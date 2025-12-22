@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: var(--font-merriweather), ui-serif, Georgia, serif;
-  --font-serif: var(--font-old-standard), "Old Standard TT", serif;
+  --font-sans: var(--font-inter), "Inter", sans-serif;
+  --font-serif: var(--font-inter), "Inter", sans-serif;
 }
 
 @keyframes fade-sequence {
@@ -22,7 +22,7 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-inter), "Inter", sans-serif;
   --font-mono: var(--font-geist-mono);
 }
 
@@ -36,5 +36,27 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+}
+
+html,
+body,
+body * {
+  font-family: var(--font-inter), "Inter", sans-serif !important;
+}
+
+h2 {
+  font-family: var(--font-old-standard), "Old Standard TT", serif !important;
+  font-weight: 700 !important;
+}
+
+.font-merriweather {
+  font-family: var(--font-merriweather), "Merriweather", serif !important;
+}
+
+.font-old-standard {
+  font-family: var(--font-old-standard), "Old Standard TT", serif !important;
+}
+
+.font-inter {
+  font-family: var(--font-inter), "Inter", sans-serif !important;
 }

@@ -1,6 +1,12 @@
 import type { Metadata } from "next";
-import { Old_Standard_TT, Merriweather } from "next/font/google";
+import { Inter, Old_Standard_TT, Merriweather } from "next/font/google";
 import "./globals.css";
+
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700", "800", "900"],
+  variable: "--font-inter"
+});
 
 const oldStandard = Old_Standard_TT({
   subsets: ["latin"],
@@ -26,7 +32,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${merriweather.variable} ${oldStandard.variable} font-sans antialiased`}>
+      <body className={`${inter.variable} ${oldStandard.variable} ${merriweather.variable} ${inter.className} antialiased`}>
         {children}
       </body>
     </html>

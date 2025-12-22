@@ -27,7 +27,7 @@ function BonusResultContent() {
     const error = searchParams.get('error');
     const message = searchParams.get('message');
 
-    const containerClass = "min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50 p-4 font-inter";
+    const containerClass = "min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50 p-4";
     const cardClass = "bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-fade-in-up";
 
     if (status === 'success') {

@@ -51,8 +51,8 @@ const ICONS: IconDef[] = [
     { id: 10, Component: Armchair, top: '38%', left: '18%', rotate: '8deg', color: 'text-blue-500', hiddenByDefault: false, speed: 0.2 },
 
     // 6. Mid Right
-    // Box: slightly more internal
-    { id: 11, Component: Box, top: '32%', right: '19%', rotate: '-8deg', color: 'text-blue-500', hiddenByDefault: false, speed: 0.18 },
+    // Layers: slightly more internal
+    { id: 11, Component: Layers, top: '32%', right: '19%', rotate: '-8deg', color: 'text-blue-500', hiddenByDefault: false, speed: 0.18 },
 
 
     // --- Faded Icons (Animated) ---
@@ -78,8 +78,8 @@ const ICONS: IconDef[] = [
     { id: 12, Component: Percent, top: '15%', right: '2%', rotate: '-10deg', color: 'text-blue-300', hiddenByDefault: true, delay: '2s', speed: 0.14 },
 
     // 12. Mid-Low Left
-    // Layers
-    { id: 13, Component: Layers, top: '55%', left: '4%', rotate: '15deg', color: 'text-blue-300', hiddenByDefault: true, delay: '2.5s', speed: 0.06 },
+    // Box
+    { id: 13, Component: Box, top: '55%', left: '4%', rotate: '15deg', color: 'text-blue-300', hiddenByDefault: true, delay: '2.5s', speed: 0.06 },
 ];
 
 export default function HeroFloatingIcons() {

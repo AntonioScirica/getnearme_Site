@@ -24,23 +24,20 @@ export default function Navbar() {
                 }`}
         >
             <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-                <div className="text-xl font-serif text-2xl tracking-tight">ORAZIO</div>
+                <div className="text-xl font-serif text-2xl tracking-tight font-semibold">GetNearMe</div>
 
                 <div className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600">
-                    <Link href="#" className="hover:text-black transition-colors">Why Orazio</Link>
-                    <Link href="#" className="hover:text-black transition-colors">Products</Link>
-                    <Link href="#" className="hover:text-black transition-colors">Resources</Link>
-                    <Link href="#" className="hover:text-black transition-colors">Pricing</Link>
-                    <Link href="#" className="hover:text-black transition-colors">Contact</Link>
+                    <Link href="#funzionalita" className="hover:text-black transition-colors">Funzionalità</Link>
+                    <Link href="#prezzi" className="hover:text-black transition-colors">Prezzi</Link>
+                    <Link href="#faq" className="hover:text-black transition-colors">FAQ</Link>
                 </div>
 
                 <div className="flex items-center gap-4">
-                    <Link href="#" className="hidden md:block text-sm font-medium hover:text-black">Log in</Link>
                     <Link
-                        href="#"
-                        className="bg-black text-white px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider hover:bg-slate-800 transition-all"
+                        href="#estensione"
+                        className="px-6 py-2.5 bg-blue-500 text-white rounded-[8px] hover:bg-blue-600 transition-all font-bold text-lg font-sans"
                     >
-                        Book a Demo
+                        Inizia Analisi
                     </Link>
                     <button className="md:hidden p-2 text-slate-600">
                         <Menu className="w-6 h-6" />
