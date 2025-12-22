@@ -12,9 +12,11 @@ import {
     Ban,
     ChevronRight
 } from 'lucide-react';
+import { useLanguage } from '@/context/LanguageContext';
 
 function BonusResultContent() {
     const searchParams = useSearchParams();
+    const { t } = useLanguage();
     const status = searchParams.get('status');
 
     // Success Params
@@ -42,7 +44,7 @@ function BonusResultContent() {
                             <PartyPopper className="w-8 h-8 text-white" />
                         </div>
                         <h1 className="text-2xl font-bold">
-                            {credits} Crediti Riscossi!
+                            {credits} {t.bonus.creditsClaimed}
                         </h1>
                     </div>
 
@@ -80,15 +82,15 @@ function BonusResultContent() {
                         {/* Message */}
                         <div className="text-center mb-8">
                             <p className="text-gray-600 text-lg mb-2">
-                                Giorno <span className="font-bold text-gray-900">{streakDay}</span> completato!
+                                {t.bonus.dayCompleted.replace('{day}', streakDay)}
                             </p>
                             {isWeekComplete ? (
                                 <p className="text-emerald-600 font-medium">
-                                    Fantastico! Hai completato la settimana! Ricevi 120 crediti bonus!
+                                    {t.bonus.weekComplete}
                                 </p>
                             ) : (
                                 <p className="text-gray-500">
-                                    Torna domani per il giorno {nextStreak}.
+                                    {t.bonus.comeBackTomorrow.replace('{day}', nextStreak)}
                                 </p>
                             )}
                         </div>
@@ -98,7 +100,7 @@ function BonusResultContent() {
                             href="/"
                             className="block w-full bg-indigo-600 hover:bg-indigo-700 text-white text-center font-semibold py-3 px-6 rounded-xl transition-colors duration-200 shadow-lg shadow-indigo-200"
                         >
-                            Vai a GetNearMe
+                            {t.bonus.goToHome}
                         </Link>
                     </div>
                 </div>
@@ -107,38 +109,35 @@ function BonusResultContent() {
     }
 
     if (status === 'error') {
-        let errorTitle = "Errore";
-        let errorMessage = "Si è verificato un errore.";
+        let errorTitle = t.bonus.error.defaultTitle;
+        let errorMessage = t.bonus.error.defaultMessage;
         let Icon = AlertCircle;
         let headerColor = "bg-red-500";
 
         switch (error) {
             case 'already_claimed':
-                errorTitle = "Bonus Già Riscosso";
-                errorMessage = "Hai già riscosso il bonus di oggi. Torna domani!";
-                Icon = CheckCircle; // Or generic info? Requirement says "Red header with appropriate icon". 
-                // already_claimed implies success was past. But requirement says "Caso ERRORE ... already_claimed".
-                // Use CheckCircle but potentially in a 'warning' context? Or sticking to Red as requested.
+                errorTitle = t.bonus.error.alreadyClaimedTitle;
+                errorMessage = t.bonus.error.alreadyClaimedMessage;
                 Icon = Clock;
                 break;
             case 'expired':
-                errorTitle = "Token Scaduto";
-                errorMessage = "Questo link non è più valido. Controlla l'email di oggi.";
+                errorTitle = t.bonus.error.expiredTitle;
+                errorMessage = t.bonus.error.expiredMessage;
                 Icon = Clock;
                 break;
             case 'invalid_token':
-                errorTitle = "Token Non Valido";
-                errorMessage = "Il link che hai usato non è valido.";
+                errorTitle = t.bonus.error.invalidTokenTitle;
+                errorMessage = t.bonus.error.invalidTokenMessage;
                 Icon = Ban;
                 break;
             case 'missing_token':
-                errorTitle = "Token Mancante";
-                errorMessage = "Nessun token fornito.";
+                errorTitle = t.bonus.error.missingTokenTitle;
+                errorMessage = t.bonus.error.missingTokenMessage;
                 Icon = AlertCircle;
                 break;
             case 'server_error':
-                errorTitle = "Errore Server";
-                errorMessage = "Si è verificato un errore. Riprova più tardi.";
+                errorTitle = t.bonus.error.serverErrorTitle;
+                errorMessage = t.bonus.error.serverErrorMessage;
                 Icon = XCircle;
                 break;
             default:
@@ -169,7 +168,7 @@ function BonusResultContent() {
                             href="/"
                             className="block w-full bg-gray-900 hover:bg-gray-800 text-white text-center font-semibold py-3 px-6 rounded-xl transition-colors duration-200"
                         >
-                            Torna alla Home
+                            {t.bonus.backToHome}
                         </Link>
                     </div>
                 </div>

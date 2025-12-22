@@ -48,7 +48,7 @@ const ICONS: IconDef[] = [
 
     // 5. Mid Left
     // Armchair: slightly lower
-    { id: 10, Component: Armchair, top: '38%', left: '18%', rotate: '8deg', color: 'text-blue-500', hiddenByDefault: false, speed: 0.2 },
+    { id: 10, Component: Armchair, top: '30%', left: '18%', rotate: '8deg', color: 'text-blue-500', hiddenByDefault: false, speed: 0.2 },
 
     // 6. Mid Right
     // Layers: slightly more internal

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Old_Standard_TT, Merriweather } from "next/font/google";
 import "./globals.css";
+import LanguageWrapper from "@/components/LanguageWrapper";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -33,7 +34,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.variable} ${oldStandard.variable} ${merriweather.variable} ${inter.className} antialiased`}>
-        {children}
+        <LanguageWrapper>
+          {children}
+        </LanguageWrapper>
       </body>
     </html>
   );
