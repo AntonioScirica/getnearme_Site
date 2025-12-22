@@ -3,22 +3,35 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Locale, translations } from '@/lib/translations';
 
+type TranslationType = typeof translations[Locale];
+
 interface LanguageContextType {
   locale: Locale;
   setLocale: (locale: Locale) => void;
-  t: any;
+  t: TranslationType;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
-export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>('it');
-
-  useEffect(() => {
+function getInitialLocale(): Locale {
+  if (typeof window !== 'undefined') {
     const savedLocale = localStorage.getItem('locale') as Locale;
     if (savedLocale && translations[savedLocale]) {
-      setLocaleState(savedLocale);
+      return savedLocale;
     }
+  }
+  return 'it';
+}
+
+export function LanguageProvider({ children }: { children: React.ReactNode }) {
+  const [locale, setLocaleState] = useState<Locale>('it');
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  useEffect(() => {
+    const savedLocale = getInitialLocale();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setLocaleState(savedLocale);
+    setIsHydrated(true);
   }, []);
 
   const setLocale = (newLocale: Locale) => {
@@ -27,6 +40,14 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   };
 
   const t = translations[locale];
+
+  if (!isHydrated) {
+    return (
+      <LanguageContext.Provider value={{ locale: 'it', setLocale, t: translations['it'] }}>
+        {children}
+      </LanguageContext.Provider>
+    );
+  }
 
   return (
     <LanguageContext.Provider value={{ locale, setLocale, t }}>

@@ -3,7 +3,7 @@
 import React from 'react';
 import { useLanguage } from '@/context/LanguageContext';
 import { Locale } from '@/lib/translations';
-import { ChevronDown, Globe } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 
 const locales: { code: Locale; label: string; flag: string }[] = [
   { code: 'it', label: 'Italiano', flag: '🇮🇹' },

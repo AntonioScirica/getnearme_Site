@@ -26,10 +26,10 @@ export default function Navbar() {
                 : 'bg-[#F5F5F5] border-b border-transparent'
                 }`}
         >
-            <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+            <div className="max-w-7xl mx-auto px-3 h-20 flex items-center justify-between">
                 <div className="text-xl font-serif text-2xl tracking-tight font-semibold">GetNearMe</div>
 
-                <div className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600">
+                <div className="hidden md:flex items-center gap-16 text-sm font-medium text-slate-600">
                     <Link href="#funzionalita" className="hover:text-black transition-colors">{t.nav.features}</Link>
                     <Link href="#prezzi" className="hover:text-black transition-colors">{t.nav.pricing}</Link>
                     <Link href="#faq" className="hover:text-black transition-colors">{t.nav.faq}</Link>

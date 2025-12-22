@@ -9,8 +9,7 @@ import {
     XCircle,
     AlertCircle,
     Clock,
-    Ban,
-    ChevronRight
+    Ban
 } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 
@@ -82,7 +81,7 @@ function BonusResultContent() {
                         {/* Message */}
                         <div className="text-center mb-8">
                             <p className="text-gray-600 text-lg mb-2">
-                                {t.bonus.dayCompleted.replace('{day}', streakDay)}
+                                {t.bonus.dayCompleted.replace('{day}', String(streakDay))}
                             </p>
                             {isWeekComplete ? (
                                 <p className="text-emerald-600 font-medium">
@@ -90,7 +89,7 @@ function BonusResultContent() {
                                 </p>
                             ) : (
                                 <p className="text-gray-500">
-                                    {t.bonus.comeBackTomorrow.replace('{day}', nextStreak)}
+                                    {t.bonus.comeBackTomorrow.replace('{day}', nextStreak || '1')}
                                 </p>
                             )}
                         </div>
@@ -112,7 +111,7 @@ function BonusResultContent() {
         let errorTitle = t.bonus.error.defaultTitle;
         let errorMessage = t.bonus.error.defaultMessage;
         let Icon = AlertCircle;
-        let headerColor = "bg-red-500";
+        const headerColor = "bg-red-500";
 
         switch (error) {
             case 'already_claimed':

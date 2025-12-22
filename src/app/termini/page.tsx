@@ -30,7 +30,7 @@ export default function TerminiServizio() {
             {t.terms.intro}
           </p>
 
-          {t.terms.sections.map((section: any, index: number) => (
+          {t.terms.sections.map((section: { t: string; c: string }, index: number) => (
             <div key={index}>
               <h2 className="text-2xl font-serif font-bold text-slate-900 mt-10 mb-4">{section.t}</h2>
               <p className="text-slate-600 leading-relaxed">

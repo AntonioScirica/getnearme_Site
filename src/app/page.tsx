@@ -24,15 +24,15 @@ export default function Home() {
         <div className="absolute top-0 left-0 w-full h-[90vh] bg-[#F5F5F5] z-0"></div>
 
         {/* --- Hero Section --- */}
-        <section className="relative px-4 max-w-7xl mx-auto text-center mb-32 z-10">
+        <section className="relative px-2 max-w-7xl mx-auto text-center mb-32 z-10">
 
           <HeroFloatingIcons />
 
           <div className="relative z-10 max-w-4xl mx-auto space-y-4 pt-16 pb-10">
-            <h1 className="text-4xl md:text-6xl font-serif text-slate-900 leading-[1.05] tracking-tight">
-              <span className="font-old-standard font-bold">{t.hero.title1}</span>
+            <h1 className="text-4xl md:text-6xl font-bold text-slate-900 leading-[1.05] tracking-tight" style={{ fontFamily: 'var(--font-old-standard), "Old Standard TT", serif' }}>
+              {t.hero.title1}
               <br />
-              <span className="font-old-standard font-bold">{t.hero.title2}</span> <span className="font-merriweather italic font-light text-4xl md:text-5xl">{t.hero.title3}</span>.
+              {t.hero.title2} <span className="font-bold" style={{ fontFamily: 'var(--font-old-standard), "Old Standard TT", serif' }}>{t.hero.title3}</span>.
             </h1>
 
             <p className="text-lg md:text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed font-light">
@@ -103,10 +103,12 @@ export default function Home() {
 
 
         {/* --- Grid Section --- */}
-        <section id="funzionalita" className="px-4 max-w-7xl mx-auto py-24">
+        <section id="funzionalita" className="px-2 max-w-7xl mx-auto py-24">
           <div className="flex flex-col md:flex-row justify-between items-center mb-16 gap-8">
-            <h2 className="text-4xl md:text-5xl font-serif text-slate-900 max-w-md leading-tight text-center md:text-left">
-              <span className="font-old-standard">{t.features.title}</span> <span className="font-merriweather italic font-light text-4xl md:text-5xl">{t.features.titleItalic}</span>
+            <h2 className="text-4xl md:text-5xl font-bold text-slate-900 max-w-md leading-tight text-center md:text-left" style={{ fontFamily: 'var(--font-old-standard), "Old Standard TT", serif' }}>
+              {t.features.title}
+              <br />
+              <span className="font-bold" style={{ fontFamily: 'var(--font-old-standard), "Old Standard TT", serif' }}>{t.features.titleItalic}</span>
             </h2>
             <p className="text-slate-600 text-base md:text-lg font-light leading-relaxed text-center md:text-right max-w-sm">
               {t.features.description}
@@ -137,7 +139,7 @@ export default function Home() {
                   <div className="aspect-4/3 bg-[#F5F5F5] rounded-lg"></div>
                 </div>
                 <div className="px-3 py-6">
-                  <h3 className="font-serif text-lg mb-2 text-slate-900 leading-tight">
+                  <h3 className="font-semibold text-lg mb-2 text-slate-900 leading-tight">
                     {item.title}
                   </h3>
                   <p className="text-sm text-slate-600 leading-relaxed font-light">
@@ -158,17 +160,17 @@ export default function Home() {
 
 
         {/* --- FAQ Section --- */}
-        <section id="faq" className="px-6 max-w-7xl mx-auto py-24 border-t border-slate-100">
+        <section id="faq" className="px-2 max-w-7xl mx-auto py-24 border-t border-slate-100">
           <div className="mb-16">
-            <h2 className="text-4xl md:text-5xl font-serif text-slate-900 mb-4 leading-tight text-center md:text-left">
-              <span className="font-old-standard">{t.faq.title}</span> <span className="font-merriweather italic font-light text-3xl md:text-4xl">{t.faq.titleItalic}</span>
+            <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4 leading-tight text-center md:text-left" style={{ fontFamily: 'var(--font-old-standard), "Old Standard TT", serif' }}>
+              {t.faq.title} <span className="font-bold" style={{ fontFamily: 'var(--font-old-standard), "Old Standard TT", serif' }}>{t.faq.titleItalic}</span>
             </h2>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-8">
-            {t.faq.items.map((item: any, i: number) => (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {t.faq.items.map((item: { q: string; a: string }, i: number) => (
               <div key={i} className="space-y-3 text-center md:text-left">
-                <h4 className="font-serif text-xl font-medium text-slate-900">
+                <h4 className="font-semibold text-xl text-slate-900">
                   {item.q}
                 </h4>
                 <p className="text-base text-slate-500 leading-relaxed font-light max-w-md mx-auto md:mx-0">
@@ -184,10 +186,10 @@ export default function Home() {
 
 
         {/* --- Pricing Section --- */}
-        <section id="prezzi" className="px-4 max-w-7xl mx-auto py-24">
+        <section id="prezzi" className="px-2 max-w-7xl mx-auto py-24">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-serif text-slate-900 mb-2 leading-tight">
-              <span className="font-old-standard">{t.pricing.title}</span> <span className="font-merriweather italic font-light text-4xl md:text-5xl">{t.pricing.titleItalic}</span>
+            <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-2 leading-tight" style={{ fontFamily: 'var(--font-old-standard), "Old Standard TT", serif' }}>
+              {t.pricing.title} <span className="font-bold" style={{ fontFamily: 'var(--font-old-standard), "Old Standard TT", serif' }}>{t.pricing.titleItalic}</span>
             </h2>
             <p className="text-slate-600 text-base md:text-lg font-light max-w-2xl mx-auto leading-relaxed">
               {t.pricing.description}
@@ -195,7 +197,7 @@ export default function Home() {
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-3 mb-12">
-            {t.pricing.plans.map((plan: any, i: number) => {
+            {t.pricing.plans.map((plan: { name: string; subtitle?: string; desc: string }, i: number) => {
               const isPopular = i === 2;
               const isFree = i === 0;
               const price = i === 1 ? "4,99" : i === 2 ? "9,99" : i === 3 ? "24,99" : t.pricing.free;
@@ -214,7 +216,7 @@ export default function Home() {
                   )}
 
                   <div className="text-center mb-6">
-                    <h3 className="text-xl font-serif text-slate-900 mb-1">{plan.name}</h3>
+                    <h3 className="text-xl font-bold text-slate-900 mb-1">{plan.name}</h3>
                     {plan.subtitle && (
                       <p className="text-sm text-slate-500 font-light mb-4">{plan.subtitle}</p>
                     )}
@@ -247,11 +249,11 @@ export default function Home() {
 
 
         {/* --- Final CTA Section --- */}
-        <section id="estensione" className="px-4 max-w-7xl mx-auto py-32">
+        <section id="estensione" className="px-2 max-w-7xl mx-auto py-32">
           <div className="max-w-4xl mx-auto text-center space-y-4">
-            <h2 className="text-4xl md:text-5xl font-serif text-slate-900 leading-tight mb-2">
-              <span className="font-old-standard">{t.cta.title}</span><br />
-              <span className="font-old-standard">{t.cta.title2}</span> <span className="font-merriweather italic font-light text-4xl md:text-5xl">{t.cta.titleItalic}</span>
+            <h2 className="text-4xl md:text-5xl font-bold text-slate-900 leading-tight mb-2" style={{ fontFamily: 'var(--font-old-standard), "Old Standard TT", serif' }}>
+              {t.cta.title}<br />
+              {t.cta.title2} <span className="font-bold" style={{ fontFamily: 'var(--font-old-standard), "Old Standard TT", serif' }}>{t.cta.titleItalic}</span>
             </h2>
             <p className="text-lg md:text-xl text-slate-600 font-light max-w-2xl mx-auto leading-relaxed">
               {t.cta.desc}
@@ -266,11 +268,11 @@ export default function Home() {
 
         {/* --- Footer --- */}
         <footer className="bg-slate-900 text-white">
-          <div className="max-w-7xl mx-auto px-4 pt-16 pb-8">
+          <div className="max-w-7xl mx-auto px-2 pt-16 pb-8">
             <div className="grid md:grid-cols-3 gap-12 mb-12 text-center md:text-left">
               {/* Brand Column */}
               <div className="md:col-span-1">
-                <h3 className="text-2xl font-serif mb-4">GetNearMe</h3>
+                <h3 className="text-2xl font-bold mb-4">GetNearMe</h3>
                 <p className="text-slate-400 text-sm font-light leading-relaxed">
                   {t.footer.desc}
                 </p>

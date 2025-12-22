@@ -2,7 +2,7 @@
 
 @theme {
   --font-sans: var(--font-inter), "Inter", sans-serif;
-  --font-serif: var(--font-inter), "Inter", sans-serif;
+  --font-serif: var(--font-old-standard), "Old Standard TT", serif;
 }
 
 @keyframes fade-sequence {
@@ -39,22 +39,22 @@ body {
 }
 
 html,
-body,
-body * {
+body {
   font-family: var(--font-inter), "Inter", sans-serif !important;
 }
 
-h2 {
-  font-family: var(--font-old-standard), "Old Standard TT", serif !important;
-  font-weight: 700 !important;
-}
-
+h1,
+h2,
+h1 *,
+h2 *,
+.font-old-standard,
 .font-merriweather {
-  font-family: var(--font-merriweather), "Merriweather", serif !important;
+  font-family: var(--font-old-standard), "Old Standard TT", serif !important;
 }
 
-.font-old-standard {
-  font-family: var(--font-old-standard), "Old Standard TT", serif !important;
+h1,
+h2 {
+  font-weight: 700 !important;
 }
 
 .font-inter {

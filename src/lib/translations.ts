@@ -10,16 +10,16 @@ export const translations = {
       backToHome: "← Torna alla home"
     },
     hero: {
-      title1: "Scegli casa tua con",
-      title2: "più",
+      title1: "Scegli casa tua",
+      title2: "con più",
       title3: "consapevolezza",
       description: "GetNearMe è uno strumento di supporto decisionale che analizza immobili e quartieri, confronta i dati disponibili e fornisce stime indicative dei costi per aiutarti a valutare più opzioni in modo strutturato.",
       cta: "Aggiungi Estensione",
       subMockup: "GetNearMe è un’estensione per Google Chrome che ti aiuta a prendere decisioni migliori quando cerchi casa. Non vedi solo le informazioni di base: organizza i dati dell’annuncio, confronta più immobili, analizza i servizi attorno e confronta prezzi reali della zona… tutto in automatico mentre navighi sui portali immobiliari che già usi."
     },
     features: {
-      title: "L'immobile, nei suoi dati",
-      titleItalic: "essenziali",
+      title: "L'immobile, nei",
+      titleItalic: "suoi dati essenziali",
       description: "GetNearMe organizza le informazioni in passaggi chiari, per aiutarti a confrontare immobili e contesto in modo strutturato.",
       card1: {
         title: "I dati dell'immobile",
@@ -44,15 +44,15 @@ export const translations = {
       titleItalic: "frequenti",
       items: [
         {
-          q: "Che tipo di informazioni mostra GetNearMe?",
+          q: "Che tipo di informazioni mostra?",
           a: "GetNearMe mostra dati organizzati provenienti da annunci immobiliari e fonti pubbliche, relativi all'immobile, al quartiere e a indicatori di prezzo e costo."
         },
         {
-          q: "GetNearMe è un portale immobiliare o un'agenzia?",
+          q: "È un portale immobiliare o un'agenzia?",
           a: "No. GetNearMe non pubblica annunci e non svolge attività di intermediazione immobiliare. È uno strumento di analisi e confronto dei dati disponibili."
         },
         {
-          q: "Le analisi fornite sono valutazioni ufficiali?",
+          q: "Sono tutte valutazioni ufficiali?",
           a: "No. Le analisi e le stime mostrate sono indicative e non costituiscono una valutazione immobiliare né una consulenza professionale."
         },
         {
@@ -246,8 +246,8 @@ export const translations = {
       backToHome: "← Back to home"
     },
     hero: {
-      title1: "Choose your home with",
-      title2: "more",
+      title1: "Choose your home",
+      title2: "with more",
       title3: "awareness",
       description: "GetNearMe is a decision support tool that analyzes real estate and neighborhoods, compares available data and provides indicative cost estimates to help you evaluate multiple options in a structured way.",
       cta: "Add Extension",
@@ -280,15 +280,15 @@ export const translations = {
       titleItalic: "Questions",
       items: [
         {
-          q: "What kind of information does GetNearMe show?",
+          q: "What kind of information does it show?",
           a: "GetNearMe shows organized data from real estate listings and available public sources, regarding the property, neighborhood and price and cost indicators."
         },
         {
-          q: "Is GetNearMe a real estate portal or agency?",
+          q: "Is it a real estate portal or agency?",
           a: "No. GetNearMe does not publish listings and does not perform real estate brokerage. It is a tool for data analysis and comparison."
         },
         {
-          q: "Are the analyzes provided official evaluations?",
+          q: "Are they all official evaluations?",
           a: "No. The analyzes and estimates shown are indicative and do not constitute a real estate appraisal or professional advice."
         },
         {
@@ -482,8 +482,8 @@ export const translations = {
       backToHome: "← Volver al inicio"
     },
     hero: {
-      title1: "Elige tu casa con",
-      title2: "más",
+      title1: "Elige tu casa",
+      title2: "con más",
       title3: "conciencia",
       description: "GetNearMe è una herramienta de soporte a la decisión que analiza inmuebles y barrios, compara los datos disponibles y ofrece estimaciones indicativas de costes para ayudarte a evaluar múltiples opciones de forma estructurada.",
       cta: "Añadir Extensión",
@@ -516,15 +516,15 @@ export const translations = {
       titleItalic: "frecuentes",
       items: [
         {
-          q: "¿Qué tipo de información muestra GetNearMe?",
+          q: "¿Qué tipo de información muestra?",
           a: "GetNearMe muestra datos organizados procedentes de anuncios inmobiliarios y fuentes públicas disponibles, relativos al inmueble, al barrio y a indicadores de precio y coste."
         },
         {
-          q: "¿Es GetNearMe un portal inmobiliario o una agencia?",
+          q: "¿Es un portal inmobiliario o una agencia?",
           a: "No. GetNearMe no publica anuncios y no realiza intermediación inmobiliaria. Es una herramienta de análisis y comparación de datos."
         },
         {
-          q: "¿Son las evaluaciones oficiales las que ofrece?",
+          q: "¿Son todas evaluaciones oficiales?",
           a: "No. Los análisis y estimaciones mostrados son indicativos y no constituyen una tasación inmobiliaria ni un asesoramiento profesional."
         },
         {
@@ -718,8 +718,8 @@ export const translations = {
       backToHome: "← Retour à l'accueil"
     },
     hero: {
-      title1: "Choisissez votre maison avec",
-      title2: "plus de",
+      title1: "Choisissez votre maison",
+      title2: "avec plus de",
       title3: "conscience",
       description: "GetNearMe est un outil d'aide à la décision qui analyse l'immobilier et les quartiers, compare les données disponibles et fournit des estimations de coûts indicatives pour vous aider à évaluer plusieurs options de manière structurée.",
       cta: "Ajouter l'Extension",
@@ -752,15 +752,15 @@ export const translations = {
       titleItalic: "fréquentes",
       items: [
         {
-          q: "Quel type d'informations GetNearMe affiche-t-il ?",
+          q: "Quel type d'informations affiche-t-il ?",
           a: "GetNearMe affiche des données organisées provenant d'annonces immobilières et de sources publiques disponibles, concernant le bien, le quartier et les indicateurs de prix et de coût."
         },
         {
-          q: "GetNearMe est-il un portail immobilier ou une agence ?",
+          q: "Est-il un portail immobilier ou une agence ?",
           a: "Non. GetNearMe ne publie pas d'annonces et ne fait pas d'intermédiation immobilière. C'est un outil d'analyse et de comparaison de données."
         },
         {
-          q: "Les analyses fournies sont-elles des évaluations officielles ?",
+          q: "Sont-elles toutes des évaluations officielles ?",
           a: "Non. Les analyses et estimations affichées sont indicatives et ne constituent pas une expertise immobilière ni un conseil professionnel."
         },
         {
@@ -954,8 +954,8 @@ export const translations = {
       backToHome: "← Вернуться на главную"
     },
     hero: {
-      title1: "Выбирайте дом с",
-      title2: "большей",
+      title1: "Выбирайте дом",
+      title2: "с большей",
       title3: "осознанностью",
       description: "GetNearMe — это инструмент поддержки принятия решений, который анализирует недвижимость и районы, сравнивает доступные данные и предоставляет ориентировочную оценку затрат, чтобы помочь вам оценить несколько вариантов структурированным образом.",
       cta: "Добавить Расширение",
@@ -988,15 +988,15 @@ export const translations = {
       titleItalic: "вопросы",
       items: [
         {
-          q: "Какую информацию показывает GetNearMe?",
+          q: "Какую информацию показывает?",
           a: "GetNearMe показывает организованные данные из объявлений о недвижимости и доступных государственных источников, касающиеся объекта, района, а также показателей цены и стоимости."
         },
         {
-          q: "Является ли GetNearMe порталом недвижимости или агентством?",
+          q: "Является ли порталом недвижимости или агентством?",
           a: "Нет. GetNearMe не публикует объявления и не занимается брокерскими операциями с недвижимостью. Это инструмент для анализа и сравнения данных."
         },
         {
-          q: "Являются ли представленные анализы официальными оценками?",
+          q: "Являются ли все анализы официальными оценками?",
           a: "Нет. Представленные анализы и оценки носят ориентировочный характер и не являются официальной оценкой недвижимости или профессиональной консультацией."
         },
         {
@@ -1190,8 +1190,8 @@ export const translations = {
       backToHome: "← Повернутися на головну"
     },
     hero: {
-      title1: "Обирайте дім з",
-      title2: "більшою",
+      title1: "Обирайте дім",
+      title2: "з більшою",
       title3: "усвідомленістю",
       description: "GetNearMe — це інструмент підтримки прийняття рішень, який аналізує нерухомість та райони, порівнює доступні дані та надає орієнтовну оцінку витрат, щоб допомогти вам оцінити кілька варіантів структурованим чином.",
       cta: "Додати Розширення",
@@ -1224,15 +1224,15 @@ export const translations = {
       titleItalic: "запитання",
       items: [
         {
-          q: "Яку інформацію показує GetNearMe?",
+          q: "Яку інформацію показує?",
           a: "GetNearMe показує організовані дані з оголошень про нерухомість та доступних державних джерел, що стосуються об'єкта, району, а також показників ціни та вартості."
         },
         {
-          q: "Чи є GetNearMe порталом нерухомості або агентством?",
+          q: "Чи є порталом нерухомості або агентством?",
           a: "Ні. GetNearMe не публікує оголошення і не займається брокерськими операциями з нерухомістю. Це інструмент для аналізу та порівняння даних."
         },
         {
-          q: "Чи є представлені аналізи офіційними оцінками?",
+          q: "Чи є всі аналізи офіційними оцінками?",
           a: "Ні. Представлені аналізи та оцінки носять орієнтовний характер і не є офіційною оцінкою нерухомості або професійною консультацією."
         },
         {

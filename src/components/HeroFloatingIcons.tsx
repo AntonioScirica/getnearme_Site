@@ -16,9 +16,11 @@ import {
     Tag
 } from 'lucide-react';
 
+import { LucideProps } from 'lucide-react';
+
 interface IconDef {
     id: number;
-    Component: any;
+    Component: React.ComponentType<LucideProps>;
     top: string;
     left?: string;
     right?: string;
