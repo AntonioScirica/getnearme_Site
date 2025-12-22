@@ -1,5 +1,19 @@
 @import "tailwindcss";
 
+@theme {
+  --font-sans: var(--font-merriweather), ui-serif, Georgia, serif;
+  --font-serif: var(--font-old-standard), "Old Standard TT", serif;
+}
+
+@keyframes fade-sequence {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 0.5; }
+}
+
+.animate-fade-sequence {
+  animation: fade-sequence 4s ease-in-out infinite;
+}
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
