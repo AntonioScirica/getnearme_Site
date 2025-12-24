@@ -1,6 +1,9 @@
 {
-  "name": "temp_app",
-  "version": "0.1.0",
+  "name": "getnearme",
+  "version": "1.0.0",
+  "description": "GetNearMe - Estensione Chrome per l'analisi immobiliare",
+  "author": "GetNearMe",
+  "homepage": "https://getnearme.it",
   "private": true,
   "scripts": {
     "dev": "next dev",

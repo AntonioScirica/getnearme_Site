@@ -1,6 +1,7 @@
 'use client';
 
 import Link from "next/link";
+import Image from "next/image";
 import { MapPin } from "lucide-react";
 import HeroFloatingIcons from "@/components/HeroFloatingIcons";
 import Navbar from "@/components/Navbar";
@@ -24,7 +25,7 @@ export default function Home() {
         <div className="absolute top-0 left-0 w-full h-[90vh] bg-[#F5F5F5] z-0"></div>
 
         {/* --- Hero Section --- */}
-        <section className="relative px-2 max-w-7xl mx-auto text-center mb-32 z-10">
+        <section className="relative px-6 max-w-7xl mx-auto text-center mb-32 z-10">
 
           <HeroFloatingIcons />
 
@@ -50,42 +51,15 @@ export default function Home() {
           </div>
 
           {/* Hero Visual Mockup */}
-          {/* White card with browser-like header */}
-          <div className="mt-20 relative mx-auto w-full max-w-full shadow-2xl rounded-t-2xl bg-white border border-[#E4E4E4] p-1 pb-0">
-            <div className="w-full bg-slate-50 rounded-t-xl overflow-hidden shadow-inner border-b border-slate-100">
-              {/* Browser Header */}
-              <div className="h-8 bg-[#F5F5F5] flex items-center px-4 gap-2 border-b border-[#E4E4E4]">
-                <div className="flex gap-1.5 opacity-50">
-                  <div className="w-2.5 h-2.5 rounded-full bg-slate-400"></div>
-                  <div className="w-2.5 h-2.5 rounded-full bg-slate-400"></div>
-                  <div className="w-2.5 h-2.5 rounded-full bg-slate-400"></div>
-                </div>
-              </div>
-
-              {/* Content Placeholder */}
-              <div className="aspect-video bg-white relative">
-                {/* Split View Mockup */}
-                <div className="absolute inset-0 flex">
-                  {/* Map side */}
-                  <div className="w-1/2 bg-blue-50/50 border-r border-[#E4E4E4] p-4">
-                    <div className="w-full h-full rounded-lg bg-blue-100/30 border border-blue-100 relative overflow-hidden">
-                      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                        <MapPin className="w-8 h-8 text-blue-400" />
-                      </div>
-                    </div>
-                  </div>
-                  {/* Data side */}
-                  <div className="w-1/2 p-6 flex flex-col gap-4">
-                    <div className="h-6 w-3/4 bg-slate-100 rounded"></div>
-                    <div className="h-4 w-1/2 bg-slate-50 rounded"></div>
-                    <div className="mt-4 grid grid-cols-2 gap-3">
-                      <div className="h-20 bg-slate-50 rounded border border-slate-100"></div>
-                      <div className="h-20 bg-slate-50 rounded border border-slate-100"></div>
-                    </div>
-                    <div className="mt-auto h-12 bg-blue-500/10 rounded border border-blue-500/20"></div>
-                  </div>
-                </div>
-              </div>
+          <div className="mt-20 relative mx-auto w-full shadow-2xl rounded-2xl overflow-hidden border border-slate-200">
+            <div className="aspect-video bg-white relative">
+              <Image 
+                src="/assets/png/immobile.png" 
+                alt="Anteprima Applicazione" 
+                fill
+                className="object-cover object-top"
+                priority
+              />
             </div>
           </div>
 
@@ -103,7 +77,7 @@ export default function Home() {
 
 
         {/* --- Grid Section --- */}
-        <section id="funzionalita" className="px-2 max-w-7xl mx-auto py-24">
+        <section id="funzionalita" className="px-6 max-w-7xl mx-auto py-24">
           <div className="flex flex-col md:flex-row justify-between items-center mb-16 gap-8">
             <h2 className="text-4xl md:text-5xl font-bold text-slate-900 max-w-md leading-tight text-center md:text-left" style={{ fontFamily: 'var(--font-old-standard), "Old Standard TT", serif' }}>
               {t.features.title}
@@ -136,7 +110,19 @@ export default function Home() {
             ].map((item, i) => (
               <div key={i} className="bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-lg transition-shadow">
                 <div className="p-2">
-                  <div className="aspect-4/3 bg-[#F5F5F5] rounded-lg"></div>
+                  <div className="aspect-4/3 bg-slate-50 rounded-lg relative overflow-hidden">
+                    <Image
+                      src={
+                        i === 0 ? "/assets/png/analizza.png" :
+                        i === 2 ? "/assets/png/prezzi.png" :
+                        i === 3 ? "/assets/png/report.png" :
+                        "/assets/png/contesto.png"
+                      }
+                      alt={item.title}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
                 </div>
                 <div className="px-3 py-6">
                   <h3 className="font-semibold text-lg mb-2 text-slate-900 leading-tight">
@@ -160,7 +146,7 @@ export default function Home() {
 
 
         {/* --- FAQ Section --- */}
-        <section id="faq" className="px-2 max-w-7xl mx-auto py-24 border-t border-slate-100">
+        <section id="faq" className="px-6 max-w-7xl mx-auto py-24 border-t border-slate-100">
           <div className="mb-16">
             <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4 leading-tight text-center md:text-left" style={{ fontFamily: 'var(--font-old-standard), "Old Standard TT", serif' }}>
               {t.faq.title} <span className="font-bold" style={{ fontFamily: 'var(--font-old-standard), "Old Standard TT", serif' }}>{t.faq.titleItalic}</span>
@@ -186,7 +172,7 @@ export default function Home() {
 
 
         {/* --- Pricing Section --- */}
-        <section id="prezzi" className="px-2 max-w-7xl mx-auto py-24">
+        <section id="prezzi" className="px-6 max-w-7xl mx-auto py-24">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-2 leading-tight" style={{ fontFamily: 'var(--font-old-standard), "Old Standard TT", serif' }}>
               {t.pricing.title} <span className="font-bold" style={{ fontFamily: 'var(--font-old-standard), "Old Standard TT", serif' }}>{t.pricing.titleItalic}</span>
@@ -249,7 +235,7 @@ export default function Home() {
 
 
         {/* --- Final CTA Section --- */}
-        <section id="estensione" className="px-2 max-w-7xl mx-auto py-32">
+        <section id="estensione" className="px-6 max-w-7xl mx-auto py-32">
           <div className="max-w-4xl mx-auto text-center space-y-4">
             <h2 className="text-4xl md:text-5xl font-bold text-slate-900 leading-tight mb-2" style={{ fontFamily: 'var(--font-old-standard), "Old Standard TT", serif' }}>
               {t.cta.title}<br />
@@ -268,7 +254,7 @@ export default function Home() {
 
         {/* --- Footer --- */}
         <footer className="bg-slate-900 text-white">
-          <div className="max-w-7xl mx-auto px-2 pt-16 pb-8">
+          <div className="max-w-7xl mx-auto px-6 pt-16 pb-8">
             <div className="grid md:grid-cols-3 gap-12 mb-12 text-center md:text-left">
               {/* Brand Column */}
               <div className="md:col-span-1">
