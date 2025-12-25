@@ -1,19 +1,50 @@
-'use client';
-
+import type { Metadata } from "next";
 import Link from "next/link";
+import { locales, type Locale } from "@/lib/i18n";
+import { translations } from "@/lib/translations";
 import Navbar from "@/components/Navbar";
-import { useLanguage } from "@/context/LanguageContext";
 
-export default function TerminiServizio() {
-  const { t } = useLanguage();
+type Props = {
+  params: Promise<{ locale: string }>;
+};
+
+export async function generateStaticParams() {
+  return locales.map((locale) => ({ locale }));
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { locale } = await params;
+  const t = translations[locale as Locale];
+  
+  const titles: Record<Locale, string> = {
+    it: "Termini di Servizio",
+    en: "Terms of Service",
+    es: "Términos de Servicio",
+    fr: "Conditions d'Utilisation",
+    ru: "Условия использования",
+    uk: "Умови використання",
+  };
+  
+  return {
+    title: titles[locale as Locale],
+    description: t.terms.intro.slice(0, 160),
+    alternates: {
+      canonical: `https://getnearme.it/${locale}/termini`,
+    },
+  };
+}
+
+export default async function TerminiServizio({ params }: Props) {
+  const { locale } = await params;
+  const t = translations[locale as Locale];
 
   return (
     <div className="min-h-screen bg-white font-sans text-slate-900">
-      <Navbar />
+      <Navbar locale={locale as Locale} />
       
       <main className="pt-32 pb-20 px-4 max-w-4xl mx-auto">
         <div className="mb-8">
-          <Link href="/" className="text-blue-500 hover:text-blue-600 text-sm font-medium">
+          <Link href={`/${locale}`} className="text-blue-500 hover:text-blue-600 text-sm font-medium">
             {t.nav.backToHome}
           </Link>
         </div>
@@ -54,3 +85,4 @@ export default function TerminiServizio() {
     </div>
   );
 }
+

@@ -3,6 +3,7 @@
 import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import {
     PartyPopper,
     CheckCircle,
@@ -11,11 +12,15 @@ import {
     Clock,
     Ban
 } from 'lucide-react';
-import { useLanguage } from '@/context/LanguageContext';
+import { translations } from '@/lib/translations';
+import { type Locale } from '@/lib/i18n';
 
 function BonusResultContent() {
     const searchParams = useSearchParams();
-    const { t } = useLanguage();
+    const params = useParams();
+    const locale = (params.locale as Locale) || 'it';
+    const t = translations[locale];
+    
     const status = searchParams.get('status');
 
     // Success Params
@@ -58,9 +63,6 @@ function BonusResultContent() {
                                 let dotClass = "w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-300";
 
                                 if (isCurrent) {
-                                    // "quello attuale in giallo" -> implied distinction, maybe pulse or different color?
-                                    // Requirement: "completati in verde, quello attuale in giallo"
-                                    // If current is completed (it is), user wants it yellow.
                                     dotClass += " bg-yellow-400 text-yellow-900 ring-4 ring-yellow-100 scale-110 z-10 font-bold";
                                 } else if (isCompleted) {
                                     dotClass += " bg-emerald-500 text-white";
@@ -96,7 +98,7 @@ function BonusResultContent() {
 
                         {/* CTA */}
                         <Link
-                            href="/"
+                            href={`/${locale}`}
                             className="block w-full bg-indigo-600 hover:bg-indigo-700 text-white text-center font-semibold py-3 px-6 rounded-xl transition-colors duration-200 shadow-lg shadow-indigo-200"
                         >
                             {t.bonus.goToHome}
@@ -140,7 +142,6 @@ function BonusResultContent() {
                 Icon = XCircle;
                 break;
             default:
-                // Use provided message if available
                 if (message) errorMessage = message;
                 break;
         }
@@ -164,7 +165,7 @@ function BonusResultContent() {
                         </p>
 
                         <Link
-                            href="/"
+                            href={`/${locale}`}
                             className="block w-full bg-gray-900 hover:bg-gray-800 text-white text-center font-semibold py-3 px-6 rounded-xl transition-colors duration-200"
                         >
                             {t.bonus.backToHome}
@@ -193,3 +194,4 @@ export default function BonusResultPage() {
         </Suspense>
     );
 }
+

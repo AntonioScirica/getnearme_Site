@@ -3,13 +3,18 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Menu, X } from 'lucide-react';
-import { useLanguage } from '@/context/LanguageContext';
+import { type Locale } from '@/lib/i18n';
+import { translations } from '@/lib/translations';
 import LanguageSwitcher from './LanguageSwitcher';
 
-export default function Navbar() {
+interface NavbarProps {
+    locale: Locale;
+}
+
+export default function Navbar({ locale }: NavbarProps) {
     const [isScrolled, setIsScrolled] = useState(false);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
-    const { t } = useLanguage();
+    const t = translations[locale];
 
     useEffect(() => {
         const handleScroll = () => {
@@ -30,13 +35,15 @@ export default function Navbar() {
                 }`}
         >
             <div className="max-w-7xl mx-auto px-3 h-20 flex items-center justify-between">
-                <div className="text-xl font-serif text-2xl tracking-tight font-semibold">GetNearMe</div>
+                <Link href={`/${locale}`} className="text-xl font-serif text-2xl tracking-tight font-semibold">
+                    GetNearMe
+                </Link>
 
                 <div className="hidden md:flex items-center gap-16 text-sm font-medium text-slate-600">
                     <Link href="#funzionalita" className="hover:text-black transition-colors">{t.nav.features}</Link>
                     <Link href="#prezzi" className="hover:text-black transition-colors">{t.nav.pricing}</Link>
                     <Link href="#faq" className="hover:text-black transition-colors">{t.nav.faq}</Link>
-                    <LanguageSwitcher />
+                    <LanguageSwitcher locale={locale} />
                 </div>
 
                 <div className="flex items-center gap-4">
@@ -83,7 +90,7 @@ export default function Navbar() {
                     
                     <div className="py-2 flex justify-between items-center border-b border-slate-100">
                         <span className="text-lg font-medium text-slate-600">Language</span>
-                        <LanguageSwitcher />
+                        <LanguageSwitcher locale={locale} />
                     </div>
 
                     <Link

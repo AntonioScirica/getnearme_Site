@@ -1,7 +1,7 @@
 {
   "name": "GetNearMe",
   "short_name": "GetNearMe",
-  "description": "Estensione Chrome per l'analisi immobiliare. Confronta immobili, analizza quartieri e prezzi.",
+  "description": "Chrome extension for real estate analysis. Compare properties, analyze neighborhoods and prices.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
@@ -14,7 +14,5 @@
       "type": "image/x-icon"
     }
   ],
-  "categories": ["utilities", "productivity"],
-  "lang": "it"
+  "categories": ["utilities", "productivity"]
 }
-

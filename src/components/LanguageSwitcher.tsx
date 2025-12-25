@@ -1,30 +1,42 @@
 'use client';
 
 import React from 'react';
-import { useLanguage } from '@/context/LanguageContext';
-import { Locale } from '@/lib/translations';
+import { useRouter, usePathname } from 'next/navigation';
 import { ChevronDown } from 'lucide-react';
+import { locales, localeNames, localeFlags, type Locale } from '@/lib/i18n';
 
-const locales: { code: Locale; label: string; flag: string }[] = [
-  { code: 'it', label: 'Italiano', flag: '🇮🇹' },
-  { code: 'en', label: 'English', flag: '🇬🇧' },
-  { code: 'es', label: 'Español', flag: '🇪🇸' },
-  { code: 'fr', label: 'Français', flag: '🇫🇷' },
-  { code: 'ru', label: 'Русский', flag: '🇷🇺' },
-  { code: 'ua', label: 'Українська', flag: '🇺🇦' },
-];
+interface LanguageSwitcherProps {
+  locale: Locale;
+}
 
-export default function LanguageSwitcher() {
-  const { locale, setLocale } = useLanguage();
+export default function LanguageSwitcher({ locale }: LanguageSwitcherProps) {
+  const router = useRouter();
+  const pathname = usePathname();
   const [isOpen, setIsOpen] = React.useState(false);
 
-  const currentLocale = locales.find((l) => l.code === locale) || locales[0];
+  const currentLocale = {
+    code: locale,
+    label: localeNames[locale],
+    flag: localeFlags[locale],
+  };
+
+  const handleLocaleChange = (newLocale: Locale) => {
+    // Ottieni il path senza il locale corrente
+    const pathWithoutLocale = pathname.replace(`/${locale}`, '') || '/';
+    
+    // Naviga alla nuova URL con il nuovo locale
+    router.push(`/${newLocale}${pathWithoutLocale === '/' ? '' : pathWithoutLocale}`);
+    setIsOpen(false);
+  };
 
   return (
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-1 text-sm font-medium text-slate-600 hover:text-black transition-colors focus:outline-none"
+        aria-label="Seleziona lingua"
+        aria-expanded={isOpen}
+        aria-haspopup="listbox"
       >
         <span className="hidden lg:inline">{currentLocale.label}</span>
         <span className="lg:hidden uppercase">{currentLocale.code}</span>
@@ -36,24 +48,28 @@ export default function LanguageSwitcher() {
           <div
             className="fixed inset-0 z-10"
             onClick={() => setIsOpen(false)}
+            aria-hidden="true"
           />
-          <div className="absolute right-0 md:left-0 md:right-auto mt-2 w-48 rounded-xl bg-white border border-slate-200 shadow-xl z-20 overflow-hidden animate-fade-in">
+          <div 
+            className="absolute right-0 md:left-0 md:right-auto mt-2 w-48 rounded-xl bg-white border border-slate-200 shadow-xl z-20 overflow-hidden animate-fade-in"
+            role="listbox"
+            aria-label="Lingue disponibili"
+          >
             <div className="p-2 grid grid-cols-1 gap-1">
-              {locales.map((l) => (
+              {locales.map((loc) => (
                 <button
-                  key={l.code}
-                  onClick={() => {
-                    setLocale(l.code);
-                    setIsOpen(false);
-                  }}
+                  key={loc}
+                  onClick={() => handleLocaleChange(loc)}
+                  role="option"
+                  aria-selected={locale === loc}
                   className={`flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm transition-colors ${
-                    locale === l.code
+                    locale === loc
                       ? 'bg-blue-50 text-blue-600 font-medium'
                       : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                   }`}
                 >
-                  <span className="text-lg leading-none">{l.flag}</span>
-                  <span>{l.label}</span>
+                  <span className="text-lg leading-none">{localeFlags[loc]}</span>
+                  <span>{localeNames[loc]}</span>
                 </button>
               ))}
             </div>

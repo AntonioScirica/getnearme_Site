@@ -1,4 +1,4 @@
-export type Locale = 'it' | 'en' | 'es' | 'fr' | 'ru' | 'ua';
+export type Locale = 'it' | 'en' | 'es' | 'fr' | 'ru' | 'uk';
 
 export const translations = {
   it: {
@@ -1181,7 +1181,7 @@ export const translations = {
       loading: "Загрузка..."
     }
   },
-  ua: {
+  uk: {
     nav: {
       features: "Можливості",
       pricing: "Ціни",

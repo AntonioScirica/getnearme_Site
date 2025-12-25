@@ -11,6 +11,9 @@ Sitemap: https://getnearme.it/sitemap.xml
 Disallow: /_next/
 Disallow: /api/
 
+# Blocca pagine di draft (se presenti in futuro)
+Disallow: /*?draft=
+
 # Consenti crawler principali
 User-agent: Googlebot
 Allow: /
@@ -18,9 +21,11 @@ Allow: /
 User-agent: Bingbot
 Allow: /
 
-User-agent: Slurp
+User-agent: Yandex
 Allow: /
 
 User-agent: DuckDuckBot
 Allow: /
 
+User-agent: Slurp
+Allow: /
