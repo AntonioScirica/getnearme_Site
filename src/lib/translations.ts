@@ -6,6 +6,7 @@ export const translations = {
       features: "Funzionalità",
       pricing: "Prezzi",
       faq: "FAQ",
+      blog: "Blog",
       startAnalysis: "Inizia Analisi",
       backToHome: "← Torna alla home"
     },
@@ -242,6 +243,7 @@ export const translations = {
       features: "Features",
       pricing: "Pricing",
       faq: "FAQ",
+      blog: "Blog",
       startAnalysis: "Start Analysis",
       backToHome: "← Back to home"
     },
@@ -478,6 +480,7 @@ export const translations = {
       features: "Funcionalidades",
       pricing: "Precios",
       faq: "FAQ",
+      blog: "Blog",
       startAnalysis: "Iniciar Análisis",
       backToHome: "← Volver al inicio"
     },
@@ -714,6 +717,7 @@ export const translations = {
       features: "Fonctionnalités",
       pricing: "Tarifs",
       faq: "FAQ",
+      blog: "Blog",
       startAnalysis: "Lancer l'Analyse",
       backToHome: "← Retour à l'accueil"
     },
@@ -950,6 +954,7 @@ export const translations = {
       features: "Возможности",
       pricing: "Цены",
       faq: "FAQ",
+      blog: "Блог",
       startAnalysis: "Начать Анализ",
       backToHome: "← Вернуться на главную"
     },
@@ -1186,6 +1191,7 @@ export const translations = {
       features: "Можливості",
       pricing: "Ціни",
       faq: "FAQ",
+      blog: "Блог",
       startAnalysis: "Почати Аналіз",
       backToHome: "← Повернутися на головну"
     },

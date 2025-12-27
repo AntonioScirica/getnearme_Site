@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import Image from "next/image";
 import { locales, type Locale } from "@/lib/i18n";
 import { translations } from "@/lib/translations";
 import { getPublishedArticles } from "@/lib/supabase";
 import Navbar from "@/components/Navbar";
+import BlogContent from "./BlogContent";
+import { tagCategories, blogTexts } from "./blogData";
 
 type Props = {
   params: Promise<{ locale: string }>;
+  searchParams: Promise<{ tag?: string }>;
 };
 
 // ============================================================================
@@ -47,47 +48,6 @@ const blogSeoData: Record<Locale, { title: string; description: string }> = {
   },
 };
 
-const blogTexts: Record<
-  Locale,
-  { heading: string; subheading: string; empty: string }
-> = {
-  it: {
-    heading: "Blog",
-    subheading:
-      "Guide, consigli e approfondimenti per orientarti nel mercato immobiliare",
-    empty: "Nessun articolo disponibile al momento.",
-  },
-  en: {
-    heading: "Blog",
-    subheading: "Guides, tips and insights to navigate the real estate market",
-    empty: "No articles available at the moment.",
-  },
-  es: {
-    heading: "Blog",
-    subheading:
-      "Guías, consejos e información para orientarte en el mercado inmobiliario",
-    empty: "No hay artículos disponibles en este momento.",
-  },
-  fr: {
-    heading: "Blog",
-    subheading:
-      "Guides, conseils et informations pour vous orienter sur le marché immobilier",
-    empty: "Aucun article disponible pour le moment.",
-  },
-  ru: {
-    heading: "Блог",
-    subheading:
-      "Руководства, советы и информация для навигации на рынке недвижимости",
-    empty: "На данный момент статей нет.",
-  },
-  uk: {
-    heading: "Блог",
-    subheading:
-      "Посібники, поради та інформація для орієнтування на ринку нерухомості",
-    empty: "На даний момент статей немає.",
-  },
-};
-
 // ============================================================================
 // STATIC PARAMS
 // ============================================================================
@@ -124,121 +84,72 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 // PAGE COMPONENT
 // ============================================================================
 
-export default async function BlogPage({ params }: Props) {
+export default async function BlogPage({ params, searchParams }: Props) {
   const { locale } = await params;
-  const articles = await getPublishedArticles(locale as Locale);
+  const { tag } = await searchParams;
+  const allArticles = await getPublishedArticles(locale as Locale);
   const t = translations[locale as Locale];
   const texts = blogTexts[locale as Locale] || blogTexts.it;
 
+  // Extract existing tags and build categories
+  const existingTags = new Set(
+    allArticles.flatMap((article) => article.tags || [])
+  );
+
+  const categoriesWithTags: Record<string, string[]> = {};
+  for (const [categoryKey, category] of Object.entries(tagCategories)) {
+    const tagsInCategory = category.tags.filter((t) => existingTags.has(t));
+    if (tagsInCategory.length > 0) {
+      categoriesWithTags[categoryKey] = tagsInCategory;
+    }
+  }
+
+  // Count articles per tag
+  const tagCounts: Record<string, number> = {};
+  allArticles.forEach((article) => {
+    article.tags?.forEach((t) => {
+      tagCounts[t] = (tagCounts[t] || 0) + 1;
+    });
+  });
+
+  // Filter articles
+  const filteredArticles = tag
+    ? allArticles.filter((article) => article.tags?.includes(tag))
+    : allArticles;
+
   return (
-    <div className="min-h-screen bg-white font-sans text-slate-900">
+    <div className="min-h-screen bg-slate-50 font-sans text-slate-900">
       <Navbar locale={locale as Locale} />
 
-      <main className="pt-32 pb-20 px-6 max-w-7xl mx-auto">
+      <main className="pt-28 pb-20 px-4 sm:px-6 max-w-7xl mx-auto">
         {/* Header */}
-        <header className="text-center mb-16">
-          <h1 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4 font-inter">
+        <header className="text-center mb-10">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-slate-900 mb-3 font-inter">
             {texts.heading}
           </h1>
-          <p className="text-lg text-slate-600 max-w-2xl mx-auto">
+          <p className="text-base sm:text-lg text-slate-600 max-w-2xl mx-auto">
             {texts.subheading}
           </p>
         </header>
 
-        {/* Articles Grid */}
-        {articles.length > 0 ? (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {articles.map((article) => {
-              const formattedDate = article.published_at
-                ? new Date(article.published_at).toLocaleDateString(locale, {
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  })
-                : "";
-
-              return (
-                <article
-                  key={article.slug}
-                  className="bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-lg transition-shadow"
-                >
-                  {/* Image */}
-                  {article.image_url && (
-                    <Link
-                      href={`/${locale}/blog/${article.slug}`}
-                      className="block"
-                    >
-                      <div className="aspect-video relative overflow-hidden">
-                        <Image
-                          src={article.image_url}
-                          alt={article.image_alt || article.title}
-                          fill
-                          className="object-cover hover:scale-105 transition-transform duration-300"
-                          sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                          loading="lazy"
-                        />
-                      </div>
-                    </Link>
-                  )}
-
-                  <div className="p-6">
-                    {/* Tags */}
-                    {article.tags && article.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mb-3">
-                        {article.tags.slice(0, 3).map((tag) => (
-                          <span
-                            key={tag}
-                            className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-full"
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Title */}
-                    <h2 className="text-xl font-bold text-slate-900 mb-2 leading-tight font-inter">
-                      <Link
-                        href={`/${locale}/blog/${article.slug}`}
-                        className="hover:text-blue-600 transition-colors"
-                      >
-                        {article.title}
-                      </Link>
-                    </h2>
-
-                    {/* Excerpt */}
-                    <p className="text-slate-600 text-sm leading-relaxed mb-4 line-clamp-2">
-                      {article.excerpt}
-                    </p>
-
-                    {/* Meta */}
-                    <div className="flex items-center justify-between text-sm text-slate-500">
-                      <time dateTime={article.published_at || ""}>
-                        {formattedDate}
-                      </time>
-                      {article.reading_time && (
-                        <span>{article.reading_time} min</span>
-                      )}
-                    </div>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="text-center py-20">
-            <p className="text-slate-500">{texts.empty}</p>
-          </div>
-        )}
+        <BlogContent
+          articles={filteredArticles}
+          allArticles={allArticles}
+          locale={locale as Locale}
+          activeTag={tag || null}
+          categoriesWithTags={categoriesWithTags}
+          tagCounts={tagCounts}
+          texts={texts}
+        />
 
         {/* Back to home */}
-        <div className="text-center mt-16">
-          <Link
+        <div className="text-center mt-12">
+          <a
             href={`/${locale}`}
             className="text-blue-600 hover:text-blue-800 font-medium"
           >
             ← {t.nav.backToHome.replace("← ", "")}
-          </Link>
+          </a>
         </div>
       </main>
 

@@ -43,6 +43,7 @@ export default function Navbar({ locale }: NavbarProps) {
                     <Link href="#funzionalita" className="hover:text-black transition-colors">{t.nav.features}</Link>
                     <Link href="#prezzi" className="hover:text-black transition-colors">{t.nav.pricing}</Link>
                     <Link href="#faq" className="hover:text-black transition-colors">{t.nav.faq}</Link>
+                    <Link href={`/${locale}/blog`} className="hover:text-black transition-colors">{t.nav.blog}</Link>
                     <LanguageSwitcher locale={locale} />
                 </div>
 
@@ -88,6 +89,13 @@ export default function Navbar({ locale }: NavbarProps) {
                         onClick={() => setIsMenuOpen(false)}
                     >
                         {t.nav.faq}
+                    </Link>
+                    <Link 
+                        href={`/${locale}/blog`} 
+                        className="text-lg font-medium text-slate-600 hover:text-blue-500 py-2 border-b border-slate-100"
+                        onClick={() => setIsMenuOpen(false)}
+                    >
+                        {t.nav.blog}
                     </Link>
                     
                     <div className="py-2 flex justify-between items-center border-b border-slate-100">
