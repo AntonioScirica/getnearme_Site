@@ -5,12 +5,12 @@ import { notFound } from "next/navigation";
 import { type Locale } from "@/lib/i18n";
 import { translations } from "@/lib/translations";
 import {
-  getPostBySlug,
+  getArticleBySlug,
   getAllPublishedSlugs,
-  getRelatedPosts,
+  getRelatedArticles,
   extractHeadings,
-  type BlogPost,
-} from "@/lib/mdx";
+  type Article,
+} from "@/lib/supabase";
 import Navbar from "@/components/Navbar";
 
 type Props = {
@@ -18,23 +18,23 @@ type Props = {
 };
 
 // ============================================================================
-// STATIC PARAMS - Solo articoli pubblicati
+// STATIC PARAMS
 // ============================================================================
 
 export async function generateStaticParams() {
-  const slugs = getAllPublishedSlugs();
+  const slugs = await getAllPublishedSlugs();
   return slugs.map(({ locale, slug }) => ({ locale, slug }));
 }
 
 // ============================================================================
-// METADATA - SEO per singolo articolo
+// METADATA SEO
 // ============================================================================
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale, slug } = await params;
-  const post = getPostBySlug(slug, locale as Locale);
+  const article = await getArticleBySlug(slug, locale as Locale);
 
-  if (!post) {
+  if (!article) {
     return {
       title: "Articolo non trovato",
       robots: { index: false, follow: false },
@@ -45,33 +45,42 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const articleUrl = `${baseUrl}/${locale}/blog/${slug}`;
 
   return {
-    title: post.frontmatter.title,
-    description: post.frontmatter.description,
-    authors: [{ name: post.frontmatter.author.name, url: post.frontmatter.author.url }],
+    title: article.title,
+    description: article.excerpt,
     alternates: {
       canonical: articleUrl,
     },
     openGraph: {
       type: "article",
-      title: post.frontmatter.title,
-      description: post.frontmatter.description,
+      title: article.title,
+      description: article.excerpt,
       url: articleUrl,
-      publishedTime: post.frontmatter.date,
-      modifiedTime: post.frontmatter.updatedAt,
-      authors: [post.frontmatter.author.name],
-      tags: post.frontmatter.tags,
-      images: [
-        {
-          url: `${baseUrl}${post.frontmatter.image.src}`,
-          alt: post.frontmatter.image.alt,
-        },
-      ],
+      publishedTime: article.published_at || undefined,
+      modifiedTime: article.updated_at,
+      authors: [article.author],
+      tags: article.tags,
+      ...(article.image_url && {
+        images: [
+          {
+            url: article.image_url.startsWith("http")
+              ? article.image_url
+              : `${baseUrl}${article.image_url}`,
+            alt: article.image_alt || article.title,
+          },
+        ],
+      }),
     },
     twitter: {
       card: "summary_large_image",
-      title: post.frontmatter.title,
-      description: post.frontmatter.description,
-      images: [`${baseUrl}${post.frontmatter.image.src}`],
+      title: article.title,
+      description: article.excerpt,
+      ...(article.image_url && {
+        images: [
+          article.image_url.startsWith("http")
+            ? article.image_url
+            : `${baseUrl}${article.image_url}`,
+        ],
+      }),
     },
   };
 }
@@ -80,14 +89,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 // TESTI LOCALIZZATI
 // ============================================================================
 
-const articleTexts: Record<Locale, {
-  readingTime: string;
-  updated: string;
-  related: string;
-  backToBlog: string;
-  tryGetNearMe: string;
-  ctaText: string;
-}> = {
+const articleTexts: Record<
+  Locale,
+  {
+    readingTime: string;
+    updated: string;
+    related: string;
+    backToBlog: string;
+    tryGetNearMe: string;
+    ctaText: string;
+  }
+> = {
   it: {
     readingTime: "min di lettura",
     updated: "Aggiornato il",
@@ -151,19 +163,25 @@ const tocTitle: Record<Locale, string> = {
 // SCHEMA.ORG JSON-LD
 // ============================================================================
 
-function ArticleSchema({ post, locale }: { post: BlogPost; locale: string }) {
+function ArticleSchema({
+  article,
+  locale,
+}: {
+  article: Article;
+  locale: string;
+}) {
   const baseUrl = "https://getnearme.it";
-  const articleUrl = `${baseUrl}/${locale}/blog/${post.slug}`;
+  const articleUrl = `${baseUrl}/${locale}/blog/${article.slug}`;
 
   const schema = {
     "@context": "https://schema.org",
     "@type": "BlogPosting",
-    headline: post.frontmatter.title,
-    description: post.frontmatter.description,
+    headline: article.title,
+    description: article.excerpt,
     author: {
       "@type": "Organization",
-      name: post.frontmatter.author.name,
-      url: post.frontmatter.author.url || baseUrl,
+      name: article.author,
+      url: baseUrl,
     },
     publisher: {
       "@type": "Organization",
@@ -174,21 +192,26 @@ function ArticleSchema({ post, locale }: { post: BlogPost; locale: string }) {
         url: `${baseUrl}/favicon.ico`,
       },
     },
-    datePublished: post.frontmatter.date,
-    dateModified: post.frontmatter.updatedAt || post.frontmatter.date,
+    datePublished: article.published_at,
+    dateModified: article.updated_at,
     mainEntityOfPage: {
       "@type": "WebPage",
       "@id": articleUrl,
     },
     url: articleUrl,
     inLanguage: locale,
-    image: {
-      "@type": "ImageObject",
-      url: `${baseUrl}${post.frontmatter.image.src}`,
-    },
-    ...(post.frontmatter.tags && {
-      keywords: post.frontmatter.tags.join(", "),
+    ...(article.image_url && {
+      image: {
+        "@type": "ImageObject",
+        url: article.image_url.startsWith("http")
+          ? article.image_url
+          : `${baseUrl}${article.image_url}`,
+      },
     }),
+    ...(article.tags &&
+      article.tags.length > 0 && {
+        keywords: article.tags.join(", "),
+      }),
   };
 
   return (
@@ -217,7 +240,9 @@ function TableOfContents({
       className="bg-slate-50 rounded-xl p-6 mb-8 border border-slate-200"
       aria-label="Indice dei contenuti"
     >
-      <h2 className="text-lg font-semibold text-slate-900 mb-4">{title}</h2>
+      <h2 className="text-lg font-semibold text-slate-900 mb-4 font-inter">
+        {title}
+      </h2>
       <ol className="space-y-2 list-decimal list-inside">
         {headings.map((heading) => (
           <li key={heading.id}>
@@ -235,41 +260,42 @@ function TableOfContents({
 }
 
 // ============================================================================
-// CONTENT RENDERER
+// MARKDOWN → HTML RENDERER
 // ============================================================================
 
 function ArticleContent({ content }: { content: string }) {
-  // Converti markdown semplice in HTML
   const htmlContent = content
-    // Headers H3
+    // Separatori orizzontali (---)
+    .replace(/^---$/gm, '<hr class="my-6 border-t border-slate-200" />')
+    // H3
     .replace(
       /^### (.+)$/gm,
-      '<h3 class="text-xl font-bold text-slate-900 mt-8 mb-4">$1</h3>'
+      '<h3 class="text-xl font-bold text-slate-900 mt-8 mb-4 font-inter">$1</h3>'
     )
-    // Headers H2 con ID per anchor
+    // H2 con anchor
     .replace(/^## (.+)$/gm, (_, text) => {
       const id = text
         .toLowerCase()
         .replace(/[^a-z0-9\s-]/g, "")
         .replace(/\s+/g, "-");
-      return `<h2 id="${id}" class="text-2xl font-bold text-slate-900 mt-10 mb-4 scroll-mt-24">${text}</h2>`;
+      return `<h2 id="${id}" class="text-2xl font-bold text-slate-900 mt-10 mb-4 scroll-mt-24 font-inter">${text}</h2>`;
     })
     // Bold
-    .replace(/\*\*(.+?)\*\*/g, '<strong class="font-semibold">$1</strong>')
-    // Unordered lists
+    .replace(/\*\*(.+?)\*\*/g, '<strong class="font-semibold text-slate-800">$1</strong>')
+    // Liste non ordinate
     .replace(/^- (.+)$/gm, '<li class="ml-4">$1</li>')
     .replace(
       /(<li class="ml-4">.*<\/li>\n?)+/g,
       '<ul class="list-disc list-inside space-y-2 my-4 text-slate-600">$&</ul>'
     )
-    // Numbered lists
+    // Liste ordinate
     .replace(/^\d+\. (.+)$/gm, '<li class="ml-4">$1</li>')
-    // Paragraphs
+    // Paragrafi (skip lines that are already HTML or hr)
     .replace(
-      /^(?!<[hulo]|<li)(.+)$/gm,
+      /^(?!<[hulo]|<li|<div|<span|<hr)(.+)$/gm,
       '<p class="text-slate-600 leading-relaxed my-4">$1</p>'
     )
-    // Clean up
+    // Cleanup
     .replace(/<p class="[^"]*"><\/p>/g, "");
 
   return (
@@ -286,37 +312,40 @@ function ArticleContent({ content }: { content: string }) {
 
 export default async function BlogPostPage({ params }: Props) {
   const { locale, slug } = await params;
-  const post = getPostBySlug(slug, locale as Locale);
+  const article = await getArticleBySlug(slug, locale as Locale);
   const t = translations[locale as Locale];
 
-  if (!post) {
+  if (!article) {
     notFound();
   }
 
-  const headings = extractHeadings(post.content);
-  const relatedPosts = getRelatedPosts(slug, locale as Locale, 2);
+  const headings = extractHeadings(article.content);
+  const relatedArticles = await getRelatedArticles(
+    slug,
+    locale as Locale,
+    article.tags || [],
+    2
+  );
   const texts = articleTexts[locale as Locale] || articleTexts.it;
 
-  const formattedDate = new Date(post.frontmatter.date).toLocaleDateString(locale, {
+  const formattedDate = article.published_at
+    ? new Date(article.published_at).toLocaleDateString(locale, {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      })
+    : "";
+
+  const updatedDate = new Date(article.updated_at).toLocaleDateString(locale, {
     year: "numeric",
     month: "long",
     day: "numeric",
   });
 
-  const updatedDate = post.frontmatter.updatedAt
-    ? new Date(post.frontmatter.updatedAt).toLocaleDateString(locale, {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      })
-    : null;
-
   return (
     <div className="min-h-screen bg-white font-sans text-slate-900">
       <Navbar locale={locale as Locale} />
-
-      {/* Schema.org JSON-LD */}
-      <ArticleSchema post={post} locale={locale} />
+      <ArticleSchema article={article} locale={locale} />
 
       <main className="pt-32 pb-20">
         <article className="max-w-3xl mx-auto px-6">
@@ -333,9 +362,9 @@ export default async function BlogPostPage({ params }: Props) {
           {/* Header */}
           <header className="mb-10">
             {/* Tags */}
-            {post.frontmatter.tags && post.frontmatter.tags.length > 0 && (
+            {article.tags && article.tags.length > 0 && (
               <div className="flex flex-wrap gap-2 mb-4">
-                {post.frontmatter.tags.map((tag) => (
+                {article.tags.map((tag) => (
                   <span
                     key={tag}
                     className="text-xs font-medium text-blue-600 bg-blue-50 px-3 py-1 rounded-full"
@@ -346,32 +375,31 @@ export default async function BlogPostPage({ params }: Props) {
               </div>
             )}
 
-            {/* Title - H1 unico */}
-            <h1
-              className="text-3xl md:text-4xl font-bold text-slate-900 leading-tight mb-6"
-              style={{ fontFamily: 'var(--font-old-standard), "Old Standard TT", serif' }}
-            >
-              {post.frontmatter.title}
+            {/* Title */}
+            <h1 className="text-3xl md:text-4xl font-bold text-slate-900 leading-tight mb-6 font-inter">
+              {article.title}
             </h1>
 
-            {/* Meta info */}
+            {/* Meta */}
             <div className="flex flex-wrap items-center gap-4 text-sm text-slate-500">
               <span className="font-medium text-slate-700">
-                {post.frontmatter.author.name}
+                {article.author}
               </span>
               <span>•</span>
-              <time dateTime={post.frontmatter.date}>{formattedDate}</time>
-              {post.frontmatter.readingTime && (
+              <time dateTime={article.published_at || ""}>
+                {formattedDate}
+              </time>
+              {article.reading_time && (
                 <>
                   <span>•</span>
                   <span>
-                    {post.frontmatter.readingTime} {texts.readingTime}
+                    {article.reading_time} {texts.readingTime}
                   </span>
                 </>
               )}
             </div>
 
-            {updatedDate && (
+            {updatedDate && formattedDate !== updatedDate && (
               <p className="text-sm text-slate-400 mt-2">
                 {texts.updated} {updatedDate}
               </p>
@@ -379,21 +407,20 @@ export default async function BlogPostPage({ params }: Props) {
           </header>
 
           {/* Featured Image */}
-          <figure className="mb-10 -mx-6 md:mx-0">
-            <div className="aspect-video relative rounded-xl overflow-hidden">
-              <Image
-                src={post.frontmatter.image.src}
-                alt={post.frontmatter.image.alt}
-                fill
-                className="object-cover"
-                priority
-                sizes="(max-width: 768px) 100vw, 768px"
-              />
+          {article.image_url && (
+            <div className="mb-10 -mx-6 md:mx-0">
+              <div className="aspect-video relative rounded-xl overflow-hidden">
+                <Image
+                  src={article.image_url}
+                  alt={article.image_alt || article.title}
+                  fill
+                  className="object-cover"
+                  priority
+                  sizes="(max-width: 768px) 100vw, 768px"
+                />
+              </div>
             </div>
-            <figcaption className="text-sm text-slate-500 text-center mt-3">
-              {post.frontmatter.image.alt}
-            </figcaption>
-          </figure>
+          )}
 
           {/* Table of Contents */}
           <TableOfContents
@@ -401,58 +428,65 @@ export default async function BlogPostPage({ params }: Props) {
             title={tocTitle[locale as Locale]}
           />
 
-          {/* Article Content */}
+          {/* Content */}
           <div className="prose-lg">
-            <ArticleContent content={post.content} />
+            <ArticleContent content={article.content} />
           </div>
 
-          {/* Internal Link CTA */}
+          {/* CTA */}
           <div className="mt-12 p-6 bg-blue-50 rounded-xl border border-blue-100">
             <p className="text-slate-700 mb-4">{texts.ctaText}</p>
-            <Link
-              href={`/${locale}#estensione`}
+            <a
+              href="https://chromewebstore.google.com/detail/getnearme-%E2%80%94-valuta-il-qua/jbnceigldmpkpplanjlednlehloaeoia"
+              target="_blank"
+              rel="noopener noreferrer"
               className="inline-block px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-semibold"
             >
               {texts.tryGetNearMe}
-            </Link>
+            </a>
           </div>
         </article>
 
-        {/* Related Posts */}
-        {relatedPosts.length > 0 && (
+        {/* Related Articles */}
+        {relatedArticles.length > 0 && (
           <section className="max-w-5xl mx-auto px-6 mt-20">
-            <h2 className="text-2xl font-bold text-slate-900 mb-8 text-center">
+            <h2 className="text-2xl font-bold text-slate-900 mb-8 text-center font-inter">
               {texts.related}
             </h2>
             <div className="grid md:grid-cols-2 gap-8">
-              {relatedPosts.map((relatedPost) => (
+              {relatedArticles.map((related) => (
                 <article
-                  key={relatedPost.slug}
+                  key={related.slug}
                   className="bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-lg transition-shadow"
                 >
-                  <Link href={`/${locale}/blog/${relatedPost.slug}`} className="block">
-                    <div className="aspect-video relative overflow-hidden">
-                      <Image
-                        src={relatedPost.frontmatter.image.src}
-                        alt={relatedPost.frontmatter.image.alt}
-                        fill
-                        className="object-cover hover:scale-105 transition-transform duration-300"
-                        sizes="(max-width: 768px) 100vw, 50vw"
-                        loading="lazy"
-                      />
-                    </div>
+                  <Link
+                    href={`/${locale}/blog/${related.slug}`}
+                    className="block"
+                  >
+                    {related.image_url && (
+                      <div className="aspect-video relative overflow-hidden">
+                        <Image
+                          src={related.image_url}
+                          alt={related.image_alt || related.title}
+                          fill
+                          className="object-cover hover:scale-105 transition-transform duration-300"
+                          sizes="(max-width: 768px) 100vw, 50vw"
+                          loading="lazy"
+                        />
+                      </div>
+                    )}
                   </Link>
                   <div className="p-6">
-                    <h3 className="text-lg font-bold text-slate-900 mb-2">
+                    <h3 className="text-lg font-bold text-slate-900 mb-2 font-inter">
                       <Link
-                        href={`/${locale}/blog/${relatedPost.slug}`}
+                        href={`/${locale}/blog/${related.slug}`}
                         className="hover:text-blue-600 transition-colors"
                       >
-                        {relatedPost.frontmatter.title}
+                        {related.title}
                       </Link>
                     </h3>
                     <p className="text-slate-600 text-sm line-clamp-2">
-                      {relatedPost.frontmatter.description}
+                      {related.excerpt}
                     </p>
                   </div>
                 </article>

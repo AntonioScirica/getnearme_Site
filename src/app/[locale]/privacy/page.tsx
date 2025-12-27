@@ -86,3 +86,4 @@ export default async function PrivacyPolicy({ params }: Props) {
   );
 }
 
+

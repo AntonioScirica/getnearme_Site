@@ -119,3 +119,4 @@ export const altTexts: Record<Locale, { hero: string; cards: string[] }> = {
   },
 };
 
+

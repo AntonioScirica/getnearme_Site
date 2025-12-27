@@ -1,10 +1,10 @@
 import { MetadataRoute } from "next";
-import { locales, type Locale } from "@/lib/i18n";
-import { getAllPublishedSlugs, getPostBySlug } from "@/lib/mdx";
+import { locales } from "@/lib/i18n";
+import { getAllPublishedSlugs } from "@/lib/supabase";
 
 const baseUrl = "https://getnearme.it";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const entries: MetadataRoute.Sitemap = [];
 
   // ===== LANDING PAGES =====
@@ -41,16 +41,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
     });
   });
 
-  // ===== BLOG ARTICLES (solo articoli pubblicati) =====
-  const publishedSlugs = getAllPublishedSlugs();
+  // ===== BLOG ARTICLES (da Supabase) =====
+  const publishedArticles = await getAllPublishedSlugs();
 
-  publishedSlugs.forEach(({ locale, slug }) => {
-    const post = getPostBySlug(slug, locale as Locale);
-    if (!post) return;
-
+  publishedArticles.forEach(({ locale, slug, updated_at }) => {
     entries.push({
       url: `${baseUrl}/${locale}/blog/${slug}`,
-      lastModified: new Date(post.frontmatter.updatedAt || post.frontmatter.date),
+      lastModified: updated_at ? new Date(updated_at) : new Date(),
       changeFrequency: "monthly",
       priority: 0.7,
     });

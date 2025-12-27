@@ -66,12 +66,14 @@ export default async function Home({ params }: Props) {
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-6 text-sm font-medium mt-8">
-              <Link
-                href="#estensione"
+              <a
+                href="https://chromewebstore.google.com/detail/getnearme-%E2%80%94-valuta-il-qua/jbnceigldmpkpplanjlednlehloaeoia"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="w-full sm:w-auto px-6 py-2.5 bg-blue-500 text-white rounded-[8px] hover:bg-blue-600 transition-all font-bold text-lg font-sans"
               >
                 {t.hero.cta}
-              </Link>
+              </a>
             </div>
           </div>
 
@@ -275,15 +277,18 @@ export default async function Home({ params }: Props) {
                       </p>
                     </div>
 
-                    <button
-                      className={`w-full px-6 py-2.5 rounded-[8px] transition-all text-lg font-sans mt-auto ${
+                    <a
+                      href="https://chromewebstore.google.com/detail/getnearme-%E2%80%94-valuta-il-qua/jbnceigldmpkpplanjlednlehloaeoia"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`w-full px-6 py-2.5 rounded-[8px] transition-all text-lg font-sans mt-auto text-center block ${
                         isFree
                           ? "bg-slate-100 text-slate-900 hover:bg-slate-200 font-medium"
                           : "bg-blue-500 text-white hover:bg-blue-600 font-bold"
                       }`}
                     >
                       {buttonText}
-                    </button>
+                    </a>
                   </article>
                 );
               }
@@ -324,9 +329,14 @@ export default async function Home({ params }: Props) {
               {t.cta.desc}
             </p>
             <div className="pt-2">
-              <button className="w-full sm:w-auto px-6 py-2.5 bg-blue-500 text-white rounded-[8px] hover:bg-blue-600 transition-all font-bold text-lg font-sans">
+              <a
+                href="https://chromewebstore.google.com/detail/getnearme-%E2%80%94-valuta-il-qua/jbnceigldmpkpplanjlednlehloaeoia"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block w-full sm:w-auto px-6 py-2.5 bg-blue-500 text-white rounded-[8px] hover:bg-blue-600 transition-all font-bold text-lg font-sans"
+              >
                 {t.cta.button}
-              </button>
+              </a>
             </div>
           </div>
         </section>

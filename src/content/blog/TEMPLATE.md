@@ -171,3 +171,4 @@ Riepilogo e call-to-action.
 3. **Draft**: Imposta `draft: true` durante la scrittura, cambia a `false` solo quando pronto.
 4. **Validazione**: Il build fallirà se manca un campo obbligatorio nel frontmatter.
 
+

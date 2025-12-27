@@ -319,3 +319,4 @@ export function extractHeadings(content: string): { id: string; text: string }[]
   return headings;
 }
 
+

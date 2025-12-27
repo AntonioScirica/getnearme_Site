@@ -47,12 +47,14 @@ export default function Navbar({ locale }: NavbarProps) {
                 </div>
 
                 <div className="flex items-center gap-4">
-                    <Link
-                        href="#estensione"
+                    <a
+                        href="https://chromewebstore.google.com/detail/getnearme-%E2%80%94-valuta-il-qua/jbnceigldmpkpplanjlednlehloaeoia"
+                        target="_blank"
+                        rel="noopener noreferrer"
                         className="hidden sm:flex px-6 py-2.5 bg-blue-500 text-white rounded-[8px] hover:bg-blue-600 transition-all font-bold text-lg font-sans"
                     >
                         {t.nav.startAnalysis}
-                    </Link>
+                    </a>
                     <button 
                         className="md:hidden p-2 text-slate-600"
                         onClick={toggleMenu}
@@ -93,13 +95,15 @@ export default function Navbar({ locale }: NavbarProps) {
                         <LanguageSwitcher locale={locale} />
                     </div>
 
-                    <Link
-                        href="#estensione"
+                    <a
+                        href="https://chromewebstore.google.com/detail/getnearme-%E2%80%94-valuta-il-qua/jbnceigldmpkpplanjlednlehloaeoia"
+                        target="_blank"
+                        rel="noopener noreferrer"
                         className="mt-2 w-full text-center px-6 py-3 bg-blue-500 text-white rounded-[8px] hover:bg-blue-600 transition-all font-bold text-lg font-sans"
                         onClick={() => setIsMenuOpen(false)}
                     >
                         {t.nav.startAnalysis}
-                    </Link>
+                    </a>
                 </div>
             )}
         </nav>

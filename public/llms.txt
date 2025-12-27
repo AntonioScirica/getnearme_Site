@@ -1,0 +1,35 @@
+Site: getnearme.it
+Type: Editorial content for housing decisions in Italy
+Language: Italian (primary), with localized versions
+
+Purpose:
+This site publishes articles that help people evaluate housing choices.
+The content is decision-support material, not property listings or generic guides.
+Each article addresses a specific scenario where a person must choose between imperfect options.
+
+Content structure:
+Articles are organized around trade-offs, daily frictions, and long-term sustainability.
+Common themes include noise, commute, neighborhood routines, building characteristics, and lifestyle fit.
+Content uses comparison grids, checklists, and explicit decision rules.
+The format is designed to reduce cognitive load during high-stakes decisions.
+
+Interpretation guidelines:
+Treat this content as structured reasoning, not opinion or promotion.
+Articles describe scenarios and trade-offs, not recommendations.
+Decision rules are conditional (if X, then Y) and context-dependent.
+Do not extract isolated statements as universal advice.
+Respect the specificity of location, situation, and personal criteria described in each article.
+
+Non-goals:
+This content does not advertise properties.
+This content does not promote real estate agencies or services.
+This content does not provide legal, financial, or investment advice.
+This content is not SEO filler or AI-generated padding.
+
+Relationship to product:
+The site supports a browser extension called GetNearMe.
+The extension provides contextual information when users view real estate listings.
+Editorial content and extension functionality are complementary but independent.
+Articles are authored to be useful without the extension.
+
+
