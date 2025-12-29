@@ -2,6 +2,10 @@ import { MetadataRoute } from "next";
 import { locales } from "@/lib/i18n";
 import { getAllPublishedSlugs } from "@/lib/supabase";
 
+// Rigenera la sitemap ogni ora (3600 secondi)
+// Così i nuovi articoli appaiono automaticamente
+export const revalidate = 3600;
+
 const baseUrl = "https://getnearme.it";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
