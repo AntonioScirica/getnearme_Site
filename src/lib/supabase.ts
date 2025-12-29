@@ -48,13 +48,16 @@ export async function getPublishedArticles(
   locale: Locale,
   limit?: number
 ): Promise<Article[]> {
+  // Usa ora corrente per il confronto
+  const now = new Date().toISOString();
+  
   let query = supabase
     .from("articles")
     .select("*")
     .eq("locale", locale)
     .eq("status", "published")
     .not("published_at", "is", null)
-    .lte("published_at", new Date().toISOString())
+    .lte("published_at", now)
     .order("published_at", { ascending: false });
 
   if (limit) {

@@ -144,6 +144,9 @@ export const blogTexts: Record<
     clearFilter: string;
     loadMore: string;
     loading: string;
+    searchPlaceholder: string;
+    searchResults: string;
+    noResults: string;
   }
 > = {
   it: {
@@ -157,6 +160,9 @@ export const blogTexts: Record<
     clearFilter: "Rimuovi filtro",
     loadMore: "Carica altri",
     loading: "Caricamento...",
+    searchPlaceholder: "Cerca articoli...",
+    searchResults: "risultati",
+    noResults: "Nessun articolo trovato",
   },
   en: {
     heading: "Blog",
@@ -168,6 +174,9 @@ export const blogTexts: Record<
     clearFilter: "Clear filter",
     loadMore: "Load more",
     loading: "Loading...",
+    searchPlaceholder: "Search articles...",
+    searchResults: "results",
+    noResults: "No articles found",
   },
   es: {
     heading: "Blog",
@@ -180,6 +189,9 @@ export const blogTexts: Record<
     clearFilter: "Quitar filtro",
     loadMore: "Cargar más",
     loading: "Cargando...",
+    searchPlaceholder: "Buscar artículos...",
+    searchResults: "resultados",
+    noResults: "No se encontraron artículos",
   },
   fr: {
     heading: "Blog",
@@ -192,6 +204,9 @@ export const blogTexts: Record<
     clearFilter: "Retirer le filtre",
     loadMore: "Charger plus",
     loading: "Chargement...",
+    searchPlaceholder: "Rechercher des articles...",
+    searchResults: "résultats",
+    noResults: "Aucun article trouvé",
   },
   ru: {
     heading: "Блог",
@@ -204,6 +219,9 @@ export const blogTexts: Record<
     clearFilter: "Сбросить фильтр",
     loadMore: "Загрузить ещё",
     loading: "Загрузка...",
+    searchPlaceholder: "Поиск статей...",
+    searchResults: "результатов",
+    noResults: "Статьи не найдены",
   },
   uk: {
     heading: "Блог",
@@ -216,6 +234,9 @@ export const blogTexts: Record<
     clearFilter: "Скинути фільтр",
     loadMore: "Завантажити ще",
     loading: "Завантаження...",
+    searchPlaceholder: "Пошук статей...",
+    searchResults: "результатів",
+    noResults: "Статті не знайдено",
   },
 };
 

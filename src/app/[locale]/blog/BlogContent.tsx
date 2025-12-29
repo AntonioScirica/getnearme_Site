@@ -42,6 +42,7 @@ export default function BlogContent({
   const router = useRouter();
   const [visibleCount, setVisibleCount] = useState(ARTICLES_PER_BATCH);
   const [isLoading, setIsLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const loaderRef = useRef<HTMLDivElement>(null);
 
   // Collapsible categories: first one open, rest closed
@@ -61,21 +62,33 @@ export default function BlogContent({
     return initial;
   });
 
-  // Reset visible count when articles change (tag filter)
+  // Filter articles by search query
+  const filteredArticles = searchQuery.trim()
+    ? articles.filter((article) => {
+        const query = searchQuery.toLowerCase();
+        return (
+          article.title.toLowerCase().includes(query) ||
+          article.excerpt.toLowerCase().includes(query) ||
+          article.tags?.some((tag) => tag.toLowerCase().includes(query))
+        );
+      })
+    : articles;
+
+  // Reset visible count when articles change (tag filter or search)
   useEffect(() => {
     setVisibleCount(ARTICLES_PER_BATCH);
-  }, [activeTag]);
+  }, [activeTag, searchQuery]);
 
   // Infinite scroll observer
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && visibleCount < articles.length) {
+        if (entries[0].isIntersecting && visibleCount < filteredArticles.length) {
           setIsLoading(true);
           // Small delay for UX
           setTimeout(() => {
             setVisibleCount((prev) =>
-              Math.min(prev + ARTICLES_PER_BATCH, articles.length)
+              Math.min(prev + ARTICLES_PER_BATCH, filteredArticles.length)
             );
             setIsLoading(false);
           }, 300);
@@ -89,7 +102,7 @@ export default function BlogContent({
     }
 
     return () => observer.disconnect();
-  }, [visibleCount, articles.length]);
+  }, [visibleCount, filteredArticles.length]);
 
   const toggleCategory = (categoryKey: string) => {
     setOpenCategories((prev) => {
@@ -116,13 +129,66 @@ export default function BlogContent({
     [locale, router]
   );
 
-  const visibleArticles = articles.slice(0, visibleCount);
-  const hasMore = visibleCount < articles.length;
+  const visibleArticles = filteredArticles.slice(0, visibleCount);
+  const hasMore = visibleCount < filteredArticles.length;
 
   return (
     <>
+      {/* Search Bar */}
+      <div className="mb-6">
+        <div className="relative max-w-2xl mx-auto">
+          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+            <svg
+              className="w-5 h-5 text-slate-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
+            </svg>
+          </div>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder={texts.searchPlaceholder}
+            className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-900 placeholder-slate-400"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery("")}
+              className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-600"
+            >
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          )}
+        </div>
+        {searchQuery && (
+          <div className="mt-2 text-center text-sm text-slate-500">
+            {filteredArticles.length} {texts.searchResults}
+          </div>
+        )}
+      </div>
+
       {/* Active Filter Banner */}
-      {activeTag && (
+      {activeTag && !searchQuery && (
         <div className="mb-6 flex items-center justify-center gap-3 flex-wrap">
           <span className="text-sm text-slate-500">
             {articles.length} {texts.articlesCount}:
@@ -415,7 +481,7 @@ export default function BlogContent({
                     <button
                       onClick={() =>
                         setVisibleCount((prev) =>
-                          Math.min(prev + ARTICLES_PER_BATCH, articles.length)
+                          Math.min(prev + ARTICLES_PER_BATCH, filteredArticles.length)
                         )
                       }
                       className="px-6 py-2 text-sm font-medium text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors"
@@ -428,10 +494,15 @@ export default function BlogContent({
             </>
           ) : (
             <div className="text-center py-16 bg-white rounded-xl border border-slate-200">
-              <p className="text-slate-500 mb-4">{texts.empty}</p>
-              {activeTag && (
+              <p className="text-slate-500 mb-4">
+                {searchQuery ? texts.noResults : texts.empty}
+              </p>
+              {(activeTag || searchQuery) && (
                 <button
-                  onClick={() => handleTagClick(null)}
+                  onClick={() => {
+                    handleTagClick(null);
+                    setSearchQuery("");
+                  }}
                   className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 font-medium"
                 >
                   <svg

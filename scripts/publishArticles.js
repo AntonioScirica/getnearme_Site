@@ -223,6 +223,55 @@ async function publishArticles() {
             log(`Fallback immagine: ${FALLBACK_IMAGE}`, 'skip');
         }
 
+        // Se published_at è nel JSON, usalo (permette programmazione)
+        // Altrimenti usa la data corrente (pubblicazione immediata)
+        let publishedAt = null;
+        if (article.status !== 'draft') {
+            if (article.published_at) {
+                try {
+                    let dateStr = article.published_at.trim();
+                    
+                    // Se la data NON ha timezone (non finisce con Z o +/-), 
+                    // assumiamo che sia ora italiana e convertiamo in UTC
+                    if (!dateStr.match(/[Z+-]\d{2}:?\d{2}$/)) {
+                        // Aggiungi formato completo se manca l'ora
+                        if (!dateStr.includes('T')) {
+                            dateStr += 'T00:00:00';
+                        }
+                        
+                        // Determina se siamo in periodo estivo (ora legale)
+                        // In Italia: ultima domenica di marzo -> ultima domenica di ottobre
+                        const [datePart, timePart] = dateStr.split('T');
+                        const [year, month, day] = datePart.split('-').map(Number);
+                        const testDate = new Date(Date.UTC(year, month - 1, day));
+                        
+                        // Approssimazione: marzo-ottobre = estate (UTC+2), resto = inverno (UTC+1)
+                        const isDST = month >= 4 && month <= 9;
+                        const italianOffset = isDST ? 2 : 1;
+                        
+                        // Crea la data come se fosse italiana (aggiungi offset) e convertila in UTC
+                        const dateWithItalianTZ = new Date(dateStr + `+0${italianOffset}:00`);
+                        publishedAt = dateWithItalianTZ.toISOString();
+                        log(`${label} - Data italiana ${dateStr} (UTC+${italianOffset}) convertita in UTC: ${publishedAt}`, 'info');
+                    } else {
+                        // Ha già timezone, usala così com'è
+                        const date = new Date(dateStr);
+                        if (isNaN(date.getTime())) {
+                            log(`${label} - Data published_at non valida: ${dateStr}, uso data corrente`, 'skip');
+                            publishedAt = new Date().toISOString();
+                        } else {
+                            publishedAt = date.toISOString();
+                        }
+                    }
+                } catch (e) {
+                    log(`${label} - Errore parsing published_at: ${article.published_at}, errore: ${e.message}`, 'skip');
+                    publishedAt = new Date().toISOString();
+                }
+            } else {
+                publishedAt = new Date().toISOString();
+            }
+        }
+
         const insertData = {
             slug: article.slug,
             locale: article.locale,
@@ -234,7 +283,7 @@ async function publishArticles() {
             image_alt: article.image_alt || article.title,
             author: article.author || 'GetNearMe',
             status: article.status || 'published',
-            published_at: article.status === 'draft' ? null : new Date().toISOString(),
+            published_at: publishedAt,
         };
 
         const { error: insertError } = await supabase
@@ -247,7 +296,13 @@ async function publishArticles() {
             continue;
         }
 
-        log(`${label} - PUBBLICATO`, 'success');
+        // Log con indicazione se programmato
+        if (publishedAt && new Date(publishedAt) > new Date()) {
+            const now = new Date().toISOString();
+            log(`${label} - PROGRAMMATO per ${publishedAt} (ora: ${now})`, 'success');
+        } else {
+            log(`${label} - PUBBLICATO (published_at: ${publishedAt})`, 'success');
+        }
         published++;
 
         existingSlugs.add(article.slug);
