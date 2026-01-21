@@ -1,9 +1,7 @@
 'use client';
 
 import { Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
-import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useSearchParams, useParams } from 'next/navigation';
 import {
     PartyPopper,
     CheckCircle,
@@ -14,13 +12,14 @@ import {
 } from 'lucide-react';
 import { translations } from '@/lib/translations';
 import { type Locale } from '@/lib/i18n';
+import Navbar from '@/components/Navbar';
 
 function BonusResultContent() {
     const searchParams = useSearchParams();
     const params = useParams();
     const locale = (params.locale as Locale) || 'it';
     const t = translations[locale];
-    
+
     const status = searchParams.get('status');
 
     // Success Params
@@ -33,45 +32,44 @@ function BonusResultContent() {
     const error = searchParams.get('error');
     const message = searchParams.get('message');
 
-    const containerClass = "min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50 p-4";
-    const cardClass = "bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-fade-in-up";
-
     if (status === 'success') {
         const isWeekComplete = streakDay >= 7;
 
         return (
-            <div className={containerClass}>
-                <div className={cardClass}>
-                    {/* Header */}
-                    <div className="bg-emerald-500 p-6 text-center text-white">
-                        <div className="mx-auto bg-white/20 w-16 h-16 rounded-full flex items-center justify-center mb-3 backdrop-blur-sm">
-                            <PartyPopper className="w-8 h-8 text-white" />
+            <div className="min-h-screen bg-white font-sans text-slate-900">
+                <Navbar locale={locale} />
+
+                <main className="min-h-screen flex items-center justify-center px-4">
+                    <div className="max-w-2xl mx-auto text-center">
+                        {/* Icon */}
+                        <div className="mb-4 flex justify-center">
+                            <PartyPopper className="w-14 h-14 text-blue-500" />
                         </div>
-                        <h1 className="text-2xl font-bold">
+
+                        {/* Title */}
+                        <h1 className="text-3xl md:text-4xl text-slate-900 font-bold mb-2">
                             {credits} {t.bonus.creditsClaimed}
                         </h1>
-                    </div>
 
-                    <div className="p-8">
                         {/* Streak Visualization */}
-                        <div className="flex justify-between items-center mb-8 px-2">
+                        <div className="flex justify-center items-center gap-3 my-8">
                             {Array.from({ length: 7 }).map((_, i) => {
                                 const day = i + 1;
                                 const isCompleted = day <= streakDay;
                                 const isCurrent = day === streakDay;
 
-                                let dotClass = "w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-300";
+                                let dotClass = "w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-300";
 
                                 if (isCurrent) {
-                                    dotClass += " bg-yellow-400 text-yellow-900 ring-4 ring-yellow-100 scale-110 z-10 font-bold";
+                                    dotClass += " bg-blue-500 text-white ring-4 ring-blue-100 scale-110";
                                 } else if (isCompleted) {
-                                    dotClass += " bg-emerald-500 text-white";
+                                    dotClass += " bg-blue-500 text-white";
                                 } else {
-                                    dotClass += " bg-gray-100 text-gray-400";
+                                    dotClass += " bg-slate-100 text-slate-400";
                                 }
 
                                 return (
-                                    <div key={day} className="flex flex-col items-center gap-1">
+                                    <div key={day} className="flex flex-col items-center">
                                         <div className={dotClass}>
                                             {isCompleted ? <CheckCircle className="w-5 h-5" /> : day}
                                         </div>
@@ -81,30 +79,31 @@ function BonusResultContent() {
                         </div>
 
                         {/* Message */}
-                        <div className="text-center mb-8">
-                            <p className="text-gray-600 text-lg mb-2">
-                                {t.bonus.dayCompleted.replace('{day}', String(streakDay))}
+                        <p className="text-slate-600 leading-relaxed text-lg max-w-xl mx-auto mb-2">
+                            {t.bonus.dayCompleted.replace('{day}', String(streakDay))}
+                        </p>
+                        {isWeekComplete ? (
+                            <p className="text-blue-500 font-medium">
+                                {t.bonus.weekComplete}
                             </p>
-                            {isWeekComplete ? (
-                                <p className="text-emerald-600 font-medium">
-                                    {t.bonus.weekComplete}
-                                </p>
-                            ) : (
-                                <p className="text-gray-500">
-                                    {t.bonus.comeBackTomorrow.replace('{day}', nextStreak || '1')}
-                                </p>
-                            )}
-                        </div>
-
-                        {/* CTA */}
-                        <Link
-                            href={`/${locale}`}
-                            className="block w-full bg-indigo-600 hover:bg-indigo-700 text-white text-center font-semibold py-3 px-6 rounded-xl transition-colors duration-200 shadow-lg shadow-indigo-200"
-                        >
-                            {t.bonus.goToHome}
-                        </Link>
+                        ) : (
+                            <p className="text-slate-500">
+                                {t.bonus.comeBackTomorrow.replace('{day}', nextStreak || '1')}
+                            </p>
+                        )}
                     </div>
-                </div>
+                </main>
+
+                {/* Footer */}
+                <footer className="bg-slate-900 text-white">
+                    <div className="max-w-7xl mx-auto px-4 pt-8 pb-8">
+                        <div className="pt-4 border-t border-slate-800">
+                            <p className="text-slate-400 text-sm font-light text-center">
+                                © 2025 GetNearMe. {t.footer.rights}
+                            </p>
+                        </div>
+                    </div>
+                </footer>
             </div>
         );
     }
@@ -113,7 +112,6 @@ function BonusResultContent() {
         let errorTitle = t.bonus.error.defaultTitle;
         let errorMessage = t.bonus.error.defaultMessage;
         let Icon = AlertCircle;
-        const headerColor = "bg-red-500";
 
         switch (error) {
             case 'already_claimed':
@@ -147,49 +145,63 @@ function BonusResultContent() {
         }
 
         return (
-            <div className={containerClass}>
-                <div className={cardClass}>
-                    {/* Header */}
-                    <div className={`${headerColor} p-6 text-center text-white`}>
-                        <div className="mx-auto bg-white/20 w-16 h-16 rounded-full flex items-center justify-center mb-3 backdrop-blur-sm">
-                            <Icon className="w-8 h-8 text-white" />
+            <div className="min-h-screen bg-white font-sans text-slate-900">
+                <Navbar locale={locale} />
+
+                <main className="min-h-screen flex items-center justify-center px-4">
+                    <div className="max-w-2xl mx-auto text-center">
+                        {/* Icon */}
+                        <div className="mb-4 flex justify-center">
+                            <Icon className="w-14 h-14 text-blue-500" />
                         </div>
-                        <h1 className="text-2xl font-bold">
+
+                        {/* Title */}
+                        <h1 className="text-3xl md:text-4xl text-slate-900 font-bold mb-2">
                             {errorTitle}
                         </h1>
-                    </div>
 
-                    <div className="p-8 text-center">
-                        <p className="text-gray-600 text-lg mb-8">
+                        {/* Description */}
+                        <p className="text-slate-600 leading-relaxed text-lg max-w-xl mx-auto">
                             {errorMessage}
                         </p>
-
-                        <Link
-                            href={`/${locale}`}
-                            className="block w-full bg-gray-900 hover:bg-gray-800 text-white text-center font-semibold py-3 px-6 rounded-xl transition-colors duration-200"
-                        >
-                            {t.bonus.backToHome}
-                        </Link>
                     </div>
-                </div>
+                </main>
+
+                {/* Footer */}
+                <footer className="bg-slate-900 text-white">
+                    <div className="max-w-7xl mx-auto px-4 pt-8 pb-8">
+                        <div className="pt-4 border-t border-slate-800">
+                            <p className="text-slate-400 text-sm font-light text-center">
+                                © 2025 GetNearMe. {t.footer.rights}
+                            </p>
+                        </div>
+                    </div>
+                </footer>
             </div>
         );
     }
 
     // Loading / Default state
     return (
-        <div className={containerClass}>
-            <div className="animate-pulse flex flex-col items-center">
-                <div className="h-4 bg-gray-300 rounded w-32 mb-4"></div>
-                <div className="h-4 bg-gray-300 rounded w-48"></div>
-            </div>
+        <div className="min-h-screen bg-white font-sans text-slate-900">
+            <Navbar locale={locale} />
+            <main className="min-h-screen flex items-center justify-center px-4">
+                <div className="animate-pulse flex flex-col items-center">
+                    <div className="h-4 bg-slate-200 rounded w-32 mb-4"></div>
+                    <div className="h-4 bg-slate-200 rounded w-48"></div>
+                </div>
+            </main>
         </div>
     );
 }
 
 export default function BonusResultPage() {
     return (
-        <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-gray-50 text-gray-400">Loading...</div>}>
+        <Suspense fallback={
+            <div className="min-h-screen bg-white flex items-center justify-center text-slate-400">
+                Loading...
+            </div>
+        }>
             <BonusResultContent />
         </Suspense>
     );
