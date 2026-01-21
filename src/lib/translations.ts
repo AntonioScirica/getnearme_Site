@@ -241,6 +241,10 @@ export const translations = {
       subtitle: "Benvenuto in GetNearMe",
       description: "La tua iscrizione al servizio è stata confermata con successo. Ritorna all'estensione ed inizia a utilizzare tutte le funzionalità di GetNearMe!",
       cta: "Inizia ad esplorare"
+    },
+    unsubscribe: {
+      subtitle: "Disiscrizione completata",
+      description: "Sei stato rimosso con successo dalla nostra mailing list. Non riceverai più email da GetNearMe."
     }
   },
   en: {
@@ -483,6 +487,10 @@ export const translations = {
       subtitle: "Welcome to GetNearMe",
       description: "Your subscription has been successfully confirmed. Return to the extension and start using all GetNearMe features!",
       cta: "Start exploring"
+    },
+    unsubscribe: {
+      subtitle: "Unsubscribe complete",
+      description: "You have been successfully removed from our mailing list. You will no longer receive emails from GetNearMe."
     }
   },
   es: {
@@ -725,6 +733,10 @@ export const translations = {
       subtitle: "Bienvenido a GetNearMe",
       description: "Tu suscripcion al servicio ha sido confirmada con exito. Vuelve a la extension y empieza a utilizar todas las funcionalidades de GetNearMe!",
       cta: "Empieza a explorar"
+    },
+    unsubscribe: {
+      subtitle: "Baja completada",
+      description: "Has sido eliminado con exito de nuestra lista de correo. Ya no recibiras emails de GetNearMe."
     }
   },
   fr: {
@@ -967,6 +979,10 @@ export const translations = {
       subtitle: "Bienvenue sur GetNearMe",
       description: "Votre inscription au service a ete confirmee avec succes. Retournez a l'extension et commencez a utiliser toutes les fonctionnalites de GetNearMe!",
       cta: "Commencer a explorer"
+    },
+    unsubscribe: {
+      subtitle: "Desinscription terminee",
+      description: "Vous avez ete supprime avec succes de notre liste de diffusion. Vous ne recevrez plus d'emails de GetNearMe."
     }
   },
   ru: {
@@ -1209,6 +1225,10 @@ export const translations = {
       subtitle: "Добро пожаловать в GetNearMe",
       description: "Ваша подписка на сервис успешно подтверждена. Вернитесь к расширению и начните использовать все возможности GetNearMe!",
       cta: "Начать исследование"
+    },
+    unsubscribe: {
+      subtitle: "Отписка завершена",
+      description: "Вы были успешно удалены из нашей рассылки. Вы больше не будете получать письма от GetNearMe."
     }
   },
   uk: {
@@ -1451,6 +1471,10 @@ export const translations = {
       subtitle: "Ласкаво просимо до GetNearMe",
       description: "Вашу пiдписку на сервiс успiшно пiдтверджено. Поверніться до розширення та почніть використовувати всі можливості GetNearMe!",
       cta: "Почати дослiдження"
+    },
+    unsubscribe: {
+      subtitle: "Відписка завершена",
+      description: "Вас було успішно видалено з нашої розсилки. Ви більше не отримуватимете листів від GetNearMe."
     }
   }
 };
