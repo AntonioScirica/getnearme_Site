@@ -171,6 +171,11 @@ export default function CheckoutAgencyPage() {
   const [password, setPassword] = useState('');
 
   async function goToCheckout(accessToken: string) {
+    if (!accessToken) {
+      setError(t.errorDefault);
+      return;
+    }
+
     setIsRedirecting(true);
     setError(null);
 
@@ -202,15 +207,27 @@ export default function CheckoutAgencyPage() {
   }
 
   useEffect(() => {
+    // Check for existing session on mount
     async function checkSession() {
       const { data: { session } } = await supabase.auth.getSession();
 
-      if (session) {
+      if (session?.access_token) {
         await goToCheckout(session.access_token);
       }
     }
 
     checkSession();
+
+    // Listen for auth state changes (handles OAuth redirect)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' && session?.access_token) {
+        await goToCheckout(session.access_token);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   async function handleGoogleLogin() {
