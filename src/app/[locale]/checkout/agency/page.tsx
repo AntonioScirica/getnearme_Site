@@ -7,8 +7,8 @@ import { CheckCircle, Loader2 } from 'lucide-react';
 import { type Locale } from '@/lib/i18n';
 import Navbar from '@/components/Navbar';
 
-const SUPABASE_URL = 'https://vpdkbavytqaaxwsfxwgs.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZwZGtiYXZ5dHFhYXh3c2Z4d2dzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzI0NTQxNzIsImV4cCI6MjA0ODAzMDE3Mn0.R8V5mCKJLypKSHCpOFfM-tHtYIZ2L24I3hXEXyjPXXE';
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
