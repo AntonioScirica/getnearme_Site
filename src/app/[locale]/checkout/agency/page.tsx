@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
-import { CheckCircle, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { type Locale } from '@/lib/i18n';
 import Navbar from '@/components/Navbar';
 
@@ -14,16 +14,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const translations = {
   it: {
-    title: 'Piano Agency',
-    planName: 'Agency',
-    price: '199',
-    perMonth: '/mese',
-    features: [
-      'Accesso completo all\'estensione',
-      '50 foto AI gratuite al mese',
-      'Analisi illimitate',
-      'Supporto prioritario'
-    ],
+    title: 'Accedi per continuare',
     loginButton: 'Continua con Google',
     orDivider: 'oppure',
     emailPlaceholder: 'Email',
@@ -36,16 +27,7 @@ const translations = {
     footer: 'Tutti i diritti riservati'
   },
   en: {
-    title: 'Agency Plan',
-    planName: 'Agency',
-    price: '199',
-    perMonth: '/month',
-    features: [
-      'Full extension access',
-      '50 free AI photos per month',
-      'Unlimited analysis',
-      'Priority support'
-    ],
+    title: 'Sign in to continue',
     loginButton: 'Continue with Google',
     orDivider: 'or',
     emailPlaceholder: 'Email',
@@ -58,16 +40,7 @@ const translations = {
     footer: 'All rights reserved'
   },
   es: {
-    title: 'Plan Agency',
-    planName: 'Agency',
-    price: '199',
-    perMonth: '/mes',
-    features: [
-      'Acceso completo a la extension',
-      '50 fotos AI gratis al mes',
-      'Analisis ilimitados',
-      'Soporte prioritario'
-    ],
+    title: 'Inicia sesion para continuar',
     loginButton: 'Continuar con Google',
     orDivider: 'o',
     emailPlaceholder: 'Email',
@@ -80,16 +53,7 @@ const translations = {
     footer: 'Todos los derechos reservados'
   },
   fr: {
-    title: 'Plan Agency',
-    planName: 'Agency',
-    price: '199',
-    perMonth: '/mois',
-    features: [
-      'Acces complet a l\'extension',
-      '50 photos AI gratuites par mois',
-      'Analyses illimitees',
-      'Support prioritaire'
-    ],
+    title: 'Connectez-vous pour continuer',
     loginButton: 'Continuer avec Google',
     orDivider: 'ou',
     emailPlaceholder: 'Email',
@@ -102,16 +66,7 @@ const translations = {
     footer: 'Tous droits reserves'
   },
   ru: {
-    title: 'План Agency',
-    planName: 'Agency',
-    price: '199',
-    perMonth: '/месяц',
-    features: [
-      'Полный доступ к расширению',
-      '50 бесплатных AI фото в месяц',
-      'Неограниченный анализ',
-      'Приоритетная поддержка'
-    ],
+    title: 'Войдите, чтобы продолжить',
     loginButton: 'Продолжить с Google',
     orDivider: 'или',
     emailPlaceholder: 'Email',
@@ -124,16 +79,7 @@ const translations = {
     footer: 'Все права защищены'
   },
   uk: {
-    title: 'План Agency',
-    planName: 'Agency',
-    price: '199',
-    perMonth: '/місяць',
-    features: [
-      'Повний доступ до розширення',
-      '50 безкоштовних AI фото на місяць',
-      'Необмежений аналіз',
-      'Пріоритетна підтримка'
-    ],
+    title: 'Увійдіть, щоб продовжити',
     loginButton: 'Продовжити з Google',
     orDivider: 'або',
     emailPlaceholder: 'Email',
@@ -282,30 +228,9 @@ export default function CheckoutAgencyPage() {
           {/* Plan Card */}
           <div className="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm">
             {/* Logo */}
-            <div className="text-center mb-6">
+            <div className="text-center mb-8">
               <span className="text-2xl font-bold text-blue-500">GetNearMe</span>
               <h1 className="text-xl font-semibold text-slate-900 mt-2">{t.title}</h1>
-            </div>
-
-            {/* Plan Info */}
-            <div className="bg-slate-50 rounded-xl p-6 mb-6">
-              <div className="text-center">
-                <div className="text-lg font-semibold text-slate-900">{t.planName}</div>
-                <div className="mt-2">
-                  <span className="text-4xl font-bold text-blue-500">{t.price}€</span>
-                  <span className="text-slate-500">{t.perMonth}</span>
-                </div>
-              </div>
-
-              {/* Features */}
-              <ul className="mt-6 space-y-3">
-                {t.features.map((feature, index) => (
-                  <li key={index} className="flex items-center gap-3 text-slate-600">
-                    <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
-                    <span>{feature}</span>
-                  </li>
-                ))}
-              </ul>
             </div>
 
             {/* Google Login Button */}
