@@ -2,15 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import { createClient, User } from '@supabase/supabase-js';
+import { User } from '@supabase/supabase-js';
 import { Loader2, CheckCircle } from 'lucide-react';
 import { type Locale } from '@/lib/i18n';
+import { supabase } from '@/lib/supabase';
 import Navbar from '@/components/Navbar';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const translations = {
   it: {
