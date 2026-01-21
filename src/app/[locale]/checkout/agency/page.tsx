@@ -24,10 +24,15 @@ const translations = {
       'Analisi illimitate',
       'Supporto prioritario'
     ],
-    loginButton: 'Accedi con Google e procedi',
+    loginButton: 'Continua con Google',
+    orDivider: 'oppure',
+    emailPlaceholder: 'Email',
+    passwordPlaceholder: 'Password',
+    emailLoginButton: 'Accedi con email',
     loading: 'Caricamento...',
     redirecting: 'Reindirizzamento al pagamento...',
     errorDefault: 'Si è verificato un errore. Riprova.',
+    errorInvalidCredentials: 'Credenziali non valide',
     footer: 'Tutti i diritti riservati'
   },
   en: {
@@ -41,10 +46,15 @@ const translations = {
       'Unlimited analysis',
       'Priority support'
     ],
-    loginButton: 'Sign in with Google and proceed',
+    loginButton: 'Continue with Google',
+    orDivider: 'or',
+    emailPlaceholder: 'Email',
+    passwordPlaceholder: 'Password',
+    emailLoginButton: 'Sign in with email',
     loading: 'Loading...',
     redirecting: 'Redirecting to payment...',
     errorDefault: 'An error occurred. Please try again.',
+    errorInvalidCredentials: 'Invalid credentials',
     footer: 'All rights reserved'
   },
   es: {
@@ -58,10 +68,15 @@ const translations = {
       'Analisis ilimitados',
       'Soporte prioritario'
     ],
-    loginButton: 'Accede con Google y continua',
+    loginButton: 'Continuar con Google',
+    orDivider: 'o',
+    emailPlaceholder: 'Email',
+    passwordPlaceholder: 'Contrasena',
+    emailLoginButton: 'Acceder con email',
     loading: 'Cargando...',
     redirecting: 'Redirigiendo al pago...',
     errorDefault: 'Se produjo un error. Intentalo de nuevo.',
+    errorInvalidCredentials: 'Credenciales no validas',
     footer: 'Todos los derechos reservados'
   },
   fr: {
@@ -75,10 +90,15 @@ const translations = {
       'Analyses illimitees',
       'Support prioritaire'
     ],
-    loginButton: 'Connectez-vous avec Google et continuez',
+    loginButton: 'Continuer avec Google',
+    orDivider: 'ou',
+    emailPlaceholder: 'Email',
+    passwordPlaceholder: 'Mot de passe',
+    emailLoginButton: 'Se connecter avec email',
     loading: 'Chargement...',
     redirecting: 'Redirection vers le paiement...',
     errorDefault: 'Une erreur s\'est produite. Veuillez reessayer.',
+    errorInvalidCredentials: 'Identifiants invalides',
     footer: 'Tous droits reserves'
   },
   ru: {
@@ -92,10 +112,15 @@ const translations = {
       'Неограниченный анализ',
       'Приоритетная поддержка'
     ],
-    loginButton: 'Войти через Google и продолжить',
+    loginButton: 'Продолжить с Google',
+    orDivider: 'или',
+    emailPlaceholder: 'Email',
+    passwordPlaceholder: 'Пароль',
+    emailLoginButton: 'Войти с email',
     loading: 'Загрузка...',
     redirecting: 'Перенаправление на оплату...',
     errorDefault: 'Произошла ошибка. Попробуйте еще раз.',
+    errorInvalidCredentials: 'Неверные учетные данные',
     footer: 'Все права защищены'
   },
   uk: {
@@ -109,10 +134,15 @@ const translations = {
       'Необмежений аналіз',
       'Пріоритетна підтримка'
     ],
-    loginButton: 'Увійти через Google та продовжити',
+    loginButton: 'Продовжити з Google',
+    orDivider: 'або',
+    emailPlaceholder: 'Email',
+    passwordPlaceholder: 'Пароль',
+    emailLoginButton: 'Увійти з email',
     loading: 'Завантаження...',
     redirecting: 'Перенаправлення на оплату...',
     errorDefault: 'Сталася помилка. Спробуйте ще раз.',
+    errorInvalidCredentials: 'Невірні облікові дані',
     footer: 'Всі права захищені'
   }
 };
@@ -134,8 +164,11 @@ export default function CheckoutAgencyPage() {
   const t = translations[locale] || translations.it;
 
   const [isLoading, setIsLoading] = useState(false);
+  const [isEmailLoading, setIsEmailLoading] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
   async function goToCheckout(accessToken: string) {
     setIsRedirecting(true);
@@ -199,6 +232,30 @@ export default function CheckoutAgencyPage() {
     }
   }
 
+  async function handleEmailLogin(e: React.FormEvent) {
+    e.preventDefault();
+    setIsEmailLoading(true);
+    setError(null);
+
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (error) {
+        throw new Error(t.errorInvalidCredentials);
+      }
+
+      if (data.session) {
+        await goToCheckout(data.session.access_token);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t.errorDefault);
+      setIsEmailLoading(false);
+    }
+  }
+
   return (
     <div className="min-h-screen bg-white font-sans text-slate-900">
       <Navbar locale={locale} />
@@ -237,13 +294,13 @@ export default function CheckoutAgencyPage() {
             {/* Google Login Button */}
             <button
               onClick={handleGoogleLogin}
-              disabled={isLoading || isRedirecting}
+              disabled={isLoading || isEmailLoading || isRedirecting}
               className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-white border border-slate-300 rounded-xl text-slate-700 font-semibold hover:bg-slate-50 hover:border-slate-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isLoading || isRedirecting ? (
+              {isLoading ? (
                 <>
                   <Loader2 className="w-5 h-5 animate-spin" />
-                  <span>{isRedirecting ? t.redirecting : t.loading}</span>
+                  <span>{t.loading}</span>
                 </>
               ) : (
                 <>
@@ -252,6 +309,49 @@ export default function CheckoutAgencyPage() {
                 </>
               )}
             </button>
+
+            {/* Divider */}
+            <div className="flex items-center gap-4 my-6">
+              <div className="flex-1 h-px bg-slate-200" />
+              <span className="text-slate-400 text-sm">{t.orDivider}</span>
+              <div className="flex-1 h-px bg-slate-200" />
+            </div>
+
+            {/* Email/Password Form */}
+            <form onSubmit={handleEmailLogin} className="space-y-4">
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder={t.emailPlaceholder}
+                required
+                disabled={isLoading || isEmailLoading || isRedirecting}
+                className="w-full px-4 py-3 border border-slate-300 rounded-xl text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+              />
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder={t.passwordPlaceholder}
+                required
+                disabled={isLoading || isEmailLoading || isRedirecting}
+                className="w-full px-4 py-3 border border-slate-300 rounded-xl text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+              />
+              <button
+                type="submit"
+                disabled={isLoading || isEmailLoading || isRedirecting}
+                className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-blue-500 rounded-xl text-white font-semibold hover:bg-blue-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isEmailLoading || isRedirecting ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <span>{isRedirecting ? t.redirecting : t.loading}</span>
+                  </>
+                ) : (
+                  <span>{t.emailLoginButton}</span>
+                )}
+              </button>
+            </form>
 
             {/* Error Message */}
             {error && (
