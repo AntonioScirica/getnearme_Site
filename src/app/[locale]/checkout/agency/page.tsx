@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'next/navigation';
-import { User } from '@supabase/supabase-js';
+import { User, Session } from '@supabase/supabase-js';
 import { Loader2, CheckCircle } from 'lucide-react';
 import { type Locale } from '@/lib/i18n';
 import { supabase } from '@/lib/supabase';
@@ -188,6 +188,7 @@ export default function CheckoutAgencyPage() {
   // Auth state
   const [user, setUser] = useState<User | null>(null);
   const [isCheckingSession, setIsCheckingSession] = useState(true);
+  const sessionRef = useRef<Session | null>(null);
 
   // Login state
   const [isLoading, setIsLoading] = useState(false);
@@ -205,6 +206,7 @@ export default function CheckoutAgencyPage() {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
         setUser(session.user);
+        sessionRef.current = session;
       }
       setIsCheckingSession(false);
     }
@@ -215,8 +217,10 @@ export default function CheckoutAgencyPage() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session?.user) {
         setUser(session.user);
+        sessionRef.current = session;
       } else if (event === 'SIGNED_OUT') {
         setUser(null);
+        sessionRef.current = null;
       }
     });
 
@@ -259,17 +263,14 @@ export default function CheckoutAgencyPage() {
         throw new Error(t.errorInvalidCredentials);
       }
 
-      // Wait for session to be established
-      const { data: { session } } = await supabase.auth.getSession();
-
-      if (!session || !session.access_token) {
+      // Save session directly from login result
+      if (!data.session || !data.session.access_token) {
         throw new Error(t.errorSessionInvalid);
       }
 
-      // Set user - this will show the checkout section
-      if (data.user) {
-        setUser(data.user);
-      }
+      // Store session in ref and set user
+      sessionRef.current = data.session;
+      setUser(data.user);
     } catch (err) {
       setError(err instanceof Error ? err.message : t.errorDefault);
     } finally {
@@ -282,8 +283,8 @@ export default function CheckoutAgencyPage() {
     setError(null);
 
     try {
-      // Get fresh session
-      const { data: { session } } = await supabase.auth.getSession();
+      // Use stored session from ref
+      const session = sessionRef.current;
 
       if (!session || !session.access_token) {
         throw new Error(t.errorSessionInvalid);
