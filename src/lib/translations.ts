@@ -236,6 +236,11 @@ export const translations = {
         serverErrorMessage: "Si è verificato un errore. Riprova più tardi."
       },
       loading: "Caricamento..."
+    },
+    confirm: {
+      subtitle: "Benvenuto in GetNearMe",
+      description: "La tua iscrizione al servizio è stata confermata con successo. Ritorna all'estensione ed inizia a utilizzare tutte le funzionalità di GetNearMe!",
+      cta: "Inizia ad esplorare"
     }
   },
   en: {
@@ -473,6 +478,11 @@ export const translations = {
         serverErrorMessage: "An error occurred. Try again later."
       },
       loading: "Loading..."
+    },
+    confirm: {
+      subtitle: "Welcome to GetNearMe",
+      description: "Your subscription has been successfully confirmed. Return to the extension and start using all GetNearMe features!",
+      cta: "Start exploring"
     }
   },
   es: {
@@ -710,6 +720,11 @@ export const translations = {
         serverErrorMessage: "Se ha producido un error. Inténtalo de nuevo más tarde."
       },
       loading: "Cargando..."
+    },
+    confirm: {
+      subtitle: "Bienvenido a GetNearMe",
+      description: "Tu suscripcion al servicio ha sido confirmada con exito. Vuelve a la extension y empieza a utilizar todas las funcionalidades de GetNearMe!",
+      cta: "Empieza a explorar"
     }
   },
   fr: {
@@ -947,6 +962,11 @@ export const translations = {
         serverErrorMessage: "Une erreur s'est produite. Réessayez plus tard."
       },
       loading: "Chargement..."
+    },
+    confirm: {
+      subtitle: "Bienvenue sur GetNearMe",
+      description: "Votre inscription au service a ete confirmee avec succes. Retournez a l'extension et commencez a utiliser toutes les fonctionnalites de GetNearMe!",
+      cta: "Commencer a explorer"
     }
   },
   ru: {
@@ -1184,6 +1204,11 @@ export const translations = {
         serverErrorMessage: "Произошла ошибка. Попробуйте позже."
       },
       loading: "Загрузка..."
+    },
+    confirm: {
+      subtitle: "Добро пожаловать в GetNearMe",
+      description: "Ваша подписка на сервис успешно подтверждена. Вернитесь к расширению и начните использовать все возможности GetNearMe!",
+      cta: "Начать исследование"
     }
   },
   uk: {
@@ -1421,6 +1446,11 @@ export const translations = {
         serverErrorMessage: "Сталася помилка. Спробуйте пізніше."
       },
       loading: "Завантаження..."
+    },
+    confirm: {
+      subtitle: "Ласкаво просимо до GetNearMe",
+      description: "Вашу пiдписку на сервiс успiшно пiдтверджено. Поверніться до розширення та почніть використовувати всі можливості GetNearMe!",
+      cta: "Почати дослiдження"
     }
   }
 };
