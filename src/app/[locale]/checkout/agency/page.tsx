@@ -8,7 +8,7 @@ import { type Locale } from '@/lib/i18n';
 import { supabase } from '@/lib/supabase';
 import Navbar from '@/components/Navbar';
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const SUPABASE_URL = 'https://ecrnpyksnfyykqwnutwa.supabase.co';
 
 const translations = {
   it: {
