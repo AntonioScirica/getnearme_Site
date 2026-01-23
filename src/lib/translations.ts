@@ -121,8 +121,8 @@ export const translations = {
       rights: "Tutti i diritti riservati."
     },
     privacy: {
-      update: "Ultimo aggiornamento: 22/12/2025",
-      intro: "La presente Privacy Policy descrive le modalità di trattamento dei dati personali degli utenti che utilizzano il sito web getnearme.it e l’estensione browser GetNearMe (di seguito, il “Servizio”).",
+      update: "Ultimo aggiornamento: 23/01/2026",
+      intro: "La presente Privacy Policy descrive le modalità di trattamento dei dati personali degli utenti che utilizzano il sito web getnearme.it e l'estensione browser GetNearMe (di seguito, il \"Servizio\").",
       sections: [
         {
           t: "1. Titolare del trattamento",
@@ -130,31 +130,43 @@ export const translations = {
         },
         {
           t: "2. Tipologie di dati trattati",
-          c: "Nel corso dell’utilizzo del Servizio possono essere trattate le seguenti categorie di dati: dati forniti volontariamente dall’utente (ad esempio indirizzo email in fase di registrazione); dati tecnici e di navigazione (indirizzo IP, tipo di browser, sistema operativo, data e ora di accesso); dati relativi all’utilizzo del Servizio (analisi effettuate, crediti utilizzati, preferenze di utilizzo). Non vengono trattati dati personali sensibili."
+          c: "Nel corso dell'utilizzo del Servizio possono essere trattate le seguenti categorie di dati: dati forniti volontariamente dall'utente (ad esempio indirizzo email in fase di registrazione); dati tecnici e di navigazione (indirizzo IP, tipo di browser, sistema operativo, data e ora di accesso); dati relativi all'utilizzo del Servizio (analisi effettuate, crediti utilizzati, preferenze di utilizzo). Non vengono trattati dati personali sensibili."
         },
         {
-          t: "3. Finalità del trattamento",
-          c: "I dati personali sono trattati per le seguenti finalità: consentire la registrazione e la gestione dell’account utente; fornire le funzionalità di analisi e confronto offerte dal Servizio; gestire il sistema di crediti e l’accesso alle funzionalità; inviare comunicazioni di servizio necessarie al funzionamento del Servizio; inviare comunicazioni informative solo previo consenso esplicito dell’utente; migliorare il funzionamento e la sicurezza del Servizio."
+          t: "3. Autenticazione",
+          c: "L'estensione utilizza Supabase per l'autenticazione degli utenti. Quando crei un account, memorizziamo: indirizzo email, ID utente univoco, data di registrazione e stato dell'abbonamento. Questi dati sono conservati sui server Supabase (EU) e sono necessari per gestire i crediti e l'accesso alle funzionalità premium."
         },
         {
-          t: "4. Base giuridica del trattamento",
-          c: "Il trattamento dei dati si basa su: esecuzione di un contratto o di misure precontrattuali; consenso dell’utente, ove richiesto; legittimo interesse del titolare al corretto funzionamento e miglioramento del Servizio."
+          t: "4. Pagamenti",
+          c: "I pagamenti sono elaborati da Stripe. GetNearMe NON memorizza dati di carte di credito. Stripe gestisce tutte le informazioni di pagamento in conformità con gli standard PCI-DSS. Conserviamo solo: ID cliente Stripe (per collegare gli acquisti al tuo account) e storico crediti acquistati."
         },
         {
-          t: "5. Modalità di trattamento",
+          t: "5. Generazione Immagini AI",
+          c: "La funzionalità \"Virtual Staging\" utilizza Replicate API per generare immagini. Quando usi questa funzione: l'immagine selezionata viene inviata a Replicate per l'elaborazione; le immagini generate sono temporanee e non vengono conservate permanentemente; Replicate può conservare log per scopi di debugging (consulta la loro privacy policy per dettagli)."
+        },
+        {
+          t: "6. Finalità del trattamento",
+          c: "I dati personali sono trattati per le seguenti finalità: consentire la registrazione e la gestione dell'account utente; fornire le funzionalità di analisi e confronto offerte dal Servizio; gestire il sistema di crediti e l'accesso alle funzionalità; inviare comunicazioni di servizio necessarie al funzionamento del Servizio; inviare comunicazioni informative solo previo consenso esplicito dell'utente; migliorare il funzionamento e la sicurezza del Servizio."
+        },
+        {
+          t: "7. Base giuridica del trattamento",
+          c: "Il trattamento dei dati si basa su: esecuzione di un contratto o di misure precontrattuali; consenso dell'utente, ove richiesto; legittimo interesse del titolare al corretto funzionamento e miglioramento del Servizio."
+        },
+        {
+          t: "8. Modalità di trattamento",
           c: "Il trattamento dei dati avviene mediante strumenti informatici, adottando misure di sicurezza adeguate a garantire riservatezza, integrità e disponibilità delle informazioni."
         },
         {
-          t: "6. Conservazione dei dati",
-          c: "I dati personali sono conservati per il tempo necessario alle finalità per cui sono stati raccolti o fino alla cancellazione dell’account da parte dell’utente, salvo obblighi di legge."
+          t: "9. Conservazione dei dati",
+          c: "Dati di navigazione locale: cancellati alla chiusura del browser. Cache immobili analizzati: conservata localmente fino a cancellazione manuale. Account utente: conservato fino a richiesta di eliminazione. Per eliminare il tuo account e tutti i dati associati, contatta info@getnearme.it o usa l'opzione \"Elimina Account\" nelle impostazioni dell'estensione."
         },
         {
-          t: "7. Condivisione dei dati",
-          c: "I dati possono essere condivisi con fornitori di servizi tecnici e operativi (ad esempio servizi di hosting, pagamento o invio email), esclusivamente per finalità connesse all’erogazione del Servizio."
+          t: "10. Condivisione dei dati",
+          c: "I dati possono essere condivisi con fornitori di servizi tecnici e operativi (Supabase per autenticazione, Stripe per pagamenti, Replicate per elaborazione immagini AI), esclusivamente per finalità connesse all'erogazione del Servizio."
         },
         {
-          t: "8. Diritti dell’utente",
-          c: "L’utente può esercitare i diritti previsti dal Regolamento UE 2016/679 (GDPR), inclusi accesso, rettifica, cancellazione e opposizione, scrivendo a info@getnearme.it."
+          t: "11. Diritti dell'utente",
+          c: "L'utente può esercitare i diritti previsti dal Regolamento UE 2016/679 (GDPR), inclusi accesso, rettifica, cancellazione e opposizione, scrivendo a info@getnearme.it."
         }
       ]
     },
@@ -367,7 +379,7 @@ export const translations = {
       rights: "All rights reserved."
     },
     privacy: {
-      update: "Last update: 12/22/2025",
+      update: "Last update: 01/23/2026",
       intro: "This Privacy Policy describes the methods of processing personal data of users who use the getnearme.it website and the GetNearMe browser extension (hereinafter, the \"Service\").",
       sections: [
         {
@@ -379,27 +391,39 @@ export const translations = {
           c: "During the use of the Service, the following categories of data may be processed: data provided voluntarily by the user (e.g. email address during registration); technical and navigation data (IP address, browser type, operating system, date and time of access); data relating to the use of the Service (analyzes performed, credits used, usage preferences). Sensitive personal data are not processed."
         },
         {
-          t: "3. Purpose of the processing",
+          t: "3. Authentication",
+          c: "The extension uses Supabase for user authentication. When you create an account, we store: email address, unique user ID, registration date, and subscription status. This data is stored on Supabase servers (EU) and is necessary to manage credits and access to premium features."
+        },
+        {
+          t: "4. Payments",
+          c: "Payments are processed by Stripe. GetNearMe does NOT store credit card data. Stripe handles all payment information in compliance with PCI-DSS standards. We only store: Stripe customer ID (to link purchases to your account) and purchased credits history."
+        },
+        {
+          t: "5. AI Image Generation",
+          c: "The \"Virtual Staging\" feature uses Replicate API to generate images. When you use this feature: the selected image is sent to Replicate for processing; generated images are temporary and are not permanently stored; Replicate may retain logs for debugging purposes (see their privacy policy for details)."
+        },
+        {
+          t: "6. Purpose of the processing",
           c: "Personal data are processed for the following purposes: to allow registration and management of the user account; provide the analysis and comparison features offered by the Service; manage the credit system and access to features; send service communications necessary for the operation of the Service; send informative communications only with the explicit consent of the user; improve the operation and security of the Service."
         },
         {
-          t: "4. Legal basis of processing",
+          t: "7. Legal basis of processing",
           c: "The data processing is based on: execution of a contract or pre-contractual measures; user consent, where required; legitimate interest of the controller in the correct functioning and improvement of the Service."
         },
         {
-          t: "5. Processing methods",
+          t: "8. Processing methods",
           c: "The data processing is carried out by means of computer tools, adopting appropriate security measures to guarantee confidentiality, integrity and availability of information."
         },
         {
-          t: "6. Data retention",
-          c: "Personal data are kept for the time necessary for the purposes for which they were collected or until the account is deleted by the user, unless legal obligations."
+          t: "9. Data retention",
+          c: "Local browsing data: deleted when the browser is closed. Analyzed property cache: stored locally until manual deletion. User account: retained until deletion request. To delete your account and all associated data, contact info@getnearme.it or use the \"Delete Account\" option in the extension settings."
         },
         {
-          t: "7. Data sharing",
-          c: "The data can be shared with technical and operational service providers (for example hosting, payment or email sending services), exclusively for purposes related to the provision of the Service."
+          t: "10. Data sharing",
+          c: "Data may be shared with technical and operational service providers (Supabase for authentication, Stripe for payments, Replicate for AI image processing), exclusively for purposes related to the provision of the Service."
         },
         {
-          t: "8. User rights",
+          t: "11. User rights",
           c: "The user can exercise the rights provided by EU Regulation 2016/679 (GDPR), including access, rectification, cancellation and opposition, by writing to info@getnearme.it."
         }
       ]
@@ -613,7 +637,7 @@ export const translations = {
       rights: "Todos los derechos reservados."
     },
     privacy: {
-      update: "Última actualización: 22/12/2025",
+      update: "Última actualización: 23/01/2026",
       intro: "Esta Política de Privacidad describe las modalidades de tratamiento de los datos personales de los usuarios que utilizan el sitio web getnearme.it y la extensión de navegador GetNearMe (en adelante, el \"Servicio\").",
       sections: [
         {
@@ -625,27 +649,39 @@ export const translations = {
           c: "Durante el uso del Servicio pueden tratarse las siguientes categorías de datos: datos facilitados voluntariamente por el usuario (por ejemplo, dirección de correo electrónico durante el registro); datos técnicos y de navegación (dirección IP, tipo de navegador, sistema operativo, fecha y hora de acceso); datos relativos al uso del Servicio (análisis realizados, créditos utilizados, preferencias de uso). No se tratan datos personales sensibles."
         },
         {
-          t: "3. Finalidad del tratamiento",
+          t: "3. Autenticación",
+          c: "La extensión utiliza Supabase para la autenticación de usuarios. Cuando creas una cuenta, almacenamos: dirección de correo electrónico, ID de usuario único, fecha de registro y estado de la suscripción. Estos datos se almacenan en servidores de Supabase (UE) y son necesarios para gestionar los créditos y el acceso a las funcionalidades premium."
+        },
+        {
+          t: "4. Pagos",
+          c: "Los pagos son procesados por Stripe. GetNearMe NO almacena datos de tarjetas de crédito. Stripe gestiona toda la información de pago de conformidad con los estándares PCI-DSS. Solo almacenamos: ID de cliente de Stripe (para vincular compras a tu cuenta) e historial de créditos comprados."
+        },
+        {
+          t: "5. Generación de Imágenes con IA",
+          c: "La función \"Virtual Staging\" utiliza Replicate API para generar imágenes. Cuando usas esta función: la imagen seleccionada se envía a Replicate para su procesamiento; las imágenes generadas son temporales y no se almacenan permanentemente; Replicate puede conservar registros para fines de depuración (consulta su política de privacidad para más detalles)."
+        },
+        {
+          t: "6. Finalidad del tratamiento",
           c: "Los datos personales se tratan con las siguientes finalidades: permitir el registro y la gestión de la cuenta de usuario; proporcionar las funcionalidades de análisis y comparación que ofrece el Servicio; gestionar el sistema de créditos y el acceso a las funcionalidades; enviar comunicaciones de servicio necesarias para el funcionamiento del Servicio; enviar comunicaciones informativas solo previo consentimiento explícito del usuario; mejorar el funcionamiento y la seguridad del Servicio."
         },
         {
-          t: "4. Base jurídica del tratamiento",
+          t: "7. Base jurídica del tratamiento",
           c: "El tratamiento de los datos se basa en: ejecución de un contrato o de medidas precontractuales; consentimiento del usuario, cuando sea requerido; interés legítimo del responsable en el correcto funcionamiento y mejora del Servicio."
         },
         {
-          t: "5. Modalidades de tratamiento",
+          t: "8. Modalidades de tratamiento",
           c: "El tratamiento de los datos se realiza mediante herramientas informáticas, adoptando las medidas de seguridad adecuadas para garantizar la confidencialidad, integridad y disponibilidad de la información."
         },
         {
-          t: "6. Conservación de los datos",
-          c: "Los datos personales se conservan durante el tiempo necesario para las finalidades para las que fueron recogidos o hasta que el usuario elimine la cuenta, salvo obligaciones legales."
+          t: "9. Conservación de los datos",
+          c: "Datos de navegación local: se eliminan al cerrar el navegador. Caché de inmuebles analizados: se conserva localmente hasta su eliminación manual. Cuenta de usuario: se conserva hasta solicitud de eliminación. Para eliminar tu cuenta y todos los datos asociados, contacta con info@getnearme.it o usa la opción \"Eliminar cuenta\" en la configuración de la extensión."
         },
         {
-          t: "7. Intercambio de datos",
-          c: "Los datos pueden compartirse con proveedores de servicios técnicos y operativos (por ejemplo, servicios de alojamiento, pago o envío de correos electrónicos), exclusivamente para finalidades relacionadas con la prestación del Servicio."
+          t: "10. Intercambio de datos",
+          c: "Los datos pueden compartirse con proveedores de servicios técnicos y operativos (Supabase para autenticación, Stripe para pagos, Replicate para procesamiento de imágenes con IA), exclusivamente para finalidades relacionadas con la prestación del Servicio."
         },
         {
-          t: "8. Derechos del usuario",
+          t: "11. Derechos del usuario",
           c: "El usuario puede ejercer los derechos previstos por el Reglamento UE 2016/679 (RGPD), incluidos el acceso, rectificación, cancelación y oposición, escribiendo a info@getnearme.it."
         }
       ]
@@ -859,8 +895,8 @@ export const translations = {
       rights: "Tous droits réservés."
     },
     privacy: {
-      update: "Dernière mise à jour : 22/12/2025",
-      intro: "La présente Politique de Confidentialité décrit les modalités de traitement des données personnelles des utilisateurs qui utilisent le site web getnearme.it et l’extension de navigateur GetNearMe (ci-après, le « Service »).",
+      update: "Dernière mise à jour : 23/01/2026",
+      intro: "La présente Politique de Confidentialité décrit les modalités de traitement des données personnelles des utilisateurs qui utilisent le site web getnearme.it et l'extension de navigateur GetNearMe (ci-après, le « Service »).",
       sections: [
         {
           t: "1. Responsable du traitement",
@@ -868,36 +904,48 @@ export const translations = {
         },
         {
           t: "2. Types de données traitées",
-          c: "Au cours de l’utilisation du Service, les catégories de données suivantes peuvent être traitées : données fournies volontairement par l’utilisateur (par exemple, adresse e-mail lors de l’inscription) ; données techniques et de navigation (adresse IP, type de navigateur, système d’exploitation, date et heure d’accès) ; données relatives à l’utilisation du Service (analyses effectuées, crédits utilisés, préférences d’utilisation). Les données personnelles sensibles ne sont pas traitées."
+          c: "Au cours de l'utilisation du Service, les catégories de données suivantes peuvent être traitées : données fournies volontairement par l'utilisateur (par exemple, adresse e-mail lors de l'inscription) ; données techniques et de navigation (adresse IP, type de navigateur, système d'exploitation, date et heure d'accès) ; données relatives à l'utilisation du Service (analyses effectuées, crédits utilisés, préférences d'utilisation). Les données personnelles sensibles ne sont pas traitées."
         },
         {
-          t: "3. Finalités du traitement",
-          c: "Les données personnelles sont traitées pour les finalités suivantes : permettre l’inscription et la gestion du compte utilisateur ; fournir les fonctionnalités d’analyse et de comparaison offertes par le Service ; gérer le système de crédits et l’accès aux fonctionnalités ; envoyer des communications de service nécessaires au fonctionnement du Service ; envoyer des communications informatives uniquement avec le consentement explicite de l’utilisateur ; améliorer le fonctionnement et la sécurité du Service."
+          t: "3. Authentification",
+          c: "L'extension utilise Supabase pour l'authentification des utilisateurs. Lorsque vous créez un compte, nous stockons : adresse e-mail, identifiant utilisateur unique, date d'inscription et statut de l'abonnement. Ces données sont conservées sur les serveurs Supabase (UE) et sont nécessaires pour gérer les crédits et l'accès aux fonctionnalités premium."
         },
         {
-          t: "4. Base juridique du traitement",
-          c: "Le traitement des données est basé sur : l’exécution d’un contrat ou de mesures précontractuelles ; le consentement de l’utilisateur, le cas échéant ; l’intérêt légitime du responsable au bon fonctionnement et à l’amélioration du Service."
+          t: "4. Paiements",
+          c: "Les paiements sont traités par Stripe. GetNearMe ne stocke PAS les données de cartes de crédit. Stripe gère toutes les informations de paiement conformément aux normes PCI-DSS. Nous ne conservons que : l'identifiant client Stripe (pour lier les achats à votre compte) et l'historique des crédits achetés."
         },
         {
-          t: "5. Modalités de traitement",
-          c: "Le traitement des données est effectué au moyen d’outils informatiques, en adoptant des mesures de sécurité appropriées pour garantir la confidentialité, l’intégrité et la disponibilité des informations."
+          t: "5. Génération d'Images IA",
+          c: "La fonctionnalité « Virtual Staging » utilise l'API Replicate pour générer des images. Lorsque vous utilisez cette fonction : l'image sélectionnée est envoyée à Replicate pour traitement ; les images générées sont temporaires et ne sont pas conservées de manière permanente ; Replicate peut conserver des journaux à des fins de débogage (consultez leur politique de confidentialité pour plus de détails)."
         },
         {
-          t: "6. Conservation des données",
-          c: "Les données personnelles sont conservées pendant le temps nécessaire aux finalités pour lesquelles elles ont été collectées ou jusqu’à la suppression du compte par l’utilisateur, sauf obligations légales."
+          t: "6. Finalités du traitement",
+          c: "Les données personnelles sont traitées pour les finalités suivantes : permettre l'inscription et la gestion du compte utilisateur ; fournir les fonctionnalités d'analyse et de comparaison offertes par le Service ; gérer le système de crédits et l'accès aux fonctionnalités ; envoyer des communications de service nécessaires au fonctionnement du Service ; envoyer des communications informatives uniquement avec le consentement explicite de l'utilisateur ; améliorer le fonctionnement et la sécurité du Service."
         },
         {
-          t: "7. Partage des données",
-          c: "Les données peuvent être partagées avec des prestataires de services techniques et opérationnels (par exemple, services d’hébergement, de paiement ou d’envoi d’e-mails), exclusivement pour des finalités liées à la fourniture du Service."
+          t: "7. Base juridique du traitement",
+          c: "Le traitement des données est basé sur : l'exécution d'un contrat ou de mesures précontractuelles ; le consentement de l'utilisateur, le cas échéant ; l'intérêt légitime du responsable au bon fonctionnement et à l'amélioration du Service."
         },
         {
-          t: "8. Droits de l’utilisateur",
-          c: "L’utilisateur peut exercer les droits prévus par le Règlement UE 2016/679 (RGPD), y compris l’accès, la rectification, la suppression et l’opposition, en écrivant à info@getnearme.it."
+          t: "8. Modalités de traitement",
+          c: "Le traitement des données est effectué au moyen d'outils informatiques, en adoptant des mesures de sécurité appropriées pour garantir la confidentialité, l'intégrité et la disponibilité des informations."
+        },
+        {
+          t: "9. Conservation des données",
+          c: "Données de navigation locales : supprimées à la fermeture du navigateur. Cache des biens analysés : conservé localement jusqu'à suppression manuelle. Compte utilisateur : conservé jusqu'à demande de suppression. Pour supprimer votre compte et toutes les données associées, contactez info@getnearme.it ou utilisez l'option « Supprimer le compte » dans les paramètres de l'extension."
+        },
+        {
+          t: "10. Partage des données",
+          c: "Les données peuvent être partagées avec des prestataires de services techniques et opérationnels (Supabase pour l'authentification, Stripe pour les paiements, Replicate pour le traitement d'images IA), exclusivement pour des finalités liées à la fourniture du Service."
+        },
+        {
+          t: "11. Droits de l'utilisateur",
+          c: "L'utilisateur peut exercer les droits prévus par le Règlement UE 2016/679 (RGPD), y compris l'accès, la rectification, la suppression et l'opposition, en écrivant à info@getnearme.it."
         }
       ]
     },
     terms: {
-      update: "Dernière mise à jour : 22/12/2025",
+      update: "Dernière mise à jour : 23/01/2026",
       intro: "Les présentes Conditions régissent l’utilisation du site web getnearme.it et de l’extension de navigateur GetNearMe.",
       sections: [
         {
@@ -1105,7 +1153,7 @@ export const translations = {
       rights: "Все права защищены."
     },
     privacy: {
-      update: "Последнее обновление: 22.12.2025",
+      update: "Последнее обновление: 23.01.2026",
       intro: "Настоящая Политика конфиденциальности описывает способы обработки персональных данных пользователей, которые используют веб-сайт getnearme.it и расширение браузера GetNearMe (далее — «Сервис»).",
       sections: [
         {
@@ -1114,36 +1162,48 @@ export const translations = {
         },
         {
           t: "2. Типы обрабатываемых данных",
-          c: "В процессе использования Сервиса могут обрабатываться следующие категории данных: данные, предоставленные пользователем добровольно (наприклад, адрес электронной почты при регистрации); технические и навигационные данные (IP-адрес, тип браузера, операционная система, дата и время доступа); данные, относящиеся к использованию Сервиса (выполненные анализы, использованные кредиты, предпочтения в использовании). Особые категории персональных данных не обрабатываются."
+          c: "В процессе использования Сервиса могут обрабатываться следующие категории данных: данные, предоставленные пользователем добровольно (например, адрес электронной почты при регистрации); технические и навигационные данные (IP-адрес, тип браузера, операционная система, дата и время доступа); данные, относящиеся к использованию Сервиса (выполненные анализы, использованные кредиты, предпочтения в использовании). Особые категории персональных данных не обрабатываются."
         },
         {
-          t: "3. Цели обработки",
+          t: "3. Аутентификация",
+          c: "Расширение использует Supabase для аутентификации пользователей. При создании учетной записи мы сохраняем: адрес электронной почты, уникальный идентификатор пользователя, дату регистрации и статус подписки. Эти данные хранятся на серверах Supabase (ЕС) и необходимы для управления кредитами и доступом к премиум-функциям."
+        },
+        {
+          t: "4. Платежи",
+          c: "Платежи обрабатываются через Stripe. GetNearMe НЕ хранит данные кредитных карт. Stripe обрабатывает всю платежную информацию в соответствии со стандартами PCI-DSS. Мы храним только: идентификатор клиента Stripe (для привязки покупок к вашему аккаунту) и историю приобретенных кредитов."
+        },
+        {
+          t: "5. Генерация изображений с помощью ИИ",
+          c: "Функция «Virtual Staging» использует API Replicate для генерации изображений. При использовании этой функции: выбранное изображение отправляется в Replicate для обработки; сгенерированные изображения являются временными и не сохраняются постоянно; Replicate может хранить журналы для целей отладки (подробнее см. их политику конфиденциальности)."
+        },
+        {
+          t: "6. Цели обработки",
           c: "Персональные данные обрабатываются в следующих целях: обеспечение регистрации и управления учетной записью пользователя; предоставление функций анализа и сравнения, предлагаемых Сервисом; управление системой кредитов и доступом к функциям; отправка сервисных сообщений, необходимых для работы Сервиса; отправка информационных сообщений только при наличии явного согласия пользователя; улучшение работы и безопасности Сервиса."
         },
         {
-          t: "4. Правовая основа обработки",
+          t: "7. Правовая основа обработки",
           c: "Обработка данных основывается на: исполнении договора или преддоговорных мерах; согласии пользователя, где это требуется; законном интересе оператора в правильном функционировании и улучшении Сервиса."
         },
         {
-          t: "5. Способы обработки",
+          t: "8. Способы обработки",
           c: "Обработка данных осуществляется с использованием компьютерных средств с принятием соответствующих мер безопасности для обеспечения конфиденциальности, целостности и доступности информации."
         },
         {
-          t: "6. Хранение данных",
-          c: "Персональные данные хранятся в течение времени, необходимого для целей, в которых они были собраны, или до удаления учетной записи пользователем, за исключением случаев, предусмотренных законом."
+          t: "9. Хранение данных",
+          c: "Локальные данные навигации: удаляются при закрытии браузера. Кэш проанализированных объектов: хранится локально до ручного удаления. Учетная запись пользователя: сохраняется до запроса на удаление. Чтобы удалить свою учетную запись и все связанные данные, свяжитесь с info@getnearme.it или используйте опцию «Удалить аккаунт» в настройках расширения."
         },
         {
-          t: "7. Обмен данными",
-          c: "Данные могут передаваться поставщикам технических и операционных услуг (например, услуги хостинга, оплаты или рассылки электронной почты) исключительно в целях, связанных с предоставлением Сервиса."
+          t: "10. Обмен данными",
+          c: "Данные могут передаваться поставщикам технических и операционных услуг (Supabase для аутентификации, Stripe для платежей, Replicate для обработки изображений с помощью ИИ) исключительно в целях, связанных с предоставлением Сервиса."
         },
         {
-          t: "8. Права пользователя",
+          t: "11. Права пользователя",
           c: "Пользователь может осуществлять права, предусмотренные Регламентом ЕС 2016/679 (GDPR), включая доступ, исправление, удаление и возражение, написав по адресу info@getnearme.it."
         }
       ]
     },
     terms: {
-      update: "Последнее обновление: 22.12.2025",
+      update: "Последнее обновление: 23.01.2026",
       intro: "Настоящие Условия регулируют использование веб-сайта getnearme.it и расширения браузера GetNearMe.",
       sections: [
         {
@@ -1351,7 +1411,7 @@ export const translations = {
       rights: "Всі права застережені."
     },
     privacy: {
-      update: "Останнє оновлення: 22.12.2025",
+      update: "Останнє оновлення: 23.01.2026",
       intro: "Ця Політика конфіденційності описує методи обробки персональних даних користувачів, які використовують веб-сайт getnearme.it та розширення браузера GetNearMe (далі — «Сервіс»).",
       sections: [
         {
@@ -1363,33 +1423,45 @@ export const translations = {
           c: "Протягом використання Сервісу можуть оброблятися такі категорії даних: дані, надані користувачем добровільно (наприклад, електронна адреса під час реєстрації); технічні та навігаційні дані (IP-адрес, тип браузера, операційна система, дата і час доступу); дані щодо використання Сервісу (виконані аналізи, використані кредити, уподобання у використанні). Особливі категорії персональних даних не обробляються."
         },
         {
-          t: "3. Мета обробки",
+          t: "3. Автентифікація",
+          c: "Розширення використовує Supabase для автентифікації користувачів. При створенні облікового запису ми зберігаємо: електронну адресу, унікальний ідентифікатор користувача, дату реєстрації та статус підписки. Ці дані зберігаються на серверах Supabase (ЄС) і необхідні для управління кредитами та доступом до преміум-функцій."
+        },
+        {
+          t: "4. Платежі",
+          c: "Платежі обробляються через Stripe. GetNearMe НЕ зберігає дані кредитних карток. Stripe обробляє всю платіжну інформацію відповідно до стандартів PCI-DSS. Ми зберігаємо лише: ідентифікатор клієнта Stripe (для прив'язки покупок до вашого облікового запису) та історію придбаних кредитів."
+        },
+        {
+          t: "5. Генерація зображень за допомогою ШІ",
+          c: "Функція «Virtual Staging» використовує API Replicate для генерації зображень. При використанні цієї функції: вибране зображення надсилається до Replicate для обробки; згенеровані зображення є тимчасовими і не зберігаються постійно; Replicate може зберігати журнали для цілей налагодження (детальніше див. їхню політику конфіденційності)."
+        },
+        {
+          t: "6. Мета обробки",
           c: "Персональні дані обробляються з наступною метою: забезпечення реєстрації та управління обліковим записом користувача; надання функцій аналізу та порівняння, що пропонуються Сервісом; управління системою кредитів та доступом до функцій; надсилання сервісних повідомлень, необхідних для роботи Сервісу; надсилання інформаційних повідомлень лише за наявності явної згоди користувача; покращення роботи та безпеки Сервісу."
         },
         {
-          t: "4. Правова основа обробки",
+          t: "7. Правова основа обробки",
           c: "Обробка даних ґрунтується на: виконанні договору або переддоговірних заходах; згоді користувача, де це потрібно; законному інтересі володільця у правильному функціонуванні та покращенні Сервісу."
         },
         {
-          t: "5. Способи обробки",
+          t: "8. Способи обробки",
           c: "Обробка даних здійснюється за допомогою комп'ютерних засобів із вжиттям відповідних заходів безпеки для забезпечення конфіденційності, цілісності та доступності інформації."
         },
         {
-          t: "6. Зберігання даних",
-          c: "Персональні дані зберігаються протягом часу, необхідного для цілей, з якими вони були зібрані, або до видалення облікового запису користувачем, за винятком випадків, передбачених законом."
+          t: "9. Зберігання даних",
+          c: "Локальні дані навігації: видаляються при закритті браузера. Кеш проаналізованих об'єктів: зберігається локально до ручного видалення. Обліковий запис користувача: зберігається до запиту на видалення. Щоб видалити свій обліковий запис та всі пов'язані дані, зверніться за адресою info@getnearme.it або скористайтеся опцією «Видалити обліковий запис» у налаштуваннях розширення."
         },
         {
-          t: "7. Обмін даними",
-          c: "Дані можуть передаватися постачальникам технічних та операційних послуг (наприклад, послуги хостингу, оплати або розсилки електронної пошти) виключно з метою, пов'язаною з наданням Сервісу."
+          t: "10. Обмін даними",
+          c: "Дані можуть передаватися постачальникам технічних та операційних послуг (Supabase для автентифікації, Stripe для платежів, Replicate для обробки зображень за допомогою ШІ) виключно з метою, пов'язаною з наданням Сервісу."
         },
         {
-          t: "8. Права користувача",
+          t: "11. Права користувача",
           c: "Користувач може здійснювати права, передбачені Регламентом ЄС 2016/679 (GDPR), включаючи доступ, виправлення, видалення та заперечення, написавши за адресою info@getnearme.it."
         }
       ]
     },
     terms: {
-      update: "Останнє оновлення: 22.12.2025",
+      update: "Останнє оновлення: 23.01.2026",
       intro: "Ці Умови регулюють використання веб-сайту getnearme.it та розширення браузера GetNearMe.",
       sections: [
         {
