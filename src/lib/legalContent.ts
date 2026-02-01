@@ -20,21 +20,21 @@ export const privacyContent: Record<Locale, LegalPage> = {
     description: "Privacy Policy for the GetNearMe browser extension.",
     blocks: [
       { type: "h2", text: "1. Introduction and Data Controller" },
-      { type: "p", text: "This Privacy Policy governs the processing of personal data in connection with the use of the GetNearMe browser extension (the \"Service\"). This Policy is compliant with Regulation (EU) 2016/679 (GDPR) and is intended to comply with Directive 2002/58/EC (ePrivacy Directive) regarding local storage and access to information on user terminal equipment." },
+      { type: "p", text: "This Privacy Policy governs the processing of personal data in connection with the use of the GetNearMe browser extension (the \"Service\"). This Policy is intended to comply with Regulation (EU) 2016/679 (GDPR) and with Directive 2002/58/EC (ePrivacy Directive) regarding access to and storage of information on user terminal equipment." },
       { type: "p", text: "Data Controller: Antonio Scirica acting commercially under the trade name \"GetNearMe\"\nEmail: as.scirica@gmail.com" },
       { type: "h2", text: "2. Nature of Data Processing" },
-      { type: "p", text: "To ensure data minimization and strictly respect third-party intellectual property rights, the Service operates primarily as a local client-side utility." },
+      { type: "p", text: "To ensure data minimization and strictly respect third-party intellectual property rights, the Service operates primarily as a local, client-side utility." },
       { type: "ul", items: [
-        "Local Processing: The analysis of real estate properties is performed dynamically within the User's browser. The Service does not scrape, index, or reproduce third-party databases on its own servers to create a competing search engine.",
+        "Local Processing: The analysis of real estate properties is performed dynamically within the User's browser. The Service does not index, or reproduce third-party databases on its own servers to create a competing search engine.",
         "No Data Transfer for Aggregation: Content visible on the User's screen is processed temporarily in the browser's volatile memory and is not transmitted to the Controller's servers for permanent storage or aggregation.",
-        "Property-related data processed locally by the Service relates to real estate objects and locations and does not constitute personal data of identifiable natural persons within the meaning of Article 4 GDPR."
+        "Property-related data processed locally by the Service primarily relates to real estate objects and locations and does not typically constitute personal data of identifiable natural persons within the meaning of Article 4 GDPR."
       ]},
       { type: "h2", text: "3. Categories of Data Processed" },
       { type: "p", text: "We process only the data strictly necessary to deliver the Service, categorized by storage location:" },
       { type: "h3", text: "3.1. Server-Side Data (Account & Technical Logs)" },
       { type: "p", text: "Our backend infrastructure processes limited metadata required for account management and security:" },
       { type: "ul", items: [
-        "Identity Data: Email address and User ID (authenticated via Supabase) to manage your subscription.",
+        "Identity Data: Email address and User ID (authenticated via Supabase) to manage your account and subscription.",
         "Transactional Data: Subscription status, credit balance, and payment identifiers processed securely by Stripe (we do not store full credit card numbers).",
         "Technical Service Logs: Technical service validation events confirming that a requested operation was successfully executed (used strictly for credit deduction and debugging), without storing listing content or attributes.",
         "Security & Retention: IP addresses and technical logs are retained only for the limited period strictly necessary to fulfill their specific purpose (security monitoring, debugging, and service validation) and are periodically deleted in accordance with internal retention policies to comply with the principle of Storage Limitation (Art. 5(1)(e) GDPR)."
@@ -44,13 +44,14 @@ export const privacyContent: Record<Locale, LegalPage> = {
       { type: "ul", items: [
         "Temporary Session Data: The Extension utilizes the browser's Local Storage API (chrome.storage.local) to temporarily cache limited factual data necessary for analysis visible on the page required for the User's requested analysis. This data remains sandboxed within your browser and is not accessible to the Controller."
       ]},
+      { type: "p", text: "This local storage is technically necessary for the functioning of the Service, is not used for tracking or advertising purposes, and remains sandboxed within the User's browser." },
       { type: "h3", text: "3.3. Voluntary Marketing Data" },
-      { type: "p", text: "Only if you explicitly consent via a separate checkbox, we process your email address and activity metrics (such as daily usage streaks) to administer the optional Daily Bonus system and send the Newsletter." },
+      { type: "p", text: "Only if you explicitly consent via a separate checkbox, we process your email address and limited activity metrics (such as daily usage streaks) to administer the optional Daily Bonus system and to send the Newsletter." },
       { type: "h2", text: "4. Third-Party Processors and Data Recipients" },
       { type: "ul", items: [
         "Infrastructure and Payments: We utilize Supabase (EU) for database hosting and authentication services, and Stripe (Global) for secure PCI-DSS compliant payment processing.",
         "Communications: We use Resend (USA) as our email delivery provider for sending transactional codes and, where consented, newsletters.",
-        "Maps and Routing: To calculate distances and travel times, the Service transmits coordinate pairs to Routing & Mapping Services.",
+        "Maps and Routing: To calculate distances and travel times, the Service transmits approximate location coordinates to routing and mapping services.",
         "Market Data & Valuations: Specific property location data may be cross-referenced with Public Market Data Sources to retrieve estimated market valuations.",
         "Contextual Events & Activities: To display nearby activities, the Service queries Contextual Event & Activity Providers. These providers receive general location coordinates and dates to return relevant events; no User identity or personal browsing history is shared with them.",
         "AI Processing: If the User voluntarily triggers the \"Virtual Staging\" feature, image URLs are transmitted transiently to AI Processing Providers solely for the generation of the requested content."
@@ -76,21 +77,21 @@ export const privacyContent: Record<Locale, LegalPage> = {
     description: "Informativa sulla Privacy per l'estensione browser GetNearMe.",
     blocks: [
       { type: "h2", text: "1. Introduzione e Titolare del Trattamento" },
-      { type: "p", text: "La presente Informativa sulla Privacy disciplina il trattamento dei dati personali in relazione all'utilizzo dell'estensione browser GetNearMe (il \"Servizio\"). La presente Informativa è conforme al Regolamento (UE) 2016/679 (GDPR) ed è volta a rispettare la Direttiva 2002/58/CE (Direttiva ePrivacy) in materia di archiviazione locale e accesso alle informazioni sui dispositivi terminali degli utenti." },
+      { type: "p", text: "La presente Informativa sulla Privacy disciplina il trattamento dei dati personali in relazione all'utilizzo dell'estensione browser GetNearMe (il \"Servizio\"). La presente Informativa è volta a rispettare il Regolamento (UE) 2016/679 (GDPR) e la Direttiva 2002/58/CE (Direttiva ePrivacy) in materia di accesso e archiviazione delle informazioni sui dispositivi terminali degli utenti." },
       { type: "p", text: "Titolare del Trattamento: Antonio Scirica, operante commercialmente con il nome \"GetNearMe\"\nEmail: as.scirica@gmail.com" },
       { type: "h2", text: "2. Natura del Trattamento dei Dati" },
-      { type: "p", text: "Per garantire la minimizzazione dei dati e il rigoroso rispetto dei diritti di proprietà intellettuale di terzi, il Servizio opera principalmente come utilità locale lato client." },
+      { type: "p", text: "Per garantire la minimizzazione dei dati e il rigoroso rispetto dei diritti di proprietà intellettuale di terzi, il Servizio opera principalmente come utilità locale, lato client." },
       { type: "ul", items: [
-        "Elaborazione Locale: L'analisi degli immobili viene eseguita dinamicamente all'interno del browser dell'Utente. Il Servizio non effettua scraping, indicizzazione o riproduzione di database di terze parti sui propri server per creare un motore di ricerca concorrente.",
+        "Elaborazione Locale: L'analisi degli immobili viene eseguita dinamicamente all'interno del browser dell'Utente. Il Servizio non effettua indicizzazione o riproduzione di database di terze parti sui propri server per creare un motore di ricerca concorrente.",
         "Nessun Trasferimento Dati per Aggregazione: Il contenuto visibile sullo schermo dell'Utente viene elaborato temporaneamente nella memoria volatile del browser e non viene trasmesso ai server del Titolare per l'archiviazione permanente o l'aggregazione.",
-        "I dati relativi agli immobili elaborati localmente dal Servizio si riferiscono a oggetti immobiliari e localizzazioni e non costituiscono dati personali di persone fisiche identificabili ai sensi dell'Articolo 4 del GDPR."
+        "I dati relativi agli immobili elaborati localmente dal Servizio si riferiscono principalmente a oggetti immobiliari e localizzazioni e non costituiscono tipicamente dati personali di persone fisiche identificabili ai sensi dell'Articolo 4 del GDPR."
       ]},
       { type: "h2", text: "3. Categorie di Dati Trattati" },
       { type: "p", text: "Trattiamo esclusivamente i dati strettamente necessari all'erogazione del Servizio, suddivisi per luogo di archiviazione:" },
       { type: "h3", text: "3.1. Dati Lato Server (Account e Log Tecnici)" },
       { type: "p", text: "La nostra infrastruttura backend elabora metadati limitati necessari per la gestione dell'account e la sicurezza:" },
       { type: "ul", items: [
-        "Dati Identificativi: Indirizzo email e ID Utente (autenticato tramite Supabase) per la gestione dell'abbonamento.",
+        "Dati Identificativi: Indirizzo email e ID Utente (autenticato tramite Supabase) per la gestione dell'account e dell'abbonamento.",
         "Dati Transazionali: Stato dell'abbonamento, saldo crediti e identificativi di pagamento elaborati in modo sicuro da Stripe (non memorizziamo i numeri completi delle carte di credito).",
         "Log Tecnici del Servizio: Eventi di validazione tecnica che confermano la corretta esecuzione di un'operazione richiesta (utilizzati esclusivamente per la deduzione dei crediti e il debugging), senza memorizzare contenuti o attributi degli annunci.",
         "Sicurezza e Conservazione: Gli indirizzi IP e i log tecnici sono conservati solo per il periodo strettamente necessario a soddisfare il loro scopo specifico (monitoraggio della sicurezza, debugging e validazione del servizio) e vengono periodicamente cancellati in conformità con le politiche di conservazione interne per rispettare il principio di Limitazione della Conservazione (Art. 5(1)(e) GDPR)."
@@ -100,13 +101,14 @@ export const privacyContent: Record<Locale, LegalPage> = {
       { type: "ul", items: [
         "Dati di Sessione Temporanei: L'Estensione utilizza l'API Local Storage del browser (chrome.storage.local) per memorizzare temporaneamente nella cache dati fattuali limitati necessari per l'analisi visibile nella pagina richiesta dall'Utente. Questi dati rimangono isolati nel browser e non sono accessibili al Titolare."
       ]},
+      { type: "p", text: "Questa archiviazione locale è tecnicamente necessaria per il funzionamento del Servizio, non viene utilizzata per finalità di tracciamento o pubblicitarie e rimane isolata all'interno del browser dell'Utente." },
       { type: "h3", text: "3.3. Dati di Marketing Volontari" },
-      { type: "p", text: "Solo previo consenso esplicito tramite apposita casella, trattiamo il tuo indirizzo email e metriche di attività (come le serie di utilizzo giornaliero) per amministrare il sistema opzionale Daily Bonus e inviare la Newsletter." },
+      { type: "p", text: "Solo previo consenso esplicito tramite apposita casella, trattiamo il tuo indirizzo email e metriche di attività limitate (come le serie di utilizzo giornaliero) per amministrare il sistema opzionale Daily Bonus e per inviare la Newsletter." },
       { type: "h2", text: "4. Responsabili del Trattamento e Destinatari dei Dati" },
       { type: "ul", items: [
         "Infrastruttura e Pagamenti: Utilizziamo Supabase (UE) per l'hosting del database e i servizi di autenticazione, e Stripe (Globale) per l'elaborazione sicura dei pagamenti conforme PCI-DSS.",
         "Comunicazioni: Utilizziamo Resend (USA) come fornitore di servizi email per l'invio di codici transazionali e, previo consenso, newsletter.",
-        "Mappe e Percorsi: Per calcolare distanze e tempi di percorrenza, il Servizio trasmette coppie di coordinate a Servizi di Routing e Mappatura.",
+        "Mappe e Percorsi: Per calcolare distanze e tempi di percorrenza, il Servizio trasmette coordinate di posizione approssimative a servizi di routing e mappatura.",
         "Dati di Mercato e Valutazioni: Dati specifici sulla posizione dell'immobile possono essere incrociati con Fonti Pubbliche di Dati di Mercato per ottenere valutazioni di mercato stimate.",
         "Eventi e Attività Contestuali: Per mostrare attività nelle vicinanze, il Servizio interroga Fornitori di Eventi e Attività Contestuali. Questi fornitori ricevono coordinate di posizione generiche e date per restituire eventi pertinenti; nessuna identità dell'Utente o cronologia di navigazione viene condivisa con loro.",
         "Elaborazione AI: Se l'Utente attiva volontariamente la funzione \"Virtual Staging\", gli URL delle immagini vengono trasmessi temporaneamente a Fornitori di Elaborazione AI esclusivamente per la generazione del contenuto richiesto."
@@ -132,21 +134,21 @@ export const privacyContent: Record<Locale, LegalPage> = {
     description: "Política de Privacidad para la extensión de navegador GetNearMe.",
     blocks: [
       { type: "h2", text: "1. Introducción y Responsable del Tratamiento" },
-      { type: "p", text: "Esta Política de Privacidad regula el tratamiento de datos personales en relación con el uso de la extensión de navegador GetNearMe (el \"Servicio\"). Esta Política cumple con el Reglamento (UE) 2016/679 (RGPD) y tiene como objetivo cumplir con la Directiva 2002/58/CE (Directiva ePrivacy) en materia de almacenamiento local y acceso a la información en los equipos terminales de los usuarios." },
+      { type: "p", text: "Esta Política de Privacidad regula el tratamiento de datos personales en relación con el uso de la extensión de navegador GetNearMe (el \"Servicio\"). Esta Política tiene como objetivo cumplir con el Reglamento (UE) 2016/679 (RGPD) y con la Directiva 2002/58/CE (Directiva ePrivacy) en materia de acceso y almacenamiento de información en los equipos terminales de los usuarios." },
       { type: "p", text: "Responsable del Tratamiento: Antonio Scirica, operando comercialmente bajo el nombre comercial \"GetNearMe\"\nEmail: as.scirica@gmail.com" },
       { type: "h2", text: "2. Naturaleza del Tratamiento de Datos" },
-      { type: "p", text: "Para garantizar la minimización de datos y respetar estrictamente los derechos de propiedad intelectual de terceros, el Servicio opera principalmente como una utilidad local del lado del cliente." },
+      { type: "p", text: "Para garantizar la minimización de datos y respetar estrictamente los derechos de propiedad intelectual de terceros, el Servicio opera principalmente como una utilidad local, del lado del cliente." },
       { type: "ul", items: [
-        "Procesamiento Local: El análisis de propiedades inmobiliarias se realiza dinámicamente dentro del navegador del Usuario. El Servicio no realiza scraping, indexación ni reproducción de bases de datos de terceros en sus propios servidores para crear un motor de búsqueda competidor.",
+        "Procesamiento Local: El análisis de propiedades inmobiliarias se realiza dinámicamente dentro del navegador del Usuario. El Servicio no realiza indexación ni reproducción de bases de datos de terceros en sus propios servidores para crear un motor de búsqueda competidor.",
         "Sin Transferencia de Datos para Agregación: El contenido visible en la pantalla del Usuario se procesa temporalmente en la memoria volátil del navegador y no se transmite a los servidores del Responsable para almacenamiento permanente o agregación.",
-        "Los datos relacionados con propiedades procesados localmente por el Servicio se refieren a objetos inmobiliarios y ubicaciones y no constituyen datos personales de personas físicas identificables en el sentido del Artículo 4 del RGPD."
+        "Los datos relacionados con propiedades procesados localmente por el Servicio se refieren principalmente a objetos inmobiliarios y ubicaciones y no constituyen típicamente datos personales de personas físicas identificables en el sentido del Artículo 4 del RGPD."
       ]},
       { type: "h2", text: "3. Categorías de Datos Tratados" },
       { type: "p", text: "Procesamos únicamente los datos estrictamente necesarios para prestar el Servicio, categorizados por ubicación de almacenamiento:" },
       { type: "h3", text: "3.1. Datos del Lado del Servidor (Cuenta y Registros Técnicos)" },
       { type: "p", text: "Nuestra infraestructura backend procesa metadatos limitados necesarios para la gestión de cuentas y seguridad:" },
       { type: "ul", items: [
-        "Datos de Identidad: Dirección de correo electrónico e ID de Usuario (autenticado mediante Supabase) para gestionar su suscripción.",
+        "Datos de Identidad: Dirección de correo electrónico e ID de Usuario (autenticado mediante Supabase) para gestionar su cuenta y suscripción.",
         "Datos Transaccionales: Estado de suscripción, saldo de créditos e identificadores de pago procesados de forma segura por Stripe (no almacenamos números completos de tarjetas de crédito).",
         "Registros Técnicos del Servicio: Eventos de validación técnica que confirman la ejecución exitosa de una operación solicitada (utilizados estrictamente para la deducción de créditos y depuración), sin almacenar contenido ni atributos de anuncios.",
         "Seguridad y Retención: Las direcciones IP y los registros técnicos se conservan únicamente durante el período estrictamente necesario para cumplir su propósito específico (monitoreo de seguridad, depuración y validación del servicio) y se eliminan periódicamente de acuerdo con las políticas de retención internas para cumplir con el principio de Limitación del Almacenamiento (Art. 5(1)(e) RGPD)."
@@ -156,13 +158,14 @@ export const privacyContent: Record<Locale, LegalPage> = {
       { type: "ul", items: [
         "Datos de Sesión Temporales: La Extensión utiliza la API de almacenamiento local del navegador (chrome.storage.local) para almacenar temporalmente en caché datos factuales limitados necesarios para el análisis visible en la página requerida para el análisis solicitado por el Usuario. Estos datos permanecen aislados dentro de su navegador y no son accesibles para el Responsable."
       ]},
+      { type: "p", text: "Este almacenamiento local es técnicamente necesario para el funcionamiento del Servicio, no se utiliza con fines de seguimiento o publicitarios y permanece aislado dentro del navegador del Usuario." },
       { type: "h3", text: "3.3. Datos de Marketing Voluntarios" },
-      { type: "p", text: "Solo si usted consiente explícitamente mediante una casilla de verificación separada, procesamos su dirección de correo electrónico y métricas de actividad (como rachas de uso diario) para administrar el sistema opcional Daily Bonus y enviar el Boletín." },
+      { type: "p", text: "Solo si usted consiente explícitamente mediante una casilla de verificación separada, procesamos su dirección de correo electrónico y métricas de actividad limitadas (como rachas de uso diario) para administrar el sistema opcional Daily Bonus y para enviar el Boletín." },
       { type: "h2", text: "4. Encargados del Tratamiento y Destinatarios de Datos" },
       { type: "ul", items: [
         "Infraestructura y Pagos: Utilizamos Supabase (UE) para el alojamiento de la base de datos y servicios de autenticación, y Stripe (Global) para el procesamiento seguro de pagos conforme a PCI-DSS.",
         "Comunicaciones: Utilizamos Resend (EE.UU.) como proveedor de envío de correo electrónico para códigos transaccionales y, cuando se consiente, boletines.",
-        "Mapas y Rutas: Para calcular distancias y tiempos de viaje, el Servicio transmite pares de coordenadas a Servicios de Enrutamiento y Mapeo.",
+        "Mapas y Rutas: Para calcular distancias y tiempos de viaje, el Servicio transmite coordenadas de ubicación aproximadas a servicios de enrutamiento y mapeo.",
         "Datos de Mercado y Valoraciones: Los datos de ubicación de propiedades específicas pueden cruzarse con Fuentes Públicas de Datos de Mercado para obtener valoraciones de mercado estimadas.",
         "Eventos y Actividades Contextuales: Para mostrar actividades cercanas, el Servicio consulta Proveedores de Eventos y Actividades Contextuales. Estos proveedores reciben coordenadas de ubicación generales y fechas para devolver eventos relevantes; no se comparte la identidad del Usuario ni el historial de navegación personal.",
         "Procesamiento de IA: Si el Usuario activa voluntariamente la función \"Virtual Staging\", las URLs de las imágenes se transmiten transitoriamente a Proveedores de Procesamiento de IA exclusivamente para la generación del contenido solicitado."
@@ -188,21 +191,21 @@ export const privacyContent: Record<Locale, LegalPage> = {
     description: "Politique de Confidentialité pour l'extension de navigateur GetNearMe.",
     blocks: [
       { type: "h2", text: "1. Introduction et Responsable du Traitement" },
-      { type: "p", text: "La présente Politique de Confidentialité régit le traitement des données personnelles dans le cadre de l'utilisation de l'extension de navigateur GetNearMe (le \"Service\"). Cette Politique est conforme au Règlement (UE) 2016/679 (RGPD) et vise à respecter la Directive 2002/58/CE (Directive ePrivacy) concernant le stockage local et l'accès aux informations sur les équipements terminaux des utilisateurs." },
+      { type: "p", text: "La présente Politique de Confidentialité régit le traitement des données personnelles dans le cadre de l'utilisation de l'extension de navigateur GetNearMe (le \"Service\"). Cette Politique vise à respecter le Règlement (UE) 2016/679 (RGPD) et la Directive 2002/58/CE (Directive ePrivacy) concernant l'accès et le stockage d'informations sur les équipements terminaux des utilisateurs." },
       { type: "p", text: "Responsable du Traitement : Antonio Scirica, opérant commercialement sous le nom commercial \"GetNearMe\"\nEmail : as.scirica@gmail.com" },
       { type: "h2", text: "2. Nature du Traitement des Données" },
-      { type: "p", text: "Pour garantir la minimisation des données et respecter strictement les droits de propriété intellectuelle des tiers, le Service fonctionne principalement comme un utilitaire local côté client." },
+      { type: "p", text: "Pour garantir la minimisation des données et respecter strictement les droits de propriété intellectuelle des tiers, le Service fonctionne principalement comme un utilitaire local, côté client." },
       { type: "ul", items: [
-        "Traitement Local : L'analyse des biens immobiliers est effectuée dynamiquement dans le navigateur de l'Utilisateur. Le Service ne pratique pas le scraping, l'indexation ou la reproduction de bases de données tierces sur ses propres serveurs pour créer un moteur de recherche concurrent.",
+        "Traitement Local : L'analyse des biens immobiliers est effectuée dynamiquement dans le navigateur de l'Utilisateur. Le Service ne pratique pas l'indexation ou la reproduction de bases de données tierces sur ses propres serveurs pour créer un moteur de recherche concurrent.",
         "Pas de Transfert de Données pour l'Agrégation : Le contenu visible sur l'écran de l'Utilisateur est traité temporairement dans la mémoire volatile du navigateur et n'est pas transmis aux serveurs du Responsable pour un stockage permanent ou une agrégation.",
-        "Les données relatives aux biens immobiliers traitées localement par le Service se rapportent à des objets immobiliers et des emplacements et ne constituent pas des données personnelles de personnes physiques identifiables au sens de l'Article 4 du RGPD."
+        "Les données relatives aux biens immobiliers traitées localement par le Service se rapportent principalement à des objets immobiliers et des emplacements et ne constituent généralement pas des données personnelles de personnes physiques identifiables au sens de l'Article 4 du RGPD."
       ]},
       { type: "h2", text: "3. Catégories de Données Traitées" },
       { type: "p", text: "Nous ne traitons que les données strictement nécessaires à la fourniture du Service, classées par lieu de stockage :" },
       { type: "h3", text: "3.1. Données Côté Serveur (Compte et Journaux Techniques)" },
       { type: "p", text: "Notre infrastructure backend traite des métadonnées limitées nécessaires à la gestion des comptes et à la sécurité :" },
       { type: "ul", items: [
-        "Données d'Identité : Adresse e-mail et identifiant utilisateur (authentifié via Supabase) pour gérer votre abonnement.",
+        "Données d'Identité : Adresse e-mail et identifiant utilisateur (authentifié via Supabase) pour gérer votre compte et abonnement.",
         "Données Transactionnelles : Statut de l'abonnement, solde de crédits et identifiants de paiement traités de manière sécurisée par Stripe (nous ne stockons pas les numéros complets de cartes de crédit).",
         "Journaux Techniques du Service : Événements de validation technique confirmant l'exécution réussie d'une opération demandée (utilisés strictement pour la déduction de crédits et le débogage), sans stocker le contenu ou les attributs des annonces.",
         "Sécurité et Conservation : Les adresses IP et les journaux techniques ne sont conservés que pendant la durée strictement nécessaire à l'accomplissement de leur finalité spécifique (surveillance de la sécurité, débogage et validation du service) et sont périodiquement supprimés conformément aux politiques de conservation internes pour respecter le principe de Limitation de la Conservation (Art. 5(1)(e) RGPD)."
@@ -212,13 +215,14 @@ export const privacyContent: Record<Locale, LegalPage> = {
       { type: "ul", items: [
         "Données de Session Temporaires : L'Extension utilise l'API de stockage local du navigateur (chrome.storage.local) pour mettre temporairement en cache des données factuelles limitées nécessaires à l'analyse visible sur la page requise pour l'analyse demandée par l'Utilisateur. Ces données restent isolées dans votre navigateur et ne sont pas accessibles au Responsable."
       ]},
+      { type: "p", text: "Ce stockage local est techniquement nécessaire au fonctionnement du Service, n'est pas utilisé à des fins de suivi ou publicitaires et reste isolé dans le navigateur de l'Utilisateur." },
       { type: "h3", text: "3.3. Données Marketing Volontaires" },
-      { type: "p", text: "Uniquement si vous consentez explicitement via une case à cocher séparée, nous traitons votre adresse e-mail et vos métriques d'activité (telles que les séries d'utilisation quotidienne) pour administrer le système optionnel Daily Bonus et envoyer la Newsletter." },
+      { type: "p", text: "Uniquement si vous consentez explicitement via une case à cocher séparée, nous traitons votre adresse e-mail et vos métriques d'activité limitées (telles que les séries d'utilisation quotidienne) pour administrer le système optionnel Daily Bonus et pour envoyer la Newsletter." },
       { type: "h2", text: "4. Sous-traitants et Destinataires des Données" },
       { type: "ul", items: [
         "Infrastructure et Paiements : Nous utilisons Supabase (UE) pour l'hébergement de la base de données et les services d'authentification, et Stripe (Global) pour le traitement sécurisé des paiements conforme PCI-DSS.",
         "Communications : Nous utilisons Resend (USA) comme fournisseur de livraison d'e-mails pour l'envoi de codes transactionnels et, sous réserve de consentement, de newsletters.",
-        "Cartes et Itinéraires : Pour calculer les distances et les temps de trajet, le Service transmet des paires de coordonnées à des Services de Routage et de Cartographie.",
+        "Cartes et Itinéraires : Pour calculer les distances et les temps de trajet, le Service transmet des coordonnées de localisation approximatives à des services de routage et de cartographie.",
         "Données de Marché et Évaluations : Les données de localisation de propriétés spécifiques peuvent être croisées avec des Sources Publiques de Données de Marché pour obtenir des évaluations de marché estimées.",
         "Événements et Activités Contextuels : Pour afficher les activités à proximité, le Service interroge des Fournisseurs d'Événements et d'Activités Contextuels. Ces fournisseurs reçoivent des coordonnées de localisation générales et des dates pour renvoyer des événements pertinents ; aucune identité de l'Utilisateur ni historique de navigation personnel n'est partagé avec eux.",
         "Traitement par IA : Si l'Utilisateur déclenche volontairement la fonctionnalité \"Virtual Staging\", les URLs des images sont transmises de manière transitoire à des Fournisseurs de Traitement par IA uniquement pour la génération du contenu demandé."
@@ -244,21 +248,21 @@ export const privacyContent: Record<Locale, LegalPage> = {
     description: "Политика конфиденциальности расширения браузера GetNearMe.",
     blocks: [
       { type: "h2", text: "1. Введение и Контролёр данных" },
-      { type: "p", text: "Настоящая Политика конфиденциальности регулирует обработку персональных данных в связи с использованием расширения браузера GetNearMe (\"Сервис\"). Настоящая Политика соответствует Регламенту (ЕС) 2016/679 (GDPR) и направлена на соблюдение Директивы 2002/58/EC (Директива ePrivacy) в отношении локального хранения и доступа к информации на терминальном оборудовании пользователей." },
+      { type: "p", text: "Настоящая Политика конфиденциальности регулирует обработку персональных данных в связи с использованием расширения браузера GetNearMe (\"Сервис\"). Настоящая Политика направлена на соблюдение Регламента (ЕС) 2016/679 (GDPR) и Директивы 2002/58/EC (Директива ePrivacy) в отношении доступа к информации и её хранения на терминальном оборудовании пользователей." },
       { type: "p", text: "Контролёр данных: Антонио Шрика, действующий коммерчески под торговым наименованием \"GetNearMe\"\nEmail: as.scirica@gmail.com" },
       { type: "h2", text: "2. Характер обработки данных" },
-      { type: "p", text: "Для обеспечения минимизации данных и строгого соблюдения прав интеллектуальной собственности третьих лиц Сервис функционирует преимущественно как локальная клиентская утилита." },
+      { type: "p", text: "Для обеспечения минимизации данных и строгого соблюдения прав интеллектуальной собственности третьих лиц Сервис функционирует преимущественно как локальная, клиентская утилита." },
       { type: "ul", items: [
-        "Локальная обработка: Анализ объектов недвижимости выполняется динамически в браузере Пользователя. Сервис не осуществляет скрейпинг, индексацию или воспроизведение баз данных третьих лиц на своих серверах для создания конкурирующей поисковой системы.",
+        "Локальная обработка: Анализ объектов недвижимости выполняется динамически в браузере Пользователя. Сервис не осуществляет индексацию или воспроизведение баз данных третьих лиц на своих серверах для создания конкурирующей поисковой системы.",
         "Отсутствие передачи данных для агрегации: Контент, видимый на экране Пользователя, обрабатывается временно в оперативной памяти браузера и не передаётся на серверы Контролёра для постоянного хранения или агрегации.",
-        "Данные, связанные с недвижимостью, обрабатываемые локально Сервисом, относятся к объектам недвижимости и местоположениям и не являются персональными данными идентифицируемых физических лиц по смыслу Статьи 4 GDPR."
+        "Данные, связанные с недвижимостью, обрабатываемые локально Сервисом, относятся преимущественно к объектам недвижимости и местоположениям и, как правило, не являются персональными данными идентифицируемых физических лиц по смыслу Статьи 4 GDPR."
       ]},
       { type: "h2", text: "3. Категории обрабатываемых данных" },
       { type: "p", text: "Мы обрабатываем только данные, строго необходимые для предоставления Сервиса, классифицированные по месту хранения:" },
       { type: "h3", text: "3.1. Серверные данные (Аккаунт и технические журналы)" },
       { type: "p", text: "Наша серверная инфраструктура обрабатывает ограниченные метаданные, необходимые для управления аккаунтом и обеспечения безопасности:" },
       { type: "ul", items: [
-        "Идентификационные данные: Адрес электронной почты и ID пользователя (аутентификация через Supabase) для управления подпиской.",
+        "Идентификационные данные: Адрес электронной почты и ID пользователя (аутентификация через Supabase) для управления аккаунтом и подпиской.",
         "Транзакционные данные: Статус подписки, баланс кредитов и идентификаторы платежей, безопасно обрабатываемые Stripe (мы не храним полные номера кредитных карт).",
         "Технические журналы сервиса: События технической валидации, подтверждающие успешное выполнение запрошенной операции (используются исключительно для списания кредитов и отладки), без хранения содержания или атрибутов объявлений.",
         "Безопасность и хранение: IP-адреса и технические журналы хранятся только в течение периода, строго необходимого для выполнения их конкретной цели (мониторинг безопасности, отладка и валидация сервиса) и периодически удаляются в соответствии с внутренними политиками хранения для соблюдения принципа ограничения хранения (Ст. 5(1)(e) GDPR)."
@@ -268,13 +272,14 @@ export const privacyContent: Record<Locale, LegalPage> = {
       { type: "ul", items: [
         "Временные данные сессии: Расширение использует API локального хранилища браузера (chrome.storage.local) для временного кэширования ограниченных фактических данных, необходимых для анализа, видимого на странице для запрошенного Пользователем анализа. Эти данные остаются изолированными в вашем браузере и недоступны Контролёру."
       ]},
+      { type: "p", text: "Данное локальное хранилище является технически необходимым для функционирования Сервиса, не используется в целях отслеживания или рекламы и остаётся изолированным в браузере Пользователя." },
       { type: "h3", text: "3.3. Добровольные маркетинговые данные" },
-      { type: "p", text: "Только при вашем явном согласии через отдельный флажок мы обрабатываем ваш адрес электронной почты и метрики активности (такие как ежедневные серии использования) для администрирования опциональной системы Daily Bonus и отправки Рассылки." },
+      { type: "p", text: "Только при вашем явном согласии через отдельный флажок мы обрабатываем ваш адрес электронной почты и ограниченные метрики активности (такие как ежедневные серии использования) для администрирования опциональной системы Daily Bonus и для отправки Рассылки." },
       { type: "h2", text: "4. Обработчики данных и получатели" },
       { type: "ul", items: [
         "Инфраструктура и платежи: Мы используем Supabase (ЕС) для хостинга баз данных и услуг аутентификации, а также Stripe (Глобально) для безопасной обработки платежей, соответствующей PCI-DSS.",
         "Коммуникации: Мы используем Resend (США) в качестве провайдера доставки электронной почты для отправки транзакционных кодов и, при наличии согласия, рассылок.",
-        "Карты и маршруты: Для расчёта расстояний и времени в пути Сервис передаёт пары координат Сервисам маршрутизации и картографии.",
+        "Карты и маршруты: Для расчёта расстояний и времени в пути Сервис передаёт приблизительные координаты местоположения сервисам маршрутизации и картографии.",
         "Рыночные данные и оценки: Конкретные данные о местоположении недвижимости могут быть сопоставлены с Публичными источниками рыночных данных для получения ориентировочных рыночных оценок.",
         "Контекстные события и мероприятия: Для отображения ближайших мероприятий Сервис обращается к Провайдерам контекстных событий и мероприятий. Эти провайдеры получают общие координаты местоположения и даты для возврата релевантных событий; личность Пользователя или история просмотров не передаются им.",
         "Обработка ИИ: Если Пользователь добровольно активирует функцию \"Virtual Staging\", URL-адреса изображений временно передаются Провайдерам обработки ИИ исключительно для генерации запрошенного контента."
@@ -300,21 +305,21 @@ export const privacyContent: Record<Locale, LegalPage> = {
     description: "Політика конфіденційності розширення браузера GetNearMe.",
     blocks: [
       { type: "h2", text: "1. Вступ та Контролер даних" },
-      { type: "p", text: "Ця Політика конфіденційності регулює обробку персональних даних у зв'язку з використанням розширення браузера GetNearMe (\"Сервіс\"). Ця Політика відповідає Регламенту (ЄС) 2016/679 (GDPR) та спрямована на дотримання Директиви 2002/58/EC (Директива ePrivacy) щодо локального зберігання та доступу до інформації на термінальному обладнанні користувачів." },
+      { type: "p", text: "Ця Політика конфіденційності регулює обробку персональних даних у зв'язку з використанням розширення браузера GetNearMe (\"Сервіс\"). Ця Політика спрямована на дотримання Регламенту (ЄС) 2016/679 (GDPR) та Директиви 2002/58/EC (Директива ePrivacy) щодо доступу до інформації та її зберігання на термінальному обладнанні користувачів." },
       { type: "p", text: "Контролер даних: Антоніо Шріка, що діє комерційно під торговою назвою \"GetNearMe\"\nEmail: as.scirica@gmail.com" },
       { type: "h2", text: "2. Характер обробки даних" },
-      { type: "p", text: "Для забезпечення мінімізації даних та суворого дотримання прав інтелектуальної власності третіх осіб Сервіс функціонує переважно як локальна клієнтська утиліта." },
+      { type: "p", text: "Для забезпечення мінімізації даних та суворого дотримання прав інтелектуальної власності третіх осіб Сервіс функціонує переважно як локальна, клієнтська утиліта." },
       { type: "ul", items: [
-        "Локальна обробка: Аналіз об'єктів нерухомості виконується динамічно у браузері Користувача. Сервіс не здійснює скрейпінг, індексацію або відтворення баз даних третіх осіб на своїх серверах для створення конкуруючої пошукової системи.",
+        "Локальна обробка: Аналіз об'єктів нерухомості виконується динамічно у браузері Користувача. Сервіс не здійснює індексацію або відтворення баз даних третіх осіб на своїх серверах для створення конкуруючої пошукової системи.",
         "Відсутність передачі даних для агрегації: Контент, видимий на екрані Користувача, обробляється тимчасово в оперативній пам'яті браузера і не передається на сервери Контролера для постійного зберігання або агрегації.",
-        "Дані, пов'язані з нерухомістю, що обробляються локально Сервісом, стосуються об'єктів нерухомості та місцеположень і не є персональними даними ідентифікованих фізичних осіб у розумінні Статті 4 GDPR."
+        "Дані, пов'язані з нерухомістю, що обробляються локально Сервісом, переважно стосуються об'єктів нерухомості та місцеположень і, як правило, не є персональними даними ідентифікованих фізичних осіб у розумінні Статті 4 GDPR."
       ]},
       { type: "h2", text: "3. Категорії оброблюваних даних" },
       { type: "p", text: "Ми обробляємо лише дані, суворо необхідні для надання Сервісу, класифіковані за місцем зберігання:" },
       { type: "h3", text: "3.1. Серверні дані (Акаунт та технічні журнали)" },
       { type: "p", text: "Наша серверна інфраструктура обробляє обмежені метадані, необхідні для управління акаунтом та забезпечення безпеки:" },
       { type: "ul", items: [
-        "Ідентифікаційні дані: Адреса електронної пошти та ID користувача (автентифікація через Supabase) для управління підпискою.",
+        "Ідентифікаційні дані: Адреса електронної пошти та ID користувача (автентифікація через Supabase) для управління акаунтом та підпискою.",
         "Транзакційні дані: Статус підписки, баланс кредитів та ідентифікатори платежів, безпечно оброблювані Stripe (ми не зберігаємо повні номери кредитних карток).",
         "Технічні журнали сервісу: Події технічної валідації, що підтверджують успішне виконання запитаної операції (використовуються виключно для списання кредитів та налагодження), без зберігання вмісту або атрибутів оголошень.",
         "Безпека та зберігання: IP-адреси та технічні журнали зберігаються лише протягом періоду, суворо необхідного для виконання їх конкретної мети (моніторинг безпеки, налагодження та валідація сервісу) та періодично видаляються відповідно до внутрішніх політик зберігання для дотримання принципу обмеження зберігання (Ст. 5(1)(e) GDPR)."
@@ -324,13 +329,14 @@ export const privacyContent: Record<Locale, LegalPage> = {
       { type: "ul", items: [
         "Тимчасові дані сесії: Розширення використовує API локального сховища браузера (chrome.storage.local) для тимчасового кешування обмежених фактичних даних, необхідних для аналізу, видимого на сторінці для запитаного Користувачем аналізу. Ці дані залишаються ізольованими у вашому браузері та недоступні Контролеру."
       ]},
+      { type: "p", text: "Це локальне сховище є технічно необхідним для функціонування Сервісу, не використовується з метою відстеження або реклами та залишається ізольованим у браузері Користувача." },
       { type: "h3", text: "3.3. Добровільні маркетингові дані" },
-      { type: "p", text: "Лише за вашої явної згоди через окремий прапорець ми обробляємо вашу адресу електронної пошти та метрики активності (такі як щоденні серії використання) для адміністрування опціональної системи Daily Bonus та відправки Розсилки." },
+      { type: "p", text: "Лише за вашої явної згоди через окремий прапорець ми обробляємо вашу адресу електронної пошти та обмежені метрики активності (такі як щоденні серії використання) для адміністрування опціональної системи Daily Bonus та для відправки Розсилки." },
       { type: "h2", text: "4. Обробники даних та отримувачі" },
       { type: "ul", items: [
         "Інфраструктура та платежі: Ми використовуємо Supabase (ЄС) для хостингу баз даних та послуг автентифікації, а також Stripe (Глобально) для безпечної обробки платежів, відповідної PCI-DSS.",
         "Комунікації: Ми використовуємо Resend (США) як провайдера доставки електронної пошти для відправки транзакційних кодів та, за наявності згоди, розсилок.",
-        "Карти та маршрути: Для розрахунку відстаней та часу подорожі Сервіс передає пари координат Сервісам маршрутизації та картографії.",
+        "Карти та маршрути: Для розрахунку відстаней та часу подорожі Сервіс передає приблизні координати місцеположення сервісам маршрутизації та картографії.",
         "Ринкові дані та оцінки: Конкретні дані про місцеположення нерухомості можуть бути зіставлені з Публічними джерелами ринкових даних для отримання орієнтовних ринкових оцінок.",
         "Контекстні події та заходи: Для відображення найближчих заходів Сервіс звертається до Провайдерів контекстних подій та заходів. Ці провайдери отримують загальні координати місцеположення та дати для повернення релевантних подій; особистість Користувача або історія перегляду не передаються їм.",
         "Обробка ШІ: Якщо Користувач добровільно активує функцію \"Virtual Staging\", URL-адреси зображень тимчасово передаються Провайдерам обробки ШІ виключно для генерації запитаного контенту."
