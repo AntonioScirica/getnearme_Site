@@ -375,7 +375,8 @@ export const termsContent: Record<Locale, LegalPage> = {
       { type: "ul", items: [
         "Perform mass extraction of data for the purpose of creating a competing database, search engine, or commercial service.",
         "Bypass any security measures, CAPTCHAs, or authentication barriers of third-party platforms.",
-        "Violate the Terms of Service of any third-party real estate portal visited while using the Extension."
+        "Violate the Terms of Service of any third-party real estate portal visited while using the Extension.",
+        "Attempt to bypass, disable, or defeat any technical restrictions or content protection measures implemented within the Service (including restrictions on printing, copying, or exporting data)."
       ]},
       { type: "h2", text: "4. Disclaimers and Limitations of Liability" },
       { type: "p", text: "4.1. Estimated Values: Any \"Estimated Total\" or financial calculation provided by the Service represents an indicative estimate of costs associated with a property purchase (e.g., agency fees, notary costs, taxes). These estimates are for informational purposes only and do not constitute a binding offer or professional financial quote." },
@@ -416,7 +417,8 @@ export const termsContent: Record<Locale, LegalPage> = {
       { type: "ul", items: [
         "Effettuare estrazione massiva di dati allo scopo di creare un database concorrente, un motore di ricerca o un servizio commerciale.",
         "Aggirare misure di sicurezza, CAPTCHA o barriere di autenticazione di piattaforme di terze parti.",
-        "Violare i Termini di Servizio di qualsiasi portale immobiliare di terze parti visitato durante l'utilizzo dell'Estensione."
+        "Violare i Termini di Servizio di qualsiasi portale immobiliare di terze parti visitato durante l'utilizzo dell'Estensione.",
+        "Tentare di aggirare, disabilitare o sconfiggere qualsiasi restrizione tecnica o misura di protezione dei contenuti implementata nel Servizio (incluse le restrizioni su stampa, copia o esportazione dei dati)."
       ]},
       { type: "h2", text: "4. Esclusioni e Limitazioni di Responsabilità" },
       { type: "p", text: "4.1. Valori Stimati: Qualsiasi \"Totale Stimato\" o calcolo finanziario fornito dal Servizio rappresenta una stima indicativa dei costi associati all'acquisto di un immobile (es. commissioni di agenzia, costi notarili, imposte). Queste stime hanno scopo puramente informativo e non costituiscono un'offerta vincolante o una quotazione finanziaria professionale." },
@@ -457,7 +459,8 @@ export const termsContent: Record<Locale, LegalPage> = {
       { type: "ul", items: [
         "Realizar extracción masiva de datos con el propósito de crear una base de datos competidora, motor de búsqueda o servicio comercial.",
         "Eludir medidas de seguridad, CAPTCHAs o barreras de autenticación de plataformas de terceros.",
-        "Violar los Términos de Servicio de cualquier portal inmobiliario de terceros visitado mientras se usa la Extensión."
+        "Violar los Términos de Servicio de cualquier portal inmobiliario de terceros visitado mientras se usa la Extensión.",
+        "Intentar eludir, desactivar o vencer cualquier restricción técnica o medida de protección de contenido implementada en el Servicio (incluidas las restricciones de impresión, copia o exportación de datos)."
       ]},
       { type: "h2", text: "4. Exclusiones y Limitaciones de Responsabilidad" },
       { type: "p", text: "4.1. Valores Estimados: Cualquier \"Total Estimado\" o cálculo financiero proporcionado por el Servicio representa una estimación indicativa de costos asociados con la compra de una propiedad (ej. comisiones de agencia, costos notariales, impuestos). Estas estimaciones son solo para fines informativos y no constituyen una oferta vinculante o una cotización financiera profesional." },
@@ -498,7 +501,8 @@ export const termsContent: Record<Locale, LegalPage> = {
       { type: "ul", items: [
         "Effectuer une extraction massive de données dans le but de créer une base de données concurrente, un moteur de recherche ou un service commercial.",
         "Contourner les mesures de sécurité, CAPTCHAs ou barrières d'authentification de plateformes tierces.",
-        "Violer les Conditions d'Utilisation de tout portail immobilier tiers visité lors de l'utilisation de l'Extension."
+        "Violer les Conditions d'Utilisation de tout portail immobilier tiers visité lors de l'utilisation de l'Extension.",
+        "Tenter de contourner, désactiver ou vaincre toute restriction technique ou mesure de protection du contenu mise en œuvre dans le Service (y compris les restrictions d'impression, de copie ou d'exportation de données)."
       ]},
       { type: "h2", text: "4. Exclusions et Limitations de Responsabilité" },
       { type: "p", text: "4.1. Valeurs Estimées : Tout \"Total Estimé\" ou calcul financier fourni par le Service représente une estimation indicative des coûts associés à l'achat d'un bien immobilier (ex. frais d'agence, frais de notaire, taxes). Ces estimations sont fournies à titre informatif uniquement et ne constituent pas une offre contraignante ou un devis financier professionnel." },
@@ -539,7 +543,8 @@ export const termsContent: Record<Locale, LegalPage> = {
       { type: "ul", items: [
         "Массового извлечения данных с целью создания конкурирующей базы данных, поисковой системы или коммерческого сервиса.",
         "Обхода мер безопасности, CAPTCHA или барьеров аутентификации сторонних платформ.",
-        "Нарушения Условий использования любого стороннего портала недвижимости, посещаемого при использовании Расширения."
+        "Нарушения Условий использования любого стороннего портала недвижимости, посещаемого при использовании Расширения.",
+        "Попытки обойти, отключить или преодолеть любые технические ограничения или меры защиты контента, реализованные в Сервисе (включая ограничения на печать, копирование или экспорт данных)."
       ]},
       { type: "h2", text: "4. Отказ от ответственности и ограничения" },
       { type: "p", text: "4.1. Оценочные значения: Любой \"Расчётный итог\" или финансовый расчёт, предоставленный Сервисом, представляет собой ориентировочную оценку затрат, связанных с покупкой недвижимости (напр., агентские комиссии, нотариальные расходы, налоги). Эти оценки носят исключительно информационный характер и не являются обязывающим предложением или профессиональной финансовой котировкой." },
@@ -580,7 +585,8 @@ export const termsContent: Record<Locale, LegalPage> = {
       { type: "ul", items: [
         "Масового видобування даних з метою створення конкуруючої бази даних, пошукової системи або комерційного сервісу.",
         "Обходу заходів безпеки, CAPTCHA або бар'єрів автентифікації сторонніх платформ.",
-        "Порушення Умов використання будь-якого стороннього порталу нерухомості, відвідуваного при використанні Розширення."
+        "Порушення Умов використання будь-якого стороннього порталу нерухомості, відвідуваного при використанні Розширення.",
+        "Спроби обійти, вимкнути або подолати будь-які технічні обмеження або заходи захисту контенту, реалізовані в Сервісі (включаючи обмеження на друк, копіювання або експорт даних)."
       ]},
       { type: "h2", text: "4. Застереження та обмеження відповідальності" },
       { type: "p", text: "4.1. Оціночні значення: Будь-який \"Розрахунковий підсумок\" або фінансовий розрахунок, наданий Сервісом, являє собою орієнтовну оцінку витрат, пов'язаних з придбанням нерухомості (напр., агентські комісії, нотаріальні витрати, податки). Ці оцінки носять виключно інформаційний характер і не є обов'язковою пропозицією або професійною фінансовою котировкою." },
