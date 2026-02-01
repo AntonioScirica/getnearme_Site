@@ -1,10 +1,5 @@
 import { MetadataRoute } from "next";
 import { locales } from "@/lib/i18n";
-import { getAllPublishedSlugs } from "@/lib/supabase";
-
-// Rigenera la sitemap ogni ora (3600 secondi)
-// Così i nuovi articoli appaiono automaticamente
-export const revalidate = 3600;
 
 const baseUrl = "https://getnearme.it";
 
@@ -32,28 +27,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         changeFrequency: "monthly",
         priority: 0.3,
       });
-    });
-  });
-
-  // ===== BLOG LISTING =====
-  locales.forEach((locale) => {
-    entries.push({
-      url: `${baseUrl}/${locale}/blog`,
-      lastModified: new Date(),
-      changeFrequency: "weekly",
-      priority: 0.8,
-    });
-  });
-
-  // ===== BLOG ARTICLES (da Supabase) =====
-  const publishedArticles = await getAllPublishedSlugs();
-
-  publishedArticles.forEach(({ locale, slug, updated_at }) => {
-    entries.push({
-      url: `${baseUrl}/${locale}/blog/${slug}`,
-      lastModified: updated_at ? new Date(updated_at) : new Date(),
-      changeFrequency: "monthly",
-      priority: 0.7,
     });
   });
 
