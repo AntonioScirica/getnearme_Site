@@ -369,6 +369,12 @@ export const termsContent: Record<Locale, LegalPage> = {
       { type: "h2", text: "2. License and Nature of Service" },
       { type: "p", text: "2.1. Client-Side Utility: You acknowledge that the Service operates as a \"User Agent\" or browser utility under your direct control. It is designed to augment your local browsing experience by visualizing independent market insights." },
       { type: "p", text: "2.2. Limited License: We grant you a revocable, non-exclusive, non-transferable license to use the Service solely for your personal or internal business analysis of real estate market data." },
+      { type: "p", text: "2.3. Data Volatility and Local Storage: The User acknowledges that GetNearMe is a client-side tool that stores detailed analysis data (e.g., prices, property characteristics) exclusively in the browser's local storage (Local Storage)." },
+      { type: "ul", items: [
+        "a) No Remote Backup: GetNearMe does not maintain backup copies of listing content on its own servers.",
+        "b) User Responsibility: It is the User's sole responsibility to save or export generated reports (e.g., as PDF) immediately after the analysis.",
+        "c) Data Loss: Uninstalling the extension, clearing the browser cache, or using system cleaning software will result in the irreversible loss of saved data and analysis history. GetNearMe shall under no circumstances be able to recover such data nor refund credits used for analyses lost due to local actions by the User."
+      ]},
       { type: "h2", text: "3. Restrictions and Intellectual Property" },
       { type: "p", text: "3.1. Independence: GetNearMe is an independent software tool. We are not affiliated with, endorsed by, sponsored by, or officially connected to any real estate platform (such as Immobiliare.it, Idealista, or others). All third-party trademarks are the property of their respective owners and are used solely for descriptive compatibility purposes (Nominative Fair Use)." },
       { type: "p", text: "3.2. Prohibited Conduct: You explicitly agree NOT to use the Service to:" },
@@ -411,6 +417,12 @@ export const termsContent: Record<Locale, LegalPage> = {
       { type: "h2", text: "2. Licenza e Natura del Servizio" },
       { type: "p", text: "2.1. Utilità Lato Client: L'utente riconosce che il Servizio opera come \"User Agent\" o utilità del browser sotto il suo diretto controllo. È progettato per migliorare l'esperienza di navigazione locale visualizzando approfondimenti di mercato indipendenti." },
       { type: "p", text: "2.2. Licenza Limitata: Concediamo una licenza revocabile, non esclusiva e non trasferibile per utilizzare il Servizio esclusivamente per l'analisi personale o aziendale interna di dati del mercato immobiliare." },
+      { type: "p", text: "2.3. Volatilità dei Dati e Archiviazione Locale: L'Utente riconosce che GetNearMe è uno strumento \"Client-Side\" che memorizza i dati dettagliati delle analisi (es. prezzi, caratteristiche immobili) esclusivamente nella memoria locale del browser (Local Storage)." },
+      { type: "ul", items: [
+        "a) Nessun Backup Remoto: GetNearMe non conserva copie di backup del contenuto degli annunci sui propri server.",
+        "b) Responsabilità dell'Utente: È esclusiva responsabilità dell'Utente salvare o esportare i report generati (es. come PDF) immediatamente dopo l'analisi.",
+        "c) Perdita Dati: La disinstallazione dell'estensione, la pulizia della cache del browser o l'uso di software di pulizia sistema comporteranno la perdita irreversibile dei dati salvati e dello storico analisi. GetNearMe non potrà in alcun caso recuperare tali dati né rimborsare i crediti utilizzati per analisi andate perse a causa di azioni locali dell'Utente."
+      ]},
       { type: "h2", text: "3. Restrizioni e Proprietà Intellettuale" },
       { type: "p", text: "3.1. Indipendenza: GetNearMe è uno strumento software indipendente. Non siamo affiliati, approvati, sponsorizzati o ufficialmente collegati ad alcuna piattaforma immobiliare (come Immobiliare.it, Idealista o altre). Tutti i marchi di terze parti sono di proprietà dei rispettivi titolari e sono utilizzati esclusivamente a fini descrittivi di compatibilità (Nominative Fair Use)." },
       { type: "p", text: "3.2. Condotta Vietata: L'utente si impegna esplicitamente a NON utilizzare il Servizio per:" },
@@ -453,6 +465,12 @@ export const termsContent: Record<Locale, LegalPage> = {
       { type: "h2", text: "2. Licencia y Naturaleza del Servicio" },
       { type: "p", text: "2.1. Utilidad del Lado del Cliente: Usted reconoce que el Servicio opera como un \"User Agent\" o utilidad del navegador bajo su control directo. Está diseñado para mejorar su experiencia de navegación local visualizando información independiente del mercado." },
       { type: "p", text: "2.2. Licencia Limitada: Le otorgamos una licencia revocable, no exclusiva e intransferible para usar el Servicio exclusivamente para su análisis personal o empresarial interno de datos del mercado inmobiliario." },
+      { type: "p", text: "2.3. Volatilidad de los Datos y Almacenamiento Local: El Usuario reconoce que GetNearMe es una herramienta del lado del cliente que almacena los datos detallados de los análisis (ej. precios, características de los inmuebles) exclusivamente en el almacenamiento local del navegador (Local Storage)." },
+      { type: "ul", items: [
+        "a) Sin Copia de Seguridad Remota: GetNearMe no mantiene copias de seguridad del contenido de los anuncios en sus propios servidores.",
+        "b) Responsabilidad del Usuario: Es responsabilidad exclusiva del Usuario guardar o exportar los informes generados (ej. como PDF) inmediatamente después del análisis.",
+        "c) Pérdida de Datos: La desinstalación de la extensión, la limpieza de la caché del navegador o el uso de software de limpieza del sistema resultarán en la pérdida irreversible de los datos guardados y del historial de análisis. GetNearMe no podrá en ningún caso recuperar dichos datos ni reembolsar los créditos utilizados para análisis perdidos debido a acciones locales del Usuario."
+      ]},
       { type: "h2", text: "3. Restricciones y Propiedad Intelectual" },
       { type: "p", text: "3.1. Independencia: GetNearMe es una herramienta de software independiente. No estamos afiliados, respaldados, patrocinados ni oficialmente conectados con ninguna plataforma inmobiliaria (como Immobiliare.it, Idealista u otras). Todas las marcas comerciales de terceros son propiedad de sus respectivos titulares y se utilizan exclusivamente con fines descriptivos de compatibilidad (Nominative Fair Use)." },
       { type: "p", text: "3.2. Conducta Prohibida: Usted acepta explícitamente NO utilizar el Servicio para:" },
@@ -495,6 +513,12 @@ export const termsContent: Record<Locale, LegalPage> = {
       { type: "h2", text: "2. Licence et Nature du Service" },
       { type: "p", text: "2.1. Utilitaire Côté Client : Vous reconnaissez que le Service fonctionne comme un \"User Agent\" ou un utilitaire de navigateur sous votre contrôle direct. Il est conçu pour améliorer votre expérience de navigation locale en visualisant des informations de marché indépendantes." },
       { type: "p", text: "2.2. Licence Limitée : Nous vous accordons une licence révocable, non exclusive et non transférable pour utiliser le Service uniquement pour votre analyse personnelle ou professionnelle interne de données du marché immobilier." },
+      { type: "p", text: "2.3. Volatilité des Données et Stockage Local : L'Utilisateur reconnaît que GetNearMe est un outil côté client qui stocke les données détaillées des analyses (ex. prix, caractéristiques des biens) exclusivement dans le stockage local du navigateur (Local Storage)." },
+      { type: "ul", items: [
+        "a) Pas de Sauvegarde Distante : GetNearMe ne conserve pas de copies de sauvegarde du contenu des annonces sur ses propres serveurs.",
+        "b) Responsabilité de l'Utilisateur : Il est de la responsabilité exclusive de l'Utilisateur de sauvegarder ou d'exporter les rapports générés (ex. en PDF) immédiatement après l'analyse.",
+        "c) Perte de Données : La désinstallation de l'extension, le nettoyage du cache du navigateur ou l'utilisation de logiciels de nettoyage système entraîneront la perte irréversible des données sauvegardées et de l'historique des analyses. GetNearMe ne pourra en aucun cas récupérer ces données ni rembourser les crédits utilisés pour des analyses perdues en raison d'actions locales de l'Utilisateur."
+      ]},
       { type: "h2", text: "3. Restrictions et Propriété Intellectuelle" },
       { type: "p", text: "3.1. Indépendance : GetNearMe est un outil logiciel indépendant. Nous ne sommes affiliés, approuvés, sponsorisés ni officiellement liés à aucune plateforme immobilière (telle qu'Immobiliare.it, Idealista ou d'autres). Toutes les marques de tiers sont la propriété de leurs détenteurs respectifs et sont utilisées uniquement à des fins descriptives de compatibilité (Nominative Fair Use)." },
       { type: "p", text: "3.2. Conduite Interdite : Vous acceptez explicitement de NE PAS utiliser le Service pour :" },
@@ -537,6 +561,12 @@ export const termsContent: Record<Locale, LegalPage> = {
       { type: "h2", text: "2. Лицензия и характер Сервиса" },
       { type: "p", text: "2.1. Клиентская утилита: Вы признаёте, что Сервис работает как \"User Agent\" или утилита браузера под вашим непосредственным контролем. Он предназначен для улучшения вашего локального просмотра путём визуализации независимой рыночной аналитики." },
       { type: "p", text: "2.2. Ограниченная лицензия: Мы предоставляем вам отзывную, неисключительную, непередаваемую лицензию на использование Сервиса исключительно для личного или внутреннего делового анализа данных рынка недвижимости." },
+      { type: "p", text: "2.3. Волатильность данных и локальное хранение: Пользователь признаёт, что GetNearMe является клиентским инструментом, который хранит детальные данные анализа (напр., цены, характеристики недвижимости) исключительно в локальном хранилище браузера (Local Storage)." },
+      { type: "ul", items: [
+        "a) Отсутствие удалённого резервного копирования: GetNearMe не хранит резервные копии содержания объявлений на своих серверах.",
+        "b) Ответственность пользователя: Исключительная ответственность за сохранение или экспорт сгенерированных отчётов (напр., в формате PDF) сразу после анализа лежит на Пользователе.",
+        "c) Потеря данных: Удаление расширения, очистка кэша браузера или использование программ для очистки системы приведут к необратимой потере сохранённых данных и истории анализов. GetNearMe ни при каких обстоятельствах не сможет восстановить эти данные и не возместит кредиты, использованные для анализов, утраченных в результате локальных действий Пользователя."
+      ]},
       { type: "h2", text: "3. Ограничения и интеллектуальная собственность" },
       { type: "p", text: "3.1. Независимость: GetNearMe является независимым программным инструментом. Мы не аффилированы, не одобрены, не спонсированы и не связаны официально ни с одной платформой недвижимости (такой как Immobiliare.it, Idealista или другие). Все товарные знаки третьих лиц являются собственностью их соответствующих владельцев и используются исключительно в описательных целях совместимости (Nominative Fair Use)." },
       { type: "p", text: "3.2. Запрещённые действия: Вы явно соглашаетесь НЕ использовать Сервис для:" },
@@ -579,6 +609,12 @@ export const termsContent: Record<Locale, LegalPage> = {
       { type: "h2", text: "2. Ліцензія та характер Сервісу" },
       { type: "p", text: "2.1. Клієнтська утиліта: Ви визнаєте, що Сервіс працює як \"User Agent\" або утиліта браузера під вашим безпосереднім контролем. Він призначений для покращення вашого локального перегляду шляхом візуалізації незалежної ринкової аналітики." },
       { type: "p", text: "2.2. Обмежена ліцензія: Ми надаємо вам відкличну, невиключну, непередавану ліцензію на використання Сервісу виключно для особистого або внутрішнього ділового аналізу даних ринку нерухомості." },
+      { type: "p", text: "2.3. Волатильність даних та локальне зберігання: Користувач визнає, що GetNearMe є клієнтським інструментом, який зберігає детальні дані аналізу (напр., ціни, характеристики нерухомості) виключно в локальному сховищі браузера (Local Storage)." },
+      { type: "ul", items: [
+        "a) Відсутність віддаленого резервного копіювання: GetNearMe не зберігає резервні копії вмісту оголошень на своїх серверах.",
+        "b) Відповідальність користувача: Виключна відповідальність за збереження або експорт згенерованих звітів (напр., у форматі PDF) одразу після аналізу лежить на Користувачеві.",
+        "c) Втрата даних: Видалення розширення, очищення кешу браузера або використання програм для очищення системи призведуть до безповоротної втрати збережених даних та історії аналізів. GetNearMe за жодних обставин не зможе відновити ці дані та не відшкодує кредити, використані для аналізів, втрачених внаслідок локальних дій Користувача."
+      ]},
       { type: "h2", text: "3. Обмеження та інтелектуальна власність" },
       { type: "p", text: "3.1. Незалежність: GetNearMe є незалежним програмним інструментом. Ми не афілійовані, не схвалені, не спонсоровані та не пов'язані офіційно з жодною платформою нерухомості (такою як Immobiliare.it, Idealista або інші). Усі товарні знаки третіх осіб є власністю їхніх відповідних власників і використовуються виключно в описових цілях сумісності (Nominative Fair Use)." },
       { type: "p", text: "3.2. Заборонені дії: Ви явно погоджуєтесь НЕ використовувати Сервіс для:" },
