@@ -44,7 +44,10 @@ export const translations = {
         title: "Valorizzazione annunci con AI",
         desc: "Migliora immagini e descrizioni per aumentare il valore percepito degli immobili, senza ricorrere a strumenti esterni."
       },
-      disclaimer: "Le analisi e le stime mostrate sono indicative e non costituiscono una valutazione immobiliare."
+      disclaimer: "Le analisi e le stime mostrate sono indicative e non costituiscono una valutazione immobiliare.",
+      addExtension: "Aggiungi estensione",
+      comingSoonTitle: "In arrivo",
+      comingSoonDesc: "Stiamo sviluppando nuove funzionalità pensate per rendere il lavoro della tua agenzia ancora più strutturato ed efficiente.",
     },
     faq: {
       title: "Domande",
@@ -115,7 +118,18 @@ export const translations = {
       title2: "con strumenti professionali",
       titleItalic: "avanzati",
       desc: "Semplifica i processi e rafforza la qualità delle tue presentazioni.",
-      button: "Aggiungi estensione"
+      button: "Aggiungi estensione",
+      requestInfo: "Richiedi informazioni",
+    },
+    howItWorks: {
+      step1Title: "Crea il tuo account",
+      step1Desc: "Registrati in pochi secondi e accedi alla piattaforma.",
+      step2Title: "Attiva il piano Agenzia",
+      step2Desc: "Dal tuo profilo, accedi alla sezione abbonamento e attiva il piano professionale mensile.",
+      step3Title: "Inizia subito a lavorare",
+      step3Desc: "L'accesso è immediato: puoi utilizzare tutte le funzionalità direttamente nei portali immobiliari che già utilizzi.",
+      cta: "Inizia con GetNearMe",
+      videoTitle: "GetNearMe — Come funziona",
     },
     footer: {
       desc: "Strumenti avanzati per agenzie immobiliari che vogliono offrire un servizio più completo e professionale.",
@@ -271,6 +285,7 @@ export const translations = {
       pricing: "Pricing",
       faq: "FAQ",
       blog: "Blog",
+      tutorial: "Tutorial",
       startAnalysis: "Start Analysis",
       backToHome: "← Back to home"
     },
@@ -307,7 +322,10 @@ export const translations = {
         title: "Placeholder title",
         desc: "Placeholder description for the fifth feature."
       },
-      disclaimer: "The analyzes and estimates shown are indicative and do not constitute a real estate appraisal."
+      disclaimer: "The analyzes and estimates shown are indicative and do not constitute a real estate appraisal.",
+      addExtension: "Add extension",
+      comingSoonTitle: "Coming soon",
+      comingSoonDesc: "We are developing new features designed to make your agency's work even more structured and efficient.",
     },
     faq: {
       title: "Frequently Asked",
@@ -378,7 +396,18 @@ export const translations = {
       title2: "in a",
       titleItalic: "structured way",
       desc: "GetNearMe helps you organize and compare available data to evaluate multiple options with greater clarity.",
-      button: "Add extension"
+      button: "Add extension",
+      requestInfo: "Request information",
+    },
+    howItWorks: {
+      step1Title: "Create your account",
+      step1Desc: "Sign up in a few seconds and access the platform.",
+      step2Title: "Activate the Agency plan",
+      step2Desc: "From your profile, go to the subscription section and activate the professional monthly plan.",
+      step3Title: "Start working right away",
+      step3Desc: "Access is immediate: you can use all the features directly on the real estate portals you already use.",
+      cta: "Start with GetNearMe",
+      videoTitle: "GetNearMe — How it works",
     },
     footer: {
       desc: "Decision support tool for comparative analysis of properties and neighborhoods.",
@@ -534,6 +563,7 @@ export const translations = {
       pricing: "Precios",
       faq: "FAQ",
       blog: "Blog",
+      tutorial: "Tutorial",
       startAnalysis: "Iniciar Análisis",
       backToHome: "← Volver al inicio"
     },
@@ -570,7 +600,10 @@ export const translations = {
         title: "Título placeholder",
         desc: "Descripción placeholder para la quinta funcionalidad."
       },
-      disclaimer: "Los análisis y estimaciones mostrados son indicativos y no constituyen una tasación inmobiliaria."
+      disclaimer: "Los análisis y estimaciones mostrados son indicativos y no constituyen una tasación inmobiliaria.",
+      addExtension: "Añadir extensión",
+      comingSoonTitle: "Próximamente",
+      comingSoonDesc: "Estamos desarrollando nuevas funcionalidades pensadas para hacer el trabajo de tu agencia aún más estructurado y eficiente.",
     },
     faq: {
       title: "Preguntas",
@@ -641,7 +674,18 @@ export const translations = {
       title2: "de forma",
       titleItalic: "estructurada",
       desc: "GetNearMe te ayuda a organizar y comparar los datos disponibles para evaluar múltiples opciones con mayor claridad.",
-      button: "Añadir extensión"
+      button: "Añadir extensión",
+      requestInfo: "Solicitar información",
+    },
+    howItWorks: {
+      step1Title: "Crea tu cuenta",
+      step1Desc: "Regístrate en pocos segundos y accede a la plataforma.",
+      step2Title: "Activa el plan Agencia",
+      step2Desc: "Desde tu perfil, accede a la sección de suscripción y activa el plan profesional mensual.",
+      step3Title: "Empieza a trabajar de inmediato",
+      step3Desc: "El acceso es inmediato: puedes utilizar todas las funcionalidades directamente en los portales inmobiliarios que ya usas.",
+      cta: "Empieza con GetNearMe",
+      videoTitle: "GetNearMe — Cómo funciona",
     },
     footer: {
       desc: "Herramienta de soporte a la decisión para el análisis comparativo de inmuebles y barrios.",
@@ -797,6 +841,7 @@ export const translations = {
       pricing: "Tarifs",
       faq: "FAQ",
       blog: "Blog",
+      tutorial: "Tutoriel",
       startAnalysis: "Lancer l'Analyse",
       backToHome: "← Retour à l'accueil"
     },
@@ -833,7 +878,10 @@ export const translations = {
         title: "Titre placeholder",
         desc: "Description placeholder pour la cinquième fonctionnalité."
       },
-      disclaimer: "Les analyses et estimations affichées sont indicatives et ne constituent pas une expertise immobilière."
+      disclaimer: "Les analyses et estimations affichées sont indicatives et ne constituent pas une expertise immobilière.",
+      addExtension: "Ajouter l'extension",
+      comingSoonTitle: "Bientôt disponible",
+      comingSoonDesc: "Nous développons de nouvelles fonctionnalités conçues pour rendre le travail de votre agence encore plus structuré et efficace.",
     },
     faq: {
       title: "Questions",
@@ -904,7 +952,18 @@ export const translations = {
       title2: "de manière",
       titleItalic: "structurée",
       desc: "GetNearMe vous aide à organiser et comparer les données disponibles pour évaluer plusieurs options avec plus de clarté.",
-      button: "Ajouter l'extension"
+      button: "Ajouter l'extension",
+      requestInfo: "Demander des informations",
+    },
+    howItWorks: {
+      step1Title: "Créez votre compte",
+      step1Desc: "Inscrivez-vous en quelques secondes et accédez à la plateforme.",
+      step2Title: "Activez le plan Agence",
+      step2Desc: "Depuis votre profil, accédez à la section abonnement et activez le plan professionnel mensuel.",
+      step3Title: "Commencez à travailler immédiatement",
+      step3Desc: "L'accès est immédiat : vous pouvez utiliser toutes les fonctionnalités directement sur les portails immobiliers que vous utilisez déjà.",
+      cta: "Commencez avec GetNearMe",
+      videoTitle: "GetNearMe — Comment ça marche",
     },
     footer: {
       desc: "Outil d'aide à la décision pour l'analyse comparative de biens immobiliers et de quartiers.",
@@ -1060,6 +1119,7 @@ export const translations = {
       pricing: "Цены",
       faq: "FAQ",
       blog: "Блог",
+      tutorial: "Обучение",
       startAnalysis: "Начать Анализ",
       backToHome: "← Вернуться на главную"
     },
@@ -1096,7 +1156,10 @@ export const translations = {
         title: "Заголовок-заполнитель",
         desc: "Описание-заполнитель для пятой функции."
       },
-      disclaimer: "Представленные анализы и оценки носят ориентировочный характер и не являются официальной оценкой недвижимости."
+      disclaimer: "Представленные анализы и оценки носят ориентировочный характер и не являются официальной оценкой недвижимости.",
+      addExtension: "Добавить расширение",
+      comingSoonTitle: "Скоро",
+      comingSoonDesc: "Мы разрабатываем новые функции, призванные сделать работу вашего агентства ещё более структурированной и эффективной.",
     },
     faq: {
       title: "Часто задаваемые",
@@ -1167,7 +1230,18 @@ export const translations = {
       title2: "структурированным",
       titleItalic: "способом",
       desc: "GetNearMe помогает вам организовать и сравнить доступные данные, чтобы оценить несколько вариантов с большей ясностью.",
-      button: "Добавить расширение"
+      button: "Добавить расширение",
+      requestInfo: "Запросить информацию",
+    },
+    howItWorks: {
+      step1Title: "Создайте аккаунт",
+      step1Desc: "Зарегистрируйтесь за несколько секунд и получите доступ к платформе.",
+      step2Title: "Активируйте план Агентство",
+      step2Desc: "В вашем профиле перейдите в раздел подписки и активируйте профессиональный ежемесячный план.",
+      step3Title: "Начните работать сразу",
+      step3Desc: "Доступ мгновенный: вы можете использовать все функции непосредственно на порталах недвижимости, которыми уже пользуетесь.",
+      cta: "Начните с GetNearMe",
+      videoTitle: "GetNearMe — Как это работает",
     },
     footer: {
       desc: "Инструмент поддержки принятия решений для сравнительного анализа недвижимости и районов.",
@@ -1323,6 +1397,7 @@ export const translations = {
       pricing: "Ціни",
       faq: "FAQ",
       blog: "Блог",
+      tutorial: "Навчання",
       startAnalysis: "Почати Аналіз",
       backToHome: "← Повернутися на головну"
     },
@@ -1359,7 +1434,10 @@ export const translations = {
         title: "Заголовок-заповнювач",
         desc: "Опис-заповнювач для п'ятої функції."
       },
-      disclaimer: "Представлені аналізи та оцінки носять орієнтовний характер і не є офіційною оцінкою нерухомості."
+      disclaimer: "Представлені аналізи та оцінки носять орієнтовний характер і не є офіційною оцінкою нерухомості.",
+      addExtension: "Додати розширення",
+      comingSoonTitle: "Незабаром",
+      comingSoonDesc: "Ми розробляємо нові функції, покликані зробити роботу вашої агенції ще більш структурованою та ефективною.",
     },
     faq: {
       title: "Часті",
@@ -1430,7 +1508,18 @@ export const translations = {
       title2: "структурованим",
       titleItalic: "способом",
       desc: "GetNearMe допомагає вам організувати та порівняти доступні дані, щоб оцінити кілька варіантів з більшою ясністю.",
-      button: "Додати розширення"
+      button: "Додати розширення",
+      requestInfo: "Запитати інформацію",
+    },
+    howItWorks: {
+      step1Title: "Створіть акаунт",
+      step1Desc: "Зареєструйтесь за кілька секунд та отримайте доступ до платформи.",
+      step2Title: "Активуйте план Агентство",
+      step2Desc: "У вашому профілі перейдіть до розділу підписки та активуйте професійний щомісячний план.",
+      step3Title: "Почніть працювати одразу",
+      step3Desc: "Доступ миттєвий: ви можете використовувати всі функції безпосередньо на порталах нерухомості, якими вже користуєтесь.",
+      cta: "Почніть з GetNearMe",
+      videoTitle: "GetNearMe — Як це працює",
     },
     footer: {
       desc: "Інструмент підтримки прийняття рішень для порівняльного аналізу нерухомості та районів.",

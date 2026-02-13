@@ -90,7 +90,7 @@ export default async function Home({ params }: Props) {
             <div className="aspect-video bg-black relative">
               <iframe
                 src="https://www.youtube-nocookie.com/embed/2_KNllGE1-0?rel=0&modestbranding=1&showinfo=0&iv_load_policy=3&fs=0&disablekb=1&color=white"
-                title="GetNearMe — Come funziona"
+                title={t.howItWorks.videoTitle}
                 allow="accelerometer; clipboard-write; encrypted-media"
                 className="absolute inset-0 w-full h-full"
               />
@@ -154,8 +154,8 @@ export default async function Home({ params }: Props) {
                 description: t.features.card5.desc,
               },
               {
-                title: "In arrivo",
-                description: "Stiamo sviluppando nuove funzionalità pensate per rendere il lavoro della tua agenzia ancora più strutturato ed efficiente.",
+                title: t.features.comingSoonTitle,
+                description: t.features.comingSoonDesc,
                 comingSoon: true,
               },
             ].map((item, i) => (
@@ -167,7 +167,7 @@ export default async function Home({ params }: Props) {
                   <div className="aspect-[4/2.5] bg-slate-50 rounded-lg relative overflow-hidden">
                     {('comingSoon' in item && item.comingSoon) ? (
                       <div className="absolute inset-0 flex items-center justify-center bg-slate-100">
-                        <span className="text-4xl font-bold text-slate-200 tracking-wide">Coming soon</span>
+                        <span className="text-4xl font-bold text-slate-200 tracking-wide">{t.features.comingSoonTitle}</span>
                       </div>
                     ) : (
                       <Image
@@ -200,7 +200,7 @@ export default async function Home({ params }: Props) {
               rel="noopener noreferrer"
               className="block w-full sm:w-auto sm:inline-block px-5 py-2.5 sm:px-6 border-2 border-blue-500 bg-blue-500 text-white rounded-lg hover:bg-blue-600 hover:border-blue-600 transition-all font-bold text-base sm:text-lg font-sans"
             >
-              Aggiungi estensione
+              {t.features.addExtension}
             </a>
           </div>
         </section>
@@ -274,20 +274,20 @@ export default async function Home({ params }: Props) {
               {[
                 {
                   step: "01",
-                  title: "Crea il tuo account",
-                  desc: "Registrati in pochi secondi e accedi alla piattaforma.",
+                  title: t.howItWorks.step1Title,
+                  desc: t.howItWorks.step1Desc,
                   image: "/assets/png/login.png",
                 },
                 {
                   step: "02",
-                  title: "Attiva il piano Agenzia",
-                  desc: "Dal tuo profilo, accedi alla sezione abbonamento e attiva il piano professionale mensile.",
+                  title: t.howItWorks.step2Title,
+                  desc: t.howItWorks.step2Desc,
                   image: "/assets/png/agency.png",
                 },
                 {
                   step: "03",
-                  title: "Inizia subito a lavorare",
-                  desc: "L'accesso è immediato: puoi utilizzare tutte le funzionalità direttamente nei portali immobiliari che già utilizzi.",
+                  title: t.howItWorks.step3Title,
+                  desc: t.howItWorks.step3Desc,
                   image: "/assets/png/startWork.png",
                 },
               ].map((item, i) => (
@@ -330,7 +330,7 @@ export default async function Home({ params }: Props) {
               rel="noopener noreferrer"
               className="block w-full sm:w-auto sm:inline-block px-5 py-2.5 sm:px-6 border-2 border-blue-500 bg-blue-500 text-white rounded-lg hover:bg-blue-600 hover:border-blue-600 transition-all font-bold text-base sm:text-lg font-sans"
             >
-              Inizia con GetNearMe
+              {t.howItWorks.cta}
             </a>
             <div className="space-y-2 text-sm text-slate-500 font-light">
               <p dangerouslySetInnerHTML={{ __html: t.pricing.footer1.replace(/, /g, ',<br class="sm:hidden" /> ') }} />
@@ -370,7 +370,7 @@ export default async function Home({ params }: Props) {
                 href="mailto:info@getnearme.it"
                 className="w-full sm:w-auto px-5 py-2.5 sm:px-6 border-2 border-blue-500 text-blue-500 rounded-lg hover:bg-blue-50 transition-all font-bold text-base sm:text-lg font-sans text-center"
               >
-                Richiedi informazioni
+                {t.cta.requestInfo}
               </a>
               <a
                 href="https://chromewebstore.google.com/detail/getnearme-%E2%80%94-valuta-il-qua/jbnceigldmpkpplanjlednlehloaeoia"
