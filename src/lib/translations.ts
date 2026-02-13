@@ -280,6 +280,7 @@ export const translations = {
       title3: "agency apart",
       description: "Zone analysis, professional comparisons, and AI to enhance properties and presentations. Offer a service that goes beyond simple listings.",
       cta: "Add Extension",
+      ctaSecondary: "How it works",
       subMockup: "GetNearMe is a Google Chrome extension that empowers your agency. It analyzes properties and neighborhoods, compares zone data, generates comparative estimates and professional presentations... all automatically while you browse the real estate portals you already use."
     },
     features: {
@@ -542,6 +543,7 @@ export const translations = {
       title3: "tu agencia",
       description: "Análisis de zona, comparaciones profesionales e IA para valorizar inmuebles y presentaciones. Ofrece un servicio que va más allá del simple anuncio.",
       cta: "Añadir Extensión",
+      ctaSecondary: "Cómo funciona",
       subMockup: "GetNearMe es una extensión de Google Chrome que potencia el trabajo de tu agencia. Analiza inmuebles y barrios, compara datos de zona, genera estimaciones comparativas y presentaciones profesionales… todo automáticamente mientras navegas por los portales inmobiliarios que ya usas."
     },
     features: {
@@ -804,6 +806,7 @@ export const translations = {
       title3: "votre agence",
       description: "Analyse de zone, comparaisons professionnelles et IA pour valoriser les biens et les présentations. Offrez un service qui va au-delà de la simple annonce.",
       cta: "Ajouter l'Extension",
+      ctaSecondary: "Comment ça marche",
       subMockup: "GetNearMe est une extension Google Chrome qui renforce le travail de votre agence. Elle analyse les biens et les quartiers, compare les données de zone, génère des estimations comparatives et des présentations professionnelles… le tout automatiquement pendant que vous naviguez sur les portails immobiliers que vous utilisez déjà."
     },
     features: {
@@ -1066,6 +1069,7 @@ export const translations = {
       title3: "ваше агентство",
       description: "Анализ районов, профессиональные сравнения и ИИ для повышения ценности объектов и презентаций. Предложите сервис, который выходит за рамки простого объявления.",
       cta: "Добавить Расширение",
+      ctaSecondary: "Как это работает",
       subMockup: "GetNearMe — это расширение для Google Chrome, которое усиливает работу вашего агентства. Оно анализирует объекты и районы, сравнивает данные по зонам, генерирует сравнительные оценки и профессиональные презентации… и всё это автоматически, пока вы просматриваете порталы недвижимости, которыми уже пользуетесь."
     },
     features: {
@@ -1328,6 +1332,7 @@ export const translations = {
       title3: "вашу агенцію",
       description: "Аналіз районів, професійні порівняння та ШІ для підвищення цінності об'єктів та презентацій. Запропонуйте сервіс, що виходить за межі простого оголошення.",
       cta: "Додати Розширення",
+      ctaSecondary: "Як це працює",
       subMockup: "GetNearMe — це розширення для Google Chrome, яке посилює роботу вашої агенції. Воно аналізує об'єкти та райони, порівнює дані по зонах, генерує порівняльні оцінки та професійні презентації… і все це автоматично, поки ви переглядаєте портали нерухомості, якими вже користуєтеся."
     },
     features: {
