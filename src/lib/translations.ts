@@ -7,36 +7,42 @@ export const translations = {
       pricing: "Prezzi",
       faq: "FAQ",
       blog: "Blog",
-      startAnalysis: "Inizia Analisi",
+      tutorial: "Tutorial",
+      startAnalysis: "Prova ora!",
       backToHome: "← Torna alla home"
     },
     hero: {
-      title1: "Scegli casa tua",
-      title2: "con più",
-      title3: "consapevolezza",
-      description: "GetNearMe è uno strumento di supporto decisionale che analizza immobili e quartieri, confronta i dati disponibili e fornisce stime indicative dei costi per aiutarti a valutare più opzioni in modo strutturato.",
+      title1: "Il vantaggio competitivo",
+      title2: "che distingue la",
+      title3: "tua agenzia",
+      description: "Analisi di zona, comparazioni professionali e AI per valorizzare immobili e presentazioni. Offri un servizio che va oltre il semplice annuncio.",
       cta: "Aggiungi Estensione",
-      subMockup: "GetNearMe è un’estensione per Google Chrome che ti aiuta a prendere decisioni migliori quando cerchi casa. Non vedi solo le informazioni di base: organizza i dati dell’annuncio, confronta più immobili, analizza i servizi attorno e confronta prezzi reali della zona… tutto in automatico mentre navighi sui portali immobiliari che già usi."
+      ctaSecondary: "Come funziona",
+      subMockup: "GetNearMe è un'estensione per Google Chrome progettata per agenzie immobiliari che vogliono offrire un servizio più completo e professionale. Analizza immobili e quartieri, confronta dati di zona, genera report comparativi personalizzati e migliora immagini e descrizioni con l'AI, tutto direttamente mentre navighi sui portali che utilizzi ogni giorno."
     },
     features: {
-      title: "L'immobile, nei",
-      titleItalic: "suoi dati essenziali",
-      description: "GetNearMe organizza le informazioni in passaggi chiari, per aiutarti a confrontare immobili e contesto in modo strutturato.",
+      title: "Tutto ciò che puoi",
+      titleItalic: "fare con GetNearMe",
+      description: "Una suite completa per analizzare immobili, confrontare dati di zona, creare report professionali e valorizzare annunci con l'intelligenza artificiale.",
       card1: {
-        title: "I dati dell'immobile",
-        desc: "Prezzo, superficie, €/m², tipologia e caratteristiche principali vengono raccolti e organizzati a partire dai dati dell'annuncio."
+        title: "Analisi completa dell'immobile",
+        desc: "Hai subito una visione chiara e strutturata dei dati chiave dell'immobile, senza dover cercare informazioni sparse tra più pagine."
       },
       card2: {
-        title: "Il contesto intorno all'immobile",
-        desc: "Servizi, trasporti, scuole, aree verdi e punti di interesse vengono analizzati in base alla posizione e alle distanze."
+        title: "Analisi territoriale interattiva",
+        desc: "Mostra ai clienti cosa significa davvero vivere in quella zona: servizi, trasporti e distanze reali consultabili in tempo reale."
       },
       card3: {
-        title: "Prezzi in relazione alla zona",
-        desc: "Il prezzo dell'annuncio viene confrontato con i valori medi di riferimento disponibili per la zona."
+        title: "Calcolo prezzo medio €/m² di zona",
+        desc: "Supporta le tue valutazioni con un riferimento oggettivo sull'area, utile in fase di acquisizione e durante la trattativa."
       },
       card4: {
-        title: "Una vista comparativa",
-        desc: "Le informazioni vengono affiancate per evidenziare differenze rilevanti tra più opzioni analizzate."
+        title: "Report comparativi personalizzabili",
+        desc: "Presenta più immobili in modo professionale, con documenti personalizzati che rafforzano l'autorevolezza della tua agenzia."
+      },
+      card5: {
+        title: "Valorizzazione annunci con AI",
+        desc: "Migliora immagini e descrizioni per aumentare il valore percepito degli immobili, senza ricorrere a strumenti esterni."
       },
       disclaimer: "Le analisi e le stime mostrate sono indicative e non costituiscono una valutazione immobiliare."
     },
@@ -45,42 +51,42 @@ export const translations = {
       titleItalic: "frequenti",
       items: [
         {
-          q: "Che tipo di informazioni mostra?",
-          a: "GetNearMe mostra dati organizzati provenienti da annunci immobiliari e fonti pubbliche, relativi all'immobile, al quartiere e a indicatori di prezzo e costo."
+          q: "GetNearMe è un portale immobiliare?",
+          a: "No. Si integra nei portali che già utilizzi e aggiunge analisi di zona, confronti di mercato, report professionali e strumenti AI direttamente durante la navigazione."
         },
         {
-          q: "È un portale immobiliare o un'agenzia?",
-          a: "No. GetNearMe non pubblica annunci e non svolge attività di intermediazione immobiliare. È uno strumento di analisi e confronto dei dati disponibili."
+          q: "Devo cambiare il mio modo di lavorare?",
+          a: "No. Continui a usare i portali che conosci. GetNearMe si integra automaticamente, senza nuovi software da imparare."
         },
         {
-          q: "Sono tutte valutazioni ufficiali?",
-          a: "No. Le analisi e le stime mostrate sono indicative e non costituiscono una valutazione immobiliare né una consulenza professionale."
+          q: "Mi aiuta nelle trattative?",
+          a: "Sì. Puoi supportare prezzo e posizionamento con dati di zona e comparazioni oggettive, aumentando credibilità e forza negoziale."
         },
         {
-          q: "Da dove provengono i dati?",
-          a: "I dati derivano dagli annunci immobiliari analizzati e da fonti pubbliche disponibili. Le informazioni vengono elaborate per facilitarne la lettura e il confronto."
+          q: "Posso creare report per i clienti?",
+          a: "Sì. Generi report comparativi personalizzati con il logo della tua agenzia, pronti da condividere."
         },
         {
-          q: "Le stime dei costi sono precise?",
-          a: "No. Le stime dei costi sono proiezioni indicative basate su valori medi e possono variare in base alle caratteristiche specifiche dell'immobile e dell'operazione."
+          q: "Posso migliorare immagini e descrizioni?",
+          a: "Sì. L'AI ti aiuta a valorizzare le foto e rendere le descrizioni più professionali e persuasive."
         },
         {
-          q: "Posso confrontare più immobili tra loro?",
-          a: "Sì. GetNearMe consente di affiancare più immobili per confrontare dati, contesto e indicatori in una vista comparativa."
+          q: "I dati sono affidabili?",
+          a: "Le analisi si basano su dati pubblici e annunci disponibili online. Sono un supporto professionale alle valutazioni, non sostituiscono una perizia ufficiale."
         }
       ]
     },
     pricing: {
-      title: "Accesso alle",
-      titleItalic: "analisi",
-      description: "Scegli il livello di accesso più adatto al numero di analisi che desideri effettuare.",
+      title: "Accesso professionale",
+      titleItalic: "alla piattaforma",
+      description: "Un unico piano, completo di tutte le funzionalità, pensato per integrare analisi e strumenti avanzati nel tuo lavoro quotidiano.",
       free: "Free",
       buyNow: "Acquista ora",
       registerNow: "Registrati ora",
       mostChosen: "Più scelto",
       footer1: "Pagamento sicuro con carta, PayPal e principali provider.",
-      footer2: "Crediti disponibili immediatamente dopo l'acquisto.",
-      footer3: "Nessun abbonamento. Nessuna scadenza.",
+      footer2: "Nessun vincolo annuale. Disdici quando vuoi.",
+      footer3: "",
       plans: [
         {
           name: "500 crediti",
@@ -105,14 +111,14 @@ export const translations = {
       ]
     },
     cta: {
-      title: "Confronta immobili",
-      title2: "in modo",
-      titleItalic: "strutturato",
-      desc: "GetNearMe ti aiuta a organizzare e confrontare i dati disponibili per valutare più opzioni con maggiore chiarezza.",
+      title: "Distingui la tua agenzia",
+      title2: "con strumenti professionali",
+      titleItalic: "avanzati",
+      desc: "Semplifica i processi e rafforza la qualità delle tue presentazioni.",
       button: "Aggiungi estensione"
     },
     footer: {
-      desc: "Strumento di supporto decisionale per l'analisi comparativa di immobili e quartieri.",
+      desc: "Strumenti avanzati per agenzie immobiliari che vogliono offrire un servizio più completo e professionale.",
       product: "Prodotto",
       legal: "Legale",
       privacy: "Privacy Policy",
@@ -269,12 +275,12 @@ export const translations = {
       backToHome: "← Back to home"
     },
     hero: {
-      title1: "Choose your home",
-      title2: "with more",
-      title3: "awareness",
-      description: "GetNearMe is a decision support tool that analyzes real estate and neighborhoods, compares available data and provides indicative cost estimates to help you evaluate multiple options in a structured way.",
+      title1: "The competitive edge",
+      title2: "that sets your",
+      title3: "agency apart",
+      description: "Zone analysis, professional comparisons, and AI to enhance properties and presentations. Offer a service that goes beyond simple listings.",
       cta: "Add Extension",
-      subMockup: "GetNearMe is a Google Chrome extension that helps you make better decisions when searching for a home. You don't just see the basic information: it organizes listing data, compares multiple properties, analyzes surrounding services and compares real area prices... all automatically while you browse the real estate portals you already use."
+      subMockup: "GetNearMe is a Google Chrome extension that empowers your agency. It analyzes properties and neighborhoods, compares zone data, generates comparative estimates and professional presentations... all automatically while you browse the real estate portals you already use."
     },
     features: {
       title: "The property, in its",
@@ -295,6 +301,10 @@ export const translations = {
       card4: {
         title: "Comparative view",
         desc: "Information is displayed side-by-side to highlight relevant differences between multiple analyzed options."
+      },
+      card5: {
+        title: "Placeholder title",
+        desc: "Placeholder description for the fifth feature."
       },
       disclaimer: "The analyzes and estimates shown are indicative and do not constitute a real estate appraisal."
     },
@@ -527,12 +537,12 @@ export const translations = {
       backToHome: "← Volver al inicio"
     },
     hero: {
-      title1: "Elige tu casa",
-      title2: "con más",
-      title3: "conciencia",
-      description: "GetNearMe è una herramienta de soporte a la decisión que analiza inmuebles y barrios, compara los datos disponibles y ofrece estimaciones indicativas de costes para ayudarte a evaluar múltiples opciones de forma estructurada.",
+      title1: "La ventaja competitiva",
+      title2: "que distingue a",
+      title3: "tu agencia",
+      description: "Análisis de zona, comparaciones profesionales e IA para valorizar inmuebles y presentaciones. Ofrece un servicio que va más allá del simple anuncio.",
       cta: "Añadir Extensión",
-      subMockup: "GetNearMe es una extensión de Google Chrome que te ayuda a tomar mejores decisiones al buscar casa. No solo ves la información básica: organiza los datos del anuncio, compara múltiples inmuebles, analiza los servicios del entorno y compara precios reales de la zona… todo automáticamente mientras navegas por los portales inmobiliarios que ya usas."
+      subMockup: "GetNearMe es una extensión de Google Chrome que potencia el trabajo de tu agencia. Analiza inmuebles y barrios, compara datos de zona, genera estimaciones comparativas y presentaciones profesionales… todo automáticamente mientras navegas por los portales inmobiliarios que ya usas."
     },
     features: {
       title: "El inmueble, en sus datos",
@@ -553,6 +563,10 @@ export const translations = {
       card4: {
         title: "Vista comparativa",
         desc: "La información se muestra en paralelo para resaltar las diferencias relevantes entre varias opciones analizadas."
+      },
+      card5: {
+        title: "Título placeholder",
+        desc: "Descripción placeholder para la quinta funcionalidad."
       },
       disclaimer: "Los análisis y estimaciones mostrados son indicativos y no constituyen una tasación inmobiliaria."
     },
@@ -785,12 +799,12 @@ export const translations = {
       backToHome: "← Retour à l'accueil"
     },
     hero: {
-      title1: "Choisissez votre maison",
-      title2: "avec plus de",
-      title3: "conscience",
-      description: "GetNearMe est un outil d'aide à la décision qui analyse l'immobilier et les quartiers, compare les données disponibles et fournit des estimations de coûts indicatives pour vous aider à évaluer plusieurs options de manière structurée.",
+      title1: "L'avantage compétitif",
+      title2: "qui distingue",
+      title3: "votre agence",
+      description: "Analyse de zone, comparaisons professionnelles et IA pour valoriser les biens et les présentations. Offrez un service qui va au-delà de la simple annonce.",
       cta: "Ajouter l'Extension",
-      subMockup: "GetNearMe est une extension Google Chrome qui vous aide à prendre de meilleures décisions lors de votre recherche de logement. Vous ne voyez pas seulement les informations de base : elle organise les données de l'annonce, compare plusieurs biens, analyse les services environnants et compare les prix réels du secteur… tout cela automatiquement pendant que vous naviguez sur les portails immobiliers que vous utilisez déjà."
+      subMockup: "GetNearMe est une extension Google Chrome qui renforce le travail de votre agence. Elle analyse les biens et les quartiers, compare les données de zone, génère des estimations comparatives et des présentations professionnelles… le tout automatiquement pendant que vous naviguez sur les portails immobiliers que vous utilisez déjà."
     },
     features: {
       title: "Le bien, dans ses données",
@@ -811,6 +825,10 @@ export const translations = {
       card4: {
         title: "Vue comparative",
         desc: "Les informations sont affichées côte à côte pour mettre en évidence les différences pertinentes entre plusieurs options analysées."
+      },
+      card5: {
+        title: "Titre placeholder",
+        desc: "Description placeholder pour la cinquième fonctionnalité."
       },
       disclaimer: "Les analyses et estimations affichées sont indicatives et ne constituent pas une expertise immobilière."
     },
@@ -1043,12 +1061,12 @@ export const translations = {
       backToHome: "← Вернуться на главную"
     },
     hero: {
-      title1: "Выбирайте дом",
-      title2: "с большей",
-      title3: "осознанностью",
-      description: "GetNearMe — это инструмент поддержки принятия решений, который анализирует недвижимость и районы, сравнивает доступные данные и предоставляет ориентировочную оценку затрат, чтобы помочь вам оценить несколько вариантов структурированным образом.",
+      title1: "Конкурентное преимущество,",
+      title2: "которое выделяет",
+      title3: "ваше агентство",
+      description: "Анализ районов, профессиональные сравнения и ИИ для повышения ценности объектов и презентаций. Предложите сервис, который выходит за рамки простого объявления.",
       cta: "Добавить Расширение",
-      subMockup: "GetNearMe — это расширение для Google Chrome, которое помогает вам принимать лучшие решения при поиске дома. Вы видите не только основную информацию: оно организует данные объявлений, сравнивает несколько объектов, анализирует окружающие услуги и сравнивает реальные цены в районе… и все это автоматически, пока вы просматриваете порталы недвижимости, которыми уже пользуетесь."
+      subMockup: "GetNearMe — это расширение для Google Chrome, которое усиливает работу вашего агентства. Оно анализирует объекты и районы, сравнивает данные по зонам, генерирует сравнительные оценки и профессиональные презентации… и всё это автоматически, пока вы просматриваете порталы недвижимости, которыми уже пользуетесь."
     },
     features: {
       title: "Объект, в его",
@@ -1069,6 +1087,10 @@ export const translations = {
       card4: {
         title: "Сравнительный вид",
         desc: "Информация отображается рядом, чтобы подчеркнуть существенные различия между несколькими проанализированными вариантами."
+      },
+      card5: {
+        title: "Заголовок-заполнитель",
+        desc: "Описание-заполнитель для пятой функции."
       },
       disclaimer: "Представленные анализы и оценки носят ориентировочный характер и не являются официальной оценкой недвижимости."
     },
@@ -1301,12 +1323,12 @@ export const translations = {
       backToHome: "← Повернутися на головну"
     },
     hero: {
-      title1: "Обирайте дім",
-      title2: "з більшою",
-      title3: "усвідомленістю",
-      description: "GetNearMe — це інструмент підтримки прийняття рішень, який аналізує нерухомість та райони, порівнює доступні дані та надає орієнтовну оцінку витрат, щоб допомогти вам оцінити кілька варіантів структурованим чином.",
+      title1: "Конкурентна перевага,",
+      title2: "яка вирізняє",
+      title3: "вашу агенцію",
+      description: "Аналіз районів, професійні порівняння та ШІ для підвищення цінності об'єктів та презентацій. Запропонуйте сервіс, що виходить за межі простого оголошення.",
       cta: "Додати Розширення",
-      subMockup: "GetNearMe — це розширення для Google Chrome, яке допомагає вам приймати кращі рішення під час пошуку житла. Ви бачите не тільки основну інформацію: воно організовує дані оголошень, порівнює кілька об'єктів, аналізує навколишні послуги та порівнює реальні ціни в районі… і все це автоматично, поки ви переглядаєте портали нерухомості, якими вже користуєтеся."
+      subMockup: "GetNearMe — це розширення для Google Chrome, яке посилює роботу вашої агенції. Воно аналізує об'єкти та райони, порівнює дані по зонах, генерує порівняльні оцінки та професійні презентації… і все це автоматично, поки ви переглядаєте портали нерухомості, якими вже користуєтеся."
     },
     features: {
       title: "Об'єкт, у його",
@@ -1327,6 +1349,10 @@ export const translations = {
       card4: {
         title: "Порівняльний вигляд",
         desc: "Інформація відображається поруч, щоб підкреслити суттєві відмінності між кількома проаналізованими варіантами."
+      },
+      card5: {
+        title: "Заголовок-заповнювач",
+        desc: "Опис-заповнювач для п'ятої функції."
       },
       disclaimer: "Представлені аналізи та оцінки носять орієнтовний характер і не є офіційною оцінкою нерухомості."
     },

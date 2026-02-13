@@ -7,9 +7,10 @@ import { locales, localeNames, localeFlags, type Locale } from '@/lib/i18n';
 
 interface LanguageSwitcherProps {
   locale: Locale;
+  openUp?: boolean;
 }
 
-export default function LanguageSwitcher({ locale }: LanguageSwitcherProps) {
+export default function LanguageSwitcher({ locale, openUp = false }: LanguageSwitcherProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [isOpen, setIsOpen] = React.useState(false);
@@ -51,7 +52,7 @@ export default function LanguageSwitcher({ locale }: LanguageSwitcherProps) {
             aria-hidden="true"
           />
           <div 
-            className="absolute right-0 md:left-0 md:right-auto mt-2 w-48 rounded-xl bg-white border border-slate-200 shadow-xl z-20 overflow-hidden animate-fade-in"
+            className={`absolute w-48 rounded-xl bg-white border border-slate-200 shadow-xl z-20 overflow-hidden animate-fade-in ${openUp ? 'bottom-full mb-2 left-1/2 -translate-x-1/2' : 'right-0 md:left-0 md:right-auto mt-2'}`}
             role="listbox"
             aria-label="Lingue disponibili"
           >

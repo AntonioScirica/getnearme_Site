@@ -70,6 +70,7 @@ export const altTexts: Record<Locale, { hero: string; cards: string[] }> = {
       'Contesto del quartiere',
       'Confronto prezzi zona',
       'Report comparativo',
+      'Placeholder',
     ],
   },
   en: {
@@ -79,6 +80,7 @@ export const altTexts: Record<Locale, { hero: string; cards: string[] }> = {
       'Neighborhood context',
       'Area price comparison',
       'Comparative report',
+      'Placeholder',
     ],
   },
   es: {
@@ -88,6 +90,7 @@ export const altTexts: Record<Locale, { hero: string; cards: string[] }> = {
       'Contexto del barrio',
       'Comparación de precios de la zona',
       'Informe comparativo',
+      'Placeholder',
     ],
   },
   fr: {
@@ -97,6 +100,7 @@ export const altTexts: Record<Locale, { hero: string; cards: string[] }> = {
       'Contexte du quartier',
       'Comparaison des prix du secteur',
       'Rapport comparatif',
+      'Placeholder',
     ],
   },
   ru: {
@@ -106,6 +110,7 @@ export const altTexts: Record<Locale, { hero: string; cards: string[] }> = {
       'Контекст района',
       'Сравнение цен в районе',
       'Сравнительный отчет',
+      'Placeholder',
     ],
   },
   uk: {
@@ -115,6 +120,7 @@ export const altTexts: Record<Locale, { hero: string; cards: string[] }> = {
       'Контекст району',
       'Порівняння цін у районі',
       'Порівняльний звіт',
+      'Placeholder',
     ],
   },
 };
