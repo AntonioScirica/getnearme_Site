@@ -33,16 +33,16 @@ export const translations = {
         desc: "Mostra ai clienti cosa significa davvero vivere in quella zona: servizi, trasporti e distanze reali consultabili in tempo reale."
       },
       card3: {
-        title: "Calcolo prezzo medio €/m² di zona",
-        desc: "Supporta le tue valutazioni con un riferimento oggettivo sull'area, utile in fase di acquisizione e durante la trattativa."
+        title: "Valore di mercato in tempo reale",
+        desc: "Ottieni il prezzo medio €/m² della zona per supportare valutazioni, acquisizioni e trattative con dati concreti."
       },
       card4: {
         title: "Report comparativi personalizzabili",
         desc: "Presenta più immobili in modo professionale, con documenti personalizzati che rafforzano l'autorevolezza della tua agenzia."
       },
       card5: {
-        title: "Valorizzazione annunci con AI",
-        desc: "Migliora immagini e descrizioni per aumentare il valore percepito degli immobili, senza ricorrere a strumenti esterni."
+        title: "Mostra il Potenziale con l'AI",
+        desc: "Modifica le foto con l'AI e mostra il confronto prima/dopo: ambienti vuoti o arredati, luce migliorata e spazi valorizzati in pochi secondi."
       },
       disclaimer: "Le analisi e le stime mostrate sono indicative e non costituiscono una valutazione immobiliare.",
       addExtension: "Aggiungi estensione",
@@ -283,18 +283,19 @@ export const translations = {
       titleItalic: "di GetNearMe",
       subtitle: "Scopri tutti gli strumenti avanzati pensati per trasformare il lavoro della tua agenzia immobiliare. Dall'analisi territoriale all'intelligenza artificiale, ogni funzionalità è progettata per offrirti un vantaggio competitivo reale.",
       feature6: {
-        title: "Gestione Portfolio Immobili",
-        desc: "Organizza e gestisci tutti i tuoi immobili in un unico posto. Tieni traccia delle analisi, confronta performance e accedi rapidamente alla cronologia completa delle tue valutazioni.",
+        title: "Marketing Immobiliare Automatico",
+        desc: "Trasforma i dati dell'immobile in post professionali, già ottimizzati per i principali social network.",
         badge: "NUOVO",
       },
       feature7: {
-        title: "Analytics e Report Avanzati",
-        desc: "Analizza le tendenze del mercato con grafici dettagliati e report personalizzabili. Ottieni insights preziosi su quartieri, prezzi e performance per decisioni basate sui dati.",
+        title: "Video Immobiliari in pochi click",
+        desc: "Crea in pochi click contenuti video professionali per promuovere ogni immobile in modo moderno e immediato.",
         badge: "NUOVO",
       },
       ctaTitle: "Pronto per iniziare?",
       ctaDesc: "Unisciti alle agenzie immobiliari che stanno già trasformando il loro modo di lavorare con GetNearMe.",
       ctaButton: "Aggiungi Estensione",
+      ctaContact: "Contattaci",
     }
   },
   en: {
@@ -329,16 +330,16 @@ export const translations = {
         desc: "Services, transport, schools, green areas and points of interest are analyzed based on location and distances."
       },
       card3: {
-        title: "Prices relative to area",
-        desc: "The listing price is compared with available reference average values for the area."
+        title: "Real-time market value",
+        desc: "Get the average price per m² in the area to support valuations, acquisitions, and negotiations with concrete data."
       },
       card4: {
         title: "Comparative view",
         desc: "Information is displayed side-by-side to highlight relevant differences between multiple analyzed options."
       },
       card5: {
-        title: "Placeholder title",
-        desc: "Placeholder description for the fifth feature."
+        title: "Show the Potential with AI",
+        desc: "Edit photos with AI and show before/after comparisons: empty or furnished rooms, improved lighting, and enhanced spaces in seconds."
       },
       disclaimer: "The analyzes and estimates shown are indicative and do not constitute a real estate appraisal.",
       addExtension: "Add extension",
@@ -579,18 +580,19 @@ export const translations = {
       titleItalic: "of GetNearMe",
       subtitle: "Discover all the advanced tools designed to transform your real estate agency's workflow. From territorial analysis to artificial intelligence, every feature is built to give you a real competitive advantage.",
       feature6: {
-        title: "Complete Portfolio Management",
-        desc: "Organize and manage all your properties in one place. Track analyses, compare performance, and quickly access the complete history of your valuations.",
+        title: "Automated Real Estate Marketing",
+        desc: "Turn property data into professional posts, already optimized for the major social networks.",
         badge: "NEW",
       },
       feature7: {
-        title: "Advanced Analytics & Reports",
-        desc: "Analyze market trends with detailed charts and customizable reports. Gain valuable insights on neighborhoods, prices, and performance for data-driven decisions.",
+        title: "Property Videos in a Few Clicks",
+        desc: "Create professional video content in just a few clicks to promote every property in a modern and impactful way.",
         badge: "NEW",
       },
       ctaTitle: "Ready to get started?",
       ctaDesc: "Join the real estate agencies already transforming their workflow with GetNearMe.",
       ctaButton: "Add Extension",
+      ctaContact: "Contact Us",
     }
   },
   es: {
@@ -625,16 +627,16 @@ export const translations = {
         desc: "Servicios, transporte, colegios, zonas verdes y puntos de interés se analizan en función de la ubicación y las distancias."
       },
       card3: {
-        title: "Precios respecto a la zona",
-        desc: "El precio del anuncio se compara con los valores medios de referencia disponibles para la zona."
+        title: "Valor de mercado en tiempo real",
+        desc: "Obtén el precio medio por m² de la zona para respaldar valoraciones, adquisiciones y negociaciones con datos concretos."
       },
       card4: {
         title: "Vista comparativa",
         desc: "La información se muestra en paralelo para resaltar las diferencias relevantes entre varias opciones analizadas."
       },
       card5: {
-        title: "Título placeholder",
-        desc: "Descripción placeholder para la quinta funcionalidad."
+        title: "Muestra el Potencial con AI",
+        desc: "Edita fotos con AI y muestra comparaciones antes/después: ambientes vacíos o amueblados, luz mejorada y espacios valorados en segundos."
       },
       disclaimer: "Los análisis y estimaciones mostrados son indicativos y no constituyen una tasación inmobiliaria.",
       addExtension: "Añadir extensión",
@@ -875,18 +877,19 @@ export const translations = {
       titleItalic: "de GetNearMe",
       subtitle: "Descubre todas las herramientas avanzadas diseñadas para transformar el trabajo de tu agencia inmobiliaria. Desde el análisis territorial hasta la inteligencia artificial, cada funcionalidad está diseñada para darte una ventaja competitiva real.",
       feature6: {
-        title: "Gestión Completa de Portfolio",
-        desc: "Organiza y gestiona todos tus inmuebles en un solo lugar. Haz seguimiento de los análisis, compara rendimientos y accede rápidamente al historial completo de tus valoraciones.",
+        title: "Marketing Inmobiliario Automático",
+        desc: "Transforma los datos del inmueble en publicaciones profesionales, ya optimizadas para las principales redes sociales.",
         badge: "NUEVO",
       },
       feature7: {
-        title: "Analytics y Reportes Avanzados",
-        desc: "Analiza las tendencias del mercado con gráficos detallados y reportes personalizables. Obtén insights valiosos sobre barrios, precios y rendimiento para decisiones basadas en datos.",
+        title: "Vídeos Inmobiliarios en pocos clics",
+        desc: "Crea en pocos clics contenidos de vídeo profesionales para promocionar cada inmueble de forma moderna e inmediata.",
         badge: "NUEVO",
       },
       ctaTitle: "¿Listo para empezar?",
       ctaDesc: "Únete a las agencias inmobiliarias que ya están transformando su forma de trabajar con GetNearMe.",
       ctaButton: "Añadir Extensión",
+      ctaContact: "Contáctanos",
     }
   },
   fr: {
@@ -921,16 +924,16 @@ export const translations = {
         desc: "Les services, les transports, les écoles, les espaces verts et les points d'intérêt sont analysés en fonction de l'emplacement et des distances."
       },
       card3: {
-        title: "Prix par rapport au secteur",
-        desc: "Le prix de l'annonce est comparé aux valeurs moyennes de référence disponibles pour le secteur."
+        title: "Valeur de marché en temps réel",
+        desc: "Obtenez le prix moyen au m² du secteur pour appuyer vos évaluations, acquisitions et négociations avec des données concrètes."
       },
       card4: {
         title: "Vue comparative",
         desc: "Les informations sont affichées côte à côte pour mettre en évidence les différences pertinentes entre plusieurs options analysées."
       },
       card5: {
-        title: "Titre placeholder",
-        desc: "Description placeholder pour la cinquième fonctionnalité."
+        title: "Montrez le Potentiel avec l'IA",
+        desc: "Modifiez les photos avec l'IA et montrez la comparaison avant/après : espaces vides ou meublés, lumière améliorée et pièces valorisées en quelques secondes."
       },
       disclaimer: "Les analyses et estimations affichées sont indicatives et ne constituent pas une expertise immobilière.",
       addExtension: "Ajouter l'extension",
@@ -1171,18 +1174,19 @@ export const translations = {
       titleItalic: "de GetNearMe",
       subtitle: "Découvrez tous les outils avancés conçus pour transformer le travail de votre agence immobilière. De l'analyse territoriale à l'intelligence artificielle, chaque fonctionnalité est conçue pour vous donner un véritable avantage concurrentiel.",
       feature6: {
-        title: "Gestion Complète de Portfolio",
-        desc: "Organisez et gérez tous vos biens en un seul endroit. Suivez les analyses, comparez les performances et accédez rapidement à l'historique complet de vos évaluations.",
+        title: "Marketing Immobilier Automatique",
+        desc: "Transformez les données du bien en publications professionnelles, déjà optimisées pour les principaux réseaux sociaux.",
         badge: "NOUVEAU",
       },
       feature7: {
-        title: "Analytics et Rapports Avancés",
-        desc: "Analysez les tendances du marché avec des graphiques détaillés et des rapports personnalisables. Obtenez des insights précieux sur les quartiers, les prix et les performances pour des décisions basées sur les données.",
+        title: "Vidéos Immobilières en quelques clics",
+        desc: "Créez en quelques clics des contenus vidéo professionnels pour promouvoir chaque bien de manière moderne et percutante.",
         badge: "NOUVEAU",
       },
       ctaTitle: "Prêt à commencer ?",
       ctaDesc: "Rejoignez les agences immobilières qui transforment déjà leur façon de travailler avec GetNearMe.",
       ctaButton: "Ajouter l'Extension",
+      ctaContact: "Contactez-nous",
     }
   },
   ru: {
@@ -1217,16 +1221,16 @@ export const translations = {
         desc: "Услуги, транспорт, школы, зеленые зоны и достопримечательности анализируются на основе местоположения и расстояний."
       },
       card3: {
-        title: "Цены относительно района",
-        desc: "Цена объявления сравнивается с доступными справочными средними значениями для данного района."
+        title: "Рыночная стоимость в реальном времени",
+        desc: "Получите среднюю цену за м² в районе для поддержки оценок, приобретений и переговоров на основе конкретных данных."
       },
       card4: {
         title: "Сравнительный вид",
         desc: "Информация отображается рядом, чтобы подчеркнуть существенные различия между несколькими проанализированными вариантами."
       },
       card5: {
-        title: "Заголовок-заполнитель",
-        desc: "Описание-заполнитель для пятой функции."
+        title: "Покажите Потенциал с ИИ",
+        desc: "Редактируйте фото с помощью ИИ и показывайте сравнение до/после: пустые или меблированные комнаты, улучшенное освещение и преображённые пространства за секунды."
       },
       disclaimer: "Представленные анализы и оценки носят ориентировочный характер и не являются официальной оценкой недвижимости.",
       addExtension: "Добавить расширение",
@@ -1467,18 +1471,19 @@ export const translations = {
       titleItalic: "GetNearMe",
       subtitle: "Откройте для себя все продвинутые инструменты, разработанные для преобразования работы вашего агентства недвижимости. От территориального анализа до искусственного интеллекта — каждая функция создана, чтобы дать вам реальное конкурентное преимущество.",
       feature6: {
-        title: "Полное Управление Портфелем",
-        desc: "Организуйте и управляйте всеми своими объектами в одном месте. Отслеживайте анализы, сравнивайте производительность и быстро получайте доступ к полной истории ваших оценок.",
+        title: "Автоматический Маркетинг Недвижимости",
+        desc: "Преобразуйте данные объекта в профессиональные публикации, уже оптимизированные для основных социальных сетей.",
         badge: "НОВОЕ",
       },
       feature7: {
-        title: "Расширенная Аналитика и Отчёты",
-        desc: "Анализируйте тенденции рынка с помощью подробных графиков и настраиваемых отчётов. Получайте ценные инсайты о районах, ценах и производительности для принятия решений на основе данных.",
+        title: "Видео Недвижимости в несколько кликов",
+        desc: "Создавайте в несколько кликов профессиональные видеоматериалы для продвижения каждого объекта современно и эффективно.",
         badge: "НОВОЕ",
       },
       ctaTitle: "Готовы начать?",
       ctaDesc: "Присоединяйтесь к агентствам недвижимости, которые уже трансформируют свою работу с GetNearMe.",
       ctaButton: "Добавить Расширение",
+      ctaContact: "Связаться с нами",
     }
   },
   uk: {
@@ -1513,16 +1518,16 @@ export const translations = {
         desc: "Послуги, транспорт, школи, зелені зони та пам'ятки аналізуються на основі розташування та відстаней."
       },
       card3: {
-        title: "Ціни відносно району",
-        desc: "Ціна оголошення порівнюється з доступними довідковими середніми значеннями для даного району."
+        title: "Ринкова вартість у реальному часі",
+        desc: "Отримайте середню ціну за м² у районі для підтримки оцінок, придбань та переговорів на основі конкретних даних."
       },
       card4: {
         title: "Порівняльний вигляд",
         desc: "Інформація відображається поруч, щоб підкреслити суттєві відмінності між кількома проаналізованими варіантами."
       },
       card5: {
-        title: "Заголовок-заповнювач",
-        desc: "Опис-заповнювач для п'ятої функції."
+        title: "Покажіть Потенціал з ШІ",
+        desc: "Редагуйте фото за допомогою ШІ та показуйте порівняння до/після: порожні або мебльовані кімнати, покращене освітлення та перетворені простори за лічені секунди."
       },
       disclaimer: "Представлені аналізи та оцінки носять орієнтовний характер і не є офіційною оцінкою нерухомості.",
       addExtension: "Додати розширення",
@@ -1763,18 +1768,19 @@ export const translations = {
       titleItalic: "GetNearMe",
       subtitle: "Відкрийте для себе всі передові інструменти, розроблені для трансформації роботи вашого агентства нерухомості. Від територіального аналізу до штучного інтелекту — кожна функція створена, щоб дати вам реальну конкурентну перевагу.",
       feature6: {
-        title: "Повне Управління Портфелем",
-        desc: "Організуйте та керуйте всіма своїми об'єктами в одному місці. Відстежуйте аналізи, порівнюйте продуктивність і швидко отримуйте доступ до повної історії ваших оцінок.",
+        title: "Автоматичний Маркетинг Нерухомості",
+        desc: "Перетворюйте дані об'єкта на професійні публікації, вже оптимізовані для основних соціальних мереж.",
         badge: "НОВЕ",
       },
       feature7: {
-        title: "Розширена Аналітика та Звіти",
-        desc: "Аналізуйте тенденції ринку за допомогою детальних графіків та налаштовуваних звітів. Отримуйте цінні інсайти про райони, ціни та продуктивність для прийняття рішень на основі даних.",
+        title: "Відео Нерухомості за кілька кліків",
+        desc: "Створюйте за кілька кліків професійні відеоматеріали для просування кожного об'єкта сучасно та ефективно.",
         badge: "НОВЕ",
       },
       ctaTitle: "Готові почати?",
       ctaDesc: "Приєднуйтесь до агентств нерухомості, які вже трансформують свою роботу з GetNearMe.",
       ctaButton: "Додати Розширення",
+      ctaContact: "Зв'яжіться з нами",
     }
   }
 };

@@ -50,7 +50,7 @@ export default function Navbar({ locale }: NavbarProps) {
                     </Link>
 
                     <div className="hidden md:flex items-center gap-16 text-sm font-medium text-slate-600">
-                        <Link href={`/${locale}#funzionalita`} className="hover:text-black transition-colors">{t.nav.features}</Link>
+                        <Link href={`/${locale}/features`} className="hover:text-black transition-colors">{t.nav.features}</Link>
                         <Link href={`/${locale}#prezzi`} className="hover:text-black transition-colors">{t.nav.pricing}</Link>
                         <Link href={`/${locale}#faq`} className="hover:text-black transition-colors">{t.nav.faq}</Link>
                         <Link href={`/${locale}/tutorial`} className="hover:text-black transition-colors">{t.nav.tutorial}</Link>
