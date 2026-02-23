@@ -277,6 +277,24 @@ export const translations = {
     unsubscribe: {
       subtitle: "Disiscrizione completata",
       description: "Sei stato rimosso con successo dalla nostra mailing list. Non riceverai più email da GetNearMe."
+    },
+    featuresPage: {
+      title: "Tutte le Funzionalità",
+      titleItalic: "di GetNearMe",
+      subtitle: "Scopri tutti gli strumenti avanzati pensati per trasformare il lavoro della tua agenzia immobiliare. Dall'analisi territoriale all'intelligenza artificiale, ogni funzionalità è progettata per offrirti un vantaggio competitivo reale.",
+      feature6: {
+        title: "Gestione Portfolio Immobili",
+        desc: "Organizza e gestisci tutti i tuoi immobili in un unico posto. Tieni traccia delle analisi, confronta performance e accedi rapidamente alla cronologia completa delle tue valutazioni.",
+        badge: "NUOVO",
+      },
+      feature7: {
+        title: "Analytics e Report Avanzati",
+        desc: "Analizza le tendenze del mercato con grafici dettagliati e report personalizzabili. Ottieni insights preziosi su quartieri, prezzi e performance per decisioni basate sui dati.",
+        badge: "NUOVO",
+      },
+      ctaTitle: "Pronto per iniziare?",
+      ctaDesc: "Unisciti alle agenzie immobiliari che stanno già trasformando il loro modo di lavorare con GetNearMe.",
+      ctaButton: "Aggiungi Estensione",
     }
   },
   en: {
@@ -555,6 +573,24 @@ export const translations = {
     unsubscribe: {
       subtitle: "Unsubscribe complete",
       description: "You have been successfully removed from our mailing list. You will no longer receive emails from GetNearMe."
+    },
+    featuresPage: {
+      title: "All Features",
+      titleItalic: "of GetNearMe",
+      subtitle: "Discover all the advanced tools designed to transform your real estate agency's workflow. From territorial analysis to artificial intelligence, every feature is built to give you a real competitive advantage.",
+      feature6: {
+        title: "Complete Portfolio Management",
+        desc: "Organize and manage all your properties in one place. Track analyses, compare performance, and quickly access the complete history of your valuations.",
+        badge: "NEW",
+      },
+      feature7: {
+        title: "Advanced Analytics & Reports",
+        desc: "Analyze market trends with detailed charts and customizable reports. Gain valuable insights on neighborhoods, prices, and performance for data-driven decisions.",
+        badge: "NEW",
+      },
+      ctaTitle: "Ready to get started?",
+      ctaDesc: "Join the real estate agencies already transforming their workflow with GetNearMe.",
+      ctaButton: "Add Extension",
     }
   },
   es: {
@@ -833,6 +869,24 @@ export const translations = {
     unsubscribe: {
       subtitle: "Baja completada",
       description: "Has sido eliminado con exito de nuestra lista de correo. Ya no recibiras emails de GetNearMe."
+    },
+    featuresPage: {
+      title: "Todas las Funcionalidades",
+      titleItalic: "de GetNearMe",
+      subtitle: "Descubre todas las herramientas avanzadas diseñadas para transformar el trabajo de tu agencia inmobiliaria. Desde el análisis territorial hasta la inteligencia artificial, cada funcionalidad está diseñada para darte una ventaja competitiva real.",
+      feature6: {
+        title: "Gestión Completa de Portfolio",
+        desc: "Organiza y gestiona todos tus inmuebles en un solo lugar. Haz seguimiento de los análisis, compara rendimientos y accede rápidamente al historial completo de tus valoraciones.",
+        badge: "NUEVO",
+      },
+      feature7: {
+        title: "Analytics y Reportes Avanzados",
+        desc: "Analiza las tendencias del mercado con gráficos detallados y reportes personalizables. Obtén insights valiosos sobre barrios, precios y rendimiento para decisiones basadas en datos.",
+        badge: "NUEVO",
+      },
+      ctaTitle: "¿Listo para empezar?",
+      ctaDesc: "Únete a las agencias inmobiliarias que ya están transformando su forma de trabajar con GetNearMe.",
+      ctaButton: "Añadir Extensión",
     }
   },
   fr: {
@@ -1111,6 +1165,24 @@ export const translations = {
     unsubscribe: {
       subtitle: "Desinscription terminee",
       description: "Vous avez ete supprime avec succes de notre liste de diffusion. Vous ne recevrez plus d'emails de GetNearMe."
+    },
+    featuresPage: {
+      title: "Toutes les Fonctionnalités",
+      titleItalic: "de GetNearMe",
+      subtitle: "Découvrez tous les outils avancés conçus pour transformer le travail de votre agence immobilière. De l'analyse territoriale à l'intelligence artificielle, chaque fonctionnalité est conçue pour vous donner un véritable avantage concurrentiel.",
+      feature6: {
+        title: "Gestion Complète de Portfolio",
+        desc: "Organisez et gérez tous vos biens en un seul endroit. Suivez les analyses, comparez les performances et accédez rapidement à l'historique complet de vos évaluations.",
+        badge: "NOUVEAU",
+      },
+      feature7: {
+        title: "Analytics et Rapports Avancés",
+        desc: "Analysez les tendances du marché avec des graphiques détaillés et des rapports personnalisables. Obtenez des insights précieux sur les quartiers, les prix et les performances pour des décisions basées sur les données.",
+        badge: "NOUVEAU",
+      },
+      ctaTitle: "Prêt à commencer ?",
+      ctaDesc: "Rejoignez les agences immobilières qui transforment déjà leur façon de travailler avec GetNearMe.",
+      ctaButton: "Ajouter l'Extension",
     }
   },
   ru: {
@@ -1389,6 +1461,24 @@ export const translations = {
     unsubscribe: {
       subtitle: "Отписка завершена",
       description: "Вы были успешно удалены из нашей рассылки. Вы больше не будете получать письма от GetNearMe."
+    },
+    featuresPage: {
+      title: "Все Возможности",
+      titleItalic: "GetNearMe",
+      subtitle: "Откройте для себя все продвинутые инструменты, разработанные для преобразования работы вашего агентства недвижимости. От территориального анализа до искусственного интеллекта — каждая функция создана, чтобы дать вам реальное конкурентное преимущество.",
+      feature6: {
+        title: "Полное Управление Портфелем",
+        desc: "Организуйте и управляйте всеми своими объектами в одном месте. Отслеживайте анализы, сравнивайте производительность и быстро получайте доступ к полной истории ваших оценок.",
+        badge: "НОВОЕ",
+      },
+      feature7: {
+        title: "Расширенная Аналитика и Отчёты",
+        desc: "Анализируйте тенденции рынка с помощью подробных графиков и настраиваемых отчётов. Получайте ценные инсайты о районах, ценах и производительности для принятия решений на основе данных.",
+        badge: "НОВОЕ",
+      },
+      ctaTitle: "Готовы начать?",
+      ctaDesc: "Присоединяйтесь к агентствам недвижимости, которые уже трансформируют свою работу с GetNearMe.",
+      ctaButton: "Добавить Расширение",
     }
   },
   uk: {
@@ -1667,6 +1757,24 @@ export const translations = {
     unsubscribe: {
       subtitle: "Відписка завершена",
       description: "Вас було успішно видалено з нашої розсилки. Ви більше не отримуватимете листів від GetNearMe."
+    },
+    featuresPage: {
+      title: "Всі Можливості",
+      titleItalic: "GetNearMe",
+      subtitle: "Відкрийте для себе всі передові інструменти, розроблені для трансформації роботи вашого агентства нерухомості. Від територіального аналізу до штучного інтелекту — кожна функція створена, щоб дати вам реальну конкурентну перевагу.",
+      feature6: {
+        title: "Повне Управління Портфелем",
+        desc: "Організуйте та керуйте всіма своїми об'єктами в одному місці. Відстежуйте аналізи, порівнюйте продуктивність і швидко отримуйте доступ до повної історії ваших оцінок.",
+        badge: "НОВЕ",
+      },
+      feature7: {
+        title: "Розширена Аналітика та Звіти",
+        desc: "Аналізуйте тенденції ринку за допомогою детальних графіків та налаштовуваних звітів. Отримуйте цінні інсайти про райони, ціни та продуктивність для прийняття рішень на основі даних.",
+        badge: "НОВЕ",
+      },
+      ctaTitle: "Готові почати?",
+      ctaDesc: "Приєднуйтесь до агентств нерухомості, які вже трансформують свою роботу з GetNearMe.",
+      ctaButton: "Додати Розширення",
     }
   }
 };
