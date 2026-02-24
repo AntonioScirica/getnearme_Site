@@ -34,7 +34,7 @@ export default async function FeaturesPage({ params }: Props) {
     {
       title: t.features.card4.title,
       description: t.features.card4.desc,
-      image: "/assets/png/report_new.png",
+      image: "/assets/png/gif/compare_pdf.gif",
     },
     {
       title: t.features.card5.title,
@@ -44,12 +44,12 @@ export default async function FeaturesPage({ params }: Props) {
     {
       title: t.featuresPage.feature6.title,
       description: t.featuresPage.feature6.desc,
-      image: "/assets/png/templates.png",
+      image: "/assets/png/gif/post_social.gif",
     },
     {
       title: t.featuresPage.feature7.title,
       description: t.featuresPage.feature7.desc,
-      image: "/assets/png/video.png",
+      image: "/assets/png/gif/video_automation.gif",
     },
     {
       title: t.features.card3.title,
@@ -59,7 +59,7 @@ export default async function FeaturesPage({ params }: Props) {
     {
       title: t.features.card2.title,
       description: t.features.card2.desc,
-      image: "/assets/png/contesto.png",
+      image: "/assets/png/gif/map_zone.gif",
     },
   ];
 

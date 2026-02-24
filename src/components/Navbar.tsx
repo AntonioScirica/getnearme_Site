@@ -92,7 +92,7 @@ export default function Navbar({ locale }: NavbarProps) {
                 <div className="flex flex-col justify-between h-full pt-28 pb-12 px-8">
                     <div className="flex flex-col items-center gap-2">
                         {[
-                            { href: `/${locale}#funzionalita`, label: t.nav.features },
+                            { href: `/${locale}/features`, label: t.nav.features },
                             { href: `/${locale}#prezzi`, label: t.nav.pricing },
                             { href: `/${locale}#faq`, label: t.nav.faq },
                             { href: `/${locale}/tutorial`, label: t.nav.tutorial },
