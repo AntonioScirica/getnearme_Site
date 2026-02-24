@@ -191,13 +191,7 @@ export default async function FeaturesPage({ params }: Props) {
           <p className="text-lg md:text-xl text-slate-600 font-light leading-relaxed max-w-2xl mx-auto">
             {t.featuresPage.ctaDesc}
           </p>
-          <div className="pt-4 flex items-center justify-center gap-4 flex-wrap">
-            <Link
-              href={`/${locale}#contatti`}
-              className="px-8 py-4 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-all font-bold text-lg"
-            >
-              {t.featuresPage.ctaContact}
-            </Link>
+          <div className="pt-4">
             <a
               href="https://chromewebstore.google.com/detail/getnearme-%E2%80%94-valuta-il-qua/jbnceigldmpkpplanjlednlehloaeoia"
               target="_blank"
