@@ -34,32 +34,32 @@ export default async function FeaturesPage({ params }: Props) {
     {
       title: t.features.card4.title,
       description: t.features.card4.desc,
-      image: "/assets/png/gif/compare_pdf.gif",
+      image: "/assets/png/gif/compare_pdf.mp4",
     },
     {
       title: t.features.card5.title,
       description: t.features.card5.desc,
-      image: "/assets/png/gif/agency_ai_anim.gif",
+      image: "/assets/png/gif/agency_ai_anim.mp4",
     },
     {
       title: t.featuresPage.feature6.title,
       description: t.featuresPage.feature6.desc,
-      image: "/assets/png/gif/post_social.gif",
+      image: "/assets/png/gif/post_social.mp4",
     },
     {
       title: t.featuresPage.feature7.title,
       description: t.featuresPage.feature7.desc,
-      image: "/assets/png/gif/video_automation.gif",
+      image: "/assets/png/gif/video_automation.mp4",
     },
     {
       title: t.features.card3.title,
       description: t.features.card3.desc,
-      image: "/assets/png/gif/prezzo_medio_m2.gif",
+      image: "/assets/png/gif/prezzo_medio_m2.mp4",
     },
     {
       title: t.features.card2.title,
       description: t.features.card2.desc,
-      image: "/assets/png/gif/map_zone.gif",
+      image: "/assets/png/gif/map_zone.mp4",
     },
   ];
 
@@ -144,7 +144,17 @@ export default async function FeaturesPage({ params }: Props) {
                       }`}
                     >
                       <div className="rounded-lg md:rounded-xl overflow-hidden border border-gray-300">
-                        {feature.image ? (
+                        {feature.image.endsWith(".mp4") ? (
+                          <video
+                            autoPlay
+                            loop
+                            muted
+                            playsInline
+                            className="w-full h-auto"
+                          >
+                            <source src={feature.image} type="video/mp4" />
+                          </video>
+                        ) : (
                           <Image
                             src={feature.image}
                             alt={feature.title}
@@ -152,14 +162,7 @@ export default async function FeaturesPage({ params }: Props) {
                             height={491}
                             className="w-full h-auto"
                             sizes="(max-width: 1024px) 100vw, 50vw"
-                            unoptimized={feature.image.endsWith(".gif")}
                           />
-                        ) : (
-                          <div className="aspect-4/3 flex items-center justify-center bg-linear-to-br from-slate-50 via-slate-100 to-slate-200">
-                            <span className="text-7xl md:text-8xl font-bold text-slate-200">
-                              {String(index + 1).padStart(2, "0")}
-                            </span>
-                          </div>
                         )}
                       </div>
                     </div>
