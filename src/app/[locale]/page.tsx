@@ -18,12 +18,37 @@ export default async function Home({ params }: Props) {
   const t = translations[locale as Locale];
   const currentAlt = altTexts[locale as Locale];
 
-  const cardImages = [
-    "/assets/png/analizza.png",
-    "/assets/png/contesto.png",
-    "/assets/png/metro_quadro.png",
-    "/assets/png/report_new.png",
-    "/assets/png/ai_img.png",
+  const featureCards = [
+    {
+      title: t.features.card4.title,
+      description: t.features.card4.desc,
+      video: "/assets/png/gif/compare_pdf.mp4",
+    },
+    {
+      title: t.features.card5.title,
+      description: t.features.card5.desc,
+      video: "/assets/png/gif/agency_ai_anim.mp4",
+    },
+    {
+      title: t.featuresPage.feature6.title,
+      description: t.featuresPage.feature6.desc,
+      video: "/assets/png/gif/post_social.mp4",
+    },
+    {
+      title: t.featuresPage.feature7.title,
+      description: t.featuresPage.feature7.desc,
+      video: "/assets/png/gif/video_automation.mp4",
+    },
+    {
+      title: t.features.card3.title,
+      description: t.features.card3.desc,
+      video: "/assets/png/gif/prezzo_medio_m2.mp4",
+    },
+    {
+      title: t.features.card2.title,
+      description: t.features.card2.desc,
+      video: "/assets/png/gif/map_zone.mp4",
+    },
   ];
 
   return (
@@ -67,7 +92,7 @@ export default async function Home({ params }: Props) {
               {t.hero.description}
             </p>
 
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 text-sm font-medium mt-8">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-3 text-sm font-medium mt-8">
               <Link
                 href={`/${locale}/tutorial`}
                 className="w-full sm:w-auto px-5 py-2.5 sm:px-6 border-2 border-blue-500 text-blue-500 rounded-lg hover:bg-blue-50 transition-all font-bold text-base sm:text-lg font-sans text-center"
@@ -132,53 +157,22 @@ export default async function Home({ params }: Props) {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-3 mb-12">
-            {[
-              {
-                title: t.features.card1.title,
-                description: t.features.card1.desc,
-              },
-              {
-                title: t.features.card2.title,
-                description: t.features.card2.desc,
-              },
-              {
-                title: t.features.card3.title,
-                description: t.features.card3.desc,
-              },
-              {
-                title: t.features.card4.title,
-                description: t.features.card4.desc,
-              },
-              {
-                title: t.features.card5.title,
-                description: t.features.card5.desc,
-              },
-              {
-                title: t.features.comingSoonTitle,
-                description: t.features.comingSoonDesc,
-                comingSoon: true,
-              },
-            ].map((item, i) => (
+            {featureCards.map((item, i) => (
               <article
                 key={i}
-                className="bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-lg transition-shadow"
+                className="bg-white rounded-2xl border border-slate-300 overflow-hidden hover:shadow-lg transition-shadow"
               >
                 <div className="p-2">
-                  <div className="aspect-[4/2.5] bg-slate-50 rounded-lg relative overflow-hidden">
-                    {('comingSoon' in item && item.comingSoon) ? (
-                      <div className="absolute inset-0 flex items-center justify-center bg-slate-100">
-                        <span className="text-4xl font-bold text-slate-200 tracking-wide">{t.features.comingSoonTitle}</span>
-                      </div>
-                    ) : (
-                      <Image
-                        src={cardImages[i]}
-                        alt={currentAlt.cards[i]}
-                        fill
-                        className="object-cover"
-                        loading="lazy"
-                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                      />
-                    )}
+                  <div className="bg-slate-50 rounded-lg overflow-hidden border border-gray-300">
+                    <video
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                      className="w-full h-auto"
+                    >
+                      <source src={item.video} type="video/mp4" />
+                    </video>
                   </div>
                 </div>
                 <div className="px-5 py-6">
@@ -293,7 +287,7 @@ export default async function Home({ params }: Props) {
               ].map((item, i) => (
                 <article
                   key={i}
-                  className="bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-lg transition-shadow"
+                  className="bg-white rounded-2xl border border-slate-300 overflow-hidden hover:shadow-lg transition-shadow"
                 >
                   <div className="p-2">
                     <div className="aspect-4/3 bg-slate-50 rounded-lg relative overflow-hidden flex items-center justify-center">
