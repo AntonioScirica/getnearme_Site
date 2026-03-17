@@ -190,9 +190,10 @@ function PricingSection({
     <>
       <section
         id="pricing"
+        className="scroll-mt-32"
         style={{ padding: '80px 0 50px', background: '#eef2ff' }}
       >
-        <div style={{ maxWidth: 1160, margin: '0 auto', padding: '0 24px' }}>
+        <div className="max-w-7xl mx-auto px-5 md:px-3">
           <div style={{ textAlign: 'center', marginBottom: 20 }}>
             <h2
               style={{
@@ -206,7 +207,7 @@ function PricingSection({
               {data.title1}
               <br />
               {data.title2}{' '}
-              <span
+              {/* <span
                 style={{
                   background: '#fef3c7',
                   padding: '2px 12px',
@@ -214,9 +215,9 @@ function PricingSection({
                   border: '2px solid #fcd34d',
                   boxShadow: '3px 3px 0 #fcd34d',
                 }}
-              >
-                {data.titleHighlight}
-              </span>
+              > */}
+              {data.titleHighlight}
+              {/* </span> */}
               .
             </h2>
             <p style={{ color: '#888', fontSize: 16, marginBottom: 24 }}>{data.subtitle}</p>
@@ -239,14 +240,7 @@ function PricingSection({
           </div>
 
           <div
-            style={{
-              display: 'flex',
-              gap: 24,
-              justifyContent: 'center',
-              flexWrap: 'wrap',
-              alignItems: 'stretch',
-              marginTop: 40,
-            }}
+            className="grid grid-cols-1 md:grid-cols-3 items-end gap-6 mt-10"
           >
             {data.plans.map(
               (plan: {
@@ -342,7 +336,7 @@ function PricingSection({
               style={{
                 display: 'inline-block',
                 background: '#f59e0b',
-                color: '#fff',
+                color: '#1a1a2e',
                 padding: '16px 36px',
                 borderRadius: 14,
                 fontWeight: 900,

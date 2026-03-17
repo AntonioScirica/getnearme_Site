@@ -19,12 +19,11 @@ export default function TestimonialCard({ testimonial: t, index = 0 }: Testimoni
   return (
     <RevealSection delay={index * 120}>
       <div
-        className="neo-border neo-shadow"
+        className="neo-border neo-shadow h-full"
         style={{
           background: '#fff',
           borderRadius: 16,
           padding: '28px 24px',
-          maxWidth: 380,
           width: '100%',
         }}
       >

@@ -5,8 +5,15 @@
 }
 
 @keyframes fade-sequence {
-  0%, 100% { opacity: 0; }
-  50% { opacity: 0.5; }
+
+  0%,
+  100% {
+    opacity: 0;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
 }
 
 .animate-fade-sequence {
@@ -56,4 +63,8 @@ body {
 .neo-btn:active {
   transform: translate(2px, 2px);
   box-shadow: 2px 2px 0px #1a1a2e;
+}
+
+html {
+  scroll-behavior: smooth;
 }

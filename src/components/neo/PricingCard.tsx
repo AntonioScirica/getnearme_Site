@@ -39,7 +39,6 @@ export default function PricingCard({ plan, onSelect }: PricingCardProps) {
           borderRadius: 20,
           padding: '40px 28px 32px',
           position: 'relative',
-          maxWidth: 370,
           width: '100%',
           boxShadow: hovered
             ? plan.popular
@@ -151,7 +150,7 @@ export default function PricingCard({ plan, onSelect }: PricingCardProps) {
             width: '100%',
             padding: '16px 0',
             background: plan.color,
-            color: '#fff',
+            color: '#1a1a2e',
             border: '3px solid #1a1a2e',
             borderRadius: 12,
             fontSize: 16,

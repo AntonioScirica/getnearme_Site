@@ -38,7 +38,7 @@ export default function Navbar({ locale }: NavbarProps) {
     return (
         <>
             <nav
-                className={`fixed w-full z-50 top-0 left-0 transition-all duration-300 ${isScrolled
+                className={`w-full transition-all duration-300 ${isScrolled
                     ? 'bg-[#fafaf8]/80 backdrop-blur-md border-b border-slate-200'
                     : 'bg-[#fafaf8] border-b border-transparent'
                     }`}
@@ -65,25 +65,25 @@ export default function Navbar({ locale }: NavbarProps) {
                     </Link>
 
                     <div className="hidden md:flex items-center gap-16 text-sm font-medium text-slate-600 absolute left-1/2 -translate-x-1/2">
-                        <Link href={`/${locale}/features`} className="hover:text-black transition-colors">{t.nav.features}</Link>
-                        <Link href={`/${locale}#prezzi`} className="hover:text-black transition-colors">{t.nav.pricing}</Link>
+                        <Link href={`/${locale}#funzionalita`} className="hover:text-black transition-colors">{t.nav.features}</Link>
+                        <Link href={`/${locale}#tutorial`} className="hover:text-black transition-colors">{t.nav.tutorial}</Link>
+                        <Link href={`/${locale}#pricing`} className="hover:text-black transition-colors">{t.nav.pricing}</Link>
                         <Link href={`/${locale}#faq`} className="hover:text-black transition-colors">{t.nav.faq}</Link>
-                        <Link href={`/${locale}/tutorial`} className="hover:text-black transition-colors">{t.nav.tutorial}</Link>
                         <LanguageSwitcher locale={locale} />
                     </div>
 
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2 sm:gap-4">
                         <a
                             href="https://chromewebstore.google.com/detail/getnearme-%E2%80%94-valuta-il-qua/jbnceigldmpkpplanjlednlehloaeoia"
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="hidden sm:flex px-6 py-2.5 bg-amber-500 text-white rounded-xl neo-border neo-btn hover:bg-amber-600 transition-all font-bold text-lg"
+                            className="flex px-3 py-2 sm:px-6 sm:py-2.5 bg-amber-500 text-[#1a1a2e] rounded-xl neo-border neo-btn hover:bg-amber-600 transition-all font-bold text-sm sm:text-lg"
                             style={{ boxShadow: '4px 4px 0px #1a1a2e' }}
                         >
                             {t.nav.startAnalysis}
                         </a>
                         <button
-                            className="md:hidden relative z-50 p-2 text-slate-600"
+                            className="md:hidden relative z-[70] p-2 text-slate-600"
                             onClick={toggleMenu}
                             aria-label="Toggle menu"
                         >
@@ -99,7 +99,7 @@ export default function Navbar({ locale }: NavbarProps) {
 
             {/* Full-screen Mobile Menu */}
             <div
-                className={`md:hidden fixed inset-0 z-40 bg-white transition-all duration-500 ease-out ${
+                className={`md:hidden fixed inset-0 z-[60] bg-white transition-all duration-500 ease-out ${
                     isMenuOpen
                         ? 'opacity-100 pointer-events-auto'
                         : 'opacity-0 pointer-events-none'
@@ -108,10 +108,10 @@ export default function Navbar({ locale }: NavbarProps) {
                 <div className="flex flex-col justify-between h-full pt-28 pb-12 px-8">
                     <div className="flex flex-col items-center gap-2">
                         {[
-                            { href: `/${locale}/features`, label: t.nav.features },
-                            { href: `/${locale}#prezzi`, label: t.nav.pricing },
+                            { href: `/${locale}#funzionalita`, label: t.nav.features },
+                            { href: `/${locale}#tutorial`, label: t.nav.tutorial },
+                            { href: `/${locale}#pricing`, label: t.nav.pricing },
                             { href: `/${locale}#faq`, label: t.nav.faq },
-                            { href: `/${locale}/tutorial`, label: t.nav.tutorial },
                         ].map((item, i) => (
                             <Link
                                 key={i}
@@ -132,7 +132,7 @@ export default function Navbar({ locale }: NavbarProps) {
                             href="https://chromewebstore.google.com/detail/getnearme-%E2%80%94-valuta-il-qua/jbnceigldmpkpplanjlednlehloaeoia"
                             target="_blank"
                             rel="noopener noreferrer"
-                            className={`mt-6 w-full max-w-xs text-center px-5 py-2.5 bg-amber-500 text-white rounded-xl neo-border neo-btn hover:bg-amber-600 transition-all duration-500 ease-out font-bold text-base ${
+                            className={`mt-6 w-full max-w-xs text-center px-5 py-2.5 bg-amber-500 text-[#1a1a2e] rounded-xl neo-border neo-btn hover:bg-amber-600 transition-all duration-500 ease-out font-bold text-base ${
                                 isMenuOpen
                                     ? 'opacity-100 translate-y-0'
                                     : 'opacity-0 translate-y-4'

@@ -1,9 +1,23 @@
+import Image from "next/image";
 import Link from "next/link";
 import { locales, type Locale } from "@/lib/i18n";
 import { translations } from "@/lib/translations";
 import Navbar from "@/components/Navbar";
 import HeroFloatingIcons from "@/components/HeroFloatingIcons";
 import HomepageClient from "./HomepageClient";
+
+const tutorialVideos = [
+  { id: "I7kcgpiGQH8", title: "Come scaricare GetNearMe!", duration: "0:46" },
+  { id: "mMpozP8SM48", title: "La sezione Immobile di GetNearMe", duration: "0:46" },
+  { id: "jY4_33HrD0E", title: "Analizza il quartiere intorno a te!", duration: "0:47" },
+  { id: "bNnjbHegtjg", title: "Calcolare il prezzo medio al m2", duration: "0:42" },
+  { id: "klTtrvPqMlI", title: "Comparare i vari immobili!", duration: "0:45" },
+  { id: "-AxXOzMCzLQ", title: "Report Personalizzabili per Agenzie", duration: "0:46" },
+  { id: "VfLpWoesIrU", title: "Get AI per arredare gli immobili!", duration: "0:37" },
+  { id: "C_pkjIiW68o", title: "A cosa servono i crediti?", duration: "1:45" },
+  { id: "BXCkVZp6nik", title: "Ottenere crediti con la newsletter!", duration: "0:44" },
+  { id: "YW2k6azRNcY", title: "Ho trovato un problema!", duration: "0:39" },
+];
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -29,47 +43,46 @@ export default async function Home({ params }: Props) {
 
   return (
     <div
-      className="min-h-screen overflow-x-hidden"
+      className="min-h-screen overflow-x-clip"
       style={{ background: "#fafaf8", color: "#1a1a2e" }}
     >
-      {/* Sticky Top Bar */}
-      <div
-        style={{
-          background: "#1a1a2e",
-          color: "#fff",
-          padding: "11px 16px",
-          textAlign: "center",
-          fontSize: 13,
-          fontWeight: 600,
-          position: "sticky",
-          top: 0,
-          zIndex: 1000,
-          borderBottom: "3px solid #f59e0b",
-        }}
-      >
-        <span>
-          🔥 {l.topBar.promo}{" "}
-          <span style={{ color: "#f59e0b" }}>{l.topBar.discount}</span>
-        </span>
-        <span className="hidden sm:inline" style={{ margin: "0 8px" }}>
-          — {l.topBar.expiresIn}
-        </span>
-        <HomepageClient variant="countdown-inline" />
-        <span style={{ marginLeft: 8, color: "#34d399" }}>
-          — {l.topBar.freeTrialShort}
-        </span>
-      </div>
+      {/* Sticky Header: Banner + Navbar */}
+      <div className="sticky top-0 z-50">
+        {/* Top Bar */}
+        <div
+          style={{
+            background: "#1a1a2e",
+            color: "#fff",
+            padding: "11px 16px",
+            textAlign: "center",
+            fontSize: 13,
+            fontWeight: 600,
+            borderBottom: "3px solid #f59e0b",
+          }}
+        >
+          <span>
+            🔥 {l.topBar.promo}{" "}
+            <span style={{ color: "#f59e0b" }}>{l.topBar.discount}</span>
+          </span>
+          <span className="hidden sm:inline" style={{ margin: "0 8px" }}>
+            — {l.topBar.expiresIn}
+          </span>
+          <HomepageClient variant="countdown-inline" />
+          <span style={{ marginLeft: 8, color: "#34d399" }}>
+            — {l.topBar.freeTrialShort}
+          </span>
+        </div>
 
-      {/* Navbar */}
-      <div style={{ marginTop: 0 }}>
+        {/* Navbar */}
         <Navbar locale={locale as Locale} />
       </div>
 
-      <main className="pt-20 relative">
+      <main className="relative">
         {/* Hero Section */}
         <section
+          className="py-8 md:py-24"
           style={{
-            padding: "80px 0 70px",
+            // padding: "40px 0 70px",
             background: "#fafaf8",
             position: "relative",
             overflow: "hidden",
@@ -123,13 +136,7 @@ export default async function Home({ params }: Props) {
           </div>
 
           <div
-            style={{
-              maxWidth: 1160,
-              margin: "0 auto",
-              padding: "0 24px",
-              position: "relative",
-              zIndex: 10,
-            }}
+            className="max-w-7xl mx-auto px-5 md:px-3 relative z-10"
           >
             <div
               style={{
@@ -154,7 +161,7 @@ export default async function Home({ params }: Props) {
                 fontWeight: 900,
                 lineHeight: 1.05,
                 margin: "0 0 22px",
-                maxWidth: 780,
+                // maxWidth: 780,
                 letterSpacing: "-2px",
               }}
             >
@@ -192,7 +199,7 @@ export default async function Home({ params }: Props) {
                 className="neo-btn"
                 style={{
                   background: "#f59e0b",
-                  color: "#fff",
+                  color: "#1a1a2e",
                   border: "3px solid #1a1a2e",
                   padding: "16px 36px",
                   borderRadius: 14,
@@ -207,8 +214,8 @@ export default async function Home({ params }: Props) {
               >
                 {l.hero.ctaPrimary}
               </a>
-              <Link
-                href={`/${locale}/tutorial`}
+              <a
+                href="#tutorial"
                 className="neo-btn"
                 style={{
                   background: "#fff",
@@ -225,7 +232,7 @@ export default async function Home({ params }: Props) {
                 }}
               >
                 {l.hero.ctaSecondary}
-              </Link>
+              </a>
             </div>
 
             <div
@@ -263,9 +270,7 @@ export default async function Home({ params }: Props) {
 
         {/* Problem / Solution */}
         <section style={{ padding: "70px 0", background: "#fff" }}>
-          <div
-            style={{ maxWidth: 1160, margin: "0 auto", padding: "0 24px" }}
-          >
+          <div className="max-w-7xl mx-auto px-5 md:px-3">
             <div
               style={{
                 display: "grid",
@@ -332,10 +337,8 @@ export default async function Home({ params }: Props) {
         </section>
 
         {/* Features */}
-        <section style={{ padding: "70px 0", background: "#f3f4f6" }}>
-          <div
-            style={{ maxWidth: 1160, margin: "0 auto", padding: "0 24px" }}
-          >
+        <section id="funzionalita" className="scroll-mt-32" style={{ padding: "70px 0", background: "#f3f4f6" }}>
+          <div className="max-w-7xl mx-auto px-5 md:px-3">
             <div style={{ textAlign: "center", marginBottom: 48 }}>
               <h2
                 style={{
@@ -395,123 +398,9 @@ export default async function Home({ params }: Props) {
           </div>
         </section>
 
-        {/* Testimonials */}
-        <section style={{ padding: "70px 0", background: "#fffbeb" }}>
-          <div
-            style={{ maxWidth: 1160, margin: "0 auto", padding: "0 24px" }}
-          >
-            <div style={{ textAlign: "center", marginBottom: 40 }}>
-              <h2
-                style={{
-                  fontSize: "clamp(28px, 5vw, 44px)",
-                  fontWeight: 900,
-                  color: "#1a1a2e",
-                  lineHeight: 1.15,
-                  marginBottom: 12,
-                }}
-              >
-                {l.testimonials.title}
-              </h2>
-              <div
-                style={{
-                  display: "flex",
-                  gap: 16,
-                  justifyContent: "center",
-                  flexWrap: "wrap",
-                  marginTop: 12,
-                }}
-              >
-                {[
-                  {
-                    label: l.testimonials.npsLabel,
-                    value: l.testimonials.npsValue,
-                    color: "#10b981",
-                  },
-                  {
-                    label: l.testimonials.retentionLabel,
-                    value: l.testimonials.retentionValue,
-                    color: "#6366f1",
-                  },
-                ].map(
-                  (
-                    s: { label: string; value: string; color: string },
-                    i: number
-                  ) => (
-                    <span
-                      key={i}
-                      className="neo-border"
-                      style={{
-                        background: "#fff",
-                        borderRadius: 10,
-                        padding: "6px 16px",
-                        fontSize: 13,
-                        fontWeight: 700,
-                        color: "#888",
-                        boxShadow: "3px 3px 0 #1a1a2e",
-                      }}
-                    >
-                      {s.label}:{" "}
-                      <strong style={{ color: s.color }}>{s.value}</strong>
-                    </span>
-                  )
-                )}
-              </div>
-            </div>
-            <div
-              style={{
-                display: "flex",
-                gap: 20,
-                flexWrap: "wrap",
-                justifyContent: "center",
-              }}
-            >
-              {l.testimonials.items.map(
-                (
-                  testimonial: {
-                    name: string;
-                    role: string;
-                    text: string;
-                    avatar: string;
-                    color: string;
-                  },
-                  i: number
-                ) => (
-                  <HomepageClient
-                    key={i}
-                    variant="testimonial"
-                    testimonialData={testimonial}
-                    index={i}
-                  />
-                )
-              )}
-            </div>
-          </div>
-        </section>
-
-        {/* Pricing */}
-        <HomepageClient
-          variant="pricing-section"
-          locale={locale}
-          pricingData={{
-            title1: l.pricing.title1,
-            title2: l.pricing.title2,
-            titleHighlight: l.pricing.titleHighlight,
-            subtitle: l.pricing.subtitle,
-            countdownLabel: l.pricing.countdownLabel,
-            trustBadges: l.pricing.trustBadges,
-            savingsLabel: l.pricing.savingsLabel,
-            progressAgencies: l.pricing.progressAgencies,
-            progressSpots: l.pricing.progressSpots,
-            plans: l.pricing.plans,
-            modal: l.modal,
-          }}
-        />
-
         {/* How It Works */}
         <section style={{ padding: "70px 0", background: "#fff" }}>
-          <div
-            style={{ maxWidth: 1160, margin: "0 auto", padding: "0 24px" }}
-          >
+          <div className="max-w-7xl mx-auto px-5 md:px-3">
             <div style={{ textAlign: "center", marginBottom: 48 }}>
               <h2
                 style={{
@@ -571,15 +460,212 @@ export default async function Home({ params }: Props) {
           </div>
         </section>
 
+        {/* Tutorial */}
+        <section id="tutorial" className="scroll-mt-32" style={{ padding: "70px 0", background: "#fff" }}>
+          <div className="max-w-7xl mx-auto px-5 md:px-3">
+            <div style={{ textAlign: "center", marginBottom: 48 }}>
+              <h2
+                style={{
+                  fontSize: "clamp(28px, 5vw, 44px)",
+                  fontWeight: 900,
+                  color: "#1a1a2e",
+                  lineHeight: 1.15,
+                  marginBottom: 12,
+                }}
+              >
+                Tutorial{" "}
+                <span
+                  style={{
+                    background: "#dbeafe",
+                    color: "#2563eb",
+                    padding: "2px 14px",
+                    borderRadius: 10,
+                    border: "2px solid #93c5fd",
+                    boxShadow: "3px 3px 0 #93c5fd",
+                  }}
+                >
+                  Video
+                </span>
+              </h2>
+              <p style={{ color: "#999", fontSize: 16 }}>
+                Scopri come sfruttare al meglio GetNearMe con le nostre guide
+                video.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {tutorialVideos.map((video) => (
+                <a
+                  key={video.id}
+                  href={`https://www.youtube.com/watch?v=${video.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="neo-border group"
+                  style={{
+                    background: "#fff",
+                    borderRadius: 16,
+                    overflow: "hidden",
+                    boxShadow: "5px 5px 0px #1a1a2e",
+                    transition: "all 0.2s",
+                    textDecoration: "none",
+                    display: "block",
+                  }}
+                >
+                  <div className="relative aspect-video bg-slate-100">
+                    <Image
+                      src={`https://img.youtube.com/vi/${video.id}/hqdefault.jpg`}
+                      alt={video.title}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="w-14 h-14 bg-white/90 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform border-2 border-[#1a1a2e]">
+                        <svg
+                          className="w-6 h-6 text-[#1a1a2e] ml-0.5"
+                          fill="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path d="M8 5v14l11-7z" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{ padding: "14px 16px 12px" }}>
+                    <h3
+                      style={{
+                        fontSize: 15,
+                        fontWeight: 800,
+                        color: "#1a1a2e",
+                        margin: "0 0 4px",
+                        lineHeight: 1.3,
+                      }}
+                    >
+                      {video.title}
+                    </h3>
+                    <span
+                      style={{
+                        fontSize: 12,
+                        color: "#999",
+                        fontWeight: 600,
+                      }}
+                    >
+                      {video.duration}
+                    </span>
+                  </div>
+                </a>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Testimonials */}
+        <section style={{ padding: "70px 0", background: "#fffbeb" }}>
+          <div className="max-w-7xl mx-auto px-5 md:px-3">
+            <div style={{ textAlign: "center", marginBottom: 40 }}>
+              <h2
+                style={{
+                  fontSize: "clamp(28px, 5vw, 44px)",
+                  fontWeight: 900,
+                  color: "#1a1a2e",
+                  lineHeight: 1.15,
+                  marginBottom: 12,
+                }}
+              >
+                {l.testimonials.title}
+              </h2>
+              {/* <div
+                style={{
+                  display: "flex",
+                  gap: 16,
+                  justifyContent: "center",
+                  flexWrap: "wrap",
+                  marginTop: 12,
+                }}
+              >
+                {[
+                  {
+                    label: l.testimonials.npsLabel,
+                    value: l.testimonials.npsValue,
+                    color: "#10b981",
+                  },
+                  {
+                    label: l.testimonials.retentionLabel,
+                    value: l.testimonials.retentionValue,
+                    color: "#6366f1",
+                  },
+                ].map(
+                  (
+                    s: { label: string; value: string; color: string },
+                    i: number
+                  ) => (
+                    <span
+                      key={i}
+                      className="neo-border"
+                      style={{
+                        background: "#fff",
+                        borderRadius: 10,
+                        padding: "6px 16px",
+                        fontSize: 13,
+                        fontWeight: 700,
+                        color: "#888",
+                        boxShadow: "3px 3px 0 #1a1a2e",
+                      }}
+                    >
+                      {s.label}:{" "}
+                      <strong style={{ color: s.color }}>{s.value}</strong>
+                    </span>
+                  )
+                )}
+              </div> */}
+            </div>
+            <div
+              className="grid grid-cols-1 md:grid-cols-3 gap-5"
+            >
+              {l.testimonials.items.map(
+                (
+                  testimonial: {
+                    name: string;
+                    role: string;
+                    text: string;
+                    avatar: string;
+                    color: string;
+                  },
+                  i: number
+                ) => (
+                  <HomepageClient
+                    key={i}
+                    variant="testimonial"
+                    testimonialData={testimonial}
+                    index={i}
+                  />
+                )
+              )}
+            </div>
+          </div>
+        </section>
+
+        {/* Pricing */}
+        <HomepageClient
+          variant="pricing-section"
+          locale={locale}
+          pricingData={{
+            title1: l.pricing.title1,
+            title2: l.pricing.title2,
+            titleHighlight: l.pricing.titleHighlight,
+            subtitle: l.pricing.subtitle,
+            countdownLabel: l.pricing.countdownLabel,
+            trustBadges: l.pricing.trustBadges,
+            savingsLabel: l.pricing.savingsLabel,
+            progressAgencies: l.pricing.progressAgencies,
+            progressSpots: l.pricing.progressSpots,
+            plans: l.pricing.plans,
+            modal: l.modal,
+          }}
+        />
+
         {/* FAQ */}
-        <section style={{ padding: "70px 0", background: "#f9fafb" }}>
-          <div
-            style={{
-              maxWidth: 720,
-              margin: "0 auto",
-              padding: "0 24px",
-            }}
-          >
+        <section id="faq" className="scroll-mt-32" style={{ padding: "70px 0", background: "#f9fafb" }}>
+          <div className="max-w-3xl mx-auto px-5 md:px-3">
             <div style={{ textAlign: "center", marginBottom: 40 }}>
               <h2
                 style={{
@@ -661,13 +747,7 @@ export default async function Home({ params }: Props) {
             }}
           />
           <div
-            style={{
-              maxWidth: 1160,
-              margin: "0 auto",
-              padding: "0 24px",
-              textAlign: "center",
-              position: "relative",
-            }}
+            className="max-w-7xl mx-auto px-5 md:px-3 text-center relative"
           >
             <h2
               style={{
@@ -691,7 +771,7 @@ export default async function Home({ params }: Props) {
               style={{
                 display: "inline-block",
                 background: "#f59e0b",
-                color: "#fff",
+                color: "#1a1a2e",
                 border: "3px solid #fff",
                 padding: "18px 48px",
                 borderRadius: 14,
@@ -723,13 +803,7 @@ export default async function Home({ params }: Props) {
             background: "#fafaf8",
           }}
         >
-          <div
-            style={{
-              maxWidth: 1160,
-              margin: "0 auto",
-              padding: "0 24px",
-            }}
-          >
+          <div className="max-w-7xl mx-auto px-5 md:px-3">
             <div className="grid md:grid-cols-3 gap-12 mb-12 text-center md:text-left">
               <div className="md:col-span-1">
                 <h3
@@ -767,6 +841,14 @@ export default async function Home({ params }: Props) {
                   </li>
                   <li>
                     <a
+                      href="#tutorial"
+                      className="text-slate-400 hover:text-slate-900 transition-colors"
+                    >
+                      {t.nav.tutorial}
+                    </a>
+                  </li>
+                  <li>
+                    <a
                       href="#pricing"
                       className="text-slate-400 hover:text-slate-900 transition-colors"
                     >
@@ -780,14 +862,6 @@ export default async function Home({ params }: Props) {
                     >
                       {t.nav.faq}
                     </a>
-                  </li>
-                  <li>
-                    <Link
-                      href={`/${locale}/tutorial`}
-                      className="text-slate-400 hover:text-slate-900 transition-colors"
-                    >
-                      {t.nav.tutorial}
-                    </Link>
                   </li>
                 </ul>
               </div>

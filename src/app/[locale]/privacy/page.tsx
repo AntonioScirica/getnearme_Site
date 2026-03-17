@@ -35,7 +35,7 @@ export default async function PrivacyPolicy({ params }: Props) {
     <div className="min-h-screen bg-white font-sans text-slate-900">
       <Navbar locale={locale as Locale} />
 
-      <main className="pt-32 pb-20 px-4 max-w-4xl mx-auto">
+      <main className="pt-8 md:pt-16 pb-20 px-4 max-w-4xl mx-auto">
         <div className="mb-8">
           <Link href={`/${locale}`} className="text-blue-500 hover:text-blue-600 text-sm font-medium">
             {t.nav.backToHome}

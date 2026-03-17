@@ -1,14 +1,58 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+
+const COOKIE_NAME = 'gnm_countdown_end';
+const COUNTDOWN_DURATION = 48 * 3600000; // 48 hours in ms
+
+function getCookie(name: string): string | null {
+  const match = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'));
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
+function setCookie(name: string, value: string, maxAgeDays: number) {
+  document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=${maxAgeDays * 86400}; SameSite=Lax`;
+}
+
+function getOrCreateTarget(): number {
+  const stored = getCookie(COOKIE_NAME);
+  if (stored) {
+    const ts = Number(stored);
+    if (!isNaN(ts) && ts > Date.now()) {
+      return ts;
+    }
+  }
+  // Expired or missing — create new countdown
+  const newTarget = Date.now() + COUNTDOWN_DURATION;
+  setCookie(COOKIE_NAME, String(newTarget), 3);
+  return newTarget;
+}
 
 function useCountdown() {
-  const [target] = useState(() => Date.now() + 48 * 3600000);
+  const [target, setTarget] = useState<number | null>(null);
   const [t, setT] = useState({ h: 47, m: 59, s: 59 });
 
+  const resetCountdown = useCallback(() => {
+    const newTarget = Date.now() + COUNTDOWN_DURATION;
+    setCookie(COOKIE_NAME, String(newTarget), 3);
+    setTarget(newTarget);
+  }, []);
+
+  // Initialize from cookie on mount (client only)
   useEffect(() => {
+    setTarget(getOrCreateTarget());
+  }, []);
+
+  useEffect(() => {
+    if (target === null) return;
+
     const tick = () => {
       const d = Math.max(0, target - Date.now());
+      if (d === 0) {
+        // Timer expired — reset
+        resetCountdown();
+        return;
+      }
       setT({
         h: Math.floor(d / 3600000),
         m: Math.floor((d % 3600000) / 60000),
@@ -18,7 +62,7 @@ function useCountdown() {
     tick();
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
-  }, [target]);
+  }, [target, resetCountdown]);
 
   return t;
 }

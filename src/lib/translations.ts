@@ -305,13 +305,13 @@ export const translations = {
         freeTrialShort: "7 giorni gratis",
       },
       hero: {
-        badge: "Usato da oltre 300 agenzie in Italia",
+        badge: "Usato da oltre 40 agenzie in Italia",
         title1: "Smetti di vendere immobili.",
         title2: "Inizia a vendere decisioni.",
         desc: "Analisi di zona, confronti professionali e AI per valorizzare ogni immobile. Tutto dentro Chrome, mentre navighi i portali che già usi.",
         ctaPrimary: "Scegli il tuo piano →",
         ctaSecondary: "▶ Come funziona",
-        stats: ["Chrome Store ★ 4.9", "300+ agenzie", "47.000+ report", "GDPR compliant"],
+        stats: ["Chrome Store ★ 4.9", "40+ agenzie", "900+ report", "GDPR compliant"],
       },
       problem: {
         emoji: "😩",
@@ -356,8 +356,8 @@ export const translations = {
         countdownLabel: "Prezzo lancio — scade tra",
         trustBadges: ["🔒 Pagamento sicuro", "💳 Nessun addebito per 7gg", "📈 Crediti immediati"],
         savingsLabel: "RISPARMI",
-        progressAgencies: "327 agenzie hanno già scelto un piano",
-        progressSpots: "73 posti rimasti al prezzo lancio",
+        progressAgencies: "38 agenzie hanno già scelto un piano",
+        progressSpots: "12 posti rimasti al prezzo lancio",
         plans: [
           {
             id: "starter", name: "Starter", users: "1 utente", oldPrice: 60, price: 24,
@@ -406,7 +406,7 @@ export const translations = {
         title2: "parte da qui.",
         desc: "7 giorni gratis. Export illimitati. Zero rischi.",
         button: "Scegli il tuo piano →",
-        footer: "Unisciti alle 300+ agenzie che hanno già scelto GetNearMe",
+        footer: "Unisciti alle 40+ agenzie che hanno già scelto GetNearMe",
       },
       modal: {
         emoji: "🚀",
@@ -420,10 +420,10 @@ export const translations = {
       },
       popups: [
         { icon: "🟢", text: "Luca da Firenze ha attivato il piano Agency", time: "3 min fa" },
-        { icon: "📊", text: "12.847 report generati questa settimana", time: "" },
-        { icon: "👥", text: "47 agenzie online in questo momento", time: "" },
+        { icon: "📊", text: "127 report generati questa settimana", time: "" },
+        { icon: "👥", text: "6 agenzie online in questo momento", time: "" },
         { icon: "🚀", text: "Maria da Napoli ha iniziato la prova gratuita", time: "12 min fa" },
-        { icon: "🔥", text: "318 agenzie hanno scelto GetNearMe questo mese", time: "" },
+        { icon: "🔥", text: "9 agenzie hanno scelto GetNearMe questo mese", time: "" },
       ],
     },
   },
@@ -731,13 +731,13 @@ export const translations = {
         freeTrialShort: "7-day free trial",
       },
       hero: {
-        badge: "Used by 300+ agencies across Europe",
+        badge: "Used by 40+ agencies across Italy",
         title1: "Stop selling properties.",
         title2: "Start selling decisions.",
         desc: "Area analysis, professional comparisons and AI to maximize every property. All inside Chrome, while you browse the portals you already use.",
         ctaPrimary: "Choose your plan →",
         ctaSecondary: "▶ How it works",
-        stats: ["Chrome Store ★ 4.9", "300+ agencies", "47,000+ reports", "GDPR compliant"],
+        stats: ["Chrome Store ★ 4.9", "40+ agencies", "900+ reports", "GDPR compliant"],
       },
       problem: {
         emoji: "😩",
@@ -769,9 +769,9 @@ export const translations = {
         retentionLabel: "90-day retention",
         retentionValue: "94%",
         items: [
-          { name: "James Mitchell", role: "Owner — Mitchell Properties, London", text: "Since using GetNearMe, clients ask how I prepare such detailed presentations. I've tripled my listings in 3 months.", avatar: "JM", color: "#f59e0b" },
-          { name: "Sarah Collins", role: "Senior Agent — HomeVista, Manchester", text: "The AI homestaging is incredible. I show the before/after and owners sign the listing agreement on the spot.", avatar: "SC", color: "#6366f1" },
-          { name: "David Thompson", role: "Director — Thompson RE Group, Edinburgh", text: "We save at least 2 hours per day per agent. With 8 people in the agency, you do the math.", avatar: "DT", color: "#10b981" },
+          { name: "Marco Bianchi", role: "Owner — Immobiliare Bianchi, Milan", text: "Since using GetNearMe, clients ask how I prepare such detailed presentations. I've tripled my listings in 3 months.", avatar: "MB", color: "#f59e0b" },
+          { name: "Laura Ferri", role: "Senior Agent — CasaViva, Rome", text: "The AI homestaging is incredible. I show the before/after and owners sign the listing agreement on the spot.", avatar: "LF", color: "#6366f1" },
+          { name: "Alessandro Conti", role: "Director — Gruppo Conti RE, Turin", text: "We save at least 2 hours per day per agent. With 8 people in the agency, you do the math.", avatar: "AC", color: "#10b981" },
         ],
       },
       pricing: {
@@ -782,8 +782,8 @@ export const translations = {
         countdownLabel: "Launch price — expires in",
         trustBadges: ["🔒 Secure payment", "💳 No charge for 7 days", "📈 Instant credits"],
         savingsLabel: "YOU SAVE",
-        progressAgencies: "327 agencies have already chosen a plan",
-        progressSpots: "73 spots left at launch price",
+        progressAgencies: "38 agencies have already chosen a plan",
+        progressSpots: "12 spots left at launch price",
         plans: [
           {
             id: "starter", name: "Starter", users: "1 user", oldPrice: 60, price: 24,
@@ -832,7 +832,7 @@ export const translations = {
         title2: "starts here.",
         desc: "7 days free. Unlimited exports. Zero risk.",
         button: "Choose your plan →",
-        footer: "Join the 300+ agencies that have already chosen GetNearMe",
+        footer: "Join the 40+ agencies that have already chosen GetNearMe",
       },
       modal: {
         emoji: "🚀",
@@ -845,11 +845,11 @@ export const translations = {
         footer: "🔒 No charges. Cancel anytime.",
       },
       popups: [
-        { icon: "🟢", text: "James from London activated the Agency plan", time: "3 min ago" },
-        { icon: "📊", text: "12,847 reports generated this week", time: "" },
-        { icon: "👥", text: "47 agencies online right now", time: "" },
-        { icon: "🚀", text: "Sarah from Manchester started the free trial", time: "12 min ago" },
-        { icon: "🔥", text: "318 agencies chose GetNearMe this month", time: "" },
+        { icon: "🟢", text: "Luca from Florence activated the Agency plan", time: "3 min ago" },
+        { icon: "📊", text: "127 reports generated this week", time: "" },
+        { icon: "👥", text: "6 agencies online right now", time: "" },
+        { icon: "🚀", text: "Maria from Naples started the free trial", time: "12 min ago" },
+        { icon: "🔥", text: "9 agencies chose GetNearMe this month", time: "" },
       ],
     },
   },
@@ -1157,13 +1157,13 @@ export const translations = {
         freeTrialShort: "7 días gratis",
       },
       hero: {
-        badge: "Usado por más de 300 agencias en Europa",
+        badge: "Usado por más de 40 agencias en Italia",
         title1: "Deja de vender inmuebles.",
         title2: "Empieza a vender decisiones.",
         desc: "Análisis de zona, comparativas profesionales e IA para valorizar cada inmueble. Todo dentro de Chrome, mientras navegas los portales que ya usas.",
         ctaPrimary: "Elige tu plan →",
         ctaSecondary: "▶ Cómo funciona",
-        stats: ["Chrome Store ★ 4.9", "300+ agencias", "47.000+ informes", "GDPR compliant"],
+        stats: ["Chrome Store ★ 4.9", "40+ agencias", "900+ informes", "GDPR compliant"],
       },
       problem: {
         emoji: "😩",
@@ -1195,9 +1195,9 @@ export const translations = {
         retentionLabel: "Retención 90 días",
         retentionValue: "94%",
         items: [
-          { name: "Carlos García", role: "Director — Inmobiliaria García, Madrid", text: "Desde que uso GetNearMe, los clientes me preguntan cómo preparo presentaciones tan detalladas. He triplicado mis captaciones en 3 meses.", avatar: "CG", color: "#f59e0b" },
-          { name: "María López", role: "Agente Senior — CasaViva, Barcelona", text: "El homestaging con IA es increíble. Muestro el antes/después y los propietarios firman el encargo en el acto.", avatar: "ML", color: "#6366f1" },
-          { name: "Alejandro Ruiz", role: "Director — Grupo Ruiz RE, Valencia", text: "Ahorramos al menos 2 horas al día por agente. Con 8 personas en la agencia, echad cuentas.", avatar: "AR", color: "#10b981" },
+          { name: "Marco Bianchi", role: "Director — Inmobiliaria Bianchi, Milán", text: "Desde que uso GetNearMe, los clientes me preguntan cómo preparo presentaciones tan detalladas. He triplicado mis captaciones en 3 meses.", avatar: "MB", color: "#f59e0b" },
+          { name: "Laura Ferri", role: "Agente Senior — CasaViva, Roma", text: "El homestaging con IA es increíble. Muestro el antes/después y los propietarios firman el encargo en el acto.", avatar: "LF", color: "#6366f1" },
+          { name: "Alessandro Conti", role: "Director — Grupo Conti RE, Turín", text: "Ahorramos al menos 2 horas al día por agente. Con 8 personas en la agencia, echad cuentas.", avatar: "AC", color: "#10b981" },
         ],
       },
       pricing: {
@@ -1208,8 +1208,8 @@ export const translations = {
         countdownLabel: "Precio de lanzamiento — expira en",
         trustBadges: ["🔒 Pago seguro", "💳 Sin cobro durante 7 días", "📈 Créditos inmediatos"],
         savingsLabel: "AHORRAS",
-        progressAgencies: "327 agencias ya han elegido un plan",
-        progressSpots: "73 plazas restantes al precio de lanzamiento",
+        progressAgencies: "38 agencias ya han elegido un plan",
+        progressSpots: "12 plazas restantes al precio de lanzamiento",
         plans: [
           {
             id: "starter", name: "Starter", users: "1 usuario", oldPrice: 60, price: 24,
@@ -1258,7 +1258,7 @@ export const translations = {
         title2: "empieza aquí.",
         desc: "7 días gratis. Exportaciones ilimitadas. Cero riesgo.",
         button: "Elige tu plan →",
-        footer: "Únete a las 300+ agencias que ya han elegido GetNearMe",
+        footer: "Únete a las 40+ agencias que ya han elegido GetNearMe",
       },
       modal: {
         emoji: "🚀",
@@ -1271,11 +1271,11 @@ export const translations = {
         footer: "🔒 Sin cargos. Cancela en cualquier momento.",
       },
       popups: [
-        { icon: "🟢", text: "Carlos de Madrid activó el plan Agency", time: "hace 3 min" },
-        { icon: "📊", text: "12.847 informes generados esta semana", time: "" },
-        { icon: "👥", text: "47 agencias online en este momento", time: "" },
-        { icon: "🚀", text: "María de Barcelona empezó la prueba gratuita", time: "hace 12 min" },
-        { icon: "🔥", text: "318 agencias eligieron GetNearMe este mes", time: "" },
+        { icon: "🟢", text: "Luca de Florencia activó el plan Agency", time: "hace 3 min" },
+        { icon: "📊", text: "127 informes generados esta semana", time: "" },
+        { icon: "👥", text: "6 agencias online en este momento", time: "" },
+        { icon: "🚀", text: "Maria de Nápoles empezó la prueba gratuita", time: "hace 12 min" },
+        { icon: "🔥", text: "9 agencias eligieron GetNearMe este mes", time: "" },
       ],
     },
   },
@@ -1583,13 +1583,13 @@ export const translations = {
         freeTrialShort: "7 jours gratuits",
       },
       hero: {
-        badge: "Utilisé par plus de 300 agences en Europe",
+        badge: "Utilisé par plus de 40 agences en Italie",
         title1: "Arrêtez de vendre des biens.",
         title2: "Commencez à vendre des décisions.",
         desc: "Analyse de quartier, comparatifs professionnels et IA pour valoriser chaque bien. Tout dans Chrome, pendant que vous naviguez sur les portails que vous utilisez déjà.",
         ctaPrimary: "Choisissez votre plan →",
         ctaSecondary: "▶ Comment ça marche",
-        stats: ["Chrome Store ★ 4.9", "300+ agences", "47 000+ rapports", "GDPR compliant"],
+        stats: ["Chrome Store ★ 4.9", "40+ agences", "900+ rapports", "GDPR compliant"],
       },
       problem: {
         emoji: "😩",
@@ -1621,9 +1621,9 @@ export const translations = {
         retentionLabel: "Rétention 90j",
         retentionValue: "94%",
         items: [
-          { name: "Pierre Dupont", role: "Directeur — Immobilière Dupont, Paris", text: "Depuis que j'utilise GetNearMe, les clients me demandent comment je prépare des présentations aussi détaillées. J'ai triplé mes mandats en 3 mois.", avatar: "PD", color: "#f59e0b" },
-          { name: "Sophie Martin", role: "Agent Senior — CasaViva, Lyon", text: "Le homestaging IA est incroyable. Je montre l'avant/après et les propriétaires signent le mandat séance tenante.", avatar: "SM", color: "#6366f1" },
-          { name: "Alexandre Morel", role: "Directeur — Groupe Morel RE, Marseille", text: "Nous économisons au moins 2 heures par jour par agent. Avec 8 personnes en agence, faites le calcul.", avatar: "AM", color: "#10b981" },
+          { name: "Marco Bianchi", role: "Directeur — Immobiliare Bianchi, Milan", text: "Depuis que j'utilise GetNearMe, les clients me demandent comment je prépare des présentations aussi détaillées. J'ai triplé mes mandats en 3 mois.", avatar: "MB", color: "#f59e0b" },
+          { name: "Laura Ferri", role: "Agent Senior — CasaViva, Rome", text: "Le homestaging IA est incroyable. Je montre l'avant/après et les propriétaires signent le mandat séance tenante.", avatar: "LF", color: "#6366f1" },
+          { name: "Alessandro Conti", role: "Directeur — Gruppo Conti RE, Turin", text: "Nous économisons au moins 2 heures par jour par agent. Avec 8 personnes en agence, faites le calcul.", avatar: "AC", color: "#10b981" },
         ],
       },
       pricing: {
@@ -1634,8 +1634,8 @@ export const translations = {
         countdownLabel: "Prix de lancement — expire dans",
         trustBadges: ["🔒 Paiement sécurisé", "💳 Aucun prélèvement pendant 7j", "📈 Crédits immédiats"],
         savingsLabel: "ÉCONOMIE",
-        progressAgencies: "327 agences ont déjà choisi un plan",
-        progressSpots: "73 places restantes au prix de lancement",
+        progressAgencies: "38 agences ont déjà choisi un plan",
+        progressSpots: "12 places restantes au prix de lancement",
         plans: [
           {
             id: "starter", name: "Starter", users: "1 utilisateur", oldPrice: 60, price: 24,
@@ -1684,7 +1684,7 @@ export const translations = {
         title2: "commence ici.",
         desc: "7 jours gratuits. Exports illimités. Zéro risque.",
         button: "Choisissez votre plan →",
-        footer: "Rejoignez les 300+ agences qui ont déjà choisi GetNearMe",
+        footer: "Rejoignez les 40+ agences qui ont déjà choisi GetNearMe",
       },
       modal: {
         emoji: "🚀",
@@ -1697,11 +1697,11 @@ export const translations = {
         footer: "🔒 Aucun prélèvement. Annulez à tout moment.",
       },
       popups: [
-        { icon: "🟢", text: "Pierre de Paris a activé le plan Agency", time: "il y a 3 min" },
-        { icon: "📊", text: "12 847 rapports générés cette semaine", time: "" },
-        { icon: "👥", text: "47 agences en ligne en ce moment", time: "" },
-        { icon: "🚀", text: "Sophie de Lyon a commencé l'essai gratuit", time: "il y a 12 min" },
-        { icon: "🔥", text: "318 agences ont choisi GetNearMe ce mois-ci", time: "" },
+        { icon: "🟢", text: "Luca de Florence a activé le plan Agency", time: "il y a 3 min" },
+        { icon: "📊", text: "127 rapports générés cette semaine", time: "" },
+        { icon: "👥", text: "6 agences en ligne en ce moment", time: "" },
+        { icon: "🚀", text: "Maria de Naples a commencé l'essai gratuit", time: "il y a 12 min" },
+        { icon: "🔥", text: "9 agences ont choisi GetNearMe ce mois-ci", time: "" },
       ],
     },
   },
@@ -2009,13 +2009,13 @@ export const translations = {
         freeTrialShort: "7 дней бесплатно",
       },
       hero: {
-        badge: "Используется более чем 300 агентствами по всей Европе",
+        badge: "Используется более чем 40 агентствами по всей Италии",
         title1: "Перестаньте продавать недвижимость.",
         title2: "Начните продавать решения.",
         desc: "Анализ района, профессиональные сравнения и ИИ для повышения ценности каждого объекта. Всё прямо в Chrome, пока вы просматриваете порталы, которые уже используете.",
         ctaPrimary: "Выберите свой план →",
         ctaSecondary: "▶ Как это работает",
-        stats: ["Chrome Store ★ 4.9", "300+ агентств", "47 000+ отчётов", "GDPR compliant"],
+        stats: ["Chrome Store ★ 4.9", "40+ агентств", "900+ отчётов", "GDPR compliant"],
       },
       problem: {
         emoji: "😩",
@@ -2047,9 +2047,9 @@ export const translations = {
         retentionLabel: "Удержание 90 дней",
         retentionValue: "94%",
         items: [
-          { name: "Андрей Волков", role: "Директор — Агентство Волков, Москва", text: "С GetNearMe клиенты спрашивают, как я готовлю такие детальные презентации. Я утроил количество договоров за 3 месяца.", avatar: "АВ", color: "#f59e0b" },
-          { name: "Елена Соколова", role: "Старший агент — ДомВиста, Санкт-Петербург", text: "ИИ-хоумстейджинг — это невероятно. Показываю до/после, и собственники подписывают договор на месте.", avatar: "ЕС", color: "#6366f1" },
-          { name: "Дмитрий Козлов", role: "Руководитель — Группа Козлов RE, Казань", text: "Экономим минимум 2 часа в день на агента. С 8 сотрудниками в агентстве — считайте сами.", avatar: "ДК", color: "#10b981" },
+          { name: "Марко Бьянки", role: "Директор — Immobiliare Bianchi, Милан", text: "С GetNearMe клиенты спрашивают, как я готовлю такие детальные презентации. Я утроил количество договоров за 3 месяца.", avatar: "МБ", color: "#f59e0b" },
+          { name: "Лаура Ферри", role: "Старший агент — CasaViva, Рим", text: "ИИ-хоумстейджинг — это невероятно. Показываю до/после, и собственники подписывают договор на месте.", avatar: "ЛФ", color: "#6366f1" },
+          { name: "Алессандро Конти", role: "Руководитель — Gruppo Conti RE, Турин", text: "Экономим минимум 2 часа в день на агента. С 8 сотрудниками в агентстве — считайте сами.", avatar: "АК", color: "#10b981" },
         ],
       },
       pricing: {
@@ -2060,8 +2060,8 @@ export const translations = {
         countdownLabel: "Стартовая цена — истекает через",
         trustBadges: ["🔒 Безопасная оплата", "💳 Без списаний 7 дней", "📈 Мгновенные кредиты"],
         savingsLabel: "ЭКОНОМИЯ",
-        progressAgencies: "327 агентств уже выбрали план",
-        progressSpots: "73 места осталось по стартовой цене",
+        progressAgencies: "38 агентств уже выбрали план",
+        progressSpots: "12 мест осталось по стартовой цене",
         plans: [
           {
             id: "starter", name: "Starter", users: "1 пользователь", oldPrice: 60, price: 24,
@@ -2110,7 +2110,7 @@ export const translations = {
         title2: "начинается здесь.",
         desc: "7 дней бесплатно. Неограниченный экспорт. Без рисков.",
         button: "Выберите свой план →",
-        footer: "Присоединяйтесь к 300+ агентствам, которые уже выбрали GetNearMe",
+        footer: "Присоединяйтесь к 40+ агентствам, которые уже выбрали GetNearMe",
       },
       modal: {
         emoji: "🚀",
@@ -2123,11 +2123,11 @@ export const translations = {
         footer: "🔒 Без списаний. Отмена в любой момент.",
       },
       popups: [
-        { icon: "🟢", text: "Андрей из Москвы активировал план Agency", time: "3 мин назад" },
-        { icon: "📊", text: "12 847 отчётов сгенерировано на этой неделе", time: "" },
-        { icon: "👥", text: "47 агентств онлайн прямо сейчас", time: "" },
-        { icon: "🚀", text: "Елена из Санкт-Петербурга начала бесплатный период", time: "12 мин назад" },
-        { icon: "🔥", text: "318 агентств выбрали GetNearMe в этом месяце", time: "" },
+        { icon: "🟢", text: "Лука из Флоренции активировал план Agency", time: "3 мин назад" },
+        { icon: "📊", text: "127 отчётов сгенерировано на этой неделе", time: "" },
+        { icon: "👥", text: "6 агентств онлайн прямо сейчас", time: "" },
+        { icon: "🚀", text: "Мария из Неаполя начала бесплатный период", time: "12 мин назад" },
+        { icon: "🔥", text: "9 агентств выбрали GetNearMe в этом месяце", time: "" },
       ],
     },
   },
@@ -2435,13 +2435,13 @@ export const translations = {
         freeTrialShort: "7 днів безкоштовно",
       },
       hero: {
-        badge: "Використовується понад 300 агентствами по всій Європі",
+        badge: "Використовується понад 40 агентствами по всій Італії",
         title1: "Припиніть продавати нерухомість.",
         title2: "Починайте продавати рішення.",
         desc: "Аналіз району, професійні порівняння та ШІ для підвищення цінності кожного об'єкта. Все прямо в Chrome, поки ви переглядаєте портали, які вже використовуєте.",
         ctaPrimary: "Оберіть свій план →",
         ctaSecondary: "▶ Як це працює",
-        stats: ["Chrome Store ★ 4.9", "300+ агентств", "47 000+ звітів", "GDPR compliant"],
+        stats: ["Chrome Store ★ 4.9", "40+ агентств", "900+ звітів", "GDPR compliant"],
       },
       problem: {
         emoji: "😩",
@@ -2473,9 +2473,9 @@ export const translations = {
         retentionLabel: "Утримання 90 днів",
         retentionValue: "94%",
         items: [
-          { name: "Олексій Коваленко", role: "Директор — Агентство Коваленко, Київ", text: "З GetNearMe клієнти запитують, як я готую такі детальні презентації. Я втричі збільшив кількість договорів за 3 місяці.", avatar: "ОК", color: "#f59e0b" },
-          { name: "Наталія Шевченко", role: "Старший агент — ДімВіста, Львів", text: "ШІ-хоумстейджинг — це неймовірно. Показую до/після, і власники підписують договір на місці.", avatar: "НШ", color: "#6366f1" },
-          { name: "Дмитро Бондаренко", role: "Керівник — Група Бондаренко RE, Одеса", text: "Економимо мінімум 2 години на день на агента. З 8 співробітниками в агентстві — рахуйте самі.", avatar: "ДБ", color: "#10b981" },
+          { name: "Марко Б'янкі", role: "Директор — Immobiliare Bianchi, Мілан", text: "З GetNearMe клієнти запитують, як я готую такі детальні презентації. Я втричі збільшив кількість договорів за 3 місяці.", avatar: "МБ", color: "#f59e0b" },
+          { name: "Лаура Феррі", role: "Старший агент — CasaViva, Рим", text: "ШІ-хоумстейджинг — це неймовірно. Показую до/після, і власники підписують договір на місці.", avatar: "ЛФ", color: "#6366f1" },
+          { name: "Алессандро Конті", role: "Керівник — Gruppo Conti RE, Турін", text: "Економимо мінімум 2 години на день на агента. З 8 співробітниками в агентстві — рахуйте самі.", avatar: "АК", color: "#10b981" },
         ],
       },
       pricing: {
@@ -2486,8 +2486,8 @@ export const translations = {
         countdownLabel: "Стартова ціна — закінчується через",
         trustBadges: ["🔒 Безпечна оплата", "💳 Без списань 7 днів", "📈 Миттєві кредити"],
         savingsLabel: "ЕКОНОМІЯ",
-        progressAgencies: "327 агентств вже обрали план",
-        progressSpots: "73 місця залишилось за стартовою ціною",
+        progressAgencies: "38 агентств вже обрали план",
+        progressSpots: "12 місць залишилось за стартовою ціною",
         plans: [
           {
             id: "starter", name: "Starter", users: "1 користувач", oldPrice: 60, price: 24,
@@ -2536,7 +2536,7 @@ export const translations = {
         title2: "починається тут.",
         desc: "7 днів безкоштовно. Необмежений експорт. Без ризиків.",
         button: "Оберіть свій план →",
-        footer: "Приєднуйтесь до 300+ агентств, які вже обрали GetNearMe",
+        footer: "Приєднуйтесь до 40+ агентств, які вже обрали GetNearMe",
       },
       modal: {
         emoji: "🚀",
@@ -2549,11 +2549,11 @@ export const translations = {
         footer: "🔒 Без списань. Скасування в будь-який момент.",
       },
       popups: [
-        { icon: "🟢", text: "Олексій з Києва активував план Agency", time: "3 хв тому" },
-        { icon: "📊", text: "12 847 звітів згенеровано цього тижня", time: "" },
-        { icon: "👥", text: "47 агентств онлайн прямо зараз", time: "" },
-        { icon: "🚀", text: "Наталія зі Львова почала безкоштовний період", time: "12 хв тому" },
-        { icon: "🔥", text: "318 агентств обрали GetNearMe цього місяця", time: "" },
+        { icon: "🟢", text: "Лука з Флоренції активував план Agency", time: "3 хв тому" },
+        { icon: "📊", text: "127 звітів згенеровано цього тижня", time: "" },
+        { icon: "👥", text: "6 агентств онлайн прямо зараз", time: "" },
+        { icon: "🚀", text: "Марія з Неаполя почала безкоштовний період", time: "12 хв тому" },
+        { icon: "🔥", text: "9 агентств обрали GetNearMe цього місяця", time: "" },
       ],
     },
   }
