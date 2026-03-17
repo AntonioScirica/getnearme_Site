@@ -1,32 +1,16 @@
 import type { Metadata } from "next";
-import { Inter, Old_Standard_TT } from "next/font/google";
 import { notFound } from "next/navigation";
-import { 
-  locales, 
-  type Locale, 
-  defaultLocale, 
-  hreflangMap, 
+import {
+  locales,
+  type Locale,
+  defaultLocale,
+  hreflangMap,
   ogLocaleMap,
   seoTitles,
-  seoDescriptions 
+  seoDescriptions
 } from "@/lib/i18n";
 import { translations } from "@/lib/translations";
 import "../globals.css";
-
-const inter = Inter({
-  subsets: ["latin", "cyrillic"],
-  weight: ["300", "400", "500", "600", "700", "800", "900"],
-  variable: "--font-inter",
-  display: "swap",
-});
-
-const oldStandard = Old_Standard_TT({
-  subsets: ["latin", "cyrillic"],
-  weight: ["400", "700"],
-  style: ["normal", "italic"],
-  variable: "--font-old-standard",
-  display: "swap",
-});
 
 type Props = {
   children: React.ReactNode;
@@ -137,6 +121,7 @@ export default async function LocaleLayout({ children, params }: Props) {
   return (
     <html lang={locale} suppressHydrationWarning>
       <head>
+        <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&display=swap" rel="stylesheet" />
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="apple-touch-icon" href="/favicon.ico" />
         <link rel="manifest" href="/manifest.json" />
@@ -226,7 +211,8 @@ export default async function LocaleLayout({ children, params }: Props) {
         />
       </head>
       <body
-        className={`${inter.variable} ${oldStandard.variable} ${inter.className} antialiased`}
+        className="antialiased"
+        style={{ fontFamily: "'Satoshi', system-ui, -apple-system, sans-serif" }}
       >
         {children}
       </body>

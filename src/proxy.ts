@@ -17,7 +17,7 @@ const languageMapping: Record<string, Locale> = {
 
 function getPreferredLocale(request: NextRequest): Locale {
   const acceptLanguage = request.headers.get("accept-language");
-  
+
   if (acceptLanguage) {
     const languages = acceptLanguage
       .split(",")
@@ -38,7 +38,7 @@ function getPreferredLocale(request: NextRequest): Locale {
   return defaultLocale;
 }
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Controlla se il pathname inizia con un locale supportato
@@ -54,7 +54,7 @@ export function middleware(request: NextRequest) {
   const locale = getPreferredLocale(request);
   const url = request.nextUrl.clone();
   url.pathname = `/${locale}${pathname}`;
-  
+
   return NextResponse.redirect(url, 307);
 }
 
@@ -71,5 +71,3 @@ export const config = {
     "/((?!_next/static|_next/image|favicon\\.ico|robots\\.txt|sitemap\\.xml|manifest\\.json|assets/|api/|metrics|.*\\..*).*)",
   ],
 };
-
-
