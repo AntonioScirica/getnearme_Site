@@ -3,7 +3,6 @@ import Link from "next/link";
 import { locales, type Locale } from "@/lib/i18n";
 import { translations } from "@/lib/translations";
 import Navbar from "@/components/Navbar";
-import HeroFloatingIcons from "@/components/HeroFloatingIcons";
 import HomepageClient from "./HomepageClient";
 
 const tutorialVideos = [
@@ -80,9 +79,8 @@ export default async function Home({ params }: Props) {
       <main className="relative">
         {/* Hero Section */}
         <section
-          className="py-8 md:py-24"
+          className="py-12 md:py-20"
           style={{
-            // padding: "40px 0 70px",
             background: "#fafaf8",
             position: "relative",
             overflow: "hidden",
@@ -106,7 +104,7 @@ export default async function Home({ params }: Props) {
             style={{
               position: "absolute",
               top: 180,
-              right: 100,
+              left: 60,
               width: 90,
               height: 90,
               background: "#dbeafe",
@@ -119,8 +117,8 @@ export default async function Home({ params }: Props) {
           <div
             style={{
               position: "absolute",
-              bottom: 20,
-              left: -50,
+              bottom: 40,
+              right: -30,
               width: 160,
               height: 160,
               background: "#fce7f3",
@@ -131,139 +129,164 @@ export default async function Home({ params }: Props) {
             }}
           />
 
-          <div className="relative hidden md:block">
-            <HeroFloatingIcons />
-          </div>
-
-          <div
-            className="max-w-7xl mx-auto px-5 md:px-3 relative z-10"
-          >
-            <div
-              style={{
-                display: "inline-block",
-                background: "#fffbeb",
-                border: "2px solid #f59e0b",
-                borderRadius: 20,
-                padding: "7px 18px",
-                fontSize: 13,
-                fontWeight: 700,
-                color: "#b45309",
-                marginBottom: 28,
-                boxShadow: "3px 3px 0 #f59e0b40",
-              }}
-            >
-              ⚡ {l.hero.badge}
-            </div>
-
-            <h1
-              style={{
-                fontSize: "clamp(40px, 7vw, 72px)",
-                fontWeight: 900,
-                lineHeight: 1.05,
-                margin: "0 0 22px",
-                // maxWidth: 780,
-                letterSpacing: "-2px",
-              }}
-            >
-              {l.hero.title1}
-              <br />
-              <span
+          <div className="max-w-5xl mx-auto px-5 md:px-6 relative z-10">
+            {/* Centered text content */}
+            <div className="text-center flex flex-col items-center">
+              <div
                 style={{
-                  color: "#f59e0b",
-                  textDecoration: "underline",
-                  textDecorationStyle: "wavy",
-                  textUnderlineOffset: 8,
-                  textDecorationThickness: 3,
-                  textDecorationColor: "#f59e0b",
-                }}
-              >
-                {l.hero.title2}
-              </span>
-            </h1>
-
-            <p
-              style={{
-                color: "#888",
-                fontSize: 18,
-                lineHeight: 1.7,
-                maxWidth: 560,
-                margin: "0 0 36px",
-              }}
-            >
-              {l.hero.desc}
-            </p>
-
-            <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
-              <a
-                href="#pricing"
-                className="neo-btn"
-                style={{
-                  background: "#f59e0b",
-                  color: "#1a1a2e",
-                  border: "3px solid #1a1a2e",
-                  padding: "16px 36px",
-                  borderRadius: 14,
-                  fontWeight: 900,
-                  fontSize: 16,
-                  cursor: "pointer",
-                  boxShadow: "6px 6px 0px #1a1a2e",
-                  transition: "all 0.15s",
-                  letterSpacing: 0.5,
-                  textDecoration: "none",
-                }}
-              >
-                {l.hero.ctaPrimary}
-              </a>
-              <a
-                href="#tutorial"
-                className="neo-btn"
-                style={{
-                  background: "#fff",
-                  color: "#1a1a2e",
-                  border: "3px solid #1a1a2e",
-                  padding: "16px 28px",
-                  borderRadius: 14,
+                  display: "inline-block",
+                  background: "#fffbeb",
+                  border: "2px solid #f59e0b",
+                  borderRadius: 20,
+                  padding: "7px 18px",
+                  fontSize: 13,
                   fontWeight: 700,
-                  fontSize: 15,
-                  cursor: "pointer",
-                  boxShadow: "6px 6px 0px #1a1a2e",
-                  transition: "all 0.15s",
-                  textDecoration: "none",
+                  color: "#b45309",
+                  marginBottom: 28,
+                  boxShadow: "3px 3px 0 #f59e0b40",
                 }}
               >
-                {l.hero.ctaSecondary}
-              </a>
-            </div>
+                ⚡ {l.hero.badge}
+              </div>
 
-            <div
-              className="neo-border neo-shadow-sm"
-              style={{
-                display: "flex",
-                gap: 20,
-                flexWrap: "wrap",
-                marginTop: 48,
-                padding: "16px 24px",
-                background: "#fff",
-                borderRadius: 14,
-                maxWidth: 720,
-              }}
-            >
-              {l.hero.stats.map((stat: string, i: number) => (
+              <h1
+                style={{
+                  fontSize: "clamp(36px, 6vw, 68px)",
+                  fontWeight: 900,
+                  lineHeight: 1.05,
+                  margin: "0 0 22px",
+                  letterSpacing: "-2px",
+                }}
+              >
+                {l.hero.title1}
+                <br />
                 <span
-                  key={i}
                   style={{
-                    color: "#666",
-                    fontSize: 13,
-                    fontWeight: 700,
-                    whiteSpace: "nowrap",
+                    color: "#f59e0b",
+                    textDecoration: "underline",
+                    textDecorationStyle: "wavy",
+                    textUnderlineOffset: 8,
+                    textDecorationThickness: 3,
+                    textDecorationColor: "#f59e0b",
                   }}
                 >
-                  {i > 0 && (
-                    <span style={{ color: "#ddd", marginRight: 10 }}>|</span>
-                  )}
-                  {stat}
+                  {l.hero.title2}
                 </span>
-              ))}
+              </h1>
+
+              <p
+                style={{
+                  color: "#888",
+                  fontSize: 18,
+                  lineHeight: 1.7,
+                  maxWidth: 560,
+                  margin: "0 0 36px",
+                }}
+              >
+                {l.hero.desc}
+              </p>
+
+              <div style={{ display: "flex", gap: 14, flexWrap: "wrap", justifyContent: "center" }}>
+                <a
+                  href="#pricing"
+                  className="neo-btn"
+                  style={{
+                    background: "#f59e0b",
+                    color: "#1a1a2e",
+                    border: "3px solid #1a1a2e",
+                    padding: "16px 36px",
+                    borderRadius: 14,
+                    fontWeight: 900,
+                    fontSize: 16,
+                    cursor: "pointer",
+                    boxShadow: "6px 6px 0px #1a1a2e",
+                    transition: "all 0.15s",
+                    letterSpacing: 0.5,
+                    textDecoration: "none",
+                  }}
+                >
+                  {l.hero.ctaPrimary}
+                </a>
+                <a
+                  href="#tutorial"
+                  className="neo-btn"
+                  style={{
+                    background: "#fff",
+                    color: "#1a1a2e",
+                    border: "3px solid #1a1a2e",
+                    padding: "16px 28px",
+                    borderRadius: 14,
+                    fontWeight: 700,
+                    fontSize: 15,
+                    cursor: "pointer",
+                    boxShadow: "6px 6px 0px #1a1a2e",
+                    transition: "all 0.15s",
+                    textDecoration: "none",
+                  }}
+                >
+                  {l.hero.ctaSecondary}
+                </a>
+              </div>
+
+              <div
+                className="neo-border neo-shadow-sm"
+                style={{
+                  display: "inline-flex",
+                  gap: 20,
+                  flexWrap: "wrap",
+                  justifyContent: "center",
+                  marginTop: 40,
+                  padding: "16px 24px",
+                  background: "#fff",
+                  borderRadius: 14,
+                }}
+              >
+                {l.hero.stats.map((stat: string, i: number) => (
+                  <span
+                    key={i}
+                    style={{
+                      color: "#666",
+                      fontSize: 13,
+                      fontWeight: 700,
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {i > 0 && (
+                      <span style={{ color: "#ddd", marginRight: 10 }}>|</span>
+                    )}
+                    {stat}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* YouTube Video - Full width, 16:9, neobrutalism frame */}
+            <div
+              className="mt-12 md:mt-16"
+              style={{
+                border: "3px solid #1a1a2e",
+                borderRadius: 18,
+                boxShadow: "8px 8px 0px #1a1a2e",
+                overflow: "hidden",
+                background: "#1a1a2e",
+              }}
+            >
+              <div style={{ position: "relative", paddingBottom: "56.25%", height: 0 }}>
+                <iframe
+                  src="https://www.youtube.com/embed/2_KNllGE1-0?rel=0&modestbranding=1"
+                  title="GetNearMe Demo"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    width: "100%",
+                    height: "100%",
+                    border: "none",
+                  }}
+                />
+              </div>
             </div>
           </div>
         </section>
