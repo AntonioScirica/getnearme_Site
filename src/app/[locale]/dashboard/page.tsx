@@ -12,7 +12,7 @@ const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-const STRIPE_BILLING_PORTAL = 'https://billing.stripe.com/p/login/cN2eY70E1ftd0kE000';
+const STRIPE_BILLING_PORTAL = 'https://billing.stripe.com/p/login/9B68wP7WH3blfTG15eak000';
 
 const PLAN_FEATURES: Record<string, Record<string, string[]>> = {
   free: {
