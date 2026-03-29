@@ -368,24 +368,6 @@ function CheckoutAgencyContent() {
 
   const plan = PLANS[selectedPlanId];
 
-  async function checkSubscription(userId: string) {
-    setCheckingSubscription(true);
-    try {
-      const { data } = await supabase
-        .from('user_credits')
-        .select('subscription_type')
-        .eq('user_id', userId)
-        .single();
-
-      if (data?.subscription_type && data.subscription_type !== 'free') {
-        setExistingSubscription(data.subscription_type);
-      }
-    } catch {
-      // Ignore - user may not have credits row yet (trigger will create it)
-    }
-    setCheckingSubscription(false);
-  }
-
   function redirectToPayment(userId: string, userEmail: string) {
     setIsRedirecting(true);
     const paymentLink = interval === 'annual' && plan.payment_link_annual
@@ -398,12 +380,36 @@ function CheckoutAgencyContent() {
     window.location.href = url.toString();
   }
 
+  async function handleUserReady(userId: string, userEmail: string) {
+    setUser({ id: userId, email: userEmail });
+    setCheckingSubscription(true);
+
+    try {
+      const { data } = await supabase
+        .from('user_credits')
+        .select('subscription_type')
+        .eq('user_id', userId)
+        .single();
+
+      if (data?.subscription_type && data.subscription_type !== 'free') {
+        setExistingSubscription(data.subscription_type);
+        setCheckingSubscription(false);
+        return;
+      }
+    } catch {
+      // No record yet - trigger will create it, proceed to payment
+    }
+
+    // No existing subscription → redirect to Stripe immediately
+    setCheckingSubscription(false);
+    redirectToPayment(userId, userEmail);
+  }
+
   useEffect(() => {
     async function checkSession() {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
-        setUser({ id: session.user.id, email: session.user.email || '' });
-        await checkSubscription(session.user.id);
+        await handleUserReady(session.user.id, session.user.email || '');
       }
     }
 
@@ -411,8 +417,7 @@ function CheckoutAgencyContent() {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session?.user) {
-        setUser({ id: session.user.id, email: session.user.email || '' });
-        await checkSubscription(session.user.id);
+        await handleUserReady(session.user.id, session.user.email || '');
       }
     });
 
@@ -451,15 +456,13 @@ function CheckoutAgencyContent() {
         });
         if (error) throw error;
         if (data.user) {
-          setUser({ id: data.user.id, email: data.user.email || '' });
-          await checkSubscription(data.user.id);
+          await handleUserReady(data.user.id, data.user.email || '');
         }
       } else {
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw new Error(t.errorInvalidCredentials as string);
         if (data.user) {
-          setUser({ id: data.user.id, email: data.user.email || '' });
-          await checkSubscription(data.user.id);
+          await handleUserReady(data.user.id, data.user.email || '');
         }
       }
     } catch (err) {
@@ -468,282 +471,175 @@ function CheckoutAgencyContent() {
     setIsEmailLoading(false);
   }
 
-  function getFeatures(planId: string): string[] {
-    const key = `features_${PLANS[planId]?.features_key}`;
-    const raw = t[key];
-    if (!raw) return [];
-    try { return JSON.parse(raw as string); } catch { return []; }
-  }
-
-  function getUsersLabel(planId: string): string {
-    const key = `users_${PLANS[planId]?.features_key}`;
-    return (t[key] as string) || '';
-  }
-
-  const annualSavings = plan
-    ? Math.round(plan.price_monthly * 12 - plan.price_annual)
-    : 0;
-
   const currentPrice = interval === 'annual' ? plan.price_annual : plan.price_monthly;
   const periodLabel = interval === 'annual' ? t.perYear : t.perMonth;
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans text-slate-900">
+    <div className="min-h-screen bg-white font-sans text-slate-900">
       <Navbar locale={locale} />
 
-      <main className="min-h-screen flex flex-col items-center px-4 py-24">
-        <div className="max-w-4xl w-full">
-          <h1 className="text-3xl md:text-4xl font-bold text-center mb-8">{t.pageTitle}</h1>
+      <main className="min-h-screen flex items-center justify-center px-4 py-20">
+        <div className="max-w-md w-full">
+          <div className="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm">
 
-          {/* Billing interval toggle */}
-          <div className="flex justify-center mb-10">
-            <div className="inline-flex bg-white rounded-xl p-1 border border-slate-200 shadow-sm">
-              <button
-                onClick={() => setInterval('monthly')}
-                className={`px-6 py-2.5 rounded-lg text-sm font-semibold transition-all ${
-                  interval === 'monthly'
-                    ? 'bg-blue-500 text-white shadow-sm'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                {t.monthly}
-              </button>
-              <button
-                onClick={() => setInterval('annual')}
-                className={`px-6 py-2.5 rounded-lg text-sm font-semibold transition-all ${
-                  interval === 'annual'
-                    ? 'bg-blue-500 text-white shadow-sm'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                {t.annual}
-              </button>
+            {/* Logo + Plan summary */}
+            <div className="text-center mb-6">
+              <span className="text-2xl font-bold text-blue-500">GetNearMe</span>
             </div>
-          </div>
 
-          {/* Plan cards grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
-            {PLAN_DISPLAY_ORDER.map((planId) => {
-              const p = PLANS[planId];
-              const isSelected = planId === selectedPlanId;
-              const price = interval === 'annual' ? p.price_annual : p.price_monthly;
-              const period = interval === 'annual' ? t.perYear : t.perMonth;
-              const features = getFeatures(planId);
-              const usersLabel = getUsersLabel(planId);
-              const savings = Math.round(p.price_monthly * 12 - p.price_annual);
-
-              return (
-                <div
-                  key={planId}
-                  onClick={() => {
-                    const url = new URL(window.location.href);
-                    url.searchParams.set('plan', planId);
-                    window.history.replaceState({}, '', url.toString());
-                    window.location.reload();
-                  }}
-                  className={`relative rounded-2xl p-6 cursor-pointer transition-all border-2 ${
-                    isSelected
-                      ? 'border-blue-500 bg-white shadow-lg scale-[1.02]'
-                      : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-md'
-                  }`}
-                >
-                  {p.popular && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                      <span className="bg-amber-400 text-amber-900 text-xs font-bold px-3 py-1 rounded-full">
-                        {t.popular}
-                      </span>
-                    </div>
-                  )}
-
-                  <div className="text-center mb-4">
-                    <h3 className="text-lg font-bold text-slate-900">{p.name}</h3>
-                    <p className="text-xs text-slate-500 mt-1">{usersLabel}</p>
-                  </div>
-
-                  <div className="text-center mb-4">
-                    <div className="flex items-baseline justify-center gap-1">
-                      <span className="text-3xl font-bold text-blue-600">
-                        {interval === 'annual'
-                          ? `€${Math.round(price / 12)}`
-                          : `€${price}`}
-                      </span>
-                      <span className="text-slate-500 text-sm">{t.perMonth}</span>
-                    </div>
-                    {interval === 'annual' && (
-                      <p className="text-xs text-slate-400 mt-1">
-                        €{price}{period}
-                      </p>
-                    )}
-                    {interval === 'annual' && savings > 0 && (
-                      <p className="text-xs text-green-600 font-semibold mt-1">
-                        {t.save} €{savings}/{t.perYear}
-                      </p>
-                    )}
-                    {p.original_price > (interval === 'annual' ? Math.round(price / 12) : price) && (
-                      <p className="text-xs text-slate-400 line-through mt-1">
-                        €{p.original_price}{t.perMonth}
-                      </p>
-                    )}
-                  </div>
-
-                  <ul className="space-y-2">
-                    {features.map((feature, i) => (
-                      <li key={i} className="flex items-start gap-2 text-xs text-slate-600">
-                        <CheckCircle className="w-3.5 h-3.5 text-green-500 flex-shrink-0 mt-0.5" />
-                        <span>{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
+            <div className="bg-slate-50 rounded-xl p-6 mb-6">
+              <div className="text-center">
+                <div className="text-lg font-semibold text-slate-900">{plan.name}</div>
+                <div className="mt-2">
+                  <span className="text-4xl font-bold text-blue-500">€{currentPrice}</span>
+                  <span className="text-slate-500">{periodLabel}</span>
                 </div>
-              );
-            })}
-          </div>
-
-          {/* Auth + Subscribe section */}
-          <div className="max-w-md mx-auto">
-            <div className="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm">
-
-              {/* Already subscribed */}
-              {user && existingSubscription ? (
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <CheckCircle className="w-8 h-8 text-green-600" />
-                  </div>
-                  <h2 className="text-xl font-bold text-slate-900 mb-2">{t.alreadySubscribed}</h2>
-                  <p className="text-slate-500 mb-6">
-                    {t.currentPlan}: <strong>{TIER_LABELS[existingSubscription]?.[locale] || existingSubscription}</strong>
+                {plan.original_price > plan.price_monthly && (
+                  <p className="text-sm text-slate-400 line-through mt-1">
+                    €{plan.original_price}{t.perMonth}
                   </p>
-                  <a
-                    href="https://billing.stripe.com/p/login/cN2eY70E1ftd0kE000"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-block px-6 py-3 bg-slate-900 text-white rounded-xl font-semibold hover:bg-slate-800 transition-all"
-                  >
-                    {t.manageSub}
-                  </a>
-                </div>
-              ) : user && !checkingSubscription ? (
-                /* Logged in, ready to subscribe */
-                <div className="text-center">
-                  <div className="bg-slate-50 rounded-xl p-6 mb-6">
-                    <h3 className="text-lg font-bold text-slate-900">{plan.name}</h3>
-                    <div className="mt-2">
-                      <span className="text-4xl font-bold text-blue-500">€{currentPrice}</span>
-                      <span className="text-slate-500">{periodLabel}</span>
-                    </div>
-                    {interval === 'annual' && annualSavings > 0 && (
-                      <p className="text-sm text-green-600 font-semibold mt-2">
-                        {t.save} €{annualSavings}
-                      </p>
-                    )}
-                  </div>
+                )}
+              </div>
 
+              {/* Billing interval toggle */}
+              {plan.payment_link_annual && (
+                <div className="flex justify-center mt-4">
+                  <div className="inline-flex bg-white rounded-lg p-0.5 border border-slate-200">
+                    <button
+                      onClick={() => setInterval('monthly')}
+                      className={`px-4 py-1.5 rounded-md text-xs font-semibold transition-all ${
+                        interval === 'monthly'
+                          ? 'bg-blue-500 text-white'
+                          : 'text-slate-500 hover:text-slate-700'
+                      }`}
+                    >
+                      {t.monthly}
+                    </button>
+                    <button
+                      onClick={() => setInterval('annual')}
+                      className={`px-4 py-1.5 rounded-md text-xs font-semibold transition-all ${
+                        interval === 'annual'
+                          ? 'bg-blue-500 text-white'
+                          : 'text-slate-500 hover:text-slate-700'
+                      }`}
+                    >
+                      {t.annual}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Already subscribed */}
+            {user && existingSubscription ? (
+              <div className="text-center">
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <CheckCircle className="w-8 h-8 text-green-600" />
+                </div>
+                <h2 className="text-xl font-bold text-slate-900 mb-2">{t.alreadySubscribed}</h2>
+                <p className="text-slate-500 mb-6">
+                  {t.currentPlan}: <strong>{TIER_LABELS[existingSubscription]?.[locale] || existingSubscription}</strong>
+                </p>
+                <a
+                  href="https://billing.stripe.com/p/login/cN2eY70E1ftd0kE000"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block px-6 py-3 bg-slate-900 text-white rounded-xl font-semibold hover:bg-slate-800 transition-all"
+                >
+                  {t.manageSub}
+                </a>
+              </div>
+            ) : isRedirecting || checkingSubscription ? (
+              /* Redirecting to Stripe or checking subscription */
+              <div className="text-center py-4">
+                <Loader2 className="w-8 h-8 animate-spin text-blue-500 mx-auto mb-3" />
+                <p className="text-slate-500 text-sm">{t.redirecting}</p>
+              </div>
+            ) : !user ? (
+              /* Not logged in - show auth UI */
+              <>
+                <h2 className="text-xl font-bold text-center mb-6">{t.loginTitle}</h2>
+
+                <button
+                  onClick={handleGoogleLogin}
+                  disabled={isLoading || isEmailLoading}
+                  className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-white border border-slate-300 rounded-xl text-slate-700 font-semibold hover:bg-slate-50 hover:border-slate-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <span>{t.loading}</span>
+                    </>
+                  ) : (
+                    <>
+                      <GoogleIcon />
+                      <span>{t.loginButton}</span>
+                    </>
+                  )}
+                </button>
+
+                <div className="flex items-center gap-4 my-6">
+                  <div className="flex-1 h-px bg-slate-200" />
+                  <span className="text-slate-400 text-sm">{t.orDivider}</span>
+                  <div className="flex-1 h-px bg-slate-200" />
+                </div>
+
+                <form onSubmit={handleEmailAuth} className="space-y-4">
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder={t.emailPlaceholder as string}
+                    required
+                    disabled={isLoading || isEmailLoading}
+                    className="w-full px-4 py-3 border border-slate-300 rounded-xl text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
+                  />
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder={t.passwordPlaceholder as string}
+                    required
+                    disabled={isLoading || isEmailLoading}
+                    className="w-full px-4 py-3 border border-slate-300 rounded-xl text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
+                  />
                   <button
-                    onClick={() => redirectToPayment(user.id, user.email)}
-                    disabled={isRedirecting}
+                    type="submit"
+                    disabled={isLoading || isEmailLoading}
                     className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-blue-500 rounded-xl text-white font-semibold hover:bg-blue-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {isRedirecting ? (
-                      <>
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                        <span>{t.redirecting}</span>
-                      </>
-                    ) : (
-                      <span>{t.subscribe}</span>
-                    )}
-                  </button>
-
-                  <div className="flex items-center justify-center gap-4 mt-4 text-xs text-slate-400">
-                    <span className="flex items-center gap-1"><ShieldIcon /> {t.securePayment}</span>
-                  </div>
-                  <p className="text-xs text-slate-400 mt-2">{t.cancelAnytime}</p>
-                </div>
-              ) : checkingSubscription ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
-                </div>
-              ) : (
-                /* Not logged in - show auth UI */
-                <>
-                  <h2 className="text-xl font-bold text-center mb-6">{t.loginTitle}</h2>
-
-                  <button
-                    onClick={handleGoogleLogin}
-                    disabled={isLoading || isEmailLoading}
-                    className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-white border border-slate-300 rounded-xl text-slate-700 font-semibold hover:bg-slate-50 hover:border-slate-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {isLoading ? (
+                    {isEmailLoading ? (
                       <>
                         <Loader2 className="w-5 h-5 animate-spin" />
                         <span>{t.loading}</span>
                       </>
                     ) : (
-                      <>
-                        <GoogleIcon />
-                        <span>{t.loginButton}</span>
-                      </>
+                      <span>{isSignup ? t.emailSignupButton : t.emailLoginButton}</span>
                     )}
                   </button>
+                </form>
 
-                  <div className="flex items-center gap-4 my-6">
-                    <div className="flex-1 h-px bg-slate-200" />
-                    <span className="text-slate-400 text-sm">{t.orDivider}</span>
-                    <div className="flex-1 h-px bg-slate-200" />
-                  </div>
+                <p className="text-center text-sm text-slate-500 mt-4">
+                  {isSignup ? (t.hasAccount as string) : (t.noAccount as string)}{' '}
+                  <button
+                    onClick={() => { setIsSignup(!isSignup); setError(null); }}
+                    className="text-blue-500 font-semibold hover:underline"
+                  >
+                    {isSignup ? (t.emailLoginButton as string) : (t.emailSignupButton as string)}
+                  </button>
+                </p>
 
-                  <form onSubmit={handleEmailAuth} className="space-y-4">
-                    <input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder={t.emailPlaceholder as string}
-                      required
-                      disabled={isLoading || isEmailLoading}
-                      className="w-full px-4 py-3 border border-slate-300 rounded-xl text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
-                    />
-                    <input
-                      type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder={t.passwordPlaceholder as string}
-                      required
-                      disabled={isLoading || isEmailLoading}
-                      className="w-full px-4 py-3 border border-slate-300 rounded-xl text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
-                    />
-                    <button
-                      type="submit"
-                      disabled={isLoading || isEmailLoading}
-                      className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-blue-500 rounded-xl text-white font-semibold hover:bg-blue-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {isEmailLoading ? (
-                        <>
-                          <Loader2 className="w-5 h-5 animate-spin" />
-                          <span>{t.loading}</span>
-                        </>
-                      ) : (
-                        <span>{isSignup ? t.emailSignupButton : t.emailLoginButton}</span>
-                      )}
-                    </button>
-                  </form>
-
-                  <p className="text-center text-sm text-slate-500 mt-4">
-                    {isSignup ? (t.hasAccount as string) : (t.noAccount as string)}{' '}
-                    <button
-                      onClick={() => { setIsSignup(!isSignup); setError(null); }}
-                      className="text-blue-500 font-semibold hover:underline"
-                    >
-                      {isSignup ? (t.emailLoginButton as string) : (t.emailSignupButton as string)}
-                    </button>
-                  </p>
-                </>
-              )}
-
-              {error && (
-                <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
-                  {error}
+                <div className="flex items-center justify-center gap-4 mt-6 text-xs text-slate-400">
+                  <span className="flex items-center gap-1"><ShieldIcon /> {t.securePayment}</span>
                 </div>
-              )}
-            </div>
+              </>
+            ) : null}
+
+            {error && (
+              <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
+                {error}
+              </div>
+            )}
           </div>
         </div>
       </main>
