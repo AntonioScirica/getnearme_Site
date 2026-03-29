@@ -14,6 +14,57 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const STRIPE_BILLING_PORTAL = 'https://billing.stripe.com/p/login/cN2eY70E1ftd0kE000';
 
+const PLAN_FEATURES: Record<string, Record<string, string[]>> = {
+  free: {
+    it: ['500 crediti iniziali', 'Analisi immobiliari base'],
+    en: ['500 initial credits', 'Basic property analysis'],
+    es: ['500 créditos iniciales', 'Análisis inmobiliario básico'],
+    fr: ['500 crédits initiaux', 'Analyse immobilière de base'],
+    ru: ['500 начальных кредитов', 'Базовый анализ недвижимости'],
+    uk: ['500 початкових кредитів', 'Базовий аналіз нерухомості'],
+  },
+  user_lite: {
+    it: ['Analisi immobiliari illimitate', 'Calcolo prezzo al m² in tempo reale', 'Export PDF (brand GetNearMe)'],
+    en: ['Unlimited property analysis', 'Real-time price per sqm', 'PDF Export (GetNearMe brand)'],
+    es: ['Análisis inmobiliarios ilimitados', 'Cálculo precio por m² en tiempo real', 'Export PDF (marca GetNearMe)'],
+    fr: ['Analyses immobilières illimitées', 'Calcul prix au m² en temps réel', 'Export PDF (marque GetNearMe)'],
+    ru: ['Безлимитный анализ недвижимости', 'Расчёт цены за м² в реальном времени', 'Экспорт PDF (бренд GetNearMe)'],
+    uk: ['Безлімітний аналіз нерухомості', 'Розрахунок ціни за м² в реальному часі', 'Експорт PDF (бренд GetNearMe)'],
+  },
+  agency_starter: {
+    it: ['Analisi immobiliari illimitate', 'Calcolo prezzo al m² in tempo reale', 'Export PDF illimitati (brand GetNearMe)'],
+    en: ['Unlimited property analysis', 'Real-time price per sqm', 'Unlimited PDF exports (GetNearMe brand)'],
+    es: ['Análisis inmobiliarios ilimitados', 'Cálculo precio por m² en tiempo real', 'Exports PDF ilimitados (marca GetNearMe)'],
+    fr: ['Analyses immobilières illimitées', 'Calcul prix au m² en temps réel', 'Exports PDF illimités (marque GetNearMe)'],
+    ru: ['Безлимитный анализ недвижимости', 'Расчёт цены за м² в реальном времени', 'Безлимитные PDF экспорты (бренд GetNearMe)'],
+    uk: ['Безлімітний аналіз нерухомості', 'Розрахунок ціни за м² в реальному часі', 'Безлімітні PDF експорти (бренд GetNearMe)'],
+  },
+  agency: {
+    it: ['Tutto di Starter, più:', 'Template Post & Stories Social', 'AI Rendering & Homestaging', '5 utenti inclusi'],
+    en: ['Everything in Starter, plus:', 'Social Post & Stories Templates', 'AI Rendering & Homestaging', '5 users included'],
+    es: ['Todo de Starter, más:', 'Plantillas Post & Stories Social', 'AI Rendering & Homestaging', '5 usuarios incluidos'],
+    fr: ['Tout de Starter, plus :', 'Templates Post & Stories Social', 'AI Rendering & Homestaging', '5 utilisateurs inclus'],
+    ru: ['Всё из Starter, плюс:', 'Шаблоны постов и сторис', 'AI Рендеринг и Хоумстейджинг', '5 пользователей включено'],
+    uk: ['Все зі Starter, плюс:', 'Шаблони постів та сторіс', 'AI Рендеринг та Хоумстейджинг', '5 користувачів включено'],
+  },
+  agency_premium: {
+    it: ['Tutto di Agency, più:', 'Export PDF con il TUO logo', 'Editor Video per i social', 'Supporto prioritario', '5 utenti inclusi'],
+    en: ['Everything in Agency, plus:', 'PDF Export with YOUR logo', 'Social Video Editor', 'Priority support', '5 users included'],
+    es: ['Todo de Agency, más:', 'Export PDF con TU logo', 'Editor de Video para redes', 'Soporte prioritario', '5 usuarios incluidos'],
+    fr: ['Tout de Agency, plus :', 'Export PDF avec VOTRE logo', 'Éditeur Vidéo pour les réseaux', 'Support prioritaire', '5 utilisateurs inclus'],
+    ru: ['Всё из Agency, плюс:', 'Экспорт PDF с ВАШИМ логотипом', 'Видеоредактор для соцсетей', 'Приоритетная поддержка', '5 пользователей включено'],
+    uk: ['Все з Agency, плюс:', 'Експорт PDF з ВАШИМ логотипом', 'Відеоредактор для соцмереж', 'Пріоритетна підтримка', '5 користувачів включено'],
+  },
+  agency_pro: {
+    it: ['Tutto di Agency, più:', 'Export PDF con il TUO logo', 'Editor Video per i social', 'Supporto prioritario', '5 utenti inclusi'],
+    en: ['Everything in Agency, plus:', 'PDF Export with YOUR logo', 'Social Video Editor', 'Priority support', '5 users included'],
+    es: ['Todo de Agency, más:', 'Export PDF con TU logo', 'Editor de Video para redes', 'Soporte prioritario', '5 usuarios incluidos'],
+    fr: ['Tout de Agency, plus :', 'Export PDF avec VOTRE logo', 'Éditeur Vidéo pour les réseaux', 'Support prioritaire', '5 utilisateurs inclus'],
+    ru: ['Всё из Agency, плюс:', 'Экспорт PDF с ВАШИМ логотипом', 'Видеоредактор для соцсетей', 'Приоритетная поддержка', '5 пользователей включено'],
+    uk: ['Все з Agency, плюс:', 'Експорт PDF з ВАШИМ логотипом', 'Відеоредактор для соцмереж', 'Пріоритетна підтримка', '5 користувачів включено'],
+  },
+};
+
 const TIER_LABELS: Record<string, string> = {
   free: 'Free',
   user_lite: 'Lite',
@@ -42,8 +93,7 @@ const translations: Record<string, Record<string, string>> = {
     choosePlan: 'Scegli un piano',
     manageSub: 'Gestisci abbonamento',
     manageSubDesc: 'Modifica, aggiorna o cancella il tuo abbonamento su Stripe.',
-    credits: 'Crediti',
-    creditsAvailable: 'crediti disponibili',
+    planIncludes: 'Il tuo piano include',
     email: 'Email',
     installExtension: 'Installa l\'estensione Chrome',
     installDesc: 'Accedi con lo stesso account nell\'estensione per usare il tuo abbonamento.',
@@ -68,8 +118,7 @@ const translations: Record<string, Record<string, string>> = {
     choosePlan: 'Choose a plan',
     manageSub: 'Manage subscription',
     manageSubDesc: 'Change, upgrade, or cancel your subscription on Stripe.',
-    credits: 'Credits',
-    creditsAvailable: 'credits available',
+    planIncludes: 'Your plan includes',
     email: 'Email',
     installExtension: 'Install Chrome Extension',
     installDesc: 'Sign in with the same account in the extension to use your subscription.',
@@ -94,8 +143,7 @@ const translations: Record<string, Record<string, string>> = {
     choosePlan: 'Elegir un plan',
     manageSub: 'Gestionar suscripción',
     manageSubDesc: 'Modifica, actualiza o cancela tu suscripción en Stripe.',
-    credits: 'Créditos',
-    creditsAvailable: 'créditos disponibles',
+    planIncludes: 'Tu plan incluye',
     email: 'Email',
     installExtension: 'Instalar extensión Chrome',
     installDesc: 'Inicia sesión con la misma cuenta en la extensión para usar tu suscripción.',
@@ -120,8 +168,7 @@ const translations: Record<string, Record<string, string>> = {
     choosePlan: 'Choisir un plan',
     manageSub: 'Gérer l\'abonnement',
     manageSubDesc: 'Modifiez, mettez à jour ou annulez votre abonnement sur Stripe.',
-    credits: 'Crédits',
-    creditsAvailable: 'crédits disponibles',
+    planIncludes: 'Votre plan inclut',
     email: 'Email',
     installExtension: 'Installer l\'extension Chrome',
     installDesc: 'Connectez-vous avec le même compte dans l\'extension pour utiliser votre abonnement.',
@@ -146,8 +193,7 @@ const translations: Record<string, Record<string, string>> = {
     choosePlan: 'Выбрать план',
     manageSub: 'Управление подпиской',
     manageSubDesc: 'Измените, обновите или отмените подписку на Stripe.',
-    credits: 'Кредиты',
-    creditsAvailable: 'кредитов доступно',
+    planIncludes: 'Ваш план включает',
     email: 'Email',
     installExtension: 'Установить расширение Chrome',
     installDesc: 'Войдите с тем же аккаунтом в расширении, чтобы использовать подписку.',
@@ -172,8 +218,7 @@ const translations: Record<string, Record<string, string>> = {
     choosePlan: 'Обрати план',
     manageSub: 'Керування підпискою',
     manageSubDesc: 'Змініть, оновіть або скасуйте підписку на Stripe.',
-    credits: 'Кредити',
-    creditsAvailable: 'кредитів доступно',
+    planIncludes: 'Ваш план включає',
     email: 'Email',
     installExtension: 'Встановити розширення Chrome',
     installDesc: 'Увійдіть з тим самим акаунтом у розширенні, щоб використовувати підписку.',
@@ -202,7 +247,6 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [userEmail, setUserEmail] = useState('');
   const [subscriptionType, setSubscriptionType] = useState('free');
-  const [credits, setCredits] = useState(0);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteConfirmEmail, setDeleteConfirmEmail] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
@@ -221,13 +265,12 @@ export default function DashboardPage() {
       try {
         const { data } = await supabase
           .from('user_credits')
-          .select('subscription_type, credits')
+          .select('subscription_type')
           .eq('user_id', session.user.id)
           .single();
 
         if (data) {
           setSubscriptionType(data.subscription_type || 'free');
-          setCredits(data.credits || 0);
         }
       } catch {
         // No record - user is free tier
@@ -271,7 +314,7 @@ export default function DashboardPage() {
       <div className="min-h-screen bg-[#fafaf8]">
         <Navbar locale={locale} />
         <div className="min-h-screen flex items-center justify-center">
-          <Loader2 className="w-8 h-8 animate-spin text-amber-500" />
+          <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
         </div>
       </div>
     );
@@ -299,11 +342,11 @@ export default function DashboardPage() {
             <div className="mt-4">
               <p className="text-slate-500 text-sm mb-4">{t.manageSubDesc}</p>
               <a
-                href={STRIPE_BILLING_PORTAL}
+                href={`${STRIPE_BILLING_PORTAL}?prefilled_email=${encodeURIComponent(userEmail)}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-6 py-3 bg-[#1a1a2e] text-white rounded-xl neo-border neo-btn font-bold text-sm transition-all"
-                style={{ boxShadow: '4px 4px 0px #f59e0b' }}
+                style={{ boxShadow: '4px 4px 0px #3B83F6' }}
               >
                 {t.manageSub}
               </a>
@@ -313,7 +356,7 @@ export default function DashboardPage() {
               <p className="text-slate-500 text-sm mb-4">{t.freeDesc}</p>
               <a
                 href={`/${locale}#pricing`}
-                className="inline-flex items-center gap-2 px-6 py-3 bg-amber-500 text-[#1a1a2e] rounded-xl neo-border neo-btn font-bold text-sm transition-all hover:bg-amber-600"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-blue-500 text-white rounded-xl neo-border neo-btn font-bold text-sm transition-all hover:bg-blue-600"
                 style={{ boxShadow: '4px 4px 0px #1a1a2e' }}
               >
                 {t.choosePlan}
@@ -322,13 +365,19 @@ export default function DashboardPage() {
           )}
         </div>
 
-        {/* Credits card */}
+        {/* Plan features card */}
         <div className="bg-white neo-border rounded-2xl p-6 mb-6" style={{ boxShadow: '6px 6px 0px #1a1a2e' }}>
-          <h2 className="text-sm font-bold uppercase tracking-wider text-slate-400 mb-4">{t.credits}</h2>
-          <div className="flex items-baseline gap-2">
-            <span className="text-4xl font-bold text-amber-500">{credits.toLocaleString()}</span>
-            <span className="text-slate-500">{t.creditsAvailable}</span>
-          </div>
+          <h2 className="text-sm font-bold uppercase tracking-wider text-slate-400 mb-4">{t.planIncludes}</h2>
+          <ul className="space-y-2">
+            {(PLAN_FEATURES[subscriptionType]?.[locale] || PLAN_FEATURES.free[locale] || PLAN_FEATURES.free.it).map((feature, i) => (
+              <li key={i} className="flex items-center gap-2 text-slate-700 text-sm">
+                <svg className="w-4 h-4 text-blue-500 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+                {feature}
+              </li>
+            ))}
+          </ul>
         </div>
 
         {/* Account info */}
@@ -338,13 +387,13 @@ export default function DashboardPage() {
         </div>
 
         {/* Extension install */}
-        <div className="bg-amber-50 neo-border rounded-2xl p-6 mb-6" style={{ boxShadow: '6px 6px 0px #1a1a2e' }}>
+        <div className="bg-blue-50 neo-border rounded-2xl p-6 mb-6" style={{ boxShadow: '6px 6px 0px #1a1a2e' }}>
           <p className="text-slate-600 text-sm mb-4">{t.installDesc}</p>
           <a
             href={CHROME_EXTENSION_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-amber-500 text-[#1a1a2e] rounded-xl neo-border neo-btn font-bold text-sm transition-all hover:bg-amber-600"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-blue-500 text-white rounded-xl neo-border neo-btn font-bold text-sm transition-all hover:bg-blue-600"
             style={{ boxShadow: '4px 4px 0px #1a1a2e' }}
           >
             {t.installExtension}

@@ -104,8 +104,8 @@ export default function Navbar({ locale }: NavbarProps) {
                         {isLoggedIn ? (
                             <Link
                                 href={`/${locale}/dashboard`}
-                                className="flex items-center gap-2 px-3 py-2 sm:px-5 sm:py-2.5 bg-[#1a1a2e] text-white rounded-xl neo-border neo-btn transition-all font-bold text-sm sm:text-base"
-                                style={{ boxShadow: '4px 4px 0px #f59e0b' }}
+                                className="flex items-center gap-2 px-3 py-2 sm:px-5 sm:py-2.5 bg-[#3B83F6] text-white rounded-xl neo-border neo-btn hover:bg-[#2563EB] transition-all font-bold text-sm sm:text-base"
+                                style={{ boxShadow: '4px 4px 0px #1a1a2e' }}
                             >
                                 <UserIcon />
                                 <span className="hidden sm:inline">{t.nav.dashboard}</span>
@@ -170,12 +170,12 @@ export default function Navbar({ locale }: NavbarProps) {
                         {isLoggedIn ? (
                             <Link
                                 href={`/${locale}/dashboard`}
-                                className={`mt-6 w-full max-w-xs text-center flex items-center justify-center gap-2 px-5 py-2.5 bg-[#1a1a2e] text-white rounded-xl neo-border neo-btn transition-all duration-500 ease-out font-bold text-base ${
+                                className={`mt-6 w-full max-w-xs text-center flex items-center justify-center gap-2 px-5 py-2.5 bg-[#3B83F6] text-white rounded-xl neo-border neo-btn hover:bg-[#2563EB] transition-all duration-500 ease-out font-bold text-base ${
                                     isMenuOpen
                                         ? 'opacity-100 translate-y-0'
                                         : 'opacity-0 translate-y-4'
                                 }`}
-                                style={{ transitionDelay: isMenuOpen ? '450ms' : '0ms', boxShadow: '4px 4px 0px #f59e0b' }}
+                                style={{ transitionDelay: isMenuOpen ? '450ms' : '0ms', boxShadow: '4px 4px 0px #1a1a2e' }}
                                 onClick={() => setIsMenuOpen(false)}
                             >
                                 <UserIcon />

@@ -382,7 +382,7 @@ export default function CheckoutAgencyPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-amber-500" />
+        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
       </div>
     }>
       <CheckoutAgencyContent />
@@ -608,14 +608,14 @@ function CheckoutAgencyContent() {
 
             {/* Logo + Plan summary */}
             <div className="text-center mb-6">
-              <span className="text-2xl font-bold text-amber-500">GetNearMe</span>
+              <span className="text-2xl font-bold text-blue-500">GetNearMe</span>
             </div>
 
             <div className="bg-slate-50 rounded-xl p-6 mb-6">
               <div className="text-center">
                 <div className="text-lg font-semibold text-slate-900">{plan.name}</div>
                 <div className="mt-2">
-                  <span className="text-4xl font-bold text-amber-500">€{currentPrice}</span>
+                  <span className="text-4xl font-bold text-blue-500">€{currentPrice}</span>
                   <span className="text-slate-500">{periodLabel}</span>
                 </div>
                 {plan.original_price > plan.price_monthly && (
@@ -633,7 +633,7 @@ function CheckoutAgencyContent() {
                       onClick={() => setInterval('monthly')}
                       className={`px-4 py-1.5 rounded-md text-xs font-semibold transition-all ${
                         interval === 'monthly'
-                          ? 'bg-amber-500 text-[#1a1a2e]'
+                          ? 'bg-blue-500 text-white'
                           : 'text-slate-500 hover:text-slate-700'
                       }`}
                     >
@@ -643,7 +643,7 @@ function CheckoutAgencyContent() {
                       onClick={() => setInterval('annual')}
                       className={`px-4 py-1.5 rounded-md text-xs font-semibold transition-all ${
                         interval === 'annual'
-                          ? 'bg-amber-500 text-[#1a1a2e]'
+                          ? 'bg-blue-500 text-white'
                           : 'text-slate-500 hover:text-slate-700'
                       }`}
                     >
@@ -676,7 +676,7 @@ function CheckoutAgencyContent() {
             ) : isRedirecting || checkingSubscription ? (
               /* Redirecting to Stripe or checking subscription */
               <div className="text-center py-4">
-                <Loader2 className="w-8 h-8 animate-spin text-amber-500 mx-auto mb-3" />
+                <Loader2 className="w-8 h-8 animate-spin text-blue-500 mx-auto mb-3" />
                 <p className="text-slate-500 text-sm">{t.redirecting}</p>
               </div>
             ) : user && !existingSubscription ? (
@@ -688,15 +688,15 @@ function CheckoutAgencyContent() {
 
                 {/* Consent checkboxes */}
                 <div className="mb-6 space-y-3">
-                  <label className="flex items-start gap-3 cursor-pointer group">
-                    <div className="relative mt-0.5 shrink-0">
+                  <label className="flex items-center gap-3 cursor-pointer group">
+                    <div className="relative shrink-0">
                       <input
                         type="checkbox"
                         checked={termsAccepted}
                         onChange={(e) => setTermsAccepted(e.target.checked)}
                         className="sr-only peer"
                       />
-                      <div className="w-5 h-5 border-2 border-[#1a1a2e] rounded bg-white peer-checked:bg-amber-500 peer-checked:border-[#1a1a2e] transition-all flex items-center justify-center" style={{ boxShadow: '2px 2px 0px #1a1a2e' }}>
+                      <div className="w-5 h-5 border-2 border-[#1a1a2e] rounded bg-white peer-checked:bg-blue-500 peer-checked:border-[#1a1a2e] transition-all flex items-center justify-center" style={{ boxShadow: '2px 2px 0px #1a1a2e' }}>
                         {termsAccepted && (
                           <svg className="w-3 h-3 text-[#1a1a2e]" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                             <polyline points="2 6 5 9 10 3" />
@@ -706,22 +706,22 @@ function CheckoutAgencyContent() {
                     </div>
                     <span className="text-sm text-slate-600 leading-tight">
                       {t.acceptTerms}{' '}
-                      <a href={`/${locale}/termini`} target="_blank" rel="noopener noreferrer" className="text-amber-600 font-semibold hover:underline">{t.termsOfService}</a>
+                      <a href={`/${locale}/termini`} target="_blank" rel="noopener noreferrer" className="text-blue-500 font-semibold hover:underline">{t.termsOfService}</a>
                       {' '}{t.andThe}{' '}
-                      <a href={`/${locale}/privacy`} target="_blank" rel="noopener noreferrer" className="text-amber-600 font-semibold hover:underline">{t.privacyPolicy}</a>
+                      <a href={`/${locale}/privacy`} target="_blank" rel="noopener noreferrer" className="text-blue-500 font-semibold hover:underline">{t.privacyPolicy}</a>
                       {' *'}
                     </span>
                   </label>
 
-                  <label className="flex items-start gap-3 cursor-pointer group">
-                    <div className="relative mt-0.5 shrink-0">
+                  <label className="flex items-center gap-3 cursor-pointer group">
+                    <div className="relative shrink-0">
                       <input
                         type="checkbox"
                         checked={marketingAccepted}
                         onChange={(e) => setMarketingAccepted(e.target.checked)}
                         className="sr-only peer"
                       />
-                      <div className="w-5 h-5 border-2 border-[#1a1a2e] rounded bg-white peer-checked:bg-amber-500 peer-checked:border-[#1a1a2e] transition-all flex items-center justify-center" style={{ boxShadow: '2px 2px 0px #1a1a2e' }}>
+                      <div className="w-5 h-5 border-2 border-[#1a1a2e] rounded bg-white peer-checked:bg-blue-500 peer-checked:border-[#1a1a2e] transition-all flex items-center justify-center" style={{ boxShadow: '2px 2px 0px #1a1a2e' }}>
                         {marketingAccepted && (
                           <svg className="w-3 h-3 text-[#1a1a2e]" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                             <polyline points="2 6 5 9 10 3" />
@@ -742,7 +742,7 @@ function CheckoutAgencyContent() {
                     proceedToPayment(user.id, user.email, termsAccepted, marketingAccepted);
                   }}
                   disabled={!termsAccepted || checkingSubscription}
-                  className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-amber-500 rounded-xl text-[#1a1a2e] font-semibold hover:bg-amber-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-blue-500 rounded-xl text-white font-semibold hover:bg-blue-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {checkingSubscription ? (
                     <>
@@ -801,7 +801,7 @@ function CheckoutAgencyContent() {
                     placeholder={t.emailPlaceholder as string}
                     required
                     disabled={isLoading || isEmailLoading}
-                    className="w-full px-4 py-3 border border-slate-300 rounded-xl text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent disabled:opacity-50"
+                    className="w-full px-4 py-3 border border-slate-300 rounded-xl text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
                   />
                   <input
                     type="password"
@@ -810,12 +810,12 @@ function CheckoutAgencyContent() {
                     placeholder={t.passwordPlaceholder as string}
                     required
                     disabled={isLoading || isEmailLoading}
-                    className="w-full px-4 py-3 border border-slate-300 rounded-xl text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent disabled:opacity-50"
+                    className="w-full px-4 py-3 border border-slate-300 rounded-xl text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
                   />
                   <button
                     type="submit"
                     disabled={isLoading || isEmailLoading}
-                    className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-amber-500 rounded-xl text-[#1a1a2e] font-semibold hover:bg-amber-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-blue-500 rounded-xl text-white font-semibold hover:bg-blue-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isEmailLoading ? (
                       <>
@@ -832,7 +832,7 @@ function CheckoutAgencyContent() {
                   {isSignup ? (t.hasAccount as string) : (t.noAccount as string)}{' '}
                   <button
                     onClick={() => { setIsSignup(!isSignup); setError(null); }}
-                    className="text-amber-600 font-semibold hover:underline"
+                    className="text-blue-500 font-semibold hover:underline"
                   >
                     {isSignup ? (t.emailLoginButton as string) : (t.emailSignupButton as string)}
                   </button>
@@ -840,15 +840,15 @@ function CheckoutAgencyContent() {
 
                 {/* Consent checkboxes - at bottom */}
                 <div ref={consentRef} className="mt-6 pt-6 border-t border-slate-200 space-y-3">
-                  <label className="flex items-start gap-3 cursor-pointer group">
-                    <div className="relative mt-0.5 shrink-0">
+                  <label className="flex items-center gap-3 cursor-pointer group">
+                    <div className="relative shrink-0">
                       <input
                         type="checkbox"
                         checked={termsAccepted}
                         onChange={(e) => { setTermsAccepted(e.target.checked); if (e.target.checked) setError(null); }}
                         className="sr-only peer"
                       />
-                      <div className="w-5 h-5 border-2 border-[#1a1a2e] rounded bg-white peer-checked:bg-amber-500 peer-checked:border-[#1a1a2e] transition-all flex items-center justify-center" style={{ boxShadow: '2px 2px 0px #1a1a2e' }}>
+                      <div className="w-5 h-5 border-2 border-[#1a1a2e] rounded bg-white peer-checked:bg-blue-500 peer-checked:border-[#1a1a2e] transition-all flex items-center justify-center" style={{ boxShadow: '2px 2px 0px #1a1a2e' }}>
                         {termsAccepted && (
                           <svg className="w-3 h-3 text-[#1a1a2e]" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                             <polyline points="2 6 5 9 10 3" />
@@ -858,22 +858,22 @@ function CheckoutAgencyContent() {
                     </div>
                     <span className="text-sm text-slate-600 leading-tight">
                       {t.acceptTerms}{' '}
-                      <a href={`/${locale}/termini`} target="_blank" rel="noopener noreferrer" className="text-amber-600 font-semibold hover:underline">{t.termsOfService}</a>
+                      <a href={`/${locale}/termini`} target="_blank" rel="noopener noreferrer" className="text-blue-500 font-semibold hover:underline">{t.termsOfService}</a>
                       {' '}{t.andThe}{' '}
-                      <a href={`/${locale}/privacy`} target="_blank" rel="noopener noreferrer" className="text-amber-600 font-semibold hover:underline">{t.privacyPolicy}</a>
+                      <a href={`/${locale}/privacy`} target="_blank" rel="noopener noreferrer" className="text-blue-500 font-semibold hover:underline">{t.privacyPolicy}</a>
                       {' *'}
                     </span>
                   </label>
 
-                  <label className="flex items-start gap-3 cursor-pointer group">
-                    <div className="relative mt-0.5 shrink-0">
+                  <label className="flex items-center gap-3 cursor-pointer group">
+                    <div className="relative shrink-0">
                       <input
                         type="checkbox"
                         checked={marketingAccepted}
                         onChange={(e) => setMarketingAccepted(e.target.checked)}
                         className="sr-only peer"
                       />
-                      <div className="w-5 h-5 border-2 border-[#1a1a2e] rounded bg-white peer-checked:bg-amber-500 peer-checked:border-[#1a1a2e] transition-all flex items-center justify-center" style={{ boxShadow: '2px 2px 0px #1a1a2e' }}>
+                      <div className="w-5 h-5 border-2 border-[#1a1a2e] rounded bg-white peer-checked:bg-blue-500 peer-checked:border-[#1a1a2e] transition-all flex items-center justify-center" style={{ boxShadow: '2px 2px 0px #1a1a2e' }}>
                         {marketingAccepted && (
                           <svg className="w-3 h-3 text-[#1a1a2e]" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                             <polyline points="2 6 5 9 10 3" />
