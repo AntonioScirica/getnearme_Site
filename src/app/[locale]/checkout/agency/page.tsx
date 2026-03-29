@@ -599,21 +599,21 @@ function CheckoutAgencyContent() {
   const periodLabel = interval === 'annual' ? t.perYear : t.perMonth;
 
   return (
-    <div className="min-h-screen bg-white font-sans text-slate-900">
+    <div className="min-h-screen bg-[#fafaf8] font-sans text-[#1a1a2e]">
       <Navbar locale={locale} />
 
-      <main className="min-h-screen flex items-center justify-center px-4 py-20">
+      <main className="min-h-screen flex items-center justify-center px-4 py-24">
         <div className="max-w-md w-full">
-          <div className="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm">
+          <div className="bg-white neo-border rounded-2xl p-8" style={{ boxShadow: '6px 6px 0px #1a1a2e' }}>
 
             {/* Logo + Plan summary */}
             <div className="text-center mb-6">
               <span className="text-2xl font-bold text-blue-500">GetNearMe</span>
             </div>
 
-            <div className="bg-slate-50 rounded-xl p-6 mb-6">
+            <div className="bg-[#fafaf8] neo-border rounded-xl p-6 mb-6" style={{ boxShadow: '4px 4px 0px #1a1a2e' }}>
               <div className="text-center">
-                <div className="text-lg font-semibold text-slate-900">{plan.name}</div>
+                <div className="text-lg font-bold text-[#1a1a2e]">{plan.name}</div>
                 <div className="mt-2">
                   <span className="text-4xl font-bold text-blue-500">€{currentPrice}</span>
                   <span className="text-slate-500">{periodLabel}</span>
@@ -628,10 +628,10 @@ function CheckoutAgencyContent() {
               {/* Billing interval toggle */}
               {plan.payment_link_annual && (
                 <div className="flex justify-center mt-4">
-                  <div className="inline-flex bg-white rounded-lg p-0.5 border border-slate-200">
+                  <div className="inline-flex bg-white neo-border rounded-lg p-0.5">
                     <button
                       onClick={() => setInterval('monthly')}
-                      className={`px-4 py-1.5 rounded-md text-xs font-semibold transition-all ${
+                      className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${
                         interval === 'monthly'
                           ? 'bg-blue-500 text-white'
                           : 'text-slate-500 hover:text-slate-700'
@@ -641,7 +641,7 @@ function CheckoutAgencyContent() {
                     </button>
                     <button
                       onClick={() => setInterval('annual')}
-                      className={`px-4 py-1.5 rounded-md text-xs font-semibold transition-all ${
+                      className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${
                         interval === 'annual'
                           ? 'bg-blue-500 text-white'
                           : 'text-slate-500 hover:text-slate-700'
@@ -657,18 +657,19 @@ function CheckoutAgencyContent() {
             {/* Already subscribed */}
             {user && existingSubscription ? (
               <div className="text-center">
-                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <div className="w-16 h-16 bg-green-100 neo-border rounded-full flex items-center justify-center mx-auto mb-4">
                   <CheckCircle className="w-8 h-8 text-green-600" />
                 </div>
-                <h2 className="text-xl font-bold text-slate-900 mb-2">{t.alreadySubscribed}</h2>
+                <h2 className="text-xl font-bold text-[#1a1a2e] mb-2">{t.alreadySubscribed}</h2>
                 <p className="text-slate-500 mb-6">
                   {t.currentPlan}: <strong>{TIER_LABELS[existingSubscription]?.[locale] || existingSubscription}</strong>
                 </p>
                 <a
-                  href="https://billing.stripe.com/p/login/cN2eY70E1ftd0kE000"
+                  href="https://billing.stripe.com/p/login/9B68wP7WH3blfTG15eak000"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-block px-6 py-3 bg-slate-900 text-white rounded-xl font-semibold hover:bg-slate-800 transition-all"
+                  className="inline-block px-6 py-3 bg-[#1a1a2e] text-white rounded-xl neo-border neo-btn font-bold hover:bg-[#2a2a3e] transition-all"
+                  style={{ boxShadow: '4px 4px 0px #3B83F6' }}
                 >
                   {t.manageSub}
                 </a>
@@ -742,7 +743,8 @@ function CheckoutAgencyContent() {
                     proceedToPayment(user.id, user.email, termsAccepted, marketingAccepted);
                   }}
                   disabled={!termsAccepted || checkingSubscription}
-                  className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-blue-500 rounded-xl text-white font-semibold hover:bg-blue-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-blue-500 rounded-xl neo-border neo-btn text-white font-bold hover:bg-blue-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{ boxShadow: '4px 4px 0px #1a1a2e' }}
                 >
                   {checkingSubscription ? (
                     <>
@@ -755,7 +757,7 @@ function CheckoutAgencyContent() {
                 </button>
 
                 {error && (
-                  <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
+                  <div className="mt-4 p-4 bg-red-50 neo-border rounded-xl text-red-700 text-sm">
                     {error}
                   </div>
                 )}
@@ -772,7 +774,8 @@ function CheckoutAgencyContent() {
                 <button
                   onClick={handleGoogleLogin}
                   disabled={isLoading || isEmailLoading}
-                  className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-white border border-slate-300 rounded-xl text-slate-700 font-semibold hover:bg-slate-50 hover:border-slate-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-white neo-border rounded-xl text-[#1a1a2e] font-bold hover:bg-slate-50 transition-all neo-btn disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{ boxShadow: '4px 4px 0px #1a1a2e' }}
                 >
                   {isLoading ? (
                     <>
@@ -788,9 +791,9 @@ function CheckoutAgencyContent() {
                 </button>
 
                 <div className="flex items-center gap-4 my-6">
-                  <div className="flex-1 h-px bg-slate-200" />
-                  <span className="text-slate-400 text-sm">{t.orDivider}</span>
-                  <div className="flex-1 h-px bg-slate-200" />
+                  <div className="flex-1 h-px bg-[#1a1a2e]/20" />
+                  <span className="text-slate-400 text-sm font-bold">{t.orDivider}</span>
+                  <div className="flex-1 h-px bg-[#1a1a2e]/20" />
                 </div>
 
                 <form onSubmit={handleEmailAuth} className="space-y-4">
@@ -801,7 +804,7 @@ function CheckoutAgencyContent() {
                     placeholder={t.emailPlaceholder as string}
                     required
                     disabled={isLoading || isEmailLoading}
-                    className="w-full px-4 py-3 border border-slate-300 rounded-xl text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
+                    className="w-full px-4 py-3 neo-border rounded-xl text-[#1a1a2e] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
                   />
                   <input
                     type="password"
@@ -810,12 +813,13 @@ function CheckoutAgencyContent() {
                     placeholder={t.passwordPlaceholder as string}
                     required
                     disabled={isLoading || isEmailLoading}
-                    className="w-full px-4 py-3 border border-slate-300 rounded-xl text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
+                    className="w-full px-4 py-3 neo-border rounded-xl text-[#1a1a2e] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
                   />
                   <button
                     type="submit"
                     disabled={isLoading || isEmailLoading}
-                    className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-blue-500 rounded-xl text-white font-semibold hover:bg-blue-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-blue-500 rounded-xl neo-border neo-btn text-white font-bold hover:bg-blue-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{ boxShadow: '4px 4px 0px #1a1a2e' }}
                   >
                     {isEmailLoading ? (
                       <>
@@ -832,14 +836,14 @@ function CheckoutAgencyContent() {
                   {isSignup ? (t.hasAccount as string) : (t.noAccount as string)}{' '}
                   <button
                     onClick={() => { setIsSignup(!isSignup); setError(null); }}
-                    className="text-blue-500 font-semibold hover:underline"
+                    className="text-blue-500 font-bold hover:underline"
                   >
                     {isSignup ? (t.emailLoginButton as string) : (t.emailSignupButton as string)}
                   </button>
                 </p>
 
                 {/* Consent checkboxes - at bottom */}
-                <div ref={consentRef} className="mt-6 pt-6 border-t border-slate-200 space-y-3">
+                <div ref={consentRef} className="mt-6 pt-6 border-t-2 border-[#1a1a2e]/20 space-y-3">
                   <label className="flex items-center gap-3 cursor-pointer group">
                     <div className="relative shrink-0">
                       <input
@@ -887,7 +891,7 @@ function CheckoutAgencyContent() {
                   </label>
 
                   {!termsAccepted && error === (t.termsRequired as string) && (
-                    <p className="text-red-500 text-xs font-medium animate-pulse">{t.termsRequired}</p>
+                    <p className="text-red-500 text-xs font-bold animate-pulse">{t.termsRequired}</p>
                   )}
                 </div>
 
@@ -898,7 +902,7 @@ function CheckoutAgencyContent() {
             ) : null}
 
             {error && (
-              <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
+              <div className="mt-4 p-4 bg-red-50 neo-border rounded-xl text-red-700 text-sm">
                 {error}
               </div>
             )}

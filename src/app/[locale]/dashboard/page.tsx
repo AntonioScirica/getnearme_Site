@@ -327,6 +327,20 @@ export default function DashboardPage() {
       <main className="max-w-2xl mx-auto px-4 py-24">
         <h1 className="text-3xl font-bold mb-8">{t.title}</h1>
 
+        {/* Extension install - first card */}
+        <div className="bg-blue-50 neo-border rounded-2xl p-6 mb-6" style={{ boxShadow: '6px 6px 0px #1a1a2e' }}>
+          <p className="text-slate-600 text-sm mb-4">{t.installDesc}</p>
+          <a
+            href={CHROME_EXTENSION_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-blue-500 text-white rounded-xl neo-border neo-btn font-bold text-sm transition-all hover:bg-blue-600"
+            style={{ boxShadow: '4px 4px 0px #1a1a2e' }}
+          >
+            {t.installExtension}
+          </a>
+        </div>
+
         {/* Subscription card */}
         <div className="bg-white neo-border rounded-2xl p-6 mb-6" style={{ boxShadow: '6px 6px 0px #1a1a2e' }}>
           <h2 className="text-sm font-bold uppercase tracking-wider text-slate-400 mb-4">{t.subscription}</h2>
@@ -384,20 +398,6 @@ export default function DashboardPage() {
         <div className="bg-white neo-border rounded-2xl p-6 mb-6" style={{ boxShadow: '6px 6px 0px #1a1a2e' }}>
           <h2 className="text-sm font-bold uppercase tracking-wider text-slate-400 mb-4">{t.email}</h2>
           <p className="text-lg font-medium">{userEmail}</p>
-        </div>
-
-        {/* Extension install */}
-        <div className="bg-blue-50 neo-border rounded-2xl p-6 mb-6" style={{ boxShadow: '6px 6px 0px #1a1a2e' }}>
-          <p className="text-slate-600 text-sm mb-4">{t.installDesc}</p>
-          <a
-            href={CHROME_EXTENSION_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-blue-500 text-white rounded-xl neo-border neo-btn font-bold text-sm transition-all hover:bg-blue-600"
-            style={{ boxShadow: '4px 4px 0px #1a1a2e' }}
-          >
-            {t.installExtension}
-          </a>
         </div>
 
         {/* Danger zone */}
