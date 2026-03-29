@@ -9,7 +9,9 @@ export const translations = {
       blog: "Blog",
       tutorial: "Tutorial",
       startAnalysis: "Prova ora!",
-      backToHome: "← Torna alla home"
+      backToHome: "← Torna alla home",
+      dashboard: "Dashboard",
+      myAccount: "Il mio account"
     },
     hero: {
       title1: "Il vantaggio competitivo",
@@ -435,7 +437,9 @@ export const translations = {
       blog: "Blog",
       tutorial: "Tutorial",
       startAnalysis: "Start Analysis",
-      backToHome: "← Back to home"
+      backToHome: "← Back to home",
+      dashboard: "Dashboard",
+      myAccount: "My account"
     },
     hero: {
       title1: "The competitive edge",
@@ -861,7 +865,9 @@ export const translations = {
       blog: "Blog",
       tutorial: "Tutorial",
       startAnalysis: "Iniciar Análisis",
-      backToHome: "← Volver al inicio"
+      backToHome: "← Volver al inicio",
+      dashboard: "Dashboard",
+      myAccount: "Mi cuenta"
     },
     hero: {
       title1: "La ventaja competitiva",
@@ -1287,7 +1293,9 @@ export const translations = {
       blog: "Blog",
       tutorial: "Tutoriel",
       startAnalysis: "Lancer l'Analyse",
-      backToHome: "← Retour à l'accueil"
+      backToHome: "← Retour à l'accueil",
+      dashboard: "Tableau de bord",
+      myAccount: "Mon compte"
     },
     hero: {
       title1: "L'avantage compétitif",
@@ -1713,7 +1721,9 @@ export const translations = {
       blog: "Блог",
       tutorial: "Обучение",
       startAnalysis: "Начать Анализ",
-      backToHome: "← Вернуться на главную"
+      backToHome: "← Вернуться на главную",
+      dashboard: "Панель управления",
+      myAccount: "Мой аккаунт"
     },
     hero: {
       title1: "Конкурентное преимущество,",
@@ -2139,7 +2149,9 @@ export const translations = {
       blog: "Блог",
       tutorial: "Навчання",
       startAnalysis: "Почати Аналіз",
-      backToHome: "← Повернутися на головну"
+      backToHome: "← Повернутися на головну",
+      dashboard: "Панель керування",
+      myAccount: "Мій акаунт"
     },
     hero: {
       title1: "Конкурентна перевага,",

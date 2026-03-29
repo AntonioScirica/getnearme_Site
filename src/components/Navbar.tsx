@@ -2,17 +2,33 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { createClient } from '@supabase/supabase-js';
 import { type Locale } from '@/lib/i18n';
 import { translations } from '@/lib/translations';
 import LanguageSwitcher from './LanguageSwitcher';
+
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 interface NavbarProps {
     locale: Locale;
 }
 
+function UserIcon() {
+    return (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+            <circle cx="12" cy="7" r="4" />
+        </svg>
+    );
+}
+
 export default function Navbar({ locale }: NavbarProps) {
     const [isScrolled, setIsScrolled] = useState(false);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
     const t = translations[locale];
 
     useEffect(() => {
@@ -32,6 +48,18 @@ export default function Navbar({ locale }: NavbarProps) {
         }
         return () => { document.body.style.overflow = ''; };
     }, [isMenuOpen]);
+
+    useEffect(() => {
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            setIsLoggedIn(!!session?.user);
+        });
+
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+            setIsLoggedIn(!!session?.user);
+        });
+
+        return () => { subscription.unsubscribe(); };
+    }, []);
 
     const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
@@ -73,15 +101,26 @@ export default function Navbar({ locale }: NavbarProps) {
                     </div>
 
                     <div className="flex items-center gap-2 sm:gap-4">
-                        <a
-                            href="https://chromewebstore.google.com/detail/getnearme-%E2%80%94-valuta-il-qua/jbnceigldmpkpplanjlednlehloaeoia"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex px-3 py-2 sm:px-6 sm:py-2.5 bg-amber-500 text-[#1a1a2e] rounded-xl neo-border neo-btn hover:bg-amber-600 transition-all font-bold text-sm sm:text-lg"
-                            style={{ boxShadow: '4px 4px 0px #1a1a2e' }}
-                        >
-                            {t.nav.startAnalysis}
-                        </a>
+                        {isLoggedIn ? (
+                            <Link
+                                href={`/${locale}/dashboard`}
+                                className="flex items-center gap-2 px-3 py-2 sm:px-5 sm:py-2.5 bg-[#1a1a2e] text-white rounded-xl neo-border neo-btn transition-all font-bold text-sm sm:text-base"
+                                style={{ boxShadow: '4px 4px 0px #f59e0b' }}
+                            >
+                                <UserIcon />
+                                <span className="hidden sm:inline">{t.nav.dashboard}</span>
+                            </Link>
+                        ) : (
+                            <a
+                                href="https://chromewebstore.google.com/detail/getnearme-%E2%80%94-valuta-il-qua/jbnceigldmpkpplanjlednlehloaeoia"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex px-3 py-2 sm:px-6 sm:py-2.5 bg-amber-500 text-[#1a1a2e] rounded-xl neo-border neo-btn hover:bg-amber-600 transition-all font-bold text-sm sm:text-lg"
+                                style={{ boxShadow: '4px 4px 0px #1a1a2e' }}
+                            >
+                                {t.nav.startAnalysis}
+                            </a>
+                        )}
                         <button
                             className="md:hidden relative z-[70] p-2 text-slate-600"
                             onClick={toggleMenu}
@@ -128,20 +167,36 @@ export default function Navbar({ locale }: NavbarProps) {
                             </Link>
                         ))}
 
-                        <a
-                            href="https://chromewebstore.google.com/detail/getnearme-%E2%80%94-valuta-il-qua/jbnceigldmpkpplanjlednlehloaeoia"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={`mt-6 w-full max-w-xs text-center px-5 py-2.5 bg-amber-500 text-[#1a1a2e] rounded-xl neo-border neo-btn hover:bg-amber-600 transition-all duration-500 ease-out font-bold text-base ${
-                                isMenuOpen
-                                    ? 'opacity-100 translate-y-0'
-                                    : 'opacity-0 translate-y-4'
-                            }`}
-                            style={{ transitionDelay: isMenuOpen ? '450ms' : '0ms' }}
-                            onClick={() => setIsMenuOpen(false)}
-                        >
-                            {t.nav.startAnalysis}
-                        </a>
+                        {isLoggedIn ? (
+                            <Link
+                                href={`/${locale}/dashboard`}
+                                className={`mt-6 w-full max-w-xs text-center flex items-center justify-center gap-2 px-5 py-2.5 bg-[#1a1a2e] text-white rounded-xl neo-border neo-btn transition-all duration-500 ease-out font-bold text-base ${
+                                    isMenuOpen
+                                        ? 'opacity-100 translate-y-0'
+                                        : 'opacity-0 translate-y-4'
+                                }`}
+                                style={{ transitionDelay: isMenuOpen ? '450ms' : '0ms', boxShadow: '4px 4px 0px #f59e0b' }}
+                                onClick={() => setIsMenuOpen(false)}
+                            >
+                                <UserIcon />
+                                {t.nav.dashboard}
+                            </Link>
+                        ) : (
+                            <a
+                                href="https://chromewebstore.google.com/detail/getnearme-%E2%80%94-valuta-il-qua/jbnceigldmpkpplanjlednlehloaeoia"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className={`mt-6 w-full max-w-xs text-center px-5 py-2.5 bg-amber-500 text-[#1a1a2e] rounded-xl neo-border neo-btn hover:bg-amber-600 transition-all duration-500 ease-out font-bold text-base ${
+                                    isMenuOpen
+                                        ? 'opacity-100 translate-y-0'
+                                        : 'opacity-0 translate-y-4'
+                                }`}
+                                style={{ transitionDelay: isMenuOpen ? '450ms' : '0ms' }}
+                                onClick={() => setIsMenuOpen(false)}
+                            >
+                                {t.nav.startAnalysis}
+                            </a>
+                        )}
                     </div>
 
                     <div

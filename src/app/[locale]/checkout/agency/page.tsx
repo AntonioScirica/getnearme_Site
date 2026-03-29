@@ -123,6 +123,14 @@ const translations: Record<string, Record<string, string | string[]>> = {
     users_pro: '5 utenti inclusi',
     securePayment: 'Pagamento sicuro con Stripe',
     cancelAnytime: 'Cancella in qualsiasi momento',
+    acceptTerms: 'Accetto i',
+    termsOfService: 'Termini di Servizio',
+    andThe: 'e la',
+    privacyPolicy: 'Privacy Policy',
+    marketingConsent: 'Accetto di ricevere email su novità e promozioni',
+    termsRequired: 'Devi accettare i termini per continuare',
+    loggedInAs: 'Accesso effettuato come',
+    proceedToPayment: 'Procedi al pagamento',
   },
   en: {
     pageTitle: 'Choose your plan',
@@ -160,6 +168,14 @@ const translations: Record<string, Record<string, string | string[]>> = {
     users_pro: '5 users included',
     securePayment: 'Secure payment via Stripe',
     cancelAnytime: 'Cancel anytime',
+    acceptTerms: 'I accept the',
+    termsOfService: 'Terms of Service',
+    andThe: 'and the',
+    privacyPolicy: 'Privacy Policy',
+    marketingConsent: 'I agree to receive emails about news and promotions',
+    termsRequired: 'You must accept the terms to continue',
+    loggedInAs: 'Signed in as',
+    proceedToPayment: 'Proceed to payment',
   },
   es: {
     pageTitle: 'Elige tu plan',
@@ -197,6 +213,14 @@ const translations: Record<string, Record<string, string | string[]>> = {
     users_pro: '5 usuarios incluidos',
     securePayment: 'Pago seguro con Stripe',
     cancelAnytime: 'Cancela cuando quieras',
+    acceptTerms: 'Acepto los',
+    termsOfService: 'Términos de Servicio',
+    andThe: 'y la',
+    privacyPolicy: 'Política de Privacidad',
+    marketingConsent: 'Acepto recibir emails sobre novedades y promociones',
+    termsRequired: 'Debes aceptar los términos para continuar',
+    loggedInAs: 'Sesión iniciada como',
+    proceedToPayment: 'Proceder al pago',
   },
   fr: {
     pageTitle: 'Choisissez votre plan',
@@ -234,6 +258,14 @@ const translations: Record<string, Record<string, string | string[]>> = {
     users_pro: '5 utilisateurs inclus',
     securePayment: 'Paiement sécurisé via Stripe',
     cancelAnytime: "Annulez à tout moment",
+    acceptTerms: "J'accepte les",
+    termsOfService: "Conditions d'Utilisation",
+    andThe: 'et la',
+    privacyPolicy: 'Politique de Confidentialité',
+    marketingConsent: "J'accepte de recevoir des emails sur les nouveautés et promotions",
+    termsRequired: 'Vous devez accepter les conditions pour continuer',
+    loggedInAs: 'Connecté en tant que',
+    proceedToPayment: 'Procéder au paiement',
   },
   ru: {
     pageTitle: 'Выберите план',
@@ -271,6 +303,14 @@ const translations: Record<string, Record<string, string | string[]>> = {
     users_pro: '5 пользователей включено',
     securePayment: 'Безопасная оплата через Stripe',
     cancelAnytime: 'Отмена в любой момент',
+    acceptTerms: 'Я принимаю',
+    termsOfService: 'Условия использования',
+    andThe: 'и',
+    privacyPolicy: 'Политику конфиденциальности',
+    marketingConsent: 'Я согласен получать письма о новостях и акциях',
+    termsRequired: 'Необходимо принять условия для продолжения',
+    loggedInAs: 'Вы вошли как',
+    proceedToPayment: 'Перейти к оплате',
   },
   uk: {
     pageTitle: 'Оберіть план',
@@ -308,6 +348,14 @@ const translations: Record<string, Record<string, string | string[]>> = {
     users_pro: '5 користувачів включено',
     securePayment: 'Безпечна оплата через Stripe',
     cancelAnytime: 'Скасування в будь-який момент',
+    acceptTerms: 'Я приймаю',
+    termsOfService: 'Умови використання',
+    andThe: 'та',
+    privacyPolicy: 'Політику конфіденційності',
+    marketingConsent: 'Я погоджуюсь отримувати листи про новини та акції',
+    termsRequired: 'Необхідно прийняти умови для продовження',
+    loggedInAs: 'Ви увійшли як',
+    proceedToPayment: 'Перейти до оплати',
   },
 };
 
@@ -365,6 +413,8 @@ function CheckoutAgencyContent() {
   const [password, setPassword] = useState('');
   const [existingSubscription, setExistingSubscription] = useState<string | null>(null);
   const [checkingSubscription, setCheckingSubscription] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [marketingAccepted, setMarketingAccepted] = useState(false);
 
   const plan = PLANS[selectedPlanId];
 
@@ -380,9 +430,35 @@ function CheckoutAgencyContent() {
     window.location.href = url.toString();
   }
 
-  async function handleUserReady(userId: string, userEmail: string) {
-    setUser({ id: userId, email: userEmail });
+  async function saveConsent(userId: string, userEmail: string, terms: boolean, marketing: boolean) {
+    try {
+      if (terms) {
+        await supabase.auth.updateUser({
+          data: {
+            terms_accepted_at: new Date().toISOString(),
+            marketing_consent: marketing,
+          },
+        });
+      }
+
+      if (marketing) {
+        await supabase.from('newsletter').upsert({
+          email: userEmail,
+          user_id: userId,
+          marketing_consent: true,
+          source: 'website_checkout',
+          language: locale,
+        }, { onConflict: 'email' });
+      }
+    } catch {
+      // Non-blocking: consent save failure shouldn't block checkout
+    }
+  }
+
+  async function proceedToPayment(userId: string, userEmail: string, terms: boolean, marketing: boolean) {
     setCheckingSubscription(true);
+
+    await saveConsent(userId, userEmail, terms, marketing);
 
     try {
       const { data } = await supabase
@@ -400,36 +476,74 @@ function CheckoutAgencyContent() {
       // No record yet - trigger will create it, proceed to payment
     }
 
-    // No existing subscription → redirect to Stripe immediately
     setCheckingSubscription(false);
     redirectToPayment(userId, userEmail);
   }
 
   useEffect(() => {
     async function checkSession() {
+      const isOAuthCallback = window.location.hash.includes('access_token');
+
       const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        await handleUserReady(session.user.id, session.user.email || '');
+      if (!session?.user) return;
+
+      const userId = session.user.id;
+      const userEmail = session.user.email || '';
+
+      if (isOAuthCallback) {
+        // Returning from Google OAuth - restore consent from sessionStorage
+        const saved = sessionStorage.getItem('gnm_checkout_consent');
+        let terms = false;
+        let marketing = false;
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          terms = parsed.terms;
+          marketing = parsed.marketing;
+          sessionStorage.removeItem('gnm_checkout_consent');
+        }
+        setUser({ id: userId, email: userEmail });
+        setTermsAccepted(terms);
+        setMarketingAccepted(marketing);
+        await proceedToPayment(userId, userEmail, terms, marketing);
+      } else {
+        // Existing session (not OAuth callback) - just show user info, don't auto-redirect
+        setUser({ id: userId, email: userEmail });
+
+        // Check if already subscribed
+        try {
+          const { data } = await supabase
+            .from('user_credits')
+            .select('subscription_type')
+            .eq('user_id', userId)
+            .single();
+
+          if (data?.subscription_type && data.subscription_type !== 'free') {
+            setExistingSubscription(data.subscription_type);
+          }
+        } catch {
+          // No record
+        }
       }
     }
 
     checkSession();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (session?.user) {
-        await handleUserReady(session.user.id, session.user.email || '');
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function handleGoogleLogin() {
+    if (!termsAccepted) {
+      setError(t.termsRequired as string);
+      return;
+    }
     setIsLoading(true);
     setError(null);
+
+    // Save consent before OAuth redirect (state is lost on page reload)
+    sessionStorage.setItem('gnm_checkout_consent', JSON.stringify({
+      terms: termsAccepted,
+      marketing: marketingAccepted,
+    }));
+
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -437,6 +551,7 @@ function CheckoutAgencyContent() {
       });
       if (error) throw error;
     } catch (err) {
+      sessionStorage.removeItem('gnm_checkout_consent');
       setError(err instanceof Error ? err.message : t.errorDefault as string);
       setIsLoading(false);
     }
@@ -444,6 +559,10 @@ function CheckoutAgencyContent() {
 
   async function handleEmailAuth(e: React.FormEvent) {
     e.preventDefault();
+    if (!termsAccepted) {
+      setError(t.termsRequired as string);
+      return;
+    }
     setIsEmailLoading(true);
     setError(null);
 
@@ -456,13 +575,15 @@ function CheckoutAgencyContent() {
         });
         if (error) throw error;
         if (data.user) {
-          await handleUserReady(data.user.id, data.user.email || '');
+          setUser({ id: data.user.id, email: data.user.email || '' });
+          await proceedToPayment(data.user.id, data.user.email || '', termsAccepted, marketingAccepted);
         }
       } else {
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw new Error(t.errorInvalidCredentials as string);
         if (data.user) {
-          await handleUserReady(data.user.id, data.user.email || '');
+          setUser({ id: data.user.id, email: data.user.email || '' });
+          await proceedToPayment(data.user.id, data.user.email || '', termsAccepted, marketingAccepted);
         }
       }
     } catch (err) {
@@ -555,14 +676,152 @@ function CheckoutAgencyContent() {
                 <Loader2 className="w-8 h-8 animate-spin text-blue-500 mx-auto mb-3" />
                 <p className="text-slate-500 text-sm">{t.redirecting}</p>
               </div>
+            ) : user && !existingSubscription ? (
+              /* Logged in with existing session, needs consent + proceed */
+              <>
+                <div className="text-center mb-6">
+                  <p className="text-slate-500 text-sm">{t.loggedInAs} <strong>{user.email}</strong></p>
+                </div>
+
+                {/* Consent checkboxes */}
+                <div className="mb-6 space-y-3">
+                  <label className="flex items-start gap-3 cursor-pointer group">
+                    <div className="relative mt-0.5 shrink-0">
+                      <input
+                        type="checkbox"
+                        checked={termsAccepted}
+                        onChange={(e) => setTermsAccepted(e.target.checked)}
+                        className="sr-only peer"
+                      />
+                      <div className="w-5 h-5 border-2 border-[#1a1a2e] rounded bg-white peer-checked:bg-amber-500 peer-checked:border-[#1a1a2e] transition-all flex items-center justify-center" style={{ boxShadow: '2px 2px 0px #1a1a2e' }}>
+                        {termsAccepted && (
+                          <svg className="w-3 h-3 text-[#1a1a2e]" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="2 6 5 9 10 3" />
+                          </svg>
+                        )}
+                      </div>
+                    </div>
+                    <span className="text-sm text-slate-600 leading-tight">
+                      {t.acceptTerms}{' '}
+                      <a href={`/${locale}/termini`} target="_blank" rel="noopener noreferrer" className="text-blue-500 font-semibold hover:underline">{t.termsOfService}</a>
+                      {' '}{t.andThe}{' '}
+                      <a href={`/${locale}/privacy`} target="_blank" rel="noopener noreferrer" className="text-blue-500 font-semibold hover:underline">{t.privacyPolicy}</a>
+                      {' *'}
+                    </span>
+                  </label>
+
+                  <label className="flex items-start gap-3 cursor-pointer group">
+                    <div className="relative mt-0.5 shrink-0">
+                      <input
+                        type="checkbox"
+                        checked={marketingAccepted}
+                        onChange={(e) => setMarketingAccepted(e.target.checked)}
+                        className="sr-only peer"
+                      />
+                      <div className="w-5 h-5 border-2 border-[#1a1a2e] rounded bg-white peer-checked:bg-amber-500 peer-checked:border-[#1a1a2e] transition-all flex items-center justify-center" style={{ boxShadow: '2px 2px 0px #1a1a2e' }}>
+                        {marketingAccepted && (
+                          <svg className="w-3 h-3 text-[#1a1a2e]" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="2 6 5 9 10 3" />
+                          </svg>
+                        )}
+                      </div>
+                    </div>
+                    <span className="text-sm text-slate-600 leading-tight">
+                      {t.marketingConsent}
+                    </span>
+                  </label>
+                </div>
+
+                <button
+                  onClick={() => {
+                    if (!termsAccepted) { setError(t.termsRequired as string); return; }
+                    setError(null);
+                    proceedToPayment(user.id, user.email, termsAccepted, marketingAccepted);
+                  }}
+                  disabled={!termsAccepted || checkingSubscription}
+                  className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-blue-500 rounded-xl text-white font-semibold hover:bg-blue-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {checkingSubscription ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <span>{t.loading}</span>
+                    </>
+                  ) : (
+                    <span>{t.proceedToPayment}</span>
+                  )}
+                </button>
+
+                {error && (
+                  <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
+                    {error}
+                  </div>
+                )}
+
+                <div className="flex items-center justify-center gap-4 mt-6 text-xs text-slate-400">
+                  <span className="flex items-center gap-1"><ShieldIcon /> {t.securePayment}</span>
+                </div>
+              </>
             ) : !user ? (
               /* Not logged in - show auth UI */
               <>
                 <h2 className="text-xl font-bold text-center mb-6">{t.loginTitle}</h2>
 
+                {/* Consent checkboxes */}
+                <div className="mb-6 space-y-3">
+                  <label className="flex items-start gap-3 cursor-pointer group">
+                    <div className="relative mt-0.5 shrink-0">
+                      <input
+                        type="checkbox"
+                        checked={termsAccepted}
+                        onChange={(e) => setTermsAccepted(e.target.checked)}
+                        className="sr-only peer"
+                      />
+                      <div className="w-5 h-5 border-2 border-[#1a1a2e] rounded bg-white peer-checked:bg-amber-500 peer-checked:border-[#1a1a2e] transition-all flex items-center justify-center" style={{ boxShadow: '2px 2px 0px #1a1a2e' }}>
+                        {termsAccepted && (
+                          <svg className="w-3 h-3 text-[#1a1a2e]" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="2 6 5 9 10 3" />
+                          </svg>
+                        )}
+                      </div>
+                    </div>
+                    <span className="text-sm text-slate-600 leading-tight">
+                      {t.acceptTerms}{' '}
+                      <a href={`/${locale}/termini`} target="_blank" rel="noopener noreferrer" className="text-blue-500 font-semibold hover:underline">{t.termsOfService}</a>
+                      {' '}{t.andThe}{' '}
+                      <a href={`/${locale}/privacy`} target="_blank" rel="noopener noreferrer" className="text-blue-500 font-semibold hover:underline">{t.privacyPolicy}</a>
+                      {' *'}
+                    </span>
+                  </label>
+
+                  <label className="flex items-start gap-3 cursor-pointer group">
+                    <div className="relative mt-0.5 shrink-0">
+                      <input
+                        type="checkbox"
+                        checked={marketingAccepted}
+                        onChange={(e) => setMarketingAccepted(e.target.checked)}
+                        className="sr-only peer"
+                      />
+                      <div className="w-5 h-5 border-2 border-[#1a1a2e] rounded bg-white peer-checked:bg-amber-500 peer-checked:border-[#1a1a2e] transition-all flex items-center justify-center" style={{ boxShadow: '2px 2px 0px #1a1a2e' }}>
+                        {marketingAccepted && (
+                          <svg className="w-3 h-3 text-[#1a1a2e]" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="2 6 5 9 10 3" />
+                          </svg>
+                        )}
+                      </div>
+                    </div>
+                    <span className="text-sm text-slate-600 leading-tight">
+                      {t.marketingConsent}
+                    </span>
+                  </label>
+
+                  {!termsAccepted && error === (t.termsRequired as string) && (
+                    <p className="text-red-500 text-xs font-medium">{t.termsRequired}</p>
+                  )}
+                </div>
+
                 <button
                   onClick={handleGoogleLogin}
-                  disabled={isLoading || isEmailLoading}
+                  disabled={isLoading || isEmailLoading || !termsAccepted}
                   className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-white border border-slate-300 rounded-xl text-slate-700 font-semibold hover:bg-slate-50 hover:border-slate-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isLoading ? (
@@ -605,7 +864,7 @@ function CheckoutAgencyContent() {
                   />
                   <button
                     type="submit"
-                    disabled={isLoading || isEmailLoading}
+                    disabled={isLoading || isEmailLoading || !termsAccepted}
                     className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-blue-500 rounded-xl text-white font-semibold hover:bg-blue-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isEmailLoading ? (
