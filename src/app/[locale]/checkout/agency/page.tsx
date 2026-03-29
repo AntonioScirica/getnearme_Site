@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { Suspense, useState, useEffect } from 'react';
+import { useParams, useSearchParams } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 import { CheckCircle, Loader2 } from 'lucide-react';
 import { type Locale } from '@/lib/i18n';
@@ -12,139 +12,303 @@ const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-const translations = {
+// Plan ID mapping: homepage IDs → internal subscription IDs
+const PLAN_ID_MAP: Record<string, string> = {
+  starter: 'agency_starter',
+  agency: 'agency',
+  pro: 'agency_premium',
+  user_lite: 'user_lite',
+  agency_starter: 'agency_starter',
+  agency_premium: 'agency_premium',
+};
+
+interface PlanData {
+  name: string;
+  price_monthly: number;
+  price_annual: number;
+  original_price: number;
+  payment_link_monthly: string;
+  payment_link_annual: string | null;
+  features_key: string;
+  popular: boolean;
+}
+
+const PLANS: Record<string, PlanData> = {
+  user_lite: {
+    name: 'Lite',
+    price_monthly: 4.99,
+    price_annual: 49.99,
+    original_price: 9.99,
+    payment_link_monthly: 'https://buy.stripe.com/8x27sLgtdh2b9vi29iak00n',
+    payment_link_annual: 'https://buy.stripe.com/28EeVdb8TeU37na3dmak00o',
+    features_key: 'lite',
+    popular: false,
+  },
+  agency_starter: {
+    name: 'Starter',
+    price_monthly: 24,
+    price_annual: 245,
+    original_price: 60,
+    payment_link_monthly: 'https://buy.stripe.com/cNiaEX2Cn7rBfTG3dmak00i',
+    payment_link_annual: 'https://buy.stripe.com/6oUeVd0ufcLV4aY8xGak00l',
+    features_key: 'starter',
+    popular: false,
+  },
+  agency: {
+    name: 'Agency',
+    price_monthly: 99,
+    price_annual: 1010,
+    original_price: 150,
+    payment_link_monthly: 'https://buy.stripe.com/8x25kD3Gr3blbDq01aak00h',
+    payment_link_annual: 'https://buy.stripe.com/fZubJ11yj7rBazm4hqak00k',
+    features_key: 'agency',
+    popular: true,
+  },
+  agency_premium: {
+    name: 'Pro',
+    price_monthly: 149,
+    price_annual: 1520,
+    original_price: 199,
+    payment_link_monthly: 'https://buy.stripe.com/dRm28rel5eU38re5luak00j',
+    payment_link_annual: 'https://buy.stripe.com/aFa28rfp99zJ22QcNWak00m',
+    features_key: 'pro',
+    popular: false,
+  },
+};
+
+const PLAN_DISPLAY_ORDER = ['user_lite', 'agency_starter', 'agency', 'agency_premium'];
+
+const TIER_LABELS: Record<string, Record<string, string>> = {
+  user_lite: { it: 'Lite', en: 'Lite', es: 'Lite', fr: 'Lite', ru: 'Lite', uk: 'Lite' },
+  agency_starter: { it: 'Starter', en: 'Starter', es: 'Starter', fr: 'Starter', ru: 'Starter', uk: 'Starter' },
+  agency: { it: 'Agency', en: 'Agency', es: 'Agency', fr: 'Agency', ru: 'Agency', uk: 'Agency' },
+  agency_premium: { it: 'Pro', en: 'Pro', es: 'Pro', fr: 'Pro', ru: 'Pro', uk: 'Pro' },
+  agency_pro: { it: 'Pro', en: 'Pro', es: 'Pro', fr: 'Pro', ru: 'Pro', uk: 'Pro' },
+};
+
+const translations: Record<string, Record<string, string | string[]>> = {
   it: {
-    title: 'Piano Agency',
-    planName: 'Agency',
-    price: '199',
+    pageTitle: 'Scegli il tuo piano',
+    monthly: 'Mensile',
+    annual: 'Annuale',
     perMonth: '/mese',
-    features: [
-      'Accesso completo all\'estensione',
-      '50 foto AI gratuite al mese',
-      'Analisi illimitate',
-      'Supporto prioritario'
-    ],
+    perYear: '/anno',
+    save: 'Risparmi',
+    subscribe: 'Abbonati ora',
+    loginTitle: 'Accedi per continuare',
     loginButton: 'Continua con Google',
     orDivider: 'oppure',
     emailPlaceholder: 'Email',
     passwordPlaceholder: 'Password',
     emailLoginButton: 'Accedi con email',
+    emailSignupButton: 'Crea account',
+    noAccount: 'Non hai un account?',
+    hasAccount: 'Hai già un account?',
     loading: 'Caricamento...',
     redirecting: 'Reindirizzamento al pagamento...',
     errorDefault: 'Si è verificato un errore. Riprova.',
     errorInvalidCredentials: 'Credenziali non valide',
-    footer: 'Tutti i diritti riservati'
+    alreadySubscribed: 'Hai già un abbonamento attivo',
+    currentPlan: 'Piano attuale',
+    manageSub: 'Gestisci abbonamento',
+    popular: 'Più popolare',
+    footer: 'Tutti i diritti riservati',
+    features_lite: JSON.stringify(['Analisi immobiliari illimitate', 'Calcolo prezzo al m² in tempo reale', 'Export PDF (brand GetNearMe)']),
+    features_starter: JSON.stringify(['Tutto di Lite, più:', 'Calcolo prezzo al m² in tempo reale', 'Export PDF illimitati (brand GetNearMe)']),
+    features_agency: JSON.stringify(['Tutto di Starter, più:', 'Template Post & Stories Social', 'AI Rendering & Homestaging', '5 utenti inclusi']),
+    features_pro: JSON.stringify(['Tutto di Agency, più:', 'Export PDF con il TUO logo', 'Editor Video per i social', 'Supporto prioritario', '5 utenti inclusi']),
+    users_lite: '1 utente',
+    users_starter: '1 utente',
+    users_agency: '5 utenti inclusi',
+    users_pro: '5 utenti inclusi',
+    securePayment: 'Pagamento sicuro con Stripe',
+    cancelAnytime: 'Cancella in qualsiasi momento',
   },
   en: {
-    title: 'Agency Plan',
-    planName: 'Agency',
-    price: '199',
+    pageTitle: 'Choose your plan',
+    monthly: 'Monthly',
+    annual: 'Annual',
     perMonth: '/month',
-    features: [
-      'Full extension access',
-      '50 free AI photos per month',
-      'Unlimited analysis',
-      'Priority support'
-    ],
+    perYear: '/year',
+    save: 'Save',
+    subscribe: 'Subscribe now',
+    loginTitle: 'Sign in to continue',
     loginButton: 'Continue with Google',
     orDivider: 'or',
     emailPlaceholder: 'Email',
     passwordPlaceholder: 'Password',
     emailLoginButton: 'Sign in with email',
+    emailSignupButton: 'Create account',
+    noAccount: "Don't have an account?",
+    hasAccount: 'Already have an account?',
     loading: 'Loading...',
     redirecting: 'Redirecting to payment...',
     errorDefault: 'An error occurred. Please try again.',
     errorInvalidCredentials: 'Invalid credentials',
-    footer: 'All rights reserved'
+    alreadySubscribed: 'You already have an active subscription',
+    currentPlan: 'Current plan',
+    manageSub: 'Manage subscription',
+    popular: 'Most popular',
+    footer: 'All rights reserved',
+    features_lite: JSON.stringify(['Unlimited property analysis', 'Real-time price per sqm', 'PDF Export (GetNearMe brand)']),
+    features_starter: JSON.stringify(['Everything in Lite, plus:', 'Real-time price per sqm', 'Unlimited PDF exports (GetNearMe brand)']),
+    features_agency: JSON.stringify(['Everything in Starter, plus:', 'Social Post & Stories Templates', 'AI Rendering & Homestaging', '5 users included']),
+    features_pro: JSON.stringify(['Everything in Agency, plus:', 'PDF Export with YOUR logo', 'Social Video Editor', 'Priority support', '5 users included']),
+    users_lite: '1 user',
+    users_starter: '1 user',
+    users_agency: '5 users included',
+    users_pro: '5 users included',
+    securePayment: 'Secure payment via Stripe',
+    cancelAnytime: 'Cancel anytime',
   },
   es: {
-    title: 'Plan Agency',
-    planName: 'Agency',
-    price: '199',
+    pageTitle: 'Elige tu plan',
+    monthly: 'Mensual',
+    annual: 'Anual',
     perMonth: '/mes',
-    features: [
-      'Acceso completo a la extension',
-      '50 fotos AI gratis al mes',
-      'Analisis ilimitados',
-      'Soporte prioritario'
-    ],
+    perYear: '/año',
+    save: 'Ahorras',
+    subscribe: 'Suscríbete ahora',
+    loginTitle: 'Inicia sesión para continuar',
     loginButton: 'Continuar con Google',
     orDivider: 'o',
     emailPlaceholder: 'Email',
-    passwordPlaceholder: 'Contrasena',
+    passwordPlaceholder: 'Contraseña',
     emailLoginButton: 'Acceder con email',
+    emailSignupButton: 'Crear cuenta',
+    noAccount: '¿No tienes cuenta?',
+    hasAccount: '¿Ya tienes cuenta?',
     loading: 'Cargando...',
     redirecting: 'Redirigiendo al pago...',
-    errorDefault: 'Se produjo un error. Intentalo de nuevo.',
-    errorInvalidCredentials: 'Credenciales no validas',
-    footer: 'Todos los derechos reservados'
+    errorDefault: 'Se produjo un error. Inténtalo de nuevo.',
+    errorInvalidCredentials: 'Credenciales no válidas',
+    alreadySubscribed: 'Ya tienes una suscripción activa',
+    currentPlan: 'Plan actual',
+    manageSub: 'Gestionar suscripción',
+    popular: 'Más popular',
+    footer: 'Todos los derechos reservados',
+    features_lite: JSON.stringify(['Análisis inmobiliarios ilimitados', 'Cálculo precio por m² en tiempo real', 'Export PDF (marca GetNearMe)']),
+    features_starter: JSON.stringify(['Todo de Lite, más:', 'Cálculo precio por m² en tiempo real', 'Exports PDF ilimitados (marca GetNearMe)']),
+    features_agency: JSON.stringify(['Todo de Starter, más:', 'Plantillas Post & Stories Social', 'AI Rendering & Homestaging', '5 usuarios incluidos']),
+    features_pro: JSON.stringify(['Todo de Agency, más:', 'Export PDF con TU logo', 'Editor de Video para redes', 'Soporte prioritario', '5 usuarios incluidos']),
+    users_lite: '1 usuario',
+    users_starter: '1 usuario',
+    users_agency: '5 usuarios incluidos',
+    users_pro: '5 usuarios incluidos',
+    securePayment: 'Pago seguro con Stripe',
+    cancelAnytime: 'Cancela cuando quieras',
   },
   fr: {
-    title: 'Plan Agency',
-    planName: 'Agency',
-    price: '199',
+    pageTitle: 'Choisissez votre plan',
+    monthly: 'Mensuel',
+    annual: 'Annuel',
     perMonth: '/mois',
-    features: [
-      'Acces complet a l\'extension',
-      '50 photos AI gratuites par mois',
-      'Analyses illimitees',
-      'Support prioritaire'
-    ],
+    perYear: '/an',
+    save: 'Économisez',
+    subscribe: "S'abonner maintenant",
+    loginTitle: 'Connectez-vous pour continuer',
     loginButton: 'Continuer avec Google',
     orDivider: 'ou',
     emailPlaceholder: 'Email',
     passwordPlaceholder: 'Mot de passe',
     emailLoginButton: 'Se connecter avec email',
+    emailSignupButton: 'Créer un compte',
+    noAccount: "Pas encore de compte ?",
+    hasAccount: 'Déjà un compte ?',
     loading: 'Chargement...',
     redirecting: 'Redirection vers le paiement...',
-    errorDefault: 'Une erreur s\'est produite. Veuillez reessayer.',
+    errorDefault: 'Une erreur s\'est produite. Veuillez réessayer.',
     errorInvalidCredentials: 'Identifiants invalides',
-    footer: 'Tous droits reserves'
+    alreadySubscribed: 'Vous avez déjà un abonnement actif',
+    currentPlan: 'Plan actuel',
+    manageSub: "Gérer l'abonnement",
+    popular: 'Le plus populaire',
+    footer: 'Tous droits réservés',
+    features_lite: JSON.stringify(['Analyses immobilières illimitées', 'Calcul prix au m² en temps réel', 'Export PDF (marque GetNearMe)']),
+    features_starter: JSON.stringify(['Tout de Lite, plus :', 'Calcul prix au m² en temps réel', 'Exports PDF illimités (marque GetNearMe)']),
+    features_agency: JSON.stringify(['Tout de Starter, plus :', 'Templates Post & Stories Social', 'AI Rendering & Homestaging', '5 utilisateurs inclus']),
+    features_pro: JSON.stringify(['Tout de Agency, plus :', 'Export PDF avec VOTRE logo', 'Éditeur Vidéo pour les réseaux', 'Support prioritaire', '5 utilisateurs inclus']),
+    users_lite: '1 utilisateur',
+    users_starter: '1 utilisateur',
+    users_agency: '5 utilisateurs inclus',
+    users_pro: '5 utilisateurs inclus',
+    securePayment: 'Paiement sécurisé via Stripe',
+    cancelAnytime: "Annulez à tout moment",
   },
   ru: {
-    title: 'План Agency',
-    planName: 'Agency',
-    price: '199',
+    pageTitle: 'Выберите план',
+    monthly: 'Ежемесячно',
+    annual: 'Ежегодно',
     perMonth: '/месяц',
-    features: [
-      'Полный доступ к расширению',
-      '50 бесплатных AI фото в месяц',
-      'Неограниченный анализ',
-      'Приоритетная поддержка'
-    ],
+    perYear: '/год',
+    save: 'Экономия',
+    subscribe: 'Подписаться',
+    loginTitle: 'Войдите, чтобы продолжить',
     loginButton: 'Продолжить с Google',
     orDivider: 'или',
     emailPlaceholder: 'Email',
     passwordPlaceholder: 'Пароль',
     emailLoginButton: 'Войти с email',
+    emailSignupButton: 'Создать аккаунт',
+    noAccount: 'Нет аккаунта?',
+    hasAccount: 'Уже есть аккаунт?',
     loading: 'Загрузка...',
     redirecting: 'Перенаправление на оплату...',
-    errorDefault: 'Произошла ошибка. Попробуйте еще раз.',
-    errorInvalidCredentials: 'Неверные учетные данные',
-    footer: 'Все права защищены'
+    errorDefault: 'Произошла ошибка. Попробуйте ещё раз.',
+    errorInvalidCredentials: 'Неверные учётные данные',
+    alreadySubscribed: 'У вас уже есть активная подписка',
+    currentPlan: 'Текущий план',
+    manageSub: 'Управление подпиской',
+    popular: 'Самый популярный',
+    footer: 'Все права защищены',
+    features_lite: JSON.stringify(['Безлимитный анализ недвижимости', 'Расчёт цены за м² в реальном времени', 'Экспорт PDF (бренд GetNearMe)']),
+    features_starter: JSON.stringify(['Всё из Lite, плюс:', 'Расчёт цены за м² в реальном времени', 'Безлимитные PDF экспорты (бренд GetNearMe)']),
+    features_agency: JSON.stringify(['Всё из Starter, плюс:', 'Шаблоны постов и сторис', 'AI Рендеринг и Хоумстейджинг', '5 пользователей включено']),
+    features_pro: JSON.stringify(['Всё из Agency, плюс:', 'Экспорт PDF с ВАШИМ логотипом', 'Видеоредактор для соцсетей', 'Приоритетная поддержка', '5 пользователей включено']),
+    users_lite: '1 пользователь',
+    users_starter: '1 пользователь',
+    users_agency: '5 пользователей включено',
+    users_pro: '5 пользователей включено',
+    securePayment: 'Безопасная оплата через Stripe',
+    cancelAnytime: 'Отмена в любой момент',
   },
   uk: {
-    title: 'План Agency',
-    planName: 'Agency',
-    price: '199',
+    pageTitle: 'Оберіть план',
+    monthly: 'Щомісячно',
+    annual: 'Щорічно',
     perMonth: '/місяць',
-    features: [
-      'Повний доступ до розширення',
-      '50 безкоштовних AI фото на місяць',
-      'Необмежений аналіз',
-      'Пріоритетна підтримка'
-    ],
+    perYear: '/рік',
+    save: 'Економія',
+    subscribe: 'Підписатися',
+    loginTitle: 'Увійдіть, щоб продовжити',
     loginButton: 'Продовжити з Google',
     orDivider: 'або',
     emailPlaceholder: 'Email',
     passwordPlaceholder: 'Пароль',
     emailLoginButton: 'Увійти з email',
+    emailSignupButton: 'Створити акаунт',
+    noAccount: 'Немає акаунту?',
+    hasAccount: 'Вже є акаунт?',
     loading: 'Завантаження...',
     redirecting: 'Перенаправлення на оплату...',
     errorDefault: 'Сталася помилка. Спробуйте ще раз.',
     errorInvalidCredentials: 'Невірні облікові дані',
-    footer: 'Всі права захищені'
-  }
+    alreadySubscribed: 'У вас вже є активна підписка',
+    currentPlan: 'Поточний план',
+    manageSub: 'Керування підпискою',
+    popular: 'Найпопулярніший',
+    footer: 'Всі права захищені',
+    features_lite: JSON.stringify(['Безлімітний аналіз нерухомості', 'Розрахунок ціни за м² в реальному часі', 'Експорт PDF (бренд GetNearMe)']),
+    features_starter: JSON.stringify(['Все з Lite, плюс:', 'Розрахунок ціни за м² в реальному часі', 'Безлімітні PDF експорти (бренд GetNearMe)']),
+    features_agency: JSON.stringify(['Все зі Starter, плюс:', 'Шаблони постів та сторіс', 'AI Рендеринг та Хоумстейджинг', '5 користувачів включено']),
+    features_pro: JSON.stringify(['Все з Agency, плюс:', 'Експорт PDF з ВАШИМ логотипом', 'Відеоредактор для соцмереж', 'Пріоритетна підтримка', '5 користувачів включено']),
+    users_lite: '1 користувач',
+    users_starter: '1 користувач',
+    users_agency: '5 користувачів включено',
+    users_pro: '5 користувачів включено',
+    securePayment: 'Безпечна оплата через Stripe',
+    cancelAnytime: 'Скасування в будь-який момент',
+  },
 };
 
 function GoogleIcon() {
@@ -158,229 +322,432 @@ function GoogleIcon() {
   );
 }
 
+function ShieldIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+    </svg>
+  );
+}
+
 export default function CheckoutAgencyPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+      </div>
+    }>
+      <CheckoutAgencyContent />
+    </Suspense>
+  );
+}
+
+function CheckoutAgencyContent() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const locale = (params.locale as Locale) || 'it';
   const t = translations[locale] || translations.it;
 
+  const rawPlanParam = searchParams.get('plan') || 'agency';
+  const selectedPlanId = PLAN_ID_MAP[rawPlanParam] || 'agency';
+  const intervalParam = searchParams.get('interval');
+
+  const [interval, setInterval] = useState<'monthly' | 'annual'>(
+    intervalParam === 'annual' ? 'annual' : 'monthly'
+  );
+  const [user, setUser] = useState<{ id: string; email: string } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isEmailLoading, setIsEmailLoading] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
+  const [isSignup, setIsSignup] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [existingSubscription, setExistingSubscription] = useState<string | null>(null);
+  const [checkingSubscription, setCheckingSubscription] = useState(false);
 
-  async function goToCheckout(accessToken: string) {
-    if (!accessToken) {
-      setError(t.errorDefault);
-      return;
-    }
+  const plan = PLANS[selectedPlanId];
 
-    setIsRedirecting(true);
-    setError(null);
-
+  async function checkSubscription(userId: string) {
+    setCheckingSubscription(true);
     try {
-      const response = await fetch(`${SUPABASE_URL}/functions/v1/create-checkout-session`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${accessToken}`
-        },
-        body: JSON.stringify({
-          packageId: 'agency-subscription',
-          successUrl: window.location.origin + '?checkout=success',
-          cancelUrl: window.location.href
-        })
-      });
+      const { data } = await supabase
+        .from('user_credits')
+        .select('subscription_type')
+        .eq('user_id', userId)
+        .single();
 
-      const result = await response.json();
-
-      if (result.url) {
-        window.location.href = result.url;
-      } else {
-        throw new Error(result.error || t.errorDefault);
+      if (data?.subscription_type && data.subscription_type !== 'free') {
+        setExistingSubscription(data.subscription_type);
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t.errorDefault);
-      setIsRedirecting(false);
+    } catch {
+      // Ignore - user may not have credits row yet (trigger will create it)
     }
+    setCheckingSubscription(false);
+  }
+
+  function redirectToPayment(userId: string, userEmail: string) {
+    setIsRedirecting(true);
+    const paymentLink = interval === 'annual' && plan.payment_link_annual
+      ? plan.payment_link_annual
+      : plan.payment_link_monthly;
+
+    const url = new URL(paymentLink);
+    url.searchParams.set('client_reference_id', userId);
+    url.searchParams.set('prefilled_email', userEmail);
+    window.location.href = url.toString();
   }
 
   useEffect(() => {
-    // Check for existing session on mount
     async function checkSession() {
       const { data: { session } } = await supabase.auth.getSession();
-
-      if (session?.access_token) {
-        await goToCheckout(session.access_token);
+      if (session?.user) {
+        setUser({ id: session.user.id, email: session.user.email || '' });
+        await checkSubscription(session.user.id);
       }
     }
 
     checkSession();
 
-    // Listen for auth state changes (handles OAuth redirect)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' && session?.access_token) {
-        await goToCheckout(session.access_token);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (session?.user) {
+        setUser({ id: session.user.id, email: session.user.email || '' });
+        await checkSubscription(session.user.id);
       }
     });
 
     return () => {
       subscription.unsubscribe();
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function handleGoogleLogin() {
     setIsLoading(true);
     setError(null);
-
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
-        options: {
-          redirectTo: window.location.href
-        }
+        options: { redirectTo: window.location.href },
       });
-
       if (error) throw error;
     } catch (err) {
-      setError(err instanceof Error ? err.message : t.errorDefault);
+      setError(err instanceof Error ? err.message : t.errorDefault as string);
       setIsLoading(false);
     }
   }
 
-  async function handleEmailLogin(e: React.FormEvent) {
+  async function handleEmailAuth(e: React.FormEvent) {
     e.preventDefault();
     setIsEmailLoading(true);
     setError(null);
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
-
-      if (error) {
-        throw new Error(t.errorInvalidCredentials);
-      }
-
-      if (data.session) {
-        await goToCheckout(data.session.access_token);
+      if (isSignup) {
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: { emailRedirectTo: window.location.href },
+        });
+        if (error) throw error;
+        if (data.user) {
+          setUser({ id: data.user.id, email: data.user.email || '' });
+          await checkSubscription(data.user.id);
+        }
+      } else {
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw new Error(t.errorInvalidCredentials as string);
+        if (data.user) {
+          setUser({ id: data.user.id, email: data.user.email || '' });
+          await checkSubscription(data.user.id);
+        }
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : t.errorDefault);
-      setIsEmailLoading(false);
+      setError(err instanceof Error ? err.message : t.errorDefault as string);
     }
+    setIsEmailLoading(false);
   }
 
+  function getFeatures(planId: string): string[] {
+    const key = `features_${PLANS[planId]?.features_key}`;
+    const raw = t[key];
+    if (!raw) return [];
+    try { return JSON.parse(raw as string); } catch { return []; }
+  }
+
+  function getUsersLabel(planId: string): string {
+    const key = `users_${PLANS[planId]?.features_key}`;
+    return (t[key] as string) || '';
+  }
+
+  const annualSavings = plan
+    ? Math.round(plan.price_monthly * 12 - plan.price_annual)
+    : 0;
+
+  const currentPrice = interval === 'annual' ? plan.price_annual : plan.price_monthly;
+  const periodLabel = interval === 'annual' ? t.perYear : t.perMonth;
+
   return (
-    <div className="min-h-screen bg-white font-sans text-slate-900">
+    <div className="min-h-screen bg-slate-50 font-sans text-slate-900">
       <Navbar locale={locale} />
 
-      <main className="min-h-screen flex items-center justify-center px-4 py-20">
-        <div className="max-w-md w-full">
-          {/* Plan Card */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm">
-            {/* Logo */}
-            <div className="text-center mb-6">
-              <span className="text-2xl font-bold text-blue-500">GetNearMe</span>
-              <h1 className="text-xl font-semibold text-slate-900 mt-2">{t.title}</h1>
-            </div>
+      <main className="min-h-screen flex flex-col items-center px-4 py-24">
+        <div className="max-w-4xl w-full">
+          <h1 className="text-3xl md:text-4xl font-bold text-center mb-8">{t.pageTitle}</h1>
 
-            {/* Plan Info */}
-            <div className="bg-slate-50 rounded-xl p-6 mb-6">
-              <div className="text-center">
-                <div className="text-lg font-semibold text-slate-900">{t.planName}</div>
-                <div className="mt-2">
-                  <span className="text-4xl font-bold text-blue-500">{t.price}€</span>
-                  <span className="text-slate-500">{t.perMonth}</span>
+          {/* Billing interval toggle */}
+          <div className="flex justify-center mb-10">
+            <div className="inline-flex bg-white rounded-xl p-1 border border-slate-200 shadow-sm">
+              <button
+                onClick={() => setInterval('monthly')}
+                className={`px-6 py-2.5 rounded-lg text-sm font-semibold transition-all ${
+                  interval === 'monthly'
+                    ? 'bg-blue-500 text-white shadow-sm'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                {t.monthly}
+              </button>
+              <button
+                onClick={() => setInterval('annual')}
+                className={`px-6 py-2.5 rounded-lg text-sm font-semibold transition-all ${
+                  interval === 'annual'
+                    ? 'bg-blue-500 text-white shadow-sm'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                {t.annual}
+              </button>
+            </div>
+          </div>
+
+          {/* Plan cards grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
+            {PLAN_DISPLAY_ORDER.map((planId) => {
+              const p = PLANS[planId];
+              const isSelected = planId === selectedPlanId;
+              const price = interval === 'annual' ? p.price_annual : p.price_monthly;
+              const period = interval === 'annual' ? t.perYear : t.perMonth;
+              const features = getFeatures(planId);
+              const usersLabel = getUsersLabel(planId);
+              const savings = Math.round(p.price_monthly * 12 - p.price_annual);
+
+              return (
+                <div
+                  key={planId}
+                  onClick={() => {
+                    const url = new URL(window.location.href);
+                    url.searchParams.set('plan', planId);
+                    window.history.replaceState({}, '', url.toString());
+                    window.location.reload();
+                  }}
+                  className={`relative rounded-2xl p-6 cursor-pointer transition-all border-2 ${
+                    isSelected
+                      ? 'border-blue-500 bg-white shadow-lg scale-[1.02]'
+                      : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-md'
+                  }`}
+                >
+                  {p.popular && (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                      <span className="bg-amber-400 text-amber-900 text-xs font-bold px-3 py-1 rounded-full">
+                        {t.popular}
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="text-center mb-4">
+                    <h3 className="text-lg font-bold text-slate-900">{p.name}</h3>
+                    <p className="text-xs text-slate-500 mt-1">{usersLabel}</p>
+                  </div>
+
+                  <div className="text-center mb-4">
+                    <div className="flex items-baseline justify-center gap-1">
+                      <span className="text-3xl font-bold text-blue-600">
+                        {interval === 'annual'
+                          ? `€${Math.round(price / 12)}`
+                          : `€${price}`}
+                      </span>
+                      <span className="text-slate-500 text-sm">{t.perMonth}</span>
+                    </div>
+                    {interval === 'annual' && (
+                      <p className="text-xs text-slate-400 mt-1">
+                        €{price}{period}
+                      </p>
+                    )}
+                    {interval === 'annual' && savings > 0 && (
+                      <p className="text-xs text-green-600 font-semibold mt-1">
+                        {t.save} €{savings}/{t.perYear}
+                      </p>
+                    )}
+                    {p.original_price > (interval === 'annual' ? Math.round(price / 12) : price) && (
+                      <p className="text-xs text-slate-400 line-through mt-1">
+                        €{p.original_price}{t.perMonth}
+                      </p>
+                    )}
+                  </div>
+
+                  <ul className="space-y-2">
+                    {features.map((feature, i) => (
+                      <li key={i} className="flex items-start gap-2 text-xs text-slate-600">
+                        <CheckCircle className="w-3.5 h-3.5 text-green-500 flex-shrink-0 mt-0.5" />
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-              </div>
+              );
+            })}
+          </div>
 
-              {/* Features */}
-              <ul className="mt-6 space-y-3">
-                {t.features.map((feature, index) => (
-                  <li key={index} className="flex items-center gap-3 text-slate-600">
-                    <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
-                    <span>{feature}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+          {/* Auth + Subscribe section */}
+          <div className="max-w-md mx-auto">
+            <div className="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm">
 
-            {/* Google Login Button */}
-            <button
-              onClick={handleGoogleLogin}
-              disabled={isLoading || isEmailLoading || isRedirecting}
-              className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-white border border-slate-300 rounded-xl text-slate-700 font-semibold hover:bg-slate-50 hover:border-slate-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  <span>{t.loading}</span>
-                </>
+              {/* Already subscribed */}
+              {user && existingSubscription ? (
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <CheckCircle className="w-8 h-8 text-green-600" />
+                  </div>
+                  <h2 className="text-xl font-bold text-slate-900 mb-2">{t.alreadySubscribed}</h2>
+                  <p className="text-slate-500 mb-6">
+                    {t.currentPlan}: <strong>{TIER_LABELS[existingSubscription]?.[locale] || existingSubscription}</strong>
+                  </p>
+                  <a
+                    href="https://billing.stripe.com/p/login/cN2eY70E1ftd0kE000"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-block px-6 py-3 bg-slate-900 text-white rounded-xl font-semibold hover:bg-slate-800 transition-all"
+                  >
+                    {t.manageSub}
+                  </a>
+                </div>
+              ) : user && !checkingSubscription ? (
+                /* Logged in, ready to subscribe */
+                <div className="text-center">
+                  <div className="bg-slate-50 rounded-xl p-6 mb-6">
+                    <h3 className="text-lg font-bold text-slate-900">{plan.name}</h3>
+                    <div className="mt-2">
+                      <span className="text-4xl font-bold text-blue-500">€{currentPrice}</span>
+                      <span className="text-slate-500">{periodLabel}</span>
+                    </div>
+                    {interval === 'annual' && annualSavings > 0 && (
+                      <p className="text-sm text-green-600 font-semibold mt-2">
+                        {t.save} €{annualSavings}
+                      </p>
+                    )}
+                  </div>
+
+                  <button
+                    onClick={() => redirectToPayment(user.id, user.email)}
+                    disabled={isRedirecting}
+                    className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-blue-500 rounded-xl text-white font-semibold hover:bg-blue-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isRedirecting ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        <span>{t.redirecting}</span>
+                      </>
+                    ) : (
+                      <span>{t.subscribe}</span>
+                    )}
+                  </button>
+
+                  <div className="flex items-center justify-center gap-4 mt-4 text-xs text-slate-400">
+                    <span className="flex items-center gap-1"><ShieldIcon /> {t.securePayment}</span>
+                  </div>
+                  <p className="text-xs text-slate-400 mt-2">{t.cancelAnytime}</p>
+                </div>
+              ) : checkingSubscription ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
+                </div>
               ) : (
+                /* Not logged in - show auth UI */
                 <>
-                  <GoogleIcon />
-                  <span>{t.loginButton}</span>
+                  <h2 className="text-xl font-bold text-center mb-6">{t.loginTitle}</h2>
+
+                  <button
+                    onClick={handleGoogleLogin}
+                    disabled={isLoading || isEmailLoading}
+                    className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-white border border-slate-300 rounded-xl text-slate-700 font-semibold hover:bg-slate-50 hover:border-slate-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        <span>{t.loading}</span>
+                      </>
+                    ) : (
+                      <>
+                        <GoogleIcon />
+                        <span>{t.loginButton}</span>
+                      </>
+                    )}
+                  </button>
+
+                  <div className="flex items-center gap-4 my-6">
+                    <div className="flex-1 h-px bg-slate-200" />
+                    <span className="text-slate-400 text-sm">{t.orDivider}</span>
+                    <div className="flex-1 h-px bg-slate-200" />
+                  </div>
+
+                  <form onSubmit={handleEmailAuth} className="space-y-4">
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder={t.emailPlaceholder as string}
+                      required
+                      disabled={isLoading || isEmailLoading}
+                      className="w-full px-4 py-3 border border-slate-300 rounded-xl text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
+                    />
+                    <input
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder={t.passwordPlaceholder as string}
+                      required
+                      disabled={isLoading || isEmailLoading}
+                      className="w-full px-4 py-3 border border-slate-300 rounded-xl text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
+                    />
+                    <button
+                      type="submit"
+                      disabled={isLoading || isEmailLoading}
+                      className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-blue-500 rounded-xl text-white font-semibold hover:bg-blue-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isEmailLoading ? (
+                        <>
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                          <span>{t.loading}</span>
+                        </>
+                      ) : (
+                        <span>{isSignup ? t.emailSignupButton : t.emailLoginButton}</span>
+                      )}
+                    </button>
+                  </form>
+
+                  <p className="text-center text-sm text-slate-500 mt-4">
+                    {isSignup ? (t.hasAccount as string) : (t.noAccount as string)}{' '}
+                    <button
+                      onClick={() => { setIsSignup(!isSignup); setError(null); }}
+                      className="text-blue-500 font-semibold hover:underline"
+                    >
+                      {isSignup ? (t.emailLoginButton as string) : (t.emailSignupButton as string)}
+                    </button>
+                  </p>
                 </>
               )}
-            </button>
 
-            {/* Divider */}
-            <div className="flex items-center gap-4 my-6">
-              <div className="flex-1 h-px bg-slate-200" />
-              <span className="text-slate-400 text-sm">{t.orDivider}</span>
-              <div className="flex-1 h-px bg-slate-200" />
+              {error && (
+                <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
+                  {error}
+                </div>
+              )}
             </div>
-
-            {/* Email/Password Form */}
-            <form onSubmit={handleEmailLogin} className="space-y-4">
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder={t.emailPlaceholder}
-                required
-                disabled={isLoading || isEmailLoading || isRedirecting}
-                className="w-full px-4 py-3 border border-slate-300 rounded-xl text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
-              />
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder={t.passwordPlaceholder}
-                required
-                disabled={isLoading || isEmailLoading || isRedirecting}
-                className="w-full px-4 py-3 border border-slate-300 rounded-xl text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
-              />
-              <button
-                type="submit"
-                disabled={isLoading || isEmailLoading || isRedirecting}
-                className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-blue-500 rounded-xl text-white font-semibold hover:bg-blue-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isEmailLoading || isRedirecting ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    <span>{isRedirecting ? t.redirecting : t.loading}</span>
-                  </>
-                ) : (
-                  <span>{t.emailLoginButton}</span>
-                )}
-              </button>
-            </form>
-
-            {/* Error Message */}
-            {error && (
-              <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
-                {error}
-              </div>
-            )}
           </div>
         </div>
       </main>
 
-      {/* Footer */}
       <footer className="bg-slate-900 text-white">
         <div className="max-w-7xl mx-auto px-4 pt-8 pb-8">
           <div className="pt-4 border-t border-slate-800">

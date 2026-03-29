@@ -157,7 +157,9 @@ function StepCard({
 
 function PricingSection({
   data,
+  locale,
 }: {
+  locale: string;
   data: {
     title1: string;
     title2: string;
@@ -329,9 +331,7 @@ function PricingSection({
               <strong style={{ color: '#1a1a2e' }}>{data.modal.descBold}</strong> {data.modal.descEnd}
             </p>
             <a
-              href={`https://chromewebstore.google.com/detail/getnearme-%E2%80%93-valuta-il-qua/jbnceigldmpkpplanjlednlehloaeoia?plan=${selectedPlan}`}
-              target="_blank"
-              rel="noopener noreferrer"
+              href={`/${locale}/checkout/agency?plan=${selectedPlan}`}
               className="neo-btn"
               style={{
                 display: 'inline-block',
@@ -392,7 +392,7 @@ export default function HomepageClient(props: HomepageClientProps) {
       return <StepCard s={props.stepData} index={props.index} />;
 
     case 'pricing-section':
-      return <PricingSection data={props.pricingData} />;
+      return <PricingSection data={props.pricingData} locale={props.locale} />;
 
     default:
       return null;
