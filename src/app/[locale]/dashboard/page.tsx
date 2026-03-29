@@ -271,7 +271,7 @@ export default function DashboardPage() {
       <div className="min-h-screen bg-[#fafaf8]">
         <Navbar locale={locale} />
         <div className="min-h-screen flex items-center justify-center">
-          <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+          <Loader2 className="w-8 h-8 animate-spin text-amber-500" />
         </div>
       </div>
     );
@@ -326,7 +326,7 @@ export default function DashboardPage() {
         <div className="bg-white neo-border rounded-2xl p-6 mb-6" style={{ boxShadow: '6px 6px 0px #1a1a2e' }}>
           <h2 className="text-sm font-bold uppercase tracking-wider text-slate-400 mb-4">{t.credits}</h2>
           <div className="flex items-baseline gap-2">
-            <span className="text-4xl font-bold text-blue-500">{credits.toLocaleString()}</span>
+            <span className="text-4xl font-bold text-amber-500">{credits.toLocaleString()}</span>
             <span className="text-slate-500">{t.creditsAvailable}</span>
           </div>
         </div>
@@ -338,13 +338,13 @@ export default function DashboardPage() {
         </div>
 
         {/* Extension install */}
-        <div className="bg-blue-50 neo-border rounded-2xl p-6 mb-6" style={{ boxShadow: '6px 6px 0px #1a1a2e' }}>
+        <div className="bg-amber-50 neo-border rounded-2xl p-6 mb-6" style={{ boxShadow: '6px 6px 0px #1a1a2e' }}>
           <p className="text-slate-600 text-sm mb-4">{t.installDesc}</p>
           <a
             href={CHROME_EXTENSION_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-blue-500 text-white rounded-xl neo-border neo-btn font-bold text-sm transition-all hover:bg-blue-600"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-amber-500 text-[#1a1a2e] rounded-xl neo-border neo-btn font-bold text-sm transition-all hover:bg-amber-600"
             style={{ boxShadow: '4px 4px 0px #1a1a2e' }}
           >
             {t.installExtension}
