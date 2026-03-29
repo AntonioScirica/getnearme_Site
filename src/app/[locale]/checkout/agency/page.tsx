@@ -901,11 +901,6 @@ function CheckoutAgencyContent() {
               </>
             ) : null}
 
-            {error && (
-              <div className="mt-4 p-4 bg-red-50 neo-border rounded-xl text-red-700 text-sm">
-                {error}
-              </div>
-            )}
           </div>
         </div>
       </main>

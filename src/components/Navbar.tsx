@@ -111,15 +111,25 @@ export default function Navbar({ locale }: NavbarProps) {
                                 <span className="hidden sm:inline">{t.nav.dashboard}</span>
                             </Link>
                         ) : (
-                            <a
-                                href="https://chromewebstore.google.com/detail/getnearme-%E2%80%94-valuta-il-qua/jbnceigldmpkpplanjlednlehloaeoia"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex px-3 py-2 sm:px-6 sm:py-2.5 bg-amber-500 text-[#1a1a2e] rounded-xl neo-border neo-btn hover:bg-amber-600 transition-all font-bold text-sm sm:text-lg"
-                                style={{ boxShadow: '4px 4px 0px #1a1a2e' }}
-                            >
-                                {t.nav.startAnalysis}
-                            </a>
+                            <>
+                                <Link
+                                    href={`/${locale}/checkout/agency`}
+                                    className="flex items-center justify-center p-2 sm:p-2.5 bg-white neo-border rounded-xl neo-btn hover:bg-slate-50 transition-all text-[#1a1a2e]"
+                                    style={{ boxShadow: '3px 3px 0px #1a1a2e' }}
+                                    aria-label="Login"
+                                >
+                                    <UserIcon />
+                                </Link>
+                                <a
+                                    href="https://chromewebstore.google.com/detail/getnearme-%E2%80%94-valuta-il-qua/jbnceigldmpkpplanjlednlehloaeoia"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex px-3 py-2 sm:px-6 sm:py-2.5 bg-amber-500 text-[#1a1a2e] rounded-xl neo-border neo-btn hover:bg-amber-600 transition-all font-bold text-sm sm:text-lg"
+                                    style={{ boxShadow: '4px 4px 0px #1a1a2e' }}
+                                >
+                                    {t.nav.startAnalysis}
+                                </a>
+                            </>
                         )}
                         <button
                             className="md:hidden relative z-[70] p-2 text-slate-600"
@@ -182,20 +192,35 @@ export default function Navbar({ locale }: NavbarProps) {
                                 {t.nav.dashboard}
                             </Link>
                         ) : (
-                            <a
-                                href="https://chromewebstore.google.com/detail/getnearme-%E2%80%94-valuta-il-qua/jbnceigldmpkpplanjlednlehloaeoia"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className={`mt-6 w-full max-w-xs text-center px-5 py-2.5 bg-amber-500 text-[#1a1a2e] rounded-xl neo-border neo-btn hover:bg-amber-600 transition-all duration-500 ease-out font-bold text-base ${
-                                    isMenuOpen
-                                        ? 'opacity-100 translate-y-0'
-                                        : 'opacity-0 translate-y-4'
-                                }`}
-                                style={{ transitionDelay: isMenuOpen ? '450ms' : '0ms' }}
-                                onClick={() => setIsMenuOpen(false)}
-                            >
-                                {t.nav.startAnalysis}
-                            </a>
+                            <>
+                                <Link
+                                    href={`/${locale}/checkout/agency`}
+                                    className={`mt-6 w-full max-w-xs text-center flex items-center justify-center gap-2 px-5 py-2.5 bg-white text-[#1a1a2e] rounded-xl neo-border neo-btn hover:bg-slate-50 transition-all duration-500 ease-out font-bold text-base ${
+                                        isMenuOpen
+                                            ? 'opacity-100 translate-y-0'
+                                            : 'opacity-0 translate-y-4'
+                                    }`}
+                                    style={{ transitionDelay: isMenuOpen ? '450ms' : '0ms', boxShadow: '4px 4px 0px #1a1a2e' }}
+                                    onClick={() => setIsMenuOpen(false)}
+                                >
+                                    <UserIcon />
+                                    Accedi
+                                </Link>
+                                <a
+                                    href="https://chromewebstore.google.com/detail/getnearme-%E2%80%94-valuta-il-qua/jbnceigldmpkpplanjlednlehloaeoia"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className={`mt-3 w-full max-w-xs text-center px-5 py-2.5 bg-amber-500 text-[#1a1a2e] rounded-xl neo-border neo-btn hover:bg-amber-600 transition-all duration-500 ease-out font-bold text-base ${
+                                        isMenuOpen
+                                            ? 'opacity-100 translate-y-0'
+                                            : 'opacity-0 translate-y-4'
+                                    }`}
+                                    style={{ transitionDelay: isMenuOpen ? '525ms' : '0ms' }}
+                                    onClick={() => setIsMenuOpen(false)}
+                                >
+                                    {t.nav.startAnalysis}
+                                </a>
+                            </>
                         )}
                     </div>
 

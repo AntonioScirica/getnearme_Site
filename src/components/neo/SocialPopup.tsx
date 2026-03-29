@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 interface PopupMessage {
   icon: string;
@@ -15,35 +15,49 @@ interface SocialPopupProps {
 export default function SocialPopup({ messages }: SocialPopupProps) {
   const [cur, setCur] = useState(0);
   const [show, setShow] = useState(false);
+  const [order, setOrder] = useState<number[]>([]);
 
+  // Shuffle message order on mount
   useEffect(() => {
-    const d = setTimeout(() => setShow(true), 4000);
+    const indices = Array.from({ length: messages.length }, (_, i) => i);
+    for (let i = indices.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [indices[i], indices[j]] = [indices[j], indices[i]];
+    }
+    setOrder(indices);
+  }, [messages.length]);
+
+  const getRandomDelay = useCallback(() => {
+    return 8000 + Math.floor(Math.random() * 12000); // 8-20 seconds
+  }, []);
+
+  // Initial appearance with random delay
+  useEffect(() => {
+    const d = setTimeout(() => setShow(true), 3000 + Math.floor(Math.random() * 4000));
     return () => clearTimeout(d);
   }, []);
 
+  // Cycle through messages with random intervals
   useEffect(() => {
-    if (!show) return;
-    const id = setInterval(() => {
+    if (!show || order.length === 0) return;
+    const delay = getRandomDelay();
+    const id = setTimeout(() => {
       setShow(false);
       setTimeout(() => {
-        setCur((c) => (c + 1) % messages.length);
+        setCur((c) => (c + 1) % order.length);
         setShow(true);
       }, 500);
-    }, 14000);
-    return () => clearInterval(id);
-  }, [show, messages.length]);
+    }, delay);
+    return () => clearTimeout(id);
+  }, [show, cur, order.length, getRandomDelay]);
 
-  const handleClick = () => {
-    setShow(false);
-    window.location.hash = 'pricing';
-  };
-
-  const p = messages[cur];
+  if (order.length === 0) return null;
+  const p = messages[order[cur]];
   if (!p) return null;
 
   return (
     <div
-      onClick={handleClick}
+      onClick={() => { setShow(false); window.location.hash = 'pricing'; }}
       style={{
         position: 'fixed',
         bottom: 16,
