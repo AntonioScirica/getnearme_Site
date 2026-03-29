@@ -342,7 +342,7 @@ export default function DashboardPage() {
             <div className="mt-4">
               <p className="text-slate-500 text-sm mb-4">{t.manageSubDesc}</p>
               <a
-                href={`${STRIPE_BILLING_PORTAL}?prefilled_email=${encodeURIComponent(userEmail)}`}
+                href={STRIPE_BILLING_PORTAL}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-6 py-3 bg-[#1a1a2e] text-white rounded-xl neo-border neo-btn font-bold text-sm transition-all"
