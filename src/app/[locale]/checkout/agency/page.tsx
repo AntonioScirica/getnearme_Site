@@ -524,6 +524,16 @@ function CheckoutAgencyContent() {
 
         setUser({ id: userId, email: userEmail });
 
+        // Check if user already accepted terms (from previous login/consent)
+        const meta = session.user.user_metadata;
+        if (meta?.terms_accepted_at) {
+          setTermsAccepted(true);
+          if (meta.marketing_consent) setMarketingAccepted(true);
+          // Auto-proceed since consent was already given
+          await proceedAfterLogin(userId, userEmail, true, !!meta.marketing_consent);
+          return;
+        }
+
         // Check if already subscribed
         try {
           const { data } = await supabase
