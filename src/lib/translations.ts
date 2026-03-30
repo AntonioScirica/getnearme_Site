@@ -374,7 +374,7 @@ export const translations = {
             extra: "+20€/mese per utente aggiuntivo", color: "#f59e0b", bg: "#fffbeb", cta: "Inizia 7 giorni gratis →",
           },
           {
-            id: "pro", name: "Pro", users: "5 utenti inclusi", oldPrice: 200, price: 148,
+            id: "pro", name: "Pro", users: "5 utenti inclusi", oldPrice: 200, price: 149,
             savingsYear: 624, badge: "Massimo controllo", popular: false,
             features: ["Tutto di Agency, più:", "Export PDF con il TUO logo", "Editor Video per i social", "Supporto Prioritario"],
             extra: "+12€/mese per utente aggiuntivo", color: "#6366f1", bg: "#eef2ff", cta: "Inizia 7 giorni gratis →",
@@ -809,7 +809,7 @@ export const translations = {
             extra: "+€20/month per additional user", color: "#f59e0b", bg: "#fffbeb", cta: "Start 7-day free trial →",
           },
           {
-            id: "pro", name: "Pro", users: "5 users included", oldPrice: 200, price: 148,
+            id: "pro", name: "Pro", users: "5 users included", oldPrice: 200, price: 149,
             savingsYear: 624, badge: "Maximum control", popular: false,
             features: ["Everything in Agency, plus:", "PDF exports with YOUR logo", "Social Video Editor", "Priority Support"],
             extra: "+€12/month per additional user", color: "#6366f1", bg: "#eef2ff", cta: "Start 7-day free trial →",
@@ -1244,7 +1244,7 @@ export const translations = {
             extra: "+20€/mes por usuario adicional", color: "#f59e0b", bg: "#fffbeb", cta: "Empieza 7 días gratis →",
           },
           {
-            id: "pro", name: "Pro", users: "5 usuarios incluidos", oldPrice: 200, price: 148,
+            id: "pro", name: "Pro", users: "5 usuarios incluidos", oldPrice: 200, price: 149,
             savingsYear: 624, badge: "Máximo control", popular: false,
             features: ["Todo de Agency, más:", "Export PDF con TU logo", "Editor de Vídeo Social", "Soporte Prioritario"],
             extra: "+12€/mes por usuario adicional", color: "#6366f1", bg: "#eef2ff", cta: "Empieza 7 días gratis →",
@@ -1679,7 +1679,7 @@ export const translations = {
             extra: "+20€/mois par utilisateur supplémentaire", color: "#f59e0b", bg: "#fffbeb", cta: "Commencer 7 jours gratuits →",
           },
           {
-            id: "pro", name: "Pro", users: "5 utilisateurs inclus", oldPrice: 200, price: 148,
+            id: "pro", name: "Pro", users: "5 utilisateurs inclus", oldPrice: 200, price: 149,
             savingsYear: 624, badge: "Contrôle maximum", popular: false,
             features: ["Tout d'Agency, plus :", "Export PDF avec VOTRE logo", "Éditeur Vidéo Social", "Support Prioritaire"],
             extra: "+12€/mois par utilisateur supplémentaire", color: "#6366f1", bg: "#eef2ff", cta: "Commencer 7 jours gratuits →",
@@ -2114,7 +2114,7 @@ export const translations = {
             extra: "+20€/мес за доп. пользователя", color: "#f59e0b", bg: "#fffbeb", cta: "Начать 7 дней бесплатно →",
           },
           {
-            id: "pro", name: "Pro", users: "5 пользователей включено", oldPrice: 200, price: 148,
+            id: "pro", name: "Pro", users: "5 пользователей включено", oldPrice: 200, price: 149,
             savingsYear: 624, badge: "Максимальный контроль", popular: false,
             features: ["Всё из Agency, плюс:", "Экспорт PDF с ВАШИМ логотипом", "Видеоредактор для соцсетей", "Приоритетная поддержка"],
             extra: "+12€/мес за доп. пользователя", color: "#6366f1", bg: "#eef2ff", cta: "Начать 7 дней бесплатно →",
@@ -2549,7 +2549,7 @@ export const translations = {
             extra: "+20€/міс за дод. користувача", color: "#f59e0b", bg: "#fffbeb", cta: "Почати 7 днів безкоштовно →",
           },
           {
-            id: "pro", name: "Pro", users: "5 користувачів включено", oldPrice: 200, price: 148,
+            id: "pro", name: "Pro", users: "5 користувачів включено", oldPrice: 200, price: 149,
             savingsYear: 624, badge: "Максимальний контроль", popular: false,
             features: ["Все з Agency, плюс:", "Експорт PDF з ВАШИМ логотипом", "Відеоредактор для соцмереж", "Пріоритетна підтримка"],
             extra: "+12€/міс за дод. користувача", color: "#6366f1", bg: "#eef2ff", cta: "Почати 7 днів безкоштовно →",
