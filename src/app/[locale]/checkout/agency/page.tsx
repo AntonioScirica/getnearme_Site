@@ -107,7 +107,7 @@ const translations: Record<string, Record<string, string | string[]>> = {
     loading: 'Caricamento...',
     redirecting: 'Reindirizzamento al pagamento...',
     errorDefault: 'Si è verificato un errore. Riprova.',
-    errorInvalidCredentials: 'Credenziali non valide',
+    errorInvalidCredentials: 'Email o password non corretti. Non hai un account? Clicca su "Crea account".',
     alreadySubscribed: 'Hai già un abbonamento attivo',
     currentPlan: 'Piano attuale',
     manageSub: 'Gestisci abbonamento',
@@ -152,7 +152,7 @@ const translations: Record<string, Record<string, string | string[]>> = {
     loading: 'Loading...',
     redirecting: 'Redirecting to payment...',
     errorDefault: 'An error occurred. Please try again.',
-    errorInvalidCredentials: 'Invalid credentials',
+    errorInvalidCredentials: 'Incorrect email or password. Don\'t have an account? Click "Create account".',
     alreadySubscribed: 'You already have an active subscription',
     currentPlan: 'Current plan',
     manageSub: 'Manage subscription',
@@ -197,7 +197,7 @@ const translations: Record<string, Record<string, string | string[]>> = {
     loading: 'Cargando...',
     redirecting: 'Redirigiendo al pago...',
     errorDefault: 'Se produjo un error. Inténtalo de nuevo.',
-    errorInvalidCredentials: 'Credenciales no válidas',
+    errorInvalidCredentials: 'Email o contraseña incorrectos. ¿No tienes cuenta? Haz clic en "Crear cuenta".',
     alreadySubscribed: 'Ya tienes una suscripción activa',
     currentPlan: 'Plan actual',
     manageSub: 'Gestionar suscripción',
@@ -242,7 +242,7 @@ const translations: Record<string, Record<string, string | string[]>> = {
     loading: 'Chargement...',
     redirecting: 'Redirection vers le paiement...',
     errorDefault: 'Une erreur s\'est produite. Veuillez réessayer.',
-    errorInvalidCredentials: 'Identifiants invalides',
+    errorInvalidCredentials: 'Email ou mot de passe incorrect. Pas de compte ? Cliquez sur "Créer un compte".',
     alreadySubscribed: 'Vous avez déjà un abonnement actif',
     currentPlan: 'Plan actuel',
     manageSub: "Gérer l'abonnement",
@@ -287,7 +287,7 @@ const translations: Record<string, Record<string, string | string[]>> = {
     loading: 'Загрузка...',
     redirecting: 'Перенаправление на оплату...',
     errorDefault: 'Произошла ошибка. Попробуйте ещё раз.',
-    errorInvalidCredentials: 'Неверные учётные данные',
+    errorInvalidCredentials: 'Неверный email или пароль. Нет аккаунта? Нажмите "Создать аккаунт".',
     alreadySubscribed: 'У вас уже есть активная подписка',
     currentPlan: 'Текущий план',
     manageSub: 'Управление подпиской',
@@ -332,7 +332,7 @@ const translations: Record<string, Record<string, string | string[]>> = {
     loading: 'Завантаження...',
     redirecting: 'Перенаправлення на оплату...',
     errorDefault: 'Сталася помилка. Спробуйте ще раз.',
-    errorInvalidCredentials: 'Невірні облікові дані',
+    errorInvalidCredentials: 'Невірний email або пароль. Немає акаунту? Натисніть "Створити акаунт".',
     alreadySubscribed: 'У вас вже є активна підписка',
     currentPlan: 'Поточний план',
     manageSub: 'Керування підпискою',
@@ -556,12 +556,17 @@ function CheckoutAgencyContent() {
   }, []);
 
   async function handleGoogleLogin() {
+    if (!termsAccepted) {
+      setError(t.termsRequired as string);
+      consentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
     setIsLoading(true);
     setError(null);
 
     // Save consent before OAuth redirect (state is lost on page reload)
     sessionStorage.setItem('gnm_checkout_consent', JSON.stringify({
-      terms: termsAccepted || true,
+      terms: termsAccepted,
       marketing: marketingAccepted,
     }));
 
@@ -580,7 +585,7 @@ function CheckoutAgencyContent() {
 
   async function handleEmailAuth(e: React.FormEvent) {
     e.preventDefault();
-    if (isSignup && !termsAccepted) {
+    if (!termsAccepted) {
       setError(t.termsRequired as string);
       consentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
@@ -605,7 +610,7 @@ function CheckoutAgencyContent() {
         if (error) throw new Error(t.errorInvalidCredentials as string);
         if (data.user) {
           setUser({ id: data.user.id, email: data.user.email || '' });
-          await proceedAfterLogin(data.user.id, data.user.email || '', true, false);
+          await proceedAfterLogin(data.user.id, data.user.email || '', termsAccepted, marketingAccepted);
         }
       }
     } catch (err) {
@@ -813,9 +818,8 @@ function CheckoutAgencyContent() {
                   </button>
                 </p>
 
-                {/* Consent checkboxes - only for signup */}
-                {isSignup && (
-                  <div ref={consentRef} className="mt-6 pt-6 border-t-2 border-[#1a1a2e]/20 space-y-3">
+                {/* Consent checkboxes */}
+                <div ref={consentRef} className="mt-6 pt-6 border-t-2 border-[#1a1a2e]/20 space-y-3">
                     <label className="flex items-center gap-3 cursor-pointer group">
                       <div className="relative shrink-0">
                         <input
@@ -866,7 +870,6 @@ function CheckoutAgencyContent() {
                       <p className="text-red-500 text-xs font-bold animate-pulse">{t.termsRequired}</p>
                     )}
                   </div>
-                )}
 
                 <div className="flex items-center justify-center gap-4 mt-6 text-xs text-slate-400">
                   <span className="flex items-center gap-1"><ShieldIcon /> {t.securePayment}</span>
