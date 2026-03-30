@@ -544,8 +544,15 @@ function CheckoutAgencyContent() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) return;
 
-      const userId = session.user.id;
-      const userEmail = session.user.email || '';
+      // Validate token server-side (catches deleted accounts)
+      const { data: { user: validUser }, error: userError } = await supabase.auth.getUser();
+      if (userError || !validUser) {
+        await supabase.auth.signOut();
+        return;
+      }
+
+      const userId = validUser.id;
+      const userEmail = validUser.email || '';
 
       if (isOAuthCallback) {
         // Returning from Google OAuth - restore consent from sessionStorage
@@ -573,7 +580,7 @@ function CheckoutAgencyContent() {
         setUser({ id: userId, email: userEmail });
 
         // Check if user already accepted terms (from previous login/consent)
-        const meta = session.user.user_metadata;
+        const meta = validUser.user_metadata;
         if (meta?.terms_accepted_at) {
           setTermsAccepted(true);
           if (meta.marketing_consent) setMarketingAccepted(true);
