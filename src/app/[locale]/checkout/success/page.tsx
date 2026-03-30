@@ -9,49 +9,49 @@ const translations: Record<string, Record<string, string>> = {
   it: {
     title: 'Abbonamento attivato!',
     subtitle: 'Grazie per aver scelto GetNearMe.',
-    activeMessage: 'Il tuo abbonamento è attivo nel tuo account.',
     installCta: 'Installa l\'estensione Chrome',
     alreadyInstalled: 'Hai già l\'estensione? Aprila e accedi con lo stesso account.',
+    syncHint: 'Se l\'abbonamento non risulta subito visibile, prova a fare logout e login nell\'estensione.',
     footer: 'Tutti i diritti riservati',
   },
   en: {
     title: 'Subscription activated!',
     subtitle: 'Thank you for choosing GetNearMe.',
-    activeMessage: 'Your subscription is active on your account.',
     installCta: 'Install Chrome Extension',
     alreadyInstalled: 'Already have the extension? Open it and sign in with the same account.',
+    syncHint: 'If the subscription doesn\'t appear right away, try logging out and back in.',
     footer: 'All rights reserved',
   },
   es: {
     title: '¡Suscripción activada!',
     subtitle: 'Gracias por elegir GetNearMe.',
-    activeMessage: 'Tu suscripción está activa en tu cuenta.',
     installCta: 'Instalar extensión Chrome',
     alreadyInstalled: '¿Ya tienes la extensión? Ábrela e inicia sesión con la misma cuenta.',
+    syncHint: 'Si la suscripción no aparece de inmediato, prueba a cerrar sesión y volver a iniciarla.',
     footer: 'Todos los derechos reservados',
   },
   fr: {
     title: 'Abonnement activé !',
     subtitle: 'Merci d\'avoir choisi GetNearMe.',
-    activeMessage: 'Votre abonnement est actif sur votre compte.',
     installCta: 'Installer l\'extension Chrome',
     alreadyInstalled: 'Vous avez déjà l\'extension ? Ouvrez-la et connectez-vous avec le même compte.',
+    syncHint: 'Si l\'abonnement n\'apparaît pas immédiatement, essayez de vous déconnecter puis de vous reconnecter.',
     footer: 'Tous droits réservés',
   },
   ru: {
     title: 'Подписка активирована!',
     subtitle: 'Спасибо, что выбрали GetNearMe.',
-    activeMessage: 'Ваша подписка активна в вашем аккаунте.',
     installCta: 'Установить расширение Chrome',
     alreadyInstalled: 'Уже есть расширение? Откройте его и войдите с тем же аккаунтом.',
+    syncHint: 'Если подписка не отображается сразу, попробуйте выйти и войти снова.',
     footer: 'Все права защищены',
   },
   uk: {
     title: 'Підписку активовано!',
     subtitle: 'Дякуємо, що обрали GetNearMe.',
-    activeMessage: 'Ваша підписка активна у вашому акаунті.',
     installCta: 'Встановити розширення Chrome',
     alreadyInstalled: 'Вже маєте розширення? Відкрийте його та увійдіть з тим самим акаунтом.',
+    syncHint: 'Якщо підписка не з\'являється одразу, спробуйте вийти та увійти знову.',
     footer: 'Всі права захищені',
   },
 };
@@ -77,8 +77,6 @@ export default function CheckoutSuccessPage() {
             <h1 className="text-3xl font-bold mb-2">{t.title}</h1>
             <p className="text-lg text-slate-500 mb-6">{t.subtitle}</p>
 
-            <p className="text-slate-500 text-sm mb-6">{t.activeMessage}</p>
-
             <a
               href={CHROME_EXTENSION_URL}
               className="inline-flex items-center justify-center gap-3 px-8 py-4 bg-blue-500 rounded-xl neo-border neo-btn text-white font-bold hover:bg-blue-600 transition-all text-lg"
@@ -88,6 +86,7 @@ export default function CheckoutSuccessPage() {
             </a>
 
             <p className="text-sm text-slate-400 mt-6">{t.alreadyInstalled}</p>
+            <p className="text-xs text-slate-400 mt-2">{t.syncHint}</p>
           </div>
         </div>
       </main>
