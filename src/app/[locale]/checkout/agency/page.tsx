@@ -396,8 +396,9 @@ function CheckoutAgencyContent() {
   const locale = (params.locale as Locale) || 'it';
   const t = translations[locale] || translations.it;
 
-  const rawPlanParam = searchParams.get('plan') || 'agency';
-  const selectedPlanId = PLAN_ID_MAP[rawPlanParam] || 'agency';
+  const rawPlanParam = searchParams.get('plan');
+  const hasPlan = !!rawPlanParam;
+  const selectedPlanId = PLAN_ID_MAP[rawPlanParam || 'agency'] || 'agency';
   const intervalParam = searchParams.get('interval');
 
   const [interval, setInterval] = useState<'monthly' | 'annual'>(
@@ -456,7 +457,7 @@ function CheckoutAgencyContent() {
     }
   }
 
-  async function proceedToPayment(userId: string, userEmail: string, terms: boolean, marketing: boolean) {
+  async function proceedAfterLogin(userId: string, userEmail: string, terms: boolean, marketing: boolean) {
     setCheckingSubscription(true);
 
     await saveConsent(userId, userEmail, terms, marketing);
@@ -474,10 +475,17 @@ function CheckoutAgencyContent() {
         return;
       }
     } catch {
-      // No record yet - trigger will create it, proceed to payment
+      // No record yet - trigger will create it
     }
 
     setCheckingSubscription(false);
+
+    if (!hasPlan) {
+      // No plan selected - redirect to dashboard
+      window.location.href = `/${locale}/dashboard`;
+      return;
+    }
+
     redirectToPayment(userId, userEmail);
   }
 
@@ -505,9 +513,15 @@ function CheckoutAgencyContent() {
         setUser({ id: userId, email: userEmail });
         setTermsAccepted(terms);
         setMarketingAccepted(marketing);
-        await proceedToPayment(userId, userEmail, terms, marketing);
+        await proceedAfterLogin(userId, userEmail, terms, marketing);
       } else {
-        // Existing session (not OAuth callback) - just show user info, don't auto-redirect
+        // Existing session (not OAuth callback)
+        // If no plan selected, just go to dashboard
+        if (!hasPlan) {
+          window.location.href = `/${locale}/dashboard`;
+          return;
+        }
+
         setUser({ id: userId, email: userEmail });
 
         // Check if already subscribed
@@ -579,14 +593,14 @@ function CheckoutAgencyContent() {
         if (error) throw error;
         if (data.user) {
           setUser({ id: data.user.id, email: data.user.email || '' });
-          await proceedToPayment(data.user.id, data.user.email || '', termsAccepted, marketingAccepted);
+          await proceedAfterLogin(data.user.id, data.user.email || '', termsAccepted, marketingAccepted);
         }
       } else {
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw new Error(t.errorInvalidCredentials as string);
         if (data.user) {
           setUser({ id: data.user.id, email: data.user.email || '' });
-          await proceedToPayment(data.user.id, data.user.email || '', termsAccepted, marketingAccepted);
+          await proceedAfterLogin(data.user.id, data.user.email || '', termsAccepted, marketingAccepted);
         }
       }
     } catch (err) {
@@ -611,48 +625,50 @@ function CheckoutAgencyContent() {
               <span className="text-2xl font-bold text-blue-500">GetNearMe</span>
             </div>
 
-            <div className="bg-[#fafaf8] neo-border rounded-xl p-6 mb-6" style={{ boxShadow: '4px 4px 0px #1a1a2e' }}>
-              <div className="text-center">
-                <div className="text-lg font-bold text-[#1a1a2e]">{plan.name}</div>
-                <div className="mt-2">
-                  <span className="text-4xl font-bold text-blue-500">€{currentPrice}</span>
-                  <span className="text-slate-500">{periodLabel}</span>
+            {hasPlan && (
+              <div className="bg-[#fafaf8] neo-border rounded-xl p-6 mb-6" style={{ boxShadow: '4px 4px 0px #1a1a2e' }}>
+                <div className="text-center">
+                  <div className="text-lg font-bold text-[#1a1a2e]">{plan.name}</div>
+                  <div className="mt-2">
+                    <span className="text-4xl font-bold text-blue-500">€{currentPrice}</span>
+                    <span className="text-slate-500">{periodLabel}</span>
+                  </div>
+                  {plan.original_price > plan.price_monthly && (
+                    <p className="text-sm text-slate-400 line-through mt-1">
+                      €{plan.original_price}{t.perMonth}
+                    </p>
+                  )}
                 </div>
-                {plan.original_price > plan.price_monthly && (
-                  <p className="text-sm text-slate-400 line-through mt-1">
-                    €{plan.original_price}{t.perMonth}
-                  </p>
+
+                {/* Billing interval toggle */}
+                {plan.payment_link_annual && (
+                  <div className="flex justify-center mt-4">
+                    <div className="inline-flex bg-white neo-border rounded-lg p-0.5">
+                      <button
+                        onClick={() => setInterval('monthly')}
+                        className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${
+                          interval === 'monthly'
+                            ? 'bg-blue-500 text-white'
+                            : 'text-slate-500 hover:text-slate-700'
+                        }`}
+                      >
+                        {t.monthly}
+                      </button>
+                      <button
+                        onClick={() => setInterval('annual')}
+                        className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${
+                          interval === 'annual'
+                            ? 'bg-blue-500 text-white'
+                            : 'text-slate-500 hover:text-slate-700'
+                        }`}
+                      >
+                        {t.annual}
+                      </button>
+                    </div>
+                  </div>
                 )}
               </div>
-
-              {/* Billing interval toggle */}
-              {plan.payment_link_annual && (
-                <div className="flex justify-center mt-4">
-                  <div className="inline-flex bg-white neo-border rounded-lg p-0.5">
-                    <button
-                      onClick={() => setInterval('monthly')}
-                      className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${
-                        interval === 'monthly'
-                          ? 'bg-blue-500 text-white'
-                          : 'text-slate-500 hover:text-slate-700'
-                      }`}
-                    >
-                      {t.monthly}
-                    </button>
-                    <button
-                      onClick={() => setInterval('annual')}
-                      className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${
-                        interval === 'annual'
-                          ? 'bg-blue-500 text-white'
-                          : 'text-slate-500 hover:text-slate-700'
-                      }`}
-                    >
-                      {t.annual}
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
+            )}
 
             {/* Already subscribed */}
             {user && existingSubscription ? (
@@ -740,7 +756,7 @@ function CheckoutAgencyContent() {
                   onClick={() => {
                     if (!termsAccepted) { setError(t.termsRequired as string); return; }
                     setError(null);
-                    proceedToPayment(user.id, user.email, termsAccepted, marketingAccepted);
+                    proceedAfterLogin(user.id, user.email, termsAccepted, marketingAccepted);
                   }}
                   disabled={!termsAccepted || checkingSubscription}
                   className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-blue-500 rounded-xl neo-border neo-btn text-white font-bold hover:bg-blue-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
