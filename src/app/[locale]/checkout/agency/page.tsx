@@ -129,6 +129,7 @@ const translations: Record<string, Record<string, string | string[]>> = {
     privacyPolicy: 'Privacy Policy',
     marketingConsent: 'Accetto di ricevere email su novità e promozioni',
     termsRequired: 'Devi accettare i termini per continuare',
+    checkEmail: 'Registrazione completata! Controlla la tua email per confermare l\'account.',
     loggedInAs: 'Accesso effettuato come',
     proceedToPayment: 'Procedi al pagamento',
     yourAccount: 'Il tuo account',
@@ -181,6 +182,7 @@ const translations: Record<string, Record<string, string | string[]>> = {
     privacyPolicy: 'Privacy Policy',
     marketingConsent: 'I agree to receive emails about news and promotions',
     termsRequired: 'You must accept the terms to continue',
+    checkEmail: 'Registration complete! Check your email to confirm your account.',
     loggedInAs: 'Signed in as',
     proceedToPayment: 'Proceed to payment',
     yourAccount: 'Your account',
@@ -233,6 +235,7 @@ const translations: Record<string, Record<string, string | string[]>> = {
     privacyPolicy: 'Política de Privacidad',
     marketingConsent: 'Acepto recibir emails sobre novedades y promociones',
     termsRequired: 'Debes aceptar los términos para continuar',
+    checkEmail: '¡Registro completado! Revisa tu email para confirmar la cuenta.',
     loggedInAs: 'Sesión iniciada como',
     proceedToPayment: 'Proceder al pago',
     yourAccount: 'Tu cuenta',
@@ -285,6 +288,7 @@ const translations: Record<string, Record<string, string | string[]>> = {
     privacyPolicy: 'Politique de Confidentialité',
     marketingConsent: "J'accepte de recevoir des emails sur les nouveautés et promotions",
     termsRequired: 'Vous devez accepter les conditions pour continuer',
+    checkEmail: 'Inscription terminée ! Vérifiez votre email pour confirmer le compte.',
     loggedInAs: 'Connecté en tant que',
     proceedToPayment: 'Procéder au paiement',
     yourAccount: 'Votre compte',
@@ -337,6 +341,7 @@ const translations: Record<string, Record<string, string | string[]>> = {
     privacyPolicy: 'Политику конфиденциальности',
     marketingConsent: 'Я согласен получать письма о новостях и акциях',
     termsRequired: 'Необходимо принять условия для продолжения',
+    checkEmail: 'Регистрация завершена! Проверьте email для подтверждения аккаунта.',
     loggedInAs: 'Вы вошли как',
     proceedToPayment: 'Перейти к оплате',
     yourAccount: 'Ваш аккаунт',
@@ -389,6 +394,7 @@ const translations: Record<string, Record<string, string | string[]>> = {
     privacyPolicy: 'Політику конфіденційності',
     marketingConsent: 'Я погоджуюсь отримувати листи про новини та акції',
     termsRequired: 'Необхідно прийняти умови для продовження',
+    checkEmail: 'Реєстрацію завершено! Перевірте email для підтвердження акаунта.',
     loggedInAs: 'Ви увійшли як',
     proceedToPayment: 'Перейти до оплати',
     yourAccount: 'Ваш акаунт',
@@ -458,6 +464,7 @@ function CheckoutAgencyContent() {
   const [checkingSubscription, setCheckingSubscription] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [marketingAccepted, setMarketingAccepted] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
   const consentRef = useRef<HTMLDivElement>(null);
 
   const plan = PLANS[selectedPlanId];
@@ -640,9 +647,25 @@ function CheckoutAgencyContent() {
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
-          options: { emailRedirectTo: window.location.href },
+          options: {
+            emailRedirectTo: window.location.href,
+            data: {
+              marketing_consent: marketingAccepted,
+              terms_accepted_at: new Date().toISOString(),
+            },
+          },
         });
         if (error) throw error;
+
+        const needsConfirmation = !data.session;
+
+        if (needsConfirmation) {
+          // Email confirmation required - show "check your email" message
+          setEmailSent(true);
+          setIsEmailLoading(false);
+          return;
+        }
+
         if (data.user) {
           setUser({ id: data.user.id, email: data.user.email || '' });
           await proceedAfterLogin(data.user.id, data.user.email || '', termsAccepted, marketingAccepted);
@@ -722,8 +745,17 @@ function CheckoutAgencyContent() {
               </div>
             )}
 
-            {/* Already subscribed */}
-            {user && existingSubscription ? (
+            {/* Email confirmation sent */}
+            {emailSent ? (
+              <div className="text-center py-4">
+                <div className="w-16 h-16 bg-green-100 neo-border rounded-full flex items-center justify-center mx-auto mb-4">
+                  <CheckCircle className="w-8 h-8 text-green-600" />
+                </div>
+                <p className="text-lg font-bold text-[#1a1a2e] mb-2">{t.checkEmail}</p>
+                <p className="text-sm text-slate-500">{email}</p>
+              </div>
+            ) : /* Already subscribed */
+            user && existingSubscription ? (
               <div className="text-center">
                 <div className="w-16 h-16 bg-green-100 neo-border rounded-full flex items-center justify-center mx-auto mb-4">
                   <CheckCircle className="w-8 h-8 text-green-600" />
