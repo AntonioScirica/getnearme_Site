@@ -131,6 +131,13 @@ const translations: Record<string, Record<string, string | string[]>> = {
     termsRequired: 'Devi accettare i termini per continuare',
     loggedInAs: 'Accesso effettuato come',
     proceedToPayment: 'Procedi al pagamento',
+    yourAccount: 'Il tuo account',
+    installExtension: 'Installa l\'estensione Chrome',
+    alreadyInstalled: 'Hai già l\'estensione? Aprila e accedi con lo stesso account.',
+    syncHint: 'Se l\'abbonamento non risulta subito visibile, prova a fare logout e login nell\'estensione.',
+    logout: 'Esci',
+    deleteAccount: 'Elimina account',
+    deleteConfirm: 'Sei sicuro di voler eliminare il tuo account? Questa azione è irreversibile.',
   },
   en: {
     pageTitle: 'Choose your plan',
@@ -176,6 +183,13 @@ const translations: Record<string, Record<string, string | string[]>> = {
     termsRequired: 'You must accept the terms to continue',
     loggedInAs: 'Signed in as',
     proceedToPayment: 'Proceed to payment',
+    yourAccount: 'Your account',
+    installExtension: 'Install Chrome Extension',
+    alreadyInstalled: 'Already have the extension? Open it and sign in with the same account.',
+    syncHint: 'If the subscription doesn\'t appear right away, try logging out and back in.',
+    logout: 'Sign out',
+    deleteAccount: 'Delete account',
+    deleteConfirm: 'Are you sure you want to delete your account? This action cannot be undone.',
   },
   es: {
     pageTitle: 'Elige tu plan',
@@ -221,6 +235,13 @@ const translations: Record<string, Record<string, string | string[]>> = {
     termsRequired: 'Debes aceptar los términos para continuar',
     loggedInAs: 'Sesión iniciada como',
     proceedToPayment: 'Proceder al pago',
+    yourAccount: 'Tu cuenta',
+    installExtension: 'Instalar extensión Chrome',
+    alreadyInstalled: '¿Ya tienes la extensión? Ábrela e inicia sesión con la misma cuenta.',
+    syncHint: 'Si la suscripción no aparece de inmediato, prueba a cerrar sesión y volver a iniciarla.',
+    logout: 'Cerrar sesión',
+    deleteAccount: 'Eliminar cuenta',
+    deleteConfirm: '¿Estás seguro de que quieres eliminar tu cuenta? Esta acción es irreversible.',
   },
   fr: {
     pageTitle: 'Choisissez votre plan',
@@ -266,6 +287,13 @@ const translations: Record<string, Record<string, string | string[]>> = {
     termsRequired: 'Vous devez accepter les conditions pour continuer',
     loggedInAs: 'Connecté en tant que',
     proceedToPayment: 'Procéder au paiement',
+    yourAccount: 'Votre compte',
+    installExtension: 'Installer l\'extension Chrome',
+    alreadyInstalled: 'Vous avez déjà l\'extension ? Ouvrez-la et connectez-vous avec le même compte.',
+    syncHint: 'Si l\'abonnement n\'apparaît pas immédiatement, essayez de vous déconnecter puis de vous reconnecter.',
+    logout: 'Se déconnecter',
+    deleteAccount: 'Supprimer le compte',
+    deleteConfirm: 'Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est irréversible.',
   },
   ru: {
     pageTitle: 'Выберите план',
@@ -311,6 +339,13 @@ const translations: Record<string, Record<string, string | string[]>> = {
     termsRequired: 'Необходимо принять условия для продолжения',
     loggedInAs: 'Вы вошли как',
     proceedToPayment: 'Перейти к оплате',
+    yourAccount: 'Ваш аккаунт',
+    installExtension: 'Установить расширение Chrome',
+    alreadyInstalled: 'Уже есть расширение? Откройте его и войдите с тем же аккаунтом.',
+    syncHint: 'Если подписка не отображается сразу, попробуйте выйти и войти снова.',
+    logout: 'Выйти',
+    deleteAccount: 'Удалить аккаунт',
+    deleteConfirm: 'Вы уверены, что хотите удалить аккаунт? Это действие необратимо.',
   },
   uk: {
     pageTitle: 'Оберіть план',
@@ -356,6 +391,13 @@ const translations: Record<string, Record<string, string | string[]>> = {
     termsRequired: 'Необхідно прийняти умови для продовження',
     loggedInAs: 'Ви увійшли як',
     proceedToPayment: 'Перейти до оплати',
+    yourAccount: 'Ваш акаунт',
+    installExtension: 'Встановити розширення Chrome',
+    alreadyInstalled: 'Вже маєте розширення? Відкрийте його та увійдіть з тим самим акаунтом.',
+    syncHint: 'Якщо підписка не з\'являється одразу, спробуйте вийти та увійти знову.',
+    logout: 'Вийти',
+    deleteAccount: 'Видалити акаунт',
+    deleteConfirm: 'Ви впевнені, що хочете видалити акаунт? Цю дію неможливо скасувати.',
   },
 };
 
@@ -470,8 +512,7 @@ function CheckoutAgencyContent() {
         .single();
 
       if (data?.subscription_type && data.subscription_type !== 'free') {
-        setExistingSubscription(data.subscription_type);
-        setCheckingSubscription(false);
+        window.location.href = `/${locale}/dashboard`;
         return;
       }
     } catch {
@@ -543,7 +584,8 @@ function CheckoutAgencyContent() {
             .single();
 
           if (data?.subscription_type && data.subscription_type !== 'free') {
-            setExistingSubscription(data.subscription_type);
+            window.location.href = `/${locale}/dashboard`;
+            return;
           }
         } catch {
           // No record
