@@ -114,8 +114,8 @@ export default function Navbar({ locale }: NavbarProps) {
                             <>
                                 <Link
                                     href={`/${locale}/checkout/agency`}
-                                    className="flex items-center justify-center h-[42px] sm:h-[48px] px-3 sm:px-4 bg-white neo-border rounded-xl neo-btn hover:bg-slate-50 transition-all text-[#1a1a2e]"
-                                    style={{ boxShadow: '4px 4px 0px #1a1a2e' }}
+                                    className="flex items-center justify-center h-[42px] sm:h-[48px] w-[42px] sm:w-[48px] bg-white neo-border rounded-xl neo-btn hover:bg-slate-50 transition-all text-[#1a1a2e]"
+                                    style={{ boxShadow: '3px 3px 0px #1a1a2e' }}
                                     aria-label="Login"
                                 >
                                     <UserIcon />
@@ -124,8 +124,8 @@ export default function Navbar({ locale }: NavbarProps) {
                                     href="https://chromewebstore.google.com/detail/getnearme-%E2%80%94-valuta-il-qua/jbnceigldmpkpplanjlednlehloaeoia"
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="flex items-center h-[42px] sm:h-[48px] px-3 sm:px-6 bg-amber-500 text-[#1a1a2e] rounded-xl neo-border neo-btn hover:bg-amber-600 transition-all font-bold text-sm sm:text-lg"
-                                    style={{ boxShadow: '4px 4px 0px #1a1a2e' }}
+                                    className="flex items-center h-[42px] sm:h-[48px] px-4 sm:px-6 bg-amber-500 text-[#1a1a2e] rounded-xl neo-border neo-btn hover:bg-amber-600 transition-all font-bold text-sm sm:text-lg"
+                                    style={{ boxShadow: '3px 3px 0px #1a1a2e' }}
                                 >
                                     {t.nav.startAnalysis}
                                 </a>
