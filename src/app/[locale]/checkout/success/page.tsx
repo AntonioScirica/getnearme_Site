@@ -1,7 +1,6 @@
 'use client';
 
 import { useParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
 import { CheckCircle } from 'lucide-react';
 import { type Locale } from '@/lib/i18n';
 import Navbar from '@/components/Navbar';
@@ -10,7 +9,7 @@ const translations: Record<string, Record<string, string>> = {
   it: {
     title: 'Abbonamento attivato!',
     subtitle: 'Grazie per aver scelto GetNearMe.',
-    redirecting: 'Ti stiamo reindirizzando al Chrome Web Store...',
+    activeMessage: 'Il tuo abbonamento è attivo nel tuo account.',
     installCta: 'Installa l\'estensione Chrome',
     alreadyInstalled: 'Hai già l\'estensione? Aprila e accedi con lo stesso account.',
     footer: 'Tutti i diritti riservati',
@@ -18,7 +17,7 @@ const translations: Record<string, Record<string, string>> = {
   en: {
     title: 'Subscription activated!',
     subtitle: 'Thank you for choosing GetNearMe.',
-    redirecting: 'Redirecting you to the Chrome Web Store...',
+    activeMessage: 'Your subscription is active on your account.',
     installCta: 'Install Chrome Extension',
     alreadyInstalled: 'Already have the extension? Open it and sign in with the same account.',
     footer: 'All rights reserved',
@@ -26,7 +25,7 @@ const translations: Record<string, Record<string, string>> = {
   es: {
     title: '¡Suscripción activada!',
     subtitle: 'Gracias por elegir GetNearMe.',
-    redirecting: 'Te estamos redirigiendo al Chrome Web Store...',
+    activeMessage: 'Tu suscripción está activa en tu cuenta.',
     installCta: 'Instalar extensión Chrome',
     alreadyInstalled: '¿Ya tienes la extensión? Ábrela e inicia sesión con la misma cuenta.',
     footer: 'Todos los derechos reservados',
@@ -34,7 +33,7 @@ const translations: Record<string, Record<string, string>> = {
   fr: {
     title: 'Abonnement activé !',
     subtitle: 'Merci d\'avoir choisi GetNearMe.',
-    redirecting: 'Redirection vers le Chrome Web Store...',
+    activeMessage: 'Votre abonnement est actif sur votre compte.',
     installCta: 'Installer l\'extension Chrome',
     alreadyInstalled: 'Vous avez déjà l\'extension ? Ouvrez-la et connectez-vous avec le même compte.',
     footer: 'Tous droits réservés',
@@ -42,7 +41,7 @@ const translations: Record<string, Record<string, string>> = {
   ru: {
     title: 'Подписка активирована!',
     subtitle: 'Спасибо, что выбрали GetNearMe.',
-    redirecting: 'Перенаправляем вас в Chrome Web Store...',
+    activeMessage: 'Ваша подписка активна в вашем аккаунте.',
     installCta: 'Установить расширение Chrome',
     alreadyInstalled: 'Уже есть расширение? Откройте его и войдите с тем же аккаунтом.',
     footer: 'Все права защищены',
@@ -50,7 +49,7 @@ const translations: Record<string, Record<string, string>> = {
   uk: {
     title: 'Підписку активовано!',
     subtitle: 'Дякуємо, що обрали GetNearMe.',
-    redirecting: 'Перенаправляємо вас до Chrome Web Store...',
+    activeMessage: 'Ваша підписка активна у вашому акаунті.',
     installCta: 'Встановити розширення Chrome',
     alreadyInstalled: 'Вже маєте розширення? Відкрийте його та увійдіть з тим самим акаунтом.',
     footer: 'Всі права захищені',
@@ -63,21 +62,6 @@ export default function CheckoutSuccessPage() {
   const params = useParams();
   const locale = (params.locale as Locale) || 'it';
   const t = translations[locale] || translations.it;
-  const [countdown, setCountdown] = useState(5);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCountdown((c) => {
-        if (c <= 1) {
-          clearInterval(interval);
-          window.location.href = CHROME_EXTENSION_URL;
-          return 0;
-        }
-        return c - 1;
-      });
-    }, 1000);
-    return () => clearInterval(interval);
-  }, []);
 
   return (
     <div className="min-h-screen flex flex-col bg-[#fafaf8] font-sans text-[#1a1a2e]">
@@ -93,9 +77,7 @@ export default function CheckoutSuccessPage() {
             <h1 className="text-3xl font-bold mb-2">{t.title}</h1>
             <p className="text-lg text-slate-500 mb-6">{t.subtitle}</p>
 
-            <p className="text-slate-500 text-sm mb-6">
-              {t.redirecting} <span className="font-bold text-blue-500">{countdown}s</span>
-            </p>
+            <p className="text-slate-500 text-sm mb-6">{t.activeMessage}</p>
 
             <a
               href={CHROME_EXTENSION_URL}
