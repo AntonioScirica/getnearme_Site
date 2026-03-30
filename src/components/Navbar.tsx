@@ -50,8 +50,14 @@ export default function Navbar({ locale }: NavbarProps) {
     }, [isMenuOpen]);
 
     useEffect(() => {
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            setIsLoggedIn(!!session?.user);
+        // Validate token server-side (catches deleted accounts)
+        supabase.auth.getUser().then(({ data: { user }, error }) => {
+            if (error || !user) {
+                setIsLoggedIn(false);
+                supabase.auth.signOut();
+            } else {
+                setIsLoggedIn(true);
+            }
         });
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
