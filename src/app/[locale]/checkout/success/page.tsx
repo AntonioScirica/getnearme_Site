@@ -80,10 +80,10 @@ export default function CheckoutSuccessPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#fafaf8] font-sans text-[#1a1a2e]">
+    <div className="min-h-screen flex flex-col bg-[#fafaf8] font-sans text-[#1a1a2e]">
       <Navbar locale={locale} />
 
-      <main className="min-h-screen flex items-center justify-center px-4 py-24">
+      <main className="flex-1 flex items-center justify-center px-4 py-24">
         <div className="max-w-md w-full">
           <div className="bg-white neo-border rounded-2xl p-8 text-center" style={{ boxShadow: '6px 6px 0px #1a1a2e' }}>
             <div className="w-20 h-20 bg-green-100 neo-border rounded-full flex items-center justify-center mx-auto mb-6">
