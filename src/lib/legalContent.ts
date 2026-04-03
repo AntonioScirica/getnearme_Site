@@ -16,11 +16,11 @@ interface LegalPage {
 export const privacyContent: Record<Locale, LegalPage> = {
   en: {
     title: "Privacy Policy",
-    lastUpdated: "Last Updated: 01 February 2026",
+    lastUpdated: "Last Updated: 02 April 2026",
     description: "Privacy Policy for the GetNearMe browser extension.",
     blocks: [
       { type: "h2", text: "1. Introduction and Data Controller" },
-      { type: "p", text: "This Privacy Policy governs the processing of personal data in connection with the use of the GetNearMe browser extension (the \"Service\"). This Policy is intended to comply with Regulation (EU) 2016/679 (GDPR) and with Directive 2002/58/EC (ePrivacy Directive) regarding access to and storage of information on user terminal equipment." },
+      { type: "p", text: "This Privacy Policy governs the processing of personal data in connection with the use of the GetNearMe browser extension (the \"Service\"). This Policy is intended to comply with Regulation (EU) 2016/679 (GDPR), Italian Legislative Decree 196/2003 (Italian Privacy Code) as amended by Legislative Decree 101/2018, and Directive 2002/58/EC (ePrivacy Directive) regarding access to and storage of information on user terminal equipment." },
       { type: "p", text: "Data Controller: Antonio Scirica acting commercially under the trade name \"GetNearMe\"\nEmail: as.scirica@gmail.com" },
       { type: "h2", text: "2. Nature of Data Processing" },
       { type: "p", text: "To ensure data minimization and strictly respect third-party intellectual property rights, the Service operates primarily as a local, client-side utility." },
@@ -47,16 +47,33 @@ export const privacyContent: Record<Locale, LegalPage> = {
       { type: "p", text: "This local storage is technically necessary for the functioning of the Service, is not used for tracking or advertising purposes, and remains sandboxed within the User's browser." },
       { type: "h3", text: "3.3. Voluntary Marketing Data" },
       { type: "p", text: "Only if you explicitly consent via a separate checkbox, we process your email address and limited activity metrics (such as daily usage streaks) to administer the optional Daily Bonus system and to send the Newsletter." },
+      { type: "h3", text: "3.4. Team and Referral Data" },
+      { type: "p", text: "If you use the Team or Referral features of the Service, we additionally process:" },
+      { type: "ul", items: [
+        "Team Data: Email address of invitees, team role (owner/member), team ID, and invitation status. Email addresses of unaccepted invitations are deleted after 7 days.",
+        "Referral Data: Referral code, email address of the inviting and invited user, referral status, and bonus credits awarded."
+      ]},
       { type: "h2", text: "4. Third-Party Processors and Data Recipients" },
       { type: "ul", items: [
         "Infrastructure and Payments: We utilize Supabase (EU) for database hosting and authentication services, and Stripe (Global) for secure PCI-DSS compliant payment processing.",
-        "Communications: We use Resend (USA) as our email delivery provider for sending transactional codes and, where consented, newsletters.",
+        "Transactional Emails: We use Resend (USA) as our email delivery provider for transactional emails (verification codes, team invitations, notifications).",
+        "Email Marketing: We use Brevo (Sendinblue, EU — France) for newsletter management and marketing communications, subject to User consent.",
+        "AI Description Analysis: If the User activates the listing description analysis feature, the description text is transmitted to Groq (USA) for automated quality assessment. No personal User data is included in the request.",
+        "Video Generation: If the User uses the social post video generation feature, listing text data (price, address, features) is transmitted to Remotion/AWS Lambda (EU — eu-central-1, Frankfurt) for video rendering. No listing photos are transmitted.",
         "Maps and Routing: To calculate distances and travel times, the Service transmits approximate location coordinates to routing and mapping services.",
         "Market Data & Valuations: Specific property location data may be cross-referenced with Public Market Data Sources to retrieve estimated market valuations.",
         "Contextual Events & Activities: To display nearby activities, the Service queries Contextual Event & Activity Providers. These providers receive general location coordinates and dates to return relevant events; no User identity or personal browsing history is shared with them.",
-        "AI Processing: If the User voluntarily triggers the \"Virtual Staging\" feature, image URLs are transmitted transiently to AI Processing Providers solely for the generation of the requested content."
+        "AI Image Processing: If the User voluntarily triggers the \"Virtual Staging\" feature by uploading their own photo, the image is transmitted transiently to Replicate (USA) solely for the generation of the requested content."
       ]},
-      { type: "h2", text: "5. Legal Basis for Processing" },
+      { type: "h2", text: "5. International Data Transfers" },
+      { type: "p", text: "Some of our service providers operate in the United States (Resend, Groq, Replicate, Stripe). Such transfers are carried out on the basis of:" },
+      { type: "ul", items: [
+        "Standard Contractual Clauses (SCCs) approved by the European Commission under Art. 46(2)(c) GDPR.",
+        "EU-US Data Privacy Framework, where the provider is certified.",
+        "Supplementary technical (encryption in transit and at rest) and organizational safeguards implemented by the providers."
+      ]},
+      { type: "p", text: "Transfers to Remotion/AWS occur within the EU (region eu-central-1, Frankfurt). Brevo and Supabase operate within the EU." },
+      { type: "h2", text: "6. Legal Basis for Processing" },
       { type: "p", text: "In compliance with Article 6 of the GDPR, we process data based on the following grounds:" },
       { type: "ul", items: [
         "Performance of a Contract (Art. 6(1)(b)): For the core delivery of the analysis service, routing calculations, valuation estimates, account management, and processing payments.",
@@ -64,20 +81,49 @@ export const privacyContent: Record<Locale, LegalPage> = {
         "Explicit Consent (Art. 6(1)(a)): For optional features such as marketing communications, the Daily Bonus system, and AI-generated content.",
         "Legal Obligation (Art. 6(1)(c)): For tax reporting and accounting compliance."
       ]},
-      { type: "h2", text: "6. User Rights" },
-      { type: "p", text: "Under the GDPR, you have the right to access your data, rectify inaccuracies, erase your account (\"right to be forgotten\"), and object to processing based on legitimate interest. You also have the right to data portability (Art. 20) and the right to lodge a complaint with a supervisory authority (Art. 77), such as the Garante per la protezione dei dati personali." },
+      { type: "h2", text: "7. Data Retention Periods" },
+      { type: "p", text: "Personal data is retained only for as long as necessary to fulfill the purposes for which it was collected:" },
+      { type: "ul", items: [
+        "Account data (email, user ID): for the duration of the account and deleted within 30 days of a deletion request.",
+        "Transactional data (payments, credits): retained for 10 years as required by Italian tax law (Art. 2220 Civil Code).",
+        "Technical logs and IP addresses: retained for a maximum of 90 days, then automatically deleted.",
+        "Marketing data (bonus emails, newsletter): retained until consent is withdrawn or the user unsubscribes.",
+        "Team data — unaccepted invitations: automatically deleted after 7 days.",
+        "Referral data: retained for the duration of the inviting user's account.",
+        "AI images (Virtual Staging): processed in real time and not stored by the Controller. AI providers (Replicate) delete images within 24 hours of processing.",
+        "AI description analysis: text is transmitted to Groq solely for the duration of processing and is not stored."
+      ]},
+      { type: "h2", text: "8. Automated Decision-Making and Profiling" },
+      { type: "p", text: "Pursuant to Art. 22 of the GDPR, we inform you that the Service uses automated decision-making processes in the following features:" },
+      { type: "ul", items: [
+        "AI Description Analysis: The automated quality analysis of real estate descriptions generates a score from 1 to 10 using artificial intelligence models (Groq/LLaMA). This score is purely informational and does not produce legal effects or similarly significantly affect the User.",
+        "AI Virtual Staging: The generation of virtual furnishing images via AI (Replicate) occurs exclusively at the User's voluntary request and does not involve automated decisions with significant effects."
+      ]},
+      { type: "p", text: "None of these features produce decisions based solely on automated processing that produce legal effects or similarly significantly affect the data subject. The User may in any case request human intervention by contacting as.scirica@gmail.com." },
+      { type: "h2", text: "9. User Rights" },
+      { type: "p", text: "Under Articles 15-22 of the GDPR, you have the right to:" },
+      { type: "ul", items: [
+        "Access (Art. 15): obtain confirmation of whether your personal data is being processed.",
+        "Rectification (Art. 16): obtain rectification of inaccurate personal data.",
+        "Erasure (Art. 17): obtain erasure of your data (\"right to be forgotten\").",
+        "Restriction (Art. 18): obtain restriction of processing.",
+        "Portability (Art. 20): receive your data in a structured, machine-readable format.",
+        "Objection (Art. 21): object to processing based on legitimate interest.",
+        "Withdrawal of consent: withdraw consent given for marketing or AI features at any time, without affecting the lawfulness of prior processing."
+      ]},
       { type: "p", text: "To exercise these rights, please contact: as.scirica@gmail.com." },
-      { type: "h2", text: "7. Changes to this Policy" },
+      { type: "p", text: "You also have the right to lodge a complaint with the supervisory authority:\nGarante per la protezione dei dati personali\nPiazza Venezia 11 — 00187 Rome, Italy\nwww.garanteprivacy.it\nEmail: protocollo@gpdp.it" },
+      { type: "h2", text: "10. Changes to this Policy" },
       { type: "p", text: "We may update this Privacy Policy from time to time. We will notify you of any significant changes via the Extension interface or email." },
     ],
   },
   it: {
     title: "Informativa sulla Privacy",
-    lastUpdated: "Ultimo aggiornamento: 01 febbraio 2026",
+    lastUpdated: "Ultimo aggiornamento: 02 aprile 2026",
     description: "Informativa sulla Privacy per l'estensione browser GetNearMe.",
     blocks: [
       { type: "h2", text: "1. Introduzione e Titolare del Trattamento" },
-      { type: "p", text: "La presente Informativa sulla Privacy disciplina il trattamento dei dati personali in relazione all'utilizzo dell'estensione browser GetNearMe (il \"Servizio\"). La presente Informativa è volta a rispettare il Regolamento (UE) 2016/679 (GDPR) e la Direttiva 2002/58/CE (Direttiva ePrivacy) in materia di accesso e archiviazione delle informazioni sui dispositivi terminali degli utenti." },
+      { type: "p", text: "La presente Informativa sulla Privacy disciplina il trattamento dei dati personali in relazione all'utilizzo dell'estensione browser GetNearMe (il \"Servizio\"). La presente Informativa è volta a rispettare il Regolamento (UE) 2016/679 (GDPR), il D.Lgs. 196/2003 (Codice Privacy italiano) come modificato dal D.Lgs. 101/2018 e la Direttiva 2002/58/CE (Direttiva ePrivacy) in materia di accesso e archiviazione delle informazioni sui dispositivi terminali degli utenti." },
       { type: "p", text: "Titolare del Trattamento: Antonio Scirica, operante commercialmente con il nome \"GetNearMe\"\nEmail: as.scirica@gmail.com" },
       { type: "h2", text: "2. Natura del Trattamento dei Dati" },
       { type: "p", text: "Per garantire la minimizzazione dei dati e il rigoroso rispetto dei diritti di proprietà intellettuale di terzi, il Servizio opera principalmente come utilità locale, lato client." },
@@ -104,16 +150,33 @@ export const privacyContent: Record<Locale, LegalPage> = {
       { type: "p", text: "Questa archiviazione locale è tecnicamente necessaria per il funzionamento del Servizio, non viene utilizzata per finalità di tracciamento o pubblicitarie e rimane isolata all'interno del browser dell'Utente." },
       { type: "h3", text: "3.3. Dati di Marketing Volontari" },
       { type: "p", text: "Solo previo consenso esplicito tramite apposita casella, trattiamo il tuo indirizzo email e metriche di attività limitate (come le serie di utilizzo giornaliero) per amministrare il sistema opzionale Daily Bonus e per inviare la Newsletter." },
+      { type: "h3", text: "3.4. Dati Team e Referral" },
+      { type: "p", text: "Se utilizzi le funzionalità Team o Referral del Servizio, trattiamo inoltre:" },
+      { type: "ul", items: [
+        "Dati Team: Indirizzo email degli invitati, ruolo nel team (owner/member), ID team e stato dell'invito. Gli indirizzi email degli invitati non accettati vengono cancellati dopo 7 giorni.",
+        "Dati Referral: Codice referral, email dell'utente invitante e dell'invitato, stato del referral e crediti bonus assegnati."
+      ]},
       { type: "h2", text: "4. Responsabili del Trattamento e Destinatari dei Dati" },
       { type: "ul", items: [
         "Infrastruttura e Pagamenti: Utilizziamo Supabase (UE) per l'hosting del database e i servizi di autenticazione, e Stripe (Globale) per l'elaborazione sicura dei pagamenti conforme PCI-DSS.",
-        "Comunicazioni: Utilizziamo Resend (USA) come fornitore di servizi email per l'invio di codici transazionali e, previo consenso, newsletter.",
+        "Email Transazionali: Utilizziamo Resend (USA) come fornitore per l'invio di email transazionali (codici di verifica, inviti team, notifiche).",
+        "Email Marketing: Utilizziamo Brevo (Sendinblue, UE — Francia) per la gestione delle newsletter e delle comunicazioni di marketing, previo consenso dell'Utente.",
+        "Analisi AI Descrizioni: Se l'Utente attiva la funzione di analisi della descrizione immobiliare, il testo della descrizione viene trasmesso a Groq (USA) per la valutazione automatica della qualità. Nessun dato personale dell'Utente viene incluso nella richiesta.",
+        "Generazione Video: Se l'Utente utilizza la funzione di generazione video per post social, i dati testuali dell'annuncio (prezzo, indirizzo, caratteristiche) vengono trasmessi a Remotion/AWS Lambda (UE — eu-central-1, Francoforte) per il rendering del video. Nessuna foto dell'annuncio viene trasmessa.",
         "Mappe e Percorsi: Per calcolare distanze e tempi di percorrenza, il Servizio trasmette coordinate di posizione approssimative a servizi di routing e mappatura.",
         "Dati di Mercato e Valutazioni: Dati specifici sulla posizione dell'immobile possono essere incrociati con Fonti Pubbliche di Dati di Mercato per ottenere valutazioni di mercato stimate.",
         "Eventi e Attività Contestuali: Per mostrare attività nelle vicinanze, il Servizio interroga Fornitori di Eventi e Attività Contestuali. Questi fornitori ricevono coordinate di posizione generiche e date per restituire eventi pertinenti; nessuna identità dell'Utente o cronologia di navigazione viene condivisa con loro.",
-        "Elaborazione AI: Se l'Utente attiva volontariamente la funzione \"Virtual Staging\", gli URL delle immagini vengono trasmessi temporaneamente a Fornitori di Elaborazione AI esclusivamente per la generazione del contenuto richiesto."
+        "Elaborazione AI Immagini: Se l'Utente attiva volontariamente la funzione \"Virtual Staging\" caricando una propria foto, l'immagine viene trasmessa temporaneamente a Replicate (USA) esclusivamente per la generazione del contenuto richiesto."
       ]},
-      { type: "h2", text: "5. Base Giuridica del Trattamento" },
+      { type: "h2", text: "5. Trasferimenti Internazionali di Dati" },
+      { type: "p", text: "Alcuni dei nostri fornitori di servizi operano negli Stati Uniti (Resend, Groq, Replicate, Stripe). Tali trasferimenti sono effettuati sulla base di:" },
+      { type: "ul", items: [
+        "Clausole Contrattuali Standard (SCC) approvate dalla Commissione Europea ai sensi dell'Art. 46(2)(c) GDPR.",
+        "Data Privacy Framework UE-USA, ove il fornitore sia certificato.",
+        "Garanzie supplementari tecniche (crittografia in transito e a riposo) e organizzative implementate dai fornitori."
+      ]},
+      { type: "p", text: "I trasferimenti verso Remotion/AWS avvengono all'interno dell'UE (regione eu-central-1, Francoforte). Brevo e Supabase operano all'interno dell'UE." },
+      { type: "h2", text: "6. Base Giuridica del Trattamento" },
       { type: "p", text: "In conformità con l'Articolo 6 del GDPR, trattiamo i dati sulla base dei seguenti fondamenti:" },
       { type: "ul", items: [
         "Esecuzione di un Contratto (Art. 6(1)(b)): Per l'erogazione del servizio di analisi, calcoli di percorso, stime di valutazione, gestione dell'account ed elaborazione dei pagamenti.",
@@ -121,20 +184,49 @@ export const privacyContent: Record<Locale, LegalPage> = {
         "Consenso Esplicito (Art. 6(1)(a)): Per funzionalità opzionali come comunicazioni di marketing, il sistema Daily Bonus e contenuti generati dall'AI.",
         "Obbligo Legale (Art. 6(1)(c)): Per la dichiarazione fiscale e la conformità contabile."
       ]},
-      { type: "h2", text: "6. Diritti dell'Utente" },
-      { type: "p", text: "Ai sensi del GDPR, hai il diritto di accedere ai tuoi dati, rettificare inesattezze, cancellare il tuo account (\"diritto all'oblio\") e opporti al trattamento basato su interesse legittimo. Hai inoltre il diritto alla portabilità dei dati (Art. 20) e il diritto di proporre reclamo a un'autorità di controllo (Art. 77), come il Garante per la protezione dei dati personali." },
+      { type: "h2", text: "7. Durata della Conservazione dei Dati" },
+      { type: "p", text: "I dati personali vengono conservati per il tempo strettamente necessario al raggiungimento delle finalità per cui sono raccolti:" },
+      { type: "ul", items: [
+        "Dati dell'account (email, ID utente): per tutta la durata dell'account e cancellati entro 30 giorni dalla richiesta di cancellazione.",
+        "Dati transazionali (pagamenti, crediti): conservati per 10 anni come richiesto dalla normativa fiscale italiana (Art. 2220 c.c.).",
+        "Log tecnici e indirizzi IP: conservati per un massimo di 90 giorni, poi cancellati automaticamente.",
+        "Dati di marketing (email bonus, newsletter): conservati fino alla revoca del consenso o alla disiscrizione.",
+        "Dati team — inviti non accettati: cancellati automaticamente dopo 7 giorni.",
+        "Dati referral: conservati per tutta la durata dell'account dell'utente invitante.",
+        "Immagini AI (Virtual Staging): elaborate in tempo reale e non conservate dal Titolare. I fornitori AI (Replicate) eliminano le immagini entro 24 ore dall'elaborazione.",
+        "Analisi descrizioni AI: il testo viene trasmesso a Groq per la sola durata dell'elaborazione e non viene conservato."
+      ]},
+      { type: "h2", text: "8. Decisioni Automatizzate e Profilazione" },
+      { type: "p", text: "Ai sensi dell'Art. 22 del GDPR, informiamo che il Servizio utilizza processi decisionali automatizzati nelle seguenti funzionalità:" },
+      { type: "ul", items: [
+        "Analisi Descrizione AI: L'analisi automatica della qualità delle descrizioni immobiliari genera un punteggio da 1 a 10 tramite modelli di intelligenza artificiale (Groq/LLaMA). Questo punteggio è puramente informativo e non produce effetti giuridici né incide in modo analogo significativamente sull'Utente.",
+        "Virtual Staging AI: La generazione di immagini di arredamento virtuale tramite AI (Replicate) avviene esclusivamente su richiesta volontaria dell'Utente e non comporta decisioni automatizzate con effetti significativi."
+      ]},
+      { type: "p", text: "Nessuna di queste funzionalità produce decisioni basate unicamente su trattamento automatizzato che producano effetti giuridici o che incidano in modo analogo significativamente sull'interessato. L'Utente può in ogni caso richiedere l'intervento umano contattando as.scirica@gmail.com." },
+      { type: "h2", text: "9. Diritti dell'Utente" },
+      { type: "p", text: "Ai sensi degli Artt. 15-22 del GDPR e degli Artt. 7-10 del D.Lgs. 196/2003, hai il diritto di:" },
+      { type: "ul", items: [
+        "Accesso (Art. 15): ottenere conferma che sia o meno in corso un trattamento dei tuoi dati personali.",
+        "Rettifica (Art. 16): ottenere la rettifica di dati personali inesatti.",
+        "Cancellazione (Art. 17): ottenere la cancellazione dei dati (\"diritto all'oblio\").",
+        "Limitazione (Art. 18): ottenere la limitazione del trattamento.",
+        "Portabilità (Art. 20): ricevere i dati in formato strutturato e leggibile da dispositivo automatico.",
+        "Opposizione (Art. 21): opporti al trattamento basato su interesse legittimo.",
+        "Revoca del consenso: revocare in qualsiasi momento il consenso prestato per il marketing o le funzionalità AI, senza pregiudizio per la liceità del trattamento precedente."
+      ]},
       { type: "p", text: "Per esercitare questi diritti, contattare: as.scirica@gmail.com." },
-      { type: "h2", text: "7. Modifiche alla presente Informativa" },
+      { type: "p", text: "Hai inoltre il diritto di proporre reclamo all'autorità di controllo:\nGarante per la protezione dei dati personali\nPiazza Venezia 11 — 00187 Roma\nwww.garanteprivacy.it\nEmail: protocollo@gpdp.it" },
+      { type: "h2", text: "10. Modifiche alla presente Informativa" },
       { type: "p", text: "Potremmo aggiornare la presente Informativa sulla Privacy di tanto in tanto. Ti informeremo di eventuali modifiche significative tramite l'interfaccia dell'Estensione o via email." },
     ],
   },
   es: {
     title: "Política de Privacidad",
-    lastUpdated: "Última actualización: 01 de febrero de 2026",
+    lastUpdated: "Última actualización: 02 de abril de 2026",
     description: "Política de Privacidad para la extensión de navegador GetNearMe.",
     blocks: [
       { type: "h2", text: "1. Introducción y Responsable del Tratamiento" },
-      { type: "p", text: "Esta Política de Privacidad regula el tratamiento de datos personales en relación con el uso de la extensión de navegador GetNearMe (el \"Servicio\"). Esta Política tiene como objetivo cumplir con el Reglamento (UE) 2016/679 (RGPD) y con la Directiva 2002/58/CE (Directiva ePrivacy) en materia de acceso y almacenamiento de información en los equipos terminales de los usuarios." },
+      { type: "p", text: "Esta Política de Privacidad regula el tratamiento de datos personales en relación con el uso de la extensión de navegador GetNearMe (el \"Servicio\"). Esta Política tiene como objetivo cumplir con el Reglamento (UE) 2016/679 (RGPD), el D.Lgs. 196/2003 (Código de Privacidad italiano) modificado por el D.Lgs. 101/2018, y la Directiva 2002/58/CE (Directiva ePrivacy) en materia de acceso y almacenamiento de información en los equipos terminales de los usuarios." },
       { type: "p", text: "Responsable del Tratamiento: Antonio Scirica, operando comercialmente bajo el nombre comercial \"GetNearMe\"\nEmail: as.scirica@gmail.com" },
       { type: "h2", text: "2. Naturaleza del Tratamiento de Datos" },
       { type: "p", text: "Para garantizar la minimización de datos y respetar estrictamente los derechos de propiedad intelectual de terceros, el Servicio opera principalmente como una utilidad local, del lado del cliente." },
@@ -161,16 +253,33 @@ export const privacyContent: Record<Locale, LegalPage> = {
       { type: "p", text: "Este almacenamiento local es técnicamente necesario para el funcionamiento del Servicio, no se utiliza con fines de seguimiento o publicitarios y permanece aislado dentro del navegador del Usuario." },
       { type: "h3", text: "3.3. Datos de Marketing Voluntarios" },
       { type: "p", text: "Solo si usted consiente explícitamente mediante una casilla de verificación separada, procesamos su dirección de correo electrónico y métricas de actividad limitadas (como rachas de uso diario) para administrar el sistema opcional Daily Bonus y para enviar el Boletín." },
+      { type: "h3", text: "3.4. Datos de Equipo y Referidos" },
+      { type: "p", text: "Si utiliza las funciones de Equipo o Referidos del Servicio, también procesamos:" },
+      { type: "ul", items: [
+        "Datos de Equipo: Dirección de correo electrónico de los invitados, rol en el equipo (propietario/miembro), ID de equipo y estado de la invitación. Las direcciones de correo de invitaciones no aceptadas se eliminan después de 7 días.",
+        "Datos de Referidos: Código de referido, correo electrónico del usuario que invita y del invitado, estado del referido y créditos de bonificación otorgados."
+      ]},
       { type: "h2", text: "4. Encargados del Tratamiento y Destinatarios de Datos" },
       { type: "ul", items: [
         "Infraestructura y Pagos: Utilizamos Supabase (UE) para el alojamiento de la base de datos y servicios de autenticación, y Stripe (Global) para el procesamiento seguro de pagos conforme a PCI-DSS.",
-        "Comunicaciones: Utilizamos Resend (EE.UU.) como proveedor de envío de correo electrónico para códigos transaccionales y, cuando se consiente, boletines.",
+        "Emails Transaccionales: Utilizamos Resend (EE.UU.) como proveedor de envío de correo electrónico para emails transaccionales (códigos de verificación, invitaciones de equipo, notificaciones).",
+        "Email Marketing: Utilizamos Brevo (Sendinblue, UE — Francia) para la gestión de boletines y comunicaciones de marketing, previo consentimiento del Usuario.",
+        "Análisis AI de Descripciones: Si el Usuario activa la función de análisis de descripciones inmobiliarias, el texto se transmite a Groq (EE.UU.) para la evaluación automatizada de calidad. No se incluyen datos personales del Usuario en la solicitud.",
+        "Generación de Video: Si el Usuario utiliza la función de generación de video para publicaciones sociales, los datos textuales del anuncio (precio, dirección, características) se transmiten a Remotion/AWS Lambda (UE — eu-central-1, Fráncfort) para el renderizado del video. No se transmiten fotos del anuncio.",
         "Mapas y Rutas: Para calcular distancias y tiempos de viaje, el Servicio transmite coordenadas de ubicación aproximadas a servicios de enrutamiento y mapeo.",
         "Datos de Mercado y Valoraciones: Los datos de ubicación de propiedades específicas pueden cruzarse con Fuentes Públicas de Datos de Mercado para obtener valoraciones de mercado estimadas.",
         "Eventos y Actividades Contextuales: Para mostrar actividades cercanas, el Servicio consulta Proveedores de Eventos y Actividades Contextuales. Estos proveedores reciben coordenadas de ubicación generales y fechas para devolver eventos relevantes; no se comparte la identidad del Usuario ni el historial de navegación personal.",
-        "Procesamiento de IA: Si el Usuario activa voluntariamente la función \"Virtual Staging\", las URLs de las imágenes se transmiten transitoriamente a Proveedores de Procesamiento de IA exclusivamente para la generación del contenido solicitado."
+        "Procesamiento AI de Imágenes: Si el Usuario activa voluntariamente la función \"Virtual Staging\" subiendo una foto propia, la imagen se transmite transitoriamente a Replicate (EE.UU.) exclusivamente para la generación del contenido solicitado."
       ]},
-      { type: "h2", text: "5. Base Jurídica del Tratamiento" },
+      { type: "h2", text: "5. Transferencias Internacionales de Datos" },
+      { type: "p", text: "Algunos de nuestros proveedores de servicios operan en Estados Unidos (Resend, Groq, Replicate, Stripe). Dichas transferencias se realizan sobre la base de:" },
+      { type: "ul", items: [
+        "Cláusulas Contractuales Tipo (CCT) aprobadas por la Comisión Europea conforme al Art. 46(2)(c) RGPD.",
+        "Marco de Privacidad de Datos UE-EE.UU., cuando el proveedor esté certificado.",
+        "Garantías suplementarias técnicas (cifrado en tránsito y en reposo) y organizativas implementadas por los proveedores."
+      ]},
+      { type: "p", text: "Las transferencias a Remotion/AWS se realizan dentro de la UE (región eu-central-1, Fráncfort). Brevo y Supabase operan dentro de la UE." },
+      { type: "h2", text: "6. Base Jurídica del Tratamiento" },
       { type: "p", text: "En cumplimiento del Artículo 6 del RGPD, tratamos los datos en base a los siguientes fundamentos:" },
       { type: "ul", items: [
         "Ejecución de un Contrato (Art. 6(1)(b)): Para la prestación principal del servicio de análisis, cálculos de ruta, estimaciones de valoración, gestión de cuenta y procesamiento de pagos.",
@@ -178,20 +287,49 @@ export const privacyContent: Record<Locale, LegalPage> = {
         "Consentimiento Explícito (Art. 6(1)(a)): Para funciones opcionales como comunicaciones de marketing, el sistema Daily Bonus y contenido generado por IA.",
         "Obligación Legal (Art. 6(1)(c)): Para la declaración de impuestos y el cumplimiento contable."
       ]},
-      { type: "h2", text: "6. Derechos del Usuario" },
-      { type: "p", text: "Bajo el RGPD, usted tiene derecho a acceder a sus datos, rectificar inexactitudes, eliminar su cuenta (\"derecho al olvido\") y oponerse al tratamiento basado en interés legítimo. También tiene derecho a la portabilidad de datos (Art. 20) y a presentar una reclamación ante una autoridad de control (Art. 77), como el Garante per la protezione dei dati personali." },
+      { type: "h2", text: "7. Períodos de Conservación de Datos" },
+      { type: "p", text: "Los datos personales se conservan únicamente durante el tiempo necesario para cumplir los fines para los que fueron recopilados:" },
+      { type: "ul", items: [
+        "Datos de cuenta (email, ID de usuario): durante la vigencia de la cuenta y eliminados en un plazo de 30 días tras la solicitud de cancelación.",
+        "Datos transaccionales (pagos, créditos): conservados durante 10 años según la normativa fiscal italiana (Art. 2220 C.C.).",
+        "Logs técnicos y direcciones IP: conservados durante un máximo de 90 días, luego eliminados automáticamente.",
+        "Datos de marketing (emails de bonificación, boletín): conservados hasta la revocación del consentimiento o la cancelación de la suscripción.",
+        "Datos de equipo — invitaciones no aceptadas: eliminados automáticamente después de 7 días.",
+        "Datos de referidos: conservados durante la vigencia de la cuenta del usuario que invita.",
+        "Imágenes AI (Virtual Staging): procesadas en tiempo real y no almacenadas por el Responsable. Los proveedores AI (Replicate) eliminan las imágenes en un plazo de 24 horas tras el procesamiento.",
+        "Análisis de descripciones AI: el texto se transmite a Groq únicamente durante el procesamiento y no se almacena."
+      ]},
+      { type: "h2", text: "8. Decisiones Automatizadas y Elaboración de Perfiles" },
+      { type: "p", text: "De conformidad con el Art. 22 del RGPD, le informamos que el Servicio utiliza procesos de toma de decisiones automatizados en las siguientes funcionalidades:" },
+      { type: "ul", items: [
+        "Análisis AI de Descripción: El análisis automatizado de la calidad de las descripciones inmobiliarias genera una puntuación de 1 a 10 mediante modelos de inteligencia artificial (Groq/LLaMA). Esta puntuación es puramente informativa y no produce efectos jurídicos ni afecta de manera similar significativamente al Usuario.",
+        "Virtual Staging AI: La generación de imágenes de amueblamiento virtual mediante IA (Replicate) se realiza exclusivamente a solicitud voluntaria del Usuario y no implica decisiones automatizadas con efectos significativos."
+      ]},
+      { type: "p", text: "Ninguna de estas funcionalidades produce decisiones basadas únicamente en tratamiento automatizado que produzcan efectos jurídicos o que afecten de manera similar significativamente al interesado. El Usuario puede en cualquier caso solicitar la intervención humana contactando a as.scirica@gmail.com." },
+      { type: "h2", text: "9. Derechos del Usuario" },
+      { type: "p", text: "Conforme a los Artículos 15-22 del RGPD, usted tiene derecho a:" },
+      { type: "ul", items: [
+        "Acceso (Art. 15): obtener confirmación de si se están tratando sus datos personales.",
+        "Rectificación (Art. 16): obtener la rectificación de datos personales inexactos.",
+        "Supresión (Art. 17): obtener la supresión de sus datos (\"derecho al olvido\").",
+        "Limitación (Art. 18): obtener la limitación del tratamiento.",
+        "Portabilidad (Art. 20): recibir sus datos en un formato estructurado y legible por máquina.",
+        "Oposición (Art. 21): oponerse al tratamiento basado en interés legítimo.",
+        "Revocación del consentimiento: revocar en cualquier momento el consentimiento otorgado para marketing o funcionalidades AI, sin que ello afecte a la licitud del tratamiento anterior."
+      ]},
       { type: "p", text: "Para ejercer estos derechos, contacte: as.scirica@gmail.com." },
-      { type: "h2", text: "7. Cambios en esta Política" },
+      { type: "p", text: "También tiene derecho a presentar una reclamación ante la autoridad de control:\nGarante per la protezione dei dati personali\nPiazza Venezia 11 — 00187 Roma, Italia\nwww.garanteprivacy.it\nEmail: protocollo@gpdp.it" },
+      { type: "h2", text: "10. Cambios en esta Política" },
       { type: "p", text: "Podemos actualizar esta Política de Privacidad periódicamente. Le notificaremos cualquier cambio significativo a través de la interfaz de la Extensión o por correo electrónico." },
     ],
   },
   fr: {
     title: "Politique de Confidentialité",
-    lastUpdated: "Dernière mise à jour : 01 février 2026",
+    lastUpdated: "Dernière mise à jour : 02 avril 2026",
     description: "Politique de Confidentialité pour l'extension de navigateur GetNearMe.",
     blocks: [
       { type: "h2", text: "1. Introduction et Responsable du Traitement" },
-      { type: "p", text: "La présente Politique de Confidentialité régit le traitement des données personnelles dans le cadre de l'utilisation de l'extension de navigateur GetNearMe (le \"Service\"). Cette Politique vise à respecter le Règlement (UE) 2016/679 (RGPD) et la Directive 2002/58/CE (Directive ePrivacy) concernant l'accès et le stockage d'informations sur les équipements terminaux des utilisateurs." },
+      { type: "p", text: "La présente Politique de Confidentialité régit le traitement des données personnelles dans le cadre de l'utilisation de l'extension de navigateur GetNearMe (le \"Service\"). Cette Politique vise à respecter le Règlement (UE) 2016/679 (RGPD), le D.Lgs. 196/2003 (Code de la Protection des Données italien) tel que modifié par le D.Lgs. 101/2018, et la Directive 2002/58/CE (Directive ePrivacy) concernant l'accès et le stockage d'informations sur les équipements terminaux des utilisateurs." },
       { type: "p", text: "Responsable du Traitement : Antonio Scirica, opérant commercialement sous le nom commercial \"GetNearMe\"\nEmail : as.scirica@gmail.com" },
       { type: "h2", text: "2. Nature du Traitement des Données" },
       { type: "p", text: "Pour garantir la minimisation des données et respecter strictement les droits de propriété intellectuelle des tiers, le Service fonctionne principalement comme un utilitaire local, côté client." },
@@ -218,16 +356,33 @@ export const privacyContent: Record<Locale, LegalPage> = {
       { type: "p", text: "Ce stockage local est techniquement nécessaire au fonctionnement du Service, n'est pas utilisé à des fins de suivi ou publicitaires et reste isolé dans le navigateur de l'Utilisateur." },
       { type: "h3", text: "3.3. Données Marketing Volontaires" },
       { type: "p", text: "Uniquement si vous consentez explicitement via une case à cocher séparée, nous traitons votre adresse e-mail et vos métriques d'activité limitées (telles que les séries d'utilisation quotidienne) pour administrer le système optionnel Daily Bonus et pour envoyer la Newsletter." },
+      { type: "h3", text: "3.4. Données d'Équipe et de Parrainage" },
+      { type: "p", text: "Si vous utilisez les fonctionnalités Équipe ou Parrainage du Service, nous traitons également :" },
+      { type: "ul", items: [
+        "Données d'Équipe : Adresse e-mail des invités, rôle dans l'équipe (propriétaire/membre), ID d'équipe et statut de l'invitation. Les adresses e-mail des invitations non acceptées sont supprimées après 7 jours.",
+        "Données de Parrainage : Code de parrainage, adresse e-mail de l'utilisateur parrain et du filleul, statut du parrainage et crédits bonus attribués."
+      ]},
       { type: "h2", text: "4. Sous-traitants et Destinataires des Données" },
       { type: "ul", items: [
         "Infrastructure et Paiements : Nous utilisons Supabase (UE) pour l'hébergement de la base de données et les services d'authentification, et Stripe (Global) pour le traitement sécurisé des paiements conforme PCI-DSS.",
-        "Communications : Nous utilisons Resend (USA) comme fournisseur de livraison d'e-mails pour l'envoi de codes transactionnels et, sous réserve de consentement, de newsletters.",
+        "Emails Transactionnels : Nous utilisons Resend (USA) comme fournisseur de livraison d'e-mails pour les emails transactionnels (codes de vérification, invitations d'équipe, notifications).",
+        "Email Marketing : Nous utilisons Brevo (Sendinblue, UE — France) pour la gestion des newsletters et des communications marketing, sous réserve du consentement de l'Utilisateur.",
+        "Analyse AI des Descriptions : Si l'Utilisateur active la fonction d'analyse des descriptions immobilières, le texte de la description est transmis à Groq (USA) pour l'évaluation automatisée de la qualité. Aucune donnée personnelle de l'Utilisateur n'est incluse dans la requête.",
+        "Génération de Vidéo : Si l'Utilisateur utilise la fonction de génération de vidéo pour les publications sociales, les données textuelles de l'annonce (prix, adresse, caractéristiques) sont transmises à Remotion/AWS Lambda (UE — eu-central-1, Francfort) pour le rendu vidéo. Aucune photo de l'annonce n'est transmise.",
         "Cartes et Itinéraires : Pour calculer les distances et les temps de trajet, le Service transmet des coordonnées de localisation approximatives à des services de routage et de cartographie.",
         "Données de Marché et Évaluations : Les données de localisation de propriétés spécifiques peuvent être croisées avec des Sources Publiques de Données de Marché pour obtenir des évaluations de marché estimées.",
         "Événements et Activités Contextuels : Pour afficher les activités à proximité, le Service interroge des Fournisseurs d'Événements et d'Activités Contextuels. Ces fournisseurs reçoivent des coordonnées de localisation générales et des dates pour renvoyer des événements pertinents ; aucune identité de l'Utilisateur ni historique de navigation personnel n'est partagé avec eux.",
-        "Traitement par IA : Si l'Utilisateur déclenche volontairement la fonctionnalité \"Virtual Staging\", les URLs des images sont transmises de manière transitoire à des Fournisseurs de Traitement par IA uniquement pour la génération du contenu demandé."
+        "Traitement AI d'Images : Si l'Utilisateur déclenche volontairement la fonctionnalité \"Virtual Staging\" en téléchargeant sa propre photo, l'image est transmise de manière transitoire à Replicate (USA) uniquement pour la génération du contenu demandé."
       ]},
-      { type: "h2", text: "5. Base Juridique du Traitement" },
+      { type: "h2", text: "5. Transferts Internationaux de Données" },
+      { type: "p", text: "Certains de nos prestataires de services opèrent aux États-Unis (Resend, Groq, Replicate, Stripe). Ces transferts sont effectués sur la base de :" },
+      { type: "ul", items: [
+        "Clauses Contractuelles Types (CCT) approuvées par la Commission Européenne en vertu de l'Art. 46(2)(c) RGPD.",
+        "Cadre de Protection des Données UE-USA, lorsque le fournisseur est certifié.",
+        "Garanties supplémentaires techniques (chiffrement en transit et au repos) et organisationnelles mises en œuvre par les fournisseurs."
+      ]},
+      { type: "p", text: "Les transferts vers Remotion/AWS s'effectuent au sein de l'UE (région eu-central-1, Francfort). Brevo et Supabase opèrent au sein de l'UE." },
+      { type: "h2", text: "6. Base Juridique du Traitement" },
       { type: "p", text: "En conformité avec l'Article 6 du RGPD, nous traitons les données sur les bases suivantes :" },
       { type: "ul", items: [
         "Exécution d'un Contrat (Art. 6(1)(b)) : Pour la fourniture principale du service d'analyse, les calculs d'itinéraire, les estimations d'évaluation, la gestion de compte et le traitement des paiements.",
@@ -235,20 +390,49 @@ export const privacyContent: Record<Locale, LegalPage> = {
         "Consentement Explicite (Art. 6(1)(a)) : Pour les fonctionnalités optionnelles telles que les communications marketing, le système Daily Bonus et le contenu généré par l'IA.",
         "Obligation Légale (Art. 6(1)(c)) : Pour la déclaration fiscale et la conformité comptable."
       ]},
-      { type: "h2", text: "6. Droits de l'Utilisateur" },
-      { type: "p", text: "En vertu du RGPD, vous avez le droit d'accéder à vos données, de rectifier les inexactitudes, d'effacer votre compte (\"droit à l'oubli\") et de vous opposer au traitement fondé sur l'intérêt légitime. Vous avez également le droit à la portabilité des données (Art. 20) et le droit de déposer une plainte auprès d'une autorité de contrôle (Art. 77), telle que le Garante per la protezione dei dati personali." },
+      { type: "h2", text: "7. Durées de Conservation des Données" },
+      { type: "p", text: "Les données personnelles ne sont conservées que pendant la durée nécessaire à l'accomplissement des finalités pour lesquelles elles ont été collectées :" },
+      { type: "ul", items: [
+        "Données de compte (email, ID utilisateur) : pendant la durée du compte et supprimées dans un délai de 30 jours suivant la demande de suppression.",
+        "Données transactionnelles (paiements, crédits) : conservées pendant 10 ans conformément à la législation fiscale italienne (Art. 2220 C.C.).",
+        "Journaux techniques et adresses IP : conservés pendant un maximum de 90 jours, puis supprimés automatiquement.",
+        "Données marketing (emails bonus, newsletter) : conservées jusqu'au retrait du consentement ou à la désinscription.",
+        "Données d'équipe — invitations non acceptées : supprimées automatiquement après 7 jours.",
+        "Données de parrainage : conservées pendant la durée du compte de l'utilisateur parrain.",
+        "Images AI (Virtual Staging) : traitées en temps réel et non conservées par le Responsable. Les fournisseurs AI (Replicate) suppriment les images dans un délai de 24 heures après le traitement.",
+        "Analyse de descriptions AI : le texte est transmis à Groq uniquement pendant la durée du traitement et n'est pas conservé."
+      ]},
+      { type: "h2", text: "8. Décisions Automatisées et Profilage" },
+      { type: "p", text: "Conformément à l'Art. 22 du RGPD, nous vous informons que le Service utilise des processus de prise de décision automatisés dans les fonctionnalités suivantes :" },
+      { type: "ul", items: [
+        "Analyse AI de Description : L'analyse automatisée de la qualité des descriptions immobilières génère un score de 1 à 10 à l'aide de modèles d'intelligence artificielle (Groq/LLaMA). Ce score est purement informatif et ne produit pas d'effets juridiques ni n'affecte de manière similaire significativement l'Utilisateur.",
+        "Virtual Staging AI : La génération d'images d'ameublement virtuel par IA (Replicate) s'effectue exclusivement à la demande volontaire de l'Utilisateur et n'implique pas de décisions automatisées ayant des effets significatifs."
+      ]},
+      { type: "p", text: "Aucune de ces fonctionnalités ne produit de décisions fondées uniquement sur un traitement automatisé qui produisent des effets juridiques ou qui affectent de manière similaire significativement la personne concernée. L'Utilisateur peut en tout cas demander une intervention humaine en contactant as.scirica@gmail.com." },
+      { type: "h2", text: "9. Droits de l'Utilisateur" },
+      { type: "p", text: "En vertu des Articles 15-22 du RGPD, vous avez le droit de :" },
+      { type: "ul", items: [
+        "Accès (Art. 15) : obtenir la confirmation que vos données personnelles font ou non l'objet d'un traitement.",
+        "Rectification (Art. 16) : obtenir la rectification de données personnelles inexactes.",
+        "Effacement (Art. 17) : obtenir l'effacement de vos données (\"droit à l'oubli\").",
+        "Limitation (Art. 18) : obtenir la limitation du traitement.",
+        "Portabilité (Art. 20) : recevoir vos données dans un format structuré et lisible par machine.",
+        "Opposition (Art. 21) : vous opposer au traitement fondé sur l'intérêt légitime.",
+        "Retrait du consentement : retirer à tout moment le consentement donné pour le marketing ou les fonctionnalités AI, sans affecter la licéité du traitement antérieur."
+      ]},
       { type: "p", text: "Pour exercer ces droits, contactez : as.scirica@gmail.com." },
-      { type: "h2", text: "7. Modifications de cette Politique" },
+      { type: "p", text: "Vous avez également le droit de déposer une réclamation auprès de l'autorité de contrôle :\nGarante per la protezione dei dati personali\nPiazza Venezia 11 — 00187 Rome, Italie\nwww.garanteprivacy.it\nEmail : protocollo@gpdp.it" },
+      { type: "h2", text: "10. Modifications de cette Politique" },
       { type: "p", text: "Nous pouvons mettre à jour cette Politique de Confidentialité de temps à autre. Nous vous informerons de tout changement significatif via l'interface de l'Extension ou par e-mail." },
     ],
   },
   ru: {
     title: "Политика конфиденциальности",
-    lastUpdated: "Последнее обновление: 01 февраля 2026",
+    lastUpdated: "Последнее обновление: 02 апреля 2026",
     description: "Политика конфиденциальности расширения браузера GetNearMe.",
     blocks: [
       { type: "h2", text: "1. Введение и Контролёр данных" },
-      { type: "p", text: "Настоящая Политика конфиденциальности регулирует обработку персональных данных в связи с использованием расширения браузера GetNearMe (\"Сервис\"). Настоящая Политика направлена на соблюдение Регламента (ЕС) 2016/679 (GDPR) и Директивы 2002/58/EC (Директива ePrivacy) в отношении доступа к информации и её хранения на терминальном оборудовании пользователей." },
+      { type: "p", text: "Настоящая Политика конфиденциальности регулирует обработку персональных данных в связи с использованием расширения браузера GetNearMe (\"Сервис\"). Настоящая Политика направлена на соблюдение Регламента (ЕС) 2016/679 (GDPR), D.Lgs. 196/2003 (Итальянский Кодекс конфиденциальности) с изменениями D.Lgs. 101/2018 и Директивы 2002/58/EC (Директива ePrivacy) в отношении доступа к информации и её хранения на терминальном оборудовании пользователей." },
       { type: "p", text: "Контролёр данных: Антонио Шрика, действующий коммерчески под торговым наименованием \"GetNearMe\"\nEmail: as.scirica@gmail.com" },
       { type: "h2", text: "2. Характер обработки данных" },
       { type: "p", text: "Для обеспечения минимизации данных и строгого соблюдения прав интеллектуальной собственности третьих лиц Сервис функционирует преимущественно как локальная, клиентская утилита." },
@@ -275,16 +459,33 @@ export const privacyContent: Record<Locale, LegalPage> = {
       { type: "p", text: "Данное локальное хранилище является технически необходимым для функционирования Сервиса, не используется в целях отслеживания или рекламы и остаётся изолированным в браузере Пользователя." },
       { type: "h3", text: "3.3. Добровольные маркетинговые данные" },
       { type: "p", text: "Только при вашем явном согласии через отдельный флажок мы обрабатываем ваш адрес электронной почты и ограниченные метрики активности (такие как ежедневные серии использования) для администрирования опциональной системы Daily Bonus и для отправки Рассылки." },
+      { type: "h3", text: "3.4. Данные команды и реферальной программы" },
+      { type: "p", text: "Если вы используете функции Команды или Реферальной программы Сервиса, мы дополнительно обрабатываем:" },
+      { type: "ul", items: [
+        "Данные команды: Адрес электронной почты приглашённых, роль в команде (владелец/участник), ID команды и статус приглашения. Адреса электронной почты непринятых приглашений удаляются через 7 дней.",
+        "Реферальные данные: Реферальный код, адрес электронной почты приглашающего и приглашённого пользователя, статус реферала и начисленные бонусные кредиты."
+      ]},
       { type: "h2", text: "4. Обработчики данных и получатели" },
       { type: "ul", items: [
         "Инфраструктура и платежи: Мы используем Supabase (ЕС) для хостинга баз данных и услуг аутентификации, а также Stripe (Глобально) для безопасной обработки платежей, соответствующей PCI-DSS.",
-        "Коммуникации: Мы используем Resend (США) в качестве провайдера доставки электронной почты для отправки транзакционных кодов и, при наличии согласия, рассылок.",
+        "Транзакционные письма: Мы используем Resend (США) для отправки транзакционных писем (коды верификации, приглашения в команду, уведомления).",
+        "Email-маркетинг: Мы используем Brevo (Sendinblue, ЕС — Франция) для управления рассылками и маркетинговыми коммуникациями при наличии согласия Пользователя.",
+        "AI-анализ описаний: Если Пользователь активирует функцию анализа описания объекта недвижимости, текст описания передаётся в Groq (США) для автоматической оценки качества. Персональные данные Пользователя в запрос не включаются.",
+        "Генерация видео: Если Пользователь использует функцию генерации видео для социальных публикаций, текстовые данные объявления (цена, адрес, характеристики) передаются в Remotion/AWS Lambda (ЕС — eu-central-1, Франкфурт) для рендеринга видео. Фотографии объявления не передаются.",
         "Карты и маршруты: Для расчёта расстояний и времени в пути Сервис передаёт приблизительные координаты местоположения сервисам маршрутизации и картографии.",
         "Рыночные данные и оценки: Конкретные данные о местоположении недвижимости могут быть сопоставлены с Публичными источниками рыночных данных для получения ориентировочных рыночных оценок.",
         "Контекстные события и мероприятия: Для отображения ближайших мероприятий Сервис обращается к Провайдерам контекстных событий и мероприятий. Эти провайдеры получают общие координаты местоположения и даты для возврата релевантных событий; личность Пользователя или история просмотров не передаются им.",
-        "Обработка ИИ: Если Пользователь добровольно активирует функцию \"Virtual Staging\", URL-адреса изображений временно передаются Провайдерам обработки ИИ исключительно для генерации запрошенного контента."
+        "AI-обработка изображений: Если Пользователь добровольно активирует функцию \"Virtual Staging\", загружая собственное фото, изображение временно передаётся в Replicate (США) исключительно для генерации запрошенного контента."
       ]},
-      { type: "h2", text: "5. Правовая основа обработки" },
+      { type: "h2", text: "5. Международные передачи данных" },
+      { type: "p", text: "Некоторые наши поставщики услуг работают в США (Resend, Groq, Replicate, Stripe). Такие передачи осуществляются на основании:" },
+      { type: "ul", items: [
+        "Стандартных контрактных положений (SCC), утверждённых Европейской Комиссией в соответствии со Ст. 46(2)(c) GDPR.",
+        "Рамочного соглашения о защите данных ЕС-США, если поставщик сертифицирован.",
+        "Дополнительных технических (шифрование при передаче и хранении) и организационных гарантий, реализованных поставщиками."
+      ]},
+      { type: "p", text: "Передачи в Remotion/AWS осуществляются в пределах ЕС (регион eu-central-1, Франкфурт). Brevo и Supabase работают в пределах ЕС." },
+      { type: "h2", text: "6. Правовая основа обработки" },
       { type: "p", text: "В соответствии со Статьёй 6 GDPR мы обрабатываем данные на следующих основаниях:" },
       { type: "ul", items: [
         "Исполнение договора (Ст. 6(1)(b)): Для основного предоставления аналитического сервиса, расчётов маршрутов, оценочных расчётов, управления аккаунтом и обработки платежей.",
@@ -292,20 +493,49 @@ export const privacyContent: Record<Locale, LegalPage> = {
         "Явное согласие (Ст. 6(1)(a)): Для опциональных функций, таких как маркетинговые коммуникации, система Daily Bonus и контент, сгенерированный ИИ.",
         "Юридическая обязанность (Ст. 6(1)(c)): Для налоговой отчётности и бухгалтерского соответствия."
       ]},
-      { type: "h2", text: "6. Права пользователя" },
-      { type: "p", text: "Согласно GDPR, вы имеете право на доступ к своим данным, исправление неточностей, удаление аккаунта (\"право на забвение\") и возражение против обработки на основании законного интереса. Вы также имеете право на переносимость данных (Ст. 20) и право подать жалобу в надзорный орган (Ст. 77), такой как Garante per la protezione dei dati personali." },
+      { type: "h2", text: "7. Сроки хранения данных" },
+      { type: "p", text: "Персональные данные хранятся только в течение времени, необходимого для достижения целей, для которых они были собраны:" },
+      { type: "ul", items: [
+        "Данные аккаунта (email, ID пользователя): в течение срока действия аккаунта и удаляются в течение 30 дней после запроса на удаление.",
+        "Транзакционные данные (платежи, кредиты): хранятся 10 лет в соответствии с итальянским налоговым законодательством (Ст. 2220 ГК).",
+        "Технические журналы и IP-адреса: хранятся не более 90 дней, затем автоматически удаляются.",
+        "Маркетинговые данные (бонусные письма, рассылка): хранятся до отзыва согласия или отписки.",
+        "Данные команды — непринятые приглашения: автоматически удаляются через 7 дней.",
+        "Реферальные данные: хранятся в течение срока действия аккаунта приглашающего пользователя.",
+        "AI-изображения (Virtual Staging): обрабатываются в реальном времени и не хранятся Контролёром. Провайдеры ИИ (Replicate) удаляют изображения в течение 24 часов после обработки.",
+        "AI-анализ описаний: текст передаётся в Groq только на время обработки и не сохраняется."
+      ]},
+      { type: "h2", text: "8. Автоматизированное принятие решений и профилирование" },
+      { type: "p", text: "В соответствии со Ст. 22 GDPR сообщаем, что Сервис использует автоматизированные процессы принятия решений в следующих функциях:" },
+      { type: "ul", items: [
+        "AI-анализ описания: Автоматический анализ качества описаний недвижимости генерирует оценку от 1 до 10 с помощью моделей искусственного интеллекта (Groq/LLaMA). Эта оценка носит исключительно информационный характер и не производит правовых последствий и не оказывает аналогичного существенного влияния на Пользователя.",
+        "AI Virtual Staging: Генерация изображений виртуальной меблировки с помощью ИИ (Replicate) осуществляется исключительно по добровольному запросу Пользователя и не предполагает автоматизированных решений с существенными последствиями."
+      ]},
+      { type: "p", text: "Ни одна из этих функций не производит решений, основанных исключительно на автоматизированной обработке, которые производят правовые последствия или аналогичным образом существенно влияют на субъекта данных. Пользователь может в любом случае запросить вмешательство человека, обратившись по адресу as.scirica@gmail.com." },
+      { type: "h2", text: "9. Права пользователя" },
+      { type: "p", text: "Согласно Статьям 15-22 GDPR, вы имеете право на:" },
+      { type: "ul", items: [
+        "Доступ (Ст. 15): получить подтверждение того, обрабатываются ли ваши персональные данные.",
+        "Исправление (Ст. 16): получить исправление неточных персональных данных.",
+        "Удаление (Ст. 17): получить удаление данных (\"право на забвение\").",
+        "Ограничение (Ст. 18): получить ограничение обработки.",
+        "Переносимость (Ст. 20): получить данные в структурированном, машиночитаемом формате.",
+        "Возражение (Ст. 21): возразить против обработки на основании законного интереса.",
+        "Отзыв согласия: отозвать в любое время согласие на маркетинг или функции ИИ без ущерба для законности предшествующей обработки."
+      ]},
       { type: "p", text: "Для осуществления этих прав обращайтесь: as.scirica@gmail.com." },
-      { type: "h2", text: "7. Изменения настоящей Политики" },
+      { type: "p", text: "Вы также имеете право подать жалобу в надзорный орган:\nGarante per la protezione dei dati personali\nPiazza Venezia 11 — 00187 Рим, Италия\nwww.garanteprivacy.it\nEmail: protocollo@gpdp.it" },
+      { type: "h2", text: "10. Изменения настоящей Политики" },
       { type: "p", text: "Мы можем периодически обновлять настоящую Политику конфиденциальности. Мы уведомим вас о любых существенных изменениях через интерфейс Расширения или по электронной почте." },
     ],
   },
   uk: {
     title: "Політика конфіденційності",
-    lastUpdated: "Останнє оновлення: 01 лютого 2026",
+    lastUpdated: "Останнє оновлення: 02 квітня 2026",
     description: "Політика конфіденційності розширення браузера GetNearMe.",
     blocks: [
       { type: "h2", text: "1. Вступ та Контролер даних" },
-      { type: "p", text: "Ця Політика конфіденційності регулює обробку персональних даних у зв'язку з використанням розширення браузера GetNearMe (\"Сервіс\"). Ця Політика спрямована на дотримання Регламенту (ЄС) 2016/679 (GDPR) та Директиви 2002/58/EC (Директива ePrivacy) щодо доступу до інформації та її зберігання на термінальному обладнанні користувачів." },
+      { type: "p", text: "Ця Політика конфіденційності регулює обробку персональних даних у зв'язку з використанням розширення браузера GetNearMe (\"Сервіс\"). Ця Політика спрямована на дотримання Регламенту (ЄС) 2016/679 (GDPR), D.Lgs. 196/2003 (Італійський Кодекс конфіденційності) зі змінами D.Lgs. 101/2018 та Директиви 2002/58/EC (Директива ePrivacy) щодо доступу до інформації та її зберігання на термінальному обладнанні користувачів." },
       { type: "p", text: "Контролер даних: Антоніо Шріка, що діє комерційно під торговою назвою \"GetNearMe\"\nEmail: as.scirica@gmail.com" },
       { type: "h2", text: "2. Характер обробки даних" },
       { type: "p", text: "Для забезпечення мінімізації даних та суворого дотримання прав інтелектуальної власності третіх осіб Сервіс функціонує переважно як локальна, клієнтська утиліта." },
@@ -332,16 +562,33 @@ export const privacyContent: Record<Locale, LegalPage> = {
       { type: "p", text: "Це локальне сховище є технічно необхідним для функціонування Сервісу, не використовується з метою відстеження або реклами та залишається ізольованим у браузері Користувача." },
       { type: "h3", text: "3.3. Добровільні маркетингові дані" },
       { type: "p", text: "Лише за вашої явної згоди через окремий прапорець ми обробляємо вашу адресу електронної пошти та обмежені метрики активності (такі як щоденні серії використання) для адміністрування опціональної системи Daily Bonus та для відправки Розсилки." },
+      { type: "h3", text: "3.4. Дані команди та реферальної програми" },
+      { type: "p", text: "Якщо ви використовуєте функції Команди або Реферальної програми Сервісу, ми додатково обробляємо:" },
+      { type: "ul", items: [
+        "Дані команди: Адреса електронної пошти запрошених, роль у команді (власник/учасник), ID команди та статус запрошення. Адреси електронної пошти неприйнятих запрошень видаляються через 7 днів.",
+        "Реферальні дані: Реферальний код, адреса електронної пошти запрошуючого та запрошеного користувача, статус реферала та нараховані бонусні кредити."
+      ]},
       { type: "h2", text: "4. Обробники даних та отримувачі" },
       { type: "ul", items: [
         "Інфраструктура та платежі: Ми використовуємо Supabase (ЄС) для хостингу баз даних та послуг автентифікації, а також Stripe (Глобально) для безпечної обробки платежів, відповідної PCI-DSS.",
-        "Комунікації: Ми використовуємо Resend (США) як провайдера доставки електронної пошти для відправки транзакційних кодів та, за наявності згоди, розсилок.",
+        "Транзакційні листи: Ми використовуємо Resend (США) для відправки транзакційних листів (коди верифікації, запрошення до команди, сповіщення).",
+        "Email-маркетинг: Ми використовуємо Brevo (Sendinblue, ЄС — Франція) для управління розсилками та маркетинговими комунікаціями за наявності згоди Користувача.",
+        "ШІ-аналіз описів: Якщо Користувач активує функцію аналізу опису об'єкта нерухомості, текст опису передається до Groq (США) для автоматичної оцінки якості. Персональні дані Користувача до запиту не включаються.",
+        "Генерація відео: Якщо Користувач використовує функцію генерації відео для соціальних публікацій, текстові дані оголошення (ціна, адреса, характеристики) передаються до Remotion/AWS Lambda (ЄС — eu-central-1, Франкфурт) для рендерингу відео. Фотографії оголошення не передаються.",
         "Карти та маршрути: Для розрахунку відстаней та часу подорожі Сервіс передає приблизні координати місцеположення сервісам маршрутизації та картографії.",
         "Ринкові дані та оцінки: Конкретні дані про місцеположення нерухомості можуть бути зіставлені з Публічними джерелами ринкових даних для отримання орієнтовних ринкових оцінок.",
         "Контекстні події та заходи: Для відображення найближчих заходів Сервіс звертається до Провайдерів контекстних подій та заходів. Ці провайдери отримують загальні координати місцеположення та дати для повернення релевантних подій; особистість Користувача або історія перегляду не передаються їм.",
-        "Обробка ШІ: Якщо Користувач добровільно активує функцію \"Virtual Staging\", URL-адреси зображень тимчасово передаються Провайдерам обробки ШІ виключно для генерації запитаного контенту."
+        "ШІ-обробка зображень: Якщо Користувач добровільно активує функцію \"Virtual Staging\", завантажуючи власне фото, зображення тимчасово передається до Replicate (США) виключно для генерації запитаного контенту."
       ]},
-      { type: "h2", text: "5. Правова основа обробки" },
+      { type: "h2", text: "5. Міжнародні передачі даних" },
+      { type: "p", text: "Деякі наші постачальники послуг працюють у США (Resend, Groq, Replicate, Stripe). Такі передачі здійснюються на підставі:" },
+      { type: "ul", items: [
+        "Стандартних контрактних положень (SCC), затверджених Європейською Комісією відповідно до Ст. 46(2)(c) GDPR.",
+        "Рамкової угоди про захист даних ЄС-США, якщо постачальник сертифікований.",
+        "Додаткових технічних (шифрування при передачі та зберіганні) та організаційних гарантій, реалізованих постачальниками."
+      ]},
+      { type: "p", text: "Передачі до Remotion/AWS здійснюються в межах ЄС (регіон eu-central-1, Франкфурт). Brevo та Supabase працюють у межах ЄС." },
+      { type: "h2", text: "6. Правова основа обробки" },
       { type: "p", text: "Відповідно до Статті 6 GDPR ми обробляємо дані на таких підставах:" },
       { type: "ul", items: [
         "Виконання договору (Ст. 6(1)(b)): Для основного надання аналітичного сервісу, розрахунків маршрутів, оціночних розрахунків, управління акаунтом та обробки платежів.",
@@ -349,10 +596,39 @@ export const privacyContent: Record<Locale, LegalPage> = {
         "Явна згода (Ст. 6(1)(a)): Для опціональних функцій, таких як маркетингові комунікації, система Daily Bonus та контент, згенерований ШІ.",
         "Юридичний обов'язок (Ст. 6(1)(c)): Для податкової звітності та бухгалтерської відповідності."
       ]},
-      { type: "h2", text: "6. Права користувача" },
-      { type: "p", text: "Згідно з GDPR, ви маєте право на доступ до своїх даних, виправлення неточностей, видалення акаунту (\"право на забуття\") та заперечення проти обробки на підставі законного інтересу. Ви також маєте право на переносимість даних (Ст. 20) та право подати скаргу до наглядового органу (Ст. 77), такого як Garante per la protezione dei dati personali." },
+      { type: "h2", text: "7. Строки зберігання даних" },
+      { type: "p", text: "Персональні дані зберігаються лише протягом часу, необхідного для досягнення цілей, для яких вони були зібрані:" },
+      { type: "ul", items: [
+        "Дані акаунту (email, ID користувача): протягом терміну дії акаунту та видаляються протягом 30 днів після запиту на видалення.",
+        "Транзакційні дані (платежі, кредити): зберігаються 10 років відповідно до італійського податкового законодавства (Ст. 2220 ЦК).",
+        "Технічні журнали та IP-адреси: зберігаються не більше 90 днів, потім автоматично видаляються.",
+        "Маркетингові дані (бонусні листи, розсилка): зберігаються до відкликання згоди або відписки.",
+        "Дані команди — неприйняті запрошення: автоматично видаляються через 7 днів.",
+        "Реферальні дані: зберігаються протягом терміну дії акаунту запрошуючого користувача.",
+        "ШІ-зображення (Virtual Staging): обробляються в реальному часі та не зберігаються Контролером. Провайдери ШІ (Replicate) видаляють зображення протягом 24 годин після обробки.",
+        "ШІ-аналіз описів: текст передається до Groq лише на час обробки та не зберігається."
+      ]},
+      { type: "h2", text: "8. Автоматизоване прийняття рішень та профілювання" },
+      { type: "p", text: "Відповідно до Ст. 22 GDPR повідомляємо, що Сервіс використовує автоматизовані процеси прийняття рішень у таких функціях:" },
+      { type: "ul", items: [
+        "ШІ-аналіз опису: Автоматичний аналіз якості описів нерухомості генерує оцінку від 1 до 10 за допомогою моделей штучного інтелекту (Groq/LLaMA). Ця оцінка є виключно інформаційною та не створює правових наслідків і не впливає аналогічним чином суттєво на Користувача.",
+        "ШІ Virtual Staging: Генерація зображень віртуального меблювання за допомогою ШІ (Replicate) здійснюється виключно за добровільним запитом Користувача та не передбачає автоматизованих рішень із суттєвими наслідками."
+      ]},
+      { type: "p", text: "Жодна з цих функцій не створює рішень, заснованих виключно на автоматизованій обробці, які створюють правові наслідки або аналогічним чином суттєво впливають на суб'єкта даних. Користувач може в будь-якому випадку вимагати втручання людини, звернувшись за адресою as.scirica@gmail.com." },
+      { type: "h2", text: "9. Права користувача" },
+      { type: "p", text: "Згідно зі Статтями 15-22 GDPR, ви маєте право на:" },
+      { type: "ul", items: [
+        "Доступ (Ст. 15): отримати підтвердження того, чи обробляються ваші персональні дані.",
+        "Виправлення (Ст. 16): отримати виправлення неточних персональних даних.",
+        "Видалення (Ст. 17): отримати видалення даних (\"право на забуття\").",
+        "Обмеження (Ст. 18): отримати обмеження обробки.",
+        "Переносимість (Ст. 20): отримати дані у структурованому, машинозчитуваному форматі.",
+        "Заперечення (Ст. 21): заперечити проти обробки на підставі законного інтересу.",
+        "Відкликання згоди: відкликати в будь-який час згоду на маркетинг або функції ШІ без шкоди для законності попередньої обробки."
+      ]},
       { type: "p", text: "Для здійснення цих прав звертайтеся: as.scirica@gmail.com." },
-      { type: "h2", text: "7. Зміни цієї Політики" },
+      { type: "p", text: "Ви також маєте право подати скаргу до наглядового органу:\nGarante per la protezione dei dati personali\nPiazza Venezia 11 — 00187 Рим, Італія\nwww.garanteprivacy.it\nEmail: protocollo@gpdp.it" },
+      { type: "h2", text: "10. Зміни цієї Політики" },
       { type: "p", text: "Ми можемо періодично оновлювати цю Політику конфіденційності. Ми повідомимо вас про будь-які суттєві зміни через інтерфейс Розширення або електронною поштою." },
     ],
   },
@@ -361,13 +637,13 @@ export const privacyContent: Record<Locale, LegalPage> = {
 export const termsContent: Record<Locale, LegalPage> = {
   en: {
     title: "Terms of Service",
-    lastUpdated: "Last Updated: 01 February 2026",
+    lastUpdated: "Last Updated: 02 April 2026",
     description: "Terms of Service for the GetNearMe browser extension.",
     blocks: [
       { type: "h2", text: "1. Acceptance of Terms" },
       { type: "p", text: "By installing or using the GetNearMe extension (\"Service\"), you agree to be bound by these Terms of Service (\"Terms\"). You affirm that you are at least 18 years of age and are fully able and competent to enter into this agreement. If you do not agree, you must immediately uninstall the Service." },
       { type: "h2", text: "2. License and Nature of Service" },
-      { type: "p", text: "2.1. Client-Side Utility: You acknowledge that the Service operates as a \"User Agent\" or browser utility under your direct control. It is designed to augment your local browsing experience by visualizing independent market insights." },
+      { type: "p", text: "2.1. User Agent: The Service operates as a \"User Agent\" — a software tool that acts exclusively on behalf of and under the direct control of the individual User, analogous to how a web browser (itself a user agent) renders and presents web content for the User. The Extension does not act autonomously, does not independently crawl or index websites, and processes only the content already visible on the page the User is currently viewing. All analysis is initiated by the User and executed locally in the User's browser session." },
       { type: "p", text: "2.2. Limited License: We grant you a revocable, non-exclusive, non-transferable license to use the Service solely for your personal or internal business analysis of real estate market data." },
       { type: "p", text: "2.3. Data Volatility and Local Storage: The User acknowledges that GetNearMe is a client-side tool that stores detailed analysis data (e.g., prices, property characteristics) exclusively in the browser's local storage (Local Storage)." },
       { type: "ul", items: [
@@ -375,6 +651,7 @@ export const termsContent: Record<Locale, LegalPage> = {
         "b) User Responsibility: It is the User's sole responsibility to save or export generated reports (e.g., as PDF) immediately after the analysis.",
         "c) Data Loss: Uninstalling the extension, clearing the browser cache, or using system cleaning software will result in the irreversible loss of saved data and analysis history. GetNearMe shall under no circumstances be able to recover such data nor refund credits used for analyses lost due to local actions by the User."
       ]},
+      { type: "p", text: "2.4. Personal Use of Reports: Analysis reports, PDF exports, social media posts, and any other output generated by the Service are intended solely for the User's personal, informational, or internal business use. The User shall not redistribute, resell, sublicense, or publicly publish such outputs for commercial purposes or in a manner that could infringe upon the intellectual property rights of third parties (including the source platforms from which data was analyzed)." },
       { type: "h2", text: "3. Restrictions and Intellectual Property" },
       { type: "p", text: "3.1. Independence: GetNearMe is an independent software tool. We are not affiliated with, endorsed by, sponsored by, or officially connected to any real estate platform (such as Immobiliare.it, Idealista, or others). All third-party trademarks are the property of their respective owners and are used solely for descriptive compatibility purposes (Nominative Fair Use)." },
       { type: "p", text: "3.2. Prohibited Conduct: You explicitly agree NOT to use the Service to:" },
@@ -409,13 +686,13 @@ export const termsContent: Record<Locale, LegalPage> = {
   },
   it: {
     title: "Termini di Servizio",
-    lastUpdated: "Ultimo aggiornamento: 01 febbraio 2026",
+    lastUpdated: "Ultimo aggiornamento: 02 aprile 2026",
     description: "Termini di Servizio per l'estensione browser GetNearMe.",
     blocks: [
       { type: "h2", text: "1. Accettazione dei Termini" },
       { type: "p", text: "Installando o utilizzando l'estensione GetNearMe (\"Servizio\"), l'utente accetta di essere vincolato dai presenti Termini di Servizio (\"Termini\"). L'utente dichiara di avere almeno 18 anni e di essere pienamente capace e competente per stipulare il presente accordo. In caso di disaccordo, l'utente deve immediatamente disinstallare il Servizio." },
       { type: "h2", text: "2. Licenza e Natura del Servizio" },
-      { type: "p", text: "2.1. Utilità Lato Client: L'utente riconosce che il Servizio opera come \"User Agent\" o utilità del browser sotto il suo diretto controllo. È progettato per migliorare l'esperienza di navigazione locale visualizzando approfondimenti di mercato indipendenti." },
+      { type: "p", text: "2.1. User Agent: Il Servizio opera come \"User Agent\" — uno strumento software che agisce esclusivamente per conto e sotto il diretto controllo dell'Utente individuale, analogamente a come un browser web (esso stesso un user agent) renderizza e presenta i contenuti web per l'Utente. L'Estensione non agisce in modo autonomo, non effettua crawling o indicizzazione indipendente di siti web e elabora esclusivamente il contenuto già visibile nella pagina che l'Utente sta attualmente visualizzando. Ogni analisi è avviata dall'Utente ed eseguita localmente nella sessione del browser dell'Utente." },
       { type: "p", text: "2.2. Licenza Limitata: Concediamo una licenza revocabile, non esclusiva e non trasferibile per utilizzare il Servizio esclusivamente per l'analisi personale o aziendale interna di dati del mercato immobiliare." },
       { type: "p", text: "2.3. Volatilità dei Dati e Archiviazione Locale: L'Utente riconosce che GetNearMe è uno strumento \"Client-Side\" che memorizza i dati dettagliati delle analisi (es. prezzi, caratteristiche immobili) esclusivamente nella memoria locale del browser (Local Storage)." },
       { type: "ul", items: [
@@ -423,6 +700,7 @@ export const termsContent: Record<Locale, LegalPage> = {
         "b) Responsabilità dell'Utente: È esclusiva responsabilità dell'Utente salvare o esportare i report generati (es. come PDF) immediatamente dopo l'analisi.",
         "c) Perdita Dati: La disinstallazione dell'estensione, la pulizia della cache del browser o l'uso di software di pulizia sistema comporteranno la perdita irreversibile dei dati salvati e dello storico analisi. GetNearMe non potrà in alcun caso recuperare tali dati né rimborsare i crediti utilizzati per analisi andate perse a causa di azioni locali dell'Utente."
       ]},
+      { type: "p", text: "2.4. Uso Personale dei Report: I report di analisi, le esportazioni PDF, i post per social media e qualsiasi altro output generato dal Servizio sono destinati esclusivamente all'uso personale, informativo o aziendale interno dell'Utente. L'Utente non deve ridistribuire, rivendere, sublicenziare o pubblicare pubblicamente tali output per scopi commerciali o in modo che possa violare i diritti di proprietà intellettuale di terzi (incluse le piattaforme di origine da cui i dati sono stati analizzati)." },
       { type: "h2", text: "3. Restrizioni e Proprietà Intellettuale" },
       { type: "p", text: "3.1. Indipendenza: GetNearMe è uno strumento software indipendente. Non siamo affiliati, approvati, sponsorizzati o ufficialmente collegati ad alcuna piattaforma immobiliare (come Immobiliare.it, Idealista o altre). Tutti i marchi di terze parti sono di proprietà dei rispettivi titolari e sono utilizzati esclusivamente a fini descrittivi di compatibilità (Nominative Fair Use)." },
       { type: "p", text: "3.2. Condotta Vietata: L'utente si impegna esplicitamente a NON utilizzare il Servizio per:" },
@@ -457,13 +735,13 @@ export const termsContent: Record<Locale, LegalPage> = {
   },
   es: {
     title: "Términos de Servicio",
-    lastUpdated: "Última actualización: 01 de febrero de 2026",
+    lastUpdated: "Última actualización: 02 de abril de 2026",
     description: "Términos de Servicio para la extensión de navegador GetNearMe.",
     blocks: [
       { type: "h2", text: "1. Aceptación de los Términos" },
       { type: "p", text: "Al instalar o usar la extensión GetNearMe (\"Servicio\"), usted acepta quedar vinculado por estos Términos de Servicio (\"Términos\"). Usted afirma que tiene al menos 18 años de edad y que es plenamente capaz y competente para celebrar este acuerdo. Si no está de acuerdo, debe desinstalar inmediatamente el Servicio." },
       { type: "h2", text: "2. Licencia y Naturaleza del Servicio" },
-      { type: "p", text: "2.1. Utilidad del Lado del Cliente: Usted reconoce que el Servicio opera como un \"User Agent\" o utilidad del navegador bajo su control directo. Está diseñado para mejorar su experiencia de navegación local visualizando información independiente del mercado." },
+      { type: "p", text: "2.1. User Agent: El Servicio opera como un \"User Agent\" — una herramienta de software que actúa exclusivamente en nombre y bajo el control directo del Usuario individual, de manera análoga a como un navegador web (que también es un user agent) renderiza y presenta el contenido web para el Usuario. La Extensión no actúa de forma autónoma, no realiza rastreo o indexación independiente de sitios web, y procesa únicamente el contenido ya visible en la página que el Usuario está visualizando actualmente. Todo análisis es iniciado por el Usuario y ejecutado localmente en la sesión del navegador del Usuario." },
       { type: "p", text: "2.2. Licencia Limitada: Le otorgamos una licencia revocable, no exclusiva e intransferible para usar el Servicio exclusivamente para su análisis personal o empresarial interno de datos del mercado inmobiliario." },
       { type: "p", text: "2.3. Volatilidad de los Datos y Almacenamiento Local: El Usuario reconoce que GetNearMe es una herramienta del lado del cliente que almacena los datos detallados de los análisis (ej. precios, características de los inmuebles) exclusivamente en el almacenamiento local del navegador (Local Storage)." },
       { type: "ul", items: [
@@ -471,6 +749,7 @@ export const termsContent: Record<Locale, LegalPage> = {
         "b) Responsabilidad del Usuario: Es responsabilidad exclusiva del Usuario guardar o exportar los informes generados (ej. como PDF) inmediatamente después del análisis.",
         "c) Pérdida de Datos: La desinstalación de la extensión, la limpieza de la caché del navegador o el uso de software de limpieza del sistema resultarán en la pérdida irreversible de los datos guardados y del historial de análisis. GetNearMe no podrá en ningún caso recuperar dichos datos ni reembolsar los créditos utilizados para análisis perdidos debido a acciones locales del Usuario."
       ]},
+      { type: "p", text: "2.4. Uso Personal de los Informes: Los informes de análisis, exportaciones PDF, publicaciones para redes sociales y cualquier otro resultado generado por el Servicio están destinados exclusivamente al uso personal, informativo o empresarial interno del Usuario. El Usuario no debe redistribuir, revender, sublicenciar ni publicar públicamente dichos resultados con fines comerciales ni de manera que pueda infringir los derechos de propiedad intelectual de terceros (incluidas las plataformas de origen de las que se analizaron los datos)." },
       { type: "h2", text: "3. Restricciones y Propiedad Intelectual" },
       { type: "p", text: "3.1. Independencia: GetNearMe es una herramienta de software independiente. No estamos afiliados, respaldados, patrocinados ni oficialmente conectados con ninguna plataforma inmobiliaria (como Immobiliare.it, Idealista u otras). Todas las marcas comerciales de terceros son propiedad de sus respectivos titulares y se utilizan exclusivamente con fines descriptivos de compatibilidad (Nominative Fair Use)." },
       { type: "p", text: "3.2. Conducta Prohibida: Usted acepta explícitamente NO utilizar el Servicio para:" },
@@ -505,13 +784,13 @@ export const termsContent: Record<Locale, LegalPage> = {
   },
   fr: {
     title: "Conditions d'Utilisation",
-    lastUpdated: "Dernière mise à jour : 01 février 2026",
+    lastUpdated: "Dernière mise à jour : 02 avril 2026",
     description: "Conditions d'Utilisation pour l'extension de navigateur GetNearMe.",
     blocks: [
       { type: "h2", text: "1. Acceptation des Conditions" },
       { type: "p", text: "En installant ou en utilisant l'extension GetNearMe (\"Service\"), vous acceptez d'être lié par les présentes Conditions d'Utilisation (\"Conditions\"). Vous affirmez avoir au moins 18 ans et être pleinement capable et compétent pour conclure cet accord. Si vous n'êtes pas d'accord, vous devez immédiatement désinstaller le Service." },
       { type: "h2", text: "2. Licence et Nature du Service" },
-      { type: "p", text: "2.1. Utilitaire Côté Client : Vous reconnaissez que le Service fonctionne comme un \"User Agent\" ou un utilitaire de navigateur sous votre contrôle direct. Il est conçu pour améliorer votre expérience de navigation locale en visualisant des informations de marché indépendantes." },
+      { type: "p", text: "2.1. User Agent : Le Service fonctionne comme un \"User Agent\" — un outil logiciel qui agit exclusivement pour le compte et sous le contrôle direct de l'Utilisateur individuel, de manière analogue à la façon dont un navigateur web (lui-même un user agent) affiche et présente le contenu web pour l'Utilisateur. L'Extension n'agit pas de manière autonome, ne parcourt ni n'indexe de manière indépendante les sites web, et ne traite que le contenu déjà visible sur la page que l'Utilisateur consulte actuellement. Toute analyse est initiée par l'Utilisateur et exécutée localement dans la session du navigateur de l'Utilisateur." },
       { type: "p", text: "2.2. Licence Limitée : Nous vous accordons une licence révocable, non exclusive et non transférable pour utiliser le Service uniquement pour votre analyse personnelle ou professionnelle interne de données du marché immobilier." },
       { type: "p", text: "2.3. Volatilité des Données et Stockage Local : L'Utilisateur reconnaît que GetNearMe est un outil côté client qui stocke les données détaillées des analyses (ex. prix, caractéristiques des biens) exclusivement dans le stockage local du navigateur (Local Storage)." },
       { type: "ul", items: [
@@ -519,6 +798,7 @@ export const termsContent: Record<Locale, LegalPage> = {
         "b) Responsabilité de l'Utilisateur : Il est de la responsabilité exclusive de l'Utilisateur de sauvegarder ou d'exporter les rapports générés (ex. en PDF) immédiatement après l'analyse.",
         "c) Perte de Données : La désinstallation de l'extension, le nettoyage du cache du navigateur ou l'utilisation de logiciels de nettoyage système entraîneront la perte irréversible des données sauvegardées et de l'historique des analyses. GetNearMe ne pourra en aucun cas récupérer ces données ni rembourser les crédits utilisés pour des analyses perdues en raison d'actions locales de l'Utilisateur."
       ]},
+      { type: "p", text: "2.4. Utilisation Personnelle des Rapports : Les rapports d'analyse, exports PDF, publications pour réseaux sociaux et tout autre résultat généré par le Service sont destinés exclusivement à l'usage personnel, informatif ou professionnel interne de l'Utilisateur. L'Utilisateur ne doit pas redistribuer, revendre, sous-licencier ou publier publiquement ces résultats à des fins commerciales ni d'une manière susceptible de porter atteinte aux droits de propriété intellectuelle de tiers (y compris les plateformes d'origine à partir desquelles les données ont été analysées)." },
       { type: "h2", text: "3. Restrictions et Propriété Intellectuelle" },
       { type: "p", text: "3.1. Indépendance : GetNearMe est un outil logiciel indépendant. Nous ne sommes affiliés, approuvés, sponsorisés ni officiellement liés à aucune plateforme immobilière (telle qu'Immobiliare.it, Idealista ou d'autres). Toutes les marques de tiers sont la propriété de leurs détenteurs respectifs et sont utilisées uniquement à des fins descriptives de compatibilité (Nominative Fair Use)." },
       { type: "p", text: "3.2. Conduite Interdite : Vous acceptez explicitement de NE PAS utiliser le Service pour :" },
@@ -553,13 +833,13 @@ export const termsContent: Record<Locale, LegalPage> = {
   },
   ru: {
     title: "Условия использования",
-    lastUpdated: "Последнее обновление: 01 февраля 2026",
+    lastUpdated: "Последнее обновление: 02 апреля 2026",
     description: "Условия использования расширения браузера GetNearMe.",
     blocks: [
       { type: "h2", text: "1. Принятие условий" },
       { type: "p", text: "Устанавливая или используя расширение GetNearMe (\"Сервис\"), вы соглашаетесь соблюдать настоящие Условия использования (\"Условия\"). Вы подтверждаете, что вам исполнилось 18 лет и вы полностью дееспособны для заключения данного соглашения. Если вы не согласны, вы должны немедленно удалить Сервис." },
       { type: "h2", text: "2. Лицензия и характер Сервиса" },
-      { type: "p", text: "2.1. Клиентская утилита: Вы признаёте, что Сервис работает как \"User Agent\" или утилита браузера под вашим непосредственным контролем. Он предназначен для улучшения вашего локального просмотра путём визуализации независимой рыночной аналитики." },
+      { type: "p", text: "2.1. User Agent: Сервис работает как \"User Agent\" — программный инструмент, действующий исключительно от имени и под непосредственным контролем индивидуального Пользователя, аналогично тому, как веб-браузер (сам являющийся user agent) отображает и представляет веб-контент для Пользователя. Расширение не действует автономно, не осуществляет независимый обход или индексацию веб-сайтов и обрабатывает только контент, уже видимый на странице, которую Пользователь просматривает в данный момент. Любой анализ инициируется Пользователем и выполняется локально в сеансе браузера Пользователя." },
       { type: "p", text: "2.2. Ограниченная лицензия: Мы предоставляем вам отзывную, неисключительную, непередаваемую лицензию на использование Сервиса исключительно для личного или внутреннего делового анализа данных рынка недвижимости." },
       { type: "p", text: "2.3. Волатильность данных и локальное хранение: Пользователь признаёт, что GetNearMe является клиентским инструментом, который хранит детальные данные анализа (напр., цены, характеристики недвижимости) исключительно в локальном хранилище браузера (Local Storage)." },
       { type: "ul", items: [
@@ -567,6 +847,7 @@ export const termsContent: Record<Locale, LegalPage> = {
         "b) Ответственность пользователя: Исключительная ответственность за сохранение или экспорт сгенерированных отчётов (напр., в формате PDF) сразу после анализа лежит на Пользователе.",
         "c) Потеря данных: Удаление расширения, очистка кэша браузера или использование программ для очистки системы приведут к необратимой потере сохранённых данных и истории анализов. GetNearMe ни при каких обстоятельствах не сможет восстановить эти данные и не возместит кредиты, использованные для анализов, утраченных в результате локальных действий Пользователя."
       ]},
+      { type: "p", text: "2.4. Личное использование отчётов: Аналитические отчёты, экспорт в PDF, публикации для социальных сетей и любые другие результаты, сгенерированные Сервисом, предназначены исключительно для личного, информационного или внутреннего делового использования Пользователем. Пользователь не должен перераспределять, перепродавать, сублицензировать или публично публиковать такие результаты в коммерческих целях или способом, который может нарушить права интеллектуальной собственности третьих лиц (включая платформы-источники, с которых были проанализированы данные)." },
       { type: "h2", text: "3. Ограничения и интеллектуальная собственность" },
       { type: "p", text: "3.1. Независимость: GetNearMe является независимым программным инструментом. Мы не аффилированы, не одобрены, не спонсированы и не связаны официально ни с одной платформой недвижимости (такой как Immobiliare.it, Idealista или другие). Все товарные знаки третьих лиц являются собственностью их соответствующих владельцев и используются исключительно в описательных целях совместимости (Nominative Fair Use)." },
       { type: "p", text: "3.2. Запрещённые действия: Вы явно соглашаетесь НЕ использовать Сервис для:" },
@@ -601,13 +882,13 @@ export const termsContent: Record<Locale, LegalPage> = {
   },
   uk: {
     title: "Умови використання",
-    lastUpdated: "Останнє оновлення: 01 лютого 2026",
+    lastUpdated: "Останнє оновлення: 02 квітня 2026",
     description: "Умови використання розширення браузера GetNearMe.",
     blocks: [
       { type: "h2", text: "1. Прийняття умов" },
       { type: "p", text: "Встановлюючи або використовуючи розширення GetNearMe (\"Сервіс\"), ви погоджуєтесь дотримуватись цих Умов використання (\"Умови\"). Ви підтверджуєте, що вам виповнилось 18 років і ви повністю дієздатні для укладення цієї угоди. Якщо ви не погоджуєтесь, ви повинні негайно видалити Сервіс." },
       { type: "h2", text: "2. Ліцензія та характер Сервісу" },
-      { type: "p", text: "2.1. Клієнтська утиліта: Ви визнаєте, що Сервіс працює як \"User Agent\" або утиліта браузера під вашим безпосереднім контролем. Він призначений для покращення вашого локального перегляду шляхом візуалізації незалежної ринкової аналітики." },
+      { type: "p", text: "2.1. User Agent: Сервіс працює як \"User Agent\" — програмний інструмент, що діє виключно від імені та під безпосереднім контролем індивідуального Користувача, аналогічно тому, як веб-браузер (сам будучи user agent) відображає та представляє веб-контент для Користувача. Розширення не діє автономно, не здійснює незалежний обхід або індексацію веб-сайтів і обробляє лише контент, вже видимий на сторінці, яку Користувач переглядає в даний момент. Будь-який аналіз ініціюється Користувачем і виконується локально в сеансі браузера Користувача." },
       { type: "p", text: "2.2. Обмежена ліцензія: Ми надаємо вам відкличну, невиключну, непередавану ліцензію на використання Сервісу виключно для особистого або внутрішнього ділового аналізу даних ринку нерухомості." },
       { type: "p", text: "2.3. Волатильність даних та локальне зберігання: Користувач визнає, що GetNearMe є клієнтським інструментом, який зберігає детальні дані аналізу (напр., ціни, характеристики нерухомості) виключно в локальному сховищі браузера (Local Storage)." },
       { type: "ul", items: [
@@ -615,6 +896,7 @@ export const termsContent: Record<Locale, LegalPage> = {
         "b) Відповідальність користувача: Виключна відповідальність за збереження або експорт згенерованих звітів (напр., у форматі PDF) одразу після аналізу лежить на Користувачеві.",
         "c) Втрата даних: Видалення розширення, очищення кешу браузера або використання програм для очищення системи призведуть до безповоротної втрати збережених даних та історії аналізів. GetNearMe за жодних обставин не зможе відновити ці дані та не відшкодує кредити, використані для аналізів, втрачених внаслідок локальних дій Користувача."
       ]},
+      { type: "p", text: "2.4. Особисте використання звітів: Аналітичні звіти, експорт у PDF, публікації для соціальних мереж та будь-які інші результати, згенеровані Сервісом, призначені виключно для особистого, інформаційного або внутрішнього ділового використання Користувачем. Користувач не повинен перерозповсюджувати, перепродавати, субліцензувати або публічно публікувати такі результати в комерційних цілях або способом, що може порушити права інтелектуальної власності третіх осіб (включаючи платформи-джерела, з яких були проаналізовані дані)." },
       { type: "h2", text: "3. Обмеження та інтелектуальна власність" },
       { type: "p", text: "3.1. Незалежність: GetNearMe є незалежним програмним інструментом. Ми не афілійовані, не схвалені, не спонсоровані та не пов'язані офіційно з жодною платформою нерухомості (такою як Immobiliare.it, Idealista або інші). Усі товарні знаки третіх осіб є власністю їхніх відповідних власників і використовуються виключно в описових цілях сумісності (Nominative Fair Use)." },
       { type: "p", text: "3.2. Заборонені дії: Ви явно погоджуєтесь НЕ використовувати Сервіс для:" },

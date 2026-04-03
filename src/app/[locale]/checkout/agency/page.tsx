@@ -14,12 +14,10 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Plan ID mapping: homepage IDs → internal subscription IDs
 const PLAN_ID_MAP: Record<string, string> = {
-  starter: 'agency_starter',
-  agency: 'agency',
-  pro: 'agency_premium',
+  agency_monthly: 'agency_monthly',
+  agency_quarterly: 'agency_quarterly',
+  agency_annual: 'agency_annual',
   user_lite: 'user_lite',
-  agency_starter: 'agency_starter',
-  agency_premium: 'agency_premium',
 };
 
 interface PlanData {
@@ -44,46 +42,45 @@ const PLANS: Record<string, PlanData> = {
     features_key: 'lite',
     popular: false,
   },
-  agency_starter: {
-    name: 'Starter',
-    price_monthly: 24,
-    price_annual: 245,
-    original_price: 60,
-    payment_link_monthly: 'https://buy.stripe.com/cNiaEX2Cn7rBfTG3dmak00i',
-    payment_link_annual: 'https://buy.stripe.com/6oUeVd0ufcLV4aY8xGak00l',
-    features_key: 'starter',
+  agency_monthly: {
+    name: 'Mensile',
+    price_monthly: 399,
+    price_annual: 399,
+    original_price: 399,
+    payment_link_monthly: 'https://buy.stripe.com/cNibJ14Kv3bl5f2aFOak00p',
+    payment_link_annual: null,
+    features_key: 'pro',
     popular: false,
   },
-  agency: {
-    name: 'Agency',
-    price_monthly: 99,
-    price_annual: 1010,
-    original_price: 150,
-    payment_link_monthly: 'https://buy.stripe.com/8x25kD3Gr3blbDq01aak00h',
-    payment_link_annual: 'https://buy.stripe.com/fZubJ11yj7rBazm4hqak00k',
-    features_key: 'agency',
+  agency_quarterly: {
+    name: 'Trimestrale',
+    price_monthly: 349,
+    price_annual: 349,
+    original_price: 349,
+    payment_link_monthly: 'https://buy.stripe.com/bJeeVddh1bHR5f229iak00s',
+    payment_link_annual: null,
+    features_key: 'pro',
     popular: true,
   },
-  agency_premium: {
-    name: 'Pro',
-    price_monthly: 149,
-    price_annual: 1520,
-    original_price: 199,
-    payment_link_monthly: 'https://buy.stripe.com/dRm28rel5eU38re5luak00j',
-    payment_link_annual: 'https://buy.stripe.com/aFa28rfp99zJ22QcNWak00m',
+  agency_annual: {
+    name: 'Annuale',
+    price_monthly: 300,
+    price_annual: 300,
+    original_price: 300,
+    payment_link_monthly: 'https://buy.stripe.com/eVq6oH90L27h8reg08ak00t',
+    payment_link_annual: null,
     features_key: 'pro',
     popular: false,
   },
 };
 
-const PLAN_DISPLAY_ORDER = ['user_lite', 'agency_starter', 'agency', 'agency_premium'];
+const PLAN_DISPLAY_ORDER = ['user_lite', 'agency_monthly', 'agency_quarterly', 'agency_annual'];
 
 const TIER_LABELS: Record<string, Record<string, string>> = {
-  user_lite: { it: 'Lite', en: 'Lite', es: 'Lite', fr: 'Lite', ru: 'Lite', uk: 'Lite' },
-  agency_starter: { it: 'Starter', en: 'Starter', es: 'Starter', fr: 'Starter', ru: 'Starter', uk: 'Starter' },
-  agency: { it: 'Agency', en: 'Agency', es: 'Agency', fr: 'Agency', ru: 'Agency', uk: 'Agency' },
-  agency_premium: { it: 'Pro', en: 'Pro', es: 'Pro', fr: 'Pro', ru: 'Pro', uk: 'Pro' },
-  agency_pro: { it: 'Pro', en: 'Pro', es: 'Pro', fr: 'Pro', ru: 'Pro', uk: 'Pro' },
+  user_lite:        { it: 'Lite',         en: 'Lite',      es: 'Lite',       fr: 'Lite',       ru: 'Lite',           uk: 'Lite' },
+  agency_monthly:   { it: 'Mensile',      en: 'Monthly',   es: 'Mensual',    fr: 'Mensuel',    ru: 'Ежемесячно',     uk: 'Щомісячно' },
+  agency_quarterly: { it: 'Trimestrale',  en: 'Quarterly', es: 'Trimestral', fr: 'Trimestriel',ru: 'Ежеквартально',  uk: 'Щоквартально' },
+  agency_annual:    { it: 'Annuale',      en: 'Annual',    es: 'Anual',      fr: 'Annuel',     ru: 'Ежегодно',       uk: 'Щорічно' },
 };
 
 const translations: Record<string, Record<string, string | string[]>> = {
