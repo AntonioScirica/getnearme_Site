@@ -78,27 +78,10 @@ export default function PricingCard({ plan, onSelect }: PricingCardProps) {
           <h3 style={{ fontSize: 26, fontWeight: 900, color: '#1a1a2e', margin: '0 0 4px' }}>{plan.name}</h3>
           <div style={{ color: '#999', fontSize: 14, fontWeight: 500 }}>{plan.users}</div>
           <div style={{ marginTop: 22, marginBottom: 8 }}>
-            <span style={{ color: '#bbb', textDecoration: 'line-through', fontSize: 18, marginRight: 8 }}>
-              {plan.oldPrice}€
-            </span>
             <span style={{ fontSize: 54, fontWeight: 900, color: plan.color, letterSpacing: -2 }}>
               {plan.price}€
             </span>
             <span style={{ color: '#999', fontSize: 14 }}>/mese</span>
-          </div>
-          <div
-            style={{
-              display: 'inline-block',
-              background: plan.bg,
-              color: plan.color,
-              padding: '5px 14px',
-              borderRadius: 8,
-              fontSize: 12,
-              fontWeight: 800,
-              border: `2px solid ${plan.color}44`,
-            }}
-          >
-            {plan.savingsLabel} {plan.savingsYear}€/anno
           </div>
         </div>
         <div style={{ margin: '22px 0', borderTop: '2px dashed #e2e8f0' }} />
@@ -150,7 +133,7 @@ export default function PricingCard({ plan, onSelect }: PricingCardProps) {
             width: '100%',
             padding: '16px 0',
             background: plan.color,
-            color: '#1a1a2e',
+            color: '#fff',
             border: '3px solid #1a1a2e',
             borderRadius: 12,
             fontSize: 16,
