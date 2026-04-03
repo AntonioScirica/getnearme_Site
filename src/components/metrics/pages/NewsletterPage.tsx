@@ -158,7 +158,6 @@ export default function NewsletterPage({ data }: { data: MetricsData }) {
           <div className="grid grid-cols-2 gap-0">
             <StatLine label="Email uniche"     value={fmt(bonus.unique_emails)} />
             <StatLine label="Streak massimo"   value={fmt(bonus.max_streak_day)} />
-            <StatLine label="Avg streak"       value={bonus.avg_streak ?? "—"} />
             <StatLine label="Max streak (nl)"  value={fmt(nl.max_streak)} />
           </div>
           {bonus.total_tokens > 0 && (
