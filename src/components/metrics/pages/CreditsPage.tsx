@@ -38,7 +38,7 @@ export default function CreditsPage({ data }: { data: MetricsData }) {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold text-gray-900 mb-6">
+      <h1 className="text-2xl font-semibold text-gray-100 mb-6">
         Credits & Transactions
       </h1>
 
@@ -53,8 +53,8 @@ export default function CreditsPage({ data }: { data: MetricsData }) {
               <span
                 className={`px-2 py-0.5 rounded text-[10px] uppercase font-medium ${
                   c.subscription_type === "agency"
-                    ? "bg-amber-50 text-amber-600"
-                    : "bg-indigo-50 text-indigo-600"
+                    ? "bg-amber-500/15 text-amber-400"
+                    : "bg-indigo-500/15 text-indigo-400"
                 }`}
               >
                 {c.users} users
@@ -85,7 +85,7 @@ export default function CreditsPage({ data }: { data: MetricsData }) {
               color="bg-emerald-500"
             />
           ) : (
-            <p className="text-sm text-gray-400">No earn data</p>
+            <p className="text-sm text-gray-500">No earn data</p>
           )}
         </StatCard>
 
@@ -100,7 +100,7 @@ export default function CreditsPage({ data }: { data: MetricsData }) {
               color="bg-violet-500"
             />
           ) : (
-            <p className="text-sm text-gray-400">No spend data</p>
+            <p className="text-sm text-gray-500">No spend data</p>
           )}
         </StatCard>
       </div>

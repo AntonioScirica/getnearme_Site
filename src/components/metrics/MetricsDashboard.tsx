@@ -8,10 +8,9 @@ import LoginScreen from "./LoginScreen";
 import Sidebar from "./Sidebar";
 import OverviewPage from "./pages/OverviewPage";
 import UsersPage from "./pages/UsersPage";
-import CreditsPage from "./pages/CreditsPage";
-import PropertiesPage from "./pages/PropertiesPage";
 import NewsletterPage from "./pages/NewsletterPage";
-import ReferralPage from "./pages/ReferralPage";
+import ExportsPage from "./pages/ExportsPage";
+import StripePage from "./pages/StripePage";
 
 export default function MetricsDashboard() {
   const [authKey, setAuthKey] = useState<string | null>(null);
@@ -68,10 +67,10 @@ export default function MetricsDashboard() {
   // Loading (no data yet)
   if (loading && !data) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-[#0d0f14]">
         <div className="flex flex-col items-center gap-3">
-          <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
-          <p className={`${MONO} text-xs text-gray-400 tracking-wider`}>
+          <Loader2 className="w-8 h-8 text-indigo-400 animate-spin" />
+          <p className={`${MONO} text-xs text-gray-500 tracking-wider`}>
             Loading metrics...
           </p>
         </div>
@@ -82,9 +81,9 @@ export default function MetricsDashboard() {
   // Error (no data)
   if (error && !data) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 max-w-sm text-center">
-          <p className="text-red-500 text-sm mb-4">{error}</p>
+      <div className="min-h-screen flex items-center justify-center bg-[#0d0f14]">
+        <div className="bg-[#161920] rounded-xl border border-white/10 p-8 max-w-sm text-center">
+          <p className="text-red-400 text-sm mb-4">{error}</p>
           <button
             onClick={() => fetchData(authKey)}
             className={`${MONO} bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-indigo-700 transition-colors`}
@@ -103,25 +102,23 @@ export default function MetricsDashboard() {
     switch (activePage) {
       case "overview":
         return <OverviewPage data={data} />;
-      case "users":
-        return <UsersPage data={data} />;
-      case "credits":
-        return <CreditsPage data={data} />;
-      case "properties":
-        return <PropertiesPage data={data} />;
       case "newsletter":
         return <NewsletterPage data={data} />;
-      case "referral":
-        return <ReferralPage data={data} />;
+      case "users":
+        return <UsersPage data={data} />;
+      case "exports":
+        return <ExportsPage data={data} />;
+      case "stripe":
+        return <StripePage data={data} />;
     }
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen bg-[#0d0f14]">
       {/* Mobile backdrop */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/20 z-30 md:hidden"
+          className="fixed inset-0 bg-black/50 z-30 md:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -148,14 +145,14 @@ export default function MetricsDashboard() {
       {/* Main content */}
       <main className="flex-1 md:ml-60 min-h-screen">
         {/* Mobile header */}
-        <div className="md:hidden flex items-center h-14 px-4 bg-white border-b border-gray-200 sticky top-0 z-20">
+        <div className="md:hidden flex items-center h-14 px-4 bg-[#161920] border-b border-white/10 sticky top-0 z-20">
           <button
             onClick={() => setSidebarOpen(true)}
-            className="p-2 -ml-2 text-gray-500 hover:text-gray-900 transition-colors"
+            className="p-2 -ml-2 text-gray-400 hover:text-gray-100 transition-colors"
           >
             <Menu className="w-5 h-5" />
           </button>
-          <span className="ml-3 font-medium text-gray-900 text-sm">
+          <span className="ml-3 font-medium text-gray-100 text-sm">
             GetNearMe Metrics
           </span>
         </div>

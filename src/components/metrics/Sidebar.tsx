@@ -1,23 +1,25 @@
+"use client";
+
+import { useState } from "react";
 import {
   LayoutDashboard,
   Users,
-  CreditCard,
+  Megaphone,
   Building2,
-  Newspaper,
-  UserPlus,
+  CreditCard,
   RefreshCw,
   LogOut,
+  ChevronUp,
 } from "lucide-react";
 import { MONO } from "./types";
 import type { PageId } from "./types";
 
 const navItems: { id: PageId; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
-  { id: "overview", label: "Overview", icon: LayoutDashboard },
-  { id: "users", label: "Users", icon: Users },
-  { id: "credits", label: "Credits & Transactions", icon: CreditCard },
-  { id: "properties", label: "Properties", icon: Building2 },
-  { id: "newsletter", label: "Newsletter & Bonus", icon: Newspaper },
-  { id: "referral", label: "Referral", icon: UserPlus },
+  { id: "overview",   label: "Overview",     icon: LayoutDashboard },
+  { id: "newsletter", label: "Marketing",    icon: Megaphone },
+  { id: "users",      label: "Utenti",       icon: Users },
+  { id: "exports",    label: "Agenzie",      icon: Building2 },
+  { id: "stripe",     label: "Stripe",       icon: CreditCard },
 ];
 
 interface SidebarProps {
@@ -37,14 +39,14 @@ export default function Sidebar({
   onLogout,
   loading,
 }: SidebarProps) {
+  const [menuOpen, setMenuOpen] = useState(false);
+
   return (
-    <div className="h-full bg-white border-r border-gray-200 flex flex-col">
+    <div className="h-full bg-[#161920] border-r border-white/[0.08] flex flex-col">
       {/* Logo */}
-      <div className="px-5 h-16 flex items-center border-b border-gray-100 shrink-0">
-        <span className="font-semibold text-gray-900 text-lg">GetNearMe</span>
-        <span
-          className={`${MONO} text-[10px] text-gray-400 tracking-wider uppercase ml-2`}
-        >
+      <div className="px-5 h-16 flex items-center border-b border-white/[0.08] shrink-0">
+        <span className="font-semibold text-gray-100 text-lg">GetNearMe</span>
+        <span className={`${MONO} text-[10px] text-gray-500 tracking-wider uppercase ml-2`}>
           Metrics
         </span>
       </div>
@@ -60,8 +62,8 @@ export default function Sidebar({
               onClick={() => onPageChange(item.id)}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors cursor-pointer text-left ${
                 active
-                  ? "bg-indigo-50 text-indigo-600 font-medium"
-                  : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"
+                  ? "bg-indigo-500/20 text-indigo-400 font-medium"
+                  : "text-gray-500 hover:bg-white/5 hover:text-gray-200"
               }`}
             >
               <Icon className="w-[18px] h-[18px] shrink-0" />
@@ -71,32 +73,48 @@ export default function Sidebar({
         })}
       </nav>
 
-      {/* Footer */}
-      <div className="px-4 py-4 border-t border-gray-100 space-y-2 shrink-0">
-        {timestamp && (
-          <p className={`${MONO} text-[10px] text-gray-400 truncate`}>
-            {new Date(timestamp).toLocaleString("it-IT")}
-          </p>
+      {/* Profile footer */}
+      <div className="shrink-0 border-t border-white/[0.08]">
+        {/* Dropdown menu */}
+        {menuOpen && (
+          <div className="px-3 py-2 border-b border-white/[0.06] space-y-0.5">
+            {timestamp && (
+              <p className={`${MONO} text-[10px] text-gray-600 px-3 py-1.5`}>
+                Aggiornato {new Date(timestamp).toLocaleString("it-IT", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+              </p>
+            )}
+            <button
+              onClick={() => { onRefresh(); setMenuOpen(false); }}
+              disabled={loading}
+              className={`${MONO} w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-gray-400 hover:bg-white/5 hover:text-gray-200 transition-colors disabled:opacity-40`}
+            >
+              <RefreshCw className={`w-4 h-4 shrink-0 ${loading ? "animate-spin" : ""}`} />
+              Aggiorna dati
+            </button>
+            <button
+              onClick={() => { onLogout(); setMenuOpen(false); }}
+              className={`${MONO} w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-gray-400 hover:bg-red-500/10 hover:text-red-400 transition-colors`}
+            >
+              <LogOut className="w-4 h-4 shrink-0" />
+              Esci
+            </button>
+          </div>
         )}
-        <div className="flex items-center gap-3">
-          <button
-            onClick={onRefresh}
-            disabled={loading}
-            className={`${MONO} text-xs text-indigo-600 hover:text-indigo-700 transition-colors flex items-center gap-1 disabled:opacity-50`}
-          >
-            <RefreshCw
-              className={`w-3 h-3 ${loading ? "animate-spin" : ""}`}
-            />
-            Refresh
-          </button>
-          <button
-            onClick={onLogout}
-            className={`${MONO} text-xs text-gray-400 hover:text-red-500 transition-colors flex items-center gap-1`}
-          >
-            <LogOut className="w-3 h-3" />
-            Logout
-          </button>
-        </div>
+
+        {/* Profile row */}
+        <button
+          onClick={() => setMenuOpen((v) => !v)}
+          className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-white/[0.04] transition-colors"
+        >
+          <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center shrink-0">
+            <span className={`${MONO} text-xs font-semibold text-white`}>A</span>
+          </div>
+          <div className="flex-1 text-left min-w-0">
+            <p className={`${MONO} text-sm text-gray-200 truncate`}>Admin</p>
+            <p className={`${MONO} text-[10px] text-gray-600 truncate`}>GetNearMe</p>
+          </div>
+          <ChevronUp className={`w-4 h-4 text-gray-600 shrink-0 transition-transform ${menuOpen ? "" : "rotate-180"}`} />
+        </button>
       </div>
     </div>
   );

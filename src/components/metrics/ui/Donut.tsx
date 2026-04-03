@@ -44,8 +44,8 @@ export default function Donut({ segments, size = 80 }: DonutProps) {
               className="w-2.5 h-2.5 rounded-full shrink-0"
               style={{ background: seg.color || PALETTE[i % PALETTE.length] }}
             />
-            <span className="text-sm text-gray-600 truncate">{seg.label}</span>
-            <span className={`${MONO} text-xs text-gray-400 shrink-0`}>
+            <span className="text-sm text-gray-400 truncate">{seg.label}</span>
+            <span className={`${MONO} text-xs text-gray-500 shrink-0`}>
               {pct(seg.value, total)}%
             </span>
           </div>

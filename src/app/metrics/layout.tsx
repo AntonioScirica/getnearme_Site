@@ -29,7 +29,7 @@ export default function MetricsLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${inter.variable} ${jetbrains.variable} ${inter.className} antialiased bg-gray-50 text-gray-900`}
+        className={`${inter.variable} ${jetbrains.variable} ${inter.className} antialiased bg-[#0d0f14] text-gray-100`}
       >
         {children}
       </body>

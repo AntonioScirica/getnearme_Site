@@ -36,15 +36,15 @@ export default function PropertiesPage({ data }: { data: MetricsData }) {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold text-gray-900 mb-6">Properties</h1>
+      <h1 className="text-2xl font-semibold text-gray-100 mb-6">Properties</h1>
 
       {/* KPI row */}
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
         <KpiCard
-          label="Total Properties"
+          label="Annunci visitati"
           value={data.summary.totalProperties}
         />
-        <KpiCard label="Full Analyses" value={totalAnalyses} />
+        <KpiCard label="Analisi complete" value={data.summary.totalFullAnalyses} />
         <KpiCard
           label="Unique Users"
           value={data.summary.totalUniquePropertyUsers}
@@ -71,7 +71,7 @@ export default function PropertiesPage({ data }: { data: MetricsData }) {
 
       {/* Trend */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <StatCard title="Properties Saved by Month">
+        <StatCard title="Annunci visitati per mese">
           <BarChart
             items={data.propertiesTrend.map((p) => ({
               label: p.month.slice(5),

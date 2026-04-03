@@ -17,11 +17,11 @@ export default function DataTable<T>({ columns, rows }: DataTableProps<T>) {
     <div className="overflow-x-auto">
       <table className="w-full">
         <thead>
-          <tr className="border-b border-gray-200">
+          <tr className="border-b border-white/[0.08]">
             {columns.map((col) => (
               <th
                 key={col.key}
-                className={`${MONO} text-[10px] tracking-wider uppercase text-gray-400 pb-3 pr-4 font-medium ${
+                className={`${MONO} text-[10px] tracking-wider uppercase text-gray-500 pb-3 pr-4 font-medium ${
                   col.align === "right"
                     ? "text-right"
                     : col.align === "center"
@@ -38,12 +38,12 @@ export default function DataTable<T>({ columns, rows }: DataTableProps<T>) {
           {rows.map((row, i) => (
             <tr
               key={i}
-              className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors"
+              className="border-b border-white/[0.04] hover:bg-white/[0.03] transition-colors"
             >
               {columns.map((col) => (
                 <td
                   key={col.key}
-                  className={`${MONO} text-sm py-3 pr-4 text-gray-700 ${
+                  className={`${MONO} text-sm py-3 pr-4 text-gray-300 ${
                     col.align === "right"
                       ? "text-right"
                       : col.align === "center"

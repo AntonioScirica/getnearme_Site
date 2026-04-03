@@ -19,7 +19,7 @@ export default function ReferralPage({ data }: { data: MetricsData }) {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold text-gray-900 mb-6">Referral</h1>
+      <h1 className="text-2xl font-semibold text-gray-100 mb-6">Referral</h1>
 
       {/* Referral KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -34,7 +34,7 @@ export default function ReferralPage({ data }: { data: MetricsData }) {
       </div>
 
       {ref.total === 0 && (
-        <div className="bg-amber-50 text-amber-700 border border-amber-200 rounded-lg p-4 mb-6 text-sm">
+        <div className="bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-lg p-4 mb-6 text-sm">
           No referrals have been used yet. The referral system is available but
           hasn&apos;t seen adoption.
         </div>
@@ -51,7 +51,7 @@ export default function ReferralPage({ data }: { data: MetricsData }) {
             />
           ) : (
             <div className="flex items-center justify-center h-20">
-              <p className="text-sm text-gray-400">No data to display</p>
+              <p className="text-sm text-gray-500">No data to display</p>
             </div>
           )}
         </StatCard>
@@ -69,7 +69,7 @@ export default function ReferralPage({ data }: { data: MetricsData }) {
       </div>
 
       {/* Onboarding */}
-      <h2 className="text-lg font-semibold text-gray-900 mb-4">
+      <h2 className="text-lg font-semibold text-gray-100 mb-4">
         Onboarding Completion
       </h2>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
