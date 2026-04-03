@@ -364,13 +364,13 @@ export const translations = {
           {
             id: "agency_monthly", name: "Mensile", users: "Tutte le funzioni incluse", oldPrice: null, price: 399,
             savingsYear: null, badge: null, popular: false,
-            features: ["Crediti illimitati", "Calcolo prezzo al m² in tempo reale", "Report illimitati con il tuo logo", "AI Rendering & Homestaging", "Template Post & Stories Social", "Editor Video per i social", "Supporto Prioritario"],
+            features: ["Crediti illimitati", "Calcolo prezzo al m² in tempo reale", "Report illimitati con il tuo logo", "AI Rendering & Homestaging", "Template Post & Stories Social", "Editor Video per i social"],
             extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Inizia 7 giorni gratis →",
           },
           {
             id: "agency_quarterly", name: "Trimestrale", users: "Tutte le funzioni incluse", oldPrice: null, price: 349,
             savingsYear: null, badge: null, popular: false,
-            features: ["Crediti illimitati", "Calcolo prezzo al m² in tempo reale", "Report illimitati con il tuo logo", "AI Rendering & Homestaging", "Template Post & Stories Social", "Editor Video per i social", "Supporto Prioritario"],
+            features: ["Crediti illimitati", "Calcolo prezzo al m² in tempo reale", "Report illimitati con il tuo logo", "AI Rendering & Homestaging", "Template Post & Stories Social", "Editor Video per i social"],
             extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Inizia 7 giorni gratis →",
           },
           {
@@ -799,13 +799,13 @@ export const translations = {
           {
             id: "agency_monthly", name: "Monthly", users: "All features included", oldPrice: null, price: 399,
             savingsYear: null, badge: null, popular: false,
-            features: ["Unlimited credits", "Real-time price per m² calculation", "Unlimited reports with your logo", "AI Rendering & Homestaging", "Social Post & Stories Templates", "Social Video Editor", "Priority Support"],
+            features: ["Unlimited credits", "Real-time price per m² calculation", "Unlimited reports with your logo", "AI Rendering & Homestaging", "Social Post & Stories Templates", "Social Video Editor"],
             extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Start 7-day free trial →",
           },
           {
             id: "agency_quarterly", name: "Quarterly", users: "All features included", oldPrice: null, price: 349,
             savingsYear: null, badge: null, popular: false,
-            features: ["Unlimited credits", "Real-time price per m² calculation", "Unlimited reports with your logo", "AI Rendering & Homestaging", "Social Post & Stories Templates", "Social Video Editor", "Priority Support"],
+            features: ["Unlimited credits", "Real-time price per m² calculation", "Unlimited reports with your logo", "AI Rendering & Homestaging", "Social Post & Stories Templates", "Social Video Editor"],
             extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Start 7-day free trial →",
           },
           {
@@ -1234,13 +1234,13 @@ export const translations = {
           {
             id: "agency_monthly", name: "Mensual", users: "Todas las funciones incluidas", oldPrice: null, price: 399,
             savingsYear: null, badge: null, popular: false,
-            features: ["Créditos ilimitados", "Cálculo de precio por m² en tiempo real", "Informes ilimitados con tu logo", "AI Rendering & Homestaging", "Plantillas Post & Stories Social", "Editor de Vídeo Social", "Soporte Prioritario"],
+            features: ["Créditos ilimitados", "Cálculo de precio por m² en tiempo real", "Informes ilimitados con tu logo", "AI Rendering & Homestaging", "Plantillas Post & Stories Social", "Editor de Vídeo Social"],
             extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Empieza 7 días gratis →",
           },
           {
             id: "agency_quarterly", name: "Trimestral", users: "Todas las funciones incluidas", oldPrice: null, price: 349,
             savingsYear: null, badge: null, popular: false,
-            features: ["Créditos ilimitados", "Cálculo de precio por m² en tiempo real", "Informes ilimitados con tu logo", "AI Rendering & Homestaging", "Plantillas Post & Stories Social", "Editor de Vídeo Social", "Soporte Prioritario"],
+            features: ["Créditos ilimitados", "Cálculo de precio por m² en tiempo real", "Informes ilimitados con tu logo", "AI Rendering & Homestaging", "Plantillas Post & Stories Social", "Editor de Vídeo Social"],
             extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Empieza 7 días gratis →",
           },
           {
@@ -1669,13 +1669,13 @@ export const translations = {
           {
             id: "agency_monthly", name: "Mensuel", users: "Toutes les fonctionnalités incluses", oldPrice: null, price: 399,
             savingsYear: null, badge: null, popular: false,
-            features: ["Crédits illimités", "Calcul du prix au m² en temps réel", "Rapports illimités avec votre logo", "AI Rendering & Homestaging", "Templates Post & Stories Social", "Éditeur Vidéo Social", "Support Prioritaire"],
+            features: ["Crédits illimités", "Calcul du prix au m² en temps réel", "Rapports illimités avec votre logo", "AI Rendering & Homestaging", "Templates Post & Stories Social", "Éditeur Vidéo Social"],
             extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Commencer 7 jours gratuits →",
           },
           {
             id: "agency_quarterly", name: "Trimestriel", users: "Toutes les fonctionnalités incluses", oldPrice: null, price: 349,
             savingsYear: null, badge: null, popular: false,
-            features: ["Crédits illimités", "Calcul du prix au m² en temps réel", "Rapports illimités avec votre logo", "AI Rendering & Homestaging", "Templates Post & Stories Social", "Éditeur Vidéo Social", "Support Prioritaire"],
+            features: ["Crédits illimités", "Calcul du prix au m² en temps réel", "Rapports illimités avec votre logo", "AI Rendering & Homestaging", "Templates Post & Stories Social", "Éditeur Vidéo Social"],
             extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Commencer 7 jours gratuits →",
           },
           {
@@ -2104,13 +2104,13 @@ export const translations = {
           {
             id: "agency_monthly", name: "Ежемесячно", users: "Все функции включены", oldPrice: null, price: 399,
             savingsYear: null, badge: null, popular: false,
-            features: ["Неограниченные кредиты", "Расчёт цены за м² в реальном времени", "Неограниченные отчёты с вашим логотипом", "AI Rendering & Homestaging", "Шаблоны постов и сторис для соцсетей", "Видеоредактор для соцсетей", "Приоритетная поддержка"],
+            features: ["Неограниченные кредиты", "Расчёт цены за м² в реальном времени", "Неограниченные отчёты с вашим логотипом", "AI Rendering & Homestaging", "Шаблоны постов и сторис для соцсетей", "Видеоредактор для соцсетей"],
             extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Начать 7 дней бесплатно →",
           },
           {
             id: "agency_quarterly", name: "Ежеквартально", users: "Все функции включены", oldPrice: null, price: 349,
             savingsYear: null, badge: null, popular: false,
-            features: ["Неограниченные кредиты", "Расчёт цены за м² в реальном времени", "Неограниченные отчёты с вашим логотипом", "AI Rendering & Homestaging", "Шаблоны постов и сторис для соцсетей", "Видеоредактор для соцсетей", "Приоритетная поддержка"],
+            features: ["Неограниченные кредиты", "Расчёт цены за м² в реальном времени", "Неограниченные отчёты с вашим логотипом", "AI Rendering & Homestaging", "Шаблоны постов и сторис для соцсетей", "Видеоредактор для соцсетей"],
             extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Начать 7 дней бесплатно →",
           },
           {
@@ -2539,13 +2539,13 @@ export const translations = {
           {
             id: "agency_monthly", name: "Щомісячно", users: "Усі функції включені", oldPrice: null, price: 399,
             savingsYear: null, badge: null, popular: false,
-            features: ["Необмежені кредити", "Розрахунок ціни за м² в реальному часі", "Необмежені звіти з вашим логотипом", "AI Rendering & Homestaging", "Шаблони постів та сторіс для соцмереж", "Відеоредактор для соцмереж", "Пріоритетна підтримка"],
+            features: ["Необмежені кредити", "Розрахунок ціни за м² в реальному часі", "Необмежені звіти з вашим логотипом", "AI Rendering & Homestaging", "Шаблони постів та сторіс для соцмереж", "Відеоредактор для соцмереж"],
             extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Почати 7 днів безкоштовно →",
           },
           {
             id: "agency_quarterly", name: "Щоквартально", users: "Усі функції включені", oldPrice: null, price: 349,
             savingsYear: null, badge: null, popular: false,
-            features: ["Необмежені кредити", "Розрахунок ціни за м² в реальному часі", "Необмежені звіти з вашим логотипом", "AI Rendering & Homestaging", "Шаблони постів та сторіс для соцмереж", "Відеоредактор для соцмереж", "Пріоритетна підтримка"],
+            features: ["Необмежені кредити", "Розрахунок ціни за м² в реальному часі", "Необмежені звіти з вашим логотипом", "AI Rendering & Homestaging", "Шаблони постів та сторіс для соцмереж", "Відеоредактор для соцмереж"],
             extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Почати 7 днів безкоштовно →",
           },
           {

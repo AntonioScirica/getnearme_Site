@@ -85,7 +85,7 @@ export default function PricingCard({ plan, onSelect }: PricingCardProps) {
           </div>
         </div>
         <div style={{ margin: '22px 0', borderTop: '2px dashed #e2e8f0' }} />
-        <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 10px' }}>
+        <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 24px' }}>
           {plan.features.map((f, i) => (
             <li
               key={i}
