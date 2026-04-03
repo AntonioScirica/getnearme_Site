@@ -184,6 +184,14 @@ export default function OverviewPage({ data }: { data: MetricsData }) {
       {/* ── 1. KPI PRINCIPALI ─────────────────────────────────────── */}
       <SectionLabel>Utenti</SectionLabel>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="bg-[#161920] rounded-xl p-5 border border-amber-500/40">
+          <div className="flex items-start justify-between">
+            <p className={`${MONO} text-[11px] tracking-wider uppercase text-amber-500/70 mb-2`}>Agency</p>
+            <Building2 className="w-[18px] h-[18px] text-amber-500/50" />
+          </div>
+          <p className={`${MONO} text-3xl font-semibold text-amber-400`}>{fmt(agencyUsers)}</p>
+          <p className={`${MONO} text-xs text-gray-500 mt-1`}>{pct(agencyUsers, data.summary.totalUsers)}% degli utenti</p>
+        </div>
         <KpiCard
           label="Utenti totali"
           value={data.summary.totalUsers}
@@ -209,14 +217,6 @@ export default function OverviewPage({ data }: { data: MetricsData }) {
           })()}
           icon={<Users className="w-[18px] h-[18px]" />}
         />
-        <div className="bg-[#161920] rounded-xl p-5 border border-amber-500/40">
-          <div className="flex items-start justify-between">
-            <p className={`${MONO} text-[11px] tracking-wider uppercase text-amber-500/70 mb-2`}>Agency</p>
-            <Building2 className="w-[18px] h-[18px] text-amber-500/50" />
-          </div>
-          <p className={`${MONO} text-3xl font-semibold text-amber-400`}>{fmt(agencyUsers)}</p>
-          <p className={`${MONO} text-xs text-gray-500 mt-1`}>{pct(agencyUsers, data.summary.totalUsers)}% degli utenti</p>
-        </div>
       </div>
 
       {/* ── 2. CRESCITA + ABBONAMENTI ─────────────────────────────── */}
