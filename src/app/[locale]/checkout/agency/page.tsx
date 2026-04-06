@@ -93,6 +93,7 @@ const translations: Record<string, Record<string, string | string[]>> = {
     save: 'Risparmi',
     subscribe: 'Abbonati ora',
     loginTitle: 'Accedi per continuare',
+    loginSubtitle: "Se possiedi già un account all'interno dell'estensione, usa lo stesso per procedere.",
     loginButton: 'Continua con Google',
     orDivider: 'oppure',
     emailPlaceholder: 'Email',
@@ -146,6 +147,7 @@ const translations: Record<string, Record<string, string | string[]>> = {
     save: 'Save',
     subscribe: 'Subscribe now',
     loginTitle: 'Sign in to continue',
+    loginSubtitle: 'If you already have an account in the extension, use the same one to proceed.',
     loginButton: 'Continue with Google',
     orDivider: 'or',
     emailPlaceholder: 'Email',
@@ -199,6 +201,7 @@ const translations: Record<string, Record<string, string | string[]>> = {
     save: 'Ahorras',
     subscribe: 'Suscríbete ahora',
     loginTitle: 'Inicia sesión para continuar',
+    loginSubtitle: 'Si ya tienes una cuenta en la extensión, usa la misma para continuar.',
     loginButton: 'Continuar con Google',
     orDivider: 'o',
     emailPlaceholder: 'Email',
@@ -252,6 +255,7 @@ const translations: Record<string, Record<string, string | string[]>> = {
     save: 'Économisez',
     subscribe: "S'abonner maintenant",
     loginTitle: 'Connectez-vous pour continuer',
+    loginSubtitle: "Si vous avez déjà un compte dans l'extension, utilisez-le pour continuer.",
     loginButton: 'Continuer avec Google',
     orDivider: 'ou',
     emailPlaceholder: 'Email',
@@ -305,6 +309,7 @@ const translations: Record<string, Record<string, string | string[]>> = {
     save: 'Экономия',
     subscribe: 'Подписаться',
     loginTitle: 'Войдите, чтобы продолжить',
+    loginSubtitle: 'Если у вас уже есть аккаунт в расширении, используйте его для продолжения.',
     loginButton: 'Продолжить с Google',
     orDivider: 'или',
     emailPlaceholder: 'Email',
@@ -358,6 +363,7 @@ const translations: Record<string, Record<string, string | string[]>> = {
     save: 'Економія',
     subscribe: 'Підписатися',
     loginTitle: 'Увійдіть, щоб продовжити',
+    loginSubtitle: 'Якщо у вас вже є акаунт у розширенні, використовуйте його для продовження.',
     loginButton: 'Продовжити з Google',
     orDivider: 'або',
     emailPlaceholder: 'Email',
@@ -823,7 +829,8 @@ function CheckoutAgencyContent() {
             ) : !user ? (
               /* Not logged in - show auth UI */
               <>
-                <h2 className="text-xl font-bold text-center mb-6">{t.loginTitle}</h2>
+                <h2 className="text-xl font-bold text-center mb-2">{t.loginTitle}</h2>
+                <p className="text-sm text-center text-gray-500 mb-6">{t.loginSubtitle}</p>
 
                 <button
                   onClick={handleGoogleLogin}
