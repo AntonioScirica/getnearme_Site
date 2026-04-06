@@ -574,12 +574,6 @@ function CheckoutAgencyContent() {
         await proceedAfterLogin(userId, userEmail, terms, marketing);
       } else {
         // Existing session (not OAuth callback)
-        // If no plan selected, just go to dashboard
-        if (!hasPlan) {
-          window.location.href = `/${locale}/dashboard`;
-          return;
-        }
-
         setUser({ id: userId, email: userEmail });
 
         // Check if user already accepted terms (from previous login/consent)
