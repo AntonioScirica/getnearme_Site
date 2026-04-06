@@ -521,7 +521,7 @@ function CheckoutAgencyContent() {
         .eq('user_id', userId)
         .single();
 
-      if (data?.subscription_type && data.subscription_type !== 'free') {
+      if (data?.subscription_type && data.subscription_type !== 'free' && data.subscription_type !== 'ambassador') {
         window.location.href = `/${locale}/dashboard`;
         return;
       }
@@ -600,7 +600,7 @@ function CheckoutAgencyContent() {
             .eq('user_id', userId)
             .single();
 
-          if (data?.subscription_type && data.subscription_type !== 'free') {
+          if (data?.subscription_type && data.subscription_type !== 'free' && data.subscription_type !== 'ambassador') {
             window.location.href = `/${locale}/dashboard`;
             return;
           }
