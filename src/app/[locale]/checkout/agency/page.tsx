@@ -449,7 +449,7 @@ function CheckoutAgencyContent() {
 
   const rawPlanParam = searchParams.get('plan');
   const hasPlan = !!rawPlanParam;
-  const selectedPlanId = PLAN_ID_MAP[rawPlanParam || 'agency'] || 'agency';
+  const selectedPlanId = PLAN_ID_MAP[rawPlanParam || 'agency_monthly'] || 'agency_monthly';
   const intervalParam = searchParams.get('interval');
 
   const [interval, setInterval] = useState<'monthly' | 'annual'>(
@@ -688,7 +688,7 @@ function CheckoutAgencyContent() {
     setIsEmailLoading(false);
   }
 
-  const currentPrice = interval === 'annual' ? plan.price_annual : plan.price_monthly;
+  const currentPrice = plan ? (interval === 'annual' ? plan.price_annual : plan.price_monthly) : 0;
   const periodLabel = interval === 'annual' ? t.perYear : t.perMonth;
 
   return (
