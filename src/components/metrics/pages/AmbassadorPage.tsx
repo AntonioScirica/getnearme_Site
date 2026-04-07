@@ -22,7 +22,9 @@ export default function AmbassadorPage({ data, authKey }: { data: MetricsData; a
   const [loading, setLoading] = useState<string | null>(null);
   const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
-  const baseUsers = data.allUsersForAmbassador ?? data.allUsers;
+  const baseUsers = (data.allUsersForAmbassador ?? data.allUsers).filter(
+    (u) => u.email && u.email !== "(no email)"
+  );
   // Local override map: email → subscription_type (for instant UI update)
   const [localOverrides, setLocalOverrides] = useState<Record<string, string>>({});
 

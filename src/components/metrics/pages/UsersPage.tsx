@@ -68,7 +68,7 @@ export default function UsersPage({ data }: { data: MetricsData }) {
   }
 
   const filtered = useMemo(() => {
-    let rows = data.allUsers;
+    let rows = data.allUsers.filter((u) => u.email && u.email !== "(no email)");
     if (search.trim()) {
       const q = search.trim().toLowerCase();
       rows = rows.filter((u) => u.email.toLowerCase().includes(q));
