@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
   // Find user in user_credits by email
   const { data: creditRow, error: fetchError } = await admin
     .from("user_credits")
-    .select("user_id, email, subscription_type")
+    .select("user_id, email, subscription_type, stripe_customer_id, stripe_agency_subscription_id")
     .eq("email", email)
     .single();
 
@@ -47,7 +47,44 @@ export async function POST(request: NextRequest) {
 
   const newSubscriptionType = ambassador ? "ambassador" : "free";
 
-  // When promoting to ambassador: reset credits to 0 with 15 earned (fresh start)
+  // Cancel all Stripe subscriptions when promoting to ambassador
+  if (ambassador) {
+    const stripeKey = process.env.STRIPE_SECRET_KEY;
+    const customerId = (creditRow as Record<string, unknown>).stripe_customer_id as string | null;
+    const agencySubId = (creditRow as Record<string, unknown>).stripe_agency_subscription_id as string | null;
+
+    if (stripeKey && customerId) {
+      try {
+        // Fetch all active subscriptions for this customer
+        const subsResp = await fetch(
+          `https://api.stripe.com/v1/subscriptions?customer=${customerId}&status=active&limit=100`,
+          { headers: { Authorization: `Bearer ${stripeKey}` } }
+        );
+        if (subsResp.ok) {
+          const subsData = await subsResp.json();
+          for (const sub of (subsData.data ?? [])) {
+            await fetch(`https://api.stripe.com/v1/subscriptions/${sub.id}`, {
+              method: "DELETE",
+              headers: { Authorization: `Bearer ${stripeKey}` },
+            });
+          }
+        }
+      } catch (err) {
+        console.error("Stripe cancellation error:", err);
+        // Non-fatal: proceed with ambassador promotion anyway
+      }
+    }
+
+    // Clear stripe subscription ID from DB
+    await admin
+      .from("user_credits")
+      .update({ stripe_agency_subscription_id: null })
+      .eq("user_id", creditRow.user_id);
+
+    void agencySubId; // already cleared above
+  }
+
+  // When promoting to ambassador: reset credits with 15 earned (fresh start)
   const updatePayload: Record<string, unknown> = { subscription_type: newSubscriptionType };
   if (ambassador) {
     updatePayload.credits = 15;
