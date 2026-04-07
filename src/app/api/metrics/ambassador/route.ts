@@ -65,6 +65,23 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Aggiornamento fallito" }, { status: 500 });
   }
 
+  // Ensure ambassador_accounts row exists (required for quota tracking)
+  if (ambassador) {
+    await admin.from("ambassador_accounts").upsert(
+      {
+        user_id: creditRow.user_id,
+        email: creditRow.email,
+        photos_used: 0,
+        videos_used: 0,
+        posts_used: 0,
+        reports_used: 0,
+        quota_month: "",
+        monthly_limit: 15,
+      },
+      { onConflict: "user_id", ignoreDuplicates: true }
+    );
+  }
+
   // Log the credit reset as a transaction
   if (ambassador) {
     await admin.from("credit_transactions").insert({
