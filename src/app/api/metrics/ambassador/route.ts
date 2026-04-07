@@ -34,15 +34,23 @@ export async function POST(request: NextRequest) {
 
   const admin = getAdmin();
 
-  // Find user in user_credits by email
+  // Find user_id via auth.users (reliable, always has email), then fetch user_credits
+  const { data: authList, error: authErr } = await admin.auth.admin.listUsers({ perPage: 1000 });
+  const authUser = authList?.users?.find(
+    (u) => u.email?.toLowerCase() === email.toLowerCase()
+  );
+  if (authErr || !authUser) {
+    return NextResponse.json({ error: "Utente non trovato" }, { status: 404 });
+  }
+
   const { data: creditRow, error: fetchError } = await admin
     .from("user_credits")
     .select("user_id, email, subscription_type, stripe_customer_id, stripe_agency_subscription_id")
-    .eq("email", email)
+    .eq("user_id", authUser.id)
     .single();
 
   if (fetchError || !creditRow) {
-    return NextResponse.json({ error: "Utente non trovato" }, { status: 404 });
+    return NextResponse.json({ error: "Utente non trovato in user_credits" }, { status: 404 });
   }
 
   const newSubscriptionType = ambassador ? "ambassador" : "free";
