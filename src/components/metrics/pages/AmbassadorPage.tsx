@@ -7,12 +7,14 @@ import StatCard from "../ui/StatCard";
 import KpiCard from "../ui/KpiCard";
 import { Star, Search, UserCheck, UserX, Loader2, CheckCircle, AlertCircle } from "lucide-react";
 
-type UserRow = MetricsData["allUsers"][0];
+type UserRow = MetricsData["allUsersForAmbassador"][0];
 
 function formatDate(iso: string | null) {
   if (!iso) return "—";
   return new Date(iso).toLocaleDateString("it-IT", { day: "2-digit", month: "short", year: "2-digit" });
 }
+
+type LocalUser = MetricsData["allUsersForAmbassador"][0];
 
 export default function AmbassadorPage({ data, authKey }: { data: MetricsData; authKey: string }) {
   const [search, setSearch] = useState("");
@@ -20,7 +22,14 @@ export default function AmbassadorPage({ data, authKey }: { data: MetricsData; a
   const [loading, setLoading] = useState<string | null>(null);
   const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
-  const allForAmbassador = data.allUsersForAmbassador ?? data.allUsers;
+  const baseUsers = data.allUsersForAmbassador ?? data.allUsers;
+  // Local override map: email → subscription_type (for instant UI update)
+  const [localOverrides, setLocalOverrides] = useState<Record<string, string>>({});
+
+  const allForAmbassador = useMemo(
+    () => baseUsers.map((u) => localOverrides[u.email] !== undefined ? { ...u, subscription_type: localOverrides[u.email] } : u),
+    [baseUsers, localOverrides]
+  );
 
   const ambassadors = useMemo(
     () => allForAmbassador.filter((u) => u.subscription_type === "ambassador"),
@@ -59,8 +68,10 @@ export default function AmbassadorPage({ data, authKey }: { data: MetricsData; a
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || `HTTP ${res.status}`);
+      // Update UI immediately without full refresh
+      setLocalOverrides((prev) => ({ ...prev, [email]: makeAmbassador ? "ambassador" : "free" }));
+      if (makeAmbassador) setPromoteSearch("");
       showToast("success", makeAmbassador ? `${email} è ora Ambassador` : `${email} rimosso da Ambassador`);
-      // Note: data will refresh on next full refresh — we just show the toast
     } catch (err: unknown) {
       showToast("error", err instanceof Error ? err.message : "Errore sconosciuto");
     } finally {

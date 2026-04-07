@@ -47,14 +47,33 @@ export async function POST(request: NextRequest) {
 
   const newSubscriptionType = ambassador ? "ambassador" : "free";
 
+  // When promoting to ambassador: reset credits to 0 with 15 earned (fresh start)
+  const updatePayload: Record<string, unknown> = { subscription_type: newSubscriptionType };
+  if (ambassador) {
+    updatePayload.credits = 15;
+    updatePayload.total_earned = 15;
+    updatePayload.total_spent = 0;
+  }
+
   const { error: updateError } = await admin
     .from("user_credits")
-    .update({ subscription_type: newSubscriptionType })
+    .update(updatePayload)
     .eq("user_id", creditRow.user_id);
 
   if (updateError) {
     console.error("Ambassador update error:", updateError);
     return NextResponse.json({ error: "Aggiornamento fallito" }, { status: 500 });
+  }
+
+  // Log the credit reset as a transaction
+  if (ambassador) {
+    await admin.from("credit_transactions").insert({
+      user_id: creditRow.user_id,
+      transaction_type: "earn",
+      reason: "ambassador_welcome",
+      amount: 15,
+      created_at: new Date().toISOString(),
+    });
   }
 
   return NextResponse.json({
