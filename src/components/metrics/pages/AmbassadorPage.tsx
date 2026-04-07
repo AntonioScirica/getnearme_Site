@@ -253,13 +253,13 @@ export default function AmbassadorPage({ data, authKey }: { data: MetricsData; a
             <thead>
               <tr className="border-b border-white/[0.08]">
                 <th className={`${MONO} text-[10px] tracking-wider uppercase text-gray-400 pb-3 pr-4 font-medium text-left cursor-pointer select-none hover:text-gray-300 transition-colors whitespace-nowrap`} onClick={() => handleSort("email")}>Email <SortIcon col="email" sortKey={sortKey} sortDir={sortDir} /></th>
-                <ColHeader label="Analisi AI" used={ambassadors.filter(u => u.full_analyses > 0).length} total={ambassadors.length} sortCol="full_analyses" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
-                <ColHeader label="Foto AI" used={ambassadors.filter(u => u.staging_photos > 0).length} total={ambassadors.length} sortCol="staging_photos" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
-                <ColHeader label="Post PNG" used={ambassadors.filter(u => u.post_png_exports > 0).length} total={ambassadors.length} sortCol="post_png_exports" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
-                <ColHeader label="Post Video" used={ambassadors.filter(u => u.post_video_exports > 0).length} total={ambassadors.length} sortCol="post_video_exports" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
-                <ColHeader label="Stg. Video" used={ambassadors.filter(u => u.staging_video_exports > 0).length} total={ambassadors.length} sortCol="staging_video_exports" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
-                <ColHeader label="PDF" used={ambassadors.filter(u => u.pdf_reports > 0).length} total={ambassadors.length} sortCol="pdf_reports" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
-                <ColHeader label="Annunci" used={ambassadors.filter(u => u.properties_saved > 0).length} total={ambassadors.length} sortCol="properties_saved" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+                <th className={`${MONO} text-[10px] tracking-wider uppercase text-gray-400 pb-3 pr-4 font-medium text-right cursor-pointer select-none hover:text-gray-300 transition-colors whitespace-nowrap`} onClick={() => handleSort("full_analyses")}>Analisi AI <SortIcon col="full_analyses" sortKey={sortKey} sortDir={sortDir} /></th>
+                <th className={`${MONO} text-[10px] tracking-wider uppercase text-gray-400 pb-3 pr-4 font-medium text-right cursor-pointer select-none hover:text-gray-300 transition-colors whitespace-nowrap`} onClick={() => handleSort("staging_photos")}>Foto AI <SortIcon col="staging_photos" sortKey={sortKey} sortDir={sortDir} /></th>
+                <th className={`${MONO} text-[10px] tracking-wider uppercase text-gray-400 pb-3 pr-4 font-medium text-right cursor-pointer select-none hover:text-gray-300 transition-colors whitespace-nowrap`} onClick={() => handleSort("post_png_exports")}>Post PNG <SortIcon col="post_png_exports" sortKey={sortKey} sortDir={sortDir} /></th>
+                <th className={`${MONO} text-[10px] tracking-wider uppercase text-gray-400 pb-3 pr-4 font-medium text-right cursor-pointer select-none hover:text-gray-300 transition-colors whitespace-nowrap`} onClick={() => handleSort("post_video_exports")}>Post Video <SortIcon col="post_video_exports" sortKey={sortKey} sortDir={sortDir} /></th>
+                <th className={`${MONO} text-[10px] tracking-wider uppercase text-gray-400 pb-3 pr-4 font-medium text-right cursor-pointer select-none hover:text-gray-300 transition-colors whitespace-nowrap`} onClick={() => handleSort("staging_video_exports")}>Stg. Video <SortIcon col="staging_video_exports" sortKey={sortKey} sortDir={sortDir} /></th>
+                <th className={`${MONO} text-[10px] tracking-wider uppercase text-gray-400 pb-3 pr-4 font-medium text-right cursor-pointer select-none hover:text-gray-300 transition-colors whitespace-nowrap`} onClick={() => handleSort("pdf_reports")}>PDF <SortIcon col="pdf_reports" sortKey={sortKey} sortDir={sortDir} /></th>
+                <th className={`${MONO} text-[10px] tracking-wider uppercase text-gray-400 pb-3 pr-4 font-medium text-right cursor-pointer select-none hover:text-gray-300 transition-colors whitespace-nowrap`} onClick={() => handleSort("properties_saved")}>Annunci <SortIcon col="properties_saved" sortKey={sortKey} sortDir={sortDir} /></th>
                 <th className={`${MONO} text-[10px] tracking-wider uppercase text-gray-400 pb-3 font-medium text-right cursor-pointer select-none hover:text-gray-300 transition-colors whitespace-nowrap`} onClick={() => handleSort("created_at")}>Joined <SortIcon col="created_at" sortKey={sortKey} sortDir={sortDir} /></th>
               </tr>
             </thead>
@@ -294,28 +294,6 @@ export default function AmbassadorPage({ data, authKey }: { data: MetricsData; a
         </div>
       </StatCard>
     </div>
-  );
-}
-
-function ColHeader({ label, used, total, sortCol, sortKey, sortDir, onSort }: {
-  label: string;
-  used: number;
-  total: number;
-  sortCol: AmbSortKey;
-  sortKey: AmbSortKey;
-  sortDir: SortDir;
-  onSort: (k: AmbSortKey) => void;
-}) {
-  return (
-    <th
-      className={`${MONO} text-[10px] tracking-wider uppercase text-gray-400 pb-3 pr-4 font-medium text-right cursor-pointer select-none hover:text-gray-300 transition-colors whitespace-nowrap`}
-      onClick={() => onSort(sortCol)}
-    >
-      <div>{label} <SortIcon col={sortCol} sortKey={sortKey} sortDir={sortDir} /></div>
-      <div className="text-[9px] text-gray-600 font-normal normal-case tracking-normal mt-0.5">
-        {used}/{total} utenti
-      </div>
-    </th>
   );
 }
 
