@@ -34,23 +34,61 @@ export async function POST(request: NextRequest) {
 
   const admin = getAdmin();
 
-  // Find user_id via auth.users (reliable, always has email), then fetch user_credits
-  const { data: authList, error: authErr } = await admin.auth.admin.listUsers({ perPage: 1000 });
-  const authUser = authList?.users?.find(
-    (u) => u.email?.toLowerCase() === email.toLowerCase()
-  );
-  if (authErr || !authUser) {
-    return NextResponse.json({ error: "Utente non trovato" }, { status: 404 });
-  }
+  // Find user_id via user_credits.email first, fallback to auth.users scan
+  let userId: string;
+  let userEmail: string = email;
+  let stripeCustomerId: string | null = null;
+  let stripeSubId: string | null = null;
+  let hasCreditRow = false;
 
-  const { data: creditRow, error: fetchError } = await admin
+  const { data: creditRow } = await admin
     .from("user_credits")
-    .select("user_id, email, subscription_type, stripe_customer_id, stripe_agency_subscription_id")
-    .eq("user_id", authUser.id)
-    .single();
+    .select("user_id, email, stripe_customer_id, stripe_agency_subscription_id")
+    .eq("email", email)
+    .maybeSingle();
 
-  if (fetchError || !creditRow) {
-    return NextResponse.json({ error: "Utente non trovato in user_credits" }, { status: 404 });
+  if (creditRow) {
+    userId = creditRow.user_id;
+    userEmail = creditRow.email ?? email;
+    stripeCustomerId = creditRow.stripe_customer_id ?? null;
+    stripeSubId = creditRow.stripe_agency_subscription_id ?? null;
+    hasCreditRow = true;
+  } else {
+    // Fallback: search auth.users by email (paginate to handle >1000 users)
+    let found = false;
+    let page = 1;
+    while (!found) {
+      const { data: authList, error: authErr } = await admin.auth.admin.listUsers({
+        page,
+        perPage: 1000,
+      });
+      if (authErr || !authList?.users?.length) break;
+      const authUser = authList.users.find(
+        (u) => u.email?.toLowerCase() === email.toLowerCase()
+      );
+      if (authUser) {
+        userId = authUser.id;
+        userEmail = authUser.email ?? email;
+        found = true;
+
+        // Try to fetch user_credits by user_id
+        const { data: cr2 } = await admin
+          .from("user_credits")
+          .select("user_id, email, stripe_customer_id, stripe_agency_subscription_id")
+          .eq("user_id", authUser.id)
+          .maybeSingle();
+        if (cr2) {
+          stripeCustomerId = cr2.stripe_customer_id ?? null;
+          stripeSubId = cr2.stripe_agency_subscription_id ?? null;
+          hasCreditRow = true;
+        }
+      }
+      if (authList.users.length < 1000) break;
+      page++;
+    }
+    if (!found) {
+      return NextResponse.json({ error: "Utente non trovato" }, { status: 404 });
+    }
   }
 
   const newSubscriptionType = ambassador ? "ambassador" : "free";
@@ -58,14 +96,10 @@ export async function POST(request: NextRequest) {
   // Cancel all Stripe subscriptions when promoting to ambassador
   if (ambassador) {
     const stripeKey = process.env.STRIPE_SECRET_KEY;
-    const customerId = (creditRow as Record<string, unknown>).stripe_customer_id as string | null;
-    const agencySubId = (creditRow as Record<string, unknown>).stripe_agency_subscription_id as string | null;
-
-    if (stripeKey && customerId) {
+    if (stripeKey && stripeCustomerId) {
       try {
-        // Fetch all active subscriptions for this customer
         const subsResp = await fetch(
-          `https://api.stripe.com/v1/subscriptions?customer=${customerId}&status=active&limit=100`,
+          `https://api.stripe.com/v1/subscriptions?customer=${stripeCustomerId}&status=active&limit=100`,
           { headers: { Authorization: `Bearer ${stripeKey}` } }
         );
         if (subsResp.ok) {
@@ -79,34 +113,29 @@ export async function POST(request: NextRequest) {
         }
       } catch (err) {
         console.error("Stripe cancellation error:", err);
-        // Non-fatal: proceed with ambassador promotion anyway
       }
     }
-
-    // Clear stripe subscription ID from DB
-    await admin
-      .from("user_credits")
-      .update({ stripe_agency_subscription_id: null })
-      .eq("user_id", creditRow.user_id);
-
-    void agencySubId; // already cleared above
   }
 
-  // When promoting to ambassador: reset credits with 15 earned (fresh start)
-  const updatePayload: Record<string, unknown> = { subscription_type: newSubscriptionType };
+  // Upsert user_credits (handles both existing and new rows)
+  const upsertPayload: Record<string, unknown> = {
+    user_id: userId!,
+    email: userEmail,
+    subscription_type: newSubscriptionType,
+    stripe_agency_subscription_id: ambassador ? null : stripeSubId,
+  };
   if (ambassador) {
-    updatePayload.credits = 15;
-    updatePayload.total_earned = 15;
-    updatePayload.total_spent = 0;
+    upsertPayload.credits = 15;
+    upsertPayload.total_earned = 15;
+    upsertPayload.total_spent = 0;
   }
 
-  const { error: updateError } = await admin
+  const { error: upsertError } = await admin
     .from("user_credits")
-    .update(updatePayload)
-    .eq("user_id", creditRow.user_id);
+    .upsert(upsertPayload, { onConflict: "user_id" });
 
-  if (updateError) {
-    console.error("Ambassador update error:", updateError);
+  if (upsertError) {
+    console.error("Ambassador upsert error:", upsertError);
     return NextResponse.json({ error: "Aggiornamento fallito" }, { status: 500 });
   }
 
@@ -114,8 +143,8 @@ export async function POST(request: NextRequest) {
   if (ambassador) {
     await admin.from("ambassador_accounts").upsert(
       {
-        user_id: creditRow.user_id,
-        email: creditRow.email,
+        user_id: userId!,
+        email: userEmail,
         photos_used: 0,
         videos_used: 0,
         posts_used: 0,
@@ -125,18 +154,17 @@ export async function POST(request: NextRequest) {
       },
       { onConflict: "user_id", ignoreDuplicates: true }
     );
-  }
 
-  // Log the credit reset as a transaction
-  if (ambassador) {
     await admin.from("credit_transactions").insert({
-      user_id: creditRow.user_id,
+      user_id: userId!,
       transaction_type: "earn",
       reason: "ambassador_welcome",
       amount: 15,
       created_at: new Date().toISOString(),
     });
   }
+
+  void hasCreditRow;
 
   return NextResponse.json({
     success: true,
