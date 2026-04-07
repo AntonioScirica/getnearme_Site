@@ -145,15 +145,22 @@ export default function AmbassadorPage({ data, authKey }: { data: MetricsData; a
       )}
 
       {/* KPI */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
         <KpiCard
           label="Ambassador attivi"
           value={ambassadors.length}
           icon={<Star className="w-[18px] h-[18px]" />}
         />
-        <UsageCounter label="Analisi AI" used={ambassadors.filter(u => u.full_analyses > 0).length} total={ambassadors.length} color="indigo" />
-        <UsageCounter label="Foto AI" used={ambassadors.filter(u => u.staging_photos > 0).length} total={ambassadors.length} color="violet" />
-        <UsageCounter label="Post esportati" used={ambassadors.filter(u => u.post_png_exports + u.post_video_exports > 0).length} total={ambassadors.length} color="teal" />
+        <KpiCard
+          label="Annunci salvati"
+          value={ambassadors.reduce((s, u) => s + u.properties_saved, 0)}
+          icon={<UserCheck className="w-[18px] h-[18px]" />}
+        />
+        <KpiCard
+          label="Analisi totali"
+          value={ambassadors.reduce((s, u) => s + u.full_analyses, 0)}
+          icon={<UserCheck className="w-[18px] h-[18px]" />}
+        />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
@@ -246,13 +253,13 @@ export default function AmbassadorPage({ data, authKey }: { data: MetricsData; a
             <thead>
               <tr className="border-b border-white/[0.08]">
                 <th className={`${MONO} text-[10px] tracking-wider uppercase text-gray-400 pb-3 pr-4 font-medium text-left cursor-pointer select-none hover:text-gray-300 transition-colors whitespace-nowrap`} onClick={() => handleSort("email")}>Email <SortIcon col="email" sortKey={sortKey} sortDir={sortDir} /></th>
-                <th className={`${MONO} text-[10px] tracking-wider uppercase text-gray-400 pb-3 pr-4 font-medium text-right cursor-pointer select-none hover:text-gray-300 transition-colors whitespace-nowrap`} onClick={() => handleSort("full_analyses")}>Analisi AI <SortIcon col="full_analyses" sortKey={sortKey} sortDir={sortDir} /></th>
-                <th className={`${MONO} text-[10px] tracking-wider uppercase text-gray-400 pb-3 pr-4 font-medium text-right cursor-pointer select-none hover:text-gray-300 transition-colors whitespace-nowrap`} onClick={() => handleSort("staging_photos")}>Foto AI <SortIcon col="staging_photos" sortKey={sortKey} sortDir={sortDir} /></th>
-                <th className={`${MONO} text-[10px] tracking-wider uppercase text-gray-400 pb-3 pr-4 font-medium text-right cursor-pointer select-none hover:text-gray-300 transition-colors whitespace-nowrap`} onClick={() => handleSort("post_png_exports")}>Post PNG <SortIcon col="post_png_exports" sortKey={sortKey} sortDir={sortDir} /></th>
-                <th className={`${MONO} text-[10px] tracking-wider uppercase text-gray-400 pb-3 pr-4 font-medium text-right cursor-pointer select-none hover:text-gray-300 transition-colors whitespace-nowrap`} onClick={() => handleSort("post_video_exports")}>Post Video <SortIcon col="post_video_exports" sortKey={sortKey} sortDir={sortDir} /></th>
-                <th className={`${MONO} text-[10px] tracking-wider uppercase text-gray-400 pb-3 pr-4 font-medium text-right cursor-pointer select-none hover:text-gray-300 transition-colors whitespace-nowrap`} onClick={() => handleSort("staging_video_exports")}>Staging Video <SortIcon col="staging_video_exports" sortKey={sortKey} sortDir={sortDir} /></th>
-                <th className={`${MONO} text-[10px] tracking-wider uppercase text-gray-400 pb-3 pr-4 font-medium text-right cursor-pointer select-none hover:text-gray-300 transition-colors whitespace-nowrap`} onClick={() => handleSort("pdf_reports")}>PDF <SortIcon col="pdf_reports" sortKey={sortKey} sortDir={sortDir} /></th>
-                <th className={`${MONO} text-[10px] tracking-wider uppercase text-gray-400 pb-3 pr-4 font-medium text-right cursor-pointer select-none hover:text-gray-300 transition-colors whitespace-nowrap`} onClick={() => handleSort("properties_saved")}>Annunci <SortIcon col="properties_saved" sortKey={sortKey} sortDir={sortDir} /></th>
+                <ColHeader label="Analisi AI" used={ambassadors.filter(u => u.full_analyses > 0).length} total={ambassadors.length} sortCol="full_analyses" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+                <ColHeader label="Foto AI" used={ambassadors.filter(u => u.staging_photos > 0).length} total={ambassadors.length} sortCol="staging_photos" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+                <ColHeader label="Post PNG" used={ambassadors.filter(u => u.post_png_exports > 0).length} total={ambassadors.length} sortCol="post_png_exports" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+                <ColHeader label="Post Video" used={ambassadors.filter(u => u.post_video_exports > 0).length} total={ambassadors.length} sortCol="post_video_exports" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+                <ColHeader label="Stg. Video" used={ambassadors.filter(u => u.staging_video_exports > 0).length} total={ambassadors.length} sortCol="staging_video_exports" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+                <ColHeader label="PDF" used={ambassadors.filter(u => u.pdf_reports > 0).length} total={ambassadors.length} sortCol="pdf_reports" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+                <ColHeader label="Annunci" used={ambassadors.filter(u => u.properties_saved > 0).length} total={ambassadors.length} sortCol="properties_saved" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
                 <th className={`${MONO} text-[10px] tracking-wider uppercase text-gray-400 pb-3 font-medium text-right cursor-pointer select-none hover:text-gray-300 transition-colors whitespace-nowrap`} onClick={() => handleSort("created_at")}>Joined <SortIcon col="created_at" sortKey={sortKey} sortDir={sortDir} /></th>
               </tr>
             </thead>
@@ -290,28 +297,25 @@ export default function AmbassadorPage({ data, authKey }: { data: MetricsData; a
   );
 }
 
-const COUNTER_COLORS = {
-  indigo: { bar: "bg-indigo-500", text: "text-indigo-400", bg: "bg-indigo-500/10" },
-  violet: { bar: "bg-violet-500", text: "text-violet-400", bg: "bg-violet-500/10" },
-  teal:   { bar: "bg-teal-500",   text: "text-teal-400",   bg: "bg-teal-500/10"   },
-  purple: { bar: "bg-purple-500", text: "text-purple-400", bg: "bg-purple-500/10" },
-} as const;
-
-function UsageCounter({ label, used, total, color }: { label: string; used: number; total: number; color: keyof typeof COUNTER_COLORS }) {
-  const pct = total > 0 ? (used / total) * 100 : 0;
-  const c = COUNTER_COLORS[color];
+function ColHeader({ label, used, total, sortCol, sortKey, sortDir, onSort }: {
+  label: string;
+  used: number;
+  total: number;
+  sortCol: AmbSortKey;
+  sortKey: AmbSortKey;
+  sortDir: SortDir;
+  onSort: (k: AmbSortKey) => void;
+}) {
   return (
-    <div className={`bg-[#161920] rounded-xl border border-white/[0.08] p-4 flex flex-col gap-2`}>
-      <p className={`${MONO} text-[10px] tracking-wider uppercase text-gray-500`}>{label}</p>
-      <div className="flex items-end gap-1.5">
-        <span className={`${MONO} text-2xl font-semibold ${c.text}`}>{used}</span>
-        <span className={`${MONO} text-sm text-gray-600 mb-0.5`}>/ {total}</span>
+    <th
+      className={`${MONO} text-[10px] tracking-wider uppercase text-gray-400 pb-3 pr-4 font-medium text-right cursor-pointer select-none hover:text-gray-300 transition-colors whitespace-nowrap`}
+      onClick={() => onSort(sortCol)}
+    >
+      <div>{label} <SortIcon col={sortCol} sortKey={sortKey} sortDir={sortDir} /></div>
+      <div className="text-[9px] text-gray-600 font-normal normal-case tracking-normal mt-0.5">
+        {used}/{total} utenti
       </div>
-      <div className="h-1 bg-white/[0.06] rounded-full overflow-hidden">
-        <div className={`h-full ${c.bar} rounded-full transition-all`} style={{ width: `${pct}%` }} />
-      </div>
-      <p className={`${MONO} text-[11px] text-gray-600`}>{pct.toFixed(0)}% lo ha usato</p>
-    </div>
+    </th>
   );
 }
 
