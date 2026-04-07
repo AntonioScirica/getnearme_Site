@@ -10,16 +10,18 @@ import {
   RefreshCw,
   LogOut,
   ChevronUp,
+  Star,
 } from "lucide-react";
 import { MONO } from "./types";
 import type { PageId } from "./types";
 
 const navItems: { id: PageId; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
-  { id: "overview",   label: "Overview",     icon: LayoutDashboard },
-  { id: "newsletter", label: "Marketing",    icon: Megaphone },
-  { id: "users",      label: "Utenti",       icon: Users },
-  { id: "exports",    label: "Agenzie",      icon: Building2 },
-  { id: "stripe",     label: "Stripe",       icon: CreditCard },
+  { id: "overview",    label: "Overview",     icon: LayoutDashboard },
+  { id: "newsletter",  label: "Marketing",    icon: Megaphone },
+  { id: "users",       label: "Utenti",       icon: Users },
+  { id: "exports",     label: "Agenzie",      icon: Building2 },
+  { id: "stripe",      label: "Stripe",       icon: CreditCard },
+  { id: "ambassador",  label: "Ambassador",   icon: Star },
 ];
 
 interface SidebarProps {

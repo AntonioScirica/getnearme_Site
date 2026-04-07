@@ -157,7 +157,8 @@ export type PageId =
   | "newsletter"
   | "users"
   | "exports"
-  | "stripe";
+  | "stripe"
+  | "ambassador";
 
 export const MONO = "font-[family-name:var(--font-jetbrains)]";
 

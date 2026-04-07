@@ -11,6 +11,7 @@ import UsersPage from "./pages/UsersPage";
 import NewsletterPage from "./pages/NewsletterPage";
 import ExportsPage from "./pages/ExportsPage";
 import StripePage from "./pages/StripePage";
+import AmbassadorPage from "./pages/AmbassadorPage";
 
 export default function MetricsDashboard() {
   const [authKey, setAuthKey] = useState<string | null>(null);
@@ -110,6 +111,8 @@ export default function MetricsDashboard() {
         return <ExportsPage data={data} />;
       case "stripe":
         return <StripePage data={data} />;
+      case "ambassador":
+        return <AmbassadorPage data={data} authKey={authKey!} />;
     }
   };
 
