@@ -20,9 +20,11 @@ export default function AmbassadorPage({ data, authKey }: { data: MetricsData; a
   const [loading, setLoading] = useState<string | null>(null);
   const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
+  const allForAmbassador = data.allUsersForAmbassador ?? data.allUsers;
+
   const ambassadors = useMemo(
-    () => data.allUsers.filter((u) => u.subscription_type === "ambassador"),
-    [data.allUsers]
+    () => allForAmbassador.filter((u) => u.subscription_type === "ambassador"),
+    [allForAmbassador]
   );
 
   const filteredAmbassadors = useMemo(() => {
@@ -34,10 +36,10 @@ export default function AmbassadorPage({ data, authKey }: { data: MetricsData; a
   const promoteResults = useMemo(() => {
     if (!promoteSearch.trim()) return [];
     const q = promoteSearch.trim().toLowerCase();
-    return data.allUsers
+    return allForAmbassador
       .filter((u) => u.subscription_type !== "ambassador" && u.email.toLowerCase().includes(q))
       .slice(0, 8);
-  }, [data.allUsers, promoteSearch]);
+  }, [allForAmbassador, promoteSearch]);
 
   function showToast(type: "success" | "error", message: string) {
     setToast({ type, message });

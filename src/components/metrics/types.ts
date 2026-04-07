@@ -139,6 +139,28 @@ export interface MetricsData {
       occurred_at: string;
     }[];
   };
+  allUsersForAmbassador: {
+    email: string;
+    subscription_type: string;
+    credits: number;
+    total_earned: number;
+    total_spent: number;
+    onboarding_completed: boolean;
+    properties_saved: number;
+    full_analyses: number;
+    created_at: string;
+    last_sign_in_at: string | null;
+    pdf_reports: number;
+    zone_analyses: number;
+    staging_photos: number;
+    staging_photo_by_style: Record<string, number>;
+    post_png_exports: number;
+    post_png_by_size: Record<string, number>;
+    post_png_by_template: Record<string, number>;
+    post_video_exports: number;
+    staging_video_exports: number;
+    team: { role: string; team_id: string; member_count: number; team_name: string } | null;
+  }[];
   summary: {
     totalUsers: number;
     totalProperties: number;

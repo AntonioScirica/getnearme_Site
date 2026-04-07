@@ -791,6 +791,30 @@ export async function GET(request: NextRequest) {
       })),
     };
 
+    // All users including admin/test — used only for Ambassador page
+    const allUsersForAmbassador = creditRows.map((c: any) => ({
+      email: c.email || "(no email)",
+      subscription_type: c.subscription_type || "free",
+      credits: c.credits,
+      total_earned: c.total_earned,
+      total_spent: c.total_spent,
+      onboarding_completed: c.onboarding_completed,
+      properties_saved: userPropCount[c.user_id]?.saved || 0,
+      full_analyses: userTxCount[c.user_id]?.full_analyses || 0,
+      created_at: c.created_at,
+      last_sign_in_at: authSignInMap[c.user_id] ?? null,
+      pdf_reports: userTxCount[c.user_id]?.pdf_reports || 0,
+      zone_analyses: userTxCount[c.user_id]?.zone_analyses || 0,
+      staging_photos: userStagingCount[c.user_id] || 0,
+      staging_photo_by_style: userExportCount[c.user_id]?.staging_photo_by_style || {},
+      post_png_exports: userExportCount[c.user_id]?.post_png || 0,
+      post_png_by_size: userExportCount[c.user_id]?.post_png_by_size || {},
+      post_png_by_template: userExportCount[c.user_id]?.post_png_by_template || {},
+      post_video_exports: userExportCount[c.user_id]?.post_video || 0,
+      staging_video_exports: userExportCount[c.user_id]?.staging_video || 0,
+      team: userTeamInfo[c.user_id] || null,
+    }));
+
     return NextResponse.json({
       retention,
       retention_months: retentionMonths,
@@ -810,6 +834,7 @@ export async function GET(request: NextRequest) {
       referral,
       topUsers,
       allUsers,
+      allUsersForAmbassador,
       sectionUnlocks,
       teamsStats,
       exportAggregates,
