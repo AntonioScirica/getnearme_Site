@@ -11,6 +11,7 @@ import {
   LogOut,
   ChevronUp,
   Star,
+  Wallet,
 } from "lucide-react";
 import { MONO } from "./types";
 import type { PageId } from "./types";
@@ -22,6 +23,7 @@ const navItems: { id: PageId; label: string; icon: React.ComponentType<{ classNa
   { id: "exports",     label: "Agenzie",      icon: Building2 },
   { id: "stripe",      label: "Stripe",       icon: CreditCard },
   { id: "ambassador",  label: "Ambassador",   icon: Star },
+  { id: "costs",       label: "Costi",        icon: Wallet },
 ];
 
 interface SidebarProps {

@@ -132,22 +132,24 @@ export default async function Home({ params }: Props) {
           <div className="max-w-5xl mx-auto px-5 md:px-6 relative z-10">
             {/* Centered text content */}
             <div className="text-center flex flex-col items-center">
-              <div
-                style={{
-                  display: "inline-block",
-                  background: "#fffbeb",
-                  border: "2px solid #f59e0b",
-                  borderRadius: 20,
-                  padding: "7px 18px",
-                  fontSize: 13,
-                  fontWeight: 700,
-                  color: "#b45309",
-                  marginBottom: 28,
-                  boxShadow: "3px 3px 0 #f59e0b40",
-                }}
-              >
-                ⚡ {l.hero.badge}
-              </div>
+              {l.hero.badge && (
+                <div
+                  style={{
+                    display: "inline-block",
+                    background: "#fffbeb",
+                    border: "2px solid #f59e0b",
+                    borderRadius: 20,
+                    padding: "7px 18px",
+                    fontSize: 13,
+                    fontWeight: 700,
+                    color: "#b45309",
+                    marginBottom: 28,
+                    boxShadow: "3px 3px 0 #f59e0b40",
+                  }}
+                >
+                  ⚡ {l.hero.badge}
+                </div>
+              )}
 
               <h1
                 style={{

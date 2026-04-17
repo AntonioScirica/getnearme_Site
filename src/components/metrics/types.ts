@@ -180,7 +180,8 @@ export type PageId =
   | "users"
   | "exports"
   | "stripe"
-  | "ambassador";
+  | "ambassador"
+  | "costs";
 
 export const MONO = "font-[family-name:var(--font-jetbrains)]";
 
