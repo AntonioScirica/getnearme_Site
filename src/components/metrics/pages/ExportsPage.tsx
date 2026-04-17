@@ -154,6 +154,68 @@ export default function AgencyPage({ data }: { data: MetricsData }) {
         </div>
       </div>
 
+      {/* Video AI templates ranking */}
+      {data.aiVideoStats && data.aiVideoStats.total > 0 && (
+        <div className="bg-[#161920] rounded-xl border border-white/[0.08] p-5">
+          <div className="flex items-baseline justify-between mb-4">
+            <p className={`${MONO} text-[11px] uppercase tracking-wider text-gray-400`}>Video AI — template più usati</p>
+            <p className={`${MONO} text-[10px] text-gray-600`}>{fmt(data.aiVideoStats.total)} video generati</p>
+          </div>
+          <div className="space-y-2.5">
+            {(() => {
+              const max = Math.max(...data.aiVideoStats.top_templates.map(t => t.count), 1);
+              const labels: Record<string, string> = {
+                classic: "Classic (avatar)",
+                split: "Split screen",
+                walkthrough: "Walkthrough",
+                sottotitoli: "Sottotitoli karaoke",
+                before_after: "Before / After",
+                ai_staging: "AI Staging video",
+              };
+              const colors: Record<string, string> = {
+                classic: "bg-indigo-500/70",
+                split: "bg-sky-500/70",
+                walkthrough: "bg-emerald-500/70",
+                sottotitoli: "bg-amber-500/70",
+                before_after: "bg-violet-500/70",
+                ai_staging: "bg-pink-500/70",
+              };
+              return data.aiVideoStats!.top_templates.map(t => {
+                const w = (t.count / max) * 100;
+                const pct = ((t.count / data.aiVideoStats!.total) * 100).toFixed(1);
+                return (
+                  <div key={t.template} className="flex items-center gap-3">
+                    <span className={`${MONO} text-xs text-gray-400 w-40 shrink-0 truncate`}>
+                      {labels[t.template] || t.template}
+                    </span>
+                    <div className="flex-1 h-2 bg-white/[0.06] rounded-full overflow-hidden">
+                      <div className={`h-full ${colors[t.template] || "bg-gray-500/70"} rounded-full`} style={{ width: `${w}%` }} />
+                    </div>
+                    <span className={`${MONO} text-xs text-gray-300 w-16 text-right shrink-0`}>
+                      {fmt(t.count)}
+                      <span className="text-gray-600 ml-1">({pct}%)</span>
+                    </span>
+                  </div>
+                );
+              });
+            })()}
+          </div>
+          {data.aiVideoStats.models.length > 0 && (
+            <div className="mt-5 pt-4 border-t border-white/[0.04]">
+              <p className={`${MONO} text-[10px] uppercase tracking-wider text-gray-500 mb-2`}>Modello AI (solo Before/After)</p>
+              <div className="flex gap-4 flex-wrap">
+                {data.aiVideoStats.models.map(m => (
+                  <span key={m.model} className={`${MONO} text-xs text-gray-400`}>
+                    <span className="text-gray-200">{m.model}</span>
+                    <span className="text-gray-600 ml-1">{fmt(m.count)}</span>
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Tabella team con utenti */}
       {data.allUsers.filter(u => u.team?.role === "owner").length > 0 && (
         <div className="bg-[#161920] rounded-xl border border-white/[0.08] p-5">

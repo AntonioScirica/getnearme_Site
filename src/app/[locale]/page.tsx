@@ -361,68 +361,6 @@ export default async function Home({ params }: Props) {
           </div>
         </section>
 
-        {/* Features */}
-        <section id="funzionalita" className="scroll-mt-32" style={{ padding: "70px 0", background: "#f3f4f6" }}>
-          <div className="max-w-7xl mx-auto px-5 md:px-3">
-            <div style={{ textAlign: "center", marginBottom: 48 }}>
-              <h2
-                style={{
-                  fontSize: "clamp(28px, 5vw, 44px)",
-                  fontWeight: 900,
-                  color: "#1a1a2e",
-                  lineHeight: 1.15,
-                  marginBottom: 12,
-                }}
-              >
-                {l.features.title}{" "}
-                <span
-                  style={{
-                    color: "#f59e0b",
-                    textDecoration: "underline",
-                    textDecorationStyle: "wavy",
-                    textUnderlineOffset: 6,
-                    textDecorationThickness: 3,
-                  }}
-                >
-                  {l.features.titleHighlight}
-                </span>
-                .
-              </h2>
-              <p style={{ color: "#999", fontSize: 16 }}>
-                {l.features.subtitle}
-              </p>
-            </div>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(330px, 1fr))",
-                gap: 20,
-              }}
-            >
-              {l.features.items.map(
-                (
-                  f: {
-                    num: string;
-                    title: string;
-                    desc: string;
-                    icon: string;
-                    color: string;
-                  },
-                  i: number
-                ) => (
-                  <HomepageClient
-                    key={f.num}
-                    variant="feature-card"
-                    featureData={f}
-                    index={i}
-                    videoSrc={featureVideos[i]?.video}
-                  />
-                )
-              )}
-            </div>
-          </div>
-        </section>
-
         {/* How It Works */}
         <section style={{ padding: "70px 0", background: "#fff" }}>
           <div className="max-w-7xl mx-auto px-5 md:px-3">
@@ -478,6 +416,68 @@ export default async function Home({ params }: Props) {
                     variant="step-card"
                     stepData={s}
                     index={i}
+                  />
+                )
+              )}
+            </div>
+          </div>
+        </section>
+
+        {/* Features */}
+        <section id="funzionalita" className="scroll-mt-32" style={{ padding: "70px 0", background: "#f3f4f6" }}>
+          <div className="max-w-7xl mx-auto px-5 md:px-3">
+            <div style={{ textAlign: "center", marginBottom: 48 }}>
+              <h2
+                style={{
+                  fontSize: "clamp(28px, 5vw, 44px)",
+                  fontWeight: 900,
+                  color: "#1a1a2e",
+                  lineHeight: 1.15,
+                  marginBottom: 12,
+                }}
+              >
+                {l.features.title}{" "}
+                <span
+                  style={{
+                    color: "#f59e0b",
+                    textDecoration: "underline",
+                    textDecorationStyle: "wavy",
+                    textUnderlineOffset: 6,
+                    textDecorationThickness: 3,
+                  }}
+                >
+                  {l.features.titleHighlight}
+                </span>
+                .
+              </h2>
+              <p style={{ color: "#999", fontSize: 16 }}>
+                {l.features.subtitle}
+              </p>
+            </div>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fill, minmax(330px, 1fr))",
+                gap: 20,
+              }}
+            >
+              {l.features.items.map(
+                (
+                  f: {
+                    num: string;
+                    title: string;
+                    desc: string;
+                    icon: string;
+                    color: string;
+                  },
+                  i: number
+                ) => (
+                  <HomepageClient
+                    key={f.num}
+                    variant="feature-card"
+                    featureData={f}
+                    index={i}
+                    videoSrc={featureVideos[i]?.video}
                   />
                 )
               )}

@@ -117,6 +117,11 @@ export interface MetricsData {
     formats: { format: string; count: number }[];
     top_templates: { template: string; count: number }[];
   };
+  aiVideoStats?: {
+    total: number;
+    top_templates: { template: string; count: number }[];
+    models: { model: string; count: number }[];
+  };
   stripeStats?: {
     hasData: boolean;
     totalEvents: number;

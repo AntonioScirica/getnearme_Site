@@ -74,6 +74,13 @@ export async function GET(request: NextRequest) {
       emailEventRows = res.data || [];
     } catch { /* table not yet created */ }
 
+    // AI video events (one row per delivered AI video)
+    let aiVideoEventRows: { user_id: string; template: string; ai_model: string | null; created_at: string }[] = [];
+    try {
+      const res = await admin.from("ai_video_events").select("user_id, template, ai_model, created_at");
+      aiVideoEventRows = res.data || [];
+    } catch { /* table not yet created */ }
+
     const creditRows = creditsRes.data || [];
     const txRows = transactionsRes.data || [];
     const propRows = propertiesRes.data || [];
@@ -815,6 +822,27 @@ export async function GET(request: NextRequest) {
       team: userTeamInfo[c.user_id] || null,
     }));
 
+    // Aggregate AI video template usage
+    const aiVideoTemplateCounts: Record<string, number> = {};
+    const aiVideoModelCounts: Record<string, number> = {};
+    aiVideoEventRows.forEach((e) => {
+      if (e.template) {
+        aiVideoTemplateCounts[e.template] = (aiVideoTemplateCounts[e.template] || 0) + 1;
+      }
+      if (e.ai_model) {
+        aiVideoModelCounts[e.ai_model] = (aiVideoModelCounts[e.ai_model] || 0) + 1;
+      }
+    });
+    const aiVideoStats = {
+      total: aiVideoEventRows.length,
+      top_templates: Object.entries(aiVideoTemplateCounts)
+        .map(([template, count]) => ({ template, count }))
+        .sort((a, b) => b.count - a.count),
+      models: Object.entries(aiVideoModelCounts)
+        .map(([model, count]) => ({ model, count }))
+        .sort((a, b) => b.count - a.count),
+    };
+
     return NextResponse.json({
       retention,
       retention_months: retentionMonths,
@@ -838,6 +866,7 @@ export async function GET(request: NextRequest) {
       sectionUnlocks,
       teamsStats,
       exportAggregates,
+      aiVideoStats,
       stripeStats,
       summary: {
         totalUsers: users.total,
