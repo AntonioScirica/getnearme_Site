@@ -17,7 +17,7 @@ const tutorialVideos = [
   { id: "VfLpWoesIrU", title: "Get AI per arredare gli immobili!", duration: "0:37" },
   { id: "C_pkjIiW68o", title: "A cosa servono i crediti?", duration: "1:45" },
   { id: "BXCkVZp6nik", title: "Ottenere crediti con la newsletter!", duration: "0:44" },
-  { id: "YW2k6azRNcY", title: "Ho trovato un problema!", duration: "0:39" },
+  // { id: "YW2k6azRNcY", title: "Ho trovato un problema!", duration: "0:39" },
 ];
 
 type Props = {
@@ -70,9 +70,9 @@ export default async function Home({ params }: Props) {
             — {l.topBar.expiresIn}
           </span>
           <HomepageClient variant="countdown-inline" />
-          <span style={{ marginLeft: 8, color: "#34d399" }}>
+          {/* <span style={{ marginLeft: 8, color: "#34d399" }}>
             — {l.topBar.freeTrialShort}
-          </span>
+          </span> */}
         </div>
 
         {/* Navbar */}
@@ -148,7 +148,7 @@ export default async function Home({ params }: Props) {
                     color: "#b45309",
                     marginBottom: 28,
                     boxShadow: "3px 3px 0 #f59e0b40",
-                    display: "inline-flex",
+                    // display: "inline-flex",
                     alignItems: "center",
                     gap: 6,
                   }}
@@ -172,8 +172,8 @@ export default async function Home({ params }: Props) {
                 <span
                   style={{
                     color: "#f59e0b",
-                    textDecoration: "underline",
-                    textDecorationStyle: "wavy",
+                    // textDecoration: "underline",
+                    // textDecorationStyle: "wavy",
                     textUnderlineOffset: 8,
                     textDecorationThickness: 3,
                     textDecorationColor: "#f59e0b",
@@ -185,10 +185,10 @@ export default async function Home({ params }: Props) {
 
               <p
                 style={{
-                  color: "#888",
+                  color: "#333",
                   fontSize: 18,
                   lineHeight: 1.7,
-                  maxWidth: 560,
+                  maxWidth: 640,
                   margin: "0 0 36px",
                 }}
               >
@@ -333,7 +333,7 @@ export default async function Home({ params }: Props) {
                 >
                   {l.problem.title}
                 </h2>
-                <p style={{ color: "#888", fontSize: 15, lineHeight: 1.7 }}>
+                <p style={{ color: "#333", fontSize: 15, lineHeight: 1.7 }}>
                   {l.problem.desc}
                 </p>
               </div>
@@ -360,7 +360,7 @@ export default async function Home({ params }: Props) {
                 >
                   {l.solution.title}
                 </h2>
-                <p style={{ color: "#888", fontSize: 15, lineHeight: 1.7 }}>
+                <p style={{ color: "#333", fontSize: 15, lineHeight: 1.7 }}>
                   {l.solution.desc}
                 </p>
               </div>
@@ -447,8 +447,8 @@ export default async function Home({ params }: Props) {
                 <span
                   style={{
                     color: "#f59e0b",
-                    textDecoration: "underline",
-                    textDecorationStyle: "wavy",
+                    // textDecoration: "underline",
+                    // textDecorationStyle: "wavy",
                     textUnderlineOffset: 6,
                     textDecorationThickness: 3,
                   }}
@@ -639,7 +639,7 @@ export default async function Home({ params }: Props) {
                         padding: "6px 16px",
                         fontSize: 13,
                         fontWeight: 700,
-                        color: "#888",
+                        color: "#333",
                         boxShadow: "3px 3px 0 #1a1a2e",
                       }}
                     >
@@ -818,14 +818,15 @@ export default async function Home({ params }: Props) {
             >
               {l.finalCta.button}
             </a>
-            <div style={{ color: "#888", fontSize: 13, marginTop: 20, display: "inline-flex", alignItems: "center", gap: 6, justifyContent: "center" }}>
+            <br/>
+            <div style={{ color: "#eee", fontSize: 13, marginTop: 20, display: "inline-flex", alignItems: "center", gap: 6, justifyContent: "center" }}>
               {(() => {
                 const text = l.finalCta.footer;
                 const first = [...text][0] || "";
                 if (first === "🔒") {
                   return (
                     <>
-                      <Lock size={14} color="#888" strokeWidth={2.5} />
+                      <Lock size={14} color="#eee" strokeWidth={2.5} />
                       {text.slice(first.length).trim()}
                     </>
                   );

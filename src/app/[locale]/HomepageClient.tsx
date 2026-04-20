@@ -122,7 +122,7 @@ function FeatureCardClient({
           >
             {f.title}
           </h3>
-          <p style={{ color: '#888', fontSize: 14, lineHeight: 1.65, margin: 0 }}>{f.desc}</p>
+          <p style={{ color: '#333', fontSize: 14, lineHeight: 1.65, margin: 0 }}>{f.desc}</p>
         </div>
       </div>
     </RevealSection>
@@ -243,7 +243,7 @@ function PricingSection({
               {/* </span> */}
               .
             </h2>
-            <p style={{ color: '#888', fontSize: 16, marginBottom: 24 }}>{data.subtitle}</p>
+            <p style={{ color: '#333', fontSize: 16, marginBottom: 24 }}>{data.subtitle}</p>
             <div
               className="neo-border neo-shadow-sm"
               style={{
@@ -290,14 +290,14 @@ function PricingSection({
             )}
           </div>
 
-          <div
+          {/* <div
             style={{
               display: 'flex',
               justifyContent: 'center',
               gap: 28,
               flexWrap: 'wrap',
               marginTop: 32,
-              color: '#888',
+              color: '#333',
               fontSize: 13,
               fontWeight: 700,
             }}
@@ -314,9 +314,9 @@ function PricingSection({
                 </span>
               );
             })}
-          </div>
+          </div> */}
 
-          <ProgressBar agenciesText={data.progressAgencies} spotsText={data.progressSpots} />
+          {/* <ProgressBar agenciesText={data.progressAgencies} spotsText={data.progressSpots} /> */}
         </div>
       </section>
 
@@ -355,7 +355,7 @@ function PricingSection({
               <br />
               {data.modal.planLabel} {selectedPlanData?.name}
             </h3>
-            <p style={{ color: '#888', fontSize: 14, lineHeight: 1.6, margin: '0 0 28px' }}>
+            <p style={{ color: '#333', fontSize: 14, lineHeight: 1.6, margin: '0 0 28px' }}>
               {data.modal.desc}
               <br />
               <strong style={{ color: '#1a1a2e' }}>{data.modal.descBold}</strong> {data.modal.descEnd}

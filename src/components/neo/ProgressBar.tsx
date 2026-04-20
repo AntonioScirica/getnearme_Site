@@ -35,7 +35,7 @@ export default function ProgressBar({ agenciesText, spotsText }: ProgressBarProp
 
   return (
     <div ref={ref} style={{ marginTop: 36, textAlign: 'center' }}>
-      <div style={{ color: '#888', fontSize: 13, marginBottom: 10, display: 'inline-flex', alignItems: 'center', gap: 6, width: '100%', justifyContent: 'center' }}>
+      <div style={{ color: '#333', fontSize: 13, marginBottom: 10, display: 'inline-flex', alignItems: 'center', gap: 6, width: '100%', justifyContent: 'center' }}>
         <Flame size={16} color="#dc2626" strokeWidth={2.5} />
         <strong style={{ color: '#1a1a2e' }}>{agenciesText}</strong> —{' '}
         <strong style={{ color: '#dc2626' }}>{spotsText}</strong>

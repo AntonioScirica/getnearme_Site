@@ -36,7 +36,7 @@ const videos = [
   { id: "VfLpWoesIrU", title: "Get AI per arredare gli immobili!", duration: "0:37" },
   { id: "C_pkjIiW68o", title: "A cosa servono i crediti in GetNearMe?", duration: "1:45" },
   { id: "BXCkVZp6nik", title: "Ottenere crediti con la newsletter!", duration: "0:44" },
-  { id: "YW2k6azRNcY", title: "Ho trovato un problema nell'estensione!", duration: "0:39" },
+  // { id: "YW2k6azRNcY", title: "Ho trovato un problema nell'estensione!", duration: "0:39" },
 ];
 
 export default async function Tutorial({ params }: Props) {
