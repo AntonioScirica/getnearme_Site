@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Cookie } from "lucide-react";
 import { locales, type Locale } from "@/lib/i18n";
 import { translations } from "@/lib/translations";
 import Navbar from "@/components/Navbar";
@@ -51,7 +52,7 @@ export default async function CookiePolicy({ params }: Props) {
 
         <article className="prose prose-slate max-w-none">
           <div className="flex items-center gap-3 mb-6">
-            <span className="text-3xl">🍪</span>
+            <Cookie size={32} className="text-amber-600" strokeWidth={2.25} />
             <h1 className="text-4xl font-serif font-bold text-slate-900 m-0">{t.footer.cookie}</h1>
           </div>
           

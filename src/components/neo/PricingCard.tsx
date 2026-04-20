@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Check } from 'lucide-react';
 import RevealSection from './RevealSection';
 
 interface PricingPlan {
@@ -110,14 +111,12 @@ export default function PricingCard({ plan, onSelect }: PricingCardProps) {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: 12,
                   flexShrink: 0,
                   marginTop: 1,
-                  fontWeight: 900,
                   border: '2px solid #1a1a2e',
                 }}
               >
-                ✓
+                <Check size={12} strokeWidth={3} />
               </span>
               {f}
             </li>

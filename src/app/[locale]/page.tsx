@@ -1,5 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
+import { Flame, Zap, Lock, CreditCard, TrendingUp } from "lucide-react";
+import { Icon } from "@/lib/icons";
 import { locales, type Locale } from "@/lib/i18n";
 import { translations } from "@/lib/translations";
 import Navbar from "@/components/Navbar";
@@ -32,12 +34,12 @@ export default async function Home({ params }: Props) {
   const l = t.landing;
 
   const featureVideos = [
-    { video: "/assets/png/gif/compare_pdf.mp4" },
-    { video: "/assets/png/gif/agency_ai_anim.mp4" },
-    { video: "/assets/png/gif/post_social.mp4" },
-    { video: "/assets/png/gif/video_automation.mp4" },
-    { video: "/assets/png/gif/prezzo_medio_m2.mp4" },
     { video: "/assets/png/gif/map_zone.mp4" },
+    { video: "/assets/png/gif/prezzo_medio_m2.mp4" },
+    { video: "/assets/png/gif/agency_ai_anim.mp4" },
+    { video: "/assets/png/gif/ai_video_templates.png" },
+    { video: "/assets/png/gif/post_social.mp4" },
+    { video: "/assets/png/gif/compare_pdf.mp4" },
   ];
 
   return (
@@ -59,8 +61,9 @@ export default async function Home({ params }: Props) {
             borderBottom: "3px solid #f59e0b",
           }}
         >
-          <span>
-            🔥 {l.topBar.promo}{" "}
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+            <Flame size={14} color="#f59e0b" strokeWidth={2.5} />
+            {l.topBar.promo}{" "}
             <span style={{ color: "#f59e0b" }}>{l.topBar.discount}</span>
           </span>
           <span className="hidden sm:inline" style={{ margin: "0 8px" }}>
@@ -145,9 +148,13 @@ export default async function Home({ params }: Props) {
                     color: "#b45309",
                     marginBottom: 28,
                     boxShadow: "3px 3px 0 #f59e0b40",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 6,
                   }}
                 >
-                  ⚡ {l.hero.badge}
+                  <Zap size={14} color="#b45309" strokeWidth={2.75} />
+                  {l.hero.badge}
                 </div>
               )}
 
@@ -312,8 +319,8 @@ export default async function Home({ params }: Props) {
                   boxShadow: "5px 5px 0 #fca5a540",
                 }}
               >
-                <div style={{ fontSize: 36, marginBottom: 12 }}>
-                  {l.problem.emoji}
+                <div style={{ marginBottom: 12, color: "#dc2626" }}>
+                  <Icon name={l.problem.emoji} size={36} strokeWidth={2} />
                 </div>
                 <h2
                   style={{
@@ -339,8 +346,8 @@ export default async function Home({ params }: Props) {
                   boxShadow: "5px 5px 0 #6ee7b740",
                 }}
               >
-                <div style={{ fontSize: 36, marginBottom: 12 }}>
-                  {l.solution.emoji}
+                <div style={{ marginBottom: 12, color: "#059669" }}>
+                  <Icon name={l.solution.emoji} size={36} strokeWidth={2} />
                 </div>
                 <h2
                   style={{
@@ -811,8 +818,20 @@ export default async function Home({ params }: Props) {
             >
               {l.finalCta.button}
             </a>
-            <div style={{ color: "#888", fontSize: 13, marginTop: 20 }}>
-              {l.finalCta.footer}
+            <div style={{ color: "#888", fontSize: 13, marginTop: 20, display: "inline-flex", alignItems: "center", gap: 6, justifyContent: "center" }}>
+              {(() => {
+                const text = l.finalCta.footer;
+                const first = [...text][0] || "";
+                if (first === "🔒") {
+                  return (
+                    <>
+                      <Lock size={14} color="#888" strokeWidth={2.5} />
+                      {text.slice(first.length).trim()}
+                    </>
+                  );
+                }
+                return text;
+              })()}
             </div>
           </div>
         </section>

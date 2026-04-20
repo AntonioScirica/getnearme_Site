@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Icon } from '@/lib/icons';
 import CountdownTimer from '@/components/neo/CountdownTimer';
 import SocialPopup from '@/components/neo/SocialPopup';
 import NeoFAQItem from '@/components/neo/NeoFAQItem';
@@ -27,7 +28,7 @@ function FeatureCardClient({
   const [hovered, setHovered] = useState(false);
 
   return (
-    <RevealSection delay={index * 70}>
+    <RevealSection delay={index * 70} className="h-full">
       <div
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
@@ -40,6 +41,9 @@ function FeatureCardClient({
           transform: hovered ? 'translate(-2px,-4px)' : 'translate(0,0)',
           transition: 'all 0.35s cubic-bezier(0.34,1.56,0.64,1)',
           cursor: 'default',
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
         }}
       >
         {videoSrc && (
@@ -50,19 +54,36 @@ function FeatureCardClient({
                 borderRadius: 12,
                 overflow: 'hidden',
                 border: '2px solid #e2e8f0',
+                aspectRatio: '16 / 10',
               }}
             >
-              <video autoPlay loop muted playsInline className="w-full h-auto">
-                <source src={videoSrc} type="video/mp4" />
-              </video>
+              {/\.(png|jpe?g|webp|gif)$/i.test(videoSrc) ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={videoSrc}
+                  alt={f.title}
+                  className="w-full h-full"
+                  style={{ objectFit: 'cover', display: 'block' }}
+                />
+              ) : (
+                <video
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  className="w-full h-full"
+                  style={{ objectFit: 'cover', display: 'block' }}
+                >
+                  <source src={videoSrc} type="video/mp4" />
+                </video>
+              )}
             </div>
           </div>
         )}
-        <div style={{ padding: '20px 24px 28px' }}>
+        <div style={{ padding: '20px 24px 28px', flex: 1, display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
             <span
               style={{
-                fontSize: 24,
                 width: 50,
                 height: 50,
                 display: 'flex',
@@ -71,9 +92,10 @@ function FeatureCardClient({
                 background: `${f.color}15`,
                 borderRadius: 14,
                 border: `2px solid ${f.color}40`,
+                color: f.color,
               }}
             >
-              {f.icon}
+              <Icon name={f.icon} size={24} />
             </span>
             <span
               style={{
@@ -126,7 +148,6 @@ function StepCard({
           padding: '32px 24px',
         }}
       >
-        <div style={{ fontSize: 36, marginBottom: 12 }}>{s.emoji}</div>
         <div
           style={{
             display: 'inline-flex',
@@ -281,9 +302,18 @@ function PricingSection({
               fontWeight: 700,
             }}
           >
-            {data.trustBadges.map((badge: string, i: number) => (
-              <span key={i}>{badge}</span>
-            ))}
+            {data.trustBadges.map((badge: string, i: number) => {
+              const iconMap: Record<string, string> = { '🔒': 'lock', '💳': 'credit-card', '📈': 'trending-up' };
+              const firstChar = [...badge][0] || '';
+              const iconName = iconMap[firstChar];
+              const text = iconName ? badge.slice(firstChar.length).trim() : badge;
+              return (
+                <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  {iconName && <Icon name={iconName} size={16} color="#1a1a2e" />}
+                  {text}
+                </span>
+              );
+            })}
           </div>
 
           <ProgressBar agenciesText={data.progressAgencies} spotsText={data.progressSpots} />

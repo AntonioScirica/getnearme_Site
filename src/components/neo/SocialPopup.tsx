@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { Icon } from '@/lib/icons';
 
 interface PopupMessage {
   icon: string;
@@ -80,7 +81,9 @@ export default function SocialPopup({ messages }: SocialPopupProps) {
         cursor: 'pointer',
       }}
     >
-      <span style={{ fontSize: 22 }}>{p.icon}</span>
+      <span style={{ display: 'flex', color: '#1a1a2e' }}>
+        <Icon name={p.icon} size={22} />
+      </span>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ color: '#1a1a2e', fontSize: 13, fontWeight: 700, lineHeight: 1.4 }}>{p.text}</div>
         {p.time && <div style={{ color: '#999', fontSize: 11, marginTop: 2 }}>{p.time}</div>}
