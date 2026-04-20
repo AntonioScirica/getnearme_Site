@@ -5,39 +5,6 @@ const locales = ['it', 'en', 'es', 'fr', 'ru', 'uk'] as const;
 type Locale = (typeof locales)[number];
 const defaultLocale: Locale = 'it';
 
-const languageMapping: Record<string, Locale> = {
-  it: "it",
-  en: "en",
-  es: "es",
-  fr: "fr",
-  ru: "ru",
-  uk: "uk",
-  ua: "uk",
-};
-
-function getPreferredLocale(request: NextRequest): Locale {
-  const acceptLanguage = request.headers.get("accept-language");
-
-  if (acceptLanguage) {
-    const languages = acceptLanguage
-      .split(",")
-      .map((lang) => {
-        const [code, priority = "q=1"] = lang.trim().split(";");
-        const q = parseFloat(priority.replace("q=", "")) || 1;
-        return { code: code.split("-")[0].toLowerCase(), q };
-      })
-      .sort((a, b) => b.q - a.q);
-
-    for (const { code } of languages) {
-      if (languageMapping[code]) {
-        return languageMapping[code];
-      }
-    }
-  }
-
-  return defaultLocale;
-}
-
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -50,10 +17,9 @@ export function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Redirect alla versione localizzata
-  const locale = getPreferredLocale(request);
+  // Redirect alla versione localizzata di default (it)
   const url = request.nextUrl.clone();
-  url.pathname = `/${locale}${pathname}`;
+  url.pathname = `/${defaultLocale}${pathname}`;
 
   return NextResponse.redirect(url, 307);
 }

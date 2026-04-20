@@ -23,10 +23,10 @@ interface PricingPlan {
 
 interface PricingCardProps {
   plan: PricingPlan;
-  onSelect: (id: string) => void;
+  href: string;
 }
 
-export default function PricingCard({ plan, onSelect }: PricingCardProps) {
+export default function PricingCard({ plan, href }: PricingCardProps) {
   const [hovered, setHovered] = useState(false);
 
   return (
@@ -125,10 +125,11 @@ export default function PricingCard({ plan, onSelect }: PricingCardProps) {
         {plan.extra && (
           <div style={{ color: '#bbb', fontSize: 12, marginBottom: 18, paddingLeft: 32 }}>{plan.extra}</div>
         )}
-        <button
-          onClick={() => onSelect(plan.id)}
+        <a
+          href={href}
           className="neo-btn"
           style={{
+            display: 'block',
             width: '100%',
             padding: '16px 0',
             background: plan.color,
@@ -141,10 +142,13 @@ export default function PricingCard({ plan, onSelect }: PricingCardProps) {
             transition: 'all 0.15s',
             boxShadow: '4px 4px 0px #1a1a2e',
             letterSpacing: 0.5,
+            textAlign: 'center',
+            textDecoration: 'none',
+            boxSizing: 'border-box',
           }}
         >
           {plan.cta}
-        </button>
+        </a>
       </div>
     </RevealSection>
   );

@@ -193,22 +193,8 @@ function PricingSection({
     progressSpots: string;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     plans: any[];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    modal: any;
   };
 }) {
-  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
-  const [showModal, setShowModal] = useState(false);
-
-  const selectPlan = (id: string) => {
-    setSelectedPlan(id);
-    setShowModal(true);
-  };
-
-  const selectedPlanData = data.plans.find(
-    (p: { id: string }) => p.id === selectedPlan
-  );
-
   return (
     <>
       <section
@@ -284,7 +270,7 @@ function PricingSection({
                 <PricingCard
                   key={plan.id}
                   plan={{ ...plan, savingsLabel: data.savingsLabel }}
-                  onSelect={selectPlan}
+                  href={`/${locale}/checkout/agency?plan=${plan.id}`}
                 />
               )
             )}
@@ -319,70 +305,6 @@ function PricingSection({
           {/* <ProgressBar agenciesText={data.progressAgencies} spotsText={data.progressSpots} /> */}
         </div>
       </section>
-
-      {/* Modal */}
-      {showModal && (
-        <div
-          onClick={() => setShowModal(false)}
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.4)',
-            backdropFilter: 'blur(6px)',
-            zIndex: 10000,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 24,
-          }}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="neo-border"
-            style={{
-              background: '#fff',
-              borderRadius: 20,
-              padding: '44px 36px',
-              maxWidth: 440,
-              width: '100%',
-              textAlign: 'center',
-              boxShadow: '8px 8px 0 #1a1a2e',
-            }}
-          >
-            <div style={{ fontSize: 44, marginBottom: 16 }}>{data.modal.emoji}</div>
-            <h3 style={{ fontSize: 24, fontWeight: 900, margin: '0 0 10px', color: '#1a1a2e' }}>
-              {data.modal.title}
-              <br />
-              {data.modal.planLabel} {selectedPlanData?.name}
-            </h3>
-            <p style={{ color: '#333', fontSize: 14, lineHeight: 1.6, margin: '0 0 28px' }}>
-              {data.modal.desc}
-              <br />
-              <strong style={{ color: '#1a1a2e' }}>{data.modal.descBold}</strong> {data.modal.descEnd}
-            </p>
-            <a
-              href={`/${locale}/checkout/agency?plan=${selectedPlan}`}
-              className="neo-btn"
-              style={{
-                display: 'inline-block',
-                background: '#f59e0b',
-                color: '#1a1a2e',
-                padding: '16px 36px',
-                borderRadius: 14,
-                fontWeight: 900,
-                fontSize: 16,
-                textDecoration: 'none',
-                border: '3px solid #1a1a2e',
-                boxShadow: '6px 6px 0px #1a1a2e',
-                transition: 'all 0.15s',
-              }}
-            >
-              {data.modal.cta}
-            </a>
-            <div style={{ color: '#bbb', fontSize: 12, marginTop: 16 }}>{data.modal.footer}</div>
-          </div>
-        </div>
-      )}
     </>
   );
 }

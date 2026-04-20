@@ -691,7 +691,6 @@ export default async function Home({ params }: Props) {
             progressAgencies: l.pricing.progressAgencies,
             progressSpots: l.pricing.progressSpots,
             plans: l.pricing.plans,
-            modal: l.modal,
           }}
         />
 
