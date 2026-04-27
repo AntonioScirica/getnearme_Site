@@ -34,6 +34,6 @@ export const config = {
      * - assets folder
      * - files with extensions (.png, .jpg, etc.)
      */
-    "/((?!_next/static|_next/image|favicon\\.ico|robots\\.txt|sitemap\\.xml|manifest\\.json|assets/|api/|metrics|.*\\..*).*)",
+    "/((?!_next/static|_next/image|favicon\\.ico|robots\\.txt|sitemap\\.xml|manifest\\.json|assets/|api/|metrics|nfc|.*\\..*).*)",
   ],
 };
