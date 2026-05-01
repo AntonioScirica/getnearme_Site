@@ -2,15 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { createClient } from '@supabase/supabase-js';
 import { Loader2 } from 'lucide-react';
 import { type Locale } from '@/lib/i18n';
 import Navbar from '@/components/Navbar';
-
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+import { supabase } from '@/lib/supabase';
 
 const STRIPE_BILLING_PORTAL = 'https://billing.stripe.com/p/login/9B68wP7WH3blfTG15eak000';
 
@@ -271,6 +266,14 @@ export default function DashboardPage() {
 
         if (data) {
           setSubscriptionType(data.subscription_type || 'free');
+          // Auto-redirect ambassadors who landed here via OAuth callback
+          if (data.subscription_type === 'ambassador' && typeof window !== 'undefined') {
+            const url = new URL(window.location.href);
+            if (url.searchParams.get('as_ambassador') === '1') {
+              router.replace(`/${locale}/ambassador/dashboard`);
+              return;
+            }
+          }
         }
       } catch {
         // No record - user is free tier
@@ -326,6 +329,29 @@ export default function DashboardPage() {
 
       <main className="max-w-2xl mx-auto px-4 py-24">
         <h1 className="text-3xl font-bold mb-8">{t.title}</h1>
+
+        {/* Ambassador dashboard - top card if user is ambassador */}
+        {subscriptionType === 'ambassador' && (
+          <a
+            href={`/${locale}/ambassador/dashboard`}
+            className="block rounded-2xl p-6 mb-6 neo-border text-white transition-transform hover:-translate-y-0.5"
+            style={{
+              background: 'linear-gradient(135deg, #3B83F6 0%, #6366f1 50%, #8b5cf6 100%)',
+              boxShadow: '6px 6px 0px #1a1a2e',
+            }}
+          >
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="uppercase tracking-wider text-xs font-bold opacity-80 mb-1">Programma Ambassador</p>
+                <h2 className="text-2xl font-extrabold mb-1">Dashboard Ambassador</h2>
+                <p className="text-sm opacity-90">Vedi codice promo, agenzie firmate e bounty maturate</p>
+              </div>
+              <svg className="w-8 h-8 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M5 12h14M13 5l7 7-7 7"/>
+              </svg>
+            </div>
+          </a>
+        )}
 
         {/* Extension install - first card */}
         <div className="bg-blue-50 neo-border rounded-2xl p-6 mb-6" style={{ boxShadow: '6px 6px 0px #1a1a2e' }}>

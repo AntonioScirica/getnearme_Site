@@ -3,6 +3,7 @@ import { locales, type Locale } from "@/lib/i18n";
 import { translations } from "@/lib/translations";
 import Navbar from "@/components/Navbar";
 import { CheckCircle } from "lucide-react";
+import AmbassadorRedirect from "./AmbassadorRedirect";
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -48,6 +49,7 @@ export default async function ConfirmPage({ params }: Props) {
 
   return (
     <div className="min-h-screen bg-white font-sans text-slate-900">
+      <AmbassadorRedirect locale={locale as Locale} />
       <Navbar locale={locale as Locale} />
 
       <main className="min-h-screen flex items-center justify-center px-4">
