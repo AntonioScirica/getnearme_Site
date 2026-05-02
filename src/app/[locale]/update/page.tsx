@@ -14,6 +14,9 @@ import {
   LayoutGrid,
   GitCompare,
   ChevronRight,
+  Construction,
+  Gauge,
+  MousePointerClick,
 } from "lucide-react";
 import type { Metadata } from "next";
 
@@ -32,7 +35,7 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-const CURRENT_VERSION = "1.3.4";
+const CURRENT_VERSION = "1.3.5";
 
 const updates: {
   version: string;
@@ -50,10 +53,45 @@ const updates: {
   }[];
 }[] = [
   {
-    version: "1.3.4",
+    version: "1.3.5",
     date: "Maggio 2026",
     badge: "Ultima versione",
     badgeColor: "#059669",
+    title: "Video AI Cantiere e wizard più reattivo",
+    subtitle:
+      "Trasforma una foto del tuo immobile finito in un timelapse cinematografico del cantiere, e lavora con un wizard ancora più fluido.",
+    features: [
+      {
+        icon: <Construction size={22} />,
+        title: "Video AI Cantiere",
+        description:
+          "Da una sola foto dell'immobile finito generi un timelapse: scavo → struttura → casa completa, chiuso da un walkthrough cinematografico. Pronto per i social.",
+        tag: "Nuovo",
+        tagColor: "#059669",
+      },
+      {
+        icon: <Gauge size={22} />,
+        title: "Timelapse più punchy",
+        description:
+          "La fase di costruzione ora scorre più veloce e diretta, prima del walkthrough finale. Niente tempi morti, niente stacchi visibili tra una scena e l'altra.",
+        tag: "Migliorato",
+        tagColor: "#2563eb",
+      },
+      {
+        icon: <MousePointerClick size={22} />,
+        title: "Wizard senza attriti",
+        description:
+          "Il pulsante \"Torna ai template\" risponde all'istante e tempo stimato chiaro sopra ogni rendering. Meno popup, più creatività.",
+        tag: "Migliorato",
+        tagColor: "#2563eb",
+      },
+    ],
+  },
+  {
+    version: "1.3.4",
+    date: "Maggio 2026",
+    badge: "",
+    badgeColor: "#6b7280",
     title: "Più veloce, più libero",
     subtitle:
       "Wizard creativi accessibili ovunque, analisi istantanea e una dashboard ambassador tutta nuova.",
@@ -71,6 +109,14 @@ const updates: {
         title: "Post Social senza limiti",
         description:
           "Crea grafiche mozzafiato per Instagram e Facebook in pochi secondi, direttamente dalla tua estensione.",
+        tag: "Nuovo",
+        tagColor: "#059669",
+      },
+      {
+        icon: <Star size={22} />,
+        title: "Programma Ambassador",
+        description:
+          "Diventa protagonista della crescita di GetNearMe. Dashboard dedicata, codice promo personale e provvigioni su ogni agenzia.",
         tag: "Nuovo",
         tagColor: "#059669",
       },
@@ -97,14 +143,6 @@ const updates: {
           "Esperienza più fluida e intuitiva nella comparazione. Ogni dettaglio al posto giusto.",
         tag: "Migliorato",
         tagColor: "#2563eb",
-      },
-      {
-        icon: <Star size={22} />,
-        title: "Programma Ambassador",
-        description:
-          "Diventa protagonista della crescita di GetNearMe. Dashboard dedicata, codice promo personale e provvigioni su ogni agenzia.",
-        tag: "Nuovo",
-        tagColor: "#059669",
       },
     ],
   },
