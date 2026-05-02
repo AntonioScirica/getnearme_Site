@@ -388,16 +388,16 @@ export default function AmbassadorDashboardPage() {
           />
           <KpiCard
             icon={<Wallet className="w-5 h-5" />}
-            label="Totale guadagnato"
+            label="Provvigioni totali"
             value={eur(data.earnedToDate)}
-            sub={`${eur(data.paidOut)} già ricevuti`}
+            sub={`${eur(data.paidOut)} già incassati`}
             tone="green"
           />
           <KpiCard
             icon={<Clock className="w-5 h-5" />}
-            label="In attesa di pagamento"
+            label="Da incassare"
             value={eur(data.pendingPayout)}
-            sub="Bonifici manuali periodici"
+            sub="In attesa di bonifico"
             tone="amber"
           />
         </div>
@@ -430,7 +430,7 @@ export default function AmbassadorDashboardPage() {
                     <th className="py-2 pr-3">Piano</th>
                     <th className="py-2 pr-3">Data</th>
                     <th className="py-2 pr-3">Stato</th>
-                    <th className="py-2 pr-3">Bounty</th>
+                    <th className="py-2 pr-3">Provvigione</th>
                     <th className="py-2">Avanzamento</th>
                   </tr>
                 </thead>
@@ -473,19 +473,22 @@ export default function AmbassadorDashboardPage() {
 
         {/* Payouts history */}
         <div className="bg-white neo-border rounded-2xl p-6 mb-6 overflow-hidden" style={{ boxShadow: '6px 6px 0px #1a1a2e' }}>
-          <h2 className="text-sm font-bold uppercase tracking-wider text-slate-400 mb-4">Storico bounty maturate</h2>
+          <h2 className="text-sm font-bold uppercase tracking-wider text-slate-400 mb-1">Dettaglio provvigioni</h2>
+          <p className="text-xs text-slate-400 mb-4">
+            Ogni riga rappresenta una rata della provvigione, sbloccata quando l&apos;agenzia paga la rispettiva fattura.
+          </p>
           {data.payouts.length === 0 ? (
-            <p className="text-slate-400 text-sm py-8 text-center">Nessuna bounty maturata ancora.</p>
+            <p className="text-slate-400 text-sm py-8 text-center">Nessuna provvigione ancora sbloccata.</p>
           ) : (
             <div className="overflow-x-auto -mx-6 px-6">
               <table className="w-full text-sm min-w-[640px]">
                 <thead>
                   <tr className="text-left text-xs uppercase text-slate-400 border-b-2 border-slate-100">
-                    <th className="py-2 pr-3">Maturata il</th>
-                    <th className="py-2 pr-3">Scaglione</th>
+                    <th className="py-2 pr-3">Data</th>
+                    <th className="py-2 pr-3">Rata</th>
                     <th className="py-2 pr-3">Importo</th>
-                    <th className="py-2 pr-3">Pagata</th>
-                    <th className="py-2">Riferimento</th>
+                    <th className="py-2 pr-3">Stato</th>
+                    <th className="py-2">Riferimento bonifico</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -496,9 +499,9 @@ export default function AmbassadorDashboardPage() {
                       <td className="py-3 pr-3 font-bold">{eur(p.amount_eur)}</td>
                       <td className="py-3 pr-3">
                         {p.paid_at ? (
-                          <span className="px-2 py-1 rounded text-xs font-bold bg-green-100 text-green-700">{formatDate(p.paid_at)}</span>
+                          <span className="px-2 py-1 rounded text-xs font-bold bg-green-100 text-green-700">Incassata · {formatDate(p.paid_at)}</span>
                         ) : (
-                          <span className="px-2 py-1 rounded text-xs font-bold bg-amber-100 text-amber-800">In attesa</span>
+                          <span className="px-2 py-1 rounded text-xs font-bold bg-amber-100 text-amber-800">Da incassare</span>
                         )}
                       </td>
                       <td className="py-3 text-slate-500 text-xs">
@@ -513,7 +516,7 @@ export default function AmbassadorDashboardPage() {
         </div>
 
         <p className="text-center text-slate-400 text-xs">
-          I bonifici vengono effettuati periodicamente. Per domande sui pagamenti contatta l&apos;amministratore.
+          I bonifici vengono effettuati periodicamente. Per domande contatta l&apos;amministratore.
         </p>
       </main>
     </div>
