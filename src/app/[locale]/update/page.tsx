@@ -4,7 +4,6 @@ import {
   Sparkles,
   Zap,
   Shield,
-  ArrowRight,
   Rocket,
   Star,
   MessageSquareHeart,
@@ -17,6 +16,7 @@ import {
   Construction,
   Gauge,
   MousePointerClick,
+  Sun,
 } from "lucide-react";
 import type { Metadata } from "next";
 
@@ -35,7 +35,7 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-const CURRENT_VERSION = "1.3.5";
+const CURRENT_VERSION = "1.3.6";
 
 const updates: {
   version: string;
@@ -53,10 +53,29 @@ const updates: {
   }[];
 }[] = [
   {
-    version: "1.3.5",
+    version: "1.3.6",
     date: "Maggio 2026",
     badge: "Ultima versione",
     badgeColor: "#059669",
+    title: "Video AI Giorno ↔ Notte",
+    subtitle:
+      "Carica una foto e trasformala da giorno a notte (o viceversa). L'AI cambia solo luci, cielo e atmosfera.",
+    features: [
+      {
+        icon: <Sun size={22} />,
+        title: "Nuovo template Giorno ↔ Notte",
+        description:
+          "Carica una foto del tuo immobile e l'AI cambia solo luci, cielo e atmosfera — da giorno a notte o viceversa. Perfetto per mostrare l'immobile in ogni momento della giornata.",
+        tag: "Nuovo",
+        tagColor: "#059669",
+      },
+    ],
+  },
+  {
+    version: "1.3.5",
+    date: "Maggio 2026",
+    badge: "",
+    badgeColor: "#6b7280",
     title: "Video AI Cantiere e wizard più reattivo",
     subtitle:
       "Trasforma una foto del tuo immobile finito in un timelapse cinematografico del cantiere, e lavora con un wizard ancora più fluido.",
