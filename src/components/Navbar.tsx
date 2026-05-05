@@ -95,7 +95,7 @@ export default function Navbar({ locale }: NavbarProps) {
 
                     <div className="hidden md:flex items-center gap-16 text-sm font-medium text-slate-600 absolute left-1/2 -translate-x-1/2">
                         <Link href={`/${locale}#funzionalita`} className="hover:text-black transition-colors">{t.nav.features}</Link>
-                        <Link href={`/${locale}#tutorial`} className="hover:text-black transition-colors">{t.nav.tutorial}</Link>
+                        <Link href={`/${locale}/tutorial`} className="hover:text-black transition-colors">{t.nav.tutorial}</Link>
                         <Link href={`/${locale}#pricing`} className="hover:text-black transition-colors">{t.nav.pricing}</Link>
                         <Link href={`/${locale}#faq`} className="hover:text-black transition-colors">{t.nav.faq}</Link>
                         <LanguageSwitcher locale={locale} />
@@ -159,7 +159,7 @@ export default function Navbar({ locale }: NavbarProps) {
                     <div className="flex flex-col items-center gap-2">
                         {[
                             { href: `/${locale}#funzionalita`, label: t.nav.features },
-                            { href: `/${locale}#tutorial`, label: t.nav.tutorial },
+                            { href: `/${locale}/tutorial`, label: t.nav.tutorial },
                             { href: `/${locale}#pricing`, label: t.nav.pricing },
                             { href: `/${locale}#faq`, label: t.nav.faq },
                         ].map((item, i) => (

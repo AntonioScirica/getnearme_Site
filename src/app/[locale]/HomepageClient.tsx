@@ -9,6 +9,7 @@ import TestimonialCard from '@/components/neo/TestimonialCard';
 import PricingCard from '@/components/neo/PricingCard';
 import ProgressBar from '@/components/neo/ProgressBar';
 import RevealSection from '@/components/neo/RevealSection';
+import FeatureShowcase from '@/components/neo/FeatureShowcase';
 
 interface HomepageClientProps {
   variant: string;
@@ -143,6 +144,7 @@ function StepCard({
         style={{
           textAlign: 'center',
           maxWidth: 300,
+          height: '100%',
           background: s.bg,
           borderRadius: 16,
           padding: '32px 24px',
@@ -342,6 +344,17 @@ export default function HomepageClient(props: HomepageClientProps) {
 
     case 'step-card':
       return <StepCard s={props.stepData} index={props.index} />;
+
+    case 'feature-showcase':
+      return (
+        <FeatureShowcase
+          feature={props.featureData}
+          index={props.index}
+          videoSrc={props.videoSrc}
+          reverse={props.reverse}
+        />
+      );
+
 
     case 'pricing-section':
       return <PricingSection data={props.pricingData} locale={props.locale} />;

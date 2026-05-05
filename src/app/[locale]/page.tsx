@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import { Flame, Zap, Lock, CreditCard, TrendingUp } from "lucide-react";
 import { Icon } from "@/lib/icons";
@@ -7,18 +6,6 @@ import { translations } from "@/lib/translations";
 import Navbar from "@/components/Navbar";
 import HomepageClient from "./HomepageClient";
 
-const tutorialVideos = [
-  { id: "I7kcgpiGQH8", title: "Come scaricare GetNearMe!", duration: "0:46" },
-  { id: "mMpozP8SM48", title: "La sezione Immobile di GetNearMe", duration: "0:46" },
-  { id: "jY4_33HrD0E", title: "Analizza il quartiere intorno a te!", duration: "0:47" },
-  { id: "bNnjbHegtjg", title: "Calcolare il prezzo medio al m2", duration: "0:42" },
-  { id: "klTtrvPqMlI", title: "Comparare i vari immobili!", duration: "0:45" },
-  { id: "-AxXOzMCzLQ", title: "Report Personalizzabili per Agenzie", duration: "0:46" },
-  { id: "VfLpWoesIrU", title: "Get AI per arredare gli immobili!", duration: "0:37" },
-  { id: "C_pkjIiW68o", title: "A cosa servono i crediti?", duration: "1:45" },
-  { id: "BXCkVZp6nik", title: "Ottenere crediti con la newsletter!", duration: "0:44" },
-  // { id: "YW2k6azRNcY", title: "Ho trovato un problema!", duration: "0:39" },
-];
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -34,12 +21,12 @@ export default async function Home({ params }: Props) {
   const l = t.landing;
 
   const featureVideos = [
-    { video: "/assets/png/gif/map_zone.mp4" },
-    { video: "/assets/png/gif/prezzo_medio_m2.mp4" },
     { video: "/assets/png/gif/agency_ai_anim.mp4" },
     { video: "/assets/png/gif/ai_video_templates.png" },
     { video: "/assets/png/gif/post_social.mp4" },
     { video: "/assets/png/gif/compare_pdf.mp4" },
+    { video: "/assets/png/gif/map_zone.mp4" },
+    { video: "/assets/png/gif/prezzo_medio_m2.mp4" },
   ];
 
   return (
@@ -160,7 +147,7 @@ export default async function Home({ params }: Props) {
 
               <h1
                 style={{
-                  fontSize: "clamp(36px, 6vw, 68px)",
+                  fontSize: "clamp(32px, 5vw, 54px)",
                   fontWeight: 900,
                   lineHeight: 1.05,
                   margin: "0 0 22px",
@@ -188,7 +175,7 @@ export default async function Home({ params }: Props) {
                   color: "#333",
                   fontSize: 18,
                   lineHeight: 1.7,
-                  maxWidth: 640,
+                  maxWidth: 720,
                   margin: "0 0 36px",
                 }}
               >
@@ -216,8 +203,8 @@ export default async function Home({ params }: Props) {
                 >
                   {l.hero.ctaPrimary}
                 </a>
-                <a
-                  href="#tutorial"
+                <Link
+                  href={`/${locale}/demo`}
                   className="neo-btn"
                   style={{
                     background: "#fff",
@@ -233,40 +220,12 @@ export default async function Home({ params }: Props) {
                     textDecoration: "none",
                   }}
                 >
-                  {l.hero.ctaSecondary}
-                </a>
+                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                  {(l.hero as any).ctaDemo}
+                </Link>
               </div>
 
-              <div
-                className="neo-border neo-shadow-sm"
-                style={{
-                  display: "inline-flex",
-                  gap: 20,
-                  flexWrap: "wrap",
-                  justifyContent: "center",
-                  marginTop: 40,
-                  padding: "16px 24px",
-                  background: "#fff",
-                  borderRadius: 14,
-                }}
-              >
-                {l.hero.stats.map((stat: string, i: number) => (
-                  <span
-                    key={i}
-                    style={{
-                      color: "#666",
-                      fontSize: 13,
-                      fontWeight: 700,
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {i > 0 && (
-                      <span style={{ color: "#ddd", marginRight: 10 }}>|</span>
-                    )}
-                    {stat}
-                  </span>
-                ))}
-              </div>
+
             </div>
 
             {/* YouTube Video - Full width, 16:9, neobrutalism frame */}
@@ -298,6 +257,120 @@ export default async function Home({ params }: Props) {
               </div>
             </div>
           </div>
+        </section>
+
+        {/* How It Works */}
+        <section style={{ padding: "70px 0", background: "#fff" }}>
+          <div className="max-w-7xl mx-auto px-5 md:px-3">
+            <div style={{ textAlign: "center", marginBottom: 48 }}>
+              <h2
+                style={{
+                  fontSize: "clamp(28px, 5vw, 44px)",
+                  fontWeight: 900,
+                  color: "#1a1a2e",
+                  lineHeight: 1.15,
+                  marginBottom: 12,
+                }}
+              >
+                {l.howItWorks.title}{" "}
+                <span
+                  style={{
+                    background: "#1a1a2e",
+                    color: "#f59e0b",
+                    padding: "2px 14px",
+                    borderRadius: 10,
+                  }}
+                >
+                  {l.howItWorks.titleHighlight}
+                </span>
+                .
+              </h2>
+              <p style={{ color: "#999", fontSize: 16 }}>
+                {l.howItWorks.subtitle}
+              </p>
+            </div>
+            <div
+              style={{
+                display: "flex",
+                gap: 24,
+                justifyContent: "center",
+                flexWrap: "wrap",
+                alignItems: "stretch",
+              }}
+            >
+              {l.howItWorks.steps.map(
+                (
+                  s: {
+                    step: string;
+                    title: string;
+                    desc: string;
+                    color: string;
+                    bg: string;
+                    emoji: string;
+                  },
+                  i: number
+                ) => (
+                  <HomepageClient
+                    key={i}
+                    variant="step-card"
+                    stepData={s}
+                    index={i}
+                  />
+                )
+              )}
+            </div>
+          </div>
+        </section>
+
+        {/* Features — Full-Width Alternating */}
+        <section id="funzionalita" className="scroll-mt-32">
+          <div style={{ textAlign: "center", padding: "70px 24px 0", background: "#fafaf8" }}>
+            <h2
+              style={{
+                fontSize: "clamp(28px, 5vw, 44px)",
+                fontWeight: 900,
+                color: "#1a1a2e",
+                lineHeight: 1.15,
+                marginBottom: 12,
+              }}
+            >
+              {l.features.title}
+              <br />
+              <span
+                style={{
+                  color: "#f59e0b",
+                  textUnderlineOffset: 6,
+                  textDecorationThickness: 3,
+                }}
+              >
+                {l.features.titleHighlight}
+              </span>
+            </h2>
+            <p style={{ color: "#999", fontSize: 16, maxWidth: 700, margin: "0 auto" }}>
+              {l.features.subtitle}
+            </p>
+          </div>
+          {l.features.items.map(
+            (
+              f: {
+                num: string;
+                title: string;
+                desc: string;
+                icon: string;
+                color: string;
+              },
+              i: number
+            ) => (
+              <HomepageClient
+                key={f.num}
+                variant="feature-showcase"
+                featureData={f}
+                index={i}
+                videoSrc={featureVideos[i]?.video}
+                reverse={i % 2 !== 0}
+              />
+            )
+          )}
         </section>
 
         {/* Problem / Solution */}
@@ -364,228 +437,6 @@ export default async function Home({ params }: Props) {
                   {l.solution.desc}
                 </p>
               </div>
-            </div>
-          </div>
-        </section>
-
-        {/* How It Works */}
-        <section style={{ padding: "70px 0", background: "#fff" }}>
-          <div className="max-w-7xl mx-auto px-5 md:px-3">
-            <div style={{ textAlign: "center", marginBottom: 48 }}>
-              <h2
-                style={{
-                  fontSize: "clamp(28px, 5vw, 44px)",
-                  fontWeight: 900,
-                  color: "#1a1a2e",
-                  lineHeight: 1.15,
-                  marginBottom: 12,
-                }}
-              >
-                {l.howItWorks.title}{" "}
-                <span
-                  style={{
-                    background: "#1a1a2e",
-                    color: "#f59e0b",
-                    padding: "2px 14px",
-                    borderRadius: 10,
-                  }}
-                >
-                  {l.howItWorks.titleHighlight}
-                </span>
-                .
-              </h2>
-              <p style={{ color: "#999", fontSize: 16 }}>
-                {l.howItWorks.subtitle}
-              </p>
-            </div>
-            <div
-              style={{
-                display: "flex",
-                gap: 24,
-                justifyContent: "center",
-                flexWrap: "wrap",
-              }}
-            >
-              {l.howItWorks.steps.map(
-                (
-                  s: {
-                    step: string;
-                    title: string;
-                    desc: string;
-                    color: string;
-                    bg: string;
-                    emoji: string;
-                  },
-                  i: number
-                ) => (
-                  <HomepageClient
-                    key={i}
-                    variant="step-card"
-                    stepData={s}
-                    index={i}
-                  />
-                )
-              )}
-            </div>
-          </div>
-        </section>
-
-        {/* Features */}
-        <section id="funzionalita" className="scroll-mt-32" style={{ padding: "70px 0", background: "#f3f4f6" }}>
-          <div className="max-w-7xl mx-auto px-5 md:px-3">
-            <div style={{ textAlign: "center", marginBottom: 48 }}>
-              <h2
-                style={{
-                  fontSize: "clamp(28px, 5vw, 44px)",
-                  fontWeight: 900,
-                  color: "#1a1a2e",
-                  lineHeight: 1.15,
-                  marginBottom: 12,
-                }}
-              >
-                {l.features.title}{" "}
-                <span
-                  style={{
-                    color: "#f59e0b",
-                    // textDecoration: "underline",
-                    // textDecorationStyle: "wavy",
-                    textUnderlineOffset: 6,
-                    textDecorationThickness: 3,
-                  }}
-                >
-                  {l.features.titleHighlight}
-                </span>
-                .
-              </h2>
-              <p style={{ color: "#999", fontSize: 16 }}>
-                {l.features.subtitle}
-              </p>
-            </div>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(330px, 1fr))",
-                gap: 20,
-              }}
-            >
-              {l.features.items.map(
-                (
-                  f: {
-                    num: string;
-                    title: string;
-                    desc: string;
-                    icon: string;
-                    color: string;
-                  },
-                  i: number
-                ) => (
-                  <HomepageClient
-                    key={f.num}
-                    variant="feature-card"
-                    featureData={f}
-                    index={i}
-                    videoSrc={featureVideos[i]?.video}
-                  />
-                )
-              )}
-            </div>
-          </div>
-        </section>
-
-        {/* Tutorial */}
-        <section id="tutorial" className="scroll-mt-32" style={{ padding: "70px 0", background: "#fff" }}>
-          <div className="max-w-7xl mx-auto px-5 md:px-3">
-            <div style={{ textAlign: "center", marginBottom: 48 }}>
-              <h2
-                style={{
-                  fontSize: "clamp(28px, 5vw, 44px)",
-                  fontWeight: 900,
-                  color: "#1a1a2e",
-                  lineHeight: 1.15,
-                  marginBottom: 12,
-                }}
-              >
-                Tutorial{" "}
-                <span
-                  style={{
-                    background: "#dbeafe",
-                    color: "#2563eb",
-                    padding: "2px 14px",
-                    borderRadius: 10,
-                    border: "2px solid #93c5fd",
-                    boxShadow: "3px 3px 0 #93c5fd",
-                  }}
-                >
-                  Video
-                </span>
-              </h2>
-              <p style={{ color: "#999", fontSize: 16 }}>
-                Scopri come sfruttare al meglio GetNearMe con le nostre guide
-                video.
-              </p>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {tutorialVideos.map((video) => (
-                <a
-                  key={video.id}
-                  href={`https://www.youtube.com/watch?v=${video.id}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="neo-border group"
-                  style={{
-                    background: "#fff",
-                    borderRadius: 16,
-                    overflow: "hidden",
-                    boxShadow: "5px 5px 0px #1a1a2e",
-                    transition: "all 0.2s",
-                    textDecoration: "none",
-                    display: "block",
-                  }}
-                >
-                  <div className="relative aspect-video bg-slate-100">
-                    <Image
-                      src={`https://img.youtube.com/vi/${video.id}/hqdefault.jpg`}
-                      alt={video.title}
-                      fill
-                      className="object-cover"
-                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                    />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-14 h-14 bg-white/90 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform border-2 border-[#1a1a2e]">
-                        <svg
-                          className="w-6 h-6 text-[#1a1a2e] ml-0.5"
-                          fill="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path d="M8 5v14l11-7z" />
-                        </svg>
-                      </div>
-                    </div>
-                  </div>
-                  <div style={{ padding: "14px 16px 12px" }}>
-                    <h3
-                      style={{
-                        fontSize: 15,
-                        fontWeight: 800,
-                        color: "#1a1a2e",
-                        margin: "0 0 4px",
-                        lineHeight: 1.3,
-                      }}
-                    >
-                      {video.title}
-                    </h3>
-                    <span
-                      style={{
-                        fontSize: 12,
-                        color: "#999",
-                        fontWeight: 600,
-                      }}
-                    >
-                      {video.duration}
-                    </span>
-                  </div>
-                </a>
-              ))}
             </div>
           </div>
         </section>
@@ -796,28 +647,50 @@ export default async function Home({ params }: Props) {
             <p style={{ color: "#aaa", fontSize: 17, marginBottom: 36 }}>
               {l.finalCta.desc}
             </p>
-            <a
-              href="#pricing"
-              className="neo-btn"
-              style={{
-                display: "inline-block",
-                background: "#f59e0b",
-                color: "#1a1a2e",
-                border: "3px solid #fff",
-                padding: "18px 48px",
-                borderRadius: 14,
-                fontWeight: 900,
-                fontSize: 18,
-                cursor: "pointer",
-                boxShadow: "6px 6px 0 rgba(255,255,255,0.2)",
-                transition: "all 0.15s",
-                letterSpacing: 0.5,
-                textDecoration: "none",
-              }}
-            >
-              {l.finalCta.button}
-            </a>
-            <br/>
+            <div style={{ display: "flex", gap: 14, flexWrap: "wrap", justifyContent: "center" }}>
+              <a
+                href="#pricing"
+                className="neo-btn"
+                style={{
+                  display: "inline-block",
+                  background: "#f59e0b",
+                  color: "#1a1a2e",
+                  border: "3px solid #fff",
+                  padding: "18px 48px",
+                  borderRadius: 14,
+                  fontWeight: 900,
+                  fontSize: 18,
+                  cursor: "pointer",
+                  boxShadow: "6px 6px 0 rgba(255,255,255,0.2)",
+                  transition: "all 0.15s",
+                  letterSpacing: 0.5,
+                  textDecoration: "none",
+                }}
+              >
+                {l.finalCta.button}
+              </a>
+              <Link
+                href={`/${locale}/demo`}
+                className="neo-btn"
+                style={{
+                  display: "inline-block",
+                  background: "transparent",
+                  color: "#fff",
+                  border: "3px solid #fff",
+                  padding: "18px 36px",
+                  borderRadius: 14,
+                  fontWeight: 700,
+                  fontSize: 16,
+                  cursor: "pointer",
+                  boxShadow: "6px 6px 0 rgba(255,255,255,0.1)",
+                  transition: "all 0.15s",
+                  textDecoration: "none",
+                }}
+              >
+                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                {(l.finalCta as any).buttonDemo}
+              </Link>
+            </div>
             <div style={{ color: "#eee", fontSize: 13, marginTop: 20, display: "inline-flex", alignItems: "center", gap: 6, justifyContent: "center" }}>
               {(() => {
                 const text = l.finalCta.footer;
@@ -885,7 +758,7 @@ export default async function Home({ params }: Props) {
                   </li>
                   <li>
                     <a
-                      href="#tutorial"
+                      href={`/${locale}/tutorial`}
                       className="text-slate-400 hover:text-slate-900 transition-colors"
                     >
                       {t.nav.tutorial}
