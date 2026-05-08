@@ -138,30 +138,46 @@ export default function ResetPasswordForm({ locale }: { locale: Locale }) {
   const [sessionError, setSessionError] = useState(false);
 
   useEffect(() => {
-    const hash = window.location.hash;
-    if (hash && hash.includes("access_token")) {
-      const params = new URLSearchParams(hash.substring(1));
-      const accessToken = params.get("access_token");
-      const refreshToken = params.get("refresh_token");
-      if (accessToken && refreshToken) {
-        supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken })
-          .then(({ error }) => {
-            if (error) {
-              setSessionError(true);
-            } else {
-              setSessionReady(true);
-            }
-          });
+    async function initSession() {
+      // PKCE flow: Supabase redirects with ?code= query param
+      const url = new URL(window.location.href);
+      const code = url.searchParams.get("code");
+      if (code) {
+        const { error } = await supabase.auth.exchangeCodeForSession(code);
+        if (error) {
+          setSessionError(true);
+        } else {
+          setSessionReady(true);
+        }
         return;
       }
-    }
-    supabase.auth.getSession().then(({ data }) => {
+
+      // Implicit flow: token in URL hash
+      const hash = window.location.hash;
+      if (hash && hash.includes("access_token")) {
+        const params = new URLSearchParams(hash.substring(1));
+        const accessToken = params.get("access_token");
+        const refreshToken = params.get("refresh_token");
+        if (accessToken && refreshToken) {
+          const { error } = await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
+          if (error) {
+            setSessionError(true);
+          } else {
+            setSessionReady(true);
+          }
+          return;
+        }
+      }
+
+      // Fallback: check existing session
+      const { data } = await supabase.auth.getSession();
       if (data.session) {
         setSessionReady(true);
       } else {
         setSessionError(true);
       }
-    });
+    }
+    initSession();
   }, []);
 
   async function handleSubmit(e: React.FormEvent) {
