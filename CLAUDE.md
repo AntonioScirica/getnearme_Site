@@ -61,3 +61,23 @@ Every locale layout generates: JSON-LD (`SoftwareApplication`, `WebSite`, `Organ
 ### Path Alias
 
 `@/*` maps to `./src/*` (tsconfig).
+
+## Second Brain
+
+**Vault note progetto:** `/Users/antonioscirica/Obsidian-SecondBrain/10-Projects/GetNearMe/site/`
+
+**Index:** `10-Projects/GetNearMe/index.md` (sezione "Sito").
+
+### Note chiave
+- `site/architecture.md` — stack, routing, blog dual-source
+- `site/pages.md` — tutte le pagine
+- `site/components.md` — Navbar, LanguageSwitcher, Hero…
+- `site/blog-system.md` — Supabase + MDX
+- `site/i18n.md` — 6 locali, proxy detection
+- `site/seo.md` — JSON-LD, OG, hreflang
+- `site/api.md` — endpoint metrics
+- `site/metrics-dashboard.md` — dashboard analytics interno
+
+### Workflow
+- Bug strano → append a vault `learnings` o `20-Knowledge/`
+- Decisione → append a `decisions.md`
