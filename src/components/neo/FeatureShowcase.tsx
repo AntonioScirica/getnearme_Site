@@ -15,8 +15,11 @@ export default function FeatureShowcase({ feature: f, videoSrc, index, reverse }
   const [hovered, setHovered] = useState(false);
   const bg = index % 2 === 0 ? '#fafaf8' : '#f3f4f6';
 
+  const sectionIds = ['ai-photos', 'ai-video', 'social-posts', 'reports', 'zone-analysis', 'price-calculator'];
+  const sectionId = sectionIds[index] || `feature-${index}`;
+
   return (
-    <div style={{ background: bg }}>
+    <div id={sectionId} style={{ background: bg }} className="scroll-mt-20">
       <RevealSection delay={80}>
         <div
           style={{
