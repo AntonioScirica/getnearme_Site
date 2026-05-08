@@ -88,17 +88,6 @@ async function loadSeedTemplates() {
       source_note: "supabase/functions/welcome-email",
     },
     {
-      id: "welcome-site",
-      file: "01-welcome-site.html",
-      audience: "user",
-      title: "Welcome · sito",
-      subject: "Il tuo account GetNearMe è attivo",
-      preheader: "Account attivo. Completa l'iscrizione al piano Pro.",
-      variables: ["user_name"],
-      trigger_note: "Email confermata · signup_source=site",
-      source_note: "supabase/functions/welcome-email",
-    },
-    {
       id: "daily-bonus-it",
       file: "02-daily-bonus.html",
       audience: "user",
@@ -202,6 +191,17 @@ async function loadSeedTemplates() {
       trigger_note:
         "2 fallimenti CSS consecutivi → Edge Function selector-health-alert",
       source_note: "supabase/functions/selector-health-alert",
+    },
+    {
+      id: "purchase-confirmed",
+      file: "08-purchase-confirmed.html",
+      audience: "user",
+      title: "Acquisto confermato",
+      subject: "Acquisto confermato · {{plan_name}}",
+      preheader: "Il tuo piano {{plan_name}} è attivo.",
+      variables: ["user_name", "plan_name"],
+      trigger_note: "checkout.session.completed (Stripe webhook, agency tier)",
+      source_note: "supabase/functions/stripe-webhook",
     },
   ];
 
