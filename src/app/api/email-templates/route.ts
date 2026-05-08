@@ -203,6 +203,28 @@ async function loadSeedTemplates() {
       trigger_note: "checkout.session.completed (Stripe webhook, agency tier)",
       source_note: "supabase/functions/stripe-webhook",
     },
+    {
+      id: "subscription-updated",
+      file: "09-subscription-updated.html",
+      audience: "user",
+      title: "Piano aggiornato",
+      subject: "Piano aggiornato · {{new_plan_name}}",
+      preheader: "Il tuo piano è stato aggiornato a {{new_plan_name}}.",
+      variables: ["user_name", "new_plan_name"],
+      trigger_note: "customer.subscription.updated (cambio tier)",
+      source_note: "supabase/functions/stripe-webhook",
+    },
+    {
+      id: "subscription-cancelled",
+      file: "10-subscription-cancelled.html",
+      audience: "user",
+      title: "Abbonamento cancellato",
+      subject: "Abbonamento cancellato · {{plan_name}}",
+      preheader: "Il tuo abbonamento GetNearMe è stato cancellato.",
+      variables: ["user_name", "plan_name"],
+      trigger_note: "customer.subscription.updated (cancel_at_period_end)",
+      source_note: "supabase/functions/stripe-webhook",
+    },
   ];
 
   return Promise.all(
