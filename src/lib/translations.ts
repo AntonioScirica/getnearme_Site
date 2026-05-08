@@ -17,7 +17,7 @@ export const translations = {
       title1: "Il vantaggio competitivo",
       title2: "che distingue la",
       title3: "tua agenzia",
-      description: "Estensione per Google Chrome con AI per agenti immobiliari. Semplifica le attività quotidiane dell'agenzia: analisi di zona, render foto con AI, video, post social e report PDF direttamente su Immobiliare.it, Idealista, Casa.it, Airbnb e Booking. Non è un sistema di valutazione immobiliare. 7 giorni di prova gratuita senza limiti.",
+      description: "Estensione per Google Chrome con AI per agenti immobiliari. Semplifica le attività quotidiane dell'agenzia: analisi di zona, render foto con AI, video, post social e report PDF direttamente su Immobiliare.it, Idealista, Casa.it, Airbnb e Booking. Non è un sistema di valutazione immobiliare.",
       cta: "Aggiungi Estensione",
       ctaSecondary: "Come funziona",
       subMockup: "GetNearMe è l'estensione Chrome con AI per agenti immobiliari: si integra in 2 secondi nei portali Immobiliare.it, Idealista, Casa.it, Airbnb e Booking, sostituendo Canva, Photoshop, video editor, PowerPoint e social media manager con un'unica estensione professionale."
@@ -96,22 +96,22 @@ export const translations = {
         {
           name: "Piano Agenzia Mensile",
           subtitle: "Tutte le funzioni incluse",
-          desc: "Accesso completo all'estensione Chrome GetNearMe per agenti immobiliari: analisi di zona, render AI, video, post social e report PDF white-label. Strumento di supporto al lavoro quotidiano dell'agenzia, non un sistema di valutazione immobiliare. Fino a 5 agenti, 7 giorni di prova gratuita senza limiti."
+          desc: "Accesso completo all'estensione Chrome GetNearMe per agenti immobiliari: analisi di zona, render AI, video, post social e report PDF white-label. Strumento di supporto al lavoro quotidiano dell'agenzia, non un sistema di valutazione immobiliare. Fino a 5 agenti."
         },
         {
           name: "Piano Agenzia Mensile",
           subtitle: "Tutte le funzioni incluse",
-          desc: "Accesso completo all'estensione Chrome GetNearMe per agenti immobiliari: analisi di zona, render AI, video, post social e report PDF white-label. Strumento di supporto al lavoro quotidiano dell'agenzia, non un sistema di valutazione immobiliare. Fino a 5 agenti, 7 giorni di prova gratuita senza limiti."
+          desc: "Accesso completo all'estensione Chrome GetNearMe per agenti immobiliari: analisi di zona, render AI, video, post social e report PDF white-label. Strumento di supporto al lavoro quotidiano dell'agenzia, non un sistema di valutazione immobiliare. Fino a 5 agenti."
         },
         {
           name: "Piano Agenzia Trimestrale",
           subtitle: "Tutte le funzioni incluse",
-          desc: "Accesso completo per 3 mesi a tutte le funzionalità di GetNearMe con risparmio rispetto al mensile. Fino a 5 agenti, 7 giorni di prova gratuita."
+          desc: "Accesso completo per 3 mesi a tutte le funzionalità di GetNearMe con risparmio rispetto al mensile. Fino a 5 agenti."
         },
         {
           name: "Piano Agenzia Annuale",
           subtitle: "Il più conveniente",
-          desc: "Accesso completo per 12 mesi a tutte le funzionalità di GetNearMe con il massimo risparmio e supporto prioritario. Fino a 5 agenti, 7 giorni di prova gratuita."
+          desc: "Accesso completo per 12 mesi a tutte le funzionalità di GetNearMe con il massimo risparmio e supporto prioritario. Fino a 5 agenti."
         }
       ]
     },
@@ -302,9 +302,9 @@ export const translations = {
     landing: {
       topBar: {
         promo: "Offerta lancio:",
-        discount: "7 giorni gratis, senza limiti",
+        discount: "Prezzo lancio limitato",
         expiresIn: "scade tra",
-        freeTrialShort: "nessuna carta richiesta",
+        freeTrialShort: "",
       },
       hero: {
         badge: "",
@@ -314,7 +314,7 @@ export const translations = {
         ctaPrimary: "Aggiungi estensione",
         ctaSecondary: "Guarda la demo",
         ctaDemo: "Prenota demo",
-        stats: ["7 giorni gratis senza limiti", "Si installa in 2 secondi", "Integrato con 5 portali", "GDPR compliant"],
+        stats: ["Si installa in 2 secondi", "Integrato con 5 portali", "GDPR compliant"],
       },
       problem: {
         emoji: "frown",
@@ -354,10 +354,10 @@ export const translations = {
       pricing: {
         title1: "Un piano.",
         title2: "Tutti gli strumenti.",
-        titleHighlight: "7 giorni gratis.",
-        subtitle: "Accesso completo a tutte le funzioni durante la prova. Nessun vincolo annuale. Disdici quando vuoi.",
+        titleHighlight: "",
+        subtitle: "Nessun vincolo annuale. Disdici quando vuoi.",
         countdownLabel: "Prezzo lancio — scade tra",
-        trustBadges: ["🔒 Pagamento sicuro Stripe", "✅ Nessun addebito per 7 giorni", "⚡ Attivazione immediata"],
+        trustBadges: ["🔒 Pagamento sicuro Stripe", "⚡ Attivazione immediata"],
         savingsLabel: "RISPARMI",
         progressAgencies: "",
         progressSpots: "",
@@ -366,19 +366,19 @@ export const translations = {
             id: "agency_monthly", name: "Mensile", users: "Tutte le funzioni incluse", oldPrice: null, price: 399,
             savingsYear: null, badge: null, popular: false,
             features: ["5 agenti inclusi", "Analisi di zona illimitate", "Prezzo medio di zona al m²", "Homestaging AI", "Video AI con avatar e sottotitoli", "Post social per IG, FB, TikTok, LinkedIn", "Report PDF white-label col tuo logo"],
-            extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Inizia 7 giorni gratis",
+            extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Scegli questo piano",
           },
           {
             id: "agency_quarterly", name: "Trimestrale", users: "Tutte le funzioni incluse", oldPrice: null, price: 349,
             savingsYear: null, badge: "Più scelto", popular: false,
             features: ["5 agenti inclusi", "Analisi di zona illimitate", "Prezzo medio di zona al m²", "Homestaging AI", "Video AI con avatar e sottotitoli", "Post social per IG, FB, TikTok, LinkedIn", "Report PDF white-label col tuo logo"],
-            extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Inizia 7 giorni gratis",
+            extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Scegli questo piano",
           },
           {
             id: "agency_annual", name: "Annuale", users: "Tutte le funzioni incluse", oldPrice: null, price: 300,
             savingsYear: null, badge: null, popular: false,
             features: ["5 agenti inclusi", "Analisi di zona illimitate", "Prezzo medio di zona al m²", "Homestaging AI", "Video AI con avatar e sottotitoli", "Post social per IG, FB, TikTok, LinkedIn", "Report PDF white-label col tuo logo", "Supporto prioritario"],
-            extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Inizia 7 giorni gratis",
+            extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Scegli questo piano",
           },
         ],
       },
@@ -404,16 +404,16 @@ export const translations = {
           { q: "Posso creare video senza saper montare?", a: "Sì. Scegli un template (avatar parlante, sottotitoli, walkthrough, before/after, split screen, video di staging) e GetNearMe monta musica, testi e clip partendo dall'annuncio. Nessun software di editing richiesto." },
           { q: "Il mio brand viene applicato automaticamente?", a: "Sì. Carichi logo, colori e font una volta sola: vengono applicati in automatico su PDF, video e post social per tutti gli agenti dell'agenzia." },
           { q: "Quanti agenti posso aggiungere?", a: "Ogni piano include 5 agenti con accesso condiviso allo stesso branding. Ogni agente ha il proprio account ma lavora sotto l'identità dell'agenzia." },
-          { q: "Come funziona la prova gratuita?", a: "7 giorni di accesso completo, senza limiti di utilizzo. Disdici con un click dalla dashboard, nessun addebito se cancelli entro 7 giorni." },
+          { q: "Posso disdire quando voglio?", a: "Sì. Nessun vincolo annuale. Cancelli con un click dalla dashboard in qualsiasi momento." },
         ],
       },
       finalCta: {
         title1: "Smetti di saltare tra 10 software.",
         title2: "Tutto il lavoro sull'annuncio, in un'estensione.",
-        desc: "Prova GetNearMe 7 giorni gratis, senza limiti. Disdici quando vuoi.",
+        desc: "Tutto il lavoro sull'annuncio in un'unica estensione. Disdici quando vuoi.",
         button: "Aggiungi estensione",
         buttonDemo: "Prenota demo",
-        footer: "🔒 Nessun addebito durante la prova. Cancelli con un click.",
+        footer: "🔒 Pagamento sicuro Stripe. Cancelli con un click.",
       },
       roiCalculator: {
         title: "Quanto risparmi con",
@@ -428,7 +428,7 @@ export const translations = {
         outputNetSavings: "Risparmio netto mensile",
         outputROI: "ritorno per ogni euro speso",
         perMonth: "/mese",
-        cta: "Inizia 7 giorni gratis",
+        cta: "Scegli questo piano",
         note: "Con GetNearMe ogni immobile richiede circa 3 minuti invece di ore. Usiamo 80% come stima conservativa del tempo risparmiato.",
       },
       demo: {
@@ -450,23 +450,23 @@ export const translations = {
         emoji: "rocket",
         title: "Ottima scelta!",
         planLabel: "Piano",
-        desc: "Accedi o registrati per attivare i tuoi",
-        descBold: "7 giorni di prova gratuita",
+        desc: "Accedi o registrati per attivare il",
+        descBold: "piano scelto",
         descEnd: "con accesso completo a tutte le funzioni.",
-        cta: "Attiva la prova gratuita",
-        footer: "🔒 Nessun addebito per 7 giorni. Cancelli con un click.",
+        cta: "Attiva il piano",
+        footer: "🔒 Pagamento sicuro Stripe. Cancelli con un click.",
       },
       popups: [
-        { icon: "circle", text: "Un'agenzia del Nord Italia ha attivato la prova gratuita", time: "3 min fa" },
+        { icon: "circle", text: "Un'agenzia del Nord Italia ha attivato il piano", time: "3 min fa" },
         { icon: "clapperboard", text: "Un agente ha appena generato un video promozionale con AI", time: "" },
         { icon: "users", text: "Agenzie online in questo momento", time: "" },
-        { icon: "rocket", text: "Un agente ha iniziato i 7 giorni di prova gratuita", time: "12 min fa" },
+        { icon: "rocket", text: "Un agente ha appena attivato GetNearMe", time: "12 min fa" },
         { icon: "flame", text: "GetNearMe scelto da nuove agenzie questa settimana", time: "" },
         { icon: "sparkles", text: "Un agente ha arredato una stanza con Homestaging AI", time: "5 min fa" },
         { icon: "star", text: "Un'agenzia ha fatto upgrade al piano Annuale", time: "18 min fa" },
         { icon: "smartphone", text: "Post social generati questa settimana con GetNearMe", time: "" },
         { icon: "target", text: "Un agente ha esportato un PDF white-label col proprio logo", time: "7 min fa" },
-        { icon: "briefcase", text: "Un'agenzia si è appena registrata alla prova gratuita", time: "2 min fa" },
+        { icon: "briefcase", text: "Un'agenzia si è appena registrata su GetNearMe", time: "2 min fa" },
         { icon: "trophy", text: "GetNearMe usato da agenti immobiliari in tutta Italia", time: "" },
         { icon: "map", text: "Un agente ha generato analisi di zona dai portali immobiliari", time: "9 min fa" },
       ],

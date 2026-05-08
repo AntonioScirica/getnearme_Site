@@ -229,7 +229,7 @@ function PricingSection({
               > */}
               {data.titleHighlight}
               {/* </span> */}
-              .
+              {data.titleHighlight ? '.' : ''}
             </h2>
             <p style={{ color: '#333', fontSize: 16, marginBottom: 24 }}>{data.subtitle}</p>
             <div
