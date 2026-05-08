@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light only">
+<meta name="supported-color-schemes" content="light only">
+<title>Pagamento non riuscito · GetNearMe</title>
+</head>
+<body style="margin:0;padding:0;background:#f4f5f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+  <span style="display:none;max-height:0;overflow:hidden;mso-hide:all;font-size:1px;color:#f4f5f7;">Il pagamento per il piano {{plan_name}} non è andato a buon fine.</span>
+
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f5f7;padding:32px 16px;">
+    <tr><td align="center">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff;border:1px solid #e5e7eb;border-radius:14px;overflow:hidden;">
+
+        <!-- Cover -->
+        <tr>
+          <td style="padding:0;">
+            <img src="https://ecrnpyksnfyykqwnutwa.supabase.co/storage/v1/object/public/email-assets/stripe_header.png" alt="GetNearMe" width="600" style="display:block;width:100%;height:auto;border:0;">
+          </td>
+        </tr>
+
+        <!-- Body -->
+        <tr>
+          <td style="padding:36px 36px 8px;color:#1F2937;">
+            <p style="margin:0 0 14px;font-size:18px;font-weight:600;color:#111827;">Ciao {{user_name}},</p>
+            <p style="margin:0 0 16px;font-size:15px;line-height:1.65;color:#374151;">
+              il rinnovo del tuo piano <strong>{{plan_name}}</strong> non è andato a buon fine. Il metodo di pagamento associato al tuo abbonamento è stato rifiutato.
+            </p>
+            <p style="margin:0 0 16px;font-size:15px;line-height:1.65;color:#374151;">
+              Per evitare l'interruzione del servizio, aggiorna il metodo di pagamento entro i prossimi giorni.
+            </p>
+          </td>
+        </tr>
+
+        <!-- Alert card -->
+        <tr>
+          <td style="padding:8px 36px 24px;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;">
+              <tr><td style="padding:20px 24px;text-align:center;">
+                <p style="margin:0 0 4px;font-size:11px;letter-spacing:0.6px;text-transform:uppercase;font-weight:700;color:#dc2626;">Pagamento non riuscito</p>
+                <p style="margin:0 0 8px;font-size:22px;font-weight:700;color:#111827;">{{plan_name}}</p>
+                <p style="margin:0;font-size:13px;color:#6b7280;line-height:1.5;">Aggiorna il metodo di pagamento per continuare a usare il servizio.</p>
+              </td></tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- CTA -->
+        <tr>
+          <td style="padding:0 36px 28px;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+              <tr><td align="center">
+                <table role="presentation" cellpadding="0" cellspacing="0">
+                  <tr><td style="border-radius:8px;background:#2563EB;">
+                    <a href="{{update_payment_url}}" style="display:inline-block;padding:12px 22px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:14px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:8px;">Aggiorna metodo di pagamento</a>
+                  </td></tr>
+                </table>
+              </td></tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- Closing -->
+        <tr>
+          <td style="padding:0 36px 28px;font-size:14px;line-height:1.65;color:#374151;">
+            <p style="margin:0 0 16px;color:#374151;">Se il problema persiste o hai bisogno di assistenza, rispondi a questa email o scrivici a <a href="mailto:info@getnearme.it" style="color:#2563EB;text-decoration:none;">info@getnearme.it</a>.</p>
+            <p style="margin:0;color:#111827;font-weight:600;">Il team di GetNearMe</p>
+          </td>
+        </tr>
+
+        <!-- Footer -->
+        <tr>
+          <td style="padding:18px 36px 24px;background:#f9fafb;border-top:1px solid #e5e7eb;font-size:12px;line-height:1.5;color:#6b7280;text-align:center;">
+            GetNearMe<br>
+            Hai ricevuto questa email perch&eacute; il pagamento del tuo abbonamento non &egrave; andato a buon fine.<br>
+            <a href="https://www.getnearme.it/legal/privacy" style="color:#6b7280;text-decoration:underline;">Privacy</a> &middot; <a href="https://www.getnearme.it/legal/terms" style="color:#6b7280;text-decoration:underline;">Termini</a> &middot; <a href="mailto:info@getnearme.it" style="color:#6b7280;text-decoration:underline;">info@getnearme.it</a>
+          </td>
+        </tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>

@@ -237,6 +237,17 @@ async function loadSeedTemplates() {
       trigger_note: "delete-account (utente cancella il proprio account)",
       source_note: "supabase/functions/delete-account",
     },
+    {
+      id: "payment-failed",
+      file: "12-payment-failed.html",
+      audience: "user",
+      title: "Pagamento non riuscito",
+      subject: "Pagamento non riuscito · {{plan_name}}",
+      preheader: "Il pagamento per il piano {{plan_name}} non è andato a buon fine.",
+      variables: ["user_name", "plan_name", "update_payment_url"],
+      trigger_note: "invoice.payment_failed (Stripe webhook)",
+      source_note: "supabase/functions/stripe-webhook",
+    },
   ];
 
   return Promise.all(
