@@ -1,83 +1,119 @@
-<!DOCTYPE html>
-<html lang="it">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="it">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="color-scheme" content="light only">
-<meta name="supported-color-schemes" content="light only">
-<title>Promemoria giornaliero · GetNearMe</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="color-scheme" content="light only">
+  <meta name="supported-color-schemes" content="light only">
+  <title>Aggiornamento account GetNearMe - Giorno {{streak_day}}</title>
+  <style type="text/css">
+    :root { color-scheme: light only; supported-color-schemes: light only; }
+    body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f5f5f5 !important; color: #000000; }
+    table { border-collapse: collapse; }
+    img { border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; }
+  </style>
 </head>
-<body style="margin:0;padding:0;background:#f4f5f7;">
-  <span style="display:none;max-height:0;overflow:hidden;mso-hide:all;font-size:1px;color:#f4f5f7;">Il bonus crediti di oggi è disponibile fino a mezzanotte.</span>
+<body style="margin: 0; padding: 0; background-color: #f5f5f5 !important;">
+  <span style="display:none;max-height:0;overflow:hidden;mso-hide:all;">Giorno {{streak_day}}: il bonus crediti di oggi è disponibile fino a mezzanotte.</span>
+  <span style="display:none;max-height:0;overflow:hidden;mso-hide:all;">&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;</span>
 
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f5f7;padding:32px 16px;">
-    <tr><td align="center">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border:1px solid #e5e7eb;border-radius:12px;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5 !important;">
+    <tr>
+      <td height="40" style="height: 40px; line-height: 40px; font-size: 1px;">&nbsp;</td>
+    </tr>
+    <tr>
+      <td align="center" style="padding: 0 20px;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #ffffff !important; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.08);">
 
-        <tr>
-          <td style="padding:28px 32px 8px;font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;">
-            <p style="margin:0;font-size:18px;font-weight:600;color:#1F2937;letter-spacing:-0.2px;">GetNearMe</p>
-            <p style="margin:2px 0 0;font-size:13px;color:#6b7280;">Promemoria del giorno</p>
-          </td>
-        </tr>
+          <!-- Header -->
+          <tr>
+            <td style="padding:0;">
+              <img src="https://ecrnpyksnfyykqwnutwa.supabase.co/storage/v1/object/public/email-assets/stripe_header.png" alt="GetNearMe" width="600" style="display:block;width:100%;height:auto;border:0;">
+            </td>
+          </tr>
 
-        <tr>
-          <td style="padding:16px 32px 8px;font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#1F2937;font-size:15px;line-height:1.6;">
-            <p style="margin:0 0 16px;">Ciao,</p>
-            <p style="margin:0 0 16px;">il bonus crediti di oggi è disponibile sul tuo account. Valido fino alle 23:59 di oggi, poi viene rigenerato domani.</p>
-          </td>
-        </tr>
+          <!-- Content -->
+          <tr>
+            <td style="padding: 40px 32px; background-color: #ffffff !important;">
+              <!-- Saluto -->
+              <p style="margin: 0 0 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; line-height: 1.6; color: #1F2937;">
+                Ciao,<br>
+                e disponibile il bonus giornaliero associato al tuo account GetNearMe.
+              </p>
 
-        <tr>
-          <td style="padding:0 32px 16px;">
-            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;">
-              <tr><td style="padding:18px 16px;font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;text-align:center;">
-                <p style="margin:0 0 12px;font-size:12px;color:#6b7280;letter-spacing:0.4px;text-transform:uppercase;">Settimana</p>
-                <table role="presentation" cellpadding="0" cellspacing="0" align="center"><tr>{{streak_circles}}</tr></table>
-                <p style="margin:14px 0 0;font-size:13px;color:#4b5563;">Giorno {{streak_day}} su 7. Il giorno 7 è previsto un bonus aumentato.</p>
-              </td></tr>
-            </table>
-          </td>
-        </tr>
+              <!-- Streak Visual -->
+              <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin: 24px 0;">
+                <tr>
+                  <td align="center">
+                    <table border="0" cellpadding="0" cellspacing="0"><tr>{{streak_circles}}</tr></table>
+                  </td>
+                </tr>
+              </table>
 
-        <tr>
-          <td style="padding:0 32px 8px;">
-            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #dbeafe;background:#eff6ff;border-radius:10px;">
-              <tr><td style="padding:18px 16px;font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;text-align:center;">
-                <p style="margin:0 0 4px;font-size:13px;color:#1e3a8a;">Disponibili oggi</p>
-                <p style="margin:0;font-size:28px;font-weight:700;color:#1d4ed8;">{{credits}} crediti</p>
-              </td></tr>
-            </table>
-          </td>
-        </tr>
+              <!-- Info Text 1 -->
+              <p style="margin: 0 0 24px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; line-height: 1.6; color: #4B5563;">
+                Il bonus puo essere utilizzato per effettuare analisi e generare report sulla base dei dati disponibili al momento dell'elaborazione.
+              </p>
 
-        <tr>
-          <td style="padding:18px 32px 8px;">
-            <table role="presentation" cellpadding="0" cellspacing="0">
-              <tr><td style="border-radius:8px;background:#2563EB;">
-                <a href="{{claim_url}}" style="display:inline-block;padding:12px 22px;font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;font-size:14px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:8px;">Aggiungi al mio account</a>
-              </td></tr>
-            </table>
-            <p style="margin:12px 0 0;font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;font-size:12px;color:#6b7280;">Il link funziona una sola volta. Se hai già riscattato oggi, non verrà accreditato nulla in più.</p>
-          </td>
-        </tr>
+              <!-- Credits Box -->
+              <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 24px;">
+                <tr>
+                  <td>
+                    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: {{credits_box_bg}}; border-radius: 14px;">
+                      <tr>
+                        <td align="center" style="padding: 24px;">
+                          <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 600; font-size: 14px; color: #515151; margin-bottom: 8px;">I tuoi crediti</div>
+                          <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 700; font-size: 38px; color: {{credits_text_color}};">{{credits}} Crediti</div>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
 
-        <tr>
-          <td style="padding:18px 32px 24px;font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;font-size:14px;color:#4b5563;">
-            Buona giornata,<br>il team di GetNearMe
-          </td>
-        </tr>
+              <!-- Info Text 2 -->
+              <p style="margin: 0 0 8px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; line-height: 1.6; color: #4B5563;">
+                Se il bonus e gia stato assegnato oggi, il link non produrra ulteriori accrediti.
+              </p>
+              <p style="margin: 0 0 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; line-height: 1.6; color: #4B5563;">
+                Per riceverlo, clicca sul pulsante qui in basso:
+              </p>
 
-        <tr>
-          <td style="padding:18px 32px 24px;background:#f9fafb;border-top:1px solid #e5e7eb;border-radius:0 0 12px 12px;font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;font-size:12px;line-height:1.6;color:#6b7280;">
-            GetNearMe · Strumenti per la valutazione immobiliare<br>
-            Ricevi questa email perché hai attivato i promemoria giornalieri.<br>
-            <a href="{{unsubscribe_url}}" style="color:#6b7280;text-decoration:underline;">Disiscriviti dai promemoria</a> · <a href="https://www.getnearme.it/legal/privacy" style="color:#6b7280;text-decoration:underline;">Privacy</a>
-          </td>
-        </tr>
+              <!-- CTA Button -->
+              <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                <tr><td align="center">
+                  <table border="0" cellpadding="0" cellspacing="0">
+                    <tr><td style="border-radius:8px;background:#2563EB;">
+                      <a href="{{claim_url}}" style="display:inline-block;padding:12px 22px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:14px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:8px;">Ottieni crediti</a>
+                    </td></tr>
+                  </table>
+                </td></tr>
+              </table>
 
-      </table>
-    </td></tr>
+              <!-- Footer Text -->
+              <p style="margin: 40px 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; line-height: 1.6; color: #4B5563;">
+                Proseguendo con l'utilizzo giornaliero, al settimo giorno sara disponibile un bonus aggiuntivo, utilizzabile secondo le stesse modalita.<br><br>
+                Un saluto,<br>
+                Il team di GetNearMe
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #F9FAFB !important; padding: 18px 32px 24px; text-align: center; border-top: 1px solid #E5E7EB; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; line-height: 1.5; color: #6B7280;">
+              GetNearMe<br>
+              Ricevi questa email perché hai attivato i promemoria giornalieri.<br>
+              <a href="{{unsubscribe_url}}" style="color:#6b7280;text-decoration:underline;">Disiscriviti</a> · <a href="https://www.getnearme.it/legal/privacy" style="color:#6b7280;text-decoration:underline;">Privacy</a> · <a href="https://www.getnearme.it/legal/terms" style="color:#6b7280;text-decoration:underline;">Termini</a> · <a href="mailto:info@getnearme.it" style="color:#6b7280;text-decoration:underline;">info@getnearme.it</a>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+    <tr>
+      <td height="40" style="height: 40px; line-height: 40px; font-size: 1px;">&nbsp;</td>
+    </tr>
   </table>
 </body>
 </html>

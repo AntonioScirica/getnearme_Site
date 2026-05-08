@@ -92,9 +92,10 @@ async function loadSeedTemplates() {
       file: "02-daily-bonus.html",
       audience: "user",
       title: "Promemoria giornaliero (IT)",
-      subject: "Promemoria account · Giorno {{streak_day}}",
-      preheader: "Il bonus crediti di oggi è disponibile fino a mezzanotte.",
-      variables: ["streak_day", "credits", "claim_url", "unsubscribe_url"],
+      subject: "Aggiornamento account GetNearMe - Giorno {{streak_day}}",
+      preheader:
+        "Giorno {{streak_day}}: il bonus crediti di oggi è disponibile fino a mezzanotte.",
+      variables: ["streak_day", "credits", "claim_url", "unsubscribe_url", "streak_circles", "credits_box_bg", "credits_text_color"],
       trigger_note: "Cron giornaliero (CRON_SECRET)",
       source_note: "supabase/functions/send-daily-bonus-emails",
     },
