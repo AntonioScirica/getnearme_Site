@@ -44,7 +44,7 @@ export default async function ResetPasswordPage({ params }: Props) {
   return (
     <>
       <Navbar locale={locale as Locale} />
-      <main className="min-h-screen bg-gray-50 flex items-center justify-center px-4 pt-24 pb-16">
+      <main className="h-screen bg-gray-50 flex items-center justify-center px-4 overflow-hidden">
         <ResetPasswordForm locale={locale as Locale} />
       </main>
     </>

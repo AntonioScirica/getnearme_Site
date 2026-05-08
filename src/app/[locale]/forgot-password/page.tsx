@@ -32,7 +32,7 @@ export default async function ForgotPasswordPage({ params }: Props) {
   return (
     <>
       <Navbar locale={locale as Locale} />
-      <main className="min-h-screen bg-gray-50 flex items-center justify-center px-4 pt-24 pb-16">
+      <main className="h-screen bg-gray-50 flex items-center justify-center px-4 overflow-hidden">
         <ForgotPasswordForm locale={locale as Locale} />
       </main>
     </>
