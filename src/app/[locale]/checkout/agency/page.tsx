@@ -651,6 +651,7 @@ function CheckoutAgencyContent() {
             data: {
               marketing_consent: marketingAccepted,
               terms_accepted_at: new Date().toISOString(),
+              signup_source: 'site',
             },
           },
         });
