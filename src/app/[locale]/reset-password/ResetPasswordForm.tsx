@@ -136,6 +136,7 @@ export default function ResetPasswordForm({ locale }: { locale: Locale }) {
   const [loading, setLoading] = useState(false);
   const [sessionReady, setSessionReady] = useState(false);
   const [sessionError, setSessionError] = useState(false);
+  const [errorDetail, setErrorDetail] = useState("");
 
   useEffect(() => {
     async function initSession() {
@@ -143,8 +144,10 @@ export default function ResetPasswordForm({ locale }: { locale: Locale }) {
       const url = new URL(window.location.href);
       const code = url.searchParams.get("code");
       if (code) {
-        const { error } = await supabase.auth.exchangeCodeForSession(code);
+        const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+        console.log('[reset-password] code exchange result:', { data: data?.session ? 'session OK' : 'no session', error: error?.message });
         if (error) {
+          setErrorDetail(error.message);
           setSessionError(true);
         } else {
           setSessionReady(true);
@@ -170,7 +173,9 @@ export default function ResetPasswordForm({ locale }: { locale: Locale }) {
       }
 
       // Fallback: check existing session
+      console.log('[reset-password] no code/hash, checking existing session');
       const { data } = await supabase.auth.getSession();
+      console.log('[reset-password] existing session:', data.session ? 'found' : 'none');
       if (data.session) {
         setSessionReady(true);
       } else {
@@ -208,6 +213,7 @@ export default function ResetPasswordForm({ locale }: { locale: Locale }) {
         </div>
         <h1 className="text-xl font-semibold text-gray-900 mb-2">{s.title}</h1>
         <p className="text-gray-500 text-sm">{s.errorExpired}</p>
+        {errorDetail && <p className="text-red-400 text-xs mt-2 font-mono">{errorDetail}</p>}
       </div>
     );
   }
