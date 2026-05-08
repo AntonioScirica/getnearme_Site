@@ -225,6 +225,17 @@ async function loadSeedTemplates() {
       trigger_note: "customer.subscription.updated (cancel_at_period_end)",
       source_note: "supabase/functions/stripe-webhook",
     },
+    {
+      id: "account-deleted-user",
+      file: "11-account-deleted-user.html",
+      audience: "user",
+      title: "Account eliminato (utente)",
+      subject: "Il tuo account GetNearMe è stato eliminato",
+      preheader: "Il tuo account GetNearMe è stato eliminato.",
+      variables: ["user_name"],
+      trigger_note: "delete-account (utente cancella il proprio account)",
+      source_note: "supabase/functions/delete-account",
+    },
   ];
 
   return Promise.all(
