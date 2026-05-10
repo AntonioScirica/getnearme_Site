@@ -110,7 +110,12 @@ export default function ReferenceGallery({ variant, media = [], posts = [], reel
   const [lightboxItem, setLightboxItem] = useState<MediaItem | null>(null);
   const refsMap = useRef<Record<string, HTMLDivElement | null>>({});
 
-  const closeLightbox = useCallback(() => setLightboxItem(null), []);
+  const hashHandled = useRef(false);
+
+  const closeLightbox = useCallback(() => {
+    setLightboxItem(null);
+    if (window.location.hash) history.replaceState(null, '', window.location.pathname);
+  }, []);
 
   const allItems: MediaItem[] = variant === 'social'
     ? [
@@ -120,10 +125,12 @@ export default function ReferenceGallery({ variant, media = [], posts = [], reel
     : media;
 
   useEffect(() => {
+    if (hashHandled.current) return;
     const hash = window.location.hash.slice(1);
     if (!hash) return;
     const match = allItems.find(m => getSlug(m.src) === hash);
     if (match) {
+      hashHandled.current = true;
       const el = refsMap.current[hash];
       if (el) {
         setTimeout(() => {
