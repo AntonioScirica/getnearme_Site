@@ -212,7 +212,6 @@ export default async function Home({ params }: Props) {
                     color: "#1a1a2e",
                     padding: "16px 20px",
                     borderRadius: 14,
-                    cursor: "pointer",
                     fontWeight: 700,
                     fontSize: 15,
                     cursor: "pointer",
