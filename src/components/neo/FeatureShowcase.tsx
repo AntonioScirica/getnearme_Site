@@ -1,8 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { Icon } from '@/lib/icons';
+import { Upload } from 'lucide-react';
 import RevealSection from './RevealSection';
+import BeforeAfterSlider, { STAGING_STYLES } from '@/components/BeforeAfterSlider';
+import VideoShowcase, { VIDEO_STYLES } from '@/components/VideoShowcase';
+import SocialShowcase from '@/components/SocialShowcase';
 
 interface FeatureShowcaseProps {
   feature: { num: string; title: string; desc: string; icon: string; color: string };
@@ -11,8 +15,33 @@ interface FeatureShowcaseProps {
   reverse: boolean;
 }
 
+const DEFAULT_SOCIAL_PHOTO = 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&h=750&fit=crop';
+
 export default function FeatureShowcase({ feature: f, videoSrc, index, reverse }: FeatureShowcaseProps) {
-  const [hovered, setHovered] = useState(false);
+  const [stagingStyle, setStagingStyle] = useState(0);
+  const [videoStyle, setVideoStyle] = useState(0);
+  const [videoFading, setVideoFading] = useState(false);
+  const videoUserClicked = useRef(false);
+  const [socialPhoto, setSocialPhoto] = useState(DEFAULT_SOCIAL_PHOTO);
+  const socialFileRef = useRef<HTMLInputElement>(null);
+
+  const handleVideoEnd = useCallback(() => {
+    if (videoUserClicked.current) return;
+    setVideoFading(true);
+    setTimeout(() => {
+      setVideoStyle(prev => (prev === 0 ? 1 : 0));
+      setVideoFading(false);
+    }, 400);
+  }, []);
+
+  const handleVideoStyleClick = useCallback((i: number) => {
+    videoUserClicked.current = true;
+    setVideoFading(true);
+    setTimeout(() => {
+      setVideoStyle(i);
+      setVideoFading(false);
+    }, 300);
+  }, []);
   const bg = index % 2 === 0 ? '#fafaf8' : '#f3f4f6';
 
   const sectionIds = ['ai-photos', 'ai-video', 'social-posts', 'reports', 'zone-analysis', 'price-calculator'];
@@ -36,19 +65,27 @@ export default function FeatureShowcase({ feature: f, videoSrc, index, reverse }
           {/* Media */}
           <div style={{ flex: 1, minWidth: 0 }}>
             <div
-              onMouseEnter={() => setHovered(true)}
-              onMouseLeave={() => setHovered(false)}
               style={{
                 background: '#fff',
                 borderRadius: 16,
                 overflow: 'hidden',
                 border: '3px solid #1a1a2e',
-                boxShadow: hovered ? '8px 8px 0px #1a1a2e' : '6px 6px 0px #1a1a2e',
-                transform: hovered ? 'translate(-2px,-4px)' : 'translate(0,0)',
-                transition: 'all 0.35s cubic-bezier(0.34,1.56,0.64,1)',
+                boxShadow: '6px 6px 0px #1a1a2e',
               }}
             >
-              {videoSrc && (
+              {index === 0 ? (
+                <BeforeAfterSlider color={f.color} activeStyle={stagingStyle} />
+              ) : index === 1 ? (
+                <div style={{ opacity: videoFading ? 0 : 1, transition: 'opacity 0.4s ease' }}>
+                  <VideoShowcase
+                    activeStyle={videoStyle}
+                    autoLoop={videoUserClicked.current}
+                    onVideoEnd={handleVideoEnd}
+                  />
+                </div>
+              ) : index === 2 ? (
+                <SocialShowcase photo={socialPhoto} />
+              ) : videoSrc ? (
                 <div style={{ aspectRatio: '16 / 10' }}>
                   {/\.(png|jpe?g|webp|gif)$/i.test(videoSrc) ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -71,7 +108,7 @@ export default function FeatureShowcase({ feature: f, videoSrc, index, reverse }
                     </video>
                   )}
                 </div>
-              )}
+              ) : null}
             </div>
           </div>
 
@@ -80,31 +117,18 @@ export default function FeatureShowcase({ feature: f, videoSrc, index, reverse }
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
               <span
                 style={{
-                  width: 56,
-                  height: 56,
+                  width: 44,
+                  height: 44,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   background: `${f.color}15`,
-                  borderRadius: 16,
+                  borderRadius: 12,
                   border: `2px solid ${f.color}40`,
                   color: f.color,
                 }}
               >
-                <Icon name={f.icon} size={28} />
-              </span>
-              <span
-                style={{
-                  fontFamily: 'monospace',
-                  color: f.color,
-                  fontSize: 14,
-                  fontWeight: 800,
-                  background: `${f.color}12`,
-                  padding: '4px 10px',
-                  borderRadius: 8,
-                }}
-              >
-                {f.num}
+                <Icon name={f.icon} size={20} />
               </span>
             </div>
 
@@ -120,16 +144,6 @@ export default function FeatureShowcase({ feature: f, videoSrc, index, reverse }
               {f.title}
             </h3>
 
-            <div
-              style={{
-                width: 48,
-                height: 4,
-                borderRadius: 2,
-                background: f.color,
-                marginBottom: 16,
-              }}
-            />
-
             <p
               style={{
                 color: '#52525b',
@@ -140,6 +154,61 @@ export default function FeatureShowcase({ feature: f, videoSrc, index, reverse }
             >
               {f.desc}
             </p>
+            {index === 2 && (
+              <div style={{ marginTop: 16 }}>
+                <button
+                  onClick={() => socialFileRef.current?.click()}
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 20px',
+                    background: '#fff', color: f.color, fontSize: 14, fontWeight: 700,
+                    borderRadius: 10, border: `2px solid ${f.color}`,
+                    cursor: 'pointer', transition: 'all 0.2s ease',
+                  }}
+                >
+                  <span className="upload-wiggle" style={{ display: 'inline-flex' }}><Upload size={16} /></span>
+                  Prova con la tua foto
+                </button>
+                <input
+                  ref={socialFileRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) setSocialPhoto(URL.createObjectURL(file));
+                  }}
+                  style={{ display: 'none' }}
+                />
+              </div>
+            )}
+            {(index === 0 || index === 1) && (
+              <div style={{ display: 'flex', gap: 6, marginTop: 16, flexWrap: 'wrap' }}>
+                {(index === 0 ? STAGING_STYLES : VIDEO_STYLES).map((s, i) => {
+                  const active = index === 0 ? stagingStyle === i : videoStyle === i;
+                  const setStyle = index === 0 ? setStagingStyle : handleVideoStyleClick;
+                  return (
+                    <button
+                      key={s.label}
+                      onClick={() => setStyle(i)}
+                      style={{
+                        padding: '7px 18px',
+                        fontSize: 13,
+                        fontWeight: 600,
+                        borderRadius: 8,
+                        border: `2px solid ${active ? f.color : '#e5e7eb'}`,
+                        background: active ? `${f.color}15` : '#fff',
+                        color: active ? f.color : '#666',
+                        minWidth: 80,
+                        textAlign: 'center' as const,
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                      }}
+                    >
+                      {s.label}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
       </RevealSection>
@@ -151,6 +220,17 @@ export default function FeatureShowcase({ feature: f, videoSrc, index, reverse }
             gap: 32px !important;
             padding: 48px 20px !important;
           }
+        }
+        @keyframes uploadWiggle {
+          0%, 80% { transform: rotate(0deg); }
+          84% { transform: rotate(-12deg); }
+          88% { transform: rotate(10deg); }
+          92% { transform: rotate(-8deg); }
+          96% { transform: rotate(6deg); }
+          100% { transform: rotate(0deg); }
+        }
+        .upload-wiggle {
+          animation: uploadWiggle 3s ease-in-out infinite;
         }
       `}</style>
     </div>
