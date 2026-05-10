@@ -72,6 +72,7 @@ function Lightbox({ item, onClose }: { item: MediaItem; onClose: () => void }) {
         {item.type === 'video' ? (
           <video
             autoPlay
+            muted
             controls
             playsInline
             style={{ maxWidth: '90vw', maxHeight: '90vh', borderRadius: 8 }}
