@@ -32,6 +32,20 @@ interface GalleryProps {
 }
 
 function Lightbox({ item, onClose }: { item: MediaItem; onClose: () => void }) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', onKey);
+    document.body.style.overflow = 'hidden';
+    window.history.pushState({ lightbox: true }, '');
+    const onPop = () => onClose();
+    window.addEventListener('popstate', onPop);
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.body.style.overflow = '';
+      window.removeEventListener('popstate', onPop);
+    };
+  }, [onClose]);
+
   return (
     <div
       onClick={onClose}
@@ -53,11 +67,11 @@ function Lightbox({ item, onClose }: { item: MediaItem; onClose: () => void }) {
           position: 'absolute',
           top: 16,
           right: 16,
-          background: 'rgba(255,255,255,0.15)',
+          background: 'rgba(255,255,255,0.3)',
           border: 'none',
           borderRadius: '50%',
-          width: 44,
-          height: 44,
+          width: 48,
+          height: 48,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -66,16 +80,16 @@ function Lightbox({ item, onClose }: { item: MediaItem; onClose: () => void }) {
           zIndex: 10,
         }}
       >
-        <X size={24} />
+        <X size={26} />
       </button>
-      <div onClick={(e) => e.stopPropagation()} style={{ maxWidth: '90vw', maxHeight: '90vh', cursor: 'default' }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ maxWidth: '85vw', maxHeight: '85vh', cursor: 'default' }}>
         {item.type === 'video' ? (
           <video
             autoPlay
             muted
             controls
             playsInline
-            style={{ maxWidth: '90vw', maxHeight: '90vh', borderRadius: 8 }}
+            style={{ maxWidth: '85vw', maxHeight: '85vh', borderRadius: 8 }}
           >
             <source src={item.src} type="video/mp4" />
           </video>
@@ -84,7 +98,7 @@ function Lightbox({ item, onClose }: { item: MediaItem; onClose: () => void }) {
           <img
             src={item.src}
             alt=""
-            style={{ maxWidth: '90vw', maxHeight: '90vh', borderRadius: 8, objectFit: 'contain' }}
+            style={{ maxWidth: '85vw', maxHeight: '85vh', borderRadius: 8, objectFit: 'contain' }}
           />
         )}
       </div>
