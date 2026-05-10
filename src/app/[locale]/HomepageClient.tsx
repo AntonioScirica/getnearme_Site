@@ -85,31 +85,18 @@ function FeatureCardClient({
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
             <span
               style={{
-                width: 50,
-                height: 50,
+                width: 40,
+                height: 40,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 background: `${f.color}15`,
-                borderRadius: 14,
+                borderRadius: 12,
                 border: `2px solid ${f.color}40`,
                 color: f.color,
               }}
             >
-              <Icon name={f.icon} size={24} />
-            </span>
-            <span
-              style={{
-                fontFamily: 'monospace',
-                color: f.color,
-                fontSize: 13,
-                fontWeight: 800,
-                background: `${f.color}12`,
-                padding: '2px 8px',
-                borderRadius: 6,
-              }}
-            >
-              {f.num}
+              <Icon name={f.icon} size={18} />
             </span>
           </div>
           <h3
@@ -172,7 +159,15 @@ function StepCard({
         <h3 style={{ fontSize: 18, fontWeight: 800, color: '#1a1a2e', margin: '0 0 8px' }}>
           {s.title}
         </h3>
-        <p style={{ color: '#999', fontSize: 14, margin: 0, lineHeight: 1.6 }}>{s.desc}</p>
+        <p style={{ color: '#444', fontSize: 14, fontWeight: 500, margin: 0, lineHeight: 1.6 }}>
+          {s.desc.includes('Chrome Web Store') ? (
+            <>
+              {s.desc.split('Chrome Web Store')[0]}
+              <a href="https://chromewebstore.google.com/detail/getnearme-%E2%80%94-valuta-il-qua/jbnceigldmpkpplanjlednlehloaeoia" target="_blank" rel="noopener noreferrer" style={{ color: '#6366f1', fontWeight: 600, textDecoration: 'none' }}>Chrome Web Store</a>
+              {s.desc.split('Chrome Web Store')[1]}
+            </>
+          ) : s.desc}
+        </p>
       </div>
     </RevealSection>
   );
@@ -218,17 +213,7 @@ function PricingSection({
               {data.title1}
               <br />
               {data.title2}{' '}
-              {/* <span
-                style={{
-                  background: '#fef3c7',
-                  padding: '2px 12px',
-                  borderRadius: 8,
-                  border: '2px solid #fcd34d',
-                  boxShadow: '3px 3px 0 #fcd34d',
-                }}
-              > */}
-              {data.titleHighlight}
-              {/* </span> */}
+              <span style={{ color: '#f59e0b' }}>{data.titleHighlight}</span>
               {data.titleHighlight ? '.' : ''}
             </h2>
             <p style={{ color: '#333', fontSize: 16, marginBottom: 24 }}>{data.subtitle}</p>
@@ -251,7 +236,7 @@ function PricingSection({
           </div>
 
           <div
-            className="grid grid-cols-1 md:grid-cols-3 items-end gap-6 mt-10"
+            className="grid grid-cols-1 md:grid-cols-3 items-stretch gap-6 mt-10"
           >
             {data.plans.map(
               (plan: {

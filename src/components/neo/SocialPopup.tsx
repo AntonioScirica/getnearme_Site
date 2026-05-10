@@ -29,7 +29,7 @@ export default function SocialPopup({ messages }: SocialPopupProps) {
   }, [messages.length]);
 
   const getRandomDelay = useCallback(() => {
-    return 8000 + Math.floor(Math.random() * 12000); // 8-20 seconds
+    return 20000 + Math.floor(Math.random() * 25000); // 20-45 seconds
   }, []);
 
   // Initial appearance with random delay

@@ -1,9 +1,10 @@
 import Link from "next/link";
-import { Flame, Zap, Lock, CreditCard, TrendingUp } from "lucide-react";
+import { Flame, Zap, Lock, CreditCard, TrendingUp, Video, Megaphone, SquaresUnite, FileText, Frown, Rocket, Euro, ClipboardList, ArrowRight } from "lucide-react";
 import { Icon } from "@/lib/icons";
 import { locales, type Locale } from "@/lib/i18n";
 import { translations } from "@/lib/translations";
 import Navbar from "@/components/Navbar";
+import RevealBadge from "@/components/RevealBadge";
 import HomepageClient from "./HomepageClient";
 
 
@@ -48,15 +49,14 @@ export default async function Home({ params }: Props) {
             borderBottom: "3px solid #f59e0b",
           }}
         >
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 6, flexWrap: "wrap", justifyContent: "center" }}>
             <Flame size={14} color="#f59e0b" strokeWidth={2.5} />
             {l.topBar.promo}{" "}
             <span style={{ color: "#f59e0b" }}>{l.topBar.discount}</span>
+            <span className="hidden sm:inline" style={{ color: "#aaa" }}>·</span>
+            <span className="hidden sm:inline">{l.topBar.expiresIn}</span>
+            <HomepageClient variant="countdown-inline" />
           </span>
-          <span className="hidden sm:inline" style={{ margin: "0 8px" }}>
-            — {l.topBar.expiresIn}
-          </span>
-          <HomepageClient variant="countdown-inline" />
           {/* <span style={{ marginLeft: 8, color: "#34d399" }}>
             — {l.topBar.freeTrialShort}
           </span> */}
@@ -185,18 +185,15 @@ export default async function Home({ params }: Props) {
               <div style={{ display: "flex", gap: 14, flexWrap: "wrap", justifyContent: "center" }}>
                 <a
                   href="#pricing"
-                  className="neo-btn"
+                  className="neo-border neo-shadow"
                   style={{
                     background: "#f59e0b",
                     color: "#1a1a2e",
-                    border: "3px solid #1a1a2e",
                     padding: "16px 36px",
                     borderRadius: 14,
                     fontWeight: 900,
                     fontSize: 16,
                     cursor: "pointer",
-                    boxShadow: "6px 6px 0px #1a1a2e",
-                    transition: "all 0.15s",
                     letterSpacing: 0.5,
                     textDecoration: "none",
                   }}
@@ -205,18 +202,15 @@ export default async function Home({ params }: Props) {
                 </a>
                 <Link
                   href={`/${locale}/demo`}
-                  className="neo-btn"
+                  className="neo-border neo-shadow"
                   style={{
                     background: "#fff",
                     color: "#1a1a2e",
-                    border: "3px solid #1a1a2e",
                     padding: "16px 28px",
                     borderRadius: 14,
                     fontWeight: 700,
                     fontSize: 15,
                     cursor: "pointer",
-                    boxShadow: "6px 6px 0px #1a1a2e",
-                    transition: "all 0.15s",
                     textDecoration: "none",
                   }}
                 >
@@ -262,7 +256,7 @@ export default async function Home({ params }: Props) {
         {/* How It Works */}
         <section style={{ padding: "70px 0", background: "#fff" }}>
           <div className="max-w-7xl mx-auto px-5 md:px-3">
-            <div style={{ textAlign: "center", marginBottom: 48 }}>
+            <div style={{ textAlign: "center", marginBottom: 28 }}>
               <h2
                 style={{
                   fontSize: "clamp(28px, 5vw, 44px)",
@@ -273,19 +267,18 @@ export default async function Home({ params }: Props) {
                 }}
               >
                 {l.howItWorks.title}{" "}
-                <span
+                <RevealBadge
                   style={{
-                    background: "#1a1a2e",
-                    color: "#f59e0b",
+                    background: "#f59e0b",
+                    color: "#fff",
                     padding: "2px 14px",
                     borderRadius: 10,
                   }}
                 >
                   {l.howItWorks.titleHighlight}
-                </span>
-                .
+                </RevealBadge>
               </h2>
-              <p style={{ color: "#999", fontSize: 16 }}>
+              <p style={{ color: "#666", fontSize: 16 }}>
                 {l.howItWorks.subtitle}
               </p>
             </div>
@@ -346,7 +339,7 @@ export default async function Home({ params }: Props) {
                 {l.features.titleHighlight}
               </span>
             </h2>
-            <p style={{ color: "#999", fontSize: 16, maxWidth: 700, margin: "0 auto" }}>
+            <p style={{ color: "#666", fontSize: 16, maxWidth: 700, margin: "0 auto" }}>
               {l.features.subtitle}
             </p>
           </div>
@@ -373,72 +366,112 @@ export default async function Home({ params }: Props) {
           )}
         </section>
 
-        {/* Problem / Solution */}
+        {/* Problem / Solution — comparison cards */}
         <section style={{ padding: "70px 0", background: "#fff" }}>
           <div className="max-w-7xl mx-auto px-5 md:px-3">
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
-                gap: 24,
-              }}
-            >
-              <div
-                style={{
-                  background: "#fef2f2",
-                  border: "3px solid #fca5a5",
-                  borderRadius: 16,
-                  padding: "32px 28px",
-                  boxShadow: "5px 5px 0 #fca5a540",
-                }}
-              >
-                <div style={{ marginBottom: 12, color: "#dc2626" }}>
-                  <Icon name={l.problem.emoji} size={36} strokeWidth={2} />
+            <div style={{ textAlign: "center", marginBottom: 48 }}>
+              <h2 style={{ fontSize: "clamp(28px, 5vw, 40px)", fontWeight: 900, color: "#1a1a2e", lineHeight: 1.15, margin: "0 0 14px" }}>
+                Ogni attività che devi fare ha un costo.<br />
+                <span style={{ color: "#f59e0b" }}>Con GetNearMe, no.</span>
+              </h2>
+              <p style={{ color: "#666", fontSize: 17, maxWidth: 700, margin: "0 auto", lineHeight: 1.6 }}>
+                Staging AI, video, post social, report, confronti di zona e molto altro… tutto in un unico flusso operativo ed un unico costo mensile.
+              </p>
+            </div>
+            {(() => {
+              const RED = "#F0000F";
+              const GREEN = "#009874";
+              const DARK = "#0E2344";
+              const rows = [
+                { icon: Video, title: "Video dell'immobile", without: "Devi coordinare e pagare un videomaker per video ed edit.", withGNM: "Generi video per i social in due click grazie all'AI." },
+                { icon: Megaphone, title: "Post social media", without: "Li crei tu o li affidi a un social media manager.", withGNM: "Template già pronti all'uso con il tuo brand integrato.", rotate: -15 },
+                { icon: SquaresUnite, title: "Home staging multiplo", without: "Mostri una sola ipotesi, o nessuna.", withGNM: "Generi più proposte visive in pochi clic e secondi." },
+                { icon: FileText, title: "Report comparativi", without: "Copi manualmente i dati e costruisci l'Excel.", withGNM: "Produci report ordinati in modo molto più veloce." },
+              ];
+              const Card = ({ color, headerTitle, headerSub, headerIcon, items }: { color: string; headerTitle: string; headerSub: string; headerIcon: React.ReactNode; items: { icon: React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>; title: string; desc: string; rotate?: number }[] }) => (
+                <div style={{ border: `2px solid ${color}`, borderRadius: 20, padding: "28px 32px", background: "#fff" }}>
+                  {/* Header */}
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 28 }}>
+                    <div>
+                      <h3 style={{ fontSize: 26, fontWeight: 700, color, margin: 0, lineHeight: 1.1 }}>{headerTitle}</h3>
+                      <p style={{ fontSize: 15, fontWeight: 500, color: DARK, margin: "6px 0 0", opacity: 0.6 }}>{headerSub}</p>
+                    </div>
+                    <div style={{ width: 52, height: 52, borderRadius: "50%", background: `${color}0D`, border: `2px solid ${color}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginLeft: 16 }}>
+                      {headerIcon}
+                    </div>
+                  </div>
+                  <div style={{ height: 1, background: `${color}20`, marginTop: -16, marginBottom: 6 }} />
+                  {/* Rows */}
+                  <div style={{ display: "flex", flexDirection: "column" }}>
+                    {items.map((r, i) => {
+                      const IconComp = r.icon;
+                      const isLast = i === items.length - 1;
+                      return (
+                        <div key={r.title} style={{ display: "grid", gridTemplateColumns: "52px 1fr 1fr", alignItems: "center", gap: 16, padding: "12px 0", borderBottom: isLast ? "none" : `1px solid ${color}20` }}>
+                          <div style={{ width: 52, height: 52, borderRadius: "50%", border: `2px solid ${color}4D`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            <span style={{ display: "inline-flex", transform: r.rotate ? `rotate(${r.rotate}deg)` : undefined }}><IconComp size={22} color={color} strokeWidth={2} /></span>
+                          </div>
+                          <div style={{ fontWeight: 700, fontSize: 18, color: DARK, lineHeight: 1.2 }}>{r.title}</div>
+                          <div style={{ fontSize: 15, fontWeight: 500, color: DARK, lineHeight: 1.5, opacity: 0.7 }}>{r.desc}</div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-                <h2
-                  style={{
-                    fontSize: "clamp(22px, 3.5vw, 28px)",
-                    fontWeight: 900,
-                    color: "#dc2626",
-                    margin: "0 0 12px",
-                    lineHeight: 1.2,
-                  }}
-                >
-                  {l.problem.title}
-                </h2>
-                <p style={{ color: "#333", fontSize: 15, lineHeight: 1.7 }}>
-                  {l.problem.desc}
-                </p>
-              </div>
-              <div
-                style={{
-                  background: "#ecfdf5",
-                  border: "3px solid #6ee7b7",
-                  borderRadius: 16,
-                  padding: "32px 28px",
-                  boxShadow: "5px 5px 0 #6ee7b740",
-                }}
-              >
-                <div style={{ marginBottom: 12, color: "#059669" }}>
-                  <Icon name={l.solution.emoji} size={36} strokeWidth={2} />
+              );
+              return (
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }} className="comparison-grid">
+                  <Card
+                    color={RED}
+                    headerTitle="Senza GetNearMe"
+                    headerSub="Più tempo perso, più costi, meno risultati."
+                    headerIcon={<Frown size={22} color={RED} strokeWidth={2} />}
+                    items={rows.map(r => ({ icon: r.icon, title: r.title, desc: r.without, rotate: r.rotate }))}
+                  />
+                  <Card
+                    color={GREEN}
+                    headerTitle="Con GetNearMe"
+                    headerSub="Più valore per te e per i tuoi clienti."
+                    headerIcon={<Rocket size={22} color={GREEN} strokeWidth={2} />}
+                    items={rows.map(r => ({ icon: r.icon, title: r.title, desc: r.withGNM, rotate: r.rotate }))}
+                  />
                 </div>
-                <h2
-                  style={{
-                    fontSize: "clamp(22px, 3.5vw, 28px)",
-                    fontWeight: 900,
-                    color: "#059669",
-                    margin: "0 0 12px",
-                    lineHeight: 1.2,
-                  }}
-                >
-                  {l.solution.title}
-                </h2>
-                <p style={{ color: "#333", fontSize: 15, lineHeight: 1.7 }}>
-                  {l.solution.desc}
-                </p>
+              );
+            })()}
+            {/* Benefits bar + CTA */}
+            <div style={{ marginTop: 24, background: "#f8f9fa", borderRadius: 20, padding: 12, border: "1.5px solid #e5e7eb" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 16 }} className="benefits-bar">
+                {[
+                  { icon: Euro, title: "Meno costi esterni", desc: "Riduci le spese per fornitori e servizi." },
+                  { icon: ClipboardList, title: "Meno copia-incolla", desc: "Dati già pronti, zero lavoro ripetitivo." },
+                  { icon: Zap, title: "Più velocità operativa", desc: "Rispondi ai clienti prima, migliori i risultati." },
+                ].map((b) => (
+                  <div key={b.title} style={{ flex: 1, display: "flex", alignItems: "center", gap: 12, background: "#fff", border: "1.5px solid #e5e7eb", borderRadius: 14, padding: "14px 16px" }}>
+                    <div style={{ width: 42, height: 42, borderRadius: "50%", background: "#2563eb", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <b.icon size={20} color="#fff" strokeWidth={2} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 15, fontWeight: 700, color: "#1a1a2e" }}>{b.title}</div>
+                      <div style={{ fontSize: 13, color: "#666", marginTop: 2 }}>{b.desc}</div>
+                    </div>
+                  </div>
+                ))}
+                <a href="#prezzi" className="neo-border neo-shadow" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, background: "#f59e0b", color: "#1a1a2e", fontSize: 18, fontWeight: 700, padding: "0 28px", height: 58, borderRadius: 12, textDecoration: "none", whiteSpace: "nowrap", flexShrink: 0, transition: "all 0.2s", marginBottom: 6, marginRight: 6 }}>
+                  Prova ora <ArrowRight size={20} strokeWidth={2.5} />
+                </a>
               </div>
             </div>
           </div>
+          <style>{`
+            @media (max-width: 768px) {
+              .comparison-grid {
+                grid-template-columns: 1fr !important;
+              }
+              .benefits-bar {
+                flex-direction: column !important;
+              }
+            }
+          `}</style>
         </section>
 
         {/* Testimonials */}
@@ -650,19 +683,17 @@ export default async function Home({ params }: Props) {
             <div style={{ display: "flex", gap: 14, flexWrap: "wrap", justifyContent: "center" }}>
               <a
                 href="#pricing"
-                className="neo-btn"
+                className="neo-shadow-light"
                 style={{
                   display: "inline-block",
                   background: "#f59e0b",
                   color: "#1a1a2e",
-                  border: "3px solid #fff",
+                  border: "3px solid #1a1a2e",
                   padding: "18px 48px",
                   borderRadius: 14,
                   fontWeight: 900,
                   fontSize: 18,
                   cursor: "pointer",
-                  boxShadow: "6px 6px 0 rgba(255,255,255,0.2)",
-                  transition: "all 0.15s",
                   letterSpacing: 0.5,
                   textDecoration: "none",
                 }}
@@ -671,7 +702,7 @@ export default async function Home({ params }: Props) {
               </a>
               <Link
                 href={`/${locale}/demo`}
-                className="neo-btn"
+                className="neo-shadow-light"
                 style={{
                   display: "inline-block",
                   background: "transparent",
@@ -682,8 +713,6 @@ export default async function Home({ params }: Props) {
                   fontWeight: 700,
                   fontSize: 16,
                   cursor: "pointer",
-                  boxShadow: "6px 6px 0 rgba(255,255,255,0.1)",
-                  transition: "all 0.15s",
                   textDecoration: "none",
                 }}
               >
@@ -735,7 +764,7 @@ export default async function Home({ params }: Props) {
                 </h3>
                 <p
                   style={{
-                    color: "#bbb",
+                    color: "#999",
                     fontSize: 13,
                     marginBottom: 24,
                     maxWidth: 250,

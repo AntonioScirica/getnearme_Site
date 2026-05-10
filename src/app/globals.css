@@ -49,10 +49,26 @@ body {
 
 .neo-shadow {
   box-shadow: 6px 6px 0px #1a1a2e;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.neo-shadow:hover {
+  box-shadow: 2px 2px 0px #1a1a2e;
+  transform: translate(4px, 4px);
 }
 
 .neo-shadow-sm {
   box-shadow: 4px 4px 0px #1a1a2e;
+}
+
+.neo-shadow-light {
+  box-shadow: 6px 6px 0 rgba(255,255,255,0.2);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.neo-shadow-light:hover {
+  box-shadow: 2px 2px 0 rgba(255,255,255,0.08) !important;
+  transform: translate(4px, 4px) !important;
 }
 
 .neo-btn:hover {

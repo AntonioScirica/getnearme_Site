@@ -17,6 +17,9 @@ import {
   Gauge,
   MousePointerClick,
   Sun,
+  Mail,
+  Package,
+  Film,
 } from "lucide-react";
 import type { Metadata } from "next";
 
@@ -35,7 +38,7 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-const CURRENT_VERSION = "1.3.6";
+const CURRENT_VERSION = "1.3.7";
 
 const updates: {
   version: string;
@@ -53,10 +56,45 @@ const updates: {
   }[];
 }[] = [
   {
-    version: "1.3.6",
+    version: "1.3.7",
     date: "Maggio 2026",
     badge: "Ultima versione",
     badgeColor: "#059669",
+    title: "AI Video — consegna via email + pacchetti extra",
+    subtitle:
+      "Il video arriva direttamente nella tua casella di posta, e quando finisci la quota mensile puoi ricaricarla con pacchetti extra. Più libertà, meno attese.",
+    features: [
+      {
+        icon: <Mail size={22} />,
+        title: "Video AI direttamente in mail",
+        description:
+          "Avvia il render e chiudi pure il browser: appena il video è pronto te lo inviamo via email. Niente più attese davanti allo schermo.",
+        tag: "Nuovo",
+        tagColor: "#059669",
+      },
+      {
+        icon: <Package size={22} />,
+        title: "Pacchetti video extra",
+        description:
+          "Esaurita la quota mensile? Acquista 10, 50 o 100 video extra. Non scadono e si sommano al tuo piano attuale, attivati solo quando finisci i video del mese.",
+        tag: "Nuovo",
+        tagColor: "#059669",
+      },
+      {
+        icon: <Film size={22} />,
+        title: "Template Montaggio Automatico",
+        description:
+          "Nuovo template video che monta automaticamente video e foto dell'annuncio in sequenza con transizioni fluide, musica e titoli animati. Pronto da condividere.",
+        tag: "Nuovo",
+        tagColor: "#059669",
+      },
+    ],
+  },
+  {
+    version: "1.3.6",
+    date: "Maggio 2026",
+    badge: "",
+    badgeColor: "#6b7280",
     title: "Video AI Giorno ↔ Notte",
     subtitle:
       "Carica una foto e trasformala da giorno a notte (o viceversa). L'AI cambia solo luci, cielo e atmosfera.",

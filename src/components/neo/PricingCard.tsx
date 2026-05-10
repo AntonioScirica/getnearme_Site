@@ -41,6 +41,9 @@ export default function PricingCard({ plan, href }: PricingCardProps) {
           padding: '40px 28px 32px',
           position: 'relative',
           width: '100%',
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column' as const,
           boxShadow: hovered
             ? plan.popular
               ? `8px 8px 0 ${plan.color}`
@@ -82,11 +85,11 @@ export default function PricingCard({ plan, href }: PricingCardProps) {
             <span style={{ fontSize: 54, fontWeight: 900, color: plan.color, letterSpacing: -2 }}>
               {plan.price}€
             </span>
-            <span style={{ color: '#999', fontSize: 14 }}>/mese</span>
+            <span style={{ color: '#999', fontSize: 14, marginLeft: 4 }}>/mese</span>
           </div>
         </div>
         <div style={{ margin: '22px 0', borderTop: '2px dashed #e2e8f0' }} />
-        <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 24px' }}>
+        <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 24px', flex: 1 }}>
           {plan.features.map((f, i) => (
             <li
               key={i}
