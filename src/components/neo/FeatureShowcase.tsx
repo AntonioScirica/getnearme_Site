@@ -62,8 +62,39 @@ export default function FeatureShowcase({ feature: f, videoSrc, index, reverse }
           }}
           className="feature-showcase-row"
         >
+          {/* Style buttons — mobile only, between text and media */}
+          {(index === 0 || index === 1) && (
+            <div className="feature-buttons-mobile" style={{ display: 'none', gap: 6, width: '100%', order: 2 }}>
+              {(index === 0 ? STAGING_STYLES : VIDEO_STYLES).map((s, i) => {
+                const active = index === 0 ? stagingStyle === i : videoStyle === i;
+                const setStyle = index === 0 ? setStagingStyle : handleVideoStyleClick;
+                return (
+                  <button
+                    key={s.label}
+                    onClick={() => setStyle(i)}
+                    style={{
+                      flex: 1,
+                      padding: '9px 8px',
+                      fontSize: 13,
+                      fontWeight: 600,
+                      borderRadius: 8,
+                      border: `2px solid ${active ? f.color : '#e5e7eb'}`,
+                      background: active ? `${f.color}15` : '#fff',
+                      color: active ? f.color : '#666',
+                      textAlign: 'center' as const,
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                    }}
+                  >
+                    {s.label}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
           {/* Media */}
-          <div style={{ flex: 1, minWidth: 0 }}>
+          <div className="feature-media" style={{ flex: 1, minWidth: 0 }}>
             <div
               style={{
                 background: '#fff',
@@ -113,7 +144,7 @@ export default function FeatureShowcase({ feature: f, videoSrc, index, reverse }
           </div>
 
           {/* Text */}
-          <div style={{ flex: 1, minWidth: 0 }}>
+          <div className="feature-text" style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
               <span
                 style={{
@@ -141,7 +172,9 @@ export default function FeatureShowcase({ feature: f, videoSrc, index, reverse }
                 lineHeight: 1.2,
               }}
             >
-              {f.title}
+              {index === 5 ? (
+                <>Prezzo medio<br className="md:hidden" /> di zona al m²</>
+              ) : f.title}
             </h3>
 
             <p
@@ -155,7 +188,7 @@ export default function FeatureShowcase({ feature: f, videoSrc, index, reverse }
               {f.desc}
             </p>
             {index === 2 && (
-              <div style={{ marginTop: 16 }}>
+              <div className="feature-upload-desktop" style={{ marginTop: 16 }}>
                 <button
                   onClick={() => socialFileRef.current?.click()}
                   style={{
@@ -168,20 +201,10 @@ export default function FeatureShowcase({ feature: f, videoSrc, index, reverse }
                   <span className="upload-wiggle" style={{ display: 'inline-flex' }}><Upload size={16} /></span>
                   Prova con la tua foto
                 </button>
-                <input
-                  ref={socialFileRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) setSocialPhoto(URL.createObjectURL(file));
-                  }}
-                  style={{ display: 'none' }}
-                />
               </div>
             )}
             {(index === 0 || index === 1) && (
-              <div style={{ display: 'flex', gap: 6, marginTop: 16, flexWrap: 'wrap' }}>
+              <div className="feature-buttons-desktop" style={{ display: 'flex', gap: 6, marginTop: 16, flexWrap: 'wrap' }}>
                 {(index === 0 ? STAGING_STYLES : VIDEO_STYLES).map((s, i) => {
                   const active = index === 0 ? stagingStyle === i : videoStyle === i;
                   const setStyle = index === 0 ? setStagingStyle : handleVideoStyleClick;
@@ -209,7 +232,38 @@ export default function FeatureShowcase({ feature: f, videoSrc, index, reverse }
                 })}
               </div>
             )}
+            {index === 2 && (
+              <input
+                ref={socialFileRef}
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) setSocialPhoto(URL.createObjectURL(file));
+                }}
+                style={{ display: 'none' }}
+              />
+            )}
           </div>
+
+          {/* Upload button — mobile only, below media */}
+          {index === 2 && (
+            <div className="feature-upload-mobile" style={{ display: 'none', width: '100%' }}>
+              <button
+                onClick={() => socialFileRef.current?.click()}
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                  padding: '12px 20px', width: '100%',
+                  background: '#fff', color: f.color, fontSize: 14, fontWeight: 700,
+                  borderRadius: 10, border: `2px solid ${f.color}`,
+                  cursor: 'pointer', transition: 'all 0.2s ease',
+                }}
+              >
+                <span className="upload-wiggle" style={{ display: 'inline-flex' }}><Upload size={16} /></span>
+                Prova con la tua foto
+              </button>
+            </div>
+          )}
         </div>
       </RevealSection>
 
@@ -217,8 +271,32 @@ export default function FeatureShowcase({ feature: f, videoSrc, index, reverse }
         @media (max-width: 768px) {
           .feature-showcase-row {
             flex-direction: column !important;
-            gap: 32px !important;
+            gap: 24px !important;
             padding: 48px 20px !important;
+          }
+          .feature-text {
+            order: 1 !important;
+            text-align: center !important;
+            align-items: center !important;
+            display: flex !important;
+            flex-direction: column !important;
+          }
+          .feature-media {
+            order: 2 !important;
+          }
+          .feature-buttons-mobile {
+            display: flex !important;
+            order: 3 !important;
+          }
+          .feature-buttons-desktop {
+            display: none !important;
+          }
+          .feature-upload-desktop {
+            display: none !important;
+          }
+          .feature-upload-mobile {
+            display: block !important;
+            order: 4 !important;
           }
         }
         @keyframes uploadWiggle {

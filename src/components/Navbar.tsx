@@ -24,15 +24,21 @@ export default function Navbar({ locale }: NavbarProps) {
     const [isScrolled, setIsScrolled] = useState(false);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [isMobile, setIsMobile] = useState(false);
     const t = translations[locale];
 
     useEffect(() => {
-        const handleScroll = () => {
-            setIsScrolled(window.scrollY > 10);
-        };
+        const handleScroll = () => setIsScrolled(window.scrollY > 10);
+        const checkMobile = () => setIsMobile(window.innerWidth < 768);
 
+        handleScroll();
+        checkMobile();
         window.addEventListener('scroll', handleScroll);
-        return () => window.removeEventListener('scroll', handleScroll);
+        window.addEventListener('resize', checkMobile);
+        return () => {
+            window.removeEventListener('scroll', handleScroll);
+            window.removeEventListener('resize', checkMobile);
+        };
     }, []);
 
     useEffect(() => {
@@ -67,10 +73,13 @@ export default function Navbar({ locale }: NavbarProps) {
     return (
         <>
             <nav
-                className={`w-full transition-all duration-300 ${isScrolled
-                    ? 'bg-[#fafaf8]/80 backdrop-blur-md border-b border-slate-200'
-                    : 'bg-[#fafaf8] border-b border-transparent'
-                    }`}
+                className="w-full transition-all duration-300 border-b"
+                style={{
+                    background: isScrolled ? 'rgba(250,250,248,0.8)' : (isMobile ? 'transparent' : '#fafaf8'),
+                    backdropFilter: isScrolled ? 'blur(12px)' : 'none',
+                    WebkitBackdropFilter: isScrolled ? 'blur(12px)' : 'none',
+                    borderColor: isScrolled ? '#e2e8f0' : 'transparent',
+                }}
             >
                 <div className="max-w-7xl mx-auto px-5 md:px-3 h-20 flex items-center justify-between relative">
                     <Link href={`/${locale}`} className="flex items-center">
@@ -90,7 +99,7 @@ export default function Navbar({ locale }: NavbarProps) {
                         {isLoggedIn ? (
                             <Link
                                 href={`/${locale}/dashboard`}
-                                className="flex items-center gap-2 px-3 py-2 sm:px-5 sm:py-2.5 bg-[#3B83F6] text-white rounded-xl neo-border neo-shadow hover:bg-[#2563EB] transition-all font-bold text-sm sm:text-base"
+                                className="hidden md:flex items-center gap-2 px-3 py-2 sm:px-5 sm:py-2.5 bg-[#3B83F6] text-white rounded-xl neo-border neo-shadow hover:bg-[#2563EB] transition-all font-bold text-sm sm:text-base"
                             >
                                 <UserIcon />
                                 <span className="hidden sm:inline">{t.nav.dashboard}</span>
@@ -99,7 +108,7 @@ export default function Navbar({ locale }: NavbarProps) {
                             <>
                                 <Link
                                     href={`/${locale}/checkout/agency`}
-                                    className="flex items-center justify-center h-[42px] sm:h-[48px] w-[42px] sm:w-[48px] bg-white neo-border rounded-xl neo-shadow hover:bg-slate-50 transition-all text-[#1a1a2e]"
+                                    className="hidden md:flex items-center justify-center h-[48px] w-[48px] bg-white neo-border rounded-xl neo-shadow hover:bg-slate-50 transition-all text-[#1a1a2e]"
                                     aria-label="Login"
                                 >
                                     <UserIcon />
@@ -108,7 +117,7 @@ export default function Navbar({ locale }: NavbarProps) {
                                     href="https://chromewebstore.google.com/detail/getnearme-%E2%80%94-valuta-il-qua/jbnceigldmpkpplanjlednlehloaeoia"
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="flex items-center h-[42px] sm:h-[48px] px-4 sm:px-6 bg-amber-500 text-[#1a1a2e] rounded-xl neo-border neo-shadow hover:bg-amber-600 transition-all font-bold text-sm sm:text-lg"
+                                    className="hidden md:flex items-center h-[48px] px-6 bg-amber-500 text-[#1a1a2e] rounded-xl neo-border neo-shadow hover:bg-amber-600 transition-all font-bold text-lg"
                                 >
                                     {t.nav.startAnalysis}
                                 </a>
@@ -137,6 +146,16 @@ export default function Navbar({ locale }: NavbarProps) {
                         : 'opacity-0 pointer-events-none'
                 }`}
             >
+                <button
+                    className="absolute top-7 right-5 p-2 text-slate-600 z-10"
+                    onClick={() => setIsMenuOpen(false)}
+                    aria-label="Close menu"
+                >
+                    <div className="relative w-6 h-6">
+                        <span className="absolute left-0 top-2.75 w-6 h-0.5 bg-current rotate-45" />
+                        <span className="absolute left-0 top-2.75 w-6 h-0.5 bg-current -rotate-45" />
+                    </div>
+                </button>
                 <div className="flex flex-col justify-between h-full pt-28 pb-12 px-8">
                     <div className="flex flex-col items-center gap-2">
                         {[
@@ -178,7 +197,7 @@ export default function Navbar({ locale }: NavbarProps) {
                             <>
                                 <Link
                                     href={`/${locale}/checkout/agency`}
-                                    className={`mt-6 w-full max-w-xs text-center flex items-center justify-center gap-2 px-5 py-2.5 bg-white text-[#1a1a2e] rounded-xl neo-border neo-shadow hover:bg-slate-50 transition-all duration-500 ease-out font-bold text-base ${
+                                    className={`mt-6 w-full max-w-[280px] text-center flex items-center justify-center gap-2 px-5 py-3 bg-white text-[#1a1a2e] rounded-xl neo-border neo-shadow hover:bg-slate-50 transition-all duration-500 ease-out font-bold text-base ${
                                         isMenuOpen
                                             ? 'opacity-100 translate-y-0'
                                             : 'opacity-0 translate-y-4'
@@ -193,7 +212,7 @@ export default function Navbar({ locale }: NavbarProps) {
                                     href="https://chromewebstore.google.com/detail/getnearme-%E2%80%94-valuta-il-qua/jbnceigldmpkpplanjlednlehloaeoia"
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className={`mt-3 w-full max-w-xs text-center px-5 py-2.5 bg-amber-500 text-[#1a1a2e] rounded-xl neo-border neo-shadow hover:bg-amber-600 transition-all duration-500 ease-out font-bold text-base ${
+                                    className={`mt-3 w-full max-w-[280px] text-center flex items-center justify-center px-5 py-3 bg-amber-500 text-[#1a1a2e] rounded-xl neo-border neo-shadow hover:bg-amber-600 transition-all duration-500 ease-out font-bold text-base ${
                                         isMenuOpen
                                             ? 'opacity-100 translate-y-0'
                                             : 'opacity-0 translate-y-4'

@@ -218,7 +218,7 @@ function PricingSection({
             </h2>
             <p style={{ color: '#333', fontSize: 16, marginBottom: 24 }}>{data.subtitle}</p>
             <div
-              className="neo-border neo-shadow-sm"
+              className="neo-border neo-shadow-sm pricing-countdown-box"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -229,14 +229,14 @@ function PricingSection({
               }}
             >
               <span style={{ color: '#555', fontSize: 14, fontWeight: 700 }}>
-                ⏰ {data.countdownLabel}
+                🔔 {data.countdownLabel}
               </span>
               <CountdownTimer big />
             </div>
           </div>
 
           <div
-            className="grid grid-cols-1 md:grid-cols-3 items-stretch gap-6 mt-10"
+            className="grid grid-cols-1 md:grid-cols-3 items-stretch gap-14 md:gap-6 mt-10"
           >
             {data.plans.map(
               (plan: {
@@ -292,6 +292,18 @@ function PricingSection({
           {/* <ProgressBar agenciesText={data.progressAgencies} spotsText={data.progressSpots} /> */}
         </div>
       </section>
+      <style>{`
+        @media (max-width: 768px) {
+          .pricing-countdown-box {
+            flex-direction: column !important;
+            gap: 12px !important;
+            padding: 14px 20px !important;
+            width: 100% !important;
+            display: flex !important;
+            box-sizing: border-box !important;
+          }
+        }
+      `}</style>
     </>
   );
 }

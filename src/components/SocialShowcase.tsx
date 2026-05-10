@@ -484,10 +484,13 @@ export default function SocialShowcase({ photo = DEFAULT_PHOTO }: { photo?: stri
   const col1 = ALL_TEMPLATES.filter((_, i) => i % 3 === 0);
   const col2 = ALL_TEMPLATES.filter((_, i) => i % 3 === 1);
   const col3 = ALL_TEMPLATES.filter((_, i) => i % 3 === 2);
+  const colA = ALL_TEMPLATES.filter((_, i) => i % 2 === 0);
+  const colB = ALL_TEMPLATES.filter((_, i) => i % 2 === 1);
 
   return (
-    <div style={{ width: '100%', aspectRatio: '16 / 10', position: 'relative', overflow: 'hidden' }}>
-      <div style={{ display: 'flex', gap: 10, height: '100%', justifyContent: 'center', padding: '0 16px' }}>
+    <div className="social-showcase-wrap" style={{ width: '100%', aspectRatio: '16 / 10', position: 'relative', overflow: 'hidden' }}>
+      {/* Desktop: 3 columns */}
+      <div className="social-cols-desktop" style={{ display: 'flex', gap: 10, height: '100%', justifyContent: 'center', padding: '0 16px' }}>
         {[col1, col2, col3].map((col, ci) => (
           <div key={ci} style={{ overflow: 'hidden', height: '100%', position: 'relative', flex: '1 1 0', maxWidth: 160, minWidth: 0 }}>
             <div className={ci % 2 === 0 ? 'social-marquee-up' : 'social-marquee-down'} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -498,16 +501,36 @@ export default function SocialShowcase({ photo = DEFAULT_PHOTO }: { photo?: stri
           </div>
         ))}
       </div>
+      {/* Mobile: 2 columns */}
+      <div className="social-cols-mobile" style={{ display: 'none', gap: 8, height: '100%', justifyContent: 'center', padding: '0 12px' }}>
+        {[colA, colB].map((col, ci) => (
+          <div key={ci} style={{ overflow: 'hidden', height: '100%', position: 'relative', flex: '1 1 0', minWidth: 0 }}>
+            <div className={ci % 2 === 0 ? 'social-marquee-up' : 'social-marquee-down'} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {[...col, ...col].map((t, i) => (
+                <TemplateCard key={`${t.name}-${i}`} Component={t.Component} photo={photo !== DEFAULT_PHOTO ? photo : t.photo} bd={t.bd} />
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
 
       {/* Fade overlays */}
-      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 40, background: 'linear-gradient(to bottom, #ffffff, transparent)', zIndex: 2, pointerEvents: 'none' }} />
-      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 50, background: 'linear-gradient(to top, #ffffff, transparent)', zIndex: 2, pointerEvents: 'none' }} />
+      <div className="social-fade-top" style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 40, background: 'linear-gradient(to bottom, #ffffff, transparent)', zIndex: 2, pointerEvents: 'none' }} />
+      <div className="social-fade-bottom" style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 50, background: 'linear-gradient(to top, #ffffff, transparent)', zIndex: 2, pointerEvents: 'none' }} />
 
       <style>{`
         @keyframes marquee-up { 0% { transform: translateY(0); } 100% { transform: translateY(-50%); } }
         @keyframes marquee-down { 0% { transform: translateY(-50%); } 100% { transform: translateY(0); } }
         .social-marquee-up { animation: marquee-up 30s linear infinite; }
         .social-marquee-down { animation: marquee-down 30s linear infinite; }
+
+        @media (max-width: 768px) {
+          .social-showcase-wrap { aspect-ratio: 16 / 10 !important; }
+          .social-cols-desktop { display: none !important; }
+          .social-cols-mobile { display: flex !important; }
+          .social-fade-top { height: 20px !important; }
+          .social-fade-bottom { height: 25px !important; }
+        }
 
         @keyframes tplKB { 0% { transform: scale(1); } 100% { transform: scale(1.08); } }
         @keyframes tplSU {

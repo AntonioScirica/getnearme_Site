@@ -78,10 +78,11 @@ export default async function Home({ params }: Props) {
         >
           {/* Decorative shapes */}
           <div
+            className="hero-shape-circle"
             style={{
               position: "absolute",
-              top: 20,
-              right: -80,
+              top: -140,
+              right: -180,
               width: 240,
               height: 240,
               background: "#fef3c7",
@@ -91,10 +92,11 @@ export default async function Home({ params }: Props) {
             }}
           />
           <div
+            className="hero-shape-square"
             style={{
               position: "absolute",
-              top: 180,
-              left: 60,
+              top: 380,
+              left: -60,
               width: 90,
               height: 90,
               background: "#dbeafe",
@@ -105,10 +107,11 @@ export default async function Home({ params }: Props) {
             }}
           />
           <div
+            className="hero-shape-pink"
             style={{
               position: "absolute",
               bottom: 40,
-              right: -30,
+              right: -120,
               width: 160,
               height: 160,
               background: "#fce7f3",
@@ -176,23 +179,23 @@ export default async function Home({ params }: Props) {
                   fontSize: 18,
                   lineHeight: 1.7,
                   maxWidth: 720,
-                  margin: "0 0 36px",
+                  margin: "0 0 24px",
                 }}
               >
                 {l.hero.desc}
               </p>
 
-              <div style={{ display: "flex", gap: 14, flexWrap: "wrap", justifyContent: "center" }}>
+              <div className="flex flex-col md:flex-row gap-3 md:gap-4 justify-center items-center w-full max-w-xs md:max-w-md mx-auto">
                 <a
                   href="#pricing"
-                  className="neo-border neo-shadow"
+                  className="neo-border neo-shadow flex-1 text-center w-full"
                   style={{
                     background: "#f59e0b",
                     color: "#1a1a2e",
-                    padding: "16px 36px",
+                    padding: "16px 20px",
                     borderRadius: 14,
                     fontWeight: 900,
-                    fontSize: 16,
+                    fontSize: 15,
                     cursor: "pointer",
                     letterSpacing: 0.5,
                     textDecoration: "none",
@@ -202,11 +205,11 @@ export default async function Home({ params }: Props) {
                 </a>
                 <Link
                   href={`/${locale}/demo`}
-                  className="neo-border neo-shadow"
+                  className="neo-border neo-shadow flex-1 text-center w-full"
                   style={{
                     background: "#fff",
                     color: "#1a1a2e",
-                    padding: "16px 28px",
+                    padding: "16px 20px",
                     borderRadius: 14,
                     fontWeight: 700,
                     fontSize: 15,
@@ -327,8 +330,8 @@ export default async function Home({ params }: Props) {
                 marginBottom: 12,
               }}
             >
-              {l.features.title}
-              <br />
+              {l.features.title}{" "}
+              <br className="hidden md:block" />
               <span
                 style={{
                   color: "#f59e0b",
@@ -391,12 +394,12 @@ export default async function Home({ params }: Props) {
               const Card = ({ color, headerTitle, headerSub, headerIcon, items }: { color: string; headerTitle: string; headerSub: string; headerIcon: React.ReactNode; items: { icon: React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>; title: string; desc: string; rotate?: number }[] }) => (
                 <div style={{ border: `2px solid ${color}`, borderRadius: 20, padding: "28px 32px", background: "#fff" }}>
                   {/* Header */}
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 28 }}>
+                  <div className="comparison-header" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 28 }}>
                     <div>
                       <h3 style={{ fontSize: 26, fontWeight: 700, color, margin: 0, lineHeight: 1.1 }}>{headerTitle}</h3>
                       <p style={{ fontSize: 15, fontWeight: 500, color: DARK, margin: "6px 0 0", opacity: 0.6 }}>{headerSub}</p>
                     </div>
-                    <div style={{ width: 52, height: 52, borderRadius: "50%", background: `${color}0D`, border: `2px solid ${color}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginLeft: 16 }}>
+                    <div className="comparison-header-icon" style={{ width: 52, height: 52, borderRadius: "50%", background: `${color}0D`, border: `2px solid ${color}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginLeft: 16 }}>
                       {headerIcon}
                     </div>
                   </div>
@@ -407,12 +410,12 @@ export default async function Home({ params }: Props) {
                       const IconComp = r.icon;
                       const isLast = i === items.length - 1;
                       return (
-                        <div key={r.title} style={{ display: "grid", gridTemplateColumns: "52px 1fr 1fr", alignItems: "center", gap: 16, padding: "12px 0", borderBottom: isLast ? "none" : `1px solid ${color}20` }}>
-                          <div style={{ width: 52, height: 52, borderRadius: "50%", border: `2px solid ${color}4D`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <div key={r.title} className="comparison-row" style={{ display: "grid", gridTemplateColumns: "52px 1fr 1fr", alignItems: "center", gap: 16, padding: "12px 0", borderBottom: isLast ? "none" : `1px solid ${color}20` }}>
+                          <div className="comparison-icon" style={{ width: 52, height: 52, borderRadius: "50%", border: `2px solid ${color}4D`, display: "flex", alignItems: "center", justifyContent: "center" }}>
                             <span style={{ display: "inline-flex", transform: r.rotate ? `rotate(${r.rotate}deg)` : undefined }}><IconComp size={22} color={color} strokeWidth={2} /></span>
                           </div>
-                          <div style={{ fontWeight: 700, fontSize: 18, color: DARK, lineHeight: 1.2 }}>{r.title}</div>
-                          <div style={{ fontSize: 15, fontWeight: 500, color: DARK, lineHeight: 1.5, opacity: 0.7 }}>{r.desc}</div>
+                          <div className="comparison-title" style={{ fontWeight: 700, fontSize: 18, color: DARK, lineHeight: 1.2 }}>{r.title}</div>
+                          <div className="comparison-desc" style={{ fontSize: 15, fontWeight: 500, color: DARK, lineHeight: 1.5, opacity: 0.7 }}>{r.desc}</div>
                         </div>
                       );
                     })}
@@ -446,7 +449,7 @@ export default async function Home({ params }: Props) {
                   { icon: ClipboardList, title: "Meno copia-incolla", desc: "Dati già pronti, zero lavoro ripetitivo." },
                   { icon: Zap, title: "Più velocità operativa", desc: "Rispondi ai clienti prima, migliori i risultati." },
                 ].map((b) => (
-                  <div key={b.title} style={{ flex: 1, display: "flex", alignItems: "center", gap: 12, background: "#fff", border: "1.5px solid #e5e7eb", borderRadius: 14, padding: "14px 16px" }}>
+                  <div key={b.title} className="benefit-card" style={{ flex: 1, display: "flex", alignItems: "center", gap: 12, background: "#fff", border: "1.5px solid #e5e7eb", borderRadius: 14, padding: "14px 16px" }}>
                     <div style={{ width: 42, height: 42, borderRadius: "50%", background: "#2563eb", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                       <b.icon size={20} color="#fff" strokeWidth={2} />
                     </div>
@@ -456,7 +459,7 @@ export default async function Home({ params }: Props) {
                     </div>
                   </div>
                 ))}
-                <a href="#prezzi" className="neo-border neo-shadow" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, background: "#f59e0b", color: "#1a1a2e", fontSize: 18, fontWeight: 700, padding: "0 28px", height: 58, borderRadius: 12, textDecoration: "none", whiteSpace: "nowrap", flexShrink: 0, transition: "all 0.2s", marginBottom: 6, marginRight: 6 }}>
+                <a href="#prezzi" className="neo-border neo-shadow benefits-cta" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, background: "#f59e0b", color: "#1a1a2e", fontSize: 18, fontWeight: 700, padding: "0 28px", height: 58, borderRadius: 12, textDecoration: "none", whiteSpace: "nowrap", flexShrink: 0, transition: "all 0.2s", marginBottom: 6, marginRight: 6 }}>
                   Prova ora <ArrowRight size={20} strokeWidth={2.5} />
                 </a>
               </div>
@@ -467,8 +470,39 @@ export default async function Home({ params }: Props) {
               .comparison-grid {
                 grid-template-columns: 1fr !important;
               }
+              .comparison-header {
+                flex-direction: column-reverse !important;
+                align-items: center !important;
+                text-align: center;
+                gap: 12px;
+              }
+              .comparison-header-icon {
+                margin-left: 0 !important;
+              }
+              .comparison-row {
+                grid-template-columns: 1fr !important;
+                justify-items: center;
+                text-align: center;
+                gap: 8px !important;
+                padding: 16px 0 !important;
+              }
               .benefits-bar {
                 flex-direction: column !important;
+                gap: 8px !important;
+              }
+              .benefit-card {
+                flex-direction: column !important;
+                text-align: center;
+                padding: 14px !important;
+                gap: 10px !important;
+                margin: 0 !important;
+                width: 100% !important;
+              }
+              .benefits-cta {
+                width: calc(100% - 12px) !important;
+                margin-top: 8px !important;
+                margin-right: 6px !important;
+                margin-bottom: 6px !important;
               }
             }
           `}</style>
@@ -673,17 +707,17 @@ export default async function Home({ params }: Props) {
                 color: "#fff",
               }}
             >
-              {l.finalCta.title1}
-              <br />
+              {l.finalCta.title1}{" "}
+              <br className="hidden md:block" />
               <span style={{ color: "#f59e0b" }}>{l.finalCta.title2}</span>
             </h2>
             <p style={{ color: "#aaa", fontSize: 17, marginBottom: 36 }}>
               {l.finalCta.desc}
             </p>
-            <div style={{ display: "flex", gap: 14, flexWrap: "wrap", justifyContent: "center" }}>
+            <div className="final-cta-buttons" style={{ display: "flex", gap: 14, flexWrap: "wrap", justifyContent: "center" }}>
               <a
                 href="#pricing"
-                className="neo-shadow-light"
+                className="neo-shadow-light final-cta-btn"
                 style={{
                   display: "inline-block",
                   background: "#f59e0b",
@@ -696,13 +730,14 @@ export default async function Home({ params }: Props) {
                   cursor: "pointer",
                   letterSpacing: 0.5,
                   textDecoration: "none",
+                  textAlign: "center",
                 }}
               >
                 {l.finalCta.button}
               </a>
               <Link
                 href={`/${locale}/demo`}
-                className="neo-shadow-light"
+                className="neo-shadow-light final-cta-btn"
                 style={{
                   display: "inline-block",
                   background: "transparent",
@@ -714,13 +749,14 @@ export default async function Home({ params }: Props) {
                   fontSize: 16,
                   cursor: "pointer",
                   textDecoration: "none",
+                  textAlign: "center",
                 }}
               >
                 {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                 {(l.finalCta as any).buttonDemo}
               </Link>
             </div>
-            <div style={{ color: "#eee", fontSize: 13, marginTop: 20, display: "inline-flex", alignItems: "center", gap: 6, justifyContent: "center" }}>
+            <div className="final-cta-footer" style={{ color: "#eee", fontSize: 13, marginTop: 20, display: "inline-flex", alignItems: "center", gap: 6, justifyContent: "center" }}>
               {(() => {
                 const text = l.finalCta.footer;
                 const first = [...text][0] || "";
@@ -736,6 +772,26 @@ export default async function Home({ params }: Props) {
               })()}
             </div>
           </div>
+          <style>{`
+            @media (max-width: 768px) {
+              .final-cta-buttons {
+                flex-direction: column !important;
+                align-items: center !important;
+                gap: 20px !important;
+                width: 100%;
+                max-width: 300px;
+                margin: 0 auto;
+              }
+              .final-cta-btn {
+                width: 100% !important;
+                display: block !important;
+                padding: 16px 20px !important;
+              }
+              .final-cta-footer {
+                margin-top: 32px !important;
+              }
+            }
+          `}</style>
         </section>
 
         {/* Footer */}
@@ -763,8 +819,9 @@ export default async function Home({ params }: Props) {
                   GetNearMe
                 </h3>
                 <p
+                  className="footer-desc"
                   style={{
-                    color: "#999",
+                    color: "#666",
                     fontSize: 13,
                     marginBottom: 24,
                     maxWidth: 250,
@@ -780,7 +837,7 @@ export default async function Home({ params }: Props) {
                   <li>
                     <a
                       href="#funzionalita"
-                      className="text-slate-400 hover:text-slate-900 transition-colors"
+                      className="text-slate-500 hover:text-slate-900 transition-colors"
                     >
                       {t.nav.features}
                     </a>
@@ -788,7 +845,7 @@ export default async function Home({ params }: Props) {
                   <li>
                     <a
                       href={`/${locale}/tutorial`}
-                      className="text-slate-400 hover:text-slate-900 transition-colors"
+                      className="text-slate-500 hover:text-slate-900 transition-colors"
                     >
                       {t.nav.tutorial}
                     </a>
@@ -796,7 +853,7 @@ export default async function Home({ params }: Props) {
                   <li>
                     <a
                       href="#pricing"
-                      className="text-slate-400 hover:text-slate-900 transition-colors"
+                      className="text-slate-500 hover:text-slate-900 transition-colors"
                     >
                       {t.nav.pricing}
                     </a>
@@ -804,7 +861,7 @@ export default async function Home({ params }: Props) {
                   <li>
                     <a
                       href="#faq"
-                      className="text-slate-400 hover:text-slate-900 transition-colors"
+                      className="text-slate-500 hover:text-slate-900 transition-colors"
                     >
                       {t.nav.faq}
                     </a>
@@ -818,7 +875,7 @@ export default async function Home({ params }: Props) {
                   <li>
                     <Link
                       href={`/${locale}/privacy`}
-                      className="text-slate-400 hover:text-slate-900 transition-colors"
+                      className="text-slate-500 hover:text-slate-900 transition-colors"
                     >
                       {t.footer.privacy}
                     </Link>
@@ -826,7 +883,7 @@ export default async function Home({ params }: Props) {
                   <li>
                     <Link
                       href={`/${locale}/cookie`}
-                      className="text-slate-400 hover:text-slate-900 transition-colors"
+                      className="text-slate-500 hover:text-slate-900 transition-colors"
                     >
                       {t.footer.cookie}
                     </Link>
@@ -834,7 +891,7 @@ export default async function Home({ params }: Props) {
                   <li>
                     <Link
                       href={`/${locale}/termini`}
-                      className="text-slate-400 hover:text-slate-900 transition-colors"
+                      className="text-slate-500 hover:text-slate-900 transition-colors"
                     >
                       {t.footer.terms}
                     </Link>
@@ -854,6 +911,15 @@ export default async function Home({ params }: Props) {
               </p>
             </div>
           </div>
+          <style>{`
+            @media (max-width: 768px) {
+              .footer-desc {
+                max-width: none !important;
+                margin-left: auto !important;
+                margin-right: auto !important;
+              }
+            }
+          `}</style>
         </footer>
       </main>
 

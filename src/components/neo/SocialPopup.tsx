@@ -28,37 +28,45 @@ export default function SocialPopup({ messages }: SocialPopupProps) {
     setOrder(indices);
   }, [messages.length]);
 
-  const getRandomDelay = useCallback(() => {
-    return 20000 + Math.floor(Math.random() * 25000); // 20-45 seconds
+  const getRandomInterval = useCallback(() => {
+    return 60000 + Math.floor(Math.random() * 60000); // 60-120 seconds between popups
   }, []);
 
   // Initial appearance with random delay
   useEffect(() => {
-    const d = setTimeout(() => setShow(true), 3000 + Math.floor(Math.random() * 4000));
+    const d = setTimeout(() => setShow(true), 15000 + Math.floor(Math.random() * 10000));
     return () => clearTimeout(d);
   }, []);
 
-  // Cycle through messages with random intervals
+  // Auto-hide after 3s, then schedule next popup
   useEffect(() => {
     if (!show || order.length === 0) return;
-    const delay = getRandomDelay();
-    const id = setTimeout(() => {
+    // Hide after 3 seconds
+    const hideId = setTimeout(() => {
       setShow(false);
-      setTimeout(() => {
-        setCur((c) => (c + 1) % order.length);
-        setShow(true);
-      }, 500);
-    }, delay);
-    return () => clearTimeout(id);
-  }, [show, cur, order.length, getRandomDelay]);
+    }, 3000);
+    return () => clearTimeout(hideId);
+  }, [show, order.length]);
+
+  // After hiding, wait long interval then show next
+  useEffect(() => {
+    if (show || order.length === 0) return;
+    const nextId = setTimeout(() => {
+      setCur((c) => (c + 1) % order.length);
+      setShow(true);
+    }, getRandomInterval());
+    return () => clearTimeout(nextId);
+  }, [show, order.length, getRandomInterval]);
 
   if (order.length === 0) return null;
   const p = messages[order[cur]];
   if (!p) return null;
+  if (!show) return null;
 
   return (
     <div
       onClick={() => { setShow(false); window.location.hash = 'pricing'; }}
+      className="social-popup-enter"
       style={{
         position: 'fixed',
         bottom: 16,
@@ -75,10 +83,8 @@ export default function SocialPopup({ messages }: SocialPopupProps) {
         maxWidth: 370,
         width: 'calc(100% - 24px)',
         boxShadow: '4px 4px 0px #1a1a2e',
-        transform: show ? 'translateY(0)' : 'translateY(160%)',
-        opacity: show ? 1 : 0,
-        transition: 'all 0.5s cubic-bezier(0.34,1.56,0.64,1)',
         cursor: 'pointer',
+        animation: 'popupSlideIn 0.4s ease forwards',
       }}
     >
       <span style={{ display: 'flex', color: '#1a1a2e' }}>
@@ -88,6 +94,12 @@ export default function SocialPopup({ messages }: SocialPopupProps) {
         <div style={{ color: '#1a1a2e', fontSize: 13, fontWeight: 700, lineHeight: 1.4 }}>{p.text}</div>
         {p.time && <div style={{ color: '#999', fontSize: 11, marginTop: 2 }}>{p.time}</div>}
       </div>
+      <style>{`
+        @keyframes popupSlideIn {
+          from { transform: translateY(120%); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
+        }
+      `}</style>
     </div>
   );
 }
