@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { locales, type Locale } from "@/lib/i18n";
 import { translations } from "@/lib/translations";
 import Navbar from "@/components/Navbar";
@@ -137,7 +136,32 @@ export default async function ReferencePage({ params }: Props) {
 
               {/* Gallery */}
               {f.layout === "social" && f.posts && f.reels ? (
-                <ReferenceGallery variant="social" posts={f.posts} reels={f.reels} color={f.color} />
+                <>
+                  <ReferenceGallery variant="social" posts={f.posts} reels={f.reels} color={f.color} />
+                  <div style={{ textAlign: "center", marginTop: 36 }}>
+                    <a
+                      href="https://chromewebstore.google.com/detail/getnearme-%E2%80%94-valuta-il-qua/jbnceigldmpkpplanjlednlehloaeoia"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="neo-shadow-light"
+                      style={{
+                        display: "inline-block",
+                        background: "#f59e0b",
+                        color: "#1a1a2e",
+                        border: "3px solid #1a1a2e",
+                        padding: "14px 36px",
+                        borderRadius: 14,
+                        fontWeight: 800,
+                        fontSize: 16,
+                        textDecoration: "none",
+                        letterSpacing: 0.3,
+                        boxShadow: "4px 4px 0 #1a1a2e",
+                      }}
+                    >
+                      Scopri tutti i template →
+                    </a>
+                  </div>
+                </>
               ) : f.media.length > 0 ? (
                 <ReferenceGallery variant="gallery" media={f.media} color={f.color} />
               ) : (
@@ -195,8 +219,9 @@ export default async function ReferencePage({ params }: Props) {
               >
                 Aggiungi estensione
               </a>
-              <Link
-                href={`/${locale}/demo`}
+              <a
+                data-cal-link="getnearme/30min"
+                data-cal-config='{"layout":"month_view"}'
                 className="neo-shadow-light ref-cta-btn"
                 style={{
                   display: "inline-block",
@@ -209,10 +234,11 @@ export default async function ReferencePage({ params }: Props) {
                   fontSize: 16,
                   textDecoration: "none",
                   textAlign: "center",
+                  cursor: "pointer",
                 }}
               >
                 Prenota demo
-              </Link>
+              </a>
             </div>
           </div>
         </section>

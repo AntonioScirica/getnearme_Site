@@ -203,14 +203,16 @@ export default async function Home({ params }: Props) {
                 >
                   {l.hero.ctaPrimary}
                 </a>
-                <Link
-                  href={`/${locale}/demo`}
+                <a
+                  data-cal-link="getnearme/30min"
+                  data-cal-config='{"layout":"month_view"}'
                   className="neo-border neo-shadow flex-1 text-center w-full"
                   style={{
                     background: "#fff",
                     color: "#1a1a2e",
                     padding: "16px 20px",
                     borderRadius: 14,
+                    cursor: "pointer",
                     fontWeight: 700,
                     fontSize: 15,
                     cursor: "pointer",
@@ -219,7 +221,7 @@ export default async function Home({ params }: Props) {
                 >
                   {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                   {(l.hero as any).ctaDemo}
-                </Link>
+                </a>
               </div>
 
 
@@ -735,8 +737,9 @@ export default async function Home({ params }: Props) {
               >
                 {l.finalCta.button}
               </a>
-              <Link
-                href={`/${locale}/demo`}
+              <a
+                data-cal-link="getnearme/30min"
+                data-cal-config='{"layout":"month_view"}'
                 className="neo-shadow-light final-cta-btn"
                 style={{
                   display: "inline-block",
@@ -754,7 +757,7 @@ export default async function Home({ params }: Props) {
               >
                 {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                 {(l.finalCta as any).buttonDemo}
-              </Link>
+              </a>
             </div>
             <div className="final-cta-footer" style={{ color: "#eee", fontSize: 13, marginTop: 20, display: "inline-flex", alignItems: "center", gap: 6, justifyContent: "center" }}>
               {(() => {
