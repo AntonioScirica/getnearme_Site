@@ -26,55 +26,42 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 const FEATURES = [
   {
-    id: "ai-photos",
-    icon: "sparkles",
-    color: "#6366f1",
-    title: "Homestaging AI",
-    desc: "Arreda, svuota o trasforma qualsiasi ambiente in pochi secondi.",
-    media: [
-      // { type: "image", src: "/reference/staging-1.jpg", aspect: "vertical" },
-      // { type: "video", src: "/reference/staging-demo.mp4", aspect: "horizontal" },
-    ] as { type: "image" | "video"; src: string; aspect?: "vertical" | "horizontal" }[],
-  },
-  {
     id: "ai-video",
     icon: "clapperboard",
     color: "#10b981",
     title: "Video AI per l'immobile",
     desc: "Reel, walkthrough, before/after, video con avatar parlante e molto altro.",
-    media: [] as { type: "image" | "video"; src: string; aspect?: "vertical" | "horizontal" }[],
+    media: [
+      { type: "video", src: "/reference/primo-piano.mp4", title: "Avatar in Primo Piano", desc: "L'avatar presenta i tuoi video con script, musica e sottotitoli generati dall'AI." },
+      { type: "video", src: "/reference/split.mp4", title: "Schermo Diviso", desc: "Video dell'immobile in alto, avatar in basso. Script, musica e sottotitoli generati dall'AI." },
+      { type: "video", src: "/reference/immagini-a-video.mp4", title: "Da immagini a video", desc: "Le tue foto prendono vita con movimenti di camera cinematografici e musica." },
+      { type: "video", src: "/reference/construction.mp4", title: "Timelapse AI", desc: "Da una foto dell'esterno, l'AI genera scavi, struttura e risultato finale in timelapse." },
+      { type: "video", src: "/reference/prima-dopo.mp4", title: "Prima vs Dopo", desc: "Carica una foto, scegli lo stile: l'AI arreda e crea il video prima/dopo automaticamente." },
+      { type: "video", src: "/reference/giorno-notte.mp4", title: "Giorno → Notte", desc: "Carica una foto e l'AI trasforma l'illuminazione da giorno a notte o viceversa." },
+      { type: "video", src: "/reference/sottotitoli.mp4", title: "Sottotitola il tuo video", desc: "Carica un video già girato: l'AI taglia pause e silenzi e aggiunge sottotitoli professionali." },
+      { type: "video", src: "/reference/montaggio.mp4", title: "Montaggio automatico", desc: "Carica foto e video: l'AI monta tutto con transizioni, musica e sottotitoli in automatico." },
+    ] as { type: "image" | "video"; src: string; aspect?: "vertical" | "horizontal"; title?: string; desc?: string }[],
   },
   {
     id: "social-posts",
     icon: "smartphone",
     color: "#ec4899",
-    title: "Post, reel e storie social",
+    title: "Post automatici",
     desc: "Contenuti pronti per Instagram, Facebook, TikTok e LinkedIn.",
-    media: [] as { type: "image" | "video"; src: string; aspect?: "vertical" | "horizontal" }[],
-  },
-  {
-    id: "reports",
-    icon: "file-text",
-    color: "#f97316",
-    title: "Report PDF white-label",
-    desc: "Presentazioni comparative col tuo logo, colori e font.",
-    media: [] as { type: "image" | "video"; src: string; aspect?: "vertical" | "horizontal" }[],
-  },
-  {
-    id: "zone-analysis",
-    icon: "map",
-    color: "#0ea5e9",
-    title: "Analisi di zona interattiva",
-    desc: "Servizi, trasporti, scuole, sanità e punti di interesse su mappa.",
-    media: [] as { type: "image" | "video"; src: string; aspect?: "vertical" | "horizontal" }[],
-  },
-  {
-    id: "price-calculator",
-    icon: "trending-up",
-    color: "#f59e0b",
-    title: "Prezzo medio di zona al m²",
-    desc: "Dati di riferimento sul prezzo medio €/m² della zona.",
-    media: [] as { type: "image" | "video"; src: string; aspect?: "vertical" | "horizontal" }[],
+    layout: "social" as const,
+    posts: [
+      { src: "/reference/social-post-feed.png", title: "Post Feed", desc: "Formato 4:5 per il feed Instagram e Facebook." },
+      { src: "/reference/social-post-square.png", title: "Post Quadrato", desc: "Formato 1:1 per Instagram e LinkedIn." },
+      { src: "/reference/social-post-story.png", title: "Post Story", desc: "Formato 9:16 per Stories." },
+      { src: "/reference/social-post.png", title: "Post Reel", desc: "Formato 9:16 per Reels e TikTok." },
+    ],
+    reels: [
+      { src: "/reference/social-reel-feed.mp4", title: "Reel Feed", desc: "Animazione automatica in formato feed." },
+      { src: "/reference/social-reel-square.mp4", title: "Reel Quadrato", desc: "Animazione automatica in formato quadrato." },
+      { src: "/reference/social-reel-story.mp4", title: "Reel Story", desc: "Animazione automatica in formato story." },
+      { src: "/reference/social-reel.mp4", title: "Reel Verticale", desc: "Animazione automatica in formato reel." },
+    ],
+    media: [] as { type: "image" | "video"; src: string; aspect?: "vertical" | "horizontal"; title?: string; desc?: string }[],
   },
 ];
 
@@ -111,23 +98,7 @@ export default async function ReferencePage({ params }: Props) {
           </div>
         </section>
 
-        {/* Feature nav */}
-        <div className="sticky top-20 z-40 bg-[#fafaf8] border-b border-slate-200">
-          <div className="max-w-5xl mx-auto px-5 md:px-6">
-            <div className="flex gap-2 py-3 overflow-x-auto no-scrollbar">
-              {FEATURES.map((f) => (
-                <a
-                  key={f.id}
-                  href={`#${f.id}`}
-                  className="shrink-0 px-4 py-2 rounded-lg text-sm font-semibold transition-colors hover:bg-slate-100"
-                  style={{ color: f.color, border: `1.5px solid ${f.color}30`, background: `${f.color}08` }}
-                >
-                  {f.title}
-                </a>
-              ))}
-            </div>
-          </div>
-        </div>
+
 
         {/* Feature sections */}
         {FEATURES.map((f, i) => (
@@ -139,7 +110,7 @@ export default async function ReferencePage({ params }: Props) {
           >
             <div className="max-w-5xl mx-auto px-5 md:px-6">
               {/* Feature header */}
-              <div className="flex items-center gap-4 mb-3">
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", marginBottom: 32 }}>
                 <span
                   style={{
                     width: 48,
@@ -151,23 +122,23 @@ export default async function ReferencePage({ params }: Props) {
                     borderRadius: 14,
                     border: `2px solid ${f.color}40`,
                     color: f.color,
-                    flexShrink: 0,
+                    marginBottom: 12,
                   }}
                 >
                   <ReferenceGallery variant="icon" iconName={f.icon} />
                 </span>
-                <div>
-                  <h2 style={{ fontSize: 28, fontWeight: 900, color: "#1a1a2e", margin: 0, lineHeight: 1.2 }}>
-                    {f.title}
-                  </h2>
-                </div>
+                <h2 style={{ fontSize: 28, fontWeight: 900, color: "#1a1a2e", margin: "0 0 8px", lineHeight: 1.2 }}>
+                  {f.title}
+                </h2>
+                <p style={{ color: "#666", fontSize: 16, margin: 0, maxWidth: 600 }}>
+                  {f.desc}
+                </p>
               </div>
-              <p style={{ color: "#666", fontSize: 16, marginBottom: 32, maxWidth: 600 }}>
-                {f.desc}
-              </p>
 
               {/* Gallery */}
-              {f.media.length > 0 ? (
+              {f.layout === "social" && f.posts && f.reels ? (
+                <ReferenceGallery variant="social" posts={f.posts} reels={f.reels} color={f.color} />
+              ) : f.media.length > 0 ? (
                 <ReferenceGallery variant="gallery" media={f.media} color={f.color} />
               ) : (
                 <div
@@ -188,40 +159,56 @@ export default async function ReferencePage({ params }: Props) {
         ))}
 
         {/* Bottom CTA */}
-        <section style={{ background: "#1a1a2e", padding: "60px 0" }}>
+        <section style={{ background: "#1a1a2e", padding: "80px 0 120px" }}>
           <div className="max-w-5xl mx-auto px-5 md:px-6 text-center">
-            <h2 style={{ fontSize: 28, fontWeight: 900, color: "#fff", marginBottom: 12 }}>
+            <h2
+              style={{
+                fontSize: "clamp(30px, 5vw, 52px)",
+                fontWeight: 900,
+                lineHeight: 1.1,
+                color: "#fff",
+                marginBottom: 16,
+              }}
+            >
               Pronto a provare?
             </h2>
-            <p style={{ color: "#aaa", fontSize: 16, marginBottom: 28 }}>
+            <p style={{ color: "#aaa", fontSize: 17, marginBottom: 36 }}>
               Aggiungi GetNearMe al tuo browser e inizia subito.
             </p>
-            <div className="flex flex-col md:flex-row gap-4 justify-center items-center">
+            <div className="ref-cta-buttons" style={{ display: "flex", gap: 14, flexWrap: "wrap", justifyContent: "center" }}>
               <a
                 href={`/${locale}#pricing`}
-                className="neo-border neo-shadow"
+                className="neo-shadow-light ref-cta-btn"
                 style={{
+                  display: "inline-block",
                   background: "#f59e0b",
                   color: "#1a1a2e",
-                  padding: "14px 36px",
+                  border: "3px solid #1a1a2e",
+                  padding: "18px 48px",
                   borderRadius: 14,
                   fontWeight: 900,
-                  fontSize: 16,
+                  fontSize: 18,
                   textDecoration: "none",
+                  textAlign: "center",
+                  letterSpacing: 0.5,
                 }}
               >
                 Aggiungi estensione
               </a>
               <Link
                 href={`/${locale}/demo`}
+                className="neo-shadow-light ref-cta-btn"
                 style={{
+                  display: "inline-block",
+                  background: "transparent",
                   color: "#fff",
-                  border: "2px solid #fff",
-                  padding: "14px 36px",
+                  border: "3px solid #fff",
+                  padding: "18px 36px",
                   borderRadius: 14,
                   fontWeight: 700,
                   fontSize: 16,
                   textDecoration: "none",
+                  textAlign: "center",
                 }}
               >
                 Prenota demo
@@ -234,6 +221,21 @@ export default async function ReferencePage({ params }: Props) {
       <style>{`
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        @media (max-width: 768px) {
+          .ref-cta-buttons {
+            flex-direction: column !important;
+            align-items: center !important;
+            gap: 20px !important;
+            width: 100%;
+            max-width: 300px;
+            margin: 0 auto;
+          }
+          .ref-cta-btn {
+            width: 100% !important;
+            display: block !important;
+            padding: 16px 20px !important;
+          }
+        }
       `}</style>
     </div>
   );
