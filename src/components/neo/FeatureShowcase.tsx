@@ -86,7 +86,7 @@ export default function FeatureShowcase({ feature: f, videoSrc, index, reverse }
                   transition: 'all 0.2s ease',
                   textDecoration: 'none',
                 };
-                if (s.type === 'link') {
+                if ('type' in s && s.type === 'link') {
                   return (
                     <Link key={s.label} href={`/${locale}/reference`} style={btnStyle}>
                       {s.label}
@@ -231,7 +231,7 @@ export default function FeatureShowcase({ feature: f, videoSrc, index, reverse }
                     transition: 'all 0.2s ease',
                     textDecoration: 'none',
                   };
-                  if (s.type === 'link') {
+                  if ('type' in s && s.type === 'link') {
                     return (
                       <Link key={s.label} href={`/${locale}/reference`} style={btnStyle}>
                         {s.label}
