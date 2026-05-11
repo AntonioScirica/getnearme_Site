@@ -103,7 +103,26 @@ export default function FeatureShowcase({ feature: f, videoSrc, index, reverse }
           )}
 
           {/* Media */}
-          <div className="feature-media" style={{ flex: 1, minWidth: 0 }}>
+          <div className="feature-media" style={{ flex: 1, minWidth: 0, position: 'relative' }}>
+            {index === 1 && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src="/staging/time.png"
+                alt="Foto originale"
+                className="timelaps-thumb hidden-mobile"
+                style={{
+                  position: 'absolute',
+                  top: -20,
+                  left: -100,
+                  width: 90,
+                  height: 'auto',
+                  zIndex: 10,
+                  pointerEvents: 'none',
+                  opacity: videoStyle === 0 ? 1 : 0,
+                  transition: 'opacity 0.4s ease',
+                }}
+              />
+            )}
             <div
               style={{
                 background: '#fff',
@@ -311,6 +330,9 @@ export default function FeatureShowcase({ feature: f, videoSrc, index, reverse }
           .feature-upload-mobile {
             display: block !important;
             order: 4 !important;
+          }
+          .hidden-mobile {
+            display: none !important;
           }
         }
         @keyframes uploadWiggle {
