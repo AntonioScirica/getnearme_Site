@@ -5,7 +5,7 @@ import { Lock, Loader2 } from "lucide-react";
 import EmailsPage from "@/components/metrics/pages/EmailsPage";
 import { MONO } from "@/components/metrics/types";
 
-const EMAIL_KEY = "gnm_email_2025!";
+const EMAIL_KEY = "GetEmail";
 
 export default function EmailOnlyPage() {
   const [authed, setAuthed] = useState(false);
