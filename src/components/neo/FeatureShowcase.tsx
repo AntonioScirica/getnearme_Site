@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useRef, useCallback } from 'react';
+import { useParams } from 'next/navigation';
+import Link from 'next/link';
 import { Icon } from '@/lib/icons';
 import { Upload } from 'lucide-react';
 import RevealSection from './RevealSection';
@@ -18,6 +20,8 @@ interface FeatureShowcaseProps {
 const DEFAULT_SOCIAL_PHOTO = 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&h=750&fit=crop';
 
 export default function FeatureShowcase({ feature: f, videoSrc, index, reverse }: FeatureShowcaseProps) {
+  const params = useParams();
+  const locale = (params?.locale as string) || 'it';
   const [stagingStyle, setStagingStyle] = useState(0);
   const [videoStyle, setVideoStyle] = useState(0);
   const [videoFading, setVideoFading] = useState(false);
@@ -68,24 +72,29 @@ export default function FeatureShowcase({ feature: f, videoSrc, index, reverse }
               {(index === 0 ? STAGING_STYLES : VIDEO_STYLES).map((s, i) => {
                 const active = index === 0 ? stagingStyle === i : videoStyle === i;
                 const setStyle = index === 0 ? setStagingStyle : handleVideoStyleClick;
+                const btnStyle = {
+                  flex: 1,
+                  padding: '9px 8px',
+                  fontSize: 13,
+                  fontWeight: 600,
+                  borderRadius: 8,
+                  border: `2px solid ${active ? f.color : '#e5e7eb'}`,
+                  background: active ? `${f.color}15` : '#fff',
+                  color: active ? f.color : '#666',
+                  textAlign: 'center' as const,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  textDecoration: 'none',
+                };
+                if (s.type === 'link') {
+                  return (
+                    <Link key={s.label} href={`/${locale}/reference`} style={btnStyle}>
+                      {s.label}
+                    </Link>
+                  );
+                }
                 return (
-                  <button
-                    key={s.label}
-                    onClick={() => setStyle(i)}
-                    style={{
-                      flex: 1,
-                      padding: '9px 8px',
-                      fontSize: 13,
-                      fontWeight: 600,
-                      borderRadius: 8,
-                      border: `2px solid ${active ? f.color : '#e5e7eb'}`,
-                      background: active ? `${f.color}15` : '#fff',
-                      color: active ? f.color : '#666',
-                      textAlign: 'center' as const,
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease',
-                    }}
-                  >
+                  <button key={s.label} onClick={() => setStyle(i)} style={btnStyle}>
                     {s.label}
                   </button>
                 );
@@ -208,24 +217,29 @@ export default function FeatureShowcase({ feature: f, videoSrc, index, reverse }
                 {(index === 0 ? STAGING_STYLES : VIDEO_STYLES).map((s, i) => {
                   const active = index === 0 ? stagingStyle === i : videoStyle === i;
                   const setStyle = index === 0 ? setStagingStyle : handleVideoStyleClick;
+                  const btnStyle = {
+                    padding: '7px 18px',
+                    fontSize: 13,
+                    fontWeight: 600,
+                    borderRadius: 8,
+                    border: `2px solid ${active ? f.color : '#e5e7eb'}`,
+                    background: active ? `${f.color}15` : '#fff',
+                    color: active ? f.color : '#666',
+                    minWidth: 80,
+                    textAlign: 'center' as const,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    textDecoration: 'none',
+                  };
+                  if (s.type === 'link') {
+                    return (
+                      <Link key={s.label} href={`/${locale}/reference`} style={btnStyle}>
+                        {s.label}
+                      </Link>
+                    );
+                  }
                   return (
-                    <button
-                      key={s.label}
-                      onClick={() => setStyle(i)}
-                      style={{
-                        padding: '7px 18px',
-                        fontSize: 13,
-                        fontWeight: 600,
-                        borderRadius: 8,
-                        border: `2px solid ${active ? f.color : '#e5e7eb'}`,
-                        background: active ? `${f.color}15` : '#fff',
-                        color: active ? f.color : '#666',
-                        minWidth: 80,
-                        textAlign: 'center' as const,
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease',
-                      }}
-                    >
+                    <button key={s.label} onClick={() => setStyle(i)} style={btnStyle}>
                       {s.label}
                     </button>
                   );

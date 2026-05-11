@@ -33,7 +33,7 @@ export async function generateStaticParams() {
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
-    title: "Novità | GetNearMe",
+    title: "Novità",
     description: "Scopri le ultime novità e miglioramenti di GetNearMe",
   };
 }

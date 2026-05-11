@@ -5,7 +5,7 @@ import { useRef, useEffect } from 'react';
 interface VideoStyle {
   label: string;
   src: string;
-  type: 'video' | 'image';
+  type: 'video' | 'image' | 'link';
 }
 
 const VIDEO_STYLES: VideoStyle[] = [
@@ -21,8 +21,8 @@ const VIDEO_STYLES: VideoStyle[] = [
   },
   {
     label: 'Vedi tutti',
-    src: '/assets/png/gif/ai_video_templates.png',
-    type: 'image',
+    src: '',
+    type: 'link',
   },
 ];
 
