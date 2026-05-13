@@ -20,6 +20,8 @@ import {
   Mail,
   Package,
   Film,
+  MapPin,
+  Clapperboard,
 } from "lucide-react";
 import type { Metadata } from "next";
 
@@ -60,7 +62,7 @@ const updates: {
     date: "Maggio 2026",
     badge: "Ultima versione",
     badgeColor: "#059669",
-    title: "AI Video — consegna via email + pacchetti extra",
+    title: "AI Video: consegna via email + pacchetti extra",
     subtitle:
       "Il video arriva direttamente nella tua casella di posta, e quando finisci la quota mensile puoi ricaricarla con pacchetti extra. Più libertà, meno attese.",
     features: [
@@ -88,6 +90,22 @@ const updates: {
         tag: "Nuovo",
         tagColor: "#059669",
       },
+      {
+        icon: <Clapperboard size={22} />,
+        title: "Montaggio Video separato",
+        description:
+          "Il Montaggio Automatico ora ha la sua card dedicata nel menu Promozione. Non consuma la quota dei Video AI e puoi crearne quanti ne vuoi, senza limiti.",
+        tag: "Nuovo",
+        tagColor: "#059669",
+      },
+      {
+        icon: <MapPin size={22} />,
+        title: "Punti di Interesse nel report",
+        description:
+          "Il report ora include una pagina dedicata con tutti i servizi vicini: trasporti, scuole, supermercati, farmacie e altro. Nella comparazione, una tabella confronta i POI di ogni immobile.",
+        tag: "Nuovo",
+        tagColor: "#059669",
+      },
     ],
   },
   {
@@ -103,7 +121,7 @@ const updates: {
         icon: <Sun size={22} />,
         title: "Nuovo template Giorno ↔ Notte",
         description:
-          "Carica una foto del tuo immobile e l'AI cambia solo luci, cielo e atmosfera — da giorno a notte o viceversa. Perfetto per mostrare l'immobile in ogni momento della giornata.",
+          "Carica una foto del tuo immobile e l'AI cambia solo luci, cielo e atmosfera, da giorno a notte o viceversa. Perfetto per mostrare l'immobile in ogni momento della giornata.",
         tag: "Nuovo",
         tagColor: "#059669",
       },
@@ -157,7 +175,7 @@ const updates: {
         icon: <Camera size={22} />,
         title: "Foto AI ovunque",
         description:
-          "La tua creatività non ha confini. Trasforma qualsiasi foto in uno staging professionale — ovunque ti trovi nel browser.",
+          "La tua creatività non ha confini. Trasforma qualsiasi foto in uno staging professionale, ovunque ti trovi nel browser.",
         tag: "Nuovo",
         tagColor: "#059669",
       },
@@ -181,7 +199,7 @@ const updates: {
         icon: <Zap size={22} />,
         title: "Analisi fulminea",
         description:
-          "Zero attese. Sblocca l'analisi completa di un immobile all'istante — i dati si caricano mentre tu decidi.",
+          "Zero attese. Sblocca l'analisi completa di un immobile all'istante. I dati si caricano mentre tu decidi.",
         tag: "Migliorato",
         tagColor: "#2563eb",
       },
@@ -189,7 +207,7 @@ const updates: {
         icon: <Sparkles size={22} />,
         title: "Foto AI alla velocità della luce",
         description:
-          "Il wizard si apre in un lampo. Niente più caricamenti — inizia subito a creare.",
+          "Il wizard si apre in un lampo. Niente più caricamenti, inizia subito a creare.",
         tag: "Migliorato",
         tagColor: "#2563eb",
       },
@@ -601,7 +619,7 @@ export default async function UpdatePage({ params }: Props) {
           color: "#a1a1aa",
         }}
       >
-        GetNearMe v{CURRENT_VERSION} — Made with ❤️ in Italia
+        GetNearMe v{CURRENT_VERSION} · Made with ❤️ in Italia
       </footer>
     </div>
   );
