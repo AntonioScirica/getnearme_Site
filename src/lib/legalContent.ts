@@ -63,10 +63,11 @@ export const privacyContent: Record<Locale, LegalPage> = {
         "Maps and Routing: To calculate distances and travel times, the Service transmits approximate location coordinates to routing and mapping services.",
         "Market Data & Valuations: Specific property location data may be cross-referenced with Public Market Data Sources to retrieve estimated market valuations.",
         "Contextual Events & Activities: To display nearby activities, the Service queries Contextual Event & Activity Providers. These providers receive general location coordinates and dates to return relevant events; no User identity or personal browsing history is shared with them.",
-        "AI Image Processing: If the User voluntarily triggers the \"Virtual Staging\" feature by uploading their own photo, the image is transmitted transiently to Replicate (USA) solely for the generation of the requested content."
+        "AI Image Processing: If the User voluntarily triggers the \"Virtual Staging\" feature by uploading their own photo, the image is transmitted transiently to Replicate (USA) solely for the generation of the requested content.",
+        "Social Media Publishing (Optional, Agency users): If the User connects their Instagram Business or Facebook Page account, we exchange OAuth credentials with Meta Platforms, Inc. (USA) through Instagram Graph API and Facebook Graph API. We store long-lived access tokens (~60 days), the linked Instagram Business Account ID, the linked Facebook Page ID, and Page access tokens — solely to publish content the User has explicitly scheduled or requested via the Service. No content is published without explicit User action. Media uploaded for publishing (images/videos) is stored privately on Supabase Storage and automatically deleted within minutes after successful publication."
       ]},
       { type: "h2", text: "5. International Data Transfers" },
-      { type: "p", text: "Some of our service providers operate in the United States (Resend, Groq, Replicate, Stripe). Such transfers are carried out on the basis of:" },
+      { type: "p", text: "Some of our service providers operate in the United States (Resend, Groq, Replicate, Stripe, Meta Platforms). Such transfers are carried out on the basis of:" },
       { type: "ul", items: [
         "Standard Contractual Clauses (SCCs) approved by the European Commission under Art. 46(2)(c) GDPR.",
         "EU-US Data Privacy Framework, where the provider is certified.",
@@ -91,7 +92,8 @@ export const privacyContent: Record<Locale, LegalPage> = {
         "Team data — unaccepted invitations: automatically deleted after 7 days.",
         "Referral data: retained for the duration of the inviting user's account.",
         "AI images (Virtual Staging): processed in real time and not stored by the Controller. AI providers (Replicate) delete images within 24 hours of processing.",
-        "AI description analysis: text is transmitted to Groq solely for the duration of processing and is not stored."
+        "AI description analysis: text is transmitted to Groq solely for the duration of processing and is not stored.",
+        "Social media access tokens: stored for the duration of the account connection, automatically refreshed every ~50 days, and deleted immediately upon User disconnection or account deletion. Media uploaded for scheduled publishing is deleted from storage within minutes after successful publication, and within 7 days if publishing fails. The User may revoke access at any time via Facebook/Instagram settings (Settings → Apps and Websites) or from the GetNearMe Settings panel."
       ]},
       { type: "h2", text: "8. Automated Decision-Making and Profiling" },
       { type: "p", text: "Pursuant to Art. 22 of the GDPR, we inform you that the Service uses automated decision-making processes in the following features:" },
@@ -166,10 +168,11 @@ export const privacyContent: Record<Locale, LegalPage> = {
         "Mappe e Percorsi: Per calcolare distanze e tempi di percorrenza, il Servizio trasmette coordinate di posizione approssimative a servizi di routing e mappatura.",
         "Dati di Mercato e Valutazioni: Dati specifici sulla posizione dell'immobile possono essere incrociati con Fonti Pubbliche di Dati di Mercato per ottenere valutazioni di mercato stimate.",
         "Eventi e Attività Contestuali: Per mostrare attività nelle vicinanze, il Servizio interroga Fornitori di Eventi e Attività Contestuali. Questi fornitori ricevono coordinate di posizione generiche e date per restituire eventi pertinenti; nessuna identità dell'Utente o cronologia di navigazione viene condivisa con loro.",
-        "Elaborazione AI Immagini: Se l'Utente attiva volontariamente la funzione \"Virtual Staging\" caricando una propria foto, l'immagine viene trasmessa temporaneamente a Replicate (USA) esclusivamente per la generazione del contenuto richiesto."
+        "Elaborazione AI Immagini: Se l'Utente attiva volontariamente la funzione \"Virtual Staging\" caricando una propria foto, l'immagine viene trasmessa temporaneamente a Replicate (USA) esclusivamente per la generazione del contenuto richiesto.",
+        "Pubblicazione Social Media (Opzionale, utenti Agency): Se l'Utente collega il proprio account Instagram Business o Pagina Facebook, scambiamo credenziali OAuth con Meta Platforms, Inc. (USA) tramite Instagram Graph API e Facebook Graph API. Conserviamo token di accesso long-lived (~60 giorni), l'ID Instagram Business Account collegato, l'ID Pagina Facebook collegato e i token di accesso della Pagina — esclusivamente per pubblicare contenuti che l'Utente ha esplicitamente programmato o richiesto tramite il Servizio. Nessun contenuto viene pubblicato senza azione esplicita dell'Utente. I media caricati per la pubblicazione (immagini/video) sono archiviati privatamente su Supabase Storage e cancellati automaticamente entro pochi minuti dalla pubblicazione riuscita."
       ]},
       { type: "h2", text: "5. Trasferimenti Internazionali di Dati" },
-      { type: "p", text: "Alcuni dei nostri fornitori di servizi operano negli Stati Uniti (Resend, Groq, Replicate, Stripe). Tali trasferimenti sono effettuati sulla base di:" },
+      { type: "p", text: "Alcuni dei nostri fornitori di servizi operano negli Stati Uniti (Resend, Groq, Replicate, Stripe, Meta Platforms). Tali trasferimenti sono effettuati sulla base di:" },
       { type: "ul", items: [
         "Clausole Contrattuali Standard (SCC) approvate dalla Commissione Europea ai sensi dell'Art. 46(2)(c) GDPR.",
         "Data Privacy Framework UE-USA, ove il fornitore sia certificato.",
@@ -194,7 +197,8 @@ export const privacyContent: Record<Locale, LegalPage> = {
         "Dati team — inviti non accettati: cancellati automaticamente dopo 7 giorni.",
         "Dati referral: conservati per tutta la durata dell'account dell'utente invitante.",
         "Immagini AI (Virtual Staging): elaborate in tempo reale e non conservate dal Titolare. I fornitori AI (Replicate) eliminano le immagini entro 24 ore dall'elaborazione.",
-        "Analisi descrizioni AI: il testo viene trasmesso a Groq per la sola durata dell'elaborazione e non viene conservato."
+        "Analisi descrizioni AI: il testo viene trasmesso a Groq per la sola durata dell'elaborazione e non viene conservato.",
+        "Token di accesso social media: conservati per la durata della connessione dell'account, rinnovati automaticamente ogni ~50 giorni e cancellati immediatamente alla disconnessione dell'Utente o all'eliminazione dell'account. I media caricati per la pubblicazione programmata sono cancellati dallo storage entro pochi minuti dalla pubblicazione riuscita, ed entro 7 giorni in caso di pubblicazione fallita. L'Utente può revocare l'accesso in qualsiasi momento dalle impostazioni Facebook/Instagram (Impostazioni → App e siti web) o dal pannello Impostazioni di GetNearMe."
       ]},
       { type: "h2", text: "8. Decisioni Automatizzate e Profilazione" },
       { type: "p", text: "Ai sensi dell'Art. 22 del GDPR, informiamo che il Servizio utilizza processi decisionali automatizzati nelle seguenti funzionalità:" },
@@ -269,10 +273,11 @@ export const privacyContent: Record<Locale, LegalPage> = {
         "Mapas y Rutas: Para calcular distancias y tiempos de viaje, el Servicio transmite coordenadas de ubicación aproximadas a servicios de enrutamiento y mapeo.",
         "Datos de Mercado y Valoraciones: Los datos de ubicación de propiedades específicas pueden cruzarse con Fuentes Públicas de Datos de Mercado para obtener valoraciones de mercado estimadas.",
         "Eventos y Actividades Contextuales: Para mostrar actividades cercanas, el Servicio consulta Proveedores de Eventos y Actividades Contextuales. Estos proveedores reciben coordenadas de ubicación generales y fechas para devolver eventos relevantes; no se comparte la identidad del Usuario ni el historial de navegación personal.",
-        "Procesamiento AI de Imágenes: Si el Usuario activa voluntariamente la función \"Virtual Staging\" subiendo una foto propia, la imagen se transmite transitoriamente a Replicate (EE.UU.) exclusivamente para la generación del contenido solicitado."
+        "Procesamiento AI de Imágenes: Si el Usuario activa voluntariamente la función \"Virtual Staging\" subiendo una foto propia, la imagen se transmite transitoriamente a Replicate (EE.UU.) exclusivamente para la generación del contenido solicitado.",
+        "Publicación en Redes Sociales (Opcional, usuarios Agency): Si el Usuario conecta su cuenta de Instagram Business o Página de Facebook, intercambiamos credenciales OAuth con Meta Platforms, Inc. (EE.UU.) a través de Instagram Graph API y Facebook Graph API. Almacenamos tokens de acceso de larga duración (~60 días), el ID de la cuenta Instagram Business vinculada, el ID de la Página de Facebook vinculada y los tokens de acceso de la Página — exclusivamente para publicar contenido que el Usuario haya programado o solicitado explícitamente. Ningún contenido se publica sin acción explícita del Usuario. Los medios cargados para publicación (imágenes/videos) se almacenan de forma privada en Supabase Storage y se eliminan automáticamente en minutos tras la publicación exitosa."
       ]},
       { type: "h2", text: "5. Transferencias Internacionales de Datos" },
-      { type: "p", text: "Algunos de nuestros proveedores de servicios operan en Estados Unidos (Resend, Groq, Replicate, Stripe). Dichas transferencias se realizan sobre la base de:" },
+      { type: "p", text: "Algunos de nuestros proveedores de servicios operan en Estados Unidos (Resend, Groq, Replicate, Stripe, Meta Platforms). Dichas transferencias se realizan sobre la base de:" },
       { type: "ul", items: [
         "Cláusulas Contractuales Tipo (CCT) aprobadas por la Comisión Europea conforme al Art. 46(2)(c) RGPD.",
         "Marco de Privacidad de Datos UE-EE.UU., cuando el proveedor esté certificado.",
@@ -297,7 +302,8 @@ export const privacyContent: Record<Locale, LegalPage> = {
         "Datos de equipo — invitaciones no aceptadas: eliminados automáticamente después de 7 días.",
         "Datos de referidos: conservados durante la vigencia de la cuenta del usuario que invita.",
         "Imágenes AI (Virtual Staging): procesadas en tiempo real y no almacenadas por el Responsable. Los proveedores AI (Replicate) eliminan las imágenes en un plazo de 24 horas tras el procesamiento.",
-        "Análisis de descripciones AI: el texto se transmite a Groq únicamente durante el procesamiento y no se almacena."
+        "Análisis de descripciones AI: el texto se transmite a Groq únicamente durante el procesamiento y no se almacena.",
+        "Tokens de acceso de redes sociales: almacenados durante la conexión de la cuenta, renovados automáticamente cada ~50 días y eliminados inmediatamente tras la desconexión del Usuario o eliminación de la cuenta. Los medios cargados para publicación programada se eliminan del almacenamiento en minutos tras la publicación exitosa, y en 7 días si la publicación falla. El Usuario puede revocar el acceso en cualquier momento desde la configuración de Facebook/Instagram (Configuración → Apps y sitios web) o desde el panel de Configuración de GetNearMe."
       ]},
       { type: "h2", text: "8. Decisiones Automatizadas y Elaboración de Perfiles" },
       { type: "p", text: "De conformidad con el Art. 22 del RGPD, le informamos que el Servicio utiliza procesos de toma de decisiones automatizados en las siguientes funcionalidades:" },
@@ -372,10 +378,11 @@ export const privacyContent: Record<Locale, LegalPage> = {
         "Cartes et Itinéraires : Pour calculer les distances et les temps de trajet, le Service transmet des coordonnées de localisation approximatives à des services de routage et de cartographie.",
         "Données de Marché et Évaluations : Les données de localisation de propriétés spécifiques peuvent être croisées avec des Sources Publiques de Données de Marché pour obtenir des évaluations de marché estimées.",
         "Événements et Activités Contextuels : Pour afficher les activités à proximité, le Service interroge des Fournisseurs d'Événements et d'Activités Contextuels. Ces fournisseurs reçoivent des coordonnées de localisation générales et des dates pour renvoyer des événements pertinents ; aucune identité de l'Utilisateur ni historique de navigation personnel n'est partagé avec eux.",
-        "Traitement AI d'Images : Si l'Utilisateur déclenche volontairement la fonctionnalité \"Virtual Staging\" en téléchargeant sa propre photo, l'image est transmise de manière transitoire à Replicate (USA) uniquement pour la génération du contenu demandé."
+        "Traitement AI d'Images : Si l'Utilisateur déclenche volontairement la fonctionnalité \"Virtual Staging\" en téléchargeant sa propre photo, l'image est transmise de manière transitoire à Replicate (USA) uniquement pour la génération du contenu demandé.",
+        "Publication sur les Réseaux Sociaux (Optionnelle, utilisateurs Agency) : Si l'Utilisateur connecte son compte Instagram Business ou sa Page Facebook, nous échangeons des identifiants OAuth avec Meta Platforms, Inc. (USA) via Instagram Graph API et Facebook Graph API. Nous stockons des jetons d'accès longue durée (~60 jours), l'ID du compte Instagram Business lié, l'ID de la Page Facebook liée et les jetons d'accès de la Page — uniquement pour publier le contenu que l'Utilisateur a explicitement programmé ou demandé via le Service. Aucun contenu n'est publié sans action explicite de l'Utilisateur. Les médias téléchargés pour la publication (images/vidéos) sont stockés en privé sur Supabase Storage et automatiquement supprimés dans les minutes suivant la publication réussie."
       ]},
       { type: "h2", text: "5. Transferts Internationaux de Données" },
-      { type: "p", text: "Certains de nos prestataires de services opèrent aux États-Unis (Resend, Groq, Replicate, Stripe). Ces transferts sont effectués sur la base de :" },
+      { type: "p", text: "Certains de nos prestataires de services opèrent aux États-Unis (Resend, Groq, Replicate, Stripe, Meta Platforms). Ces transferts sont effectués sur la base de :" },
       { type: "ul", items: [
         "Clauses Contractuelles Types (CCT) approuvées par la Commission Européenne en vertu de l'Art. 46(2)(c) RGPD.",
         "Cadre de Protection des Données UE-USA, lorsque le fournisseur est certifié.",
@@ -400,7 +407,8 @@ export const privacyContent: Record<Locale, LegalPage> = {
         "Données d'équipe — invitations non acceptées : supprimées automatiquement après 7 jours.",
         "Données de parrainage : conservées pendant la durée du compte de l'utilisateur parrain.",
         "Images AI (Virtual Staging) : traitées en temps réel et non conservées par le Responsable. Les fournisseurs AI (Replicate) suppriment les images dans un délai de 24 heures après le traitement.",
-        "Analyse de descriptions AI : le texte est transmis à Groq uniquement pendant la durée du traitement et n'est pas conservé."
+        "Analyse de descriptions AI : le texte est transmis à Groq uniquement pendant la durée du traitement et n'est pas conservé.",
+        "Jetons d'accès aux réseaux sociaux : conservés pendant la durée de la connexion du compte, renouvelés automatiquement tous les ~50 jours et supprimés immédiatement lors de la déconnexion de l'Utilisateur ou de la suppression du compte. Les médias téléchargés pour publication programmée sont supprimés du stockage dans les minutes suivant la publication réussie, et dans les 7 jours en cas d'échec. L'Utilisateur peut révoquer l'accès à tout moment depuis les paramètres Facebook/Instagram (Paramètres → Apps et sites web) ou depuis le panneau Paramètres de GetNearMe."
       ]},
       { type: "h2", text: "8. Décisions Automatisées et Profilage" },
       { type: "p", text: "Conformément à l'Art. 22 du RGPD, nous vous informons que le Service utilise des processus de prise de décision automatisés dans les fonctionnalités suivantes :" },
@@ -475,10 +483,11 @@ export const privacyContent: Record<Locale, LegalPage> = {
         "Карты и маршруты: Для расчёта расстояний и времени в пути Сервис передаёт приблизительные координаты местоположения сервисам маршрутизации и картографии.",
         "Рыночные данные и оценки: Конкретные данные о местоположении недвижимости могут быть сопоставлены с Публичными источниками рыночных данных для получения ориентировочных рыночных оценок.",
         "Контекстные события и мероприятия: Для отображения ближайших мероприятий Сервис обращается к Провайдерам контекстных событий и мероприятий. Эти провайдеры получают общие координаты местоположения и даты для возврата релевантных событий; личность Пользователя или история просмотров не передаются им.",
-        "AI-обработка изображений: Если Пользователь добровольно активирует функцию \"Virtual Staging\", загружая собственное фото, изображение временно передаётся в Replicate (США) исключительно для генерации запрошенного контента."
+        "AI-обработка изображений: Если Пользователь добровольно активирует функцию \"Virtual Staging\", загружая собственное фото, изображение временно передаётся в Replicate (США) исключительно для генерации запрошенного контента.",
+        "Публикация в социальных сетях (Опционально, пользователи Agency): Если Пользователь подключает свой аккаунт Instagram Business или Страницу Facebook, мы обмениваемся OAuth-учётными данными с Meta Platforms, Inc. (США) через Instagram Graph API и Facebook Graph API. Мы храним долгосрочные токены доступа (~60 дней), ID связанного аккаунта Instagram Business, ID связанной Страницы Facebook и токены доступа к Странице — исключительно для публикации контента, который Пользователь явно запланировал или запросил через Сервис. Ни один контент не публикуется без явного действия Пользователя. Медиафайлы, загруженные для публикации (изображения/видео), хранятся приватно в Supabase Storage и автоматически удаляются в течение нескольких минут после успешной публикации."
       ]},
       { type: "h2", text: "5. Международные передачи данных" },
-      { type: "p", text: "Некоторые наши поставщики услуг работают в США (Resend, Groq, Replicate, Stripe). Такие передачи осуществляются на основании:" },
+      { type: "p", text: "Некоторые наши поставщики услуг работают в США (Resend, Groq, Replicate, Stripe, Meta Platforms). Такие передачи осуществляются на основании:" },
       { type: "ul", items: [
         "Стандартных контрактных положений (SCC), утверждённых Европейской Комиссией в соответствии со Ст. 46(2)(c) GDPR.",
         "Рамочного соглашения о защите данных ЕС-США, если поставщик сертифицирован.",
@@ -503,7 +512,8 @@ export const privacyContent: Record<Locale, LegalPage> = {
         "Данные команды — непринятые приглашения: автоматически удаляются через 7 дней.",
         "Реферальные данные: хранятся в течение срока действия аккаунта приглашающего пользователя.",
         "AI-изображения (Virtual Staging): обрабатываются в реальном времени и не хранятся Контролёром. Провайдеры ИИ (Replicate) удаляют изображения в течение 24 часов после обработки.",
-        "AI-анализ описаний: текст передаётся в Groq только на время обработки и не сохраняется."
+        "AI-анализ описаний: текст передаётся в Groq только на время обработки и не сохраняется.",
+        "Токены доступа к соцсетям: хранятся в течение подключения аккаунта, автоматически обновляются каждые ~50 дней и удаляются немедленно при отключении Пользователя или удалении аккаунта. Медиафайлы, загруженные для запланированной публикации, удаляются из хранилища в течение нескольких минут после успешной публикации и в течение 7 дней в случае сбоя. Пользователь может отозвать доступ в любое время через настройки Facebook/Instagram (Настройки → Приложения и сайты) или через панель Настройки GetNearMe."
       ]},
       { type: "h2", text: "8. Автоматизированное принятие решений и профилирование" },
       { type: "p", text: "В соответствии со Ст. 22 GDPR сообщаем, что Сервис использует автоматизированные процессы принятия решений в следующих функциях:" },
@@ -578,10 +588,11 @@ export const privacyContent: Record<Locale, LegalPage> = {
         "Карти та маршрути: Для розрахунку відстаней та часу подорожі Сервіс передає приблизні координати місцеположення сервісам маршрутизації та картографії.",
         "Ринкові дані та оцінки: Конкретні дані про місцеположення нерухомості можуть бути зіставлені з Публічними джерелами ринкових даних для отримання орієнтовних ринкових оцінок.",
         "Контекстні події та заходи: Для відображення найближчих заходів Сервіс звертається до Провайдерів контекстних подій та заходів. Ці провайдери отримують загальні координати місцеположення та дати для повернення релевантних подій; особистість Користувача або історія перегляду не передаються їм.",
-        "ШІ-обробка зображень: Якщо Користувач добровільно активує функцію \"Virtual Staging\", завантажуючи власне фото, зображення тимчасово передається до Replicate (США) виключно для генерації запитаного контенту."
+        "ШІ-обробка зображень: Якщо Користувач добровільно активує функцію \"Virtual Staging\", завантажуючи власне фото, зображення тимчасово передається до Replicate (США) виключно для генерації запитаного контенту.",
+        "Публікація у соцмережах (Опціонально, користувачі Agency): Якщо Користувач підключає свій акаунт Instagram Business або Сторінку Facebook, ми обмінюємося OAuth-обліковими даними з Meta Platforms, Inc. (США) через Instagram Graph API та Facebook Graph API. Ми зберігаємо довгострокові токени доступу (~60 днів), ID пов'язаного акаунта Instagram Business, ID пов'язаної Сторінки Facebook та токени доступу до Сторінки — виключно для публікації контенту, який Користувач явно запланував або запросив через Сервіс. Жоден контент не публікується без явної дії Користувача. Медіафайли, завантажені для публікації (зображення/відео), зберігаються приватно у Supabase Storage та автоматично видаляються протягом кількох хвилин після успішної публікації."
       ]},
       { type: "h2", text: "5. Міжнародні передачі даних" },
-      { type: "p", text: "Деякі наші постачальники послуг працюють у США (Resend, Groq, Replicate, Stripe). Такі передачі здійснюються на підставі:" },
+      { type: "p", text: "Деякі наші постачальники послуг працюють у США (Resend, Groq, Replicate, Stripe, Meta Platforms). Такі передачі здійснюються на підставі:" },
       { type: "ul", items: [
         "Стандартних контрактних положень (SCC), затверджених Європейською Комісією відповідно до Ст. 46(2)(c) GDPR.",
         "Рамкової угоди про захист даних ЄС-США, якщо постачальник сертифікований.",
@@ -606,7 +617,8 @@ export const privacyContent: Record<Locale, LegalPage> = {
         "Дані команди — неприйняті запрошення: автоматично видаляються через 7 днів.",
         "Реферальні дані: зберігаються протягом терміну дії акаунту запрошуючого користувача.",
         "ШІ-зображення (Virtual Staging): обробляються в реальному часі та не зберігаються Контролером. Провайдери ШІ (Replicate) видаляють зображення протягом 24 годин після обробки.",
-        "ШІ-аналіз описів: текст передається до Groq лише на час обробки та не зберігається."
+        "ШІ-аналіз описів: текст передається до Groq лише на час обробки та не зберігається.",
+        "Токени доступу до соцмереж: зберігаються протягом підключення акаунту, автоматично оновлюються кожні ~50 днів та видаляються негайно при відключенні Користувача або видаленні акаунту. Медіафайли, завантажені для запланованої публікації, видаляються зі сховища протягом кількох хвилин після успішної публікації та протягом 7 днів у разі помилки. Користувач може відкликати доступ у будь-який момент через налаштування Facebook/Instagram (Налаштування → Додатки та сайти) або через панель Налаштування GetNearMe."
       ]},
       { type: "h2", text: "8. Автоматизоване прийняття рішень та профілювання" },
       { type: "p", text: "Відповідно до Ст. 22 GDPR повідомляємо, що Сервіс використовує автоматизовані процеси прийняття рішень у таких функціях:" },
@@ -652,6 +664,7 @@ export const termsContent: Record<Locale, LegalPage> = {
         "c) Data Loss: Uninstalling the extension, clearing the browser cache, or using system cleaning software will result in the irreversible loss of saved data and analysis history. GetNearMe shall under no circumstances be able to recover such data nor refund credits used for analyses lost due to local actions by the User."
       ]},
       { type: "p", text: "2.4. Personal Use of Reports: Analysis reports, PDF exports, social media posts, and any other output generated by the Service are intended solely for the User's personal, informational, or internal business use. The User shall not redistribute, resell, sublicense, or publicly publish such outputs for commercial purposes or in a manner that could infringe upon the intellectual property rights of third parties (including the source platforms from which data was analyzed)." },
+      { type: "p", text: "2.5. Social Media Publishing (Optional, Agency users): The Service may publish content to the User's connected Instagram Business account or Facebook Page on the User's behalf, only upon the User's explicit scheduling or immediate publish request. By connecting these accounts, the User authorizes GetNearMe to act on their behalf strictly within the scope of these Terms and grants GetNearMe permission to call the Instagram Graph API and Facebook Graph API solely for the purpose of publishing content the User has prepared. The User is solely responsible for the published content, including compliance with the Instagram Community Guidelines, Facebook Community Standards, applicable copyright law, and the Terms of Service of Meta Platforms, Inc. GetNearMe does not own, modify, or claim rights over the User's published content. The User may revoke this authorization at any time from the GetNearMe Settings panel or from Facebook/Instagram settings (see Data Deletion Instructions)." },
       { type: "h2", text: "3. Restrictions and Intellectual Property" },
       { type: "p", text: "3.1. Independence: GetNearMe is an independent software tool. We are not affiliated with, endorsed by, sponsored by, or officially connected to any real estate platform (such as Immobiliare.it, Idealista, or others). All third-party trademarks are the property of their respective owners and are used solely for descriptive compatibility purposes (Nominative Fair Use)." },
       { type: "p", text: "3.2. Prohibited Conduct: You explicitly agree NOT to use the Service to:" },
@@ -701,6 +714,7 @@ export const termsContent: Record<Locale, LegalPage> = {
         "c) Perdita Dati: La disinstallazione dell'estensione, la pulizia della cache del browser o l'uso di software di pulizia sistema comporteranno la perdita irreversibile dei dati salvati e dello storico analisi. GetNearMe non potrà in alcun caso recuperare tali dati né rimborsare i crediti utilizzati per analisi andate perse a causa di azioni locali dell'Utente."
       ]},
       { type: "p", text: "2.4. Uso Personale dei Report: I report di analisi, le esportazioni PDF, i post per social media e qualsiasi altro output generato dal Servizio sono destinati esclusivamente all'uso personale, informativo o aziendale interno dell'Utente. L'Utente non deve ridistribuire, rivendere, sublicenziare o pubblicare pubblicamente tali output per scopi commerciali o in modo che possa violare i diritti di proprietà intellettuale di terzi (incluse le piattaforme di origine da cui i dati sono stati analizzati)." },
+      { type: "p", text: "2.5. Pubblicazione Social Media (Opzionale, utenti Agency): Il Servizio può pubblicare contenuti sull'account Instagram Business o Pagina Facebook collegati dall'Utente, esclusivamente su esplicita programmazione o richiesta di pubblicazione immediata da parte dell'Utente. Collegando tali account, l'Utente autorizza GetNearMe ad agire per suo conto nei limiti dei presenti Termini e concede a GetNearMe il permesso di chiamare le API Instagram Graph e Facebook Graph al solo scopo di pubblicare contenuti predisposti dall'Utente. L'Utente è l'unico responsabile dei contenuti pubblicati, inclusa la conformità alle Linee Guida della Community di Instagram, agli Standard della Community di Facebook, alla normativa applicabile sul diritto d'autore e ai Termini di Servizio di Meta Platforms, Inc. GetNearMe non possiede, modifica o rivendica diritti sui contenuti pubblicati dall'Utente. L'Utente può revocare questa autorizzazione in qualsiasi momento dal pannello Impostazioni di GetNearMe o dalle impostazioni Facebook/Instagram (vedi Istruzioni Cancellazione Dati)." },
       { type: "h2", text: "3. Restrizioni e Proprietà Intellettuale" },
       { type: "p", text: "3.1. Indipendenza: GetNearMe è uno strumento software indipendente. Non siamo affiliati, approvati, sponsorizzati o ufficialmente collegati ad alcuna piattaforma immobiliare (come Immobiliare.it, Idealista o altre). Tutti i marchi di terze parti sono di proprietà dei rispettivi titolari e sono utilizzati esclusivamente a fini descrittivi di compatibilità (Nominative Fair Use)." },
       { type: "p", text: "3.2. Condotta Vietata: L'utente si impegna esplicitamente a NON utilizzare il Servizio per:" },
@@ -750,6 +764,7 @@ export const termsContent: Record<Locale, LegalPage> = {
         "c) Pérdida de Datos: La desinstalación de la extensión, la limpieza de la caché del navegador o el uso de software de limpieza del sistema resultarán en la pérdida irreversible de los datos guardados y del historial de análisis. GetNearMe no podrá en ningún caso recuperar dichos datos ni reembolsar los créditos utilizados para análisis perdidos debido a acciones locales del Usuario."
       ]},
       { type: "p", text: "2.4. Uso Personal de los Informes: Los informes de análisis, exportaciones PDF, publicaciones para redes sociales y cualquier otro resultado generado por el Servicio están destinados exclusivamente al uso personal, informativo o empresarial interno del Usuario. El Usuario no debe redistribuir, revender, sublicenciar ni publicar públicamente dichos resultados con fines comerciales ni de manera que pueda infringir los derechos de propiedad intelectual de terceros (incluidas las plataformas de origen de las que se analizaron los datos)." },
+      { type: "p", text: "2.5. Publicación en Redes Sociales (Opcional, usuarios Agency): El Servicio puede publicar contenido en la cuenta Instagram Business o Página de Facebook conectada por el Usuario, únicamente bajo programación explícita o solicitud de publicación inmediata del Usuario. Al conectar dichas cuentas, el Usuario autoriza a GetNearMe a actuar en su nombre dentro de los límites de estos Términos y concede a GetNearMe permiso para llamar a las API Instagram Graph y Facebook Graph con el único propósito de publicar contenido preparado por el Usuario. El Usuario es el único responsable del contenido publicado, incluido el cumplimiento de las Normas de la Comunidad de Instagram, las Normas Comunitarias de Facebook, la normativa de derechos de autor aplicable y los Términos de Servicio de Meta Platforms, Inc. GetNearMe no posee, modifica ni reclama derechos sobre el contenido publicado por el Usuario. El Usuario puede revocar esta autorización en cualquier momento desde el panel Configuración de GetNearMe o desde la configuración de Facebook/Instagram (ver Instrucciones de Eliminación de Datos)." },
       { type: "h2", text: "3. Restricciones y Propiedad Intelectual" },
       { type: "p", text: "3.1. Independencia: GetNearMe es una herramienta de software independiente. No estamos afiliados, respaldados, patrocinados ni oficialmente conectados con ninguna plataforma inmobiliaria (como Immobiliare.it, Idealista u otras). Todas las marcas comerciales de terceros son propiedad de sus respectivos titulares y se utilizan exclusivamente con fines descriptivos de compatibilidad (Nominative Fair Use)." },
       { type: "p", text: "3.2. Conducta Prohibida: Usted acepta explícitamente NO utilizar el Servicio para:" },
@@ -799,6 +814,7 @@ export const termsContent: Record<Locale, LegalPage> = {
         "c) Perte de Données : La désinstallation de l'extension, le nettoyage du cache du navigateur ou l'utilisation de logiciels de nettoyage système entraîneront la perte irréversible des données sauvegardées et de l'historique des analyses. GetNearMe ne pourra en aucun cas récupérer ces données ni rembourser les crédits utilisés pour des analyses perdues en raison d'actions locales de l'Utilisateur."
       ]},
       { type: "p", text: "2.4. Utilisation Personnelle des Rapports : Les rapports d'analyse, exports PDF, publications pour réseaux sociaux et tout autre résultat généré par le Service sont destinés exclusivement à l'usage personnel, informatif ou professionnel interne de l'Utilisateur. L'Utilisateur ne doit pas redistribuer, revendre, sous-licencier ou publier publiquement ces résultats à des fins commerciales ni d'une manière susceptible de porter atteinte aux droits de propriété intellectuelle de tiers (y compris les plateformes d'origine à partir desquelles les données ont été analysées)." },
+      { type: "p", text: "2.5. Publication sur les Réseaux Sociaux (Optionnelle, utilisateurs Agency) : Le Service peut publier du contenu sur le compte Instagram Business ou la Page Facebook connectés par l'Utilisateur, uniquement sur programmation explicite ou demande de publication immédiate de l'Utilisateur. En connectant ces comptes, l'Utilisateur autorise GetNearMe à agir en son nom dans les limites des présents Conditions et accorde à GetNearMe la permission d'appeler les API Instagram Graph et Facebook Graph dans le seul but de publier le contenu préparé par l'Utilisateur. L'Utilisateur est seul responsable du contenu publié, y compris la conformité aux Règles de la Communauté Instagram, aux Standards de la Communauté Facebook, à la législation applicable sur le droit d'auteur et aux Conditions d'Utilisation de Meta Platforms, Inc. GetNearMe ne possède pas, ne modifie pas ni ne revendique de droits sur le contenu publié par l'Utilisateur. L'Utilisateur peut révoquer cette autorisation à tout moment depuis le panneau Paramètres de GetNearMe ou depuis les paramètres Facebook/Instagram (voir Instructions de Suppression des Données)." },
       { type: "h2", text: "3. Restrictions et Propriété Intellectuelle" },
       { type: "p", text: "3.1. Indépendance : GetNearMe est un outil logiciel indépendant. Nous ne sommes affiliés, approuvés, sponsorisés ni officiellement liés à aucune plateforme immobilière (telle qu'Immobiliare.it, Idealista ou d'autres). Toutes les marques de tiers sont la propriété de leurs détenteurs respectifs et sont utilisées uniquement à des fins descriptives de compatibilité (Nominative Fair Use)." },
       { type: "p", text: "3.2. Conduite Interdite : Vous acceptez explicitement de NE PAS utiliser le Service pour :" },
@@ -848,6 +864,7 @@ export const termsContent: Record<Locale, LegalPage> = {
         "c) Потеря данных: Удаление расширения, очистка кэша браузера или использование программ для очистки системы приведут к необратимой потере сохранённых данных и истории анализов. GetNearMe ни при каких обстоятельствах не сможет восстановить эти данные и не возместит кредиты, использованные для анализов, утраченных в результате локальных действий Пользователя."
       ]},
       { type: "p", text: "2.4. Личное использование отчётов: Аналитические отчёты, экспорт в PDF, публикации для социальных сетей и любые другие результаты, сгенерированные Сервисом, предназначены исключительно для личного, информационного или внутреннего делового использования Пользователем. Пользователь не должен перераспределять, перепродавать, сублицензировать или публично публиковать такие результаты в коммерческих целях или способом, который может нарушить права интеллектуальной собственности третьих лиц (включая платформы-источники, с которых были проанализированы данные)." },
+      { type: "p", text: "2.5. Публикация в социальных сетях (Опционально, пользователи Agency): Сервис может публиковать контент в подключённом аккаунте Instagram Business или Странице Facebook Пользователя только по явному планированию или запросу немедленной публикации от Пользователя. Подключая эти аккаунты, Пользователь уполномочивает GetNearMe действовать от его имени в рамках настоящих Условий и предоставляет GetNearMe разрешение на вызов Instagram Graph API и Facebook Graph API исключительно с целью публикации контента, подготовленного Пользователем. Пользователь несёт единоличную ответственность за опубликованный контент, включая соблюдение Правил сообщества Instagram, Стандартов сообщества Facebook, применимого законодательства об авторском праве и Условий использования Meta Platforms, Inc. GetNearMe не владеет, не изменяет и не претендует на права в отношении опубликованного Пользователем контента. Пользователь может отозвать это разрешение в любое время из панели Настройки GetNearMe или из настроек Facebook/Instagram (см. Инструкции по удалению данных)." },
       { type: "h2", text: "3. Ограничения и интеллектуальная собственность" },
       { type: "p", text: "3.1. Независимость: GetNearMe является независимым программным инструментом. Мы не аффилированы, не одобрены, не спонсированы и не связаны официально ни с одной платформой недвижимости (такой как Immobiliare.it, Idealista или другие). Все товарные знаки третьих лиц являются собственностью их соответствующих владельцев и используются исключительно в описательных целях совместимости (Nominative Fair Use)." },
       { type: "p", text: "3.2. Запрещённые действия: Вы явно соглашаетесь НЕ использовать Сервис для:" },
@@ -897,6 +914,7 @@ export const termsContent: Record<Locale, LegalPage> = {
         "c) Втрата даних: Видалення розширення, очищення кешу браузера або використання програм для очищення системи призведуть до безповоротної втрати збережених даних та історії аналізів. GetNearMe за жодних обставин не зможе відновити ці дані та не відшкодує кредити, використані для аналізів, втрачених внаслідок локальних дій Користувача."
       ]},
       { type: "p", text: "2.4. Особисте використання звітів: Аналітичні звіти, експорт у PDF, публікації для соціальних мереж та будь-які інші результати, згенеровані Сервісом, призначені виключно для особистого, інформаційного або внутрішнього ділового використання Користувачем. Користувач не повинен перерозповсюджувати, перепродавати, субліцензувати або публічно публікувати такі результати в комерційних цілях або способом, що може порушити права інтелектуальної власності третіх осіб (включаючи платформи-джерела, з яких були проаналізовані дані)." },
+      { type: "p", text: "2.5. Публікація у соцмережах (Опціонально, користувачі Agency): Сервіс може публікувати контент у підключеному акаунті Instagram Business або Сторінці Facebook Користувача лише за явним плануванням або запитом негайної публікації від Користувача. Підключаючи ці акаунти, Користувач уповноважує GetNearMe діяти від його імені в межах цих Умов та надає GetNearMe дозвіл викликати Instagram Graph API та Facebook Graph API виключно з метою публікації контенту, підготовленого Користувачем. Користувач несе одноосібну відповідальність за опублікований контент, включаючи дотримання Правил спільноти Instagram, Стандартів спільноти Facebook, застосовного законодавства про авторське право та Умов використання Meta Platforms, Inc. GetNearMe не володіє, не змінює та не претендує на права щодо опублікованого Користувачем контенту. Користувач може відкликати цей дозвіл у будь-який час з панелі Налаштування GetNearMe або з налаштувань Facebook/Instagram (див. Інструкції з видалення даних)." },
       { type: "h2", text: "3. Обмеження та інтелектуальна власність" },
       { type: "p", text: "3.1. Незалежність: GetNearMe є незалежним програмним інструментом. Ми не афілійовані, не схвалені, не спонсоровані та не пов'язані офіційно з жодною платформою нерухомості (такою як Immobiliare.it, Idealista або інші). Усі товарні знаки третіх осіб є власністю їхніх відповідних власників і використовуються виключно в описових цілях сумісності (Nominative Fair Use)." },
       { type: "p", text: "3.2. Заборонені дії: Ви явно погоджуєтесь НЕ використовувати Сервіс для:" },
@@ -927,6 +945,294 @@ export const termsContent: Record<Locale, LegalPage> = {
       { type: "p", text: "8.2. Зміна Умов: Ми залишаємо за собою право змінювати ці Умови в будь-який час на наш власний розсуд. Продовження використання Сервісу після будь-яких змін означає ваше прийняття нових Умов." },
       { type: "h2", text: "9. Застосовне право та юрисдикція" },
       { type: "p", text: "Ці Умови регулюються законодавством Італії. Будь-який спір, що виникає з цих Умов, підлягає виключній юрисдикції компетентних судів Риму, Італія. Європейські споживачі мають право використовувати платформу Онлайн-вирішення спорів." },
+    ],
+  },
+};
+
+// ─── Data Deletion Instructions (Meta App Review requirement) ────────────────
+
+export const dataDeletionContent: Record<Locale, LegalPage> = {
+  en: {
+    title: "Data Deletion Instructions",
+    lastUpdated: "Last updated: 14 May 2026",
+    description: "How to request deletion of your data from GetNearMe and revoke access from connected Instagram or Facebook accounts.",
+    blocks: [
+      { type: "p", text: "GetNearMe takes your data privacy seriously. This page explains how to delete the data we hold about you and how to revoke access from any Instagram or Facebook account you may have connected to our service." },
+      { type: "h2", text: "1. Delete your GetNearMe account" },
+      { type: "p", text: "To request full deletion of your GetNearMe account and all associated personal data (email, user ID, transactional records subject to legal retention, social media access tokens, scheduled posts), send an email to:" },
+      { type: "p", text: "as.scirica@gmail.com" },
+      { type: "p", text: "Subject: \"Account Deletion Request\". Include the email address associated with your GetNearMe account. We will process the request and confirm deletion within 30 days, in accordance with Article 17 GDPR." },
+      { type: "h2", text: "2. Revoke Instagram / Facebook access only" },
+      { type: "p", text: "If you only want to disconnect your Instagram Business or Facebook Page from GetNearMe without deleting your account, you have three options:" },
+      { type: "h3", text: "Option A — From GetNearMe (recommended)" },
+      { type: "ul", items: [
+        "Open the GetNearMe browser extension.",
+        "Open Settings → Social Accounts.",
+        "Click \"Disconnect\" next to the Instagram or Facebook account.",
+        "Access tokens are revoked immediately on our side and removed from our database."
+      ]},
+      { type: "h3", text: "Option B — From Facebook" },
+      { type: "ul", items: [
+        "Go to https://www.facebook.com/settings?tab=business_tools.",
+        "Locate \"GetNearMe\" in the list of connected business tools.",
+        "Click \"Remove\".",
+        "This revokes our access tokens at the Meta level. We will detect the revocation on the next API call and remove the corresponding row from our database."
+      ]},
+      { type: "h3", text: "Option C — From Instagram" },
+      { type: "ul", items: [
+        "Open the Instagram app → Settings → Apps and Websites → Active.",
+        "Find \"GetNearMe\" and tap \"Remove\".",
+        "Access is revoked immediately."
+      ]},
+      { type: "h2", text: "3. What data is deleted" },
+      { type: "p", text: "Upon disconnection or account deletion we permanently delete:" },
+      { type: "ul", items: [
+        "Long-lived access tokens (Instagram and Facebook).",
+        "Page access tokens.",
+        "Connected Instagram Business Account ID and Facebook Page ID.",
+        "Cached account name and avatar URL.",
+        "Pending scheduled posts associated with the disconnected account.",
+        "Media files uploaded for unpublished posts (within minutes, automatic cleanup)."
+      ]},
+      { type: "p", text: "Data we are legally required to retain (e.g. invoices, payment records under Italian tax law Art. 2220 C.C., 10 years) is anonymized and retained only for compliance purposes." },
+      { type: "h2", text: "4. Confirmation" },
+      { type: "p", text: "After deletion you will receive an email confirmation. If you do not receive confirmation within 30 days, contact as.scirica@gmail.com." },
+      { type: "h2", text: "5. Questions" },
+      { type: "p", text: "For any question about data deletion or your rights under GDPR, write to as.scirica@gmail.com or to the Italian Data Protection Authority: www.garanteprivacy.it." },
+    ],
+  },
+  it: {
+    title: "Istruzioni per la Cancellazione dei Dati",
+    lastUpdated: "Ultimo aggiornamento: 14 maggio 2026",
+    description: "Come richiedere la cancellazione dei dati personali da GetNearMe e revocare l'accesso agli account Instagram o Facebook collegati.",
+    blocks: [
+      { type: "p", text: "GetNearMe prende sul serio la tua privacy. Questa pagina spiega come cancellare i dati che conserviamo su di te e come revocare l'accesso a qualsiasi account Instagram o Facebook collegato al nostro servizio." },
+      { type: "h2", text: "1. Cancella il tuo account GetNearMe" },
+      { type: "p", text: "Per richiedere la cancellazione completa dell'account GetNearMe e di tutti i dati personali associati (email, ID utente, dati transazionali soggetti a conservazione legale, token di accesso social, post programmati), invia una email a:" },
+      { type: "p", text: "as.scirica@gmail.com" },
+      { type: "p", text: "Oggetto: \"Richiesta cancellazione account\". Includi l'indirizzo email associato al tuo account GetNearMe. Elaboreremo la richiesta e confermeremo la cancellazione entro 30 giorni, in conformità con l'Art. 17 GDPR." },
+      { type: "h2", text: "2. Revoca solo l'accesso Instagram / Facebook" },
+      { type: "p", text: "Se vuoi solo scollegare il tuo account Instagram Business o Pagina Facebook da GetNearMe senza cancellare l'account, hai tre opzioni:" },
+      { type: "h3", text: "Opzione A — Da GetNearMe (consigliato)" },
+      { type: "ul", items: [
+        "Apri l'estensione browser GetNearMe.",
+        "Apri Impostazioni → Account Social.",
+        "Clicca \"Scollega\" accanto all'account Instagram o Facebook.",
+        "I token di accesso sono revocati immediatamente dal nostro lato e rimossi dal nostro database."
+      ]},
+      { type: "h3", text: "Opzione B — Da Facebook" },
+      { type: "ul", items: [
+        "Vai su https://www.facebook.com/settings?tab=business_tools.",
+        "Trova \"GetNearMe\" nella lista degli strumenti business collegati.",
+        "Clicca \"Rimuovi\".",
+        "Questo revoca i nostri token a livello Meta. Rileveremo la revoca alla successiva chiamata API e rimuoveremo la riga corrispondente dal nostro database."
+      ]},
+      { type: "h3", text: "Opzione C — Da Instagram" },
+      { type: "ul", items: [
+        "Apri l'app Instagram → Impostazioni → App e siti web → Attive.",
+        "Trova \"GetNearMe\" e tocca \"Rimuovi\".",
+        "L'accesso viene revocato immediatamente."
+      ]},
+      { type: "h2", text: "3. Quali dati vengono cancellati" },
+      { type: "p", text: "Alla disconnessione o cancellazione account eliminiamo permanentemente:" },
+      { type: "ul", items: [
+        "Token di accesso long-lived (Instagram e Facebook).",
+        "Token di accesso della Pagina Facebook.",
+        "ID Instagram Business Account collegato e ID Pagina Facebook.",
+        "Nome account e URL avatar in cache.",
+        "Post programmati pendenti associati all'account scollegato.",
+        "File media caricati per post non pubblicati (entro pochi minuti, pulizia automatica)."
+      ]},
+      { type: "p", text: "I dati che siamo legalmente obbligati a conservare (es. fatture, registri pagamenti ai sensi dell'Art. 2220 C.C., 10 anni) vengono anonimizzati e conservati solo per finalità di conformità." },
+      { type: "h2", text: "4. Conferma" },
+      { type: "p", text: "Dopo la cancellazione riceverai una email di conferma. Se non ricevi la conferma entro 30 giorni, contatta as.scirica@gmail.com." },
+      { type: "h2", text: "5. Domande" },
+      { type: "p", text: "Per qualsiasi domanda sulla cancellazione dei dati o sui tuoi diritti GDPR, scrivi a as.scirica@gmail.com o all'Autorità Garante per la Protezione dei Dati Personali: www.garanteprivacy.it." },
+    ],
+  },
+  es: {
+    title: "Instrucciones para la Eliminación de Datos",
+    lastUpdated: "Última actualización: 14 de mayo de 2026",
+    description: "Cómo solicitar la eliminación de tus datos de GetNearMe y revocar el acceso a las cuentas de Instagram o Facebook conectadas.",
+    blocks: [
+      { type: "p", text: "GetNearMe toma en serio tu privacidad. Esta página explica cómo eliminar los datos que conservamos sobre ti y cómo revocar el acceso a cualquier cuenta de Instagram o Facebook conectada a nuestro servicio." },
+      { type: "h2", text: "1. Elimina tu cuenta de GetNearMe" },
+      { type: "p", text: "Para solicitar la eliminación completa de la cuenta GetNearMe y todos los datos personales asociados, envía un correo a:" },
+      { type: "p", text: "as.scirica@gmail.com" },
+      { type: "p", text: "Asunto: \"Solicitud de eliminación de cuenta\". Incluye la dirección de correo asociada a tu cuenta GetNearMe. Procesaremos la solicitud y confirmaremos la eliminación en un plazo de 30 días, conforme al Art. 17 RGPD." },
+      { type: "h2", text: "2. Revocar solo el acceso a Instagram / Facebook" },
+      { type: "p", text: "Si solo deseas desconectar tu cuenta Instagram Business o Página de Facebook de GetNearMe sin eliminar la cuenta, tienes tres opciones:" },
+      { type: "h3", text: "Opción A — Desde GetNearMe (recomendado)" },
+      { type: "ul", items: [
+        "Abre la extensión del navegador GetNearMe.",
+        "Abre Configuración → Cuentas Sociales.",
+        "Haz clic en \"Desconectar\" junto a la cuenta de Instagram o Facebook.",
+        "Los tokens de acceso se revocan inmediatamente y se eliminan de nuestra base de datos."
+      ]},
+      { type: "h3", text: "Opción B — Desde Facebook" },
+      { type: "ul", items: [
+        "Ve a https://www.facebook.com/settings?tab=business_tools.",
+        "Localiza \"GetNearMe\" en la lista de herramientas empresariales conectadas.",
+        "Haz clic en \"Eliminar\".",
+        "Esto revoca nuestros tokens a nivel de Meta."
+      ]},
+      { type: "h3", text: "Opción C — Desde Instagram" },
+      { type: "ul", items: [
+        "Abre la app Instagram → Configuración → Apps y sitios web → Activos.",
+        "Encuentra \"GetNearMe\" y toca \"Eliminar\".",
+        "El acceso se revoca inmediatamente."
+      ]},
+      { type: "h2", text: "3. Qué datos se eliminan" },
+      { type: "ul", items: [
+        "Tokens de acceso de larga duración (Instagram y Facebook).",
+        "Tokens de acceso de la Página de Facebook.",
+        "ID de cuenta Instagram Business e ID de Página de Facebook conectadas.",
+        "Nombre de cuenta y URL de avatar en caché.",
+        "Publicaciones programadas pendientes asociadas a la cuenta desconectada.",
+        "Archivos multimedia cargados para publicaciones no publicadas (limpieza automática)."
+      ]},
+      { type: "h2", text: "4. Confirmación" },
+      { type: "p", text: "Tras la eliminación recibirás un correo de confirmación. Si no recibes confirmación en 30 días, contacta a as.scirica@gmail.com." },
+      { type: "h2", text: "5. Preguntas" },
+      { type: "p", text: "Para cualquier pregunta sobre eliminación de datos o tus derechos RGPD, escribe a as.scirica@gmail.com." },
+    ],
+  },
+  fr: {
+    title: "Instructions de Suppression des Données",
+    lastUpdated: "Dernière mise à jour : 14 mai 2026",
+    description: "Comment demander la suppression de vos données de GetNearMe et révoquer l'accès aux comptes Instagram ou Facebook connectés.",
+    blocks: [
+      { type: "p", text: "GetNearMe prend votre confidentialité au sérieux. Cette page explique comment supprimer les données que nous détenons sur vous et comment révoquer l'accès à tout compte Instagram ou Facebook connecté à notre service." },
+      { type: "h2", text: "1. Supprimez votre compte GetNearMe" },
+      { type: "p", text: "Pour demander la suppression complète du compte GetNearMe et de toutes les données personnelles associées, envoyez un email à :" },
+      { type: "p", text: "as.scirica@gmail.com" },
+      { type: "p", text: "Objet : « Demande de suppression de compte ». Incluez l'adresse email associée à votre compte GetNearMe. Nous traiterons la demande et confirmerons la suppression dans un délai de 30 jours, conformément à l'Art. 17 RGPD." },
+      { type: "h2", text: "2. Révoquer uniquement l'accès Instagram / Facebook" },
+      { type: "p", text: "Si vous souhaitez uniquement déconnecter votre compte Instagram Business ou Page Facebook de GetNearMe sans supprimer le compte, vous avez trois options :" },
+      { type: "h3", text: "Option A — Depuis GetNearMe (recommandé)" },
+      { type: "ul", items: [
+        "Ouvrez l'extension navigateur GetNearMe.",
+        "Ouvrez Paramètres → Comptes Sociaux.",
+        "Cliquez sur « Déconnecter » à côté du compte Instagram ou Facebook.",
+        "Les jetons d'accès sont révoqués immédiatement et supprimés de notre base de données."
+      ]},
+      { type: "h3", text: "Option B — Depuis Facebook" },
+      { type: "ul", items: [
+        "Allez sur https://www.facebook.com/settings?tab=business_tools.",
+        "Trouvez « GetNearMe » dans la liste des outils d'entreprise connectés.",
+        "Cliquez sur « Supprimer »."
+      ]},
+      { type: "h3", text: "Option C — Depuis Instagram" },
+      { type: "ul", items: [
+        "Ouvrez l'app Instagram → Paramètres → Apps et sites web → Actifs.",
+        "Trouvez « GetNearMe » et appuyez sur « Supprimer ».",
+        "L'accès est révoqué immédiatement."
+      ]},
+      { type: "h2", text: "3. Quelles données sont supprimées" },
+      { type: "ul", items: [
+        "Jetons d'accès longue durée (Instagram et Facebook).",
+        "Jetons d'accès de la Page Facebook.",
+        "ID du compte Instagram Business et ID de la Page Facebook connectés.",
+        "Nom du compte et URL de l'avatar en cache.",
+        "Publications programmées en attente associées au compte déconnecté.",
+        "Fichiers médias téléchargés pour publications non publiées (nettoyage automatique)."
+      ]},
+      { type: "h2", text: "4. Confirmation" },
+      { type: "p", text: "Après suppression, vous recevrez un email de confirmation. Si vous ne recevez pas la confirmation dans 30 jours, contactez as.scirica@gmail.com." },
+      { type: "h2", text: "5. Questions" },
+      { type: "p", text: "Pour toute question sur la suppression des données ou vos droits RGPD, écrivez à as.scirica@gmail.com." },
+    ],
+  },
+  ru: {
+    title: "Инструкции по удалению данных",
+    lastUpdated: "Последнее обновление: 14 мая 2026",
+    description: "Как запросить удаление ваших данных из GetNearMe и отозвать доступ к подключённым аккаунтам Instagram или Facebook.",
+    blocks: [
+      { type: "p", text: "GetNearMe серьёзно относится к вашей конфиденциальности. Эта страница объясняет, как удалить данные, которые мы храним о вас, и как отозвать доступ к любому подключённому аккаунту Instagram или Facebook." },
+      { type: "h2", text: "1. Удалите свой аккаунт GetNearMe" },
+      { type: "p", text: "Чтобы запросить полное удаление аккаунта GetNearMe и всех связанных персональных данных, отправьте письмо на:" },
+      { type: "p", text: "as.scirica@gmail.com" },
+      { type: "p", text: "Тема: «Запрос на удаление аккаунта». Укажите адрес электронной почты, связанный с вашим аккаунтом GetNearMe. Мы обработаем запрос и подтвердим удаление в течение 30 дней в соответствии со ст. 17 GDPR." },
+      { type: "h2", text: "2. Отозвать только доступ Instagram / Facebook" },
+      { type: "p", text: "Если вы хотите только отключить аккаунт Instagram Business или Страницу Facebook от GetNearMe, не удаляя аккаунт, у вас есть три варианта:" },
+      { type: "h3", text: "Вариант A — Из GetNearMe (рекомендуется)" },
+      { type: "ul", items: [
+        "Откройте расширение браузера GetNearMe.",
+        "Откройте Настройки → Социальные аккаунты.",
+        "Нажмите «Отключить» рядом с аккаунтом Instagram или Facebook.",
+        "Токены доступа отзываются немедленно и удаляются из нашей базы данных."
+      ]},
+      { type: "h3", text: "Вариант B — Из Facebook" },
+      { type: "ul", items: [
+        "Перейдите на https://www.facebook.com/settings?tab=business_tools.",
+        "Найдите «GetNearMe» в списке подключённых бизнес-инструментов.",
+        "Нажмите «Удалить»."
+      ]},
+      { type: "h3", text: "Вариант C — Из Instagram" },
+      { type: "ul", items: [
+        "Откройте приложение Instagram → Настройки → Приложения и сайты → Активные.",
+        "Найдите «GetNearMe» и нажмите «Удалить».",
+        "Доступ отзывается немедленно."
+      ]},
+      { type: "h2", text: "3. Какие данные удаляются" },
+      { type: "ul", items: [
+        "Долгосрочные токены доступа (Instagram и Facebook).",
+        "Токены доступа Страницы Facebook.",
+        "ID подключённого аккаунта Instagram Business и ID Страницы Facebook.",
+        "Имя аккаунта и URL аватара в кэше.",
+        "Ожидающие запланированные публикации, связанные с отключённым аккаунтом.",
+        "Медиафайлы, загруженные для неопубликованных публикаций (автоматическая очистка)."
+      ]},
+      { type: "h2", text: "4. Подтверждение" },
+      { type: "p", text: "После удаления вы получите письмо с подтверждением. Если вы не получили подтверждение в течение 30 дней, свяжитесь с as.scirica@gmail.com." },
+      { type: "h2", text: "5. Вопросы" },
+      { type: "p", text: "По любым вопросам об удалении данных или ваших правах GDPR пишите на as.scirica@gmail.com." },
+    ],
+  },
+  uk: {
+    title: "Інструкції з видалення даних",
+    lastUpdated: "Останнє оновлення: 14 травня 2026",
+    description: "Як запросити видалення ваших даних з GetNearMe та відкликати доступ до підключених акаунтів Instagram або Facebook.",
+    blocks: [
+      { type: "p", text: "GetNearMe серйозно ставиться до вашої конфіденційності. Ця сторінка пояснює, як видалити дані, які ми зберігаємо про вас, та як відкликати доступ до будь-якого підключеного акаунта Instagram або Facebook." },
+      { type: "h2", text: "1. Видаліть свій акаунт GetNearMe" },
+      { type: "p", text: "Щоб запросити повне видалення акаунта GetNearMe та всіх пов'язаних персональних даних, надішліть листа на:" },
+      { type: "p", text: "as.scirica@gmail.com" },
+      { type: "p", text: "Тема: «Запит на видалення акаунта». Вкажіть адресу електронної пошти, пов'язану з вашим акаунтом GetNearMe. Ми обробимо запит та підтвердимо видалення протягом 30 днів відповідно до ст. 17 GDPR." },
+      { type: "h2", text: "2. Відкликати лише доступ Instagram / Facebook" },
+      { type: "p", text: "Якщо ви хочете лише відключити акаунт Instagram Business або Сторінку Facebook від GetNearMe, не видаляючи акаунт, у вас є три варіанти:" },
+      { type: "h3", text: "Варіант A — З GetNearMe (рекомендовано)" },
+      { type: "ul", items: [
+        "Відкрийте розширення браузера GetNearMe.",
+        "Відкрийте Налаштування → Соціальні акаунти.",
+        "Натисніть «Відключити» поруч з акаунтом Instagram або Facebook.",
+        "Токени доступу відкликаються негайно та видаляються з нашої бази даних."
+      ]},
+      { type: "h3", text: "Варіант B — З Facebook" },
+      { type: "ul", items: [
+        "Перейдіть на https://www.facebook.com/settings?tab=business_tools.",
+        "Знайдіть «GetNearMe» у списку підключених бізнес-інструментів.",
+        "Натисніть «Видалити»."
+      ]},
+      { type: "h3", text: "Варіант C — З Instagram" },
+      { type: "ul", items: [
+        "Відкрийте додаток Instagram → Налаштування → Додатки та сайти → Активні.",
+        "Знайдіть «GetNearMe» та торкніться «Видалити».",
+        "Доступ відкликається негайно."
+      ]},
+      { type: "h2", text: "3. Які дані видаляються" },
+      { type: "ul", items: [
+        "Довгострокові токени доступу (Instagram та Facebook).",
+        "Токени доступу Сторінки Facebook.",
+        "ID підключеного акаунта Instagram Business та ID Сторінки Facebook.",
+        "Ім'я акаунта та URL аватару в кеші.",
+        "Очікувані заплановані публікації, пов'язані з відключеним акаунтом.",
+        "Медіафайли, завантажені для неопублікованих публікацій (автоматичне очищення)."
+      ]},
+      { type: "h2", text: "4. Підтвердження" },
+      { type: "p", text: "Після видалення ви отримаєте лист з підтвердженням. Якщо ви не отримали підтвердження протягом 30 днів, зв'яжіться з as.scirica@gmail.com." },
+      { type: "h2", text: "5. Запитання" },
+      { type: "p", text: "З будь-яких питань щодо видалення даних або ваших прав GDPR пишіть на as.scirica@gmail.com." },
     ],
   },
 };
