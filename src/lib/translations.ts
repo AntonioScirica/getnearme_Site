@@ -140,6 +140,7 @@ export const translations = {
       privacy: "Privacy Policy",
       cookie: "Cookie Policy",
       terms: "Termini di Servizio",
+      dataDeletion: "Cancellazione Dati",
       rights: "Tutti i diritti riservati."
     },
     privacy: {
@@ -611,6 +612,7 @@ export const translations = {
       privacy: "Privacy Policy",
       cookie: "Cookie Policy",
       terms: "Terms of Service",
+      dataDeletion: "Data Deletion",
       rights: "All rights reserved."
     },
     privacy: {
@@ -1082,6 +1084,7 @@ export const translations = {
       privacy: "Política de Privacidad",
       cookie: "Política de Cookies",
       terms: "Términos de Servicio",
+      dataDeletion: "Eliminación de Datos",
       rights: "Todos los derechos reservados."
     },
     privacy: {
@@ -1522,6 +1525,7 @@ export const translations = {
       privacy: "Politique de Confidentialité",
       cookie: "Politique relative aux Cookies",
       terms: "Conditions d'Utilisation",
+      dataDeletion: "Suppression des Données",
       rights: "Tous droits réservés."
     },
     privacy: {
@@ -1962,6 +1966,7 @@ export const translations = {
       privacy: "Политика конфиденциальности",
       cookie: "Политика использования файлов cookie",
       terms: "Условия использования",
+      dataDeletion: "Удаление данных",
       rights: "Все права защищены."
     },
     privacy: {
@@ -2402,6 +2407,7 @@ export const translations = {
       privacy: "Політика конфіденційності",
       cookie: "Політика використання файлів cookie",
       terms: "Умови використання",
+      dataDeletion: "Видалення даних",
       rights: "Всі права застережені."
     },
     privacy: {
