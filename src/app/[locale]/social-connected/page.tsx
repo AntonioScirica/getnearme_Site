@@ -123,6 +123,7 @@ export default async function SocialConnectedPage({ params, searchParams }: Prop
   const sp = await searchParams;
   const success = sp.success === "true";
   const igMissing = sp.ig_business_missing === "true";
+  const errorDetail = sp.error || "";
   const t = content[locale as Locale] || content.it;
 
   return (
@@ -150,6 +151,12 @@ export default async function SocialConnectedPage({ params, searchParams }: Prop
           {igMissing && (
             <p className="text-amber-600 text-sm max-w-md mx-auto mb-6">
               {t.igMissing}
+            </p>
+          )}
+
+          {!success && errorDetail && (
+            <p className="text-red-400 text-xs font-mono max-w-lg mx-auto mb-6 break-all">
+              {errorDetail}
             </p>
           )}
 
