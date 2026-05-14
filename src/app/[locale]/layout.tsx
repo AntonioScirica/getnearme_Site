@@ -121,6 +121,7 @@ export default async function LocaleLayout({ children, params }: Props) {
   return (
     <html lang={locale} suppressHydrationWarning>
       <head>
+        <meta name="facebook-domain-verification" content="3el76s85o30orscaoxt1ceryo0tbki" />
         <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&display=swap" rel="stylesheet" />
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="apple-touch-icon" href="/favicon.ico" />
