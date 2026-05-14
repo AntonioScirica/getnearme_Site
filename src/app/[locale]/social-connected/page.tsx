@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { locales, type Locale } from "@/lib/i18n";
 import Navbar from "@/components/Navbar";
+import PagePicker from "@/components/PagePicker";
 import { CheckCircle, XCircle } from "lucide-react";
 
 type Props = {
@@ -124,6 +125,8 @@ export default async function SocialConnectedPage({ params, searchParams }: Prop
   const success = sp.success === "true";
   const igMissing = sp.ig_business_missing === "true";
   const errorDetail = sp.error || "";
+  const choosePage = sp.choose_page === "true";
+  const sessionId = sp.session || "";
   const t = content[locale as Locale] || content.it;
 
   return (
@@ -132,40 +135,48 @@ export default async function SocialConnectedPage({ params, searchParams }: Prop
 
       <main className="min-h-screen flex items-center justify-center px-4">
         <div className="max-w-2xl mx-auto text-center">
-          <div className="mb-4 flex justify-center">
-            {success ? (
-              <CheckCircle className="w-14 h-14 text-green-500" />
-            ) : (
-              <XCircle className="w-14 h-14 text-red-500" />
-            )}
-          </div>
+          {choosePage && sessionId ? (
+            /* ── Page Picker mode ── */
+            <PagePicker sessionId={sessionId} locale={locale} />
+          ) : (
+            /* ── Success / Error mode ── */
+            <>
+              <div className="mb-4 flex justify-center">
+                {success ? (
+                  <CheckCircle className="w-14 h-14 text-green-500" />
+                ) : (
+                  <XCircle className="w-14 h-14 text-red-500" />
+                )}
+              </div>
 
-          <h1 className="text-3xl md:text-4xl text-slate-900 font-bold mb-2">
-            {success ? t.success.title : t.error.title}
-          </h1>
+              <h1 className="text-3xl md:text-4xl text-slate-900 font-bold mb-2">
+                {success ? t.success.title : t.error.title}
+              </h1>
 
-          <p className="text-slate-600 leading-relaxed text-lg max-w-xl mx-auto mb-2">
-            {success ? t.success.desc : t.error.desc}
-          </p>
+              <p className="text-slate-600 leading-relaxed text-lg max-w-xl mx-auto mb-2">
+                {success ? t.success.desc : t.error.desc}
+              </p>
 
-          {igMissing && (
-            <p className="text-amber-600 text-sm max-w-md mx-auto mb-6">
-              {t.igMissing}
-            </p>
+              {igMissing && (
+                <p className="text-amber-600 text-sm max-w-md mx-auto mb-6">
+                  {t.igMissing}
+                </p>
+              )}
+
+              {!success && errorDetail && (
+                <p className="text-red-400 text-xs font-mono max-w-lg mx-auto mb-6 break-all">
+                  {errorDetail}
+                </p>
+              )}
+
+              <a
+                href="https://getnearme.it"
+                className="mt-6 inline-flex items-center px-6 py-3 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors"
+              >
+                {success ? t.success.close : t.error.retry}
+              </a>
+            </>
           )}
-
-          {!success && errorDetail && (
-            <p className="text-red-400 text-xs font-mono max-w-lg mx-auto mb-6 break-all">
-              {errorDetail}
-            </p>
-          )}
-
-          <a
-            href="https://getnearme.it"
-            className="mt-6 inline-flex items-center px-6 py-3 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors"
-          >
-            {success ? t.success.close : t.error.retry}
-          </a>
         </div>
       </main>
 
