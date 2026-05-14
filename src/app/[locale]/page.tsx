@@ -898,14 +898,6 @@ export default async function Home({ params }: Props) {
                       {t.footer.terms}
                     </Link>
                   </li>
-                  <li>
-                    <Link
-                      href={`/${locale}/data-deletion`}
-                      className="text-slate-500 hover:text-slate-900 transition-colors"
-                    >
-                      {t.footer.dataDeletion ?? "Data Deletion"}
-                    </Link>
-                  </li>
                 </ul>
               </div>
             </div>
