@@ -8,6 +8,7 @@ export default function SupportFormClient({ locale }: { locale: string }) {
   const [type, setType] = useState<'support' | 'bug'>('support');
   const [message, setMessage] = useState('');
   const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
+  const [errorMsg, setErrorMsg] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,7 +25,7 @@ export default function SupportFormClient({ locale }: { locale: string }) {
       }
       setStatus('success');
     } catch (err) {
-      console.error('Support form error:', err);
+      setErrorMsg(err instanceof Error ? err.message : 'Errore nell\'invio');
       setStatus('error');
     }
   };
@@ -169,7 +170,7 @@ export default function SupportFormClient({ locale }: { locale: string }) {
 
       {status === 'error' && (
         <p style={{ color: '#dc2626', fontSize: 14, margin: 0 }}>
-          Errore nell&apos;invio. Riprova o scrivici a info@getnearme.it
+          {errorMsg || 'Errore nell\'invio'}. Riprova o scrivici a info@getnearme.it
         </p>
       )}
 
