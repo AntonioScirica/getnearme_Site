@@ -20,7 +20,7 @@ const translations: Record<string, { install: SuccessText; extension: SuccessTex
       title: 'Abbonamento attivato!',
       subtitle: 'Grazie per aver scelto GetNearMe.',
       cta: 'Inizia ad usare l\'estensione',
-      hint: 'Verrai reindirizzato su Immobiliare.it dove potrai usare subito GetNearMe.',
+      hint: '',
       syncHint: 'Se l\'abbonamento non risulta subito visibile, prova a fare logout e login nell\'estensione.',
     },
   },
@@ -36,7 +36,7 @@ const translations: Record<string, { install: SuccessText; extension: SuccessTex
       title: 'Subscription activated!',
       subtitle: 'Thank you for choosing GetNearMe.',
       cta: 'Start using the extension',
-      hint: 'You\'ll be redirected to Immobiliare.it where you can use GetNearMe right away.',
+      hint: '',
       syncHint: 'If the subscription doesn\'t appear right away, try logging out and back in.',
     },
   },
@@ -52,7 +52,7 @@ const translations: Record<string, { install: SuccessText; extension: SuccessTex
       title: '¡Suscripción activada!',
       subtitle: 'Gracias por elegir GetNearMe.',
       cta: 'Empieza a usar la extensión',
-      hint: 'Serás redirigido a Immobiliare.it donde podrás usar GetNearMe de inmediato.',
+      hint: '',
       syncHint: 'Si la suscripción no aparece de inmediato, prueba a cerrar sesión y volver a iniciarla.',
     },
   },
@@ -68,7 +68,7 @@ const translations: Record<string, { install: SuccessText; extension: SuccessTex
       title: 'Abonnement activé !',
       subtitle: 'Merci d\'avoir choisi GetNearMe.',
       cta: 'Commencer à utiliser l\'extension',
-      hint: 'Vous serez redirigé vers Immobiliare.it où vous pourrez utiliser GetNearMe immédiatement.',
+      hint: '',
       syncHint: 'Si l\'abonnement n\'apparaît pas immédiatement, essayez de vous déconnecter puis de vous reconnecter.',
     },
   },
@@ -84,7 +84,7 @@ const translations: Record<string, { install: SuccessText; extension: SuccessTex
       title: 'Подписка активирована!',
       subtitle: 'Спасибо, что выбрали GetNearMe.',
       cta: 'Начать использовать расширение',
-      hint: 'Вы будете перенаправлены на Immobiliare.it, где сможете сразу использовать GetNearMe.',
+      hint: '',
       syncHint: 'Если подписка не отображается сразу, попробуйте выйти и войти снова.',
     },
   },
@@ -100,7 +100,7 @@ const translations: Record<string, { install: SuccessText; extension: SuccessTex
       title: 'Підписку активовано!',
       subtitle: 'Дякуємо, що обрали GetNearMe.',
       cta: 'Почати використовувати розширення',
-      hint: 'Вас буде перенаправлено на Immobiliare.it, де ви зможете одразу використовувати GetNearMe.',
+      hint: '',
       syncHint: 'Якщо підписка не з\'являється одразу, спробуйте вийти та увійти знову.',
     },
   },
@@ -136,7 +136,7 @@ function SuccessContent() {
           {t.cta}
         </a>
 
-        <p className="text-sm text-slate-400 mt-6">{t.hint}</p>
+        {t.hint && <p className="text-sm text-slate-400 mt-6">{t.hint}</p>}
         <p className="text-xs text-slate-400 mt-2">{t.syncHint}</p>
       </div>
     </div>
