@@ -5,7 +5,8 @@ import { CheckCircle } from 'lucide-react';
 import { type Locale } from '@/lib/i18n';
 import Navbar from '@/components/Navbar';
 
-const translations: Record<string, Record<string, { title: string; subtitle: string; cta: string; hint: string; syncHint: string }>> = {
+type SuccessText = { title: string; subtitle: string; cta: string; hint: string; syncHint: string };
+const translations: Record<string, { install: SuccessText; extension: SuccessText }> = {
   it: {
     install: {
       title: 'Abbonamento attivato!',
