@@ -1,5 +1,6 @@
 'use client';
 
+import { Suspense } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import { CheckCircle } from 'lucide-react';
 import { type Locale } from '@/lib/i18n';
@@ -108,7 +109,7 @@ const translations: Record<string, { install: SuccessText; extension: SuccessTex
 const CHROME_EXTENSION_URL = 'https://chromewebstore.google.com/detail/getnearme-%E2%80%93-valuta-il-qua/jbnceigldmpkpplanjlednlehloaeoia';
 const IMMOBILIARE_URL = 'https://www.immobiliare.it';
 
-export default function CheckoutSuccessPage() {
+function SuccessContent() {
   const params = useParams();
   const searchParams = useSearchParams();
   const locale = (params.locale as Locale) || 'it';
@@ -118,31 +119,42 @@ export default function CheckoutSuccessPage() {
   const ctaUrl = isFromExtension ? IMMOBILIARE_URL : CHROME_EXTENSION_URL;
 
   return (
+    <div className="max-w-md w-full">
+      <div className="bg-white neo-border rounded-2xl p-8 text-center" style={{ boxShadow: '6px 6px 0px #1a1a2e' }}>
+        <div className="w-20 h-20 bg-green-100 neo-border rounded-full flex items-center justify-center mx-auto mb-6">
+          <CheckCircle className="w-10 h-10 text-green-600" />
+        </div>
+
+        <h1 className="text-3xl font-bold mb-2">{t.title}</h1>
+        <p className="text-lg text-slate-500 mb-6">{t.subtitle}</p>
+
+        <a
+          href={ctaUrl}
+          className="inline-flex items-center justify-center gap-3 px-8 py-4 bg-blue-500 rounded-xl neo-border neo-btn text-white font-bold hover:bg-blue-600 transition-all text-lg"
+          style={{ boxShadow: '4px 4px 0px #1a1a2e' }}
+        >
+          {t.cta}
+        </a>
+
+        <p className="text-sm text-slate-400 mt-6">{t.hint}</p>
+        <p className="text-xs text-slate-400 mt-2">{t.syncHint}</p>
+      </div>
+    </div>
+  );
+}
+
+export default function CheckoutSuccessPage() {
+  const params = useParams();
+  const locale = (params.locale as Locale) || 'it';
+
+  return (
     <div className="min-h-screen flex flex-col bg-[#fafaf8] font-sans text-[#1a1a2e]">
       <Navbar locale={locale} />
 
       <main className="flex-1 flex items-center justify-center px-4 py-24">
-        <div className="max-w-md w-full">
-          <div className="bg-white neo-border rounded-2xl p-8 text-center" style={{ boxShadow: '6px 6px 0px #1a1a2e' }}>
-            <div className="w-20 h-20 bg-green-100 neo-border rounded-full flex items-center justify-center mx-auto mb-6">
-              <CheckCircle className="w-10 h-10 text-green-600" />
-            </div>
-
-            <h1 className="text-3xl font-bold mb-2">{t.title}</h1>
-            <p className="text-lg text-slate-500 mb-6">{t.subtitle}</p>
-
-            <a
-              href={ctaUrl}
-              className="inline-flex items-center justify-center gap-3 px-8 py-4 bg-blue-500 rounded-xl neo-border neo-btn text-white font-bold hover:bg-blue-600 transition-all text-lg"
-              style={{ boxShadow: '4px 4px 0px #1a1a2e' }}
-            >
-              {t.cta}
-            </a>
-
-            <p className="text-sm text-slate-400 mt-6">{t.hint}</p>
-            <p className="text-xs text-slate-400 mt-2">{t.syncHint}</p>
-          </div>
-        </div>
+        <Suspense>
+          <SuccessContent />
+        </Suspense>
       </main>
 
       <footer className="bg-slate-900 text-white">
