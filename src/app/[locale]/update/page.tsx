@@ -26,6 +26,8 @@ import {
   CalendarClock,
   Share2,
   Clock,
+  Diamond,
+  Brush,
 } from "lucide-react";
 import type { Metadata } from "next";
 
@@ -109,6 +111,22 @@ const updates: {
           "Il report ora include una pagina dedicata con tutti i servizi vicini: trasporti, scuole, supermercati, farmacie e altro. Nella comparazione, una tabella confronta i POI di ogni immobile.",
         tag: "Nuovo",
         tagColor: "#059669",
+      },
+      {
+        icon: <Diamond size={22} />,
+        title: "Nuovo stile Foto AI: Luxury Contemporary",
+        description:
+          "Lo stile Industrial lascia il posto a Luxury Contemporary: marmo, ottone spazzolato, noce scuro, vetro fumé. Ogni elemento viene sostituito con la versione di lusso dello stesso mobile, senza aggiungere arredi extra.",
+        tag: "Nuovo",
+        tagColor: "#059669",
+      },
+      {
+        icon: <Brush size={22} />,
+        title: "Prompt Foto AI migliorati",
+        description:
+          "Gli stili Moderno, Nordico e Boho ora usano prompt più precisi: l'AI identifica ogni mobile e lo sostituisce con la versione nello stile scelto, senza aggiungere divani o oggetti che non c'erano nella foto originale.",
+        tag: "Migliorato",
+        tagColor: "#2563eb",
       },
       {
         icon: <Palette size={22} />,
