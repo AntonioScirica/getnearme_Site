@@ -121,20 +121,20 @@ const updates: {
         tagColor: "#059669",
       },
       {
-        icon: <Brush size={22} />,
-        title: "Prompt Foto AI migliorati",
-        description:
-          "Gli stili Moderno, Nordico e Boho ora usano prompt più precisi: l'AI identifica ogni mobile e lo sostituisce con la versione nello stile scelto, senza aggiungere divani o oggetti che non c'erano nella foto originale.",
-        tag: "Migliorato",
-        tagColor: "#2563eb",
-      },
-      {
         icon: <Palette size={22} />,
         title: "Brand condiviso con il team",
         description:
           "Logo, colori e testi dei report ora si impostano una volta sola e vengono applicati automaticamente a tutti i membri del team. Ogni agente lavora con l'identità dell'agenzia senza configurare nulla.",
         tag: "Nuovo",
         tagColor: "#059669",
+      },
+      {
+        icon: <Brush size={22} />,
+        title: "Prompt Foto AI migliorati",
+        description:
+          "Gli stili Moderno, Nordico e Boho ora usano prompt più precisi, aggiunto lo stile Luxury.",
+        tag: "Migliorato",
+        tagColor: "#2563eb",
       },
     ],
   },
