@@ -18,9 +18,13 @@ export default function SupportFormClient({ locale }: { locale: string }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, type, message }),
       });
-      if (!res.ok) throw new Error();
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.error || 'Errore server');
+      }
       setStatus('success');
-    } catch {
+    } catch (err) {
+      console.error('Support form error:', err);
       setStatus('error');
     }
   };
