@@ -22,6 +22,10 @@ import {
   Film,
   MapPin,
   Clapperboard,
+  Palette,
+  CalendarClock,
+  Share2,
+  Clock,
 } from "lucide-react";
 import type { Metadata } from "next";
 
@@ -103,6 +107,14 @@ const updates: {
         title: "Punti di Interesse nel report",
         description:
           "Il report ora include una pagina dedicata con tutti i servizi vicini: trasporti, scuole, supermercati, farmacie e altro. Nella comparazione, una tabella confronta i POI di ogni immobile.",
+        tag: "Nuovo",
+        tagColor: "#059669",
+      },
+      {
+        icon: <Palette size={22} />,
+        title: "Brand condiviso con il team",
+        description:
+          "Logo, colori e testi dei report ora si impostano una volta sola e vengono applicati automaticamente a tutti i membri del team. Ogni agente lavora con l'identità dell'agenzia senza configurare nulla.",
         tag: "Nuovo",
         tagColor: "#059669",
       },
@@ -351,6 +363,176 @@ export default async function UpdatePage({ params }: Props) {
           <br />
           Ecco cosa c&apos;è di nuovo.
         </p>
+      </section>
+
+      {/* Coming Soon */}
+      <section
+        style={{
+          maxWidth: 780,
+          margin: "0 auto",
+          padding: "0 24px 48px",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            marginBottom: 20,
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "6px 16px",
+              background: "#f59e0b",
+              color: "#1a1a2e",
+              borderRadius: 10,
+              fontWeight: 800,
+              fontSize: 15,
+              border: "3px solid #1a1a2e",
+            }}
+          >
+            <Clock size={16} />
+            In arrivo
+          </div>
+        </div>
+
+        <div
+          style={{
+            background: "linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)",
+            border: "3px solid #1a1a2e",
+            borderRadius: 20,
+            boxShadow: "6px 6px 0px #f59e0b",
+            overflow: "hidden",
+          }}
+        >
+          <div
+            style={{
+              padding: "28px 32px 20px",
+              borderBottom: "2px solid rgba(245, 158, 11, 0.2)",
+            }}
+          >
+            <h2
+              style={{
+                fontSize: 26,
+                fontWeight: 900,
+                margin: "0 0 6px",
+                lineHeight: 1.2,
+              }}
+            >
+              Pubblicazione automatica sui social
+            </h2>
+            <p style={{ fontSize: 15, color: "#71717a", margin: 0, lineHeight: 1.5 }}>
+              Crea il post, scegli data e ora, e GetNearMe pubblica per te su Instagram, Facebook e LinkedIn. Zero copia-incolla, zero app esterne.
+            </p>
+          </div>
+
+          <div style={{ padding: "8px 0" }}>
+            <div
+              style={{
+                display: "flex",
+                gap: 16,
+                padding: "20px 32px",
+                borderBottom: "1px solid rgba(245, 158, 11, 0.15)",
+                alignItems: "flex-start",
+              }}
+            >
+              <div
+                style={{
+                  width: 44,
+                  height: 44,
+                  minWidth: 44,
+                  borderRadius: 12,
+                  background: "#fff",
+                  border: "2px solid #1a1a2e",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "#1a1a2e",
+                }}
+              >
+                <Share2 size={22} />
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                  <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>
+                    Pubblica direttamente dall&apos;estensione
+                  </h3>
+                  <span
+                    style={{
+                      padding: "2px 8px",
+                      background: "rgba(245, 158, 11, 0.15)",
+                      color: "#b45309",
+                      borderRadius: 6,
+                      fontSize: 11,
+                      fontWeight: 700,
+                      letterSpacing: 0.3,
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    In arrivo
+                  </span>
+                </div>
+                <p style={{ fontSize: 14, color: "#52525b", margin: 0, lineHeight: 1.5 }}>
+                  Collega i tuoi account social e pubblica post e stories con un click. Scegli il canale, scrivi la caption e vai.
+                </p>
+              </div>
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                gap: 16,
+                padding: "20px 32px",
+                alignItems: "flex-start",
+              }}
+            >
+              <div
+                style={{
+                  width: 44,
+                  height: 44,
+                  minWidth: 44,
+                  borderRadius: 12,
+                  background: "#fff",
+                  border: "2px solid #1a1a2e",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "#1a1a2e",
+                }}
+              >
+                <CalendarClock size={22} />
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                  <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>
+                    Calendario editoriale e programmazione
+                  </h3>
+                  <span
+                    style={{
+                      padding: "2px 8px",
+                      background: "rgba(245, 158, 11, 0.15)",
+                      color: "#b45309",
+                      borderRadius: 6,
+                      fontSize: 11,
+                      fontWeight: 700,
+                      letterSpacing: 0.3,
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    In arrivo
+                  </span>
+                </div>
+                <p style={{ fontSize: 14, color: "#52525b", margin: 0, lineHeight: 1.5 }}>
+                  Pianifica i contenuti in anticipo con un calendario visuale. Programma la pubblicazione automatica e gestisci tutto da un unico posto.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
 
       {/* Updates Timeline */}
