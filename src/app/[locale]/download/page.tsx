@@ -115,7 +115,7 @@ function DownloadContent() {
   const styleLabel = STYLE_LABELS[data.style] || data.style
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#2563EB] via-[#1D4ED8] to-[#1e40af] flex flex-col items-center px-4 py-10">
+    <div className="min-h-screen bg-gradient-to-br from-[#2563EB] via-[#1D4ED8] to-[#1e40af] flex flex-col items-center justify-center px-4">
 
       {/* Main card */}
       <div className="w-full max-w-[420px] bg-white rounded-2xl p-8 text-center shadow-2xl shadow-black/20">
@@ -172,15 +172,6 @@ function DownloadContent() {
         </div>
       )}
 
-      {/* Footer */}
-      <div className="mt-8 text-center text-xs text-white/50 leading-relaxed">
-        <p>GetNearMe</p>
-        <p className="mt-1">
-          <a href="https://www.getnearme.it/legal/privacy" className="text-white/50 hover:text-white/70 underline">Privacy</a>
-          {' · '}
-          <a href="https://www.getnearme.it/legal/terms" className="text-white/50 hover:text-white/70 underline">Termini</a>
-        </p>
-      </div>
 
     </div>
   )
