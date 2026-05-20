@@ -129,7 +129,7 @@ function DownloadContent() {
 
         {/* Title */}
         <h1 className="text-[22px] font-bold text-[#2563eb] mb-1">Foto pronte!</h1>
-        <p className="text-sm text-[#6B7280] leading-relaxed">
+        <p className="text-sm text-[#6B7280] leading-relaxed max-w-[280px] mx-auto">
           Le tue <strong className="text-[#1F2937]">{data.completed} foto</strong> con stile <strong className="text-[#1F2937]">{styleLabel}</strong> sono pronte per il download.
         </p>
 
@@ -140,7 +140,7 @@ function DownloadContent() {
 
         {/* Expiry */}
         <p className="mt-4 text-xs text-[#6B7280]">
-          Il link per il download sarà valido per <strong className="text-[#2563eb]">7 giorni</strong>.
+          Il link per il download sarà valido per <strong className="text-[#2563eb]">24 ore</strong>.
         </p>
       </div>
 
@@ -164,29 +164,6 @@ function DownloadContent() {
           </>
         )}
       </button>
-
-      {/* Photo grid */}
-      <div className="mt-4 w-full max-w-[420px] grid grid-cols-2 gap-3">
-        {data.photos.map((photo) => (
-          <div key={photo.index} className="group relative rounded-xl overflow-hidden shadow-lg shadow-black/15">
-            <img
-              src={photo.url}
-              alt={`Foto ${photo.index + 1}`}
-              className="w-full aspect-[4/3] object-cover block bg-white/10"
-              loading="lazy"
-            />
-            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
-              <a
-                href={photo.url}
-                download={`foto_${photo.index + 1}.png`}
-                className="px-4 py-2 bg-white rounded-lg text-xs font-semibold text-[#1F2937] shadow-lg hover:bg-gray-50 transition"
-              >
-                Scarica
-              </a>
-            </div>
-          </div>
-        ))}
-      </div>
 
       {/* Failed notice */}
       {data.failed > 0 && (

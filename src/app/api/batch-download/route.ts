@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
     completedItems.map(async (item) => {
       const { data } = await supabase.storage
         .from('batch-staging')
-        .createSignedUrl(item.result_path!, 7 * 24 * 60 * 60)
+        .createSignedUrl(item.result_path!, 24 * 60 * 60)
       return {
         index: item.item_index,
         url: data?.signedUrl || null,
