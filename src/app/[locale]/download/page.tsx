@@ -88,37 +88,23 @@ function DownloadContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#f4f5f7] flex items-center justify-center">
-        <div className="w-8 h-8 border-[3px] border-gray-200 border-t-[#2563EB] rounded-full animate-spin" />
+      <div className="min-h-screen bg-gradient-to-br from-[#2563EB] via-[#1D4ED8] to-[#1e40af] flex items-center justify-center">
+        <div className="w-10 h-10 border-[3px] border-white/20 border-t-white rounded-full animate-spin" />
       </div>
     )
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-[#f4f5f7] flex items-center justify-center px-4">
-        <div className="w-full max-w-[560px] bg-white border border-[#e5e7eb] rounded-xl overflow-hidden">
-          <img
-            src="https://ecrnpyksnfyykqwnutwa.supabase.co/storage/v1/object/public/email-assets/stripe_header.png"
-            alt="GetNearMe"
-            className="w-full h-auto"
-          />
-          <div className="px-8 py-10 text-center">
-            <div className="w-14 h-14 mx-auto mb-4 flex items-center justify-center bg-red-50 rounded-2xl">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" />
-              </svg>
-            </div>
-            <h1 className="text-lg font-bold text-[#1F2937] mb-2">{error}</h1>
-            <p className="text-sm text-[#6b7280]">Il link potrebbe essere scaduto o non valido.</p>
+      <div className="min-h-screen bg-gradient-to-br from-[#2563EB] via-[#1D4ED8] to-[#1e40af] flex items-center justify-center px-4">
+        <div className="w-full max-w-[420px] bg-white rounded-2xl p-10 text-center shadow-2xl shadow-black/20">
+          <div className="w-14 h-14 mx-auto mb-5 flex items-center justify-center bg-red-50 rounded-[14px]">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" />
+            </svg>
           </div>
-          <div className="px-8 py-5 bg-[#f9fafb] border-t border-[#e5e7eb] text-center text-xs text-[#6b7280] leading-relaxed">
-            GetNearMe<br />
-            <a href="https://www.getnearme.it/legal/privacy" className="text-[#6b7280] underline">Privacy</a>
-            {' · '}
-            <a href="https://www.getnearme.it/legal/terms" className="text-[#6b7280] underline">Termini</a>
-            {' · info@getnearme.it'}
-          </div>
+          <h1 className="text-lg font-bold text-[#1F2937] mb-1">{error}</h1>
+          <p className="text-sm text-[#6B7280]">Il link potrebbe essere scaduto o non valido.</p>
         </div>
       </div>
     )
@@ -129,126 +115,96 @@ function DownloadContent() {
   const styleLabel = STYLE_LABELS[data.style] || data.style
 
   return (
-    <div className="min-h-screen bg-[#f4f5f7] py-8 px-4">
-      <div className="w-full max-w-[560px] mx-auto bg-white border border-[#e5e7eb] rounded-xl overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-[#2563EB] via-[#1D4ED8] to-[#1e40af] flex flex-col items-center px-4 py-10">
 
-        {/* Header image */}
-        <img
-          src="https://ecrnpyksnfyykqwnutwa.supabase.co/storage/v1/object/public/email-assets/stripe_header.png"
-          alt="GetNearMe"
-          className="w-full h-auto block"
-        />
+      {/* Main card */}
+      <div className="w-full max-w-[420px] bg-white rounded-2xl p-8 text-center shadow-2xl shadow-black/20">
 
-        {/* Intro text */}
-        <div className="px-8 pt-4 pb-4 text-[15px] leading-relaxed text-[#1F2937]" style={{ fontFamily: '-apple-system, Segoe UI, Roboto, Arial, sans-serif' }}>
-          <p className="mb-4">Ciao,</p>
-          <p className="mb-4">le tue <strong>{data.completed}</strong> foto AI con stile <strong>{styleLabel}</strong> sono pronte.</p>
-          <p className="mb-4">Puoi scaricarle subito e iniziare a usarle per i tuoi annunci, contenuti social o presentazioni immobiliari.</p>
+        {/* Blue icon */}
+        <div className="w-14 h-14 mx-auto mb-5 flex items-center justify-center bg-[#2563eb] rounded-[14px] text-white">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <rect width="18" height="18" x="3" y="3" rx="2" /><circle cx="12" cy="12" r="3" /><path d="m16 2-4 4-4-4" />
+          </svg>
         </div>
 
-        {/* Info card with details + download button */}
-        <div className="px-8 pb-4">
-          <div className="border border-[#e5e7eb] rounded-xl overflow-hidden">
-            <div className="px-[18px] py-4 text-[13px] text-[#374151] border-b border-[#e5e7eb]">
-              <div className="flex justify-between items-center">
-                <span className="text-[#6b7280]">Foto elaborate</span>
-                <span className="text-[#1F2937]">{data.completed} di {data.total}</span>
-              </div>
-              <div className="flex justify-between items-center mt-[10px]">
-                <span className="text-[#6b7280]">Stile</span>
-                <span className="text-[#1F2937]">{styleLabel}</span>
-              </div>
-              <div className="flex justify-between items-center mt-[10px]">
-                <span className="text-[#6b7280]">Formato</span>
-                <span className="text-[#1F2937]">PNG</span>
-              </div>
-            </div>
-            <div className="px-[18px] py-4">
-              <button
-                onClick={downloadAll}
-                disabled={zipping}
-                className="w-full py-3 bg-[#2563EB] text-white text-sm font-semibold rounded-lg hover:bg-[#1d4ed8] transition disabled:opacity-60 flex items-center justify-center gap-2"
-              >
-                {zipping ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    Creazione ZIP...
-                  </>
-                ) : (
-                  <>Scarica tutte le foto (ZIP)</>
-                )}
-              </button>
-            </div>
-          </div>
+        {/* Title */}
+        <h1 className="text-[22px] font-bold text-[#2563eb] mb-1">Foto pronte!</h1>
+        <p className="text-sm text-[#6B7280] leading-relaxed">
+          Le tue <strong className="text-[#1F2937]">{data.completed} foto</strong> con stile <strong className="text-[#1F2937]">{styleLabel}</strong> sono pronte per il download.
+        </p>
+
+        {/* Photo count badge */}
+        <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-[rgba(37,99,235,0.1)] rounded-[10px]">
+          <span className="text-[15px] font-bold text-[#2563eb]">{data.completed} di {data.total} foto</span>
         </div>
 
-        {/* Photo grid */}
-        <div className="px-8 pb-4">
-          <div className="grid grid-cols-2 gap-3">
-            {data.photos.map((photo) => (
-              <div key={photo.index} className="group relative rounded-lg overflow-hidden border border-[#e5e7eb]">
-                <img
-                  src={photo.url}
-                  alt={`Foto ${photo.index + 1}`}
-                  className="w-full aspect-[4/3] object-cover block"
-                  loading="lazy"
-                />
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
-                  <a
-                    href={photo.url}
-                    download={`foto_${photo.index + 1}.png`}
-                    className="px-4 py-2 bg-white rounded-lg text-xs font-semibold text-[#1F2937] shadow-lg hover:bg-gray-50 transition"
-                  >
-                    Scarica
-                  </a>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Tips */}
-        <div className="px-8 pt-[18px] pb-2 text-sm leading-relaxed text-[#374151]" style={{ fontFamily: '-apple-system, Segoe UI, Roboto, Arial, sans-serif' }}>
-          <p className="mb-2 font-semibold text-[#1F2937]">Consigli utili:</p>
-          <ul className="mb-4 pl-5 text-[#4b5563] list-disc">
-            <li className="mb-1">Scarica le foto da computer per ottenere la massima qualità.</li>
-            <li className="mb-1">Perfette per annunci immobiliari, social media e presentazioni.</li>
-          </ul>
-        </div>
-
-        {/* Failed notice */}
-        {data.failed > 0 && (
-          <div className="px-8 pb-4">
-            <div className="px-[18px] py-[14px] bg-red-50 border border-red-200 rounded-[10px] text-[13px] leading-relaxed text-red-800">
-              {data.failed} foto non riuscite. I crediti corrispondenti sono stati rimborsati automaticamente.
-            </div>
-          </div>
-        )}
-
-        {/* Amber warning */}
-        <div className="px-8 py-2 pb-4">
-          <div className="px-[18px] py-[14px] bg-[#fffbeb] border border-[#fde68a] rounded-[10px] text-[13px] leading-relaxed text-[#92400e]" style={{ fontFamily: '-apple-system, Segoe UI, Roboto, Arial, sans-serif' }}>
-            I link di download resteranno attivi per <strong>7 giorni</strong>. Dopo la scadenza i file non saranno più disponibili.
-          </div>
-        </div>
-
-        {/* Sign-off */}
-        <div className="px-8 py-2 pb-6 text-sm text-[#4b5563]" style={{ fontFamily: '-apple-system, Segoe UI, Roboto, Arial, sans-serif' }}>
-          Buon lavoro,
-          <p className="mt-2 text-sm font-semibold text-[#111827]">Il team di GetNearMe</p>
-        </div>
-
-        {/* Footer */}
-        <div className="px-8 py-[18px] pb-6 bg-[#f9fafb] border-t border-[#e5e7eb] text-center text-xs leading-relaxed text-[#6b7280]" style={{ fontFamily: '-apple-system, Segoe UI, Roboto, Arial, sans-serif' }}>
-          GetNearMe<br />
-          Hai ricevuto questa email perché hai richiesto delle foto AI dall&apos;estensione.<br />
-          <a href="https://www.getnearme.it/legal/privacy" className="text-[#6b7280] underline">Privacy</a>
-          {' · '}
-          <a href="https://www.getnearme.it/legal/terms" className="text-[#6b7280] underline">Termini</a>
-          {' · info@getnearme.it'}
-        </div>
-
+        {/* Expiry */}
+        <p className="mt-4 text-xs text-[#6B7280]">
+          Il link per il download sarà valido per <strong className="text-[#2563eb]">7 giorni</strong>.
+        </p>
       </div>
+
+      {/* Download all button */}
+      <button
+        onClick={downloadAll}
+        disabled={zipping}
+        className="mt-4 w-full max-w-[420px] flex items-center justify-center gap-2 py-3 bg-white text-[#2563EB] font-semibold text-sm rounded-xl shadow-lg shadow-black/10 hover:bg-gray-50 transition disabled:opacity-60"
+      >
+        {zipping ? (
+          <>
+            <div className="w-4 h-4 border-2 border-[#2563EB]/30 border-t-[#2563EB] rounded-full animate-spin" />
+            Creazione ZIP...
+          </>
+        ) : (
+          <>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            Scarica tutte le foto (ZIP)
+          </>
+        )}
+      </button>
+
+      {/* Photo grid */}
+      <div className="mt-4 w-full max-w-[420px] grid grid-cols-2 gap-3">
+        {data.photos.map((photo) => (
+          <div key={photo.index} className="group relative rounded-xl overflow-hidden shadow-lg shadow-black/15">
+            <img
+              src={photo.url}
+              alt={`Foto ${photo.index + 1}`}
+              className="w-full aspect-[4/3] object-cover block bg-white/10"
+              loading="lazy"
+            />
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
+              <a
+                href={photo.url}
+                download={`foto_${photo.index + 1}.png`}
+                className="px-4 py-2 bg-white rounded-lg text-xs font-semibold text-[#1F2937] shadow-lg hover:bg-gray-50 transition"
+              >
+                Scarica
+              </a>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Failed notice */}
+      {data.failed > 0 && (
+        <div className="mt-4 w-full max-w-[420px] px-4 py-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl text-sm text-white/90 text-center">
+          {data.failed} foto non riuscite. Crediti rimborsati.
+        </div>
+      )}
+
+      {/* Footer */}
+      <div className="mt-8 text-center text-xs text-white/50 leading-relaxed">
+        <p>GetNearMe</p>
+        <p className="mt-1">
+          <a href="https://www.getnearme.it/legal/privacy" className="text-white/50 hover:text-white/70 underline">Privacy</a>
+          {' · '}
+          <a href="https://www.getnearme.it/legal/terms" className="text-white/50 hover:text-white/70 underline">Termini</a>
+        </p>
+      </div>
+
     </div>
   )
 }
@@ -257,8 +213,8 @@ export default function DownloadPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-[#f4f5f7] flex items-center justify-center">
-          <div className="w-8 h-8 border-[3px] border-gray-200 border-t-[#2563EB] rounded-full animate-spin" />
+        <div className="min-h-screen bg-gradient-to-br from-[#2563EB] via-[#1D4ED8] to-[#1e40af] flex items-center justify-center">
+          <div className="w-10 h-10 border-[3px] border-white/20 border-t-white rounded-full animate-spin" />
         </div>
       }
     >
