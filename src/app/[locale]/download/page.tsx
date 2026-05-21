@@ -115,55 +115,50 @@ function DownloadContent() {
   const styleLabel = STYLE_LABELS[data.style] || data.style
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#2563EB] via-[#1D4ED8] to-[#1e40af] flex flex-col items-center justify-center px-4">
+    <div className="relative min-h-screen bg-gradient-to-br from-[#2563EB] via-[#1D4ED8] to-[#1e40af] flex flex-col items-center justify-center px-4">
 
       {/* Main card */}
       <div className="w-full max-w-[420px] bg-white rounded-2xl p-8 text-center shadow-2xl shadow-black/20">
 
-        {/* Blue icon */}
-        <div className="w-14 h-14 mx-auto mb-5 flex items-center justify-center bg-[#2563eb] rounded-[14px] text-white">
+        {/* Download icon */}
+        <div className="w-14 h-14 mx-auto mb-3 flex items-center justify-center bg-[#2563eb] rounded-[14px] text-white">
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-            <rect width="18" height="18" x="3" y="3" rx="2" /><circle cx="12" cy="12" r="3" /><path d="m16 2-4 4-4-4" />
+            <rect width="18" height="18" x="3" y="3" rx="2" /><circle cx="9" cy="9" r="2" /><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
           </svg>
         </div>
 
         {/* Title */}
         <h1 className="text-[22px] font-bold text-[#2563eb] mb-1">Foto pronte!</h1>
         <p className="text-sm text-[#6B7280] leading-relaxed max-w-[280px] mx-auto">
-          Le tue <strong className="text-[#1F2937]">{data.completed} foto</strong> con stile <strong className="text-[#1F2937]">{styleLabel}</strong> sono pronte per il download.
+          Le tue {data.completed} foto con stile {styleLabel} sono<br />ora pronte per il download.
         </p>
 
-        {/* Photo count badge */}
-        <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-[rgba(37,99,235,0.1)] rounded-[10px]">
-          <span className="text-[15px] font-bold text-[#2563eb]">{data.completed} di {data.total} foto</span>
-        </div>
+        {/* Download button */}
+        <button
+          onClick={downloadAll}
+          disabled={zipping}
+          className="mt-5 w-full flex items-center justify-center gap-2 py-[14px] bg-[#2563EB] text-white font-semibold text-sm rounded-xl hover:bg-[#1D4ED8] transition disabled:opacity-60"
+        >
+          {zipping ? (
+            <>
+              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              Creazione ZIP...
+            </>
+          ) : (
+            <>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+              Scarica tutte le foto
+            </>
+          )}
+        </button>
 
         {/* Expiry */}
         <p className="mt-4 text-xs text-[#6B7280]">
           Il link per il download sarà valido per <strong className="text-[#2563eb]">24 ore</strong>.
         </p>
       </div>
-
-      {/* Download all button */}
-      <button
-        onClick={downloadAll}
-        disabled={zipping}
-        className="mt-4 w-full max-w-[420px] flex items-center justify-center gap-2 py-3 bg-white text-[#2563EB] font-semibold text-sm rounded-xl shadow-lg shadow-black/10 hover:bg-gray-50 transition disabled:opacity-60"
-      >
-        {zipping ? (
-          <>
-            <div className="w-4 h-4 border-2 border-[#2563EB]/30 border-t-[#2563EB] rounded-full animate-spin" />
-            Creazione ZIP...
-          </>
-        ) : (
-          <>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
-            </svg>
-            Scarica tutte le foto (ZIP)
-          </>
-        )}
-      </button>
 
       {/* Failed notice */}
       {data.failed > 0 && (
@@ -172,7 +167,7 @@ function DownloadContent() {
         </div>
       )}
 
-
+      <a href="https://www.getnearme.it" className="absolute bottom-6 text-sm text-white/50 hover:text-white/70 transition">GetNearMe</a>
     </div>
   )
 }
