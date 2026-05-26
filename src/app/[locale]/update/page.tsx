@@ -28,6 +28,8 @@ import {
   Clock,
   Diamond,
   Brush,
+  ImagePlus,
+  Wand2,
 } from "lucide-react";
 import type { Metadata } from "next";
 
@@ -46,7 +48,7 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-const CURRENT_VERSION = "1.3.7";
+const CURRENT_VERSION = "1.3.8";
 
 const updates: {
   version: string;
@@ -64,10 +66,29 @@ const updates: {
   }[];
 }[] = [
   {
-    version: "1.3.7",
+    version: "1.3.8",
     date: "Maggio 2026",
     badge: "Ultima versione",
     badgeColor: "#059669",
+    title: "Foto AI: fino a 30 foto insieme",
+    subtitle:
+      "Il wizard Foto AI ora supporta più foto in una volta sola. Carica fino a 30 foto, scegli lo stile e genera tutto insieme.",
+    features: [
+      {
+        icon: <ImagePlus size={22} />,
+        title: "Genera fino a 30 foto insieme",
+        description:
+          "Carica da 1 a 30 foto nello stesso wizard, scegli lo stile e lancia la generazione. Tutte le foto vengono elaborate e puoi scaricarle direttamente.",
+        tag: "Aggiornamento",
+        tagColor: "#2563eb",
+      },
+    ],
+  },
+  {
+    version: "1.3.7",
+    date: "Maggio 2026",
+    badge: "",
+    badgeColor: "#6b7280",
     title: "AI Video: consegna via email + pacchetti extra",
     subtitle:
       "Il video arriva direttamente nella tua casella di posta, e quando finisci la quota mensile puoi ricaricarla con pacchetti extra. Più libertà, meno attese.",

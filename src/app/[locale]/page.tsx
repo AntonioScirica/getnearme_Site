@@ -226,7 +226,7 @@ export default async function Home({ params }: Props) {
 
             </div>
 
-            {/* YouTube Video - Full width, 16:9, neobrutalism frame */}
+            {/* Header Image - Full width, neobrutalism frame */}
             <div
               className="mt-12 md:mt-16"
               style={{
@@ -237,22 +237,15 @@ export default async function Home({ params }: Props) {
                 background: "#1a1a2e",
               }}
             >
-              <div style={{ position: "relative", paddingBottom: "56.25%", height: 0 }}>
-                <iframe
-                  src="https://www.youtube.com/embed/2_KNllGE1-0?rel=0&modestbranding=1"
-                  title="GetNearMe Demo"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  style={{
-                    position: "absolute",
-                    top: 0,
-                    left: 0,
-                    width: "100%",
-                    height: "100%",
-                    border: "none",
-                  }}
-                />
-              </div>
+              <img
+                src="/assets/png/header.jpg"
+                alt="GetNearMe - Analisi immobiliare intelligente"
+                style={{
+                  width: "100%",
+                  height: "auto",
+                  display: "block",
+                }}
+              />
             </div>
           </div>
         </section>
