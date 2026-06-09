@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   Users,
@@ -13,6 +14,7 @@ import {
   Star,
   Wallet,
   Mail,
+  Share2,
 } from "lucide-react";
 import { MONO } from "./types";
 import type { PageId } from "./types";
@@ -46,6 +48,7 @@ export default function Sidebar({
   loading,
 }: SidebarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const router = useRouter();
 
   return (
     <div className="h-full bg-[#161920] border-r border-white/[0.08] flex flex-col">
@@ -77,6 +80,15 @@ export default function Sidebar({
             </button>
           );
         })}
+
+        {/* Social content dashboard (separate page) */}
+        <button
+          onClick={() => router.push("/metrics/social")}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors cursor-pointer text-left text-gray-500 hover:bg-white/5 hover:text-gray-200"
+        >
+          <Share2 className="w-[18px] h-[18px] shrink-0" />
+          <span className="truncate">Social</span>
+        </button>
       </nav>
 
       {/* Profile footer */}
