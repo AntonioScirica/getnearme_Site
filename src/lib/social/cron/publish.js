@@ -188,9 +188,10 @@ export default async function handler(req, res) {
     return res.json({ message: `Slot "${slot}" already published`, post_id: post.post_id });
   }
 
-  // Rate limit recovery: if previous attempt hit rate limit, check IG before re-publishing
-  // This avoids duplicates — IG often publishes despite returning rate limit error
-  if (post.error?.startsWith('rate_limit')) {
+  // Pre-publish dedup: ALWAYS check IG for a caption match before publishing.
+  // Covers every stale-state case (silent DB write failures, rate-limit-but-published,
+  // manual re-triggers): if the post is already on IG, never publish again.
+  {
     const recoveredId = await checkIfPublishedOnIG(post);
     if (recoveredId) {
       await markPublished(post.id, {

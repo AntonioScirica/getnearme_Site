@@ -89,9 +89,9 @@ const BASE = `
 export function buildNewsStoryHTML(top5 = [], edition = 'morning') {
   const morning = edition === 'morning';
   const accent  = morning ? '#F59E0B' : '#818CF8';
-  const bg      = morning
-    ? 'radial-gradient(ellipse at 50% 40%, #F59E0B44 0%, #050505 65%)'
-    : 'radial-gradient(ellipse at 50% 40%, #818CF844 0%, #050505 65%)';
+  // Background always indigo: the amber glow renders washed-out beige in
+  // headless Chromium. Reference look = indigo glow + amber pill (morning).
+  const bg      = 'radial-gradient(ellipse at 50% 40%, #818CF844 0%, #050505 65%)';
   const emoji   = morning ? '☀️' : '🌙';
   const label   = morning ? 'MORNING BRIEF' : 'EVENING BRIEF';
   const timeStr = morning ? 'Ogni mattina alle 9:00, gratis' : 'Ogni sera alle 20:00, gratis';
