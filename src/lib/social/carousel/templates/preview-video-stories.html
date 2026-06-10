@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Video Stories Preview — All Types</title>
+<style>
+  @import url('https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&display=swap');
+
+  :root {
+    --room-empty: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 540 960'%3E%3Cdefs%3E%3ClinearGradient id='w' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23e8e4df'/%3E%3Cstop offset='1' stop-color='%23d5d0c9'/%3E%3C/linearGradient%3E%3ClinearGradient id='f' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23c4a882'/%3E%3Cstop offset='1' stop-color='%23a8906e'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='540' height='960' fill='url(%23w)'/%3E%3Crect y='620' width='540' height='340' fill='url(%23f)'/%3E%3Cline x1='0' y1='620' x2='540' y2='620' stroke='%23b8a080' stroke-width='2'/%3E%3Crect x='160' y='180' width='220' height='280' rx='4' fill='%23b8d4e8' stroke='%23999' stroke-width='3'/%3E%3Cline x1='270' y1='180' x2='270' y2='460' stroke='%23999' stroke-width='2'/%3E%3Cline x1='160' y1='320' x2='380' y2='320' stroke='%23999' stroke-width='2'/%3E%3Crect x='170' y='190' width='95' height='125' fill='%23cce5f5' opacity='.6'/%3E%3Crect x='275' y='190' width='95' height='125' fill='%23cce5f5' opacity='.6'/%3E%3Crect x='170' y='325' width='95' height='125' fill='%23b8d8ec' opacity='.5'/%3E%3Crect x='275' y='325' width='95' height='125' fill='%23b8d8ec' opacity='.5'/%3E%3Crect x='40' y='500' width='120' height='180' rx='3' fill='%23d5cfc6' stroke='%23b0a898' stroke-width='2'/%3E%3Crect x='48' y='508' width='104' height='164' rx='2' fill='%23c8c0b4'/%3E%3C/svg%3E");
+    --room-full: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 540 960'%3E%3Cdefs%3E%3ClinearGradient id='w2' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23e8e4df'/%3E%3Cstop offset='1' stop-color='%23d5d0c9'/%3E%3C/linearGradient%3E%3ClinearGradient id='f2' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23c4a882'/%3E%3Cstop offset='1' stop-color='%23a8906e'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='540' height='960' fill='url(%23w2)'/%3E%3Crect y='620' width='540' height='340' fill='url(%23f2)'/%3E%3Cline x1='0' y1='620' x2='540' y2='620' stroke='%23b8a080' stroke-width='2'/%3E%3Crect x='160' y='180' width='220' height='280' rx='4' fill='%23b8d4e8' stroke='%23999' stroke-width='3'/%3E%3Cline x1='270' y1='180' x2='270' y2='460' stroke='%23999' stroke-width='2'/%3E%3Cline x1='160' y1='320' x2='380' y2='320' stroke='%23999' stroke-width='2'/%3E%3Crect x='170' y='190' width='95' height='125' fill='%23cce5f5' opacity='.6'/%3E%3Crect x='275' y='190' width='95' height='125' fill='%23cce5f5' opacity='.6'/%3E%3Crect x='170' y='325' width='95' height='125' fill='%23b8d8ec' opacity='.5'/%3E%3Crect x='275' y='325' width='95' height='125' fill='%23b8d8ec' opacity='.5'/%3E%3Crect x='80' y='520' width='380' height='160' rx='12' fill='%236b7f5e'/%3E%3Crect x='90' y='510' width='140' height='100' rx='8' fill='%237a9068'/%3E%3Crect x='250' y='510' width='140' height='100' rx='8' fill='%237a9068'/%3E%3Crect x='80' y='680' width='380' height='20' rx='4' fill='%23594a3a'/%3E%3Crect x='200' y='700' width='140' height='80' rx='4' fill='%23695842' stroke='%23594a3a' stroke-width='2'/%3E%3Crect x='40' y='500' width='120' height='180' rx='3' fill='%23d5cfc6' stroke='%23b0a898' stroke-width='2'/%3E%3Crect x='48' y='508' width='104' height='164' rx='2' fill='%23dab06a'/%3E%3Cellipse cx='430' cy='480' rx='40' ry='140' fill='%234a7a3a' opacity='.8'/%3E%3Crect x='425' y='480' width='10' height='200' fill='%23594a3a'/%3E%3Crect x='400' y='680' width='60' height='20' rx='10' fill='%236b5d4d'/%3E%3Cellipse cx='270' cy='720' rx='120' ry='60' fill='%23a0785a' opacity='.3'/%3E%3Ccircle cx='460' cy='200' r='60' fill='%23f5e6b8' opacity='.15'/%3E%3Crect x='440' y='280' width='6' height='200' fill='%23b0a898'/%3E%3Ccircle cx='443' cy='280' r='30' fill='%23f5e6b8' opacity='.5'/%3E%3C/svg%3E");
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0a0a0a;
+    font-family: system-ui, -apple-system, sans-serif;
+    color: #e5e5e5;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px;
+    min-height: 100vh;
+  }
+
+  .page-title {
+    font-size: 14px;
+    color: #7C3AED;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    font-weight: 700;
+    margin-bottom: 48px;
+  }
+
+  .stories-grid {
+    display: flex;
+    gap: 32px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .story-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .story-label {
+    font-size: 11px;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+    text-align: center;
+  }
+
+  .story-frame {
+    width: 270px;
+    height: 480px;
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 8px 40px rgba(0,0,0,.5);
+  }
+  .story-frame .slide {
+    width: 1080px;
+    height: 1920px;
+    transform: scale(0.25);
+    transform-origin: top left;
+    position: absolute;
+    top: 0; left: 0;
+    overflow: hidden;
+    font-family: 'Satoshi', 'Helvetica Neue', Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .story-type {
+    font-size: 10px;
+    color: #666;
+    margin-top: 8px;
+    text-align: center;
+  }
+
+  .logo-svg { fill: #3B83F6; }
+
+  /* ═══════════════════════════════════════════════════════
+     1. SLIDER BEFORE/AFTER — Neobrutalist light (approved)
+     ═══════════════════════════════════════════════════════ */
+  .neo-light {
+    background: #fafaf8;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 280px 72px 80px;
+    position: relative;
+  }
+  .neo-light .deco { position: absolute; }
+
+  .neo-light h2 {
+    font-size: 84px; font-weight: 900; color: #1a1a2e; line-height: 1.08;
+    margin-bottom: 28px; position: relative; z-index: 1; letter-spacing: -2px;
+  }
+  .neo-light .hl-amber { color: #f59e0b; }
+
+  .neo-light .s-badge {
+    border-radius: 24px; padding: 12px 32px; font-size: 24px; font-weight: 800;
+    margin-bottom: 36px; box-shadow: 4px 4px 0 rgba(0,0,0,0.15);
+    position: relative; z-index: 1; display: flex; align-items: center; gap: 10px;
+  }
+  .neo-light .s-badge svg { width: 24px; height: 24px; }
+
+  .neo-light .s-desc {
+    font-size: 34px; color: #555; line-height: 1.5; margin-bottom: 44px;
+    max-width: 860px; position: relative; z-index: 1;
+  }
+
+  .neo-light .s-btn {
+    background: #3B83F6; color: #fff; font-size: 36px; font-weight: 900;
+    padding: 26px 64px; border-radius: 18px; border: 4px solid #1a1a2e;
+    display: inline-flex; align-items: center; gap: 16px;
+    position: relative; z-index: 1; box-shadow: 8px 8px 0 #1a1a2e;
+  }
+
+  .neo-light .s-footer {
+    margin-top: 48px; padding-top: 24px; border-top: 2px solid #e5e5e5;
+    font-size: 20px; font-weight: 700; color: #bbb; letter-spacing: 3px;
+    text-transform: uppercase; z-index: 1; position: relative;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .neo-light .s-footer svg { width: 36px; height: 36px; }
+
+  /* Slider card */
+  .duo-card {
+    width: 880px; border-radius: 24px; border: 4px solid #1a1a2e;
+    overflow: hidden; box-shadow: 8px 8px 0 #1a1a2e; margin-bottom: 36px;
+    position: relative; z-index: 1; display: flex; height: 520px;
+  }
+  .duo-half {
+    flex: 1; position: relative; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .duo-half .ph {
+    width: 100%; height: 100%;
+    background-size: cover; background-position: center;
+  }
+  .ph-room-empty { background-image: var(--room-empty) !important; }
+  .ph-room-full  { background-image: var(--room-full) !important; }
+  .duo-label {
+    position: absolute; bottom: 16px; font-size: 22px; font-weight: 800;
+    color: #fff; text-transform: uppercase; letter-spacing: 2px; z-index: 3;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+  }
+  .duo-label-l { left: 24px; }
+  .duo-label-r { right: 24px; }
+
+  .ph-dark { background: linear-gradient(135deg, #374151, #1f2937); color: #6b7280; }
+  .ph-purple { background: linear-gradient(135deg, #4c1d95, #7c3aed); color: rgba(255,255,255,0.5); }
+
+  .story-slider .deco-1 { top: 140px; right: -100px; width: 280px; height: 280px; background: #fef3c7; border-radius: 50%; border: 4px solid #fcd34d; opacity: 0.5; }
+  .story-slider .deco-2 { bottom: 500px; left: -40px; width: 120px; height: 120px; background: #dbeafe; border-radius: 24px; border: 4px solid #93c5fd; opacity: 0.5; transform: rotate(12deg); }
+  .story-slider .deco-3 { bottom: 300px; right: 60px; width: 180px; height: 180px; background: #fce7f3; border-radius: 28px; border: 4px solid #f9a8d4; opacity: 0.4; transform: rotate(-8deg); }
+  .story-slider .s-badge { background: #fffbeb; border: 3px solid #f59e0b; color: #b45309; }
+
+  .story-slider .pc-divider { position: absolute; left: 65%; top: 0; bottom: 0; width: 4px; background: #fff; z-index: 4; }
+  .story-slider .pc-slider-icon {
+    position: absolute; left: 65%; top: 50%; transform: translate(-50%, -50%);
+    width: 48px; height: 48px; background: #fff; border-radius: 50%; z-index: 5;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.4);
+  }
+  .story-slider .pc-slider-icon svg { width: 24px; height: 24px; }
+  .story-slider .duo-half:nth-child(2) { position: absolute; top: 0; right: 0; bottom: 0; width: 35%; }
+
+  /* ═══════════════════════════════════════════════════════
+     SHARED: Split story (stories 2, 3, 4, 5)
+     ═══════════════════════════════════════════════════════ */
+  .split {
+    position: relative;
+    display: flex;
+    overflow: hidden;
+  }
+  .split .sp-left,
+  .split .sp-right {
+    flex: 1;
+    position: relative;
+  }
+  .split .sp-divider { display: none; }
+  .split .sp-swap { display: none; }
+  .split .sp-arrow {
+    position: absolute;
+    left: 50%; top: 1120px;
+    transform: translateX(-50%) translateY(-30px) scale(0.6) rotate(7deg);
+    z-index: 15;
+  }
+  .split .sp-arrow svg { width: 280px; height: 86px; }
+  .split .sp-label {
+    display: none;
+  }
+  .split .sp-ph {
+    position: absolute;
+    top: 280px; left: 40px; right: 40px;
+    height: 800px;
+    border-radius: 20px;
+    background-size: cover; background-position: center;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+  }
+  .split .sp-ph.ph-room-empty { background-image: var(--room-empty); }
+  .split .sp-ph.ph-room-full  { background-image: var(--room-full); }
+  .split .sp-right .sp-play {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 96px; height: 96px;
+    background: rgba(255,255,255,0.25);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    z-index: 6;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  }
+  .split .sp-right .sp-play svg { width: 36px; height: 36px; margin-left: 4px; }
+  .split .sp-bottom {
+    position: absolute;
+    bottom: 120px; left: 32px; right: 32px;
+    padding: 48px 56px 52px;
+    background: #fff;
+    border: 1px solid #b0b0b0;
+    border-radius: 24px;
+    z-index: 20;
+    text-align: center;
+  }
+  .split .sp-title {
+    font-size: 84px; font-weight: 900; color: #1a1a2e; line-height: 1.08;
+    margin-bottom: 24px; letter-spacing: -2px;
+  }
+  .split .sp-desc {
+    font-size: 34px; color: #555; line-height: 1.5;
+    margin-bottom: 44px;
+  }
+  .split .sp-btn {
+    display: inline-flex; align-items: center; gap: 16px;
+    background: #3B83F6; color: #fff;
+    font-size: 36px; font-weight: 900;
+    padding: 26px 64px; border-radius: 18px;
+    border: 4px solid #1a1a2e;
+    box-shadow: 8px 8px 0 #1a1a2e;
+  }
+  .split .sp-footer {
+    margin-top: 36px;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    font-size: 20px; font-weight: 700; color: #bbb;
+    letter-spacing: 3px; text-transform: uppercase;
+  }
+  .split .sp-footer svg { width: 36px; height: 36px; }
+
+  /* Stars for night sides */
+  .sp-star {
+    position: absolute;
+    width: 4px; height: 4px;
+    background: #fff; border-radius: 50%; z-index: 2;
+  }
+
+  /* All stories: on-brand backgrounds */
+  .split .sp-left  { background: #fff; }
+  .split .sp-right { background: #fff; }
+  .split .sp-mid-line {
+    position: absolute;
+    left: 50%; top: 0; bottom: 0;
+    width: 1px;
+    background: #b0b0b0;
+    z-index: 3;
+  }
+
+  /* ── AI STAGING — single photo with slider ── */
+  .story-ba-slide {
+    background: #fff;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .ba-photo {
+    position: absolute;
+    top: 60px;
+    left: 50%; transform: translateX(-50%);
+    width: 700px;
+    aspect-ratio: 9 / 16;
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+  }
+  .ba-layer {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-size: cover; background-position: center;
+  }
+  .ba-after { clip-path: inset(0 0 0 65%); }
+  .ba-slider-line {
+    position: absolute;
+    left: 65%; top: 0; bottom: 0;
+    width: 4px;
+    background: #fff;
+    transform: translateX(-50%);
+    z-index: 5;
+    box-shadow: 0 0 12px rgba(0,0,0,0.2);
+  }
+  .ba-slider-handle {
+    position: absolute;
+    left: 65%; top: 50%;
+    transform: translate(-50%, -50%);
+    width: 64px; height: 64px;
+    background: #fff;
+    border: 3px solid #fff;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    z-index: 6;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+  }
+  .ba-slider-handle svg { width: 28px; height: 28px; }
+  .ba-label {
+    position: absolute;
+    top: 24px;
+    font-size: 24px; font-weight: 800;
+    color: #1a1a2e; text-transform: uppercase;
+    letter-spacing: 3px; z-index: 7;
+    background: #fff;
+    padding: 10px 24px;
+    border-radius: 12px;
+  }
+  .ba-label-l { left: 32px; }
+  .ba-label-r { right: 32px; }
+  .ba-bottom {
+    position: absolute;
+    bottom: 120px; left: 32px; right: 32px;
+    padding: 48px 56px 52px;
+    background: #fff;
+    border: 1px solid #b0b0b0;
+    border-radius: 24px;
+    z-index: 20;
+    text-align: center;
+  }
+  .ba-title {
+    font-size: 84px; font-weight: 900; color: #1a1a2e;
+    line-height: 1.08; margin-bottom: 24px; letter-spacing: -2px;
+  }
+  .ba-hl { color: #f59e0b; }
+  .ba-desc {
+    font-size: 34px; color: #555; line-height: 1.5;
+    margin-bottom: 44px;
+  }
+  .ba-btn {
+    display: inline-flex; align-items: center; gap: 16px;
+    background: #3B83F6; color: #fff;
+    font-size: 36px; font-weight: 900;
+    padding: 26px 64px; border-radius: 18px;
+    border: 4px solid #1a1a2e;
+    box-shadow: 8px 8px 0 #1a1a2e;
+  }
+  .ba-footer {
+    margin-top: 36px;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    font-size: 20px; font-weight: 700; color: #bbb;
+    letter-spacing: 3px; text-transform: uppercase;
+  }
+  .ba-footer svg { width: 36px; height: 36px; }
+  /* ── OVERLAPPING CARDS layout (Stop Motion, Particle Dust) ── */
+  .cards-slide {
+    background: #fff;
+    position: relative;
+  }
+  .card-photo {
+    position: absolute;
+    width: 440px; aspect-ratio: 9 / 16;
+    border-radius: 28px;
+    background-size: cover; background-position: center;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+    border: 6px solid #fff;
+  }
+  .card-before {
+    top: 140px; left: 80px;
+    transform: rotate(-4deg);
+    z-index: 2;
+  }
+  .card-after {
+    top: 380px; right: 80px; left: auto;
+    transform: rotate(3deg);
+    z-index: 3;
+  }
+  .card-play {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 96px; height: 96px;
+    background: rgba(255,255,255,0.25);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    z-index: 6;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  }
+  .card-play svg { width: 36px; height: 36px; margin-left: 4px; }
+  .card-label {
+    position: absolute;
+    bottom: 28px; left: 32px;
+    font-size: 28px; font-weight: 900;
+    color: #1a1a2e; text-transform: uppercase;
+    letter-spacing: 4px;
+    background: #fff;
+    padding: 10px 24px;
+    border-radius: 12px;
+    z-index: 4;
+  }
+  .card-arrow {
+    position: absolute;
+    top: 975px; left: 435px;
+    transform: translateX(-50%) scale(0.7) rotate(20deg);
+    z-index: 5;
+  }
+  .card-arrow svg { width: 200px; height: 62px; }
+  .cards-bottom {
+    position: absolute;
+    bottom: 120px; left: 32px; right: 32px;
+    padding: 48px 56px 52px;
+    background: #fff;
+    border: 1px solid #b0b0b0;
+    border-radius: 24px;
+    z-index: 20;
+    text-align: center;
+  }
+  .cards-title {
+    font-size: 84px; font-weight: 900; color: #1a1a2e;
+    line-height: 1.08; margin-bottom: 24px; letter-spacing: -2px;
+  }
+  .cards-desc {
+    font-size: 34px; color: #555; line-height: 1.5;
+    margin-bottom: 44px;
+  }
+  .cards-btn {
+    display: inline-flex; align-items: center; gap: 16px;
+    background: #3B83F6; color: #fff;
+    font-size: 36px; font-weight: 900;
+    padding: 26px 64px; border-radius: 18px;
+    border: 4px solid #1a1a2e;
+    box-shadow: 8px 8px 0 #1a1a2e;
+  }
+  .cards-footer {
+    margin-top: 36px;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    font-size: 20px; font-weight: 700; color: #bbb;
+    letter-spacing: 3px; text-transform: uppercase;
+  }
+  .cards-footer svg { width: 36px; height: 36px; }
+  .cards-hl { color: #3B83F6; }
+
+  /* ── DUST — diagonal split photos ── */
+  .dust-slide {
+    background: #fff;
+    position: relative;
+  }
+  .dust-photos {
+    position: absolute;
+    top: 60px;
+    left: 50%; transform: translateX(-50%);
+    width: 700px;
+    aspect-ratio: 9 / 16;
+    border-radius: 28px;
+    overflow: hidden;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.12);
+    border: 6px solid #fff;
+  }
+  .dust-ph {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-size: cover; background-position: center;
+  }
+  .dust-before {
+    clip-path: polygon(0 0, 100% 0, 0 100%);
+    z-index: 2;
+  }
+  .dust-after {
+    clip-path: polygon(100% 0, 100% 100%, 0 100%);
+    z-index: 2;
+  }
+  .dust-diag {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 3;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .dust-diag::after {
+    content: '';
+    position: absolute;
+    top: -2px; left: -2px; right: -2px; bottom: -2px;
+    background: linear-gradient(to bottom right, transparent calc(50% - 2px), #fff calc(50% - 2px), #fff calc(50% + 2px), transparent calc(50% + 2px));
+  }
+  .dust-label {
+    position: absolute;
+    font-size: 28px; font-weight: 900;
+    color: #1a1a2e; text-transform: uppercase;
+    letter-spacing: 4px;
+    background: #fff;
+    padding: 10px 24px;
+    border-radius: 12px;
+    z-index: 5;
+  }
+  .dust-label-before { top: 32px; left: 32px; }
+  .dust-label-after { bottom: 100px; right: 32px; }
+  .dust-play {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 96px; height: 96px;
+    background: rgba(255,255,255,0.25);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    z-index: 6;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  }
+  .dust-play svg { width: 36px; height: 36px; margin-left: 4px; }
+  .dust-bottom {
+    position: absolute;
+    bottom: 120px; left: 32px; right: 32px;
+    padding: 48px 56px 52px;
+    background: #fff;
+    border: 1px solid #b0b0b0;
+    border-radius: 24px;
+    z-index: 20;
+    text-align: center;
+  }
+  .dust-title {
+    font-size: 84px; font-weight: 900; color: #1a1a2e;
+    line-height: 1.08; margin-bottom: 24px; letter-spacing: -2px;
+  }
+  .dust-desc {
+    font-size: 34px; color: #555; line-height: 1.5;
+    margin-bottom: 44px;
+  }
+  .dust-btn {
+    display: inline-flex; align-items: center; gap: 16px;
+    background: #3B83F6; color: #fff;
+    font-size: 36px; font-weight: 900;
+    padding: 26px 64px; border-radius: 18px;
+    border: 4px solid #1a1a2e;
+    box-shadow: 8px 8px 0 #1a1a2e;
+  }
+  .dust-footer {
+    margin-top: 36px;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    font-size: 20px; font-weight: 700; color: #bbb;
+    letter-spacing: 3px; text-transform: uppercase;
+  }
+  .dust-footer svg { width: 36px; height: 36px; }
+  .dust-hl { color: #3B83F6; }
+
+  .story-dn .sp-title .hl-day { color: #a5a5a5; }
+  .story-dn .sp-title .hl-night { color: #3B83F6; }
+  .story-dn .sp-ph {
+    top: 0; left: 0; right: 0; bottom: 0;
+    height: auto;
+    border-radius: 0;
+    box-shadow: none;
+  }
+  .story-dn .sp-mid-line {
+    background: #fff;
+    width: 4px;
+  }
+  .story-dn .sp-arrow { display: none; }
+  .story-dn .sp-play { display: none; }
+  .story-dn .sp-divider {
+    display: block !important;
+    position: absolute;
+    left: 50%; top: 0; bottom: 0;
+    width: 4px;
+    background: #fff;
+    z-index: 10;
+    transform: translateX(-50%);
+  }
+  .story-dn .sp-swap {
+    display: flex !important;
+    position: absolute;
+    left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 12;
+    width: 72px; height: 72px;
+    background: #fff;
+    border-radius: 50%;
+    align-items: center; justify-content: center;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+  }
+  .story-dn .sp-swap svg { width: 36px; height: 36px; }
+  .story-tl .sp-title .hl { color: #f59e0b; }
+
+</style>
+</head>
+<body>
+
+<div class="page-title">Story CTA — Tutti i tipi video (1080 × 1920)</div>
+
+<div class="stories-grid">
+
+  <!-- ════════════════════════════════════════════════
+       1. SLIDER BEFORE/AFTER
+       ════════════════════════════════════════════════ -->
+  <div class="story-col">
+    <div class="story-label">Slider Before/After</div>
+    <div class="story-frame">
+      <div class="slide story-ba-slide">
+        <div class="ba-bg">#fff</div>
+        <div class="ba-photo">
+          <div class="ba-layer ba-before ph-room-empty"></div>
+          <div class="ba-layer ba-after ph-room-full"></div>
+          <div class="ba-slider-line"></div>
+          <div class="ba-slider-handle">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#3B83F6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 16l-4-4 4-4"/><path d="M17 8l4 4-4 4"/></svg>
+          </div>
+          <div class="ba-label ba-label-l">PRIMA</div>
+          <div class="ba-label ba-label-r">DOPO</div>
+        </div>
+        <div class="ba-bottom">
+          <div class="ba-title">AI <span class="ba-hl">Staging</span></div>
+          <div class="ba-desc">Trasforma le tue foto con l'AI.<br>Scegli lo stile e vedi il risultato.</div>
+          <div class="ba-btn">Post sul profilo!</div>
+          <div class="ba-footer"><svg viewBox="0 0 424 533" xmlns="http://www.w3.org/2000/svg"><path class="logo-svg" d="M224.816 4.98C217.966-1.72 207.036-1.65 200.274 5.13L51.253 154.306c-14.922 14.922-27.88 29.952-37.086 49.303-9.206 19.35-13.635 38.526-14.071 58.923-.567 26.135.975 49.699 17.468 70.838 13.962 17.889 31.458 32.876 46.576 49.739 16.601 18.521 34.14 36.475 51.178 54.691 4.56 4.887 58.465 62.021 83.051 88.418 6.698 7.177 17.976 7.439 25.001.567L379.138 374.925c55.018-53.971 58.334-133.379 15.969-196.448-16.885-25.153-40.882-45.812-63.483-66.471-6.85-6.261-17.409-6.043-24.019.48L167.856 250.403c-6.61 6.522-6.959 17.059-.785 23.997l33.508 37.784c6.61 7.461 18.129 7.875 25.262.894L320.193 220.69s41.885 40.773.349 93.152L225.427 408.782c-6.785 6.763-17.736 6.807-24.564.109L111.463 321.084s-61.759-46.619.658-109.491c49.521-49.106 119.483-118.479 147.778-146.512 6.915-6.85 6.871-18.063-.088-24.87L224.816 4.98z"/></svg>getnearme.it</div>
+        </div>
+      </div>
+    </div>
+    <div class="story-type">1080 × 1920</div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════
+       2. STOP MOTION — Overlapping cards
+       ════════════════════════════════════════════════ -->
+  <div class="story-col">
+    <div class="story-label">Stop Motion</div>
+    <div class="story-frame">
+      <div class="slide cards-slide">
+        <div class="card-photo card-before ph-room-empty">
+          <div class="card-label">PRIMA</div>
+        </div>
+        <div class="card-arrow">
+          <svg viewBox="0 0 94 29" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M88.1266 9.57854C87.3044 12.6015 86.5639 15.5492 85.6513 18.882C87.7071 18.7237 88.9347 17.5167 89.4596 16.1269C91.0341 11.9575 92.5327 7.70694 93.6407 3.36357C94.285 0.882061 92.5236 -0.514612 90.0537 0.176354C85.913 1.27486 81.8422 2.61087 77.6956 3.86575C77.4565 3.93514 77.1386 4.00161 77.0541 4.15505C76.64 4.68771 76.3805 5.30441 76.0423 5.91819C76.5847 6.17328 77.1154 6.74114 77.5907 6.68055C79.2529 6.50758 80.8421 6.1753 82.4285 5.9212C83.3004 5.79708 84.0964 5.59185 85.3416 6.02972C84.4406 6.93572 83.5367 7.91991 82.6356 8.82591C63.2037 26.7368 34.95 29.5992 12.1136 16.1426C9.1829 14.3892 6.50002 12.3318 3.65385 10.425C2.65361 9.76135 1.65045 9.17589 0.65021 8.51225C0.408182 8.65983 0.241976 8.88853 -5.13402e-05 9.03611C0.209937 9.74861 0.25372 10.6898 0.787383 11.1795C2.45837 12.886 4.12935 14.5924 6.04528 16.0732C25.0471 30.8745 52.1899 32.4337 73.7129 19.7683C77.8245 17.3377 81.4899 14.1857 85.301 11.3524C86.1117 10.7562 86.7678 10.076 87.5026 9.3987C87.663 9.32638 87.8963 9.41336 88.1266 9.57854Z" fill="#3B83F6"/></svg>
+        </div>
+        <div class="card-photo card-after ph-room-full">
+          <div class="card-label">DOPO</div>
+          <div class="card-play"><svg viewBox="0 0 24 24" fill="#fff" xmlns="http://www.w3.org/2000/svg"><polygon points="8,5 20,12 8,19"/></svg></div>
+        </div>
+        <div class="cards-bottom">
+          <div class="cards-title">Stop <span class="cards-hl">Motion</span></div>
+          <div class="cards-desc">Guarda i mobili apparire uno alla volta.<br>Il video completo è nel profilo.</div>
+          <div class="cards-btn">Post sul profilo!</div>
+          <div class="cards-footer"><svg viewBox="0 0 424 533" xmlns="http://www.w3.org/2000/svg"><path class="logo-svg" d="M224.816 4.98C217.966-1.72 207.036-1.65 200.274 5.13L51.253 154.306c-14.922 14.922-27.88 29.952-37.086 49.303-9.206 19.35-13.635 38.526-14.071 58.923-.567 26.135.975 49.699 17.468 70.838 13.962 17.889 31.458 32.876 46.576 49.739 16.601 18.521 34.14 36.475 51.178 54.691 4.56 4.887 58.465 62.021 83.051 88.418 6.698 7.177 17.976 7.439 25.001.567L379.138 374.925c55.018-53.971 58.334-133.379 15.969-196.448-16.885-25.153-40.882-45.812-63.483-66.471-6.85-6.261-17.409-6.043-24.019.48L167.856 250.403c-6.61 6.522-6.959 17.059-.785 23.997l33.508 37.784c6.61 7.461 18.129 7.875 25.262.894L320.193 220.69s41.885 40.773.349 93.152L225.427 408.782c-6.785 6.763-17.736 6.807-24.564.109L111.463 321.084s-61.759-46.619.658-109.491c49.521-49.106 119.483-118.479 147.778-146.512 6.915-6.85 6.871-18.063-.088-24.87L224.816 4.98z"/></svg>getnearme.it</div>
+        </div>
+      </div>
+    </div>
+    <div class="story-type">1080 × 1920</div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════
+       3. PARTICLE DUST — Overlapping cards
+       ════════════════════════════════════════════════ -->
+  <div class="story-col">
+    <div class="story-label">Particle Dust</div>
+    <div class="story-frame">
+      <div class="slide dust-slide">
+        <div class="dust-photos">
+          <div class="dust-ph dust-before ph-room-empty"></div>
+          <div class="dust-ph dust-after ph-room-full"></div>
+          <div class="dust-diag"></div>
+          <div class="dust-label dust-label-before">PRIMA</div>
+          <div class="dust-label dust-label-after">DOPO</div>
+          <div class="dust-play"><svg viewBox="0 0 24 24" fill="#fff" xmlns="http://www.w3.org/2000/svg"><polygon points="8,5 20,12 8,19"/></svg></div>
+        </div>
+        <div class="dust-bottom">
+          <div class="dust-title">Effetto <span class="dust-hl">Polvere</span></div>
+          <div class="dust-desc">I mobili si dissolvono in particelle e si riformano.<br>Il video completo è nel profilo.</div>
+          <div class="dust-btn">Post sul profilo!</div>
+          <div class="dust-footer"><svg viewBox="0 0 424 533" xmlns="http://www.w3.org/2000/svg"><path class="logo-svg" d="M224.816 4.98C217.966-1.72 207.036-1.65 200.274 5.13L51.253 154.306c-14.922 14.922-27.88 29.952-37.086 49.303-9.206 19.35-13.635 38.526-14.071 58.923-.567 26.135.975 49.699 17.468 70.838 13.962 17.889 31.458 32.876 46.576 49.739 16.601 18.521 34.14 36.475 51.178 54.691 4.56 4.887 58.465 62.021 83.051 88.418 6.698 7.177 17.976 7.439 25.001.567L379.138 374.925c55.018-53.971 58.334-133.379 15.969-196.448-16.885-25.153-40.882-45.812-63.483-66.471-6.85-6.261-17.409-6.043-24.019.48L167.856 250.403c-6.61 6.522-6.959 17.059-.785 23.997l33.508 37.784c6.61 7.461 18.129 7.875 25.262.894L320.193 220.69s41.885 40.773.349 93.152L225.427 408.782c-6.785 6.763-17.736 6.807-24.564.109L111.463 321.084s-61.759-46.619.658-109.491c49.521-49.106 119.483-118.479 147.778-146.512 6.915-6.85 6.871-18.063-.088-24.87L224.816 4.98z"/></svg>getnearme.it</div>
+        </div>
+      </div>
+    </div>
+    <div class="story-type">1080 × 1920</div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════
+       4. DAY/NIGHT — Split verticale
+       ════════════════════════════════════════════════ -->
+  <div class="story-col">
+    <div class="story-label">Day / Night</div>
+    <div class="story-frame">
+      <div class="slide split story-dn">
+        <div class="sp-left">
+          <div class="sp-label">GIORNO</div>
+          <div class="sp-ph ph-room-empty"></div>
+        </div>
+        <div class="sp-right">
+          <div class="sp-label">NOTTE</div>
+          <div class="sp-ph ph-room-full"></div>
+          <div class="sp-star" style="top:15%;left:20%"></div>
+          <div class="sp-star" style="top:22%;left:65%"></div>
+          <div class="sp-star" style="top:8%;left:45%"></div>
+          <div class="sp-star" style="top:35%;left:30%"></div>
+          <div class="sp-star" style="top:12%;left:80%"></div>
+          <div class="sp-star" style="top:40%;left:55%"></div>
+        </div>
+        <div class="sp-mid-line"></div>
+        <div class="sp-arrow">
+          <svg viewBox="0 0 94 29" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M88.1266 9.57854C87.3044 12.6015 86.5639 15.5492 85.6513 18.882C87.7071 18.7237 88.9347 17.5167 89.4596 16.1269C91.0341 11.9575 92.5327 7.70694 93.6407 3.36357C94.285 0.882061 92.5236 -0.514612 90.0537 0.176354C85.913 1.27486 81.8422 2.61087 77.6956 3.86575C77.4565 3.93514 77.1386 4.00161 77.0541 4.15505C76.64 4.68771 76.3805 5.30441 76.0423 5.91819C76.5847 6.17328 77.1154 6.74114 77.5907 6.68055C79.2529 6.50758 80.8421 6.1753 82.4285 5.9212C83.3004 5.79708 84.0964 5.59185 85.3416 6.02972C84.4406 6.93572 83.5367 7.91991 82.6356 8.82591C63.2037 26.7368 34.95 29.5992 12.1136 16.1426C9.1829 14.3892 6.50002 12.3318 3.65385 10.425C2.65361 9.76135 1.65045 9.17589 0.65021 8.51225C0.408182 8.65983 0.241976 8.88853 -5.13402e-05 9.03611C0.209937 9.74861 0.25372 10.6898 0.787383 11.1795C2.45837 12.886 4.12935 14.5924 6.04528 16.0732C25.0471 30.8745 52.1899 32.4337 73.7129 19.7683C77.8245 17.3377 81.4899 14.1857 85.301 11.3524C86.1117 10.7562 86.7678 10.076 87.5026 9.3987C87.663 9.32638 87.8963 9.41336 88.1266 9.57854Z" fill="#3B83F6"/></svg>
+        </div>
+        <div class="sp-divider"></div>
+        <div class="sp-swap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#1a1a2e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </div>
+        <div class="sp-bottom">
+          <div class="sp-title">Da Giorno a <span class="hl-night">Notte</span></div>
+          <div class="sp-desc">La stessa stanza, due atmosfere diverse.<br>Il video completo è nel profilo.</div>
+          <div class="sp-btn">Post sul profilo!</div>
+          <div class="sp-footer"><svg viewBox="0 0 424 533" xmlns="http://www.w3.org/2000/svg"><path class="logo-svg" d="M224.816 4.98C217.966-1.72 207.036-1.65 200.274 5.13L51.253 154.306c-14.922 14.922-27.88 29.952-37.086 49.303-9.206 19.35-13.635 38.526-14.071 58.923-.567 26.135.975 49.699 17.468 70.838 13.962 17.889 31.458 32.876 46.576 49.739 16.601 18.521 34.14 36.475 51.178 54.691 4.56 4.887 58.465 62.021 83.051 88.418 6.698 7.177 17.976 7.439 25.001.567L379.138 374.925c55.018-53.971 58.334-133.379 15.969-196.448-16.885-25.153-40.882-45.812-63.483-66.471-6.85-6.261-17.409-6.043-24.019.48L167.856 250.403c-6.61 6.522-6.959 17.059-.785 23.997l33.508 37.784c6.61 7.461 18.129 7.875 25.262.894L320.193 220.69s41.885 40.773.349 93.152L225.427 408.782c-6.785 6.763-17.736 6.807-24.564.109L111.463 321.084s-61.759-46.619.658-109.491c49.521-49.106 119.483-118.479 147.778-146.512 6.915-6.85 6.871-18.063-.088-24.87L224.816 4.98z"/></svg>getnearme.it</div>
+        </div>
+      </div>
+    </div>
+    <div class="story-type">1080 × 1920</div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════
+       5. TIMELAPSE — Split verticale
+       ════════════════════════════════════════════════ -->
+  <div class="story-col">
+    <div class="story-label">Timelapse</div>
+    <div class="story-frame">
+      <div class="slide split story-tl">
+        <div class="sp-left">
+          <div class="sp-label">CANTIERE</div>
+          <div class="sp-ph ph-room-empty"></div>
+        </div>
+        <div class="sp-right">
+          <div class="sp-label">FINITO</div>
+          <div class="sp-ph ph-room-full">
+            <div class="sp-play"><svg viewBox="0 0 24 24" fill="#fff" xmlns="http://www.w3.org/2000/svg"><polygon points="8,5 20,12 8,19"/></svg></div>
+          </div>
+        </div>
+        <div class="sp-mid-line"></div>
+        <div class="sp-arrow">
+          <svg viewBox="0 0 94 29" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M88.1266 9.57854C87.3044 12.6015 86.5639 15.5492 85.6513 18.882C87.7071 18.7237 88.9347 17.5167 89.4596 16.1269C91.0341 11.9575 92.5327 7.70694 93.6407 3.36357C94.285 0.882061 92.5236 -0.514612 90.0537 0.176354C85.913 1.27486 81.8422 2.61087 77.6956 3.86575C77.4565 3.93514 77.1386 4.00161 77.0541 4.15505C76.64 4.68771 76.3805 5.30441 76.0423 5.91819C76.5847 6.17328 77.1154 6.74114 77.5907 6.68055C79.2529 6.50758 80.8421 6.1753 82.4285 5.9212C83.3004 5.79708 84.0964 5.59185 85.3416 6.02972C84.4406 6.93572 83.5367 7.91991 82.6356 8.82591C63.2037 26.7368 34.95 29.5992 12.1136 16.1426C9.1829 14.3892 6.50002 12.3318 3.65385 10.425C2.65361 9.76135 1.65045 9.17589 0.65021 8.51225C0.408182 8.65983 0.241976 8.88853 -5.13402e-05 9.03611C0.209937 9.74861 0.25372 10.6898 0.787383 11.1795C2.45837 12.886 4.12935 14.5924 6.04528 16.0732C25.0471 30.8745 52.1899 32.4337 73.7129 19.7683C77.8245 17.3377 81.4899 14.1857 85.301 11.3524C86.1117 10.7562 86.7678 10.076 87.5026 9.3987C87.663 9.32638 87.8963 9.41336 88.1266 9.57854Z" fill="#3B83F6"/></svg>
+        </div>
+        <div class="sp-divider"></div>
+        <div class="sp-swap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </div>
+        <div class="sp-bottom">
+          <div class="sp-title">AI <span class="hl">Timelapse</span></div>
+          <div class="sp-desc">Ristrutturazione completa in un timelapse AI.<br>Il video completo è nel profilo.</div>
+          <div class="sp-btn">Post sul profilo!</div>
+          <div class="sp-footer"><svg viewBox="0 0 424 533" xmlns="http://www.w3.org/2000/svg"><path class="logo-svg" d="M224.816 4.98C217.966-1.72 207.036-1.65 200.274 5.13L51.253 154.306c-14.922 14.922-27.88 29.952-37.086 49.303-9.206 19.35-13.635 38.526-14.071 58.923-.567 26.135.975 49.699 17.468 70.838 13.962 17.889 31.458 32.876 46.576 49.739 16.601 18.521 34.14 36.475 51.178 54.691 4.56 4.887 58.465 62.021 83.051 88.418 6.698 7.177 17.976 7.439 25.001.567L379.138 374.925c55.018-53.971 58.334-133.379 15.969-196.448-16.885-25.153-40.882-45.812-63.483-66.471-6.85-6.261-17.409-6.043-24.019.48L167.856 250.403c-6.61 6.522-6.959 17.059-.785 23.997l33.508 37.784c6.61 7.461 18.129 7.875 25.262.894L320.193 220.69s41.885 40.773.349 93.152L225.427 408.782c-6.785 6.763-17.736 6.807-24.564.109L111.463 321.084s-61.759-46.619.658-109.491c49.521-49.106 119.483-118.479 147.778-146.512 6.915-6.85 6.871-18.063-.088-24.87L224.816 4.98z"/></svg>getnearme.it</div>
+        </div>
+      </div>
+    </div>
+    <div class="story-type">1080 × 1920</div>
+  </div>
+
+</div>
+
+
+</body>
+</html>
