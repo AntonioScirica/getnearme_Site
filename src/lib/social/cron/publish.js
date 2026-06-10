@@ -48,6 +48,26 @@ async function checkIfPublishedOnIG(post) {
 }
 
 /**
+ * Update a generated_content row to published and VERIFY the write landed.
+ * Supabase updates can fail silently (0 rows, no error) — when that happens
+ * the post stays 'approved' and the next trigger re-publishes/re-notifies.
+ * Retries once; returns true only if the row is really updated.
+ */
+async function markPublished(postId, fields) {
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    const { data, error } = await supabase
+      .from('generated_content')
+      .update(fields)
+      .eq('id', postId)
+      .select('id, status');
+    if (!error && data?.length === 1 && data[0].status === fields.status) return true;
+    console.error(`markPublished attempt ${attempt} failed:`, error?.message || `rows=${data?.length || 0}`);
+  }
+  await sendMessage(`⚠️ <b>DB non aggiornato dopo publish</b> (post id ${postId}). Status resta 'approved': rischio doppia notifica al prossimo trigger. Controllare Supabase.`);
+  return false;
+}
+
+/**
  * Daily publishing schedule (Rome timezone, UTC+1/+2 DST).
  * Each slot is triggered by a separate cron call with ?slot=<name>.
  *
@@ -173,15 +193,12 @@ export default async function handler(req, res) {
   if (post.error?.startsWith('rate_limit')) {
     const recoveredId = await checkIfPublishedOnIG(post);
     if (recoveredId) {
-      await supabase
-        .from('generated_content')
-        .update({
-          status: 'published',
-          ig_post_id: recoveredId,
-          published_at: new Date().toISOString(),
-          error: null,
-        })
-        .eq('id', post.id);
+      await markPublished(post.id, {
+        status: 'published',
+        ig_post_id: recoveredId,
+        published_at: new Date().toISOString(),
+        error: null,
+      });
       await sendMessage(
         `✅ [${slot}] Recovered (5min check): <b>${post.content_data.slides?.[0]?.headline || post.post_id}</b>\nIG: ${recoveredId}`
       );
@@ -206,15 +223,12 @@ export default async function handler(req, res) {
       }
     }
 
-    await supabase
-      .from('generated_content')
-      .update({
-        status: 'published',
-        ig_post_id: igId,
-        tiktok_publish_id: tiktokId,
-        published_at: new Date().toISOString(),
-      })
-      .eq('id', post.id);
+    await markPublished(post.id, {
+      status: 'published',
+      ig_post_id: igId,
+      tiktok_publish_id: tiktokId,
+      published_at: new Date().toISOString(),
+    });
 
     // Cleanup: delete video from Supabase Storage after publish
     if (post.type === 'video' && post.video_url?.includes('/storage/v1/object/public/content/')) {
@@ -242,15 +256,12 @@ export default async function handler(req, res) {
       // IG sometimes publishes despite rate limit error — check recent media
       const recoveredId = await checkIfPublishedOnIG(post);
       if (recoveredId) {
-        await supabase
-          .from('generated_content')
-          .update({
-            status: 'published',
-            ig_post_id: recoveredId,
-            published_at: new Date().toISOString(),
-            error: null,
-          })
-          .eq('id', post.id);
+        await markPublished(post.id, {
+          status: 'published',
+          ig_post_id: recoveredId,
+          published_at: new Date().toISOString(),
+          error: null,
+        });
         await sendMessage(
           `✅ [${slot}] Pubblicato (recovered post rate limit): <b>${post.content_data.slides?.[0]?.headline || post.post_id}</b>\nIG: ${recoveredId}`
         );
@@ -340,10 +351,7 @@ async function handleStoryPublish(req, res) {
     if (rlPost) {
       const recoveredId = await checkIfPublishedOnIG(rlPost);
       if (recoveredId) {
-        await supabase
-          .from('generated_content')
-          .update({ status: 'published', ig_post_id: recoveredId, published_at: new Date().toISOString(), error: null })
-          .eq('id', rlPost.id);
+        await markPublished(rlPost.id, { status: 'published', ig_post_id: recoveredId, published_at: new Date().toISOString(), error: null });
         await sendMessage(`✅ [${slot}] Recovered (story-cron check): <b>${rlPost.content_data?.slides?.[0]?.headline || rlPost.post_id}</b>\nIG: ${recoveredId}`);
         post = { ...rlPost, status: 'published', ig_post_id: recoveredId };
       }
