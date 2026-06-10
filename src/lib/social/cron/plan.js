@@ -234,12 +234,20 @@ export default async function handler(req, res) {
     }
   }
 
+  // Chain generate right away: there is no generate cron between the 18:30
+  // evening plan and the 20:00 publish, so evening news would never render.
+  // Harmless for morning too (the 08:30 generate cron becomes a no-op backup).
+  const genUrl = `https://${req.headers.host || 'getnearme.it'}/api/social/cron/generate?account=${accountId}&secret=${req.query.secret || ''}`;
+  fetch(genUrl).catch(() => {});
+  console.log(`Chained generate for ${edition}`);
+
   return res.json({
     v: 5,
     date: today,
     edition,
     top5: top5.length,
     saved: true,
+    generateChained: true,
     videoTopicSaved,
     ...(req.query.debug === '1' ? {
       debugPool,
