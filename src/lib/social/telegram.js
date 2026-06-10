@@ -5,7 +5,8 @@ const API = `https://api.telegram.org/bot${BOT_TOKEN}`;
 export async function sendMessage(text, options = {}) {
   const body = {
     chat_id: CHAT_ID,
-    text,
+    // Prefix: same bot+chat as ai-for-dumbs, messages must be distinguishable
+    text: `🏠 <b>[GetNearMe]</b> ${text}`,
     parse_mode: 'HTML',
     ...options,
   };
