@@ -1,41 +1,38 @@
 // Instagram publisher for PED content.
-// Uses the token saved by the GetNearMe extension in social_accounts
-// (Facebook Login flow → graph.facebook.com, NOT graph.instagram.com).
+// Reads credentials from app_config.instagram_tokens (page token, never expires).
+// Completely independent from the extension's social_accounts table.
 
 import supabase from '../supabase.js';
 
 const API = 'https://graph.facebook.com/v21.0';
 
-// Publishing target: NEVER pick an arbitrary account. social_accounts holds
-// tokens for every user who connects IG from the extension; publishing must
-// be pinned to the official account.
-const PUBLISH_USERNAME = (process.env.PED_IG_USERNAME || 'getnearmeext').replace(/^@/, '');
+let _cached = null;
 
 /**
- * Get IG credentials from social_accounts (extension-connected account).
- * Only returns the official publishing account (PED_IG_USERNAME).
+ * Get IG credentials from app_config.instagram_tokens.
  * Returns { igUserId, accessToken } or throws.
  */
 export async function getIgCredentials() {
-  const { data: account, error } = await supabase
-    .from('social_accounts')
-    .select('external_account_id, external_account_name, access_token, token_expires_at')
-    .eq('platform', 'instagram')
-    .eq('external_account_name', `@${PUBLISH_USERNAME}`)
-    .order('token_expires_at', { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  if (_cached) return _cached;
 
-  if (error || !account) {
-    throw new Error(`No Instagram token for @${PUBLISH_USERNAME} in social_accounts — connect it from the extension`);
+  const { data: config, error } = await supabase
+    .from('app_config')
+    .select('value')
+    .eq('key', 'instagram_tokens')
+    .single();
+
+  if (error || !config?.value?.access_token) {
+    throw new Error('No instagram_tokens in app_config — run the token setup');
   }
 
-  const expiresAt = new Date(account.token_expires_at).getTime();
-  if (expiresAt && expiresAt < Date.now()) {
-    throw new Error(`Instagram token expired on ${account.token_expires_at} — reconnect from the extension`);
+  const { access_token, ig_user_id, expires_at } = config.value;
+
+  if (expires_at && expires_at > 0 && expires_at < Math.floor(Date.now() / 1000)) {
+    throw new Error('Instagram page token expired — regenerate from Graph Explorer');
   }
 
-  return { igUserId: account.external_account_id, accessToken: account.access_token };
+  _cached = { igUserId: ig_user_id, accessToken: access_token };
+  return _cached;
 }
 
 async function pollContainerStatus(containerId, accessToken, maxAttempts = 30) {
@@ -146,8 +143,6 @@ export async function publishStory(imageUrl) {
 
 /**
  * Get insights for a media object (post, carousel or story).
- * Returns { reach, views, likes, comments, saved, shares, total_interactions, replies }
- * with only the metrics IG actually supports for that media type.
  */
 export async function getMediaInsights(mediaId, isStory = false) {
   const { accessToken } = await getIgCredentials();
@@ -162,7 +157,6 @@ export async function getMediaInsights(mediaId, isStory = false) {
     );
     const data = await res.json();
     if (data.error) {
-      // Unsupported metric for this media type/version → try a smaller set
       if (data.error.code === 100 || /metric/i.test(data.error.message || '')) continue;
       throw new Error(`IG insights error: ${data.error.message}`);
     }
