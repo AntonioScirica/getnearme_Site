@@ -23,7 +23,10 @@ const LOADERS: Record<string, () => Promise<{ default: ExpressHandler }>> = {
   plan: () => import("@/lib/social/cron/plan.js"),
   generate: () => import("@/lib/social/cron/generate.js"),
   publish: () => import("@/lib/social/cron/publish.js"),
+  "generate-ped": () => import("@/lib/social/cron/generate-ped.js"),
+  "publish-ped": () => import("@/lib/social/cron/publish-ped.js"),
   "monthly-plan": () => import("@/lib/social/cron/monthly-plan.js"),
+  "fetch-stats": () => import("@/lib/social/cron/fetch-stats.js"),
 };
 
 export async function GET(

@@ -1,0 +1,207 @@
+// Generate PED content: render slides from content_topics.slide_data → PNG →
+// Supabase Storage → generated_content rows ready for publish-ped.
+//
+// No AI calls: slide_data is authored upfront in the dashboard/seed scripts.
+//
+// Query params:
+//   ?secret=<CRON_SECRET>   auth (or x-cron-secret header)
+//   ?date=YYYY-MM-DD        override plan_date (default: today, Europe/Rome)
+//   ?sync=1                 run synchronously (otherwise self-invoke async)
+//   ?verbose=1              send step-by-step logs to Telegram
+//
+// Slot assignment (must mirror dashboard page.tsx getPublishTime):
+//   feed posts (non-video, non-tip) in created_at order → 09:00, 12:30, 17:30
+//   tip → 19:00
+//   video → 15:00 (skipped here: publishing pipeline is image-only for now)
+
+import supabase from '../supabase.js';
+import { buildSlidesForTopic, buildStoryForTopic, buildCaptionForTopic, PED_CSS, STORY_CSS } from '../ped/templates.js';
+import { renderPedSlides } from '../ped/renderer.js';
+import { sendMessage } from '../telegram.js';
+
+export const config = { maxDuration: 300 };
+
+const FEED_SLOTS = ['09:00', '12:00', '18:00'];
+const TIP_SLOT = '20:00';
+
+function romeToday() {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Rome' }).format(new Date());
+}
+
+function isVideoTopic(t) {
+  return t.rubric === 'video' || (t.template || '').startsWith('video');
+}
+
+export default async function handler(req, res) {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+  const { checkAuth } = await import('./discover.js');
+  if (!checkAuth(req)) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  // Async mode: respond immediately, self-invoke with ?sync=1
+  if (!req.query.sync) {
+    const qs = new URLSearchParams(req.query);
+    qs.set('sync', '1');
+    fetch(`https://${req.headers.host || 'getnearme.it'}/api/social/cron/generate-ped?${qs}`).catch(() => {});
+    return res.json({ ok: true, message: 'generate-ped triggered async' });
+  }
+
+  const accountId = req.query.account || 'getnearme';
+  const day = req.query.date || romeToday();
+  const verbose = req.query.verbose === '1';
+
+  // Verbose logger: batches step logs to Telegram per topic (avoids msg spam)
+  const stepLogs = [];
+  const vlog = (msg) => {
+    console.log(`[generate-ped] ${msg}`);
+    if (verbose) stepLogs.push(msg);
+  };
+  const flushLogs = async (title) => {
+    if (!verbose || !stepLogs.length) return;
+    await sendMessage(`🔍 <b>${title}</b>\n<code>${stepLogs.join('\n').slice(0, 3500)}</code>`);
+    stepLogs.length = 0;
+  };
+
+  // All PED topics for the day (created_at asc = slot order, same as dashboard)
+  const { data: topics, error: topicError } = await supabase
+    .from('content_topics')
+    .select('*')
+    .eq('account_id', accountId)
+    .eq('plan_date', day)
+    .like('template', 'ped-%')
+    .in('status', ['proposed', 'planned', 'approved', 'generated', 'generating'])
+    .order('created_at', { ascending: true });
+
+  if (topicError) {
+    await sendMessage(`❌ <b>PED generate: query topics fallita</b>\n<code>${topicError.message}</code>`);
+    return res.status(500).json({ error: topicError.message });
+  }
+  if (!topics?.length) {
+    vlog(`nessun topic PED per ${day}`);
+    await flushLogs(`PED generate ${day}`);
+    return res.json({ message: `No PED topics for ${day}`, generated: 0 });
+  }
+
+  vlog(`trovati ${topics.length} topic per ${day}: ${topics.map((t) => t.title).join(' | ')}`);
+
+  // Compute slot per topic
+  const feedTopics = topics.filter((t) => !isVideoTopic(t) && t.rubric !== 'tip');
+  const slotFor = (t) => {
+    if (t.rubric === 'tip') return TIP_SLOT;
+    const idx = feedTopics.indexOf(t);
+    return FEED_SLOTS[Math.min(Math.max(idx, 0), FEED_SLOTS.length - 1)];
+  };
+
+  const results = [];
+
+  for (const topic of topics) {
+    vlog(`── topic: ${topic.title} [${topic.template}]`);
+
+    // Idempotency: skip if already generated for this topic
+    const { data: existing } = await supabase
+      .from('generated_content')
+      .select('id')
+      .eq('topic_id', topic.id)
+      .limit(1);
+    if (existing?.length) {
+      vlog(`skip: già generato`);
+      results.push({ id: topic.id, skipped: 'already_generated' });
+      continue;
+    }
+
+    const slides = buildSlidesForTopic(topic);
+    if (!slides) {
+      vlog(`skip: template sconosciuto o slide_data mancante`);
+      results.push({ id: topic.id, skipped: 'no_template_or_data' });
+      continue;
+    }
+    vlog(`slide da renderizzare: ${slides.length} (${slides.map((s) => s.label).join(', ')})`);
+
+    await supabase.from('content_topics').update({ status: 'generating' }).eq('id', topic.id);
+
+    try {
+      // ── Render feed slides ──
+      const images = await renderPedSlides(slides, PED_CSS, { width: 1080, height: 1350 }, vlog);
+      vlog(`render feed ok: ${images.length} png`);
+
+      const imageUrls = [];
+      for (let i = 0; i < images.length; i++) {
+        const path = `ped/${topic.plan_date}/${topic.id}/slide_${i}.png`;
+        const { error } = await supabase.storage
+          .from('content')
+          .upload(path, images[i], { contentType: 'image/png', upsert: true });
+        if (error) throw new Error(`Upload slide ${i}: ${error.message}`);
+        const { data: urlData } = supabase.storage.from('content').getPublicUrl(path);
+        imageUrls.push(urlData.publicUrl);
+      }
+      vlog(`upload feed ok: ${imageUrls.length} file su storage`);
+
+      // ── Render story teaser (optional) ──
+      let storyUrl = null;
+      const storyHtml = buildStoryForTopic(topic);
+      if (storyHtml) {
+        const [storyImg] = await renderPedSlides([{ html: storyHtml, label: 'story' }], STORY_CSS, { width: 1080, height: 1920 }, vlog);
+        const storyPath = `ped/${topic.plan_date}/${topic.id}/story.png`;
+        const { error } = await supabase.storage
+          .from('content')
+          .upload(storyPath, storyImg, { contentType: 'image/png', upsert: true });
+        if (error) {
+          vlog(`upload story FALLITO: ${error.message} (continuo senza story)`);
+        } else {
+          const { data: urlData } = supabase.storage.from('content').getPublicUrl(storyPath);
+          storyUrl = urlData.publicUrl;
+          vlog(`story ok: renderizzata e caricata`);
+        }
+      } else {
+        vlog(`nessuna story (storyHook assente in slide_data)`);
+      }
+
+      const caption = buildCaptionForTopic(topic);
+      const slotTime = slotFor(topic);
+      vlog(`caption: ${caption.length} caratteri | slot: ${slotTime}`);
+
+      const { error: insertErr } = await supabase.from('generated_content').insert({
+        topic_id: topic.id,
+        post_id: `ped_${topic.id.slice(0, 8)}`,
+        type: 'ped',
+        content_data: {
+          caption,
+          rubric: topic.rubric,
+          template: topic.template,
+          slot_time: slotTime,
+          story_url: storyUrl,
+          title: topic.title,
+        },
+        image_urls: imageUrls,
+        status: 'approved',
+        publish_date: topic.plan_date,
+        account_id: accountId,
+      });
+      if (insertErr) throw new Error(`Insert generated_content: ${insertErr.message}`);
+
+      await supabase.from('content_topics').update({ status: 'generated' }).eq('id', topic.id);
+      vlog(`✅ generato e salvato`);
+
+      results.push({ id: topic.id, title: topic.title, slides: images.length, slot: slotTime, story: !!storyUrl });
+    } catch (err) {
+      console.error(`generate-ped failed for ${topic.id}:`, err);
+      vlog(`❌ ERRORE: ${err.message}`);
+      await supabase.from('content_topics').update({ status: 'approved' }).eq('id', topic.id);
+      await sendMessage(`❌ <b>PED generate fallito</b>\n${topic.title}\n<code>${(err.message || '').slice(0, 300)}</code>`);
+      results.push({ id: topic.id, error: err.message });
+    }
+
+    await flushLogs(`PED log: ${topic.title}`);
+  }
+
+  const okCount = results.filter((r) => r.slides).length;
+  if (okCount > 0) {
+    await sendMessage(
+      `🎨 <b>PED generati per ${day}</b>: ${okCount}/${topics.length}\n` +
+      results.filter((r) => r.slides).map((r) => `[${r.slot}] ${r.title} (${r.slides} slide${r.story ? ' + story' : ''})`).join('\n')
+    );
+  }
+
+  return res.json({ day, generated: okCount, results });
+}

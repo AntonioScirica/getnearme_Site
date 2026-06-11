@@ -38,11 +38,12 @@ export async function GET(req: NextRequest) {
 
       const { data: topics, error: tErr } = await supabase
         .from("content_topics")
-        .select("id, plan_date, rubric, category, title, status, edition, template")
+        .select("id, plan_date, rubric, category, title, status, edition, template, slide_data")
         .eq("account_id", ACCOUNT)
         .gte("plan_date", from)
         .lte("plan_date", to)
-        .order("plan_date");
+        .order("plan_date")
+        .order("created_at", { ascending: true });
       if (tErr) throw tErr;
 
       const { data: content, error: cErr } = await supabase
@@ -94,6 +95,71 @@ export async function GET(req: NextRequest) {
         total += cost;
       }
       return NextResponse.json({ totalUsd: total, byDay, byOperation, recent: (data || []).slice(0, 50) });
+    }
+
+    if (view === "performance") {
+      const days = Math.min(Number(url.searchParams.get("days")) || 30, 365);
+      const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000)
+        .toISOString()
+        .slice(0, 10);
+
+      const { data: posts, error: pErr } = await supabase
+        .from("post_metrics")
+        .select(
+          "id, content_id, ig_post_id, publish_date, impressions, reach, saves, shares, comments, likes, plays, total_interactions, save_rate, share_rate, engagement_rate, content_type, rubric, hook_text, cta_text, fetched_at"
+        )
+        .eq("account_id", ACCOUNT)
+        .gte("publish_date", since)
+        .order("publish_date", { ascending: false });
+      if (pErr) throw pErr;
+
+      // Attach slide thumbnails + captions for the posts we have
+      const contentIds = (posts || [])
+        .map((p) => p.content_id)
+        .filter((id): id is number => id != null);
+      let contentById: Record<number, { image_urls: string[] | null; content_data: { caption?: string } | null }> = {};
+      if (contentIds.length > 0) {
+        const { data: contents } = await supabase
+          .from("generated_content")
+          .select("id, image_urls, content_data")
+          .in("id", contentIds);
+        contentById = Object.fromEntries((contents || []).map((c) => [c.id, c]));
+      }
+
+      const { data: insights } = await supabase
+        .from("performance_insights")
+        .select("id, week_start, week_end, insights, applied, created_at")
+        .eq("account_id", ACCOUNT)
+        .order("week_start", { ascending: false })
+        .limit(8);
+
+      return NextResponse.json({
+        days,
+        posts: (posts || []).map((p) => ({
+          ...p,
+          thumbnail: p.content_id != null ? contentById[p.content_id]?.image_urls?.[0] || null : null,
+          caption: p.content_id != null ? contentById[p.content_id]?.content_data?.caption || null : null,
+        })),
+        insights: insights || [],
+      });
+    }
+
+    if (view === "market-stats") {
+      const { data, error } = await supabase
+        .from("market_stats")
+        .select("id, indicator, period, region, value, prev_value, unit, source, fetched_at")
+        .eq("account_id", ACCOUNT)
+        .order("period", { ascending: false })
+        .limit(200);
+      if (error) throw error;
+
+      // Group by indicator for easy consumption
+      const byIndicator: Record<string, typeof data> = {};
+      for (const row of data || []) {
+        (byIndicator[row.indicator] ??= []).push(row);
+      }
+
+      return NextResponse.json({ stats: data || [], byIndicator });
     }
 
     return NextResponse.json({ error: `Unknown view "${view}"` }, { status: 400 });
