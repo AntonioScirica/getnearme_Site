@@ -6,20 +6,29 @@ import supabase from '../supabase.js';
 
 const API = 'https://graph.facebook.com/v21.0';
 
+// Publishing target: NEVER pick an arbitrary account. social_accounts holds
+// tokens for every user who connects IG from the extension; publishing must
+// be pinned to the official account.
+const PUBLISH_USERNAME = (process.env.PED_IG_USERNAME || 'getnearmeext').replace(/^@/, '');
+
 /**
  * Get IG credentials from social_accounts (extension-connected account).
+ * Only returns the official publishing account (PED_IG_USERNAME).
  * Returns { igUserId, accessToken } or throws.
  */
 export async function getIgCredentials() {
   const { data: account, error } = await supabase
     .from('social_accounts')
-    .select('external_account_id, access_token, token_expires_at')
+    .select('external_account_id, external_account_name, access_token, token_expires_at')
     .eq('platform', 'instagram')
-    .order('last_used_at', { ascending: false, nullsFirst: false })
+    .eq('external_account_name', `@${PUBLISH_USERNAME}`)
+    .order('token_expires_at', { ascending: false })
     .limit(1)
     .maybeSingle();
 
-  if (error || !account) throw new Error('No Instagram account in social_accounts');
+  if (error || !account) {
+    throw new Error(`No Instagram token for @${PUBLISH_USERNAME} in social_accounts — connect it from the extension`);
+  }
 
   const expiresAt = new Date(account.token_expires_at).getTime();
   if (expiresAt && expiresAt < Date.now()) {
