@@ -136,6 +136,48 @@ export async function publishStory(imageUrl) {
 }
 
 /**
+ * Get insights for a media object (post, carousel or story).
+ * Returns { reach, views, likes, comments, saved, shares, total_interactions, replies }
+ * with only the metrics IG actually supports for that media type.
+ */
+export async function getMediaInsights(mediaId, isStory = false) {
+  const { accessToken } = await getIgCredentials();
+
+  const metricSets = isStory
+    ? [['reach', 'views', 'replies', 'total_interactions'], ['reach', 'views'], ['reach']]
+    : [['reach', 'views', 'likes', 'comments', 'saved', 'shares', 'total_interactions'], ['reach', 'total_interactions'], ['reach']];
+
+  for (const metrics of metricSets) {
+    const res = await fetch(
+      `${API}/${mediaId}/insights?metric=${metrics.join(',')}&access_token=${accessToken}`
+    );
+    const data = await res.json();
+    if (data.error) {
+      // Unsupported metric for this media type/version → try a smaller set
+      if (data.error.code === 100 || /metric/i.test(data.error.message || '')) continue;
+      throw new Error(`IG insights error: ${data.error.message}`);
+    }
+    const out = {};
+    for (const m of data.data || []) {
+      out[m.name] = m.values?.[0]?.value ?? m.total_value?.value ?? 0;
+    }
+    return out;
+  }
+  throw new Error('IG insights: no supported metric set for this media');
+}
+
+/**
+ * Get current account followers count.
+ */
+export async function getFollowersCount() {
+  const { igUserId, accessToken } = await getIgCredentials();
+  const res = await fetch(`${API}/${igUserId}?fields=followers_count&access_token=${accessToken}`);
+  const data = await res.json();
+  if (data.error) throw new Error(`IG followers error: ${data.error.message}`);
+  return data.followers_count ?? null;
+}
+
+/**
  * Get recent IG media (for rate-limit recovery dedup).
  */
 export async function getRecentMedia(limit = 5) {
