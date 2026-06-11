@@ -423,7 +423,7 @@ export function buildCaptionForTopic(topic) {
   const pill = d.ctaPill;
   if (pill) {
     const hint = strip(d.ctaHint || d.ctaSub || "Ricevi il link per provare GetNearMe.");
-    parts.push(`Commenta "${pill}" — ${hint}`);
+    parts.push(`Commenta "${pill}", ${hint.charAt(0).toLowerCase()}${hint.slice(1)}`);
   }
 
   const hashtags = "#immobiliare #agenteimmobiliare #agenziaimmobiliare #realestateitalia #getnearme";
