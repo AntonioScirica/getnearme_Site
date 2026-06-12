@@ -6,6 +6,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { s, Box, Icon } from './ui';
+import type { UserData } from '@/app/[locale]/dashboard/page';
 
 type Project = {
   id: string; nome: string; addr: string; prezzo: number; mq: number; locali: number;
@@ -25,8 +26,8 @@ const NAV_SECTIONS = [
   { label: 'Lavoro', items: [{ icon: 'building-2', label: 'Progetti', route: 'progetti' }, { icon: 'sparkles', label: 'Foto AI', route: 'staging' }, { icon: 'film', label: 'Video AI', route: 'video' }] },
   { label: 'Social', items: [{ icon: 'image-plus', label: 'Post Social', route: 'studio' }, { icon: 'calendar', label: 'Calendario', route: 'calendario' }] },
   { label: 'Libreria', items: [{ icon: 'image', label: 'Media', route: 'media' }] },
-  { label: 'Agenzia', items: [{ icon: 'users', label: 'Team', route: 'team' }, { icon: 'palette', label: 'Brand & White-label', route: 'brand' }, { icon: 'at-sign', label: 'Account social', route: 'social' }] },
-  { label: 'Account', items: [{ icon: 'credit-card', label: 'Piano & Crediti', route: 'account' }] },
+  { label: 'Agenzia', items: [{ icon: 'palette', label: 'Brand', route: 'brand' }] },
+  { label: 'Account', items: [{ icon: 'credit-card', label: 'Piano', route: 'account' }] },
 ];
 
 const TOUR_DEFS = [
@@ -35,7 +36,7 @@ const TOUR_DEFS = [
   { sel: '[title="Progetti"]', title: 'Progetti', text: 'Un progetto = un immobile. Non serve crearlo prima: nasce da solo al primo contenuto che generi.' },
   { sel: '[title="Media"]', title: 'Media', text: 'Tutto ciò che generi finisce qui. Puoi riusarlo in post e video senza pagare altri crediti.' },
   { sel: '[title="Lavori in corso"]', title: 'Lavori in corso', text: 'Le generazioni girano in background: qui vedi i progressi senza mai bloccarti. Ti avvisiamo a fine lavoro.' },
-  { sel: '[title="Piano e crediti"]', title: 'Crediti', text: 'Il costo è sempre dichiarato prima di generare. Qui controlli saldo e ricariche.' },
+  { sel: '[title="Piano"]', title: 'Piano', text: 'Qui gestisci il tuo abbonamento e confronti i piani disponibili.' },
 ];
 
 const fmt = (n: number) => '€ ' + Number(n || 0).toLocaleString('it-IT');
@@ -54,19 +55,368 @@ const RECENT = [
   { type: 'video', label: 'Tour da immagini · 0:31', meta: 'Trilocale Isola · 4 giorni fa', img: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=500&h=320&fit=crop' },
 ];
 
+/* ───── PLANS DATA ───── */
+const STRIPE_BILLING_PORTAL = 'https://billing.stripe.com/p/login/9B68wP7WH3blfTG15eak000';
+
+const STRIPE_PAYMENT_LINKS: Record<string, string> = {
+  agency_monthly: 'https://buy.stripe.com/cNibJ14Kv3bl5f2aFOak00p',
+  agency_quarterly: 'https://buy.stripe.com/bJeeVddh1bHR5f229iak00s',
+  agency_annual: 'https://buy.stripe.com/eVq6oH90L27h8reg08ak00t',
+};
+
+const SUB_TYPE_TO_PLAN: Record<string, string> = {
+  agency_monthly: 'monthly',
+  agency_quarterly: 'quarterly',
+  agency_annual: 'annual',
+};
+
+const PLAN_TO_SUB_TYPE: Record<string, string> = {
+  monthly: 'agency_monthly',
+  quarterly: 'agency_quarterly',
+  annual: 'agency_annual',
+};
+
+const PLANS = [
+  {
+    id: 'monthly', name: 'Mensile', price: 100, period: '/mese', badge: null, popular: false,
+    features: ['Report illimitati con il tuo logo', '60 foto AI homestaging/mese', '2 video Template AI/mese', 'Video montaggio automatico', 'Template Post & Stories Social'],
+    color: '#211f1c', quotaFoto: 60, quotaVideo: 2, quotaPost: 999,
+  },
+  {
+    id: 'quarterly', name: 'Trimestrale', price: 79, period: '/mese', badge: 'Consigliato', popular: true,
+    features: ['Report illimitati con il tuo logo', '120 foto AI homestaging/mese', '3 video Template AI/mese', 'Video montaggio automatico', 'Template Post & Stories Social'],
+    color: '#3B83F6', quotaFoto: 120, quotaVideo: 3, quotaPost: 999,
+  },
+  {
+    id: 'annual', name: 'Annuale', price: 59, period: '/mese', badge: 'Miglior prezzo', popular: false,
+    features: ['Report illimitati con il tuo logo', '240 foto AI homestaging/mese', '4 video Template AI/mese', 'Video montaggio automatico', 'Template Post & Stories Social', 'Supporto prioritario'],
+    color: '#211f1c', quotaFoto: 240, quotaVideo: 4, quotaPost: 999,
+  },
+];
+
+function redirectToStripePayment(planId: string, userId: string, email: string) {
+  const subType = PLAN_TO_SUB_TYPE[planId];
+  const baseUrl = subType ? STRIPE_PAYMENT_LINKS[subType] : null;
+  if (!baseUrl) return;
+  const url = new URL(baseUrl);
+  url.searchParams.set('client_reference_id', userId);
+  url.searchParams.set('prefilled_email', email);
+  window.open(url.toString(), '_blank');
+}
+
+
+/* ───── ACCOUNT / PIANO & CREDITI SCREEN ───── */
+function UsageBar({ label, used, total, color }: { label: string; used: number; total: number; color: string }) {
+  const pct = Math.min((used / total) * 100, 100);
+  return (
+    <div style={s('flex:1;min-width:0')}>
+      <div style={s('display:flex;align-items:baseline;justify-content:space-between;margin-bottom:6px')}>
+        <span style={s('font-size:13px;font-weight:700;color:#211f1c')}>{label}</span>
+        <span style={s('font-size:12.5px;font-weight:700;color:#8c867d')}>{used} / {total}</span>
+      </div>
+      <div style={{ height: 6, background: '#f0ede7', borderRadius: 3, overflow: 'hidden' }}>
+        <div style={{ height: '100%', width: pct + '%', background: color, borderRadius: 3, transition: 'width .4s ease' }} />
+      </div>
+    </div>
+  );
+}
+
+function AccountScreen({ credits, toast, go, userData }: { credits: number; toast: (msg: string, icon?: string) => void; go: (r: string) => void; userData: UserData | null }) {
+  const activePlan = userData?.subscriptionType ? (SUB_TYPE_TO_PLAN[userData.subscriptionType] ?? 'quarterly') : 'quarterly';
+  const currentPlan = PLANS.find(p => p.id === activePlan)!;
+  const monthlyCost = 100;
+
+  return (
+    <div style={s('max-width:1160px;margin:0 auto;padding:32px 32px 64px')}>
+      {/* header */}
+      <div style={s('margin-bottom:24px')}>
+        <h1 style={s('margin:0 0 4px;font-size:25px;font-weight:800;letter-spacing:-.5px')}>Piano</h1>
+        <div style={s('color:#8c867d;font-size:14px')}>Gestisci il tuo abbonamento.</div>
+      </div>
+
+      {/* ── CURRENT PLAN SUMMARY ── */}
+      <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:14px;padding:24px 28px;margin-bottom:20px')}>
+        <div style={s('display:flex;align-items:center;gap:20px')}>
+          <div style={s('flex:1;min-width:0')}>
+            <div style={s('display:flex;align-items:center;gap:10px')}>
+              <span style={s('font-size:18px;font-weight:800;letter-spacing:-.3px')}>Piano {currentPlan.name}</span>
+              <span style={s('font-size:10.5px;font-weight:800;background:#3B83F6;color:#fff;padding:4px 12px;border-radius:8px;letter-spacing:.03em')}>ATTIVO</span>
+            </div>
+          </div>
+          <Box as="button" onClick={() => window.open(STRIPE_BILLING_PORTAL, '_blank')} style={s('border:1px solid #e4e1da;background:#fff;font-size:13px;font-weight:700;padding:10px 18px;border-radius:10px;cursor:pointer;min-height:44px;white-space:nowrap')} hover={s('background:#f6f4f0')}>Gestisci piano</Box>
+        </div>
+      </div>
+
+      {/* ── PLAN CARDS ── */}
+      <div style={s('margin-bottom:20px')}>
+        <div style={s('font-size:16px;font-weight:800;margin-bottom:14px;letter-spacing:-.2px')}>Confronta i piani</div>
+        <div style={s('display:grid;grid-template-columns:repeat(3,1fr);gap:20px;align-items:stretch')}>
+          {PLANS.map((plan) => {
+            const active = plan.id === activePlan;
+            const savings = plan.price < monthlyCost ? (monthlyCost - plan.price) * 12 : 0;
+            return (
+              <Box key={plan.id} style={{
+                background: active ? '#3B83F6' : '#fff',
+                border: active ? '2px solid #3B83F6' : '1.5px solid #ece9e2',
+                borderRadius: 16,
+                padding: '32px 28px 28px',
+                cursor: 'pointer',
+                position: 'relative',
+                display: 'flex',
+                flexDirection: 'column',
+                transition: 'transform .25s cubic-bezier(.4,0,.2,1), box-shadow .25s cubic-bezier(.4,0,.2,1)',
+                boxShadow: active ? '0 16px 48px rgba(59,131,246,.28), 0 4px 12px rgba(59,131,246,.12)' : '0 1px 3px rgba(33,31,28,.04)',
+                transform: active ? 'scale(1.02)' : 'scale(1)',
+              }} hover={{
+                transform: active ? 'scale(1.02) translateY(-3px)' : 'translateY(-3px)',
+                boxShadow: active ? '0 20px 56px rgba(59,131,246,.32), 0 6px 16px rgba(59,131,246,.14)' : '0 12px 36px rgba(33,31,28,.10)',
+              }}>
+                {plan.badge && (
+                  <span style={{
+                    position: 'absolute', top: -11, left: '50%', transform: 'translateX(-50%)',
+                    fontSize: 10.5, fontWeight: 800, padding: '5px 16px', borderRadius: 20,
+                    whiteSpace: 'nowrap', letterSpacing: '.04em', textTransform: 'uppercase',
+                    background: active ? '#fff' : '#211f1c', color: active ? '#3B83F6' : '#fff',
+                    boxShadow: '0 2px 8px rgba(33,31,28,.12)',
+                  }}>{plan.badge}</span>
+                )}
+
+                <div style={s('display:flex;align-items:center;justify-content:space-between;margin-bottom:6px')}>
+                  <span style={{ fontSize: 15, fontWeight: 700, color: active ? 'rgba(255,255,255,.85)' : '#8c867d', letterSpacing: '.02em', textTransform: 'uppercase' }}>{plan.name}</span>
+                  {active && <span style={{ fontSize: 11, fontWeight: 800, background: 'rgba(255,255,255,.2)', color: '#fff', padding: '5px 14px', borderRadius: 20, letterSpacing: '.03em' }}>ATTIVO</span>}
+                </div>
+
+                <div style={s('display:flex;align-items:baseline;gap:6px')}>
+                  <span style={{ fontSize: 48, fontWeight: 800, color: active ? '#fff' : '#211f1c', letterSpacing: -2, lineHeight: 1 }}>{plan.price}€</span>
+                  <span style={{ fontSize: 16, fontWeight: 600, color: active ? 'rgba(255,255,255,.55)' : '#b3aca1' }}>{plan.period}</span>
+                </div>
+                {savings > 0 && (
+                  <div style={{ fontSize: 12.5, fontWeight: 700, color: active ? 'rgba(255,255,255,.7)' : '#10b981', marginTop: 4 }}>Risparmi {savings}€/anno vs Mensile</div>
+                )}
+
+                <div style={{ height: 1, background: active ? 'rgba(255,255,255,.15)' : '#f0ede7', margin: '20px 0' }} />
+
+                <div style={s('display:flex;flex-direction:column;gap:14px;flex:1')}>
+                  {plan.features.map((f, i) => (
+                    <div key={i} style={s('display:flex;align-items:center;gap:12px')}>
+                      <span style={{
+                        width: 22, height: 22, flex: 'none', borderRadius: '50%',
+                        background: active ? 'rgba(255,255,255,.2)' : '#f0ede7',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      }}>
+                        <Icon name="check" size={12} color={active ? '#fff' : '#8c867d'} />
+                      </span>
+                      <span style={{ fontSize: 14.5, fontWeight: 500, color: active ? 'rgba(255,255,255,.92)' : '#57534c', lineHeight: 1.45 }}>{f}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <Box as="button" onClick={() => {
+                  if (active) toast('Sei già su questo piano', 'check');
+                  else if (userData) redirectToStripePayment(plan.id, userData.id, userData.email);
+                }} style={{
+                  marginTop: 28,
+                  border: 'none',
+                  background: active ? '#fff' : '#211f1c',
+                  color: active ? '#3B83F6' : '#fff',
+                  fontSize: 15, fontWeight: 700, padding: '14px 20px', borderRadius: 12,
+                  cursor: 'pointer', minHeight: 48, width: '100%',
+                  transition: 'background .2s, transform .15s',
+                  boxShadow: active ? '0 2px 8px rgba(0,0,0,.08)' : 'none',
+                }} hover={{
+                  background: active ? '#f0f6ff' : '#333028',
+                  transform: 'scale(0.98)',
+                }}>
+                  {active ? 'Piano attuale' : 'Scegli questo piano'}
+                </Box>
+              </Box>
+            );
+          })}
+        </div>
+      </div>
+
+
+    </div>
+  );
+}
+
+/* ───── BRAND AGENZIA SCREEN ───── */
+const LOGO_ROWS = [
+  { label: 'Icona', variants: [
+    { key: 'logo_white_v', label: 'Bianco', bg: '#211f1c' },
+    { key: 'logo_black_v', label: 'Nero', bg: '#fff' },
+    { key: 'logo_colored_v', label: 'Colore', bg: '#f6f4f0' },
+  ]},
+  { label: 'Logo + Nome', variants: [
+    { key: 'logo_white_h', label: 'Bianco', bg: '#211f1c' },
+    { key: 'logo_black_h', label: 'Nero', bg: '#fff' },
+    { key: 'logo_colored_h', label: 'Colore', bg: '#f6f4f0' },
+  ]},
+] as const;
+
+type BrandState = {
+  logos: Record<string, string | null>;
+  logoOrientation: 'vertical' | 'horizontal';
+  primaryColor: string;
+  companyName: string;
+  companyWebsite: string;
+  companyEmail: string;
+  reportFinalTitle: string;
+  reportFinalDesc: string;
+};
+
+const DEFAULT_BRAND: BrandState = {
+  logos: {}, logoOrientation: 'vertical', primaryColor: '#3B82F6',
+  companyName: '', companyWebsite: '', companyEmail: '',
+  reportFinalTitle: '', reportFinalDesc: '',
+};
+
+function BrandScreen({ toast }: { toast: (msg: string, icon?: string) => void }) {
+  const [brand, setBrand] = React.useState<BrandState>(DEFAULT_BRAND);
+  const fileRefs = React.useRef<Record<string, HTMLInputElement | null>>({});
+
+  const set = <K extends keyof BrandState>(k: K, v: BrandState[K]) => setBrand(b => ({ ...b, [k]: v }));
+
+  const handleLogoUpload = (variant: string, file: File) => {
+    if (file.size > 500 * 1024) { toast('File troppo grande (max 500 KB)', 'x'); return; }
+    if (!['image/png', 'image/jpeg', 'image/svg+xml', 'image/webp'].includes(file.type)) { toast('Formato non supportato', 'x'); return; }
+    const reader = new FileReader();
+    reader.onload = () => setBrand(b => ({ ...b, logos: { ...b.logos, [variant]: reader.result as string } }));
+    reader.readAsDataURL(file);
+  };
+
+  const removeLogo = (variant: string) => setBrand(b => ({ ...b, logos: { ...b.logos, [variant]: null } }));
+
+  const inputStyle: React.CSSProperties = { width: '100%', border: '1px solid #e4e1da', borderRadius: 10, padding: '11px 14px', fontSize: 14, fontFamily: 'inherit', outline: 'none', background: '#fff', transition: 'border-color .2s' };
+
+  return (
+    <div style={s('max-width:820px;margin:0 auto;padding:32px 32px 64px')}>
+      <div style={s('margin-bottom:24px')}>
+        <h1 style={s('margin:0 0 4px;font-size:25px;font-weight:800;letter-spacing:-.5px')}>Brand Agenzia</h1>
+        <div style={s('color:#8c867d;font-size:14px')}>Personalizza loghi, colori e informazioni che appaiono nei tuoi report e contenuti.</div>
+      </div>
+
+      {/* ── LOGO SECTION ── */}
+      <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:14px;padding:24px 28px;margin-bottom:20px')}>
+        <div style={s('font-size:16px;font-weight:800;margin-bottom:4px;letter-spacing:-.2px')}>Loghi</div>
+        <div style={s('color:#8c867d;font-size:13px;margin-bottom:18px')}>Carica le versioni del tuo logo per sfondi chiari e scuri.</div>
+        <div style={s('display:flex;flex-direction:column;gap:28px')}>
+          {LOGO_ROWS.map(row => (
+            <div key={row.label}>
+              <div style={s('font-size:12px;font-weight:700;color:#b3aca1;text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px')}>{row.label}</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
+                {row.variants.map(v => {
+                  const src = brand.logos[v.key];
+                  return (
+                    <div key={v.key} style={{ position: 'relative' }}>
+                      <Box onClick={() => fileRefs.current[v.key]?.click()} style={{
+                        width: '100%', aspectRatio: '2.4', borderRadius: 12,
+                        background: v.bg, border: v.bg === '#fff' ? '1.5px solid #ece9e2' : 'none',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+                        overflow: 'hidden', transition: 'box-shadow .2s',
+                      }} hover={{ boxShadow: '0 4px 16px rgba(33,31,28,.10)' }}>
+                        {src ? (
+                          <img src={src} alt={v.label} style={{ maxWidth: '70%', maxHeight: '70%', objectFit: 'contain' }} />
+                        ) : (
+                          <Icon name="image-plus" size={20} color={v.bg === '#211f1c' ? 'rgba(255,255,255,.35)' : '#b3aca1'} />
+                        )}
+                      </Box>
+                      {src && (
+                        <button onClick={() => removeLogo(v.key)} style={{
+                          position: 'absolute', top: 6, right: 6, width: 24, height: 24, borderRadius: '50%',
+                          background: 'rgba(33,31,28,.7)', border: 'none', cursor: 'pointer',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        }}><Icon name="x" size={12} color="#fff" /></button>
+                      )}
+                      <input ref={el => { fileRefs.current[v.key] = el; }} type="file" accept="image/png,image/jpeg,image/svg+xml,image/webp" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) handleLogoUpload(v.key, f); e.target.value = ''; }} />
+                      <div style={s('margin-top:6px;font-size:12px;font-weight:700;color:#57534c')}>{v.label}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+        <div style={{ height: 1, background: '#f4f2ee', margin: '20px 0' }} />
+        <div style={s('display:flex;align-items:center;gap:12px')}>
+          <span style={s('font-size:13px;font-weight:700;color:#57534c')}>Logo da usare nei contenuti</span>
+          <select value={brand.logoOrientation} onChange={e => set('logoOrientation', e.target.value as 'vertical' | 'horizontal')} style={{ ...inputStyle, width: 'auto', padding: '8px 12px', cursor: 'pointer' }}>
+            <option value="vertical">Solo icona</option>
+            <option value="horizontal">Icona + Nome</option>
+          </select>
+        </div>
+      </div>
+
+      {/* ── PRIMARY COLOR ── */}
+      <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:14px;padding:24px 28px;margin-bottom:20px')}>
+        <div style={s('font-size:16px;font-weight:800;margin-bottom:4px;letter-spacing:-.2px')}>Colore della tua agenzia</div>
+        <div style={s('color:#8c867d;font-size:13px;margin-bottom:16px')}>Questo colore viene applicato ai report, ai post e ai video che crei.</div>
+        <div style={s('display:flex;align-items:center;gap:14px')}>
+          <div style={{ width: 44, height: 44, borderRadius: 10, border: '1px solid #e4e1da', overflow: 'hidden', position: 'relative', cursor: 'pointer', padding: 4, background: '#fff' }}>
+            <div style={{ width: '100%', height: '100%', background: brand.primaryColor, borderRadius: 6 }} />
+            <input type="color" value={brand.primaryColor} onChange={e => set('primaryColor', e.target.value)} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', width: '100%', height: '100%' }} />
+          </div>
+          <span style={s('font-size:13px;font-weight:600;color:#57534c')}>Clicca per cambiare colore</span>
+        </div>
+      </div>
+
+      {/* ── COMPANY INFO ── */}
+      <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:14px;padding:24px 28px;margin-bottom:20px')}>
+        <div style={s('font-size:16px;font-weight:800;margin-bottom:4px;letter-spacing:-.2px')}>Informazioni agenzia</div>
+        <div style={s('color:#8c867d;font-size:13px;margin-bottom:18px')}>Queste informazioni appaiono nei report e nei post che crei.</div>
+        <div style={s('display:flex;flex-direction:column;gap:16px')}>
+          <div>
+            <label style={s('display:block;font-size:13px;font-weight:700;color:#57534c;margin-bottom:6px')}>Nome agenzia</label>
+            <input value={brand.companyName} onChange={e => set('companyName', e.target.value)} maxLength={50} placeholder="La Tua Agenzia" style={inputStyle} />
+          </div>
+          <div>
+            <label style={s('display:block;font-size:13px;font-weight:700;color:#57534c;margin-bottom:6px')}>Sito web <span style={s('color:#b3aca1;font-weight:500')}>(opzionale)</span></label>
+            <input value={brand.companyWebsite} onChange={e => set('companyWebsite', e.target.value)} placeholder="https://www.tuaagenzia.it" type="url" style={inputStyle} />
+          </div>
+          <div>
+            <label style={s('display:block;font-size:13px;font-weight:700;color:#57534c;margin-bottom:6px')}>Email contatto <span style={s('color:#b3aca1;font-weight:500')}>(opzionale)</span></label>
+            <input value={brand.companyEmail} onChange={e => set('companyEmail', e.target.value)} placeholder="info@tuaagenzia.it" type="email" style={inputStyle} />
+          </div>
+        </div>
+      </div>
+
+      {/* ── REPORT FINAL PAGE ── */}
+      <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:14px;padding:24px 28px;margin-bottom:20px')}>
+        <div style={s('font-size:16px;font-weight:800;margin-bottom:4px;letter-spacing:-.2px')}>Pagina finale del report</div>
+        <div style={s('color:#8c867d;font-size:13px;margin-bottom:18px')}>Personalizza il messaggio che i tuoi clienti vedono alla fine del report.</div>
+        <div style={s('display:flex;flex-direction:column;gap:16px')}>
+          <div>
+            <label style={s('display:block;font-size:13px;font-weight:700;color:#57534c;margin-bottom:6px')}>Titolo finale</label>
+            <input value={brand.reportFinalTitle} onChange={e => set('reportFinalTitle', e.target.value)} maxLength={100} placeholder="Grazie per aver scelto la nostra agenzia" style={inputStyle} />
+          </div>
+          <div>
+            <label style={s('display:block;font-size:13px;font-weight:700;color:#57534c;margin-bottom:6px')}>Messaggio finale</label>
+            <textarea value={brand.reportFinalDesc} onChange={e => set('reportFinalDesc', e.target.value)} maxLength={500} rows={4} placeholder="Inserisci un messaggio personalizzato per i tuoi clienti..." style={{ ...inputStyle, resize: 'vertical' }} />
+          </div>
+        </div>
+      </div>
+
+      {/* ── SAVE ── */}
+      <div style={s('display:flex;justify-content:flex-end')}>
+        <Box as="button" onClick={() => toast('Impostazioni salvate', 'check')} style={s('border:none;background:#3B83F6;color:#fff;font-size:14px;font-weight:700;padding:12px 28px;border-radius:10px;cursor:pointer;min-height:44px')} hover={s('background:#2b6fe0')}>Salva impostazioni</Box>
+      </div>
+    </div>
+  );
+}
+
 const ROUTE_TITLES: Record<string, string> = {
   progetti: 'Progetti', progetto: 'Dettaglio immobile', staging: 'Foto AI', video: 'Video AI',
   studio: 'Post Social', calendario: 'Calendario', media: 'Libreria Media', team: 'Team',
-  brand: 'Brand & White-label', social: 'Account social', account: 'Piano & Crediti',
+  brand: 'Brand Agenzia', social: 'Account social', account: 'Piano',
 };
 
-export default function DashboardApp() {
+export default function DashboardApp({ userData }: { userData: UserData | null }) {
   const [route, setRoute] = useState('home');
   const [collapsed, setCollapsed] = useState(false);
   const [projOpen, setProjOpen] = useState(false);
   const [projQuery, setProjQuery] = useState('');
   const [activeProject, setActiveProject] = useState('p1');
-  const [credits] = useState(140);
+  const credits = userData?.credits ?? 0;
   const [projects] = useState<Project[]>(DEMO_PROJECTS);
   const [welcomeOpen, setWelcomeOpen] = useState(true);
   const [tourStep, setTourStep] = useState<number | null>(null);
@@ -124,7 +474,7 @@ export default function DashboardApp() {
   const clDone = clDefs.filter((c) => c.done).length;
   const showChecklist = !clDismissed && clDone < 4;
 
-  const homeSub = `${projects.length} immobili attivi · 5 contenuti programmati · ${credits} crediti disponibili`;
+  const homeSub = `${projects.length} immobili attivi · 5 contenuti programmati`;
 
   const projList = projects.filter((p) => !projQuery || (p.nome + ' ' + p.addr).toLowerCase().includes(projQuery.toLowerCase()));
 
@@ -133,7 +483,7 @@ export default function DashboardApp() {
   const cmdTools = [
     ['Foto AI', 'staging', 'sparkles'], ['Video AI', 'video', 'film'], ['Post Social', 'studio', 'image-plus'],
     ['Calendario', 'calendario', 'calendar'], ['Media', 'media', 'image'], ['Team', 'team', 'users'],
-    ['Brand & White-label', 'brand', 'palette'], ['Piano & Crediti', 'account', 'credit-card'],
+    ['Brand Agenzia', 'brand', 'palette'], ['Piano', 'account', 'credit-card'],
   ] as const;
   const cmdResults: { label: string; sub: string; icon: string; go: () => void }[] = [];
   cmdTools.filter((t) => !cmdq || t[0].toLowerCase().includes(cmdq)).forEach((t) => cmdResults.push({ label: t[0], sub: 'Strumento', icon: t[2], go: () => { setCmdkOpen(false); go(t[1]); } }));
@@ -208,9 +558,9 @@ export default function DashboardApp() {
             ))}
           </div>
           <div style={s('flex:none;border-top:1px solid #f0ede7;padding:12px 10px')}>
-            <Box onClick={() => go('account')} title="Crediti" style={s('display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:12px;cursor:pointer;background:#faf9f7')} hover={s('background:#f1efe9')}>
-              <Icon name="coins" size={18} color="#3B83F6" />
-              {!collapsed && <div style={{ minWidth: 0 }}><div style={s('font-size:13px;font-weight:800')}>{credits} crediti</div><div style={s('font-size:11px;color:#8c867d;white-space:nowrap')}>Piano Professional</div></div>}
+            <Box onClick={() => go('account')} title="Piano" style={s('display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:12px;cursor:pointer;background:#faf9f7')} hover={s('background:#f1efe9')}>
+              <Icon name="credit-card" size={18} color="#3B83F6" />
+              {!collapsed && <div style={{ minWidth: 0 }}><div style={s('font-size:13px;font-weight:800')}>Piano {PLANS.find(p => p.id === (SUB_TYPE_TO_PLAN[userData?.subscriptionType ?? ''] ?? 'quarterly'))?.name ?? 'Trimestrale'}</div></div>}
             </Box>
           </div>
         </div>
@@ -264,12 +614,12 @@ export default function DashboardApp() {
               )}
             </div>
 
-            <Box onClick={() => go('account')} title="Piano e crediti" style={s('display:flex;align-items:center;gap:8px;padding:9px 16px;border-radius:8px;background:#eef4fe;cursor:pointer;min-height:38px')} hover={s('background:#e3edfd')}>
-              <Icon name="coins" size={15} color="#1d5fd0" /><span style={s('font-size:13px;font-weight:800;color:#1d5fd0;white-space:nowrap')}>{credits} crediti</span>
+            <Box onClick={() => go('account')} title="Piano" style={s('display:flex;align-items:center;gap:8px;padding:9px 16px;border-radius:8px;background:#eef4fe;cursor:pointer;min-height:38px')} hover={s('background:#e3edfd')}>
+              <Icon name="credit-card" size={15} color="#1d5fd0" /><span style={s('font-size:13px;font-weight:800;color:#1d5fd0;white-space:nowrap')}>Piano</span>
             </Box>
             <Box as="button" onClick={() => toast('Nessuna nuova notifica', 'bell')} title="Notifiche" aria-label="Notifiche" style={s('border:none;background:transparent;width:42px;height:42px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;position:relative')} hover={s('background:#f1efe9')}><Icon name="bell" size={18} /></Box>
             <Box as="button" onClick={() => setWelcomeOpen(true)} title="Aiuto e tour" aria-label="Aiuto e tour" style={s('border:none;background:transparent;width:42px;height:42px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center')} hover={s('background:#f1efe9')}><Icon name="circle-help" size={18} /></Box>
-            <div title="Marco Rossi" style={s('width:38px;height:38px;border-radius:50%;background:#211f1c;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;cursor:pointer')}>MR</div>
+            <div title={userData?.email ?? ''} style={s('width:38px;height:38px;border-radius:50%;background:#211f1c;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;cursor:pointer')}>{(userData?.email ?? 'U')[0].toUpperCase()}</div>
           </div>
 
           {/* CONTENT */}
@@ -277,7 +627,7 @@ export default function DashboardApp() {
             {route === 'home' ? (
               <div style={s('max-width:1160px;margin:0 auto;padding:36px 32px 64px')}>
                 <div style={s('display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin-bottom:24px')}>
-                  <div><h1 style={s('margin:0 0 4px;font-size:27px;font-weight:800;letter-spacing:-.5px')}>Buonasera, Marco</h1><div style={s('color:#8c867d;font-size:14px')}>{homeSub}</div></div>
+                  <div><h1 style={s('margin:0 0 4px;font-size:27px;font-weight:800;letter-spacing:-.5px')}>Ciao{userData?.email ? `, ${userData.email.split('@')[0]}` : ''}</h1><div style={s('color:#8c867d;font-size:14px')}>{homeSub}</div></div>
                 </div>
 
                 {showChecklist && (
@@ -343,6 +693,10 @@ export default function DashboardApp() {
                   })}
                 </div>
               </div>
+            ) : route === 'account' ? (
+              <AccountScreen credits={credits} toast={toast} go={go} userData={userData} />
+            ) : route === 'brand' ? (
+              <BrandScreen toast={toast} />
             ) : (
               <div style={s('max-width:1160px;margin:0 auto;padding:36px 32px 64px')}>
                 <h1 style={s('margin:0 0 4px;font-size:27px;font-weight:800;letter-spacing:-.5px')}>{ROUTE_TITLES[route] ?? route}</h1>

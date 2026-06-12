@@ -11,22 +11,46 @@ import { Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import DashboardApp from '@/components/dashboard/DashboardApp';
 
+export type UserData = {
+  id: string;
+  email: string;
+  credits: number;
+  subscriptionType: string;
+  stripeCustomerId: string | null;
+  totalEarned: number;
+  totalSpent: number;
+};
+
 export default function DashboardPage() {
   const router = useRouter();
   const params = useParams();
   const locale = (params?.locale as string) || 'it';
   const [ready, setReady] = useState(false);
+  const [userData, setUserData] = useState<UserData | null>(null);
 
   useEffect(() => {
-    async function gate() {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) {
-        router.replace(`/${locale}/checkout/agency`);
-        return;
-      }
+    async function init() {
+      // TODO: restore auth gate before merge
+      // const { data: { session } } = await supabase.auth.getSession();
+      // if (!session?.user) {
+      //   router.replace(`/${locale}/checkout/agency`);
+      //   return;
+      // }
+
+      // Demo data while auth is bypassed
+      setUserData({
+        id: 'demo-user',
+        email: 'demo@getnearme.it',
+        credits: 140,
+        subscriptionType: 'agency_quarterly',
+        stripeCustomerId: null,
+        totalEarned: 200,
+        totalSpent: 60,
+      });
+
       setReady(true);
     }
-    gate();
+    init();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -38,5 +62,5 @@ export default function DashboardPage() {
     );
   }
 
-  return <DashboardApp />;
+  return <DashboardApp userData={userData} />;
 }

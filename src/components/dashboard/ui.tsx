@@ -8,7 +8,7 @@ import {
   ArrowRight, ArrowLeft, PanelLeft, ChevronDown, Search, Check, Plus, Layers,
   Coins, Bell, CircleHelp, X, Building2, Sparkles, Film, ImagePlus, Calendar,
   Image as ImageIcon, Download, Pencil, LayoutDashboard, Users, Palette, AtSign,
-  CreditCard, Upload, Copy, Trash2, type LucideIcon,
+  CreditCard, Upload, Copy, Trash2, Gift, Crown, Zap, type LucideIcon,
 } from 'lucide-react';
 
 const ICONS: Record<string, LucideIcon> = {
@@ -19,7 +19,7 @@ const ICONS: Record<string, LucideIcon> = {
   calendar: Calendar, image: ImageIcon, download: Download, pencil: Pencil,
   'layout-dashboard': LayoutDashboard, users: Users, palette: Palette,
   'at-sign': AtSign, 'credit-card': CreditCard, upload: Upload, copy: Copy,
-  trash: Trash2,
+  trash: Trash2, gift: Gift, crown: Crown, zap: Zap,
 };
 
 /** Parse a CSS declaration string into a React style object. */
