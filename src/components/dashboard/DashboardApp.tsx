@@ -7,6 +7,16 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { s, Box, Icon } from './ui';
 import type { UserData } from '@/app/[locale]/dashboard/page';
+import dynamic from 'next/dynamic';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore — modulo JS condiviso con l'estensione, senza tipi
+import { TEMPLATES, renderTemplate } from './templates/index.js';
+// @ts-ignore — JS module, no types
+import { ICONS as TPL_ICONS } from './templates/icons.js';
+// @ts-ignore — JS module, no types
+import { exportToPng, exportStaticToVideo, downloadBlob } from './templates/exporter.js';
+
+const TemplatePreview = dynamic(() => import('./TemplatePreview'), { ssr: false });
 
 type Project = {
   id: string; nome: string; addr: string; prezzo: number; mq: number; locali: number;
@@ -105,7 +115,875 @@ function redirectToStripePayment(planId: string, userId: string, email: string) 
 }
 
 
-/* ───── ACCOUNT / PIANO & CREDITI SCREEN ───── */
+/* ───── POST SOCIAL SCREEN ───── */
+// Registry vero dei template, identico all'estensione (vedi templates/index.js)
+
+// Stessi formati e safe area di TEMPLATE_CATEGORIES dell'estensione (templates/index.js)
+const PS_PLATFORMS = [
+  { id: 'instagram', label: 'Instagram', formats: [
+    { id: 'ig-post', label: 'Post 1080 × 1350', w: 1080, h: 1350, safe: { top: 60, bottom: 60, left: 60, right: 60 } },
+    { id: 'ig-quadrato', label: 'Quadrato 1080 × 1080', w: 1080, h: 1080, safe: { top: 60, bottom: 60, left: 60, right: 60 } },
+    { id: 'ig-story', label: 'Story 1080 × 1920', w: 1080, h: 1920, safe: { top: 100, bottom: 200, left: 0, right: 0 } },
+    { id: 'ig-reel', label: 'Reel 1080 × 1920', w: 1080, h: 1920, safe: { top: 250, bottom: 340, left: 84, right: 84 } },
+  ]},
+  { id: 'facebook', label: 'Facebook', formats: [
+    { id: 'fb-post', label: 'Post 1080 × 1350', w: 1080, h: 1350, safe: { top: 60, bottom: 60, left: 60, right: 60 } },
+    { id: 'fb-quadrato', label: 'Quadrato 1080 × 1080', w: 1080, h: 1080, safe: { top: 60, bottom: 60, left: 60, right: 60 } },
+    { id: 'fb-story', label: 'Story 1080 × 1920', w: 1080, h: 1920, safe: { top: 225, bottom: 275, left: 0, right: 0 } },
+  ]},
+  { id: 'tiktok', label: 'TikTok', formats: [
+    { id: 'tt-video', label: 'Video 1080 × 1920', w: 1080, h: 1920, safe: { top: 108, bottom: 320, left: 120, right: 120 } },
+  ]},
+  { id: 'linkedin', label: 'LinkedIn', formats: [
+    { id: 'li-post', label: 'Post 1080 × 1350', w: 1080, h: 1350 },
+    { id: 'li-quadrato', label: 'Quadrato 1080 × 1080', w: 1080, h: 1080 },
+  ]},
+];
+
+const ANIM_STYLES: { id: string; label: string }[] = [
+  { id: 'slide-up', label: 'Scorrimento' }, { id: 'fade', label: 'Dissolvenza' },
+  { id: 'scale', label: 'Espansione' }, { id: 'slide-right', label: 'Laterale' },
+  { id: 'drop', label: 'Caduta' }, { id: 'zoom-out', label: 'Zoom' },
+  { id: 'bounce', label: 'Rimbalzo' }, { id: 'diagonal', label: 'Diagonale' },
+];
+
+const ANIM_CSS = `
+.aw{position:absolute;border-radius:2px;opacity:0;animation-duration:3.5s;animation-iteration-count:infinite;animation-fill-mode:both}
+.aw-badge{width:18px;height:5px;top:10px;left:8px;background:#6875F5}
+.aw-price{width:38px;height:8px;top:19px;left:8px;background:#fff}
+.aw-title{width:50px;height:5px;top:32px;left:8px;background:rgba(255,255,255,.7)}
+.aw-addr{width:28px;height:3px;top:41px;left:8px;background:rgba(255,255,255,.35)}
+.aw-m1{width:16px;height:13px;top:52px;left:5px;background:rgba(255,255,255,.15);border-radius:3px}
+.aw-m2{width:16px;height:13px;top:52px;left:25px;background:rgba(255,255,255,.15);border-radius:3px}
+.aw-m3{width:16px;height:13px;top:52px;left:45px;background:rgba(255,255,255,.15);border-radius:3px}
+.aw-desc{width:54px;height:4px;top:76px;left:8px;background:rgba(255,255,255,.45)}
+.aw-badge{animation-delay:.3s}.aw-price{animation-delay:.5s}.aw-title{animation-delay:.7s}
+.aw-addr{animation-delay:.9s}.aw-m1{animation-delay:1.1s}.aw-m2{animation-delay:1.25s}
+.aw-m3{animation-delay:1.4s}.aw-desc{animation-delay:1.6s}
+@keyframes aw-slide-up{0%,6%{opacity:0;transform:translateY(22px)}16%,65%{opacity:1;transform:translateY(0)}78%,100%{opacity:0}}
+@keyframes aw-fade{0%,6%{opacity:0}20%,65%{opacity:1}78%,100%{opacity:0}}
+@keyframes aw-scale{0%,6%{opacity:0;transform:scale(.3)}16%,65%{opacity:1;transform:scale(1)}78%,100%{opacity:0}}
+@keyframes aw-slide-right{0%,6%{opacity:0;transform:translateX(-22px)}16%,65%{opacity:1;transform:translateX(0)}78%,100%{opacity:0}}
+@keyframes aw-drop{0%,6%{opacity:0;transform:translateY(-22px)}13%{opacity:1;transform:translateY(5px)}16%,65%{opacity:1;transform:translateY(0)}78%,100%{opacity:0}}
+@keyframes aw-zoom-out{0%,6%{opacity:0;transform:scale(2)}16%,65%{opacity:1;transform:scale(1)}78%,100%{opacity:0}}
+@keyframes aw-bounce{0%,6%{opacity:0;transform:translateY(25px)}12%{opacity:1;transform:translateY(-8px)}15%{transform:translateY(3px)}18%,65%{opacity:1;transform:translateY(0)}78%,100%{opacity:0}}
+@keyframes aw-diagonal{0%,6%{opacity:0;transform:translate(-16px,16px)}16%,65%{opacity:1;transform:translate(0,0)}78%,100%{opacity:0}}
+.acp--slide-up .aw{animation-name:aw-slide-up}.acp--fade .aw{animation-name:aw-fade}
+.acp--scale .aw{animation-name:aw-scale}.acp--slide-right .aw{animation-name:aw-slide-right}
+.acp--drop .aw{animation-name:aw-drop}.acp--zoom-out .aw{animation-name:aw-zoom-out}
+.acp--bounce .aw{animation-name:aw-bounce}.acp--diagonal .aw{animation-name:aw-diagonal}
+`;
+
+const PICKER_ICONS: { key: string; label: string }[] = [
+  { key: 'bed', label: 'Camere' }, { key: 'bath', label: 'Bagni' }, { key: 'area', label: 'Superficie' },
+  { key: 'rooms', label: 'Locali' }, { key: 'sofa', label: 'Soggiorno' }, { key: 'cookingPot', label: 'Cucina' },
+  { key: 'elevator', label: 'Ascensore' }, { key: 'balcony', label: 'Balcone' }, { key: 'terrace', label: 'Terrazzo' },
+  { key: 'garden', label: 'Giardino' }, { key: 'parking', label: 'Parcheggio' }, { key: 'floor', label: 'Piano' },
+];
+
+// Stessi dati campione del post wizard dell'estensione (SAMPLE_DATA in post-wizard-app.js)
+const DEFAULT_PHOTO = '/templates/default-photo.png';
+
+const SAMPLE_TPL_DATA = {
+  price: '€ 250.000', address: 'Via Valerio Rossi, 53',
+  surface: '180 m²', surfaceNum: '180', rooms: '4',
+  bedrooms: '4', bathrooms: '3', type: 'Appartamento Premium',
+  title: 'Appartamento Premium', contract: 'Nuovo',
+  description: 'Splendido appartamento con finiture di pregio e ampi spazi luminosi.',
+  ctaText: 'Contattaci ora', accentColor: '#2967EC',
+};
+
+const DEMO_IMMOBILI = [
+  { id: 'i1', nome: 'Attico Brera', prezzo: '€ 1.250.000', meta: '145 m² · 4 locali', thumb: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=80&h=80&fit=crop' },
+  { id: 'i2', nome: 'Trilocale Isola', prezzo: '€ 545.000', meta: '95 m² · 3 locali', thumb: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=80&h=80&fit=crop' },
+  { id: 'i3', nome: 'Appartamento Trastevere', prezzo: '€ 690.000', meta: '110 m² · 3 locali', thumb: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=80&h=80&fit=crop' },
+  { id: 'i4', nome: 'Bilocale Crocetta', prezzo: '€ 295.000', meta: '68 m² · 2 locali', thumb: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=80&h=80&fit=crop' },
+];
+
+// Carica i loghi GNM default come data URL, come fa il post wizard dell'estensione
+let logosCache: { white: string | null; black: string | null; blue: string | null } | null = null;
+async function loadDefaultLogos() {
+  if (logosCache) return logosCache;
+  const load = async (url: string): Promise<string | null> => {
+    try {
+      const resp = await fetch(url);
+      if (!resp.ok) return null;
+      const blob = await resp.blob();
+      return await new Promise<string>(r => { const fr = new FileReader(); fr.onload = () => r(fr.result as string); fr.readAsDataURL(blob); });
+    } catch { return null; }
+  };
+  const [white, black, blue] = await Promise.all([
+    load('/templates/default-logo-vertical.svg'),
+    load('/templates/default-logo-vertical-black.svg'),
+    load('/templates/default-logo-vertical-blue.svg'),
+  ]);
+  logosCache = { white, black, blue };
+  return logosCache;
+}
+
+function PostSocialScreen({ toast }: { toast: (msg: string, icon?: string) => void }) {
+  const [step, setStep] = React.useState(1);
+  const [logos, setLogos] = React.useState<{ white: string | null; black: string | null; blue: string | null } | null>(logosCache);
+  React.useEffect(() => { loadDefaultLogos().then(setLogos); }, []);
+  const [platform, setPlatform] = React.useState('instagram');
+  const [formatId, setFormatId] = React.useState('ig-post');
+  const [tplId, setTplId] = React.useState('gradient');
+  const [selImm, setSelImm] = React.useState<string | null>(null);
+  const [bgLoaded, setBgLoaded] = React.useState(false);
+  const [fields, setFields] = React.useState({ titolo: '', indirizzo: '', prezzo: '', superficie: '', camere: '', bagni: '', descrizione: '', btnTxt: 'Contattaci ora', badgeTxt: 'Nuovo' });
+  const [showBadge, setShowBadge] = React.useState(true);
+  const [showLogo, setShowLogo] = React.useState(true);
+  const [oscuramento, setOscuramento] = React.useState(100);
+  const [animStyle, setAnimStyle] = React.useState('slide-up');
+  const [pubPlatforms, setPubPlatforms] = React.useState({ instagram: true, facebook: false, tiktok: false });
+  const [pubMode, setPubMode] = React.useState<'schedule' | 'now'>('schedule');
+  const [caption, setCaption] = React.useState('');
+  const [hashtags, setHashtags] = React.useState('');
+  const [firstComment, setFirstComment] = React.useState('');
+  const [coverPhoto, setCoverPhoto] = React.useState<string>(DEFAULT_PHOTO);
+  const [isVideo, setIsVideo] = React.useState(false);
+  const [extraPhotos, setExtraPhotos] = React.useState<string[]>([]);
+  const [fieldIcons, setFieldIcons] = React.useState<Record<string, string>>({ bedrooms: 'bed', bathrooms: 'bath', surface: 'area' });
+  const [iconDropdown, setIconDropdown] = React.useState<string | null>(null);
+  const [currency, setCurrency] = React.useState('€');
+  const [currencyDropdown, setCurrencyDropdown] = React.useState(false);
+  const [showAnimPicker, setShowAnimPicker] = React.useState(false);
+  const [exporting, setExporting] = React.useState<'image' | 'video' | null>(null);
+  const [exportProgress, setExportProgress] = React.useState(0);
+  const exportAbortRef = React.useRef<AbortController | null>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const extraFileRefs = React.useRef<(HTMLInputElement | null)[]>([]);
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    setCoverPhoto(url);
+    setIsVideo(file.type.startsWith('video/'));
+  };
+  const handleExtraPhoto = (idx: number, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    setExtraPhotos(prev => { const next = [...prev]; next[idx] = url; return next; });
+    e.target.value = '';
+  };
+  const getPhotosArray = (tpl: typeof TEMPLATES[number]) => {
+    if (!tpl.multiPhoto) return undefined;
+    const count = tpl.multiPhoto - 1;
+    return Array.from({ length: count }, (_, i) => extraPhotos[i] || '');
+  };
+
+  const previewContainerRef = React.useRef<HTMLDivElement>(null);
+
+  // Builds a fresh full-size template element OUTSIDE React's DOM (React re-renders
+  // during export would replace the preview element mid-capture and break html2canvas).
+  // Mounted at normal coordinates inside an opacity:0 wrapper, same as the extension:
+  // html2canvas starts rendering at the target element, ancestor opacity is ignored.
+  const mountExportEl = async () => {
+    const blurredUrl: string = await new Promise((resolve) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        const sc = 0.15;
+        const cw = Math.max(Math.round(img.naturalWidth * sc), 1);
+        const ch = Math.max(Math.round(img.naturalHeight * sc), 1);
+        const canvas = document.createElement('canvas');
+        canvas.width = cw; canvas.height = ch;
+        const ctx = canvas.getContext('2d')!;
+        ctx.filter = 'blur(8px)';
+        ctx.drawImage(img, 0, 0, cw, ch);
+        resolve(canvas.toDataURL('image/jpeg', 0.5));
+      };
+      img.onerror = () => resolve(coverPhoto);
+      img.src = coverPhoto;
+    });
+
+    const data = {
+      ...SAMPLE_TPL_DATA,
+      title: fields.titolo || SAMPLE_TPL_DATA.title,
+      type: fields.titolo || SAMPLE_TPL_DATA.type,
+      address: fields.indirizzo || SAMPLE_TPL_DATA.address,
+      price: `${currency} ${fields.prezzo || '250.000'}`,
+      surface: (fields.superficie || SAMPLE_TPL_DATA.surfaceNum) + ' m²',
+      surfaceNum: fields.superficie || SAMPLE_TPL_DATA.surfaceNum,
+      bedrooms: fields.camere || SAMPLE_TPL_DATA.bedrooms,
+      bathrooms: fields.bagni || SAMPLE_TPL_DATA.bathrooms,
+      rooms: fields.camere || SAMPLE_TPL_DATA.rooms,
+      description: fields.descrizione || SAMPLE_TPL_DATA.description,
+      ctaText: fields.btnTxt || SAMPLE_TPL_DATA.ctaText,
+      contract: showBadge ? (fields.badgeTxt || 'Nuovo') : '',
+      _icons: fieldIcons,
+    };
+    const opts: Record<string, unknown> = {
+      size: curFmt,
+      blurredUrl,
+      isVideo,
+      ...(showLogo ? { logoWhite: logos?.white, logoBlack: logos?.black, logoColored: logos?.blue, logoPosition: 'top-right', logoOrientation: 'vertical' } : {}),
+      ...(curTpl.multiPhoto ? { photos: getPhotosArray(curTpl) } : {}),
+    };
+    const tplEl = renderTemplate(tplId, data, coverPhoto, opts) as HTMLElement;
+    tplEl.style.width = curFmt.w + 'px';
+    tplEl.style.height = curFmt.h + 'px';
+
+    const wrapper = document.createElement('div');
+    wrapper.style.cssText = `position:fixed;top:0;left:0;width:${curFmt.w}px;height:${curFmt.h}px;opacity:0;pointer-events:none;overflow:visible;z-index:-1;`;
+    wrapper.appendChild(tplEl);
+    document.body.appendChild(wrapper);
+
+    const blurMap: Record<string, string> = {
+      'tpl-glass-panel': 'blur(16px)',
+      'tpl-metric-card': 'blur(12px)',
+      'tpl-metric-pill': 'blur(12px)',
+    };
+    for (const [cls, val] of Object.entries(blurMap)) {
+      tplEl.querySelectorAll('.' + cls).forEach((node) => {
+        const h = node as HTMLElement;
+        h.style.backdropFilter = val;
+        h.style.setProperty('-webkit-backdrop-filter', val);
+      });
+    }
+
+    const dimAlpha = oscuramento / 100;
+    tplEl.querySelectorAll('.tpl-overlay').forEach((node) => {
+      (node as HTMLElement).style.opacity = String(dimAlpha);
+    });
+
+    if (document.fonts?.ready) await document.fonts.ready;
+    await new Promise<void>(resolve => {
+      const imgs = tplEl.querySelectorAll('img');
+      let pending = 0;
+      imgs.forEach(img => { if (!img.complete) { pending++; img.onload = img.onerror = () => { if (--pending === 0) resolve(); }; } });
+      if (pending === 0) resolve();
+    });
+    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+
+    return { tplEl, cleanup: () => { try { wrapper.remove(); } catch {} } };
+  };
+
+  const handleExportImage = async () => {
+    if (exporting) return;
+    setExporting('image');
+    let cleanup: (() => void) | null = null;
+    try {
+      const mounted = await mountExportEl();
+      cleanup = mounted.cleanup;
+      const blob = await exportToPng(mounted.tplEl, { w: curFmt.w, h: curFmt.h }, { photoSrc: coverPhoto });
+      await downloadBlob(blob, 'social-post.png');
+      toast('Immagine scaricata', 'download');
+    } catch (err) {
+      console.error('Export PNG failed:', err);
+      toast('Errore durante il download', 'download');
+    } finally {
+      cleanup?.();
+      setExporting(null);
+    }
+  };
+
+  const handleExportVideo = async () => {
+    if (exporting) return;
+    setExporting('video');
+    setExportProgress(0);
+    const abort = new AbortController();
+    exportAbortRef.current = abort;
+    let cleanup: (() => void) | null = null;
+    try {
+      const mounted = await mountExportEl();
+      cleanup = mounted.cleanup;
+      const { blob, ext } = await exportStaticToVideo(mounted.tplEl, { w: curFmt.w, h: curFmt.h }, {
+        duration: 15,
+        animStyle,
+        photoSrc: coverPhoto,
+        fitCover: false,
+        onProgress: (p: number) => setExportProgress(Math.round(p * 100)),
+        signal: abort.signal,
+        onOverlayCaptured: () => { cleanup?.(); cleanup = null; },
+      });
+      await downloadBlob(blob, 'social-post.' + ext);
+      toast('Video scaricato', 'download');
+      setShowAnimPicker(false);
+    } catch (err: unknown) {
+      if (err instanceof DOMException && err.name === 'AbortError') {
+        toast('Export annullato', 'download');
+      } else {
+        console.error('Export video failed:', err);
+        toast('Errore durante il download', 'download');
+      }
+    } finally {
+      cleanup?.();
+      setExporting(null);
+      setExportProgress(0);
+      exportAbortRef.current = null;
+    }
+  };
+
+  const plat = PS_PLATFORMS.find(p => p.id === platform)!;
+  const formats = plat.formats;
+  const curFmt = formats.find(f => f.id === formatId) ?? formats[0];
+  const curTpl = TEMPLATES.find(t => t.id === tplId)!;
+  const hasField = (f: string) => !curTpl.fields || curTpl.fields.includes(f);
+
+  const setField = (k: string, v: string) => setFields(f => ({ ...f, [k]: v }));
+
+  const stepTitles: Record<number, string> = { 1: 'Scegli un template', 3: 'Modifica post', 4: 'Pubblica' };
+  const stepSubs: Record<number, string> = { 1: 'Seleziona lo stile del tuo post', 3: 'Personalizza e scarica il post', 4: 'Programma o pubblica subito il post' };
+
+  const goStep = (n: number) => {
+    if (n === 2 && selImm) {
+      const imm = DEMO_IMMOBILI.find(i => i.id === selImm);
+      if (imm) {
+        setField('titolo', 'Appartamento');
+        setField('indirizzo', imm.nome);
+        setField('prezzo', imm.prezzo);
+      }
+    }
+    setStep(n);
+  };
+
+  const inputStyle: React.CSSProperties = { width: '100%', border: '1px solid #e4e1da', borderRadius: 8, padding: '10px 12px', fontSize: 13, fontFamily: 'inherit', outline: 'none', background: '#fff' };
+  const labelStyle: React.CSSProperties = { display: 'block', fontSize: 12.5, fontWeight: 700, marginBottom: 5 };
+  const smallLabelStyle: React.CSSProperties = { display: 'block', fontSize: 11.5, fontWeight: 700, marginBottom: 5 };
+
+  // Preview: fit to viewport height, reactive on resize
+  const [winH, setWinH] = React.useState(typeof window !== 'undefined' ? window.innerHeight : 800);
+  const closeAllDropdowns = () => { setIconDropdown(null); setCurrencyDropdown(false); };
+  React.useEffect(() => {
+    const onResize = () => setWinH(window.innerHeight);
+    window.addEventListener('resize', onResize);
+    return () => { window.removeEventListener('resize', onResize); };
+  }, []);
+  React.useEffect(() => {
+    if (document.getElementById('anim-prev-css')) return;
+    const st = document.createElement('style');
+    st.id = 'anim-prev-css';
+    st.textContent = ANIM_CSS;
+    document.head.appendChild(st);
+  }, []);
+  const maxPvH = winH - 180;
+  const scaleByH = maxPvH / curFmt.h;
+  const pvScale = Math.min(0.55, scaleByH);
+  const pvW = curFmt.w * pvScale;
+  const pvH = curFmt.h * pvScale;
+
+  return (
+    <div style={s('max-width:1240px;margin:0 auto;padding:16px 32px 64px')}>
+      {/* header */}
+      <div style={s('display:flex;align-items:center;gap:12px;margin-bottom:22px')}>
+        {step > 1 && (
+          <Box as="button" onClick={() => setStep(step === 3 ? 1 : step - 1)} style={s('border:1px solid #e4e1da;background:#fff;width:38px;height:38px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center')} hover={s('background:#f6f4f0')}>
+            <Icon name="arrow-left" size={15} color="#57534c" />
+          </Box>
+        )}
+        <div style={s('flex:1;min-width:0')}>
+          <h1 style={s('margin:0 0 2px;font-size:22px;font-weight:800;letter-spacing:-.4px')}>{stepTitles[step]}</h1>
+          <div style={s('font-size:13px;color:#8c867d')}>{stepSubs[step]} · passo {step === 1 ? 1 : step === 3 ? 2 : 3} di 3</div>
+        </div>
+      </div>
+
+      <input ref={fileInputRef} type="file" accept="image/*,video/*" onChange={handlePhotoUpload} style={{ display: 'none' }} />
+
+      {/* STEP 1: template selection */}
+      {step === 1 && (
+        <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: 22, alignItems: 'start' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, position: 'sticky', top: 24 }}>
+            {PS_PLATFORMS.map(pl => (
+              <Box key={pl.id} onClick={() => { setPlatform(pl.id); setFormatId(pl.formats[0].id); }} style={{
+                padding: '10px 14px', borderRadius: 12, cursor: 'pointer', fontSize: 14,
+                fontWeight: platform === pl.id ? 700 : 500,
+                color: platform === pl.id ? '#211f1c' : '#8c867d',
+                background: platform === pl.id ? '#f1efe9' : 'transparent',
+              }} hover={{ background: '#f1efe9' }}>{pl.label}</Box>
+            ))}
+            <div style={{ height: 1, background: '#ece9e2', margin: '8px 0' }} />
+            {formats.map(f => (
+              <Box key={f.id} onClick={() => setFormatId(f.id)} style={{
+                borderWidth: 1, borderStyle: 'solid', borderColor: formatId === f.id ? '#3B83F6' : '#e4e1da',
+                background: formatId === f.id ? '#eef4fe' : '#fff',
+                color: formatId === f.id ? '#1d5fd0' : '#57534c',
+                fontSize: 11.5, fontWeight: 700, padding: '8px 10px', borderRadius: 8, cursor: 'pointer', minHeight: 38, whiteSpace: 'nowrap', display: 'flex', alignItems: 'center',
+              }} hover={{ borderColor: '#3B83F6' }}>{f.label}</Box>
+            ))}
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+            {/* upload cover photo */}
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px',
+                background: '#fff', border: '1.5px dashed #d8d4cb', borderRadius: 12,
+                cursor: 'pointer', transition: 'border-color .15s',
+                maxWidth: 940,
+              }}
+              onMouseEnter={e => (e.currentTarget.style.borderColor = '#3B83F6')}
+              onMouseLeave={e => (e.currentTarget.style.borderColor = '#d8d4cb')}
+            >
+              {coverPhoto !== DEFAULT_PHOTO ? (
+                <img src={coverPhoto} alt="" style={{ width: 48, height: 48, borderRadius: 8, objectFit: 'cover' }} />
+              ) : (
+                <div style={{ width: 48, height: 48, borderRadius: 8, background: '#f6f4f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Icon name="upload" size={20} color="#8c867d" />
+                </div>
+              )}
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#211f1c' }}>
+                  {coverPhoto !== DEFAULT_PHOTO ? 'Cambia foto di sfondo' : 'Carica foto o video'}
+                </div>
+                <div style={{ fontSize: 11.5, color: '#8c867d' }}>JPG, PNG, WebP, MP4</div>
+              </div>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 300px)', gap: 20, justifyContent: 'start' }}>
+            {TEMPLATES.map(tc => {
+              const sel = tc.id === tplId;
+              const cardW = 300;
+              // Stesse opts del renderTemplateGrid dell'estensione: formato selezionato, loghi verticali default, foto primaria duplicata per multi-foto
+              const tplOpts: Record<string, unknown> = {
+                size: curFmt,
+                logoWhite: logos?.white, logoBlack: logos?.black, logoColored: logos?.blue,
+                logoPosition: 'top-right', logoOrientation: 'vertical',
+              };
+              if (tc.multiPhoto) tplOpts.photos = getPhotosArray(tc);
+              return (
+                <div key={tc.id} onClick={() => { setTplId(tc.id); goStep(3); }} style={{
+                  borderRadius: 14, overflow: 'hidden', cursor: 'pointer',
+                  outline: sel ? '2.5px solid #3B83F6' : 'none', outlineOffset: 2,
+                  transition: 'transform .15s, box-shadow .15s',
+                }}>
+                  <TemplatePreview
+                    templateId={tc.id}
+                    data={SAMPLE_TPL_DATA}
+                    photoUrl={coverPhoto}
+                    width={cardW}
+                    opts={tplOpts}
+                  />
+                </div>
+              );
+            })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* STEP 3: edit post (skip step 2, dati vengono dal progetto attivo) */}
+      {step === 3 && (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 360px', gap: 28, alignItems: 'start' }}>
+          {(iconDropdown || currencyDropdown) && (
+            <div onClick={closeAllDropdowns} style={{ position: 'fixed', inset: 0, zIndex: 40 }} />
+          )}
+          {/* preview */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, position: 'sticky', top: 16 }}>
+            {/* preview with arrows on sides */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <Box as="button" onClick={() => { const i = TEMPLATES.findIndex(t => t.id === tplId); setTplId(TEMPLATES[(i - 1 + TEMPLATES.length) % TEMPLATES.length].id); }} style={s('border:1px solid #e4e1da;background:#fff;width:34px;height:34px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none')} hover={s('background:#f6f4f0')}>
+                <Icon name="arrow-left" size={14} color="#57534c" />
+              </Box>
+              <div ref={previewContainerRef} style={{ borderRadius: 12, overflow: 'hidden', boxShadow: '0 12px 36px rgba(33,31,28,.14)' }}>
+                <TemplatePreview
+                  templateId={tplId}
+                  data={{
+                    ...SAMPLE_TPL_DATA,
+                    title: fields.titolo || SAMPLE_TPL_DATA.title,
+                    type: fields.titolo || SAMPLE_TPL_DATA.type,
+                    address: fields.indirizzo || SAMPLE_TPL_DATA.address,
+                    price: `${currency} ${fields.prezzo || '250.000'}`,
+                    surface: (fields.superficie || SAMPLE_TPL_DATA.surfaceNum) + ' m²',
+                    surfaceNum: fields.superficie || SAMPLE_TPL_DATA.surfaceNum,
+                    bedrooms: fields.camere || SAMPLE_TPL_DATA.bedrooms,
+                    bathrooms: fields.bagni || SAMPLE_TPL_DATA.bathrooms,
+                    rooms: fields.camere || SAMPLE_TPL_DATA.rooms,
+                    description: fields.descrizione || SAMPLE_TPL_DATA.description,
+                    ctaText: fields.btnTxt || SAMPLE_TPL_DATA.ctaText,
+                    contract: showBadge ? (fields.badgeTxt || 'Nuovo') : '',
+                    _icons: fieldIcons,
+                  }}
+                  photoUrl={coverPhoto}
+                  width={pvW}
+                  opts={{
+                    size: curFmt,
+                    dimAlpha: oscuramento / 100,
+                    isVideo,
+                    ...(showLogo ? { logoWhite: logos?.white, logoBlack: logos?.black, logoColored: logos?.blue, logoPosition: 'top-right', logoOrientation: 'vertical' } : {}),
+                    ...(curTpl.multiPhoto ? { photos: getPhotosArray(curTpl) } : {}),
+                  }}
+                />
+              </div>
+              <Box as="button" onClick={() => { const i = TEMPLATES.findIndex(t => t.id === tplId); setTplId(TEMPLATES[(i + 1) % TEMPLATES.length].id); }} style={s('border:1px solid #e4e1da;background:#fff;width:34px;height:34px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none')} hover={s('background:#f6f4f0')}>
+                <Icon name="arrow-right" size={14} color="#57534c" />
+              </Box>
+            </div>
+          </div>
+          {/* sidebar */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {/* info mini card */}
+            <div style={{ background: '#fff', border: '1px solid #f0ede7', borderRadius: 12, padding: '16px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+              {/* platform row */}
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 600, color: '#8c867d', marginBottom: 6 }}>Piattaforma</div>
+                <div style={{ display: 'flex', alignItems: 'center', background: '#f6f4f0', borderRadius: 8, padding: 3 }}>
+                  {PS_PLATFORMS.map(pl => (
+                    <div key={pl.id} onClick={() => { setPlatform(pl.id); setFormatId(pl.formats[0].id); }} style={{
+                      flex: 1, textAlign: 'center', padding: '6px 0', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                      background: platform === pl.id ? '#fff' : 'transparent',
+                      color: platform === pl.id ? '#211f1c' : '#8c867d',
+                      boxShadow: platform === pl.id ? '0 1px 3px rgba(0,0,0,.08)' : 'none',
+                      transition: 'all .15s',
+                    }}>{pl.label}</div>
+                  ))}
+                </div>
+              </div>
+              {/* format row */}
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 600, color: '#8c867d', marginBottom: 6 }}>Formato</div>
+                <div style={{ display: 'flex', alignItems: 'center', background: '#f6f4f0', borderRadius: 8, padding: 3 }}>
+                  {formats.map(f => (
+                    <div key={f.id} onClick={() => setFormatId(f.id)} style={{
+                      flex: 1, textAlign: 'center', padding: '6px 0', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                      background: formatId === f.id ? '#fff' : 'transparent',
+                      color: formatId === f.id ? '#1d5fd0' : '#8c867d',
+                      boxShadow: formatId === f.id ? '0 1px 3px rgba(0,0,0,.08)' : 'none',
+                      transition: 'all .15s',
+                    }}>
+                      {f.id.includes('post') ? 'Post' : f.id.includes('story') ? 'Story' : f.id.includes('reel') ? 'Reel' : f.label.split(' ').pop()}
+                    </div>
+                  ))}
+                </div>
+              </div>
+              {/* template + size */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid #f4f2ee', paddingTop: 12 }}>
+                <span style={{ fontSize: 12.5, fontWeight: 700, color: '#211f1c' }}>{curTpl.label}</span>
+                <span style={{ fontSize: 11, fontWeight: 600, color: '#b8b3a9', background: '#f6f4f0', padding: '3px 8px', borderRadius: 4 }}>{curFmt.w} × {curFmt.h}</span>
+              </div>
+            </div>
+            {/* photo upload */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px',
+                  background: '#fff', border: '1px solid #f0ede7', borderRadius: 12,
+                  cursor: 'pointer', transition: 'border-color .15s',
+                }}
+                onMouseEnter={e => (e.currentTarget.style.borderColor = '#3B83F6')}
+                onMouseLeave={e => (e.currentTarget.style.borderColor = '#f0ede7')}
+              >
+                {coverPhoto !== DEFAULT_PHOTO ? (
+                  isVideo
+                    ? <video src={coverPhoto} muted style={{ width: 44, height: 44, borderRadius: 8, objectFit: 'cover' }} />
+                    : <img src={coverPhoto} alt="" style={{ width: 44, height: 44, borderRadius: 8, objectFit: 'cover' }} />
+                ) : (
+                  <div style={{ width: 44, height: 44, borderRadius: 8, background: '#f6f4f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Icon name="upload" size={18} color="#8c867d" />
+                  </div>
+                )}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 12.5, fontWeight: 700, color: '#211f1c' }}>
+                    {coverPhoto !== DEFAULT_PHOTO ? (isVideo ? 'Cambia video' : 'Cambia foto principale') : 'Carica foto o video'}
+                  </div>
+                  <div style={{ fontSize: 11, color: '#8c867d' }}>JPG, PNG, WebP, MP4</div>
+                </div>
+                <Icon name="image" size={16} color="#b8b3a9" />
+              </div>
+              {curTpl.multiPhoto && Array.from({ length: curTpl.multiPhoto - 1 }, (_, i) => (
+                <div key={`extra-${i}`}>
+                  <input ref={el => { extraFileRefs.current[i] = el; }} type="file" accept="image/*,video/*" onChange={e => handleExtraPhoto(i, e)} style={{ display: 'none' }} />
+                  <div
+                    onClick={() => extraFileRefs.current[i]?.click()}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px',
+                      background: '#fff', border: '1px solid #f0ede7', borderRadius: 12,
+                      cursor: 'pointer', transition: 'border-color .15s',
+                    }}
+                    onMouseEnter={e => (e.currentTarget.style.borderColor = '#3B83F6')}
+                    onMouseLeave={e => (e.currentTarget.style.borderColor = '#f0ede7')}
+                  >
+                    {extraPhotos[i] ? (
+                      <img src={extraPhotos[i]} alt="" style={{ width: 44, height: 44, borderRadius: 8, objectFit: 'cover' }} />
+                    ) : (
+                      <div style={{ width: 44, height: 44, borderRadius: 8, background: '#f6f4f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Icon name="upload" size={18} color="#8c867d" />
+                      </div>
+                    )}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 12.5, fontWeight: 700, color: '#211f1c' }}>
+                        {extraPhotos[i] ? `Cambia foto ${i + 2}` : `Carica foto ${i + 2}`}
+                      </div>
+                      <div style={{ fontSize: 11, color: '#8c867d' }}>JPG, PNG, WebP, MP4</div>
+                    </div>
+                    <Icon name="image" size={16} color="#b8b3a9" />
+                  </div>
+                </div>
+              ))}
+            </div>
+            {/* fields card */}
+            <div style={{ background: '#fff', border: '1px solid #f0ede7', borderRadius: 12, padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#8c867d', textTransform: 'uppercase' as const, letterSpacing: '0.05em' }}>Dati immobile</div>
+              {hasField('title') && <div><label style={labelStyle}>Titolo</label><input value={fields.titolo} onChange={e => setField('titolo', e.target.value)} placeholder="Es. Appartamento" style={inputStyle} /></div>}
+              {hasField('address') && <div><label style={labelStyle}>Indirizzo</label><input value={fields.indirizzo} onChange={e => setField('indirizzo', e.target.value)} placeholder="Es. Milano, Porta Nuova" style={inputStyle} /></div>}
+              {hasField('price') && <div style={{ position: 'relative' }}>
+                <label style={labelStyle}>Prezzo</label>
+                <div style={{ position: 'relative' }}>
+                  <input value={fields.prezzo} onChange={e => setField('prezzo', e.target.value)} placeholder="250.000" style={{ ...inputStyle, paddingRight: 34 }} />
+                  <div
+                    onClick={() => { setIconDropdown(null); setCurrencyDropdown(!currencyDropdown); }}
+                    style={{
+                      position: 'absolute', right: 5, top: '50%', transform: 'translateY(-50%)',
+                      width: 26, height: 26, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      cursor: 'pointer', border: '1px solid #e4e1da', background: currencyDropdown ? '#f6f4f0' : 'transparent',
+                      color: '#211f1c', transition: 'all .15s', fontSize: 13, fontWeight: 700,
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = '#3B83F6'; e.currentTarget.style.background = '#f6f4f0'; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = '#e4e1da'; e.currentTarget.style.background = currencyDropdown ? '#f6f4f0' : 'transparent'; }}
+                  >
+                    {currency}
+                  </div>
+                </div>
+                {currencyDropdown && (
+                  <div style={{
+                    position: 'absolute', top: '100%', right: 0, zIndex: 50, marginTop: 4,
+                    background: '#fff', border: '1px solid #e4e1da', borderRadius: 8,
+                    boxShadow: '0 4px 12px rgba(0,0,0,.10)', padding: 4, display: 'flex', gap: 2,
+                  }}>
+                    {['€', '$', '£', 'CHF'].map(c => (
+                      <div key={c} onClick={() => { setCurrency(c); setCurrencyDropdown(false); }} style={{
+                        width: 36, height: 32, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        cursor: 'pointer', fontSize: 14, fontWeight: 600,
+                        border: currency === c ? '1.5px solid #3B83F6' : '1.5px solid transparent',
+                        background: currency === c ? '#eef4fe' : 'transparent',
+                        color: currency === c ? '#3B83F6' : '#6b7280', transition: 'all .15s',
+                      }}
+                        onMouseEnter={e => { if (currency !== c) { e.currentTarget.style.background = '#f6f4f0'; e.currentTarget.style.color = '#211f1c'; } }}
+                        onMouseLeave={e => { if (currency !== c) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#6b7280'; } }}
+                      >{c}</div>
+                    ))}
+                  </div>
+                )}
+              </div>}
+              {hasField('metrics') && <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 9 }}>
+                {([
+                  { field: 'surface', stateKey: 'superficie', label: 'Superficie', placeholder: '110' },
+                  { field: 'bedrooms', stateKey: 'camere', label: 'Camere', placeholder: '3' },
+                  { field: 'bathrooms', stateKey: 'bagni', label: 'Bagni', placeholder: '2' },
+                ] as const).map(m => {
+                  const iconKey = fieldIcons[m.field];
+                  return (
+                    <div key={m.field} style={{ position: 'relative' }}>
+                      <label style={smallLabelStyle as React.CSSProperties}>{PICKER_ICONS.find(pi => pi.key === fieldIcons[m.field])?.label || m.label}</label>
+                      <div style={{ position: 'relative' }}>
+                        <input value={fields[m.stateKey]} onChange={e => setField(m.stateKey, e.target.value)} placeholder={m.placeholder} style={{ ...inputStyle, paddingRight: 34 }} />
+                        <div
+                          onClick={() => { setCurrencyDropdown(false); setIconDropdown(iconDropdown === m.field ? null : m.field); }}
+                          style={{
+                            position: 'absolute', right: 5, top: '50%', transform: 'translateY(-50%)',
+                            width: 26, height: 26, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            cursor: 'pointer', border: '1px solid #e4e1da', background: iconDropdown === m.field ? '#f6f4f0' : 'transparent',
+                            color: '#211f1c', transition: 'all .15s',
+                          }}
+                          onMouseEnter={e => { e.currentTarget.style.borderColor = '#3B83F6'; e.currentTarget.style.background = '#f6f4f0'; }}
+                          onMouseLeave={e => { e.currentTarget.style.borderColor = '#e4e1da'; e.currentTarget.style.background = iconDropdown === m.field ? '#f6f4f0' : 'transparent'; }}
+                        >
+                          <span style={{ width: 14, height: 14, display: 'flex' }} dangerouslySetInnerHTML={{ __html: (TPL_ICONS as Record<string, string>)[iconKey] || '' }} />
+                        </div>
+                      </div>
+                      {iconDropdown === m.field && (
+                        <div style={{
+                          position: 'absolute', top: '100%', right: 0, zIndex: 50,
+                          background: '#fff', border: '1px solid #e4e1da', borderRadius: 8,
+                          boxShadow: '0 4px 12px rgba(0,0,0,.10)',
+                          display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 4, padding: 6, marginTop: 4,
+                        }}>
+                          {PICKER_ICONS.map(pi => (
+                            <div key={pi.key} onClick={() => { setFieldIcons(prev => ({ ...prev, [m.field]: pi.key })); setIconDropdown(null); }} style={{
+                              width: 30, height: 30, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              cursor: 'pointer', border: fieldIcons[m.field] === pi.key ? '1.5px solid #3B83F6' : '1.5px solid transparent',
+                              background: fieldIcons[m.field] === pi.key ? '#eef4fe' : 'transparent',
+                              color: fieldIcons[m.field] === pi.key ? '#3B83F6' : '#6b7280',
+                              transition: 'all .15s',
+                            }}
+                              onMouseEnter={e => { if (fieldIcons[m.field] !== pi.key) { e.currentTarget.style.background = '#f6f4f0'; e.currentTarget.style.color = '#211f1c'; } }}
+                              onMouseLeave={e => { if (fieldIcons[m.field] !== pi.key) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#6b7280'; } }}
+                            >
+                              <span style={{ width: 16, height: 16, display: 'flex' }} dangerouslySetInnerHTML={{ __html: (TPL_ICONS as Record<string, string>)[pi.key] || '' }} />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>}
+              {hasField('description') && <div><label style={labelStyle}>Descrizione</label><textarea value={fields.descrizione} onChange={e => setField('descrizione', e.target.value)} rows={2} placeholder="Informazioni sull'immobile..." style={{ ...inputStyle, lineHeight: 1.5 }} /></div>}
+            </div>
+            {/* style card */}
+            <div style={{ background: '#fff', border: '1px solid #f0ede7', borderRadius: 12, padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#8c867d', textTransform: 'uppercase' as const, letterSpacing: '0.05em' }}>Stile</div>
+              {/* logo toggle */}
+              <div style={s('display:flex;align-items:center;justify-content:space-between')}>
+                <span style={{ fontSize: 13, fontWeight: 600 }}>Logo</span>
+                <div onClick={() => setShowLogo(!showLogo)} style={{ width: 40, height: 24, borderRadius: 99, background: showLogo ? '#3B83F6' : '#d8d4cb', position: 'relative', cursor: 'pointer', transition: 'background .2s' }}>
+                  <span style={{ position: 'absolute', top: 3, left: showLogo ? 19 : 3, width: 18, height: 18, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,.2)', transition: 'left .2s' }} />
+                </div>
+              </div>
+              {/* badge toggle */}
+              {hasField('badge') && <div>
+                <div style={s('display:flex;align-items:center;justify-content:space-between')}>
+                  <span style={{ fontSize: 13, fontWeight: 600 }}>Badge</span>
+                  <div onClick={() => setShowBadge(!showBadge)} style={{ width: 40, height: 24, borderRadius: 99, background: showBadge ? '#3B83F6' : '#d8d4cb', position: 'relative', cursor: 'pointer', transition: 'background .2s' }}>
+                    <span style={{ position: 'absolute', top: 3, left: showBadge ? 19 : 3, width: 18, height: 18, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,.2)', transition: 'left .2s' }} />
+                  </div>
+                </div>
+                {showBadge && <input value={fields.badgeTxt} onChange={e => setField('badgeTxt', e.target.value)} placeholder="Es. Nuovo" style={{ ...inputStyle, marginTop: 8 }} />}
+              </div>}
+              <div style={{ height: 1, background: '#f0ede7', marginTop: 4, marginBottom: 4 }} />
+              {/* oscuramento */}
+              <div>
+                <div style={s('display:flex;align-items:center;justify-content:space-between;margin-bottom:6px')}>
+                  <span style={{ fontSize: 13, fontWeight: 600 }}>Oscuramento</span>
+                  <span style={{ fontSize: 12, fontWeight: 800, color: '#8c867d' }}>{oscuramento}%</span>
+                </div>
+                <input type="range" min={0} max={100} value={oscuramento} onChange={e => setOscuramento(+e.target.value)} style={{ width: '100%', accentColor: '#3B83F6' }} />
+              </div>
+              {curTpl.hasBtn && <div><label style={labelStyle}>Testo pulsante</label><input value={fields.btnTxt} onChange={e => setField('btnTxt', e.target.value)} placeholder="Es. Contattaci ora" style={inputStyle} /></div>}
+            </div>
+            {/* actions */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <Box as="button" onClick={handleExportImage} style={{ border: '1px solid #e4e1da', background: '#fff', fontSize: 13, fontWeight: 700, padding: '12px 16px', borderRadius: 10, cursor: 'pointer', minHeight: 42, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: exporting ? 0.5 : 1, pointerEvents: exporting ? 'none' : 'auto' }} hover={{ background: '#f6f4f0' }}>
+                <Icon name="download" size={15} color="#57534c" />{exporting === 'image' ? 'Esportazione...' : 'Scarica immagine'}
+              </Box>
+              <Box as="button" onClick={() => setShowAnimPicker(true)} style={{ border: '1px solid #e4e1da', background: '#fff', fontSize: 13, fontWeight: 700, padding: '12px 16px', borderRadius: 10, cursor: 'pointer', minHeight: 42, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: exporting ? 0.5 : 1, pointerEvents: exporting ? 'none' : 'auto' }} hover={{ background: '#f6f4f0' }}>
+                <Icon name="film" size={15} color="#57534c" />Scarica video
+              </Box>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Animation picker modal */}
+      {(showAnimPicker || exporting === 'video') && (
+        <div onClick={() => { if (exporting !== 'video') setShowAnimPicker(false); }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.45)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 20, padding: '28px 28px 24px', width: 'min(520px, 92vw)', boxShadow: '0 24px 64px rgba(0,0,0,.22)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
+              <div>
+                <div style={{ fontSize: 18, fontWeight: 800, color: '#211f1c' }}>Stile animazione</div>
+                <div style={{ fontSize: 13, color: '#8c867d', marginTop: 2 }}>Scegli come appaiono gli elementi nel video</div>
+              </div>
+              <button onClick={() => { if (exporting !== 'video') setShowAnimPicker(false); }} style={{ border: 'none', background: '#f6f4f0', borderRadius: 8, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, opacity: exporting === 'video' ? 0.4 : 1 }}>
+                <Icon name="x" size={16} color="#57534c" />
+              </button>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: 24 }}>
+              {ANIM_STYLES.map(a => {
+                const sel = animStyle === a.id;
+                return (
+                  <div key={a.id} onClick={() => setAnimStyle(a.id)} style={{
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, padding: '14px 6px 10px',
+                    borderRadius: 12, cursor: 'pointer',
+                    border: sel ? '2px solid #3B83F6' : '2px solid transparent',
+                    background: sel ? '#eef4fe' : '#f6f4f0',
+                    transition: 'all .15s',
+                  }}
+                    onMouseEnter={e => { if (!sel) e.currentTarget.style.background = '#ece9e2'; }}
+                    onMouseLeave={e => { if (!sel) e.currentTarget.style.background = '#f6f4f0'; }}
+                  >
+                    <div className={`acp--${a.id}`} style={{ width: 68, height: 95, borderRadius: 8, background: 'linear-gradient(145deg, #2a2733, #1a1825)', position: 'relative', overflow: 'hidden', flexShrink: 0 }}>
+                      <div className="aw aw-badge" />
+                      <div className="aw aw-price" />
+                      <div className="aw aw-title" />
+                      <div className="aw aw-addr" />
+                      <div className="aw aw-m1" />
+                      <div className="aw aw-m2" />
+                      <div className="aw aw-m3" />
+                      <div className="aw aw-desc" />
+                    </div>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: sel ? '#1d5fd0' : '#57534c' }}>{a.label}</span>
+                  </div>
+                );
+              })}
+            </div>
+            {exporting === 'video' && (
+              <div style={{ marginBottom: 12 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, fontWeight: 600, color: '#57534c', marginBottom: 6 }}>
+                  <span>Esportazione in corso...</span>
+                  <span>{exportProgress}%</span>
+                </div>
+                <div style={{ height: 6, borderRadius: 3, background: '#f0ede7', overflow: 'hidden' }}>
+                  <div style={{ height: '100%', borderRadius: 3, background: '#3B83F6', width: exportProgress + '%', transition: 'width .2s' }} />
+                </div>
+              </div>
+            )}
+            <Box as="button" onClick={() => { if (exporting === 'video') { exportAbortRef.current?.abort(); } else { handleExportVideo(); } }} style={{ border: exporting === 'video' ? '2px solid #dc2626' : '2px solid transparent', background: exporting === 'video' ? 'transparent' : '#3B83F6', color: exporting === 'video' ? '#dc2626' : '#fff', fontSize: 14, fontWeight: 700, padding: '13px 16px', borderRadius: 12, cursor: 'pointer', minHeight: 44, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }} hover={{ background: exporting === 'video' ? '#dc2626' : '#2b6fe0', color: '#fff', borderColor: exporting === 'video' ? '#dc2626' : 'transparent' }}>
+              <Icon name={exporting === 'video' ? 'x' : 'download'} size={16} color="currentColor" />{exporting === 'video' ? 'Annulla' : 'Scarica video'}
+            </Box>
+          </div>
+        </div>
+      )}
+
+      {/* STEP 4: publish */}
+      {step === 4 && (
+        <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr', gap: 24, alignItems: 'start', maxWidth: 980 }}>
+          {/* preview thumb */}
+          <div style={s('display:flex;flex-direction:column;align-items:center;gap:10px')}>
+            <div style={{ width: 240, aspectRatio: '4/5', borderRadius: 16, overflow: 'hidden', boxShadow: '0 10px 28px rgba(33,31,28,.12)', display: 'flex', flexDirection: 'column', background: '#fff' }}>
+              <div style={{ flex: 1, background: 'url(https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=400&h=500&fit=crop) center/cover' }} />
+              <div style={{ flex: 'none', background: 'linear-gradient(0deg, rgba(20,18,15,.92), rgba(20,18,15,.78))', padding: '10px 12px' }}>
+                <div style={{ fontSize: 11, fontWeight: 800, color: '#fff' }}>{fields.titolo || 'Appartamento'}</div>
+              </div>
+            </div>
+            <span style={{ fontSize: 12, fontWeight: 700, color: '#8c867d' }}>{curFmt.label}</span>
+          </div>
+          {/* publish form */}
+          <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:12px;padding:22px;display:flex;flex-direction:column;gap:15px')}>
+            <div>
+              <div style={{ fontSize: 12.5, fontWeight: 700, marginBottom: 8 }}>Piattaforme</div>
+              <div style={s('display:flex;gap:8px')}>
+                {(['instagram', 'facebook', 'tiktok'] as const).map(pp => (
+                  <Box as="button" key={pp} onClick={() => setPubPlatforms(p => ({ ...p, [pp]: !p[pp] }))} style={{
+                    border: `1px solid ${pubPlatforms[pp] ? '#3B83F6' : '#e4e1da'}`,
+                    background: pubPlatforms[pp] ? '#eef4fe' : '#fff',
+                    color: pubPlatforms[pp] ? '#1d5fd0' : '#57534c',
+                    fontSize: 13, fontWeight: 700, padding: '9px 18px', borderRadius: 8, cursor: 'pointer', minHeight: 38,
+                    textTransform: 'capitalize',
+                  }} hover={{ borderColor: '#3B83F6' }}>{pp}</Box>
+                ))}
+              </div>
+            </div>
+            <div>
+              <div style={{ fontSize: 12.5, fontWeight: 700, marginBottom: 8 }}>Quando</div>
+              <div style={s('display:flex;gap:8px')}>
+                {(['schedule', 'now'] as const).map(m => (
+                  <Box as="button" key={m} onClick={() => setPubMode(m)} style={{
+                    border: `1px solid ${pubMode === m ? '#3B83F6' : '#e4e1da'}`,
+                    background: pubMode === m ? '#eef4fe' : '#fff',
+                    color: pubMode === m ? '#1d5fd0' : '#57534c',
+                    fontSize: 13, fontWeight: 700, padding: '9px 18px', borderRadius: 8, cursor: 'pointer', minHeight: 38,
+                  }} hover={{ borderColor: '#3B83F6' }}>{m === 'schedule' ? 'Programma' : 'Pubblica ora'}</Box>
+                ))}
+              </div>
+            </div>
+            {pubMode === 'schedule' && (
+              <div>
+                <label style={labelStyle}>Data e ora</label>
+                <input type="datetime-local" style={inputStyle} />
+                <div style={{ fontSize: 11.5, color: '#8c867d', marginTop: 5 }}>Instagram consente di programmare fino a 75 giorni in anticipo.</div>
+              </div>
+            )}
+            <div>
+              <div style={s('display:flex;align-items:center;justify-content:space-between;margin-bottom:5px')}>
+                <label style={{ fontSize: 12.5, fontWeight: 700 }}>Caption</label>
+                <span style={{ fontSize: 11.5, fontWeight: 700, color: '#8c867d' }}>{caption.length}/2200</span>
+              </div>
+              <textarea value={caption} onChange={e => setCaption(e.target.value)} rows={3} maxLength={2200} placeholder="Descrizione del post..." style={{ ...inputStyle, lineHeight: 1.5 }} />
+            </div>
+            <div><label style={labelStyle}>Hashtags</label><input value={hashtags} onChange={e => setHashtags(e.target.value)} placeholder="#immobiliare #casainvendita" style={inputStyle} /></div>
+            <div><label style={labelStyle}>Primo commento (opzionale)</label><input value={firstComment} onChange={e => setFirstComment(e.target.value)} placeholder="Commento automatico dopo la pubblicazione..." style={inputStyle} /></div>
+            <Box as="button" onClick={() => { toast('Post programmato con successo', 'check'); setStep(1); }} style={s('border:none;background:#3B83F6;color:#fff;font-size:13.5px;font-weight:700;padding:12px 16px;border-radius:8px;cursor:pointer;min-height:38px;margin-top:4px')} hover={s('background:#2b6fe0')}>
+              {pubMode === 'schedule' ? 'Programma' : 'Pubblica ora'}
+            </Box>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ───── ACCOUNT / PIANO SCREEN ───── */
 function UsageBar({ label, used, total, color }: { label: string; used: number; total: number; color: string }) {
   const pct = Math.min((used / total) * 100, 100);
   return (
@@ -429,6 +1307,16 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
 
   const active = useMemo(() => projects.find((p) => p.id === activeProject) ?? projects[0], [projects, activeProject]);
 
+  useEffect(() => {
+    if (!document.getElementById('poppins-font')) {
+      const link = document.createElement('link');
+      link.id = 'poppins-font';
+      link.rel = 'stylesheet';
+      link.href = 'https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap';
+      document.head.appendChild(link);
+    }
+  }, []);
+
   const toast = useCallback((msg: string, icon = 'check') => {
     const id = Date.now() + Math.random();
     setToasts((t) => [...t, { id, msg, icon }]);
@@ -693,6 +1581,8 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                   })}
                 </div>
               </div>
+            ) : route === 'studio' ? (
+              <PostSocialScreen toast={toast} />
             ) : route === 'account' ? (
               <AccountScreen credits={credits} toast={toast} go={go} userData={userData} />
             ) : route === 'brand' ? (
