@@ -32,8 +32,8 @@ const DEMO_PROJECTS: Project[] = [
 ];
 
 const NAV_SECTIONS = [
-  { label: 'Progetto', items: [{ icon: 'sparkles', label: 'Foto AI', route: 'staging' }, { icon: 'film', label: 'Video AI', route: 'video' }, { icon: 'scissors', label: 'Montaggio', route: 'montaggio' }, { icon: 'image-plus', label: 'Post Social', route: 'studio' }, { icon: 'image', label: 'Media generati', route: 'media' }] },
-  { label: 'Agenzia', items: [{ icon: 'calendar', label: 'Calendario', route: 'calendario' }, { icon: 'palette', label: 'Brand', route: 'brand' }, { icon: 'credit-card', label: 'Piano', route: 'account' }] },
+  { label: 'Progetto', items: [{ icon: 'layout-dashboard', label: 'Home', route: 'home' }, { icon: 'sparkles', label: 'Foto AI', route: 'staging' }, { icon: 'film', label: 'Video AI', route: 'video' }, { icon: 'scissors', label: 'Montaggio', route: 'montaggio' }, { icon: 'image-plus', label: 'Post Social', route: 'studio' }, { icon: 'image', label: 'Media generati', route: 'media' }] },
+  { label: 'Agenzia', items: [{ icon: 'palette', label: 'Brand', route: 'brand' }, { icon: 'credit-card', label: 'Piano', route: 'account' }] },
 ];
 
 const TOUR_DEFS = [
@@ -1665,12 +1665,13 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
     typeof window !== 'undefined' ? localStorage.getItem('gnm_active_project') ?? 'p1' : 'p1'
   );
   const credits = userData?.credits ?? 0;
-  const [projects] = useState<Project[]>(DEMO_PROJECTS);
+  const [projects] = useState<Project[]>([]);
   const [welcomeOpen, setWelcomeOpen] = useState(true);
   const [tourStep, setTourStep] = useState<number | null>(null);
   const [tourRect, setTourRect] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
   const [trayOpen, setTrayOpen] = useState(false);
-  const [clDismissed, setClDismissed] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const profileRef = React.useRef<HTMLDivElement>(null);
   const [cmdkOpen, setCmdkOpen] = useState(false);
   const [cmdQuery, setCmdQuery] = useState('');
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -1704,14 +1705,14 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
 
   const contentRef = React.useRef<HTMLDivElement>(null);
   const [routeKey, setRouteKey] = useState(0);
-  const go = useCallback((r: string) => { setRoute(r); setRouteKey(k => k + 1); setProjOpen(false); setTrayOpen(false); contentRef.current?.scrollTo(0, 0); }, []);
-  const closeMenus = useCallback(() => { setProjOpen(false); setTrayOpen(false); }, []);
+  const go = useCallback((r: string) => { setRoute(r); setRouteKey(k => k + 1); setProjOpen(false); setTrayOpen(false); setProfileOpen(false); contentRef.current?.scrollTo(0, 0); }, []);
+  const closeMenus = useCallback(() => { setProjOpen(false); setTrayOpen(false); setProfileOpen(false); }, []);
 
   // ⌘K
   useEffect(() => {
     const kd = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')) { e.preventDefault(); setCmdkOpen(true); setCmdQuery(''); }
-      if (e.key === 'Escape') { setCmdkOpen(false); setTourStep(null); setProjOpen(false); setTrayOpen(false); }
+      if (e.key === 'Escape') { setCmdkOpen(false); setTourStep(null); setProjOpen(false); setTrayOpen(false); setProfileOpen(false); }
     };
     window.addEventListener('keydown', kd);
     return () => window.removeEventListener('keydown', kd);
@@ -1734,14 +1735,6 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
   }, [tourMeasure]);
 
   // ---- derived: checklist ----
-  const clDefs = [
-    { label: 'Brand configurato', done: false, route: 'brand' },
-    { label: 'Instagram collegato', done: false, route: 'social' },
-    { label: 'Primo immobile creato', done: true, route: 'progetti' },
-    { label: 'Prima generazione AI', done: false, route: 'staging' },
-  ];
-  const clDone = clDefs.filter((c) => c.done).length;
-  const showChecklist = !clDismissed && clDone < 4;
 
   const projList = projects.filter((p) => !projQuery || (p.nome + ' ' + p.addr).toLowerCase().includes(projQuery.toLowerCase()));
 
@@ -1804,7 +1797,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
       {/* APP SHELL */}
       <div style={{ display: 'flex', height: '100%' }}>
         {/* SIDEBAR */}
-        <div style={{ width: collapsed ? 76 : 252, flex: 'none', background: '#fff', borderRight: '1px solid #f0ede7', display: 'flex', flexDirection: 'column', transition: 'width .25s ease', overflow: 'hidden' }}>
+        <div style={{ width: collapsed ? 64 : 252, flex: 'none', background: '#fff', borderRight: '1px solid #f0ede7', display: 'flex', flexDirection: 'column', transition: 'width .25s ease', overflow: 'hidden' }}>
           <div style={s('height:64px;flex:none;display:flex;align-items:center;padding:0 20px;overflow:hidden')}>
             <div style={{ width: collapsed ? 27 : 130, overflow: 'hidden', flex: 'none' }}><img src="/dashboard/logo.svg" alt="GetNearMe" style={{ height: 24, maxWidth: 'none' }} /></div>
           </div>
@@ -1824,11 +1817,37 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
               </div>
             ))}
           </div>
-          <div style={s('flex:none;border-top:1px solid #f0ede7;padding:12px 10px')}>
-            <Box onClick={() => go('account')} title="Piano" style={s('display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:12px;cursor:pointer;background:#faf9f7')} hover={s('background:#f1efe9')}>
-              <Icon name="credit-card" size={18} color="#3B83F6" />
-              {!collapsed && <div style={{ minWidth: 0 }}><div style={s('font-size:13px;font-weight:800')}>Piano {PLANS.find(p => p.id === (SUB_TYPE_TO_PLAN[userData?.subscriptionType ?? ''] ?? 'quarterly'))?.name ?? 'Trimestrale'}</div></div>}
+          <div ref={profileRef} style={{ flex: 'none', borderTop: '1px solid #f0ede7', padding: collapsed ? '12px 6px' : '12px 10px' }}>
+            <Box onClick={(e) => { e.stopPropagation(); setProfileOpen(o => !o); setProjOpen(false); setTrayOpen(false); }} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: collapsed ? '0' : '10px 12px', borderRadius: collapsed ? '50%' : 12, cursor: 'pointer', justifyContent: collapsed ? 'center' : 'flex-start', width: collapsed ? 42 : 'auto', height: collapsed ? 42 : 'auto', margin: collapsed ? '0 auto' : 0 }} hover={{ background: '#f1efe9' }}>
+              <div style={s('width:34px;height:34px;border-radius:50%;background:#211f1c;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex:none')}>{(userData?.email ?? 'U')[0].toUpperCase()}</div>
+              {!collapsed && <div style={{ minWidth: 0, flex: 1 }}><div style={s('font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{userData?.email?.split('@')[0] ?? 'Utente'}</div><div style={s('font-size:11px;color:#8c867d;white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{userData?.email ?? ''}</div></div>}
+              {!collapsed && <Icon name="chevron-up" size={14} color="#8c867d" />}
             </Box>
+            {profileOpen && (() => {
+              const rect = profileRef.current?.getBoundingClientRect();
+              const left = rect ? rect.left + 10 : 10;
+              const bottom = rect ? window.innerHeight - rect.top + 4 : 80;
+              return (
+                <div style={{ position: 'fixed', bottom, left, width: 220, background: '#fff', borderRadius: 12, boxShadow: '0 16px 48px rgba(33,31,28,.16)', border: '1px solid #f0ede7', overflow: 'hidden', zIndex: 9999 }}>
+                  <div style={s('padding:4px')}>
+                    {[
+                      { icon: 'settings', label: 'Impostazioni', action: () => { setProfileOpen(false); toast('Impostazioni (in arrivo)'); } },
+                      { icon: 'play-circle', label: 'Tutorial', action: () => { setProfileOpen(false); setWelcomeOpen(true); } },
+                      { icon: 'life-buoy', label: 'Assistenza', action: () => { setProfileOpen(false); window.open('mailto:support@getnearme.it', '_blank'); } },
+                    ].map(item => (
+                      <Box key={item.label} onClick={item.action} style={s('display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:600')} hover={s('background:#f6f4f0')}>
+                        <Icon name={item.icon} size={16} color="#57534c" />{item.label}
+                      </Box>
+                    ))}
+                  </div>
+                  <div style={s('border-top:1px solid #f0ede7;padding:4px')}>
+                    <Box onClick={() => { setProfileOpen(false); window.location.href = '/api/auth/logout'; }} style={s('display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:600;color:#dc2626')} hover={s('background:#fef2f2')}>
+                      <Icon name="log-out" size={16} color="#dc2626" />Esci
+                    </Box>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         </div>
 
@@ -1841,8 +1860,17 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
             {/* project switcher */}
             <div style={{ position: 'relative' }}>
               <Box onClick={(e) => { e.stopPropagation(); setProjOpen((o) => !o); setTrayOpen(false); }} style={s('display:flex;align-items:center;gap:10px;padding:7px 14px 7px 8px;border:1px solid #e9e6df;border-radius:8px;cursor:pointer;background:#fff;min-height:38px')} hover={s('border-color:#d8d4cb;box-shadow:0 2px 8px rgba(33,31,28,.06)')}>
-                <div style={{ width: 30, height: 30, borderRadius: '50%', background: `url(${active.cover}) center/cover`, backgroundColor: '#f3f1ec', flex: 'none' }} />
-                <div style={{ minWidth: 0 }}><div style={s('font-size:11px;color:#8c867d;line-height:1.2')}>Progetto attivo</div><div style={s('font-size:13px;font-weight:700;white-space:nowrap;line-height:1.2')}>{active.nome}</div></div>
+                {active ? (
+                  <>
+                    <div style={{ width: 30, height: 30, borderRadius: '50%', background: `url(${active.cover}) center/cover`, backgroundColor: '#f3f1ec', flex: 'none' }} />
+                    <div style={{ minWidth: 0 }}><div style={s('font-size:11px;color:#8c867d;line-height:1.2')}>Progetto attivo</div><div style={s('font-size:13px;font-weight:700;white-space:nowrap;line-height:1.2')}>{active.nome}</div></div>
+                  </>
+                ) : (
+                  <>
+                    <div style={{ width: 30, height: 30, borderRadius: '50%', backgroundColor: '#f3f1ec', flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="plus" size={14} color="#8c867d" /></div>
+                    <div style={{ minWidth: 0 }}><div style={s('font-size:13px;font-weight:700;white-space:nowrap;line-height:1.2')}>Crea il tuo primo immobile</div></div>
+                  </>
+                )}
                 <Icon name="chevron-down" size={14} color="#8c867d" />
               </Box>
               {projOpen && (
@@ -1864,113 +1892,119 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
 
             <div style={{ flex: 1 }} />
 
-            <Box as="button" onClick={() => { setCmdkOpen(true); setCmdQuery(''); }} title="Cerca · ⌘K" aria-label="Cerca" style={s('border:1px solid #e9e6df;background:#fff;display:flex;align-items:center;gap:8px;padding:0 14px;height:40px;border-radius:8px;cursor:pointer;color:#8c867d')} hover={s('border-color:#d8d4cb')}>
-              <Icon name="search" size={15} color="#8c867d" /><span style={s('font-size:13px;font-weight:600')}>Cerca</span><span style={s('font-size:10.5px;font-weight:700;background:#f1efe9;color:#8c867d;padding:2px 7px;border-radius:6px')}>⌘K</span>
+            <Box as="button" onClick={() => { setCmdkOpen(true); setCmdQuery(''); }} title="Cerca · ⌘K" aria-label="Cerca" style={s('border:1px solid #e9e6df;background:#fff;display:flex;align-items:center;gap:8px;padding:0 16px;height:40px;border-radius:10px;cursor:pointer;color:#8c867d;flex:1;max-width:480px')} hover={s('border-color:#d8d4cb;box-shadow:0 2px 8px rgba(33,31,28,.06)')}>
+              <Icon name="search" size={15} color="#b3aca1" /><span style={s('font-size:13px;font-weight:500;color:#b3aca1;flex:1;text-align:left')}>Cerca strumenti, immobili, media</span><span style={s('font-size:10.5px;font-weight:700;background:#f1efe9;color:#8c867d;padding:2px 7px;border-radius:6px')}>⌘K</span>
             </Box>
 
-            {/* jobs tray */}
-            <div style={{ position: 'relative' }}>
-              <Box as="button" onClick={(e) => { e.stopPropagation(); setTrayOpen((o) => !o); setProjOpen(false); }} title="Lavori in corso" aria-label="Lavori in corso" style={s('border:none;background:transparent;width:42px;height:42px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;position:relative')} hover={s('background:#f1efe9')}>
-                <Icon name="layers" size={18} />
-              </Box>
-              {trayOpen && (
-                <div style={s('position:absolute;top:50px;right:0;width:330px;background:#fff;border-radius:12px;box-shadow:0 16px 48px rgba(33,31,28,.16);border:1px solid #f0ede7;overflow:hidden;z-index:50')}>
-                  <div style={s('display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:1px solid #f4f2ee')}><span style={s('font-size:13.5px;font-weight:800')}>Lavori in corso</span></div>
-                  <div style={s('padding:22px 16px;text-align:center;font-size:13px;color:#8c867d')}>Nessun lavoro in corso.<br />Le generazioni girano qui in background, senza bloccarti.</div>
-                </div>
-              )}
+            {/* jobs tray + notifications */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <div style={{ position: 'relative' }}>
+                <Box as="button" onClick={(e) => { e.stopPropagation(); setTrayOpen((o) => !o); setProjOpen(false); }} title="Lavori in corso" aria-label="Lavori in corso" style={s('border:none;background:transparent;width:38px;height:38px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;position:relative')} hover={s('background:#f1efe9')}>
+                  <Icon name="inbox" size={18} />
+                </Box>
+                {trayOpen && (
+                  <div style={s('position:absolute;top:46px;right:0;width:330px;background:#fff;border-radius:12px;box-shadow:0 16px 48px rgba(33,31,28,.16);border:1px solid #f0ede7;overflow:hidden;z-index:50')}>
+                    <div style={s('display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:1px solid #f4f2ee')}><span style={s('font-size:13.5px;font-weight:800')}>Lavori in corso</span></div>
+                    <div style={s('padding:22px 16px;text-align:center;font-size:13px;color:#8c867d')}>Nessun lavoro in corso.<br />Le generazioni girano qui in background, senza bloccarti.</div>
+                  </div>
+                )}
+              </div>
+              <Box as="button" onClick={() => toast('Nessuna nuova notifica', 'bell')} title="Notifiche" aria-label="Notifiche" style={s('border:none;background:transparent;width:38px;height:38px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;position:relative')} hover={s('background:#f1efe9')}><Icon name="bell" size={18} /></Box>
             </div>
-
-            <Box onClick={() => go('account')} title="Piano" style={s('display:flex;align-items:center;gap:8px;padding:9px 16px;border-radius:8px;background:#eef4fe;cursor:pointer;min-height:38px')} hover={s('background:#e3edfd')}>
-              <Icon name="credit-card" size={15} color="#1d5fd0" /><span style={s('font-size:13px;font-weight:800;color:#1d5fd0;white-space:nowrap')}>Piano</span>
-            </Box>
-            <Box as="button" onClick={() => toast('Nessuna nuova notifica', 'bell')} title="Notifiche" aria-label="Notifiche" style={s('border:none;background:transparent;width:42px;height:42px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;position:relative')} hover={s('background:#f1efe9')}><Icon name="bell" size={18} /></Box>
-            <Box as="button" onClick={() => setWelcomeOpen(true)} title="Aiuto e tour" aria-label="Aiuto e tour" style={s('border:none;background:transparent;width:42px;height:42px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center')} hover={s('background:#f1efe9')}><Icon name="circle-help" size={18} /></Box>
-            <div title={userData?.email ?? ''} style={s('width:38px;height:38px;border-radius:50%;background:#211f1c;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;cursor:pointer')}>{(userData?.email ?? 'U')[0].toUpperCase()}</div>
           </div>
 
           {/* CONTENT */}
           <div ref={contentRef} style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }} onClick={closeMenus}>
             {route === 'home' ? (
               <div style={s('max-width:1160px;margin:0 auto;padding:36px 32px 64px')}>
-                {/* project header */}
-                <div style={s('display:flex;align-items:center;gap:20px;margin-bottom:28px')}>
-                  <div style={{ width: 72, height: 72, borderRadius: 16, background: `url(${active.cover}) center/cover`, backgroundColor: '#f3f1ec', flex: 'none' }} />
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <h1 style={s('margin:0 0 4px;font-size:27px;font-weight:800;letter-spacing:-.5px')}>{active.nome}</h1>
-                    <div style={s('color:#8c867d;font-size:14px;display:flex;align-items:center;gap:6px')}><Icon name="map-pin" size={13} color="#b3aca1" />{active.addr}</div>
-                  </div>
-                </div>
-
-                {/* stats */}
-                <div style={s('display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px')}>
-                  {[
-                    { label: 'Prezzo', value: fmt(active.prezzo), icon: 'tag' },
-                    { label: 'Superficie', value: active.mq + ' m²', icon: 'maximize-2' },
-                    { label: 'Locali', value: String(active.locali), icon: 'layout-grid' },
-                    { label: 'Contenuti', value: String(active.nFoto + active.nStaging + active.nVideo + active.nPost), icon: 'layers' },
-                  ].map(st => (
-                    <div key={st.label} style={s('background:#fff;border:1px solid #f0ede7;border-radius:12px;padding:18px 20px')}>
-                      <div style={s('display:flex;align-items:center;gap:8px;margin-bottom:8px')}><Icon name={st.icon} size={15} color="#8c867d" /><span style={s('font-size:12px;font-weight:700;color:#8c867d;text-transform:uppercase;letter-spacing:.04em')}>{st.label}</span></div>
-                      <div style={s('font-size:22px;font-weight:800;letter-spacing:-.3px')}>{st.value}</div>
-                    </div>
-                  ))}
-                </div>
-
-                {showChecklist && (
-                  <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:12px;padding:20px 24px;margin-bottom:24px;box-shadow:0 1px 2px rgba(33,31,28,.03)')}>
-                    <div style={s('display:flex;align-items:center;justify-content:space-between;margin-bottom:12px')}>
-                      <div style={s('display:flex;align-items:center;gap:10px')}><span style={s('font-size:15px;font-weight:800')}>Completa il setup</span><span style={s('font-size:12px;font-weight:700;color:#57534c;background:#f1efe9;padding:3px 10px;border-radius:6px;white-space:nowrap')}>{clDone} di 4</span></div>
-                      <Box as="button" onClick={() => setClDismissed(true)} title="Nascondi checklist" aria-label="Nascondi checklist" style={s('border:none;background:transparent;width:32px;height:32px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center')} hover={s('background:#f1efe9')}><Icon name="x" size={14} color="#8c867d" /></Box>
-                    </div>
-                    <div style={s('height:4px;background:#f1efe9;border-radius:99px;overflow:hidden;margin-bottom:14px')}><div style={{ height: '100%', width: (clDone / 4 * 100) + '%', background: '#211f1c', borderRadius: 99, transition: 'width .4s' }} /></div>
-                    <div style={s('display:grid;grid-template-columns:repeat(4,1fr);gap:10px')}>
-                      {clDefs.map((cl) => (
-                        <Box key={cl.label} onClick={() => go(cl.route)} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '11px 12px', borderRadius: 12, border: '1px solid ' + (cl.done ? '#e4e1da' : '#ece9e2'), background: cl.done ? '#faf9f7' : '#fff', cursor: 'pointer', minHeight: 38 }} hover={{ borderColor: '#d8d4cb' }}>
-                          <span style={{ width: 18, height: 18, flex: 'none', borderRadius: '50%', background: cl.done ? '#211f1c' : '#ece9e2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="check" size={10} color={cl.done ? '#fff' : '#b3aca1'} /></span>
-                          <span style={{ fontSize: 12.5, fontWeight: 600, color: cl.done ? '#211f1c' : '#8c867d' }}>{cl.label}</span>
-                        </Box>
+                {!active ? (
+                  /* ── empty state: no projects yet ── */
+                  <div style={s('display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 32px;text-align:center')}>
+                    <div style={s('width:80px;height:80px;border-radius:20px;background:#f4f2ee;display:flex;align-items:center;justify-content:center;margin-bottom:24px')}><Icon name="building-2" size={36} color="#b3aca1" /></div>
+                    <h1 style={s('margin:0 0 8px;font-size:24px;font-weight:800;letter-spacing:-.3px')}>Benvenuto in GetNearMe</h1>
+                    <p style={s('margin:0 0 32px;font-size:15px;color:#8c867d;max-width:420px;line-height:1.6')}>Crea il tuo primo immobile per iniziare a generare foto AI, video e post social per i tuoi annunci</p>
+                    <Box onClick={() => toast('Nuovo immobile (in arrivo)')} style={s('display:inline-flex;align-items:center;gap:10px;background:#211f1c;color:#fff;padding:14px 28px;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;transition:transform .2s,box-shadow .2s')} hover={{ transform: 'translateY(-2px)', boxShadow: '0 8px 24px rgba(33,31,28,.16)' }}>
+                      <Icon name="plus" size={18} color="#fff" />Crea il tuo primo immobile
+                    </Box>
+                    <div style={s('margin-top:48px;display:grid;grid-template-columns:repeat(3,1fr);gap:20px;max-width:640px;width:100%')}>
+                      {[
+                        { icon: 'sparkles', title: 'Foto AI', desc: 'Arreda e trasforma le foto con un click' },
+                        { icon: 'film', title: 'Video AI', desc: 'Crea video professionali automaticamente' },
+                        { icon: 'image-plus', title: 'Post Social', desc: 'Template pronti per Instagram e social' },
+                      ].map(f => (
+                        <div key={f.title} style={s('background:#fff;border:1px solid #f0ede7;border-radius:14px;padding:24px 20px;text-align:center')}>
+                          <div style={s('width:44px;height:44px;border-radius:12px;background:#f4f2ee;display:flex;align-items:center;justify-content:center;margin:0 auto 12px')}><Icon name={f.icon} size={20} color="#57534c" /></div>
+                          <div style={s('font-size:14px;font-weight:700;margin-bottom:4px')}>{f.title}</div>
+                          <div style={s('font-size:12.5px;color:#8c867d;line-height:1.5')}>{f.desc}</div>
+                        </div>
                       ))}
                     </div>
                   </div>
+                ) : (
+                  /* ── project overview ── */
+                  <>
+                    {/* project header */}
+                    <div style={s('display:flex;align-items:center;gap:20px;margin-bottom:28px')}>
+                      <div style={{ width: 72, height: 72, borderRadius: 16, background: `url(${active.cover}) center/cover`, backgroundColor: '#f3f1ec', flex: 'none' }} />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <h1 style={s('margin:0 0 4px;font-size:27px;font-weight:800;letter-spacing:-.5px')}>{active.nome}</h1>
+                        <div style={s('color:#8c867d;font-size:14px;display:flex;align-items:center;gap:6px')}><Icon name="map-pin" size={13} color="#b3aca1" />{active.addr}</div>
+                      </div>
+                    </div>
+
+                    {/* stats */}
+                    <div style={s('display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px')}>
+                      {[
+                        { label: 'Prezzo', value: fmt(active.prezzo), icon: 'tag' },
+                        { label: 'Superficie', value: active.mq + ' m²', icon: 'maximize-2' },
+                        { label: 'Locali', value: String(active.locali), icon: 'layout-grid' },
+                        { label: 'Contenuti', value: String(active.nFoto + active.nStaging + active.nVideo + active.nPost), icon: 'layers' },
+                      ].map(st => (
+                        <div key={st.label} style={s('background:#fff;border:1px solid #f0ede7;border-radius:12px;padding:18px 20px')}>
+                          <div style={s('display:flex;align-items:center;gap:8px;margin-bottom:8px')}><Icon name={st.icon} size={15} color="#8c867d" /><span style={s('font-size:12px;font-weight:700;color:#8c867d;text-transform:uppercase;letter-spacing:.04em')}>{st.label}</span></div>
+                          <div style={s('font-size:22px;font-weight:800;letter-spacing:-.3px')}>{st.value}</div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* quick actions */}
+                    <div style={s('display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px')}>
+                      {[
+                        ['sparkles', 'Genera foto AI', 'staging', '#211f1c', '#fff'],
+                        ['film', 'Crea video', 'video', '#fff', '#211f1c'],
+                        ['image-plus', 'Crea un post', 'studio', '#fff', '#211f1c'],
+                        ['scissors', 'Montaggio', 'montaggio', '#fff', '#211f1c'],
+                      ].map(([ic, lbl, r, bg, col]) => (
+                        <Box key={r} onClick={() => go(r)} style={{ display: 'flex', alignItems: 'center', gap: 12, background: bg, border: bg === '#fff' ? '1px solid #e9e6df' : 'none', borderRadius: 14, padding: '20px 22px', cursor: 'pointer', color: col, transition: 'transform .2s, box-shadow .2s' }} hover={{ transform: 'translateY(-2px)', boxShadow: '0 8px 24px rgba(33,31,28,.10)' }}>
+                          <div style={{ width: 42, height: 42, borderRadius: 10, background: bg === '#fff' ? '#f4f2ee' : 'rgba(255,255,255,.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}><Icon name={ic} size={20} color={col} /></div>
+                          <span style={s('font-size:14px;font-weight:700')}>{lbl}</span>
+                        </Box>
+                      ))}
+                    </div>
+
+                    {/* recent */}
+                    <div style={s('display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px')}>
+                      <h2 style={s('margin:0;font-size:18px;font-weight:800;letter-spacing:-.3px')}>Contenuti recenti</h2>
+                      <span onClick={() => go('media')} style={s('font-size:13px;font-weight:700;color:#1d5fd0;cursor:pointer')}>Vedi tutto in Media</span>
+                    </div>
+                    <div style={s('display:grid;grid-template-columns:repeat(3,1fr);gap:16px')}>
+                      {RECENT.map((r, i) => {
+                        const t = typeTag(r.type);
+                        return (
+                          <Box key={i} style={s('background:#fff;border:1px solid #f0ede7;border-radius:12px;overflow:hidden;transition:box-shadow .2s')} hover={s('box-shadow:0 8px 24px rgba(33,31,28,.08)')}>
+                            <div style={{ aspectRatio: '16/10', background: `url(${r.img}) center/cover`, backgroundColor: '#f3f1ec', position: 'relative' }}>
+                              <span style={{ position: 'absolute', top: 10, left: 10, fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 8, background: t.tBg, color: t.tCol }}>{t.label}</span>
+                            </div>
+                            <div style={s('padding:12px 14px;display:flex;align-items:center;gap:10px')}>
+                              <div style={{ minWidth: 0, flex: 1 }}><div style={s('font-size:13.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{r.label}</div><div style={s('font-size:12px;color:#8c867d')}>{r.meta}</div></div>
+                              <Box as="button" onClick={(e) => { e.stopPropagation(); toast('Download avviato'); }} title="Scarica" aria-label="Scarica" style={s('border:1px solid #ece9e2;background:#fff;width:34px;height:34px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none')} hover={s('background:#f6f4f0')}><Icon name="download" size={14} /></Box>
+                            </div>
+                          </Box>
+                        );
+                      })}
+                    </div>
+                  </>
                 )}
-
-                {/* quick actions */}
-                <div style={s('display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px')}>
-                  {[
-                    ['sparkles', 'Genera foto AI', 'staging', '#211f1c', '#fff'],
-                    ['film', 'Crea video', 'video', '#fff', '#211f1c'],
-                    ['image-plus', 'Crea un post', 'studio', '#fff', '#211f1c'],
-                    ['scissors', 'Montaggio', 'montaggio', '#fff', '#211f1c'],
-                  ].map(([ic, lbl, r, bg, col]) => (
-                    <Box key={r} onClick={() => go(r)} style={{ display: 'flex', alignItems: 'center', gap: 12, background: bg, border: bg === '#fff' ? '1px solid #e9e6df' : 'none', borderRadius: 14, padding: '20px 22px', cursor: 'pointer', color: col, transition: 'transform .2s, box-shadow .2s' }} hover={{ transform: 'translateY(-2px)', boxShadow: '0 8px 24px rgba(33,31,28,.10)' }}>
-                      <div style={{ width: 42, height: 42, borderRadius: 10, background: bg === '#fff' ? '#f4f2ee' : 'rgba(255,255,255,.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}><Icon name={ic} size={20} color={col} /></div>
-                      <span style={s('font-size:14px;font-weight:700')}>{lbl}</span>
-                    </Box>
-                  ))}
-                </div>
-
-                {/* recent */}
-                <div style={s('display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px')}>
-                  <h2 style={s('margin:0;font-size:18px;font-weight:800;letter-spacing:-.3px')}>Contenuti recenti</h2>
-                  <span onClick={() => go('media')} style={s('font-size:13px;font-weight:700;color:#1d5fd0;cursor:pointer')}>Vedi tutto in Media</span>
-                </div>
-                <div style={s('display:grid;grid-template-columns:repeat(3,1fr);gap:16px')}>
-                  {RECENT.map((r, i) => {
-                    const t = typeTag(r.type);
-                    return (
-                      <Box key={i} style={s('background:#fff;border:1px solid #f0ede7;border-radius:12px;overflow:hidden;transition:box-shadow .2s')} hover={s('box-shadow:0 8px 24px rgba(33,31,28,.08)')}>
-                        <div style={{ aspectRatio: '16/10', background: `url(${r.img}) center/cover`, backgroundColor: '#f3f1ec', position: 'relative' }}>
-                          <span style={{ position: 'absolute', top: 10, left: 10, fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 8, background: t.tBg, color: t.tCol }}>{t.label}</span>
-                        </div>
-                        <div style={s('padding:12px 14px;display:flex;align-items:center;gap:10px')}>
-                          <div style={{ minWidth: 0, flex: 1 }}><div style={s('font-size:13.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{r.label}</div><div style={s('font-size:12px;color:#8c867d')}>{r.meta}</div></div>
-                          <Box as="button" onClick={(e) => { e.stopPropagation(); toast('Download avviato'); }} title="Scarica" aria-label="Scarica" style={s('border:1px solid #ece9e2;background:#fff;width:34px;height:34px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none')} hover={s('background:#f6f4f0')}><Icon name="download" size={14} /></Box>
-                        </div>
-                      </Box>
-                    );
-                  })}
-                </div>
               </div>
             ) : route === 'studio' ? (
               <PostSocialScreen toast={toast} routeKey={routeKey} brand={brand} project={active} />

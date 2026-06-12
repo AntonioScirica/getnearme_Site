@@ -5,21 +5,26 @@
 
 import React, { useState } from 'react';
 import {
-  ArrowRight, ArrowLeft, PanelLeft, ChevronDown, Search, Check, Plus, Layers,
+  ArrowRight, ArrowLeft, PanelLeft, ChevronDown, ChevronUp, Search, Check, Plus, Layers,
   Coins, Bell, CircleHelp, X, Building2, Sparkles, Film, ImagePlus, Calendar,
   Image as ImageIcon, Download, Pencil, LayoutDashboard, Users, Palette, AtSign,
-  CreditCard, Upload, Copy, Trash2, Gift, Crown, Zap, type LucideIcon,
+  CreditCard, Upload, Copy, Trash2, Gift, Crown, Zap, Settings, LogOut, LifeBuoy,
+  PlayCircle, MapPin, Maximize2, LayoutGrid, Tag, Scissors, LoaderCircle, Inbox,
+  type LucideIcon,
 } from 'lucide-react';
 
 const ICONS: Record<string, LucideIcon> = {
   'arrow-right': ArrowRight, 'arrow-left': ArrowLeft, 'panel-left': PanelLeft,
-  'chevron-down': ChevronDown, search: Search, check: Check, plus: Plus,
+  'chevron-down': ChevronDown, 'chevron-up': ChevronUp, search: Search, check: Check, plus: Plus,
   layers: Layers, coins: Coins, bell: Bell, 'circle-help': CircleHelp, x: X,
   'building-2': Building2, sparkles: Sparkles, film: Film, 'image-plus': ImagePlus,
   calendar: Calendar, image: ImageIcon, download: Download, pencil: Pencil,
   'layout-dashboard': LayoutDashboard, users: Users, palette: Palette,
   'at-sign': AtSign, 'credit-card': CreditCard, upload: Upload, copy: Copy,
-  trash: Trash2, gift: Gift, crown: Crown, zap: Zap,
+  trash: Trash2, gift: Gift, crown: Crown, zap: Zap, settings: Settings,
+  'log-out': LogOut, 'life-buoy': LifeBuoy, 'play-circle': PlayCircle,
+  'map-pin': MapPin, 'maximize-2': Maximize2, 'layout-grid': LayoutGrid,
+  tag: Tag, scissors: Scissors, 'loader-circle': LoaderCircle, inbox: Inbox,
 };
 
 /** Parse a CSS declaration string into a React style object. */
@@ -57,8 +62,16 @@ function splitBorderShorthand(s: React.CSSProperties): React.CSSProperties {
 /** A div (or other tag) that merges `hover` styles on mouse enter, like the prototype's style-hover. */
 export function Box({ hover, as = 'div', style, children, onMouseEnter, onMouseLeave, ...rest }: BoxProps) {
   const [h, setH] = useState(false);
-  const needsSplit = hover && ('borderColor' in hover || 'borderWidth' in hover || 'borderStyle' in hover);
-  const baseStyle = needsSplit && style ? splitBorderShorthand(style) : style;
+  const needsBorderSplit = hover && ('borderColor' in hover || 'borderWidth' in hover || 'borderStyle' in hover);
+  let baseStyle = needsBorderSplit && style ? splitBorderShorthand(style) : style;
+  if (hover && baseStyle && 'background' in hover && 'backgroundColor' in (baseStyle as Record<string, unknown>)) {
+    const { backgroundColor: _, ...rest2 } = baseStyle as Record<string, unknown>;
+    baseStyle = rest2 as React.CSSProperties;
+  }
+  if (hover && baseStyle && 'backgroundColor' in hover && 'background' in (baseStyle as Record<string, unknown>)) {
+    const { background: _, ...rest2 } = baseStyle as Record<string, unknown>;
+    baseStyle = { ...rest2, backgroundColor: (baseStyle as Record<string, unknown>).background } as React.CSSProperties;
+  }
   return React.createElement(
     as,
     {
