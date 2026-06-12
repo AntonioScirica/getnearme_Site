@@ -1,6 +1,6 @@
 // Template: Gallery
 // Primary-blue background, white text at top, 3 photos flush at bottom
-import { createPrice, createAddress, createMetricsInline } from '../components.js';
+import { createPrice, createAddress, createMetricsInline, createPhotoPlaceholder } from '../components.js';
 
 const FONT = 'Poppins, sans-serif';
 /**
@@ -194,15 +194,7 @@ export function renderGallery(data, photoUrl, opts = {}) {
       img.style.display = 'block';
       cell.appendChild(img);
     } else {
-      const placeholder = document.createElement('div');
-      placeholder.style.width = '100%';
-      placeholder.style.height = '100%';
-      placeholder.style.display = 'flex';
-      placeholder.style.alignItems = 'center';
-      placeholder.style.justifyContent = 'center';
-      placeholder.style.color = 'rgba(0,0,0,0.2)';
-      placeholder.innerHTML = '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="12" cy="13" r="3"/><path d="M5 3v2M19 3v2"/></svg>';
-      cell.appendChild(placeholder);
+      cell.appendChild(createPhotoPlaceholder({ iconSize: 48 }));
     }
 
     photoBox.appendChild(cell);

@@ -1,6 +1,6 @@
 // Template: Before After
 // Two pill-shaped photos (before/after) on light bg with accent text
-import { createAddress } from '../components.js';
+import { createAddress, createPhotoPlaceholder } from '../components.js';
 
 const FONT = 'Poppins, sans-serif';
 /**
@@ -53,14 +53,18 @@ export function renderBeforeAfter(data, photoUrl, opts = {}) {
   p2.style.borderTopRightRadius = '500px';
   p2.style.overflow = 'hidden';
 
-  const img2 = document.createElement('img');
-  img2.src = photos[1] || photos[0];
-  img2.alt = '';
-  img2.style.width = '100%';
-  img2.style.height = '100%';
-  img2.style.objectFit = 'cover';
-  img2.style.display = 'block';
-  p2.appendChild(img2);
+  if (photos[1]) {
+    const img2 = document.createElement('img');
+    img2.src = photos[1];
+    img2.alt = '';
+    img2.style.width = '100%';
+    img2.style.height = '100%';
+    img2.style.objectFit = 'cover';
+    img2.style.display = 'block';
+    p2.appendChild(img2);
+  } else {
+    p2.appendChild(createPhotoPlaceholder());
+  }
   container.appendChild(p2);
 
   // ── "BEFORE" rotated label (left side) ──

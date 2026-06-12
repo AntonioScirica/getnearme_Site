@@ -180,6 +180,18 @@ function applySafeArea(el, templateId, margins) {
         if (SR) child.style.right = maxPx(child.style.right, SR);
       }
     }
+    // Keep glass panel and badge inside the safe area too
+    const panel = el.querySelector('.tpl-glass-panel');
+    if (panel) {
+      panel.style.bottom = maxPx(panel.style.bottom, SB + 32);
+      panel.style.left = maxPx(panel.style.left, SL + 32);
+      panel.style.right = maxPx(panel.style.right, SR + 32);
+    }
+    const fbadge = el.querySelector('.tpl-badge');
+    if (fbadge && fbadge.style.position === 'absolute') {
+      fbadge.style.top = maxPx(fbadge.style.top, ST + 32);
+      fbadge.style.right = maxPx(fbadge.style.right, SR + 32);
+    }
   }
 
   // Minimal: badge (zIndex 3) at top + card (zIndex 2) at bottom
@@ -315,21 +327,30 @@ export function renderTemplate(templateId, data, photoUrl, opts = {}) {
     if (bg) bg.src = opts.blurredUrl;
   }
 
+  // Fit mode: cover (fullscreen) or contain (show full photo + blur bg)
+  const fgEl = el.querySelector('.tpl-cover-fg');
+  if (fgEl) fgEl.style.objectFit = opts.fitCover ? 'cover' : 'contain';
+
   // Swap cover images for video elements if needed
   if (opts.isVideo) {
     const cover = el.querySelector('.tpl-cover');
-    if (cover) {
-      cover.querySelectorAll('img').forEach(img => {
-        const video = document.createElement('video');
-        video.className = img.className; // preserves tpl-cover-bg / tpl-cover-fg
-        video.src = photoUrl;
-        video.muted = true;
-        video.loop = true;
-        video.autoplay = true;
-        video.playsInline = true;
-        img.replaceWith(video);
-      });
-    }
+    const targets = cover
+      ? cover.querySelectorAll('img')
+      : el.querySelectorAll('img[src="' + CSS.escape(photoUrl) + '"]');
+    targets.forEach(img => {
+      const video = document.createElement('video');
+      video.className = img.className;
+      video.src = photoUrl;
+      video.muted = true;
+      video.loop = true;
+      video.autoplay = true;
+      video.playsInline = true;
+      // Copy sizing styles from the img
+      for (const prop of ['width', 'height', 'objectFit', 'display', 'position', 'top', 'left', 'right', 'bottom', 'borderRadius']) {
+        if (img.style[prop]) video.style[prop] = img.style[prop];
+      }
+      img.replaceWith(video);
+    });
   }
 
   // Add logo overlay if provided (template-specific placement)

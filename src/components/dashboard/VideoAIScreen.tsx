@@ -33,11 +33,14 @@ const MAX_PAIRS = 1;
 
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
 
-export default function VideoAIScreen({ toast, routeKey, brand, preselect }: {
+import type { Project } from './types';
+
+export default function VideoAIScreen({ toast, routeKey, brand, preselect, project }: {
   toast: (msg: string, icon?: string) => void;
   routeKey: number;
   brand: BrandSettings;
   preselect?: string;
+  project?: Project;
 }) {
   const [templates, setTemplates] = React.useState<VideoTemplate[]>(DEFAULT_VIDEO_TEMPLATES);
   const [avatars, setAvatars] = React.useState<VideoAvatar[]>([]);
@@ -60,8 +63,8 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect }: {
   const [coverTitle, setCoverTitle] = React.useState('');
   const [coverAddress, setCoverAddress] = React.useState('');
   const [coverStyle, setCoverStyle] = React.useState('classic');
-  const [propTitle, setPropTitle] = React.useState('');
-  const [propAddress, setPropAddress] = React.useState('');
+  const [propTitle, setPropTitle] = React.useState(project?.titolo ?? '');
+  const [propAddress, setPropAddress] = React.useState(project?.addr ?? '');
   // sottotitoli transcription
   const [sottPhase, setSottPhase] = React.useState<'edit' | 'style'>('edit');
   const [transcription, setTranscription] = React.useState<{ wordTimestamps: { word: string; start: number; end: number }[]; keepSegments: { start: number; end: number }[]; audioDurationSeconds: number } | null>(null);
@@ -93,8 +96,9 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect }: {
   const isPhotoTemplate = ['walkthrough', 'ai_staging', 'construction', 'day_night'].includes(layout);
   const singlePhoto = ['ai_staging', 'construction', 'day_night'].includes(layout);
   const maxClips = layout === 'montaggio' ? MAX_CLIPS_MONTAGGIO : layout === 'sottotitoli' || singlePhoto ? 1 : MAX_CLIPS;
-  const minClips = layout === 'montaggio' ? 3 : layout === 'sottotitoli' || singlePhoto ? 1 : 3;
+  const minClips = layout === 'montaggio' ? 3 : layout === 'sottotitoli' || singlePhoto || isPhotoTemplate ? 1 : 3;
   const usesMusic = layout !== 'sottotitoli';
+  const inlineStep3 = ['walkthrough', 'construction', 'before_after', 'ai_staging'].includes(layout);
 
   const musicLibrary = React.useMemo(() => getMusicLibrary(), []);
 
@@ -488,23 +492,20 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect }: {
   // ── UI ───────────────────────────────────────────────────────────────────
   return (
     <div style={s('max-width:1160px;margin:0 auto;padding:32px 32px 64px')}>
-      <div style={s('display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px')}>
-        <div>
-          <h1 style={s('margin:0 0 4px;font-size:25px;font-weight:800;letter-spacing:-.5px')}>{preselect === 'montaggio' ? 'Montaggio Automatico' : 'Video AI'}</h1>
-          <div style={s('color:#8c867d;font-size:14px')}>{preselect === 'montaggio' ? "Carica le clip della casa: l'AI monta tutto con musica e cover." : 'Trasforma foto e clip in video pronti per i social.'}</div>
-        </div>
-        <div style={s('display:flex;align-items:center;gap:10px')}>
+      {step === 0 && (
+        <div style={s('display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px')}>
+          <div>
+            <h1 style={s('margin:0 0 4px;font-size:25px;font-weight:800;letter-spacing:-.5px')}>{preselect === 'montaggio' ? 'Montaggio Automatico' : 'Video AI'}</h1>
+            <div style={s('color:#8c867d;font-size:14px')}>{preselect === 'montaggio' ? "Carica le clip della casa: l'AI monta tutto con musica e cover." : 'Trasforma foto e clip in video pronti per i social.'}</div>
+          </div>
           {quota && (
             <div style={s('display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #f0ede7;border-radius:99px;padding:8px 16px')}>
               <Icon name="film" size={15} color="#3B83F6" />
               <span style={{ fontSize: 13, fontWeight: 700 }}>{quota.remaining}/{quota.limit} video</span>
             </div>
           )}
-          {step > 0 && renderStage !== 'done' && (
-            <Box as="button" onClick={resetAll} style={s('border:1px solid #e4e1da;background:#fff;font-size:13px;font-weight:600;padding:8px 16px;border-radius:99px;cursor:pointer') as React.CSSProperties} hover={s('background:#f6f4f0')}>Annulla</Box>
-          )}
         </div>
-      </div>
+      )}
 
       {/* STEP 0 — template gallery */}
       {step === 0 && (
@@ -615,9 +616,6 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect }: {
                       )}
                     </div>
                   ))}
-                  <select value={p.room} onChange={e => setPairs(ps => ps.map(x => x.id === p.id ? { ...x, room: e.target.value } : x))} style={{ ...inputStyle, width: 160 }}>
-                    {ROOM_TYPES.map(r => <option key={r.id} value={r.id}>{r.label}</option>)}
-                  </select>
                   <button onClick={() => setPairs(ps => ps.filter(x => x.id !== p.id))} style={{ border: 'none', background: '#f6f4f0', borderRadius: 8, width: 30, height: 30, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="x" size={13} color="#57534c" /></button>
                 </div>
               ))}
@@ -640,16 +638,20 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect }: {
                   <div style={s('color:#8c867d;font-size:13px')}>{isPhotoTemplate && layout !== 'montaggio' ? 'JPG, PNG, WebP' : layout === 'montaggio' ? 'Video e foto' : 'MP4, MOV, WebM'}</div>
                 </>
               ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 10 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
                   {clips.map((c, idx) => (
                     <div key={c.id} onClick={e => e.stopPropagation()} style={{ position: 'relative' }}>
                       <div style={{ position: 'relative', aspectRatio: '4/3', borderRadius: 10, overflow: 'hidden' }}>
+                        {c.isPhoto && c.height > c.width && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={c.thumb} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', filter: 'blur(20px) brightness(.85)', transform: 'scale(1.15)' }} />
+                        )}
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={c.thumb} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        <img src={c.thumb} alt="" style={{ width: '100%', height: '100%', objectFit: c.isPhoto && c.height > c.width ? 'contain' : 'cover', position: 'relative' }} />
                         <span style={{ position: 'absolute', top: 6, left: 6, background: 'rgba(33,31,28,.72)', color: '#fff', fontSize: 10.5, fontWeight: 800, padding: '3px 8px', borderRadius: 99 }}>{idx + 1}{!c.isPhoto && ` · ${Math.round(c.duration)}s`}</span>
                         <button onClick={() => setClips(cs => cs.filter(x => x.id !== c.id))} style={{ position: 'absolute', top: 6, right: 6, width: 22, height: 22, borderRadius: '50%', background: 'rgba(33,31,28,.72)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="x" size={11} color="#fff" /></button>
                       </div>
-                      {layout !== 'sottotitoli' && !singlePhoto && (
+                      {!isPhotoTemplate && layout !== 'sottotitoli' && !singlePhoto && (
                         <select value={c.room} onChange={e => setClips(cs => cs.map(x => x.id === c.id ? { ...x, room: e.target.value } : x))} style={{ ...inputStyle, marginTop: 6, padding: '7px 10px', fontSize: 12 }}>
                           {ROOM_TYPES.map(r => <option key={r.id} value={r.id}>{r.label}</option>)}
                         </select>
@@ -689,9 +691,87 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect }: {
           )}
           <input ref={fileRef} type="file" accept={isPhotoTemplate && layout !== 'montaggio' ? 'image/*' : layout === 'montaggio' ? 'image/*,video/*' : 'video/*'} multiple={maxClips > 1} style={{ display: 'none' }} onChange={e => { if (e.target.files) addFiles(e.target.files); e.target.value = ''; }} />
 
+          {/* ai_staging inline options */}
+          {layout === 'ai_staging' && clips.length > 0 && (
+            <>
+              <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:14px;padding:18px;margin-top:16px')}>
+                <div style={s('font-size:13px;font-weight:800;margin-bottom:10px')}>Stile arredamento</div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+                  {AI_STAGING_STYLES.map(st => {
+                    const sel = stagingStyle === st.id;
+                    return (
+                      <div key={st.id} onClick={() => setStagingStyle(st.id)} style={{
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, padding: '12px 4px',
+                        borderRadius: 10, cursor: 'pointer', textAlign: 'center',
+                        border: sel ? '2px solid #3B83F6' : '2px solid transparent',
+                        background: sel ? '#eef4fe' : '#f6f4f0', transition: 'all .15s',
+                      }}>
+                        <span style={{ width: 22, height: 22, display: 'flex', color: sel ? '#1d5fd0' : '#57534c' }} dangerouslySetInnerHTML={{ __html: st.icon }} />
+                        <span style={{ fontSize: 11, fontWeight: 600, color: sel ? '#1d5fd0' : '#57534c' }}>{st.label}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+              <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:14px;padding:18px;margin-top:12px')}>
+                <div style={s('font-size:13px;font-weight:800;margin-bottom:10px')}>Animazione</div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
+                  {AI_STAGING_ANIMATION_STYLES.map(an => (
+                    <div key={an.id} onClick={() => setAnimStyle(an.id)} style={{ ...cardSel(animStyle === an.id), textAlign: 'center', fontSize: 12.5, fontWeight: 700 }}>{an.label}</div>
+                  ))}
+                </div>
+              </div>
+              <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:14px;padding:18px;margin-top:12px')}>
+                <div style={s('font-size:13px;font-weight:800;margin-bottom:10px')}>Immobile <span style={s('font-weight:500;color:#b3aca1;font-size:12px')}>(opzionale)</span></div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                  <input value={propTitle} onChange={e => setPropTitle(e.target.value)} placeholder="Tipologia (es. Trilocale)" style={inputStyle} />
+                  <input value={propAddress} onChange={e => setPropAddress(e.target.value)} placeholder="Indirizzo" style={inputStyle} />
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* inline music for templates that skip step 3 */}
+          {inlineStep3 && (layout === 'before_after' ? pairs.some(p => p.before && p.after) : clips.length > 0) && (
+            <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:14px;padding:18px;margin-top:16px')}>
+              <div style={s('font-size:13px;font-weight:800;margin-bottom:10px')}>Musica <span style={s('font-weight:500;color:#b3aca1;font-size:12px')}>(opzionale)</span></div>
+              <Box as="button" onClick={() => setMusicOpen(o => !o)} style={s('width:100%;border:1px solid #e4e1da;background:#fff;font-size:13px;font-weight:600;padding:10px 14px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:space-between') as React.CSSProperties} hover={s('background:#faf9f7')}>
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: musicUrl ? '#1F2937' : '#b3aca1', fontWeight: musicUrl ? 600 : 400 }}>
+                  {musicUrl ? (musicLibrary.find(t => t.url === musicUrl)?.title || 'Traccia selezionata') : 'Seleziona musica'}
+                </span>
+                <Icon name="chevron-down" size={14} color="#8c867d" />
+              </Box>
+              {musicOpen && (
+                <div style={{ marginTop: 8, maxHeight: 320, overflowY: 'auto', border: '1px solid #f0ede7', borderRadius: 10 }}>
+                  <div onClick={() => { setMusicUrl(null); setMusicOpen(false); }} style={{ padding: '9px 12px', fontSize: 12.5, fontWeight: 600, cursor: 'pointer', color: '#8c867d' }}>Nessuna musica</div>
+                  {Object.keys(MOOD_LABELS).map(mood => (
+                    <div key={mood}>
+                      <div style={{ padding: '8px 12px 4px', fontSize: 10.5, fontWeight: 800, color: '#b3aca1', textTransform: 'uppercase', letterSpacing: '.05em' }}>{MOOD_LABELS[mood]}</div>
+                      {musicLibrary.filter(t => t.mood === mood).slice(0, 12).map(t => (
+                        <Box key={t.id} onClick={() => setMusicUrl(t.url)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 12px', cursor: 'pointer', background: musicUrl === t.url ? '#DBEAFE' : 'transparent', borderRadius: 6, border: musicUrl === t.url ? '1.5px solid #3B83F6' : '1.5px solid transparent' }} hover={{ background: musicUrl === t.url ? '#DBEAFE' : '#f6f4f0' }}>
+                          <button onClick={e => { e.stopPropagation(); toggleMusicPlay(t); }} style={{ border: 'none', background: musicUrl === t.url ? '#3B83F6' : '#f0ede7', color: musicUrl === t.url ? '#fff' : '#1F2937', borderRadius: '50%', width: 24, height: 24, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none', fontSize: 10 }}>
+                            {playingUrl === t.url ? '❚❚' : '►'}
+                          </button>
+                          <span style={{ fontSize: 12.5, fontWeight: musicUrl === t.url ? 700 : 500, color: musicUrl === t.url ? '#1D4ED8' : '#1F2937', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{t.title}</span>
+                          {musicUrl === t.url && <Icon name="check" size={14} color="#3B83F6" />}
+                        </Box>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           <div style={s('display:flex;justify-content:space-between;margin-top:20px')}>
             <Box as="button" onClick={() => setStep(usesAvatar ? 1 : 0)} style={s('border:1px solid #e4e1da;background:#fff;font-size:13px;font-weight:600;padding:11px 20px;border-radius:10px;cursor:pointer') as React.CSSProperties} hover={s('background:#f6f4f0')}>Indietro</Box>
-            <Box as="button" onClick={() => { if (mediaReady) goToOptions(); }} style={{ border: 'none', background: '#3B83F6', color: '#fff', fontSize: 14, fontWeight: 700, padding: '12px 28px', borderRadius: 10, cursor: mediaReady ? 'pointer' : 'default', opacity: mediaReady ? 1 : 0.4 }} hover={mediaReady ? { background: '#2b6fe0' } : {}}>Continua</Box>
+            {inlineStep3 ? (
+              <Box as="button" onClick={() => { if (mediaReady) handleRender(); }} style={{ border: 'none', background: '#3B83F6', color: '#fff', fontSize: 14, fontWeight: 700, padding: '12px 28px', borderRadius: 10, cursor: mediaReady ? 'pointer' : 'default', opacity: mediaReady ? 1 : 0.4, display: 'flex', alignItems: 'center', gap: 8 }} hover={mediaReady ? { background: '#2b6fe0' } : {}}>
+                <Icon name="sparkles" size={16} color="#fff" />Genera video
+              </Box>
+            ) : (
+              <Box as="button" onClick={() => { if (mediaReady) goToOptions(); }} style={{ border: 'none', background: '#3B83F6', color: '#fff', fontSize: 14, fontWeight: 700, padding: '12px 28px', borderRadius: 10, cursor: mediaReady ? 'pointer' : 'default', opacity: mediaReady ? 1 : 0.4 }} hover={mediaReady ? { background: '#2b6fe0' } : {}}>Continua</Box>
+            )}
           </div>
         </div>
       )}
@@ -916,8 +996,8 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect }: {
               <div style={s('font-size:16px;font-weight:800;margin-bottom:4px')}>Musica</div>
               <div style={s('color:#8c867d;font-size:13px;margin-bottom:16px')}>Scegli la colonna sonora del video.</div>
               <Box as="button" onClick={() => setMusicOpen(o => !o)} style={s('width:100%;border:1px solid #e4e1da;background:#fff;font-size:13px;font-weight:600;padding:10px 14px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:space-between') as React.CSSProperties} hover={s('background:#faf9f7')}>
-                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {musicUrl ? (musicLibrary.find(t => t.url === musicUrl)?.title || 'Traccia selezionata') : 'Nessuna musica'}
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: musicUrl ? '#1F2937' : '#b3aca1', fontWeight: musicUrl ? 600 : 400 }}>
+                  {musicUrl ? (musicLibrary.find(t => t.url === musicUrl)?.title || 'Traccia selezionata') : 'Seleziona musica'}
                 </span>
                 <Icon name="chevron-down" size={14} color="#8c867d" />
               </Box>
@@ -928,12 +1008,13 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect }: {
                     <div key={mood}>
                       <div style={{ padding: '8px 12px 4px', fontSize: 10.5, fontWeight: 800, color: '#b3aca1', textTransform: 'uppercase', letterSpacing: '.05em' }}>{MOOD_LABELS[mood]}</div>
                       {musicLibrary.filter(t => t.mood === mood).slice(0, 12).map(t => (
-                        <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 12px', cursor: 'pointer', background: musicUrl === t.url ? '#eef4fe' : 'transparent' }}>
-                          <button onClick={e => { e.stopPropagation(); toggleMusicPlay(t); }} style={{ border: 'none', background: '#f0ede7', borderRadius: '50%', width: 24, height: 24, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none', fontSize: 10 }}>
+                        <Box key={t.id} onClick={() => setMusicUrl(t.url)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 12px', cursor: 'pointer', background: musicUrl === t.url ? '#DBEAFE' : 'transparent', borderRadius: 6, border: musicUrl === t.url ? '1.5px solid #3B83F6' : '1.5px solid transparent' }} hover={{ background: musicUrl === t.url ? '#DBEAFE' : '#f6f4f0' }}>
+                          <button onClick={e => { e.stopPropagation(); toggleMusicPlay(t); }} style={{ border: 'none', background: musicUrl === t.url ? '#3B83F6' : '#f0ede7', color: musicUrl === t.url ? '#fff' : '#1F2937', borderRadius: '50%', width: 24, height: 24, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none', fontSize: 10 }}>
                             {playingUrl === t.url ? '❚❚' : '►'}
                           </button>
-                          <span onClick={() => { setMusicUrl(t.url); setMusicOpen(false); }} style={{ fontSize: 12.5, fontWeight: musicUrl === t.url ? 700 : 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{t.title}</span>
-                        </div>
+                          <span style={{ fontSize: 12.5, fontWeight: musicUrl === t.url ? 700 : 500, color: musicUrl === t.url ? '#1D4ED8' : '#1F2937', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{t.title}</span>
+                          {musicUrl === t.url && <Icon name="check" size={14} color="#3B83F6" />}
+                        </Box>
                       ))}
                     </div>
                   ))}
@@ -959,7 +1040,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect }: {
       )}
 
       {/* STEP 3 — options (all other templates: standard 2-column layout) */}
-      {step === 3 && tpl && layout !== 'sottotitoli' && layout !== 'montaggio' && (
+      {step === 3 && tpl && !inlineStep3 && layout !== 'sottotitoli' && layout !== 'montaggio' && (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 360px', gap: 24, alignItems: 'start' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {/* script editor (classic/split) */}
@@ -990,9 +1071,20 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect }: {
                 <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:14px;padding:20px')}>
                   <div style={s('font-size:14px;font-weight:800;margin-bottom:12px')}>Stile arredamento</div>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
-                    {AI_STAGING_STYLES.map(st => (
-                      <div key={st.id} onClick={() => setStagingStyle(st.id)} style={{ ...cardSel(stagingStyle === st.id), textAlign: 'center', fontSize: 12.5, fontWeight: 700 }}>{st.label}</div>
-                    ))}
+                    {AI_STAGING_STYLES.map(st => {
+                      const sel = stagingStyle === st.id;
+                      return (
+                        <div key={st.id} onClick={() => setStagingStyle(st.id)} style={{
+                          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, padding: '12px 4px',
+                          borderRadius: 10, cursor: 'pointer', textAlign: 'center',
+                          border: sel ? '2px solid #3B83F6' : '2px solid transparent',
+                          background: sel ? '#eef4fe' : '#f6f4f0', transition: 'all .15s',
+                        }}>
+                          <span style={{ width: 22, height: 22, display: 'flex', color: sel ? '#1d5fd0' : '#57534c' }} dangerouslySetInnerHTML={{ __html: st.icon }} />
+                          <span style={{ fontSize: 11, fontWeight: 600, color: sel ? '#1d5fd0' : '#57534c' }}>{st.label}</span>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
                 <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:14px;padding:20px')}>
@@ -1034,8 +1126,8 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect }: {
               <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:14px;padding:18px')}>
                 <div style={s('font-size:13px;font-weight:800;margin-bottom:10px')}>Musica</div>
                 <Box as="button" onClick={() => setMusicOpen(o => !o)} style={s('width:100%;border:1px solid #e4e1da;background:#fff;font-size:13px;font-weight:600;padding:10px 14px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:space-between') as React.CSSProperties} hover={s('background:#faf9f7')}>
-                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {musicUrl ? (musicLibrary.find(t => t.url === musicUrl)?.title || 'Traccia selezionata') : 'Nessuna musica'}
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: musicUrl ? '#1F2937' : '#b3aca1', fontWeight: musicUrl ? 600 : 400 }}>
+                    {musicUrl ? (musicLibrary.find(t => t.url === musicUrl)?.title || 'Traccia selezionata') : 'Seleziona musica'}
                   </span>
                   <Icon name="chevron-down" size={14} color="#8c867d" />
                 </Box>
@@ -1046,12 +1138,13 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect }: {
                       <div key={mood}>
                         <div style={{ padding: '8px 12px 4px', fontSize: 10.5, fontWeight: 800, color: '#b3aca1', textTransform: 'uppercase', letterSpacing: '.05em' }}>{MOOD_LABELS[mood]}</div>
                         {musicLibrary.filter(t => t.mood === mood).slice(0, 12).map(t => (
-                          <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 12px', cursor: 'pointer', background: musicUrl === t.url ? '#eef4fe' : 'transparent' }}>
-                            <button onClick={e => { e.stopPropagation(); toggleMusicPlay(t); }} style={{ border: 'none', background: '#f0ede7', borderRadius: '50%', width: 24, height: 24, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none', fontSize: 10 }}>
+                          <Box key={t.id} onClick={() => setMusicUrl(t.url)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 12px', cursor: 'pointer', background: musicUrl === t.url ? '#DBEAFE' : 'transparent', borderRadius: 6, border: musicUrl === t.url ? '1.5px solid #3B83F6' : '1.5px solid transparent' }} hover={{ background: musicUrl === t.url ? '#DBEAFE' : '#f6f4f0' }}>
+                            <button onClick={e => { e.stopPropagation(); toggleMusicPlay(t); }} style={{ border: 'none', background: musicUrl === t.url ? '#3B83F6' : '#f0ede7', color: musicUrl === t.url ? '#fff' : '#1F2937', borderRadius: '50%', width: 24, height: 24, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none', fontSize: 10 }}>
                               {playingUrl === t.url ? '❚❚' : '►'}
                             </button>
-                            <span onClick={() => { setMusicUrl(t.url); setMusicOpen(false); }} style={{ fontSize: 12.5, fontWeight: musicUrl === t.url ? 700 : 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{t.title}</span>
-                          </div>
+                            <span style={{ fontSize: 12.5, fontWeight: musicUrl === t.url ? 700 : 500, color: musicUrl === t.url ? '#1D4ED8' : '#1F2937', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{t.title}</span>
+                            {musicUrl === t.url && <Icon name="check" size={14} color="#3B83F6" />}
+                          </Box>
                         ))}
                       </div>
                     ))}

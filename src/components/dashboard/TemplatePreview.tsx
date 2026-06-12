@@ -21,22 +21,27 @@ function createBlurredImage(imageUrl: string, isVideo?: boolean): Promise<string
       if (!imageUrl.startsWith('blob:')) vid.crossOrigin = 'anonymous';
       vid.muted = true;
       vid.preload = 'auto';
-      vid.onloadeddata = () => {
-        vid.currentTime = 0.1;
-      };
-      vid.onseeked = () => {
+      vid.playsInline = true;
+      const extractFrame = () => {
+        const vw = vid.videoWidth || 1080;
+        const vh = vid.videoHeight || 1350;
         const scale = 0.15;
-        const w = Math.max(Math.round(vid.videoWidth * scale), 1);
-        const h = Math.max(Math.round(vid.videoHeight * scale), 1);
+        const w = Math.max(Math.round(vw * scale), 1);
+        const h = Math.max(Math.round(vh * scale), 1);
         const canvas = document.createElement('canvas');
         canvas.width = w;
         canvas.height = h;
         const ctx = canvas.getContext('2d')!;
         ctx.filter = 'blur(8px)';
-        ctx.drawImage(vid, 0, 0, w, h);
+        try { ctx.drawImage(vid, 0, 0, w, h); } catch { /* tainted */ }
         resolve(canvas.toDataURL('image/jpeg', 0.5));
       };
-      vid.onerror = () => resolve(imageUrl);
+      vid.onseeked = extractFrame;
+      vid.onloadeddata = () => {
+        if (vid.duration > 0.1) vid.currentTime = 0.1;
+        else extractFrame();
+      };
+      vid.onerror = () => resolve('');
       vid.src = imageUrl;
       return;
     }
@@ -60,6 +65,7 @@ function createBlurredImage(imageUrl: string, isVideo?: boolean): Promise<string
 }
 
 const blurCache = new Map<string, string>();
+const blurCacheVideo = new Map<string, string>();
 
 let fontsReadyPromise: Promise<void> | null = null;
 function ensureTemplateFonts(): Promise<void> {
@@ -68,7 +74,7 @@ function ensureTemplateFonts(): Promise<void> {
     const link = document.createElement('link');
     link.id = 'tpl-fonts';
     link.rel = 'stylesheet';
-    link.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap';
+    link.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap';
     document.head.appendChild(link);
   }
   fontsReadyPromise = document.fonts?.ready ? document.fonts.ready.then(() => {}) : Promise.resolve();
@@ -77,7 +83,7 @@ function ensureTemplateFonts(): Promise<void> {
 
 type TemplatePreviewProps = {
   templateId: string;
-  data: Record<string, string | null | undefined>;
+  data: Record<string, unknown>;
   photoUrl: string;
   width?: number;
   opts?: Record<string, unknown>;
@@ -85,26 +91,37 @@ type TemplatePreviewProps = {
 
 export default function TemplatePreview({ templateId, data, photoUrl, width = 200, opts = {} }: TemplatePreviewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [blurredUrl, setBlurredUrl] = useState<string | null>(blurCache.get(photoUrl) || null);
+  const isVideo = !!opts.isVideo;
+  const cache = isVideo ? blurCacheVideo : blurCache;
+  const [blurredUrl, setBlurredUrl] = useState<string | null>(cache.get(photoUrl) || null);
   const [fontsReady, setFontsReady] = useState(false);
+  // Minimum skeleton time so fast loads don't flash.
+  const [minTimePassed, setMinTimePassed] = useState(false);
 
   useEffect(() => {
     ensureTemplateFonts().then(() => setFontsReady(true));
   }, []);
 
   useEffect(() => {
-    if (blurCache.has(photoUrl)) {
-      setBlurredUrl(blurCache.get(photoUrl)!);
-      return;
-    }
-    createBlurredImage(photoUrl, opts.isVideo as boolean).then(b => {
-      blurCache.set(photoUrl, b);
-      setBlurredUrl(b);
-    });
-  }, [photoUrl]);
+    const t = setTimeout(() => setMinTimePassed(true), 500);
+    return () => clearTimeout(t);
+  }, []);
 
   useEffect(() => {
-    if (!containerRef.current || !blurredUrl || !fontsReady) return;
+    const c = isVideo ? blurCacheVideo : blurCache;
+    if (c.has(photoUrl)) {
+      setBlurredUrl(c.get(photoUrl)!);
+      return;
+    }
+    setBlurredUrl(null);
+    createBlurredImage(photoUrl, isVideo).then(b => {
+      c.set(photoUrl, b);
+      setBlurredUrl(b);
+    });
+  }, [photoUrl, isVideo]);
+
+  useEffect(() => {
+    if (!containerRef.current || blurredUrl === null || !fontsReady) return;
     containerRef.current.innerHTML = '';
     try {
       const mergedOpts = { ...opts, blurredUrl };
@@ -144,33 +161,50 @@ export default function TemplatePreview({ templateId, data, photoUrl, width = 20
   const nativeH = (opts.size as { h?: number })?.h || 1350;
   const scale = width / nativeW;
   const displayH = nativeH * scale;
-  const ready = blurredUrl && fontsReady;
+  const ready = blurredUrl !== null && fontsReady && minTimePassed;
 
   useEffect(() => { ensureShimmerCSS(); }, []);
 
   return (
     <div style={{ position: 'relative', width, height: displayH }}>
-      {!ready && (
+      {!ready && (() => {
+        // Scale skeleton metrics to the preview width so spacing reads well at
+        // any size (grid card ~300px and large preview alike).
+        const u = width / 300; // unit scale
+        const bar = (h: number, c = 0.07) => ({ height: Math.round(h * u), borderRadius: Math.round(6 * u), background: `rgba(0,0,0,${c})` });
+        return (
         <div style={{
           position: 'absolute', inset: 0, borderRadius: 8, overflow: 'hidden',
-          background: 'linear-gradient(90deg, #f0ede7 25%, #e8e4dc 50%, #f0ede7 75%)',
+          background: 'linear-gradient(90deg, #efece6 25%, #e6e2da 50%, #efece6 75%)',
           backgroundSize: '800px 100%',
-          animation: 'tpl-shimmer 1.5s infinite linear',
+          animation: 'tpl-shimmer 1.4s infinite linear',
         }}>
-          <div style={{ padding: '10%', display: 'flex', flexDirection: 'column', gap: '6%' }}>
-            <div style={{ width: '35%', height: 14, borderRadius: 4, background: 'rgba(0,0,0,.06)' }} />
-            <div style={{ width: '70%', height: 18, borderRadius: 4, background: 'rgba(0,0,0,.06)' }} />
-            <div style={{ width: '50%', height: 12, borderRadius: 4, background: 'rgba(0,0,0,.04)' }} />
+          <div style={{ position: 'absolute', inset: 0, padding: `${Math.round(34 * u)}px ${Math.round(30 * u)}px`, display: 'flex', flexDirection: 'column' }}>
+            {/* badge */}
+            <div style={{ width: Math.round(70 * u), ...bar(20, 0.06), borderRadius: Math.round(99 * u) }} />
+            {/* title block */}
+            <div style={{ height: Math.round(26 * u) }} />
+            <div style={{ width: '82%', ...bar(22) }} />
+            <div style={{ height: Math.round(12 * u) }} />
+            <div style={{ width: '55%', ...bar(28, 0.09) }} />
+            <div style={{ height: Math.round(14 * u) }} />
+            <div style={{ width: '45%', ...bar(13, 0.05) }} />
             <div style={{ flex: 1 }} />
-            <div style={{ display: 'flex', gap: '4%' }}>
-              <div style={{ flex: 1, height: 28, borderRadius: 6, background: 'rgba(0,0,0,.05)' }} />
-              <div style={{ flex: 1, height: 28, borderRadius: 6, background: 'rgba(0,0,0,.05)' }} />
-              <div style={{ flex: 1, height: 28, borderRadius: 6, background: 'rgba(0,0,0,.05)' }} />
+            {/* metric cards */}
+            <div style={{ display: 'flex', gap: Math.round(12 * u) }}>
+              <div style={{ flex: 1, ...bar(64, 0.06) }} />
+              <div style={{ flex: 1, ...bar(64, 0.06) }} />
+              <div style={{ flex: 1, ...bar(64, 0.06) }} />
             </div>
-            <div style={{ width: '90%', height: 14, borderRadius: 4, background: 'rgba(0,0,0,.04)' }} />
+            <div style={{ height: Math.round(18 * u) }} />
+            {/* description */}
+            <div style={{ width: '92%', ...bar(12, 0.045) }} />
+            <div style={{ height: Math.round(8 * u) }} />
+            <div style={{ width: '78%', ...bar(12, 0.045) }} />
           </div>
         </div>
-      )}
+        );
+      })()}
       <div
         ref={containerRef}
         style={{

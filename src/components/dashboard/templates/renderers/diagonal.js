@@ -95,9 +95,9 @@ export function renderDiagonal(data, photoUrl) {
       fontFamily: FONT,
       iconSize: 24,
       fontSize: 24,
-      maxLines: 1,
     });
     addr.style.marginTop = '8px';
+    addr.style.whiteSpace = 'nowrap';
     top.appendChild(addr);
   }
 

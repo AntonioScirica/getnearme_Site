@@ -118,8 +118,8 @@ export function renderFrame(data, photoUrl) {
       fontFamily: FONT,
       iconSize: 24,
       fontSize: 28,
-      maxLines: 1,
     });
+    addr.style.whiteSpace = 'nowrap';
     panel.appendChild(addr);
   }
 

@@ -1,6 +1,6 @@
 // Template: Tips
 // Accent bg, white text, two overlapping photos, CTA button — 1080×1350
-import { createMetricsInline } from '../components.js';
+import { createMetricsInline, createPhotoPlaceholder } from '../components.js';
 
 const FONT = 'Poppins, sans-serif';
 
@@ -117,23 +117,27 @@ export function renderTips(data, photoUrl, opts = {}) {
     p2W = 440; p2H = 640; p2Bot = 64; p2Right = 280;
   }
 
-  // ── Photo 1 (back, right, higher) ──
+  // ── Photo 1 (back, right, higher) — secondary photo ──
   const p1 = document.createElement('div');
   p1.className = 'tpl-photo';
   p1.style.cssText = `position:absolute;right:${p1Right}px;bottom:${p1Bot}px;width:${p1W}px;height:${p1H}px;border-radius:12px;overflow:hidden;z-index:1`;
-  const img1 = document.createElement('img');
-  img1.src = photos[0];
-  img1.alt = '';
-  img1.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block';
-  p1.appendChild(img1);
+  if (photos[1]) {
+    const img1 = document.createElement('img');
+    img1.src = photos[1];
+    img1.alt = '';
+    img1.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block';
+    p1.appendChild(img1);
+  } else {
+    p1.appendChild(createPhotoPlaceholder());
+  }
   container.appendChild(p1);
 
-  // ── Photo 2 (front, overlapping, lower) ──
+  // ── Photo 2 (front, overlapping, lower) — main photo ──
   const p2 = document.createElement('div');
   p2.className = 'tpl-photo';
   p2.style.cssText = `position:absolute;right:${p2Right}px;bottom:${p2Bot}px;width:${p2W}px;height:${p2H}px;border-radius:12px;overflow:hidden;z-index:3;box-shadow:0 8px 32px rgba(0,0,0,0.15)`;
   const img2 = document.createElement('img');
-  img2.src = photos[1] || photos[0];
+  img2.src = photos[0];
   img2.alt = '';
   img2.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block';
   p2.appendChild(img2);

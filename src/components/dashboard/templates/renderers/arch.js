@@ -107,11 +107,12 @@ export function renderArch(data, photoUrl, opts = {}) {
       fontFamily: FONT,
       iconSize: 22,
       fontSize: 24,
-      maxLines: 1,
     });
     addr.style.marginTop = '12px';
     addr.style.color = '#999';
-    addr.style.justifyContent = 'center';
+    addr.style.display = 'inline-flex';
+    addr.style.alignSelf = 'center';
+    addr.style.whiteSpace = 'nowrap';
     top.appendChild(addr);
   }
 

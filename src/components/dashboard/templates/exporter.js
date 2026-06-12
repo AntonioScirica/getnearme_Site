@@ -336,6 +336,32 @@ function drawGlassPanels(ctx, glassPanels, blurCanvasMap) {
   }
 }
 
+// Convert blob URLs to data URLs in all <img> elements inside the template.
+// html2canvas foreignObjectRendering can fail with blob URLs in cloned documents.
+async function convertBlobImgs(element) {
+  const imgs = element.querySelectorAll('img');
+  const restores = [];
+  await Promise.all(Array.from(imgs).map(async (img) => {
+    if (!img.src || !img.src.startsWith('blob:')) return;
+    try {
+      const resp = await fetch(img.src);
+      const blob = await resp.blob();
+      const dataUrl = await new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.readAsDataURL(blob);
+      });
+      const saved = img.src;
+      img.src = dataUrl;
+      await img.decode();
+      restores.push(() => { img.src = saved; });
+    } catch (err) {
+      console.warn('convertBlobImgs failed for', img.src, err);
+    }
+  }));
+  return () => restores.forEach(fn => fn());
+}
+
 export async function exportToPng(element, size, opts = {}) {
   const html2canvas = (await import('html2canvas')).default;
   const { photoSrc, fitCover = false } = opts;
@@ -346,26 +372,64 @@ export async function exportToPng(element, size, opts = {}) {
   const hasCover = !!cover;
   if (cover) cover.style.visibility = 'hidden';
 
+  // Convert blob URLs to data URLs so html2canvas can handle them
+  const restoreBlobImgs = await convertBlobImgs(element);
+
   const tplRect = element.getBoundingClientRect();
   const glassPanels = collectGlassPanels(element, tplRect);
   const restoreActions = fixClipPath(element, w, h);
 
   await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
 
-  const restoreObjFit = patchObjectFitImages(element);
+  const h2cOpts = {
+    width: w, height: h, scale: 1,
+    allowTaint: true, backgroundColor: null, logging: false,
+    foreignObjectRendering: true,
+    onclone: (doc) => stripNonTemplateCss(doc),
+  };
+  const raf2 = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+
+  // Non-cover templates with glass panels (e.g. frame) need a two-pass capture
+  // to reproduce backdrop-filter: a background pass (glass hidden) to blur from,
+  // and a foreground pass (photos hidden) for the glass bg + text on top.
+  const isNonCoverGlass = !hasCover && glassPanels.length > 0;
+
+  // NB: no patchObjectFitImages — foreignObjectRendering renders object-fit natively
   const restoreGradient = patchGradientStops();
-  let overlayCanvas;
+  let overlayCanvas, bgCanvas, fgCanvas;
   try {
-    overlayCanvas = await html2canvas(element, {
-      width: w, height: h, scale: 1,
-      allowTaint: true, backgroundColor: null, logging: false,
-      foreignObjectRendering: true,
-      onclone: (doc) => stripNonTemplateCss(doc),
-    });
+    if (isNonCoverGlass) {
+      const glassEls = Array.from(element.querySelectorAll('.tpl-glass-panel, .tpl-metric-card, .tpl-metric-pill'));
+      const savedGlassVis = glassEls.map(el => el.style.visibility);
+      const photoEls = Array.from(element.querySelectorAll('img')).filter(im => !im.closest('.tpl-logo-overlay') && !im.classList.contains('tpl-logo-overlay'));
+      const savedPhotoVis = photoEls.map(el => el.style.visibility);
+
+      // PASS 1 — background scene (photos + gradients), glass hidden
+      glassEls.forEach(el => { el.style.visibility = 'hidden'; });
+      await raf2();
+      bgCanvas = await html2canvas(element, h2cOpts);
+      glassEls.forEach((el, i) => { el.style.visibility = savedGlassVis[i]; });
+
+      // PASS 2 — foreground (glass bg + border + text + badge), photos hidden.
+      // Also make the root background transparent so the opaque template bg
+      // (e.g. frame's colored border) does not cover the photo from pass 1.
+      const savedRootBg = element.style.background;
+      const savedRootBgColor = element.style.backgroundColor;
+      photoEls.forEach(el => { el.style.visibility = 'hidden'; });
+      element.style.background = 'transparent';
+      element.style.backgroundColor = 'transparent';
+      await raf2();
+      fgCanvas = await html2canvas(element, h2cOpts);
+      photoEls.forEach((el, i) => { el.style.visibility = savedPhotoVis[i]; });
+      element.style.background = savedRootBg;
+      element.style.backgroundColor = savedRootBgColor;
+    } else {
+      overlayCanvas = await html2canvas(element, h2cOpts);
+    }
   } finally {
     restoreGradient();
-    restoreObjFit();
     restoreActions.forEach(fn => fn());
+    restoreBlobImgs();
   }
 
   if (cover) cover.style.visibility = '';
@@ -374,7 +438,7 @@ export async function exportToPng(element, size, opts = {}) {
   if (photoSrc) {
     fgImg = await new Promise((resolve) => {
       const img = new Image();
-      img.crossOrigin = 'anonymous';
+      if (!photoSrc.startsWith('blob:')) img.crossOrigin = 'anonymous';
       img.onload = () => resolve(img);
       img.onerror = () => resolve(null);
       img.src = photoSrc;
@@ -418,7 +482,27 @@ export async function exportToPng(element, size, opts = {}) {
     }
   }
 
-  ctx.drawImage(overlayCanvas, 0, 0);
+  if (isNonCoverGlass) {
+    // 1. photo/background scene
+    ctx.drawImage(bgCanvas, -1, -1, w + 2, h + 2);
+    // 2. blur the background inside each glass panel region
+    const blurMap = buildBlurCanvasMap(glassPanels, bgCanvas, w, h);
+    for (const p of glassPanels) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.roundRect(p.x, p.y, p.w, p.h, p.radius);
+      ctx.clip();
+      const bc = blurMap.get(p.blurRadius);
+      if (bc) ctx.drawImage(bc, 0, 0);
+      ctx.restore();
+    }
+    // 3. glass bg + border + text + badge on top (photos hidden in this pass)
+    ctx.drawImage(fgCanvas, 0, 0);
+  } else {
+    // Slight 1px overdraw to cover sub-pixel gap at top/left edges where
+    // html2canvas can leave the composited photo peeking through the overlay.
+    ctx.drawImage(overlayCanvas, -1, -1, w + 2, h + 2);
+  }
 
   return new Promise((resolve, reject) => {
     canvas.toBlob((blob) => {
@@ -430,18 +514,40 @@ export async function exportToPng(element, size, opts = {}) {
 
 export async function exportStaticToVideo(templateEl, size, opts = {}) {
   const html2canvas = (await import('html2canvas')).default;
-  const { duration = 15, animStyle = 'slide-up', photoSrc, blurredSrc, fitCover = false, onProgress, signal, onOverlayCaptured } = opts;
+  const { duration = 15, animStyle = 'slide-up', photoSrc, videoSrc, blurredSrc, fitCover = false, onProgress, signal, onOverlayCaptured } = opts;
   const style = ANIMATION_STYLES.find(s => s.id === animStyle) || ANIMATION_STYLES[0];
   const w = size?.w || 1080;
   const h = size?.h || 1350;
 
   if (signal?.aborted) throw new DOMException('Export cancelled', 'AbortError');
 
+  // Optional moving video background (user uploaded a video cover). The clip
+  // loops to fill the animation duration; the cut point stays the same.
+  let coverVideo = null;
+  if (videoSrc) {
+    coverVideo = document.createElement('video');
+    coverVideo.src = videoSrc;
+    coverVideo.muted = true;
+    coverVideo.loop = true;
+    coverVideo.playsInline = true;
+    coverVideo.preload = 'auto';
+    await new Promise((resolve) => {
+      coverVideo.onloadeddata = resolve;
+      coverVideo.onerror = resolve;
+      coverVideo.load();
+    });
+    try { await coverVideo.play(); } catch { /* autoplay may need muted, already set */ }
+  }
+
   const TEXT_SELS = '.tpl-badge, .tpl-price, .tpl-title, .tpl-address, .tpl-metrics, .tpl-metric-pills, .tpl-metrics-inline, .tpl-desc, .tpl-btn, .tpl-photo, .tpl-label, .tpl-logo-overlay, .tpl-bar';
 
   const cover = templateEl.querySelector('.tpl-cover');
   const hasCover = !!cover;
   if (cover) cover.style.visibility = 'hidden';
+
+  // Convert blob URLs to data URLs for html2canvas compatibility
+  const restoreBlobImgs = await convertBlobImgs(templateEl);
+
   await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
 
   const tplRect = templateEl.getBoundingClientRect();
@@ -488,7 +594,9 @@ export async function exportStaticToVideo(templateEl, size, opts = {}) {
   const textEls = templateEl.querySelectorAll(TEXT_SELS);
   const textElsSet = new Set(textEls);
   const glassPanels = collectGlassPanels(templateEl, tplRect, textElsSet);
-  const textChildPanels = glassPanels.filter(p => p.isTextChild);
+  // Use ALL glass panels (not just text descendants) so standalone panels like
+  // frame's .tpl-glass-panel keep their backdrop blur in the video too.
+  const textChildPanels = glassPanels;
 
   // Capture gradient layer (hide text, keep overlays)
   textEls.forEach(el => { el.style.visibility = 'hidden'; });
@@ -517,7 +625,6 @@ export async function exportStaticToVideo(templateEl, size, opts = {}) {
 
   await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
 
-  const restoreObjFit = patchObjectFitImages(templateEl);
   const restoreGrad1 = patchGradientStops();
   let gradientCanvas;
   try {
@@ -644,9 +751,9 @@ export async function exportStaticToVideo(templateEl, size, opts = {}) {
     else el.removeAttribute('style');
   });
 
-  restoreObjFit();
   overlayEls.forEach(el => { el.style.visibility = ''; });
   if (cover) cover.style.visibility = '';
+  restoreBlobImgs();
 
   if (onOverlayCaptured) onOverlayCaptured();
   if (signal?.aborted) throw new DOMException('Export cancelled', 'AbortError');
@@ -656,7 +763,7 @@ export async function exportStaticToVideo(templateEl, size, opts = {}) {
     return new Promise((resolve, reject) => {
       if (!src) return reject(new Error('No src'));
       const img = new Image();
-      img.crossOrigin = 'anonymous';
+      if (!src.startsWith('blob:')) img.crossOrigin = 'anonymous';
       img.onload = () => resolve(img);
       img.onerror = () => reject(new Error('Failed to load'));
       img.src = src;
@@ -697,6 +804,29 @@ export async function exportStaticToVideo(templateEl, size, opts = {}) {
     blurCanvasMap = buildBlurCanvasMap(textChildPanels, compCanvas, w, h);
   }
 
+  const isVideoCover = !!coverVideo;
+  // Video-aware cover/contain draw (uses videoWidth/Height, not naturalWidth).
+  function drawVideoFit(destCtx, vid, dw, dh, cover) {
+    const vw = vid.videoWidth, vh = vid.videoHeight;
+    if (!vw || !vh) return;
+    const vR = vw / vh, cR = dw / dh;
+    if (cover) {
+      let sx, sy, sw, sh;
+      if (vR > cR) { sh = vh; sw = vh * cR; sx = (vw - sw) / 2; sy = 0; }
+      else { sw = vw; sh = vw / cR; sx = 0; sy = (vh - sh) / 2; }
+      destCtx.drawImage(vid, sx, sy, sw, sh, 0, 0, dw, dh);
+    } else {
+      const scale = Math.min(dw / vw, dh / vh);
+      const rw = vw * scale, rh = vh * scale;
+      destCtx.drawImage(vid, (dw - rw) / 2, (dh - rh) / 2, rw, rh);
+    }
+  }
+  // Small offscreen canvas to produce a cheap blurred video background frame.
+  const vSmall = document.createElement('canvas');
+  vSmall.width = Math.max(Math.round(w * 0.12), 1);
+  vSmall.height = Math.max(Math.round(h * 0.12), 1);
+  const vSmallCtx = vSmall.getContext('2d');
+
   const blurCanvas = document.createElement('canvas');
   blurCanvas.width = w;
   blurCanvas.height = h;
@@ -735,7 +865,6 @@ export async function exportStaticToVideo(templateEl, size, opts = {}) {
     if (e.data.size > 0) chunks.push(e.data);
   };
 
-  const GRAD_FADE_END = 0.4;
   const ELEM_START = 0.4;
   const ELEM_STAGGER = 0.18;
   const ELEM_ANIM_DUR = 0.5;
@@ -746,6 +875,7 @@ export async function exportStaticToVideo(templateEl, size, opts = {}) {
     const durationMs = duration * 1000;
 
     recorder.onstop = () => {
+      if (coverVideo) { try { coverVideo.pause(); coverVideo.src = ''; } catch { /* noop */ } }
       if (aborted) {
         reject(new DOMException('Export cancelled', 'AbortError'));
       } else {
@@ -765,7 +895,13 @@ export async function exportStaticToVideo(templateEl, size, opts = {}) {
     }
 
     // Pre-draw initial scene
-    if (hasCover) {
+    if (isVideoCover) {
+      vSmallCtx.drawImage(coverVideo, 0, 0, vSmall.width, vSmall.height);
+      ctx.save(); ctx.filter = 'blur(8px)';
+      ctx.drawImage(vSmall, 0, 0, w, h);
+      ctx.filter = 'none'; ctx.restore();
+      drawVideoFit(ctx, coverVideo, w, h, fitCover);
+    } else if (hasCover) {
       blurCtx.clearRect(0, 0, w, h);
       blurCtx.save();
       blurCtx.translate(w / 2, h / 2);
@@ -785,6 +921,15 @@ export async function exportStaticToVideo(templateEl, size, opts = {}) {
     recorder.start(100);
     videoTrack.requestFrame();
 
+    // Associate each animated layer with the glass panel that matches its
+    // bounding box (metric cards), so the box animates together with its
+    // content instead of sitting there statically.
+    const layerPanel = layers.map(l => textChildPanels.find(p =>
+      Math.abs(p.x - l.x) < 6 && Math.abs(p.y - l.y) < 6 &&
+      Math.abs(p.w - l.w) < 6 && Math.abs(p.h - l.h) < 6
+    ) || null);
+    const animatedPanels = new Set(layerPanel.filter(Boolean));
+
     function drawFrame() {
       if (aborted) return;
       const elapsed = performance.now() - startTime;
@@ -797,7 +942,22 @@ export async function exportStaticToVideo(templateEl, size, opts = {}) {
       const progress = t / duration;
       ctx.clearRect(0, 0, w, h);
 
-      if (hasCover) {
+      // Per-frame glass blur source: for video covers it must follow the moving
+      // background, so derive it live from the scene; for images use the static map.
+      let frameBlurMap = blurCanvasMap;
+
+      if (isVideoCover) {
+        // Blurred moving video background + video foreground.
+        vSmallCtx.drawImage(coverVideo, 0, 0, vSmall.width, vSmall.height);
+        ctx.save(); ctx.filter = 'blur(8px)';
+        ctx.drawImage(vSmall, 0, 0, w, h);
+        ctx.filter = 'none'; ctx.restore();
+        drawVideoFit(ctx, coverVideo, w, h, fitCover);
+        // Build glass blur from the current scene (bg + fg) so it moves too.
+        if (textChildPanels.length > 0) {
+          frameBlurMap = buildBlurCanvasMap(textChildPanels, canvas, w, h);
+        }
+      } else if (hasCover) {
         const bgScale = 1.15 + 0.10 * progress;
         blurCtx.clearRect(0, 0, w, h);
         blurCtx.save();
@@ -818,10 +978,12 @@ export async function exportStaticToVideo(templateEl, size, opts = {}) {
         ctx.restore();
       }
 
-      if (blurCanvasMap) {
-        const fgScaleGlass = hasCover ? (1.0 + 0.04 * progress) : 1;
+      if (frameBlurMap) {
+        // No Ken-Burns scale on the glass blur for video (blur already matches the scene).
+        const fgScaleGlass = (hasCover && !isVideoCover) ? (1.0 + 0.04 * progress) : 1;
         for (const p of textChildPanels) {
-          const blurSrc = blurCanvasMap.get(p.blurRadius);
+          if (animatedPanels.has(p)) continue; // drawn (animated) in the layer loop
+          const blurSrc = frameBlurMap.get(p.blurRadius);
           if (!blurSrc) continue;
           ctx.save();
           ctx.beginPath();
@@ -851,13 +1013,8 @@ export async function exportStaticToVideo(templateEl, size, opts = {}) {
         }
       }
 
-      const gradAlpha = hasCover ? Math.min(t / GRAD_FADE_END, 1) : 1;
-      if (gradAlpha > 0) {
-        ctx.save();
-        ctx.globalAlpha = gradAlpha;
-        ctx.drawImage(gradientCanvas, 0, 0);
-        ctx.restore();
-      }
+      // Dark overlay is present from the first frame (no fade-in).
+      ctx.drawImage(gradientCanvas, 0, 0);
 
       for (let i = 0; i < layers.length; i++) {
         const l = layers[i];
@@ -866,6 +1023,42 @@ export async function exportStaticToVideo(templateEl, size, opts = {}) {
 
         const p = Math.min((t - startT) / ELEM_ANIM_DUR, 1);
         const { alpha = 1, x = 0, y = 0, scale: s } = style.animate(p);
+
+        // Animated glass box for this layer (metric cards): same look as the
+        // static box, just faded in with its content (no extra blur/offset).
+        const gp = layerPanel[i];
+        if (gp && frameBlurMap) {
+          const fgScaleGlass = (hasCover && !isVideoCover) ? (1.0 + 0.04 * progress) : 1;
+          const blurSrc = frameBlurMap.get(gp.blurRadius);
+          ctx.save();
+          ctx.globalAlpha = alpha;
+          if (blurSrc) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.roundRect(gp.x, gp.y, gp.w, gp.h, gp.radius);
+            ctx.clip();
+            ctx.translate(w / 2, h / 2);
+            ctx.scale(fgScaleGlass, fgScaleGlass);
+            ctx.translate(-w / 2, -h / 2);
+            ctx.drawImage(blurSrc, 0, 0);
+            ctx.restore();
+          }
+          ctx.save();
+          ctx.beginPath();
+          ctx.roundRect(gp.x, gp.y, gp.w, gp.h, gp.radius);
+          ctx.clip();
+          ctx.fillStyle = gp.bg;
+          ctx.fillRect(gp.x, gp.y, gp.w, gp.h);
+          ctx.restore();
+          if (gp.borderWidth > 0 && gp.borderColor !== 'transparent' && gp.borderColor !== 'rgba(0, 0, 0, 0)') {
+            ctx.strokeStyle = gp.borderColor;
+            ctx.lineWidth = gp.borderWidth;
+            ctx.beginPath();
+            ctx.roundRect(gp.x, gp.y, gp.w, gp.h, gp.radius);
+            ctx.stroke();
+          }
+          ctx.restore();
+        }
 
         ctx.save();
         ctx.globalAlpha = alpha;

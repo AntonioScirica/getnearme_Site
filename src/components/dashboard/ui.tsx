@@ -43,14 +43,27 @@ type BoxProps = React.HTMLAttributes<HTMLDivElement> & {
   as?: keyof React.JSX.IntrinsicElements;
 };
 
+// Split `border` shorthand into separate properties to avoid React warnings
+// when hover styles use `borderColor` (shorthand vs non-shorthand conflict)
+function splitBorderShorthand(s: React.CSSProperties): React.CSSProperties {
+  const b = (s as Record<string, unknown>).border;
+  if (typeof b !== 'string') return s;
+  const { border: _, ...rest } = s as Record<string, unknown>;
+  const m = b.match(/^(\S+)\s+(\S+)\s+(.+)$/);
+  if (!m) return s;
+  return { ...rest, borderWidth: m[1], borderStyle: m[2], borderColor: m[3] } as React.CSSProperties;
+}
+
 /** A div (or other tag) that merges `hover` styles on mouse enter, like the prototype's style-hover. */
 export function Box({ hover, as = 'div', style, children, onMouseEnter, onMouseLeave, ...rest }: BoxProps) {
   const [h, setH] = useState(false);
+  const needsSplit = hover && ('borderColor' in hover || 'borderWidth' in hover || 'borderStyle' in hover);
+  const baseStyle = needsSplit && style ? splitBorderShorthand(style) : style;
   return React.createElement(
     as,
     {
       ...rest,
-      style: { ...style, ...(h && hover ? hover : null) },
+      style: { outline: 'none', ...baseStyle, ...(h && hover ? hover : null) },
       onMouseEnter: (e: React.MouseEvent<HTMLDivElement>) => { setH(true); onMouseEnter?.(e); },
       onMouseLeave: (e: React.MouseEvent<HTMLDivElement>) => { setH(false); onMouseLeave?.(e); },
     },

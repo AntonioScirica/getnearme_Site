@@ -16,9 +16,12 @@ type Photo = { id: string; dataUrl: string; name: string; w: number; h: number }
 
 const GEN_SECONDS = 45; // countdown estimate, same ballpark as the extension
 
-export default function FotoAIScreen({ toast, routeKey }: {
+import type { Project } from './types';
+
+export default function FotoAIScreen({ toast, routeKey, project }: {
   toast: (msg: string, icon?: string) => void;
   routeKey: number;
+  project?: Project;
 }) {
   const [quota, setQuota] = React.useState<StagingQuota | null>(null);
   React.useEffect(() => { fetchStagingQuota().then(setQuota); }, []);

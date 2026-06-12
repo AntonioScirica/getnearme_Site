@@ -18,13 +18,10 @@ import { exportToPng, exportStaticToVideo, downloadBlob } from './templates/expo
 import { fetchBrand, updateBrand, uploadBrandLogo, removeBrandLogo, logoUrlToDataUrl, DEFAULT_BRAND_SETTINGS, type BrandSettings } from '@/lib/brand';
 import FotoAIScreen from './FotoAIScreen';
 import VideoAIScreen from './VideoAIScreen';
+import type { Project } from './types';
 
 const TemplatePreview = dynamic(() => import('./TemplatePreview'), { ssr: false });
 
-type Project = {
-  id: string; nome: string; addr: string; prezzo: number; mq: number; locali: number;
-  nFoto: number; nStaging: number; nVideo: number; nPost: number; titolo: string; cover: string;
-};
 type Toast = { id: number; msg: string; icon: string };
 
 const DEMO_PROJECTS: Project[] = [
@@ -35,18 +32,14 @@ const DEMO_PROJECTS: Project[] = [
 ];
 
 const NAV_SECTIONS = [
-  { label: '', items: [{ icon: 'layout-dashboard', label: 'Home', route: 'home' }] },
-  { label: 'Lavoro', items: [{ icon: 'building-2', label: 'Progetti', route: 'progetti' }, { icon: 'sparkles', label: 'Foto AI', route: 'staging' }, { icon: 'film', label: 'Video AI', route: 'video' }, { icon: 'scissors', label: 'Montaggio', route: 'montaggio' }] },
-  { label: 'Social', items: [{ icon: 'image-plus', label: 'Post Social', route: 'studio' }, { icon: 'calendar', label: 'Calendario', route: 'calendario' }] },
-  { label: 'Libreria', items: [{ icon: 'image', label: 'Media', route: 'media' }] },
-  { label: 'Agenzia', items: [{ icon: 'palette', label: 'Brand', route: 'brand' }] },
-  { label: 'Account', items: [{ icon: 'credit-card', label: 'Piano', route: 'account' }] },
+  { label: 'Progetto', items: [{ icon: 'sparkles', label: 'Foto AI', route: 'staging' }, { icon: 'film', label: 'Video AI', route: 'video' }, { icon: 'scissors', label: 'Montaggio', route: 'montaggio' }, { icon: 'image-plus', label: 'Post Social', route: 'studio' }, { icon: 'image', label: 'Media generati', route: 'media' }] },
+  { label: 'Agenzia', items: [{ icon: 'calendar', label: 'Calendario', route: 'calendario' }, { icon: 'palette', label: 'Brand', route: 'brand' }, { icon: 'credit-card', label: 'Piano', route: 'account' }] },
 ];
 
 const TOUR_DEFS = [
   { sel: '[title="Foto AI"]', title: 'Foto AI', text: "Arreda, svuota o trasforma le foto dei tuoi immobili con l'AI. Singola o batch, stile o prompt libero." },
   { sel: '[title="Post Social"]', title: 'Post Social', text: 'Template per post e storie con i dati già compilati, e il calendario per programmare le pubblicazioni.' },
-  { sel: '[title="Progetti"]', title: 'Progetti', text: 'Un progetto = un immobile. Non serve crearlo prima: nasce da solo al primo contenuto che generi.' },
+  { sel: '[title="Brand"]', title: 'Brand', text: 'Configura il logo, i colori e il nome della tua agenzia. Appariranno su tutti i contenuti.' },
   { sel: '[title="Media"]', title: 'Media', text: 'Tutto ciò che generi finisce qui. Puoi riusarlo in post e video senza pagare altri crediti.' },
   { sel: '[title="Lavori in corso"]', title: 'Lavori in corso', text: 'Le generazioni girano in background: qui vedi i progressi senza mai bloccarti. Ti avvisiamo a fine lavoro.' },
   { sel: '[title="Piano"]', title: 'Piano', text: 'Qui gestisci il tuo abbonamento e confronti i piani disponibili.' },
@@ -197,12 +190,6 @@ const SAMPLE_TPL_DATA = {
   ctaText: 'Contattaci ora', accentColor: '#2967EC',
 };
 
-const DEMO_IMMOBILI = [
-  { id: 'i1', nome: 'Attico Brera', prezzo: '€ 1.250.000', meta: '145 m² · 4 locali', thumb: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=80&h=80&fit=crop' },
-  { id: 'i2', nome: 'Trilocale Isola', prezzo: '€ 545.000', meta: '95 m² · 3 locali', thumb: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=80&h=80&fit=crop' },
-  { id: 'i3', nome: 'Appartamento Trastevere', prezzo: '€ 690.000', meta: '110 m² · 3 locali', thumb: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=80&h=80&fit=crop' },
-  { id: 'i4', nome: 'Bilocale Crocetta', prezzo: '€ 295.000', meta: '68 m² · 2 locali', thumb: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=80&h=80&fit=crop' },
-];
 
 // Carica i loghi GNM default come data URL, come fa il post wizard dell'estensione
 let logosCache: { white: string | null; black: string | null; blue: string | null } | null = null;
@@ -231,7 +218,7 @@ const LOGO_VARIANT_LABELS: Record<string, string> = {
   colored_v: 'Icona, Colore', colored_h: 'Icona + Nome, Colore',
 };
 
-function PostSocialScreen({ toast, routeKey, brand }: { toast: (msg: string, icon?: string) => void; routeKey: number; brand: BrandSettings }) {
+function PostSocialScreen({ toast, routeKey, brand, project }: { toast: (msg: string, icon?: string) => void; routeKey: number; brand: BrandSettings; project?: Project }) {
   const [step, setStep] = React.useState(1);
   React.useEffect(() => { setStep(1); }, [routeKey]);
   const [logos, setLogos] = React.useState<{ white: string | null; black: string | null; blue: string | null } | null>(logosCache);
@@ -276,9 +263,13 @@ function PostSocialScreen({ toast, routeKey, brand }: { toast: (msg: string, ico
   const [platform, setPlatform] = React.useState('instagram');
   const [formatId, setFormatId] = React.useState('ig-post');
   const [tplId, setTplId] = React.useState('gradient');
-  const [selImm, setSelImm] = React.useState<string | null>(null);
   const [bgLoaded, setBgLoaded] = React.useState(false);
-  const [fields, setFields] = React.useState({ titolo: '', indirizzo: '', prezzo: '', superficie: '', camere: '', bagni: '', descrizione: '', btnTxt: 'Contattaci ora', badgeTxt: 'Nuovo' });
+  const [fields, setFields] = React.useState(() => ({
+    titolo: project?.titolo ?? '', indirizzo: project?.addr ?? '',
+    prezzo: project ? Number(project.prezzo).toLocaleString('it-IT') : '',
+    superficie: project ? String(project.mq) : '', camere: project ? String(project.locali) : '',
+    bagni: '', descrizione: '', btnTxt: 'Contattaci ora', badgeTxt: 'Nuovo',
+  }));
   const [showBadge, setShowBadge] = React.useState(true);
   const [showLogo, setShowLogo] = React.useState(true);
   const [oscuramento, setOscuramento] = React.useState(100);
@@ -654,14 +645,6 @@ function PostSocialScreen({ toast, routeKey, brand }: { toast: (msg: string, ico
   const stepSubs: Record<number, string> = { 1: 'Seleziona lo stile del tuo post', 3: 'Personalizza e scarica il post', 4: 'Programma o pubblica subito il post' };
 
   const goStep = (n: number) => {
-    if (n === 2 && selImm) {
-      const imm = DEMO_IMMOBILI.find(i => i.id === selImm);
-      if (imm) {
-        setField('titolo', 'Appartamento');
-        setField('indirizzo', imm.nome);
-        setField('prezzo', imm.prezzo);
-      }
-    }
     setStep(n);
   };
 
@@ -1678,7 +1661,9 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
   const [collapsed, setCollapsed] = useState(false);
   const [projOpen, setProjOpen] = useState(false);
   const [projQuery, setProjQuery] = useState('');
-  const [activeProject, setActiveProject] = useState('p1');
+  const [activeProject, setActiveProject] = useState(() =>
+    typeof window !== 'undefined' ? localStorage.getItem('gnm_active_project') ?? 'p1' : 'p1'
+  );
   const credits = userData?.credits ?? 0;
   const [projects] = useState<Project[]>(DEMO_PROJECTS);
   const [welcomeOpen, setWelcomeOpen] = useState(true);
@@ -1697,6 +1682,9 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
   }, []);
 
   const active = useMemo(() => projects.find((p) => p.id === activeProject) ?? projects[0], [projects, activeProject]);
+
+  useEffect(() => { localStorage.setItem('gnm_active_project', activeProject); }, [activeProject]);
+  useEffect(() => { setRouteKey(k => k + 1); }, [activeProject]);
 
   useEffect(() => {
     if (!document.getElementById('poppins-font')) {
@@ -1755,8 +1743,6 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
   const clDone = clDefs.filter((c) => c.done).length;
   const showChecklist = !clDismissed && clDone < 4;
 
-  const homeSub = `${projects.length} immobili attivi · 5 contenuti programmati`;
-
   const projList = projects.filter((p) => !projQuery || (p.nome + ' ' + p.addr).toLowerCase().includes(projQuery.toLowerCase()));
 
   // ⌘K results
@@ -1768,7 +1754,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
   ] as const;
   const cmdResults: { label: string; sub: string; icon: string; go: () => void }[] = [];
   cmdTools.filter((t) => !cmdq || t[0].toLowerCase().includes(cmdq)).forEach((t) => cmdResults.push({ label: t[0], sub: 'Strumento', icon: t[2], go: () => { setCmdkOpen(false); go(t[1]); } }));
-  projects.filter((p) => !cmdq || (p.nome + ' ' + p.addr).toLowerCase().includes(cmdq)).forEach((p) => cmdResults.push({ label: p.nome, sub: p.addr, icon: 'building-2', go: () => { setCmdkOpen(false); setActiveProject(p.id); go('progetti'); } }));
+  projects.filter((p) => !cmdq || (p.nome + ' ' + p.addr).toLowerCase().includes(cmdq)).forEach((p) => cmdResults.push({ label: p.nome, sub: p.addr, icon: 'building-2', go: () => { setCmdkOpen(false); setActiveProject(p.id); go('home'); } }));
 
   const onRight = tourRect && tourRect.x > (typeof window !== 'undefined' ? window.innerWidth - 420 : 9999);
   const tipL = tourRect ? (onRight ? Math.max(16, tourRect.x + tourRect.w - 320) : tourRect.x + tourRect.w + 20) : 0;
@@ -1907,8 +1893,28 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
           <div ref={contentRef} style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }} onClick={closeMenus}>
             {route === 'home' ? (
               <div style={s('max-width:1160px;margin:0 auto;padding:36px 32px 64px')}>
-                <div style={s('display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin-bottom:24px')}>
-                  <div><h1 style={s('margin:0 0 4px;font-size:27px;font-weight:800;letter-spacing:-.5px')}>Ciao{userData?.email ? `, ${userData.email.split('@')[0]}` : ''}</h1><div style={s('color:#8c867d;font-size:14px')}>{homeSub}</div></div>
+                {/* project header */}
+                <div style={s('display:flex;align-items:center;gap:20px;margin-bottom:28px')}>
+                  <div style={{ width: 72, height: 72, borderRadius: 16, background: `url(${active.cover}) center/cover`, backgroundColor: '#f3f1ec', flex: 'none' }} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <h1 style={s('margin:0 0 4px;font-size:27px;font-weight:800;letter-spacing:-.5px')}>{active.nome}</h1>
+                    <div style={s('color:#8c867d;font-size:14px;display:flex;align-items:center;gap:6px')}><Icon name="map-pin" size={13} color="#b3aca1" />{active.addr}</div>
+                  </div>
+                </div>
+
+                {/* stats */}
+                <div style={s('display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px')}>
+                  {[
+                    { label: 'Prezzo', value: fmt(active.prezzo), icon: 'tag' },
+                    { label: 'Superficie', value: active.mq + ' m²', icon: 'maximize-2' },
+                    { label: 'Locali', value: String(active.locali), icon: 'layout-grid' },
+                    { label: 'Contenuti', value: String(active.nFoto + active.nStaging + active.nVideo + active.nPost), icon: 'layers' },
+                  ].map(st => (
+                    <div key={st.label} style={s('background:#fff;border:1px solid #f0ede7;border-radius:12px;padding:18px 20px')}>
+                      <div style={s('display:flex;align-items:center;gap:8px;margin-bottom:8px')}><Icon name={st.icon} size={15} color="#8c867d" /><span style={s('font-size:12px;font-weight:700;color:#8c867d;text-transform:uppercase;letter-spacing:.04em')}>{st.label}</span></div>
+                      <div style={s('font-size:22px;font-weight:800;letter-spacing:-.3px')}>{st.value}</div>
+                    </div>
+                  ))}
                 </div>
 
                 {showChecklist && (
@@ -1929,26 +1935,18 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                   </div>
                 )}
 
-                {/* hero AI */}
-                <div style={s('display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px')}>
-                  <Box onClick={() => go('staging')} style={s('background:#211f1c;border-radius:14px;padding:28px;cursor:pointer;position:relative;overflow:hidden;transition:transform .2s, box-shadow .2s')} hover={s('transform:translateY(-2px);box-shadow:0 12px 32px rgba(33,31,28,.18)')}>
-                    <div style={s('display:flex;align-items:center;gap:10px;margin-bottom:16px')}><div style={s('width:42px;height:42px;border-radius:10px;background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center')}><Icon name="sparkles" size={20} color="#fff" /></div><span style={s('font-size:10.5px;font-weight:800;color:rgba(255,255,255,.65);letter-spacing:.05em;text-transform:uppercase')}>Agency</span></div>
-                    <div style={s('font-size:19px;font-weight:800;letter-spacing:-.3px;margin-bottom:4px;color:#fff')}>Foto AI</div>
-                    <div style={s('color:rgba(255,255,255,.7);font-size:14px;max-width:320px;margin-bottom:20px')}>Arreda, svuota o trasforma le foto dei tuoi immobili con l&apos;AI.</div>
-                    <div style={s('display:flex;align-items:center;justify-content:space-between')}><span style={s('font-size:12.5px;font-weight:700;color:rgba(255,255,255,.6);background:rgba(255,255,255,.08);padding:6px 12px;border-radius:6px')}>87 / 100 foto</span><span style={s('display:flex;align-items:center;gap:7px;background:#3B83F6;color:#fff;font-size:13px;font-weight:700;padding:10px 20px;border-radius:8px;min-height:38px')}>Apri lo studio<Icon name="arrow-right" size={14} color="#fff" /></span></div>
-                  </Box>
-                  <Box onClick={() => go('video')} style={s('background:#fff;border:1px solid #e9e6df;border-radius:14px;padding:28px;cursor:pointer;position:relative;overflow:hidden;transition:transform .2s, box-shadow .2s')} hover={s('transform:translateY(-2px);box-shadow:0 12px 32px rgba(33,31,28,.10)')}>
-                    <div style={s('width:42px;height:42px;border-radius:10px;background:#f4f2ee;display:flex;align-items:center;justify-content:center;margin-bottom:16px')}><Icon name="film" size={20} color="#57534c" /></div>
-                    <div style={s('font-size:19px;font-weight:800;letter-spacing:-.3px;margin-bottom:4px')}>Video AI</div>
-                    <div style={s('color:#57534c;font-size:14px;max-width:320px;margin-bottom:20px')}>9 template pronti: avatar, tour dalle foto, prima/dopo, timelapse e altro.</div>
-                    <div style={s('display:flex;align-items:center;justify-content:space-between')}><span style={s('font-size:12.5px;font-weight:700;color:#8c867d;background:#f4f2ee;padding:6px 12px;border-radius:6px')}>da 1 video quota</span><span style={s('display:flex;align-items:center;gap:7px;background:#211f1c;color:#fff;font-size:13px;font-weight:700;padding:10px 20px;border-radius:8px;min-height:38px')}>Apri lo studio<Icon name="arrow-right" size={14} color="#fff" /></span></div>
-                  </Box>
-                </div>
-
                 {/* quick actions */}
-                <div style={s('display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:36px')}>
-                  {[['image-plus', 'Crea un post', 'studio'], ['calendar', 'Programma una pubblicazione', 'calendario'], ['image', 'Apri la libreria media', 'media']].map(([ic, lbl, r]) => (
-                    <Box key={r} onClick={() => go(r)} style={s('display:flex;align-items:center;gap:12px;background:#fff;border:1px solid #ece9e2;border-radius:10px;padding:14px 18px;cursor:pointer;min-height:52px')} hover={s('border-color:#d8d4cb;background:#faf9f7')}><Icon name={ic} size={17} color="#8c867d" /><span style={s('font-size:13.5px;font-weight:700')}>{lbl}</span></Box>
+                <div style={s('display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px')}>
+                  {[
+                    ['sparkles', 'Genera foto AI', 'staging', '#211f1c', '#fff'],
+                    ['film', 'Crea video', 'video', '#fff', '#211f1c'],
+                    ['image-plus', 'Crea un post', 'studio', '#fff', '#211f1c'],
+                    ['scissors', 'Montaggio', 'montaggio', '#fff', '#211f1c'],
+                  ].map(([ic, lbl, r, bg, col]) => (
+                    <Box key={r} onClick={() => go(r)} style={{ display: 'flex', alignItems: 'center', gap: 12, background: bg, border: bg === '#fff' ? '1px solid #e9e6df' : 'none', borderRadius: 14, padding: '20px 22px', cursor: 'pointer', color: col, transition: 'transform .2s, box-shadow .2s' }} hover={{ transform: 'translateY(-2px)', boxShadow: '0 8px 24px rgba(33,31,28,.10)' }}>
+                      <div style={{ width: 42, height: 42, borderRadius: 10, background: bg === '#fff' ? '#f4f2ee' : 'rgba(255,255,255,.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}><Icon name={ic} size={20} color={col} /></div>
+                      <span style={s('font-size:14px;font-weight:700')}>{lbl}</span>
+                    </Box>
                   ))}
                 </div>
 
@@ -1975,13 +1973,13 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                 </div>
               </div>
             ) : route === 'studio' ? (
-              <PostSocialScreen toast={toast} routeKey={routeKey} brand={brand} />
+              <PostSocialScreen toast={toast} routeKey={routeKey} brand={brand} project={active} />
             ) : route === 'staging' ? (
-              <FotoAIScreen toast={toast} routeKey={routeKey} />
+              <FotoAIScreen toast={toast} routeKey={routeKey} project={active} />
             ) : route === 'video' ? (
-              <VideoAIScreen toast={toast} routeKey={routeKey} brand={brand} />
+              <VideoAIScreen toast={toast} routeKey={routeKey} brand={brand} project={active} />
             ) : route === 'montaggio' ? (
-              <VideoAIScreen toast={toast} routeKey={routeKey} brand={brand} preselect="montaggio" />
+              <VideoAIScreen toast={toast} routeKey={routeKey} brand={brand} preselect="montaggio" project={active} />
             ) : route === 'account' ? (
               <AccountScreen credits={credits} toast={toast} go={go} userData={userData} />
             ) : route === 'brand' ? (

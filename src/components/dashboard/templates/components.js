@@ -147,6 +147,21 @@ export function createAddress(address, opts = {}) {
 }
 
 /**
+ * Creates an empty-photo placeholder: grey box with a Lucide "image" icon.
+ * Used for multi-photo templates when a photo slot is not filled.
+ * @param {Object} [opts]
+ * @param {number} [opts.iconSize=64]
+ * @returns {HTMLElement}
+ */
+export function createPhotoPlaceholder(opts = {}) {
+  const { iconSize = 64 } = opts;
+  const box = document.createElement('div');
+  box.style.cssText = 'width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#e0e0e0;color:rgba(0,0,0,0.25)';
+  box.innerHTML = `<svg width="${iconSize}" height="${iconSize}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>`;
+  return box;
+}
+
+/**
  * Creates metric cards row (bedrooms, bathrooms, surface).
  * @param {Object} data - { bedrooms, rooms, bathrooms, surface, surfaceNum }
  * @param {Object} opts
@@ -214,6 +229,7 @@ export function createMetricCards(data, opts = {}) {
     const value = document.createElement('div');
     value.className = 'tpl-metric-card__value';
     value.textContent = m.value;
+    value.style.whiteSpace = 'nowrap';
     if (valueSize) value.style.fontSize = valueSize + 'px';
 
     if (iconOnTop) {

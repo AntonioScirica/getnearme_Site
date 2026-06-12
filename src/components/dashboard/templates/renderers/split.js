@@ -115,9 +115,9 @@ export function renderSplit(data, photoUrl) {
       fontFamily: FONT,
       iconSize: 24,
       fontSize: 24,
-      maxLines: 1,
     });
     addr.style.lineHeight = '32px';
+    addr.style.whiteSpace = 'nowrap';
     midSection.appendChild(addr);
   }
 
