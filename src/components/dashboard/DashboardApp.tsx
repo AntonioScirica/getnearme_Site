@@ -15,6 +15,9 @@ import { TEMPLATES, renderTemplate } from './templates/index.js';
 import { ICONS as TPL_ICONS } from './templates/icons.js';
 // @ts-ignore — JS module, no types
 import { exportToPng, exportStaticToVideo, downloadBlob } from './templates/exporter.js';
+import { fetchBrand, updateBrand, uploadBrandLogo, removeBrandLogo, logoUrlToDataUrl, DEFAULT_BRAND_SETTINGS, type BrandSettings } from '@/lib/brand';
+import FotoAIScreen from './FotoAIScreen';
+import VideoAIScreen from './VideoAIScreen';
 
 const TemplatePreview = dynamic(() => import('./TemplatePreview'), { ssr: false });
 
@@ -33,7 +36,7 @@ const DEMO_PROJECTS: Project[] = [
 
 const NAV_SECTIONS = [
   { label: '', items: [{ icon: 'layout-dashboard', label: 'Home', route: 'home' }] },
-  { label: 'Lavoro', items: [{ icon: 'building-2', label: 'Progetti', route: 'progetti' }, { icon: 'sparkles', label: 'Foto AI', route: 'staging' }, { icon: 'film', label: 'Video AI', route: 'video' }] },
+  { label: 'Lavoro', items: [{ icon: 'building-2', label: 'Progetti', route: 'progetti' }, { icon: 'sparkles', label: 'Foto AI', route: 'staging' }, { icon: 'film', label: 'Video AI', route: 'video' }, { icon: 'scissors', label: 'Montaggio', route: 'montaggio' }] },
   { label: 'Social', items: [{ icon: 'image-plus', label: 'Post Social', route: 'studio' }, { icon: 'calendar', label: 'Calendario', route: 'calendario' }] },
   { label: 'Libreria', items: [{ icon: 'image', label: 'Media', route: 'media' }] },
   { label: 'Agenzia', items: [{ icon: 'palette', label: 'Brand', route: 'brand' }] },
@@ -93,12 +96,12 @@ const PLANS = [
     color: '#211f1c', quotaFoto: 60, quotaVideo: 2, quotaPost: 999,
   },
   {
-    id: 'quarterly', name: 'Trimestrale', price: 79, period: '/mese', badge: 'Consigliato', popular: true,
+    id: 'quarterly', name: 'Trimestrale', price: 79, period: '/mese', badge: null, popular: false,
     features: ['Report illimitati con il tuo logo', '120 foto AI homestaging/mese', '3 video Template AI/mese', 'Video montaggio automatico', 'Template Post & Stories Social'],
     color: '#3B83F6', quotaFoto: 120, quotaVideo: 3, quotaPost: 999,
   },
   {
-    id: 'annual', name: 'Annuale', price: 59, period: '/mese', badge: 'Miglior prezzo', popular: false,
+    id: 'annual', name: 'Annuale', price: 59, period: '/mese', badge: null, popular: false,
     features: ['Report illimitati con il tuo logo', '240 foto AI homestaging/mese', '4 video Template AI/mese', 'Video montaggio automatico', 'Template Post & Stories Social', 'Supporto prioritario'],
     color: '#211f1c', quotaFoto: 240, quotaVideo: 4, quotaPost: 999,
   },
@@ -172,6 +175,7 @@ const ANIM_CSS = `
 .acp--scale .aw{animation-name:aw-scale}.acp--slide-right .aw{animation-name:aw-slide-right}
 .acp--drop .aw{animation-name:aw-drop}.acp--zoom-out .aw{animation-name:aw-zoom-out}
 .acp--bounce .aw{animation-name:aw-bounce}.acp--diagonal .aw{animation-name:aw-diagonal}
+@keyframes export-spin{to{transform:rotate(360deg)}}
 `;
 
 const PICKER_ICONS: { key: string; label: string }[] = [
@@ -221,10 +225,54 @@ async function loadDefaultLogos() {
   return logosCache;
 }
 
-function PostSocialScreen({ toast }: { toast: (msg: string, icon?: string) => void }) {
+const LOGO_VARIANT_LABELS: Record<string, string> = {
+  white_v: 'Icona, Bianco', white_h: 'Icona + Nome, Bianco',
+  black_v: 'Icona, Nero', black_h: 'Icona + Nome, Nero',
+  colored_v: 'Icona, Colore', colored_h: 'Icona + Nome, Colore',
+};
+
+function PostSocialScreen({ toast, routeKey, brand }: { toast: (msg: string, icon?: string) => void; routeKey: number; brand: BrandSettings }) {
   const [step, setStep] = React.useState(1);
+  React.useEffect(() => { setStep(1); }, [routeKey]);
   const [logos, setLogos] = React.useState<{ white: string | null; black: string | null; blue: string | null } | null>(logosCache);
   React.useEffect(() => { loadDefaultLogos().then(setLogos); }, []);
+  // All 6 agency brand logo variants converted to data URLs (so html2canvas
+  // export does not taint), keyed white_h/white_v/black_h/.../colored_v.
+  const BRAND_LOGO_KEYS = ['white_h', 'white_v', 'black_h', 'black_v', 'colored_h', 'colored_v'] as const;
+  const [allBrandLogos, setAllBrandLogos] = React.useState<Record<string, string | null>>({});
+  React.useEffect(() => {
+    Promise.all(BRAND_LOGO_KEYS.map(k => logoUrlToDataUrl(brand.logos[`logo_${k}` as keyof typeof brand.logos])))
+      .then(arr => { const o: Record<string, string | null> = {}; BRAND_LOGO_KEYS.forEach((k, i) => { o[k] = arr[i]; }); setAllBrandLogos(o); });
+  }, [brand]);
+  const accentColor = brand.primaryColor || '#2967EC';
+  // 'auto' lets the template auto-pick by background; otherwise force a variant.
+  const [selectedLogoKey, setSelectedLogoKey] = React.useState('auto');
+  const [logoMenuOpen, setLogoMenuOpen] = React.useState(false);
+  // Reset selection to auto if the chosen variant is no longer available.
+  React.useEffect(() => {
+    if (selectedLogoKey !== 'auto' && !allBrandLogos[selectedLogoKey]) setSelectedLogoKey('auto');
+  }, [allBrandLogos, selectedLogoKey]);
+  const buildLogoOpts = (): Record<string, unknown> => {
+    if (selectedLogoKey !== 'auto' && allBrandLogos[selectedLogoKey]) {
+      const [color, ori] = selectedLogoKey.split('_');
+      const src = allBrandLogos[selectedLogoKey];
+      return {
+        logoWhite: color === 'white' ? src : null,
+        logoBlack: color === 'black' ? src : null,
+        logoColored: color === 'colored' ? src : null,
+        logoPosition: 'top-right',
+        logoOrientation: ori === 'v' ? 'vertical' : 'horizontal',
+      };
+    }
+    const suf = brand.logoOrientation === 'horizontal' ? 'h' : 'v';
+    return {
+      logoWhite: allBrandLogos[`white_${suf}`] || logos?.white || null,
+      logoBlack: allBrandLogos[`black_${suf}`] || logos?.black || null,
+      logoColored: allBrandLogos[`colored_${suf}`] || logos?.blue || null,
+      logoPosition: 'top-right',
+      logoOrientation: brand.logoOrientation || 'vertical',
+    };
+  };
   const [platform, setPlatform] = React.useState('instagram');
   const [formatId, setFormatId] = React.useState('ig-post');
   const [tplId, setTplId] = React.useState('gradient');
@@ -242,6 +290,8 @@ function PostSocialScreen({ toast }: { toast: (msg: string, icon?: string) => vo
   const [firstComment, setFirstComment] = React.useState('');
   const [coverPhoto, setCoverPhoto] = React.useState<string>(DEFAULT_PHOTO);
   const [isVideo, setIsVideo] = React.useState(false);
+  const [videoThumb, setVideoThumb] = React.useState<string>('');
+  const [fitCover, setFitCover] = React.useState(false);
   const [extraPhotos, setExtraPhotos] = React.useState<string[]>([]);
   const [fieldIcons, setFieldIcons] = React.useState<Record<string, string>>({ bedrooms: 'bed', bathrooms: 'bath', surface: 'area' });
   const [iconDropdown, setIconDropdown] = React.useState<string | null>(null);
@@ -258,7 +308,24 @@ function PostSocialScreen({ toast }: { toast: (msg: string, icon?: string) => vo
     if (!file) return;
     const url = URL.createObjectURL(file);
     setCoverPhoto(url);
-    setIsVideo(file.type.startsWith('video/'));
+    const isVid = file.type.startsWith('video/');
+    setIsVideo(isVid);
+    setVideoThumb('');
+    if (isVid) {
+      const vid = document.createElement('video');
+      vid.muted = true;
+      vid.playsInline = true;
+      vid.preload = 'auto';
+      vid.onloadeddata = () => { vid.currentTime = 0.1; };
+      vid.onseeked = () => {
+        const c = document.createElement('canvas');
+        c.width = vid.videoWidth || 320;
+        c.height = vid.videoHeight || 240;
+        c.getContext('2d')!.drawImage(vid, 0, 0, c.width, c.height);
+        setVideoThumb(c.toDataURL('image/jpeg', 0.7));
+      };
+      vid.src = url;
+    }
   };
   const handleExtraPhoto = (idx: number, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -282,7 +349,7 @@ function PostSocialScreen({ toast }: { toast: (msg: string, icon?: string) => vo
   const mountExportEl = async () => {
     const blurredUrl: string = await new Promise((resolve) => {
       const img = new Image();
-      img.crossOrigin = 'anonymous';
+      if (!coverPhoto.startsWith('blob:')) img.crossOrigin = 'anonymous';
       img.onload = () => {
         const sc = 0.15;
         const cw = Math.max(Math.round(img.naturalWidth * sc), 1);
@@ -299,7 +366,7 @@ function PostSocialScreen({ toast }: { toast: (msg: string, icon?: string) => vo
     });
 
     const data = {
-      ...SAMPLE_TPL_DATA,
+      ...SAMPLE_TPL_DATA, accentColor,
       title: fields.titolo || SAMPLE_TPL_DATA.title,
       type: fields.titolo || SAMPLE_TPL_DATA.type,
       address: fields.indirizzo || SAMPLE_TPL_DATA.address,
@@ -318,7 +385,8 @@ function PostSocialScreen({ toast }: { toast: (msg: string, icon?: string) => vo
       size: curFmt,
       blurredUrl,
       isVideo,
-      ...(showLogo ? { logoWhite: logos?.white, logoBlack: logos?.black, logoColored: logos?.blue, logoPosition: 'top-right', logoOrientation: 'vertical' } : {}),
+      fitCover,
+      ...(showLogo ? buildLogoOpts() : {}),
       ...(curTpl.multiPhoto ? { photos: getPhotosArray(curTpl) } : {}),
     };
     const tplEl = renderTemplate(tplId, data, coverPhoto, opts) as HTMLElement;
@@ -348,6 +416,12 @@ function PostSocialScreen({ toast }: { toast: (msg: string, icon?: string) => vo
       (node as HTMLElement).style.opacity = String(dimAlpha);
     });
 
+    // Force-load every Poppins weight the templates use (incl. 300, used by
+    // Magazine price) so foreignObject capture renders the correct weight
+    // instead of falling back to 400.
+    if (document.fonts?.load) {
+      await Promise.all([300, 400, 500, 600, 700].map(w => document.fonts.load(`${w} 64px Poppins`).catch(() => {})));
+    }
     if (document.fonts?.ready) await document.fonts.ready;
     await new Promise<void>(resolve => {
       const imgs = tplEl.querySelectorAll('img');
@@ -362,12 +436,13 @@ function PostSocialScreen({ toast }: { toast: (msg: string, icon?: string) => vo
 
   const handleExportImage = async () => {
     if (exporting) return;
+    if (isVideo) { toast('Hai caricato un video: scarica il video, non l’immagine', 'download'); return; }
     setExporting('image');
     let cleanup: (() => void) | null = null;
     try {
       const mounted = await mountExportEl();
       cleanup = mounted.cleanup;
-      const blob = await exportToPng(mounted.tplEl, { w: curFmt.w, h: curFmt.h }, { photoSrc: coverPhoto });
+      const blob = await exportToPng(mounted.tplEl, { w: curFmt.w, h: curFmt.h }, { photoSrc: coverPhoto, fitCover });
       await downloadBlob(blob, 'social-post.png');
       toast('Immagine scaricata', 'download');
     } catch (err) {
@@ -377,6 +452,153 @@ function PostSocialScreen({ toast }: { toast: (msg: string, icon?: string) => vo
       cleanup?.();
       setExporting(null);
     }
+  };
+
+  const handleExportAll = async () => {
+    if (exporting) return;
+    setExporting('image');
+    const blurredUrl: string = await new Promise((resolve) => {
+      const img = new Image();
+      if (!coverPhoto.startsWith('blob:')) img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        const sc = 0.15;
+        const cw = Math.max(Math.round(img.naturalWidth * sc), 1);
+        const ch = Math.max(Math.round(img.naturalHeight * sc), 1);
+        const canvas = document.createElement('canvas');
+        canvas.width = cw; canvas.height = ch;
+        const ctx = canvas.getContext('2d')!;
+        ctx.filter = 'blur(8px)';
+        ctx.drawImage(img, 0, 0, cw, ch);
+        resolve(canvas.toDataURL('image/jpeg', 0.5));
+      };
+      img.onerror = () => resolve(coverPhoto);
+      img.src = coverPhoto;
+    });
+    const data = {
+      ...SAMPLE_TPL_DATA, accentColor,
+      title: fields.titolo || SAMPLE_TPL_DATA.title,
+      type: fields.titolo || SAMPLE_TPL_DATA.type,
+      address: fields.indirizzo || SAMPLE_TPL_DATA.address,
+      price: `${currency} ${fields.prezzo || '250.000'}`,
+      surface: (fields.superficie || SAMPLE_TPL_DATA.surfaceNum) + ' m²',
+      surfaceNum: fields.superficie || SAMPLE_TPL_DATA.surfaceNum,
+      bedrooms: fields.camere || SAMPLE_TPL_DATA.bedrooms,
+      bathrooms: fields.bagni || SAMPLE_TPL_DATA.bathrooms,
+      rooms: fields.camere || SAMPLE_TPL_DATA.rooms,
+      description: fields.descrizione || SAMPLE_TPL_DATA.description,
+      ctaText: fields.btnTxt || SAMPLE_TPL_DATA.ctaText,
+      contract: showBadge ? (fields.badgeTxt || 'Nuovo') : '',
+      _icons: fieldIcons,
+    };
+    const blurMap: Record<string, string> = {
+      'tpl-glass-panel': 'blur(16px)', 'tpl-metric-card': 'blur(12px)', 'tpl-metric-pill': 'blur(12px)',
+    };
+    if (document.fonts?.load) {
+      await Promise.all([300, 400, 500, 600, 700].map(w => document.fonts.load(`${w} 64px Poppins`).catch(() => {})));
+    }
+    if (document.fonts?.ready) await document.fonts.ready;
+    const { default: JSZip } = await import('jszip');
+    const zip = new JSZip();
+    // All non-video formats across platforms (exclude reel/video)
+    const allFormats = PS_PLATFORMS.flatMap(p =>
+      p.formats
+        .filter(f => !/video|reel/i.test(f.id))
+        .map(f => ({ ...f, platform: p.id }))
+    );
+    let count = 0;
+    let tplIdx = -1;
+    for (const tpl of TEMPLATES) {
+      tplIdx++;
+      const tplFitCover = NO_COVER_TPL.includes(tpl.id) ? false : fitCover;
+      for (const f of allFormats) {
+        try {
+          const opts: Record<string, unknown> = {
+            size: f, blurredUrl, isVideo, fitCover: tplFitCover,
+            ...(showLogo ? buildLogoOpts() : {}),
+            ...(tpl.multiPhoto ? { photos: getPhotosArray(tpl) } : {}),
+          };
+          const tplEl = renderTemplate(tpl.id, data, coverPhoto, opts) as HTMLElement;
+          tplEl.style.width = f.w + 'px';
+          tplEl.style.height = f.h + 'px';
+          const wrapper = document.createElement('div');
+          wrapper.style.cssText = `position:fixed;top:0;left:0;width:${f.w}px;height:${f.h}px;opacity:0;pointer-events:none;overflow:visible;z-index:-1;`;
+          wrapper.appendChild(tplEl);
+          document.body.appendChild(wrapper);
+          for (const [cls, val] of Object.entries(blurMap)) {
+            tplEl.querySelectorAll('.' + cls).forEach((n) => {
+              const h = n as HTMLElement; h.style.backdropFilter = val; h.style.setProperty('-webkit-backdrop-filter', val);
+            });
+          }
+          tplEl.querySelectorAll('.tpl-overlay').forEach((n) => { (n as HTMLElement).style.opacity = String(oscuramento / 100); });
+          await new Promise<void>(resolve => {
+            const imgs = tplEl.querySelectorAll('img');
+            let pending = 0;
+            imgs.forEach(img => { if (!img.complete) { pending++; img.onload = img.onerror = () => { if (--pending === 0) resolve(); }; } });
+            if (pending === 0) resolve();
+          });
+          await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+          const blob = await exportToPng(tplEl, { w: f.w, h: f.h }, { photoSrc: coverPhoto, fitCover: tplFitCover });
+          zip.file(`${tpl.id}/${f.id}-${f.w}x${f.h}.png`, blob);
+          count++;
+          wrapper.remove();
+        } catch (err) {
+          console.error(`Export ${tpl.id} ${f.id} failed:`, err);
+        }
+      }
+      // One video per template, cycling through the animation styles.
+      try {
+        const animId = ANIM_STYLES[tplIdx % ANIM_STYLES.length].id;
+        const vopts: Record<string, unknown> = {
+          size: curFmt, blurredUrl, isVideo, fitCover: tplFitCover,
+          ...(showLogo ? buildLogoOpts() : {}),
+          ...(tpl.multiPhoto ? { photos: getPhotosArray(tpl) } : {}),
+        };
+        const vEl = renderTemplate(tpl.id, data, coverPhoto, vopts) as HTMLElement;
+        vEl.style.width = curFmt.w + 'px';
+        vEl.style.height = curFmt.h + 'px';
+        const vWrap = document.createElement('div');
+        vWrap.style.cssText = `position:fixed;top:0;left:0;width:${curFmt.w}px;height:${curFmt.h}px;opacity:0;pointer-events:none;overflow:visible;z-index:-1;`;
+        vWrap.appendChild(vEl);
+        document.body.appendChild(vWrap);
+        for (const [cls, val] of Object.entries(blurMap)) {
+          vEl.querySelectorAll('.' + cls).forEach((n) => {
+            const h = n as HTMLElement; h.style.backdropFilter = val; h.style.setProperty('-webkit-backdrop-filter', val);
+          });
+        }
+        vEl.querySelectorAll('.tpl-overlay').forEach((n) => { (n as HTMLElement).style.opacity = String(oscuramento / 100); });
+        await new Promise<void>(resolve => {
+          const imgs = vEl.querySelectorAll('img');
+          let pending = 0;
+          imgs.forEach(img => { if (!img.complete) { pending++; img.onload = img.onerror = () => { if (--pending === 0) resolve(); }; } });
+          if (pending === 0) resolve();
+        });
+        await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+        const { blob: vblob, ext } = await exportStaticToVideo(vEl, { w: curFmt.w, h: curFmt.h }, {
+          duration: 6, animStyle: animId, photoSrc: coverPhoto, fitCover: tplFitCover,
+        });
+        zip.file(`${tpl.id}/video-${animId}.${ext}`, vblob);
+        count++;
+        vWrap.remove();
+      } catch (err) {
+        console.error(`Export video ${tpl.id} failed:`, err);
+      }
+    }
+    if (count === 0) {
+      toast('Nessun template esportato', 'download');
+      setExporting(null);
+      return;
+    }
+    const zipBlob = await zip.generateAsync({ type: 'blob', mimeType: 'application/zip' });
+    const url = URL.createObjectURL(zipBlob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'templates.zip';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+    toast(`${count} file esportati (immagini + video)`, 'download');
+    setExporting(null);
   };
 
   const handleExportVideo = async () => {
@@ -392,8 +614,8 @@ function PostSocialScreen({ toast }: { toast: (msg: string, icon?: string) => vo
       const { blob, ext } = await exportStaticToVideo(mounted.tplEl, { w: curFmt.w, h: curFmt.h }, {
         duration: 15,
         animStyle,
-        photoSrc: coverPhoto,
-        fitCover: false,
+        ...(isVideo ? { videoSrc: coverPhoto } : { photoSrc: coverPhoto }),
+        fitCover,
         onProgress: (p: number) => setExportProgress(Math.round(p * 100)),
         signal: abort.signal,
         onOverlayCaptured: () => { cleanup?.(); cleanup = null; },
@@ -421,6 +643,10 @@ function PostSocialScreen({ toast }: { toast: (msg: string, icon?: string) => vo
   const curFmt = formats.find(f => f.id === formatId) ?? formats[0];
   const curTpl = TEMPLATES.find(t => t.id === tplId)!;
   const hasField = (f: string) => !curTpl.fields || curTpl.fields.includes(f);
+  // fitCover (foto full screen) only meaningful for cover templates; non-cover
+  // templates place the photo in a fixed shape (always object-fit: cover).
+  const NO_COVER_TPL = ['arch', 'split', 'frame', 'spotlight', 'before-after', 'gallery', 'tips'];
+  const supportsFitCover = !NO_COVER_TPL.includes(tplId);
 
   const setField = (k: string, v: string) => setFields(f => ({ ...f, [k]: v }));
 
@@ -532,24 +758,23 @@ function PostSocialScreen({ toast }: { toast: (msg: string, icon?: string) => vo
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 300px)', gap: 20, justifyContent: 'start' }}>
             {TEMPLATES.map(tc => {
-              const sel = tc.id === tplId;
               const cardW = 300;
               // Stesse opts del renderTemplateGrid dell'estensione: formato selezionato, loghi verticali default, foto primaria duplicata per multi-foto
               const tplOpts: Record<string, unknown> = {
                 size: curFmt,
-                logoWhite: logos?.white, logoBlack: logos?.black, logoColored: logos?.blue,
-                logoPosition: 'top-right', logoOrientation: 'vertical',
+                isVideo,
+                fitCover: NO_COVER_TPL.includes(tc.id) ? false : fitCover,
+                ...buildLogoOpts(),
               };
               if (tc.multiPhoto) tplOpts.photos = getPhotosArray(tc);
               return (
                 <div key={tc.id} onClick={() => { setTplId(tc.id); goStep(3); }} style={{
                   borderRadius: 14, overflow: 'hidden', cursor: 'pointer',
-                  outline: sel ? '2.5px solid #3B83F6' : 'none', outlineOffset: 2,
                   transition: 'transform .15s, box-shadow .15s',
                 }}>
                   <TemplatePreview
                     templateId={tc.id}
-                    data={SAMPLE_TPL_DATA}
+                    data={{ ...SAMPLE_TPL_DATA, accentColor }}
                     photoUrl={coverPhoto}
                     width={cardW}
                     opts={tplOpts}
@@ -575,11 +800,27 @@ function PostSocialScreen({ toast }: { toast: (msg: string, icon?: string) => vo
               <Box as="button" onClick={() => { const i = TEMPLATES.findIndex(t => t.id === tplId); setTplId(TEMPLATES[(i - 1 + TEMPLATES.length) % TEMPLATES.length].id); }} style={s('border:1px solid #e4e1da;background:#fff;width:34px;height:34px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none')} hover={s('background:#f6f4f0')}>
                 <Icon name="arrow-left" size={14} color="#57534c" />
               </Box>
-              <div ref={previewContainerRef} style={{ borderRadius: 12, overflow: 'hidden', boxShadow: '0 12px 36px rgba(33,31,28,.14)' }}>
+              <div ref={previewContainerRef} style={{ borderRadius: 12, overflow: 'hidden', boxShadow: '0 12px 36px rgba(33,31,28,.14)', position: 'relative' }}>
+                {exporting && (
+                  <div style={{
+                    position: 'absolute', inset: 0, zIndex: 10, borderRadius: 12,
+                    background: 'rgba(0,0,0,.45)', display: 'flex', flexDirection: 'column',
+                    alignItems: 'center', justifyContent: 'center', gap: 14,
+                  }}>
+                    <div style={{
+                      width: 36, height: 36, border: '3px solid rgba(255,255,255,.25)',
+                      borderTopColor: '#fff', borderRadius: '50%',
+                      animation: 'export-spin .8s linear infinite',
+                    }} />
+                    <span style={{ color: '#fff', fontSize: 13, fontWeight: 700 }}>
+                      {exporting === 'image' ? 'Esportazione...' : `Esportazione video ${exportProgress}%`}
+                    </span>
+                  </div>
+                )}
                 <TemplatePreview
                   templateId={tplId}
                   data={{
-                    ...SAMPLE_TPL_DATA,
+                    ...SAMPLE_TPL_DATA, accentColor,
                     title: fields.titolo || SAMPLE_TPL_DATA.title,
                     type: fields.titolo || SAMPLE_TPL_DATA.type,
                     address: fields.indirizzo || SAMPLE_TPL_DATA.address,
@@ -600,7 +841,8 @@ function PostSocialScreen({ toast }: { toast: (msg: string, icon?: string) => vo
                     size: curFmt,
                     dimAlpha: oscuramento / 100,
                     isVideo,
-                    ...(showLogo ? { logoWhite: logos?.white, logoBlack: logos?.black, logoColored: logos?.blue, logoPosition: 'top-right', logoOrientation: 'vertical' } : {}),
+                    fitCover,
+                    ...(showLogo ? buildLogoOpts() : {}),
                     ...(curTpl.multiPhoto ? { photos: getPhotosArray(curTpl) } : {}),
                   }}
                 />
@@ -666,7 +908,14 @@ function PostSocialScreen({ toast }: { toast: (msg: string, icon?: string) => vo
               >
                 {coverPhoto !== DEFAULT_PHOTO ? (
                   isVideo
-                    ? <video src={coverPhoto} muted style={{ width: 44, height: 44, borderRadius: 8, objectFit: 'cover' }} />
+                    ? <div style={{ width: 44, height: 44, borderRadius: 8, overflow: 'hidden', position: 'relative', flexShrink: 0 }}>
+                        <img src={videoThumb || ''} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', background: '#1a1825' }} />
+                        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <div style={{ width: 18, height: 18, borderRadius: '50%', background: 'rgba(255,255,255,.85)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <div style={{ width: 0, height: 0, borderLeft: '6px solid #211f1c', borderTop: '4px solid transparent', borderBottom: '4px solid transparent', marginLeft: 1 }} />
+                          </div>
+                        </div>
+                      </div>
                     : <img src={coverPhoto} alt="" style={{ width: 44, height: 44, borderRadius: 8, objectFit: 'cover' }} />
                 ) : (
                   <div style={{ width: 44, height: 44, borderRadius: 8, background: '#f6f4f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -821,6 +1070,75 @@ function PostSocialScreen({ toast }: { toast: (msg: string, icon?: string) => vo
                   <span style={{ position: 'absolute', top: 3, left: showLogo ? 19 : 3, width: 18, height: 18, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,.2)', transition: 'left .2s' }} />
                 </div>
               </div>
+              {/* logo variant picker — only when logos are loaded in Brand */}
+              {showLogo && BRAND_LOGO_KEYS.some(k => allBrandLogos[k]) && (() => {
+                const opts = [{ key: 'auto', label: 'Logo automatico', src: null as string | null }, ...BRAND_LOGO_KEYS.filter(k => allBrandLogos[k]).map(k => ({ key: k as string, label: LOGO_VARIANT_LABELS[k], src: allBrandLogos[k] }))];
+                const cur = opts.find(o => o.key === selectedLogoKey) || opts[0];
+                const thumbBg = (key: string) => key.startsWith('white') ? '#211f1c' : '#f6f4f0';
+                return (
+                  <>
+                    <div style={{ position: 'relative' }}>
+                      <Box as="button" onClick={() => setLogoMenuOpen(o => !o)} style={{
+                        width: '100%', border: '1px solid #e4e1da', borderRadius: 10, padding: '8px 12px',
+                        fontSize: 13, fontWeight: 600, background: '#fff', cursor: 'pointer', color: '#211f1c',
+                        display: 'flex', alignItems: 'center', gap: 10, minHeight: 40,
+                      }} hover={{ background: '#faf9f7' }}>
+                        {cur.src && (
+                          <span style={{ width: 28, height: 20, borderRadius: 4, background: thumbBg(cur.key), display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none', overflow: 'hidden' }}>
+                            <img src={cur.src} alt="" style={{ maxWidth: '80%', maxHeight: '80%', objectFit: 'contain' }} />
+                          </span>
+                        )}
+                        <span style={{ flex: 1, textAlign: 'left', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{cur.label}</span>
+                        <Icon name="chevron-down" size={15} color="#8c867d" />
+                      </Box>
+                      {logoMenuOpen && (
+                        <>
+                          <div onClick={() => setLogoMenuOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 40 }} />
+                          <div style={{
+                            position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 50,
+                            background: '#fff', border: '1px solid #e4e1da', borderRadius: 10,
+                            boxShadow: '0 8px 24px rgba(33,31,28,.12)', padding: 4, maxHeight: 280, overflowY: 'auto',
+                          }}>
+                            {opts.map(o => (
+                              <div key={o.key} onClick={() => { setSelectedLogoKey(o.key); setLogoMenuOpen(false); }} style={{
+                                display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', borderRadius: 7, cursor: 'pointer',
+                                background: o.key === selectedLogoKey ? '#eef4fe' : 'transparent',
+                              }}
+                                onMouseEnter={e => { if (o.key !== selectedLogoKey) e.currentTarget.style.background = '#f6f4f0'; }}
+                                onMouseLeave={e => { if (o.key !== selectedLogoKey) e.currentTarget.style.background = 'transparent'; }}
+                              >
+                                {o.src ? (
+                                  <span style={{ width: 32, height: 22, borderRadius: 4, background: thumbBg(o.key), display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none', overflow: 'hidden' }}>
+                                    <img src={o.src} alt="" style={{ maxWidth: '80%', maxHeight: '80%', objectFit: 'contain' }} />
+                                  </span>
+                                ) : (
+                                  <span style={{ width: 32, height: 22, borderRadius: 4, background: '#f0ede7', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}>
+                                    <Icon name="sparkles" size={13} color="#8c867d" />
+                                  </span>
+                                )}
+                                <span style={{ fontSize: 13, fontWeight: o.key === selectedLogoKey ? 700 : 500, color: '#211f1c' }}>{o.label}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                    <div style={{ height: 1, background: '#f0ede7', margin: '4px 0' }} />
+                  </>
+                );
+              })()}
+              {/* fit cover toggle */}
+              {supportsFitCover && (
+              <>
+              <div style={s('display:flex;align-items:center;justify-content:space-between')}>
+                <span style={{ fontSize: 13, fontWeight: 600 }}>Foto full screen</span>
+                <div onClick={() => setFitCover(!fitCover)} style={{ width: 40, height: 24, borderRadius: 99, background: fitCover ? '#3B83F6' : '#d8d4cb', position: 'relative', cursor: 'pointer', transition: 'background .2s' }}>
+                  <span style={{ position: 'absolute', top: 3, left: fitCover ? 19 : 3, width: 18, height: 18, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,.2)', transition: 'left .2s' }} />
+                </div>
+              </div>
+              <div style={{ height: 1, background: '#f0ede7', margin: '4px 0' }} />
+              </>
+              )}
               {/* badge toggle */}
               {hasField('badge') && <div>
                 <div style={s('display:flex;align-items:center;justify-content:space-between')}>
@@ -843,14 +1161,27 @@ function PostSocialScreen({ toast }: { toast: (msg: string, icon?: string) => vo
               {curTpl.hasBtn && <div><label style={labelStyle}>Testo pulsante</label><input value={fields.btnTxt} onChange={e => setField('btnTxt', e.target.value)} placeholder="Es. Contattaci ora" style={inputStyle} /></div>}
             </div>
             {/* actions */}
+            {(() => {
+              const noPhoto = coverPhoto === DEFAULT_PHOTO;
+              const needExtra = curTpl.multiPhoto ? curTpl.multiPhoto - 1 : 0;
+              const missingExtra = needExtra > 0 && extraPhotos.filter(Boolean).length < needExtra;
+              const dis = !!exporting || noPhoto || missingExtra;
+              // Image exports are blocked when a video cover is uploaded.
+              const disImg = dis || isVideo;
+              const tip = noPhoto ? 'Carica una foto per esportare' : missingExtra ? `Carica tutte le ${curTpl.multiPhoto} foto per esportare` : isVideo ? 'Hai caricato un video: scarica il video' : undefined;
+              return (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <Box as="button" onClick={handleExportImage} style={{ border: '1px solid #e4e1da', background: '#fff', fontSize: 13, fontWeight: 700, padding: '12px 16px', borderRadius: 10, cursor: 'pointer', minHeight: 42, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: exporting ? 0.5 : 1, pointerEvents: exporting ? 'none' : 'auto' }} hover={{ background: '#f6f4f0' }}>
+              <Box as="button" title={tip} onClick={() => { if (!disImg) handleExportImage(); }} style={{ border: '1px solid #e4e1da', background: '#fff', fontSize: 13, fontWeight: 700, padding: '12px 16px', borderRadius: 10, cursor: disImg ? 'default' : 'pointer', minHeight: 42, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: disImg ? 0.4 : 1 }} hover={disImg ? {} : { background: '#f6f4f0' }}>
                 <Icon name="download" size={15} color="#57534c" />{exporting === 'image' ? 'Esportazione...' : 'Scarica immagine'}
               </Box>
-              <Box as="button" onClick={() => setShowAnimPicker(true)} style={{ border: '1px solid #e4e1da', background: '#fff', fontSize: 13, fontWeight: 700, padding: '12px 16px', borderRadius: 10, cursor: 'pointer', minHeight: 42, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: exporting ? 0.5 : 1, pointerEvents: exporting ? 'none' : 'auto' }} hover={{ background: '#f6f4f0' }}>
+              <Box as="button" title={tip} onClick={() => { if (!dis) setShowAnimPicker(true); }} style={{ border: '1px solid #e4e1da', background: '#fff', fontSize: 13, fontWeight: 700, padding: '12px 16px', borderRadius: 10, cursor: dis ? 'default' : 'pointer', minHeight: 42, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: dis ? 0.4 : 1 }} hover={dis ? {} : { background: '#f6f4f0' }}>
                 <Icon name="film" size={15} color="#57534c" />Scarica video
               </Box>
+              <Box as="button" title={tip} onClick={() => { if (!disImg) handleExportAll(); }} style={{ border: '1px dashed #d8d4cb', background: 'transparent', fontSize: 12, fontWeight: 600, padding: '10px 16px', borderRadius: 10, cursor: disImg ? 'default' : 'pointer', minHeight: 38, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: disImg ? 0.4 : 1, color: '#8c867d' }} hover={disImg ? {} : { background: '#f6f4f0', color: '#57534c' }}>
+                <Icon name="layers" size={14} color="#8c867d" />{exporting === 'image' ? 'Esportazione...' : `Scarica tutti (${TEMPLATES.length})`}
+              </Box>
             </div>
+            ); })()}
           </div>
         </div>
       )}
@@ -861,56 +1192,75 @@ function PostSocialScreen({ toast }: { toast: (msg: string, icon?: string) => vo
           <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 20, padding: '28px 28px 24px', width: 'min(520px, 92vw)', boxShadow: '0 24px 64px rgba(0,0,0,.22)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
               <div>
-                <div style={{ fontSize: 18, fontWeight: 800, color: '#211f1c' }}>Stile animazione</div>
-                <div style={{ fontSize: 13, color: '#8c867d', marginTop: 2 }}>Scegli come appaiono gli elementi nel video</div>
+                <div style={{ fontSize: 18, fontWeight: 800, color: '#211f1c' }}>{exporting === 'video' ? 'Generazione video' : 'Stile animazione'}</div>
+                <div style={{ fontSize: 13, color: '#8c867d', marginTop: 2 }}>{exporting === 'video' ? 'Attendi, stiamo creando il tuo video' : 'Scegli come appaiono gli elementi nel video'}</div>
               </div>
-              <button onClick={() => { if (exporting !== 'video') setShowAnimPicker(false); }} style={{ border: 'none', background: '#f6f4f0', borderRadius: 8, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, opacity: exporting === 'video' ? 0.4 : 1 }}>
+              <button onClick={() => { if (exporting === 'video') exportAbortRef.current?.abort(); else setShowAnimPicker(false); }} style={{ border: 'none', background: '#f6f4f0', borderRadius: 8, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }} title={exporting === 'video' ? 'Annulla' : 'Chiudi'}>
                 <Icon name="x" size={16} color="#57534c" />
               </button>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: 24 }}>
-              {ANIM_STYLES.map(a => {
-                const sel = animStyle === a.id;
-                return (
-                  <div key={a.id} onClick={() => setAnimStyle(a.id)} style={{
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, padding: '14px 6px 10px',
-                    borderRadius: 12, cursor: 'pointer',
-                    border: sel ? '2px solid #3B83F6' : '2px solid transparent',
-                    background: sel ? '#eef4fe' : '#f6f4f0',
-                    transition: 'all .15s',
-                  }}
-                    onMouseEnter={e => { if (!sel) e.currentTarget.style.background = '#ece9e2'; }}
-                    onMouseLeave={e => { if (!sel) e.currentTarget.style.background = '#f6f4f0'; }}
-                  >
-                    <div className={`acp--${a.id}`} style={{ width: 68, height: 95, borderRadius: 8, background: 'linear-gradient(145deg, #2a2733, #1a1825)', position: 'relative', overflow: 'hidden', flexShrink: 0 }}>
-                      <div className="aw aw-badge" />
-                      <div className="aw aw-price" />
-                      <div className="aw aw-title" />
-                      <div className="aw aw-addr" />
-                      <div className="aw aw-m1" />
-                      <div className="aw aw-m2" />
-                      <div className="aw aw-m3" />
-                      <div className="aw aw-desc" />
-                    </div>
-                    <span style={{ fontSize: 11, fontWeight: 600, color: sel ? '#1d5fd0' : '#57534c' }}>{a.label}</span>
+            {exporting === 'video' ? (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, padding: '20px 0 28px' }}>
+                <div style={{ position: 'relative', width: 150, height: 150 }}>
+                  <svg width="150" height="150" viewBox="0 0 150 150" style={{ transform: 'rotate(-90deg)' }}>
+                    <defs>
+                      <linearGradient id="vidgrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="#5b9dff" />
+                        <stop offset="100%" stopColor="#2b6fe0" />
+                      </linearGradient>
+                    </defs>
+                    <circle cx="75" cy="75" r="62" fill="none" stroke="#eef0f3" strokeWidth="10" />
+                    <circle cx="75" cy="75" r="62" fill="none" stroke="url(#vidgrad)" strokeWidth="10" strokeLinecap="round"
+                      strokeDasharray={2 * Math.PI * 62}
+                      strokeDashoffset={2 * Math.PI * 62 * (1 - exportProgress / 100)}
+                      style={{ transition: 'stroke-dashoffset .3s ease' }} />
+                    {/* indeterminate spinner arc for liveliness */}
+                    <circle cx="75" cy="75" r="62" fill="none" stroke="#3B83F6" strokeWidth="10" strokeLinecap="round"
+                      strokeDasharray={`${2 * Math.PI * 62 * 0.08} ${2 * Math.PI * 62}`}
+                      style={{ transformOrigin: '75px 75px', animation: 'export-spin 1s linear infinite', opacity: 0.35 }} />
+                  </svg>
+                  <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                    <span style={{ fontSize: 30, fontWeight: 800, color: '#211f1c', lineHeight: 1 }}>{exportProgress}%</span>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: '#b3aca1', marginTop: 4, textTransform: 'uppercase', letterSpacing: '.06em' }}>Rendering</span>
                   </div>
-                );
-              })}
-            </div>
-            {exporting === 'video' && (
-              <div style={{ marginBottom: 12 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, fontWeight: 600, color: '#57534c', marginBottom: 6 }}>
-                  <span>Esportazione in corso...</span>
-                  <span>{exportProgress}%</span>
-                </div>
-                <div style={{ height: 6, borderRadius: 3, background: '#f0ede7', overflow: 'hidden' }}>
-                  <div style={{ height: '100%', borderRadius: 3, background: '#3B83F6', width: exportProgress + '%', transition: 'width .2s' }} />
                 </div>
               </div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: 24 }}>
+                {ANIM_STYLES.map(a => {
+                  const sel = animStyle === a.id;
+                  return (
+                    <div key={a.id} onClick={() => setAnimStyle(a.id)} style={{
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, padding: '14px 6px 10px',
+                      borderRadius: 12, cursor: 'pointer',
+                      border: sel ? '2px solid #3B83F6' : '2px solid transparent',
+                      background: sel ? '#eef4fe' : '#f6f4f0',
+                      transition: 'all .15s',
+                    }}
+                      onMouseEnter={e => { if (!sel) e.currentTarget.style.background = '#ece9e2'; }}
+                      onMouseLeave={e => { if (!sel) e.currentTarget.style.background = '#f6f4f0'; }}
+                    >
+                      <div className={`acp--${a.id}`} style={{ width: 68, height: 95, borderRadius: 8, background: 'linear-gradient(145deg, #2a2733, #1a1825)', position: 'relative', overflow: 'hidden', flexShrink: 0 }}>
+                        <div className="aw aw-badge" />
+                        <div className="aw aw-price" />
+                        <div className="aw aw-title" />
+                        <div className="aw aw-addr" />
+                        <div className="aw aw-m1" />
+                        <div className="aw aw-m2" />
+                        <div className="aw aw-m3" />
+                        <div className="aw aw-desc" />
+                      </div>
+                      <span style={{ fontSize: 11, fontWeight: 600, color: sel ? '#1d5fd0' : '#57534c' }}>{a.label}</span>
+                    </div>
+                  );
+                })}
+              </div>
             )}
-            <Box as="button" onClick={() => { if (exporting === 'video') { exportAbortRef.current?.abort(); } else { handleExportVideo(); } }} style={{ border: exporting === 'video' ? '2px solid #dc2626' : '2px solid transparent', background: exporting === 'video' ? 'transparent' : '#3B83F6', color: exporting === 'video' ? '#dc2626' : '#fff', fontSize: 14, fontWeight: 700, padding: '13px 16px', borderRadius: 12, cursor: 'pointer', minHeight: 44, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }} hover={{ background: exporting === 'video' ? '#dc2626' : '#2b6fe0', color: '#fff', borderColor: exporting === 'video' ? '#dc2626' : 'transparent' }}>
-              <Icon name={exporting === 'video' ? 'x' : 'download'} size={16} color="currentColor" />{exporting === 'video' ? 'Annulla' : 'Scarica video'}
-            </Box>
+            {exporting !== 'video' && (
+              <Box as="button" onClick={() => handleExportVideo()} style={{ border: '2px solid transparent', background: '#3B83F6', color: '#fff', fontSize: 14, fontWeight: 700, padding: '13px 16px', borderRadius: 12, cursor: 'pointer', minHeight: 44, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }} hover={{ background: '#2b6fe0', color: '#fff' }}>
+                <Icon name="download" size={16} color="currentColor" />Scarica video
+              </Box>
+            )}
           </div>
         </div>
       )}
@@ -1143,27 +1493,63 @@ type BrandState = {
   reportFinalDesc: string;
 };
 
-const DEFAULT_BRAND: BrandState = {
-  logos: {}, logoOrientation: 'vertical', primaryColor: '#3B82F6',
-  companyName: '', companyWebsite: '', companyEmail: '',
-  reportFinalTitle: '', reportFinalDesc: '',
-};
-
-function BrandScreen({ toast }: { toast: (msg: string, icon?: string) => void }) {
-  const [brand, setBrand] = React.useState<BrandState>(DEFAULT_BRAND);
+function BrandScreen({ toast, brand: brandProp, setBrand: setBrandParent, brandRole }: { toast: (msg: string, icon?: string) => void; brand: BrandSettings; setBrand: (b: BrandSettings) => void; brandRole: 'owner' | 'member' | null }) {
+  const [brand, setBrand] = React.useState<BrandState>(brandProp as unknown as BrandState);
   const fileRefs = React.useRef<Record<string, HTMLInputElement | null>>({});
+  const scope: 'team' | 'user' = brandRole === 'owner' ? 'team' : 'user';
+
+  // Sync local edit state when the parent brand (re-)loads. Flag the sync so the
+  // auto-save effect below does not echo it straight back to the server.
+  const syncingRef = React.useRef(false);
+  React.useEffect(() => { syncingRef.current = true; setBrand(brandProp as unknown as BrandState); }, [brandProp]);
+
+  // Auto-save text fields (debounced) — no save button.
+  const saveTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  React.useEffect(() => {
+    if (syncingRef.current) { syncingRef.current = false; return; }
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(() => {
+      updateBrand(scope, {
+        logoOrientation: brand.logoOrientation,
+        primaryColor: brand.primaryColor,
+        companyName: brand.companyName,
+        companyWebsite: brand.companyWebsite,
+        companyEmail: brand.companyEmail,
+        reportFinalTitle: brand.reportFinalTitle,
+        reportFinalDesc: brand.reportFinalDesc,
+      }).then(ok => { if (ok) setBrandParent(brand as unknown as BrandSettings); });
+    }, 600);
+    return () => { if (saveTimer.current) clearTimeout(saveTimer.current); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [brand.logoOrientation, brand.primaryColor, brand.companyName, brand.companyWebsite, brand.companyEmail, brand.reportFinalTitle, brand.reportFinalDesc]);
 
   const set = <K extends keyof BrandState>(k: K, v: BrandState[K]) => setBrand(b => ({ ...b, [k]: v }));
 
-  const handleLogoUpload = (variant: string, file: File) => {
+  const handleLogoUpload = async (variant: string, file: File) => {
     if (file.size > 500 * 1024) { toast('File troppo grande (max 500 KB)', 'x'); return; }
     if (!['image/png', 'image/jpeg', 'image/svg+xml', 'image/webp'].includes(file.type)) { toast('Formato non supportato', 'x'); return; }
+    // Optimistic local preview
     const reader = new FileReader();
     reader.onload = () => setBrand(b => ({ ...b, logos: { ...b.logos, [variant]: reader.result as string } }));
     reader.readAsDataURL(file);
+    const ok = await uploadBrandLogo(scope, variant, file);
+    if (ok) {
+      const fresh = await fetchBrand();
+      setBrandParent(fresh.settings);
+      toast('Logo caricato', 'check');
+    } else {
+      toast('Errore caricamento logo', 'x');
+    }
   };
 
-  const removeLogo = (variant: string) => setBrand(b => ({ ...b, logos: { ...b.logos, [variant]: null } }));
+  const removeLogo = async (variant: string) => {
+    setBrand(b => ({ ...b, logos: { ...b.logos, [variant]: null } }));
+    const ok = await removeBrandLogo(scope, variant);
+    if (ok) {
+      const fresh = await fetchBrand();
+      setBrandParent(fresh.settings);
+    }
+  };
 
   const inputStyle: React.CSSProperties = { width: '100%', border: '1px solid #e4e1da', borderRadius: 10, padding: '11px 14px', fontSize: 14, fontFamily: 'inherit', outline: 'none', background: '#fff', transition: 'border-color .2s' };
 
@@ -1216,7 +1602,7 @@ function BrandScreen({ toast }: { toast: (msg: string, icon?: string) => void })
           ))}
         </div>
         <div style={{ height: 1, background: '#f4f2ee', margin: '20px 0' }} />
-        <div style={s('display:flex;align-items:center;gap:12px')}>
+        <div style={s('display:flex;align-items:center;gap:12px;justify-content:space-between')}>
           <span style={s('font-size:13px;font-weight:700;color:#57534c')}>Logo da usare nei contenuti</span>
           <select value={brand.logoOrientation} onChange={e => set('logoOrientation', e.target.value as 'vertical' | 'horizontal')} style={{ ...inputStyle, width: 'auto', padding: '8px 12px', cursor: 'pointer' }}>
             <option value="vertical">Solo icona</option>
@@ -1274,16 +1660,15 @@ function BrandScreen({ toast }: { toast: (msg: string, icon?: string) => void })
         </div>
       </div>
 
-      {/* ── SAVE ── */}
-      <div style={s('display:flex;justify-content:flex-end')}>
-        <Box as="button" onClick={() => toast('Impostazioni salvate', 'check')} style={s('border:none;background:#3B83F6;color:#fff;font-size:14px;font-weight:700;padding:12px 28px;border-radius:10px;cursor:pointer;min-height:44px')} hover={s('background:#2b6fe0')}>Salva impostazioni</Box>
+      <div style={s('display:flex;align-items:center;gap:8px;color:#b3aca1;font-size:12.5px;justify-content:flex-end')}>
+        <Icon name="check" size={14} color="#b3aca1" />Le modifiche vengono salvate automaticamente
       </div>
     </div>
   );
 }
 
 const ROUTE_TITLES: Record<string, string> = {
-  progetti: 'Progetti', progetto: 'Dettaglio immobile', staging: 'Foto AI', video: 'Video AI',
+  progetti: 'Progetti', progetto: 'Dettaglio immobile', staging: 'Foto AI', video: 'Video AI', montaggio: 'Montaggio',
   studio: 'Post Social', calendario: 'Calendario', media: 'Libreria Media', team: 'Team',
   brand: 'Brand Agenzia', social: 'Account social', account: 'Piano',
 };
@@ -1304,6 +1689,12 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
   const [cmdkOpen, setCmdkOpen] = useState(false);
   const [cmdQuery, setCmdQuery] = useState('');
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const [brand, setBrand] = useState<BrandSettings>(DEFAULT_BRAND_SETTINGS);
+  const [brandRole, setBrandRole] = useState<'owner' | 'member' | null>(null);
+
+  useEffect(() => {
+    fetchBrand().then(r => { setBrand(r.settings); setBrandRole(r.role); });
+  }, []);
 
   const active = useMemo(() => projects.find((p) => p.id === activeProject) ?? projects[0], [projects, activeProject]);
 
@@ -1312,7 +1703,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
       const link = document.createElement('link');
       link.id = 'poppins-font';
       link.rel = 'stylesheet';
-      link.href = 'https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap';
+      link.href = 'https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap';
       document.head.appendChild(link);
     }
   }, []);
@@ -1323,7 +1714,9 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
     setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 4000);
   }, []);
 
-  const go = useCallback((r: string) => { setRoute(r); setProjOpen(false); setTrayOpen(false); }, []);
+  const contentRef = React.useRef<HTMLDivElement>(null);
+  const [routeKey, setRouteKey] = useState(0);
+  const go = useCallback((r: string) => { setRoute(r); setRouteKey(k => k + 1); setProjOpen(false); setTrayOpen(false); contentRef.current?.scrollTo(0, 0); }, []);
   const closeMenus = useCallback(() => { setProjOpen(false); setTrayOpen(false); }, []);
 
   // ⌘K
@@ -1511,7 +1904,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
           </div>
 
           {/* CONTENT */}
-          <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }} onClick={closeMenus}>
+          <div ref={contentRef} style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }} onClick={closeMenus}>
             {route === 'home' ? (
               <div style={s('max-width:1160px;margin:0 auto;padding:36px 32px 64px')}>
                 <div style={s('display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin-bottom:24px')}>
@@ -1582,11 +1975,17 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                 </div>
               </div>
             ) : route === 'studio' ? (
-              <PostSocialScreen toast={toast} />
+              <PostSocialScreen toast={toast} routeKey={routeKey} brand={brand} />
+            ) : route === 'staging' ? (
+              <FotoAIScreen toast={toast} routeKey={routeKey} />
+            ) : route === 'video' ? (
+              <VideoAIScreen toast={toast} routeKey={routeKey} brand={brand} />
+            ) : route === 'montaggio' ? (
+              <VideoAIScreen toast={toast} routeKey={routeKey} brand={brand} preselect="montaggio" />
             ) : route === 'account' ? (
               <AccountScreen credits={credits} toast={toast} go={go} userData={userData} />
             ) : route === 'brand' ? (
-              <BrandScreen toast={toast} />
+              <BrandScreen toast={toast} brand={brand} setBrand={setBrand} brandRole={brandRole} />
             ) : (
               <div style={s('max-width:1160px;margin:0 auto;padding:36px 32px 64px')}>
                 <h1 style={s('margin:0 0 4px;font-size:27px;font-weight:800;letter-spacing:-.5px')}>{ROUTE_TITLES[route] ?? route}</h1>
