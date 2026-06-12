@@ -32,7 +32,7 @@ const DEMO_PROJECTS: Project[] = [
 ];
 
 const NAV_SECTIONS = [
-  { label: 'Progetto', items: [{ icon: 'layout-dashboard', label: 'Home', route: 'home' }, { icon: 'sparkles', label: 'Foto AI', route: 'staging' }, { icon: 'film', label: 'Video AI', route: 'video' }, { icon: 'scissors', label: 'Montaggio', route: 'montaggio' }, { icon: 'image-plus', label: 'Post Social', route: 'studio' }, { icon: 'image', label: 'Media generati', route: 'media' }] },
+  { label: 'Progetto', items: [{ icon: 'layout-dashboard', label: 'Home', route: 'home' }, { icon: 'sparkles', label: 'Homestaging AI', route: 'staging' }, { icon: 'film', label: 'Video AI', route: 'video' }, { icon: 'scissors', label: 'Montaggio', route: 'montaggio' }, { icon: 'image-plus', label: 'Post Social', route: 'studio' }, { icon: 'image', label: 'Media', route: 'media' }] },
   { label: 'Agenzia', items: [{ icon: 'palette', label: 'Brand', route: 'brand' }, { icon: 'credit-card', label: 'Piano', route: 'account' }] },
 ];
 
@@ -1821,14 +1821,15 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
             <Box onClick={(e) => { e.stopPropagation(); setProfileOpen(o => !o); setProjOpen(false); setTrayOpen(false); }} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: collapsed ? '0' : '10px 12px', borderRadius: collapsed ? '50%' : 12, cursor: 'pointer', justifyContent: collapsed ? 'center' : 'flex-start', width: collapsed ? 42 : 'auto', height: collapsed ? 42 : 'auto', margin: collapsed ? '0 auto' : 0 }} hover={{ background: '#f1efe9' }}>
               <div style={s('width:34px;height:34px;border-radius:50%;background:#211f1c;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex:none')}>{(userData?.email ?? 'U')[0].toUpperCase()}</div>
               {!collapsed && <div style={{ minWidth: 0, flex: 1 }}><div style={s('font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{userData?.email?.split('@')[0] ?? 'Utente'}</div><div style={s('font-size:11px;color:#8c867d;white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{userData?.email ?? ''}</div></div>}
-              {!collapsed && <Icon name="chevron-up" size={14} color="#8c867d" />}
+              {!collapsed && <Icon name="chevron-up" size={14} color="#8c867d" style={{ transition: 'transform .2s', transform: profileOpen ? 'none' : 'rotate(180deg)' }} />}
             </Box>
             {profileOpen && (() => {
               const rect = profileRef.current?.getBoundingClientRect();
               const left = rect ? rect.left + 10 : 10;
+              const w = rect ? rect.width - 20 : 220;
               const bottom = rect ? window.innerHeight - rect.top + 4 : 80;
               return (
-                <div style={{ position: 'fixed', bottom, left, width: 220, background: '#fff', borderRadius: 12, boxShadow: '0 16px 48px rgba(33,31,28,.16)', border: '1px solid #f0ede7', overflow: 'hidden', zIndex: 9999 }}>
+                <div style={{ position: 'fixed', bottom, left, width: w, background: '#fff', borderRadius: 12, boxShadow: '0 16px 48px rgba(33,31,28,.16)', border: '1px solid #f0ede7', overflow: 'hidden', zIndex: 9999 }}>
                   <div style={s('padding:4px')}>
                     {[
                       { icon: 'settings', label: 'Impostazioni', action: () => { setProfileOpen(false); toast('Impostazioni (in arrivo)'); } },
@@ -1920,11 +1921,11 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                 {!active ? (
                   /* ── empty state: no projects yet ── */
                   <div style={s('display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 32px;text-align:center')}>
-                    <div style={s('width:80px;height:80px;border-radius:20px;background:#f4f2ee;display:flex;align-items:center;justify-content:center;margin-bottom:24px')}><Icon name="building-2" size={36} color="#b3aca1" /></div>
+                    <img src="/dashboard/logo-icon.svg" alt="GetNearMe" style={{ width: 56, height: 56, marginBottom: 24 }} />
                     <h1 style={s('margin:0 0 8px;font-size:24px;font-weight:800;letter-spacing:-.3px')}>Benvenuto in GetNearMe</h1>
                     <p style={s('margin:0 0 32px;font-size:15px;color:#8c867d;max-width:420px;line-height:1.6')}>Crea il tuo primo immobile per iniziare a generare foto AI, video e post social per i tuoi annunci</p>
-                    <Box onClick={() => toast('Nuovo immobile (in arrivo)')} style={s('display:inline-flex;align-items:center;gap:10px;background:#211f1c;color:#fff;padding:14px 28px;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;transition:transform .2s,box-shadow .2s')} hover={{ transform: 'translateY(-2px)', boxShadow: '0 8px 24px rgba(33,31,28,.16)' }}>
-                      <Icon name="plus" size={18} color="#fff" />Crea il tuo primo immobile
+                    <Box onClick={() => toast('Nuovo immobile (in arrivo)')} style={s('display:inline-flex;align-items:center;gap:10px;background:#3B83F6;color:#fff;padding:14px 28px;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;transition:transform .2s,box-shadow .2s')} hover={{ transform: 'translateY(-2px)', boxShadow: '0 8px 24px rgba(59,131,246,.3)' }}>
+                      Crea il tuo primo immobile
                     </Box>
                     <div style={s('margin-top:48px;display:grid;grid-template-columns:repeat(3,1fr);gap:20px;max-width:640px;width:100%')}>
                       {[
