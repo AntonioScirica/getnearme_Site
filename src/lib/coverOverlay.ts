@@ -64,7 +64,7 @@ export function drawCoverOverlay(ctx: CanvasRenderingContext2D, opts: CoverOverl
   ctx.fillRect(0, 0, W, H);
 
   const fontSize = Math.round(H * (isPortrait ? 0.030 : 0.100));
-  const ls = Math.round(fontSize * (isPortrait ? 0.10 : 0.05));
+  const ls = Math.round(fontSize * (isPortrait ? 0.16 : 0.10)); // interlinea titolo (un po' più ariosa)
   const lineH = fontSize + ls;
   const bandH = Math.min(W, H);
 
@@ -177,8 +177,9 @@ export function drawCoverOverlay(ctx: CanvasRenderingContext2D, opts: CoverOverl
     const minMaxW = W * 0.85;
     const minLines = wrapTitle(title, ctx, minFont, minMaxW);
     const minLineCount = Math.max(1, minLines.length);
-    const minLineH = minSize;
-    const minTextH = minLineCount * minSize;
+    const minGap = Math.round(minSize * (isPortrait ? 0.16 : 0.10)); // interlinea coerente con gli altri stili
+    const minLineH = minSize + minGap;
+    const minTextH = minLineCount * minSize + Math.max(0, minLineCount - 1) * minGap;
     const minBlockH = (hasLogo ? logoH + logoGap : 0) + minTextH;
     const minBlockTopY = Math.round((H - minBlockH) / 2);
     const minTopY = hasLogo ? minBlockTopY + logoH + logoGap : minBlockTopY;

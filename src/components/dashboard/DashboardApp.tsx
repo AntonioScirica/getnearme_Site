@@ -19,6 +19,8 @@ import { exportToPng, exportStaticToVideo, downloadBlob } from './templates/expo
 import { fetchBrand, updateBrand, uploadBrandLogo, removeBrandLogo, logoUrlToDataUrl, DEFAULT_BRAND_SETTINGS, type BrandSettings } from '@/lib/brand';
 import FotoAIScreen from './FotoAIScreen';
 import VideoAIScreen from './VideoAIScreen';
+import { loadVideoJobs, upsertVideoJob, patchVideoJob, dismissVideoJob, fetchServerVideoJobs, mergeServerJobs, type VideoJob } from '@/lib/videoJobs';
+import { pollRenderProgress } from '@/lib/aiVideo';
 import MediaScreen from './MediaScreen';
 import { HomeScreen } from './HomeScreen';
 import { NewProjectModal } from './NewProjectModal';
@@ -2009,6 +2011,54 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
     }, false);
   }, [mutateBatches]);
 
+  // ── Video jobs (montaggio/avatar): tray "Lavori in corso" + Media ──
+  // Source of truth = tabella ai_video_jobs (finalizzata dal cron, sopravvive a
+  // browser chiuso/altro device). localStorage = cache ottimistica. Si fondono.
+  const [videoJobs, setVideoJobs] = useState<VideoJob[]>([]);
+  useEffect(() => { setVideoJobs(loadVideoJobs()); }, []);
+  const registerVideoJob = useCallback((job: Omit<VideoJob, 'createdAt' | 'dismissed'>) => {
+    setVideoJobs(upsertVideoJob({ ...job, createdAt: Date.now() }));
+  }, []);
+
+  // Sync col server: al mount, al ritorno sul tab, e ogni 20s mentre ci sono
+  // render in corso. Fonde lo stato server (vince su done/failed) nel locale.
+  const syncServerVideoJobs = useCallback(async () => {
+    const server = await fetchServerVideoJobs();
+    if (server.length) setVideoJobs(mergeServerJobs(server));
+  }, []);
+  useEffect(() => { void syncServerVideoJobs(); }, [syncServerVideoJobs]);
+  useEffect(() => {
+    const onVis = () => { if (document.visibilityState === 'visible') void syncServerVideoJobs(); };
+    document.addEventListener('visibilitychange', onVis);
+    return () => document.removeEventListener('visibilitychange', onVis);
+  }, [syncServerVideoJobs]);
+
+  // Polling a livello app: feedback rapido in sessione (il cron e' la rete di
+  // sicurezza server-side). Per ogni job in render interroga il progresso ogni
+  // ~20s; in piu' rilegge dal server per allinearsi a chi finalizza per primo.
+  useEffect(() => {
+    const active = videoJobs.filter(j => j.stage === 'render');
+    if (!active.length) return;
+    let cancelled = false;
+    const timer = setInterval(async () => {
+      for (const job of videoJobs.filter(j => j.stage === 'render')) {
+        try {
+          const p = await pollRenderProgress(job.ctx);
+          if (cancelled) return;
+          if (p?.done && p.outputUrl) {
+            setVideoJobs(patchVideoJob(job.id, { stage: 'done', progress: 1, outputUrl: p.outputUrl }));
+          } else if (p?.error) {
+            setVideoJobs(patchVideoJob(job.id, { stage: 'failed', error: p.error }));
+          } else {
+            setVideoJobs(patchVideoJob(job.id, { progress: Math.min(0.95, job.progress + 0.04) }));
+          }
+        } catch { /* transiente, riprova al prossimo tick */ }
+      }
+      if (!cancelled) await syncServerVideoJobs();
+    }, 20000);
+    return () => { cancelled = true; clearInterval(timer); };
+  }, [videoJobs, syncServerVideoJobs]);
+
   const [welcomeOpen, setWelcomeOpen] = useState(true);
   const [tourStep, setTourStep] = useState<number | null>(null);
   const [tourRect, setTourRect] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
@@ -2354,10 +2404,11 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                       {(() => {
                         const dismissed = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('gnm_dismissed_batches') || '[]') : [];
                         const activeBatches = batches.filter(b => (b.status === 'processing' || b.status === 'pending') || ((b.status === 'completed' || b.status === 'partial') && !dismissed.includes(b.id)));
-                        if (activeBatches.length === 0) {
+                        const activeVideos = videoJobs.filter(j => !j.dismissed && (j.stage === 'render' || j.stage === 'done' || j.stage === 'failed'));
+                        if (activeBatches.length === 0 && activeVideos.length === 0) {
                           return <div style={s('padding:22px 16px;text-align:center;font-size:13px;color:#8c867d')}>Nessun lavoro in corso.<br />Le generazioni girano qui in background, senza bloccarti.</div>;
                         }
-                        return activeBatches.map(b => {
+                        return (<>{activeBatches.map(b => {
                           const isDone = b.status === 'completed' || b.status === 'partial';
                           const styleObj = STAGING_STYLES.find(s => s.id === b.style);
                           const styleName = styleObj ? styleObj.label : b.style;
@@ -2384,7 +2435,34 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                               )}
                             </div>
                           );
-                        });
+                        })}
+                        {activeVideos.map(j => {
+                          const isDone = j.stage === 'done';
+                          const isFailed = j.stage === 'failed';
+                          return (
+                            <div key={j.id} style={{ padding: '12px 16px', borderBottom: '1px solid #f4f2ee', display: 'flex', gap: 12, position: 'relative' }}>
+                              <div style={{ width: 32, height: 32, borderRadius: 8, background: isDone ? '#e6f4ea' : isFailed ? '#fef2f2' : '#eef4fe', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}>
+                                {isDone ? <Icon name="check" size={16} color="#1e8e3e" /> : isFailed ? <Icon name="x" size={16} color="#dc2626" /> : <div style={{ width: 14, height: 14, border: '2px solid #3B83F6', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />}
+                              </div>
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 2, paddingRight: 22, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{j.template === 'montaggio' ? 'Montaggio' : 'Video AI'} · {j.title}</div>
+                                <div style={{ fontSize: 12, color: '#8c867d', marginBottom: 6 }}>
+                                  {isDone ? 'Completato' : isFailed ? (j.error || 'Non riuscito') : `In elaborazione (${Math.round(j.progress * 100)}%)`}
+                                </div>
+                                {isDone && (
+                                  <div style={{ display: 'flex', gap: 8 }}>
+                                    <button onClick={() => { setTrayOpen(false); go('media'); }} style={{ padding: '4px 8px', fontSize: 11, fontWeight: 700, borderRadius: 6, border: '1px solid #e4e1da', background: '#fff', cursor: 'pointer' }}>Vedi in Media</button>
+                                  </div>
+                                )}
+                              </div>
+                              {(isDone || isFailed) && (
+                                <button onClick={(e) => { e.stopPropagation(); setVideoJobs(dismissVideoJob(j.id)); }} title="Rimuovi" style={{ position: 'absolute', top: 10, right: 12, width: 22, height: 22, borderRadius: '50%', border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                  <Icon name="x" size={13} color="#b3aca1" />
+                                </button>
+                              )}
+                            </div>
+                          );
+                        })}</>);
                       })()}
                     </div>
                   </div>
@@ -2507,9 +2585,9 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                 loadingBatches={loadingBatches} 
               />
             ) : route === 'video' ? (
-              <VideoAIScreen toast={toast} routeKey={routeKey} brand={brand} project={active} />
+              <VideoAIScreen toast={toast} routeKey={routeKey} brand={brand} project={active} onVideoJob={registerVideoJob} />
             ) : route === 'montaggio' ? (
-              <VideoAIScreen toast={toast} routeKey={routeKey} brand={brand} preselect="montaggio" project={active} />
+              <VideoAIScreen toast={toast} routeKey={routeKey} brand={brand} preselect="montaggio" project={active} onVideoJob={registerVideoJob} />
             ) : route === 'account' ? (
               <AccountScreen credits={credits} toast={toast} go={go} userData={userData} />
             ) : route === 'brand' ? (

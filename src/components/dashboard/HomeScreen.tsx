@@ -4,7 +4,7 @@ import { Box, Icon } from './ui';
 import { ProjectData } from '@/lib/projects';
 import { fetchUserBatches, fetchBatchPhotos } from '@/lib/stagingBatches';
 
-type RecentPhoto = { url: string; ts: number };
+type RecentPhoto = { url: string; ts: number; isVideo?: boolean };
 
 // Helpers
 const s = (str: string) => str.split(';').reduce((acc: any, rule) => {
@@ -97,7 +97,7 @@ export function HomeScreen({
   const [recent, setRecent] = React.useState<RecentPhoto[]>([]);
   const [hasMoreRecent, setHasMoreRecent] = React.useState(false);
   const [loadingRecent, setLoadingRecent] = React.useState(true);
-  const [lightbox, setLightbox] = React.useState<string | null>(null);
+  const [lightbox, setLightbox] = React.useState<{ url: string; isVideo?: boolean } | null>(null);
   React.useEffect(() => {
     let cancelled = false;
     setLoadingRecent(true);
@@ -115,9 +115,19 @@ export function HomeScreen({
             if (p.resultUrl && p.status !== 'failed') all.push({ url: p.resultUrl, ts: new Date(b.createdAt).getTime() });
           }
         }));
+        // Video AI finiti (tabella + cache locale).
+        try {
+          const { finishedVideos, fetchServerVideoJobs, mergeServerJobs } = await import('@/lib/videoJobs');
+          const server = await fetchServerVideoJobs();
+          if (server.length) mergeServerJobs(server);
+          for (const v of finishedVideos(active?.id)) {
+            if (v.outputUrl) all.push({ url: v.outputUrl, ts: v.createdAt, isVideo: true });
+          }
+        } catch { /* ignore */ }
         if (!cancelled) {
-          setHasMoreRecent(all.length > 12);
-          setRecent(all.sort((a, b) => b.ts - a.ts).slice(0, 12));
+          const sorted = all.sort((a, b) => b.ts - a.ts);
+          setHasMoreRecent(sorted.length > 12);
+          setRecent(sorted.slice(0, 12));
         }
       } catch { /* ignore */ }
       finally { if (!cancelled) setLoadingRecent(false); }
@@ -371,16 +381,29 @@ export function HomeScreen({
             <>
               <div className="max-md:!grid-cols-2" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
                 {recent.map((p, i) => (
-                  <div key={i} onClick={() => setLightbox(p.url)} style={{ position: 'relative', aspectRatio: '4/3', borderRadius: 12, overflow: 'hidden', cursor: 'pointer', border: '1px solid #f0ede7', background: '#f4f2ee', animation: 'media-reveal .7s cubic-bezier(.22,1,.36,1) both', animationDelay: `${i * 70}ms` }}>
-                    <Image src={p.url} alt="" fill sizes="(max-width: 768px) 50vw, 25vw" style={{ objectFit: 'cover' }} onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }} />
-                    <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.25)', opacity: 0, transition: 'opacity .2s', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                      onMouseEnter={e => e.currentTarget.style.opacity = '1'}
-                      onMouseLeave={e => e.currentTarget.style.opacity = '0'}
-                    >
-                      <div style={{ background: '#fff', borderRadius: '50%', width: 42, height: 42, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <Icon name="maximize-2" size={19} color="#211f1c" />
+                  <div key={i} onClick={() => setLightbox({ url: p.url, isVideo: p.isVideo })} style={{ position: 'relative', aspectRatio: '4/3', borderRadius: 12, overflow: 'hidden', cursor: 'pointer', border: '1px solid #f0ede7', background: p.isVideo ? '#000' : '#f4f2ee', animation: 'media-reveal .7s cubic-bezier(.22,1,.36,1) both', animationDelay: `${i * 70}ms` }}>
+                    {p.isVideo ? (
+                      // eslint-disable-next-line jsx-a11y/media-has-caption
+                      <video src={`${p.url}#t=0.5`} muted playsInline preload="metadata" style={{ width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }} />
+                    ) : (
+                      <Image src={p.url} alt="" fill sizes="(max-width: 768px) 50vw, 25vw" style={{ objectFit: 'cover' }} onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }} />
+                    )}
+                    {p.isVideo ? (
+                      <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+                        <div style={{ background: 'rgba(20,30,55,0.55)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', borderRadius: '50%', width: 46, height: 46, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <Icon name="play-circle" size={24} color="#fff" />
+                        </div>
                       </div>
-                    </div>
+                    ) : (
+                      <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.25)', opacity: 0, transition: 'opacity .2s', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                        onMouseEnter={e => e.currentTarget.style.opacity = '1'}
+                        onMouseLeave={e => e.currentTarget.style.opacity = '0'}
+                      >
+                        <div style={{ background: '#fff', borderRadius: '50%', width: 42, height: 42, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <Icon name="maximize-2" size={19} color="#211f1c" />
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -410,8 +433,13 @@ export function HomeScreen({
 
       {lightbox && (
         <div onClick={() => setLightbox(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.94)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 40 }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={lightbox} alt="" style={{ maxWidth: '90vw', maxHeight: '88vh', objectFit: 'contain', borderRadius: 12 }} />
+          {lightbox.isVideo ? (
+            // controlsList nofullscreen: resta contenuto nel modal, niente super-fullscreen
+            <video onClick={e => e.stopPropagation()} src={lightbox.url} controls autoPlay playsInline controlsList="nofullscreen" disablePictureInPicture style={{ maxWidth: '90vw', maxHeight: '88vh', objectFit: 'contain', borderRadius: 12, background: '#000' }} />
+          ) : (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={lightbox.url} alt="" style={{ maxWidth: '90vw', maxHeight: '88vh', objectFit: 'contain', borderRadius: 12 }} />
+          )}
           <button onClick={() => setLightbox(null)} style={{ position: 'fixed', top: 24, right: 28, background: 'rgba(255,255,255,0.12)', border: 'none', borderRadius: '50%', width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
             <Icon name="x" size={20} color="#fff" />
           </button>

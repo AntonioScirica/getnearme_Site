@@ -13,19 +13,45 @@ import {
   SUBTITLE_STYLES, COVER_STYLES, MOOD_LABELS,
   fetchVideoConfig, fetchVideoQuota, getMusicLibrary, resolvePreviewUrl,
   getUploadUrls, uploadToPresigned, generateScript, renderAvatar, checkAvatar,
-  animatePhotoStart, animatePhotoPoll, transcribeAudio, startRender, pollRenderProgress,
-  createImageThumbnail, createVideoThumbnail, aspectFromDims,
+  animatePhotoStart, animatePhotoPoll, transcribeAudio, startRender, pollRenderProgress, detectRooms,
+  createImageThumbnail, createVideoThumbnail, extractFrames, aspectFromDims,
   type VideoTemplate, type VideoAvatar, type VideoQuota, type ScriptSection, type MusicTrack,
   AIVideoError,
 } from '@/lib/aiVideo';
 import { drawCoverOverlay, preloadCoverFonts, renderCoverOverlayBlob } from '@/lib/coverOverlay';
+import { createServerVideoJob } from '@/lib/videoJobs';
 
 type Clip = {
   id: string; file: File; thumb: string; duration: number;
   width: number; height: number; room: string; isPhoto: boolean;
   uploadedUrl?: string;
   sourceStart: number; sourceEnd: number;
+  roomManual?: boolean; // l'utente ha scelto l'ambiente a mano: non sovrascrivere
+  frames?: string[];    // mini-anteprima: N frame estratti lungo la clip
 };
+
+// Riconoscimento ambiente → riordino clip per ordine di visita (come l'estensione).
+const ROOM_VISIT_ORDER: Record<string, number> = {
+  vista: 0, giardino: 0, ingresso: 1, soggiorno: 2, cucina: 3,
+  camera: 4, bagno: 5, studio: 6, terrazzo: 7, cantina: 8, altro: 9,
+};
+function detectRoomFromFilename(filename?: string): string | null {
+  const n = (filename || '').toLowerCase().replace(/[^a-z0-9]/g, ' ');
+  const MAP: [string, string[]][] = [
+    ['bagno', ['bagno', 'bathroom', 'bath', 'wc', 'toilet']],
+    ['cucina', ['cucina', 'kitchen', 'cottura']],
+    ['soggiorno', ['soggiorno', 'sala', 'salone', 'living', 'salotto', 'lounge']],
+    ['camera', ['camera', 'bedroom', 'letto', 'notte', 'matrimoniale', 'singola']],
+    ['ingresso', ['ingresso', 'entrata', 'corridoio', 'hallway', 'hall', 'foyer']],
+    ['studio', ['studio', 'ufficio', 'office', 'lavoro']],
+    ['terrazzo', ['terrazzo', 'balcone', 'balcony', 'terrace', 'loggia']],
+    ['giardino', ['giardino', 'garden', 'yard', 'piscina']],
+    ['vista', ['vista', 'esterno', 'facade', 'exterior', 'outside']],
+    ['cantina', ['cantina', 'garage', 'box', 'cellar', 'basement', 'magazzino']],
+  ];
+  for (const [id, keys] of MAP) if (keys.some(k => n.includes(k))) return id;
+  return null;
+}
 type Pair = { id: string; before: { file: File; thumb: string; uploadedUrl?: string } | null; after: { file: File; thumb: string; uploadedUrl?: string } | null; room: string };
 
 const MAX_CLIPS = 6;
@@ -46,6 +72,115 @@ function loadImg(src: string): Promise<HTMLImageElement | null> {
   });
 }
 
+// Durata massima della porzione tenuta da ogni clip nel montaggio.
+const CLIP_WINDOW_SEC = 6;
+const CLIP_MIN_SEC = 1;
+const fmtTime = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+// Slider a doppio handle, finestra MAX 6s (puoi anche meno). Track full-width con
+// striscia di frame sotto. onPreview(t) aggiorna l'anteprima mentre trascini.
+function TrimRange({ duration, start, end, frames, onChange, onPreview }: {
+  duration: number; start: number; end: number; frames?: string[];
+  onChange: (s: number, e: number) => void; onPreview?: (t: number) => void;
+}) {
+  const ref = React.useRef<HTMLDivElement>(null);
+  // Resize da un lato (handle) — clamp max 6s, min 1s.
+  const startDrag = (which: 'start' | 'end') => (e: React.PointerEvent) => {
+    e.preventDefault(); e.stopPropagation();
+    const el = ref.current; if (!el) return;
+    const apply = (clientX: number) => {
+      const r = el.getBoundingClientRect();
+      let t = ((clientX - r.left) / r.width) * duration;
+      t = Math.max(0, Math.min(duration, t));
+      if (which === 'start') {
+        const s = Math.min(t, end - CLIP_MIN_SEC);
+        const e2 = Math.min(end, s + CLIP_WINDOW_SEC);
+        onChange(Math.max(0, s), e2); onPreview?.(Math.max(0, s));
+      } else {
+        const e2 = Math.max(t, start + CLIP_MIN_SEC);
+        const s = Math.max(start, e2 - CLIP_WINDOW_SEC);
+        onChange(s, Math.min(duration, e2)); onPreview?.(Math.min(duration, e2));
+      }
+    };
+    apply(e.clientX);
+    const onMove = (ev: PointerEvent) => apply(ev.clientX);
+    const onUp = () => { window.removeEventListener('pointermove', onMove); window.removeEventListener('pointerup', onUp); };
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+  };
+  // Sposta tutta la finestra (mantiene la durata) afferrando il centro.
+  const moveWindow = (e: React.PointerEvent) => {
+    e.preventDefault(); e.stopPropagation();
+    const el = ref.current; if (!el) return;
+    const r = el.getBoundingClientRect();
+    const win = end - start;
+    const grab = (e.clientX - r.left) - (start / duration) * r.width;
+    const apply = (clientX: number) => {
+      let s = (((clientX - r.left) - grab) / r.width) * duration;
+      s = Math.max(0, Math.min(duration - win, s));
+      onChange(s, s + win); onPreview?.(s);
+    };
+    const onMove = (ev: PointerEvent) => apply(ev.clientX);
+    const onUp = () => { window.removeEventListener('pointermove', onMove); window.removeEventListener('pointerup', onUp); };
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+  };
+  const sp = duration ? (start / duration) * 100 : 0;
+  const ep = duration ? (end / duration) * 100 : 100;
+  const thumb: React.CSSProperties = { position: 'absolute', top: '50%', transform: 'translate(-50%,-50%)', width: 12, height: 26, borderRadius: 4, background: '#fff', border: '2px solid #3B83F6', boxShadow: '0 1px 4px rgba(0,0,0,.3)', cursor: 'ew-resize', touchAction: 'none', zIndex: 3 };
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+      <Icon name="scissors" size={13} color="#b3aca1" />
+      <div ref={ref} style={{ position: 'relative', flex: 1, height: 30, display: 'flex', alignItems: 'center' }}>
+        {/* striscia di frame + stroke grigio */}
+        <div style={{ position: 'absolute', inset: 0, borderRadius: 6, overflow: 'hidden', background: '#e4e1da', display: 'flex', border: '1px solid #b3aca1' }}>
+          {frames && frames.length > 0
+            ? frames.map((f, i) => (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img key={i} src={f} alt="" style={{ flex: 1, minWidth: 0, height: '100%', objectFit: 'cover' }} />
+              ))
+            : null}
+        </div>
+        {/* zone fuori dalla selezione schiarite */}
+        <div style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: `${sp}%`, background: 'rgba(255,255,255,.62)', borderRadius: '6px 0 0 6px' }} />
+        <div style={{ position: 'absolute', top: 0, bottom: 0, right: 0, left: `${ep}%`, background: 'rgba(255,255,255,.62)', borderRadius: '0 6px 6px 0' }} />
+        {/* finestra selezione: afferra il CENTRO per spostarla */}
+        <div onPointerDown={moveWindow} title="Trascina per spostare la selezione" style={{ position: 'absolute', top: 0, bottom: 0, left: `${sp}%`, right: `${100 - ep}%`, border: '2px solid #3B83F6', borderRadius: 6, boxSizing: 'border-box', cursor: 'grab', touchAction: 'none', zIndex: 2 }} />
+        <div onPointerDown={startDrag('start')} title="Inizio" style={{ ...thumb, left: `${sp}%` }} />
+        <div onPointerDown={startDrag('end')} title="Fine" style={{ ...thumb, left: `${ep}%` }} />
+      </div>
+      <span style={{ fontSize: 10.5, color: '#8c867d', fontWeight: 700, minWidth: 92, textAlign: 'center', fontVariantNumeric: 'tabular-nums' }}>{fmtTime(start)} - {fmtTime(end)}</span>
+    </div>
+  );
+}
+
+// Barra azioni (Indietro/Avanti) sticky in basso. bg+stroke compaiono SOLO
+// quando la barra è davvero "stuck" (contenuto scende sotto il fold); con
+// contenuto corto resta una riga semplice in fondo. Rilevamento via sentinel.
+function StickyNav({ children, align, bleed = 0 }: { children: React.ReactNode; align?: 'center'; bleed?: number }) {
+  const [stuck, setStuck] = React.useState(false);
+  const sentinelRef = React.useRef<HTMLDivElement>(null);
+  React.useEffect(() => {
+    const el = sentinelRef.current; if (!el || typeof IntersectionObserver === 'undefined') return;
+    const io = new IntersectionObserver(([e]) => setStuck(!e.isIntersecting), { threshold: 1 });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  return (
+    <>
+      <div style={{
+        display: 'flex', alignItems: align === 'center' ? 'center' : undefined, justifyContent: 'space-between',
+        gap: 12, position: 'sticky', bottom: 0, marginTop: 20, paddingTop: 14, paddingBottom: 14,
+        paddingLeft: stuck ? bleed : 0, paddingRight: stuck ? bleed : 0,
+        marginLeft: stuck ? -bleed : 0, marginRight: stuck ? -bleed : 0, zIndex: 5,
+        ...(stuck ? { background: 'rgba(252,252,251,0.96)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', borderTop: '1.5px solid #c4bfb6', boxShadow: '0 -8px 20px rgba(0,0,0,.08)' } : {}),
+      }}>
+        {children}
+      </div>
+      <div ref={sentinelRef} style={{ height: 1 }} aria-hidden />
+    </>
+  );
+}
+
 // Griglia anteprima cover: 9 canvas (primo frame + dim + logo + titolo per stile),
 // identica all'estensione. Clic per selezionare.
 function CoverStylesGrid({ thumbUrl, logoUrl, title, address, brandColor, isPortrait, selected, onSelect, styles }: {
@@ -60,8 +195,11 @@ function CoverStylesGrid({ thumbUrl, logoUrl, title, address, brandColor, isPort
       await preloadCoverFonts();
       const [frame, logo] = await Promise.all([loadImg(thumbUrl), logoUrl ? loadImg(logoUrl) : Promise.resolve(null)]);
       if (!alive) return;
-      const W = isPortrait ? 270 : 480;
-      const H = isPortrait ? 480 : 270;
+      // Mezza risoluzione (scalata via CSS): wrapping/spazi sono scale-invariant
+      // → identici all'export 1080×1920, ma più leggera (niente lag in digitazione).
+      // Prima era 270×480: a quel font (~14px) l'hinting falsava wrapping e spazi.
+      const W = isPortrait ? 540 : 960;
+      const H = isPortrait ? 960 : 540;
       for (const st of styles) {
         const canvas = refs.current[st.id];
         if (!canvas) continue;
@@ -83,10 +221,10 @@ function CoverStylesGrid({ thumbUrl, logoUrl, title, address, brandColor, isPort
   return (
     <div style={{ display: 'grid', gridTemplateColumns: `repeat(${isPortrait ? 4 : 3}, 1fr)`, gap: 10 }}>
       {styles.map(st => (
-        <div key={st.id} onClick={() => onSelect(st.id)} style={{ cursor: 'pointer', borderRadius: 10, overflow: 'hidden', border: selected === st.id ? '2px solid #3B83F6' : '2px solid transparent', boxShadow: selected === st.id ? '0 4px 12px rgba(59,131,246,.18)' : '0 1px 3px rgba(0,0,0,.06)' }}>
+        <Box key={st.id} onClick={() => onSelect(st.id)} style={{ cursor: 'pointer', borderRadius: 10, overflow: 'hidden', border: selected === st.id ? '2px solid #3B83F6' : '2px solid transparent', boxShadow: selected === st.id ? '0 4px 12px rgba(59,131,246,.18)' : '0 1px 3px rgba(0,0,0,.06)', transition: 'transform .15s, box-shadow .15s', transform: 'translateY(0)' } as React.CSSProperties} hover={selected === st.id ? undefined : { transform: 'translateY(-3px)', boxShadow: '0 8px 20px rgba(0,0,0,.12)' }}>
           <canvas ref={el => { refs.current[st.id] = el; }} style={{ width: '100%', aspectRatio: isPortrait ? '9 / 16' : '16 / 9', display: 'block', background: '#000' }} />
           <div style={{ fontSize: 11, fontWeight: 700, textAlign: 'center', padding: '6px 4px', color: selected === st.id ? '#1d5fd0' : '#57534c', background: selected === st.id ? '#eff6ff' : '#fff' }}>{st.label}</div>
-        </div>
+        </Box>
       ))}
     </div>
   );
@@ -94,12 +232,13 @@ function CoverStylesGrid({ thumbUrl, logoUrl, title, address, brandColor, isPort
 
 import type { Project } from './types';
 
-export default function VideoAIScreen({ toast, routeKey, brand, preselect, project }: {
+export default function VideoAIScreen({ toast, routeKey, brand, preselect, project, onVideoJob }: {
   toast: (msg: string, icon?: string) => void;
   routeKey: number;
   brand: BrandSettings;
   preselect?: string;
   project?: Project;
+  onVideoJob?: (job: { id: string; title: string; template: string; stage: 'render' | 'done'; progress: number; ctx: Record<string, unknown>; outputUrl?: string; projectId: string | null; aspect: string }) => void;
 }) {
   const [templates, setTemplates] = React.useState<VideoTemplate[]>(DEFAULT_VIDEO_TEMPLATES);
   const [avatars, setAvatars] = React.useState<VideoAvatar[]>([]);
@@ -108,6 +247,12 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
   const [tpl, setTpl] = React.useState<VideoTemplate | null>(null);
   const [avatar, setAvatar] = React.useState<VideoAvatar | null>(null);
   const [clips, setClips] = React.useState<Clip[]>([]);
+  const [dragIdx, setDragIdx] = React.useState<number | null>(null);
+  const [overIdx, setOverIdx] = React.useState<number | null>(null);
+  const moveClip = (from: number, to: number) => setClips(cs => {
+    if (to < 0 || to >= cs.length || from === to) return cs;
+    const n = [...cs]; const [m] = n.splice(from, 1); n.splice(to, 0, m); return n;
+  });
   const [pairs, setPairs] = React.useState<Pair[]>([]);
   // options
   const [sections, setSections] = React.useState<ScriptSection[]>([]);
@@ -136,6 +281,23 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
   // montaggio logo
   const [montaggioPhase, setMontaggioPhase] = React.useState<'cover' | 'logo' | 'music'>('cover');
   const [coverLogoOn, setCoverLogoOn] = React.useState(false);
+  const [coverLogoKey, setCoverLogoKey] = React.useState('auto'); // 'auto' | 'white_h' | 'black_v' | ...
+  // Logo bianco auto (in base all'orientamento) + URL del logo scelto per la cover.
+  const whiteLogoAuto = (brand.logoOrientation === 'vertical' ? (brand.logos.logo_white_v || brand.logos.logo_white_h) : (brand.logos.logo_white_h || brand.logos.logo_white_v)) || '';
+  const coverLogoUrl = !coverLogoOn ? '' : (coverLogoKey === 'auto' ? whiteLogoAuto : ((brand.logos as Record<string, string | null>)['logo_' + coverLogoKey] || whiteLogoAuto));
+  // Varianti logo disponibili (label come nei post), per il picker.
+  const coverLogoItems = React.useMemo(() => {
+    const labelMap: Record<string, string> = {
+      white_h: 'Bianco + Payoff', white_v: 'Bianco', black_h: 'Nero + Payoff', black_v: 'Nero', colored_h: 'Colore + Payoff', colored_v: 'Colore',
+    };
+    const order = ['white_h', 'white_v', 'black_h', 'black_v', 'colored_h', 'colored_v'];
+    const items = [{ key: 'auto', label: 'Auto', src: whiteLogoAuto, dark: true }];
+    for (const k of order) {
+      const src = (brand.logos as Record<string, string | null>)['logo_' + k];
+      if (src) items.push({ key: k, label: labelMap[k] || k, src, dark: k.startsWith('white') });
+    }
+    return items;
+  }, [brand.logos, whiteLogoAuto]);
   const [watermarkEnabled, setWatermarkEnabled] = React.useState(true);
   const [watermarkPosition, setWatermarkPosition] = React.useState('bottom-right');
   const [watermarkOpacity, setWatermarkOpacity] = React.useState(100);
@@ -219,13 +381,55 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
         } else {
           const { thumb, duration, width, height } = await createVideoThumbnail(f);
           if (layout === 'sottotitoli' && duration > 90) { toast('Video massimo 90 secondi', 'x'); continue; }
-          converted.push({ id: `${Date.now()}-${Math.random()}`, file: f, thumb, duration, width, height, room: layout === 'sottotitoli' ? 'video' : 'altro', isPhoto: false, sourceStart: 0, sourceEnd: duration });
+          // Montaggio: finestra di default 6s (lo slider scorre, non ridimensiona).
+          const defEnd = layout === 'montaggio' ? Math.min(duration, CLIP_WINDOW_SEC) : duration;
+          converted.push({ id: `${Date.now()}-${Math.random()}`, file: f, thumb, duration, width, height, room: layout === 'sottotitoli' ? 'video' : 'altro', isPhoto: false, sourceStart: 0, sourceEnd: defEnd });
         }
       }
       setClips(c => [...c, ...converted]);
+      // Riconoscimento ambiente + riordino (montaggio/walkthrough), best-effort.
+      void autoDetectRooms(converted);
+      // Mini-anteprima a frame per la timeline di trim (montaggio, solo video).
+      if (layout === 'montaggio') {
+        for (const cl of converted) {
+          if (cl.isPhoto) continue;
+          void extractFrames(cl.file, 8).then(frames => {
+            if (frames.length) setClips(cs => cs.map(x => x.id === cl.id ? { ...x, frames } : x));
+          });
+        }
+      }
     } catch {
       toast('Errore lettura file', 'x');
     }
+  };
+
+  // Rileva l'ambiente delle clip video (nome file → Groq vision) e, per il
+  // montaggio, riordina per ordine di visita. Non tocca le scelte manuali.
+  const autoDetectRooms = async (added: Clip[]) => {
+    if (layout !== 'montaggio' && layout !== 'walkthrough') return;
+    const targets = added.filter(c => !c.isPhoto && c.room === 'altro');
+    if (!targets.length) return;
+    const applyPatch = (patch: Record<string, string>) => {
+      if (!Object.keys(patch).length) return;
+      setClips(cs => cs.map(x => (patch[x.id] && !x.roomManual && x.room === 'altro') ? { ...x, room: patch[x.id] } : x));
+    };
+    const sortMontaggio = () => {
+      if (layout !== 'montaggio') return;
+      setClips(cs => [...cs].sort((a, b) => (ROOM_VISIT_ORDER[a.room] ?? 9) - (ROOM_VISIT_ORDER[b.room] ?? 9)));
+    };
+    // 1) nome file (istantaneo, gratis)
+    const fnPatch: Record<string, string> = {};
+    for (const c of targets) { const r = detectRoomFromFilename(c.file?.name); if (r) fnPatch[c.id] = r; }
+    applyPatch(fnPatch);
+    // 2) Groq vision per le clip ancora 'altro'
+    const remaining = targets.filter(c => !fnPatch[c.id]);
+    if (remaining.length) {
+      const rooms = await detectRooms(remaining.map(c => c.thumb));
+      const apiPatch: Record<string, string> = {};
+      remaining.forEach((c, i) => { const r = rooms[i]; if (r && r !== 'altro') apiPatch[c.id] = r; });
+      applyPatch(apiPatch);
+    }
+    sortMontaggio();
   };
 
   const addPairFile = async (file: File) => {
@@ -245,33 +449,51 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
   const propertyLabel = () => propAddress || propTitle || '';
 
   const uploadClips = async (items: Clip[], mediaType: 'video' | 'photo'): Promise<Clip[]> => {
+    console.log(`[Video] uploadClips: chiedo ${items.length} URL (${mediaType})…`);
     const urls = await getUploadUrls(items.length, mediaType, items.map(c => c.file.type));
+    console.log(`[Video] uploadClips: ottenuti ${urls.length} URL, carico…`);
     const out: Clip[] = [];
     for (let i = 0; i < items.length; i++) {
       await uploadToPresigned(urls[i].uploadUrl, items[i].file, items[i].file.type);
+      console.log(`[Video] uploadClips: caricata ${i + 1}/${items.length}`);
       out.push({ ...items[i], uploadedUrl: urls[i].readUrl });
     }
     return out;
   };
 
+  const jobTitle = () => (coverTitle.trim() || propTitle.trim() || project?.titolo || 'Montaggio video');
+
   const finishRender = (res: { done?: boolean; outputUrl?: string; renderId?: string; error?: string; monthly_limit?: number } & Record<string, unknown>, aspect: string) => {
     if (res?.done && res.outputUrl) {
       setOutputUrl(res.outputUrl); setRenderStage('done'); setRenderProgress(1);
       fetchVideoQuota().then(setQuota);
+      const doneId = `vid_${Date.now()}`;
+      onVideoJob?.({ id: doneId, title: jobTitle(), template: layout, stage: 'done', progress: 1, ctx: {}, outputUrl: res.outputUrl, projectId: project?.id || null, aspect });
+      void createServerVideoJob({ id: doneId, title: jobTitle(), template: layout, status: 'done', progress: 1, ctx: {}, outputUrl: res.outputUrl, projectId: project?.id || null, aspect });
       return true;
     }
     if (res?.renderId) {
-      // async (Veo) — poll progress
+      const ctx: Record<string, unknown> = {
+        renderId: res.renderId, bucketName: res.bucketName || 'ffmpeg', template: layout,
+        aspectRatio: res.aspectRatio || aspect, propertyData: propertyData(),
+        keepR2: true, // i Veo-template compongono su Lambda in fase progress: tieni R2
+      };
+      if (res.veoStatusUrl) ctx.veoStatusUrl = res.veoStatusUrl;
+      if (res.veoResponseUrl) ctx.veoResponseUrl = res.veoResponseUrl;
+      if (res.aiModel) ctx.aiModel = res.aiModel;
+      if (res.pairs) ctx.pairs = res.pairs;
+      if (res.constructionJobs) ctx.constructionJobs = res.constructionJobs;
+      // Hand off al tray "Lavori in corso": il polling vive a livello app,
+      // sopravvive al cambio sezione. Niente polling locale qui.
+      // Persisti la riga server: il cron la finalizza anche a browser chiuso.
+      void createServerVideoJob({ id: res.renderId as string, title: jobTitle(), template: layout, status: 'rendering', progress: 0.25, ctx, projectId: project?.id || null, aspect: (res.aspectRatio as string) || aspect });
+      if (onVideoJob) {
+        onVideoJob({ id: res.renderId as string, title: jobTitle(), template: layout, stage: 'render', progress: 0.25, ctx, projectId: project?.id || null, aspect: (res.aspectRatio as string) || aspect });
+        setRenderStage('background');
+        return true;
+      }
+      // fallback: polling locale (se nessun handoff)
       void (async () => {
-        const ctx: Record<string, unknown> = {
-          renderId: res.renderId, bucketName: res.bucketName || 'ffmpeg', template: layout,
-          aspectRatio: res.aspectRatio || aspect, propertyData: propertyData(),
-        };
-        if (res.veoStatusUrl) ctx.veoStatusUrl = res.veoStatusUrl;
-        if (res.veoResponseUrl) ctx.veoResponseUrl = res.veoResponseUrl;
-        if (res.aiModel) ctx.aiModel = res.aiModel;
-        if (res.pairs) ctx.pairs = res.pairs;
-        if (res.constructionJobs) ctx.constructionJobs = res.constructionJobs;
         for (let i = 0; i < 90 && !abortRef.current; i++) {
           await sleep(20000);
           try {
@@ -425,7 +647,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
           try {
             const blob = await renderCoverOverlayBlob({
               style: coverStyle, title: coverTitle.trim(), address: coverAddress.trim(),
-              logoUrl: coverLogoOn ? whiteLogo : '', brandColor: brand.primaryColor || '#3B82F6', isPortrait,
+              logoUrl: coverLogoUrl, brandColor: brand.primaryColor || '#3B82F6', isPortrait,
             });
             const [slot] = await getUploadUrls(1, 'photo', ['image/png']);
             await uploadToPresigned(slot.uploadUrl, blob, 'image/png');
@@ -434,13 +656,14 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
         }
 
         setRenderStage('render'); setRenderProgress(0.25);
+        console.log('[Montaggio] startRender…', { clips: ordered.length, coverOverlayUrl: !!coverOverlayUrl, musicUrl: !!musicUrl });
         const res = await startRender({
           template: 'montaggio',
           avatarDurationSeconds: ordered.reduce((acc, c) => acc + ((c.sourceEnd || c.duration) - (c.sourceStart || 0)), 0),
           musicUrl,
           ...(coverTitle.trim() ? { coverTitle: coverTitle.trim(), coverAddress: coverAddress.trim(), coverStyle } : {}),
           ...(coverOverlayUrl ? { coverOverlayUrl } : {}),
-          ...(coverLogoOn && whiteLogo ? { coverLogo: whiteLogo } : {}),
+          ...(coverLogoUrl ? { coverLogo: coverLogoUrl } : {}),
           ...(watermarkEnabled ? { watermark: { logoUrl: whiteLogo || undefined, position: watermarkPosition, opacity: watermarkOpacity / 100, skipFirst: true } } : {}),
           clips: ordered.map(c => ({
             url: c.uploadedUrl, room: c.room,
@@ -450,6 +673,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
           propertyData: propertyData(), propertyLabel: propertyLabel(),
           aspectRatio: aspect,
         });
+        console.log('[Montaggio] startRender result:', JSON.stringify(res).slice(0, 300));
         finishRender(res, aspect);
         return;
       }
@@ -566,6 +790,13 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
   };
 
   const inputStyle: React.CSSProperties = { width: '100%', border: '1px solid #e4e1da', borderRadius: 10, padding: '11px 14px', fontSize: 13.5, fontFamily: 'inherit', outline: 'none', background: '#fff' };
+  // Select ambiente compatto con chevron custom staccata dal bordo destro.
+  const roomSelectStyle: React.CSSProperties = {
+    ...inputStyle, flex: 'none', width: 'auto', maxWidth: 180, padding: '7px 32px 7px 10px', fontSize: 12,
+    appearance: 'none', WebkitAppearance: 'none', MozAppearance: 'none', cursor: 'pointer',
+    backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2357534c' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>")`,
+    backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center', backgroundSize: '12px',
+  };
   const cardSel = (sel: boolean): React.CSSProperties => ({
     borderRadius: 12, cursor: 'pointer', border: sel ? '2px solid #3B83F6' : '2px solid transparent',
         background: sel ? '#eef4fe' : '#f6f4f0', transition: 'all .15s', padding: '12px',
@@ -707,9 +938,9 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
               <input ref={pairFileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) addPairFile(f); e.target.value = ''; }} />
             </div>
           ) : (
-            <div onClick={() => fileRef.current?.click()}
+            <div onClick={clips.length === 0 ? () => fileRef.current?.click() : undefined}
               onDragOver={e => e.preventDefault()}
-              onDrop={e => { e.preventDefault(); addFiles(e.dataTransfer.files); }}
+              onDrop={e => { e.preventDefault(); if (e.dataTransfer.files?.length) addFiles(e.dataTransfer.files); }}
               style={{ border: '2px dashed #d8d4cb', background: '#fff', borderRadius: 16, padding: clips.length ? 20 : 56, cursor: 'pointer', textAlign: 'center' }}>
               {clips.length === 0 ? (
                 <>
@@ -721,9 +952,82 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
                 </>
               ) : (
                 <div style={layout === 'montaggio' ? { display: 'flex', flexDirection: 'column', gap: 12 } : { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
-                  {clips.map((c, idx) => { const mont = layout === 'montaggio'; return (
-                    <div key={c.id} onClick={e => e.stopPropagation()} style={mont ? { position: 'relative', display: 'flex', gap: 14, alignItems: 'flex-start', background: '#fff', border: '1px solid #f0ede7', borderRadius: 12, padding: 10 } : { position: 'relative' }}>
-                      <div style={{ position: 'relative', aspectRatio: '4/3', borderRadius: 10, overflow: 'hidden', ...(mont ? { width: 260, flex: 'none' } : {}) }}>
+                  {layout === 'montaggio' && clips.length < maxClips && (
+                    <Box onClick={(e: React.MouseEvent) => { e.stopPropagation(); fileRef.current?.click(); }} style={{ borderRadius: 12, border: '1.5px dashed #d8d4cb', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, padding: '14px', cursor: 'pointer', color: '#57534c', fontSize: 13.5, fontWeight: 700, background: '#fcfcfb' } as React.CSSProperties} hover={{ background: '#f6f4f0', borderColor: '#3B83F6', color: '#3B83F6' }}>
+                      <span style={{ width: 26, height: 26, borderRadius: '50%', background: '#eef4fe', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="plus" size={15} color="#3B83F6" /></span>
+                      Aggiungi clip o foto <span style={{ color: '#a8a299', fontWeight: 600 }}>· {clips.length}/{maxClips}</span>
+                    </Box>
+                  )}
+                  {clips.map((c, idx) => {
+                    const mont = layout === 'montaggio';
+                    const trimmable = !c.isPhoto && !singlePhoto && layout !== 'sottotitoli' && c.duration > 3;
+                    const showRoom = !isPhotoTemplate && layout !== 'sottotitoli' && !singlePhoto;
+                    if (mont) {
+                      // Riga compatta con drag-and-drop. Handle a sinistra, miniatura,
+                      // tipo + ambiente, trim (solo video), rimuovi a destra.
+                      const isDragging = dragIdx === idx;
+                      const isOver = overIdx === idx && dragIdx !== null && dragIdx !== idx;
+                      // Anteprima = frame più vicino all'inizio della selezione.
+                      const previewSrc = (!c.isPhoto && c.frames && c.frames.length)
+                        ? c.frames[Math.min(c.frames.length - 1, Math.max(0, Math.round((c.sourceStart / (c.duration || 1)) * (c.frames.length - 1))))]
+                        : c.thumb;
+                      return (
+                        <div key={c.id}
+                          onClick={e => e.stopPropagation()}
+                          onDragOver={e => { e.preventDefault(); if (overIdx !== idx) setOverIdx(idx); }}
+                          onDrop={e => { e.preventDefault(); e.stopPropagation(); if (dragIdx !== null) moveClip(dragIdx, idx); setDragIdx(null); setOverIdx(null); }}
+                          style={{
+                            position: 'relative', display: 'flex', gap: 12, alignItems: 'center',
+                            background: '#fff', borderRadius: 12, padding: 10,
+                            border: isOver ? '2px solid #3B83F6' : '1px solid #e4e1da',
+                            boxShadow: isDragging ? '0 8px 24px rgba(0,0,0,.12)' : 'none',
+                            opacity: isDragging ? .45 : 1, transition: 'box-shadow .15s, opacity .15s',
+                          }}>
+                          <div
+                            draggable
+                            onDragStart={() => setDragIdx(idx)}
+                            onDragEnd={() => { setDragIdx(null); setOverIdx(null); }}
+                            title="Trascina per riordinare"
+                            style={{ flex: 'none', cursor: 'grab', color: '#c4bfb6', display: 'flex', alignItems: 'center', padding: '0 2px', touchAction: 'none' }}>
+                            <svg width="14" height="20" viewBox="0 0 14 20" fill="currentColor" aria-hidden><circle cx="4" cy="4" r="1.5"/><circle cx="10" cy="4" r="1.5"/><circle cx="4" cy="10" r="1.5"/><circle cx="10" cy="10" r="1.5"/><circle cx="4" cy="16" r="1.5"/><circle cx="10" cy="16" r="1.5"/></svg>
+                          </div>
+                          <div style={{ position: 'relative', width: 116, height: 78, flex: 'none', borderRadius: 8, overflow: 'hidden', background: '#000' }}>
+                            {c.isPhoto && c.height > c.width && (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src={c.thumb} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', filter: 'blur(18px) brightness(.85)', transform: 'scale(1.15)' }} />
+                            )}
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={previewSrc} alt="" style={{ width: '100%', height: '100%', objectFit: c.isPhoto && c.height > c.width ? 'contain' : 'cover', position: 'relative' }} />
+                            <span style={{ position: 'absolute', top: 5, left: 5, background: 'rgba(33,31,28,.78)', color: '#fff', fontSize: 10, fontWeight: 800, minWidth: 18, height: 18, padding: '0 5px', borderRadius: 99, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{idx + 1}</span>
+                          </div>
+                          <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11.5, fontWeight: 700, color: '#57534c', background: '#f3f1ec', padding: '3px 9px', borderRadius: 99 }}>
+                                <Icon name={c.isPhoto ? 'image' : 'film'} size={12} color="#57534c" />
+                                {c.isPhoto ? 'Foto' : `Video · ${Math.round(c.duration)}s`}
+                              </span>
+                              <div style={{ flex: 1 }} />
+                              {showRoom && (
+                                <select value={c.room} onChange={e => setClips(cs => cs.map(x => x.id === c.id ? { ...x, room: e.target.value, roomManual: true } : x))} style={roomSelectStyle}>
+                                  {ROOM_TYPES.map(r => <option key={r.id} value={r.id}>{r.label}</option>)}
+                                </select>
+                              )}
+                              <Box as="button" onClick={() => setClips(cs => cs.filter(x => x.id !== c.id))} title="Rimuovi" style={{ flex: 'none', width: 32, height: 32, borderRadius: 8, background: '#fff', border: '1px solid #e4e1da', cursor: 'pointer', color: '#b3aca1', display: 'flex', alignItems: 'center', justifyContent: 'center' } as React.CSSProperties} hover={{ background: '#fef2f2', borderColor: '#fca5a5', color: '#dc2626' }}><Icon name="trash" size={14} color="currentColor" /></Box>
+                            </div>
+                            {trimmable && (
+                              <>
+                                <div style={{ height: 1, background: '#f0ede7' }} />
+                                <TrimRange duration={c.duration} start={c.sourceStart} end={c.sourceEnd} frames={c.frames}
+                                  onChange={(st, en) => setClips(cs => cs.map(x => x.id === c.id ? { ...x, sourceStart: st, sourceEnd: en } : x))} />
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    }
+                    return (
+                    <div key={c.id} onClick={e => e.stopPropagation()} style={{ position: 'relative' }}>
+                      <div style={{ position: 'relative', aspectRatio: '4/3', borderRadius: 10, overflow: 'hidden' }}>
                         {c.isPhoto && c.height > c.width && (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img src={c.thumb} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', filter: 'blur(20px) brightness(.85)', transform: 'scale(1.15)' }} />
@@ -732,52 +1036,23 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
                         <img src={c.thumb} alt="" style={{ width: '100%', height: '100%', objectFit: c.isPhoto && c.height > c.width ? 'contain' : 'cover', position: 'relative' }} />
                         <span style={{ position: 'absolute', top: 6, left: 6, background: 'rgba(33,31,28,.72)', color: '#fff', fontSize: 10.5, fontWeight: 800, padding: '3px 8px', borderRadius: 99 }}>{idx + 1}{!c.isPhoto && ` · ${Math.round(c.duration)}s`}</span>
                         <button onClick={() => setClips(cs => cs.filter(x => x.id !== c.id))} style={{ position: 'absolute', top: 6, right: 6, width: 22, height: 22, borderRadius: '50%', background: 'rgba(33,31,28,.72)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="x" size={11} color="#fff" /></button>
-                        {mont && clips.length > 1 && (
-                          <div style={{ position: 'absolute', bottom: 6, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 6 }}>
-                            <button disabled={idx === 0} onClick={() => setClips(cs => { if (idx === 0) return cs; const n = [...cs]; [n[idx - 1], n[idx]] = [n[idx], n[idx - 1]]; return n; })} title="Sposta indietro" style={{ width: 24, height: 24, borderRadius: '50%', background: 'rgba(33,31,28,.72)', border: 'none', cursor: idx === 0 ? 'default' : 'pointer', opacity: idx === 0 ? .35 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 13 }}>‹</button>
-                            <button disabled={idx === clips.length - 1} onClick={() => setClips(cs => { if (idx === cs.length - 1) return cs; const n = [...cs]; [n[idx + 1], n[idx]] = [n[idx], n[idx + 1]]; return n; })} title="Sposta avanti" style={{ width: 24, height: 24, borderRadius: '50%', background: 'rgba(33,31,28,.72)', border: 'none', cursor: idx === clips.length - 1 ? 'default' : 'pointer', opacity: idx === clips.length - 1 ? .35 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 13 }}>›</button>
-                          </div>
-                        )}
                       </div>
-                      <div style={mont ? { flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 8 } : { display: 'contents' }}>
-                      {!isPhotoTemplate && layout !== 'sottotitoli' && !singlePhoto && (
-                        <select value={c.room} onChange={e => setClips(cs => cs.map(x => x.id === c.id ? { ...x, room: e.target.value } : x))} style={{ ...inputStyle, marginTop: mont ? 0 : 6, padding: '7px 10px', fontSize: 12 }}>
+                      {showRoom && (
+                        <select value={c.room} onChange={e => setClips(cs => cs.map(x => x.id === c.id ? { ...x, room: e.target.value, roomManual: true } : x))} style={{ ...inputStyle, marginTop: 6, padding: '7px 10px', fontSize: 12 }}>
                           {ROOM_TYPES.map(r => <option key={r.id} value={r.id}>{r.label}</option>)}
                         </select>
                       )}
-                      {!c.isPhoto && !singlePhoto && layout !== 'sottotitoli' && c.duration > 3 && (
-                        <div style={{ marginTop: mont ? 0 : 6, background: '#f6f4f0', borderRadius: 8, padding: '8px 10px' }}>
-                          <div style={{ position: 'relative', height: 6, background: '#e4e1da', borderRadius: 3 }}>
-                            <div style={{
-                              position: 'absolute', height: '100%', borderRadius: 3, background: '#3B83F6',
-                              left: `${(c.sourceStart / c.duration) * 100}%`,
-                              width: `${((c.sourceEnd - c.sourceStart) / c.duration) * 100}%`,
-                            }} />
-                          </div>
-                          <div style={{ display: 'flex', gap: 6, marginTop: 6, alignItems: 'center' }}>
-                            <input type="range" min={0} max={Math.max(0, c.sourceEnd - 2)} step={0.1} value={c.sourceStart}
-                              onChange={e => { const v = Number(e.target.value); setClips(cs => cs.map(x => x.id === c.id ? { ...x, sourceStart: v } : x)); }}
-                              style={{ flex: 1, height: 3, accentColor: '#3B83F6' }} />
-                            <span style={{ fontSize: 10, color: '#8c867d', fontWeight: 700, minWidth: 64, textAlign: 'center' }}>
-                              {Math.floor(c.sourceStart / 60)}:{String(Math.floor(c.sourceStart % 60)).padStart(2, '0')} - {Math.floor(c.sourceEnd / 60)}:{String(Math.floor(c.sourceEnd % 60)).padStart(2, '0')}
-                            </span>
-                            <input type="range" min={Math.min(c.duration, c.sourceStart + 2)} max={c.duration} step={0.1} value={c.sourceEnd}
-                              onChange={e => { const v = Number(e.target.value); setClips(cs => cs.map(x => x.id === c.id ? { ...x, sourceEnd: v } : x)); }}
-                              style={{ flex: 1, height: 3, accentColor: '#3B83F6' }} />
-                          </div>
+                      {trimmable && (
+                        <div style={{ marginTop: 6, background: '#f6f4f0', borderRadius: 8, padding: '8px 10px' }}>
+                          <TrimRange duration={c.duration} start={c.sourceStart} end={c.sourceEnd}
+                            onChange={(st, en) => setClips(cs => cs.map(x => x.id === c.id ? { ...x, sourceStart: st, sourceEnd: en } : x))} />
                         </div>
                       )}
-                      </div>
                     </div>
                   ); })}
                   {clips.length < maxClips && layout !== 'montaggio' && (
                     <div style={{ aspectRatio: '4/3', borderRadius: 10, border: '1.5px dashed #d8d4cb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       <Icon name="plus" size={20} color="#b3aca1" />
-                    </div>
-                  )}
-                  {clips.length < maxClips && layout === 'montaggio' && (
-                    <div onClick={(e) => { e.stopPropagation(); fileRef.current?.click(); }} style={{ borderRadius: 10, border: '1.5px dashed #d8d4cb', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '16px', cursor: 'pointer', color: '#8c867d', fontSize: 13, fontWeight: 700 }}>
-                      <Icon name="plus" size={18} color="#b3aca1" />Aggiungi clip o foto
                     </div>
                   )}
                 </div>
@@ -858,7 +1133,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
             </div>
           )}
 
-          <div style={s('display:flex;justify-content:space-between;margin-top:20px')}>
+          <StickyNav>
             <Box as="button" onClick={() => setStep(usesAvatar ? 1 : 0)} style={s('border:1px solid #e4e1da;background:#fff;font-size:13px;font-weight:600;padding:11px 20px;border-radius:10px;cursor:pointer') as React.CSSProperties} hover={s('background:#f6f4f0')}>Indietro</Box>
             {inlineStep3 ? (
               <Box as="button" onClick={() => { if (mediaReady) handleRender(); }} style={{ border: 'none', background: '#3B83F6', color: '#fff', fontSize: 14, fontWeight: 700, padding: '12px 28px', borderRadius: 10, cursor: mediaReady ? 'pointer' : 'default', opacity: mediaReady ? 1 : 0.4, display: 'flex', alignItems: 'center', gap: 8 }} hover={mediaReady ? { background: '#2b6fe0' } : {}}>
@@ -867,7 +1142,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
             ) : (
               <Box as="button" onClick={() => { if (mediaReady) goToOptions(); }} style={{ border: 'none', background: '#3B83F6', color: '#fff', fontSize: 14, fontWeight: 700, padding: '12px 28px', borderRadius: 10, cursor: mediaReady ? 'pointer' : 'default', opacity: mediaReady ? 1 : 0.4 }} hover={mediaReady ? { background: '#2b6fe0' } : {}}>Continua</Box>
             )}
-          </div>
+          </StickyNav>
         </div>
       )}
 
@@ -1045,19 +1320,47 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
                 <input value={coverTitle} onChange={e => setCoverTitle(e.target.value)} maxLength={80} placeholder="Inserisci qui il titolo del video..." style={inputStyle} />
                 <input value={coverAddress} onChange={e => setCoverAddress(e.target.value)} maxLength={100} placeholder="Scrivi qui l'indirizzo dell'immobile... (opzionale)" style={inputStyle} />
                 {(() => {
-                  const whiteLogo = (brand.logoOrientation === 'vertical' ? (brand.logos.logo_white_v || brand.logos.logo_white_h) : (brand.logos.logo_white_h || brand.logos.logo_white_v)) || '';
+                  const logoOpts = coverLogoItems.filter(i => i.src);
+                  const hasAnyLogo = logoOpts.length > 0;
+                  const toggleLogo = () => {
+                    if (!hasAnyLogo) return;
+                    setCoverLogoOn(v => {
+                      const next = !v;
+                      if (next && !coverLogoUrl) setCoverLogoKey(logoOpts[0].key); // assicura una scelta valida
+                      return next;
+                    });
+                  };
                   return (
                     <>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid #f0ede7', borderBottom: '1px solid #f0ede7', padding: '14px 0', margin: '4px 0' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid #f0ede7', borderBottom: coverLogoOn ? 'none' : '1px solid #f0ede7', padding: '14px 0', margin: '4px 0 0' }}>
                         <span style={{ fontSize: 13.5, fontWeight: 600 }}>Aggiungi logo</span>
-                        <div onClick={() => { if (whiteLogo) setCoverLogoOn(v => !v); }} title={whiteLogo ? '' : 'Carica un logo bianco in Brand'} style={{ width: 40, height: 24, borderRadius: 99, background: coverLogoOn && whiteLogo ? '#3B83F6' : '#d8d4cb', position: 'relative', cursor: whiteLogo ? 'pointer' : 'not-allowed', opacity: whiteLogo ? 1 : .5, transition: 'background .2s' }}>
-                          <span style={{ position: 'absolute', top: 3, left: coverLogoOn && whiteLogo ? 19 : 3, width: 18, height: 18, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,.2)', transition: 'left .2s' }} />
+                        <div onClick={toggleLogo} title={hasAnyLogo ? '' : 'Carica un logo nella sezione Brand'} style={{ width: 40, height: 24, borderRadius: 99, background: coverLogoOn && hasAnyLogo ? '#3B83F6' : '#d8d4cb', position: 'relative', cursor: hasAnyLogo ? 'pointer' : 'not-allowed', opacity: hasAnyLogo ? 1 : .5, transition: 'background .2s' }}>
+                          <span style={{ position: 'absolute', top: 3, left: coverLogoOn && hasAnyLogo ? 19 : 3, width: 18, height: 18, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,.2)', transition: 'left .2s' }} />
                         </div>
                       </div>
-                      <div style={s('font-size:12.5px;font-weight:700;color:#57534c')}>Scegli una copertina</div>
+                      {/* Picker: quale logo usare (come nei post) */}
+                      {coverLogoOn && hasAnyLogo && (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, padding: '14px 0', borderBottom: '1px solid #f0ede7', margin: '0 0 4px' }}>
+                          {logoOpts.map(it => {
+                            const sel = coverLogoKey === it.key;
+                            return (
+                              <Box key={it.key} onClick={() => setCoverLogoKey(it.key)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px 6px 6px', borderRadius: 10, cursor: 'pointer', border: sel ? '2px solid #3B83F6' : '1px solid #e4e1da', background: sel ? '#eff6ff' : '#fff' } as React.CSSProperties} hover={sel ? undefined : { background: '#f6f4f0' }}>
+                                <span style={{ width: 38, height: 26, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', background: it.dark ? '#211f1c' : '#f1efe9', overflow: 'hidden' }}>
+                                  {it.src
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    ? <img src={it.src} alt="" style={{ maxWidth: '82%', maxHeight: '74%', objectFit: 'contain' }} />
+                                    : <Icon name="sparkles" size={13} color="#8c867d" />}
+                                </span>
+                                <span style={{ fontSize: 12, fontWeight: sel ? 700 : 600, color: sel ? '#1d5fd0' : '#57534c' }}>{it.label}</span>
+                              </Box>
+                            );
+                          })}
+                        </div>
+                      )}
+                      <div style={s('font-size:12.5px;font-weight:700;color:#57534c;margin-top:8px')}>Scegli una copertina</div>
                       <CoverStylesGrid
                         thumbUrl={clips[0]?.thumb || ''}
-                        logoUrl={coverLogoOn ? whiteLogo : ''}
+                        logoUrl={coverLogoUrl}
                         title={coverTitle}
                         address={coverAddress}
                         brandColor={brand.primaryColor || '#3B82F6'}
@@ -1070,10 +1373,10 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
                   );
                 })()}
               </div>
-              <div style={s('display:flex;justify-content:space-between;margin-top:20px')}>
+              <StickyNav bleed={24}>
                 <Box as="button" onClick={() => setStep(2)} style={s('border:1px solid #e4e1da;background:#fff;font-size:13px;font-weight:600;padding:11px 20px;border-radius:10px;cursor:pointer') as React.CSSProperties} hover={s('background:#f6f4f0')}>Indietro</Box>
                 <Box as="button" onClick={() => setMontaggioPhase('logo')} style={{ border: 'none', background: '#3B83F6', color: '#fff', fontSize: 13.5, fontWeight: 700, padding: '11px 22px', borderRadius: 10, cursor: 'pointer' }} hover={{ background: '#2b6fe0' }}>Avanti &rarr;</Box>
-              </div>
+              </StickyNav>
             </div>
           )}
           {montaggioPhase === 'logo' && (
@@ -1119,10 +1422,10 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
                   </>
                 );
               })()}
-              <div style={s('display:flex;justify-content:space-between;margin-top:20px')}>
+              <StickyNav bleed={24}>
                 <Box as="button" onClick={() => setMontaggioPhase('cover')} style={s('border:1px solid #e4e1da;background:#fff;font-size:13px;font-weight:600;padding:11px 20px;border-radius:10px;cursor:pointer') as React.CSSProperties} hover={s('background:#f6f4f0')}>&larr; Cover</Box>
                 <Box as="button" onClick={() => setMontaggioPhase('music')} style={{ border: 'none', background: '#3B83F6', color: '#fff', fontSize: 13.5, fontWeight: 700, padding: '11px 22px', borderRadius: 10, cursor: 'pointer' }} hover={{ background: '#2b6fe0' }}>Avanti &rarr;</Box>
-              </div>
+              </StickyNav>
             </div>
           )}
           {montaggioPhase === 'music' && (
@@ -1162,12 +1465,12 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
                   <input value={propAddress} onChange={e => setPropAddress(e.target.value)} placeholder="Indirizzo" style={inputStyle} />
                 </div>
               </div>
-              <div style={s('display:flex;justify-content:space-between;margin-top:20px')}>
+              <StickyNav bleed={24}>
                 <Box as="button" onClick={() => setMontaggioPhase('logo')} style={s('border:1px solid #e4e1da;background:#fff;font-size:13px;font-weight:600;padding:11px 20px;border-radius:10px;cursor:pointer') as React.CSSProperties} hover={s('background:#f6f4f0')}>&larr; Logo</Box>
                 <Box as="button" onClick={handleRender} style={s('border:none;background:#3B83F6;color:#fff;font-size:14px;font-weight:700;padding:12px 24px;border-radius:10px;cursor:pointer;display:flex;align-items:center;gap:8px') as React.CSSProperties} hover={s('background:#2b6fe0')}>
                   <Icon name="sparkles" size={16} color="#fff" />Genera video
                 </Box>
-              </div>
+              </StickyNav>
             </div>
           )}
         </div>
@@ -1286,10 +1589,12 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
                 )}
               </div>
             )}
-            <Box as="button" onClick={handleRender} style={s('border:none;background:#3B83F6;color:#fff;font-size:14px;font-weight:700;padding:14px 16px;border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px') as React.CSSProperties} hover={s('background:#2b6fe0')}>
-              <Icon name="sparkles" size={16} color="#fff" />Genera video
-            </Box>
-            <Box as="button" onClick={() => setStep(2)} style={s('border:1px solid #e4e1da;background:#fff;font-size:13px;font-weight:600;padding:11px 20px;border-radius:10px;cursor:pointer') as React.CSSProperties} hover={s('background:#f6f4f0')}>Indietro</Box>
+            <StickyNav align="center">
+              <Box as="button" onClick={() => setStep(2)} style={s('border:1px solid #e4e1da;background:#fff;font-size:13px;font-weight:600;padding:11px 20px;border-radius:10px;cursor:pointer') as React.CSSProperties} hover={s('background:#f6f4f0')}>Indietro</Box>
+              <Box as="button" onClick={handleRender} style={s('border:none;background:#3B83F6;color:#fff;font-size:14px;font-weight:700;padding:14px 22px;border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px') as React.CSSProperties} hover={s('background:#2b6fe0')}>
+                <Icon name="sparkles" size={16} color="#fff" />Genera video
+              </Box>
+            </StickyNav>
           </div>
         </div>
       )}
@@ -1320,9 +1625,28 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
               <div style={s('color:#8c867d;font-size:13.5px;margin-bottom:20px')}>{renderError}</div>
               <Box as="button" onClick={resetAll} style={s('border:none;background:#3B83F6;color:#fff;font-size:14px;font-weight:700;padding:12px 24px;border-radius:10px;cursor:pointer') as React.CSSProperties} hover={s('background:#2b6fe0')}>Riprova</Box>
             </div>
+          ) : renderStage === 'background' ? (
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ position: 'relative', width: 120, height: 120, margin: '0 auto 22px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'radial-gradient(circle at 35% 35%, #93C5FD, #3B83F6 60%, #1d4ed8)', filter: 'blur(14px)', opacity: .55, animation: 'blob-float 7s ease-in-out infinite' }} />
+                <div style={{ position: 'absolute', inset: 8, borderRadius: '50%', background: 'radial-gradient(circle at 65% 60%, #60A5FA, #6366f1)', filter: 'blur(16px)', opacity: .5, animation: 'blob-float-2 9s ease-in-out infinite' }} />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/dashboard/logo-icon.svg" alt="" style={{ position: 'relative', width: 52, height: 52, animation: 'aurora-pulse 4s ease-in-out infinite' }} />
+              </div>
+              <div style={s('font-size:17px;font-weight:800;margin-bottom:6px')}>Video in elaborazione</div>
+              <div style={s('color:#8c867d;font-size:13.5px;max-width:420px;margin:0 auto 24px')}>
+                Gira in background: puoi cambiare sezione o chiudere la pagina. Lo trovi nel tray <b>Lavori in corso</b> in alto a destra e poi in <b>Media</b>.
+              </div>
+              <Box as="button" onClick={resetAll} style={s('border:none;background:#3B83F6;color:#fff;font-size:14px;font-weight:700;padding:12px 24px;border-radius:10px;cursor:pointer') as React.CSSProperties} hover={s('background:#2b6fe0')}>Nuovo video</Box>
+            </div>
           ) : (
             <div style={{ textAlign: 'center' }}>
-              <div style={{ width: 48, height: 48, border: '4px solid #eef0f3', borderTopColor: '#3B83F6', borderRadius: '50%', animation: 'export-spin .8s linear infinite', margin: '0 auto 18px' }} />
+              <div style={{ position: 'relative', width: 120, height: 120, margin: '0 auto 22px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'radial-gradient(circle at 35% 35%, #93C5FD, #3B83F6 60%, #1d4ed8)', filter: 'blur(14px)', opacity: .55, animation: 'blob-float 7s ease-in-out infinite' }} />
+                <div style={{ position: 'absolute', inset: 8, borderRadius: '50%', background: 'radial-gradient(circle at 65% 60%, #60A5FA, #6366f1)', filter: 'blur(16px)', opacity: .5, animation: 'blob-float-2 9s ease-in-out infinite' }} />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/dashboard/logo-icon.svg" alt="" style={{ position: 'relative', width: 52, height: 52, animation: 'aurora-pulse 4s ease-in-out infinite' }} />
+              </div>
               <div style={s('font-size:16px;font-weight:800;margin-bottom:6px')}>
                 {renderStage === 'uploading' ? 'Caricamento file...'
                   : renderStage === 'avatar' ? 'Sintesi avatar...'

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { s, Box, Icon } from './ui';
 import { fetchUserBatches, fetchBatchPhotos, deleteBatchPhoto, BatchInfo, BatchPhoto } from '@/lib/stagingBatches';
 import { downloadImage } from '@/lib/staging';
@@ -26,7 +26,7 @@ export default function MediaScreen({
   const [photosByBatch, setPhotosByBatch] = useState<Record<string, BatchPhoto[]>>({});
   const [loadingPhotos, setLoadingPhotos] = useState<Record<string, boolean>>({});
   const [filter, setFilter] = useState<'all' | 'staging' | 'video'>('all');
-  const [lightbox, setLightbox] = useState<{ resultUrl: string; sourceUrl: string | null } | null>(null);
+  const [lightbox, setLightbox] = useState<{ resultUrl: string; sourceUrl: string | null; isVideo?: boolean } | null>(null);
   const [localSourceUrls, setLocalSourceUrls] = useState<Record<string, string>>({});
 
   // Filter batches by current project if project is passed
@@ -88,23 +88,32 @@ export default function MediaScreen({
   };
   const exitSelect = () => { setSelectDay(null); setSelected(new Set()); };
 
-  // Elimina una lista di foto (bulk), poi aggiorna lo stato locale.
+  // Elimina una lista di elementi (foto + video) in bulk, poi aggiorna lo stato.
   const handleDeletePhotos = async (list: (BatchPhoto & { batchId: string })[]) => {
     if (!list.length) return;
-    if (!window.confirm(`Eliminare ${list.length} ${list.length === 1 ? 'foto' : 'foto'}? L'azione è irreversibile.`)) return;
-    await Promise.all(list.map(p => deleteBatchPhoto(p.batchId, p.index)));
-    setPhotosByBatch(prev => {
+    const vids = list.filter(p => (p as MediaItem).isVideo);
+    const pics = list.filter(p => !(p as MediaItem).isVideo);
+    const n = list.length;
+    if (!window.confirm(`Eliminare ${n} ${n === 1 ? 'elemento' : 'elementi'}? L'azione è irreversibile.`)) return;
+    const { deleteServerVideoJob } = await import('@/lib/videoJobs');
+    await Promise.all([
+      ...pics.map(p => deleteBatchPhoto(p.batchId, p.index)),
+      ...vids.map(p => deleteServerVideoJob((p as MediaItem).videoId!)),
+    ]);
+    if (pics.length) setPhotosByBatch(prev => {
       const next = { ...prev };
-      for (const p of list) next[p.batchId] = (next[p.batchId] || []).filter(x => x.index !== p.index);
+      for (const p of pics) next[p.batchId] = (next[p.batchId] || []).filter(x => x.index !== p.index);
       return next;
     });
+    if (vids.length) setVideos(prev => prev.filter(v => !vids.some(x => (x as MediaItem).videoId === v.id)));
     exitSelect();
-    toast('Foto eliminate', 'trash');
+    toast(n === 1 ? 'Elemento eliminato' : 'Elementi eliminati', 'trash');
   };
 
   // Scarica come ZIP una lista di foto (solo riuscite con URL valido).
   const handleDownloadPhotos = async (list: (BatchPhoto & { batchId: string })[], zipName: string) => {
-    const photos = list.filter(p => p.resultUrl && p.status !== 'failed');
+    // I video si scaricano singolarmente (file pesanti, no ZIP misto).
+    const photos = list.filter(p => p.resultUrl && p.status !== 'failed' && !(p as MediaItem).isVideo);
     if (!photos.length) {
       toast('Nessuna foto scaricabile', 'x');
       return;
@@ -143,29 +152,52 @@ export default function MediaScreen({
   const [visibleCounts, setVisibleCounts] = useState<Record<string, number>>({});
   const validBatches = projectBatches.filter(b => b.completedItems > 0 && b.status !== 'failed');
 
-  // Raggruppa TUTTE le foto per giorno (una sezione al giorno, non per batch).
+  // Video finiti (R2, scaricabili entro 30gg). Source of truth = tabella
+  // ai_video_jobs (cross-device, sopravvive a browser chiuso); localStorage
+  // fonde la sessione corrente. Ricaricati al mount + a ogni routeKey.
+  const [videos, setVideos] = useState<{ id: string; url: string; title: string; ts: number }[]>([]);
+  const refreshVideos = useCallback(async () => {
+    const { finishedVideos, fetchServerVideoJobs, mergeServerJobs } = await import('@/lib/videoJobs');
+    const apply = () => {
+      const seen = new Set<string>();
+      const out = finishedVideos(project?.id)
+        .filter(v => v.outputUrl && !seen.has(v.outputUrl) && seen.add(v.outputUrl))
+        .map(v => ({ id: v.id, url: v.outputUrl!, title: v.title, ts: v.createdAt }));
+      setVideos(out);
+    };
+    apply(); // istantaneo da localStorage
+    const server = await fetchServerVideoJobs();
+    if (server.length) { mergeServerJobs(server); apply(); }
+  }, [project?.id]);
+  useEffect(() => { void refreshVideos(); }, [refreshVideos, routeKey]);
+
+  type MediaItem = (BatchPhoto & { batchId: string }) & { isVideo?: boolean; title?: string; videoId?: string };
+
+  // Raggruppa foto + video per giorno (una sezione al giorno).
   const days = useMemo(() => {
-    const map = new Map<string, { key: string; label: string; ts: number; photos: (BatchPhoto & { batchId: string })[] }>();
-    for (const batch of validBatches) {
-      if (filter === 'staging' && batch.type !== 'staging') continue;
-      if (filter === 'video' && batch.type !== 'video') continue;
-      
-      const photos = photosByBatch[batch.id];
-      if (!photos || photos.length === 0) continue;
-      const d = new Date(batch.createdAt);
+    const map = new Map<string, { key: string; label: string; ts: number; photos: MediaItem[] }>();
+    const ensure = (ts: number) => {
+      const d = new Date(ts);
       const key = d.toISOString().slice(0, 10);
-      if (!map.has(key)) {
-        map.set(key, {
-          key,
-          label: d.toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' }),
-          ts: d.getTime(),
-          photos: [],
-        });
+      if (!map.has(key)) map.set(key, { key, label: d.toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' }), ts, photos: [] });
+      return map.get(key)!;
+    };
+    if (filter !== 'video') {
+      for (const batch of validBatches) {
+        if (filter === 'staging' && batch.type !== 'staging') continue;
+        const photos = photosByBatch[batch.id];
+        if (!photos || photos.length === 0) continue;
+        const day = ensure(new Date(batch.createdAt).getTime());
+        for (const p of photos) day.photos.push({ ...p, batchId: batch.id });
       }
-      for (const p of photos) map.get(key)!.photos.push({ ...p, batchId: batch.id });
+    }
+    if (filter !== 'staging') {
+      videos.forEach((v, i) => {
+        ensure(v.ts).photos.push({ index: -1 - i, resultUrl: v.url, sourceUrl: null, status: 'completed', batchId: 'video', isVideo: true, title: v.title, videoId: v.id } as MediaItem);
+      });
     }
     return Array.from(map.values()).sort((a, b) => b.ts - a.ts);
-  }, [validBatches, photosByBatch, filter]);
+  }, [validBatches, photosByBatch, filter, videos]);
 
   const anyPhotosLoading = validBatches.some(b => loadingPhotos[b.id] || (!photosByBatch[b.id] && b.completedItems > 0));
 
@@ -174,7 +206,7 @@ export default function MediaScreen({
       <div className="max-md:!flex-col max-md:!items-start max-md:!gap-4" style={s('display:flex;align-items:center;justify-content:space-between;margin-bottom:24px')}>
         <div>
           <h1 style={s('margin:0 0 4px;font-size:25px;font-weight:800;letter-spacing:-.5px')}>Libreria Media</h1>
-          <div style={s('color:#8c867d;font-size:14px')}>Le foto e i video generati per questo immobile. I file non scadono mai.</div>
+          <div style={s('color:#8c867d;font-size:14px')}>Le foto e i video generati per questo immobile. Le foto restano sempre, i video sono disponibili per 30 giorni.</div>
         </div>
         
         <div style={s('display:flex;background:#f6f4f0;border-radius:10px;padding:4px')}>
@@ -294,6 +326,34 @@ export default function MediaScreen({
                         </div>
                       );
                     }
+                    if ((photo as MediaItem).isVideo) {
+                      const vSelKey = `${photo.batchId}_${photo.index}`;
+                      const vSel = selected.has(vSelKey);
+                      return (
+                        <div key={`video_${photo.index}`} onClick={() => inSelect ? toggleSelect(vSelKey) : setLightbox({ resultUrl: photo.resultUrl, sourceUrl: null, isVideo: true })} style={{ position: 'relative', aspectRatio: '4/3', borderRadius: 12, overflow: 'hidden', border: vSel ? '2px solid #3B83F6' : '1px solid #f0ede7', background: '#000', cursor: 'pointer', animation: 'media-reveal .7s cubic-bezier(.22,1,.36,1) both', animationDelay: `${pi * 60}ms` }}>
+                          {/* Poster: niente controlli inline (no fullscreen nativo). Click → modal contenuto. Cancellazione solo da "Azioni". */}
+                          <video src={`${photo.resultUrl}#t=0.5`} playsInline preload="metadata" muted style={{ width: '100%', height: '100%', objectFit: 'contain', background: '#000', pointerEvents: 'none', ...(vSel ? { opacity: .85 } : {}) }} />
+                          {!inSelect && (
+                            <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+                              <div style={{ width: 54, height: 54, borderRadius: '50%', background: 'rgba(20,30,55,0.55)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <Icon name="play-circle" size={26} color="#fff" />
+                              </div>
+                            </div>
+                          )}
+                          {inSelect && (
+                            <div style={{ position: 'absolute', top: 10, left: 10, width: 24, height: 24, borderRadius: '50%', background: vSel ? '#3B83F6' : 'rgba(255,255,255,0.85)', border: vSel ? 'none' : '1px solid #d8d4cb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              {vSel && <Icon name="check" size={14} color="#fff" />}
+                            </div>
+                          )}
+                          {!inSelect && (
+                            <a href={photo.resultUrl} download rel="noopener" onClick={e => e.stopPropagation()} title="Scarica" style={{ position: 'absolute', top: 10, right: 10, width: 32, height: 32, borderRadius: '50%', background: 'rgba(20,30,55,0.55)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}>
+                              <Icon name="download" size={15} color="#fff" />
+                            </a>
+                          )}
+                          <span style={{ position: 'absolute', bottom: 8, left: 8, background: 'rgba(0,0,0,.6)', color: '#fff', fontSize: 10.5, fontWeight: 700, padding: '3px 8px', borderRadius: 99, display: 'flex', alignItems: 'center', gap: 4 }}><Icon name="film" size={11} color="#fff" />Video</span>
+                        </div>
+                      );
+                    }
                     const selKey = `${photo.batchId}_${photo.index}`;
                     const isSel = selected.has(selKey);
                     return (
@@ -351,16 +411,26 @@ export default function MediaScreen({
           style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.94)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 40 }}
         >
           <div onClick={e => e.stopPropagation()} className="max-md:!flex-col max-md:!gap-4" style={{ position: 'relative', maxWidth: '100%', maxHeight: '100%', display: 'flex', gap: 20 }}>
-            {lightbox.sourceUrl && (
+            {lightbox.isVideo ? (
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
-                <span style={{ color: '#fff', fontSize: 13, fontWeight: 700, background: 'rgba(255,255,255,0.2)', padding: '4px 12px', borderRadius: 99 }}>Originale</span>
-                <img src={lightbox.sourceUrl} alt="Source" className="max-md:!max-w-[80vw] max-md:!max-h-[35vh]" style={{ maxHeight: '80vh', maxWidth: '40vw', objectFit: 'contain', borderRadius: 12 }} />
+                <span style={{ color: '#fff', fontSize: 13, fontWeight: 700, background: '#3B83F6', padding: '4px 12px', borderRadius: 99 }}>Video AI</span>
+                {/* controlsList nofullscreen: niente super-fullscreen nativo, resta contenuto nel modal */}
+                <video src={lightbox.resultUrl} controls autoPlay playsInline controlsList="nofullscreen" disablePictureInPicture className="max-md:!max-w-[88vw] max-md:!max-h-[60vh]" style={{ maxHeight: '82vh', maxWidth: '46vw', objectFit: 'contain', borderRadius: 12, background: '#000' }} />
               </div>
+            ) : (
+              <>
+                {lightbox.sourceUrl && (
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+                    <span style={{ color: '#fff', fontSize: 13, fontWeight: 700, background: 'rgba(255,255,255,0.2)', padding: '4px 12px', borderRadius: 99 }}>Originale</span>
+                    <img src={lightbox.sourceUrl} alt="Source" className="max-md:!max-w-[80vw] max-md:!max-h-[35vh]" style={{ maxHeight: '80vh', maxWidth: '40vw', objectFit: 'contain', borderRadius: 12 }} />
+                  </div>
+                )}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+                  <span style={{ color: '#fff', fontSize: 13, fontWeight: 700, background: '#3B83F6', padding: '4px 12px', borderRadius: 99 }}>Generata con AI</span>
+                  <img src={lightbox.resultUrl} alt="Result" className="max-md:!max-w-[80vw] max-md:!max-h-[35vh]" style={{ maxHeight: '80vh', maxWidth: '40vw', objectFit: 'contain', borderRadius: 12 }} />
+                </div>
+              </>
             )}
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
-              <span style={{ color: '#fff', fontSize: 13, fontWeight: 700, background: '#3B83F6', padding: '4px 12px', borderRadius: 99 }}>Generata con AI</span>
-              <img src={lightbox.resultUrl} alt="Result" className="max-md:!max-w-[80vw] max-md:!max-h-[35vh]" style={{ maxHeight: '80vh', maxWidth: '40vw', objectFit: 'contain', borderRadius: 12 }} />
-            </div>
             
             <button
               onClick={() => setLightbox(null)}

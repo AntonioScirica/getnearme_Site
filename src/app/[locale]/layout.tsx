@@ -220,6 +220,7 @@ export default async function LocaleLayout({ children, params }: Props) {
       <body
         className="antialiased"
         style={{ fontFamily: "'Satoshi', system-ui, -apple-system, sans-serif" }}
+        suppressHydrationWarning
       >
         {children}
       </body>

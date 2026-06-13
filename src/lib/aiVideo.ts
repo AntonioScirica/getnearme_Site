@@ -10,6 +10,7 @@
 //  others        : start directly (Lambda orchestrates nano-banana / Veo / Kling)
 
 import { supabase } from './supabase';
+import { getTokenFast } from './staging';
 
 // ─── Templates ───────────────────────────────────────────────────────────────
 
@@ -212,19 +213,36 @@ export class AIVideoError extends Error {
   }
 }
 
-async function callEdge<T = Record<string, unknown>>(name: string, body: Record<string, unknown>): Promise<T> {
-  const { data, error } = await supabase.functions.invoke(name, { method: 'POST', body });
-  if (error) {
-    let status = 0;
-    let errBody: Record<string, unknown> | null = null;
-    try {
-      const ctx = (error as { context?: Response })?.context;
-      if (ctx) { status = ctx.status; errBody = await ctx.json().catch(() => null); }
-    } catch { /* ignore */ }
-    const msg = (errBody?.error as string) || (error as { message?: string })?.message || 'Errore di rete';
-    throw new AIVideoError(status === 401 ? 'Accedi per usare Video AI' : msg, status, errBody);
+// Fetch diretto: supabase.functions.invoke() + getSession() vanno in deadlock
+// sul lock di navigator.locks (la promise non si risolve). Bypass con fetch +
+// token letto da localStorage.
+const FN_BASE = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1`;
+const ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
+
+async function callEdge<T = Record<string, unknown>>(name: string, body: Record<string, unknown>, timeoutMs = 60_000): Promise<T> {
+  const token = getTokenFast();
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  let resp: Response;
+  try {
+    resp = await fetch(`${FN_BASE}/${name}`, {
+      method: 'POST',
+      headers: { apikey: ANON_KEY, Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+      signal: ctrl.signal,
+    });
+  } catch (e: any) {
+    clearTimeout(timer);
+    throw new AIVideoError(e?.name === 'AbortError' ? 'Richiesta troppo lenta, riprova' : (e?.message || 'Errore di rete'));
   }
-  return data as T;
+  clearTimeout(timer);
+  let json: any = null;
+  try { json = await resp.json(); } catch { /* no body */ }
+  if (!resp.ok) {
+    const msg = (json?.error as string) || `HTTP ${resp.status}`;
+    throw new AIVideoError(resp.status === 401 ? 'Accedi per usare Video AI' : msg, resp.status, json);
+  }
+  return json as T;
 }
 
 // Presigned R2 upload URLs
@@ -297,6 +315,16 @@ export async function animatePhotoPoll(payload: { statusUrl: string; responseUrl
   );
 }
 
+// Riconoscimento ambiente da thumbnail (Groq vision). Best-effort: torna [] su errore.
+export async function detectRooms(thumbnails: string[]): Promise<string[]> {
+  try {
+    const res = await callEdge<{ rooms?: string[] }>('generate-ai-video-avatar', { mode: 'detect-rooms', thumbnails }, 20_000);
+    return Array.isArray(res.rooms) ? res.rooms : [];
+  } catch {
+    return [];
+  }
+}
+
 // Audio transcription (sottotitoli)
 export async function transcribeAudio(payload: { audioUrl: string; autoCut: boolean; silenceSegments?: { start: number; end: number }[] }) {
   return callEdge<{
@@ -317,7 +345,9 @@ export type RenderStartResponse = {
 };
 
 export async function startRender(payload: Record<string, unknown>): Promise<RenderStartResponse> {
-  return callEdge<RenderStartResponse>('render-ai-video-final', { mode: 'start', ...payload });
+  // keepR2: il sito si stacca dal flusso Litterbox/worker dell'estensione. Il
+  // video finito resta su R2 (scaricabile direttamente da Media per 30 giorni).
+  return callEdge<RenderStartResponse>('render-ai-video-final', { mode: 'start', keepR2: true, ...payload });
 }
 
 export async function pollRenderProgress(ctx: Record<string, unknown>): Promise<RenderStartResponse> {
@@ -359,6 +389,37 @@ export function createVideoThumbnail(file: File): Promise<{ thumb: string; durat
       resolve(out);
     };
     v.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Video non valido')); };
+    v.src = url;
+  });
+}
+
+// Estrae N frame equidistanti da un video (per la mini-anteprima della timeline).
+// Best-effort: torna [] se il video non è leggibile. Frame piccoli (jpeg ~160px).
+export function extractFrames(file: File, count = 8): Promise<string[]> {
+  return new Promise(resolve => {
+    const url = URL.createObjectURL(file);
+    const v = document.createElement('video');
+    v.muted = true; v.playsInline = true; v.preload = 'auto';
+    const out: string[] = [];
+    let times: number[] = [];
+    let i = 0;
+    const c = document.createElement('canvas');
+    const done = () => { URL.revokeObjectURL(url); resolve(out); };
+    const seekNext = () => { if (i >= times.length) { done(); return; } v.currentTime = times[i]; };
+    v.onloadeddata = () => {
+      const d = v.duration || 0;
+      if (!d) { done(); return; }
+      times = Array.from({ length: count }, (_, k) => d * ((k + 0.5) / count));
+      seekNext();
+    };
+    v.onseeked = () => {
+      const k = Math.min(1, 240 / Math.max(v.videoWidth || 1, v.videoHeight || 1));
+      c.width = Math.round((v.videoWidth || 240) * k);
+      c.height = Math.round((v.videoHeight || 180) * k);
+      try { c.getContext('2d')!.drawImage(v, 0, 0, c.width, c.height); out.push(c.toDataURL('image/jpeg', 0.82)); } catch { /* tainted */ }
+      i++; seekNext();
+    };
+    v.onerror = () => done();
     v.src = url;
   });
 }
