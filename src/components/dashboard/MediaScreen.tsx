@@ -285,7 +285,7 @@ export default function MediaScreen({
                           <Box as="button" onClick={async () => {
                             await deleteBatchPhoto(photo.batchId, photo.index);
                             setPhotosByBatch(prev => ({ ...prev, [photo.batchId]: (prev[photo.batchId] || []).filter(x => x.index !== photo.index) }));
-                          }} style={{ border: '1px solid #fca5a5', background: '#fff', color: '#dc2626', fontSize: 12.5, fontWeight: 700, padding: '7px 18px', borderRadius: 8, cursor: 'pointer' } as React.CSSProperties} hover={{ background: '#fef2f2' }}>
+                          }} style={{ border: 'none', background: '#dc2626', color: '#fff', fontSize: 12.5, fontWeight: 700, padding: '8px 20px', borderRadius: 8, cursor: 'pointer' } as React.CSSProperties} hover={{ background: '#b91c1c' }}>
                             Capito
                           </Box>
                         </div>
