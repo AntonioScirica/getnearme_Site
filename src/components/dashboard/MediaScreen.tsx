@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { s, Box, Icon } from './ui';
-import { fetchUserBatches, fetchBatchPhotos, BatchInfo, BatchPhoto } from '@/lib/stagingBatches';
+import { fetchUserBatches, fetchBatchPhotos, deleteBatchPhoto, BatchInfo, BatchPhoto } from '@/lib/stagingBatches';
 import { downloadImage } from '@/lib/staging';
 import type { Project } from './types';
 import Image from 'next/image';
@@ -80,6 +80,27 @@ export default function MediaScreen({
   };
 
   const [actionsOpen, setActionsOpen] = useState<string | null>(null);
+  const [selectDay, setSelectDay] = useState<string | null>(null);       // giorno in modalità selezione
+  const [selected, setSelected] = useState<Set<string>>(new Set());      // chiavi `${batchId}_${index}`
+
+  const toggleSelect = (key: string) => {
+    setSelected(prev => { const n = new Set(prev); n.has(key) ? n.delete(key) : n.add(key); return n; });
+  };
+  const exitSelect = () => { setSelectDay(null); setSelected(new Set()); };
+
+  // Elimina una lista di foto (bulk), poi aggiorna lo stato locale.
+  const handleDeletePhotos = async (list: (BatchPhoto & { batchId: string })[]) => {
+    if (!list.length) return;
+    if (!window.confirm(`Eliminare ${list.length} ${list.length === 1 ? 'foto' : 'foto'}? L'azione è irreversibile.`)) return;
+    await Promise.all(list.map(p => deleteBatchPhoto(p.batchId, p.index)));
+    setPhotosByBatch(prev => {
+      const next = { ...prev };
+      for (const p of list) next[p.batchId] = (next[p.batchId] || []).filter(x => x.index !== p.index);
+      return next;
+    });
+    exitSelect();
+    toast('Foto eliminate', 'trash');
+  };
 
   // Scarica come ZIP una lista di foto (solo riuscite con URL valido).
   const handleDownloadPhotos = async (list: (BatchPhoto & { batchId: string })[], zipName: string) => {
@@ -196,6 +217,8 @@ export default function MediaScreen({
         <div style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
           {days.map(day => {
             const downloadable = day.photos.filter(p => p.resultUrl && p.status !== 'failed');
+            const inSelect = selectDay === day.key;
+            const selectedPhotos = day.photos.filter(p => selected.has(`${p.batchId}_${p.index}`));
             return (
               <div key={day.key}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, borderBottom: '1px solid #f0ede7', paddingBottom: 12 }}>
@@ -205,10 +228,20 @@ export default function MediaScreen({
                     </div>
                     <div>
                       <div style={{ fontSize: 15, fontWeight: 700, color: '#211f1c', textTransform: 'capitalize' }}>{day.label}</div>
-                      <div style={{ fontSize: 12.5, color: '#8c867d' }}>{downloadable.length} foto</div>
+                      <div style={{ fontSize: 12.5, color: '#8c867d' }}>{inSelect ? `${selectedPhotos.length} selezionate` : `${downloadable.length} foto`}</div>
                     </div>
                   </div>
-                  {downloadable.length > 0 && (
+                  {inSelect ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <Box as="button" onClick={() => handleDeletePhotos(selectedPhotos)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', borderRadius: 8, fontSize: 13, fontWeight: 700, background: selectedPhotos.length ? '#dc2626' : '#f3d4d4', color: '#fff', border: 'none', cursor: selectedPhotos.length ? 'pointer' : 'default' } as React.CSSProperties} hover={selectedPhotos.length ? { background: '#b91c1c' } : undefined}>
+                        <Icon name="trash" size={14} color="#fff" />
+                        Elimina{selectedPhotos.length ? ` (${selectedPhotos.length})` : ''}
+                      </Box>
+                      <Box as="button" onClick={exitSelect} style={{ padding: '8px 14px', borderRadius: 8, fontSize: 13, fontWeight: 700, background: '#fff', border: '1px solid #e4e1da', cursor: 'pointer', color: '#211f1c' } as React.CSSProperties} hover={{ background: '#f6f4f0' }}>
+                        Annulla
+                      </Box>
+                    </div>
+                  ) : downloadable.length > 0 && (
                     <div style={{ position: 'relative' }}>
                       <Box as="button" onClick={() => setActionsOpen(actionsOpen === day.key ? null : day.key)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', borderRadius: 8, fontSize: 13, fontWeight: 700, background: '#fff', border: '1px solid #e4e1da', cursor: 'pointer', color: '#211f1c' }} hover={{ background: '#f6f4f0' }}>
                         Azioni
@@ -217,10 +250,18 @@ export default function MediaScreen({
                       {actionsOpen === day.key && (
                         <>
                           <div onClick={() => setActionsOpen(null)} style={{ position: 'fixed', inset: 0, zIndex: 40 }} />
-                          <div style={{ position: 'absolute', top: 'calc(100% + 6px)', right: 0, zIndex: 41, background: '#fff', border: '1px solid #f0ede7', borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.08)', padding: 4, minWidth: 180 }}>
+                          <div style={{ position: 'absolute', top: 'calc(100% + 6px)', right: 0, zIndex: 41, background: '#fff', border: '1px solid #f0ede7', borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.08)', padding: 4, minWidth: 200 }}>
                             <Box as="button" onClick={() => { setActionsOpen(null); handleDownloadPhotos(day.photos, `getnearme_foto_${day.key}`); }} style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '10px 12px', borderRadius: 8, fontSize: 13.5, fontWeight: 600, background: 'transparent', border: 'none', cursor: 'pointer', color: '#211f1c', textAlign: 'left' }} hover={{ background: '#f6f4f0' }}>
                               <Icon name="download" size={15} color="#57534c" />
                               Scarica tutte
+                            </Box>
+                            <Box as="button" onClick={() => { setActionsOpen(null); setSelected(new Set()); setSelectDay(day.key); }} style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '10px 12px', borderRadius: 8, fontSize: 13.5, fontWeight: 600, background: 'transparent', border: 'none', cursor: 'pointer', color: '#211f1c', textAlign: 'left' }} hover={{ background: '#f6f4f0' }}>
+                              <Icon name="check" size={15} color="#57534c" />
+                              Seleziona
+                            </Box>
+                            <Box as="button" onClick={() => { setActionsOpen(null); handleDeletePhotos(day.photos); }} style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '10px 12px', borderRadius: 8, fontSize: 13.5, fontWeight: 600, background: 'transparent', border: 'none', cursor: 'pointer', color: '#dc2626', textAlign: 'left' }} hover={{ background: '#fef2f2' }}>
+                              <Icon name="trash" size={15} color="#dc2626" />
+                              Elimina tutte
                             </Box>
                           </div>
                         </>
@@ -244,29 +285,39 @@ export default function MediaScreen({
                         </div>
                       );
                     }
+                    const selKey = `${photo.batchId}_${photo.index}`;
+                    const isSel = selected.has(selKey);
                     return (
                       <div
-                        key={`${photo.batchId}_${photo.index}`}
-                        onClick={() => setLightbox({ ...photo, sourceUrl: photo.sourceUrl || localSourceUrls[`${photo.batchId}_${photo.index}`] || null })}
-                        style={{ position: 'relative', aspectRatio: '4/3', borderRadius: 12, overflow: 'hidden', cursor: 'pointer', border: '1px solid #f0ede7', background: '#f4f2ee', animation: 'media-reveal .7s cubic-bezier(.22,1,.36,1) both', animationDelay: `${pi * 60}ms` }}
+                        key={selKey}
+                        onClick={() => inSelect ? toggleSelect(selKey) : setLightbox({ ...photo, sourceUrl: photo.sourceUrl || localSourceUrls[selKey] || null })}
+                        style={{ position: 'relative', aspectRatio: '4/3', borderRadius: 12, overflow: 'hidden', cursor: 'pointer', border: isSel ? '2px solid #3B83F6' : '1px solid #f0ede7', background: '#f4f2ee', animation: 'media-reveal .7s cubic-bezier(.22,1,.36,1) both', animationDelay: `${pi * 60}ms` }}
                       >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={photo.resultUrl} alt="" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                        <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.2)', opacity: 0, transition: 'opacity .2s', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                          onMouseEnter={e => e.currentTarget.style.opacity = '1'}
-                          onMouseLeave={e => e.currentTarget.style.opacity = '0'}
-                        >
-                          <div style={{ background: '#fff', borderRadius: '50%', width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <Icon name="maximize-2" size={20} color="#211f1c" />
+                        <img src={photo.resultUrl} alt="" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover', ...(isSel ? { opacity: .85 } : {}) }} onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                        {inSelect ? (
+                          <div style={{ position: 'absolute', top: 10, left: 10, width: 24, height: 24, borderRadius: '50%', background: isSel ? '#3B83F6' : 'rgba(255,255,255,0.85)', border: isSel ? 'none' : '1px solid #d8d4cb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            {isSel && <Icon name="check" size={14} color="#fff" />}
                           </div>
-                        </div>
-                        <button
-                          onClick={(e) => handleDownloadSingle(photo.resultUrl, e)}
-                          title="Scarica"
-                          style={{ position: 'absolute', bottom: 12, right: 12, width: 34, height: 34, borderRadius: '50%', background: 'rgba(20,30,55,0.45)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                        >
-                          <Icon name="download" size={16} color="#fff" />
-                        </button>
+                        ) : (
+                          <>
+                            <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.2)', opacity: 0, transition: 'opacity .2s', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                              onMouseEnter={e => e.currentTarget.style.opacity = '1'}
+                              onMouseLeave={e => e.currentTarget.style.opacity = '0'}
+                            >
+                              <div style={{ background: '#fff', borderRadius: '50%', width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <Icon name="maximize-2" size={20} color="#211f1c" />
+                              </div>
+                            </div>
+                            <button
+                              onClick={(e) => handleDownloadSingle(photo.resultUrl, e)}
+                              title="Scarica"
+                              style={{ position: 'absolute', bottom: 12, right: 12, width: 34, height: 34, borderRadius: '50%', background: 'rgba(20,30,55,0.45)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                            >
+                              <Icon name="download" size={16} color="#fff" />
+                            </button>
+                          </>
+                        )}
                       </div>
                     );
                   })}
