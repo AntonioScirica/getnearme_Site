@@ -140,3 +140,10 @@ html {
 @keyframes export-spin {
   to { transform: rotate(360deg); }
 }
+
+/* Reveal foto in stile AI: de-blur + scale + fade, scaglionato per indice */
+@keyframes media-reveal {
+  0%   { opacity: 0; transform: scale(.9) translateY(10px); filter: blur(12px); }
+  60%  { opacity: 1; }
+  100% { opacity: 1; transform: none; filter: blur(0); }
+}
