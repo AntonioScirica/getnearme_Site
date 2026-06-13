@@ -1689,7 +1689,7 @@ function BrandScreen({ toast, brand: brandProp, setBrand: setBrandParent, brandR
         </div>
       </div>
 
-      {/* ── REPORT FINAL PAGE ── */}
+      {/* ── REPORT FINAL PAGE ── nascosta (report non attivo) ──
       <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:14px;padding:24px 28px;margin-bottom:20px')}>
         <div style={s('font-size:16px;font-weight:800;margin-bottom:4px;letter-spacing:-.2px')}>Pagina finale del report</div>
         <div style={s('color:#8c867d;font-size:13px;margin-bottom:18px')}>Personalizza il messaggio che i tuoi clienti vedono alla fine del report.</div>
@@ -1704,6 +1704,7 @@ function BrandScreen({ toast, brand: brandProp, setBrand: setBrandParent, brandR
           </div>
         </div>
       </div>
+      */}
 
       <div style={s('display:flex;align-items:center;gap:8px;color:#b3aca1;font-size:12.5px;justify-content:flex-end')}>
         <Icon name="check" size={14} color="#b3aca1" />Le modifiche vengono salvate automaticamente
@@ -2203,7 +2204,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
       {/* TOASTS */}
       <div style={s('position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:999999;display:flex;flex-direction:column;gap:10px;align-items:center')}>
         {toasts.map((t) => (
-          <div key={t.id} style={s('display:flex;align-items:center;gap:10px;background:#211f1c;color:#fff;padding:12px 18px;border-radius:10px;box-shadow:0 12px 32px rgba(20,18,15,.28);font-size:13.5px;font-weight:600;max-width:420px')}>
+          <div key={t.id} style={s('display:flex;align-items:center;gap:10px;background:#3B83F6;color:#fff;padding:12px 18px;border-radius:10px;box-shadow:0 12px 32px rgba(59,131,246,.32);font-size:13.5px;font-weight:600;max-width:420px')}>
             <Icon name={t.icon} size={16} color="#fff" />{t.msg}
           </div>
         ))}
