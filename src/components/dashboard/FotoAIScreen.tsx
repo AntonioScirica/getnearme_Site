@@ -211,6 +211,7 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated 
 @keyframes foto-reveal{0%{opacity:0}100%{opacity:1}}
 @keyframes aurora-shift{0%{background-position:0% 50%;opacity:.45}25%{opacity:.55}50%{background-position:100% 50%;opacity:.45}75%{opacity:.55}100%{background-position:0% 50%;opacity:.45}}
 @keyframes aurora-pulse{0%,100%{transform:scale(1) rotate(0deg)}50%{transform:scale(1.08) rotate(2deg)}}
+@keyframes aurora-edge{0%{opacity:.78;transform:scale(1.012)}25%{opacity:1;transform:scale(1)}50%{opacity:.82;transform:scale(1.018)}75%{opacity:1;transform:scale(1.004)}100%{opacity:.78;transform:scale(1.012)}}
 @keyframes aurora-burst{0%{opacity:.5}40%{opacity:.85}100%{opacity:0}}
 @keyframes result-fade-in{0%{opacity:0}100%{opacity:1}}
 @keyframes slider-line-sweep{0%{clip-path:inset(0 0 100% 0)}100%{clip-path:inset(0 0 0% 0)}}
@@ -483,15 +484,15 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated 
                               background: isBatch
                                 ? 'linear-gradient(135deg, rgba(59,131,246,.7) 0%, rgba(37,99,210,.6) 25%, rgba(96,165,250,.65) 50%, rgba(59,131,246,.6) 75%, rgba(37,99,210,.7) 100%)'
                                 : [
-                                    'linear-gradient(to right, rgba(59,131,246,1) 0%, rgba(59,131,246,0) 24%)',   // sinistra — blu
-                                    'linear-gradient(to left, rgba(168,85,247,1) 0%, rgba(168,85,247,0) 24%)',    // destra — viola/magenta
-                                    'linear-gradient(to bottom, rgba(99,102,241,1) 0%, rgba(99,102,241,0) 22%)',  // alto — indaco
-                                    'linear-gradient(to top, rgba(139,92,246,1) 0%, rgba(139,92,246,0) 22%)',     // basso — viola
+                                    'linear-gradient(to right, rgba(59,131,246,1) 0%, rgba(59,131,246,.9) 6%, rgba(59,131,246,0) 15%)',   // sinistra — blu
+                                    'linear-gradient(to left, rgba(168,85,247,1) 0%, rgba(168,85,247,.9) 6%, rgba(168,85,247,0) 15%)',    // destra — viola/magenta
+                                    'linear-gradient(to bottom, rgba(99,102,241,1) 0%, rgba(99,102,241,.9) 5%, rgba(99,102,241,0) 14%)',  // alto — indaco
+                                    'linear-gradient(to top, rgba(139,92,246,1) 0%, rgba(139,92,246,.9) 5%, rgba(139,92,246,0) 14%)',     // basso — viola
                                   ].join(','),
                               backgroundSize: isBatch ? '400% 400%' : undefined,
                               animation: revealing === 'burst'
                                 ? 'aurora-burst .6s ease-out forwards'
-                                : (isBatch ? 'aurora-shift 4s ease-in-out infinite, aurora-pulse 6s ease-in-out infinite' : 'aurora-pulse 5s ease-in-out infinite'),
+                                : (isBatch ? 'aurora-shift 4s ease-in-out infinite, aurora-pulse 6s ease-in-out infinite' : 'aurora-edge 2.4s ease-in-out infinite'),
                               mixBlendMode: 'normal',
                             }} />
                             {/* Animated colored blobs anchored to the four edges (screen blend) */}
@@ -501,7 +502,7 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated 
                               backgroundSize: '200% 200%',
                               animation: revealing === 'burst'
                                 ? 'aurora-burst .6s ease-out forwards'
-                                : 'aurora-shift 5s ease-in-out infinite',
+                                : 'aurora-shift 3s ease-in-out infinite, aurora-pulse 4s ease-in-out infinite',
                               mixBlendMode: 'screen',
                             }} />
                             {generating && (

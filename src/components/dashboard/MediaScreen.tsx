@@ -79,44 +79,38 @@ export default function MediaScreen({
     downloadImage(url, 'foto-ai.png');
   };
 
-  const handleDownloadBatch = async (batch: BatchInfo) => {
-    const photos = photosByBatch[batch.id] || [];
+  // Scarica come ZIP una lista di foto (solo riuscite con URL valido).
+  const handleDownloadPhotos = async (list: (BatchPhoto & { batchId: string })[], zipName: string) => {
+    const photos = list.filter(p => p.resultUrl && p.status !== 'failed');
     if (!photos.length) {
-      toast('Nessuna foto scaricabile in questo batch', 'x');
+      toast('Nessuna foto scaricabile', 'x');
       return;
     }
-    
     toast('Preparazione archivio in corso...', 'loader');
     try {
       const JSZip = await loadJSZip();
       const zip = new JSZip();
-      
-      const folder = zip.folder(`Batch_${batch.style || 'Custom'}_${new Date(batch.createdAt).toISOString().split('T')[0]}`);
-      
       let downloadedCount = 0;
       await Promise.all(photos.map(async (p, idx) => {
         try {
           const res = await fetch(p.resultUrl);
           const blob = await res.blob();
-          folder?.file(`foto_${idx + 1}.png`, blob);
+          zip.file(`foto_${idx + 1}.png`, blob);
           downloadedCount++;
         } catch (e) {
           console.error('Failed to download photo for zip', e);
         }
       }));
-      
       if (downloadedCount === 0) throw new Error('Nessuna foto scaricata');
-      
       const zipBlob = await zip.generateAsync({ type: 'blob' });
       const url = URL.createObjectURL(zipBlob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `getnearme_foto_${batch.style || 'ai'}.zip`;
+      a.download = `${zipName}.zip`;
       document.body.appendChild(a);
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
-      
       toast('Archivio ZIP scaricato', 'download');
     } catch (e) {
       toast('Errore durante la creazione dello ZIP', 'x');
@@ -124,6 +118,30 @@ export default function MediaScreen({
   };
 
   const validBatches = projectBatches.filter(b => b.completedItems > 0 && b.status !== 'failed');
+
+  // Raggruppa TUTTE le foto per giorno (una sezione al giorno, non per batch).
+  const days = useMemo(() => {
+    if (filter === 'video') return [];
+    const map = new Map<string, { key: string; label: string; ts: number; photos: (BatchPhoto & { batchId: string })[] }>();
+    for (const batch of validBatches) {
+      const photos = photosByBatch[batch.id];
+      if (!photos || photos.length === 0) continue;
+      const d = new Date(batch.createdAt);
+      const key = d.toISOString().slice(0, 10);
+      if (!map.has(key)) {
+        map.set(key, {
+          key,
+          label: d.toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' }),
+          ts: d.getTime(),
+          photos: [],
+        });
+      }
+      for (const p of photos) map.get(key)!.photos.push({ ...p, batchId: batch.id });
+    }
+    return Array.from(map.values()).sort((a, b) => b.ts - a.ts);
+  }, [validBatches, photosByBatch, filter]);
+
+  const anyPhotosLoading = validBatches.some(b => loadingPhotos[b.id] || (!photosByBatch[b.id] && b.completedItems > 0));
 
   return (
     <div className="max-md:!px-4 max-md:!py-6" style={s('max-width:1160px;margin:0 auto;padding:32px 32px 64px')}>
@@ -166,104 +184,77 @@ export default function MediaScreen({
             Le foto generate in Foto AI e i video creati appariranno qui automaticamente.
           </p>
         </div>
+      ) : days.length === 0 && anyPhotosLoading ? (
+        <div className="max-md:!grid-cols-2" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 16 }}>
+          {[1, 2, 3, 4].map(i => (
+            <div key={i} style={{ aspectRatio: '4/3', borderRadius: 12, background: '#f4f2ee', animation: 'pulse 1.5s infinite ease-in-out' }} />
+          ))}
+        </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
-          {validBatches.map(batch => {
-            const photos = photosByBatch[batch.id];
-            const loading = loadingPhotos[batch.id];
-            const dateStr = new Date(batch.createdAt).toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' });
-
-            if (filter === 'video') return null; // We only have staging batches for now
-            if (batch.status === 'failed' || batch.completedItems === 0) return null;
-            // Caricate ma vuote (es. vecchi batch senza item): nascondi la sezione.
-            if (!loading && photos && photos.length === 0) return null;
-
+          {days.map(day => {
+            const downloadable = day.photos.filter(p => p.resultUrl && p.status !== 'failed');
             return (
-              <div key={batch.id}>
+              <div key={day.key}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, borderBottom: '1px solid #f0ede7', paddingBottom: 12 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <div style={{ width: 32, height: 32, borderRadius: 8, background: '#eef4fe', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       <Icon name="sparkles" size={16} color="#3B83F6" />
                     </div>
                     <div>
-                      <div style={{ fontSize: 15, fontWeight: 700, color: '#211f1c' }}>
-                        Batch Foto AI · {batch.style || 'Stile Custom'}
-                      </div>
-                      <div style={{ fontSize: 12.5, color: '#8c867d' }}>
-                        {dateStr} · {batch.completedItems} / {batch.totalItems} foto
-                      </div>
+                      <div style={{ fontSize: 15, fontWeight: 700, color: '#211f1c', textTransform: 'capitalize' }}>{day.label}</div>
+                      <div style={{ fontSize: 12.5, color: '#8c867d' }}>{downloadable.length} foto</div>
                     </div>
                   </div>
-                  
-                  {photos && photos.length > 1 && (
-                    <Box as="button" onClick={() => handleDownloadBatch(batch)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', borderRadius: 8, fontSize: 13, fontWeight: 700, background: '#fff', border: '1px solid #e4e1da', cursor: 'pointer', color: '#211f1c' }} hover={{ background: '#f6f4f0' }}>
+                  {downloadable.length > 1 && (
+                    <Box as="button" onClick={() => handleDownloadPhotos(day.photos, `getnearme_foto_${day.key}`)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', borderRadius: 8, fontSize: 13, fontWeight: 700, background: '#fff', border: '1px solid #e4e1da', cursor: 'pointer', color: '#211f1c' }} hover={{ background: '#f6f4f0' }}>
                       <Icon name="download" size={14} />
-                      Scarica ZIP
+                      Scarica tutte (ZIP)
                     </Box>
                   )}
                 </div>
 
-                {loading ? (
-                  <div style={{ display: 'flex', gap: 16, overflowX: 'auto', paddingBottom: 16 }}>
-                    {[1, 2, 3].map(i => (
-                      <div key={i} style={{ width: 280, height: 200, borderRadius: 12, background: '#f4f2ee', flexShrink: 0, animation: 'pulse 1.5s infinite ease-in-out' }} />
-                    ))}
-                  </div>
-                ) : !photos || photos.length === 0 ? (
-                  <div style={{ fontSize: 13, color: '#8c867d', fontStyle: 'italic' }}>Nessuna foto disponibile.</div>
-                ) : (
-                  <div style={{ display: 'flex', gap: 16, overflowX: 'auto', paddingBottom: 16 }}>
-                    {photos.map(photo => {
-                      if (photo.status === 'failed') {
-                        return (
-                          <div
-                            key={photo.index}
-                            style={{ position: 'relative', width: 280, height: 200, borderRadius: 12, flexShrink: 0, border: '1px solid #fca5a5', background: '#fef2f2', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 20, textAlign: 'center' }}
-                          >
-                            <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#fee2e2', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
-                              <Icon name="alert-triangle" size={20} color="#dc2626" />
-                            </div>
-                            <div style={{ fontSize: 13, fontWeight: 700, color: '#dc2626', marginBottom: 4 }}>Generazione fallita</div>
-                            <div style={{ fontSize: 12, color: '#b91c1c' }}>
-                              {photo.error === 'generation_failed' ? "L'AI non è riuscita a processare questa foto. Riprova con un'angolazione diversa." : photo.error || "Errore sconosciuto."}
-                            </div>
-                          </div>
-                        );
-                      }
-                      
+                <div className="max-md:!grid-cols-2" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 16 }}>
+                  {day.photos.map(photo => {
+                    if (photo.status === 'failed') {
                       return (
-                        <div 
-                          key={photo.index} 
-                          onClick={() => setLightbox({ ...photo, sourceUrl: photo.sourceUrl || localSourceUrls[`${batch.id}_${photo.index}`] || null })}
-                          style={{ position: 'relative', width: 280, height: 200, borderRadius: 12, overflow: 'hidden', flexShrink: 0, cursor: 'pointer', border: '1px solid #f0ede7', background: '#f4f2ee' }}
-                        >
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={photo.resultUrl}
-                            alt=""
-                            loading="lazy"
-                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                          />
-                          <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.2)', opacity: 0, transition: 'opacity .2s', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                            onMouseEnter={e => e.currentTarget.style.opacity = '1'}
-                            onMouseLeave={e => e.currentTarget.style.opacity = '0'}
-                          >
-                            <div style={{ background: '#fff', borderRadius: '50%', width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                              <Icon name="maximize-2" size={20} color="#211f1c" />
-                            </div>
+                        <div key={`${photo.batchId}_${photo.index}`} style={{ position: 'relative', aspectRatio: '4/3', borderRadius: 12, border: '1px solid #fca5a5', background: '#fef2f2', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 20, textAlign: 'center' }}>
+                          <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#fee2e2', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
+                            <Icon name="alert-triangle" size={20} color="#dc2626" />
                           </div>
-                          <button
-                            onClick={(e) => handleDownloadSingle(photo.resultUrl, e)}
-                            style={{ position: 'absolute', top: 12, right: 12, width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,0.9)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}
-                          >
-                            <Icon name="download" size={16} color="#211f1c" />
-                          </button>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: '#dc2626', marginBottom: 4 }}>Generazione fallita</div>
+                          <div style={{ fontSize: 12, color: '#b91c1c' }}>
+                            {photo.error === 'generation_failed' ? "L'AI non è riuscita a processare questa foto. Riprova con un'angolazione diversa." : photo.error || "Errore sconosciuto."}
+                          </div>
                         </div>
                       );
-                    })}
-                  </div>
-                )}
+                    }
+                    return (
+                      <div
+                        key={`${photo.batchId}_${photo.index}`}
+                        onClick={() => setLightbox({ ...photo, sourceUrl: photo.sourceUrl || localSourceUrls[`${photo.batchId}_${photo.index}`] || null })}
+                        style={{ position: 'relative', aspectRatio: '4/3', borderRadius: 12, overflow: 'hidden', cursor: 'pointer', border: '1px solid #f0ede7', background: '#f4f2ee' }}
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={photo.resultUrl} alt="" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                        <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.2)', opacity: 0, transition: 'opacity .2s', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                          onMouseEnter={e => e.currentTarget.style.opacity = '1'}
+                          onMouseLeave={e => e.currentTarget.style.opacity = '0'}
+                        >
+                          <div style={{ background: '#fff', borderRadius: '50%', width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <Icon name="maximize-2" size={20} color="#211f1c" />
+                          </div>
+                        </div>
+                        <button
+                          onClick={(e) => handleDownloadSingle(photo.resultUrl, e)}
+                          style={{ position: 'absolute', top: 12, right: 12, width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,0.9)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}
+                        >
+                          <Icon name="download" size={16} color="#211f1c" />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             );
           })}
