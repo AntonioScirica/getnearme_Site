@@ -8,6 +8,7 @@
 // camera-position template). Custom prompt wins over both.
 
 import { supabase } from './supabase';
+import { saveOriginalMedia } from '@/lib/localMediaCache';
 
 export type StagingStyle = {
   id: string;
@@ -180,11 +181,12 @@ export async function createBatchStaging(opts: {
   images: string[]; // data URLs
   style?: string | null;
   customPrompt?: string | null;
+  projectId?: string | null;
 }): Promise<BatchResult> {
-  const { images, style = null, customPrompt = null } = opts;
+  const { images, style = null, customPrompt = null, projectId = null } = opts;
   const { data, error } = await supabase.functions.invoke('create-batch-staging', {
     method: 'POST',
-    body: { images, style, customPrompt: customPrompt?.trim() || null },
+    body: { images, style, customPrompt: customPrompt?.trim() || null, projectId },
   });
   if (error) {
     const { message, status, body } = await fnError(error);
@@ -193,6 +195,12 @@ export async function createBatchStaging(opts: {
     return { ok: false, error: message };
   }
   if (!data?.success) return { ok: false, error: (data?.error as string) || 'Invio non riuscito' };
+  
+  // Save originals to IndexedDB so they don't consume backend storage
+  if (data?.batchId) {
+    Promise.all(images.map((img, i) => saveOriginalMedia(data.batchId, i, img))).catch(console.error);
+  }
+  
   return { ok: true, batchId: data.batchId, itemCount: data.itemCount };
 }
 

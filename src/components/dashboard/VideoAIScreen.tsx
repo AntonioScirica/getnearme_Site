@@ -486,14 +486,14 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
   const inputStyle: React.CSSProperties = { width: '100%', border: '1px solid #e4e1da', borderRadius: 10, padding: '11px 14px', fontSize: 13.5, fontFamily: 'inherit', outline: 'none', background: '#fff' };
   const cardSel = (sel: boolean): React.CSSProperties => ({
     borderRadius: 12, cursor: 'pointer', border: sel ? '2px solid #3B83F6' : '2px solid transparent',
-    background: sel ? '#eef4fe' : '#f6f4f0', transition: 'all .15s', padding: '12px',
+        background: sel ? '#eef4fe' : '#f6f4f0', transition: 'all .15s', padding: '12px',
   });
 
   // ── UI ───────────────────────────────────────────────────────────────────
   return (
-    <div style={s('max-width:1160px;margin:0 auto;padding:32px 32px 64px')}>
+    <div className="max-md:!px-4 max-md:!py-6" style={s('max-width:1160px;margin:0 auto;padding:32px 32px 64px')}>
       {step === 0 && (
-        <div style={s('display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px')}>
+        <div className="max-md:!flex-col max-md:!items-start max-md:!gap-4" style={s('display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px')}>
           <div>
             <h1 style={s('margin:0 0 4px;font-size:25px;font-weight:800;letter-spacing:-.5px')}>{preselect === 'montaggio' ? 'Montaggio Automatico' : 'Video AI'}</h1>
             <div style={s('color:#8c867d;font-size:14px')}>{preselect === 'montaggio' ? "Carica le clip della casa: l'AI monta tutto con musica e cover." : 'Trasforma foto e clip in video pronti per i social.'}</div>
@@ -509,7 +509,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
 
       {/* STEP 0 — template gallery */}
       {step === 0 && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+        <div className="max-md:!grid-cols-1" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
           {templates.filter(t => t.id !== 'montaggio').map(t => (
             <Box key={t.id} onClick={() => { setTpl(t); setStep(NO_AVATAR_LAYOUTS.includes(t.layout || t.id) ? 2 : 1); }} style={{
               background: '#fff', border: '1px solid #f0ede7', borderRadius: 16, overflow: 'hidden', cursor: 'pointer',
@@ -786,7 +786,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
               <div style={s('color:#8c867d;font-size:13px')}>Stiamo analizzando l'audio del video.</div>
             </div>
           ) : sottPhase === 'edit' ? (
-            <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr', gap: 20, alignItems: 'start' }}>
+        <div className="max-md:!grid-cols-1 max-md:!flex max-md:!flex-col-reverse" style={{ display: 'grid', gridTemplateColumns: '260px 1fr', gap: 20, alignItems: 'start' }}>
               {/* left: video preview */}
               <div style={{ position: 'sticky', top: 16 }}>
                 <div style={{ position: 'relative', aspectRatio: '9/16', background: '#000', borderRadius: 12, overflow: 'hidden' }}>
@@ -881,7 +881,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
             </div>
           ) : (
             /* sottPhase === 'style' */
-            <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr', gap: 20, alignItems: 'start' }}>
+        <div className="max-md:!grid-cols-1 max-md:!flex max-md:!flex-col-reverse" style={{ display: 'grid', gridTemplateColumns: '260px 1fr', gap: 20, alignItems: 'start' }}>
               {/* left: video preview (sticky) */}
               <div style={{ position: 'sticky', top: 16 }}>
                 <div style={{ position: 'relative', aspectRatio: '9/16', background: '#000', borderRadius: 12, overflow: 'hidden' }}>
@@ -1041,7 +1041,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
 
       {/* STEP 3 — options (all other templates: standard 2-column layout) */}
       {step === 3 && tpl && !inlineStep3 && layout !== 'sottotitoli' && layout !== 'montaggio' && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 360px', gap: 24, alignItems: 'start' }}>
+        <div className="max-md:!grid-cols-1 max-md:!flex max-md:!flex-col-reverse" style={{ display: 'grid', gridTemplateColumns: '1fr 360px', gap: 24, alignItems: 'start' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {/* script editor (classic/split) */}
             {usesAvatar && (

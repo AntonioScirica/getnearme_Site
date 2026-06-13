@@ -5,6 +5,7 @@
 // until ported. Demo data mirrors the prototype; real data wiring comes later.
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import useSWR from 'swr';
 import { s, Box, Icon } from './ui';
 import type { UserData } from '@/app/[locale]/dashboard/page';
 import dynamic from 'next/dynamic';
@@ -18,7 +19,14 @@ import { exportToPng, exportStaticToVideo, downloadBlob } from './templates/expo
 import { fetchBrand, updateBrand, uploadBrandLogo, removeBrandLogo, logoUrlToDataUrl, DEFAULT_BRAND_SETTINGS, type BrandSettings } from '@/lib/brand';
 import FotoAIScreen from './FotoAIScreen';
 import VideoAIScreen from './VideoAIScreen';
+import MediaScreen from './MediaScreen';
+import { HomeScreen } from './HomeScreen';
+import { NewProjectModal } from './NewProjectModal';
 import type { Project } from './types';
+import { type ProjectData, fetchProjects, updateProject } from '@/lib/projects';
+import { fetchUserBatches, dismissBatch, type BatchInfo } from '@/lib/stagingBatches';
+import { STAGING_STYLES } from '@/lib/staging';
+import { cleanupOldMedia } from '@/lib/localMediaCache';
 
 const TemplatePreview = dynamic(() => import('./TemplatePreview'), { ssr: false });
 
@@ -46,21 +54,6 @@ const TOUR_DEFS = [
 ];
 
 const fmt = (n: number) => '€ ' + Number(n || 0).toLocaleString('it-IT');
-const typeTag = (t: string) =>
-  t === 'staging' ? { label: 'Staging', tBg: '#fdf3e4', tCol: '#9a6312' }
-    : t === 'video' ? { label: 'Video', tBg: '#eef4fe', tCol: '#1d5fd0' }
-      : t === 'post' ? { label: 'Post', tBg: '#e8f6ef', tCol: '#177a52' }
-        : { label: 'Foto', tBg: '#f1efe9', tCol: '#57534c' };
-
-const RECENT = [
-  { type: 'staging', label: 'Soggiorno · Moderno', meta: 'Attico Brera · 2 ore fa', img: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=500&h=320&fit=crop' },
-  { type: 'video', label: 'Prima vs Dopo · 0:24', meta: 'Attico Brera · ieri', img: 'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=500&h=320&fit=crop' },
-  { type: 'post', label: 'Post 4:5 · Classico', meta: 'Trilocale Isola · ieri', img: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=500&h=320&fit=crop' },
-  { type: 'staging', label: 'Camera · Nordico', meta: 'Trastevere · 2 giorni fa', img: 'https://images.unsplash.com/photo-1617325247661-675ab4b64ae2?w=500&h=320&fit=crop' },
-  { type: 'post', label: 'Story 9:16 · Open House', meta: 'Bilocale Crocetta · 3 giorni fa', img: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=500&h=320&fit=crop' },
-  { type: 'video', label: 'Tour da immagini · 0:31', meta: 'Trilocale Isola · 4 giorni fa', img: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=500&h=320&fit=crop' },
-];
-
 /* ───── PLANS DATA ───── */
 const STRIPE_BILLING_PORTAL = 'https://billing.stripe.com/p/login/9B68wP7WH3blfTG15eak000';
 
@@ -218,7 +211,7 @@ const LOGO_VARIANT_LABELS: Record<string, string> = {
   colored_v: 'Icona, Colore', colored_h: 'Icona + Nome, Colore',
 };
 
-function PostSocialScreen({ toast, routeKey, brand, project }: { toast: (msg: string, icon?: string) => void; routeKey: number; brand: BrandSettings; project?: Project }) {
+function PostSocialScreen({ toast, routeKey, brand, project, onProjectUpdate }: { toast: (msg: string, icon?: string) => void; routeKey: number; brand: BrandSettings; project?: Project; onProjectUpdate?: (p: Partial<Project>) => void }) {
   const [step, setStep] = React.useState(1);
   React.useEffect(() => { setStep(1); }, [routeKey]);
   const [logos, setLogos] = React.useState<{ white: string | null; black: string | null; blue: string | null } | null>(logosCache);
@@ -267,8 +260,8 @@ function PostSocialScreen({ toast, routeKey, brand, project }: { toast: (msg: st
   const [fields, setFields] = React.useState(() => ({
     titolo: project?.titolo ?? '', indirizzo: project?.addr ?? '',
     prezzo: project ? Number(project.prezzo).toLocaleString('it-IT') : '',
-    superficie: project ? String(project.mq) : '', camere: project ? String(project.locali) : '',
-    bagni: '', descrizione: '', btnTxt: 'Contattaci ora', badgeTxt: 'Nuovo',
+    superficie: project ? String(project.mq) : '', camere: project ? String(project.camere) : '',
+    bagni: project ? String(project.bagni) : '', descrizione: '', btnTxt: 'Contattaci ora', badgeTxt: 'Nuovo',
   }));
   const [showBadge, setShowBadge] = React.useState(true);
   const [showLogo, setShowLogo] = React.useState(true);
@@ -284,9 +277,23 @@ function PostSocialScreen({ toast, routeKey, brand, project }: { toast: (msg: st
   const [videoThumb, setVideoThumb] = React.useState<string>('');
   const [fitCover, setFitCover] = React.useState(false);
   const [extraPhotos, setExtraPhotos] = React.useState<string[]>([]);
-  const [fieldIcons, setFieldIcons] = React.useState<Record<string, string>>({ bedrooms: 'bed', bathrooms: 'bath', surface: 'area' });
+  const [fieldIcons, setFieldIcons] = React.useState<Record<string, string>>(() => {
+    return project?.icons ? { bedrooms: project.icons.camere || 'bed', bathrooms: project.icons.bagni || 'bath', surface: project.icons.mq || 'area' } : { bedrooms: 'bed', bathrooms: 'bath', surface: 'area' };
+  });
   const [iconDropdown, setIconDropdown] = React.useState<string | null>(null);
-  const [currency, setCurrency] = React.useState('€');
+  const [currency, setCurrency] = React.useState(() => project?.icons?.prezzo === 'dollar' ? '$' : project?.icons?.prezzo === 'pound' ? '£' : '€');
+  
+  React.useEffect(() => {
+    setFields({
+      titolo: project?.titolo ?? '', indirizzo: project?.addr ?? '',
+      prezzo: project ? Number(project.prezzo).toLocaleString('it-IT') : '',
+      superficie: project ? String(project.mq) : '', camere: project ? String(project.camere) : '',
+      bagni: project ? String(project.bagni) : '', descrizione: '', btnTxt: 'Contattaci ora', badgeTxt: 'Nuovo',
+    });
+    setFieldIcons(project?.icons ? { bedrooms: project.icons.camere || 'bed', bathrooms: project.icons.bagni || 'bath', surface: project.icons.mq || 'area' } : { bedrooms: 'bed', bathrooms: 'bath', surface: 'area' });
+    setCurrency(project?.icons?.prezzo === 'dollar' ? '$' : project?.icons?.prezzo === 'pound' ? '£' : '€');
+  }, [project]);
+
   const [currencyDropdown, setCurrencyDropdown] = React.useState(false);
   const [showAnimPicker, setShowAnimPicker] = React.useState(false);
   const [exporting, setExporting] = React.useState<'image' | 'video' | null>(null);
@@ -358,17 +365,17 @@ function PostSocialScreen({ toast, routeKey, brand, project }: { toast: (msg: st
 
     const data = {
       ...SAMPLE_TPL_DATA, accentColor,
-      title: fields.titolo || SAMPLE_TPL_DATA.title,
-      type: fields.titolo || SAMPLE_TPL_DATA.type,
-      address: fields.indirizzo || SAMPLE_TPL_DATA.address,
-      price: `${currency} ${fields.prezzo || '250.000'}`,
-      surface: (fields.superficie || SAMPLE_TPL_DATA.surfaceNum) + ' m²',
-      surfaceNum: fields.superficie || SAMPLE_TPL_DATA.surfaceNum,
-      bedrooms: fields.camere || SAMPLE_TPL_DATA.bedrooms,
-      bathrooms: fields.bagni || SAMPLE_TPL_DATA.bathrooms,
-      rooms: fields.camere || SAMPLE_TPL_DATA.rooms,
-      description: fields.descrizione || SAMPLE_TPL_DATA.description,
-      ctaText: fields.btnTxt || SAMPLE_TPL_DATA.ctaText,
+      title: fields.titolo || project?.nome || '-',
+      type: fields.titolo || project?.nome || '-',
+      address: fields.indirizzo || '-',
+      price: fields.prezzo ? `${currency} ${fields.prezzo}` : '-',
+      surface: fields.superficie ? fields.superficie + ' m²' : '-',
+      surfaceNum: fields.superficie || '-',
+      bedrooms: fields.camere || '-',
+      bathrooms: fields.bagni || '-',
+      rooms: fields.camere || '-',
+      description: fields.descrizione || '-',
+      ctaText: fields.btnTxt || '-',
       contract: showBadge ? (fields.badgeTxt || 'Nuovo') : '',
       _icons: fieldIcons,
     };
@@ -436,6 +443,19 @@ function PostSocialScreen({ toast, routeKey, brand, project }: { toast: (msg: st
       const blob = await exportToPng(mounted.tplEl, { w: curFmt.w, h: curFmt.h }, { photoSrc: coverPhoto, fitCover });
       await downloadBlob(blob, 'social-post.png');
       toast('Immagine scaricata', 'download');
+      
+      if (project) {
+        const updates = {
+          titolo: fields.titolo,
+          addr: fields.indirizzo,
+          prezzo: Number(fields.prezzo.replace(/\D/g, '')) || 0,
+          mq: Number(fields.superficie.replace(/\D/g, '')) || 0,
+          camere: Number(fields.camere.replace(/\D/g, '')) || 0,
+          bagni: Number(fields.bagni.replace(/\D/g, '')) || 0,
+        };
+        await updateProject(project.id, updates);
+        onProjectUpdate?.(updates);
+      }
     } catch (err) {
       console.error('Export PNG failed:', err);
       toast('Errore durante il download', 'download');
@@ -467,17 +487,17 @@ function PostSocialScreen({ toast, routeKey, brand, project }: { toast: (msg: st
     });
     const data = {
       ...SAMPLE_TPL_DATA, accentColor,
-      title: fields.titolo || SAMPLE_TPL_DATA.title,
-      type: fields.titolo || SAMPLE_TPL_DATA.type,
-      address: fields.indirizzo || SAMPLE_TPL_DATA.address,
-      price: `${currency} ${fields.prezzo || '250.000'}`,
-      surface: (fields.superficie || SAMPLE_TPL_DATA.surfaceNum) + ' m²',
-      surfaceNum: fields.superficie || SAMPLE_TPL_DATA.surfaceNum,
-      bedrooms: fields.camere || SAMPLE_TPL_DATA.bedrooms,
-      bathrooms: fields.bagni || SAMPLE_TPL_DATA.bathrooms,
-      rooms: fields.camere || SAMPLE_TPL_DATA.rooms,
-      description: fields.descrizione || SAMPLE_TPL_DATA.description,
-      ctaText: fields.btnTxt || SAMPLE_TPL_DATA.ctaText,
+      title: fields.titolo || project?.nome || '-',
+      type: fields.titolo || project?.nome || '-',
+      address: fields.indirizzo || '-',
+      price: fields.prezzo ? `${currency} ${fields.prezzo}` : '-',
+      surface: fields.superficie ? fields.superficie + ' m²' : '-',
+      surfaceNum: fields.superficie || '-',
+      bedrooms: fields.camere || '-',
+      bathrooms: fields.bagni || '-',
+      rooms: fields.camere || '-',
+      description: fields.descrizione || '-',
+      ctaText: fields.btnTxt || '-',
       contract: showBadge ? (fields.badgeTxt || 'Nuovo') : '',
       _icons: fieldIcons,
     };
@@ -589,6 +609,20 @@ function PostSocialScreen({ toast, routeKey, brand, project }: { toast: (msg: st
     a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 5000);
     toast(`${count} file esportati (immagini + video)`, 'download');
+    
+    if (project) {
+      const updates = {
+        titolo: fields.titolo,
+        addr: fields.indirizzo,
+        prezzo: Number(fields.prezzo.replace(/\D/g, '')) || 0,
+        mq: Number(fields.superficie.replace(/\D/g, '')) || 0,
+        camere: Number(fields.camere.replace(/\D/g, '')) || 0,
+        bagni: Number(fields.bagni.replace(/\D/g, '')) || 0,
+      };
+      await updateProject(project.id, updates);
+      onProjectUpdate?.(updates);
+    }
+
     setExporting(null);
   };
 
@@ -613,6 +647,19 @@ function PostSocialScreen({ toast, routeKey, brand, project }: { toast: (msg: st
       });
       await downloadBlob(blob, 'social-post.' + ext);
       toast('Video scaricato', 'download');
+      
+      if (project) {
+        const updates = {
+          titolo: fields.titolo,
+          addr: fields.indirizzo,
+          prezzo: Number(fields.prezzo.replace(/\D/g, '')) || 0,
+          mq: Number(fields.superficie.replace(/\D/g, '')) || 0,
+          camere: Number(fields.camere.replace(/\D/g, '')) || 0,
+          bagni: Number(fields.bagni.replace(/\D/g, '')) || 0,
+        };
+        await updateProject(project.id, updates);
+        onProjectUpdate?.(updates);
+      }
       setShowAnimPicker(false);
     } catch (err: unknown) {
       if (err instanceof DOMException && err.name === 'AbortError') {
@@ -757,7 +804,22 @@ function PostSocialScreen({ toast, routeKey, brand, project }: { toast: (msg: st
                 }}>
                   <TemplatePreview
                     templateId={tc.id}
-                    data={{ ...SAMPLE_TPL_DATA, accentColor }}
+                    data={{
+                      ...SAMPLE_TPL_DATA, accentColor,
+                      title: fields.titolo || project?.nome || 'Titolo immobile',
+                      type: fields.titolo || project?.nome || 'Tipologia',
+                      address: fields.indirizzo || 'Indirizzo immobile',
+                      price: fields.prezzo ? `${currency} ${fields.prezzo}` : '-',
+                      surface: fields.superficie ? fields.superficie + ' m²' : '-',
+                      surfaceNum: fields.superficie || '-',
+                      bedrooms: fields.camere || '-',
+                      bathrooms: fields.bagni || '-',
+                      rooms: fields.camere || '-',
+                      description: fields.descrizione || 'Aggiungi qui una breve descrizione accattivante per attrarre l\'attenzione dei potenziali acquirenti. Spiega i punti forti.',
+                      ctaText: fields.btnTxt || 'Contattaci ora',
+                      contract: showBadge ? (fields.badgeTxt || 'Nuovo') : '',
+                      _icons: fieldIcons,
+                    }}
                     photoUrl={coverPhoto}
                     width={cardW}
                     opts={tplOpts}
@@ -804,17 +866,17 @@ function PostSocialScreen({ toast, routeKey, brand, project }: { toast: (msg: st
                   templateId={tplId}
                   data={{
                     ...SAMPLE_TPL_DATA, accentColor,
-                    title: fields.titolo || SAMPLE_TPL_DATA.title,
-                    type: fields.titolo || SAMPLE_TPL_DATA.type,
-                    address: fields.indirizzo || SAMPLE_TPL_DATA.address,
-                    price: `${currency} ${fields.prezzo || '250.000'}`,
-                    surface: (fields.superficie || SAMPLE_TPL_DATA.surfaceNum) + ' m²',
-                    surfaceNum: fields.superficie || SAMPLE_TPL_DATA.surfaceNum,
-                    bedrooms: fields.camere || SAMPLE_TPL_DATA.bedrooms,
-                    bathrooms: fields.bagni || SAMPLE_TPL_DATA.bathrooms,
-                    rooms: fields.camere || SAMPLE_TPL_DATA.rooms,
-                    description: fields.descrizione || SAMPLE_TPL_DATA.description,
-                    ctaText: fields.btnTxt || SAMPLE_TPL_DATA.ctaText,
+                    title: fields.titolo || project?.nome || '-',
+                    type: fields.titolo || project?.nome || '-',
+                    address: fields.indirizzo || '-',
+                    price: fields.prezzo ? `${currency} ${fields.prezzo}` : '-',
+                    surface: fields.superficie ? fields.superficie + ' m²' : '-',
+                    surfaceNum: fields.superficie || '-',
+                    bedrooms: fields.camere || '-',
+                    bathrooms: fields.bagni || '-',
+                    rooms: fields.camere || '-',
+                    description: fields.descrizione || '-',
+                    ctaText: fields.btnTxt || '-',
                     contract: showBadge ? (fields.badgeTxt || 'Nuovo') : '',
                     _icons: fieldIcons,
                   }}
@@ -1537,9 +1599,9 @@ function BrandScreen({ toast, brand: brandProp, setBrand: setBrandParent, brandR
   const inputStyle: React.CSSProperties = { width: '100%', border: '1px solid #e4e1da', borderRadius: 10, padding: '11px 14px', fontSize: 14, fontFamily: 'inherit', outline: 'none', background: '#fff', transition: 'border-color .2s' };
 
   return (
-    <div style={s('max-width:820px;margin:0 auto;padding:32px 32px 64px')}>
+    <div className="max-md:!px-4 max-md:!py-6" style={s('max-width:820px;margin:0 auto;padding:32px 32px 64px')}>
       <div style={s('margin-bottom:24px')}>
-        <h1 style={s('margin:0 0 4px;font-size:25px;font-weight:800;letter-spacing:-.5px')}>Brand Agenzia</h1>
+        <h1 style={s('margin:0 0 4px;font-size:25px;font-weight:800;letter-spacing:-.5px')}>Brand</h1>
         <div style={s('color:#8c867d;font-size:14px')}>Personalizza loghi, colori e informazioni che appaiono nei tuoi report e contenuti.</div>
       </div>
 
@@ -1551,7 +1613,7 @@ function BrandScreen({ toast, brand: brandProp, setBrand: setBrandParent, brandR
           {LOGO_ROWS.map(row => (
             <div key={row.label}>
               <div style={s('font-size:12px;font-weight:700;color:#b3aca1;text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px')}>{row.label}</div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
+              <div className="max-md:!grid-cols-2 max-sm:!grid-cols-1" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
                 {row.variants.map(v => {
                   const src = brand.logos[v.key];
                   return (
@@ -1585,7 +1647,7 @@ function BrandScreen({ toast, brand: brandProp, setBrand: setBrandParent, brandR
           ))}
         </div>
         <div style={{ height: 1, background: '#f4f2ee', margin: '20px 0' }} />
-        <div style={s('display:flex;align-items:center;gap:12px;justify-content:space-between')}>
+        <div className="max-md:!flex-col max-md:!items-start max-md:!gap-2" style={s('display:flex;align-items:center;gap:12px;justify-content:space-between')}>
           <span style={s('font-size:13px;font-weight:700;color:#57534c')}>Logo da usare nei contenuti</span>
           <select value={brand.logoOrientation} onChange={e => set('logoOrientation', e.target.value as 'vertical' | 'horizontal')} style={{ ...inputStyle, width: 'auto', padding: '8px 12px', cursor: 'pointer' }}>
             <option value="vertical">Solo icona</option>
@@ -1651,9 +1713,18 @@ function BrandScreen({ toast, brand: brandProp, setBrand: setBrandParent, brandR
 }
 
 const ROUTE_TITLES: Record<string, string> = {
-  progetti: 'Progetti', progetto: 'Dettaglio immobile', staging: 'Foto AI', video: 'Video AI', montaggio: 'Montaggio',
+  progetti: 'Progetti', progetto: 'Dettaglio immobile', staging: 'Homestaging AI', video: 'Video AI', montaggio: 'Montaggio',
   studio: 'Post Social', calendario: 'Calendario', media: 'Libreria Media', team: 'Team',
-  brand: 'Brand Agenzia', social: 'Account social', account: 'Piano',
+  brand: 'Brand', social: 'Account social', account: 'Piano', home: 'Home',
+};
+
+// Helper for dynamic project cover gradients when no image is provided
+const getCoverStyle = (p: Project | null | undefined): React.CSSProperties => {
+  if (!p) return { background: '#f3f1ec' };
+  if (p.cover) return { background: `url("${p.cover}") center/cover`, backgroundColor: '#f3f1ec' };
+  const hash = p.id.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
+  const hue = hash % 360;
+  return { background: `linear-gradient(135deg, hsl(${hue}, 80%, 65%), hsl(${(hue + 40) % 360}, 80%, 55%))` };
 };
 
 export default function DashboardApp({ userData }: { userData: UserData | null }) {
@@ -1665,27 +1736,90 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
     typeof window !== 'undefined' ? localStorage.getItem('gnm_active_project') ?? 'p1' : 'p1'
   );
   const credits = userData?.credits ?? 0;
-  const [projects] = useState<Project[]>([]);
+  const [newProjOpen, setNewProjOpen] = useState(false);
+  const [editProjOpen, setEditProjOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
+  // Caching with SWR for Projects
+  const { data: realProjects = [], isLoading: loadingProjects, mutate: mutateProjects } = useSWR('projects', fetchProjects, {
+    onSuccess: (data) => {
+      if (data.length > 0) {
+        const savedId = localStorage.getItem('gnm_active_project');
+        if (savedId && data.find(p => p.id === savedId)) {
+          setActiveProject(savedId);
+        } else if (!savedId) {
+          setActiveProject(data[0].id);
+        }
+      }
+    }
+  });
+  
+  const projects = realProjects as unknown as Project[];
+  const setProjects = useCallback((updater: React.SetStateAction<Project[]>) => {
+    mutateProjects(prev => {
+      const prevArray = (prev as unknown as Project[]) || [];
+      return typeof updater === 'function' ? (updater as any)(prevArray) : updater;
+    }, false);
+  }, [mutateProjects]);
+
+  // Smart Polling with SWR for Batches
+  const { data: batches = [], isLoading: loadingBatches, mutate: mutateBatches } = useSWR('batches', fetchUserBatches, {
+    refreshInterval: (data) => {
+      if (!data) return 0;
+      const hasActive = data.some(x => x.status === 'processing' || x.status === 'pending');
+      return hasActive ? 5000 : 0; // Poll only if there are active batches
+    },
+    revalidateOnFocus: true, // Auto update when user comes back to the tab
+  });
+
+  const setBatches = useCallback((updater: React.SetStateAction<BatchInfo[]>) => {
+    mutateBatches(prev => {
+      const prevArray = prev || [];
+      return typeof updater === 'function' ? (updater as any)(prevArray) : updater;
+    }, false);
+  }, [mutateBatches]);
+
   const [welcomeOpen, setWelcomeOpen] = useState(true);
   const [tourStep, setTourStep] = useState<number | null>(null);
   const [tourRect, setTourRect] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
   const [trayOpen, setTrayOpen] = useState(false);
+  const prevTrayOpen = useRef(trayOpen);
+  
+  useEffect(() => {
+    if (prevTrayOpen.current && !trayOpen) {
+      let changed = false;
+      batches.forEach(b => {
+        if (b.status === 'completed') {
+          dismissBatch(b.id);
+          changed = true;
+        }
+      });
+      if (changed) setBatches([...batches]);
+    }
+    prevTrayOpen.current = trayOpen;
+  }, [trayOpen, batches, setBatches]);
   const [profileOpen, setProfileOpen] = useState(false);
   const profileRef = React.useRef<HTMLDivElement>(null);
   const [cmdkOpen, setCmdkOpen] = useState(false);
   const [cmdQuery, setCmdQuery] = useState('');
   const [toasts, setToasts] = useState<Toast[]>([]);
-  const [brand, setBrand] = useState<BrandSettings>(DEFAULT_BRAND_SETTINGS);
-  const [brandRole, setBrandRole] = useState<'owner' | 'member' | null>(null);
-
-  useEffect(() => {
-    fetchBrand().then(r => { setBrand(r.settings); setBrandRole(r.role); });
-  }, []);
+  const { data: brandData, mutate: mutateBrand } = useSWR('brand', fetchBrand);
+  const brand = brandData?.settings ?? DEFAULT_BRAND_SETTINGS;
+  const brandRole = brandData?.role ?? null;
+  
+  const setBrand = useCallback((updater: React.SetStateAction<BrandSettings>) => {
+    mutateBrand(prev => {
+      if (!prev) return prev;
+      const nextBrand = typeof updater === 'function' ? (updater as any)(prev.settings) : updater;
+      return { ...prev, settings: nextBrand };
+    }, false);
+  }, [mutateBrand]);
 
   const active = useMemo(() => projects.find((p) => p.id === activeProject) ?? projects[0], [projects, activeProject]);
 
   useEffect(() => { localStorage.setItem('gnm_active_project', activeProject); }, [activeProject]);
   useEffect(() => { setRouteKey(k => k + 1); }, [activeProject]);
+  useEffect(() => { cleanupOldMedia().catch(console.error); }, []);
 
   useEffect(() => {
     if (!document.getElementById('poppins-font')) {
@@ -1797,9 +1931,12 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
       {/* APP SHELL */}
       <div style={{ display: 'flex', height: '100%' }}>
         {/* SIDEBAR */}
-        <div style={{ width: collapsed ? 64 : 252, flex: 'none', background: '#fff', borderRight: '1px solid #f0ede7', display: 'flex', flexDirection: 'column', transition: 'width .25s ease', overflow: 'hidden' }}>
-          <div style={s('height:64px;flex:none;display:flex;align-items:center;padding:0 20px;overflow:hidden')}>
+        <div className={`max-md:!fixed max-md:!inset-y-0 max-md:!left-0 max-md:!z-[100] max-md:!w-64 max-md:!shadow-2xl ${mobileMenuOpen ? 'max-md:!flex' : 'max-md:!hidden'}`} style={{ width: collapsed ? 64 : 252, flex: 'none', background: '#fff', borderRight: '1px solid #f0ede7', display: 'flex', flexDirection: 'column', transition: 'width .25s ease', overflow: 'hidden' }}>
+          <div style={s('height:64px;flex:none;display:flex;align-items:center;padding:0 20px;overflow:hidden;justify-content:space-between')}>
             <div style={{ width: collapsed ? 27 : 130, overflow: 'hidden', flex: 'none' }}><img src="/dashboard/logo.svg" alt="GetNearMe" style={{ height: 24, maxWidth: 'none' }} /></div>
+            {mobileMenuOpen && (
+              <Box as="button" onClick={() => setMobileMenuOpen(false)} className="md:!hidden" style={s('border:none;background:transparent;width:32px;height:32px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center')} hover={s('background:#f1efe9')}><Icon name="x" size={18} /></Box>
+            )}
           </div>
           <div style={s('flex:1;overflow-y:auto;overflow-x:hidden;padding:6px 0 16px')}>
             {NAV_SECTIONS.map((sec, si) => (
@@ -1808,7 +1945,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                 {sec.items.map((it) => {
                   const a = route === it.route || (it.route === 'progetti' && route === 'progetto');
                   return (
-                    <Box key={it.route} onClick={() => go(it.route)} title={it.label} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', margin: '1px 10px', borderRadius: 12, cursor: 'pointer', background: a ? '#f1efe9' : 'transparent', color: a ? '#211f1c' : '#57534c', fontWeight: a ? 700 : 500, fontSize: 14, whiteSpace: 'nowrap', minHeight: 38 }} hover={{ background: '#f6f4f0' }}>
+                    <Box key={it.route} onClick={() => { go(it.route); setMobileMenuOpen(false); }} title={it.label} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', margin: '1px 10px', borderRadius: 12, cursor: 'pointer', background: a ? '#f1efe9' : 'transparent', color: a ? '#211f1c' : '#57534c', fontWeight: a ? 700 : 500, fontSize: 14, whiteSpace: 'nowrap', minHeight: 38 }} hover={{ background: '#f6f4f0' }}>
                       <Icon name={it.icon} size={18} color={a ? '#211f1c' : '#57534c'} />
                       {!collapsed && <span>{it.label}</span>}
                     </Box>
@@ -1852,49 +1989,64 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
           </div>
         </div>
 
+        {/* MOBILE MENU BACKDROP */}
+        {mobileMenuOpen && (
+          <div className="md:hidden" onClick={() => setMobileMenuOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 99 }} />
+        )}
+
         {/* MAIN */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+        <div className="max-md:!w-full" style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
           {/* HEADER */}
-          <div style={{ height: 64, flex: 'none', background: '#fff', borderBottom: '1px solid #f0ede7', display: 'flex', alignItems: 'center', gap: 14, padding: '0 20px', position: 'relative', zIndex: 30 }}>
-            <Box as="button" onClick={() => setCollapsed((c) => !c)} title="Comprimi menu" aria-label="Comprimi menu" style={s('border:none;background:transparent;width:38px;height:38px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center')} hover={s('background:#f1efe9')}><Icon name="panel-left" size={18} /></Box>
+          <div className="max-md:!px-3 max-md:!gap-2" style={{ height: 64, flex: 'none', background: '#fff', borderBottom: '1px solid #f0ede7', display: 'flex', alignItems: 'center', gap: 14, padding: '0 20px', position: 'relative', zIndex: 30 }}>
+            {/* Hamburger (Mobile) */}
+            <Box as="button" onClick={() => setMobileMenuOpen(true)} className="md:!hidden" title="Apri menu" aria-label="Apri menu" style={s('border:none;background:transparent;width:38px;height:38px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none')} hover={s('background:#f1efe9')}><Icon name="menu" size={20} /></Box>
+            
+            {/* Collapse (Desktop) */}
+            <Box as="button" onClick={() => setCollapsed((c) => !c)} className="max-md:!hidden" title="Comprimi menu" aria-label="Comprimi menu" style={s('border:none;background:transparent;width:38px;height:38px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center')} hover={s('background:#f1efe9')}><Icon name="panel-left" size={18} /></Box>
 
             {/* project switcher */}
             <div style={{ position: 'relative' }}>
-              <Box onClick={(e) => { e.stopPropagation(); setProjOpen((o) => !o); setTrayOpen(false); }} style={s('display:flex;align-items:center;gap:10px;padding:7px 14px 7px 8px;border:1px solid #e9e6df;border-radius:8px;cursor:pointer;background:#fff;min-height:38px')} hover={s('border-color:#d8d4cb;box-shadow:0 2px 8px rgba(33,31,28,.06)')}>
-                {active ? (
-                  <>
-                    <div style={{ width: 30, height: 30, borderRadius: '50%', background: `url(${active.cover}) center/cover`, backgroundColor: '#f3f1ec', flex: 'none' }} />
-                    <div style={{ minWidth: 0 }}><div style={s('font-size:11px;color:#8c867d;line-height:1.2')}>Progetto attivo</div><div style={s('font-size:13px;font-weight:700;white-space:nowrap;line-height:1.2')}>{active.nome}</div></div>
-                  </>
-                ) : (
-                  <>
-                    <div style={{ width: 30, height: 30, borderRadius: '50%', backgroundColor: '#f3f1ec', flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="plus" size={14} color="#8c867d" /></div>
-                    <div style={{ minWidth: 0 }}><div style={s('font-size:13px;font-weight:700;white-space:nowrap;line-height:1.2')}>Crea il tuo primo immobile</div></div>
-                  </>
-                )}
-                <Icon name="chevron-down" size={14} color="#8c867d" />
+              <Box onClick={(e) => { e.stopPropagation(); setProjOpen((o) => !o); setTrayOpen(false); }} style={s('display:flex;align-items:center;gap:10px;padding:7px 14px 7px 8px;border:1px solid #e9e6df;border-radius:8px;cursor:pointer;background:#fff;min-height:38px;min-width:240px;justify-content:space-between')} hover={s('border-color:#d8d4cb;box-shadow:0 2px 8px rgba(33,31,28,.06)')}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
+                  {loadingProjects ? (
+                    <div className="max-md:!hidden" style={{ minWidth: 0, flex: 1 }}><div style={s('font-size:13px;font-weight:700;color:#8c867d')}>Caricamento...</div></div>
+                  ) : active ? (
+                    <>
+                      <div style={{ width: 30, height: 30, borderRadius: '50%', ...getCoverStyle(active), flex: 'none' }} />
+                      <div className="max-md:!hidden" style={{ minWidth: 0, flex: 1 }}><div style={s('font-size:11px;color:#8c867d;line-height:1.2')}>Progetto attivo</div><div style={s('font-size:13px;font-weight:700;white-space:nowrap;line-height:1.2;overflow:hidden;text-overflow:ellipsis')}>{active.nome}</div></div>
+                    </>
+                  ) : (
+                    <>
+                      <div style={{ width: 30, height: 30, borderRadius: '50%', backgroundColor: '#f3f1ec', flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="plus" size={14} color="#8c867d" /></div>
+                      <div className="max-md:!hidden" style={{ minWidth: 0, flex: 1 }}><div style={s('font-size:13px;font-weight:700;white-space:nowrap;line-height:1.2')}>Crea il tuo primo immobile</div></div>
+                    </>
+                  )}
+                </div>
+                <Icon name="chevron-down" size={14} color="#8c867d" style={{ flex: 'none' }} />
               </Box>
               {projOpen && (
-                <div style={s('position:absolute;top:52px;left:0;width:320px;background:#fff;border-radius:12px;box-shadow:0 16px 48px rgba(33,31,28,.16);border:1px solid #f0ede7;overflow:hidden')}>
+                <div className="max-md:!fixed max-md:!top-16 max-md:!left-2 max-md:!right-2 max-md:!w-auto" style={s('position:absolute;top:52px;left:0;width:100%;background:#fff;border-radius:12px;box-shadow:0 16px 48px rgba(33,31,28,.16);border:1px solid #f0ede7;overflow:hidden;z-index:99')}>
                   <div style={s('padding:12px 12px 8px')}><div style={s('display:flex;align-items:center;gap:8px;background:#faf9f7;border:1px solid #ece9e2;border-radius:10px;padding:8px 12px')}><Icon name="search" size={15} color="#8c867d" /><input value={projQuery} onChange={(e) => setProjQuery(e.target.value)} placeholder="Cerca immobile…" style={s('border:none;background:transparent;outline:none;font-size:13px;width:100%')} /></div></div>
                   <div style={s('max-height:260px;overflow:auto;padding:0 6px')}>
                     {projList.map((p) => (
                       <Box key={p.id} onClick={() => { setActiveProject(p.id); setProjOpen(false); }} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 10px', borderRadius: 12, cursor: 'pointer', background: p.id === activeProject ? '#f6faff' : 'transparent' }} hover={{ background: '#f6f4f0' }}>
-                        <div style={{ width: 34, height: 34, borderRadius: 10, background: `url(${p.cover}) center/cover`, backgroundColor: '#f3f1ec', flex: 'none' }} />
+                        <div style={{ width: 34, height: 34, borderRadius: 10, ...getCoverStyle(p), flex: 'none' }} />
                         <div style={{ minWidth: 0, flex: 1 }}><div style={s('font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{p.nome}</div><div style={s('font-size:11px;color:#8c867d;white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{p.addr}</div></div>
                         {p.id === activeProject && <Icon name="check" size={14} color="#3B83F6" />}
                       </Box>
                     ))}
                   </div>
-                  <Box onClick={() => { setProjOpen(false); toast('Nuovo immobile (in arrivo)'); }} style={s('display:flex;align-items:center;gap:10px;padding:12px 16px;border-top:1px solid #f0ede7;cursor:pointer;color:#1d5fd0;font-weight:700;font-size:13px')} hover={s('background:#f6faff')}><Icon name="plus" size={16} color="#1d5fd0" />Nuovo immobile</Box>
+                  <Box onClick={() => { setProjOpen(false); setNewProjOpen(true); }} style={s('display:flex;align-items:center;gap:10px;padding:12px 16px;border-top:1px solid #f0ede7;cursor:pointer;color:#1d5fd0;font-weight:700;font-size:13px')} hover={s('background:#f6faff')}><Icon name="plus" size={16} color="#1d5fd0" />Nuovo immobile</Box>
                 </div>
               )}
             </div>
 
             <div style={{ flex: 1 }} />
 
-            <Box as="button" onClick={() => { setCmdkOpen(true); setCmdQuery(''); }} title="Cerca · ⌘K" aria-label="Cerca" style={s('border:1px solid #e9e6df;background:#fff;display:flex;align-items:center;gap:8px;padding:0 16px;height:40px;border-radius:10px;cursor:pointer;color:#8c867d;flex:1;max-width:480px')} hover={s('border-color:#d8d4cb;box-shadow:0 2px 8px rgba(33,31,28,.06)')}>
-              <Icon name="search" size={15} color="#b3aca1" /><span style={s('font-size:13px;font-weight:500;color:#b3aca1;flex:1;text-align:left')}>Cerca strumenti, immobili, media</span><span style={s('font-size:10.5px;font-weight:700;background:#f1efe9;color:#8c867d;padding:2px 7px;border-radius:6px')}>⌘K</span>
+            <Box as="button" onClick={() => { setCmdkOpen(true); setCmdQuery(''); }} title="Cerca · ⌘K" aria-label="Cerca" className="max-md:!px-3 max-md:!justify-center" style={s('border:1px solid #e9e6df;background:#fff;display:flex;align-items:center;gap:8px;padding:0 16px;height:40px;border-radius:10px;cursor:pointer;color:#8c867d;flex:1;max-width:480px')} hover={s('border-color:#d8d4cb;box-shadow:0 2px 8px rgba(33,31,28,.06)')}>
+              <Icon name="search" size={15} color="#b3aca1" />
+              <span className="max-md:!hidden" style={s('font-size:13px;font-weight:500;color:#b3aca1;flex:1;text-align:left')}>Cerca strumenti, immobili, media</span>
+              <span className="max-md:!hidden" style={s('font-size:10.5px;font-weight:700;background:#f1efe9;color:#8c867d;padding:2px 7px;border-radius:6px')}>⌘K</span>
             </Box>
 
             {/* jobs tray + notifications */}
@@ -1902,11 +2054,45 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
               <div style={{ position: 'relative' }}>
                 <Box as="button" onClick={(e) => { e.stopPropagation(); setTrayOpen((o) => !o); setProjOpen(false); }} title="Lavori in corso" aria-label="Lavori in corso" style={s('border:none;background:transparent;width:38px;height:38px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;position:relative')} hover={s('background:#f1efe9')}>
                   <Icon name="inbox" size={18} />
+                  {batches.filter(b => b.status === 'processing' || b.status === 'pending').length > 0 && (
+                    <div style={{ position: 'absolute', top: 6, right: 6, width: 8, height: 8, borderRadius: '50%', background: '#3B83F6', border: '2px solid #fff' }} />
+                  )}
                 </Box>
                 {trayOpen && (
                   <div style={s('position:absolute;top:46px;right:0;width:330px;background:#fff;border-radius:12px;box-shadow:0 16px 48px rgba(33,31,28,.16);border:1px solid #f0ede7;overflow:hidden;z-index:50')}>
                     <div style={s('display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:1px solid #f4f2ee')}><span style={s('font-size:13.5px;font-weight:800')}>Lavori in corso</span></div>
-                    <div style={s('padding:22px 16px;text-align:center;font-size:13px;color:#8c867d')}>Nessun lavoro in corso.<br />Le generazioni girano qui in background, senza bloccarti.</div>
+                    <div style={{ maxHeight: 320, overflow: 'auto' }}>
+                      {(() => {
+                        const dismissed = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('gnm_dismissed_batches') || '[]') : [];
+                        const activeBatches = batches.filter(b => (b.status === 'processing' || b.status === 'pending') || ((b.status === 'completed' || b.status === 'partial') && !dismissed.includes(b.id)));
+                        if (activeBatches.length === 0) {
+                          return <div style={s('padding:22px 16px;text-align:center;font-size:13px;color:#8c867d')}>Nessun lavoro in corso.<br />Le generazioni girano qui in background, senza bloccarti.</div>;
+                        }
+                        return activeBatches.map(b => {
+                          const isDone = b.status === 'completed' || b.status === 'partial';
+                          const styleObj = STAGING_STYLES.find(s => s.id === b.style);
+                          const styleName = styleObj ? styleObj.label : b.style;
+                          return (
+                            <div key={b.id} style={{ padding: '12px 16px', borderBottom: '1px solid #f4f2ee', display: 'flex', gap: 12 }}>
+                              <div style={{ width: 32, height: 32, borderRadius: 8, background: isDone ? '#e6f4ea' : '#eef4fe', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}>
+                                {isDone ? <Icon name="check" size={16} color="#1e8e3e" /> : <div style={{ width: 14, height: 14, border: '2px solid #3B83F6', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />}
+                              </div>
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 2 }}>Batch Foto AI {styleName ? `· ${styleName}` : ''}</div>
+                                <div style={{ fontSize: 12, color: '#8c867d', marginBottom: 6 }}>
+                                  {isDone ? 'Completato' : `In elaborazione (${b.completedItems}/${b.totalItems})`}
+                                </div>
+                                {isDone && (
+                                  <div style={{ display: 'flex', gap: 8 }}>
+                                    <button onClick={() => { setTrayOpen(false); go('media'); }} style={{ padding: '4px 8px', fontSize: 11, fontWeight: 700, borderRadius: 6, border: '1px solid #e4e1da', background: '#fff', cursor: 'pointer' }}>Vedi in Media</button>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        });
+                      })()}
+                    </div>
                   </div>
                 )}
               </div>
@@ -1916,101 +2102,59 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
 
           {/* CONTENT */}
           <div ref={contentRef} style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }} onClick={closeMenus}>
-            {route === 'home' ? (
-              <div style={s('max-width:1160px;margin:0 auto;padding:36px 32px 64px')}>
-                {!active ? (
-                  /* ── empty state: no projects yet ── */
-                  <div style={s('display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 32px;text-align:center')}>
-                    <img src="/dashboard/logo-icon.svg" alt="GetNearMe" style={{ width: 56, height: 56, marginBottom: 24 }} />
-                    <h1 style={s('margin:0 0 8px;font-size:24px;font-weight:800;letter-spacing:-.3px')}>Benvenuto in GetNearMe</h1>
-                    <p style={s('margin:0 0 32px;font-size:15px;color:#8c867d;max-width:420px;line-height:1.6')}>Crea il tuo primo immobile per iniziare a generare foto AI, video e post social per i tuoi annunci</p>
-                    <Box onClick={() => toast('Nuovo immobile (in arrivo)')} style={s('display:inline-flex;align-items:center;gap:10px;background:#3B83F6;color:#fff;padding:14px 28px;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;transition:transform .2s,box-shadow .2s')} hover={{ transform: 'translateY(-2px)', boxShadow: '0 8px 24px rgba(59,131,246,.3)' }}>
-                      Crea il tuo primo immobile
-                    </Box>
-                    <div style={s('margin-top:48px;display:grid;grid-template-columns:repeat(3,1fr);gap:20px;max-width:640px;width:100%')}>
-                      {[
-                        { icon: 'sparkles', title: 'Foto AI', desc: 'Arreda e trasforma le foto con un click' },
-                        { icon: 'film', title: 'Video AI', desc: 'Crea video professionali automaticamente' },
-                        { icon: 'image-plus', title: 'Post Social', desc: 'Template pronti per Instagram e social' },
-                      ].map(f => (
-                        <div key={f.title} style={s('background:#fff;border:1px solid #f0ede7;border-radius:14px;padding:24px 20px;text-align:center')}>
-                          <div style={s('width:44px;height:44px;border-radius:12px;background:#f4f2ee;display:flex;align-items:center;justify-content:center;margin:0 auto 12px')}><Icon name={f.icon} size={20} color="#57534c" /></div>
-                          <div style={s('font-size:14px;font-weight:700;margin-bottom:4px')}>{f.title}</div>
-                          <div style={s('font-size:12.5px;color:#8c867d;line-height:1.5')}>{f.desc}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ) : (
-                  /* ── project overview ── */
-                  <>
-                    {/* project header */}
-                    <div style={s('display:flex;align-items:center;gap:20px;margin-bottom:28px')}>
-                      <div style={{ width: 72, height: 72, borderRadius: 16, background: `url(${active.cover}) center/cover`, backgroundColor: '#f3f1ec', flex: 'none' }} />
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <h1 style={s('margin:0 0 4px;font-size:27px;font-weight:800;letter-spacing:-.5px')}>{active.nome}</h1>
-                        <div style={s('color:#8c867d;font-size:14px;display:flex;align-items:center;gap:6px')}><Icon name="map-pin" size={13} color="#b3aca1" />{active.addr}</div>
+            {loadingProjects ? (
+              <div className="animate-pulse">
+                <div className="max-md:!h-auto max-md:!min-h-[220px]" style={{ height: 260, background: '#f4f2ee', position: 'relative' }}>
+                  <div className="max-md:!p-6 max-md:!pb-6 max-md:!items-center" style={{ maxWidth: 1160, margin: '0 auto', padding: '0 32px', height: '100%', display: 'flex', alignItems: 'flex-end', paddingBottom: 32 }}>
+                    <div className="max-md:!flex-col max-md:!items-center max-md:!mt-12" style={{ display: 'flex', gap: 24, alignItems: 'center', width: '100%' }}>
+                      <div style={{ width: 120, height: 120, borderRadius: 20, background: '#e9e6df' }} />
+                      <div className="max-md:!items-center" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                        <div style={{ width: 140, height: 16, background: '#e9e6df', borderRadius: 4 }} />
+                        <div style={{ width: 280, height: 38, background: '#e9e6df', borderRadius: 6 }} />
+                        <div style={{ width: 200, height: 16, background: '#e9e6df', borderRadius: 4 }} />
                       </div>
                     </div>
-
-                    {/* stats */}
-                    <div style={s('display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px')}>
-                      {[
-                        { label: 'Prezzo', value: fmt(active.prezzo), icon: 'tag' },
-                        { label: 'Superficie', value: active.mq + ' m²', icon: 'maximize-2' },
-                        { label: 'Locali', value: String(active.locali), icon: 'layout-grid' },
-                        { label: 'Contenuti', value: String(active.nFoto + active.nStaging + active.nVideo + active.nPost), icon: 'layers' },
-                      ].map(st => (
-                        <div key={st.label} style={s('background:#fff;border:1px solid #f0ede7;border-radius:12px;padding:18px 20px')}>
-                          <div style={s('display:flex;align-items:center;gap:8px;margin-bottom:8px')}><Icon name={st.icon} size={15} color="#8c867d" /><span style={s('font-size:12px;font-weight:700;color:#8c867d;text-transform:uppercase;letter-spacing:.04em')}>{st.label}</span></div>
-                          <div style={s('font-size:22px;font-weight:800;letter-spacing:-.3px')}>{st.value}</div>
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* quick actions */}
-                    <div style={s('display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px')}>
-                      {[
-                        ['sparkles', 'Genera foto AI', 'staging', '#211f1c', '#fff'],
-                        ['film', 'Crea video', 'video', '#fff', '#211f1c'],
-                        ['image-plus', 'Crea un post', 'studio', '#fff', '#211f1c'],
-                        ['scissors', 'Montaggio', 'montaggio', '#fff', '#211f1c'],
-                      ].map(([ic, lbl, r, bg, col]) => (
-                        <Box key={r} onClick={() => go(r)} style={{ display: 'flex', alignItems: 'center', gap: 12, background: bg, border: bg === '#fff' ? '1px solid #e9e6df' : 'none', borderRadius: 14, padding: '20px 22px', cursor: 'pointer', color: col, transition: 'transform .2s, box-shadow .2s' }} hover={{ transform: 'translateY(-2px)', boxShadow: '0 8px 24px rgba(33,31,28,.10)' }}>
-                          <div style={{ width: 42, height: 42, borderRadius: 10, background: bg === '#fff' ? '#f4f2ee' : 'rgba(255,255,255,.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}><Icon name={ic} size={20} color={col} /></div>
-                          <span style={s('font-size:14px;font-weight:700')}>{lbl}</span>
-                        </Box>
-                      ))}
-                    </div>
-
-                    {/* recent */}
-                    <div style={s('display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px')}>
-                      <h2 style={s('margin:0;font-size:18px;font-weight:800;letter-spacing:-.3px')}>Contenuti recenti</h2>
-                      <span onClick={() => go('media')} style={s('font-size:13px;font-weight:700;color:#1d5fd0;cursor:pointer')}>Vedi tutto in Media</span>
-                    </div>
-                    <div style={s('display:grid;grid-template-columns:repeat(3,1fr);gap:16px')}>
-                      {RECENT.map((r, i) => {
-                        const t = typeTag(r.type);
-                        return (
-                          <Box key={i} style={s('background:#fff;border:1px solid #f0ede7;border-radius:12px;overflow:hidden;transition:box-shadow .2s')} hover={s('box-shadow:0 8px 24px rgba(33,31,28,.08)')}>
-                            <div style={{ aspectRatio: '16/10', background: `url(${r.img}) center/cover`, backgroundColor: '#f3f1ec', position: 'relative' }}>
-                              <span style={{ position: 'absolute', top: 10, left: 10, fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 8, background: t.tBg, color: t.tCol }}>{t.label}</span>
-                            </div>
-                            <div style={s('padding:12px 14px;display:flex;align-items:center;gap:10px')}>
-                              <div style={{ minWidth: 0, flex: 1 }}><div style={s('font-size:13.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{r.label}</div><div style={s('font-size:12px;color:#8c867d')}>{r.meta}</div></div>
-                              <Box as="button" onClick={(e) => { e.stopPropagation(); toast('Download avviato'); }} title="Scarica" aria-label="Scarica" style={s('border:1px solid #ece9e2;background:#fff;width:34px;height:34px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none')} hover={s('background:#f6f4f0')}><Icon name="download" size={14} /></Box>
-                            </div>
-                          </Box>
-                        );
-                      })}
-                    </div>
-                  </>
-                )}
+                  </div>
+                </div>
+                <div className="max-md:!p-4" style={{ maxWidth: 1160, margin: '0 auto', padding: '48px 32px 32px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 24 }}>
+                    <div style={{ height: 140, background: '#f4f2ee', borderRadius: 16 }} />
+                    <div style={{ height: 140, background: '#f4f2ee', borderRadius: 16 }} />
+                    <div style={{ height: 140, background: '#f4f2ee', borderRadius: 16 }} />
+                  </div>
+                </div>
               </div>
+            ) : route === 'home' ? (
+              <HomeScreen
+                active={active}
+                setNewProjOpen={setNewProjOpen}
+                onEditProject={() => setEditProjOpen(true)}
+                go={go}
+                getCoverStyle={getCoverStyle}
+                onProjectUpdate={(upd) => {
+                  setProjects(prev => prev.map(p => p.id === active?.id ? { ...p, ...upd } : p));
+                  if (active) updateProject(active.id, upd);
+                }}
+              />
             ) : route === 'studio' ? (
-              <PostSocialScreen toast={toast} routeKey={routeKey} brand={brand} project={active} />
+              <PostSocialScreen toast={toast} routeKey={routeKey} brand={brand} project={active} onProjectUpdate={(upd) => setProjects(prev => prev.map(p => p.id === active.id ? { ...p, ...upd } : p))} />
             ) : route === 'staging' ? (
-              <FotoAIScreen toast={toast} routeKey={routeKey} project={active} />
+              <FotoAIScreen 
+                toast={toast} 
+                routeKey={routeKey} 
+                project={active} 
+                onBatchCreated={() => {
+                  fetchUserBatches().then(setBatches);
+                }} 
+              />
+            ) : route === 'media' ? (
+              <MediaScreen 
+                toast={toast} 
+                routeKey={routeKey} 
+                project={active} 
+                batches={batches} 
+                loadingBatches={loadingBatches} 
+              />
             ) : route === 'video' ? (
               <VideoAIScreen toast={toast} routeKey={routeKey} brand={brand} project={active} />
             ) : route === 'montaggio' ? (
@@ -2052,13 +2196,47 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
       )}
 
       {/* TOASTS */}
-      <div style={s('position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:120;display:flex;flex-direction:column;gap:10px;align-items:center')}>
+      <div style={s('position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:999999;display:flex;flex-direction:column;gap:10px;align-items:center')}>
         {toasts.map((t) => (
           <div key={t.id} style={s('display:flex;align-items:center;gap:10px;background:#211f1c;color:#fff;padding:12px 18px;border-radius:10px;box-shadow:0 12px 32px rgba(20,18,15,.28);font-size:13.5px;font-weight:600;max-width:420px')}>
             <Icon name={t.icon} size={16} color="#fff" />{t.msg}
           </div>
         ))}
       </div>
+
+      {/* NEW PROJECT MODAL */}
+      {newProjOpen && (
+        <NewProjectModal 
+          toast={toast}
+          onClose={() => setNewProjOpen(false)}
+          onSuccess={(p) => {
+            setProjects(prev => [p as unknown as Project, ...prev]);
+            setActiveProject(p.id);
+            setNewProjOpen(false);
+            setRoute('home');
+          }}
+        />
+      )}
+
+      {/* EDIT PROJECT MODAL */}
+      {editProjOpen && active && (
+        <NewProjectModal 
+          toast={toast}
+          editProject={active as unknown as ProjectData}
+          onClose={() => setEditProjOpen(false)}
+          onSuccess={(p) => {
+            setProjects(prev => prev.map(old => old.id === p.id ? p as unknown as Project : old));
+            setEditProjOpen(false);
+          }}
+          onDelete={(id) => {
+            setProjects(prev => prev.filter(old => old.id !== id));
+            setEditProjOpen(false);
+            const remaining = projects.filter(old => old.id !== id);
+            if (remaining.length > 0) setActiveProject(remaining[0].id);
+            else setActiveProject('');
+          }}
+        />
+      )}
     </div>
   );
 }

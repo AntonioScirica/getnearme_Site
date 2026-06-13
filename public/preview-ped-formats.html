@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PED Formats Preview — 7 Template</title>
+<style>
+  @import url('https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0a0a0a;
+    font-family: system-ui, -apple-system, sans-serif;
+    color: #e5e5e5;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px;
+    min-height: 100vh;
+  }
+
+  .page-title {
+    font-size: 14px;
+    color: #7C3AED;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    font-weight: 700;
+    margin-bottom: 12px;
+  }
+  .page-sub { font-size: 12px; color: #666; margin-bottom: 48px; }
+
+  .section-title {
+    font-size: 12px;
+    color: #999;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-weight: 700;
+    margin: 40px 0 16px;
+    align-self: flex-start;
+    max-width: 1280px;
+    width: 100%;
+  }
+
+  .row {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    max-width: 1280px;
+    width: 100%;
+  }
+
+  .col { display: flex; flex-direction: column; align-items: center; }
+  .col-label {
+    font-size: 10px;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+  }
+
+  .frame {
+    width: 270px;
+    height: 337.5px;
+    position: relative;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 8px 40px rgba(0,0,0,.5);
+  }
+  .frame .slide {
+    width: 1080px;
+    height: 1350px;
+    transform: scale(0.25);
+    transform-origin: top left;
+    position: absolute;
+    top: 0; left: 0;
+    overflow: hidden;
+    font-family: 'Satoshi', 'Helvetica Neue', Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    background: #fafaf8;
+  }
+
+  /* ═══════════ SHARED ═══════════ */
+  .s-pad { padding: 80px 72px; display: flex; flex-direction: column; }
+  .s-badge {
+    align-self: flex-start;
+    display: inline-flex; align-items: center; gap: 10px;
+    border-radius: 24px; padding: 12px 32px;
+    font-size: 24px; font-weight: 800;
+    box-shadow: 4px 4px 0 rgba(0,0,0,0.15);
+    text-transform: uppercase; letter-spacing: 2px;
+  }
+  .badge-amber { background: #fffbeb; border: 3px solid #f59e0b; color: #b45309; }
+  .badge-blue  { background: #eff6ff; border: 3px solid #3B83F6; color: #1d4ed8; }
+  .badge-green { background: #ecfdf5; border: 3px solid #10b981; color: #047857; }
+
+  .s-title {
+    font-size: 76px; font-weight: 900; color: #1a1a2e;
+    line-height: 1.1; letter-spacing: -2px;
+  }
+  .hl-amber { color: #f59e0b; }
+  .hl-blue { color: #3B83F6; }
+
+  .s-footer {
+    margin-top: auto;
+    display: flex; align-items: center; gap: 10px;
+    font-size: 20px; font-weight: 700; color: #bbb;
+    letter-spacing: 3px; text-transform: uppercase;
+  }
+  .s-footer svg { width: 36px; height: 36px; }
+  .s-footer .swipe {
+    margin-left: auto;
+    display: flex; align-items: center; gap: 8px;
+    color: #1a1a2e; font-size: 20px; letter-spacing: 1px;
+  }
+  .s-footer .swipe svg { width: 28px; height: 28px; }
+
+  .deco { position: absolute; z-index: 0; }
+  .deco-c1 { top: -80px; right: -100px; width: 280px; height: 280px; background: #fef3c7; border-radius: 50%; border: 4px solid #fcd34d; opacity: 0.5; }
+  .deco-s1 { bottom: 200px; left: -40px; width: 120px; height: 120px; background: #dbeafe; border-radius: 24px; border: 4px solid #93c5fd; opacity: 0.5; transform: rotate(12deg); }
+  .deco-p1 { bottom: -60px; right: 80px; width: 180px; height: 180px; background: #fce7f3; border-radius: 28px; border: 4px solid #f9a8d4; opacity: 0.4; transform: rotate(-8deg); }
+
+  /* ═══════════ 1. CAROSELLO DATI — cover ═══════════ */
+  .cd-stat {
+    margin: auto 0 20px;
+    position: relative; z-index: 1;
+  }
+  .cd-num {
+    font-size: 200px; font-weight: 900; color: #1a1a2e;
+    line-height: 1; letter-spacing: -6px;
+  }
+  .cd-num .unit { font-size: 100px; letter-spacing: -2px; }
+  .cd-delta {
+    display: inline-flex; align-items: center; gap: 10px;
+    background: #ecfdf5; border: 3px solid #10b981; color: #047857;
+    font-size: 36px; font-weight: 900; padding: 12px 32px; border-radius: 16px;
+    margin-top: 24px;
+    box-shadow: 4px 4px 0 rgba(16,185,129,0.25);
+  }
+  .cd-delta svg { width: 32px; height: 32px; }
+  .cd-statlabel {
+    font-size: 30px; color: #888; font-weight: 700;
+    margin-top: 16px; letter-spacing: 0.5px;
+  }
+  .cd-title { margin-top: 70px; position: relative; z-index: 1; padding-bottom: 60px; }
+
+  /* ═══ Carosello dati — content slide ═══ */
+  .cdc-kicker {
+    font-size: 24px; font-weight: 800; color: #b45309;
+    letter-spacing: 3px; text-transform: uppercase; margin-bottom: 28px;
+    margin-top: 40px;
+  }
+  .cdc-text { margin-top: auto; }
+  .cdc-text {
+    font-size: 44px; color: #1a1a2e; line-height: 1.45; font-weight: 500;
+    position: relative; z-index: 1;
+  }
+  .cdc-text strong { font-weight: 900; }
+  .cdc-card {
+    margin-top: 56px;
+    background: #fff; border: 4px solid #1a1a2e; border-radius: 24px;
+    padding: 40px 48px;
+    box-shadow: 8px 8px 0 #1a1a2e;
+    position: relative; z-index: 1;
+  }
+  .cdc-card .label { font-size: 24px; font-weight: 800; color: #888; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 12px; }
+  .cdc-card .value { font-size: 64px; font-weight: 900; color: #1a1a2e; letter-spacing: -1px; }
+  .cdc-card .value span { color: #f59e0b; }
+
+  /* ═══════════ 2. CAROSELLO EDUCATIVO — cover ═══════════ */
+  .ce-num-big {
+    font-size: 280px; font-weight: 900; color: #3B83F6;
+    line-height: 0.9; letter-spacing: -8px;
+    margin: auto 0 10px;
+    position: relative; z-index: 1;
+    text-shadow: 10px 10px 0 rgba(59,131,246,0.15);
+  }
+  .ce-title { position: relative; z-index: 1; }
+  .ce-save {
+    margin-top: 48px;
+    align-self: flex-start;
+    display: inline-flex; align-items: center; gap: 12px;
+    background: #fff; border: 3px solid #1a1a2e; border-radius: 14px;
+    padding: 16px 32px; font-size: 26px; font-weight: 800; color: #1a1a2e;
+    box-shadow: 5px 5px 0 #1a1a2e;
+    position: relative; z-index: 1;
+  }
+  .ce-save svg { width: 28px; height: 28px; }
+
+  /* ═══ Carosello educativo — content slide (numbered item) ═══ */
+  .cec-num {
+    width: 130px; height: 130px;
+    background: #3B83F6; color: #fff;
+    border: 4px solid #1a1a2e; border-radius: 28px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 72px; font-weight: 900;
+    box-shadow: 8px 8px 0 #1a1a2e;
+    margin: auto 0 48px;
+  }
+  .cec-title {
+    font-size: 64px; font-weight: 900; color: #1a1a2e;
+    line-height: 1.15; letter-spacing: -1.5px; margin-bottom: 32px;
+  }
+  .cec-text {
+    font-size: 38px; color: #555; line-height: 1.5;
+    padding-bottom: 60px;
+  }
+
+  /* ═══════════ 3. CAROSELLO FEATURE — cover ═══════════ */
+  .cf-visual {
+    margin: auto 0 0;
+    width: 100%;
+    height: 540px;
+    background: #fff;
+    border: 4px solid #1a1a2e; border-radius: 28px;
+    box-shadow: 10px 10px 0 #1a1a2e;
+    position: relative; z-index: 1;
+    overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .cf-visual .mock {
+    width: 85%; height: 78%;
+    background: #f5f5f3;
+    border: 3px solid #e5e5e5; border-radius: 18px;
+    position: relative;
+    overflow: hidden;
+  }
+  .cf-visual .mock .bar { height: 56px; background: #1a1a2e; display: flex; align-items: center; gap: 8px; padding: 0 20px; }
+  .cf-visual .mock .bar i { width: 16px; height: 16px; border-radius: 50%; display: block; }
+  .cf-visual .mock .body { padding: 24px; display: flex; gap: 20px; }
+  .cf-visual .mock .panel { flex: 1; background: #fff; border: 2px solid #e5e5e5; border-radius: 12px; height: 240px; }
+  .cf-visual .mock .panel.acc { background: #eff6ff; border-color: #93c5fd; }
+  .cf-title { margin-top: 56px; position: relative; z-index: 1; padding-bottom: 60px; }
+
+  /* ═══════════ 4. POST DATI ═══════════ */
+  .pd-center {
+    display: flex; flex-direction: column;
+    align-items: center; text-align: center;
+    justify-content: center;
+    flex: 1;
+    position: relative; z-index: 1;
+  }
+  .pd-num {
+    font-size: 230px; font-weight: 900; color: #1a1a2e;
+    line-height: 1; letter-spacing: -7px;
+  }
+  .pd-num .unit { font-size: 110px; }
+  .pd-delta {
+    display: inline-flex; align-items: center; gap: 10px;
+    background: #ecfdf5; border: 3px solid #10b981; color: #047857;
+    font-size: 36px; font-weight: 900; padding: 12px 36px; border-radius: 16px;
+    margin-top: 28px;
+    box-shadow: 4px 4px 0 rgba(16,185,129,0.25);
+  }
+  .pd-label { font-size: 32px; color: #888; font-weight: 700; margin-top: 20px; }
+  .pd-claim {
+    font-size: 58px; font-weight: 900; color: #1a1a2e;
+    line-height: 1.18; letter-spacing: -1.5px;
+    margin-top: 64px; max-width: 880px;
+  }
+
+  /* ═══════════ 5. POST SINGOLO ═══════════ */
+  .ps-center {
+    display: flex; flex-direction: column;
+    justify-content: center;
+    flex: 1;
+    position: relative; z-index: 1;
+  }
+  .ps-title {
+    font-size: 92px; font-weight: 900; color: #1a1a2e;
+    line-height: 1.1; letter-spacing: -3px;
+    margin-bottom: 44px;
+  }
+  .ps-sub {
+    font-size: 40px; color: #555; line-height: 1.5;
+    max-width: 880px;
+  }
+  .ps-cta {
+    margin-top: 56px;
+    align-self: flex-start;
+    display: inline-flex; align-items: center; gap: 14px;
+    background: #3B83F6; color: #fff;
+    font-size: 32px; font-weight: 900;
+    padding: 22px 48px; border-radius: 16px;
+    border: 4px solid #1a1a2e;
+    box-shadow: 7px 7px 0 #1a1a2e;
+  }
+
+  /* ═══════════ 6. REEL TUTORIAL — cover ═══════════ */
+  .rt-slide { background: #1a1a2e !important; }
+  .rt-slide .deco-grid {
+    position: absolute; inset: 0;
+    background-image: repeating-linear-gradient(0deg, transparent, transparent 79px, rgba(255,255,255,0.04) 79px, rgba(255,255,255,0.04) 80px), repeating-linear-gradient(90deg, transparent, transparent 79px, rgba(255,255,255,0.04) 79px, rgba(255,255,255,0.04) 80px);
+  }
+  .rt-badge {
+    align-self: flex-start;
+    display: inline-flex; align-items: center; gap: 10px;
+    background: rgba(245,158,11,0.15); border: 3px solid #f59e0b; color: #fbbf24;
+    border-radius: 24px; padding: 12px 32px;
+    font-size: 24px; font-weight: 800;
+    text-transform: uppercase; letter-spacing: 2px;
+    position: relative; z-index: 1;
+  }
+  .rt-play {
+    width: 170px; height: 170px;
+    background: #3B83F6;
+    border: 4px solid #fff; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 10px 10px 0 rgba(59,131,246,0.3);
+    margin: auto 0 60px;
+    position: relative; z-index: 1;
+  }
+  .rt-play svg { width: 64px; height: 64px; margin-left: 8px; }
+  .rt-title {
+    font-size: 88px; font-weight: 900; color: #fff;
+    line-height: 1.1; letter-spacing: -2.5px;
+    position: relative; z-index: 1;
+  }
+  .rt-sub {
+    margin-top: 32px;
+    font-size: 36px; color: rgba(255,255,255,0.65); line-height: 1.5;
+    position: relative; z-index: 1;
+    padding-bottom: 60px;
+  }
+  .rt-footer {
+    margin-top: auto;
+    display: flex; align-items: center; gap: 10px;
+    font-size: 20px; font-weight: 700; color: rgba(255,255,255,0.4);
+    letter-spacing: 3px; text-transform: uppercase;
+    position: relative; z-index: 1;
+  }
+  .rt-footer svg { width: 36px; height: 36px; }
+  .rt-footer .dur {
+    margin-left: auto;
+    color: #fbbf24; font-size: 22px;
+  }
+
+  /* ═══════════ 7. CAROSELLO REFERRAL — cover ═══════════ */
+  .rf-steps {
+    margin: auto 0 0;
+    display: flex; flex-direction: column; gap: 24px;
+    position: relative; z-index: 1;
+  }
+  .rf-step {
+    display: flex; align-items: center; gap: 28px;
+    background: #fff; border: 4px solid #1a1a2e; border-radius: 20px;
+    padding: 28px 36px;
+    box-shadow: 6px 6px 0 #1a1a2e;
+  }
+  .rf-step .n {
+    width: 72px; height: 72px; flex-shrink: 0;
+    background: #f59e0b; color: #1a1a2e;
+    border: 3px solid #1a1a2e; border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 40px; font-weight: 900;
+  }
+  .rf-step .t { font-size: 38px; font-weight: 800; color: #1a1a2e; }
+  .rf-title { margin-top: 60px; position: relative; z-index: 1; padding-bottom: 40px; }
+
+  .logo-path { fill: #3B83F6; }
+</style>
+</head>
+<body>
+
+<div class="page-title">PED Formats — 7 Template Feed (1080 × 1350)</div>
+<div class="page-sub">Fillati con copy reali del PED 14 giorni</div>
+
+<!-- ════════════ 1. CAROSELLO DATI ════════════ -->
+<div class="section-title">1 · Carosello Dati — mercato / focus città (cover + slide contenuto)</div>
+<div class="row">
+
+  <div class="col">
+    <div class="col-label">Cover — Giorno 1</div>
+    <div class="frame">
+      <div class="slide s-pad">
+        <div class="deco deco-c1"></div>
+        <div class="deco deco-s1"></div>
+        <div class="s-badge badge-amber">Mercato</div>
+        <div class="cd-stat">
+          <div class="cd-num">767<span class="unit">mila</span></div>
+          <div class="cd-delta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7"/><path d="M8 7h9v9"/></svg>+6,4%</div>
+          <div class="cd-statlabel">Compravendite residenziali in Italia, 2025</div>
+        </div>
+        <div class="s-title cd-title">Il mercato casa è ripartito.<br><span class="hl-amber">E ora?</span></div>
+        <div class="s-footer">
+          <svg viewBox="0 0 424 533" xmlns="http://www.w3.org/2000/svg"><path class="logo-path" d="M224.816 4.98C217.966-1.72 207.036-1.65 200.274 5.13L51.253 154.306c-14.922 14.922-27.88 29.952-37.086 49.303-9.206 19.35-13.635 38.526-14.071 58.923-.567 26.135.975 49.699 17.468 70.838 13.962 17.889 31.458 32.876 46.576 49.739 16.601 18.521 34.14 36.475 51.178 54.691 4.56 4.887 58.465 62.021 83.051 88.418 6.698 7.177 17.976 7.439 25.001.567L379.138 374.925c55.018-53.971 58.334-133.379 15.969-196.448-16.885-25.153-40.882-45.812-63.483-66.471-6.85-6.261-17.409-6.043-24.019.48L167.856 250.403c-6.61 6.522-6.959 17.059-.785 23.997l33.508 37.784c6.61 7.461 18.129 7.875 25.262.894L320.193 220.69s41.885 40.773.349 93.152L225.427 408.782c-6.785 6.763-17.736 6.807-24.564.109L111.463 321.084s-61.759-46.619.658-109.491c49.521-49.106 119.483-118.479 147.778-146.512 6.915-6.85 6.871-18.063-.088-24.87L224.816 4.98z"/></svg>
+          getnearme.it
+          <span class="swipe">Scorri <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="col-label">Slide contenuto</div>
+    <div class="frame">
+      <div class="slide s-pad">
+        <div class="deco deco-p1"></div>
+        <div class="cdc-kicker">Cosa significa per chi vende</div>
+        <div class="cdc-text">Il mercato non premia solo chi ha più annunci.<br><br>Premia chi rende ogni annuncio <strong>più chiaro, più credibile e più utile</strong> per il cliente.</div>
+        <div class="cdc-card">
+          <div class="label">Più movimento significa</div>
+          <div class="value">Più immobili da <span>presentare bene</span></div>
+        </div>
+        <div class="s-footer">
+          <svg viewBox="0 0 424 533" xmlns="http://www.w3.org/2000/svg"><path class="logo-path" d="M224.816 4.98C217.966-1.72 207.036-1.65 200.274 5.13L51.253 154.306c-14.922 14.922-27.88 29.952-37.086 49.303-9.206 19.35-13.635 38.526-14.071 58.923-.567 26.135.975 49.699 17.468 70.838 13.962 17.889 31.458 32.876 46.576 49.739 16.601 18.521 34.14 36.475 51.178 54.691 4.56 4.887 58.465 62.021 83.051 88.418 6.698 7.177 17.976 7.439 25.001.567L379.138 374.925c55.018-53.971 58.334-133.379 15.969-196.448-16.885-25.153-40.882-45.812-63.483-66.471-6.85-6.261-17.409-6.043-24.019.48L167.856 250.403c-6.61 6.522-6.959 17.059-.785 23.997l33.508 37.784c6.61 7.461 18.129 7.875 25.262.894L320.193 220.69s41.885 40.773.349 93.152L225.427 408.782c-6.785 6.763-17.736 6.807-24.564.109L111.463 321.084s-61.759-46.619.658-109.491c49.521-49.106 119.483-118.479 147.778-146.512 6.915-6.85 6.871-18.063-.088-24.87L224.816 4.98z"/></svg>
+          getnearme.it
+          <span class="swipe">Scorri <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="col-label">Cover — Giorno 2 (Roma)</div>
+    <div class="frame">
+      <div class="slide s-pad">
+        <div class="deco deco-c1"></div>
+        <div class="deco deco-s1"></div>
+        <div class="s-badge badge-amber">Focus Roma</div>
+        <div class="cd-stat">
+          <div class="cd-num">8.697<span class="unit">€/m²</span></div>
+          <div class="cd-delta" style="background:#eff6ff;border-color:#3B83F6;color:#1d4ed8;box-shadow:4px 4px 0 rgba(59,131,246,0.25)">min 1.909 €/m²</div>
+          <div class="cd-statlabel">Range vendita residenziale per zona, maggio 2026</div>
+        </div>
+        <div class="s-title cd-title">Roma: il quartiere pesa<br><span class="hl-amber">più di quanto sembra</span></div>
+        <div class="s-footer">
+          <svg viewBox="0 0 424 533" xmlns="http://www.w3.org/2000/svg"><path class="logo-path" d="M224.816 4.98C217.966-1.72 207.036-1.65 200.274 5.13L51.253 154.306c-14.922 14.922-27.88 29.952-37.086 49.303-9.206 19.35-13.635 38.526-14.071 58.923-.567 26.135.975 49.699 17.468 70.838 13.962 17.889 31.458 32.876 46.576 49.739 16.601 18.521 34.14 36.475 51.178 54.691 4.56 4.887 58.465 62.021 83.051 88.418 6.698 7.177 17.976 7.439 25.001.567L379.138 374.925c55.018-53.971 58.334-133.379 15.969-196.448-16.885-25.153-40.882-45.812-63.483-66.471-6.85-6.261-17.409-6.043-24.019.48L167.856 250.403c-6.61 6.522-6.959 17.059-.785 23.997l33.508 37.784c6.61 7.461 18.129 7.875 25.262.894L320.193 220.69s41.885 40.773.349 93.152L225.427 408.782c-6.785 6.763-17.736 6.807-24.564.109L111.463 321.084s-61.759-46.619.658-109.491c49.521-49.106 119.483-118.479 147.778-146.512 6.915-6.85 6.871-18.063-.088-24.87L224.816 4.98z"/></svg>
+          getnearme.it
+          <span class="swipe">Scorri <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ════════════ 2. CAROSELLO EDUCATIVO ════════════ -->
+<div class="section-title">2 · Carosello Educativo — checklist salvabile (cover + slide item)</div>
+<div class="row">
+
+  <div class="col">
+    <div class="col-label">Cover — Giorno 2</div>
+    <div class="frame">
+      <div class="slide s-pad">
+        <div class="deco deco-c1"></div>
+        <div class="deco deco-p1"></div>
+        <div class="s-badge badge-blue">Checklist</div>
+        <div class="ce-num-big">5</div>
+        <div class="s-title ce-title">cose che un annuncio dovrebbe<br><span class="hl-blue">spiegare meglio</span></div>
+        <div class="ce-save"><svg viewBox="0 0 24 24" fill="none" stroke="#1a1a2e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>Salva per dopo</div>
+        <div class="s-footer">
+          <svg viewBox="0 0 424 533" xmlns="http://www.w3.org/2000/svg"><path class="logo-path" d="M224.816 4.98C217.966-1.72 207.036-1.65 200.274 5.13L51.253 154.306c-14.922 14.922-27.88 29.952-37.086 49.303-9.206 19.35-13.635 38.526-14.071 58.923-.567 26.135.975 49.699 17.468 70.838 13.962 17.889 31.458 32.876 46.576 49.739 16.601 18.521 34.14 36.475 51.178 54.691 4.56 4.887 58.465 62.021 83.051 88.418 6.698 7.177 17.976 7.439 25.001.567L379.138 374.925c55.018-53.971 58.334-133.379 15.969-196.448-16.885-25.153-40.882-45.812-63.483-66.471-6.85-6.261-17.409-6.043-24.019.48L167.856 250.403c-6.61 6.522-6.959 17.059-.785 23.997l33.508 37.784c6.61 7.461 18.129 7.875 25.262.894L320.193 220.69s41.885 40.773.349 93.152L225.427 408.782c-6.785 6.763-17.736 6.807-24.564.109L111.463 321.084s-61.759-46.619.658-109.491c49.521-49.106 119.483-118.479 147.778-146.512 6.915-6.85 6.871-18.063-.088-24.87L224.816 4.98z"/></svg>
+          getnearme.it
+          <span class="swipe">Scorri <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="col-label">Slide item 1</div>
+    <div class="frame">
+      <div class="slide s-pad">
+        <div class="deco deco-s1"></div>
+        <div class="cec-num">1</div>
+        <div class="cec-title">Perché quel prezzo<br>è coerente</div>
+        <div class="cec-text">Il cliente non vuole solo sapere quanto costa. Vuole capire perché. Prezzo al m² della zona, comparabili e andamento della domanda rendono il numero credibile.</div>
+        <div class="s-footer">
+          <svg viewBox="0 0 424 533" xmlns="http://www.w3.org/2000/svg"><path class="logo-path" d="M224.816 4.98C217.966-1.72 207.036-1.65 200.274 5.13L51.253 154.306c-14.922 14.922-27.88 29.952-37.086 49.303-9.206 19.35-13.635 38.526-14.071 58.923-.567 26.135.975 49.699 17.468 70.838 13.962 17.889 31.458 32.876 46.576 49.739 16.601 18.521 34.14 36.475 51.178 54.691 4.56 4.887 58.465 62.021 83.051 88.418 6.698 7.177 17.976 7.439 25.001.567L379.138 374.925c55.018-53.971 58.334-133.379 15.969-196.448-16.885-25.153-40.882-45.812-63.483-66.471-6.85-6.261-17.409-6.043-24.019.48L167.856 250.403c-6.61 6.522-6.959 17.059-.785 23.997l33.508 37.784c6.61 7.461 18.129 7.875 25.262.894L320.193 220.69s41.885 40.773.349 93.152L225.427 408.782c-6.785 6.763-17.736 6.807-24.564.109L111.463 321.084s-61.759-46.619.658-109.491c49.521-49.106 119.483-118.479 147.778-146.512 6.915-6.85 6.871-18.063-.088-24.87L224.816 4.98z"/></svg>
+          getnearme.it
+          <span class="swipe">Scorri <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ════════════ 3. CAROSELLO FEATURE ════════════ -->
+<div class="section-title">3 · Carosello Feature — prodotto (cover)</div>
+<div class="row">
+
+  <div class="col">
+    <div class="col-label">Cover — Giorno 3 (Staging AI)</div>
+    <div class="frame">
+      <div class="slide s-pad">
+        <div class="deco deco-c1"></div>
+        <div class="s-badge badge-blue">Feature</div>
+        <div class="cf-visual">
+          <div class="mock">
+            <div class="bar"><i style="background:#ef4444"></i><i style="background:#f59e0b"></i><i style="background:#10b981"></i></div>
+            <div class="body"><div class="panel"></div><div class="panel acc"></div></div>
+          </div>
+        </div>
+        <div class="s-title cf-title">Home staging AI:<br><span class="hl-blue">quando ha senso usarlo</span></div>
+        <div class="s-footer">
+          <svg viewBox="0 0 424 533" xmlns="http://www.w3.org/2000/svg"><path class="logo-path" d="M224.816 4.98C217.966-1.72 207.036-1.65 200.274 5.13L51.253 154.306c-14.922 14.922-27.88 29.952-37.086 49.303-9.206 19.35-13.635 38.526-14.071 58.923-.567 26.135.975 49.699 17.468 70.838 13.962 17.889 31.458 32.876 46.576 49.739 16.601 18.521 34.14 36.475 51.178 54.691 4.56 4.887 58.465 62.021 83.051 88.418 6.698 7.177 17.976 7.439 25.001.567L379.138 374.925c55.018-53.971 58.334-133.379 15.969-196.448-16.885-25.153-40.882-45.812-63.483-66.471-6.85-6.261-17.409-6.043-24.019.48L167.856 250.403c-6.61 6.522-6.959 17.059-.785 23.997l33.508 37.784c6.61 7.461 18.129 7.875 25.262.894L320.193 220.69s41.885 40.773.349 93.152L225.427 408.782c-6.785 6.763-17.736 6.807-24.564.109L111.463 321.084s-61.759-46.619.658-109.491c49.521-49.106 119.483-118.479 147.778-146.512 6.915-6.85 6.871-18.063-.088-24.87L224.816 4.98z"/></svg>
+          getnearme.it
+          <span class="swipe">Scorri <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ════════════ 4. POST DATI ════════════ -->
+<div class="section-title">4 · Post Dati — singola immagine con stat</div>
+<div class="row">
+
+  <div class="col">
+    <div class="col-label">Giorno 3 — Previsioni 2026</div>
+    <div class="frame">
+      <div class="slide s-pad">
+        <div class="deco deco-c1"></div>
+        <div class="deco deco-s1"></div>
+        <div class="s-badge badge-amber">Mercato · 2026</div>
+        <div class="pd-center">
+          <div class="pd-num">783<span class="unit">mila</span></div>
+          <div class="pd-delta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7"/><path d="M8 7h9v9"/></svg>+1,8%</div>
+          <div class="pd-label">Compravendite previste nel 2026 (Nomisma)</div>
+          <div class="pd-claim">Meno corsa, più qualità.<br><span class="hl-amber">Vince chi lavora con metodo.</span></div>
+        </div>
+        <div class="s-footer">
+          <svg viewBox="0 0 424 533" xmlns="http://www.w3.org/2000/svg"><path class="logo-path" d="M224.816 4.98C217.966-1.72 207.036-1.65 200.274 5.13L51.253 154.306c-14.922 14.922-27.88 29.952-37.086 49.303-9.206 19.35-13.635 38.526-14.071 58.923-.567 26.135.975 49.699 17.468 70.838 13.962 17.889 31.458 32.876 46.576 49.739 16.601 18.521 34.14 36.475 51.178 54.691 4.56 4.887 58.465 62.021 83.051 88.418 6.698 7.177 17.976 7.439 25.001.567L379.138 374.925c55.018-53.971 58.334-133.379 15.969-196.448-16.885-25.153-40.882-45.812-63.483-66.471-6.85-6.261-17.409-6.043-24.019.48L167.856 250.403c-6.61 6.522-6.959 17.059-.785 23.997l33.508 37.784c6.61 7.461 18.129 7.875 25.262.894L320.193 220.69s41.885 40.773.349 93.152L225.427 408.782c-6.785 6.763-17.736 6.807-24.564.109L111.463 321.084s-61.759-46.619.658-109.491c49.521-49.106 119.483-118.479 147.778-146.512 6.915-6.85 6.871-18.063-.088-24.87L224.816 4.98z"/></svg>
+          getnearme.it
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ════════════ 5. POST SINGOLO ════════════ -->
+<div class="section-title">5 · Post Singolo — statement</div>
+<div class="row">
+
+  <div class="col">
+    <div class="col-label">Giorno 1 — Valore invisibile</div>
+    <div class="frame">
+      <div class="slide s-pad">
+        <div class="deco deco-c1"></div>
+        <div class="deco deco-p1"></div>
+        <div class="s-badge badge-amber">Per gli agenti</div>
+        <div class="ps-center">
+          <div class="ps-title">Il lavoro che il proprietario <span class="hl-amber">non vede</span></div>
+          <div class="ps-sub">Analisi, confronto prezzi, selezione foto, descrizioni, materiali per appuntamenti. Se questo lavoro resta nascosto, il tuo valore si percepisce meno.</div>
+          <div class="ps-cta">Commenta "VALORE"</div>
+        </div>
+        <div class="s-footer">
+          <svg viewBox="0 0 424 533" xmlns="http://www.w3.org/2000/svg"><path class="logo-path" d="M224.816 4.98C217.966-1.72 207.036-1.65 200.274 5.13L51.253 154.306c-14.922 14.922-27.88 29.952-37.086 49.303-9.206 19.35-13.635 38.526-14.071 58.923-.567 26.135.975 49.699 17.468 70.838 13.962 17.889 31.458 32.876 46.576 49.739 16.601 18.521 34.14 36.475 51.178 54.691 4.56 4.887 58.465 62.021 83.051 88.418 6.698 7.177 17.976 7.439 25.001.567L379.138 374.925c55.018-53.971 58.334-133.379 15.969-196.448-16.885-25.153-40.882-45.812-63.483-66.471-6.85-6.261-17.409-6.043-24.019.48L167.856 250.403c-6.61 6.522-6.959 17.059-.785 23.997l33.508 37.784c6.61 7.461 18.129 7.875 25.262.894L320.193 220.69s41.885 40.773.349 93.152L225.427 408.782c-6.785 6.763-17.736 6.807-24.564.109L111.463 321.084s-61.759-46.619.658-109.491c49.521-49.106 119.483-118.479 147.778-146.512 6.915-6.85 6.871-18.063-.088-24.87L224.816 4.98z"/></svg>
+          getnearme.it
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ════════════ 6. REEL TUTORIAL ════════════ -->
+<div class="section-title">6 · Reel Tutorial — cover video (dark)</div>
+<div class="row">
+
+  <div class="col">
+    <div class="col-label">Giorno 1 — Flusso base</div>
+    <div class="frame">
+      <div class="slide s-pad rt-slide">
+        <div class="deco-grid"></div>
+        <div class="rt-badge">Tutorial</div>
+        <div class="rt-play"><svg viewBox="0 0 24 24" fill="#fff" xmlns="http://www.w3.org/2000/svg"><polygon points="8,5 20,12 8,19"/></svg></div>
+        <div class="rt-title">Da annuncio a<br>materiali <span style="color:#fbbf24">pronti</span></div>
+        <div class="rt-sub">Report, post social, video, home staging e analisi zona. Tutto parte dall'annuncio.</div>
+        <div class="rt-footer">
+          <svg viewBox="0 0 424 533" xmlns="http://www.w3.org/2000/svg"><path fill="rgba(255,255,255,0.4)" d="M224.816 4.98C217.966-1.72 207.036-1.65 200.274 5.13L51.253 154.306c-14.922 14.922-27.88 29.952-37.086 49.303-9.206 19.35-13.635 38.526-14.071 58.923-.567 26.135.975 49.699 17.468 70.838 13.962 17.889 31.458 32.876 46.576 49.739 16.601 18.521 34.14 36.475 51.178 54.691 4.56 4.887 58.465 62.021 83.051 88.418 6.698 7.177 17.976 7.439 25.001.567L379.138 374.925c55.018-53.971 58.334-133.379 15.969-196.448-16.885-25.153-40.882-45.812-63.483-66.471-6.85-6.261-17.409-6.043-24.019.48L167.856 250.403c-6.61 6.522-6.959 17.059-.785 23.997l33.508 37.784c6.61 7.461 18.129 7.875 25.262.894L320.193 220.69s41.885 40.773.349 93.152L225.427 408.782c-6.785 6.763-17.736 6.807-24.564.109L111.463 321.084s-61.759-46.619.658-109.491c49.521-49.106 119.483-118.479 147.778-146.512 6.915-6.85 6.871-18.063-.088-24.87L224.816 4.98z"/></svg>
+          getnearme.it
+          <span class="dur">▶ Guarda il video</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ════════════ 7. CAROSELLO REFERRAL ════════════ -->
+<div class="section-title">7 · Carosello Referral — ambassador steps (cover)</div>
+<div class="row">
+
+  <div class="col">
+    <div class="col-label">Giorno 6 — Ambassador 4 step</div>
+    <div class="frame">
+      <div class="slide s-pad">
+        <div class="deco deco-c1"></div>
+        <div class="s-badge badge-amber">Ambassador</div>
+        <div class="rf-steps">
+          <div class="rf-step"><div class="n">1</div><div class="t">Tu segnali l'agenzia</div></div>
+          <div class="rf-step"><div class="n">2</div><div class="t">Noi facciamo la demo</div></div>
+          <div class="rf-step"><div class="n">3</div><div class="t">L'agenzia decide se attivarsi</div></div>
+          <div class="rf-step"><div class="n">4</div><div class="t">Tu ricevi il payout</div></div>
+        </div>
+        <div class="s-title rf-title" style="font-size:64px">Ambassador<br><span class="hl-amber">in 4 passaggi</span></div>
+        <div class="s-footer">
+          <svg viewBox="0 0 424 533" xmlns="http://www.w3.org/2000/svg"><path class="logo-path" d="M224.816 4.98C217.966-1.72 207.036-1.65 200.274 5.13L51.253 154.306c-14.922 14.922-27.88 29.952-37.086 49.303-9.206 19.35-13.635 38.526-14.071 58.923-.567 26.135.975 49.699 17.468 70.838 13.962 17.889 31.458 32.876 46.576 49.739 16.601 18.521 34.14 36.475 51.178 54.691 4.56 4.887 58.465 62.021 83.051 88.418 6.698 7.177 17.976 7.439 25.001.567L379.138 374.925c55.018-53.971 58.334-133.379 15.969-196.448-16.885-25.153-40.882-45.812-63.483-66.471-6.85-6.261-17.409-6.043-24.019.48L167.856 250.403c-6.61 6.522-6.959 17.059-.785 23.997l33.508 37.784c6.61 7.461 18.129 7.875 25.262.894L320.193 220.69s41.885 40.773.349 93.152L225.427 408.782c-6.785 6.763-17.736 6.807-24.564.109L111.463 321.084s-61.759-46.619.658-109.491c49.521-49.106 119.483-118.479 147.778-146.512 6.915-6.85 6.871-18.063-.088-24.87L224.816 4.98z"/></svg>
+          getnearme.it
+          <span class="swipe">Scorri <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

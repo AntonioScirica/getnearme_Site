@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Before/After Template Preview</title>
+<style>
+  /* ── Page chrome ─────────────────────────────────── */
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0a0a0a;
+    font-family: system-ui, -apple-system, sans-serif;
+    color: #e5e5e5;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px;
+    min-height: 100vh;
+  }
+
+  .toolbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 56px;
+    background: #161616;
+    border-bottom: 1px solid #2a2a2a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    z-index: 100;
+    padding: 0 24px;
+  }
+  .toolbar span { font-size: 13px; color: #888; }
+  .toolbar select, .toolbar input {
+    background: #222;
+    border: 1px solid #333;
+    color: #e5e5e5;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+  }
+  .toolbar .fmt-btn {
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    border: 1px solid #333;
+    background: #222;
+    color: #aaa;
+    transition: all .15s;
+  }
+  .toolbar .fmt-btn.active {
+    background: #7C3AED;
+    border-color: #7C3AED;
+    color: #fff;
+  }
+  .toolbar .fmt-btn:hover:not(.active) {
+    background: #2a2a2a;
+    color: #e5e5e5;
+  }
+
+  /* ── Format sections ─────────────────────────────── */
+  .format-section {
+    margin-top: 80px;
+    width: 100%;
+    max-width: 1600px;
+  }
+
+  .format-header {
+    font-size: 14px;
+    color: #7C3AED;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    font-weight: 700;
+    margin-bottom: 24px;
+    padding-left: 4px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .format-header::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #222;
+  }
+
+  .slides-row {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 48px;
+  }
+
+  .slide-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .slide-label {
+    font-size: 11px;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+    text-align: center;
+  }
+
+  /* ── Feed frame: 1080x1350 → scaled ──────────────── */
+  .slide-frame-feed {
+    width: 324px;
+    height: 405px;
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 8px 40px rgba(0,0,0,.5);
+  }
+  .slide-frame-feed .slide {
+    width: 1080px;
+    height: 1350px;
+    transform: scale(0.3);
+    transform-origin: top left;
+  }
+
+  /* ── Story frame: 1080x1920 → scaled ─────────────── */
+  .slide-frame-story {
+    width: 270px;
+    height: 480px;
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 8px 40px rgba(0,0,0,.5);
+  }
+  .slide-frame-story .slide {
+    width: 1080px;
+    height: 1920px;
+    transform: scale(0.25);
+    transform-origin: top left;
+  }
+
+  /* ── Shared slide base ───────────────────────────── */
+  .slide {
+    position: absolute;
+    top: 0; left: 0;
+    overflow: hidden;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ═══════════════════════════════════════════════════
+     SLIDE 1 — Before / After split
+     ═══════════════════════════════════════════════════ */
+
+  .slide-1 { background: #0f0f0f; }
+
+  .split-container {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+  }
+
+  .split-half {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+  }
+
+  .split-before .ph, .split-before img {
+    filter: grayscale(60%) brightness(0.7);
+  }
+  .split-before::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.5) 100%);
+  }
+
+  .split-after {
+    clip-path: inset(0 0 0 50%);
+    animation: clip-reveal 15s ease-in-out infinite;
+  }
+  .split-after::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.3) 100%);
+  }
+
+  @keyframes clip-reveal {
+    0%, 8%   { clip-path: inset(0 0 0 5%); }
+    45%, 55% { clip-path: inset(0 0 0 95%); }
+    92%, 100% { clip-path: inset(0 0 0 5%); }
+  }
+
+  .divider {
+    position: absolute;
+    left: 5%;
+    top: 0;
+    bottom: 0;
+    width: 6px;
+    background: #fff;
+    transform: translateX(-50%);
+    z-index: 10;
+    box-shadow: 0 0 20px rgba(255,255,255,0.3);
+    animation: divider-slide 15s ease-in-out infinite;
+  }
+  .divider-icon {
+    position: absolute;
+    left: 5%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 72px;
+    height: 72px;
+    background: #fff;
+    border-radius: 50%;
+    z-index: 11;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+    animation: divider-slide 15s ease-in-out infinite;
+  }
+  .divider-icon svg { width: 36px; height: 36px; }
+
+  @keyframes divider-slide {
+    0%, 8%   { left: 5%; }
+    45%, 55% { left: 95%; }
+    92%, 100% { left: 5%; }
+  }
+
+  .label-before, .label-after {
+    position: absolute;
+    top: 60px;
+    z-index: 12;
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+  .label-before { left: 60px; color: rgba(255,255,255,0.85); }
+  .label-after { right: 60px; color: #fff; text-shadow: 0 2px 12px rgba(124,58,237,0.4); }
+
+  /* Story format: IG Story safe area — top ~250px (status bar + username),
+     bottom ~270px (swipe-up / CTA zone) at 1920px canvas */
+  .slide-frame-story .top-badge { top: 270px; }
+  .slide-frame-story .label-before { top: 278px; }
+  .slide-frame-story .label-after { top: 278px; }
+  .slide-frame-story .bottom-bar-center { padding: 0 60px 280px; }
+
+  .bottom-bar-center {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 36px 60px;
+    background: linear-gradient(0deg, rgba(0,0,0,0.8) 0%, transparent 100%);
+    z-index: 12;
+    display: flex;
+    justify-content: center;
+  }
+  .bottom-bar-center .badge {
+    background: #f59e0b;
+    color: #1a1a2e;
+    font-size: 28px;
+    font-weight: 900;
+    padding: 14px 40px;
+    border-radius: 14px;
+    border: 3px solid #1a1a2e;
+    letter-spacing: 1.5px;
+    box-shadow: 5px 5px 0 rgba(0,0,0,0.4);
+  }
+
+  .top-badge {
+    position: absolute;
+    top: 60px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 12;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.15);
+    padding: 10px 32px;
+    border-radius: 40px;
+    font-size: 24px;
+    font-weight: 600;
+    color: #fff;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  /* ═══════════════════════════════════════════════════
+     SLIDE 2 — Zoom dettaglio
+     ═══════════════════════════════════════════════════ */
+
+  .slide-2 {
+    background: #0f0f0f;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .zoom-grid {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 8px;
+    padding: 60px 60px 24px;
+  }
+
+  .zoom-cell {
+    position: relative;
+    border-radius: 20px;
+    overflow: hidden;
+  }
+
+  .zoom-cell .cell-label {
+    position: absolute;
+    bottom: 16px;
+    left: 16px;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(8px);
+    color: #fff;
+    font-size: 22px;
+    font-weight: 600;
+    padding: 8px 20px;
+    border-radius: 10px;
+  }
+
+  .zoom-cell.before-cell .ph { filter: grayscale(60%) brightness(0.7); }
+
+  .slide-2 .bottom-text {
+    padding: 24px 60px 60px;
+    text-align: center;
+  }
+  .slide-2 .bottom-text h3 { font-size: 36px; font-weight: 700; color: #fff; margin-bottom: 8px; }
+  .slide-2 .bottom-text p { font-size: 26px; color: rgba(255,255,255,0.5); }
+
+  /* Story variant: 2x3 grid for extra vertical space */
+  .slide-frame-story .zoom-grid {
+    grid-template-rows: 1fr 1fr 1fr;
+  }
+
+  /* ═══════════════════════════════════════════════════
+     SLIDE 3 — CTA (Neobrutalist, matches site)
+     ═══════════════════════════════════════════════════ */
+
+  .slide-3 {
+    background: #fafaf8;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 80px;
+    position: relative;
+    font-family: 'Satoshi', 'Helvetica Neue', Arial, sans-serif;
+  }
+
+  /* Decorative shapes */
+  .slide-3 .deco-circle {
+    position: absolute;
+    top: -80px;
+    right: -100px;
+    width: 280px;
+    height: 280px;
+    background: #fef3c7;
+    border-radius: 50%;
+    border: 4px solid #fcd34d;
+    opacity: 0.5;
+  }
+  .slide-3 .deco-square {
+    position: absolute;
+    bottom: 120px;
+    left: -40px;
+    width: 120px;
+    height: 120px;
+    background: #dbeafe;
+    border-radius: 24px;
+    border: 4px solid #93c5fd;
+    opacity: 0.5;
+    transform: rotate(12deg);
+  }
+  .slide-3 .deco-pink {
+    position: absolute;
+    bottom: -60px;
+    right: 80px;
+    width: 180px;
+    height: 180px;
+    background: #fce7f3;
+    border-radius: 28px;
+    border: 4px solid #f9a8d4;
+    opacity: 0.4;
+    transform: rotate(-8deg);
+  }
+
+  /* Top amber badge */
+  .slide-3 .cta-badge {
+    background: #fffbeb;
+    border: 3px solid #f59e0b;
+    border-radius: 24px;
+    padding: 12px 32px;
+    font-size: 24px;
+    font-weight: 800;
+    color: #b45309;
+    margin-bottom: 48px;
+    box-shadow: 4px 4px 0 rgba(245,158,11,0.25);
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    letter-spacing: 0.5px;
+  }
+  .slide-3 .cta-badge svg { width: 24px; height: 24px; }
+
+  .slide-3 h2 {
+    font-size: 72px;
+    font-weight: 900;
+    color: #1a1a2e;
+    line-height: 1.05;
+    margin-bottom: 28px;
+    position: relative;
+    z-index: 1;
+    letter-spacing: -2px;
+  }
+  .slide-3 h2 .highlight {
+    color: #f59e0b;
+  }
+
+  .slide-3 .cta-sub {
+    font-size: 30px;
+    color: #555;
+    line-height: 1.55;
+    margin-bottom: 52px;
+    max-width: 820px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Feature pills row */
+  .slide-3 .feature-pills {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 52px;
+    position: relative;
+    z-index: 1;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .slide-3 .pill {
+    background: #fff;
+    border: 3px solid #1a1a2e;
+    border-radius: 14px;
+    padding: 14px 28px;
+    font-size: 22px;
+    font-weight: 700;
+    color: #1a1a2e;
+    box-shadow: 4px 4px 0 #1a1a2e;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .slide-3 .pill svg { width: 22px; height: 22px; }
+
+  /* Logo icon */
+  .logo-icon { width: 28px; height: 28px; flex-shrink: 0; }
+  .bottom-bar-center .logo-icon { width: 32px; height: 32px; }
+  .cta-footer { display: flex; align-items: center; gap: 10px; }
+  .cta-footer .logo-icon { width: 36px; height: 36px; }
+
+  /* Main CTA button */
+  .slide-3 .cta-btn {
+    background: #3B83F6;
+    color: #fff;
+    font-size: 36px;
+    font-weight: 900;
+    padding: 28px 72px;
+    border-radius: 18px;
+    border: 4px solid #1a1a2e;
+    display: inline-flex;
+    align-items: center;
+    gap: 16px;
+    position: relative;
+    z-index: 1;
+    box-shadow: 8px 8px 0 #1a1a2e;
+    letter-spacing: 0.5px;
+  }
+  .slide-3 .cta-btn svg { width: 32px; height: 32px; stroke-width: 3; }
+
+  /* Free trial note */
+  .slide-3 .cta-free {
+    margin-top: 24px;
+    font-size: 22px;
+    font-weight: 600;
+    color: #16a34a;
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .slide-3 .cta-free svg { width: 20px; height: 20px; }
+
+  .slide-3 .cta-footer {
+    position: absolute;
+    bottom: 48px;
+    font-size: 20px;
+    font-weight: 700;
+    color: #bbb;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    z-index: 1;
+    padding-top: 20px;
+    border-top: 2px solid #e5e5e5;
+  }
+
+  /* ═══════════════════════════════════════════════════
+     STORY CTA — neobrutalist with photo card
+     ═══════════════════════════════════════════════════ */
+  .slide-story-cta {
+    background: #fafaf8;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 280px 72px 300px;
+    position: relative;
+    font-family: 'Satoshi', 'Helvetica Neue', Arial, sans-serif;
+  }
+  .slide-story-cta .deco-circle,
+  .slide-story-cta .deco-square,
+  .slide-story-cta .deco-pink { position: absolute; }
+  .slide-story-cta .deco-circle { top: 200px; right: -100px; width: 280px; height: 280px; background: #fef3c7; border-radius: 50%; border: 4px solid #fcd34d; opacity: 0.5; }
+  .slide-story-cta .deco-square { bottom: 500px; left: -40px; width: 120px; height: 120px; background: #dbeafe; border-radius: 24px; border: 4px solid #93c5fd; opacity: 0.5; transform: rotate(12deg); }
+  .slide-story-cta .deco-pink { bottom: 300px; right: 60px; width: 180px; height: 180px; background: #fce7f3; border-radius: 28px; border: 4px solid #f9a8d4; opacity: 0.4; transform: rotate(-8deg); }
+
+  .slide-story-cta .cta-badge { background: #fffbeb; border: 3px solid #f59e0b; border-radius: 24px; padding: 12px 32px; font-size: 24px; font-weight: 800; color: #b45309; margin-bottom: 40px; box-shadow: 4px 4px 0 rgba(245,158,11,0.25); position: relative; z-index: 1; display: flex; align-items: center; gap: 10px; }
+  .slide-story-cta .cta-badge svg { width: 24px; height: 24px; }
+
+  /* Photo card — before/after rectangle */
+  .slide-story-cta .photo-card {
+    position: relative;
+    width: 880px;
+    height: 560px;
+    border-radius: 24px;
+    border: 4px solid #1a1a2e;
+    overflow: hidden;
+    box-shadow: 8px 8px 0 #1a1a2e;
+    margin-bottom: 40px;
+    z-index: 1;
+    display: flex;
+  }
+  .slide-story-cta .photo-card .pc-half {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+  }
+  .slide-story-cta .photo-card .pc-half img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .slide-story-cta .photo-card .pc-before img {
+    filter: grayscale(60%) brightness(0.7);
+  }
+  .slide-story-cta .photo-card .pc-after {
+    position: absolute;
+    top: 0; right: 0; bottom: 0;
+    width: 35%;
+  }
+  .slide-story-cta .photo-card .pc-before {
+    flex: 1;
+  }
+  .slide-story-cta .photo-card .pc-divider {
+    position: absolute;
+    left: 65%;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: #fff;
+    transform: translateX(-50%);
+    z-index: 2;
+  }
+  .slide-story-cta .photo-card .pc-slider-icon {
+    position: absolute;
+    left: 65%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 48px;
+    height: 48px;
+    background: #fff;
+    border-radius: 50%;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.4);
+  }
+  .slide-story-cta .photo-card .pc-slider-icon svg { width: 24px; height: 24px; }
+  .slide-story-cta .photo-card .pc-label {
+    position: absolute;
+    bottom: 16px;
+    font-size: 22px;
+    font-weight: 800;
+    color: #fff;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    z-index: 3;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+  }
+  .slide-story-cta .photo-card .pc-label-before { left: 24px; }
+  .slide-story-cta .photo-card .pc-label-after { right: 24px; }
+
+  .slide-story-cta h2 { font-size: 88px; font-weight: 900; color: #1a1a2e; line-height: 1.08; margin-bottom: 32px; position: relative; z-index: 1; letter-spacing: -2px; }
+  .slide-story-cta h2 .highlight { color: #f59e0b; }
+  .slide-story-cta .cta-sub { font-size: 36px; color: #555; line-height: 1.5; margin-bottom: 52px; max-width: 860px; position: relative; z-index: 1; }
+  .slide-story-cta .cta-btn { background: #3B83F6; color: #fff; font-size: 38px; font-weight: 900; padding: 28px 72px; border-radius: 18px; border: 4px solid #1a1a2e; display: inline-flex; align-items: center; gap: 16px; position: relative; z-index: 1; box-shadow: 8px 8px 0 #1a1a2e; }
+  .slide-story-cta .cta-btn svg { width: 32px; height: 32px; }
+  .slide-story-cta .cta-footer { margin-top: 24px; font-size: 20px; font-weight: 700; color: #bbb; letter-spacing: 3px; text-transform: uppercase; z-index: 1; position: relative; }
+
+  /* ── Placeholders ────────────────────────────────── */
+  .ph {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    font-weight: 600;
+  }
+  .ph-before {
+    background: linear-gradient(135deg, #374151 0%, #1f2937 100%);
+    color: #6b7280;
+  }
+  .ph-after {
+    background: linear-gradient(135deg, #4c1d95 0%, #7c3aed 50%, #6d28d9 100%);
+    color: rgba(255,255,255,0.5);
+  }
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <span>Formato:</span>
+  <button class="fmt-btn active" onclick="toggle('all',this)">Tutti</button>
+  <button class="fmt-btn" onclick="toggle('feed',this)">Feed</button>
+  <button class="fmt-btn" onclick="toggle('story',this)">Story</button>
+  <button class="fmt-btn" onclick="toggle('reels',this)">Reels</button>
+  <span style="margin-left:12px">Colore:</span>
+  <input type="color" id="accent" value="#7C3AED">
+</div>
+
+<!-- ════════════════════════════════════════════════════
+     FEED FORMAT — 1080 × 1350 (slide + CTA)
+     ════════════════════════════════════════════════════ -->
+<div class="format-section" id="sec-feed">
+  <div class="format-header">Instagram / LinkedIn Feed — 1080 × 1350</div>
+  <div class="slides-row">
+
+    <!-- Slide 1 -->
+    <div class="slide-col">
+      <div class="slide-label">Slide 1 — Before / After</div>
+      <div class="slide-frame-feed">
+        <div class="slide slide-1">
+          <div class="top-badge">AI Staging</div>
+          <div class="split-container">
+            <div class="split-half split-before">
+              <img src="file:///Users/antonioscirica/getnearme_Site/public/staging/1.jpg" style="width:100%;height:100%;object-fit:cover;">
+            </div>
+            <div class="split-half split-after">
+              <img src="file:///Users/antonioscirica/getnearme_Site/public/staging/2.jpg" style="width:100%;height:100%;object-fit:cover;">
+            </div>
+          </div>
+          <div class="divider"></div>
+          <div class="divider-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M7 16l-4-4 4-4"/><path d="M17 8l4 4-4 4"/>
+            </svg>
+          </div>
+          <div class="label-before">Prima</div>
+          <div class="label-after">Dopo</div>
+          <div class="bottom-bar-center">
+            <div class="badge" style="display:flex;align-items:center;gap:10px"><svg class="logo-icon" viewBox="0 0 424 533" xmlns="http://www.w3.org/2000/svg"><path d="M224.816 4.98C217.966-1.72 207.036-1.65 200.274 5.13L51.253 154.306c-14.922 14.922-27.88 29.952-37.086 49.303-9.206 19.35-13.635 38.526-14.071 58.923-.567 26.135.975 49.699 17.468 70.838 13.962 17.889 31.458 32.876 46.576 49.739 16.601 18.521 34.14 36.475 51.178 54.691 4.56 4.887 58.465 62.021 83.051 88.418 6.698 7.177 17.976 7.439 25.001.567L379.138 374.925c55.018-53.971 58.334-133.379 15.969-196.448-16.885-25.153-40.882-45.812-63.483-66.471-6.85-6.261-17.409-6.043-24.019.48L167.856 250.403c-6.61 6.522-6.959 17.059-.785 23.997l33.508 37.784c6.61 7.461 18.129 7.875 25.262.894L320.193 220.69s41.885 40.773.349 93.152L225.427 408.782c-6.785 6.763-17.736 6.807-24.564.109L111.463 321.084s-61.759-46.619.658-109.491c49.521-49.106 119.483-118.479 147.778-146.512 6.915-6.85 6.871-18.063-.088-24.87L224.816 4.98z" fill="#1a1a2e"/></svg>GetNearMe</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 2 — CTA -->
+    <div class="slide-col">
+      <div class="slide-label">Slide 2 — CTA</div>
+      <div class="slide-frame-feed">
+        <div class="slide slide-3">
+          <div class="deco-circle"></div>
+          <div class="deco-square"></div>
+          <div class="deco-pink"></div>
+
+          <div class="cta-badge">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#b45309" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+            </svg>
+            AI Virtual Staging
+          </div>
+
+          <h2>Trasforma i tuoi<br>annunci in <span class="highlight">30 secondi</span></h2>
+
+          <div class="cta-sub">Staging AI, analisi di zona, template social e video pronti per i tuoi annunci. Tutto in un'estensione Chrome gratuita.</div>
+
+          <div class="feature-pills">
+            <div class="pill">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#1a1a2e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/>
+              </svg>
+              Staging AI
+            </div>
+            <div class="pill">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#1a1a2e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14.5 4h-5L7 7H4a2 2 0 00-2 2v9a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/>
+              </svg>
+              Post Social
+            </div>
+            <div class="pill">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#1a1a2e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+              Video AI
+            </div>
+          </div>
+
+          <div class="cta-btn">
+            Link in bio
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 5v14"/><path d="M19 12l-7 7-7-7"/>
+            </svg>
+          </div>
+
+          <div class="cta-footer"><svg class="logo-icon" viewBox="0 0 424 533" xmlns="http://www.w3.org/2000/svg"><path d="M224.816 4.98C217.966-1.72 207.036-1.65 200.274 5.13L51.253 154.306c-14.922 14.922-27.88 29.952-37.086 49.303-9.206 19.35-13.635 38.526-14.071 58.923-.567 26.135.975 49.699 17.468 70.838 13.962 17.889 31.458 32.876 46.576 49.739 16.601 18.521 34.14 36.475 51.178 54.691 4.56 4.887 58.465 62.021 83.051 88.418 6.698 7.177 17.976 7.439 25.001.567L379.138 374.925c55.018-53.971 58.334-133.379 15.969-196.448-16.885-25.153-40.882-45.812-63.483-66.471-6.85-6.261-17.409-6.043-24.019.48L167.856 250.403c-6.61 6.522-6.959 17.059-.785 23.997l33.508 37.784c6.61 7.461 18.129 7.875 25.262.894L320.193 220.69s41.885 40.773.349 93.152L225.427 408.782c-6.785 6.763-17.736 6.807-24.564.109L111.463 321.084s-61.759-46.619.658-109.491c49.521-49.106 119.483-118.479 147.778-146.512 6.915-6.85 6.871-18.063-.088-24.87L224.816 4.98z" fill="#3B83F6"/></svg>getnearme.it</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════
+     STORY — 1080 × 1920 (CTA neobrutalist + photo card)
+     ════════════════════════════════════════════════════ -->
+<div class="format-section" id="sec-story">
+  <div class="format-header">Instagram Story — 1080 × 1920</div>
+  <div class="slides-row">
+
+    <div class="slide-col">
+      <div class="slide-label">Story — CTA + foto</div>
+      <div class="slide-frame-story">
+        <div class="slide slide-story-cta">
+          <div class="deco-circle"></div>
+          <div class="deco-square"></div>
+          <div class="deco-pink"></div>
+
+          <div class="cta-badge">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#b45309" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+            </svg>
+            AI Staging
+          </div>
+
+          <div class="photo-card">
+            <div class="pc-half pc-before">
+              <img src="file:///Users/antonioscirica/getnearme_Site/public/staging/1.jpg">
+              <div class="pc-label pc-label-before">Prima</div>
+            </div>
+            <div class="pc-half pc-after">
+              <img src="file:///Users/antonioscirica/getnearme_Site/public/staging/2.jpg">
+              <div class="pc-label pc-label-after">Dopo</div>
+            </div>
+            <div class="pc-divider"></div>
+            <div class="pc-slider-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M7 16l-4-4 4-4"/><path d="M17 8l4 4-4 4"/>
+              </svg>
+            </div>
+          </div>
+
+          <h2>Vedi il risultato<br><span class="highlight">completo</span></h2>
+
+          <div class="cta-sub">Staging AI, analisi di zona e template social per i tuoi annunci. Tutto in un'estensione Chrome.</div>
+
+          <div class="cta-btn">
+            Guarda nel profilo
+          </div>
+
+          <div class="cta-footer" style="margin-top:48px;padding-top:24px;border-top:2px solid #e5e5e5"><svg class="logo-icon" viewBox="0 0 424 533" xmlns="http://www.w3.org/2000/svg"><path d="M224.816 4.98C217.966-1.72 207.036-1.65 200.274 5.13L51.253 154.306c-14.922 14.922-27.88 29.952-37.086 49.303-9.206 19.35-13.635 38.526-14.071 58.923-.567 26.135.975 49.699 17.468 70.838 13.962 17.889 31.458 32.876 46.576 49.739 16.601 18.521 34.14 36.475 51.178 54.691 4.56 4.887 58.465 62.021 83.051 88.418 6.698 7.177 17.976 7.439 25.001.567L379.138 374.925c55.018-53.971 58.334-133.379 15.969-196.448-16.885-25.153-40.882-45.812-63.483-66.471-6.85-6.261-17.409-6.043-24.019.48L167.856 250.403c-6.61 6.522-6.959 17.059-.785 23.997l33.508 37.784c6.61 7.461 18.129 7.875 25.262.894L320.193 220.69s41.885 40.773.349 93.152L225.427 408.782c-6.785 6.763-17.736 6.807-24.564.109L111.463 321.084s-61.759-46.619.658-109.491c49.521-49.106 119.483-118.479 147.778-146.512 6.915-6.85 6.871-18.063-.088-24.87L224.816 4.98z" fill="#3B83F6"/></svg>getnearme.it</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════
+     REELS / VERTICAL — 1080 × 1920 (animated slider)
+     ════════════════════════════════════════════════════ -->
+<div class="format-section" id="sec-reels">
+  <div class="format-header">Instagram Reels / TikTok / LinkedIn Vertical — 1080 × 1920</div>
+  <div class="slides-row">
+
+    <div class="slide-col">
+      <div class="slide-label">Reel — Before / After (15s)</div>
+      <div class="slide-frame-story">
+        <div class="slide slide-1">
+          <div class="top-badge">AI Staging</div>
+          <div class="split-container">
+            <div class="split-half split-before">
+              <img src="file:///Users/antonioscirica/getnearme_Site/public/staging/1.jpg" style="width:100%;height:100%;object-fit:cover;">
+            </div>
+            <div class="split-half split-after">
+              <img src="file:///Users/antonioscirica/getnearme_Site/public/staging/2.jpg" style="width:100%;height:100%;object-fit:cover;">
+            </div>
+          </div>
+          <div class="divider"></div>
+          <div class="divider-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M7 16l-4-4 4-4"/><path d="M17 8l4 4-4 4"/>
+            </svg>
+          </div>
+          <div class="label-before">Prima</div>
+          <div class="label-after">Dopo</div>
+          <div class="bottom-bar-center">
+            <div class="badge" style="display:flex;align-items:center;gap:10px"><svg class="logo-icon" viewBox="0 0 424 533" xmlns="http://www.w3.org/2000/svg"><path d="M224.816 4.98C217.966-1.72 207.036-1.65 200.274 5.13L51.253 154.306c-14.922 14.922-27.88 29.952-37.086 49.303-9.206 19.35-13.635 38.526-14.071 58.923-.567 26.135.975 49.699 17.468 70.838 13.962 17.889 31.458 32.876 46.576 49.739 16.601 18.521 34.14 36.475 51.178 54.691 4.56 4.887 58.465 62.021 83.051 88.418 6.698 7.177 17.976 7.439 25.001.567L379.138 374.925c55.018-53.971 58.334-133.379 15.969-196.448-16.885-25.153-40.882-45.812-63.483-66.471-6.85-6.261-17.409-6.043-24.019.48L167.856 250.403c-6.61 6.522-6.959 17.059-.785 23.997l33.508 37.784c6.61 7.461 18.129 7.875 25.262.894L320.193 220.69s41.885 40.773.349 93.152L225.427 408.782c-6.785 6.763-17.736 6.807-24.564.109L111.463 321.084s-61.759-46.619.658-109.491c49.521-49.106 119.483-118.479 147.778-146.512 6.915-6.85 6.871-18.063-.088-24.87L224.816 4.98z" fill="#1a1a2e"/></svg>GetNearMe</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  function toggle(mode, btn) {
+    document.querySelectorAll('.fmt-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const sections = { feed: 'sec-feed', story: 'sec-story', reels: 'sec-reels' };
+    Object.entries(sections).forEach(([key, id]) => {
+      document.getElementById(id).style.display = (mode === 'all' || mode === key) ? '' : 'none';
+    });
+  }
+
+  document.getElementById('accent').addEventListener('input', (e) => {
+    const c = e.target.value;
+    document.documentElement.style.setProperty('--accent', c);
+    document.querySelectorAll('.badge, .cta-btn').forEach(el => el.style.background = c);
+    document.querySelectorAll('.divider-icon svg').forEach(el => el.setAttribute('stroke', c));
+    document.querySelectorAll('.slide-3 .glow').forEach(el => el.style.background = c);
+    document.querySelectorAll('.cta-icon').forEach(el => el.style.background = c + '33');
+    document.querySelectorAll('.format-header').forEach(el => el.style.color = c);
+  });
+</script>
+
+</body>
+</html>
