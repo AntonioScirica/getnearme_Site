@@ -18,6 +18,7 @@ import {
   type VideoTemplate, type VideoAvatar, type VideoQuota, type ScriptSection, type MusicTrack,
   AIVideoError,
 } from '@/lib/aiVideo';
+import { drawCoverOverlay, preloadCoverFonts } from '@/lib/coverOverlay';
 
 type Clip = {
   id: string; file: File; thumb: string; duration: number;
@@ -32,6 +33,64 @@ const MAX_CLIPS_MONTAGGIO = 30;
 const MAX_PAIRS = 1;
 
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
+
+// Carica un'immagine (crossOrigin per poter usare il canvas → toBlob).
+function loadImg(src: string): Promise<HTMLImageElement | null> {
+  return new Promise(res => {
+    if (!src) { res(null); return; }
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => res(img);
+    img.onerror = () => res(null);
+    img.src = src;
+  });
+}
+
+// Griglia anteprima cover: 9 canvas (primo frame + dim + logo + titolo per stile),
+// identica all'estensione. Clic per selezionare.
+function CoverStylesGrid({ thumbUrl, logoUrl, title, address, brandColor, isPortrait, selected, onSelect, styles }: {
+  thumbUrl: string; logoUrl: string; title: string; address: string; brandColor: string;
+  isPortrait: boolean; selected: string; onSelect: (id: string) => void;
+  styles: { id: string; label: string }[];
+}) {
+  const refs = React.useRef<Record<string, HTMLCanvasElement | null>>({});
+  React.useEffect(() => {
+    let alive = true;
+    (async () => {
+      await preloadCoverFonts();
+      const [frame, logo] = await Promise.all([loadImg(thumbUrl), logoUrl ? loadImg(logoUrl) : Promise.resolve(null)]);
+      if (!alive) return;
+      const W = isPortrait ? 270 : 480;
+      const H = isPortrait ? 480 : 270;
+      for (const st of styles) {
+        const canvas = refs.current[st.id];
+        if (!canvas) continue;
+        canvas.width = W; canvas.height = H;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) continue;
+        ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
+        if (frame && frame.width > 0) {
+          const scale = Math.max(W / frame.width, H / frame.height);
+          const sw = W / scale, sh = H / scale;
+          ctx.drawImage(frame, (frame.width - sw) / 2, (frame.height - sh) / 2, sw, sh, 0, 0, W, H);
+        }
+        drawCoverOverlay(ctx, { style: st.id, title: title.trim() || 'Inserisci qui il titolo del video', address, logoImg: logo, brandColor, isPortrait, W, H });
+      }
+    })();
+    return () => { alive = false; };
+  }, [thumbUrl, logoUrl, title, address, brandColor, isPortrait, styles]);
+
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+      {styles.map(st => (
+        <div key={st.id} onClick={() => onSelect(st.id)} style={{ cursor: 'pointer', borderRadius: 10, overflow: 'hidden', border: selected === st.id ? '2px solid #3B83F6' : '2px solid transparent', boxShadow: selected === st.id ? '0 4px 12px rgba(59,131,246,.18)' : '0 1px 3px rgba(0,0,0,.06)' }}>
+          <canvas ref={el => { refs.current[st.id] = el; }} style={{ width: '100%', aspectRatio: isPortrait ? '9 / 16' : '16 / 9', display: 'block', background: '#000' }} />
+          <div style={{ fontSize: 11, fontWeight: 700, textAlign: 'center', padding: '6px 4px', color: selected === st.id ? '#1d5fd0' : '#57534c', background: selected === st.id ? '#eff6ff' : '#fff' }}>{st.label}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 import type { Project } from './types';
 
@@ -76,6 +135,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
   const videoObjUrl = React.useRef<string | null>(null);
   // montaggio logo
   const [montaggioPhase, setMontaggioPhase] = React.useState<'cover' | 'logo' | 'music'>('cover');
+  const [coverLogoOn, setCoverLogoOn] = React.useState(false);
   const [watermarkEnabled, setWatermarkEnabled] = React.useState(true);
   const [watermarkPosition, setWatermarkPosition] = React.useState('bottom-right');
   const [watermarkOpacity, setWatermarkOpacity] = React.useState(100);
@@ -947,15 +1007,37 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
               <div style={s('font-size:16px;font-weight:800;margin-bottom:4px')}>Cover di apertura</div>
               <div style={s('color:#8c867d;font-size:13px;margin-bottom:16px')}>Inserisci il titolo che apparirà nella schermata iniziale del video.</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <input value={coverTitle} onChange={e => setCoverTitle(e.target.value)} maxLength={80} placeholder="Titolo (es. Trilocale con terrazzo)" style={inputStyle} />
-                <input value={coverAddress} onChange={e => setCoverAddress(e.target.value)} maxLength={80} placeholder="Indirizzo" style={inputStyle} />
-                {coverTitle.trim() && (
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
-                    {COVER_STYLES.map(cs => (
-                      <div key={cs.id} onClick={() => setCoverStyle(cs.id)} style={{ ...cardSel(coverStyle === cs.id), textAlign: 'center', fontSize: 12, fontWeight: 700, padding: '9px 4px' }}>{cs.label}</div>
-                    ))}
-                  </div>
-                )}
+                <input value={coverTitle} onChange={e => setCoverTitle(e.target.value)} maxLength={80} placeholder="Inserisci qui il titolo del video..." style={inputStyle} />
+                <input value={coverAddress} onChange={e => setCoverAddress(e.target.value)} maxLength={100} placeholder="Scrivi qui l'indirizzo dell'immobile... (opzionale)" style={inputStyle} />
+                {(() => {
+                  const whiteLogo = (brand.logoOrientation === 'vertical' ? (brand.logos.logo_white_v || brand.logos.logo_white_h) : (brand.logos.logo_white_h || brand.logos.logo_white_v)) || '';
+                  return (
+                    <>
+                      <div style={s('display:flex;align-items:center;justify-content:space-between')}>
+                        <span style={{ fontSize: 13.5, fontWeight: 600 }}>Aggiungi logo</span>
+                        <div onClick={() => { if (whiteLogo) setCoverLogoOn(v => !v); }} title={whiteLogo ? '' : 'Carica un logo bianco in Brand'} style={{ width: 40, height: 24, borderRadius: 99, background: coverLogoOn && whiteLogo ? '#3B83F6' : '#d8d4cb', position: 'relative', cursor: whiteLogo ? 'pointer' : 'not-allowed', opacity: whiteLogo ? 1 : .5, transition: 'background .2s' }}>
+                          <span style={{ position: 'absolute', top: 3, left: coverLogoOn && whiteLogo ? 19 : 3, width: 18, height: 18, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,.2)', transition: 'left .2s' }} />
+                        </div>
+                      </div>
+                      {coverTitle.trim() && (
+                        <>
+                          <div style={s('font-size:12.5px;font-weight:700;color:#57534c')}>Scegli una copertina</div>
+                          <CoverStylesGrid
+                            thumbUrl={clips[0]?.thumb || ''}
+                            logoUrl={coverLogoOn ? whiteLogo : ''}
+                            title={coverTitle}
+                            address={coverAddress}
+                            brandColor={brand.primaryColor || '#3B82F6'}
+                            isPortrait={clips.filter(c => c.height >= c.width).length >= clips.length / 2}
+                            selected={coverStyle}
+                            onSelect={setCoverStyle}
+                            styles={COVER_STYLES}
+                          />
+                        </>
+                      )}
+                    </>
+                  );
+                })()}
               </div>
               <div style={s('display:flex;justify-content:space-between;margin-top:20px')}>
                 <Box as="button" onClick={() => setStep(2)} style={s('border:1px solid #e4e1da;background:#fff;font-size:13px;font-weight:600;padding:11px 20px;border-radius:10px;cursor:pointer') as React.CSSProperties} hover={s('background:#f6f4f0')}>Indietro</Box>
