@@ -78,7 +78,7 @@ const PLAN_TO_SUB_TYPE: Record<string, string> = {
 // Voci dalla landing (uguali per tutti i piani). Differenza tra piani = prezzo.
 // Quote uguali: 200 foto AI + 4 video AI/mese (margini ~81-91%).
 const PLAN_FEATURES = [
-  '200 foto AI homestaging/mese',
+  '250 foto AI homestaging/mese',
   '4 video AI/mese',
   'Analisi immobiliari illimitate',
   'Report PDF con il tuo logo',
@@ -92,17 +92,17 @@ const PLANS = [
   {
     id: 'monthly', name: 'Mensile', price: 100, period: '/mese', badge: null, popular: false,
     features: PLAN_FEATURES,
-    color: '#211f1c', quotaFoto: 200, quotaVideo: 4, quotaPost: 999,
+    color: '#211f1c', quotaFoto: 250, quotaVideo: 4, quotaPost: 999,
   },
   {
     id: 'quarterly', name: 'Trimestrale', price: 79, period: '/mese', badge: null, popular: false,
     features: PLAN_FEATURES,
-    color: '#3B83F6', quotaFoto: 200, quotaVideo: 4, quotaPost: 999,
+    color: '#3B83F6', quotaFoto: 250, quotaVideo: 4, quotaPost: 999,
   },
   {
     id: 'annual', name: 'Annuale', price: 59, period: '/mese', badge: null, popular: false,
     features: PLAN_FEATURES,
-    color: '#211f1c', quotaFoto: 200, quotaVideo: 4, quotaPost: 999,
+    color: '#211f1c', quotaFoto: 250, quotaVideo: 4, quotaPost: 999,
   },
 ];
 
