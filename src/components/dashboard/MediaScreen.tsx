@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { s, Box, Icon } from './ui';
-import { fetchUserBatches, fetchBatchPhotos, BatchInfo, BatchPhoto } from '@/lib/stagingBatches';
+import { fetchUserBatches, fetchBatchPhotos, deleteBatchPhoto, BatchInfo, BatchPhoto } from '@/lib/stagingBatches';
 import { downloadImage } from '@/lib/staging';
 import type { Project } from './types';
 import Image from 'next/image';
@@ -77,6 +77,18 @@ export default function MediaScreen({
     e.stopPropagation();
     toast('Download avviato...', 'download');
     downloadImage(url, 'foto-ai.png');
+  };
+
+  const handleDeletePhoto = async (batchId: string, index: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!window.confirm('Eliminare questa foto? L\'azione è irreversibile.')) return;
+    const ok = await deleteBatchPhoto(batchId, index);
+    if (ok) {
+      setPhotosByBatch(prev => ({ ...prev, [batchId]: (prev[batchId] || []).filter(p => p.index !== index) }));
+      toast('Foto eliminata', 'trash');
+    } else {
+      toast('Errore durante l\'eliminazione', 'x');
+    }
   };
 
   // Scarica come ZIP una lista di foto (solo riuscite con URL valido).
@@ -226,6 +238,13 @@ export default function MediaScreen({
                           <div style={{ fontSize: 12, color: '#b91c1c' }}>
                             {photo.error === 'generation_failed' ? "L'AI non è riuscita a processare questa foto. Riprova con un'angolazione diversa." : photo.error || "Errore sconosciuto."}
                           </div>
+                          <button
+                            onClick={(e) => handleDeletePhoto(photo.batchId, photo.index, e)}
+                            title="Elimina"
+                            style={{ position: 'absolute', top: 10, right: 10, width: 30, height: 30, borderRadius: '50%', background: '#fff', border: '1px solid #fecaca', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                          >
+                            <Icon name="trash" size={14} color="#dc2626" />
+                          </button>
                         </div>
                       );
                     }
@@ -250,6 +269,13 @@ export default function MediaScreen({
                           style={{ position: 'absolute', top: 12, right: 12, width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,0.9)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}
                         >
                           <Icon name="download" size={16} color="#211f1c" />
+                        </button>
+                        <button
+                          onClick={(e) => handleDeletePhoto(photo.batchId, photo.index, e)}
+                          title="Elimina foto"
+                          style={{ position: 'absolute', top: 12, left: 12, width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,0.9)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}
+                        >
+                          <Icon name="trash" size={15} color="#dc2626" />
                         </button>
                       </div>
                     );

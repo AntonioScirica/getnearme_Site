@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 const ACCOUNT_ID = process.env.R2_ACCOUNT_ID!;
@@ -33,6 +33,17 @@ export async function uploadToR2(buffer: Buffer, key: string, contentType: strin
 /**
  * Uploads from a remote URL to R2 directly.
  */
+/**
+ * Elimina un oggetto da R2. Non lancia: logga e prosegue (best-effort).
+ */
+export async function deleteFromR2(key: string): Promise<void> {
+  try {
+    await s3.send(new DeleteObjectCommand({ Bucket: BUCKET_NAME, Key: key }));
+  } catch (e) {
+    console.error('deleteFromR2 failed for', key, (e as Error)?.message);
+  }
+}
+
 export async function uploadUrlToR2(url: string, key: string): Promise<string> {
   const response = await fetch(url);
   if (!response.ok) {

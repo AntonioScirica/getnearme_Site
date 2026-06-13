@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { getR2SignedUrl } from '@/lib/s3'
+import { getR2SignedUrl, deleteFromR2 } from '@/lib/s3'
 
 const admin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -100,4 +100,54 @@ export async function GET(
   return NextResponse.json({
     photos: photos.filter(p => p.resultUrl || p.status === 'failed')
   })
+}
+
+// Elimina una foto (item) dal batch. Se il batch resta senza item, elimina anche il batch.
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ batchId: string }> }
+) {
+  const { batchId } = await params;
+  const userId = await getUserId(req)
+  if (!userId) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
+
+  const body = await req.json().catch(() => ({}))
+  const index = body?.index
+  if (typeof index !== 'number') return NextResponse.json({ error: 'missing_index' }, { status: 400 })
+
+  // Verifica proprietà del batch
+  const { data: batch } = await admin
+    .from('batch_staging')
+    .select('id, user_id')
+    .eq('id', batchId)
+    .single()
+  if (!batch) return NextResponse.json({ error: 'not_found' }, { status: 404 })
+  if (batch.user_id !== userId) return NextResponse.json({ error: 'forbidden' }, { status: 403 })
+
+  // Recupera l'item per cancellare anche gli oggetti R2
+  const { data: item } = await admin
+    .from('batch_staging_items')
+    .select('result_path, source_path')
+    .eq('batch_id', batchId)
+    .eq('item_index', index)
+    .single()
+
+  if (item) {
+    for (const p of [item.result_path, item.source_path]) {
+      if (p && typeof p === 'string' && p.startsWith('staging/')) await deleteFromR2(p)
+    }
+  }
+
+  await admin.from('batch_staging_items').delete().eq('batch_id', batchId).eq('item_index', index)
+
+  // Se non restano item, elimina il batch (così la sezione sparisce)
+  const { count } = await admin
+    .from('batch_staging_items')
+    .select('id', { count: 'exact', head: true })
+    .eq('batch_id', batchId)
+  if ((count ?? 0) === 0) {
+    await admin.from('batch_staging').delete().eq('id', batchId)
+  }
+
+  return NextResponse.json({ success: true, batchEmpty: (count ?? 0) === 0 })
 }

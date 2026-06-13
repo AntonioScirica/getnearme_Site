@@ -51,6 +51,21 @@ export async function fetchBatchPhotos(batchId: string): Promise<BatchPhoto[]> {
   }
 }
 
+export async function deleteBatchPhoto(batchId: string, index: number): Promise<boolean> {
+  const token = getTokenFast()
+  try {
+    const res = await fetch(`/api/staging-batches/${batchId}/photos`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ index }),
+    })
+    return res.ok
+  } catch (err) {
+    console.error('deleteBatchPhoto error:', err)
+    return false
+  }
+}
+
 export function dismissBatch(batchId: string): void {
   if (typeof window === 'undefined') return
   const key = 'gnm_dismissed_batches'
