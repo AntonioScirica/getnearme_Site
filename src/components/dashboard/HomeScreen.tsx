@@ -1,6 +1,9 @@
 import React from 'react';
 import { Box, Icon } from './ui';
 import { ProjectData } from '@/lib/projects';
+import { fetchUserBatches, fetchBatchPhotos } from '@/lib/stagingBatches';
+
+type RecentPhoto = { url: string; ts: number };
 
 // Helpers
 const s = (str: string) => str.split(';').reduce((acc, rule) => {
@@ -88,6 +91,30 @@ export function HomeScreen({
     // reset input
     e.target.value = '';
   };
+
+  // Carica le foto recenti generate per questo immobile (max 8) dai batch.
+  const [recent, setRecent] = React.useState<RecentPhoto[]>([]);
+  React.useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const batches = await fetchUserBatches();
+        const valid = batches.filter(b =>
+          b.completedItems > 0 && b.status !== 'failed' &&
+          (!active?.id || !b.projectId || b.projectId === active.id)
+        );
+        const all: RecentPhoto[] = [];
+        await Promise.all(valid.map(async b => {
+          const photos = await fetchBatchPhotos(b.id);
+          for (const p of photos) {
+            if (p.resultUrl && p.status !== 'failed') all.push({ url: p.resultUrl, ts: new Date(b.createdAt).getTime() });
+          }
+        }));
+        if (!cancelled) setRecent(all.sort((a, b) => b.ts - a.ts).slice(0, 8));
+      } catch { /* ignore */ }
+    })();
+    return () => { cancelled = true; };
+  }, [active?.id]);
 
   if (!active) {
     return (
@@ -324,15 +351,26 @@ export function HomeScreen({
             <h2 style={s('margin:0;font-size:20px;font-weight:800;letter-spacing:-.3px;color:#211f1c')}>Contenuti recenti</h2>
             <span onClick={() => go('media')} style={s('font-size:14px;font-weight:700;color:#1d5fd0;cursor:pointer')}>Vedi tutto in Libreria Media</span>
           </div>
-          <div style={{ background: '#fcfcfb', border: '1px dashed #e4e1da', borderRadius: 16, padding: '48px 24px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <div style={{ width: 48, height: 48, borderRadius: '50%', background: '#f6f4f0', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
-              <Icon name="image" size={24} color="#8c867d" />
+          {recent.length > 0 ? (
+            <div className="max-md:!grid-cols-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 12 }}>
+              {recent.map((p, i) => (
+                <div key={i} onClick={() => go('media')} style={{ position: 'relative', aspectRatio: '4/3', borderRadius: 12, overflow: 'hidden', cursor: 'pointer', border: '1px solid #f0ede7', background: '#f4f2ee' }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={p.url} alt="" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                </div>
+              ))}
             </div>
-            <div style={{ fontSize: 16, fontWeight: 700, color: '#211f1c', marginBottom: 4 }}>Nessun contenuto generato</div>
-            <div style={{ fontSize: 14, color: '#8c867d', maxWidth: 360, lineHeight: 1.5 }}>
-              Non hai ancora creato render o video AI per questo immobile. Usa gli strumenti qui sopra per iniziare.
+          ) : (
+            <div style={{ background: '#fcfcfb', border: '1px dashed #e4e1da', borderRadius: 16, padding: '48px 24px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <div style={{ width: 48, height: 48, borderRadius: '50%', background: '#f6f4f0', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+                <Icon name="image" size={24} color="#8c867d" />
+              </div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: '#211f1c', marginBottom: 4 }}>Nessun contenuto generato</div>
+              <div style={{ fontSize: 14, color: '#8c867d', maxWidth: 360, lineHeight: 1.5 }}>
+                Non hai ancora creato render o video AI per questo immobile. Usa gli strumenti qui sopra per iniziare.
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
       </div>
