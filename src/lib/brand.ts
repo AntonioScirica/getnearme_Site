@@ -114,15 +114,21 @@ function rowToSettings(row: Record<string, unknown> | null, signed: Record<LogoK
 
 export async function fetchBrand(): Promise<BrandFetchResult> {
   try {
-    const uid = await getUid();
-    if (!uid) return { isTeamMember: false, role: 'owner', settings: readLocal() };
-    const { data: row } = await supabase
-      .from('user_brand')
-      .select('*')
-      .eq('user_id', uid)
-      .maybeSingle();
-    const signed = {} as Record<LogoKey, string | null>;
-    await Promise.all(LOGO_KEYS.map(async (k) => { signed[k] = await signPath((row?.[k] as string) || null); }));
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return { isTeamMember: false, role: 'owner', settings: readLocal() };
+
+    const res = await fetch('/api/brand', {
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`
+      },
+      cache: 'no-store'
+    });
+
+    if (!res.ok) {
+      return { isTeamMember: false, role: 'owner', settings: readLocal() };
+    }
+
+    const { row, signed } = await res.json();
     return { isTeamMember: false, role: 'owner', settings: rowToSettings(row, signed) };
   } catch {
     return { isTeamMember: false, role: 'owner', settings: readLocal() };
@@ -196,11 +202,32 @@ export async function uploadBrandLogo(_scope: Scope, logoKey: string, file: File
     writeLocal({ ...cur, logos: { ...cur.logos, [logoKey]: dataUrl } });
     return true;
   }
-  const ext = file.type === 'image/webp' ? 'webp' : file.type === 'image/jpeg' ? 'jpg' : file.type === 'image/svg+xml' ? 'svg' : 'png';
-  const path = `${uid}/${logoKey}_${Date.now()}.${ext}`;
-  const { error: upErr } = await supabase.storage.from(BUCKET).upload(path, file, { contentType: file.type, upsert: true });
-  if (upErr) { console.error('[brand] logo upload failed:', upErr.message); return false; }
-  return upsertBrand({ [logoKey]: path });
+  
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return false;
+
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('logoKey', logoKey);
+
+    const res = await fetch('/api/brand/logo', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`
+      },
+      body: formData
+    });
+
+    if (!res.ok) {
+      console.error('[brand] logo upload failed via API');
+      return false;
+    }
+    return true;
+  } catch (err: any) {
+    console.error('[brand] logo upload exception:', err.message);
+    return false;
+  }
 }
 
 export async function removeBrandLogo(_scope: Scope, logoKey: string): Promise<boolean> {

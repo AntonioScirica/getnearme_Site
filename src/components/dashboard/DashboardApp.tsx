@@ -27,7 +27,9 @@ import { type ProjectData, fetchProjects, updateProject } from '@/lib/projects';
 import { fetchUserBatches, dismissBatch, type BatchInfo } from '@/lib/stagingBatches';
 import { STAGING_STYLES } from '@/lib/staging';
 import { cleanupOldMedia } from '@/lib/localMediaCache';
+import { supabase } from '@/lib/supabase';
 
+export type AppNotification = { id: string; title: string; body: string; type: string; is_read: boolean; created_at: string; };
 const TemplatePreview = dynamic(() => import('./TemplatePreview'), { ssr: false });
 
 type Toast = { id: number; msg: string; icon: string };
@@ -80,11 +82,9 @@ const PLAN_TO_SUB_TYPE: Record<string, string> = {
 const PLAN_FEATURES = [
   '250 foto AI homestaging/mese',
   '4 video AI/mese',
-  'Analisi immobiliari illimitate',
-  'Report PDF con il tuo logo',
   'Template Post & Stories Social',
-  'AI Rendering & Homestaging',
-  'Editor Video per i social',
+  'Editor Video Automatico',
+  'Contenuti 100% Brandizzati',
   'Supporto prioritario',
 ];
 
@@ -1422,21 +1422,21 @@ function AccountScreen({ credits, toast, go, userData }: { credits: number; toas
 
       {/* ── CURRENT PLAN SUMMARY ── */}
       <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:14px;padding:24px 28px;margin-bottom:20px')}>
-        <div style={s('display:flex;align-items:center;gap:20px')}>
+        <div className="max-md:!flex-col max-md:!items-start" style={s('display:flex;align-items:center;gap:20px')}>
           <div style={s('flex:1;min-width:0')}>
             <div style={s('display:flex;align-items:center;gap:10px')}>
               <span style={s('font-size:18px;font-weight:800;letter-spacing:-.3px')}>Piano {currentPlan.name}</span>
               <span style={s('font-size:10.5px;font-weight:800;background:#3B83F6;color:#fff;padding:4px 12px;border-radius:8px;letter-spacing:.03em')}>ATTIVO</span>
             </div>
           </div>
-          <Box as="button" onClick={() => window.open(STRIPE_BILLING_PORTAL, '_blank')} style={s('border:1px solid #e4e1da;background:#fff;font-size:13px;font-weight:700;padding:10px 18px;border-radius:10px;cursor:pointer;min-height:44px;white-space:nowrap')} hover={s('background:#f6f4f0')}>Gestisci piano</Box>
+          <Box as="button" onClick={() => window.open(STRIPE_BILLING_PORTAL, '_blank')} className="max-md:!w-full" style={s('border:1px solid #e4e1da;background:#fff;font-size:13px;font-weight:700;padding:10px 18px;border-radius:10px;cursor:pointer;min-height:44px;white-space:nowrap')} hover={s('background:#f6f4f0')}>Gestisci piano</Box>
         </div>
       </div>
 
       {/* ── PLAN CARDS ── */}
       <div style={s('margin-bottom:20px')}>
         <div style={s('font-size:16px;font-weight:800;margin-bottom:14px;letter-spacing:-.2px')}>Confronta i piani</div>
-        <div style={s('display:grid;grid-template-columns:repeat(3,1fr);gap:20px;align-items:stretch')}>
+        <div className="max-md:!grid-cols-1" style={s('display:grid;grid-template-columns:repeat(3,1fr);gap:20px;align-items:stretch')}>
           {PLANS.map((plan) => {
             const active = plan.id === activePlan;
             const savings = plan.price < monthlyCost ? (monthlyCost - plan.price) * 12 : 0;
@@ -1551,22 +1551,229 @@ type BrandState = {
   reportFinalDesc: string;
 };
 
+function SettingsScreen({ toast }: { toast: (msg: string, icon?: string) => void }) {
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  const handleDelete = async () => {
+    if (deleteConfirmText !== 'ELIMINA') return;
+    setDeleteLoading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const res = await fetch('/api/account/delete', {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${session.access_token}` }
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.error || 'Errore eliminazione account');
+      }
+      await supabase.auth.signOut();
+      window.location.href = '/';
+    } catch (err: any) {
+      toast(err.message, 'x');
+      setDeleteLoading(false);
+      setDeleteModalOpen(false);
+    }
+  };
+
+  return (
+    <div style={s('max-width:1160px;margin:0 auto;padding:36px 32px 64px')}>
+      <h1 style={s('margin:0 0 4px;font-size:27px;font-weight:800;letter-spacing:-.5px')}>Impostazioni</h1>
+      <div style={s('color:#8c867d;font-size:14px;margin-bottom:28px')}>Gestisci il tuo account e le preferenze dell'app.</div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+        {/* Info Box */}
+        <div style={{ background: '#fff', border: '1px solid #f0ede7', borderRadius: 16, padding: 24 }}>
+          <h3 style={{ margin: '0 0 16px', fontSize: 15, fontWeight: 700 }}>Informazioni</h3>
+          
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid #f0ede7' }}>
+            <div style={{ fontSize: 14, fontWeight: 600, color: '#211f1c' }}>Versione App</div>
+            <div style={{ fontSize: 14, color: '#8c867d' }}>1.0.0</div>
+          </div>
+          <a href="https://www.getnearme.it/it/privacy" target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid #f0ede7', textDecoration: 'none' }}>
+            <div style={{ fontSize: 14, fontWeight: 600, color: '#211f1c' }}>Privacy Policy</div>
+            <Icon name="external-link" size={14} color="#8c867d" />
+          </a>
+          <a href="https://www.getnearme.it/it/terms" target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', textDecoration: 'none' }}>
+            <div style={{ fontSize: 14, fontWeight: 600, color: '#211f1c' }}>Termini e Condizioni</div>
+            <Icon name="external-link" size={14} color="#8c867d" />
+          </a>
+        </div>
+
+        {/* Danger Zone */}
+        <div style={{ background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 16, padding: 24, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
+          <div style={{ flex: '1 1 300px' }}>
+            <h3 style={{ margin: '0 0 8px', fontSize: 15, fontWeight: 700, color: '#dc2626' }}>Zona Pericolosa</h3>
+            <p style={{ margin: 0, fontSize: 13, color: '#b91c1c', maxWidth: 600 }}>
+              L'eliminazione dell'account è irreversibile. Tutti i tuoi progetti, foto AI, video e brand verranno cancellati definitivamente dai nostri server.
+            </p>
+          </div>
+
+          <div style={{ flex: 'none' }}>
+            <Box as="button" onClick={() => { setDeleteModalOpen(true); setDeleteConfirmText(''); }} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 16px', borderRadius: 8, fontSize: 13.5, fontWeight: 700, background: '#dc2626', color: '#fff', border: 'none', cursor: 'pointer' } as React.CSSProperties} hover={{ background: '#b91c1c' }}>
+              <Icon name="trash" size={16} color="#fff" />
+              Elimina account
+            </Box>
+          </div>
+        </div>
+      </div>
+
+      {deleteModalOpen && (
+        <div onClick={() => setDeleteModalOpen(false)} style={s('position:fixed;inset:0;background:rgba(24,21,17,.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px')}>
+          <div onClick={e => e.stopPropagation()} style={s('width:100%;max-width:440px;background:#fff;border-radius:20px;box-shadow:0 32px 64px rgba(20,18,15,.2);padding:32px')}>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
+              <div style={{ width: 56, height: 56, borderRadius: '50%', background: '#fef2f2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Icon name="alert-triangle" size={28} color="#dc2626" />
+              </div>
+            </div>
+            <h3 style={{ margin: '0 0 12px', fontSize: 20, fontWeight: 800, textAlign: 'center', color: '#1a1a1a' }}>Sei assolutamente sicuro?</h3>
+            <p style={{ margin: '0 0 24px', fontSize: 14, color: '#57534c', textAlign: 'center', lineHeight: 1.5 }}>
+              Questa azione <strong>non può essere annullata</strong>. L'eliminazione dell'account comporterà la perdita di tutti i tuoi dati, crediti e progetti.
+            </p>
+            
+            <div style={{ marginBottom: 24 }}>
+              <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#211f1c', marginBottom: 8 }}>
+                Scrivi <strong style={{ color: '#dc2626' }}>ELIMINA</strong> per confermare:
+              </label>
+              <input 
+                type="text" 
+                value={deleteConfirmText} 
+                onChange={e => setDeleteConfirmText(e.target.value)} 
+                placeholder="ELIMINA" 
+                style={{ width: '100%', border: '1px solid #e4e1da', borderRadius: 10, padding: '12px 16px', fontSize: 14, outline: 'none' }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', gap: 12 }}>
+              <Box as="button" onClick={() => setDeleteModalOpen(false)} style={{ flex: 1, padding: '12px', borderRadius: 10, fontSize: 14, fontWeight: 700, background: '#f4f2ee', color: '#57534c', border: 'none', cursor: 'pointer' } as React.CSSProperties} hover={{ background: '#e9e6df' }}>
+                Annulla
+              </Box>
+              <Box as="button" disabled={deleteConfirmText !== 'ELIMINA' || deleteLoading} onClick={handleDelete} style={{ flex: 1, padding: '12px', borderRadius: 10, fontSize: 14, fontWeight: 700, background: '#dc2626', color: '#fff', border: 'none', cursor: deleteConfirmText !== 'ELIMINA' || deleteLoading ? 'not-allowed' : 'pointer', opacity: deleteConfirmText !== 'ELIMINA' || deleteLoading ? 0.5 : 1 } as React.CSSProperties} hover={deleteConfirmText === 'ELIMINA' && !deleteLoading ? { background: '#b91c1c' } : undefined}>
+                {deleteLoading ? 'Eliminazione...' : 'Conferma ed elimina'}
+              </Box>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AssistenzaScreen({ toast, email }: { toast: (msg: string, icon?: string) => void; email: string }) {
+  const [type, setType] = useState('support');
+  const [message, setMessage] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (message.trim().length < 10) {
+      toast('Il messaggio deve contenere almeno 10 caratteri.', 'x');
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await fetch('/api/support-request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, type, message })
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.error || 'Errore invio richiesta');
+      }
+      toast('Richiesta inviata con successo!', 'check');
+      setMessage('');
+    } catch (err: any) {
+      toast(err.message, 'x');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div style={s('max-width:800px;margin:0 auto;padding:36px 32px 64px')}>
+      <h1 style={s('margin:0 0 4px;font-size:27px;font-weight:800;letter-spacing:-.5px')}>Assistenza</h1>
+      <div style={s('color:#8c867d;font-size:14px;margin-bottom:32px')}>Come possiamo aiutarti? Inviaci una segnalazione o richiedi supporto tecnico.</div>
+
+      <div style={{ background: '#fff', border: '1px solid #f0ede7', borderRadius: 16, padding: 24 }}>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          
+          <div>
+            <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#211f1c', marginBottom: 8 }}>Tipo di richiesta</label>
+            <div style={{ position: 'relative' }}>
+              <select 
+                value={type} 
+                onChange={e => setType(e.target.value)}
+                style={{ width: '100%', appearance: 'none', border: '1px solid #e4e1da', borderRadius: 10, padding: '12px 16px', fontSize: 14, outline: 'none', background: '#fff', color: '#211f1c', cursor: 'pointer' }}
+              >
+                <option value="support">Assistenza generale</option>
+                <option value="bug">Segnala un problema (Bug)</option>
+              </select>
+              <Icon name="chevron-down" size={16} color="#8c867d" style={{ position: 'absolute', right: 16, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+            </div>
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#211f1c', marginBottom: 8 }}>Messaggio</label>
+            <textarea 
+              value={message}
+              onChange={e => setMessage(e.target.value)}
+              placeholder={type === 'bug' ? 'Descrivi il problema nel dettaglio. Cosa stavi facendo quando si è verificato?' : 'Scrivi qui la tua richiesta...'}
+              style={{ width: '100%', border: '1px solid #e4e1da', borderRadius: 10, padding: '12px 16px', fontSize: 14, outline: 'none', minHeight: 140, resize: 'vertical' }}
+            />
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
+            <Box as="button" type="submit" disabled={loading} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '12px 24px', borderRadius: 10, fontSize: 14, fontWeight: 700, background: '#1d5fd0', color: '#fff', border: 'none', cursor: loading ? 'default' : 'pointer', opacity: loading ? 0.7 : 1 } as React.CSSProperties} hover={!loading ? { background: '#1850b0' } : undefined}>
+              {loading ? 'Invio in corso...' : 'Invia richiesta'}
+            </Box>
+          </div>
+
+        </form>
+      </div>
+    </div>
+  );
+}
+
 function BrandScreen({ toast, brand: brandProp, setBrand: setBrandParent, brandRole }: { toast: (msg: string, icon?: string) => void; brand: BrandSettings; setBrand: (b: BrandSettings) => void; brandRole: 'owner' | 'member' | null }) {
   const [brand, setBrand] = React.useState<BrandState>(brandProp as unknown as BrandState);
   const fileRefs = React.useRef<Record<string, HTMLInputElement | null>>({});
   const scope: 'team' | 'user' = brandRole === 'owner' ? 'team' : 'user';
 
-  // Sync local edit state when the parent brand (re-)loads. Flag the sync so the
-  // auto-save effect below does not echo it straight back to the server.
-  const syncingRef = React.useRef(false);
-  React.useEffect(() => { syncingRef.current = true; setBrand(brandProp as unknown as BrandState); }, [brandProp]);
+  // Keep track of what we last saved to avoid echoing back identical data
+  // or triggering saves on initial mount if nothing changed.
+  const lastSavedRef = React.useRef(JSON.stringify({
+    logoOrientation: brandProp.logoOrientation,
+    primaryColor: brandProp.primaryColor,
+    companyName: brandProp.companyName,
+    companyWebsite: brandProp.companyWebsite,
+    companyEmail: brandProp.companyEmail,
+    reportFinalTitle: brandProp.reportFinalTitle,
+    reportFinalDesc: brandProp.reportFinalDesc,
+  }));
 
   // Auto-save text fields (debounced) — no save button.
   const saveTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   React.useEffect(() => {
-    if (syncingRef.current) { syncingRef.current = false; return; }
     if (saveTimer.current) clearTimeout(saveTimer.current);
+    
+    const currentStr = JSON.stringify({
+      logoOrientation: brand.logoOrientation,
+      primaryColor: brand.primaryColor,
+      companyName: brand.companyName,
+      companyWebsite: brand.companyWebsite,
+      companyEmail: brand.companyEmail,
+      reportFinalTitle: brand.reportFinalTitle,
+      reportFinalDesc: brand.reportFinalDesc,
+    });
+
+    if (currentStr === lastSavedRef.current) return;
+
     saveTimer.current = setTimeout(() => {
+      lastSavedRef.current = currentStr;
       updateBrand(scope, {
         logoOrientation: brand.logoOrientation,
         primaryColor: brand.primaryColor,
@@ -1575,7 +1782,12 @@ function BrandScreen({ toast, brand: brandProp, setBrand: setBrandParent, brandR
         companyEmail: brand.companyEmail,
         reportFinalTitle: brand.reportFinalTitle,
         reportFinalDesc: brand.reportFinalDesc,
-      }).then(ok => { if (ok) setBrandParent(brand as unknown as BrandSettings); });
+      }).then(ok => { 
+        if (ok) {
+          setBrandParent(brand as unknown as BrandSettings); 
+          toast('Modifiche salvate', 'check');
+        }
+      });
     }, 600);
     return () => { if (saveTimer.current) clearTimeout(saveTimer.current); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1590,9 +1802,12 @@ function BrandScreen({ toast, brand: brandProp, setBrand: setBrandParent, brandR
     const reader = new FileReader();
     reader.onload = () => setBrand(b => ({ ...b, logos: { ...b.logos, [variant]: reader.result as string } }));
     reader.readAsDataURL(file);
+    
+    toast('Caricamento in corso...', 'refresh');
     const ok = await uploadBrandLogo(scope, variant, file);
     if (ok) {
       const fresh = await fetchBrand();
+      setBrand(fresh.settings as unknown as BrandState);
       setBrandParent(fresh.settings);
       toast('Logo caricato', 'check');
     } else {
@@ -1605,6 +1820,7 @@ function BrandScreen({ toast, brand: brandProp, setBrand: setBrandParent, brandR
     const ok = await removeBrandLogo(scope, variant);
     if (ok) {
       const fresh = await fetchBrand();
+      setBrand(fresh.settings as unknown as BrandState);
       setBrandParent(fresh.settings);
     }
   };
@@ -1729,7 +1945,7 @@ function BrandScreen({ toast, brand: brandProp, setBrand: setBrandParent, brandR
 const ROUTE_TITLES: Record<string, string> = {
   progetti: 'Progetti', progetto: 'Dettaglio immobile', staging: 'Homestaging AI', video: 'Video AI', montaggio: 'Montaggio',
   studio: 'Post Social', calendario: 'Calendario', media: 'Libreria Media', team: 'Team',
-  brand: 'Brand', social: 'Account social', account: 'Piano', home: 'Home',
+  brand: 'Brand', social: 'Account social', account: 'Piano', home: 'Home', impostazioni: 'Impostazioni', assistenza: 'Assistenza'
 };
 
 // Helper for dynamic project cover gradients when no image is provided
@@ -1813,7 +2029,15 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
     prevTrayOpen.current = trayOpen;
   }, [trayOpen, batches, setBatches]);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const { data: notifications = [], mutate: mutateNotifs } = useSWR('notifications', async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return [];
+    const { data } = await supabase.from('notifications').select('*').order('created_at', { ascending: false }).limit(20);
+    return (data || []) as AppNotification[];
+  }, { refreshInterval: 15000 });
   const profileRef = React.useRef<HTMLDivElement>(null);
+  const notifRef = React.useRef<HTMLDivElement>(null);
   const [cmdkOpen, setCmdkOpen] = useState(false);
   const [cmdQuery, setCmdQuery] = useState('');
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -1847,14 +2071,17 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
 
   const toast = useCallback((msg: string, icon = 'check') => {
     const id = Date.now() + Math.random();
-    setToasts((t) => [...t, { id, msg, icon }]);
+    setToasts((t) => {
+      const next = [...t, { id, msg, icon }];
+      return next.slice(-2);
+    });
     setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 4000);
   }, []);
 
   const contentRef = React.useRef<HTMLDivElement>(null);
   const [routeKey, setRouteKey] = useState(0);
   const go = useCallback((r: string) => { setRoute(r); setRouteKey(k => k + 1); setProjOpen(false); setTrayOpen(false); setProfileOpen(false); contentRef.current?.scrollTo(0, 0); }, []);
-  const closeMenus = useCallback(() => { setProjOpen(false); setTrayOpen(false); setProfileOpen(false); }, []);
+  const closeMenus = useCallback(() => { setProjOpen(false); setTrayOpen(false); setProfileOpen(false); setNotifOpen(false); }, []);
 
   // ⌘K
   useEffect(() => {
@@ -1907,16 +2134,57 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
 
       {/* WELCOME MODAL */}
       {welcomeOpen && (
-        <div style={s('position:fixed;inset:0;background:rgba(24,21,17,.5);z-index:95;display:flex;align-items:center;justify-content:center;padding:24px')}>
-          <div style={s('background:#fff;border-radius:14px;box-shadow:0 24px 64px rgba(20,18,15,.3);width:100%;max-width:460px;padding:38px 40px;text-align:center')}>
-            <img src="/dashboard/logo.svg" alt="GetNearMe" style={{ height: 26, marginBottom: 20 }} />
-            <h2 style={s('margin:0 0 8px;font-size:23px;font-weight:800;letter-spacing:-.4px')}>Benvenuto su GetNearMe</h2>
-            <p style={s('margin:0 auto 26px;max-width:360px;color:#57534c;font-size:14.5px')}>Trasforma le foto dei tuoi immobili in staging, video e post pronti da pubblicare. Ti facciamo fare un giro veloce?</p>
-            <div style={s('display:flex;gap:12px;justify-content:center')}>
-              <Box as="button" onClick={() => { setWelcomeOpen(false); toast('Puoi rifare il tour dal pulsante ? in alto'); }} style={s('border:1px solid #e4e1da;background:#fff;color:#211f1c;font-size:14px;font-weight:700;padding:12px 24px;border-radius:8px;cursor:pointer;min-height:38px')} hover={s('background:#f6f4f0')}>Salta</Box>
-              <Box as="button" onClick={startTour} style={s('border:none;background:#3B83F6;color:#fff;font-size:14px;font-weight:700;padding:12px 28px;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:8px;min-height:38px')} hover={s('background:#2b6fe0')}>Fai il giro<Icon name="arrow-right" size={15} color="#fff" /></Box>
+        <div style={s('position:fixed;inset:0;background:rgba(24,21,17,.6);backdrop-filter:blur(4px);z-index:95;display:flex;align-items:center;justify-content:center;padding:24px')}>
+          <div style={s('background:#fff;border-radius:24px;box-shadow:0 32px 80px rgba(0,0,0,.15), 0 2px 16px rgba(0,0,0,.05);width:100%;max-width:540px;overflow:hidden;position:relative')}>
+            {/* Header / Banner */}
+            <div style={{ background: 'linear-gradient(135deg, #eef4fe, #f6f4f0)', padding: '40px 40px 32px', textAlign: 'center', borderBottom: '1px solid #f0ede7' }}>
+              <div style={{ width: 64, height: 64, background: '#fff', borderRadius: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', boxShadow: '0 8px 24px rgba(33,31,28,.08)' }}>
+                <Icon name="sparkles" size={28} color="#1d5fd0" />
+              </div>
+              <h2 style={s('margin:0 0 10px;font-size:28px;font-weight:800;letter-spacing:-.6px;color:#1a1a1a')}>Benvenuto su GetNearMe</h2>
+              <p style={s('margin:0 auto;max-width:380px;color:#57534c;font-size:15px;line-height:1.5')}>La prima suite All-in-One per agenzie immobiliari. Genera materiali di marketing incredibili in pochi secondi.</p>
             </div>
-            <div style={s('margin-top:18px;font-size:12px;color:#b3aca1')}>Dura meno di un minuto · sempre rigiocabile dal pulsante ?</div>
+            
+            {/* Feature List */}
+            <div style={{ padding: '32px 40px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
+                <div style={{ width: 44, height: 44, borderRadius: 12, background: '#f4f2ee', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}>
+                  <Icon name="image" size={20} color="#211f1c" />
+                </div>
+                <div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: '#211f1c', marginBottom: 2 }}>Virtual Staging AI</div>
+                  <div style={{ fontSize: 13.5, color: '#57534c', lineHeight: 1.4 }}>Arreda stanze vuote, cambia lo stile e migliora l'illuminazione con un clic.</div>
+                </div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
+                <div style={{ width: 44, height: 44, borderRadius: 12, background: '#f4f2ee', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}>
+                  <Icon name="film" size={20} color="#211f1c" />
+                </div>
+                <div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: '#211f1c', marginBottom: 2 }}>Montaggio Video Automatico</div>
+                  <div style={{ fontSize: 13.5, color: '#57534c', lineHeight: 1.4 }}>Trasforma le tue foto in Reel e TikTok dinamici pronti da condividere.</div>
+                </div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
+                <div style={{ width: 44, height: 44, borderRadius: 12, background: '#f4f2ee', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}>
+                  <Icon name="share-2" size={20} color="#211f1c" />
+                </div>
+                <div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: '#211f1c', marginBottom: 2 }}>Post Social e Calendario</div>
+                  <div style={{ fontSize: 13.5, color: '#57534c', lineHeight: 1.4 }}>Genera grafiche professionali per i social e programma le pubblicazioni.</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div style={{ padding: '24px 40px 32px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+              <Box as="button" onClick={startTour} style={s('width:100%;border:none;background:#1d5fd0;color:#fff;font-size:15px;font-weight:700;padding:14px 28px;border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;min-height:48px;transition:all .2s')} hover={s('background:#1850b0;transform:translateY(-1px);box-shadow:0 8px 24px rgba(29,95,208,.25)')}>
+                Fai un giro veloce (1 min) <Icon name="arrow-right" size={16} color="#fff" />
+              </Box>
+              <Box as="button" onClick={() => { setWelcomeOpen(false); toast('Puoi rifare il tour dal menu Profilo > Tutorial'); }} style={s('border:none;background:transparent;color:#8c867d;font-size:14px;font-weight:600;padding:10px 24px;border-radius:8px;cursor:pointer;min-height:40px;transition:color .2s')} hover={{ color: '#57534c' }}>
+                Salta e inizia subito
+              </Box>
+            </div>
           </div>
         </div>
       )}
@@ -1968,7 +2236,12 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
               </div>
             ))}
           </div>
-          <div ref={profileRef} style={{ flex: 'none', borderTop: '1px solid #f0ede7', padding: collapsed ? '12px 6px' : '12px 10px' }}>
+          <div 
+            ref={profileRef} 
+            onMouseEnter={() => setProfileOpen(true)}
+            onMouseLeave={() => setProfileOpen(false)}
+            style={{ flex: 'none', borderTop: '1px solid #f0ede7', padding: collapsed ? '12px 6px' : '12px 10px' }}
+          >
             <Box onClick={(e) => { e.stopPropagation(); setProfileOpen(o => !o); setProjOpen(false); setTrayOpen(false); }} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: collapsed ? '0' : '10px 12px', borderRadius: collapsed ? '50%' : 12, cursor: 'pointer', justifyContent: collapsed ? 'center' : 'flex-start', width: collapsed ? 42 : 'auto', height: collapsed ? 42 : 'auto', margin: collapsed ? '0 auto' : 0 }} hover={{ background: '#f1efe9' }}>
               <div style={s('width:34px;height:34px;border-radius:50%;background:#211f1c;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex:none')}>{(userData?.email ?? 'U')[0].toUpperCase()}</div>
               {!collapsed && <div style={{ minWidth: 0, flex: 1 }}><div style={s('font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{userData?.email?.split('@')[0] ?? 'Utente'}</div><div style={s('font-size:11px;color:#8c867d;white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{userData?.email ?? ''}</div></div>}
@@ -1978,24 +2251,26 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
               const rect = profileRef.current?.getBoundingClientRect();
               const left = rect ? rect.left + 10 : 10;
               const w = rect ? rect.width - 20 : 220;
-              const bottom = rect ? window.innerHeight - rect.top + 4 : 80;
+              const bottom = rect ? window.innerHeight - rect.top - 12 : 80;
               return (
-                <div style={{ position: 'fixed', bottom, left, width: w, background: '#fff', borderRadius: 12, boxShadow: '0 16px 48px rgba(33,31,28,.16)', border: '1px solid #f0ede7', overflow: 'hidden', zIndex: 9999 }}>
-                  <div style={s('padding:4px')}>
-                    {[
-                      { icon: 'settings', label: 'Impostazioni', action: () => { setProfileOpen(false); toast('Impostazioni (in arrivo)'); } },
-                      { icon: 'play-circle', label: 'Tutorial', action: () => { setProfileOpen(false); setWelcomeOpen(true); } },
-                      { icon: 'life-buoy', label: 'Assistenza', action: () => { setProfileOpen(false); window.open('mailto:support@getnearme.it', '_blank'); } },
-                    ].map(item => (
-                      <Box key={item.label} onClick={item.action} style={s('display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:600')} hover={s('background:#f6f4f0')}>
-                        <Icon name={item.icon} size={16} color="#57534c" />{item.label}
+                <div style={{ position: 'fixed', bottom, left, width: w, zIndex: 9999, paddingBottom: 16 }}>
+                  <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 16px 48px rgba(33,31,28,.16)', border: '1px solid #f0ede7', overflow: 'hidden' }}>
+                    <div style={s('padding:4px')}>
+                      {[
+                        { icon: 'settings', label: 'Impostazioni', action: () => { setProfileOpen(false); go('impostazioni'); } },
+                        { icon: 'play-circle', label: 'Tutorial', action: () => { setProfileOpen(false); setWelcomeOpen(true); } },
+                        { icon: 'life-buoy', label: 'Assistenza', action: () => { setProfileOpen(false); go('assistenza'); } },
+                      ].map(item => (
+                        <Box key={item.label} onClick={item.action} style={s('display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:600')} hover={s('background:#f6f4f0')}>
+                          <Icon name={item.icon} size={16} color="#57534c" />{item.label}
+                        </Box>
+                      ))}
+                    </div>
+                    <div style={s('border-top:1px solid #f0ede7;padding:4px')}>
+                      <Box onClick={() => { setProfileOpen(false); window.location.href = '/api/auth/logout'; }} style={s('display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:600;color:#dc2626')} hover={s('background:#fef2f2')}>
+                        <Icon name="log-out" size={16} color="#dc2626" />Esci
                       </Box>
-                    ))}
-                  </div>
-                  <div style={s('border-top:1px solid #f0ede7;padding:4px')}>
-                    <Box onClick={() => { setProfileOpen(false); window.location.href = '/api/auth/logout'; }} style={s('display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:600;color:#dc2626')} hover={s('background:#fef2f2')}>
-                      <Icon name="log-out" size={16} color="#dc2626" />Esci
-                    </Box>
+                    </div>
                   </div>
                 </div>
               );
@@ -2115,7 +2390,63 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                   </div>
                 )}
               </div>
-              <Box as="button" onClick={() => toast('Nessuna nuova notifica', 'bell')} title="Notifiche" aria-label="Notifiche" style={s('border:none;background:transparent;width:38px;height:38px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;position:relative')} hover={s('background:#f1efe9')}><Icon name="bell" size={18} /></Box>
+              <div ref={notifRef} style={{ position: 'relative' }}>
+                <Box as="button" onClick={(e) => { e.stopPropagation(); setNotifOpen(o => !o); setProjOpen(false); setTrayOpen(false); setProfileOpen(false); }} title="Notifiche" aria-label="Notifiche" style={s('border:none;background:transparent;width:38px;height:38px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;position:relative')} hover={s('background:#f1efe9')}>
+                  <Icon name="bell" size={18} />
+                  {notifications.filter(n => !n.is_read).length > 0 && (
+                    <div style={{ position: 'absolute', top: 6, right: 6, width: 8, height: 8, borderRadius: '50%', background: '#ef4444', border: '2px solid #fff' }} />
+                  )}
+                </Box>
+                {notifOpen && (
+                  <div style={s('position:absolute;top:46px;right:0;width:340px;background:#fff;border-radius:12px;box-shadow:0 16px 48px rgba(33,31,28,.16);border:1px solid #f0ede7;overflow:hidden;z-index:999')}>
+                    <div style={s('display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:1px solid #f4f2ee')}>
+                      <span style={s('font-size:13.5px;font-weight:800')}>Notifiche</span>
+                      {notifications.filter(n => !n.is_read).length > 0 && (
+                        <button 
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            const unread = notifications.filter(n => !n.is_read).map(n => n.id);
+                            if (!unread.length) return;
+                            mutateNotifs(prev => prev?.map(n => ({ ...n, is_read: true })), false);
+                            await supabase.from('notifications').update({ is_read: true }).in('id', unread);
+                          }}
+                          style={{ background: 'transparent', border: 'none', color: '#1d5fd0', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
+                        >Segna tutte come lette</button>
+                      )}
+                    </div>
+                    <div style={{ maxHeight: 380, overflowY: 'auto' }}>
+                      {notifications.length === 0 ? (
+                        <div style={{ padding: '32px 16px', textAlign: 'center', color: '#8c867d', fontSize: 13.5 }}>Nessuna notifica.</div>
+                      ) : (
+                        notifications.map(n => (
+                          <div 
+                            key={n.id} 
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              if (!n.is_read) {
+                                mutateNotifs(prev => prev?.map(x => x.id === n.id ? { ...x, is_read: true } : x), false);
+                                await supabase.from('notifications').update({ is_read: true }).eq('id', n.id);
+                              }
+                            }}
+                            style={{ padding: '16px', borderBottom: '1px solid #f4f2ee', cursor: 'pointer', background: n.is_read ? '#fff' : '#f0fdf4', display: 'flex', gap: 12 }}
+                          >
+                            <div style={{ flex: 'none', paddingTop: 2 }}>
+                              {n.type === 'info' ? <Icon name="info" size={16} color="#3B83F6" /> : <Icon name="bell" size={16} color="#10b981" />}
+                            </div>
+                            <div>
+                              <div style={{ fontSize: 13, fontWeight: 700, color: '#211f1c', marginBottom: 4 }}>{n.title}</div>
+                              <div style={{ fontSize: 13, color: '#57534c', lineHeight: 1.4 }}>{n.body}</div>
+                              <div style={{ fontSize: 11, color: '#8c867d', marginTop: 6 }}>
+                                {new Date(n.created_at).toLocaleDateString('it-IT', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
@@ -2183,6 +2514,10 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
               <AccountScreen credits={credits} toast={toast} go={go} userData={userData} />
             ) : route === 'brand' ? (
               <BrandScreen toast={toast} brand={brand} setBrand={setBrand} brandRole={brandRole} />
+            ) : route === 'impostazioni' ? (
+              <SettingsScreen toast={toast} />
+            ) : route === 'assistenza' ? (
+              <AssistenzaScreen toast={toast} email={userData?.email ?? ''} />
             ) : (
               <div style={s('max-width:1160px;margin:0 auto;padding:36px 32px 64px')}>
                 <h1 style={s('margin:0 0 4px;font-size:27px;font-weight:800;letter-spacing:-.5px')}>{ROUTE_TITLES[route] ?? route}</h1>

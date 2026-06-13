@@ -160,3 +160,43 @@ html {
   60%  { opacity: 1; }
   100% { opacity: 1; transform: none; filter: blur(0); }
 }
+
+@keyframes pulse-ring {
+  0% { transform: scale(0.8); opacity: 0.5; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+
+@keyframes aurora-pulse {
+  0%, 100% { transform: scale(1); filter: brightness(1); }
+  50% { transform: scale(1.05); filter: brightness(1.2); }
+}
+
+@keyframes organic-blob {
+  0%   { border-radius: 60% 40% 55% 45% / 50% 60% 40% 50%; }
+  25%  { border-radius: 45% 55% 42% 58% / 58% 45% 55% 42%; }
+  50%  { border-radius: 42% 58% 47% 53% / 47% 52% 53% 47%; }
+  75%  { border-radius: 53% 47% 58% 42% / 55% 42% 58% 48%; }
+  100% { border-radius: 60% 40% 55% 45% / 50% 60% 40% 50%; }
+}
+
+@keyframes fly-to-inbox {
+  0% {
+    top: 75%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 0;
+  }
+  20% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    top: 26px;
+    left: calc(100vw - 82px);
+    transform: translate(-50%, -50%) scale(0.3);
+    opacity: 0;
+  }
+}

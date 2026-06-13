@@ -1,4 +1,5 @@
 import React from 'react';
+import Image from 'next/image';
 import { Box, Icon } from './ui';
 import { ProjectData } from '@/lib/projects';
 import { fetchUserBatches, fetchBatchPhotos } from '@/lib/stagingBatches';
@@ -6,12 +7,12 @@ import { fetchUserBatches, fetchBatchPhotos } from '@/lib/stagingBatches';
 type RecentPhoto = { url: string; ts: number };
 
 // Helpers
-const s = (str: string) => str.split(';').reduce((acc, rule) => {
+const s = (str: string) => str.split(';').reduce((acc: any, rule) => {
   if (!rule.trim()) return acc;
   const [k, v] = rule.split(':');
   if (k && v) {
     const camelK = k.trim().replace(/-([a-z])/g, g => g[1].toUpperCase());
-    acc[camelK as keyof React.CSSProperties] = v.trim();
+    acc[camelK] = v.trim();
   }
   return acc;
 }, {} as React.CSSProperties);
@@ -65,7 +66,7 @@ export function HomeScreen({
     
     const reader = new FileReader();
     reader.onload = (event) => {
-      const img = new Image();
+      const img = new window.Image();
       img.onload = () => {
         const canvas = document.createElement('canvas');
         let width = img.width;
@@ -94,6 +95,7 @@ export function HomeScreen({
 
   // Carica le foto recenti generate per questo immobile dai batch (max 12 = 3 righe).
   const [recent, setRecent] = React.useState<RecentPhoto[]>([]);
+  const [hasMoreRecent, setHasMoreRecent] = React.useState(false);
   const [loadingRecent, setLoadingRecent] = React.useState(true);
   const [lightbox, setLightbox] = React.useState<string | null>(null);
   React.useEffect(() => {
@@ -113,7 +115,10 @@ export function HomeScreen({
             if (p.resultUrl && p.status !== 'failed') all.push({ url: p.resultUrl, ts: new Date(b.createdAt).getTime() });
           }
         }));
-        if (!cancelled) setRecent(all.sort((a, b) => b.ts - a.ts).slice(0, 12));
+        if (!cancelled) {
+          setHasMoreRecent(all.length > 12);
+          setRecent(all.sort((a, b) => b.ts - a.ts).slice(0, 12));
+        }
       } catch { /* ignore */ }
       finally { if (!cancelled) setLoadingRecent(false); }
     })();
@@ -367,8 +372,7 @@ export function HomeScreen({
               <div className="max-md:!grid-cols-2" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
                 {recent.map((p, i) => (
                   <div key={i} onClick={() => setLightbox(p.url)} style={{ position: 'relative', aspectRatio: '4/3', borderRadius: 12, overflow: 'hidden', cursor: 'pointer', border: '1px solid #f0ede7', background: '#f4f2ee', animation: 'media-reveal .7s cubic-bezier(.22,1,.36,1) both', animationDelay: `${i * 70}ms` }}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={p.url} alt="" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                    <Image src={p.url} alt="" fill sizes="(max-width: 768px) 50vw, 25vw" style={{ objectFit: 'cover' }} onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }} />
                     <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.25)', opacity: 0, transition: 'opacity .2s', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                       onMouseEnter={e => e.currentTarget.style.opacity = '1'}
                       onMouseLeave={e => e.currentTarget.style.opacity = '0'}
@@ -380,12 +384,14 @@ export function HomeScreen({
                   </div>
                 ))}
               </div>
-              <div style={{ display: 'flex', justifyContent: 'center', marginTop: 20 }}>
-                <Box onClick={() => go('media')} style={s('display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid #e4e1da;color:#211f1c;padding:10px 20px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer')} hover={{ background: '#f6f4f0' }}>
-                  Vedi altro
-                  <Icon name="arrow-right" size={15} color="#211f1c" />
-                </Box>
-              </div>
+              {hasMoreRecent && (
+                <div style={{ display: 'flex', justifyContent: 'center', marginTop: 20 }}>
+                  <Box onClick={() => go('media')} style={s('display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid #e4e1da;color:#211f1c;padding:10px 20px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer')} hover={{ background: '#f6f4f0' }}>
+                    Vedi altro
+                    <Icon name="arrow-right" size={15} color="#211f1c" />
+                  </Box>
+                </div>
+              )}
             </>
           ) : (
             <div style={{ background: '#fcfcfb', border: '1px dashed #e4e1da', borderRadius: 16, padding: '48px 24px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>

@@ -45,9 +45,11 @@ export function s(css: string): React.CSSProperties {
   return out as React.CSSProperties;
 }
 
-type BoxProps = React.HTMLAttributes<HTMLDivElement> & {
+type BoxProps = React.HTMLAttributes<HTMLElement> & {
   hover?: React.CSSProperties;
   as?: keyof React.JSX.IntrinsicElements;
+  disabled?: boolean;
+  type?: string;
 };
 
 // Split `border` shorthand into separate properties to avoid React warnings

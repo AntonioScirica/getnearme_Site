@@ -6,12 +6,17 @@ export type ProjectData = {
   addr: string
   prezzo: number
   mq: number
-  bagni: number
-  camere: number
+  bagni?: number
+  camere?: number
+  locali?: number
   titolo: string
   cover: string
   icons?: Record<string, string>
-  createdAt: string
+  createdAt?: string
+  nFoto?: number
+  nStaging?: number
+  nVideo?: number
+  nPost?: number
 }
 
 export async function fetchProjects(): Promise<ProjectData[]> {

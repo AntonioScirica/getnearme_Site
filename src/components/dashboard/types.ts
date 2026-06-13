@@ -4,10 +4,12 @@ export type Project = {
   addr: string;
   prezzo: number;
   mq: number;
-  bagni: number;
-  camere: number;
+  bagni?: number;
+  camere?: number;
+  locali?: number;
   titolo: string;
   cover: string;
+  createdAt?: string;
   icons?: Record<string, string>;
   nFoto?: number;
   nStaging?: number;

@@ -11,6 +11,7 @@ export type BatchInfo = {
   projectId: string | null
   createdAt: string
   updatedAt: string
+  type?: string
 }
 
 export type BatchPhoto = {

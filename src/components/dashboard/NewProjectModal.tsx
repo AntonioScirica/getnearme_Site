@@ -304,7 +304,7 @@ export function NewProjectModal({
                       crop={crop}
                       zoom={zoom}
                       aspect={16/9}
-                      objectFit="auto-cover"
+                      objectFit="horizontal-cover"
                       onCropChange={setCrop}
                       onCropComplete={onCropComplete}
                       onZoomChange={setZoom}

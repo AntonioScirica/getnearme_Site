@@ -140,13 +140,16 @@ export default function MediaScreen({
     }
   };
 
+  const [visibleCounts, setVisibleCounts] = useState<Record<string, number>>({});
   const validBatches = projectBatches.filter(b => b.completedItems > 0 && b.status !== 'failed');
 
   // Raggruppa TUTTE le foto per giorno (una sezione al giorno, non per batch).
   const days = useMemo(() => {
-    if (filter === 'video') return [];
     const map = new Map<string, { key: string; label: string; ts: number; photos: (BatchPhoto & { batchId: string })[] }>();
     for (const batch of validBatches) {
+      if (filter === 'staging' && batch.type !== 'staging') continue;
+      if (filter === 'video' && batch.type !== 'video') continue;
+      
       const photos = photosByBatch[batch.id];
       if (!photos || photos.length === 0) continue;
       const d = new Date(batch.createdAt);
@@ -271,7 +274,7 @@ export default function MediaScreen({
                 </div>
 
                 <div className="max-md:!grid-cols-2" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 16 }}>
-                  {day.photos.map((photo, pi) => {
+                  {day.photos.slice(0, visibleCounts[day.key] || 20).map((photo, pi) => {
                     if (photo.status === 'failed') {
                       return (
                         <div key={`${photo.batchId}_${photo.index}`} style={{ position: 'relative', aspectRatio: '4/3', borderRadius: 12, border: '1px solid #fca5a5', background: '#fef2f2', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 20, textAlign: 'center', animation: 'media-reveal .7s cubic-bezier(.22,1,.36,1) both', animationDelay: `${pi * 60}ms` }}>
@@ -299,8 +302,7 @@ export default function MediaScreen({
                         onClick={() => inSelect ? toggleSelect(selKey) : setLightbox({ ...photo, sourceUrl: photo.sourceUrl || localSourceUrls[selKey] || null })}
                         style={{ position: 'relative', aspectRatio: '4/3', borderRadius: 12, overflow: 'hidden', cursor: 'pointer', border: isSel ? '2px solid #3B83F6' : '1px solid #f0ede7', background: '#f4f2ee', animation: 'media-reveal .7s cubic-bezier(.22,1,.36,1) both', animationDelay: `${pi * 60}ms` }}
                       >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={photo.resultUrl} alt="" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover', ...(isSel ? { opacity: .85 } : {}) }} onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                        <Image src={photo.resultUrl} alt="" fill sizes="(max-width: 768px) 50vw, 33vw" style={{ objectFit: 'cover', ...(isSel ? { opacity: .85 } : {}) }} onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }} />
                         {inSelect ? (
                           <div style={{ position: 'absolute', top: 10, left: 10, width: 24, height: 24, borderRadius: '50%', background: isSel ? '#3B83F6' : 'rgba(255,255,255,0.85)', border: isSel ? 'none' : '1px solid #d8d4cb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             {isSel && <Icon name="check" size={14} color="#fff" />}
@@ -328,6 +330,14 @@ export default function MediaScreen({
                     );
                   })}
                 </div>
+                {day.photos.length > (visibleCounts[day.key] || 20) && (
+                  <div style={{ display: 'flex', justifyContent: 'center', marginTop: 24 }}>
+                    <Box as="button" onClick={() => setVisibleCounts(prev => ({ ...prev, [day.key]: (prev[day.key] || 20) + 20 }))} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 20px', borderRadius: 10, fontSize: 14, fontWeight: 700, background: '#fff', border: '1px solid #e4e1da', cursor: 'pointer', color: '#211f1c' } as React.CSSProperties} hover={{ background: '#f6f4f0' }}>
+                      Mostra altro ({day.photos.length - (visibleCounts[day.key] || 20)})
+                      <Icon name="chevron-down" size={16} />
+                    </Box>
+                  </div>
+                )}
               </div>
             );
           })}
