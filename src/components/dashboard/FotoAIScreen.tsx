@@ -11,7 +11,7 @@ import {
   fileToResizedDataUrl, startStaging, pollStagingStatus, findLatestProcessingPrediction, createBatchStaging, downloadImage,
   fetchStagingQuota, type StagingQuota,
 } from '@/lib/staging';
-import { saveSingleGenerationToBatch } from '@/lib/stagingBatches';
+import { saveSingleGenerationToBatch, deleteBatchPhoto } from '@/lib/stagingBatches';
 import { saveOriginalMedia } from '@/lib/localMediaCache';
 
 type Photo = { id: string; dataUrl: string; name: string; w: number; h: number };
@@ -22,7 +22,7 @@ const POLL_MAX_MS = 120_000; // cap totale: oltre questo → timeout client
 const PENDING_KEY = 'gnm_pending_staging';
 
 // Pending single-photo generation tracked across tab switches / reload.
-type Pending = { predictionId: string; before: string; style: string | null; customPrompt: string | null; startedAt: number };
+type Pending = { predictionId: string; before: string; style: string | null; customPrompt: string | null; startedAt: number; replaceBatchId?: string | null };
 
 import type { Project } from './types';
 
@@ -49,6 +49,7 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated 
   const [batchDone, setBatchDone] = React.useState<number | null>(null); // itemCount
   const [error, setError] = React.useState<string | null>(null);
   const fileRef = React.useRef<HTMLInputElement>(null);
+  const currentBatchId = React.useRef<string | null>(null); // batch della foto mostrata (per sostituire al reprompt)
   const dragDepth = React.useRef(0);
   const [dragOver, setDragOver] = React.useState(false);
   const [activePhotoId, setActivePhotoId] = React.useState<string | null>(null);
@@ -117,6 +118,11 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated 
           if (batchId && pending.before) {
             saveOriginalMedia(batchId, 0, pending.before).catch(() => {});
           }
+          // Reprompt: la nuova versione sostituisce la precedente in Media.
+          if (pending.replaceBatchId && pending.replaceBatchId !== batchId) {
+            deleteBatchPhoto(pending.replaceBatchId, 0).catch(() => {});
+          }
+          currentBatchId.current = batchId;
           onBatchCreated?.();
         } catch (saveErr) {
           console.error('[FotoAI] save to batch failed (non-blocking):', saveErr);
@@ -264,7 +270,7 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated 
 
   // Start an async single-photo generation: kick off the prediction, persist it,
   // and let the polling effect drive the result. Resilient to tab switches.
-  const beginSingle = async (opts: { imageDataUrl: string; before: string; style: string | null; angle: string | null; customPrompt: string | null }) => {
+  const beginSingle = async (opts: { imageDataUrl: string; before: string; style: string | null; angle: string | null; customPrompt: string | null; replaceBatchId?: string | null }) => {
     // Start con retry: il primo tentativo può scadere su cold start; il secondo
     // (function calda) di solito va. Prima di ogni retry controlla se una
     // prediction è già stata creata server-side (evita doppio scalo quota).
@@ -297,6 +303,7 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated 
       style: opts.style,
       customPrompt: opts.customPrompt,
       startedAt: Date.now(),
+      replaceBatchId: opts.replaceBatchId ?? null,
     };
     try { localStorage.setItem(PENDING_KEY, JSON.stringify(p)); } catch { /* storage full → memoria basta per il cambio tab */ }
     // Caso raro: già pronta al primo colpo
@@ -308,6 +315,8 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated 
       try {
         const batchId = await saveSingleGenerationToBatch({ projectId: project?.id || null, style: opts.style, customPrompt: opts.customPrompt, sourceUrl: '', resultUrl: res.outputUrl });
         if (batchId && opts.before) saveOriginalMedia(batchId, 0, opts.before).catch(() => {});
+        if (opts.replaceBatchId && opts.replaceBatchId !== batchId) deleteBatchPhoto(opts.replaceBatchId, 0).catch(() => {});
+        currentBatchId.current = batchId;
         onBatchCreated?.();
       } catch (e) { console.error('[FotoAI] save to batch failed (non-blocking):', e); }
       return;
@@ -338,6 +347,7 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated 
           setGenerating(false);
         }
       } else {
+        currentBatchId.current = null; // nuova generazione = nuova catena
         await beginSingle({
           imageDataUrl: photos[0].dataUrl,
           before: photos[0].dataUrl,
@@ -370,6 +380,7 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated 
         style: null,
         angle: null,
         customPrompt: prompt,
+        replaceBatchId: currentBatchId.current, // sostituisci la versione precedente
       });
     } catch (err: any) {
       setError(err?.message || 'Errore di connessione al server AI');
@@ -379,6 +390,7 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated 
 
   const resetAll = () => {
     clearPending();
+    currentBatchId.current = null;
     setPhotos([]); setSelStyle(null); setSelAngle(null); setCustomPrompt('');
     setResult(null); setRevealing(null); setReprompt(''); setBatchDone(null); setError(null); setGenerating(false);
   };
