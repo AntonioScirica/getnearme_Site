@@ -583,23 +583,7 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated 
 
             {revealing === 'slider' && result ? (
               <>
-                {/* Result actions panel */}
-                <div style={{ background: '#fff', border: '1px solid #f0ede7', borderRadius: 16, padding: 20, boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: '#b3aca1', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 14 }}>Risultato</div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    <Box as="button" onClick={async () => { if (downloading) return; setDownloading(true); try { await downloadImage(result.after, 'homestaging-ai.jpg'); } finally { setDownloading(false); } }} style={{ border: 'none', background: 'linear-gradient(135deg, #3B83F6 0%, #6366f1 100%)', color: '#fff', fontSize: 14, fontWeight: 700, padding: '14px 20px', borderRadius: 12, cursor: downloading ? 'default' : 'pointer', opacity: downloading ? .85 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 } as React.CSSProperties} hover={downloading ? undefined : s('opacity:.9')}>
-                      {downloading
-                        ? <><span style={{ width: 16, height: 16, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.4)', borderTopColor: '#fff', animation: 'export-spin 1s linear infinite', display: 'inline-block' }} />Scaricando...</>
-                        : <><Icon name="download" size={16} color="#fff" />Scarica risultato</>}
-                    </Box>
-                    <Box as="button" onClick={resetAll} style={{ border: '1.5px solid #e4e1da', background: '#fff', color: '#211f1c', fontSize: 14, fontWeight: 600, padding: '13px 20px', borderRadius: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 } as React.CSSProperties} hover={s('background:#f8f7f5')}>
-                      <Icon name="image-plus" size={16} color="#57534c" />
-                      Nuova foto
-                    </Box>
-                  </div>
-                </div>
-
-                {/* Reprompt */}
+                {/* Reprompt (sopra) */}
                 <div style={{ background: '#fff', border: '1px solid #f0ede7', borderRadius: 16, padding: 20, boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
                   <div style={{ fontSize: 11, fontWeight: 700, color: '#b3aca1', textTransform: 'uppercase', letterSpacing: '.06em', margin: '0 0 10px' }}>Modifica con un prompt</div>
                   <textarea value={reprompt} onChange={e => setReprompt(e.target.value)} maxLength={2000} rows={3} placeholder="Es. cambia il colore del divano in beige" style={inputStyle} />
@@ -615,6 +599,22 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated 
                     <Icon name="sparkles" size={15} color={reprompt.trim() && !generating ? '#fff' : '#9ca3af'} />
                     Rigenera
                   </button>
+                </div>
+
+                {/* Export / salvataggio (sotto) */}
+                <div style={{ background: '#fff', border: '1px solid #f0ede7', borderRadius: 16, padding: 20, boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: '#b3aca1', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 14 }}>Risultato</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    <Box as="button" onClick={async () => { if (downloading) return; setDownloading(true); try { await downloadImage(result.after, 'homestaging-ai.jpg'); } finally { setDownloading(false); } }} style={{ border: 'none', background: 'linear-gradient(135deg, #3B83F6 0%, #6366f1 100%)', color: '#fff', fontSize: 14, fontWeight: 700, padding: '14px 20px', borderRadius: 12, cursor: downloading ? 'default' : 'pointer', opacity: downloading ? .85 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 } as React.CSSProperties} hover={downloading ? undefined : s('opacity:.9')}>
+                      {downloading
+                        ? <><span style={{ width: 16, height: 16, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.4)', borderTopColor: '#fff', animation: 'export-spin 1s linear infinite', display: 'inline-block' }} />Scaricando...</>
+                        : <><Icon name="download" size={16} color="#fff" />Scarica risultato</>}
+                    </Box>
+                    <Box as="button" onClick={resetAll} style={{ border: '1.5px solid #e4e1da', background: '#fff', color: '#211f1c', fontSize: 14, fontWeight: 600, padding: '13px 20px', borderRadius: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 } as React.CSSProperties} hover={s('background:#f8f7f5')}>
+                      <Icon name="image-plus" size={16} color="#57534c" />
+                      Nuova foto
+                    </Box>
+                  </div>
                 </div>
               </>
             ) : (
