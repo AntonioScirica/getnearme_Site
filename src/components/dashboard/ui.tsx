@@ -10,7 +10,7 @@ import {
   Image as ImageIcon, Download, Pencil, LayoutDashboard, Users, Palette, AtSign,
   CreditCard, Upload, Copy, Trash2, Gift, Crown, Zap, Settings, LogOut, LifeBuoy,
   PlayCircle, MapPin, Maximize2, LayoutGrid, Tag, Scissors, LoaderCircle, Inbox,
-  Euro, Bed, Bath,
+  Euro, Bed, Bath, Instagram, Type, Home,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -26,7 +26,7 @@ const ICONS: Record<string, LucideIcon> = {
   'log-out': LogOut, 'life-buoy': LifeBuoy, 'play-circle': PlayCircle,
   'map-pin': MapPin, 'maximize-2': Maximize2, 'layout-grid': LayoutGrid,
   tag: Tag, scissors: Scissors, 'loader-circle': LoaderCircle, inbox: Inbox,
-  euro: Euro, bed: Bed, bath: Bath,
+  euro: Euro, bed: Bed, bath: Bath, instagram: Instagram, type: Type, home: Home,
 };
 
 /** Parse a CSS declaration string into a React style object. */

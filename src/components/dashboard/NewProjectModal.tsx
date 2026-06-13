@@ -3,6 +3,7 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { s, Box, Icon } from './ui';
 import { createProject, updateProject, deleteProject, ProjectData } from '@/lib/projects';
+import { supabase } from '@/lib/supabase';
 import { ICONS as TPL_ICONS } from './templates/icons.js';
 import Cropper from 'react-easy-crop';
 
@@ -144,8 +145,13 @@ export function NewProjectModal({
         formData.append('file', file);
         formData.append('folder', 'covers');
         
+        const { data: { session } } = await supabase.auth.getSession();
+        const headers: Record<string, string> = {};
+        if (session) headers['Authorization'] = `Bearer ${session.access_token}`;
+
         const uploadRes = await fetch('/api/upload', {
           method: 'POST',
+          headers,
           body: formData,
         });
         
@@ -269,7 +275,7 @@ export function NewProjectModal({
         </div>
 
         {/* Body */}
-        <div className="max-md:!p-4" style={{ padding: '32px', overflowY: 'auto', position: 'relative', zIndex: 10 }}>
+        <div className="max-md:!p-4" style={{ padding: '20px 32px 32px', overflowY: 'auto', position: 'relative', zIndex: 10 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
               {(editProject || step === 1) && (<>
               <div>
@@ -307,7 +313,7 @@ export function NewProjectModal({
                       image={cover}
                       crop={crop}
                       zoom={zoom}
-                      aspect={16/9}
+                      aspect={1}
                       objectFit="horizontal-cover"
                       onCropChange={setCrop}
                       onCropComplete={onCropComplete}
@@ -484,9 +490,6 @@ export function NewProjectModal({
                   </>
                 ) : step === 1 ? (
                   <>
-                    <Box as="button" onClick={() => handleFinish(true)} style={s('border:1px solid #e4e1da;background:#fff;color:#57534c;font-size:14px;font-weight:700;padding:12px 20px;border-radius:12px;cursor:pointer;flex:1')} hover={s('background:#f6f4f0;border-color:#d8d4cb')}>
-                      Salta per ora
-                    </Box>
                     <Box as="button" onClick={() => { if (nome.trim()) setStep(2); }} style={s('border:none;background:#3B83F6;color:#fff;font-size:14px;font-weight:700;padding:12px 20px;border-radius:12px;cursor:' + (nome.trim() ? 'pointer' : 'default') + ';flex:1;box-shadow:0 4px 12px rgba(59,131,246,0.25);opacity:' + (nome.trim() ? 1 : 0.45))} hover={nome.trim() ? s('background:#2563EB') : undefined}>
                       Avanti
                     </Box>

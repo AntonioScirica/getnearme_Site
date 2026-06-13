@@ -172,9 +172,22 @@ html {
 @keyframes tour-slide { 0% { transform: translateX(-14px); opacity: 0; } 100% { transform: translateX(0); opacity: 1; } }
 @keyframes tour-bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
 @keyframes tour-tile { 0% { transform: scale(.6); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
-@keyframes tour-wiggle { 0%,100% { transform: rotate(-7deg); } 50% { transform: rotate(7deg); } }
+@keyframes tour-wiggle {
+  0%, 15%, 100% { transform: rotate(0deg); }
+  3%, 9% { transform: rotate(-8deg); }
+  6%, 12% { transform: rotate(8deg); }
+}
+@keyframes tour-video-squares {
+  0%, 10% { transform: scale(0.6); opacity: 0; }
+  20%, 80% { transform: scale(1); opacity: 1; }
+  90%, 100% { transform: scale(0.6); opacity: 0; }
+}
 @keyframes tour-reveal { 0%,100% { width: 30%; } 50% { width: 72%; } }
-@keyframes tour-tile-loop { 0%,100% { transform: scale(.82); opacity: .45; } 50% { transform: scale(1); opacity: 1; } }
+@keyframes tour-tile-loop { 0%,100% { transform: scale(.94); opacity: .7; } 50% { transform: scale(1); opacity: 1; } }
+@keyframes tour-fade-in { 0% { opacity: 0; transform: translate(-50%, -46%); } 100% { opacity: 1; transform: translate(-50%, -50%); } }
+@keyframes tour-fade-tip { 0% { opacity: 0; transform: translateY(6px); } 100% { opacity: 1; transform: translateY(0); } }
+@keyframes tour-fade-only { 0% { opacity: 0; } 100% { opacity: 1; } }
+
 
 @keyframes aurora-pulse {
   0%, 100% { transform: scale(1); filter: brightness(1); }

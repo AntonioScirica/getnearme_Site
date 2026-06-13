@@ -56,31 +56,30 @@ const TOUR_DEFS = [
   { sel: '[title="Post Social"]', title: 'Post Social', anim: 'social', text: 'Template per post e storie con i dati già compilati, e il calendario per programmare le pubblicazioni.' },
   { sel: '[title="Media"]', title: 'Media', anim: 'media', text: 'Tutto ciò che generi finisce qui. Puoi riusarlo in post e video senza pagare altri crediti.' },
   { sel: '[title="Lavori in corso"]', title: 'Lavori in corso', anim: 'jobs', text: 'Le generazioni girano in background: qui vedi i progressi senza mai bloccarti. Ti avvisiamo a fine lavoro.' },
-  { sel: '@center', title: 'Aggiungi il tuo primo immobile', anim: 'project', text: 'Crea un progetto immobile: da lì generi foto, video e post con i dati già compilati. Iniziamo?' },
+  { sel: '@center', title: 'Tutto parte da qui', anim: 'project', text: "Inserisci foto e dettagli una sola volta: l'AI li userà in automatico per generare home staging, video reel e post social perfetti e già compilati." },
+  { sel: '[data-tour="new-project"]', title: 'Inizia subito', anim: 'none', text: 'Clicca qui per iniziare a caricare foto e dettagli e sbloccare tutte le funzioni AI di GetNearMe.' },
 ];
 
 // Mini-animazioni per ogni step del tour (CSS, leggere).
 function TourAnim({ kind }: { kind: string }) {
-  const wrap: React.CSSProperties = { height: 92, borderRadius: 12, background: 'linear-gradient(135deg,#eef4fe,#f6f4f0)', overflow: 'hidden', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 14 };
+  const wrap: React.CSSProperties = { height: 106, borderRadius: 12, background: 'linear-gradient(135deg,#eef4fe,#f6f4f0)', overflow: 'hidden', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 14 };
   if (kind === 'brand') return (
     <div style={wrap}>
       {['#3B83F6', '#5B6CF0', '#211f1c'].map((c, i) => (
         <div key={i} style={{ width: 26, height: 26, borderRadius: 8, background: c, animation: 'tour-pop .6s both', animationDelay: `${i * 0.18}s`, boxShadow: '0 2px 8px rgba(0,0,0,.12)' }} />
       ))}
-      <div style={{ width: 30, height: 30, borderRadius: '50%', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'tour-wiggle 2s ease-in-out infinite', boxShadow: '0 2px 8px rgba(0,0,0,.1)' }}><Icon name="palette" size={15} color="#1d5fd0" /></div>
+      <div style={{ width: 30, height: 30, borderRadius: '50%', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'tour-wiggle 5s ease-in-out infinite', boxShadow: '0 2px 8px rgba(0,0,0,.1)' }}><Icon name="palette" size={15} color="#1d5fd0" /></div>
     </div>
   );
   if (kind === 'staging') return (
     <div style={wrap}>
       {/* Prima/Dopo: la parte "dopo" (arredata) si rivela con la linea che scorre dx/sx */}
-      <div style={{ position: 'relative', width: 160, height: 60, borderRadius: 8, overflow: 'hidden', background: 'repeating-linear-gradient(45deg,#e7e3dc,#e7e3dc 6px,#ddd8cf 6px,#ddd8cf 12px)' }}>
-        <span style={{ position: 'absolute', top: 5, left: 7, fontSize: 9, fontWeight: 800, color: '#a8a299', textTransform: 'uppercase', letterSpacing: '.06em' }}>Prima</span>
-        {/* layer "dopo" che si rivela, con la linea+handle sul bordo destro */}
-        <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, overflow: 'hidden', animation: 'tour-reveal 3s ease-in-out infinite' }}>
-          <div style={{ width: 160, height: 60, background: 'linear-gradient(135deg,#93C5FD,#3B83F6 70%,#5B6CF0)', position: 'relative' }}>
-            <span style={{ position: 'absolute', top: 5, left: 7, fontSize: 9, fontWeight: 800, color: '#fff', textTransform: 'uppercase', letterSpacing: '.06em' }}>Dopo</span>
-            <Icon name="sparkles" size={14} color="#fff" />
-          </div>
+      <div style={{ position: 'relative', width: 160, height: 60, borderRadius: 8 }}>
+        {/* Layer "prima" (sfondo) */}
+        <div style={{ position: 'absolute', inset: 0, borderRadius: 8, background: '#dbeafe' }} />
+        
+        {/* Layer "dopo" che si rivela, senza overflow:hidden per non tagliare il cerchio */}
+        <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, background: 'linear-gradient(135deg,#93C5FD,#3B83F6 70%,#5B6CF0)', borderRadius: '8px 0 0 8px', animation: 'tour-reveal 3s ease-in-out infinite', display: 'flex', alignItems: 'center', paddingLeft: 10 }}>
           <div style={{ position: 'absolute', top: 0, bottom: 0, right: 0, width: 2, background: '#fff', boxShadow: '0 0 6px rgba(0,0,0,.25)' }} />
           <div style={{ position: 'absolute', top: '50%', right: -9, transform: 'translateY(-50%)', width: 18, height: 18, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 5px rgba(0,0,0,.25)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#211f1c" strokeWidth="2.5"><path d="M8 6l-6 6 6 6M16 6l6 6-6 6" /></svg>
@@ -90,9 +89,23 @@ function TourAnim({ kind }: { kind: string }) {
     </div>
   );
   if (kind === 'video') return (
-    <div style={{ ...wrap, flexDirection: 'column', gap: 12 }}>
-      <div style={{ animation: 'aurora-pulse 2.2s ease-in-out infinite' }}><Icon name="play-circle" size={34} color="#3B83F6" /></div>
-      <div style={{ width: 130, height: 5, borderRadius: 3, background: '#dfe7f4', overflow: 'hidden' }}><div style={{ height: '100%', borderRadius: 3, background: '#3B83F6', animation: 'tour-fill 2.4s ease-in-out infinite' }} /></div>
+    <div style={{ ...wrap, gap: 12 }}>
+      {/* Foto di partenza */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+        {[0, 1, 2].map(i => (
+           <div key={i} style={{ width: 18, height: 18, borderRadius: 3, background: '#e4e1da', animation: 'tour-video-squares 4s both infinite', animationDelay: `${i * 0.15}s` }} />
+        ))}
+      </div>
+      
+      {/* Freccia */}
+      <Icon name="arrow-right" size={14} color="#b3aca1" />
+      
+      {/* Video Verticale generato */}
+      <div style={{ width: 48, height: 78, borderRadius: 6, background: 'linear-gradient(135deg, #3B83F6, #5B6CF0)', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 24px rgba(59,131,246,.25)' }}>
+        <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(255,255,255,.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'aurora-pulse 2s infinite' }}>
+          <Icon name="sparkles" size={14} color="#fff" />
+        </div>
+      </div>
     </div>
   );
   if (kind === 'montaggio') return (
@@ -106,34 +119,91 @@ function TourAnim({ kind }: { kind: string }) {
   );
   if (kind === 'social') return (
     <div style={wrap}>
-      <div style={{ width: 150, background: '#fff', borderRadius: 8, padding: 10, boxShadow: '0 2px 10px rgba(0,0,0,.08)', display: 'flex', flexDirection: 'column', gap: 6 }}>
-        <div style={{ height: 8, width: '70%', borderRadius: 4, background: '#dfe7f4', animation: 'tour-fill 2.2s ease-in-out infinite' }} />
-        <div style={{ height: 8, width: '45%', borderRadius: 4, background: '#eef0f3', animation: 'tour-fill 2.2s .3s ease-in-out infinite' }} />
-        <div style={{ alignSelf: 'flex-end', marginTop: 2, animation: 'tour-pop 1.8s ease-in-out infinite' }}><Icon name="sparkles" size={13} color="#5B6CF0" /></div>
+      <div style={{ width: 56, background: '#fff', borderRadius: 6, padding: 5, boxShadow: '0 8px 24px rgba(29,95,208,.12)', display: 'flex', flexDirection: 'column', gap: 4, position: 'relative' }}>
+        
+        {/* Header (Avatar + Name) */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <div style={{ width: 10, height: 10, borderRadius: '50%', background: 'linear-gradient(135deg,#3B83F6,#5B6CF0)' }} />
+          <div style={{ height: 3, width: 16, borderRadius: 2, background: '#e4e1da' }} />
+        </div>
+        
+        {/* Post Image */}
+        <div style={{ width: '100%', height: 38, borderRadius: 3, background: '#f4f2ee', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Icon name="image" size={12} color="#b3aca1" />
+        </div>
+        
+        {/* Like/Comment mini icons (simulated with circles) */}
+        <div style={{ display: 'flex', gap: 2 }}>
+          <div style={{ width: 5, height: 5, borderRadius: '50%', border: '1px solid #b3aca1' }} />
+          <div style={{ width: 5, height: 5, borderRadius: '50%', border: '1px solid #b3aca1' }} />
+        </div>
+
+        {/* AI Caption Typing */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 1 }}>
+          <div style={{ height: 2, width: '90%', borderRadius: 1, background: '#3B83F6', animation: 'tour-fill 2.5s ease-in-out infinite' }} />
+          <div style={{ height: 2, width: '60%', borderRadius: 1, background: '#3B83F6', animation: 'tour-fill 2.5s .3s ease-in-out infinite' }} />
+          <div style={{ height: 2, width: '40%', borderRadius: 1, background: '#3B83F6', animation: 'tour-fill 2.5s .6s ease-in-out infinite' }} />
+        </div>
+        
+        {/* Scintilla AI che fluttua al lato della caption */}
+        <div style={{ position: 'absolute', bottom: -5, right: -5, background: '#fff', borderRadius: '50%', padding: 3, boxShadow: '0 2px 8px rgba(0,0,0,.15)', animation: 'tour-bob 2s ease-in-out infinite' }}>
+          <Icon name="sparkles" size={10} color="#3B83F6" />
+        </div>
       </div>
     </div>
   );
   if (kind === 'media') return (
-    <div style={{ ...wrap, display: 'grid', gridTemplateColumns: 'repeat(3,28px)', gridAutoRows: 28, gap: 6 }}>
-      {[0, 1, 2, 3, 4, 5].map(i => (
-        <div key={i} style={{ borderRadius: 6, background: i % 2 ? '#3B83F6' : '#93C5FD', animation: 'tour-tile-loop 1.8s ease-in-out infinite', animationDelay: `${i * 0.15}s` }} />
-      ))}
+    <div style={{ ...wrap, padding: 12, display: 'flex', gap: 8, alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ width: 38, height: 38, borderRadius: 8, background: '#3B83F6', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'tour-tile-loop 6s ease-in-out infinite' }}>
+        <Icon name="image" size={16} color="#fff" />
+      </div>
+      <div style={{ width: 38, height: 38, borderRadius: 8, background: '#93C5FD', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'tour-tile-loop 6s .6s ease-in-out infinite' }}>
+        <Icon name="film" size={16} color="#fff" />
+      </div>
+      <div style={{ width: 38, height: 38, borderRadius: 8, background: 'linear-gradient(135deg,#3B83F6,#5B6CF0)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'tour-tile-loop 6s 1.2s ease-in-out infinite' }}>
+        <Icon name="instagram" size={16} color="#fff" />
+      </div>
     </div>
   );
   if (kind === 'jobs') return (
     <div style={wrap}>
       <div style={{ position: 'relative', width: 64, height: 64, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ position: 'absolute', width: 56, height: 56, borderRadius: '50%', border: '1.5px solid rgba(59,131,246,.3)', animation: 'pulse-ring 2.6s ease-out infinite' }} />
-        <div style={{ width: 40, height: 40, background: 'radial-gradient(circle at 32% 28%, #AECBFF, #3B83F6 70%, #5B6CF0)', animation: 'organic-blob 7s ease-in-out infinite' }} />
+        <div style={{ position: 'absolute', width: 56, height: 56, borderRadius: '50%', border: '1.5px solid rgba(59,131,246,.3)', animation: 'pulse-ring 2.6s linear infinite' }} />
+        <div style={{ width: 40, height: 40, background: 'radial-gradient(circle at 32% 28%, #AECBFF, #3B83F6 70%, #5B6CF0)', animation: 'organic-blob 10s linear infinite', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <img src="/templates/default-logo-vertical.svg" style={{ height: 16, filter: 'brightness(0) invert(1)' }} alt="GetNearMe" />
+        </div>
       </div>
     </div>
   );
   // project (step centrale)
   return (
     <div style={wrap}>
-      <div style={{ position: 'relative', width: 60, height: 60, display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'tour-bob 2.4s ease-in-out infinite' }}>
-        <div style={{ width: 52, height: 52, borderRadius: 16, background: '#eef4fe', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="building-2" size={26} color="#1d5fd0" /></div>
-        <div style={{ position: 'absolute', bottom: -2, right: -2, width: 22, height: 22, borderRadius: '50%', background: '#3B83F6', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'tour-pop .6s both', animationDelay: '.4s' }}><Icon name="plus" size={13} color="#fff" /></div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+        {/* L'immobile di partenza */}
+        <div style={{ width: 60, height: 60, borderRadius: 14, background: '#fff', boxShadow: '0 12px 32px rgba(29,95,208,.12)', border: '1px solid #f0ede7', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}>
+          <Icon name="home" size={28} color="#1d5fd0" />
+        </div>
+
+        {/* Freccia */}
+        <div style={{ color: '#b3aca1', animation: 'tour-slide 2s alternate infinite', padding: '0 4px' }}>
+          <Icon name="arrow-right" size={20} />
+        </div>
+        
+        {/* I contenuti generati */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+          <div style={{ width: 40, height: 40, borderRadius: 10, background: '#eef4fe', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'tour-tile-loop 3s ease-in-out infinite' }}>
+            <Icon name="image" size={18} color="#3B83F6" />
+          </div>
+          <div style={{ width: 40, height: 40, borderRadius: 10, background: '#eef4fe', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'tour-tile-loop 3s .3s ease-in-out infinite' }}>
+            <Icon name="film" size={18} color="#3B83F6" />
+          </div>
+          <div style={{ width: 40, height: 40, borderRadius: 10, background: '#eef4fe', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'tour-tile-loop 3s .6s ease-in-out infinite' }}>
+            <Icon name="instagram" size={18} color="#3B83F6" />
+          </div>
+          <div style={{ width: 40, height: 40, borderRadius: 10, background: '#eef4fe', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'tour-tile-loop 3s .9s ease-in-out infinite' }}>
+            <Icon name="type" size={18} color="#3B83F6" />
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -2323,7 +2393,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
             <Box as="button" onClick={startTour} style={s('width:100%;border:none;background:#3B83F6;color:#fff;font-size:15px;font-weight:700;padding:14px 28px;border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;min-height:48px;transition:all .2s')} hover={s('background:#2b6fe0;transform:translateY(-1px);box-shadow:0 8px 24px rgba(59,131,246,.28)')}>
               Fai un giro veloce (1 min) <Icon name="arrow-right" size={16} color="#fff" />
             </Box>
-            <Box as="button" onClick={() => { closeWelcome(); toast('Puoi rifare il tour dal menu Profilo > Tutorial'); }} style={s('display:block;text-align:left;width:fit-content;border:none;background:transparent;color:#8c867d;font-size:14px;font-weight:600;padding:12px 4px 0;border-radius:8px;cursor:pointer;transition:color .2s')} hover={{ color: '#57534c' }}>
+            <Box as="button" onClick={() => { closeWelcome(); toast('Puoi rifare il tour dal menu Profilo > Tutorial'); }} style={s('display:block;margin:16px auto 0;text-align:center;width:fit-content;border:none;background:transparent;color:#8c867d;font-size:14px;font-weight:600;padding:8px 12px;border-radius:8px;cursor:pointer;transition:color .2s')} hover={{ color: '#57534c' }}>
               Salta e inizia subito
             </Box>
           </div>
@@ -2331,28 +2401,67 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
       )}
 
       {/* TOUR COACHMARK */}
-      {tourStep !== null && (tourRect || tdef.sel === '@center') && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 96 }}>
-          {tdef.sel === '@center'
-            ? <div onClick={() => setTourStep(null)} style={{ position: 'absolute', inset: 0, background: 'rgba(24,21,17,.55)', backdropFilter: 'blur(2px)' }} />
-            : <div onClick={() => setTourStep(null)} style={{ position: 'absolute', left: tourRect!.x - 6, top: tourRect!.y - 6, width: tourRect!.w + 12, height: tourRect!.h + 12, borderRadius: 14, boxShadow: '0 0 0 9999px rgba(24,21,17,.55)', transition: 'all .3s ease', pointerEvents: 'none' }} />}
-          <div style={tdef.sel === '@center'
-            ? { position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%,-50%)', width: 360, maxWidth: 'calc(100vw - 32px)', background: '#fff', borderRadius: 16, boxShadow: '0 24px 64px rgba(20,18,15,.32)', padding: '22px 24px' }
-            : { position: 'absolute', left: tipL, top: tipT, width: 300, background: '#fff', borderRadius: 12, boxShadow: '0 16px 48px rgba(20,18,15,.3)', padding: '18px 20px 20px', transition: 'all .3s ease' }}>
-            <TourAnim kind={tdef.anim} />
-            <div style={s('display:flex;align-items:center;justify-content:space-between;margin-bottom:6px')}>
-              <span style={s('font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#1d5fd0')}>{(tourStep + 1) + ' di ' + TOUR_DEFS.length}</span>
-              <span onClick={() => setTourStep(null)} style={s('font-size:12px;font-weight:600;color:#b3aca1;cursor:pointer;padding:4px')}>Salta il tour</span>
+      {tourStep !== null && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 101, pointerEvents: 'none' }}>
+          <div style={{ 
+            position: 'absolute', 
+            transition: 'all .5s cubic-bezier(0.16, 1, 0.3, 1)', 
+            pointerEvents: 'none',
+            ...(tdef.sel === '@center' || !tourRect
+              ? { left: '50%', top: '50%', width: 0, height: 0, borderRadius: '50%', boxShadow: '0 0 0 9999px rgba(24,21,17,.55)' }
+              : { 
+                  left: tourRect.x - (tdef.sel === '[data-tour="new-project"]' ? 0 : 6), 
+                  top: tourRect.y - (tdef.sel === '[data-tour="new-project"]' ? 0 : 6), 
+                  width: tourRect.w + (tdef.sel === '[data-tour="new-project"]' ? 0 : 12), 
+                  height: tourRect.h + (tdef.sel === '[data-tour="new-project"]' ? 0 : 12), 
+                  borderRadius: tdef.sel === '[data-tour="new-project"]' ? 10 : 14, 
+                  boxShadow: '0 0 0 9999px rgba(24,21,17,.55)' 
+                })
+          }} />
+
+          {/* Il catcher a tutto schermo (usato per lo step @center) */}
+          {(!tourRect || tdef.sel === '@center') && (
+            <div style={{ position: 'absolute', inset: 0, pointerEvents: 'auto' }} onClick={() => setTourStep(null)} />
+          )}
+
+          {/* I 4 muri invisibili per gli step con tourRect, lasciano un buco fisico per far passare click/hover */}
+          {tourRect && tdef.sel !== '@center' && (
+            (() => {
+              const pad = tdef.sel === '[data-tour="new-project"]' ? 0 : 6;
+              return (
+                <>
+                  <div onClick={() => setTourStep(null)} style={{ position: 'absolute', top: 0, left: 0, right: 0, height: Math.max(0, tourRect.y - pad), pointerEvents: 'auto' }} />
+                  <div onClick={() => setTourStep(null)} style={{ position: 'absolute', top: tourRect.y + tourRect.h + pad, left: 0, right: 0, bottom: 0, pointerEvents: 'auto' }} />
+                  <div onClick={() => setTourStep(null)} style={{ position: 'absolute', top: Math.max(0, tourRect.y - pad), left: 0, width: Math.max(0, tourRect.x - pad), height: tourRect.h + pad*2, pointerEvents: 'auto' }} />
+                  <div onClick={() => setTourStep(null)} style={{ position: 'absolute', top: Math.max(0, tourRect.y - pad), left: tourRect.x + tourRect.w + pad, right: 0, height: tourRect.h + pad*2, pointerEvents: 'auto' }} />
+                </>
+              );
+            })()
+          )}
+          {tdef.sel !== '[data-tour="new-project"]' && (tdef.sel === '@center' || tourRect) && (
+            <div key={tourStep} style={tdef.sel === '@center'
+              ? { position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%,-50%)', width: 360, maxWidth: 'calc(100vw - 32px)', background: '#fff', borderRadius: 16, boxShadow: '0 24px 64px rgba(20,18,15,.32)', padding: '22px 24px', animation: 'tour-fade-in .5s cubic-bezier(0.16, 1, 0.3, 1) forwards', pointerEvents: 'auto' }
+              : { position: 'absolute', left: tipL, top: tipT, width: 300, background: '#fff', borderRadius: 12, boxShadow: '0 16px 48px rgba(20,18,15,.3)', padding: '18px 20px 20px', animation: 'tour-fade-tip .4s cubic-bezier(0.16, 1, 0.3, 1) forwards', pointerEvents: 'auto' }}>
+              <TourAnim kind={tdef.anim} />
+              {tdef.sel !== '@center' && (
+                <div style={s('display:flex;align-items:center;justify-content:space-between;margin-bottom:6px')}>
+                  <span style={s('font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#1d5fd0')}>{(tourStep + 1) + ' di ' + (TOUR_DEFS.length - 2)}</span>
+                  <span onClick={() => setTourStep(null)} style={s('font-size:12px;font-weight:600;color:#b3aca1;cursor:pointer;padding:4px')}>Salta il tour</span>
+                </div>
+              )}
+              {tdef.sel === '@center' && (
+                <div style={s('font-size:32px;text-align:center;margin-bottom:16px')}>🎉</div>
+              )}
+              <div style={s(`font-size:16px;font-weight:800;letter-spacing:-.2px;margin-bottom:4px;${tdef.sel === '@center' ? 'text-align:center;' : ''}`)}>{tdef.title}</div>
+              <div style={s(`font-size:13px;color:#57534c;line-height:1.5;margin-bottom:24px;${tdef.sel === '@center' ? 'text-align:center;' : ''}`)}>{tdef.text}</div>
+              <div style={s('display:flex;align-items:center;justify-content:space-between')}>
+                {tourStep > 0 && tdef.sel !== '@center' && <Box as="button" onClick={() => tourGo(tourStep - 1)} style={s('border:1px solid #e4e1da;background:#fff;font-size:12.5px;font-weight:700;padding:9px 16px;border-radius:8px;cursor:pointer;min-height:38px')} hover={s('background:#f6f4f0')}>Indietro</Box>}
+                {tdef.sel !== '@center'
+                  ? <Box as="button" onClick={() => tourGo(tourStep + 1)} style={s('border:none;background:#3B83F6;color:#fff;font-size:12.5px;font-weight:700;padding:9px 18px;border-radius:8px;cursor:pointer;margin-left:auto;min-height:38px')} hover={s('background:#2b6fe0')}>Avanti</Box>
+                  : <Box as="button" onClick={() => { setProjOpen(true); tourGo(tourStep + 1); }} style={s('border:none;background:#3B83F6;color:#fff;font-size:13.5px;font-weight:700;padding:12px 18px;border-radius:8px;cursor:pointer;width:100%;text-align:center;display:flex;align-items:center;justify-content:center;min-height:44px')} hover={s('background:#2b6fe0;transform:translateY(-1px);box-shadow:0 8px 20px rgba(59,131,246,.25)')}>Aggiungi immobile</Box>}
+              </div>
             </div>
-            <div style={s('font-size:16px;font-weight:800;letter-spacing:-.2px;margin-bottom:4px')}>{tdef.title}</div>
-            <div style={s('font-size:13px;color:#57534c;line-height:1.5;margin-bottom:16px')}>{tdef.text}</div>
-            <div style={s('display:flex;align-items:center;justify-content:space-between')}>
-              {tourStep > 0 && <Box as="button" onClick={() => tourGo(tourStep - 1)} style={s('border:1px solid #e4e1da;background:#fff;font-size:12.5px;font-weight:700;padding:9px 16px;border-radius:8px;cursor:pointer;min-height:38px')} hover={s('background:#f6f4f0')}>Indietro</Box>}
-              {tdef.sel !== '@center'
-                ? <Box as="button" onClick={() => tourGo(tourStep + 1)} style={s('border:none;background:#3B83F6;color:#fff;font-size:12.5px;font-weight:700;padding:9px 18px;border-radius:8px;cursor:pointer;margin-left:auto;min-height:38px')} hover={s('background:#2b6fe0')}>Avanti</Box>
-                : <Box as="button" onClick={() => { setTourStep(null); setNewProjOpen(true); }} style={s('border:none;background:#3B83F6;color:#fff;font-size:12.5px;font-weight:700;padding:9px 18px;border-radius:8px;cursor:pointer;margin-left:auto;display:flex;align-items:center;gap:7px;min-height:38px')} hover={s('background:#2b6fe0')}><Icon name="plus" size={14} color="#fff" />Aggiungi immobile</Box>}
-            </div>
-          </div>
+          )}
         </div>
       )}
 
@@ -2471,7 +2580,9 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                       </Box>
                     ))}
                   </div>
-                  <Box onClick={() => { setProjOpen(false); setNewProjOpen(true); }} style={s('display:flex;align-items:center;gap:10px;padding:12px 16px;border-top:1px solid #f0ede7;cursor:pointer;color:#1d5fd0;font-weight:700;font-size:13px')} hover={s('background:#f6faff')}><Icon name="plus" size={16} color="#1d5fd0" />Nuovo immobile</Box>
+                  <div style={{ padding: '12px', borderTop: '1px solid #f0ede7' }}>
+                    <Box data-tour="new-project" onClick={() => { setProjOpen(false); setNewProjOpen(true); setTourStep(null); }} style={s(`display:flex;align-items:center;gap:10px;padding:12px 16px;border-radius:10px;cursor:pointer;color:${projList.length === 0 ? '#fff' : '#1d5fd0'};background:${projList.length === 0 ? '#3B83F6' : 'transparent'};font-weight:700;font-size:13px`)} hover={s(`background:${projList.length === 0 ? '#2b6fe0' : '#f6faff'}`)}><Icon name="plus" size={16} color={projList.length === 0 ? '#fff' : '#1d5fd0'} />{projList.length === 0 ? 'Crea il tuo primo immobile' : 'Nuovo immobile'}</Box>
+                  </div>
                 </div>
               )}
             </div>
@@ -2759,7 +2870,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
           editProject={active as unknown as ProjectData}
           onClose={() => setEditProjOpen(false)}
           onSuccess={(p) => {
-            setProjects(prev => prev.map(old => old.id === p.id ? p as unknown as Project : old));
+            setProjects(prev => prev.map(old => old.id === p.id ? { ...old, ...p } as unknown as Project : old));
             setEditProjOpen(false);
           }}
           onDelete={(id) => {
@@ -2767,7 +2878,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
             setEditProjOpen(false);
             const remaining = projects.filter(old => old.id !== id);
             if (remaining.length > 0) setActiveProject(remaining[0].id);
-            else setActiveProject('');
+            else setActiveProject(null);
           }}
         />
       )}
