@@ -266,7 +266,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
   const [autoCut, setAutoCut] = React.useState(true);
   const [coverTitle, setCoverTitle] = React.useState('');
   const [coverAddress, setCoverAddress] = React.useState('');
-  const [coverStyle, setCoverStyle] = React.useState('classic');
+  const [coverStyle, setCoverStyle] = React.useState(''); // nessuno di default: scelta obbligatoria
   const [propTitle, setPropTitle] = React.useState(project?.titolo ?? '');
   const [propAddress, setPropAddress] = React.useState(project?.addr ?? '');
   // sottotitoli transcription
@@ -334,7 +334,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
     setSections([]); setMusicUrl(null); setMusicOpen(false);
     setStagingStyle(AI_STAGING_STYLES[0].id); setAnimStyle(AI_STAGING_ANIMATION_STYLES[0].id);
     setDayNightDir(DAY_NIGHT_DIRECTIONS[0].id); setSubtitleStyle('bold'); setAutoCut(true);
-    setCoverTitle(''); setCoverAddress(''); setCoverStyle('classic');
+    setCoverTitle(''); setCoverAddress(''); setCoverStyle('');
     setPropTitle(''); setPropAddress('');
     setRenderStage(null); setRenderProgress(0); setOutputUrl(null); setRenderError(null);
     setSottPhase('edit'); setTranscription(null); setTranscribing(false); setEditingWordIdx(null);
@@ -1375,7 +1375,12 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
               </div>
               <StickyNav bleed={24}>
                 <Box as="button" onClick={() => setStep(2)} style={s('border:1px solid #e4e1da;background:#fff;font-size:13px;font-weight:600;padding:11px 20px;border-radius:10px;cursor:pointer') as React.CSSProperties} hover={s('background:#f6f4f0')}>Indietro</Box>
-                <Box as="button" onClick={() => { if (coverTitle.trim()) setMontaggioPhase('logo'); }} title={coverTitle.trim() ? '' : 'Inserisci un titolo per la copertina'} style={{ border: 'none', background: '#3B83F6', color: '#fff', fontSize: 13.5, fontWeight: 700, padding: '11px 22px', borderRadius: 10, cursor: coverTitle.trim() ? 'pointer' : 'default', opacity: coverTitle.trim() ? 1 : 0.45 }} hover={coverTitle.trim() ? { background: '#2b6fe0' } : {}}>Avanti &rarr;</Box>
+                {(() => {
+                  const ok = !!coverTitle.trim() && !!coverStyle;
+                  return (
+                    <Box as="button" onClick={() => { if (ok) setMontaggioPhase('logo'); }} title={ok ? '' : (!coverTitle.trim() ? 'Inserisci un titolo per la copertina' : 'Scegli una copertina')} style={{ border: 'none', background: '#3B83F6', color: '#fff', fontSize: 13.5, fontWeight: 700, padding: '11px 22px', borderRadius: 10, cursor: ok ? 'pointer' : 'default', opacity: ok ? 1 : 0.45 }} hover={ok ? { background: '#2b6fe0' } : {}}>Avanti &rarr;</Box>
+                  );
+                })()}
               </StickyNav>
             </div>
           )}
@@ -1399,25 +1404,29 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
                     </div>
                     {!whiteLogo && <div style={{ fontSize: 12.5, color: '#b45309', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 8, padding: '10px 12px', marginBottom: 16 }}>Nessun logo bianco configurato. Caricalo nella sezione Brand per usare il watermark.</div>}
                     {watermarkEnabled && whiteLogo && (
-                      <>
-                        {/* Anteprima watermark */}
-                        <div style={{ position: 'relative', aspectRatio: '16/9', borderRadius: 10, overflow: 'hidden', background: '#211f1c', marginBottom: 16 }}>
+                      <div className="max-md:!flex-col" style={{ display: 'flex', gap: 20, alignItems: 'flex-start' }}>
+                        {/* Sinistra: anteprima piccola */}
+                        <div className="max-md:!w-full" style={{ position: 'relative', width: 480, flex: 'none', aspectRatio: '16/9', borderRadius: 10, overflow: 'hidden', background: '#211f1c' }}>
                           {clips[0]?.thumb && (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img src={clips[0].thumb} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                           )}
+                          {/* logo piccolo: rispecchia la dimensione reale dell'export */}
                           {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={whiteLogo} alt="" style={{ position: 'absolute', maxWidth: '26%', maxHeight: '20%', objectFit: 'contain', opacity: watermarkOpacity / 100, ...posStyle[watermarkPosition] }} />
+                          <img src={whiteLogo} alt="" style={{ position: 'absolute', maxWidth: '15%', maxHeight: '12%', objectFit: 'contain', opacity: watermarkOpacity / 100, ...posStyle[watermarkPosition] }} />
                         </div>
-                        <div style={s('font-size:12.5px;font-weight:700;color:#57534c;margin-bottom:8px')}>Posizione</div>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 16 }}>
-                          {[{ id: 'top-left', label: '↖ Alto sx' }, { id: 'top-right', label: '↗ Alto dx' }, { id: 'bottom-left', label: '↙ Basso sx' }, { id: 'bottom-right', label: '↘ Basso dx' }].map(pos => (
-                            <div key={pos.id} onClick={() => setWatermarkPosition(pos.id)} style={{ ...cardSel(watermarkPosition === pos.id), textAlign: 'center', fontSize: 11.5, fontWeight: 700, padding: '10px 4px' }}>{pos.label}</div>
-                          ))}
+                        {/* Destra: posizione + opacità */}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={s('font-size:12.5px;font-weight:700;color:#57534c;margin-bottom:8px')}>Posizione</div>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8, marginBottom: 18 }}>
+                            {[{ id: 'top-left', label: '↖ Alto sx' }, { id: 'top-right', label: '↗ Alto dx' }, { id: 'bottom-left', label: '↙ Basso sx' }, { id: 'bottom-right', label: '↘ Basso dx' }].map(pos => (
+                              <div key={pos.id} onClick={() => setWatermarkPosition(pos.id)} style={{ ...cardSel(watermarkPosition === pos.id), textAlign: 'center', fontSize: 12, fontWeight: 700, padding: '10px 4px' }}>{pos.label}</div>
+                            ))}
+                          </div>
+                          <div style={s('font-size:12.5px;font-weight:700;color:#57534c;margin-bottom:8px')}>Opacità: {watermarkOpacity}%</div>
+                          <input type="range" min={10} max={100} step={5} value={watermarkOpacity} onChange={e => setWatermarkOpacity(Number(e.target.value))} style={{ width: '100%', accentColor: '#3B83F6' }} />
                         </div>
-                        <div style={s('font-size:12.5px;font-weight:700;color:#57534c;margin-bottom:8px')}>Opacità: {watermarkOpacity}%</div>
-                        <input type="range" min={10} max={100} step={5} value={watermarkOpacity} onChange={e => setWatermarkOpacity(Number(e.target.value))} style={{ width: '100%', accentColor: '#3B83F6' }} />
-                      </>
+                      </div>
                     )}
                   </>
                 );
