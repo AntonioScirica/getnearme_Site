@@ -75,21 +75,34 @@ const PLAN_TO_SUB_TYPE: Record<string, string> = {
   annual: 'agency_annual',
 };
 
+// Voci dalla landing (uguali per tutti i piani). Differenza tra piani = prezzo.
+// Quote uguali: 200 foto AI + 4 video AI/mese (margini ~81-91%).
+const PLAN_FEATURES = [
+  '200 foto AI homestaging/mese',
+  '4 video AI/mese',
+  'Analisi immobiliari illimitate',
+  'Report PDF con il tuo logo',
+  'Template Post & Stories Social',
+  'AI Rendering & Homestaging',
+  'Editor Video per i social',
+  'Supporto prioritario',
+];
+
 const PLANS = [
   {
     id: 'monthly', name: 'Mensile', price: 100, period: '/mese', badge: null, popular: false,
-    features: ['Report illimitati con il tuo logo', '60 foto AI homestaging/mese', '2 video Template AI/mese', 'Video montaggio automatico', 'Template Post & Stories Social'],
-    color: '#211f1c', quotaFoto: 60, quotaVideo: 2, quotaPost: 999,
+    features: PLAN_FEATURES,
+    color: '#211f1c', quotaFoto: 200, quotaVideo: 4, quotaPost: 999,
   },
   {
     id: 'quarterly', name: 'Trimestrale', price: 79, period: '/mese', badge: null, popular: false,
-    features: ['Report illimitati con il tuo logo', '120 foto AI homestaging/mese', '3 video Template AI/mese', 'Video montaggio automatico', 'Template Post & Stories Social'],
-    color: '#3B83F6', quotaFoto: 120, quotaVideo: 3, quotaPost: 999,
+    features: PLAN_FEATURES,
+    color: '#3B83F6', quotaFoto: 200, quotaVideo: 4, quotaPost: 999,
   },
   {
     id: 'annual', name: 'Annuale', price: 59, period: '/mese', badge: null, popular: false,
-    features: ['Report illimitati con il tuo logo', '240 foto AI homestaging/mese', '4 video Template AI/mese', 'Video montaggio automatico', 'Template Post & Stories Social', 'Supporto prioritario'],
-    color: '#211f1c', quotaFoto: 240, quotaVideo: 4, quotaPost: 999,
+    features: PLAN_FEATURES,
+    color: '#211f1c', quotaFoto: 200, quotaVideo: 4, quotaPost: 999,
   },
 ];
 
