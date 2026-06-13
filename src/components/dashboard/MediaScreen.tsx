@@ -197,7 +197,13 @@ export default function MediaScreen({
           <div style={{ animation: 'export-spin 1s linear infinite', width: 24, height: 24, border: '2px solid #e4e1da', borderTopColor: '#3B83F6', borderRadius: '50%', margin: '0 auto 16px' }} />
           <div style={{ color: '#8c867d', fontSize: 14 }}>Caricamento media...</div>
         </div>
-      ) : validBatches.length === 0 ? (
+      ) : days.length === 0 && anyPhotosLoading ? (
+        <div className="max-md:!grid-cols-2" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 16 }}>
+          {[1, 2, 3, 4].map(i => (
+            <div key={i} style={{ aspectRatio: '4/3', borderRadius: 12, background: '#f4f2ee', animation: 'pulse 1.5s infinite ease-in-out' }} />
+          ))}
+        </div>
+      ) : days.length === 0 ? (
         <div style={{ background: '#fff', border: '1px solid #f0ede7', borderRadius: 16, padding: '80px 40px', textAlign: 'center', marginTop: 20 }}>
           <div style={{ width: 64, height: 64, borderRadius: 16, background: '#f4f2ee', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
             <Icon name="image" size={28} color="#b3aca1" />
@@ -206,12 +212,6 @@ export default function MediaScreen({
           <p style={{ margin: '0 0 24px', color: '#8c867d', fontSize: 14, maxWidth: 360, marginInline: 'auto' }}>
             Le foto generate in Foto AI e i video creati appariranno qui automaticamente.
           </p>
-        </div>
-      ) : days.length === 0 && anyPhotosLoading ? (
-        <div className="max-md:!grid-cols-2" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 16 }}>
-          {[1, 2, 3, 4].map(i => (
-            <div key={i} style={{ aspectRatio: '4/3', borderRadius: 12, background: '#f4f2ee', animation: 'pulse 1.5s infinite ease-in-out' }} />
-          ))}
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
