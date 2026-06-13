@@ -475,12 +475,19 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated 
                             Batch (>1 foto): blob pieni che coprono — è una semplice "elaborazione", niente reveal AI. */}
                         {(generating || revealing === 'burst') && (
                           <>
-                            {/* Layer base: edge-glow per singola, full-cover blob per batch */}
+                            {/* Layer base: bordo aurora intenso (singola) — ogni lato al 100%
+                                e ben delineato, sfuma verso il centro trasparente.
+                                Batch: blob pieni che coprono. */}
                             <div style={{
                               position: 'absolute', inset: 0, zIndex: 6, pointerEvents: 'none',
                               background: isBatch
                                 ? 'linear-gradient(135deg, rgba(59,131,246,.7) 0%, rgba(37,99,210,.6) 25%, rgba(96,165,250,.65) 50%, rgba(59,131,246,.6) 75%, rgba(37,99,210,.7) 100%)'
-                                : 'radial-gradient(ellipse 82% 72% at 50% 50%, rgba(59,131,246,.12) 0%, rgba(59,131,246,.14) 40%, rgba(37,99,210,.6) 72%, rgba(59,131,246,.97) 94%, rgba(59,131,246,1) 100%)',
+                                : [
+                                    'linear-gradient(to right, rgba(59,131,246,1) 0%, rgba(59,131,246,0) 24%)',   // sinistra — blu
+                                    'linear-gradient(to left, rgba(168,85,247,1) 0%, rgba(168,85,247,0) 24%)',    // destra — viola/magenta
+                                    'linear-gradient(to bottom, rgba(99,102,241,1) 0%, rgba(99,102,241,0) 22%)',  // alto — indaco
+                                    'linear-gradient(to top, rgba(139,92,246,1) 0%, rgba(139,92,246,0) 22%)',     // basso — viola
+                                  ].join(','),
                               backgroundSize: isBatch ? '400% 400%' : undefined,
                               animation: revealing === 'burst'
                                 ? 'aurora-burst .6s ease-out forwards'

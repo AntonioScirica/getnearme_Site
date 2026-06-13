@@ -172,9 +172,11 @@ export default function MediaScreen({
             const photos = photosByBatch[batch.id];
             const loading = loadingPhotos[batch.id];
             const dateStr = new Date(batch.createdAt).toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' });
-            
+
             if (filter === 'video') return null; // We only have staging batches for now
             if (batch.status === 'failed' || batch.completedItems === 0) return null;
+            // Caricate ma vuote (es. vecchi batch senza item): nascondi la sezione.
+            if (!loading && photos && photos.length === 0) return null;
 
             return (
               <div key={batch.id}>
@@ -193,7 +195,7 @@ export default function MediaScreen({
                     </div>
                   </div>
                   
-                  {photos && photos.length > 0 && (
+                  {photos && photos.length > 1 && (
                     <Box as="button" onClick={() => handleDownloadBatch(batch)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', borderRadius: 8, fontSize: 13, fontWeight: 700, background: '#fff', border: '1px solid #e4e1da', cursor: 'pointer', color: '#211f1c' }} hover={{ background: '#f6f4f0' }}>
                       <Icon name="download" size={14} />
                       Scarica ZIP
