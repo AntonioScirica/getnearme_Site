@@ -1375,7 +1375,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
               </div>
               <StickyNav bleed={24}>
                 <Box as="button" onClick={() => setStep(2)} style={s('border:1px solid #e4e1da;background:#fff;font-size:13px;font-weight:600;padding:11px 20px;border-radius:10px;cursor:pointer') as React.CSSProperties} hover={s('background:#f6f4f0')}>Indietro</Box>
-                <Box as="button" onClick={() => setMontaggioPhase('logo')} style={{ border: 'none', background: '#3B83F6', color: '#fff', fontSize: 13.5, fontWeight: 700, padding: '11px 22px', borderRadius: 10, cursor: 'pointer' }} hover={{ background: '#2b6fe0' }}>Avanti &rarr;</Box>
+                <Box as="button" onClick={() => { if (coverTitle.trim()) setMontaggioPhase('logo'); }} title={coverTitle.trim() ? '' : 'Inserisci un titolo per la copertina'} style={{ border: 'none', background: '#3B83F6', color: '#fff', fontSize: 13.5, fontWeight: 700, padding: '11px 22px', borderRadius: 10, cursor: coverTitle.trim() ? 'pointer' : 'default', opacity: coverTitle.trim() ? 1 : 0.45 }} hover={coverTitle.trim() ? { background: '#2b6fe0' } : {}}>Avanti &rarr;</Box>
               </StickyNav>
             </div>
           )}
