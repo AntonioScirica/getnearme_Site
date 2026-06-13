@@ -92,10 +92,12 @@ export function HomeScreen({
     e.target.value = '';
   };
 
-  // Carica le foto recenti generate per questo immobile (max 8) dai batch.
+  // Carica le foto recenti generate per questo immobile dai batch (max 12 = 3 righe).
   const [recent, setRecent] = React.useState<RecentPhoto[]>([]);
+  const [loadingRecent, setLoadingRecent] = React.useState(true);
   React.useEffect(() => {
     let cancelled = false;
+    setLoadingRecent(true);
     (async () => {
       try {
         const batches = await fetchUserBatches();
@@ -110,8 +112,9 @@ export function HomeScreen({
             if (p.resultUrl && p.status !== 'failed') all.push({ url: p.resultUrl, ts: new Date(b.createdAt).getTime() });
           }
         }));
-        if (!cancelled) setRecent(all.sort((a, b) => b.ts - a.ts).slice(0, 8));
+        if (!cancelled) setRecent(all.sort((a, b) => b.ts - a.ts).slice(0, 12));
       } catch { /* ignore */ }
+      finally { if (!cancelled) setLoadingRecent(false); }
     })();
     return () => { cancelled = true; };
   }, [active?.id]);
@@ -351,15 +354,29 @@ export function HomeScreen({
             <h2 style={s('margin:0;font-size:20px;font-weight:800;letter-spacing:-.3px;color:#211f1c')}>Contenuti recenti</h2>
             <span onClick={() => go('media')} style={s('font-size:14px;font-weight:700;color:#1d5fd0;cursor:pointer')}>Vedi tutto in Libreria Media</span>
           </div>
-          {recent.length > 0 ? (
-            <div className="max-md:!grid-cols-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 12 }}>
-              {recent.map((p, i) => (
-                <div key={i} onClick={() => go('media')} style={{ position: 'relative', aspectRatio: '4/3', borderRadius: 12, overflow: 'hidden', cursor: 'pointer', border: '1px solid #f0ede7', background: '#f4f2ee' }}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={p.url} alt="" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                </div>
+          {loadingRecent ? (
+            <div className="max-md:!grid-cols-2" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+              {[1, 2, 3, 4].map(i => (
+                <div key={i} style={{ aspectRatio: '4/3', borderRadius: 12, background: '#f4f2ee', animation: 'pulse 1.5s infinite ease-in-out' }} />
               ))}
             </div>
+          ) : recent.length > 0 ? (
+            <>
+              <div className="max-md:!grid-cols-2" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+                {recent.map((p, i) => (
+                  <div key={i} onClick={() => go('media')} style={{ position: 'relative', aspectRatio: '4/3', borderRadius: 12, overflow: 'hidden', cursor: 'pointer', border: '1px solid #f0ede7', background: '#f4f2ee' }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={p.url} alt="" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                  </div>
+                ))}
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'center', marginTop: 20 }}>
+                <Box onClick={() => go('media')} style={s('display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid #e4e1da;color:#211f1c;padding:10px 20px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer')} hover={{ background: '#f6f4f0' }}>
+                  Vedi altro
+                  <Icon name="arrow-right" size={15} color="#211f1c" />
+                </Box>
+              </div>
+            </>
           ) : (
             <div style={{ background: '#fcfcfb', border: '1px dashed #e4e1da', borderRadius: 16, padding: '48px 24px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
               <div style={{ width: 48, height: 48, borderRadius: '50%', background: '#f6f4f0', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
