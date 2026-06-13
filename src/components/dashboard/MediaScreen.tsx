@@ -279,9 +279,15 @@ export default function MediaScreen({
                             <Icon name="alert-triangle" size={20} color="#dc2626" />
                           </div>
                           <div style={{ fontSize: 13, fontWeight: 700, color: '#dc2626', marginBottom: 4 }}>Generazione fallita</div>
-                          <div style={{ fontSize: 12, color: '#b91c1c' }}>
+                          <div style={{ fontSize: 12, color: '#b91c1c', marginBottom: 14 }}>
                             {photo.error === 'generation_failed' ? "L'AI non è riuscita a processare questa foto. Riprova con un'angolazione diversa." : photo.error || "Errore sconosciuto."}
                           </div>
+                          <Box as="button" onClick={async () => {
+                            await deleteBatchPhoto(photo.batchId, photo.index);
+                            setPhotosByBatch(prev => ({ ...prev, [photo.batchId]: (prev[photo.batchId] || []).filter(x => x.index !== photo.index) }));
+                          }} style={{ border: '1px solid #fca5a5', background: '#fff', color: '#dc2626', fontSize: 12.5, fontWeight: 700, padding: '7px 18px', borderRadius: 8, cursor: 'pointer' } as React.CSSProperties} hover={{ background: '#fef2f2' }}>
+                            Capito
+                          </Box>
                         </div>
                       );
                     }
