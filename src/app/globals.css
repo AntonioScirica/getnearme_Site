@@ -172,6 +172,9 @@ html {
 @keyframes tour-slide { 0% { transform: translateX(-14px); opacity: 0; } 100% { transform: translateX(0); opacity: 1; } }
 @keyframes tour-bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
 @keyframes tour-tile { 0% { transform: scale(.6); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+@keyframes tour-wiggle { 0%,100% { transform: rotate(-7deg); } 50% { transform: rotate(7deg); } }
+@keyframes tour-reveal { 0%,100% { width: 30%; } 50% { width: 72%; } }
+@keyframes tour-tile-loop { 0%,100% { transform: scale(.82); opacity: .45; } 50% { transform: scale(1); opacity: 1; } }
 
 @keyframes aurora-pulse {
   0%, 100% { transform: scale(1); filter: brightness(1); }

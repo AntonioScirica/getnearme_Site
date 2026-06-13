@@ -67,15 +67,25 @@ function TourAnim({ kind }: { kind: string }) {
       {['#3B83F6', '#5B6CF0', '#211f1c'].map((c, i) => (
         <div key={i} style={{ width: 26, height: 26, borderRadius: 8, background: c, animation: 'tour-pop .6s both', animationDelay: `${i * 0.18}s`, boxShadow: '0 2px 8px rgba(0,0,0,.12)' }} />
       ))}
-      <div style={{ width: 30, height: 30, borderRadius: '50%', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'tour-bob 2.4s ease-in-out infinite', boxShadow: '0 2px 8px rgba(0,0,0,.1)' }}><Icon name="palette" size={15} color="#1d5fd0" /></div>
+      <div style={{ width: 30, height: 30, borderRadius: '50%', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'tour-wiggle 2s ease-in-out infinite', boxShadow: '0 2px 8px rgba(0,0,0,.1)' }}><Icon name="palette" size={15} color="#1d5fd0" /></div>
     </div>
   );
   if (kind === 'staging') return (
     <div style={wrap}>
-      <div style={{ position: 'relative', width: 150, height: 56, borderRadius: 8, background: '#dfe7f4', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(100deg, transparent 20%, rgba(59,131,246,.5) 50%, transparent 80%)', animation: 'shimmer 1.8s linear infinite', backgroundSize: '200% 100%' }} />
-        <Icon name="sparkles" size={16} color="#1d5fd0" />
-        <div style={{ position: 'absolute', top: 8, right: 12, animation: 'tour-pop 1.6s ease-in-out infinite' }}><Icon name="sparkles" size={12} color="#5B6CF0" /></div>
+      {/* Prima/Dopo: la parte "dopo" (arredata) si rivela con la linea che scorre dx/sx */}
+      <div style={{ position: 'relative', width: 160, height: 60, borderRadius: 8, overflow: 'hidden', background: 'repeating-linear-gradient(45deg,#e7e3dc,#e7e3dc 6px,#ddd8cf 6px,#ddd8cf 12px)' }}>
+        <span style={{ position: 'absolute', top: 5, left: 7, fontSize: 9, fontWeight: 800, color: '#a8a299', textTransform: 'uppercase', letterSpacing: '.06em' }}>Prima</span>
+        {/* layer "dopo" che si rivela, con la linea+handle sul bordo destro */}
+        <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, overflow: 'hidden', animation: 'tour-reveal 3s ease-in-out infinite' }}>
+          <div style={{ width: 160, height: 60, background: 'linear-gradient(135deg,#93C5FD,#3B83F6 70%,#5B6CF0)', position: 'relative' }}>
+            <span style={{ position: 'absolute', top: 5, left: 7, fontSize: 9, fontWeight: 800, color: '#fff', textTransform: 'uppercase', letterSpacing: '.06em' }}>Dopo</span>
+            <Icon name="sparkles" size={14} color="#fff" />
+          </div>
+          <div style={{ position: 'absolute', top: 0, bottom: 0, right: 0, width: 2, background: '#fff', boxShadow: '0 0 6px rgba(0,0,0,.25)' }} />
+          <div style={{ position: 'absolute', top: '50%', right: -9, transform: 'translateY(-50%)', width: 18, height: 18, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 5px rgba(0,0,0,.25)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#211f1c" strokeWidth="2.5"><path d="M8 6l-6 6 6 6M16 6l6 6-6 6" /></svg>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -106,7 +116,7 @@ function TourAnim({ kind }: { kind: string }) {
   if (kind === 'media') return (
     <div style={{ ...wrap, display: 'grid', gridTemplateColumns: 'repeat(3,28px)', gridAutoRows: 28, gap: 6 }}>
       {[0, 1, 2, 3, 4, 5].map(i => (
-        <div key={i} style={{ borderRadius: 6, background: i % 2 ? '#cfe0f7' : '#dfe7f4', animation: 'tour-tile .5s both', animationDelay: `${i * 0.1}s` }} />
+        <div key={i} style={{ borderRadius: 6, background: i % 2 ? '#3B83F6' : '#93C5FD', animation: 'tour-tile-loop 1.8s ease-in-out infinite', animationDelay: `${i * 0.15}s` }} />
       ))}
     </div>
   );
@@ -2309,11 +2319,11 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
               <img src="/dashboard/logo-icon.svg" alt="GetNearMe" style={{ width: 40, height: 40 }} />
             </div>
             <h2 style={s('margin:0 0 10px;font-size:27px;font-weight:800;letter-spacing:-.6px;color:#1a1a1a')}>Benvenuto su GetNearMe</h2>
-            <p style={s('margin:0 auto 28px;max-width:360px;color:#57534c;font-size:15px;line-height:1.5')}>La prima suite All-in-One per agenzie immobiliari. Genera materiali di marketing incredibili in pochi secondi.</p>
+            <p style={s('margin:0 auto 28px;max-width:370px;color:#57534c;font-size:15px;line-height:1.5')}>Dai una marcia in più ai tuoi annunci: foto, video e post curati, pronti in pochi minuti. Ti facciamo vedere come.</p>
             <Box as="button" onClick={startTour} style={s('width:100%;border:none;background:#3B83F6;color:#fff;font-size:15px;font-weight:700;padding:14px 28px;border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;min-height:48px;transition:all .2s')} hover={s('background:#2b6fe0;transform:translateY(-1px);box-shadow:0 8px 24px rgba(59,131,246,.28)')}>
               Fai un giro veloce (1 min) <Icon name="arrow-right" size={16} color="#fff" />
             </Box>
-            <Box as="button" onClick={() => { closeWelcome(); toast('Puoi rifare il tour dal menu Profilo > Tutorial'); }} style={s('border:none;background:transparent;color:#8c867d;font-size:14px;font-weight:600;padding:12px 24px 0;border-radius:8px;cursor:pointer;transition:color .2s')} hover={{ color: '#57534c' }}>
+            <Box as="button" onClick={() => { closeWelcome(); toast('Puoi rifare il tour dal menu Profilo > Tutorial'); }} style={s('display:block;text-align:left;width:fit-content;border:none;background:transparent;color:#8c867d;font-size:14px;font-weight:600;padding:12px 4px 0;border-radius:8px;cursor:pointer;transition:color .2s')} hover={{ color: '#57534c' }}>
               Salta e inizia subito
             </Box>
           </div>
