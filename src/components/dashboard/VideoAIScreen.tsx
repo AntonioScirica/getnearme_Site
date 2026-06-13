@@ -732,6 +732,12 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
                         <img src={c.thumb} alt="" style={{ width: '100%', height: '100%', objectFit: c.isPhoto && c.height > c.width ? 'contain' : 'cover', position: 'relative' }} />
                         <span style={{ position: 'absolute', top: 6, left: 6, background: 'rgba(33,31,28,.72)', color: '#fff', fontSize: 10.5, fontWeight: 800, padding: '3px 8px', borderRadius: 99 }}>{idx + 1}{!c.isPhoto && ` · ${Math.round(c.duration)}s`}</span>
                         <button onClick={() => setClips(cs => cs.filter(x => x.id !== c.id))} style={{ position: 'absolute', top: 6, right: 6, width: 22, height: 22, borderRadius: '50%', background: 'rgba(33,31,28,.72)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="x" size={11} color="#fff" /></button>
+                        {layout === 'montaggio' && clips.length > 1 && (
+                          <div style={{ position: 'absolute', bottom: 6, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 6 }}>
+                            <button disabled={idx === 0} onClick={() => setClips(cs => { if (idx === 0) return cs; const n = [...cs]; [n[idx - 1], n[idx]] = [n[idx], n[idx - 1]]; return n; })} title="Sposta indietro" style={{ width: 24, height: 24, borderRadius: '50%', background: 'rgba(33,31,28,.72)', border: 'none', cursor: idx === 0 ? 'default' : 'pointer', opacity: idx === 0 ? .35 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 13 }}>‹</button>
+                            <button disabled={idx === clips.length - 1} onClick={() => setClips(cs => { if (idx === cs.length - 1) return cs; const n = [...cs]; [n[idx + 1], n[idx]] = [n[idx], n[idx + 1]]; return n; })} title="Sposta avanti" style={{ width: 24, height: 24, borderRadius: '50%', background: 'rgba(33,31,28,.72)', border: 'none', cursor: idx === clips.length - 1 ? 'default' : 'pointer', opacity: idx === clips.length - 1 ? .35 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 13 }}>›</button>
+                          </div>
+                        )}
                       </div>
                       {!isPhotoTemplate && layout !== 'sottotitoli' && !singlePhoto && (
                         <select value={c.room} onChange={e => setClips(cs => cs.map(x => x.id === c.id ? { ...x, room: e.target.value } : x))} style={{ ...inputStyle, marginTop: 6, padding: '7px 10px', fontSize: 12 }}>
@@ -1071,24 +1077,45 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
             <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:14px;padding:24px')}>
               <div style={s('font-size:16px;font-weight:800;margin-bottom:4px')}>Logo e watermark</div>
               <div style={s('color:#8c867d;font-size:13px;margin-bottom:16px')}>Configura il logo sovrapposto alle clip del video.</div>
-              <div style={s('display:flex;align-items:center;justify-content:space-between;margin-bottom:16px')}>
-                <span style={{ fontSize: 13.5, fontWeight: 600 }}>Logo nelle clip</span>
-                <div onClick={() => setWatermarkEnabled(v => !v)} style={{ width: 40, height: 24, borderRadius: 99, background: watermarkEnabled ? '#3B83F6' : '#d8d4cb', position: 'relative', cursor: 'pointer', transition: 'background .2s' }}>
-                  <span style={{ position: 'absolute', top: 3, left: watermarkEnabled ? 19 : 3, width: 18, height: 18, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,.2)', transition: 'left .2s' }} />
-                </div>
-              </div>
-              {watermarkEnabled && (
-                <>
-                  <div style={s('font-size:12.5px;font-weight:700;color:#57534c;margin-bottom:8px')}>Posizione</div>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 16 }}>
-                    {[{ id: 'top-left', label: '↖ Alto sx' }, { id: 'top-right', label: '↗ Alto dx' }, { id: 'bottom-left', label: '↙ Basso sx' }, { id: 'bottom-right', label: '↘ Basso dx' }].map(pos => (
-                      <div key={pos.id} onClick={() => setWatermarkPosition(pos.id)} style={{ ...cardSel(watermarkPosition === pos.id), textAlign: 'center', fontSize: 11.5, fontWeight: 700, padding: '10px 4px' }}>{pos.label}</div>
-                    ))}
-                  </div>
-                  <div style={s('font-size:12.5px;font-weight:700;color:#57534c;margin-bottom:8px')}>Opacità: {watermarkOpacity}%</div>
-                  <input type="range" min={10} max={100} step={5} value={watermarkOpacity} onChange={e => setWatermarkOpacity(Number(e.target.value))} style={{ width: '100%', accentColor: '#3B83F6' }} />
-                </>
-              )}
+              {(() => {
+                const whiteLogo = (brand.logoOrientation === 'vertical' ? (brand.logos.logo_white_v || brand.logos.logo_white_h) : (brand.logos.logo_white_h || brand.logos.logo_white_v)) || '';
+                const posStyle: Record<string, React.CSSProperties> = {
+                  'top-left': { top: 10, left: 10 }, 'top-right': { top: 10, right: 10 },
+                  'bottom-left': { bottom: 10, left: 10 }, 'bottom-right': { bottom: 10, right: 10 },
+                };
+                return (
+                  <>
+                    <div style={s('display:flex;align-items:center;justify-content:space-between;margin-bottom:16px')}>
+                      <span style={{ fontSize: 13.5, fontWeight: 600 }}>Logo nelle clip</span>
+                      <div onClick={() => { if (whiteLogo) setWatermarkEnabled(v => !v); }} title={whiteLogo ? '' : 'Carica un logo bianco in Brand'} style={{ width: 40, height: 24, borderRadius: 99, background: watermarkEnabled && whiteLogo ? '#3B83F6' : '#d8d4cb', position: 'relative', cursor: whiteLogo ? 'pointer' : 'not-allowed', opacity: whiteLogo ? 1 : .5, transition: 'background .2s' }}>
+                        <span style={{ position: 'absolute', top: 3, left: watermarkEnabled && whiteLogo ? 19 : 3, width: 18, height: 18, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,.2)', transition: 'left .2s' }} />
+                      </div>
+                    </div>
+                    {!whiteLogo && <div style={{ fontSize: 12.5, color: '#b45309', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 8, padding: '10px 12px', marginBottom: 16 }}>Nessun logo bianco configurato. Caricalo nella sezione Brand per usare il watermark.</div>}
+                    {watermarkEnabled && whiteLogo && (
+                      <>
+                        {/* Anteprima watermark */}
+                        <div style={{ position: 'relative', aspectRatio: '16/9', borderRadius: 10, overflow: 'hidden', background: '#211f1c', marginBottom: 16 }}>
+                          {clips[0]?.thumb && (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={clips[0].thumb} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          )}
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={whiteLogo} alt="" style={{ position: 'absolute', maxWidth: '26%', maxHeight: '20%', objectFit: 'contain', opacity: watermarkOpacity / 100, ...posStyle[watermarkPosition] }} />
+                        </div>
+                        <div style={s('font-size:12.5px;font-weight:700;color:#57534c;margin-bottom:8px')}>Posizione</div>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 16 }}>
+                          {[{ id: 'top-left', label: '↖ Alto sx' }, { id: 'top-right', label: '↗ Alto dx' }, { id: 'bottom-left', label: '↙ Basso sx' }, { id: 'bottom-right', label: '↘ Basso dx' }].map(pos => (
+                            <div key={pos.id} onClick={() => setWatermarkPosition(pos.id)} style={{ ...cardSel(watermarkPosition === pos.id), textAlign: 'center', fontSize: 11.5, fontWeight: 700, padding: '10px 4px' }}>{pos.label}</div>
+                          ))}
+                        </div>
+                        <div style={s('font-size:12.5px;font-weight:700;color:#57534c;margin-bottom:8px')}>Opacità: {watermarkOpacity}%</div>
+                        <input type="range" min={10} max={100} step={5} value={watermarkOpacity} onChange={e => setWatermarkOpacity(Number(e.target.value))} style={{ width: '100%', accentColor: '#3B83F6' }} />
+                      </>
+                    )}
+                  </>
+                );
+              })()}
               <div style={s('display:flex;justify-content:space-between;margin-top:20px')}>
                 <Box as="button" onClick={() => setMontaggioPhase('cover')} style={s('border:1px solid #e4e1da;background:#fff;font-size:13px;font-weight:600;padding:11px 20px;border-radius:10px;cursor:pointer') as React.CSSProperties} hover={s('background:#f6f4f0')}>&larr; Cover</Box>
                 <Box as="button" onClick={() => setMontaggioPhase('music')} style={{ border: 'none', background: '#3B83F6', color: '#fff', fontSize: 13.5, fontWeight: 700, padding: '11px 22px', borderRadius: 10, cursor: 'pointer' }} hover={{ background: '#2b6fe0' }}>Avanti &rarr;</Box>
