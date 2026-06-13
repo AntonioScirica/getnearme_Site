@@ -369,6 +369,14 @@ export function HomeScreen({
                   <div key={i} onClick={() => setLightbox(p.url)} style={{ position: 'relative', aspectRatio: '4/3', borderRadius: 12, overflow: 'hidden', cursor: 'pointer', border: '1px solid #f0ede7', background: '#f4f2ee', animation: 'media-reveal .7s cubic-bezier(.22,1,.36,1) both', animationDelay: `${i * 70}ms` }}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={p.url} alt="" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                    <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.25)', opacity: 0, transition: 'opacity .2s', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                      onMouseEnter={e => e.currentTarget.style.opacity = '1'}
+                      onMouseLeave={e => e.currentTarget.style.opacity = '0'}
+                    >
+                      <div style={{ background: '#fff', borderRadius: '50%', width: 42, height: 42, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Icon name="maximize-2" size={19} color="#211f1c" />
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
