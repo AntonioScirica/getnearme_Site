@@ -282,6 +282,31 @@ export function drawCoverOverlay(ctx: CanvasRenderingContext2D, opts: CoverOverl
   ctx.shadowColor = 'transparent';
 }
 
+// Genera il PNG overlay (solo dim+logo+titolo, sfondo trasparente) a piena
+// risoluzione e lo restituisce come Blob. Lambda lo sovrappone al frame cover.
+export async function renderCoverOverlayBlob(opts: Omit<CoverOverlayOpts, 'W' | 'H'> & { logoUrl?: string }): Promise<Blob> {
+  await Promise.race([preloadCoverFonts(), new Promise(r => setTimeout(r, 3000))]);
+  let logoImg: HTMLImageElement | null = opts.logoImg ?? null;
+  if (!logoImg && opts.logoUrl) {
+    logoImg = await new Promise<HTMLImageElement | null>(res => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => res(img);
+      img.onerror = () => res(null);
+      img.src = opts.logoUrl!;
+    });
+  }
+  const W = opts.isPortrait ? 1080 : 1920;
+  const H = opts.isPortrait ? 1920 : 1080;
+  const canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d')!;
+  drawCoverOverlay(ctx, { ...opts, logoImg, W, H });
+  return await new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob(b => b ? resolve(b) : reject(new Error('cover overlay toBlob failed')), 'image/png');
+  });
+}
+
 let fontsInjected = false;
 // Carica i font Poppins + EB Garamond (servono al canvas per il testo cover).
 export async function preloadCoverFonts(): Promise<void> {

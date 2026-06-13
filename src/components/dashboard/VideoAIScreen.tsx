@@ -18,7 +18,7 @@ import {
   type VideoTemplate, type VideoAvatar, type VideoQuota, type ScriptSection, type MusicTrack,
   AIVideoError,
 } from '@/lib/aiVideo';
-import { drawCoverOverlay, preloadCoverFonts } from '@/lib/coverOverlay';
+import { drawCoverOverlay, preloadCoverFonts, renderCoverOverlayBlob } from '@/lib/coverOverlay';
 
 type Clip = {
   id: string; file: File; thumb: string; duration: number;
@@ -414,15 +414,37 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
         const upVideos = videos.length ? await uploadClips(videos, 'video') : [];
         const byId = new Map([...upPhotos, ...upVideos].map(c => [c.id, c]));
         const ordered = clips.map(c => byId.get(c.id)!).filter(Boolean);
+
+        // Logo bianco brand (per cover/watermark)
+        const whiteLogo = (brand.logoOrientation === 'vertical' ? (brand.logos.logo_white_v || brand.logos.logo_white_h) : (brand.logos.logo_white_h || brand.logos.logo_white_v)) || '';
+        const isPortrait = aspect === 'portrait';
+
+        // Genera e carica l'overlay PNG della cover (come l'estensione)
+        let coverOverlayUrl = '';
+        if (coverTitle.trim()) {
+          try {
+            const blob = await renderCoverOverlayBlob({
+              style: coverStyle, title: coverTitle.trim(), address: coverAddress.trim(),
+              logoUrl: coverLogoOn ? whiteLogo : '', brandColor: brand.primaryColor || '#3B82F6', isPortrait,
+            });
+            const [slot] = await getUploadUrls(1, 'photo', ['image/png']);
+            await uploadToPresigned(slot.uploadUrl, blob, 'image/png');
+            coverOverlayUrl = slot.readUrl;
+          } catch (e) { console.error('[montaggio] cover overlay upload failed (non-blocking):', e); }
+        }
+
         setRenderStage('render'); setRenderProgress(0.25);
         const res = await startRender({
           template: 'montaggio',
-          avatarDurationSeconds: ordered.reduce((acc, c) => acc + (c.duration || 5), 0),
+          avatarDurationSeconds: ordered.reduce((acc, c) => acc + ((c.sourceEnd || c.duration) - (c.sourceStart || 0)), 0),
           musicUrl,
           ...(coverTitle.trim() ? { coverTitle: coverTitle.trim(), coverAddress: coverAddress.trim(), coverStyle } : {}),
-          ...(watermarkEnabled ? { watermark: { position: watermarkPosition, opacity: watermarkOpacity / 100, skipFirst: true } } : {}),
+          ...(coverOverlayUrl ? { coverOverlayUrl } : {}),
+          ...(coverLogoOn && whiteLogo ? { coverLogo: whiteLogo } : {}),
+          ...(watermarkEnabled ? { watermark: { logoUrl: whiteLogo || undefined, position: watermarkPosition, opacity: watermarkOpacity / 100, skipFirst: true } } : {}),
           clips: ordered.map(c => ({
-            url: c.uploadedUrl, room: c.room, sourceStart: 0, sourceEnd: c.duration || 5,
+            url: c.uploadedUrl, room: c.room,
+            sourceStart: c.sourceStart || 0, sourceEnd: c.sourceEnd || c.duration || 5,
             originalDuration: c.duration || 5, ...(c.isPhoto ? { isPhoto: true } : {}),
           })),
           propertyData: propertyData(), propertyLabel: propertyLabel(),
