@@ -2393,7 +2393,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
               <div style={{ position: 'relative' }}>
                 <Box as="button" onClick={(e) => { e.stopPropagation(); setTrayOpen((o) => !o); setProjOpen(false); }} title="Lavori in corso" aria-label="Lavori in corso" style={s('border:none;background:transparent;width:38px;height:38px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;position:relative')} hover={s('background:#f1efe9')}>
                   <Icon name="inbox" size={18} />
-                  {batches.filter(b => b.status === 'processing' || b.status === 'pending').length > 0 && (
+                  {(batches.filter(b => b.status === 'processing' || b.status === 'pending').length > 0 || videoJobs.some(j => j.stage === 'render' && !j.dismissed)) && (
                     <div style={{ position: 'absolute', top: 6, right: 6, width: 8, height: 8, borderRadius: '50%', background: '#3B83F6', border: '2px solid #fff' }} />
                   )}
                 </Box>

@@ -344,13 +344,16 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
     if (videoObjUrl.current) { URL.revokeObjectURL(videoObjUrl.current); videoObjUrl.current = null; }
     if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; setPlayingUrl(null); }
   }, []);
-  React.useEffect(() => {
+  // Riparte dall'entrata giusta: su montaggio torna al montaggio, non al
+  // picker generale dei Video AI.
+  const startNew = React.useCallback(() => {
     resetAll();
     if (preselect) {
       const found = [...DEFAULT_VIDEO_TEMPLATES, MONTAGGIO_TEMPLATE, ...templates].find(t => t.id === preselect);
       if (found) { setTpl(found); setStep(NO_AVATAR_LAYOUTS.includes(found.layout || found.id) ? 2 : 1); }
     }
-  }, [routeKey, resetAll, preselect, templates]);
+  }, [resetAll, preselect, templates]);
+  React.useEffect(() => { startNew(); }, [routeKey, startNew]);
 
   React.useEffect(() => {
     if (document.getElementById('foto-ai-spin-css')) return;
@@ -1118,7 +1121,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
                     <div key={mood}>
                       <div style={{ padding: '8px 12px 4px', fontSize: 10.5, fontWeight: 800, color: '#b3aca1', textTransform: 'uppercase', letterSpacing: '.05em' }}>{MOOD_LABELS[mood]}</div>
                       {musicLibrary.filter(t => t.mood === mood).slice(0, 12).map(t => (
-                        <Box key={t.id} onClick={() => setMusicUrl(t.url)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 12px', cursor: 'pointer', background: musicUrl === t.url ? '#DBEAFE' : 'transparent', borderRadius: 6, border: musicUrl === t.url ? '1.5px solid #3B83F6' : '1.5px solid transparent' }} hover={{ background: musicUrl === t.url ? '#DBEAFE' : '#f6f4f0' }}>
+                        <Box key={t.id} onClick={() => { setMusicUrl(t.url); setMusicOpen(false); }} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 12px', cursor: 'pointer', background: musicUrl === t.url ? '#DBEAFE' : 'transparent', borderRadius: 6, border: musicUrl === t.url ? '1.5px solid #3B83F6' : '1.5px solid transparent' }} hover={{ background: musicUrl === t.url ? '#DBEAFE' : '#f6f4f0' }}>
                           <button onClick={e => { e.stopPropagation(); toggleMusicPlay(t); }} style={{ border: 'none', background: musicUrl === t.url ? '#3B83F6' : '#f0ede7', color: musicUrl === t.url ? '#fff' : '#1F2937', borderRadius: '50%', width: 24, height: 24, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none', fontSize: 10 }}>
                             {playingUrl === t.url ? '❚❚' : '►'}
                           </button>
@@ -1378,7 +1381,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
                 {(() => {
                   const ok = !!coverTitle.trim() && !!coverStyle;
                   return (
-                    <Box as="button" onClick={() => { if (ok) setMontaggioPhase('logo'); }} title={ok ? '' : (!coverTitle.trim() ? 'Inserisci un titolo per la copertina' : 'Scegli una copertina')} style={{ border: 'none', background: '#3B83F6', color: '#fff', fontSize: 13.5, fontWeight: 700, padding: '11px 22px', borderRadius: 10, cursor: ok ? 'pointer' : 'default', opacity: ok ? 1 : 0.45 }} hover={ok ? { background: '#2b6fe0' } : {}}>Avanti &rarr;</Box>
+                    <Box as="button" onClick={() => { if (ok) setMontaggioPhase('logo'); }} title={ok ? '' : (!coverTitle.trim() ? 'Inserisci un titolo per la copertina' : 'Scegli una copertina')} style={{ border: 'none', background: '#3B83F6', color: '#fff', fontSize: 13.5, fontWeight: 700, padding: '11px 22px', borderRadius: 10, cursor: ok ? 'pointer' : 'default', opacity: ok ? 1 : 0.45 }} hover={ok ? { background: '#2b6fe0' } : {}}>Avanti</Box>
                   );
                 })()}
               </StickyNav>
@@ -1396,16 +1399,17 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
                 };
                 return (
                   <>
-                    <div style={s('display:flex;align-items:center;justify-content:space-between;margin-bottom:16px')}>
+                    <div style={s('display:flex;align-items:center;justify-content:space-between;padding-bottom:14px')}>
                       <span style={{ fontSize: 13.5, fontWeight: 600 }}>Logo nelle clip</span>
                       <div onClick={() => { if (whiteLogo) setWatermarkEnabled(v => !v); }} title={whiteLogo ? '' : 'Carica un logo bianco in Brand'} style={{ width: 40, height: 24, borderRadius: 99, background: watermarkEnabled && whiteLogo ? '#3B83F6' : '#d8d4cb', position: 'relative', cursor: whiteLogo ? 'pointer' : 'not-allowed', opacity: whiteLogo ? 1 : .5, transition: 'background .2s' }}>
                         <span style={{ position: 'absolute', top: 3, left: watermarkEnabled && whiteLogo ? 19 : 3, width: 18, height: 18, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,.2)', transition: 'left .2s' }} />
                       </div>
                     </div>
+                    <div style={{ height: 1, background: '#f0ede7', margin: '0 0 16px' }} />
                     {!whiteLogo && <div style={{ fontSize: 12.5, color: '#b45309', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 8, padding: '10px 12px', marginBottom: 16 }}>Nessun logo bianco configurato. Caricalo nella sezione Brand per usare il watermark.</div>}
                     {watermarkEnabled && whiteLogo && (
-                      <div className="max-md:!flex-col" style={{ display: 'flex', gap: 20, alignItems: 'flex-start' }}>
-                        {/* Sinistra: anteprima piccola */}
+                      <div className="max-md:!flex-col" style={{ display: 'flex', gap: 20, alignItems: 'stretch' }}>
+                        {/* Sinistra: anteprima */}
                         <div className="max-md:!w-full" style={{ position: 'relative', width: 480, flex: 'none', aspectRatio: '16/9', borderRadius: 10, overflow: 'hidden', background: '#211f1c' }}>
                           {clips[0]?.thumb && (
                             // eslint-disable-next-line @next/next/no-img-element
@@ -1415,12 +1419,15 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img src={whiteLogo} alt="" style={{ position: 'absolute', maxWidth: '15%', maxHeight: '12%', objectFit: 'contain', opacity: watermarkOpacity / 100, ...posStyle[watermarkPosition] }} />
                         </div>
-                        {/* Destra: posizione + opacità */}
-                        <div style={{ flex: 1, minWidth: 0 }}>
+                        {/* Destra: posizione + opacità, alta quanto la foto */}
+                        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
                           <div style={s('font-size:12.5px;font-weight:700;color:#57534c;margin-bottom:8px')}>Posizione</div>
-                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8, marginBottom: 18 }}>
-                            {[{ id: 'top-left', label: '↖ Alto sx' }, { id: 'top-right', label: '↗ Alto dx' }, { id: 'bottom-left', label: '↙ Basso sx' }, { id: 'bottom-right', label: '↘ Basso dx' }].map(pos => (
-                              <div key={pos.id} onClick={() => setWatermarkPosition(pos.id)} style={{ ...cardSel(watermarkPosition === pos.id), textAlign: 'center', fontSize: 12, fontWeight: 700, padding: '10px 4px' }}>{pos.label}</div>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gridTemplateRows: 'repeat(2, 1fr)', gap: 8, flex: 1, marginBottom: 18, minHeight: 120 }}>
+                            {[{ id: 'top-left', arrow: '↖', text: 'Alto sinistra' }, { id: 'top-right', arrow: '↗', text: 'Alto destra' }, { id: 'bottom-left', arrow: '↙', text: 'Basso sinistra' }, { id: 'bottom-right', arrow: '↘', text: 'Basso destra' }].map(pos => (
+                              <div key={pos.id} onClick={() => setWatermarkPosition(pos.id)} style={{ ...cardSel(watermarkPosition === pos.id), display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, textAlign: 'center', fontSize: 13, fontWeight: 700 }}>
+                                <span style={{ fontSize: 15 }}>{pos.arrow}</span>
+                                <span>{pos.text}</span>
+                              </div>
                             ))}
                           </div>
                           <div style={s('font-size:12.5px;font-weight:700;color:#57534c;margin-bottom:8px')}>Opacità: {watermarkOpacity}%</div>
@@ -1433,7 +1440,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
               })()}
               {/* Musica (unita allo stesso step) */}
               <div style={s('border-top:1px solid #f0ede7;padding-top:18px;margin-top:18px')}>
-                <div style={s('font-size:14px;font-weight:800;margin-bottom:4px')}>Musica</div>
+                <div style={s('font-size:14px;font-weight:800;margin-bottom:4px')}>Musica <span style={s('font-weight:500;color:#b3aca1;font-size:12px')}>(opzionale)</span></div>
                 <div style={s('color:#8c867d;font-size:13px;margin-bottom:12px')}>Scegli la colonna sonora del video.</div>
                 <Box as="button" onClick={() => setMusicOpen(o => !o)} style={s('width:100%;border:1px solid #e4e1da;background:#fff;font-size:13px;font-weight:600;padding:10px 14px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:space-between') as React.CSSProperties} hover={s('background:#faf9f7')}>
                   <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: musicUrl ? '#1F2937' : '#b3aca1', fontWeight: musicUrl ? 600 : 400 }}>
@@ -1462,7 +1469,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
                 )}
               </div>
               <StickyNav bleed={24}>
-                <Box as="button" onClick={() => setMontaggioPhase('cover')} style={s('border:1px solid #e4e1da;background:#fff;font-size:13px;font-weight:600;padding:11px 20px;border-radius:10px;cursor:pointer') as React.CSSProperties} hover={s('background:#f6f4f0')}>&larr; Cover</Box>
+                <Box as="button" onClick={() => setMontaggioPhase('cover')} style={s('border:1px solid #e4e1da;background:#fff;font-size:13px;font-weight:600;padding:11px 20px;border-radius:10px;cursor:pointer') as React.CSSProperties} hover={s('background:#f6f4f0')}>Indietro</Box>
                 <Box as="button" onClick={handleRender} style={s('border:none;background:#3B83F6;color:#fff;font-size:14px;font-weight:700;padding:12px 24px;border-radius:10px;cursor:pointer;display:flex;align-items:center;gap:8px') as React.CSSProperties} hover={s('background:#2b6fe0')}>
                   <Icon name="sparkles" size={16} color="#fff" />Genera video
                 </Box>
@@ -1571,7 +1578,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
                       <div key={mood}>
                         <div style={{ padding: '8px 12px 4px', fontSize: 10.5, fontWeight: 800, color: '#b3aca1', textTransform: 'uppercase', letterSpacing: '.05em' }}>{MOOD_LABELS[mood]}</div>
                         {musicLibrary.filter(t => t.mood === mood).slice(0, 12).map(t => (
-                          <Box key={t.id} onClick={() => setMusicUrl(t.url)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 12px', cursor: 'pointer', background: musicUrl === t.url ? '#DBEAFE' : 'transparent', borderRadius: 6, border: musicUrl === t.url ? '1.5px solid #3B83F6' : '1.5px solid transparent' }} hover={{ background: musicUrl === t.url ? '#DBEAFE' : '#f6f4f0' }}>
+                          <Box key={t.id} onClick={() => { setMusicUrl(t.url); setMusicOpen(false); }} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 12px', cursor: 'pointer', background: musicUrl === t.url ? '#DBEAFE' : 'transparent', borderRadius: 6, border: musicUrl === t.url ? '1.5px solid #3B83F6' : '1.5px solid transparent' }} hover={{ background: musicUrl === t.url ? '#DBEAFE' : '#f6f4f0' }}>
                             <button onClick={e => { e.stopPropagation(); toggleMusicPlay(t); }} style={{ border: 'none', background: musicUrl === t.url ? '#3B83F6' : '#f0ede7', color: musicUrl === t.url ? '#fff' : '#1F2937', borderRadius: '50%', width: 24, height: 24, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none', fontSize: 10 }}>
                               {playingUrl === t.url ? '❚❚' : '►'}
                             </button>
@@ -1609,7 +1616,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
                 <Box as="a" {...({ href: outputUrl, download: 'video-ai.mp4', target: '_blank', rel: 'noopener' } as Record<string, unknown>)} style={s('border:none;background:#3B83F6;color:#fff;font-size:14px;font-weight:700;padding:12px 24px;border-radius:10px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:8px') as React.CSSProperties} hover={s('background:#2b6fe0')}>
                   <Icon name="download" size={15} color="#fff" />Scarica video
                 </Box>
-                <Box as="button" onClick={resetAll} style={s('border:1px solid #e4e1da;background:#fff;font-size:14px;font-weight:700;padding:12px 24px;border-radius:10px;cursor:pointer') as React.CSSProperties} hover={s('background:#f6f4f0')}>Nuovo video</Box>
+                <Box as="button" onClick={startNew} style={s('border:1px solid #e4e1da;background:#fff;font-size:14px;font-weight:700;padding:12px 24px;border-radius:10px;cursor:pointer') as React.CSSProperties} hover={s('background:#f6f4f0')}>Nuovo video</Box>
               </div>
             </div>
           ) : renderStage === 'failed' ? (
@@ -1619,13 +1626,16 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
               </div>
               <div style={s('font-size:16px;font-weight:800;margin-bottom:8px')}>Generazione non riuscita</div>
               <div style={s('color:#8c867d;font-size:13.5px;margin-bottom:20px')}>{renderError}</div>
-              <Box as="button" onClick={resetAll} style={s('border:none;background:#3B83F6;color:#fff;font-size:14px;font-weight:700;padding:12px 24px;border-radius:10px;cursor:pointer') as React.CSSProperties} hover={s('background:#2b6fe0')}>Riprova</Box>
+              <Box as="button" onClick={startNew} style={s('border:none;background:#3B83F6;color:#fff;font-size:14px;font-weight:700;padding:12px 24px;border-radius:10px;cursor:pointer') as React.CSSProperties} hover={s('background:#2b6fe0')}>Riprova</Box>
             </div>
           ) : renderStage === 'background' ? (
             <div style={{ textAlign: 'center' }}>
               <div style={{ position: 'relative', width: 120, height: 120, margin: '0 auto 22px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'radial-gradient(circle at 35% 35%, #93C5FD, #3B83F6 60%, #1d4ed8)', filter: 'blur(14px)', opacity: .55, animation: 'blob-float 7s ease-in-out infinite' }} />
-                <div style={{ position: 'absolute', inset: 8, borderRadius: '50%', background: 'radial-gradient(circle at 65% 60%, #60A5FA, #6366f1)', filter: 'blur(16px)', opacity: .5, animation: 'blob-float-2 9s ease-in-out infinite' }} />
+                {/* Cerchi che pulsano dietro, molto fade */}
+                <div style={{ position: 'absolute', width: 110, height: 110, borderRadius: '50%', border: '1.5px solid rgba(59,131,246,.20)', animation: 'pulse-ring 2.8s ease-out infinite' }} />
+                <div style={{ position: 'absolute', width: 110, height: 110, borderRadius: '50%', border: '1.5px solid rgba(59,131,246,.20)', animation: 'pulse-ring 2.8s ease-out infinite', animationDelay: '1.4s' }} />
+                {/* Blob blu che si muove dietro il logo */}
+                <div style={{ position: 'absolute', width: 92, height: 92, background: 'radial-gradient(circle at 35% 35%, #93C5FD, #3B83F6 72%)', opacity: .9, animation: 'organic-blob 8s ease-in-out infinite' }} />
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="/dashboard/logo-icon.svg" alt="" style={{ position: 'relative', width: 52, height: 52, animation: 'aurora-pulse 4s ease-in-out infinite' }} />
               </div>
@@ -1633,13 +1643,16 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
               <div style={s('color:#8c867d;font-size:13.5px;max-width:420px;margin:0 auto 24px')}>
                 Gira in background: puoi cambiare sezione o chiudere la pagina. Lo trovi nel tray <b>Lavori in corso</b> in alto a destra e poi in <b>Media</b>.
               </div>
-              <Box as="button" onClick={resetAll} style={s('border:none;background:#3B83F6;color:#fff;font-size:14px;font-weight:700;padding:12px 24px;border-radius:10px;cursor:pointer') as React.CSSProperties} hover={s('background:#2b6fe0')}>Nuovo video</Box>
+              <Box as="button" onClick={startNew} style={s('border:none;background:#3B83F6;color:#fff;font-size:14px;font-weight:700;padding:12px 24px;border-radius:10px;cursor:pointer') as React.CSSProperties} hover={s('background:#2b6fe0')}>Nuovo video</Box>
             </div>
           ) : (
             <div style={{ textAlign: 'center' }}>
               <div style={{ position: 'relative', width: 120, height: 120, margin: '0 auto 22px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'radial-gradient(circle at 35% 35%, #93C5FD, #3B83F6 60%, #1d4ed8)', filter: 'blur(14px)', opacity: .55, animation: 'blob-float 7s ease-in-out infinite' }} />
-                <div style={{ position: 'absolute', inset: 8, borderRadius: '50%', background: 'radial-gradient(circle at 65% 60%, #60A5FA, #6366f1)', filter: 'blur(16px)', opacity: .5, animation: 'blob-float-2 9s ease-in-out infinite' }} />
+                {/* Cerchi che pulsano dietro, molto fade */}
+                <div style={{ position: 'absolute', width: 110, height: 110, borderRadius: '50%', border: '1.5px solid rgba(59,131,246,.20)', animation: 'pulse-ring 2.8s ease-out infinite' }} />
+                <div style={{ position: 'absolute', width: 110, height: 110, borderRadius: '50%', border: '1.5px solid rgba(59,131,246,.20)', animation: 'pulse-ring 2.8s ease-out infinite', animationDelay: '1.4s' }} />
+                {/* Blob blu che si muove dietro il logo */}
+                <div style={{ position: 'absolute', width: 92, height: 92, background: 'radial-gradient(circle at 35% 35%, #93C5FD, #3B83F6 72%)', opacity: .9, animation: 'organic-blob 8s ease-in-out infinite' }} />
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="/dashboard/logo-icon.svg" alt="" style={{ position: 'relative', width: 52, height: 52, animation: 'aurora-pulse 4s ease-in-out infinite' }} />
               </div>
