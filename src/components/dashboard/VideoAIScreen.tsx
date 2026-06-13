@@ -279,7 +279,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
   const [videoPlaying, setVideoPlaying] = React.useState(false);
   const videoObjUrl = React.useRef<string | null>(null);
   // montaggio logo
-  const [montaggioPhase, setMontaggioPhase] = React.useState<'cover' | 'logo' | 'music'>('cover');
+  const [montaggioPhase, setMontaggioPhase] = React.useState<'cover' | 'logo'>('cover');
   const [coverLogoOn, setCoverLogoOn] = React.useState(false);
   const [coverLogoKey, setCoverLogoKey] = React.useState('auto'); // 'auto' | 'white_h' | 'black_v' | ...
   // Logo bianco auto (in base all'orientamento) + URL del logo scelto per la cover.
@@ -1431,51 +1431,38 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
                   </>
                 );
               })()}
-              <StickyNav bleed={24}>
-                <Box as="button" onClick={() => setMontaggioPhase('cover')} style={s('border:1px solid #e4e1da;background:#fff;font-size:13px;font-weight:600;padding:11px 20px;border-radius:10px;cursor:pointer') as React.CSSProperties} hover={s('background:#f6f4f0')}>&larr; Cover</Box>
-                <Box as="button" onClick={() => setMontaggioPhase('music')} style={{ border: 'none', background: '#3B83F6', color: '#fff', fontSize: 13.5, fontWeight: 700, padding: '11px 22px', borderRadius: 10, cursor: 'pointer' }} hover={{ background: '#2b6fe0' }}>Avanti &rarr;</Box>
-              </StickyNav>
-            </div>
-          )}
-          {montaggioPhase === 'music' && (
-            <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:14px;padding:24px')}>
-              <div style={s('font-size:16px;font-weight:800;margin-bottom:4px')}>Musica</div>
-              <div style={s('color:#8c867d;font-size:13px;margin-bottom:16px')}>Scegli la colonna sonora del video.</div>
-              <Box as="button" onClick={() => setMusicOpen(o => !o)} style={s('width:100%;border:1px solid #e4e1da;background:#fff;font-size:13px;font-weight:600;padding:10px 14px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:space-between') as React.CSSProperties} hover={s('background:#faf9f7')}>
-                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: musicUrl ? '#1F2937' : '#b3aca1', fontWeight: musicUrl ? 600 : 400 }}>
-                  {musicUrl ? (musicLibrary.find(t => t.url === musicUrl)?.title || 'Traccia selezionata') : 'Seleziona musica'}
-                </span>
-                <Icon name="chevron-down" size={14} color="#8c867d" />
-              </Box>
-              {musicOpen && (
-                <div style={{ marginTop: 8, maxHeight: 320, overflowY: 'auto', border: '1px solid #f0ede7', borderRadius: 10 }}>
-                  <div onClick={() => { setMusicUrl(null); setMusicOpen(false); }} style={{ padding: '9px 12px', fontSize: 12.5, fontWeight: 600, cursor: 'pointer', color: '#8c867d' }}>Nessuna musica</div>
-                  {Object.keys(MOOD_LABELS).map(mood => (
-                    <div key={mood}>
-                      <div style={{ padding: '8px 12px 4px', fontSize: 10.5, fontWeight: 800, color: '#b3aca1', textTransform: 'uppercase', letterSpacing: '.05em' }}>{MOOD_LABELS[mood]}</div>
-                      {musicLibrary.filter(t => t.mood === mood).slice(0, 12).map(t => (
-                        <Box key={t.id} onClick={() => setMusicUrl(t.url)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 12px', cursor: 'pointer', background: musicUrl === t.url ? '#DBEAFE' : 'transparent', borderRadius: 6, border: musicUrl === t.url ? '1.5px solid #3B83F6' : '1.5px solid transparent' }} hover={{ background: musicUrl === t.url ? '#DBEAFE' : '#f6f4f0' }}>
-                          <button onClick={e => { e.stopPropagation(); toggleMusicPlay(t); }} style={{ border: 'none', background: musicUrl === t.url ? '#3B83F6' : '#f0ede7', color: musicUrl === t.url ? '#fff' : '#1F2937', borderRadius: '50%', width: 24, height: 24, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none', fontSize: 10 }}>
-                            {playingUrl === t.url ? '❚❚' : '►'}
-                          </button>
-                          <span style={{ fontSize: 12.5, fontWeight: musicUrl === t.url ? 700 : 500, color: musicUrl === t.url ? '#1D4ED8' : '#1F2937', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{t.title}</span>
-                          {musicUrl === t.url && <Icon name="check" size={14} color="#3B83F6" />}
-                        </Box>
-                      ))}
-                    </div>
-                  ))}
-                </div>
-              )}
-              {/* property info */}
-              <div style={s('border-top:1px solid #f0ede7;padding-top:16px;margin-top:16px')}>
-                <div style={s('font-size:13px;font-weight:800;margin-bottom:10px')}>Immobile <span style={s('font-weight:500;color:#b3aca1;font-size:12px')}>(opzionale)</span></div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                  <input value={propTitle} onChange={e => setPropTitle(e.target.value)} placeholder="Tipologia (es. Trilocale)" style={inputStyle} />
-                  <input value={propAddress} onChange={e => setPropAddress(e.target.value)} placeholder="Indirizzo" style={inputStyle} />
-                </div>
+              {/* Musica (unita allo stesso step) */}
+              <div style={s('border-top:1px solid #f0ede7;padding-top:18px;margin-top:18px')}>
+                <div style={s('font-size:14px;font-weight:800;margin-bottom:4px')}>Musica</div>
+                <div style={s('color:#8c867d;font-size:13px;margin-bottom:12px')}>Scegli la colonna sonora del video.</div>
+                <Box as="button" onClick={() => setMusicOpen(o => !o)} style={s('width:100%;border:1px solid #e4e1da;background:#fff;font-size:13px;font-weight:600;padding:10px 14px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:space-between') as React.CSSProperties} hover={s('background:#faf9f7')}>
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: musicUrl ? '#1F2937' : '#b3aca1', fontWeight: musicUrl ? 600 : 400 }}>
+                    {musicUrl ? (musicLibrary.find(t => t.url === musicUrl)?.title || 'Traccia selezionata') : 'Seleziona musica'}
+                  </span>
+                  <Icon name="chevron-down" size={14} color="#8c867d" />
+                </Box>
+                {musicOpen && (
+                  <div style={{ marginTop: 8, maxHeight: 320, overflowY: 'auto', border: '1px solid #f0ede7', borderRadius: 10 }}>
+                    <div onClick={() => { setMusicUrl(null); setMusicOpen(false); }} style={{ padding: '9px 12px', fontSize: 12.5, fontWeight: 600, cursor: 'pointer', color: '#8c867d' }}>Nessuna musica</div>
+                    {Object.keys(MOOD_LABELS).map(mood => (
+                      <div key={mood}>
+                        <div style={{ padding: '8px 12px 4px', fontSize: 10.5, fontWeight: 800, color: '#b3aca1', textTransform: 'uppercase', letterSpacing: '.05em' }}>{MOOD_LABELS[mood]}</div>
+                        {musicLibrary.filter(t => t.mood === mood).slice(0, 12).map(t => (
+                          <Box key={t.id} onClick={() => { setMusicUrl(t.url); setMusicOpen(false); }} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 12px', cursor: 'pointer', background: musicUrl === t.url ? '#DBEAFE' : 'transparent', borderRadius: 6, border: musicUrl === t.url ? '1.5px solid #3B83F6' : '1.5px solid transparent' }} hover={{ background: musicUrl === t.url ? '#DBEAFE' : '#f6f4f0' }}>
+                            <button onClick={e => { e.stopPropagation(); toggleMusicPlay(t); }} style={{ border: 'none', background: musicUrl === t.url ? '#3B83F6' : '#f0ede7', color: musicUrl === t.url ? '#fff' : '#1F2937', borderRadius: '50%', width: 24, height: 24, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none', fontSize: 10 }}>
+                              {playingUrl === t.url ? '❚❚' : '►'}
+                            </button>
+                            <span style={{ fontSize: 12.5, fontWeight: musicUrl === t.url ? 700 : 500, color: musicUrl === t.url ? '#1D4ED8' : '#1F2937', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{t.title}</span>
+                            {musicUrl === t.url && <Icon name="check" size={14} color="#3B83F6" />}
+                          </Box>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
               <StickyNav bleed={24}>
-                <Box as="button" onClick={() => setMontaggioPhase('logo')} style={s('border:1px solid #e4e1da;background:#fff;font-size:13px;font-weight:600;padding:11px 20px;border-radius:10px;cursor:pointer') as React.CSSProperties} hover={s('background:#f6f4f0')}>&larr; Logo</Box>
+                <Box as="button" onClick={() => setMontaggioPhase('cover')} style={s('border:1px solid #e4e1da;background:#fff;font-size:13px;font-weight:600;padding:11px 20px;border-radius:10px;cursor:pointer') as React.CSSProperties} hover={s('background:#f6f4f0')}>&larr; Cover</Box>
                 <Box as="button" onClick={handleRender} style={s('border:none;background:#3B83F6;color:#fff;font-size:14px;font-weight:700;padding:12px 24px;border-radius:10px;cursor:pointer;display:flex;align-items:center;gap:8px') as React.CSSProperties} hover={s('background:#2b6fe0')}>
                   <Icon name="sparkles" size={16} color="#fff" />Genera video
                 </Box>
