@@ -720,10 +720,10 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
                   <div style={s('color:#8c867d;font-size:13px')}>{isPhotoTemplate && layout !== 'montaggio' ? 'JPG, PNG, WebP' : layout === 'montaggio' ? 'Video e foto' : 'MP4, MOV, WebM'}</div>
                 </>
               ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
-                  {clips.map((c, idx) => (
-                    <div key={c.id} onClick={e => e.stopPropagation()} style={{ position: 'relative' }}>
-                      <div style={{ position: 'relative', aspectRatio: '4/3', borderRadius: 10, overflow: 'hidden' }}>
+                <div style={layout === 'montaggio' ? { display: 'flex', flexDirection: 'column', gap: 12 } : { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+                  {clips.map((c, idx) => { const mont = layout === 'montaggio'; return (
+                    <div key={c.id} onClick={e => e.stopPropagation()} style={mont ? { position: 'relative', display: 'flex', gap: 14, alignItems: 'flex-start', background: '#fff', border: '1px solid #f0ede7', borderRadius: 12, padding: 10 } : { position: 'relative' }}>
+                      <div style={{ position: 'relative', aspectRatio: '4/3', borderRadius: 10, overflow: 'hidden', ...(mont ? { width: 260, flex: 'none' } : {}) }}>
                         {c.isPhoto && c.height > c.width && (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img src={c.thumb} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', filter: 'blur(20px) brightness(.85)', transform: 'scale(1.15)' }} />
@@ -732,20 +732,21 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
                         <img src={c.thumb} alt="" style={{ width: '100%', height: '100%', objectFit: c.isPhoto && c.height > c.width ? 'contain' : 'cover', position: 'relative' }} />
                         <span style={{ position: 'absolute', top: 6, left: 6, background: 'rgba(33,31,28,.72)', color: '#fff', fontSize: 10.5, fontWeight: 800, padding: '3px 8px', borderRadius: 99 }}>{idx + 1}{!c.isPhoto && ` · ${Math.round(c.duration)}s`}</span>
                         <button onClick={() => setClips(cs => cs.filter(x => x.id !== c.id))} style={{ position: 'absolute', top: 6, right: 6, width: 22, height: 22, borderRadius: '50%', background: 'rgba(33,31,28,.72)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="x" size={11} color="#fff" /></button>
-                        {layout === 'montaggio' && clips.length > 1 && (
+                        {mont && clips.length > 1 && (
                           <div style={{ position: 'absolute', bottom: 6, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 6 }}>
                             <button disabled={idx === 0} onClick={() => setClips(cs => { if (idx === 0) return cs; const n = [...cs]; [n[idx - 1], n[idx]] = [n[idx], n[idx - 1]]; return n; })} title="Sposta indietro" style={{ width: 24, height: 24, borderRadius: '50%', background: 'rgba(33,31,28,.72)', border: 'none', cursor: idx === 0 ? 'default' : 'pointer', opacity: idx === 0 ? .35 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 13 }}>‹</button>
                             <button disabled={idx === clips.length - 1} onClick={() => setClips(cs => { if (idx === cs.length - 1) return cs; const n = [...cs]; [n[idx + 1], n[idx]] = [n[idx], n[idx + 1]]; return n; })} title="Sposta avanti" style={{ width: 24, height: 24, borderRadius: '50%', background: 'rgba(33,31,28,.72)', border: 'none', cursor: idx === clips.length - 1 ? 'default' : 'pointer', opacity: idx === clips.length - 1 ? .35 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 13 }}>›</button>
                           </div>
                         )}
                       </div>
+                      <div style={mont ? { flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 8 } : { display: 'contents' }}>
                       {!isPhotoTemplate && layout !== 'sottotitoli' && !singlePhoto && (
-                        <select value={c.room} onChange={e => setClips(cs => cs.map(x => x.id === c.id ? { ...x, room: e.target.value } : x))} style={{ ...inputStyle, marginTop: 6, padding: '7px 10px', fontSize: 12 }}>
+                        <select value={c.room} onChange={e => setClips(cs => cs.map(x => x.id === c.id ? { ...x, room: e.target.value } : x))} style={{ ...inputStyle, marginTop: mont ? 0 : 6, padding: '7px 10px', fontSize: 12 }}>
                           {ROOM_TYPES.map(r => <option key={r.id} value={r.id}>{r.label}</option>)}
                         </select>
                       )}
                       {!c.isPhoto && !singlePhoto && layout !== 'sottotitoli' && c.duration > 3 && (
-                        <div style={{ marginTop: 6, background: '#f6f4f0', borderRadius: 8, padding: '8px 10px' }}>
+                        <div style={{ marginTop: mont ? 0 : 6, background: '#f6f4f0', borderRadius: 8, padding: '8px 10px' }}>
                           <div style={{ position: 'relative', height: 6, background: '#e4e1da', borderRadius: 3 }}>
                             <div style={{
                               position: 'absolute', height: '100%', borderRadius: 3, background: '#3B83F6',
@@ -766,11 +767,17 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
                           </div>
                         </div>
                       )}
+                      </div>
                     </div>
-                  ))}
-                  {clips.length < maxClips && (
+                  ); })}
+                  {clips.length < maxClips && layout !== 'montaggio' && (
                     <div style={{ aspectRatio: '4/3', borderRadius: 10, border: '1.5px dashed #d8d4cb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       <Icon name="plus" size={20} color="#b3aca1" />
+                    </div>
+                  )}
+                  {clips.length < maxClips && layout === 'montaggio' && (
+                    <div onClick={(e) => { e.stopPropagation(); fileRef.current?.click(); }} style={{ borderRadius: 10, border: '1.5px dashed #d8d4cb', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '16px', cursor: 'pointer', color: '#8c867d', fontSize: 13, fontWeight: 700 }}>
+                      <Icon name="plus" size={18} color="#b3aca1" />Aggiungi clip o foto
                     </div>
                   )}
                 </div>
@@ -1047,22 +1054,18 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
                           <span style={{ position: 'absolute', top: 3, left: coverLogoOn && whiteLogo ? 19 : 3, width: 18, height: 18, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,.2)', transition: 'left .2s' }} />
                         </div>
                       </div>
-                      {coverTitle.trim() && (
-                        <>
-                          <div style={s('font-size:12.5px;font-weight:700;color:#57534c')}>Scegli una copertina</div>
-                          <CoverStylesGrid
-                            thumbUrl={clips[0]?.thumb || ''}
-                            logoUrl={coverLogoOn ? whiteLogo : ''}
-                            title={coverTitle}
-                            address={coverAddress}
-                            brandColor={brand.primaryColor || '#3B82F6'}
-                            isPortrait={clips.filter(c => c.height >= c.width).length >= clips.length / 2}
-                            selected={coverStyle}
-                            onSelect={setCoverStyle}
-                            styles={COVER_STYLES}
-                          />
-                        </>
-                      )}
+                      <div style={s('font-size:12.5px;font-weight:700;color:#57534c')}>Scegli una copertina</div>
+                      <CoverStylesGrid
+                        thumbUrl={clips[0]?.thumb || ''}
+                        logoUrl={coverLogoOn ? whiteLogo : ''}
+                        title={coverTitle}
+                        address={coverAddress}
+                        brandColor={brand.primaryColor || '#3B82F6'}
+                        isPortrait={clips.filter(c => c.height >= c.width).length >= clips.length / 2}
+                        selected={coverStyle}
+                        onSelect={setCoverStyle}
+                        styles={COVER_STYLES}
+                      />
                     </>
                   );
                 })()}
