@@ -10,7 +10,7 @@
 //  others        : start directly (Lambda orchestrates nano-banana / Veo / Kling)
 
 import { supabase } from './supabase';
-import { getTokenFast } from './staging';
+import { getTokenFast, refreshTokenFast } from './staging';
 
 // ─── Templates ───────────────────────────────────────────────────────────────
 
@@ -220,22 +220,29 @@ const FN_BASE = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1`;
 const ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
 
 async function callEdge<T = Record<string, unknown>>(name: string, body: Record<string, unknown>, timeoutMs = 60_000): Promise<T> {
-  const token = getTokenFast();
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  const doFetch = async (token: string): Promise<Response> => {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+    try {
+      return await fetch(`${FN_BASE}/${name}`, {
+        method: 'POST',
+        headers: { apikey: ANON_KEY, Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+        signal: ctrl.signal,
+      });
+    } finally { clearTimeout(timer); }
+  };
   let resp: Response;
   try {
-    resp = await fetch(`${FN_BASE}/${name}`, {
-      method: 'POST',
-      headers: { apikey: ANON_KEY, Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-      signal: ctrl.signal,
-    });
+    resp = await doFetch(getTokenFast());
+    // Token scaduto → rinfresca (raw, no deadlock) e riprova una volta.
+    if (resp.status === 401) {
+      const fresh = await refreshTokenFast();
+      if (fresh) resp = await doFetch(fresh);
+    }
   } catch (e: any) {
-    clearTimeout(timer);
     throw new AIVideoError(e?.name === 'AbortError' ? 'Richiesta troppo lenta, riprova' : (e?.message || 'Errore di rete'));
   }
-  clearTimeout(timer);
   let json: any = null;
   try { json = await resp.json(); } catch { /* no body */ }
   if (!resp.ok) {

@@ -52,6 +52,13 @@ export function dismissVideoJob(id: string): VideoJob[] {
   return patchVideoJob(id, { dismissed: true });
 }
 
+// Rimuove del tutto un job locale (es. il temporaneo sostituito dal renderId).
+export function removeVideoJob(id: string): VideoJob[] {
+  const jobs = loadVideoJobs().filter(j => j.id !== id);
+  saveVideoJobs(jobs);
+  return jobs;
+}
+
 // Output video finiti, per la Libreria Media (più recenti prima).
 export function finishedVideos(projectId?: string | null): VideoJob[] {
   return loadVideoJobs()

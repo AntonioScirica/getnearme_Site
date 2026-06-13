@@ -19,7 +19,7 @@ import { exportToPng, exportStaticToVideo, downloadBlob } from './templates/expo
 import { fetchBrand, updateBrand, uploadBrandLogo, removeBrandLogo, logoUrlToDataUrl, DEFAULT_BRAND_SETTINGS, type BrandSettings } from '@/lib/brand';
 import FotoAIScreen from './FotoAIScreen';
 import VideoAIScreen from './VideoAIScreen';
-import { loadVideoJobs, upsertVideoJob, patchVideoJob, dismissVideoJob, fetchServerVideoJobs, mergeServerJobs, type VideoJob } from '@/lib/videoJobs';
+import { loadVideoJobs, upsertVideoJob, patchVideoJob, dismissVideoJob, removeVideoJob, fetchServerVideoJobs, mergeServerJobs, type VideoJob } from '@/lib/videoJobs';
 import { pollRenderProgress } from '@/lib/aiVideo';
 import MediaScreen from './MediaScreen';
 import { HomeScreen } from './HomeScreen';
@@ -49,13 +49,92 @@ const NAV_SECTIONS = [
 ];
 
 const TOUR_DEFS = [
-  { sel: '[title="Foto AI"]', title: 'Foto AI', text: "Arreda, svuota o trasforma le foto dei tuoi immobili con l'AI. Singola o batch, stile o prompt libero." },
-  { sel: '[title="Post Social"]', title: 'Post Social', text: 'Template per post e storie con i dati già compilati, e il calendario per programmare le pubblicazioni.' },
-  { sel: '[title="Brand"]', title: 'Brand', text: 'Configura il logo, i colori e il nome della tua agenzia. Appariranno su tutti i contenuti.' },
-  { sel: '[title="Media"]', title: 'Media', text: 'Tutto ciò che generi finisce qui. Puoi riusarlo in post e video senza pagare altri crediti.' },
-  { sel: '[title="Lavori in corso"]', title: 'Lavori in corso', text: 'Le generazioni girano in background: qui vedi i progressi senza mai bloccarti. Ti avvisiamo a fine lavoro.' },
-  { sel: '[title="Piano"]', title: 'Piano', text: 'Qui gestisci il tuo abbonamento e confronti i piani disponibili.' },
+  { sel: '[title="Brand"]', title: 'Brand', anim: 'brand', text: 'Parti da qui: carica logo, colori e nome agenzia. Appariranno automaticamente su foto, video e post.' },
+  { sel: '[title="Homestaging AI"]', title: 'Homestaging AI', anim: 'staging', text: "Arreda, svuota o trasforma le foto dei tuoi immobili con l'AI. Singola o batch, stile o prompt libero." },
+  { sel: '[title="Video AI"]', title: 'Video AI', anim: 'video', text: 'Trasforma foto e clip in video pronti per i social: prima/dopo, timelapse, avatar e altro.' },
+  { sel: '[title="Montaggio"]', title: 'Montaggio', anim: 'montaggio', text: "Carica le clip della casa: l'AI le monta con cover, musica e watermark in un Reel pronto." },
+  { sel: '[title="Post Social"]', title: 'Post Social', anim: 'social', text: 'Template per post e storie con i dati già compilati, e il calendario per programmare le pubblicazioni.' },
+  { sel: '[title="Media"]', title: 'Media', anim: 'media', text: 'Tutto ciò che generi finisce qui. Puoi riusarlo in post e video senza pagare altri crediti.' },
+  { sel: '[title="Lavori in corso"]', title: 'Lavori in corso', anim: 'jobs', text: 'Le generazioni girano in background: qui vedi i progressi senza mai bloccarti. Ti avvisiamo a fine lavoro.' },
+  { sel: '@center', title: 'Aggiungi il tuo primo immobile', anim: 'project', text: 'Crea un progetto immobile: da lì generi foto, video e post con i dati già compilati. Iniziamo?' },
 ];
+
+// Mini-animazioni per ogni step del tour (CSS, leggere).
+function TourAnim({ kind }: { kind: string }) {
+  const wrap: React.CSSProperties = { height: 92, borderRadius: 12, background: 'linear-gradient(135deg,#eef4fe,#f6f4f0)', overflow: 'hidden', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 14 };
+  if (kind === 'brand') return (
+    <div style={wrap}>
+      {['#3B83F6', '#5B6CF0', '#211f1c'].map((c, i) => (
+        <div key={i} style={{ width: 26, height: 26, borderRadius: 8, background: c, animation: 'tour-pop .6s both', animationDelay: `${i * 0.18}s`, boxShadow: '0 2px 8px rgba(0,0,0,.12)' }} />
+      ))}
+      <div style={{ width: 30, height: 30, borderRadius: '50%', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'tour-bob 2.4s ease-in-out infinite', boxShadow: '0 2px 8px rgba(0,0,0,.1)' }}><Icon name="palette" size={15} color="#1d5fd0" /></div>
+    </div>
+  );
+  if (kind === 'staging') return (
+    <div style={wrap}>
+      <div style={{ position: 'relative', width: 150, height: 56, borderRadius: 8, background: '#dfe7f4', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(100deg, transparent 20%, rgba(59,131,246,.5) 50%, transparent 80%)', animation: 'shimmer 1.8s linear infinite', backgroundSize: '200% 100%' }} />
+        <Icon name="sparkles" size={16} color="#1d5fd0" />
+        <div style={{ position: 'absolute', top: 8, right: 12, animation: 'tour-pop 1.6s ease-in-out infinite' }}><Icon name="sparkles" size={12} color="#5B6CF0" /></div>
+      </div>
+    </div>
+  );
+  if (kind === 'video') return (
+    <div style={{ ...wrap, flexDirection: 'column', gap: 12 }}>
+      <div style={{ animation: 'aurora-pulse 2.2s ease-in-out infinite' }}><Icon name="play-circle" size={34} color="#3B83F6" /></div>
+      <div style={{ width: 130, height: 5, borderRadius: 3, background: '#dfe7f4', overflow: 'hidden' }}><div style={{ height: '100%', borderRadius: 3, background: '#3B83F6', animation: 'tour-fill 2.4s ease-in-out infinite' }} /></div>
+    </div>
+  );
+  if (kind === 'montaggio') return (
+    <div style={wrap}>
+      {[0, 1, 2].map(i => (
+        <div key={i} style={{ width: 30, height: 44, borderRadius: 6, background: ['#93C5FD', '#3B83F6', '#5B6CF0'][i], animation: 'tour-slide .7s both', animationDelay: `${i * 0.2}s` }} />
+      ))}
+      <Icon name="scissors" size={16} color="#57534c" />
+      <div style={{ width: 34, height: 44, borderRadius: 6, background: 'linear-gradient(135deg,#3B83F6,#5B6CF0)', animation: 'tour-pop .6s both', animationDelay: '.75s' }} />
+    </div>
+  );
+  if (kind === 'social') return (
+    <div style={wrap}>
+      <div style={{ width: 150, background: '#fff', borderRadius: 8, padding: 10, boxShadow: '0 2px 10px rgba(0,0,0,.08)', display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <div style={{ height: 8, width: '70%', borderRadius: 4, background: '#dfe7f4', animation: 'tour-fill 2.2s ease-in-out infinite' }} />
+        <div style={{ height: 8, width: '45%', borderRadius: 4, background: '#eef0f3', animation: 'tour-fill 2.2s .3s ease-in-out infinite' }} />
+        <div style={{ alignSelf: 'flex-end', marginTop: 2, animation: 'tour-pop 1.8s ease-in-out infinite' }}><Icon name="sparkles" size={13} color="#5B6CF0" /></div>
+      </div>
+    </div>
+  );
+  if (kind === 'media') return (
+    <div style={{ ...wrap, display: 'grid', gridTemplateColumns: 'repeat(3,28px)', gridAutoRows: 28, gap: 6 }}>
+      {[0, 1, 2, 3, 4, 5].map(i => (
+        <div key={i} style={{ borderRadius: 6, background: i % 2 ? '#cfe0f7' : '#dfe7f4', animation: 'tour-tile .5s both', animationDelay: `${i * 0.1}s` }} />
+      ))}
+    </div>
+  );
+  if (kind === 'jobs') return (
+    <div style={wrap}>
+      <div style={{ position: 'relative', width: 64, height: 64, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ position: 'absolute', width: 56, height: 56, borderRadius: '50%', border: '1.5px solid rgba(59,131,246,.3)', animation: 'pulse-ring 2.6s ease-out infinite' }} />
+        <div style={{ width: 40, height: 40, background: 'radial-gradient(circle at 32% 28%, #AECBFF, #3B83F6 70%, #5B6CF0)', animation: 'organic-blob 7s ease-in-out infinite' }} />
+      </div>
+    </div>
+  );
+  // project (step centrale)
+  return (
+    <div style={wrap}>
+      <div style={{ position: 'relative', width: 60, height: 60, display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'tour-bob 2.4s ease-in-out infinite' }}>
+        <div style={{ width: 52, height: 52, borderRadius: 16, background: '#eef4fe', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="building-2" size={26} color="#1d5fd0" /></div>
+        <div style={{ position: 'absolute', bottom: -2, right: -2, width: 22, height: 22, borderRadius: '50%', background: '#3B83F6', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'tour-pop .6s both', animationDelay: '.4s' }}><Icon name="plus" size={13} color="#fff" /></div>
+      </div>
+    </div>
+  );
+}
+
+// Tempo stimato per template (mostrato in "Lavori in corso").
+const VIDEO_ETA: Record<string, string> = {
+  montaggio: '~2-5 min', before_after: '~2-4 min', ai_staging: '~2-4 min', day_night: '~2-4 min',
+  construction: '~3-6 min', walkthrough: '~3-6 min', sottotitoli: '~2-4 min', classic: '~10-15 min', split: '~10-15 min',
+};
+const videoEta = (template: string) => VIDEO_ETA[template] || '~3-6 min';
 
 const fmt = (n: number) => '€ ' + Number(n || 0).toLocaleString('it-IT');
 /* ───── PLANS DATA ───── */
@@ -2016,8 +2095,10 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
   // browser chiuso/altro device). localStorage = cache ottimistica. Si fondono.
   const [videoJobs, setVideoJobs] = useState<VideoJob[]>([]);
   useEffect(() => { setVideoJobs(loadVideoJobs()); }, []);
-  const registerVideoJob = useCallback((job: Omit<VideoJob, 'createdAt' | 'dismissed'>) => {
-    setVideoJobs(upsertVideoJob({ ...job, createdAt: Date.now() }));
+  const registerVideoJob = useCallback((job: Omit<VideoJob, 'createdAt' | 'dismissed'> & { replaceId?: string }) => {
+    const { replaceId, ...j } = job;
+    if (replaceId && replaceId !== j.id) removeVideoJob(replaceId); // sostituisce il job temporaneo
+    setVideoJobs(upsertVideoJob({ ...j, createdAt: Date.now() }));
   }, []);
 
   // Sync col server: al mount, al ritorno sul tab, e ogni 20s mentre ci sono
@@ -2042,15 +2123,24 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
     let cancelled = false;
     const timer = setInterval(async () => {
       for (const job of videoJobs.filter(j => j.stage === 'render')) {
+        const renderId = (job.ctx as { renderId?: string } | undefined)?.renderId;
+        // Job temporaneo (pre-render, ctx vuoto): non si polla, avanza piano
+        // così non sembra bloccato durante l'upload/preparazione.
+        if (!renderId) {
+          setVideoJobs(patchVideoJob(job.id, { progress: Math.min(0.2, (job.progress || 0) + 0.02) }));
+          continue;
+        }
         try {
           const p = await pollRenderProgress(job.ctx);
           if (cancelled) return;
           if (p?.done && p.outputUrl) {
             setVideoJobs(patchVideoJob(job.id, { stage: 'done', progress: 1, outputUrl: p.outputUrl }));
-          } else if (p?.error) {
-            setVideoJobs(patchVideoJob(job.id, { stage: 'failed', error: p.error }));
+          } else if (p?.error || (p?.done && (p as unknown as { fatalErrorEncountered?: string }).fatalErrorEncountered)) {
+            setVideoJobs(patchVideoJob(job.id, { stage: 'failed', error: p.error || (p as unknown as { fatalErrorEncountered?: string }).fatalErrorEncountered }));
           } else {
-            setVideoJobs(patchVideoJob(job.id, { progress: Math.min(0.95, job.progress + 0.04) }));
+            // Usa il progress reale dall'edge (Veo/Lambda); fallback a +0.04.
+            const real = typeof (p as unknown as { overallProgress?: number }).overallProgress === 'number' ? (p as unknown as { overallProgress: number }).overallProgress : 0;
+            setVideoJobs(patchVideoJob(job.id, { progress: Math.min(0.96, Math.max(job.progress || 0, real, (job.progress || 0) + 0.04)) }));
           }
         } catch { /* transiente, riprova al prossimo tick */ }
       }
@@ -2059,7 +2149,17 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
     return () => { cancelled = true; clearInterval(timer); };
   }, [videoJobs, syncServerVideoJobs]);
 
-  const [welcomeOpen, setWelcomeOpen] = useState(true);
+  // Tutorial iniziale: appare UNA SOLA VOLTA (flag persistente). Ri-attivabile
+  // da menu Profilo > Tutorial / cmdk. Init false per evitare mismatch SSR; un
+  // effetto lo apre al primo accesso se non ancora visto.
+  const [welcomeOpen, setWelcomeOpen] = useState(false);
+  useEffect(() => {
+    if (typeof window !== 'undefined' && !localStorage.getItem('gnm_tutorial_seen')) setWelcomeOpen(true);
+  }, []);
+  const markTutorialSeen = useCallback(() => {
+    try { localStorage.setItem('gnm_tutorial_seen', '1'); } catch { /* quota */ }
+  }, []);
+  const closeWelcome = useCallback(() => { setWelcomeOpen(false); markTutorialSeen(); }, [markTutorialSeen]);
   const [tourStep, setTourStep] = useState<number | null>(null);
   const [tourRect, setTourRect] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
   const [trayOpen, setTrayOpen] = useState(false);
@@ -2145,9 +2245,17 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
 
   // Tour measuring
   const tourMeasure = useCallback((i: number) => {
-    const d = TOUR_DEFS[i]; if (!d) return;
-    const el = document.querySelector(d.sel);
-    if (el) { const r = el.getBoundingClientRect(); setTourRect({ x: r.x, y: r.y, w: r.width, h: r.height }); }
+    // Trova il primo step renderizzato da i in poi (salta quelli non presenti),
+    // così non resta mai bloccato invisibile.
+    let idx = i;
+    while (idx < TOUR_DEFS.length) {
+      const sel = TOUR_DEFS[idx].sel;
+      if (sel === '@center') { setTourStep(idx); setTourRect(null); return; } // step centrato (no ancora)
+      const el = document.querySelector(sel);
+      if (el) { const r = el.getBoundingClientRect(); setTourStep(idx); setTourRect({ x: r.x, y: r.y, w: r.width, h: r.height }); return; }
+      idx++;
+    }
+    setTourStep(null); setTourRect(null); // nessuno trovato → chiudi
   }, []);
   const tourGo = useCallback((n: number) => {
     if (n >= TOUR_DEFS.length || n < 0) { setTourStep(null); return; }
@@ -2155,9 +2263,9 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
     setTimeout(() => tourMeasure(n), 60);
   }, [tourMeasure]);
   const startTour = useCallback(() => {
-    setWelcomeOpen(false); setCollapsed(false); setTourStep(0); setTourRect(null);
+    setWelcomeOpen(false); markTutorialSeen(); setCollapsed(false); setTourStep(0); setTourRect(null);
     setTimeout(() => tourMeasure(0), 350);
-  }, [tourMeasure]);
+  }, [tourMeasure, markTutorialSeen]);
 
   // ---- derived: checklist ----
 
@@ -2165,14 +2273,24 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
 
   // ⌘K results
   const cmdq = cmdQuery.toLowerCase();
+  // Solo feature disponibili (= sidebar). Le voci nascoste per ora (Team,
+  // Calendario, Account social) NON vanno mostrate nemmeno qui.
   const cmdTools = [
-    ['Foto AI', 'staging', 'sparkles'], ['Video AI', 'video', 'film'], ['Post Social', 'studio', 'image-plus'],
-    ['Calendario', 'calendario', 'calendar'], ['Media', 'media', 'image'], ['Team', 'team', 'users'],
-    ['Brand Agenzia', 'brand', 'palette'], ['Piano', 'account', 'credit-card'],
+    ['Foto AI', 'staging', 'sparkles'], ['Video AI', 'video', 'film'], ['Montaggio', 'montaggio', 'scissors'],
+    ['Post Social', 'studio', 'image-plus'], ['Media', 'media', 'image'],
+    ['Brand Agenzia', 'brand', 'palette'], ['Piano e crediti', 'account', 'credit-card'],
   ] as const;
+  // Voci disponibili dal menu profilo (non in sidebar).
+  const cmdActions: [string, string, string, () => void][] = [
+    ['Impostazioni', 'settings', 'Account', () => { setCmdkOpen(false); go('impostazioni'); }],
+    ['Assistenza', 'life-buoy', 'Supporto', () => { setCmdkOpen(false); go('assistenza'); }],
+    ['Tutorial', 'play-circle', 'Guida', () => { setCmdkOpen(false); setWelcomeOpen(true); }],
+  ];
   const cmdResults: { label: string; sub: string; icon: string; go: () => void }[] = [];
   cmdTools.filter((t) => !cmdq || t[0].toLowerCase().includes(cmdq)).forEach((t) => cmdResults.push({ label: t[0], sub: 'Strumento', icon: t[2], go: () => { setCmdkOpen(false); go(t[1]); } }));
-  projects.filter((p) => !cmdq || (p.nome + ' ' + p.addr).toLowerCase().includes(cmdq)).forEach((p) => cmdResults.push({ label: p.nome, sub: p.addr, icon: 'building-2', go: () => { setCmdkOpen(false); setActiveProject(p.id); go('home'); } }));
+  cmdActions.filter((a) => !cmdq || a[0].toLowerCase().includes(cmdq)).forEach((a) => cmdResults.push({ label: a[0], sub: a[2], icon: a[1], go: a[3] }));
+  // Progetti: solo se cercati (niente lista di default).
+  if (cmdq) projects.filter((p) => (p.nome + ' ' + p.addr).toLowerCase().includes(cmdq)).forEach((p) => cmdResults.push({ label: p.nome, sub: p.addr, icon: 'building-2', go: () => { setCmdkOpen(false); setActiveProject(p.id); go('home'); } }));
 
   const onRight = tourRect && tourRect.x > (typeof window !== 'undefined' ? window.innerWidth - 420 : 9999);
   const tipL = tourRect ? (onRight ? Math.max(16, tourRect.x + tourRect.w - 320) : tourRect.x + tourRect.w + 20) : 0;
@@ -2185,65 +2303,33 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
       {/* WELCOME MODAL */}
       {welcomeOpen && (
         <div style={s('position:fixed;inset:0;background:rgba(24,21,17,.6);backdrop-filter:blur(4px);z-index:95;display:flex;align-items:center;justify-content:center;padding:24px')}>
-          <div style={s('background:#fff;border-radius:24px;box-shadow:0 32px 80px rgba(0,0,0,.15), 0 2px 16px rgba(0,0,0,.05);width:100%;max-width:540px;overflow:hidden;position:relative')}>
-            {/* Header / Banner */}
-            <div style={{ background: 'linear-gradient(135deg, #eef4fe, #f6f4f0)', padding: '40px 40px 32px', textAlign: 'center', borderBottom: '1px solid #f0ede7' }}>
-              <div style={{ width: 64, height: 64, background: '#fff', borderRadius: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', boxShadow: '0 8px 24px rgba(33,31,28,.08)' }}>
-                <Icon name="sparkles" size={28} color="#1d5fd0" />
-              </div>
-              <h2 style={s('margin:0 0 10px;font-size:28px;font-weight:800;letter-spacing:-.6px;color:#1a1a1a')}>Benvenuto su GetNearMe</h2>
-              <p style={s('margin:0 auto;max-width:380px;color:#57534c;font-size:15px;line-height:1.5')}>La prima suite All-in-One per agenzie immobiliari. Genera materiali di marketing incredibili in pochi secondi.</p>
+          <div style={{ background: 'linear-gradient(160deg, #eef4fe 0%, #f6f4f0 100%)', borderRadius: 24, boxShadow: '0 32px 80px rgba(0,0,0,.15), 0 2px 16px rgba(0,0,0,.05)', width: '100%', maxWidth: 440, overflow: 'hidden', position: 'relative', padding: '44px 40px 32px', textAlign: 'center' }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <div style={{ width: 68, height: 68, background: '#fff', borderRadius: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 22px', boxShadow: '0 8px 24px rgba(33,31,28,.1)' }}>
+              <img src="/dashboard/logo-icon.svg" alt="GetNearMe" style={{ width: 40, height: 40 }} />
             </div>
-            
-            {/* Feature List */}
-            <div style={{ padding: '32px 40px', display: 'flex', flexDirection: 'column', gap: 20 }}>
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
-                <div style={{ width: 44, height: 44, borderRadius: 12, background: '#f4f2ee', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}>
-                  <Icon name="image" size={20} color="#211f1c" />
-                </div>
-                <div>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: '#211f1c', marginBottom: 2 }}>Virtual Staging AI</div>
-                  <div style={{ fontSize: 13.5, color: '#57534c', lineHeight: 1.4 }}>Arreda stanze vuote, cambia lo stile e migliora l'illuminazione con un clic.</div>
-                </div>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
-                <div style={{ width: 44, height: 44, borderRadius: 12, background: '#f4f2ee', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}>
-                  <Icon name="film" size={20} color="#211f1c" />
-                </div>
-                <div>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: '#211f1c', marginBottom: 2 }}>Montaggio Video Automatico</div>
-                  <div style={{ fontSize: 13.5, color: '#57534c', lineHeight: 1.4 }}>Trasforma le tue foto in Reel e TikTok dinamici pronti da condividere.</div>
-                </div>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
-                <div style={{ width: 44, height: 44, borderRadius: 12, background: '#f4f2ee', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}>
-                  <Icon name="share-2" size={20} color="#211f1c" />
-                </div>
-                <div>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: '#211f1c', marginBottom: 2 }}>Post Social e Calendario</div>
-                  <div style={{ fontSize: 13.5, color: '#57534c', lineHeight: 1.4 }}>Genera grafiche professionali per i social e programma le pubblicazioni.</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Actions */}
-            <div style={{ padding: '24px 40px 32px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
-              <Box as="button" onClick={startTour} style={s('width:100%;border:none;background:#1d5fd0;color:#fff;font-size:15px;font-weight:700;padding:14px 28px;border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;min-height:48px;transition:all .2s')} hover={s('background:#1850b0;transform:translateY(-1px);box-shadow:0 8px 24px rgba(29,95,208,.25)')}>
-                Fai un giro veloce (1 min) <Icon name="arrow-right" size={16} color="#fff" />
-              </Box>
-              <Box as="button" onClick={() => { setWelcomeOpen(false); toast('Puoi rifare il tour dal menu Profilo > Tutorial'); }} style={s('border:none;background:transparent;color:#8c867d;font-size:14px;font-weight:600;padding:10px 24px;border-radius:8px;cursor:pointer;min-height:40px;transition:color .2s')} hover={{ color: '#57534c' }}>
-                Salta e inizia subito
-              </Box>
-            </div>
+            <h2 style={s('margin:0 0 10px;font-size:27px;font-weight:800;letter-spacing:-.6px;color:#1a1a1a')}>Benvenuto su GetNearMe</h2>
+            <p style={s('margin:0 auto 28px;max-width:360px;color:#57534c;font-size:15px;line-height:1.5')}>La prima suite All-in-One per agenzie immobiliari. Genera materiali di marketing incredibili in pochi secondi.</p>
+            <Box as="button" onClick={startTour} style={s('width:100%;border:none;background:#3B83F6;color:#fff;font-size:15px;font-weight:700;padding:14px 28px;border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;min-height:48px;transition:all .2s')} hover={s('background:#2b6fe0;transform:translateY(-1px);box-shadow:0 8px 24px rgba(59,131,246,.28)')}>
+              Fai un giro veloce (1 min) <Icon name="arrow-right" size={16} color="#fff" />
+            </Box>
+            <Box as="button" onClick={() => { closeWelcome(); toast('Puoi rifare il tour dal menu Profilo > Tutorial'); }} style={s('border:none;background:transparent;color:#8c867d;font-size:14px;font-weight:600;padding:12px 24px 0;border-radius:8px;cursor:pointer;transition:color .2s')} hover={{ color: '#57534c' }}>
+              Salta e inizia subito
+            </Box>
           </div>
         </div>
       )}
 
       {/* TOUR COACHMARK */}
-      {tourStep !== null && tourRect && (
+      {tourStep !== null && (tourRect || tdef.sel === '@center') && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 96 }}>
-          <div onClick={() => setTourStep(null)} style={{ position: 'absolute', left: tourRect.x - 6, top: tourRect.y - 6, width: tourRect.w + 12, height: tourRect.h + 12, borderRadius: 14, boxShadow: '0 0 0 9999px rgba(24,21,17,.55)', transition: 'all .3s ease', pointerEvents: 'none' }} />
-          <div style={{ position: 'absolute', left: tipL, top: tipT, width: 300, background: '#fff', borderRadius: 12, boxShadow: '0 16px 48px rgba(20,18,15,.3)', padding: '20px 22px', transition: 'all .3s ease' }}>
+          {tdef.sel === '@center'
+            ? <div onClick={() => setTourStep(null)} style={{ position: 'absolute', inset: 0, background: 'rgba(24,21,17,.55)', backdropFilter: 'blur(2px)' }} />
+            : <div onClick={() => setTourStep(null)} style={{ position: 'absolute', left: tourRect!.x - 6, top: tourRect!.y - 6, width: tourRect!.w + 12, height: tourRect!.h + 12, borderRadius: 14, boxShadow: '0 0 0 9999px rgba(24,21,17,.55)', transition: 'all .3s ease', pointerEvents: 'none' }} />}
+          <div style={tdef.sel === '@center'
+            ? { position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%,-50%)', width: 360, maxWidth: 'calc(100vw - 32px)', background: '#fff', borderRadius: 16, boxShadow: '0 24px 64px rgba(20,18,15,.32)', padding: '22px 24px' }
+            : { position: 'absolute', left: tipL, top: tipT, width: 300, background: '#fff', borderRadius: 12, boxShadow: '0 16px 48px rgba(20,18,15,.3)', padding: '18px 20px 20px', transition: 'all .3s ease' }}>
+            <TourAnim kind={tdef.anim} />
             <div style={s('display:flex;align-items:center;justify-content:space-between;margin-bottom:6px')}>
               <span style={s('font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#1d5fd0')}>{(tourStep + 1) + ' di ' + TOUR_DEFS.length}</span>
               <span onClick={() => setTourStep(null)} style={s('font-size:12px;font-weight:600;color:#b3aca1;cursor:pointer;padding:4px')}>Salta il tour</span>
@@ -2252,9 +2338,9 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
             <div style={s('font-size:13px;color:#57534c;line-height:1.5;margin-bottom:16px')}>{tdef.text}</div>
             <div style={s('display:flex;align-items:center;justify-content:space-between')}>
               {tourStep > 0 && <Box as="button" onClick={() => tourGo(tourStep - 1)} style={s('border:1px solid #e4e1da;background:#fff;font-size:12.5px;font-weight:700;padding:9px 16px;border-radius:8px;cursor:pointer;min-height:38px')} hover={s('background:#f6f4f0')}>Indietro</Box>}
-              {tourStep < TOUR_DEFS.length - 1
+              {tdef.sel !== '@center'
                 ? <Box as="button" onClick={() => tourGo(tourStep + 1)} style={s('border:none;background:#3B83F6;color:#fff;font-size:12.5px;font-weight:700;padding:9px 18px;border-radius:8px;cursor:pointer;margin-left:auto;min-height:38px')} hover={s('background:#2b6fe0')}>Avanti</Box>
-                : <Box as="button" onClick={() => { setTourStep(null); go('staging'); }} style={s('border:none;background:#3B83F6;color:#fff;font-size:12.5px;font-weight:700;padding:9px 18px;border-radius:8px;cursor:pointer;margin-left:auto;display:flex;align-items:center;gap:7px;min-height:38px')} hover={s('background:#2b6fe0')}><Icon name="sparkles" size={13} color="#fff" />Inizia da una foto</Box>}
+                : <Box as="button" onClick={() => { setTourStep(null); setNewProjOpen(true); }} style={s('border:none;background:#3B83F6;color:#fff;font-size:12.5px;font-weight:700;padding:9px 18px;border-radius:8px;cursor:pointer;margin-left:auto;display:flex;align-items:center;gap:7px;min-height:38px')} hover={s('background:#2b6fe0')}><Icon name="plus" size={14} color="#fff" />Aggiungi immobile</Box>}
             </div>
           </div>
         </div>
@@ -2391,7 +2477,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
             {/* jobs tray + notifications */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <div style={{ position: 'relative' }}>
-                <Box as="button" onClick={(e) => { e.stopPropagation(); setTrayOpen((o) => !o); setProjOpen(false); }} title="Lavori in corso" aria-label="Lavori in corso" style={s('border:none;background:transparent;width:38px;height:38px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;position:relative')} hover={s('background:#f1efe9')}>
+                <Box as="button" onClick={(e) => { e.stopPropagation(); setTrayOpen((o) => !o); setProjOpen(false); setNotifOpen(false); setProfileOpen(false); }} title="Lavori in corso" aria-label="Lavori in corso" style={s('border:none;background:transparent;width:38px;height:38px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;position:relative')} hover={s('background:#f1efe9')}>
                   <Icon name="inbox" size={18} />
                   {(batches.filter(b => b.status === 'processing' || b.status === 'pending').length > 0 || videoJobs.some(j => j.stage === 'render' && !j.dismissed)) && (
                     <div style={{ position: 'absolute', top: 6, right: 6, width: 8, height: 8, borderRadius: '50%', background: '#3B83F6', border: '2px solid #fff' }} />
@@ -2447,8 +2533,13 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                               <div style={{ flex: 1, minWidth: 0 }}>
                                 <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 2, paddingRight: 22, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{j.template === 'montaggio' ? 'Montaggio' : 'Video AI'} · {j.title}</div>
                                 <div style={{ fontSize: 12, color: '#8c867d', marginBottom: 6 }}>
-                                  {isDone ? 'Completato' : isFailed ? (j.error || 'Non riuscito') : `In elaborazione (${Math.round(j.progress * 100)}%)`}
+                                  {isDone ? 'Completato' : isFailed ? (j.error || 'Non riuscito') : `In elaborazione (${Math.round(j.progress * 100)}%) · ${videoEta(j.template)}`}
                                 </div>
+                                {!isDone && !isFailed && (
+                                  <div style={{ height: 4, borderRadius: 2, background: '#eef0f3', overflow: 'hidden', marginBottom: 6 }}>
+                                    <div style={{ height: '100%', borderRadius: 2, background: '#3B83F6', width: `${Math.round(j.progress * 100)}%`, transition: 'width .4s' }} />
+                                  </div>
+                                )}
                                 {isDone && (
                                   <div style={{ display: 'flex', gap: 8 }}>
                                     <button onClick={() => { setTrayOpen(false); go('media'); }} style={{ padding: '4px 8px', fontSize: 11, fontWeight: 700, borderRadius: 6, border: '1px solid #e4e1da', background: '#fff', cursor: 'pointer' }}>Vedi in Media</button>
@@ -2585,9 +2676,9 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                 loadingBatches={loadingBatches} 
               />
             ) : route === 'video' ? (
-              <VideoAIScreen toast={toast} routeKey={routeKey} brand={brand} project={active} onVideoJob={registerVideoJob} />
+              <VideoAIScreen key="video" toast={toast} routeKey={routeKey} brand={brand} project={active} onVideoJob={registerVideoJob} activeRenders={videoJobs.filter(j => j.stage === 'render' && !j.dismissed).length} />
             ) : route === 'montaggio' ? (
-              <VideoAIScreen toast={toast} routeKey={routeKey} brand={brand} preselect="montaggio" project={active} onVideoJob={registerVideoJob} />
+              <VideoAIScreen key="montaggio" toast={toast} routeKey={routeKey} brand={brand} preselect="montaggio" project={active} onVideoJob={registerVideoJob} activeRenders={videoJobs.filter(j => j.stage === 'render' && !j.dismissed).length} />
             ) : route === 'account' ? (
               <AccountScreen credits={credits} toast={toast} go={go} userData={userData} />
             ) : route === 'brand' ? (
@@ -2617,7 +2708,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
           <div onClick={(e) => e.stopPropagation()} style={s('width:100%;max-width:560px;background:#fff;border-radius:14px;box-shadow:0 24px 64px rgba(20,18,15,.3);overflow:hidden')}>
             <div style={s('display:flex;align-items:center;gap:10px;padding:16px 18px;border-bottom:1px solid #f4f2ee')}><Icon name="search" size={18} color="#8c867d" /><input autoFocus value={cmdQuery} onChange={(e) => setCmdQuery(e.target.value)} placeholder="Cerca strumenti, immobili, media…" style={s('border:none;outline:none;font-size:15px;width:100%;background:transparent')} /><span style={s('font-size:11px;font-weight:700;background:#f1efe9;color:#8c867d;padding:3px 8px;border-radius:6px')}>esc</span></div>
             <div style={s('max-height:340px;overflow:auto;padding:8px')}>
-              {cmdResults.length === 0 ? <div style={s('padding:28px;text-align:center;color:#8c867d;font-size:13.5px')}>Nessun risultato.</div> : cmdResults.slice(0, 8).map((r, i) => (
+              {cmdResults.length === 0 ? <div style={s('padding:28px;text-align:center;color:#8c867d;font-size:13.5px')}>Nessun risultato.</div> : cmdResults.slice(0, 12).map((r, i) => (
                 <Box key={i} onClick={r.go} style={s('display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:10px;cursor:pointer')} hover={s('background:#f6f4f0')}>
                   <span style={s('width:32px;height:32px;border-radius:9px;background:#f4f2ee;display:flex;align-items:center;justify-content:center;flex:none')}><Icon name={r.icon} size={15} color="#57534c" /></span>
                   <div style={{ minWidth: 0 }}><div style={s('font-size:13.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{r.label}</div><div style={s('font-size:11.5px;color:#8c867d')}>{r.sub}</div></div>

@@ -9,7 +9,7 @@ import { s, Box, Icon } from './ui';
 import {
   STAGING_STYLES, STAGING_ANGLES, MAX_BATCH_PHOTOS,
   fileToResizedDataUrl, startStaging, pollStagingStatus, findLatestProcessingPrediction, createBatchStaging, downloadImage,
-  fetchStagingQuota, type StagingQuota,
+  fetchStagingQuota, type StagingQuota, getTokenFast,
 } from '@/lib/staging';
 import { saveSingleGenerationToBatch, deleteBatchPhoto } from '@/lib/stagingBatches';
 import { saveOriginalMedia } from '@/lib/localMediaCache';
@@ -26,6 +26,57 @@ type Pending = { predictionId: string; before: string; style: string | null; cus
 
 import type { Project } from './types';
 
+// Pacchetti foto extra (Stripe Payment Links reali da ai_photo_packages).
+const PHOTO_PACKS = [
+  { id: 'ai-listing-boost', name: 'Listing Boost', photos: 500, price: 50, popular: false, link: 'https://buy.stripe.com/6oUfZhccXdPZ22QaFOak00d' },
+  { id: 'ai-real-estate-pro', name: 'Real Estate Pro', photos: 1500, price: 99, popular: true, link: 'https://buy.stripe.com/7sY4gzccXdPZ5f2dS0ak00e' },
+  { id: 'ai-agency', name: 'Agency Pack', photos: 4000, price: 199, popular: false, link: 'https://buy.stripe.com/7sYdR96SD3blePC4hqak00f' },
+];
+
+function userFromToken(): { id?: string; email?: string } {
+  try { const t = getTokenFast(); const p = JSON.parse(atob(t.split('.')[1])); return { id: p.sub, email: p.email }; } catch { return {}; }
+}
+
+// Popup "Pacchetti AI Foto" quando la quota mensile è esaurita.
+function PhotoPacksModal({ onClose }: { onClose: () => void }) {
+  const buy = (link: string) => {
+    const { id, email } = userFromToken();
+    let url = link;
+    try { const u = new URL(link); if (id) u.searchParams.set('client_reference_id', id); if (email) u.searchParams.set('prefilled_email', email); url = u.toString(); } catch { /* keep link */ }
+    window.open(url, '_blank');
+    onClose();
+  };
+  return (
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(24,21,17,.55)', backdropFilter: 'blur(3px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+      <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 540, background: '#fff', borderRadius: 20, boxShadow: '0 28px 72px rgba(20,18,15,.3)', overflow: 'hidden' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 28px', borderBottom: '1px solid #f0ede7' }}>
+          <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, letterSpacing: '-.3px' }}>Pacchetti AI Foto</h3>
+          <button onClick={onClose} aria-label="Chiudi" style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#8c867d' }}><Icon name="x" size={20} color="#8c867d" /></button>
+        </div>
+        <div style={{ padding: '22px 28px 26px' }}>
+          <div style={{ textAlign: 'center', marginBottom: 20 }}>
+            <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 6 }}>Hai esaurito le foto di questo mese</div>
+            <div style={{ fontSize: 13.5, color: '#57534c', lineHeight: 1.5 }}>Acquista un pacchetto extra per continuare a generare foto AI. I crediti extra non scadono e si sommano al tuo piano attuale.</div>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {PHOTO_PACKS.map(p => (
+              <div key={p.id} style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', borderRadius: 14, border: p.popular ? '2px solid #3B83F6' : '1px solid #e4e1da', background: p.popular ? '#eff6ff' : '#fff' }}>
+                <div style={{ width: 42, height: 42, borderRadius: 12, background: p.popular ? '#fff' : '#f4f2ee', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}><Icon name="image" size={19} color={p.popular ? '#1d5fd0' : '#57534c'} /></div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 14.5, fontWeight: 800, display: 'flex', alignItems: 'center', gap: 8 }}>{p.name}{p.popular && <span style={{ fontSize: 10, fontWeight: 800, color: '#1d5fd0', background: '#dbeafe', padding: '2px 7px', borderRadius: 99, textTransform: 'uppercase', letterSpacing: '.04em' }}>Popolare</span>}</div>
+                  <div style={{ fontSize: 12.5, color: '#8c867d', marginTop: 1 }}>{p.photos} foto AI extra</div>
+                </div>
+                <div style={{ fontSize: 19, fontWeight: 800, flex: 'none', minWidth: 64, textAlign: 'right' }}>€{p.price}</div>
+                <Box as="button" onClick={() => buy(p.link)} style={{ border: 'none', background: '#3B83F6', color: '#fff', fontSize: 13, fontWeight: 700, padding: '10px 20px', borderRadius: 10, cursor: 'pointer', flex: 'none' } as React.CSSProperties} hover={{ background: '#2b6fe0' }}>Scegli</Box>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated, onGoPlan }: {
   toast: (msg: string, icon?: string) => void;
   routeKey: number;
@@ -34,6 +85,7 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
   onGoPlan?: () => void;
 }) {
   const [quota, setQuota] = React.useState<StagingQuota | null>(null);
+  const [packsOpen, setPacksOpen] = React.useState(false);
   React.useEffect(() => { fetchStagingQuota().then(setQuota); }, []);
   // Warm-up: spin up the edge function on mount so the first real generation
   // doesn't hit a cold start (which can exceed the start timeout).
@@ -411,12 +463,16 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
           <h1 style={s('margin:0 0 4px;font-size:25px;font-weight:800;letter-spacing:-.5px')}>Homestaging AI</h1>
           <div style={s('color:#8c867d;font-size:14px')}>Arreda, svuota o trasforma le foto dei tuoi immobili con l’AI.</div>
         </div>
-        {quota && (
+        {quota && (quota.remaining > 0 ? (
           <div style={s('display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #f0ede7;border-radius:99px;padding:8px 16px')}>
             <Icon name="image" size={15} color="#3B83F6" />
             <span style={{ fontSize: 13, fontWeight: 700 }}>{quota.remaining}/{quota.limit} foto</span>
           </div>
-        )}
+        ) : (
+          <Box as="button" onClick={() => setPacksOpen(true)} style={s('display:flex;align-items:center;gap:8px;background:#3B83F6;color:#fff;border:none;border-radius:10px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer') as React.CSSProperties} hover={s('background:#2b6fe0')}>
+            <Icon name="zap" size={15} color="#fff" />Ottieni altre foto
+          </Box>
+        ))}
       </div>
 
       {/* ── GLOBAL ERROR ── */}
@@ -678,21 +734,23 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
                   <textarea value={customPrompt} onChange={e => onPrompt(e.target.value)} maxLength={2000} rows={3} placeholder="Es. trasforma in soggiorno moderno con divano color crema e parquet chiaro" style={inputStyle} />
                 </div>
 
-                <button onClick={handleGenerate} disabled={!canGenerate} className="group" style={{
+                {(() => { const mainActive = canGenerate || outOfQuota; return (
+                <button onClick={outOfQuota ? () => setPacksOpen(true) : handleGenerate} disabled={!mainActive} className="group" style={{
                   border: 'none',
-                  background: canGenerate ? 'linear-gradient(135deg, #3B83F6 0%, #6366f1 100%)' : '#e5e7eb',
-                  color: canGenerate ? '#fff' : '#9ca3af',
+                  background: mainActive ? 'linear-gradient(135deg, #3B83F6 0%, #6366f1 100%)' : '#e5e7eb',
+                  color: mainActive ? '#fff' : '#9ca3af',
                   fontSize: 15, fontWeight: 600,
-                  padding: '16px 20px', borderRadius: 14, cursor: canGenerate ? 'pointer' : 'default',
+                  padding: '16px 20px', borderRadius: 14, cursor: mainActive ? 'pointer' : 'default',
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                  boxShadow: canGenerate ? '0 8px 24px rgba(99,102,241,0.25)' : 'none',
+                  boxShadow: mainActive ? '0 8px 24px rgba(99,102,241,0.25)' : 'none',
                   transition: 'all .2s cubic-bezier(.4,0,.2,1)',
                 }}>
-                  <span className={canGenerate ? "group-hover:rotate-12 transition-transform duration-300" : ""} style={{ display: 'flex' }}>
-                    <Icon name={outOfQuota ? 'image' : 'sparkles'} size={18} color={canGenerate ? "#fff" : "#9ca3af"} />
+                  <span className={mainActive ? "group-hover:rotate-12 transition-transform duration-300" : ""} style={{ display: 'flex' }}>
+                    <Icon name={outOfQuota ? 'zap' : 'sparkles'} size={18} color={mainActive ? "#fff" : "#9ca3af"} />
                   </span>
-                  {outOfQuota ? 'Limite mensile raggiunto' : notEnoughForBatch ? `Restano solo ${quota!.remaining} foto` : (isBatch ? `Genera ${photos.length} foto` : 'Genera foto')}
+                  {outOfQuota ? 'Ottieni altre foto' : notEnoughForBatch ? `Restano solo ${quota!.remaining} foto` : (isBatch ? `Genera ${photos.length} foto` : 'Genera foto')}
                 </button>
+                ); })()}
 
                 {(outOfQuota || notEnoughForBatch) && (
                   <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 14, padding: '16px 18px' }}>
@@ -701,10 +759,15 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
                     </div>
                     <div style={{ fontSize: 13, color: '#3b6fb0', lineHeight: 1.5, marginBottom: 12 }}>
                       {outOfQuota
-                        ? 'La quota riparte il primo del mese prossimo. Per averne di più ora, passa a un piano superiore.'
-                        : `Te ne restano ${quota!.remaining}: riduci le foto o passa a un piano superiore.`}
+                        ? 'La quota riparte il primo del mese prossimo. Per averne di più ora, acquista un pacchetto extra: i crediti non scadono e si sommano.'
+                        : `Te ne restano ${quota!.remaining}: riduci le foto o acquista un pacchetto extra.`}
                     </div>
-                    {onGoPlan && (
+                    {outOfQuota ? (
+                      <Box as="button" onClick={() => setPacksOpen(true)} style={s('border:none;background:#3B83F6;color:#fff;font-size:13.5px;font-weight:700;padding:10px 18px;border-radius:10px;cursor:pointer;display:inline-flex;align-items:center;gap:8px') as React.CSSProperties} hover={s('background:#2b6fe0')}>
+                        <Icon name="zap" size={15} color="#fff" />
+                        Ottieni altre foto
+                      </Box>
+                    ) : onGoPlan && (
                       <Box as="button" onClick={onGoPlan} style={s('border:none;background:#3B83F6;color:#fff;font-size:13.5px;font-weight:700;padding:10px 18px;border-radius:10px;cursor:pointer;display:inline-flex;align-items:center;gap:8px') as React.CSSProperties} hover={s('background:#2b6fe0')}>
                         <Icon name="crown" size={15} color="#fff" />
                         Vedi i piani
@@ -720,6 +783,7 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
 
       </div>
       )}
+      {packsOpen && <PhotoPacksModal onClose={() => setPacksOpen(false)} />}
     </div>
   );
 }

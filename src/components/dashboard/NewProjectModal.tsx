@@ -88,7 +88,10 @@ export function NewProjectModal({
   toast: (msg: string, icon?: string) => void;
 }) {
   const [loading, setLoading] = useState(false);
-  
+  // Nuovo immobile = 2 step; modifica = step unico (tutti i campi).
+  const [step, setStep] = useState<Step>(1);
+  const isNew = !editProject;
+
   // Basic info
   const [nome, setNome] = useState(editProject?.nome || '');
   const [addr, setAddr] = useState(editProject?.addr || '');
@@ -257,7 +260,7 @@ export function NewProjectModal({
           <div>
             <h2 style={{ margin: 0, fontSize: 20, fontWeight: 800, letterSpacing: '-0.3px' }}>{editProject ? 'Modifica Immobile' : 'Nuovo Immobile'}</h2>
             <div style={{ fontSize: 13, color: '#8c867d', marginTop: 4 }}>
-              Inserisci le informazioni per il tuo immobile
+              {isNew ? `Passo ${step} di 2 — ${step === 1 ? 'nome, indirizzo e copertina' : 'dati immobile (opzionali)'}` : 'Inserisci le informazioni per il tuo immobile'}
             </div>
           </div>
           <button onClick={onClose} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4, borderRadius: 8 }} className="hover:bg-gray-100">
@@ -268,6 +271,7 @@ export function NewProjectModal({
         {/* Body */}
         <div className="max-md:!p-4" style={{ padding: '32px', overflowY: 'auto', position: 'relative', zIndex: 10 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+              {(editProject || step === 1) && (<>
               <div>
                 <label style={labelStyle}>Nome del progetto *</label>
                 <input 
@@ -366,8 +370,10 @@ export function NewProjectModal({
                 )}
               </div>
               )}
+              </>)}
 
-              <hr style={{ border: 'none', borderTop: '1px solid #f0ede7', margin: '8px 0' }} />
+              {(editProject || step === 2) && (<>
+              {!isNew && <hr style={{ border: 'none', borderTop: '1px solid #f0ede7', margin: '8px 0' }} />}
 
               <div style={{ background: '#f6f4f0', padding: 16, borderRadius: 12, fontSize: 13, color: '#57534c', lineHeight: 1.5 }}>
                 Questi dati non sono obbligatori, ma ci aiutano a generare in automatico le descrizioni e i Post Social perfetti per te.
@@ -460,25 +466,41 @@ export function NewProjectModal({
                   </div>
                 </div>
               </div>
+              </>)}
           </div>
         </div>
 
         {/* Footer */}
         <div className="max-md:!p-4 max-md:!flex-col max-md:!gap-4" style={{ padding: '20px 32px', borderTop: '1px solid #f0ede7', background: '#faf9f7', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', position: 'relative', zIndex: 5 }}>
               <div style={{ display: 'flex', gap: 12, marginTop: 0, width: '100%', justifyContent: 'flex-end' }}>
-                {!editProject && (
-                  <Box as="button" onClick={() => handleFinish(true)} style={s('border:1px solid #e4e1da;background:#fff;color:#57534c;font-size:14px;font-weight:700;padding:12px 20px;border-radius:12px;cursor:pointer;flex:1')} hover={s('background:#f6f4f0;border-color:#d8d4cb')}>
-                    Salta per ora
-                  </Box>
+                {editProject ? (
+                  <>
+                    <Box as="button" onClick={handleDelete} disabled={loading} style={s('border:1.5px solid #dc2626;background:#fff;color:#dc2626;font-size:14px;font-weight:700;padding:12px 20px;border-radius:12px;cursor:pointer;flex:1;transition:all 0.2s')} hover={s('background:#dc2626;color:#fff')}>
+                      Elimina Immobile
+                    </Box>
+                    <Box as="button" onClick={() => handleFinish(false)} disabled={loading} style={s('border:none;background:#3B83F6;color:#fff;font-size:14px;font-weight:700;padding:12px 20px;border-radius:12px;cursor:pointer;flex:1;box-shadow:0 4px 12px rgba(59,131,246,0.25);opacity:' + (loading ? 0.7 : 1))} hover={s('background:#2563EB;box-shadow:0 6px 16px rgba(59,131,246,0.3)')}>
+                      {loading ? 'Salvataggio...' : 'Salva modifiche'}
+                    </Box>
+                  </>
+                ) : step === 1 ? (
+                  <>
+                    <Box as="button" onClick={() => handleFinish(true)} style={s('border:1px solid #e4e1da;background:#fff;color:#57534c;font-size:14px;font-weight:700;padding:12px 20px;border-radius:12px;cursor:pointer;flex:1')} hover={s('background:#f6f4f0;border-color:#d8d4cb')}>
+                      Salta per ora
+                    </Box>
+                    <Box as="button" onClick={() => { if (nome.trim()) setStep(2); }} style={s('border:none;background:#3B83F6;color:#fff;font-size:14px;font-weight:700;padding:12px 20px;border-radius:12px;cursor:' + (nome.trim() ? 'pointer' : 'default') + ';flex:1;box-shadow:0 4px 12px rgba(59,131,246,0.25);opacity:' + (nome.trim() ? 1 : 0.45))} hover={nome.trim() ? s('background:#2563EB') : undefined}>
+                      Avanti
+                    </Box>
+                  </>
+                ) : (
+                  <>
+                    <Box as="button" onClick={() => setStep(1)} style={s('border:1px solid #e4e1da;background:#fff;color:#57534c;font-size:14px;font-weight:700;padding:12px 20px;border-radius:12px;cursor:pointer;flex:1')} hover={s('background:#f6f4f0;border-color:#d8d4cb')}>
+                      Indietro
+                    </Box>
+                    <Box as="button" onClick={() => handleFinish(false)} disabled={loading} style={s('border:none;background:#3B83F6;color:#fff;font-size:14px;font-weight:700;padding:12px 20px;border-radius:12px;cursor:pointer;flex:1;box-shadow:0 4px 12px rgba(59,131,246,0.25);opacity:' + (loading ? 0.7 : 1))} hover={s('background:#2563EB;box-shadow:0 6px 16px rgba(59,131,246,0.3)')}>
+                      {loading ? 'Creazione...' : 'Crea Immobile'}
+                    </Box>
+                  </>
                 )}
-                {editProject && (
-                  <Box as="button" onClick={handleDelete} disabled={loading} style={s('border:1.5px solid #dc2626;background:#fff;color:#dc2626;font-size:14px;font-weight:700;padding:12px 20px;border-radius:12px;cursor:pointer;flex:1;transition:all 0.2s')} hover={s('background:#dc2626;color:#fff')}>
-                    Elimina Immobile
-                  </Box>
-                )}
-                <Box as="button" onClick={() => handleFinish(false)} disabled={loading} style={s('border:none;background:#3B83F6;color:#fff;font-size:14px;font-weight:700;padding:12px 20px;border-radius:12px;cursor:pointer;flex:1;box-shadow:0 4px 12px rgba(59,131,246,0.25);opacity:' + (loading ? 0.7 : 1))} hover={s('background:#2563EB;box-shadow:0 6px 16px rgba(59,131,246,0.3)')}>
-                  {loading ? (editProject ? 'Salvataggio...' : 'Creazione...') : (editProject ? 'Salva modifiche' : 'Crea Immobile')}
-                </Box>
               </div>
         </div>
 

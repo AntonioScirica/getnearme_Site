@@ -166,6 +166,13 @@ html {
   100% { transform: scale(1.6); opacity: 0; }
 }
 
+/* Animazioni del tutorial (tour) */
+@keyframes tour-fill { 0%,12% { width: 8%; } 70%,100% { width: 100%; } }
+@keyframes tour-pop { 0% { transform: scale(0); opacity: 0; } 60% { transform: scale(1.18); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
+@keyframes tour-slide { 0% { transform: translateX(-14px); opacity: 0; } 100% { transform: translateX(0); opacity: 1; } }
+@keyframes tour-bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+@keyframes tour-tile { 0% { transform: scale(.6); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+
 @keyframes aurora-pulse {
   0%, 100% { transform: scale(1); filter: brightness(1); }
   50% { transform: scale(1.05); filter: brightness(1.2); }

@@ -3,6 +3,15 @@
 // directly via RLS (single-user, no team).
 
 import { supabase } from './supabase';
+import { getTokenFast } from './staging';
+
+// uid dal JWT (sub), senza supabase.auth.getUser/getSession che vanno in
+// deadlock su navigator.locks (localhost). Token letto da localStorage.
+function uidFromToken(): string | null {
+  const t = getTokenFast();
+  if (!t) return null;
+  try { return JSON.parse(atob(t.split('.')[1])).sub || null; } catch { return null; }
+}
 
 export type BrandLogos = {
   logo_white_h: string | null;
@@ -53,12 +62,7 @@ const LOGO_KEYS = [
 type LogoKey = typeof LOGO_KEYS[number];
 
 async function getUid(): Promise<string | null> {
-  try {
-    const { data } = await supabase.auth.getUser();
-    return data.user?.id ?? null;
-  } catch {
-    return null;
-  }
+  return uidFromToken();
 }
 
 // ─── Local fallback (used while auth is bypassed / no Supabase session) ───────
@@ -114,12 +118,12 @@ function rowToSettings(row: Record<string, unknown> | null, signed: Record<LogoK
 
 export async function fetchBrand(): Promise<BrandFetchResult> {
   try {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return { isTeamMember: false, role: 'owner', settings: readLocal() };
+    const token = getTokenFast();
+    if (!token) return { isTeamMember: false, role: 'owner', settings: readLocal() };
 
     const res = await fetch('/api/brand', {
       headers: {
-        'Authorization': `Bearer ${session.access_token}`
+        'Authorization': `Bearer ${token}`
       },
       cache: 'no-store'
     });
@@ -148,17 +152,15 @@ const FIELD_TO_DB: Record<string, string> = {
 };
 
 async function upsertBrand(patch: Record<string, unknown>): Promise<boolean> {
-  const uid = await getUid();
-  if (!uid) { console.error('[brand] not authenticated'); return false; }
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) return false;
-  
+  const token = getTokenFast();
+  if (!token) { console.error('[brand] not authenticated'); return false; }
+
   try {
     const res = await fetch('/api/brand', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session.access_token}`
+        'Authorization': `Bearer ${token}`
       },
       body: JSON.stringify({ patch })
     });
@@ -203,8 +205,8 @@ export async function uploadBrandLogo(_scope: Scope, logoKey: string, file: File
     return true;
   }
   
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) return false;
+  const token = getTokenFast();
+  if (!token) return false;
 
   try {
     const formData = new FormData();
@@ -214,7 +216,7 @@ export async function uploadBrandLogo(_scope: Scope, logoKey: string, file: File
     const res = await fetch('/api/brand/logo', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${session.access_token}`
+        'Authorization': `Bearer ${token}`
       },
       body: formData
     });

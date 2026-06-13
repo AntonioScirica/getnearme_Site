@@ -156,6 +156,7 @@ export default function MediaScreen({
   // ai_video_jobs (cross-device, sopravvive a browser chiuso); localStorage
   // fonde la sessione corrente. Ricaricati al mount + a ogni routeKey.
   const [videos, setVideos] = useState<{ id: string; url: string; title: string; ts: number }[]>([]);
+  const [videosLoaded, setVideosLoaded] = useState(false);
   const refreshVideos = useCallback(async () => {
     const { finishedVideos, fetchServerVideoJobs, mergeServerJobs } = await import('@/lib/videoJobs');
     const apply = () => {
@@ -168,6 +169,7 @@ export default function MediaScreen({
     apply(); // istantaneo da localStorage
     const server = await fetchServerVideoJobs();
     if (server.length) { mergeServerJobs(server); apply(); }
+    setVideosLoaded(true);
   }, [project?.id]);
   useEffect(() => { void refreshVideos(); }, [refreshVideos, routeKey]);
 
@@ -184,7 +186,7 @@ export default function MediaScreen({
     };
     if (filter !== 'video') {
       for (const batch of validBatches) {
-        if (filter === 'staging' && batch.type !== 'staging') continue;
+        // Tutti i batch_staging sono Foto AI; i video stanno in ai_video_jobs.
         const photos = photosByBatch[batch.id];
         if (!photos || photos.length === 0) continue;
         const day = ensure(new Date(batch.createdAt).getTime());
@@ -227,14 +229,12 @@ export default function MediaScreen({
         </div>
       </div>
 
-      {loadingBatches && projectBatches.length === 0 ? (
-        <div style={{ padding: '60px', textAlign: 'center' }}>
-          <div style={{ animation: 'export-spin 1s linear infinite', width: 24, height: 24, border: '2px solid #e4e1da', borderTopColor: '#3B83F6', borderRadius: '50%', margin: '0 auto 16px' }} />
-          <div style={{ color: '#8c867d', fontSize: 14 }}>Caricamento media...</div>
-        </div>
-      ) : days.length === 0 && anyPhotosLoading ? (
+      {(loadingBatches || anyPhotosLoading || !videosLoaded) ? (
+        // Skeleton istantaneo finché TUTTO non è pronto (foto + video), poi i
+        // contenuti compaiono insieme con media-reveal. Evita "video → skeleton →
+        // foto" a scatti: comparsa unica e fluida (come in Post Social).
         <div className="max-md:!grid-cols-2" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 16 }}>
-          {[1, 2, 3, 4].map(i => (
+          {[1, 2, 3, 4, 5, 6].map(i => (
             <div key={i} style={{ aspectRatio: '4/3', borderRadius: 12, background: '#f4f2ee', animation: 'pulse 1.5s infinite ease-in-out' }} />
           ))}
         </div>
@@ -331,8 +331,9 @@ export default function MediaScreen({
                       const vSel = selected.has(vSelKey);
                       return (
                         <div key={`video_${photo.index}`} onClick={() => inSelect ? toggleSelect(vSelKey) : setLightbox({ resultUrl: photo.resultUrl, sourceUrl: null, isVideo: true })} style={{ position: 'relative', aspectRatio: '4/3', borderRadius: 12, overflow: 'hidden', border: vSel ? '2px solid #3B83F6' : '1px solid #f0ede7', background: '#000', cursor: 'pointer', animation: 'media-reveal .7s cubic-bezier(.22,1,.36,1) both', animationDelay: `${pi * 60}ms` }}>
-                          {/* Poster: niente controlli inline (no fullscreen nativo). Click → modal contenuto. Cancellazione solo da "Azioni". */}
-                          <video src={`${photo.resultUrl}#t=0.5`} playsInline preload="metadata" muted style={{ width: '100%', height: '100%', objectFit: 'contain', background: '#000', pointerEvents: 'none', ...(vSel ? { opacity: .85 } : {}) }} />
+                          {/* Cover: video blurrato dietro (riempie) + video contenuto davanti, come le foto verticali. */}
+                          <video src={`${photo.resultUrl}#t=0.5`} playsInline preload="metadata" muted style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', filter: 'blur(16px) brightness(.85)', transform: 'scale(1.15)', pointerEvents: 'none' }} />
+                          <video src={`${photo.resultUrl}#t=0.5`} playsInline preload="metadata" muted style={{ position: 'relative', width: '100%', height: '100%', objectFit: 'contain', pointerEvents: 'none', ...(vSel ? { opacity: .85 } : {}) }} />
                           {!inSelect && (
                             <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
                               <div style={{ width: 54, height: 54, borderRadius: '50%', background: 'rgba(20,30,55,0.55)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

@@ -34,25 +34,59 @@ export function getTokenFast(): string {
   return ANON_KEY;
 }
 
-async function invokeFn<T = any>(name: string, body: unknown, timeoutMs = 60_000): Promise<{ data: T | null; status: number; error: string | null }> {
-  const token = getTokenFast();
-
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+// Rinfresca l'access_token usando il refresh_token, via l'endpoint Supabase
+// (niente supabase.auth → niente deadlock navigator.locks su localhost).
+// Aggiorna localStorage e torna il nuovo token, o null se non recuperabile.
+export async function refreshTokenFast(): Promise<string | null> {
   try {
-    const resp = await fetch(`${FN_BASE}/${name}`, {
+    const ref = (process.env.NEXT_PUBLIC_SUPABASE_URL || '').match(/https:\/\/([^.]+)\./)?.[1];
+    if (!ref) return null;
+    const key = `sb-${ref}-auth-token`;
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    const sess = JSON.parse(raw);
+    const refresh = sess?.refresh_token;
+    if (!refresh) return null;
+    const resp = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
       method: 'POST',
-      headers: { 'apikey': ANON_KEY, 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-      signal: ctrl.signal,
+      headers: { apikey: ANON_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh_token: refresh }),
     });
+    if (!resp.ok) return null;
+    const data = await resp.json();
+    if (!data?.access_token) return null;
+    const merged = { ...sess, ...data, expires_at: Math.floor(Date.now() / 1000) + (data.expires_in || 3600) };
+    localStorage.setItem(key, JSON.stringify(merged));
+    return data.access_token as string;
+  } catch {
+    return null;
+  }
+}
+
+async function invokeFn<T = any>(name: string, body: unknown, timeoutMs = 60_000): Promise<{ data: T | null; status: number; error: string | null }> {
+  const once = async (token: string) => {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+    try {
+      return await fetch(`${FN_BASE}/${name}`, {
+        method: 'POST',
+        headers: { 'apikey': ANON_KEY, 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+        signal: ctrl.signal,
+      });
+    } finally { clearTimeout(timer); }
+  };
+  try {
+    let resp = await once(getTokenFast());
+    if (resp.status === 401) {
+      const fresh = await refreshTokenFast();
+      if (fresh) resp = await once(fresh);
+    }
     let json: any = null;
     try { json = await resp.json(); } catch { /* no body */ }
     return { data: json, status: resp.status, error: resp.ok ? null : (json?.error || `HTTP ${resp.status}`) };
   } catch (e: any) {
     return { data: null, status: 0, error: e?.name === 'AbortError' ? '__timeout' : (e?.message || 'network') };
-  } finally {
-    clearTimeout(timer);
   }
 }
 

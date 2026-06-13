@@ -6,6 +6,7 @@
 
 import React from 'react';
 import { s, Box, Icon } from './ui';
+import { getTokenFast } from '@/lib/staging';
 import type { BrandSettings } from '@/lib/brand';
 import {
   DEFAULT_VIDEO_TEMPLATES, MONTAGGIO_TEMPLATE, NO_AVATAR_LAYOUTS, ROOM_TYPES,
@@ -232,19 +233,80 @@ function CoverStylesGrid({ thumbUrl, logoUrl, title, address, brandColor, isPort
 
 import type { Project } from './types';
 
-export default function VideoAIScreen({ toast, routeKey, brand, preselect, project, onVideoJob }: {
+// Max render video in corso contemporaneamente. Cap conservativo per non
+// superare i rate-limit di fal Kling / HeyGen (avatar/walkthrough).
+const MAX_CONCURRENT_RENDERS = 2;
+
+// Pacchetti video extra. Prezzi provvisori (da finalizzare con i Payment Link
+// Stripe dei nuovi tagli 10/30/50). Il link 10 è quello reale; 30/50 da generare.
+const VIDEO_PACKS = [
+  { id: 'ai-video-10', name: 'Video Pack 10', videos: 10, price: 39, popular: false, link: 'https://buy.stripe.com/aFa4gzgtdaDN36U29iak00u' },
+  { id: 'ai-video-30', name: 'Video Pack 30', videos: 30, price: 99, popular: true, link: 'https://buy.stripe.com/bJeaEX5OzcLVbDqbJSak00v' },
+  { id: 'ai-video-50', name: 'Video Pack 50', videos: 50, price: 149, popular: false, link: 'https://buy.stripe.com/28E4gza4Ph2bcHu6pyak00w' },
+];
+
+function userFromToken(): { id?: string; email?: string } {
+  try { const t = getTokenFast(); const p = JSON.parse(atob(t.split('.')[1])); return { id: p.sub, email: p.email }; } catch { return {}; }
+}
+
+// Popup "Pacchetti AI Video" quando la quota mensile è esaurita (copia estensione).
+function VideoPacksModal({ onClose }: { onClose: () => void }) {
+  const buy = (link: string) => {
+    const { id, email } = userFromToken();
+    let url = link;
+    try { const u = new URL(link); if (id) u.searchParams.set('client_reference_id', id); if (email) u.searchParams.set('prefilled_email', email); url = u.toString(); } catch { /* keep link */ }
+    window.open(url, '_blank');
+    onClose();
+  };
+  return (
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(24,21,17,.55)', backdropFilter: 'blur(3px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+      <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 540, background: '#fff', borderRadius: 20, boxShadow: '0 28px 72px rgba(20,18,15,.3)', overflow: 'hidden' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 28px', borderBottom: '1px solid #f0ede7' }}>
+          <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, letterSpacing: '-.3px' }}>Pacchetti AI Video</h3>
+          <button onClick={onClose} aria-label="Chiudi" style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#8c867d' }}><Icon name="x" size={20} color="#8c867d" /></button>
+        </div>
+        <div style={{ padding: '22px 28px 26px' }}>
+          <div style={{ textAlign: 'center', marginBottom: 20 }}>
+            <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 6 }}>Hai esaurito i video di questo mese</div>
+            <div style={{ fontSize: 13.5, color: '#57534c', lineHeight: 1.5 }}>Acquista un pacchetto extra per continuare a generare video AI. I crediti extra non scadono e si sommano al tuo piano attuale.</div>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {VIDEO_PACKS.map(p => (
+              <div key={p.id} style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', borderRadius: 14, border: p.popular ? '2px solid #3B83F6' : '1px solid #e4e1da', background: p.popular ? '#eff6ff' : '#fff' }}>
+                <div style={{ width: 42, height: 42, borderRadius: 12, background: p.popular ? '#fff' : '#f4f2ee', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}><Icon name="film" size={19} color={p.popular ? '#1d5fd0' : '#57534c'} /></div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 14.5, fontWeight: 800, display: 'flex', alignItems: 'center', gap: 8 }}>{p.name}{p.popular && <span style={{ fontSize: 10, fontWeight: 800, color: '#1d5fd0', background: '#dbeafe', padding: '2px 7px', borderRadius: 99, textTransform: 'uppercase', letterSpacing: '.04em' }}>Popolare</span>}</div>
+                  <div style={{ fontSize: 12.5, color: '#8c867d', marginTop: 1 }}>{p.videos} video AI extra</div>
+                </div>
+                {/* Prezzo + CTA sulla stessa linea, allineati verticalmente */}
+                <div style={{ fontSize: 19, fontWeight: 800, flex: 'none', minWidth: 64, textAlign: 'right' }}>€{p.price}</div>
+                <Box as="button" onClick={() => buy(p.link)} style={{ border: 'none', background: '#3B83F6', color: '#fff', fontSize: 13, fontWeight: 700, padding: '10px 20px', borderRadius: 10, cursor: 'pointer', flex: 'none' } as React.CSSProperties} hover={{ background: '#2b6fe0' }}>Scegli</Box>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function VideoAIScreen({ toast, routeKey, brand, preselect, project, onVideoJob, activeRenders }: {
   toast: (msg: string, icon?: string) => void;
   routeKey: number;
   brand: BrandSettings;
   preselect?: string;
   project?: Project;
-  onVideoJob?: (job: { id: string; title: string; template: string; stage: 'render' | 'done'; progress: number; ctx: Record<string, unknown>; outputUrl?: string; projectId: string | null; aspect: string }) => void;
+  onVideoJob?: (job: { id: string; title: string; template: string; stage: 'render' | 'done' | 'failed'; progress: number; ctx: Record<string, unknown>; outputUrl?: string; error?: string; projectId: string | null; aspect: string; replaceId?: string }) => void;
+  activeRenders?: number;
 }) {
   const [templates, setTemplates] = React.useState<VideoTemplate[]>(DEFAULT_VIDEO_TEMPLATES);
   const [avatars, setAvatars] = React.useState<VideoAvatar[]>([]);
   const [quota, setQuota] = React.useState<VideoQuota | null>(null);
-  const [step, setStep] = React.useState(0);
-  const [tpl, setTpl] = React.useState<VideoTemplate | null>(null);
+  const [packsOpen, setPacksOpen] = React.useState(false); // popup pacchetti video extra
+  // Init dal preselect: montaggio entra direttamente al suo step (niente flash
+  // del picker Video AI prima del passaggio).
+  const [step, setStep] = React.useState(preselect === 'montaggio' ? 2 : 0);
+  const [tpl, setTpl] = React.useState<VideoTemplate | null>(preselect === 'montaggio' ? MONTAGGIO_TEMPLATE : null);
   const [avatar, setAvatar] = React.useState<VideoAvatar | null>(null);
   const [clips, setClips] = React.useState<Clip[]>([]);
   const [dragIdx, setDragIdx] = React.useState<number | null>(null);
@@ -307,6 +369,8 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
   const [outputUrl, setOutputUrl] = React.useState<string | null>(null);
   const [renderError, setRenderError] = React.useState<string | null>(null);
   const abortRef = React.useRef(false);
+  const prepJobRef = React.useRef<string | null>(null); // job tray temporaneo (prima del renderId)
+  const uiOwnerRef = React.useRef<string | null>(null); // quale render possiede la UI foreground (evita hijack tra render concorrenti)
   const fileRef = React.useRef<HTMLInputElement>(null);
   const pairRef = React.useRef<{ pairId: string; slot: 'before' | 'after' } | null>(null);
   const pairFileRef = React.useRef<HTMLInputElement>(null);
@@ -340,7 +404,8 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
     setSottPhase('edit'); setTranscription(null); setTranscribing(false); setEditingWordIdx(null);
     setVideoTime(0); setVideoPlaying(false);
     setMontaggioPhase('cover'); setWatermarkEnabled(true); setWatermarkPosition('bottom-right'); setWatermarkOpacity(100);
-    abortRef.current = true;
+    // NON abortire: un render in corso deve continuare in background (l'UI è
+    // gated su step===4, quindi non viene dirottata dal vecchio render).
     if (videoObjUrl.current) { URL.revokeObjectURL(videoObjUrl.current); videoObjUrl.current = null; }
     if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; setPlayingUrl(null); }
   }, []);
@@ -464,14 +529,16 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
     return out;
   };
 
-  const jobTitle = () => (coverTitle.trim() || propTitle.trim() || project?.titolo || 'Montaggio video');
+  const jobTitle = () => (coverTitle.trim() || propTitle.trim() || project?.titolo || (layout === 'montaggio' ? 'Montaggio video' : (tpl?.name || 'Video AI')));
 
-  const finishRender = (res: { done?: boolean; outputUrl?: string; renderId?: string; error?: string; monthly_limit?: number } & Record<string, unknown>, aspect: string) => {
+  const finishRender = (res: { done?: boolean; outputUrl?: string; renderId?: string; error?: string; monthly_limit?: number } & Record<string, unknown>, aspect: string, owner?: string) => {
+    const ownsUi = () => !owner || uiOwnerRef.current === owner; // aggiorna la UI solo se questo render la possiede ancora
     if (res?.done && res.outputUrl) {
-      setOutputUrl(res.outputUrl); setRenderStage('done'); setRenderProgress(1);
+      if (ownsUi()) { setOutputUrl(res.outputUrl); setRenderStage('done'); setRenderProgress(1); }
       fetchVideoQuota().then(setQuota);
       const doneId = `vid_${Date.now()}`;
-      onVideoJob?.({ id: doneId, title: jobTitle(), template: layout, stage: 'done', progress: 1, ctx: {}, outputUrl: res.outputUrl, projectId: project?.id || null, aspect });
+      onVideoJob?.({ id: doneId, title: jobTitle(), template: layout, stage: 'done', progress: 1, ctx: {}, outputUrl: res.outputUrl, projectId: project?.id || null, aspect, replaceId: prepJobRef.current || undefined });
+      prepJobRef.current = null;
       void createServerVideoJob({ id: doneId, title: jobTitle(), template: layout, status: 'done', progress: 1, ctx: {}, outputUrl: res.outputUrl, projectId: project?.id || null, aspect });
       return true;
     }
@@ -491,8 +558,9 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
       // Persisti la riga server: il cron la finalizza anche a browser chiuso.
       void createServerVideoJob({ id: res.renderId as string, title: jobTitle(), template: layout, status: 'rendering', progress: 0.25, ctx, projectId: project?.id || null, aspect: (res.aspectRatio as string) || aspect });
       if (onVideoJob) {
-        onVideoJob({ id: res.renderId as string, title: jobTitle(), template: layout, stage: 'render', progress: 0.25, ctx, projectId: project?.id || null, aspect: (res.aspectRatio as string) || aspect });
-        setRenderStage('background');
+        onVideoJob({ id: res.renderId as string, title: jobTitle(), template: layout, stage: 'render', progress: 0.25, ctx, projectId: project?.id || null, aspect: (res.aspectRatio as string) || aspect, replaceId: prepJobRef.current || undefined });
+        prepJobRef.current = null;
+        if (ownsUi()) setRenderStage('background');
         return true;
       }
       // fallback: polling locale (se nessun handoff)
@@ -514,17 +582,33 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
       })();
       return true;
     }
-    setRenderStage('failed');
-    setRenderError(res?.error === 'quota_exceeded'
-      ? `Quota mensile video esaurita (${res?.monthly_limit ?? '?'}/mese)`
-      : res?.error || 'Avvio rendering non riuscito');
+    if (ownsUi()) {
+      setRenderStage('failed');
+      setRenderError(res?.error === 'quota_exceeded'
+        ? `Quota mensile video esaurita (${res?.monthly_limit ?? '?'}/mese)`
+        : res?.error || 'Avvio rendering non riuscito');
+    }
     return false;
   };
 
   const handleRender = async () => {
     if (!tpl) return;
+    if ((activeRenders ?? 0) >= MAX_CONCURRENT_RENDERS) {
+      toast(`Massimo ${MAX_CONCURRENT_RENDERS} video alla volta. Attendi che finiscano.`, 'x');
+      return;
+    }
+    if (quota && quota.remaining <= 0) {
+      setPacksOpen(true); // quota finita → mostra i pacchetti extra
+      return;
+    }
     abortRef.current = false;
-    setStep(4); setRenderStage('uploading'); setRenderProgress(0.03); setRenderError(null); setOutputUrl(null);
+    // Subito in background + job nel tray: l'utente non resta bloccato in
+    // foreground e può navigare; la pipeline prosegue (sopravvive all'unmount).
+    const prepId = `prep_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    prepJobRef.current = prepId;
+    uiOwnerRef.current = prepId; // questo render possiede la UI finché non se ne avvia un altro
+    setStep(4); setRenderStage('background'); setRenderProgress(0.05); setRenderError(null); setOutputUrl(null);
+    onVideoJob?.({ id: prepId, title: jobTitle(), template: layout, stage: 'render', progress: 0.05, ctx: {}, projectId: project?.id || null, aspect: clips[0] ? aspectFromDims(clips[0].width, clips[0].height) : 'portrait' });
     try {
       const aspect = clips[0] ? aspectFromDims(clips[0].width, clips[0].height) : 'portrait';
 
@@ -541,7 +625,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
           await uploadToPresigned(urls[i].uploadUrl, flat[i].file, flat[i].file.type);
           uploaded[`${flat[i].pairIdx}-${flat[i].slot}`] = urls[i].readUrl;
         }
-        setRenderStage('render'); setRenderProgress(0.2);
+        setRenderProgress(0.2);
         const validPairs = pairs.map((p, i) => ({
           beforeUrl: uploaded[`${i}-before`], afterUrl: uploaded[`${i}-after`], room: p.room || undefined,
         })).filter(p => p.beforeUrl && p.afterUrl);
@@ -551,13 +635,13 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
           musicUrl, clips: [], propertyData: propertyData(), propertyLabel: propertyLabel(),
           aspectRatio: 'portrait',
         });
-        finishRender(res, 'portrait');
+        finishRender(res, 'portrait', prepId);
         return;
       }
 
       if (singlePhoto) {
         const up = await uploadClips(clips.slice(0, 1), 'photo');
-        setRenderStage('render'); setRenderProgress(0.2);
+        setRenderProgress(0.2);
         const photoAspect = aspectFromDims(up[0].width, up[0].height);
         const base = {
           imageUrl: up[0].uploadedUrl, room: 'altro', aspectRatio: photoAspect,
@@ -575,20 +659,20 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
         } else {
           res = await startRender({ template: 'construction', ...base });
         }
-        finishRender(res, photoAspect);
+        finishRender(res, photoAspect, prepId);
         return;
       }
 
       if (layout === 'walkthrough') {
         const up = await uploadClips(clips, 'photo');
-        setRenderStage('render'); setRenderProgress(0.15);
+        setRenderProgress(0.15);
         // animate each photo (fal Kling), poll until done
         const animated: { url: string; room: string }[] = [];
         for (const c of up) {
           const st = await animatePhotoStart({ photoUrl: c.uploadedUrl!, room: c.room, duration: '5', aspectRatio: aspect });
           if (!st.success) throw new AIVideoError(st.error || 'Animazione foto non riuscita');
           let done = false;
-          for (let i = 0; i < 180 && !abortRef.current; i++) {
+          for (let i = 0; i < 300 && !abortRef.current; i++) {
             await sleep(2000);
             const p = await animatePhotoPoll({ statusUrl: st.statusUrl, responseUrl: st.responseUrl, requestId: st.requestId, room: st.room });
             if (p.success && p.status === 'COMPLETED' && p.clip) { animated.push(p.clip); done = true; break; }
@@ -602,7 +686,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
           aspectRatio: aspect, propertyData: propertyData(), propertyLabel: propertyLabel(),
           avatarDurationSeconds: animated.length * 5,
         });
-        finishRender(res, aspect);
+        finishRender(res, aspect, prepId);
         return;
       }
 
@@ -614,7 +698,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
           await uploadToPresigned(urls[0].uploadUrl, clip0.file, clip0.file.type);
           audioUrl = urls[0].readUrl;
         }
-        setRenderStage('render'); setRenderProgress(0.2);
+        setRenderProgress(0.2);
         const wt = transcription?.wordTimestamps || [];
         const ks = transcription?.keepSegments || [];
         const dur = transcription?.audioDurationSeconds || clip0.duration;
@@ -628,7 +712,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
           propertyData: propertyData(), propertyLabel: propertyLabel(),
           aspectRatio: aspectFromDims(clip0.width, clip0.height),
         });
-        finishRender(res, aspect);
+        finishRender(res, aspect, prepId);
         return;
       }
 
@@ -658,7 +742,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
           } catch (e) { console.error('[montaggio] cover overlay upload failed (non-blocking):', e); }
         }
 
-        setRenderStage('render'); setRenderProgress(0.25);
+        setRenderProgress(0.25);
         console.log('[Montaggio] startRender…', { clips: ordered.length, coverOverlayUrl: !!coverOverlayUrl, musicUrl: !!musicUrl });
         const res = await startRender({
           template: 'montaggio',
@@ -677,7 +761,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
           aspectRatio: aspect,
         });
         console.log('[Montaggio] startRender result:', JSON.stringify(res).slice(0, 300));
-        finishRender(res, aspect);
+        finishRender(res, aspect, prepId);
         return;
       }
 
@@ -686,7 +770,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
       const script = sections.map(x => x.text).filter(Boolean).join(' ').trim();
       if (!script) throw new AIVideoError('Lo script è vuoto');
       const up = await uploadClips(clips, 'video');
-      setRenderStage('avatar'); setRenderProgress(0.12);
+      setRenderProgress(0.12);
       const av = await renderAvatar({
         script,
         avatarId: avatar.heygen_avatar_id,
@@ -709,7 +793,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
       }
       if (abortRef.current) return;
       if (!avatarUrl) throw new AIVideoError('Timeout sintesi avatar');
-      setRenderStage('render'); setRenderProgress(0.5);
+      setRenderProgress(0.5);
       const res = await startRender({
         avatarVideoUrl: avatarUrl,
         avatarDurationSeconds: av.audioDurationSeconds,
@@ -721,11 +805,21 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
         ...(musicUrl ? { musicUrl } : {}),
         ...(avatar.crop_pct != null ? { avatarCrop: { pct: avatar.crop_pct, xPct: avatar.crop_xPct ?? 0.5, yPct: avatar.crop_yPct ?? 0.45 } } : {}),
       });
-      finishRender(res, 'portrait');
+      finishRender(res, 'portrait', prepId);
     } catch (e) {
-      setRenderStage('failed');
-      setRenderError(e instanceof AIVideoError ? e.message : 'Errore imprevisto durante il rendering');
+      const raw = e instanceof AIVideoError ? e.message : '';
+      const msg = raw === 'quota_exceeded'
+        ? `Quota video mensile esaurita${quota ? ` (${quota.limit}/mese)` : ''}`
+        : (raw || 'Errore imprevisto durante il rendering');
+      if (uiOwnerRef.current === prepId) {
+        setRenderStage('failed');
+        setRenderError(msg);
+      }
       console.error('[video-ai] render failed:', e);
+      if (prepJobRef.current === prepId) {
+        onVideoJob?.({ id: prepId, title: jobTitle(), template: layout, stage: 'failed', progress: 0, ctx: {}, error: msg, projectId: project?.id || null, aspect: 'portrait' });
+        prepJobRef.current = null;
+      }
     }
   };
 
@@ -814,12 +908,16 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
             <h1 style={s('margin:0 0 4px;font-size:25px;font-weight:800;letter-spacing:-.5px')}>{preselect === 'montaggio' ? 'Montaggio Automatico' : 'Video AI'}</h1>
             <div style={s('color:#8c867d;font-size:14px')}>{preselect === 'montaggio' ? "Carica le clip della casa: l'AI monta tutto con musica e cover." : 'Trasforma foto e clip in video pronti per i social.'}</div>
           </div>
-          {quota && (
+          {quota && (quota.remaining > 0 ? (
             <div style={s('display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #f0ede7;border-radius:99px;padding:8px 16px')}>
               <Icon name="film" size={15} color="#3B83F6" />
               <span style={{ fontSize: 13, fontWeight: 700 }}>{quota.remaining}/{quota.limit} video</span>
             </div>
-          )}
+          ) : (
+            <Box as="button" onClick={() => setPacksOpen(true)} style={s('display:flex;align-items:center;gap:8px;background:#3B83F6;color:#fff;border:none;border-radius:10px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer') as React.CSSProperties} hover={s('background:#2b6fe0')}>
+              <Icon name="zap" size={15} color="#fff" />Ottieni altri video
+            </Box>
+          ))}
         </div>
       )}
 
@@ -827,7 +925,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
       {step === 0 && (
         <div className="max-md:!grid-cols-1" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
           {templates.filter(t => t.id !== 'montaggio').map(t => (
-            <Box key={t.id} onClick={() => { setTpl(t); setStep(NO_AVATAR_LAYOUTS.includes(t.layout || t.id) ? 2 : 1); }} style={{
+            <Box key={t.id} onClick={() => { if (quota && quota.remaining <= 0) { setPacksOpen(true); return; } setTpl(t); setStep(NO_AVATAR_LAYOUTS.includes(t.layout || t.id) ? 2 : 1); }} style={{
               background: '#fff', border: '1px solid #f0ede7', borderRadius: 16, overflow: 'hidden', cursor: 'pointer',
               transition: 'box-shadow .15s, transform .15s',
             }} hover={{ boxShadow: '0 12px 32px rgba(33,31,28,.10)', transform: 'translateY(-2px)' }}>
@@ -1635,9 +1733,9 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
                 <div style={{ position: 'absolute', width: 110, height: 110, borderRadius: '50%', border: '1.5px solid rgba(59,131,246,.20)', animation: 'pulse-ring 2.8s ease-out infinite' }} />
                 <div style={{ position: 'absolute', width: 110, height: 110, borderRadius: '50%', border: '1.5px solid rgba(59,131,246,.20)', animation: 'pulse-ring 2.8s ease-out infinite', animationDelay: '1.4s' }} />
                 {/* Blob blu che si muove dietro il logo */}
-                <div style={{ position: 'absolute', width: 92, height: 92, background: 'radial-gradient(circle at 35% 35%, #93C5FD, #3B83F6 72%)', opacity: .9, animation: 'organic-blob 8s ease-in-out infinite' }} />
+                <div style={{ position: 'absolute', width: 72, height: 72, background: 'radial-gradient(circle at 30% 26%, #AECBFF 0%, #3B83F6 46%, #5B6CF0 100%)', opacity: .95, boxShadow: '0 0 30px rgba(91,108,240,.45), 0 0 14px rgba(59,131,246,.55)', animation: 'organic-blob 8s ease-in-out infinite' }} />
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/dashboard/logo-icon.svg" alt="" style={{ position: 'relative', width: 52, height: 52, animation: 'aurora-pulse 4s ease-in-out infinite' }} />
+                <img src="/dashboard/logo-mark-white.svg" alt="" style={{ position: 'relative', width: 56, height: 56, animation: 'aurora-pulse 4s ease-in-out infinite' }} />
               </div>
               <div style={s('font-size:17px;font-weight:800;margin-bottom:6px')}>Video in elaborazione</div>
               <div style={s('color:#8c867d;font-size:13.5px;max-width:420px;margin:0 auto 24px')}>
@@ -1652,9 +1750,9 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
                 <div style={{ position: 'absolute', width: 110, height: 110, borderRadius: '50%', border: '1.5px solid rgba(59,131,246,.20)', animation: 'pulse-ring 2.8s ease-out infinite' }} />
                 <div style={{ position: 'absolute', width: 110, height: 110, borderRadius: '50%', border: '1.5px solid rgba(59,131,246,.20)', animation: 'pulse-ring 2.8s ease-out infinite', animationDelay: '1.4s' }} />
                 {/* Blob blu che si muove dietro il logo */}
-                <div style={{ position: 'absolute', width: 92, height: 92, background: 'radial-gradient(circle at 35% 35%, #93C5FD, #3B83F6 72%)', opacity: .9, animation: 'organic-blob 8s ease-in-out infinite' }} />
+                <div style={{ position: 'absolute', width: 72, height: 72, background: 'radial-gradient(circle at 30% 26%, #AECBFF 0%, #3B83F6 46%, #5B6CF0 100%)', opacity: .95, boxShadow: '0 0 30px rgba(91,108,240,.45), 0 0 14px rgba(59,131,246,.55)', animation: 'organic-blob 8s ease-in-out infinite' }} />
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/dashboard/logo-icon.svg" alt="" style={{ position: 'relative', width: 52, height: 52, animation: 'aurora-pulse 4s ease-in-out infinite' }} />
+                <img src="/dashboard/logo-mark-white.svg" alt="" style={{ position: 'relative', width: 56, height: 56, animation: 'aurora-pulse 4s ease-in-out infinite' }} />
               </div>
               <div style={s('font-size:16px;font-weight:800;margin-bottom:6px')}>
                 {renderStage === 'uploading' ? 'Caricamento file...'
@@ -1671,6 +1769,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
           )}
         </div>
       )}
+      {packsOpen && <VideoPacksModal onClose={() => setPacksOpen(false)} />}
     </div>
   );
 }
