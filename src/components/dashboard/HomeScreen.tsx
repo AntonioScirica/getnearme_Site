@@ -95,6 +95,7 @@ export function HomeScreen({
   // Carica le foto recenti generate per questo immobile dai batch (max 12 = 3 righe).
   const [recent, setRecent] = React.useState<RecentPhoto[]>([]);
   const [loadingRecent, setLoadingRecent] = React.useState(true);
+  const [lightbox, setLightbox] = React.useState<string | null>(null);
   React.useEffect(() => {
     let cancelled = false;
     setLoadingRecent(true);
@@ -247,8 +248,9 @@ export function HomeScreen({
               
               {/* PRIMARY: Foto AI */}
               <Box onClick={() => go('staging')} style={{ gridColumn: 'span 1', gridRow: 'span 2', background: 'linear-gradient(135deg, #3B83F6, #1d4ed8)', borderRadius: 20, padding: 32, cursor: 'pointer', position: 'relative', overflow: 'hidden', color: '#fff', border: '1px solid rgba(255,255,255,.1)', transition: 'transform .2s, box-shadow .2s' }} hover={{ transform: 'translateY(-4px)', boxShadow: '0 16px 40px rgba(37,99,235,.25)' }}>
-                {/* Decorative blob */}
-                <div style={{ position: 'absolute', top: -40, right: -40, width: 220, height: 220, background: 'linear-gradient(135deg, #60A5FA, #93C5FD)', borderRadius: '50%', filter: 'blur(40px)', opacity: 0.3 }} />
+                {/* Blob animati: gradiente fluido che deriva e ruota */}
+                <div style={{ position: 'absolute', top: -40, right: -40, width: 220, height: 220, background: 'linear-gradient(135deg, #60A5FA, #93C5FD)', borderRadius: '50%', filter: 'blur(40px)', opacity: 0.35, animation: 'blob-float 14s ease-in-out infinite' }} />
+                <div style={{ position: 'absolute', bottom: -60, left: -50, width: 200, height: 200, background: 'linear-gradient(135deg, #93C5FD, #6366f1)', borderRadius: '50%', filter: 'blur(48px)', opacity: 0.3, animation: 'blob-float-2 18s ease-in-out infinite' }} />
                 
                 <div style={{ width: 56, height: 56, borderRadius: 16, background: 'rgba(255,255,255,.2)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 'auto', border: '1px solid rgba(255,255,255,.2)' }}>
                   <Icon name="sparkles" size={28} color="#fff" />
@@ -364,7 +366,7 @@ export function HomeScreen({
             <>
               <div className="max-md:!grid-cols-2" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
                 {recent.map((p, i) => (
-                  <div key={i} onClick={() => go('media')} style={{ position: 'relative', aspectRatio: '4/3', borderRadius: 12, overflow: 'hidden', cursor: 'pointer', border: '1px solid #f0ede7', background: '#f4f2ee', animation: 'media-reveal .7s cubic-bezier(.22,1,.36,1) both', animationDelay: `${i * 70}ms` }}>
+                  <div key={i} onClick={() => setLightbox(p.url)} style={{ position: 'relative', aspectRatio: '4/3', borderRadius: 12, overflow: 'hidden', cursor: 'pointer', border: '1px solid #f0ede7', background: '#f4f2ee', animation: 'media-reveal .7s cubic-bezier(.22,1,.36,1) both', animationDelay: `${i * 70}ms` }}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={p.url} alt="" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                   </div>
@@ -391,6 +393,16 @@ export function HomeScreen({
         </div>
 
       </div>
+
+      {lightbox && (
+        <div onClick={() => setLightbox(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 40 }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={lightbox} alt="" style={{ maxWidth: '90vw', maxHeight: '88vh', objectFit: 'contain', borderRadius: 12 }} />
+          <button onClick={() => setLightbox(null)} style={{ position: 'fixed', top: 24, right: 28, background: 'rgba(255,255,255,0.12)', border: 'none', borderRadius: '50%', width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+            <Icon name="x" size={20} color="#fff" />
+          </button>
+        </div>
+      )}
     </div>
   );
 }

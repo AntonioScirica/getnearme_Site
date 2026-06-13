@@ -408,15 +408,20 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated 
         </div>
       )}
 
-      {/* ── BATCH SUBMITTED ── */}
+      {/* ── BATCH SUBMITTED ── blob animato col logo al centro */}
       {!generating && batchDone !== null && (
         <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:16px;padding:52px;text-align:center;max-width:560px;margin:0 auto')}>
-          <div style={s('width:52px;height:52px;border-radius:16px;background:#eef4fe;display:flex;align-items:center;justify-content:center;margin:0 auto 14px')}>
-            <Icon name="inbox" size={24} color="#3B83F6" />
+          <div style={{ position: 'relative', width: 120, height: 120, margin: '0 auto 22px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            {/* blob animati blu dietro al logo */}
+            <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'radial-gradient(circle at 35% 35%, #93C5FD, #3B83F6 60%, #1d4ed8)', filter: 'blur(14px)', opacity: .55, animation: 'blob-float 7s ease-in-out infinite' }} />
+            <div style={{ position: 'absolute', inset: 8, borderRadius: '50%', background: 'radial-gradient(circle at 65% 60%, #60A5FA, #6366f1)', filter: 'blur(16px)', opacity: .5, animation: 'blob-float-2 9s ease-in-out infinite' }} />
+            {/* logo al centro */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/dashboard/logo-icon.svg" alt="" style={{ position: 'relative', width: 52, height: 52, animation: 'aurora-pulse 4s ease-in-out infinite' }} />
           </div>
           <div style={s('font-size:17px;font-weight:800;margin-bottom:6px')}>{batchDone} foto in elaborazione</div>
-          <div style={s('color:#8c867d;font-size:13.5px;max-width:400px;margin:0 auto 24px')}>
-            Le tue foto sono in elaborazione nel server. Puoi controllare l'avanzamento nel tray <b>Lavori in corso</b> in alto a destra, o chiudere la pagina.
+          <div style={s('color:#8c867d;font-size:13.5px;max-width:420px;margin:0 auto 24px')}>
+            Girano in background: puoi fare quello che vuoi, cambiare sezione o chiudere la pagina. Le trovi nel tray <b>Lavori in corso</b> in alto a destra e poi in <b>Media</b>.
           </div>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
             <Box as="button" onClick={resetAll} style={s('border:none;background:#3B83F6;color:#fff;font-size:14px;font-weight:700;padding:12px 24px;border-radius:10px;cursor:pointer') as React.CSSProperties} hover={s('background:#2b6fe0')}>

@@ -2073,12 +2073,12 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                           const styleObj = STAGING_STYLES.find(s => s.id === b.style);
                           const styleName = styleObj ? styleObj.label : b.style;
                           return (
-                            <div key={b.id} style={{ padding: '12px 16px', borderBottom: '1px solid #f4f2ee', display: 'flex', gap: 12 }}>
+                            <div key={b.id} style={{ padding: '12px 16px', borderBottom: '1px solid #f4f2ee', display: 'flex', gap: 12, position: 'relative' }}>
                               <div style={{ width: 32, height: 32, borderRadius: 8, background: isDone ? '#e6f4ea' : '#eef4fe', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}>
                                 {isDone ? <Icon name="check" size={16} color="#1e8e3e" /> : <div style={{ width: 14, height: 14, border: '2px solid #3B83F6', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />}
                               </div>
                               <div style={{ flex: 1, minWidth: 0 }}>
-                                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 2 }}>Batch Foto AI {styleName ? `· ${styleName}` : ''}</div>
+                                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 2, paddingRight: 22 }}>Batch Foto AI {styleName ? `· ${styleName}` : ''}</div>
                                 <div style={{ fontSize: 12, color: '#8c867d', marginBottom: 6 }}>
                                   {isDone ? 'Completato' : `In elaborazione (${b.completedItems}/${b.totalItems})`}
                                 </div>
@@ -2088,6 +2088,11 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                                   </div>
                                 )}
                               </div>
+                              {isDone && (
+                                <button onClick={(e) => { e.stopPropagation(); dismissBatch(b.id); mutateBatches(); }} title="Rimuovi" style={{ position: 'absolute', top: 10, right: 12, width: 22, height: 22, borderRadius: '50%', border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                  <Icon name="x" size={13} color="#b3aca1" />
+                                </button>
+                              )}
                             </div>
                           );
                         });

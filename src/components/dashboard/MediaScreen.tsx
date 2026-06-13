@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { s, Box, Icon } from './ui';
-import { fetchUserBatches, fetchBatchPhotos, deleteBatchPhoto, BatchInfo, BatchPhoto } from '@/lib/stagingBatches';
+import { fetchUserBatches, fetchBatchPhotos, BatchInfo, BatchPhoto } from '@/lib/stagingBatches';
 import { downloadImage } from '@/lib/staging';
 import type { Project } from './types';
 import Image from 'next/image';
@@ -79,17 +79,7 @@ export default function MediaScreen({
     downloadImage(url, 'foto-ai.png');
   };
 
-  const handleDeletePhoto = async (batchId: string, index: number, e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!window.confirm('Eliminare questa foto? L\'azione è irreversibile.')) return;
-    const ok = await deleteBatchPhoto(batchId, index);
-    if (ok) {
-      setPhotosByBatch(prev => ({ ...prev, [batchId]: (prev[batchId] || []).filter(p => p.index !== index) }));
-      toast('Foto eliminata', 'trash');
-    } else {
-      toast('Errore durante l\'eliminazione', 'x');
-    }
-  };
+  const [actionsOpen, setActionsOpen] = useState<string | null>(null);
 
   // Scarica come ZIP una lista di foto (solo riuscite con URL valido).
   const handleDownloadPhotos = async (list: (BatchPhoto & { batchId: string })[], zipName: string) => {
@@ -218,11 +208,24 @@ export default function MediaScreen({
                       <div style={{ fontSize: 12.5, color: '#8c867d' }}>{downloadable.length} foto</div>
                     </div>
                   </div>
-                  {downloadable.length > 1 && (
-                    <Box as="button" onClick={() => handleDownloadPhotos(day.photos, `getnearme_foto_${day.key}`)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', borderRadius: 8, fontSize: 13, fontWeight: 700, background: '#fff', border: '1px solid #e4e1da', cursor: 'pointer', color: '#211f1c' }} hover={{ background: '#f6f4f0' }}>
-                      <Icon name="download" size={14} />
-                      Scarica tutte (ZIP)
-                    </Box>
+                  {downloadable.length > 0 && (
+                    <div style={{ position: 'relative' }}>
+                      <Box as="button" onClick={() => setActionsOpen(actionsOpen === day.key ? null : day.key)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', borderRadius: 8, fontSize: 13, fontWeight: 700, background: '#fff', border: '1px solid #e4e1da', cursor: 'pointer', color: '#211f1c' }} hover={{ background: '#f6f4f0' }}>
+                        Azioni
+                        <Icon name="chevron-down" size={14} />
+                      </Box>
+                      {actionsOpen === day.key && (
+                        <>
+                          <div onClick={() => setActionsOpen(null)} style={{ position: 'fixed', inset: 0, zIndex: 40 }} />
+                          <div style={{ position: 'absolute', top: 'calc(100% + 6px)', right: 0, zIndex: 41, background: '#fff', border: '1px solid #f0ede7', borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.08)', padding: 4, minWidth: 180 }}>
+                            <Box as="button" onClick={() => { setActionsOpen(null); handleDownloadPhotos(day.photos, `getnearme_foto_${day.key}`); }} style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '10px 12px', borderRadius: 8, fontSize: 13.5, fontWeight: 600, background: 'transparent', border: 'none', cursor: 'pointer', color: '#211f1c', textAlign: 'left' }} hover={{ background: '#f6f4f0' }}>
+                              <Icon name="download" size={15} color="#57534c" />
+                              Scarica tutte
+                            </Box>
+                          </div>
+                        </>
+                      )}
+                    </div>
                   )}
                 </div>
 
@@ -238,13 +241,6 @@ export default function MediaScreen({
                           <div style={{ fontSize: 12, color: '#b91c1c' }}>
                             {photo.error === 'generation_failed' ? "L'AI non è riuscita a processare questa foto. Riprova con un'angolazione diversa." : photo.error || "Errore sconosciuto."}
                           </div>
-                          <button
-                            onClick={(e) => handleDeletePhoto(photo.batchId, photo.index, e)}
-                            title="Elimina"
-                            style={{ position: 'absolute', top: 10, right: 10, width: 30, height: 30, borderRadius: '50%', background: '#fff', border: '1px solid #fecaca', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                          >
-                            <Icon name="trash" size={14} color="#dc2626" />
-                          </button>
                         </div>
                       );
                     }
@@ -266,16 +262,10 @@ export default function MediaScreen({
                         </div>
                         <button
                           onClick={(e) => handleDownloadSingle(photo.resultUrl, e)}
-                          style={{ position: 'absolute', top: 12, right: 12, width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,0.9)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}
+                          title="Scarica"
+                          style={{ position: 'absolute', bottom: 12, right: 12, width: 34, height: 34, borderRadius: '50%', background: 'rgba(20,30,55,0.45)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                         >
-                          <Icon name="download" size={16} color="#211f1c" />
-                        </button>
-                        <button
-                          onClick={(e) => handleDeletePhoto(photo.batchId, photo.index, e)}
-                          title="Elimina foto"
-                          style={{ position: 'absolute', top: 12, left: 12, width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,0.9)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}
-                        >
-                          <Icon name="trash" size={15} color="#dc2626" />
+                          <Icon name="download" size={16} color="#fff" />
                         </button>
                       </div>
                     );
