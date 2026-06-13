@@ -69,7 +69,7 @@ export function drawCoverOverlay(ctx: CanvasRenderingContext2D, opts: CoverOverl
   const bandH = Math.min(W, H);
 
   const logoH = Math.round(H * (isPortrait ? 0.05 : 0.11));
-  const logoGap = 32;
+  const logoGap = Math.round(H * 0.014); // proporzionale: logo vicino al titolo (preview + export coerenti)
 
   const maxWidth = W * (isPortrait ? 0.80 : 0.84);
   const boldFont = `700 ${fontSize}px Poppins, sans-serif`;
