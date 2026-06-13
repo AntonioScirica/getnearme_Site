@@ -26,11 +26,12 @@ type Pending = { predictionId: string; before: string; style: string | null; cus
 
 import type { Project } from './types';
 
-export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated }: {
+export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated, onGoPlan }: {
   toast: (msg: string, icon?: string) => void;
   routeKey: number;
   project?: Project;
   onBatchCreated?: () => void;
+  onGoPlan?: () => void;
 }) {
   const [quota, setQuota] = React.useState<StagingQuota | null>(null);
   React.useEffect(() => { fetchStagingQuota().then(setQuota); }, []);
@@ -105,6 +106,8 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated 
         setResult({ before: pending.before || res.outputUrl, after: res.outputUrl });
         setGenerating(false);
         setRevealing('burst');
+        // Ogni generazione (incl. reprompt) scala 1 dalla quota: aggiorna live.
+        setQuota(q => q ? { ...q, remaining: Math.max(0, q.remaining - 1) } : q);
         try {
           const batchId = await saveSingleGenerationToBatch({
             projectId: project?.id || null,
@@ -265,8 +268,10 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated 
   const pickAngle = (id: string) => { if (generating) return; setSelAngle(v => v === id ? null : id); setSelStyle(null); setCustomPrompt(''); };
   const onPrompt = (v: string) => { if (generating) return; setCustomPrompt(v); if (v.trim()) { setSelStyle(null); setSelAngle(null); } };
 
-  const canGenerate = photos.length > 0 && (selStyle || customPrompt.trim()) && !generating;
   const isBatch = photos.length > 1;
+  const outOfQuota = !!quota && quota.remaining <= 0;
+  const notEnoughForBatch = !!quota && photos.length > 1 && photos.length > quota.remaining;
+  const canGenerate = photos.length > 0 && (selStyle || customPrompt.trim()) && !generating && !outOfQuota && !notEnoughForBatch;
 
   // Start an async single-photo generation: kick off the prediction, persist it,
   // and let the polling effect drive the result. Resilient to tab switches.
@@ -311,6 +316,7 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated 
       setResult({ before: opts.before, after: res.outputUrl });
       setGenerating(false);
       setRevealing('burst');
+      setQuota(q => q ? { ...q, remaining: Math.max(0, q.remaining - 1) } : q);
       try { localStorage.removeItem(PENDING_KEY); } catch { /* ignore */ }
       try {
         const batchId = await saveSingleGenerationToBatch({ projectId: project?.id || null, style: opts.style, customPrompt: opts.customPrompt, sourceUrl: '', resultUrl: res.outputUrl });
@@ -340,6 +346,7 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated 
         if (res.ok) {
           setBatchDone(res.itemCount);
           setGenerating(false);
+          setQuota(q => q ? { ...q, remaining: Math.max(0, q.remaining - res.itemCount) } : q);
           toast(`${res.itemCount} foto inviate per l'elaborazione`, 'sparkles');
           onBatchCreated?.();
         } else {
@@ -664,7 +671,7 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated 
                   <textarea value={customPrompt} onChange={e => onPrompt(e.target.value)} maxLength={2000} rows={3} placeholder="Es. trasforma in soggiorno moderno con divano color crema e parquet chiaro" style={inputStyle} />
                 </div>
 
-                <button onClick={handleGenerate} className="group" style={{
+                <button onClick={handleGenerate} disabled={!canGenerate} className="group" style={{
                   border: 'none',
                   background: canGenerate ? 'linear-gradient(135deg, #3B83F6 0%, #6366f1 100%)' : '#e5e7eb',
                   color: canGenerate ? '#fff' : '#9ca3af',
@@ -675,10 +682,29 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated 
                   transition: 'all .2s cubic-bezier(.4,0,.2,1)',
                 }}>
                   <span className={canGenerate ? "group-hover:rotate-12 transition-transform duration-300" : ""} style={{ display: 'flex' }}>
-                    <Icon name="sparkles" size={18} color={canGenerate ? "#fff" : "#9ca3af"} />
+                    <Icon name={outOfQuota ? 'image' : 'sparkles'} size={18} color={canGenerate ? "#fff" : "#9ca3af"} />
                   </span>
-                  {isBatch ? `Genera ${photos.length} foto` : 'Genera foto'}
+                  {outOfQuota ? 'Limite mensile raggiunto' : notEnoughForBatch ? `Restano solo ${quota!.remaining} foto` : (isBatch ? `Genera ${photos.length} foto` : 'Genera foto')}
                 </button>
+
+                {(outOfQuota || notEnoughForBatch) && (
+                  <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 14, padding: '16px 18px' }}>
+                    <div style={{ fontSize: 13.5, fontWeight: 700, color: '#1d5fd0', marginBottom: 4 }}>
+                      {outOfQuota ? 'Hai usato tutte le foto del mese' : 'Foto insufficienti per questo batch'}
+                    </div>
+                    <div style={{ fontSize: 13, color: '#3b6fb0', lineHeight: 1.5, marginBottom: 12 }}>
+                      {outOfQuota
+                        ? 'La quota riparte il primo del mese prossimo. Per averne di più ora, passa a un piano superiore.'
+                        : `Te ne restano ${quota!.remaining}: riduci le foto o passa a un piano superiore.`}
+                    </div>
+                    {onGoPlan && (
+                      <Box as="button" onClick={onGoPlan} style={s('border:none;background:#3B83F6;color:#fff;font-size:13.5px;font-weight:700;padding:10px 18px;border-radius:10px;cursor:pointer;display:inline-flex;align-items:center;gap:8px') as React.CSSProperties} hover={s('background:#2b6fe0')}>
+                        <Icon name="crown" size={15} color="#fff" />
+                        Vedi i piani
+                      </Box>
+                    )}
+                  </div>
+                )}
               </>
             )}
           </div>

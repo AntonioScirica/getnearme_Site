@@ -2164,7 +2164,8 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                 project={active} 
                 onBatchCreated={() => {
                   fetchUserBatches().then(setBatches);
-                }} 
+                }}
+                onGoPlan={() => go('account')}
               />
             ) : route === 'media' ? (
               <MediaScreen 
