@@ -10,6 +10,52 @@
 import { supabase } from './supabase';
 import { saveOriginalMedia } from '@/lib/localMediaCache';
 
+// ── Raw fetch verso le Edge Functions ───────────────────────────────────────
+// supabase.functions.invoke() in browser può andare in deadlock sul lock di
+// auth (navigator.locks) durante il polling ripetuto → la promise non si
+// risolve mai. Bypassiamo con fetch diretto + token di sessione.
+const FN_BASE = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1`;
+const ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
+
+// Legge l'access_token DIRETTAMENTE da localStorage (chiave sb-<ref>-auth-token),
+// senza passare per supabase.auth.getSession() che può andare in deadlock sul
+// lock di navigator.locks durante un refresh token in corso.
+export function getTokenFast(): string {
+  try {
+    const ref = (process.env.NEXT_PUBLIC_SUPABASE_URL || '').match(/https:\/\/([^.]+)\./)?.[1];
+    if (ref) {
+      const raw = localStorage.getItem(`sb-${ref}-auth-token`);
+      if (raw) {
+        const t = JSON.parse(raw)?.access_token;
+        if (t) return t;
+      }
+    }
+  } catch { /* fallback anon */ }
+  return ANON_KEY;
+}
+
+async function invokeFn<T = any>(name: string, body: unknown, timeoutMs = 60_000): Promise<{ data: T | null; status: number; error: string | null }> {
+  const token = getTokenFast();
+
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const resp = await fetch(`${FN_BASE}/${name}`, {
+      method: 'POST',
+      headers: { 'apikey': ANON_KEY, 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+      signal: ctrl.signal,
+    });
+    let json: any = null;
+    try { json = await resp.json(); } catch { /* no body */ }
+    return { data: json, status: resp.status, error: resp.ok ? null : (json?.error || `HTTP ${resp.status}`) };
+  } catch (e: any) {
+    return { data: null, status: 0, error: e?.name === 'AbortError' ? '__timeout' : (e?.message || 'network') };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export type StagingStyle = {
   id: string;
   label: string;
@@ -172,6 +218,84 @@ export async function generateStaging(opts: {
   return { ok: true, outputUrl: data.outputUrl };
 }
 
+// ── Async single generation (start + polling) ──────────────────────────────
+// `start` ritorna subito il predictionId; il client poi fa polling con
+// `pollStagingStatus`. Resistente al cambio tab (richieste brevi, niente
+// connessione HTTP lunga aperta).
+
+export type StartResult =
+  | { ok: true; predictionId: string; outputUrl?: string }
+  | { ok: false; error: string; quotaExhausted?: boolean; notAuthenticated?: boolean };
+
+export async function startStaging(opts: {
+  imageDataUrl: string;
+  style?: string | null;
+  angle?: string | null;
+  customPrompt?: string | null;
+}): Promise<StartResult> {
+  const { imageDataUrl, style = null, angle = null, customPrompt = null } = opts;
+
+  let promptToSend = customPrompt?.trim() || null;
+  if (!promptToSend && angle) {
+    promptToSend = STAGING_ANGLES.find(a => a.id === angle)?.prompt || null;
+  }
+
+  const { data, status, error } = await invokeFn('replicate-staging', {
+    action: 'start',
+    imageUrl: imageDataUrl,
+    style: style || null,
+    angle: angle || null,
+    customPrompt: promptToSend,
+  }, 60_000);
+
+  console.log('[staging] start fetch returned', { status, hasData: !!data, error });
+
+  if (error === '__timeout') return { ok: false, error: 'Avvio generazione troppo lento, riprova' };
+  if (status === 401) return { ok: false, error: 'Accedi per generare le foto AI', notAuthenticated: true };
+  if (status === 402 || (data as any)?.quota_exhausted) return { ok: false, error: 'Quota foto esaurita', quotaExhausted: true };
+  if (error && !data) return { ok: false, error };
+  if (!data?.success || !data?.predictionId) {
+    return { ok: false, error: (data?.error as string) || 'Generazione non riuscita' };
+  }
+  return { ok: true, predictionId: data.predictionId, outputUrl: data.outputUrl };
+}
+
+// Recupero server-side: trova l'ultima prediction ancora "processing" dell'utente
+// (entro 3 min). Serve a riprendere una generazione anche se il client ha perso
+// tutto lo stato locale (cambio focus, reload, DevTools, ecc.).
+export async function findLatestProcessingPrediction(): Promise<string | null> {
+  try {
+    const token = getTokenFast();
+    const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/staging_predictions?select=replicate_id,created_at,status&status=eq.processing&order=created_at.desc&limit=1`;
+    const resp = await fetch(url, { headers: { apikey: ANON_KEY, Authorization: `Bearer ${token}` } });
+    if (!resp.ok) return null;
+    const rows = await resp.json();
+    if (!rows?.[0]) return null;
+    const ageMs = Date.now() - new Date(rows[0].created_at).getTime();
+    if (ageMs > 180_000) return null;
+    return rows[0].replicate_id as string;
+  } catch {
+    return null;
+  }
+}
+
+export type PollResult =
+  | { status: 'processing' }
+  | { status: 'succeeded'; outputUrl: string }
+  | { status: 'failed'; error: string };
+
+export async function pollStagingStatus(predictionId: string): Promise<PollResult> {
+  const { data } = await invokeFn('replicate-staging', { action: 'status', predictionId }, 20_000);
+  // Errore transitorio (rete / tab risvegliato / timeout): trattalo come "in corso"
+  if (data?.status === 'succeeded' && data?.outputUrl) {
+    return { status: 'succeeded', outputUrl: data.outputUrl };
+  }
+  if (data?.status === 'failed') {
+    return { status: 'failed', error: (data?.error as string) || 'Generazione non riuscita' };
+  }
+  return { status: 'processing' };
+}
+
 export type BatchResult =
   | { ok: true; batchId: string; itemCount: number }
   | { ok: false; error: string; quotaExhausted?: boolean; notAuthenticated?: boolean };
@@ -184,15 +308,14 @@ export async function createBatchStaging(opts: {
   projectId?: string | null;
 }): Promise<BatchResult> {
   const { images, style = null, customPrompt = null, projectId = null } = opts;
-  const { data, error } = await supabase.functions.invoke('create-batch-staging', {
-    method: 'POST',
-    body: { images, style, customPrompt: customPrompt?.trim() || null, projectId },
-  });
-  if (error) {
-    const { message, status, body } = await fnError(error);
+  const { data, status, error } = await invokeFn('create-batch-staging', {
+    images, style, customPrompt: customPrompt?.trim() || null, projectId,
+  }, 120_000);
+  if (error && !data) {
+    if (error === '__timeout') return { ok: false, error: 'Invio troppo lento, riprova' };
     if (status === 401) return { ok: false, error: 'Accedi per generare le foto AI', notAuthenticated: true };
-    if (status === 402 || body?.quota_exhausted) return { ok: false, error: 'Crediti insufficienti', quotaExhausted: true };
-    return { ok: false, error: message };
+    if (status === 402 || (data as any)?.quota_exhausted) return { ok: false, error: 'Crediti insufficienti', quotaExhausted: true };
+    return { ok: false, error };
   }
   if (!data?.success) return { ok: false, error: (data?.error as string) || 'Invio non riuscito' };
   

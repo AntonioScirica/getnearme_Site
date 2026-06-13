@@ -125,3 +125,18 @@ html {
   background-clip: text;
   animation: shimmer-text 3s linear infinite;
 }
+
+/* AI Border Spin — conic gradient rotation */
+@property --ai-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes ai-border-spin {
+  to { --ai-angle: 360deg; }
+}
+
+@keyframes export-spin {
+  to { transform: rotate(360deg); }
+}

@@ -1,4 +1,4 @@
-import { supabase } from './supabase'
+import { getTokenFast } from './staging'
 
 export type BatchInfo = {
   id: string
@@ -22,11 +22,10 @@ export type BatchPhoto = {
 }
 
 export async function fetchUserBatches(): Promise<BatchInfo[]> {
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) return []
+  const token = getTokenFast()
   try {
     const res = await fetch('/api/staging-batches', {
-      headers: { 'Authorization': `Bearer ${session.access_token}` },
+      headers: { 'Authorization': `Bearer ${token}` },
     })
     if (!res.ok) return []
     const json = await res.json()
@@ -38,11 +37,10 @@ export async function fetchUserBatches(): Promise<BatchInfo[]> {
 }
 
 export async function fetchBatchPhotos(batchId: string): Promise<BatchPhoto[]> {
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) return []
+  const token = getTokenFast()
   try {
     const res = await fetch(`/api/staging-batches/${batchId}/photos`, {
-      headers: { 'Authorization': `Bearer ${session.access_token}` },
+      headers: { 'Authorization': `Bearer ${token}` },
     })
     if (!res.ok) return []
     const json = await res.json()
@@ -74,19 +72,21 @@ export async function saveSingleGenerationToBatch(opts: {
   customPrompt: string | null;
   sourceUrl: string;
   resultUrl: string;
-}) {
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) return
+}): Promise<string | null> {
+  const token = getTokenFast()
   try {
-    await fetch('/api/staging-batches/single', {
+    const res = await fetch('/api/staging-batches/single', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${session.access_token}`,
+        'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(opts),
     })
+    const json = await res.json().catch(() => null)
+    return json?.batchId ?? null
   } catch (err) {
     console.error('saveSingleGenerationToBatch error:', err)
+    return null
   }
 }

@@ -60,6 +60,10 @@ export async function POST(req: NextRequest) {
       await uploadUrlToR2(sourceUrl, key);
       finalSourcePath = key;
     }
+    // Niente source remoto per la singola: source_path resta NULL (l'originale
+    // vive in IndexedDB lato client). Media mostrerà solo il "dopo" se la cache
+    // è stata svuotata.
+    if (!finalSourcePath) finalSourcePath = null;
 
     // 3. Create the batch item record using the R2 keys
     const { error: itemErr } = await admin

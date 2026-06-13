@@ -46,6 +46,7 @@ export default function MediaScreen({
 
       setLoadingPhotos(prev => ({ ...prev, [batch.id]: true }));
       fetchBatchPhotos(batch.id).then(photos => {
+        console.log(`[Media] batch ${batch.id} photos:`, photos.map(p => ({ idx: p.index, url: p.resultUrl?.slice(0, 80), status: p.status })));
         setPhotosByBatch(prev => ({ ...prev, [batch.id]: photos }));
       }).finally(() => {
         setLoadingPhotos(prev => ({ ...prev, [batch.id]: false }));
@@ -232,9 +233,16 @@ export default function MediaScreen({
                         <div 
                           key={photo.index} 
                           onClick={() => setLightbox({ ...photo, sourceUrl: photo.sourceUrl || localSourceUrls[`${batch.id}_${photo.index}`] || null })}
-                          style={{ position: 'relative', width: 280, height: 200, borderRadius: 12, overflow: 'hidden', flexShrink: 0, cursor: 'pointer', border: '1px solid #f0ede7' }}
+                          style={{ position: 'relative', width: 280, height: 200, borderRadius: 12, overflow: 'hidden', flexShrink: 0, cursor: 'pointer', border: '1px solid #f0ede7', background: '#f4f2ee' }}
                         >
-                          <Image src={photo.resultUrl} alt="" width={400} height={300} style={{ width: '100%', height: '100%', objectFit: 'cover' }} unoptimized={false} />
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={photo.resultUrl}
+                            alt=""
+                            loading="lazy"
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                          />
                           <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.2)', opacity: 0, transition: 'opacity .2s', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                             onMouseEnter={e => e.currentTarget.style.opacity = '1'}
                             onMouseLeave={e => e.currentTarget.style.opacity = '0'}
