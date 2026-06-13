@@ -360,10 +360,8 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated 
     const fromImage = result.after;   // rigenera dal risultato corrente
     const baseBefore = result.before; // slider compara con l'originale
     setReprompt('');
-    // Torna alla vista di generazione (overlay aurora sulla foto) finché il
-    // nuovo risultato non è pronto.
-    setResult(null);
-    setRevealing(null);
+    // NON tornare agli stili: resta sul risultato corrente (slider), lo dimmiamo
+    // e blocchiamo le azioni finché la nuova foto non è pronta.
     setGenerating(true);
     try {
       await beginSingle({
@@ -483,12 +481,7 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated 
                               position: 'absolute', inset: 0, zIndex: 6, pointerEvents: 'none',
                               background: isBatch
                                 ? 'linear-gradient(135deg, rgba(59,131,246,.7) 0%, rgba(37,99,210,.6) 25%, rgba(96,165,250,.65) 50%, rgba(59,131,246,.6) 75%, rgba(37,99,210,.7) 100%)'
-                                : [
-                                    'linear-gradient(to right, rgba(59,131,246,1) 0%, rgba(59,131,246,.9) 6%, rgba(59,131,246,0) 15%)',   // sinistra — blu
-                                    'linear-gradient(to left, rgba(168,85,247,1) 0%, rgba(168,85,247,.9) 6%, rgba(168,85,247,0) 15%)',    // destra — viola/magenta
-                                    'linear-gradient(to bottom, rgba(99,102,241,1) 0%, rgba(99,102,241,.9) 5%, rgba(99,102,241,0) 14%)',  // alto — indaco
-                                    'linear-gradient(to top, rgba(139,92,246,1) 0%, rgba(139,92,246,.9) 5%, rgba(139,92,246,0) 14%)',     // basso — viola
-                                  ].join(','),
+                                : 'radial-gradient(ellipse 86% 76% at 50% 50%, rgba(59,131,246,0) 46%, rgba(59,131,246,.5) 76%, rgba(59,131,246,.95) 100%)',
                               backgroundSize: isBatch ? '400% 400%' : undefined,
                               animation: revealing === 'burst'
                                 ? 'aurora-burst .6s ease-out forwards'
@@ -532,11 +525,20 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated 
                           <InlineSlider before={result.before} after={result.after} isVertical={isVertical} showImages={revealing === 'slider'} interactive={revealing === 'slider'} />
                         )}
                         {/* Labels — appear with the images at slider phase */}
-                        {revealing === 'slider' && result && (
+                        {revealing === 'slider' && result && !generating && (
                           <>
                             <span style={{ position: 'absolute', top: 12, left: 12, background: 'rgba(33,31,28,.72)', color: '#fff', fontSize: 11.5, fontWeight: 700, padding: '5px 12px', borderRadius: 99, zIndex: 12, animation: 'result-fade-in .4s ease both' }}>Prima</span>
                             <span style={{ position: 'absolute', top: 12, right: 12, background: 'rgba(33,31,28,.72)', color: '#fff', fontSize: 11.5, fontWeight: 700, padding: '5px 12px', borderRadius: 99, zIndex: 12, animation: 'result-fade-in .4s ease both' }}>Dopo</span>
                           </>
+                        )}
+                        {/* Reprompt in corso: dim sopra il risultato + spinner, blocca tutto finché pronto */}
+                        {generating && result && (
+                          <div style={{ position: 'absolute', inset: 0, zIndex: 14, background: 'rgba(20,40,80,0.42)', backdropFilter: 'blur(2px)', WebkitBackdropFilter: 'blur(2px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', borderRadius: 99, padding: '10px 22px', whiteSpace: 'nowrap' }}>
+                              <div style={{ width: 16, height: 16, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', animation: 'export-spin 1s linear infinite', flexShrink: 0 }} />
+                              <span style={{ fontSize: 13, fontWeight: 700, background: 'linear-gradient(to right, #dbeafe 20%, #3B83F6 50%, #dbeafe 80%)', backgroundSize: '200% auto', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent', animation: 'shimmer-text 2.5s linear infinite' }}>Rigenerazione...</span>
+                            </div>
+                          </div>
                         )}
                         {!generating && !revealing && !result && (
                         <button
@@ -572,7 +574,7 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated 
           </div>
 
           {/* right: style / angle / prompt OR result actions */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, ...(revealing && revealing !== 'slider' ? { opacity: 0, pointerEvents: 'none' as const, transition: 'opacity .3s' } : {}), ...(generating && !revealing ? { opacity: .5, pointerEvents: 'none' as const, transition: 'opacity .3s' } : {}), ...(revealing === 'slider' ? { animation: 'result-fade-in .5s ease both' } : {}) }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, ...(generating ? { opacity: .5, pointerEvents: 'none' as const, transition: 'opacity .3s' } : (revealing && revealing !== 'slider' ? { opacity: 0, pointerEvents: 'none' as const, transition: 'opacity .3s' } : (revealing === 'slider' ? { animation: 'result-fade-in .5s ease both' } : {}))) }}>
 
             {revealing === 'slider' && result ? (
               <>
@@ -598,7 +600,7 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated 
                   <textarea value={reprompt} onChange={e => setReprompt(e.target.value)} maxLength={2000} rows={3} placeholder="Es. cambia il colore del divano in beige" style={inputStyle} />
                   <button onClick={handleReprompt} disabled={!reprompt.trim() || generating} style={{
                     marginTop: 10, width: '100%', border: 'none',
-                    background: reprompt.trim() && !generating ? '#211f1c' : '#e5e7eb',
+                    background: reprompt.trim() && !generating ? 'linear-gradient(135deg, #3B83F6 0%, #6366f1 100%)' : '#e5e7eb',
                     color: reprompt.trim() && !generating ? '#fff' : '#9ca3af',
                     fontSize: 14, fontWeight: 600, padding: '12px 20px', borderRadius: 10,
                     cursor: reprompt.trim() && !generating ? 'pointer' : 'default',
