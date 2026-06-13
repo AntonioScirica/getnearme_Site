@@ -1036,7 +1036,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
 
       {/* STEP 3 — options (montaggio: cover → logo → music phases) */}
       {step === 3 && tpl && layout === 'montaggio' && (
-        <div style={{ maxWidth: 720, margin: '0 auto' }}>
+        <div>
           {montaggioPhase === 'cover' && (
             <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:14px;padding:24px')}>
               <div style={s('font-size:16px;font-weight:800;margin-bottom:4px')}>Cover di apertura</div>
