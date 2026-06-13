@@ -1048,7 +1048,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
                   const whiteLogo = (brand.logoOrientation === 'vertical' ? (brand.logos.logo_white_v || brand.logos.logo_white_h) : (brand.logos.logo_white_h || brand.logos.logo_white_v)) || '';
                   return (
                     <>
-                      <div style={s('display:flex;align-items:center;justify-content:space-between')}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid #f0ede7', borderBottom: '1px solid #f0ede7', padding: '14px 0', margin: '4px 0' }}>
                         <span style={{ fontSize: 13.5, fontWeight: 600 }}>Aggiungi logo</span>
                         <div onClick={() => { if (whiteLogo) setCoverLogoOn(v => !v); }} title={whiteLogo ? '' : 'Carica un logo bianco in Brand'} style={{ width: 40, height: 24, borderRadius: 99, background: coverLogoOn && whiteLogo ? '#3B83F6' : '#d8d4cb', position: 'relative', cursor: whiteLogo ? 'pointer' : 'not-allowed', opacity: whiteLogo ? 1 : .5, transition: 'background .2s' }}>
                           <span style={{ position: 'absolute', top: 3, left: coverLogoOn && whiteLogo ? 19 : 3, width: 18, height: 18, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,.2)', transition: 'left .2s' }} />
