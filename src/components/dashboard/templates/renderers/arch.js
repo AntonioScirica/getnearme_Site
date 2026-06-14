@@ -129,7 +129,7 @@ export function renderArch(data, photoUrl, opts = {}) {
   const img = document.createElement('img');
   img.src = photoUrl;
   img.alt = '';
-  img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block';
+  img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;transform:scale(1.02)';
   arch.appendChild(img);
 
   // Dark gradient at bottom of photo

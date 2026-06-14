@@ -292,12 +292,11 @@ function drawGlassPanels(ctx, glassPanels, blurCanvasMap) {
 // Convert blob URLs to data URLs in all <img> elements inside the template.
 // html2canvas foreignObjectRendering can fail with blob URLs in cloned documents.
 async function convertBlobImgs(element) {
-  const imgs = element.querySelectorAll('img');
   const restores = [];
-  await Promise.all(Array.from(imgs).map(async (img) => {
-    if (!img.src || !img.src.startsWith('blob:')) return;
+  await Promise.all([...element.querySelectorAll('img')].map(async (img) => {
+    if (img.src.startsWith('data:')) return;
     try {
-      const resp = await fetch(img.src);
+      const resp = await fetch(img.src, { mode: 'cors', cache: 'no-cache' });
       const blob = await resp.blob();
       const dataUrl = await new Promise((resolve) => {
         const reader = new FileReader();
@@ -387,12 +386,27 @@ export async function exportToPng(element, size, opts = {}) {
 
   let fgImg = null;
   if (photoSrc) {
-    fgImg = await new Promise((resolve) => {
+    fgImg = await new Promise(async (resolve) => {
+      let finalSrc = photoSrc;
+      if (!photoSrc.startsWith('blob:') && !photoSrc.startsWith('data:')) {
+        try {
+          const res = await fetch(photoSrc, { mode: 'cors', cache: 'no-cache' });
+          if (res.ok) {
+            const blob = await res.blob();
+            finalSrc = URL.createObjectURL(blob);
+          }
+        } catch (e) {
+          console.warn('Failed to fetch photoSrc as blob, falling back to direct src', e);
+        }
+      }
       const img = new Image();
-      if (!photoSrc.startsWith('blob:')) img.crossOrigin = 'anonymous';
+      img.crossOrigin = 'anonymous';
       img.onload = () => resolve(img);
-      img.onerror = () => resolve(null);
-      img.src = photoSrc;
+      img.onerror = () => {
+        console.error('Failed to load fgImg', finalSrc);
+        resolve(null);
+      };
+      img.src = finalSrc;
     });
   }
 
@@ -490,7 +504,7 @@ export async function exportStaticToVideo(templateEl, size, opts = {}) {
     try { await coverVideo.play(); } catch { /* autoplay may need muted, already set */ }
   }
 
-  const TEXT_SELS = '.tpl-badge, .tpl-price, .tpl-title, .tpl-address, .tpl-metrics, .tpl-metric-pills, .tpl-metrics-inline, .tpl-desc, .tpl-btn, .tpl-photo, .tpl-label, .tpl-logo-overlay, .tpl-bar, .tpl-shape, .tpl-panel, .tpl-overlay--triangle, .tpl-arch-top';
+  const TEXT_SELS = '.tpl-badge, .tpl-price, .tpl-title, .tpl-address, .tpl-metrics, .tpl-metric-pills, .tpl-metrics-inline, .tpl-desc, .tpl-btn, .tpl-photo, .tpl-label, .tpl-logo-overlay, .tpl-bar';
 
   const cover = templateEl.querySelector('.tpl-cover');
   const hasCover = !!cover;
@@ -509,10 +523,10 @@ export async function exportStaticToVideo(templateEl, size, opts = {}) {
     const r = el.getBoundingClientRect();
     if (r.width <= 0 || r.height <= 0) return;
     const layer = {
-      x: Math.round(r.left - tplRect.left),
-      y: Math.round(r.top - tplRect.top),
-      w: Math.round(r.width),
-      h: Math.round(r.height),
+      x: Math.floor(r.left - tplRect.left) - 2,
+      y: Math.floor(r.top - tplRect.top) - 2,
+      w: Math.ceil(r.width) + 4,
+      h: Math.ceil(r.height) + 4,
       type,
     };
     if (type === 'photo') {
@@ -529,10 +543,7 @@ export async function exportStaticToVideo(templateEl, size, opts = {}) {
     layers.push(layer);
   }
 
-  // Draw background shapes/panels first
-  ['.tpl-shape', '.tpl-panel', '.tpl-overlay--triangle', '.tpl-arch-top'].forEach(sel => {
-    templateEl.querySelectorAll(sel).forEach(el => addRect(el, 'shape'));
-  });
+  // Removed shapes from layer collection so they bake into the static background
 
   templateEl.querySelectorAll('.tpl-photo').forEach(el => addRect(el, 'photo'));
   templateEl.querySelectorAll('.tpl-label').forEach(el => addRect(el));
@@ -704,13 +715,25 @@ export async function exportStaticToVideo(templateEl, size, opts = {}) {
 
   // Load photo images
   function loadImg(src) {
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
       if (!src) return reject(new Error('No src'));
+      let finalSrc = src;
+      if (!src.startsWith('blob:') && !src.startsWith('data:')) {
+        try {
+          const res = await fetch(src, { mode: 'cors', cache: 'no-cache' });
+          if (res.ok) {
+            const blob = await res.blob();
+            finalSrc = URL.createObjectURL(blob);
+          }
+        } catch (e) {
+          console.warn('Failed to fetch src as blob, falling back to direct src', e);
+        }
+      }
       const img = new Image();
-      if (!src.startsWith('blob:')) img.crossOrigin = 'anonymous';
+      img.crossOrigin = 'anonymous';
       img.onload = () => resolve(img);
       img.onerror = () => reject(new Error('Failed to load'));
-      img.src = src;
+      img.src = finalSrc;
     });
   }
 

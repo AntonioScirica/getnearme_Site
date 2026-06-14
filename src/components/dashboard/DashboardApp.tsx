@@ -1,4 +1,36 @@
 'use client';
+
+// Inject theme variables globally
+if (typeof document !== 'undefined') {
+  const style = document.createElement('style');
+  style.innerHTML = `
+    :root {
+      --bg-card: #fff;
+      --bg-body: #f4f2ee;
+      --bg-hover: #f6f4f0;
+      --text-main: #211f1c;
+      --text-sec: #57534c;
+      --text-muted: #8c867d;
+      --border-main: #e4e1da;
+      --border-light: #f0ede7;
+      --border-dark: #d8d4cb;
+    }
+    html.dark {
+      --bg-card: #1c1c1e;
+      --bg-body: #0a0a0a;
+      --bg-hover: #2c2c2e;
+      --text-main: #f5f5f5;
+      --text-sec: #a1a1aa;
+      --text-muted: #71717a;
+      --border-main: #3f3f46;
+      --border-light: #27272a;
+      --border-dark: #52525b;
+      color-scheme: dark;
+    }
+  `;
+  document.head.appendChild(style);
+}
+
 // GetNearMe SaaS dashboard — React port of the Claude Design prototype.
 // Phase 1: app shell (sidebar, header, project switcher, jobs tray, ⌘K), Home,
 // onboarding (welcome + coachmark tour), toasts. Other routes render a placeholder
@@ -62,13 +94,13 @@ const TOUR_DEFS = [
 
 // Mini-animazioni per ogni step del tour (CSS, leggere).
 function TourAnim({ kind }: { kind: string }) {
-  const wrap: React.CSSProperties = { height: 106, borderRadius: 12, background: 'linear-gradient(135deg,#eef4fe,#f6f4f0)', overflow: 'hidden', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 14 };
+  const wrap: React.CSSProperties = { height: 106, borderRadius: 12, background: 'linear-gradient(135deg,#eef4fe,var(--bg-hover))', overflow: 'hidden', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 14 };
   if (kind === 'brand') return (
     <div style={wrap}>
-      {['#3B83F6', '#5B6CF0', '#211f1c'].map((c, i) => (
+      {['#3B83F6', '#5B6CF0', 'var(--text-main)'].map((c, i) => (
         <div key={i} style={{ width: 26, height: 26, borderRadius: 8, background: c, animation: 'tour-pop .6s both', animationDelay: `${i * 0.18}s`, boxShadow: '0 2px 8px rgba(0,0,0,.12)' }} />
       ))}
-      <div style={{ width: 30, height: 30, borderRadius: '50%', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'tour-wiggle 5s ease-in-out infinite', boxShadow: '0 2px 8px rgba(0,0,0,.1)' }}><Icon name="palette" size={15} color="#1d5fd0" /></div>
+      <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'var(--bg-card)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'tour-wiggle 5s ease-in-out infinite', boxShadow: '0 2px 8px rgba(0,0,0,.1)' }}><Icon name="palette" size={15} color="#1d5fd0" /></div>
     </div>
   );
   if (kind === 'staging') return (
@@ -80,9 +112,9 @@ function TourAnim({ kind }: { kind: string }) {
         
         {/* Layer "dopo" che si rivela, senza overflow:hidden per non tagliare il cerchio */}
         <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, background: 'linear-gradient(135deg,#93C5FD,#3B83F6 70%,#5B6CF0)', borderRadius: '8px 0 0 8px', animation: 'tour-reveal 3s ease-in-out infinite', display: 'flex', alignItems: 'center', paddingLeft: 10 }}>
-          <div style={{ position: 'absolute', top: 0, bottom: 0, right: 0, width: 2, background: '#fff', boxShadow: '0 0 6px rgba(0,0,0,.25)' }} />
-          <div style={{ position: 'absolute', top: '50%', right: -9, transform: 'translateY(-50%)', width: 18, height: 18, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 5px rgba(0,0,0,.25)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#211f1c" strokeWidth="2.5"><path d="M8 6l-6 6 6 6M16 6l6 6-6 6" /></svg>
+          <div style={{ position: 'absolute', top: 0, bottom: 0, right: 0, width: 2, background: 'var(--bg-card)', boxShadow: '0 0 6px rgba(0,0,0,.25)' }} />
+          <div style={{ position: 'absolute', top: '50%', right: -9, transform: 'translateY(-50%)', width: 18, height: 18, borderRadius: '50%', background: 'var(--bg-card)', boxShadow: '0 1px 5px rgba(0,0,0,.25)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--text-main)" strokeWidth="2.5"><path d="M8 6l-6 6 6 6M16 6l6 6-6 6" /></svg>
           </div>
         </div>
       </div>
@@ -93,7 +125,7 @@ function TourAnim({ kind }: { kind: string }) {
       {/* Foto di partenza */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
         {[0, 1, 2].map(i => (
-           <div key={i} style={{ width: 18, height: 18, borderRadius: 3, background: '#e4e1da', animation: 'tour-video-squares 4s both infinite', animationDelay: `${i * 0.15}s` }} />
+           <div key={i} style={{ width: 18, height: 18, borderRadius: 3, background: 'var(--border-main)', animation: 'tour-video-squares 4s both infinite', animationDelay: `${i * 0.15}s` }} />
         ))}
       </div>
       
@@ -103,7 +135,7 @@ function TourAnim({ kind }: { kind: string }) {
       {/* Video Verticale generato */}
       <div style={{ width: 48, height: 78, borderRadius: 6, background: 'linear-gradient(135deg, #3B83F6, #5B6CF0)', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 24px rgba(59,131,246,.25)' }}>
         <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(255,255,255,.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'aurora-pulse 2s infinite' }}>
-          <Icon name="sparkles" size={14} color="#fff" />
+          <Icon name="sparkles" size={14} color="var(--bg-card)" />
         </div>
       </div>
     </div>
@@ -113,22 +145,22 @@ function TourAnim({ kind }: { kind: string }) {
       {[0, 1, 2].map(i => (
         <div key={i} style={{ width: 30, height: 44, borderRadius: 6, background: ['#93C5FD', '#3B83F6', '#5B6CF0'][i], animation: 'tour-slide .7s both', animationDelay: `${i * 0.2}s` }} />
       ))}
-      <Icon name="scissors" size={16} color="#57534c" />
+      <Icon name="scissors" size={16} color="var(--text-sec)" />
       <div style={{ width: 34, height: 44, borderRadius: 6, background: 'linear-gradient(135deg,#3B83F6,#5B6CF0)', animation: 'tour-pop .6s both', animationDelay: '.75s' }} />
     </div>
   );
   if (kind === 'social') return (
     <div style={wrap}>
-      <div style={{ width: 56, background: '#fff', borderRadius: 6, padding: 5, boxShadow: '0 8px 24px rgba(29,95,208,.12)', display: 'flex', flexDirection: 'column', gap: 4, position: 'relative' }}>
+      <div style={{ width: 56, background: 'var(--bg-card)', borderRadius: 6, padding: 5, boxShadow: '0 8px 24px rgba(29,95,208,.12)', display: 'flex', flexDirection: 'column', gap: 4, position: 'relative' }}>
         
         {/* Header (Avatar + Name) */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
           <div style={{ width: 10, height: 10, borderRadius: '50%', background: 'linear-gradient(135deg,#3B83F6,#5B6CF0)' }} />
-          <div style={{ height: 3, width: 16, borderRadius: 2, background: '#e4e1da' }} />
+          <div style={{ height: 3, width: 16, borderRadius: 2, background: 'var(--border-main)' }} />
         </div>
         
         {/* Post Image */}
-        <div style={{ width: '100%', height: 38, borderRadius: 3, background: '#f4f2ee', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ width: '100%', height: 38, borderRadius: 3, background: 'var(--bg-body)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <Icon name="image" size={12} color="#b3aca1" />
         </div>
         
@@ -146,7 +178,7 @@ function TourAnim({ kind }: { kind: string }) {
         </div>
         
         {/* Scintilla AI che fluttua al lato della caption */}
-        <div style={{ position: 'absolute', bottom: -5, right: -5, background: '#fff', borderRadius: '50%', padding: 3, boxShadow: '0 2px 8px rgba(0,0,0,.15)', animation: 'tour-bob 2s ease-in-out infinite' }}>
+        <div style={{ position: 'absolute', bottom: -5, right: -5, background: 'var(--bg-card)', borderRadius: '50%', padding: 3, boxShadow: '0 2px 8px rgba(0,0,0,.15)', animation: 'tour-bob 2s ease-in-out infinite' }}>
           <Icon name="sparkles" size={10} color="#3B83F6" />
         </div>
       </div>
@@ -155,13 +187,13 @@ function TourAnim({ kind }: { kind: string }) {
   if (kind === 'media') return (
     <div style={{ ...wrap, padding: 12, display: 'flex', gap: 8, alignItems: 'center', justifyContent: 'center' }}>
       <div style={{ width: 38, height: 38, borderRadius: 8, background: '#3B83F6', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'tour-tile-loop 6s ease-in-out infinite' }}>
-        <Icon name="image" size={16} color="#fff" />
+        <Icon name="image" size={16} color="var(--bg-card)" />
       </div>
       <div style={{ width: 38, height: 38, borderRadius: 8, background: '#93C5FD', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'tour-tile-loop 6s .6s ease-in-out infinite' }}>
-        <Icon name="film" size={16} color="#fff" />
+        <Icon name="film" size={16} color="var(--bg-card)" />
       </div>
       <div style={{ width: 38, height: 38, borderRadius: 8, background: 'linear-gradient(135deg,#3B83F6,#5B6CF0)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'tour-tile-loop 6s 1.2s ease-in-out infinite' }}>
-        <Icon name="instagram" size={16} color="#fff" />
+        <Icon name="instagram" size={16} color="var(--bg-card)" />
       </div>
     </div>
   );
@@ -180,7 +212,7 @@ function TourAnim({ kind }: { kind: string }) {
     <div style={wrap}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
         {/* L'immobile di partenza */}
-        <div style={{ width: 60, height: 60, borderRadius: 14, background: '#fff', boxShadow: '0 12px 32px rgba(29,95,208,.12)', border: '1px solid #f0ede7', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}>
+        <div style={{ width: 60, height: 60, borderRadius: 14, background: 'var(--bg-card)', boxShadow: '0 12px 32px rgba(29,95,208,.12)', border: '1px solid var(--border-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}>
           <Icon name="home" size={28} color="#1d5fd0" />
         </div>
 
@@ -253,7 +285,7 @@ const PLANS = [
   {
     id: 'monthly', name: 'Mensile', price: 100, period: '/mese', badge: null, popular: false,
     features: PLAN_FEATURES,
-    color: '#211f1c', quotaFoto: 250, quotaVideo: 4, quotaPost: 999,
+    color: 'var(--text-main)', quotaFoto: 250, quotaVideo: 4, quotaPost: 999,
   },
   {
     id: 'quarterly', name: 'Trimestrale', price: 79, period: '/mese', badge: null, popular: false,
@@ -263,7 +295,7 @@ const PLANS = [
   {
     id: 'annual', name: 'Annuale', price: 59, period: '/mese', badge: null, popular: false,
     features: PLAN_FEATURES,
-    color: '#211f1c', quotaFoto: 250, quotaVideo: 4, quotaPost: 999,
+    color: 'var(--text-main)', quotaFoto: 250, quotaVideo: 4, quotaPost: 999,
   },
 ];
 
@@ -313,7 +345,7 @@ const ANIM_STYLES: { id: string; label: string }[] = [
 const ANIM_CSS = `
 .aw{position:absolute;border-radius:2px;opacity:0;animation-duration:3.5s;animation-iteration-count:infinite;animation-fill-mode:both}
 .aw-badge{width:18px;height:5px;top:10px;left:8px;background:#6875F5}
-.aw-price{width:38px;height:8px;top:19px;left:8px;background:#fff}
+.aw-price{width:38px;height:8px;top:19px;left:8px;background:var(--bg-card)}
 .aw-title{width:50px;height:5px;top:32px;left:8px;background:rgba(255,255,255,.7)}
 .aw-addr{width:28px;height:3px;top:41px;left:8px;background:rgba(255,255,255,.35)}
 .aw-m1{width:16px;height:13px;top:52px;left:5px;background:rgba(255,255,255,.15);border-radius:3px}
@@ -385,7 +417,7 @@ const LOGO_VARIANT_LABELS: Record<string, string> = {
   colored_v: 'Icona, Colore', colored_h: 'Icona + Nome, Colore',
 };
 
-function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectUpdate }: { toast: (msg: string, icon?: string) => void; routeKey: number; brand: BrandSettings; project?: Project; batches?: BatchInfo[]; onProjectUpdate?: (p: Partial<Project>) => void }) {
+function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectUpdate, initialPhotoUrl }: { toast: (msg: string, icon?: string) => void; routeKey: number; brand: BrandSettings; project?: Project; batches?: BatchInfo[]; onProjectUpdate?: (p: Partial<Project>) => void; initialPhotoUrl?: string | null }) {
   const [step, setStep] = React.useState(1);
   React.useEffect(() => { setStep(1); }, [routeKey]);
   const [logos, setLogos] = React.useState<{ white: string | null; black: string | null; blue: string | null } | null>(logosCache);
@@ -446,7 +478,7 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
   const [caption, setCaption] = React.useState('');
   const [hashtags, setHashtags] = React.useState('');
   const [firstComment, setFirstComment] = React.useState('');
-  const [coverPhoto, setCoverPhoto] = React.useState<string>(DEFAULT_PHOTO);
+  const [coverPhoto, setCoverPhoto] = React.useState<string>(initialPhotoUrl || DEFAULT_PHOTO);
   const [isVideo, setIsVideo] = React.useState(false);
   const [videoThumb, setVideoThumb] = React.useState<string>('');
   const [fitCover, setFitCover] = React.useState(false);
@@ -648,6 +680,7 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
           camere: Number(String(fields.camere || '').replace(/\D/g, '')) || 0,
           bagni: Number(String(fields.bagni || '').replace(/\D/g, '')) || 0,
           descrizione: fields.descrizione,
+          nPost: (project.nPost || 0) + 1,
         };
         updateProject(project.id, updates).catch(e => console.error("updateProject failed", e));
         onProjectUpdate?.(updates);
@@ -815,6 +848,7 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
           camere: Number(String(fields.camere || '').replace(/\D/g, '')) || 0,
           bagni: Number(String(fields.bagni || '').replace(/\D/g, '')) || 0,
           descrizione: fields.descrizione,
+          nPost: (project.nPost || 0) + count,
         };
         updateProject(project.id, updates).catch(e => console.error("updateProject failed", e));
         onProjectUpdate?.(updates);
@@ -861,6 +895,7 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
           camere: Number(fields.camere.replace(/\D/g, '')) || 0,
           bagni: Number(fields.bagni.replace(/\D/g, '')) || 0,
           descrizione: fields.descrizione,
+          nPost: (project.nPost || 0) + 1,
         };
         updateProject(project.id, updates).then(() => onProjectUpdate?.(updates)).catch(() => {});
       }
@@ -898,13 +933,29 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
     setStep(n);
   };
 
-  const inputStyle: React.CSSProperties = { width: '100%', border: '1px solid #e4e1da', borderRadius: 8, padding: '10px 12px', fontSize: 13, fontFamily: 'inherit', outline: 'none', background: '#fff' };
+  const inputStyle: React.CSSProperties = { width: '100%', border: '1px solid var(--border-main)', borderRadius: 8, padding: '10px 12px', fontSize: 13, fontFamily: 'inherit', outline: 'none', background: 'var(--bg-card)' };
   const labelStyle: React.CSSProperties = { display: 'block', fontSize: 12.5, fontWeight: 700, marginBottom: 5 };
   const smallLabelStyle: React.CSSProperties = { display: 'block', fontSize: 11.5, fontWeight: 700, marginBottom: 5 };
 
   // Preview: fit to viewport height, reactive on resize
   const [winH, setWinH] = React.useState(typeof window !== 'undefined' ? window.innerHeight : 800);
   const closeAllDropdowns = () => { setIconDropdown(null); setCurrencyDropdown(false); };
+
+  // Keyboard navigation for templates
+  React.useEffect(() => {
+    if (step !== 3 || exporting) return;
+    const handleKeyDown = (eb: KeyboardEvent) => {
+      if (eb.key === 'ArrowLeft') {
+        const i = TEMPLATES.findIndex(t => t.id === tplId);
+        setTplId(TEMPLATES[(i - 1 + TEMPLATES.length) % TEMPLATES.length].id);
+      } else if (eb.key === 'ArrowRight') {
+        const i = TEMPLATES.findIndex(t => t.id === tplId);
+        setTplId(TEMPLATES[(i + 1) % TEMPLATES.length].id);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [step, tplId, exporting]);
   React.useEffect(() => {
     const onResize = () => setWinH(window.innerHeight);
     window.addEventListener('resize', onResize);
@@ -928,13 +979,13 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
       {/* header */}
       <div style={s('display:flex;align-items:center;gap:12px;margin-bottom:22px')}>
         {step > 1 && (
-          <Box as="button" onClick={() => setStep(step === 3 ? 1 : step - 1)} style={s('border:1px solid #e4e1da;background:#fff;width:38px;height:38px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center')} hover={s('background:#f6f4f0')}>
-            <Icon name="arrow-left" size={15} color="#57534c" />
+          <Box as="button" onClick={() => setStep(step === 3 ? 1 : step - 1)} style={s('border:1px solid var(--border-main);background:var(--bg-card);width:38px;height:38px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center')} hover={s('background:var(--bg-hover)')}>
+            <Icon name="arrow-left" size={15} color="var(--text-sec)" />
           </Box>
         )}
         <div style={s('flex:1;min-width:0')}>
           <h1 style={s('margin:0 0 2px;font-size:22px;font-weight:800;letter-spacing:-.4px')}>{stepTitles[step]}</h1>
-          <div style={s('font-size:13px;color:#8c867d')}>{stepSubs[step]} · passo {step === 1 ? 1 : step === 3 ? 2 : 3} di 3</div>
+          <div style={s('font-size:13px;color:var(--text-muted)')}>{stepSubs[step]} · passo {step === 1 ? 1 : step === 3 ? 2 : 3} di 3</div>
         </div>
       </div>
 
@@ -948,16 +999,16 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
               <Box key={pl.id} onClick={() => { setPlatform(pl.id); setFormatId(pl.formats[0].id); }} style={{
                 padding: '10px 14px', borderRadius: 12, cursor: 'pointer', fontSize: 14,
                 fontWeight: platform === pl.id ? 700 : 500,
-                color: platform === pl.id ? '#211f1c' : '#8c867d',
+                color: platform === pl.id ? 'var(--text-main)' : 'var(--text-muted)',
                 background: platform === pl.id ? '#f1efe9' : 'transparent',
               }} hover={{ background: '#f1efe9' }}>{pl.label}</Box>
             ))}
             <div style={{ height: 1, background: '#ece9e2', margin: '8px 0' }} />
             {formats.map(f => (
               <Box key={f.id} onClick={() => setFormatId(f.id)} style={{
-                borderWidth: 1, borderStyle: 'solid', borderColor: formatId === f.id ? '#3B83F6' : '#e4e1da',
-                background: formatId === f.id ? '#eef4fe' : '#fff',
-                color: formatId === f.id ? '#1d5fd0' : '#57534c',
+                borderWidth: 1, borderStyle: 'solid', borderColor: formatId === f.id ? '#3B83F6' : 'var(--border-main)',
+                background: formatId === f.id ? '#eef4fe' : 'var(--bg-card)',
+                color: formatId === f.id ? '#1d5fd0' : 'var(--text-sec)',
                 fontSize: 11.5, fontWeight: 700, padding: '8px 10px', borderRadius: 8, cursor: 'pointer', minHeight: 38, whiteSpace: 'nowrap', display: 'flex', alignItems: 'center',
               }} hover={{ borderColor: '#3B83F6' }}>{f.label}</Box>
             ))}
@@ -967,36 +1018,36 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
             <div
               style={{
                 display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px',
-                background: '#fff', border: '1.5px dashed #d8d4cb', borderRadius: 12,
+                background: 'var(--bg-card)', border: '1.5px dashed var(--border-dark)', borderRadius: 12,
                 transition: 'border-color .15s',
                 maxWidth: 940, position: 'relative'
               }}
               onMouseEnter={e => (e.currentTarget.style.borderColor = '#3B83F6')}
-              onMouseLeave={e => (e.currentTarget.style.borderColor = '#d8d4cb')}
+              onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--border-dark)')}
             >
               <div onClick={() => fileInputRef.current?.click()} style={{ display: 'flex', flex: 1, alignItems: 'center', gap: 12, cursor: 'pointer' }}>
                 {coverPhoto !== DEFAULT_PHOTO ? (
                   <img src={coverPhoto} alt="" style={{ width: 48, height: 48, borderRadius: 8, objectFit: 'cover' }} />
                 ) : (
-                  <div style={{ width: 48, height: 48, borderRadius: 8, background: '#f6f4f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Icon name="upload" size={20} color="#8c867d" />
+                  <div style={{ width: 48, height: 48, borderRadius: 8, background: 'var(--bg-hover)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Icon name="upload" size={20} color="var(--text-muted)" />
                   </div>
                 )}
                 <div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: '#211f1c' }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-main)' }}>
                     {coverPhoto !== DEFAULT_PHOTO ? 'Cambia foto di sfondo' : 'Carica foto o video'}
                   </div>
-                  <div style={{ fontSize: 11.5, color: '#8c867d' }}>JPG, PNG, WebP, MP4</div>
+                  <div style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>JPG, PNG, WebP, MP4</div>
                 </div>
               </div>
               {coverPhoto !== DEFAULT_PHOTO && (
                 <div 
                   onClick={(e) => { e.stopPropagation(); setCoverPhoto(DEFAULT_PHOTO); }}
-                  style={{ width: 32, height: 32, borderRadius: 8, background: '#f6f4f0', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none', cursor: 'pointer' }}
+                  style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--bg-hover)', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none', cursor: 'pointer' }}
                   onMouseEnter={e => (e.currentTarget.style.background = '#eeebe3')}
-                  onMouseLeave={e => (e.currentTarget.style.background = '#f6f4f0')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'var(--bg-hover)')}
                 >
-                  <Icon name="x" size={16} color="#8c867d" />
+                  <Icon name="x" size={16} color="var(--text-muted)" />
                 </div>
               )}
             </div>
@@ -1015,6 +1066,8 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
                 <div key={tc.id} onClick={() => { setTplId(tc.id); goStep(3); }} style={{
                   borderRadius: 14, overflow: 'hidden', cursor: 'pointer',
                   transition: 'transform .15s, box-shadow .15s',
+                  transform: 'translateZ(0)',
+                  boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.04)',
                 }}>
                   <TemplatePreview
                     templateId={tc.id}
@@ -1056,8 +1109,8 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, position: 'sticky', top: 16 }}>
             {/* preview with arrows on sides */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <Box as="button" onClick={() => { const i = TEMPLATES.findIndex(t => t.id === tplId); setTplId(TEMPLATES[(i - 1 + TEMPLATES.length) % TEMPLATES.length].id); }} style={s('border:1px solid #e4e1da;background:#fff;width:34px;height:34px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none')} hover={s('background:#f6f4f0')}>
-                <Icon name="arrow-left" size={14} color="#57534c" />
+              <Box as="button" onClick={() => { const i = TEMPLATES.findIndex(t => t.id === tplId); setTplId(TEMPLATES[(i - 1 + TEMPLATES.length) % TEMPLATES.length].id); }} style={s('border:1px solid var(--border-main);background:var(--bg-card);width:34px;height:34px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none')} hover={s('background:var(--bg-hover)')}>
+                <Icon name="arrow-left" size={14} color="var(--text-sec)" />
               </Box>
               <div ref={previewContainerRef} style={{ borderRadius: 12, overflow: 'hidden', boxShadow: '0 12px 36px rgba(33,31,28,.14)', position: 'relative' }}>
                 {exporting && (
@@ -1068,10 +1121,10 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
                   }}>
                     <div style={{
                       width: 36, height: 36, border: '3px solid rgba(255,255,255,.25)',
-                      borderTopColor: '#fff', borderRadius: '50%',
+                      borderTopColor: 'var(--bg-card)', borderRadius: '50%',
                       animation: 'export-spin .8s linear infinite',
                     }} />
-                    <span style={{ color: '#fff', fontSize: 13, fontWeight: 700 }}>
+                    <span style={{ color: 'var(--bg-card)', fontSize: 13, fontWeight: 700 }}>
                       {exporting === 'image' ? 'Esportazione...' : `Esportazione video ${exportProgress}%`}
                     </span>
                   </div>
@@ -1106,24 +1159,24 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
                   }}
                 />
               </div>
-              <Box as="button" onClick={() => { const i = TEMPLATES.findIndex(t => t.id === tplId); setTplId(TEMPLATES[(i + 1) % TEMPLATES.length].id); }} style={s('border:1px solid #e4e1da;background:#fff;width:34px;height:34px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none')} hover={s('background:#f6f4f0')}>
-                <Icon name="arrow-right" size={14} color="#57534c" />
+              <Box as="button" onClick={() => { const i = TEMPLATES.findIndex(t => t.id === tplId); setTplId(TEMPLATES[(i + 1) % TEMPLATES.length].id); }} style={s('border:1px solid var(--border-main);background:var(--bg-card);width:34px;height:34px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none')} hover={s('background:var(--bg-hover)')}>
+                <Icon name="arrow-right" size={14} color="var(--text-sec)" />
               </Box>
             </div>
           </div>
           {/* sidebar */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {/* info mini card */}
-            <div style={{ background: '#fff', border: '1px solid #f0ede7', borderRadius: 12, padding: '16px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)', borderRadius: 12, padding: '16px', display: 'flex', flexDirection: 'column', gap: 14 }}>
               {/* platform row */}
               <div>
-                <div style={{ fontSize: 11, fontWeight: 600, color: '#8c867d', marginBottom: 6 }}>Piattaforma</div>
-                <div style={{ display: 'flex', alignItems: 'center', background: '#f6f4f0', borderRadius: 8, padding: 3 }}>
+                <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 6 }}>Piattaforma</div>
+                <div style={{ display: 'flex', alignItems: 'center', background: 'var(--bg-hover)', borderRadius: 8, padding: 3 }}>
                   {PS_PLATFORMS.map(pl => (
                     <div key={pl.id} onClick={() => { setPlatform(pl.id); setFormatId(pl.formats[0].id); }} style={{
                       flex: 1, textAlign: 'center', padding: '6px 0', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer',
-                      background: platform === pl.id ? '#fff' : 'transparent',
-                      color: platform === pl.id ? '#211f1c' : '#8c867d',
+                      background: platform === pl.id ? 'var(--bg-card)' : 'transparent',
+                      color: platform === pl.id ? 'var(--text-main)' : 'var(--text-muted)',
                       boxShadow: platform === pl.id ? '0 1px 3px rgba(0,0,0,.08)' : 'none',
                       transition: 'all .15s',
                     }}>{pl.label}</div>
@@ -1132,13 +1185,13 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
               </div>
               {/* format row */}
               <div>
-                <div style={{ fontSize: 11, fontWeight: 600, color: '#8c867d', marginBottom: 6 }}>Formato</div>
-                <div style={{ display: 'flex', alignItems: 'center', background: '#f6f4f0', borderRadius: 8, padding: 3 }}>
+                <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 6 }}>Formato</div>
+                <div style={{ display: 'flex', alignItems: 'center', background: 'var(--bg-hover)', borderRadius: 8, padding: 3 }}>
                   {formats.map(f => (
                     <div key={f.id} onClick={() => setFormatId(f.id)} style={{
                       flex: 1, textAlign: 'center', padding: '6px 0', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer',
-                      background: formatId === f.id ? '#fff' : 'transparent',
-                      color: formatId === f.id ? '#1d5fd0' : '#8c867d',
+                      background: formatId === f.id ? 'var(--bg-card)' : 'transparent',
+                      color: formatId === f.id ? '#1d5fd0' : 'var(--text-muted)',
                       boxShadow: formatId === f.id ? '0 1px 3px rgba(0,0,0,.08)' : 'none',
                       transition: 'all .15s',
                     }}>
@@ -1148,9 +1201,9 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
                 </div>
               </div>
               {/* template + size */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid #f4f2ee', paddingTop: 12 }}>
-                <span style={{ fontSize: 12.5, fontWeight: 700, color: '#211f1c' }}>{curTpl.label}</span>
-                <span style={{ fontSize: 11, fontWeight: 600, color: '#b8b3a9', background: '#f6f4f0', padding: '3px 8px', borderRadius: 4 }}>{curFmt.w} × {curFmt.h}</span>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid var(--bg-body)', paddingTop: 12 }}>
+                <span style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--text-main)' }}>{curTpl.label}</span>
+                <span style={{ fontSize: 11, fontWeight: 600, color: '#b8b3a9', background: 'var(--bg-hover)', padding: '3px 8px', borderRadius: 4 }}>{curFmt.w} × {curFmt.h}</span>
               </div>
             </div>
             {/* photo upload */}
@@ -1159,11 +1212,11 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
                 onClick={() => fileInputRef.current?.click()}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px',
-                  background: '#fff', border: '1px solid #f0ede7', borderRadius: 12,
+                  background: 'var(--bg-card)', border: '1px solid var(--border-light)', borderRadius: 12,
                   cursor: 'pointer', transition: 'border-color .15s',
                 }}
                 onMouseEnter={e => (e.currentTarget.style.borderColor = '#3B83F6')}
-                onMouseLeave={e => (e.currentTarget.style.borderColor = '#f0ede7')}
+                onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--border-light)')}
               >
                 {coverPhoto !== DEFAULT_PHOTO ? (
                   isVideo
@@ -1171,21 +1224,21 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
                         <img src={videoThumb || ''} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', background: '#1a1825' }} />
                         <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                           <div style={{ width: 18, height: 18, borderRadius: '50%', background: 'rgba(255,255,255,.85)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <div style={{ width: 0, height: 0, borderLeft: '6px solid #211f1c', borderTop: '4px solid transparent', borderBottom: '4px solid transparent', marginLeft: 1 }} />
+                            <div style={{ width: 0, height: 0, borderLeft: '6px solid var(--text-main)', borderTop: '4px solid transparent', borderBottom: '4px solid transparent', marginLeft: 1 }} />
                           </div>
                         </div>
                       </div>
                     : <img src={coverPhoto} alt="" style={{ width: 44, height: 44, borderRadius: 8, objectFit: 'cover' }} />
                 ) : (
-                  <div style={{ width: 44, height: 44, borderRadius: 8, background: '#f6f4f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Icon name="upload" size={18} color="#8c867d" />
+                  <div style={{ width: 44, height: 44, borderRadius: 8, background: 'var(--bg-hover)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Icon name="upload" size={18} color="var(--text-muted)" />
                   </div>
                 )}
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 12.5, fontWeight: 700, color: '#211f1c' }}>
+                  <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--text-main)' }}>
                     {coverPhoto !== DEFAULT_PHOTO ? (isVideo ? 'Cambia video' : 'Cambia foto principale') : 'Carica foto o video'}
                   </div>
-                  <div style={{ fontSize: 11, color: '#8c867d' }}>JPG, PNG, WebP, MP4</div>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>JPG, PNG, WebP, MP4</div>
                 </div>
                 <Icon name="image" size={16} color="#b8b3a9" />
               </div>
@@ -1196,24 +1249,24 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
                     onClick={() => extraFileRefs.current[i]?.click()}
                     style={{
                       display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px',
-                      background: '#fff', border: '1px solid #f0ede7', borderRadius: 12,
+                      background: 'var(--bg-card)', border: '1px solid var(--border-light)', borderRadius: 12,
                       cursor: 'pointer', transition: 'border-color .15s',
                     }}
                     onMouseEnter={e => (e.currentTarget.style.borderColor = '#3B83F6')}
-                    onMouseLeave={e => (e.currentTarget.style.borderColor = '#f0ede7')}
+                    onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--border-light)')}
                   >
                     {extraPhotos[i] ? (
                       <img src={extraPhotos[i]} alt="" style={{ width: 44, height: 44, borderRadius: 8, objectFit: 'cover' }} />
                     ) : (
-                      <div style={{ width: 44, height: 44, borderRadius: 8, background: '#f6f4f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <Icon name="upload" size={18} color="#8c867d" />
+                      <div style={{ width: 44, height: 44, borderRadius: 8, background: 'var(--bg-hover)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Icon name="upload" size={18} color="var(--text-muted)" />
                       </div>
                     )}
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 12.5, fontWeight: 700, color: '#211f1c' }}>
+                      <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--text-main)' }}>
                         {extraPhotos[i] ? `Cambia foto ${i + 2}` : `Carica foto ${i + 2}`}
                       </div>
-                      <div style={{ fontSize: 11, color: '#8c867d' }}>JPG, PNG, WebP, MP4</div>
+                      <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>JPG, PNG, WebP, MP4</div>
                     </div>
                     <Icon name="image" size={16} color="#b8b3a9" />
                   </div>
@@ -1221,8 +1274,8 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
               ))}
             </div>
             {/* fields card */}
-            <div style={{ background: '#fff', border: '1px solid #f0ede7', borderRadius: 12, padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: '#8c867d', textTransform: 'uppercase' as const, letterSpacing: '0.05em' }}>Dati immobile</div>
+            <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)', borderRadius: 12, padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' as const, letterSpacing: '0.05em' }}>Dati immobile</div>
               {hasField('title') && <div><label style={labelStyle}>Titolo</label><input value={fields.titolo} onChange={e => setField('titolo', e.target.value)} placeholder="Es. Appartamento" style={inputStyle} /></div>}
               {hasField('address') && <div><label style={labelStyle}>Indirizzo</label><input value={fields.indirizzo} onChange={e => setField('indirizzo', e.target.value)} placeholder="Es. Milano, Porta Nuova" style={inputStyle} /></div>}
               {hasField('price') && <div style={{ position: 'relative' }}>
@@ -1234,11 +1287,11 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
                     style={{
                       position: 'absolute', right: 5, top: '50%', transform: 'translateY(-50%)',
                       width: 26, height: 26, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      cursor: 'pointer', border: '1px solid #e4e1da', background: currencyDropdown ? '#f6f4f0' : 'transparent',
-                      color: '#211f1c', transition: 'all .15s', fontSize: 13, fontWeight: 700,
+                      cursor: 'pointer', border: '1px solid var(--border-main)', background: currencyDropdown ? 'var(--bg-hover)' : 'transparent',
+                      color: 'var(--text-main)', transition: 'all .15s', fontSize: 13, fontWeight: 700,
                     }}
-                    onMouseEnter={e => { e.currentTarget.style.borderColor = '#3B83F6'; e.currentTarget.style.background = '#f6f4f0'; }}
-                    onMouseLeave={e => { e.currentTarget.style.borderColor = '#e4e1da'; e.currentTarget.style.background = currencyDropdown ? '#f6f4f0' : 'transparent'; }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = '#3B83F6'; e.currentTarget.style.background = 'var(--bg-hover)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-main)'; e.currentTarget.style.background = currencyDropdown ? 'var(--bg-hover)' : 'transparent'; }}
                   >
                     {currency}
                   </div>
@@ -1246,7 +1299,7 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
                 {currencyDropdown && (
                   <div style={{
                     position: 'absolute', top: '100%', right: 0, zIndex: 50, marginTop: 4,
-                    background: '#fff', border: '1px solid #e4e1da', borderRadius: 8,
+                    background: 'var(--bg-card)', border: '1px solid var(--border-main)', borderRadius: 8,
                     boxShadow: '0 4px 12px rgba(0,0,0,.10)', padding: 4, display: 'flex', gap: 2,
                   }}>
                     {['€', '$', '£', 'CHF'].map(c => (
@@ -1257,7 +1310,7 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
                         background: currency === c ? '#eef4fe' : 'transparent',
                         color: currency === c ? '#3B83F6' : '#6b7280', transition: 'all .15s',
                       }}
-                        onMouseEnter={e => { if (currency !== c) { e.currentTarget.style.background = '#f6f4f0'; e.currentTarget.style.color = '#211f1c'; } }}
+                        onMouseEnter={e => { if (currency !== c) { e.currentTarget.style.background = 'var(--bg-hover)'; e.currentTarget.style.color = 'var(--text-main)'; } }}
                         onMouseLeave={e => { if (currency !== c) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#6b7280'; } }}
                       >{c}</div>
                     ))}
@@ -1281,11 +1334,11 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
                           style={{
                             position: 'absolute', right: 5, top: '50%', transform: 'translateY(-50%)',
                             width: 26, height: 26, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            cursor: 'pointer', border: '1px solid #e4e1da', background: iconDropdown === m.field ? '#f6f4f0' : 'transparent',
-                            color: '#211f1c', transition: 'all .15s',
+                            cursor: 'pointer', border: '1px solid var(--border-main)', background: iconDropdown === m.field ? 'var(--bg-hover)' : 'transparent',
+                            color: 'var(--text-main)', transition: 'all .15s',
                           }}
-                          onMouseEnter={e => { e.currentTarget.style.borderColor = '#3B83F6'; e.currentTarget.style.background = '#f6f4f0'; }}
-                          onMouseLeave={e => { e.currentTarget.style.borderColor = '#e4e1da'; e.currentTarget.style.background = iconDropdown === m.field ? '#f6f4f0' : 'transparent'; }}
+                          onMouseEnter={e => { e.currentTarget.style.borderColor = '#3B83F6'; e.currentTarget.style.background = 'var(--bg-hover)'; }}
+                          onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-main)'; e.currentTarget.style.background = iconDropdown === m.field ? 'var(--bg-hover)' : 'transparent'; }}
                         >
                           <span style={{ width: 14, height: 14, display: 'flex' }} dangerouslySetInnerHTML={{ __html: (TPL_ICONS as Record<string, string>)[iconKey] || '' }} />
                         </div>
@@ -1293,7 +1346,7 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
                       {iconDropdown === m.field && (
                         <div style={{
                           position: 'absolute', top: '100%', right: 0, zIndex: 50,
-                          background: '#fff', border: '1px solid #e4e1da', borderRadius: 8,
+                          background: 'var(--bg-card)', border: '1px solid var(--border-main)', borderRadius: 8,
                           boxShadow: '0 4px 12px rgba(0,0,0,.10)',
                           display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 4, padding: 6, marginTop: 4,
                         }}>
@@ -1305,7 +1358,7 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
                               color: fieldIcons[m.field] === pi.key ? '#3B83F6' : '#6b7280',
                               transition: 'all .15s',
                             }}
-                              onMouseEnter={e => { if (fieldIcons[m.field] !== pi.key) { e.currentTarget.style.background = '#f6f4f0'; e.currentTarget.style.color = '#211f1c'; } }}
+                              onMouseEnter={e => { if (fieldIcons[m.field] !== pi.key) { e.currentTarget.style.background = 'var(--bg-hover)'; e.currentTarget.style.color = 'var(--text-main)'; } }}
                               onMouseLeave={e => { if (fieldIcons[m.field] !== pi.key) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#6b7280'; } }}
                             >
                               <span style={{ width: 16, height: 16, display: 'flex' }} dangerouslySetInnerHTML={{ __html: (TPL_ICONS as Record<string, string>)[pi.key] || '' }} />
@@ -1320,26 +1373,26 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
               {hasField('description') && <div><label style={labelStyle}>Descrizione</label><textarea value={fields.descrizione} onChange={e => setField('descrizione', e.target.value)} rows={2} placeholder="Informazioni sull'immobile..." style={{ ...inputStyle, lineHeight: 1.5 }} /></div>}
             </div>
             {/* style card */}
-            <div style={{ background: '#fff', border: '1px solid #f0ede7', borderRadius: 12, padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: '#8c867d', textTransform: 'uppercase' as const, letterSpacing: '0.05em' }}>Stile</div>
+            <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)', borderRadius: 12, padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' as const, letterSpacing: '0.05em' }}>Stile</div>
               {/* logo toggle */}
               <div style={s('display:flex;align-items:center;justify-content:space-between')}>
                 <span style={{ fontSize: 13, fontWeight: 600 }}>Logo</span>
-                <div onClick={() => setShowLogo(!showLogo)} style={{ width: 40, height: 24, borderRadius: 99, background: showLogo ? '#3B83F6' : '#d8d4cb', position: 'relative', cursor: 'pointer', transition: 'background .2s' }}>
-                  <span style={{ position: 'absolute', top: 3, left: showLogo ? 19 : 3, width: 18, height: 18, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,.2)', transition: 'left .2s' }} />
+                <div onClick={() => setShowLogo(!showLogo)} style={{ width: 40, height: 24, borderRadius: 99, background: showLogo ? '#3B83F6' : 'var(--border-dark)', position: 'relative', cursor: 'pointer', transition: 'background .2s' }}>
+                  <span style={{ position: 'absolute', top: 3, left: showLogo ? 19 : 3, width: 18, height: 18, borderRadius: '50%', background: 'var(--bg-card)', boxShadow: '0 1px 3px rgba(0,0,0,.2)', transition: 'left .2s' }} />
                 </div>
               </div>
               {/* logo variant picker — only when logos are loaded in Brand */}
               {showLogo && BRAND_LOGO_KEYS.some(k => allBrandLogos[k]) && (() => {
                 const opts = [{ key: 'auto', label: 'Logo automatico', src: null as string | null }, ...BRAND_LOGO_KEYS.filter(k => allBrandLogos[k]).map(k => ({ key: k as string, label: LOGO_VARIANT_LABELS[k], src: allBrandLogos[k] }))];
                 const cur = opts.find(o => o.key === selectedLogoKey) || opts[0];
-                const thumbBg = (key: string) => key.startsWith('white') ? '#211f1c' : '#f6f4f0';
+                const thumbBg = (key: string) => key.startsWith('white') ? 'var(--text-main)' : 'var(--bg-hover)';
                 return (
                   <>
                     <div style={{ position: 'relative' }}>
                       <Box as="button" onClick={() => setLogoMenuOpen(o => !o)} style={{
-                        width: '100%', border: '1px solid #e4e1da', borderRadius: 10, padding: '8px 12px',
-                        fontSize: 13, fontWeight: 600, background: '#fff', cursor: 'pointer', color: '#211f1c',
+                        width: '100%', border: '1px solid var(--border-main)', borderRadius: 10, padding: '8px 12px',
+                        fontSize: 13, fontWeight: 600, background: 'var(--bg-card)', cursor: 'pointer', color: 'var(--text-main)',
                         display: 'flex', alignItems: 'center', gap: 10, minHeight: 40,
                       }} hover={{ background: '#faf9f7' }}>
                         {cur.src && (
@@ -1348,14 +1401,14 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
                           </span>
                         )}
                         <span style={{ flex: 1, textAlign: 'left', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{cur.label}</span>
-                        <Icon name="chevron-down" size={15} color="#8c867d" />
+                        <Icon name="chevron-down" size={15} color="var(--text-muted)" />
                       </Box>
                       {logoMenuOpen && (
                         <>
                           <div onClick={() => setLogoMenuOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 40 }} />
                           <div style={{
                             position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 50,
-                            background: '#fff', border: '1px solid #e4e1da', borderRadius: 10,
+                            background: 'var(--bg-card)', border: '1px solid var(--border-main)', borderRadius: 10,
                             boxShadow: '0 8px 24px rgba(33,31,28,.12)', padding: 4, maxHeight: 280, overflowY: 'auto',
                           }}>
                             {opts.map(o => (
@@ -1363,7 +1416,7 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
                                 display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', borderRadius: 7, cursor: 'pointer',
                                 background: o.key === selectedLogoKey ? '#eef4fe' : 'transparent',
                               }}
-                                onMouseEnter={e => { if (o.key !== selectedLogoKey) e.currentTarget.style.background = '#f6f4f0'; }}
+                                onMouseEnter={e => { if (o.key !== selectedLogoKey) e.currentTarget.style.background = 'var(--bg-hover)'; }}
                                 onMouseLeave={e => { if (o.key !== selectedLogoKey) e.currentTarget.style.background = 'transparent'; }}
                               >
                                 {o.src ? (
@@ -1371,18 +1424,18 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
                                     <img src={o.src} alt="" style={{ maxWidth: '80%', maxHeight: '80%', objectFit: 'contain' }} />
                                   </span>
                                 ) : (
-                                  <span style={{ width: 32, height: 22, borderRadius: 4, background: '#f0ede7', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}>
-                                    <Icon name="sparkles" size={13} color="#8c867d" />
+                                  <span style={{ width: 32, height: 22, borderRadius: 4, background: 'var(--border-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}>
+                                    <Icon name="sparkles" size={13} color="var(--text-muted)" />
                                   </span>
                                 )}
-                                <span style={{ fontSize: 13, fontWeight: o.key === selectedLogoKey ? 700 : 500, color: '#211f1c' }}>{o.label}</span>
+                                <span style={{ fontSize: 13, fontWeight: o.key === selectedLogoKey ? 700 : 500, color: 'var(--text-main)' }}>{o.label}</span>
                               </div>
                             ))}
                           </div>
                         </>
                       )}
                     </div>
-                    <div style={{ height: 1, background: '#f0ede7', margin: '4px 0' }} />
+                    <div style={{ height: 1, background: 'var(--border-light)', margin: '4px 0' }} />
                   </>
                 );
               })()}
@@ -1391,29 +1444,29 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
               <>
               <div style={s('display:flex;align-items:center;justify-content:space-between')}>
                 <span style={{ fontSize: 13, fontWeight: 600 }}>Foto full screen</span>
-                <div onClick={() => setFitCover(!fitCover)} style={{ width: 40, height: 24, borderRadius: 99, background: fitCover ? '#3B83F6' : '#d8d4cb', position: 'relative', cursor: 'pointer', transition: 'background .2s' }}>
-                  <span style={{ position: 'absolute', top: 3, left: fitCover ? 19 : 3, width: 18, height: 18, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,.2)', transition: 'left .2s' }} />
+                <div onClick={() => setFitCover(!fitCover)} style={{ width: 40, height: 24, borderRadius: 99, background: fitCover ? '#3B83F6' : 'var(--border-dark)', position: 'relative', cursor: 'pointer', transition: 'background .2s' }}>
+                  <span style={{ position: 'absolute', top: 3, left: fitCover ? 19 : 3, width: 18, height: 18, borderRadius: '50%', background: 'var(--bg-card)', boxShadow: '0 1px 3px rgba(0,0,0,.2)', transition: 'left .2s' }} />
                 </div>
               </div>
-              <div style={{ height: 1, background: '#f0ede7', margin: '4px 0' }} />
+              <div style={{ height: 1, background: 'var(--border-light)', margin: '4px 0' }} />
               </>
               )}
               {/* badge toggle */}
               {hasField('badge') && <div>
                 <div style={s('display:flex;align-items:center;justify-content:space-between')}>
                   <span style={{ fontSize: 13, fontWeight: 600 }}>Badge</span>
-                  <div onClick={() => setShowBadge(!showBadge)} style={{ width: 40, height: 24, borderRadius: 99, background: showBadge ? '#3B83F6' : '#d8d4cb', position: 'relative', cursor: 'pointer', transition: 'background .2s' }}>
-                    <span style={{ position: 'absolute', top: 3, left: showBadge ? 19 : 3, width: 18, height: 18, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,.2)', transition: 'left .2s' }} />
+                  <div onClick={() => setShowBadge(!showBadge)} style={{ width: 40, height: 24, borderRadius: 99, background: showBadge ? '#3B83F6' : 'var(--border-dark)', position: 'relative', cursor: 'pointer', transition: 'background .2s' }}>
+                    <span style={{ position: 'absolute', top: 3, left: showBadge ? 19 : 3, width: 18, height: 18, borderRadius: '50%', background: 'var(--bg-card)', boxShadow: '0 1px 3px rgba(0,0,0,.2)', transition: 'left .2s' }} />
                   </div>
                 </div>
                 {showBadge && <input value={fields.badgeTxt} onChange={e => setField('badgeTxt', e.target.value)} placeholder="Es. Nuovo" style={{ ...inputStyle, marginTop: 8 }} />}
               </div>}
-              <div style={{ height: 1, background: '#f0ede7', marginTop: 4, marginBottom: 4 }} />
+              <div style={{ height: 1, background: 'var(--border-light)', marginTop: 4, marginBottom: 4 }} />
               {/* oscuramento */}
               <div>
                 <div style={s('display:flex;align-items:center;justify-content:space-between;margin-bottom:6px')}>
                   <span style={{ fontSize: 13, fontWeight: 600 }}>Oscuramento</span>
-                  <span style={{ fontSize: 12, fontWeight: 800, color: '#8c867d' }}>{oscuramento}%</span>
+                  <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--text-muted)' }}>{oscuramento}%</span>
                 </div>
                 <input type="range" min={0} max={100} value={oscuramento} onChange={e => setOscuramento(+e.target.value)} style={{ width: '100%', accentColor: '#3B83F6' }} />
               </div>
@@ -1430,14 +1483,14 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
               const tip = noPhoto ? 'Carica una foto per esportare' : missingExtra ? `Carica tutte le ${curTpl.multiPhoto} foto per esportare` : isVideo ? 'Hai caricato un video: scarica il video' : undefined;
               return (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <Box as="button" title={tip} onClick={() => { if (!disImg) handleExportImage(); }} style={{ border: '1px solid #e4e1da', background: '#fff', fontSize: 13, fontWeight: 700, padding: '12px 16px', borderRadius: 10, cursor: disImg ? 'default' : 'pointer', minHeight: 42, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: disImg ? 0.4 : 1 }} hover={disImg ? {} : { background: '#f6f4f0' }}>
-                <Icon name="download" size={15} color="#57534c" />{exporting === 'image' ? 'Esportazione...' : 'Scarica immagine'}
+              <Box as="button" title={tip} onClick={() => { if (!disImg) handleExportImage(); }} style={{ border: '1px solid var(--border-main)', background: 'var(--bg-card)', fontSize: 13, fontWeight: 700, padding: '12px 16px', borderRadius: 10, cursor: disImg ? 'default' : 'pointer', minHeight: 42, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: disImg ? 0.4 : 1 }} hover={disImg ? {} : { background: 'var(--bg-hover)' }}>
+                <Icon name="download" size={15} color="var(--text-sec)" />{exporting === 'image' ? 'Esportazione...' : 'Scarica immagine'}
               </Box>
-              <Box as="button" title={tip} onClick={() => { if (!dis) setShowAnimPicker(true); }} style={{ border: '1px solid #e4e1da', background: '#fff', fontSize: 13, fontWeight: 700, padding: '12px 16px', borderRadius: 10, cursor: dis ? 'default' : 'pointer', minHeight: 42, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: dis ? 0.4 : 1 }} hover={dis ? {} : { background: '#f6f4f0' }}>
-                <Icon name="film" size={15} color="#57534c" />Scarica video
+              <Box as="button" title={tip} onClick={() => { if (!dis) setShowAnimPicker(true); }} style={{ border: '1px solid var(--border-main)', background: 'var(--bg-card)', fontSize: 13, fontWeight: 700, padding: '12px 16px', borderRadius: 10, cursor: dis ? 'default' : 'pointer', minHeight: 42, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: dis ? 0.4 : 1 }} hover={dis ? {} : { background: 'var(--bg-hover)' }}>
+                <Icon name="film" size={15} color="var(--text-sec)" />Scarica video
               </Box>
-              <Box as="button" title={tip} onClick={() => { if (!disImg) handleExportAll(); }} style={{ border: '1px dashed #d8d4cb', background: 'transparent', fontSize: 12, fontWeight: 600, padding: '10px 16px', borderRadius: 10, cursor: disImg ? 'default' : 'pointer', minHeight: 38, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: disImg ? 0.4 : 1, color: '#8c867d' }} hover={disImg ? {} : { background: '#f6f4f0', color: '#57534c' }}>
-                <Icon name="layers" size={14} color="#8c867d" />{exporting === 'image' ? 'Esportazione...' : `Scarica tutti (${TEMPLATES.length})`}
+              <Box as="button" title={tip} onClick={() => { if (!disImg) handleExportAll(); }} style={{ border: '1px dashed var(--border-dark)', background: 'transparent', fontSize: 12, fontWeight: 600, padding: '10px 16px', borderRadius: 10, cursor: disImg ? 'default' : 'pointer', minHeight: 38, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: disImg ? 0.4 : 1, color: 'var(--text-muted)' }} hover={disImg ? {} : { background: 'var(--bg-hover)', color: 'var(--text-sec)' }}>
+                <Icon name="layers" size={14} color="var(--text-muted)" />{exporting === 'image' ? 'Esportazione...' : `Scarica tutti (${TEMPLATES.length})`}
               </Box>
             </div>
             ); })()}
@@ -1448,14 +1501,14 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
       {/* Animation picker modal */}
       {(showAnimPicker || exporting === 'video') && (
         <div onClick={() => { if (exporting !== 'video') setShowAnimPicker(false); }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.45)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 20, padding: '28px 28px 24px', width: 'min(520px, 92vw)', boxShadow: '0 24px 64px rgba(0,0,0,.22)' }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: 'var(--bg-card)', borderRadius: 20, padding: '28px 28px 24px', width: 'min(520px, 92vw)', boxShadow: '0 24px 64px rgba(0,0,0,.22)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
               <div>
-                <div style={{ fontSize: 18, fontWeight: 800, color: '#211f1c' }}>{exporting === 'video' ? 'Generazione video' : 'Stile animazione'}</div>
-                <div style={{ fontSize: 13, color: '#8c867d', marginTop: 2 }}>{exporting === 'video' ? 'Attendi, stiamo creando il tuo video' : 'Scegli come appaiono gli elementi nel video'}</div>
+                <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-main)' }}>{exporting === 'video' ? 'Generazione video' : 'Stile animazione'}</div>
+                <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 2 }}>{exporting === 'video' ? 'Attendi, stiamo creando il tuo video' : 'Scegli come appaiono gli elementi nel video'}</div>
               </div>
-              <button onClick={() => { if (exporting === 'video') exportAbortRef.current?.abort(); else setShowAnimPicker(false); }} style={{ border: 'none', background: '#f6f4f0', borderRadius: 8, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }} title={exporting === 'video' ? 'Annulla' : 'Chiudi'}>
-                <Icon name="x" size={16} color="#57534c" />
+              <button onClick={() => { if (exporting === 'video') exportAbortRef.current?.abort(); else setShowAnimPicker(false); }} style={{ border: 'none', background: 'var(--bg-hover)', borderRadius: 8, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }} title={exporting === 'video' ? 'Annulla' : 'Chiudi'}>
+                <Icon name="x" size={16} color="var(--text-sec)" />
               </button>
             </div>
             {exporting === 'video' ? (
@@ -1468,7 +1521,7 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src="/dashboard/logo-mark-white.svg" alt="" style={{ position: 'relative', width: 56, height: 56, animation: 'aurora-pulse 4s ease-in-out infinite' }} />
                 </div>
-                <span style={{ fontSize: 32, fontWeight: 800, color: '#211f1c', lineHeight: 1 }}>{exportProgress}%</span>
+                <span style={{ fontSize: 32, fontWeight: 800, color: 'var(--text-main)', lineHeight: 1 }}>{exportProgress}%</span>
                 <span style={{ fontSize: 11, fontWeight: 600, color: '#b3aca1', marginTop: 2, textTransform: 'uppercase', letterSpacing: '.06em' }}>Rendering</span>
               </div>
             ) : (
@@ -1480,11 +1533,11 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
                       display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, padding: '14px 6px 10px',
                       borderRadius: 12, cursor: 'pointer',
                       border: sel ? '2px solid #3B83F6' : '2px solid transparent',
-                      background: sel ? '#eef4fe' : '#f6f4f0',
+                      background: sel ? '#eef4fe' : 'var(--bg-hover)',
                       transition: 'all .15s',
                     }}
                       onMouseEnter={e => { if (!sel) e.currentTarget.style.background = '#ece9e2'; }}
-                      onMouseLeave={e => { if (!sel) e.currentTarget.style.background = '#f6f4f0'; }}
+                      onMouseLeave={e => { if (!sel) e.currentTarget.style.background = 'var(--bg-hover)'; }}
                     >
                       <div className={`acp--${a.id}`} style={{ width: 68, height: 95, borderRadius: 8, background: 'linear-gradient(145deg, #2a2733, #1a1825)', position: 'relative', overflow: 'hidden', flexShrink: 0 }}>
                         <div className="aw aw-badge" />
@@ -1496,14 +1549,14 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
                         <div className="aw aw-m3" />
                         <div className="aw aw-desc" />
                       </div>
-                      <span style={{ fontSize: 11, fontWeight: 600, color: sel ? '#1d5fd0' : '#57534c' }}>{a.label}</span>
+                      <span style={{ fontSize: 11, fontWeight: 600, color: sel ? '#1d5fd0' : 'var(--text-sec)' }}>{a.label}</span>
                     </div>
                   );
                 })}
               </div>
             )}
             {exporting !== 'video' && (
-              <Box as="button" onClick={() => handleExportVideo()} style={{ border: '2px solid transparent', background: '#3B83F6', color: '#fff', fontSize: 14, fontWeight: 700, padding: '13px 16px', borderRadius: 12, cursor: 'pointer', minHeight: 44, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }} hover={{ background: '#2b6fe0', color: '#fff' }}>
+              <Box as="button" onClick={() => handleExportVideo()} style={{ border: '2px solid transparent', background: '#3B83F6', color: 'var(--bg-card)', fontSize: 14, fontWeight: 700, padding: '13px 16px', borderRadius: 12, cursor: 'pointer', minHeight: 44, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }} hover={{ background: '#2b6fe0', color: 'var(--bg-card)' }}>
                 <Icon name="download" size={16} color="currentColor" />Scarica video
               </Box>
             )}
@@ -1516,24 +1569,24 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
         <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr', gap: 24, alignItems: 'start', maxWidth: 980 }}>
           {/* preview thumb */}
           <div style={s('display:flex;flex-direction:column;align-items:center;gap:10px')}>
-            <div style={{ width: 240, aspectRatio: '4/5', borderRadius: 16, overflow: 'hidden', boxShadow: '0 10px 28px rgba(33,31,28,.12)', display: 'flex', flexDirection: 'column', background: '#fff' }}>
+            <div style={{ width: 240, aspectRatio: '4/5', borderRadius: 16, overflow: 'hidden', boxShadow: '0 10px 28px rgba(33,31,28,.12)', display: 'flex', flexDirection: 'column', background: 'var(--bg-card)' }}>
               <div style={{ flex: 1, background: 'url(https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=400&h=500&fit=crop) center/cover' }} />
               <div style={{ flex: 'none', background: 'linear-gradient(0deg, rgba(20,18,15,.92), rgba(20,18,15,.78))', padding: '10px 12px' }}>
-                <div style={{ fontSize: 11, fontWeight: 800, color: '#fff' }}>{fields.titolo || 'Appartamento'}</div>
+                <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--bg-card)' }}>{fields.titolo || 'Appartamento'}</div>
               </div>
             </div>
-            <span style={{ fontSize: 12, fontWeight: 700, color: '#8c867d' }}>{curFmt.label}</span>
+            <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)' }}>{curFmt.label}</span>
           </div>
           {/* publish form */}
-          <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:12px;padding:22px;display:flex;flex-direction:column;gap:15px')}>
+          <div style={s('background:var(--bg-card);border:1px solid var(--border-light);border-radius:12px;padding:22px;display:flex;flex-direction:column;gap:15px')}>
             <div>
               <div style={{ fontSize: 12.5, fontWeight: 700, marginBottom: 8 }}>Piattaforme</div>
               <div style={s('display:flex;gap:8px')}>
                 {(['instagram', 'facebook', 'tiktok'] as const).map(pp => (
                   <Box as="button" key={pp} onClick={() => setPubPlatforms(p => ({ ...p, [pp]: !p[pp] }))} style={{
-                    border: `1px solid ${pubPlatforms[pp] ? '#3B83F6' : '#e4e1da'}`,
-                    background: pubPlatforms[pp] ? '#eef4fe' : '#fff',
-                    color: pubPlatforms[pp] ? '#1d5fd0' : '#57534c',
+                    border: `1px solid ${pubPlatforms[pp] ? '#3B83F6' : 'var(--border-main)'}`,
+                    background: pubPlatforms[pp] ? '#eef4fe' : 'var(--bg-card)',
+                    color: pubPlatforms[pp] ? '#1d5fd0' : 'var(--text-sec)',
                     fontSize: 13, fontWeight: 700, padding: '9px 18px', borderRadius: 8, cursor: 'pointer', minHeight: 38,
                     textTransform: 'capitalize',
                   }} hover={{ borderColor: '#3B83F6' }}>{pp}</Box>
@@ -1545,9 +1598,9 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
               <div style={s('display:flex;gap:8px')}>
                 {(['schedule', 'now'] as const).map(m => (
                   <Box as="button" key={m} onClick={() => setPubMode(m)} style={{
-                    border: `1px solid ${pubMode === m ? '#3B83F6' : '#e4e1da'}`,
-                    background: pubMode === m ? '#eef4fe' : '#fff',
-                    color: pubMode === m ? '#1d5fd0' : '#57534c',
+                    border: `1px solid ${pubMode === m ? '#3B83F6' : 'var(--border-main)'}`,
+                    background: pubMode === m ? '#eef4fe' : 'var(--bg-card)',
+                    color: pubMode === m ? '#1d5fd0' : 'var(--text-sec)',
                     fontSize: 13, fontWeight: 700, padding: '9px 18px', borderRadius: 8, cursor: 'pointer', minHeight: 38,
                   }} hover={{ borderColor: '#3B83F6' }}>{m === 'schedule' ? 'Programma' : 'Pubblica ora'}</Box>
                 ))}
@@ -1557,19 +1610,19 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
               <div>
                 <label style={labelStyle}>Data e ora</label>
                 <input type="datetime-local" style={inputStyle} />
-                <div style={{ fontSize: 11.5, color: '#8c867d', marginTop: 5 }}>Instagram consente di programmare fino a 75 giorni in anticipo.</div>
+                <div style={{ fontSize: 11.5, color: 'var(--text-muted)', marginTop: 5 }}>Instagram consente di programmare fino a 75 giorni in anticipo.</div>
               </div>
             )}
             <div>
               <div style={s('display:flex;align-items:center;justify-content:space-between;margin-bottom:5px')}>
                 <label style={{ fontSize: 12.5, fontWeight: 700 }}>Caption</label>
-                <span style={{ fontSize: 11.5, fontWeight: 700, color: '#8c867d' }}>{caption.length}/2200</span>
+                <span style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--text-muted)' }}>{caption.length}/2200</span>
               </div>
               <textarea value={caption} onChange={e => setCaption(e.target.value)} rows={3} maxLength={2200} placeholder="Descrizione del post..." style={{ ...inputStyle, lineHeight: 1.5 }} />
             </div>
             <div><label style={labelStyle}>Hashtags</label><input value={hashtags} onChange={e => setHashtags(e.target.value)} placeholder="#immobiliare #casainvendita" style={inputStyle} /></div>
             <div><label style={labelStyle}>Primo commento (opzionale)</label><input value={firstComment} onChange={e => setFirstComment(e.target.value)} placeholder="Commento automatico dopo la pubblicazione..." style={inputStyle} /></div>
-            <Box as="button" onClick={() => { toast('Post programmato con successo', 'check'); setStep(1); }} style={s('border:none;background:#3B83F6;color:#fff;font-size:13.5px;font-weight:700;padding:12px 16px;border-radius:8px;cursor:pointer;min-height:38px;margin-top:4px')} hover={s('background:#2b6fe0')}>
+            <Box as="button" onClick={() => { toast('Post programmato con successo', 'check'); setStep(1); }} style={s('border:none;background:#3B83F6;color:var(--bg-card);font-size:13.5px;font-weight:700;padding:12px 16px;border-radius:8px;cursor:pointer;min-height:38px;margin-top:4px')} hover={s('background:#2b6fe0')}>
               {pubMode === 'schedule' ? 'Programma' : 'Pubblica ora'}
             </Box>
           </div>
@@ -1585,10 +1638,10 @@ function UsageBar({ label, used, total, color }: { label: string; used: number; 
   return (
     <div style={s('flex:1;min-width:0')}>
       <div style={s('display:flex;align-items:baseline;justify-content:space-between;margin-bottom:6px')}>
-        <span style={s('font-size:13px;font-weight:700;color:#211f1c')}>{label}</span>
-        <span style={s('font-size:12.5px;font-weight:700;color:#8c867d')}>{used} / {total}</span>
+        <span style={s('font-size:13px;font-weight:700;color:var(--text-main)')}>{label}</span>
+        <span style={s('font-size:12.5px;font-weight:700;color:var(--text-muted)')}>{used} / {total}</span>
       </div>
-      <div style={{ height: 6, background: '#f0ede7', borderRadius: 3, overflow: 'hidden' }}>
+      <div style={{ height: 6, background: 'var(--border-light)', borderRadius: 3, overflow: 'hidden' }}>
         <div style={{ height: '100%', width: pct + '%', background: color, borderRadius: 3, transition: 'width .4s ease' }} />
       </div>
     </div>
@@ -1605,19 +1658,19 @@ function AccountScreen({ credits, toast, go, userData }: { credits: number; toas
       {/* header */}
       <div style={s('margin-bottom:24px')}>
         <h1 style={s('margin:0 0 4px;font-size:25px;font-weight:800;letter-spacing:-.5px')}>Piano</h1>
-        <div style={s('color:#8c867d;font-size:14px')}>Gestisci il tuo abbonamento.</div>
+        <div style={s('color:var(--text-muted);font-size:14px')}>Gestisci il tuo abbonamento.</div>
       </div>
 
       {/* ── CURRENT PLAN SUMMARY ── */}
-      <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:14px;padding:24px 28px;margin-bottom:20px')}>
+      <div style={s('background:var(--bg-card);border:1px solid var(--border-light);border-radius:14px;padding:24px 28px;margin-bottom:20px')}>
         <div className="max-md:!flex-col max-md:!items-start" style={s('display:flex;align-items:center;gap:20px')}>
           <div style={s('flex:1;min-width:0')}>
             <div style={s('display:flex;align-items:center;gap:10px')}>
               <span style={s('font-size:18px;font-weight:800;letter-spacing:-.3px')}>Piano {currentPlan.name}</span>
-              <span style={s('font-size:10.5px;font-weight:800;background:#3B83F6;color:#fff;padding:4px 12px;border-radius:8px;letter-spacing:.03em')}>ATTIVO</span>
+              <span style={s('font-size:10.5px;font-weight:800;background:#3B83F6;color:var(--bg-card);padding:4px 12px;border-radius:8px;letter-spacing:.03em')}>ATTIVO</span>
             </div>
           </div>
-          <Box as="button" onClick={() => window.open(STRIPE_BILLING_PORTAL, '_blank')} className="max-md:!w-full" style={s('border:1px solid #e4e1da;background:#fff;font-size:13px;font-weight:700;padding:10px 18px;border-radius:10px;cursor:pointer;min-height:44px;white-space:nowrap')} hover={s('background:#f6f4f0')}>Gestisci piano</Box>
+          <Box as="button" onClick={() => window.open(STRIPE_BILLING_PORTAL, '_blank')} className="max-md:!w-full" style={s('border:1px solid var(--border-main);background:var(--bg-card);font-size:13px;font-weight:700;padding:10px 18px;border-radius:10px;cursor:pointer;min-height:44px;white-space:nowrap')} hover={s('background:var(--bg-hover)')}>Gestisci piano</Box>
         </div>
       </div>
 
@@ -1630,7 +1683,7 @@ function AccountScreen({ credits, toast, go, userData }: { credits: number; toas
             const savings = plan.price < monthlyCost ? (monthlyCost - plan.price) * 12 : 0;
             return (
               <Box key={plan.id} style={{
-                background: active ? '#3B83F6' : '#fff',
+                background: active ? '#3B83F6' : 'var(--bg-card)',
                 border: active ? '2px solid #3B83F6' : '1.5px solid #ece9e2',
                 borderRadius: 16,
                 padding: '32px 28px 28px',
@@ -1650,37 +1703,37 @@ function AccountScreen({ credits, toast, go, userData }: { credits: number; toas
                     position: 'absolute', top: -11, left: '50%', transform: 'translateX(-50%)',
                     fontSize: 10.5, fontWeight: 800, padding: '5px 16px', borderRadius: 20,
                     whiteSpace: 'nowrap', letterSpacing: '.04em', textTransform: 'uppercase',
-                    background: active ? '#fff' : '#211f1c', color: active ? '#3B83F6' : '#fff',
+                    background: active ? 'var(--bg-card)' : 'var(--text-main)', color: active ? '#3B83F6' : 'var(--bg-card)',
                     boxShadow: '0 2px 8px rgba(33,31,28,.12)',
                   }}>{plan.badge}</span>
                 )}
 
                 <div style={s('display:flex;align-items:center;justify-content:space-between;margin-bottom:6px')}>
-                  <span style={{ fontSize: 15, fontWeight: 700, color: active ? 'rgba(255,255,255,.85)' : '#8c867d', letterSpacing: '.02em', textTransform: 'uppercase' }}>{plan.name}</span>
-                  {active && <span style={{ fontSize: 11, fontWeight: 800, background: 'rgba(255,255,255,.2)', color: '#fff', padding: '5px 14px', borderRadius: 20, letterSpacing: '.03em' }}>ATTIVO</span>}
+                  <span style={{ fontSize: 15, fontWeight: 700, color: active ? 'rgba(255,255,255,.85)' : 'var(--text-muted)', letterSpacing: '.02em', textTransform: 'uppercase' }}>{plan.name}</span>
+                  {active && <span style={{ fontSize: 11, fontWeight: 800, background: 'rgba(255,255,255,.2)', color: 'var(--bg-card)', padding: '5px 14px', borderRadius: 20, letterSpacing: '.03em' }}>ATTIVO</span>}
                 </div>
 
                 <div style={s('display:flex;align-items:baseline;gap:6px')}>
-                  <span style={{ fontSize: 48, fontWeight: 800, color: active ? '#fff' : '#211f1c', letterSpacing: -2, lineHeight: 1 }}>{plan.price}€</span>
+                  <span style={{ fontSize: 48, fontWeight: 800, color: active ? 'var(--bg-card)' : 'var(--text-main)', letterSpacing: -2, lineHeight: 1 }}>{plan.price}€</span>
                   <span style={{ fontSize: 16, fontWeight: 600, color: active ? 'rgba(255,255,255,.55)' : '#b3aca1' }}>{plan.period}</span>
                 </div>
                 {savings > 0 && (
                   <div style={{ fontSize: 12.5, fontWeight: 700, color: active ? 'rgba(255,255,255,.7)' : '#10b981', marginTop: 4 }}>Risparmi {savings}€/anno vs Mensile</div>
                 )}
 
-                <div style={{ height: 1, background: active ? 'rgba(255,255,255,.15)' : '#f0ede7', margin: '20px 0' }} />
+                <div style={{ height: 1, background: active ? 'rgba(255,255,255,.15)' : 'var(--border-light)', margin: '20px 0' }} />
 
                 <div style={s('display:flex;flex-direction:column;gap:14px;flex:1')}>
                   {plan.features.map((f, i) => (
                     <div key={i} style={s('display:flex;align-items:center;gap:12px')}>
                       <span style={{
                         width: 22, height: 22, flex: 'none', borderRadius: '50%',
-                        background: active ? 'rgba(255,255,255,.2)' : '#f0ede7',
+                        background: active ? 'rgba(255,255,255,.2)' : 'var(--border-light)',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                       }}>
-                        <Icon name="check" size={12} color={active ? '#fff' : '#8c867d'} />
+                        <Icon name="check" size={12} color={active ? 'var(--bg-card)' : 'var(--text-muted)'} />
                       </span>
-                      <span style={{ fontSize: 14.5, fontWeight: 500, color: active ? 'rgba(255,255,255,.92)' : '#57534c', lineHeight: 1.45 }}>{f}</span>
+                      <span style={{ fontSize: 14.5, fontWeight: 500, color: active ? 'rgba(255,255,255,.92)' : 'var(--text-sec)', lineHeight: 1.45 }}>{f}</span>
                     </div>
                   ))}
                 </div>
@@ -1691,8 +1744,8 @@ function AccountScreen({ credits, toast, go, userData }: { credits: number; toas
                 }} style={{
                   marginTop: 28,
                   border: 'none',
-                  background: active ? '#fff' : '#211f1c',
-                  color: active ? '#3B83F6' : '#fff',
+                  background: active ? 'var(--bg-card)' : 'var(--text-main)',
+                  color: active ? '#3B83F6' : 'var(--bg-card)',
                   fontSize: 15, fontWeight: 700, padding: '14px 20px', borderRadius: 12,
                   cursor: 'pointer', minHeight: 48, width: '100%',
                   transition: 'background .2s, transform .15s',
@@ -1717,14 +1770,14 @@ function AccountScreen({ credits, toast, go, userData }: { credits: number; toas
 /* ───── BRAND AGENZIA SCREEN ───── */
 const LOGO_ROWS = [
   { label: 'Icona', variants: [
-    { key: 'logo_white_v', label: 'Bianco', bg: '#211f1c' },
-    { key: 'logo_black_v', label: 'Nero', bg: '#fff' },
-    { key: 'logo_colored_v', label: 'Colore', bg: '#f6f4f0' },
+    { key: 'logo_white_v', label: 'Bianco', bg: 'var(--text-main)' },
+    { key: 'logo_black_v', label: 'Nero', bg: 'var(--bg-card)' },
+    { key: 'logo_colored_v', label: 'Colore', bg: 'var(--bg-hover)' },
   ]},
   { label: 'Logo + Nome', variants: [
-    { key: 'logo_white_h', label: 'Bianco', bg: '#211f1c' },
-    { key: 'logo_black_h', label: 'Nero', bg: '#fff' },
-    { key: 'logo_colored_h', label: 'Colore', bg: '#f6f4f0' },
+    { key: 'logo_white_h', label: 'Bianco', bg: 'var(--text-main)' },
+    { key: 'logo_black_h', label: 'Nero', bg: 'var(--bg-card)' },
+    { key: 'logo_colored_h', label: 'Colore', bg: 'var(--bg-hover)' },
   ]},
 ] as const;
 
@@ -1770,24 +1823,24 @@ function SettingsScreen({ toast }: { toast: (msg: string, icon?: string) => void
   return (
     <div style={s('max-width:1160px;margin:0 auto;padding:36px 32px 64px')}>
       <h1 style={s('margin:0 0 4px;font-size:27px;font-weight:800;letter-spacing:-.5px')}>Impostazioni</h1>
-      <div style={s('color:#8c867d;font-size:14px;margin-bottom:28px')}>Gestisci il tuo account e le preferenze dell'app.</div>
+      <div style={s('color:var(--text-muted);font-size:14px;margin-bottom:28px')}>Gestisci il tuo account e le preferenze dell'app.</div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
         {/* Info Box */}
-        <div style={{ background: '#fff', border: '1px solid #f0ede7', borderRadius: 16, padding: 24 }}>
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)', borderRadius: 16, padding: 24 }}>
           <h3 style={{ margin: '0 0 16px', fontSize: 15, fontWeight: 700 }}>Informazioni</h3>
           
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid #f0ede7' }}>
-            <div style={{ fontSize: 14, fontWeight: 600, color: '#211f1c' }}>Versione App</div>
-            <div style={{ fontSize: 14, color: '#8c867d' }}>1.0.0</div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid var(--border-light)' }}>
+            <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-main)' }}>Versione App</div>
+            <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>1.0.0</div>
           </div>
-          <a href="https://www.getnearme.it/it/privacy" target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid #f0ede7', textDecoration: 'none' }}>
-            <div style={{ fontSize: 14, fontWeight: 600, color: '#211f1c' }}>Privacy Policy</div>
-            <Icon name="external-link" size={14} color="#8c867d" />
+          <a href="https://www.getnearme.it/it/privacy" target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid var(--border-light)', textDecoration: 'none' }}>
+            <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-main)' }}>Privacy Policy</div>
+            <Icon name="external-link" size={14} color="var(--text-muted)" />
           </a>
           <a href="https://www.getnearme.it/it/terms" target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', textDecoration: 'none' }}>
-            <div style={{ fontSize: 14, fontWeight: 600, color: '#211f1c' }}>Termini e Condizioni</div>
-            <Icon name="external-link" size={14} color="#8c867d" />
+            <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-main)' }}>Termini e Condizioni</div>
+            <Icon name="external-link" size={14} color="var(--text-muted)" />
           </a>
         </div>
 
@@ -1801,8 +1854,8 @@ function SettingsScreen({ toast }: { toast: (msg: string, icon?: string) => void
           </div>
 
           <div style={{ flex: 'none' }}>
-            <Box as="button" onClick={() => { setDeleteModalOpen(true); setDeleteConfirmText(''); }} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 16px', borderRadius: 8, fontSize: 13.5, fontWeight: 700, background: '#dc2626', color: '#fff', border: 'none', cursor: 'pointer' } as React.CSSProperties} hover={{ background: '#b91c1c' }}>
-              <Icon name="trash" size={16} color="#fff" />
+            <Box as="button" onClick={() => { setDeleteModalOpen(true); setDeleteConfirmText(''); }} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 16px', borderRadius: 8, fontSize: 13.5, fontWeight: 700, background: '#dc2626', color: 'var(--bg-card)', border: 'none', cursor: 'pointer' } as React.CSSProperties} hover={{ background: '#b91c1c' }}>
+              <Icon name="trash" size={16} color="var(--bg-card)" />
               Elimina account
             </Box>
           </div>
@@ -1811,19 +1864,19 @@ function SettingsScreen({ toast }: { toast: (msg: string, icon?: string) => void
 
       {deleteModalOpen && (
         <div onClick={() => setDeleteModalOpen(false)} style={s('position:fixed;inset:0;background:rgba(24,21,17,.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px')}>
-          <div onClick={e => e.stopPropagation()} style={s('width:100%;max-width:440px;background:#fff;border-radius:20px;box-shadow:0 32px 64px rgba(20,18,15,.2);padding:32px')}>
+          <div onClick={e => e.stopPropagation()} style={s('width:100%;max-width:440px;background:var(--bg-card);border-radius:20px;box-shadow:0 32px 64px rgba(20,18,15,.2);padding:32px')}>
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
               <div style={{ width: 56, height: 56, borderRadius: '50%', background: '#fef2f2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <Icon name="alert-triangle" size={28} color="#dc2626" />
               </div>
             </div>
             <h3 style={{ margin: '0 0 12px', fontSize: 20, fontWeight: 800, textAlign: 'center', color: '#1a1a1a' }}>Sei assolutamente sicuro?</h3>
-            <p style={{ margin: '0 0 24px', fontSize: 14, color: '#57534c', textAlign: 'center', lineHeight: 1.5 }}>
+            <p style={{ margin: '0 0 24px', fontSize: 14, color: 'var(--text-sec)', textAlign: 'center', lineHeight: 1.5 }}>
               Questa azione <strong>non può essere annullata</strong>. L'eliminazione dell'account comporterà la perdita di tutti i tuoi dati, crediti e progetti.
             </p>
             
             <div style={{ marginBottom: 24 }}>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#211f1c', marginBottom: 8 }}>
+              <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: 'var(--text-main)', marginBottom: 8 }}>
                 Scrivi <strong style={{ color: '#dc2626' }}>ELIMINA</strong> per confermare:
               </label>
               <input 
@@ -1831,15 +1884,15 @@ function SettingsScreen({ toast }: { toast: (msg: string, icon?: string) => void
                 value={deleteConfirmText} 
                 onChange={e => setDeleteConfirmText(e.target.value)} 
                 placeholder="ELIMINA" 
-                style={{ width: '100%', border: '1px solid #e4e1da', borderRadius: 10, padding: '12px 16px', fontSize: 14, outline: 'none' }}
+                style={{ width: '100%', border: '1px solid var(--border-main)', borderRadius: 10, padding: '12px 16px', fontSize: 14, outline: 'none' }}
               />
             </div>
 
             <div style={{ display: 'flex', gap: 12 }}>
-              <Box as="button" onClick={() => setDeleteModalOpen(false)} style={{ flex: 1, padding: '12px', borderRadius: 10, fontSize: 14, fontWeight: 700, background: '#f4f2ee', color: '#57534c', border: 'none', cursor: 'pointer' } as React.CSSProperties} hover={{ background: '#e9e6df' }}>
+              <Box as="button" onClick={() => setDeleteModalOpen(false)} style={{ flex: 1, padding: '12px', borderRadius: 10, fontSize: 14, fontWeight: 700, background: 'var(--bg-body)', color: 'var(--text-sec)', border: 'none', cursor: 'pointer' } as React.CSSProperties} hover={{ background: '#e9e6df' }}>
                 Annulla
               </Box>
-              <Box as="button" disabled={deleteConfirmText !== 'ELIMINA' || deleteLoading} onClick={handleDelete} style={{ flex: 1, padding: '12px', borderRadius: 10, fontSize: 14, fontWeight: 700, background: '#dc2626', color: '#fff', border: 'none', cursor: deleteConfirmText !== 'ELIMINA' || deleteLoading ? 'not-allowed' : 'pointer', opacity: deleteConfirmText !== 'ELIMINA' || deleteLoading ? 0.5 : 1 } as React.CSSProperties} hover={deleteConfirmText === 'ELIMINA' && !deleteLoading ? { background: '#b91c1c' } : undefined}>
+              <Box as="button" disabled={deleteConfirmText !== 'ELIMINA' || deleteLoading} onClick={handleDelete} style={{ flex: 1, padding: '12px', borderRadius: 10, fontSize: 14, fontWeight: 700, background: '#dc2626', color: 'var(--bg-card)', border: 'none', cursor: deleteConfirmText !== 'ELIMINA' || deleteLoading ? 'not-allowed' : 'pointer', opacity: deleteConfirmText !== 'ELIMINA' || deleteLoading ? 0.5 : 1 } as React.CSSProperties} hover={deleteConfirmText === 'ELIMINA' && !deleteLoading ? { background: '#b91c1c' } : undefined}>
                 {deleteLoading ? 'Eliminazione...' : 'Conferma ed elimina'}
               </Box>
             </div>
@@ -1885,39 +1938,39 @@ function AssistenzaScreen({ toast, email, defaultType = 'support' }: { toast: (m
   return (
     <div style={s('max-width:800px;margin:0 auto;padding:36px 32px 64px')}>
       <h1 style={s('margin:0 0 4px;font-size:27px;font-weight:800;letter-spacing:-.5px')}>Assistenza</h1>
-      <div style={s('color:#8c867d;font-size:14px;margin-bottom:32px')}>Come possiamo aiutarti? Inviaci una segnalazione o richiedi supporto tecnico.</div>
+      <div style={s('color:var(--text-muted);font-size:14px;margin-bottom:32px')}>Come possiamo aiutarti? Inviaci una segnalazione o richiedi supporto tecnico.</div>
 
-      <div style={{ background: '#fff', border: '1px solid #f0ede7', borderRadius: 16, padding: 24 }}>
+      <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)', borderRadius: 16, padding: 24 }}>
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           
           <div>
-            <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#211f1c', marginBottom: 8 }}>Tipo di richiesta</label>
+            <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: 'var(--text-main)', marginBottom: 8 }}>Tipo di richiesta</label>
             <div style={{ position: 'relative' }}>
               <select 
                 value={type} 
                 onChange={e => setType(e.target.value)}
-                style={{ width: '100%', appearance: 'none', border: '1px solid #e4e1da', borderRadius: 10, padding: '12px 16px', fontSize: 14, outline: 'none', background: '#fff', color: '#211f1c', cursor: 'pointer' }}
+                style={{ width: '100%', appearance: 'none', border: '1px solid var(--border-main)', borderRadius: 10, padding: '12px 16px', fontSize: 14, outline: 'none', background: 'var(--bg-card)', color: 'var(--text-main)', cursor: 'pointer' }}
               >
                 <option value="support">Assistenza generale</option>
                 <option value="bug">Segnala un problema (Bug)</option>
                 <option value="feature">Richiedi funzione / Suggerimento</option>
               </select>
-              <Icon name="chevron-down" size={16} color="#8c867d" style={{ position: 'absolute', right: 16, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+              <Icon name="chevron-down" size={16} color="var(--text-muted)" style={{ position: 'absolute', right: 16, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
             </div>
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#211f1c', marginBottom: 8 }}>Messaggio</label>
+            <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: 'var(--text-main)', marginBottom: 8 }}>Messaggio</label>
             <textarea 
               value={message}
               onChange={e => setMessage(e.target.value)}
               placeholder={type === 'feature' ? 'Raccontaci la tua idea: che funzionalità ti servirebbe e perché?' : type === 'bug' ? 'Descrivi il problema nel dettaglio. Cosa stavi facendo quando si è verificato?' : 'Scrivi qui la tua richiesta...'}
-              style={{ width: '100%', border: '1px solid #e4e1da', borderRadius: 10, padding: '12px 16px', fontSize: 14, outline: 'none', minHeight: 140, resize: 'vertical' }}
+              style={{ width: '100%', border: '1px solid var(--border-main)', borderRadius: 10, padding: '12px 16px', fontSize: 14, outline: 'none', minHeight: 140, resize: 'vertical' }}
             />
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
-            <Box as="button" type="submit" disabled={loading} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '12px 24px', borderRadius: 10, fontSize: 14, fontWeight: 700, background: '#1d5fd0', color: '#fff', border: 'none', cursor: loading ? 'default' : 'pointer', opacity: loading ? 0.7 : 1 } as React.CSSProperties} hover={!loading ? { background: '#1850b0' } : undefined}>
+            <Box as="button" type="submit" disabled={loading} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '12px 24px', borderRadius: 10, fontSize: 14, fontWeight: 700, background: '#1d5fd0', color: 'var(--bg-card)', border: 'none', cursor: loading ? 'default' : 'pointer', opacity: loading ? 0.7 : 1 } as React.CSSProperties} hover={!loading ? { background: '#1850b0' } : undefined}>
               {loading ? 'Invio in corso...' : 'Invia richiesta'}
             </Box>
           </div>
@@ -2016,19 +2069,19 @@ function BrandScreen({ toast, brand: brandProp, setBrand: setBrandParent, brandR
     }
   };
 
-  const inputStyle: React.CSSProperties = { width: '100%', border: '1px solid #e4e1da', borderRadius: 10, padding: '11px 14px', fontSize: 14, fontFamily: 'inherit', outline: 'none', background: '#fff', transition: 'border-color .2s' };
+  const inputStyle: React.CSSProperties = { width: '100%', border: '1px solid var(--border-main)', borderRadius: 10, padding: '11px 14px', fontSize: 14, fontFamily: 'inherit', outline: 'none', background: 'var(--bg-card)', transition: 'border-color .2s' };
 
   return (
     <div className="max-md:!px-4 max-md:!py-6" style={s('max-width:820px;margin:0 auto;padding:32px 32px 64px')}>
       <div style={s('margin-bottom:24px')}>
         <h1 style={s('margin:0 0 4px;font-size:25px;font-weight:800;letter-spacing:-.5px')}>Brand</h1>
-        <div style={s('color:#8c867d;font-size:14px')}>Personalizza loghi, colori e informazioni che appaiono nei tuoi report e contenuti.</div>
+        <div style={s('color:var(--text-muted);font-size:14px')}>Personalizza loghi, colori e informazioni che appaiono nei tuoi report e contenuti.</div>
       </div>
 
       {/* ── LOGO SECTION ── */}
-      <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:14px;padding:24px 28px;margin-bottom:20px')}>
+      <div style={s('background:var(--bg-card);border:1px solid var(--border-light);border-radius:14px;padding:24px 28px;margin-bottom:20px')}>
         <div style={s('font-size:16px;font-weight:800;margin-bottom:4px;letter-spacing:-.2px')}>Loghi</div>
-        <div style={s('color:#8c867d;font-size:13px;margin-bottom:18px')}>Carica le versioni del tuo logo per sfondi chiari e scuri.</div>
+        <div style={s('color:var(--text-muted);font-size:13px;margin-bottom:18px')}>Carica le versioni del tuo logo per sfondi chiari e scuri.</div>
         <div style={s('display:flex;flex-direction:column;gap:28px')}>
           {LOGO_ROWS.map(row => (
             <div key={row.label}>
@@ -2040,7 +2093,7 @@ function BrandScreen({ toast, brand: brandProp, setBrand: setBrandParent, brandR
                     <div key={v.key} style={{ position: 'relative' }}>
                       <Box onClick={() => fileRefs.current[v.key]?.click()} style={{
                         width: '100%', aspectRatio: '2.4', borderRadius: 12,
-                        background: v.bg, border: v.bg === '#fff' ? '1.5px solid #ece9e2' : 'none',
+                        background: v.bg, border: v.bg === 'var(--bg-card)' ? '1.5px solid #ece9e2' : 'none',
                         display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
                         overflow: 'hidden', transition: 'box-shadow .2s',
                       }} hover={{ boxShadow: '0 4px 16px rgba(33,31,28,.10)' }}>
@@ -2055,7 +2108,7 @@ function BrandScreen({ toast, brand: brandProp, setBrand: setBrandParent, brandR
                             }} 
                           />
                         ) : (
-                          <Icon name="image-plus" size={20} color={v.bg === '#211f1c' ? 'rgba(255,255,255,.35)' : '#b3aca1'} />
+                          <Icon name="image-plus" size={20} color={v.bg === 'var(--text-main)' ? 'rgba(255,255,255,.35)' : '#b3aca1'} />
                         )}
                       </Box>
                       {src && (
@@ -2063,10 +2116,10 @@ function BrandScreen({ toast, brand: brandProp, setBrand: setBrandParent, brandR
                           position: 'absolute', top: 6, right: 6, width: 24, height: 24, borderRadius: '50%',
                           background: 'rgba(33,31,28,.7)', border: 'none', cursor: 'pointer',
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        }}><Icon name="x" size={12} color="#fff" /></button>
+                        }}><Icon name="x" size={12} color="var(--bg-card)" /></button>
                       )}
                       <input ref={el => { fileRefs.current[v.key] = el; }} type="file" accept="image/png,image/jpeg,image/svg+xml,image/webp" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) handleLogoUpload(v.key, f); e.target.value = ''; }} />
-                      <div style={s('margin-top:6px;font-size:12px;font-weight:700;color:#57534c')}>{v.label}</div>
+                      <div style={s('margin-top:6px;font-size:12px;font-weight:700;color:var(--text-sec)')}>{v.label}</div>
                     </div>
                   );
                 })}
@@ -2074,9 +2127,9 @@ function BrandScreen({ toast, brand: brandProp, setBrand: setBrandParent, brandR
             </div>
           ))}
         </div>
-        <div style={{ height: 1, background: '#f4f2ee', margin: '20px 0' }} />
+        <div style={{ height: 1, background: 'var(--bg-body)', margin: '20px 0' }} />
         <div className="max-md:!flex-col max-md:!items-start max-md:!gap-2" style={s('display:flex;align-items:center;gap:12px;justify-content:space-between')}>
-          <span style={s('font-size:13px;font-weight:700;color:#57534c')}>Logo da usare nei contenuti</span>
+          <span style={s('font-size:13px;font-weight:700;color:var(--text-sec)')}>Logo da usare nei contenuti</span>
           <select value={brand.logoOrientation} onChange={e => set('logoOrientation', e.target.value as 'vertical' | 'horizontal')} style={{ ...inputStyle, width: 'auto', padding: '8px 12px', cursor: 'pointer' }}>
             <option value="vertical">Solo icona</option>
             <option value="horizontal">Icona + Nome</option>
@@ -2085,49 +2138,49 @@ function BrandScreen({ toast, brand: brandProp, setBrand: setBrandParent, brandR
       </div>
 
       {/* ── PRIMARY COLOR ── */}
-      <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:14px;padding:24px 28px;margin-bottom:20px')}>
+      <div style={s('background:var(--bg-card);border:1px solid var(--border-light);border-radius:14px;padding:24px 28px;margin-bottom:20px')}>
         <div style={s('font-size:16px;font-weight:800;margin-bottom:4px;letter-spacing:-.2px')}>Colore della tua agenzia</div>
-        <div style={s('color:#8c867d;font-size:13px;margin-bottom:16px')}>Questo colore viene applicato ai report, ai post e ai video che crei.</div>
+        <div style={s('color:var(--text-muted);font-size:13px;margin-bottom:16px')}>Questo colore viene applicato ai report, ai post e ai video che crei.</div>
         <div style={s('display:flex;align-items:center;gap:14px')}>
-          <div style={{ width: 44, height: 44, borderRadius: 10, border: '1px solid #e4e1da', overflow: 'hidden', position: 'relative', cursor: 'pointer', padding: 4, background: '#fff' }}>
+          <div style={{ width: 44, height: 44, borderRadius: 10, border: '1px solid var(--border-main)', overflow: 'hidden', position: 'relative', cursor: 'pointer', padding: 4, background: 'var(--bg-card)' }}>
             <div style={{ width: '100%', height: '100%', background: brand.primaryColor, borderRadius: 6 }} />
             <input type="color" value={brand.primaryColor} onChange={e => set('primaryColor', e.target.value)} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', width: '100%', height: '100%' }} />
           </div>
-          <span style={s('font-size:13px;font-weight:600;color:#57534c')}>Clicca per cambiare colore</span>
+          <span style={s('font-size:13px;font-weight:600;color:var(--text-sec)')}>Clicca per cambiare colore</span>
         </div>
       </div>
 
       {/* ── COMPANY INFO ── */}
-      <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:14px;padding:24px 28px;margin-bottom:20px')}>
+      <div style={s('background:var(--bg-card);border:1px solid var(--border-light);border-radius:14px;padding:24px 28px;margin-bottom:20px')}>
         <div style={s('font-size:16px;font-weight:800;margin-bottom:4px;letter-spacing:-.2px')}>Informazioni agenzia</div>
-        <div style={s('color:#8c867d;font-size:13px;margin-bottom:18px')}>Queste informazioni appaiono nei report e nei post che crei.</div>
+        <div style={s('color:var(--text-muted);font-size:13px;margin-bottom:18px')}>Queste informazioni appaiono nei report e nei post che crei.</div>
         <div style={s('display:flex;flex-direction:column;gap:16px')}>
           <div>
-            <label style={s('display:block;font-size:13px;font-weight:700;color:#57534c;margin-bottom:6px')}>Nome agenzia</label>
+            <label style={s('display:block;font-size:13px;font-weight:700;color:var(--text-sec);margin-bottom:6px')}>Nome agenzia</label>
             <input value={brand.companyName} onChange={e => set('companyName', e.target.value)} maxLength={50} placeholder="La Tua Agenzia" style={inputStyle} />
           </div>
           <div>
-            <label style={s('display:block;font-size:13px;font-weight:700;color:#57534c;margin-bottom:6px')}>Sito web <span style={s('color:#b3aca1;font-weight:500')}>(opzionale)</span></label>
+            <label style={s('display:block;font-size:13px;font-weight:700;color:var(--text-sec);margin-bottom:6px')}>Sito web <span style={s('color:#b3aca1;font-weight:500')}>(opzionale)</span></label>
             <input value={brand.companyWebsite} onChange={e => set('companyWebsite', e.target.value)} placeholder="https://www.tuaagenzia.it" type="url" style={inputStyle} />
           </div>
           <div>
-            <label style={s('display:block;font-size:13px;font-weight:700;color:#57534c;margin-bottom:6px')}>Email contatto <span style={s('color:#b3aca1;font-weight:500')}>(opzionale)</span></label>
+            <label style={s('display:block;font-size:13px;font-weight:700;color:var(--text-sec);margin-bottom:6px')}>Email contatto <span style={s('color:#b3aca1;font-weight:500')}>(opzionale)</span></label>
             <input value={brand.companyEmail} onChange={e => set('companyEmail', e.target.value)} placeholder="info@tuaagenzia.it" type="email" style={inputStyle} />
           </div>
         </div>
       </div>
 
       {/* ── REPORT FINAL PAGE ── nascosta (report non attivo) ──
-      <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:14px;padding:24px 28px;margin-bottom:20px')}>
+      <div style={s('background:var(--bg-card);border:1px solid var(--border-light);border-radius:14px;padding:24px 28px;margin-bottom:20px')}>
         <div style={s('font-size:16px;font-weight:800;margin-bottom:4px;letter-spacing:-.2px')}>Pagina finale del report</div>
-        <div style={s('color:#8c867d;font-size:13px;margin-bottom:18px')}>Personalizza il messaggio che i tuoi clienti vedono alla fine del report.</div>
+        <div style={s('color:var(--text-muted);font-size:13px;margin-bottom:18px')}>Personalizza il messaggio che i tuoi clienti vedono alla fine del report.</div>
         <div style={s('display:flex;flex-direction:column;gap:16px')}>
           <div>
-            <label style={s('display:block;font-size:13px;font-weight:700;color:#57534c;margin-bottom:6px')}>Titolo finale</label>
+            <label style={s('display:block;font-size:13px;font-weight:700;color:var(--text-sec);margin-bottom:6px')}>Titolo finale</label>
             <input value={brand.reportFinalTitle} onChange={e => set('reportFinalTitle', e.target.value)} maxLength={100} placeholder="Grazie per aver scelto la nostra agenzia" style={inputStyle} />
           </div>
           <div>
-            <label style={s('display:block;font-size:13px;font-weight:700;color:#57534c;margin-bottom:6px')}>Messaggio finale</label>
+            <label style={s('display:block;font-size:13px;font-weight:700;color:var(--text-sec);margin-bottom:6px')}>Messaggio finale</label>
             <textarea value={brand.reportFinalDesc} onChange={e => set('reportFinalDesc', e.target.value)} maxLength={500} rows={4} placeholder="Inserisci un messaggio personalizzato per i tuoi clienti..." style={{ ...inputStyle, resize: 'vertical' }} />
           </div>
         </div>
@@ -2354,7 +2407,14 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
 
   const contentRef = React.useRef<HTMLDivElement>(null);
   const [routeKey, setRouteKey] = useState(0);
-  const go = useCallback((r: string) => { setRoute(r); setRouteKey(k => k + 1); setProjOpen(false); setTrayOpen(false); setProfileOpen(false); contentRef.current?.scrollTo(0, 0); }, []);
+  const [studioPhoto, setStudioPhoto] = useState<string | null>(null);
+  const go = useCallback((r: string, params?: { photoUrl?: string }) => { 
+    setRoute(r); 
+    setRouteKey(k => k + 1); 
+    if ((r === 'studio' || r === 'video') && params?.photoUrl) setStudioPhoto(params.photoUrl);
+    else if (r !== 'studio' && r !== 'video') setStudioPhoto(null);
+    setProjOpen(false); setTrayOpen(false); setProfileOpen(false); contentRef.current?.scrollTo(0, 0); 
+  }, []);
   const closeMenus = useCallback(() => { setProjOpen(false); setTrayOpen(false); setProfileOpen(false); setNotifOpen(false); }, []);
 
   // ⌘K
@@ -2422,22 +2482,22 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
   const tdef = tourStep !== null ? TOUR_DEFS[tourStep] : TOUR_DEFS[0];
 
   return (
-    <div style={{ fontFamily: 'inherit', color: '#211f1c', height: '100vh', overflow: 'hidden', background: '#faf9f7', fontSize: 14, lineHeight: 1.45 }}>
+    <div style={{ fontFamily: 'inherit', color: 'var(--text-main)', height: '100vh', overflow: 'hidden', background: '#faf9f7', fontSize: 14, lineHeight: 1.45 }}>
 
       {/* WELCOME MODAL */}
       {welcomeOpen && (
         <div style={s('position:fixed;inset:0;background:rgba(24,21,17,.6);backdrop-filter:blur(4px);z-index:95;display:flex;align-items:center;justify-content:center;padding:24px')}>
-          <div style={{ background: 'linear-gradient(160deg, #eef4fe 0%, #f6f4f0 100%)', borderRadius: 24, boxShadow: '0 32px 80px rgba(0,0,0,.15), 0 2px 16px rgba(0,0,0,.05)', width: '100%', maxWidth: 440, overflow: 'hidden', position: 'relative', padding: '44px 40px 32px', textAlign: 'center' }}>
+          <div style={{ background: 'linear-gradient(160deg, #eef4fe 0%, var(--bg-hover) 100%)', borderRadius: 24, boxShadow: '0 32px 80px rgba(0,0,0,.15), 0 2px 16px rgba(0,0,0,.05)', width: '100%', maxWidth: 440, overflow: 'hidden', position: 'relative', padding: '44px 40px 32px', textAlign: 'center' }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <div style={{ width: 68, height: 68, background: '#fff', borderRadius: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 22px', boxShadow: '0 8px 24px rgba(33,31,28,.1)' }}>
+            <div style={{ width: 68, height: 68, background: 'var(--bg-card)', borderRadius: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 22px', boxShadow: '0 8px 24px rgba(33,31,28,.1)' }}>
               <img src="/dashboard/logo-icon.svg" alt="GetNearMe" style={{ width: 40, height: 40 }} />
             </div>
             <h2 style={s('margin:0 0 10px;font-size:27px;font-weight:800;letter-spacing:-.6px;color:#1a1a1a')}>Benvenuto su GetNearMe</h2>
-            <p style={s('margin:0 auto 28px;max-width:370px;color:#57534c;font-size:15px;line-height:1.5')}>Dai una marcia in più ai tuoi annunci: foto, video e post curati, pronti in pochi minuti. Ti facciamo vedere come.</p>
-            <Box as="button" onClick={startTour} style={s('width:100%;border:none;background:#3B83F6;color:#fff;font-size:15px;font-weight:700;padding:14px 28px;border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;min-height:48px;transition:all .2s')} hover={s('background:#2b6fe0;transform:translateY(-1px);box-shadow:0 8px 24px rgba(59,131,246,.28)')}>
-              Fai un giro veloce (1 min) <Icon name="arrow-right" size={16} color="#fff" />
+            <p style={s('margin:0 auto 28px;max-width:370px;color:var(--text-sec);font-size:15px;line-height:1.5')}>Dai una marcia in più ai tuoi annunci: foto, video e post curati, pronti in pochi minuti. Ti facciamo vedere come.</p>
+            <Box as="button" onClick={startTour} style={s('width:100%;border:none;background:#3B83F6;color:var(--bg-card);font-size:15px;font-weight:700;padding:14px 28px;border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;min-height:48px;transition:all .2s')} hover={s('background:#2b6fe0;transform:translateY(-1px);box-shadow:0 8px 24px rgba(59,131,246,.28)')}>
+              Fai un giro veloce (1 min) <Icon name="arrow-right" size={16} color="var(--bg-card)" />
             </Box>
-            <Box as="button" onClick={() => { closeWelcome(); toast('Puoi rifare il tour dal menu Profilo > Tutorial'); }} style={s('display:block;margin:16px auto 0;text-align:center;width:fit-content;border:none;background:transparent;color:#8c867d;font-size:14px;font-weight:600;padding:8px 12px;border-radius:8px;cursor:pointer;transition:color .2s')} hover={{ color: '#57534c' }}>
+            <Box as="button" onClick={() => { closeWelcome(); toast('Puoi rifare il tour dal menu Profilo > Tutorial'); }} style={s('display:block;margin:16px auto 0;text-align:center;width:fit-content;border:none;background:transparent;color:var(--text-muted);font-size:14px;font-weight:600;padding:8px 12px;border-radius:8px;cursor:pointer;transition:color .2s')} hover={{ color: 'var(--text-sec)' }}>
               Salta e inizia subito
             </Box>
           </div>
@@ -2484,8 +2544,8 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
           )}
           {tdef.sel !== '[data-tour="new-project"]' && (tdef.sel === '@center' || tourRect) && (
             <div key={tourStep} style={tdef.sel === '@center'
-              ? { position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%,-50%)', width: 360, maxWidth: 'calc(100vw - 32px)', background: '#fff', borderRadius: 16, boxShadow: '0 24px 64px rgba(20,18,15,.32)', padding: '22px 24px', animation: 'tour-fade-in .5s cubic-bezier(0.16, 1, 0.3, 1) forwards', pointerEvents: 'auto' }
-              : { position: 'absolute', left: tipL, top: tipT, width: 300, background: '#fff', borderRadius: 12, boxShadow: '0 16px 48px rgba(20,18,15,.3)', padding: '18px 20px 20px', animation: 'tour-fade-tip .4s cubic-bezier(0.16, 1, 0.3, 1) forwards', pointerEvents: 'auto' }}>
+              ? { position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%,-50%)', width: 360, maxWidth: 'calc(100vw - 32px)', background: 'var(--bg-card)', borderRadius: 16, boxShadow: '0 24px 64px rgba(20,18,15,.32)', padding: '22px 24px', animation: 'tour-fade-in .5s cubic-bezier(0.16, 1, 0.3, 1) forwards', pointerEvents: 'auto' }
+              : { position: 'absolute', left: tipL, top: tipT, width: 300, background: 'var(--bg-card)', borderRadius: 12, boxShadow: '0 16px 48px rgba(20,18,15,.3)', padding: '18px 20px 20px', animation: 'tour-fade-tip .4s cubic-bezier(0.16, 1, 0.3, 1) forwards', pointerEvents: 'auto' }}>
               <TourAnim kind={tdef.anim} />
               {tdef.sel !== '@center' && (
                 <div style={s('display:flex;align-items:center;justify-content:space-between;margin-bottom:6px')}>
@@ -2497,12 +2557,12 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                 <div style={s('font-size:32px;text-align:center;margin-bottom:16px')}>🎉</div>
               )}
               <div style={s(`font-size:16px;font-weight:800;letter-spacing:-.2px;margin-bottom:4px;${tdef.sel === '@center' ? 'text-align:center;' : ''}`)}>{tdef.title}</div>
-              <div style={s(`font-size:13px;color:#57534c;line-height:1.5;margin-bottom:24px;${tdef.sel === '@center' ? 'text-align:center;' : ''}`)}>{tdef.text}</div>
+              <div style={s(`font-size:13px;color:var(--text-sec);line-height:1.5;margin-bottom:24px;${tdef.sel === '@center' ? 'text-align:center;' : ''}`)}>{tdef.text}</div>
               <div style={s('display:flex;align-items:center;justify-content:space-between')}>
-                {tourStep > 0 && tdef.sel !== '@center' && <Box as="button" onClick={() => tourGo(tourStep - 1)} style={s('border:1px solid #e4e1da;background:#fff;font-size:12.5px;font-weight:700;padding:9px 16px;border-radius:8px;cursor:pointer;min-height:38px')} hover={s('background:#f6f4f0')}>Indietro</Box>}
+                {tourStep > 0 && tdef.sel !== '@center' && <Box as="button" onClick={() => tourGo(tourStep - 1)} style={s('border:1px solid var(--border-main);background:var(--bg-card);font-size:12.5px;font-weight:700;padding:9px 16px;border-radius:8px;cursor:pointer;min-height:38px')} hover={s('background:var(--bg-hover)')}>Indietro</Box>}
                 {tdef.sel !== '@center'
-                  ? <Box as="button" onClick={() => tourGo(tourStep + 1)} style={s('border:none;background:#3B83F6;color:#fff;font-size:12.5px;font-weight:700;padding:9px 18px;border-radius:8px;cursor:pointer;margin-left:auto;min-height:38px')} hover={s('background:#2b6fe0')}>Avanti</Box>
-                  : <Box as="button" onClick={() => { setProjOpen(true); tourGo(tourStep + 1); }} style={s('border:none;background:#3B83F6;color:#fff;font-size:13.5px;font-weight:700;padding:12px 18px;border-radius:8px;cursor:pointer;width:100%;text-align:center;display:flex;align-items:center;justify-content:center;min-height:44px')} hover={s('background:#2b6fe0;transform:translateY(-1px);box-shadow:0 8px 20px rgba(59,131,246,.25)')}>Aggiungi immobile</Box>}
+                  ? <Box as="button" onClick={() => tourGo(tourStep + 1)} style={s('border:none;background:#3B83F6;color:var(--bg-card);font-size:12.5px;font-weight:700;padding:9px 18px;border-radius:8px;cursor:pointer;margin-left:auto;min-height:38px')} hover={s('background:#2b6fe0')}>Avanti</Box>
+                  : <Box as="button" onClick={() => { setProjOpen(true); tourGo(tourStep + 1); }} style={s('border:none;background:#3B83F6;color:var(--bg-card);font-size:13.5px;font-weight:700;padding:12px 18px;border-radius:8px;cursor:pointer;width:100%;text-align:center;display:flex;align-items:center;justify-content:center;min-height:44px')} hover={s('background:#2b6fe0;transform:translateY(-1px);box-shadow:0 8px 20px rgba(59,131,246,.25)')}>Aggiungi immobile</Box>}
               </div>
             </div>
           )}
@@ -2512,7 +2572,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
       {/* APP SHELL */}
       <div data-app-shell style={{ display: 'flex', height: '100%', ['--gnm-content-left' as string]: collapsed ? '64px' : '252px' } as React.CSSProperties}>
         {/* SIDEBAR */}
-        <div className={`max-md:!fixed max-md:!inset-y-0 max-md:!left-0 max-md:!z-[100] max-md:!w-64 max-md:!shadow-2xl ${mobileMenuOpen ? 'max-md:!flex' : 'max-md:!hidden'}`} style={{ width: collapsed ? 64 : 252, flex: 'none', background: '#fff', borderRight: '1px solid #f0ede7', display: 'flex', flexDirection: 'column', transition: 'width .25s ease', overflow: 'hidden' }}>
+        <div className={`max-md:!fixed max-md:!inset-y-0 max-md:!left-0 max-md:!z-[100] max-md:!w-64 max-md:!shadow-2xl ${mobileMenuOpen ? 'max-md:!flex' : 'max-md:!hidden'}`} style={{ width: collapsed ? 64 : 252, flex: 'none', background: 'var(--bg-card)', borderRight: '1px solid var(--border-light)', display: 'flex', flexDirection: 'column', transition: 'width .25s ease', overflow: 'hidden' }}>
           <div style={s('height:64px;flex:none;display:flex;align-items:center;padding:0 20px;overflow:hidden;justify-content:space-between')}>
             <div style={{ width: collapsed ? 27 : 130, overflow: 'hidden', flex: 'none' }}><img src="/dashboard/logo.svg" alt="GetNearMe" style={{ height: 24, maxWidth: 'none' }} /></div>
             {mobileMenuOpen && (
@@ -2526,8 +2586,8 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                 {sec.items.map((it) => {
                   const a = route === it.route || (it.route === 'progetti' && route === 'progetto');
                   return (
-                    <Box key={it.route} onClick={() => { go(it.route); setMobileMenuOpen(false); }} title={it.label} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', margin: '1px 10px', borderRadius: 12, cursor: 'pointer', background: a ? '#f1efe9' : 'transparent', color: a ? '#211f1c' : '#57534c', fontWeight: a ? 700 : 500, fontSize: 14, whiteSpace: 'nowrap', minHeight: 38 }} hover={{ background: '#f6f4f0' }}>
-                      <Icon name={it.icon} size={18} color={a ? '#211f1c' : '#57534c'} />
+                    <Box key={it.route} onClick={() => { go(it.route); setMobileMenuOpen(false); }} title={it.label} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', margin: '1px 10px', borderRadius: 12, cursor: 'pointer', background: a ? '#f1efe9' : 'transparent', color: a ? 'var(--text-main)' : 'var(--text-sec)', fontWeight: a ? 700 : 500, fontSize: 14, whiteSpace: 'nowrap', minHeight: 38 }} hover={{ background: 'var(--bg-hover)' }}>
+                      <Icon name={it.icon} size={18} color={a ? 'var(--text-main)' : 'var(--text-sec)'} />
                       {!collapsed && <span>{it.label}</span>}
                     </Box>
                   );
@@ -2539,12 +2599,12 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
             ref={profileRef} 
             onMouseEnter={() => setProfileOpen(true)}
             onMouseLeave={() => setProfileOpen(false)}
-            style={{ flex: 'none', borderTop: '1px solid #f0ede7', padding: collapsed ? '12px 6px' : '12px 10px' }}
+            style={{ flex: 'none', borderTop: '1px solid var(--border-light)', padding: collapsed ? '12px 6px' : '12px 10px' }}
           >
             <Box onClick={(e) => { e.stopPropagation(); setProfileOpen(o => !o); setProjOpen(false); setTrayOpen(false); }} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: collapsed ? '0' : '10px 12px', borderRadius: collapsed ? '50%' : 12, cursor: 'pointer', justifyContent: collapsed ? 'center' : 'flex-start', width: collapsed ? 42 : 'auto', height: collapsed ? 42 : 'auto', margin: collapsed ? '0 auto' : 0 }} hover={{ background: '#f1efe9' }}>
-              <div style={s('width:34px;height:34px;border-radius:50%;background:#211f1c;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex:none')}>{(userData?.email ?? 'U')[0].toUpperCase()}</div>
-              {!collapsed && <div style={{ minWidth: 0, flex: 1 }}><div style={s('font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{userData?.email?.split('@')[0] ?? 'Utente'}</div><div style={s('font-size:11px;color:#8c867d;white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{userData?.email ?? ''}</div></div>}
-              {!collapsed && <Icon name="chevron-up" size={14} color="#8c867d" style={{ transition: 'transform .2s', transform: profileOpen ? 'none' : 'rotate(180deg)' }} />}
+              <div style={s('width:34px;height:34px;border-radius:50%;background:var(--text-main);color:var(--bg-card);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex:none')}>{(userData?.email ?? 'U')[0].toUpperCase()}</div>
+              {!collapsed && <div style={{ minWidth: 0, flex: 1 }}><div style={s('font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{userData?.email?.split('@')[0] ?? 'Utente'}</div><div style={s('font-size:11px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{userData?.email ?? ''}</div></div>}
+              {!collapsed && <Icon name="chevron-up" size={14} color="var(--text-muted)" style={{ transition: 'transform .2s', transform: profileOpen ? 'none' : 'rotate(180deg)' }} />}
             </Box>
             {profileOpen && (() => {
               const rect = profileRef.current?.getBoundingClientRect();
@@ -2553,7 +2613,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
               const bottom = rect ? window.innerHeight - rect.top - 12 : 80;
               return (
                 <div style={{ position: 'fixed', bottom, left, width: w, zIndex: 9999, paddingBottom: 16 }}>
-                  <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 16px 48px rgba(33,31,28,.16)', border: '1px solid #f0ede7', overflow: 'hidden' }}>
+                  <div style={{ background: 'var(--bg-card)', borderRadius: 12, boxShadow: '0 16px 48px rgba(33,31,28,.16)', border: '1px solid var(--border-light)', overflow: 'hidden' }}>
                     <div style={s('padding:4px')}>
                       {[
                         { icon: 'play-circle', label: 'Tutorial', action: () => { setProfileOpen(false); setWelcomeOpen(true); } },
@@ -2561,12 +2621,12 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                         { icon: 'settings', label: 'Impostazioni', action: () => { setProfileOpen(false); go('impostazioni'); } },
                         { icon: 'life-buoy', label: 'Assistenza', action: () => { setProfileOpen(false); go('assistenza'); } },
                       ].map(item => (
-                        <Box key={item.label} onClick={item.action} style={s('display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:600')} hover={s('background:#f6f4f0')}>
-                          <Icon name={item.icon} size={16} color="#57534c" />{item.label}
+                        <Box key={item.label} onClick={item.action} style={s('display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:600')} hover={s('background:var(--bg-hover)')}>
+                          <Icon name={item.icon} size={16} color="var(--text-sec)" />{item.label}
                         </Box>
                       ))}
                     </div>
-                    <div style={s('border-top:1px solid #f0ede7;padding:4px')}>
+                    <div style={s('border-top:1px solid var(--border-light);padding:4px')}>
                       <Box onClick={() => { setProfileOpen(false); window.location.href = '/api/auth/logout'; }} style={s('display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:600;color:#dc2626')} hover={s('background:#fef2f2')}>
                         <Icon name="log-out" size={16} color="#dc2626" />Esci
                       </Box>
@@ -2586,7 +2646,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
         {/* MAIN */}
         <div className="max-md:!w-full" style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
           {/* HEADER */}
-          <div className="max-md:!px-3 max-md:!gap-2" style={{ height: 64, flex: 'none', background: '#fff', borderBottom: '1px solid #f0ede7', display: 'flex', alignItems: 'center', gap: 14, padding: '0 20px', position: 'relative', zIndex: 30 }}>
+          <div className="max-md:!px-3 max-md:!gap-2" style={{ height: 64, flex: 'none', background: 'var(--bg-card)', borderBottom: '1px solid var(--border-light)', display: 'flex', alignItems: 'center', gap: 14, padding: '0 20px', position: 'relative', zIndex: 30 }}>
             {/* Hamburger (Mobile) */}
             <Box as="button" onClick={() => setMobileMenuOpen(true)} className="md:!hidden" title="Apri menu" aria-label="Apri menu" style={s('border:none;background:transparent;width:38px;height:38px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none')} hover={s('background:#f1efe9')}><Icon name="menu" size={20} /></Box>
             
@@ -2595,38 +2655,38 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
 
             {/* project switcher */}
             <div style={{ position: 'relative' }}>
-              <Box onClick={(e) => { e.stopPropagation(); setProjOpen((o) => !o); setTrayOpen(false); }} style={s('display:flex;align-items:center;gap:10px;padding:7px 14px 7px 8px;border:1px solid #e9e6df;border-radius:8px;cursor:pointer;background:#fff;min-height:38px;min-width:240px;justify-content:space-between')} hover={s('border-color:#d8d4cb;box-shadow:0 2px 8px rgba(33,31,28,.06)')}>
+              <Box onClick={(e) => { e.stopPropagation(); setProjOpen((o) => !o); setTrayOpen(false); }} style={s('display:flex;align-items:center;gap:10px;padding:7px 14px 7px 8px;border:1px solid #e9e6df;border-radius:8px;cursor:pointer;background:var(--bg-card);min-height:38px;min-width:240px;justify-content:space-between')} hover={s('border-color:var(--border-dark);box-shadow:0 2px 8px rgba(33,31,28,.06)')}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
                   {loadingProjects ? (
-                    <div className="max-md:!hidden" style={{ minWidth: 0, flex: 1 }}><div style={s('font-size:13px;font-weight:700;color:#8c867d')}>Caricamento...</div></div>
+                    <div className="max-md:!hidden" style={{ minWidth: 0, flex: 1 }}><div style={s('font-size:13px;font-weight:700;color:var(--text-muted)')}>Caricamento...</div></div>
                   ) : active ? (
                     <>
                       <div style={{ width: 30, height: 30, borderRadius: '50%', ...getCoverStyle(active), flex: 'none' }} />
-                      <div className="max-md:!hidden" style={{ minWidth: 0, flex: 1 }}><div style={s('font-size:11px;color:#8c867d;line-height:1.2')}>Progetto attivo</div><div style={s('font-size:13px;font-weight:700;white-space:nowrap;line-height:1.2;overflow:hidden;text-overflow:ellipsis')}>{active.nome}</div></div>
+                      <div className="max-md:!hidden" style={{ minWidth: 0, flex: 1 }}><div style={s('font-size:11px;color:var(--text-muted);line-height:1.2')}>Progetto attivo</div><div style={s('font-size:13px;font-weight:700;white-space:nowrap;line-height:1.2;overflow:hidden;text-overflow:ellipsis')}>{active.nome}</div></div>
                     </>
                   ) : (
                     <>
-                      <div style={{ width: 30, height: 30, borderRadius: '50%', backgroundColor: '#f3f1ec', flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="plus" size={14} color="#8c867d" /></div>
+                      <div style={{ width: 30, height: 30, borderRadius: '50%', backgroundColor: '#f3f1ec', flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="plus" size={14} color="var(--text-muted)" /></div>
                       <div className="max-md:!hidden" style={{ minWidth: 0, flex: 1 }}><div style={s('font-size:13px;font-weight:700;white-space:nowrap;line-height:1.2')}>Crea il tuo primo immobile</div></div>
                     </>
                   )}
                 </div>
-                <Icon name="chevron-down" size={14} color="#8c867d" style={{ flex: 'none' }} />
+                <Icon name="chevron-down" size={14} color="var(--text-muted)" style={{ flex: 'none' }} />
               </Box>
               {projOpen && (
-                <div className="max-md:!fixed max-md:!top-16 max-md:!left-2 max-md:!right-2 max-md:!w-auto" style={s('position:absolute;top:52px;left:0;width:100%;background:#fff;border-radius:12px;box-shadow:0 16px 48px rgba(33,31,28,.16);border:1px solid #f0ede7;overflow:hidden;z-index:99')}>
-                  <div style={s('padding:12px 12px 8px')}><div style={s('display:flex;align-items:center;gap:8px;background:#faf9f7;border:1px solid #ece9e2;border-radius:10px;padding:8px 12px')}><Icon name="search" size={15} color="#8c867d" /><input value={projQuery} onChange={(e) => setProjQuery(e.target.value)} placeholder="Cerca immobile…" style={s('border:none;background:transparent;outline:none;font-size:13px;width:100%')} /></div></div>
+                <div className="max-md:!fixed max-md:!top-16 max-md:!left-2 max-md:!right-2 max-md:!w-auto" style={s('position:absolute;top:52px;left:0;width:100%;background:var(--bg-card);border-radius:12px;box-shadow:0 16px 48px rgba(33,31,28,.16);border:1px solid var(--border-light);overflow:hidden;z-index:99')}>
+                  <div style={s('padding:12px 12px 8px')}><div style={s('display:flex;align-items:center;gap:8px;background:#faf9f7;border:1px solid #ece9e2;border-radius:10px;padding:8px 12px')}><Icon name="search" size={15} color="var(--text-muted)" /><input value={projQuery} onChange={(e) => setProjQuery(e.target.value)} placeholder="Cerca immobile…" style={s('border:none;background:transparent;outline:none;font-size:13px;width:100%')} /></div></div>
                   <div style={s('max-height:260px;overflow:auto;padding:0 6px')}>
                     {projList.map((p) => (
-                      <Box key={p.id} onClick={() => { setActiveProject(p.id); setProjOpen(false); }} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 10px', borderRadius: 12, cursor: 'pointer', background: p.id === activeProject ? '#f6faff' : 'transparent' }} hover={{ background: '#f6f4f0' }}>
+                      <Box key={p.id} onClick={() => { setActiveProject(p.id); setProjOpen(false); }} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 10px', borderRadius: 12, cursor: 'pointer', background: p.id === activeProject ? '#f6faff' : 'transparent' }} hover={{ background: 'var(--bg-hover)' }}>
                         <div style={{ width: 34, height: 34, borderRadius: 10, ...getCoverStyle(p), flex: 'none' }} />
-                        <div style={{ minWidth: 0, flex: 1 }}><div style={s('font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{p.nome}</div><div style={s('font-size:11px;color:#8c867d;white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{p.addr}</div></div>
+                        <div style={{ minWidth: 0, flex: 1 }}><div style={s('font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{p.nome}</div><div style={s('font-size:11px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{p.addr}</div></div>
                         {p.id === activeProject && <Icon name="check" size={14} color="#3B83F6" />}
                       </Box>
                     ))}
                   </div>
-                  <div style={{ padding: '12px', borderTop: '1px solid #f0ede7' }}>
-                    <Box data-tour="new-project" onClick={() => { setProjOpen(false); setNewProjOpen(true); setTourStep(null); }} style={s(`display:flex;align-items:center;gap:10px;padding:12px 16px;border-radius:10px;cursor:pointer;color:${projList.length === 0 ? '#fff' : '#1d5fd0'};background:${projList.length === 0 ? '#3B83F6' : 'transparent'};font-weight:700;font-size:13px`)} hover={s(`background:${projList.length === 0 ? '#2b6fe0' : '#f6faff'}`)}><Icon name="plus" size={16} color={projList.length === 0 ? '#fff' : '#1d5fd0'} />{projList.length === 0 ? 'Crea il tuo primo immobile' : 'Nuovo immobile'}</Box>
+                  <div style={{ padding: '12px', borderTop: '1px solid var(--border-light)' }}>
+                    <Box data-tour="new-project" onClick={() => { setProjOpen(false); setNewProjOpen(true); setTourStep(null); }} style={s(`display:flex;align-items:center;gap:10px;padding:12px 16px;border-radius:10px;cursor:pointer;color:${projList.length === 0 ? 'var(--bg-card)' : '#1d5fd0'};background:${projList.length === 0 ? '#3B83F6' : 'transparent'};font-weight:700;font-size:13px`)} hover={s(`background:${projList.length === 0 ? '#2b6fe0' : '#f6faff'}`)}><Icon name="plus" size={16} color={projList.length === 0 ? 'var(--bg-card)' : '#1d5fd0'} />{projList.length === 0 ? 'Crea il tuo primo immobile' : 'Nuovo immobile'}</Box>
                   </div>
                 </div>
               )}
@@ -2634,10 +2694,10 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
 
             <div style={{ flex: 1 }} />
 
-            <Box as="button" onClick={() => { setCmdkOpen(true); setCmdQuery(''); }} title="Cerca · ⌘K" aria-label="Cerca" className="max-md:!px-3 max-md:!justify-center" style={s('border:1px solid #e9e6df;background:#fff;display:flex;align-items:center;gap:8px;padding:0 16px;height:40px;border-radius:10px;cursor:pointer;color:#8c867d;flex:1;max-width:480px')} hover={s('border-color:#d8d4cb;box-shadow:0 2px 8px rgba(33,31,28,.06)')}>
+            <Box as="button" onClick={() => { setCmdkOpen(true); setCmdQuery(''); }} title="Cerca · ⌘K" aria-label="Cerca" className="max-md:!px-3 max-md:!justify-center" style={s('border:1px solid #e9e6df;background:var(--bg-card);display:flex;align-items:center;gap:8px;padding:0 16px;height:40px;border-radius:10px;cursor:pointer;color:var(--text-muted);flex:1;max-width:480px')} hover={s('border-color:var(--border-dark);box-shadow:0 2px 8px rgba(33,31,28,.06)')}>
               <Icon name="search" size={15} color="#b3aca1" />
               <span className="max-md:!hidden" style={s('font-size:13px;font-weight:500;color:#b3aca1;flex:1;text-align:left')}>Cerca strumenti, immobili, media</span>
-              <span className="max-md:!hidden" style={s('font-size:10.5px;font-weight:700;background:#f1efe9;color:#8c867d;padding:2px 7px;border-radius:6px')}>⌘K</span>
+              <span className="max-md:!hidden" style={s('font-size:10.5px;font-weight:700;background:#f1efe9;color:var(--text-muted);padding:2px 7px;border-radius:6px')}>⌘K</span>
             </Box>
 
             {/* jobs tray + notifications */}
@@ -2646,37 +2706,37 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                 <Box as="button" onClick={(e) => { e.stopPropagation(); setTrayOpen((o) => !o); setProjOpen(false); setNotifOpen(false); setProfileOpen(false); }} title="Lavori in corso" aria-label="Lavori in corso" style={s('border:none;background:transparent;width:38px;height:38px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;position:relative')} hover={s('background:#f1efe9')}>
                   <Icon name="inbox" size={18} />
                   {(batches.filter(b => b.status === 'processing' || b.status === 'pending').length > 0 || videoJobs.some(j => j.stage === 'render' && !j.dismissed)) && (
-                    <div style={{ position: 'absolute', top: 6, right: 6, width: 8, height: 8, borderRadius: '50%', background: '#3B83F6', border: '2px solid #fff' }} />
+                    <div style={{ position: 'absolute', top: 6, right: 6, width: 8, height: 8, borderRadius: '50%', background: '#3B83F6', border: '2px solid var(--bg-card)' }} />
                   )}
                 </Box>
                 {trayOpen && (
-                  <div style={s('position:absolute;top:46px;right:0;width:330px;background:#fff;border-radius:12px;box-shadow:0 16px 48px rgba(33,31,28,.16);border:1px solid #f0ede7;overflow:hidden;z-index:50')}>
-                    <div style={s('display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:1px solid #f4f2ee')}><span style={s('font-size:13.5px;font-weight:800')}>Lavori in corso</span></div>
+                  <div style={s('position:absolute;top:46px;right:0;width:330px;background:var(--bg-card);border-radius:12px;box-shadow:0 16px 48px rgba(33,31,28,.16);border:1px solid var(--border-light);overflow:hidden;z-index:50')}>
+                    <div style={s('display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:1px solid var(--bg-body)')}><span style={s('font-size:13.5px;font-weight:800')}>Lavori in corso</span></div>
                     <div style={{ maxHeight: 320, overflow: 'auto' }}>
                       {(() => {
                         const dismissed = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('gnm_dismissed_batches') || '[]') : [];
                         const activeBatches = batches.filter(b => (b.status === 'processing' || b.status === 'pending') || ((b.status === 'completed' || b.status === 'partial') && !dismissed.includes(b.id)));
                         const activeVideos = videoJobs.filter(j => !j.dismissed && (j.stage === 'render' || j.stage === 'done' || j.stage === 'failed'));
                         if (activeBatches.length === 0 && activeVideos.length === 0) {
-                          return <div style={s('padding:22px 16px;text-align:center;font-size:13px;color:#8c867d')}>Nessun lavoro in corso.<br />Le generazioni girano qui in background, senza bloccarti.</div>;
+                          return <div style={s('padding:22px 16px;text-align:center;font-size:13px;color:var(--text-muted)')}>Nessun lavoro in corso.<br />Le generazioni girano qui in background, senza bloccarti.</div>;
                         }
                         return (<>{activeBatches.map(b => {
                           const isDone = b.status === 'completed' || b.status === 'partial';
                           const styleObj = STAGING_STYLES.find(s => s.id === b.style);
                           const styleName = styleObj ? styleObj.label : b.style;
                           return (
-                            <div key={b.id} style={{ padding: '12px 16px', borderBottom: '1px solid #f4f2ee', display: 'flex', gap: 12, position: 'relative' }}>
+                            <div key={b.id} style={{ padding: '12px 16px', borderBottom: '1px solid var(--bg-body)', display: 'flex', gap: 12, position: 'relative' }}>
                               <div style={{ width: 32, height: 32, borderRadius: 8, background: isDone ? '#e6f4ea' : '#eef4fe', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}>
                                 {isDone ? <Icon name="check" size={16} color="#1e8e3e" /> : <div style={{ width: 14, height: 14, border: '2px solid #3B83F6', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />}
                               </div>
                               <div style={{ flex: 1, minWidth: 0 }}>
                                 <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 2, paddingRight: 22 }}>Batch Foto AI {styleName ? `· ${styleName}` : ''}</div>
-                                <div style={{ fontSize: 12, color: '#8c867d', marginBottom: 6 }}>
+                                <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 6 }}>
                                   {isDone ? 'Completato' : `In elaborazione (${b.completedItems}/${b.totalItems})`}
                                 </div>
                                 {isDone && (
                                   <div style={{ display: 'flex', gap: 8 }}>
-                                    <button onClick={() => { dismissBatch(b.id); mutateBatches(); setTrayOpen(false); go('media'); }} style={{ padding: '4px 8px', fontSize: 11, fontWeight: 700, borderRadius: 6, border: '1px solid #e4e1da', background: '#fff', cursor: 'pointer' }}>Vedi in Media</button>
+                                    <button onClick={() => { dismissBatch(b.id); mutateBatches(); setTrayOpen(false); go('media'); }} style={{ padding: '4px 8px', fontSize: 11, fontWeight: 700, borderRadius: 6, border: '1px solid var(--border-main)', background: 'var(--bg-card)', cursor: 'pointer' }}>Vedi in Media</button>
                                   </div>
                                 )}
                               </div>
@@ -2692,13 +2752,13 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                           const isDone = j.stage === 'done';
                           const isFailed = j.stage === 'failed';
                           return (
-                            <div key={j.id} style={{ padding: '12px 16px', borderBottom: '1px solid #f4f2ee', display: 'flex', gap: 12, position: 'relative' }}>
+                            <div key={j.id} style={{ padding: '12px 16px', borderBottom: '1px solid var(--bg-body)', display: 'flex', gap: 12, position: 'relative' }}>
                               <div style={{ width: 32, height: 32, borderRadius: 8, background: isDone ? '#e6f4ea' : isFailed ? '#fef2f2' : '#eef4fe', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}>
                                 {isDone ? <Icon name="check" size={16} color="#1e8e3e" /> : isFailed ? <Icon name="x" size={16} color="#dc2626" /> : <div style={{ width: 14, height: 14, border: '2px solid #3B83F6', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />}
                               </div>
                               <div style={{ flex: 1, minWidth: 0 }}>
                                 <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 2, paddingRight: 22, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{j.template === 'montaggio' ? 'Montaggio' : 'Video AI'} · {j.title}</div>
-                                <div style={{ fontSize: 12, color: '#8c867d', marginBottom: 6 }}>
+                                <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 6 }}>
                                   {isDone ? 'Completato' : isFailed ? (j.error || 'Non riuscito') : `In elaborazione (${Math.round(j.progress * 100)}%) · ${videoEta(j.template)}`}
                                 </div>
                                 {!isDone && !isFailed && (
@@ -2708,7 +2768,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                                 )}
                                 {isDone && (
                                   <div style={{ display: 'flex', gap: 8 }}>
-                                    <button onClick={() => { setVideoJobs(dismissVideoJob(j.id)); setTrayOpen(false); go('media'); }} style={{ padding: '4px 8px', fontSize: 11, fontWeight: 700, borderRadius: 6, border: '1px solid #e4e1da', background: '#fff', cursor: 'pointer' }}>Vedi in Media</button>
+                                    <button onClick={() => { setVideoJobs(dismissVideoJob(j.id)); setTrayOpen(false); go('media'); }} style={{ padding: '4px 8px', fontSize: 11, fontWeight: 700, borderRadius: 6, border: '1px solid var(--border-main)', background: 'var(--bg-card)', cursor: 'pointer' }}>Vedi in Media</button>
                                   </div>
                                 )}
                               </div>
@@ -2727,12 +2787,12 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                 <Box as="button" onClick={(e) => { e.stopPropagation(); setNotifOpen(o => !o); setProjOpen(false); setTrayOpen(false); setProfileOpen(false); }} title="Notifiche" aria-label="Notifiche" style={s('border:none;background:transparent;width:38px;height:38px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;position:relative')} hover={s('background:#f1efe9')}>
                   <Icon name="bell" size={18} />
                   {notifications.filter(n => !n.is_read).length > 0 && (
-                    <div style={{ position: 'absolute', top: 6, right: 6, width: 8, height: 8, borderRadius: '50%', background: '#ef4444', border: '2px solid #fff' }} />
+                    <div style={{ position: 'absolute', top: 6, right: 6, width: 8, height: 8, borderRadius: '50%', background: '#ef4444', border: '2px solid var(--bg-card)' }} />
                   )}
                 </Box>
                 {notifOpen && (
-                  <div style={s('position:absolute;top:46px;right:0;width:340px;background:#fff;border-radius:12px;box-shadow:0 16px 48px rgba(33,31,28,.16);border:1px solid #f0ede7;overflow:hidden;z-index:999')}>
-                    <div style={s('display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:1px solid #f4f2ee')}>
+                  <div style={s('position:absolute;top:46px;right:0;width:340px;background:var(--bg-card);border-radius:12px;box-shadow:0 16px 48px rgba(33,31,28,.16);border:1px solid var(--border-light);overflow:hidden;z-index:999')}>
+                    <div style={s('display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:1px solid var(--bg-body)')}>
                       <span style={s('font-size:13.5px;font-weight:800')}>Notifiche</span>
                       {notifications.filter(n => !n.is_read).length > 0 && (
                         <button 
@@ -2749,7 +2809,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                     </div>
                     <div style={{ maxHeight: 380, overflowY: 'auto' }}>
                       {notifications.length === 0 ? (
-                        <div style={{ padding: '32px 16px', textAlign: 'center', color: '#8c867d', fontSize: 13.5 }}>Nessuna notifica.</div>
+                        <div style={{ padding: '32px 16px', textAlign: 'center', color: 'var(--text-muted)', fontSize: 13.5 }}>Nessuna notifica.</div>
                       ) : (
                         notifications.map(n => (
                           <div 
@@ -2761,15 +2821,15 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                                 await supabase.from('notifications').update({ is_read: true }).eq('id', n.id);
                               }
                             }}
-                            style={{ padding: '16px', borderBottom: '1px solid #f4f2ee', cursor: 'pointer', background: n.is_read ? '#fff' : '#f0fdf4', display: 'flex', gap: 12 }}
+                            style={{ padding: '16px', borderBottom: '1px solid var(--bg-body)', cursor: 'pointer', background: n.is_read ? 'var(--bg-card)' : '#f0fdf4', display: 'flex', gap: 12 }}
                           >
                             <div style={{ flex: 'none', paddingTop: 2 }}>
                               {n.type === 'info' ? <Icon name="info" size={16} color="#3B83F6" /> : <Icon name="bell" size={16} color="#10b981" />}
                             </div>
                             <div>
-                              <div style={{ fontSize: 13, fontWeight: 700, color: '#211f1c', marginBottom: 4 }}>{n.title}</div>
-                              <div style={{ fontSize: 13, color: '#57534c', lineHeight: 1.4 }}>{n.body}</div>
-                              <div style={{ fontSize: 11, color: '#8c867d', marginTop: 6 }}>
+                              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-main)', marginBottom: 4 }}>{n.title}</div>
+                              <div style={{ fontSize: 13, color: 'var(--text-sec)', lineHeight: 1.4 }}>{n.body}</div>
+                              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 6 }}>
                                 {new Date(n.created_at).toLocaleDateString('it-IT', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                               </div>
                             </div>
@@ -2787,7 +2847,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
           <div ref={contentRef} style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }} onClick={closeMenus}>
             {loadingProjects ? (
               <div className="animate-pulse">
-                <div className="max-md:!h-auto max-md:!min-h-[220px]" style={{ height: 260, background: '#f4f2ee', position: 'relative' }}>
+                <div className="max-md:!h-auto max-md:!min-h-[220px]" style={{ height: 260, background: 'var(--bg-body)', position: 'relative' }}>
                   <div className="max-md:!p-6 max-md:!pb-6 max-md:!items-center" style={{ maxWidth: 1160, margin: '0 auto', padding: '0 32px', height: '100%', display: 'flex', alignItems: 'flex-end', paddingBottom: 32 }}>
                     <div className="max-md:!flex-col max-md:!items-center max-md:!mt-12" style={{ display: 'flex', gap: 24, alignItems: 'center', width: '100%' }}>
                       <div style={{ width: 120, height: 120, borderRadius: 20, background: '#e9e6df' }} />
@@ -2801,9 +2861,9 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                 </div>
                 <div className="max-md:!p-4" style={{ maxWidth: 1160, margin: '0 auto', padding: '48px 32px 32px' }}>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 24 }}>
-                    <div style={{ height: 140, background: '#f4f2ee', borderRadius: 16 }} />
-                    <div style={{ height: 140, background: '#f4f2ee', borderRadius: 16 }} />
-                    <div style={{ height: 140, background: '#f4f2ee', borderRadius: 16 }} />
+                    <div style={{ height: 140, background: 'var(--bg-body)', borderRadius: 16 }} />
+                    <div style={{ height: 140, background: 'var(--bg-body)', borderRadius: 16 }} />
+                    <div style={{ height: 140, background: 'var(--bg-body)', borderRadius: 16 }} />
                   </div>
                 </div>
               </div>
@@ -2822,7 +2882,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                 }}
               />
             ) : route === 'studio' ? (
-              <PostSocialScreen toast={toast} routeKey={routeKey} brand={brand} project={active} batches={batches} onProjectUpdate={(upd) => setProjects(prev => prev.map(p => p.id === active.id ? { ...p, ...upd } : p))} />
+              <PostSocialScreen toast={toast} routeKey={routeKey} brand={brand} project={active} batches={batches} onProjectUpdate={(upd) => setProjects(prev => prev.map(p => p.id === active.id ? { ...p, ...upd } : p))} initialPhotoUrl={studioPhoto} />
             ) : route === 'staging' ? (
               <FotoAIScreen 
                 toast={toast} 
@@ -2832,6 +2892,8 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                   fetchUserBatches().then(setBatches);
                 }}
                 onGoPlan={() => go('account')}
+                onGoPost={(url) => go('studio', { photoUrl: url })}
+                onGoVideo={(url) => go('video', { photoUrl: url })}
               />
             ) : route === 'media' ? (
               <MediaScreen 
@@ -2842,7 +2904,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                 loadingBatches={loadingBatches} 
               />
             ) : route === 'video' ? (
-              <VideoAIScreen key="video" toast={toast} routeKey={routeKey} brand={brand} project={active} onVideoJob={registerVideoJob} activeRenders={videoJobs.filter(j => j.stage === 'render' && !j.dismissed).length} />
+              <VideoAIScreen key="video" toast={toast} routeKey={routeKey} brand={brand} project={active} onVideoJob={registerVideoJob} activeRenders={videoJobs.filter(j => j.stage === 'render' && !j.dismissed).length} initialPhotoUrl={studioPhoto} preselect={studioPhoto ? 'walkthrough' : undefined} />
             ) : route === 'montaggio' ? (
               <VideoAIScreen key="montaggio" toast={toast} routeKey={routeKey} brand={brand} preselect="montaggio" project={active} onVideoJob={registerVideoJob} activeRenders={videoJobs.filter(j => j.stage === 'render' && !j.dismissed).length} />
             ) : route === 'account' ? (
@@ -2856,11 +2918,11 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
             ) : (
               <div style={s('max-width:1160px;margin:0 auto;padding:36px 32px 64px')}>
                 <h1 style={s('margin:0 0 4px;font-size:27px;font-weight:800;letter-spacing:-.5px')}>{ROUTE_TITLES[route] ?? route}</h1>
-                <div style={s('color:#8c867d;font-size:14px;margin-bottom:28px')}>Schermata in arrivo nelle prossime fasi del porting.</div>
-                <div style={s('background:#fff;border:1.5px dashed #d8d4cb;border-radius:12px;padding:52px;text-align:center;max-width:560px')}>
+                <div style={s('color:var(--text-muted);font-size:14px;margin-bottom:28px')}>Schermata in arrivo nelle prossime fasi del porting.</div>
+                <div style={s('background:var(--bg-card);border:1.5px dashed var(--border-dark);border-radius:12px;padding:52px;text-align:center;max-width:560px')}>
                   <div style={s('width:52px;height:52px;border-radius:16px;background:#eef4fe;display:flex;align-items:center;justify-content:center;margin:0 auto 14px')}><Icon name="sparkles" size={24} color="#3B83F6" /></div>
                   <div style={s('font-size:15px;font-weight:800;margin-bottom:6px')}>«{ROUTE_TITLES[route] ?? route}» in costruzione</div>
-                  <div style={s('color:#8c867d;font-size:13.5px;max-width:380px;margin:0 auto')}>Lo shell, la navigazione e la Home sono pronti. Questa sezione viene portata nella fase successiva.</div>
+                  <div style={s('color:var(--text-muted);font-size:13.5px;max-width:380px;margin:0 auto')}>Lo shell, la navigazione e la Home sono pronti. Questa sezione viene portata nella fase successiva.</div>
                 </div>
               </div>
             )}
@@ -2871,13 +2933,13 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
       {/* ⌘K MODAL */}
       {cmdkOpen && (
         <div onClick={() => setCmdkOpen(false)} style={s('position:fixed;inset:0;background:rgba(24,21,17,.4);z-index:90;display:flex;align-items:flex-start;justify-content:center;padding-top:14vh')}>
-          <div onClick={(e) => e.stopPropagation()} style={s('width:100%;max-width:560px;background:#fff;border-radius:14px;box-shadow:0 24px 64px rgba(20,18,15,.3);overflow:hidden')}>
-            <div style={s('display:flex;align-items:center;gap:10px;padding:16px 18px;border-bottom:1px solid #f4f2ee')}><Icon name="search" size={18} color="#8c867d" /><input autoFocus value={cmdQuery} onChange={(e) => setCmdQuery(e.target.value)} placeholder="Cerca strumenti, immobili, media…" style={s('border:none;outline:none;font-size:15px;width:100%;background:transparent')} /><span style={s('font-size:11px;font-weight:700;background:#f1efe9;color:#8c867d;padding:3px 8px;border-radius:6px')}>esc</span></div>
+          <div onClick={(e) => e.stopPropagation()} style={s('width:100%;max-width:560px;background:var(--bg-card);border-radius:14px;box-shadow:0 24px 64px rgba(20,18,15,.3);overflow:hidden')}>
+            <div style={s('display:flex;align-items:center;gap:10px;padding:16px 18px;border-bottom:1px solid var(--bg-body)')}><Icon name="search" size={18} color="var(--text-muted)" /><input autoFocus value={cmdQuery} onChange={(e) => setCmdQuery(e.target.value)} placeholder="Cerca strumenti, immobili, media…" style={s('border:none;outline:none;font-size:15px;width:100%;background:transparent')} /><span style={s('font-size:11px;font-weight:700;background:#f1efe9;color:var(--text-muted);padding:3px 8px;border-radius:6px')}>esc</span></div>
             <div style={s('max-height:340px;overflow:auto;padding:8px')}>
-              {cmdResults.length === 0 ? <div style={s('padding:28px;text-align:center;color:#8c867d;font-size:13.5px')}>Nessun risultato.</div> : cmdResults.slice(0, 12).map((r, i) => (
-                <Box key={i} onClick={r.go} style={s('display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:10px;cursor:pointer')} hover={s('background:#f6f4f0')}>
-                  <span style={s('width:32px;height:32px;border-radius:9px;background:#f4f2ee;display:flex;align-items:center;justify-content:center;flex:none')}><Icon name={r.icon} size={15} color="#57534c" /></span>
-                  <div style={{ minWidth: 0 }}><div style={s('font-size:13.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{r.label}</div><div style={s('font-size:11.5px;color:#8c867d')}>{r.sub}</div></div>
+              {cmdResults.length === 0 ? <div style={s('padding:28px;text-align:center;color:var(--text-muted);font-size:13.5px')}>Nessun risultato.</div> : cmdResults.slice(0, 12).map((r, i) => (
+                <Box key={i} onClick={r.go} style={s('display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:10px;cursor:pointer')} hover={s('background:var(--bg-hover)')}>
+                  <span style={s('width:32px;height:32px;border-radius:9px;background:var(--bg-body);display:flex;align-items:center;justify-content:center;flex:none')}><Icon name={r.icon} size={15} color="var(--text-sec)" /></span>
+                  <div style={{ minWidth: 0 }}><div style={s('font-size:13.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{r.label}</div><div style={s('font-size:11.5px;color:var(--text-muted)')}>{r.sub}</div></div>
                 </Box>
               ))}
             </div>
@@ -2888,8 +2950,8 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
       {/* TOASTS */}
       <div style={s('position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:999999;display:flex;flex-direction:column;gap:10px;align-items:center')}>
         {toasts.map((t) => (
-          <div key={t.id} style={s('display:flex;align-items:center;gap:10px;background:#3B83F6;color:#fff;padding:12px 18px;border-radius:10px;box-shadow:0 12px 32px rgba(59,131,246,.32);font-size:13.5px;font-weight:600;max-width:420px')}>
-            <Icon name={t.icon} size={16} color="#fff" />{t.msg}
+          <div key={t.id} style={s('display:flex;align-items:center;gap:10px;background:#3B83F6;color:var(--bg-card);padding:12px 18px;border-radius:10px;box-shadow:0 12px 32px rgba(59,131,246,.32);font-size:13.5px;font-weight:600;max-width:420px')}>
+            <Icon name={t.icon} size={16} color="var(--bg-card)" />{t.msg}
           </div>
         ))}
       </div>

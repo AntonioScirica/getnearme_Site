@@ -29,6 +29,8 @@ export function renderFrame(data, photoUrl) {
   photoArea.style.bottom = BORDER + 'px';
   photoArea.style.borderRadius = '16px';
   photoArea.style.overflow = 'hidden';
+  photoArea.style.backgroundColor = AC;
+  photoArea.style.transform = 'translateZ(0)';
 
   const img = document.createElement('img');
   img.src = photoUrl;
@@ -37,6 +39,7 @@ export function renderFrame(data, photoUrl) {
   img.style.height = '100%';
   img.style.objectFit = 'cover';
   img.style.display = 'block';
+  img.style.transform = 'scale(1.02)';
   photoArea.appendChild(img);
 
   // Gradient overlay on photo for bottom readability

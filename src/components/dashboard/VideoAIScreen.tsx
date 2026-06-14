@@ -304,6 +304,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
   project?: Project;
   onVideoJob?: (job: { id: string; title: string; template: string; stage: 'render' | 'done' | 'failed'; progress: number; ctx: Record<string, unknown>; outputUrl?: string; error?: string; projectId: string | null; aspect: string; replaceId?: string }) => void;
   activeRenders?: number;
+  initialPhotoUrl?: string | null;
 }) {
   const [templates, setTemplates] = React.useState<VideoTemplate[]>(DEFAULT_VIDEO_TEMPLATES);
   const [avatars, setAvatars] = React.useState<VideoAvatar[]>([]);
@@ -469,6 +470,21 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
     st.textContent = '@keyframes export-spin{to{transform:rotate(360deg)}}';
     document.head.appendChild(st);
   }, []);
+
+  const loadedInitialPhotoRef = React.useRef(false);
+  React.useEffect(() => { loadedInitialPhotoRef.current = false; }, [initialPhotoUrl]);
+  React.useEffect(() => {
+    if (initialPhotoUrl && tpl && !loadedInitialPhotoRef.current) {
+      loadedInitialPhotoRef.current = true;
+      fetch(initialPhotoUrl)
+        .then(res => res.blob())
+        .then(blob => {
+          const file = new File([blob], 'photo.jpg', { type: blob.type });
+          addFiles([file]);
+        })
+        .catch(() => toast('Errore nel caricamento della foto iniziale', 'x'));
+    }
+  }, [initialPhotoUrl, tpl]);
 
   // ── media handling ─────────────────────────────────────────────────────────
   const addFiles = async (files: FileList | File[]) => {

@@ -77,12 +77,14 @@ function PhotoPacksModal({ onClose }: { onClose: () => void }) {
   );
 }
 
-export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated, onGoPlan }: {
+export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated, onGoPlan, onGoPost }: {
   toast: (msg: string, icon?: string) => void;
   routeKey: number;
   project?: Project;
   onBatchCreated?: () => void;
   onGoPlan?: () => void;
+  onGoPost?: (url: string) => void;
+  onGoVideo?: (url: string) => void;
 }) {
   const [quota, setQuota] = React.useState<StagingQuota | null>(null);
   const [packsOpen, setPacksOpen] = React.useState(false);
@@ -691,6 +693,14 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
                       {downloading
                         ? <><span style={{ width: 16, height: 16, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.4)', borderTopColor: '#fff', animation: 'export-spin 1s linear infinite', display: 'inline-block' }} />Scaricando...</>
                         : <><Icon name="download" size={16} color="#fff" />Scarica risultato</>}
+                    </Box>
+                    <Box as="button" onClick={() => onGoPost?.(result.after)} style={{ border: '1.5px solid #3B83F6', background: '#eff6ff', color: '#1d5fd0', fontSize: 14, fontWeight: 700, padding: '13px 20px', borderRadius: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 } as React.CSSProperties} hover={s('background:#dbeafe')}>
+                      <Icon name="share" size={16} color="#1d5fd0" />
+                      Crea post con questa foto
+                    </Box>
+                    <Box as="button" onClick={() => onGoVideo?.(result.after)} style={{ border: '1.5px solid #3B83F6', background: '#eff6ff', color: '#1d5fd0', fontSize: 14, fontWeight: 700, padding: '13px 20px', borderRadius: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 } as React.CSSProperties} hover={s('background:#dbeafe')}>
+                      <Icon name="film" size={16} color="#1d5fd0" />
+                      Crea video da foto
                     </Box>
                     <Box as="button" onClick={resetAll} style={{ border: '1.5px solid #e4e1da', background: '#fff', color: '#211f1c', fontSize: 14, fontWeight: 600, padding: '13px 20px', borderRadius: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 } as React.CSSProperties} hover={s('background:#f8f7f5')}>
                       <Icon name="image-plus" size={16} color="#57534c" />

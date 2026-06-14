@@ -30,6 +30,7 @@ export function renderSplit(data, photoUrl) {
   img.style.height = '100%';
   img.style.objectFit = 'cover';
   img.style.display = 'block';
+  img.style.transform = 'scale(1.02)';
   photoSide.appendChild(img);
 
   container.appendChild(photoSide);

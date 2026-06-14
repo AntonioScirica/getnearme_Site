@@ -176,7 +176,8 @@ export default function TemplatePreview({ templateId, data, photoUrl, width = 20
         return (
         <div style={{
           position: 'absolute', inset: 0, borderRadius: 8, overflow: 'hidden',
-          background: 'linear-gradient(90deg, #efece6 25%, #e6e2da 50%, #efece6 75%)',
+          background: 'transparent',
+          backgroundImage: 'linear-gradient(90deg, #efece6 25%, #e6e2da 50%, #efece6 75%)',
           backgroundSize: '800px 100%',
           animation: 'tpl-shimmer 1.4s infinite linear',
         }}>
