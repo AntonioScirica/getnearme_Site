@@ -198,7 +198,7 @@ function TourAnim({ kind }: { kind: string }) {
             <Icon name="film" size={18} color="#3B83F6" />
           </div>
           <div style={{ width: 40, height: 40, borderRadius: 10, background: '#eef4fe', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'tour-tile-loop 3s .6s ease-in-out infinite' }}>
-            <Icon name="instagram" size={18} color="#3B83F6" />
+            <Icon name="megaphone" size={18} color="#3B83F6" />
           </div>
           <div style={{ width: 40, height: 40, borderRadius: 10, background: '#eef4fe', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'tour-tile-loop 3s .9s ease-in-out infinite' }}>
             <Icon name="type" size={18} color="#3B83F6" />
