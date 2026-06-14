@@ -47,6 +47,7 @@ export function HomeScreen({
   active,
   batches,
   videoJobs,
+  toast,
   setNewProjOpen,
   onEditProject,
   go,
@@ -56,6 +57,7 @@ export function HomeScreen({
   active: ProjectData | null;
   batches?: any[];
   videoJobs?: any[];
+  toast?: (msg: string, icon?: string) => void;
   setNewProjOpen: (b: boolean) => void;
   onEditProject?: () => void;
   go: (route: string) => void;
@@ -174,9 +176,18 @@ export function HomeScreen({
   const hasPhotos = localHasPhotos || (active.nFoto || 0) + (active.nStaging || 0) > 0;
   const hasVideo = localHasVideo || (active.nVideo || 0) > 0;
   const postCount = active.nPost || 0;
-  const hasSocial = postCount >= 3;
+  const hasSocial = postCount >= 1; // basta UN post creato per spuntare lo step
   const completedCount = [hasPhotos, hasVideo, hasSocial].filter(Boolean).length;
   const completionPct = Math.round((completedCount / 3) * 100);
+
+  // Festeggia quando il kit e' completo (transizione a 100%), una sola volta.
+  const prevPctRef = React.useRef(completionPct);
+  React.useEffect(() => {
+    if (completionPct === 100 && prevPctRef.current < 100) {
+      toast?.('Kit completo! Hai tutti i materiali per questo immobile', 'check');
+    }
+    prevPctRef.current = completionPct;
+  }, [completionPct, toast]);
 
   return (
     <div>
@@ -342,7 +353,7 @@ export function HomeScreen({
                 {[
                   { id: 'foto', label: 'Foto generate', done: hasPhotos, ic: 'sparkles' },
                   { id: 'video', label: 'Video creati', done: hasVideo, ic: 'film' },
-                  { id: 'social', label: `Post Social pronti (${postCount}/3)`, done: hasSocial, ic: 'megaphone' },
+                  { id: 'social', label: 'Post Social pronti', done: hasSocial, ic: 'megaphone' },
                 ].map(item => (
                   <div key={item.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', background: item.done ? '#f0fdf4' : '#f9f8f6', borderRadius: 10, border: `1px solid ${item.done ? '#bbf7d0' : '#f0ede7'}` }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>

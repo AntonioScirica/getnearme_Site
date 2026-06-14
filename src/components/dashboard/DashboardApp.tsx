@@ -253,9 +253,9 @@ const fmt = (n: number) => '€ ' + Number(n || 0).toLocaleString('it-IT');
 const STRIPE_BILLING_PORTAL = 'https://billing.stripe.com/p/login/9B68wP7WH3blfTG15eak000';
 
 const STRIPE_PAYMENT_LINKS: Record<string, string> = {
-  agency_monthly: 'https://buy.stripe.com/cNibJ14Kv3bl5f2aFOak00p',
-  agency_quarterly: 'https://buy.stripe.com/bJeeVddh1bHR5f229iak00s',
-  agency_annual: 'https://buy.stripe.com/eVq6oH90L27h8reg08ak00t',
+  agency_monthly: 'https://buy.stripe.com/eVq6oH2Cn3bl22Q8xGak00x',
+  agency_quarterly: 'https://buy.stripe.com/eVq00jdh1eU36j6g08ak00y',
+  agency_annual: 'https://buy.stripe.com/eVq00jccX6nxePCdS0ak00z',
 };
 
 const SUB_TYPE_TO_PLAN: Record<string, string> = {
@@ -2872,6 +2872,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                 active={active}
                 batches={batches}
                 videoJobs={videoJobs}
+                toast={toast}
                 setNewProjOpen={setNewProjOpen}
                 onEditProject={() => setEditProjOpen(true)}
                 go={go}

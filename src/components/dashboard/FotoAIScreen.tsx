@@ -28,9 +28,9 @@ import type { Project } from './types';
 
 // Pacchetti foto extra (Stripe Payment Links reali da ai_photo_packages).
 const PHOTO_PACKS = [
-  { id: 'ai-listing-boost', name: 'Listing Boost', photos: 500, price: 50, popular: false, link: 'https://buy.stripe.com/6oUfZhccXdPZ22QaFOak00d' },
-  { id: 'ai-real-estate-pro', name: 'Real Estate Pro', photos: 1500, price: 99, popular: true, link: 'https://buy.stripe.com/7sY4gzccXdPZ5f2dS0ak00e' },
-  { id: 'ai-agency', name: 'Agency Pack', photos: 4000, price: 199, popular: false, link: 'https://buy.stripe.com/7sYdR96SD3blePC4hqak00f' },
+  { id: 'ai-listing-boost', name: 'Listing Boost', photos: 500, price: 50, popular: false, link: 'https://buy.stripe.com/00wdR92Cn6nx36U01aak00A' },
+  { id: 'ai-real-estate-pro', name: 'Real Estate Pro', photos: 1500, price: 99, popular: true, link: 'https://buy.stripe.com/fZucN54KvaDN0YM5luak00B' },
+  { id: 'ai-agency', name: 'Agency Pack', photos: 4000, price: 199, popular: false, link: 'https://buy.stripe.com/14AdR9b8T6nx36U8xGak00C' },
 ];
 
 function userFromToken(): { id?: string; email?: string } {
@@ -77,7 +77,7 @@ function PhotoPacksModal({ onClose }: { onClose: () => void }) {
   );
 }
 
-export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated, onGoPlan, onGoPost }: {
+export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated, onGoPlan, onGoPost, onGoVideo }: {
   toast: (msg: string, icon?: string) => void;
   routeKey: number;
   project?: Project;

@@ -268,7 +268,7 @@ export default function MediaScreen({
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, borderBottom: '1px solid #f0ede7', paddingBottom: 12 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <div style={{ width: 32, height: 32, borderRadius: 8, background: '#eef4fe', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <Icon name="sparkles" size={16} color="#3B83F6" />
+                      <Icon name="calendar" size={16} color="#3B83F6" />
                     </div>
                     <div>
                       <div style={{ fontSize: 15, fontWeight: 700, color: '#211f1c', textTransform: 'capitalize' }}>{day.label}</div>

@@ -246,9 +246,9 @@ const ANIM_META: Record<string, { desc: string; icon: string }> = {
 // Pacchetti video extra. Prezzi provvisori (da finalizzare con i Payment Link
 // Stripe dei nuovi tagli 10/30/50). Il link 10 è quello reale; 30/50 da generare.
 const VIDEO_PACKS = [
-  { id: 'ai-video-10', name: 'Video Pack 10', videos: 10, price: 39, popular: false, link: 'https://buy.stripe.com/aFa4gzgtdaDN36U29iak00u' },
-  { id: 'ai-video-30', name: 'Video Pack 30', videos: 30, price: 99, popular: true, link: 'https://buy.stripe.com/bJeaEX5OzcLVbDqbJSak00v' },
-  { id: 'ai-video-50', name: 'Video Pack 50', videos: 50, price: 149, popular: false, link: 'https://buy.stripe.com/28E4gza4Ph2bcHu6pyak00w' },
+  { id: 'ai-video-10', name: 'Video Pack 10', videos: 10, price: 39, popular: false, link: 'https://buy.stripe.com/7sYdR93GreU336UaFOak00D' },
+  { id: 'ai-video-30', name: 'Video Pack 30', videos: 30, price: 99, popular: true, link: 'https://buy.stripe.com/bJe6oHa4PdPZgXKaFOak00E' },
+  { id: 'ai-video-50', name: 'Video Pack 50', videos: 50, price: 149, popular: false, link: 'https://buy.stripe.com/8x29AT7WH4fpbDqdS0ak00F' },
 ];
 
 function userFromToken(): { id?: string; email?: string } {
@@ -296,7 +296,7 @@ function VideoPacksModal({ onClose }: { onClose: () => void }) {
   );
 }
 
-export default function VideoAIScreen({ toast, routeKey, brand, preselect, project, onVideoJob, activeRenders }: {
+export default function VideoAIScreen({ toast, routeKey, brand, preselect, project, onVideoJob, activeRenders, initialPhotoUrl }: {
   toast: (msg: string, icon?: string) => void;
   routeKey: number;
   brand: BrandSettings;
