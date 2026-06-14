@@ -812,31 +812,6 @@ export async function exportStaticToVideo(templateEl, size, opts = {}) {
     preBlurCtx.filter = 'none';
   }
 
-  let blurCanvasMap = null;
-  if (textChildPanels.length > 0) {
-    const compCanvas = document.createElement('canvas');
-    compCanvas.width = w;
-    compCanvas.height = h;
-    const compCtx = compCanvas.getContext('2d');
-    if (hasCover && fgImg) {
-      compCtx.drawImage(preBlurCanvas, 0, 0);
-      if (fitCover) imgCover(compCtx, fgImg, w, h);
-      else imgContain(compCtx, fgImg, w, h);
-    } else if (coverVideo) {
-      // Sorgente del blur glass = primo frame del video NITIDO, cover-fit (riempie
-      // il frame). buildBlurCanvasMap lo sfoca UNA volta → frost pulito ovunque,
-      // niente "blur di immagine di immagine". Statica → niente farfallamento.
-      drawVideoFit(compCtx, coverVideo, w, h, true);
-      // La scena reale e' scurita dall'overlay (gradiente nero). Senza, il frost
-      // risulta "super luminoso". Si scurisce la sorgente per matchare la scena.
-      compCtx.fillStyle = 'rgba(0,0,0,0.5)';
-      compCtx.fillRect(0, 0, w, h);
-    } else {
-      compCtx.drawImage(gradientCanvas, 0, 0);
-    }
-    blurCanvasMap = buildBlurCanvasMap(textChildPanels, compCanvas, w, h);
-  }
-
   const isVideoCover = !!coverVideo;
   // Video-aware cover/contain draw (uses videoWidth/Height, not naturalWidth).
   function drawVideoFit(destCtx, vid, dw, dh, cover) {
@@ -853,6 +828,29 @@ export async function exportStaticToVideo(templateEl, size, opts = {}) {
       const rw = vw * scale, rh = vh * scale;
       destCtx.drawImage(vid, (dw - rw) / 2, (dh - rh) / 2, rw, rh);
     }
+  }
+
+  let blurCanvasMap = null;
+  if (textChildPanels.length > 0) {
+    const compCanvas = document.createElement('canvas');
+    compCanvas.width = w;
+    compCanvas.height = h;
+    const compCtx = compCanvas.getContext('2d');
+    if (hasCover && fgImg) {
+      compCtx.drawImage(preBlurCanvas, 0, 0);
+      if (fitCover) imgCover(compCtx, fgImg, w, h);
+      else imgContain(compCtx, fgImg, w, h);
+      compCtx.drawImage(gradientCanvas, 0, 0);
+    } else {
+      // Cover video (e no-cover): sorgente blur = primo frame video + overlay scuro
+      // catturato in gradientCanvas. Il box mostra blur(scena) = darkness corretta
+      // (l'overlay e' gia' dentro). Statica → niente farfallamento.
+      if (isVideoCover && coverVideo) {
+        drawVideoFit(compCtx, coverVideo, w, h, fitCover);
+      }
+      compCtx.drawImage(gradientCanvas, 0, 0);
+    }
+    blurCanvasMap = buildBlurCanvasMap(textChildPanels, compCanvas, w, h);
   }
   // Small offscreen canvas to produce a cheap blurred video background frame.
   const vSmall = document.createElement('canvas');

@@ -2876,7 +2876,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
             setEditProjOpen(false);
             const remaining = projects.filter(old => old.id !== id);
             if (remaining.length > 0) setActiveProject(remaining[0].id);
-            else setActiveProject(null);
+            else setActiveProject('');
           }}
         />
       )}
