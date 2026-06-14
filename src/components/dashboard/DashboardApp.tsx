@@ -26,7 +26,7 @@ import { HomeScreen } from './HomeScreen';
 import { NewProjectModal } from './NewProjectModal';
 import type { Project } from './types';
 import { type ProjectData, fetchProjects, updateProject } from '@/lib/projects';
-import { fetchUserBatches, dismissBatch, type BatchInfo } from '@/lib/stagingBatches';
+import { fetchUserBatches, fetchBatchPhotos, dismissBatch, type BatchInfo } from '@/lib/stagingBatches';
 import { STAGING_STYLES } from '@/lib/staging';
 import { cleanupOldMedia } from '@/lib/localMediaCache';
 import { supabase } from '@/lib/supabase';
@@ -385,7 +385,7 @@ const LOGO_VARIANT_LABELS: Record<string, string> = {
   colored_v: 'Icona, Colore', colored_h: 'Icona + Nome, Colore',
 };
 
-function PostSocialScreen({ toast, routeKey, brand, project, onProjectUpdate }: { toast: (msg: string, icon?: string) => void; routeKey: number; brand: BrandSettings; project?: Project; onProjectUpdate?: (p: Partial<Project>) => void }) {
+function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectUpdate }: { toast: (msg: string, icon?: string) => void; routeKey: number; brand: BrandSettings; project?: Project; batches?: BatchInfo[]; onProjectUpdate?: (p: Partial<Project>) => void }) {
   const [step, setStep] = React.useState(1);
   React.useEffect(() => { setStep(1); }, [routeKey]);
   const [logos, setLogos] = React.useState<{ white: string | null; black: string | null; blue: string | null } | null>(logosCache);
@@ -451,6 +451,23 @@ function PostSocialScreen({ toast, routeKey, brand, project, onProjectUpdate }: 
   const [videoThumb, setVideoThumb] = React.useState<string>('');
   const [fitCover, setFitCover] = React.useState(false);
   const [extraPhotos, setExtraPhotos] = React.useState<string[]>([]);
+  
+  const aiCheckedRef = React.useRef<string | null>(null);
+
+  React.useEffect(() => {
+    if (!batches || !project?.id) return;
+    if (aiCheckedRef.current === project.id) return; // already loaded for this project
+    const latestBatch = batches.find(b => b.projectId === project.id && b.status === 'completed');
+    if (latestBatch) {
+      aiCheckedRef.current = project.id;
+      fetchBatchPhotos(latestBatch.id).then(photos => {
+         const valid = photos.filter(p => p.resultUrl);
+         if (valid.length > 0) {
+           setCoverPhoto(prev => prev === DEFAULT_PHOTO ? valid[valid.length - 1].resultUrl : prev);
+         }
+      });
+    }
+  }, [batches, project?.id]);
   const [fieldIcons, setFieldIcons] = React.useState<Record<string, string>>(() => {
     return project?.icons ? { bedrooms: project.icons.camere || 'bed', bathrooms: project.icons.bagni || 'bath', surface: project.icons.mq || 'area' } : { bedrooms: 'bed', bathrooms: 'bath', surface: 'area' };
   });
@@ -580,6 +597,7 @@ function PostSocialScreen({ toast, routeKey, brand, project, onProjectUpdate }: 
         const h = node as HTMLElement;
         h.style.backdropFilter = val;
         h.style.setProperty('-webkit-backdrop-filter', val);
+        h.style.transform = 'translateZ(0)';
       });
     }
 
@@ -618,23 +636,25 @@ function PostSocialScreen({ toast, routeKey, brand, project, onProjectUpdate }: 
       await downloadBlob(blob, 'social-post.png');
       toast('Immagine scaricata', 'download');
       
+      cleanup?.();
+      setExporting(null);
+      
       if (project) {
         const updates = {
           titolo: fields.titolo,
           addr: fields.indirizzo,
-          prezzo: Number(fields.prezzo.replace(/\D/g, '')) || 0,
-          mq: Number(fields.superficie.replace(/\D/g, '')) || 0,
-          camere: Number(fields.camere.replace(/\D/g, '')) || 0,
-          bagni: Number(fields.bagni.replace(/\D/g, '')) || 0,
+          prezzo: Number(String(fields.prezzo || '').replace(/\D/g, '')) || 0,
+          mq: Number(String(fields.superficie || '').replace(/\D/g, '')) || 0,
+          camere: Number(String(fields.camere || '').replace(/\D/g, '')) || 0,
+          bagni: Number(String(fields.bagni || '').replace(/\D/g, '')) || 0,
           descrizione: fields.descrizione,
         };
-        await updateProject(project.id, updates);
+        updateProject(project.id, updates).catch(e => console.error("updateProject failed", e));
         onProjectUpdate?.(updates);
       }
     } catch (err) {
       console.error('Export PNG failed:', err);
       toast('Errore durante il download', 'download');
-    } finally {
       cleanup?.();
       setExporting(null);
     }
@@ -713,7 +733,7 @@ function PostSocialScreen({ toast, routeKey, brand, project, onProjectUpdate }: 
             document.body.appendChild(wrapper);
             for (const [cls, val] of Object.entries(blurMap)) {
               tplEl.querySelectorAll('.' + cls).forEach((n) => {
-                const h = n as HTMLElement; h.style.backdropFilter = val; h.style.setProperty('-webkit-backdrop-filter', val);
+                const h = n as HTMLElement; h.style.backdropFilter = val; h.style.setProperty('-webkit-backdrop-filter', val); h.style.transform = 'translateZ(0)';
               });
             }
             tplEl.querySelectorAll('.tpl-overlay').forEach((n) => { (n as HTMLElement).style.opacity = String(oscuramento / 100); });
@@ -749,7 +769,7 @@ function PostSocialScreen({ toast, routeKey, brand, project, onProjectUpdate }: 
           document.body.appendChild(vWrap);
           for (const [cls, val] of Object.entries(blurMap)) {
             vEl.querySelectorAll('.' + cls).forEach((n) => {
-              const h = n as HTMLElement; h.style.backdropFilter = val; h.style.setProperty('-webkit-backdrop-filter', val);
+              const h = n as HTMLElement; h.style.backdropFilter = val; h.style.setProperty('-webkit-backdrop-filter', val); h.style.transform = 'translateZ(0)';
             });
           }
           vEl.querySelectorAll('.tpl-overlay').forEach((n) => { (n as HTMLElement).style.opacity = String(oscuramento / 100); });
@@ -784,6 +804,7 @@ function PostSocialScreen({ toast, routeKey, brand, project, onProjectUpdate }: 
       a.remove();
       setTimeout(() => URL.revokeObjectURL(url), 5000);
       toast(`${count} file esportati (immagini + video)`, 'download');
+      setExporting(null);
       
       if (project) {
         const updates = {
@@ -795,10 +816,12 @@ function PostSocialScreen({ toast, routeKey, brand, project, onProjectUpdate }: 
           bagni: Number(String(fields.bagni || '').replace(/\D/g, '')) || 0,
           descrizione: fields.descrizione,
         };
-        await updateProject(project.id, updates).catch(e => console.error("updateProject failed", e));
+        updateProject(project.id, updates).catch(e => console.error("updateProject failed", e));
         onProjectUpdate?.(updates);
       }
-    } finally {
+    } catch (err) {
+      console.error('Export ALL failed:', err);
+      toast('Errore durante l\'esportazione', 'download');
       setExporting(null);
     }
   };
@@ -942,29 +965,40 @@ function PostSocialScreen({ toast, routeKey, brand, project, onProjectUpdate }: 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
             {/* upload cover photo */}
             <div
-              onClick={() => fileInputRef.current?.click()}
               style={{
                 display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px',
                 background: '#fff', border: '1.5px dashed #d8d4cb', borderRadius: 12,
-                cursor: 'pointer', transition: 'border-color .15s',
-                maxWidth: 940,
+                transition: 'border-color .15s',
+                maxWidth: 940, position: 'relative'
               }}
               onMouseEnter={e => (e.currentTarget.style.borderColor = '#3B83F6')}
               onMouseLeave={e => (e.currentTarget.style.borderColor = '#d8d4cb')}
             >
-              {coverPhoto !== DEFAULT_PHOTO ? (
-                <img src={coverPhoto} alt="" style={{ width: 48, height: 48, borderRadius: 8, objectFit: 'cover' }} />
-              ) : (
-                <div style={{ width: 48, height: 48, borderRadius: 8, background: '#f6f4f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Icon name="upload" size={20} color="#8c867d" />
+              <div onClick={() => fileInputRef.current?.click()} style={{ display: 'flex', flex: 1, alignItems: 'center', gap: 12, cursor: 'pointer' }}>
+                {coverPhoto !== DEFAULT_PHOTO ? (
+                  <img src={coverPhoto} alt="" style={{ width: 48, height: 48, borderRadius: 8, objectFit: 'cover' }} />
+                ) : (
+                  <div style={{ width: 48, height: 48, borderRadius: 8, background: '#f6f4f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Icon name="upload" size={20} color="#8c867d" />
+                  </div>
+                )}
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#211f1c' }}>
+                    {coverPhoto !== DEFAULT_PHOTO ? 'Cambia foto di sfondo' : 'Carica foto o video'}
+                  </div>
+                  <div style={{ fontSize: 11.5, color: '#8c867d' }}>JPG, PNG, WebP, MP4</div>
+                </div>
+              </div>
+              {coverPhoto !== DEFAULT_PHOTO && (
+                <div 
+                  onClick={(e) => { e.stopPropagation(); setCoverPhoto(DEFAULT_PHOTO); }}
+                  style={{ width: 32, height: 32, borderRadius: 8, background: '#f6f4f0', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none', cursor: 'pointer' }}
+                  onMouseEnter={e => (e.currentTarget.style.background = '#eeebe3')}
+                  onMouseLeave={e => (e.currentTarget.style.background = '#f6f4f0')}
+                >
+                  <Icon name="x" size={16} color="#8c867d" />
                 </div>
               )}
-              <div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: '#211f1c' }}>
-                  {coverPhoto !== DEFAULT_PHOTO ? 'Cambia foto di sfondo' : 'Carica foto o video'}
-                </div>
-                <div style={{ fontSize: 11.5, color: '#8c867d' }}>JPG, PNG, WebP, MP4</div>
-              </div>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 300px)', gap: 20, justifyContent: 'start' }}>
             {TEMPLATES.map(tc => {
@@ -2788,7 +2822,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                 }}
               />
             ) : route === 'studio' ? (
-              <PostSocialScreen toast={toast} routeKey={routeKey} brand={brand} project={active} onProjectUpdate={(upd) => setProjects(prev => prev.map(p => p.id === active.id ? { ...p, ...upd } : p))} />
+              <PostSocialScreen toast={toast} routeKey={routeKey} brand={brand} project={active} batches={batches} onProjectUpdate={(upd) => setProjects(prev => prev.map(p => p.id === active.id ? { ...p, ...upd } : p))} />
             ) : route === 'staging' ? (
               <FotoAIScreen 
                 toast={toast} 

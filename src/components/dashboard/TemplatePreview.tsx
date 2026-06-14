@@ -144,6 +144,7 @@ export default function TemplatePreview({ templateId, data, photoUrl, width = 20
           const h = node as HTMLElement;
           h.style.backdropFilter = val;
           h.style.setProperty('-webkit-backdrop-filter', val);
+          h.style.transform = 'translateZ(0)';
         });
       }
 
