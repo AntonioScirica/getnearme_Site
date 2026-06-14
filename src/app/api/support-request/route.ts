@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
     if (!email || typeof email !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return NextResponse.json({ error: 'Email non valida' }, { status: 400 });
     }
-    if (!type || !['support', 'bug'].includes(type)) {
+    if (!type || !['support', 'bug', 'feature'].includes(type)) {
       return NextResponse.json({ error: 'Tipo richiesta non valido' }, { status: 400 });
     }
     if (!message || typeof message !== 'string' || message.trim().length < 10) {

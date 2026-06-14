@@ -1816,8 +1816,9 @@ function SettingsScreen({ toast }: { toast: (msg: string, icon?: string) => void
   );
 }
 
-function AssistenzaScreen({ toast, email }: { toast: (msg: string, icon?: string) => void; email: string }) {
-  const [type, setType] = useState('support');
+function AssistenzaScreen({ toast, email, defaultType = 'support' }: { toast: (msg: string, icon?: string) => void; email: string; defaultType?: string }) {
+  const [type, setType] = useState(defaultType);
+  useEffect(() => { setType(defaultType); }, [defaultType]);
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -1865,6 +1866,7 @@ function AssistenzaScreen({ toast, email }: { toast: (msg: string, icon?: string
               >
                 <option value="support">Assistenza generale</option>
                 <option value="bug">Segnala un problema (Bug)</option>
+                <option value="feature">Richiedi funzione / Suggerimento</option>
               </select>
               <Icon name="chevron-down" size={16} color="#8c867d" style={{ position: 'absolute', right: 16, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
             </div>
@@ -1875,7 +1877,7 @@ function AssistenzaScreen({ toast, email }: { toast: (msg: string, icon?: string
             <textarea 
               value={message}
               onChange={e => setMessage(e.target.value)}
-              placeholder={type === 'bug' ? 'Descrivi il problema nel dettaglio. Cosa stavi facendo quando si è verificato?' : 'Scrivi qui la tua richiesta...'}
+              placeholder={type === 'feature' ? 'Raccontaci la tua idea: che funzionalità ti servirebbe e perché?' : type === 'bug' ? 'Descrivi il problema nel dettaglio. Cosa stavi facendo quando si è verificato?' : 'Scrivi qui la tua richiesta...'}
               style={{ width: '100%', border: '1px solid #e4e1da', borderRadius: 10, padding: '12px 16px', fontSize: 14, outline: 'none', minHeight: 140, resize: 'vertical' }}
             />
           </div>
@@ -2522,6 +2524,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                       {[
                         { icon: 'settings', label: 'Impostazioni', action: () => { setProfileOpen(false); go('impostazioni'); } },
                         { icon: 'play-circle', label: 'Tutorial', action: () => { setProfileOpen(false); setWelcomeOpen(true); } },
+                        { icon: 'lightbulb', label: 'Suggerisci funzione', action: () => { setProfileOpen(false); go('assistenza?type=feature'); } },
                         { icon: 'life-buoy', label: 'Assistenza', action: () => { setProfileOpen(false); go('assistenza'); } },
                       ].map(item => (
                         <Box key={item.label} onClick={item.action} style={s('display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:600')} hover={s('background:#f6f4f0')}>
@@ -2814,8 +2817,8 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
               <BrandScreen toast={toast} brand={brand} setBrand={setBrand} brandRole={brandRole} />
             ) : route === 'impostazioni' ? (
               <SettingsScreen toast={toast} />
-            ) : route === 'assistenza' ? (
-              <AssistenzaScreen toast={toast} email={userData?.email ?? ''} />
+            ) : route.startsWith('assistenza') ? (
+              <AssistenzaScreen toast={toast} email={userData?.email ?? ''} defaultType={route.includes('type=feature') ? 'feature' : 'support'} />
             ) : (
               <div style={s('max-width:1160px;margin:0 auto;padding:36px 32px 64px')}>
                 <h1 style={s('margin:0 0 4px;font-size:27px;font-weight:800;letter-spacing:-.5px')}>{ROUTE_TITLES[route] ?? route}</h1>
