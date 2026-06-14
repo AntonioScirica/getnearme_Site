@@ -28,20 +28,20 @@ interface PlanData {
 const PLANS: Record<string, PlanData> = {
   agency_monthly: {
     name: 'Mensile',
-    price_monthly: 100,
-    price_annual: 100,
-    original_price: 100,
-    payment_link_monthly: 'https://buy.stripe.com/eVq6oH2Cn3bl22Q8xGak00x',
+    price_monthly: 59,
+    price_annual: 59,
+    original_price: 150,
+    payment_link_monthly: 'https://buy.stripe.com/fZucN5dh17rB5f2bJSak00G',
     payment_link_annual: null,
     features_key: 'pro',
     popular: false,
   },
   agency_annual: {
     name: 'Annuale',
-    price_monthly: 59,
-    price_annual: 59,
-    original_price: 59,
-    payment_link_monthly: 'https://buy.stripe.com/eVq00jccX6nxePCdS0ak00z',
+    price_monthly: 590,
+    price_annual: 590,
+    original_price: 1800,
+    payment_link_monthly: 'https://buy.stripe.com/bJe4gzdh19zJgXK9BKak00H',
     payment_link_annual: null,
     features_key: 'pro',
     popular: true,
@@ -426,7 +426,7 @@ function CheckoutAgencyContent() {
   const intervalParam = searchParams.get('interval');
 
   const [interval, setInterval] = useState<'monthly' | 'annual'>(
-    intervalParam === 'annual' ? 'annual' : 'monthly'
+    intervalParam === 'annual' || selectedPlanId === 'agency_annual' ? 'annual' : 'monthly'
   );
   const [user, setUser] = useState<{ id: string; email: string } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -697,7 +697,7 @@ function CheckoutAgencyContent() {
                   </div>
                   {plan.original_price > plan.price_monthly && (
                     <p className="text-sm text-slate-400 line-through mt-1">
-                      €{plan.original_price}{t.perMonth}
+                      €{plan.original_price}{periodLabel}
                     </p>
                   )}
                 </div>

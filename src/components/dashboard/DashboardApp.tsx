@@ -253,8 +253,8 @@ const fmt = (n: number) => '€ ' + Number(n || 0).toLocaleString('it-IT');
 const STRIPE_BILLING_PORTAL = 'https://billing.stripe.com/p/login/9B68wP7WH3blfTG15eak000';
 
 const STRIPE_PAYMENT_LINKS: Record<string, string> = {
-  agency_monthly: 'https://buy.stripe.com/eVq6oH2Cn3bl22Q8xGak00x',
-  agency_annual: 'https://buy.stripe.com/eVq00jccX6nxePCdS0ak00z',
+  agency_monthly: 'https://buy.stripe.com/fZucN5dh17rB5f2bJSak00G',
+  agency_annual: 'https://buy.stripe.com/bJe4gzdh19zJgXK9BKak00H',
 };
 
 const SUB_TYPE_TO_PLAN: Record<string, string> = {
@@ -293,12 +293,12 @@ const PLANS = [
     color: 'var(--text-muted)', quotaFoto: 5, quotaVideo: 1, quotaPost: 5,
   },
   {
-    id: 'monthly', name: 'Mensile', price: 100, period: '/mese', badge: null, popular: false,
+    id: 'monthly', name: 'Mensile', price: 59, period: '/mese', badge: null, popular: false,
     features: PLAN_FEATURES,
     color: 'var(--text-main)', quotaFoto: 250, quotaVideo: 4, quotaPost: 999,
   },
   {
-    id: 'annual', name: 'Annuale', price: 59, period: '/mese', badge: 'Risparmia', popular: true,
+    id: 'annual', name: 'Annuale', price: 590, period: '/anno', badge: 'Più scelto', popular: true,
     features: PLAN_FEATURES,
     color: 'var(--text-main)', quotaFoto: 250, quotaVideo: 4, quotaPost: 999,
   },
@@ -1697,7 +1697,7 @@ function AccountScreen({ credits, toast, go, userData }: { credits: number; toas
   const activePlan = userData?.subscriptionType ? (SUB_TYPE_TO_PLAN[userData.subscriptionType] ?? 'free') : 'free';
   const currentPlan = PLANS.find(p => p.id === activePlan) ?? PLANS[0];
   const isFree = currentPlan.id === 'free';
-  const monthlyCost = 100;
+  const monthlyCost = PLANS.find(p => p.id === 'monthly')?.price ?? 0;
 
   return (
     <div style={s('max-width:1160px;margin:0 auto;padding:32px 32px 64px')}>
@@ -1745,7 +1745,7 @@ function AccountScreen({ credits, toast, go, userData }: { credits: number; toas
         <div className="max-md:!grid-cols-1" style={s('display:grid;grid-template-columns:repeat(3,1fr);gap:20px;align-items:stretch')}>
           {PLANS.map((plan) => {
             const active = plan.id === activePlan;
-            const savings = plan.id !== 'free' && plan.price < monthlyCost ? (monthlyCost - plan.price) * 12 : 0;
+            const savings = plan.id === 'annual' && monthlyCost > 0 ? (monthlyCost * 12 - plan.price) : 0;
             return (
               <Box key={plan.id} style={{
                 background: active ? '#3B83F6' : 'var(--bg-card)',
