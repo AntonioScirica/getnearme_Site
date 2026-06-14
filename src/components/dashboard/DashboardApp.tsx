@@ -2522,9 +2522,9 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                   <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 16px 48px rgba(33,31,28,.16)', border: '1px solid #f0ede7', overflow: 'hidden' }}>
                     <div style={s('padding:4px')}>
                       {[
-                        { icon: 'settings', label: 'Impostazioni', action: () => { setProfileOpen(false); go('impostazioni'); } },
                         { icon: 'play-circle', label: 'Tutorial', action: () => { setProfileOpen(false); setWelcomeOpen(true); } },
                         { icon: 'message-square', label: 'Suggerimenti', action: () => { setProfileOpen(false); go('assistenza?type=feature'); } },
+                        { icon: 'settings', label: 'Impostazioni', action: () => { setProfileOpen(false); go('impostazioni'); } },
                         { icon: 'life-buoy', label: 'Assistenza', action: () => { setProfileOpen(false); go('assistenza'); } },
                       ].map(item => (
                         <Box key={item.label} onClick={item.action} style={s('display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:600')} hover={s('background:#f6f4f0')}>
