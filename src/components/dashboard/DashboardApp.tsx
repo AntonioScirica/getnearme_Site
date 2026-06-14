@@ -44,7 +44,7 @@ const DEMO_PROJECTS: Project[] = [
 ];
 
 const NAV_SECTIONS = [
-  { label: 'Progetto', items: [{ icon: 'layout-dashboard', label: 'Home', route: 'home' }, { icon: 'sparkles', label: 'Homestaging AI', route: 'staging' }, { icon: 'film', label: 'Video AI', route: 'video' }, { icon: 'scissors', label: 'Montaggio', route: 'montaggio' }, { icon: 'instagram', label: 'Post Social', route: 'studio' }, { icon: 'images', label: 'Galleria', route: 'media' }] },
+  { label: 'Progetto', items: [{ icon: 'layout-dashboard', label: 'Home', route: 'home' }, { icon: 'sparkles', label: 'Homestaging AI', route: 'staging' }, { icon: 'film', label: 'Video AI', route: 'video' }, { icon: 'scissors', label: 'Montaggio', route: 'montaggio' }, { icon: 'layout-template', label: 'Post Social', route: 'studio' }, { icon: 'images', label: 'Galleria', route: 'media' }] },
   { label: 'Agenzia', items: [{ icon: 'palette', label: 'Brand', route: 'brand' }, { icon: 'credit-card', label: 'Piano', route: 'account' }] },
 ];
 
@@ -2355,7 +2355,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
   // Calendario, Account social) NON vanno mostrate nemmeno qui.
   const cmdTools = [
     ['Foto AI', 'staging', 'sparkles'], ['Video AI', 'video', 'film'], ['Montaggio', 'montaggio', 'scissors'],
-    ['Post Social', 'studio', 'instagram'], ['Galleria', 'media', 'images'],
+    ['Post Social', 'studio', 'layout-template'], ['Galleria', 'media', 'images'],
     ['Brand Agenzia', 'brand', 'palette'], ['Piano e crediti', 'account', 'credit-card'],
   ] as const;
   // Voci disponibili dal menu profilo (non in sidebar).
