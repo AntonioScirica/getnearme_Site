@@ -317,7 +317,8 @@ export function renderTemplate(templateId, data, photoUrl, opts = {}) {
       const safeOffset = opts.size.safe ? Math.max(opts.size.safe.top - 40, 0) : 0;
       const rPct = ((rightPx + safeOffset) / h * 100).toFixed(1);
       const lPct = ((leftPx + safeOffset) / h * 100).toFixed(1);
-      triangle.style.clipPath = `polygon(0 0, 100% 0, 100% ${rPct}%, 0 ${lPct}%)`;
+      const poly = triangle.querySelector('polygon');
+      if (poly) poly.setAttribute('points', `0,0 100,0 100,${rPct} 0,${lPct}`);
     }
   }
 

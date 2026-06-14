@@ -17,11 +17,20 @@ export function renderDiagonal(data, photoUrl) {
   // Cover photo
   container.appendChild(createCover(photoUrl));
 
-  // Overlay: accent triangle
-  const triangle = document.createElement('div');
-  triangle.className = 'tpl-overlay tpl-overlay--triangle';
-  triangle.style.background = AC;
-  container.appendChild(triangle);
+  // Overlay: accent triangle (SVG)
+  const svgNS = 'http://www.w3.org/2000/svg';
+  const shapeSvg = document.createElementNS(svgNS, 'svg');
+  shapeSvg.setAttribute('width', '100%');
+  shapeSvg.setAttribute('height', '100%');
+  shapeSvg.setAttribute('viewBox', '0 0 100 100');
+  shapeSvg.setAttribute('preserveAspectRatio', 'none');
+  shapeSvg.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0';
+  shapeSvg.setAttribute('class', 'tpl-overlay tpl-overlay--triangle tpl-shape');
+  const shapePoly = document.createElementNS(svgNS, 'polygon');
+  shapePoly.setAttribute('points', '0,0 100,0 100,25 0,55'); // CSS had polygon(0 0, 100% 0, 100% 25%, 0 55%)
+  shapePoly.setAttribute('fill', AC);
+  shapeSvg.appendChild(shapePoly);
+  container.appendChild(shapeSvg);
 
   // Overlay: bottom gradient for description
   const bottomGrad = document.createElement('div');

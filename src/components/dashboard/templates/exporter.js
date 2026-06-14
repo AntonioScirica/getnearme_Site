@@ -219,53 +219,6 @@ function imgContain(destCtx, img, dw, dh) {
   destCtx.drawImage(img, (dw - rw) / 2, (dh - rh) / 2, rw, rh);
 }
 
-function fixClipPath(templateEl, w, h) {
-  const restoreActions = [];
-  const clipEl = templateEl.querySelector('.tpl-overlay--triangle');
-  if (clipEl) {
-    const cs = getComputedStyle(clipEl);
-    const clipStr = clipEl.style.clipPath || cs.clipPath || '';
-    const polyMatch = clipStr.match(/polygon\(([^)]+)\)/);
-    if (polyMatch) {
-      const parseVal = (v, max) => {
-        v = v.trim();
-        if (v.endsWith('%')) return parseFloat(v) / 100 * max;
-        return parseFloat(v);
-      };
-      const points = polyMatch[1].split(',').map(pt => {
-        const [xStr, yStr] = pt.trim().split(/\s+/);
-        return { x: parseVal(xStr, w), y: parseVal(yStr, h) };
-      });
-      const color = cs.backgroundColor || '#2967EC';
-
-      const polyCanvas = document.createElement('canvas');
-      polyCanvas.width = w;
-      polyCanvas.height = h;
-      polyCanvas.style.position = 'absolute';
-      polyCanvas.style.inset = '0';
-      polyCanvas.style.zIndex = '1';
-      polyCanvas.style.pointerEvents = 'none';
-      const polyCtx = polyCanvas.getContext('2d');
-      polyCtx.fillStyle = color;
-      polyCtx.beginPath();
-      polyCtx.moveTo(points[0].x, points[0].y);
-      for (let i = 1; i < points.length; i++) {
-        polyCtx.lineTo(points[i].x, points[i].y);
-      }
-      polyCtx.closePath();
-      polyCtx.fill();
-
-      clipEl.style.visibility = 'hidden';
-      clipEl.parentNode.insertBefore(polyCanvas, clipEl);
-      restoreActions.push(() => {
-        clipEl.style.visibility = '';
-        polyCanvas.remove();
-      });
-    }
-  }
-  return restoreActions;
-}
-
 function collectGlassPanels(templateEl, tplRect, textElsSet) {
   const panels = [];
   templateEl.querySelectorAll('*').forEach(el => {
@@ -377,7 +330,6 @@ export async function exportToPng(element, size, opts = {}) {
 
   const tplRect = element.getBoundingClientRect();
   const glassPanels = collectGlassPanels(element, tplRect);
-  const restoreActions = fixClipPath(element, w, h);
 
   await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
 
@@ -428,7 +380,6 @@ export async function exportToPng(element, size, opts = {}) {
     }
   } finally {
     restoreGradient();
-    restoreActions.forEach(fn => fn());
     restoreBlobImgs();
   }
 
@@ -539,7 +490,7 @@ export async function exportStaticToVideo(templateEl, size, opts = {}) {
     try { await coverVideo.play(); } catch { /* autoplay may need muted, already set */ }
   }
 
-  const TEXT_SELS = '.tpl-badge, .tpl-price, .tpl-title, .tpl-address, .tpl-metrics, .tpl-metric-pills, .tpl-metrics-inline, .tpl-desc, .tpl-btn, .tpl-photo, .tpl-label, .tpl-logo-overlay, .tpl-bar';
+  const TEXT_SELS = '.tpl-badge, .tpl-price, .tpl-title, .tpl-address, .tpl-metrics, .tpl-metric-pills, .tpl-metrics-inline, .tpl-desc, .tpl-btn, .tpl-photo, .tpl-label, .tpl-logo-overlay, .tpl-bar, .tpl-shape, .tpl-panel, .tpl-overlay--triangle, .tpl-arch-top';
 
   const cover = templateEl.querySelector('.tpl-cover');
   const hasCover = !!cover;
@@ -577,6 +528,11 @@ export async function exportStaticToVideo(templateEl, size, opts = {}) {
     }
     layers.push(layer);
   }
+
+  // Draw background shapes/panels first
+  ['.tpl-shape', '.tpl-panel', '.tpl-overlay--triangle', '.tpl-arch-top'].forEach(sel => {
+    templateEl.querySelectorAll(sel).forEach(el => addRect(el, 'shape'));
+  });
 
   templateEl.querySelectorAll('.tpl-photo').forEach(el => addRect(el, 'photo'));
   templateEl.querySelectorAll('.tpl-label').forEach(el => addRect(el));
@@ -622,28 +578,6 @@ export async function exportStaticToVideo(templateEl, size, opts = {}) {
   const glassVisSaved = glassEls.map(el => el.style.visibility);
   glassEls.forEach(el => { el.style.visibility = 'hidden'; });
 
-  const clipPathEl = templateEl.querySelector('[style*="clip-path"], .tpl-overlay--triangle');
-  let clipPathPoly = null;
-  if (clipPathEl) {
-    const clipStr = clipPathEl.style.clipPath || getComputedStyle(clipPathEl).clipPath || '';
-    const polyMatch = clipStr.match(/polygon\(([^)]+)\)/);
-    if (polyMatch) {
-      clipPathEl.style.visibility = 'hidden';
-      const parseVal = (v, max) => {
-        v = v.trim();
-        if (v.endsWith('%')) return parseFloat(v) / 100 * max;
-        return parseFloat(v);
-      };
-      clipPathPoly = {
-        color: getComputedStyle(clipPathEl).backgroundColor || '#2967EC',
-        points: polyMatch[1].split(',').map(pt => {
-          const [xStr, yStr] = pt.trim().split(/\s+/);
-          return { x: parseVal(xStr, w), y: parseVal(yStr, h) };
-        }),
-      };
-    }
-  }
-
   await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
 
   const restoreGrad1 = patchGradientStops();
@@ -659,32 +593,18 @@ export async function exportStaticToVideo(templateEl, size, opts = {}) {
     restoreGrad1();
   }
 
-  if (clipPathEl) clipPathEl.style.visibility = '';
   // Ripristina le glass box: nella fase textCanvas servono visibili (il loro
   // bg viene reso trasparente a parte) per catturarne il testo/icone interni.
   glassEls.forEach((el, i) => { el.style.visibility = glassVisSaved[i]; });
 
-  if (clipPathPoly && clipPathPoly.points.length >= 3) {
-    const tempCanvas = document.createElement('canvas');
-    tempCanvas.width = w;
-    tempCanvas.height = h;
-    const tempCtx = tempCanvas.getContext('2d');
-    tempCtx.fillStyle = clipPathPoly.color;
-    tempCtx.beginPath();
-    tempCtx.moveTo(clipPathPoly.points[0].x, clipPathPoly.points[0].y);
-    for (let i = 1; i < clipPathPoly.points.length; i++) {
-      tempCtx.lineTo(clipPathPoly.points[i].x, clipPathPoly.points[i].y);
-    }
-    tempCtx.closePath();
-    tempCtx.fill();
-    tempCtx.drawImage(gradientCanvas, 0, 0);
-    gradientCanvas = tempCanvas;
-  }
-
   // Capture text layer
   textEls.forEach(el => { el.style.visibility = ''; });
   const overlayEls = templateEl.querySelectorAll('.tpl-overlay');
-  overlayEls.forEach(el => { el.style.visibility = 'hidden'; });
+  overlayEls.forEach(el => {
+    if (!el.classList.contains('tpl-shape') && !el.classList.contains('tpl-overlay--triangle')) {
+      el.style.visibility = 'hidden';
+    }
+  });
 
   const keepSet = new Set();
   textEls.forEach(el => {
