@@ -1671,7 +1671,7 @@ function AccountScreen({ credits, toast, go, userData }: { credits: number; toas
               <span style={s('font-size:18px;font-weight:800;letter-spacing:-.3px')}>Piano {currentPlan ? currentPlan.name : 'Free'}</span>
               <span style={currentPlan
                 ? s('font-size:10.5px;font-weight:800;background:#3B83F6;color:var(--bg-card);padding:4px 12px;border-radius:8px;letter-spacing:.03em')
-                : s('font-size:10.5px;font-weight:800;background:var(--border-light);color:var(--text-muted);padding:4px 12px;border-radius:8px;letter-spacing:.03em')}>{currentPlan ? 'ATTIVO' : 'NESSUN ABBONAMENTO'}</span>
+                : s('font-size:10.5px;font-weight:800;background:var(--border-light);color:var(--text-muted);padding:4px 12px;border-radius:8px;letter-spacing:.03em')}>{currentPlan ? 'ATTIVO' : 'FREE'}</span>
             </div>
             {!currentPlan && (
               <div style={s('margin-top:6px;font-size:13px;color:var(--text-muted)')}>Scegli un piano qui sotto per avere foto e video AI ogni mese.</div>
@@ -2367,7 +2367,10 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
   // Numeri NON hardcoded: letti dalla quota reale. Solo per utenti free.
   const [freeTrial, setFreeTrial] = useState<{ photos: number; videos: number } | null>(null);
   useEffect(() => {
-    if (userData?.subscriptionType) { setFreeTrial(null); return; }
+    // 'free'/null = non pagante -> mostra la quota di prova. Solo i piani a
+    // pagamento (agency_*) la nascondono. ('free' e' un tier reale, non l'assenza.)
+    const isPaidPlan = !!userData?.subscriptionType && userData.subscriptionType !== 'free';
+    if (isPaidPlan) { setFreeTrial(null); return; }
     let cancelled = false;
     (async () => {
       const [sq, vq] = await Promise.all([fetchStagingQuota(), fetchVideoQuota()]);
