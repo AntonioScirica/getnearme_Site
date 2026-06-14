@@ -1895,6 +1895,7 @@ function AssistenzaScreen({ toast, email }: { toast: (msg: string, icon?: string
 function BrandScreen({ toast, brand: brandProp, setBrand: setBrandParent, brandRole }: { toast: (msg: string, icon?: string) => void; brand: BrandSettings; setBrand: (b: BrandSettings) => void; brandRole: 'owner' | 'member' | null }) {
   const [brand, setBrand] = React.useState<BrandState>(brandProp as unknown as BrandState);
   const fileRefs = React.useRef<Record<string, HTMLInputElement | null>>({});
+  const [loadedLogos, setLoadedLogos] = React.useState<Record<string, boolean>>({});
   const scope: 'team' | 'user' = brandRole === 'owner' ? 'team' : 'user';
 
   // Keep track of what we last saved to avoid echoing back identical data
@@ -2008,7 +2009,15 @@ function BrandScreen({ toast, brand: brandProp, setBrand: setBrandParent, brandR
                         overflow: 'hidden', transition: 'box-shadow .2s',
                       }} hover={{ boxShadow: '0 4px 16px rgba(33,31,28,.10)' }}>
                         {src ? (
-                          <img src={src} alt={v.label} style={{ maxWidth: '70%', maxHeight: '70%', objectFit: 'contain' }} />
+                          <img 
+                            src={src} 
+                            alt={v.label} 
+                            onLoad={() => setLoadedLogos(p => ({ ...p, [src]: true }))}
+                            style={{ 
+                              maxWidth: '70%', maxHeight: '70%', objectFit: 'contain',
+                              opacity: loadedLogos[src] ? 1 : 0, transition: 'opacity 0.4s ease'
+                            }} 
+                          />
                         ) : (
                           <Icon name="image-plus" size={20} color={v.bg === '#211f1c' ? 'rgba(255,255,255,.35)' : '#b3aca1'} />
                         )}
