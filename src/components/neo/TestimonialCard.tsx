@@ -31,7 +31,7 @@ export default function TestimonialCard({ testimonial: t, index = 0 }: Testimoni
           width: '100%',
         }}
       >
-        <div style={{ color: '#f59e0b', fontSize: 18, marginBottom: 12, letterSpacing: 2 }}>★★★★★</div>
+        <div style={{ color: '#3B83F6', fontSize: 18, marginBottom: 12, letterSpacing: 2 }}>★★★★★</div>
         <p style={{ color: '#555', fontSize: 14, lineHeight: 1.75, margin: '0 0 20px' }}>
           &ldquo;{t.text}&rdquo;
         </p>

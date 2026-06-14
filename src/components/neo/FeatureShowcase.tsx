@@ -4,7 +4,6 @@ import { useState, useRef, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { Icon } from '@/lib/icons';
-import { Upload } from 'lucide-react';
 import RevealSection from './RevealSection';
 import BeforeAfterSlider, { STAGING_STYLES } from '@/components/BeforeAfterSlider';
 import VideoShowcase, { VIDEO_STYLES } from '@/components/VideoShowcase';
@@ -27,7 +26,6 @@ export default function FeatureShowcase({ feature: f, videoSrc, index, reverse }
   const [videoFading, setVideoFading] = useState(false);
   const videoUserClicked = useRef(false);
   const [socialPhoto, setSocialPhoto] = useState(DEFAULT_SOCIAL_PHOTO);
-  const socialFileRef = useRef<HTMLInputElement>(null);
 
   const handleVideoEnd = useCallback(() => {
     if (videoUserClicked.current) return;
@@ -46,7 +44,7 @@ export default function FeatureShowcase({ feature: f, videoSrc, index, reverse }
       setVideoFading(false);
     }, 300);
   }, []);
-  const bg = index % 2 === 0 ? '#fafaf8' : '#f3f4f6';
+  const bg = index % 2 === 0 ? '#fff' : '#f3f4f6';
 
   const sectionIds = ['ai-photos', 'ai-video', 'social-posts', 'reports', 'zone-analysis', 'price-calculator'];
   const sectionId = sectionIds[index] || `feature-${index}`;
@@ -72,15 +70,16 @@ export default function FeatureShowcase({ feature: f, videoSrc, index, reverse }
               {(index === 0 ? STAGING_STYLES : VIDEO_STYLES).map((s, i) => {
                 const active = index === 0 ? stagingStyle === i : videoStyle === i;
                 const setStyle = index === 0 ? setStagingStyle : handleVideoStyleClick;
+                const darkColor = index === 0 ? '#4338ca' : '#047857';
                 const btnStyle = {
                   flex: 1,
                   padding: '9px 8px',
                   fontSize: 13,
                   fontWeight: 600,
                   borderRadius: 8,
-                  border: `2px solid ${active ? f.color : '#e5e7eb'}`,
+                  border: `1px solid ${active ? darkColor + '55' : '#e5e7eb'}`,
                   background: active ? `${f.color}15` : '#fff',
-                  color: active ? f.color : '#666',
+                  color: active ? darkColor : '#666',
                   textAlign: 'center' as const,
                   cursor: 'pointer',
                   transition: 'all 0.2s ease',
@@ -217,18 +216,17 @@ export default function FeatureShowcase({ feature: f, videoSrc, index, reverse }
             </p>
             {index === 2 && (
               <div className="feature-upload-desktop" style={{ marginTop: 16 }}>
-                <button
-                  onClick={() => socialFileRef.current?.click()}
+                <Link
+                  href={`/${locale}#pricing`}
                   style={{
                     display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 20px',
                     background: '#fff', color: f.color, fontSize: 14, fontWeight: 700,
-                    borderRadius: 10, border: `2px solid ${f.color}`,
-                    cursor: 'pointer', transition: 'all 0.2s ease',
+                    borderRadius: 10, border: `1px solid ${f.color}55`,
+                    textDecoration: 'none', transition: 'all 0.2s ease',
                   }}
                 >
-                  <span className="upload-wiggle" style={{ display: 'inline-flex' }}><Upload size={16} /></span>
                   Prova con la tua foto
-                </button>
+                </Link>
               </div>
             )}
             {(index === 0 || index === 1) && (
@@ -236,14 +234,15 @@ export default function FeatureShowcase({ feature: f, videoSrc, index, reverse }
                 {(index === 0 ? STAGING_STYLES : VIDEO_STYLES).map((s, i) => {
                   const active = index === 0 ? stagingStyle === i : videoStyle === i;
                   const setStyle = index === 0 ? setStagingStyle : handleVideoStyleClick;
+                  const darkColor = index === 0 ? '#4338ca' : '#047857';
                   const btnStyle = {
                     padding: '7px 18px',
                     fontSize: 13,
                     fontWeight: 600,
                     borderRadius: 8,
-                    border: `2px solid ${active ? f.color : '#e5e7eb'}`,
+                    border: `1px solid ${active ? darkColor + '55' : '#e5e7eb'}`,
                     background: active ? `${f.color}15` : '#fff',
-                    color: active ? f.color : '#666',
+                    color: active ? darkColor : '#666',
                     minWidth: 80,
                     textAlign: 'center' as const,
                     cursor: 'pointer',
@@ -265,36 +264,23 @@ export default function FeatureShowcase({ feature: f, videoSrc, index, reverse }
                 })}
               </div>
             )}
-            {index === 2 && (
-              <input
-                ref={socialFileRef}
-                type="file"
-                accept="image/*"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) setSocialPhoto(URL.createObjectURL(file));
-                }}
-                style={{ display: 'none' }}
-              />
-            )}
           </div>
 
-          {/* Upload button — mobile only, below media */}
+          {/* CTA mobile — below media */}
           {index === 2 && (
             <div className="feature-upload-mobile" style={{ display: 'none', width: '100%' }}>
-              <button
-                onClick={() => socialFileRef.current?.click()}
+              <Link
+                href={`/${locale}#pricing`}
                 style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                   padding: '12px 20px', width: '100%',
                   background: '#fff', color: f.color, fontSize: 14, fontWeight: 700,
-                  borderRadius: 10, border: `2px solid ${f.color}`,
-                  cursor: 'pointer', transition: 'all 0.2s ease',
+                  borderRadius: 10, border: `1px solid ${f.color}55`,
+                  textDecoration: 'none', transition: 'all 0.2s ease',
                 }}
               >
-                <span className="upload-wiggle" style={{ display: 'inline-flex' }}><Upload size={16} /></span>
                 Prova con la tua foto
-              </button>
+              </Link>
             </div>
           )}
         </div>

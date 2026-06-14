@@ -37,8 +37,11 @@ export default function BeforeAfterSlider({ color = '#6366f1', activeStyle = 0 }
   const [hinted, setHinted] = useState(false);
   const [animating, setAnimating] = useState(false);
   const interacted = useRef(false);
+  const [fading, setFading] = useState(false);
+  const [displayedStyle, setDisplayedStyle] = useState(activeStyle);
+  const prevStyle = useRef(activeStyle);
 
-  const current = STYLES[activeStyle];
+  const current = STYLES[displayedStyle];
 
   const updatePos = useCallback((clientX: number) => {
     const el = containerRef.current;
@@ -66,12 +69,19 @@ export default function BeforeAfterSlider({ color = '#6366f1', activeStyle = 0 }
     setDragging(false);
   }, []);
 
-  // Reset slider position on style change — Vuoto starts at 30% to show more "before"
+  // Crossfade on style change
   useEffect(() => {
-    setAnimating(true);
-    setPos(activeStyle === 1 ? 30 : activeStyle === 2 ? 60 : 50);
-    const t = setTimeout(() => setAnimating(false), 600);
-    return () => clearTimeout(t);
+    if (activeStyle === prevStyle.current) return;
+    prevStyle.current = activeStyle;
+    setFading(true);
+    const t1 = setTimeout(() => {
+      setDisplayedStyle(activeStyle);
+      setAnimating(true);
+      setPos(activeStyle === 1 ? 30 : activeStyle === 2 ? 60 : 50);
+      setFading(false);
+    }, 300);
+    const t2 = setTimeout(() => setAnimating(false), 900);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
   }, [activeStyle]);
 
   // Hint animation: smooth wiggle slider once when it enters viewport
@@ -110,7 +120,7 @@ export default function BeforeAfterSlider({ color = '#6366f1', activeStyle = 0 }
   };
 
   return (
-    <div style={{ width: '100%' }}>
+    <div style={{ width: '100%', opacity: fading ? 0 : 1, transition: 'opacity 0.3s ease' }}>
       {/* Slider container */}
       <div
         ref={containerRef}

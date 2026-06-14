@@ -31,9 +31,12 @@ export default function LanguageSwitcher({ locale, openUp = false }: LanguageSwi
   };
 
   return (
-    <div className="relative">
+    <div
+      className="relative"
+      onMouseEnter={() => setIsOpen(true)}
+      onMouseLeave={() => setIsOpen(false)}
+    >
       <button
-        onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-1 text-sm font-medium text-slate-600 hover:text-black transition-colors focus:outline-none"
         aria-label="Seleziona lingua"
         aria-expanded={isOpen}
@@ -45,14 +48,12 @@ export default function LanguageSwitcher({ locale, openUp = false }: LanguageSwi
       </button>
 
       {isOpen && (
-        <>
+        <div
+          className={`absolute w-48 z-20 ${openUp ? 'bottom-full left-1/2 -translate-x-1/2' : 'right-0 md:left-0 md:right-auto'}`}
+          style={{ top: '100%', paddingTop: 8 }}
+        >
           <div
-            className="fixed inset-0 z-10"
-            onClick={() => setIsOpen(false)}
-            aria-hidden="true"
-          />
-          <div 
-            className={`absolute w-48 rounded-xl bg-white border border-slate-200 shadow-xl z-20 overflow-hidden animate-fade-in ${openUp ? 'bottom-full mb-2 left-1/2 -translate-x-1/2' : 'right-0 md:left-0 md:right-auto mt-2'}`}
+            className="rounded-xl bg-white border border-slate-200 shadow-xl overflow-hidden animate-fade-in"
             role="listbox"
             aria-label="Lingue disponibili"
           >
@@ -75,7 +76,7 @@ export default function LanguageSwitcher({ locale, openUp = false }: LanguageSwi
               ))}
             </div>
           </div>
-        </>
+        </div>
       )}
     </div>
   );

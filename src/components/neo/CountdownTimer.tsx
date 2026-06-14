@@ -83,7 +83,7 @@ export default function CountdownTimer({ big = false }: CountdownTimerProps) {
             <span
               style={{
                 background: '#1a1a2e',
-                color: '#f59e0b',
+                color: '#fff',
                 borderRadius: 8,
                 padding: '6px 10px',
                 fontSize: 20,

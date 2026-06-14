@@ -18,10 +18,10 @@ export default function NeoFAQItem({ question, answer, index = 0 }: NeoFAQItemPr
         onClick={() => setOpen(!open)}
         className="neo-border cursor-pointer"
         style={{
-          background: open ? '#fffbeb' : '#fff',
+          background: open ? '#eff6ff' : '#fff',
           borderRadius: 14,
           padding: '18px 22px',
-          boxShadow: open ? '0 6px 18px rgba(245,158,11,0.20)' : '0 2px 10px rgba(16,24,40,0.06)',
+          boxShadow: open ? '0 6px 18px rgba(59,131,246,0.15)' : '0 2px 10px rgba(16,24,40,0.06)',
           transition: 'all 0.3s',
         }}
       >
@@ -34,9 +34,9 @@ export default function NeoFAQItem({ question, answer, index = 0 }: NeoFAQItemPr
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              background: open ? '#f59e0b' : '#fffbeb',
+              background: open ? '#3B83F6' : '#eff6ff',
               borderRadius: 10,
-              color: open ? '#fff' : '#f59e0b',
+              color: open ? '#fff' : '#3B83F6',
               border: '1px solid rgba(26,26,46,0.10)',
               fontSize: 20,
               fontWeight: 900,

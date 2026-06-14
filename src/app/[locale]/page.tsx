@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Flame, Zap, Lock, TrendingUp, Video, Megaphone, FileText, ArrowRight, Link2, Sparkles, Send, Clock } from "lucide-react";
+import { Flame, Zap, Lock, TrendingUp, Video, Megaphone, FileText, ArrowRight, Link2, Sparkles, Send, Clock, ImagePlus } from "lucide-react";
 import { locales, type Locale } from "@/lib/i18n";
 import { translations } from "@/lib/translations";
 import Navbar from "@/components/Navbar";
@@ -24,15 +24,12 @@ export default async function Home({ params }: Props) {
     { video: "/assets/png/gif/agency_ai_anim.mp4" },
     { video: "/assets/png/gif/ai_video_templates.png" },
     { video: "/assets/png/gif/post_social.mp4" },
-    { video: "/assets/png/gif/compare_pdf.mp4" },
-    { video: "/assets/png/gif/map_zone.mp4" },
-    { video: "/assets/png/gif/prezzo_medio_m2.mp4" },
   ];
 
   return (
     <div
       className="min-h-screen overflow-x-clip"
-      style={{ background: "#fafaf8", color: "#1a1a2e" }}
+      style={{ background: "#fff", color: "#1a1a2e" }}
     >
       {/* Sticky Header: Banner + Navbar */}
       <div className="sticky top-0 z-50">
@@ -45,13 +42,13 @@ export default async function Home({ params }: Props) {
             textAlign: "center",
             fontSize: 13,
             fontWeight: 600,
-            borderBottom: "1px solid #f59e0b",
+            borderBottom: "1px solid #3B83F6",
           }}
         >
           <span style={{ display: "inline-flex", alignItems: "center", gap: 6, flexWrap: "wrap", justifyContent: "center" }}>
-            <Flame size={14} color="#f59e0b" strokeWidth={2.5} />
+            <Flame size={14} color="#60a5fa" strokeWidth={2.5} style={{ flexShrink: 0, position: 'relative', top: -1 }} />
             {l.topBar.promo}{" "}
-            <span style={{ color: "#f59e0b" }}>{l.topBar.discount}</span>
+            <span style={{ color: "#60a5fa" }}>{l.topBar.discount}</span>
             <span className="hidden sm:inline" style={{ color: "#aaa" }}>·</span>
             <span className="hidden sm:inline">{l.topBar.expiresIn}</span>
             <HomepageClient variant="countdown-inline" />
@@ -70,7 +67,7 @@ export default async function Home({ params }: Props) {
         <section
           className="py-12 md:py-20"
           style={{
-            background: "#fafaf8",
+            background: "#fff",
             position: "relative",
             overflow: "hidden",
           }}
@@ -84,10 +81,10 @@ export default async function Home({ params }: Props) {
               right: -180,
               width: 240,
               height: 240,
-              background: "#fef3c7",
+              background: "#dbeafe",
               borderRadius: "50%",
               opacity: 0.5,
-              border: "3px solid #fcd34d",
+              border: "1px solid #93c5fd",
             }}
           />
           <div
@@ -101,7 +98,7 @@ export default async function Home({ params }: Props) {
               background: "#dbeafe",
               borderRadius: 18,
               opacity: 0.5,
-              border: "3px solid #93c5fd",
+              border: "1px solid #93c5fd",
               transform: "rotate(12deg)",
             }}
           />
@@ -116,7 +113,7 @@ export default async function Home({ params }: Props) {
               background: "#fce7f3",
               borderRadius: 24,
               opacity: 0.4,
-              border: "3px solid #f9a8d4",
+              border: "1px solid #f9a8d4",
               transform: "rotate(-8deg)",
             }}
           />
@@ -128,21 +125,21 @@ export default async function Home({ params }: Props) {
                 <div
                   style={{
                     display: "inline-block",
-                    background: "#fffbeb",
-                    border: "2px solid #f59e0b",
+                    background: "#eff6ff",
+                    border: "1px solid #3B83F6",
                     borderRadius: 20,
                     padding: "7px 18px",
                     fontSize: 13,
                     fontWeight: 700,
-                    color: "#b45309",
+                    color: "#1d4ed8",
                     marginBottom: 28,
-                    boxShadow: "0 4px 14px rgba(245,158,11,0.20)",
+                    boxShadow: "0 4px 14px rgba(59,131,246,0.20)",
                     // display: "inline-flex",
                     alignItems: "center",
                     gap: 6,
                   }}
                 >
-                  <Zap size={14} color="#b45309" strokeWidth={2.75} />
+                  <Zap size={14} color="#1d4ed8" strokeWidth={2.75} />
                   {l.hero.badge}
                 </div>
               )}
@@ -150,35 +147,23 @@ export default async function Home({ params }: Props) {
               <h1
                 style={{
                   fontSize: "clamp(32px, 5vw, 54px)",
-                  fontWeight: 900,
+                  fontWeight: 800,
                   lineHeight: 1.05,
                   margin: "0 0 22px",
-                  letterSpacing: "-2px",
+                  letterSpacing: "-1px",
                 }}
               >
-                {l.hero.title1}
-                <br />
-                <span
-                  style={{
-                    color: "#f59e0b",
-                    // textDecoration: "underline",
-                    // textDecorationStyle: "wavy",
-                    textUnderlineOffset: 8,
-                    textDecorationThickness: 3,
-                    textDecorationColor: "#f59e0b",
-                  }}
-                >
-                  {l.hero.title2}
-                </span>
+                {"L'assistente "}<span style={{ color: "#3B83F6" }}>{"AI per agenti"}</span>{" immobiliari."}
               </h1>
 
               <p
                 style={{
-                  color: "#333",
-                  fontSize: 18,
+                  color: "#555",
+                  fontSize: 20,
                   lineHeight: 1.7,
-                  maxWidth: 720,
+                  maxWidth: 780,
                   margin: "0 0 24px",
+                  marginTop: -6,
                 }}
               >
                 {l.hero.desc}
@@ -187,17 +172,16 @@ export default async function Home({ params }: Props) {
               <div className="flex flex-col md:flex-row gap-3 md:gap-4 justify-center items-center w-full max-w-xs md:max-w-md mx-auto">
                 <a
                   href="#pricing"
-                  className="neo-border neo-shadow flex-1 text-center w-full"
+                  className="neo-shadow neo-cta-blue flex-1 text-center w-full"
                   style={{
-                    background: "#f59e0b",
-                    color: "#1a1a2e",
-                    padding: "16px 20px",
-                    borderRadius: 14,
-                    fontWeight: 800,
-                    fontSize: 15,
+                    padding: "16px 18px",
+                    borderRadius: 12,
+                    fontWeight: 700,
+                    fontSize: 17,
                     cursor: "pointer",
-                    letterSpacing: 0.5,
+                    letterSpacing: 0.3,
                     textDecoration: "none",
+                    border: "none",
                   }}
                 >
                   {l.hero.ctaPrimary}
@@ -205,17 +189,17 @@ export default async function Home({ params }: Props) {
                 <a
                   data-cal-link="getnearme/30min"
                   data-cal-config='{"layout":"month_view"}'
-                  className="neo-border neo-shadow flex-1 text-center w-full"
+                  className="neo-shadow neo-cta-outline flex-1 text-center w-full"
                   style={{
                     background: "#fff",
                     color: "#1a1a2e",
-                    padding: "16px 20px",
-                    borderRadius: 14,
-                    fontWeight: 800,
-                    fontSize: 15,
+                    padding: "16px 18px",
+                    borderRadius: 12,
+                    fontWeight: 700,
+                    fontSize: 17,
                     cursor: "pointer",
                     textDecoration: "none",
-                    border: "1.5px solid rgba(26,26,46,0.25)",
+                    border: "1px solid rgba(26,26,46,0.20)",
                   }}
                 >
                   {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
@@ -259,48 +243,48 @@ export default async function Home({ params }: Props) {
         </section>
 
         {/* Operational flow — Dall'annuncio al cliente */}
-        <section style={{ padding: "70px 0", background: "#fff" }}>
+        <section style={{ padding: "70px 0", background: "#f3f4f6" }}>
           <div className="max-w-7xl mx-auto px-5 md:px-3">
             <div style={{ textAlign: "center", marginBottom: 48 }}>
               <h2
                 style={{
-                  fontSize: "clamp(28px, 5vw, 44px)",
-                  fontWeight: 900,
+                  fontSize: "clamp(26px, 4.5vw, 38px)",
+                  fontWeight: 800,
                   color: "#1a1a2e",
                   lineHeight: 1.15,
                   marginBottom: 12,
                 }}
               >
                 {"Dall'annuncio al cliente, "}
-                <span style={{ color: "#f59e0b" }}>in pochi minuti.</span>
+                <span style={{ color: "#3B83F6" }}>in pochi minuti.</span>
               </h2>
-              <p style={{ color: "#666", fontSize: 16, maxWidth: 720, margin: "0 auto", lineHeight: 1.6 }}>
-                {"Niente da installare, niente da imparare. Parti dall'annuncio e l'assistente AI prepara tutto il materiale, già col tuo brand."}
+              <p style={{ color: "#555", fontSize: 18, maxWidth: 760, margin: "0 auto", lineHeight: 1.6 }}>
+                {"Niente da installare, niente da imparare. Carichi le tue foto, l'assistente AI prepara tutto il materiale, già col tuo brand."}
               </p>
             </div>
             {(() => {
               const flowSteps = [
-                { n: "1", icon: Link2, color: "#6366f1", bg: "#eef2ff", title: "Parti dall'annuncio", desc: "Incolli il link da Immobiliare o Idealista, oppure carichi le tue foto. GetNearMe legge i dati dell'immobile.", chips: ["Dati immobile", "Foto", "Zona"] },
-                { n: "2", icon: Sparkles, color: "#f59e0b", bg: "#fffbeb", title: "L'AI prepara tutto", desc: "In pochi minuti l'assistente genera i materiali, già col tuo logo e i tuoi colori.", chips: ["Home staging", "Video", "Post social", "Report PDF"] },
-                { n: "3", icon: Send, color: "#10b981", bg: "#ecfdf5", title: "Pubblichi e invii", desc: "Pubblichi sui social, metti sui portali o mandi al cliente. Tutto pronto, senza altri programmi.", chips: ["Portali", "Social", "Cliente"] },
+                { n: "1", icon: ImagePlus, color: "#6366f1", darkColor: "#4338ca", bg: "#eef2ff", title: "Carichi le tue foto", desc: "Carichi le foto dell'immobile, inserisci i dati principali e scegli cosa vuoi ottenere. Il resto lo fa GetNearMe.", chips: ["Foto", "Dati immobile"] },
+                { n: "2", icon: Sparkles, color: "#f59e0b", darkColor: "#b45309", bg: "#fffbeb", title: "L'AI prepara tutto", desc: "In pochi minuti l'assistente genera home staging, video e post social, già col tuo logo e i tuoi colori.", chips: ["Home staging", "Video", "Post social"] },
+                { n: "3", icon: Send, color: "#10b981", darkColor: "#047857", bg: "#ecfdf5", title: "Pubblichi e invii", desc: "Pubblichi sui social, metti sui portali o mandi al cliente. Tutto pronto, senza altri programmi.", chips: ["Portali", "Social", "Cliente"] },
               ];
               return (
                 <div className="flow-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 24, alignItems: "stretch" }}>
                   {flowSteps.map((s) => {
                     const IconComp = s.icon;
                     return (
-                      <div key={s.n} className="neo-border neo-shadow" style={{ background: "#fff", borderRadius: 16, padding: "28px 24px", display: "flex", flexDirection: "column", gap: 14 }}>
+                      <div key={s.n} className="neo-border neo-shadow flow-card" style={{ background: "#fff", borderRadius: 16, padding: "28px 24px", display: "flex", flexDirection: "column", gap: 14, transition: "all .3s cubic-bezier(0.4, 0, 0.2, 1)", cursor: "default" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                          <span style={{ width: 48, height: 48, borderRadius: 12, background: s.bg, border: `2px solid ${s.color}`, color: s.color, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                          <span className={`step-icon step-icon-${s.n}`} style={{ width: 48, height: 48, borderRadius: 12, background: s.bg, border: `1px solid ${s.color}33`, color: s.color, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                             <IconComp size={22} strokeWidth={2} />
                           </span>
-                          <span style={{ fontSize: 13, fontWeight: 900, color: s.color, textTransform: "uppercase", letterSpacing: 0.5 }}>Passo {s.n}</span>
+                          <span style={{ fontSize: 13, fontWeight: 700, color: s.color, textTransform: "uppercase", letterSpacing: 0.5 }}>Passo {s.n}</span>
                         </div>
-                        <h3 style={{ fontSize: 20, fontWeight: 800, color: "#1a1a2e", margin: 0, lineHeight: 1.25 }}>{s.title}</h3>
-                        <p style={{ color: "#444", fontSize: 14, lineHeight: 1.6, margin: 0, flex: 1 }}>{s.desc}</p>
-                        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                        <h3 style={{ fontSize: 20, fontWeight: 700, color: "#1a1a2e", margin: 0, lineHeight: 1.25 }}>{s.title}</h3>
+                        <p style={{ color: "#444", fontSize: 15, lineHeight: 1.6, margin: 0, flex: 1 }}>{s.desc}</p>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 6 }}>
                           {s.chips.map((c) => (
-                            <span key={c} style={{ fontSize: 12, fontWeight: 700, color: "#1a1a2e", background: s.bg, border: `1.5px solid ${s.color}55`, borderRadius: 999, padding: "5px 12px" }}>{c}</span>
+                            <span key={c} style={{ fontSize: 12, fontWeight: 600, color: (s as any).darkColor, background: s.bg, border: `1px solid ${(s as any).darkColor}55`, borderRadius: 999, padding: "5px 12px" }}>{c}</span>
                           ))}
                         </div>
                       </div>
@@ -314,16 +298,30 @@ export default async function Home({ params }: Props) {
             @media (max-width: 768px) {
               .flow-grid { grid-template-columns: 1fr !important; }
             }
+            .flow-card:hover {
+              transform: translateY(-4px);
+              box-shadow: 0 12px 32px rgba(59,131,246,0.12);
+              border-color: #bfdbfe;
+            }
+            .step-icon {
+              animation: stepFloat 3s ease-in-out infinite;
+            }
+            .step-icon-2 { animation-delay: 0.4s; }
+            .step-icon-3 { animation-delay: 0.8s; }
+            @keyframes stepFloat {
+              0%, 100% { transform: translateY(0); }
+              50% { transform: translateY(-4px); }
+            }
           `}</style>
         </section>
 
         {/* Features — Full-Width Alternating */}
         <section id="funzionalita" className="scroll-mt-32">
-          <div style={{ textAlign: "center", padding: "70px 24px 0", background: "#fafaf8" }}>
+          <div style={{ textAlign: "center", padding: "70px 24px 0", background: "#fff" }}>
             <h2
               style={{
-                fontSize: "clamp(28px, 5vw, 44px)",
-                fontWeight: 900,
+                fontSize: "clamp(26px, 4.5vw, 38px)",
+                fontWeight: 800,
                 color: "#1a1a2e",
                 lineHeight: 1.15,
                 marginBottom: 12,
@@ -333,7 +331,7 @@ export default async function Home({ params }: Props) {
               <br className="hidden md:block" />
               <span
                 style={{
-                  color: "#f59e0b",
+                  color: "#3B83F6",
                   textUnderlineOffset: 6,
                   textDecorationThickness: 3,
                 }}
@@ -341,7 +339,7 @@ export default async function Home({ params }: Props) {
                 {l.features.titleHighlight}
               </span>
             </h2>
-            <p style={{ color: "#666", fontSize: 16, maxWidth: 700, margin: "0 auto" }}>
+            <p style={{ color: "#555", fontSize: 18, maxWidth: 760, margin: "0 auto", lineHeight: 1.6 }}>
               {l.features.subtitle}
             </p>
           </div>
@@ -369,12 +367,12 @@ export default async function Home({ params }: Props) {
         </section>
 
         {/* Time saved — Ogni attività ti porta via tempo */}
-        <section style={{ padding: "70px 0", background: "#fff" }}>
+        <section style={{ padding: "70px 0", background: "#f3f4f6" }}>
           <div className="max-w-5xl mx-auto px-5 md:px-3">
             <div style={{ textAlign: "center", marginBottom: 40 }}>
-              <h2 style={{ fontSize: "clamp(28px, 5vw, 40px)", fontWeight: 900, color: "#1a1a2e", lineHeight: 1.15, margin: "0 0 14px" }}>
+              <h2 style={{ fontSize: "clamp(26px, 4.5vw, 36px)", fontWeight: 800, color: "#1a1a2e", lineHeight: 1.15, margin: "0 0 14px" }}>
                 Ogni attività ti porta via tempo.<br />
-                <span style={{ color: "#f59e0b" }}>Con GetNearMe, minuti.</span>
+                <span style={{ color: "#3B83F6" }}>Con GetNearMe, minuti.</span>
               </h2>
               <p style={{ color: "#666", fontSize: 17, maxWidth: 720, margin: "0 auto", lineHeight: 1.6 }}>
                 {"Quello che oggi ti richiede ore lo fai in pochi minuti. Su una settimana di lavoro è più di un giorno e mezzo che ti riprendi per clienti e trattative."}
@@ -387,12 +385,10 @@ export default async function Home({ params }: Props) {
                 { icon: Sparkles, activity: "Home staging di una stanza", before: "~2 ore con designer o Photoshop", after: "30 secondi" },
                 { icon: Video, activity: "Video per l'annuncio", before: "mezza giornata col videomaker", after: "2 minuti" },
                 { icon: Megaphone, activity: "Post per i social", before: "~30 minuti su Canva", after: "1 minuto" },
-                { icon: FileText, activity: "Report comparativo", before: "~1 ora tra Excel e PowerPoint", after: "2 minuti" },
-                { icon: TrendingUp, activity: "Analisi di zona", before: "~30 minuti tra mappe e ricerche", after: "immediata" },
               ];
               return (
                 <div className="neo-border neo-shadow" style={{ background: "#fff", borderRadius: 20, overflow: "hidden" }}>
-                  <div className="time-row time-head" style={{ display: "grid", gridTemplateColumns: "1.5fr 1.2fr 1fr", alignItems: "center", gap: 16, padding: "16px 24px", background: "#1a1a2e", color: "#fff", fontWeight: 800, fontSize: 13, textTransform: "uppercase", letterSpacing: 0.5 }}>
+                  <div className="time-row time-head" style={{ display: "grid", gridTemplateColumns: "1.5fr 1.2fr 1fr", alignItems: "center", gap: 16, padding: "16px 24px", background: "#1a1a2e", color: "#fff", fontWeight: 700, fontSize: 13, textTransform: "uppercase", letterSpacing: 0.5 }}>
                     <div>Attività</div>
                     <div>Come la fai oggi</div>
                     <div style={{ textAlign: "right" }}>Con GetNearMe</div>
@@ -402,12 +398,12 @@ export default async function Home({ params }: Props) {
                     return (
                       <div key={r.activity} className="time-row" style={{ display: "grid", gridTemplateColumns: "1.5fr 1.2fr 1fr", alignItems: "center", gap: 16, padding: "16px 24px", borderTop: i === 0 ? "none" : "1px solid #eef0f4" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                          <span style={{ width: 40, height: 40, borderRadius: 10, background: "#eef2ff", border: "2px solid #2563EB55", color: "#2563EB", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                          <span style={{ width: 40, height: 40, borderRadius: 10, background: "#eef2ff", border: "1px solid #2563EB22", color: "#2563EB", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                             <IconComp size={18} strokeWidth={2} />
                           </span>
                           <span style={{ fontWeight: 700, fontSize: 15, color: DARK }}>{r.activity}</span>
                         </div>
-                        <div className="time-before" style={{ fontSize: 14, color: "#6b7280", textDecoration: "line-through" }}>{r.before}</div>
+                        <div className="time-before" style={{ fontSize: 14, color: "#dc2626" }}>{r.before}</div>
                         <div className="time-after" style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 6, fontWeight: 800, fontSize: 15, color: GREEN }}>
                           <Clock size={15} strokeWidth={2.5} /> {r.after}
                         </div>
@@ -421,7 +417,7 @@ export default async function Home({ params }: Props) {
               {"Stime indicative sul tempo tipico di preparazione manuale."}
             </p>
             <div style={{ display: "flex", justifyContent: "center", marginTop: 24 }}>
-              <a href="#pricing" className="neo-border neo-shadow" style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "#f59e0b", color: "#1a1a2e", fontSize: 17, fontWeight: 800, padding: "16px 32px", borderRadius: 12, textDecoration: "none" }}>
+              <a href="#pricing" className="neo-shadow neo-cta-blue" style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 17, fontWeight: 700, padding: "16px 32px", borderRadius: 12, textDecoration: "none" }}>
                 Prova gratis <ArrowRight size={20} strokeWidth={2.5} />
               </a>
             </div>
@@ -429,7 +425,8 @@ export default async function Home({ params }: Props) {
           <style>{`
             @media (max-width: 768px) {
               .time-head { display: none !important; }
-              .time-row { grid-template-columns: 1fr !important; gap: 4px !important; text-align: center; justify-items: center; padding: 16px !important; }
+              .time-row { grid-template-columns: 1fr !important; gap: 6px !important; text-align: center; justify-items: center; padding: 20px 16px !important; }
+              .time-row > div:first-child { flex-direction: column !important; gap: 8px !important; }
               .time-before { text-align: center; }
               .time-after { justify-content: center !important; }
             }
@@ -437,14 +434,14 @@ export default async function Home({ params }: Props) {
         </section>
 
         {/* Real examples teaser */}
-        <section style={{ padding: "70px 0", background: "#f3f4f6" }}>
+        <section style={{ padding: "70px 0", background: "#fff" }}>
           <div className="max-w-5xl mx-auto px-5 md:px-6">
             <div style={{ textAlign: "center", marginBottom: 36 }}>
-              <h2 style={{ fontSize: "clamp(28px, 5vw, 44px)", fontWeight: 900, color: "#1a1a2e", lineHeight: 1.15, marginBottom: 12 }}>
-                Esempi reali. <span style={{ color: "#f59e0b" }}>Risultati concreti.</span>
+              <h2 style={{ fontSize: "clamp(26px, 4.5vw, 38px)", fontWeight: 800, color: "#1a1a2e", lineHeight: 1.15, marginBottom: 12 }}>
+                Esempi reali. <span style={{ color: "#3B83F6" }}>Risultati concreti.</span>
               </h2>
               <p style={{ color: "#555", fontSize: 16, maxWidth: 640, margin: "0 auto", lineHeight: 1.6 }}>
-                {"Guarda cosa puoi creare con GetNearMe: video, reel e post pronti in pochi click. Questi sono output veri, non mockup."}
+                {"Guarda cosa puoi creare con GetNearMe: video, reel e post pronti in pochi click. Questi sono risultati reali, generati dall'AI."}
               </p>
             </div>
             <ReferenceGallery
@@ -452,32 +449,48 @@ export default async function Home({ params }: Props) {
               color="#6366f1"
               media={[
                 { type: "video", src: "/reference/primo-piano.mp4", title: "Avatar in primo piano", desc: "Video con avatar, script e sottotitoli generati dall'AI." },
-                { type: "video", src: "/reference/prima-dopo.mp4", title: "Prima vs Dopo", desc: "Carichi una foto: l'AI arreda e crea il video automaticamente." },
+                { type: "video", src: "/reference/prima-dopo.mp4", title: "Prima vs Dopo", desc: "Partendo da una foto, l'AI arreda e crea il video." },
                 { type: "video", src: "/reference/giorno-notte.mp4", title: "Giorno e notte", desc: "L'AI trasforma l'illuminazione della scena." },
                 { type: "video", src: "/reference/social-reel.mp4", title: "Reel per i social", desc: "Reel pronto per Instagram, TikTok e Reels." },
                 { type: "video", src: "/reference/construction.mp4", title: "Timelapse AI", desc: "Da una foto dell'esterno, l'AI genera il timelapse." },
                 { type: "video", src: "/reference/split.mp4", title: "Schermo diviso", desc: "Immobile e avatar parlante nello stesso video." },
               ]}
             />
-            <div style={{ display: "flex", gap: 14, flexWrap: "wrap", justifyContent: "center", marginTop: 36 }}>
-              <a href={`/${locale}/reference`} className="neo-border neo-shadow" style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "#fff", color: "#1a1a2e", fontSize: 16, fontWeight: 800, padding: "15px 28px", borderRadius: 12, textDecoration: "none", border: "1.5px solid rgba(26,26,46,0.25)" }}>
+            <div className="examples-cta-row" style={{ display: "flex", gap: 14, flexWrap: "wrap", justifyContent: "center", marginTop: 36 }}>
+              <a href={`/${locale}/reference`} className="neo-border neo-shadow neo-cta-outline examples-cta-btn" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, background: "#fff", color: "#1a1a2e", fontSize: 17, fontWeight: 700, padding: "16px 32px", borderRadius: 12, textDecoration: "none", border: "1px solid rgba(26,26,46,0.20)" }}>
                 Guarda tutti gli esempi
               </a>
-              <a href="#pricing" className="neo-border neo-shadow" style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "#f59e0b", color: "#1a1a2e", fontSize: 16, fontWeight: 800, padding: "15px 28px", borderRadius: 12, textDecoration: "none" }}>
+              <a href="#pricing" className="neo-shadow neo-cta-blue examples-cta-btn" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, fontSize: 17, fontWeight: 700, padding: "16px 32px", borderRadius: 12, textDecoration: "none" }}>
                 Prova gratis <ArrowRight size={18} strokeWidth={2.5} />
               </a>
             </div>
           </div>
+          <style>{`
+            @media (max-width: 768px) {
+              .examples-cta-row {
+                flex-direction: column !important;
+                align-items: center !important;
+                gap: 12px !important;
+                max-width: 300px;
+                margin: 36px auto 0 !important;
+              }
+              .examples-cta-btn {
+                width: 100% !important;
+                display: flex !important;
+                padding: 16px 20px !important;
+              }
+            }
+          `}</style>
         </section>
 
         {/* Testimonials */}
-        <section style={{ padding: "70px 0", background: "#fffbeb" }}>
+        <section style={{ padding: "70px 0", background: "#f3f4f6" }}>
           <div className="max-w-7xl mx-auto px-5 md:px-3">
             <div style={{ textAlign: "center", marginBottom: 40 }}>
               <h2
                 style={{
-                  fontSize: "clamp(28px, 5vw, 44px)",
-                  fontWeight: 900,
+                  fontSize: "clamp(26px, 4.5vw, 38px)",
+                  fontWeight: 800,
                   color: "#1a1a2e",
                   lineHeight: 1.15,
                   marginBottom: 12,
@@ -575,13 +588,13 @@ export default async function Home({ params }: Props) {
         />
 
         {/* FAQ */}
-        <section id="faq" className="scroll-mt-32" style={{ padding: "70px 0", background: "#f9fafb" }}>
+        <section id="faq" className="scroll-mt-32" style={{ padding: "70px 0", background: "#f3f4f6" }}>
           <div className="max-w-3xl mx-auto px-5 md:px-3">
             <div style={{ textAlign: "center", marginBottom: 40 }}>
               <h2
                 style={{
-                  fontSize: "clamp(28px, 5vw, 44px)",
-                  fontWeight: 900,
+                  fontSize: "clamp(26px, 4.5vw, 38px)",
+                  fontWeight: 800,
                   color: "#1a1a2e",
                   lineHeight: 1.15,
                   marginBottom: 12,
@@ -590,7 +603,7 @@ export default async function Home({ params }: Props) {
                 {l.faq.title}{" "}
                 <span
                   style={{
-                    background: "#f59e0b",
+                    background: "#3B83F6",
                     color: "#fff",
                     padding: "2px 16px",
                     borderRadius: 10,
@@ -639,9 +652,9 @@ export default async function Home({ params }: Props) {
               right: -60,
               width: 220,
               height: 220,
-              background: "#f59e0b",
+              background: "#3B83F6",
               borderRadius: "50%",
-              opacity: 0.08,
+              opacity: 0.06,
             }}
           />
           <div
@@ -662,8 +675,8 @@ export default async function Home({ params }: Props) {
           >
             <h2
               style={{
-                fontSize: "clamp(30px, 5vw, 52px)",
-                fontWeight: 900,
+                fontSize: "clamp(28px, 4.5vw, 44px)",
+                fontWeight: 800,
                 lineHeight: 1.1,
                 margin: "0 0 16px",
                 color: "#fff",
@@ -671,7 +684,7 @@ export default async function Home({ params }: Props) {
             >
               {l.finalCta.title1}{" "}
               <br className="hidden md:block" />
-              <span style={{ color: "#f59e0b" }}>{l.finalCta.title2}</span>
+              <span style={{ color: "#3B83F6" }}>{l.finalCta.title2}</span>
             </h2>
             <p style={{ color: "#aaa", fontSize: 17, marginBottom: 36 }}>
               {l.finalCta.desc}
@@ -679,18 +692,16 @@ export default async function Home({ params }: Props) {
             <div className="final-cta-buttons" style={{ display: "flex", gap: 14, flexWrap: "wrap", justifyContent: "center" }}>
               <a
                 href="#pricing"
-                className="neo-shadow-light final-cta-btn"
+                className="neo-shadow-light neo-cta-blue final-cta-btn"
                 style={{
                   display: "inline-block",
-                  background: "#f59e0b",
-                  color: "#1a1a2e",
-                  border: "1px solid rgba(26,26,46,0.10)",
-                  padding: "18px 48px",
-                  borderRadius: 14,
-                  fontWeight: 800,
-                  fontSize: 18,
+                  border: "none",
+                  padding: "16px 32px",
+                  borderRadius: 12,
+                  fontWeight: 700,
+                  fontSize: 17,
                   cursor: "pointer",
-                  letterSpacing: 0.5,
+                  letterSpacing: 0.3,
                   textDecoration: "none",
                   textAlign: "center",
                 }}
@@ -700,16 +711,16 @@ export default async function Home({ params }: Props) {
               <a
                 data-cal-link="getnearme/30min"
                 data-cal-config='{"layout":"month_view"}'
-                className="neo-shadow-light final-cta-btn"
+                className="neo-shadow-light final-cta-outline-dark final-cta-btn"
                 style={{
                   display: "inline-block",
                   background: "transparent",
                   color: "#fff",
-                  border: "2px solid #fff",
-                  padding: "18px 36px",
-                  borderRadius: 14,
-                  fontWeight: 800,
-                  fontSize: 18,
+                  border: "1px solid rgba(255,255,255,0.5)",
+                  padding: "16px 32px",
+                  borderRadius: 12,
+                  fontWeight: 700,
+                  fontSize: 17,
                   cursor: "pointer",
                   textDecoration: "none",
                   textAlign: "center",
@@ -774,7 +785,7 @@ export default async function Home({ params }: Props) {
                 <h3
                   style={{
                     fontSize: 22,
-                    fontWeight: 900,
+                    fontWeight: 700,
                     marginBottom: 6,
                     color: "#1a1a2e",
                   }}

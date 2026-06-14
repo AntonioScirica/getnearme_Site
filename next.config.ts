@@ -1,8 +1,13 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Puppeteer/Chromium must not be bundled (native binaries, runtime paths)
   serverExternalPackages: ["@sparticuz/chromium", "puppeteer-core"],
+  async redirects() {
+    return [
+      { source: "/:locale/home", destination: "/:locale", permanent: true },
+      { source: "/home", destination: "/", permanent: true },
+    ];
+  },
   images: {
     remotePatterns: [
       {

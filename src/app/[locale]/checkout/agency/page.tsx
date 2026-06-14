@@ -66,7 +66,7 @@ const translations: Record<string, Record<string, string | string[]>> = {
     save: 'Risparmi',
     subscribe: 'Abbonati ora',
     loginTitle: 'Accedi per continuare',
-    loginSubtitle: "Se possiedi già un account all'interno dell'estensione, usa lo stesso per procedere.",
+    loginSubtitle: "Accedi con il tuo account o creane uno nuovo\nin pochi secondi.",
     loginButton: 'Continua con Google',
     orDivider: 'oppure',
     emailPlaceholder: 'Email',
@@ -100,7 +100,8 @@ const translations: Record<string, Record<string, string | string[]>> = {
     privacyPolicy: 'Privacy Policy',
     marketingConsent: 'Accetto di ricevere email su novità e promozioni',
     termsRequired: 'Devi accettare i termini per continuare',
-    checkEmail: 'Registrazione completata! Controlla la tua email per confermare l\'account.',
+    checkEmail: 'Registrazione completata!',
+    checkEmailDesc: 'Controlla la tua email per confermare l\'account.',
     loggedInAs: 'Accesso effettuato come',
     proceedToPayment: 'Procedi al pagamento',
     yourAccount: 'Il tuo account',
@@ -120,7 +121,7 @@ const translations: Record<string, Record<string, string | string[]>> = {
     save: 'Save',
     subscribe: 'Subscribe now',
     loginTitle: 'Sign in to continue',
-    loginSubtitle: 'If you already have an account in the extension, use the same one to proceed.',
+    loginSubtitle: 'Sign in with your account or create a new one in seconds.',
     loginButton: 'Continue with Google',
     orDivider: 'or',
     emailPlaceholder: 'Email',
@@ -154,7 +155,8 @@ const translations: Record<string, Record<string, string | string[]>> = {
     privacyPolicy: 'Privacy Policy',
     marketingConsent: 'I agree to receive emails about news and promotions',
     termsRequired: 'You must accept the terms to continue',
-    checkEmail: 'Registration complete! Check your email to confirm your account.',
+    checkEmail: 'Registration complete!',
+    checkEmailDesc: 'Check your email to confirm your account.',
     loggedInAs: 'Signed in as',
     proceedToPayment: 'Proceed to payment',
     yourAccount: 'Your account',
@@ -174,7 +176,7 @@ const translations: Record<string, Record<string, string | string[]>> = {
     save: 'Ahorras',
     subscribe: 'Suscríbete ahora',
     loginTitle: 'Inicia sesión para continuar',
-    loginSubtitle: 'Si ya tienes una cuenta en la extensión, usa la misma para continuar.',
+    loginSubtitle: 'Accede con tu cuenta o crea una nueva en pocos segundos.',
     loginButton: 'Continuar con Google',
     orDivider: 'o',
     emailPlaceholder: 'Email',
@@ -208,7 +210,8 @@ const translations: Record<string, Record<string, string | string[]>> = {
     privacyPolicy: 'Política de Privacidad',
     marketingConsent: 'Acepto recibir emails sobre novedades y promociones',
     termsRequired: 'Debes aceptar los términos para continuar',
-    checkEmail: '¡Registro completado! Revisa tu email para confirmar la cuenta.',
+    checkEmail: '¡Registro completado!',
+    checkEmailDesc: 'Revisa tu email para confirmar la cuenta.',
     loggedInAs: 'Sesión iniciada como',
     proceedToPayment: 'Proceder al pago',
     yourAccount: 'Tu cuenta',
@@ -228,7 +231,7 @@ const translations: Record<string, Record<string, string | string[]>> = {
     save: 'Économisez',
     subscribe: "S'abonner maintenant",
     loginTitle: 'Connectez-vous pour continuer',
-    loginSubtitle: "Si vous avez déjà un compte dans l'extension, utilisez-le pour continuer.",
+    loginSubtitle: "Connectez-vous ou créez un compte en quelques secondes.",
     loginButton: 'Continuer avec Google',
     orDivider: 'ou',
     emailPlaceholder: 'Email',
@@ -262,7 +265,8 @@ const translations: Record<string, Record<string, string | string[]>> = {
     privacyPolicy: 'Politique de Confidentialité',
     marketingConsent: "J'accepte de recevoir des emails sur les nouveautés et promotions",
     termsRequired: 'Vous devez accepter les conditions pour continuer',
-    checkEmail: 'Inscription terminée ! Vérifiez votre email pour confirmer le compte.',
+    checkEmail: 'Inscription terminée !',
+    checkEmailDesc: 'Vérifiez votre email pour confirmer le compte.',
     loggedInAs: 'Connecté en tant que',
     proceedToPayment: 'Procéder au paiement',
     yourAccount: 'Votre compte',
@@ -282,7 +286,7 @@ const translations: Record<string, Record<string, string | string[]>> = {
     save: 'Экономия',
     subscribe: 'Подписаться',
     loginTitle: 'Войдите, чтобы продолжить',
-    loginSubtitle: 'Если у вас уже есть аккаунт в расширении, используйте его для продолжения.',
+    loginSubtitle: 'Войдите в аккаунт или создайте новый за несколько секунд.',
     loginButton: 'Продолжить с Google',
     orDivider: 'или',
     emailPlaceholder: 'Email',
@@ -316,7 +320,8 @@ const translations: Record<string, Record<string, string | string[]>> = {
     privacyPolicy: 'Политику конфиденциальности',
     marketingConsent: 'Я согласен получать письма о новостях и акциях',
     termsRequired: 'Необходимо принять условия для продолжения',
-    checkEmail: 'Регистрация завершена! Проверьте email для подтверждения аккаунта.',
+    checkEmail: 'Регистрация завершена!',
+    checkEmailDesc: 'Проверьте email для подтверждения аккаунта.',
     loggedInAs: 'Вы вошли как',
     proceedToPayment: 'Перейти к оплате',
     yourAccount: 'Ваш аккаунт',
@@ -336,7 +341,7 @@ const translations: Record<string, Record<string, string | string[]>> = {
     save: 'Економія',
     subscribe: 'Підписатися',
     loginTitle: 'Увійдіть, щоб продовжити',
-    loginSubtitle: 'Якщо у вас вже є акаунт у розширенні, використовуйте його для продовження.',
+    loginSubtitle: 'Увійдіть в акаунт або створіть новий за кілька секунд.',
     loginButton: 'Продовжити з Google',
     orDivider: 'або',
     emailPlaceholder: 'Email',
@@ -370,7 +375,8 @@ const translations: Record<string, Record<string, string | string[]>> = {
     privacyPolicy: 'Політику конфіденційності',
     marketingConsent: 'Я погоджуюсь отримувати листи про новини та акції',
     termsRequired: 'Необхідно прийняти умови для продовження',
-    checkEmail: 'Реєстрацію завершено! Перевірте email для підтвердження акаунта.',
+    checkEmail: 'Реєстрацію завершено!',
+    checkEmailDesc: 'Перевірте email для підтвердження акаунта.',
     loggedInAs: 'Ви увійшли як',
     proceedToPayment: 'Перейти до оплати',
     yourAccount: 'Ваш акаунт',
@@ -613,7 +619,7 @@ function CheckoutAgencyContent() {
 
   async function handleEmailAuth(e: React.FormEvent) {
     e.preventDefault();
-    if (!termsAccepted) {
+    if (isSignup && !termsAccepted) {
       setError(t.termsRequired as string);
       consentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
@@ -678,14 +684,18 @@ function CheckoutAgencyContent() {
     <div className="min-h-screen bg-[#fafaf8] font-sans text-[#1a1a2e]">
       <Navbar locale={locale} />
 
-      <main className="min-h-screen flex items-center justify-center px-4 py-24">
+      <main className="flex items-center justify-center px-4 py-24" style={{ minHeight: 'calc(100vh - 80px)' }}>
         <div className="max-w-md w-full">
           <div className="bg-white neo-border rounded-2xl p-8" style={{ boxShadow: '0 4px 16px rgba(16,24,40,0.08)' }}>
 
-            {/* Logo + Plan summary */}
+            {!emailSent && (
             <div className="text-center mb-6">
-              <span className="text-2xl font-bold text-blue-500">GetNearMe</span>
+              <svg width="48" height="48" viewBox="0 0 75 75" fill="none" xmlns="http://www.w3.org/2000/svg" className="mx-auto">
+                <circle cx="37.3135" cy="37.3135" r="37.3135" fill="#3B83F6"/>
+                <path d="M38.1986 19.2772C37.7253 18.8144 36.9701 18.819 36.5028 19.2878L26.2056 29.5955C25.1745 30.6266 24.2791 31.6652 23.643 33.0023C23.0068 34.3394 22.7008 35.6644 22.6707 37.0738C22.6315 38.8797 22.734 40.5771 23.8736 42.0378C24.8384 43.2739 26.0473 44.3095 27.092 45.4747C28.2391 46.7545 29.4511 47.9951 30.6284 49.2538C30.9434 49.5915 34.6682 53.5394 36.3671 55.3634C36.8299 55.8593 37.6092 55.8774 38.0946 55.4026L48.8621 44.8401C52.6638 41.1107 52.893 35.6237 49.9656 31.2657C48.7988 29.5277 47.1407 28.1002 45.579 26.6726C45.1056 26.24 44.376 26.2551 43.9193 26.7058L34.2628 36.2357C33.806 36.6864 33.7819 37.4145 34.2085 37.8939L36.5239 40.5047C36.9806 41.0203 37.7766 41.0489 38.2695 40.5665L44.7891 34.1826C44.7891 34.1826 47.6833 37 44.8132 40.6193L38.2408 47.1796C37.772 47.6469 37.0153 47.6499 36.5435 47.1871L30.3661 41.1198C30.3661 41.1198 26.0986 37.8984 30.4806 33.554C33.9025 30.1608 38.7368 25.3672 40.6919 23.4302C41.1698 22.9568 41.1667 22.182 40.6859 21.7117L38.1986 19.2772Z" fill="white"/>
+              </svg>
             </div>
+            )}
 
             {hasPlan && (
               <div className="bg-[#fafaf8] neo-border rounded-xl p-6 mb-6" style={{ boxShadow: '0 4px 16px rgba(16,24,40,0.08)' }}>
@@ -734,12 +744,28 @@ function CheckoutAgencyContent() {
 
             {/* Email confirmation sent */}
             {emailSent ? (
-              <div className="text-center py-4">
-                <div className="w-16 h-16 bg-green-100 neo-border rounded-full flex items-center justify-center mx-auto mb-4">
-                  <CheckCircle className="w-8 h-8 text-green-600" />
-                </div>
-                <p className="text-lg font-bold text-[#1a1a2e] mb-2">{t.checkEmail}</p>
-                <p className="text-sm text-slate-500">{email}</p>
+              <div className="text-center py-8">
+                <CheckCircle className="w-12 h-12 text-blue-500 mx-auto mb-4" />
+                <h2 className="text-xl font-bold text-[#1a1a2e] mb-2">{t.checkEmail}</h2>
+                <p className="text-base text-slate-500 mb-5">{t.checkEmailDesc}</p>
+                <div className="p-3 bg-slate-50 rounded-xl text-base text-slate-600 font-medium mb-4">{email}</div>
+                <a
+                  href={
+                    email.endsWith('@gmail.com') ? 'https://mail.google.com' :
+                    email.endsWith('@outlook.com') || email.endsWith('@hotmail.com') || email.endsWith('@live.com') ? 'https://outlook.live.com' :
+                    email.endsWith('@yahoo.com') || email.endsWith('@yahoo.it') ? 'https://mail.yahoo.com' :
+                    email.endsWith('@icloud.com') ? 'https://www.icloud.com/mail' :
+                    `mailto:${email}`
+                  }
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="neo-cta-blue flex items-center justify-center gap-2 w-full py-3 rounded-xl font-bold text-base mb-4"
+                  style={{ textDecoration: 'none' }}
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                  Apri la tua email
+                </a>
+                <p className="text-sm text-slate-400">Controlla anche la cartella spam</p>
               </div>
             ) : /* Already subscribed */
             user && existingSubscription ? (
@@ -807,7 +833,7 @@ function CheckoutAgencyContent() {
               /* Not logged in - show auth UI */
               <>
                 <h2 className="text-xl font-bold text-center mb-2">{t.loginTitle}</h2>
-                <p className="text-sm text-center text-gray-500 mb-6">{t.loginSubtitle}</p>
+                <p className="text-base text-center text-gray-500 mb-6 whitespace-pre-line">{t.loginSubtitle}</p>
 
                 <button
                   onClick={handleGoogleLogin}
@@ -855,7 +881,7 @@ function CheckoutAgencyContent() {
                   />
                   <button
                     type="submit"
-                    disabled={isLoading || isEmailLoading}
+                    disabled={isLoading || isEmailLoading || !email.trim() || !password}
                     className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-blue-500 rounded-xl neo-border neo-btn text-white font-bold hover:bg-blue-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     style={{ boxShadow: '0 4px 16px rgba(16,24,40,0.08)' }}
                   >
@@ -869,6 +895,12 @@ function CheckoutAgencyContent() {
                     )}
                   </button>
                 </form>
+
+                {error && error !== (t.termsRequired as string) && (
+                  <div className="mt-4 p-4 bg-red-50 neo-border rounded-xl text-red-700 text-sm">
+                    {error}
+                  </div>
+                )}
 
                 <p className="text-center text-sm text-slate-500 mt-4">
                   {isSignup ? (t.hasAccount as string) : (t.noAccount as string)}{' '}
@@ -929,13 +961,17 @@ function CheckoutAgencyContent() {
                     </label>
 
                     {!termsAccepted && error === (t.termsRequired as string) && (
-                      <p className="text-red-500 text-xs font-bold animate-pulse">{t.termsRequired}</p>
+                      <div className="mt-4 p-4 bg-red-50 neo-border rounded-xl text-red-700 text-sm text-center">
+                        {t.termsRequired}
+                      </div>
                     )}
                   </div>
 
+                {hasPlan && (
                 <div className="flex items-center justify-center gap-4 mt-6 text-xs text-slate-400">
                   <span className="flex items-center gap-1"><ShieldIcon /> {t.securePayment}</span>
                 </div>
+                )}
               </>
             ) : null}
 

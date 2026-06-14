@@ -311,7 +311,54 @@ function TplPreview({ src }: { src: string | null }) {
   );
 }
 
-export default function VideoAIScreen({ toast, routeKey, brand, preselect, project, onVideoJob, activeRenders, initialPhotoUrl }: {
+const DEMO_CLIPS = [
+  { id: '1', label: 'Video · 12s', room: 'Soggiorno', isPhoto: false, color: '#1d3a5c' },
+  { id: '2', label: 'Video · 8s', room: 'Cucina', isPhoto: false, color: '#2563eb' },
+  { id: '3', label: 'Foto', room: 'Camera', isPhoto: true, color: '#1e40af' },
+  { id: '4', label: 'Video · 15s', room: 'Bagno', isPhoto: false, color: '#3B83F6' },
+  { id: '5', label: 'Foto', room: 'Terrazzo', isPhoto: true, color: '#1e3a5f' },
+];
+
+function DemoMontaggioClips() {
+  const [visible, setVisible] = React.useState(0);
+  React.useEffect(() => {
+    const timers = DEMO_CLIPS.map((_, i) => setTimeout(() => setVisible(i + 1), 200 + i * 250));
+    return () => timers.forEach(clearTimeout);
+  }, []);
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div style={{ borderRadius: 12, border: '1.5px dashed #d8d4cb', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, padding: 14, color: '#57534c', fontSize: 13.5, fontWeight: 700, background: '#fcfcfb' }}>
+        <span style={{ width: 26, height: 26, borderRadius: '50%', background: '#eef4fe', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#3B83F6" strokeWidth="2"><path d="M12 5v14M5 12h14" /></svg>
+        </span>
+        Aggiungi clip o foto <span style={{ color: '#a8a299', fontWeight: 600 }}>· {DEMO_CLIPS.length}/15</span>
+      </div>
+      {DEMO_CLIPS.map((c, idx) => (
+        <div key={c.id} style={{
+          display: 'flex', gap: 12, alignItems: 'center', background: '#fff', borderRadius: 12, padding: 10, border: '1px solid #e4e1da',
+          opacity: visible > idx ? 1 : 0, transform: visible > idx ? 'translateY(0)' : 'translateY(8px)', transition: 'opacity .4s ease, transform .4s ease',
+        }}>
+          <div style={{ flex: 'none', color: '#c4bfb6', display: 'flex', alignItems: 'center', padding: '0 2px' }}>
+            <svg width="14" height="20" viewBox="0 0 14 20" fill="currentColor"><circle cx="4" cy="4" r="1.5"/><circle cx="10" cy="4" r="1.5"/><circle cx="4" cy="10" r="1.5"/><circle cx="10" cy="10" r="1.5"/><circle cx="4" cy="16" r="1.5"/><circle cx="10" cy="16" r="1.5"/></svg>
+          </div>
+          <div style={{ position: 'relative', width: 116, height: 78, flex: 'none', borderRadius: 8, overflow: 'hidden', background: c.color }}>
+            <span style={{ position: 'absolute', top: 5, left: 5, background: 'rgba(33,31,28,.78)', color: '#fff', fontSize: 10, fontWeight: 800, minWidth: 18, height: 18, padding: '0 5px', borderRadius: 99, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{idx + 1}</span>
+          </div>
+          <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11.5, fontWeight: 700, color: '#57534c', background: '#f3f1ec', padding: '3px 9px', borderRadius: 99 }}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#57534c" strokeWidth="2"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/>{!c.isPhoto && <polygon points="10 8 16 12 10 16 10 8" />}</svg>
+              {c.label}
+            </span>
+            <div style={{ flex: 1 }} />
+            <span style={{ fontSize: 12, fontWeight: 600, color: '#8c867d', background: '#f6f4f0', padding: '4px 10px', borderRadius: 8 }}>{c.room}</span>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export default function VideoAIScreen({ toast, routeKey, brand, preselect, project, onVideoJob, activeRenders, initialPhotoUrl, demoMode }: {
   toast: (msg: string, icon?: string) => void;
   routeKey: number;
   brand: BrandSettings;
@@ -320,6 +367,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
   onVideoJob?: (job: { id: string; title: string; template: string; stage: 'render' | 'done' | 'failed'; progress: number; ctx: Record<string, unknown>; outputUrl?: string; error?: string; projectId: string | null; aspect: string; replaceId?: string }) => void;
   activeRenders?: number;
   initialPhotoUrl?: string | null;
+  demoMode?: boolean;
 }) {
   const [templates, setTemplates] = React.useState<VideoTemplate[]>(DEFAULT_VIDEO_TEMPLATES);
   const [avatars, setAvatars] = React.useState<VideoAvatar[]>([]);
@@ -1162,11 +1210,13 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
               <input ref={pairFileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) addPairFile(f); e.target.value = ''; }} />
             </div>
           ) : (
-            <div onClick={clips.length === 0 ? () => fileRef.current?.click() : undefined}
+            <div onClick={clips.length === 0 && !demoMode ? () => fileRef.current?.click() : undefined}
               onDragOver={e => e.preventDefault()}
               onDrop={e => { e.preventDefault(); if (e.dataTransfer.files?.length) addFiles(e.dataTransfer.files); }}
-              style={{ border: '2px dashed #d8d4cb', background: '#fff', borderRadius: 16, padding: clips.length ? 20 : 56, cursor: 'pointer', textAlign: 'center' }}>
-              {clips.length === 0 ? (
+              style={{ border: clips.length === 0 && !demoMode ? '2px dashed #d8d4cb' : '2px solid transparent', background: '#fff', borderRadius: 16, padding: (clips.length || demoMode) ? 20 : 56, cursor: clips.length === 0 && !demoMode ? 'pointer' : 'default', textAlign: 'center' }}>
+              {clips.length === 0 && demoMode && layout === 'montaggio' ? (
+                <DemoMontaggioClips />
+              ) : clips.length === 0 ? (
                 <>
                   <div style={s('width:52px;height:52px;border-radius:16px;background:#eef4fe;display:flex;align-items:center;justify-content:center;margin:0 auto 14px')}>
                     <Icon name={isPhotoTemplate && layout !== 'montaggio' ? 'image-plus' : 'film'} size={24} color="#3B83F6" />

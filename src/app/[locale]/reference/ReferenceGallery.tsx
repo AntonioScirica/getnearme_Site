@@ -237,7 +237,7 @@ export default function ReferenceGallery({ variant, media = [], posts = [], reel
 
   return (
     <>
-      <div className="ref-gallery" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, alignItems: 'start' }}>
+      <div className="ref-gallery" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
         {media.map((item, i) => {
           const slug = getSlug(item.src);
           return (
@@ -253,6 +253,8 @@ export default function ReferenceGallery({ variant, media = [], posts = [], reel
                 border: '1.5px solid #e2e8f0',
                 cursor: 'zoom-in',
                 background: '#fff',
+                display: 'flex',
+                flexDirection: 'column',
               }}
             >
               <div style={{ position: 'relative', background: '#000' }}>
@@ -294,7 +296,7 @@ export default function ReferenceGallery({ variant, media = [], posts = [], reel
                 )}
               </div>
               {item.title && (
-                <div style={{ padding: '10px 12px 12px' }}>
+                <div style={{ padding: '10px 12px 12px', flex: 1 }}>
                   <h4 style={{ fontSize: 14, fontWeight: 700, color: '#1a1a2e', margin: '0 0 2px', lineHeight: 1.3 }}>
                     {item.title}
                   </h4>
@@ -316,7 +318,7 @@ export default function ReferenceGallery({ variant, media = [], posts = [], reel
         @media (max-width: 768px) {
           .ref-gallery {
             grid-template-columns: 1fr !important;
-            gap: 10px !important;
+            gap: 12px !important;
           }
         }
       `}</style>

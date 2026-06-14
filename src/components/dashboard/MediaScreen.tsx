@@ -10,18 +10,128 @@ import Image from 'next/image';
 // We import JSZip dynamically when needed for bulk export
 const loadJSZip = () => import('jszip').then(m => m.default);
 
+const DEMO_NEW_ITEM = { src: 'https://images.unsplash.com/photo-1600573472550-8090b5e0745e?w=600&h=600&fit=crop', type: 'photo' as const };
+
+function DemoMediaContent({ demoJobsDone }: { demoJobsDone?: boolean }) {
+  const [visibleItems, setVisibleItems] = useState(0);
+  const [showNewItem, setShowNewItem] = useState(false);
+
+  useEffect(() => {
+    const total = DEMO_DAYS.reduce((a, d) => a + d.items.length, 0);
+    let i = 0;
+    const id = setInterval(() => { i++; setVisibleItems(i); if (i >= total) clearInterval(id); }, 120);
+    return () => clearInterval(id);
+  }, []);
+
+  useEffect(() => {
+    if (demoJobsDone) {
+      const t = setTimeout(() => setShowNewItem(true), 400);
+      return () => clearTimeout(t);
+    }
+    setShowNewItem(false);
+  }, [demoJobsDone]);
+
+  let globalIdx = 0;
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
+      {DEMO_DAYS.map((day, di) => {
+        const extraItem = di === 0 && showNewItem;
+        const allItems = extraItem ? [DEMO_NEW_ITEM, ...day.items] : day.items;
+        const nPhotos = allItems.filter(i => i.type === 'photo').length;
+        const nVideos = allItems.filter(i => i.type === 'video').length;
+        const countLabel = [nPhotos > 0 ? `${nPhotos} foto` : '', nVideos > 0 ? `${nVideos} video` : ''].filter(Boolean).join(' · ');
+        return (
+          <div key={di}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, borderBottom: '1px solid #f0ede7', paddingBottom: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ fontSize: 15, fontWeight: 700 }}>{day.label}</span>
+                <span style={{ fontSize: 13, color: '#b3aca1' }}>{countLabel}</span>
+              </div>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 10 }}>
+              {allItems.map((item, i) => {
+                const isNew = di === 0 && extraItem && i === 0;
+                const idx = isNew ? -1 : globalIdx++;
+                const show = isNew ? true : visibleItems > idx;
+                return (
+                  <div key={isNew ? 'new-ai' : i} style={{
+                    position: 'relative', aspectRatio: '4/3', borderRadius: 12, overflow: 'hidden',
+                    opacity: show ? 1 : 0, transform: show ? 'scale(1)' : 'scale(0.85)',
+                    transition: 'opacity .45s cubic-bezier(.22,1,.36,1), transform .45s cubic-bezier(.22,1,.36,1)',
+                    ...(isNew ? { boxShadow: '0 0 0 2px #3B83F6, 0 4px 16px rgba(59,131,246,0.25)' } : {}),
+                  }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={item.src} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    {isNew && (
+                      <div style={{
+                        position: 'absolute', top: 8, left: 8, background: '#3B83F6', color: '#fff',
+                        fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 6,
+                      }}>AI</div>
+                    )}
+                    {item.type === 'video' && !isNew && (
+                      <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.18)' }}>
+                        <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(255,255,255,0.92)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="#1a1a1a"><polygon points="6 3 20 12 6 21 6 3" /></svg>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+const DEMO_DAYS = [
+  {
+    label: 'Oggi',
+    items: [
+      { src: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&h=600&fit=crop', type: 'photo' },
+      { src: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600&h=600&fit=crop', type: 'photo' },
+      { src: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=600&h=600&fit=crop', type: 'photo' },
+      { src: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=600&h=600&fit=crop', type: 'video' },
+    ],
+  },
+  {
+    label: 'Ieri',
+    items: [
+      { src: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=600&h=600&fit=crop', type: 'photo' },
+      { src: 'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=600&h=600&fit=crop', type: 'photo' },
+      { src: 'https://images.unsplash.com/photo-1600585154084-4e5fe7c39198?w=600&h=600&fit=crop', type: 'video' },
+      { src: 'https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=600&h=600&fit=crop', type: 'photo' },
+      { src: 'https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=600&h=600&fit=crop', type: 'photo' },
+    ],
+  },
+  {
+    label: '2 giorni fa',
+    items: [
+      { src: 'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=600&h=600&fit=crop', type: 'photo' },
+      { src: 'https://images.unsplash.com/photo-1600607687644-c7171b42498f?w=600&h=600&fit=crop', type: 'photo' },
+      { src: 'https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?w=600&h=600&fit=crop', type: 'photo' },
+    ],
+  },
+];
+
 export default function MediaScreen({
   toast,
   routeKey,
   project,
   batches,
-  loadingBatches
+  loadingBatches,
+  demoMode = false,
+  demoJobsDone = false
 }: {
   toast: (msg: string, icon?: string) => void;
   routeKey: number;
   project?: Project;
   batches: BatchInfo[];
   loadingBatches: boolean;
+  demoMode?: boolean;
+  demoJobsDone?: boolean;
 }) {
   const [photosByBatch, setPhotosByBatch] = useState<Record<string, BatchPhoto[]>>({});
   const [loadingPhotos, setLoadingPhotos] = useState<Record<string, boolean>>({});
@@ -230,10 +340,9 @@ export default function MediaScreen({
         </div>
       </div>
 
-      {(loadingBatches || anyPhotosLoading || !videosLoaded) ? (
-        // Skeleton istantaneo finché TUTTO non è pronto (foto + video), poi i
-        // contenuti compaiono insieme con media-reveal. Evita "video → skeleton →
-        // foto" a scatti: comparsa unica e fluida (come in Post Social).
+      {demoMode ? (
+        <DemoMediaContent demoJobsDone={demoJobsDone} />
+      ) : (loadingBatches || anyPhotosLoading || !videosLoaded) ? (
         <div className="max-md:!grid-cols-2" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 16 }}>
           {[1, 2, 3, 4, 5, 6].map(i => (
             <div key={i} style={{ aspectRatio: '4/3', borderRadius: 12, background: '#f4f2ee', animation: 'pulse 1.5s infinite ease-in-out' }} />

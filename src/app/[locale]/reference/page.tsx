@@ -31,14 +31,14 @@ const FEATURES = [
     title: "Video AI per l'immobile",
     desc: "Reel, walkthrough, before/after, video con avatar parlante e molto altro.",
     media: [
-      { type: "video", src: "/reference/primo-piano.mp4", title: "Avatar in Primo Piano", desc: "L'avatar presenta i tuoi video con script, musica e sottotitoli generati dall'AI." },
-      { type: "video", src: "/reference/split.mp4", title: "Schermo Diviso", desc: "Video dell'immobile in alto, avatar in basso. Script, musica e sottotitoli generati dall'AI." },
-      { type: "video", src: "/reference/immagini-a-video.mp4", title: "Da immagini a video", desc: "Le tue foto prendono vita con movimenti di camera cinematografici e musica." },
-      { type: "video", src: "/reference/construction.mp4", title: "Timelapse AI", desc: "Da una foto dell'esterno, l'AI genera scavi, struttura e risultato finale in timelapse." },
-      { type: "video", src: "/reference/prima-dopo.mp4", title: "Prima vs Dopo", desc: "Carica una foto, scegli lo stile: l'AI arreda e crea il video prima/dopo automaticamente." },
-      { type: "video", src: "/reference/giorno-notte.mp4", title: "Giorno → Notte", desc: "Carica una foto e l'AI trasforma l'illuminazione da giorno a notte o viceversa." },
-      { type: "video", src: "/reference/sottotitoli.mp4", title: "Sottotitola il tuo video", desc: "Carica un video già girato: l'AI taglia pause e silenzi e aggiunge sottotitoli professionali." },
-      { type: "video", src: "/reference/montaggio.mp4", title: "Montaggio automatico", desc: "Carica foto e video: l'AI monta tutto con transizioni, musica e sottotitoli in automatico." },
+      { type: "video", src: "/reference/primo-piano.mp4", title: "Avatar in primo piano", desc: "Video con avatar, script e sottotitoli generati dall'AI." },
+      { type: "video", src: "/reference/split.mp4", title: "Schermo diviso", desc: "Immobile e avatar parlante nello stesso video." },
+      { type: "video", src: "/reference/immagini-a-video.mp4", title: "Immagini a Video", desc: "Trasforma le foto dell'immobile in un video animato." },
+      { type: "video", src: "/reference/construction.mp4", title: "Timelapse AI", desc: "Da una foto dell'esterno, l'AI genera il timelapse." },
+      { type: "video", src: "/reference/prima-dopo.mp4", title: "Prima vs Dopo", desc: "Partendo da una foto, l'AI arreda e crea il video." },
+      { type: "video", src: "/reference/giorno-notte.mp4", title: "Giorno e notte", desc: "L'AI trasforma l'illuminazione della scena." },
+      { type: "video", src: "/reference/sottotitoli.mp4", title: "Sottotitoli", desc: "Video con testo descrittivo animato." },
+      { type: "video", src: "/reference/montaggio.mp4", title: "Montaggio", desc: "Montaggio automatico multi-stanza con musica." },
     ] as { type: "image" | "video"; src: string; aspect?: "vertical" | "horizontal"; title?: string; desc?: string }[],
   },
   {
@@ -88,7 +88,7 @@ export default async function ReferencePage({ params }: Props) {
               }}
             >
               Esempi reali.{" "}
-              <span style={{ color: "#f59e0b" }}>Risultati concreti.</span>
+              <span style={{ color: "#3B83F6" }}>Risultati concreti.</span>
             </h1>
             <p style={{ color: "#aaa", fontSize: 17, maxWidth: 600, margin: "0 auto" }}>
               Scopri cosa puoi creare con ogni funzionalità di GetNearMe.
@@ -107,7 +107,7 @@ export default async function ReferencePage({ params }: Props) {
             className="scroll-mt-32 py-16 md:py-20"
             style={{ background: i % 2 === 0 ? "#fafaf8" : "#f3f4f6" }}
           >
-            <div className="max-w-5xl mx-auto px-5 md:px-6">
+            <div className="max-w-6xl mx-auto px-5 md:px-6">
               {/* Feature header */}
               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", marginBottom: 32 }}>
                 <span
@@ -141,16 +141,14 @@ export default async function ReferencePage({ params }: Props) {
                   <div style={{ textAlign: "center", marginTop: 36 }}>
                     <a
                       href={`/${locale}#pricing`}
-                      className="neo-shadow-light"
+                      className="neo-shadow-light neo-cta-blue"
                       style={{
                         display: "inline-block",
-                        background: "#f59e0b",
-                        color: "#1a1a2e",
                         border: "1px solid rgba(26,26,46,0.10)",
-                        padding: "14px 36px",
-                        borderRadius: 14,
-                        fontWeight: 800,
-                        fontSize: 16,
+                        padding: "16px 32px",
+                        borderRadius: 12,
+                        fontWeight: 700,
+                        fontSize: 17,
                         textDecoration: "none",
                         letterSpacing: 0.3,
                         boxShadow: "0 2px 10px rgba(16,24,40,0.06)",
@@ -200,19 +198,17 @@ export default async function ReferencePage({ params }: Props) {
             <div className="ref-cta-buttons" style={{ display: "flex", gap: 14, flexWrap: "wrap", justifyContent: "center" }}>
               <a
                 href={`/${locale}#pricing`}
-                className="neo-shadow-light ref-cta-btn"
+                className="neo-shadow-light neo-cta-blue ref-cta-btn"
                 style={{
                   display: "inline-block",
-                  background: "#f59e0b",
-                  color: "#1a1a2e",
                   border: "1px solid rgba(26,26,46,0.10)",
-                  padding: "18px 48px",
-                  borderRadius: 14,
-                  fontWeight: 800,
-                  fontSize: 18,
+                  padding: "16px 32px",
+                  borderRadius: 12,
+                  fontWeight: 700,
+                  fontSize: 17,
                   textDecoration: "none",
                   textAlign: "center",
-                  letterSpacing: 0.5,
+                  letterSpacing: 0.3,
                 }}
               >
                 Prova gratis
@@ -220,16 +216,16 @@ export default async function ReferencePage({ params }: Props) {
               <a
                 data-cal-link="getnearme/30min"
                 data-cal-config='{"layout":"month_view"}'
-                className="neo-shadow-light ref-cta-btn"
+                className="neo-shadow-light final-cta-outline-dark ref-cta-btn"
                 style={{
                   display: "inline-block",
                   background: "transparent",
                   color: "#fff",
                   border: "2px solid #fff",
-                  padding: "18px 36px",
-                  borderRadius: 14,
-                  fontWeight: 800,
-                  fontSize: 18,
+                  padding: "16px 32px",
+                  borderRadius: 12,
+                  fontWeight: 700,
+                  fontSize: 17,
                   textDecoration: "none",
                   textAlign: "center",
                   cursor: "pointer",

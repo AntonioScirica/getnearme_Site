@@ -77,7 +77,29 @@ function PhotoPacksModal({ onClose }: { onClose: () => void }) {
   );
 }
 
-export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated, onGoPlan, onGoPost, onGoVideo }: {
+const DEMO_BEFORE = '/demo/foto_demo.jpg';
+const DEMO_AFTER = '/demo/dopo_demo.jpg';
+
+function DemoBeforeAfter() {
+  const [phase, setPhase] = React.useState<'line' | 'slider'>('line');
+  React.useEffect(() => {
+    const t = setTimeout(() => setPhase('slider'), 850);
+    return () => clearTimeout(t);
+  }, []);
+  return (
+    <div style={{ position: 'relative', borderRadius: 16, overflow: 'hidden', marginBottom: 12, animation: 'foto-reveal .45s cubic-bezier(.22,1,.36,1) both' }}>
+      <div style={{ position: 'relative', borderRadius: 16, overflow: 'hidden', zIndex: 4, boxShadow: '0 12px 32px rgba(0,0,0,0.08)' }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={DEMO_BEFORE} alt="" style={{ position: 'relative', width: '100%', height: 'auto', objectFit: 'cover', display: 'block' }} />
+        <InlineSlider before={DEMO_BEFORE} after={DEMO_AFTER} isVertical={false} showImages={phase === 'slider'} interactive={phase === 'slider'} />
+        <span style={{ position: 'absolute', top: 12, left: 12, background: 'rgba(33,31,28,.72)', color: '#fff', fontSize: 11.5, fontWeight: 700, padding: '5px 12px', borderRadius: 99, zIndex: 12, opacity: phase === 'slider' ? 1 : 0, transition: 'opacity .6s' }}>Prima</span>
+        <span style={{ position: 'absolute', top: 12, right: 12, background: 'rgba(33,31,28,.72)', color: '#fff', fontSize: 11.5, fontWeight: 700, padding: '5px 12px', borderRadius: 99, zIndex: 12, opacity: phase === 'slider' ? 1 : 0, transition: 'opacity .6s' }}>Dopo</span>
+      </div>
+    </div>
+  );
+}
+
+export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated, onGoPlan, onGoPost, onGoVideo, demoMode = false }: {
   toast: (msg: string, icon?: string) => void;
   routeKey: number;
   project?: Project;
@@ -85,6 +107,7 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
   onGoPlan?: () => void;
   onGoPost?: (url: string) => void;
   onGoVideo?: (url: string) => void;
+  demoMode?: boolean;
 }) {
   const [quota, setQuota] = React.useState<StagingQuota | null>(null);
   const [packsOpen, setPacksOpen] = React.useState(false);
@@ -93,7 +116,8 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
   // doesn't hit a cold start (which can exceed the start timeout).
   React.useEffect(() => { pollStagingStatus('warmup-noop').catch(() => {}); }, []);
   const [photos, setPhotos] = React.useState<Photo[]>([]);
-  const [selStyle, setSelStyle] = React.useState<string | null>(null);
+  const [selStyle, setSelStyle] = React.useState<string | null>(demoMode ? 'modern' : null);
+  React.useEffect(() => { if (demoMode) setSelStyle('modern'); }, [demoMode]);
   const [selAngle, setSelAngle] = React.useState<string | null>(null);
   const [customPrompt, setCustomPrompt] = React.useState('');
   const [generating, setGenerating] = React.useState(false);
@@ -260,7 +284,7 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
   React.useEffect(() => {
     if (!didMount.current) { didMount.current = true; return; }
     clearPending();
-    setPhotos([]); setSelStyle(null); setSelAngle(null); setCustomPrompt(''); setActivePhotoId(null);
+    setPhotos([]); setSelStyle(demoMode ? 'modern' : null); setSelAngle(null); setCustomPrompt(''); setActivePhotoId(null);
     setResult(null); setRevealing(null); setReprompt(''); setBatchDone(null); setError(null); setGenerating(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [routeKey]);
@@ -528,14 +552,18 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
               onDragOver={e => e.preventDefault()}
               onDrop={e => { e.preventDefault(); dragDepth.current = 0; setDragOver(false); addFiles(e.dataTransfer.files); }}
             style={{
-              flex: 1, minHeight: 400, borderRadius: photos.length === 0 ? 20 : 0, padding: photos.length === 0 ? 24 : 0,
-              border: dragOver ? '2px dashed #3B83F6' : (photos.length === 0 ? '2px dashed #d8d4cb' : '2px solid transparent'),
-              background: dragOver ? '#eff6ff' : (photos.length === 0 ? '#fff' : 'transparent'),
-              display: 'flex', flexDirection: 'column', alignItems: photos.length === 0 ? 'center' : 'stretch', justifyContent: photos.length === 0 ? 'center' : 'flex-start',
-              textAlign: 'center', transition: 'all .2s', position: 'relative', cursor: photos.length === 0 ? 'pointer' : 'default'
+              flex: 1, minHeight: 400,
+              borderRadius: (photos.length === 0 && !demoMode) ? 20 : 0,
+              padding: (photos.length === 0 && !demoMode) ? 24 : 0,
+              border: dragOver ? '2px dashed #3B83F6' : ((photos.length === 0 && !demoMode) ? '2px dashed #d8d4cb' : '2px solid transparent'),
+              background: dragOver ? '#eff6ff' : ((photos.length === 0 && !demoMode) ? '#fff' : 'transparent'),
+              display: 'flex', flexDirection: 'column', alignItems: (photos.length === 0 && !demoMode) ? 'center' : 'stretch', justifyContent: (photos.length === 0 && !demoMode) ? 'center' : 'flex-start',
+              textAlign: 'center', transition: 'all .2s', position: 'relative', cursor: (photos.length === 0 && !demoMode) ? 'pointer' : 'default'
             }}
           >
-              {photos.length === 0 ? (
+              {photos.length === 0 && demoMode ? (
+                <DemoBeforeAfter />
+              ) : photos.length === 0 ? (
                 <>
                   <div style={s('width:52px;height:52px;border-radius:16px;background:#eef4fe;display:flex;align-items:center;justify-content:center;margin:0 auto 14px')}>
                     <Icon name="image-plus" size={24} color="#3B83F6" />
@@ -806,10 +834,12 @@ function InlineSlider({ before, after, isVertical, showImages, interactive }: { 
   const [pos, setPos] = React.useState(50);
   const boxRef = React.useRef<HTMLDivElement>(null);
   const dragging = React.useRef(false);
+  const userTouched = React.useRef(false);
 
   const updateFromEvent = (clientX: number) => {
     const r = boxRef.current?.getBoundingClientRect();
     if (!r) return;
+    userTouched.current = true;
     setPos(Math.max(2, Math.min(98, ((clientX - r.left) / r.width) * 100)));
   };
 
@@ -824,6 +854,24 @@ function InlineSlider({ before, after, isVertical, showImages, interactive }: { 
     window.addEventListener('touchend', up);
     return () => { window.removeEventListener('mousemove', move); window.removeEventListener('mouseup', up); window.removeEventListener('touchmove', tmove); window.removeEventListener('touchend', up); };
   }, [interactive]);
+
+  React.useEffect(() => {
+    if (!showImages) return;
+    let raf: number;
+    let start = 0;
+    const delay = setTimeout(() => {
+      if (userTouched.current) return;
+      const tick = (t: number) => {
+        if (userTouched.current) return;
+        if (!start) start = t;
+        const elapsed = (t - start) / 1000;
+        setPos(50 + Math.sin(elapsed * 0.8) * 18);
+        raf = requestAnimationFrame(tick);
+      };
+      raf = requestAnimationFrame(tick);
+    }, 1100);
+    return () => { clearTimeout(delay); cancelAnimationFrame(raf); };
+  }, [showImages]);
 
   return (
     <div

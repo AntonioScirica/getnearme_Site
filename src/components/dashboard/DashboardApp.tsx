@@ -69,7 +69,7 @@ const TemplatePreview = dynamic(() => import('./TemplatePreview'), { ssr: false 
 type Toast = { id: number; msg: string; icon: string };
 
 const DEMO_PROJECTS: Project[] = [
-  { id: 'p1', nome: 'Attico Brera', addr: 'Via Fiori Chiari 12, Milano', prezzo: 1250000, mq: 145, locali: 4, nFoto: 12, nStaging: 6, nVideo: 2, nPost: 8, titolo: 'Attico con terrazza nel cuore di Brera', cover: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&h=500&fit=crop' },
+  { id: 'p1', nome: 'Attico Brera', addr: 'Via Fiori Chiari 12, Milano', prezzo: 1250000, mq: 145, locali: 4, camere: 3, bagni: 2, nFoto: 12, nStaging: 6, nVideo: 2, nPost: 8, titolo: 'Attico con terrazza nel cuore di Brera', cover: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&h=500&fit=crop' },
   { id: 'p2', nome: 'Trilocale Isola', addr: 'Via Borsieri 28, Milano', prezzo: 545000, mq: 95, locali: 3, nFoto: 9, nStaging: 3, nVideo: 1, nPost: 5, titolo: 'Trilocale ristrutturato nel cuore di Isola', cover: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&h=500&fit=crop' },
   { id: 'p3', nome: 'Appartamento Trastevere', addr: 'Vicolo del Cedro 9, Roma', prezzo: 690000, mq: 110, locali: 3, nFoto: 10, nStaging: 2, nVideo: 1, nPost: 4, titolo: 'Charme romano con travi a vista', cover: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&h=500&fit=crop' },
   { id: 'p4', nome: 'Bilocale Crocetta', addr: 'Corso Re Umberto 44, Torino', prezzo: 295000, mq: 68, locali: 2, nFoto: 6, nStaging: 0, nVideo: 0, nPost: 2, titolo: 'Bilocale elegante in zona Crocetta', cover: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&h=500&fit=crop' },
@@ -80,6 +80,45 @@ const NAV_SECTIONS = [
   { label: 'Agenzia', items: [{ icon: 'palette', label: 'Brand', route: 'brand' }, { icon: 'credit-card', label: 'Piano', route: 'account' }] },
 ];
 
+const TOUR_LABEL_TO_ROUTE: Record<string, string> = {};
+NAV_SECTIONS.forEach(sec => sec.items.forEach(it => { TOUR_LABEL_TO_ROUTE[it.label] = it.route; }));
+
+function DemoTrayJobs({ onAllDone }: { onAllDone?: () => void }) {
+  const [tick, setTick] = useState(0);
+  const firedRef = useRef(false);
+  useEffect(() => {
+    const id = setInterval(() => setTick(t => t + 1), 350);
+    return () => clearInterval(id);
+  }, []);
+
+  const total = 5;
+  const completed = Math.min(total, Math.floor(tick * 1.2));
+  const done = completed >= total;
+  const pct = (completed / total) * 100;
+  const sub = done ? 'Completato' : `In elaborazione (${completed}/${total})`;
+
+  useEffect(() => {
+    if (done && !firedRef.current) { firedRef.current = true; onAllDone?.(); }
+  }, [done, onAllDone]);
+
+  return (
+    <div style={{ padding: '12px 16px', display: 'flex', gap: 12, minHeight: 56 }}>
+      <div style={{ width: 32, height: 32, borderRadius: 8, background: done ? '#e6f4ea' : '#eef4fe', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none', transition: 'background .3s' }}>
+        {done
+          ? <Icon name="check" size={16} color="#1e8e3e" />
+          : <div style={{ width: 14, height: 14, border: '2px solid #3B83F6', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />}
+      </div>
+      <div style={{ flex: 1 }}>
+        <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 2 }}>Foto AI · Via Roma 12, Milano</div>
+        <div style={{ fontSize: 12, color: done ? '#1e8e3e' : 'var(--text-muted)', transition: 'color .3s' }}>{sub}</div>
+        <div style={{ marginTop: 6, height: 4, borderRadius: 2, background: '#f0ede7', overflow: 'hidden' }}>
+          <div style={{ height: '100%', borderRadius: 2, background: done ? '#1e8e3e' : '#3B83F6', width: `${pct}%`, transition: 'width .5s ease' }} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const TOUR_DEFS = [
   { sel: '[title="Brand"]', title: 'Brand', anim: 'brand', text: 'Parti da qui: carica logo, colori e nome agenzia. Appariranno automaticamente su foto, video e post.' },
   { sel: '[title="Homestaging AI"]', title: 'Homestaging AI', anim: 'staging', text: "Arreda, svuota o trasforma le foto dei tuoi immobili con l'AI. Singola o batch, stile o prompt libero." },
@@ -89,7 +128,7 @@ const TOUR_DEFS = [
   { sel: '[title="Galleria"]', title: 'Galleria', anim: 'media', text: 'Tutto ciò che generi finisce qui. Puoi riusarlo in post e video senza pagare altri crediti.' },
   { sel: '[title="Lavori in corso"]', title: 'Lavori in corso', anim: 'jobs', text: 'Le generazioni girano in background: qui vedi i progressi senza mai bloccarti. Ti avvisiamo a fine lavoro.' },
   { sel: '@center', title: 'Tutto parte da qui', anim: 'project', text: "Inserisci foto e dettagli una sola volta: l'AI li userà in automatico per generare home staging, video reel e post social perfetti e già compilati." },
-  { sel: '[data-tour="new-project"]', title: 'Inizia subito', anim: 'none', text: 'Clicca qui per iniziare a caricare foto e dettagli e sbloccare tutte le funzioni AI di GetNearMe.' },
+  { sel: '[data-tour-dropdown]', title: 'Inizia subito', anim: 'none', text: 'Clicca qui per iniziare a caricare foto e dettagli e sbloccare tutte le funzioni AI di GetNearMe.' },
 ];
 
 // Mini-animazioni per ogni step del tour (CSS, leggere).
@@ -2047,8 +2086,20 @@ function AssistenzaScreen({ toast, email, defaultType = 'support' }: { toast: (m
   );
 }
 
-function BrandScreen({ toast, brand: brandProp, setBrand: setBrandParent, brandRole }: { toast: (msg: string, icon?: string) => void; brand: BrandSettings; setBrand: (b: BrandSettings) => void; brandRole: 'owner' | 'member' | null }) {
-  const [brand, setBrand] = React.useState<BrandState>(brandProp as unknown as BrandState);
+function BrandScreen({ toast, brand: brandProp, setBrand: setBrandParent, brandRole, demoMode }: { toast: (msg: string, icon?: string) => void; brand: BrandSettings; setBrand: (b: BrandSettings) => void; brandRole: 'owner' | 'member' | null; demoMode?: boolean }) {
+  const [brand, setBrand] = React.useState<BrandState>(() => {
+    const base = brandProp as unknown as BrandState;
+    if (!demoMode) return base;
+    return { ...base, logos: { logo_white_v: '/dashboard/logo-icon-white.svg', logo_black_v: '/dashboard/logo-icon-black.svg', logo_colored_v: '/dashboard/logo-icon.svg', logo_white_h: '/assets/svg/logo_scritta_white_circle.svg', logo_black_h: '/assets/svg/logo_scritta_black_circle.svg', logo_colored_h: '/dashboard/logo.svg' }, primaryColor: '#3B83F6', companyName: 'GetNearMe', companyWebsite: 'https://getnearme.com', companyEmail: 'info@getnearme.com' };
+  });
+  const [demoStep, setDemoStep] = React.useState(0);
+  React.useEffect(() => {
+    if (!demoMode) return;
+    setBrand(prev => ({ ...prev, logos: { logo_white_v: '/dashboard/logo-icon-white.svg', logo_black_v: '/dashboard/logo-icon-black.svg', logo_colored_v: '/dashboard/logo-icon.svg', logo_white_h: '/assets/svg/logo_scritta_white_circle.svg', logo_black_h: '/assets/svg/logo_scritta_black_circle.svg', logo_colored_h: '/dashboard/logo.svg' }, primaryColor: '#3B83F6', companyName: 'GetNearMe', companyWebsite: 'https://getnearme.com', companyEmail: 'info@getnearme.com' }));
+    setDemoStep(0);
+    const timers = [1,2,3,4,5].map((step, i) => setTimeout(() => setDemoStep(step), 300 + i * 350));
+    return () => timers.forEach(clearTimeout);
+  }, [demoMode]);
   const fileRefs = React.useRef<Record<string, HTMLInputElement | null>>({});
   const [loadedLogos, setLoadedLogos] = React.useState<Record<string, boolean>>({});
   const scope: 'team' | 'user' = brandRole === 'owner' ? 'team' : 'user';
@@ -2068,8 +2119,9 @@ function BrandScreen({ toast, brand: brandProp, setBrand: setBrandParent, brandR
   // Auto-save text fields (debounced) — no save button.
   const saveTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   React.useEffect(() => {
+    if (demoMode) return;
     if (saveTimer.current) clearTimeout(saveTimer.current);
-    
+
     const currentStr = JSON.stringify({
       logoOrientation: brand.logoOrientation,
       primaryColor: brand.primaryColor,
@@ -2137,6 +2189,8 @@ function BrandScreen({ toast, brand: brandProp, setBrand: setBrandParent, brandR
 
   const inputStyle: React.CSSProperties = { width: '100%', border: '1px solid var(--border-main)', borderRadius: 10, padding: '11px 14px', fontSize: 14, fontFamily: 'inherit', outline: 'none', background: 'var(--bg-card)', transition: 'border-color .2s' };
 
+  const df = (step: number): React.CSSProperties => demoMode ? { opacity: demoStep >= step ? 1 : 0, transform: demoStep >= step ? 'translateY(0)' : 'translateY(8px)', transition: 'opacity .5s ease, transform .5s ease' } : {};
+
   return (
     <div className="max-md:!px-4 max-md:!py-6" style={s('max-width:820px;margin:0 auto;padding:32px 32px 64px')}>
       <div style={s('margin-bottom:24px')}>
@@ -2164,14 +2218,16 @@ function BrandScreen({ toast, brand: brandProp, setBrand: setBrandParent, brandR
                         overflow: 'hidden', transition: 'box-shadow .2s',
                       }} hover={{ boxShadow: '0 4px 16px rgba(33,31,28,.10)' }}>
                         {src ? (
-                          <img 
-                            src={src} 
-                            alt={v.label} 
+                          <img
+                            src={src}
+                            alt={v.label}
                             onLoad={() => setLoadedLogos(p => ({ ...p, [src]: true }))}
-                            style={{ 
-                              maxWidth: '70%', maxHeight: '70%', objectFit: 'contain',
-                              opacity: loadedLogos[src] ? 1 : 0, transition: 'opacity 0.4s ease'
-                            }} 
+                            style={{
+                              maxWidth: demoMode ? (v.key.endsWith('_h') ? '65%' : '50%') : '70%', maxHeight: demoMode ? (v.key.endsWith('_h') ? '65%' : '50%') : '70%', objectFit: 'contain',
+                              opacity: (demoMode ? demoStep >= 1 && loadedLogos[src] : loadedLogos[src]) ? 1 : 0,
+                              transform: demoMode ? (demoStep >= 1 ? 'scale(1)' : 'scale(.92)') : undefined,
+                              transition: 'opacity .5s ease, transform .5s ease'
+                            }}
                           />
                         ) : (
                           <Icon name="image-plus" size={20} color={v.bg === 'var(--text-main)' ? 'rgba(255,255,255,.35)' : '#b3aca1'} />
@@ -2209,7 +2265,7 @@ function BrandScreen({ toast, brand: brandProp, setBrand: setBrandParent, brandR
         <div style={s('color:var(--text-muted);font-size:13px;margin-bottom:16px')}>Questo colore viene applicato ai report, ai post e ai video che crei.</div>
         <div style={s('display:flex;align-items:center;gap:14px')}>
           <div style={{ width: 44, height: 44, borderRadius: 10, border: '1px solid var(--border-main)', overflow: 'hidden', position: 'relative', cursor: 'pointer', padding: 4, background: 'var(--bg-card)' }}>
-            <div style={{ width: '100%', height: '100%', background: brand.primaryColor, borderRadius: 6 }} />
+            <div style={{ width: '100%', height: '100%', background: brand.primaryColor, borderRadius: 6, ...df(2) }} />
             <input type="color" value={brand.primaryColor} onChange={e => set('primaryColor', e.target.value)} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', width: '100%', height: '100%' }} />
           </div>
           <span style={s('font-size:13px;font-weight:600;color:var(--text-sec)')}>Clicca per cambiare colore</span>
@@ -2223,15 +2279,15 @@ function BrandScreen({ toast, brand: brandProp, setBrand: setBrandParent, brandR
         <div style={s('display:flex;flex-direction:column;gap:16px')}>
           <div>
             <label style={s('display:block;font-size:13px;font-weight:700;color:var(--text-sec);margin-bottom:6px')}>Nome agenzia</label>
-            <input value={brand.companyName} onChange={e => set('companyName', e.target.value)} maxLength={50} placeholder="La Tua Agenzia" style={inputStyle} />
+            <input value={brand.companyName} onChange={e => set('companyName', e.target.value)} maxLength={50} placeholder="La Tua Agenzia" style={{ ...inputStyle, ...df(3) }} />
           </div>
           <div>
             <label style={s('display:block;font-size:13px;font-weight:700;color:var(--text-sec);margin-bottom:6px')}>Sito web <span style={s('color:#b3aca1;font-weight:500')}>(opzionale)</span></label>
-            <input value={brand.companyWebsite} onChange={e => set('companyWebsite', e.target.value)} placeholder="https://www.tuaagenzia.it" type="url" style={inputStyle} />
+            <input value={brand.companyWebsite} onChange={e => set('companyWebsite', e.target.value)} placeholder="https://www.tuaagenzia.it" type="url" style={{ ...inputStyle, ...df(4) }} />
           </div>
           <div>
             <label style={s('display:block;font-size:13px;font-weight:700;color:var(--text-sec);margin-bottom:6px')}>Email contatto <span style={s('color:#b3aca1;font-weight:500')}>(opzionale)</span></label>
-            <input value={brand.companyEmail} onChange={e => set('companyEmail', e.target.value)} placeholder="info@tuaagenzia.it" type="email" style={inputStyle} />
+            <input value={brand.companyEmail} onChange={e => set('companyEmail', e.target.value)} placeholder="info@tuaagenzia.it" type="email" style={{ ...inputStyle, ...df(5) }} />
           </div>
         </div>
       </div>
@@ -2274,6 +2330,7 @@ const getCoverStyle = (p: Project | null | undefined): React.CSSProperties => {
   const hue = hash % 360;
   return { background: `linear-gradient(135deg, hsl(${hue}, 80%, 65%), hsl(${(hue + 40) % 360}, 80%, 55%))` };
 };
+
 
 export default function DashboardApp({ userData }: { userData: UserData | null }) {
   const [route, setRoute] = useState('home');
@@ -2407,6 +2464,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
   const markTutorialSeen = useCallback(() => {
     try { if (tutorialKey) localStorage.setItem(tutorialKey, '1'); } catch { /* quota */ }
   }, [tutorialKey]);
+  const tourReplayRef = useRef(false);
 
   // Quota free trial (foto + video) per spiegarla in onboarding / empty state.
   // Numeri NON hardcoded: letti dalla quota reale. Solo per utenti free.
@@ -2427,6 +2485,11 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
   const closeWelcome = useCallback(() => { setWelcomeOpen(false); markTutorialSeen(); }, [markTutorialSeen]);
   const [tourStep, setTourStep] = useState<number | null>(null);
   const [tourRect, setTourRect] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
+  const [tourRect2, setTourRect2] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
+  const [demoJobsDone, setDemoJobsDone] = useState(false);
+  const [tourCtaRect, setTourCtaRect] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
+  const [hlFading, setHlFading] = useState(false);
+  const hlFadeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [trayOpen, setTrayOpen] = useState(false);
   const prevTrayOpen = useRef(trayOpen);
   
@@ -2443,6 +2506,11 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
     }
     prevTrayOpen.current = trayOpen;
   }, [trayOpen, batches, setBatches]);
+  useEffect(() => {
+    if (tourStep !== null && TOUR_DEFS[tourStep]?.sel === '[data-tour-dropdown]' && !projOpen) {
+      setProjOpen(true);
+    }
+  }, [tourStep, projOpen]);
   const [profileOpen, setProfileOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const { data: notifications = [], mutate: mutateNotifs } = useSWR('notifications', async () => {
@@ -2503,41 +2571,101 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
     else if (r !== 'studio' && r !== 'video') setStudioPhoto(null);
     setProjOpen(false); setTrayOpen(false); setProfileOpen(false); contentRef.current?.scrollTo(0, 0); 
   }, []);
-  const closeMenus = useCallback(() => { setProjOpen(false); setTrayOpen(false); setProfileOpen(false); setNotifOpen(false); }, []);
+  const closeMenus = useCallback(() => { if (tourStep !== null && TOUR_DEFS[tourStep]?.sel === '[data-tour-dropdown]') return; setProjOpen(false); setTrayOpen(false); setProfileOpen(false); setNotifOpen(false); }, [tourStep]);
 
   // ⌘K
   useEffect(() => {
     const kd = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')) { e.preventDefault(); setCmdkOpen(true); setCmdQuery(''); }
-      if (e.key === 'Escape') { setCmdkOpen(false); setTourStep(null); setProjOpen(false); setTrayOpen(false); setProfileOpen(false); }
+      if (e.key === 'Escape') { setCmdkOpen(false); if (tourStep === null || TOUR_DEFS[tourStep]?.sel !== '[data-tour-dropdown]') setProjOpen(false); setTrayOpen(false); setProfileOpen(false); }
     };
     window.addEventListener('keydown', kd);
     return () => window.removeEventListener('keydown', kd);
   }, []);
 
   // Tour measuring
-  const tourMeasure = useCallback((i: number) => {
-    // Trova il primo step renderizzato da i in poi (salta quelli non presenti),
-    // così non resta mai bloccato invisibile.
+  const scheduleFadeIn = useCallback(() => {
+    hlFadeTimer.current = setTimeout(() => setHlFading(false), 60);
+  }, []);
+  const tourMeasure = useCallback((i: number, skipStep?: boolean) => {
     let idx = i;
     while (idx < TOUR_DEFS.length) {
       const sel = TOUR_DEFS[idx].sel;
-      if (sel === '@center') { setTourStep(idx); setTourRect(null); return; } // step centrato (no ancora)
+      if (sel === '@center') { setTourStep(idx); scheduleFadeIn(); return; }
       const el = document.querySelector(sel);
-      if (el) { const r = el.getBoundingClientRect(); setTourStep(idx); setTourRect({ x: r.x, y: r.y, w: r.width, h: r.height }); return; }
+      if (el) {
+        const r = el.getBoundingClientRect();
+        const rect = { x: r.x, y: r.y, w: r.width, h: r.height };
+        if (sel === '[title="Lavori in corso"]') {
+          const btn = el.querySelector('button');
+          const tray = el.querySelector('[data-tour-tray]');
+          if (btn && tray) {
+            const br = btn.getBoundingClientRect();
+            const tr = tray.getBoundingClientRect();
+            if (!skipStep) setTourStep(idx);
+            setTourRect({ x: br.x, y: br.y, w: br.width, h: br.height });
+            setTourRect2({ x: tr.x, y: tr.y, w: tr.width, h: tr.height });
+            scheduleFadeIn();
+            return;
+          }
+        }
+        if (sel === '[data-tour-dropdown]') {
+          const cta = el.querySelector('[data-tour="new-project"]');
+          if (cta) { const cr = cta.getBoundingClientRect(); setTourCtaRect({ x: cr.x, y: cr.y, w: cr.width, h: cr.height }); }
+          else setTourCtaRect(null);
+          // Combine trigger bar + absolute popup into one rect
+          const children = el.children;
+          let minX = r.x, minY = r.y, maxX = r.right, maxY = r.bottom;
+          for (let c = 0; c < children.length; c++) {
+            const cr2 = children[c].getBoundingClientRect();
+            if (cr2.width === 0 && cr2.height === 0) continue;
+            minX = Math.min(minX, cr2.x);
+            minY = Math.min(minY, cr2.y);
+            maxX = Math.max(maxX, cr2.x + cr2.width);
+            maxY = Math.max(maxY, cr2.y + cr2.height);
+          }
+          const combined = { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
+          if (!skipStep) setTourStep(idx);
+          setTourRect(combined); setTourRect2(null); scheduleFadeIn(); return;
+        } else { setTourCtaRect(null); }
+        if (!skipStep) setTourStep(idx);
+        setTourRect(rect); setTourRect2(null); scheduleFadeIn(); return;
+      }
       idx++;
     }
-    setTourStep(null); setTourRect(null); // nessuno trovato → chiudi
-  }, []);
+    setTourStep(null); setTourRect(null); setTourRect2(null);
+  }, [scheduleFadeIn]);
   const tourGo = useCallback((n: number) => {
-    if (n >= TOUR_DEFS.length || n < 0) { setTourStep(null); return; }
-    setTourStep(n);
-    setTimeout(() => tourMeasure(n), 60);
-  }, [tourMeasure]);
+    if (n >= TOUR_DEFS.length || n < 0) { setTourStep(null); setTrayOpen(false); setTourRect2(null); setDemoJobsDone(false); return; }
+    const def = TOUR_DEFS[n];
+    const m = def.sel.match(/\[title="(.+?)"\]/);
+    if (m && TOUR_LABEL_TO_ROUTE[m[1]]) go(TOUR_LABEL_TO_ROUTE[m[1]]);
+    else if (def.sel.includes('tour-dropdown')) go('home');
+    const isTray = def.sel === '[title="Lavori in corso"]';
+    const isCenter = def.sel === '@center';
+    const isNewProj = def.sel.includes('tour-dropdown');
+    const needsFade = n === 0 || isCenter || isNewProj;
+    if (needsFade) {
+      setHlFading(true);
+      if (hlFadeTimer.current) clearTimeout(hlFadeTimer.current);
+    }
+    if (isNewProj) { setTourRect(null); setTourRect2(null); }
+    else { if (!isCenter) setDemoJobsDone(false); setTourRect2(null); }
+    setTrayOpen(isTray);
+    if (needsFade) {
+      setTourStep(n);
+      setTimeout(() => tourMeasure(n), isNewProj ? 400 : 60);
+    } else {
+      setTimeout(() => tourMeasure(n, true), isTray ? 250 : 60);
+      setTimeout(() => setTourStep(n), 400);
+    }
+  }, [tourMeasure, go]);
   const startTour = useCallback(() => {
-    setWelcomeOpen(false); markTutorialSeen(); setCollapsed(false); setTourStep(0); setTourRect(null);
+    setWelcomeOpen(false); markTutorialSeen(); setCollapsed(false); setTourStep(0); setTourRect(null); setTourRect2(null); setDemoJobsDone(false); setTrayOpen(false);
+    setHlFading(true); if (hlFadeTimer.current) clearTimeout(hlFadeTimer.current);
+    go('brand');
     setTimeout(() => tourMeasure(0), 350);
-  }, [tourMeasure, markTutorialSeen]);
+  }, [tourMeasure, markTutorialSeen, go]);
 
   // ---- derived: checklist ----
 
@@ -2556,7 +2684,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
   const cmdActions: [string, string, string, () => void][] = [
     ['Impostazioni', 'settings', 'Account', () => { setCmdkOpen(false); go('impostazioni'); }],
     ['Assistenza', 'life-buoy', 'Supporto', () => { setCmdkOpen(false); go('assistenza'); }],
-    ['Tutorial', 'play-circle', 'Guida', () => { setCmdkOpen(false); setWelcomeOpen(true); }],
+    ['Tutorial', 'play-circle', 'Guida', () => { setCmdkOpen(false); tourReplayRef.current = true; setWelcomeOpen(true); }],
   ];
   const cmdResults: { label: string; sub: string; icon: string; go: () => void }[] = [];
   cmdTools.filter((t) => !cmdq || t[0].toLowerCase().includes(cmdq)).forEach((t) => cmdResults.push({ label: t[0], sub: 'Strumento', icon: t[2], go: () => { setCmdkOpen(false); go(t[1]); } }));
@@ -2564,9 +2692,10 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
   // Progetti: solo se cercati (niente lista di default).
   if (cmdq) projects.filter((p) => (p.nome + ' ' + p.addr).toLowerCase().includes(cmdq)).forEach((p) => cmdResults.push({ label: p.nome, sub: p.addr, icon: 'building-2', go: () => { setCmdkOpen(false); setActiveProject(p.id); go('home'); } }));
 
-  const onRight = tourRect && tourRect.x > (typeof window !== 'undefined' ? window.innerWidth - 420 : 9999);
-  const tipL = tourRect ? (onRight ? Math.max(16, tourRect.x + tourRect.w - 320) : tourRect.x + tourRect.w + 20) : 0;
-  const tipT = tourRect ? (onRight ? tourRect.y + tourRect.h + 16 : Math.max(16, tourRect.y - 12)) : 0;
+  const tipRef = tourRect2 || tourRect;
+  const onRight = tipRef && tipRef.x > (typeof window !== 'undefined' ? window.innerWidth - 420 : 9999);
+  const tipL = tipRef ? (onRight ? Math.max(16, tipRef.x + tipRef.w - 320) : tipRef.x + tipRef.w + 20) : 0;
+  const tipT = tipRef ? (onRight ? tipRef.y + tipRef.h + 16 : Math.max(16, tipRef.y - 12)) : 0;
   const tdef = tourStep !== null ? TOUR_DEFS[tourStep] : TOUR_DEFS[0];
 
   return (
@@ -2580,20 +2709,12 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
             <div style={{ width: 68, height: 68, background: 'var(--bg-card)', borderRadius: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 22px', boxShadow: '0 8px 24px rgba(33,31,28,.1)' }}>
               <img src="/dashboard/logo-icon.svg" alt="GetNearMe" style={{ width: 40, height: 40 }} />
             </div>
-            <h2 style={s('margin:0 0 10px;font-size:27px;font-weight:800;letter-spacing:-.6px;color:#1a1a1a')}>Benvenuto su GetNearMe</h2>
-            <p style={s('margin:0 auto 20px;max-width:370px;color:var(--text-sec);font-size:15px;line-height:1.5')}>Dai una marcia in più ai tuoi annunci: foto, video e post curati, pronti in pochi minuti. Ti facciamo vedere come.</p>
-            {freeTrial && (freeTrial.photos > 0 || freeTrial.videos > 0) && (
-              <div style={s('display:flex;justify-content:center;margin:0 0 24px')}>
-                <span style={s('display:inline-flex;align-items:center;gap:8px;background:#eef4fe;border:1px solid #d3e3fd;color:#2b6fe0;font-size:13.5px;font-weight:700;padding:10px 16px;border-radius:99px')}>
-                  <Icon name="sparkles" size={15} color="#2b6fe0" />
-                  Inizia gratis: {freeTrial.photos} foto AI + {freeTrial.videos} video AI inclusi
-                </span>
-              </div>
-            )}
+            <h2 style={s('margin:0 0 4px;font-size:27px;font-weight:800;letter-spacing:-.6px;color:#1a1a1a')}>Benvenuto su GetNearMe</h2>
+            <p style={s('margin:0 auto 20px;max-width:370px;color:var(--text-sec);font-size:15px;line-height:1.5')}>Foto, video e post curati per i tuoi annunci, pronti in pochi minuti. Ti facciamo vedere come.</p>
             <Box as="button" onClick={startTour} style={s('width:100%;border:none;background:#3B83F6;color:var(--bg-card);font-size:15px;font-weight:700;padding:14px 28px;border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;min-height:48px;transition:all .2s')} hover={s('background:#2b6fe0;transform:translateY(-1px);box-shadow:0 8px 24px rgba(59,131,246,.28)')}>
-              Fai un giro veloce (1 min) <Icon name="arrow-right" size={16} color="var(--bg-card)" />
+              Fai un giro veloce
             </Box>
-            <Box as="button" onClick={() => { closeWelcome(); toast('Puoi rifare il tour dal menu Profilo > Tutorial'); }} style={s('display:block;margin:16px auto 0;text-align:center;width:fit-content;border:none;background:transparent;color:var(--text-muted);font-size:14px;font-weight:600;padding:8px 12px;border-radius:8px;cursor:pointer;transition:color .2s')} hover={{ color: 'var(--text-sec)' }}>
+            <Box as="button" onClick={() => { closeWelcome(); setCollapsed(false); tourGo(TOUR_DEFS.length - 2); }} style={s('display:block;margin:16px auto 0;text-align:center;width:fit-content;border:none;background:transparent;color:var(--text-muted);font-size:14px;font-weight:600;padding:8px 12px;border-radius:8px;cursor:pointer;transition:color .2s')} hover={{ color: 'var(--text-sec)' }}>
               Salta e inizia subito
             </Box>
           </div>
@@ -2602,51 +2723,67 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
 
       {/* TOUR COACHMARK */}
       {tourStep !== null && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 101, pointerEvents: 'none' }}>
-          <div style={{ 
-            position: 'absolute', 
-            transition: 'all .5s cubic-bezier(0.16, 1, 0.3, 1)', 
-            pointerEvents: 'none',
-            ...(tdef.sel === '@center' || !tourRect
-              ? { left: '50%', top: '50%', width: 0, height: 0, borderRadius: '50%', boxShadow: '0 0 0 9999px rgba(24,21,17,.55)' }
-              : { 
-                  left: tourRect.x - (tdef.sel === '[data-tour="new-project"]' ? 0 : 6), 
-                  top: tourRect.y - (tdef.sel === '[data-tour="new-project"]' ? 0 : 6), 
-                  width: tourRect.w + (tdef.sel === '[data-tour="new-project"]' ? 0 : 12), 
-                  height: tourRect.h + (tdef.sel === '[data-tour="new-project"]' ? 0 : 12), 
-                  borderRadius: tdef.sel === '[data-tour="new-project"]' ? 10 : 14, 
-                  boxShadow: '0 0 0 9999px rgba(24,21,17,.55)' 
-                })
-          }} />
+        <div style={{ position: 'fixed', inset: 0, zIndex: 101, pointerEvents: 'none', animation: 'tour-fade-only .5s ease forwards' }}>
+          {(() => {
+            const isNP = tdef.sel === '[data-tour-dropdown]';
+            const pad = isNP ? 0 : 6;
+            const rad = isNP ? 10 : 14;
+            const cx = tourRect ? tourRect.x - pad : 0;
+            const cy = tourRect ? tourRect.y - pad : 0;
+            const cw = tourRect ? tourRect.w + pad * 2 : 0;
+            const ch = tourRect ? tourRect.h + pad * 2 : 0;
+            const hasCutout = tourRect && tdef.sel !== '@center';
+            const hasDual = tourRect && tourRect2;
+            const cutoutOpacity = hlFading ? 0 : 1;
+            const interp = 'x .8s cubic-bezier(.16,1,.3,1), y .8s cubic-bezier(.16,1,.3,1), width .8s cubic-bezier(.16,1,.3,1), height .8s cubic-bezier(.16,1,.3,1)';
+            return (
+              <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }}>
+                <defs>
+                  <mask id="tour-mask">
+                    <rect width="100%" height="100%" fill="white" />
+                    {hasDual ? (
+                      <>
+                        <rect style={{ opacity: cutoutOpacity, transition: `opacity .6s ease, ${interp}` }} x={tourRect.x - 6} y={tourRect.y - 6} width={tourRect.w + 12} height={tourRect2.y + tourRect2.h + 6 - (tourRect.y - 6)} rx={14} fill="black" />
+                        <rect style={{ opacity: cutoutOpacity, transition: `opacity .6s ease, ${interp}` }} x={tourRect2.x - 6} y={tourRect2.y - 6} width={tourRect2.w + 12} height={tourRect2.h + 12} rx={14} fill="black" />
+                      </>
+                    ) : hasCutout ? (
+                      <rect style={{ opacity: cutoutOpacity, transition: `opacity .6s ease, ${interp}` }} x={cx} y={cy} width={cw} height={ch} rx={rad} fill="black" />
+                    ) : null}
+                  </mask>
+                </defs>
+                <rect width="100%" height="100%" fill="rgba(24,21,17,.55)" mask="url(#tour-mask)" />
+              </svg>
+            );
+          })()}
 
-          {/* Il catcher a tutto schermo (usato per lo step @center) */}
-          {(!tourRect || tdef.sel === '@center') && (
-            <div style={{ position: 'absolute', inset: 0, pointerEvents: 'auto' }} onClick={() => setTourStep(null)} />
+          {/* Il catcher a tutto schermo — blocca click fuori senza chiudere il tour */}
+          {(!tourRect || tdef.sel === '@center' || tourRect2) && (
+            <div style={{ position: 'absolute', inset: 0, pointerEvents: 'auto' }} />
           )}
 
-          {/* I 4 muri invisibili per gli step con tourRect, lasciano un buco fisico per far passare click/hover */}
-          {tourRect && tdef.sel !== '@center' && (
+          {/* I 4 muri invisibili per gli step con tourRect (singolo), lasciano un buco fisico per far passare click/hover */}
+          {tourRect && !tourRect2 && tdef.sel !== '@center' && (
             (() => {
-              const pad = tdef.sel === '[data-tour="new-project"]' ? 0 : 6;
+              const pad = tdef.sel === '[data-tour-dropdown]' ? 0 : 6;
               return (
                 <>
-                  <div onClick={() => setTourStep(null)} style={{ position: 'absolute', top: 0, left: 0, right: 0, height: Math.max(0, tourRect.y - pad), pointerEvents: 'auto' }} />
-                  <div onClick={() => setTourStep(null)} style={{ position: 'absolute', top: tourRect.y + tourRect.h + pad, left: 0, right: 0, bottom: 0, pointerEvents: 'auto' }} />
-                  <div onClick={() => setTourStep(null)} style={{ position: 'absolute', top: Math.max(0, tourRect.y - pad), left: 0, width: Math.max(0, tourRect.x - pad), height: tourRect.h + pad*2, pointerEvents: 'auto' }} />
-                  <div onClick={() => setTourStep(null)} style={{ position: 'absolute', top: Math.max(0, tourRect.y - pad), left: tourRect.x + tourRect.w + pad, right: 0, height: tourRect.h + pad*2, pointerEvents: 'auto' }} />
+                  <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: Math.max(0, tourRect.y - pad), pointerEvents: 'auto' }} />
+                  <div style={{ position: 'absolute', top: tourRect.y + tourRect.h + pad, left: 0, right: 0, bottom: 0, pointerEvents: 'auto' }} />
+                  <div style={{ position: 'absolute', top: Math.max(0, tourRect.y - pad), left: 0, width: Math.max(0, tourRect.x - pad), height: tourRect.h + pad*2, pointerEvents: 'auto' }} />
+                  <div style={{ position: 'absolute', top: Math.max(0, tourRect.y - pad), left: tourRect.x + tourRect.w + pad, right: 0, height: tourRect.h + pad*2, pointerEvents: 'auto' }} />
                 </>
               );
             })()
           )}
-          {tdef.sel !== '[data-tour="new-project"]' && (tdef.sel === '@center' || tourRect) && (
-            <div key={tourStep} style={tdef.sel === '@center'
+          {tdef.sel !== '[data-tour="new-project"]' && tdef.sel !== '[data-tour-dropdown]' && (tdef.sel === '@center' || tourRect) && (
+            <div key={tdef.sel === '@center' ? 'center' : 'tip'} style={tdef.sel === '@center'
               ? { position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%,-50%)', width: 360, maxWidth: 'calc(100vw - 32px)', background: 'var(--bg-card)', borderRadius: 16, boxShadow: '0 24px 64px rgba(20,18,15,.32)', padding: '22px 24px', animation: 'tour-fade-in .5s cubic-bezier(0.16, 1, 0.3, 1) forwards', pointerEvents: 'auto' }
-              : { position: 'absolute', left: tipL, top: tipT, width: 300, background: 'var(--bg-card)', borderRadius: 12, boxShadow: '0 16px 48px rgba(20,18,15,.3)', padding: '18px 20px 20px', animation: 'tour-fade-tip .4s cubic-bezier(0.16, 1, 0.3, 1) forwards', pointerEvents: 'auto' }}>
-              <TourAnim kind={tdef.anim} />
-              {tdef.sel !== '@center' && (
+              : { position: 'absolute', left: tipL, top: tipT, width: 300, background: 'var(--bg-card)', borderRadius: 12, boxShadow: '0 16px 48px rgba(20,18,15,.3)', padding: '18px 20px 20px', pointerEvents: 'auto', transition: 'left .8s cubic-bezier(0.16, 1, 0.3, 1), top .8s cubic-bezier(0.16, 1, 0.3, 1), opacity .3s ease' }}>
+              <TourAnim key={tourStep} kind={tdef.anim} />
+              {tdef.sel !== '@center' && tdef.sel !== '[data-tour-dropdown]' && (
                 <div style={s('display:flex;align-items:center;justify-content:space-between;margin-bottom:6px')}>
                   <span style={s('font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#1d5fd0')}>{(tourStep + 1) + ' di ' + (TOUR_DEFS.length - 2)}</span>
-                  <span onClick={() => setTourStep(null)} style={s('font-size:12px;font-weight:600;color:#b3aca1;cursor:pointer;padding:4px')}>Salta il tour</span>
+                  <span onClick={() => tourGo(TOUR_DEFS.length - 2)} style={s('font-size:12px;font-weight:600;color:#b3aca1;cursor:pointer;padding:4px')}>Salta il tour</span>
                 </div>
               )}
               {tdef.sel === '@center' && (
@@ -2656,9 +2793,11 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
               <div style={s(`font-size:13px;color:var(--text-sec);line-height:1.5;margin-bottom:24px;${tdef.sel === '@center' ? 'text-align:center;' : ''}`)}>{tdef.text}</div>
               <div style={s('display:flex;align-items:center;justify-content:space-between')}>
                 {tourStep > 0 && tdef.sel !== '@center' && <Box as="button" onClick={() => tourGo(tourStep - 1)} style={s('border:1px solid var(--border-main);background:var(--bg-card);font-size:12.5px;font-weight:700;padding:9px 16px;border-radius:8px;cursor:pointer;min-height:38px')} hover={s('background:var(--bg-hover)')}>Indietro</Box>}
-                {tdef.sel !== '@center'
-                  ? <Box as="button" onClick={() => tourGo(tourStep + 1)} style={s('border:none;background:#3B83F6;color:var(--bg-card);font-size:12.5px;font-weight:700;padding:9px 18px;border-radius:8px;cursor:pointer;margin-left:auto;min-height:38px')} hover={s('background:#2b6fe0')}>Avanti</Box>
-                  : <Box as="button" onClick={() => { setProjOpen(true); tourGo(tourStep + 1); }} style={s('border:none;background:#3B83F6;color:var(--bg-card);font-size:13.5px;font-weight:700;padding:12px 18px;border-radius:8px;cursor:pointer;width:100%;text-align:center;display:flex;align-items:center;justify-content:center;min-height:44px')} hover={s('background:#2b6fe0;transform:translateY(-1px);box-shadow:0 8px 20px rgba(59,131,246,.25)')}>Aggiungi immobile</Box>}
+                {tdef.sel === '@center'
+                  ? <Box as="button" onClick={() => { tourGo(tourStep + 1); setTimeout(() => setProjOpen(true), 80); }} style={s('border:none;background:#3B83F6;color:var(--bg-card);font-size:13.5px;font-weight:700;padding:12px 18px;border-radius:8px;cursor:pointer;width:100%;text-align:center;display:flex;align-items:center;justify-content:center;min-height:44px')} hover={s('background:#2b6fe0;transform:translateY(-1px);box-shadow:0 8px 20px rgba(59,131,246,.25)')}>Avanti</Box>
+                  : tdef.sel === '[data-tour-dropdown]'
+                  ? <Box as="button" onClick={() => { const replay = tourReplayRef.current; tourReplayRef.current = false; if (replay) { setTourStep(null); setTourRect(null); setTourRect2(null); setProjOpen(false); } else { setTourStep(null); setTourRect(null); setTourRect2(null); setProjOpen(false); setNewProjOpen(true); } }} style={s('border:none;background:#3B83F6;color:var(--bg-card);font-size:13.5px;font-weight:700;padding:12px 18px;border-radius:8px;cursor:pointer;width:100%;text-align:center;display:flex;align-items:center;justify-content:center;min-height:44px')} hover={s('background:#2b6fe0;transform:translateY(-1px);box-shadow:0 8px 20px rgba(59,131,246,.25)')}>{tourReplayRef.current ? 'Ho capito' : 'Aggiungi immobile'}</Box>
+                  : <Box as="button" onClick={() => tourGo(tourStep + 1)} style={s('border:none;background:#3B83F6;color:var(--bg-card);font-size:12.5px;font-weight:700;padding:9px 18px;border-radius:8px;cursor:pointer;margin-left:auto;min-height:38px')} hover={s('background:#2b6fe0')}>Avanti</Box>}
               </div>
             </div>
           )}
@@ -2681,9 +2820,11 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                 {sec.label && !collapsed && <div style={s('font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#b3aca1;padding:14px 22px 6px;white-space:nowrap')}>{sec.label}</div>}
                 {sec.items.map((it) => {
                   const a = route === it.route || (it.route === 'progetti' && route === 'progetto');
+                  const tourActive = tourStep !== null && TOUR_DEFS[tourStep]?.sel === `[title="${it.label}"]`;
+                  const highlighted = a || tourActive;
                   return (
-                    <Box key={it.route} onClick={() => { go(it.route); setMobileMenuOpen(false); }} title={it.label} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', margin: '1px 10px', borderRadius: 12, cursor: 'pointer', background: a ? '#f1efe9' : 'transparent', color: a ? 'var(--text-main)' : 'var(--text-sec)', fontWeight: a ? 700 : 500, fontSize: 14, whiteSpace: 'nowrap', minHeight: 38 }} hover={{ background: 'var(--bg-hover)' }}>
-                      <Icon name={it.icon} size={18} color={a ? 'var(--text-main)' : 'var(--text-sec)'} />
+                    <Box key={it.route} onClick={tourStep !== null ? undefined : () => { go(it.route); setMobileMenuOpen(false); }} title={it.label} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', margin: '1px 10px', borderRadius: 12, cursor: tourStep !== null ? 'default' : 'pointer', background: highlighted ? '#f1efe9' : 'transparent', color: highlighted ? 'var(--text-main)' : 'var(--text-sec)', fontWeight: highlighted ? 700 : 500, fontSize: 14, whiteSpace: 'nowrap', minHeight: 38 }} hover={tourStep !== null ? {} : { background: 'var(--bg-hover)' }}>
+                      <Icon name={it.icon} size={18} color={highlighted ? 'var(--text-main)' : 'var(--text-sec)'} />
                       {!collapsed && <span>{it.label}</span>}
                     </Box>
                   );
@@ -2748,7 +2889,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
         {/* MAIN */}
         <div className="max-md:!w-full" style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
           {/* HEADER */}
-          <div className="max-md:!px-3 max-md:!gap-2" style={{ height: 64, flex: 'none', background: 'var(--bg-card)', borderBottom: '1px solid var(--border-light)', display: 'flex', alignItems: 'center', gap: 14, padding: '0 20px', position: 'relative', zIndex: 30 }}>
+          <div className="max-md:!px-3 max-md:!gap-2" style={{ height: 64, flex: 'none', background: 'var(--bg-card)', borderBottom: '1px solid var(--border-light)', display: 'flex', alignItems: 'center', gap: 14, padding: '0 20px', position: 'relative', zIndex: tourStep !== null && tdef.sel === '[data-tour-dropdown]' ? 'auto' as any : 30 }}>
             {/* Hamburger (Mobile) */}
             <Box as="button" onClick={() => setMobileMenuOpen(true)} className="md:!hidden" title="Apri menu" aria-label="Apri menu" style={s('border:none;background:transparent;width:38px;height:38px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none')} hover={s('background:#f1efe9')}><Icon name="menu" size={20} /></Box>
             
@@ -2756,8 +2897,8 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
             <Box as="button" onClick={() => setCollapsed((c) => !c)} className="max-md:!hidden" title="Comprimi menu" aria-label="Comprimi menu" style={s('border:none;background:transparent;width:38px;height:38px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center')} hover={s('background:#f1efe9')}><Icon name="panel-left" size={18} /></Box>
 
             {/* project switcher */}
-            <div style={{ position: 'relative' }}>
-              <Box onClick={(e) => { e.stopPropagation(); setProjOpen((o) => !o); setTrayOpen(false); }} style={s('display:flex;align-items:center;gap:10px;padding:7px 14px 7px 8px;border:1px solid #e9e6df;border-radius:8px;cursor:pointer;background:var(--bg-card);min-height:38px;min-width:240px;justify-content:space-between')} hover={s('border-color:var(--border-dark);box-shadow:0 2px 8px rgba(33,31,28,.06)')}>
+            <div data-tour-dropdown style={{ position: 'relative', ...(tourStep !== null && tdef.sel === '[data-tour-dropdown]' ? { zIndex: 102, pointerEvents: 'none' as const } : {}) }}>
+              <Box onClick={(e) => { e.stopPropagation(); if (tourStep !== null && TOUR_DEFS[tourStep]?.sel === '[data-tour-dropdown]') return; setProjOpen((o) => !o); setTrayOpen(false); }} style={s(`display:flex;align-items:center;gap:10px;padding:7px 14px 7px 8px;border:1px solid #e9e6df;border-radius:8px;cursor:pointer;background:var(--bg-card);min-height:38px;min-width:240px;justify-content:space-between`)} hover={s('border-color:var(--border-dark);box-shadow:0 2px 8px rgba(33,31,28,.06)')}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
                   {loadingProjects ? (
                     <div className="max-md:!hidden" style={{ minWidth: 0, flex: 1 }}><div style={s('font-size:13px;font-weight:700;color:var(--text-muted)')}>Caricamento...</div></div>
@@ -2776,7 +2917,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                 <Icon name="chevron-down" size={14} color="var(--text-muted)" style={{ flex: 'none' }} />
               </Box>
               {projOpen && (
-                <div className="max-md:!fixed max-md:!top-16 max-md:!left-2 max-md:!right-2 max-md:!w-auto" style={s('position:absolute;top:52px;left:0;width:100%;background:var(--bg-card);border-radius:12px;box-shadow:0 16px 48px rgba(33,31,28,.16);border:1px solid var(--border-light);overflow:hidden;z-index:99')}>
+                <div className="max-md:!fixed max-md:!top-16 max-md:!left-2 max-md:!right-2 max-md:!w-auto" style={s(`position:absolute;top:52px;left:0;width:100%;background:var(--bg-card);border-radius:12px;box-shadow:0 16px 48px rgba(33,31,28,.16);border:1px solid var(--border-light);z-index:99;overflow:hidden;box-shadow:0 16px 48px rgba(33,31,28,.16)`)}>
                   <div style={s('padding:12px 12px 8px')}><div style={s('display:flex;align-items:center;gap:8px;background:#faf9f7;border:1px solid #ece9e2;border-radius:10px;padding:8px 12px')}><Icon name="search" size={15} color="var(--text-muted)" /><input value={projQuery} onChange={(e) => setProjQuery(e.target.value)} placeholder="Cerca immobile…" style={s('border:none;background:transparent;outline:none;font-size:13px;width:100%')} /></div></div>
                   <div style={s('max-height:260px;overflow:auto;padding:0 6px')}>
                     {projList.map((p) => (
@@ -2788,7 +2929,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                     ))}
                   </div>
                   <div style={{ padding: '12px', borderTop: '1px solid var(--border-light)' }}>
-                    <Box data-tour="new-project" onClick={() => { setProjOpen(false); setNewProjOpen(true); setTourStep(null); }} style={s(`display:flex;align-items:center;gap:10px;padding:12px 16px;border-radius:10px;cursor:pointer;color:${projList.length === 0 ? 'var(--bg-card)' : '#1d5fd0'};background:${projList.length === 0 ? '#3B83F6' : 'transparent'};font-weight:700;font-size:13px`)} hover={s(`background:${projList.length === 0 ? '#2b6fe0' : '#f6faff'}`)}><Icon name="plus" size={16} color={projList.length === 0 ? 'var(--bg-card)' : '#1d5fd0'} />{projList.length === 0 ? 'Crea il tuo primo immobile' : 'Nuovo immobile'}</Box>
+                    <Box data-tour="new-project" onClick={() => { setProjOpen(false); setNewProjOpen(true); setTourStep(null); setTourRect(null); setTourRect2(null); setTourCtaRect(null); }} style={s(`display:flex;align-items:center;gap:10px;padding:12px 16px;border-radius:10px;cursor:pointer;color:${projList.length === 0 ? 'var(--bg-card)' : '#1d5fd0'};background:${projList.length === 0 ? '#3B83F6' : 'transparent'};font-weight:700;font-size:13px;${tourStep !== null && tdef.sel === '[data-tour-dropdown]' ? 'box-shadow:0 0 0 3px rgba(255,255,255,.7),0 0 20px rgba(255,255,255,.4);animation:tour-cta-glow 2s ease-in-out infinite;pointer-events:auto;' : ''}`)} hover={s(`background:${projList.length === 0 ? '#2b6fe0' : '#f6faff'}`)}><Icon name="plus" size={16} color={projList.length === 0 ? 'var(--bg-card)' : '#1d5fd0'} />{projList.length === 0 ? 'Crea il tuo primo immobile' : 'Nuovo immobile'}</Box>
                   </div>
                 </div>
               )}
@@ -2804,18 +2945,21 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
 
             {/* jobs tray + notifications */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <div style={{ position: 'relative' }}>
-                <Box as="button" onClick={(e) => { e.stopPropagation(); setTrayOpen((o) => !o); setProjOpen(false); setNotifOpen(false); setProfileOpen(false); }} title="Lavori in corso" aria-label="Lavori in corso" style={s('border:none;background:transparent;width:38px;height:38px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;position:relative')} hover={s('background:#f1efe9')}>
+              <div style={{ position: 'relative' }} title="Lavori in corso">
+                <Box as="button" onClick={(e) => { e.stopPropagation(); setTrayOpen((o) => !o); setProjOpen(false); setNotifOpen(false); setProfileOpen(false); }} aria-label="Lavori in corso" style={s('border:none;background:transparent;width:38px;height:38px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;position:relative')} hover={s('background:#f1efe9')}>
                   <Icon name="inbox" size={18} />
-                  {(batches.filter(b => b.status === 'processing' || b.status === 'pending').length > 0 || videoJobs.some(j => j.stage === 'render' && !j.dismissed)) && (
+                  {(tourStep !== null || batches.filter(b => b.status === 'processing' || b.status === 'pending').length > 0 || videoJobs.some(j => j.stage === 'render' && !j.dismissed)) && (
                     <div style={{ position: 'absolute', top: 6, right: 6, width: 8, height: 8, borderRadius: '50%', background: '#3B83F6', border: '2px solid var(--bg-card)' }} />
                   )}
                 </Box>
                 {trayOpen && (
-                  <div style={s('position:absolute;top:46px;right:0;width:330px;background:var(--bg-card);border-radius:12px;box-shadow:0 16px 48px rgba(33,31,28,.16);border:1px solid var(--border-light);overflow:hidden;z-index:50')}>
+                  <div data-tour-tray style={s('position:absolute;top:46px;right:0;width:330px;background:var(--bg-card);border-radius:12px;box-shadow:0 16px 48px rgba(33,31,28,.16);border:1px solid var(--border-light);overflow:hidden;z-index:50')}>
                     <div style={s('display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:1px solid var(--bg-body)')}><span style={s('font-size:13.5px;font-weight:800')}>Lavori in corso</span></div>
-                    <div style={{ maxHeight: 320, overflow: 'auto' }}>
+                    <div style={{ maxHeight: 320, overflow: 'auto', ...(tourStep !== null ? { minHeight: 80 } : {}) }}>
                       {(() => {
+                        if (tourStep !== null) {
+                          return <DemoTrayJobs onAllDone={() => setDemoJobsDone(true)} />;
+                        }
                         const dismissed = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('gnm_dismissed_batches') || '[]') : [];
                         const activeBatches = batches.filter(b => (b.status === 'processing' || b.status === 'pending') || ((b.status === 'completed' || b.status === 'partial') && !dismissed.includes(b.id)));
                         const activeVideos = videoJobs.filter(j => !j.dismissed && (j.stage === 'render' || j.stage === 'done' || j.stage === 'failed'));
@@ -2986,35 +3130,38 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                 }}
               />
             ) : route === 'studio' ? (
-              <PostSocialScreen toast={toast} routeKey={routeKey} brand={brand} project={active} batches={batches} onProjectUpdate={(upd) => setProjects(prev => prev.map(p => p.id === active.id ? { ...p, ...upd } : p))} initialPhotoUrl={studioPhoto} go={go} />
+              <PostSocialScreen toast={toast} routeKey={routeKey} brand={brand} project={active || (tourStep !== null ? DEMO_PROJECTS[0] : undefined)} batches={batches} onProjectUpdate={active ? (upd) => setProjects(prev => prev.map(p => p.id === active.id ? { ...p, ...upd } : p)) : undefined} initialPhotoUrl={studioPhoto} go={go} />
             ) : route === 'staging' ? (
-              <FotoAIScreen 
-                toast={toast} 
-                routeKey={routeKey} 
-                project={active} 
+              <FotoAIScreen
+                toast={toast}
+                routeKey={routeKey}
+                project={active || (tourStep !== null ? DEMO_PROJECTS[0] : undefined)}
                 onBatchCreated={() => {
                   fetchUserBatches().then(setBatches);
                 }}
                 onGoPlan={() => go('account')}
                 onGoPost={(url) => go('studio', { photoUrl: url })}
                 onGoVideo={(url) => go('video', { photoUrl: url })}
+                demoMode={tourStep !== null}
               />
             ) : route === 'media' ? (
-              <MediaScreen 
-                toast={toast} 
-                routeKey={routeKey} 
-                project={active} 
-                batches={batches} 
-                loadingBatches={loadingBatches} 
+              <MediaScreen
+                toast={toast}
+                routeKey={routeKey}
+                project={active || (tourStep !== null ? DEMO_PROJECTS[0] : undefined)}
+                batches={batches}
+                loadingBatches={loadingBatches}
+                demoMode={tourStep !== null}
+                demoJobsDone={demoJobsDone}
               />
             ) : route === 'video' ? (
-              <VideoAIScreen key="video" toast={toast} routeKey={routeKey} brand={brand} project={active} onVideoJob={registerVideoJob} activeRenders={videoJobs.filter(j => j.stage === 'render' && !j.dismissed).length} initialPhotoUrl={studioPhoto} preselect={studioPhoto ? 'walkthrough' : undefined} />
+              <VideoAIScreen key="video" toast={toast} routeKey={routeKey} brand={brand} project={active || (tourStep !== null ? DEMO_PROJECTS[0] : undefined)} onVideoJob={registerVideoJob} activeRenders={videoJobs.filter(j => j.stage === 'render' && !j.dismissed).length} initialPhotoUrl={studioPhoto} preselect={studioPhoto ? 'walkthrough' : undefined} demoMode={tourStep !== null} />
             ) : route === 'montaggio' ? (
-              <VideoAIScreen key="montaggio" toast={toast} routeKey={routeKey} brand={brand} preselect="montaggio" project={active} onVideoJob={registerVideoJob} activeRenders={videoJobs.filter(j => j.stage === 'render' && !j.dismissed).length} />
+              <VideoAIScreen key="montaggio" toast={toast} routeKey={routeKey} brand={brand} preselect="montaggio" project={active || (tourStep !== null ? DEMO_PROJECTS[0] : undefined)} onVideoJob={registerVideoJob} activeRenders={videoJobs.filter(j => j.stage === 'render' && !j.dismissed).length} demoMode={tourStep !== null} />
             ) : route === 'account' ? (
               <AccountScreen credits={credits} toast={toast} go={go} userData={userData} />
             ) : route === 'brand' ? (
-              <BrandScreen toast={toast} brand={brand} setBrand={setBrand} brandRole={brandRole} />
+              <BrandScreen toast={toast} brand={brand} setBrand={setBrand} brandRole={brandRole} demoMode={tourStep !== null} />
             ) : route === 'impostazioni' ? (
               <SettingsScreen toast={toast} />
             ) : route.startsWith('assistenza') ? (

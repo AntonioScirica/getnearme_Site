@@ -84,15 +84,15 @@ export function renderDiagonal(data, photoUrl) {
   title.className = 'tpl-title';
   title.textContent = data.title;
   title.style.fontFamily = FONT;
-  title.style.fontSize = '50px';
+  title.style.fontSize = '62px';
   title.style.fontWeight = '600';
-  title.style.lineHeight = '65px';
+  title.style.lineHeight = '77px';
   title.style.display = '-webkit-box';
   title.style.webkitLineClamp = '2';
   title.style.webkitBoxOrient = 'vertical';
   title.style.overflow = 'hidden';
   title.style.marginTop = '16px';
-  title.style.maxWidth = '100%';
+  title.style.maxWidth = '70%';
   title.style.minWidth = '0';
   title.style.wordBreak = 'break-word';
   top.appendChild(title);

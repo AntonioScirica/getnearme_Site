@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Icon } from '@/lib/icons';
 import CountdownTimer from '@/components/neo/CountdownTimer';
 import SocialPopup from '@/components/neo/SocialPopup';
@@ -38,9 +38,10 @@ function FeatureCardClient({
           background: '#fff',
           borderRadius: 16,
           overflow: 'hidden',
-          boxShadow: hovered ? '0 12px 28px rgba(16,24,40,0.10)' : '0 6px 20px rgba(16,24,40,0.06)',
-          transform: hovered ? 'translate(-2px,-4px)' : 'translate(0,0)',
-          transition: 'all 0.35s cubic-bezier(0.34,1.56,0.64,1)',
+          boxShadow: hovered ? '0 12px 32px rgba(59,131,246,0.12)' : '0 6px 20px rgba(16,24,40,0.06)',
+          borderColor: hovered ? '#bfdbfe' : undefined,
+          transform: hovered ? 'translateY(-4px)' : 'translateY(0)',
+          transition: 'all .3s cubic-bezier(0.4, 0, 0.2, 1)',
           cursor: 'default',
           height: '100%',
           display: 'flex',
@@ -54,7 +55,7 @@ function FeatureCardClient({
                 background: '#f8fafc',
                 borderRadius: 12,
                 overflow: 'hidden',
-                border: '2px solid #e2e8f0',
+                border: '1px solid #e2e8f0',
                 aspectRatio: '16 / 10',
               }}
             >
@@ -92,7 +93,7 @@ function FeatureCardClient({
                 justifyContent: 'center',
                 background: `${f.color}15`,
                 borderRadius: 12,
-                border: `2px solid ${f.color}40`,
+                border: `1px solid ${f.color}25`,
                 color: f.color,
               }}
             >
@@ -102,7 +103,7 @@ function FeatureCardClient({
           <h3
             style={{
               fontSize: 18,
-              fontWeight: 800,
+              fontWeight: 700,
               color: '#1a1a2e',
               margin: '0 0 8px',
               lineHeight: 1.3,
@@ -147,7 +148,7 @@ function StepCard({
             color: '#fff',
             alignItems: 'center',
             justifyContent: 'center',
-            fontWeight: 900,
+            fontWeight: 700,
             fontSize: 20,
             border: '1px solid rgba(26,26,46,0.10)',
             boxShadow: '0 2px 10px rgba(16,24,40,0.06)',
@@ -156,7 +157,7 @@ function StepCard({
         >
           {s.step}
         </div>
-        <h3 style={{ fontSize: 18, fontWeight: 800, color: '#1a1a2e', margin: '0 0 8px' }}>
+        <h3 style={{ fontSize: 18, fontWeight: 700, color: '#1a1a2e', margin: '0 0 8px' }}>
           {s.title}
         </h3>
         <p style={{ color: '#444', fontSize: 14, fontWeight: 500, margin: 0, lineHeight: 1.6 }}>
@@ -194,19 +195,28 @@ function PricingSection({
 }) {
   const freeLabel =
     ({ it: 'Gratis', en: 'Free', es: 'Gratis', fr: 'Gratuit', ru: 'Бесплатно', uk: 'Безкоштовно' } as Record<string, string>)[locale] ?? 'Gratis';
+
+  useEffect(() => {
+    if (window.location.hash === '#pricing') {
+      setTimeout(() => {
+        document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 300);
+    }
+  }, []);
+
   return (
     <>
       <section
         id="pricing"
-        className="scroll-mt-32"
-        style={{ padding: '80px 0 50px', background: '#eef2ff' }}
+        className="scroll-mt-48"
+        style={{ padding: '80px 0 80px', background: '#fff' }}
       >
         <div className="max-w-7xl mx-auto px-5 md:px-3">
           <div style={{ textAlign: 'center', marginBottom: 20 }}>
             <h2
               style={{
-                fontSize: 'clamp(28px, 5vw, 44px)',
-                fontWeight: 900,
+                fontSize: 'clamp(26px, 4.5vw, 38px)',
+                fontWeight: 800,
                 color: '#1a1a2e',
                 lineHeight: 1.15,
                 marginBottom: 12,
@@ -215,7 +225,7 @@ function PricingSection({
               {data.title1}
               <br />
               {data.title2}{' '}
-              <span style={{ color: '#f59e0b' }}>{data.titleHighlight}</span>
+              <span style={{ color: '#3B83F6' }}>{data.titleHighlight}</span>
               {data.titleHighlight ? '.' : ''}
             </h2>
             <p style={{ color: '#333', fontSize: 16, marginBottom: 24 }}>{data.subtitle}</p>
@@ -240,29 +250,26 @@ function PricingSection({
           <div
             className="grid grid-cols-1 md:grid-cols-3 items-stretch gap-14 md:gap-6 mt-10"
           >
-            {data.plans.map(
-              (plan: {
-                id: string;
-                name: string;
-                users: string;
-                oldPrice: number;
-                price: number;
-                savingsYear: number;
-                badge: string | null;
-                popular: boolean;
-                features: string[];
-                extra: string | null;
-                color: string;
-                bg: string;
-                cta: string;
-              }) => (
-                <PricingCard
-                  key={plan.id}
-                  plan={{ ...plan, savingsLabel: data.savingsLabel, freeLabel }}
-                  href={plan.price === 0 ? `/${locale}/checkout/agency` : `/${locale}/checkout/agency?plan=${plan.id}`}
-                />
-              )
-            )}
+            {(() => {
+              const plans = data.plans as {
+                id: string; name: string; users: string; oldPrice: number;
+                price: number; savingsYear: number; badge: string | null;
+                popular: boolean; features: string[]; extra: string | null;
+                color: string; bg: string; cta: string;
+              }[];
+              const maxFeatures = Math.max(...plans.map((p) => p.features.length));
+              return plans.map((plan) => {
+                const padded = [...plan.features];
+                while (padded.length < maxFeatures) padded.push('');
+                return (
+                  <PricingCard
+                    key={plan.id}
+                    plan={{ ...plan, features: padded, savingsLabel: data.savingsLabel, freeLabel }}
+                    href={plan.price === 0 ? `/${locale}/checkout/agency` : `/${locale}/checkout/agency?plan=${plan.id}`}
+                  />
+                );
+              });
+            })()}
           </div>
 
           {/* <div

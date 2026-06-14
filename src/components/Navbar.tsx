@@ -70,6 +70,15 @@ export default function Navbar({ locale }: NavbarProps) {
 
     const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
+    const scrollTo = (id: string) => {
+        setIsMenuOpen(false);
+        const el = document.getElementById(id);
+        if (el) {
+            const y = el.getBoundingClientRect().top + window.scrollY - 100;
+            window.scrollTo({ top: y, behavior: 'smooth' });
+        }
+    };
+
     return (
         <>
             <nav
@@ -87,12 +96,12 @@ export default function Navbar({ locale }: NavbarProps) {
                         <img src="/logo_blu_nero.svg" alt="GetNearMe" className="h-7 md:h-9 w-auto" />
                     </Link>
 
-                    <div className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600 absolute left-1/2 -translate-x-1/2">
-                        <Link href={`/${locale}#funzionalita`} className="hover:text-black transition-colors">{t.nav.features}</Link>
+                    <div className="hidden md:flex items-center gap-16 text-sm font-medium text-slate-600 absolute left-1/2 -translate-x-1/2">
+                        <button onClick={() => scrollTo('funzionalita')} className="hover:text-black transition-colors cursor-pointer">{t.nav.features}</button>
                         <Link href={`/${locale}/reference`} className="hover:text-black transition-colors">{t.nav.examples}</Link>
                         {/* <Link href={`/${locale}/tutorial`} className="hover:text-black transition-colors">{t.nav.tutorial}</Link> */}
-                        <Link href={`/${locale}#pricing`} className="hover:text-black transition-colors">{t.nav.pricing}</Link>
-                        <Link href={`/${locale}#faq`} className="hover:text-black transition-colors">{t.nav.faq}</Link>
+                        <button onClick={() => scrollTo('pricing')} className="hover:text-black transition-colors cursor-pointer">{t.nav.pricing}</button>
+                        <button onClick={() => scrollTo('faq')} className="hover:text-black transition-colors cursor-pointer">{t.nav.faq}</button>
                         <LanguageSwitcher locale={locale} />
                     </div>
 
@@ -107,8 +116,8 @@ export default function Navbar({ locale }: NavbarProps) {
                             </Link>
                         ) : (
                             <Link
-                                href={`/${locale}#pricing`}
-                                className="hidden md:flex items-center h-[48px] px-6 bg-amber-500 text-[#1a1a2e] rounded-xl neo-border neo-shadow hover:bg-amber-600 transition-all font-bold text-lg"
+                                href={`/${locale}/checkout/agency`}
+                                className="hidden md:flex items-center h-[48px] px-6 bg-[#3B83F6] text-white rounded-xl neo-shadow hover:bg-[#2563EB] transition-all font-bold text-lg"
                             >
                                 {t.nav.startAnalysis}
                             </Link>
@@ -136,26 +145,30 @@ export default function Navbar({ locale }: NavbarProps) {
                         : 'opacity-0 pointer-events-none'
                 }`}
             >
-                <button
-                    className="absolute top-7 right-5 p-2 text-slate-600 z-10"
-                    onClick={() => setIsMenuOpen(false)}
-                    aria-label="Close menu"
-                >
-                    <div className="relative w-6 h-6">
-                        <span className="absolute left-0 top-2.75 w-6 h-0.5 bg-current rotate-45" />
-                        <span className="absolute left-0 top-2.75 w-6 h-0.5 bg-current -rotate-45" />
-                    </div>
-                </button>
                 <div className="flex flex-col justify-between h-full pt-28 pb-12 px-8">
                     <div className="flex flex-col items-center gap-2">
                         {[
-                            { href: `/${locale}#funzionalita`, label: t.nav.features },
+                            { id: 'funzionalita', label: t.nav.features },
                             { href: `/${locale}/reference`, label: t.nav.examples },
-                            // { href: `/${locale}/tutorial`, label: t.nav.tutorial },
-                            { href: `/${locale}#pricing`, label: t.nav.pricing },
-                            { href: `/${locale}#faq`, label: t.nav.faq },
+                            // { id: 'tutorial', label: t.nav.tutorial },
+                            { id: 'pricing', label: t.nav.pricing },
+                            { id: 'faq', label: t.nav.faq },
                         ].map((item, i) => (
-                            <Link
+                            'id' in item ? (
+                            <button
+                                key={i}
+                                className={`text-3xl font-semibold text-slate-900 hover:text-blue-500 py-3 transition-all duration-500 ease-out cursor-pointer ${
+                                    isMenuOpen
+                                        ? 'opacity-100 translate-y-0'
+                                        : 'opacity-0 translate-y-4'
+                                }`}
+                                style={{ transitionDelay: isMenuOpen ? `${150 + i * 75}ms` : '0ms' }}
+                                onClick={() => scrollTo((item as { id: string; label: string }).id)}
+                            >
+                                {item.label}
+                            </button>
+                            ) : (
+                            <a
                                 key={i}
                                 href={item.href}
                                 className={`text-3xl font-semibold text-slate-900 hover:text-blue-500 py-3 transition-all duration-500 ease-out ${
@@ -167,7 +180,8 @@ export default function Navbar({ locale }: NavbarProps) {
                                 onClick={() => setIsMenuOpen(false)}
                             >
                                 {item.label}
-                            </Link>
+                            </a>
+                            )
                         ))}
 
                         {isLoggedIn ? (
@@ -200,8 +214,8 @@ export default function Navbar({ locale }: NavbarProps) {
                                     Accedi
                                 </Link>
                                 <Link
-                                    href={`/${locale}#pricing`}
-                                    className={`mt-3 w-full max-w-[280px] text-center flex items-center justify-center px-5 py-3 bg-amber-500 text-[#1a1a2e] rounded-xl neo-border neo-shadow hover:bg-amber-600 transition-all duration-500 ease-out font-bold text-base ${
+                                    href={`/${locale}/checkout/agency`}
+                                    className={`mt-3 w-full max-w-[280px] text-center flex items-center justify-center px-5 py-3 bg-[#3B83F6] text-white rounded-xl neo-shadow hover:bg-[#2563EB] transition-all duration-500 ease-out font-bold text-base ${
                                         isMenuOpen
                                             ? 'opacity-100 translate-y-0'
                                             : 'opacity-0 translate-y-4'

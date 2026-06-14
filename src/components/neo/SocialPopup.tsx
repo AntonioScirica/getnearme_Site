@@ -16,6 +16,8 @@ interface SocialPopupProps {
 export default function SocialPopup({ messages }: SocialPopupProps) {
   const [cur, setCur] = useState(0);
   const [show, setShow] = useState(false);
+  const [fading, setFading] = useState(false);
+  const [visible, setVisible] = useState(false);
   const [order, setOrder] = useState<number[]>([]);
 
   // Shuffle message order on mount
@@ -29,7 +31,7 @@ export default function SocialPopup({ messages }: SocialPopupProps) {
   }, [messages.length]);
 
   const getRandomInterval = useCallback(() => {
-    return 60000 + Math.floor(Math.random() * 60000); // 60-120 seconds between popups
+    return 120000 + Math.floor(Math.random() * 120000); // 120-240 seconds between popups
   }, []);
 
   // Initial appearance with random delay
@@ -38,35 +40,54 @@ export default function SocialPopup({ messages }: SocialPopupProps) {
     return () => clearTimeout(d);
   }, []);
 
-  // Auto-hide after 3s, then schedule next popup
+  // When show turns true, make visible
+  useEffect(() => {
+    if (show) {
+      setVisible(true);
+      setFading(false);
+    }
+  }, [show]);
+
+  // Auto-hide after 3s with fade out
   useEffect(() => {
     if (!show || order.length === 0) return;
-    // Hide after 3 seconds
     const hideId = setTimeout(() => {
-      setShow(false);
+      setFading(true);
+      setTimeout(() => {
+        setShow(false);
+        setVisible(false);
+        setFading(false);
+      }, 500);
     }, 3000);
     return () => clearTimeout(hideId);
   }, [show, order.length]);
 
   // After hiding, wait long interval then show next
   useEffect(() => {
-    if (show || order.length === 0) return;
+    if (show || visible || order.length === 0) return;
     const nextId = setTimeout(() => {
       setCur((c) => (c + 1) % order.length);
       setShow(true);
     }, getRandomInterval());
     return () => clearTimeout(nextId);
-  }, [show, order.length, getRandomInterval]);
+  }, [show, visible, order.length, getRandomInterval]);
 
   if (order.length === 0) return null;
   const p = messages[order[cur]];
   if (!p) return null;
-  if (!show) return null;
+  if (!visible) return null;
 
   return (
     <div
-      onClick={() => { setShow(false); window.location.hash = 'pricing'; }}
-      className="social-popup-enter"
+      onClick={() => {
+        setFading(true);
+        setTimeout(() => {
+          setShow(false);
+          setVisible(false);
+          setFading(false);
+          window.location.hash = 'pricing';
+        }, 300);
+      }}
       style={{
         position: 'fixed',
         bottom: 16,
@@ -84,7 +105,9 @@ export default function SocialPopup({ messages }: SocialPopupProps) {
         width: 'calc(100% - 24px)',
         boxShadow: '0 8px 24px rgba(16,24,40,0.14)',
         cursor: 'pointer',
-        animation: 'popupSlideIn 0.4s ease forwards',
+        opacity: fading ? 0 : 1,
+        transition: 'opacity 0.5s ease',
+        animation: !fading ? 'popupFadeIn 0.5s ease forwards' : undefined,
       }}
     >
       <span style={{ display: 'flex', color: '#1a1a2e' }}>
@@ -95,9 +118,9 @@ export default function SocialPopup({ messages }: SocialPopupProps) {
         {p.time && <div style={{ color: '#6b7280', fontSize: 11, marginTop: 2 }}>{p.time}</div>}
       </div>
       <style>{`
-        @keyframes popupSlideIn {
-          from { transform: translateY(120%); opacity: 0; }
-          to { transform: translateY(0); opacity: 1; }
+        @keyframes popupFadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
         }
       `}</style>
     </div>

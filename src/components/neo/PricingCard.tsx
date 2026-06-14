@@ -53,13 +53,13 @@ export default function PricingCard({ plan, href }: PricingCardProps) {
           flexDirection: 'column' as const,
           boxShadow: hovered
             ? plan.popular
-              ? `0 14px 32px ${plan.color}33`
-              : '0 12px 28px rgba(16,24,40,0.10)'
+              ? `0 16px 40px ${plan.color}25`
+              : '0 12px 32px rgba(59,131,246,0.12)'
             : plan.popular
               ? `0 8px 22px ${plan.color}26`
               : '0 6px 20px rgba(16,24,40,0.06)',
-          transform: hovered ? 'translate(-2px,-2px)' : 'translate(0,0)',
-          transition: 'all 0.45s cubic-bezier(0.34,1.56,0.64,1)',
+          transform: hovered ? 'translateY(-4px)' : 'translateY(0)',
+          transition: 'all .3s cubic-bezier(0.4, 0, 0.2, 1)',
         }}
       >
         {plan.badge && (
@@ -86,43 +86,34 @@ export default function PricingCard({ plan, href }: PricingCardProps) {
           </div>
         )}
         <div style={{ textAlign: 'center' }}>
-          <h3 style={{ fontSize: 26, fontWeight: 900, color: '#1a1a2e', margin: '0 0 4px' }}>{plan.name}</h3>
+          <h3 style={{ fontSize: 26, fontWeight: 800, color: '#1a1a2e', margin: '0 0 4px' }}>{plan.name}</h3>
           <div style={{ color: '#6b7280', fontSize: 14, fontWeight: 500 }}>{plan.users}</div>
           <div style={{ marginTop: 22, marginBottom: 8 }}>
-            {plan.price === 0 ? (
-              <span style={{ fontSize: 54, fontWeight: 900, color: plan.color, letterSpacing: -2 }}>
-                {plan.freeLabel ?? 'Gratis'}
+            {/* Discount row — visible or invisible placeholder */}
+            <div className="pricing-discount-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 4, visibility: hasDiscount ? 'visible' : 'hidden' }}>
+              <span style={{ color: '#6b7280', fontSize: 18, fontWeight: 700, textDecoration: 'line-through' }}>
+                {hasDiscount ? `${plan.oldPrice}€` : '0€'}
               </span>
-            ) : (
-              <>
-                {hasDiscount && (
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 4 }}>
-                    <span style={{ color: '#6b7280', fontSize: 18, fontWeight: 700, textDecoration: 'line-through' }}>
-                      {plan.oldPrice}€
-                    </span>
-                    <span style={{ background: '#f59e0b', color: '#1a1a2e', fontSize: 12, fontWeight: 900, padding: '3px 9px', borderRadius: 999, border: '1px solid rgba(26,26,46,0.10)' }}>
-                      -{discountPct}%
-                    </span>
-                  </div>
-                )}
-                <span style={{ fontSize: 54, fontWeight: 900, color: plan.color, letterSpacing: -2 }}>
-                  {plan.price}€
-                </span>
-                <span style={{ color: '#6b7280', fontSize: 14, marginLeft: 4 }}>{periodLabel}</span>
-                {hasDiscount && (
-                  <div style={{ marginTop: 6, color: '#009874', fontSize: 13, fontWeight: 800 }}>
-                    {plan.savingsLabel} {saved}€{periodLabel}
-                  </div>
-                )}
-              </>
-            )}
+              <span style={{ background: '#3B83F6', color: '#fff', fontSize: 12, fontWeight: 700, padding: '3px 9px', borderRadius: 999, border: '1px solid rgba(26,26,46,0.10)' }}>
+                {hasDiscount ? `-${discountPct}%` : '-0%'}
+              </span>
+            </div>
+            <span style={{ fontSize: 54, fontWeight: 800, color: plan.color, letterSpacing: -1 }}>
+              {plan.price === 0 ? (plan.freeLabel ?? 'Gratis') : `${plan.price}€`}
+            </span>
+            {plan.price > 0 && <span style={{ color: '#6b7280', fontSize: 14, marginLeft: 4 }}>{periodLabel}</span>}
+            {/* Savings row — visible or invisible placeholder */}
+            <div className="pricing-savings-row" style={{ marginTop: 6, color: '#009874', fontSize: 13, fontWeight: 800, visibility: hasDiscount ? 'visible' : 'hidden' }}>
+              {hasDiscount ? `${plan.savingsLabel} ${saved}€${periodLabel}` : ' '}
+            </div>
           </div>
         </div>
-        <div style={{ margin: '22px 0', borderTop: '2px dashed #e2e8f0' }} />
-        <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 24px', flex: 1 }}>
+        <div style={{ margin: '22px 0', borderTop: '1px dashed #e2e8f0' }} />
+        <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 24px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
           {plan.features.map((f, i) => (
             <li
               key={i}
+              className={f ? '' : 'pricing-spacer'}
               style={{
                 display: 'flex',
                 alignItems: 'flex-start',
@@ -132,6 +123,7 @@ export default function PricingCard({ plan, href }: PricingCardProps) {
                 fontSize: 14,
                 lineHeight: 1.55,
                 fontStyle: 'normal',
+                ...(f ? {} : { visibility: 'hidden' as const }),
               }}
             >
               <span
@@ -151,7 +143,7 @@ export default function PricingCard({ plan, href }: PricingCardProps) {
               >
                 <Check size={12} strokeWidth={3} />
               </span>
-              {f}
+              {f || ' '}
             </li>
           ))}
         </ul>
@@ -160,7 +152,7 @@ export default function PricingCard({ plan, href }: PricingCardProps) {
         )}
         <a
           href={href}
-          className="neo-btn"
+          className="neo-btn neo-cta-blue"
           style={{
             display: 'block',
             width: '100%',
@@ -169,10 +161,10 @@ export default function PricingCard({ plan, href }: PricingCardProps) {
             color: '#fff',
             border: 'none',
             borderRadius: 12,
-            fontSize: 16,
-            fontWeight: 800,
+            fontSize: 17,
+            fontWeight: 700,
             cursor: 'pointer',
-            transition: 'all 0.15s',
+            transition: 'all 0.2s ease',
             boxShadow: '0 2px 10px rgba(16,24,40,0.10)',
             letterSpacing: 0.5,
             textAlign: 'center',
@@ -182,6 +174,13 @@ export default function PricingCard({ plan, href }: PricingCardProps) {
         >
           {plan.cta}
         </a>
+        <style>{`
+          @media (max-width: 768px) {
+            .pricing-spacer { display: none !important; }
+            .pricing-discount-row[style*="hidden"] { display: none !important; }
+            .pricing-savings-row[style*="hidden"] { display: none !important; }
+          }
+        `}</style>
       </div>
     </RevealSection>
   );
