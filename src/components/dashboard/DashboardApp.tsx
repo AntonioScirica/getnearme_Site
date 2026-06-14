@@ -2639,7 +2639,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                       ))}
                     </div>
                     <div style={s('border-top:1px solid var(--border-light);padding:4px')}>
-                      <Box onClick={() => { setProfileOpen(false); window.location.href = '/api/auth/logout'; }} style={s('display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:600;color:#dc2626')} hover={s('background:#fef2f2')}>
+                      <Box onClick={async () => { setProfileOpen(false); try { await supabase.auth.signOut(); } catch { /* noop */ } window.location.reload(); }} style={s('display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:600;color:#dc2626')} hover={s('background:#fef2f2')}>
                         <Icon name="log-out" size={16} color="#dc2626" />Esci
                       </Box>
                     </div>
