@@ -12,7 +12,6 @@ const PLAN_ID_MAP: Record<string, string> = {
   agency_monthly: 'agency_monthly',
   agency_quarterly: 'agency_quarterly',
   agency_annual: 'agency_annual',
-  user_lite: 'user_lite',
 };
 
 interface PlanData {
@@ -27,16 +26,6 @@ interface PlanData {
 }
 
 const PLANS: Record<string, PlanData> = {
-  user_lite: {
-    name: 'Lite',
-    price_monthly: 4.99,
-    price_annual: 49.99,
-    original_price: 9.99,
-    payment_link_monthly: 'https://buy.stripe.com/8x27sLgtdh2b9vi29iak00n',
-    payment_link_annual: 'https://buy.stripe.com/28EeVdb8TeU37na3dmak00o',
-    features_key: 'lite',
-    popular: false,
-  },
   agency_monthly: {
     name: 'Mensile',
     price_monthly: 100,
@@ -69,7 +58,7 @@ const PLANS: Record<string, PlanData> = {
   },
 };
 
-const PLAN_DISPLAY_ORDER = ['user_lite', 'agency_monthly', 'agency_quarterly', 'agency_annual'];
+const PLAN_DISPLAY_ORDER = ['agency_monthly', 'agency_quarterly', 'agency_annual'];
 
 const TIER_LABELS: Record<string, Record<string, string>> = {
   user_lite:        { it: 'Lite',         en: 'Lite',      es: 'Lite',       fr: 'Lite',       ru: 'Lite',           uk: 'Lite' },
