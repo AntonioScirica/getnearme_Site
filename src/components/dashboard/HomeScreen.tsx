@@ -45,6 +45,8 @@ const typeTag = (t: string) =>
 
 export function HomeScreen({
   active,
+  batches,
+  videoJobs,
   setNewProjOpen,
   onEditProject,
   go,
@@ -52,6 +54,8 @@ export function HomeScreen({
   onProjectUpdate,
 }: {
   active: ProjectData | null;
+  batches?: any[];
+  videoJobs?: any[];
   setNewProjOpen: (b: boolean) => void;
   onEditProject?: () => void;
   go: (route: string) => void;
@@ -164,8 +168,11 @@ export function HomeScreen({
   }
 
   // Calculate completion
-  const hasPhotos = (active.nFoto || 0) + (active.nStaging || 0) > 0;
-  const hasVideo = (active.nVideo || 0) > 0;
+  const localHasPhotos = batches?.some(b => b.projectId === active.id && b.status !== 'failed' && b.completedItems > 0) || false;
+  const localHasVideo = videoJobs?.some(v => v.projectId === active.id && v.stage === 'done') || false;
+  
+  const hasPhotos = localHasPhotos || (active.nFoto || 0) + (active.nStaging || 0) > 0;
+  const hasVideo = localHasVideo || (active.nVideo || 0) > 0;
   const hasSocial = (active.nPost || 0) > 0;
   const completedCount = [hasPhotos, hasVideo, hasSocial].filter(Boolean).length;
   const completionPct = Math.round((completedCount / 3) * 100);
@@ -342,7 +349,9 @@ export function HomeScreen({
                       <span style={{ fontSize: 13.5, fontWeight: 600, color: item.done ? '#166534' : '#57534c' }}>{item.label}</span>
                     </div>
                     {item.done ? (
-                      <Icon name="check-circle" size={16} color="#16a34a" />
+                      <div style={{ width: 18, height: 18, borderRadius: '50%', background: '#16a34a', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}>
+                        <Icon name="check" size={11} color="#fff" />
+                      </div>
                     ) : (
                       <div style={{ width: 16, height: 16, borderRadius: '50%', border: '2px solid #d8d4cb' }} />
                     )}

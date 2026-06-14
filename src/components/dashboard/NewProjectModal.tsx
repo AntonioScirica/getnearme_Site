@@ -22,10 +22,6 @@ async function getCroppedImg(imageSrc: string, pixelCrop: { x: number, y: number
   const ctx = canvas.getContext('2d')
   if (!ctx) return ''
 
-  canvas.width = image.width
-  canvas.height = image.height
-  ctx.drawImage(image, 0, 0)
-
   // Limit dimensions to max 800px to avoid API payload limits and speed up upload
   const MAX_DIM = 800;
   let finalW = pixelCrop.width;

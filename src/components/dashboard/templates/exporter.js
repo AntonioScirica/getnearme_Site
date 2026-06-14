@@ -597,9 +597,30 @@ export async function exportStaticToVideo(templateEl, size, opts = {}) {
   // Use ALL glass panels (not just text descendants) so standalone panels like
   // frame's .tpl-glass-panel keep their backdrop blur in the video too.
   const textChildPanels = glassPanels;
+  // Pannelli ANNIDATI dentro un altro pannello glass (es. metric card dentro il
+  // pannello glass del topbar-alt): NON ridisegnano il blur, altrimenti la loro
+  // area lo riceve due volte (pannello esterno + card) → "doppio blur". Disegnano
+  // solo tint + bordo; lo sfondo sfocato lo fornisce gia' il pannello esterno.
+  for (const p of textChildPanels) {
+    p.nested = textChildPanels.some(q => q !== p && q.w * q.h > p.w * p.h &&
+      p.x >= q.x - 2 && p.y >= q.y - 2 &&
+      p.x + p.w <= q.x + q.w + 2 && p.y + p.h <= q.y + q.h + 2);
+  }
 
   // Capture gradient layer (hide text, keep overlays)
   textEls.forEach(el => { el.style.visibility = 'hidden'; });
+
+  // Nascondi le glass box (elementi con backdrop-filter) durante la cattura
+  // dello sfondo: altrimenti html2canvas vi cuoce dentro bg+bordo STATICI e poi
+  // le box animate ci finiscono sopra → ogni box appare DOPPIA. Lo sfondo deve
+  // contenere solo cover + overlay; le box le disegnano solo le animate.
+  const glassEls = [...templateEl.querySelectorAll('*')].filter(el => {
+    const cs = getComputedStyle(el);
+    const bf = cs.backdropFilter || cs.webkitBackdropFilter;
+    return bf && bf !== 'none';
+  });
+  const glassVisSaved = glassEls.map(el => el.style.visibility);
+  glassEls.forEach(el => { el.style.visibility = 'hidden'; });
 
   const clipPathEl = templateEl.querySelector('[style*="clip-path"], .tpl-overlay--triangle');
   let clipPathPoly = null;
@@ -639,6 +660,9 @@ export async function exportStaticToVideo(templateEl, size, opts = {}) {
   }
 
   if (clipPathEl) clipPathEl.style.visibility = '';
+  // Ripristina le glass box: nella fase textCanvas servono visibili (il loro
+  // bg viene reso trasparente a parte) per catturarne il testo/icone interni.
+  glassEls.forEach((el, i) => { el.style.visibility = glassVisSaved[i]; });
 
   if (clipPathPoly && clipPathPoly.points.length >= 3) {
     const tempCanvas = document.createElement('canvas');
@@ -798,6 +822,15 @@ export async function exportStaticToVideo(templateEl, size, opts = {}) {
       compCtx.drawImage(preBlurCanvas, 0, 0);
       if (fitCover) imgCover(compCtx, fgImg, w, h);
       else imgContain(compCtx, fgImg, w, h);
+    } else if (coverVideo) {
+      // Sorgente del blur glass = primo frame del video NITIDO, cover-fit (riempie
+      // il frame). buildBlurCanvasMap lo sfoca UNA volta → frost pulito ovunque,
+      // niente "blur di immagine di immagine". Statica → niente farfallamento.
+      drawVideoFit(compCtx, coverVideo, w, h, true);
+      // La scena reale e' scurita dall'overlay (gradiente nero). Senza, il frost
+      // risulta "super luminoso". Si scurisce la sorgente per matchare la scena.
+      compCtx.fillStyle = 'rgba(0,0,0,0.5)';
+      compCtx.fillRect(0, 0, w, h);
     } else {
       compCtx.drawImage(gradientCanvas, 0, 0);
     }
@@ -874,7 +907,12 @@ export async function exportStaticToVideo(templateEl, size, opts = {}) {
     const startTime = performance.now();
     const durationMs = duration * 1000;
 
-    recorder.onstop = () => {
+    // Risoluzione garantita: `finish()` viene chiamato da onstop O dal watchdog
+    // se onstop non scatta (alcuni browser non emettono onstop con captureStream
+    // manuale). Il flag `settled` evita doppie risoluzioni → niente modal appeso.
+    let settled = false;
+    const finish = () => {
+      if (settled) return; settled = true;
       if (coverVideo) { try { coverVideo.pause(); coverVideo.src = ''; } catch { /* noop */ } }
       if (aborted) {
         reject(new DOMException('Export cancelled', 'AbortError'));
@@ -883,7 +921,9 @@ export async function exportStaticToVideo(templateEl, size, opts = {}) {
         resolve({ blob: new Blob(chunks, { type: mimeType }), ext });
       }
     };
+    recorder.onstop = finish;
     recorder.onerror = (e) => {
+      if (settled) return; settled = true;
       reject(e.error || new Error('Recording failed'));
     };
 
@@ -913,22 +953,46 @@ export async function exportStaticToVideo(templateEl, size, opts = {}) {
       if (fitCover) imgCover(ctx, fgImg, w, h);
       else imgContain(ctx, fgImg, w, h);
     }
-    if (blurCanvasMap) {
-      drawGlassPanels(ctx, textChildPanels, blurCanvasMap);
-    }
-    ctx.drawImage(gradientCanvas, 0, 0);
+    // Frame 0 = solo scena (cover + overlay). Le box NON si disegnano qui:
+    // entrano animate (alpha 0 → 1) nel loop, niente flash statico iniziale.
+    ctx.drawImage(gradientCanvas, -1, -1, w + 2, h + 2);
 
     recorder.start(100);
     videoTrack.requestFrame();
 
-    // Associate each animated layer with the glass panel that matches its
-    // bounding box (metric cards), so the box animates together with its
-    // content instead of sitting there statically.
-    const layerPanel = layers.map(l => textChildPanels.find(p =>
-      Math.abs(p.x - l.x) < 6 && Math.abs(p.y - l.y) < 6 &&
-      Math.abs(p.w - l.w) < 6 && Math.abs(p.h - l.h) < 6
-    ) || null);
-    const animatedPanels = new Set(layerPanel.filter(Boolean));
+    // Watchdog a tempo reale: se il loop requestAnimationFrame viene throttlato
+    // (tab in background, frame pesanti), `recorder.stop()` potrebbe non essere
+    // mai chiamato → modal appeso. Forza lo stop dopo la durata; se onstop non
+    // scatta entro 1.2s, risolve comunque con i chunk raccolti (finish()).
+    const watchdog = setTimeout(() => {
+      if (onProgress) onProgress(1);
+      if (!aborted && recorder.state !== 'inactive') { try { recorder.stop(); } catch { /* noop */ } }
+      setTimeout(finish, 1200); // fallback se onstop non scatta
+    }, durationMs + 1500);
+    recorder.onstop = () => { clearTimeout(watchdog); finish(); };
+
+    // Ogni layer appartiene al pannello glass che lo CONTIENE (centro dentro la
+    // bbox del pannello, pannello piu' piccolo se annidati). Il pannello e tutti
+    // i suoi layer animano come UN BLOCCO, con la tempistica del primo layer
+    // contenuto (drive) → box + testo entrano insieme (titolo/badge, descrizione,
+    // metric card). I pannelli senza layer dentro restano statici.
+    const layerCenterIn = (l, p) => {
+      const cx = l.x + l.w / 2, cy = l.y + l.h / 2;
+      return cx >= p.x - 2 && cx <= p.x + p.w + 2 && cy >= p.y - 2 && cy <= p.y + p.h + 2;
+    };
+    const panelOf = layers.map(l => {
+      let best = null, bestArea = Infinity;
+      for (const p of textChildPanels) {
+        if (!layerCenterIn(l, p)) continue;
+        const a = p.w * p.h;
+        if (a < bestArea) { best = p; bestArea = a; }
+      }
+      return best;
+    });
+    const panelDrive = new Map();
+    panelOf.forEach((p, i) => { if (p && !panelDrive.has(p)) panelDrive.set(p, i); });
+    const animatedPanels = new Set(panelDrive.keys());
+    const startTimeOf = (i) => ELEM_START + i * ELEM_STAGGER;
 
     function drawFrame() {
       if (aborted) return;
@@ -953,10 +1017,8 @@ export async function exportStaticToVideo(templateEl, size, opts = {}) {
         ctx.drawImage(vSmall, 0, 0, w, h);
         ctx.filter = 'none'; ctx.restore();
         drawVideoFit(ctx, coverVideo, w, h, fitCover);
-        // Build glass blur from the current scene (bg + fg) so it moves too.
-        if (textChildPanels.length > 0) {
-          frameBlurMap = buildBlurCanvasMap(textChildPanels, canvas, w, h);
-        }
+        // NB: niente ricalcolo per-frame del blur glass. Si usa la mappa STATICA
+        // (primo frame), come per le foto → box stabili, niente farfallamento.
       } else if (hasCover) {
         const bgScale = 1.15 + 0.10 * progress;
         blurCtx.clearRect(0, 0, w, h);
@@ -984,16 +1046,18 @@ export async function exportStaticToVideo(templateEl, size, opts = {}) {
         for (const p of textChildPanels) {
           if (animatedPanels.has(p)) continue; // drawn (animated) in the layer loop
           const blurSrc = frameBlurMap.get(p.blurRadius);
-          if (!blurSrc) continue;
-          ctx.save();
-          ctx.beginPath();
-          ctx.roundRect(p.x, p.y, p.w, p.h, p.radius);
-          ctx.clip();
-          ctx.translate(w / 2, h / 2);
-          ctx.scale(fgScaleGlass, fgScaleGlass);
-          ctx.translate(-w / 2, -h / 2);
-          ctx.drawImage(blurSrc, 0, 0);
-          ctx.restore();
+          // Pannello annidato: niente blur (lo da' il pannello esterno) → solo tint+bordo.
+          if (blurSrc && !p.nested) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.roundRect(p.x, p.y, p.w, p.h, p.radius);
+            ctx.clip();
+            ctx.translate(w / 2, h / 2);
+            ctx.scale(fgScaleGlass, fgScaleGlass);
+            ctx.translate(-w / 2, -h / 2);
+            ctx.drawImage(blurSrc, 0, 0);
+            ctx.restore();
+          }
           ctx.save();
           ctx.beginPath();
           ctx.roundRect(p.x, p.y, p.w, p.h, p.radius);
@@ -1014,25 +1078,38 @@ export async function exportStaticToVideo(templateEl, size, opts = {}) {
       }
 
       // Dark overlay is present from the first frame (no fade-in).
-      ctx.drawImage(gradientCanvas, 0, 0);
+      ctx.drawImage(gradientCanvas, -1, -1, w + 2, h + 2);
 
       for (let i = 0; i < layers.length; i++) {
         const l = layers[i];
-        const startT = ELEM_START + i * ELEM_STAGGER;
+        // I layer dentro un pannello condividono la tempistica del drive layer:
+        // box + contenuto entrano come un blocco unico.
+        const gp = panelOf[i];
+        const driveIdx = gp ? panelDrive.get(gp) : i;
+        const startT = startTimeOf(driveIdx);
         if (t <= startT) continue;
 
         const p = Math.min((t - startT) / ELEM_ANIM_DUR, 1);
         const { alpha = 1, x = 0, y = 0, scale: s } = style.animate(p);
 
-        // Animated glass box for this layer (metric cards): same look as the
-        // static box, just faded in with its content (no extra blur/offset).
-        const gp = layerPanel[i];
-        if (gp && frameBlurMap) {
+        // Disegna la box del pannello UNA sola volta, sul suo drive layer, con
+        // l'animazione condivisa. Gli altri layer dello stesso pannello usano la
+        // stessa (alpha,x,y,s) → restano allineati alla box.
+        if (gp && i === driveIdx && frameBlurMap) {
           const fgScaleGlass = (hasCover && !isVideoCover) ? (1.0 + 0.04 * progress) : 1;
           const blurSrc = frameBlurMap.get(gp.blurRadius);
           ctx.save();
           ctx.globalAlpha = alpha;
-          if (blurSrc) {
+          // La box (blur + bg + bordo) si muove INSIEME al suo contenuto: stesso
+          // offset di slide (x,y) e scale (s) del testo. Senza questo, durante
+          // l'animazione la box resta ferma mentre il testo scorre → "farfalla".
+          if (s != null && s !== 1) {
+            const cx = gp.x + gp.w / 2, cy = gp.y + gp.h / 2;
+            ctx.translate(cx, cy); ctx.scale(s, s); ctx.translate(-cx, -cy);
+          }
+          ctx.translate(x, y);
+          // Pannello annidato: niente blur (lo fornisce gia' il pannello esterno).
+          if (blurSrc && !gp.nested) {
             ctx.save();
             ctx.beginPath();
             ctx.roundRect(gp.x, gp.y, gp.w, gp.h, gp.radius);

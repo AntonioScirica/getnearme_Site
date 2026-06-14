@@ -460,9 +460,9 @@ function PostSocialScreen({ toast, routeKey, brand, project, onProjectUpdate }: 
   React.useEffect(() => {
     setFields({
       titolo: project?.titolo ?? '', indirizzo: project?.addr ?? '',
-      prezzo: project ? Number(project.prezzo).toLocaleString('it-IT') : '',
-      superficie: project ? String(project.mq) : '', camere: project ? String(project.camere) : '',
-      bagni: project ? String(project.bagni) : '', descrizione: '', btnTxt: 'Contattaci ora', badgeTxt: 'Nuovo',
+      prezzo: project && project.prezzo ? Number(project.prezzo).toLocaleString('it-IT') : '',
+      superficie: project && project.mq ? String(project.mq) : '', camere: project && project.camere ? String(project.camere) : '',
+      bagni: project && project.bagni ? String(project.bagni) : '', descrizione: project?.descrizione ?? '', btnTxt: 'Contattaci ora', badgeTxt: 'Nuovo',
     });
     setFieldIcons(project?.icons ? { bedrooms: project.icons.camere || 'bed', bathrooms: project.icons.bagni || 'bath', surface: project.icons.mq || 'area' } : { bedrooms: 'bed', bathrooms: 'bath', surface: 'area' });
     setCurrency(project?.icons?.prezzo === 'dollar' ? '$' : project?.icons?.prezzo === 'pound' ? '£' : '€');
@@ -543,11 +543,11 @@ function PostSocialScreen({ toast, routeKey, brand, project, onProjectUpdate }: 
       type: fields.titolo || project?.nome || '-',
       address: fields.indirizzo || '-',
       price: fields.prezzo ? `${currency} ${fields.prezzo}` : '-',
-      surface: fields.superficie ? fields.superficie + ' m²' : '-',
-      surfaceNum: fields.superficie || '-',
-      bedrooms: fields.camere || '-',
-      bathrooms: fields.bagni || '-',
-      rooms: fields.camere || '-',
+      surface: fields.superficie ? fields.superficie + ' m²' : '0 m²',
+      surfaceNum: fields.superficie || '0',
+      bedrooms: fields.camere || '0',
+      bathrooms: fields.bagni || '0',
+      rooms: fields.camere || '0',
       description: fields.descrizione || '-',
       ctaText: fields.btnTxt || '-',
       contract: showBadge ? (fields.badgeTxt || 'Nuovo') : '',
@@ -626,6 +626,7 @@ function PostSocialScreen({ toast, routeKey, brand, project, onProjectUpdate }: 
           mq: Number(fields.superficie.replace(/\D/g, '')) || 0,
           camere: Number(fields.camere.replace(/\D/g, '')) || 0,
           bagni: Number(fields.bagni.replace(/\D/g, '')) || 0,
+          descrizione: fields.descrizione,
         };
         await updateProject(project.id, updates);
         onProjectUpdate?.(updates);
@@ -665,11 +666,11 @@ function PostSocialScreen({ toast, routeKey, brand, project, onProjectUpdate }: 
       type: fields.titolo || project?.nome || '-',
       address: fields.indirizzo || '-',
       price: fields.prezzo ? `${currency} ${fields.prezzo}` : '-',
-      surface: fields.superficie ? fields.superficie + ' m²' : '-',
-      surfaceNum: fields.superficie || '-',
-      bedrooms: fields.camere || '-',
-      bathrooms: fields.bagni || '-',
-      rooms: fields.camere || '-',
+      surface: fields.superficie ? fields.superficie + ' m²' : '0 m²',
+      surfaceNum: fields.superficie || '0',
+      bedrooms: fields.camere || '0',
+      bathrooms: fields.bagni || '0',
+      rooms: fields.camere || '0',
       description: fields.descrizione || '-',
       ctaText: fields.btnTxt || '-',
       contract: showBadge ? (fields.badgeTxt || 'Nuovo') : '',
@@ -792,6 +793,7 @@ function PostSocialScreen({ toast, routeKey, brand, project, onProjectUpdate }: 
         mq: Number(fields.superficie.replace(/\D/g, '')) || 0,
         camere: Number(fields.camere.replace(/\D/g, '')) || 0,
         bagni: Number(fields.bagni.replace(/\D/g, '')) || 0,
+        descrizione: fields.descrizione,
       };
       await updateProject(project.id, updates);
       onProjectUpdate?.(updates);
@@ -821,7 +823,11 @@ function PostSocialScreen({ toast, routeKey, brand, project, onProjectUpdate }: 
       });
       await downloadBlob(blob, 'social-post.' + ext);
       toast('Video scaricato', 'download');
-      
+      // Chiudi il modal SUBITO dopo il download. Il salvataggio dati immobile e'
+      // best-effort e NON deve bloccare la chiusura (se la rete stalla, prima il
+      // modal restava appeso a 100% col video gia' scaricato).
+      setShowAnimPicker(false);
+      setExporting(null);
       if (project) {
         const updates = {
           titolo: fields.titolo,
@@ -830,11 +836,10 @@ function PostSocialScreen({ toast, routeKey, brand, project, onProjectUpdate }: 
           mq: Number(fields.superficie.replace(/\D/g, '')) || 0,
           camere: Number(fields.camere.replace(/\D/g, '')) || 0,
           bagni: Number(fields.bagni.replace(/\D/g, '')) || 0,
+          descrizione: fields.descrizione,
         };
-        await updateProject(project.id, updates);
-        onProjectUpdate?.(updates);
+        updateProject(project.id, updates).then(() => onProjectUpdate?.(updates)).catch(() => {});
       }
-      setShowAnimPicker(false);
     } catch (err: unknown) {
       if (err instanceof DOMException && err.name === 'AbortError') {
         toast('Export annullato', 'download');
@@ -1188,7 +1193,7 @@ function PostSocialScreen({ toast, routeKey, brand, project, onProjectUpdate }: 
               {hasField('price') && <div style={{ position: 'relative' }}>
                 <label style={labelStyle}>Prezzo</label>
                 <div style={{ position: 'relative' }}>
-                  <input value={fields.prezzo} onChange={e => setField('prezzo', e.target.value)} placeholder="250.000" style={{ ...inputStyle, paddingRight: 34 }} />
+                  <input value={fields.prezzo} onChange={e => { const n = e.target.value.replace(/\D/g, ''); setField('prezzo', n ? Number(n).toLocaleString('it-IT') : ''); }} inputMode="numeric" placeholder="250.000" style={{ ...inputStyle, paddingRight: 34 }} />
                   <div
                     onClick={() => { setIconDropdown(null); setCurrencyDropdown(!currencyDropdown); }}
                     style={{
@@ -1226,9 +1231,9 @@ function PostSocialScreen({ toast, routeKey, brand, project, onProjectUpdate }: 
               </div>}
               {hasField('metrics') && <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 9 }}>
                 {([
-                  { field: 'surface', stateKey: 'superficie', label: 'Superficie', placeholder: '110' },
-                  { field: 'bedrooms', stateKey: 'camere', label: 'Camere', placeholder: '3' },
-                  { field: 'bathrooms', stateKey: 'bagni', label: 'Bagni', placeholder: '2' },
+                  { field: 'surface', stateKey: 'superficie', label: 'Superficie', placeholder: '0' },
+                  { field: 'bedrooms', stateKey: 'camere', label: 'Camere', placeholder: '0' },
+                  { field: 'bathrooms', stateKey: 'bagni', label: 'Bagni', placeholder: '0' },
                 ] as const).map(m => {
                   const iconKey = fieldIcons[m.field];
                   return (
@@ -1419,30 +1424,17 @@ function PostSocialScreen({ toast, routeKey, brand, project, onProjectUpdate }: 
               </button>
             </div>
             {exporting === 'video' ? (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, padding: '20px 0 28px' }}>
-                <div style={{ position: 'relative', width: 150, height: 150 }}>
-                  <svg width="150" height="150" viewBox="0 0 150 150" style={{ transform: 'rotate(-90deg)' }}>
-                    <defs>
-                      <linearGradient id="vidgrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stopColor="#5b9dff" />
-                        <stop offset="100%" stopColor="#2b6fe0" />
-                      </linearGradient>
-                    </defs>
-                    <circle cx="75" cy="75" r="62" fill="none" stroke="#eef0f3" strokeWidth="10" />
-                    <circle cx="75" cy="75" r="62" fill="none" stroke="url(#vidgrad)" strokeWidth="10" strokeLinecap="round"
-                      strokeDasharray={2 * Math.PI * 62}
-                      strokeDashoffset={2 * Math.PI * 62 * (1 - exportProgress / 100)}
-                      style={{ transition: 'stroke-dashoffset .3s ease' }} />
-                    {/* indeterminate spinner arc for liveliness */}
-                    <circle cx="75" cy="75" r="62" fill="none" stroke="#3B83F6" strokeWidth="10" strokeLinecap="round"
-                      strokeDasharray={`${2 * Math.PI * 62 * 0.08} ${2 * Math.PI * 62}`}
-                      style={{ transformOrigin: '75px 75px', animation: 'export-spin 1s linear infinite', opacity: 0.35 }} />
-                  </svg>
-                  <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                    <span style={{ fontSize: 30, fontWeight: 800, color: '#211f1c', lineHeight: 1 }}>{exportProgress}%</span>
-                    <span style={{ fontSize: 11, fontWeight: 600, color: '#b3aca1', marginTop: 4, textTransform: 'uppercase', letterSpacing: '.06em' }}>Rendering</span>
-                  </div>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, padding: '14px 0 26px' }}>
+                {/* Loader blob come Video AI */}
+                <div style={{ position: 'relative', width: 120, height: 120, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 6 }}>
+                  <div style={{ position: 'absolute', width: 110, height: 110, borderRadius: '50%', border: '1.5px solid rgba(59,131,246,.20)', animation: 'pulse-ring 2.8s ease-out infinite' }} />
+                  <div style={{ position: 'absolute', width: 110, height: 110, borderRadius: '50%', border: '1.5px solid rgba(59,131,246,.20)', animation: 'pulse-ring 2.8s ease-out infinite', animationDelay: '1.4s' }} />
+                  <div style={{ position: 'absolute', width: 72, height: 72, background: 'radial-gradient(circle at 30% 26%, #AECBFF 0%, #3B83F6 46%, #5B6CF0 100%)', opacity: .95, boxShadow: '0 0 30px rgba(91,108,240,.45), 0 0 14px rgba(59,131,246,.55)', animation: 'organic-blob 8s ease-in-out infinite' }} />
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/dashboard/logo-mark-white.svg" alt="" style={{ position: 'relative', width: 56, height: 56, animation: 'aurora-pulse 4s ease-in-out infinite' }} />
                 </div>
+                <span style={{ fontSize: 32, fontWeight: 800, color: '#211f1c', lineHeight: 1 }}>{exportProgress}%</span>
+                <span style={{ fontSize: 11, fontWeight: 600, color: '#b3aca1', marginTop: 2, textTransform: 'uppercase', letterSpacing: '.06em' }}>Rendering</span>
               </div>
             ) : (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: 24 }}>
@@ -2203,9 +2195,15 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
     let cancelled = false;
     const timer = setInterval(async () => {
       for (const job of videoJobs.filter(j => j.stage === 'render')) {
+        // Rete di sicurezza: un render bloccato da oltre 30 min e' morto (anche i
+        // construction/Veo finiscono ben prima). Lo si chiude come fallito cosi'
+        // non resta a occupare uno slot e impedire nuovi render all'infinito.
+        if (Date.now() - (job.createdAt || 0) > 1_800_000) {
+          setVideoJobs(patchVideoJob(job.id, { stage: 'failed', error: 'Render interrotto (timeout)' }));
+          continue;
+        }
         const renderId = (job.ctx as { renderId?: string } | undefined)?.renderId;
-        // Job temporaneo (pre-render, ctx vuoto): non si polla, avanza piano
-        // così non sembra bloccato durante l'upload/preparazione.
+        // Job temporaneo (pre-render, ctx vuoto): non si polla, avanza piano.
         if (!renderId) {
           setVideoJobs(patchVideoJob(job.id, { progress: Math.min(0.2, (job.progress || 0) + 0.02) }));
           continue;
@@ -2466,7 +2464,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
       )}
 
       {/* APP SHELL */}
-      <div style={{ display: 'flex', height: '100%' }}>
+      <div data-app-shell style={{ display: 'flex', height: '100%', ['--gnm-content-left' as string]: collapsed ? '64px' : '252px' } as React.CSSProperties}>
         {/* SIDEBAR */}
         <div className={`max-md:!fixed max-md:!inset-y-0 max-md:!left-0 max-md:!z-[100] max-md:!w-64 max-md:!shadow-2xl ${mobileMenuOpen ? 'max-md:!flex' : 'max-md:!hidden'}`} style={{ width: collapsed ? 64 : 252, flex: 'none', background: '#fff', borderRight: '1px solid #f0ede7', display: 'flex', flexDirection: 'column', transition: 'width .25s ease', overflow: 'hidden' }}>
           <div style={s('height:64px;flex:none;display:flex;align-items:center;padding:0 20px;overflow:hidden;justify-content:space-between')}>
@@ -2631,7 +2629,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                                 </div>
                                 {isDone && (
                                   <div style={{ display: 'flex', gap: 8 }}>
-                                    <button onClick={() => { setTrayOpen(false); go('media'); }} style={{ padding: '4px 8px', fontSize: 11, fontWeight: 700, borderRadius: 6, border: '1px solid #e4e1da', background: '#fff', cursor: 'pointer' }}>Vedi in Media</button>
+                                    <button onClick={() => { dismissBatch(b.id); mutateBatches(); setTrayOpen(false); go('media'); }} style={{ padding: '4px 8px', fontSize: 11, fontWeight: 700, borderRadius: 6, border: '1px solid #e4e1da', background: '#fff', cursor: 'pointer' }}>Vedi in Media</button>
                                   </div>
                                 )}
                               </div>
@@ -2663,15 +2661,13 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                                 )}
                                 {isDone && (
                                   <div style={{ display: 'flex', gap: 8 }}>
-                                    <button onClick={() => { setTrayOpen(false); go('media'); }} style={{ padding: '4px 8px', fontSize: 11, fontWeight: 700, borderRadius: 6, border: '1px solid #e4e1da', background: '#fff', cursor: 'pointer' }}>Vedi in Media</button>
+                                    <button onClick={() => { setVideoJobs(dismissVideoJob(j.id)); setTrayOpen(false); go('media'); }} style={{ padding: '4px 8px', fontSize: 11, fontWeight: 700, borderRadius: 6, border: '1px solid #e4e1da', background: '#fff', cursor: 'pointer' }}>Vedi in Media</button>
                                   </div>
                                 )}
                               </div>
-                              {(isDone || isFailed) && (
-                                <button onClick={(e) => { e.stopPropagation(); setVideoJobs(dismissVideoJob(j.id)); }} title="Rimuovi" style={{ position: 'absolute', top: 10, right: 12, width: 22, height: 22, borderRadius: '50%', border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                  <Icon name="x" size={13} color="#b3aca1" />
-                                </button>
-                              )}
+                              <button onClick={(e) => { e.stopPropagation(); setVideoJobs(dismissVideoJob(j.id)); }} title={isDone || isFailed ? 'Rimuovi' : 'Annulla'} style={{ position: 'absolute', top: 10, right: 12, width: 22, height: 22, borderRadius: '50%', border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <Icon name="x" size={13} color="#b3aca1" />
+                              </button>
                             </div>
                           );
                         })}</>);
@@ -2767,6 +2763,8 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
             ) : route === 'home' ? (
               <HomeScreen
                 active={active}
+                batches={batches}
+                videoJobs={videoJobs}
                 setNewProjOpen={setNewProjOpen}
                 onEditProject={() => setEditProjOpen(true)}
                 go={go}

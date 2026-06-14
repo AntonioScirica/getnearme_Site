@@ -39,6 +39,7 @@ export async function GET(req: NextRequest) {
     bagni: p.bagni,
     camere: p.camere,
     titolo: p.titolo,
+    descrizione: p.descrizione,
     cover: p.cover,
     icons: p.icons,
     createdAt: p.created_at,
@@ -58,7 +59,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'bad_request' }, { status: 400 })
   }
 
-  const { nome, addr, prezzo, mq, bagni, camere, titolo, cover, icons } = body
+  const { nome, addr, prezzo, mq, bagni, camere, titolo, descrizione, cover, icons } = body
 
   if (!nome) {
     return NextResponse.json({ error: 'missing_name' }, { status: 400 })
@@ -75,6 +76,7 @@ export async function POST(req: NextRequest) {
       bagni: typeof bagni === 'number' ? bagni : 0,
       camere: typeof camere === 'number' ? camere : 0,
       titolo: titolo || '',
+      descrizione: typeof descrizione === 'string' ? descrizione : '',
       cover: cover || '',
       icons: icons || { prezzo: 'euro', mq: 'maximize-2', camere: 'bed', bagni: 'bath' },
     })
@@ -95,6 +97,7 @@ export async function POST(req: NextRequest) {
     bagni: project.bagni,
     camere: project.camere,
     titolo: project.titolo,
+    descrizione: project.descrizione,
     cover: project.cover,
     icons: project.icons,
     createdAt: project.created_at,
@@ -114,7 +117,7 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: 'bad_request' }, { status: 400 })
   }
 
-  const { id, nome, addr, prezzo, mq, bagni, camere, titolo, cover, icons } = body
+  const { id, nome, addr, prezzo, mq, bagni, camere, titolo, descrizione, cover, icons } = body
 
   if (!id) {
     return NextResponse.json({ error: 'missing_id' }, { status: 400 })
@@ -128,6 +131,7 @@ export async function PUT(req: NextRequest) {
   if (bagni !== undefined) updates.bagni = typeof bagni === 'number' ? bagni : 0
   if (camere !== undefined) updates.camere = typeof camere === 'number' ? camere : 0
   if (titolo !== undefined) updates.titolo = titolo
+  if (descrizione !== undefined) updates.descrizione = typeof descrizione === 'string' ? descrizione : ''
   if (cover !== undefined) updates.cover = cover
   if (icons !== undefined) updates.icons = icons
 
@@ -153,6 +157,7 @@ export async function PUT(req: NextRequest) {
     bagni: project.bagni,
     camere: project.camere,
     titolo: project.titolo,
+    descrizione: project.descrizione,
     cover: project.cover,
     icons: project.icons,
     createdAt: project.created_at,

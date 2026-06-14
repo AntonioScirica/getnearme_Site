@@ -134,7 +134,23 @@ export function mergeServerJobs(server: VideoJob[]): VideoJob[] {
       ctx: Object.keys(prev.ctx || {}).length ? prev.ctx : s.ctx,
     });
   }
-  const merged = [...byId.values()].sort((a, b) => b.createdAt - a.createdAt);
+  let merged = [...byId.values()].sort((a, b) => b.createdAt - a.createdAt);
+  // Riconciliazione orfani: un job "prep_" (temporaneo, senza renderId) e' valido
+  // solo finche' non viene sostituito dal render reale. Se esiste gia' un job
+  // server dello stesso template+progetto creato nello stesso intervallo, il prep
+  // e' un orfano (la sostituzione e' fallita) → si scarta. Evita il "fermo al 20%
+  // mentre il video e' in realta' finito".
+  const realJobs = merged.filter(j => !j.id.startsWith('prep_') && (j.ctx as { renderId?: string })?.renderId || j.stage === 'done' || j.stage === 'failed');
+  merged = merged.filter(j => {
+    if (!j.id.startsWith('prep_')) return true;
+    const orphan = realJobs.some(r =>
+      r.template === j.template &&
+      (r.projectId || null) === (j.projectId || null) &&
+      r.createdAt >= j.createdAt - 60_000 &&
+      r.createdAt <= j.createdAt + 1_200_000
+    );
+    return !orphan;
+  });
   saveVideoJobs(merged);
   return merged;
 }

@@ -25,6 +25,7 @@ export default function MediaScreen({
 }) {
   const [photosByBatch, setPhotosByBatch] = useState<Record<string, BatchPhoto[]>>({});
   const [loadingPhotos, setLoadingPhotos] = useState<Record<string, boolean>>({});
+  const [vidLoaded, setVidLoaded] = useState<Record<string, boolean>>({}); // skeleton finche' il poster video non e' pronto
   const [filter, setFilter] = useState<'all' | 'staging' | 'video'>('all');
   const [lightbox, setLightbox] = useState<{ resultUrl: string; sourceUrl: string | null; isVideo?: boolean } | null>(null);
   const [localSourceUrls, setLocalSourceUrls] = useState<Record<string, string>>({});
@@ -254,6 +255,14 @@ export default function MediaScreen({
             const downloadable = day.photos.filter(p => p.resultUrl && p.status !== 'failed');
             const inSelect = selectDay === day.key;
             const selectedPhotos = day.photos.filter(p => selected.has(`${p.batchId}_${p.index}`));
+            // Conteggio separato foto/video per l'etichetta (foto e video sono
+            // invarianti al plurale in italiano: "1 foto", "2 video").
+            const nVideos = downloadable.filter(p => (p as MediaItem).isVideo).length;
+            const nPhotos = downloadable.length - nVideos;
+            const countLabel = [
+              nPhotos > 0 ? `${nPhotos} foto` : '',
+              nVideos > 0 ? `${nVideos} video` : '',
+            ].filter(Boolean).join(' · ') || '0 foto';
             return (
               <div key={day.key}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, borderBottom: '1px solid #f0ede7', paddingBottom: 12 }}>
@@ -263,7 +272,7 @@ export default function MediaScreen({
                     </div>
                     <div>
                       <div style={{ fontSize: 15, fontWeight: 700, color: '#211f1c', textTransform: 'capitalize' }}>{day.label}</div>
-                      <div style={{ fontSize: 12.5, color: '#8c867d' }}>{inSelect ? `${selectedPhotos.length} selezionate` : `${downloadable.length} foto`}</div>
+                      <div style={{ fontSize: 12.5, color: '#8c867d' }}>{inSelect ? `${selectedPhotos.length} selezionate` : countLabel}</div>
                     </div>
                   </div>
                   {inSelect ? (
@@ -333,7 +342,7 @@ export default function MediaScreen({
                         <div key={`video_${photo.index}`} onClick={() => inSelect ? toggleSelect(vSelKey) : setLightbox({ resultUrl: photo.resultUrl, sourceUrl: null, isVideo: true })} style={{ position: 'relative', aspectRatio: '4/3', borderRadius: 12, overflow: 'hidden', border: vSel ? '2px solid #3B83F6' : '1px solid #f0ede7', background: '#000', cursor: 'pointer', animation: 'media-reveal .7s cubic-bezier(.22,1,.36,1) both', animationDelay: `${pi * 60}ms` }}>
                           {/* Cover: video blurrato dietro (riempie) + video contenuto davanti, come le foto verticali. */}
                           <video src={`${photo.resultUrl}#t=0.5`} playsInline preload="metadata" muted style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', filter: 'blur(16px) brightness(.85)', transform: 'scale(1.15)', pointerEvents: 'none' }} />
-                          <video src={`${photo.resultUrl}#t=0.5`} playsInline preload="metadata" muted style={{ position: 'relative', width: '100%', height: '100%', objectFit: 'contain', pointerEvents: 'none', ...(vSel ? { opacity: .85 } : {}) }} />
+                          <video src={`${photo.resultUrl}#t=0.5`} playsInline preload="metadata" muted onLoadedData={() => setVidLoaded(m => m[photo.videoId!] ? m : { ...m, [photo.videoId!]: true })} style={{ position: 'relative', width: '100%', height: '100%', objectFit: 'contain', pointerEvents: 'none', ...(vSel ? { opacity: .85 } : {}) }} />
                           {!inSelect && (
                             <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
                               <div style={{ width: 54, height: 54, borderRadius: '50%', background: 'rgba(20,30,55,0.55)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -352,6 +361,9 @@ export default function MediaScreen({
                             </a>
                           )}
                           <span style={{ position: 'absolute', bottom: 8, left: 8, background: 'rgba(0,0,0,.6)', color: '#fff', fontSize: 10.5, fontWeight: 700, padding: '3px 8px', borderRadius: 99, display: 'flex', alignItems: 'center', gap: 4 }}><Icon name="film" size={11} color="#fff" />Video</span>
+                          {!vidLoaded[photo.videoId!] && (
+                            <div style={{ position: 'absolute', inset: 0, background: '#f4f2ee', animation: 'pulse 1.5s infinite ease-in-out', zIndex: 5 }} />
+                          )}
                         </div>
                       );
                     }

@@ -10,6 +10,7 @@ export type ProjectData = {
   camere?: number
   locali?: number
   titolo: string
+  descrizione?: string
   cover: string
   icons?: Record<string, string>
   createdAt?: string

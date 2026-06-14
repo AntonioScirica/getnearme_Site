@@ -84,6 +84,13 @@ body {
 html {
   scroll-behavior: smooth;
 }
+
+/* Barra azioni video FISSA in basso: su mobile la sidebar è overlay, niente offset. */
+@media (max-width: 768px) {
+  [data-app-shell] {
+    --gnm-content-left: 0px !important;
+  }
+}
 /* Apple Intelligence / Siri Loading FX */
 @keyframes aurora-gradient {
   0% { background-position: 0% 50%; }

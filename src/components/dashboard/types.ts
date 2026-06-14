@@ -8,6 +8,7 @@ export type Project = {
   camere?: number;
   locali?: number;
   titolo: string;
+  descrizione?: string;
   cover: string;
   createdAt?: string;
   icons?: Record<string, string>;

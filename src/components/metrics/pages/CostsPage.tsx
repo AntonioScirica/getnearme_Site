@@ -5,6 +5,7 @@ import {
   Video,
   Film,
   ImageIcon,
+  Images,
   FileText,
   PenLine,
   Search,
@@ -37,6 +38,7 @@ type Feature = {
   where: string;               // dove nell'app lo vede l'utente
   why: string;                 // perché serve / cosa offre
   perUseCost: number;          // costo totale stimato per una singola consegna (€)
+  perUseCostMax?: number;      // se presente, perUseCost..perUseCostMax è un range
   icon: React.ComponentType<{ className?: string }>;
   color: FeatColor;
   costs: FeatureCost[];
@@ -54,6 +56,40 @@ const FEAT_COLORS: Record<FeatColor, string> = {
 };
 
 const FEATURES: Feature[] = [
+  // ────────────────────────────────────────────────────────────
+  {
+    id: "video-image-to-video",
+    title: "Video AI — Da immagini a video",
+    where: "Wizard video AI · template «Da immagini a video» (walkthrough)",
+    why: "Le foto dell'immobile prendono vita con movimenti di camera cinematografici generati dall'AI, montate in un unico video con musica. Da 1 a 6 foto per video: il costo scala con il numero di foto animate.",
+    perUseCost: 0.26,
+    perUseCostMax: 1.55,
+    icon: Images,
+    color: "amber",
+    costs: [
+      {
+        item: "Animazione foto (Kling 1.6 Standard)",
+        provider: "fal.ai",
+        unit: "clip 5s / foto",
+        unitCost: 0.258,
+        note: "Image-to-video, $0.056/s × 5s per foto. Si salta il primo 0.3s (frame congelato) per partire subito col movimento. Da 1 a 6 foto: €0.26 (1 foto) → €1.55 (6 foto).",
+      },
+      {
+        item: "Compositing finale ffmpeg",
+        provider: "AWS Lambda",
+        unit: "render ~30s",
+        unitCost: 0.003,
+        note: "Lambda gnm-ai-video-ffmpeg (ARM Graviton, 3 GB). Concatena le clip animate con musica e transizioni.",
+      },
+      {
+        item: "Storage output temporaneo",
+        provider: "Cloudflare R2",
+        unit: "MP4 finale",
+        unitCost: 0.0002,
+        note: "Tenuto su R2 30 giorni (scaricabile da Media). Zero egress fee.",
+      },
+    ],
+  },
   // ────────────────────────────────────────────────────────────
   {
     id: "video-before-after",
@@ -418,7 +454,9 @@ export default function CostsPage() {
                     <p
                       className={`${MONO} text-xl font-semibold text-gray-100 mt-0.5`}
                     >
-                      {eur(feat.perUseCost)}
+                      {feat.perUseCostMax
+                        ? `${eur(feat.perUseCost)} – ${eur(feat.perUseCostMax)}`
+                        : eur(feat.perUseCost)}
                     </p>
                   </div>
                 </div>
@@ -428,7 +466,9 @@ export default function CostsPage() {
                     costo / consegna
                   </span>
                   <span className={`${MONO} text-base font-semibold text-gray-100`}>
-                    {eur(feat.perUseCost)}
+                    {feat.perUseCostMax
+                      ? `${eur(feat.perUseCost)} – ${eur(feat.perUseCostMax)}`
+                      : eur(feat.perUseCost)}
                   </span>
                 </div>
               </div>

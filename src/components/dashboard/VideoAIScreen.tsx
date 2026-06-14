@@ -154,31 +154,25 @@ function TrimRange({ duration, start, end, frames, onChange, onPreview }: {
   );
 }
 
-// Barra azioni (Indietro/Avanti) sticky in basso. bg+stroke compaiono SOLO
-// quando la barra è davvero "stuck" (contenuto scende sotto il fold); con
-// contenuto corto resta una riga semplice in fondo. Rilevamento via sentinel.
-function StickyNav({ children, align, bleed = 0 }: { children: React.ReactNode; align?: 'center'; bleed?: number }) {
-  const [stuck, setStuck] = React.useState(false);
-  const sentinelRef = React.useRef<HTMLDivElement>(null);
-  React.useEffect(() => {
-    const el = sentinelRef.current; if (!el || typeof IntersectionObserver === 'undefined') return;
-    const io = new IntersectionObserver(([e]) => setStuck(!e.isIntersecting), { threshold: 1 });
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
+// Barra azioni (Indietro/Avanti) FISSA in fondo all'area contenuti, full-width.
+// `left` = larghezza sidebar via CSS var `--gnm-content-left` (settata in
+// DashboardApp, 0 su mobile via media query in globals.css). Il contenuto
+// interno resta allineato alla colonna (max 1160 + padding 32).
+function StickyNav({ children, align }: { children: React.ReactNode; align?: 'center'; bleed?: number }) {
   return (
-    <>
+    <div style={{
+      position: 'fixed', bottom: 0, left: 'var(--gnm-content-left, 252px)', right: 0, zIndex: 30,
+      background: 'rgba(252,252,251,0.97)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
+      borderTop: '1.5px solid #e4e1da',
+    }}>
       <div style={{
-        display: 'flex', alignItems: align === 'center' ? 'center' : undefined, justifyContent: 'space-between',
-        gap: 12, position: 'sticky', bottom: 0, marginTop: 20, paddingTop: 14, paddingBottom: 14,
-        paddingLeft: stuck ? bleed : 0, paddingRight: stuck ? bleed : 0,
-        marginLeft: stuck ? -bleed : 0, marginRight: stuck ? -bleed : 0, zIndex: 5,
-        ...(stuck ? { background: 'rgba(252,252,251,0.96)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', borderTop: '1.5px solid #c4bfb6', boxShadow: '0 -8px 20px rgba(0,0,0,.08)' } : {}),
+        maxWidth: 1160, margin: '0 auto', padding: '14px 32px',
+        display: 'flex', alignItems: align === 'center' ? 'center' : undefined,
+        justifyContent: 'space-between', gap: 12,
       }}>
         {children}
       </div>
-      <div ref={sentinelRef} style={{ height: 1 }} aria-hidden />
-    </>
+    </div>
   );
 }
 
@@ -236,6 +230,18 @@ import type { Project } from './types';
 // Max render video in corso contemporaneamente. Cap conservativo per non
 // superare i rate-limit di fal Kling / HeyGen (avatar/walkthrough).
 const MAX_CONCURRENT_RENDERS = 2;
+
+// Meta per le card Animazione (ai_staging): icona + descrizione breve.
+const ANIM_META: Record<string, { desc: string; icon: string }> = {
+  stop_motion: {
+    desc: 'I mobili compaiono a scatti, pezzo dopo pezzo',
+    icon: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 3v18M17 3v18M3 7h4M3 12h4M3 17h4M17 7h4M17 12h4M17 17h4"/></svg>',
+  },
+  particle_dust: {
+    desc: 'Gli arredi si formano da particelle di polvere',
+    icon: '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" stroke="none"><circle cx="6" cy="7" r="1.4"/><circle cx="12" cy="5" r="1.1"/><circle cx="18" cy="8" r="1.4"/><circle cx="9" cy="12" r="1.1"/><circle cx="15" cy="13" r="1.4"/><circle cx="5" cy="16" r="1.1"/><circle cx="12" cy="18" r="1.4"/><circle cx="19" cy="17" r="1.1"/></svg>',
+  },
+};
 
 // Pacchetti video extra. Prezzi provvisori (da finalizzare con i Payment Link
 // Stripe dei nuovi tagli 10/30/50). Il link 10 è quello reale; 30/50 da generare.
@@ -360,6 +366,28 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
     }
     return items;
   }, [brand.logos, whiteLogoAuto]);
+  // Copertina finale (outro): fade su bianco + logo centrato, identico al
+  // montaggio. Disponibile su TUTTI i template, ON di default. Su bianco serve
+  // un logo scuro/colorato (non bianco), quindi l'auto preferisce colorato→nero.
+  const [outroOn, setOutroOn] = React.useState(true);
+  const [outroLogoKey, setOutroLogoKey] = React.useState('auto');
+  const darkLogoAuto = (brand.logoOrientation === 'vertical'
+    ? (brand.logos.logo_colored_v || brand.logos.logo_black_v || brand.logos.logo_colored_h || brand.logos.logo_black_h)
+    : (brand.logos.logo_colored_h || brand.logos.logo_black_h || brand.logos.logo_colored_v || brand.logos.logo_black_v)) || '';
+  const hasAnyLogo = Object.values(brand.logos || {}).some(Boolean);
+  const outroLogoUrl = (!outroOn || !hasAnyLogo) ? '' : (outroLogoKey === 'auto' ? darkLogoAuto : ((brand.logos as Record<string, string | null>)['logo_' + outroLogoKey] || darkLogoAuto));
+  const outroLogoItems = React.useMemo(() => {
+    const labelMap: Record<string, string> = {
+      colored_h: 'Colore + Payoff', colored_v: 'Colore', black_h: 'Nero + Payoff', black_v: 'Nero', white_h: 'Bianco + Payoff', white_v: 'Bianco',
+    };
+    const order = ['colored_h', 'colored_v', 'black_h', 'black_v', 'white_h', 'white_v'];
+    const items = [{ key: 'auto', label: 'Auto', src: darkLogoAuto, white: false }];
+    for (const k of order) {
+      const src = (brand.logos as Record<string, string | null>)['logo_' + k];
+      if (src) items.push({ key: k, label: labelMap[k] || k, src, white: k.startsWith('white') });
+    }
+    return items;
+  }, [brand.logos, darkLogoAuto]);
   const [watermarkEnabled, setWatermarkEnabled] = React.useState(true);
   const [watermarkPosition, setWatermarkPosition] = React.useState('bottom-right');
   const [watermarkOpacity, setWatermarkOpacity] = React.useState(100);
@@ -376,15 +404,29 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
   const pairFileRef = React.useRef<HTMLInputElement>(null);
   const audioRef = React.useRef<HTMLAudioElement | null>(null);
   const [playingUrl, setPlayingUrl] = React.useState<string | null>(null);
+  const rootRef = React.useRef<HTMLDivElement>(null);
+  // Ad ogni cambio step risali al contenitore scrollabile e torna in cima
+  // (es. selezione avatar: deve partire dall'alto, non a metà pagina).
+  React.useEffect(() => {
+    let el = rootRef.current?.parentElement as HTMLElement | null;
+    while (el) {
+      const oy = getComputedStyle(el).overflowY;
+      if (oy === 'auto' || oy === 'scroll') { el.scrollTop = 0; break; }
+      el = el.parentElement;
+    }
+  }, [step]);
 
   const layout = tpl?.layout || tpl?.id || '';
   const usesAvatar = !!tpl && !NO_AVATAR_LAYOUTS.includes(layout);
+  // Layout righe orizzontali (come montaggio): anche per gli avatar (classic/split),
+  // così le clip stanno una sotto l'altra con anteprima larga, ambiente e trim.
+  const rowLayout = layout === 'montaggio' || usesAvatar;
   const isPhotoTemplate = ['walkthrough', 'ai_staging', 'construction', 'day_night'].includes(layout);
   const singlePhoto = ['ai_staging', 'construction', 'day_night'].includes(layout);
   const maxClips = layout === 'montaggio' ? MAX_CLIPS_MONTAGGIO : layout === 'sottotitoli' || singlePhoto ? 1 : MAX_CLIPS;
   const minClips = layout === 'montaggio' ? 3 : layout === 'sottotitoli' || singlePhoto || isPhotoTemplate ? 1 : 3;
   const usesMusic = layout !== 'sottotitoli';
-  const inlineStep3 = ['walkthrough', 'construction', 'before_after', 'ai_staging'].includes(layout);
+  const inlineStep3 = ['walkthrough', 'construction', 'before_after', 'ai_staging', 'day_night'].includes(layout);
 
   const musicLibrary = React.useMemo(() => getMusicLibrary(), []);
 
@@ -457,8 +499,8 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
       setClips(c => [...c, ...converted]);
       // Riconoscimento ambiente + riordino (montaggio/walkthrough), best-effort.
       void autoDetectRooms(converted);
-      // Mini-anteprima a frame per la timeline di trim (montaggio, solo video).
-      if (layout === 'montaggio') {
+      // Mini-anteprima a frame per la timeline di trim (montaggio + avatar, video).
+      if (rowLayout) {
         for (const cl of converted) {
           if (cl.isPhoto) continue;
           void extractFrames(cl.file, 8).then(frames => {
@@ -474,7 +516,8 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
   // Rileva l'ambiente delle clip video (nome file → Groq vision) e, per il
   // montaggio, riordina per ordine di visita. Non tocca le scelte manuali.
   const autoDetectRooms = async (added: Clip[]) => {
-    if (layout !== 'montaggio' && layout !== 'walkthrough') return;
+    // Montaggio, walkthrough e avatar (classic/split): le clip hanno un ambiente.
+    if (layout !== 'montaggio' && layout !== 'walkthrough' && !usesAvatar) return;
     const targets = added.filter(c => !c.isPhoto && c.room === 'altro');
     if (!targets.length) return;
     const applyPatch = (patch: Record<string, string>) => {
@@ -537,8 +580,10 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
       if (ownsUi()) { setOutputUrl(res.outputUrl); setRenderStage('done'); setRenderProgress(1); }
       fetchVideoQuota().then(setQuota);
       const doneId = `vid_${Date.now()}`;
-      onVideoJob?.({ id: doneId, title: jobTitle(), template: layout, stage: 'done', progress: 1, ctx: {}, outputUrl: res.outputUrl, projectId: project?.id || null, aspect, replaceId: prepJobRef.current || undefined });
-      prepJobRef.current = null;
+      // replaceId = il prepId DI QUESTO render (owner), non prepJobRef.current
+      // che un render concorrente puo' aver sovrascritto → prep orfano al 20%.
+      onVideoJob?.({ id: doneId, title: jobTitle(), template: layout, stage: 'done', progress: 1, ctx: {}, outputUrl: res.outputUrl, projectId: project?.id || null, aspect, replaceId: owner || prepJobRef.current || undefined });
+      if (prepJobRef.current === owner) prepJobRef.current = null;
       void createServerVideoJob({ id: doneId, title: jobTitle(), template: layout, status: 'done', progress: 1, ctx: {}, outputUrl: res.outputUrl, projectId: project?.id || null, aspect });
       return true;
     }
@@ -553,13 +598,16 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
       if (res.aiModel) ctx.aiModel = res.aiModel;
       if (res.pairs) ctx.pairs = res.pairs;
       if (res.constructionJobs) ctx.constructionJobs = res.constructionJobs;
+      // Echo per i template async (Veo/Kling): la copertina finale viene
+      // composta dal Lambda in fase progress, serve nel ctx dei poll.
+      if (outroLogoUrl) ctx.outroLogoUrl = outroLogoUrl;
       // Hand off al tray "Lavori in corso": il polling vive a livello app,
       // sopravvive al cambio sezione. Niente polling locale qui.
       // Persisti la riga server: il cron la finalizza anche a browser chiuso.
       void createServerVideoJob({ id: res.renderId as string, title: jobTitle(), template: layout, status: 'rendering', progress: 0.25, ctx, projectId: project?.id || null, aspect: (res.aspectRatio as string) || aspect });
       if (onVideoJob) {
-        onVideoJob({ id: res.renderId as string, title: jobTitle(), template: layout, stage: 'render', progress: 0.25, ctx, projectId: project?.id || null, aspect: (res.aspectRatio as string) || aspect, replaceId: prepJobRef.current || undefined });
-        prepJobRef.current = null;
+        onVideoJob({ id: res.renderId as string, title: jobTitle(), template: layout, stage: 'render', progress: 0.25, ctx, projectId: project?.id || null, aspect: (res.aspectRatio as string) || aspect, replaceId: owner || prepJobRef.current || undefined });
+        if (prepJobRef.current === owner) prepJobRef.current = null;
         if (ownsUi()) setRenderStage('background');
         return true;
       }
@@ -590,6 +638,38 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
     }
     return false;
   };
+
+  // Sezione "Copertina finale" (outro), riusabile nell'ultimo step di ogni
+  // template. Switch ON di default + picker del logo (auto = scuro/colorato).
+  const renderOutroSection = () => (
+    <div style={{ margin: '4px 0 0' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 0' }}>
+        <div style={{ minWidth: 0, paddingRight: 12 }}>
+          <div style={{ fontSize: 13.5, fontWeight: 600 }}>Copertina finale</div>
+          <div style={{ fontSize: 12, color: '#8c867d', marginTop: 2 }}>Chiusura con dissolvenza su bianco e logo al centro</div>
+        </div>
+        <div onClick={() => { if (hasAnyLogo) setOutroOn(v => !v); }} title={hasAnyLogo ? '' : 'Carica un logo nella sezione Brand'} style={{ width: 40, height: 24, borderRadius: 99, background: outroOn && hasAnyLogo ? '#3B83F6' : '#d8d4cb', position: 'relative', cursor: hasAnyLogo ? 'pointer' : 'not-allowed', opacity: hasAnyLogo ? 1 : .5, transition: 'background .2s', flex: 'none' }}>
+          <span style={{ position: 'absolute', top: 3, left: outroOn && hasAnyLogo ? 19 : 3, width: 18, height: 18, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,.2)', transition: 'left .2s' }} />
+        </div>
+      </div>
+      {outroOn && hasAnyLogo && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, padding: '4px 0 0' }}>
+          {outroLogoItems.filter(i => i.src).map(it => {
+            const sel = outroLogoKey === it.key;
+            return (
+              <Box key={it.key} onClick={() => setOutroLogoKey(it.key)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px 6px 6px', borderRadius: 10, cursor: 'pointer', border: sel ? '2px solid #3B83F6' : '1px solid #e4e1da', background: sel ? '#eff6ff' : '#fff' } as React.CSSProperties} hover={sel ? undefined : { background: '#f6f4f0' }}>
+                <span style={{ width: 38, height: 26, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', background: it.white ? '#211f1c' : '#f1efe9', overflow: 'hidden' }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={it.src} alt="" style={{ maxWidth: '82%', maxHeight: '74%', objectFit: 'contain' }} />
+                </span>
+                <span style={{ fontSize: 12, fontWeight: sel ? 700 : 600, color: sel ? '#1d5fd0' : '#57534c' }}>{it.label}</span>
+              </Box>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
 
   const handleRender = async () => {
     if (!tpl) return;
@@ -633,7 +713,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
           template: 'before_after', pairs: validPairs,
           audioDurationSeconds: validPairs.length * 5,
           musicUrl, clips: [], propertyData: propertyData(), propertyLabel: propertyLabel(),
-          aspectRatio: 'portrait',
+          aspectRatio: 'portrait', outroLogoUrl,
         });
         finishRender(res, 'portrait', prepId);
         return;
@@ -647,6 +727,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
           imageUrl: up[0].uploadedUrl, room: 'altro', aspectRatio: photoAspect,
           audioDurationSeconds: 15, musicUrl, clips: [],
           propertyData: propertyData(), propertyLabel: propertyLabel(),
+          outroLogoUrl,
         };
         let res;
         if (layout === 'ai_staging') {
@@ -681,10 +762,17 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
           if (!done) throw new AIVideoError('Timeout animazione foto');
           setRenderProgress(pr => Math.min(0.5, pr + 0.3 / up.length));
         }
+        // Salta i primi 0.3s di ogni clip: Kling genera un frame congelato
+        // iniziale, così il movimento parte subito (come l'estensione).
+        const AI_SKIP = 0.3;
+        const trimmed = animated.map(c => ({
+          ...c, sourceStart: AI_SKIP, sourceEnd: 5, targetDuration: Math.round((5 - AI_SKIP) * 10) / 10,
+        }));
         const res = await startRender({
-          template: 'walkthrough', clips: animated, musicUrl,
+          template: 'walkthrough', clips: trimmed, musicUrl,
           aspectRatio: aspect, propertyData: propertyData(), propertyLabel: propertyLabel(),
-          avatarDurationSeconds: animated.length * 5,
+          avatarDurationSeconds: trimmed.reduce((s, c) => s + c.targetDuration, 0),
+          outroLogoUrl,
         });
         finishRender(res, aspect, prepId);
         return;
@@ -711,6 +799,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
           clips: [{ url: audioUrl, room: 'video', sourceStart: 0, sourceEnd: clip0.duration || dur }],
           propertyData: propertyData(), propertyLabel: propertyLabel(),
           aspectRatio: aspectFromDims(clip0.width, clip0.height),
+          outroLogoUrl,
         });
         finishRender(res, aspect, prepId);
         return;
@@ -752,6 +841,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
           ...(coverOverlayUrl ? { coverOverlayUrl } : {}),
           ...(coverLogoUrl ? { coverLogo: coverLogoUrl } : {}),
           ...(watermarkEnabled ? { watermark: { logoUrl: whiteLogo || undefined, position: watermarkPosition, opacity: watermarkOpacity / 100, skipFirst: true } } : {}),
+          outroLogoUrl,
           clips: ordered.map(c => ({
             url: c.uploadedUrl, room: c.room,
             sourceStart: c.sourceStart || 0, sourceEnd: c.sourceEnd || c.duration || 5,
@@ -804,6 +894,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
         aspectRatio: 'portrait',
         ...(musicUrl ? { musicUrl } : {}),
         ...(avatar.crop_pct != null ? { avatarCrop: { pct: avatar.crop_pct, xPct: avatar.crop_xPct ?? 0.5, yPct: avatar.crop_yPct ?? 0.45 } } : {}),
+        outroLogoUrl,
       });
       finishRender(res, 'portrait', prepId);
     } catch (e) {
@@ -816,10 +907,8 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
         setRenderError(msg);
       }
       console.error('[video-ai] render failed:', e);
-      if (prepJobRef.current === prepId) {
-        onVideoJob?.({ id: prepId, title: jobTitle(), template: layout, stage: 'failed', progress: 0, ctx: {}, error: msg, projectId: project?.id || null, aspect: 'portrait' });
-        prepJobRef.current = null;
-      }
+      onVideoJob?.({ id: prepId, title: jobTitle(), template: layout, stage: 'failed', progress: 0, ctx: {}, error: msg, projectId: project?.id || null, aspect: 'portrait' });
+      if (prepJobRef.current === prepId) prepJobRef.current = null;
     }
   };
 
@@ -828,12 +917,21 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
     if (usesAvatar && sections.length === 0) {
       setScriptLoading(true);
       try {
+        // Estrai frame per clip (come l'estensione): l'edge li usa con Groq
+        // vision per descrivere ogni ambiente → script relativo a cosa si vede.
+        const framesByClip = await Promise.all(
+          clips.map(c => c.isPhoto ? Promise.resolve([] as string[]) : extractFrames(c.file, 4).catch(() => [] as string[]))
+        );
         const res = await generateScript({
           propertyData: propertyData(),
-          clips: clips.map(c => ({ room: c.room, finalDuration: c.duration, captionFrames: [] })),
+          clips: clips.map((c, i) => ({ room: c.room, finalDuration: c.duration, captionFrames: framesByClip[i] || [] })),
           scriptTone: tpl?.script_tone || 'professional',
         });
-        setSections(res.sections.length ? res.sections : [{ id: 'all', label: 'Script', text: res.script }]);
+        // maxWords = parole generate dall'AI: l'utente puo' editare ma non
+        // sforare (mantiene la durata sincrona con l'avatar).
+        const wc = (t: string) => t.trim() ? t.trim().split(/\s+/).length : 0;
+        const withMax = (arr: ScriptSection[]) => arr.map(s => ({ ...s, maxWords: Math.max(wc(s.text), 4) }));
+        setSections(res.sections.length ? withMax(res.sections) : [{ id: 'all', label: 'Script', text: res.script, maxWords: Math.max(wc(res.script), 4) }]);
       } catch (e) {
         toast(e instanceof AIVideoError ? e.message : 'Generazione script non riuscita', 'x');
         setSections([{ id: 'all', label: 'Script', text: '' }]);
@@ -901,7 +999,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
 
   // ── UI ───────────────────────────────────────────────────────────────────
   return (
-    <div className="max-md:!px-4 max-md:!py-6" style={s('max-width:1160px;margin:0 auto;padding:32px 32px 64px')}>
+    <div ref={rootRef} className="max-md:!px-4 max-md:!py-6" style={s('max-width:1160px;margin:0 auto;padding:32px 32px 104px')}>
       {step === 0 && (
         <div className="max-md:!flex-col max-md:!items-start max-md:!gap-4" style={s('display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px')}>
           <div>
@@ -1009,7 +1107,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
               : layout === 'montaggio' ? `Carica da ${minClips} a ${maxClips} tra clip e foto`
               : `Carica da ${minClips} a ${maxClips} clip video`}
           </div>
-          <div style={s('color:#8c867d;font-size:13px;margin-bottom:16px')}>{tpl.description}</div>
+          <div style={s('color:#8c867d;font-size:13px;margin-bottom:16px')}>{tpl.description}{isPhotoTemplate && !singlePhoto && clips.length > 1 ? ' Trascina le foto per cambiarne l\'ordine.' : ''}</div>
 
           {layout === 'before_after' ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -1052,15 +1150,15 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
                   <div style={s('color:#8c867d;font-size:13px')}>{isPhotoTemplate && layout !== 'montaggio' ? 'JPG, PNG, WebP' : layout === 'montaggio' ? 'Video e foto' : 'MP4, MOV, WebM'}</div>
                 </>
               ) : (
-                <div style={layout === 'montaggio' ? { display: 'flex', flexDirection: 'column', gap: 12 } : { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
-                  {layout === 'montaggio' && clips.length < maxClips && (
+                <div style={rowLayout ? { display: 'flex', flexDirection: 'column', gap: 12 } : { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+                  {rowLayout && clips.length < maxClips && (
                     <Box onClick={(e: React.MouseEvent) => { e.stopPropagation(); fileRef.current?.click(); }} style={{ borderRadius: 12, border: '1.5px dashed #d8d4cb', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, padding: '14px', cursor: 'pointer', color: '#57534c', fontSize: 13.5, fontWeight: 700, background: '#fcfcfb' } as React.CSSProperties} hover={{ background: '#f6f4f0', borderColor: '#3B83F6', color: '#3B83F6' }}>
                       <span style={{ width: 26, height: 26, borderRadius: '50%', background: '#eef4fe', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="plus" size={15} color="#3B83F6" /></span>
-                      Aggiungi clip o foto <span style={{ color: '#a8a299', fontWeight: 600 }}>· {clips.length}/{maxClips}</span>
+                      {layout === 'montaggio' ? 'Aggiungi clip o foto' : 'Aggiungi clip'} <span style={{ color: '#a8a299', fontWeight: 600 }}>· {clips.length}/{maxClips}</span>
                     </Box>
                   )}
                   {clips.map((c, idx) => {
-                    const mont = layout === 'montaggio';
+                    const mont = rowLayout;
                     const trimmable = !c.isPhoto && !singlePhoto && layout !== 'sottotitoli' && c.duration > 3;
                     const showRoom = !isPhotoTemplate && layout !== 'sottotitoli' && !singlePhoto;
                     if (mont) {
@@ -1126,15 +1224,26 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
                         </div>
                       );
                     }
+                    // Riordino drag-and-drop quando ci sono più foto (walkthrough).
+                    const reorderable = clips.length > 1 && !singlePhoto && layout !== 'sottotitoli' && layout !== 'before_after';
+                    const isDragging = dragIdx === idx;
+                    const isOver = overIdx === idx && dragIdx !== null && dragIdx !== idx;
                     return (
-                    <div key={c.id} onClick={e => e.stopPropagation()} style={{ position: 'relative' }}>
-                      <div style={{ position: 'relative', aspectRatio: '4/3', borderRadius: 10, overflow: 'hidden' }}>
+                    <div key={c.id} onClick={e => e.stopPropagation()}
+                      onDragOver={reorderable ? (e => { e.preventDefault(); if (overIdx !== idx) setOverIdx(idx); }) : undefined}
+                      onDrop={reorderable ? (e => { e.preventDefault(); e.stopPropagation(); if (dragIdx !== null) moveClip(dragIdx, idx); setDragIdx(null); setOverIdx(null); }) : undefined}
+                      style={{ position: 'relative', opacity: isDragging ? .45 : 1, transition: 'opacity .15s' }}>
+                      <div
+                        draggable={reorderable}
+                        onDragStart={reorderable ? (() => setDragIdx(idx)) : undefined}
+                        onDragEnd={reorderable ? (() => { setDragIdx(null); setOverIdx(null); }) : undefined}
+                        style={{ position: 'relative', aspectRatio: '4/3', borderRadius: 10, overflow: 'hidden', cursor: reorderable ? 'grab' : 'default', outline: isOver ? '2px solid #3B83F6' : 'none', outlineOffset: 2 }}>
                         {c.isPhoto && c.height > c.width && (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img src={c.thumb} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', filter: 'blur(20px) brightness(.85)', transform: 'scale(1.15)' }} />
                         )}
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={c.thumb} alt="" style={{ width: '100%', height: '100%', objectFit: c.isPhoto && c.height > c.width ? 'contain' : 'cover', position: 'relative' }} />
+                        <img src={c.thumb} alt="" draggable={false} style={{ width: '100%', height: '100%', objectFit: c.isPhoto && c.height > c.width ? 'contain' : 'cover', position: 'relative' }} />
                         <span style={{ position: 'absolute', top: 6, left: 6, background: 'rgba(33,31,28,.72)', color: '#fff', fontSize: 10.5, fontWeight: 800, padding: '3px 8px', borderRadius: 99 }}>{idx + 1}{!c.isPhoto && ` · ${Math.round(c.duration)}s`}</span>
                         <button onClick={() => setClips(cs => cs.filter(x => x.id !== c.id))} style={{ position: 'absolute', top: 6, right: 6, width: 22, height: 22, borderRadius: '50%', background: 'rgba(33,31,28,.72)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="x" size={11} color="#fff" /></button>
                       </div>
@@ -1151,7 +1260,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
                       )}
                     </div>
                   ); })}
-                  {clips.length < maxClips && layout !== 'montaggio' && (
+                  {clips.length < maxClips && !rowLayout && (
                     <div style={{ aspectRatio: '4/3', borderRadius: 10, border: '1.5px dashed #d8d4cb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       <Icon name="plus" size={20} color="#b3aca1" />
                     </div>
@@ -1186,29 +1295,48 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
               </div>
               <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:14px;padding:18px;margin-top:12px')}>
                 <div style={s('font-size:13px;font-weight:800;margin-bottom:10px')}>Animazione</div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
-                  {AI_STAGING_ANIMATION_STYLES.map(an => (
-                    <div key={an.id} onClick={() => setAnimStyle(an.id)} style={{ ...cardSel(animStyle === an.id), textAlign: 'center', fontSize: 12.5, fontWeight: 700 }}>{an.label}</div>
-                  ))}
-                </div>
-              </div>
-              <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:14px;padding:18px;margin-top:12px')}>
-                <div style={s('font-size:13px;font-weight:800;margin-bottom:10px')}>Immobile <span style={s('font-weight:500;color:#b3aca1;font-size:12px')}>(opzionale)</span></div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                  <input value={propTitle} onChange={e => setPropTitle(e.target.value)} placeholder="Tipologia (es. Trilocale)" style={inputStyle} />
-                  <input value={propAddress} onChange={e => setPropAddress(e.target.value)} placeholder="Indirizzo" style={inputStyle} />
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
+                  {AI_STAGING_ANIMATION_STYLES.map(an => {
+                    const sel = animStyle === an.id;
+                    const meta = ANIM_META[an.id] || { desc: '', icon: '' };
+                    return (
+                      <div key={an.id} onClick={() => setAnimStyle(an.id)} style={{
+                        display: 'flex', alignItems: 'flex-start', gap: 12, padding: 14, borderRadius: 12, cursor: 'pointer',
+                        border: sel ? '2px solid #3B83F6' : '2px solid transparent',
+                        background: sel ? '#eef4fe' : '#f6f4f0', transition: 'all .15s',
+                      }}>
+                        <span style={{ flex: 'none', width: 38, height: 38, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', background: sel ? '#3B83F6' : '#fff', color: sel ? '#fff' : '#57534c', border: sel ? 'none' : '1px solid #e4e1da' }} dangerouslySetInnerHTML={{ __html: meta.icon }} />
+                        <div style={{ minWidth: 0 }}>
+                          <div style={{ fontSize: 13.5, fontWeight: 700, color: sel ? '#1d5fd0' : '#211f1c' }}>{an.label}</div>
+                          <div style={{ fontSize: 11.5, color: '#8c867d', marginTop: 2, lineHeight: 1.35 }}>{meta.desc}</div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </>
+          )}
+
+          {/* day_night inline option (Direzione) */}
+          {layout === 'day_night' && clips.length > 0 && (
+            <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:14px;padding:18px;margin-top:16px')}>
+              <div style={s('font-size:13px;font-weight:800;margin-bottom:10px')}>Direzione</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
+                {DAY_NIGHT_DIRECTIONS.map(d => (
+                  <div key={d.id} onClick={() => setDayNightDir(d.id)} style={{ ...cardSel(dayNightDir === d.id), textAlign: 'center', fontSize: 12.5, fontWeight: 700 }}>{d.label}</div>
+                ))}
+              </div>
+            </div>
           )}
 
           {/* inline music for templates that skip step 3 */}
           {inlineStep3 && (layout === 'before_after' ? pairs.some(p => p.before && p.after) : clips.length > 0) && (
             <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:14px;padding:18px;margin-top:16px')}>
               <div style={s('font-size:13px;font-weight:800;margin-bottom:10px')}>Musica <span style={s('font-weight:500;color:#b3aca1;font-size:12px')}>(opzionale)</span></div>
-              <Box as="button" onClick={() => setMusicOpen(o => !o)} style={s('width:100%;border:1px solid #e4e1da;background:#fff;font-size:13px;font-weight:600;padding:10px 14px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:space-between') as React.CSSProperties} hover={s('background:#faf9f7')}>
+              <Box as="button" onClick={() => setMusicOpen(o => !o)} style={s('width:100%;border:1.5px solid #d6d2c9;background:#fff;font-size:13px;font-weight:600;padding:10px 14px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:space-between') as React.CSSProperties} hover={s('background:#faf9f7;border-color:#bdb8ae')}>
                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: musicUrl ? '#1F2937' : '#b3aca1', fontWeight: musicUrl ? 600 : 400 }}>
-                  {musicUrl ? (musicLibrary.find(t => t.url === musicUrl)?.title || 'Traccia selezionata') : 'Seleziona musica'}
+                  {musicUrl ? (musicLibrary.find(t => t.url === musicUrl)?.title || 'Traccia selezionata') : 'Seleziona la musica del video...'}
                 </span>
                 <Icon name="chevron-down" size={14} color="#8c867d" />
               </Box>
@@ -1231,6 +1359,12 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
                   ))}
                 </div>
               )}
+            </div>
+          )}
+
+          {inlineStep3 && (layout === 'before_after' ? pairs.some(p => p.before && p.after) : clips.length > 0) && (
+            <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:14px;padding:6px 18px 14px;margin-top:16px')}>
+              {renderOutroSection()}
             </div>
           )}
 
@@ -1398,6 +1532,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
                     <input value={propAddress} onChange={e => setPropAddress(e.target.value)} placeholder="Indirizzo" style={inputStyle} />
                   </div>
                 </div>
+                {renderOutroSection()}
                 <div style={s('display:flex;justify-content:space-between;margin-top:16px')}>
                   <Box as="button" onClick={() => setSottPhase('edit')} style={s('border:1px solid #e4e1da;background:#fff;font-size:13px;font-weight:600;padding:11px 20px;border-radius:10px;cursor:pointer') as React.CSSProperties} hover={s('background:#f6f4f0')}>&larr; Modifica testo</Box>
                   <Box as="button" onClick={handleRender} style={s('border:none;background:#3B83F6;color:#fff;font-size:14px;font-weight:700;padding:12px 24px;border-radius:10px;cursor:pointer;display:flex;align-items:center;gap:8px') as React.CSSProperties} hover={s('background:#2b6fe0')}>
@@ -1540,9 +1675,9 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
               <div style={s('border-top:1px solid #f0ede7;padding-top:18px;margin-top:18px')}>
                 <div style={s('font-size:14px;font-weight:800;margin-bottom:4px')}>Musica <span style={s('font-weight:500;color:#b3aca1;font-size:12px')}>(opzionale)</span></div>
                 <div style={s('color:#8c867d;font-size:13px;margin-bottom:12px')}>Scegli la colonna sonora del video.</div>
-                <Box as="button" onClick={() => setMusicOpen(o => !o)} style={s('width:100%;border:1px solid #e4e1da;background:#fff;font-size:13px;font-weight:600;padding:10px 14px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:space-between') as React.CSSProperties} hover={s('background:#faf9f7')}>
+                <Box as="button" onClick={() => setMusicOpen(o => !o)} style={s('width:100%;border:1.5px solid #d6d2c9;background:#fff;font-size:13px;font-weight:600;padding:10px 14px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:space-between') as React.CSSProperties} hover={s('background:#faf9f7;border-color:#bdb8ae')}>
                   <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: musicUrl ? '#1F2937' : '#b3aca1', fontWeight: musicUrl ? 600 : 400 }}>
-                    {musicUrl ? (musicLibrary.find(t => t.url === musicUrl)?.title || 'Traccia selezionata') : 'Seleziona musica'}
+                    {musicUrl ? (musicLibrary.find(t => t.url === musicUrl)?.title || 'Traccia selezionata') : 'Seleziona la musica del video...'}
                   </span>
                   <Icon name="chevron-down" size={14} color="#8c867d" />
                 </Box>
@@ -1565,6 +1700,9 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
                     ))}
                   </div>
                 )}
+              </div>
+              <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:14px;padding:6px 18px 14px;margin-top:14px')}>
+                {renderOutroSection()}
               </div>
               <StickyNav bleed={24}>
                 <Box as="button" onClick={() => setMontaggioPhase('cover')} style={s('border:1px solid #e4e1da;background:#fff;font-size:13px;font-weight:600;padding:11px 20px;border-radius:10px;cursor:pointer') as React.CSSProperties} hover={s('background:#f6f4f0')}>Indietro</Box>
@@ -1577,9 +1715,9 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
         </div>
       )}
 
-      {/* STEP 3 — options (all other templates: standard 2-column layout) */}
+      {/* STEP 3 — options (avatar: tutto in colonna unica) */}
       {step === 3 && tpl && !inlineStep3 && layout !== 'sottotitoli' && layout !== 'montaggio' && (
-        <div className="max-md:!grid-cols-1 max-md:!flex max-md:!flex-col-reverse" style={{ display: 'grid', gridTemplateColumns: '1fr 360px', gap: 24, alignItems: 'start' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {/* script editor (classic/split) */}
             {usesAvatar && (
@@ -1592,80 +1730,42 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
                   </div>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                    {sections.map(sec => (
+                    {sections.map(sec => {
+                      const wc = sec.text.trim() ? sec.text.trim().split(/\s+/).length : 0;
+                      const over = sec.maxWords ? wc > sec.maxWords : false;
+                      return (
                       <div key={sec.id}>
-                        <label style={s('display:block;font-size:12px;font-weight:700;color:#57534c;margin-bottom:5px')}>{sec.label}</label>
-                        <textarea value={sec.text} onChange={e => setSections(ss => ss.map(x => x.id === sec.id ? { ...x, text: e.target.value } : x))} rows={2} style={{ ...inputStyle, resize: 'vertical' }} />
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 5 }}>
+                          <label style={s('font-size:12px;font-weight:700;color:#57534c')}>{sec.label}</label>
+                          {sec.maxWords ? <span style={{ fontSize: 11, fontWeight: 600, color: over ? '#dc2626' : '#b3aca1' }}>{wc}/{sec.maxWords} parole</span> : null}
+                        </div>
+                        <textarea value={sec.text} onChange={e => {
+                          let v = e.target.value;
+                          if (sec.maxWords) {
+                            const words = v.split(/\s+/);
+                            // cap solo quando si supera (mantiene gli spazi durante la digitazione)
+                            if (words.filter(Boolean).length > sec.maxWords) v = words.filter(Boolean).slice(0, sec.maxWords).join(' ');
+                          }
+                          setSections(ss => ss.map(x => x.id === sec.id ? { ...x, text: v } : x));
+                        }} rows={2} style={{ ...inputStyle, resize: 'vertical' }} />
                       </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>
             )}
 
-            {/* ai_staging style + animation */}
-            {layout === 'ai_staging' && (
-              <>
-                <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:14px;padding:20px')}>
-                  <div style={s('font-size:14px;font-weight:800;margin-bottom:12px')}>Stile arredamento</div>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
-                    {AI_STAGING_STYLES.map(st => {
-                      const sel = stagingStyle === st.id;
-                      return (
-                        <div key={st.id} onClick={() => setStagingStyle(st.id)} style={{
-                          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, padding: '12px 4px',
-                          borderRadius: 10, cursor: 'pointer', textAlign: 'center',
-                          border: sel ? '2px solid #3B83F6' : '2px solid transparent',
-                          background: sel ? '#eef4fe' : '#f6f4f0', transition: 'all .15s',
-                        }}>
-                          <span style={{ width: 22, height: 22, display: 'flex', color: sel ? '#1d5fd0' : '#57534c' }} dangerouslySetInnerHTML={{ __html: st.icon }} />
-                          <span style={{ fontSize: 11, fontWeight: 600, color: sel ? '#1d5fd0' : '#57534c' }}>{st.label}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-                <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:14px;padding:20px')}>
-                  <div style={s('font-size:14px;font-weight:800;margin-bottom:12px')}>Animazione</div>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
-                    {AI_STAGING_ANIMATION_STYLES.map(an => (
-                      <div key={an.id} onClick={() => setAnimStyle(an.id)} style={{ ...cardSel(animStyle === an.id), textAlign: 'center', fontSize: 12.5, fontWeight: 700 }}>{an.label}</div>
-                    ))}
-                  </div>
-                </div>
-              </>
-            )}
-
-            {/* day_night direction */}
-            {layout === 'day_night' && (
-              <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:14px;padding:20px')}>
-                <div style={s('font-size:14px;font-weight:800;margin-bottom:12px')}>Direzione</div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
-                  {DAY_NIGHT_DIRECTIONS.map(d => (
-                    <div key={d.id} onClick={() => setDayNightDir(d.id)} style={{ ...cardSel(dayNightDir === d.id), textAlign: 'center', fontSize: 12.5, fontWeight: 700 }}>{d.label}</div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* property info */}
-            <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:14px;padding:20px')}>
-              <div style={s('font-size:14px;font-weight:800;margin-bottom:12px')}>Immobile <span style={s('font-weight:500;color:#b3aca1;font-size:12px')}>(opzionale)</span></div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <input value={propTitle} onChange={e => setPropTitle(e.target.value)} placeholder="Tipologia (es. Trilocale)" style={inputStyle} />
-                <input value={propAddress} onChange={e => setPropAddress(e.target.value)} placeholder="Indirizzo" style={inputStyle} />
-              </div>
-            </div>
           </div>
 
-          {/* right column: music + CTA */}
+          {/* musica + copertina + CTA (impilati) */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {usesMusic && (
               <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:14px;padding:18px')}>
                 <div style={s('font-size:13px;font-weight:800;margin-bottom:10px')}>Musica</div>
-                <Box as="button" onClick={() => setMusicOpen(o => !o)} style={s('width:100%;border:1px solid #e4e1da;background:#fff;font-size:13px;font-weight:600;padding:10px 14px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:space-between') as React.CSSProperties} hover={s('background:#faf9f7')}>
+                <Box as="button" onClick={() => setMusicOpen(o => !o)} style={s('width:100%;border:1.5px solid #d6d2c9;background:#fff;font-size:13px;font-weight:600;padding:10px 14px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:space-between') as React.CSSProperties} hover={s('background:#faf9f7;border-color:#bdb8ae')}>
                   <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: musicUrl ? '#1F2937' : '#b3aca1', fontWeight: musicUrl ? 600 : 400 }}>
-                    {musicUrl ? (musicLibrary.find(t => t.url === musicUrl)?.title || 'Traccia selezionata') : 'Seleziona musica'}
+                    {musicUrl ? (musicLibrary.find(t => t.url === musicUrl)?.title || 'Traccia selezionata') : 'Seleziona la musica del video...'}
                   </span>
                   <Icon name="chevron-down" size={14} color="#8c867d" />
                 </Box>
@@ -1690,6 +1790,9 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
                 )}
               </div>
             )}
+            <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:14px;padding:6px 18px 14px')}>
+              {renderOutroSection()}
+            </div>
             <StickyNav align="center">
               <Box as="button" onClick={() => setStep(2)} style={s('border:1px solid #e4e1da;background:#fff;font-size:13px;font-weight:600;padding:11px 20px;border-radius:10px;cursor:pointer') as React.CSSProperties} hover={s('background:#f6f4f0')}>Indietro</Box>
               <Box as="button" onClick={handleRender} style={s('border:none;background:#3B83F6;color:#fff;font-size:14px;font-weight:700;padding:14px 22px;border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px') as React.CSSProperties} hover={s('background:#2b6fe0')}>
