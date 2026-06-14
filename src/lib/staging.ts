@@ -378,6 +378,40 @@ export async function fetchStagingQuota(): Promise<StagingQuota | null> {
   }
 }
 
+// ─── Post quota (5 gratis per account, illimitati sui piani a pagamento) ───
+export type PostQuota = { unlimited: boolean; remaining: number };
+
+export async function fetchPostQuota(): Promise<PostQuota | null> {
+  try {
+    const { data: udata } = await supabase.auth.getUser();
+    const uid = udata.user?.id;
+    if (!uid) return null;
+    const { data, error } = await supabase.rpc('get_post_quota_status', { p_user_id: uid });
+    if (error || !data) return null;
+    return { unlimited: !!data.unlimited, remaining: Number(data.remaining) || 0 };
+  } catch {
+    return null;
+  }
+}
+
+// Consuma 1 post. Paid -> allowed:true unlimited (nessun decremento).
+export async function consumePostQuota(): Promise<{ allowed: boolean; unlimited: boolean; remaining: number | null } | null> {
+  try {
+    const { data: udata } = await supabase.auth.getUser();
+    const uid = udata.user?.id;
+    if (!uid) return null;
+    const { data, error } = await supabase.rpc('check_and_decrement_post_quota', { p_user_id: uid });
+    if (error || !data) return null;
+    return {
+      allowed: !!data.allowed,
+      unlimited: !!data.unlimited,
+      remaining: typeof data.remaining === 'number' ? data.remaining : null,
+    };
+  } catch {
+    return null;
+  }
+}
+
 // Download a generated image (remote URL) as a local file.
 export async function downloadImage(url: string, filename = 'foto-ai.png') {
   const resp = await fetch(url);

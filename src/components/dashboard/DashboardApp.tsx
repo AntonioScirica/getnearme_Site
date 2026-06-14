@@ -59,7 +59,7 @@ import { NewProjectModal } from './NewProjectModal';
 import type { Project } from './types';
 import { type ProjectData, fetchProjects, updateProject } from '@/lib/projects';
 import { fetchUserBatches, fetchBatchPhotos, dismissBatch, type BatchInfo } from '@/lib/stagingBatches';
-import { STAGING_STYLES, getTokenFast, fetchStagingQuota } from '@/lib/staging';
+import { STAGING_STYLES, getTokenFast, fetchStagingQuota, fetchPostQuota, consumePostQuota } from '@/lib/staging';
 import { cleanupOldMedia } from '@/lib/localMediaCache';
 import { supabase } from '@/lib/supabase';
 
@@ -254,19 +254,17 @@ const STRIPE_BILLING_PORTAL = 'https://billing.stripe.com/p/login/9B68wP7WH3blfT
 
 const STRIPE_PAYMENT_LINKS: Record<string, string> = {
   agency_monthly: 'https://buy.stripe.com/eVq6oH2Cn3bl22Q8xGak00x',
-  agency_quarterly: 'https://buy.stripe.com/eVq00jdh1eU36j6g08ak00y',
   agency_annual: 'https://buy.stripe.com/eVq00jccX6nxePCdS0ak00z',
 };
 
 const SUB_TYPE_TO_PLAN: Record<string, string> = {
+  free: 'free',
   agency_monthly: 'monthly',
-  agency_quarterly: 'quarterly',
   agency_annual: 'annual',
 };
 
 const PLAN_TO_SUB_TYPE: Record<string, string> = {
   monthly: 'agency_monthly',
-  quarterly: 'agency_quarterly',
   annual: 'agency_annual',
 };
 
@@ -281,19 +279,26 @@ const PLAN_FEATURES = [
   'Supporto prioritario',
 ];
 
+const FREE_FEATURES = [
+  '5 foto AI homestaging',
+  '1 video AI',
+  '5 post social',
+  'Template Post & Stories Social',
+];
+
 const PLANS = [
+  {
+    id: 'free', name: 'Free', price: 0, period: '', badge: null, popular: false,
+    features: FREE_FEATURES,
+    color: 'var(--text-muted)', quotaFoto: 5, quotaVideo: 1, quotaPost: 5,
+  },
   {
     id: 'monthly', name: 'Mensile', price: 100, period: '/mese', badge: null, popular: false,
     features: PLAN_FEATURES,
     color: 'var(--text-main)', quotaFoto: 250, quotaVideo: 4, quotaPost: 999,
   },
   {
-    id: 'quarterly', name: 'Trimestrale', price: 79, period: '/mese', badge: null, popular: false,
-    features: PLAN_FEATURES,
-    color: '#3B83F6', quotaFoto: 250, quotaVideo: 4, quotaPost: 999,
-  },
-  {
-    id: 'annual', name: 'Annuale', price: 59, period: '/mese', badge: null, popular: false,
+    id: 'annual', name: 'Annuale', price: 59, period: '/mese', badge: 'Risparmia', popular: true,
     features: PLAN_FEATURES,
     color: 'var(--text-main)', quotaFoto: 250, quotaVideo: 4, quotaPost: 999,
   },
@@ -417,7 +422,7 @@ const LOGO_VARIANT_LABELS: Record<string, string> = {
   colored_v: 'Icona, Colore', colored_h: 'Icona + Nome, Colore',
 };
 
-function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectUpdate, initialPhotoUrl }: { toast: (msg: string, icon?: string) => void; routeKey: number; brand: BrandSettings; project?: Project; batches?: BatchInfo[]; onProjectUpdate?: (p: Partial<Project>) => void; initialPhotoUrl?: string | null }) {
+function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectUpdate, initialPhotoUrl, go }: { toast: (msg: string, icon?: string) => void; routeKey: number; brand: BrandSettings; project?: Project; batches?: BatchInfo[]; onProjectUpdate?: (p: Partial<Project>) => void; initialPhotoUrl?: string | null; go?: (r: string) => void }) {
   const [step, setStep] = React.useState(1);
   React.useEffect(() => { setStep(1); }, [routeKey]);
   const [logos, setLogos] = React.useState<{ white: string | null; black: string | null; blue: string | null } | null>(logosCache);
@@ -521,6 +526,19 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
   const [showAnimPicker, setShowAnimPicker] = React.useState(false);
   const [exporting, setExporting] = React.useState<'image' | 'video' | null>(null);
   const [exportProgress, setExportProgress] = React.useState(0);
+  // Quota post: 5 gratis, illimitati sui piani a pagamento. Gate su ogni export.
+  const [postQuota, setPostQuota] = React.useState<{ unlimited: boolean; remaining: number } | null>(null);
+  const [postsPaywallOpen, setPostsPaywallOpen] = React.useState(false);
+  React.useEffect(() => { fetchPostQuota().then(setPostQuota); }, []);
+  // Ritorna true se si puo' procedere (consuma 1 credito), altrimenti apre il paywall.
+  const gatePost = async (): Promise<boolean> => {
+    if (postQuota && !postQuota.unlimited && postQuota.remaining <= 0) { setPostsPaywallOpen(true); return false; }
+    const r = await consumePostQuota();
+    if (!r || !r.allowed) { setPostsPaywallOpen(true); return false; }
+    if (!r.unlimited && typeof r.remaining === 'number') setPostQuota({ unlimited: false, remaining: r.remaining });
+    else if (r.unlimited) setPostQuota({ unlimited: true, remaining: 0 });
+    return true;
+  };
   const exportAbortRef = React.useRef<AbortController | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const extraFileRefs = React.useRef<(HTMLInputElement | null)[]>([]);
@@ -659,6 +677,7 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
   const handleExportImage = async () => {
     if (exporting) return;
     if (isVideo) { toast('Hai caricato un video: scarica il video, non l’immagine', 'download'); return; }
+    if (!(await gatePost())) return;
     setExporting('image');
     let cleanup: (() => void) | null = null;
     try {
@@ -695,6 +714,7 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
 
   const handleExportAll = async () => {
     if (exporting) return;
+    if (!(await gatePost())) return;
     setExporting('image');
     try {
       const blurredUrl: string = await new Promise((resolve) => {
@@ -862,6 +882,7 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
 
   const handleExportVideo = async () => {
     if (exporting) return;
+    if (!(await gatePost())) return;
     setExporting('video');
     setExportProgress(0);
     const abort = new AbortController();
@@ -1483,6 +1504,12 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
               const tip = noPhoto ? 'Carica una foto per esportare' : missingExtra ? `Carica tutte le ${curTpl.multiPhoto} foto per esportare` : isVideo ? 'Hai caricato un video: scarica il video' : undefined;
               return (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {postQuota && !postQuota.unlimited && (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: postQuota.remaining > 0 ? 'var(--text-muted)' : '#dc2626' }}>
+                  <Icon name="megaphone" size={13} color={postQuota.remaining > 0 ? 'var(--text-muted)' : '#dc2626'} />
+                  {postQuota.remaining > 0 ? `${postQuota.remaining} post gratis rimasti` : 'Post gratis esauriti'}
+                </div>
+              )}
               <Box as="button" title={tip} onClick={() => { if (!disImg) handleExportImage(); }} style={{ border: '1px solid var(--border-main)', background: 'var(--bg-card)', fontSize: 13, fontWeight: 700, padding: '12px 16px', borderRadius: 10, cursor: disImg ? 'default' : 'pointer', minHeight: 42, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: disImg ? 0.4 : 1 }} hover={disImg ? {} : { background: 'var(--bg-hover)' }}>
                 <Icon name="download" size={15} color="var(--text-sec)" />{exporting === 'image' ? 'Esportazione...' : 'Scarica immagine'}
               </Box>
@@ -1628,6 +1655,23 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
           </div>
         </div>
       )}
+      {postsPaywallOpen && (
+        <div onClick={() => setPostsPaywallOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(24,21,17,.55)', backdropFilter: 'blur(4px)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: 'var(--bg-card)', borderRadius: 20, maxWidth: 420, width: '100%', padding: '32px 28px', textAlign: 'center', boxShadow: '0 24px 64px rgba(0,0,0,.18)' }}>
+            <div style={{ width: 56, height: 56, borderRadius: 16, background: '#eef4fe', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 18px' }}>
+              <Icon name="megaphone" size={26} color="#3B83F6" />
+            </div>
+            <div style={{ fontSize: 17, fontWeight: 800, marginBottom: 6 }}>Hai esaurito i post gratis</div>
+            <div style={{ fontSize: 13.5, color: 'var(--text-muted)', lineHeight: 1.5, marginBottom: 22 }}>Passa a un piano per creare post social illimitati per i tuoi annunci.</div>
+            <Box as="button" onClick={() => { setPostsPaywallOpen(false); go?.('account'); }} style={s('display:block;width:100%;border:none;background:#3B83F6;color:var(--bg-card);font-size:14px;font-weight:700;padding:13px 16px;border-radius:12px;cursor:pointer;min-height:46px')} hover={s('background:#2b6fe0')}>
+              Vedi i piani
+            </Box>
+            <Box as="button" onClick={() => setPostsPaywallOpen(false)} style={s('display:block;margin:10px auto 0;border:none;background:transparent;color:var(--text-muted);font-size:13px;font-weight:600;cursor:pointer')} hover={{ color: 'var(--text-sec)' }}>
+              Chiudi
+            </Box>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -1649,10 +1693,10 @@ function UsageBar({ label, used, total, color }: { label: string; used: number; 
 }
 
 function AccountScreen({ credits, toast, go, userData }: { credits: number; toast: (msg: string, icon?: string) => void; go: (r: string) => void; userData: UserData | null }) {
-  // Free / nessun abbonamento -> activePlan null (NON defaultare a 'quarterly',
-  // altrimenti un utente appena registrato vede "Trimestrale ATTIVO").
-  const activePlan = userData?.subscriptionType ? (SUB_TYPE_TO_PLAN[userData.subscriptionType] ?? null) : null;
-  const currentPlan = activePlan ? (PLANS.find(p => p.id === activePlan) ?? null) : null;
+  // Free e' un tier reale: 'free'/null -> piano Free. I paganti -> monthly/annual.
+  const activePlan = userData?.subscriptionType ? (SUB_TYPE_TO_PLAN[userData.subscriptionType] ?? 'free') : 'free';
+  const currentPlan = PLANS.find(p => p.id === activePlan) ?? PLANS[0];
+  const isFree = currentPlan.id === 'free';
   const monthlyCost = 100;
 
   return (
@@ -1668,16 +1712,16 @@ function AccountScreen({ credits, toast, go, userData }: { credits: number; toas
         <div className="max-md:!flex-col max-md:!items-start" style={s('display:flex;align-items:center;gap:20px')}>
           <div style={s('flex:1;min-width:0')}>
             <div style={s('display:flex;align-items:center;gap:10px')}>
-              <span style={s('font-size:18px;font-weight:800;letter-spacing:-.3px')}>Piano {currentPlan ? currentPlan.name : 'Free'}</span>
-              <span style={currentPlan
-                ? s('font-size:10.5px;font-weight:800;background:#3B83F6;color:var(--bg-card);padding:4px 12px;border-radius:8px;letter-spacing:.03em')
-                : s('font-size:10.5px;font-weight:800;background:var(--border-light);color:var(--text-muted);padding:4px 12px;border-radius:8px;letter-spacing:.03em')}>{currentPlan ? 'ATTIVO' : 'FREE'}</span>
+              <span style={s('font-size:18px;font-weight:800;letter-spacing:-.3px')}>Piano {currentPlan.name}</span>
+              <span style={isFree
+                ? s('font-size:10.5px;font-weight:800;background:var(--border-light);color:var(--text-muted);padding:4px 12px;border-radius:8px;letter-spacing:.03em')
+                : s('font-size:10.5px;font-weight:800;background:#3B83F6;color:var(--bg-card);padding:4px 12px;border-radius:8px;letter-spacing:.03em')}>{isFree ? 'FREE' : 'ATTIVO'}</span>
             </div>
-            {!currentPlan && (
-              <div style={s('margin-top:6px;font-size:13px;color:var(--text-muted)')}>Scegli un piano qui sotto per avere foto e video AI ogni mese.</div>
+            {isFree && (
+              <div style={s('margin-top:6px;font-size:13px;color:var(--text-muted)')}>Passa a un piano per foto, video e post AI illimitati ogni mese.</div>
             )}
           </div>
-          {currentPlan && (
+          {!isFree && (
             <Box as="button" onClick={async () => {
               // Apre il Billing Portal Stripe DIRETTO (no re-login): crea una
               // portal session server-side col customer dell'utente. Fallback al
@@ -1701,7 +1745,7 @@ function AccountScreen({ credits, toast, go, userData }: { credits: number; toas
         <div className="max-md:!grid-cols-1" style={s('display:grid;grid-template-columns:repeat(3,1fr);gap:20px;align-items:stretch')}>
           {PLANS.map((plan) => {
             const active = plan.id === activePlan;
-            const savings = plan.price < monthlyCost ? (monthlyCost - plan.price) * 12 : 0;
+            const savings = plan.id !== 'free' && plan.price < monthlyCost ? (monthlyCost - plan.price) * 12 : 0;
             return (
               <Box key={plan.id} style={{
                 background: active ? '#3B83F6' : 'var(--bg-card)',
@@ -1760,8 +1804,9 @@ function AccountScreen({ credits, toast, go, userData }: { credits: number; toas
                 </div>
 
                 <Box as="button" onClick={() => {
-                  if (active) toast('Sei già su questo piano', 'check');
-                  else if (userData) redirectToStripePayment(plan.id, userData.id, userData.email);
+                  if (active) { toast('Sei già su questo piano', 'check'); return; }
+                  if (plan.id === 'free') { toast('Per tornare al Free disdici l’abbonamento da “Gestisci piano”'); return; }
+                  if (userData) redirectToStripePayment(plan.id, userData.id, userData.email);
                 }} style={{
                   marginTop: 28,
                   border: 'none',
@@ -1775,7 +1820,7 @@ function AccountScreen({ credits, toast, go, userData }: { credits: number; toas
                   background: active ? '#f0f6ff' : '#333028',
                   transform: 'scale(0.98)',
                 }}>
-                  {active ? 'Piano attuale' : 'Scegli questo piano'}
+                  {active ? 'Piano attuale' : plan.id === 'free' ? 'Piano base' : 'Scegli questo piano'}
                 </Box>
               </Box>
             );
@@ -2942,7 +2987,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                 }}
               />
             ) : route === 'studio' ? (
-              <PostSocialScreen toast={toast} routeKey={routeKey} brand={brand} project={active} batches={batches} onProjectUpdate={(upd) => setProjects(prev => prev.map(p => p.id === active.id ? { ...p, ...upd } : p))} initialPhotoUrl={studioPhoto} />
+              <PostSocialScreen toast={toast} routeKey={routeKey} brand={brand} project={active} batches={batches} onProjectUpdate={(upd) => setProjects(prev => prev.map(p => p.id === active.id ? { ...p, ...upd } : p))} initialPhotoUrl={studioPhoto} go={go} />
             ) : route === 'staging' ? (
               <FotoAIScreen 
                 toast={toast} 

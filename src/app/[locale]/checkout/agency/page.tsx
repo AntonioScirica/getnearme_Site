@@ -11,7 +11,6 @@ import Navbar from '@/components/Navbar';
 // Plan ID mapping: homepage IDs → internal subscription IDs
 const PLAN_ID_MAP: Record<string, string> = {
   agency_monthly: 'agency_monthly',
-  agency_quarterly: 'agency_quarterly',
   agency_annual: 'agency_annual',
 };
 
@@ -37,16 +36,6 @@ const PLANS: Record<string, PlanData> = {
     features_key: 'pro',
     popular: false,
   },
-  agency_quarterly: {
-    name: 'Trimestrale',
-    price_monthly: 79,
-    price_annual: 79,
-    original_price: 79,
-    payment_link_monthly: 'https://buy.stripe.com/eVq00jdh1eU36j6g08ak00y',
-    payment_link_annual: null,
-    features_key: 'pro',
-    popular: true,
-  },
   agency_annual: {
     name: 'Annuale',
     price_monthly: 59,
@@ -55,16 +44,15 @@ const PLANS: Record<string, PlanData> = {
     payment_link_monthly: 'https://buy.stripe.com/eVq00jccX6nxePCdS0ak00z',
     payment_link_annual: null,
     features_key: 'pro',
-    popular: false,
+    popular: true,
   },
 };
 
-const PLAN_DISPLAY_ORDER = ['agency_monthly', 'agency_quarterly', 'agency_annual'];
+const PLAN_DISPLAY_ORDER = ['agency_monthly', 'agency_annual'];
 
 const TIER_LABELS: Record<string, Record<string, string>> = {
   user_lite:        { it: 'Lite',         en: 'Lite',      es: 'Lite',       fr: 'Lite',       ru: 'Lite',           uk: 'Lite' },
   agency_monthly:   { it: 'Mensile',      en: 'Monthly',   es: 'Mensual',    fr: 'Mensuel',    ru: 'Ежемесячно',     uk: 'Щомісячно' },
-  agency_quarterly: { it: 'Trimestrale',  en: 'Quarterly', es: 'Trimestral', fr: 'Trimestriel',ru: 'Ежеквартально',  uk: 'Щоквартально' },
   agency_annual:    { it: 'Annuale',      en: 'Annual',    es: 'Anual',      fr: 'Annuel',     ru: 'Ежегодно',       uk: 'Щорічно' },
 };
 
