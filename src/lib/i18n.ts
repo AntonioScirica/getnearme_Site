@@ -43,90 +43,90 @@ export const ogLocaleMap: Record<Locale, string> = {
 
 // Titoli SEO localizzati (≤60 caratteri ideali)
 export const seoTitles: Record<Locale, string> = {
-  it: 'GetNearMe — AI per Agenti Immobiliari | Analisi Zona, Social, Render',
-  en: 'GetNearMe — AI for Real Estate Agents | Area Analysis, Social, Renders',
-  es: 'GetNearMe — IA para Agentes Inmobiliarios | Análisis Zona, Social, Renders',
-  fr: 'GetNearMe — IA pour Agents Immobiliers | Analyse Zone, Social, Renders',
-  ru: 'GetNearMe — ИИ для риелторов | Анализ района, соцсети, рендеры',
-  uk: 'GetNearMe — ШІ для ріелторів | Аналіз району, соцмережі, рендери',
+  it: 'GetNearMe — Assistente AI per Agenti Immobiliari | Foto, Video, Report',
+  en: 'GetNearMe — AI Assistant for Real Estate Agents | Photos, Video, Reports',
+  es: 'GetNearMe — Asistente IA para Agentes Inmobiliarios | Fotos, Vídeo, Informes',
+  fr: 'GetNearMe — Assistant IA pour Agents Immobiliers | Photos, Vidéo, Rapports',
+  ru: 'GetNearMe — ИИ-ассистент для риелторов | Фото, видео, отчёты',
+  uk: 'GetNearMe — ШІ-асистент для ріелторів | Фото, відео, звіти',
 };
 
 // Descrizioni SEO localizzate (≤155 caratteri ideali)
 export const seoDescriptions: Record<Locale, string> = {
-  it: 'L\'estensione Chrome con AI che semplifica il lavoro quotidiano dell\'agenzia immobiliare: analisi di zona, render foto AI, video, post social e report PDF su Immobiliare.it, Idealista, Casa.it, Airbnb e Booking. Non è un sistema di valutazione immobiliare. 7 giorni di prova gratuita.',
-  en: 'The Chrome extension with AI that simplifies the daily work of a real estate agency: area analysis, AI photo renders, videos, social posts and PDF reports on Immobiliare.it, Idealista, Casa.it, Airbnb and Booking. Not a property valuation system. 7-day free trial.',
-  es: 'La extensión de Chrome con IA que simplifica el trabajo diario de la agencia inmobiliaria: análisis de zona, renders de fotos con IA, vídeos, posts sociales e informes PDF en Idealista, Immobiliare.it, Casa.it, Airbnb y Booking. No es un sistema de tasación inmobiliaria. 7 días de prueba gratis.',
-  fr: 'L\'extension Chrome avec IA qui simplifie le travail quotidien de l\'agence immobilière : analyse de zone, rendus photo IA, vidéos, posts sociaux et rapports PDF sur Immobiliare.it, Idealista, Casa.it, Airbnb et Booking. Ce n\'est pas un système d\'évaluation immobilière. 7 jours d\'essai gratuit.',
-  ru: 'Расширение Chrome с ИИ, упрощающее ежедневную работу агентства недвижимости: анализ района, ИИ-рендеры фото, видео, посты для соцсетей и PDF-отчёты на Immobiliare.it, Idealista, Casa.it, Airbnb и Booking. Не является системой оценки недвижимости. 7 дней бесплатно.',
-  uk: 'Розширення Chrome зі ШІ, що спрощує щоденну роботу агентства нерухомості: аналіз району, ШІ-рендери фото, відео, пости для соцмереж та PDF-звіти на Immobiliare.it, Idealista, Casa.it, Airbnb і Booking. Не є системою оцінки нерухомості. 7 днів безкоштовно.',
+  it: 'L\'assistente AI per agenti immobiliari: home staging, video, post social, report col tuo brand e analisi di zona per ogni immobile, in pochi minuti. Provalo gratis, senza carta.',
+  en: "The AI assistant for real estate agents: home staging, video, social posts, branded reports and area analysis for every listing, in minutes. What takes you hours today, you do from one place. Try it free, no card.",
+  es: "El asistente IA para agentes inmobiliarios: home staging, vídeos, posts sociales, informes con tu marca y análisis de zona para cada inmueble, en minutos. Lo que hoy te lleva horas, lo haces desde un solo sitio. Pruébalo gratis, sin tarjeta.",
+  fr: "L'assistant IA pour les agents immobiliers : home staging, vidéos, posts sociaux, rapports à ton image et analyse de quartier pour chaque bien, en quelques minutes. Ce qui te prend des heures aujourd'hui, tu le fais depuis un seul endroit. Essaie-le gratuitement, sans carte.",
+  ru: "ИИ-ассистент для риелторов: хоумстейджинг, видео, посты для соцсетей, отчёты с твоим брендом и анализ района для каждого объекта — за пару минут. То, на что сегодня уходят часы, ты делаешь из одного места. Попробуй бесплатно, без карты.",
+  uk: "ШІ-асистент для ріелторів: хоумстейджинг, відео, пости для соцмереж, звіти з твоїм брендом та аналіз району для кожного об'єкта — за кілька хвилин. Те, на що сьогодні йдуть години, ти робиш з одного місця. Спробуй безкоштовно, без картки.",
 };
 
 // Alt text per immagini localizzati
 export const altTexts: Record<Locale, { hero: string; cards: string[] }> = {
   it: {
-    hero: 'GetNearMe — estensione Chrome con AI per agenti immobiliari',
+    hero: 'GetNearMe — l\'assistente AI per agenti immobiliari',
     cards: [
       'Analisi di zona interattiva dei servizi di quartiere',
       'Prezzo medio di zona al m² per riferimento',
-      'Homestaging AI: render foto before/after',
+      'Home staging AI: render foto prima/dopo',
       'Video AI per presentazione immobili',
       'Post social per Instagram e TikTok dall\'annuncio',
-      'Report PDF white-label con brand dell\'agenzia',
+      'Report PDF col tuo brand per ogni immobile',
     ],
   },
   en: {
-    hero: 'GetNearMe — Chrome extension with AI for real estate agents',
+    hero: 'GetNearMe — the AI assistant for real estate agents',
     cards: [
       'Interactive area analysis of neighborhood services',
-      'Average €/m² area price for reference',
+      'Average area price per m² for reference',
       'AI home staging: before/after photo renders',
-      'AI videos for property presentation',
+      'AI videos to present properties',
       'Social posts for Instagram and TikTok from the listing',
-      'White-label PDF reports with agency brand',
+      'PDF reports with your brand for every property',
     ],
   },
   es: {
-    hero: 'GetNearMe — extensión Chrome con IA para agentes inmobiliarios',
+    hero: 'GetNearMe — el asistente IA para agentes inmobiliarios',
     cards: [
-      'Análisis interactivo del barrio y sus servicios',
-      'Precio medio por m² de la zona a título orientativo',
+      'Análisis de zona interactivo de los servicios del barrio',
+      'Precio medio de la zona por m² a título orientativo',
       'Home staging IA: renders de fotos antes/después',
       'Vídeos con IA para presentar inmuebles',
       'Posts sociales para Instagram y TikTok desde el anuncio',
-      'Informes PDF white-label con la marca de la agencia',
+      'Informes PDF con tu marca para cada inmueble',
     ],
   },
   fr: {
-    hero: 'GetNearMe — extension Chrome avec IA pour agents immobiliers',
+    hero: "GetNearMe — l'assistant IA pour les agents immobiliers",
     cards: [
-      'Analyse interactive du quartier et de ses services',
-      'Prix moyen au m² du secteur à titre indicatif',
+      'Analyse de quartier interactive des services du secteur',
+      'Prix moyen du secteur au m² à titre indicatif',
       'Home staging IA : rendus photo avant/après',
-      'Vidéos générées par IA pour présenter les biens',
-      'Posts sociaux pour Instagram et TikTok depuis l\'annonce',
-      'Rapports PDF en marque blanche avec l\'identité de l\'agence',
+      'Vidéos IA pour présenter les biens',
+      "Posts sociaux pour Instagram et TikTok depuis l'annonce",
+      'Rapports PDF à ton image pour chaque bien',
     ],
   },
   ru: {
-    hero: 'GetNearMe — расширение Chrome с ИИ для риелторов',
+    hero: 'GetNearMe — ИИ-ассистент для риелторов',
     cards: [
-      'Интерактивный анализ района и сервисов',
-      'Средняя цена за м² по району (ориентировочно)',
+      'Интерактивный анализ района и его сервисов',
+      'Средняя цена по району за м² для ориентира',
       'ИИ-хоумстейджинг: рендеры фото до/после',
       'ИИ-видео для презентации недвижимости',
       'Посты в соцсети для Instagram и TikTok из объявления',
-      'PDF-отчёты white-label с брендом агентства',
+      'PDF-отчёты с твоим брендом для каждого объекта',
     ],
   },
   uk: {
-    hero: 'GetNearMe — розширення Chrome зі ШІ для ріелторів',
+    hero: 'GetNearMe — ШІ-асистент для ріелторів',
     cards: [
-      'Інтерактивний аналіз району та сервісів',
-      'Середня ціна за м² у районі (орієнтовно)',
+      'Інтерактивний аналіз району та його сервісів',
+      'Середня ціна по району за м² для орієнтиру',
       'ШІ-хоумстейджинг: рендери фото до/після',
       'ШІ-відео для презентації нерухомості',
       'Пости у соцмережі для Instagram і TikTok з оголошення',
-      'PDF-звіти white-label з брендом агентства',
+      "PDF-звіти з твоїм брендом для кожного об'єкта",
     ],
   },
 };

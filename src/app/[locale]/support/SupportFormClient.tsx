@@ -61,7 +61,7 @@ export default function SupportFormClient({ locale }: { locale: string }) {
             display: 'inline-block',
             background: '#f59e0b',
             color: '#1a1a2e',
-            border: '3px solid #1a1a2e',
+            border: '1px solid rgba(26,26,46,0.10)',
             borderRadius: 12,
             padding: '14px 32px',
             fontWeight: 900,
@@ -180,7 +180,7 @@ export default function SupportFormClient({ locale }: { locale: string }) {
         style={{
           background: status === 'sending' ? '#9ca3af' : '#f59e0b',
           color: '#1a1a2e',
-          border: '3px solid #1a1a2e',
+          border: '1px solid rgba(26,26,46,0.10)',
           borderRadius: 12,
           padding: '16px 32px',
           fontWeight: 900,

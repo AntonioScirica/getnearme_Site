@@ -102,7 +102,7 @@ export default function HeroFloatingIcons() {
                         animationDelay: icon.delay,
                     }}
                 >
-                    <div className="w-16 h-16 bg-white neo-border rounded-2xl flex items-center justify-center" style={{ boxShadow: '3px 3px 0px #1a1a2e' }}>
+                    <div className="w-16 h-16 bg-white neo-border rounded-2xl flex items-center justify-center" style={{ boxShadow: '0 4px 16px rgba(16,24,40,0.08)' }}>
                         <icon.Component className={`w-8 h-8 ${icon.color}`} strokeWidth={1.5} />
                     </div>
                 </div>

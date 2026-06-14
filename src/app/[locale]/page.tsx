@@ -1,11 +1,10 @@
 import Link from "next/link";
-import { Flame, Zap, Lock, CreditCard, TrendingUp, Video, Megaphone, SquaresUnite, FileText, Frown, Rocket, Euro, ClipboardList, ArrowRight } from "lucide-react";
-import { Icon } from "@/lib/icons";
+import { Flame, Zap, Lock, TrendingUp, Video, Megaphone, FileText, ArrowRight, Link2, Sparkles, Send, Clock } from "lucide-react";
 import { locales, type Locale } from "@/lib/i18n";
 import { translations } from "@/lib/translations";
 import Navbar from "@/components/Navbar";
-import RevealBadge from "@/components/RevealBadge";
 import HomepageClient from "./HomepageClient";
+import ReferenceGallery from "./reference/ReferenceGallery";
 
 
 type Props = {
@@ -46,7 +45,7 @@ export default async function Home({ params }: Props) {
             textAlign: "center",
             fontSize: 13,
             fontWeight: 600,
-            borderBottom: "3px solid #f59e0b",
+            borderBottom: "1px solid #f59e0b",
           }}
         >
           <span style={{ display: "inline-flex", alignItems: "center", gap: 6, flexWrap: "wrap", justifyContent: "center" }}>
@@ -137,7 +136,7 @@ export default async function Home({ params }: Props) {
                     fontWeight: 700,
                     color: "#b45309",
                     marginBottom: 28,
-                    boxShadow: "3px 3px 0 #f59e0b40",
+                    boxShadow: "0 4px 14px rgba(245,158,11,0.20)",
                     // display: "inline-flex",
                     alignItems: "center",
                     gap: 6,
@@ -194,7 +193,7 @@ export default async function Home({ params }: Props) {
                     color: "#1a1a2e",
                     padding: "16px 20px",
                     borderRadius: 14,
-                    fontWeight: 900,
+                    fontWeight: 800,
                     fontSize: 15,
                     cursor: "pointer",
                     letterSpacing: 0.5,
@@ -212,10 +211,11 @@ export default async function Home({ params }: Props) {
                     color: "#1a1a2e",
                     padding: "16px 20px",
                     borderRadius: 14,
-                    fontWeight: 700,
+                    fontWeight: 800,
                     fontSize: 15,
                     cursor: "pointer",
                     textDecoration: "none",
+                    border: "1.5px solid rgba(26,26,46,0.25)",
                   }}
                 >
                   {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
@@ -226,34 +226,42 @@ export default async function Home({ params }: Props) {
 
             </div>
 
-            {/* Header Image - Full width, neobrutalism frame */}
+            {/* Hero tutorial video — 16:9 */}
             <div
               className="mt-12 md:mt-16"
               style={{
-                border: "3px solid #1a1a2e",
+                border: "1px solid rgba(26,26,46,0.10)",
                 borderRadius: 18,
-                boxShadow: "8px 8px 0px #1a1a2e",
+                boxShadow: "0 12px 30px rgba(16,24,40,0.10)",
                 overflow: "hidden",
                 background: "#1a1a2e",
+                aspectRatio: "16 / 9",
               }}
             >
-              <img
-                src="/assets/png/header.jpg"
-                alt="GetNearMe - Analisi immobiliare intelligente"
+              <video
+                autoPlay
+                muted
+                loop
+                playsInline
+                poster="/staging/1.jpg"
+                aria-label="GetNearMe — home staging AI: prima e dopo"
                 style={{
                   width: "100%",
-                  height: "auto",
+                  height: "100%",
+                  objectFit: "cover",
                   display: "block",
                 }}
-              />
+              >
+                <source src="/staging/prima_dopo.mp4" type="video/mp4" />
+              </video>
             </div>
           </div>
         </section>
 
-        {/* How It Works */}
+        {/* Operational flow — Dall'annuncio al cliente */}
         <section style={{ padding: "70px 0", background: "#fff" }}>
           <div className="max-w-7xl mx-auto px-5 md:px-3">
-            <div style={{ textAlign: "center", marginBottom: 28 }}>
+            <div style={{ textAlign: "center", marginBottom: 48 }}>
               <h2
                 style={{
                   fontSize: "clamp(28px, 5vw, 44px)",
@@ -263,53 +271,50 @@ export default async function Home({ params }: Props) {
                   marginBottom: 12,
                 }}
               >
-                {l.howItWorks.title}{" "}
-                <RevealBadge
-                  style={{
-                    background: "#f59e0b",
-                    color: "#fff",
-                    padding: "2px 14px",
-                    borderRadius: 10,
-                  }}
-                >
-                  {l.howItWorks.titleHighlight}
-                </RevealBadge>
+                {"Dall'annuncio al cliente, "}
+                <span style={{ color: "#f59e0b" }}>in pochi minuti.</span>
               </h2>
-              <p style={{ color: "#666", fontSize: 16 }}>
-                {l.howItWorks.subtitle}
+              <p style={{ color: "#666", fontSize: 16, maxWidth: 720, margin: "0 auto", lineHeight: 1.6 }}>
+                {"Niente da installare, niente da imparare. Parti dall'annuncio e l'assistente AI prepara tutto il materiale, già col tuo brand."}
               </p>
             </div>
-            <div
-              style={{
-                display: "flex",
-                gap: 24,
-                justifyContent: "center",
-                flexWrap: "wrap",
-                alignItems: "stretch",
-              }}
-            >
-              {l.howItWorks.steps.map(
-                (
-                  s: {
-                    step: string;
-                    title: string;
-                    desc: string;
-                    color: string;
-                    bg: string;
-                    emoji: string;
-                  },
-                  i: number
-                ) => (
-                  <HomepageClient
-                    key={i}
-                    variant="step-card"
-                    stepData={s}
-                    index={i}
-                  />
-                )
-              )}
-            </div>
+            {(() => {
+              const flowSteps = [
+                { n: "1", icon: Link2, color: "#6366f1", bg: "#eef2ff", title: "Parti dall'annuncio", desc: "Incolli il link da Immobiliare o Idealista, oppure carichi le tue foto. GetNearMe legge i dati dell'immobile.", chips: ["Dati immobile", "Foto", "Zona"] },
+                { n: "2", icon: Sparkles, color: "#f59e0b", bg: "#fffbeb", title: "L'AI prepara tutto", desc: "In pochi minuti l'assistente genera i materiali, già col tuo logo e i tuoi colori.", chips: ["Home staging", "Video", "Post social", "Report PDF"] },
+                { n: "3", icon: Send, color: "#10b981", bg: "#ecfdf5", title: "Pubblichi e invii", desc: "Pubblichi sui social, metti sui portali o mandi al cliente. Tutto pronto, senza altri programmi.", chips: ["Portali", "Social", "Cliente"] },
+              ];
+              return (
+                <div className="flow-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 24, alignItems: "stretch" }}>
+                  {flowSteps.map((s) => {
+                    const IconComp = s.icon;
+                    return (
+                      <div key={s.n} className="neo-border neo-shadow" style={{ background: "#fff", borderRadius: 16, padding: "28px 24px", display: "flex", flexDirection: "column", gap: 14 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                          <span style={{ width: 48, height: 48, borderRadius: 12, background: s.bg, border: `2px solid ${s.color}`, color: s.color, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                            <IconComp size={22} strokeWidth={2} />
+                          </span>
+                          <span style={{ fontSize: 13, fontWeight: 900, color: s.color, textTransform: "uppercase", letterSpacing: 0.5 }}>Passo {s.n}</span>
+                        </div>
+                        <h3 style={{ fontSize: 20, fontWeight: 800, color: "#1a1a2e", margin: 0, lineHeight: 1.25 }}>{s.title}</h3>
+                        <p style={{ color: "#444", fontSize: 14, lineHeight: 1.6, margin: 0, flex: 1 }}>{s.desc}</p>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                          {s.chips.map((c) => (
+                            <span key={c} style={{ fontSize: 12, fontWeight: 700, color: "#1a1a2e", background: s.bg, border: `1.5px solid ${s.color}55`, borderRadius: 999, padding: "5px 12px" }}>{c}</span>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
           </div>
+          <style>{`
+            @media (max-width: 768px) {
+              .flow-grid { grid-template-columns: 1fr !important; }
+            }
+          `}</style>
         </section>
 
         {/* Features — Full-Width Alternating */}
@@ -363,143 +368,106 @@ export default async function Home({ params }: Props) {
           )}
         </section>
 
-        {/* Problem / Solution — comparison cards */}
+        {/* Time saved — Ogni attività ti porta via tempo */}
         <section style={{ padding: "70px 0", background: "#fff" }}>
-          <div className="max-w-7xl mx-auto px-5 md:px-3">
-            <div style={{ textAlign: "center", marginBottom: 48 }}>
+          <div className="max-w-5xl mx-auto px-5 md:px-3">
+            <div style={{ textAlign: "center", marginBottom: 40 }}>
               <h2 style={{ fontSize: "clamp(28px, 5vw, 40px)", fontWeight: 900, color: "#1a1a2e", lineHeight: 1.15, margin: "0 0 14px" }}>
-                Ogni attività che devi fare ha un costo.<br />
-                <span style={{ color: "#f59e0b" }}>Con GetNearMe, no.</span>
+                Ogni attività ti porta via tempo.<br />
+                <span style={{ color: "#f59e0b" }}>Con GetNearMe, minuti.</span>
               </h2>
-              <p style={{ color: "#666", fontSize: 17, maxWidth: 700, margin: "0 auto", lineHeight: 1.6 }}>
-                Staging AI, video, post social, report, confronti di zona e molto altro… tutto in un unico flusso operativo ed un unico costo mensile.
+              <p style={{ color: "#666", fontSize: 17, maxWidth: 720, margin: "0 auto", lineHeight: 1.6 }}>
+                {"Quello che oggi ti richiede ore lo fai in pochi minuti. Su una settimana di lavoro è più di un giorno e mezzo che ti riprendi per clienti e trattative."}
               </p>
             </div>
             {(() => {
-              const RED = "#F0000F";
-              const GREEN = "#009874";
               const DARK = "#0E2344";
-              const rows = [
-                { icon: Video, title: "Video dell'immobile", without: "Devi coordinare e pagare un videomaker per video ed edit.", withGNM: "Generi video per i social in due click grazie all'AI." },
-                { icon: Megaphone, title: "Post social media", without: "Li crei tu o li affidi a un social media manager.", withGNM: "Template già pronti all'uso con il tuo brand integrato.", rotate: -15 },
-                { icon: SquaresUnite, title: "Home staging multiplo", without: "Mostri una sola ipotesi, o nessuna.", withGNM: "Generi più proposte visive in pochi clic e secondi." },
-                { icon: FileText, title: "Report comparativi", without: "Copi manualmente i dati e costruisci l'Excel.", withGNM: "Produci report ordinati in modo molto più veloce." },
+              const GREEN = "#009874";
+              const timeRows = [
+                { icon: Sparkles, activity: "Home staging di una stanza", before: "~2 ore con designer o Photoshop", after: "30 secondi" },
+                { icon: Video, activity: "Video per l'annuncio", before: "mezza giornata col videomaker", after: "2 minuti" },
+                { icon: Megaphone, activity: "Post per i social", before: "~30 minuti su Canva", after: "1 minuto" },
+                { icon: FileText, activity: "Report comparativo", before: "~1 ora tra Excel e PowerPoint", after: "2 minuti" },
+                { icon: TrendingUp, activity: "Analisi di zona", before: "~30 minuti tra mappe e ricerche", after: "immediata" },
               ];
-              const Card = ({ color, headerTitle, headerSub, headerIcon, items }: { color: string; headerTitle: string; headerSub: string; headerIcon: React.ReactNode; items: { icon: React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>; title: string; desc: string; rotate?: number }[] }) => (
-                <div style={{ border: `2px solid ${color}`, borderRadius: 20, padding: "28px 32px", background: "#fff" }}>
-                  {/* Header */}
-                  <div className="comparison-header" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 28 }}>
-                    <div>
-                      <h3 style={{ fontSize: 26, fontWeight: 700, color, margin: 0, lineHeight: 1.1 }}>{headerTitle}</h3>
-                      <p style={{ fontSize: 15, fontWeight: 500, color: DARK, margin: "6px 0 0", opacity: 0.6 }}>{headerSub}</p>
-                    </div>
-                    <div className="comparison-header-icon" style={{ width: 52, height: 52, borderRadius: "50%", background: `${color}0D`, border: `2px solid ${color}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginLeft: 16 }}>
-                      {headerIcon}
-                    </div>
-                  </div>
-                  <div style={{ height: 1, background: `${color}20`, marginTop: -16, marginBottom: 6 }} />
-                  {/* Rows */}
-                  <div style={{ display: "flex", flexDirection: "column" }}>
-                    {items.map((r, i) => {
-                      const IconComp = r.icon;
-                      const isLast = i === items.length - 1;
-                      return (
-                        <div key={r.title} className="comparison-row" style={{ display: "grid", gridTemplateColumns: "52px 1fr 1fr", alignItems: "center", gap: 16, padding: "12px 0", borderBottom: isLast ? "none" : `1px solid ${color}20` }}>
-                          <div className="comparison-icon" style={{ width: 52, height: 52, borderRadius: "50%", border: `2px solid ${color}4D`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                            <span style={{ display: "inline-flex", transform: r.rotate ? `rotate(${r.rotate}deg)` : undefined }}><IconComp size={22} color={color} strokeWidth={2} /></span>
-                          </div>
-                          <div className="comparison-title" style={{ fontWeight: 700, fontSize: 18, color: DARK, lineHeight: 1.2 }}>{r.title}</div>
-                          <div className="comparison-desc" style={{ fontSize: 15, fontWeight: 500, color: DARK, lineHeight: 1.5, opacity: 0.7 }}>{r.desc}</div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
               return (
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }} className="comparison-grid">
-                  <Card
-                    color={RED}
-                    headerTitle="Senza GetNearMe"
-                    headerSub="Più tempo perso, più costi, meno risultati."
-                    headerIcon={<Frown size={22} color={RED} strokeWidth={2} />}
-                    items={rows.map(r => ({ icon: r.icon, title: r.title, desc: r.without, rotate: r.rotate }))}
-                  />
-                  <Card
-                    color={GREEN}
-                    headerTitle="Con GetNearMe"
-                    headerSub="Più valore per te e per i tuoi clienti."
-                    headerIcon={<Rocket size={22} color={GREEN} strokeWidth={2} />}
-                    items={rows.map(r => ({ icon: r.icon, title: r.title, desc: r.withGNM, rotate: r.rotate }))}
-                  />
+                <div className="neo-border neo-shadow" style={{ background: "#fff", borderRadius: 20, overflow: "hidden" }}>
+                  <div className="time-row time-head" style={{ display: "grid", gridTemplateColumns: "1.5fr 1.2fr 1fr", alignItems: "center", gap: 16, padding: "16px 24px", background: "#1a1a2e", color: "#fff", fontWeight: 800, fontSize: 13, textTransform: "uppercase", letterSpacing: 0.5 }}>
+                    <div>Attività</div>
+                    <div>Come la fai oggi</div>
+                    <div style={{ textAlign: "right" }}>Con GetNearMe</div>
+                  </div>
+                  {timeRows.map((r, i) => {
+                    const IconComp = r.icon;
+                    return (
+                      <div key={r.activity} className="time-row" style={{ display: "grid", gridTemplateColumns: "1.5fr 1.2fr 1fr", alignItems: "center", gap: 16, padding: "16px 24px", borderTop: i === 0 ? "none" : "1px solid #eef0f4" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                          <span style={{ width: 40, height: 40, borderRadius: 10, background: "#eef2ff", border: "2px solid #2563EB55", color: "#2563EB", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                            <IconComp size={18} strokeWidth={2} />
+                          </span>
+                          <span style={{ fontWeight: 700, fontSize: 15, color: DARK }}>{r.activity}</span>
+                        </div>
+                        <div className="time-before" style={{ fontSize: 14, color: "#6b7280", textDecoration: "line-through" }}>{r.before}</div>
+                        <div className="time-after" style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 6, fontWeight: 800, fontSize: 15, color: GREEN }}>
+                          <Clock size={15} strokeWidth={2.5} /> {r.after}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               );
             })()}
-            {/* Benefits bar + CTA */}
-            <div style={{ marginTop: 24, background: "#f8f9fa", borderRadius: 20, padding: 12, border: "1.5px solid #e5e7eb" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 16 }} className="benefits-bar">
-                {[
-                  { icon: Euro, title: "Meno costi esterni", desc: "Riduci le spese per fornitori e servizi." },
-                  { icon: ClipboardList, title: "Meno copia-incolla", desc: "Dati già pronti, zero lavoro ripetitivo." },
-                  { icon: Zap, title: "Più velocità operativa", desc: "Rispondi ai clienti prima, migliori i risultati." },
-                ].map((b) => (
-                  <div key={b.title} className="benefit-card" style={{ flex: 1, display: "flex", alignItems: "center", gap: 12, background: "#fff", border: "1.5px solid #e5e7eb", borderRadius: 14, padding: "14px 16px" }}>
-                    <div style={{ width: 42, height: 42, borderRadius: "50%", background: "#2563eb", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                      <b.icon size={20} color="#fff" strokeWidth={2} />
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 15, fontWeight: 700, color: "#1a1a2e" }}>{b.title}</div>
-                      <div style={{ fontSize: 13, color: "#666", marginTop: 2 }}>{b.desc}</div>
-                    </div>
-                  </div>
-                ))}
-                <a href="#prezzi" className="neo-border neo-shadow benefits-cta" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, background: "#f59e0b", color: "#1a1a2e", fontSize: 18, fontWeight: 700, padding: "0 28px", height: 58, borderRadius: 12, textDecoration: "none", whiteSpace: "nowrap", flexShrink: 0, transition: "all 0.2s", marginBottom: 6, marginRight: 6 }}>
-                  Prova ora <ArrowRight size={20} strokeWidth={2.5} />
-                </a>
-              </div>
+            <p style={{ color: "#6b7280", fontSize: 12, textAlign: "center", marginTop: 14 }}>
+              {"Stime indicative sul tempo tipico di preparazione manuale."}
+            </p>
+            <div style={{ display: "flex", justifyContent: "center", marginTop: 24 }}>
+              <a href="#pricing" className="neo-border neo-shadow" style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "#f59e0b", color: "#1a1a2e", fontSize: 17, fontWeight: 800, padding: "16px 32px", borderRadius: 12, textDecoration: "none" }}>
+                Prova gratis <ArrowRight size={20} strokeWidth={2.5} />
+              </a>
             </div>
           </div>
           <style>{`
             @media (max-width: 768px) {
-              .comparison-grid {
-                grid-template-columns: 1fr !important;
-              }
-              .comparison-header {
-                flex-direction: column-reverse !important;
-                align-items: center !important;
-                text-align: center;
-                gap: 12px;
-              }
-              .comparison-header-icon {
-                margin-left: 0 !important;
-              }
-              .comparison-row {
-                grid-template-columns: 1fr !important;
-                justify-items: center;
-                text-align: center;
-                gap: 8px !important;
-                padding: 16px 0 !important;
-              }
-              .benefits-bar {
-                flex-direction: column !important;
-                gap: 8px !important;
-              }
-              .benefit-card {
-                flex-direction: column !important;
-                text-align: center;
-                padding: 14px !important;
-                gap: 10px !important;
-                margin: 0 !important;
-                width: 100% !important;
-              }
-              .benefits-cta {
-                width: calc(100% - 12px) !important;
-                margin-top: 8px !important;
-                margin-right: 6px !important;
-                margin-bottom: 6px !important;
-              }
+              .time-head { display: none !important; }
+              .time-row { grid-template-columns: 1fr !important; gap: 4px !important; text-align: center; justify-items: center; padding: 16px !important; }
+              .time-before { text-align: center; }
+              .time-after { justify-content: center !important; }
             }
           `}</style>
+        </section>
+
+        {/* Real examples teaser */}
+        <section style={{ padding: "70px 0", background: "#f3f4f6" }}>
+          <div className="max-w-5xl mx-auto px-5 md:px-6">
+            <div style={{ textAlign: "center", marginBottom: 36 }}>
+              <h2 style={{ fontSize: "clamp(28px, 5vw, 44px)", fontWeight: 900, color: "#1a1a2e", lineHeight: 1.15, marginBottom: 12 }}>
+                Esempi reali. <span style={{ color: "#f59e0b" }}>Risultati concreti.</span>
+              </h2>
+              <p style={{ color: "#555", fontSize: 16, maxWidth: 640, margin: "0 auto", lineHeight: 1.6 }}>
+                {"Guarda cosa puoi creare con GetNearMe: video, reel e post pronti in pochi click. Questi sono output veri, non mockup."}
+              </p>
+            </div>
+            <ReferenceGallery
+              variant="gallery"
+              color="#6366f1"
+              media={[
+                { type: "video", src: "/reference/primo-piano.mp4", title: "Avatar in primo piano", desc: "Video con avatar, script e sottotitoli generati dall'AI." },
+                { type: "video", src: "/reference/prima-dopo.mp4", title: "Prima vs Dopo", desc: "Carichi una foto: l'AI arreda e crea il video automaticamente." },
+                { type: "video", src: "/reference/giorno-notte.mp4", title: "Giorno e notte", desc: "L'AI trasforma l'illuminazione della scena." },
+                { type: "video", src: "/reference/social-reel.mp4", title: "Reel per i social", desc: "Reel pronto per Instagram, TikTok e Reels." },
+                { type: "video", src: "/reference/construction.mp4", title: "Timelapse AI", desc: "Da una foto dell'esterno, l'AI genera il timelapse." },
+                { type: "video", src: "/reference/split.mp4", title: "Schermo diviso", desc: "Immobile e avatar parlante nello stesso video." },
+              ]}
+            />
+            <div style={{ display: "flex", gap: 14, flexWrap: "wrap", justifyContent: "center", marginTop: 36 }}>
+              <a href={`/${locale}/reference`} className="neo-border neo-shadow" style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "#fff", color: "#1a1a2e", fontSize: 16, fontWeight: 800, padding: "15px 28px", borderRadius: 12, textDecoration: "none", border: "1.5px solid rgba(26,26,46,0.25)" }}>
+                Guarda tutti gli esempi
+              </a>
+              <a href="#pricing" className="neo-border neo-shadow" style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "#f59e0b", color: "#1a1a2e", fontSize: 16, fontWeight: 800, padding: "15px 28px", borderRadius: 12, textDecoration: "none" }}>
+                Prova gratis <ArrowRight size={18} strokeWidth={2.5} />
+              </a>
+            </div>
+          </div>
         </section>
 
         {/* Testimonials */}
@@ -552,7 +520,7 @@ export default async function Home({ params }: Props) {
                         fontSize: 13,
                         fontWeight: 700,
                         color: "#333",
-                        boxShadow: "3px 3px 0 #1a1a2e",
+                        boxShadow: "0 2px 10px rgba(16,24,40,0.06)",
                       }}
                     >
                       {s.label}:{" "}
@@ -626,8 +594,8 @@ export default async function Home({ params }: Props) {
                     color: "#fff",
                     padding: "2px 16px",
                     borderRadius: 10,
-                    border: "2px solid #1a1a2e",
-                    boxShadow: "3px 3px 0 #1a1a2e",
+                    border: "1px solid rgba(26,26,46,0.10)",
+                    boxShadow: "0 2px 10px rgba(16,24,40,0.06)",
                   }}
                 >
                   {l.faq.titleHighlight}
@@ -716,10 +684,10 @@ export default async function Home({ params }: Props) {
                   display: "inline-block",
                   background: "#f59e0b",
                   color: "#1a1a2e",
-                  border: "3px solid #1a1a2e",
+                  border: "1px solid rgba(26,26,46,0.10)",
                   padding: "18px 48px",
                   borderRadius: 14,
-                  fontWeight: 900,
+                  fontWeight: 800,
                   fontSize: 18,
                   cursor: "pointer",
                   letterSpacing: 0.5,
@@ -737,11 +705,11 @@ export default async function Home({ params }: Props) {
                   display: "inline-block",
                   background: "transparent",
                   color: "#fff",
-                  border: "3px solid #fff",
+                  border: "2px solid #fff",
                   padding: "18px 36px",
                   borderRadius: 14,
-                  fontWeight: 700,
-                  fontSize: 16,
+                  fontWeight: 800,
+                  fontSize: 18,
                   cursor: "pointer",
                   textDecoration: "none",
                   textAlign: "center",
@@ -901,7 +869,7 @@ export default async function Home({ params }: Props) {
                 textAlign: "center",
               }}
             >
-              <p style={{ color: "#bbb", fontSize: 13 }}>
+              <p style={{ color: "#6b7280", fontSize: 13 }}>
                 © 2026 GetNearMe. {t.footer.rights}
               </p>
             </div>

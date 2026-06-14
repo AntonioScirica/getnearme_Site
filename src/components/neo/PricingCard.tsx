@@ -19,6 +19,8 @@ interface PricingPlan {
   bg: string;
   cta: string;
   savingsLabel: string;
+  freeLabel?: string;
+  period?: string;
 }
 
 interface PricingCardProps {
@@ -29,6 +31,11 @@ interface PricingCardProps {
 export default function PricingCard({ plan, href }: PricingCardProps) {
   const [hovered, setHovered] = useState(false);
 
+  const hasDiscount = plan.price > 0 && !!plan.oldPrice && plan.oldPrice > plan.price;
+  const discountPct = hasDiscount ? Math.round((1 - plan.price / plan.oldPrice) * 100) : 0;
+  const saved = hasDiscount ? plan.oldPrice - plan.price : 0;
+  const periodLabel = plan.period ?? '/mese';
+
   return (
     <RevealSection>
       <div
@@ -36,7 +43,7 @@ export default function PricingCard({ plan, href }: PricingCardProps) {
         onMouseLeave={() => setHovered(false)}
         style={{
           background: plan.popular ? plan.bg : '#fff',
-          border: plan.popular ? `3px solid ${plan.color}` : '3px solid #1a1a2e',
+          border: plan.popular ? `1.5px solid ${plan.color}` : '1px solid rgba(26,26,46,0.10)',
           borderRadius: 20,
           padding: '40px 28px 32px',
           position: 'relative',
@@ -46,11 +53,11 @@ export default function PricingCard({ plan, href }: PricingCardProps) {
           flexDirection: 'column' as const,
           boxShadow: hovered
             ? plan.popular
-              ? `8px 8px 0 ${plan.color}`
-              : '8px 8px 0px #1a1a2e'
+              ? `0 14px 32px ${plan.color}33`
+              : '0 12px 28px rgba(16,24,40,0.10)'
             : plan.popular
-              ? `6px 6px 0 ${plan.color}`
-              : '6px 6px 0px #1a1a2e',
+              ? `0 8px 22px ${plan.color}26`
+              : '0 6px 20px rgba(16,24,40,0.06)',
           transform: hovered ? 'translate(-2px,-2px)' : 'translate(0,0)',
           transition: 'all 0.45s cubic-bezier(0.34,1.56,0.64,1)',
         }}
@@ -71,8 +78,8 @@ export default function PricingCard({ plan, href }: PricingCardProps) {
               textTransform: 'uppercase',
               letterSpacing: 1.2,
               whiteSpace: 'nowrap',
-              border: '2px solid #1a1a2e',
-              boxShadow: '3px 3px 0 #1a1a2e',
+              border: '1px solid rgba(26,26,46,0.10)',
+              boxShadow: '0 2px 10px rgba(16,24,40,0.06)',
             }}
           >
             {plan.badge}
@@ -80,12 +87,35 @@ export default function PricingCard({ plan, href }: PricingCardProps) {
         )}
         <div style={{ textAlign: 'center' }}>
           <h3 style={{ fontSize: 26, fontWeight: 900, color: '#1a1a2e', margin: '0 0 4px' }}>{plan.name}</h3>
-          <div style={{ color: '#999', fontSize: 14, fontWeight: 500 }}>{plan.users}</div>
+          <div style={{ color: '#6b7280', fontSize: 14, fontWeight: 500 }}>{plan.users}</div>
           <div style={{ marginTop: 22, marginBottom: 8 }}>
-            <span style={{ fontSize: 54, fontWeight: 900, color: plan.color, letterSpacing: -2 }}>
-              {plan.price}€
-            </span>
-            <span style={{ color: '#999', fontSize: 14, marginLeft: 4 }}>/mese</span>
+            {plan.price === 0 ? (
+              <span style={{ fontSize: 54, fontWeight: 900, color: plan.color, letterSpacing: -2 }}>
+                {plan.freeLabel ?? 'Gratis'}
+              </span>
+            ) : (
+              <>
+                {hasDiscount && (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 4 }}>
+                    <span style={{ color: '#6b7280', fontSize: 18, fontWeight: 700, textDecoration: 'line-through' }}>
+                      {plan.oldPrice}€
+                    </span>
+                    <span style={{ background: '#f59e0b', color: '#1a1a2e', fontSize: 12, fontWeight: 900, padding: '3px 9px', borderRadius: 999, border: '1px solid rgba(26,26,46,0.10)' }}>
+                      -{discountPct}%
+                    </span>
+                  </div>
+                )}
+                <span style={{ fontSize: 54, fontWeight: 900, color: plan.color, letterSpacing: -2 }}>
+                  {plan.price}€
+                </span>
+                <span style={{ color: '#6b7280', fontSize: 14, marginLeft: 4 }}>{periodLabel}</span>
+                {hasDiscount && (
+                  <div style={{ marginTop: 6, color: '#009874', fontSize: 13, fontWeight: 800 }}>
+                    {plan.savingsLabel} {saved}€{periodLabel}
+                  </div>
+                )}
+              </>
+            )}
           </div>
         </div>
         <div style={{ margin: '22px 0', borderTop: '2px dashed #e2e8f0' }} />
@@ -98,10 +128,10 @@ export default function PricingCard({ plan, href }: PricingCardProps) {
                 alignItems: 'flex-start',
                 gap: 10,
                 marginBottom: 12,
-                color: i === 0 && plan.id !== 'starter' ? '#aaa' : '#444',
+                color: '#444',
                 fontSize: 14,
                 lineHeight: 1.55,
-                fontStyle: i === 0 && plan.id !== 'starter' ? 'italic' : 'normal',
+                fontStyle: 'normal',
               }}
             >
               <span
@@ -116,7 +146,7 @@ export default function PricingCard({ plan, href }: PricingCardProps) {
                   justifyContent: 'center',
                   flexShrink: 0,
                   marginTop: 1,
-                  border: '2px solid #1a1a2e',
+                  border: '1px solid rgba(26,26,46,0.10)',
                 }}
               >
                 <Check size={12} strokeWidth={3} />
@@ -126,7 +156,7 @@ export default function PricingCard({ plan, href }: PricingCardProps) {
           ))}
         </ul>
         {plan.extra && (
-          <div style={{ color: '#bbb', fontSize: 12, marginBottom: 18, paddingLeft: 32 }}>{plan.extra}</div>
+          <div style={{ color: '#6b7280', fontSize: 12, marginBottom: 18, paddingLeft: 32 }}>{plan.extra}</div>
         )}
         <a
           href={href}
@@ -137,13 +167,13 @@ export default function PricingCard({ plan, href }: PricingCardProps) {
             padding: '16px 0',
             background: plan.color,
             color: '#fff',
-            border: '3px solid #1a1a2e',
+            border: 'none',
             borderRadius: 12,
             fontSize: 16,
             fontWeight: 800,
             cursor: 'pointer',
             transition: 'all 0.15s',
-            boxShadow: '4px 4px 0px #1a1a2e',
+            boxShadow: '0 2px 10px rgba(16,24,40,0.10)',
             letterSpacing: 0.5,
             textAlign: 'center',
             textDecoration: 'none',

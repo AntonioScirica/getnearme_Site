@@ -61,7 +61,7 @@ export default function VideoCheckoutSuccessPage() {
 
       <main className="flex-1 flex items-center justify-center px-4 py-24">
         <div className="max-w-md w-full">
-          <div className="bg-white neo-border rounded-2xl p-8 text-center" style={{ boxShadow: '6px 6px 0px #1a1a2e' }}>
+          <div className="bg-white neo-border rounded-2xl p-8 text-center" style={{ boxShadow: '0 4px 16px rgba(16,24,40,0.08)' }}>
             <div className="w-20 h-20 bg-blue-100 neo-border rounded-full flex items-center justify-center mx-auto mb-6">
               <Video className="w-10 h-10 text-blue-600" />
             </div>

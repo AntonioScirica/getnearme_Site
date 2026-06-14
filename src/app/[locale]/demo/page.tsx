@@ -66,9 +66,9 @@ export default async function DemoPage({ params }: Props) {
               gap: 8,
               padding: "8px 20px",
               background: "#fff",
-              border: "3px solid #1a1a2e",
+              border: "1px solid rgba(26,26,46,0.10)",
               borderRadius: 100,
-              boxShadow: "4px 4px 0px #1a1a2e",
+              boxShadow: "0 4px 16px rgba(16,24,40,0.08)",
               fontWeight: 700,
               fontSize: 14,
               marginBottom: 24,
@@ -95,9 +95,9 @@ export default async function DemoPage({ params }: Props) {
         <div
           style={{
             background: "#fff",
-            border: "3px solid #1a1a2e",
+            border: "1px solid rgba(26,26,46,0.10)",
             borderRadius: 20,
-            boxShadow: "6px 6px 0px #1a1a2e",
+            boxShadow: "0 4px 16px rgba(16,24,40,0.08)",
             padding: "32px 28px",
           }}
         >

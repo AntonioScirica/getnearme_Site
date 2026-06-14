@@ -15,7 +15,7 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
   return {
-    title: "Reference — GetNearMe",
+    title: "Esempi reali — GetNearMe",
     description: "Esempi reali delle funzionalità GetNearMe: foto AI, video, post social, report PDF, analisi di zona e molto altro.",
     alternates: {
       canonical: `https://getnearme.it/${locale}/reference`,
@@ -140,25 +140,23 @@ export default async function ReferencePage({ params }: Props) {
                   <ReferenceGallery variant="social" posts={f.posts} reels={f.reels} color={f.color} />
                   <div style={{ textAlign: "center", marginTop: 36 }}>
                     <a
-                      href="https://chromewebstore.google.com/detail/getnearme-%E2%80%94-valuta-il-qua/jbnceigldmpkpplanjlednlehloaeoia"
-                      target="_blank"
-                      rel="noopener noreferrer"
+                      href={`/${locale}#pricing`}
                       className="neo-shadow-light"
                       style={{
                         display: "inline-block",
                         background: "#f59e0b",
                         color: "#1a1a2e",
-                        border: "3px solid #1a1a2e",
+                        border: "1px solid rgba(26,26,46,0.10)",
                         padding: "14px 36px",
                         borderRadius: 14,
                         fontWeight: 800,
                         fontSize: 16,
                         textDecoration: "none",
                         letterSpacing: 0.3,
-                        boxShadow: "4px 4px 0 #1a1a2e",
+                        boxShadow: "0 2px 10px rgba(16,24,40,0.06)",
                       }}
                     >
-                      Scopri tutti i template →
+                      Provali tutti gratis →
                     </a>
                   </div>
                 </>
@@ -197,7 +195,7 @@ export default async function ReferencePage({ params }: Props) {
               Pronto a provare?
             </h2>
             <p style={{ color: "#aaa", fontSize: 17, marginBottom: 36 }}>
-              Aggiungi GetNearMe al tuo browser e inizia subito.
+              Crei il tuo account in pochi secondi e inizi subito. Gratis, senza carta.
             </p>
             <div className="ref-cta-buttons" style={{ display: "flex", gap: 14, flexWrap: "wrap", justifyContent: "center" }}>
               <a
@@ -207,17 +205,17 @@ export default async function ReferencePage({ params }: Props) {
                   display: "inline-block",
                   background: "#f59e0b",
                   color: "#1a1a2e",
-                  border: "3px solid #1a1a2e",
+                  border: "1px solid rgba(26,26,46,0.10)",
                   padding: "18px 48px",
                   borderRadius: 14,
-                  fontWeight: 900,
+                  fontWeight: 800,
                   fontSize: 18,
                   textDecoration: "none",
                   textAlign: "center",
                   letterSpacing: 0.5,
                 }}
               >
-                Aggiungi estensione
+                Prova gratis
               </a>
               <a
                 data-cal-link="getnearme/30min"
@@ -227,17 +225,17 @@ export default async function ReferencePage({ params }: Props) {
                   display: "inline-block",
                   background: "transparent",
                   color: "#fff",
-                  border: "3px solid #fff",
+                  border: "2px solid #fff",
                   padding: "18px 36px",
                   borderRadius: 14,
-                  fontWeight: 700,
-                  fontSize: 16,
+                  fontWeight: 800,
+                  fontSize: 18,
                   textDecoration: "none",
                   textAlign: "center",
                   cursor: "pointer",
                 }}
               >
-                Prenota demo
+                Prenota una demo
               </a>
             </div>
           </div>

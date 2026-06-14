@@ -4,137 +4,133 @@ export const translations = {
   it: {
     nav: {
       features: "Funzionalità",
+      examples: "Esempi",
       pricing: "Prezzi",
       faq: "FAQ",
       blog: "Blog",
       tutorial: "Tutorial",
-      startAnalysis: "Prova ora!",
+      startAnalysis: "Prova gratis",
       backToHome: "← Torna alla home",
       dashboard: "Dashboard",
       myAccount: "Il mio account"
     },
     hero: {
-      title1: "Il vantaggio competitivo",
-      title2: "che distingue la",
-      title3: "tua agenzia",
-      description: "Estensione per Google Chrome con AI per agenti immobiliari. Semplifica le attività quotidiane dell'agenzia: analisi di zona, render foto con AI, video, post social e report PDF direttamente su Immobiliare.it, Idealista, Casa.it, Airbnb e Booking. Non è un sistema di valutazione immobiliare.",
-      cta: "Aggiungi Estensione",
+      title1: "L'assistente AI per agenti immobiliari.",
+      title2: "Risparmia più di un giorno e mezzo a settimana",
+      title3: "",
+      description: "Home staging, video, post social e report per ogni immobile, pronti in pochi minuti. Quello che oggi ti porta via ore, lo fai da un posto solo.",
+      cta: "Prova gratis",
       ctaSecondary: "Come funziona",
-      subMockup: "GetNearMe è l'estensione Chrome con AI per agenti immobiliari: si integra in 2 secondi nei portali Immobiliare.it, Idealista, Casa.it, Airbnb e Booking, sostituendo Canva, Photoshop, video editor, PowerPoint e social media manager con un'unica estensione professionale."
+      subMockup: "GetNearMe è l'assistente AI per agenti immobiliari: parti dall'annuncio o dalle tue foto e ottieni home staging, video, post social, report col tuo brand e analisi di zona. Tutto in un posto solo, senza imparare niente di nuovo."
     },
     features: {
       title: "Tutto ciò che puoi",
       titleItalic: "fare con GetNearMe",
-      description: "Una suite completa per analizzare immobili, confrontare dati di zona, creare report professionali e valorizzare annunci con l'intelligenza artificiale.",
+      description: "Un assistente al posto di Canva, editor video, designer e ore di lavoro. Analizzi l'immobile, valorizzi le foto e prepari report e contenuti in pochi minuti.",
       card1: {
         title: "Analisi completa dell'immobile",
-        desc: "Hai subito una visione chiara e strutturata dei dati chiave dell'immobile, senza dover cercare informazioni sparse tra più pagine."
+        desc: "Hai subito una visione chiara e ordinata dei dati chiave dell'immobile, senza cercare informazioni sparse tra mille pagine."
       },
       card2: {
-        title: "Analisi territoriale interattiva",
-        desc: "Mostra ai clienti cosa significa davvero vivere in quella zona: servizi, trasporti e distanze reali consultabili in tempo reale."
+        title: "Analisi di zona interattiva",
+        desc: "Mostri al cliente cosa significa vivere in quella zona: servizi, trasporti e distanze reali, su mappa e in tempo reale."
       },
       card3: {
-        title: "Valore di mercato in tempo reale",
-        desc: "Ottieni il prezzo medio €/m² della zona per supportare valutazioni, acquisizioni e trattative con dati concreti."
+        title: "Prezzo medio di zona al m²",
+        desc: "Il prezzo medio €/m² della zona, per preparare la trattativa con i numeri alla mano."
       },
       card4: {
-        title: "Report comparativi personalizzabili",
-        desc: "Presenta più immobili in modo professionale, con documenti personalizzati che rafforzano l'autorevolezza della tua agenzia."
+        title: "Report comparativi col tuo brand",
+        desc: "Presenti più immobili in un documento ordinato col tuo logo, pronto da inviare al cliente."
       },
       card5: {
-        title: "Mostra il Potenziale con l'AI",
-        desc: "Modifica le foto con l'AI e mostra il confronto prima/dopo: ambienti vuoti o arredati, luce migliorata e spazi valorizzati in pochi secondi."
+        title: "Home staging con l'AI",
+        desc: "Modifichi le foto con l'AI e mostri il confronto prima/dopo: stanze vuote o arredate, luce migliorata e spazi valorizzati in pochi secondi."
       },
-      disclaimer: "Le analisi e le stime mostrate sono indicative e non costituiscono una valutazione immobiliare.",
-      addExtension: "Aggiungi estensione",
+      disclaimer: "I dati di zona sono informazioni di mercato a scopo informativo e non costituiscono una valutazione o perizia immobiliare.",
+      addExtension: "Prova gratis",
       comingSoonTitle: "In arrivo",
-      comingSoonDesc: "Stiamo sviluppando nuove funzionalità pensate per rendere il lavoro della tua agenzia ancora più strutturato ed efficiente.",
+      comingSoonDesc: "Stiamo sviluppando nuove funzioni per rendere il tuo lavoro ancora più veloce e professionale.",
     },
     faq: {
       title: "Domande",
       titleItalic: "frequenti",
       items: [
         {
-          q: "GetNearMe è un portale immobiliare?",
-          a: "No. Si integra nei portali che già utilizzi e aggiunge analisi di zona, confronti di mercato, report professionali e strumenti AI direttamente durante la navigazione."
+          q: "Cos'è GetNearMe?",
+          a: "È l'assistente AI che prepara tutto il materiale dei tuoi annunci: home staging, video, post social, report e analisi di zona. Parti dal link del portale o dalle tue foto e in pochi minuti hai tutto pronto, col tuo brand."
         },
         {
-          q: "Devo cambiare il mio modo di lavorare?",
-          a: "No. Continui a usare i portali che conosci. GetNearMe si integra automaticamente, senza nuovi software da imparare."
+          q: "Devo installare qualcosa?",
+          a: "No. GetNearMe è online: accedi dal browser e inizi a lavorare. Niente da scaricare, niente software da imparare."
         },
         {
-          q: "Mi aiuta nelle trattative?",
-          a: "Sì. Puoi supportare prezzo e posizionamento con dati di zona e comparazioni oggettive, aumentando credibilità e forza negoziale."
+          q: "Come lo provo?",
+          a: "Gratis e senza carta. Crei l'account e provi subito le funzioni: vedi l'output prima di decidere."
         },
         {
-          q: "Posso creare report per i clienti?",
-          a: "Sì. Generi report comparativi personalizzati con il logo della tua agenzia, pronti da condividere."
+          q: "Funziona se lavoro da solo?",
+          a: "Sì, è pensato proprio per il singolo agente. Fai da solo il lavoro di un piccolo team: foto, video, post e report, senza fornitori esterni."
         },
         {
-          q: "Posso migliorare immagini e descrizioni?",
-          a: "Sì. L'AI ti aiuta a valorizzare le foto e rendere le descrizioni più professionali e persuasive."
+          q: "Devo saper montare video o usare programmi di grafica?",
+          a: "No. Scegli un template e l'AI fa il resto: video con musica e sottotitoli, post col tuo logo, report già impaginati."
         },
         {
-          q: "I dati sono affidabili?",
-          a: "Le analisi si basano su dati pubblici e annunci disponibili online. Sono un supporto professionale alle valutazioni, non sostituiscono una perizia ufficiale."
+          q: "I dati di zona sono una valutazione?",
+          a: "No. Sono informazioni di mercato a scopo informativo, utili per raccontare l'immobile e preparare la trattativa. Non sostituiscono una perizia ufficiale."
         }
       ]
     },
     pricing: {
-      title: "Accesso professionale",
-      titleItalic: "alla piattaforma",
-      description: "Un unico piano, completo di tutte le funzionalità, pensato per integrare analisi e strumenti avanzati nel tuo lavoro quotidiano.",
+      title: "Un prezzo solo",
+      titleItalic: "per tutto",
+      description: "Un unico piano con tutte le funzioni: home staging, video, post social, report e analisi di zona. Provi gratis prima di pagare.",
       free: "Free",
       buyNow: "Acquista ora",
       registerNow: "Registrati ora",
       mostChosen: "Più scelto",
-      footer1: "Pagamento sicuro con carta, PayPal e principali provider.",
-      footer2: "Nessun vincolo annuale. Disdici quando vuoi.",
+      footer1: "Pagamento sicuro con carta, PayPal e i principali provider.",
+      footer2: "Provi gratis, senza carta. Disdici quando vuoi.",
       footer3: "",
       plans: [
         {
-          name: "Piano Agenzia Mensile",
-          subtitle: "Tutte le funzioni incluse",
-          desc: "Accesso completo all'estensione Chrome GetNearMe per agenti immobiliari: analisi di zona, render AI, video, post social e report PDF white-label. Strumento di supporto al lavoro quotidiano dell'agenzia, non un sistema di valutazione immobiliare. Fino a 5 agenti."
+          name: "Free",
+          subtitle: "Per iniziare",
+          desc: "Provi GetNearMe gratis e senza carta: crei l'account e usi subito le funzioni con i crediti di prova inclusi."
         },
         {
-          name: "Piano Agenzia Mensile",
+          name: "Piano Mensile",
           subtitle: "Tutte le funzioni incluse",
-          desc: "Accesso completo all'estensione Chrome GetNearMe per agenti immobiliari: analisi di zona, render AI, video, post social e report PDF white-label. Strumento di supporto al lavoro quotidiano dell'agenzia, non un sistema di valutazione immobiliare. Fino a 5 agenti."
+          desc: "Accesso completo a GetNearMe per il singolo agente: home staging AI, video, post social, report col tuo brand e analisi di zona. Uno strumento di supporto al tuo lavoro, non un sistema di valutazione immobiliare."
         },
         {
-          name: "Piano Agenzia Trimestrale",
-          subtitle: "Tutte le funzioni incluse",
-          desc: "Accesso completo per 3 mesi a tutte le funzionalità di GetNearMe con risparmio rispetto al mensile. Fino a 5 agenti."
-        },
-        {
-          name: "Piano Agenzia Annuale",
+          name: "Piano Annuale",
           subtitle: "Il più conveniente",
-          desc: "Accesso completo per 12 mesi a tutte le funzionalità di GetNearMe con il massimo risparmio e supporto prioritario. Fino a 5 agenti."
+          desc: "Tutte le funzioni del piano mensile con due mesi gratis e supporto prioritario."
         }
       ]
     },
     cta: {
-      title: "Distingui la tua agenzia",
-      title2: "con strumenti professionali",
-      titleItalic: "avanzati",
-      desc: "Semplifica i processi e rafforza la qualità delle tue presentazioni.",
-      button: "Aggiungi estensione",
+      title: "Presentati come una grande agenzia",
+      title2: "anche se lavori",
+      titleItalic: "da solo",
+      desc: "Prepara foto, video, post e report professionali per ogni immobile, in pochi minuti.",
+      button: "Prova gratis",
       requestInfo: "Richiedi informazioni",
     },
     howItWorks: {
-      step1Title: "Crea il tuo account",
-      step1Desc: "Registrati in pochi secondi e accedi alla piattaforma.",
-      step2Title: "Attiva il piano Agenzia",
-      step2Desc: "Dal tuo profilo, accedi alla sezione abbonamento e attiva il piano professionale mensile.",
-      step3Title: "Inizia subito a lavorare",
-      step3Desc: "L'accesso è immediato: puoi utilizzare tutte le funzionalità direttamente nei portali immobiliari che già utilizzi.",
-      cta: "Inizia con GetNearMe",
+      step1Title: "Crea il tuo account gratis",
+      step1Desc: "Ti registri in pochi secondi. Nessuna carta richiesta.",
+      step2Title: "Parti dall'annuncio",
+      step2Desc: "Incolli il link del portale o carichi le tue foto e i dati dell'immobile.",
+      step3Title: "Pubblica in pochi minuti",
+      step3Desc: "Foto, video, post e report pronti, col tuo brand. Tutto da un posto solo.",
+      cta: "Prova gratis",
       videoTitle: "GetNearMe: come funziona",
     },
     footer: {
-      desc: "AI e automazione commerciale per agenzie immobiliari. Quello che oggi ti costa ore, preparare foto, video, post e presentazioni, con GetNearMe lo fai in pochi minuti, direttamente dall'annuncio.",
+      desc: "L'assistente AI per agenti immobiliari. Quello che oggi ti costa ore — foto, video, post e presentazioni — con GetNearMe lo fai in pochi minuti, partendo dall'annuncio.",
       product: "Prodotto",
       legal: "Legale",
       privacy: "Privacy Policy",
@@ -274,7 +270,7 @@ export const translations = {
     },
     confirm: {
       subtitle: "Benvenuto in GetNearMe",
-      description: "La tua iscrizione al servizio è stata confermata con successo. Ritorna all'estensione ed inizia a utilizzare tutte le funzionalità di GetNearMe!",
+      description: "La tua iscrizione al servizio è stata confermata. Accedi a GetNearMe e inizia a usare tutte le funzioni.",
       cta: "Inizia ad esplorare"
     },
     unsubscribe: {
@@ -284,7 +280,7 @@ export const translations = {
     featuresPage: {
       title: "Tutte le Funzionalità",
       titleItalic: "di GetNearMe",
-      subtitle: "Scopri tutti gli strumenti avanzati pensati per trasformare il lavoro della tua agenzia immobiliare. Dall'analisi territoriale all'intelligenza artificiale, ogni funzionalità è progettata per offrirti un vantaggio competitivo reale.",
+      subtitle: "Scopri tutti gli strumenti pensati per cambiare il tuo lavoro di agente immobiliare. Dall'analisi di zona all'intelligenza artificiale, ogni funzione ti dà un vantaggio concreto.",
       feature6: {
         title: "Marketing Immobiliare Automatico",
         desc: "Trasforma i dati dell'immobile in post professionali, già ottimizzati per i principali social network.",
@@ -296,8 +292,8 @@ export const translations = {
         badge: "NUOVO",
       },
       ctaTitle: "Pronto per iniziare?",
-      ctaDesc: "Unisciti alle agenzie immobiliari che stanno già trasformando il loro modo di lavorare con GetNearMe.",
-      ctaButton: "Aggiungi Estensione",
+      ctaDesc: "Unisciti agli agenti immobiliari che stanno già cambiando il loro modo di lavorare con GetNearMe.",
+      ctaButton: "Prova gratis",
       ctaContact: "Contattaci",
     },
     landing: {
@@ -309,35 +305,35 @@ export const translations = {
       },
       hero: {
         badge: "",
-        title1: "AI e automazione commerciale",
-        title2: "per agenzie immobiliari.",
-        desc: "Quello che oggi ti costa ore, preparare foto, video, post e presentazioni, con GetNearMe lo fai in pochi minuti, direttamente dall'annuncio.",
-        ctaPrimary: "Aggiungi estensione",
-        ctaSecondary: "Guarda la demo",
-        ctaDemo: "Prenota demo",
-        stats: ["Si installa in 2 secondi", "Integrato con 5 portali", "GDPR compliant"],
+        title1: "L'assistente AI per agenti immobiliari.",
+        title2: "Risparmia più di un giorno e mezzo a settimana.",
+        desc: "Home staging, video, post social e report per ogni immobile, pronti in pochi minuti. Quello che oggi ti porta via ore, lo fai da un posto solo.",
+        ctaPrimary: "Prova gratis",
+        ctaSecondary: "Guarda come funziona",
+        ctaDemo: "Prenota una demo",
+        stats: ["Provi senza carta", "Pronto in pochi minuti", "I tuoi annunci, col tuo brand"],
       },
       problem: {
         emoji: "frown",
-        title: "Canva, Photoshop, PowerPoint, CapCut, Google Maps: 10 tab aperte per un solo annuncio.",
-        desc: "Per valutare una zona, sistemare le foto, preparare un post Instagram o un PDF da mandare al cliente ti servono cinque software diversi che costano, non si parlano tra loro e ti rubano ore di lavoro ogni settimana. Nel frattempo il cliente aspetta.",
+        title: "Per un solo annuncio apri dieci programmi diversi.",
+        desc: "Foto da sistemare, video da montare, post per i social, il PDF da mandare al cliente. Strumenti che costano, non si parlano tra loro e ti rubano ore ogni settimana. E intanto un altro agente arriva prima di te.",
       },
       solution: {
         emoji: "rocket",
-        title: "Un'estensione Chrome. Tutto il lavoro sull'annuncio, finito.",
-        desc: "GetNearMe si attiva con un click sui portali che già usi. Apri un immobile su Immobiliare.it, Idealista, Casa.it, Airbnb o Booking e ottieni analisi di zona, render AI, video, post social e report PDF col tuo brand, senza aprire altro software. Uno strumento per semplificare il lavoro quotidiano dell'agente, non per sostituire valutazioni o perizie professionali.",
+        title: "Un assistente solo. Tutto il lavoro sull'annuncio, finito.",
+        desc: "Parti dall'annuncio — incolli il link del portale o carichi le tue foto — e GetNearMe ti restituisce home staging, video, post social e report col tuo logo. In pochi minuti, senza aprire altri programmi e senza imparare niente di nuovo.",
       },
       features: {
         title: "Sei strumenti professionali.",
-        titleHighlight: "Dentro il tuo browser.",
-        subtitle: "GetNearMe sostituisce Canva, Photoshop, video maker, interior designer, social media manager e PowerPoint con un'unica estensione Chrome e non devi imparare nulla di nuovo.",
+        titleHighlight: "Un assistente solo.",
+        subtitle: "GetNearMe fa il lavoro di Canva, editor video, designer, social media manager e PowerPoint. E non devi imparare niente di nuovo.",
         items: [
-          { num: "01", title: "Homestaging AI", desc: "Arreda, svuota o trasforma qualsiasi ambiente in pochi secondi. Confronto prima/dopo pronto da mostrare al cliente o pubblicare sui portali e social. Sostituisce Photoshop e interior designer.", icon: "sparkles", color: "#6366f1" },
-          { num: "02", title: "Video AI per l'immobile", desc: "Carica video e foto: reel, walkthrough, before/after, video con avatar parlante e molto altro, pronti in pochi click senza montaggio. Risultato professionale, senza bisogno di essere un videomaker.", icon: "clapperboard", color: "#10b981" },
-          { num: "03", title: "Post, reel e storie social", desc: "Contenuti pronti per Instagram, Facebook, TikTok e LinkedIn partendo dai dati dell'annuncio. Logo, colori e identità della tua agenzia applicati in automatico. Sostituisce Canva e social media manager.", icon: "smartphone", color: "#ec4899" },
-          { num: "04", title: "Report PDF white-label", desc: "Presentazioni comparative col tuo logo, colori e font. Confronta più immobili in un documento professionale, pronto da inviare. Sostituisce PowerPoint e Graphic designer.", icon: "file-text", color: "#f97316" },
-          { num: "05", title: "Analisi di zona interattiva", desc: "Servizi, trasporti, scuole, sanità, parchi e punti di interesse reali mostrati su mappa in tempo reale. Racconta il quartiere al cliente con dati concreti.", icon: "map", color: "#0ea5e9" },
-          { num: "06", title: "Prezzo medio di zona al m²", desc: "Dati di riferimento sul prezzo medio €/m² della zona e confronti tra immobili simili, utili per preparare presentazioni al cliente e impostare trattative. Sono informazioni di mercato a scopo illustrativo, non costituiscono una perizia o valutazione ufficiale.", icon: "trending-up", color: "#f59e0b" },
+          { num: "01", title: "Home staging AI", desc: "Arreda, svuota o trasforma una stanza in pochi secondi. Mostri il prima/dopo al cliente o lo pubblichi subito sui portali e sui social.", icon: "sparkles", color: "#6366f1" },
+          { num: "02", title: "Video AI per l'immobile", desc: "Reel, walkthrough, before/after, video con avatar che parla e molto altro. Pronti in pochi click, senza montaggio e senza videomaker.", icon: "clapperboard", color: "#10b981" },
+          { num: "03", title: "Post, reel e storie social", desc: "Contenuti pronti per Instagram, Facebook, TikTok e LinkedIn dai dati dell'annuncio. Il tuo logo e i tuoi colori applicati da soli.", icon: "smartphone", color: "#ec4899" },
+          { num: "04", title: "Report PDF col tuo brand", desc: "Confronti più immobili in un documento ordinato col tuo logo, colori e font. Pronto da inviare al cliente dopo la visita.", icon: "file-text", color: "#f97316" },
+          { num: "05", title: "Analisi di zona interattiva", desc: "Servizi, trasporti, scuole, sanità, parchi e distanze reali mostrati su mappa. Racconti il quartiere al cliente con dati concreti, senza aprire venti schede.", icon: "map", color: "#0ea5e9" },
+          { num: "06", title: "Prezzo medio di zona al m²", desc: "Il prezzo medio €/m² della zona e il confronto tra immobili simili, per preparare la trattativa con i numeri alla mano. Dati di mercato a scopo informativo, non una perizia.", icon: "trending-up", color: "#f59e0b" },
         ],
       },
       testimonials: {
@@ -347,16 +343,16 @@ export const translations = {
         retentionLabel: "",
         retentionValue: "",
         items: [
-          { name: "Marco R.", role: "Agente immobiliare", text: "Ho provato i video AI per un trilocale che non si muoveva da due mesi. L'ho condiviso su Instagram e in una settimana ho ricevuto tre richieste di visita. Non me l'aspettavo, onestamente.", avatar: "MR", color: "#f59e0b" },
-          { name: "Giulia T.", role: "Titolare agenzia", text: "Il report lo mando dopo la visita, così il cliente confronta le case e decide con calma. Con le foto AI gli faccio vedere la stessa stanza arredata in tre modi diversi, si convince molto prima.", avatar: "GT", color: "#6366f1" },
-          { name: "Davide M.", role: "Titolare agenzia", text: "Carico le foto, scelgo lo stile e in un minuto ho il reel pronto da pubblicare. Prima dovevo chiamare il videomaker e aspettare giorni, adesso lo faccio mentre aspetto il cliente in agenzia.", avatar: "DM", color: "#10b981" },
+          { name: "Marco R.", role: "Agente immobiliare", text: "Ho provato i video AI per un trilocale fermo da due mesi. L'ho messo su Instagram e in una settimana ho ricevuto tre richieste di visita. Non me l'aspettavo, onestamente.", avatar: "MR", color: "#f59e0b", photo: "https://randomuser.me/api/portraits/men/32.jpg" },
+          { name: "Giulia T.", role: "Agente immobiliare", text: "Il report lo mando dopo la visita, così il cliente confronta le case con calma. Con le foto AI gli faccio vedere la stessa stanza arredata in tre modi diversi: si convince molto prima.", avatar: "GT", color: "#6366f1", photo: "https://randomuser.me/api/portraits/women/65.jpg" },
+          { name: "Davide M.", role: "Agente immobiliare", text: "Carico le foto, scelgo lo stile e in un minuto ho il reel pronto. Prima dovevo chiamare il videomaker e aspettare giorni, adesso lo faccio mentre aspetto il cliente in ufficio.", avatar: "DM", color: "#10b981", photo: "https://randomuser.me/api/portraits/men/76.jpg" },
         ],
       },
       pricing: {
-        title1: "Tre formule.",
-        title2: "Tutte si",
-        titleHighlight: "ripagano da sole",
-        subtitle: "Un unico strumento al posto di Canva, editor video, ricerche manuali e ore di lavoro. Costa meno della somma.",
+        title1: "Un prezzo solo.",
+        title2: "Si ripaga col",
+        titleHighlight: "primo immobile",
+        subtitle: "Provalo gratis. Poi un solo abbonamento al posto di Canva, editor video, designer e ore di lavoro: costa meno della somma.",
         countdownLabel: "Prezzo lancio, scade tra",
         trustBadges: ["🔒 Pagamento sicuro Stripe", "⚡ Attivazione immediata"],
         savingsLabel: "RISPARMI",
@@ -364,68 +360,67 @@ export const translations = {
         progressSpots: "",
         plans: [
           {
-            id: "agency_monthly", name: "Mensile", users: "Tutte le funzioni incluse", oldPrice: null, price: 399,
+            id: "free", name: "Free", users: "Per iniziare", oldPrice: null, price: 0, period: "",
             savingsYear: null, badge: null, popular: false,
-            features: ["5 agenti inclusi", "Report illimitati con il tuo logo", "300 foto AI homestaging/mese", "8 video Template AI", "Video montaggio automatico", "Template Post & Stories Social", "Calcolo prezzo al m² in tempo reale", "Crediti illimitati"],
+            features: ["Provi tutte le funzioni", "Crediti di prova inclusi", "Nessuna carta richiesta"],
+            extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Inizia gratis",
+          },
+          {
+            id: "agency_monthly", name: "Mensile", users: "Tutte le funzioni incluse", oldPrice: 150, price: 59, period: "/mese",
+            savingsYear: null, badge: null, popular: false,
+            features: ["Tutto del piano Free", "Report col tuo logo", "Home staging AI", "Video AI per gli immobili", "Post e storie social", "Prezzo al m² in tempo reale", "Supporto via email"],
             extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Scegli questo piano",
           },
           {
-            id: "agency_quarterly", name: "Trimestrale", users: "Tutte le funzioni incluse", oldPrice: null, price: 349,
-            savingsYear: null, badge: "Più scelto", popular: false,
-            features: ["5 agenti inclusi", "Report illimitati con il tuo logo", "600 foto AI homestaging/mese", "12 video Template AI", "Video montaggio automatico", "Template Post & Stories Social", "Calcolo prezzo al m² in tempo reale", "Crediti illimitati"],
-            extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Scegli questo piano",
-          },
-          {
-            id: "agency_annual", name: "Annuale", users: "Tutte le funzioni incluse", oldPrice: null, price: 300,
-            savingsYear: null, badge: null, popular: false,
-            features: ["5 agenti inclusi", "Report illimitati con il tuo logo", "1200 foto AI homestaging/mese", "16 video Template AI", "Video montaggio automatico", "Template Post & Stories Social", "Calcolo prezzo al m² in tempo reale", "Crediti illimitati", "Supporto prioritario"],
+            id: "agency_annual", name: "Annuale", users: "Tutte le funzioni incluse", oldPrice: 1800, price: 590, period: "/anno",
+            savingsYear: null, badge: "Più scelto", popular: true,
+            features: ["Tutto del piano Mensile", "2 mesi gratis rispetto al mensile", "Prezzo bloccato per 12 mesi", "Supporto prioritario"],
             extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Scegli questo piano",
           },
         ],
       },
       howItWorks: {
         title: "Operativo in",
-        titleHighlight: "2 secondi",
-        subtitle: "Nessun software da installare. Nessuna formazione. L'estensione si integra nei portali che usi già ogni giorno.",
+        titleHighlight: "2 minuti",
+        subtitle: "Niente da installare, niente da imparare. Crei l'account, parti dall'annuncio e hai tutto pronto.",
         steps: [
-          { step: "1", title: "Aggiungi a Chrome", desc: "Un click dal Chrome Web Store. L'estensione GetNearMe si installa nel browser in meno di 2 secondi.", color: "#6366f1", bg: "#eef2ff", emoji: "puzzle" },
-          { step: "2", title: "Apri un annuncio", desc: "Immobiliare ed Idealista, i portali dove lavori già. GetNearMe si integra, senza cambiare il tuo flusso.", color: "#f59e0b", bg: "#fffbeb", emoji: "search" },
-          { step: "3", title: "Tutto ad un click", desc: "Staging AI, video, post social, report e molto altro...pronti per il cliente, senza altro software.", color: "#10b981", bg: "#ecfdf5", emoji: "sparkles" },
+          { step: "1", title: "Crea il tuo account gratis", desc: "Ti registri in pochi secondi, direttamente dal browser. Nessuna carta richiesta.", color: "#6366f1", bg: "#eef2ff", emoji: "puzzle" },
+          { step: "2", title: "Parti dall'annuncio", desc: "Incolli il link del portale o carichi le tue foto e i dati dell'immobile.", color: "#f59e0b", bg: "#fffbeb", emoji: "search" },
+          { step: "3", title: "Pubblica in pochi minuti", desc: "Home staging, video, post social e report pronti, col tuo brand. Tutto da un posto solo.", color: "#10b981", bg: "#ecfdf5", emoji: "sparkles" },
         ],
       },
       faq: {
         title: "Domande?",
         titleHighlight: "Risposte.",
         items: [
-          { q: "Cos'è GetNearMe?", a: "Un'estensione Chrome per agenzie immobiliari. Tutto il lavoro sull'annuncio (staging AI, video, post social, report, analisi di zona) in un unico strumento, integrato con Immobiliare.it, Idealista, Casa.it, Airbnb e Booking. Apri l'annuncio e lavori, senza uscire dal portale." },
-          { q: "GetNearMe fa valutazioni immobiliari?", a: "No. Non è un sistema di valutazione e non sostituisce perizie o stime professionali. I prezzi medi al m² e i dati di zona sono informazioni di mercato a scopo illustrativo, utili per raccontare l'immobile e preparare la trattativa con dati concreti." },
-          { q: "Quali strumenti sostituisce?", a: "Canva, editor video, PowerPoint, tool di analisi di zona, servizi esterni di home staging e grafica. Un unico strumento al posto di tanti, con meno costi e meno tempo per ogni immobile." },
-          { q: "Come funziona l'home staging AI?", a: "Carichi la foto di una stanza, scegli lo stile e in pochi secondi ottieni la versione arredata. Puoi generare più proposte visive della stessa stanza per mostrare diverse soluzioni al cliente." },
-          { q: "Posso creare video senza saper montare?", a: "Sì. Scegli un template (avatar parlante, schermo diviso, walkthrough, before/after, montaggio automatico, timelapse AI) e GetNearMe genera il video con musica e sottotitoli. Nessun software esterno, nessun videomaker." },
-          { q: "Come funzionano i post social?", a: "Contenuti pronti per Instagram, Facebook, TikTok e LinkedIn, generati partendo dai dati dell'annuncio. Logo, colori e identità della tua agenzia applicati in automatico. Sostituisce Canva e il social media manager." },
-          { q: "Come funzionano i report?", a: "Presentazioni comparative con il tuo logo, colori e font. Confronti più immobili in un documento professionale pronto da inviare al cliente dopo la visita." },
-          { q: "Quanti agenti posso aggiungere?", a: "Ogni piano include 5 agenti con accesso condiviso allo stesso branding. Ogni agente ha il proprio account ma lavora sotto l'identità dell'agenzia." },
-          { q: "Come funziona la disdetta?", a: "Con il piano mensile e trimestrale puoi cancellare in qualsiasi momento dalla dashboard, senza vincoli. Il piano annuale è fatturato anticipatamente e include il prezzo più basso per mese." },
+          { q: "Cos'è GetNearMe?", a: "È l'assistente AI che prepara tutto il materiale dei tuoi annunci: home staging, video, post social, report e analisi di zona. Parti dal link del portale o dalle tue foto e in pochi minuti hai tutto pronto, col tuo brand." },
+          { q: "Devo installare qualcosa?", a: "No. GetNearMe è online: accedi dal browser e inizi a lavorare. Niente da scaricare, niente software da imparare." },
+          { q: "Come lo provo?", a: "Gratis e senza carta. Crei l'account e provi subito le funzioni: vedi l'output prima di decidere se abbonarti." },
+          { q: "Funziona se lavoro da solo?", a: "Sì, è pensato proprio per il singolo agente. Fai da solo il lavoro di un piccolo team: foto, video, post e report, senza fornitori esterni." },
+          { q: "Quali strumenti sostituisce?", a: "Canva, editor video, PowerPoint, designer, social media manager e ore di ricerca manuale. Un assistente solo al posto di tanti strumenti, con meno costi e meno tempo per ogni immobile." },
+          { q: "Devo saper montare video o usare la grafica?", a: "No. Scegli un template (avatar parlante, schermo diviso, walkthrough, before/after, montaggio automatico, timelapse AI) e l'AI genera il video con musica e sottotitoli. I post escono già col tuo logo." },
+          { q: "I dati di zona sono una valutazione?", a: "No. I prezzi medi al m² e i dati di zona sono informazioni di mercato a scopo informativo, utili per raccontare l'immobile e preparare la trattativa. Non sostituiscono una perizia ufficiale." },
+          { q: "Posso disdire quando voglio?", a: "Sì. Con il piano mensile disdici quando vuoi dalla dashboard, senza vincoli. Il piano annuale è fatturato in anticipo e ha il prezzo più basso al mese." },
         ],
       },
       finalCta: {
-        title1: "Smetti di saltare tra 10 software.",
-        title2: "Tutto il lavoro sull'annuncio, in un'estensione.",
-        desc: "Scopri come GetNearMe può supportare la tua agenzia su acquisizione, presentazione immobili e contenuti commerciali.",
-        button: "Aggiungi estensione",
-        buttonDemo: "Prenota demo",
-        footer: "🔒 Pagamento sicuro Stripe. Cancelli con un click.",
+        title1: "Smetti di saltare tra dieci programmi.",
+        title2: "Prepara i tuoi annunci con un assistente solo.",
+        desc: "Foto, video, post e report professionali per ogni immobile, in pochi minuti. Provalo gratis, senza carta.",
+        button: "Prova gratis",
+        buttonDemo: "Prenota una demo",
+        footer: "🔒 Pagamento sicuro Stripe. Provi gratis, disdici quando vuoi.",
       },
       roiCalculator: {
         title: "Quanto risparmi con",
         titleHighlight: "GetNearMe?",
-        subtitle: "Calcola il ritorno sull'investimento per la tua agenzia.",
-        inputProperties: "Immobili gestiti al mese",
-        inputHours: "Ore per preparare materiali per immobile",
-        inputRate: "Costo orario agente",
+        subtitle: "Calcola quanto tempo e quanti soldi ti fa risparmiare.",
+        inputProperties: "Immobili che gestisci al mese",
+        inputHours: "Ore per preparare i materiali di un immobile",
+        inputRate: "Quanto vale un'ora del tuo lavoro",
         outputHoursSaved: "Ore risparmiate al mese",
         outputValueRecovered: "Valore del tempo recuperato",
-        outputCost: "Costo piano GetNearMe",
+        outputCost: "Costo di GetNearMe",
         outputNetSavings: "Risparmio netto mensile",
         outputROI: "ritorno per ogni euro speso",
         perMonth: "/mese",
@@ -433,11 +428,11 @@ export const translations = {
         note: "Con GetNearMe ogni immobile richiede circa 3 minuti invece di ore. Usiamo 80% come stima conservativa del tempo risparmiato.",
       },
       demo: {
-        pageTitle: "Prenota una demo per la tua agenzia",
-        pageSubtitle: "Compila il modulo e ti contatteremo per organizzare una demo personalizzata di GetNearMe.",
+        pageTitle: "Prenota una demo",
+        pageSubtitle: "Compila il modulo e ti ricontattiamo per organizzare una demo personalizzata di GetNearMe.",
         fieldName: "Nome e cognome",
         fieldEmail: "Email",
-        fieldAgencyName: "Nome agenzia",
+        fieldAgencyName: "Agenzia o team (opzionale)",
         fieldPhone: "Telefono (opzionale)",
         fieldMessage: "Messaggio (opzionale)",
         submit: "Prenota demo",
@@ -449,7 +444,7 @@ export const translations = {
       },
       modal: {
         emoji: "rocket",
-        title: "Ottima scelta!",
+        title: "Ottima scelta.",
         planLabel: "Piano",
         desc: "Accedi o registrati per attivare il",
         descBold: "piano scelto",
@@ -458,155 +453,151 @@ export const translations = {
         footer: "🔒 Pagamento sicuro Stripe. Cancelli con un click.",
       },
       popups: [
-        { icon: "circle", text: "Un'agenzia del Nord Italia ha attivato il piano", time: "3 min fa" },
-        { icon: "clapperboard", text: "Un agente ha appena generato un video promozionale con AI", time: "" },
-        { icon: "users", text: "Agenzie online in questo momento", time: "" },
-        { icon: "rocket", text: "Un agente ha appena attivato GetNearMe", time: "12 min fa" },
-        { icon: "flame", text: "GetNearMe scelto da nuove agenzie questa settimana", time: "" },
-        { icon: "sparkles", text: "Un agente ha arredato una stanza con Homestaging AI", time: "5 min fa" },
-        { icon: "star", text: "Un'agenzia ha fatto upgrade al piano Annuale", time: "18 min fa" },
-        { icon: "smartphone", text: "Post social generati questa settimana con GetNearMe", time: "" },
-        { icon: "target", text: "Un agente ha esportato un PDF white-label col proprio logo", time: "7 min fa" },
-        { icon: "briefcase", text: "Un'agenzia si è appena registrata su GetNearMe", time: "2 min fa" },
+        { icon: "circle", text: "Un agente ha appena attivato il piano", time: "3 min fa" },
+        { icon: "clapperboard", text: "Un agente ha generato un video promozionale con l'AI", time: "" },
+        { icon: "users", text: "Agenti al lavoro su GetNearMe in questo momento", time: "" },
+        { icon: "rocket", text: "Un agente ha appena iniziato la prova gratuita", time: "12 min fa" },
+        { icon: "flame", text: "Sempre più agenti scelgono GetNearMe", time: "" },
+        { icon: "sparkles", text: "Un agente ha arredato una stanza con l'home staging AI", time: "5 min fa" },
+        { icon: "star", text: "Un agente è passato al piano annuale", time: "18 min fa" },
+        { icon: "smartphone", text: "Post social creati con GetNearMe", time: "" },
+        { icon: "target", text: "Un agente ha esportato un report PDF col proprio logo", time: "7 min fa" },
+        { icon: "briefcase", text: "Un agente si è appena registrato su GetNearMe", time: "2 min fa" },
         { icon: "trophy", text: "GetNearMe usato da agenti immobiliari in tutta Italia", time: "" },
-        { icon: "map", text: "Un agente ha generato analisi di zona dai portali immobiliari", time: "9 min fa" },
+        { icon: "map", text: "Un agente ha generato l'analisi di zona di un immobile", time: "9 min fa" },
       ],
     },
   },
   en: {
     nav: {
       features: "Features",
+      examples: "Examples",
       pricing: "Pricing",
       faq: "FAQ",
       blog: "Blog",
       tutorial: "Tutorial",
-      startAnalysis: "Start Analysis",
+      startAnalysis: "Try it free",
       backToHome: "← Back to home",
       dashboard: "Dashboard",
       myAccount: "My account"
     },
     hero: {
-      title1: "The competitive edge",
-      title2: "that sets your",
-      title3: "agency apart",
-      description: "Zone analysis, professional comparisons, and AI to enhance properties and presentations. Offer a service that goes beyond simple listings.",
-      cta: "Add Extension",
+      title1: "The AI assistant for real estate agents.",
+      title2: "Save more than a day and a half every week",
+      title3: "",
+      description: "Home staging, videos, social posts and reports for every property, ready in minutes. Everything that used to take you hours, done from one place.",
+      cta: "Try it free",
       ctaSecondary: "How it works",
-      subMockup: "GetNearMe is a Google Chrome extension that empowers your agency. It analyzes properties and neighborhoods, compares zone data, generates comparative estimates and professional presentations... all automatically while you browse the real estate portals you already use."
+      subMockup: "GetNearMe is the AI assistant for real estate agents: start from the listing or your own photos and get home staging, videos, social posts, branded reports and area analysis. All in one place, with nothing new to learn."
     },
     features: {
-      title: "The property, in its",
-      titleItalic: "essential data",
-      description: "GetNearMe organizes information into clear steps, to help you compare properties and context in a structured way.",
+      title: "Everything you can",
+      titleItalic: "do with GetNearMe",
+      description: "One assistant instead of Canva, a video editor, a designer and hours of work. Analyse the property, enhance the photos and prepare reports and content in minutes.",
       card1: {
-        title: "Property data",
-        desc: "Price, surface area, €/sqm, type and main features are collected and organized from listing data."
+        title: "Full property analysis",
+        desc: "You get an immediate, clear overview of the property's key data, without hunting for information scattered across dozens of pages."
       },
       card2: {
-        title: "Neighborhood context",
-        desc: "Services, transport, schools, green areas and points of interest are analyzed based on location and distances."
+        title: "Interactive area analysis",
+        desc: "Show your client what it actually means to live in that area: amenities, transport and real distances, on a map and in real time."
       },
       card3: {
-        title: "Real-time market value",
-        desc: "Get the average price per m² in the area to support valuations, acquisitions, and negotiations with concrete data."
+        title: "Average area price per m²",
+        desc: "The average €/m² price for the area, so you can go into negotiations with the numbers at hand."
       },
       card4: {
-        title: "Comparative view",
-        desc: "Information is displayed side-by-side to highlight relevant differences between multiple analyzed options."
+        title: "Comparative reports with your brand",
+        desc: "Present multiple properties in a tidy document with your logo, ready to send to the client."
       },
       card5: {
-        title: "Show the Potential with AI",
-        desc: "Edit photos with AI and show before/after comparisons: empty or furnished rooms, improved lighting, and enhanced spaces in seconds."
+        title: "AI home staging",
+        desc: "Edit photos with AI and show the before/after comparison: empty or furnished rooms, improved lighting and enhanced spaces in seconds."
       },
-      disclaimer: "The analyzes and estimates shown are indicative and do not constitute a real estate appraisal.",
-      addExtension: "Add extension",
+      disclaimer: "Area data is market information for illustrative purposes and does not constitute a property valuation or appraisal.",
+      addExtension: "Try it free",
       comingSoonTitle: "Coming soon",
-      comingSoonDesc: "We are developing new features designed to make your agency's work even more structured and efficient.",
+      comingSoonDesc: "We are developing new features to make your work even faster and more professional.",
     },
     faq: {
-      title: "Frequently Asked",
-      titleItalic: "Questions",
+      title: "Frequently asked",
+      titleItalic: "questions",
       items: [
         {
-          q: "What kind of information does it show?",
-          a: "GetNearMe shows organized data from real estate listings and available public sources, regarding the property, neighborhood and price and cost indicators."
+          q: "What is GetNearMe?",
+          a: "It is the AI assistant that prepares all the material for your listings: home staging, videos, social posts, reports and area analysis. Start from the portal link or your own photos and in minutes everything is ready, with your brand."
         },
         {
-          q: "Is it a real estate portal or agency?",
-          a: "No. GetNearMe does not publish listings and does not perform real estate brokerage. It is a tool for data analysis and comparison."
+          q: "Do I need to install anything?",
+          a: "No. GetNearMe is online: open it in your browser and start working. Nothing to download, no software to learn."
         },
         {
-          q: "Are they all official evaluations?",
-          a: "No. The analyzes and estimates shown are indicative and do not constitute a real estate appraisal or professional advice."
+          q: "How do I try it?",
+          a: "Free and without a card. Create your account and try the features straight away: see the output before you decide."
         },
         {
-          q: "Where does the data come from?",
-          a: "The data comes from the analyzed real estate listings and available public sources. The information is processed for easier reading and comparison."
+          q: "Does it work if I work alone?",
+          a: "Yes, it is designed precisely for the individual agent. You do the work of a small team on your own: photos, videos, posts and reports, with no external suppliers."
         },
         {
-          q: "Are the cost estimates accurate?",
-          a: "No. Cost estimates are indicative projections based on average values and may vary based on specific property and transaction characteristics."
+          q: "Do I need to know how to edit videos or use design software?",
+          a: "No. Choose a template and the AI does the rest: video with music and subtitles, post with your logo, reports already laid out."
         },
         {
-          q: "Can I compare multiple properties with each other?",
-          a: "Yes. GetNearMe allows you to side-by-side multiple properties to compare data, context and indicators in a comparative view."
+          q: "Is the area data a valuation?",
+          a: "No. It is market information for illustrative purposes, useful for presenting the property and preparing negotiations. It does not replace an official appraisal."
         }
       ]
     },
     pricing: {
-      title: "Access to",
-      titleItalic: "analyzes",
-      description: "Choose the access level that best fits the number of analyzes you want to perform.",
+      title: "One price",
+      titleItalic: "for everything",
+      description: "A single plan with every feature: home staging, videos, social posts, reports and area analysis. Try it free before you pay.",
       free: "Free",
       buyNow: "Buy now",
-      registerNow: "Register now",
-      mostChosen: "Most chosen",
-      footer1: "Secure payment with card, PayPal and major providers.",
-      footer2: "Credits available immediately after purchase.",
-      footer3: "No subscription. No expiration.",
+      registerNow: "Sign up now",
+      mostChosen: "Most popular",
+      footer1: "Secure payment by card, PayPal and major providers.",
+      footer2: "Try it free, no card required. Cancel anytime.",
+      footer3: "",
       plans: [
         {
-          name: "500 credits",
-          subtitle: "To start",
-          desc: "Allows you to perform some complete analyzes to compare properties and context in a structured way."
+          name: "Free",
+          subtitle: "To get started",
+          desc: "Try GetNearMe free with no card: create your account and use the features right away with the included trial credits."
         },
         {
-          name: "500 credits",
-          subtitle: "To start",
-          desc: "Allows you to perform some complete analyzes to compare properties and context in a structured way."
+          name: "Monthly Plan",
+          subtitle: "All features included",
+          desc: "Full access to GetNearMe for the individual agent: AI home staging, videos, social posts, branded reports and area analysis. A tool to support your work, not a property valuation system."
         },
         {
-          name: "1,500 credits",
-          subtitle: "Deep comparisons",
-          desc: "Suitable for comparing multiple options and deepening differences between properties, neighborhoods and estimated costs."
-        },
-        {
-          name: "5,000 credits",
-          subtitle: "Extended analyzes",
-          desc: "Designed for those analyzing many options and wanting deeper comparisons over time."
+          name: "Annual Plan",
+          subtitle: "Best value",
+          desc: "All the features of the monthly plan with two months free and priority support."
         }
       ]
     },
     cta: {
-      title: "Compare properties",
-      title2: "in a",
-      titleItalic: "structured way",
-      desc: "GetNearMe helps you organize and compare available data to evaluate multiple options with greater clarity.",
-      button: "Add extension",
+      title: "Present yourself like a large agency",
+      title2: "even when you work",
+      titleItalic: "alone",
+      desc: "Prepare professional photos, videos, posts and reports for every property, in minutes.",
+      button: "Try it free",
       requestInfo: "Request information",
     },
     howItWorks: {
-      step1Title: "Create your account",
-      step1Desc: "Sign up in a few seconds and access the platform.",
-      step2Title: "Activate the Agency plan",
-      step2Desc: "From your profile, go to the subscription section and activate the professional monthly plan.",
-      step3Title: "Start working right away",
-      step3Desc: "Access is immediate: you can use all the features directly on the real estate portals you already use.",
-      cta: "Start with GetNearMe",
-      videoTitle: "GetNearMe — How it works",
+      step1Title: "Create your free account",
+      step1Desc: "Sign up in seconds. No card required.",
+      step2Title: "Start from the listing",
+      step2Desc: "Paste the portal link or upload your own photos and property details.",
+      step3Title: "Publish in minutes",
+      step3Desc: "Photos, videos, posts and reports ready, with your brand. All from one place.",
+      cta: "Try it free",
+      videoTitle: "GetNearMe: how it works",
     },
     footer: {
-      desc: "Decision support tool for comparative analysis of properties and neighborhoods.",
+      desc: "The AI assistant for real estate agents. Everything that used to cost you hours — photos, videos, posts and presentations — with GetNearMe you do it in minutes, starting from the listing.",
       product: "Product",
       legal: "Legal",
       privacy: "Privacy Policy",
@@ -754,331 +745,326 @@ export const translations = {
       description: "You have been successfully removed from our mailing list. You will no longer receive emails from GetNearMe."
     },
     featuresPage: {
-      title: "All Features",
+      title: "All the Features",
       titleItalic: "of GetNearMe",
-      subtitle: "Discover all the advanced tools designed to transform your real estate agency's workflow. From territorial analysis to artificial intelligence, every feature is built to give you a real competitive advantage.",
+      subtitle: "Discover all the tools designed to change the way you work as a real estate agent. From area analysis to artificial intelligence, every feature gives you a concrete advantage.",
       feature6: {
-        title: "Automated Real Estate Marketing",
-        desc: "Turn property data into professional posts, already optimized for the major social networks.",
+        title: "Automated Property Marketing",
+        desc: "Turn property data into professional posts, already optimised for the major social networks.",
         badge: "NEW",
       },
       feature7: {
         title: "Property Videos in a Few Clicks",
-        desc: "Create professional video content in just a few clicks to promote every property in a modern and impactful way.",
+        desc: "Create professional video content in just a few clicks to promote every property in a modern and immediate way.",
         badge: "NEW",
       },
       ctaTitle: "Ready to get started?",
-      ctaDesc: "Join the real estate agencies already transforming their workflow with GetNearMe.",
-      ctaButton: "Add Extension",
-      ctaContact: "Contact Us",
+      ctaDesc: "Join the real estate agents already changing the way they work with GetNearMe.",
+      ctaButton: "Try it free",
+      ctaContact: "Contact us",
     },
     landing: {
       topBar: {
         promo: "Launch offer:",
-        discount: "7 days free, no limits",
+        discount: "Limited launch price",
         expiresIn: "expires in",
-        freeTrialShort: "no card required",
+        freeTrialShort: "",
       },
       hero: {
         badge: "",
-        title1: "Save hours of work",
-        title2: "with the best AI for real estate agents.",
-        desc: "GetNearMe is the Google Chrome extension that lives inside Immobiliare.it, Idealista, Casa.it, Airbnb and Booking. Simplifies the agency's daily work: area analysis, social posts, reels, AI renders of photos and PDF reports.",
-        ctaPrimary: "Add extension — 7 days free",
-        ctaSecondary: "Watch the demo",
-        ctaDemo: "Book agency demo",
-        stats: ["7 days free, no limits", "Installs in 2 seconds", "Integrated with 5 portals", "GDPR compliant"],
+        title1: "The AI assistant for real estate agents.",
+        title2: "Save more than a day and a half every week.",
+        desc: "Home staging, videos, social posts and reports for every property, ready in minutes. Everything that used to take you hours, done from one place.",
+        ctaPrimary: "Try it free",
+        ctaSecondary: "See how it works",
+        ctaDemo: "Book a demo",
+        stats: ["No card required", "Ready in minutes", "Your listings, with your brand"],
       },
       problem: {
         emoji: "frown",
-        title: "Canva, Photoshop, PowerPoint, CapCut, Google Maps: 10 tabs open for a single listing.",
-        desc: "To evaluate an area, fix photos, prepare an Instagram post or a PDF to send to the client you need five different tools — which cost money, don't talk to each other and steal hours of work every week. Meanwhile the client is waiting.",
+        title: "For a single listing you open ten different programmes.",
+        desc: "Photos to fix, videos to edit, social posts to create, a PDF to send the client. Tools that cost money, don't talk to each other and steal hours every week. And meanwhile another agent gets there first.",
       },
       solution: {
         emoji: "rocket",
-        title: "One Chrome extension. All the work on the listing, done.",
-        desc: "GetNearMe activates with one click on the portals you already use. Open a property on Immobiliare.it, Idealista, Casa.it, Airbnb or Booking and get area analysis, AI render, video, social posts and PDF report with your brand — without opening any other software. A tool to simplify the agent's daily work, not a substitute for professional valuations or appraisals.",
+        title: "One assistant. All the work on the listing, done.",
+        desc: "Start from the listing — paste the portal link or upload your photos — and GetNearMe gives you back home staging, videos, social posts and a branded report. In minutes, without opening another programme or learning anything new.",
       },
       features: {
         title: "Six professional tools.",
-        titleHighlight: "Inside the browser.",
-        subtitle: "GetNearMe replaces Canva, Photoshop, video editor, interior designer, social media manager and PowerPoint with a single Chrome extension. Works on Immobiliare.it, Idealista, Casa.it, Airbnb and Booking.",
+        titleHighlight: "One assistant.",
+        subtitle: "GetNearMe does the work of Canva, a video editor, a designer, a social media manager and PowerPoint. And you don't need to learn anything new.",
         items: [
-          { num: "01", title: "Interactive area analysis", desc: "Services, transport, schools, healthcare, parks and real points of interest shown on a map in real time. Tell the client about the neighbourhood with concrete data.", icon: "map", color: "#0ea5e9" },
-          { num: "02", title: "Average area €/m² price", desc: "Reference data on the average €/m² price in the area and comparisons between similar properties, useful for preparing client presentations and setting up negotiations. Market information for illustrative purposes — it does not constitute a professional appraisal or official valuation.", icon: "trending-up", color: "#f59e0b" },
-          { num: "03", title: "AI Homestaging", desc: "Furnishes empty rooms, corrects lighting and clears spaces in about 10 seconds. Eight selectable styles, before/after ready for client or social. Replaces Photoshop and interior designer.", icon: "sparkles", color: "#6366f1" },
-          { num: "04", title: "AI Video for the property", desc: "Reels and promotional videos with talking avatar, subtitles, walkthrough and before/after. Six templates, zero editing. Replaces CapCut, Premiere and video maker.", icon: "clapperboard", color: "#10b981" },
-          { num: "05", title: "Posts, reels and social stories", desc: "Content ready for Instagram, Facebook, TikTok and LinkedIn starting from the listing data. Your agency's logo, colours and identity applied automatically. Replaces Canva and social media manager.", icon: "smartphone", color: "#ec4899" },
-          { num: "06", title: "White-label PDF report", desc: "Comparative presentations with your logo, colours and font. Compare multiple properties in one professional document, ready to send. Replaces PowerPoint and graphic designer.", icon: "file-text", color: "#f97316" },
+          { num: "01", title: "AI home staging", desc: "Furnish, empty or transform a room in seconds. Show the before/after to the client or publish it straight to portals and social media.", icon: "sparkles", color: "#6366f1" },
+          { num: "02", title: "AI property video", desc: "Reels, walkthroughs, before/after, videos with a talking avatar and much more. Ready in a few clicks, no editing and no videographer.", icon: "clapperboard", color: "#10b981" },
+          { num: "03", title: "Posts, reels and social stories", desc: "Content ready for Instagram, Facebook, TikTok and LinkedIn from the listing data. Your logo and colours applied automatically.", icon: "smartphone", color: "#ec4899" },
+          { num: "04", title: "Branded PDF report", desc: "Compare multiple properties in a tidy document with your logo, colours and font. Ready to send to the client after the viewing.", icon: "file-text", color: "#f97316" },
+          { num: "05", title: "Interactive area analysis", desc: "Amenities, transport, schools, healthcare, parks and real distances shown on a map. Tell the client about the neighbourhood with concrete data, without opening twenty tabs.", icon: "map", color: "#0ea5e9" },
+          { num: "06", title: "Average area price per m²", desc: "The average €/m² price in the area and a comparison with similar properties, so you go into negotiations with the numbers at hand. Market data for illustrative purposes, not an appraisal.", icon: "trending-up", color: "#f59e0b" },
         ],
       },
       testimonials: {
-        title: "Built for how you actually work.",
+        title: "Fewer tools, better results.",
         npsLabel: "",
         npsValue: "",
         retentionLabel: "",
         retentionValue: "",
         items: [
-          { name: "Real estate agency", role: "Owner — Northern Italy", text: "I open the listing on Immobiliare.it and in five minutes I have area analysis, AI-furnished photos, Instagram post and PDF to send to the client. Before it was a full day's work between Canva, Photoshop and PowerPoint.", avatar: "AI", color: "#f59e0b" },
-          { name: "Real estate agent", role: "Senior — Central Italy", text: "AI homestaging convinces the owner. I show the empty room, then furnished in 10 seconds. It's the only thing I use to close the acquisition at the first meeting.", avatar: "AI", color: "#6366f1" },
-          { name: "Real estate group", role: "Director — Southern Italy", text: "We stopped paying for Canva, CapCut and an external graphic designer. With GetNearMe the entire agency produces brand-consistent content directly from the portals we already use every day.", avatar: "GI", color: "#10b981" },
+          { name: "Marco R.", role: "Real estate agent", text: "I tried the AI videos for a three-bedroom flat that had been sitting for two months. I posted it on Instagram and within a week I had three viewing requests. Honestly, I didn't expect that.", avatar: "MR", color: "#f59e0b", photo: "https://randomuser.me/api/portraits/men/32.jpg" },
+          { name: "Giulia T.", role: "Real estate agent", text: "I send the report after the viewing so the client can compare properties at their own pace. With the AI photos I show them the same room furnished three different ways — they make up their mind much faster.", avatar: "GT", color: "#6366f1", photo: "https://randomuser.me/api/portraits/women/65.jpg" },
+          { name: "Davide M.", role: "Real estate agent", text: "I upload the photos, pick a style and in a minute the reel is ready. Before I had to call a videographer and wait days — now I do it while I'm waiting for a client in the office.", avatar: "DM", color: "#10b981", photo: "https://randomuser.me/api/portraits/men/76.jpg" },
         ],
       },
       pricing: {
-        title1: "One plan.",
-        title2: "All the tools.",
-        titleHighlight: "7 days free.",
-        subtitle: "Full access to all features during the trial. No annual commitment. Cancel anytime.",
-        countdownLabel: "Launch price — expires in",
-        trustBadges: ["🔒 Secure payment with Stripe", "✅ No charge for 7 days", "⚡ Instant activation"],
+        title1: "One price.",
+        title2: "Pays for itself with the",
+        titleHighlight: "first property",
+        subtitle: "Try it free. Then one single subscription instead of Canva, a video editor, a designer and hours of work: it costs less than the sum of the parts.",
+        countdownLabel: "Launch price, expires in",
+        trustBadges: ["🔒 Secure payment with Stripe", "⚡ Instant activation"],
         savingsLabel: "YOU SAVE",
         progressAgencies: "",
         progressSpots: "",
         plans: [
           {
-            id: "agency_monthly", name: "Monthly", users: "All features included", oldPrice: null, price: 399,
+            id: "free", name: "Free", users: "To get started", oldPrice: null, price: 0, period: "",
             savingsYear: null, badge: null, popular: false,
-            features: ["5 agents included", "Unlimited reports with your logo", "300 AI homestaging photos/month", "8 AI Video Templates", "Automatic video editing", "Post & Stories Social Templates", "Real-time €/m² price calculation", "Unlimited credits"],
+            features: ["Try all the features", "Trial credits included", "No card required"],
+            extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Start free",
+          },
+          {
+            id: "agency_monthly", name: "Monthly", users: "All features included", oldPrice: 150, price: 59, period: "/month",
+            savingsYear: null, badge: null, popular: false,
+            features: ["Everything in Free", "Reports with your logo", "AI home staging", "AI property videos", "Social posts and stories", "Real-time €/m² price", "Email support"],
             extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Choose this plan",
           },
           {
-            id: "agency_quarterly", name: "Quarterly", users: "All features included", oldPrice: null, price: 349,
-            savingsYear: null, badge: null, popular: false,
-            features: ["5 agents included", "Unlimited reports with your logo", "600 AI homestaging photos/month", "12 AI Video Templates", "Automatic video editing", "Post & Stories Social Templates", "Real-time €/m² price calculation", "Unlimited credits"],
-            extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Choose this plan",
-          },
-          {
-            id: "agency_annual", name: "Annual", users: "All features included", oldPrice: null, price: 300,
-            savingsYear: null, badge: "Best value", popular: false,
-            features: ["5 agents included", "Unlimited reports with your logo", "1200 AI homestaging photos/month", "16 AI Video Templates", "Automatic video editing", "Post & Stories Social Templates", "Real-time €/m² price calculation", "Unlimited credits", "Priority support"],
+            id: "agency_annual", name: "Annual", users: "All features included", oldPrice: 1800, price: 590, period: "/year",
+            savingsYear: null, badge: "Most popular", popular: true,
+            features: ["Everything in Monthly", "2 months free vs monthly", "Price locked for 12 months", "Priority support"],
             extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Choose this plan",
           },
         ],
       },
       howItWorks: {
         title: "Up and running in",
-        titleHighlight: "2 seconds",
-        subtitle: "No software to install. No training needed. The extension integrates into the portals you already use every day.",
+        titleHighlight: "2 minutes",
+        subtitle: "Nothing to install, nothing to learn. Create your account, start from the listing and everything is ready.",
         steps: [
-          { step: "1", title: "Add to Chrome", desc: "One click from the Chrome Web Store. The GetNearMe extension installs in your browser in less than 2 seconds.", color: "#6366f1", bg: "#eef2ff", emoji: "puzzle" },
-          { step: "2", title: "Open a listing", desc: "Immobiliare.it, Idealista, Casa.it, Airbnb or Booking: the portals you already use every day. GetNearMe activates automatically on the listing.", color: "#f59e0b", bg: "#fffbeb", emoji: "search" },
-          { step: "3", title: "Generate everything with a click", desc: "Area analysis, AI render, video, social posts and PDF with your brand. Ready to show the client, without opening any other software.", color: "#10b981", bg: "#ecfdf5", emoji: "sparkles" },
+          { step: "1", title: "Create your free account", desc: "Sign up in seconds, directly in the browser. No card required.", color: "#6366f1", bg: "#eef2ff", emoji: "puzzle" },
+          { step: "2", title: "Start from the listing", desc: "Paste the portal link or upload your own photos and property details.", color: "#f59e0b", bg: "#fffbeb", emoji: "search" },
+          { step: "3", title: "Publish in minutes", desc: "Home staging, videos, social posts and reports ready, with your brand. All from one place.", color: "#10b981", bg: "#ecfdf5", emoji: "sparkles" },
         ],
       },
       faq: {
         title: "Questions?",
         titleHighlight: "Answers.",
         items: [
-          { q: "What exactly is GetNearMe?", a: "A browser extension for Google Chrome, designed for real estate agents and agencies. It installs from the Chrome Web Store in 2 seconds and is not software you need to learn: it activates automatically when you open a listing on supported portals." },
-          { q: "Does GetNearMe perform official property valuations?", a: "No. GetNearMe is not a property valuation system and does not replace a professional appraisal, estimate, or certification in any way. Area data and average €/m² prices are market information for illustrative purposes, useful for preparing presentations and negotiations. Any formal valuation remains the responsibility of the agent, appraiser, or qualified professional." },
-          { q: "Which portals does it work on?", a: "Immobiliare.it, Idealista, Casa.it, Airbnb and Booking. Open the listing and GetNearMe automatically reads the property data to generate analyses, content and reports." },
-          { q: "Which tools does it replace?", a: "GetNearMe concentrates in a single extension work you currently do with Canva, Photoshop, video editors, PowerPoint, area analysis tools and external home staging or graphic design services. The goal is to save you hours of work for every property." },
-          { q: "How does AI homestaging work?", a: "You choose a photo of an empty or furnished room, select one of the available styles and the AI returns the furnished version in about 10 seconds. You can use the before/after directly in social posts, videos or the client PDF." },
-          { q: "Can I create videos without knowing how to edit?", a: "Yes. Choose a template (talking avatar, subtitles, walkthrough, before/after, split screen, staging video) and GetNearMe assembles music, text and clips from the listing. No editing software required." },
-          { q: "Is my brand applied automatically?", a: "Yes. You upload your logo, colours and font once: they are applied automatically to PDFs, videos and social posts for all agents in the agency." },
-          { q: "How many agents can I add?", a: "Every plan includes 5 agents with shared access to the same branding. Each agent has their own account but works under the agency's identity." },
-          { q: "How does the free trial work?", a: "7 days of full access, with no usage limits. Cancel with one click from the dashboard, no charge if you cancel within 7 days." },
+          { q: "What is GetNearMe?", a: "It is the AI assistant that prepares all the material for your listings: home staging, videos, social posts, reports and area analysis. Start from the portal link or your own photos and in minutes everything is ready, with your brand." },
+          { q: "Do I need to install anything?", a: "No. GetNearMe is online: open it in your browser and start working. Nothing to download, no software to learn." },
+          { q: "How do I try it?", a: "Free and without a card. Create your account and try the features straight away: see the output before you decide to subscribe." },
+          { q: "Does it work if I work alone?", a: "Yes, it is designed precisely for the individual agent. You do the work of a small team on your own: photos, videos, posts and reports, with no external suppliers." },
+          { q: "Which tools does it replace?", a: "Canva, a video editor, PowerPoint, a designer, a social media manager and hours of manual research. One assistant instead of many tools, with lower costs and less time spent per property." },
+          { q: "Do I need to know how to edit videos or use design software?", a: "No. Choose a template (talking avatar, split screen, walkthrough, before/after, automatic editing, AI timelapse) and the AI generates the video with music and subtitles. Posts come out with your logo already applied." },
+          { q: "Is the area data a valuation?", a: "No. Average €/m² prices and area data are market information for illustrative purposes, useful for presenting the property and preparing negotiations. They do not replace an official appraisal." },
+          { q: "Can I cancel anytime?", a: "Yes. With the monthly plan you can cancel anytime from the dashboard, with no strings attached. The annual plan is billed upfront and has the lowest monthly price." },
         ],
       },
       finalCta: {
-        title1: "Stop jumping between 10 tools.",
-        title2: "All the work on the listing, in one extension.",
-        desc: "Try GetNearMe free for 7 days, with no limits. Cancel anytime.",
-        button: "Add extension — 7 days free",
-        buttonDemo: "Book agency demo",
-        footer: "🔒 No charge during the trial. Cancel with one click.",
+        title1: "Stop jumping between ten programmes.",
+        title2: "Prepare your listings with one assistant.",
+        desc: "Professional photos, videos, posts and reports for every property, in minutes. Try it free, no card required.",
+        button: "Try it free",
+        buttonDemo: "Book a demo",
+        footer: "🔒 Secure payment with Stripe. Try it free, cancel anytime.",
       },
       roiCalculator: {
         title: "How much do you save with",
         titleHighlight: "GetNearMe?",
-        subtitle: "Calculate the return on investment for your agency.",
-        inputProperties: "Properties managed per month",
+        subtitle: "Calculate how much time and money you save.",
+        inputProperties: "Properties you manage per month",
         inputHours: "Hours to prepare materials per property",
-        inputRate: "Agent hourly rate",
+        inputRate: "What one hour of your time is worth",
         outputHoursSaved: "Hours saved per month",
-        outputValueRecovered: "Time value recovered",
-        outputCost: "GetNearMe plan cost",
+        outputValueRecovered: "Value of time recovered",
+        outputCost: "Cost of GetNearMe",
         outputNetSavings: "Net monthly savings",
-        outputROI: "return on every euro spent",
+        outputROI: "return for every euro spent",
         perMonth: "/month",
-        cta: "Start 7 days free",
+        cta: "Choose this plan",
         note: "With GetNearMe each property takes about 3 minutes instead of hours. We use 80% as a conservative estimate of time saved.",
       },
       demo: {
-        pageTitle: "Book a demo for your agency",
-        pageSubtitle: "Fill out the form and we'll contact you to arrange a personalized GetNearMe demo.",
+        pageTitle: "Book a demo",
+        pageSubtitle: "Fill out the form and we'll get back to you to arrange a personalised GetNearMe demo.",
         fieldName: "Full name",
         fieldEmail: "Email",
-        fieldAgencyName: "Agency name",
+        fieldAgencyName: "Agency or team (optional)",
         fieldPhone: "Phone (optional)",
         fieldMessage: "Message (optional)",
         submit: "Book demo",
         submitting: "Sending...",
         successTitle: "Request sent!",
-        successMessage: "We'll contact you soon to arrange the demo.",
+        successMessage: "We'll contact you shortly to arrange the demo.",
         errorMessage: "An error occurred. Please try again later.",
         backToHome: "Back to home",
       },
       modal: {
         emoji: "rocket",
-        title: "Great choice!",
+        title: "Great choice.",
         planLabel: "Plan",
-        desc: "Sign in or register to activate your",
-        descBold: "7-day free trial",
+        desc: "Sign in or register to activate the",
+        descBold: "selected plan",
         descEnd: "with full access to all features.",
-        cta: "Activate free trial",
-        footer: "🔒 No charge for 7 days. Cancel with one click.",
+        cta: "Activate plan",
+        footer: "🔒 Secure payment with Stripe. Cancel with one click.",
       },
       popups: [
-        { icon: "circle", text: "An agency from Northern Italy activated the free trial", time: "3 min ago" },
-        { icon: "clapperboard", text: "An agent just generated a promotional video with AI", time: "" },
-        { icon: "users", text: "Agencies online right now", time: "" },
-        { icon: "rocket", text: "An agent started the 7-day free trial", time: "12 min ago" },
-        { icon: "flame", text: "GetNearMe chosen by new agencies this week", time: "" },
-        { icon: "sparkles", text: "An agent furnished a room with AI Homestaging", time: "5 min ago" },
-        { icon: "star", text: "An agency upgraded to the Annual plan", time: "18 min ago" },
-        { icon: "smartphone", text: "Social posts generated this week with GetNearMe", time: "" },
-        { icon: "target", text: "An agent exported a white-label PDF with their logo", time: "7 min ago" },
-        { icon: "briefcase", text: "An agency just signed up for the free trial", time: "2 min ago" },
-        { icon: "trophy", text: "GetNearMe used by real estate agents across Italy", time: "" },
-        { icon: "map", text: "An agent generated area analysis from property portals", time: "9 min ago" },
+        { icon: "circle", text: "An agent just activated the plan", time: "3 min ago" },
+        { icon: "clapperboard", text: "An agent generated a promotional video with AI", time: "" },
+        { icon: "users", text: "Agents working on GetNearMe right now", time: "" },
+        { icon: "rocket", text: "An agent just started the free trial", time: "12 min ago" },
+        { icon: "flame", text: "More and more agents are choosing GetNearMe", time: "" },
+        { icon: "sparkles", text: "An agent furnished a room with AI home staging", time: "5 min ago" },
+        { icon: "star", text: "An agent switched to the annual plan", time: "18 min ago" },
+        { icon: "smartphone", text: "Social posts created with GetNearMe", time: "" },
+        { icon: "target", text: "An agent exported a branded PDF report", time: "7 min ago" },
+        { icon: "briefcase", text: "An agent just signed up on GetNearMe", time: "2 min ago" },
+        { icon: "trophy", text: "GetNearMe used by real estate agents all across Italy", time: "" },
+        { icon: "map", text: "An agent generated area analysis for a property", time: "9 min ago" },
       ],
     },
   },
   es: {
     nav: {
       features: "Funcionalidades",
+      examples: "Ejemplos",
       pricing: "Precios",
       faq: "FAQ",
       blog: "Blog",
       tutorial: "Tutorial",
-      startAnalysis: "Iniciar Análisis",
+      startAnalysis: "Pruébalo gratis",
       backToHome: "← Volver al inicio",
       dashboard: "Dashboard",
       myAccount: "Mi cuenta"
     },
     hero: {
-      title1: "La ventaja competitiva",
-      title2: "que distingue a",
-      title3: "tu agencia",
-      description: "Análisis de zona, comparaciones profesionales e IA para valorizar inmuebles y presentaciones. Ofrece un servicio que va más allá del simple anuncio.",
-      cta: "Añadir Extensión",
+      title1: "El asistente de IA para agentes inmobiliarios.",
+      title2: "Ahorra más de un día y medio a la semana",
+      title3: "",
+      description: "Home staging, vídeos, posts sociales e informes para cada inmueble, listos en pocos minutos. Lo que hoy te lleva horas, lo haces desde un solo lugar.",
+      cta: "Pruébalo gratis",
       ctaSecondary: "Cómo funciona",
-      subMockup: "GetNearMe es una extensión de Google Chrome que potencia el trabajo de tu agencia. Analiza inmuebles y barrios, compara datos de zona, genera estimaciones comparativas y presentaciones profesionales… todo automáticamente mientras navegas por los portales inmobiliarios que ya usas."
+      subMockup: "GetNearMe es el asistente de IA para agentes inmobiliarios: parte del anuncio o de tus fotos y obtén home staging, vídeos, posts sociales, informes con tu marca y análisis de zona. Todo en un solo lugar, sin aprender nada nuevo."
     },
     features: {
-      title: "El inmueble, en sus datos",
-      titleItalic: "esenciales",
-      description: "GetNearMe organiza la información en pasos claros, para ayudarte a comparar inmuebles y contexto de forma estructurada.",
+      title: "Todo lo que puedes",
+      titleItalic: "hacer con GetNearMe",
+      description: "Un asistente en lugar de Canva, editor de vídeo, diseñador y horas de trabajo. Analizas el inmueble, valorizas las fotos y preparas informes y contenidos en pocos minutos.",
       card1: {
-        title: "Datos del inmueble",
-        desc: "Precio, superficie, €/m², tipologia y características principales se recogen y organizan a partir de los datos del anuncio."
+        title: "Análisis completo del inmueble",
+        desc: "Tienes al instante una visión clara y ordenada de los datos clave del inmueble, sin buscar información repartida entre mil páginas."
       },
       card2: {
-        title: "Contexto del barrio",
-        desc: "Servicios, transporte, colegios, zonas verdes y puntos de interés se analizan en función de la ubicación y las distancias."
+        title: "Análisis de zona interactivo",
+        desc: "Le muestras al cliente qué significa vivir en esa zona: servicios, transportes y distancias reales, en mapa y en tiempo real."
       },
       card3: {
-        title: "Valor de mercado en tiempo real",
-        desc: "Obtén el precio medio por m² de la zona para respaldar valoraciones, adquisiciones y negociaciones con datos concretos."
+        title: "Precio medio de zona por m²",
+        desc: "El precio medio €/m² de la zona, para preparar la negociación con los números a mano."
       },
       card4: {
-        title: "Vista comparativa",
-        desc: "La información se muestra en paralelo para resaltar las diferencias relevantes entre varias opciones analizadas."
+        title: "Informes comparativos con tu marca",
+        desc: "Presentas varios inmuebles en un documento ordenado con tu logo, listo para enviar al cliente."
       },
       card5: {
-        title: "Muestra el Potencial con AI",
-        desc: "Edita fotos con AI y muestra comparaciones antes/después: ambientes vacíos o amueblados, luz mejorada y espacios valorados en segundos."
+        title: "Home staging con IA",
+        desc: "Editas las fotos con IA y muestras la comparación antes/después: habitaciones vacías o amuebladas, luz mejorada y espacios valorizados en pocos segundos."
       },
-      disclaimer: "Los análisis y estimaciones mostrados son indicativos y no constituyen una tasación inmobiliaria.",
-      addExtension: "Añadir extensión",
+      disclaimer: "Los datos de zona son información de mercado a título orientativo y no constituyen una valoración ni tasación inmobiliaria.",
+      addExtension: "Pruébalo gratis",
       comingSoonTitle: "Próximamente",
-      comingSoonDesc: "Estamos desarrollando nuevas funcionalidades pensadas para hacer el trabajo de tu agencia aún más estructurado y eficiente.",
+      comingSoonDesc: "Estamos desarrollando nuevas funciones para que tu trabajo sea aún más rápido y profesional.",
     },
     faq: {
       title: "Preguntas",
       titleItalic: "frecuentes",
       items: [
         {
-          q: "¿Qué tipo de información muestra?",
-          a: "GetNearMe muestra datos organizados procedentes de anuncios inmobiliarios y fuentes públicas disponibles, relativos al inmueble, al barrio y a indicadores de precio y coste."
+          q: "¿Qué es GetNearMe?",
+          a: "Es el asistente de IA que prepara todo el material de tus anuncios: home staging, vídeos, posts sociales, informes y análisis de zona. Parte del enlace del portal o de tus fotos y en pocos minutos tienes todo listo, con tu marca."
         },
         {
-          q: "¿Es un portal inmobiliario o una agencia?",
-          a: "No. GetNearMe no publica anuncios y no realiza intermediación inmobiliaria. Es una herramienta de análisis y comparación de datos."
+          q: "¿Tengo que instalar algo?",
+          a: "No. GetNearMe es online: accedes desde el navegador y empiezas a trabajar. Nada que descargar, ningún software que aprender."
         },
         {
-          q: "¿Son todas evaluaciones oficiales?",
-          a: "No. Los análisis y estimaciones mostrados son indicativos y no constituyen una tasación inmobiliaria ni un asesoramiento profesional."
+          q: "¿Cómo lo pruebo?",
+          a: "Gratis y sin tarjeta. Creas la cuenta y pruebas las funciones enseguida: ves el resultado antes de decidir."
         },
         {
-          q: "¿De dónde proceden los datos?",
-          a: "Los datos proceden de los anuncios inmobiliarios analizados y de fuentes públicas disponibles. La información se procesa para facilitar su lectura y comparación."
+          q: "¿Funciona si trabajo solo?",
+          a: "Sí, está pensado precisamente para el agente individual. Haces tú solo el trabajo de un pequeño equipo: fotos, vídeos, posts e informes, sin proveedores externos."
         },
         {
-          q: "¿Son precisas las estimaciones de costes?",
-          a: "No. Las estimaciones de costes son proyecciones indicativas basadas en valores medios y pueden variar según las características específicas del inmueble y la operación."
+          q: "¿Necesito saber montar vídeos o usar programas de diseño?",
+          a: "No. Eliges una plantilla y la IA hace el resto: vídeo con música y subtítulos, posts con tu logo, informes ya maquetados."
         },
         {
-          q: "¿Puedo comparar varios inmuebles entre sí?",
-          a: "Sí. GetNearMe permite comparar varios inmuebles en paralelo para contrastar datos, contexto e indicadores en una vista comparativa."
+          q: "¿Los datos de zona son una valoración?",
+          a: "No. Son información de mercado a título orientativo, útiles para presentar el inmueble y preparar la negociación. No sustituyen una tasación oficial."
         }
       ]
     },
     pricing: {
-      title: "Acceso a los",
-      titleItalic: "análisis",
-      description: "Elige el nivel de acceso que mejor se adapte al número de análisis que desees realizar.",
+      title: "Un solo precio",
+      titleItalic: "para todo",
+      description: "Un único plan con todas las funciones: home staging, vídeos, posts sociales, informes y análisis de zona. Prueba gratis antes de pagar.",
       free: "Gratis",
       buyNow: "Comprar ahora",
       registerNow: "Regístrate ahora",
       mostChosen: "Más elegido",
-      footer1: "Pago seguro con tarjeta, PayPal y principales proveedores.",
-      footer2: "Créditos disponibles inmediatamente tras la compra.",
-      footer3: "Sin suscripción. Sin caducidad.",
+      footer1: "Pago seguro con tarjeta, PayPal y los principales proveedores.",
+      footer2: "Prueba gratis, sin tarjeta. Cancela cuando quieras.",
+      footer3: "",
       plans: [
         {
-          name: "500 créditos",
+          name: "Gratis",
           subtitle: "Para empezar",
-          desc: "Permite realizar algunos análisis completos para comparar inmuebles y contexto de forma estructurada."
+          desc: "Prueba GetNearMe gratis y sin tarjeta: creas la cuenta y usas enseguida las funciones con los créditos de prueba incluidos."
         },
         {
-          name: "500 créditos",
-          subtitle: "Para empezar",
-          desc: "Permite realizar algunos análisis completos para comparar inmuebles y contexto de forma estructurada."
+          name: "Plan Mensual",
+          subtitle: "Todas las funciones incluidas",
+          desc: "Acceso completo a GetNearMe para el agente individual: home staging AI, vídeos, posts sociales, informes con tu marca y análisis de zona. Una herramienta de apoyo a tu trabajo, no un sistema de valoración inmobiliaria."
         },
         {
-          name: "1.500 créditos",
-          subtitle: "Comparativas profundas",
-          desc: "Adecuado para comparar varias opciones y profundizar en las diferencias entre inmuebles, barrios y costes estimados."
-        },
-        {
-          name: "5.000 créditos",
-          subtitle: "Análisis extendidos",
-          desc: "Pensado para quienes analizan muchas opciones y desean comparativas más profundas en el tiempo."
+          name: "Plan Anual",
+          subtitle: "El más conveniente",
+          desc: "Todas las funciones del plan mensual con dos meses gratis y soporte prioritario."
         }
       ]
     },
     cta: {
-      title: "Compara inmuebles",
-      title2: "de forma",
-      titleItalic: "estructurada",
-      desc: "GetNearMe te ayuda a organizar y comparar los datos disponibles para evaluar múltiples opciones con mayor claridad.",
-      button: "Añadir extensión",
+      title: "Preséntate como una gran agencia",
+      title2: "aunque trabajes",
+      titleItalic: "solo",
+      desc: "Prepara fotos, vídeos, posts e informes profesionales para cada inmueble, en pocos minutos.",
+      button: "Pruébalo gratis",
       requestInfo: "Solicitar información",
     },
     howItWorks: {
-      step1Title: "Crea tu cuenta",
-      step1Desc: "Regístrate en pocos segundos y accede a la plataforma.",
-      step2Title: "Activa el plan Agencia",
-      step2Desc: "Desde tu perfil, accede a la sección de suscripción y activa el plan profesional mensual.",
-      step3Title: "Empieza a trabajar de inmediato",
-      step3Desc: "El acceso es inmediato: puedes utilizar todas las funcionalidades directamente en los portales inmobiliarios que ya usas.",
-      cta: "Empieza con GetNearMe",
-      videoTitle: "GetNearMe — Cómo funciona",
+      step1Title: "Crea tu cuenta gratis",
+      step1Desc: "Te registras en pocos segundos. Sin tarjeta requerida.",
+      step2Title: "Parte del anuncio",
+      step2Desc: "Pegas el enlace del portal o subes tus fotos y los datos del inmueble.",
+      step3Title: "Publica en pocos minutos",
+      step3Desc: "Fotos, vídeos, posts e informes listos, con tu marca. Todo desde un solo lugar.",
+      cta: "Pruébalo gratis",
+      videoTitle: "GetNearMe: cómo funciona",
     },
     footer: {
-      desc: "Herramienta de soporte a la decisión para el análisis comparativo de inmuebles y barrios.",
+      desc: "El asistente de IA para agentes inmobiliarios. Lo que hoy te cuesta horas — fotos, vídeos, posts y presentaciones — con GetNearMe lo haces en pocos minutos, partiendo del anuncio.",
       product: "Producto",
       legal: "Legal",
       privacy: "Política de Privacidad",
@@ -1196,7 +1182,7 @@ export const translations = {
     bonus: {
       creditsClaimed: "¡Créditos Reclamados!",
       dayCompleted: "¡Día {day} completado!",
-      weekComplete: "¡Fantástico! ¡Has completado la semana! ¡Recibes 120 créditos extra!",
+      weekComplete: "¡Genial! ¡Has completado la semana! ¡Recibes 120 créditos extra!",
       comeBackTomorrow: "Vuelve mañana para el día {day}.",
       goToHome: "Ir a GetNearMe",
       backToHome: "Volver al Inicio",
@@ -1228,7 +1214,7 @@ export const translations = {
     featuresPage: {
       title: "Todas las Funcionalidades",
       titleItalic: "de GetNearMe",
-      subtitle: "Descubre todas las herramientas avanzadas diseñadas para transformar el trabajo de tu agencia inmobiliaria. Desde el análisis territorial hasta la inteligencia artificial, cada funcionalidad está diseñada para darte una ventaja competitiva real.",
+      subtitle: "Descubre todas las herramientas pensadas para transformar tu trabajo como agente inmobiliario. Desde el análisis de zona hasta la inteligencia artificial, cada función te da una ventaja concreta.",
       feature6: {
         title: "Marketing Inmobiliario Automático",
         desc: "Transforma los datos del inmueble en publicaciones profesionales, ya optimizadas para las principales redes sociales.",
@@ -1240,286 +1226,312 @@ export const translations = {
         badge: "NUEVO",
       },
       ctaTitle: "¿Listo para empezar?",
-      ctaDesc: "Únete a las agencias inmobiliarias que ya están transformando su forma de trabajar con GetNearMe.",
-      ctaButton: "Añadir Extensión",
+      ctaDesc: "Únete a los agentes inmobiliarios que ya están cambiando su forma de trabajar con GetNearMe.",
+      ctaButton: "Pruébalo gratis",
       ctaContact: "Contáctanos",
     },
     landing: {
       topBar: {
         promo: "Oferta de lanzamiento:",
-        discount: "7 días gratis, sin límites",
+        discount: "Precio de lanzamiento limitado",
         expiresIn: "expira en",
-        freeTrialShort: "sin tarjeta requerida",
+        freeTrialShort: "",
       },
       hero: {
         badge: "",
-        title1: "Ahorra horas de trabajo",
-        title2: "con la mejor IA para agentes inmobiliarios.",
-        desc: "GetNearMe es la extensión para Google Chrome que vive dentro de Immobiliare.it, Idealista, Casa.it, Airbnb y Booking. Simplifica el trabajo diario de la agencia: análisis de zona, posts sociales, reels, renders AI de fotos e informes PDF.",
-        ctaPrimary: "Añadir extensión — 7 días gratis",
-        ctaSecondary: "Ver la demo",
-        ctaDemo: "Reservar demo agencia",
-        stats: ["7 días gratis sin límites", "Se instala en 2 segundos", "Integrado con 5 portales", "GDPR compliant"],
+        title1: "El asistente de IA para agentes inmobiliarios.",
+        title2: "Ahorra más de un día y medio a la semana.",
+        desc: "Home staging, vídeos, posts sociales e informes para cada inmueble, listos en pocos minutos. Lo que hoy te lleva horas, lo haces desde un solo lugar.",
+        ctaPrimary: "Pruébalo gratis",
+        ctaSecondary: "Mira cómo funciona",
+        ctaDemo: "Reserva una demo",
+        stats: ["Sin tarjeta requerida", "Listo en pocos minutos", "Tus anuncios, con tu marca"],
       },
       problem: {
         emoji: "frown",
-        title: "Canva, Photoshop, PowerPoint, CapCut, Google Maps: 10 pestañas abiertas para un solo anuncio.",
-        desc: "Para valorar una zona, arreglar fotos, preparar un post de Instagram o un PDF para enviar al cliente necesitas cinco software distintos — que cuestan, no se hablan entre sí y te roban horas de trabajo cada semana. Mientras tanto el cliente espera.",
+        title: "Para un solo anuncio abres diez programas distintos.",
+        desc: "Fotos que arreglar, vídeos que montar, posts para las redes, el PDF que enviar al cliente. Herramientas que cuestan, no se hablan entre sí y te roban horas cada semana. Y mientras tanto otro agente llega antes que tú.",
       },
       solution: {
         emoji: "rocket",
-        title: "Una extensión Chrome. Todo el trabajo sobre el anuncio, terminado.",
-        desc: "GetNearMe se activa con un clic en los portales que ya usas. Abre un inmueble en Immobiliare.it, Idealista, Casa.it, Airbnb o Booking y obtén análisis de zona, render AI, vídeo, posts sociales e informe PDF con tu marca — sin abrir ningún otro software. Una herramienta para simplificar el trabajo diario del agente, no un sustituto de tasaciones o peritaciones profesionales.",
+        title: "Un solo asistente. Todo el trabajo sobre el anuncio, terminado.",
+        desc: "Partes del anuncio — pegas el enlace del portal o subes tus fotos — y GetNearMe te devuelve home staging, vídeos, posts sociales e informes con tu logo. En pocos minutos, sin abrir otros programas y sin aprender nada nuevo.",
       },
       features: {
         title: "Seis herramientas profesionales.",
-        titleHighlight: "Dentro del navegador.",
-        subtitle: "GetNearMe sustituye a Canva, Photoshop, editor de vídeo, interiorista, social media manager y PowerPoint con una única extensión Chrome. Funciona en Immobiliare.it, Idealista, Casa.it, Airbnb y Booking.",
+        titleHighlight: "Un solo asistente.",
+        subtitle: "GetNearMe hace el trabajo de Canva, editor de vídeo, diseñador, social media manager y PowerPoint. Y no tienes que aprender nada nuevo.",
         items: [
-          { num: "01", title: "Análisis de zona interactivo", desc: "Servicios, transportes, colegios, sanidad, parques y puntos de interés reales mostrados en mapa en tiempo real. Habla del barrio al cliente con datos concretos.", icon: "map", color: "#0ea5e9" },
-          { num: "02", title: "Precio medio de zona por m²", desc: "Datos de referencia sobre el precio medio €/m² de la zona y comparativas entre inmuebles similares, útiles para preparar presentaciones al cliente e iniciar negociaciones. Información de mercado a título orientativo — no constituye una peritación o tasación oficial.", icon: "trending-up", color: "#f59e0b" },
-          { num: "03", title: "Homestaging AI", desc: "Amuebla habitaciones vacías, corrige la luz y despeja los ambientes en unos 10 segundos. Ocho estilos seleccionables, antes/después listos para cliente o redes sociales. Sustituye a Photoshop e interiorista.", icon: "sparkles", color: "#6366f1" },
-          { num: "04", title: "Vídeo AI para el inmueble", desc: "Reels y vídeos promocionales con avatar parlante, subtítulos, walkthrough y before/after. Seis plantillas, cero edición. Sustituye a CapCut, Premiere y video maker.", icon: "clapperboard", color: "#10b981" },
-          { num: "05", title: "Posts, reels e historias sociales", desc: "Contenidos listos para Instagram, Facebook, TikTok y LinkedIn partiendo de los datos del anuncio. Logo, colores e identidad de tu agencia aplicados automáticamente. Sustituye a Canva y social media manager.", icon: "smartphone", color: "#ec4899" },
-          { num: "06", title: "Informe PDF white-label", desc: "Presentaciones comparativas con tu logo, colores y tipografía. Compara varios inmuebles en un documento profesional, listo para enviar. Sustituye a PowerPoint y diseñador gráfico.", icon: "file-text", color: "#f97316" },
+          { num: "01", title: "Home staging AI", desc: "Amuebla, vacía o transforma una habitación en pocos segundos. Muestras el antes/después al cliente o lo publicas directamente en los portales y en las redes.", icon: "sparkles", color: "#6366f1" },
+          { num: "02", title: "Vídeo AI para el inmueble", desc: "Reels, walkthrough, before/after, vídeo con avatar que habla y mucho más. Listos en pocos clics, sin montaje y sin videomaker.", icon: "clapperboard", color: "#10b981" },
+          { num: "03", title: "Posts, reels e historias sociales", desc: "Contenidos listos para Instagram, Facebook, TikTok y LinkedIn a partir de los datos del anuncio. Tu logo y tus colores aplicados solos.", icon: "smartphone", color: "#ec4899" },
+          { num: "04", title: "Informe PDF con tu marca", desc: "Comparas varios inmuebles en un documento ordenado con tu logo, colores y tipografía. Listo para enviar al cliente después de la visita.", icon: "file-text", color: "#f97316" },
+          { num: "05", title: "Análisis de zona interactivo", desc: "Servicios, transportes, colegios, sanidad, parques y distancias reales mostrados en mapa. Le cuentas el barrio al cliente con datos concretos, sin abrir veinte pestañas.", icon: "map", color: "#0ea5e9" },
+          { num: "06", title: "Precio medio de zona por m²", desc: "El precio medio €/m² de la zona y la comparativa entre inmuebles similares, para preparar la negociación con los números a mano. Datos de mercado a título orientativo, no una tasación.", icon: "trending-up", color: "#f59e0b" },
         ],
       },
       testimonials: {
-        title: "Pensada para como trabajas de verdad.",
+        title: "Menos herramientas, más resultados.",
         npsLabel: "",
         npsValue: "",
         retentionLabel: "",
         retentionValue: "",
         items: [
-          { name: "Agencia inmobiliaria", role: "Propietario — Norte de Italia", text: "Abro el anuncio en Immobiliare.it y en cinco minutos tengo análisis de zona, fotos amuebladas con IA, post de Instagram y PDF para enviar al cliente. Antes era un día entero de trabajo entre Canva, Photoshop y PowerPoint.", avatar: "AI", color: "#f59e0b" },
-          { name: "Agente inmobiliario", role: "Senior — Centro de Italia", text: "El homestaging AI convence al propietario. Le muestro la habitación vacía, luego amueblada en 10 segundos. Es lo único que uso para cerrar la captación en el primer encuentro.", avatar: "AI", color: "#6366f1" },
-          { name: "Grupo inmobiliario", role: "Director — Sur de Italia", text: "Dejamos de pagar Canva, CapCut y un diseñador externo. Con GetNearMe toda la agencia produce contenidos coherentes con la marca, directamente desde los portales que ya usamos cada día.", avatar: "GI", color: "#10b981" },
+          { name: "Marco R.", role: "Agente inmobiliario", text: "Probé los vídeos AI para un piso que llevaba dos meses parado. Lo puse en Instagram y en una semana recibí tres solicitudes de visita. Sinceramente no me lo esperaba.", avatar: "MR", color: "#f59e0b", photo: "https://randomuser.me/api/portraits/men/32.jpg" },
+          { name: "Giulia T.", role: "Agente inmobiliario", text: "El informe lo mando después de la visita, así el cliente compara las casas con calma. Con las fotos AI le muestro la misma habitación amueblada de tres formas distintas: se convence mucho antes.", avatar: "GT", color: "#6366f1", photo: "https://randomuser.me/api/portraits/women/65.jpg" },
+          { name: "Davide M.", role: "Agente inmobiliario", text: "Subo las fotos, elijo el estilo y en un minuto tengo el reel listo. Antes tenía que llamar al videomaker y esperar días; ahora lo hago mientras espero al cliente en la oficina.", avatar: "DM", color: "#10b981", photo: "https://randomuser.me/api/portraits/men/76.jpg" },
         ],
       },
       pricing: {
-        title1: "Un plan.",
-        title2: "Todas las herramientas.",
-        titleHighlight: "7 días gratis.",
-        subtitle: "Acceso completo a todas las funciones durante la prueba. Sin compromiso anual. Cancela cuando quieras.",
-        countdownLabel: "Precio de lanzamiento — expira en",
-        trustBadges: ["🔒 Pago seguro con Stripe", "✅ Sin cobro durante 7 días", "⚡ Activación inmediata"],
+        title1: "Un solo precio.",
+        title2: "Se amortiza con el",
+        titleHighlight: "primer inmueble",
+        subtitle: "Pruébalo gratis. Luego un solo plan en lugar de Canva, editor de vídeo, diseñador y horas de trabajo: cuesta menos que la suma de todo.",
+        countdownLabel: "Precio de lanzamiento, expira en",
+        trustBadges: ["🔒 Pago seguro con Stripe", "⚡ Activación inmediata"],
         savingsLabel: "AHORRAS",
         progressAgencies: "",
         progressSpots: "",
         plans: [
           {
-            id: "agency_monthly", name: "Mensual", users: "Todas las funciones incluidas", oldPrice: null, price: 399,
+            id: "free", name: "Free", users: "Para empezar", oldPrice: null, price: 0, period: "",
             savingsYear: null, badge: null, popular: false,
-            features: ["5 agentes incluidos", "Informes ilimitados con tu logo", "300 fotos AI homestaging/mes", "8 plantillas de vídeo AI", "Montaje de vídeo automático", "Plantillas Post & Stories Social", "Cálculo precio €/m² en tiempo real", "Créditos ilimitados"],
+            features: ["Prueba todas las funciones", "Créditos de prueba incluidos", "Sin tarjeta requerida"],
+            extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Empieza gratis",
+          },
+          {
+            id: "agency_monthly", name: "Mensual", users: "Todas las funciones incluidas", oldPrice: 150, price: 59, period: "/mes",
+            savingsYear: null, badge: null, popular: false,
+            features: ["Todo del plan Gratis", "Informes con tu logo", "Home staging AI", "Vídeos AI para inmuebles", "Posts e historias sociales", "Precio al m² en tiempo real", "Soporte por email"],
             extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Elige este plan",
           },
           {
-            id: "agency_quarterly", name: "Trimestral", users: "Todas las funciones incluidas", oldPrice: null, price: 349,
-            savingsYear: null, badge: null, popular: false,
-            features: ["5 agentes incluidos", "Informes ilimitados con tu logo", "600 fotos AI homestaging/mes", "12 plantillas de vídeo AI", "Montaje de vídeo automático", "Plantillas Post & Stories Social", "Cálculo precio €/m² en tiempo real", "Créditos ilimitados"],
-            extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Elige este plan",
-          },
-          {
-            id: "agency_annual", name: "Anual", users: "Todas las funciones incluidas", oldPrice: null, price: 300,
-            savingsYear: null, badge: "Más conveniente", popular: false,
-            features: ["5 agentes incluidos", "Informes ilimitados con tu logo", "1200 fotos AI homestaging/mes", "16 plantillas de vídeo AI", "Montaje de vídeo automático", "Plantillas Post & Stories Social", "Cálculo precio €/m² en tiempo real", "Créditos ilimitados", "Soporte prioritario"],
+            id: "agency_annual", name: "Anual", users: "Todas las funciones incluidas", oldPrice: 1800, price: 590, period: "/año",
+            savingsYear: null, badge: "Más elegido", popular: true,
+            features: ["Todo del plan Mensual", "2 meses gratis respecto al mensual", "Precio fijo durante 12 meses", "Soporte prioritario"],
             extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Elige este plan",
           },
         ],
       },
       howItWorks: {
         title: "Operativo en",
-        titleHighlight: "2 segundos",
-        subtitle: "Ningún software que instalar. Ninguna formación. La extensión se integra en los portales que ya usas cada día.",
+        titleHighlight: "2 minutos",
+        subtitle: "Nada que instalar, nada que aprender. Creas la cuenta, partes del anuncio y tienes todo listo.",
         steps: [
-          { step: "1", title: "Añade a Chrome", desc: "Un clic desde Chrome Web Store. La extensión GetNearMe se instala en el navegador en menos de 2 segundos.", color: "#6366f1", bg: "#eef2ff", emoji: "puzzle" },
-          { step: "2", title: "Abre un anuncio", desc: "Immobiliare.it, Idealista, Casa.it, Airbnb o Booking: los portales que ya usas cada día. GetNearMe se activa automáticamente en el anuncio.", color: "#f59e0b", bg: "#fffbeb", emoji: "search" },
-          { step: "3", title: "Genera todo con un clic", desc: "Análisis de zona, render AI, vídeo, posts sociales y PDF con tu marca. Listos para mostrar al cliente, sin abrir ningún otro software.", color: "#10b981", bg: "#ecfdf5", emoji: "sparkles" },
+          { step: "1", title: "Crea tu cuenta gratis", desc: "Te registras en pocos segundos, directamente desde el navegador. Sin tarjeta requerida.", color: "#6366f1", bg: "#eef2ff", emoji: "puzzle" },
+          { step: "2", title: "Parte del anuncio", desc: "Pegas el enlace del portal o subes tus fotos y los datos del inmueble.", color: "#f59e0b", bg: "#fffbeb", emoji: "search" },
+          { step: "3", title: "Publica en pocos minutos", desc: "Home staging, vídeos, posts sociales e informes listos, con tu marca. Todo desde un solo lugar.", color: "#10b981", bg: "#ecfdf5", emoji: "sparkles" },
         ],
       },
       faq: {
         title: "¿Preguntas?",
         titleHighlight: "Respuestas.",
         items: [
-          { q: "¿Qué es exactamente GetNearMe?", a: "Una extensión para el navegador Google Chrome, pensada para agentes y agencias inmobiliarias. Se instala desde Chrome Web Store en 2 segundos y no es un software que aprender: se activa automáticamente cuando abres un anuncio en los portales compatibles." },
-          { q: "¿GetNearMe realiza tasaciones inmobiliarias oficiales?", a: "No. GetNearMe no es un sistema de tasación inmobiliaria y no sustituye en modo alguno una peritación, estimación o certificación profesional. Los datos de zona y los precios medios por m² son información de mercado a título orientativo, útiles para preparar presentaciones y negociaciones. Toda tasación formal sigue siendo responsabilidad del agente, perito o técnico habilitado." },
-          { q: "¿En qué portales funciona?", a: "Immobiliare.it, Idealista, Casa.it, Airbnb y Booking. Abre el anuncio y GetNearMe lee automáticamente los datos del inmueble para generar análisis, contenidos e informes." },
-          { q: "¿Qué herramientas sustituye?", a: "GetNearMe concentra en una sola extensión trabajos que hoy realizas con Canva, Photoshop, editores de vídeo, PowerPoint, herramientas de análisis de zona y servicios externos de home staging o diseño gráfico. El objetivo es ahorrarte horas de trabajo por cada inmueble." },
-          { q: "¿Cómo funciona el homestaging AI?", a: "Eliges la foto de una habitación vacía o amueblada, seleccionas uno de los estilos disponibles y la IA devuelve la versión amueblada en unos 10 segundos. Puedes usar el antes/después directamente en posts sociales, vídeos o el PDF del cliente." },
-          { q: "¿Puedo crear vídeos sin saber montar?", a: "Sí. Elige una plantilla (avatar parlante, subtítulos, walkthrough, before/after, pantalla dividida, vídeo de staging) y GetNearMe monta música, textos y clips partiendo del anuncio. No se requiere ningún software de edición." },
-          { q: "¿Mi marca se aplica automáticamente?", a: "Sí. Subes logo, colores y tipografía una sola vez: se aplican automáticamente en PDF, vídeos y posts sociales para todos los agentes de la agencia." },
-          { q: "¿Cuántos agentes puedo añadir?", a: "Cada plan incluye 5 agentes con acceso compartido al mismo branding. Cada agente tiene su propia cuenta pero trabaja bajo la identidad de la agencia." },
-          { q: "¿Cómo funciona la prueba gratuita?", a: "7 días de acceso completo, sin límites de uso. Cancela con un clic desde el panel, sin cargo si cancelas antes de los 7 días." },
+          { q: "¿Qué es GetNearMe?", a: "Es el asistente de IA que prepara todo el material de tus anuncios: home staging, vídeos, posts sociales, informes y análisis de zona. Parte del enlace del portal o de tus fotos y en pocos minutos tienes todo listo, con tu marca." },
+          { q: "¿Tengo que instalar algo?", a: "No. GetNearMe es online: accedes desde el navegador y empiezas a trabajar. Nada que descargar, ningún software que aprender." },
+          { q: "¿Cómo lo pruebo?", a: "Gratis y sin tarjeta. Creas la cuenta y pruebas las funciones enseguida: ves el resultado antes de decidir si suscribirte." },
+          { q: "¿Funciona si trabajo solo?", a: "Sí, está pensado precisamente para el agente individual. Haces tú solo el trabajo de un pequeño equipo: fotos, vídeos, posts e informes, sin proveedores externos." },
+          { q: "¿Qué herramientas sustituye?", a: "Canva, editor de vídeo, PowerPoint, diseñador, social media manager y horas de búsqueda manual. Un solo asistente en lugar de muchas herramientas, con menos costes y menos tiempo por inmueble." },
+          { q: "¿Necesito saber montar vídeos o usar diseño gráfico?", a: "No. Eliges una plantilla (avatar parlante, pantalla dividida, walkthrough, before/after, montaje automático, timelapse AI) y la IA genera el vídeo con música y subtítulos. Los posts salen ya con tu logo." },
+          { q: "¿Los datos de zona son una valoración?", a: "No. Los precios medios al m² y los datos de zona son información de mercado a título orientativo, útiles para presentar el inmueble y preparar la negociación. No sustituyen una tasación oficial." },
+          { q: "¿Puedo cancelar cuando quiera?", a: "Sí. Con el plan mensual cancelas cuando quieras desde la dashboard, sin compromisos. El plan anual se factura por adelantado y tiene el precio más bajo por mes." },
         ],
       },
       finalCta: {
-        title1: "Deja de saltar entre 10 software.",
-        title2: "Todo el trabajo sobre el anuncio, en una extensión.",
-        desc: "Prueba GetNearMe 7 días gratis, sin límites. Cancela cuando quieras.",
-        button: "Añadir extensión — 7 días gratis",
-        buttonDemo: "Reservar demo agencia",
-        footer: "🔒 Sin cargo durante la prueba. Cancelas con un clic.",
+        title1: "Deja de saltar entre diez programas.",
+        title2: "Prepara tus anuncios con un solo asistente.",
+        desc: "Fotos, vídeos, posts e informes profesionales para cada inmueble, en pocos minutos. Pruébalo gratis, sin tarjeta.",
+        button: "Pruébalo gratis",
+        buttonDemo: "Reserva una demo",
+        footer: "🔒 Pago seguro con Stripe. Prueba gratis, cancela cuando quieras.",
+      },
+      roiCalculator: {
+        title: "¿Cuánto ahorras con",
+        titleHighlight: "GetNearMe?",
+        subtitle: "Calcula cuánto tiempo y dinero te hace ahorrar.",
+        inputProperties: "Inmuebles que gestionas al mes",
+        inputHours: "Horas para preparar los materiales de un inmueble",
+        inputRate: "Cuánto vale una hora de tu trabajo",
+        outputHoursSaved: "Horas ahorradas al mes",
+        outputValueRecovered: "Valor del tiempo recuperado",
+        outputCost: "Coste de GetNearMe",
+        outputNetSavings: "Ahorro neto mensual",
+        outputROI: "retorno por cada euro invertido",
+        perMonth: "/mes",
+        cta: "Elige este plan",
+        note: "Con GetNearMe cada inmueble requiere unos 3 minutos en lugar de horas. Usamos el 80% como estimación conservadora del tiempo ahorrado.",
+      },
+      demo: {
+        pageTitle: "Reserva una demo",
+        pageSubtitle: "Rellena el formulario y te contactamos para organizar una demo personalizada de GetNearMe.",
+        fieldName: "Nombre y apellidos",
+        fieldEmail: "Email",
+        fieldAgencyName: "Agencia o equipo (opcional)",
+        fieldPhone: "Teléfono (opcional)",
+        fieldMessage: "Mensaje (opcional)",
+        submit: "Reservar demo",
+        submitting: "Enviando...",
+        successTitle: "¡Solicitud enviada!",
+        successMessage: "Te contactaremos lo antes posible para organizar la demo.",
+        errorMessage: "Se ha producido un error. Inténtalo de nuevo más tarde.",
+        backToHome: "Volver al inicio",
       },
       modal: {
         emoji: "rocket",
-        title: "¡Gran elección!",
+        title: "Buena elección.",
         planLabel: "Plan",
-        desc: "Accede o regístrate para activar tus",
-        descBold: "7 días de prueba gratuita",
+        desc: "Accede o regístrate para activar el",
+        descBold: "plan elegido",
         descEnd: "con acceso completo a todas las funciones.",
-        cta: "Activar prueba gratuita",
-        footer: "🔒 Sin cargo durante 7 días. Cancelas con un clic.",
+        cta: "Activar el plan",
+        footer: "🔒 Pago seguro con Stripe. Cancela con un clic.",
       },
       popups: [
-        { icon: "circle", text: "Una agencia del norte de Italia activó la prueba gratuita", time: "hace 3 min" },
-        { icon: "clapperboard", text: "Un agente acaba de generar un vídeo promocional con IA", time: "" },
-        { icon: "users", text: "Agencias online en este momento", time: "" },
-        { icon: "rocket", text: "Un agente ha empezado los 7 días de prueba gratuita", time: "hace 12 min" },
-        { icon: "flame", text: "GetNearMe elegido por nuevas agencias esta semana", time: "" },
-        { icon: "sparkles", text: "Un agente ha amueblado una habitación con Homestaging AI", time: "hace 5 min" },
-        { icon: "star", text: "Una agencia ha hecho upgrade al plan Anual", time: "hace 18 min" },
-        { icon: "smartphone", text: "Posts sociales generados esta semana con GetNearMe", time: "" },
-        { icon: "target", text: "Un agente ha exportado un PDF white-label con su logo", time: "hace 7 min" },
-        { icon: "briefcase", text: "Una agencia acaba de registrarse en la prueba gratuita", time: "hace 2 min" },
+        { icon: "circle", text: "Un agente acaba de activar el plan", time: "hace 3 min" },
+        { icon: "clapperboard", text: "Un agente ha generado un vídeo promocional con IA", time: "" },
+        { icon: "users", text: "Agentes trabajando en GetNearMe en este momento", time: "" },
+        { icon: "rocket", text: "Un agente acaba de empezar la prueba gratuita", time: "hace 12 min" },
+        { icon: "flame", text: "Cada vez más agentes eligen GetNearMe", time: "" },
+        { icon: "sparkles", text: "Un agente ha amueblado una habitación con el home staging AI", time: "hace 5 min" },
+        { icon: "star", text: "Un agente ha pasado al plan anual", time: "hace 18 min" },
+        { icon: "smartphone", text: "Posts sociales creados con GetNearMe", time: "" },
+        { icon: "target", text: "Un agente ha exportado un informe PDF con su logo", time: "hace 7 min" },
+        { icon: "briefcase", text: "Un agente acaba de registrarse en GetNearMe", time: "hace 2 min" },
         { icon: "trophy", text: "GetNearMe usado por agentes inmobiliarios en toda Italia", time: "" },
-        { icon: "map", text: "Un agente ha generado análisis de zona desde los portales inmobiliarios", time: "hace 9 min" },
+        { icon: "map", text: "Un agente ha generado el análisis de zona de un inmueble", time: "hace 9 min" },
       ],
     },
   },
   fr: {
     nav: {
       features: "Fonctionnalités",
+      examples: "Exemples",
       pricing: "Tarifs",
       faq: "FAQ",
       blog: "Blog",
       tutorial: "Tutoriel",
-      startAnalysis: "Lancer l'Analyse",
+      startAnalysis: "Essaie gratuitement",
       backToHome: "← Retour à l'accueil",
       dashboard: "Tableau de bord",
       myAccount: "Mon compte"
     },
     hero: {
-      title1: "L'avantage compétitif",
-      title2: "qui distingue",
-      title3: "votre agence",
-      description: "Analyse de zone, comparaisons professionnelles et IA pour valoriser les biens et les présentations. Offrez un service qui va au-delà de la simple annonce.",
-      cta: "Ajouter l'Extension",
+      title1: "L'assistant AI pour les agents immobiliers.",
+      title2: "Gagne plus d'une journée et demie par semaine",
+      title3: "",
+      description: "Home staging, vidéos, posts sociaux et rapports pour chaque bien, prêts en quelques minutes. Ce qui te prend des heures aujourd'hui, tu le fais depuis un seul endroit.",
+      cta: "Essaie gratuitement",
       ctaSecondary: "Comment ça marche",
-      subMockup: "GetNearMe est une extension Google Chrome qui renforce le travail de votre agence. Elle analyse les biens et les quartiers, compare les données de zone, génère des estimations comparatives et des présentations professionnelles… le tout automatiquement pendant que vous naviguez sur les portails immobiliers que vous utilisez déjà."
+      subMockup: "GetNearMe est l'assistant AI pour les agents immobiliers : pars de l'annonce ou de tes photos et obtiens home staging, vidéos, posts sociaux, rapports avec ton logo et analyse de zone. Tout au même endroit, sans rien apprendre de nouveau."
     },
     features: {
-      title: "Le bien, dans ses données",
-      titleItalic: "essentielles",
-      description: "GetNearMe organise les informations en étapes claires, pour vous aider à comparer les biens et leur contexte de manière structurée.",
+      title: "Tout ce que tu peux",
+      titleItalic: "faire avec GetNearMe",
+      description: "Un assistant à la place de Canva, éditeur vidéo, designer et des heures de travail. Tu analyses le bien, tu valorises les photos et tu prépares rapports et contenus en quelques minutes.",
       card1: {
-        title: "Données du bien",
-        desc: "Le prix, la surface, le €/m², le type et les caractéristiques principales sont collectés et organisés à partir des données de l'annonce."
+        title: "Analyse complète du bien",
+        desc: "Tu as immédiatement une vision claire et organisée des données clés du bien, sans chercher des informations éparpillées sur mille pages."
       },
       card2: {
-        title: "Contexte du quartier",
-        desc: "Les services, les transports, les écoles, les espaces verts et les points d'intérêt sont analysés en fonction de l'emplacement et des distances."
+        title: "Analyse de zone interactive",
+        desc: "Tu montres au client ce que signifie vivre dans ce quartier : services, transports et distances réelles, sur carte et en temps réel."
       },
       card3: {
-        title: "Valeur de marché en temps réel",
-        desc: "Obtenez le prix moyen au m² du secteur pour appuyer vos évaluations, acquisitions et négociations avec des données concrètes."
+        title: "Prix moyen de zone au m²",
+        desc: "Le prix moyen €/m² de la zone, pour préparer la négociation avec les chiffres en main."
       },
       card4: {
-        title: "Vue comparative",
-        desc: "Les informations sont affichées côte à côte pour mettre en évidence les différences pertinentes entre plusieurs options analysées."
+        title: "Rapports comparatifs avec ton logo",
+        desc: "Tu présentes plusieurs biens dans un document organisé avec ton logo, prêt à envoyer au client."
       },
       card5: {
-        title: "Montrez le Potentiel avec l'IA",
-        desc: "Modifiez les photos avec l'IA et montrez la comparaison avant/après : espaces vides ou meublés, lumière améliorée et pièces valorisées en quelques secondes."
+        title: "Home staging avec l'AI",
+        desc: "Tu modifies les photos avec l'AI et tu montres la comparaison avant/après : pièces vides ou meublées, lumière améliorée et espaces valorisés en quelques secondes."
       },
-      disclaimer: "Les analyses et estimations affichées sont indicatives et ne constituent pas une expertise immobilière.",
-      addExtension: "Ajouter l'extension",
+      disclaimer: "Les données de zone sont des informations de marché à titre indicatif et ne constituent pas une évaluation ou une expertise immobilière.",
+      addExtension: "Essaie gratuitement",
       comingSoonTitle: "Bientôt disponible",
-      comingSoonDesc: "Nous développons de nouvelles fonctionnalités conçues pour rendre le travail de votre agence encore plus structuré et efficace.",
+      comingSoonDesc: "Nous développons de nouvelles fonctions pour rendre ton travail encore plus rapide et professionnel.",
     },
     faq: {
       title: "Questions",
       titleItalic: "fréquentes",
       items: [
         {
-          q: "Quel type d'informations affiche-t-il ?",
-          a: "GetNearMe affiche des données organisées provenant d'annonces immobilières et de sources publiques disponibles, concernant le bien, le quartier et les indicateurs de prix et de coût."
+          q: "Qu'est-ce que GetNearMe ?",
+          a: "C'est l'assistant AI qui prépare tous les supports de tes annonces : home staging, vidéos, posts sociaux, rapports et analyse de zone. Pars du lien du portail ou de tes photos et en quelques minutes tu as tout prêt, avec ton logo."
         },
         {
-          q: "Est-il un portail immobilier ou une agence ?",
-          a: "Non. GetNearMe ne publie pas d'annonces et ne fait pas d'intermédiation immobilière. C'est un outil d'analyse et de comparaison de données."
+          q: "Dois-je installer quelque chose ?",
+          a: "Non. GetNearMe est en ligne : tu accèdes depuis le navigateur et tu commences à travailler. Rien à télécharger, aucun logiciel à apprendre."
         },
         {
-          q: "Sont-elles toutes des évaluations officielles ?",
-          a: "Non. Les analyses et estimations affichées sont indicatives et ne constituent pas une expertise immobilière ni un conseil professionnel."
+          q: "Comment l'essayer ?",
+          a: "Gratuitement et sans carte. Tu crées le compte et tu essaies aussitôt les fonctions : tu vois le résultat avant de décider."
         },
         {
-          q: "D'où proviennent les données ?",
-          a: "Les données proviennent des annonces immobilières analysées et des sources publiques disponibles. Les informations sont traitées pour faciliter leur lecture et leur comparaison."
+          q: "Ça marche si je travaille seul ?",
+          a: "Oui, c'est conçu justement pour l'agent individuel. Tu fais seul le travail d'une petite équipe : photos, vidéos, posts et rapports, sans prestataires externes."
         },
         {
-          q: "Les estimations de coûts sont-elles précises ?",
-          a: "Non. Les estimations de coûts sont des projections indicatives basées sur des valeurs moyennes et peuvent varier en fonction des caractéristiques spécifiques du bien et de l'opération."
+          q: "Dois-je savoir monter des vidéos ou utiliser des logiciels de graphisme ?",
+          a: "Non. Tu choisis un modèle et l'AI fait le reste : vidéo avec musique et sous-titres, post avec ton logo, rapports déjà mis en page."
         },
         {
-          q: "Puis-je comparer plusieurs biens entre eux ?",
-          a: "Oui. GetNearMe permet de mettre côte à côte plusieurs biens pour comparer les données, le contexte et les indicateurs dans une vue comparative."
+          q: "Les données de zone sont-elles une évaluation ?",
+          a: "Non. Ce sont des informations de marché à titre indicatif, utiles pour présenter le bien et préparer la négociation. Elles ne remplacent pas une expertise officielle."
         }
       ]
     },
     pricing: {
-      title: "Accès aux",
-      titleItalic: "analyses",
-      description: "Choisissez le niveau d'accès le mieux adapté au nombre d'analyses que vous souhaitez effectuer.",
+      title: "Un seul prix",
+      titleItalic: "pour tout",
+      description: "Un seul plan avec toutes les fonctions : home staging, vidéos, posts sociaux, rapports et analyse de zone. Tu essaies gratuitement avant de payer.",
       free: "Gratuit",
       buyNow: "Acheter maintenant",
       registerNow: "S'inscrire maintenant",
       mostChosen: "Le plus choisi",
       footer1: "Paiement sécurisé par carte, PayPal et principaux prestataires.",
-      footer2: "Crédits disponibles immédiatement après l'achat.",
-      footer3: "Pas d'abonnement. Pas d'expiration.",
+      footer2: "Tu essaies gratuitement, sans carte. Annule quand tu veux.",
+      footer3: "",
       plans: [
         {
-          name: "500 crédits",
+          name: "Gratuit",
           subtitle: "Pour commencer",
-          desc: "Permet de réaliser quelques analyses complètes pour comparer les biens et leur contexte de manière structurée."
+          desc: "Tu essaies GetNearMe gratuitement et sans carte : tu crées le compte et tu utilises aussitôt les fonctions avec les crédits d'essai inclus."
         },
         {
-          name: "500 crédits",
-          subtitle: "Pour commencer",
-          desc: "Permet de réaliser quelques analyses complètes pour comparer les biens et leur contexte de manière structurée."
+          name: "Plan Mensuel",
+          subtitle: "Toutes les fonctions incluses",
+          desc: "Accès complet à GetNearMe pour l'agent individuel : home staging AI, vidéos, posts sociaux, rapports avec ton logo et analyse de zone. Un outil de support à ton travail, pas un système d'évaluation immobilière."
         },
         {
-          name: "1 500 crédits",
-          subtitle: "Comparaisons approfondies",
-          desc: "Convient pour comparer plusieurs options et approfondir les différences entre les biens, les quartiers et les coûts estimés."
-        },
-        {
-          name: "5 000 crédits",
-          subtitle: "Analyses étendues",
-          desc: "Conçu pour ceux qui analysent de nombreuses options et souhaitent des comparaisons plus approfondies dans le temps."
+          name: "Plan Annuel",
+          subtitle: "Le plus avantageux",
+          desc: "Toutes les fonctions du plan mensuel avec deux mois offerts et support prioritaire."
         }
       ]
     },
     cta: {
-      title: "Comparez l'immobilier",
-      title2: "de manière",
-      titleItalic: "structurée",
-      desc: "GetNearMe vous aide à organiser et comparer les données disponibles pour évaluer plusieurs options avec plus de clarté.",
-      button: "Ajouter l'extension",
+      title: "Présente-toi comme une grande agence",
+      title2: "même si tu travailles",
+      titleItalic: "seul",
+      desc: "Prépare photos, vidéos, posts et rapports professionnels pour chaque bien, en quelques minutes.",
+      button: "Essaie gratuitement",
       requestInfo: "Demander des informations",
     },
     howItWorks: {
-      step1Title: "Créez votre compte",
-      step1Desc: "Inscrivez-vous en quelques secondes et accédez à la plateforme.",
-      step2Title: "Activez le plan Agence",
-      step2Desc: "Depuis votre profil, accédez à la section abonnement et activez le plan professionnel mensuel.",
-      step3Title: "Commencez à travailler immédiatement",
-      step3Desc: "L'accès est immédiat : vous pouvez utiliser toutes les fonctionnalités directement sur les portails immobiliers que vous utilisez déjà.",
-      cta: "Commencez avec GetNearMe",
-      videoTitle: "GetNearMe — Comment ça marche",
+      step1Title: "Crée ton compte gratuitement",
+      step1Desc: "Tu t'inscris en quelques secondes. Aucune carte requise.",
+      step2Title: "Pars de l'annonce",
+      step2Desc: "Tu colles le lien du portail ou tu charges tes photos et les données du bien.",
+      step3Title: "Publie en quelques minutes",
+      step3Desc: "Photos, vidéos, posts et rapports prêts, avec ton logo. Tout depuis un seul endroit.",
+      cta: "Essaie gratuitement",
+      videoTitle: "GetNearMe : comment ça marche",
     },
     footer: {
-      desc: "Outil d'aide à la décision pour l'analyse comparative de biens immobiliers et de quartiers.",
+      desc: "L'assistant AI pour les agents immobiliers. Ce qui te coûte des heures aujourd'hui — photos, vidéos, posts et présentations — avec GetNearMe tu le fais en quelques minutes, en partant de l'annonce.",
       product: "Produit",
       legal: "Légal",
       privacy: "Politique de Confidentialité",
@@ -1580,57 +1592,57 @@ export const translations = {
     },
     terms: {
       update: "Dernière mise à jour : 23/01/2026",
-      intro: "Les présentes Conditions régissent l’utilisation du site web getnearme.it et de l’extension de navigateur GetNearMe.",
+      intro: "Les présentes Conditions régissent l'utilisation du site web getnearme.it et de l'extension de navigateur GetNearMe.",
       sections: [
         {
           t: "1. Nature du Service",
-          c: "GetNearMe est un outil d’aide à la décision qui organise et compare les données disponibles sur les biens immobiliers et les quartiers. GetNearMe n’est pas une agence immobilière et ne fournit pas de conseils professionnels, juridiques, fiscaux ou immobiliers."
+          c: "GetNearMe est un outil d'aide à la décision qui organise et compare les données disponibles sur les biens immobiliers et les quartiers. GetNearMe n'est pas une agence immobilière et ne fournit pas de conseils professionnels, juridiques, fiscaux ou immobiliers."
         },
         {
           t: "2. Origine des données",
-          c: "Les informations affichées proviennent d’annonces immobilières tierces et de sources publiques disponibles. GetNearMe n’a aucun contrôle sur le contenu des annonces et n’est pas responsable des erreurs, omissions ou modifications ultérieures."
+          c: "Les informations affichées proviennent d'annonces immobilières tierces et de sources publiques disponibles. GetNearMe n'a aucun contrôle sur le contenu des annonces et n'est pas responsable des erreurs, omissions ou modifications ultérieures."
         },
         {
           t: "3. Analyses et estimations",
-          c: "Les analyses et estimations fournies sont purement indicatives, basées sur des valeurs moyennes et des données disponibles, et ne constituent pas une expertise immobilière officielle. Toute décision prise par l’utilisateur relève de sa seule responsabilité."
+          c: "Les analyses et estimations fournies sont purement indicatives, basées sur des valeurs moyennes et des données disponibles, et ne constituent pas une expertise immobilière officielle. Toute décision prise par l'utilisateur relève de sa seule responsabilité."
         },
         {
           t: "4. Compte et crédits",
-          c: "Certaines fonctionnalités du Service nécessitent la création d’un compte. Les crédits : sont associés au compte de l’utilisateur ; n’ont pas de date d’expiration ; ne sont pas remboursables."
+          c: "Certaines fonctionnalités du Service nécessitent la création d'un compte. Les crédits : sont associés au compte de l'utilisateur ; n'ont pas de date d'expiration ; ne sont pas remboursables."
         },
         {
           t: "5. Utilisation autorisée",
-          c: "Il est interdit : d’utiliser le Service à des fins illicites ou non autorisées ; de tenter de contourner les systèmes de sécurité ou le système de crédits ; d’effectuer un scraping massif ou une utilisation commerciale non autorisée des contenus."
+          c: "Il est interdit : d'utiliser le Service à des fins illicites ou non autorisées ; de tenter de contourner les systèmes de sécurité ou le système de crédits ; d'effectuer un scraping massif ou une utilisation commerciale non autorisée des contenus."
         },
         {
           t: "6. Disponibilité du Service",
-          c: "Certaines fonctionnalités peuvent varier selon la disponibilité des sources, le site analysé ou le navigateur utilisé. GetNearMe se réserve le droit de modifier, de suspendre ou d’interrompre le Service, en tout ou en partie, à tout moment."
+          c: "Certaines fonctionnalités peuvent varier selon la disponibilité des sources, le site analysé ou le navigateur utilisé. GetNearMe se réserve le droit de modifier, de suspendre ou d'interrompre le Service, en tout ou en partie, à tout moment."
         },
         {
           t: "7. Limitation de responsabilité",
-          c: "Dans la mesure permise par la loi, GetNearMe n’est pas responsable des dommages résultant de l’utilisation ou de l’impossibilité d’utiliser le Service."
+          c: "Dans la mesure permise par la loi, GetNearMe n'est pas responsable des dommages résultant de l'utilisation ou de l'impossibilité d'utiliser le Service."
         }
       ]
     },
     cookie: {
       update: "Dernière mise à jour : 22/12/2025",
-      intro: "La présente Politique relative aux Cookies s’applique exclusivement au site web getnearme.it.",
+      intro: "La présente Politique relative aux Cookies s'applique exclusivement au site web getnearme.it.",
       sections: [
         {
           t: "1. Que sont les cookies ?",
-          c: "Les cookies sont de petits fichiers texte que le site envoie à l’appareil de l’utilisateur pour améliorer l’expérience de navigation et le bon fonctionnement du site."
+          c: "Les cookies sont de petits fichiers texte que le site envoie à l'appareil de l'utilisateur pour améliorer l'expérience de navigation et le bon fonctionnement du site."
         },
         {
           t: "2. Types de cookies utilisés",
-          c: "Le site utilise : des cookies techniques, nécessaires au fonctionnement du site et à la gestion des préférences de l’utilisateur ; d’éventuels cookies tiers liés à des services techniques ou de paiement."
+          c: "Le site utilise : des cookies techniques, nécessaires au fonctionnement du site et à la gestion des préférences de l'utilisateur ; d'éventuels cookies tiers liés à des services techniques ou de paiement."
         },
         {
           t: "3. Gestion des cookies",
-          c: "L’utilisateur peut gérer ou désactiver les cookies via les paramètres de son navigateur. La désactivation des cookies techniques peut compromettre le bon fonctionnement du site."
+          c: "L'utilisateur peut gérer ou désactiver les cookies via les paramètres de son navigateur. La désactivation des cookies techniques peut compromettre le bon fonctionnement du site."
         },
         {
           t: "4. Consentement",
-          c: "Les cookies techniques ne nécessitent pas le consentement de l’utilisateur. Pour tout cookie non technique, le consentement est demandé via une bannière spécifique."
+          c: "Les cookies techniques ne nécessitent pas le consentement de l'utilisateur. Pour tout cookie non technique, le consentement est demandé via une bannière spécifique."
         }
       ]
     },
@@ -1669,302 +1681,328 @@ export const translations = {
     featuresPage: {
       title: "Toutes les Fonctionnalités",
       titleItalic: "de GetNearMe",
-      subtitle: "Découvrez tous les outils avancés conçus pour transformer le travail de votre agence immobilière. De l'analyse territoriale à l'intelligence artificielle, chaque fonctionnalité est conçue pour vous donner un véritable avantage concurrentiel.",
+      subtitle: "Découvre tous les outils conçus pour changer ton travail d'agent immobilier. De l'analyse de zone à l'intelligence artificielle, chaque fonction te donne un avantage concret.",
       feature6: {
         title: "Marketing Immobilier Automatique",
-        desc: "Transformez les données du bien en publications professionnelles, déjà optimisées pour les principaux réseaux sociaux.",
+        desc: "Transforme les données du bien en posts professionnels, déjà optimisés pour les principaux réseaux sociaux.",
         badge: "NOUVEAU",
       },
       feature7: {
         title: "Vidéos Immobilières en quelques clics",
-        desc: "Créez en quelques clics des contenus vidéo professionnels pour promouvoir chaque bien de manière moderne et percutante.",
+        desc: "Crée en quelques clics des contenus vidéo professionnels pour promouvoir chaque bien de manière moderne et immédiate.",
         badge: "NOUVEAU",
       },
       ctaTitle: "Prêt à commencer ?",
-      ctaDesc: "Rejoignez les agences immobilières qui transforment déjà leur façon de travailler avec GetNearMe.",
-      ctaButton: "Ajouter l'Extension",
-      ctaContact: "Contactez-nous",
+      ctaDesc: "Rejoins les agents immobiliers qui changent déjà leur façon de travailler avec GetNearMe.",
+      ctaButton: "Essaie gratuitement",
+      ctaContact: "Contacte-nous",
     },
     landing: {
       topBar: {
         promo: "Offre de lancement :",
-        discount: "7 jours gratuits, sans limites",
+        discount: "Prix de lancement limité",
         expiresIn: "expire dans",
-        freeTrialShort: "aucune carte requise",
+        freeTrialShort: "",
       },
       hero: {
         badge: "",
-        title1: "Gagnez des heures de travail",
-        title2: "avec la meilleure IA pour les agents immobiliers.",
-        desc: "GetNearMe est l'extension Google Chrome qui vit à l'intérieur d'Immobiliare.it, Idealista, Casa.it, Airbnb et Booking. Simplifie le travail quotidien de l'agence : analyse de zone, posts sociaux, reels, rendus AI des photos et rapports PDF.",
-        ctaPrimary: "Ajouter l'extension — 7 jours gratuits",
-        ctaSecondary: "Voir la démo",
-        ctaDemo: "Réserver démo agence",
-        stats: ["7 jours gratuits sans limites", "S'installe en 2 secondes", "Intégré avec 5 portails", "GDPR compliant"],
+        title1: "L'assistant AI pour les agents immobiliers.",
+        title2: "Gagne plus d'une journée et demie par semaine.",
+        desc: "Home staging, vidéos, posts sociaux et rapports pour chaque bien, prêts en quelques minutes. Ce qui te prend des heures aujourd'hui, tu le fais depuis un seul endroit.",
+        ctaPrimary: "Essaie gratuitement",
+        ctaSecondary: "Regarde comment ça marche",
+        ctaDemo: "Réserve une démo",
+        stats: ["Sans carte de crédit", "Prêt en quelques minutes", "Tes annonces, avec ton logo"],
       },
       problem: {
         emoji: "frown",
-        title: "Canva, Photoshop, PowerPoint, CapCut, Google Maps : 10 onglets ouverts pour une seule annonce.",
-        desc: "Pour évaluer un quartier, retoucher des photos, préparer un post Instagram ou un PDF à envoyer au client, tu as besoin de cinq logiciels différents — qui coûtent de l'argent, ne communiquent pas entre eux et te volent des heures de travail chaque semaine. Pendant ce temps, le client attend.",
+        title: "Pour une seule annonce, tu ouvres dix programmes différents.",
+        desc: "Photos à retoucher, vidéos à monter, posts pour les réseaux sociaux, le PDF à envoyer au client. Des outils qui coûtent cher, ne communiquent pas entre eux et te volent des heures chaque semaine. Et pendant ce temps, un autre agent te devance.",
       },
       solution: {
         emoji: "rocket",
-        title: "Une extension Chrome. Tout le travail sur l'annonce, terminé.",
-        desc: "GetNearMe s'active en un clic sur les portails que tu utilises déjà. Ouvre un bien sur Immobiliare.it, Idealista, Casa.it, Airbnb ou Booking et obtiens analyse de zone, rendu AI, vidéo, posts sociaux et rapport PDF avec ta marque — sans ouvrir aucun autre logiciel. Un outil pour simplifier le travail quotidien de l'agent, pas un substitut aux évaluations ou expertises professionnelles.",
+        title: "Un seul assistant. Tout le travail sur l'annonce, terminé.",
+        desc: "Pars de l'annonce — tu colles le lien du portail ou tu charges tes photos — et GetNearMe te restitue home staging, vidéos, posts sociaux et rapports avec ton logo. En quelques minutes, sans ouvrir d'autres programmes et sans rien apprendre de nouveau.",
       },
       features: {
         title: "Six outils professionnels.",
-        titleHighlight: "Dans le navigateur.",
-        subtitle: "GetNearMe remplace Canva, Photoshop, éditeur vidéo, architecte d'intérieur, social media manager et PowerPoint avec une seule extension Chrome. Fonctionne sur Immobiliare.it, Idealista, Casa.it, Airbnb et Booking.",
+        titleHighlight: "Un seul assistant.",
+        subtitle: "GetNearMe fait le travail de Canva, éditeur vidéo, designer, social media manager et PowerPoint. Et tu n'as rien de nouveau à apprendre.",
         items: [
-          { num: "01", title: "Analyse de quartier interactive", desc: "Services, transports, écoles, santé, parcs et points d'intérêt réels affichés sur une carte en temps réel. Présente le quartier au client avec des données concrètes.", icon: "map", color: "#0ea5e9" },
-          { num: "02", title: "Prix moyen du quartier au m²", desc: "Données de référence sur le prix moyen €/m² de la zone et comparaisons entre biens similaires, utiles pour préparer des présentations client et engager des négociations. Informations de marché à titre indicatif — elles ne constituent pas une expertise ou une évaluation officielle.", icon: "trending-up", color: "#f59e0b" },
-          { num: "03", title: "Homestaging AI", desc: "Meuble les pièces vides, corrige la lumière et débarrasse les espaces en environ 10 secondes. Huit styles sélectionnables, avant/après prêts pour le client ou les réseaux sociaux. Remplace Photoshop et l'architecte d'intérieur.", icon: "sparkles", color: "#6366f1" },
-          { num: "04", title: "Vidéo AI pour le bien", desc: "Reels et vidéos promotionnelles avec avatar parlant, sous-titres, walkthrough et before/after. Six templates, zéro montage. Remplace CapCut, Premiere et le vidéaste.", icon: "clapperboard", color: "#10b981" },
-          { num: "05", title: "Posts, reels et stories sociaux", desc: "Contenus prêts pour Instagram, Facebook, TikTok et LinkedIn à partir des données de l'annonce. Logo, couleurs et identité de ton agence appliqués automatiquement. Remplace Canva et le social media manager.", icon: "smartphone", color: "#ec4899" },
-          { num: "06", title: "Rapport PDF white-label", desc: "Présentations comparatives avec ton logo, tes couleurs et ta typographie. Compare plusieurs biens dans un document professionnel, prêt à envoyer. Remplace PowerPoint et le graphiste.", icon: "file-text", color: "#f97316" },
+          { num: "01", title: "Home staging AI", desc: "Meuble, vide ou transforme une pièce en quelques secondes. Tu montres l'avant/après au client ou tu le publies directement sur les portails et les réseaux sociaux.", icon: "sparkles", color: "#6366f1" },
+          { num: "02", title: "Vidéo AI pour le bien", desc: "Reels, walkthroughs, before/after, vidéos avec avatar parlant et bien plus. Prêts en quelques clics, sans montage et sans vidéaste.", icon: "clapperboard", color: "#10b981" },
+          { num: "03", title: "Posts, reels et stories sociaux", desc: "Contenus prêts pour Instagram, Facebook, TikTok et LinkedIn à partir des données de l'annonce. Ton logo et tes couleurs appliqués automatiquement.", icon: "smartphone", color: "#ec4899" },
+          { num: "04", title: "Rapport PDF avec ton logo", desc: "Tu compares plusieurs biens dans un document organisé avec ton logo, tes couleurs et ta police. Prêt à envoyer au client après la visite.", icon: "file-text", color: "#f97316" },
+          { num: "05", title: "Analyse de zone interactive", desc: "Services, transports, écoles, santé, parcs et distances réelles affichés sur carte. Tu présentes le quartier au client avec des données concrètes, sans ouvrir vingt onglets.", icon: "map", color: "#0ea5e9" },
+          { num: "06", title: "Prix moyen de zone au m²", desc: "Le prix moyen €/m² de la zone et la comparaison entre biens similaires, pour préparer la négociation avec les chiffres en main. Données de marché à titre indicatif, pas une expertise.", icon: "trending-up", color: "#f59e0b" },
         ],
       },
       testimonials: {
-        title: "Conçu pour ta vraie façon de travailler.",
+        title: "Moins d'outils, plus de résultats.",
         npsLabel: "",
         npsValue: "",
         retentionLabel: "",
         retentionValue: "",
         items: [
-          { name: "Agence immobilière", role: "Propriétaire — Nord de l'Italie", text: "J'ouvre l'annonce sur Immobiliare.it et en cinq minutes j'ai l'analyse de zone, les photos meublées par IA, le post Instagram et le PDF à envoyer au client. Avant c'était une journée entière entre Canva, Photoshop et PowerPoint.", avatar: "AI", color: "#f59e0b" },
-          { name: "Agent immobilier", role: "Senior — Centre de l'Italie", text: "Le homestaging AI convainc le propriétaire. Je lui montre la pièce vide, puis meublée en 10 secondes. C'est la seule chose que j'utilise pour signer le mandat au premier rendez-vous.", avatar: "AI", color: "#6366f1" },
-          { name: "Groupe immobilier", role: "Directeur — Sud de l'Italie", text: "On a arrêté de payer Canva, CapCut et un graphiste externe. Avec GetNearMe toute l'agence produit des contenus cohérents avec la marque, directement depuis les portails qu'on utilise déjà chaque jour.", avatar: "GI", color: "#10b981" },
+          { name: "Marco R.", role: "Agent immobilier", text: "J'ai essayé les vidéos AI pour un trois-pièces qui stagnait depuis deux mois. Je l'ai mis sur Instagram et en une semaine j'ai reçu trois demandes de visite. Je ne m'y attendais pas, honnêtement.", avatar: "MR", color: "#f59e0b", photo: "https://randomuser.me/api/portraits/men/32.jpg" },
+          { name: "Giulia T.", role: "Agent immobilier", text: "J'envoie le rapport après la visite, comme ça le client compare les biens tranquillement. Avec les photos AI je lui montre la même pièce meublée de trois façons différentes : il se convainc bien plus vite.", avatar: "GT", color: "#6366f1", photo: "https://randomuser.me/api/portraits/women/65.jpg" },
+          { name: "Davide M.", role: "Agent immobilier", text: "Je charge les photos, je choisis le style et en une minute le reel est prêt. Avant je devais appeler le vidéaste et attendre des jours, maintenant je le fais pendant que j'attends le client au bureau.", avatar: "DM", color: "#10b981", photo: "https://randomuser.me/api/portraits/men/76.jpg" },
         ],
       },
       pricing: {
-        title1: "Un plan.",
-        title2: "Tous les outils.",
-        titleHighlight: "7 jours gratuits.",
-        subtitle: "Accès complet à toutes les fonctionnalités pendant l'essai. Aucun engagement annuel. Annule quand tu veux.",
-        countdownLabel: "Prix de lancement — expire dans",
-        trustBadges: ["🔒 Paiement sécurisé avec Stripe", "✅ Aucun prélèvement pendant 7 jours", "⚡ Activation immédiate"],
+        title1: "Un seul prix.",
+        title2: "Rentabilisé dès le",
+        titleHighlight: "premier bien",
+        subtitle: "Essaie gratuitement. Ensuite un seul abonnement à la place de Canva, éditeur vidéo, designer et des heures de travail : ça coûte moins que la somme.",
+        countdownLabel: "Prix de lancement, expire dans",
+        trustBadges: ["🔒 Paiement sécurisé Stripe", "⚡ Activation immédiate"],
         savingsLabel: "ÉCONOMIE",
         progressAgencies: "",
         progressSpots: "",
         plans: [
           {
-            id: "agency_monthly", name: "Mensuel", users: "Toutes les fonctionnalités incluses", oldPrice: null, price: 399,
+            id: "free", name: "Gratuit", users: "Pour commencer", oldPrice: null, price: 0, period: "",
             savingsYear: null, badge: null, popular: false,
-            features: ["5 agents inclus", "Rapports illimités avec ton logo", "300 photos AI homestaging/mois", "8 modèles vidéo AI", "Montage vidéo automatique", "Modèles Post & Stories Social", "Calcul prix €/m² en temps réel", "Crédits illimités"],
+            features: ["Tu essaies toutes les fonctions", "Crédits d'essai inclus", "Aucune carte requise"],
+            extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Commence gratuitement",
+          },
+          {
+            id: "agency_monthly", name: "Mensuel", users: "Toutes les fonctions incluses", oldPrice: 150, price: 59, period: "/mois",
+            savingsYear: null, badge: null, popular: false,
+            features: ["Tout du plan Gratuit", "Rapports avec ton logo", "Home staging AI", "Vidéos AI pour les biens", "Posts et stories sociaux", "Prix au m² en temps réel", "Support par e-mail"],
             extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Choisir ce plan",
           },
           {
-            id: "agency_quarterly", name: "Trimestriel", users: "Toutes les fonctionnalités incluses", oldPrice: null, price: 349,
-            savingsYear: null, badge: null, popular: false,
-            features: ["5 agents inclus", "Rapports illimités avec ton logo", "600 photos AI homestaging/mois", "12 modèles vidéo AI", "Montage vidéo automatique", "Modèles Post & Stories Social", "Calcul prix €/m² en temps réel", "Crédits illimités"],
-            extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Choisir ce plan",
-          },
-          {
-            id: "agency_annual", name: "Annuel", users: "Toutes les fonctionnalités incluses", oldPrice: null, price: 300,
-            savingsYear: null, badge: "Plus avantageux", popular: false,
-            features: ["5 agents inclus", "Rapports illimités avec ton logo", "1200 photos AI homestaging/mois", "16 modèles vidéo AI", "Montage vidéo automatique", "Modèles Post & Stories Social", "Calcul prix €/m² en temps réel", "Crédits illimités", "Support prioritaire"],
+            id: "agency_annual", name: "Annuel", users: "Toutes les fonctions incluses", oldPrice: 1800, price: 590, period: "/an",
+            savingsYear: null, badge: "Le plus choisi", popular: true,
+            features: ["Tout du plan Mensuel", "2 mois offerts par rapport au mensuel", "Prix bloqué 12 mois", "Support prioritaire"],
             extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Choisir ce plan",
           },
         ],
       },
       howItWorks: {
         title: "Opérationnel en",
-        titleHighlight: "2 secondes",
-        subtitle: "Aucun logiciel à installer. Aucune formation. L'extension s'intègre dans les portails que tu utilises déjà chaque jour.",
+        titleHighlight: "2 minutes",
+        subtitle: "Rien à installer, rien à apprendre. Tu crées le compte, tu pars de l'annonce et tu as tout prêt.",
         steps: [
-          { step: "1", title: "Ajouter à Chrome", desc: "Un clic depuis Chrome Web Store. L'extension GetNearMe s'installe dans le navigateur en moins de 2 secondes.", color: "#6366f1", bg: "#eef2ff", emoji: "puzzle" },
-          { step: "2", title: "Ouvre une annonce", desc: "Immobiliare.it, Idealista, Casa.it, Airbnb ou Booking : les portails que tu utilises déjà chaque jour. GetNearMe s'active automatiquement sur l'annonce.", color: "#f59e0b", bg: "#fffbeb", emoji: "search" },
-          { step: "3", title: "Génère tout en un clic", desc: "Analyse de zone, rendu AI, vidéo, posts sociaux et PDF avec ta marque. Prêts à montrer au client, sans ouvrir aucun autre logiciel.", color: "#10b981", bg: "#ecfdf5", emoji: "sparkles" },
+          { step: "1", title: "Crée ton compte gratuitement", desc: "Tu t'inscris en quelques secondes, directement depuis le navigateur. Aucune carte requise.", color: "#6366f1", bg: "#eef2ff", emoji: "puzzle" },
+          { step: "2", title: "Pars de l'annonce", desc: "Tu colles le lien du portail ou tu charges tes photos et les données du bien.", color: "#f59e0b", bg: "#fffbeb", emoji: "search" },
+          { step: "3", title: "Publie en quelques minutes", desc: "Home staging, vidéos, posts sociaux et rapports prêts, avec ton logo. Tout depuis un seul endroit.", color: "#10b981", bg: "#ecfdf5", emoji: "sparkles" },
         ],
       },
       faq: {
-        title: "Questions ?",
-        titleHighlight: "Réponses.",
+        title: "Des questions ?",
+        titleHighlight: "Des réponses.",
         items: [
-          { q: "Qu'est-ce que GetNearMe exactement ?", a: "Une extension pour le navigateur Google Chrome, conçue pour les agents et agences immobilières. Elle s'installe depuis Chrome Web Store en 2 secondes et n'est pas un logiciel à apprendre : elle s'active automatiquement quand tu ouvres une annonce sur les portails compatibles." },
-          { q: "GetNearMe effectue-t-il des évaluations immobilières officielles ?", a: "Non. GetNearMe n'est pas un système d'évaluation immobilière et ne remplace en aucun cas une expertise, une estimation ou une certification professionnelle. Les données de zone et les prix moyens au m² sont des informations de marché à titre indicatif, utiles pour préparer des présentations et des négociations. Toute évaluation formelle reste de la responsabilité de l'agent, de l'expert ou du professionnel qualifié." },
-          { q: "Sur quels portails fonctionne-t-elle ?", a: "Immobiliare.it, Idealista, Casa.it, Airbnb et Booking. Ouvre l'annonce et GetNearMe lit automatiquement les données du bien pour générer analyses, contenus et rapports." },
-          { q: "Quels outils remplace-t-elle ?", a: "GetNearMe concentre en une seule extension des travaux que tu fais aujourd'hui avec Canva, Photoshop, des éditeurs vidéo, PowerPoint, des outils d'analyse de quartier et des services externes de home staging ou de graphisme. L'objectif est de te faire gagner des heures de travail pour chaque bien." },
-          { q: "Comment fonctionne le homestaging AI ?", a: "Tu choisis la photo d'une pièce vide ou meublée, tu sélectionnes l'un des styles disponibles et l'IA renvoie la version meublée en environ 10 secondes. Tu peux utiliser l'avant/après directement dans les posts sociaux, les vidéos ou le PDF client." },
-          { q: "Puis-je créer des vidéos sans savoir monter ?", a: "Oui. Choisis un template (avatar parlant, sous-titres, walkthrough, before/after, split screen, vidéo de staging) et GetNearMe assemble musique, textes et clips à partir de l'annonce. Aucun logiciel de montage requis." },
-          { q: "Ma marque est-elle appliquée automatiquement ?", a: "Oui. Tu charges ton logo, tes couleurs et ta typographie une seule fois : ils sont appliqués automatiquement sur les PDF, vidéos et posts sociaux pour tous les agents de l'agence." },
-          { q: "Combien d'agents puis-je ajouter ?", a: "Chaque plan inclut 5 agents avec accès partagé au même branding. Chaque agent a son propre compte mais travaille sous l'identité de l'agence." },
-          { q: "Comment fonctionne l'essai gratuit ?", a: "7 jours d'accès complet, sans limites d'utilisation. Annule en un clic depuis le tableau de bord, aucun prélèvement si tu annules dans les 7 jours." },
+          { q: "Qu'est-ce que GetNearMe ?", a: "C'est l'assistant AI qui prépare tous les supports de tes annonces : home staging, vidéos, posts sociaux, rapports et analyse de zone. Pars du lien du portail ou de tes photos et en quelques minutes tu as tout prêt, avec ton logo." },
+          { q: "Dois-je installer quelque chose ?", a: "Non. GetNearMe est en ligne : tu accèdes depuis le navigateur et tu commences à travailler. Rien à télécharger, aucun logiciel à apprendre." },
+          { q: "Comment l'essayer ?", a: "Gratuitement et sans carte. Tu crées le compte et tu essaies aussitôt les fonctions : tu vois le résultat avant de décider si tu t'abonnes." },
+          { q: "Ça marche si je travaille seul ?", a: "Oui, c'est conçu justement pour l'agent individuel. Tu fais seul le travail d'une petite équipe : photos, vidéos, posts et rapports, sans prestataires externes." },
+          { q: "Quels outils remplace-t-il ?", a: "Canva, éditeur vidéo, PowerPoint, designer, social media manager et des heures de recherche manuelle. Un seul assistant à la place de nombreux outils, avec moins de coûts et moins de temps par bien." },
+          { q: "Dois-je savoir monter des vidéos ou utiliser la graphisme ?", a: "Non. Tu choisis un modèle (avatar parlant, écran partagé, walkthrough, before/after, montage automatique, timelapse AI) et l'AI génère la vidéo avec musique et sous-titres. Les posts sortent déjà avec ton logo." },
+          { q: "Les données de zone sont-elles une évaluation ?", a: "Non. Les prix moyens au m² et les données de zone sont des informations de marché à titre indicatif, utiles pour présenter le bien et préparer la négociation. Elles ne remplacent pas une expertise officielle." },
+          { q: "Puis-je annuler quand je veux ?", a: "Oui. Avec le plan mensuel tu annules quand tu veux depuis le tableau de bord, sans engagement. Le plan annuel est facturé à l'avance et offre le prix mensuel le plus bas." },
         ],
       },
       finalCta: {
-        title1: "Arrête de jongler entre 10 logiciels.",
-        title2: "Tout le travail sur l'annonce, dans une extension.",
-        desc: "Essaie GetNearMe 7 jours gratuits, sans limites. Annule quand tu veux.",
-        button: "Ajouter l'extension — 7 jours gratuits",
-        buttonDemo: "Réserver démo agence",
-        footer: "🔒 Aucun prélèvement pendant l'essai. Annule en un clic.",
+        title1: "Arrête de jongler entre dix programmes.",
+        title2: "Prépare tes annonces avec un seul assistant.",
+        desc: "Photos, vidéos, posts et rapports professionnels pour chaque bien, en quelques minutes. Essaie gratuitement, sans carte.",
+        button: "Essaie gratuitement",
+        buttonDemo: "Réserve une démo",
+        footer: "🔒 Paiement sécurisé Stripe. Tu essaies gratuitement, annule quand tu veux.",
+      },
+      roiCalculator: {
+        title: "Combien tu gagnes avec",
+        titleHighlight: "GetNearMe ?",
+        subtitle: "Calcule combien de temps et d'argent tu économises.",
+        inputProperties: "Biens que tu gères par mois",
+        inputHours: "Heures pour préparer les supports d'un bien",
+        inputRate: "Combien vaut une heure de ton travail",
+        outputHoursSaved: "Heures économisées par mois",
+        outputValueRecovered: "Valeur du temps récupéré",
+        outputCost: "Coût de GetNearMe",
+        outputNetSavings: "Économie nette mensuelle",
+        outputROI: "de retour pour chaque euro dépensé",
+        perMonth: "/mois",
+        cta: "Choisir ce plan",
+        note: "Avec GetNearMe chaque bien nécessite environ 3 minutes au lieu de plusieurs heures. On utilise 80 % comme estimation conservative du temps économisé.",
+      },
+      demo: {
+        pageTitle: "Réserve une démo",
+        pageSubtitle: "Remplis le formulaire et on te recontacte pour organiser une démo personnalisée de GetNearMe.",
+        fieldName: "Prénom et nom",
+        fieldEmail: "E-mail",
+        fieldAgencyName: "Agence ou équipe (facultatif)",
+        fieldPhone: "Téléphone (facultatif)",
+        fieldMessage: "Message (facultatif)",
+        submit: "Réserver la démo",
+        submitting: "Envoi en cours...",
+        successTitle: "Demande envoyée !",
+        successMessage: "On te contactera dès que possible pour organiser la démo.",
+        errorMessage: "Une erreur s'est produite. Réessaie plus tard.",
+        backToHome: "Retour à l'accueil",
       },
       modal: {
         emoji: "rocket",
-        title: "Excellent choix !",
+        title: "Excellent choix.",
         planLabel: "Plan",
-        desc: "Connecte-toi ou inscris-toi pour activer tes",
-        descBold: "7 jours d'essai gratuit",
-        descEnd: "avec accès complet à toutes les fonctionnalités.",
-        cta: "Activer l'essai gratuit",
-        footer: "🔒 Aucun prélèvement pendant 7 jours. Annule en un clic.",
+        desc: "Connecte-toi ou inscris-toi pour activer le",
+        descBold: "plan choisi",
+        descEnd: "avec accès complet à toutes les fonctions.",
+        cta: "Activer le plan",
+        footer: "🔒 Paiement sécurisé Stripe. Annule en un clic.",
       },
       popups: [
-        { icon: "circle", text: "Une agence du nord de l'Italie a activé l'essai gratuit", time: "il y a 3 min" },
-        { icon: "clapperboard", text: "Un agent vient de générer une vidéo promotionnelle avec IA", time: "" },
-        { icon: "users", text: "Agences en ligne en ce moment", time: "" },
-        { icon: "rocket", text: "Un agent a commencé les 7 jours d'essai gratuit", time: "il y a 12 min" },
-        { icon: "flame", text: "GetNearMe choisi par de nouvelles agences cette semaine", time: "" },
-        { icon: "sparkles", text: "Un agent a meublé une pièce avec Homestaging AI", time: "il y a 5 min" },
-        { icon: "star", text: "Une agence est passée au plan Annuel", time: "il y a 18 min" },
-        { icon: "smartphone", text: "Posts sociaux générés cette semaine avec GetNearMe", time: "" },
-        { icon: "target", text: "Un agent a exporté un PDF white-label avec son logo", time: "il y a 7 min" },
-        { icon: "briefcase", text: "Une agence vient de s'inscrire à l'essai gratuit", time: "il y a 2 min" },
+        { icon: "circle", text: "Un agent vient d'activer le plan", time: "il y a 3 min" },
+        { icon: "clapperboard", text: "Un agent a généré une vidéo promotionnelle avec l'AI", time: "" },
+        { icon: "users", text: "Agents au travail sur GetNearMe en ce moment", time: "" },
+        { icon: "rocket", text: "Un agent vient de commencer l'essai gratuit", time: "il y a 12 min" },
+        { icon: "flame", text: "De plus en plus d'agents choisissent GetNearMe", time: "" },
+        { icon: "sparkles", text: "Un agent a meublé une pièce avec le home staging AI", time: "il y a 5 min" },
+        { icon: "star", text: "Un agent est passé au plan annuel", time: "il y a 18 min" },
+        { icon: "smartphone", text: "Posts sociaux créés avec GetNearMe", time: "" },
+        { icon: "target", text: "Un agent a exporté un rapport PDF avec son logo", time: "il y a 7 min" },
+        { icon: "briefcase", text: "Un agent vient de s'inscrire sur GetNearMe", time: "il y a 2 min" },
         { icon: "trophy", text: "GetNearMe utilisé par des agents immobiliers dans toute l'Italie", time: "" },
-        { icon: "map", text: "Un agent a généré une analyse de quartier depuis les portails immobiliers", time: "il y a 9 min" },
+        { icon: "map", text: "Un agent a généré l'analyse de zone d'un bien", time: "il y a 9 min" },
       ],
     },
   },
   ru: {
     nav: {
       features: "Возможности",
+      examples: "Примеры",
       pricing: "Цены",
       faq: "FAQ",
       blog: "Блог",
       tutorial: "Обучение",
-      startAnalysis: "Начать Анализ",
+      startAnalysis: "Попробуй бесплатно",
       backToHome: "← Вернуться на главную",
       dashboard: "Панель управления",
       myAccount: "Мой аккаунт"
     },
     hero: {
-      title1: "Конкурентное преимущество,",
-      title2: "которое выделяет",
-      title3: "ваше агентство",
-      description: "Анализ районов, профессиональные сравнения и ИИ для повышения ценности объектов и презентаций. Предложите сервис, который выходит за рамки простого объявления.",
-      cta: "Добавить Расширение",
+      title1: "Ассистент на базе ИИ для агентов по недвижимости.",
+      title2: "Экономь больше полутора дней в неделю",
+      title3: "",
+      description: "Home staging, видео, посты для соцсетей и отчёты по каждому объекту — готовы за несколько минут. То, что сейчас занимает часы, делаешь из одного места.",
+      cta: "Попробуй бесплатно",
       ctaSecondary: "Как это работает",
-      subMockup: "GetNearMe — это расширение для Google Chrome, которое усиливает работу вашего агентства. Оно анализирует объекты и районы, сравнивает данные по зонам, генерирует сравнительные оценки и профессиональные презентации… и всё это автоматически, пока вы просматриваете порталы недвижимости, которыми уже пользуетесь."
+      subMockup: "GetNearMe — это ИИ-ассистент для агентов по недвижимости: начинаешь с объявления или своих фото и получаешь home staging, видео, посты для соцсетей, отчёт с твоим брендом и анализ района. Всё в одном месте, без изучения новых инструментов."
     },
     features: {
-      title: "Объект, в его",
-      titleItalic: "основных данных",
-      description: "GetNearMe организует информацию в виде четких шагов, чтобы помочь вам сравнить объекты и контекст структурированным образом.",
+      title: "Всё, что ты можешь",
+      titleItalic: "сделать с GetNearMe",
+      description: "Один ассистент вместо Canva, видеоредактора, дизайнера и часов работы. Анализируешь объект, улучшаешь фото и готовишь отчёты и контент за несколько минут.",
       card1: {
-        title: "Данные объекта",
-        desc: "Цена, площадь, €/м², тип и основные характеристики собираются и организуются на основе данных объявления."
+        title: "Полный анализ объекта",
+        desc: "Сразу получаешь чёткую и структурированную картину ключевых данных по объекту — без поиска информации по сотням страниц."
       },
       card2: {
-        title: "Контекст района",
-        desc: "Услуги, транспорт, школы, зеленые зоны и достопримечательности анализируются на основе местоположения и расстояний."
+        title: "Интерактивный анализ района",
+        desc: "Показываешь клиенту, каково жить в этом районе: сервисы, транспорт и реальные расстояния — на карте, в реальном времени."
       },
       card3: {
-        title: "Рыночная стоимость в реальном времени",
-        desc: "Получите среднюю цену за м² в районе для поддержки оценок, приобретений и переговоров на основе конкретных данных."
+        title: "Средняя цена по району за м²",
+        desc: "Средняя цена €/м² в районе — чтобы идти на переговоры с конкретными цифрами."
       },
       card4: {
-        title: "Сравнительный вид",
-        desc: "Информация отображается рядом, чтобы подчеркнуть существенные различия между несколькими проанализированными вариантами."
+        title: "Сравнительные отчёты с твоим брендом",
+        desc: "Представляешь несколько объектов в аккуратном документе с твоим логотипом, готовом к отправке клиенту."
       },
       card5: {
-        title: "Покажите Потенциал с ИИ",
-        desc: "Редактируйте фото с помощью ИИ и показывайте сравнение до/после: пустые или меблированные комнаты, улучшенное освещение и преображённые пространства за секунды."
+        title: "Home staging с помощью ИИ",
+        desc: "Редактируешь фото с ИИ и показываешь сравнение до/после: пустые или обставленные комнаты, улучшенный свет и преображённые пространства за секунды."
       },
-      disclaimer: "Представленные анализы и оценки носят ориентировочный характер и не являются официальной оценкой недвижимости.",
-      addExtension: "Добавить расширение",
+      disclaimer: "Данные по районам — это рыночная информация в иллюстративных целях и не являются оценкой или профессиональной экспертизой недвижимости.",
+      addExtension: "Попробуй бесплатно",
       comingSoonTitle: "Скоро",
-      comingSoonDesc: "Мы разрабатываем новые функции, призванные сделать работу вашего агентства ещё более структурированной и эффективной.",
+      comingSoonDesc: "Мы разрабатываем новые функции, чтобы сделать твою работу ещё быстрее и профессиональнее.",
     },
     faq: {
       title: "Часто задаваемые",
       titleItalic: "вопросы",
       items: [
         {
-          q: "Какую информацию показывает?",
-          a: "GetNearMe показывает организованные данные из объявлений о недвижимости и доступных государственных источников, касающиеся объекта, района, а также показателей цены и стоимости."
+          q: "Что такое GetNearMe?",
+          a: "Это ИИ-ассистент, который готовит все материалы для твоих объявлений: home staging, видео, посты для соцсетей, отчёты и анализ района. Начинаешь со ссылки на портал или своих фото — и за несколько минут всё готово, с твоим брендом."
         },
         {
-          q: "Является ли порталом недвижимости или агентством?",
-          a: "Нет. GetNearMe не публикует объявления и не занимается брокерскими операциями с недвижимостью. Это инструмент для анализа и сравнения данных."
+          q: "Нужно что-то устанавливать?",
+          a: "Нет. GetNearMe работает онлайн: заходишь через браузер и сразу начинаешь работать. Ничего скачивать, никакого нового软件 учить не нужно."
         },
         {
-          q: "Являются ли все анализы официальными оценками?",
-          a: "Нет. Представленные анализы и оценки носят ориентировочный характер и не являются официальной оценкой недвижимости или профессиональной консультацией."
+          q: "Как попробовать?",
+          a: "Бесплатно и без карты. Создаёшь аккаунт и сразу пробуешь функции: видишь результат до того, как решаешь."
         },
         {
-          q: "Откуда берутся данные?",
-          a: "Данные поступают из проанализированных объявлений о недвижимости и доступных государственных источников. Информация обрабатывается для удобства чтения и сравнения."
+          q: "Работает, если работаю один?",
+          a: "Да, именно для такого агента и создано. Делаешь в одиночку работу небольшой команды: фото, видео, посты и отчёты — без внешних подрядчиков."
         },
         {
-          q: "Насколько точны оценки затрат?",
-          a: "Нет. Оценки затрат — это ориентировочные прогнозы, основанные на средних значениях, которые могут варьироваться в зависимости от конкретных характеристик объекта и сделки."
+          q: "Нужно уметь монтировать видео или работать в графических редакторах?",
+          a: "Нет. Выбираешь шаблон — ИИ делает остальное: видео с музыкой и субтитрами, посты с твоим логотипом, уже свёрстанные отчёты."
         },
         {
-          q: "Могу ли я сравнить несколько объектов между собой?",
-          a: "Да. GetNearMe позволяет сравнивать несколько объектов рядом, чтобы сопоставить данные, контекст и показатели в сравнительном виде."
+          q: "Данные по районам — это оценка?",
+          a: "Нет. Это рыночная информация в иллюстративных целях, полезная для рассказа об объекте и подготовки к переговорам. Не заменяет официальную экспертизу."
         }
       ]
     },
     pricing: {
-      title: "Доступ к",
-      titleItalic: "анализам",
-      description: "Выберите уровень доступа, наиболее подходящий для количества анализов, которые вы хотите провести.",
+      title: "Одна цена",
+      titleItalic: "за всё",
+      description: "Один тариф со всеми функциями: home staging, видео, посты для соцсетей, отчёты и анализ района. Пробуешь бесплатно — потом платишь.",
       free: "Бесплатно",
       buyNow: "Купить сейчас",
-      registerNow: "Зарегистрироваться сейчас",
+      registerNow: "Зарегистрироваться",
       mostChosen: "Самый популярный",
-      footer1: "Безопасная оплата картой, PayPal и через основных провайдеров.",
-      footer2: "Кредиты доступны сразу после покупки.",
-      footer3: "Без подписки. Без ограничения срока действия.",
+      footer1: "Безопасная оплата картой, PayPal и другими способами.",
+      footer2: "Пробуешь бесплатно, без карты. Отменяешь когда угодно.",
+      footer3: "",
       plans: [
         {
-          name: "500 кредитов",
-          subtitle: "Для начала",
-          desc: "Позволяет провести несколько полных анализов для сравнения объектов и контекста структурированным образом."
+          name: "Бесплатно",
+          subtitle: "Чтобы начать",
+          desc: "Попробуй GetNearMe бесплатно и без карты: создаёшь аккаунт и сразу используешь функции с включёнными пробными кредитами."
         },
         {
-          name: "500 кредитов",
-          subtitle: "Для начала",
-          desc: "Позволяет провести несколько полных анализов для сравнения объектов и контекста структурированным образом."
+          name: "Месячный план",
+          subtitle: "Все функции включены",
+          desc: "Полный доступ к GetNearMe для одного агента: ИИ home staging, видео, посты для соцсетей, отчёты с твоим брендом и анализ района. Инструмент для поддержки твоей работы, не система оценки недвижимости."
         },
         {
-          name: "1 500 кредитов",
-          subtitle: "Глубокое сравнение",
-          desc: "Подходит для сравнения нескольких вариантов и более детального изучения различий между объектами, районами и оценочными затратами."
-        },
-        {
-          name: "5 000 кредитов",
-          subtitle: "Расширенный анализ",
-          desc: "Предназначен для тех, кто анализирует много вариантов и хочет проводить более глубокие сравнения с течением времени."
+          name: "Годовой план",
+          subtitle: "Самый выгодный",
+          desc: "Все функции месячного плана плюс два месяца бесплатно и приоритетная поддержка."
         }
       ]
     },
     cta: {
-      title: "Сравнивайте недвижимость",
-      title2: "структурированным",
-      titleItalic: "способом",
-      desc: "GetNearMe помогает вам организовать и сравнить доступные данные, чтобы оценить несколько вариантов с большей ясностью.",
-      button: "Добавить расширение",
+      title: "Выглядишь как крупное агентство",
+      title2: "даже если работаешь",
+      titleItalic: "один",
+      desc: "Готовишь профессиональные фото, видео, посты и отчёты по каждому объекту за несколько минут.",
+      button: "Попробуй бесплатно",
       requestInfo: "Запросить информацию",
     },
     howItWorks: {
-      step1Title: "Создайте аккаунт",
-      step1Desc: "Зарегистрируйтесь за несколько секунд и получите доступ к платформе.",
-      step2Title: "Активируйте план Агентство",
-      step2Desc: "В вашем профиле перейдите в раздел подписки и активируйте профессиональный ежемесячный план.",
-      step3Title: "Начните работать сразу",
-      step3Desc: "Доступ мгновенный: вы можете использовать все функции непосредственно на порталах недвижимости, которыми уже пользуетесь.",
-      cta: "Начните с GetNearMe",
-      videoTitle: "GetNearMe — Как это работает",
+      step1Title: "Создай аккаунт бесплатно",
+      step1Desc: "Регистрируешься за несколько секунд. Карта не нужна.",
+      step2Title: "Начни с объявления",
+      step2Desc: "Вставляешь ссылку на портал или загружаешь свои фото и данные объекта.",
+      step3Title: "Публикуй за несколько минут",
+      step3Desc: "Фото, видео, посты и отчёты готовы, с твоим брендом. Всё из одного места.",
+      cta: "Попробуй бесплатно",
+      videoTitle: "GetNearMe: как это работает",
     },
     footer: {
-      desc: "Инструмент поддержки принятия решений для сравнительного анализа недвижимости и районов.",
+      desc: "ИИ-ассистент для агентов по недвижимости. То, что сейчас занимает часы — фото, видео, посты и презентации — с GetNearMe делаешь за несколько минут, начиная с объявления.",
       product: "Продукт",
       legal: "Юридическая информация",
       privacy: "Политика конфиденциальности",
-      cookie: "Политика использования файлов cookie",
+      cookie: "Политика cookie",
       terms: "Условия использования",
       dataDeletion: "Удаление данных",
       rights: "Все права защищены."
@@ -2108,300 +2146,326 @@ export const translations = {
       description: "Вы были успешно удалены из нашей рассылки. Вы больше не будете получать письма от GetNearMe."
     },
     featuresPage: {
-      title: "Все Возможности",
+      title: "Все возможности",
       titleItalic: "GetNearMe",
-      subtitle: "Откройте для себя все продвинутые инструменты, разработанные для преобразования работы вашего агентства недвижимости. От территориального анализа до искусственного интеллекта — каждая функция создана, чтобы дать вам реальное конкурентное преимущество.",
+      subtitle: "Узнай обо всех инструментах, созданных чтобы изменить твою работу агента по недвижимости. От анализа района до искусственного интеллекта — каждая функция даёт тебе реальное преимущество.",
       feature6: {
-        title: "Автоматический Маркетинг Недвижимости",
-        desc: "Преобразуйте данные объекта в профессиональные публикации, уже оптимизированные для основных социальных сетей.",
+        title: "Автоматический маркетинг недвижимости",
+        desc: "Превращаешь данные объекта в профессиональные посты, уже оптимизированные для основных социальных сетей.",
         badge: "НОВОЕ",
       },
       feature7: {
-        title: "Видео Недвижимости в несколько кликов",
-        desc: "Создавайте в несколько кликов профессиональные видеоматериалы для продвижения каждого объекта современно и эффективно.",
+        title: "Видео об объекте за несколько кликов",
+        desc: "Создаёшь за несколько кликов профессиональные видеоматериалы для продвижения каждого объекта — современно и эффективно.",
         badge: "НОВОЕ",
       },
-      ctaTitle: "Готовы начать?",
-      ctaDesc: "Присоединяйтесь к агентствам недвижимости, которые уже трансформируют свою работу с GetNearMe.",
-      ctaButton: "Добавить Расширение",
+      ctaTitle: "Готов начать?",
+      ctaDesc: "Присоединяйся к агентам по недвижимости, которые уже меняют свой подход к работе с GetNearMe.",
+      ctaButton: "Попробуй бесплатно",
       ctaContact: "Связаться с нами",
     },
     landing: {
       topBar: {
-        promo: "Стартовое предложение:",
-        discount: "7 дней бесплатно, без ограничений",
+        promo: "Акционное предложение:",
+        discount: "Ограниченная стартовая цена",
         expiresIn: "истекает через",
-        freeTrialShort: "карта не нужна",
+        freeTrialShort: "",
       },
       hero: {
         badge: "",
-        title1: "Экономьте часы работы",
-        title2: "с лучшим ИИ для агентов по недвижимости.",
-        desc: "GetNearMe — расширение для Google Chrome, которое работает внутри Immobiliare.it, Idealista, Casa.it, Airbnb и Booking. Упрощает ежедневную работу агентства: анализ района, посты в соцсетях, рилсы, ИИ-рендеры фотографий и PDF-отчёты",
-        ctaPrimary: "Добавить расширение — 7 дней бесплатно",
-        ctaSecondary: "Смотреть демо",
+        title1: "Ассистент на базе ИИ для агентов по недвижимости.",
+        title2: "Экономь больше полутора дней в неделю.",
+        desc: "Home staging, видео, посты для соцсетей и отчёты по каждому объекту — готовы за несколько минут. То, что сейчас занимает часы, делаешь из одного места.",
+        ctaPrimary: "Попробуй бесплатно",
+        ctaSecondary: "Посмотри как работает",
         ctaDemo: "Записаться на демо",
-        stats: ["7 дней бесплатно без ограничений", "Устанавливается за 2 секунды", "Интеграция с 5 порталами", "GDPR compliant"],
+        stats: ["Пробуешь без карты", "Готово за несколько минут", "Твои объявления, с твоим брендом"],
       },
       problem: {
         emoji: "frown",
-        title: "Canva, Photoshop, PowerPoint, CapCut, Google Maps: 10 вкладок открыто для одного объявления.",
-        desc: "Чтобы оценить район, обработать фото, подготовить пост в Instagram или PDF для клиента, нужно пять разных инструментов — которые стоят денег, не взаимодействуют друг с другом и крадут часы работы каждую неделю. А клиент тем временем ждёт.",
+        title: "Для одного объявления открываешь десять разных программ.",
+        desc: "Фото нужно обработать, видео смонтировать, посты для соцсетей подготовить, PDF отправить клиенту. Инструменты стоят денег, не работают вместе и крадут часы каждую неделю. А в это время другой агент опережает тебя.",
       },
       solution: {
         emoji: "rocket",
-        title: "Одно расширение Chrome. Вся работа по объявлению — готова.",
-        desc: "GetNearMe активируется одним кликом на порталах, которые ты уже используешь. Открой объект на Immobiliare.it, Idealista, Casa.it, Airbnb или Booking и получи анализ района, ИИ-рендер, видео, посты в соцсетях и PDF-отчёт с твоим брендом — без открытия другого программного обеспечения. Инструмент для упрощения ежедневной работы агента, а не замена профессиональным оценкам или экспертизам.",
+        title: "Один ассистент. Вся работа по объявлению — готова.",
+        desc: "Начинаешь с объявления — вставляешь ссылку на портал или загружаешь свои фото — и GetNearMe возвращает home staging, видео, посты для соцсетей и отчёт с твоим логотипом. За несколько минут, без открытия других программ и без изучения чего-то нового.",
       },
       features: {
         title: "Шесть профессиональных инструментов.",
-        titleHighlight: "Прямо в браузере.",
-        subtitle: "GetNearMe заменяет Canva, Photoshop, видеоредактор, дизайнера интерьеров, SMM-специалиста и PowerPoint одним расширением Chrome. Работает на Immobiliare.it, Idealista, Casa.it, Airbnb и Booking.",
+        titleHighlight: "Один ассистент.",
+        subtitle: "GetNearMe делает работу Canva, видеоредактора, дизайнера, SMM-специалиста и PowerPoint. И не нужно ничему учиться.",
         items: [
-          { num: "01", title: "Интерактивный анализ района", desc: "Сервисы, транспорт, школы, здравоохранение, парки и реальные объекты на карте в реальном времени. Расскажи клиенту о районе с конкретными данными.", icon: "map", color: "#0ea5e9" },
-          { num: "02", title: "Средняя цена за м² в районе", desc: "Справочные данные о средней цене €/м² в районе и сравнения с похожими объектами, полезные для подготовки презентаций клиенту и проведения переговоров. Рыночная информация в иллюстративных целях — не является профессиональной экспертизой или официальной оценкой.", icon: "trending-up", color: "#f59e0b" },
-          { num: "03", title: "ИИ-homestaging", desc: "Обставляет пустые комнаты, корректирует освещение и расчищает пространство примерно за 10 секунд. Восемь стилей на выбор, до/после — готово для клиента или соцсетей. Заменяет Photoshop и дизайнера интерьеров.", icon: "sparkles", color: "#6366f1" },
-          { num: "04", title: "ИИ-видео для объекта", desc: "Рилсы и промо-видео с говорящим аватаром, субтитрами, walkthrough и before/after. Шесть шаблонов, ноль монтажа. Заменяет CapCut, Premiere и видеографа.", icon: "clapperboard", color: "#10b981" },
-          { num: "05", title: "Посты, рилсы и сторис для соцсетей", desc: "Контент для Instagram, Facebook, TikTok и LinkedIn на основе данных объявления. Логотип, цвета и фирменный стиль агентства применяются автоматически. Заменяет Canva и SMM-специалиста.", icon: "smartphone", color: "#ec4899" },
-          { num: "06", title: "PDF-отчёт white-label", desc: "Сравнительные презентации с твоим логотипом, цветами и шрифтами. Сравни несколько объектов в одном профессиональном документе, готовом к отправке. Заменяет PowerPoint и графического дизайнера.", icon: "file-text", color: "#f97316" },
+          { num: "01", title: "ИИ home staging", desc: "Обставляешь, освобождаешь или преображаешь комнату за секунды. Показываешь клиенту до/после или сразу публикуешь на порталах и в соцсетях.", icon: "sparkles", color: "#6366f1" },
+          { num: "02", title: "ИИ-видео об объекте", desc: "Reels, walkthrough, before/after, видео с говорящим аватаром и многое другое. Готово за несколько кликов, без монтажа и без видеографа.", icon: "clapperboard", color: "#10b981" },
+          { num: "03", title: "Посты, reels и сторис для соцсетей", desc: "Готовый контент для Instagram, Facebook, TikTok и LinkedIn на основе данных объявления. Твой логотип и твои цвета применяются автоматически.", icon: "smartphone", color: "#ec4899" },
+          { num: "04", title: "PDF-отчёт с твоим брендом", desc: "Сравниваешь несколько объектов в аккуратном документе с твоим логотипом, цветами и шрифтом. Готов к отправке клиенту после просмотра.", icon: "file-text", color: "#f97316" },
+          { num: "05", title: "Интерактивный анализ района", desc: "Сервисы, транспорт, школы, здравоохранение, парки и реальные расстояния на карте. Рассказываешь клиенту о районе с конкретными данными, не открывая двадцать вкладок.", icon: "map", color: "#0ea5e9" },
+          { num: "06", title: "Средняя цена по району за м²", desc: "Средняя цена €/м² в районе и сравнение с похожими объектами — чтобы идти на переговоры с конкретными цифрами. Рыночные данные в иллюстративных целях, не экспертиза.", icon: "trending-up", color: "#f59e0b" },
         ],
       },
       testimonials: {
-        title: "Создан для того, как ты работаешь на самом деле.",
+        title: "Меньше инструментов, больше результата.",
         npsLabel: "",
         npsValue: "",
         retentionLabel: "",
         retentionValue: "",
         items: [
-          { name: "Агентство недвижимости", role: "Владелец — Северная Италия", text: "Открываю объявление на Immobiliare.it и за пять минут у меня есть анализ района, фотографии с ИИ-обстановкой, пост для Instagram и PDF для клиента. Раньше это занимало целый рабочий день между Canva, Photoshop и PowerPoint.", avatar: "AI", color: "#f59e0b" },
-          { name: "Агент по недвижимости", role: "Старший — Центральная Италия", text: "ИИ-homestaging убеждает собственника. Показываю пустую комнату, потом обставленную за 10 секунд. Это единственное, что я использую, чтобы закрыть сделку на первой встрече.", avatar: "AI", color: "#6366f1" },
-          { name: "Группа компаний недвижимости", role: "Директор — Южная Италия", text: "Мы перестали платить за Canva, CapCut и внешнего графического дизайнера. С GetNearMe всё агентство создаёт контент, соответствующий бренду, прямо с порталов, которые мы используем каждый день.", avatar: "GI", color: "#10b981" },
+          { name: "Marco R.", role: "Агент по недвижимости", text: "Попробовал ИИ-видео для трёшки, которая простояла два месяца. Выложил в Instagram — за неделю получил три запроса на просмотр. Честно говоря, не ожидал.", avatar: "MR", color: "#f59e0b", photo: "https://randomuser.me/api/portraits/men/32.jpg" },
+          { name: "Giulia T.", role: "Агент по недвижимости", text: "Отправляю отчёт после просмотра — клиент спокойно сравнивает квартиры дома. С ИИ-фото показываю одну и ту же комнату обставленной тремя разными способами: решение принимается гораздо быстрее.", avatar: "GT", color: "#6366f1", photo: "https://randomuser.me/api/portraits/women/65.jpg" },
+          { name: "Davide M.", role: "Агент по недвижимости", text: "Загружаю фото, выбираю стиль — через минуту reel готов. Раньше приходилось звонить видеографу и ждать несколько дней, теперь делаю это пока жду клиента в офисе.", avatar: "DM", color: "#10b981", photo: "https://randomuser.me/api/portraits/men/76.jpg" },
         ],
       },
       pricing: {
-        title1: "Один план.",
-        title2: "Все инструменты.",
-        titleHighlight: "7 дней бесплатно.",
-        subtitle: "Полный доступ ко всем функциям во время пробного периода. Без годовых обязательств. Отмена в любое время.",
-        countdownLabel: "Стартовая цена — истекает через",
-        trustBadges: ["🔒 Безопасная оплата через Stripe", "✅ Без списаний 7 дней", "⚡ Мгновенная активация"],
+        title1: "Одна цена.",
+        title2: "Окупается с",
+        titleHighlight: "первого объекта",
+        subtitle: "Пробуешь бесплатно. Потом один тариф вместо Canva, видеоредактора, дизайнера и часов работы: стоит меньше, чем всё вместе.",
+        countdownLabel: "Стартовая цена, истекает через",
+        trustBadges: ["🔒 Безопасная оплата Stripe", "⚡ Мгновенная активация"],
         savingsLabel: "ЭКОНОМИЯ",
         progressAgencies: "",
         progressSpots: "",
         plans: [
           {
-            id: "agency_monthly", name: "Ежемесячно", users: "Все функции включены", oldPrice: null, price: 399,
+            id: "free", name: "Free", users: "Чтобы начать", oldPrice: null, price: 0, period: "",
             savingsYear: null, badge: null, popular: false,
-            features: ["5 агентов включено", "Неограниченный анализ района", "Средняя цена за м² в районе", "ИИ-homestaging", "ИИ-видео с аватаром и субтитрами", "Посты для IG, FB, TikTok, LinkedIn", "PDF-отчёт white-label с твоим логотипом", "Интеграция с Immobiliare.it, Idealista, Casa.it, Airbnb, Booking"],
-            extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Начать 7 дней бесплатно",
+            features: ["Пробуешь все функции", "Пробные кредиты включены", "Карта не нужна"],
+            extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Начать бесплатно",
           },
           {
-            id: "agency_quarterly", name: "Ежеквартально", users: "Все функции включены", oldPrice: null, price: 349,
+            id: "agency_monthly", name: "Месячный", users: "Все функции включены", oldPrice: 150, price: 59, period: "/мес",
             savingsYear: null, badge: null, popular: false,
-            features: ["5 агентов включено", "Неограниченный анализ района", "Средняя цена за м² в районе", "ИИ-homestaging", "ИИ-видео с аватаром и субтитрами", "Посты для IG, FB, TikTok, LinkedIn", "PDF-отчёт white-label с твоим логотипом", "Интеграция с Immobiliare.it, Idealista, Casa.it, Airbnb, Booking"],
-            extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Начать 7 дней бесплатно",
+            features: ["Всё из бесплатного плана", "Отчёты с твоим логотипом", "ИИ home staging", "ИИ-видео об объектах", "Посты и сторис для соцсетей", "Цена за м² в реальном времени", "Поддержка по email"],
+            extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Выбрать этот план",
           },
           {
-            id: "agency_annual", name: "Ежегодно", users: "Все функции включены", oldPrice: null, price: 300,
-            savingsYear: null, badge: "Самый выгодный", popular: false,
-            features: ["5 агентов включено", "Неограниченный анализ района", "Средняя цена за м² в районе", "ИИ-homestaging", "ИИ-видео с аватаром и субтитрами", "Посты для IG, FB, TikTok, LinkedIn", "PDF-отчёт white-label с твоим логотипом", "Интеграция с Immobiliare.it, Idealista, Casa.it, Airbnb, Booking", "Приоритетная поддержка"],
-            extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Начать 7 дней бесплатно",
+            id: "agency_annual", name: "Годовой", users: "Все функции включены", oldPrice: 1800, price: 590, period: "/год",
+            savingsYear: null, badge: "Самый популярный", popular: true,
+            features: ["Всё из месячного плана", "2 месяца бесплатно по сравнению с месячным", "Цена зафиксирована на 12 месяцев", "Приоритетная поддержка"],
+            extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Выбрать этот план",
           },
         ],
       },
       howItWorks: {
-        title: "Готово к работе за",
-        titleHighlight: "2 секунды",
-        subtitle: "Никакого ПО для установки. Никакого обучения. Расширение интегрируется в порталы, которые ты уже используешь каждый день.",
+        title: "Готов к работе за",
+        titleHighlight: "2 минуты",
+        subtitle: "Ничего устанавливать, ничему учиться. Создаёшь аккаунт, начинаешь с объявления — и всё готово.",
         steps: [
-          { step: "1", title: "Добавь в Chrome", desc: "Один клик в Chrome Web Store. Расширение GetNearMe устанавливается в браузере менее чем за 2 секунды.", color: "#6366f1", bg: "#eef2ff", emoji: "puzzle" },
-          { step: "2", title: "Открой объявление", desc: "Immobiliare.it, Idealista, Casa.it, Airbnb или Booking: порталы, которые ты уже используешь каждый день. GetNearMe автоматически активируется на объявлении.", color: "#f59e0b", bg: "#fffbeb", emoji: "search" },
-          { step: "3", title: "Генерируй всё одним кликом", desc: "Анализ района, ИИ-рендер, видео, посты и PDF с твоим брендом. Готовы показать клиенту, без открытия другого программного обеспечения.", color: "#10b981", bg: "#ecfdf5", emoji: "sparkles" },
+          { step: "1", title: "Создай аккаунт бесплатно", desc: "Регистрируешься за несколько секунд прямо в браузере. Карта не нужна.", color: "#6366f1", bg: "#eef2ff", emoji: "puzzle" },
+          { step: "2", title: "Начни с объявления", desc: "Вставляешь ссылку на портал или загружаешь свои фото и данные объекта.", color: "#f59e0b", bg: "#fffbeb", emoji: "search" },
+          { step: "3", title: "Публикуй за несколько минут", desc: "Home staging, видео, посты для соцсетей и отчёты готовы, с твоим брендом. Всё из одного места.", color: "#10b981", bg: "#ecfdf5", emoji: "sparkles" },
         ],
       },
       faq: {
         title: "Вопросы?",
         titleHighlight: "Ответы.",
         items: [
-          { q: "Что именно такое GetNearMe?", a: "Расширение для браузера Google Chrome, созданное для агентов и агентств по недвижимости. Устанавливается из Chrome Web Store за 2 секунды и не требует обучения: активируется автоматически, когда открываешь объявление на поддерживаемых порталах." },
-          { q: "Проводит ли GetNearMe официальную оценку недвижимости?", a: "Нет. GetNearMe не является системой оценки недвижимости и никоим образом не заменяет профессиональную экспертизу, оценку или сертификацию. Данные по району и средние цены за м² — это рыночная информация в иллюстративных целях, полезная для подготовки презентаций и переговоров. Любая официальная оценка остаётся ответственностью агента, оценщика или квалифицированного специалиста." },
-          { q: "На каких порталах работает?", a: "Immobiliare.it, Idealista, Casa.it, Airbnb и Booking. Открой объявление, и GetNearMe автоматически считает данные объекта для генерации анализов, контента и отчётов." },
-          { q: "Какие инструменты заменяет?", a: "GetNearMe концентрирует в одном расширении работу, которую ты сегодня выполняешь с Canva, Photoshop, видеоредакторами, PowerPoint, инструментами анализа района и внешними сервисами homestaging или графического дизайна. Цель — сэкономить тебе часы работы по каждому объекту." },
-          { q: "Как работает ИИ-homestaging?", a: "Выбираешь фото пустой или обставленной комнаты, выбираешь один из доступных стилей, и ИИ возвращает обставленную версию примерно за 10 секунд. До/после можно использовать прямо в постах соцсетей, видео или PDF для клиента." },
-          { q: "Можно ли создавать видео без навыков монтажа?", a: "Да. Выбери шаблон (говорящий аватар, субтитры, walkthrough, before/after, разделённый экран, видео стейджинга) и GetNearMe монтирует музыку, тексты и клипы на основе объявления. Никакое редактирующее ПО не требуется." },
-          { q: "Мой бренд применяется автоматически?", a: "Да. Загружаешь логотип, цвета и шрифты один раз: они автоматически применяются к PDF, видео и постам в соцсетях для всех агентов агентства." },
-          { q: "Сколько агентов можно добавить?", a: "Каждый план включает 5 агентов с общим доступом к одному брендингу. У каждого агента свой аккаунт, но работает под идентичностью агентства." },
-          { q: "Как работает бесплатный пробный период?", a: "7 дней полного доступа без ограничений по использованию. Отмени одним кликом из дашборда — никаких списаний при отмене в течение 7 дней." },
+          { q: "Что такое GetNearMe?", a: "Это ИИ-ассистент, который готовит все материалы для твоих объявлений: home staging, видео, посты для соцсетей, отчёты и анализ района. Начинаешь со ссылки на портал или своих фото — и за несколько минут всё готово, с твоим брендом." },
+          { q: "Нужно что-то устанавливать?", a: "Нет. GetNearMe работает онлайн: заходишь через браузер и сразу начинаешь работать. Ничего скачивать, никакого нового программного обеспечения." },
+          { q: "Как попробовать?", a: "Бесплатно и без карты. Создаёшь аккаунт и сразу пробуешь функции: видишь результат до того, как решаешь оформить подписку." },
+          { q: "Работает, если работаю один?", a: "Да, именно для такого агента и создано. Делаешь в одиночку работу небольшой команды: фото, видео, посты и отчёты — без внешних подрядчиков." },
+          { q: "Какие инструменты заменяет?", a: "Canva, видеоредактор, PowerPoint, дизайнера, SMM-специалиста и часы ручного поиска. Один ассистент вместо множества инструментов — меньше затрат и меньше времени на каждый объект." },
+          { q: "Нужно уметь монтировать видео или работать с графикой?", a: "Нет. Выбираешь шаблон (говорящий аватар, разделённый экран, walkthrough, before/after, автомонтаж, ИИ-таймлапс) — и ИИ создаёт видео с музыкой и субтитрами. Посты выходят уже с твоим логотипом." },
+          { q: "Данные по районам — это оценка?", a: "Нет. Средние цены за м² и данные по районам — это рыночная информация в иллюстративных целях, полезная для рассказа об объекте и подготовки к переговорам. Не заменяет официальную экспертизу." },
+          { q: "Можно отменить в любой момент?", a: "Да. С месячным планом отменяешь когда угодно из личного кабинета, без обязательств. Годовой план оплачивается авансом и имеет самую низкую цену в месяц." },
         ],
       },
       finalCta: {
-        title1: "Перестань переключаться между 10 инструментами.",
-        title2: "Вся работа по объявлению — в одном расширении.",
-        desc: "Попробуй GetNearMe 7 дней бесплатно, без ограничений. Отмени когда угодно.",
-        button: "Добавить расширение — 7 дней бесплатно",
+        title1: "Перестань переключаться между десятью программами.",
+        title2: "Готовь свои объявления с одним ассистентом.",
+        desc: "Профессиональные фото, видео, посты и отчёты по каждому объекту за несколько минут. Пробуй бесплатно, без карты.",
+        button: "Попробуй бесплатно",
         buttonDemo: "Записаться на демо",
-        footer: "🔒 Без списаний во время пробного периода. Отмена одним кликом.",
+        footer: "🔒 Безопасная оплата Stripe. Пробуешь бесплатно, отменяешь когда угодно.",
+      },
+      roiCalculator: {
+        title: "Сколько ты экономишь с",
+        titleHighlight: "GetNearMe?",
+        subtitle: "Рассчитай, сколько времени и денег ты сэкономишь.",
+        inputProperties: "Объектов в работе в месяц",
+        inputHours: "Часов на подготовку материалов по одному объекту",
+        inputRate: "Сколько стоит один час твоей работы",
+        outputHoursSaved: "Сэкономленных часов в месяц",
+        outputValueRecovered: "Стоимость возвращённого времени",
+        outputCost: "Стоимость GetNearMe",
+        outputNetSavings: "Чистая экономия в месяц",
+        outputROI: "возврат на каждый потраченный евро",
+        perMonth: "/мес",
+        cta: "Выбрать этот план",
+        note: "С GetNearMe каждый объект занимает около 3 минут вместо часов. Используем 80% как консервативную оценку экономии времени.",
+      },
+      demo: {
+        pageTitle: "Записаться на демо",
+        pageSubtitle: "Заполни форму и мы свяжемся с тобой, чтобы организовать персональную демонстрацию GetNearMe.",
+        fieldName: "Имя и фамилия",
+        fieldEmail: "Email",
+        fieldAgencyName: "Агентство или команда (необязательно)",
+        fieldPhone: "Телефон (необязательно)",
+        fieldMessage: "Сообщение (необязательно)",
+        submit: "Записаться на демо",
+        submitting: "Отправка...",
+        successTitle: "Заявка отправлена!",
+        successMessage: "Мы свяжемся с тобой как можно скорее, чтобы организовать демо.",
+        errorMessage: "Произошла ошибка. Попробуй позже.",
+        backToHome: "Вернуться на главную",
       },
       modal: {
         emoji: "rocket",
-        title: "Отличный выбор!",
+        title: "Отличный выбор.",
         planLabel: "План",
         desc: "Войди или зарегистрируйся, чтобы активировать",
-        descBold: "7 дней бесплатного пробного периода",
+        descBold: "выбранный план",
         descEnd: "с полным доступом ко всем функциям.",
-        cta: "Активировать бесплатный период",
-        footer: "🔒 Без списаний 7 дней. Отмена одним кликом.",
+        cta: "Активировать план",
+        footer: "🔒 Безопасная оплата Stripe. Отменяешь одним кликом.",
       },
       popups: [
-        { icon: "circle", text: "Агентство из Северной Италии активировало бесплатный период", time: "3 мин назад" },
-        { icon: "clapperboard", text: "Агент только что сгенерировал промо-видео с ИИ", time: "" },
-        { icon: "users", text: "Агентства онлайн прямо сейчас", time: "" },
-        { icon: "rocket", text: "Агент начал 7 дней бесплатного пробного периода", time: "12 мин назад" },
-        { icon: "flame", text: "GetNearMe выбрали новые агентства на этой неделе", time: "" },
-        { icon: "sparkles", text: "Агент обставил комнату с помощью ИИ-homestaging", time: "5 мин назад" },
-        { icon: "star", text: "Агентство перешло на годовой план", time: "18 мин назад" },
-        { icon: "smartphone", text: "Постов в соцсетях сгенерировано на этой неделе с GetNearMe", time: "" },
-        { icon: "target", text: "Агент экспортировал PDF white-label со своим логотипом", time: "7 мин назад" },
-        { icon: "briefcase", text: "Агентство только что зарегистрировалось на бесплатный период", time: "2 мин назад" },
-        { icon: "trophy", text: "GetNearMe используют агенты по недвижимости по всей Италии", time: "" },
-        { icon: "map", text: "Агент сгенерировал анализ района с порталов недвижимости", time: "9 мин назад" },
+        { icon: "circle", text: "Агент только что активировал план", time: "3 мин назад" },
+        { icon: "clapperboard", text: "Агент создал промо-видео с помощью ИИ", time: "" },
+        { icon: "users", text: "Агентов работают с GetNearMe прямо сейчас", time: "" },
+        { icon: "rocket", text: "Агент только что начал бесплатную пробную версию", time: "12 мин назад" },
+        { icon: "flame", text: "Всё больше агентов выбирают GetNearMe", time: "" },
+        { icon: "sparkles", text: "Агент обставил комнату с помощью ИИ home staging", time: "5 мин назад" },
+        { icon: "star", text: "Агент перешёл на годовой план", time: "18 мин назад" },
+        { icon: "smartphone", text: "Постов для соцсетей создано с GetNearMe", time: "" },
+        { icon: "target", text: "Агент экспортировал PDF-отчёт с собственным логотипом", time: "7 мин назад" },
+        { icon: "briefcase", text: "Агент только что зарегистрировался в GetNearMe", time: "2 мин назад" },
+        { icon: "trophy", text: "GetNearMe используют агенты по всей Италии", time: "" },
+        { icon: "map", text: "Агент сгенерировал анализ района для объекта", time: "9 мин назад" },
       ],
     },
   },
   uk: {
     nav: {
       features: "Можливості",
+      examples: "Приклади",
       pricing: "Ціни",
       faq: "FAQ",
       blog: "Блог",
       tutorial: "Навчання",
-      startAnalysis: "Почати Аналіз",
+      startAnalysis: "Спробуй безкоштовно",
       backToHome: "← Повернутися на головну",
       dashboard: "Панель керування",
       myAccount: "Мій акаунт"
     },
     hero: {
-      title1: "Конкурентна перевага,",
-      title2: "яка вирізняє",
-      title3: "вашу агенцію",
-      description: "Аналіз районів, професійні порівняння та ШІ для підвищення цінності об'єктів та презентацій. Запропонуйте сервіс, що виходить за межі простого оголошення.",
-      cta: "Додати Розширення",
+      title1: "Асистент AI для агентів нерухомості.",
+      title2: "Заощаджуй більше ніж півтора дня на тиждень",
+      title3: "",
+      description: "Хоум стейджинг, відео, пости для соцмереж і звіти для кожного об'єкта — готові за кілька хвилин. Те, що сьогодні забирає години, тепер робиш в одному місці.",
+      cta: "Спробуй безкоштовно",
       ctaSecondary: "Як це працює",
-      subMockup: "GetNearMe — це розширення для Google Chrome, яке посилює роботу вашої агенції. Воно аналізує об'єкти та райони, порівнює дані по зонах, генерує порівняльні оцінки та професійні презентації… і все це автоматично, поки ви переглядаєте портали нерухомості, якими вже користуєтеся."
+      subMockup: "GetNearMe — це AI-асистент для агентів нерухомості: починаєш з оголошення або своїх фото і отримуєш хоум стейджинг, відео, пости для соцмереж, звіт з твоїм брендом і аналіз района. Все в одному місці, без необхідності вчитися чомусь новому."
     },
     features: {
-      title: "Об'єкт, у його",
-      titleItalic: "основных даних",
-      description: "GetNearMe організовує інформацію у вигляді чітких кроків, щоб допомогти вам порівняти об'єкти та контекст структурованим чином.",
+      title: "Все, що можна",
+      titleItalic: "зробити з GetNearMe",
+      description: "Один асистент замість Canva, відеоредактора, дизайнера і годин роботи. Аналізуєш об'єкт, покращуєш фото і готуєш звіти та контент за кілька хвилин.",
       card1: {
-        title: "Дані об'єкта",
-        desc: "Ціна, площа, €/м², тип та основні характеристики збираються та організовуються на основі даних оголошення."
+        title: "Повний аналіз об'єкта",
+        desc: "Відразу маєш чітку і впорядковану картину ключових даних об'єкта — без пошуку інформації по сотнях сторінок."
       },
       card2: {
-        title: "Контекст району",
-        desc: "Послуги, транспорт, школи, зелені зони та пам'ятки аналізуються на основі розташування та відстаней."
+        title: "Інтерактивний аналіз района",
+        desc: "Показуєш клієнту, що означає жити в цьому районі: сервіси, транспорт і реальні відстані на карті в режимі реального часу."
       },
       card3: {
-        title: "Ринкова вартість у реальному часі",
-        desc: "Отримайте середню ціну за м² у районі для підтримки оцінок, придбань та переговорів на основі конкретних даних."
+        title: "Середня ціна в районі за м²",
+        desc: "Середня ціна €/м² в районі, щоб підготуватися до переговорів з конкретними цифрами в руках."
       },
       card4: {
-        title: "Порівняльний вигляд",
-        desc: "Інформація відображається поруч, щоб підкреслити суттєві відмінності між кількома проаналізованими варіантами."
+        title: "Порівняльні звіти з твоїм брендом",
+        desc: "Представляєш кілька об'єктів в одному впорядкованому документі з твоїм логотипом, готовому для відправки клієнту."
       },
       card5: {
-        title: "Покажіть Потенціал з ШІ",
-        desc: "Редагуйте фото за допомогою ШІ та показуйте порівняння до/після: порожні або мебльовані кімнати, покращене освітлення та перетворені простори за лічені секунди."
+        title: "Хоум стейджинг за допомогою AI",
+        desc: "Редагуєш фото за допомогою AI і показуєш порівняння до/після: порожні або меблі кімнати, покращене освітлення і перетворені простори за лічені секунди."
       },
-      disclaimer: "Представлені аналізи та оцінки носять орієнтовний характер і не є офіційною оцінкою нерухомості.",
-      addExtension: "Додати розширення",
+      disclaimer: "Дані по районах є ринковою інформацією в ілюстративних цілях і не є оцінкою або експертизою нерухомості.",
+      addExtension: "Спробуй безкоштовно",
       comingSoonTitle: "Незабаром",
-      comingSoonDesc: "Ми розробляємо нові функції, покликані зробити роботу вашої агенції ще більш структурованою та ефективною.",
+      comingSoonDesc: "Ми розробляємо нові функції, щоб зробити твою роботу ще швидшою і професійнішою.",
     },
     faq: {
       title: "Часті",
       titleItalic: "запитання",
       items: [
         {
-          q: "Яку інформацію показує?",
-          a: "GetNearMe показує організовані дані з оголошень про нерухомість та доступних державних джерел, що стосуються об'єкта, району, а також показників ціни та вартості."
+          q: "Що таке GetNearMe?",
+          a: "Це AI-асистент, який готує всі матеріали для твоїх оголошень: хоум стейджинг, відео, пости для соцмереж, звіти й аналіз района. Починаєш з посилання на портал або своїх фото і за кілька хвилин маєш все готове з твоїм брендом."
         },
         {
-          q: "Чи є порталом нерухомості або агентством?",
-          a: "Ні. GetNearMe не публікує оголошення і не займається брокерськими операциями з нерухомістю. Це інструмент для аналізу та порівняння даних."
+          q: "Потрібно щось встановлювати?",
+          a: "Ні. GetNearMe — онлайн-сервіс: відкриваєш у браузері і починаєш працювати. Нічого завантажувати, нічого вчитися."
         },
         {
-          q: "Чи є всі аналізи офіційними оцінками?",
-          a: "Ні. Представлені аналізи та оцінки носять орієнтовний характер і не є офіційною оцінкою нерухомості або професійною консультацією."
+          q: "Як його спробувати?",
+          a: "Безкоштовно і без картки. Створюєш акаунт і відразу пробуєш функції — бачиш результат ще до того, як вирішиш."
         },
         {
-          q: "Звідки беруться дані?",
-          a: "Дані надходять із проаналізованих оголошень про нерухомість та доступних державних джерел. Інформація обробляється для зручності читання та порівняння."
+          q: "Підходить, якщо я працюю самостійно?",
+          a: "Так, він створений саме для індивідуального агента. Сам робиш роботу невеликої команди: фото, відео, пости і звіти — без сторонніх підрядників."
         },
         {
-          q: "Наскільки точними є оцінки витрат?",
-          a: "Ні. Оцінки витрат — це орієнтовні прогнози, засновані на середніх значеннях, які можуть варіюватися залежно від конкретних характеристик об'єкта та угоди."
+          q: "Потрібно вміти монтувати відео або користуватися графічними програмами?",
+          a: "Ні. Обираєш шаблон — і AI робить решту: відео з музикою і субтитрами, пости з твоїм логотипом, звіти вже готові до друку."
         },
         {
-          q: "Чи можу я порівняти кілька об'єктів між собою?",
-          a: "Так. GetNearMe дозволяє порівнювати кілька об'єктів поруч, щоб зіставити дані, контекст та показники у порівняльному вигляді."
+          q: "Дані по районах — це офіційна оцінка?",
+          a: "Ні. Це ринкова інформація в ілюстративних цілях, корисна для розповіді про об'єкт і підготовки до переговорів. Вона не замінює офіційну експертизу."
         }
       ]
     },
     pricing: {
-      title: "Доступ до",
-      titleItalic: "аналізів",
-      description: "Виберіть рівень доступу, який найкраще підходить для кількості аналізів, які ви хочете провести.",
+      title: "Одна ціна",
+      titleItalic: "за все",
+      description: "Єдиний план з усіма функціями: хоум стейджинг, відео, пости для соцмереж, звіти й аналіз района. Спробуй безкоштовно ще до оплати.",
       free: "Безкоштовно",
       buyNow: "Купити зараз",
       registerNow: "Зареєструватися зараз",
       mostChosen: "Найпопулярніший",
-      footer1: "Безпечна оплата карткою, PayPal та через основних провайдерів.",
-      footer2: "Кредити доступні відразу після покупки.",
-      footer3: "Без підписки. Без обмеження терміну дії.",
+      footer1: "Безпечна оплата карткою, PayPal та основними провайдерами.",
+      footer2: "Пробуєш безкоштовно, без картки. Скасовуєш коли завгодно.",
+      footer3: "",
       plans: [
         {
-          name: "500 кредитів",
+          name: "Free",
           subtitle: "Для початку",
-          desc: "Дозволяє провести кілька повних аналізів для порівняння об'єктів та контексту структурованим чином."
+          desc: "Пробуєш GetNearMe безкоштовно і без картки: створюєш акаунт і відразу користуєшся функціями з включеними тестовими кредитами."
         },
         {
-          name: "500 кредитів",
-          subtitle: "Для початку",
-          desc: "Дозволяє провести кілька повних аналізів для порівняння об'єктів та контексту структурованим чином."
+          name: "Місячний план",
+          subtitle: "Всі функції включені",
+          desc: "Повний доступ до GetNearMe для індивідуального агента: AI хоум стейджинг, відео, пости для соцмереж, звіти з твоїм брендом і аналіз района. Інструмент для підтримки твоєї роботи, а не система оцінки нерухомості."
         },
         {
-          name: "1 500 кредитів",
-          subtitle: "Глубоке порівняння",
-          desc: "Підходить для порівняння кількох варіантів та більш детального вивчення відмінностей між об'єктами, районами та оціночними витратами."
-        },
-        {
-          name: "5 000 кредитів",
-          subtitle: "Розширений аналіз",
-          desc: "Призначений для тих, хто аналізує багато варіантів і хоче проводити більш глибокі порівняння з часом."
+          name: "Річний план",
+          subtitle: "Найвигідніший",
+          desc: "Всі функції місячного плану плюс два місяці безкоштовно і пріоритетна підтримка."
         }
       ]
     },
     cta: {
-      title: "Порівнюйте нерухомість",
-      title2: "структурованим",
-      titleItalic: "способом",
-      desc: "GetNearMe допомагає вам організувати та порівняти доступні дані, щоб оцінити кілька варіантів з більшою ясністю.",
-      button: "Додати розширення",
+      title: "Виглядай як велике агентство",
+      title2: "навіть якщо працюєш",
+      titleItalic: "сам",
+      desc: "Готуй професійні фото, відео, пости і звіти для кожного об'єкта за кілька хвилин.",
+      button: "Спробуй безкоштовно",
       requestInfo: "Запитати інформацію",
     },
     howItWorks: {
-      step1Title: "Створіть акаунт",
-      step1Desc: "Зареєструйтесь за кілька секунд та отримайте доступ до платформи.",
-      step2Title: "Активуйте план Агентство",
-      step2Desc: "У вашому профілі перейдіть до розділу підписки та активуйте професійний щомісячний план.",
-      step3Title: "Почніть працювати одразу",
-      step3Desc: "Доступ миттєвий: ви можете використовувати всі функції безпосередньо на порталах нерухомості, якими вже користуєтесь.",
-      cta: "Почніть з GetNearMe",
-      videoTitle: "GetNearMe — Як це працює",
+      step1Title: "Створи безкоштовний акаунт",
+      step1Desc: "Реєструєшся за кілька секунд. Картка не потрібна.",
+      step2Title: "Починай з оголошення",
+      step2Desc: "Вставляєш посилання на портал або завантажуєш свої фото і дані об'єкта.",
+      step3Title: "Публікуй за кілька хвилин",
+      step3Desc: "Фото, відео, пости і звіти готові з твоїм брендом. Все в одному місці.",
+      cta: "Спробуй безкоштовно",
+      videoTitle: "GetNearMe: як це працює",
     },
     footer: {
-      desc: "Інструмент підтримки прийняття рішень для порівняльного аналізу нерухомості та районів.",
+      desc: "AI-асистент для агентів нерухомості. Те, що сьогодні коштує тобі годин — фото, відео, пости і презентації — з GetNearMe робиш за кілька хвилин, починаючи з оголошення.",
       product: "Продукт",
       legal: "Юридична інформація",
       privacy: "Політика конфіденційності",
@@ -2440,7 +2504,7 @@ export const translations = {
         },
         {
           t: "7. Правова основа обробки",
-          c: "Обробка даних ґрунтується на: виконанні договору або переддоговірних заходах; згоді користувача, де це потрібно; законному інтересі володільця у правильному функціонуванні та покращенні Сервісу."
+          c: "Обробка даних ґрунтується на: виконанні договору або переддоговірних заходів; згоді користувача, де це потрібно; законному інтересі володільця у правильному функціонуванні та покращенні Сервісу."
         },
         {
           t: "8. Способи обробки",
@@ -2482,7 +2546,7 @@ export const translations = {
         },
         {
           t: "5. Дозволене використання",
-          c: "Забороняється: використовувати Сервіс у незаконних або несанкцірованих цілях; намагатися обійти системи безпеки або систему кредитів; виконувати масовий парсинг або несанкціоноване комерційне використання контенту."
+          c: "Забороняється: використовувати Сервіс у незаконних або несанкціонованих цілях; намагатися обійти системи безпеки або систему кредитів; виконувати масовий парсинг або несанкціоноване комерційне використання контенту."
         },
         {
           t: "6. Доступність Сервісу",
@@ -2500,7 +2564,7 @@ export const translations = {
       sections: [
         {
           t: "1. Що таке файли cookie",
-          c: "Файли cookie — це невеликі текстовые файли, які сайт надсилає на пристрій користувача для покращення досвіду навігації та забезпечення правильної роботи сайту."
+          c: "Файли cookie — це невеликі текстові файли, які сайт надсилає на пристрій користувача для покращення досвіду навігації та забезпечення правильної роботи сайту."
         },
         {
           t: "2. Типи файлів cookie, що використовуються",
@@ -2519,192 +2583,223 @@ export const translations = {
     bonus: {
       creditsClaimed: "Кредити Отримано!",
       dayCompleted: "День {day} завершено!",
-      weekComplete: "Фантастика! Ви завершили тиждень! Отримайте 120 бонусних кредитів!",
-      comeBackTomorrow: "Повертайтеся завтра на {day} день.",
+      weekComplete: "Фантастика! Ти завершив тиждень! Отримуєш 120 бонусних кредитів!",
+      comeBackTomorrow: "Повертайся завтра на {day} день.",
       goToHome: "Перейти в GetNearMe",
       backToHome: "Повернутися на Головну",
       error: {
         defaultTitle: "Помилка",
         defaultMessage: "Сталася помилка.",
         alreadyClaimedTitle: "Бонус Вже Отримано",
-        alreadyClaimedMessage: "Ви вже отримали сьогоднішній бонус. Повертайтеся завтра!",
+        alreadyClaimedMessage: "Ти вже отримав сьогоднішній бонус. Повертайся завтра!",
         expiredTitle: "Токен Вичерпано",
-        expiredMessage: "Це посилання більше не дійсне. Перевірте сьогоднішній лист.",
+        expiredMessage: "Це посилання більше не дійсне. Перевір сьогоднішній лист.",
         invalidTokenTitle: "Недійсний Токен",
-        invalidTokenMessage: "Посилання, яке ви використали, недійсне.",
+        invalidTokenMessage: "Посилання, яке ти використав, недійсне.",
         missingTokenTitle: "Токен Відсутній",
         missingTokenMessage: "Токен не надано.",
         serverErrorTitle: "Помилка Сервера",
-        serverErrorMessage: "Сталася помилка. Спробуйте пізніше."
+        serverErrorMessage: "Сталася помилка. Спробуй пізніше."
       },
       loading: "Завантаження..."
     },
     confirm: {
       subtitle: "Ласкаво просимо до GetNearMe",
-      description: "Вашу пiдписку на сервiс успiшно пiдтверджено. Поверніться до розширення та почніть використовувати всі можливості GetNearMe!",
-      cta: "Почати дослiдження"
+      description: "Твою підписку на сервіс підтверджено. Увійди в GetNearMe і починай користуватися всіма функціями.",
+      cta: "Почати досліджувати"
     },
     unsubscribe: {
-      subtitle: "Відписка завершена",
-      description: "Вас було успішно видалено з нашої розсилки. Ви більше не отримуватимете листів від GetNearMe."
+      subtitle: "Відписку завершено",
+      description: "Тебе успішно видалено з нашого списку розсилки. Ти більше не отримуватимеш листів від GetNearMe."
     },
     featuresPage: {
       title: "Всі Можливості",
       titleItalic: "GetNearMe",
-      subtitle: "Відкрийте для себе всі передові інструменти, розроблені для трансформації роботи вашого агентства нерухомості. Від територіального аналізу до штучного інтелекту — кожна функція створена, щоб дати вам реальну конкурентну перевагу.",
+      subtitle: "Відкрий для себе всі інструменти, створені для того, щоб змінити твою роботу агента нерухомості. Від аналізу района до штучного інтелекту — кожна функція дає тобі реальну перевагу.",
       feature6: {
         title: "Автоматичний Маркетинг Нерухомості",
-        desc: "Перетворюйте дані об'єкта на професійні публікації, вже оптимізовані для основних соціальних мереж.",
+        desc: "Перетворюй дані об'єкта на професійні пости, вже оптимізовані для основних соціальних мереж.",
         badge: "НОВЕ",
       },
       feature7: {
-        title: "Відео Нерухомості за кілька кліків",
-        desc: "Створюйте за кілька кліків професійні відеоматеріали для просування кожного об'єкта сучасно та ефективно.",
+        title: "Відео для Нерухомості за кілька кліків",
+        desc: "Створюй за кілька кліків професійні відеоматеріали для просування кожного об'єкта сучасно та ефективно.",
         badge: "НОВЕ",
       },
-      ctaTitle: "Готові почати?",
-      ctaDesc: "Приєднуйтесь до агентств нерухомості, які вже трансформують свою роботу з GetNearMe.",
-      ctaButton: "Додати Розширення",
-      ctaContact: "Зв'яжіться з нами",
+      ctaTitle: "Готовий почати?",
+      ctaDesc: "Приєднуйся до агентів нерухомості, які вже змінюють свій спосіб роботи з GetNearMe.",
+      ctaButton: "Спробуй безкоштовно",
+      ctaContact: "Зв'яжись з нами",
     },
     landing: {
       topBar: {
         promo: "Стартова пропозиція:",
-        discount: "7 днів безкоштовно, без обмежень",
+        discount: "Обмежена стартова ціна",
         expiresIn: "закінчується через",
-        freeTrialShort: "картка не потрібна",
+        freeTrialShort: "",
       },
       hero: {
         badge: "",
-        title1: "Заощаджуй години роботи",
-        title2: "з найкращим ШІ для агентів з нерухомості.",
-        desc: "GetNearMe — розширення для Google Chrome, яке працює всередині Immobiliare.it, Idealista, Casa.it, Airbnb та Booking. Спрощує щоденну роботу агентства: аналіз району, пости в соцмережах, рілси, ШІ-рендери фотографій та PDF-звіти",
-        ctaPrimary: "Додати розширення — 7 днів безкоштовно",
-        ctaSecondary: "Дивитися демо",
-        ctaDemo: "Записатися на демо",
-        stats: ["7 днів безкоштовно без обмежень", "Встановлюється за 2 секунди", "Інтеграція з 5 порталами", "GDPR compliant"],
+        title1: "Асистент AI для агентів нерухомості.",
+        title2: "Заощаджуй більше ніж півтора дня на тиждень.",
+        desc: "Хоум стейджинг, відео, пости для соцмереж і звіти для кожного об'єкта — готові за кілька хвилин. Те, що сьогодні забирає години, тепер робиш в одному місці.",
+        ctaPrimary: "Спробуй безкоштовно",
+        ctaSecondary: "Подивись як це працює",
+        ctaDemo: "Замов демо",
+        stats: ["Пробуєш без картки", "Готово за кілька хвилин", "Твої оголошення, з твоїм брендом"],
       },
       problem: {
         emoji: "frown",
-        title: "Canva, Photoshop, PowerPoint, CapCut, Google Maps: 10 вкладок відкрито для одного оголошення.",
-        desc: "Щоб оцінити район, обробити фото, підготувати пост в Instagram або PDF для клієнта, потрібно п'ять різних інструментів — які коштують грошей, не взаємодіють між собою і крадуть години роботи щотижня. А клієнт тим часом чекає.",
+        title: "Для одного оголошення відкриваєш десять різних програм.",
+        desc: "Фото треба відретушувати, відео змонтувати, пости для соцмереж підготувати, PDF відправити клієнту. Інструменти, які коштують грошей, не взаємодіють між собою і крадуть години щотижня. А тим часом інший агент встигає раніше за тебе.",
       },
       solution: {
         emoji: "rocket",
-        title: "Одне розширення Chrome. Вся робота по оголошенню — готова.",
-        desc: "GetNearMe активується одним кліком на порталах, які ти вже використовуєш. Відкрий об'єкт на Immobiliare.it, Idealista, Casa.it, Airbnb або Booking і отримай аналіз району, ШІ-рендер, відео, пости в соцмережах і PDF-звіт з твоїм брендом — без відкриття іншого програмного забезпечення. Інструмент для спрощення щоденної роботи агента, а не заміна професійним оцінкам або експертизам.",
+        title: "Один асистент. Вся робота по оголошенню — готова.",
+        desc: "Починаєш з оголошення — вставляєш посилання на портал або завантажуєш свої фото — і GetNearMe повертає тобі хоум стейджинг, відео, пости для соцмереж і звіт з твоїм логотипом. За кілька хвилин, без відкриття інших програм і без необхідності вчитися чомусь новому.",
       },
       features: {
         title: "Шість професійних інструментів.",
-        titleHighlight: "Прямо в браузері.",
-        subtitle: "GetNearMe замінює Canva, Photoshop, відеоредактор, дизайнера інтер'єрів, SMM-спеціаліста та PowerPoint одним розширенням Chrome. Працює на Immobiliare.it, Idealista, Casa.it, Airbnb та Booking.",
+        titleHighlight: "Один асистент.",
+        subtitle: "GetNearMe робить роботу Canva, відеоредактора, дизайнера, SMM-спеціаліста і PowerPoint. І тобі не треба нічому вчитися.",
         items: [
-          { num: "01", title: "Інтерактивний аналіз району", desc: "Сервіси, транспорт, школи, охорона здоров'я, парки та реальні об'єкти на карті в режимі реального часу. Розкажи клієнту про район з конкретними даними.", icon: "map", color: "#0ea5e9" },
-          { num: "02", title: "Середня ціна за м² у районі", desc: "Довідкові дані про середню ціну €/м² у районі та порівняння з подібними об'єктами, корисні для підготовки презентацій клієнту та проведення переговорів. Ринкова інформація в ілюстративних цілях — не є професійною експертизою або офіційною оцінкою.", icon: "trending-up", color: "#f59e0b" },
-          { num: "03", title: "ШІ-homestaging", desc: "Обставляє порожні кімнати, коригує освітлення та розчищає простір приблизно за 10 секунд. Вісім стилів на вибір, до/після — готово для клієнта або соцмереж. Замінює Photoshop і дизайнера інтер'єрів.", icon: "sparkles", color: "#6366f1" },
-          { num: "04", title: "ШІ-відео для об'єкта", desc: "Рілси та промо-відео з говорячим аватаром, субтитрами, walkthrough та before/after. Шість шаблонів, нуль монтажу. Замінює CapCut, Premiere і відеографа.", icon: "clapperboard", color: "#10b981" },
-          { num: "05", title: "Пости, рілси та сторіс для соцмереж", desc: "Контент для Instagram, Facebook, TikTok та LinkedIn на основі даних оголошення. Логотип, кольори та фірмовий стиль агентства застосовуються автоматично. Замінює Canva і SMM-спеціаліста.", icon: "smartphone", color: "#ec4899" },
-          { num: "06", title: "PDF-звіт white-label", desc: "Порівняльні презентації з твоїм логотипом, кольорами та шрифтами. Порівняй кілька об'єктів в одному професійному документі, готовому до відправки. Замінює PowerPoint і графічного дизайнера.", icon: "file-text", color: "#f97316" },
+          { num: "01", title: "Хоум стейджинг AI", desc: "Меблюєш, прибираєш або перетворюєш кімнату за лічені секунди. Показуєш клієнту порівняння до/після або відразу публікуєш на порталах і в соцмережах.", icon: "sparkles", color: "#6366f1" },
+          { num: "02", title: "AI відео для об'єкта", desc: "Reel, walkthrough, before/after, відео з аватаром, що говорить, та багато іншого. Готові за кілька кліків, без монтажу і без відеографа.", icon: "clapperboard", color: "#10b981" },
+          { num: "03", title: "Пости, reel і stories для соцмереж", desc: "Контент готовий для Instagram, Facebook, TikTok і LinkedIn на основі даних оголошення. Твій логотип і кольори застосовуються самі.", icon: "smartphone", color: "#ec4899" },
+          { num: "04", title: "PDF звіт з твоїм брендом", desc: "Порівнюєш кілька об'єктів в одному впорядкованому документі з твоїм логотипом, кольорами і шрифтами. Готовий до відправки клієнту після візиту.", icon: "file-text", color: "#f97316" },
+          { num: "05", title: "Інтерактивний аналіз района", desc: "Сервіси, транспорт, школи, медицина, парки і реальні відстані на карті. Розповідаєш клієнту про район з конкретними даними, не відкриваючи двадцять вкладок.", icon: "map", color: "#0ea5e9" },
+          { num: "06", title: "Середня ціна в районі за м²", desc: "Середня ціна €/м² в районі і порівняння з аналогічними об'єктами, щоб підготуватися до переговорів з цифрами в руках. Ринкові дані в ілюстративних цілях, не експертиза.", icon: "trending-up", color: "#f59e0b" },
         ],
       },
       testimonials: {
-        title: "Створено для того, як ти працюєш насправді.",
+        title: "Менше інструментів, більше результатів.",
         npsLabel: "",
         npsValue: "",
         retentionLabel: "",
         retentionValue: "",
         items: [
-          { name: "Агентство нерухомості", role: "Власник — Північна Італія", text: "Відкриваю оголошення на Immobiliare.it і за п'ять хвилин маю аналіз району, фотографії з ШІ-обстановкою, пост для Instagram і PDF для клієнта. Раніше це займало цілий робочий день між Canva, Photoshop і PowerPoint.", avatar: "AI", color: "#f59e0b" },
-          { name: "Агент з нерухомості", role: "Старший — Центральна Італія", text: "ШІ-homestaging переконує власника. Показую порожню кімнату, потім обставлену за 10 секунд. Це єдине, що я використовую, щоб закрити угоду на першій зустрічі.", avatar: "AI", color: "#6366f1" },
-          { name: "Група компаній нерухомості", role: "Директор — Південна Італія", text: "Ми перестали платити за Canva, CapCut і зовнішнього графічного дизайнера. З GetNearMe все агентство створює контент, що відповідає бренду, прямо з порталів, які ми використовуємо щодня.", avatar: "GI", color: "#10b981" },
+          { name: "Marco R.", role: "Агент нерухомості", text: "Спробував AI відео для триімнатної квартири, яка не продавалась два місяці. Виклав в Instagram і за тиждень отримав три запити на перегляд. Чесно кажучи, не очікував такого.", avatar: "MR", color: "#f59e0b", photo: "https://randomuser.me/api/portraits/men/32.jpg" },
+          { name: "Giulia T.", role: "Агент нерухомості", text: "Відправляю звіт після візиту — так клієнт спокійно порівнює об'єкти. Завдяки AI фото показую одну й ту саму кімнату в трьох різних варіантах меблювання: переконується набагато швидше.", avatar: "GT", color: "#6366f1", photo: "https://randomuser.me/api/portraits/women/65.jpg" },
+          { name: "Davide M.", role: "Агент нерухомості", text: "Завантажую фото, обираю стиль і за хвилину reel готовий. Раніше доводилось дзвонити відеографу і чекати днями, тепер роблю це поки чекаю клієнта в офісі.", avatar: "DM", color: "#10b981", photo: "https://randomuser.me/api/portraits/men/76.jpg" },
         ],
       },
       pricing: {
-        title1: "Один план.",
-        title2: "Всі інструменти.",
-        titleHighlight: "7 днів безкоштовно.",
-        subtitle: "Повний доступ до всіх функцій під час пробного періоду. Без річних зобов'язань. Скасування в будь-який час.",
-        countdownLabel: "Стартова ціна — закінчується через",
-        trustBadges: ["🔒 Безпечна оплата через Stripe", "✅ Без списань 7 днів", "⚡ Миттєва активація"],
+        title1: "Одна ціна.",
+        title2: "Окупається з",
+        titleHighlight: "першого об'єкта",
+        subtitle: "Пробуй безкоштовно. Потім один абонемент замість Canva, відеоредактора, дизайнера і годин роботи: коштує менше, ніж їх сума.",
+        countdownLabel: "Стартова ціна, закінчується через",
+        trustBadges: ["🔒 Безпечна оплата Stripe", "⚡ Миттєва активація"],
         savingsLabel: "ЕКОНОМІЯ",
         progressAgencies: "",
         progressSpots: "",
         plans: [
           {
-            id: "agency_monthly", name: "Щомісячно", users: "Усі функції включені", oldPrice: null, price: 399,
+            id: "free", name: "Free", users: "Для початку", oldPrice: null, price: 0, period: "",
             savingsYear: null, badge: null, popular: false,
-            features: ["5 агентів включено", "Необмежений аналіз району", "Середня ціна за м² у районі", "ШІ-homestaging", "ШІ-відео з аватаром і субтитрами", "Пости для IG, FB, TikTok, LinkedIn", "PDF-звіт white-label з твоїм логотипом", "Інтеграція з Immobiliare.it, Idealista, Casa.it, Airbnb, Booking"],
-            extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Почати 7 днів безкоштовно",
+            features: ["Пробуєш всі функції", "Тестові кредити включені", "Картка не потрібна"],
+            extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Починай безкоштовно",
           },
           {
-            id: "agency_quarterly", name: "Щоквартально", users: "Усі функції включені", oldPrice: null, price: 349,
+            id: "agency_monthly", name: "Місячний", users: "Всі функції включені", oldPrice: 150, price: 59, period: "/міс",
             savingsYear: null, badge: null, popular: false,
-            features: ["5 агентів включено", "Необмежений аналіз району", "Середня ціна за м² у районі", "ШІ-homestaging", "ШІ-відео з аватаром і субтитрами", "Пости для IG, FB, TikTok, LinkedIn", "PDF-звіт white-label з твоїм логотипом", "Інтеграція з Immobiliare.it, Idealista, Casa.it, Airbnb, Booking"],
-            extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Почати 7 днів безкоштовно",
+            features: ["Все з плану Free", "Звіти з твоїм логотипом", "Хоум стейджинг AI", "AI відео для об'єктів", "Пости і stories для соцмереж", "Ціна за м² в реальному часі", "Підтримка через email"],
+            extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Обрати цей план",
           },
           {
-            id: "agency_annual", name: "Щорічно", users: "Усі функції включені", oldPrice: null, price: 300,
-            savingsYear: null, badge: "Найвигідніший", popular: false,
-            features: ["5 агентів включено", "Необмежений аналіз району", "Середня ціна за м² у районі", "ШІ-homestaging", "ШІ-відео з аватаром і субтитрами", "Пости для IG, FB, TikTok, LinkedIn", "PDF-звіт white-label з твоїм логотипом", "Інтеграція з Immobiliare.it, Idealista, Casa.it, Airbnb, Booking", "Пріоритетна підтримка"],
-            extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Почати 7 днів безкоштовно",
+            id: "agency_annual", name: "Річний", users: "Всі функції включені", oldPrice: 1800, price: 590, period: "/рік",
+            savingsYear: null, badge: "Найпопулярніший", popular: true,
+            features: ["Все з місячного плану", "2 місяці безкоштовно порівняно з місячним", "Ціна заморожена на 12 місяців", "Пріоритетна підтримка"],
+            extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Обрати цей план",
           },
         ],
       },
       howItWorks: {
-        title: "Готово до роботи за",
-        titleHighlight: "2 секунди",
-        subtitle: "Жодного програмного забезпечення для встановлення. Жодного навчання. Розширення інтегрується в портали, які ти вже використовуєш щодня.",
+        title: "Готовий до роботи за",
+        titleHighlight: "2 хвилини",
+        subtitle: "Нічого встановлювати, нічого вчити. Створюєш акаунт, починаєш з оголошення — і все готово.",
         steps: [
-          { step: "1", title: "Додай до Chrome", desc: "Один клік у Chrome Web Store. Розширення GetNearMe встановлюється в браузері менш ніж за 2 секунди.", color: "#6366f1", bg: "#eef2ff", emoji: "puzzle" },
-          { step: "2", title: "Відкрий оголошення", desc: "Immobiliare.it, Idealista, Casa.it, Airbnb або Booking: портали, які ти вже використовуєш щодня. GetNearMe автоматично активується на оголошенні.", color: "#f59e0b", bg: "#fffbeb", emoji: "search" },
-          { step: "3", title: "Генеруй все одним кліком", desc: "Аналіз району, ШІ-рендер, відео, пости та PDF з твоїм брендом. Готові показати клієнту, без відкриття іншого програмного забезпечення.", color: "#10b981", bg: "#ecfdf5", emoji: "sparkles" },
+          { step: "1", title: "Створи безкоштовний акаунт", desc: "Реєструєшся за кілька секунд, прямо в браузері. Картка не потрібна.", color: "#6366f1", bg: "#eef2ff", emoji: "puzzle" },
+          { step: "2", title: "Починай з оголошення", desc: "Вставляєш посилання на портал або завантажуєш свої фото і дані об'єкта.", color: "#f59e0b", bg: "#fffbeb", emoji: "search" },
+          { step: "3", title: "Публікуй за кілька хвилин", desc: "Хоум стейджинг, відео, пости і звіти готові з твоїм брендом. Все в одному місці.", color: "#10b981", bg: "#ecfdf5", emoji: "sparkles" },
         ],
       },
       faq: {
         title: "Питання?",
         titleHighlight: "Відповіді.",
         items: [
-          { q: "Що саме таке GetNearMe?", a: "Розширення для браузера Google Chrome, створене для агентів та агентств з нерухомості. Встановлюється з Chrome Web Store за 2 секунди і не потребує навчання: активується автоматично, коли відкриваєш оголошення на підтримуваних порталах." },
-          { q: "На яких порталах працює?", a: "Immobiliare.it, Idealista, Casa.it, Airbnb та Booking. Відкрий оголошення, і GetNearMe автоматично зчитає дані об'єкта для генерації аналізів, контенту та звітів." },
-          { q: "Які інструменти замінює?", a: "GetNearMe концентрує в одному розширенні роботу, яку ти сьогодні виконуєш з Canva, Photoshop, відеоредакторами, PowerPoint, інструментами аналізу району та зовнішніми сервісами homestaging або графічного дизайну. Мета — заощадити тобі години роботи по кожному об'єкту." },
-          { q: "Як працює ШІ-homestaging?", a: "Вибираєш фото порожньої або обставленої кімнати, обираєш один із доступних стилів, і ШІ повертає обставлену версію приблизно за 10 секунд. До/після можна використовувати прямо в постах соцмереж, відео або PDF для клієнта." },
-          { q: "Чи можна створювати відео без навичок монтажу?", a: "Так. Обери шаблон (говорячий аватар, субтитри, walkthrough, before/after, розділений екран, відео стейджингу) і GetNearMe монтує музику, тексти та кліпи на основі оголошення. Жодне редагуюче програмне забезпечення не потрібне." },
-          { q: "Мій бренд застосовується автоматично?", a: "Так. Завантажуєш логотип, кольори та шрифти один раз: вони автоматично застосовуються до PDF, відео та постів у соцмережах для всіх агентів агентства." },
-          { q: "Скільки агентів можна додати?", a: "Кожен план включає 5 агентів із спільним доступом до одного брендингу. У кожного агента свій акаунт, але він працює під ідентичністю агентства." },
-          { q: "Як працює безкоштовний пробний період?", a: "7 днів повного доступу без обмежень використання. Скасуй одним кліком із дашборду — жодних списань при скасуванні протягом 7 днів." },
+          { q: "Що таке GetNearMe?", a: "Це AI-асистент, який готує всі матеріали для твоїх оголошень: хоум стейджинг, відео, пости для соцмереж, звіти й аналіз района. Починаєш з посилання на портал або своїх фото і за кілька хвилин маєш все готове з твоїм брендом." },
+          { q: "Потрібно щось встановлювати?", a: "Ні. GetNearMe — онлайн-сервіс: відкриваєш у браузері і починаєш працювати. Нічого завантажувати, нічого вчитися." },
+          { q: "Як його спробувати?", a: "Безкоштовно і без картки. Створюєш акаунт і відразу пробуєш функції — бачиш результат ще до того, як вирішиш підписатися." },
+          { q: "Підходить, якщо я працюю самостійно?", a: "Так, він створений саме для індивідуального агента. Сам робиш роботу невеликої команди: фото, відео, пости і звіти — без сторонніх підрядників." },
+          { q: "Які інструменти замінює?", a: "Canva, відеоредактор, PowerPoint, дизайнер, SMM-спеціаліст і години ручного пошуку. Один асистент замість багатьох інструментів — менше витрат і менше часу на кожен об'єкт." },
+          { q: "Потрібно вміти монтувати відео або користуватися графікою?", a: "Ні. Обираєш шаблон (аватар, що говорить, розділений екран, walkthrough, before/after, автоматичний монтаж, timelapse AI) — і AI генерує відео з музикою і субтитрами. Пости виходять вже з твоїм логотипом." },
+          { q: "Дані по районах — це офіційна оцінка?", a: "Ні. Середні ціни за м² і дані по районах є ринковою інформацією в ілюстративних цілях, корисною для розповіді про об'єкт і підготовки до переговорів. Вони не замінюють офіційну експертизу." },
+          { q: "Можна скасувати коли завгодно?", a: "Так. З місячним планом скасовуєш коли завгодно з панелі керування, без обмежень. Річний план оплачується наперед і має найнижчу ціну на місяць." },
         ],
       },
       finalCta: {
-        title1: "Припини перемикатися між 10 інструментами.",
-        title2: "Вся робота по оголошенню — в одному розширенні.",
-        desc: "Спробуй GetNearMe 7 днів безкоштовно, без обмежень. Скасуй коли завгодно.",
-        button: "Додати розширення — 7 днів безкоштовно",
-        buttonDemo: "Записатися на демо",
-        footer: "🔒 Без списань під час пробного періоду. Скасування одним кліком.",
+        title1: "Перестань перемикатися між десятьма програмами.",
+        title2: "Готуй свої оголошення з одним асистентом.",
+        desc: "Професійні фото, відео, пости і звіти для кожного об'єкта за кілька хвилин. Спробуй безкоштовно, без картки.",
+        button: "Спробуй безкоштовно",
+        buttonDemo: "Замов демо",
+        footer: "🔒 Безпечна оплата Stripe. Пробуєш безкоштовно, скасовуєш коли завгодно.",
+      },
+      roiCalculator: {
+        title: "Скільки заощаджуєш з",
+        titleHighlight: "GetNearMe?",
+        subtitle: "Розрахуй, скільки часу і грошей це тобі економить.",
+        inputProperties: "Об'єктів, якими управляєш на місяць",
+        inputHours: "Годин на підготовку матеріалів для одного об'єкта",
+        inputRate: "Скільки коштує одна година твоєї роботи",
+        outputHoursSaved: "Годин зекономлено на місяць",
+        outputValueRecovered: "Вартість відновленого часу",
+        outputCost: "Вартість GetNearMe",
+        outputNetSavings: "Чиста економія на місяць",
+        outputROI: "повернення на кожне витрачене євро",
+        perMonth: "/міс",
+        cta: "Обрати цей план",
+        note: "З GetNearMe кожен об'єкт займає близько 3 хвилин замість годин. Використовуємо 80% як консервативну оцінку заощадженого часу.",
+      },
+      demo: {
+        pageTitle: "Замов демо",
+        pageSubtitle: "Заповни форму і ми зв'яжемося з тобою, щоб організувати персональне демо GetNearMe.",
+        fieldName: "Ім'я та прізвище",
+        fieldEmail: "Email",
+        fieldAgencyName: "Агентство або команда (необов'язково)",
+        fieldPhone: "Телефон (необов'язково)",
+        fieldMessage: "Повідомлення (необов'язково)",
+        submit: "Замовити демо",
+        submitting: "Надсилаємо...",
+        successTitle: "Запит надіслано!",
+        successMessage: "Ми зв'яжемося з тобою якнайшвидше для організації демо.",
+        errorMessage: "Сталася помилка. Спробуй пізніше.",
+        backToHome: "Повернутися на головну",
       },
       modal: {
         emoji: "rocket",
-        title: "Чудовий вибір!",
+        title: "Відмінний вибір.",
         planLabel: "План",
         desc: "Увійди або зареєструйся, щоб активувати",
-        descBold: "7 днів безкоштовного пробного періоду",
+        descBold: "обраний план",
         descEnd: "з повним доступом до всіх функцій.",
-        cta: "Активувати безкоштовний період",
-        footer: "🔒 Без списань 7 днів. Скасування одним кліком.",
+        cta: "Активувати план",
+        footer: "🔒 Безпечна оплата Stripe. Скасовуєш одним кліком.",
       },
       popups: [
-        { icon: "circle", text: "Агентство з Північної Італії активувало безкоштовний період", time: "3 хв тому" },
-        { icon: "clapperboard", text: "Агент щойно згенерував промо-відео з ШІ", time: "" },
-        { icon: "users", text: "Агентства онлайн прямо зараз", time: "" },
-        { icon: "rocket", text: "Агент почав 7 днів безкоштовного пробного періоду", time: "12 хв тому" },
-        { icon: "flame", text: "GetNearMe обрали нові агентства цього тижня", time: "" },
-        { icon: "sparkles", text: "Агент обставив кімнату за допомогою ШІ-homestaging", time: "5 хв тому" },
-        { icon: "star", text: "Агентство перейшло на річний план", time: "18 хв тому" },
-        { icon: "smartphone", text: "Постів у соцмережах згенеровано цього тижня з GetNearMe", time: "" },
-        { icon: "target", text: "Агент експортував PDF white-label зі своїм логотипом", time: "7 хв тому" },
-        { icon: "briefcase", text: "Агентство щойно зареєструвалось на безкоштовний період", time: "2 хв тому" },
-        { icon: "trophy", text: "GetNearMe використовують агенти з нерухомості по всій Італії", time: "" },
-        { icon: "map", text: "Агент згенерував аналіз району з порталів нерухомості", time: "9 хв тому" },
+        { icon: "circle", text: "Агент щойно активував план", time: "3 хв тому" },
+        { icon: "clapperboard", text: "Агент згенерував промо-відео за допомогою AI", time: "" },
+        { icon: "users", text: "Агентів зараз працюють в GetNearMe", time: "" },
+        { icon: "rocket", text: "Агент щойно почав безкоштовну пробну версію", time: "12 хв тому" },
+        { icon: "flame", text: "Дедалі більше агентів обирають GetNearMe", time: "" },
+        { icon: "sparkles", text: "Агент облаштував кімнату за допомогою AI хоум стейджингу", time: "5 хв тому" },
+        { icon: "star", text: "Агент перейшов на річний план", time: "18 хв тому" },
+        { icon: "smartphone", text: "Пости для соцмереж створені з GetNearMe", time: "" },
+        { icon: "target", text: "Агент експортував PDF звіт зі своїм логотипом", time: "7 хв тому" },
+        { icon: "briefcase", text: "Агент щойно зареєструвався в GetNearMe", time: "2 хв тому" },
+        { icon: "trophy", text: "GetNearMe використовують агенти нерухомості по всій Італії", time: "" },
+        { icon: "map", text: "Агент згенерував аналіз района для об'єкта", time: "9 хв тому" },
       ],
     },
   }

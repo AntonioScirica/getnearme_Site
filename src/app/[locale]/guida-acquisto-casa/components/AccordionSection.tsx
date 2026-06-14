@@ -22,9 +22,9 @@ export default function AccordionSection({
     <div
       style={{
         background: "#fff",
-        border: "3px solid #1a1a2e",
+        border: "1px solid rgba(26,26,46,0.10)",
         borderRadius: 20,
-        boxShadow: "6px 6px 0px #1a1a2e",
+        boxShadow: "0 4px 16px rgba(16,24,40,0.08)",
         marginBottom: 28,
         overflow: "hidden",
         transition: "box-shadow 0.2s",
@@ -56,7 +56,7 @@ export default function AccordionSection({
               minWidth: 32,
               borderRadius: 10,
               background: "#fef3c7",
-              border: "2px solid #1a1a2e",
+              border: "1px solid rgba(26,26,46,0.10)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",

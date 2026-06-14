@@ -337,7 +337,7 @@ export default function DashboardPage() {
             className="block rounded-2xl p-6 mb-6 neo-border text-white transition-transform hover:-translate-y-0.5"
             style={{
               background: 'linear-gradient(135deg, #3B83F6 0%, #6366f1 50%, #8b5cf6 100%)',
-              boxShadow: '6px 6px 0px #1a1a2e',
+              boxShadow: '0 4px 16px rgba(16,24,40,0.08)',
             }}
           >
             <div className="flex items-center justify-between gap-4">
@@ -354,21 +354,21 @@ export default function DashboardPage() {
         )}
 
         {/* Extension install - first card */}
-        <div className="bg-blue-50 neo-border rounded-2xl p-6 mb-6" style={{ boxShadow: '6px 6px 0px #1a1a2e' }}>
+        <div className="bg-blue-50 neo-border rounded-2xl p-6 mb-6" style={{ boxShadow: '0 4px 16px rgba(16,24,40,0.08)' }}>
           <p className="text-slate-600 text-sm mb-4">{t.installDesc}</p>
           <a
             href={CHROME_EXTENSION_URL}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 px-6 py-3 bg-blue-500 text-white rounded-xl neo-border neo-btn font-bold text-sm transition-all hover:bg-blue-600"
-            style={{ boxShadow: '4px 4px 0px #1a1a2e' }}
+            style={{ boxShadow: '0 4px 16px rgba(16,24,40,0.08)' }}
           >
             {t.installExtension}
           </a>
         </div>
 
         {/* Subscription card */}
-        <div className="bg-white neo-border rounded-2xl p-6 mb-6" style={{ boxShadow: '6px 6px 0px #1a1a2e' }}>
+        <div className="bg-white neo-border rounded-2xl p-6 mb-6" style={{ boxShadow: '0 4px 16px rgba(16,24,40,0.08)' }}>
           <h2 className="text-sm font-bold uppercase tracking-wider text-slate-400 mb-4">{t.subscription}</h2>
 
           <div className="flex items-center gap-3 mb-3">
@@ -397,7 +397,7 @@ export default function DashboardPage() {
               <a
                 href={`/${locale}#pricing`}
                 className="inline-flex items-center gap-2 px-6 py-3 bg-blue-500 text-white rounded-xl neo-border neo-btn font-bold text-sm transition-all hover:bg-blue-600"
-                style={{ boxShadow: '4px 4px 0px #1a1a2e' }}
+                style={{ boxShadow: '0 4px 16px rgba(16,24,40,0.08)' }}
               >
                 {t.choosePlan}
               </a>
@@ -406,7 +406,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Plan features card */}
-        <div className="bg-white neo-border rounded-2xl p-6 mb-6" style={{ boxShadow: '6px 6px 0px #1a1a2e' }}>
+        <div className="bg-white neo-border rounded-2xl p-6 mb-6" style={{ boxShadow: '0 4px 16px rgba(16,24,40,0.08)' }}>
           <h2 className="text-sm font-bold uppercase tracking-wider text-slate-400 mb-4">{t.planIncludes}</h2>
           <ul className="space-y-2">
             {(PLAN_FEATURES[subscriptionType]?.[locale] || PLAN_FEATURES.free[locale] || PLAN_FEATURES.free.it).map((feature, i) => (
@@ -421,7 +421,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Account info */}
-        <div className="bg-white neo-border rounded-2xl p-6 mb-6" style={{ boxShadow: '6px 6px 0px #1a1a2e' }}>
+        <div className="bg-white neo-border rounded-2xl p-6 mb-6" style={{ boxShadow: '0 4px 16px rgba(16,24,40,0.08)' }}>
           <h2 className="text-sm font-bold uppercase tracking-wider text-slate-400 mb-4">{t.email}</h2>
           <p className="text-lg font-medium">{userEmail}</p>
         </div>
@@ -433,7 +433,7 @@ export default function DashboardPage() {
           <button
             onClick={() => setShowDeleteModal(true)}
             className="inline-flex items-center gap-2 px-6 py-3 bg-red-500 text-white rounded-xl neo-border neo-btn font-bold text-sm transition-all hover:bg-red-600"
-            style={{ boxShadow: '4px 4px 0px #1a1a2e' }}
+            style={{ boxShadow: '0 4px 16px rgba(16,24,40,0.08)' }}
           >
             {t.deleteAccount}
           </button>
@@ -451,7 +451,7 @@ export default function DashboardPage() {
       {/* Delete account confirmation modal */}
       {showDeleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-          <div className="bg-white neo-border rounded-2xl p-8 max-w-md w-full" style={{ boxShadow: '8px 8px 0px #1a1a2e' }}>
+          <div className="bg-white neo-border rounded-2xl p-8 max-w-md w-full" style={{ boxShadow: '0 4px 16px rgba(16,24,40,0.08)' }}>
             <h3 className="text-xl font-bold text-red-600 mb-2">{t.deleteConfirmTitle}</h3>
             <p className="text-slate-600 text-sm mb-4">{t.deleteConfirmDesc}</p>
 

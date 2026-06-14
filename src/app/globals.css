@@ -42,43 +42,47 @@ body {
   color: #fff;
 }
 
-/* Neobrutalist utilities */
+/* Soft minimal utilities (formerly neobrutalist) */
 .neo-border {
-  border: 3px solid #1a1a2e;
+  border: 1px solid rgba(26, 26, 46, 0.10);
 }
 
 .neo-shadow {
-  box-shadow: 6px 6px 0px #1a1a2e;
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  box-shadow: 0 6px 20px rgba(16, 24, 40, 0.06);
+  transition: box-shadow 0.25s ease, transform 0.25s ease;
 }
 
 .neo-shadow:hover {
-  box-shadow: 2px 2px 0px #1a1a2e;
-  transform: translate(4px, 4px);
+  box-shadow: 0 12px 28px rgba(16, 24, 40, 0.10);
+  transform: translateY(-2px);
 }
 
 .neo-shadow-sm {
-  box-shadow: 4px 4px 0px #1a1a2e;
+  box-shadow: 0 2px 10px rgba(16, 24, 40, 0.05);
 }
 
 .neo-shadow-light {
-  box-shadow: 6px 6px 0 rgba(255,255,255,0.2);
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
+  transition: box-shadow 0.25s ease, transform 0.25s ease;
 }
 
 .neo-shadow-light:hover {
-  box-shadow: 2px 2px 0 rgba(255,255,255,0.08) !important;
-  transform: translate(4px, 4px) !important;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.30) !important;
+  transform: translateY(-2px) !important;
+}
+
+.neo-btn {
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
 }
 
 .neo-btn:hover {
-  transform: translate(-2px, -2px);
-  box-shadow: 8px 8px 0px #1a1a2e;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(16, 24, 40, 0.12);
 }
 
 .neo-btn:active {
-  transform: translate(2px, 2px);
-  box-shadow: 2px 2px 0px #1a1a2e;
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(16, 24, 40, 0.10);
 }
 
 html {

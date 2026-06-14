@@ -199,13 +199,13 @@ export default function AmbassadorDashboardPage() {
           <h1 className="text-3xl font-bold mb-2">Ambassador</h1>
           <p className="text-slate-500 mb-8">Accedi alla tua dashboard</p>
 
-          <div className="bg-white neo-border rounded-2xl p-6 space-y-4 mb-4" style={{ boxShadow: '6px 6px 0px #1a1a2e' }}>
+          <div className="bg-white neo-border rounded-2xl p-6 space-y-4 mb-4" style={{ boxShadow: '0 4px 16px rgba(16,24,40,0.08)' }}>
             <button
               type="button"
               onClick={handleGoogleLogin}
               disabled={loggingIn}
               className="w-full flex items-center justify-center gap-3 px-6 py-3 bg-white border-2 border-[#1a1a2e] rounded-xl font-bold text-sm hover:bg-slate-50 transition-all disabled:opacity-50"
-              style={{ boxShadow: '4px 4px 0px #1a1a2e' }}
+              style={{ boxShadow: '0 4px 16px rgba(16,24,40,0.08)' }}
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -223,7 +223,7 @@ export default function AmbassadorDashboardPage() {
             </div>
           </div>
 
-          <form onSubmit={handleLogin} className="bg-white neo-border rounded-2xl p-6 space-y-4" style={{ boxShadow: '6px 6px 0px #1a1a2e' }}>
+          <form onSubmit={handleLogin} className="bg-white neo-border rounded-2xl p-6 space-y-4" style={{ boxShadow: '0 4px 16px rgba(16,24,40,0.08)' }}>
             <div>
               <label className="block text-sm font-bold mb-2">Email</label>
               <input
@@ -258,7 +258,7 @@ export default function AmbassadorDashboardPage() {
               type="submit"
               disabled={loggingIn}
               className="w-full px-6 py-3 bg-blue-500 text-white rounded-xl neo-border neo-btn font-bold transition-all hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{ boxShadow: '4px 4px 0px #1a1a2e' }}
+              style={{ boxShadow: '0 4px 16px rgba(16,24,40,0.08)' }}
             >
               {loggingIn ? 'Accesso in corso...' : 'Accedi'}
             </button>
@@ -278,7 +278,7 @@ export default function AmbassadorDashboardPage() {
       <div className="min-h-screen bg-[#fafaf8] font-sans text-[#1a1a2e]">
         <Navbar locale={locale} />
         <main className="max-w-xl mx-auto px-4 py-24">
-          <div className="bg-white neo-border rounded-2xl p-8 text-center" style={{ boxShadow: '6px 6px 0px #1a1a2e' }}>
+          <div className="bg-white neo-border rounded-2xl p-8 text-center" style={{ boxShadow: '0 4px 16px rgba(16,24,40,0.08)' }}>
             <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
             <h1 className="text-2xl font-bold mb-2">Accesso non autorizzato</h1>
             <p className="text-slate-500 mb-6">
@@ -349,7 +349,7 @@ export default function AmbassadorDashboardPage() {
             className="rounded-2xl p-8 mb-6 neo-border text-white"
             style={{
               background: 'linear-gradient(135deg, #3B83F6 0%, #6366f1 50%, #8b5cf6 100%)',
-              boxShadow: '6px 6px 0px #1a1a2e',
+              boxShadow: '0 4px 16px rgba(16,24,40,0.08)',
             }}
           >
             <p className="uppercase tracking-wider text-xs font-bold opacity-80 mb-2">Il tuo codice promo</p>
@@ -358,7 +358,7 @@ export default function AmbassadorDashboardPage() {
               <button
                 onClick={copyCode}
                 className="inline-flex items-center gap-2 px-5 py-3 bg-white text-[#1a1a2e] rounded-xl font-bold text-sm transition-all hover:bg-slate-100"
-                style={{ boxShadow: '4px 4px 0px #1a1a2e' }}
+                style={{ boxShadow: '0 4px 16px rgba(16,24,40,0.08)' }}
               >
                 {copied ? <><Check className="w-4 h-4" /> Copiato!</> : <><Copy className="w-4 h-4" /> Copia</>}
               </button>
@@ -404,7 +404,7 @@ export default function AmbassadorDashboardPage() {
 
         {/* Breakdown */}
         {totalRef > 0 && (
-          <div className="bg-white neo-border rounded-2xl p-6 mb-6" style={{ boxShadow: '6px 6px 0px #1a1a2e' }}>
+          <div className="bg-white neo-border rounded-2xl p-6 mb-6" style={{ boxShadow: '0 4px 16px rgba(16,24,40,0.08)' }}>
             <h2 className="text-sm font-bold uppercase tracking-wider text-slate-400 mb-4">Distribuzione piani</h2>
             <div className="space-y-3">
               <BreakdownRow label="Mensile" count={bd.monthly} max={maxBd} cls="bg-blue-500" />
@@ -415,7 +415,7 @@ export default function AmbassadorDashboardPage() {
         )}
 
         {/* Referrals */}
-        <div className="bg-white neo-border rounded-2xl p-6 mb-6 overflow-hidden" style={{ boxShadow: '6px 6px 0px #1a1a2e' }}>
+        <div className="bg-white neo-border rounded-2xl p-6 mb-6 overflow-hidden" style={{ boxShadow: '0 4px 16px rgba(16,24,40,0.08)' }}>
           <h2 className="text-sm font-bold uppercase tracking-wider text-slate-400 mb-4">Agenzie firmate</h2>
           {data.referrals.length === 0 ? (
             <p className="text-slate-400 text-sm py-8 text-center">
@@ -472,7 +472,7 @@ export default function AmbassadorDashboardPage() {
         </div>
 
         {/* Payouts history */}
-        <div className="bg-white neo-border rounded-2xl p-6 mb-6 overflow-hidden" style={{ boxShadow: '6px 6px 0px #1a1a2e' }}>
+        <div className="bg-white neo-border rounded-2xl p-6 mb-6 overflow-hidden" style={{ boxShadow: '0 4px 16px rgba(16,24,40,0.08)' }}>
           <h2 className="text-sm font-bold uppercase tracking-wider text-slate-400 mb-1">Dettaglio provvigioni</h2>
           <p className="text-xs text-slate-400 mb-4">
             Ogni riga rappresenta una rata della provvigione, sbloccata quando l&apos;agenzia paga la rispettiva fattura.
@@ -530,7 +530,7 @@ function KpiCard({ icon, label, value, sub, tone }: { icon: React.ReactNode; lab
     amber: 'bg-amber-100 text-amber-700',
   }[tone];
   return (
-    <div className="bg-white neo-border rounded-2xl p-6" style={{ boxShadow: '6px 6px 0px #1a1a2e' }}>
+    <div className="bg-white neo-border rounded-2xl p-6" style={{ boxShadow: '0 4px 16px rgba(16,24,40,0.08)' }}>
       <div className="flex items-center gap-2 mb-3">
         <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${toneCls}`}>{icon}</div>
         <span className="text-xs font-bold uppercase tracking-wider text-slate-400">{label}</span>

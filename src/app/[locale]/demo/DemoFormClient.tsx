@@ -77,13 +77,13 @@ export default function DemoFormClient({
             display: 'inline-block',
             background: '#f59e0b',
             color: '#1a1a2e',
-            border: '3px solid #1a1a2e',
+            border: '1px solid rgba(26,26,46,0.10)',
             padding: '14px 32px',
             borderRadius: 12,
             fontWeight: 800,
             fontSize: 15,
             textDecoration: 'none',
-            boxShadow: '4px 4px 0px #1a1a2e',
+            boxShadow: '0 4px 16px rgba(16,24,40,0.08)',
           }}
         >
           {t.backToHome}
@@ -95,7 +95,7 @@ export default function DemoFormClient({
   const inputStyle: React.CSSProperties = {
     width: '100%',
     padding: '14px 16px',
-    border: '3px solid #1a1a2e',
+    border: '1px solid rgba(26,26,46,0.10)',
     borderRadius: 12,
     fontSize: 15,
     fontWeight: 500,
@@ -193,12 +193,12 @@ export default function DemoFormClient({
           padding: '16px',
           background: status === 'sending' ? '#d97706' : '#f59e0b',
           color: '#1a1a2e',
-          border: '3px solid #1a1a2e',
+          border: '1px solid rgba(26,26,46,0.10)',
           borderRadius: 14,
           fontWeight: 900,
           fontSize: 16,
           cursor: status === 'sending' ? 'wait' : 'pointer',
-          boxShadow: '6px 6px 0px #1a1a2e',
+          boxShadow: '0 4px 16px rgba(16,24,40,0.08)',
           transition: 'all 0.15s',
           letterSpacing: 0.5,
         }}
