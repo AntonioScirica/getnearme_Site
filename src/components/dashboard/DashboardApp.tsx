@@ -198,7 +198,7 @@ function TourAnim({ kind }: { kind: string }) {
             <Icon name="film" size={18} color="#3B83F6" />
           </div>
           <div style={{ width: 40, height: 40, borderRadius: 10, background: '#eef4fe', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'tour-tile-loop 3s .6s ease-in-out infinite' }}>
-            <Icon name="megaphone" size={18} color="#3B83F6" />
+            <Icon name="instagram" size={18} color="#3B83F6" />
           </div>
           <div style={{ width: 40, height: 40, borderRadius: 10, background: '#eef4fe', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'tour-tile-loop 3s .9s ease-in-out infinite' }}>
             <Icon name="type" size={18} color="#3B83F6" />
@@ -643,163 +643,164 @@ function PostSocialScreen({ toast, routeKey, brand, project, onProjectUpdate }: 
   const handleExportAll = async () => {
     if (exporting) return;
     setExporting('image');
-    const blurredUrl: string = await new Promise((resolve) => {
-      const img = new Image();
-      if (!coverPhoto.startsWith('blob:')) img.crossOrigin = 'anonymous';
-      img.onload = () => {
-        const sc = 0.15;
-        const cw = Math.max(Math.round(img.naturalWidth * sc), 1);
-        const ch = Math.max(Math.round(img.naturalHeight * sc), 1);
-        const canvas = document.createElement('canvas');
-        canvas.width = cw; canvas.height = ch;
-        const ctx = canvas.getContext('2d')!;
-        ctx.filter = 'blur(8px)';
-        ctx.drawImage(img, 0, 0, cw, ch);
-        resolve(canvas.toDataURL('image/jpeg', 0.5));
+    try {
+      const blurredUrl: string = await new Promise((resolve) => {
+        const img = new Image();
+        if (!coverPhoto.startsWith('blob:')) img.crossOrigin = 'anonymous';
+        img.onload = () => {
+          const sc = 0.15;
+          const cw = Math.max(Math.round(img.naturalWidth * sc), 1);
+          const ch = Math.max(Math.round(img.naturalHeight * sc), 1);
+          const canvas = document.createElement('canvas');
+          canvas.width = cw; canvas.height = ch;
+          const ctx = canvas.getContext('2d')!;
+          ctx.filter = 'blur(8px)';
+          ctx.drawImage(img, 0, 0, cw, ch);
+          resolve(canvas.toDataURL('image/jpeg', 0.5));
+        };
+        img.onerror = () => resolve(coverPhoto);
+        img.src = coverPhoto;
+      });
+      const data = {
+        ...SAMPLE_TPL_DATA, accentColor,
+        title: fields.titolo || project?.nome || '-',
+        type: fields.titolo || project?.nome || '-',
+        address: fields.indirizzo || '-',
+        price: fields.prezzo ? `${currency} ${fields.prezzo}` : '-',
+        surface: fields.superficie ? fields.superficie + ' m²' : '0 m²',
+        surfaceNum: fields.superficie || '0',
+        bedrooms: fields.camere || '0',
+        bathrooms: fields.bagni || '0',
+        rooms: fields.camere || '0',
+        description: fields.descrizione || '-',
+        ctaText: fields.btnTxt || '-',
+        contract: showBadge ? (fields.badgeTxt || 'Nuovo') : '',
+        _icons: fieldIcons,
       };
-      img.onerror = () => resolve(coverPhoto);
-      img.src = coverPhoto;
-    });
-    const data = {
-      ...SAMPLE_TPL_DATA, accentColor,
-      title: fields.titolo || project?.nome || '-',
-      type: fields.titolo || project?.nome || '-',
-      address: fields.indirizzo || '-',
-      price: fields.prezzo ? `${currency} ${fields.prezzo}` : '-',
-      surface: fields.superficie ? fields.superficie + ' m²' : '0 m²',
-      surfaceNum: fields.superficie || '0',
-      bedrooms: fields.camere || '0',
-      bathrooms: fields.bagni || '0',
-      rooms: fields.camere || '0',
-      description: fields.descrizione || '-',
-      ctaText: fields.btnTxt || '-',
-      contract: showBadge ? (fields.badgeTxt || 'Nuovo') : '',
-      _icons: fieldIcons,
-    };
-    const blurMap: Record<string, string> = {
-      'tpl-glass-panel': 'blur(16px)', 'tpl-metric-card': 'blur(12px)', 'tpl-metric-pill': 'blur(12px)',
-    };
-    if (document.fonts?.load) {
-      await Promise.all([300, 400, 500, 600, 700].map(w => document.fonts.load(`${w} 64px Poppins`).catch(() => {})));
-    }
-    if (document.fonts?.ready) await document.fonts.ready;
-    const { default: JSZip } = await import('jszip');
-    const zip = new JSZip();
-    // All non-video formats across platforms (exclude reel/video)
-    const allFormats = PS_PLATFORMS.flatMap(p =>
-      p.formats
-        .filter(f => !/video|reel/i.test(f.id))
-        .map(f => ({ ...f, platform: p.id }))
-    );
-    let count = 0;
-    let tplIdx = -1;
-    for (const tpl of TEMPLATES) {
-      tplIdx++;
-      const tplFitCover = NO_COVER_TPL.includes(tpl.id) ? false : fitCover;
-      for (const f of allFormats) {
+      const blurMap: Record<string, string> = {
+        'tpl-glass-panel': 'blur(16px)', 'tpl-metric-card': 'blur(12px)', 'tpl-metric-pill': 'blur(12px)',
+      };
+      if (document.fonts?.load) {
+        await Promise.all([300, 400, 500, 600, 700].map(w => document.fonts.load(`${w} 64px Poppins`).catch(() => {})));
+      }
+      if (document.fonts?.ready) await document.fonts.ready;
+      const { default: JSZip } = await import('jszip');
+      const zip = new JSZip();
+      // All non-video formats across platforms (exclude reel/video)
+      const allFormats = PS_PLATFORMS.flatMap(p =>
+        p.formats
+          .filter(f => !/video|reel/i.test(f.id))
+          .map(f => ({ ...f, platform: p.id }))
+      );
+      let count = 0;
+      let tplIdx = -1;
+      for (const tpl of TEMPLATES) {
+        tplIdx++;
+        const tplFitCover = NO_COVER_TPL.includes(tpl.id) ? false : fitCover;
+        for (const f of allFormats) {
+          try {
+            const opts: Record<string, unknown> = {
+              size: f, blurredUrl, isVideo, fitCover: tplFitCover,
+              ...(showLogo ? buildLogoOpts() : {}),
+              ...(tpl.multiPhoto ? { photos: getPhotosArray(tpl) } : {}),
+            };
+            const tplEl = renderTemplate(tpl.id, data, coverPhoto, opts) as HTMLElement;
+            tplEl.style.width = f.w + 'px';
+            tplEl.style.height = f.h + 'px';
+            const wrapper = document.createElement('div');
+            wrapper.style.cssText = `position:fixed;top:0;left:0;width:${f.w}px;height:${f.h}px;opacity:0;pointer-events:none;overflow:visible;z-index:-1;`;
+            wrapper.appendChild(tplEl);
+            document.body.appendChild(wrapper);
+            for (const [cls, val] of Object.entries(blurMap)) {
+              tplEl.querySelectorAll('.' + cls).forEach((n) => {
+                const h = n as HTMLElement; h.style.backdropFilter = val; h.style.setProperty('-webkit-backdrop-filter', val);
+              });
+            }
+            tplEl.querySelectorAll('.tpl-overlay').forEach((n) => { (n as HTMLElement).style.opacity = String(oscuramento / 100); });
+            await new Promise<void>(resolve => {
+              const imgs = tplEl.querySelectorAll('img');
+              let pending = 0;
+              imgs.forEach(img => { if (!img.complete) { pending++; img.onload = img.onerror = () => { if (--pending === 0) resolve(); }; } });
+              if (pending === 0) resolve();
+            });
+            await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+            const blob = await exportToPng(tplEl, { w: f.w, h: f.h }, { photoSrc: coverPhoto, fitCover: tplFitCover });
+            zip.file(`${tpl.id}/${f.id}-${f.w}x${f.h}.png`, blob);
+            count++;
+            wrapper.remove();
+          } catch (err) {
+            console.error(`Export ${tpl.id} ${f.id} failed:`, err);
+          }
+        }
+        // One video per template, cycling through the animation styles.
         try {
-          const opts: Record<string, unknown> = {
-            size: f, blurredUrl, isVideo, fitCover: tplFitCover,
+          const animId = ANIM_STYLES[tplIdx % ANIM_STYLES.length].id;
+          const vopts: Record<string, unknown> = {
+            size: curFmt, blurredUrl, isVideo, fitCover: tplFitCover,
             ...(showLogo ? buildLogoOpts() : {}),
             ...(tpl.multiPhoto ? { photos: getPhotosArray(tpl) } : {}),
           };
-          const tplEl = renderTemplate(tpl.id, data, coverPhoto, opts) as HTMLElement;
-          tplEl.style.width = f.w + 'px';
-          tplEl.style.height = f.h + 'px';
-          const wrapper = document.createElement('div');
-          wrapper.style.cssText = `position:fixed;top:0;left:0;width:${f.w}px;height:${f.h}px;opacity:0;pointer-events:none;overflow:visible;z-index:-1;`;
-          wrapper.appendChild(tplEl);
-          document.body.appendChild(wrapper);
+          const vEl = renderTemplate(tpl.id, data, coverPhoto, vopts) as HTMLElement;
+          vEl.style.width = curFmt.w + 'px';
+          vEl.style.height = curFmt.h + 'px';
+          const vWrap = document.createElement('div');
+          vWrap.style.cssText = `position:fixed;top:0;left:0;width:${curFmt.w}px;height:${curFmt.h}px;opacity:0;pointer-events:none;overflow:visible;z-index:-1;`;
+          vWrap.appendChild(vEl);
+          document.body.appendChild(vWrap);
           for (const [cls, val] of Object.entries(blurMap)) {
-            tplEl.querySelectorAll('.' + cls).forEach((n) => {
+            vEl.querySelectorAll('.' + cls).forEach((n) => {
               const h = n as HTMLElement; h.style.backdropFilter = val; h.style.setProperty('-webkit-backdrop-filter', val);
             });
           }
-          tplEl.querySelectorAll('.tpl-overlay').forEach((n) => { (n as HTMLElement).style.opacity = String(oscuramento / 100); });
+          vEl.querySelectorAll('.tpl-overlay').forEach((n) => { (n as HTMLElement).style.opacity = String(oscuramento / 100); });
           await new Promise<void>(resolve => {
-            const imgs = tplEl.querySelectorAll('img');
+            const imgs = vEl.querySelectorAll('img');
             let pending = 0;
             imgs.forEach(img => { if (!img.complete) { pending++; img.onload = img.onerror = () => { if (--pending === 0) resolve(); }; } });
             if (pending === 0) resolve();
           });
           await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
-          const blob = await exportToPng(tplEl, { w: f.w, h: f.h }, { photoSrc: coverPhoto, fitCover: tplFitCover });
-          zip.file(`${tpl.id}/${f.id}-${f.w}x${f.h}.png`, blob);
-          count++;
-          wrapper.remove();
-        } catch (err) {
-          console.error(`Export ${tpl.id} ${f.id} failed:`, err);
-        }
-      }
-      // One video per template, cycling through the animation styles.
-      try {
-        const animId = ANIM_STYLES[tplIdx % ANIM_STYLES.length].id;
-        const vopts: Record<string, unknown> = {
-          size: curFmt, blurredUrl, isVideo, fitCover: tplFitCover,
-          ...(showLogo ? buildLogoOpts() : {}),
-          ...(tpl.multiPhoto ? { photos: getPhotosArray(tpl) } : {}),
-        };
-        const vEl = renderTemplate(tpl.id, data, coverPhoto, vopts) as HTMLElement;
-        vEl.style.width = curFmt.w + 'px';
-        vEl.style.height = curFmt.h + 'px';
-        const vWrap = document.createElement('div');
-        vWrap.style.cssText = `position:fixed;top:0;left:0;width:${curFmt.w}px;height:${curFmt.h}px;opacity:0;pointer-events:none;overflow:visible;z-index:-1;`;
-        vWrap.appendChild(vEl);
-        document.body.appendChild(vWrap);
-        for (const [cls, val] of Object.entries(blurMap)) {
-          vEl.querySelectorAll('.' + cls).forEach((n) => {
-            const h = n as HTMLElement; h.style.backdropFilter = val; h.style.setProperty('-webkit-backdrop-filter', val);
+          const { blob: vblob, ext } = await exportStaticToVideo(vEl, { w: curFmt.w, h: curFmt.h }, {
+            duration: 6, animStyle: animId, photoSrc: coverPhoto, fitCover: tplFitCover,
           });
+          zip.file(`${tpl.id}/video-${animId}.${ext}`, vblob);
+          count++;
+          vWrap.remove();
+        } catch (err) {
+          console.error(`Export video ${tpl.id} failed:`, err);
         }
-        vEl.querySelectorAll('.tpl-overlay').forEach((n) => { (n as HTMLElement).style.opacity = String(oscuramento / 100); });
-        await new Promise<void>(resolve => {
-          const imgs = vEl.querySelectorAll('img');
-          let pending = 0;
-          imgs.forEach(img => { if (!img.complete) { pending++; img.onload = img.onerror = () => { if (--pending === 0) resolve(); }; } });
-          if (pending === 0) resolve();
-        });
-        await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
-        const { blob: vblob, ext } = await exportStaticToVideo(vEl, { w: curFmt.w, h: curFmt.h }, {
-          duration: 6, animStyle: animId, photoSrc: coverPhoto, fitCover: tplFitCover,
-        });
-        zip.file(`${tpl.id}/video-${animId}.${ext}`, vblob);
-        count++;
-        vWrap.remove();
-      } catch (err) {
-        console.error(`Export video ${tpl.id} failed:`, err);
       }
-    }
-    if (count === 0) {
-      toast('Nessun template esportato', 'download');
+      if (count === 0) {
+        toast('Nessun template esportato', 'download');
+        return;
+      }
+      const zipBlob = await zip.generateAsync({ type: 'blob', mimeType: 'application/zip' });
+      const url = URL.createObjectURL(zipBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'templates.zip';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+      toast(`${count} file esportati (immagini + video)`, 'download');
+      
+      if (project) {
+        const updates = {
+          titolo: fields.titolo,
+          addr: fields.indirizzo,
+          prezzo: Number(String(fields.prezzo || '').replace(/\D/g, '')) || 0,
+          mq: Number(String(fields.superficie || '').replace(/\D/g, '')) || 0,
+          camere: Number(String(fields.camere || '').replace(/\D/g, '')) || 0,
+          bagni: Number(String(fields.bagni || '').replace(/\D/g, '')) || 0,
+          descrizione: fields.descrizione,
+        };
+        await updateProject(project.id, updates).catch(e => console.error("updateProject failed", e));
+        onProjectUpdate?.(updates);
+      }
+    } finally {
       setExporting(null);
-      return;
     }
-    const zipBlob = await zip.generateAsync({ type: 'blob', mimeType: 'application/zip' });
-    const url = URL.createObjectURL(zipBlob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'templates.zip';
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 5000);
-    toast(`${count} file esportati (immagini + video)`, 'download');
-    
-    if (project) {
-      const updates = {
-        titolo: fields.titolo,
-        addr: fields.indirizzo,
-        prezzo: Number(fields.prezzo.replace(/\D/g, '')) || 0,
-        mq: Number(fields.superficie.replace(/\D/g, '')) || 0,
-        camere: Number(fields.camere.replace(/\D/g, '')) || 0,
-        bagni: Number(fields.bagni.replace(/\D/g, '')) || 0,
-        descrizione: fields.descrizione,
-      };
-      await updateProject(project.id, updates);
-      onProjectUpdate?.(updates);
-    }
-
-    setExporting(null);
   };
 
   const handleExportVideo = async () => {
