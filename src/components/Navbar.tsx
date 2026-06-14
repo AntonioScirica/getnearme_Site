@@ -106,21 +106,12 @@ export default function Navbar({ locale }: NavbarProps) {
                                 <span className="hidden sm:inline">{t.nav.dashboard}</span>
                             </Link>
                         ) : (
-                            <>
-                                <Link
-                                    href={`/${locale}/checkout/agency`}
-                                    className="hidden md:flex items-center justify-center h-[48px] w-[48px] bg-white neo-border rounded-xl neo-shadow hover:bg-slate-50 transition-all text-[#1a1a2e]"
-                                    aria-label="Login"
-                                >
-                                    <UserIcon />
-                                </Link>
-                                <Link
-                                    href={`/${locale}/checkout/agency`}
-                                    className="hidden md:flex items-center h-[48px] px-6 bg-amber-500 text-[#1a1a2e] rounded-xl neo-border neo-shadow hover:bg-amber-600 transition-all font-bold text-lg"
-                                >
-                                    {t.nav.startAnalysis}
-                                </Link>
-                            </>
+                            <Link
+                                href={`/${locale}/checkout/agency`}
+                                className="hidden md:flex items-center h-[48px] px-6 bg-amber-500 text-[#1a1a2e] rounded-xl neo-border neo-shadow hover:bg-amber-600 transition-all font-bold text-lg"
+                            >
+                                {t.nav.startAnalysis}
+                            </Link>
                         )}
                         <button
                             className="md:hidden relative z-[70] p-2 text-slate-600"
