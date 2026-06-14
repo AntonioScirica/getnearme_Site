@@ -87,8 +87,9 @@ export default function Navbar({ locale }: NavbarProps) {
                         <img src="/logo_blu_nero.svg" alt="GetNearMe" className="h-7 md:h-9 w-auto" />
                     </Link>
 
-                    <div className="hidden md:flex items-center gap-16 text-sm font-medium text-slate-600 absolute left-1/2 -translate-x-1/2">
+                    <div className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600 absolute left-1/2 -translate-x-1/2">
                         <Link href={`/${locale}#funzionalita`} className="hover:text-black transition-colors">{t.nav.features}</Link>
+                        <Link href={`/${locale}/reference`} className="hover:text-black transition-colors">{t.nav.examples}</Link>
                         {/* <Link href={`/${locale}/tutorial`} className="hover:text-black transition-colors">{t.nav.tutorial}</Link> */}
                         <Link href={`/${locale}#pricing`} className="hover:text-black transition-colors">{t.nav.pricing}</Link>
                         <Link href={`/${locale}#faq`} className="hover:text-black transition-colors">{t.nav.faq}</Link>
@@ -113,14 +114,12 @@ export default function Navbar({ locale }: NavbarProps) {
                                 >
                                     <UserIcon />
                                 </Link>
-                                <a
-                                    href="https://chromewebstore.google.com/detail/getnearme-%E2%80%94-valuta-il-qua/jbnceigldmpkpplanjlednlehloaeoia"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
+                                <Link
+                                    href={`/${locale}/checkout/agency`}
                                     className="hidden md:flex items-center h-[48px] px-6 bg-amber-500 text-[#1a1a2e] rounded-xl neo-border neo-shadow hover:bg-amber-600 transition-all font-bold text-lg"
                                 >
                                     {t.nav.startAnalysis}
-                                </a>
+                                </Link>
                             </>
                         )}
                         <button
@@ -160,6 +159,7 @@ export default function Navbar({ locale }: NavbarProps) {
                     <div className="flex flex-col items-center gap-2">
                         {[
                             { href: `/${locale}#funzionalita`, label: t.nav.features },
+                            { href: `/${locale}/reference`, label: t.nav.examples },
                             // { href: `/${locale}/tutorial`, label: t.nav.tutorial },
                             { href: `/${locale}#pricing`, label: t.nav.pricing },
                             { href: `/${locale}#faq`, label: t.nav.faq },
@@ -208,10 +208,8 @@ export default function Navbar({ locale }: NavbarProps) {
                                     <UserIcon />
                                     Accedi
                                 </Link>
-                                <a
-                                    href="https://chromewebstore.google.com/detail/getnearme-%E2%80%94-valuta-il-qua/jbnceigldmpkpplanjlednlehloaeoia"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
+                                <Link
+                                    href={`/${locale}/checkout/agency`}
                                     className={`mt-3 w-full max-w-[280px] text-center flex items-center justify-center px-5 py-3 bg-amber-500 text-[#1a1a2e] rounded-xl neo-border neo-shadow hover:bg-amber-600 transition-all duration-500 ease-out font-bold text-base ${
                                         isMenuOpen
                                             ? 'opacity-100 translate-y-0'
@@ -221,7 +219,7 @@ export default function Navbar({ locale }: NavbarProps) {
                                     onClick={() => setIsMenuOpen(false)}
                                 >
                                     {t.nav.startAnalysis}
-                                </a>
+                                </Link>
                             </>
                         )}
                     </div>

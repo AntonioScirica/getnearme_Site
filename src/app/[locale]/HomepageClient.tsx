@@ -38,7 +38,7 @@ function FeatureCardClient({
           background: '#fff',
           borderRadius: 16,
           overflow: 'hidden',
-          boxShadow: hovered ? '8px 8px 0px #1a1a2e' : '6px 6px 0px #1a1a2e',
+          boxShadow: hovered ? '0 12px 28px rgba(16,24,40,0.10)' : '0 6px 20px rgba(16,24,40,0.06)',
           transform: hovered ? 'translate(-2px,-4px)' : 'translate(0,0)',
           transition: 'all 0.35s cubic-bezier(0.34,1.56,0.64,1)',
           cursor: 'default',
@@ -149,8 +149,8 @@ function StepCard({
             justifyContent: 'center',
             fontWeight: 900,
             fontSize: 20,
-            border: '2px solid #1a1a2e',
-            boxShadow: '3px 3px 0 #1a1a2e',
+            border: '1px solid rgba(26,26,46,0.10)',
+            boxShadow: '0 2px 10px rgba(16,24,40,0.06)',
             marginBottom: 16,
           }}
         >
@@ -192,6 +192,8 @@ function PricingSection({
     plans: any[];
   };
 }) {
+  const freeLabel =
+    ({ it: 'Gratis', en: 'Free', es: 'Gratis', fr: 'Gratuit', ru: 'Бесплатно', uk: 'Безкоштовно' } as Record<string, string>)[locale] ?? 'Gratis';
   return (
     <>
       <section
@@ -256,8 +258,8 @@ function PricingSection({
               }) => (
                 <PricingCard
                   key={plan.id}
-                  plan={{ ...plan, savingsLabel: data.savingsLabel }}
-                  href={`/${locale}/checkout/agency?plan=${plan.id}`}
+                  plan={{ ...plan, savingsLabel: data.savingsLabel, freeLabel }}
+                  href={plan.price === 0 ? `/${locale}/checkout/agency` : `/${locale}/checkout/agency?plan=${plan.id}`}
                 />
               )
             )}

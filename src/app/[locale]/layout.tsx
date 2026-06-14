@@ -46,7 +46,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     keywords: [
       "analisi immobiliare",
       "confronto immobili",
-      "estensione chrome immobiliare",
+      "assistente ai immobiliare",
+      "software agente immobiliare",
       "prezzi immobili",
       "valutazione casa",
       "quartieri",

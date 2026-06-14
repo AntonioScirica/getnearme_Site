@@ -137,7 +137,7 @@ export default function TaxCalculator() {
     <div
       style={{
         background: "#fff",
-        border: "3px solid #1a1a2e",
+        border: "1px solid rgba(26,26,46,0.10)",
         borderRadius: 20,
         boxShadow: "6px 6px 0px #f59e0b",
         padding: "32px 32px 28px",
@@ -159,7 +159,7 @@ export default function TaxCalculator() {
             height: 44,
             borderRadius: 12,
             background: "#fef3c7",
-            border: "2px solid #1a1a2e",
+            border: "1px solid rgba(26,26,46,0.10)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -403,7 +403,7 @@ export default function TaxCalculator() {
           {/* Totals */}
           <div
             style={{
-              borderTop: "2px solid #1a1a2e",
+              borderTop: "1px solid rgba(26,26,46,0.10)",
               paddingTop: 12,
             }}
           >

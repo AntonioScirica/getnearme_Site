@@ -128,8 +128,8 @@ export default function FeatureShowcase({ feature: f, videoSrc, index, reverse }
                 background: '#fff',
                 borderRadius: 16,
                 overflow: 'hidden',
-                border: '3px solid #1a1a2e',
-                boxShadow: '6px 6px 0px #1a1a2e',
+                border: '1px solid rgba(26,26,46,0.10)',
+                boxShadow: '0 6px 20px rgba(16,24,40,0.06)',
               }}
             >
               {index === 0 ? (

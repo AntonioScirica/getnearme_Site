@@ -692,7 +692,7 @@ function CheckoutAgencyContent() {
 
       <main className="min-h-screen flex items-center justify-center px-4 py-24">
         <div className="max-w-md w-full">
-          <div className="bg-white neo-border rounded-2xl p-8" style={{ boxShadow: '6px 6px 0px #1a1a2e' }}>
+          <div className="bg-white neo-border rounded-2xl p-8" style={{ boxShadow: '0 4px 16px rgba(16,24,40,0.08)' }}>
 
             {/* Logo + Plan summary */}
             <div className="text-center mb-6">
@@ -700,7 +700,7 @@ function CheckoutAgencyContent() {
             </div>
 
             {hasPlan && (
-              <div className="bg-[#fafaf8] neo-border rounded-xl p-6 mb-6" style={{ boxShadow: '4px 4px 0px #1a1a2e' }}>
+              <div className="bg-[#fafaf8] neo-border rounded-xl p-6 mb-6" style={{ boxShadow: '0 4px 16px rgba(16,24,40,0.08)' }}>
                 <div className="text-center">
                   <div className="text-lg font-bold text-[#1a1a2e]">{plan.name}</div>
                   <div className="mt-2">
@@ -793,7 +793,7 @@ function CheckoutAgencyContent() {
                   }}
                   disabled={checkingSubscription}
                   className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-blue-500 rounded-xl neo-border neo-btn text-white font-bold hover:bg-blue-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                  style={{ boxShadow: '4px 4px 0px #1a1a2e' }}
+                  style={{ boxShadow: '0 4px 16px rgba(16,24,40,0.08)' }}
                 >
                   {checkingSubscription ? (
                     <>
@@ -825,7 +825,7 @@ function CheckoutAgencyContent() {
                   onClick={handleGoogleLogin}
                   disabled={isLoading || isEmailLoading}
                   className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-white neo-border rounded-xl text-[#1a1a2e] font-bold hover:bg-slate-50 transition-all neo-btn disabled:opacity-50 disabled:cursor-not-allowed"
-                  style={{ boxShadow: '4px 4px 0px #1a1a2e' }}
+                  style={{ boxShadow: '0 4px 16px rgba(16,24,40,0.08)' }}
                 >
                   {isLoading ? (
                     <>
@@ -869,7 +869,7 @@ function CheckoutAgencyContent() {
                     type="submit"
                     disabled={isLoading || isEmailLoading}
                     className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-blue-500 rounded-xl neo-border neo-btn text-white font-bold hover:bg-blue-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                    style={{ boxShadow: '4px 4px 0px #1a1a2e' }}
+                    style={{ boxShadow: '0 4px 16px rgba(16,24,40,0.08)' }}
                   >
                     {isEmailLoading ? (
                       <>
@@ -902,7 +902,7 @@ function CheckoutAgencyContent() {
                           onChange={(e) => { setTermsAccepted(e.target.checked); if (e.target.checked) setError(null); }}
                           className="sr-only peer"
                         />
-                        <div className="w-5 h-5 border-2 border-[#1a1a2e] rounded bg-white peer-checked:bg-blue-500 peer-checked:border-[#1a1a2e] transition-all flex items-center justify-center" style={{ boxShadow: '2px 2px 0px #1a1a2e' }}>
+                        <div className="w-5 h-5 border-2 border-[#1a1a2e] rounded bg-white peer-checked:bg-blue-500 peer-checked:border-[#1a1a2e] transition-all flex items-center justify-center" style={{ boxShadow: '0 4px 16px rgba(16,24,40,0.08)' }}>
                           {termsAccepted && (
                             <svg className="w-3 h-3 text-white" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                               <polyline points="2 6 5 9 10 3" />
@@ -927,7 +927,7 @@ function CheckoutAgencyContent() {
                           onChange={(e) => setMarketingAccepted(e.target.checked)}
                           className="sr-only peer"
                         />
-                        <div className="w-5 h-5 border-2 border-[#1a1a2e] rounded bg-white peer-checked:bg-blue-500 peer-checked:border-[#1a1a2e] transition-all flex items-center justify-center" style={{ boxShadow: '2px 2px 0px #1a1a2e' }}>
+                        <div className="w-5 h-5 border-2 border-[#1a1a2e] rounded bg-white peer-checked:bg-blue-500 peer-checked:border-[#1a1a2e] transition-all flex items-center justify-center" style={{ boxShadow: '0 4px 16px rgba(16,24,40,0.08)' }}>
                           {marketingAccepted && (
                             <svg className="w-3 h-3 text-white" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                               <polyline points="2 6 5 9 10 3" />

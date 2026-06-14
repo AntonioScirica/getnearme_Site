@@ -188,7 +188,7 @@ export default async function ChapterPage({ params }: Props) {
               minWidth: 52,
               borderRadius: 14,
               background: "#fef3c7",
-              border: "2px solid #1a1a2e",
+              border: "1px solid rgba(26,26,46,0.10)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -306,9 +306,9 @@ export default async function ChapterPage({ params }: Props) {
               <div
                 style={{
                   background: "#fff",
-                  border: "3px solid #1a1a2e",
+                  border: "1px solid rgba(26,26,46,0.10)",
                   borderRadius: 16,
-                  boxShadow: "4px 4px 0px #1a1a2e",
+                  boxShadow: "0 4px 16px rgba(16,24,40,0.08)",
                   padding: "20px 24px",
                   display: "flex",
                   alignItems: "center",
@@ -357,9 +357,9 @@ export default async function ChapterPage({ params }: Props) {
               <div
                 style={{
                   background: "#fff",
-                  border: "3px solid #1a1a2e",
+                  border: "1px solid rgba(26,26,46,0.10)",
                   borderRadius: 16,
-                  boxShadow: "4px 4px 0px #1a1a2e",
+                  boxShadow: "0 4px 16px rgba(16,24,40,0.08)",
                   padding: "20px 24px",
                   display: "flex",
                   alignItems: "center",
@@ -429,7 +429,7 @@ export default async function ChapterPage({ params }: Props) {
             maxWidth: 580,
             margin: "0 auto",
             background: "#1a1a2e",
-            border: "3px solid #1a1a2e",
+            border: "1px solid rgba(26,26,46,0.10)",
             borderRadius: 20,
             boxShadow: "6px 6px 0px #f59e0b",
             padding: "40px 32px",

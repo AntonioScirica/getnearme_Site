@@ -342,7 +342,7 @@ export default async function UpdatePage({ params }: Props) {
             width: 60,
             height: 60,
             borderRadius: 14,
-            border: "3px solid #1a1a2e",
+            border: "1px solid rgba(26,26,46,0.10)",
             opacity: 0.08,
             transform: "rotate(-12deg)",
           }}
@@ -355,9 +355,9 @@ export default async function UpdatePage({ params }: Props) {
             gap: 8,
             padding: "8px 20px",
             background: "#fff",
-            border: "3px solid #1a1a2e",
+            border: "1px solid rgba(26,26,46,0.10)",
             borderRadius: 100,
-            boxShadow: "4px 4px 0px #1a1a2e",
+            boxShadow: "0 4px 16px rgba(16,24,40,0.08)",
             fontWeight: 700,
             fontSize: 14,
             marginBottom: 24,
@@ -431,7 +431,7 @@ export default async function UpdatePage({ params }: Props) {
               borderRadius: 10,
               fontWeight: 800,
               fontSize: 15,
-              border: "3px solid #1a1a2e",
+              border: "1px solid rgba(26,26,46,0.10)",
             }}
           >
             <Clock size={16} />
@@ -442,7 +442,7 @@ export default async function UpdatePage({ params }: Props) {
         <div
           style={{
             background: "linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)",
-            border: "3px solid #1a1a2e",
+            border: "1px solid rgba(26,26,46,0.10)",
             borderRadius: 20,
             boxShadow: "6px 6px 0px #f59e0b",
             overflow: "hidden",
@@ -486,7 +486,7 @@ export default async function UpdatePage({ params }: Props) {
                   minWidth: 44,
                   borderRadius: 12,
                   background: "#fff",
-                  border: "2px solid #1a1a2e",
+                  border: "1px solid rgba(26,26,46,0.10)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -536,7 +536,7 @@ export default async function UpdatePage({ params }: Props) {
                   minWidth: 44,
                   borderRadius: 12,
                   background: "#fff",
-                  border: "2px solid #1a1a2e",
+                  border: "1px solid rgba(26,26,46,0.10)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -604,7 +604,7 @@ export default async function UpdatePage({ params }: Props) {
                   borderRadius: 10,
                   fontWeight: 800,
                   fontSize: 15,
-                  border: "3px solid #1a1a2e",
+                  border: "1px solid rgba(26,26,46,0.10)",
                 }}
               >
                 v{update.version}
@@ -634,9 +634,9 @@ export default async function UpdatePage({ params }: Props) {
             <div
               style={{
                 background: "#fff",
-                border: "3px solid #1a1a2e",
+                border: "1px solid rgba(26,26,46,0.10)",
                 borderRadius: 20,
-                boxShadow: "6px 6px 0px #1a1a2e",
+                boxShadow: "0 4px 16px rgba(16,24,40,0.08)",
                 overflow: "hidden",
               }}
             >
@@ -685,7 +685,7 @@ export default async function UpdatePage({ params }: Props) {
                         minWidth: 44,
                         borderRadius: 12,
                         background: "#fef3c7",
-                        border: "2px solid #1a1a2e",
+                        border: "1px solid rgba(26,26,46,0.10)",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
@@ -762,7 +762,7 @@ export default async function UpdatePage({ params }: Props) {
             maxWidth: 580,
             margin: "0 auto",
             background: "#1a1a2e",
-            border: "3px solid #1a1a2e",
+            border: "1px solid rgba(26,26,46,0.10)",
             borderRadius: 20,
             boxShadow: "6px 6px 0px #f59e0b",
             padding: "40px 32px",

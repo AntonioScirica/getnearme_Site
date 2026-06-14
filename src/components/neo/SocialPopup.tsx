@@ -74,7 +74,7 @@ export default function SocialPopup({ messages }: SocialPopupProps) {
         right: 12,
         zIndex: 9999,
         background: '#fff',
-        border: '3px solid #1a1a2e',
+        border: '1px solid rgba(26,26,46,0.10)',
         borderRadius: 14,
         padding: '14px 20px',
         display: 'flex',
@@ -82,7 +82,7 @@ export default function SocialPopup({ messages }: SocialPopupProps) {
         gap: 12,
         maxWidth: 370,
         width: 'calc(100% - 24px)',
-        boxShadow: '4px 4px 0px #1a1a2e',
+        boxShadow: '0 8px 24px rgba(16,24,40,0.14)',
         cursor: 'pointer',
         animation: 'popupSlideIn 0.4s ease forwards',
       }}
@@ -92,7 +92,7 @@ export default function SocialPopup({ messages }: SocialPopupProps) {
       </span>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ color: '#1a1a2e', fontSize: 13, fontWeight: 700, lineHeight: 1.4 }}>{p.text}</div>
-        {p.time && <div style={{ color: '#999', fontSize: 11, marginTop: 2 }}>{p.time}</div>}
+        {p.time && <div style={{ color: '#6b7280', fontSize: 11, marginTop: 2 }}>{p.time}</div>}
       </div>
       <style>{`
         @keyframes popupSlideIn {
