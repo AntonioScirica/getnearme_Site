@@ -107,7 +107,7 @@ export default function Navbar({ locale }: NavbarProps) {
                             </Link>
                         ) : (
                             <Link
-                                href={`/${locale}/checkout/agency`}
+                                href={`/${locale}#pricing`}
                                 className="hidden md:flex items-center h-[48px] px-6 bg-amber-500 text-[#1a1a2e] rounded-xl neo-border neo-shadow hover:bg-amber-600 transition-all font-bold text-lg"
                             >
                                 {t.nav.startAnalysis}
@@ -200,7 +200,7 @@ export default function Navbar({ locale }: NavbarProps) {
                                     Accedi
                                 </Link>
                                 <Link
-                                    href={`/${locale}/checkout/agency`}
+                                    href={`/${locale}#pricing`}
                                     className={`mt-3 w-full max-w-[280px] text-center flex items-center justify-center px-5 py-3 bg-amber-500 text-[#1a1a2e] rounded-xl neo-border neo-shadow hover:bg-amber-600 transition-all duration-500 ease-out font-bold text-base ${
                                         isMenuOpen
                                             ? 'opacity-100 translate-y-0'
