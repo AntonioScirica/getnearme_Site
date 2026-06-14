@@ -44,7 +44,7 @@ const DEMO_PROJECTS: Project[] = [
 ];
 
 const NAV_SECTIONS = [
-  { label: 'Progetto', items: [{ icon: 'layout-dashboard', label: 'Home', route: 'home' }, { icon: 'sparkles', label: 'Homestaging AI', route: 'staging' }, { icon: 'film', label: 'Video AI', route: 'video' }, { icon: 'scissors', label: 'Montaggio', route: 'montaggio' }, { icon: 'image-plus', label: 'Post Social', route: 'studio' }, { icon: 'image', label: 'Media', route: 'media' }] },
+  { label: 'Progetto', items: [{ icon: 'layout-dashboard', label: 'Home', route: 'home' }, { icon: 'sparkles', label: 'Homestaging AI', route: 'staging' }, { icon: 'film', label: 'Video AI', route: 'video' }, { icon: 'scissors', label: 'Montaggio', route: 'montaggio' }, { icon: 'smartphone', label: 'Post Social', route: 'studio' }, { icon: 'images', label: 'Galleria', route: 'media' }] },
   { label: 'Agenzia', items: [{ icon: 'palette', label: 'Brand', route: 'brand' }, { icon: 'credit-card', label: 'Piano', route: 'account' }] },
 ];
 
@@ -54,7 +54,7 @@ const TOUR_DEFS = [
   { sel: '[title="Video AI"]', title: 'Video AI', anim: 'video', text: 'Trasforma foto e clip in video pronti per i social: prima/dopo, timelapse, avatar e altro.' },
   { sel: '[title="Montaggio"]', title: 'Montaggio', anim: 'montaggio', text: "Carica le clip della casa: l'AI le monta con cover, musica e watermark in un Reel pronto." },
   { sel: '[title="Post Social"]', title: 'Post Social', anim: 'social', text: 'Template per post e storie con i dati già compilati, e il calendario per programmare le pubblicazioni.' },
-  { sel: '[title="Media"]', title: 'Media', anim: 'media', text: 'Tutto ciò che generi finisce qui. Puoi riusarlo in post e video senza pagare altri crediti.' },
+  { sel: '[title="Galleria"]', title: 'Galleria', anim: 'media', text: 'Tutto ciò che generi finisce qui. Puoi riusarlo in post e video senza pagare altri crediti.' },
   { sel: '[title="Lavori in corso"]', title: 'Lavori in corso', anim: 'jobs', text: 'Le generazioni girano in background: qui vedi i progressi senza mai bloccarti. Ti avvisiamo a fine lavoro.' },
   { sel: '@center', title: 'Tutto parte da qui', anim: 'project', text: "Inserisci foto e dettagli una sola volta: l'AI li userà in automatico per generare home staging, video reel e post social perfetti e già compilati." },
   { sel: '[data-tour="new-project"]', title: 'Inizia subito', anim: 'none', text: 'Clicca qui per iniziare a caricare foto e dettagli e sbloccare tutte le funzioni AI di GetNearMe.' },
@@ -2097,7 +2097,7 @@ function BrandScreen({ toast, brand: brandProp, setBrand: setBrandParent, brandR
 
 const ROUTE_TITLES: Record<string, string> = {
   progetti: 'Progetti', progetto: 'Dettaglio immobile', staging: 'Homestaging AI', video: 'Video AI', montaggio: 'Montaggio',
-  studio: 'Post Social', calendario: 'Calendario', media: 'Libreria Media', team: 'Team',
+  studio: 'Post Social', calendario: 'Calendario', media: 'Galleria', team: 'Team',
   brand: 'Brand', social: 'Account social', account: 'Piano', home: 'Home', impostazioni: 'Impostazioni', assistenza: 'Assistenza'
 };
 
@@ -2355,7 +2355,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
   // Calendario, Account social) NON vanno mostrate nemmeno qui.
   const cmdTools = [
     ['Foto AI', 'staging', 'sparkles'], ['Video AI', 'video', 'film'], ['Montaggio', 'montaggio', 'scissors'],
-    ['Post Social', 'studio', 'image-plus'], ['Media', 'media', 'image'],
+    ['Post Social', 'studio', 'smartphone'], ['Galleria', 'media', 'images'],
     ['Brand Agenzia', 'brand', 'palette'], ['Piano e crediti', 'account', 'credit-card'],
   ] as const;
   // Voci disponibili dal menu profilo (non in sidebar).
