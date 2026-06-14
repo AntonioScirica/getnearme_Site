@@ -296,6 +296,21 @@ function VideoPacksModal({ onClose }: { onClose: () => void }) {
   );
 }
 
+// Preview video di una card template, con skeleton (pulse) finche' il primo
+// frame non e' pronto, poi fade-in. Come MediaScreen, evita il "pop" del video.
+function TplPreview({ src }: { src: string | null }) {
+  const [loaded, setLoaded] = React.useState(false);
+  return (
+    <div style={{ aspectRatio: '3/4', background: 'linear-gradient(145deg, #2a2733, #1a1825)', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', ...(src && !loaded ? { animation: 'pulse 1.5s infinite ease-in-out' } : {}) }}>
+      {src ? (
+        <video src={src} muted loop autoPlay playsInline onLoadedData={() => setLoaded(true)} style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: loaded ? 1 : 0, transition: 'opacity .3s' }} />
+      ) : (
+        <Icon name="film" size={32} color="rgba(255,255,255,.4)" />
+      )}
+    </div>
+  );
+}
+
 export default function VideoAIScreen({ toast, routeKey, brand, preselect, project, onVideoJob, activeRenders, initialPhotoUrl }: {
   toast: (msg: string, icon?: string) => void;
   routeKey: number;
@@ -1043,13 +1058,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
               background: '#fff', border: '1px solid #f0ede7', borderRadius: 16, overflow: 'hidden', cursor: 'pointer',
               transition: 'box-shadow .15s, transform .15s',
             }} hover={{ boxShadow: '0 12px 32px rgba(33,31,28,.10)', transform: 'translateY(-2px)' }}>
-              <div style={{ aspectRatio: '3/4', background: 'linear-gradient(145deg, #2a2733, #1a1825)', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                {resolvePreviewUrl(t.preview_video_url) ? (
-                  <video src={resolvePreviewUrl(t.preview_video_url)!} muted loop autoPlay playsInline style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                ) : (
-                  <Icon name="film" size={32} color="rgba(255,255,255,.4)" />
-                )}
-              </div>
+              <TplPreview src={resolvePreviewUrl(t.preview_video_url)} />
               <div style={{ padding: '14px 16px 16px' }}>
                 <div style={{ fontSize: 14.5, fontWeight: 800, marginBottom: 4 }}>{t.name}</div>
                 <div style={{ fontSize: 12.5, color: '#8c867d', lineHeight: 1.45 }}>{t.description}</div>

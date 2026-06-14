@@ -52,14 +52,14 @@ import { fetchBrand, updateBrand, uploadBrandLogo, removeBrandLogo, logoUrlToDat
 import FotoAIScreen from './FotoAIScreen';
 import VideoAIScreen from './VideoAIScreen';
 import { loadVideoJobs, upsertVideoJob, patchVideoJob, dismissVideoJob, removeVideoJob, fetchServerVideoJobs, mergeServerJobs, type VideoJob } from '@/lib/videoJobs';
-import { pollRenderProgress } from '@/lib/aiVideo';
+import { pollRenderProgress, fetchVideoQuota } from '@/lib/aiVideo';
 import MediaScreen from './MediaScreen';
 import { HomeScreen } from './HomeScreen';
 import { NewProjectModal } from './NewProjectModal';
 import type { Project } from './types';
 import { type ProjectData, fetchProjects, updateProject } from '@/lib/projects';
 import { fetchUserBatches, fetchBatchPhotos, dismissBatch, type BatchInfo } from '@/lib/stagingBatches';
-import { STAGING_STYLES, getTokenFast } from '@/lib/staging';
+import { STAGING_STYLES, getTokenFast, fetchStagingQuota } from '@/lib/staging';
 import { cleanupOldMedia } from '@/lib/localMediaCache';
 import { supabase } from '@/lib/supabase';
 
@@ -1649,8 +1649,10 @@ function UsageBar({ label, used, total, color }: { label: string; used: number; 
 }
 
 function AccountScreen({ credits, toast, go, userData }: { credits: number; toast: (msg: string, icon?: string) => void; go: (r: string) => void; userData: UserData | null }) {
-  const activePlan = userData?.subscriptionType ? (SUB_TYPE_TO_PLAN[userData.subscriptionType] ?? 'quarterly') : 'quarterly';
-  const currentPlan = PLANS.find(p => p.id === activePlan)!;
+  // Free / nessun abbonamento -> activePlan null (NON defaultare a 'quarterly',
+  // altrimenti un utente appena registrato vede "Trimestrale ATTIVO").
+  const activePlan = userData?.subscriptionType ? (SUB_TYPE_TO_PLAN[userData.subscriptionType] ?? null) : null;
+  const currentPlan = activePlan ? (PLANS.find(p => p.id === activePlan) ?? null) : null;
   const monthlyCost = 100;
 
   return (
@@ -1666,23 +1668,30 @@ function AccountScreen({ credits, toast, go, userData }: { credits: number; toas
         <div className="max-md:!flex-col max-md:!items-start" style={s('display:flex;align-items:center;gap:20px')}>
           <div style={s('flex:1;min-width:0')}>
             <div style={s('display:flex;align-items:center;gap:10px')}>
-              <span style={s('font-size:18px;font-weight:800;letter-spacing:-.3px')}>Piano {currentPlan.name}</span>
-              <span style={s('font-size:10.5px;font-weight:800;background:#3B83F6;color:var(--bg-card);padding:4px 12px;border-radius:8px;letter-spacing:.03em')}>ATTIVO</span>
+              <span style={s('font-size:18px;font-weight:800;letter-spacing:-.3px')}>Piano {currentPlan ? currentPlan.name : 'Free'}</span>
+              <span style={currentPlan
+                ? s('font-size:10.5px;font-weight:800;background:#3B83F6;color:var(--bg-card);padding:4px 12px;border-radius:8px;letter-spacing:.03em')
+                : s('font-size:10.5px;font-weight:800;background:var(--border-light);color:var(--text-muted);padding:4px 12px;border-radius:8px;letter-spacing:.03em')}>{currentPlan ? 'ATTIVO' : 'NESSUN ABBONAMENTO'}</span>
             </div>
+            {!currentPlan && (
+              <div style={s('margin-top:6px;font-size:13px;color:var(--text-muted)')}>Scegli un piano qui sotto per avere foto e video AI ogni mese.</div>
+            )}
           </div>
-          <Box as="button" onClick={async () => {
-            // Apre il Billing Portal Stripe DIRETTO (no re-login): crea una
-            // portal session server-side col customer dell'utente. Fallback al
-            // link generico se non c'e' customer/errore.
-            try {
-              const token = getTokenFast();
-              const res = await fetch('/api/billing-portal', { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ returnUrl: window.location.href }) });
-              const d = await res.json();
-              if (res.ok && d.url) { window.open(d.url, '_blank'); return; }
-              if (d.error === 'no_customer') { toast('Nessun abbonamento attivo da gestire', 'x'); return; }
-            } catch { /* fallback */ }
-            window.open(STRIPE_BILLING_PORTAL, '_blank');
-          }} className="max-md:!w-full" style={s('border:1px solid var(--border-main);background:var(--bg-card);font-size:13px;font-weight:700;padding:10px 18px;border-radius:10px;cursor:pointer;min-height:44px;white-space:nowrap')} hover={s('background:var(--bg-hover)')}>Gestisci piano</Box>
+          {currentPlan && (
+            <Box as="button" onClick={async () => {
+              // Apre il Billing Portal Stripe DIRETTO (no re-login): crea una
+              // portal session server-side col customer dell'utente. Fallback al
+              // link generico se non c'e' customer/errore.
+              try {
+                const token = getTokenFast();
+                const res = await fetch('/api/billing-portal', { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ returnUrl: window.location.href }) });
+                const d = await res.json();
+                if (res.ok && d.url) { window.open(d.url, '_blank'); return; }
+                if (d.error === 'no_customer') { toast('Nessun abbonamento attivo da gestire', 'x'); return; }
+              } catch { /* fallback */ }
+              window.open(STRIPE_BILLING_PORTAL, '_blank');
+            }} className="max-md:!w-full" style={s('border:1px solid var(--border-main);background:var(--bg-card);font-size:13px;font-weight:700;padding:10px 18px;border-radius:10px;cursor:pointer;min-height:44px;white-space:nowrap')} hover={s('background:var(--bg-hover)')}>Gestisci piano</Box>
+          )}
         </div>
       </div>
 
@@ -2341,13 +2350,32 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
   // Tutorial iniziale: appare UNA SOLA VOLTA (flag persistente). Ri-attivabile
   // da menu Profilo > Tutorial / cmdk. Init false per evitare mismatch SSR; un
   // effetto lo apre al primo accesso se non ancora visto.
+  // Flag PER-UTENTE: un account nuovo deve vedere l'onboarding anche se nello
+  // stesso browser un altro account l'aveva gia' chiuso (il vecchio flag globale
+  // 'gnm_tutorial_seen' lo impediva, per questo non partiva).
+  const tutorialKey = userData?.id ? `gnm_tutorial_seen_${userData.id}` : null;
   const [welcomeOpen, setWelcomeOpen] = useState(false);
   useEffect(() => {
-    if (typeof window !== 'undefined' && !localStorage.getItem('gnm_tutorial_seen')) setWelcomeOpen(true);
-  }, []);
+    if (typeof window === 'undefined' || !tutorialKey) return;
+    if (!localStorage.getItem(tutorialKey)) setWelcomeOpen(true);
+  }, [tutorialKey]);
   const markTutorialSeen = useCallback(() => {
-    try { localStorage.setItem('gnm_tutorial_seen', '1'); } catch { /* quota */ }
-  }, []);
+    try { if (tutorialKey) localStorage.setItem(tutorialKey, '1'); } catch { /* quota */ }
+  }, [tutorialKey]);
+
+  // Quota free trial (foto + video) per spiegarla in onboarding / empty state.
+  // Numeri NON hardcoded: letti dalla quota reale. Solo per utenti free.
+  const [freeTrial, setFreeTrial] = useState<{ photos: number; videos: number } | null>(null);
+  useEffect(() => {
+    if (userData?.subscriptionType) { setFreeTrial(null); return; }
+    let cancelled = false;
+    (async () => {
+      const [sq, vq] = await Promise.all([fetchStagingQuota(), fetchVideoQuota()]);
+      if (cancelled) return;
+      setFreeTrial({ photos: sq?.remaining ?? 0, videos: vq?.remaining ?? 0 });
+    })();
+    return () => { cancelled = true; };
+  }, [userData?.subscriptionType]);
   const closeWelcome = useCallback(() => { setWelcomeOpen(false); markTutorialSeen(); }, [markTutorialSeen]);
   const [tourStep, setTourStep] = useState<number | null>(null);
   const [tourRect, setTourRect] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
@@ -2505,7 +2533,15 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
               <img src="/dashboard/logo-icon.svg" alt="GetNearMe" style={{ width: 40, height: 40 }} />
             </div>
             <h2 style={s('margin:0 0 10px;font-size:27px;font-weight:800;letter-spacing:-.6px;color:#1a1a1a')}>Benvenuto su GetNearMe</h2>
-            <p style={s('margin:0 auto 28px;max-width:370px;color:var(--text-sec);font-size:15px;line-height:1.5')}>Dai una marcia in più ai tuoi annunci: foto, video e post curati, pronti in pochi minuti. Ti facciamo vedere come.</p>
+            <p style={s('margin:0 auto 20px;max-width:370px;color:var(--text-sec);font-size:15px;line-height:1.5')}>Dai una marcia in più ai tuoi annunci: foto, video e post curati, pronti in pochi minuti. Ti facciamo vedere come.</p>
+            {freeTrial && (freeTrial.photos > 0 || freeTrial.videos > 0) && (
+              <div style={s('display:flex;justify-content:center;margin:0 0 24px')}>
+                <span style={s('display:inline-flex;align-items:center;gap:8px;background:#eef4fe;border:1px solid #d3e3fd;color:#2b6fe0;font-size:13.5px;font-weight:700;padding:10px 16px;border-radius:99px')}>
+                  <Icon name="sparkles" size={15} color="#2b6fe0" />
+                  Inizia gratis: {freeTrial.photos} foto AI + {freeTrial.videos} video AI inclusi
+                </span>
+              </div>
+            )}
             <Box as="button" onClick={startTour} style={s('width:100%;border:none;background:#3B83F6;color:var(--bg-card);font-size:15px;font-weight:700;padding:14px 28px;border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;min-height:48px;transition:all .2s')} hover={s('background:#2b6fe0;transform:translateY(-1px);box-shadow:0 8px 24px rgba(59,131,246,.28)')}>
               Fai un giro veloce (1 min) <Icon name="arrow-right" size={16} color="var(--bg-card)" />
             </Box>
@@ -2892,6 +2928,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                 batches={batches}
                 videoJobs={videoJobs}
                 toast={toast}
+                freeTrial={freeTrial}
                 setNewProjOpen={setNewProjOpen}
                 onEditProject={() => setEditProjOpen(true)}
                 go={go}

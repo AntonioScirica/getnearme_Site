@@ -49,6 +49,37 @@ async function getCroppedImg(imageSrc: string, pixelCrop: { x: number, y: number
   })
 }
 
+// Ridimensiona QUALSIASI cover data URL prima dell'upload. Il crop gia' limita a
+// 800px, ma i path "salta crop" / cover passata possono lasciare l'originale a
+// piena risoluzione (anche diversi MB) -> /api/upload sfora il limite body di
+// 4.5MB di Vercel (413) -> fallback al data URL grande -> anche POST /api/projects
+// sfora -> creazione immobile fallisce. Questo garantisce un payload sempre piccolo.
+async function downscaleDataUrl(dataUrl: string, maxDim = 1280, quality = 0.8): Promise<string> {
+  try {
+    const image = await createImage(dataUrl);
+    let w = image.width, h = image.height;
+    if (w > maxDim || h > maxDim) {
+      const r = Math.min(maxDim / w, maxDim / h);
+      w = Math.round(w * r); h = Math.round(h * r);
+    }
+    const canvas = document.createElement('canvas');
+    canvas.width = w; canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return dataUrl;
+    ctx.drawImage(image, 0, 0, w, h);
+    return await new Promise<string>((resolve) => {
+      canvas.toBlob((b) => {
+        if (!b) return resolve(dataUrl);
+        const reader = new FileReader();
+        reader.readAsDataURL(b);
+        reader.onloadend = () => resolve(reader.result as string);
+      }, 'image/jpeg', quality);
+    });
+  } catch {
+    return dataUrl;
+  }
+}
+
 const PICKER_ICONS: { key: string; label: string }[] = [
   { key: 'euro', label: 'Euro' }, { key: 'dollar', label: 'Dollaro' }, { key: 'pound', label: 'Sterlina' },
   { key: 'bed', label: 'Camere' }, { key: 'bath', label: 'Bagni' }, { key: 'area', label: 'Superficie' },
@@ -133,6 +164,8 @@ export function NewProjectModal({
     }
 
     if (finalCover && finalCover.startsWith('data:image/')) {
+      // Resize sempre: garantisce payload piccolo a prescindere da crop/skip.
+      finalCover = await downscaleDataUrl(finalCover);
       try {
         const res = await fetch(finalCover);
         const blob = await res.blob();
@@ -140,7 +173,7 @@ export function NewProjectModal({
         const formData = new FormData();
         formData.append('file', file);
         formData.append('folder', 'covers');
-        
+
         const { data: { session } } = await supabase.auth.getSession();
         const headers: Record<string, string> = {};
         if (session) headers['Authorization'] = `Bearer ${session.access_token}`;
@@ -150,7 +183,7 @@ export function NewProjectModal({
           headers,
           body: formData,
         });
-        
+
         if (uploadRes.ok) {
           const { url } = await uploadRes.json();
           finalCover = url;
@@ -159,6 +192,13 @@ export function NewProjectModal({
         }
       } catch (err) {
         console.error('Failed to upload cover', err);
+      }
+      // Safety: se l'upload e' fallito e la cover e' ancora un data URL grande, non
+      // inviarla a /api/projects (sforerebbe il limite body). Meglio creare senza
+      // copertina che far fallire la creazione dell'immobile.
+      if (finalCover.startsWith('data:') && finalCover.length > 1_500_000) {
+        finalCover = '';
+        toast('Copertina non caricata, immobile creato senza foto. Riprova piu\' tardi.', 'x');
       }
     }
 

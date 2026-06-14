@@ -48,6 +48,7 @@ export function HomeScreen({
   batches,
   videoJobs,
   toast,
+  freeTrial,
   setNewProjOpen,
   onEditProject,
   go,
@@ -58,6 +59,7 @@ export function HomeScreen({
   batches?: any[];
   videoJobs?: any[];
   toast?: (msg: string, icon?: string) => void;
+  freeTrial?: { photos: number; videos: number } | null;
   setNewProjOpen: (b: boolean) => void;
   onEditProject?: () => void;
   go: (route: string) => void;
@@ -151,6 +153,12 @@ export function HomeScreen({
           <Box onClick={() => setNewProjOpen(true)} style={s('display:inline-flex;align-items:center;gap:10px;background:#3B83F6;color:#fff;padding:14px 28px;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;transition:transform .2s,box-shadow .2s')} hover={{ transform: 'translateY(-2px)', boxShadow: '0 8px 24px rgba(59,131,246,.3)' }}>
             Crea il tuo primo immobile
           </Box>
+          {freeTrial && (freeTrial.photos > 0 || freeTrial.videos > 0) && (
+            <div style={s('margin-top:16px;display:inline-flex;align-items:center;gap:8px;background:#eef4fe;border:1px solid #d3e3fd;color:#2b6fe0;font-size:13px;font-weight:700;padding:8px 14px;border-radius:99px')}>
+              <Icon name="sparkles" size={14} color="#2b6fe0" />
+              Hai {freeTrial.photos} foto AI e {freeTrial.videos} video AI gratis per provare
+            </div>
+          )}
           <div className="max-md:!mt-8 max-md:!grid-cols-1" style={s('margin-top:48px;display:grid;grid-template-columns:repeat(3,1fr);gap:20px;max-width:640px;width:100%')}>
             {[
               { icon: 'sparkles', title: 'Homestaging AI', desc: 'Arreda e trasforma le foto con un click' },
