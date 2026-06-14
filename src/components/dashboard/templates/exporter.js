@@ -956,7 +956,7 @@ export async function exportStaticToVideo(templateEl, size, opts = {}) {
     ctx.drawImage(gradientCanvas, -1, -1, w + 2, h + 2);
 
     recorder.start(100);
-    videoTrack.requestFrame();
+    if (videoTrack.requestFrame) videoTrack.requestFrame();
 
     // Watchdog a tempo reale: se il loop requestAnimationFrame viene throttlato
     // (tab in background, frame pesanti), `recorder.stop()` potrebbe non essere
@@ -1163,7 +1163,7 @@ export async function exportStaticToVideo(templateEl, size, opts = {}) {
         ctx.restore();
       }
 
-      videoTrack.requestFrame();
+      if (videoTrack.requestFrame) videoTrack.requestFrame();
       if (onProgress && !aborted) onProgress(Math.min(elapsed / durationMs, 1));
       requestAnimationFrame(drawFrame);
     }
