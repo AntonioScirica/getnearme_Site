@@ -2726,10 +2726,9 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                       <Box onClick={async () => {
                         setProfileOpen(false);
                         try { await supabase.auth.signOut(); } catch { /* noop */ }
-                        // Login vero (Google + email) vive su /checkout/agency: dopo il
-                        // logout si va li'. Locale preso dall'URL corrente.
+                        // Dopo il logout si torna alla landing (homepage del locale).
                         const loc = window.location.pathname.split('/').filter(Boolean)[0] || 'it';
-                        window.location.href = `/${loc}/checkout/agency`;
+                        window.location.href = `/${loc}`;
                       }} style={s('display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:600;color:#dc2626')} hover={s('background:#fef2f2')}>
                         <Icon name="log-out" size={16} color="#dc2626" />Esci
                       </Box>
