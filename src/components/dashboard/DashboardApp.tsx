@@ -2524,7 +2524,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                       {[
                         { icon: 'settings', label: 'Impostazioni', action: () => { setProfileOpen(false); go('impostazioni'); } },
                         { icon: 'play-circle', label: 'Tutorial', action: () => { setProfileOpen(false); setWelcomeOpen(true); } },
-                        { icon: 'lightbulb', label: 'Suggerisci funzione', action: () => { setProfileOpen(false); go('assistenza?type=feature'); } },
+                        { icon: 'message-square', label: 'Suggerimenti', action: () => { setProfileOpen(false); go('assistenza?type=feature'); } },
                         { icon: 'life-buoy', label: 'Assistenza', action: () => { setProfileOpen(false); go('assistenza'); } },
                       ].map(item => (
                         <Box key={item.label} onClick={item.action} style={s('display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:600')} hover={s('background:#f6f4f0')}>
