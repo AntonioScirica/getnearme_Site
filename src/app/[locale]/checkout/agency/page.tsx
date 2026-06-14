@@ -557,7 +557,9 @@ function CheckoutAgencyContent() {
         setMarketingAccepted(marketing);
         await proceedAfterLogin(userId, userEmail, terms, marketing);
       } else {
-        // Existing session (not OAuth callback)
+        // Existing session (not OAuth callback). Se non c'e' un piano selezionato
+        // siamo in modalita' LOGIN (non checkout) → vai dritto alla dashboard.
+        if (!hasPlan) { window.location.href = `/${locale}/dashboard`; return; }
         setUser({ id: userId, email: userEmail });
 
         // Check if user already accepted terms (from previous login/consent)
