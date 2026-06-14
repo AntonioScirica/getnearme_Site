@@ -153,7 +153,7 @@ export function HomeScreen({
             {[
               { icon: 'sparkles', title: 'Homestaging AI', desc: 'Arreda e trasforma le foto con un click' },
               { icon: 'film', title: 'Video AI', desc: 'Crea video professionali automaticamente' },
-              { icon: 'smartphone', title: 'Post Social', desc: 'Template pronti per Instagram e social' },
+              { icon: 'instagram', title: 'Post Social', desc: 'Template pronti per Instagram e social' },
             ].map(f => (
               <div key={f.title} style={s('background:#fff;border:1px solid #f0ede7;border-radius:14px;padding:24px 20px;text-align:center')}>
                 <div style={s('width:44px;height:44px;border-radius:12px;background:#f4f2ee;display:flex;align-items:center;justify-content:center;margin:0 auto 12px')}><Icon name={f.icon} size={20} color="#57534c" /></div>
@@ -341,7 +341,7 @@ export function HomeScreen({
                 {[
                   { id: 'foto', label: 'Foto generate', done: hasPhotos, ic: 'sparkles' },
                   { id: 'video', label: 'Video creati', done: hasVideo, ic: 'film' },
-                  { id: 'social', label: 'Post Social pronti', done: hasSocial, ic: 'smartphone' },
+                  { id: 'social', label: 'Post Social pronti', done: hasSocial, ic: 'instagram' },
                 ].map(item => (
                   <div key={item.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', background: item.done ? '#f0fdf4' : '#f9f8f6', borderRadius: 10, border: `1px solid ${item.done ? '#bbf7d0' : '#f0ede7'}` }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
