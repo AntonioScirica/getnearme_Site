@@ -59,7 +59,7 @@ import { NewProjectModal } from './NewProjectModal';
 import type { Project } from './types';
 import { type ProjectData, fetchProjects, updateProject } from '@/lib/projects';
 import { fetchUserBatches, fetchBatchPhotos, dismissBatch, type BatchInfo } from '@/lib/stagingBatches';
-import { STAGING_STYLES } from '@/lib/staging';
+import { STAGING_STYLES, getTokenFast } from '@/lib/staging';
 import { cleanupOldMedia } from '@/lib/localMediaCache';
 import { supabase } from '@/lib/supabase';
 
@@ -1670,7 +1670,19 @@ function AccountScreen({ credits, toast, go, userData }: { credits: number; toas
               <span style={s('font-size:10.5px;font-weight:800;background:#3B83F6;color:var(--bg-card);padding:4px 12px;border-radius:8px;letter-spacing:.03em')}>ATTIVO</span>
             </div>
           </div>
-          <Box as="button" onClick={() => window.open(STRIPE_BILLING_PORTAL, '_blank')} className="max-md:!w-full" style={s('border:1px solid var(--border-main);background:var(--bg-card);font-size:13px;font-weight:700;padding:10px 18px;border-radius:10px;cursor:pointer;min-height:44px;white-space:nowrap')} hover={s('background:var(--bg-hover)')}>Gestisci piano</Box>
+          <Box as="button" onClick={async () => {
+            // Apre il Billing Portal Stripe DIRETTO (no re-login): crea una
+            // portal session server-side col customer dell'utente. Fallback al
+            // link generico se non c'e' customer/errore.
+            try {
+              const token = getTokenFast();
+              const res = await fetch('/api/billing-portal', { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ returnUrl: window.location.href }) });
+              const d = await res.json();
+              if (res.ok && d.url) { window.open(d.url, '_blank'); return; }
+              if (d.error === 'no_customer') { toast('Nessun abbonamento attivo da gestire', 'x'); return; }
+            } catch { /* fallback */ }
+            window.open(STRIPE_BILLING_PORTAL, '_blank');
+          }} className="max-md:!w-full" style={s('border:1px solid var(--border-main);background:var(--bg-card);font-size:13px;font-weight:700;padding:10px 18px;border-radius:10px;cursor:pointer;min-height:44px;white-space:nowrap')} hover={s('background:var(--bg-hover)')}>Gestisci piano</Box>
         </div>
       </div>
 
