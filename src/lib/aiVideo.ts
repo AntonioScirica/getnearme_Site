@@ -89,7 +89,7 @@ export async function fetchVideoConfig(): Promise<{ templates: VideoTemplate[]; 
 
 // ─── Quota ───────────────────────────────────────────────────────────────────
 
-export type VideoQuota = { used: number; limit: number; remaining: number; isAgency: boolean };
+export type VideoQuota = { used: number; limit: number; remaining: number; extra: number; isAgency: boolean };
 
 export async function fetchVideoQuota(): Promise<VideoQuota | null> {
   try {
@@ -99,8 +99,14 @@ export async function fetchVideoQuota(): Promise<VideoQuota | null> {
     const { data, error } = await supabase.rpc('get_ai_video_quota_status', { p_user_id: uid });
     if (error || !data) return null;
     const used = Number(data.used) || 0;
-    const limit = Number(data.monthly_limit) || 0;
-    return { used, limit, remaining: Math.max(0, limit - used), isAgency: !!data.isAgency || limit > 0 };
+    const monthlyLimit = Number(data.monthly_limit) || 0;
+    // extra_credits = pacchetti acquistati + video free trial (one-time, non si resettano).
+    // Vanno contati nel rimanente, altrimenti il free trial (monthly_limit 0, extra 1)
+    // mostrerebbe 0 e bloccherebbe il bottone.
+    const extra = Number(data.extra_credits) || 0;
+    const remaining = Math.max(0, monthlyLimit - used) + extra;
+    const limit = monthlyLimit + extra;
+    return { used, limit, remaining, extra, isAgency: monthlyLimit > 0 };
   } catch {
     return null;
   }

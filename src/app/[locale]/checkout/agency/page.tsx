@@ -3,6 +3,7 @@
 import { Suspense, useState, useEffect, useRef } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+import { isDisposableEmail } from '@/lib/disposableEmails';
 import { CheckCircle, Loader2 } from 'lucide-react';
 import { type Locale } from '@/lib/i18n';
 import Navbar from '@/components/Navbar';
@@ -634,6 +635,13 @@ function CheckoutAgencyContent() {
 
     try {
       if (isSignup) {
+        if (isDisposableEmail(email)) {
+          setError(locale === 'it'
+            ? 'Usa un indirizzo email reale: le email temporanee non sono ammesse.'
+            : 'Please use a real email address: temporary emails are not allowed.');
+          setIsEmailLoading(false);
+          return;
+        }
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
