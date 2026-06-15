@@ -2936,7 +2936,10 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
             style={{ flex: 'none', borderTop: '1px solid var(--border-light)', padding: collapsed ? '12px 6px' : '12px 10px' }}
           >
             <Box onClick={(e) => { e.stopPropagation(); setProfileOpen(o => !o); setProjOpen(false); setTrayOpen(false); }} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: collapsed ? '0' : '10px 12px', borderRadius: collapsed ? '50%' : 12, cursor: 'pointer', justifyContent: collapsed ? 'center' : 'flex-start', width: collapsed ? 42 : 'auto', height: collapsed ? 42 : 'auto', margin: collapsed ? '0 auto' : 0 }} hover={{ background: '#f1efe9' }}>
-              <div style={s('width:34px;height:34px;border-radius:50%;background:var(--text-main);color:var(--bg-card);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex:none')}>{(userData?.email ?? 'U')[0].toUpperCase()}</div>
+              {userData?.avatarUrl
+                // eslint-disable-next-line @next/next/no-img-element
+                ? <img src={userData.avatarUrl} alt="" referrerPolicy="no-referrer" style={{ width: 34, height: 34, borderRadius: '50%', objectFit: 'cover', flex: 'none' }} />
+                : <div style={s('width:34px;height:34px;border-radius:50%;background:var(--text-main);color:var(--bg-card);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex:none')}>{(userData?.email ?? 'U')[0].toUpperCase()}</div>}
               {!collapsed && <div style={{ minWidth: 0, flex: 1 }}><div style={s('font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{userData?.email?.split('@')[0] ?? 'Utente'}</div><div style={s('font-size:11px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{userData?.email ?? ''}</div></div>}
               {!collapsed && <Icon name="chevron-up" size={14} color="var(--text-muted)" style={{ transition: 'transform .2s', transform: profileOpen ? 'none' : 'rotate(180deg)' }} />}
             </Box>

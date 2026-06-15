@@ -14,9 +14,16 @@ export type UserData = {
   stripeCustomerId: string | null;
   totalEarned: number;
   totalSpent: number;
+  avatarUrl: string | null;
 };
 
-async function fetchProfile(userId: string, email: string): Promise<UserData> {
+// Avatar dal provider OAuth (Google): user_metadata.avatar_url / picture.
+function avatarFromUser(user: { user_metadata?: Record<string, unknown> } | null | undefined): string | null {
+  const m = user?.user_metadata as Record<string, string> | undefined;
+  return (m?.avatar_url || m?.picture || null) as string | null;
+}
+
+async function fetchProfile(userId: string, email: string, avatarUrl: string | null = null): Promise<UserData> {
   // NB: la colonna e' `stripe_agency_subscription_id` (NON `stripe_customer_id`).
   // Selezionare una colonna inesistente faceva fallire l'INTERA query -> data
   // null -> subscriptionType sempre 'free' (piano/brand bloccati anche da pagante).
@@ -34,6 +41,7 @@ async function fetchProfile(userId: string, email: string): Promise<UserData> {
     stripeCustomerId: data?.stripe_agency_subscription_id ?? null,
     totalEarned: data?.total_earned ?? 0,
     totalSpent: data?.total_spent ?? 0,
+    avatarUrl,
   };
 }
 
@@ -53,7 +61,7 @@ export default function DashboardPage() {
         ]);
         const session = sessionRes?.data?.session ?? null;
         if (session?.user) {
-          const profile = await fetchProfile(session.user.id, session.user.email || '');
+          const profile = await fetchProfile(session.user.id, session.user.email || '', avatarFromUser(session.user));
           setUserData(profile);
         }
       } catch (e) {
@@ -75,7 +83,7 @@ export default function DashboardPage() {
       }
       if (session?.user) {
         const u = session.user;
-        setTimeout(() => { fetchProfile(u.id, u.email || '').then(setUserData).catch(() => {}); }, 0);
+        setTimeout(() => { fetchProfile(u.id, u.email || '', avatarFromUser(u)).then(setUserData).catch(() => {}); }, 0);
       }
     });
 
@@ -87,7 +95,7 @@ export default function DashboardPage() {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.user) {
-          const p = await fetchProfile(session.user.id, session.user.email || '');
+          const p = await fetchProfile(session.user.id, session.user.email || '', avatarFromUser(session.user));
           setUserData(p);
           return p.subscriptionType && p.subscriptionType !== 'free';
         }
