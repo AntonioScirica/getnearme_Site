@@ -14,6 +14,25 @@ export default function LanguageSwitcher({ locale, openUp = false }: LanguageSwi
   const router = useRouter();
   const pathname = usePathname();
   const [isOpen, setIsOpen] = React.useState(false);
+  const ref = React.useRef<HTMLDivElement>(null);
+
+  // Click fuori / Escape per chiudere (niente hover: su touch l'hover apre e
+  // poi il click richiude subito).
+  React.useEffect(() => {
+    if (!isOpen) return;
+    const onDown = (e: MouseEvent | TouchEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setIsOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setIsOpen(false); };
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('touchstart', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDown);
+      document.removeEventListener('touchstart', onDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [isOpen]);
 
   const currentLocale = {
     code: locale,
@@ -31,12 +50,9 @@ export default function LanguageSwitcher({ locale, openUp = false }: LanguageSwi
   };
 
   return (
-    <div
-      className="relative"
-      onMouseEnter={() => setIsOpen(true)}
-      onMouseLeave={() => setIsOpen(false)}
-    >
+    <div className="relative" ref={ref}>
       <button
+        onClick={() => setIsOpen((o) => !o)}
         className="flex items-center gap-1 text-sm font-medium text-slate-600 hover:text-black transition-colors focus:outline-none"
         aria-label="Seleziona lingua"
         aria-expanded={isOpen}
@@ -49,8 +65,8 @@ export default function LanguageSwitcher({ locale, openUp = false }: LanguageSwi
 
       {isOpen && (
         <div
-          className={`absolute w-48 z-20 ${openUp ? 'bottom-full left-1/2 -translate-x-1/2' : 'right-0 md:left-0 md:right-auto'}`}
-          style={{ top: '100%', paddingTop: 8 }}
+          className={`absolute w-48 z-20 ${openUp ? 'left-1/2 -translate-x-1/2' : 'right-0 md:left-0 md:right-auto'}`}
+          style={openUp ? { bottom: '100%', paddingBottom: 8 } : { top: '100%', paddingTop: 8 }}
         >
           <div
             className="rounded-xl bg-white border border-slate-200 shadow-xl overflow-hidden animate-fade-in"

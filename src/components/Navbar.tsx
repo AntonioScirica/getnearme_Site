@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter, usePathname } from 'next/navigation';
 import { type Locale } from '@/lib/i18n';
 import { translations } from '@/lib/translations';
 import LanguageSwitcher from './LanguageSwitcher';
@@ -26,6 +27,8 @@ export default function Navbar({ locale }: NavbarProps) {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
     const t = translations[locale];
+    const router = useRouter();
+    const pathname = usePathname();
 
     useEffect(() => {
         const handleScroll = () => setIsScrolled(window.scrollY > 10);
@@ -68,15 +71,42 @@ export default function Navbar({ locale }: NavbarProps) {
         return () => { subscription.unsubscribe(); };
     }, []);
 
+    // Arrivo sulla landing con un hash (es. da un'altra pagina): scrolla alla
+    // sezione con l'offset dell'header sticky (lo scroll nativo non lo applica).
+    useEffect(() => {
+        const onLanding = pathname === `/${locale}` || pathname === `/${locale}/`;
+        if (!onLanding || !window.location.hash) return;
+        const id = window.location.hash.slice(1);
+        const tid = setTimeout(() => {
+            const el = document.getElementById(id);
+            if (el) {
+                const y = el.getBoundingClientRect().top + window.scrollY - 100;
+                window.scrollTo({ top: y, behavior: 'smooth' });
+            }
+        }, 350);
+        return () => clearTimeout(tid);
+    }, [pathname, locale]);
+
     const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
     const scrollTo = (id: string) => {
         setIsMenuOpen(false);
-        const el = document.getElementById(id);
-        if (el) {
-            const y = el.getBoundingClientRect().top + window.scrollY - 100;
-            window.scrollTo({ top: y, behavior: 'smooth' });
+        // Su mobile il menu blocca lo scroll (body overflow:hidden): sblocco subito.
+        document.body.style.overflow = '';
+        // Se non siamo sulla landing, la sezione non esiste in pagina: naviga alla
+        // home con l'hash (il browser fa lo scroll all' id al caricamento).
+        const onLanding = pathname === `/${locale}` || pathname === `/${locale}/`;
+        if (!onLanding) {
+            router.push(`/${locale}#${id}`);
+            return;
         }
+        setTimeout(() => {
+            const el = document.getElementById(id);
+            if (el) {
+                const y = el.getBoundingClientRect().top + window.scrollY - 100;
+                window.scrollTo({ top: y, behavior: 'smooth' });
+            }
+        }, 60);
     };
 
     return (
@@ -115,12 +145,12 @@ export default function Navbar({ locale }: NavbarProps) {
                                 <span className="hidden sm:inline">{t.nav.dashboard}</span>
                             </Link>
                         ) : (
-                            <Link
-                                href={`/${locale}/checkout/agency`}
-                                className="hidden md:flex items-center h-[48px] px-6 bg-[#3B83F6] text-white rounded-xl neo-shadow hover:bg-[#2563EB] transition-all font-bold text-lg"
+                            <button
+                                onClick={() => scrollTo('pricing')}
+                                className="hidden md:flex items-center h-[48px] px-6 bg-[#3B83F6] text-white rounded-xl neo-shadow hover:bg-[#2563EB] transition-all font-bold text-lg cursor-pointer"
                             >
                                 {t.nav.startAnalysis}
-                            </Link>
+                            </button>
                         )}
                         <button
                             className="md:hidden relative z-[70] p-2 text-slate-600"
@@ -213,18 +243,17 @@ export default function Navbar({ locale }: NavbarProps) {
                                     <UserIcon />
                                     Accedi
                                 </Link>
-                                <Link
-                                    href={`/${locale}/checkout/agency`}
-                                    className={`mt-3 w-full max-w-[280px] text-center flex items-center justify-center px-5 py-3 bg-[#3B83F6] text-white rounded-xl neo-shadow hover:bg-[#2563EB] transition-all duration-500 ease-out font-bold text-base ${
+                                <button
+                                    onClick={() => scrollTo('pricing')}
+                                    className={`mt-3 w-full max-w-[280px] text-center flex items-center justify-center px-5 py-3 bg-[#3B83F6] text-white rounded-xl neo-shadow hover:bg-[#2563EB] transition-all duration-500 ease-out font-bold text-base cursor-pointer ${
                                         isMenuOpen
                                             ? 'opacity-100 translate-y-0'
                                             : 'opacity-0 translate-y-4'
                                     }`}
                                     style={{ transitionDelay: isMenuOpen ? '525ms' : '0ms' }}
-                                    onClick={() => setIsMenuOpen(false)}
                                 >
                                     {t.nav.startAnalysis}
-                                </Link>
+                                </button>
                             </>
                         )}
                     </div>
