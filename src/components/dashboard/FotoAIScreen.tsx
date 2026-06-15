@@ -99,14 +99,15 @@ function DemoBeforeAfter() {
   );
 }
 
-export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated, onGoPlan, onGoPost, onGoVideo, demoMode = false, lockBrand }: {
+export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated, onGoPlan, onGoPost, onGoVideo, onCreated, demoMode = false, lockBrand }: {
   toast: (msg: string, icon?: string) => void;
   routeKey: number;
   project?: Project;
   onBatchCreated?: () => void;
   onGoPlan?: () => void;
-  onGoPost?: (url: string) => void;
+  onGoPost?: () => void;
   onGoVideo?: (url: string) => void;
+  onCreated?: () => void; // staging completato -> notifica galleria (badge +1)
   demoMode?: boolean;
   lockBrand?: boolean; // free: niente acquisto extra, solo stato esaurito
 }) {
@@ -191,6 +192,7 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
         // before può mancare se la generazione è stata recuperata dal server
         // (stato locale perso): in quel caso niente slider, mostra il risultato.
         setResult({ before: pending.before || res.outputUrl, after: res.outputUrl });
+        onCreated?.();
         setGenerating(false);
         setRevealing('burst');
         // Ogni generazione (incl. reprompt) scala 1 dalla quota: aggiorna live.
@@ -403,6 +405,7 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
     // Caso raro: già pronta al primo colpo
     if (res.outputUrl) {
       setResult({ before: opts.before, after: res.outputUrl });
+      onCreated?.();
       setGenerating(false);
       setRevealing('burst');
       setQuota(q => q ? { ...q, remaining: Math.max(0, q.remaining - 1) } : q);
@@ -739,19 +742,25 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
                         ? <><span style={{ width: 16, height: 16, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.4)', borderTopColor: '#fff', animation: 'export-spin 1s linear infinite', display: 'inline-block' }} />Scaricando...</>
                         : <><Icon name="download" size={16} color="#fff" />Scarica risultato</>}
                     </Box>
-                    <Box as="button" onClick={() => onGoPost?.(result.after)} style={{ border: '1.5px solid #3B83F6', background: '#eff6ff', color: '#1d5fd0', fontSize: 14, fontWeight: 700, padding: '13px 20px', borderRadius: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 } as React.CSSProperties} hover={s('background:#dbeafe')}>
-                      <Icon name="share" size={16} color="#1d5fd0" />
-                      Crea post con questa foto
-                    </Box>
-                    <Box as="button" onClick={() => onGoVideo?.(result.after)} style={{ border: '1.5px solid #3B83F6', background: '#eff6ff', color: '#1d5fd0', fontSize: 14, fontWeight: 700, padding: '13px 20px', borderRadius: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 } as React.CSSProperties} hover={s('background:#dbeafe')}>
-                      <Icon name="film" size={16} color="#1d5fd0" />
-                      Crea video da foto
-                    </Box>
+                    <div style={{ display: 'flex', gap: 10 }}>
+                      <Box as="button" onClick={() => onGoPost?.()} style={{ flex: 1, border: '1.5px solid #3B83F6', background: '#eff6ff', color: '#1d5fd0', fontSize: 14, fontWeight: 700, padding: '13px 20px', borderRadius: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 } as React.CSSProperties} hover={s('background:#dbeafe')}>
+                        <Icon name="share" size={16} color="#1d5fd0" />
+                        Crea post
+                      </Box>
+                      <Box as="button" onClick={() => onGoVideo?.(result.after)} style={{ flex: 1, border: '1.5px solid #3B83F6', background: '#eff6ff', color: '#1d5fd0', fontSize: 14, fontWeight: 700, padding: '13px 20px', borderRadius: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 } as React.CSSProperties} hover={s('background:#dbeafe')}>
+                        <Icon name="film" size={16} color="#1d5fd0" />
+                        Crea video
+                      </Box>
+                    </div>
                     <Box as="button" onClick={resetAll} style={{ border: '1.5px solid #e4e1da', background: '#fff', color: '#211f1c', fontSize: 14, fontWeight: 600, padding: '13px 20px', borderRadius: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 } as React.CSSProperties} hover={s('background:#f8f7f5')}>
                       <Icon name="image-plus" size={16} color="#57534c" />
                       Nuova foto
                     </Box>
                   </div>
+                </div>
+                {/* Fuori dal container: dove ritrovare la foto */}
+                <div style={{ textAlign: 'center', fontSize: 12.5, color: '#8a8275', marginTop: 2 }}>
+                  La foto è stata salvata nella tua galleria
                 </div>
               </>
             ) : (

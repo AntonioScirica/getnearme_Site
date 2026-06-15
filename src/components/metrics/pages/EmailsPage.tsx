@@ -26,6 +26,7 @@ interface EmailTemplateMeta {
   variables: string[];
   trigger_note: string | null;
   source_note: string | null;
+  active: boolean;
   updated_at: string;
   updated_by: string | null;
 }
@@ -115,9 +116,10 @@ export default function EmailsPage() {
   }
 
   const grouped: Record<EmailAudience, EmailTemplateMeta[]> = {
-    user: filtered.filter((e) => e.audience === "user"),
-    internal: filtered.filter((e) => e.audience === "internal"),
+    user: filtered.filter((e) => e.audience === "user" && e.active),
+    internal: filtered.filter((e) => e.audience === "internal" && e.active),
   };
+  const disabled = filtered.filter((e) => !e.active);
 
   return (
     <div>
@@ -207,6 +209,19 @@ export default function EmailsPage() {
               </div>
             ),
           )}
+
+          {disabled.length > 0 && (
+            <div className="mb-8">
+              <p className={`${MONO} text-[10px] font-semibold uppercase tracking-[0.6px] text-gray-500 mb-3`}>
+                Disattivate · non inviate
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {disabled.map((e) => (
+                  <EmailCard key={e.id} email={e} onClick={() => setActiveId(e.id)} />
+                ))}
+              </div>
+            </div>
+          )}
         </>
       )}
     </div>
@@ -223,7 +238,7 @@ function EmailCard({
   return (
     <button
       onClick={onClick}
-      className="text-left bg-[#161920] rounded-xl border border-white/[0.08] p-4 hover:border-indigo-500/40 transition-colors group"
+      className={`text-left bg-[#161920] rounded-xl border border-white/[0.08] p-4 hover:border-indigo-500/40 transition-colors group ${email.active ? "" : "opacity-50"}`}
     >
       <div className="flex items-center gap-2 mb-3">
         <span
@@ -231,6 +246,11 @@ function EmailCard({
         >
           {email.audience === "user" ? "Utente" : "Interna"}
         </span>
+        {!email.active && (
+          <span className={`${MONO} inline-flex items-center px-2 py-0.5 rounded border border-red-500/30 bg-red-500/10 text-red-400 text-[10px] uppercase tracking-wider`}>
+            Disattivata
+          </span>
+        )}
         <span className={`${MONO} text-[10px] text-gray-600`}>
           {new Date(email.updated_at).toLocaleDateString("it-IT", {
             day: "2-digit",
@@ -277,6 +297,8 @@ function EmailDetail({
   const [html, setHtml] = useState("");
   const [saving, setSaving] = useState(false);
   const [savedFlash, setSavedFlash] = useState(false);
+  const [active, setActive] = useState(true);
+  const [togglingActive, setTogglingActive] = useState(false);
 
   useEffect(() => {
     let cancel = false;
@@ -292,6 +314,7 @@ function EmailDetail({
         setSubject(json.template.subject);
         setPreheader(json.template.preheader ?? "");
         setHtml(json.template.html_body);
+        setActive(json.template.active);
       } catch (e: unknown) {
         if (!cancel)
           setError(e instanceof Error ? e.message : "Fetch failed");
@@ -332,6 +355,29 @@ function EmailDetail({
       setError(e instanceof Error ? e.message : "Save failed");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const toggleActive = async () => {
+    if (!tpl) return;
+    const next = !active;
+    setTogglingActive(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/email-templates/${id}`, {
+        method: "PUT",
+        headers: { ...authHeader(), "Content-Type": "application/json" },
+        body: JSON.stringify({ active: next }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json?.error || `HTTP ${res.status}`);
+      setActive(next);
+      setTpl(json.template);
+      onSaved();
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Toggle failed");
+    } finally {
+      setTogglingActive(false);
     }
   };
 
@@ -384,6 +430,21 @@ function EmailDetail({
         </div>
 
         <div className="flex items-center gap-2">
+          <button
+            onClick={toggleActive}
+            disabled={togglingActive}
+            className={`${MONO} inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold transition-colors disabled:opacity-60 ${
+              active
+                ? "bg-red-500/10 text-red-400 border border-red-500/30 hover:bg-red-500/20"
+                : "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20"
+            }`}
+          >
+            {togglingActive ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              active ? "Disattiva" : "Attiva"
+            )}
+          </button>
           {tab === "edit" && (
             <button
               onClick={save}

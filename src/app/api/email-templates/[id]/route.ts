@@ -56,6 +56,7 @@ export async function PUT(
     subject?: string;
     preheader?: string | null;
     html_body?: string;
+    active?: boolean;
   };
   try {
     body = await req.json();
@@ -93,6 +94,10 @@ export async function PUT(
       );
     }
     update.html_body = body.html_body;
+  }
+
+  if (typeof body.active === "boolean") {
+    update.active = body.active;
   }
 
   if (Object.keys(update).length === 1) {

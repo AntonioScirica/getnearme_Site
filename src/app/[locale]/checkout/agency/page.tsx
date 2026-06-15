@@ -812,6 +812,12 @@ function CheckoutAgencyContent() {
                 <h2 className="text-xl font-bold text-[#1a1a2e] mb-2">{t.checkEmail}</h2>
                 <p className="text-base text-slate-500 mb-5">{t.checkEmailDesc}</p>
                 <div className="p-3 bg-slate-50 rounded-xl text-base text-slate-600 font-medium mb-4">{email}</div>
+                <button
+                  onClick={() => { setEmailSent(false); setIsSignup(false); setPassword(''); setError(null); }}
+                  className="neo-cta-blue w-full py-3 rounded-xl font-bold text-base mb-3"
+                >
+                  {({ it: 'Vai al login', en: 'Go to login', es: 'Ir al inicio de sesión', fr: 'Aller à la connexion', ru: 'Перейти ко входу', uk: 'Перейти до входу' }[locale as string] || 'Go to login')}
+                </button>
                 <a
                   href={
                     email.endsWith('@gmail.com') ? 'https://mail.google.com' :
@@ -822,7 +828,7 @@ function CheckoutAgencyContent() {
                   }
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="neo-cta-blue flex items-center justify-center gap-2 w-full py-3 rounded-xl font-bold text-base mb-4"
+                  className="neo-border bg-white text-[#1a1a2e] hover:bg-slate-50 transition-all flex items-center justify-center gap-2 w-full py-3 rounded-xl font-bold text-base mb-4"
                   style={{ textDecoration: 'none' }}
                 >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>

@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
   const { data, error } = await admin
     .from("email_templates")
     .select(
-      "id, audience, title, subject, preheader, variables, trigger_note, source_note, updated_at, updated_by",
+      "id, audience, title, subject, preheader, variables, trigger_note, source_note, active, updated_at, updated_by",
     )
     .order("audience", { ascending: true })
     .order("id", { ascending: true });

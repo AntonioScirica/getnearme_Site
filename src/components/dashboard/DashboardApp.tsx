@@ -539,6 +539,8 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
   const [animStyle, setAnimStyle] = React.useState('slide-up');
   const [pubPlatforms, setPubPlatforms] = React.useState({ instagram: true, facebook: false, tiktok: false });
   const [pubMode, setPubMode] = React.useState<'schedule' | 'now'>('schedule');
+  const [pubDate, setPubDate] = React.useState('');
+  const [publishing, setPublishing] = React.useState(false);
   const [caption, setCaption] = React.useState('');
   const [hashtags, setHashtags] = React.useState('');
   const [firstComment, setFirstComment] = React.useState('');
@@ -1012,6 +1014,75 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
   const curFmt = formats.find(f => f.id === formatId) ?? formats[0];
   const curTpl = TEMPLATES.find(t => t.id === tplId)!;
   const hasField = (f: string) => !curTpl.fields || curTpl.fields.includes(f);
+
+  // Pubblica/Programma il post sui social: render -> upload media -> crea
+  // scheduled_post (l'edge function publish-due-posts lo pubblica via cron).
+  const publishFormat = (): 'feed' | 'story' | 'reel' | 'square' => {
+    const id = curFmt.id || '';
+    if (id.includes('story')) return 'story';
+    if (id.includes('reel') || id.includes('tt-video')) return 'reel';
+    if (id.includes('quadrato')) return 'square';
+    return isVideo ? 'reel' : 'feed';
+  };
+  const handlePublish = async () => {
+    if (publishing) return;
+    const platforms = (['instagram', 'facebook', 'tiktok'] as const).filter(p => pubPlatforms[p]);
+    if (!platforms.length) { toast('Seleziona almeno una piattaforma', 'x'); return; }
+    let scheduledAtIso: string;
+    if (pubMode === 'schedule') {
+      if (!pubDate) { toast('Scegli data e ora', 'x'); return; }
+      const d = new Date(pubDate);
+      if (isNaN(d.getTime()) || d.getTime() < Date.now() - 60_000) { toast('Scegli una data futura', 'x'); return; }
+      scheduledAtIso = d.toISOString();
+    } else {
+      scheduledAtIso = new Date(Date.now() + 5_000).toISOString(); // "ora": il cron lo prende subito
+    }
+    if (!(await gatePost())) return;
+    setPublishing(true);
+    let cleanup: (() => void) | null = null;
+    try {
+      const FN = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/social-post-create`;
+      const authH = { Authorization: `Bearer ${getTokenFast()}`, 'Content-Type': 'application/json' };
+      const mounted = await mountExportEl();
+      cleanup = mounted.cleanup;
+      let blob: Blob; let mediaType: 'image' | 'video'; let mime: string;
+      if (isVideo) {
+        const r = await exportStaticToVideo(mounted.tplEl, { w: curFmt.w, h: curFmt.h }, { duration: 15, animStyle, videoSrc: coverPhoto, fitCover });
+        blob = r.blob; mediaType = 'video'; mime = r.ext === 'webm' ? 'video/webm' : 'video/mp4';
+      } else {
+        blob = await exportToPng(mounted.tplEl, { w: curFmt.w, h: curFmt.h }, { photoSrc: coverPhoto, fitCover });
+        mediaType = 'image'; mime = 'image/png';
+      }
+      cleanup?.(); cleanup = null;
+      // 1) signed upload url
+      const upRes = await fetch(FN, { method: 'POST', headers: authH, body: JSON.stringify({ mode: 'upload-url', media_type: mediaType, mime }) });
+      const up = await upRes.json();
+      if (!upRes.ok || !up.storagePath) throw new Error(up.error || 'upload-url failed');
+      // 2) upload media
+      const { error: upErr } = await supabase.storage.from('social-post-media').uploadToSignedUrl(up.storagePath, up.token, blob, { contentType: mime });
+      if (upErr) throw new Error('upload failed: ' + upErr.message);
+      // 3) create scheduled post
+      const crRes = await fetch(FN, { method: 'POST', headers: authH, body: JSON.stringify({
+        mode: 'create', storagePath: up.storagePath, media_type: mediaType, format: publishFormat(),
+        platforms, caption, hashtags, first_comment: firstComment, scheduled_at: scheduledAtIso,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/Rome',
+      }) });
+      const cr = await crRes.json();
+      if (!crRes.ok) {
+        if (typeof cr.error === 'string' && cr.error.startsWith('Not connected')) { toast('Collega prima l\'account social', 'x'); return; }
+        if (cr.error === 'ig_daily_limit') { toast(cr.message || 'Limite Instagram giornaliero raggiunto', 'x'); return; }
+        throw new Error(cr.error || cr.message || 'create failed');
+      }
+      toast(pubMode === 'schedule' ? 'Post programmato' : 'Pubblicazione avviata', 'check');
+      setStep(1);
+    } catch (e) {
+      console.error('publish error', e);
+      toast('Errore durante la pubblicazione', 'x');
+    } finally {
+      cleanup?.();
+      setPublishing(false);
+    }
+  };
   // fitCover (foto full screen) only meaningful for cover templates; non-cover
   // templates place the photo in a fixed shape (always object-fit: cover).
   const NO_COVER_TPL = ['arch', 'split', 'frame', 'spotlight', 'before-after', 'gallery', 'tips'];
@@ -1714,7 +1785,7 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
             {pubMode === 'schedule' && (
               <div>
                 <label style={labelStyle}>Data e ora</label>
-                <input type="datetime-local" style={inputStyle} />
+                <input type="datetime-local" value={pubDate} onChange={e => setPubDate(e.target.value)} style={inputStyle} />
                 <div style={{ fontSize: 11.5, color: 'var(--text-muted)', marginTop: 5 }}>Instagram consente di programmare fino a 75 giorni in anticipo.</div>
               </div>
             )}
@@ -1727,8 +1798,8 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
             </div>
             <div><label style={labelStyle}>Hashtags</label><input value={hashtags} onChange={e => setHashtags(e.target.value)} placeholder="#immobiliare #casainvendita" style={inputStyle} /></div>
             <div><label style={labelStyle}>Primo commento (opzionale)</label><input value={firstComment} onChange={e => setFirstComment(e.target.value)} placeholder="Commento automatico dopo la pubblicazione..." style={inputStyle} /></div>
-            <Box as="button" onClick={() => { toast('Post programmato con successo', 'check'); setStep(1); }} style={s('border:none;background:#3B83F6;color:var(--bg-card);font-size:13.5px;font-weight:700;padding:12px 16px;border-radius:8px;cursor:pointer;min-height:38px;margin-top:4px')} hover={s('background:#2b6fe0')}>
-              {pubMode === 'schedule' ? 'Programma' : 'Pubblica ora'}
+            <Box as="button" onClick={handlePublish} disabled={publishing} style={s('border:none;background:#3B83F6;color:var(--bg-card);font-size:13.5px;font-weight:700;padding:12px 16px;border-radius:8px;cursor:' + (publishing ? 'default' : 'pointer') + ';min-height:38px;margin-top:4px;opacity:' + (publishing ? 0.6 : 1))} hover={publishing ? undefined : s('background:#2b6fe0')}>
+              {publishing ? 'Pubblicazione…' : (pubMode === 'schedule' ? 'Programma' : 'Pubblica ora')}
             </Box>
           </div>
         </div>
@@ -2515,6 +2586,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
           if (cancelled) return;
           if (p?.done && p.outputUrl) {
             setVideoJobs(patchVideoJob(job.id, { stage: 'done', progress: 1, outputUrl: p.outputUrl }));
+            if (routeRef.current !== 'media') setGalleryUnseen(n => n + 1); // video pronto -> badge galleria
           } else if (p?.error || (p?.done && (p as unknown as { fatalErrorEncountered?: string }).fatalErrorEncountered)) {
             setVideoJobs(patchVideoJob(job.id, { stage: 'failed', error: p.error || (p as unknown as { fatalErrorEncountered?: string }).fatalErrorEncountered }));
           } else {
@@ -2647,9 +2719,14 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
   const contentRef = React.useRef<HTMLDivElement>(null);
   const [routeKey, setRouteKey] = useState(0);
   const [studioPhoto, setStudioPhoto] = useState<string | null>(null);
-  const go = useCallback((r: string, params?: { photoUrl?: string }) => { 
-    setRoute(r); 
-    setRouteKey(k => k + 1); 
+  // Badge "+N" sulla voce Galleria: contenuti creati non ancora visti.
+  const [galleryUnseen, setGalleryUnseen] = useState(0);
+  const routeRef = useRef(route);
+  useEffect(() => { routeRef.current = route; }, [route]);
+  const go = useCallback((r: string, params?: { photoUrl?: string }) => {
+    setRoute(r);
+    setRouteKey(k => k + 1);
+    if (r === 'media') setGalleryUnseen(0);
     if ((r === 'studio' || r === 'video') && params?.photoUrl) setStudioPhoto(params.photoUrl);
     else if (r !== 'studio' && r !== 'video') setStudioPhoto(null);
     setProjOpen(false); setTrayOpen(false); setProfileOpen(false); contentRef.current?.scrollTo(0, 0); 
@@ -2923,6 +3000,11 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                     <Box key={it.route} onClick={tourStep !== null ? undefined : () => { go(it.route); setMobileMenuOpen(false); }} title={it.label} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', margin: '1px 10px', borderRadius: 12, cursor: tourStep !== null ? 'default' : 'pointer', background: highlighted ? '#f1efe9' : 'transparent', color: highlighted ? 'var(--text-main)' : 'var(--text-sec)', fontWeight: highlighted ? 700 : 500, fontSize: 14, whiteSpace: 'nowrap', minHeight: 38 }} hover={tourStep !== null ? {} : { background: 'var(--bg-hover)' }}>
                       <Icon name={it.icon} size={18} color={highlighted ? 'var(--text-main)' : 'var(--text-sec)'} />
                       {!collapsed && <span>{it.label}</span>}
+                      {it.route === 'media' && galleryUnseen > 0 && (
+                        <span style={{ marginLeft: 'auto', flexShrink: 0, background: '#3B83F6', color: '#fff', fontSize: 11, fontWeight: 700, lineHeight: 1, width: 20, height: 20, padding: 0, borderRadius: 6, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                          +{galleryUnseen}
+                        </span>
+                      )}
                     </Box>
                   );
                 })}
@@ -3251,8 +3333,9 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                   fetchUserBatches().then(setBatches);
                 }}
                 onGoPlan={() => go('account')}
-                onGoPost={(url) => go('studio', { photoUrl: url })}
+                onGoPost={() => go('studio')}
                 onGoVideo={(url) => go('video', { photoUrl: url })}
+                onCreated={() => setGalleryUnseen(n => n + 1)}
                 demoMode={tourStep !== null}
                 lockBrand={isFreePlan}
               />
