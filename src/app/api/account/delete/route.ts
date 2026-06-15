@@ -8,30 +8,33 @@ const admin = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-// Best-effort: cancella subito gli abbonamenti Stripe attivi del cliente, così un
-// account eliminato non continua a essere fatturato. Non blocca la cancellazione
-// account se Stripe fallisce.
-async function cancelStripeSubscriptions(customerId: string) {
+// Best-effort: annulla SUBITO la subscription Stripe, così un account eliminato
+// non continua a essere fatturato. Non blocca la cancellazione account se Stripe
+// fallisce. Cancella per id subscription e (se ricavabile) tutte quelle del customer.
+async function cancelStripeSubscription(subscriptionId: string) {
   const key = process.env.STRIPE_SECRET_KEY;
-  if (!key) return;
+  if (!key) { console.error('cancelStripeSubscription: STRIPE_SECRET_KEY mancante'); return; }
   try {
-    const list = await fetch(
-      `https://api.stripe.com/v1/subscriptions?customer=${encodeURIComponent(customerId)}&status=all&limit=100`,
-      { headers: { Authorization: `Bearer ${key}` } }
-    );
-    const json = await list.json();
-    if (!list.ok || !Array.isArray(json?.data)) return;
-    const active = json.data.filter((s: any) => s.status === 'active' || s.status === 'trialing' || s.status === 'past_due');
-    await Promise.all(
-      active.map((s: any) =>
-        fetch(`https://api.stripe.com/v1/subscriptions/${s.id}`, {
-          method: 'DELETE',
-          headers: { Authorization: `Bearer ${key}` },
-        }).catch(() => null)
-      )
-    );
+    // 1) annulla la subscription nota
+    const res = await fetch(`https://api.stripe.com/v1/subscriptions/${subscriptionId}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${key}` },
+    });
+    const sub = await res.json();
+    if (!res.ok) { console.error('cancel sub failed:', sub?.error?.message); return; }
+    // 2) per sicurezza, annulla eventuali altre subscription attive dello stesso customer
+    const customerId = sub?.customer;
+    if (customerId) {
+      const list = await fetch(`https://api.stripe.com/v1/subscriptions?customer=${encodeURIComponent(customerId)}&status=active&limit=100`, { headers: { Authorization: `Bearer ${key}` } });
+      const json = await list.json();
+      if (list.ok && Array.isArray(json?.data)) {
+        await Promise.all(json.data.map((s: any) =>
+          fetch(`https://api.stripe.com/v1/subscriptions/${s.id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${key}` } }).catch(() => null)
+        ));
+      }
+    }
   } catch (err) {
-    console.error('cancelStripeSubscriptions error:', (err as Error)?.message);
+    console.error('cancelStripeSubscription error:', (err as Error)?.message);
   }
 }
 
@@ -44,14 +47,15 @@ export async function DELETE(req: NextRequest) {
     const { data: { user }, error: authErr } = await admin.auth.getUser(token);
     if (authErr || !user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
 
-    // Cancella eventuali abbonamenti Stripe prima di eliminare l'utente
+    // Cancella la subscription Stripe PRIMA di eliminare l'utente (colonna reale:
+    // stripe_agency_subscription_id, NON stripe_customer_id che non esiste).
     const { data: credits } = await admin
       .from('user_credits')
-      .select('stripe_customer_id')
+      .select('stripe_agency_subscription_id')
       .eq('user_id', user.id)
       .single();
-    if (credits?.stripe_customer_id) {
-      await cancelStripeSubscriptions(credits.stripe_customer_id);
+    if (credits?.stripe_agency_subscription_id) {
+      await cancelStripeSubscription(credits.stripe_agency_subscription_id);
     }
 
     // Hard delete: le righe dipendenti vengono rimosse via ON DELETE CASCADE / SET NULL
