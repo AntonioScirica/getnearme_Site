@@ -310,10 +310,10 @@ const PLAN_TO_SUB_TYPE: Record<string, string> = {
 // Voci dalla landing (uguali per tutti i piani). Differenza tra piani = prezzo.
 // Quote uguali: 200 foto AI + 4 video AI/mese (margini ~81-91%).
 const PLAN_FEATURES = [
-  '250 foto AI homestaging/mese',
-  '4 video AI/mese',
-  'Template Post & Stories Social',
-  'Editor Video Automatico',
+  'Foto AI homestaging per i tuoi immobili',
+  'Video AI pronti per i social',
+  'Post social illimitati',
+  'Editor Video Limitato',
   'Contenuti 100% Brandizzati',
   'Supporto prioritario',
 ];
@@ -321,27 +321,42 @@ const PLAN_FEATURES = [
 const FREE_FEATURES = [
   '5 foto AI homestaging',
   '1 video AI',
+  '5 montaggi video',
   '5 post social',
-  'Template Post & Stories Social',
 ];
 
 const PLANS = [
   {
-    id: 'free', name: 'Free', price: 0, period: '', badge: null, popular: false,
+    id: 'free', name: 'Free', price: 0, oldPrice: 0, period: '', badge: null, popular: false,
     features: FREE_FEATURES,
     color: 'var(--text-muted)', quotaFoto: 5, quotaVideo: 1, quotaPost: 5,
   },
   {
-    id: 'monthly', name: 'Mensile', price: 59, period: '/mese', badge: null, popular: false,
+    id: 'monthly', name: 'Mensile', price: 59, oldPrice: 150, period: '/mese', badge: null, popular: false,
     features: PLAN_FEATURES,
     color: 'var(--text-main)', quotaFoto: 250, quotaVideo: 4, quotaPost: 999,
   },
   {
-    id: 'annual', name: 'Annuale', price: 590, period: '/anno', badge: 'Più scelto', popular: true,
+    id: 'annual', name: 'Annuale', price: 590, oldPrice: 1800, period: '/anno', badge: null, popular: true,
     features: PLAN_FEATURES,
     color: 'var(--text-main)', quotaFoto: 250, quotaVideo: 4, quotaPost: 999,
   },
 ];
+
+// Brand GetNearMe imposto e BLOCCATO per gli account free: watermark + copertina
+// finale dei video, e i loghi mostrati nella sezione Brand. URL assoluti (origin
+// corrente) cosi' che il Lambda di render possa fetcharli per watermark/outro.
+function gnmBrandLogos(): import('@/lib/brand').BrandLogos {
+  const o = typeof window !== 'undefined' ? window.location.origin : 'https://www.getnearme.it';
+  return {
+    logo_white_h: `${o}/assets/svg/logo_scritta_white.svg`,
+    logo_white_v: `${o}/dashboard/logo-icon-white.svg`,
+    logo_black_h: `${o}/assets/svg/logo_scritta_black.svg`,
+    logo_black_v: `${o}/dashboard/logo-icon-black.svg`,
+    logo_colored_h: `${o}/assets/svg/logo_scritta_black.svg`,
+    logo_colored_v: `${o}/dashboard/logo-icon.svg`,
+  };
+}
 
 function redirectToStripePayment(planId: string, userId: string, email: string) {
   const subType = PLAN_TO_SUB_TYPE[planId];
@@ -740,6 +755,10 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
           descrizione: fields.descrizione,
           nPost: (project.nPost || 0) + 1,
         };
+        // nPost non viene persistito dall'API progetti -> al refresh si perde.
+        // Flag locale per progetto: la Home segna "Post Social pronti" in modo
+        // affidabile appena scarichi un post (immagine o video).
+        try { localStorage.setItem('gnm_post_done_' + project.id, '1'); } catch { /* quota */ }
         updateProject(project.id, updates).catch(e => console.error("updateProject failed", e));
         onProjectUpdate?.(updates);
       }
@@ -909,6 +928,7 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
           descrizione: fields.descrizione,
           nPost: (project.nPost || 0) + count,
         };
+        try { localStorage.setItem('gnm_post_done_' + project.id, '1'); } catch { /* quota */ }
         updateProject(project.id, updates).catch(e => console.error("updateProject failed", e));
         onProjectUpdate?.(updates);
       }
@@ -957,6 +977,7 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
           descrizione: fields.descrizione,
           nPost: (project.nPost || 0) + 1,
         };
+        try { localStorage.setItem('gnm_post_done_' + project.id, '1'); } catch { /* quota */ }
         updateProject(project.id, updates).then(() => onProjectUpdate?.(updates)).catch(() => {});
       }
     } catch (err: unknown) {
@@ -1035,7 +1056,7 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
   const pvH = curFmt.h * pvScale;
 
   return (
-    <div style={s('max-width:1240px;margin:0 auto;padding:16px 32px 64px')}>
+    <div style={s('max-width:1240px;margin:0 auto;padding:32px 32px 64px')}>
       {/* header */}
       <div style={s('display:flex;align-items:center;gap:12px;margin-bottom:22px')}>
         {step > 1 && (
@@ -1044,13 +1065,13 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
           </Box>
         )}
         <div style={s('flex:1;min-width:0')}>
-          <h1 style={s('margin:0 0 2px;font-size:22px;font-weight:800;letter-spacing:-.4px')}>{stepTitles[step]}</h1>
+          <h1 style={s('margin:0 0 4px;font-size:25px;font-weight:800;letter-spacing:-.5px')}>{stepTitles[step]}</h1>
           <div style={s('font-size:13px;color:var(--text-muted)')}>{stepSubs[step]} · passo {step === 1 ? 1 : step === 3 ? 2 : 3} di 3</div>
         </div>
         {postQuota && !postQuota.unlimited && (
-          <div style={s('display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #f0ede7;border-radius:99px;padding:8px 16px;flex:none') as React.CSSProperties}>
+          <div onClick={() => { if (postQuota.remaining <= 0) go?.('account'); }} style={s(`display:inline-flex;align-items:center;justify-content:center;gap:8px;background:#fff;border:1px solid ${postQuota.remaining > 0 ? '#f0ede7' : '#fecaca'};border-radius:99px;padding:8px 16px;flex:none${postQuota.remaining <= 0 ? ';cursor:pointer' : ''}`) as React.CSSProperties}>
             <Icon name="megaphone" size={15} color={postQuota.remaining > 0 ? '#3B83F6' : '#dc2626'} />
-            <span style={{ fontSize: 13, fontWeight: 700 }}>{Math.max(0, postQuota.remaining)}/5 post</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: postQuota.remaining > 0 ? undefined : '#dc2626' }}>{Math.max(0, postQuota.remaining)}/5 post</span>
           </div>
         )}
       </div>
@@ -1742,7 +1763,6 @@ function AccountScreen({ credits, toast, go, userData }: { credits: number; toas
   const activePlan = userData?.subscriptionType ? (SUB_TYPE_TO_PLAN[userData.subscriptionType] ?? 'free') : 'free';
   const currentPlan = PLANS.find(p => p.id === activePlan) ?? PLANS[0];
   const isFree = currentPlan.id === 'free';
-  const monthlyCost = PLANS.find(p => p.id === 'monthly')?.price ?? 0;
 
   return (
     <div style={s('max-width:1160px;margin:0 auto;padding:32px 32px 64px')}>
@@ -1790,7 +1810,6 @@ function AccountScreen({ credits, toast, go, userData }: { credits: number; toas
         <div className="max-md:!grid-cols-1" style={s('display:grid;grid-template-columns:repeat(3,1fr);gap:20px;align-items:stretch')}>
           {PLANS.map((plan) => {
             const active = plan.id === activePlan;
-            const savings = plan.id === 'annual' && monthlyCost > 0 ? (monthlyCost * 12 - plan.price) : 0;
             return (
               <Box key={plan.id} style={{
                 background: active ? '#3B83F6' : 'var(--bg-card)',
@@ -1823,13 +1842,28 @@ function AccountScreen({ credits, toast, go, userData }: { credits: number; toas
                   {active && <span style={{ fontSize: 11, fontWeight: 800, background: 'rgba(255,255,255,.2)', color: 'var(--bg-card)', padding: '5px 14px', borderRadius: 20, letterSpacing: '.03em' }}>ATTIVO</span>}
                 </div>
 
-                <div style={s('display:flex;align-items:baseline;gap:6px')}>
-                  <span style={{ fontSize: 48, fontWeight: 800, color: active ? 'var(--bg-card)' : 'var(--text-main)', letterSpacing: -2, lineHeight: 1 }}>{plan.price}€</span>
-                  <span style={{ fontSize: 16, fontWeight: 600, color: active ? 'rgba(255,255,255,.55)' : '#b3aca1' }}>{plan.period}</span>
-                </div>
-                {savings > 0 && (
-                  <div style={{ fontSize: 12.5, fontWeight: 700, color: active ? 'rgba(255,255,255,.7)' : '#10b981', marginTop: 4 }}>Risparmi {savings}€/anno vs Mensile</div>
-                )}
+                {(() => {
+                  const hasDiscount = plan.price > 0 && !!plan.oldPrice && plan.oldPrice > plan.price;
+                  const discountPct = hasDiscount ? Math.round((1 - plan.price / plan.oldPrice) * 100) : 0;
+                  const saved = hasDiscount ? plan.oldPrice - plan.price : 0;
+                  return (
+                    <>
+                      {hasDiscount && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                          <span style={{ fontSize: 16, fontWeight: 700, textDecoration: 'line-through', color: active ? 'rgba(255,255,255,.6)' : '#b3aca1' }}>{plan.oldPrice}€</span>
+                          <span style={{ background: active ? 'rgba(255,255,255,.2)' : '#3B83F6', color: active ? 'var(--bg-card)' : '#fff', fontSize: 11, fontWeight: 800, padding: '3px 9px', borderRadius: 999 }}>-{discountPct}%</span>
+                        </div>
+                      )}
+                      <div style={s('display:flex;align-items:baseline;gap:6px')}>
+                        <span style={{ fontSize: 48, fontWeight: 800, color: active ? 'var(--bg-card)' : 'var(--text-main)', letterSpacing: -2, lineHeight: 1 }}>{plan.price}€</span>
+                        <span style={{ fontSize: 16, fontWeight: 600, color: active ? 'rgba(255,255,255,.55)' : '#b3aca1' }}>{plan.period}</span>
+                      </div>
+                      {hasDiscount && (
+                        <div style={{ fontSize: 12.5, fontWeight: 800, color: active ? 'rgba(255,255,255,.8)' : '#009874', marginTop: 6 }}>RISPARMI {saved}€{plan.period}</div>
+                      )}
+                    </>
+                  );
+                })()}
 
                 <div style={{ height: 1, background: active ? 'rgba(255,255,255,.15)' : 'var(--border-light)', margin: '20px 0' }} />
 
@@ -1936,7 +1970,7 @@ function SettingsScreen({ toast }: { toast: (msg: string, icon?: string) => void
   };
 
   return (
-    <div style={s('max-width:1160px;margin:0 auto;padding:36px 32px 64px')}>
+    <div style={s('max-width:1160px;margin:0 auto;padding:32px 32px 64px')}>
       <h1 style={s('margin:0 0 4px;font-size:27px;font-weight:800;letter-spacing:-.5px')}>Impostazioni</h1>
       <div style={s('color:var(--text-muted);font-size:14px;margin-bottom:28px')}>Gestisci il tuo account e le preferenze dell'app.</div>
 
@@ -2051,7 +2085,7 @@ function AssistenzaScreen({ toast, email, defaultType = 'support' }: { toast: (m
   };
 
   return (
-    <div style={s('max-width:800px;margin:0 auto;padding:36px 32px 64px')}>
+    <div style={s('max-width:800px;margin:0 auto;padding:32px 32px 64px')}>
       <h1 style={s('margin:0 0 4px;font-size:27px;font-weight:800;letter-spacing:-.5px')}>Assistenza</h1>
       <div style={s('color:var(--text-muted);font-size:14px;margin-bottom:32px')}>Come possiamo aiutarti? Inviaci una segnalazione o richiedi supporto tecnico.</div>
 
@@ -2096,7 +2130,7 @@ function AssistenzaScreen({ toast, email, defaultType = 'support' }: { toast: (m
   );
 }
 
-function BrandScreen({ toast, brand: brandProp, setBrand: setBrandParent, brandRole, demoMode }: { toast: (msg: string, icon?: string) => void; brand: BrandSettings; setBrand: (b: BrandSettings) => void; brandRole: 'owner' | 'member' | null; demoMode?: boolean }) {
+function BrandScreen({ toast, brand: brandProp, setBrand: setBrandParent, brandRole, demoMode, locked, go }: { toast: (msg: string, icon?: string) => void; brand: BrandSettings; setBrand: (b: BrandSettings) => void; brandRole: 'owner' | 'member' | null; demoMode?: boolean; locked?: boolean; go?: (r: string) => void }) {
   const [brand, setBrand] = React.useState<BrandState>(() => {
     const base = brandProp as unknown as BrandState;
     if (!demoMode) return base;
@@ -2168,6 +2202,7 @@ function BrandScreen({ toast, brand: brandProp, setBrand: setBrandParent, brandR
   const set = <K extends keyof BrandState>(k: K, v: BrandState[K]) => setBrand(b => ({ ...b, [k]: v }));
 
   const handleLogoUpload = async (variant: string, file: File) => {
+    if (locked) { toast('Brand GetNearMe incluso nel piano Free. Passa a un piano per usare il tuo logo.', 'x'); return; }
     if (file.size > 500 * 1024) { toast('File troppo grande (max 500 KB)', 'x'); return; }
     if (!['image/png', 'image/jpeg', 'image/svg+xml', 'image/webp'].includes(file.type)) { toast('Formato non supportato', 'x'); return; }
     // Optimistic local preview
@@ -2188,6 +2223,7 @@ function BrandScreen({ toast, brand: brandProp, setBrand: setBrandParent, brandR
   };
 
   const removeLogo = async (variant: string) => {
+    if (locked) { toast('Brand GetNearMe incluso nel piano Free. Passa a un piano per personalizzarlo.', 'x'); return; }
     setBrand(b => ({ ...b, logos: { ...b.logos, [variant]: null } }));
     const ok = await removeBrandLogo(scope, variant);
     if (ok) {
@@ -2207,6 +2243,13 @@ function BrandScreen({ toast, brand: brandProp, setBrand: setBrandParent, brandR
         <h1 style={s('margin:0 0 4px;font-size:25px;font-weight:800;letter-spacing:-.5px')}>Brand</h1>
         <div style={s('color:var(--text-muted);font-size:14px')}>Personalizza loghi, colori e informazioni che appaiono nei tuoi report e contenuti.</div>
       </div>
+
+      {locked && (
+        <div onClick={() => go?.('account')} style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#eef4fe', border: '1px solid #cfe0fb', borderRadius: 12, padding: '12px 16px', marginBottom: 20, cursor: go ? 'pointer' : 'default' }}>
+          <Icon name="lock" size={16} color="#1d5fd0" />
+          <div style={{ fontSize: 13, color: '#1d5fd0', fontWeight: 600 }}>Sul piano Free i contenuti usano il brand GetNearMe. <span style={{ textDecoration: 'underline', fontWeight: 800 }}>Passa a un piano</span> per caricare il tuo logo e personalizzare tutto.</div>
+        </div>
+      )}
 
       {/* ── LOGO SECTION ── */}
       <div style={s('background:var(--bg-card);border:1px solid var(--border-light);border-radius:14px;padding:24px 28px;margin-bottom:20px')}>
@@ -2539,8 +2582,11 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
   const [cmdQuery, setCmdQuery] = useState('');
   const [toasts, setToasts] = useState<Toast[]>([]);
   const { data: brandData, mutate: mutateBrand } = useSWR('brand', fetchBrand);
-  const brand = brandData?.settings ?? DEFAULT_BRAND_SETTINGS;
+  const rawBrand = brandData?.settings ?? DEFAULT_BRAND_SETTINGS;
   const brandRole = brandData?.role ?? null;
+  // Free: brand GetNearMe forzato (loghi non rimovibili, usati in watermark/outro).
+  const isFreePlan = !userData?.subscriptionType || userData.subscriptionType === 'free';
+  const brand = useMemo(() => isFreePlan ? { ...rawBrand, logos: gnmBrandLogos() } : rawBrand, [isFreePlan, rawBrand]);
   
   const setBrand = useCallback((updater: React.SetStateAction<BrandSettings>) => {
     mutateBrand(prev => {
@@ -2820,9 +2866,11 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
               <div style={s('display:flex;align-items:center;justify-content:space-between')}>
                 {tourStep > 0 && tdef.sel !== '@center' && <Box as="button" onClick={() => tourGo(tourStep - 1)} style={s('border:1px solid var(--border-main);background:var(--bg-card);font-size:12.5px;font-weight:700;padding:9px 16px;border-radius:8px;cursor:pointer;min-height:38px')} hover={s('background:var(--bg-hover)')}>Indietro</Box>}
                 {tdef.sel === '@center'
-                  ? <Box as="button" onClick={() => tourGo(tourStep + 1)} style={s('border:none;background:#3B83F6;color:var(--bg-card);font-size:13.5px;font-weight:700;padding:12px 18px;border-radius:8px;cursor:pointer;width:100%;text-align:center;display:flex;align-items:center;justify-content:center;min-height:44px')} hover={s('background:#2b6fe0;transform:translateY(-1px);box-shadow:0 8px 20px rgba(59,131,246,.25)')}>Avanti</Box>
+                  ? (tourReplayRef.current
+                    ? <Box as="button" onClick={() => { tourReplayRef.current = false; setTourStep(null); setTourRect(null); setTourRect2(null); setProjOpen(false); go('home'); }} style={s('border:none;background:#3B83F6;color:var(--bg-card);font-size:13.5px;font-weight:700;padding:12px 18px;border-radius:8px;cursor:pointer;width:100%;text-align:center;display:flex;align-items:center;justify-content:center;min-height:44px')} hover={s('background:#2b6fe0;transform:translateY(-1px);box-shadow:0 8px 20px rgba(59,131,246,.25)')}>Ho capito</Box>
+                    : <Box as="button" onClick={() => tourGo(tourStep + 1)} style={s('border:none;background:#3B83F6;color:var(--bg-card);font-size:13.5px;font-weight:700;padding:12px 18px;border-radius:8px;cursor:pointer;width:100%;text-align:center;display:flex;align-items:center;justify-content:center;min-height:44px')} hover={s('background:#2b6fe0;transform:translateY(-1px);box-shadow:0 8px 20px rgba(59,131,246,.25)')}>Avanti</Box>)
                   : tdef.sel === '[data-tour-dropdown]'
-                  ? <Box as="button" onClick={() => { const replay = tourReplayRef.current; tourReplayRef.current = false; if (replay) { setTourStep(null); setTourRect(null); setTourRect2(null); setProjOpen(false); } else { setTourStep(null); setTourRect(null); setTourRect2(null); setProjOpen(false); setNewProjOpen(true); } }} style={s('border:none;background:#3B83F6;color:var(--bg-card);font-size:13.5px;font-weight:700;padding:12px 18px;border-radius:8px;cursor:pointer;width:100%;text-align:center;display:flex;align-items:center;justify-content:center;min-height:44px')} hover={s('background:#2b6fe0;transform:translateY(-1px);box-shadow:0 8px 20px rgba(59,131,246,.25)')}>{tourReplayRef.current ? 'Ho capito' : 'Aggiungi immobile'}</Box>
+                  ? <Box as="button" onClick={() => { const replay = tourReplayRef.current; tourReplayRef.current = false; if (replay) { setTourStep(null); setTourRect(null); setTourRect2(null); setProjOpen(false); go('home'); } else { setTourStep(null); setTourRect(null); setTourRect2(null); setProjOpen(false); setNewProjOpen(true); } }} style={s('border:none;background:#3B83F6;color:var(--bg-card);font-size:13.5px;font-weight:700;padding:12px 18px;border-radius:8px;cursor:pointer;width:100%;text-align:center;display:flex;align-items:center;justify-content:center;min-height:44px')} hover={s('background:#2b6fe0;transform:translateY(-1px);box-shadow:0 8px 20px rgba(59,131,246,.25)')}>{tourReplayRef.current ? 'Ho capito' : 'Aggiungi immobile'}</Box>
                   : <Box as="button" onClick={() => tourGo(tourStep + 1)} style={s('border:none;background:#3B83F6;color:var(--bg-card);font-size:12.5px;font-weight:700;padding:9px 18px;border-radius:8px;cursor:pointer;margin-left:auto;min-height:38px')} hover={s('background:#2b6fe0')}>Avanti</Box>}
               </div>
             </div>
@@ -2879,7 +2927,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                   <div style={{ background: 'var(--bg-card)', borderRadius: 12, boxShadow: '0 16px 48px rgba(33,31,28,.16)', border: '1px solid var(--border-light)', overflow: 'hidden' }}>
                     <div style={s('padding:4px')}>
                       {[
-                        { icon: 'play-circle', label: 'Tutorial', action: () => { setProfileOpen(false); setWelcomeOpen(true); } },
+                        { icon: 'play-circle', label: 'Tutorial', action: () => { setProfileOpen(false); tourReplayRef.current = true; setWelcomeOpen(true); } },
                         { icon: 'message-square', label: 'Suggerimenti', action: () => { setProfileOpen(false); go('assistenza?type=feature'); } },
                         { icon: 'settings', label: 'Impostazioni', action: () => { setProfileOpen(false); go('impostazioni'); } },
                         { icon: 'life-buoy', label: 'Assistenza', action: () => { setProfileOpen(false); go('assistenza'); } },
@@ -2955,7 +3003,16 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                     ))}
                   </div>
                   <div style={{ padding: '12px', borderTop: '1px solid var(--border-light)' }}>
-                    <Box data-tour="new-project" onClick={() => { setProjOpen(false); setNewProjOpen(true); setTourStep(null); setTourRect(null); setTourRect2(null); setTourCtaRect(null); }} style={s(`display:flex;align-items:center;gap:10px;padding:12px 16px;border-radius:10px;cursor:pointer;color:${projList.length === 0 ? 'var(--bg-card)' : '#1d5fd0'};background:${projList.length === 0 ? '#3B83F6' : 'transparent'};font-weight:700;font-size:13px;${tourStep !== null && tdef.sel === '[data-tour-dropdown]' ? 'box-shadow:0 0 0 3px rgba(255,255,255,.7),0 0 20px rgba(255,255,255,.4);animation:tour-cta-glow 2s ease-in-out infinite;pointer-events:auto;' : ''}`)} hover={s(`background:${projList.length === 0 ? '#2b6fe0' : '#f6faff'}`)}><Icon name="plus" size={16} color={projList.length === 0 ? 'var(--bg-card)' : '#1d5fd0'} />{projList.length === 0 ? 'Crea il tuo primo immobile' : 'Nuovo immobile'}</Box>
+                    <Box data-tour="new-project" onClick={() => {
+                      const inTourDropdown = tourStep !== null && TOUR_DEFS[tourStep]?.sel === '[data-tour-dropdown]';
+                      if (inTourDropdown && tourReplayRef.current) {
+                        // Replay del tutorial: l'ultima CTA chiude e basta, niente nuovo progetto.
+                        tourReplayRef.current = false;
+                        setProjOpen(false); setTourStep(null); setTourRect(null); setTourRect2(null); setTourCtaRect(null); go('home');
+                        return;
+                      }
+                      setProjOpen(false); setNewProjOpen(true); setTourStep(null); setTourRect(null); setTourRect2(null); setTourCtaRect(null);
+                    }} style={s(`display:flex;align-items:center;gap:10px;padding:12px 16px;border-radius:10px;cursor:pointer;color:${projList.length === 0 ? 'var(--bg-card)' : '#1d5fd0'};background:${projList.length === 0 ? '#3B83F6' : 'transparent'};font-weight:700;font-size:13px;${tourStep !== null && tdef.sel === '[data-tour-dropdown]' ? 'box-shadow:0 0 0 3px rgba(255,255,255,.7),0 0 20px rgba(255,255,255,.4);animation:tour-cta-glow 2s ease-in-out infinite;pointer-events:auto;' : ''}`)} hover={s(`background:${projList.length === 0 ? '#2b6fe0' : '#f6faff'}`)}><Icon name={tourStep !== null && tdef.sel === '[data-tour-dropdown]' && tourReplayRef.current ? 'check' : 'plus'} size={16} color={projList.length === 0 ? 'var(--bg-card)' : '#1d5fd0'} />{tourStep !== null && tdef.sel === '[data-tour-dropdown]' && tourReplayRef.current ? 'Ho capito' : (projList.length === 0 ? 'Crea il tuo primo immobile' : 'Nuovo immobile')}</Box>
                   </div>
                 </div>
               )}
@@ -3169,6 +3226,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                 onGoPost={(url) => go('studio', { photoUrl: url })}
                 onGoVideo={(url) => go('video', { photoUrl: url })}
                 demoMode={tourStep !== null}
+                lockBrand={isFreePlan}
               />
             ) : route === 'media' ? (
               <MediaScreen
@@ -3181,19 +3239,19 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                 demoJobsDone={demoJobsDone}
               />
             ) : route === 'video' ? (
-              <VideoAIScreen key="video" toast={toast} routeKey={routeKey} brand={brand} project={active || (tourStep !== null ? DEMO_PROJECTS[0] : undefined)} onVideoJob={registerVideoJob} activeRenders={videoJobs.filter(j => j.stage === 'render' && !j.dismissed).length} initialPhotoUrl={studioPhoto} preselect={studioPhoto ? 'walkthrough' : undefined} demoMode={tourStep !== null} />
+              <VideoAIScreen key="video" toast={toast} routeKey={routeKey} brand={brand} project={active || (tourStep !== null ? DEMO_PROJECTS[0] : undefined)} onVideoJob={registerVideoJob} activeRenders={videoJobs.filter(j => j.stage === 'render' && !j.dismissed).length} initialPhotoUrl={studioPhoto} preselect={studioPhoto ? 'walkthrough' : undefined} demoMode={tourStep !== null} go={go} lockBrand={isFreePlan} />
             ) : route === 'montaggio' ? (
-              <VideoAIScreen key="montaggio" toast={toast} routeKey={routeKey} brand={brand} preselect="montaggio" project={active || (tourStep !== null ? DEMO_PROJECTS[0] : undefined)} onVideoJob={registerVideoJob} activeRenders={videoJobs.filter(j => j.stage === 'render' && !j.dismissed).length} demoMode={tourStep !== null} />
+              <VideoAIScreen key="montaggio" toast={toast} routeKey={routeKey} brand={brand} preselect="montaggio" project={active || (tourStep !== null ? DEMO_PROJECTS[0] : undefined)} onVideoJob={registerVideoJob} activeRenders={videoJobs.filter(j => j.stage === 'render' && !j.dismissed).length} demoMode={tourStep !== null} go={go} lockBrand={isFreePlan} />
             ) : route === 'account' ? (
               <AccountScreen credits={credits} toast={toast} go={go} userData={userData} />
             ) : route === 'brand' ? (
-              <BrandScreen toast={toast} brand={brand} setBrand={setBrand} brandRole={brandRole} demoMode={tourStep !== null} />
+              <BrandScreen toast={toast} brand={brand} setBrand={setBrand} brandRole={brandRole} demoMode={tourStep !== null} locked={isFreePlan} go={go} />
             ) : route === 'impostazioni' ? (
               <SettingsScreen toast={toast} />
             ) : route.startsWith('assistenza') ? (
               <AssistenzaScreen toast={toast} email={userData?.email ?? ''} defaultType={route.includes('type=feature') ? 'feature' : 'support'} />
             ) : (
-              <div style={s('max-width:1160px;margin:0 auto;padding:36px 32px 64px')}>
+              <div style={s('max-width:1160px;margin:0 auto;padding:32px 32px 64px')}>
                 <h1 style={s('margin:0 0 4px;font-size:27px;font-weight:800;letter-spacing:-.5px')}>{ROUTE_TITLES[route] ?? route}</h1>
                 <div style={s('color:var(--text-muted);font-size:14px;margin-bottom:28px')}>Schermata in arrivo nelle prossime fasi del porting.</div>
                 <div style={s('background:var(--bg-card);border:1.5px dashed var(--border-dark);border-radius:12px;padding:52px;text-align:center;max-width:560px')}>

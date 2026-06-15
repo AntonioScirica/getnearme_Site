@@ -358,7 +358,7 @@ function DemoMontaggioClips() {
   );
 }
 
-export default function VideoAIScreen({ toast, routeKey, brand, preselect, project, onVideoJob, activeRenders, initialPhotoUrl, demoMode }: {
+export default function VideoAIScreen({ toast, routeKey, brand, preselect, project, onVideoJob, activeRenders, initialPhotoUrl, demoMode, go, lockBrand }: {
   toast: (msg: string, icon?: string) => void;
   routeKey: number;
   brand: BrandSettings;
@@ -368,6 +368,8 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
   activeRenders?: number;
   initialPhotoUrl?: string | null;
   demoMode?: boolean;
+  go?: (r: string) => void;
+  lockBrand?: boolean; // free: watermark + copertina finale GetNearMe non rimovibili
 }) {
   const [templates, setTemplates] = React.useState<VideoTemplate[]>(DEFAULT_VIDEO_TEMPLATES);
   const [avatars, setAvatars] = React.useState<VideoAvatar[]>([]);
@@ -456,6 +458,8 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
   const [watermarkEnabled, setWatermarkEnabled] = React.useState(true);
   const [watermarkPosition, setWatermarkPosition] = React.useState('bottom-right');
   const [watermarkOpacity, setWatermarkOpacity] = React.useState(100);
+  // Free: watermark + copertina finale GetNearMe sempre attivi (non disattivabili).
+  React.useEffect(() => { if (lockBrand) { setWatermarkEnabled(true); setOutroOn(true); } }, [lockBrand]);
   // render
   const [renderStage, setRenderStage] = React.useState<string | null>(null); // uploading|avatar|render|done|failed
   const [renderProgress, setRenderProgress] = React.useState(0);
@@ -729,7 +733,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
           <div style={{ fontSize: 13.5, fontWeight: 600 }}>Copertina finale</div>
           <div style={{ fontSize: 12, color: '#8c867d', marginTop: 2 }}>Chiusura con dissolvenza su bianco e logo al centro</div>
         </div>
-        <div onClick={() => { if (hasAnyLogo) setOutroOn(v => !v); }} title={hasAnyLogo ? '' : 'Carica un logo nella sezione Brand'} style={{ width: 40, height: 24, borderRadius: 99, background: outroOn && hasAnyLogo ? '#3B83F6' : '#d8d4cb', position: 'relative', cursor: hasAnyLogo ? 'pointer' : 'not-allowed', opacity: hasAnyLogo ? 1 : .5, transition: 'background .2s', flex: 'none' }}>
+        <div onClick={() => { if (lockBrand) { toast('Copertina finale GetNearMe inclusa nel piano Free. Passa a un piano per rimuoverla.', 'x'); return; } if (hasAnyLogo) setOutroOn(v => !v); }} title={lockBrand ? 'Inclusa nel piano Free' : (hasAnyLogo ? '' : 'Carica un logo nella sezione Brand')} style={{ width: 40, height: 24, borderRadius: 99, background: outroOn && hasAnyLogo ? '#3B83F6' : '#d8d4cb', position: 'relative', cursor: lockBrand ? 'not-allowed' : (hasAnyLogo ? 'pointer' : 'not-allowed'), opacity: lockBrand ? 1 : (hasAnyLogo ? 1 : .5), transition: 'background .2s', flex: 'none' }}>
           <span style={{ position: 'absolute', top: 3, left: outroOn && hasAnyLogo ? 19 : 3, width: 18, height: 18, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,.2)', transition: 'left .2s' }} />
         </div>
       </div>
@@ -772,8 +776,15 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
       }
       if (c && !c.unlimited && typeof c.remaining === 'number') setMontaggioQuota({ unlimited: false, remaining: c.remaining });
     } else if (quota && quota.remaining <= 0) {
-      setPacksOpen(true); // quota finita → mostra i pacchetti extra
+      if (lockBrand) { toast('Hai finito i video gratuiti. Passa a un piano per continuare.', 'x'); return; }
+      setPacksOpen(true); // quota finita (paganti) → mostra i pacchetti extra
       return;
+    } else if (quota && !quota.isAgency) {
+      // Contatore video scende SUBITO all'avvio (non a fine render): cosi' non
+      // si puo' avviare un secondo video sopra la quota mentre il primo gira.
+      // Lo scalo DB definitivo avviene a consegna (cron commit-quota); questo e'
+      // ottimistico e viene riallineato dal refetch.
+      setQuota(q => q ? { ...q, remaining: Math.max(0, q.remaining - 1) } : q);
     }
     abortRef.current = false;
     // Subito in background + job nel tray: l'utente non resta bloccato in
@@ -1095,15 +1106,21 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
   return (
     <div ref={rootRef} className="max-md:!px-4 max-md:!py-6" style={s('max-width:1160px;margin:0 auto;padding:32px 32px 104px')}>
       {step === 0 && (
-        <div className="max-md:!flex-col max-md:!items-start max-md:!gap-4" style={s('display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px')}>
+        <div className="max-md:!flex-col max-md:!items-start max-md:!gap-4" style={s('display:flex;align-items:center;justify-content:space-between;margin-bottom:24px')}>
           <div>
             <h1 style={s('margin:0 0 4px;font-size:25px;font-weight:800;letter-spacing:-.5px')}>{preselect === 'montaggio' ? 'Montaggio Automatico' : 'Video AI'}</h1>
             <div style={s('color:#8c867d;font-size:14px')}>{preselect === 'montaggio' ? "Carica le clip della casa: l'AI monta tutto con musica e cover." : 'Trasforma foto e clip in video pronti per i social.'}</div>
           </div>
           {quota && (quota.remaining > 0 ? (
-            <div style={s('display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #f0ede7;border-radius:99px;padding:8px 16px')}>
+            <div style={s('display:inline-flex;align-items:center;justify-content:center;gap:8px;background:#fff;border:1px solid #f0ede7;border-radius:99px;padding:8px 16px')}>
               <Icon name="film" size={15} color="#3B83F6" />
               <span style={{ fontSize: 13, fontWeight: 700 }}>{quota.remaining}/{quota.limit} video</span>
+            </div>
+          ) : lockBrand ? (
+            // Free esaurito: rosso + click -> pagina Piani.
+            <div onClick={() => go?.('account')} style={s('display:inline-flex;align-items:center;justify-content:center;gap:8px;background:#fff;border:1px solid #fecaca;border-radius:99px;padding:8px 16px;cursor:pointer') as React.CSSProperties}>
+              <Icon name="film" size={15} color="#dc2626" />
+              <span style={{ fontSize: 13, fontWeight: 700, color: '#dc2626' }}>0/{quota.limit} video</span>
             </div>
           ) : (
             <Box as="button" onClick={() => setPacksOpen(true)} style={s('display:flex;align-items:center;gap:8px;background:#3B83F6;color:#fff;border:none;border-radius:10px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer') as React.CSSProperties} hover={s('background:#2b6fe0')}>
@@ -1117,7 +1134,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
       {step === 0 && (
         <div className="max-md:!grid-cols-1" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
           {templates.filter(t => t.id !== 'montaggio').map(t => (
-            <Box key={t.id} onClick={() => { if (quota && quota.remaining <= 0) { setPacksOpen(true); return; } setTpl(t); setStep(NO_AVATAR_LAYOUTS.includes(t.layout || t.id) ? 2 : 1); }} style={{
+            <Box key={t.id} onClick={() => { if (quota && quota.remaining <= 0) { if (lockBrand) { toast('Hai finito i video gratuiti. Passa a un piano per continuare.', 'x'); } else { setPacksOpen(true); } return; } setTpl(t); setStep(NO_AVATAR_LAYOUTS.includes(t.layout || t.id) ? 2 : 1); }} style={{
               background: '#fff', border: '1px solid #f0ede7', borderRadius: 16, overflow: 'hidden', cursor: 'pointer',
               transition: 'box-shadow .15s, transform .15s',
             }} hover={{ boxShadow: '0 12px 32px rgba(33,31,28,.10)', transform: 'translateY(-2px)' }}>
@@ -1187,23 +1204,31 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
       {/* STEP 2 — media upload */}
       {step === 2 && tpl && (
         <div>
-          <div style={s('display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:4px')}>
-            <div style={s('font-size:16px;font-weight:800')}>
-              {layout === 'before_after' ? 'Carica le coppie prima/dopo'
-                : singlePhoto ? 'Carica la foto'
-                : layout === 'sottotitoli' ? 'Carica il tuo video (max 90s)'
-                : isPhotoTemplate ? `Carica da ${minClips} a ${maxClips} foto`
-                : layout === 'montaggio' ? `Carica da ${minClips} a ${maxClips} tra clip e foto`
-                : `Carica da ${minClips} a ${maxClips} clip video`}
-            </div>
-            {layout === 'montaggio' && montaggioQuota && !montaggioQuota.unlimited && (
-              <div style={s('display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #f0ede7;border-radius:99px;padding:8px 16px;flex:none') as React.CSSProperties}>
-                <Icon name="scissors" size={15} color={montaggioQuota.remaining > 0 ? '#3B83F6' : '#dc2626'} />
-                <span style={{ fontSize: 13, fontWeight: 700 }}>{Math.max(0, montaggioQuota.remaining)}/5 montaggi</span>
+          {layout === 'montaggio' ? (
+            <div className="max-md:!flex-col max-md:!items-start max-md:!gap-4" style={s('display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:24px')}>
+              <div>
+                <h1 style={s('margin:0 0 4px;font-size:25px;font-weight:800;letter-spacing:-.5px')}>Montaggio Automatico</h1>
+                <div style={s('color:#8c867d;font-size:14px')}>{`Carica da ${minClips} a ${maxClips} tra clip e foto: l'AI seleziona i momenti migliori e monta tutto con musica e cover.`}</div>
               </div>
-            )}
-          </div>
-          <div style={s('color:#8c867d;font-size:13px;margin-bottom:16px')}>{tpl.description}{isPhotoTemplate && !singlePhoto && clips.length > 1 ? ' Trascina le foto per cambiarne l\'ordine.' : ''}</div>
+              {montaggioQuota && !montaggioQuota.unlimited && (
+                <div onClick={() => { if (montaggioQuota.remaining <= 0) go?.('account'); }} style={s(`display:inline-flex;align-items:center;justify-content:center;gap:8px;background:#fff;border:1px solid ${montaggioQuota.remaining > 0 ? '#f0ede7' : '#fecaca'};border-radius:99px;padding:8px 16px;flex:none${montaggioQuota.remaining <= 0 ? ';cursor:pointer' : ''}`) as React.CSSProperties}>
+                  <Icon name="scissors" size={15} color={montaggioQuota.remaining > 0 ? '#3B83F6' : '#dc2626'} />
+                  <span style={{ fontSize: 13, fontWeight: 700, color: montaggioQuota.remaining > 0 ? undefined : '#dc2626' }}>{Math.max(0, montaggioQuota.remaining)}/5 montaggi</span>
+                </div>
+              )}
+            </div>
+          ) : (
+            <>
+              <div style={s('font-size:16px;font-weight:800;margin-bottom:4px')}>
+                {layout === 'before_after' ? 'Carica le coppie prima/dopo'
+                  : singlePhoto ? 'Carica la foto'
+                  : layout === 'sottotitoli' ? 'Carica il tuo video (max 90s)'
+                  : isPhotoTemplate ? `Carica da ${minClips} a ${maxClips} foto`
+                  : `Carica da ${minClips} a ${maxClips} clip video`}
+              </div>
+              <div style={s('color:#8c867d;font-size:13px;margin-bottom:16px')}>{tpl.description}{isPhotoTemplate && !singlePhoto && clips.length > 1 ? ' Trascina le foto per cambiarne l\'ordine.' : ''}</div>
+            </>
+          )}
 
           {layout === 'before_after' ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -1732,12 +1757,12 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
                   <>
                     <div style={s('display:flex;align-items:center;justify-content:space-between;padding-bottom:14px')}>
                       <span style={{ fontSize: 13.5, fontWeight: 600 }}>Logo nelle clip</span>
-                      <div onClick={() => { if (whiteLogo) setWatermarkEnabled(v => !v); }} title={whiteLogo ? '' : 'Carica un logo bianco in Brand'} style={{ width: 40, height: 24, borderRadius: 99, background: watermarkEnabled && whiteLogo ? '#3B83F6' : '#d8d4cb', position: 'relative', cursor: whiteLogo ? 'pointer' : 'not-allowed', opacity: whiteLogo ? 1 : .5, transition: 'background .2s' }}>
+                      <div onClick={() => { if (lockBrand) { toast('Logo GetNearMe incluso nel piano Free. Passa a un piano per rimuoverlo.', 'x'); return; } if (whiteLogo) setWatermarkEnabled(v => !v); }} title={lockBrand ? 'Incluso nel piano Free' : (whiteLogo ? '' : 'Carica un logo bianco in Brand')} style={{ width: 40, height: 24, borderRadius: 99, background: watermarkEnabled && whiteLogo ? '#3B83F6' : '#d8d4cb', position: 'relative', cursor: lockBrand ? 'not-allowed' : (whiteLogo ? 'pointer' : 'not-allowed'), opacity: lockBrand ? 1 : (whiteLogo ? 1 : .5), transition: 'background .2s' }}>
                         <span style={{ position: 'absolute', top: 3, left: watermarkEnabled && whiteLogo ? 19 : 3, width: 18, height: 18, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,.2)', transition: 'left .2s' }} />
                       </div>
                     </div>
                     <div style={{ height: 1, background: '#f0ede7', margin: '0 0 16px' }} />
-                    {!whiteLogo && <div style={{ fontSize: 12.5, color: '#b45309', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 8, padding: '10px 12px', marginBottom: 16 }}>Nessun logo bianco configurato. Caricalo nella sezione Brand per usare il watermark.</div>}
+                    {!whiteLogo && <div onClick={() => go?.('brand')} style={{ fontSize: 12.5, color: '#b45309', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 8, padding: '10px 12px', marginBottom: 16, cursor: go ? 'pointer' : 'default' }}>Nessun logo bianco configurato. <span style={{ textDecoration: 'underline', fontWeight: 700 }}>Caricalo nella sezione Brand</span> per usare il watermark.</div>}
                     {watermarkEnabled && whiteLogo && (
                       <div className="max-md:!flex-col" style={{ display: 'flex', gap: 20, alignItems: 'stretch' }}>
                         {/* Sinistra: anteprima */}

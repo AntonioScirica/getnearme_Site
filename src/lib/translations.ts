@@ -359,19 +359,19 @@ export const translations = {
           {
             id: "free", name: "Free", users: "Per iniziare", oldPrice: null, price: 0, period: "",
             savingsYear: null, badge: null, popular: false,
-            features: ["5 foto AI homestaging", "1 video AI", "5 post e storie social"],
+            features: ["5 foto AI homestaging", "1 video AI", "5 montaggi video", "5 post social"],
             extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Inizia gratis",
           },
           {
             id: "agency_monthly", name: "Mensile", users: "Tutte le funzioni incluse", oldPrice: 150, price: 59, period: "/mese",
             savingsYear: null, badge: null, popular: false,
-            features: ["250 foto AI homestaging/mese", "4 video AI/mese", "Post e storie social illimitati", "Editor Video Automatico", "Contenuti 100% Brandizzati", "Supporto prioritario"],
+            features: ["Foto AI homestaging per i tuoi immobili", "Video AI pronti per i social", "Post social illimitati", "Editor Video Limitato", "Contenuti 100% Brandizzati", "Supporto prioritario"],
             extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Scegli questo piano",
           },
           {
             id: "agency_annual", name: "Annuale", users: "Tutte le funzioni incluse", oldPrice: 1800, price: 590, period: "/anno",
             savingsYear: null, badge: "Più scelto", popular: true,
-            features: ["250 foto AI homestaging/mese", "4 video AI/mese", "Post e storie social illimitati", "Editor Video Automatico", "Contenuti 100% Brandizzati", "Supporto prioritario", "2 mesi gratis"],
+            features: ["Foto AI homestaging per i tuoi immobili", "Video AI pronti per i social", "Post social illimitati", "Editor Video Limitato", "Contenuti 100% Brandizzati", "Supporto prioritario"],
             extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Scegli questo piano",
           },
         ],

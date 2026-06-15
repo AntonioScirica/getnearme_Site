@@ -99,7 +99,7 @@ function DemoBeforeAfter() {
   );
 }
 
-export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated, onGoPlan, onGoPost, onGoVideo, demoMode = false }: {
+export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated, onGoPlan, onGoPost, onGoVideo, demoMode = false, lockBrand }: {
   toast: (msg: string, icon?: string) => void;
   routeKey: number;
   project?: Project;
@@ -108,6 +108,7 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
   onGoPost?: (url: string) => void;
   onGoVideo?: (url: string) => void;
   demoMode?: boolean;
+  lockBrand?: boolean; // free: niente acquisto extra, solo stato esaurito
 }) {
   const [quota, setQuota] = React.useState<StagingQuota | null>(null);
   const [packsOpen, setPacksOpen] = React.useState(false);
@@ -484,15 +485,21 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
 
   return (
     <div className="max-md:!px-4 max-md:!py-6" style={s('max-width:1160px;margin:0 auto;padding:32px 32px 64px')}>
-      <div className="max-md:!flex-col max-md:!items-start max-md:!gap-4" style={s('display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px')}>
+      <div className="max-md:!flex-col max-md:!items-start max-md:!gap-4" style={s('display:flex;align-items:center;justify-content:space-between;margin-bottom:24px')}>
         <div>
           <h1 style={s('margin:0 0 4px;font-size:25px;font-weight:800;letter-spacing:-.5px')}>Homestaging AI</h1>
           <div style={s('color:#8c867d;font-size:14px')}>Arreda, svuota o trasforma le foto dei tuoi immobili con l’AI.</div>
         </div>
         {quota && (quota.remaining > 0 ? (
-          <div style={s('display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #f0ede7;border-radius:99px;padding:8px 16px')}>
+          <div style={s('display:inline-flex;align-items:center;justify-content:center;gap:8px;background:#fff;border:1px solid #f0ede7;border-radius:99px;padding:8px 16px')}>
             <Icon name="image" size={15} color="#3B83F6" />
             <span style={{ fontSize: 13, fontWeight: 700 }}>{quota.remaining}/{quota.limit} foto</span>
+          </div>
+        ) : lockBrand ? (
+          // Free esaurito: rosso + click -> pagina Piani.
+          <div onClick={() => onGoPlan?.()} style={s('display:inline-flex;align-items:center;justify-content:center;gap:8px;background:#fff;border:1px solid #fecaca;border-radius:99px;padding:8px 16px;cursor:pointer') as React.CSSProperties}>
+            <Icon name="image" size={15} color="#dc2626" />
+            <span style={{ fontSize: 13, fontWeight: 700, color: '#dc2626' }}>0/{quota.limit} foto</span>
           </div>
         ) : (
           <Box as="button" onClick={() => setPacksOpen(true)} style={s('display:flex;align-items:center;gap:8px;background:#3B83F6;color:#fff;border:none;border-radius:10px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer') as React.CSSProperties} hover={s('background:#2b6fe0')}>
@@ -772,8 +779,8 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
                   <textarea value={customPrompt} onChange={e => onPrompt(e.target.value)} maxLength={2000} rows={3} placeholder="Es. trasforma in soggiorno moderno con divano color crema e parquet chiaro" style={inputStyle} />
                 </div>
 
-                {(() => { const mainActive = canGenerate || outOfQuota; return (
-                <button onClick={outOfQuota ? () => setPacksOpen(true) : handleGenerate} disabled={!mainActive} className="group" style={{
+                {(() => { const mainActive = canGenerate || (outOfQuota && !lockBrand); return (
+                <button onClick={outOfQuota ? (lockBrand ? undefined : () => setPacksOpen(true)) : handleGenerate} disabled={!mainActive} className="group" style={{
                   border: 'none',
                   background: mainActive ? 'linear-gradient(135deg, #3B83F6 0%, #6366f1 100%)' : '#e5e7eb',
                   color: mainActive ? '#fff' : '#9ca3af',
@@ -786,7 +793,7 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
                   <span className={mainActive ? "group-hover:rotate-12 transition-transform duration-300" : ""} style={{ display: 'flex' }}>
                     <Icon name={outOfQuota ? 'zap' : 'sparkles'} size={18} color={mainActive ? "#fff" : "#9ca3af"} />
                   </span>
-                  {outOfQuota ? 'Ottieni altre foto' : notEnoughForBatch ? `Restano solo ${quota!.remaining} foto` : (isBatch ? `Genera ${photos.length} foto` : 'Genera foto')}
+                  {outOfQuota ? (lockBrand ? 'Foto gratuite esaurite' : 'Ottieni altre foto') : notEnoughForBatch ? `Restano solo ${quota!.remaining} foto` : (isBatch ? `Genera ${photos.length} foto` : 'Genera foto')}
                 </button>
                 ); })()}
 

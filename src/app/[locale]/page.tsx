@@ -403,7 +403,7 @@ export default async function Home({ params }: Props) {
                           </span>
                           <span style={{ fontWeight: 700, fontSize: 15, color: DARK }}>{r.activity}</span>
                         </div>
-                        <div className="time-before" style={{ fontSize: 14, color: "#dc2626" }}>{r.before}</div>
+                        <div className="time-before" style={{ fontSize: 14, color: "#dc2626", textDecoration: "line-through", textDecorationColor: "rgba(220,38,38,0.35)" }}>{r.before}</div>
                         <div className="time-after" style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 6, fontWeight: 800, fontSize: 15, color: GREEN }}>
                           <Clock size={15} strokeWidth={2.5} /> {r.after}
                         </div>

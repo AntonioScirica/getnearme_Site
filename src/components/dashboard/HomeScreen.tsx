@@ -153,7 +153,11 @@ export function HomeScreen({
   const hasPhotos = localHasPhotos || (active?.nFoto || 0) + (active?.nStaging || 0) > 0;
   const hasVideo = localHasVideo || (active?.nVideo || 0) > 0;
   const postCount = active?.nPost || 0;
-  const hasSocial = postCount >= 1; // basta UN post creato per spuntare lo step
+  // nPost non e' persistito dall'API -> al refresh tornerebbe 0. Affianchiamo un
+  // flag locale per progetto (settato all'export del post) cosi' "Post Social
+  // pronti" resta spuntato in modo affidabile.
+  const postDoneLocal = typeof window !== 'undefined' && !!active?.id && (() => { try { return localStorage.getItem('gnm_post_done_' + active.id) === '1'; } catch { return false; } })();
+  const hasSocial = postCount >= 1 || postDoneLocal;
   const completedCount = [hasPhotos, hasVideo, hasSocial].filter(Boolean).length;
   const completionPct = Math.round((completedCount / 3) * 100);
 
