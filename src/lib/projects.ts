@@ -39,6 +39,8 @@ export async function fetchProjects(): Promise<ProjectData[]> {
 export async function createProject(project: Omit<ProjectData, 'id' | 'createdAt'>): Promise<ProjectData | null> {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) return null
+  const ac = new AbortController()
+  const tid = setTimeout(() => ac.abort(), 25_000)
   try {
     const res = await fetch('/api/projects', {
       method: 'POST',
@@ -47,6 +49,7 @@ export async function createProject(project: Omit<ProjectData, 'id' | 'createdAt
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(project),
+      signal: ac.signal,
     })
     if (!res.ok) {
       const errJson = await res.json().catch(() => ({}));
@@ -58,12 +61,16 @@ export async function createProject(project: Omit<ProjectData, 'id' | 'createdAt
   } catch (err) {
     console.error('createProject error:', err)
     return null
+  } finally {
+    clearTimeout(tid)
   }
 }
 
 export async function updateProject(id: string, updates: Partial<Omit<ProjectData, 'id' | 'createdAt'>>): Promise<ProjectData | null> {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) return null
+  const ac = new AbortController()
+  const tid = setTimeout(() => ac.abort(), 25_000)
   try {
     const res = await fetch('/api/projects', {
       method: 'PUT',
@@ -72,6 +79,7 @@ export async function updateProject(id: string, updates: Partial<Omit<ProjectDat
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ id, ...updates }),
+      signal: ac.signal,
     })
     if (!res.ok) {
       const errJson = await res.json().catch(() => ({}));
@@ -83,6 +91,8 @@ export async function updateProject(id: string, updates: Partial<Omit<ProjectDat
   } catch (err) {
     console.error('updateProject error:', err)
     return null
+  } finally {
+    clearTimeout(tid)
   }
 }
 

@@ -371,7 +371,11 @@ export async function fetchStagingQuota(): Promise<StagingQuota | null> {
     const { data, error } = await supabase.rpc('get_team_staging_credits', { p_user_id: uid });
     if (error || !data) return null;
     const remaining = Number(data.photo_credits) || 0;
-    const limit = Number(data.monthly_limit) || remaining;
+    // Free trial: monthly_limit e' NULL (grant one-time di 5 foto). Il totale da
+    // mostrare e' 5 fisso, non "remaining" (altrimenti "4 su 4" invece di "4 su 5").
+    const FREE_PHOTO_TRIAL = 5;
+    const ml = Number(data.monthly_limit);
+    const limit = ml > 0 ? ml : Math.max(remaining, FREE_PHOTO_TRIAL);
     return { remaining, limit };
   } catch {
     return null;
@@ -401,6 +405,40 @@ export async function consumePostQuota(): Promise<{ allowed: boolean; unlimited:
     const uid = udata.user?.id;
     if (!uid) return null;
     const { data, error } = await supabase.rpc('check_and_decrement_post_quota', { p_user_id: uid });
+    if (error || !data) return null;
+    return {
+      allowed: !!data.allowed,
+      unlimited: !!data.unlimited,
+      remaining: typeof data.remaining === 'number' ? data.remaining : null,
+    };
+  } catch {
+    return null;
+  }
+}
+
+// ─── Montaggio quota (5 gratis per account, illimitato sui piani a pagamento) ───
+export type MontaggioQuota = { unlimited: boolean; remaining: number };
+
+export async function fetchMontaggioQuota(): Promise<MontaggioQuota | null> {
+  try {
+    const { data: udata } = await supabase.auth.getUser();
+    const uid = udata.user?.id;
+    if (!uid) return null;
+    const { data, error } = await supabase.rpc('get_montaggio_quota_status', { p_user_id: uid });
+    if (error || !data) return null;
+    return { unlimited: !!data.unlimited, remaining: Number(data.remaining) || 0 };
+  } catch {
+    return null;
+  }
+}
+
+// Consuma 1 montaggio. Paid -> allowed:true unlimited (nessun decremento).
+export async function consumeMontaggioQuota(): Promise<{ allowed: boolean; unlimited: boolean; remaining: number | null } | null> {
+  try {
+    const { data: udata } = await supabase.auth.getUser();
+    const uid = udata.user?.id;
+    if (!uid) return null;
+    const { data, error } = await supabase.rpc('check_and_decrement_montaggio_quota', { p_user_id: uid });
     if (error || !data) return null;
     return {
       allowed: !!data.allowed,

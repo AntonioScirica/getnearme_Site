@@ -1047,6 +1047,12 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
           <h1 style={s('margin:0 0 2px;font-size:22px;font-weight:800;letter-spacing:-.4px')}>{stepTitles[step]}</h1>
           <div style={s('font-size:13px;color:var(--text-muted)')}>{stepSubs[step]} · passo {step === 1 ? 1 : step === 3 ? 2 : 3} di 3</div>
         </div>
+        {postQuota && !postQuota.unlimited && (
+          <div style={s('display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #f0ede7;border-radius:99px;padding:8px 16px;flex:none') as React.CSSProperties}>
+            <Icon name="megaphone" size={15} color={postQuota.remaining > 0 ? '#3B83F6' : '#dc2626'} />
+            <span style={{ fontSize: 13, fontWeight: 700 }}>{Math.max(0, postQuota.remaining)}/5 post</span>
+          </div>
+        )}
       </div>
 
       <input ref={fileInputRef} type="file" accept="image/*,video/*" onChange={handlePhotoUpload} style={{ display: 'none' }} />
@@ -1916,8 +1922,12 @@ function SettingsScreen({ toast }: { toast: (msg: string, icon?: string) => void
         const data = await res.json().catch(() => null);
         throw new Error(data?.error || 'Errore eliminazione account');
       }
+      // Flag: la dashboard, vedendo la sessione sparire, NON deve rimbalzare al
+      // login del checkout. Dopo delete si va dritti alla home della landing.
+      try { sessionStorage.setItem('gnm_post_delete', '1'); } catch { /* private mode */ }
       await supabase.auth.signOut();
-      window.location.href = '/';
+      const loc = window.location.pathname.split('/')[1] || 'it';
+      window.location.replace(`/${loc}`);
     } catch (err: any) {
       toast(err.message, 'x');
       setDeleteLoading(false);
@@ -2323,12 +2333,15 @@ const ROUTE_TITLES: Record<string, string> = {
 };
 
 // Helper for dynamic project cover gradients when no image is provided
+// Sempre gli STESSI key longhand in tutti i rami (mai il shorthand `background`):
+// se cambiano tra render con set di proprieta' diversi React avvisa di mix
+// shorthand/longhand. I gradient sono backgroundImage validi.
 const getCoverStyle = (p: Project | null | undefined): React.CSSProperties => {
-  if (!p) return { background: '#f3f1ec' };
-  if (p.cover) return { background: `url("${p.cover}") center/cover`, backgroundColor: '#f3f1ec' };
+  if (!p) return { backgroundImage: 'none', backgroundColor: '#f3f1ec', backgroundSize: 'cover', backgroundPosition: 'center' };
+  if (p.cover) return { backgroundImage: `url("${p.cover}")`, backgroundColor: '#f3f1ec', backgroundSize: 'cover', backgroundPosition: 'center' };
   const hash = p.id.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
   const hue = hash % 360;
-  return { background: `linear-gradient(135deg, hsl(${hue}, 80%, 65%), hsl(${(hue + 40) % 360}, 80%, 55%))` };
+  return { backgroundImage: `linear-gradient(135deg, hsl(${hue}, 80%, 65%), hsl(${(hue + 40) % 360}, 80%, 55%))`, backgroundColor: '#f3f1ec', backgroundSize: 'cover', backgroundPosition: 'center' };
 };
 
 
@@ -2336,6 +2349,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
   const [route, setRoute] = useState('home');
   const [collapsed, setCollapsed] = useState(false);
   const [projOpen, setProjOpen] = useState(false);
+  const projHoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [projQuery, setProjQuery] = useState('');
   const [activeProject, setActiveProject] = useState(() =>
     typeof window !== 'undefined' ? localStorage.getItem('gnm_active_project') ?? 'p1' : 'p1'
@@ -2459,7 +2473,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
   const [welcomeOpen, setWelcomeOpen] = useState(false);
   useEffect(() => {
     if (typeof window === 'undefined' || !tutorialKey) return;
-    if (!localStorage.getItem(tutorialKey)) setWelcomeOpen(true);
+    if (!localStorage.getItem(tutorialKey)) { setWelcomeOpen(true); setRoute('brand'); }
   }, [tutorialKey]);
   const markTutorialSeen = useCallback(() => {
     try { if (tutorialKey) localStorage.setItem(tutorialKey, '1'); } catch { /* quota */ }
@@ -2640,21 +2654,33 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
     const def = TOUR_DEFS[n];
     const m = def.sel.match(/\[title="(.+?)"\]/);
     if (m && TOUR_LABEL_TO_ROUTE[m[1]]) go(TOUR_LABEL_TO_ROUTE[m[1]]);
-    else if (def.sel.includes('tour-dropdown')) go('home');
+    else if (def.sel.includes('tour-dropdown')) go('media');
     const isTray = def.sel === '[title="Lavori in corso"]';
     const isCenter = def.sel === '@center';
     const isNewProj = def.sel.includes('tour-dropdown');
-    const needsFade = n === 0 || isCenter || isNewProj;
+    // Lo step dropdown finale NON deve fare fade: il buco sopra il dropdown deve
+    // comparire gia' pronto (overlay scuro pieno + cutout istantaneo).
+    const needsFade = n === 0 || isCenter;
     if (needsFade) {
       setHlFading(true);
       if (hlFadeTimer.current) clearTimeout(hlFadeTimer.current);
     }
-    if (isNewProj) { setTourRect(null); setTourRect2(null); }
+    if (isNewProj) {
+      setHlFading(false);
+      if (hlFadeTimer.current) clearTimeout(hlFadeTimer.current);
+      setTourRect(null); setTourRect2(null);
+    }
     else { if (!isCenter) setDemoJobsDone(false); setTourRect2(null); }
     setTrayOpen(isTray);
-    if (needsFade) {
+    if (isNewProj) {
+      // Apri il popup e misura sui frame subito dopo il render: il cutout
+      // compare insieme al popup (stesso momento), niente scatto/ritardo.
+      setProjOpen(true);
       setTourStep(n);
-      setTimeout(() => tourMeasure(n), isNewProj ? 400 : 60);
+      requestAnimationFrame(() => requestAnimationFrame(() => tourMeasure(n)));
+    } else if (needsFade) {
+      setTourStep(n);
+      setTimeout(() => tourMeasure(n), 60);
     } else {
       setTimeout(() => tourMeasure(n, true), isTray ? 250 : 60);
       setTimeout(() => setTourStep(n), 400);
@@ -2794,7 +2820,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
               <div style={s('display:flex;align-items:center;justify-content:space-between')}>
                 {tourStep > 0 && tdef.sel !== '@center' && <Box as="button" onClick={() => tourGo(tourStep - 1)} style={s('border:1px solid var(--border-main);background:var(--bg-card);font-size:12.5px;font-weight:700;padding:9px 16px;border-radius:8px;cursor:pointer;min-height:38px')} hover={s('background:var(--bg-hover)')}>Indietro</Box>}
                 {tdef.sel === '@center'
-                  ? <Box as="button" onClick={() => { tourGo(tourStep + 1); setTimeout(() => setProjOpen(true), 80); }} style={s('border:none;background:#3B83F6;color:var(--bg-card);font-size:13.5px;font-weight:700;padding:12px 18px;border-radius:8px;cursor:pointer;width:100%;text-align:center;display:flex;align-items:center;justify-content:center;min-height:44px')} hover={s('background:#2b6fe0;transform:translateY(-1px);box-shadow:0 8px 20px rgba(59,131,246,.25)')}>Avanti</Box>
+                  ? <Box as="button" onClick={() => tourGo(tourStep + 1)} style={s('border:none;background:#3B83F6;color:var(--bg-card);font-size:13.5px;font-weight:700;padding:12px 18px;border-radius:8px;cursor:pointer;width:100%;text-align:center;display:flex;align-items:center;justify-content:center;min-height:44px')} hover={s('background:#2b6fe0;transform:translateY(-1px);box-shadow:0 8px 20px rgba(59,131,246,.25)')}>Avanti</Box>
                   : tdef.sel === '[data-tour-dropdown]'
                   ? <Box as="button" onClick={() => { const replay = tourReplayRef.current; tourReplayRef.current = false; if (replay) { setTourStep(null); setTourRect(null); setTourRect2(null); setProjOpen(false); } else { setTourStep(null); setTourRect(null); setTourRect2(null); setProjOpen(false); setNewProjOpen(true); } }} style={s('border:none;background:#3B83F6;color:var(--bg-card);font-size:13.5px;font-weight:700;padding:12px 18px;border-radius:8px;cursor:pointer;width:100%;text-align:center;display:flex;align-items:center;justify-content:center;min-height:44px')} hover={s('background:#2b6fe0;transform:translateY(-1px);box-shadow:0 8px 20px rgba(59,131,246,.25)')}>{tourReplayRef.current ? 'Ho capito' : 'Aggiungi immobile'}</Box>
                   : <Box as="button" onClick={() => tourGo(tourStep + 1)} style={s('border:none;background:#3B83F6;color:var(--bg-card);font-size:12.5px;font-weight:700;padding:9px 18px;border-radius:8px;cursor:pointer;margin-left:auto;min-height:38px')} hover={s('background:#2b6fe0')}>Avanti</Box>}
@@ -2897,7 +2923,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
             <Box as="button" onClick={() => setCollapsed((c) => !c)} className="max-md:!hidden" title="Comprimi menu" aria-label="Comprimi menu" style={s('border:none;background:transparent;width:38px;height:38px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center')} hover={s('background:#f1efe9')}><Icon name="panel-left" size={18} /></Box>
 
             {/* project switcher */}
-            <div data-tour-dropdown style={{ position: 'relative', ...(tourStep !== null && tdef.sel === '[data-tour-dropdown]' ? { zIndex: 102, pointerEvents: 'none' as const } : {}) }}>
+            <div data-tour-dropdown onMouseEnter={() => { if (tourStep === null) { if (projHoverTimer.current) clearTimeout(projHoverTimer.current); setProjOpen(true); setTrayOpen(false); } }} onMouseLeave={() => { if (tourStep === null) { if (projHoverTimer.current) clearTimeout(projHoverTimer.current); projHoverTimer.current = setTimeout(() => setProjOpen(false), 180); } }} style={{ position: 'relative', ...(tourStep !== null && tdef.sel === '[data-tour-dropdown]' ? { zIndex: 102, pointerEvents: 'none' as const } : {}) }}>
               <Box onClick={(e) => { e.stopPropagation(); if (tourStep !== null && TOUR_DEFS[tourStep]?.sel === '[data-tour-dropdown]') return; setProjOpen((o) => !o); setTrayOpen(false); }} style={s(`display:flex;align-items:center;gap:10px;padding:7px 14px 7px 8px;border:1px solid #e9e6df;border-radius:8px;cursor:pointer;background:var(--bg-card);min-height:38px;min-width:240px;justify-content:space-between`)} hover={s('border-color:var(--border-dark);box-shadow:0 2px 8px rgba(33,31,28,.06)')}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
                   {loadingProjects ? (
@@ -2921,7 +2947,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                   <div style={s('padding:12px 12px 8px')}><div style={s('display:flex;align-items:center;gap:8px;background:#faf9f7;border:1px solid #ece9e2;border-radius:10px;padding:8px 12px')}><Icon name="search" size={15} color="var(--text-muted)" /><input value={projQuery} onChange={(e) => setProjQuery(e.target.value)} placeholder="Cerca immobile…" style={s('border:none;background:transparent;outline:none;font-size:13px;width:100%')} /></div></div>
                   <div style={s('max-height:260px;overflow:auto;padding:0 6px')}>
                     {projList.map((p) => (
-                      <Box key={p.id} onClick={() => { setActiveProject(p.id); setProjOpen(false); }} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 10px', borderRadius: 12, cursor: 'pointer', background: p.id === activeProject ? '#f6faff' : 'transparent' }} hover={{ background: 'var(--bg-hover)' }}>
+                      <Box key={p.id} onClick={() => { setActiveProject(p.id); setProjOpen(false); }} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 10px', borderRadius: 12, cursor: 'pointer', background: p.id === activeProject ? '#f6faff' : 'transparent', border: p.id === activeProject ? '1px solid #3B83F6' : '1px solid transparent' }} hover={{ background: 'var(--bg-hover)' }}>
                         <div style={{ width: 34, height: 34, borderRadius: 10, ...getCoverStyle(p), flex: 'none' }} />
                         <div style={{ minWidth: 0, flex: 1 }}><div style={s('font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{p.nome}</div><div style={s('font-size:11px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{p.addr}</div></div>
                         {p.id === activeProject && <Icon name="check" size={14} color="#3B83F6" />}
@@ -3148,10 +3174,10 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
               <MediaScreen
                 toast={toast}
                 routeKey={routeKey}
-                project={active || (tourStep !== null ? DEMO_PROJECTS[0] : undefined)}
+                project={active || DEMO_PROJECTS[0]}
                 batches={batches}
                 loadingBatches={loadingBatches}
-                demoMode={tourStep !== null}
+                demoMode={tourStep !== null || !active}
                 demoJobsDone={demoJobsDone}
               />
             ) : route === 'video' ? (
@@ -3209,8 +3235,9 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
 
       {/* NEW PROJECT MODAL */}
       {newProjOpen && (
-        <NewProjectModal 
+        <NewProjectModal
           toast={toast}
+          mandatory={projects.length === 0}
           onClose={() => setNewProjOpen(false)}
           onSuccess={(p) => {
             setProjects(prev => [p as unknown as Project, ...prev]);

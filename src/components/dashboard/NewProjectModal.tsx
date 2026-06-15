@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { s, Box, Icon } from './ui';
 import { createProject, updateProject, deleteProject, ProjectData } from '@/lib/projects';
 import { supabase } from '@/lib/supabase';
@@ -10,9 +11,14 @@ import Cropper from 'react-easy-crop';
 const createImage = (url: string): Promise<HTMLImageElement> =>
   new Promise((resolve, reject) => {
     const image = new Image()
-    image.addEventListener('load', () => resolve(image))
-    image.addEventListener('error', (error) => reject(error))
-    image.setAttribute('crossOrigin', 'anonymous')
+    // Timeout 12s: un'immagine che non emette ne' load ne' error non deve
+    // lasciare appesa la creazione immobile (spinner infinito).
+    const tid = setTimeout(() => reject(new Error('image load timeout')), 12_000)
+    image.addEventListener('load', () => { clearTimeout(tid); resolve(image) })
+    image.addEventListener('error', (error) => { clearTimeout(tid); reject(error) })
+    // crossOrigin solo per URL remoti (evita taint del canvas). Sui data URL
+    // non serve e in alcuni browser puo' interferire col decode.
+    if (!url.startsWith('data:')) image.setAttribute('crossOrigin', 'anonymous')
     image.src = url
   })
 
@@ -95,6 +101,22 @@ const getLabelForIcon = (key: string, defaultLabel: string) => {
   return found && !CURRENCY_KEYS.includes(key) ? found.label : defaultLabel;
 };
 
+const DEFAULT_ICONS: Record<string, string> = { prezzo: 'euro', mq: 'area', camere: 'bed', bagni: 'bath' };
+const ICONS_STORAGE_KEY = 'gnm_field_icons';
+
+// Config icone "info principali" salvata per il prossimo immobile.
+function loadSavedIcons(): Record<string, string> {
+  if (typeof window === 'undefined') return { ...DEFAULT_ICONS };
+  try {
+    const raw = localStorage.getItem(ICONS_STORAGE_KEY);
+    if (raw) return { ...DEFAULT_ICONS, ...JSON.parse(raw) };
+  } catch { /* ignore */ }
+  return { ...DEFAULT_ICONS };
+}
+function saveIcons(icons: Record<string, string>) {
+  try { localStorage.setItem(ICONS_STORAGE_KEY, JSON.stringify(icons)); } catch { /* quota */ }
+}
+
 const formatNumber = (val: string) => {
   const num = val.replace(/\D/g, '');
   return num ? Number(num).toLocaleString('it-IT') : '';
@@ -102,18 +124,20 @@ const formatNumber = (val: string) => {
 
 type Step = 1 | 2;
 
-export function NewProjectModal({ 
-  onClose, 
+export function NewProjectModal({
+  onClose,
   onSuccess,
   onDelete,
   editProject,
-  toast
-}: { 
-  onClose: () => void; 
+  toast,
+  mandatory = false
+}: {
+  onClose: () => void;
   onSuccess: (p: ProjectData) => void;
   onDelete?: (id: string) => void;
   editProject?: ProjectData | null;
   toast: (msg: string, icon?: string) => void;
+  mandatory?: boolean; // primo immobile: non chiudibile (no X / backdrop / Esc)
 }) {
   const [loading, setLoading] = useState(false);
   // Nuovo immobile = 2 step; modifica = step unico (tutti i campi).
@@ -131,10 +155,24 @@ export function NewProjectModal({
   const [camere, setCamere] = useState(editProject?.camere ? editProject.camere.toString() : '');
   const [bagni, setBagni] = useState(editProject?.bagni ? editProject.bagni.toString() : '');
   
-  const [fieldIcons, setFieldIcons] = useState<Record<string, string>>(editProject?.icons || {
-    prezzo: 'euro', mq: 'area', camere: 'bed', bagni: 'bath'
-  });
+  const [fieldIcons, setFieldIcons] = useState<Record<string, string>>(editProject?.icons || loadSavedIcons());
   const [iconDropdown, setIconDropdown] = useState<string | null>(null);
+  // Posizione del trigger per renderizzare il picker in un portal (fixed),
+  // cosi' non viene tagliato dall'overflow del body del modal.
+  const [pickerRect, setPickerRect] = useState<DOMRect | null>(null);
+  const togglePicker = (field: string, el: HTMLElement) => {
+    if (iconDropdown === field) { setIconDropdown(null); return; }
+    setPickerRect(el.getBoundingClientRect());
+    setIconDropdown(field);
+  };
+
+  // Primo immobile obbligatorio: blocca la chiusura via Esc.
+  useEffect(() => {
+    if (!mandatory) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); } };
+    window.addEventListener('keydown', onKey, true);
+    return () => window.removeEventListener('keydown', onKey, true);
+  }, [mandatory]);
 
   // Drag state (for future image upload integration, currently just visual)
   const [dragOver, setDragOver] = useState(false);
@@ -146,88 +184,124 @@ export function NewProjectModal({
   const onCropComplete = useCallback((croppedArea: any, croppedAreaPixels: any) => {
     setCroppedAreaPixels(croppedAreaPixels);
   }, []);
-  
 
+  // Ridimensiona la copertina SUBITO alla selezione (non a fine creazione):
+  // la foto del telefono puo' essere 5-10MB -> decodificarla/processarla al
+  // momento del "Crea" rende tutto lentissimo. Qui la portiamo a max 1400px.
+  const handleCoverFile = useCallback((file?: File | null) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const raw = reader.result as string;
+      try {
+        // Preview buono nel cropper (step 1). La compressione "vera" a pochi px
+        // avviene al salvataggio (handleFinish), non alla selezione.
+        setCover(await downscaleDataUrl(raw, 1400, 0.85));
+      } catch {
+        setCover(raw);
+      }
+    };
+    reader.readAsDataURL(file);
+  }, []);
+
+
+
+
+  // Campi tecnici ora obbligatori (servono per descrizioni e Post Social).
+  const techFilled = !!(prezzo.trim() && mq.trim() && camere.trim() && bagni.trim());
 
   const handleFinish = async (skip: boolean = false) => {
     if (!nome.trim()) return;
-    
+    if (!skip && !techFilled) {
+      toast('Compila prezzo, superficie, camere e bagni', 'x');
+      return;
+    }
+
     setLoading(true);
-    
-    let finalCover = cover;
-    if (cover && croppedAreaPixels && !skip && !cover.startsWith('http')) {
-      try {
-        finalCover = await getCroppedImg(cover, croppedAreaPixels);
-      } catch (e) {
-        console.error('Failed to crop image', e);
-      }
-    }
 
-    if (finalCover && finalCover.startsWith('data:image/')) {
-      // Resize sempre: garantisce payload piccolo a prescindere da crop/skip.
-      finalCover = await downscaleDataUrl(finalCover);
-      try {
-        const res = await fetch(finalCover);
-        const blob = await res.blob();
-        const file = new File([blob], 'cover.jpg', { type: blob.type });
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('folder', 'covers');
-
-        const { data: { session } } = await supabase.auth.getSession();
-        const headers: Record<string, string> = {};
-        if (session) headers['Authorization'] = `Bearer ${session.access_token}`;
-
-        const uploadRes = await fetch('/api/upload', {
-          method: 'POST',
-          headers,
-          body: formData,
-        });
-
-        if (uploadRes.ok) {
-          const { url } = await uploadRes.json();
-          finalCover = url;
-        } else {
-          console.error('Upload failed:', await uploadRes.text());
+    // try/finally: qualunque cosa accada, lo spinner si ferma. I timeout sotto
+    // evitano fetch appese (R2/API) -> niente piu' "loading infinito".
+    try {
+      let finalCover = cover;
+      if (cover && croppedAreaPixels && !skip && !cover.startsWith('http')) {
+        try {
+          finalCover = await getCroppedImg(cover, croppedAreaPixels);
+        } catch (e) {
+          console.error('Failed to crop image', e);
         }
-      } catch (err) {
-        console.error('Failed to upload cover', err);
       }
-      // Safety: se l'upload e' fallito e la cover e' ancora un data URL grande, non
-      // inviarla a /api/projects (sforerebbe il limite body). Meglio creare senza
-      // copertina che far fallire la creazione dell'immobile.
-      if (finalCover.startsWith('data:') && finalCover.length > 1_500_000) {
-        finalCover = '';
-        toast('Copertina non caricata, immobile creato senza foto. Riprova piu\' tardi.', 'x');
+
+      if (finalCover && finalCover.startsWith('data:image/')) {
+        // Compressione finale a pochi px (foto profilo immobile).
+        finalCover = await downscaleDataUrl(finalCover, 200, 0.82);
+        try {
+          const res = await fetch(finalCover);
+          const blob = await res.blob();
+          const file = new File([blob], 'cover.jpg', { type: blob.type });
+          const formData = new FormData();
+          formData.append('file', file);
+          formData.append('folder', 'covers');
+
+          const { data: { session } } = await supabase.auth.getSession();
+          const headers: Record<string, string> = {};
+          if (session) headers['Authorization'] = `Bearer ${session.access_token}`;
+
+          // Timeout 20s: se l'upload R2 si blocca lato server, abortiamo e
+          // proseguiamo senza copertina invece di restare appesi.
+          const ac = new AbortController();
+          const tid = setTimeout(() => ac.abort(), 20_000);
+          let uploadRes: Response;
+          try {
+            uploadRes = await fetch('/api/upload', { method: 'POST', headers, body: formData, signal: ac.signal });
+          } finally {
+            clearTimeout(tid);
+          }
+
+          if (uploadRes.ok) {
+            const { url } = await uploadRes.json();
+            finalCover = url;
+          } else {
+            console.error('Upload failed:', await uploadRes.text());
+          }
+        } catch (err) {
+          console.error('Failed to upload cover', err);
+        }
+        // Safety: se l'upload e' fallito e la cover e' ancora un data URL grande, non
+        // inviarla a /api/projects (sforerebbe il limite body). Meglio creare senza
+        // copertina che far fallire la creazione dell'immobile.
+        if (finalCover.startsWith('data:') && finalCover.length > 1_500_000) {
+          finalCover = '';
+          toast('Copertina non caricata, immobile creato senza foto. Riprova piu\' tardi.', 'x');
+        }
       }
-    }
 
-    const payload = {
-      nome: nome.trim(),
-      addr: addr.trim(),
-      prezzo: skip ? (editProject?.prezzo || 0) : Number(prezzo.replace(/\D/g, '')) || 0,
-      mq: skip ? (editProject?.mq || 0) : Number(mq.replace(/\D/g, '')) || 0,
-      camere: skip ? (editProject?.camere || 0) : Number(camere.replace(/\D/g, '')) || 0,
-      bagni: skip ? (editProject?.bagni || 0) : Number(bagni.replace(/\D/g, '')) || 0,
-      titolo: editProject?.titolo || '',
-      cover: finalCover, // Empty means use gradient
-      icons: fieldIcons,
-    };
+      const payload = {
+        nome: nome.trim(),
+        addr: addr.trim(),
+        prezzo: skip ? (editProject?.prezzo || 0) : Number(prezzo.replace(/\D/g, '')) || 0,
+        mq: skip ? (editProject?.mq || 0) : Number(mq.replace(/\D/g, '')) || 0,
+        camere: skip ? (editProject?.camere || 0) : Number(camere.replace(/\D/g, '')) || 0,
+        bagni: skip ? (editProject?.bagni || 0) : Number(bagni.replace(/\D/g, '')) || 0,
+        titolo: editProject?.titolo || '',
+        cover: finalCover, // Empty means use gradient
+        icons: fieldIcons,
+      };
 
-    let p: ProjectData | null;
-    if (editProject) {
-      p = await updateProject(editProject.id, payload);
-    } else {
-      p = await createProject(payload);
-    }
-    
-    setLoading(false);
-    
-    if (p) {
-      toast(editProject ? 'Immobile aggiornato con successo!' : 'Immobile creato con successo!', 'check');
-      onSuccess(p);
-    } else {
+      const p: ProjectData | null = editProject
+        ? await updateProject(editProject.id, payload)
+        : await createProject(payload);
+
+      if (p) {
+        toast(editProject ? 'Immobile aggiornato con successo!' : 'Immobile creato con successo!', 'check');
+        onSuccess(p);
+      } else {
+        toast('Errore durante l\'operazione', 'x');
+      }
+    } catch (err) {
+      console.error('handleFinish error', err);
       toast('Errore durante l\'operazione', 'x');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -252,11 +326,12 @@ export function NewProjectModal({
   const labelStyle = s('display:block;font-size:12px;font-weight:700;color:#b3aca1;margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em');
 
   const renderIconPicker = (field: string, allowedKeys?: string[]) => {
-    if (iconDropdown !== field) return null;
+    if (iconDropdown !== field || !pickerRect) return null;
     const iconsToShow = allowedKeys ? PICKER_ICONS.filter(p => allowedKeys.includes(p.key)) : PICKER_ICONS.filter(p => !CURRENCY_KEYS.includes(p.key));
-    const openUpwards = true; // Always open upwards to prevent clipping with footer
-    return (
-      <div style={{ position: 'absolute', ...(openUpwards ? { bottom: 'calc(100% + 8px)' } : { top: 'calc(100% + 8px)' }), left: 0, zIndex: 99999, background: '#fff', borderRadius: 12, boxShadow: '0 8px 32px rgba(0,0,0,0.12)', border: '1px solid #e4e1da', padding: 8, display: 'grid', gridTemplateColumns: 'repeat(5, 36px)', gap: 4 }}>
+    // Portal su body + fixed: il picker apre verso l'alto sopra l'icona e non
+    // viene tagliato dall'overflow del modal.
+    return createPortal(
+      <div style={{ position: 'fixed', bottom: (typeof window !== 'undefined' ? window.innerHeight : 0) - pickerRect.top + 8, left: pickerRect.left, zIndex: 99999, background: '#fff', borderRadius: 12, boxShadow: '0 8px 32px rgba(0,0,0,0.12)', border: '1px solid #e4e1da', padding: 8, display: 'grid', gridTemplateColumns: 'repeat(5, 36px)', gap: 4 }}>
         {iconsToShow.map(pi => (
           <div 
             key={pi.key} 
@@ -270,9 +345,10 @@ export function NewProjectModal({
                   newIcons[fieldWithSameIcon] = oldIcon;
                 }
                 newIcons[field] = pi.key;
+                saveIcons(newIcons); // salva config per il prossimo immobile
                 return newIcons;
-              }); 
-              setIconDropdown(null); 
+              });
+              setIconDropdown(null);
             }} 
             style={{ width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8, cursor: 'pointer', border: fieldIcons[field] === pi.key ? '1.5px solid #3B83F6' : '1.5px solid transparent', background: fieldIcons[field] === pi.key ? '#eef4fe' : 'transparent', color: fieldIcons[field] === pi.key ? '#3B83F6' : '#6b7280' }}
             onMouseEnter={e => { if (fieldIcons[field] !== pi.key) { e.currentTarget.style.background = '#f6f4f0'; e.currentTarget.style.color = '#211f1c'; } }}
@@ -282,16 +358,17 @@ export function NewProjectModal({
             <span style={{ width: 16, height: 16, display: 'flex' }} dangerouslySetInnerHTML={{ __html: (TPL_ICONS as Record<string, string>)[pi.key] || '' }} />
           </div>
         ))}
-      </div>
+      </div>,
+      document.body
     );
   };
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
       {/* Backdrop */}
-      <div 
-        onClick={onClose}
-        style={{ position: 'absolute', inset: 0, background: 'rgba(24, 21, 17, 0.4)', backdropFilter: 'blur(4px)', animation: 'foto-reveal .3s ease' }} 
+      <div
+        onClick={() => { if (!mandatory) onClose(); }}
+        style={{ position: 'absolute', inset: 0, background: 'rgba(24, 21, 17, 0.4)', backdropFilter: 'blur(4px)', animation: 'foto-reveal .3s ease' }}
       />
       
       {/* Modal Content */}
@@ -305,9 +382,11 @@ export function NewProjectModal({
               {isNew ? `Passo ${step} di 2 — ${step === 1 ? 'nome, indirizzo e copertina' : 'dati immobile (opzionali)'}` : 'Inserisci le informazioni per il tuo immobile'}
             </div>
           </div>
-          <button onClick={onClose} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4, borderRadius: 8 }} className="hover:bg-gray-100">
-            <Icon name="x" size={20} color="#8c867d" />
-          </button>
+          {!mandatory && (
+            <button onClick={onClose} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4, borderRadius: 8 }} className="hover:bg-gray-100">
+              <Icon name="x" size={20} color="#8c867d" />
+            </button>
+          )}
         </div>
 
         {/* Body */}
@@ -367,15 +446,10 @@ export function NewProjectModal({
                   <label 
                     onDragOver={e => { e.preventDefault(); setDragOver(true); }}
                     onDragLeave={() => setDragOver(false)}
-                    onDrop={e => { 
-                      e.preventDefault(); 
-                      setDragOver(false); 
-                      const file = e.dataTransfer.files?.[0];
-                      if (file) {
-                        const reader = new FileReader();
-                        reader.onload = () => setCover(reader.result as string);
-                        reader.readAsDataURL(file);
-                      }
+                    onDrop={e => {
+                      e.preventDefault();
+                      setDragOver(false);
+                      handleCoverFile(e.dataTransfer.files?.[0]);
                     }}
                     style={{
                       display: 'block',
@@ -394,14 +468,7 @@ export function NewProjectModal({
                       type="file" 
                       accept="image/*" 
                       style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', zIndex: 10 }} 
-                      onChange={e => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          const reader = new FileReader();
-                          reader.onload = () => setCover(reader.result as string);
-                          reader.readAsDataURL(file);
-                        }
-                      }} 
+                      onChange={e => handleCoverFile(e.target.files?.[0])}
                     />
                     <div style={{ width: 44, height: 44, borderRadius: 12, background: '#fff', border: '1px solid #f0ede7', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px', boxShadow: '0 4px 12px rgba(0,0,0,0.04)' }}>
                       <Icon name="image-plus" size={20} color={dragOver ? '#3B83F6' : '#8c867d'} />
@@ -418,7 +485,7 @@ export function NewProjectModal({
               {!isNew && <hr style={{ border: 'none', borderTop: '1px solid #f0ede7', margin: '8px 0' }} />}
 
               <div style={{ background: '#f6f4f0', padding: 16, borderRadius: 12, fontSize: 13, color: '#57534c', lineHeight: 1.5 }}>
-                Questi dati non sono obbligatori, ma ci aiutano a generare in automatico le descrizioni e i Post Social perfetti per te.
+Tocca le icone per scegliere quali info mostrare.
               </div>
               
               <div className="max-md:!grid-cols-1" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
@@ -426,7 +493,7 @@ export function NewProjectModal({
                   <label style={labelStyle}>Prezzo ({fieldIcons.prezzo === 'dollar' ? '$' : fieldIcons.prezzo === 'pound' ? '£' : '€'})</label>
                   <div style={{ position: 'relative', display: 'flex', flexDirection: 'column' }}>
                     <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                      <div onClick={() => setIconDropdown(iconDropdown === 'prezzo' ? null : 'prezzo')} style={{ position: 'absolute', left: 8, width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#57534c', cursor: 'pointer', borderRadius: 8, background: '#f6f4f0', border: '1px solid #e4e1da' }} onMouseEnter={e => e.currentTarget.style.background = '#efece6'} onMouseLeave={e => e.currentTarget.style.background = '#f6f4f0'}>
+                      <div onClick={(e) => togglePicker('prezzo', e.currentTarget)} style={{ position: 'absolute', left: 8, width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#57534c', cursor: 'pointer', borderRadius: 8, background: '#f6f4f0', border: '1px solid #e4e1da' }} onMouseEnter={e => e.currentTarget.style.background = '#efece6'} onMouseLeave={e => e.currentTarget.style.background = '#f6f4f0'}>
                         <span style={{ width: 15, height: 15, display: 'flex' }} dangerouslySetInnerHTML={{ __html: (TPL_ICONS as any)[fieldIcons.prezzo] || '' }} />
                       </div>
                       <input 
@@ -447,7 +514,7 @@ export function NewProjectModal({
                   <label style={labelStyle}>{getLabelForIcon(fieldIcons.mq, 'Metratura (m²)')}</label>
                   <div style={{ position: 'relative', display: 'flex', flexDirection: 'column' }}>
                     <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                      <div onClick={() => setIconDropdown(iconDropdown === 'mq' ? null : 'mq')} style={{ position: 'absolute', left: 8, width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#57534c', cursor: 'pointer', borderRadius: 8, background: '#f6f4f0', border: '1px solid #e4e1da' }} onMouseEnter={e => e.currentTarget.style.background = '#efece6'} onMouseLeave={e => e.currentTarget.style.background = '#f6f4f0'}>
+                      <div onClick={(e) => togglePicker('mq', e.currentTarget)} style={{ position: 'absolute', left: 8, width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#57534c', cursor: 'pointer', borderRadius: 8, background: '#f6f4f0', border: '1px solid #e4e1da' }} onMouseEnter={e => e.currentTarget.style.background = '#efece6'} onMouseLeave={e => e.currentTarget.style.background = '#f6f4f0'}>
                         <span style={{ width: 15, height: 15, display: 'flex' }} dangerouslySetInnerHTML={{ __html: (TPL_ICONS as any)[fieldIcons.mq] || '' }} />
                       </div>
                       <input 
@@ -470,7 +537,7 @@ export function NewProjectModal({
                   <label style={labelStyle}>{getLabelForIcon(fieldIcons.camere, 'Camere da letto')}</label>
                   <div style={{ position: 'relative', display: 'flex', flexDirection: 'column' }}>
                     <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                      <div onClick={() => setIconDropdown(iconDropdown === 'camere' ? null : 'camere')} style={{ position: 'absolute', left: 8, width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#57534c', cursor: 'pointer', borderRadius: 8, background: '#f6f4f0', border: '1px solid #e4e1da' }} onMouseEnter={e => e.currentTarget.style.background = '#efece6'} onMouseLeave={e => e.currentTarget.style.background = '#f6f4f0'}>
+                      <div onClick={(e) => togglePicker('camere', e.currentTarget)} style={{ position: 'absolute', left: 8, width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#57534c', cursor: 'pointer', borderRadius: 8, background: '#f6f4f0', border: '1px solid #e4e1da' }} onMouseEnter={e => e.currentTarget.style.background = '#efece6'} onMouseLeave={e => e.currentTarget.style.background = '#f6f4f0'}>
                         <span style={{ width: 15, height: 15, display: 'flex' }} dangerouslySetInnerHTML={{ __html: (TPL_ICONS as any)[fieldIcons.camere] || '' }} />
                       </div>
                       <input 
@@ -491,7 +558,7 @@ export function NewProjectModal({
                   <label style={labelStyle}>{getLabelForIcon(fieldIcons.bagni, 'Bagni')}</label>
                   <div style={{ position: 'relative', display: 'flex', flexDirection: 'column' }}>
                     <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                      <div onClick={() => setIconDropdown(iconDropdown === 'bagni' ? null : 'bagni')} style={{ position: 'absolute', left: 8, width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#57534c', cursor: 'pointer', borderRadius: 8, background: '#f6f4f0', border: '1px solid #e4e1da' }} onMouseEnter={e => e.currentTarget.style.background = '#efece6'} onMouseLeave={e => e.currentTarget.style.background = '#f6f4f0'}>
+                      <div onClick={(e) => togglePicker('bagni', e.currentTarget)} style={{ position: 'absolute', left: 8, width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#57534c', cursor: 'pointer', borderRadius: 8, background: '#f6f4f0', border: '1px solid #e4e1da' }} onMouseEnter={e => e.currentTarget.style.background = '#efece6'} onMouseLeave={e => e.currentTarget.style.background = '#f6f4f0'}>
                         <span style={{ width: 15, height: 15, display: 'flex' }} dangerouslySetInnerHTML={{ __html: (TPL_ICONS as any)[fieldIcons.bagni] || '' }} />
                       </div>
                       <input 
@@ -520,7 +587,7 @@ export function NewProjectModal({
                     <Box as="button" onClick={handleDelete} disabled={loading} style={s('border:1.5px solid #dc2626;background:#fff;color:#dc2626;font-size:14px;font-weight:700;padding:12px 20px;border-radius:12px;cursor:pointer;flex:1;transition:all 0.2s')} hover={s('background:#dc2626;color:#fff')}>
                       Elimina Immobile
                     </Box>
-                    <Box as="button" onClick={() => handleFinish(false)} disabled={loading} style={s('border:none;background:#3B83F6;color:#fff;font-size:14px;font-weight:700;padding:12px 20px;border-radius:12px;cursor:pointer;flex:1;box-shadow:0 4px 12px rgba(59,131,246,0.25);opacity:' + (loading ? 0.7 : 1))} hover={s('background:#2563EB;box-shadow:0 6px 16px rgba(59,131,246,0.3)')}>
+                    <Box as="button" onClick={() => handleFinish(false)} disabled={loading || !techFilled} style={s('border:none;background:#3B83F6;color:#fff;font-size:14px;font-weight:700;padding:12px 20px;border-radius:12px;cursor:' + (loading || !techFilled ? 'default' : 'pointer') + ';flex:1;box-shadow:0 4px 12px rgba(59,131,246,0.25);opacity:' + (loading || !techFilled ? 0.45 : 1))} hover={loading || !techFilled ? undefined : s('background:#2563EB;box-shadow:0 6px 16px rgba(59,131,246,0.3)')}>
                       {loading ? 'Salvataggio...' : 'Salva modifiche'}
                     </Box>
                   </>
@@ -535,7 +602,7 @@ export function NewProjectModal({
                     <Box as="button" onClick={() => setStep(1)} style={s('border:1px solid #e4e1da;background:#fff;color:#57534c;font-size:14px;font-weight:700;padding:12px 20px;border-radius:12px;cursor:pointer;flex:1')} hover={s('background:#f6f4f0;border-color:#d8d4cb')}>
                       Indietro
                     </Box>
-                    <Box as="button" onClick={() => handleFinish(false)} disabled={loading} style={s('border:none;background:#3B83F6;color:#fff;font-size:14px;font-weight:700;padding:12px 20px;border-radius:12px;cursor:pointer;flex:1;box-shadow:0 4px 12px rgba(59,131,246,0.25);opacity:' + (loading ? 0.7 : 1))} hover={s('background:#2563EB;box-shadow:0 6px 16px rgba(59,131,246,0.3)')}>
+                    <Box as="button" onClick={() => handleFinish(false)} disabled={loading || !techFilled} style={s('border:none;background:#3B83F6;color:#fff;font-size:14px;font-weight:700;padding:12px 20px;border-radius:12px;cursor:' + (loading || !techFilled ? 'default' : 'pointer') + ';flex:1;box-shadow:0 4px 12px rgba(59,131,246,0.25);opacity:' + (loading || !techFilled ? 0.45 : 1))} hover={loading || !techFilled ? undefined : s('background:#2563EB;box-shadow:0 6px 16px rgba(59,131,246,0.3)')}>
                       {loading ? 'Creazione...' : 'Crea Immobile'}
                     </Box>
                   </>

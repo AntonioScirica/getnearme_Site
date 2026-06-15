@@ -146,6 +146,26 @@ export function HomeScreen({
   // Festeggia quando il kit e' completo (transizione a 100%), una sola volta.
   const prevPctRef = React.useRef<number | null>(null);
 
+  // Calculate completion
+  const localHasPhotos = batches?.some(b => b.projectId === active?.id && b.status !== 'failed' && b.completedItems > 0) || false;
+  const localHasVideo = videoJobs?.some(v => v.projectId === active?.id && v.stage === 'done') || false;
+
+  const hasPhotos = localHasPhotos || (active?.nFoto || 0) + (active?.nStaging || 0) > 0;
+  const hasVideo = localHasVideo || (active?.nVideo || 0) > 0;
+  const postCount = active?.nPost || 0;
+  const hasSocial = postCount >= 1; // basta UN post creato per spuntare lo step
+  const completedCount = [hasPhotos, hasVideo, hasSocial].filter(Boolean).length;
+  const completionPct = Math.round((completedCount / 3) * 100);
+
+  React.useEffect(() => {
+    if (prevPctRef.current !== null && completionPct === 100 && prevPctRef.current < 100) {
+      toast?.('Kit completo! Hai tutti i materiali per questo immobile', 'check');
+    }
+    prevPctRef.current = completionPct;
+  }, [completionPct, toast]);
+
+  // Guard: senza immobile attivo (utente nuovo o dopo aver cancellato tutto)
+  // mostriamo uno stato vuoto invece di crashare su active.nome.
   if (!active) {
     return (
       <div style={s('max-width:1160px;margin:0 auto;padding:36px 32px 64px')}>
@@ -174,29 +194,11 @@ export function HomeScreen({
     );
   }
 
-  // Calculate completion
-  const localHasPhotos = batches?.some(b => b.projectId === active.id && b.status !== 'failed' && b.completedItems > 0) || false;
-  const localHasVideo = videoJobs?.some(v => v.projectId === active.id && v.stage === 'done') || false;
-  
-  const hasPhotos = localHasPhotos || (active.nFoto || 0) + (active.nStaging || 0) > 0;
-  const hasVideo = localHasVideo || (active.nVideo || 0) > 0;
-  const postCount = active.nPost || 0;
-  const hasSocial = postCount >= 1; // basta UN post creato per spuntare lo step
-  const completedCount = [hasPhotos, hasVideo, hasSocial].filter(Boolean).length;
-  const completionPct = Math.round((completedCount / 3) * 100);
-
-  React.useEffect(() => {
-    if (prevPctRef.current !== null && completionPct === 100 && prevPctRef.current < 100) {
-      toast?.('Kit completo! Hai tutti i materiali per questo immobile', 'check');
-    }
-    prevPctRef.current = completionPct;
-  }, [completionPct, toast]);
-
   return (
     <div>
       {/* ── CINEMATIC HEADER ── */}
       <div className="max-md:!h-auto max-md:!min-h-[220px]" style={{ position: 'relative', height: 260, background: '#111', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', inset: 0, opacity: 0.6, ...getCoverStyle(active), filter: 'blur(20px) brightness(0.6)', transform: 'scale(1.1)' }} />
+        <div style={{ position: 'absolute', inset: 0, opacity: 0.6, ...getCoverStyle(active), filter: 'blur(10px) brightness(0.6)', transform: 'scale(1.1)' }} />
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, #111, transparent)' }} />
         <div className="max-md:!p-6 max-md:!pb-6 max-md:!items-center" style={s('max-width:1160px;margin:0 auto;padding:0 32px;height:100%;display:flex;align-items:flex-end;position:relative;z-index:2;padding-bottom:32px')}>
           <div className="max-md:!flex-col max-md:!items-center max-md:!text-center max-md:!mt-12" style={{ display: 'flex', gap: 24, alignItems: 'center', width: '100%' }}>

@@ -33,7 +33,8 @@ export default function AmbassadorRedirect({ locale }: { locale: Locale }) {
     })();
 
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) check(session.user.id);
+      // Differito: niente chiamate supabase dentro il callback (evita deadlock col lock auth).
+      if (session?.user) { const uid = session.user.id; setTimeout(() => check(uid), 0); }
     });
 
     return () => {

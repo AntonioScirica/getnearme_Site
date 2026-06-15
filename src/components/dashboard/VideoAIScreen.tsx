@@ -6,7 +6,7 @@
 
 import React from 'react';
 import { s, Box, Icon } from './ui';
-import { getTokenFast } from '@/lib/staging';
+import { getTokenFast, fetchMontaggioQuota, consumeMontaggioQuota, type MontaggioQuota } from '@/lib/staging';
 import type { BrandSettings } from '@/lib/brand';
 import {
   DEFAULT_VIDEO_TEMPLATES, MONTAGGIO_TEMPLATE, NO_AVATAR_LAYOUTS, ROOM_TYPES,
@@ -372,6 +372,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
   const [templates, setTemplates] = React.useState<VideoTemplate[]>(DEFAULT_VIDEO_TEMPLATES);
   const [avatars, setAvatars] = React.useState<VideoAvatar[]>([]);
   const [quota, setQuota] = React.useState<VideoQuota | null>(null);
+  const [montaggioQuota, setMontaggioQuota] = React.useState<MontaggioQuota | null>(null);
   const [packsOpen, setPacksOpen] = React.useState(false); // popup pacchetti video extra
   // Init dal preselect: montaggio entra direttamente al suo step (niente flash
   // del picker Video AI prima del passaggio).
@@ -497,6 +498,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
   React.useEffect(() => {
     fetchVideoConfig().then(c => { setTemplates(c.templates); setAvatars(c.avatars); });
     fetchVideoQuota().then(setQuota);
+    fetchMontaggioQuota().then(setMontaggioQuota);
   }, []);
 
   const resetAll = React.useCallback(() => {
@@ -756,7 +758,20 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
       toast(`Massimo ${MAX_CONCURRENT_RENDERS} video alla volta. Attendi che finiscano.`, 'x');
       return;
     }
-    if (quota && quota.remaining <= 0) {
+    if (layout === 'montaggio') {
+      // Montaggio: quota dedicata (5 free, illimitato sui piani pagati).
+      if (montaggioQuota && !montaggioQuota.unlimited && montaggioQuota.remaining <= 0) {
+        toast('Hai finito i montaggi gratuiti. Passa a un piano per montaggi illimitati.', 'x');
+        return;
+      }
+      const c = await consumeMontaggioQuota();
+      if (c && !c.allowed) {
+        setMontaggioQuota({ unlimited: false, remaining: 0 });
+        toast('Hai finito i montaggi gratuiti. Passa a un piano per montaggi illimitati.', 'x');
+        return;
+      }
+      if (c && !c.unlimited && typeof c.remaining === 'number') setMontaggioQuota({ unlimited: false, remaining: c.remaining });
+    } else if (quota && quota.remaining <= 0) {
       setPacksOpen(true); // quota finita → mostra i pacchetti extra
       return;
     }
@@ -1172,13 +1187,21 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
       {/* STEP 2 — media upload */}
       {step === 2 && tpl && (
         <div>
-          <div style={s('font-size:16px;font-weight:800;margin-bottom:4px')}>
-            {layout === 'before_after' ? 'Carica le coppie prima/dopo'
-              : singlePhoto ? 'Carica la foto'
-              : layout === 'sottotitoli' ? 'Carica il tuo video (max 90s)'
-              : isPhotoTemplate ? `Carica da ${minClips} a ${maxClips} foto`
-              : layout === 'montaggio' ? `Carica da ${minClips} a ${maxClips} tra clip e foto`
-              : `Carica da ${minClips} a ${maxClips} clip video`}
+          <div style={s('display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:4px')}>
+            <div style={s('font-size:16px;font-weight:800')}>
+              {layout === 'before_after' ? 'Carica le coppie prima/dopo'
+                : singlePhoto ? 'Carica la foto'
+                : layout === 'sottotitoli' ? 'Carica il tuo video (max 90s)'
+                : isPhotoTemplate ? `Carica da ${minClips} a ${maxClips} foto`
+                : layout === 'montaggio' ? `Carica da ${minClips} a ${maxClips} tra clip e foto`
+                : `Carica da ${minClips} a ${maxClips} clip video`}
+            </div>
+            {layout === 'montaggio' && montaggioQuota && !montaggioQuota.unlimited && (
+              <div style={s('display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #f0ede7;border-radius:99px;padding:8px 16px;flex:none') as React.CSSProperties}>
+                <Icon name="scissors" size={15} color={montaggioQuota.remaining > 0 ? '#3B83F6' : '#dc2626'} />
+                <span style={{ fontSize: 13, fontWeight: 700 }}>{Math.max(0, montaggioQuota.remaining)}/5 montaggi</span>
+              </div>
+            )}
           </div>
           <div style={s('color:#8c867d;font-size:13px;margin-bottom:16px')}>{tpl.description}{isPhotoTemplate && !singlePhoto && clips.length > 1 ? ' Trascina le foto per cambiarne l\'ordine.' : ''}</div>
 

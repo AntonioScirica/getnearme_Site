@@ -13,18 +13,17 @@ declare global {
   var __gnm_supabase__: SupabaseClient | undefined;
 }
 
-// lock no-op: supabase-js usa navigator.locks per serializzare il refresh del
-// token; su localhost (e in certi setup) quella lock può non risolversi mai →
-// deadlock → l'auto-refresh non gira → il token scade e l'utente viene
-// sbattuto fuori ("Accedi per usare..."). Bypassando la lock l'auto-refresh
-// funziona e il token resta sempre fresco, anche durante render lunghi.
+// Lock del refresh token: quello DEFAULT di supabase-js (navigator.locks).
+// I "deadlock" visti prima NON erano il lock, ma un callback onAuthStateChange
+// async che awaitava supabase.from dentro (deadlock col lock di auth). Risolto
+// quello, il lock di default funziona come in produzione/estensione. Il
+// singleton qui sotto evita la multi-istanza (vera causa storica del deadlock).
 export const supabase: SupabaseClient =
   globalThis.__gnm_supabase__ ?? createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     auth: {
       persistSession: true,
       autoRefreshToken: true,
       detectSessionInUrl: true,
-      lock: <R,>(_name: string, _acquireTimeout: number, fn: () => Promise<R>): Promise<R> => fn(),
     },
   });
 

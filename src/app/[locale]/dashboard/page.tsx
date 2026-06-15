@@ -38,81 +38,65 @@ export default function DashboardPage() {
   const locale = (params?.locale as string) || 'it';
   const [loading, setLoading] = useState(true);
   const [userData, setUserData] = useState<UserData | null>(null);
-  const [loginEmail, setLoginEmail] = useState('');
-  const [loginPassword, setLoginPassword] = useState('');
-  const [loginError, setLoginError] = useState<string | null>(null);
-  const [loginLoading, setLoginLoading] = useState(false);
 
   useEffect(() => {
     async function init() {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        const profile = await fetchProfile(session.user.id, session.user.email || '');
-        setUserData(profile);
+      try {
+        // Safety: getSession non deve mai appendere il loader all'infinito.
+        const sessionRes = await Promise.race([
+          supabase.auth.getSession(),
+          new Promise<null>((resolve) => setTimeout(() => resolve(null), 4000)),
+        ]);
+        const session = sessionRes?.data?.session ?? null;
+        if (session?.user) {
+          const profile = await fetchProfile(session.user.id, session.user.email || '');
+          setUserData(profile);
+        }
+      } catch (e) {
+        console.error('dashboard init error', e);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     }
     init();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (session?.user) {
-        const profile = await fetchProfile(session.user.id, session.user.email || '');
-        setUserData(profile);
-      } else {
+    // IMPORTANTE: il callback NON deve essere async ne' chiamare supabase dentro.
+    // Supabase lo invoca tenendo il lock di auth: awaitare fetchProfile (che fa
+    // supabase.from) qui dentro causa DEADLOCK -> getSession appeso -> loader
+    // infinito. Il fetch del profilo va differito fuori dal callback.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT') {
         setUserData(null);
+        return;
+      }
+      if (session?.user) {
+        const u = session.user;
+        setTimeout(() => { fetchProfile(u.id, u.email || '').then(setUserData).catch(() => {}); }, 0);
       }
     });
     return () => subscription.unsubscribe();
   }, []);
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoginError(null);
-    setLoginLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({
-      email: loginEmail.trim(),
-      password: loginPassword,
-    });
-    setLoginLoading(false);
-    if (error) setLoginError(error.message);
-  };
+  // Non autenticato -> mandiamo al login vero (checkout/agency). Niente piu'
+  // pagina di login custom: si usa sempre il login del checkout.
+  useEffect(() => {
+    if (!loading && !userData) {
+      // Post eliminazione account: si va alla home landing, non al login.
+      let postDelete = false;
+      try { postDelete = sessionStorage.getItem('gnm_post_delete') === '1'; } catch { /* private mode */ }
+      if (postDelete) {
+        try { sessionStorage.removeItem('gnm_post_delete'); } catch { /* private mode */ }
+        window.location.replace(`/${locale}`);
+        return;
+      }
+      window.location.replace(`/${locale}/checkout/agency`);
+    }
+  }, [loading, userData, locale]);
 
-  if (loading) {
+  if (loading || !userData) {
     return (
       <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#faf9f7' }}>
         <Loader2 size={26} color="#3B82F6" style={{ animation: 'spin 1s linear infinite' }} />
-      </div>
-    );
-  }
-
-  if (!userData) {
-    return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#faf9f7', fontFamily: "'Inter', system-ui, sans-serif" }}>
-        <form onSubmit={handleLogin} style={{ width: 380, background: '#fff', borderRadius: 20, padding: '40px 32px', boxShadow: '0 8px 40px rgba(33,31,28,.08)', border: '1px solid #f0ede7' }}>
-          <div style={{ textAlign: 'center', marginBottom: 28 }}>
-            <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-.4px', marginBottom: 4 }}>GetNearMe</div>
-            <div style={{ fontSize: 13.5, color: '#8c867d' }}>Accedi per continuare</div>
-          </div>
-          <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6, color: '#57534c' }}>Email</label>
-          <input
-            type="email" required autoFocus value={loginEmail} onChange={e => setLoginEmail(e.target.value)}
-            style={{ width: '100%', padding: '11px 14px', border: '1px solid #e4e1da', borderRadius: 10, fontSize: 14, marginBottom: 16, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }}
-          />
-          <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6, color: '#57534c' }}>Password</label>
-          <input
-            type="password" required value={loginPassword} onChange={e => setLoginPassword(e.target.value)}
-            style={{ width: '100%', padding: '11px 14px', border: '1px solid #e4e1da', borderRadius: 10, fontSize: 14, marginBottom: 20, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }}
-          />
-          {loginError && (
-            <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#b91c1c', borderRadius: 10, padding: '10px 14px', fontSize: 13, marginBottom: 16 }}>{loginError}</div>
-          )}
-          <button
-            type="submit" disabled={loginLoading}
-            style={{ width: '100%', padding: '13px 16px', background: '#3B83F6', color: '#fff', fontSize: 14, fontWeight: 700, border: 'none', borderRadius: 10, cursor: loginLoading ? 'wait' : 'pointer', opacity: loginLoading ? 0.7 : 1, fontFamily: 'inherit' }}
-          >
-            {loginLoading ? 'Accesso in corso...' : 'Accedi'}
-          </button>
-        </form>
       </div>
     );
   }
