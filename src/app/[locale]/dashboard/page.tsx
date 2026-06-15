@@ -17,17 +17,21 @@ export type UserData = {
 };
 
 async function fetchProfile(userId: string, email: string): Promise<UserData> {
-  const { data } = await supabase
+  // NB: la colonna e' `stripe_agency_subscription_id` (NON `stripe_customer_id`).
+  // Selezionare una colonna inesistente faceva fallire l'INTERA query -> data
+  // null -> subscriptionType sempre 'free' (piano/brand bloccati anche da pagante).
+  const { data, error } = await supabase
     .from('user_credits')
-    .select('credits, subscription_type, stripe_customer_id, total_earned, total_spent')
+    .select('credits, subscription_type, stripe_agency_subscription_id, total_earned, total_spent')
     .eq('user_id', userId)
     .single();
+  if (error) console.error('fetchProfile error:', error.message);
   return {
     id: userId,
     email,
     credits: data?.credits ?? 0,
     subscriptionType: data?.subscription_type ?? 'free',
-    stripeCustomerId: data?.stripe_customer_id ?? null,
+    stripeCustomerId: data?.stripe_agency_subscription_id ?? null,
     totalEarned: data?.total_earned ?? 0,
     totalSpent: data?.total_spent ?? 0,
   };
