@@ -2037,7 +2037,7 @@ function SettingsScreen({ toast }: { toast: (msg: string, icon?: string) => void
             </div>
             <h3 style={{ margin: '0 0 6px', fontSize: 20, fontWeight: 800, textAlign: 'center', color: '#1a1a1a' }}>Sei sicuro?</h3>
             <p style={{ margin: '0 auto 24px', maxWidth: 300, fontSize: 14, color: 'var(--text-sec)', textAlign: 'center', lineHeight: 1.5 }}>
-Azione <strong>irreversibile</strong>: cancellando il tuo account perderai dati, contenuti e progetti.
+Azione <strong>irreversibile</strong>: perderai dati, contenuti e progetti, e l&apos;abbonamento verrà annullato.
             </p>
             
             <div style={{ marginBottom: 24 }}>
