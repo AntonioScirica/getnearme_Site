@@ -19,16 +19,29 @@ export async function POST(req: NextRequest) {
     const userId = u.user?.id
     if (!userId) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
 
-    const { data: row } = await admin
+    // La colonna reale e' stripe_agency_subscription_id (NON stripe_customer_id).
+    const { data: row, error: rowErr } = await admin
       .from('user_credits')
-      .select('stripe_customer_id')
+      .select('stripe_agency_subscription_id')
       .eq('user_id', userId)
       .single()
-    const customer = row?.stripe_customer_id
-    if (!customer) return NextResponse.json({ error: 'no_customer' }, { status: 400 })
+    if (rowErr) console.error('billing-portal row error:', rowErr.message)
+    const subscriptionId = row?.stripe_agency_subscription_id
+    if (!subscriptionId) return NextResponse.json({ error: 'no_subscription' }, { status: 400 })
 
     const stripeKey = process.env.STRIPE_SECRET_KEY
     if (!stripeKey) return NextResponse.json({ error: 'misconfig' }, { status: 500 })
+
+    // Ricava il customer dalla subscription (il portal richiede il customer id).
+    const subRes = await fetch(`https://api.stripe.com/v1/subscriptions/${subscriptionId}`, {
+      headers: { Authorization: `Bearer ${stripeKey}` },
+    })
+    const sub = await subRes.json()
+    const customer = sub?.customer
+    if (!subRes.ok || !customer) {
+      console.error('billing-portal sub lookup failed:', sub?.error?.message)
+      return NextResponse.json({ error: 'no_customer' }, { status: 400 })
+    }
 
     const { returnUrl } = await req.json().catch(() => ({}))
     const body = new URLSearchParams()
