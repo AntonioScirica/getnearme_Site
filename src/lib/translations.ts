@@ -365,13 +365,13 @@ export const translations = {
           {
             id: "agency_monthly", name: "Mensile", users: "Tutte le funzioni incluse", oldPrice: 150, price: 59, period: "/mese",
             savingsYear: null, badge: null, popular: false,
-            features: ["Foto AI homestaging per i tuoi immobili", "Video AI pronti per i social", "Post social illimitati", "Editor Video Limitato", "Contenuti 100% Brandizzati", "Supporto prioritario"],
+            features: ["250 foto AI homestaging/mese", "4 video AI/mese", "Post social illimitati", "Editor Video Illimitato", "Contenuti 100% Brandizzati", "Supporto prioritario"],
             extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Scegli questo piano",
           },
           {
             id: "agency_annual", name: "Annuale", users: "Tutte le funzioni incluse", oldPrice: 1800, price: 590, period: "/anno",
             savingsYear: null, badge: "Più scelto", popular: true,
-            features: ["Foto AI homestaging per i tuoi immobili", "Video AI pronti per i social", "Post social illimitati", "Editor Video Limitato", "Contenuti 100% Brandizzati", "Supporto prioritario"],
+            features: ["250 foto AI homestaging/mese", "4 video AI/mese", "Post social illimitati", "Editor Video Illimitato", "Contenuti 100% Brandizzati", "Supporto prioritario"],
             extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Scegli questo piano",
           },
         ],

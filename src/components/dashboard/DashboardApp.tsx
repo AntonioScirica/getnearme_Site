@@ -300,6 +300,11 @@ const SUB_TYPE_TO_PLAN: Record<string, string> = {
   free: 'free',
   agency_monthly: 'monthly',
   agency_annual: 'annual',
+  // Fallback: qualsiasi tier agency generico/legacy conta come pagante (mensile).
+  agency: 'monthly',
+  agency_quarterly: 'monthly',
+  agency_pro: 'monthly',
+  agency_starter: 'monthly',
 };
 
 const PLAN_TO_SUB_TYPE: Record<string, string> = {
@@ -310,10 +315,10 @@ const PLAN_TO_SUB_TYPE: Record<string, string> = {
 // Voci dalla landing (uguali per tutti i piani). Differenza tra piani = prezzo.
 // Quote uguali: 200 foto AI + 4 video AI/mese (margini ~81-91%).
 const PLAN_FEATURES = [
-  'Foto AI homestaging per i tuoi immobili',
-  'Video AI pronti per i social',
+  '250 foto AI homestaging/mese',
+  '4 video AI/mese',
   'Post social illimitati',
-  'Editor Video Limitato',
+  'Editor Video Illimitato',
   'Contenuti 100% Brandizzati',
   'Supporto prioritario',
 ];
@@ -1956,6 +1961,17 @@ function SettingsScreen({ toast }: { toast: (msg: string, icon?: string) => void
         const data = await res.json().catch(() => null);
         throw new Error(data?.error || 'Errore eliminazione account');
       }
+      // Pulizia cache locale: i job video / progetti / flag sono in localStorage
+      // NON scoped per utente. Senza pulirli, un nuovo account sullo stesso
+      // browser si ritrova i contenuti del vecchio. Rimuoviamo tutte le chiavi gnm_.
+      try {
+        for (let i = localStorage.length - 1; i >= 0; i--) {
+          const k = localStorage.key(i);
+          if (k && k.startsWith('gnm_')) localStorage.removeItem(k);
+        }
+      } catch { /* private mode */ }
+      // Best-effort: svuota anche la cache media in IndexedDB.
+      try { indexedDB.deleteDatabase('gnm_media_cache'); } catch { /* noop */ }
       // Flag: la dashboard, vedendo la sessione sparire, NON deve rimbalzare al
       // login del checkout. Dopo delete si va dritti alla home della landing.
       try { sessionStorage.setItem('gnm_post_delete', '1'); } catch { /* private mode */ }

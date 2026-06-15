@@ -214,7 +214,8 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
       if (res.status === 'failed') {
         clearPending();
         setGenerating(false);
-        setError(res.error);
+        console.error('[FotoAI] generation failed:', res.error);
+        setError('Non siamo riusciti a modificare questa foto. Riprova o usa un\'altra immagine.');
         return;
       }
       // processing → schedule next poll
@@ -377,7 +378,8 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
     })();
 
     if (!res.ok) {
-      setError(res.error);
+      console.error('[FotoAI] start failed:', res.error);
+      setError('Non siamo riusciti a modificare questa foto. Riprova o usa un\'altra immagine.');
       setGenerating(false);
       return;
     }

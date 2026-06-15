@@ -74,7 +74,42 @@ export default function DashboardPage() {
         setTimeout(() => { fetchProfile(u.id, u.email || '').then(setUserData).catch(() => {}); }, 0);
       }
     });
-    return () => subscription.unsubscribe();
+
+    // Refetch profilo al ritorno dal checkout Stripe (aperto in nuova tab):
+    // tornando sulla dashboard scatta focus/visibilitychange. Il webhook e'
+    // async, quindi facciamo qualche tentativo finche' il piano si aggiorna.
+    let pollId: ReturnType<typeof setTimeout> | null = null;
+    const refetchProfile = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          const p = await fetchProfile(session.user.id, session.user.email || '');
+          setUserData(p);
+          return p.subscriptionType && p.subscriptionType !== 'free';
+        }
+      } catch { /* noop */ }
+      return false;
+    };
+    const onReturn = () => {
+      if (document.hidden) return;
+      let tries = 0;
+      const run = async () => {
+        const paid = await refetchProfile();
+        tries++;
+        if (!paid && tries < 5) pollId = setTimeout(run, 2500); // webhook lag
+      };
+      if (pollId) clearTimeout(pollId);
+      run();
+    };
+    window.addEventListener('focus', onReturn);
+    document.addEventListener('visibilitychange', onReturn);
+
+    return () => {
+      subscription.unsubscribe();
+      window.removeEventListener('focus', onReturn);
+      document.removeEventListener('visibilitychange', onReturn);
+      if (pollId) clearTimeout(pollId);
+    };
   }, []);
 
   // Non autenticato -> mandiamo al login vero (checkout/agency). Niente piu'
