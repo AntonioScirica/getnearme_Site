@@ -504,6 +504,13 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
     fetchVideoQuota().then(setQuota);
     fetchMontaggioQuota().then(setMontaggioQuota);
   }, []);
+  // Refetch al ritorno dal checkout pacchetti (nuova tab) -> pill aggiornata subito.
+  React.useEffect(() => {
+    const onFocus = () => { if (!document.hidden) { fetchVideoQuota().then(setQuota); fetchMontaggioQuota().then(setMontaggioQuota); } };
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onFocus);
+    return () => { window.removeEventListener('focus', onFocus); document.removeEventListener('visibilitychange', onFocus); };
+  }, []);
 
   const resetAll = React.useCallback(() => {
     setStep(0); setTpl(null); setAvatar(null); setClips([]); setPairs([]);

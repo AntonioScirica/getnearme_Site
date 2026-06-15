@@ -589,6 +589,13 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
   const [postQuota, setPostQuota] = React.useState<{ unlimited: boolean; remaining: number } | null>(null);
   const [postsPaywallOpen, setPostsPaywallOpen] = React.useState(false);
   React.useEffect(() => { fetchPostQuota().then(setPostQuota); }, []);
+  // Refetch al ritorno da una tab esterna (es. checkout pacchetti) -> pill aggiornata.
+  React.useEffect(() => {
+    const onFocus = () => { if (!document.hidden) fetchPostQuota().then(setPostQuota); };
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onFocus);
+    return () => { window.removeEventListener('focus', onFocus); document.removeEventListener('visibilitychange', onFocus); };
+  }, []);
   // Ritorna true se si puo' procedere (consuma 1 credito), altrimenti apre il paywall.
   const gatePost = async (): Promise<boolean> => {
     if (postQuota && !postQuota.unlimited && postQuota.remaining <= 0) { setPostsPaywallOpen(true); return false; }

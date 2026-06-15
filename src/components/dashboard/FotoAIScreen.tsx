@@ -113,6 +113,14 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
   const [quota, setQuota] = React.useState<StagingQuota | null>(null);
   const [packsOpen, setPacksOpen] = React.useState(false);
   React.useEffect(() => { fetchStagingQuota().then(setQuota); }, []);
+  // Refetch al ritorno dal checkout pacchetti (aperto in nuova tab): rientrando
+  // sulla tab la pill crediti si aggiorna subito.
+  React.useEffect(() => {
+    const onFocus = () => { if (!document.hidden) fetchStagingQuota().then(setQuota); };
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onFocus);
+    return () => { window.removeEventListener('focus', onFocus); document.removeEventListener('visibilitychange', onFocus); };
+  }, []);
   // Warm-up: spin up the edge function on mount so the first real generation
   // doesn't hit a cold start (which can exceed the start timeout).
   React.useEffect(() => { pollStagingStatus('warmup-noop').catch(() => {}); }, []);
