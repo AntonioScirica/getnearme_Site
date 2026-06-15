@@ -2019,9 +2019,9 @@ function SettingsScreen({ toast }: { toast: (msg: string, icon?: string) => void
                 <Icon name="alert-triangle" size={28} color="#dc2626" />
               </div>
             </div>
-            <h3 style={{ margin: '0 0 12px', fontSize: 20, fontWeight: 800, textAlign: 'center', color: '#1a1a1a' }}>Sei assolutamente sicuro?</h3>
-            <p style={{ margin: '0 0 24px', fontSize: 14, color: 'var(--text-sec)', textAlign: 'center', lineHeight: 1.5 }}>
-              Questa azione <strong>non può essere annullata</strong>. L'eliminazione dell'account comporterà la perdita di tutti i tuoi dati, crediti e progetti.
+            <h3 style={{ margin: '0 0 6px', fontSize: 20, fontWeight: 800, textAlign: 'center', color: '#1a1a1a' }}>Sei sicuro?</h3>
+            <p style={{ margin: '0 auto 24px', maxWidth: 300, fontSize: 14, color: 'var(--text-sec)', textAlign: 'center', lineHeight: 1.5 }}>
+Azione <strong>irreversibile</strong>: cancellando il tuo account perderai dati, contenuti e progetti.
             </p>
             
             <div style={{ marginBottom: 24 }}>
@@ -2993,16 +2993,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
               {projOpen && (
                 <div className="max-md:!fixed max-md:!top-16 max-md:!left-2 max-md:!right-2 max-md:!w-auto" style={s(`position:absolute;top:52px;left:0;width:100%;background:var(--bg-card);border-radius:12px;box-shadow:0 16px 48px rgba(33,31,28,.16);border:1px solid var(--border-light);z-index:99;overflow:hidden;box-shadow:0 16px 48px rgba(33,31,28,.16)`)}>
                   <div style={s('padding:12px 12px 8px')}><div style={s('display:flex;align-items:center;gap:8px;background:#faf9f7;border:1px solid #ece9e2;border-radius:10px;padding:8px 12px')}><Icon name="search" size={15} color="var(--text-muted)" /><input value={projQuery} onChange={(e) => setProjQuery(e.target.value)} placeholder="Cerca immobile…" style={s('border:none;background:transparent;outline:none;font-size:13px;width:100%')} /></div></div>
-                  <div style={s('max-height:260px;overflow:auto;padding:0 6px')}>
-                    {projList.map((p) => (
-                      <Box key={p.id} onClick={() => { setActiveProject(p.id); setProjOpen(false); }} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 10px', borderRadius: 12, cursor: 'pointer', background: p.id === activeProject ? '#f6faff' : 'transparent', border: p.id === activeProject ? '1px solid #3B83F6' : '1px solid transparent' }} hover={{ background: 'var(--bg-hover)' }}>
-                        <div style={{ width: 34, height: 34, borderRadius: 10, ...getCoverStyle(p), flex: 'none' }} />
-                        <div style={{ minWidth: 0, flex: 1 }}><div style={s('font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{p.nome}</div><div style={s('font-size:11px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{p.addr}</div></div>
-                        {p.id === activeProject && <Icon name="check" size={14} color="#3B83F6" />}
-                      </Box>
-                    ))}
-                  </div>
-                  <div style={{ padding: '12px', borderTop: '1px solid var(--border-light)' }}>
+                  <div style={{ padding: '0 12px 12px', borderBottom: '1px solid var(--border-light)' }}>
                     <Box data-tour="new-project" onClick={() => {
                       const inTourDropdown = tourStep !== null && TOUR_DEFS[tourStep]?.sel === '[data-tour-dropdown]';
                       if (inTourDropdown && tourReplayRef.current) {
@@ -3012,8 +3003,19 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                         return;
                       }
                       setProjOpen(false); setNewProjOpen(true); setTourStep(null); setTourRect(null); setTourRect2(null); setTourCtaRect(null);
-                    }} style={s(`display:flex;align-items:center;gap:10px;padding:12px 16px;border-radius:10px;cursor:pointer;color:${projList.length === 0 ? 'var(--bg-card)' : '#1d5fd0'};background:${projList.length === 0 ? '#3B83F6' : 'transparent'};font-weight:700;font-size:13px;${tourStep !== null && tdef.sel === '[data-tour-dropdown]' ? 'box-shadow:0 0 0 3px rgba(255,255,255,.7),0 0 20px rgba(255,255,255,.4);animation:tour-cta-glow 2s ease-in-out infinite;pointer-events:auto;' : ''}`)} hover={s(`background:${projList.length === 0 ? '#2b6fe0' : '#f6faff'}`)}><Icon name={tourStep !== null && tdef.sel === '[data-tour-dropdown]' && tourReplayRef.current ? 'check' : 'plus'} size={16} color={projList.length === 0 ? 'var(--bg-card)' : '#1d5fd0'} />{tourStep !== null && tdef.sel === '[data-tour-dropdown]' && tourReplayRef.current ? 'Ho capito' : (projList.length === 0 ? 'Crea il tuo primo immobile' : 'Nuovo immobile')}</Box>
+                    }} style={s(`display:flex;align-items:center;justify-content:center;gap:8px;padding:12px 16px;border-radius:10px;cursor:pointer;color:var(--bg-card);background:#3B83F6;font-weight:700;font-size:13px;min-height:44px;${tourStep !== null && tdef.sel === '[data-tour-dropdown]' ? 'box-shadow:0 0 0 3px rgba(255,255,255,.7),0 0 20px rgba(255,255,255,.4);animation:tour-cta-glow 2s ease-in-out infinite;pointer-events:auto;' : ''}`)} hover={s('background:#2b6fe0')}>{tourStep !== null && tdef.sel === '[data-tour-dropdown]' && tourReplayRef.current && <Icon name="check" size={16} color="var(--bg-card)" />}{tourStep !== null && tdef.sel === '[data-tour-dropdown]' && tourReplayRef.current ? 'Ho capito' : (projList.length === 0 ? 'Crea il tuo primo immobile' : 'Nuovo immobile')}</Box>
                   </div>
+                  {projList.length > 0 && (
+                    <div style={s('max-height:260px;overflow:auto;padding:8px 6px')}>
+                      {projList.map((p) => (
+                        <Box key={p.id} onClick={() => { setActiveProject(p.id); setProjOpen(false); }} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 10px', borderRadius: 12, cursor: 'pointer', background: p.id === activeProject ? '#f6faff' : 'transparent', border: p.id === activeProject ? '1px solid #3B83F6' : '1px solid transparent' }} hover={{ background: 'var(--bg-hover)' }}>
+                          <div style={{ width: 34, height: 34, borderRadius: 10, ...getCoverStyle(p), flex: 'none' }} />
+                          <div style={{ minWidth: 0, flex: 1 }}><div style={s('font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{p.nome}</div><div style={s('font-size:11px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{p.addr}</div></div>
+                          {p.id === activeProject && <Icon name="check" size={14} color="#3B83F6" />}
+                        </Box>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </div>

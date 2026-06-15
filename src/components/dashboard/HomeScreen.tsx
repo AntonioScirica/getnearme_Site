@@ -353,7 +353,7 @@ export function HomeScreen({
                     {completionPct === 100 ? 'Kit Completo!' : completionPct === 0 ? 'Tutto da creare' : 'Quasi pronto'}
                   </div>
                   <div style={s('font-size:13px;color:#8c867d;line-height:1.4')}>
-                    {completionPct === 100 ? 'Hai generato tutti i materiali.' : 'Usa gli strumenti AI per completare il set.'}
+                    {completionPct === 100 ? 'Hai generato tutti i materiali per questo immobile.' : 'Usa gli strumenti AI per completare il set di contenuti del tuo immobile.'}
                   </div>
                 </div>
               </div>

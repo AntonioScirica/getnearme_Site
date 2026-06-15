@@ -11,6 +11,7 @@ import {
   CreditCard, Upload, Copy, Trash2, Gift, Crown, Zap, Settings, LogOut, LifeBuoy,
   PlayCircle, MapPin, Maximize2, LayoutGrid, Tag, Scissors, LoaderCircle, Inbox,
   Euro, Bed, Bath, Instagram, Type, Home, Megaphone, Images, MessageSquare,
+  TriangleAlert, Lock,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -28,6 +29,7 @@ const ICONS: Record<string, LucideIcon> = {
   tag: Tag, scissors: Scissors, 'loader-circle': LoaderCircle, inbox: Inbox,
   euro: Euro, bed: Bed, bath: Bath, instagram: Instagram, type: Type, home: Home,
   megaphone: Megaphone, images: Images, 'message-square': MessageSquare,
+  'alert-triangle': TriangleAlert, alert: TriangleAlert, lock: Lock,
 };
 
 /** Parse a CSS declaration string into a React style object. */

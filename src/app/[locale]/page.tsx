@@ -609,9 +609,11 @@ export default async function Home({ params }: Props) {
                     borderRadius: 10,
                     border: "1px solid rgba(26,26,46,0.10)",
                     boxShadow: "0 2px 10px rgba(16,24,40,0.06)",
+                    position: "relative",
+                    top: 1.5,
                   }}
                 >
-                  {l.faq.titleHighlight}
+                  <span style={{ position: "relative", top: -1.5, display: "inline-block" }}>{l.faq.titleHighlight}</span>
                 </span>
               </h2>
             </div>
