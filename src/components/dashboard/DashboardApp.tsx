@@ -321,7 +321,8 @@ const PLAN_FEATURES = [
   '250 foto AI homestaging/mese',
   '4 video AI/mese',
   'Post social illimitati',
-  'Editor Video Illimitato',
+  'Montaggio Illimitato',
+  'Import immobili',
   'Contenuti 100% Brandizzati',
   'Supporto prioritario',
 ];
@@ -1975,14 +1976,14 @@ function AccountScreen({ credits, toast, go, userData }: { credits: number; toas
                 }} style={{
                   marginTop: 28,
                   border: 'none',
-                  background: active ? 'var(--bg-card)' : 'var(--text-main)',
-                  color: active ? '#3B83F6' : 'var(--bg-card)',
+                  background: active ? 'var(--bg-card)' : '#3B83F6',
+                  color: active ? '#3B83F6' : '#fff',
                   fontSize: 15, fontWeight: 700, padding: '14px 20px', borderRadius: 12,
                   cursor: 'pointer', minHeight: 48, width: '100%',
                   transition: 'background .2s, transform .15s',
                   boxShadow: active ? '0 2px 8px rgba(0,0,0,.08)' : 'none',
                 }} hover={{
-                  background: active ? '#f0f6ff' : '#333028',
+                  background: active ? '#f0f6ff' : '#2b6fe0',
                   transform: 'scale(0.98)',
                 }}>
                   {active ? 'Piano attuale' : plan.id === 'free' ? 'Piano base' : 'Scegli questo piano'}
@@ -2095,7 +2096,7 @@ function SettingsScreen({ toast }: { toast: (msg: string, icon?: string) => void
           <div style={{ flex: '1 1 300px' }}>
             <h3 style={{ margin: '0 0 8px', fontSize: 15, fontWeight: 700, color: '#dc2626' }}>Zona Pericolosa</h3>
             <p style={{ margin: 0, fontSize: 13, color: '#b91c1c', maxWidth: 600 }}>
-              L'eliminazione dell'account è irreversibile. Tutti i tuoi progetti, foto AI, video e brand verranno cancellati definitivamente dai nostri server.
+              L'eliminazione dell'account è irreversibile. Tutti i tuoi immobili, foto AI, video e brand verranno cancellati definitivamente dai nostri server.
             </p>
           </div>
 
@@ -2118,7 +2119,7 @@ function SettingsScreen({ toast }: { toast: (msg: string, icon?: string) => void
             </div>
             <h3 style={{ margin: '0 0 6px', fontSize: 20, fontWeight: 800, textAlign: 'center', color: '#1a1a1a' }}>Sei sicuro?</h3>
             <p style={{ margin: '0 auto 24px', maxWidth: 300, fontSize: 14, color: 'var(--text-sec)', textAlign: 'center', lineHeight: 1.5 }}>
-Azione <strong>irreversibile</strong>: perderai dati, contenuti e progetti, e l&apos;abbonamento verrà annullato.
+Azione <strong>irreversibile</strong>: perderai dati, contenuti e immobili, e l&apos;abbonamento verrà annullato.
             </p>
             
             <div style={{ marginBottom: 24 }}>
@@ -2467,7 +2468,7 @@ function BrandScreen({ toast, brand: brandProp, setBrand: setBrandParent, brandR
 }
 
 const ROUTE_TITLES: Record<string, string> = {
-  progetti: 'Progetti', immobili: 'Immobili', progetto: 'Dettaglio immobile', staging: 'Homestaging AI', video: 'Video AI', montaggio: 'Montaggio',
+  progetti: 'Immobili', immobili: 'Immobili', progetto: 'Dettaglio immobile', staging: 'Homestaging AI', video: 'Video AI', montaggio: 'Montaggio',
   studio: 'Post Social', calendario: 'Calendario', media: 'Galleria', team: 'Team',
   brand: 'Brand', social: 'Account social', account: 'Piano', home: 'Scheda', impostazioni: 'Impostazioni', assistenza: 'Assistenza'
 };
@@ -3002,7 +3003,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
           <div style={s('flex:1;overflow-y:auto;overflow-x:hidden;padding:6px 0 16px')}>
             {NAV_SECTIONS.map((sec, si) => (
               <div key={si} style={{ marginBottom: 4 }}>
-                {sec.label && !collapsed && <div style={s('font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#b3aca1;padding:14px 22px 6px;white-space:nowrap')}>{sec.label}</div>}
+                {sec.label && !collapsed && <div title={sec.label === 'Immobile attivo' ? (active?.addr || active?.nome || '') : undefined} style={s('font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#b3aca1;padding:14px 22px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%')}>{sec.label === 'Immobile attivo' ? (active?.addr || active?.nome || 'Immobile attivo') : sec.label}</div>}
                 {sec.items.map((it) => {
                   const a = route === it.route || (it.route === 'progetti' && route === 'progetto');
                   const tourActive = tourStep !== null && TOUR_DEFS[tourStep]?.sel === `[title="${it.label}"]`;
@@ -3371,7 +3372,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                       ) : (
                       <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
                         <div style={{ position: 'relative' }}>
-                          <Box as="button" onClick={() => setImmActionsOpen(o => !o)} style={s('box-sizing:border-box;border:1px solid #e4e1da;background:var(--bg-card);color:var(--text-main);font-size:13.5px;font-weight:700;padding:0 18px;height:44px;border-radius:10px;cursor:pointer;display:flex;align-items:center;gap:8px;white-space:nowrap')} hover={s('background:#f6f4f0')}>
+                          <Box as="button" onClick={() => setImmActionsOpen(o => !o)} style={s('box-sizing:border-box;border:1px solid #e4e1da;background:var(--bg-card);color:var(--text-main);font-size:13.5px;font-weight:700;line-height:20px;padding:11px 18px;border-radius:10px;cursor:pointer;display:flex;align-items:center;gap:8px;white-space:nowrap')} hover={s('background:#f6f4f0')}>
                             Azioni <Icon name="chevron-down" size={16} color="#57534c" />
                           </Box>
                           {immActionsOpen && (
@@ -3395,14 +3396,28 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                             </div>
                           )}
                         </div>
-                        <Box as="button" onClick={() => setNewProjOpen(true)} style={s('box-sizing:border-box;border:1px solid #3B83F6;background:#3B83F6;color:var(--bg-card);font-size:13.5px;font-weight:700;padding:0 18px;height:44px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;white-space:nowrap')} hover={s('background:#2b6fe0;border-color:#2b6fe0')}>
+                        <Box as="button" onClick={() => setNewProjOpen(true)} style={s('box-sizing:border-box;border:1px solid #3B83F6;background:#3B83F6;color:var(--bg-card);font-size:13.5px;font-weight:700;line-height:20px;padding:11px 18px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;white-space:nowrap')} hover={s('background:#2b6fe0;border-color:#2b6fe0')}>
                           Nuovo immobile
                         </Box>
                       </div>
                       )}
                     </div>
                     {list.length === 0 ? (
-                      <div style={s('text-align:center;padding:64px 20px;color:var(--text-muted);font-size:14px')}>Nessun immobile ancora. Creane uno con &quot;Nuovo immobile&quot;.</div>
+                      <div style={s('display:flex;flex-direction:column;align-items:center;justify-content:center;padding:72px 32px;text-align:center')}>
+                        <div style={s('width:64px;height:64px;border-radius:16px;background:#f4f2ee;display:flex;align-items:center;justify-content:center;margin-bottom:18px')}>
+                          <Icon name="building-2" size={28} color="#b3aca1" />
+                        </div>
+                        <h2 style={s('margin:0 0 8px;font-size:20px;font-weight:800;letter-spacing:-.3px')}>Nessun immobile ancora</h2>
+                        <p style={s('margin:0 0 24px;font-size:14px;color:#8c867d;max-width:380px;line-height:1.6')}>Crea il tuo primo immobile o importa la tua lista per iniziare a generare foto AI, video e post.</p>
+                        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center' }}>
+                          <Box as="button" onClick={() => setNewProjOpen(true)} style={s('border:1px solid #3B83F6;background:#3B83F6;color:#fff;font-size:14px;font-weight:700;padding:12px 22px;border-radius:12px;cursor:pointer;display:flex;align-items:center;gap:8px')} hover={s('background:#2b6fe0;border-color:#2b6fe0')}>
+                            <Icon name="plus" size={16} color="#fff" />Nuovo immobile
+                          </Box>
+                          <Box as="button" onClick={() => setImportOpen(true)} style={s('border:1px solid #e4e1da;background:var(--bg-card);color:var(--text-main);font-size:14px;font-weight:700;padding:12px 22px;border-radius:12px;cursor:pointer;display:flex;align-items:center;gap:8px')} hover={s('background:#f6f4f0')}>
+                            <Icon name="upload" size={16} color="#57534c" />Importa
+                          </Box>
+                        </div>
+                      </div>
                     ) : (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
                         {days.map(day => (

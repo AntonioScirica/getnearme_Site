@@ -15,6 +15,7 @@ export type ProjectData = {
   thumb?: string
   riferimento?: string
   tipologia?: string
+  import_data?: Record<string, unknown>
   icons?: Record<string, string>
   createdAt?: string
   nFoto?: number

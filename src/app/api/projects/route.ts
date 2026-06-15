@@ -45,6 +45,7 @@ export async function GET(req: NextRequest) {
     thumb: p.thumb,
     riferimento: p.riferimento,
     tipologia: p.tipologia,
+    import_data: p.import_data,
     icons: p.icons,
     createdAt: p.created_at,
   })) || []
@@ -127,7 +128,7 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: 'bad_request' }, { status: 400 })
   }
 
-  const { id, nome, addr, prezzo, mq, bagni, camere, titolo, descrizione, cover, thumb, riferimento, tipologia, icons } = body
+  const { id, nome, addr, prezzo, mq, bagni, camere, locali, titolo, descrizione, cover, thumb, riferimento, tipologia, icons } = body
 
   if (!id) {
     return NextResponse.json({ error: 'missing_id' }, { status: 400 })
@@ -140,6 +141,7 @@ export async function PUT(req: NextRequest) {
   if (mq !== undefined) updates.mq = typeof mq === 'number' ? mq : 0
   if (bagni !== undefined) updates.bagni = typeof bagni === 'number' ? bagni : 0
   if (camere !== undefined) updates.camere = typeof camere === 'number' ? camere : 0
+  if (locali !== undefined) updates.locali = typeof locali === 'number' ? locali : null
   if (titolo !== undefined) updates.titolo = titolo
   if (descrizione !== undefined) updates.descrizione = typeof descrizione === 'string' ? descrizione : ''
   if (cover !== undefined) updates.cover = cover

@@ -1,12 +1,10 @@
 'use client';
 
-import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { createPortal } from 'react-dom';
+import React, { useState, useCallback, useEffect } from 'react';
 import { s, Box, Icon } from './ui';
 import { createProject, updateProject, deleteProject, ProjectData } from '@/lib/projects';
 import { supabase } from '@/lib/supabase';
 import { ICONS as TPL_ICONS } from './templates/icons.js';
-import Cropper from 'react-easy-crop';
 
 const createImage = (url: string): Promise<HTMLImageElement> =>
   new Promise((resolve, reject) => {
@@ -22,38 +20,6 @@ const createImage = (url: string): Promise<HTMLImageElement> =>
     image.src = url
   })
 
-async function getCroppedImg(imageSrc: string, pixelCrop: { x: number, y: number, width: number, height: number }): Promise<string> {
-  const image = await createImage(imageSrc)
-  const canvas = document.createElement('canvas')
-  const ctx = canvas.getContext('2d')
-  if (!ctx) return ''
-
-  // Limit dimensions to max 800px to avoid API payload limits and speed up upload
-  const MAX_DIM = 800;
-  let finalW = pixelCrop.width;
-  let finalH = pixelCrop.height;
-  if (finalW > MAX_DIM || finalH > MAX_DIM) {
-    const ratio = Math.min(MAX_DIM / finalW, MAX_DIM / finalH);
-    finalW = Math.round(finalW * ratio);
-    finalH = Math.round(finalH * ratio);
-  }
-
-  canvas.width = finalW;
-  canvas.height = finalH;
-  ctx.drawImage(image, pixelCrop.x, pixelCrop.y, pixelCrop.width, pixelCrop.height, 0, 0, finalW, finalH);
-
-  return new Promise((resolve) => {
-    canvas.toBlob((file) => {
-      if (file) {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onloadend = () => resolve(reader.result as string);
-      } else {
-        resolve('');
-      }
-    }, 'image/jpeg', 0.7) // 0.7 quality for even smaller payload
-  })
-}
 
 // Ridimensiona QUALSIASI cover data URL prima dell'upload. Il crop gia' limita a
 // 800px, ma i path "salta crop" / cover passata possono lasciare l'originale a
@@ -141,9 +107,6 @@ function loadSavedIcons(): Record<string, string> {
   } catch { /* ignore */ }
   return { ...DEFAULT_ICONS };
 }
-function saveIcons(icons: Record<string, string>) {
-  try { localStorage.setItem(ICONS_STORAGE_KEY, JSON.stringify(icons)); } catch { /* quota */ }
-}
 
 const formatNumber = (val: string) => {
   const num = val.replace(/\D/g, '');
@@ -184,17 +147,17 @@ export function NewProjectModal({
   const [mq, setMq] = useState(editProject?.mq ? editProject.mq.toString() : '');
   const [camere, setCamere] = useState(editProject?.camere ? editProject.camere.toString() : '');
   const [bagni, setBagni] = useState(editProject?.bagni ? editProject.bagni.toString() : '');
+  const [riferimento, setRiferimento] = useState(editProject?.riferimento || '');
+  const [tipologia, setTipologia] = useState(editProject?.tipologia || '');
+  const [locali, setLocali] = useState(editProject?.locali ? String(editProject.locali) : '');
+  const [titolo, setTitolo] = useState(editProject?.titolo || '');
+  const [descrizione, setDescrizione] = useState(editProject?.descrizione || '');
+  const extraImportEntries: [string, unknown][] = editProject?.import_data && typeof editProject.import_data === 'object'
+    ? Object.entries(editProject.import_data as Record<string, unknown>).filter(([, v]) => v !== '' && v != null)
+    : [];
   
-  const [fieldIcons, setFieldIcons] = useState<Record<string, string>>(editProject?.icons || loadSavedIcons());
-  const [iconDropdown, setIconDropdown] = useState<string | null>(null);
-  // Posizione del trigger per renderizzare il picker in un portal (fixed),
-  // cosi' non viene tagliato dall'overflow del body del modal.
-  const [pickerRect, setPickerRect] = useState<DOMRect | null>(null);
-  const togglePicker = (field: string, el: HTMLElement) => {
-    if (iconDropdown === field) { setIconDropdown(null); return; }
-    setPickerRect(el.getBoundingClientRect());
-    setIconDropdown(field);
-  };
+  // Icone "info principali" fisse (default): non piu' personalizzabili.
+  const [fieldIcons] = useState<Record<string, string>>(editProject?.icons || loadSavedIcons());
 
   // Primo immobile obbligatorio: blocca la chiusura via Esc.
   useEffect(() => {
@@ -203,17 +166,6 @@ export function NewProjectModal({
     window.addEventListener('keydown', onKey, true);
     return () => window.removeEventListener('keydown', onKey, true);
   }, [mandatory]);
-
-  // Drag state (for future image upload integration, currently just visual)
-  const [dragOver, setDragOver] = useState(false);
-  
-  // Crop state
-  const [crop, setCrop] = useState({ x: 0, y: 0 });
-  const [zoom, setZoom] = useState(1);
-  const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
-  const onCropComplete = useCallback((croppedArea: any, croppedAreaPixels: any) => {
-    setCroppedAreaPixels(croppedAreaPixels);
-  }, []);
 
   // Ridimensiona la copertina SUBITO alla selezione (non a fine creazione):
   // la foto del telefono puo' essere 5-10MB -> decodificarla/processarla al
@@ -256,16 +208,9 @@ export function NewProjectModal({
     // try/finally: qualunque cosa accada, lo spinner si ferma. I timeout sotto
     // evitano fetch appese (R2/API) -> niente piu' "loading infinito".
     try {
+      const finalThumb0 = editProject?.thumb || '';
       let finalCover = cover;
-      let finalThumb = editProject?.thumb || '';
-      if (cover && croppedAreaPixels && !skip && !cover.startsWith('http')) {
-        try {
-          finalCover = await getCroppedImg(cover, croppedAreaPixels);
-        } catch (e) {
-          console.error('Failed to crop image', e);
-        }
-      }
-
+      let finalThumb = finalThumb0;
       if (finalCover && finalCover.startsWith('data:image/')) {
         // Due versioni: cover orizzontale ~500px (card) + thumb ~100px (avatar/lista, come la foto profilo).
         const cover500 = await downscaleDataUrl(finalCover, 500, 0.82);
@@ -290,7 +235,11 @@ export function NewProjectModal({
         mq: skip ? (editProject?.mq || 0) : Number(mq.replace(/\D/g, '')) || 0,
         camere: skip ? (editProject?.camere || 0) : Number(camere.replace(/\D/g, '')) || 0,
         bagni: skip ? (editProject?.bagni || 0) : Number(bagni.replace(/\D/g, '')) || 0,
-        titolo: editProject?.titolo || '',
+        locali: locali.trim() ? (Number(locali.replace(/\D/g, '')) || undefined) : undefined,
+        titolo: titolo.trim(),
+        descrizione: descrizione.trim(),
+        riferimento: riferimento.trim(),
+        tipologia: tipologia.trim(),
         cover: finalCover, // Empty means use gradient
         thumb: finalThumb, // ~100px per avatar/lista
         icons: fieldIcons,
@@ -334,44 +283,6 @@ export function NewProjectModal({
   const inputWithIconStyle = s('width:100%;padding:11px 14px 11px 44px;border:1px solid #e4e1da;border-radius:10px;font-size:13.5px;outline:none;font-family:inherit;background:#fff;transition:border-color .2s, box-shadow .2s');
   const labelStyle = s('display:block;font-size:12px;font-weight:700;color:#b3aca1;margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em');
 
-  const renderIconPicker = (field: string, allowedKeys?: string[]) => {
-    if (iconDropdown !== field || !pickerRect) return null;
-    const iconsToShow = allowedKeys ? PICKER_ICONS.filter(p => allowedKeys.includes(p.key)) : PICKER_ICONS.filter(p => !CURRENCY_KEYS.includes(p.key));
-    // Portal su body + fixed: il picker apre verso l'alto sopra l'icona e non
-    // viene tagliato dall'overflow del modal.
-    return createPortal(
-      <div style={{ position: 'fixed', bottom: (typeof window !== 'undefined' ? window.innerHeight : 0) - pickerRect.top + 8, left: pickerRect.left, zIndex: 99999, background: '#fff', borderRadius: 12, boxShadow: '0 8px 32px rgba(0,0,0,0.12)', border: '1px solid #e4e1da', padding: 8, display: 'grid', gridTemplateColumns: 'repeat(5, 36px)', gap: 4 }}>
-        {iconsToShow.map(pi => (
-          <div 
-            key={pi.key} 
-            onClick={(e) => { 
-              e.stopPropagation(); 
-              setFieldIcons(prev => {
-                const newIcons = { ...prev };
-                const oldIcon = newIcons[field];
-                const fieldWithSameIcon = Object.keys(newIcons).find(k => k !== field && newIcons[k] === pi.key);
-                if (fieldWithSameIcon && !CURRENCY_KEYS.includes(pi.key)) {
-                  newIcons[fieldWithSameIcon] = oldIcon;
-                }
-                newIcons[field] = pi.key;
-                saveIcons(newIcons); // salva config per il prossimo immobile
-                return newIcons;
-              });
-              setIconDropdown(null);
-            }} 
-            style={{ width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8, cursor: 'pointer', border: fieldIcons[field] === pi.key ? '1.5px solid #3B83F6' : '1.5px solid transparent', background: fieldIcons[field] === pi.key ? '#eef4fe' : 'transparent', color: fieldIcons[field] === pi.key ? '#3B83F6' : '#6b7280' }}
-            onMouseEnter={e => { if (fieldIcons[field] !== pi.key) { e.currentTarget.style.background = '#f6f4f0'; e.currentTarget.style.color = '#211f1c'; } }}
-            onMouseLeave={e => { if (fieldIcons[field] !== pi.key) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#6b7280'; } }}
-            title={pi.label}
-          >
-            <span style={{ width: 16, height: 16, display: 'flex' }} dangerouslySetInnerHTML={{ __html: (TPL_ICONS as Record<string, string>)[pi.key] || '' }} />
-          </div>
-        ))}
-      </div>,
-      document.body
-    );
-  };
-
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
       {/* Backdrop */}
@@ -403,7 +314,7 @@ export function NewProjectModal({
           <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
               {(editProject || step === 1) && (<>
               <div>
-                <label style={labelStyle}>Nome del progetto *</label>
+                <label style={labelStyle}>Nome immobile *</label>
                 <input 
                   autoFocus
                   placeholder="es. Attico Brera" 
@@ -416,7 +327,7 @@ export function NewProjectModal({
               </div>
               
               <div>
-                <label style={labelStyle}>Indirizzo</label>
+                <label style={labelStyle}>Indirizzo *</label>
                 <input 
                   placeholder="es. Via Fiori Chiari 12, Milano" 
                   value={addr} 
@@ -427,74 +338,25 @@ export function NewProjectModal({
                 />
               </div>
 
-              {!editProject && (
-                <div>
-                  <label style={labelStyle}>Foto di copertina (opzionale)</label>
-                  {cover ? (
-                  <div style={{ position: 'relative', width: '100%', height: 240, borderRadius: 16, overflow: 'hidden', background: '#111', touchAction: 'none' }}>
-                    <div style={{ position: 'absolute', inset: -20, background: `url("${cover}") center/cover`, filter: 'blur(10px) brightness(0.5)' }} />
-                    <Cropper
-                      image={cover}
-                      crop={crop}
-                      zoom={zoom}
-                      aspect={1}
-                      objectFit="horizontal-cover"
-                      onCropChange={setCrop}
-                      onCropComplete={onCropComplete}
-                      onZoomChange={setZoom}
-                      style={{ containerStyle: { width: '100%', height: '100%', background: 'transparent' } }}
-                    />
-                    <label
-                      style={{ position: 'absolute', bottom: 10, left: 10, background: 'rgba(0,0,0,0.5)', color: '#fff', padding: '6px 12px', borderRadius: 8, fontSize: 12, fontWeight: 700, zIndex: 20, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}
-                    >
-                      <Icon name="image-plus" size={14} color="#fff" />
-                      Cambia foto
+              <div>
+                <label style={labelStyle}>Foto di copertina (opzionale)</label>
+                {cover ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                    <div style={{ width: 96, height: 64, borderRadius: 10, backgroundImage: `url("${cover}")`, backgroundSize: 'cover', backgroundPosition: 'center', border: '1px solid #e4e1da', flex: 'none' }} />
+                    <label style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 16px', borderRadius: 10, border: '1px solid #e4e1da', background: '#fff', color: '#211f1c', fontSize: 13.5, fontWeight: 700, cursor: 'pointer' }}>
+                      <Icon name="image-plus" size={16} color="#57534c" />Modifica copertina
                       <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => handleCoverFile(e.target.files?.[0])} />
                     </label>
-                    <div
-                      style={{ position: 'absolute', bottom: 10, right: 10, background: 'rgba(0,0,0,0.5)', color: '#fff', padding: '6px 12px', borderRadius: 8, fontSize: 12, fontWeight: 700, zIndex: 20, cursor: 'pointer' }}
-                      onClick={(e) => { e.preventDefault(); setCover(''); }}
-                    >
-                      Rimuovi
-                    </div>
+                    <Box as="button" onClick={() => setCover('')} style={s('border:1px solid #e4e1da;background:#fff;color:#dc2626;font-size:13.5px;font-weight:700;padding:10px 16px;border-radius:10px;cursor:pointer')} hover={s('background:#fef2f2;border-color:#fecaca')}>Rimuovi</Box>
                   </div>
                 ) : (
-                  <label 
-                    onDragOver={e => { e.preventDefault(); setDragOver(true); }}
-                    onDragLeave={() => setDragOver(false)}
-                    onDrop={e => {
-                      e.preventDefault();
-                      setDragOver(false);
-                      handleCoverFile(e.dataTransfer.files?.[0]);
-                    }}
-                    style={{
-                      display: 'block',
-                      border: `2px dashed ${dragOver ? '#3B83F6' : '#d8d4cb'}`,
-                      borderRadius: 16,
-                      padding: '32px 20px',
-                      textAlign: 'center',
-                      background: dragOver ? '#eff6ff' : '#fcfcfb',
-                      cursor: 'pointer',
-                      transition: 'all .2s',
-                      position: 'relative',
-                      overflow: 'hidden',
-                    }}
-                  >
-                    <input 
-                      type="file" 
-                      accept="image/*" 
-                      style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', zIndex: 10 }} 
-                      onChange={e => handleCoverFile(e.target.files?.[0])}
-                    />
-                    <div style={{ width: 44, height: 44, borderRadius: 12, background: '#fff', border: '1px solid #f0ede7', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px', boxShadow: '0 4px 12px rgba(0,0,0,0.04)' }}>
-                      <Icon name="image-plus" size={20} color={dragOver ? '#3B83F6' : '#8c867d'} />
-                    </div>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: dragOver ? '#3B83F6' : '#57534c' }}>Trascina o clicca qui</div>
-                    <div style={{ fontSize: 12.5, color: '#8c867d', marginTop: 4 }}>Se lasci vuoto, creeremo uno sfondo colorato per te.</div>
+                  <label style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '12px 18px', borderRadius: 10, border: '1px solid #e4e1da', background: '#fff', color: '#211f1c', fontSize: 13.5, fontWeight: 700, cursor: 'pointer' }}>
+                    <Icon name="image-plus" size={16} color="#57534c" />Carica copertina
+                    <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => handleCoverFile(e.target.files?.[0])} />
                   </label>
                 )}
+                <div style={{ fontSize: 12, color: '#8c867d', marginTop: 8 }}>Se lasci vuoto, creeremo uno sfondo colorato per te.</div>
               </div>
-              )}
               {!editProject && onImport && (
                 <div style={{ marginTop: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '0 0 20px' }}>
@@ -512,17 +374,13 @@ export function NewProjectModal({
               {(editProject || step === 2) && (<>
               {!isNew && <hr style={{ border: 'none', borderTop: '1px solid #f0ede7', margin: '8px 0' }} />}
 
-              <div style={{ background: '#f6f4f0', padding: 16, borderRadius: 12, fontSize: 13, color: '#57534c', lineHeight: 1.5 }}>
-Clicca sulle icone per scegliere quali info mostrare.
-              </div>
-              
               <div className="max-md:!grid-cols-1" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                 <div>
                   <label style={labelStyle}>Prezzo ({fieldIcons.prezzo === 'dollar' ? '$' : fieldIcons.prezzo === 'pound' ? '£' : '€'})</label>
                   <div style={{ position: 'relative', display: 'flex', flexDirection: 'column' }}>
                     <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                      <div onClick={(e) => togglePicker('prezzo', e.currentTarget)} style={{ position: 'absolute', left: 8, width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#57534c', cursor: 'pointer', borderRadius: 8, background: '#f6f4f0', border: '1px solid #e4e1da' }} onMouseEnter={e => e.currentTarget.style.background = '#efece6'} onMouseLeave={e => e.currentTarget.style.background = '#f6f4f0'}>
-                        <span style={{ width: 15, height: 15, display: 'flex' }} dangerouslySetInnerHTML={{ __html: (TPL_ICONS as any)[fieldIcons.prezzo] || '' }} />
+                      <div style={{ position: 'absolute', left: 8, width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#57534c', borderRadius: 8, background: '#f6f4f0', border: '1px solid #e4e1da' }}>
+                        <span style={{ width: 15, height: 15, display: 'flex' }} dangerouslySetInnerHTML={{ __html: (TPL_ICONS as Record<string, string>)[fieldIcons.prezzo] || '' }} />
                       </div>
                       <input 
                         type="text" 
@@ -534,7 +392,6 @@ Clicca sulle icone per scegliere quali info mostrare.
                         onBlur={e => e.currentTarget.style.borderColor = '#e4e1da'}
                       />
                     </div>
-                    {renderIconPicker('prezzo', CURRENCY_KEYS)}
                   </div>
                 </div>
 
@@ -542,8 +399,8 @@ Clicca sulle icone per scegliere quali info mostrare.
                   <label style={labelStyle}>{getLabelForIcon(fieldIcons.mq, 'Metratura (m²)')}</label>
                   <div style={{ position: 'relative', display: 'flex', flexDirection: 'column' }}>
                     <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                      <div onClick={(e) => togglePicker('mq', e.currentTarget)} style={{ position: 'absolute', left: 8, width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#57534c', cursor: 'pointer', borderRadius: 8, background: '#f6f4f0', border: '1px solid #e4e1da' }} onMouseEnter={e => e.currentTarget.style.background = '#efece6'} onMouseLeave={e => e.currentTarget.style.background = '#f6f4f0'}>
-                        <span style={{ width: 15, height: 15, display: 'flex' }} dangerouslySetInnerHTML={{ __html: (TPL_ICONS as any)[fieldIcons.mq] || '' }} />
+                      <div style={{ position: 'absolute', left: 8, width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#57534c', borderRadius: 8, background: '#f6f4f0', border: '1px solid #e4e1da' }}>
+                        <span style={{ width: 15, height: 15, display: 'flex' }} dangerouslySetInnerHTML={{ __html: (TPL_ICONS as Record<string, string>)[fieldIcons.mq] || '' }} />
                       </div>
                       <input 
                         type="text" 
@@ -555,7 +412,6 @@ Clicca sulle icone per scegliere quali info mostrare.
                         onBlur={e => e.currentTarget.style.borderColor = '#e4e1da'}
                       />
                     </div>
-                    {renderIconPicker('mq')}
                   </div>
                 </div>
               </div>
@@ -565,8 +421,8 @@ Clicca sulle icone per scegliere quali info mostrare.
                   <label style={labelStyle}>{getLabelForIcon(fieldIcons.camere, 'Camere da letto')}</label>
                   <div style={{ position: 'relative', display: 'flex', flexDirection: 'column' }}>
                     <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                      <div onClick={(e) => togglePicker('camere', e.currentTarget)} style={{ position: 'absolute', left: 8, width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#57534c', cursor: 'pointer', borderRadius: 8, background: '#f6f4f0', border: '1px solid #e4e1da' }} onMouseEnter={e => e.currentTarget.style.background = '#efece6'} onMouseLeave={e => e.currentTarget.style.background = '#f6f4f0'}>
-                        <span style={{ width: 15, height: 15, display: 'flex' }} dangerouslySetInnerHTML={{ __html: (TPL_ICONS as any)[fieldIcons.camere] || '' }} />
+                      <div style={{ position: 'absolute', left: 8, width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#57534c', borderRadius: 8, background: '#f6f4f0', border: '1px solid #e4e1da' }}>
+                        <span style={{ width: 15, height: 15, display: 'flex' }} dangerouslySetInnerHTML={{ __html: (TPL_ICONS as Record<string, string>)[fieldIcons.camere] || '' }} />
                       </div>
                       <input 
                         type="text" 
@@ -578,7 +434,6 @@ Clicca sulle icone per scegliere quali info mostrare.
                         onBlur={e => e.currentTarget.style.borderColor = '#e4e1da'}
                       />
                     </div>
-                    {renderIconPicker('camere')}
                   </div>
                 </div>
 
@@ -586,8 +441,8 @@ Clicca sulle icone per scegliere quali info mostrare.
                   <label style={labelStyle}>{getLabelForIcon(fieldIcons.bagni, 'Bagni')}</label>
                   <div style={{ position: 'relative', display: 'flex', flexDirection: 'column' }}>
                     <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                      <div onClick={(e) => togglePicker('bagni', e.currentTarget)} style={{ position: 'absolute', left: 8, width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#57534c', cursor: 'pointer', borderRadius: 8, background: '#f6f4f0', border: '1px solid #e4e1da' }} onMouseEnter={e => e.currentTarget.style.background = '#efece6'} onMouseLeave={e => e.currentTarget.style.background = '#f6f4f0'}>
-                        <span style={{ width: 15, height: 15, display: 'flex' }} dangerouslySetInnerHTML={{ __html: (TPL_ICONS as any)[fieldIcons.bagni] || '' }} />
+                      <div style={{ position: 'absolute', left: 8, width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#57534c', borderRadius: 8, background: '#f6f4f0', border: '1px solid #e4e1da' }}>
+                        <span style={{ width: 15, height: 15, display: 'flex' }} dangerouslySetInnerHTML={{ __html: (TPL_ICONS as Record<string, string>)[fieldIcons.bagni] || '' }} />
                       </div>
                       <input 
                         type="text" 
@@ -599,10 +454,50 @@ Clicca sulle icone per scegliere quali info mostrare.
                         onBlur={e => e.currentTarget.style.borderColor = '#e4e1da'}
                       />
                     </div>
-                    {renderIconPicker('bagni')}
                   </div>
                 </div>
               </div>
+
+              {editProject && (
+                <div style={{ marginTop: 20, paddingTop: 20, borderTop: '1px solid #f0ede7' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                    <div>
+                      <label style={labelStyle}>Riferimento</label>
+                      <input value={riferimento} onChange={e => setRiferimento(e.target.value)} placeholder="Codice annuncio" style={inputStyle} />
+                    </div>
+                    <div>
+                      <label style={labelStyle}>Tipologia</label>
+                      <input value={tipologia} onChange={e => setTipologia(e.target.value)} placeholder="es. Appartamento" style={inputStyle} />
+                    </div>
+                  </div>
+                  <div style={{ marginTop: 14 }}>
+                    <label style={labelStyle}>Locali</label>
+                    <input value={locali} onChange={e => setLocali(e.target.value.replace(/\D/g, ''))} placeholder="es. 3" style={inputStyle} />
+                  </div>
+                  <div style={{ marginTop: 14 }}>
+                    <label style={labelStyle}>Titolo annuncio</label>
+                    <input value={titolo} onChange={e => setTitolo(e.target.value)} placeholder="Titolo dell'annuncio" style={inputStyle} />
+                  </div>
+                  <div style={{ marginTop: 14 }}>
+                    <label style={labelStyle}>Descrizione</label>
+                    <textarea value={descrizione} onChange={e => setDescrizione(e.target.value)} rows={4} placeholder="Descrizione immobile" style={{ ...inputStyle, resize: 'vertical', minHeight: 92 } as React.CSSProperties} />
+                  </div>
+                  {extraImportEntries.length > 0 && (
+                    <div style={{ marginTop: 18 }}>
+                      <label style={labelStyle}>Altri dati importati</label>
+                      <div style={{ background: '#f6f4f0', borderRadius: 10, padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 180, overflowY: 'auto' }}>
+                        {extraImportEntries.map(([k, v]) => (
+                          <div key={k} style={{ display: 'flex', gap: 10, fontSize: 12.5, lineHeight: 1.4 }}>
+                            <span style={{ color: '#8c867d', fontWeight: 600, minWidth: 150, flex: 'none' }}>{k}</span>
+                            <span style={{ color: '#211f1c', wordBreak: 'break-word' }}>{String(v)}</span>
+                          </div>
+                        ))}
+                      </div>
+                      <div style={{ fontSize: 11.5, color: '#b3aca1', marginTop: 6 }}>Dati grezzi dal file importato (sola lettura), disponibili per i report.</div>
+                    </div>
+                  )}
+                </div>
+              )}
               </>)}
           </div>
         </div>
