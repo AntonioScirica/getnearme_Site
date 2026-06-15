@@ -54,6 +54,8 @@ import VideoAIScreen from './VideoAIScreen';
 import { loadVideoJobs, upsertVideoJob, patchVideoJob, dismissVideoJob, removeVideoJob, fetchServerVideoJobs, mergeServerJobs, type VideoJob } from '@/lib/videoJobs';
 import { pollRenderProgress, fetchVideoQuota } from '@/lib/aiVideo';
 import MediaScreen from './MediaScreen';
+import ReportScreen from './ReportScreen';
+import ZonaScreen from './ZonaScreen';
 import { HomeScreen } from './HomeScreen';
 import { NewProjectModal } from './NewProjectModal';
 import { ImportProjectsModal } from './ImportProjectsModal';
@@ -63,6 +65,7 @@ import { type ProjectData, fetchProjects, updateProject, deleteProject } from '@
 import { fetchUserBatches, fetchBatchPhotos, dismissBatch, type BatchInfo } from '@/lib/stagingBatches';
 import { STAGING_STYLES, getTokenFast, fetchStagingQuota, fetchPostQuota, consumePostQuota } from '@/lib/staging';
 import { cleanupOldMedia } from '@/lib/localMediaCache';
+import { getGeoEnabled, setGeoEnabled } from '@/lib/prefs';
 import { supabase } from '@/lib/supabase';
 
 export type AppNotification = { id: string; title: string; body: string; type: string; is_read: boolean; created_at: string; };
@@ -79,6 +82,7 @@ const DEMO_PROJECTS: Project[] = [
 
 const NAV_SECTIONS = [
   { label: 'Immobili', items: [{ icon: 'building-2', label: 'Tutti gli immobili', route: 'immobili' }] },
+  { label: 'Analisi', items: [{ icon: 'file-text', label: 'Report', route: 'report' }, { icon: 'map-pin', label: 'Zona', route: 'quartiere' }] },
   { label: 'Immobile attivo', items: [{ icon: 'layout-dashboard', label: 'Scheda', route: 'home' }, { icon: 'sparkles', label: 'Homestaging AI', route: 'staging' }, { icon: 'film', label: 'Video AI', route: 'video' }, { icon: 'scissors', label: 'Montaggio', route: 'montaggio' }, { icon: 'megaphone', label: 'Post Social', route: 'studio' }, { icon: 'images', label: 'Galleria', route: 'media' }] },
   { label: 'Agenzia', items: [{ icon: 'palette', label: 'Brand', route: 'brand' }, { icon: 'credit-card', label: 'Piano', route: 'account' }] },
 ];
@@ -322,6 +326,8 @@ const PLAN_FEATURES = [
   '4 video AI/mese',
   'Post social illimitati',
   'Montaggio Illimitato',
+  'Report Automatici',
+  'Analisi della zona',
   'Import immobili',
   'Contenuti 100% Brandizzati',
   'Supporto prioritario',
@@ -332,6 +338,7 @@ const FREE_FEATURES = [
   '1 video AI',
   '5 montaggi video',
   '5 post social',
+  '5 Analisi di zona',
 ];
 
 const PLANS = [
@@ -2028,6 +2035,14 @@ function SettingsScreen({ toast }: { toast: (msg: string, icon?: string) => void
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [geoOn, setGeoOn] = useState(true);
+  useEffect(() => { setGeoOn(getGeoEnabled()); }, []);
+  const toggleGeo = () => {
+    const next = !geoOn;
+    setGeoOn(next);
+    setGeoEnabled(next);
+    toast(next ? 'Geolocalizzazione attivata' : 'Geolocalizzazione disattivata', next ? 'check' : 'x');
+  };
 
   const handleDelete = async () => {
     if (deleteConfirmText !== 'ELIMINA') return;
@@ -2089,6 +2104,20 @@ function SettingsScreen({ toast }: { toast: (msg: string, icon?: string) => void
             <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-main)' }}>Termini e Condizioni</div>
             <Icon name="external-link" size={14} color="var(--text-muted)" />
           </a>
+        </div>
+
+        {/* Preferenze */}
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)', borderRadius: 16, padding: 24 }}>
+          <h3 style={{ margin: '0 0 16px', fontSize: 15, fontWeight: 700 }}>Preferenze</h3>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-main)' }}>Geolocalizzazione</div>
+              <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 2, lineHeight: 1.5 }}>Nell&apos;Analisi di zona precompila l&apos;indirizzo con la tua posizione attuale.</div>
+            </div>
+            <div onClick={toggleGeo} style={{ width: 44, height: 26, borderRadius: 99, background: geoOn ? '#3B83F6' : '#d8d4cb', position: 'relative', flexShrink: 0, cursor: 'pointer', transition: 'background .2s' }}>
+              <div style={{ position: 'absolute', top: 3, left: geoOn ? 21 : 3, width: 20, height: 20, borderRadius: 99, background: '#fff', transition: 'left .2s', boxShadow: '0 1px 3px rgba(0,0,0,.2)' }} />
+            </div>
+          </div>
         </div>
 
         {/* Danger Zone */}
@@ -2470,7 +2499,8 @@ function BrandScreen({ toast, brand: brandProp, setBrand: setBrandParent, brandR
 const ROUTE_TITLES: Record<string, string> = {
   progetti: 'Immobili', immobili: 'Immobili', progetto: 'Dettaglio immobile', staging: 'Homestaging AI', video: 'Video AI', montaggio: 'Montaggio',
   studio: 'Post Social', calendario: 'Calendario', media: 'Galleria', team: 'Team',
-  brand: 'Brand', social: 'Account social', account: 'Piano', home: 'Scheda', impostazioni: 'Impostazioni', assistenza: 'Assistenza'
+  brand: 'Brand', social: 'Account social', account: 'Piano', home: 'Scheda', impostazioni: 'Impostazioni', assistenza: 'Assistenza',
+  report: 'Report', quartiere: 'Analisi Quartiere', compare: 'Confronta immobili'
 };
 
 // Helper for dynamic project cover gradients when no image is provided
@@ -3410,8 +3440,8 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                         <h2 style={s('margin:0 0 8px;font-size:20px;font-weight:800;letter-spacing:-.3px')}>Nessun immobile ancora</h2>
                         <p style={s('margin:0 0 24px;font-size:14px;color:#8c867d;max-width:380px;line-height:1.6')}>Crea il tuo primo immobile o importa la tua lista per iniziare a generare foto AI, video e post.</p>
                         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center' }}>
-                          <Box as="button" onClick={() => setNewProjOpen(true)} style={s('border:1px solid #3B83F6;background:#3B83F6;color:#fff;font-size:14px;font-weight:700;padding:12px 22px;border-radius:12px;cursor:pointer;display:flex;align-items:center;gap:8px')} hover={s('background:#2b6fe0;border-color:#2b6fe0')}>
-                            <Icon name="plus" size={16} color="#fff" />Nuovo immobile
+                          <Box as="button" onClick={() => setNewProjOpen(true)} style={s('border:1px solid #3B83F6;background:#3B83F6;color:#fff;font-size:14px;font-weight:700;padding:12px 22px;border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:center')} hover={s('background:#2b6fe0;border-color:#2b6fe0')}>
+                            Nuovo immobile
                           </Box>
                           <Box as="button" onClick={() => setImportOpen(true)} style={s('border:1px solid #e4e1da;background:var(--bg-card);color:var(--text-main);font-size:14px;font-weight:700;padding:12px 22px;border-radius:12px;cursor:pointer;display:flex;align-items:center;gap:8px')} hover={s('background:#f6f4f0')}>
                             <Icon name="upload" size={16} color="#57534c" />Importa
@@ -3480,12 +3510,12 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                 );
               })()
             ) : route === 'studio' ? (
-              <PostSocialScreen toast={toast} routeKey={routeKey} brand={brand} project={active || (tourStep !== null ? DEMO_PROJECTS[0] : undefined)} batches={batches} onProjectUpdate={active ? (upd) => setProjects(prev => prev.map(p => p.id === active.id ? { ...p, ...upd } : p)) : undefined} initialPhotoUrl={studioPhoto} go={go} />
+              <PostSocialScreen toast={toast} routeKey={routeKey} brand={brand} project={active || DEMO_PROJECTS[0]} batches={batches} onProjectUpdate={active ? (upd) => setProjects(prev => prev.map(p => p.id === active.id ? { ...p, ...upd } : p)) : undefined} initialPhotoUrl={studioPhoto} go={go} />
             ) : route === 'staging' ? (
               <FotoAIScreen
                 toast={toast}
                 routeKey={routeKey}
-                project={active || (tourStep !== null ? DEMO_PROJECTS[0] : undefined)}
+                project={active || DEMO_PROJECTS[0]}
                 onBatchCreated={() => {
                   fetchUserBatches().then(setBatches);
                 }}
@@ -3503,18 +3533,33 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                 project={active || DEMO_PROJECTS[0]}
                 batches={batches}
                 loadingBatches={loadingBatches}
-                demoMode={tourStep !== null || !active}
+                demoMode={tourStep !== null}
                 demoJobsDone={demoJobsDone}
                 go={go}
               />
             ) : route === 'video' ? (
-              <VideoAIScreen key="video" toast={toast} routeKey={routeKey} brand={brand} project={active || (tourStep !== null ? DEMO_PROJECTS[0] : undefined)} onVideoJob={registerVideoJob} activeRenders={videoJobs.filter(j => j.stage === 'render' && !j.dismissed).length} initialPhotoUrl={studioPhoto} preselect={studioPhoto ? 'walkthrough' : undefined} demoMode={tourStep !== null} go={go} lockBrand={isFreePlan} />
+              <VideoAIScreen key="video" toast={toast} routeKey={routeKey} brand={brand} project={active || DEMO_PROJECTS[0]} onVideoJob={registerVideoJob} activeRenders={videoJobs.filter(j => j.stage === 'render' && !j.dismissed).length} initialPhotoUrl={studioPhoto} preselect={studioPhoto ? 'walkthrough' : undefined} demoMode={tourStep !== null} go={go} lockBrand={isFreePlan} />
             ) : route === 'montaggio' ? (
-              <VideoAIScreen key="montaggio" toast={toast} routeKey={routeKey} brand={brand} preselect="montaggio" project={active || (tourStep !== null ? DEMO_PROJECTS[0] : undefined)} onVideoJob={registerVideoJob} activeRenders={videoJobs.filter(j => j.stage === 'render' && !j.dismissed).length} demoMode={tourStep !== null} go={go} lockBrand={isFreePlan} />
+              <VideoAIScreen key="montaggio" toast={toast} routeKey={routeKey} brand={brand} preselect="montaggio" project={active || DEMO_PROJECTS[0]} onVideoJob={registerVideoJob} activeRenders={videoJobs.filter(j => j.stage === 'render' && !j.dismissed).length} demoMode={tourStep !== null} go={go} lockBrand={isFreePlan} />
+            ) : route === 'quartiere' ? (
+              <ZonaScreen key="quartiere" project={active || DEMO_PROJECTS[0]} projects={projects.length ? projects : DEMO_PROJECTS} brand={brand} toast={toast} locked={isFreePlan} go={go} />
+            ) : route === 'report' || route === 'compare' ? (
+              <ReportScreen project={active || DEMO_PROJECTS[0]} projects={projects.length ? projects : DEMO_PROJECTS} brand={brand} toast={toast} locked={isFreePlan} go={go} />
             ) : route === 'account' ? (
               <AccountScreen credits={credits} toast={toast} go={go} userData={userData} />
             ) : route === 'brand' ? (
-              <BrandScreen toast={toast} brand={brand} setBrand={setBrand} brandRole={brandRole} demoMode={tourStep !== null} locked={isFreePlan} go={go} />
+              (!active && tourStep === null) ? (
+                <div style={s('display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 32px;text-align:center;max-width:1160px;margin:0 auto')}>
+                  <div style={s('width:64px;height:64px;border-radius:16px;background:#f4f2ee;display:flex;align-items:center;justify-content:center;margin-bottom:18px')}>
+                    <Icon name="palette" size={28} color="#b3aca1" />
+                  </div>
+                  <h2 style={s('margin:0 0 8px;font-size:20px;font-weight:800;letter-spacing:-.3px')}>Crea prima un immobile</h2>
+                  <p style={s('margin:0 0 24px;font-size:14px;color:#8c867d;max-width:380px;line-height:1.6')}>Aggiungi un immobile per vedere il tuo brand applicato ai materiali (post, video, report).</p>
+                  <Box as="button" onClick={() => setNewProjOpen(true)} style={s('border:1px solid #3B83F6;background:#3B83F6;color:#fff;font-size:14px;font-weight:700;padding:12px 22px;border-radius:12px;cursor:pointer')} hover={s('background:#2b6fe0;border-color:#2b6fe0')}>Nuovo immobile</Box>
+                </div>
+              ) : (
+                <BrandScreen toast={toast} brand={brand} setBrand={setBrand} brandRole={brandRole} demoMode={tourStep !== null} locked={isFreePlan} go={go} />
+              )
             ) : route === 'impostazioni' ? (
               <SettingsScreen toast={toast} />
             ) : route.startsWith('assistenza') ? (
@@ -3566,6 +3611,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
           onClose={() => setImportOpen(false)}
           onDone={(res) => {
             mutateProjects();
+            go('immobili');
             toast(`Import: ${res.created} creati, ${res.updated} aggiornati${res.skipped ? `, ${res.skipped} saltati` : ''}`, 'check');
           }}
         />
@@ -3582,7 +3628,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
             setProjects(prev => [p as unknown as Project, ...prev]);
             setActiveProject(p.id);
             setNewProjOpen(false);
-            setRoute('home');
+            go('immobili');
           }}
         />
       )}

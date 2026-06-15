@@ -80,20 +80,6 @@ async function uploadDataUrl(dataUrl: string, folder: string): Promise<string> {
   }
 }
 
-const PICKER_ICONS: { key: string; label: string }[] = [
-  { key: 'euro', label: 'Euro' }, { key: 'dollar', label: 'Dollaro' }, { key: 'pound', label: 'Sterlina' },
-  { key: 'bed', label: 'Camere' }, { key: 'bath', label: 'Bagni' }, { key: 'area', label: 'Superficie' },
-  { key: 'rooms', label: 'Locali' }, { key: 'sofa', label: 'Soggiorno' }, { key: 'cookingPot', label: 'Cucina' },
-  { key: 'elevator', label: 'Ascensore' }, { key: 'balcony', label: 'Balcone' }, { key: 'terrace', label: 'Terrazzo' },
-  { key: 'garden', label: 'Giardino' }, { key: 'parking', label: 'Parcheggio' }, { key: 'floor', label: 'Piano' },
-];
-
-const CURRENCY_KEYS = ['euro', 'dollar', 'pound'];
-
-const getLabelForIcon = (key: string, defaultLabel: string) => {
-  const found = PICKER_ICONS.find(p => p.key === key);
-  return found && !CURRENCY_KEYS.includes(key) ? found.label : defaultLabel;
-};
 
 const DEFAULT_ICONS: Record<string, string> = { prezzo: 'euro', mq: 'area', camere: 'bed', bagni: 'bath' };
 const ICONS_STORAGE_KEY = 'gnm_field_icons';
@@ -111,6 +97,59 @@ function loadSavedIcons(): Record<string, string> {
 const formatNumber = (val: string) => {
   const num = val.replace(/\D/g, '');
   return num ? Number(num).toLocaleString('it-IT') : '';
+};
+
+// Chiavi import gia' coperte da un campo dedicato -> non duplicarle in "Altri dati".
+const DUP_KEYS = new Set([
+  'prezzo', 'price', 'prezzorichiesta',
+  'mq', 'metratura', 'metriquadri', 'metriquadrati', 'superficie', 'superficiecommerciale', 'area', 'mq2',
+  'camere', 'cameredaletto', 'bedrooms', 'stanze',
+  'bagni', 'bathrooms', 'servizi',
+  'riferimento', 'rif', 'codice', 'codiceannuncio', 'annuncio', 'ref',
+  'tipologia', 'tipo', 'tipoimmobile', 'categoria',
+  'locali', 'vani', 'numerolocali', 'rooms',
+  'descrizione', 'description', 'descr',
+  'nome', 'name', 'titolo', 'title', 'titoloannuncio',
+  'indirizzo', 'addr', 'address', 'via',
+  'cover', 'foto', 'photo', 'photos', 'image', 'immagine', 'url', 'urlfoto', 'link', 'id', 'idannuncio',
+  // Campi tecnici non rilevanti da mostrare.
+  'idgestim', 'gestim', 'statoannuncio', 'stato',
+  'codiceagenzia', 'codicegetrix', 'getrix', 'testoannuncio',
+]);
+// Radici: se la chiave normalizzata le contiene -> e' un duplicato (gestisce prefissi/suffissi
+// tipo Prezzo_Euro, Superficie_MQ, Rif_Interno, Descrizione_IT, N_Bagni...).
+const DUP_ROOTS = ['prezzo', 'price', 'superfic', 'metratur', 'metriquadr', 'quadr', 'bagn', 'camer', 'vani', 'descriz', 'descript', 'testoannunc', 'tipolog', 'indiriz', 'address', 'riferiment', 'rifinterno', 'titolo', 'codiceagenz', 'agenzia', 'getrix'];
+const normKey = (k: string) => k.toLowerCase().replace(/[^a-z0-9]/g, '');
+const isDupKey = (k: string) => {
+  const n = normKey(k);
+  if (DUP_KEYS.has(n)) return true;
+  return DUP_ROOTS.some(r => n.includes(r));
+};
+
+// Icona coerente in base al nome del campo importato.
+const iconForKey = (k: string): string => {
+  const n = normKey(k);
+  if (/bagn|bath/.test(n)) return 'bath';
+  if (/camer|letto|bed/.test(n)) return 'bed';
+  if (/local|vani|room/.test(n)) return 'rooms';
+  if (/mq|metr|superf|area/.test(n)) return 'area';
+  if (/prezz|price|euro|costo/.test(n)) return 'euro';
+  if (/classe|energetic/.test(n)) return 'heating';
+  if (/contratt|vendita|affitto/.test(n)) return 'tag';
+  if (/piano|piani|floor/.test(n)) return 'floor';
+  if (/ascens|elevator/.test(n)) return 'elevator';
+  if (/balcon/.test(n)) return 'balcony';
+  if (/terrazz|terrace/.test(n)) return 'terrace';
+  if (/giardin|garden/.test(n)) return 'garden';
+  if (/cantin|cellar/.test(n)) return 'cellar';
+  if (/box|garage|posto|parking|auto/.test(n)) return 'parking';
+  if (/riscald|heating/.test(n)) return 'heating';
+  if (/condizion|clima|aria/.test(n)) return 'airConditioning';
+  if (/cucin|cooking/.test(n)) return 'cookingPot';
+  if (/soggiorn|salotto|sofa/.test(n)) return 'sofa';
+  if (/zona|quartier|indiriz|via|citt|comun|local/.test(n)) return 'mapPin';
+  if (/tipo|categor/.test(n)) return 'storage';
+  return 'tag';
 };
 
 type Step = 1 | 2;
@@ -143,21 +182,30 @@ export function NewProjectModal({
   const [cover, setCover] = useState(editProject?.cover || ''); // Foto di copertina
   
   // Tech info (Step 2)
-  const [prezzo, setPrezzo] = useState(editProject?.prezzo ? editProject.prezzo.toString() : '');
+  const [prezzo, setPrezzo] = useState(editProject?.prezzo ? formatNumber(editProject.prezzo.toString()) : '');
   const [mq, setMq] = useState(editProject?.mq ? editProject.mq.toString() : '');
   const [camere, setCamere] = useState(editProject?.camere ? editProject.camere.toString() : '');
   const [bagni, setBagni] = useState(editProject?.bagni ? editProject.bagni.toString() : '');
-  const [riferimento, setRiferimento] = useState(editProject?.riferimento || '');
+  const [riferimento] = useState(editProject?.riferimento || '');
   const [tipologia, setTipologia] = useState(editProject?.tipologia || '');
   const [locali, setLocali] = useState(editProject?.locali ? String(editProject.locali) : '');
-  const [titolo, setTitolo] = useState(editProject?.titolo || '');
   const [descrizione, setDescrizione] = useState(editProject?.descrizione || '');
+  const [extraData, setExtraData] = useState<Record<string, string>>(() => {
+    const src = editProject?.import_data;
+    if (!src || typeof src !== 'object') return {};
+    const out: Record<string, string> = {};
+    for (const [k, v] of Object.entries(src as Record<string, unknown>)) {
+      if (v !== '' && v != null) out[k] = String(v);
+    }
+    return out;
+  });
   const extraImportEntries: [string, unknown][] = editProject?.import_data && typeof editProject.import_data === 'object'
     ? Object.entries(editProject.import_data as Record<string, unknown>).filter(([, v]) => v !== '' && v != null)
     : [];
   
   // Icone "info principali" fisse (default): non piu' personalizzabili.
   const [fieldIcons] = useState<Record<string, string>>(editProject?.icons || loadSavedIcons());
+  const [dragOver, setDragOver] = useState(false);
 
   // Primo immobile obbligatorio: blocca la chiusura via Esc.
   useEffect(() => {
@@ -236,13 +284,14 @@ export function NewProjectModal({
         camere: skip ? (editProject?.camere || 0) : Number(camere.replace(/\D/g, '')) || 0,
         bagni: skip ? (editProject?.bagni || 0) : Number(bagni.replace(/\D/g, '')) || 0,
         locali: locali.trim() ? (Number(locali.replace(/\D/g, '')) || undefined) : undefined,
-        titolo: titolo.trim(),
+        titolo: nome.trim(),
         descrizione: descrizione.trim(),
         riferimento: riferimento.trim(),
         tipologia: tipologia.trim(),
         cover: finalCover, // Empty means use gradient
         thumb: finalThumb, // ~100px per avatar/lista
         icons: fieldIcons,
+        ...(editProject ? { import_data: { ...(editProject.import_data as Record<string, unknown> || {}), ...extraData } } : {}),
       };
 
       const p: ProjectData | null = editProject
@@ -280,8 +329,29 @@ export function NewProjectModal({
   };
 
   const inputStyle = s('width:100%;padding:11px 14px;border:1px solid #e4e1da;border-radius:10px;font-size:13.5px;outline:none;font-family:inherit;background:#fff;transition:border-color .2s, box-shadow .2s');
-  const inputWithIconStyle = s('width:100%;padding:11px 14px 11px 44px;border:1px solid #e4e1da;border-radius:10px;font-size:13.5px;outline:none;font-family:inherit;background:#fff;transition:border-color .2s, box-shadow .2s');
+  const inputWithIconStyle = s('width:100%;padding:11px 14px 11px 52px;border:1px solid #e4e1da;border-radius:10px;font-size:13.5px;outline:none;font-family:inherit;background:#fff;transition:border-color .2s, box-shadow .2s');
   const labelStyle = s('display:block;font-size:12px;font-weight:700;color:#b3aca1;margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em');
+
+  // Campo uniforme: label + input con icona e divider verticale.
+  const iconField = (key: string, label: string, iconKey: string, value: string, onChange: (v: string) => void, placeholder = '') => (
+    <div key={key}>
+      <label style={{ ...labelStyle, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={label}>{label}</label>
+      <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+        <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, display: 'flex', alignItems: 'center', paddingLeft: 14, gap: 10, color: '#57534c', pointerEvents: 'none' }}>
+          <span style={{ width: 17, height: 17, display: 'flex' }} dangerouslySetInnerHTML={{ __html: (TPL_ICONS as Record<string, string>)[iconKey] || (TPL_ICONS as Record<string, string>).tag || '' }} />
+          <div style={{ width: 1, height: 20, background: '#e4e1da' }} />
+        </div>
+        <input
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          placeholder={placeholder}
+          style={inputWithIconStyle}
+          onFocus={e => e.currentTarget.style.borderColor = '#3B83F6'}
+          onBlur={e => e.currentTarget.style.borderColor = '#e4e1da'}
+        />
+      </div>
+    </div>
+  );
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
@@ -292,21 +362,19 @@ export function NewProjectModal({
       />
       
       {/* Modal Content */}
-      <div style={{ position: 'relative', width: '100%', maxWidth: 480, background: '#fff', borderRadius: 24, boxShadow: '0 24px 64px rgba(20, 18, 15, 0.2)', overflow: 'hidden', animation: 'orb-float 0.4s ease-out', display: 'flex', flexDirection: 'column', maxHeight: '90vh' }}>
+      <div style={{ position: 'relative', width: '100%', maxWidth: (editProject || step === 2) ? 720 : 480, background: '#fff', borderRadius: 24, boxShadow: '0 24px 64px rgba(20, 18, 15, 0.2)', overflow: 'hidden', animation: 'orb-float 0.4s ease-out', display: 'flex', flexDirection: 'column', maxHeight: '90vh', transition: 'max-width .25s ease' }}>
         
         {/* Header */}
         <div className="max-md:!p-4" style={{ padding: '24px 32px 20px', borderBottom: '1px solid #f0ede7', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
             <h2 style={{ margin: 0, fontSize: 20, fontWeight: 800, letterSpacing: '-0.3px' }}>{editProject ? 'Modifica Immobile' : 'Nuovo Immobile'}</h2>
             <div style={{ fontSize: 13, color: '#8c867d', marginTop: 4 }}>
-              {isNew ? `Passo ${step} di 2 — ${step === 1 ? 'nome, indirizzo e copertina' : 'dati immobile (opzionali)'}` : 'Inserisci le informazioni per il tuo immobile'}
+              {isNew ? `Passo ${step} di 2` : 'Inserisci le informazioni per il tuo immobile'}
             </div>
           </div>
-          {!mandatory && (
-            <button onClick={onClose} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4, borderRadius: 8 }} className="hover:bg-gray-100">
-              <Icon name="x" size={20} color="#8c867d" />
-            </button>
-          )}
+          <button onClick={onClose} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4, borderRadius: 8 }} className="hover:bg-gray-100">
+            <Icon name="x" size={20} color="#8c867d" />
+          </button>
         </div>
 
         {/* Body */}
@@ -341,21 +409,28 @@ export function NewProjectModal({
               <div>
                 <label style={labelStyle}>Foto di copertina (opzionale)</label>
                 {cover ? (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-                    <div style={{ width: 96, height: 64, borderRadius: 10, backgroundImage: `url("${cover}")`, backgroundSize: 'cover', backgroundPosition: 'center', border: '1px solid #e4e1da', flex: 'none' }} />
-                    <label style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 16px', borderRadius: 10, border: '1px solid #e4e1da', background: '#fff', color: '#211f1c', fontSize: 13.5, fontWeight: 700, cursor: 'pointer' }}>
-                      <Icon name="image-plus" size={16} color="#57534c" />Modifica copertina
+                  <div style={{ position: 'relative', width: '100%', height: 180, borderRadius: 16, overflow: 'hidden', border: '1px solid #e4e1da', backgroundImage: `url("${cover}")`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
+                    <label style={{ position: 'absolute', bottom: 10, left: 10, background: 'rgba(0,0,0,0.55)', color: '#fff', padding: '6px 12px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                      <Icon name="image-plus" size={14} color="#fff" />Cambia foto
                       <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => handleCoverFile(e.target.files?.[0])} />
                     </label>
-                    <Box as="button" onClick={() => setCover('')} style={s('border:1px solid #e4e1da;background:#fff;color:#dc2626;font-size:13.5px;font-weight:700;padding:10px 16px;border-radius:10px;cursor:pointer')} hover={s('background:#fef2f2;border-color:#fecaca')}>Rimuovi</Box>
+                    <div onClick={() => setCover('')} style={{ position: 'absolute', bottom: 10, right: 10, background: 'rgba(0,0,0,0.55)', color: '#fff', padding: '6px 12px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Rimuovi</div>
                   </div>
                 ) : (
-                  <label style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '12px 18px', borderRadius: 10, border: '1px solid #e4e1da', background: '#fff', color: '#211f1c', fontSize: 13.5, fontWeight: 700, cursor: 'pointer' }}>
-                    <Icon name="image-plus" size={16} color="#57534c" />Carica copertina
-                    <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => handleCoverFile(e.target.files?.[0])} />
+                  <label
+                    onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+                    onDragLeave={() => setDragOver(false)}
+                    onDrop={e => { e.preventDefault(); setDragOver(false); handleCoverFile(e.dataTransfer.files?.[0]); }}
+                    style={{ display: 'block', border: `2px dashed ${dragOver ? '#3B83F6' : '#d8d4cb'}`, borderRadius: 16, padding: '32px 20px', textAlign: 'center', background: dragOver ? '#eff6ff' : '#fcfcfb', cursor: 'pointer', transition: 'all .2s', position: 'relative', overflow: 'hidden' }}
+                  >
+                    <input type="file" accept="image/*" style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', zIndex: 10 }} onChange={e => handleCoverFile(e.target.files?.[0])} />
+                    <div style={{ width: 44, height: 44, borderRadius: 12, background: '#fff', border: '1px solid #f0ede7', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px', boxShadow: '0 4px 12px rgba(0,0,0,0.04)' }}>
+                      <Icon name="image-plus" size={20} color={dragOver ? '#3B83F6' : '#8c867d'} />
+                    </div>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: dragOver ? '#3B83F6' : '#57534c' }}>Trascina o clicca qui</div>
+                    <div style={{ fontSize: 12.5, color: '#8c867d', marginTop: 4 }}>Se lasci vuoto, creeremo uno sfondo colorato per te.</div>
                   </label>
                 )}
-                <div style={{ fontSize: 12, color: '#8c867d', marginTop: 8 }}>Se lasci vuoto, creeremo uno sfondo colorato per te.</div>
               </div>
               {!editProject && onImport && (
                 <div style={{ marginTop: 0 }}>
@@ -374,128 +449,26 @@ export function NewProjectModal({
               {(editProject || step === 2) && (<>
               {!isNew && <hr style={{ border: 'none', borderTop: '1px solid #f0ede7', margin: '8px 0' }} />}
 
-              <div className="max-md:!grid-cols-1" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-                <div>
-                  <label style={labelStyle}>Prezzo ({fieldIcons.prezzo === 'dollar' ? '$' : fieldIcons.prezzo === 'pound' ? '£' : '€'})</label>
-                  <div style={{ position: 'relative', display: 'flex', flexDirection: 'column' }}>
-                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                      <div style={{ position: 'absolute', left: 8, width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#57534c', borderRadius: 8, background: '#f6f4f0', border: '1px solid #e4e1da' }}>
-                        <span style={{ width: 15, height: 15, display: 'flex' }} dangerouslySetInnerHTML={{ __html: (TPL_ICONS as Record<string, string>)[fieldIcons.prezzo] || '' }} />
-                      </div>
-                      <input 
-                        type="text" 
-                        value={prezzo}
-                        onChange={e => setPrezzo(formatNumber(e.target.value))}
-                        placeholder="es. 350.000"
-                        style={inputWithIconStyle}
-                        onFocus={e => e.currentTarget.style.borderColor = '#d8d4cb'}
-                        onBlur={e => e.currentTarget.style.borderColor = '#e4e1da'}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <label style={labelStyle}>{getLabelForIcon(fieldIcons.mq, 'Metratura (m²)')}</label>
-                  <div style={{ position: 'relative', display: 'flex', flexDirection: 'column' }}>
-                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                      <div style={{ position: 'absolute', left: 8, width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#57534c', borderRadius: 8, background: '#f6f4f0', border: '1px solid #e4e1da' }}>
-                        <span style={{ width: 15, height: 15, display: 'flex' }} dangerouslySetInnerHTML={{ __html: (TPL_ICONS as Record<string, string>)[fieldIcons.mq] || '' }} />
-                      </div>
-                      <input 
-                        type="text" 
-                        value={mq}
-                        onChange={e => setMq(formatNumber(e.target.value))}
-                        placeholder="es. 95"
-                        style={inputWithIconStyle}
-                        onFocus={e => e.currentTarget.style.borderColor = '#d8d4cb'}
-                        onBlur={e => e.currentTarget.style.borderColor = '#e4e1da'}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="max-md:!grid-cols-1" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-                <div>
-                  <label style={labelStyle}>{getLabelForIcon(fieldIcons.camere, 'Camere da letto')}</label>
-                  <div style={{ position: 'relative', display: 'flex', flexDirection: 'column' }}>
-                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                      <div style={{ position: 'absolute', left: 8, width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#57534c', borderRadius: 8, background: '#f6f4f0', border: '1px solid #e4e1da' }}>
-                        <span style={{ width: 15, height: 15, display: 'flex' }} dangerouslySetInnerHTML={{ __html: (TPL_ICONS as Record<string, string>)[fieldIcons.camere] || '' }} />
-                      </div>
-                      <input 
-                        type="text" 
-                        value={camere}
-                        onChange={e => setCamere(formatNumber(e.target.value))}
-                        placeholder="es. 2"
-                        style={inputWithIconStyle}
-                        onFocus={e => e.currentTarget.style.borderColor = '#d8d4cb'}
-                        onBlur={e => e.currentTarget.style.borderColor = '#e4e1da'}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <label style={labelStyle}>{getLabelForIcon(fieldIcons.bagni, 'Bagni')}</label>
-                  <div style={{ position: 'relative', display: 'flex', flexDirection: 'column' }}>
-                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                      <div style={{ position: 'absolute', left: 8, width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#57534c', borderRadius: 8, background: '#f6f4f0', border: '1px solid #e4e1da' }}>
-                        <span style={{ width: 15, height: 15, display: 'flex' }} dangerouslySetInnerHTML={{ __html: (TPL_ICONS as Record<string, string>)[fieldIcons.bagni] || '' }} />
-                      </div>
-                      <input 
-                        type="text" 
-                        value={bagni}
-                        onChange={e => setBagni(formatNumber(e.target.value))}
-                        placeholder="es. 1"
-                        style={inputWithIconStyle}
-                        onFocus={e => e.currentTarget.style.borderColor = '#d8d4cb'}
-                        onBlur={e => e.currentTarget.style.borderColor = '#e4e1da'}
-                      />
-                    </div>
-                  </div>
-                </div>
+              <div className="max-md:!grid-cols-2" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+                {iconField('prezzo', `Prezzo (${fieldIcons.prezzo === 'dollar' ? '$' : fieldIcons.prezzo === 'pound' ? '£' : '€'})`, fieldIcons.prezzo, prezzo, v => setPrezzo(formatNumber(v)), 'es. 350.000')}
+                {iconField('mq', 'Metratura (m²)', 'area', mq, v => setMq(formatNumber(v)), 'es. 95')}
+                {iconField('camere', 'Camere', 'bed', camere, v => setCamere(formatNumber(v)), 'es. 2')}
+                {iconField('bagni', 'Bagni', 'bath', bagni, v => setBagni(formatNumber(v)), 'es. 1')}
+                {editProject && iconField('tipologia', 'Tipologia', 'storage', tipologia, setTipologia, 'es. Appartamento')}
+                {editProject && iconField('locali', 'Locali', 'rooms', locali, v => setLocali(v.replace(/\D/g, '')), 'es. 3')}
+                {editProject && (() => {
+                  const seen = new Set<string>();
+                  return extraImportEntries
+                    .filter(([k]) => !isDupKey(k) && !seen.has(normKey(k)) && !!seen.add(normKey(k)))
+                    .map(([k]) => iconField(k, k.replace(/_/g, ' '), iconForKey(k), extraData[k] ?? '', v => setExtraData(prev => ({ ...prev, [k]: v }))));
+                })()}
               </div>
 
               {editProject && (
-                <div style={{ marginTop: 20, paddingTop: 20, borderTop: '1px solid #f0ede7' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-                    <div>
-                      <label style={labelStyle}>Riferimento</label>
-                      <input value={riferimento} onChange={e => setRiferimento(e.target.value)} placeholder="Codice annuncio" style={inputStyle} />
-                    </div>
-                    <div>
-                      <label style={labelStyle}>Tipologia</label>
-                      <input value={tipologia} onChange={e => setTipologia(e.target.value)} placeholder="es. Appartamento" style={inputStyle} />
-                    </div>
-                  </div>
-                  <div style={{ marginTop: 14 }}>
-                    <label style={labelStyle}>Locali</label>
-                    <input value={locali} onChange={e => setLocali(e.target.value.replace(/\D/g, ''))} placeholder="es. 3" style={inputStyle} />
-                  </div>
-                  <div style={{ marginTop: 14 }}>
-                    <label style={labelStyle}>Titolo annuncio</label>
-                    <input value={titolo} onChange={e => setTitolo(e.target.value)} placeholder="Titolo dell'annuncio" style={inputStyle} />
-                  </div>
-                  <div style={{ marginTop: 14 }}>
-                    <label style={labelStyle}>Descrizione</label>
-                    <textarea value={descrizione} onChange={e => setDescrizione(e.target.value)} rows={4} placeholder="Descrizione immobile" style={{ ...inputStyle, resize: 'vertical', minHeight: 92 } as React.CSSProperties} />
-                  </div>
-                  {extraImportEntries.length > 0 && (
-                    <div style={{ marginTop: 18 }}>
-                      <label style={labelStyle}>Altri dati importati</label>
-                      <div style={{ background: '#f6f4f0', borderRadius: 10, padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 180, overflowY: 'auto' }}>
-                        {extraImportEntries.map(([k, v]) => (
-                          <div key={k} style={{ display: 'flex', gap: 10, fontSize: 12.5, lineHeight: 1.4 }}>
-                            <span style={{ color: '#8c867d', fontWeight: 600, minWidth: 150, flex: 'none' }}>{k}</span>
-                            <span style={{ color: '#211f1c', wordBreak: 'break-word' }}>{String(v)}</span>
-                          </div>
-                        ))}
-                      </div>
-                      <div style={{ fontSize: 11.5, color: '#b3aca1', marginTop: 6 }}>Dati grezzi dal file importato (sola lettura), disponibili per i report.</div>
-                    </div>
-                  )}
+                <div>
+                  <label style={labelStyle}>Descrizione</label>
+                  <textarea value={descrizione} onChange={e => setDescrizione(e.target.value)} rows={4} placeholder="Descrizione immobile" style={{ ...inputStyle, resize: 'vertical', minHeight: 92 } as React.CSSProperties} />
+                  <div style={{ fontSize: 11.5, color: '#b3aca1', marginTop: 8 }}>Tutti i campi sono modificabili e disponibili per i report.</div>
                 </div>
               )}
               </>)}

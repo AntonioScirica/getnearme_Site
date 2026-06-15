@@ -5,18 +5,21 @@
 
 import React, { useState } from 'react';
 import {
-  ArrowRight, ArrowLeft, PanelLeft, ChevronDown, ChevronUp, Search, Check, Plus, Layers,
+  ArrowRight, ArrowLeft, ArrowUpDown, PanelLeft, ChevronDown, ChevronUp, Search, Check, Plus, Layers,
   Coins, Bell, CircleHelp, X, Building2, Sparkles, Film, ImagePlus, Calendar,
   Image as ImageIcon, Download, Pencil, LayoutDashboard, Users, Palette, AtSign,
   CreditCard, Upload, Copy, Trash2, Gift, Crown, Zap, Settings, LogOut, LifeBuoy,
   PlayCircle, MapPin, Maximize2, LayoutGrid, Tag, Scissors, LoaderCircle, Inbox,
   Euro, Bed, Bath, Instagram, Type, Home, Megaphone, Images, MessageSquare,
-  TriangleAlert, Lock, MoreVertical,
+  TriangleAlert, Lock, MoreVertical, FileSpreadsheet, FileText, RefreshCw, Minus,
+  CircleCheck, Table as TableIcon, Scale, Car, Sofa, Fence, Sun, Trees, Warehouse, Snowflake,
+  Info, TrainFront, ShoppingBag, Cross, Activity, School, Coffee, Dog, Music, Navigation, Crosshair,
+  TreePine,
   type LucideIcon,
 } from 'lucide-react';
 
 const ICONS: Record<string, LucideIcon> = {
-  'arrow-right': ArrowRight, 'arrow-left': ArrowLeft, 'panel-left': PanelLeft,
+  'arrow-right': ArrowRight, 'arrow-left': ArrowLeft, 'arrow-up-down': ArrowUpDown, 'panel-left': PanelLeft,
   'chevron-down': ChevronDown, 'chevron-up': ChevronUp, search: Search, check: Check, plus: Plus,
   layers: Layers, coins: Coins, bell: Bell, 'circle-help': CircleHelp, x: X,
   'building-2': Building2, sparkles: Sparkles, film: Film, 'image-plus': ImagePlus,
@@ -30,6 +33,12 @@ const ICONS: Record<string, LucideIcon> = {
   euro: Euro, bed: Bed, bath: Bath, instagram: Instagram, type: Type, home: Home,
   megaphone: Megaphone, images: Images, 'message-square': MessageSquare,
   'alert-triangle': TriangleAlert, alert: TriangleAlert, lock: Lock,
+  'file-spreadsheet': FileSpreadsheet, 'file-text': FileText, 'refresh-cw': RefreshCw,
+  minus: Minus, 'circle-check': CircleCheck, table: TableIcon, scale: Scale,
+  car: Car, sofa: Sofa, fence: Fence, sun: Sun, trees: Trees, warehouse: Warehouse, snowflake: Snowflake,
+  info: Info, 'train-front': TrainFront, 'shopping-bag': ShoppingBag, cross: Cross, activity: Activity,
+  school: School, coffee: Coffee, dog: Dog, music: Music, navigation: Navigation, crosshair: Crosshair,
+  'tree-pine': TreePine,
 };
 
 /** Parse a CSS declaration string into a React style object. */

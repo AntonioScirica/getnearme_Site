@@ -335,37 +335,46 @@ export function ImportProjectsModal({
           {/* STEP MAPPING */}
           {step === 'mapping' && (
             <>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#f6f4f0', padding: '12px 16px', borderRadius: 12, marginBottom: 20 }}>
-                <Icon name="file-text" size={18} color="#57534c" />
-                <div style={{ fontSize: 13, color: '#57534c', lineHeight: 1.4 }}>
-                  <strong style={{ color: '#211f1c' }}>{fileName || 'File'}</strong>
-                  {' — '}{rawRows.length} righe rilevate
-                  {skippedClient > 0 && (
-                    <span style={{ color: '#b3760c' }}>{`, ${skippedClient} senza nome verranno saltate`}</span>
-                  )}
+              {/* File banner */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: '#faf9f7', border: '1px solid #f0ede7', padding: '12px 14px', borderRadius: 14, marginBottom: 20 }}>
+                <div style={{ width: 38, height: 38, borderRadius: 10, background: '#fff', border: '1px solid #f0ede7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Icon name="file-spreadsheet" size={18} color="#57534c" />
+                </div>
+                <div style={{ minWidth: 0, fontSize: 13, color: '#8c867d', lineHeight: 1.4 }}>
+                  <div style={{ fontWeight: 700, color: '#211f1c', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{fileName || 'File'}</div>
+                  <div>{rawRows.length} righe rilevate{skippedClient > 0 && <span style={{ color: '#b3760c' }}>{` · ${skippedClient} senza nome saltate`}</span>}</div>
                 </div>
               </div>
 
-              <div style={{ textAlign: 'center', padding: '20px 12px 8px' }}>
-                <div style={{ fontSize: 34, fontWeight: 800, color: '#211f1c', lineHeight: 1 }}>{rows.length}</div>
-                <div style={{ fontSize: 14, color: '#57534c', marginTop: 6 }}>{rows.length === 1 ? 'immobile pronto per l\'import' : 'immobili pronti per l\'import'}</div>
-                {skippedClient > 0 && (
-                  <div style={{ fontSize: 12.5, color: '#b3760c', marginTop: 6 }}>{`${skippedClient} righe senza dati verranno saltate`}</div>
+              {/* Count hero */}
+              <div style={{ background: '#fff', border: '1px solid #e4e1da', borderRadius: 16, padding: '24px 16px', textAlign: 'center' }}>
+                <div style={{ fontSize: 38, fontWeight: 800, color: '#211f1c', lineHeight: 1, letterSpacing: '-0.5px' }}>{rows.length}</div>
+                <div style={{ fontSize: 14, color: '#57534c', marginTop: 8 }}>{rows.length === 1 ? 'immobile pronto per l\'import' : 'immobili pronti per l\'import'}</div>
+              </div>
+
+              {/* Recognized fields */}
+              <div style={{ marginTop: 20 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: '#b3aca1', textTransform: 'uppercase', letterSpacing: '.04em' }}>Campi riconosciuti</span>
+                  {aiLoading && (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11.5, color: '#3B83F6', fontWeight: 600 }}>
+                      <span style={{ display: 'inline-flex', animation: 'spin 1s linear infinite' }}><Icon name="loader-circle" size={13} color="#3B83F6" /></span>
+                      AI…
+                    </span>
+                  )}
+                </div>
+                {recognized.length > 0 ? (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                    {recognized.map((lbl) => (
+                      <span key={lbl} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12.5, fontWeight: 600, color: '#16734a', background: '#eef9f0', border: '1px solid #cce8d6', borderRadius: 99, padding: '6px 12px' }}>
+                        <Icon name="check" size={13} color="#16a34a" />{lbl}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <div style={{ fontSize: 13, color: '#8c867d' }}>Nessun campo riconosciuto automaticamente.</div>
                 )}
               </div>
-              {aiLoading && (
-                <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontSize: 12.5, color: '#8c867d' }}>
-                  <span style={{ display: 'inline-flex', animation: 'spin 1s linear infinite' }}><Icon name="loader-circle" size={14} color="#8c867d" /></span>
-                  Riconoscimento colonne con AI…
-                </div>
-              )}
-              {recognized.length > 0 && (
-                <div style={{ marginTop: 12, display: 'flex', flexWrap: 'wrap', gap: 6, justifyContent: 'center' }}>
-                  {recognized.map((lbl) => (
-                    <span key={lbl} style={{ fontSize: 12, fontWeight: 600, color: '#16734a', background: '#eef9f0', border: '1px solid #cce8d6', borderRadius: 99, padding: '4px 10px' }}>{lbl}</span>
-                  ))}
-                </div>
-              )}
 
               {fetchError && (
                 <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#dc2626' }}>
@@ -379,33 +388,42 @@ export function ImportProjectsModal({
           {/* STEP DONE */}
           {step === 'done' && result && (
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 18 }}>
-                <div style={{ width: 40, height: 40, borderRadius: 10, background: '#eef9f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Icon name="check" size={22} color="#16a34a" />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+                <div style={{ width: 44, height: 44, borderRadius: 12, background: '#eef9f0', border: '1px solid #cce8d6', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Icon name="circle-check" size={24} color="#16a34a" />
                 </div>
-                <div style={{ fontSize: 16, fontWeight: 700, color: '#211f1c' }}>Import completato</div>
+                <div>
+                  <div style={{ fontSize: 16, fontWeight: 800, color: '#211f1c', letterSpacing: '-0.2px' }}>Import completato</div>
+                  <div style={{ fontSize: 13, color: '#8c867d', marginTop: 2 }}>I tuoi immobili sono pronti.</div>
+                </div>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
                 {[
-                  { label: 'Creati', value: result.created },
-                  { label: 'Aggiornati', value: result.updated },
-                  { label: 'Saltati', value: result.skipped },
+                  { label: 'Creati', value: result.created, icon: 'plus', color: '#16a34a', bg: '#eef9f0', bd: '#cce8d6' },
+                  { label: 'Aggiornati', value: result.updated, icon: 'refresh-cw', color: '#3B83F6', bg: '#eff4fe', bd: '#d3e3fc' },
+                  { label: 'Saltati', value: result.skipped, icon: 'minus', color: '#b3760c', bg: '#fdf8ef', bd: '#f0e4cc' },
                 ].map((stat) => (
-                  <div key={stat.label} style={{ background: '#f6f4f0', borderRadius: 12, padding: '14px 12px', textAlign: 'center' }}>
-                    <div style={{ fontSize: 24, fontWeight: 800, color: '#211f1c' }}>{stat.value}</div>
-                    <div style={{ fontSize: 12, color: '#8c867d', marginTop: 2 }}>{stat.label}</div>
+                  <div key={stat.label} style={{ background: '#fff', border: '1px solid #e4e1da', borderRadius: 14, padding: '16px 12px', textAlign: 'center' }}>
+                    <div style={{ width: 32, height: 32, borderRadius: 9, background: stat.bg, border: `1px solid ${stat.bd}`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px' }}>
+                      <Icon name={stat.icon} size={16} color={stat.color} />
+                    </div>
+                    <div style={{ fontSize: 26, fontWeight: 800, color: '#211f1c', lineHeight: 1 }}>{stat.value}</div>
+                    <div style={{ fontSize: 12, color: '#8c867d', marginTop: 5 }}>{stat.label}</div>
                   </div>
                 ))}
               </div>
               {result.errors.length > 0 && (
-                <div style={{ marginTop: 18 }}>
+                <div style={{ marginTop: 20 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 700, color: '#b3760c', marginBottom: 8 }}>
                     <Icon name="alert-triangle" size={16} color="#b3760c" />
-                    {`${result.errors.length} avvisi`}
+                    {result.errors.length === 1 ? '1 avviso' : `${result.errors.length} avvisi`}
                   </div>
-                  <div style={{ maxHeight: 160, overflowY: 'auto', background: '#fdf8ef', border: '1px solid #f0e4cc', borderRadius: 10, padding: 12 }}>
+                  <div style={{ maxHeight: 160, overflowY: 'auto', background: '#fdf8ef', border: '1px solid #f0e4cc', borderRadius: 12, padding: '8px 12px' }}>
                     {result.errors.map((err, i) => (
-                      <div key={i} style={{ fontSize: 12.5, color: '#7a5a16', lineHeight: 1.5 }}>{err}</div>
+                      <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', fontSize: 12.5, color: '#7a5a16', lineHeight: 1.5, padding: '5px 0', borderBottom: i === result.errors.length - 1 ? 'none' : '1px solid #f0e4cc' }}>
+                        <span style={{ marginTop: 5, width: 4, height: 4, borderRadius: 99, background: '#b3760c', flexShrink: 0 }} />
+                        {err}
+                      </div>
                     ))}
                   </div>
                 </div>
@@ -430,16 +448,16 @@ export function ImportProjectsModal({
               <Box
                 as="button"
                 onClick={handleImport}
-                disabled={loading || !rows.length}
-                style={s('border:none;background:#3B83F6;color:#fff;font-size:14px;font-weight:700;padding:12px 20px;border-radius:12px;display:inline-flex;align-items:center;gap:8px;box-shadow:0 4px 12px rgba(59,131,246,0.25);cursor:' + (loading || !rows.length ? 'default' : 'pointer') + ';opacity:' + (loading || !rows.length ? 0.45 : 1))}
-                hover={loading || !rows.length ? undefined : s('background:#2563EB;box-shadow:0 6px 16px rgba(59,131,246,0.3)')}
+                disabled={loading || aiLoading || !rows.length}
+                style={s('border:none;background:#3B83F6;color:#fff;font-size:14px;font-weight:700;padding:12px 20px;border-radius:12px;display:inline-flex;align-items:center;gap:8px;box-shadow:0 4px 12px rgba(59,131,246,0.25);cursor:' + (loading || aiLoading || !rows.length ? 'default' : 'pointer') + ';opacity:' + (loading || aiLoading || !rows.length ? 0.45 : 1))}
+                hover={loading || aiLoading || !rows.length ? undefined : s('background:#2563EB;box-shadow:0 6px 16px rgba(59,131,246,0.3)')}
               >
-                {loading ? (
+                {loading || aiLoading ? (
                   <>
                     <span style={{ display: 'inline-flex', animation: 'spin 1s linear infinite' }}>
                       <Icon name="loader-circle" size={16} color="#fff" />
                     </span>
-                    Importazione...
+                    {aiLoading ? 'Analisi colonne...' : 'Importazione...'}
                   </>
                 ) : (
                   `Importa ${rows.length} immobili`
@@ -449,8 +467,9 @@ export function ImportProjectsModal({
           )}
 
           {step === 'done' && (
-            <Box as="button" onClick={onClose} style={s('border:none;background:#3B83F6;color:#fff;font-size:14px;font-weight:700;padding:12px 20px;border-radius:12px;cursor:pointer;box-shadow:0 4px 12px rgba(59,131,246,0.25)')} hover={s('background:#2563EB')}>
-              Chiudi
+            <Box as="button" onClick={onClose} style={s('border:none;background:#3B83F6;color:#fff;font-size:14px;font-weight:700;padding:12px 20px;border-radius:12px;cursor:pointer;box-shadow:0 4px 12px rgba(59,131,246,0.25);display:inline-flex;align-items:center;gap:8px')} hover={s('background:#2563EB')}>
+              Avanti
+              <Icon name="arrow-right" size={16} color="#fff" />
             </Box>
           )}
         </div>

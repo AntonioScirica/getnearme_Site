@@ -128,7 +128,7 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: 'bad_request' }, { status: 400 })
   }
 
-  const { id, nome, addr, prezzo, mq, bagni, camere, locali, titolo, descrizione, cover, thumb, riferimento, tipologia, icons } = body
+  const { id, nome, addr, prezzo, mq, bagni, camere, locali, titolo, descrizione, cover, thumb, riferimento, tipologia, icons, import_data } = body
 
   if (!id) {
     return NextResponse.json({ error: 'missing_id' }, { status: 400 })
