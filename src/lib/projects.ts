@@ -12,6 +12,9 @@ export type ProjectData = {
   titolo: string
   descrizione?: string
   cover: string
+  thumb?: string
+  riferimento?: string
+  tipologia?: string
   icons?: Record<string, string>
   createdAt?: string
   nFoto?: number

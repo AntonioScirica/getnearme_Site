@@ -56,8 +56,10 @@ import { pollRenderProgress, fetchVideoQuota } from '@/lib/aiVideo';
 import MediaScreen from './MediaScreen';
 import { HomeScreen } from './HomeScreen';
 import { NewProjectModal } from './NewProjectModal';
+import { ImportProjectsModal } from './ImportProjectsModal';
+import { exportProjectsCSV, exportProjectsXLSX, exportProjectsPDF } from '@/lib/projectsExport';
 import type { Project } from './types';
-import { type ProjectData, fetchProjects, updateProject } from '@/lib/projects';
+import { type ProjectData, fetchProjects, updateProject, deleteProject } from '@/lib/projects';
 import { fetchUserBatches, fetchBatchPhotos, dismissBatch, type BatchInfo } from '@/lib/stagingBatches';
 import { STAGING_STYLES, getTokenFast, fetchStagingQuota, fetchPostQuota, consumePostQuota } from '@/lib/staging';
 import { cleanupOldMedia } from '@/lib/localMediaCache';
@@ -69,14 +71,15 @@ const TemplatePreview = dynamic(() => import('./TemplatePreview'), { ssr: false 
 type Toast = { id: number; msg: string; icon: string };
 
 const DEMO_PROJECTS: Project[] = [
-  { id: 'p1', nome: 'Attico Brera', addr: 'Via Fiori Chiari 12, Milano', prezzo: 1250000, mq: 145, locali: 4, camere: 3, bagni: 2, nFoto: 12, nStaging: 6, nVideo: 2, nPost: 8, titolo: 'Attico con terrazza nel cuore di Brera', cover: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&h=500&fit=crop' },
-  { id: 'p2', nome: 'Trilocale Isola', addr: 'Via Borsieri 28, Milano', prezzo: 545000, mq: 95, locali: 3, nFoto: 9, nStaging: 3, nVideo: 1, nPost: 5, titolo: 'Trilocale ristrutturato nel cuore di Isola', cover: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&h=500&fit=crop' },
-  { id: 'p3', nome: 'Appartamento Trastevere', addr: 'Vicolo del Cedro 9, Roma', prezzo: 690000, mq: 110, locali: 3, nFoto: 10, nStaging: 2, nVideo: 1, nPost: 4, titolo: 'Charme romano con travi a vista', cover: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&h=500&fit=crop' },
-  { id: 'p4', nome: 'Bilocale Crocetta', addr: 'Corso Re Umberto 44, Torino', prezzo: 295000, mq: 68, locali: 2, nFoto: 6, nStaging: 0, nVideo: 0, nPost: 2, titolo: 'Bilocale elegante in zona Crocetta', cover: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&h=500&fit=crop' },
+  { id: 'p1', nome: 'Attico Brera', addr: 'Via Fiori Chiari 12, Milano', prezzo: 1250000, mq: 145, locali: 4, camere: 3, bagni: 2, nFoto: 12, nStaging: 6, nVideo: 2, nPost: 8, titolo: 'Attico con terrazza nel cuore di Brera', cover: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1600&h=1000&fit=crop&q=80' },
+  { id: 'p2', nome: 'Trilocale Isola', addr: 'Via Borsieri 28, Milano', prezzo: 545000, mq: 95, locali: 3, nFoto: 9, nStaging: 3, nVideo: 1, nPost: 5, titolo: 'Trilocale ristrutturato nel cuore di Isola', cover: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1600&h=1000&fit=crop&q=80' },
+  { id: 'p3', nome: 'Appartamento Trastevere', addr: 'Vicolo del Cedro 9, Roma', prezzo: 690000, mq: 110, locali: 3, nFoto: 10, nStaging: 2, nVideo: 1, nPost: 4, titolo: 'Charme romano con travi a vista', cover: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1600&h=1000&fit=crop&q=80' },
+  { id: 'p4', nome: 'Bilocale Crocetta', addr: 'Corso Re Umberto 44, Torino', prezzo: 295000, mq: 68, locali: 2, nFoto: 6, nStaging: 0, nVideo: 0, nPost: 2, titolo: 'Bilocale elegante in zona Crocetta', cover: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=1600&h=1000&fit=crop&q=80' },
 ];
 
 const NAV_SECTIONS = [
-  { label: 'Progetto', items: [{ icon: 'layout-dashboard', label: 'Home', route: 'home' }, { icon: 'sparkles', label: 'Homestaging AI', route: 'staging' }, { icon: 'film', label: 'Video AI', route: 'video' }, { icon: 'scissors', label: 'Montaggio', route: 'montaggio' }, { icon: 'megaphone', label: 'Post Social', route: 'studio' }, { icon: 'images', label: 'Galleria', route: 'media' }] },
+  { label: 'Immobili', items: [{ icon: 'building-2', label: 'Tutti gli immobili', route: 'immobili' }] },
+  { label: 'Immobile attivo', items: [{ icon: 'layout-dashboard', label: 'Scheda', route: 'home' }, { icon: 'sparkles', label: 'Homestaging AI', route: 'staging' }, { icon: 'film', label: 'Video AI', route: 'video' }, { icon: 'scissors', label: 'Montaggio', route: 'montaggio' }, { icon: 'megaphone', label: 'Post Social', route: 'studio' }, { icon: 'images', label: 'Galleria', route: 'media' }] },
   { label: 'Agenzia', items: [{ icon: 'palette', label: 'Brand', route: 'brand' }, { icon: 'credit-card', label: 'Piano', route: 'account' }] },
 ];
 
@@ -1154,7 +1157,7 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
         {postQuota && !postQuota.unlimited && (
           <div onClick={() => { if (postQuota.remaining <= 0) go?.('account'); }} style={s(`display:inline-flex;align-items:center;justify-content:center;gap:8px;background:#fff;border:1px solid ${postQuota.remaining > 0 ? '#f0ede7' : '#fecaca'};border-radius:99px;padding:8px 16px;flex:none${postQuota.remaining <= 0 ? ';cursor:pointer' : ''}`) as React.CSSProperties}>
             <Icon name="megaphone" size={15} color={postQuota.remaining > 0 ? '#3B83F6' : '#dc2626'} />
-            <span style={{ fontSize: 13, fontWeight: 700, color: postQuota.remaining > 0 ? undefined : '#dc2626' }}>{Math.max(0, postQuota.remaining)}/5 post</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: postQuota.remaining > 0 ? undefined : '#dc2626' }}>{Math.max(0, postQuota.remaining)} {postQuota.remaining === 1 ? 'post rimanente' : 'post rimanenti'}</span>
           </div>
         )}
       </div>
@@ -2464,18 +2467,20 @@ function BrandScreen({ toast, brand: brandProp, setBrand: setBrandParent, brandR
 }
 
 const ROUTE_TITLES: Record<string, string> = {
-  progetti: 'Progetti', progetto: 'Dettaglio immobile', staging: 'Homestaging AI', video: 'Video AI', montaggio: 'Montaggio',
+  progetti: 'Progetti', immobili: 'Immobili', progetto: 'Dettaglio immobile', staging: 'Homestaging AI', video: 'Video AI', montaggio: 'Montaggio',
   studio: 'Post Social', calendario: 'Calendario', media: 'Galleria', team: 'Team',
-  brand: 'Brand', social: 'Account social', account: 'Piano', home: 'Home', impostazioni: 'Impostazioni', assistenza: 'Assistenza'
+  brand: 'Brand', social: 'Account social', account: 'Piano', home: 'Scheda', impostazioni: 'Impostazioni', assistenza: 'Assistenza'
 };
 
 // Helper for dynamic project cover gradients when no image is provided
 // Sempre gli STESSI key longhand in tutti i rami (mai il shorthand `background`):
 // se cambiano tra render con set di proprieta' diversi React avvisa di mix
 // shorthand/longhand. I gradient sono backgroundImage validi.
-const getCoverStyle = (p: Project | null | undefined): React.CSSProperties => {
+const getCoverStyle = (p: Project | null | undefined, small = false): React.CSSProperties => {
   if (!p) return { backgroundImage: 'none', backgroundColor: '#f3f1ec', backgroundSize: 'cover', backgroundPosition: 'center' };
-  if (p.cover) return { backgroundImage: `url("${p.cover}")`, backgroundColor: '#f3f1ec', backgroundSize: 'cover', backgroundPosition: 'center' };
+  // small (avatar/lista) usa la thumb ~100px; la card usa la cover ~500px.
+  const src = small ? (p.thumb || p.cover) : (p.cover || p.thumb);
+  if (src) return { backgroundImage: `url("${src}")`, backgroundColor: '#f3f1ec', backgroundSize: 'cover', backgroundPosition: 'center' };
   const hash = p.id.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
   const hue = hash % 360;
   return { backgroundImage: `linear-gradient(135deg, hsl(${hue}, 80%, 65%), hsl(${(hue + 40) % 360}, 80%, 55%))`, backgroundColor: '#f3f1ec', backgroundSize: 'cover', backgroundPosition: 'center' };
@@ -2493,6 +2498,12 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
   );
   const credits = userData?.credits ?? 0;
   const [newProjOpen, setNewProjOpen] = useState(false);
+  const [immMenuId, setImmMenuId] = useState<string | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
+  const [immActionsOpen, setImmActionsOpen] = useState(false);
+  const [immSelectMode, setImmSelectMode] = useState(false);
+  const [immSelected, setImmSelected] = useState<Set<string>>(new Set());
+  const [immDeleting, setImmDeleting] = useState(false);
   const [editProjOpen, setEditProjOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
@@ -3086,8 +3097,8 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                     <div className="max-md:!hidden" style={{ minWidth: 0, flex: 1 }}><div style={s('font-size:13px;font-weight:700;color:var(--text-muted)')}>Caricamento...</div></div>
                   ) : active ? (
                     <>
-                      <div style={{ width: 30, height: 30, borderRadius: '50%', ...getCoverStyle(active), flex: 'none' }} />
-                      <div className="max-md:!hidden" style={{ minWidth: 0, flex: 1 }}><div style={s('font-size:11px;color:var(--text-muted);line-height:1.2')}>Progetto attivo</div><div style={s('font-size:13px;font-weight:700;white-space:nowrap;line-height:1.2;overflow:hidden;text-overflow:ellipsis')}>{active.nome}</div></div>
+                      <div style={{ width: 30, height: 30, borderRadius: '50%', ...getCoverStyle(active, true), flex: 'none' }} />
+                      <div className="max-md:!hidden" style={{ minWidth: 0, flex: 1 }}><div style={s('font-size:11px;color:var(--text-muted);line-height:1.2')}>Immobile attivo</div><div style={s('font-size:13px;font-weight:700;white-space:nowrap;line-height:1.2;overflow:hidden;text-overflow:ellipsis')}>{active.nome}</div></div>
                     </>
                   ) : (
                     <>
@@ -3117,7 +3128,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                     <div style={s('max-height:260px;overflow:auto;padding:8px 6px')}>
                       {projList.map((p) => (
                         <Box key={p.id} onClick={() => { setActiveProject(p.id); setProjOpen(false); }} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 10px', borderRadius: 12, cursor: 'pointer', background: p.id === activeProject ? '#f6faff' : 'transparent', border: p.id === activeProject ? '1px solid #3B83F6' : '1px solid transparent' }} hover={{ background: 'var(--bg-hover)' }}>
-                          <div style={{ width: 34, height: 34, borderRadius: 10, ...getCoverStyle(p), flex: 'none' }} />
+                          <div style={{ width: 34, height: 34, borderRadius: 10, ...getCoverStyle(p, true), flex: 'none' }} />
                           <div style={{ minWidth: 0, flex: 1 }}><div style={s('font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{p.nome}</div><div style={s('font-size:11px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{p.addr}</div></div>
                           {p.id === activeProject && <Icon name="check" size={14} color="#3B83F6" />}
                         </Box>
@@ -3322,6 +3333,137 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                   if (active) updateProject(active.id, upd);
                 }}
               />
+            ) : route === 'immobili' ? (
+              (() => {
+                const list = projects;
+                // Raggruppa per giorno di creazione (come Galleria).
+                const dayMap = new Map<string, Project[]>();
+                for (const p of list) {
+                  const key = p.createdAt ? p.createdAt.slice(0, 10) : 'nd';
+                  (dayMap.get(key) ?? dayMap.set(key, []).get(key)!).push(p);
+                }
+                const days = [...dayMap.entries()]
+                  .sort((a, b) => (a[0] === 'nd' ? 1 : b[0] === 'nd' ? -1 : b[0].localeCompare(a[0])))
+                  .map(([key, items]) => ({
+                    key,
+                    label: items[0].createdAt ? new Date(items[0].createdAt).toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Senza data',
+                    items,
+                  }));
+                return (
+                  <div className="max-md:!px-4 max-md:!py-6" style={{ maxWidth: 1160, margin: '0 auto', padding: '32px 32px 64px' }}>
+                    <div className="max-md:!flex-col max-md:!items-start max-md:!gap-4" style={s('display:flex;align-items:center;justify-content:space-between;margin-bottom:40px')}>
+                      <div>
+                        <h1 style={s('margin:0 0 4px;font-size:25px;font-weight:800;letter-spacing:-.5px')}>Immobili</h1>
+                        <div style={s('color:#8c867d;font-size:14px')}>{projects.length} immobili · ogni immobile raccoglie foto, staging, video e post</div>
+                      </div>
+                      {immSelectMode ? (
+                        <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+                          <Box as="button" onClick={() => { const all = projects.length > 0 && immSelected.size === projects.length; setImmSelected(all ? new Set() : new Set(projects.map(p => p.id))); }} style={s('box-sizing:border-box;border:1px solid #e4e1da;background:var(--bg-card);color:var(--text-main);font-size:13.5px;font-weight:700;padding:0 18px;height:44px;border-radius:10px;cursor:pointer;display:flex;align-items:center;gap:8px;white-space:nowrap')} hover={s('background:#f6f4f0')}>
+                            {projects.length > 0 && immSelected.size === projects.length ? 'Deseleziona tutti' : 'Seleziona tutti'}
+                          </Box>
+                          <Box as="button" onClick={async () => { if (!immSelected.size || immDeleting) return; setImmDeleting(true); const ids = [...immSelected]; let ok = 0; for (const id of ids) { if (await deleteProject(id)) ok++; } if (immSelected.has(activeProject)) { const rem = projects.filter(p => !immSelected.has(p.id)); setActiveProject(rem[0]?.id || ''); } setProjects(prev => prev.filter(p => !immSelected.has(p.id))); setImmDeleting(false); setImmSelectMode(false); setImmSelected(new Set()); toast(`${ok} ${ok === 1 ? 'immobile eliminato' : 'immobili eliminati'}`, 'check'); }} style={s('box-sizing:border-box;border:none;background:' + (immSelected.size && !immDeleting ? '#dc2626' : '#f3d4d4') + ';color:#fff;font-size:13.5px;font-weight:700;padding:0 18px;height:44px;border-radius:10px;cursor:' + (immSelected.size && !immDeleting ? 'pointer' : 'default') + ';display:flex;align-items:center;gap:8px;white-space:nowrap')} hover={immSelected.size && !immDeleting ? s('background:#b91c1c') : undefined}>
+                            {immDeleting ? (<><span style={{ display: 'inline-flex', animation: 'spin 1s linear infinite' }}><Icon name="loader-circle" size={16} color="#fff" /></span>Eliminazione...</>) : (<><Icon name="trash-2" size={16} color="#fff" />Elimina{immSelected.size ? ` (${immSelected.size})` : ''}</>)}
+                          </Box>
+                          <Box as="button" onClick={() => { setImmSelectMode(false); setImmSelected(new Set()); }} style={s('box-sizing:border-box;border:1px solid #e4e1da;background:var(--bg-card);color:var(--text-main);font-size:13.5px;font-weight:700;padding:0 18px;height:44px;border-radius:10px;cursor:pointer;display:flex;align-items:center;white-space:nowrap')} hover={s('background:#f6f4f0')}>
+                            Annulla
+                          </Box>
+                        </div>
+                      ) : (
+                      <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+                        <div style={{ position: 'relative' }}>
+                          <Box as="button" onClick={() => setImmActionsOpen(o => !o)} style={s('box-sizing:border-box;border:1px solid #e4e1da;background:var(--bg-card);color:var(--text-main);font-size:13.5px;font-weight:700;padding:0 18px;height:44px;border-radius:10px;cursor:pointer;display:flex;align-items:center;gap:8px;white-space:nowrap')} hover={s('background:#f6f4f0')}>
+                            Azioni <Icon name="chevron-down" size={16} color="#57534c" />
+                          </Box>
+                          {immActionsOpen && (
+                            <div onClick={(e) => e.stopPropagation()} style={{ position: 'absolute', top: 'calc(100% + 6px)', right: 0, zIndex: 40, background: '#fff', border: '1px solid #f0ede7', borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', padding: 4, minWidth: 180 }}>
+                              <Box as="button" onClick={() => { setImmActionsOpen(false); setImportOpen(true); }} style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '10px 12px', borderRadius: 8, border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 13.5, fontWeight: 600, color: '#211f1c', textAlign: 'left' } as React.CSSProperties} hover={{ background: 'var(--bg-hover)' }}>
+                                <Icon name="upload" size={16} color="#57534c" />Importa immobili
+                              </Box>
+                              <Box as="button" onClick={() => { setImmActionsOpen(false); if (!projects.length) { toast('Nessun immobile', 'x'); return; } setImmSelectMode(true); setImmSelected(new Set()); }} style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '10px 12px', borderRadius: 8, border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 13.5, fontWeight: 600, color: '#211f1c', textAlign: 'left' } as React.CSSProperties} hover={{ background: 'var(--bg-hover)' }}>
+                                <Icon name="check" size={16} color="#57534c" />Seleziona immobili
+                              </Box>
+                              <div style={{ height: 1, background: '#f0ede7', margin: '4px 8px' }} />
+                              {([
+                                { fmt: 'csv', label: 'Esporta CSV', fn: exportProjectsCSV },
+                                { fmt: 'xlsx', label: 'Esporta Excel', fn: exportProjectsXLSX },
+                                { fmt: 'pdf', label: 'Esporta PDF', fn: exportProjectsPDF },
+                              ] as const).map((opt) => (
+                                <Box key={opt.fmt} as="button" onClick={() => { setImmActionsOpen(false); if (!projects.length) { toast('Nessun immobile da esportare', 'x'); return; } opt.fn(projects as unknown as ProjectData[]); }} style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '10px 12px', borderRadius: 8, border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 13.5, fontWeight: 600, color: '#211f1c', textAlign: 'left' } as React.CSSProperties} hover={{ background: 'var(--bg-hover)' }}>
+                                  <Icon name="download" size={16} color="#57534c" />{opt.label}
+                                </Box>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        <Box as="button" onClick={() => setNewProjOpen(true)} style={s('box-sizing:border-box;border:1px solid #3B83F6;background:#3B83F6;color:var(--bg-card);font-size:13.5px;font-weight:700;padding:0 18px;height:44px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;white-space:nowrap')} hover={s('background:#2b6fe0;border-color:#2b6fe0')}>
+                          Nuovo immobile
+                        </Box>
+                      </div>
+                      )}
+                    </div>
+                    {list.length === 0 ? (
+                      <div style={s('text-align:center;padding:64px 20px;color:var(--text-muted);font-size:14px')}>Nessun immobile ancora. Creane uno con &quot;Nuovo immobile&quot;.</div>
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
+                        {days.map(day => (
+                          <div key={day.key}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, borderBottom: '1px solid #f0ede7', paddingBottom: 12 }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                <div style={{ width: 32, height: 32, borderRadius: 8, background: '#eef4fe', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                  <Icon name="calendar" size={16} color="#3B83F6" />
+                                </div>
+                                <div>
+                                  <div style={{ fontSize: 15, fontWeight: 700, color: '#211f1c', textTransform: 'capitalize' }}>{day.label}</div>
+                                  <div style={{ fontSize: 12.5, color: '#8c867d' }}>{day.items.length} {day.items.length === 1 ? 'immobile' : 'immobili'}</div>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="max-md:!grid-cols-2" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 16 }}>
+                        {day.items.map(p => (
+                          <Box key={p.id} onClick={() => { if (immSelectMode) { setImmSelected(prev => { const n = new Set(prev); if (n.has(p.id)) n.delete(p.id); else n.add(p.id); return n; }); return; } if (immMenuId === p.id) { setImmMenuId(null); return; } setActiveProject(p.id); go('home'); }} style={{ position: 'relative', background: 'var(--bg-card)', border: immSelectMode && immSelected.has(p.id) ? '2px solid #3B83F6' : '1px solid #ece9e2', borderRadius: 16, overflow: 'hidden', cursor: 'pointer', display: 'flex', flexDirection: 'column', transition: 'transform .18s ease, box-shadow .18s ease', willChange: 'transform' }} hover={s('box-shadow:0 8px 24px rgba(33,31,28,.08);transform:translateY(-2px)')}>
+                            {immSelectMode && (
+                              <div style={{ position: 'absolute', top: 12, left: 12, width: 26, height: 26, borderRadius: '50%', background: immSelected.has(p.id) ? '#3B83F6' : 'rgba(255,255,255,0.92)', border: immSelected.has(p.id) ? 'none' : '1px solid #d8d4cb', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 6 }}>
+                                {immSelected.has(p.id) && <Icon name="check" size={15} color="#fff" />}
+                              </div>
+                            )}
+                            {!immSelectMode && (
+                            <button onClick={(e) => { e.stopPropagation(); setImmMenuId(id => id === p.id ? null : p.id); }} title="Azioni" style={{ position: 'absolute', top: 12, right: 12, width: 34, height: 34, borderRadius: '50%', background: 'rgba(20,30,55,0.45)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 6 }}>
+                              <Icon name="more-vertical" size={16} color="#fff" />
+                            </button>
+                            )}
+                            {!immSelectMode && immMenuId === p.id && (
+                              <div onClick={(e) => e.stopPropagation()} style={{ position: 'absolute', top: 52, right: 12, zIndex: 7, background: '#fff', border: '1px solid #f0ede7', borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', padding: 4, minWidth: 170 }}>
+                                <Box as="button" onClick={() => { setImmMenuId(null); setActiveProject(p.id); setEditProjOpen(true); }} style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '10px 12px', borderRadius: 8, border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 13.5, fontWeight: 600, color: '#211f1c', textAlign: 'left' } as React.CSSProperties} hover={{ background: 'var(--bg-hover)' }}>
+                                  <Icon name="pencil" size={16} color="#57534c" />Modifica
+                                </Box>
+                                <Box as="button" onClick={async () => { setImmMenuId(null); const ok = await deleteProject(p.id); if (!ok) { toast('Errore eliminazione', 'x'); return; } if (activeProject === p.id) { const rem = projects.filter(x => x.id !== p.id); setActiveProject(rem[0]?.id || ''); } setProjects(prev => prev.filter(x => x.id !== p.id)); toast('Immobile eliminato', 'check'); }} style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '10px 12px', borderRadius: 8, border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 13.5, fontWeight: 600, color: '#dc2626', textAlign: 'left' } as React.CSSProperties} hover={{ background: '#fef2f2' }}>
+                                  <Icon name="trash-2" size={16} color="#dc2626" />Elimina
+                                </Box>
+                              </div>
+                            )}
+                            <div style={{ height: 190, ...getCoverStyle(p) }} />
+                            <div style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                              <div style={s('font-size:16px;font-weight:800;color:var(--text-main);white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{p.nome}</div>
+                              <div style={s('font-size:13px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{p.addr}</div>
+                              <div style={s('font-size:13.5px;color:var(--text-main);margin-top:8px')}>
+                                {p.prezzo ? <strong>€ {p.prezzo.toLocaleString('it-IT')}</strong> : null}
+                                {p.mq ? <span style={s('color:var(--text-muted)')}>{p.prezzo ? '  ·  ' : ''}{p.mq} m²</span> : null}
+                                {p.locali ? <span style={s('color:var(--text-muted)')}>  ·  {p.locali} locali</span> : null}
+                              </div>
+                              <div style={s('font-size:12px;color:var(--text-muted);margin-top:12px;padding-top:12px;border-top:1px solid #f0ede7')}>
+                                {(p.nFoto || 0)} foto · {(p.nStaging || 0)} staging · {(p.nVideo || 0)} video · {(p.nPost || 0)} post
+                              </div>
+                            </div>
+                          </Box>
+                        ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()
             ) : route === 'studio' ? (
               <PostSocialScreen toast={toast} routeKey={routeKey} brand={brand} project={active || (tourStep !== null ? DEMO_PROJECTS[0] : undefined)} batches={batches} onProjectUpdate={active ? (upd) => setProjects(prev => prev.map(p => p.id === active.id ? { ...p, ...upd } : p)) : undefined} initialPhotoUrl={studioPhoto} go={go} />
             ) : route === 'staging' ? (
@@ -3348,6 +3490,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                 loadingBatches={loadingBatches}
                 demoMode={tourStep !== null || !active}
                 demoJobsDone={demoJobsDone}
+                go={go}
               />
             ) : route === 'video' ? (
               <VideoAIScreen key="video" toast={toast} routeKey={routeKey} brand={brand} project={active || (tourStep !== null ? DEMO_PROJECTS[0] : undefined)} onVideoJob={registerVideoJob} activeRenders={videoJobs.filter(j => j.stage === 'render' && !j.dismissed).length} initialPhotoUrl={studioPhoto} preselect={studioPhoto ? 'walkthrough' : undefined} demoMode={tourStep !== null} go={go} lockBrand={isFreePlan} />
@@ -3402,11 +3545,23 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
         ))}
       </div>
 
+      {/* IMPORT IMMOBILI MODAL */}
+      {importOpen && (
+        <ImportProjectsModal
+          onClose={() => setImportOpen(false)}
+          onDone={(res) => {
+            mutateProjects();
+            toast(`Import: ${res.created} creati, ${res.updated} aggiornati${res.skipped ? `, ${res.skipped} saltati` : ''}`, 'check');
+          }}
+        />
+      )}
+
       {/* NEW PROJECT MODAL */}
       {newProjOpen && (
         <NewProjectModal
           toast={toast}
           mandatory={projects.length === 0}
+          onImport={() => { setNewProjOpen(false); setImportOpen(true); }}
           onClose={() => setNewProjOpen(false)}
           onSuccess={(p) => {
             setProjects(prev => [p as unknown as Project, ...prev]);

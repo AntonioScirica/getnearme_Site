@@ -11,7 +11,7 @@ import {
   CreditCard, Upload, Copy, Trash2, Gift, Crown, Zap, Settings, LogOut, LifeBuoy,
   PlayCircle, MapPin, Maximize2, LayoutGrid, Tag, Scissors, LoaderCircle, Inbox,
   Euro, Bed, Bath, Instagram, Type, Home, Megaphone, Images, MessageSquare,
-  TriangleAlert, Lock,
+  TriangleAlert, Lock, MoreVertical,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -23,7 +23,7 @@ const ICONS: Record<string, LucideIcon> = {
   calendar: Calendar, image: ImageIcon, download: Download, pencil: Pencil,
   'layout-dashboard': LayoutDashboard, users: Users, palette: Palette,
   'at-sign': AtSign, 'credit-card': CreditCard, upload: Upload, copy: Copy,
-  trash: Trash2, gift: Gift, crown: Crown, zap: Zap, settings: Settings,
+  trash: Trash2, 'trash-2': Trash2, 'more-vertical': MoreVertical, gift: Gift, crown: Crown, zap: Zap, settings: Settings,
   'log-out': LogOut, 'life-buoy': LifeBuoy, 'play-circle': PlayCircle,
   'map-pin': MapPin, 'maximize-2': Maximize2, 'layout-grid': LayoutGrid,
   tag: Tag, scissors: Scissors, 'loader-circle': LoaderCircle, inbox: Inbox,

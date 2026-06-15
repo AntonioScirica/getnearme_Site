@@ -23,6 +23,10 @@ import {
   Cookie,
   Circle,
   Star,
+  MoreHorizontal,
+  MoreVertical,
+  Trash2,
+  Pencil,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -38,6 +42,10 @@ export const ICONS: Record<string, LucideIcon> = {
   flame: Flame,
   lock: Lock,
   'credit-card': CreditCard,
+  'more-horizontal': MoreHorizontal,
+  'more-vertical': MoreVertical,
+  'trash-2': Trash2,
+  pencil: Pencil,
   check: Check,
   rocket: Rocket,
   frown: Frown,

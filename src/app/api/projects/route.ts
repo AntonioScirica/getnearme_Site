@@ -38,9 +38,13 @@ export async function GET(req: NextRequest) {
     mq: p.mq,
     bagni: p.bagni,
     camere: p.camere,
+    locali: p.locali,
     titolo: p.titolo,
     descrizione: p.descrizione,
     cover: p.cover,
+    thumb: p.thumb,
+    riferimento: p.riferimento,
+    tipologia: p.tipologia,
     icons: p.icons,
     createdAt: p.created_at,
   })) || []
@@ -59,7 +63,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'bad_request' }, { status: 400 })
   }
 
-  const { nome, addr, prezzo, mq, bagni, camere, titolo, descrizione, cover, icons } = body
+  const { nome, addr, prezzo, mq, bagni, camere, titolo, descrizione, cover, thumb, riferimento, tipologia, icons } = body
 
   if (!nome) {
     return NextResponse.json({ error: 'missing_name' }, { status: 400 })
@@ -78,6 +82,9 @@ export async function POST(req: NextRequest) {
       titolo: titolo || '',
       descrizione: typeof descrizione === 'string' ? descrizione : '',
       cover: cover || '',
+      thumb: thumb || '',
+      riferimento: typeof riferimento === 'string' ? riferimento : '',
+      tipologia: typeof tipologia === 'string' ? tipologia : '',
       icons: icons || { prezzo: 'euro', mq: 'maximize-2', camere: 'bed', bagni: 'bath' },
     })
     .select('*')
@@ -99,6 +106,9 @@ export async function POST(req: NextRequest) {
     titolo: project.titolo,
     descrizione: project.descrizione,
     cover: project.cover,
+    thumb: project.thumb,
+    riferimento: project.riferimento,
+    tipologia: project.tipologia,
     icons: project.icons,
     createdAt: project.created_at,
   }
@@ -117,7 +127,7 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: 'bad_request' }, { status: 400 })
   }
 
-  const { id, nome, addr, prezzo, mq, bagni, camere, titolo, descrizione, cover, icons } = body
+  const { id, nome, addr, prezzo, mq, bagni, camere, titolo, descrizione, cover, thumb, riferimento, tipologia, icons } = body
 
   if (!id) {
     return NextResponse.json({ error: 'missing_id' }, { status: 400 })
@@ -133,6 +143,9 @@ export async function PUT(req: NextRequest) {
   if (titolo !== undefined) updates.titolo = titolo
   if (descrizione !== undefined) updates.descrizione = typeof descrizione === 'string' ? descrizione : ''
   if (cover !== undefined) updates.cover = cover
+  if (thumb !== undefined) updates.thumb = thumb
+  if (riferimento !== undefined) updates.riferimento = riferimento
+  if (tipologia !== undefined) updates.tipologia = tipologia
   if (icons !== undefined) updates.icons = icons
 
   const { data: project, error } = await admin
@@ -159,6 +172,9 @@ export async function PUT(req: NextRequest) {
     titolo: project.titolo,
     descrizione: project.descrizione,
     cover: project.cover,
+    thumb: project.thumb,
+    riferimento: project.riferimento,
+    tipologia: project.tipologia,
     icons: project.icons,
     createdAt: project.created_at,
   }

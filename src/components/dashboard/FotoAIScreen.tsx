@@ -506,13 +506,13 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
         {quota && (quota.remaining > 0 ? (
           <div style={s('display:inline-flex;align-items:center;justify-content:center;gap:8px;background:#fff;border:1px solid #f0ede7;border-radius:99px;padding:8px 16px')}>
             <Icon name="image" size={15} color="#3B83F6" />
-            <span style={{ fontSize: 13, fontWeight: 700 }}>{quota.remaining}/{quota.limit} foto</span>
+            <span style={{ fontSize: 13, fontWeight: 700 }}>{quota.remaining} {quota.remaining === 1 ? 'foto rimanente' : 'foto rimanenti'}</span>
           </div>
         ) : lockBrand ? (
           // Free esaurito: rosso + click -> pagina Piani.
           <div onClick={() => onGoPlan?.()} style={s('display:inline-flex;align-items:center;justify-content:center;gap:8px;background:#fff;border:1px solid #fecaca;border-radius:99px;padding:8px 16px;cursor:pointer') as React.CSSProperties}>
             <Icon name="image" size={15} color="#dc2626" />
-            <span style={{ fontSize: 13, fontWeight: 700, color: '#dc2626' }}>0/{quota.limit} foto</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: '#dc2626' }}>0 foto rimanenti</span>
           </div>
         ) : (
           <Box as="button" onClick={() => setPacksOpen(true)} style={s('display:flex;align-items:center;gap:8px;background:#3B83F6;color:#fff;border:none;border-radius:10px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer') as React.CSSProperties} hover={s('background:#2b6fe0')}>

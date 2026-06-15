@@ -1121,13 +1121,13 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
           {quota && (quota.remaining > 0 ? (
             <div style={s('display:inline-flex;align-items:center;justify-content:center;gap:8px;background:#fff;border:1px solid #f0ede7;border-radius:99px;padding:8px 16px')}>
               <Icon name="film" size={15} color="#3B83F6" />
-              <span style={{ fontSize: 13, fontWeight: 700 }}>{quota.remaining}/{quota.limit} video</span>
+              <span style={{ fontSize: 13, fontWeight: 700 }}>{quota.remaining} video {quota.remaining === 1 ? 'rimanente' : 'rimanenti'}</span>
             </div>
           ) : lockBrand ? (
             // Free esaurito: rosso + click -> pagina Piani.
             <div onClick={() => go?.('account')} style={s('display:inline-flex;align-items:center;justify-content:center;gap:8px;background:#fff;border:1px solid #fecaca;border-radius:99px;padding:8px 16px;cursor:pointer') as React.CSSProperties}>
               <Icon name="film" size={15} color="#dc2626" />
-              <span style={{ fontSize: 13, fontWeight: 700, color: '#dc2626' }}>0/{quota.limit} video</span>
+              <span style={{ fontSize: 13, fontWeight: 700, color: '#dc2626' }}>0 video rimanenti</span>
             </div>
           ) : (
             <Box as="button" onClick={() => setPacksOpen(true)} style={s('display:flex;align-items:center;gap:8px;background:#3B83F6;color:#fff;border:none;border-radius:10px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer') as React.CSSProperties} hover={s('background:#2b6fe0')}>
@@ -1220,7 +1220,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
               {montaggioQuota && !montaggioQuota.unlimited && (
                 <div onClick={() => { if (montaggioQuota.remaining <= 0) go?.('account'); }} style={s(`display:inline-flex;align-items:center;justify-content:center;gap:8px;background:#fff;border:1px solid ${montaggioQuota.remaining > 0 ? '#f0ede7' : '#fecaca'};border-radius:99px;padding:8px 16px;flex:none${montaggioQuota.remaining <= 0 ? ';cursor:pointer' : ''}`) as React.CSSProperties}>
                   <Icon name="scissors" size={15} color={montaggioQuota.remaining > 0 ? '#3B83F6' : '#dc2626'} />
-                  <span style={{ fontSize: 13, fontWeight: 700, color: montaggioQuota.remaining > 0 ? undefined : '#dc2626' }}>{Math.max(0, montaggioQuota.remaining)}/5 montaggi</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: montaggioQuota.remaining > 0 ? undefined : '#dc2626' }}>{Math.max(0, montaggioQuota.remaining)} {montaggioQuota.remaining === 1 ? 'montaggio rimanente' : 'montaggi rimanenti'}</span>
                 </div>
               )}
             </div>

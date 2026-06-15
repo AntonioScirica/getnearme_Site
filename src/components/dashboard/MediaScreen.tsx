@@ -123,7 +123,8 @@ export default function MediaScreen({
   batches,
   loadingBatches,
   demoMode = false,
-  demoJobsDone = false
+  demoJobsDone = false,
+  go,
 }: {
   toast: (msg: string, icon?: string) => void;
   routeKey: number;
@@ -132,7 +133,9 @@ export default function MediaScreen({
   loadingBatches: boolean;
   demoMode?: boolean;
   demoJobsDone?: boolean;
+  go?: (r: string, params?: { photoUrl?: string }) => void;
 }) {
+  const [menuKey, setMenuKey] = useState<string | null>(null);
   const [photosByBatch, setPhotosByBatch] = useState<Record<string, BatchPhoto[]>>({});
   const [loadingPhotos, setLoadingPhotos] = useState<Record<string, boolean>>({});
   const [vidLoaded, setVidLoaded] = useState<Record<string, boolean>>({}); // skeleton finche' il poster video non e' pronto
@@ -316,7 +319,7 @@ export default function MediaScreen({
 
   return (
     <div className="max-md:!px-4 max-md:!py-6" style={s('max-width:1160px;margin:0 auto;padding:32px 32px 64px')}>
-      <div className="max-md:!flex-col max-md:!items-start max-md:!gap-4" style={s('display:flex;align-items:center;justify-content:space-between;margin-bottom:24px')}>
+      <div className="max-md:!flex-col max-md:!items-start max-md:!gap-4" style={s('display:flex;align-items:center;justify-content:space-between;margin-bottom:40px')}>
         <div>
           <h1 style={s('margin:0 0 4px;font-size:25px;font-weight:800;letter-spacing:-.5px')}>Libreria Media</h1>
           <div style={s('color:#8c867d;font-size:14px')}>Le foto e i video generati per questo immobile. Le foto restano sempre, i video sono disponibili per 30 giorni.</div>
@@ -481,17 +484,17 @@ export default function MediaScreen({
                     return (
                       <div
                         key={selKey}
-                        onClick={() => inSelect ? toggleSelect(selKey) : setLightbox({ ...photo, sourceUrl: photo.sourceUrl || localSourceUrls[selKey] || null })}
-                        style={{ position: 'relative', aspectRatio: '4/3', borderRadius: 12, overflow: 'hidden', cursor: 'pointer', border: isSel ? '2px solid #3B83F6' : '1px solid #f0ede7', background: '#f4f2ee', animation: 'media-reveal .7s cubic-bezier(.22,1,.36,1) both', animationDelay: `${pi * 60}ms` }}
+                        onClick={() => { if (inSelect) { toggleSelect(selKey); return; } if (menuKey === selKey) { setMenuKey(null); return; } setLightbox({ ...photo, sourceUrl: photo.sourceUrl || localSourceUrls[selKey] || null }); }}
+                        style={{ position: 'relative', aspectRatio: '4/3', borderRadius: 12, cursor: 'pointer', border: isSel ? '2px solid #3B83F6' : '1px solid #f0ede7', background: '#f4f2ee', zIndex: menuKey === selKey ? 30 : undefined, animation: 'media-reveal .7s cubic-bezier(.22,1,.36,1) both', animationDelay: `${pi * 60}ms` }}
                       >
-                        <Image src={photo.resultUrl} alt="" fill sizes="(max-width: 768px) 50vw, 33vw" style={{ objectFit: 'cover', ...(isSel ? { opacity: .85 } : {}) }} onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }} />
+                        <Image src={photo.resultUrl} alt="" fill sizes="(max-width: 768px) 50vw, 33vw" style={{ objectFit: 'cover', borderRadius: 12, ...(isSel ? { opacity: .85 } : {}) }} onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }} />
                         {inSelect ? (
                           <div style={{ position: 'absolute', top: 10, left: 10, width: 24, height: 24, borderRadius: '50%', background: isSel ? '#3B83F6' : 'rgba(255,255,255,0.85)', border: isSel ? 'none' : '1px solid #d8d4cb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             {isSel && <Icon name="check" size={14} color="#fff" />}
                           </div>
                         ) : (
                           <>
-                            <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.2)', opacity: 0, transition: 'opacity .2s', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                            <div style={{ position: 'absolute', inset: 0, borderRadius: 12, background: 'rgba(0,0,0,0.2)', opacity: 0, transition: 'opacity .2s', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                               onMouseEnter={e => e.currentTarget.style.opacity = '1'}
                               onMouseLeave={e => e.currentTarget.style.opacity = '0'}
                             >
@@ -500,12 +503,32 @@ export default function MediaScreen({
                               </div>
                             </div>
                             <button
-                              onClick={(e) => handleDownloadSingle(photo.resultUrl, e)}
-                              title="Scarica"
-                              style={{ position: 'absolute', bottom: 12, right: 12, width: 34, height: 34, borderRadius: '50%', background: 'rgba(20,30,55,0.45)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                              onClick={(e) => { e.stopPropagation(); setMenuKey(k => k === selKey ? null : selKey); }}
+                              title="Opzioni"
+                              style={{ position: 'absolute', bottom: 12, right: 12, width: 34, height: 34, borderRadius: '50%', background: 'rgba(20,30,55,0.45)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 6 }}
                             >
-                              <Icon name="download" size={16} color="#fff" />
+                              <Icon name="more-vertical" size={16} color="#fff" />
                             </button>
+                            {menuKey === selKey && (
+                              <div onClick={(e) => e.stopPropagation()} style={{ position: 'absolute', top: 'calc(100% + 6px)', right: 0, zIndex: 40, background: '#fff', border: '1px solid #f0ede7', borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', padding: 4, minWidth: 170 }}>
+                                {go && (
+                                  <Box as="button" onClick={() => { setMenuKey(null); go('studio', { photoUrl: photo.resultUrl }); }} style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '10px 12px', borderRadius: 8, border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 13.5, fontWeight: 600, color: '#211f1c', textAlign: 'left' } as React.CSSProperties} hover={{ background: 'var(--bg-hover)' }}>
+                                    <Icon name="megaphone" size={16} color="#3B83F6" />Crea post
+                                  </Box>
+                                )}
+                                {go && (
+                                  <Box as="button" onClick={() => { setMenuKey(null); go('video', { photoUrl: photo.resultUrl }); }} style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '10px 12px', borderRadius: 8, border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 13.5, fontWeight: 600, color: '#211f1c', textAlign: 'left' } as React.CSSProperties} hover={{ background: 'var(--bg-hover)' }}>
+                                    <Icon name="film" size={16} color="#3B83F6" />Crea video
+                                  </Box>
+                                )}
+                                <Box as="button" onClick={(e: React.MouseEvent) => { setMenuKey(null); handleDownloadSingle(photo.resultUrl, e); }} style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '10px 12px', borderRadius: 8, border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 13.5, fontWeight: 600, color: '#211f1c', textAlign: 'left' } as React.CSSProperties} hover={{ background: 'var(--bg-hover)' }}>
+                                  <Icon name="download" size={16} color="#57534c" />Scarica
+                                </Box>
+                                <Box as="button" onClick={async () => { setMenuKey(null); await deleteBatchPhoto(photo.batchId, photo.index); setPhotosByBatch(prev => ({ ...prev, [photo.batchId]: (prev[photo.batchId] || []).filter(x => x.index !== photo.index) })); toast('Foto eliminata', 'check'); }} style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '10px 12px', borderRadius: 8, border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 13.5, fontWeight: 600, color: '#dc2626', textAlign: 'left' } as React.CSSProperties} hover={{ background: '#fef2f2' }}>
+                                  <Icon name="trash-2" size={16} color="#dc2626" />Elimina
+                                </Box>
+                              </div>
+                            )}
                           </>
                         )}
                       </div>

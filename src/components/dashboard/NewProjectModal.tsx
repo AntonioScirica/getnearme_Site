@@ -86,6 +86,34 @@ async function downscaleDataUrl(dataUrl: string, maxDim = 1280, quality = 0.8): 
   }
 }
 
+// Carica un data URL su R2 via /api/upload. Ritorna l'URL o '' se fallisce.
+async function uploadDataUrl(dataUrl: string, folder: string): Promise<string> {
+  try {
+    const blob = await (await fetch(dataUrl)).blob();
+    const file = new File([blob], 'img.jpg', { type: blob.type || 'image/jpeg' });
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('folder', folder);
+    const { data: { session } } = await supabase.auth.getSession();
+    const headers: Record<string, string> = {};
+    if (session) headers['Authorization'] = `Bearer ${session.access_token}`;
+    const ac = new AbortController();
+    const tid = setTimeout(() => ac.abort(), 20_000);
+    let res: Response;
+    try {
+      res = await fetch('/api/upload', { method: 'POST', headers, body: fd, signal: ac.signal });
+    } finally {
+      clearTimeout(tid);
+    }
+    if (res.ok) return (await res.json()).url as string;
+    console.error('Upload failed:', await res.text());
+    return '';
+  } catch (err) {
+    console.error('uploadDataUrl error', err);
+    return '';
+  }
+}
+
 const PICKER_ICONS: { key: string; label: string }[] = [
   { key: 'euro', label: 'Euro' }, { key: 'dollar', label: 'Dollaro' }, { key: 'pound', label: 'Sterlina' },
   { key: 'bed', label: 'Camere' }, { key: 'bath', label: 'Bagni' }, { key: 'area', label: 'Superficie' },
@@ -130,7 +158,8 @@ export function NewProjectModal({
   onDelete,
   editProject,
   toast,
-  mandatory = false
+  mandatory = false,
+  onImport,
 }: {
   onClose: () => void;
   onSuccess: (p: ProjectData) => void;
@@ -138,6 +167,7 @@ export function NewProjectModal({
   editProject?: ProjectData | null;
   toast: (msg: string, icon?: string) => void;
   mandatory?: boolean; // primo immobile: non chiudibile (no X / backdrop / Esc)
+  onImport?: () => void; // apre l'import lista (solo creazione)
 }) {
   const [loading, setLoading] = useState(false);
   // Nuovo immobile = 2 step; modifica = step unico (tutti i campi).
@@ -212,6 +242,10 @@ export function NewProjectModal({
 
   const handleFinish = async (skip: boolean = false) => {
     if (!nome.trim()) return;
+    if (!addr.trim()) {
+      toast('Inserisci l\'indirizzo dell\'immobile', 'x');
+      return;
+    }
     if (!skip && !techFilled) {
       toast('Compila prezzo, superficie, camere e bagni', 'x');
       return;
@@ -223,6 +257,7 @@ export function NewProjectModal({
     // evitano fetch appese (R2/API) -> niente piu' "loading infinito".
     try {
       let finalCover = cover;
+      let finalThumb = editProject?.thumb || '';
       if (cover && croppedAreaPixels && !skip && !cover.startsWith('http')) {
         try {
           finalCover = await getCroppedImg(cover, croppedAreaPixels);
@@ -232,45 +267,18 @@ export function NewProjectModal({
       }
 
       if (finalCover && finalCover.startsWith('data:image/')) {
-        // Compressione finale a pochi px (foto profilo immobile).
-        finalCover = await downscaleDataUrl(finalCover, 200, 0.82);
-        try {
-          const res = await fetch(finalCover);
-          const blob = await res.blob();
-          const file = new File([blob], 'cover.jpg', { type: blob.type });
-          const formData = new FormData();
-          formData.append('file', file);
-          formData.append('folder', 'covers');
-
-          const { data: { session } } = await supabase.auth.getSession();
-          const headers: Record<string, string> = {};
-          if (session) headers['Authorization'] = `Bearer ${session.access_token}`;
-
-          // Timeout 20s: se l'upload R2 si blocca lato server, abortiamo e
-          // proseguiamo senza copertina invece di restare appesi.
-          const ac = new AbortController();
-          const tid = setTimeout(() => ac.abort(), 20_000);
-          let uploadRes: Response;
-          try {
-            uploadRes = await fetch('/api/upload', { method: 'POST', headers, body: formData, signal: ac.signal });
-          } finally {
-            clearTimeout(tid);
-          }
-
-          if (uploadRes.ok) {
-            const { url } = await uploadRes.json();
-            finalCover = url;
-          } else {
-            console.error('Upload failed:', await uploadRes.text());
-          }
-        } catch (err) {
-          console.error('Failed to upload cover', err);
-        }
-        // Safety: se l'upload e' fallito e la cover e' ancora un data URL grande, non
-        // inviarla a /api/projects (sforerebbe il limite body). Meglio creare senza
-        // copertina che far fallire la creazione dell'immobile.
+        // Due versioni: cover orizzontale ~500px (card) + thumb ~100px (avatar/lista, come la foto profilo).
+        const cover500 = await downscaleDataUrl(finalCover, 500, 0.82);
+        const thumb100 = await downscaleDataUrl(finalCover, 100, 0.8);
+        const coverUrl = await uploadDataUrl(cover500, 'covers');
+        const thumbUrl = await uploadDataUrl(thumb100, 'covers');
+        finalCover = coverUrl || cover500;
+        finalThumb = thumbUrl || '';
+        // Safety: se l'upload e' fallito non inviare un data URL grande a /api/projects
+        // (sforerebbe il body limit). Meglio creare senza copertina che far fallire.
         if (finalCover.startsWith('data:') && finalCover.length > 1_500_000) {
           finalCover = '';
+          finalThumb = '';
           toast('Copertina non caricata, immobile creato senza foto. Riprova piu\' tardi.', 'x');
         }
       }
@@ -284,6 +292,7 @@ export function NewProjectModal({
         bagni: skip ? (editProject?.bagni || 0) : Number(bagni.replace(/\D/g, '')) || 0,
         titolo: editProject?.titolo || '',
         cover: finalCover, // Empty means use gradient
+        thumb: finalThumb, // ~100px per avatar/lista
         icons: fieldIcons,
       };
 
@@ -407,7 +416,7 @@ export function NewProjectModal({
               </div>
               
               <div>
-                <label style={labelStyle}>Indirizzo (opzionale)</label>
+                <label style={labelStyle}>Indirizzo</label>
                 <input 
                   placeholder="es. Via Fiori Chiari 12, Milano" 
                   value={addr} 
@@ -435,7 +444,14 @@ export function NewProjectModal({
                       onZoomChange={setZoom}
                       style={{ containerStyle: { width: '100%', height: '100%', background: 'transparent' } }}
                     />
-                    <div 
+                    <label
+                      style={{ position: 'absolute', bottom: 10, left: 10, background: 'rgba(0,0,0,0.5)', color: '#fff', padding: '6px 12px', borderRadius: 8, fontSize: 12, fontWeight: 700, zIndex: 20, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}
+                    >
+                      <Icon name="image-plus" size={14} color="#fff" />
+                      Cambia foto
+                      <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => handleCoverFile(e.target.files?.[0])} />
+                    </label>
+                    <div
                       style={{ position: 'absolute', bottom: 10, right: 10, background: 'rgba(0,0,0,0.5)', color: '#fff', padding: '6px 12px', borderRadius: 8, fontSize: 12, fontWeight: 700, zIndex: 20, cursor: 'pointer' }}
                       onClick={(e) => { e.preventDefault(); setCover(''); }}
                     >
@@ -479,13 +495,25 @@ export function NewProjectModal({
                 )}
               </div>
               )}
+              {!editProject && onImport && (
+                <div style={{ marginTop: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '0 0 20px' }}>
+                    <div style={{ flex: 1, height: 1, background: '#e9e6df' }} />
+                    <span style={{ fontSize: 12, fontWeight: 700, color: '#b3aca1', textTransform: 'uppercase', letterSpacing: '.04em' }}>Oppure</span>
+                    <div style={{ flex: 1, height: 1, background: '#e9e6df' }} />
+                  </div>
+                  <Box as="button" onClick={() => onImport()} style={s('width:100%;box-sizing:border-box;border:1px solid #e4e1da;background:#fff;color:#211f1c;font-size:14px;font-weight:700;padding:13px 20px;border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px')} hover={s('background:#f6f4f0;border-color:#d8d4cb')}>
+                    <Icon name="upload" size={16} color="#57534c" />Importa immobili da file
+                  </Box>
+                </div>
+              )}
               </>)}
 
               {(editProject || step === 2) && (<>
               {!isNew && <hr style={{ border: 'none', borderTop: '1px solid #f0ede7', margin: '8px 0' }} />}
 
               <div style={{ background: '#f6f4f0', padding: 16, borderRadius: 12, fontSize: 13, color: '#57534c', lineHeight: 1.5 }}>
-Tocca le icone per scegliere quali info mostrare.
+Clicca sulle icone per scegliere quali info mostrare.
               </div>
               
               <div className="max-md:!grid-cols-1" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
@@ -593,7 +621,7 @@ Tocca le icone per scegliere quali info mostrare.
                   </>
                 ) : step === 1 ? (
                   <>
-                    <Box as="button" onClick={() => { if (nome.trim()) setStep(2); }} style={s('border:none;background:#3B83F6;color:#fff;font-size:14px;font-weight:700;padding:12px 20px;border-radius:12px;cursor:' + (nome.trim() ? 'pointer' : 'default') + ';flex:1;box-shadow:0 4px 12px rgba(59,131,246,0.25);opacity:' + (nome.trim() ? 1 : 0.45))} hover={nome.trim() ? s('background:#2563EB') : undefined}>
+                    <Box as="button" onClick={() => { if (nome.trim() && addr.trim()) setStep(2); }} style={s('border:none;background:#3B83F6;color:#fff;font-size:14px;font-weight:700;padding:12px 20px;border-radius:12px;cursor:' + (nome.trim() && addr.trim() ? 'pointer' : 'default') + ';flex:1;box-shadow:0 4px 12px rgba(59,131,246,0.25);opacity:' + (nome.trim() && addr.trim() ? 1 : 0.45))} hover={nome.trim() && addr.trim() ? s('background:#2563EB') : undefined}>
                       Avanti
                     </Box>
                   </>

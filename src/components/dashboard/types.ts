@@ -10,6 +10,9 @@ export type Project = {
   titolo: string;
   descrizione?: string;
   cover: string;
+  thumb?: string; // versione ~100px per avatar/lista (cover = ~500px orizzontale)
+  riferimento?: string; // codice annuncio agenzia (dedup import)
+  tipologia?: string;   // es. appartamento, villa, attico
   createdAt?: string;
   icons?: Record<string, string>;
   nFoto?: number;
