@@ -103,28 +103,68 @@ export async function GET(req: NextRequest) {
         .toISOString()
         .slice(0, 10);
 
-      const { data: posts, error: pErr } = await supabase
-        .from("post_metrics")
-        .select(
-          "id, content_id, ig_post_id, publish_date, impressions, reach, saves, shares, comments, likes, plays, total_interactions, save_rate, share_rate, engagement_rate, content_type, rubric, hook_text, cta_text, fetched_at"
-        )
+      // Le metriche vivono in generated_content.content_data.insights (scritte
+      // dal cron ped-insights). La vecchia tabella post_metrics non viene mai
+      // popolata, quindi leggiamo direttamente dal contenuto pubblicato.
+      const { data: rows, error: pErr } = await supabase
+        .from("generated_content")
+        .select("id, ig_post_id, type, publish_date, image_urls, content_data")
         .eq("account_id", ACCOUNT)
+        .eq("status", "published")
         .gte("publish_date", since)
+        .not("ig_post_id", "is", null)
         .order("publish_date", { ascending: false });
       if (pErr) throw pErr;
 
-      // Attach slide thumbnails + captions for the posts we have
-      const contentIds = (posts || [])
-        .map((p) => p.content_id)
-        .filter((id): id is number => id != null);
-      let contentById: Record<number, { image_urls: string[] | null; content_data: { caption?: string } | null }> = {};
-      if (contentIds.length > 0) {
-        const { data: contents } = await supabase
-          .from("generated_content")
-          .select("id, image_urls, content_data")
-          .in("id", contentIds);
-        contentById = Object.fromEntries((contents || []).map((c) => [c.id, c]));
-      }
+      type Insights = {
+        reach?: number; views?: number; impressions?: number; likes?: number;
+        comments?: number; saved?: number; shares?: number; plays?: number;
+        video_views?: number; total_interactions?: number; fetched_at?: string;
+      };
+      type ContentData = {
+        insights?: Insights; caption?: string; rubric?: string;
+        hook?: string; cta?: string;
+      };
+
+      const posts = (rows || [])
+        .map((r) => {
+          const cd = (r.content_data || {}) as ContentData;
+          const ins = cd.insights || {};
+          const reach = ins.reach ?? 0;
+          const likes = ins.likes ?? 0;
+          const comments = ins.comments ?? 0;
+          const saves = ins.saved ?? 0;
+          const shares = ins.shares ?? 0;
+          const interactions = ins.total_interactions ?? likes + comments + saves + shares;
+          return {
+            id: r.id,
+            content_id: r.id,
+            ig_post_id: r.ig_post_id,
+            publish_date: r.publish_date,
+            impressions: ins.views ?? ins.impressions ?? 0,
+            reach,
+            saves,
+            shares,
+            comments,
+            likes,
+            plays: ins.plays ?? ins.video_views ?? 0,
+            total_interactions: interactions,
+            save_rate: reach ? saves / reach : 0,
+            share_rate: reach ? shares / reach : 0,
+            engagement_rate: reach ? interactions / reach : 0,
+            content_type: r.type ?? null,
+            rubric: cd.rubric ?? null,
+            hook_text: cd.hook ?? null,
+            cta_text: cd.cta ?? null,
+            fetched_at: ins.fetched_at ?? null,
+            thumbnail: r.image_urls?.[0] ?? null,
+            caption: cd.caption ?? null,
+            _hasInsights: ins.reach != null,
+          };
+        })
+        // Solo post con insight raccolti (gli altri non hanno ancora metriche)
+        .filter((p) => p._hasInsights)
+        .map(({ _hasInsights, ...p }) => p);
 
       const { data: insights } = await supabase
         .from("performance_insights")
@@ -133,15 +173,7 @@ export async function GET(req: NextRequest) {
         .order("week_start", { ascending: false })
         .limit(8);
 
-      return NextResponse.json({
-        days,
-        posts: (posts || []).map((p) => ({
-          ...p,
-          thumbnail: p.content_id != null ? contentById[p.content_id]?.image_urls?.[0] || null : null,
-          caption: p.content_id != null ? contentById[p.content_id]?.content_data?.caption || null : null,
-        })),
-        insights: insights || [],
-      });
+      return NextResponse.json({ days, posts, insights: insights || [] });
     }
 
     if (view === "market-stats") {

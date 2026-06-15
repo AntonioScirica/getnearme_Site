@@ -57,7 +57,8 @@ export async function renderPedSlides(slides, css, viewport = { width: 1080, hei
           } catch { /* fonts not critical */ }
           // Small settle delay for layout
           await new Promise((r) => setTimeout(r, 300));
-          const buffer = await page.screenshot({ type: 'png' });
+          // JPEG: IG Graph API accetta solo JPEG per i post immagine (PNG rifiutato).
+          const buffer = await page.screenshot({ type: 'jpeg', quality: 90 });
           images.push(buffer);
           log(`renderer: slide ${i + 1}/${slides.length} (${slide.label || ''}) ok${attempt > 1 ? ` al tentativo ${attempt}` : ''}`);
           lastErr = null;

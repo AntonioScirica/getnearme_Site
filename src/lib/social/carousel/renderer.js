@@ -156,7 +156,7 @@ export async function renderCarousel(carouselContent, template = 'pop', rubric =
       : buildSlideHTML(slide, i + 1, totalSlides, rubric);
 
     await page.setContent(html, { waitUntil: 'domcontentloaded', timeout: 15000 });
-    const buffer = await page.screenshot({ type: 'png' });
+    const buffer = await page.screenshot({ type: 'jpeg', quality: 90 });
     images.push(buffer);
   }
 

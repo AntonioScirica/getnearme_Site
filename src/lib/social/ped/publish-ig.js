@@ -157,7 +157,11 @@ export async function getMediaInsights(mediaId, isStory = false) {
     );
     const data = await res.json();
     if (data.error) {
-      if (data.error.code === 100 || /metric/i.test(data.error.message || '')) continue;
+      // 100 = metrica non valida per questo media; 10 = permesso non disponibile
+      // per quel set di metriche. In entrambi i casi proviamo un set piu' piccolo
+      // invece di abortire tutta la raccolta.
+      const code = data.error.code;
+      if (code === 100 || code === 10 || /metric|permission/i.test(data.error.message || '')) continue;
       throw new Error(`IG insights error: ${data.error.message}`);
     }
     const out = {};

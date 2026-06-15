@@ -100,10 +100,10 @@ export default async function handler(req, res) {
 
         const imageUrls = [];
         for (let i = 0; i < images.length; i++) {
-          const path = `carousels/${topic.plan_date}/${topic.id}/slide_${i}.png`;
+          const path = `carousels/${topic.plan_date}/${topic.id}/slide_${i}.jpg`;
           const { error } = await supabase.storage
             .from('content')
-            .upload(path, images[i], { contentType: 'image/png', upsert: true });
+            .upload(path, images[i], { contentType: 'image/jpeg', upsert: true });
           if (error) console.error(`Upload error slide ${i}:`, error.message);
 
           const { data: urlData } = supabase.storage.from('content').getPublicUrl(path);
@@ -150,10 +150,10 @@ export default async function handler(req, res) {
 
         const imageUrls = [];
         for (let i = 0; i < images.length; i++) {
-          const path = `prompts/${topic.plan_date}/${topic.id}/slide_${i}.png`;
+          const path = `prompts/${topic.plan_date}/${topic.id}/slide_${i}.jpg`;
           const { error } = await supabase.storage
             .from('content')
-            .upload(path, images[i], { contentType: 'image/png', upsert: true });
+            .upload(path, images[i], { contentType: 'image/jpeg', upsert: true });
           if (error) console.error(`Upload error slide ${i}:`, error.message);
 
           const { data: urlData } = supabase.storage.from('content').getPublicUrl(path);

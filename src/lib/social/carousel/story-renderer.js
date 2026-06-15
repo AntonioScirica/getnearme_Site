@@ -25,7 +25,7 @@ export async function renderStory(type, data) {
     const html = buildStoryHTML(type, data);
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: 'domcontentloaded', timeout: 15000 });
-    const buffer = await page.screenshot({ type: 'png' });
+    const buffer = await page.screenshot({ type: 'jpeg', quality: 90 });
     await page.close();
     return buffer;
   } finally {

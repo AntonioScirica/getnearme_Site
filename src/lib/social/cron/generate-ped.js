@@ -127,10 +127,10 @@ export default async function handler(req, res) {
 
       const imageUrls = [];
       for (let i = 0; i < images.length; i++) {
-        const path = `ped/${topic.plan_date}/${topic.id}/slide_${i}.png`;
+        const path = `ped/${topic.plan_date}/${topic.id}/slide_${i}.jpg`;
         const { error } = await supabase.storage
           .from('content')
-          .upload(path, images[i], { contentType: 'image/png', upsert: true });
+          .upload(path, images[i], { contentType: 'image/jpeg', upsert: true });
         if (error) throw new Error(`Upload slide ${i}: ${error.message}`);
         const { data: urlData } = supabase.storage.from('content').getPublicUrl(path);
         imageUrls.push(urlData.publicUrl);
@@ -142,10 +142,10 @@ export default async function handler(req, res) {
       const storyHtml = buildStoryForTopic(topic);
       if (storyHtml) {
         const [storyImg] = await renderPedSlides([{ html: storyHtml, label: 'story' }], STORY_CSS, { width: 1080, height: 1920 }, vlog);
-        const storyPath = `ped/${topic.plan_date}/${topic.id}/story.png`;
+        const storyPath = `ped/${topic.plan_date}/${topic.id}/story.jpg`;
         const { error } = await supabase.storage
           .from('content')
-          .upload(storyPath, storyImg, { contentType: 'image/png', upsert: true });
+          .upload(storyPath, storyImg, { contentType: 'image/jpeg', upsert: true });
         if (error) {
           vlog(`upload story FALLITO: ${error.message} (continuo senza story)`);
         } else {
