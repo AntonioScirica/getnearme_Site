@@ -447,6 +447,8 @@ function CheckoutAgencyContent() {
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [marketingAccepted, setMarketingAccepted] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
+  // Nuovo utente via Google senza consenso pregresso: mostra i checkbox una volta.
+  const [needsConsent, setNeedsConsent] = useState(false);
   const consentRef = useRef<HTMLDivElement>(null);
 
   const plan = PLANS[selectedPlanId];
@@ -537,20 +539,19 @@ function CheckoutAgencyContent() {
       const userEmail = validUser.email || '';
 
       if (isOAuthCallback) {
-        // Returning from Google OAuth - restore consent from sessionStorage
-        const saved = sessionStorage.getItem('gnm_checkout_consent');
-        let terms = false;
-        let marketing = false;
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          terms = parsed.terms;
-          marketing = parsed.marketing;
-          sessionStorage.removeItem('gnm_checkout_consent');
-        }
+        // Ritorno da Google OAuth. Il consenso non si chiede PRIMA del login
+        // (estenuante per chi ha gia' un account): si controlla DOPO.
         setUser({ id: userId, email: userEmail });
-        setTermsAccepted(terms);
-        setMarketingAccepted(marketing);
-        await proceedAfterLogin(userId, userEmail, terms, marketing);
+        const meta = validUser.user_metadata;
+        if (meta?.terms_accepted_at) {
+          // Utente di ritorno: consenso gia' dato in passato, niente checkbox.
+          setTermsAccepted(true);
+          if (meta.marketing_consent) setMarketingAccepted(true);
+          await proceedAfterLogin(userId, userEmail, true, !!meta.marketing_consent);
+        } else {
+          // Nuovo utente via Google: deve accettare i termini una volta sola.
+          setNeedsConsent(true);
+        }
       } else {
         // Existing session (not OAuth callback). Se non c'e' un piano selezionato
         // siamo in modalita' LOGIN (non checkout) → vai dritto alla dashboard.
@@ -590,19 +591,11 @@ function CheckoutAgencyContent() {
   }, []);
 
   async function handleGoogleLogin() {
-    if (!termsAccepted) {
-      setError(t.termsRequired as string);
-      consentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      return;
-    }
+    // Niente gate sui checkbox prima dell'OAuth: il consenso si gestisce dopo il
+    // login (solo per i nuovi account, via needsConsent). Chi ha gia' accettato
+    // non rivede piu' i checkbox.
     setIsLoading(true);
     setError(null);
-
-    // Save consent before OAuth redirect (state is lost on page reload)
-    sessionStorage.setItem('gnm_checkout_consent', JSON.stringify({
-      terms: termsAccepted,
-      marketing: marketingAccepted,
-    }));
 
     try {
       const { error } = await supabase.auth.signInWithOAuth({
@@ -611,10 +604,22 @@ function CheckoutAgencyContent() {
       });
       if (error) throw error;
     } catch (err) {
-      sessionStorage.removeItem('gnm_checkout_consent');
       setError(err instanceof Error ? err.message : t.errorDefault as string);
       setIsLoading(false);
     }
+  }
+
+  // Conferma consenso per nuovo utente Google (post-login, una volta sola).
+  function handleConsentContinue() {
+    if (!termsAccepted) {
+      setError(t.termsRequired as string);
+      consentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+    if (!user) return;
+    setError(null);
+    setNeedsConsent(false);
+    proceedAfterLogin(user.id, user.email, true, marketingAccepted);
   }
 
   async function handleEmailAuth(e: React.FormEvent) {
@@ -679,6 +684,64 @@ function CheckoutAgencyContent() {
 
   const currentPrice = plan ? (interval === 'annual' ? plan.price_annual : plan.price_monthly) : 0;
   const periodLabel = interval === 'annual' ? t.perYear : t.perMonth;
+
+  function renderConsentBoxes() {
+    return (
+      <div ref={consentRef} className="mt-6 pt-6 border-t-2 border-[#1a1a2e]/20 space-y-3">
+        <label className="flex items-center gap-3 cursor-pointer group">
+          <div className="relative shrink-0">
+            <input
+              type="checkbox"
+              checked={termsAccepted}
+              onChange={(e) => { setTermsAccepted(e.target.checked); if (e.target.checked) setError(null); }}
+              className="sr-only peer"
+            />
+            <div className="w-5 h-5 border-2 border-[#1a1a2e] rounded bg-white peer-checked:bg-blue-500 peer-checked:border-[#1a1a2e] transition-all flex items-center justify-center" style={{ boxShadow: '0 4px 16px rgba(16,24,40,0.08)' }}>
+              {termsAccepted && (
+                <svg className="w-3 h-3 text-white" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="2 6 5 9 10 3" />
+                </svg>
+              )}
+            </div>
+          </div>
+          <span className="text-sm text-slate-600 leading-tight">
+            {t.acceptTerms}{' '}
+            <a href={`/${locale}/termini`} target="_blank" rel="noopener noreferrer" className="text-blue-500 font-semibold hover:underline">{t.termsOfService}</a>
+            {' '}{t.andThe}{' '}
+            <a href={`/${locale}/privacy`} target="_blank" rel="noopener noreferrer" className="text-blue-500 font-semibold hover:underline">{t.privacyPolicy}</a>
+            {' *'}
+          </span>
+        </label>
+
+        <label className="flex items-center gap-3 cursor-pointer group">
+          <div className="relative shrink-0">
+            <input
+              type="checkbox"
+              checked={marketingAccepted}
+              onChange={(e) => setMarketingAccepted(e.target.checked)}
+              className="sr-only peer"
+            />
+            <div className="w-5 h-5 border-2 border-[#1a1a2e] rounded bg-white peer-checked:bg-blue-500 peer-checked:border-[#1a1a2e] transition-all flex items-center justify-center" style={{ boxShadow: '0 4px 16px rgba(16,24,40,0.08)' }}>
+              {marketingAccepted && (
+                <svg className="w-3 h-3 text-white" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="2 6 5 9 10 3" />
+                </svg>
+              )}
+            </div>
+          </div>
+          <span className="text-sm text-slate-600 leading-tight">
+            {t.marketingConsent}
+          </span>
+        </label>
+
+        {!termsAccepted && error === (t.termsRequired as string) && (
+          <div className="mt-4 p-4 bg-red-50 neo-border rounded-xl text-red-700 text-sm text-center">
+            {t.termsRequired}
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#fafaf8] font-sans text-[#1a1a2e]">
@@ -793,6 +856,28 @@ function CheckoutAgencyContent() {
                 <Loader2 className="w-8 h-8 animate-spin text-blue-500 mx-auto mb-3" />
                 <p className="text-slate-500 text-sm">{t.redirecting}</p>
               </div>
+            ) : user && needsConsent ? (
+              /* Nuovo utente via Google: accetta i termini una volta sola */
+              <>
+                <h2 className="text-xl font-bold text-center mb-2">{t.loginTitle}</h2>
+                <p className="text-sm text-center text-slate-500 mb-2">{t.loggedInAs} <strong>{user.email}</strong></p>
+                {renderConsentBoxes()}
+                <button
+                  onClick={handleConsentContinue}
+                  disabled={checkingSubscription}
+                  className="mt-6 w-full flex items-center justify-center gap-3 px-6 py-4 bg-blue-500 rounded-xl neo-border neo-btn text-white font-bold hover:bg-blue-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{ boxShadow: '0 4px 16px rgba(16,24,40,0.08)' }}
+                >
+                  {checkingSubscription ? (
+                    <><Loader2 className="w-5 h-5 animate-spin" /><span>{t.loading}</span></>
+                  ) : (
+                    <span>{hasPlan ? t.proceedToPayment : ({ it: 'Continua', en: 'Continue', es: 'Continuar', fr: 'Continuer', ru: 'Продолжить', uk: 'Продовжити' }[locale as string] || 'Continue')}</span>
+                  )}
+                </button>
+                {error && error !== (t.termsRequired as string) && (
+                  <div className="mt-4 p-4 bg-red-50 neo-border rounded-xl text-red-700 text-sm">{error}</div>
+                )}
+              </>
             ) : user && !existingSubscription ? (
               /* Logged in, no subscription - proceed directly */
               <>
@@ -912,60 +997,7 @@ function CheckoutAgencyContent() {
                   </button>
                 </p>
 
-                {/* Consent checkboxes */}
-                <div ref={consentRef} className="mt-6 pt-6 border-t-2 border-[#1a1a2e]/20 space-y-3">
-                    <label className="flex items-center gap-3 cursor-pointer group">
-                      <div className="relative shrink-0">
-                        <input
-                          type="checkbox"
-                          checked={termsAccepted}
-                          onChange={(e) => { setTermsAccepted(e.target.checked); if (e.target.checked) setError(null); }}
-                          className="sr-only peer"
-                        />
-                        <div className="w-5 h-5 border-2 border-[#1a1a2e] rounded bg-white peer-checked:bg-blue-500 peer-checked:border-[#1a1a2e] transition-all flex items-center justify-center" style={{ boxShadow: '0 4px 16px rgba(16,24,40,0.08)' }}>
-                          {termsAccepted && (
-                            <svg className="w-3 h-3 text-white" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                              <polyline points="2 6 5 9 10 3" />
-                            </svg>
-                          )}
-                        </div>
-                      </div>
-                      <span className="text-sm text-slate-600 leading-tight">
-                        {t.acceptTerms}{' '}
-                        <a href={`/${locale}/termini`} target="_blank" rel="noopener noreferrer" className="text-blue-500 font-semibold hover:underline">{t.termsOfService}</a>
-                        {' '}{t.andThe}{' '}
-                        <a href={`/${locale}/privacy`} target="_blank" rel="noopener noreferrer" className="text-blue-500 font-semibold hover:underline">{t.privacyPolicy}</a>
-                        {' *'}
-                      </span>
-                    </label>
-
-                    <label className="flex items-center gap-3 cursor-pointer group">
-                      <div className="relative shrink-0">
-                        <input
-                          type="checkbox"
-                          checked={marketingAccepted}
-                          onChange={(e) => setMarketingAccepted(e.target.checked)}
-                          className="sr-only peer"
-                        />
-                        <div className="w-5 h-5 border-2 border-[#1a1a2e] rounded bg-white peer-checked:bg-blue-500 peer-checked:border-[#1a1a2e] transition-all flex items-center justify-center" style={{ boxShadow: '0 4px 16px rgba(16,24,40,0.08)' }}>
-                          {marketingAccepted && (
-                            <svg className="w-3 h-3 text-white" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                              <polyline points="2 6 5 9 10 3" />
-                            </svg>
-                          )}
-                        </div>
-                      </div>
-                      <span className="text-sm text-slate-600 leading-tight">
-                        {t.marketingConsent}
-                      </span>
-                    </label>
-
-                    {!termsAccepted && error === (t.termsRequired as string) && (
-                      <div className="mt-4 p-4 bg-red-50 neo-border rounded-xl text-red-700 text-sm text-center">
-                        {t.termsRequired}
-                      </div>
-                    )}
-                  </div>
+                {renderConsentBoxes()}
 
                 {hasPlan && (
                 <div className="flex items-center justify-center gap-4 mt-6 text-xs text-slate-400">
