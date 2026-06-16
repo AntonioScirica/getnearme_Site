@@ -1227,7 +1227,8 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
                 <h1 style={s('margin:0 0 4px;font-size:25px;font-weight:800;letter-spacing:-.5px')}>Montaggio Automatico</h1>
                 <div style={s('color:#8c867d;font-size:14px')}>{`Carica da ${minClips} a ${maxClips} tra clip e foto: l'AI seleziona i momenti migliori e monta tutto con musica e cover.`}</div>
               </div>
-              {!demoMode && !montaggioQuota && (
+              {/* Skeleton solo se la pill comparirà (montaggio limitato = free); i paid hanno montaggio illimitato -> niente pill. */}
+              {!demoMode && !montaggioQuota && lockBrand && (
                 <div style={{ width: 160, height: 37, borderRadius: 99, background: 'linear-gradient(90deg,#efece7,#f7f5f1,#efece7)', backgroundSize: '200% 100%', animation: 'demo-ai-shimmer 1.4s linear infinite', flex: 'none' }} />
               )}
               {!demoMode && montaggioQuota && !montaggioQuota.unlimited && (

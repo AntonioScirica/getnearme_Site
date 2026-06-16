@@ -24,7 +24,7 @@ function formatDate(iso: string | null) {
   return new Date(iso).toLocaleDateString("it-IT", { day: "2-digit", month: "short", year: "2-digit" });
 }
 
-type SortKey = "email" | "subscription_type" | "credits" | "total_spent" | "properties_saved" | "full_analyses" | "pdf_reports" | "staging_photos" | "post_png_exports" | "staging_video_exports" | "last_sign_in_at" | "created_at";
+type SortKey = "email" | "subscription_type" | "credits" | "total_spent" | "properties_saved" | "full_analyses" | "zone_analyses" | "pdf_reports" | "staging_photos" | "post_png_exports" | "staging_video_exports" | "last_sign_in_at" | "created_at";
 type SortDir = "asc" | "desc";
 
 type UserRow = MetricsData["allUsers"][0];
@@ -163,8 +163,8 @@ export default function UsersPage({ data }: { data: MetricsData }) {
                 <th className={thClass} onClick={() => handleSort("subscription_type")}>Tipo <SortIcon col="subscription_type" sortKey={sortKey} sortDir={sortDir} /></th>
                 <th className={thRClass} onClick={() => handleSort("credits")}>Credits <SortIcon col="credits" sortKey={sortKey} sortDir={sortDir} /></th>
                 <th className={thRClass} onClick={() => handleSort("total_spent")}>Spent <SortIcon col="total_spent" sortKey={sortKey} sortDir={sortDir} /></th>
-                <th className={thRClass} onClick={() => handleSort("properties_saved")}>Annunci <SortIcon col="properties_saved" sortKey={sortKey} sortDir={sortDir} /></th>
-                <th className={thRClass} onClick={() => handleSort("full_analyses")}>Analisi <SortIcon col="full_analyses" sortKey={sortKey} sortDir={sortDir} /></th>
+                <th className={thRClass} onClick={() => handleSort("properties_saved")}>Immobili <SortIcon col="properties_saved" sortKey={sortKey} sortDir={sortDir} /></th>
+                <th className={thRClass} onClick={() => handleSort("zone_analyses")}>Analisi <SortIcon col="zone_analyses" sortKey={sortKey} sortDir={sortDir} /></th>
                 <th className={thRClass} onClick={() => handleSort("pdf_reports")}>PDF <SortIcon col="pdf_reports" sortKey={sortKey} sortDir={sortDir} /></th>
                 <th className={thRClass} onClick={() => handleSort("staging_photos")}>Foto AI <SortIcon col="staging_photos" sortKey={sortKey} sortDir={sortDir} /></th>
                 <th className={`${MONO} text-[10px] tracking-wider uppercase text-gray-400 pb-3 pr-4 font-medium text-right select-none whitespace-nowrap`}>
@@ -222,7 +222,7 @@ export default function UsersPage({ data }: { data: MetricsData }) {
                     <td className={`${MONO} text-sm py-3 pr-4 text-right text-gray-300`}>{fmt(user.credits)}</td>
                     <td className={`${MONO} text-sm py-3 pr-4 text-right text-gray-300`}>{fmt(user.total_spent)}</td>
                     <td className={`${MONO} text-sm py-3 pr-4 text-right ${user.properties_saved > 0 ? "text-gray-300" : "text-gray-700"}`}>{user.properties_saved > 0 ? fmt(user.properties_saved) : "—"}</td>
-                    <td className={`${MONO} text-sm py-3 pr-4 text-right ${user.full_analyses > 0 ? "text-indigo-400" : "text-gray-700"}`}>{user.full_analyses > 0 ? fmt(user.full_analyses) : "—"}</td>
+                    <td className={`${MONO} text-sm py-3 pr-4 text-right ${user.zone_analyses > 0 ? "text-indigo-400" : "text-gray-700"}`}>{user.zone_analyses > 0 ? fmt(user.zone_analyses) : "—"}</td>
                     <td className={`${MONO} text-sm py-3 pr-4 text-right ${user.pdf_reports > 0 ? "text-gray-300" : "text-gray-700"}`}>{user.pdf_reports > 0 ? fmt(user.pdf_reports) : "—"}</td>
                     <td className={`${MONO} text-sm py-3 pr-4 text-right ${user.staging_photos > 0 ? "text-violet-400" : "text-gray-700"}`}>{user.staging_photos > 0 ? fmt(user.staging_photos) : "—"}</td>
                     <td className="py-3 pr-4 text-right">

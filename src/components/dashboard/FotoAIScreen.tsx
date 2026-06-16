@@ -516,11 +516,7 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
           <Box as="button" onClick={() => onGoPlan?.()} style={s('display:flex;align-items:center;gap:8px;background:#3B83F6;color:#fff;border:none;border-radius:10px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer') as React.CSSProperties} hover={s('background:#2b6fe0')}>
             <Icon name="crown" size={15} color="#fff" />Vedi i piani
           </Box>
-        ) : (
-          <Box as="button" onClick={() => setPacksOpen(true)} style={s('display:flex;align-items:center;gap:8px;background:#3B83F6;color:#fff;border:none;border-radius:10px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer') as React.CSSProperties} hover={s('background:#2b6fe0')}>
-            <Icon name="zap" size={15} color="#fff" />Ottieni altre foto
-          </Box>
-        ))}
+        ) : null)}
       </div>
 
       {/* ── GLOBAL ERROR ── */}
@@ -558,6 +554,30 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
       {/* ── SETUP (upload + style/prompt) — stays visible during reveal ── */}
       {((!result && batchDone === null) || revealing) && (
         <div style={{ position: 'relative' }}>
+          {/* Avviso quota esaurita / batch insufficiente: banner a tutta larghezza. */}
+          {((outOfQuota && !lockBrand) || notEnoughForBatch) && (
+            <div style={{ width: '100%', boxSizing: 'border-box', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 14, padding: '16px 18px', marginBottom: 20 }}>
+              <div style={{ fontSize: 15.5, fontWeight: 700, color: '#1d5fd0', marginBottom: 6 }}>
+                {outOfQuota ? 'Hai usato tutte le foto del mese' : 'Foto insufficienti per questo batch'}
+              </div>
+              <div style={{ fontSize: 14.5, color: '#3b6fb0', lineHeight: 1.55, marginBottom: 14 }}>
+                {outOfQuota
+                  ? 'La quota riparte il primo del mese prossimo. Per averne di più ora, acquista un pacchetto extra: i crediti non scadono e si sommano.'
+                  : `Te ne restano ${quota!.remaining}: riduci le foto o acquista un pacchetto extra.`}
+              </div>
+              {outOfQuota ? (
+                <Box as="button" onClick={() => setPacksOpen(true)} style={s('border:none;background:#3B83F6;color:#fff;font-size:13.5px;font-weight:700;padding:10px 18px;border-radius:10px;cursor:pointer;display:inline-flex;align-items:center;gap:8px') as React.CSSProperties} hover={s('background:#2b6fe0')}>
+                  <Icon name="zap" size={15} color="#fff" />
+                  Ottieni altre foto
+                </Box>
+              ) : onGoPlan && (
+                <Box as="button" onClick={onGoPlan} style={s('border:none;background:#3B83F6;color:#fff;font-size:13.5px;font-weight:700;padding:10px 18px;border-radius:10px;cursor:pointer;display:inline-flex;align-items:center;gap:8px') as React.CSSProperties} hover={s('background:#2b6fe0')}>
+                  <Icon name="crown" size={15} color="#fff" />
+                  Vedi i piani
+                </Box>
+              )}
+            </div>
+          )}
           <div className="max-md:!grid-cols-1 max-md:!flex max-md:!flex-col-reverse" style={{ display: 'grid', gridTemplateColumns: '1fr 360px', gap: 24, alignItems: 'start' }}>
           {/* left: upload */}
           <div>
@@ -812,30 +832,6 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
                 </button>
                 ); })()}
 
-                {/* Free esaurito: nessun box, la CTA "Vedi i piani" è già nel bottone sopra. */}
-                {((outOfQuota && !lockBrand) || notEnoughForBatch) && (
-                  <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 14, padding: '16px 18px' }}>
-                    <div style={{ fontSize: 13.5, fontWeight: 700, color: '#1d5fd0', marginBottom: 4 }}>
-                      {outOfQuota ? 'Hai usato tutte le foto del mese' : 'Foto insufficienti per questo batch'}
-                    </div>
-                    <div style={{ fontSize: 13, color: '#3b6fb0', lineHeight: 1.5, marginBottom: 12 }}>
-                      {outOfQuota
-                        ? 'La quota riparte il primo del mese prossimo. Per averne di più ora, acquista un pacchetto extra: i crediti non scadono e si sommano.'
-                        : `Te ne restano ${quota!.remaining}: riduci le foto o acquista un pacchetto extra.`}
-                    </div>
-                    {outOfQuota ? (
-                      <Box as="button" onClick={() => setPacksOpen(true)} style={s('border:none;background:#3B83F6;color:#fff;font-size:13.5px;font-weight:700;padding:10px 18px;border-radius:10px;cursor:pointer;display:inline-flex;align-items:center;gap:8px') as React.CSSProperties} hover={s('background:#2b6fe0')}>
-                        <Icon name="zap" size={15} color="#fff" />
-                        Ottieni altre foto
-                      </Box>
-                    ) : onGoPlan && (
-                      <Box as="button" onClick={onGoPlan} style={s('border:none;background:#3B83F6;color:#fff;font-size:13.5px;font-weight:700;padding:10px 18px;border-radius:10px;cursor:pointer;display:inline-flex;align-items:center;gap:8px') as React.CSSProperties} hover={s('background:#2b6fe0')}>
-                        <Icon name="crown" size={15} color="#fff" />
-                        Vedi i piani
-                      </Box>
-                    )}
-                  </div>
-                )}
               </>
             )}
           </div>

@@ -65,7 +65,7 @@ import { exportProjectsCSV, exportProjectsXLSX, exportProjectsPDF } from '@/lib/
 import type { Project } from './types';
 import { type ProjectData, fetchProjects, updateProject, deleteProject } from '@/lib/projects';
 import { fetchUserBatches, fetchBatchPhotos, dismissBatch, type BatchInfo } from '@/lib/stagingBatches';
-import { STAGING_STYLES, getTokenFast, fetchStagingQuota, fetchPostQuota, consumePostQuota } from '@/lib/staging';
+import { STAGING_STYLES, getTokenFast, fetchStagingQuota, fetchPostQuota, consumePostQuota, trackExport } from '@/lib/staging';
 import { cleanupOldMedia } from '@/lib/localMediaCache';
 import { getGeoEnabled, setGeoEnabled } from '@/lib/prefs';
 import { supabase } from '@/lib/supabase';
@@ -73,7 +73,7 @@ import { supabase } from '@/lib/supabase';
 export type AppNotification = { id: string; title: string; body: string; type: string; is_read: boolean; created_at: string; };
 const TemplatePreview = dynamic(() => import('./TemplatePreview'), { ssr: false });
 
-type Toast = { id: number; msg: string; icon: string };
+type Toast = { id: number; msg: string; icon: string; link?: { href: string; label: string } };
 
 const DEMO_PROJECTS: Project[] = [
   { id: 'p1', nome: 'Attico Brera', addr: 'Via Fiori Chiari 12, Milano', prezzo: 1250000, mq: 145, locali: 4, camere: 3, bagni: 2, nFoto: 12, nStaging: 6, nVideo: 2, nPost: 8, titolo: 'Attico con terrazza nel cuore di Brera', cover: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1600&h=1000&fit=crop&q=80' },
@@ -804,6 +804,7 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
       cleanup = mounted.cleanup;
       const blob = await exportToPng(mounted.tplEl, { w: curFmt.w, h: curFmt.h }, { photoSrc: coverPhoto, fitCover });
       await downloadBlob(blob, 'social-post.png');
+      void trackExport({ export_type: 'post_png', width: curFmt.w, height: curFmt.h, format: `${curFmt.w}x${curFmt.h}`, template: tplId });
       toast('Immagine scaricata', 'download');
       
       cleanup?.();
@@ -1025,6 +1026,7 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
         onOverlayCaptured: () => { cleanup?.(); cleanup = null; },
       });
       await downloadBlob(blob, 'social-post.' + ext);
+      void trackExport({ export_type: 'post_video', width: curFmt.w, height: curFmt.h, format: `${curFmt.w}x${curFmt.h}`, template: tplId });
       toast('Video scaricato', 'download');
       // Chiudi il modal SUBITO dopo il download. Il salvataggio dati immobile e'
       // best-effort e NON deve bloccare la chiusura (se la rete stalla, prima il
@@ -1202,9 +1204,6 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
           <h1 style={s('margin:0 0 4px;font-size:25px;font-weight:800;letter-spacing:-.5px')}>{stepTitles[step]}</h1>
           <div style={s('font-size:13px;color:var(--text-muted)')}>{stepSubs[step]} · passo {step === 1 ? 1 : step === 3 ? 2 : 3} di 3</div>
         </div>
-        {!demoMode && !postQuota && (
-          <div style={{ width: 150, height: 37, borderRadius: 99, background: 'linear-gradient(90deg,#efece7,#f7f5f1,#efece7)', backgroundSize: '200% 100%', animation: 'demo-ai-shimmer 1.4s linear infinite', flex: 'none' }} />
-        )}
         {!demoMode && postQuota && !postQuota.unlimited && (
           postQuota.remaining > 0 ? (
             <div style={s('display:inline-flex;align-items:center;justify-content:center;gap:8px;background:#fff;border:1px solid #f0ede7;border-radius:99px;padding:8px 16px;flex:none')}>
@@ -1971,7 +1970,7 @@ function AccountScreen({ credits, toast, go, userData, tierHint }: { credits: nu
             })}
           </div>
         </div>
-        <div className="max-md:!grid-cols-1" style={s('display:grid;grid-template-columns:repeat(3,1fr);gap:20px;align-items:stretch')}>
+        <div className="max-md:!grid-cols-1" style={s('display:grid;grid-template-columns:repeat(3,1fr);gap:20px;align-items:stretch;margin-top:40px')}>
           {plans.map((plan) => {
             const active = plan.id === activePlan;
             return (
@@ -2330,7 +2329,7 @@ function AssistenzaScreen({ toast, email, defaultType = 'support' }: { toast: (m
   );
 }
 
-function BrandScreen({ toast, brand: brandProp, setBrand: setBrandParent, brandRole, demoMode, locked, go, demoPaused }: { toast: (msg: string, icon?: string) => void; brand: BrandSettings; setBrand: (b: BrandSettings) => void; brandRole: 'owner' | 'member' | null; demoMode?: boolean; locked?: boolean; go?: (r: string) => void; demoPaused?: boolean }) {
+function BrandScreen({ toast, brand: brandProp, setBrand: setBrandParent, brandRole, demoMode, locked, go, demoPaused }: { toast: (msg: string, icon?: string, link?: { href: string; label: string }) => void; brand: BrandSettings; setBrand: (b: BrandSettings) => void; brandRole: 'owner' | 'member' | null; demoMode?: boolean; locked?: boolean; go?: (r: string) => void; demoPaused?: boolean }) {
   const [brand, setBrand] = React.useState<BrandState>(() => {
     const base = brandProp as unknown as BrandState;
     if (!demoMode) return base;
@@ -2404,7 +2403,7 @@ function BrandScreen({ toast, brand: brandProp, setBrand: setBrandParent, brandR
 
   const handleLogoUpload = async (variant: string, file: File) => {
     if (locked) { toast('Brand GetNearMe incluso nel piano Free. Passa a un piano per usare il tuo logo.', 'x'); return; }
-    if (file.size > 500 * 1024) { toast('File troppo grande (max 500 KB)', 'x'); return; }
+    if (file.size > 500 * 1024) { toast('File troppo grande (max 500 KB). Comprimila qui:', 'x', { href: 'https://www.iloveimg.com/compress-image', label: 'clicca qui' }); return; }
     if (!['image/png', 'image/jpeg', 'image/svg+xml', 'image/webp'].includes(file.type)) { toast('Formato non supportato', 'x'); return; }
     // Optimistic local preview
     const reader = new FileReader();
@@ -2846,13 +2845,13 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
     }
   }, []);
 
-  const toast = useCallback((msg: string, icon = 'check') => {
+  const toast = useCallback((msg: string, icon = 'check', link?: { href: string; label: string }) => {
     const id = Date.now() + Math.random();
     setToasts((t) => {
-      const next = [...t, { id, msg, icon }];
+      const next = [...t, { id, msg, icon, link }];
       return next.slice(-2);
     });
-    setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 4000);
+    setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), link ? 8000 : 4000);
   }, []);
 
   // Auto-join: se l'utente ha un invito team pending per la sua email, lo accetta
@@ -3148,9 +3147,12 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                   const a = route === it.route || (it.route === 'progetti' && route === 'progetto');
                   const tourActive = tourStep !== null && TOUR_DEFS[tourStep]?.sel === `[title="${it.label}"]`;
                   const highlighted = a || tourActive;
+                  // Senza immobili: Report e tutta la sezione "Immobile attivo" disattivate.
+                  const needsProject = sec.label === 'Immobile attivo' || it.route === 'report';
+                  const disabled = tourStep === null && needsProject && projects.length === 0;
                   return (
-                    <Box key={it.route} onClick={tourStep !== null ? undefined : () => { go(it.route); setMobileMenuOpen(false); }} title={it.label} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', margin: '1px 10px', borderRadius: 12, cursor: tourStep !== null ? 'default' : 'pointer', background: highlighted ? '#f1efe9' : 'transparent', color: highlighted ? 'var(--text-main)' : 'var(--text-sec)', fontWeight: highlighted ? 700 : 500, fontSize: 14, whiteSpace: 'nowrap', minHeight: 38 }} hover={tourStep !== null ? {} : { background: 'var(--bg-hover)' }}>
-                      <Icon name={it.icon} size={18} color={highlighted ? 'var(--text-main)' : 'var(--text-sec)'} />
+                    <Box key={it.route} onClick={tourStep !== null ? undefined : (disabled ? () => toast('Crea prima un immobile', 'x') : () => { go(it.route); setMobileMenuOpen(false); })} title={disabled ? 'Crea prima un immobile' : it.label} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', margin: '1px 10px', borderRadius: 12, cursor: tourStep !== null ? 'default' : (disabled ? 'not-allowed' : 'pointer'), background: highlighted ? '#f1efe9' : 'transparent', color: disabled ? 'var(--text-muted)' : (highlighted ? 'var(--text-main)' : 'var(--text-sec)'), fontWeight: highlighted ? 700 : 500, fontSize: 14, whiteSpace: 'nowrap', minHeight: 38, opacity: disabled ? 0.45 : 1 }} hover={tourStep !== null || disabled ? {} : { background: 'var(--bg-hover)' }}>
+                      <Icon name={it.icon} size={18} color={disabled ? 'var(--text-muted)' : (highlighted ? 'var(--text-main)' : 'var(--text-sec)')} />
                       {!collapsed && <span>{it.label}</span>}
                       {it.route === 'media' && galleryUnseen > 0 && (
                         <span style={{ marginLeft: 'auto', flexShrink: 0, background: '#3B83F6', color: '#fff', fontSize: 11, fontWeight: 700, lineHeight: 1, width: 20, height: 20, padding: 0, borderRadius: 6, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -3715,7 +3717,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
       <div style={s('position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:999999;display:flex;flex-direction:column;gap:10px;align-items:center')}>
         {toasts.map((t) => (
           <div key={t.id} style={s('display:flex;align-items:center;gap:10px;background:#3B83F6;color:var(--bg-card);padding:12px 18px;border-radius:10px;box-shadow:0 12px 32px rgba(59,131,246,.32);font-size:13.5px;font-weight:600;max-width:420px')}>
-            <Icon name={t.icon} size={16} color="var(--bg-card)" />{t.msg}
+            <Icon name={t.icon} size={16} color="var(--bg-card)" /><span>{t.msg}{t.link && <><br /><a href={t.link.href} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--bg-card)', textDecoration: 'underline', fontWeight: 700, whiteSpace: 'nowrap' }}>{t.link.label}</a></>}</span>
           </div>
         ))}
       </div>

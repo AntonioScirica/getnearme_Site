@@ -81,6 +81,25 @@ export async function GET(request: NextRequest) {
       aiVideoEventRows = res.data || [];
     } catch { /* table not yet created */ }
 
+    // ── Tabelle PIATTAFORMA (dashboard attuale) — fonti per i nuovi flussi ──
+    // Immobili creati nel sito (oltre ai saved_properties dell'estensione),
+    // foto AI (batch_staging) e video AI (ai_video_jobs).
+    let projectRows: { user_id: string; created_at: string }[] = [];
+    try {
+      const res = await admin.from("projects").select("user_id, created_at");
+      projectRows = res.data || [];
+    } catch { /* tabella assente */ }
+    let batchStagingRows: { user_id: string; completed_items: number; created_at: string }[] = [];
+    try {
+      const res = await admin.from("batch_staging").select("user_id, completed_items, created_at");
+      batchStagingRows = res.data || [];
+    } catch { /* tabella assente */ }
+    let aiVideoJobRows: { user_id: string; status: string; created_at: string }[] = [];
+    try {
+      const res = await admin.from("ai_video_jobs").select("user_id, status, created_at");
+      aiVideoJobRows = res.data || [];
+    } catch { /* tabella assente */ }
+
     const creditRows = creditsRes.data || [];
     const txRows = transactionsRes.data || [];
     const propRows = propertiesRes.data || [];
@@ -95,7 +114,7 @@ export async function GET(request: NextRequest) {
 
     // Exclude admin/test accounts from spending metrics
     const EXCLUDED_EMAILS = [
-      "as.scirica@gmail.com",
+      // as.scirica@gmail.com TEMPORANEAMENTE incluso nelle metrics per check
       "antonioiphoneid@gmail.com",
       "lookgameyt@gmail.com",
       "info@getnearme.it",
@@ -381,6 +400,17 @@ export async function GET(request: NextRequest) {
       userStagingCount[s.user_id] = (userStagingCount[s.user_id] || 0) + 1;
     });
 
+    // ── Contatori PIATTAFORMA per-utente ──
+    // Immobili creati nel sito.
+    const userProjectCount: Record<string, number> = {};
+    projectRows.forEach((p) => { if (p.user_id) userProjectCount[p.user_id] = (userProjectCount[p.user_id] || 0) + 1; });
+    // Foto AI generate (somma delle foto completate per batch).
+    const userBatchPhotos: Record<string, number> = {};
+    batchStagingRows.forEach((b) => { if (b.user_id) userBatchPhotos[b.user_id] = (userBatchPhotos[b.user_id] || 0) + (b.completed_items || 0); });
+    // Video AI consegnati (job in stato done — include i montaggi).
+    const userVideoDone: Record<string, number> = {};
+    aiVideoJobRows.forEach((v) => { if (v.user_id && v.status === "done") userVideoDone[v.user_id] = (userVideoDone[v.user_id] || 0) + 1; });
+
     // ─── Teams ───
     const memberCountByTeam: Record<string, number> = {};
     teamMemberRows.forEach((m: any) => {
@@ -466,6 +496,15 @@ export async function GET(request: NextRequest) {
       }
     });
 
+    // PDF report e analisi zona dalla piattaforma (export_events) — i flussi del sito
+    // non scrivono credit_transactions come l'estensione.
+    const userExportPdf: Record<string, number> = {};
+    const userExportZone: Record<string, number> = {};
+    exportRows.forEach((e: any) => {
+      if (e.export_type === "pdf_report") userExportPdf[e.user_id] = (userExportPdf[e.user_id] || 0) + 1;
+      if (e.export_type === "zone_analysis") userExportZone[e.user_id] = (userExportZone[e.user_id] || 0) + 1;
+    });
+
     // Build a lookup map from user_id → last_sign_in_at (from auth users if available)
     const authSignInMap: Record<string, string | null> = {};
     authUsers.forEach((u: any) => {
@@ -481,7 +520,7 @@ export async function GET(request: NextRequest) {
         total_earned: c.total_earned,
         total_spent: c.total_spent,
         onboarding_completed: c.onboarding_completed,
-        properties_saved: userPropCount[c.user_id]?.saved || 0,
+        properties_saved: (userPropCount[c.user_id]?.saved || 0) + (userProjectCount[c.user_id] || 0),
         full_analyses: userTxCount[c.user_id]?.full_analyses || 0,
       }))
       .sort((a: any, b: any) => b.properties_saved - a.properties_saved)
@@ -496,19 +535,22 @@ export async function GET(request: NextRequest) {
         total_earned: c.total_earned,
         total_spent: c.total_spent,
         onboarding_completed: c.onboarding_completed,
-        properties_saved: userPropCount[c.user_id]?.saved || 0,
+        // Annunci: saved_properties (estensione free) + immobili creati nel sito.
+        properties_saved: (userPropCount[c.user_id]?.saved || 0) + (userProjectCount[c.user_id] || 0),
         full_analyses: userTxCount[c.user_id]?.full_analyses || 0,
         created_at: c.created_at,
         last_sign_in_at: authSignInMap[c.user_id] ?? null,
-        pdf_reports: userTxCount[c.user_id]?.pdf_reports || 0,
-        zone_analyses: userTxCount[c.user_id]?.zone_analyses || 0,
-        staging_photos: userStagingCount[c.user_id] || 0,
+        pdf_reports: (userTxCount[c.user_id]?.pdf_reports || 0) + (userExportPdf[c.user_id] || 0),
+        zone_analyses: (userTxCount[c.user_id]?.zone_analyses || 0) + (userExportZone[c.user_id] || 0),
+        // Foto AI: staging_usage (estensione) + foto generate dai batch (sito).
+        staging_photos: (userStagingCount[c.user_id] || 0) + (userBatchPhotos[c.user_id] || 0),
         staging_photo_by_style: userExportCount[c.user_id]?.staging_photo_by_style || {},
         post_png_exports: userExportCount[c.user_id]?.post_png || 0,
         post_png_by_size: userExportCount[c.user_id]?.post_png_by_size || {},
         post_png_by_template: userExportCount[c.user_id]?.post_png_by_template || {},
         post_video_exports: (userExportCount[c.user_id]?.post_video || 0),
-        staging_video_exports: userExportCount[c.user_id]?.staging_video || 0,
+        // Video: export staging_video (estensione) + video AI consegnati (sito).
+        staging_video_exports: (userExportCount[c.user_id]?.staging_video || 0) + (userVideoDone[c.user_id] || 0),
         team: userTeamInfo[c.user_id] || null,
       }))
       .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
@@ -806,19 +848,19 @@ export async function GET(request: NextRequest) {
       total_earned: c.total_earned,
       total_spent: c.total_spent,
       onboarding_completed: c.onboarding_completed,
-      properties_saved: userPropCount[c.user_id]?.saved || 0,
+      properties_saved: (userPropCount[c.user_id]?.saved || 0) + (userProjectCount[c.user_id] || 0),
       full_analyses: userTxCount[c.user_id]?.full_analyses || 0,
       created_at: c.created_at,
       last_sign_in_at: authSignInMap[c.user_id] ?? null,
-      pdf_reports: userTxCount[c.user_id]?.pdf_reports || 0,
-      zone_analyses: userTxCount[c.user_id]?.zone_analyses || 0,
-      staging_photos: userStagingCount[c.user_id] || 0,
+      pdf_reports: (userTxCount[c.user_id]?.pdf_reports || 0) + (userExportPdf[c.user_id] || 0),
+      zone_analyses: (userTxCount[c.user_id]?.zone_analyses || 0) + (userExportZone[c.user_id] || 0),
+      staging_photos: (userStagingCount[c.user_id] || 0) + (userBatchPhotos[c.user_id] || 0),
       staging_photo_by_style: userExportCount[c.user_id]?.staging_photo_by_style || {},
       post_png_exports: userExportCount[c.user_id]?.post_png || 0,
       post_png_by_size: userExportCount[c.user_id]?.post_png_by_size || {},
       post_png_by_template: userExportCount[c.user_id]?.post_png_by_template || {},
       post_video_exports: userExportCount[c.user_id]?.post_video || 0,
-      staging_video_exports: userExportCount[c.user_id]?.staging_video || 0,
+      staging_video_exports: (userExportCount[c.user_id]?.staging_video || 0) + (userVideoDone[c.user_id] || 0),
       team: userTeamInfo[c.user_id] || null,
     }));
 

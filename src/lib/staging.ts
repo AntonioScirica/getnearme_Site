@@ -398,6 +398,17 @@ export async function fetchPostQuota(): Promise<PostQuota | null> {
   }
 }
 
+// Registra un export (post/video) per le metrics. Non-bloccante: best-effort.
+export async function trackExport(payload: { export_type: 'post_png' | 'post_video' | 'staging_photo' | 'staging_video' | 'pdf_report' | 'zone_analysis'; width?: number; height?: number; format?: string; template?: string }): Promise<void> {
+  try {
+    await fetch('/api/track-export', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', authorization: `Bearer ${getTokenFast()}` },
+      body: JSON.stringify(payload),
+    });
+  } catch { /* non-bloccante */ }
+}
+
 // Consuma 1 post. Paid -> allowed:true unlimited (nessun decremento).
 export async function consumePostQuota(): Promise<{ allowed: boolean; unlimited: boolean; remaining: number | null } | null> {
   try {

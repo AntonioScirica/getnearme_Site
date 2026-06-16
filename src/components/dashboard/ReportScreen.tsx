@@ -17,6 +17,7 @@ import {
   type ProsConsEdits,
 } from '@/lib/reportHtml';
 import { supabase } from '@/lib/supabase';
+import { trackExport } from '@/lib/staging';
 
 type SectionId = 'cover' | 'table' | 'prosCons' | 'costs' | 'poi' | 'legal' | 'thanks';
 
@@ -394,6 +395,7 @@ export default function ReportScreen({
   const handlePrint = () => {
     if (!hasProperties) { toast('Crea o seleziona un immobile', 'x'); return; }
     iframeRef.current?.contentWindow?.print();
+    void trackExport({ export_type: 'pdf_report' });
   };
 
   const labelStyle = s('display:block;font-size:11px;font-weight:700;color:#b3aca1;text-transform:uppercase;letter-spacing:.04em;margin:0 0 10px');

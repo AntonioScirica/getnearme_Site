@@ -15,6 +15,7 @@ import {
   type ZonaResult, type Poi, type GeocodeHit, type LatLng,
 } from '@/lib/poi';
 import { getGeoEnabled } from '@/lib/prefs';
+import { trackExport } from '@/lib/staging';
 import { supabase } from '@/lib/supabase';
 
 const FREE_LIMIT = 5;
@@ -324,6 +325,7 @@ export default function ZonaScreen({
       const data = await fetchZona(hit.lat, hit.lng, radius);
       setResult(data);
       setResultId((n) => n + 1);
+      void trackExport({ export_type: 'zone_analysis' });
       const firstNonEmpty = POI_CATEGORIES.find((c) => (data[c.key] || []).length > 0);
       setExpanded(firstNonEmpty?.key || null);
       if (locked) setUsage(bumpUsage(usageKeyRef.current));
@@ -389,6 +391,7 @@ export default function ZonaScreen({
       setCenter(hit);
       setResult(data);
       setResultId((n) => n + 1);
+      void trackExport({ export_type: 'zone_analysis' });
       const firstNonEmpty = POI_CATEGORIES.find((cat) => (data[cat.key] || []).length > 0);
       setExpanded(firstNonEmpty?.key || null);
       if (locked) setUsage(bumpUsage(usageKeyRef.current));
