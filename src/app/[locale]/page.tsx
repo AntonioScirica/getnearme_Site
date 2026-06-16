@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Flame, Zap, Lock, TrendingUp, Video, Megaphone, FileText, ArrowRight, Link2, Sparkles, Send, Clock, ImagePlus } from "lucide-react";
+import { Flame, Zap, Lock, TrendingUp, Video, Megaphone, FileText, ArrowRight, Link2, Sparkles, Send, Clock, ImagePlus, MapPin, BarChart3 } from "lucide-react";
 import { locales, type Locale } from "@/lib/i18n";
 import { translations } from "@/lib/translations";
 import Navbar from "@/components/Navbar";
@@ -385,6 +385,8 @@ export default async function Home({ params }: Props) {
                 { icon: Sparkles, activity: "Home staging di una stanza", before: "~2 ore con designer o Photoshop", after: "30 secondi" },
                 { icon: Video, activity: "Video per l'annuncio", before: "mezza giornata col videomaker", after: "2 minuti" },
                 { icon: Megaphone, activity: "Post per i social", before: "~30 minuti su Canva", after: "1 minuto" },
+                { icon: MapPin, activity: "Analisi di zona", before: "~1 ora tra portali e Google Maps", after: "10 secondi" },
+                { icon: BarChart3, activity: "Report immobile", before: "~45 minuti con Word o PDF", after: "1 minuto" },
               ];
               return (
                 <div className="neo-border neo-shadow" style={{ background: "#fff", borderRadius: 20, overflow: "hidden" }}>
@@ -584,6 +586,8 @@ export default async function Home({ params }: Props) {
             progressAgencies: l.pricing.progressAgencies,
             progressSpots: l.pricing.progressSpots,
             plans: l.pricing.plans,
+            plansByTier: l.pricing.plansByTier,
+            tierToggle: l.pricing.tierToggle,
           }}
         />
 

@@ -28,6 +28,7 @@ export default function TeamScreen({
   toast,
   go,
   isAgency,
+  userData,
 }: {
   toast: (msg: string, icon?: string) => void;
   go?: (r: string, params?: Record<string, unknown>) => void;
@@ -50,7 +51,7 @@ export default function TeamScreen({
   useEffect(() => { if (isAgency) refresh(); else setLoading(false); }, [isAgency, refresh]);
 
   const isOwner = status?.role === 'owner';
-  const owner = useMemo(() => status?.members.find((m) => m.role === 'owner') || null, [status]);
+  const owner = useMemo(() => status?.members?.find((m) => m.role === 'owner') || null, [status]);
 
   // ── Azioni ───────────────────────────────────────────────────────────────
   const wrap = async (fn: () => Promise<{ error: string | null } | { error?: string }>, okMsg?: string) => {
@@ -78,12 +79,9 @@ export default function TeamScreen({
   const onInvite = () => {
     const e = inviteEmail.trim();
     if (!e || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)) { toast('Email non valida', 'x'); return; }
+    const ownEmail = userData?.email?.toLowerCase();
+    if (ownEmail && e.toLowerCase() === ownEmail) { toast('Non puoi invitare te stesso', 'x'); return; }
     wrap(() => inviteTeamMember(e), `Invito inviato a ${e}`).then((ok) => { if (ok) setInviteEmail(''); });
-  };
-  const onRegen = () => wrap(() => regenerateInviteCode(), 'Codice rigenerato');
-  const copyCode = () => {
-    if (!status?.invite_code) return;
-    navigator.clipboard?.writeText(status.invite_code).then(() => toast('Codice copiato', 'check')).catch(() => {});
   };
 
   // ── Stati di rendering ─────────────────────────────────────────────────────
@@ -149,14 +147,7 @@ export default function TeamScreen({
             <div style={s('font-size:11px;font-weight:700;color:#b3aca1;text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px')}>Invita collaboratori</div>
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 14 }}>
               <input value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') onInvite(); }} placeholder="email@collaboratore.it" type="email" style={{ flex: 1, minWidth: 220, border: '1px solid #e4e1da', borderRadius: 10, padding: '11px 14px', fontSize: 14, outline: 'none', color: '#211f1c' }} />
-              <Box as="button" onClick={onInvite} disabled={busy} style={s('border:none;background:#3B83F6;color:#fff;font-size:14px;font-weight:700;padding:11px 20px;border-radius:10px;cursor:pointer;display:inline-flex;align-items:center;gap:7px')} hover={s('background:#2b6fe0')}><Icon name="at-sign" size={15} color="#fff" />Invita</Box>
-            </div>
-            {/* Codice invito */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#faf9f7', border: '1px dashed #d8d4cb', borderRadius: 10, padding: '10px 14px' }}>
-              <Icon name="link" size={15} color="#b3aca1" />
-              <span style={{ flex: 1, minWidth: 0, fontSize: 14, fontWeight: 700, color: '#211f1c', fontFamily: 'monospace', letterSpacing: '.05em' }}>{status.invite_code || '—'}</span>
-              <span onClick={copyCode} title="Copia" style={{ cursor: 'pointer', display: 'flex' }}><Icon name="copy" size={16} color="#8c867d" /></span>
-              <span onClick={onRegen} title="Rigenera" style={{ cursor: 'pointer', display: 'flex' }}><Icon name="refresh-cw" size={15} color="#8c867d" /></span>
+              <Box as="button" onClick={onInvite} disabled={busy} style={s('border:none;background:#3B83F6;color:#fff;font-size:14px;font-weight:700;padding:11px 20px;border-radius:10px;cursor:pointer;display:inline-flex;align-items:center;gap:7px')} hover={s('background:#2b6fe0')}>Invita</Box>
             </div>
           </div>
 
