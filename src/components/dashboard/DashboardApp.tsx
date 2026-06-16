@@ -2817,8 +2817,8 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
   const hasAgency = isAgencyTier(userData?.subscriptionType) || inAgencyTeam;
   // Free: brand GetNearMe forzato (loghi non rimovibili, usati in watermark/outro).
   // I membri di un team agenzia NON sono free per il brand.
-  const isFreePlan = !userData?.subscriptionType || userData.subscriptionType === 'free';
-  const brandLocked = isFreePlan && !inAgencyTeam;
+  const isFreePlan = (!userData?.subscriptionType || userData.subscriptionType === 'free') && !inAgencyTeam;
+  const brandLocked = isFreePlan;
   const brand = useMemo(() => brandLocked ? { ...rawBrand, logos: gnmBrandLogos() } : rawBrand, [brandLocked, rawBrand]);
   
   const setBrand = useCallback((updater: React.SetStateAction<BrandSettings>) => {
@@ -2855,15 +2855,24 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
   }, []);
 
   // Auto-join: se l'utente ha un invito team pending per la sua email, lo accetta
-  // al primo caricamento (una volta per sessione utente).
+  // al primo caricamento (una volta per sessione utente). Il toast "aggiunto al
+  // team" NON esce subito: aspetta la fine dell'onboarding (welcome + tour).
   const autoJoinedRef = useRef(false);
+  const [pendingTeamToast, setPendingTeamToast] = useState<string | null>(null);
   useEffect(() => {
     if (autoJoinedRef.current || !userData?.id) return;
     autoJoinedRef.current = true;
     autoJoinTeam().then((res) => {
-      if (res.data?.success && res.data.team_name) toast(`Sei stato aggiunto al team "${res.data.team_name}"`, 'check');
+      if (res.data?.success && res.data.team_name) setPendingTeamToast(res.data.team_name);
     }).catch(() => {});
-  }, [userData?.id, toast]);
+  }, [userData?.id]);
+  // Mostra il toast solo a onboarding concluso (welcome chiuso e nessuno step tour).
+  useEffect(() => {
+    if (pendingTeamToast && !welcomeOpen && tourStep === null) {
+      toast(`Sei stato aggiunto al team "${pendingTeamToast}"`, 'check');
+      setPendingTeamToast(null);
+    }
+  }, [pendingTeamToast, welcomeOpen, tourStep, toast]);
 
   const contentRef = React.useRef<HTMLDivElement>(null);
   const [routeKey, setRouteKey] = useState(0);
@@ -3118,7 +3127,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                     ? <Box as="button" onClick={() => { tourReplayRef.current = false; setTourStep(null); setTourRect(null); setTourRect2(null); setProjOpen(false); go('home'); }} style={s('border:none;background:#3B83F6;color:var(--bg-card);font-size:13.5px;font-weight:700;padding:12px 18px;border-radius:8px;cursor:pointer;width:100%;text-align:center;display:flex;align-items:center;justify-content:center;min-height:44px')} hover={s('background:#2b6fe0;transform:translateY(-1px);box-shadow:0 8px 20px rgba(59,131,246,.25)')}>Ho capito</Box>
                     : <Box as="button" onClick={() => tourGo(tourStep + 1)} style={s('border:none;background:#3B83F6;color:var(--bg-card);font-size:13.5px;font-weight:700;padding:12px 18px;border-radius:8px;cursor:pointer;width:100%;text-align:center;display:flex;align-items:center;justify-content:center;min-height:44px')} hover={s('background:#2b6fe0;transform:translateY(-1px);box-shadow:0 8px 20px rgba(59,131,246,.25)')}>Avanti</Box>)
                   : tdef.sel === '[data-tour-dropdown]'
-                  ? <Box as="button" onClick={() => { const replay = tourReplayRef.current; tourReplayRef.current = false; if (replay) { setTourStep(null); setTourRect(null); setTourRect2(null); setProjOpen(false); go('home'); } else { setTourStep(null); setTourRect(null); setTourRect2(null); setProjOpen(false); setNewProjOpen(true); } }} style={s('border:none;background:#3B83F6;color:var(--bg-card);font-size:13.5px;font-weight:700;padding:12px 18px;border-radius:8px;cursor:pointer;width:100%;text-align:center;display:flex;align-items:center;justify-content:center;min-height:44px')} hover={s('background:#2b6fe0;transform:translateY(-1px);box-shadow:0 8px 20px rgba(59,131,246,.25)')}>{tourReplayRef.current ? 'Ho capito' : 'Aggiungi immobile'}</Box>
+                  ? <Box as="button" onClick={() => { const replay = tourReplayRef.current; tourReplayRef.current = false; setTourStep(null); setTourRect(null); setTourRect2(null); setProjOpen(false); if (replay) { go('home'); } else if (inAgencyTeam) { go('immobili'); } else { setNewProjOpen(true); } }} style={s('border:none;background:#3B83F6;color:var(--bg-card);font-size:13.5px;font-weight:700;padding:12px 18px;border-radius:8px;cursor:pointer;width:100%;text-align:center;display:flex;align-items:center;justify-content:center;min-height:44px')} hover={s('background:#2b6fe0;transform:translateY(-1px);box-shadow:0 8px 20px rgba(59,131,246,.25)')}>{tourReplayRef.current ? 'Ho capito' : (inAgencyTeam ? 'Vedi gli immobili' : 'Aggiungi immobile')}</Box>
                   : <Box as="button" onClick={() => tourGo(tourStep + 1)} style={s('border:none;background:#3B83F6;color:var(--bg-card);font-size:12.5px;font-weight:700;padding:9px 18px;border-radius:8px;cursor:pointer;margin-left:auto;min-height:38px')} hover={s('background:#2b6fe0')}>Avanti</Box>}
               </div>
             </div>
@@ -3265,8 +3274,13 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                         setProjOpen(false); setTourStep(null); setTourRect(null); setTourRect2(null); setTourCtaRect(null); go('home');
                         return;
                       }
+                      // Team member in onboarding: niente creazione, vai agli immobili del team.
+                      if (inTourDropdown && inAgencyTeam) {
+                        setProjOpen(false); setTourStep(null); setTourRect(null); setTourRect2(null); setTourCtaRect(null); go('immobili');
+                        return;
+                      }
                       setProjOpen(false); setNewProjOpen(true); setTourStep(null); setTourRect(null); setTourRect2(null); setTourCtaRect(null);
-                    }} style={s(`display:flex;align-items:center;justify-content:center;gap:8px;padding:12px 16px;border-radius:10px;cursor:pointer;color:var(--bg-card);background:#3B83F6;font-weight:700;font-size:13px;min-height:44px;${tourStep !== null && tdef.sel === '[data-tour-dropdown]' ? 'box-shadow:0 0 0 3px rgba(255,255,255,.7),0 0 20px rgba(255,255,255,.4);animation:tour-cta-glow 2s ease-in-out infinite;pointer-events:auto;' : ''}`)} hover={s('background:#2b6fe0')}>{tourStep !== null && tdef.sel === '[data-tour-dropdown]' && tourReplayRef.current && <Icon name="check" size={16} color="var(--bg-card)" />}{tourStep !== null && tdef.sel === '[data-tour-dropdown]' && tourReplayRef.current ? 'Ho capito' : (projList.length === 0 ? 'Crea il tuo primo immobile' : 'Nuovo immobile')}</Box>
+                    }} style={s(`display:flex;align-items:center;justify-content:center;gap:8px;padding:12px 16px;border-radius:10px;cursor:pointer;color:var(--bg-card);background:#3B83F6;font-weight:700;font-size:13px;min-height:44px;${tourStep !== null && tdef.sel === '[data-tour-dropdown]' ? 'box-shadow:0 0 0 3px rgba(255,255,255,.7),0 0 20px rgba(255,255,255,.4);animation:tour-cta-glow 2s ease-in-out infinite;pointer-events:auto;' : ''}`)} hover={s('background:#2b6fe0')}>{tourStep !== null && tdef.sel === '[data-tour-dropdown]' && tourReplayRef.current && <Icon name="check" size={16} color="var(--bg-card)" />}{tourStep !== null && tdef.sel === '[data-tour-dropdown]' && tourReplayRef.current ? 'Ho capito' : (tourStep !== null && tdef.sel === '[data-tour-dropdown]' && inAgencyTeam ? 'Vedi gli immobili' : (projList.length === 0 ? 'Crea il tuo primo immobile' : 'Nuovo immobile'))}</Box>
                   </div>
                   {projList.length > 0 && (
                     <div style={s('max-height:260px;overflow:auto;padding:8px 6px')}>

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { getTeamUserIds } from '@/lib/teamScope'
 
 // Job video AI persistiti server-side (tabella ai_video_jobs). Il client crea la
 // riga allo start del render; il cron process-batch-staging la finalizza (anche
@@ -55,10 +56,12 @@ export async function GET(req: NextRequest) {
     const userId = await getUserId(req)
     if (!userId) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
 
+    // Galleria condivisa col team (agenzia): video AI visibili a tutti i membri.
+    const teamIds = await getTeamUserIds(admin, userId)
     const { data, error } = await admin
       .from('ai_video_jobs')
       .select('id, project_id, title, template, aspect, status, progress, ctx, output_url, error, created_at')
-      .eq('user_id', userId)
+      .in('user_id', teamIds)
       .order('created_at', { ascending: false })
       .limit(60)
 
@@ -84,11 +87,13 @@ export async function DELETE(req: NextRequest) {
     // Elimina solo la riga propria. L'MP4 su R2 (bucket del Lambda) viene potato
     // da cleanup-ai-videos entro 30gg: rimuovere la riga lo nasconde subito da
     // Media, lo storage si libera comunque.
+    // Galleria condivisa: un membro del team può eliminare i video del team.
+    const teamIds = await getTeamUserIds(admin, userId)
     const { error } = await admin
       .from('ai_video_jobs')
       .delete()
       .eq('id', id)
-      .eq('user_id', userId)
+      .in('user_id', teamIds)
 
     if (error) {
       console.error('video-jobs DELETE error:', error)

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { getTeamUserIds } from '@/lib/teamScope'
 
 const admin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -18,10 +19,12 @@ export async function GET(req: NextRequest) {
   const userId = await getUserId(req)
   if (!userId) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
 
+  // Immobili condivisi col team (agenzia): visibili a tutti i membri.
+  const teamIds = await getTeamUserIds(admin, userId)
   const { data: projects, error } = await admin
     .from('projects')
     .select('*')
-    .eq('user_id', userId)
+    .in('user_id', teamIds)
     .order('created_at', { ascending: false })
 
   if (error) {
@@ -153,11 +156,13 @@ export async function PUT(req: NextRequest) {
   if (icons !== undefined) updates.icons = icons
   if (import_data !== undefined) updates.import_data = import_data
 
+  // Team agenzia: i membri possono modificare gli immobili condivisi del team.
+  const teamIds = await getTeamUserIds(admin, userId)
   const { data: project, error } = await admin
     .from('projects')
     .update(updates)
     .eq('id', id)
-    .eq('user_id', userId)
+    .in('user_id', teamIds)
     .select('*')
     .single()
 
@@ -197,11 +202,12 @@ export async function DELETE(req: NextRequest) {
   const id = url.searchParams.get('id')
   if (!id) return NextResponse.json({ error: 'missing_id' }, { status: 400 })
 
+  const teamIds = await getTeamUserIds(admin, userId)
   const { error } = await admin
     .from('projects')
     .delete()
     .eq('id', id)
-    .eq('user_id', userId)
+    .in('user_id', teamIds)
 
   if (error) {
     console.error('Error deleting project:', error)

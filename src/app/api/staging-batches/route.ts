@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { getTeamUserIds } from '@/lib/teamScope'
 
 const admin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -21,10 +22,12 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   }
 
+  // Galleria condivisa col team (agenzia): foto AI visibili a tutti i membri.
+  const teamIds = await getTeamUserIds(admin, userId)
   const { data: batches, error } = await admin
     .from('batch_staging')
     .select('id, style, custom_prompt, status, total_items, completed_items, failed_items, project_id, created_at, updated_at')
-    .eq('user_id', userId)
+    .in('user_id', teamIds)
     .order('created_at', { ascending: false })
 
   if (error) {

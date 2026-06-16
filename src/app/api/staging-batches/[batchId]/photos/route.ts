@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { getR2SignedUrl, deleteFromR2 } from '@/lib/s3'
+import { getTeamUserIds } from '@/lib/teamScope'
 
 const admin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -38,7 +39,9 @@ export async function GET(
     return NextResponse.json({ error: 'not_found' }, { status: 404 })
   }
   
-  if (batch.user_id !== userId) {
+  // Consenti l'accesso anche ai membri del team (galleria condivisa).
+  const teamIds = await getTeamUserIds(admin, userId)
+  if (!teamIds.includes(batch.user_id)) {
     return NextResponse.json({ error: 'forbidden' }, { status: 403 })
   }
 
@@ -122,7 +125,8 @@ export async function DELETE(
     .eq('id', batchId)
     .single()
   if (!batch) return NextResponse.json({ error: 'not_found' }, { status: 404 })
-  if (batch.user_id !== userId) return NextResponse.json({ error: 'forbidden' }, { status: 403 })
+  const teamIdsDel = await getTeamUserIds(admin, userId)
+  if (!teamIdsDel.includes(batch.user_id)) return NextResponse.json({ error: 'forbidden' }, { status: 403 })
 
   // Recupera l'item per cancellare anche gli oggetti R2
   const { data: item } = await admin

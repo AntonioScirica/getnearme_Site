@@ -76,7 +76,13 @@ export default function TeamScreen({
     if (!n) return;
     wrap(() => updateTeamName(n), 'Nome aggiornato');
   };
+  const [limitPopup, setLimitPopup] = useState(false);
+
+  const MAX_MEMBERS = 4;
+  const occupiedSlots = (status?.members?.filter(m => m.role !== 'owner').length || 0) + (status?.pending_invites?.length || 0);
+
   const onInvite = () => {
+    if (occupiedSlots >= MAX_MEMBERS) { setLimitPopup(true); return; }
     const e = inviteEmail.trim();
     if (!e || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)) { toast('Email non valida', 'x'); return; }
     const ownEmail = userData?.email?.toLowerCase();
@@ -155,7 +161,7 @@ export default function TeamScreen({
           <div style={s('background:var(--bg-card);border:1px solid var(--border-light);border-radius:16px;padding:22px 24px')}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
               <div style={s('font-size:11px;font-weight:700;color:#b3aca1;text-transform:uppercase;letter-spacing:.04em')}>Membri</div>
-              <span style={{ fontSize: 12, fontWeight: 700, color: '#8c867d' }}>{status.member_count}/{status.max_members}</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: occupiedSlots >= MAX_MEMBERS ? '#ea580c' : '#8c867d' }}>{occupiedSlots}/{MAX_MEMBERS}</span>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {status.members.map((m) => (
@@ -229,6 +235,23 @@ export default function TeamScreen({
 
           <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
             <Box as="button" onClick={() => setConfirm({ title: 'Lasciare il team?', sub: 'Perderai l\'accesso Agenzia condiviso e le risorse del team.', danger: true, onYes: () => wrap(() => leaveTeam(), 'Hai lasciato il team') })} style={s('border:1px solid #fdba74;background:#fff;color:#ea580c;font-size:13px;font-weight:700;padding:10px 18px;border-radius:10px;cursor:pointer')} hover={{ background: '#fff7ed' }}>Lascia team</Box>
+          </div>
+        </div>
+      )}
+
+      {/* ── Popup limite raggiunto ── */}
+      {limitPopup && (
+        <div onClick={() => setLimitPopup(false)} style={s('position:fixed;inset:0;background:rgba(24,21,17,.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px')}>
+          <div onClick={(e) => e.stopPropagation()} style={s('width:100%;max-width:420px;background:var(--bg-card);border-radius:18px;box-shadow:0 32px 64px rgba(20,18,15,.2);padding:28px;text-align:center')}>
+            <div style={{ width: 52, height: 52, borderRadius: '50%', background: '#fff7ed', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+              <Icon name="users" size={24} color="#ea580c" />
+            </div>
+            <h3 style={s('margin:0 0 6px;font-size:17px;font-weight:800')}>Limite raggiunto</h3>
+            <p style={s('margin:0 0 22px;font-size:13.5px;color:#8c867d;line-height:1.5')}>Hai raggiunto il massimo di {MAX_MEMBERS} collaboratori.<br/>Contattaci per aggiungere altri slot al tuo team.</p>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <Box as="button" onClick={() => setLimitPopup(false)} style={s('flex:1;border:1px solid #d8d4cb;background:#fff;color:#8c867d;font-size:14px;font-weight:700;padding:11px 0;border-radius:10px;cursor:pointer')} hover={s('background:#faf9f7')}>Chiudi</Box>
+              <a href="mailto:info@getnearme.it?subject=Richiesta%20slot%20team%20extra" style={{ flex: 1, border: 'none', background: ACCENT, color: '#fff', fontSize: 14, fontWeight: 700, padding: '11px 0', borderRadius: 10, cursor: 'pointer', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Contattaci</a>
+            </div>
           </div>
         </div>
       )}
