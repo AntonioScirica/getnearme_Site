@@ -24,6 +24,8 @@ export default async function Home({ params }: Props) {
     { video: "/assets/png/gif/agency_ai_anim.mp4" },
     { video: "/assets/png/gif/ai_video_templates.png" },
     { video: "/assets/png/gif/post_social.mp4" },
+    { video: "/assets/png/gif/map_zone.mp4" },
+    { video: "/assets/png/gif/compare_pdf.mp4" },
   ];
 
   return (

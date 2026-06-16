@@ -1,5 +1,6 @@
 import {
   Map,
+  MapPin,
   File,
   Sparkles,
   Clapperboard,
@@ -32,6 +33,7 @@ import {
 
 export const ICONS: Record<string, LucideIcon> = {
   map: Map,
+  'map-pin': MapPin,
   'file-text': File,
   sparkles: Sparkles,
   clapperboard: Clapperboard,

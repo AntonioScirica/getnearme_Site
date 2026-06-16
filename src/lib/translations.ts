@@ -324,13 +324,15 @@ export const translations = {
         desc: "Parti dall'annuncio — incolli il link del portale o carichi le tue foto — e GetNearMe ti restituisce home staging, video, post social e report col tuo logo. In pochi minuti, senza aprire altri programmi e senza imparare niente di nuovo.",
       },
       features: {
-        title: "Tre strumenti professionali.",
+        title: "Cinque strumenti professionali.",
         titleHighlight: "Un assistente solo.",
         subtitle: "GetNearMe fa il lavoro di Canva, editor video, designer, social media manager e PowerPoint, senza imparare niente di nuovo.",
         items: [
           { num: "01", title: "Home staging AI", desc: "Arreda, svuota o trasforma una stanza in pochi secondi. Mostri il prima/dopo al cliente o lo pubblichi subito sui portali e sui social.", icon: "sparkles", color: "#6366f1" },
           { num: "02", title: "Video AI per l'immobile", desc: "Reel, walkthrough, before/after, video con avatar che parla e molto altro. Pronti in pochi click, senza montaggio e senza videomaker.", icon: "clapperboard", color: "#10b981" },
           { num: "03", title: "Post, reel e storie social", desc: "Contenuti pronti per Instagram, Facebook, TikTok e LinkedIn dai dati dell'annuncio. Il tuo logo e i tuoi colori applicati da soli.", icon: "smartphone", color: "#ec4899" },
+          { num: "04", title: "Analisi di zona", desc: "Servizi, trasporti, scuole e distanze reali su mappa interattiva. Mostri al cliente cosa significa vivere in quella zona, con i dati alla mano.", icon: "map-pin", color: "#f59e0b" },
+          { num: "05", title: "Report immobile PDF", desc: "Report professionale con foto, dati, mappa e il tuo brand, pronto da inviare al cliente dopo la visita. In un minuto, non in mezz'ora.", icon: "file-text", color: "#ef4444" },
         ],
       },
       testimonials: {
@@ -928,13 +930,15 @@ export const translations = {
         desc: "Start from the listing — paste the portal link or upload your photos — and GetNearMe gives you back home staging, videos, social posts and a branded report. In minutes, without opening another programme or learning anything new.",
       },
       features: {
-        title: "Three professional tools.",
+        title: "Five professional tools.",
         titleHighlight: "One assistant.",
         subtitle: "GetNearMe does the work of Canva, a video editor, a designer, a social media manager and PowerPoint — without learning anything new.",
         items: [
           { num: "01", title: "AI home staging", desc: "Furnish, empty or transform a room in seconds. Show the before/after to the client or publish it straight to portals and social media.", icon: "sparkles", color: "#6366f1" },
           { num: "02", title: "AI property video", desc: "Reels, walkthroughs, before/after, videos with a talking avatar and much more. Ready in a few clicks, no editing and no videographer.", icon: "clapperboard", color: "#10b981" },
           { num: "03", title: "Posts, reels and social stories", desc: "Content ready for Instagram, Facebook, TikTok and LinkedIn from the listing data. Your logo and colours applied automatically.", icon: "smartphone", color: "#ec4899" },
+          { num: "04", title: "Area analysis", desc: "Services, transport, schools and real distances on an interactive map. Show the client what it means to live in that area, with data at hand.", icon: "map-pin", color: "#f59e0b" },
+          { num: "05", title: "Property report PDF", desc: "Professional report with photos, data, map and your brand, ready to send the client after the viewing. In one minute, not half an hour.", icon: "file-text", color: "#ef4444" },
         ],
       },
       testimonials: {
@@ -1532,13 +1536,15 @@ export const translations = {
         desc: "Partes del anuncio — pegas el enlace del portal o subes tus fotos — y GetNearMe te devuelve home staging, vídeos, posts sociales e informes con tu logo. En pocos minutos, sin abrir otros programas y sin aprender nada nuevo.",
       },
       features: {
-        title: "Tres herramientas profesionales.",
+        title: "Cinco herramientas profesionales.",
         titleHighlight: "Un solo asistente.",
         subtitle: "GetNearMe hace el trabajo de Canva, editor de vídeo, diseñador, social media manager y PowerPoint, sin aprender nada nuevo.",
         items: [
           { num: "01", title: "Home staging AI", desc: "Amuebla, vacía o transforma una habitación en pocos segundos. Muestras el antes/después al cliente o lo publicas directamente en los portales y en las redes.", icon: "sparkles", color: "#6366f1" },
           { num: "02", title: "Vídeo AI para el inmueble", desc: "Reels, walkthrough, before/after, vídeo con avatar que habla y mucho más. Listos en pocos clics, sin montaje y sin videomaker.", icon: "clapperboard", color: "#10b981" },
           { num: "03", title: "Posts, reels e historias sociales", desc: "Contenidos listos para Instagram, Facebook, TikTok y LinkedIn a partir de los datos del anuncio. Tu logo y tus colores aplicados solos.", icon: "smartphone", color: "#ec4899" },
+          { num: "04", title: "Análisis de zona", desc: "Servicios, transporte, escuelas y distancias reales en un mapa interactivo. Muestras al cliente lo que significa vivir en esa zona, con datos concretos.", icon: "map-pin", color: "#f59e0b" },
+          { num: "05", title: "Informe del inmueble PDF", desc: "Informe profesional con fotos, datos, mapa y tu marca, listo para enviar al cliente tras la visita. En un minuto, no en media hora.", icon: "file-text", color: "#ef4444" },
         ],
       },
       testimonials: {
