@@ -205,10 +205,12 @@ html {
 }
 
 /* Animazioni del tutorial (tour) */
-@keyframes tour-fill { 0%,12% { width: 8%; } 70%,100% { width: 100%; } }
+@keyframes tour-fill { 0% { width: 8%; } 40% { width: 100%; } 70% { width: 100%; } 100% { width: 8%; } }
 @keyframes tour-pop { 0% { transform: scale(0); opacity: 0; } 60% { transform: scale(1.18); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
 @keyframes tour-slide { 0% { transform: translateX(-14px); opacity: 0; } 100% { transform: translateX(0); opacity: 1; } }
 @keyframes tour-bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+@keyframes demo-ai-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+@keyframes demo-ai-reveal { 0% { opacity: 0; transform: scale(1.04); } 100% { opacity: 1; transform: scale(1); } }
 @keyframes tour-tile { 0% { transform: scale(.6); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
 @keyframes tour-wiggle {
   0%, 15%, 100% { transform: rotate(0deg); }

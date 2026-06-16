@@ -104,12 +104,14 @@ export async function POST(req: NextRequest) {
     mq: project.mq,
     bagni: project.bagni,
     camere: project.camere,
+    locali: project.locali,
     titolo: project.titolo,
     descrizione: project.descrizione,
     cover: project.cover,
     thumb: project.thumb,
     riferimento: project.riferimento,
     tipologia: project.tipologia,
+    import_data: project.import_data,
     icons: project.icons,
     createdAt: project.created_at,
   }
@@ -149,6 +151,7 @@ export async function PUT(req: NextRequest) {
   if (riferimento !== undefined) updates.riferimento = riferimento
   if (tipologia !== undefined) updates.tipologia = tipologia
   if (icons !== undefined) updates.icons = icons
+  if (import_data !== undefined) updates.import_data = import_data
 
   const { data: project, error } = await admin
     .from('projects')
@@ -171,12 +174,14 @@ export async function PUT(req: NextRequest) {
     mq: project.mq,
     bagni: project.bagni,
     camere: project.camere,
+    locali: project.locali,
     titolo: project.titolo,
     descrizione: project.descrizione,
     cover: project.cover,
     thumb: project.thumb,
     riferimento: project.riferimento,
     tipologia: project.tipologia,
+    import_data: project.import_data,
     icons: project.icons,
     createdAt: project.created_at,
   }

@@ -358,7 +358,7 @@ function DemoMontaggioClips() {
   );
 }
 
-export default function VideoAIScreen({ toast, routeKey, brand, preselect, project, onVideoJob, activeRenders, initialPhotoUrl, demoMode, go, lockBrand }: {
+export default function VideoAIScreen({ toast, routeKey, brand, preselect, project, onVideoJob, activeRenders, pendingVideoRenders, initialPhotoUrl, demoMode, go, lockBrand }: {
   toast: (msg: string, icon?: string) => void;
   routeKey: number;
   brand: BrandSettings;
@@ -366,6 +366,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
   project?: Project;
   onVideoJob?: (job: { id: string; title: string; template: string; stage: 'render' | 'done' | 'failed'; progress: number; ctx: Record<string, unknown>; outputUrl?: string; error?: string; projectId: string | null; aspect: string; replaceId?: string }) => void;
   activeRenders?: number;
+  pendingVideoRenders?: number; // render template-video in corso (montaggio escluso) -> offset quota
   initialPhotoUrl?: string | null;
   demoMode?: boolean;
   go?: (r: string) => void;
@@ -499,18 +500,29 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
 
   const musicLibrary = React.useMemo(() => getMusicLibrary(), []);
 
+  // Il refetch riflette sempre il server. La quota mostrata e' DERIVATA: dal valore
+  // server sottraiamo i render template-video in corso (pendingVideoRenders), che il
+  // DB scala solo a consegna. Cosi' niente decremento ottimistico da preservare:
+  // acquisto pacchetti / reset mensile risalgono da soli, il fallimento "rimborsa"
+  // appena il job esce dallo stage render.
+  const applyVideoQuota = React.useCallback((q: VideoQuota | null) => {
+    setQuota(prev => q ? q : prev);
+  }, []);
+  // Quota mostrata = server - render template-video in corso (montaggio escluso).
+  const displayRemaining = quota ? Math.max(0, quota.remaining - (pendingVideoRenders ?? 0)) : 0;
+
   React.useEffect(() => {
     fetchVideoConfig().then(c => { setTemplates(c.templates); setAvatars(c.avatars); });
-    fetchVideoQuota().then(setQuota);
+    fetchVideoQuota().then(applyVideoQuota);
     fetchMontaggioQuota().then(setMontaggioQuota);
-  }, []);
+  }, [applyVideoQuota]);
   // Refetch al ritorno dal checkout pacchetti (nuova tab) -> pill aggiornata subito.
   React.useEffect(() => {
-    const onFocus = () => { if (!document.hidden) { fetchVideoQuota().then(setQuota); fetchMontaggioQuota().then(setMontaggioQuota); } };
+    const onFocus = () => { if (!document.hidden) { fetchVideoQuota().then(applyVideoQuota); fetchMontaggioQuota().then(setMontaggioQuota); } };
     window.addEventListener('focus', onFocus);
     document.addEventListener('visibilitychange', onFocus);
     return () => { window.removeEventListener('focus', onFocus); document.removeEventListener('visibilitychange', onFocus); };
-  }, []);
+  }, [applyVideoQuota]);
 
   const resetAll = React.useCallback(() => {
     setStep(0); setTpl(null); setAvatar(null); setClips([]); setPairs([]);
@@ -670,7 +682,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
     const ownsUi = () => !owner || uiOwnerRef.current === owner; // aggiorna la UI solo se questo render la possiede ancora
     if (res?.done && res.outputUrl) {
       if (ownsUi()) { setOutputUrl(res.outputUrl); setRenderStage('done'); setRenderProgress(1); }
-      fetchVideoQuota().then(setQuota);
+      fetchVideoQuota().then(applyVideoQuota);
       const doneId = `vid_${Date.now()}`;
       // replaceId = il prepId DI QUESTO render (owner), non prepJobRef.current
       // che un render concorrente puo' aver sovrascritto → prep orfano al 20%.
@@ -711,7 +723,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
             const p = await pollRenderProgress(ctx);
             if (p?.done && p.outputUrl) {
               setOutputUrl(p.outputUrl); setRenderStage('done'); setRenderProgress(1);
-              fetchVideoQuota().then(setQuota);
+              fetchVideoQuota().then(applyVideoQuota);
               return;
             }
             if (p?.error) { setRenderStage('failed'); setRenderError(p.error); return; }
@@ -782,17 +794,13 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
         return;
       }
       if (c && !c.unlimited && typeof c.remaining === 'number') setMontaggioQuota({ unlimited: false, remaining: c.remaining });
-    } else if (quota && quota.remaining <= 0) {
+    } else if (quota && displayRemaining <= 0) {
       if (lockBrand) { toast('Hai finito i video gratuiti. Passa a un piano per continuare.', 'x'); return; }
       setPacksOpen(true); // quota finita (paganti) → mostra i pacchetti extra
       return;
-    } else if (quota && !quota.isAgency) {
-      // Contatore video scende SUBITO all'avvio (non a fine render): cosi' non
-      // si puo' avviare un secondo video sopra la quota mentre il primo gira.
-      // Lo scalo DB definitivo avviene a consegna (cron commit-quota); questo e'
-      // ottimistico e viene riallineato dal refetch.
-      setQuota(q => q ? { ...q, remaining: Math.max(0, q.remaining - 1) } : q);
     }
+    // Nessun decremento ottimistico: la pill e' derivata da pendingVideoRenders
+    // (il job 'render' parte sotto, vedi onVideoJob), che il DB scala a consegna.
     abortRef.current = false;
     // Subito in background + job nel tray: l'utente non resta bloccato in
     // foreground e può navigare; la pipeline prosegue (sopravvive all'unmount).
@@ -1118,17 +1126,19 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
             <h1 style={s('margin:0 0 4px;font-size:25px;font-weight:800;letter-spacing:-.5px')}>{preselect === 'montaggio' ? 'Montaggio Automatico' : 'Video AI'}</h1>
             <div style={s('color:#8c867d;font-size:14px')}>{preselect === 'montaggio' ? "Carica le clip della casa: l'AI monta tutto con musica e cover." : 'Trasforma foto e clip in video pronti per i social.'}</div>
           </div>
-          {quota && (quota.remaining > 0 ? (
+          {!demoMode && !quota && (
+            <div style={{ width: 140, height: 37, borderRadius: 99, background: 'linear-gradient(90deg,#efece7,#f7f5f1,#efece7)', backgroundSize: '200% 100%', animation: 'demo-ai-shimmer 1.4s linear infinite', flex: 'none' }} />
+          )}
+          {!demoMode && quota && (displayRemaining > 0 ? (
             <div style={s('display:inline-flex;align-items:center;justify-content:center;gap:8px;background:#fff;border:1px solid #f0ede7;border-radius:99px;padding:8px 16px')}>
               <Icon name="film" size={15} color="#3B83F6" />
-              <span style={{ fontSize: 13, fontWeight: 700 }}>{quota.remaining} video {quota.remaining === 1 ? 'rimanente' : 'rimanenti'}</span>
+              <span style={{ fontSize: 13, fontWeight: 700 }}>{displayRemaining} video {displayRemaining === 1 ? 'rimanente' : 'rimanenti'}</span>
             </div>
           ) : lockBrand ? (
-            // Free esaurito: rosso + click -> pagina Piani.
-            <div onClick={() => go?.('account')} style={s('display:inline-flex;align-items:center;justify-content:center;gap:8px;background:#fff;border:1px solid #fecaca;border-radius:99px;padding:8px 16px;cursor:pointer') as React.CSSProperties}>
-              <Icon name="film" size={15} color="#dc2626" />
-              <span style={{ fontSize: 13, fontWeight: 700, color: '#dc2626' }}>0 video rimanenti</span>
-            </div>
+            // Free esaurito: CTA verso i piani al posto della pill.
+            <Box as="button" onClick={() => go?.('account')} style={s('display:flex;align-items:center;gap:8px;background:#3B83F6;color:#fff;border:none;border-radius:10px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer') as React.CSSProperties} hover={s('background:#2b6fe0')}>
+              <Icon name="crown" size={15} color="#fff" />Vedi i piani
+            </Box>
           ) : (
             <Box as="button" onClick={() => setPacksOpen(true)} style={s('display:flex;align-items:center;gap:8px;background:#3B83F6;color:#fff;border:none;border-radius:10px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer') as React.CSSProperties} hover={s('background:#2b6fe0')}>
               <Icon name="zap" size={15} color="#fff" />Ottieni altri video
@@ -1141,7 +1151,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
       {step === 0 && (
         <div className="max-md:!grid-cols-1" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
           {templates.filter(t => t.id !== 'montaggio').map(t => (
-            <Box key={t.id} onClick={() => { if (quota && quota.remaining <= 0) { if (lockBrand) { toast('Hai finito i video gratuiti. Passa a un piano per continuare.', 'x'); } else { setPacksOpen(true); } return; } setTpl(t); setStep(NO_AVATAR_LAYOUTS.includes(t.layout || t.id) ? 2 : 1); }} style={{
+            <Box key={t.id} onClick={() => { if (quota && displayRemaining <= 0) { if (lockBrand) { toast('Hai finito i video gratuiti. Passa a un piano per continuare.', 'x'); } else { setPacksOpen(true); } return; } setTpl(t); setStep(NO_AVATAR_LAYOUTS.includes(t.layout || t.id) ? 2 : 1); }} style={{
               background: '#fff', border: '1px solid #f0ede7', borderRadius: 16, overflow: 'hidden', cursor: 'pointer',
               transition: 'box-shadow .15s, transform .15s',
             }} hover={{ boxShadow: '0 12px 32px rgba(33,31,28,.10)', transform: 'translateY(-2px)' }}>
@@ -1217,11 +1227,20 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
                 <h1 style={s('margin:0 0 4px;font-size:25px;font-weight:800;letter-spacing:-.5px')}>Montaggio Automatico</h1>
                 <div style={s('color:#8c867d;font-size:14px')}>{`Carica da ${minClips} a ${maxClips} tra clip e foto: l'AI seleziona i momenti migliori e monta tutto con musica e cover.`}</div>
               </div>
-              {montaggioQuota && !montaggioQuota.unlimited && (
-                <div onClick={() => { if (montaggioQuota.remaining <= 0) go?.('account'); }} style={s(`display:inline-flex;align-items:center;justify-content:center;gap:8px;background:#fff;border:1px solid ${montaggioQuota.remaining > 0 ? '#f0ede7' : '#fecaca'};border-radius:99px;padding:8px 16px;flex:none${montaggioQuota.remaining <= 0 ? ';cursor:pointer' : ''}`) as React.CSSProperties}>
-                  <Icon name="scissors" size={15} color={montaggioQuota.remaining > 0 ? '#3B83F6' : '#dc2626'} />
-                  <span style={{ fontSize: 13, fontWeight: 700, color: montaggioQuota.remaining > 0 ? undefined : '#dc2626' }}>{Math.max(0, montaggioQuota.remaining)} {montaggioQuota.remaining === 1 ? 'montaggio rimanente' : 'montaggi rimanenti'}</span>
-                </div>
+              {!demoMode && !montaggioQuota && (
+                <div style={{ width: 160, height: 37, borderRadius: 99, background: 'linear-gradient(90deg,#efece7,#f7f5f1,#efece7)', backgroundSize: '200% 100%', animation: 'demo-ai-shimmer 1.4s linear infinite', flex: 'none' }} />
+              )}
+              {!demoMode && montaggioQuota && !montaggioQuota.unlimited && (
+                montaggioQuota.remaining > 0 ? (
+                  <div style={s('display:inline-flex;align-items:center;justify-content:center;gap:8px;background:#fff;border:1px solid #f0ede7;border-radius:99px;padding:8px 16px;flex:none')}>
+                    <Icon name="scissors" size={15} color="#3B83F6" />
+                    <span style={{ fontSize: 13, fontWeight: 700 }}>{montaggioQuota.remaining} {montaggioQuota.remaining === 1 ? 'montaggio rimanente' : 'montaggi rimanenti'}</span>
+                  </div>
+                ) : (
+                  <Box as="button" onClick={() => go?.('account')} style={s('display:flex;align-items:center;gap:8px;background:#3B83F6;color:#fff;border:none;border-radius:10px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer;flex:none') as React.CSSProperties} hover={s('background:#2b6fe0')}>
+                    <Icon name="crown" size={15} color="#fff" />Vedi i piani
+                  </Box>
+                )
               )}
             </div>
           ) : (

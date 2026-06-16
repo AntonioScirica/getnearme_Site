@@ -164,6 +164,27 @@ export async function geocodeAddress(address: string): Promise<GeocodeHit | null
   return { lat: parseFloat(h.lat), lng: parseFloat(h.lon), label: h.display_name };
 }
 
+// Autocomplete indirizzi: più risultati per il dropdown di suggerimenti.
+export async function searchAddresses(query: string, limit = 5): Promise<GeocodeHit[]> {
+  const q = query.trim();
+  if (q.length < 3) return [];
+  const url = new URL('https://nominatim.openstreetmap.org/search');
+  url.searchParams.set('q', q);
+  url.searchParams.set('format', 'jsonv2');
+  url.searchParams.set('limit', String(limit));
+  url.searchParams.set('countrycodes', 'it');
+  url.searchParams.set('addressdetails', '0');
+  try {
+    const resp = await fetch(url.toString(), { headers: { 'Accept-Language': 'it' } });
+    if (!resp.ok) return [];
+    const data = await resp.json();
+    if (!Array.isArray(data)) return [];
+    return data.map((h: { lat: string; lon: string; display_name: string }) => ({
+      lat: parseFloat(h.lat), lng: parseFloat(h.lon), label: h.display_name,
+    }));
+  } catch { return []; }
+}
+
 // Reverse geocoding: coordinate → indirizzo (via + città). Nominatim.
 export async function reverseGeocode(lat: number, lng: number): Promise<string | null> {
   const url = new URL('https://nominatim.openstreetmap.org/reverse');

@@ -16,6 +16,7 @@ import {
   type ReportColumnKey,
   type ProsConsEdits,
 } from '@/lib/reportHtml';
+import { supabase } from '@/lib/supabase';
 
 type SectionId = 'cover' | 'table' | 'prosCons' | 'costs' | 'poi' | 'legal' | 'thanks';
 
@@ -198,22 +199,38 @@ export default function ReportScreen({
   );
   const hasProperties = mappedProperties.length > 0;
 
-  const STORAGE_KEY = 'gnm-report-cols';
+  // Chiave per-account: le preferenze colonne NON devono sbordare tra account
+  // sullo stesso browser. La chiave generica resta solo come fallback pre-login.
+  const colsKeyRef = useRef('gnm-report-cols');
 
-  const [colOn, setColOn] = useState<Record<ReportColumnKey, boolean>>(() => {
+  const defaultColOn = useCallback(() => {
     const init = {} as Record<ReportColumnKey, boolean>;
     for (const c of COLUMNS) init[c.id] = c.defaultOn !== false;
-    if (typeof window !== 'undefined') {
+    return init;
+  }, []);
+
+  const [colOn, setColOn] = useState<Record<ReportColumnKey, boolean>>(defaultColOn);
+
+  // Carica le preferenze salvate per l'account corrente (o default per nuovo account).
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      const key = user?.id ? `gnm-report-cols:${user.id}` : 'gnm-report-cols';
+      colsKeyRef.current = key;
+      if (!alive) return;
+      const init = defaultColOn();
       try {
-        const saved = localStorage.getItem(STORAGE_KEY);
+        const saved = localStorage.getItem(key);
         if (saved) {
           const parsed = JSON.parse(saved);
           for (const c of COLUMNS) if (typeof parsed[c.id] === 'boolean') init[c.id] = parsed[c.id];
         }
       } catch { /* ignore */ }
-    }
-    return init;
-  });
+      setColOn(init);
+    })();
+    return () => { alive = false; };
+  }, [defaultColOn]);
 
   const activeCount = Object.values(colOn).filter(Boolean).length;
 
@@ -224,7 +241,7 @@ export default function ReportScreen({
     }
     setColOn((p) => {
       const next = { ...p, [id]: !p[id] };
-      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(next)); } catch { /* ignore */ }
+      try { localStorage.setItem(colsKeyRef.current, JSON.stringify(next)); } catch { /* ignore */ }
       return next;
     });
   };

@@ -11,21 +11,38 @@ import type { Project } from './types';
 import type { BrandSettings } from '@/lib/brand';
 import {
   POI_CATEGORIES, RADIUS_OPTIONS, DEFAULT_RADIUS,
-  geocodeAddress, reverseGeocode, fetchZona, fetchZonaArea, centroid, formatDistance,
+  geocodeAddress, reverseGeocode, searchAddresses, fetchZona, fetchZonaArea, centroid, formatDistance,
   type ZonaResult, type Poi, type GeocodeHit, type LatLng,
 } from '@/lib/poi';
 import { getGeoEnabled } from '@/lib/prefs';
+import { supabase } from '@/lib/supabase';
 
 const FREE_LIMIT = 5;
-const USAGE_KEY = 'gnm-zona-used';
 
-function getUsage(): number {
+// Zoom oltre il quale i marker POI mostrano l'icona della categoria (come estensione).
+const ICON_ZOOM = 15;
+// SVG (inner) per le icone categoria nei marker ravvicinati. Stroke = currentColor.
+const POI_ICON_SVG: Record<string, string> = {
+  'train-front': '<path d="M8 3.1V7a4 4 0 0 0 8 0V3.1"/><path d="m9 15-1-1"/><path d="m15 15 1-1"/><path d="M9 19l-2 3"/><path d="m15 19 2 3"/><rect width="18" height="14" x="3" y="3" rx="2"/>',
+  'shopping-bag': '<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/>',
+  plus: '<path d="M5 12h14"/><path d="M12 5v14"/>',
+  activity: '<path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"/>',
+  school: '<path d="M14 22v-4a2 2 0 1 0-4 0v4"/><path d="m18 10 3.447 1.724a1 1 0 0 1 .553.894V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-7.382a1 1 0 0 1 .553-.894L6 10"/><path d="M18 5v17"/><path d="m4 6 7.106-3.553a2 2 0 0 1 1.788 0L20 6"/><path d="M6 5v17"/><circle cx="12" cy="9" r="2"/>',
+  'tree-pine': '<path d="m17 14 3 3.3a1 1 0 0 1-.7 1.7H4.7a1 1 0 0 1-.7-1.7L7 14h-.3a1 1 0 0 1-.7-1.7L9 9h-.2A1 1 0 0 1 8 7.3L12 3l4 4.3a1 1 0 0 1-.8 1.7H15l3 3.3a1 1 0 0 1-.7 1.7H17Z"/><path d="M12 22v-3"/>',
+  coffee: '<path d="M10 2v2"/><path d="M14 2v2"/><path d="M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a4 4 0 1 1 0 8h-1"/><path d="M6 2v2"/>',
+  dog: '<path d="M11.25 16.25h1.5L12 17z"/><path d="M16 14v.5"/><path d="M4.42 11.247A13.152 13.152 0 0 0 4 14.556C4 18.728 7.582 21 12 21s8-2.272 8-6.444a11.702 11.702 0 0 0-.493-3.309"/><path d="M8 14v.5"/><path d="M8.5 8.5c-.384 1.05-1.083 2.028-2.344 2.5-1.931.722-3.576-.297-3.656-1-.113-.994 1.177-6.53 4-7 1.923-.321 3.651.845 3.651 2.235A7.497 7.497 0 0 1 14 5.277c0-1.39 1.844-2.598 3.767-2.277 2.823.47 4.113 6.006 4 7-.08.703-1.725 1.722-3.656 1-1.261-.472-1.855-1.45-2.239-2.5"/>',
+  music: '<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>',
+};
+
+// Conteggio per-account: il quota free NON deve sbordare tra account sullo
+// stesso browser. Chiave generica solo come fallback pre-login.
+function getUsage(key: string): number {
   if (typeof window === 'undefined') return 0;
-  try { return parseInt(localStorage.getItem(USAGE_KEY) || '0', 10) || 0; } catch { return 0; }
+  try { return parseInt(localStorage.getItem(key) || '0', 10) || 0; } catch { return 0; }
 }
-function bumpUsage(): number {
-  const n = getUsage() + 1;
-  try { localStorage.setItem(USAGE_KEY, String(n)); } catch { /* ignore */ }
+function bumpUsage(key: string): number {
+  const n = getUsage(key) + 1;
+  try { localStorage.setItem(key, String(n)); } catch { /* ignore */ }
   return n;
 }
 
@@ -60,6 +77,39 @@ export default function ZonaScreen({
   const [geoEnabled, setGeoEnabledState] = useState(true);
   useEffect(() => { setGeoEnabledState(getGeoEnabled()); }, []);
 
+  // Autocomplete indirizzo (Nominatim), debounce 350ms.
+  const [addrSug, setAddrSug] = useState<GeocodeHit[]>([]);
+  const [sugOpen, setSugOpen] = useState(false);
+  const sugBoxRef = useRef<HTMLDivElement>(null);
+  const suppressSug = useRef(false); // salta la ricerca quando settiamo l'indirizzo via codice
+  useEffect(() => {
+    if (suppressSug.current) { suppressSug.current = false; return; }
+    const q = address.trim();
+    if (q.length < 3) { setAddrSug([]); setSugOpen(false); return; }
+    let alive = true;
+    const t = setTimeout(async () => {
+      const hits = await searchAddresses(q, 5);
+      if (!alive) return;
+      setAddrSug(hits);
+      setSugOpen(hits.length > 0);
+    }, 350);
+    return () => { alive = false; clearTimeout(t); };
+  }, [address]);
+  useEffect(() => {
+    if (!sugOpen) return;
+    const onDoc = (e: MouseEvent) => { if (sugBoxRef.current && !sugBoxRef.current.contains(e.target as Node)) setSugOpen(false); };
+    document.addEventListener('mousedown', onDoc);
+    return () => document.removeEventListener('mousedown', onDoc);
+  }, [sugOpen]);
+  const pickSuggestion = (hit: GeocodeHit) => {
+    // Compila SOLO l'indirizzo: l'analisi parte quando l'utente preme la CTA.
+    // (Solo la scelta di un immobile lancia l'analisi in automatico.)
+    suppressSug.current = true;
+    setAddress(hit.label);
+    setSugOpen(false);
+    setAddrSug([]);
+  };
+
   // All'apertura: chiedi la geolocalizzazione e precompila con la mia via
   // (reverse geocode). Niente prefill della città a caso.
   const geoAsked = useRef(false);
@@ -72,7 +122,7 @@ export default function ZonaScreen({
       async (pos) => {
         try {
           const addr = await reverseGeocode(pos.coords.latitude, pos.coords.longitude);
-          if (addr) setAddress((cur) => cur.trim() ? cur : addr);
+          if (addr) { suppressSug.current = true; setAddress((cur) => cur.trim() ? cur : addr); }
         } catch { /* ignore */ }
       },
       () => { /* permesso negato: lascia vuoto */ },
@@ -103,6 +153,8 @@ export default function ZonaScreen({
   const [addrCenter, setAddrCenter] = useState<GeocodeHit | null>(null); // ultimo centro da indirizzo (per ripristinare il cerchio)
   const [activeCats, setActiveCats] = useState<Set<string>>(() => new Set(POI_CATEGORIES.map((c) => c.key)));
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [zoom, setZoom] = useState(12);
+  const [locating, setLocating] = useState(false);
   const [usage, setUsage] = useState(0);
 
   // Disegno area sulla mappa
@@ -110,7 +162,17 @@ export default function ZonaScreen({
   const [drawPoints, setDrawPoints] = useState<LatLng[]>([]);
   const [area, setArea] = useState<LatLng[] | null>(null);
 
-  useEffect(() => { setUsage(getUsage()); }, []);
+  const usageKeyRef = useRef('gnm-zona-used');
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      const key = user?.id ? `gnm-zona-used:${user.id}` : 'gnm-zona-used';
+      usageKeyRef.current = key;
+      if (alive) setUsage(getUsage(key));
+    })();
+    return () => { alive = false; };
+  }, []);
   const remaining = Math.max(0, FREE_LIMIT - usage);
   const blocked = locked && remaining <= 0;
 
@@ -137,6 +199,8 @@ export default function ZonaScreen({
       markersRef.current = (L as typeof import('leaflet')).layerGroup().addTo(map);
       drawLayerRef.current = (L as typeof import('leaflet')).layerGroup().addTo(map);
       mapRef.current = map;
+      setZoom(map.getZoom());
+      map.on('zoomend', () => setZoom(map.getZoom()));
       // fix dimensioni dopo il mount
       setTimeout(() => map.invalidateSize(), 100);
     })();
@@ -145,6 +209,7 @@ export default function ZonaScreen({
 
   const colorOf = useCallback((key: string) => POI_CATEGORIES.find((c) => c.key === key)?.color || accent, []);
   const removeAreaRef = useRef<() => void>(() => {});
+  const lastFitRef = useRef(-1); // ultimo resultId su cui abbiamo fatto auto-fit
 
   // Ridisegna i marker quando cambiano risultati / filtri.
   useEffect(() => {
@@ -156,8 +221,9 @@ export default function ZonaScreen({
 
     if (area && area.length >= 3) {
       // area disegnata: poligono NON interattivo (i click sulla mappa restano per
-      // pan/zoom; la rimozione avviene dal bottone dedicato).
-      L.polygon(area.map((p) => [p.lat, p.lng]), { color: accent, weight: 2, opacity: 0.7, fillOpacity: 0.06, interactive: false }).addTo(group);
+      // pan/zoom; la rimozione avviene dal bottone dedicato). Durante l'analisi
+      // la forma pulsa con effetto AI (className zona-analyzing).
+      L.polygon(area.map((p) => [p.lat, p.lng]), { color: accent, weight: 2, opacity: 0.7, fillOpacity: 0.06, interactive: false, className: loading ? 'zona-analyzing' : '' }).addTo(group);
     } else if (center && !drawMode) {
       // marker centro (immobile/indirizzo) + cerchio raggio (nascosto durante il disegno)
       const html = `<div style="width:22px;height:22px;border-radius:50%;background:${accent};border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.35)"></div>`;
@@ -170,11 +236,17 @@ export default function ZonaScreen({
     if (area && area.length >= 3) for (const p of area) bounds.push([p.lat, p.lng]);
     else if (center) bounds.push([center.lat, center.lng]);
     if (result) {
+      const showIcons = zoom >= ICON_ZOOM;
       for (const cat of POI_CATEGORIES) {
         if (!activeCats.has(cat.key)) continue;
+        const svg = POI_ICON_SVG[cat.icon];
         for (const poi of result[cat.key] || []) {
-          const html = `<div style="width:12px;height:12px;border-radius:50%;background:${cat.color};border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.3)"></div>`;
-          const icon = L.divIcon({ html, className: '', iconSize: [12, 12], iconAnchor: [6, 6] });
+          // Lontano: pallino. Vicino (zoom): pin colorato con icona categoria (come estensione).
+          const html = showIcons && svg
+            ? `<div style="width:28px;height:28px;border-radius:50%;background:${cat.color};border:2.5px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;color:#fff"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${svg}</svg></div>`
+            : `<div style="width:12px;height:12px;border-radius:50%;background:${cat.color};border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.3)"></div>`;
+          const sz = showIcons && svg ? 28 : 12;
+          const icon = L.divIcon({ html, className: '', iconSize: [sz, sz], iconAnchor: [sz / 2, sz / 2] });
           const m = L.marker([poi.lat, poi.lng], { icon });
           m.bindTooltip(`${poi.name} · ${formatDistance(poi.distance)}`, { direction: 'top' });
           m.addTo(group);
@@ -182,11 +254,14 @@ export default function ZonaScreen({
         }
       }
     }
-    if (!drawMode) {
+    // Auto-fit SOLO ad ogni nuova analisi (resultId), non ad ogni re-render (es.
+    // cambio zoom per le icone) -> altrimenti l'utente non potrebbe zoomare.
+    if (!drawMode && lastFitRef.current !== resultId) {
+      lastFitRef.current = resultId;
       if (bounds.length > 1) map.fitBounds(bounds, { padding: [40, 40], maxZoom: 16 });
       else if (center) map.setView([center.lat, center.lng], 15);
     }
-  }, [result, center, activeCats, radius, area, drawMode, colorOf]);
+  }, [result, center, activeCats, radius, area, drawMode, colorOf, loading, zoom]);
 
   // ─── Disegno area: gestione click sulla mappa ────────────────────────────────
   useEffect(() => {
@@ -251,7 +326,7 @@ export default function ZonaScreen({
       setResultId((n) => n + 1);
       const firstNonEmpty = POI_CATEGORIES.find((c) => (data[c.key] || []).length > 0);
       setExpanded(firstNonEmpty?.key || null);
-      if (locked) setUsage(bumpUsage());
+      if (locked) setUsage(bumpUsage(usageKeyRef.current));
     } catch (e) {
       const msg = e instanceof Error && e.message === 'overpass_unreachable'
         ? 'Servizio dati temporaneamente non disponibile, riprova'
@@ -262,41 +337,32 @@ export default function ZonaScreen({
     }
   };
 
-  // Usa la posizione attuale: reverse geocode → indirizzo → analizza.
+  // Usa la posizione attuale: reverse geocode → compila SOLO l'indirizzo.
+  // NON analizza in automatico: l'utente preme la CTA quando vuole.
   const useMyLocation = () => {
     if (typeof navigator === 'undefined' || !navigator.geolocation) { toast('Geolocalizzazione non disponibile', 'x'); return; }
-    setLoading(true);
+    setLocating(true);
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         try {
           const addr = await reverseGeocode(pos.coords.latitude, pos.coords.longitude);
-          if (addr) { setAddress(addr); await runAnalysis(addr); }
-          else { toast('Posizione non trovata', 'x'); setLoading(false); }
-        } catch { toast('Errore posizione', 'x'); setLoading(false); }
+          if (addr) { suppressSug.current = true; setAddress(addr); }
+          else toast('Posizione non trovata', 'x');
+        } catch { toast('Errore posizione', 'x'); }
+        finally { setLocating(false); }
       },
-      () => { toast('Permesso posizione negato', 'x'); setLoading(false); },
+      () => { toast('Permesso posizione negato', 'x'); setLocating(false); },
       { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 }
     );
   };
 
-  // Rimuove l'area disegnata e ripristina il cerchio attorno all'ultimo indirizzo.
-  const removeArea = async () => {
+  // Rimuove l'area disegnata e i suoi POI. NON rifà l'analisi: ripristina solo
+  // il pin/cerchio dell'ultimo indirizzo (l'utente rilancia a mano se vuole).
+  const removeArea = () => {
     setArea(null);
     setDrawPoints([]);
-    if (!addrCenter) { setCenter(null); setResult(null); return; }
-    setCenter(addrCenter);
-    setLoading(true);
-    try {
-      const data = await fetchZona(addrCenter.lat, addrCenter.lng, radius);
-      setResult(data);
-      setResultId((n) => n + 1);
-      const firstNonEmpty = POI_CATEGORIES.find((c) => (data[c.key] || []).length > 0);
-      setExpanded(firstNonEmpty?.key || null);
-    } catch {
-      setResult(null);
-    } finally {
-      setLoading(false);
-    }
+    setResult(null);
+    setCenter(addrCenter ?? null);
   };
   removeAreaRef.current = removeArea;
 
@@ -308,6 +374,8 @@ export default function ZonaScreen({
     if (blocked) { toast('Hai esaurito le analisi gratuite', 'lock'); return; }
     setLoading(true);
     setDrawMode(false);
+    // La forma resta visibile durante l'analisi (con effetto AI dentro), non sparisce.
+    setArea(points);
     try {
       const c = centroid(points);
       // Analisi SOLO dentro il poligono disegnato (filtro poly Overpass).
@@ -315,7 +383,7 @@ export default function ZonaScreen({
       let label = 'Area selezionata';
       try { const addr = await reverseGeocode(c.lat, c.lng); if (addr) label = addr; } catch { /* ignore */ }
       const hit = { lat: c.lat, lng: c.lng, label };
-      setArea(points);
+      suppressSug.current = true;
       setAddress(label);
       setAddrCenter(hit);
       setCenter(hit);
@@ -323,7 +391,7 @@ export default function ZonaScreen({
       setResultId((n) => n + 1);
       const firstNonEmpty = POI_CATEGORIES.find((cat) => (data[cat.key] || []).length > 0);
       setExpanded(firstNonEmpty?.key || null);
-      if (locked) setUsage(bumpUsage());
+      if (locked) setUsage(bumpUsage(usageKeyRef.current));
     } catch (e) {
       const msg = e instanceof Error && e.message === 'overpass_unreachable'
         ? 'Servizio dati temporaneamente non disponibile, riprova'
@@ -361,7 +429,7 @@ export default function ZonaScreen({
 
   return (
     <div style={{ display: 'flex', height: '100%', minHeight: 'calc(100vh - 64px)' }}>
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } } @keyframes zfadein { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } } .zona-card { animation: zfadein .38s ease both; } .leaflet-container { font: inherit; }`}</style>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } } @keyframes zfadein { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } } .zona-card { animation: zfadein .38s ease both; } .leaflet-container { font: inherit; } @keyframes zona-ai-pulse { 0%,100% { fill-opacity: .06; stroke-opacity: .6; stroke-width: 2; } 50% { fill-opacity: .26; stroke-opacity: 1; stroke-width: 3.5; } } .zona-analyzing { animation: zona-ai-pulse 1.3s ease-in-out infinite; fill: ${accent}; stroke: ${accent}; filter: drop-shadow(0 0 6px ${accent}aa); }`}</style>
       {/* LEFT: ricerca + risultati */}
       <div className="max-md:!hidden" style={{ width: 380, flexShrink: 0, borderRight: '1px solid #ece9e2', background: '#faf9f7', overflowY: 'auto', padding: '24px 18px 40px', display: 'flex', flexDirection: 'column' }}>
         <h1 style={s('margin:0 0 4px;font-size:20px;font-weight:800;letter-spacing:-.3px')}>Analisi di zona</h1>
@@ -397,7 +465,7 @@ export default function ZonaScreen({
                   <div style={{ maxHeight: 240, overflowY: 'auto' }}>
                     {filteredProps.length === 0 && <div style={{ fontSize: 13, color: '#b3aca1', padding: '12px 14px' }}>Nessun risultato.</div>}
                     {filteredProps.map((p) => (
-                      <Box key={p.id} onClick={() => { setAddress(p.addr); setPickerOpen(false); if (!loading && !blocked) runAnalysis(p.addr); }} style={{ display: 'flex', flexDirection: 'column', gap: 1, padding: '9px 14px', cursor: 'pointer', borderBottom: '1px solid #f6f4f0' }} hover={{ background: '#faf9f7' }}>
+                      <Box key={p.id} onClick={() => { suppressSug.current = true; setAddress(p.addr); setPickerOpen(false); if (!loading && !blocked) runAnalysis(p.addr); }} style={{ display: 'flex', flexDirection: 'column', gap: 1, padding: '9px 14px', cursor: 'pointer', borderBottom: '1px solid #f6f4f0' }} hover={{ background: '#faf9f7' }}>
                         <span style={{ fontSize: 13, fontWeight: 600, color: '#211f1c', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.nome}</span>
                         <span style={{ fontSize: 11.5, color: '#b3aca1', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.addr}</span>
                       </Box>
@@ -411,20 +479,35 @@ export default function ZonaScreen({
 
         {/* Input indirizzo */}
         <div style={labelStyle}>{propsWithAddr.length > 0 ? 'Oppure inserisci un indirizzo' : 'Indirizzo'}</div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#fff', border: '1px solid #e4e1da', borderRadius: 10, padding: '10px 12px', marginBottom: 12 }}>
-          <Icon name="map-pin" size={16} color="#b3aca1" />
-          <input
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter' && !loading && address.trim()) runAnalysis(); }}
-            placeholder="Es. Via Fiori Chiari 12, Milano"
-            style={{ border: 'none', outline: 'none', background: 'transparent', fontSize: 14, width: '100%', color: '#211f1c' }}
-          />
-          {address && <span onClick={() => setAddress('')} style={{ cursor: 'pointer', display: 'flex' }}><Icon name="x" size={14} color="#b3aca1" /></span>}
-          {geoEnabled && (
-            <span onClick={useMyLocation} title="Usa la mia posizione" style={{ cursor: 'pointer', display: 'flex', paddingLeft: 4, borderLeft: '1px solid #f0ede7' }}>
-              <Icon name="crosshair" size={17} color={accent} />
-            </span>
+        <div ref={sugBoxRef} style={{ position: 'relative', marginBottom: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#fff', border: `1px solid ${sugOpen ? accent : '#e4e1da'}`, borderRadius: 10, padding: '10px 12px' }}>
+            <Icon name="map-pin" size={16} color="#b3aca1" />
+            <input
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              onFocus={() => { if (addrSug.length) setSugOpen(true); }}
+              onKeyDown={(e) => { if (e.key === 'Enter' && !loading && address.trim()) { setSugOpen(false); runAnalysis(); } if (e.key === 'Escape') setSugOpen(false); }}
+              placeholder="Es. Via Fiori Chiari 12, Milano"
+              style={{ border: 'none', outline: 'none', background: 'transparent', fontSize: 14, width: '100%', color: '#211f1c' }}
+            />
+            {address && <span onClick={() => { suppressSug.current = true; setAddress(''); setAddrSug([]); setSugOpen(false); }} style={{ cursor: 'pointer', display: 'flex' }}><Icon name="x" size={14} color="#b3aca1" /></span>}
+            {geoEnabled && (
+              <span onClick={() => { if (!locating) useMyLocation(); }} title="Usa la mia posizione" style={{ cursor: locating ? 'default' : 'pointer', display: 'flex', paddingLeft: 4, borderLeft: '1px solid #f0ede7' }}>
+                {locating
+                  ? <span style={{ width: 16, height: 16, border: `2px solid ${accent}`, borderTopColor: 'transparent', borderRadius: '50%', display: 'inline-block', animation: 'spin .8s linear infinite' }} />
+                  : <Icon name="crosshair" size={17} color={accent} />}
+              </span>
+            )}
+          </div>
+          {sugOpen && addrSug.length > 0 && (
+            <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, background: '#fff', border: '1px solid #e4e1da', borderRadius: 10, boxShadow: '0 12px 32px rgba(33,31,28,.12)', zIndex: 30, overflow: 'hidden' }}>
+              {addrSug.map((hit, i) => (
+                <Box key={`${hit.lat},${hit.lng},${i}`} onClick={() => pickSuggestion(hit)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', cursor: 'pointer', borderBottom: i < addrSug.length - 1 ? '1px solid #f6f4f0' : 'none' }} hover={{ background: '#faf9f7' }}>
+                  <Icon name="map-pin" size={14} color="#b3aca1" />
+                  <span style={{ fontSize: 13, color: '#211f1c', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{hit.label}</span>
+                </Box>
+              ))}
+            </div>
           )}
         </div>
 
@@ -497,8 +580,9 @@ export default function ZonaScreen({
         )}
       </div>
 
-      {/* RIGHT: mappa */}
-      <div style={{ flex: 1, minWidth: 0, position: 'relative', background: '#e8ebef' }}>
+      {/* RIGHT: mappa — isolata: i z-index interni di Leaflet (fino a ~1000) restano
+          contenuti qui e non sfondano sopra l'header/tray dell'app. */}
+      <div style={{ flex: 1, minWidth: 0, position: 'relative', background: '#e8ebef', isolation: 'isolate', zIndex: 0 }}>
         <div ref={mapEl} style={{ position: 'absolute', inset: 0 }} />
 
         {/* Controlli disegno area (in alto a destra) */}

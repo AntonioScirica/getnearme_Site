@@ -107,7 +107,7 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
   onGoPlan?: () => void;
   onGoPost?: () => void;
   onGoVideo?: (url: string) => void;
-  onCreated?: () => void; // staging completato -> notifica galleria (badge +1)
+  onCreated?: (count?: number) => void; // staging completato -> notifica galleria (badge +N)
   demoMode?: boolean;
   lockBrand?: boolean; // free: niente acquisto extra, solo stato esaurito
 }) {
@@ -503,17 +503,19 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
           <h1 style={s('margin:0 0 4px;font-size:25px;font-weight:800;letter-spacing:-.5px')}>Homestaging AI</h1>
           <div style={s('color:#8c867d;font-size:14px')}>Arreda, svuota o trasforma le foto dei tuoi immobili con l’AI.</div>
         </div>
-        {quota && (quota.remaining > 0 ? (
+        {!demoMode && !quota && (
+          <div style={{ width: 140, height: 37, borderRadius: 99, background: 'linear-gradient(90deg,#efece7,#f7f5f1,#efece7)', backgroundSize: '200% 100%', animation: 'demo-ai-shimmer 1.4s linear infinite', flex: 'none' }} />
+        )}
+        {!demoMode && quota && (quota.remaining > 0 ? (
           <div style={s('display:inline-flex;align-items:center;justify-content:center;gap:8px;background:#fff;border:1px solid #f0ede7;border-radius:99px;padding:8px 16px')}>
             <Icon name="image" size={15} color="#3B83F6" />
             <span style={{ fontSize: 13, fontWeight: 700 }}>{quota.remaining} {quota.remaining === 1 ? 'foto rimanente' : 'foto rimanenti'}</span>
           </div>
         ) : lockBrand ? (
-          // Free esaurito: rosso + click -> pagina Piani.
-          <div onClick={() => onGoPlan?.()} style={s('display:inline-flex;align-items:center;justify-content:center;gap:8px;background:#fff;border:1px solid #fecaca;border-radius:99px;padding:8px 16px;cursor:pointer') as React.CSSProperties}>
-            <Icon name="image" size={15} color="#dc2626" />
-            <span style={{ fontSize: 13, fontWeight: 700, color: '#dc2626' }}>0 foto rimanenti</span>
-          </div>
+          // Free esaurito: CTA verso i piani al posto della pill.
+          <Box as="button" onClick={() => onGoPlan?.()} style={s('display:flex;align-items:center;gap:8px;background:#3B83F6;color:#fff;border:none;border-radius:10px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer') as React.CSSProperties} hover={s('background:#2b6fe0')}>
+            <Icon name="crown" size={15} color="#fff" />Vedi i piani
+          </Box>
         ) : (
           <Box as="button" onClick={() => setPacksOpen(true)} style={s('display:flex;align-items:center;gap:8px;background:#3B83F6;color:#fff;border:none;border-radius:10px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer') as React.CSSProperties} hover={s('background:#2b6fe0')}>
             <Icon name="zap" size={15} color="#fff" />Ottieni altre foto
@@ -532,20 +534,14 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
       {/* ── BATCH SUBMITTED ── blob animato col logo al centro */}
       {!generating && batchDone !== null && (
         <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:16px;padding:64px 24px;text-align:center;width:100%;margin:0 auto')}>
-          <div style={{ position: 'relative', width: 240, height: 180, margin: '0 auto -20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            {/* Large blurry halo in background */}
-            <div style={{ position: 'absolute', width: '100%', height: '100%', borderRadius: '50%', background: 'radial-gradient(circle, #dbeafe 0%, rgba(219,234,254,0) 70%)', filter: 'blur(20px)' }} />
-            <div style={{ position: 'absolute', width: '70%', height: '70%', borderRadius: '50%', background: 'radial-gradient(circle, #bfdbfe 0%, rgba(191,219,254,0) 70%)', filter: 'blur(16px)', animation: 'blob-float 7s ease-in-out infinite' }} />
-
-            {/* Pulsing radar rings */}
-            <div style={{ position: 'absolute', width: 80, height: 80, borderRadius: '50%', background: '#3B83F6', animation: 'pulse-ring 2.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite' }} />
-            <div style={{ position: 'absolute', width: 80, height: 80, borderRadius: '50%', background: '#60A5FA', animation: 'pulse-ring 2.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite', animationDelay: '1.25s' }} />
-
-            {/* Organic Fluid Blob */}
-            <div style={{ position: 'relative', width: 80, height: 80, background: '#3B83F6', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'organic-blob 8s linear infinite', zIndex: 10, boxShadow: '0 4px 20px rgba(59,131,246,0.35)' }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/dashboard/logo-icon.svg" alt="" style={{ width: 44, height: 44 }} />
-            </div>
+          <div style={{ position: 'relative', width: 120, height: 120, margin: '0 auto 4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            {/* Cerchi che pulsano dietro, molto fade */}
+            <div style={{ position: 'absolute', width: 110, height: 110, borderRadius: '50%', border: '1.5px solid rgba(59,131,246,.20)', animation: 'pulse-ring 2.8s ease-out infinite' }} />
+            <div style={{ position: 'absolute', width: 110, height: 110, borderRadius: '50%', border: '1.5px solid rgba(59,131,246,.20)', animation: 'pulse-ring 2.8s ease-out infinite', animationDelay: '1.4s' }} />
+            {/* Blob blu che si muove dietro il logo */}
+            <div style={{ position: 'absolute', width: 72, height: 72, background: 'radial-gradient(circle at 30% 26%, #AECBFF 0%, #3B83F6 46%, #5B6CF0 100%)', opacity: .95, boxShadow: '0 0 30px rgba(91,108,240,.45), 0 0 14px rgba(59,131,246,.55)', animation: 'organic-blob 8s ease-in-out infinite' }} />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/dashboard/logo-mark-white.svg" alt="" style={{ position: 'relative', width: 56, height: 56, animation: 'aurora-pulse 4s ease-in-out infinite' }} />
           </div>
           <div style={s('font-size:20px;font-weight:800;margin-bottom:8px')}>{batchDone} foto in elaborazione</div>
           <div style={s('color:#8c867d;font-size:15px;max-width:500px;margin:0 auto 32px;line-height:1.5')}>
@@ -798,8 +794,8 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
                   <textarea value={customPrompt} onChange={e => onPrompt(e.target.value)} maxLength={2000} rows={3} placeholder="Es. trasforma in soggiorno moderno con divano color crema e parquet chiaro" style={inputStyle} />
                 </div>
 
-                {(() => { const mainActive = canGenerate || (outOfQuota && !lockBrand); return (
-                <button onClick={outOfQuota ? (lockBrand ? undefined : () => setPacksOpen(true)) : handleGenerate} disabled={!mainActive} className="group" style={{
+                {(() => { const mainActive = canGenerate || outOfQuota; return (
+                <button onClick={outOfQuota ? (lockBrand ? onGoPlan : () => setPacksOpen(true)) : handleGenerate} disabled={!mainActive} className="group" style={{
                   border: 'none',
                   background: mainActive ? 'linear-gradient(135deg, #3B83F6 0%, #6366f1 100%)' : '#e5e7eb',
                   color: mainActive ? '#fff' : '#9ca3af',
@@ -810,13 +806,14 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
                   transition: 'all .2s cubic-bezier(.4,0,.2,1)',
                 }}>
                   <span className={mainActive ? "group-hover:rotate-12 transition-transform duration-300" : ""} style={{ display: 'flex' }}>
-                    <Icon name={outOfQuota ? 'zap' : 'sparkles'} size={18} color={mainActive ? "#fff" : "#9ca3af"} />
+                    <Icon name={outOfQuota ? (lockBrand ? 'crown' : 'zap') : 'sparkles'} size={18} color={mainActive ? "#fff" : "#9ca3af"} />
                   </span>
-                  {outOfQuota ? (lockBrand ? 'Foto gratuite esaurite' : 'Ottieni altre foto') : notEnoughForBatch ? `Restano solo ${quota!.remaining} foto` : (isBatch ? `Genera ${photos.length} foto` : 'Genera foto')}
+                  {outOfQuota ? (lockBrand ? 'Vedi i piani' : 'Ottieni altre foto') : notEnoughForBatch ? `Restano solo ${quota!.remaining} foto` : (isBatch ? `Genera ${photos.length} foto` : 'Genera foto')}
                 </button>
                 ); })()}
 
-                {(outOfQuota || notEnoughForBatch) && (
+                {/* Free esaurito: nessun box, la CTA "Vedi i piani" è già nel bottone sopra. */}
+                {((outOfQuota && !lockBrand) || notEnoughForBatch) && (
                   <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 14, padding: '16px 18px' }}>
                     <div style={{ fontSize: 13.5, fontWeight: 700, color: '#1d5fd0', marginBottom: 4 }}>
                       {outOfQuota ? 'Hai usato tutte le foto del mese' : 'Foto insufficienti per questo batch'}

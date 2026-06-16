@@ -133,8 +133,8 @@ const TOUR_DEFS = [
   { sel: '[title="Homestaging AI"]', title: 'Homestaging AI', anim: 'staging', text: "Arreda, svuota o trasforma le foto dei tuoi immobili con l'AI. Singola o batch, stile o prompt libero." },
   { sel: '[title="Video AI"]', title: 'Video AI', anim: 'video', text: 'Trasforma foto e clip in video pronti per i social: prima/dopo, timelapse, avatar e altro.' },
   { sel: '[title="Montaggio"]', title: 'Montaggio', anim: 'montaggio', text: "Carica le clip della casa: l'AI le monta con cover, musica e watermark in un Reel pronto." },
-  { sel: '[title="Post Social"]', title: 'Post Social', anim: 'social', text: 'Template per post e storie con i dati già compilati, e il calendario per programmare le pubblicazioni.' },
-  { sel: '[title="Galleria"]', title: 'Galleria', anim: 'media', text: 'Tutto ciò che generi finisce qui. Puoi riusarlo in post e video senza pagare altri crediti.' },
+  { sel: '[title="Post Social"]', title: 'Post Social', anim: 'social', text: 'Template per post e storie con i dati già compilati. Scegli lo stile, personalizza e scarica.' },
+  { sel: '[title="Galleria"]', title: 'Galleria', anim: 'media', text: 'Tutto ciò che generi finisce qui. Puoi riusarlo in post e video quando vuoi.' },
   { sel: '[title="Lavori in corso"]', title: 'Lavori in corso', anim: 'jobs', text: 'Le generazioni girano in background: qui vedi i progressi senza mai bloccarti. Ti avvisiamo a fine lavoro.' },
   { sel: '@center', title: 'Tutto parte da qui', anim: 'project', text: "Inserisci foto e dettagli una sola volta: l'AI li userà in automatico per generare home staging, video reel e post social perfetti e già compilati." },
   { sel: '[data-tour-dropdown]', title: 'Inizia subito', anim: 'none', text: 'Clicca qui per iniziare a caricare foto e dettagli e sbloccare tutte le funzioni AI di GetNearMe.' },
@@ -532,7 +532,7 @@ const LOGO_VARIANT_LABELS: Record<string, string> = {
   colored_v: 'Icona, Colore', colored_h: 'Icona + Nome, Colore',
 };
 
-function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectUpdate, initialPhotoUrl, go }: { toast: (msg: string, icon?: string) => void; routeKey: number; brand: BrandSettings; project?: Project; batches?: BatchInfo[]; onProjectUpdate?: (p: Partial<Project>) => void; initialPhotoUrl?: string | null; go?: (r: string) => void }) {
+function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectUpdate, initialPhotoUrl, go, demoMode }: { toast: (msg: string, icon?: string) => void; routeKey: number; brand: BrandSettings; project?: Project; batches?: BatchInfo[]; onProjectUpdate?: (p: Partial<Project>) => void; initialPhotoUrl?: string | null; go?: (r: string) => void; demoMode?: boolean }) {
   const [step, setStep] = React.useState(1);
   React.useEffect(() => { setStep(1); }, [routeKey]);
   const [logos, setLogos] = React.useState<{ white: string | null; black: string | null; blue: string | null } | null>(logosCache);
@@ -1202,11 +1202,20 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
           <h1 style={s('margin:0 0 4px;font-size:25px;font-weight:800;letter-spacing:-.5px')}>{stepTitles[step]}</h1>
           <div style={s('font-size:13px;color:var(--text-muted)')}>{stepSubs[step]} · passo {step === 1 ? 1 : step === 3 ? 2 : 3} di 3</div>
         </div>
-        {postQuota && !postQuota.unlimited && (
-          <div onClick={() => { if (postQuota.remaining <= 0) go?.('account'); }} style={s(`display:inline-flex;align-items:center;justify-content:center;gap:8px;background:#fff;border:1px solid ${postQuota.remaining > 0 ? '#f0ede7' : '#fecaca'};border-radius:99px;padding:8px 16px;flex:none${postQuota.remaining <= 0 ? ';cursor:pointer' : ''}`) as React.CSSProperties}>
-            <Icon name="megaphone" size={15} color={postQuota.remaining > 0 ? '#3B83F6' : '#dc2626'} />
-            <span style={{ fontSize: 13, fontWeight: 700, color: postQuota.remaining > 0 ? undefined : '#dc2626' }}>{Math.max(0, postQuota.remaining)} {postQuota.remaining === 1 ? 'post rimanente' : 'post rimanenti'}</span>
-          </div>
+        {!demoMode && !postQuota && (
+          <div style={{ width: 150, height: 37, borderRadius: 99, background: 'linear-gradient(90deg,#efece7,#f7f5f1,#efece7)', backgroundSize: '200% 100%', animation: 'demo-ai-shimmer 1.4s linear infinite', flex: 'none' }} />
+        )}
+        {!demoMode && postQuota && !postQuota.unlimited && (
+          postQuota.remaining > 0 ? (
+            <div style={s('display:inline-flex;align-items:center;justify-content:center;gap:8px;background:#fff;border:1px solid #f0ede7;border-radius:99px;padding:8px 16px;flex:none')}>
+              <Icon name="megaphone" size={15} color="#3B83F6" />
+              <span style={{ fontSize: 13, fontWeight: 700 }}>{postQuota.remaining} {postQuota.remaining === 1 ? 'post rimanente' : 'post rimanenti'}</span>
+            </div>
+          ) : (
+            <Box as="button" onClick={() => go?.('account')} style={s('display:flex;align-items:center;gap:8px;background:#3B83F6;color:#fff;border:none;border-radius:10px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer;flex:none') as React.CSSProperties} hover={s('background:#2b6fe0')}>
+              <Icon name="crown" size={15} color="#fff" />Vedi i piani
+            </Box>
+          )
         )}
       </div>
 
@@ -1704,7 +1713,7 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
               const tip = noPhoto ? 'Carica una foto per esportare' : missingExtra ? `Carica tutte le ${curTpl.multiPhoto} foto per esportare` : isVideo ? 'Hai caricato un video: scarica il video' : undefined;
               return (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {postQuota && !postQuota.unlimited && (
+              {!demoMode && postQuota && !postQuota.unlimited && (
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: postQuota.remaining > 0 ? 'var(--text-muted)' : '#dc2626' }}>
                   <Icon name="megaphone" size={13} color={postQuota.remaining > 0 ? 'var(--text-muted)' : '#dc2626'} />
                   {postQuota.remaining > 0 ? `${postQuota.remaining} post gratis rimasti` : 'Post gratis esauriti'}
@@ -2321,7 +2330,7 @@ function AssistenzaScreen({ toast, email, defaultType = 'support' }: { toast: (m
   );
 }
 
-function BrandScreen({ toast, brand: brandProp, setBrand: setBrandParent, brandRole, demoMode, locked, go }: { toast: (msg: string, icon?: string) => void; brand: BrandSettings; setBrand: (b: BrandSettings) => void; brandRole: 'owner' | 'member' | null; demoMode?: boolean; locked?: boolean; go?: (r: string) => void }) {
+function BrandScreen({ toast, brand: brandProp, setBrand: setBrandParent, brandRole, demoMode, locked, go, demoPaused }: { toast: (msg: string, icon?: string) => void; brand: BrandSettings; setBrand: (b: BrandSettings) => void; brandRole: 'owner' | 'member' | null; demoMode?: boolean; locked?: boolean; go?: (r: string) => void; demoPaused?: boolean }) {
   const [brand, setBrand] = React.useState<BrandState>(() => {
     const base = brandProp as unknown as BrandState;
     if (!demoMode) return base;
@@ -2332,9 +2341,10 @@ function BrandScreen({ toast, brand: brandProp, setBrand: setBrandParent, brandR
     if (!demoMode) return;
     setBrand(prev => ({ ...prev, logos: { logo_white_v: '/dashboard/logo-icon-white.svg', logo_black_v: '/dashboard/logo-icon-black.svg', logo_colored_v: '/dashboard/logo-icon.svg', logo_white_h: '/assets/svg/logo_scritta_white_circle.svg', logo_black_h: '/assets/svg/logo_scritta_black_circle.svg', logo_colored_h: '/dashboard/logo.svg' }, primaryColor: '#3B83F6', companyName: 'GetNearMe', companyWebsite: 'https://getnearme.com', companyEmail: 'info@getnearme.com' }));
     setDemoStep(0);
+    if (demoPaused) return;
     const timers = [1,2,3,4,5].map((step, i) => setTimeout(() => setDemoStep(step), 300 + i * 350));
     return () => timers.forEach(clearTimeout);
-  }, [demoMode]);
+  }, [demoMode, demoPaused]);
   const fileRefs = React.useRef<Record<string, HTMLInputElement | null>>({});
   const [loadedLogos, setLoadedLogos] = React.useState<Record<string, boolean>>({});
   const scope: 'team' | 'user' = brandRole === 'owner' ? 'team' : 'user';
@@ -2435,7 +2445,7 @@ function BrandScreen({ toast, brand: brandProp, setBrand: setBrandParent, brandR
         <div style={s('color:var(--text-muted);font-size:14px')}>Personalizza loghi, colori e informazioni che appaiono nei tuoi report e contenuti.</div>
       </div>
 
-      {locked && (
+      {locked && !demoMode && (
         <div onClick={() => go?.('account')} style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#eef4fe', border: '1px solid #cfe0fb', borderRadius: 12, padding: '12px 16px', marginBottom: 20, cursor: go ? 'pointer' : 'default' }}>
           <Icon name="lock" size={16} color="#1d5fd0" />
           <div style={{ fontSize: 13, color: '#1d5fd0', fontWeight: 600 }}>Sul piano Free i contenuti usano il brand GetNearMe. <span style={{ textDecoration: 'underline', fontWeight: 800 }}>Passa a un piano</span> per caricare il tuo logo e personalizzare tutto.</div>
@@ -2640,6 +2650,24 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
       return typeof updater === 'function' ? (updater as any)(prevArray) : updater;
     }, false);
   }, [mutateBatches]);
+
+  // Badge galleria +N per le foto batch: scatta SOLO quando il batch passa da
+  // attivo (processing/pending) a completato, non al submit. Conta una volta sola.
+  const batchPrevStatusRef = useRef<Map<string, string>>(new Map());
+  const batchCountedRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    for (const b of batches) {
+      const prev = batchPrevStatusRef.current.get(b.id);
+      const isDone = b.status === 'completed' || b.status === 'partial';
+      const wasActive = prev === 'processing' || prev === 'pending';
+      if (isDone && wasActive && !batchCountedRef.current.has(b.id)) {
+        batchCountedRef.current.add(b.id);
+        const n = b.completedItems || b.totalItems || 1;
+        if (routeRef.current !== 'media') setGalleryUnseen(x => x + n);
+      }
+      batchPrevStatusRef.current.set(b.id, b.status);
+    }
+  }, [batches]);
 
   // ── Video jobs (montaggio/avatar): tray "Lavori in corso" + Media ──
   // Source of truth = tabella ai_video_jobs (finalizzata dal cron, sopravvive a
@@ -2898,18 +2926,14 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
           const cta = el.querySelector('[data-tour="new-project"]');
           if (cta) { const cr = cta.getBoundingClientRect(); setTourCtaRect({ x: cr.x, y: cr.y, w: cr.width, h: cr.height }); }
           else setTourCtaRect(null);
-          // Combine trigger bar + absolute popup into one rect
-          const children = el.children;
-          let minX = r.x, minY = r.y, maxX = r.right, maxY = r.bottom;
-          for (let c = 0; c < children.length; c++) {
-            const cr2 = children[c].getBoundingClientRect();
-            if (cr2.width === 0 && cr2.height === 0) continue;
-            minX = Math.min(minX, cr2.x);
-            minY = Math.min(minY, cr2.y);
-            maxX = Math.max(maxX, cr2.x + cr2.width);
-            maxY = Math.max(maxY, cr2.y + cr2.height);
-          }
-          const combined = { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
+          // Tight rect: trigger bar (children[0]) top → popup card (children[1]) bottom.
+          const trig = el.children[0]?.getBoundingClientRect();
+          const popup = el.children[1]?.getBoundingClientRect();
+          const left = Math.min(trig?.left ?? r.left, popup?.left ?? r.left);
+          const right = Math.max(trig?.right ?? r.right, popup?.right ?? r.right);
+          const top = trig?.top ?? r.top;
+          const bottom = popup?.bottom ?? r.bottom;
+          const combined = { x: left, y: top, w: right - left, h: bottom - top };
           if (!skipStep) setTourStep(idx);
           setTourRect(combined); setTourRect2(null); scheduleFadeIn(); return;
         } else { setTourCtaRect(null); }
@@ -2925,7 +2949,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
     const def = TOUR_DEFS[n];
     const m = def.sel.match(/\[title="(.+?)"\]/);
     if (m && TOUR_LABEL_TO_ROUTE[m[1]]) go(TOUR_LABEL_TO_ROUTE[m[1]]);
-    else if (def.sel.includes('tour-dropdown')) go('media');
+    else if (def.sel.includes('tour-dropdown')) go('immobili');
     const isTray = def.sel === '[title="Lavori in corso"]';
     const isCenter = def.sel === '@center';
     const isNewProj = def.sel.includes('tour-dropdown');
@@ -2937,18 +2961,17 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
       if (hlFadeTimer.current) clearTimeout(hlFadeTimer.current);
     }
     if (isNewProj) {
-      setHlFading(false);
+      setHlFading(true);
       if (hlFadeTimer.current) clearTimeout(hlFadeTimer.current);
       setTourRect(null); setTourRect2(null);
     }
     else { if (!isCenter) setDemoJobsDone(false); setTourRect2(null); }
     setTrayOpen(isTray);
     if (isNewProj) {
-      // Apri il popup e misura sui frame subito dopo il render: il cutout
-      // compare insieme al popup (stesso momento), niente scatto/ritardo.
       setProjOpen(true);
       setTourStep(n);
-      requestAnimationFrame(() => requestAnimationFrame(() => tourMeasure(n)));
+      setTimeout(() => tourMeasure(n), 120);
+      setTimeout(() => tourMeasure(n), 300);
     } else if (needsFade) {
       setTourStep(n);
       setTimeout(() => tourMeasure(n), 60);
@@ -3023,8 +3046,8 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
         <div style={{ position: 'fixed', inset: 0, zIndex: 101, pointerEvents: 'none', animation: 'tour-fade-only .5s ease forwards' }}>
           {(() => {
             const isNP = tdef.sel === '[data-tour-dropdown]';
-            const pad = isNP ? 0 : 6;
-            const rad = isNP ? 10 : 14;
+            const pad = 6;
+            const rad = 14;
             const cx = tourRect ? tourRect.x - pad : 0;
             const cy = tourRect ? tourRect.y - pad : 0;
             const cw = tourRect ? tourRect.w + pad * 2 : 0;
@@ -3061,7 +3084,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
           {/* I 4 muri invisibili per gli step con tourRect (singolo), lasciano un buco fisico per far passare click/hover */}
           {tourRect && !tourRect2 && tdef.sel !== '@center' && (
             (() => {
-              const pad = tdef.sel === '[data-tour-dropdown]' ? 0 : 6;
+              const pad = 6;
               return (
                 <>
                   <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: Math.max(0, tourRect.y - pad), pointerEvents: 'auto' }} />
@@ -3080,14 +3103,15 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
               {tdef.sel !== '@center' && tdef.sel !== '[data-tour-dropdown]' && (
                 <div style={s('display:flex;align-items:center;justify-content:space-between;margin-bottom:6px')}>
                   <span style={s('font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#1d5fd0')}>{(tourStep + 1) + ' di ' + (TOUR_DEFS.length - 2)}</span>
-                  <span onClick={() => tourGo(TOUR_DEFS.length - 2)} style={s('font-size:12px;font-weight:600;color:#b3aca1;cursor:pointer;padding:4px')}>Salta il tour</span>
+                  <span onClick={() => { go('immobili'); tourGo(TOUR_DEFS.length - 2); }} style={s('font-size:12px;font-weight:600;color:#b3aca1;cursor:pointer;padding:4px')}>Salta il tour</span>
                 </div>
               )}
               {tdef.sel === '@center' && (
                 <div style={s('font-size:32px;text-align:center;margin-bottom:16px')}>🎉</div>
               )}
               <div style={s(`font-size:16px;font-weight:800;letter-spacing:-.2px;margin-bottom:4px;${tdef.sel === '@center' ? 'text-align:center;' : ''}`)}>{tdef.title}</div>
-              <div style={s(`font-size:13px;color:var(--text-sec);line-height:1.5;margin-bottom:24px;${tdef.sel === '@center' ? 'text-align:center;' : ''}`)}>{tdef.text}</div>
+              <div style={s(`font-size:13px;color:var(--text-sec);line-height:1.5;margin-bottom:16px;${tdef.sel === '@center' ? 'text-align:center;' : ''}`)}>{tdef.text}</div>
+              <div style={{ height: 1, background: 'var(--border-light)', margin: '0 0 16px' }} />
               <div style={s('display:flex;align-items:center;justify-content:space-between')}>
                 {tourStep > 0 && tdef.sel !== '@center' && <Box as="button" onClick={() => tourGo(tourStep - 1)} style={s('border:1px solid var(--border-main);background:var(--bg-card);font-size:12.5px;font-weight:700;padding:9px 16px;border-radius:8px;cursor:pointer;min-height:38px')} hover={s('background:var(--bg-hover)')}>Indietro</Box>}
                 {tdef.sel === '@center'
@@ -3220,8 +3244,8 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                     </>
                   ) : (
                     <>
-                      <div style={{ width: 30, height: 30, borderRadius: '50%', backgroundColor: '#f3f1ec', flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="plus" size={14} color="var(--text-muted)" /></div>
-                      <div className="max-md:!hidden" style={{ minWidth: 0, flex: 1 }}><div style={s('font-size:13px;font-weight:700;white-space:nowrap;line-height:1.2')}>Crea il tuo primo immobile</div></div>
+                      {tourStep === null && <div style={{ width: 30, height: 30, borderRadius: '50%', backgroundColor: '#f3f1ec', flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="plus" size={14} color="var(--text-muted)" /></div>}
+                      <div className="max-md:!hidden" style={{ minWidth: 0, flex: 1 }}><div style={s(`font-size:13px;font-weight:700;white-space:nowrap;line-height:1.2${tourStep !== null ? ';color:var(--text-muted)' : ''}`)}>{tourStep !== null ? 'I tuoi immobili' : 'Crea il tuo primo immobile'}</div></div>
                     </>
                   )}
                 </div>
@@ -3229,8 +3253,8 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
               </Box>
               {projOpen && (
                 <div className="max-md:!fixed max-md:!top-16 max-md:!left-2 max-md:!right-2 max-md:!w-auto" style={s(`position:absolute;top:52px;left:0;width:100%;background:var(--bg-card);border-radius:12px;box-shadow:0 16px 48px rgba(33,31,28,.16);border:1px solid var(--border-light);z-index:99;overflow:hidden;box-shadow:0 16px 48px rgba(33,31,28,.16)`)}>
-                  <div style={s('padding:12px 12px 8px')}><div style={s('display:flex;align-items:center;gap:8px;background:#faf9f7;border:1px solid #ece9e2;border-radius:10px;padding:8px 12px')}><Icon name="search" size={15} color="var(--text-muted)" /><input value={projQuery} onChange={(e) => setProjQuery(e.target.value)} placeholder="Cerca immobile…" style={s('border:none;background:transparent;outline:none;font-size:13px;width:100%')} /></div></div>
-                  <div style={{ padding: '0 12px 12px', borderBottom: '1px solid var(--border-light)' }}>
+                  {tourStep === null && <div style={s('padding:12px 12px 8px')}><div style={s('display:flex;align-items:center;gap:8px;background:#faf9f7;border:1px solid #ece9e2;border-radius:10px;padding:8px 12px')}><Icon name="search" size={15} color="var(--text-muted)" /><input value={projQuery} onChange={(e) => setProjQuery(e.target.value)} placeholder="Cerca immobile…" style={s('border:none;background:transparent;outline:none;font-size:13px;width:100%')} /></div></div>}
+                  <div style={{ padding: tourStep !== null ? '12px' : '0 12px 12px', borderBottom: '1px solid var(--border-light)' }}>
                     <Box data-tour="new-project" onClick={() => {
                       const inTourDropdown = tourStep !== null && TOUR_DEFS[tourStep]?.sel === '[data-tour-dropdown]';
                       if (inTourDropdown && tourReplayRef.current) {
@@ -3270,7 +3294,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
               <div style={{ position: 'relative' }} title="Lavori in corso">
                 <Box as="button" onClick={(e) => { e.stopPropagation(); setTrayOpen((o) => !o); setProjOpen(false); setNotifOpen(false); setProfileOpen(false); }} aria-label="Lavori in corso" style={s('border:none;background:transparent;width:38px;height:38px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;position:relative')} hover={s('background:#f1efe9')}>
                   <Icon name="inbox" size={18} />
-                  {(tourStep !== null || batches.filter(b => b.status === 'processing' || b.status === 'pending').length > 0 || videoJobs.some(j => j.stage === 'render' && !j.dismissed)) && (
+                  {((tourStep !== null && tourStep >= 6) || batches.filter(b => b.status === 'processing' || b.status === 'pending').length > 0 || videoJobs.some(j => j.stage === 'render' && !j.dismissed)) && (
                     <div style={{ position: 'absolute', top: 6, right: 6, width: 8, height: 8, borderRadius: '50%', background: '#3B83F6', border: '2px solid var(--bg-card)' }} />
                   )}
                 </Box>
@@ -3597,7 +3621,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                 );
               })()
             ) : route === 'studio' ? (
-              <PostSocialScreen toast={toast} routeKey={routeKey} brand={brand} project={active || DEMO_PROJECTS[0]} batches={batches} onProjectUpdate={active ? (upd) => setProjects(prev => prev.map(p => p.id === active.id ? { ...p, ...upd } : p)) : undefined} initialPhotoUrl={studioPhoto} go={go} />
+              <PostSocialScreen toast={toast} routeKey={routeKey} brand={brand} project={active || DEMO_PROJECTS[0]} batches={batches} onProjectUpdate={active ? (upd) => setProjects(prev => prev.map(p => p.id === active.id ? { ...p, ...upd } : p)) : undefined} initialPhotoUrl={studioPhoto} go={go} demoMode={tourStep !== null} />
             ) : route === 'staging' ? (
               <FotoAIScreen
                 toast={toast}
@@ -3609,7 +3633,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                 onGoPlan={() => go('account')}
                 onGoPost={() => go('studio')}
                 onGoVideo={(url) => go('video', { photoUrl: url })}
-                onCreated={() => setGalleryUnseen(n => n + 1)}
+                onCreated={(count = 1) => setGalleryUnseen(n => n + count)}
                 demoMode={tourStep !== null}
                 lockBrand={isFreePlan}
               />
@@ -3620,14 +3644,16 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                 project={active || DEMO_PROJECTS[0]}
                 batches={batches}
                 loadingBatches={loadingBatches}
+                activeVideoJobs={videoJobs.filter(j => j.stage === 'render' && !j.dismissed).map(j => ({ id: j.id, title: j.title, createdAt: j.createdAt, projectId: j.projectId }))}
                 demoMode={tourStep !== null}
                 demoJobsDone={demoJobsDone}
+                demoShowSkeleton={tourStep === 6}
                 go={go}
               />
             ) : route === 'video' ? (
-              <VideoAIScreen key="video" toast={toast} routeKey={routeKey} brand={brand} project={active || DEMO_PROJECTS[0]} onVideoJob={registerVideoJob} activeRenders={videoJobs.filter(j => j.stage === 'render' && !j.dismissed).length} initialPhotoUrl={studioPhoto} preselect={studioPhoto ? 'walkthrough' : undefined} demoMode={tourStep !== null} go={go} lockBrand={isFreePlan} />
+              <VideoAIScreen key="video" toast={toast} routeKey={routeKey} brand={brand} project={active || DEMO_PROJECTS[0]} onVideoJob={registerVideoJob} activeRenders={videoJobs.filter(j => j.stage === 'render' && !j.dismissed).length} pendingVideoRenders={videoJobs.filter(j => j.stage === 'render' && !j.dismissed && j.template !== 'montaggio').length} initialPhotoUrl={studioPhoto} preselect={studioPhoto ? 'walkthrough' : undefined} demoMode={tourStep !== null} go={go} lockBrand={isFreePlan} />
             ) : route === 'montaggio' ? (
-              <VideoAIScreen key="montaggio" toast={toast} routeKey={routeKey} brand={brand} preselect="montaggio" project={active || DEMO_PROJECTS[0]} onVideoJob={registerVideoJob} activeRenders={videoJobs.filter(j => j.stage === 'render' && !j.dismissed).length} demoMode={tourStep !== null} go={go} lockBrand={isFreePlan} />
+              <VideoAIScreen key="montaggio" toast={toast} routeKey={routeKey} brand={brand} preselect="montaggio" project={active || DEMO_PROJECTS[0]} onVideoJob={registerVideoJob} activeRenders={videoJobs.filter(j => j.stage === 'render' && !j.dismissed).length} pendingVideoRenders={0} demoMode={tourStep !== null} go={go} lockBrand={isFreePlan} />
             ) : route === 'quartiere' ? (
               <ZonaScreen key="quartiere" project={active || DEMO_PROJECTS[0]} projects={projects.length ? projects : DEMO_PROJECTS} brand={brand} toast={toast} locked={isFreePlan} go={go} />
             ) : route === 'report' || route === 'compare' ? (
@@ -3637,7 +3663,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
             ) : route === 'team' ? (
               <TeamScreen toast={toast} go={go} isAgency={hasAgency} userData={userData} />
             ) : route === 'brand' ? (
-              (!active && tourStep === null) ? (
+              (!active && tourStep === null && !welcomeOpen) ? (
                 <div style={s('display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 32px;text-align:center;max-width:1160px;margin:0 auto')}>
                   <div style={s('width:64px;height:64px;border-radius:16px;background:#f4f2ee;display:flex;align-items:center;justify-content:center;margin-bottom:18px')}>
                     <Icon name="palette" size={28} color="#b3aca1" />
@@ -3647,7 +3673,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                   <Box as="button" onClick={() => setNewProjOpen(true)} style={s('border:1px solid #3B83F6;background:#3B83F6;color:#fff;font-size:14px;font-weight:700;padding:12px 22px;border-radius:12px;cursor:pointer')} hover={s('background:#2b6fe0;border-color:#2b6fe0')}>Nuovo immobile</Box>
                 </div>
               ) : (
-                <BrandScreen toast={toast} brand={brand} setBrand={setBrand} brandRole={brandRole} demoMode={tourStep !== null} locked={brandLocked} go={go} />
+                <BrandScreen toast={toast} brand={brand} setBrand={setBrand} brandRole={brandRole} demoMode={tourStep !== null || welcomeOpen} demoPaused={welcomeOpen} locked={brandLocked} go={go} />
               )
             ) : route === 'impostazioni' ? (
               <SettingsScreen toast={toast} />
@@ -3714,10 +3740,12 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
           onImport={() => { setNewProjOpen(false); setImportOpen(true); }}
           onClose={() => setNewProjOpen(false)}
           onSuccess={(p) => {
+            const isFirst = projects.length === 0;
             setProjects(prev => [p as unknown as Project, ...prev]);
             setActiveProject(p.id);
             setNewProjOpen(false);
-            go('immobili');
+            // Primo immobile (l'unico): vai dritto alla sua scheda, non alla lista.
+            go(isFirst ? 'home' : 'immobili');
           }}
         />
       )}
@@ -3738,6 +3766,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
             const remaining = projects.filter(old => old.id !== id);
             if (remaining.length > 0) setActiveProject(remaining[0].id);
             else setActiveProject('');
+            go('immobili'); // dopo eliminazione -> lista "tutti gli immobili"
           }}
         />
       )}

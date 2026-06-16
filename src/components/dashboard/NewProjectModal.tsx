@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
+import Cropper, { type Area } from 'react-easy-crop';
 import { s, Box, Icon } from './ui';
 import { createProject, updateProject, deleteProject, ProjectData } from '@/lib/projects';
 import { supabase } from '@/lib/supabase';
@@ -20,6 +21,19 @@ const createImage = (url: string): Promise<HTMLImageElement> =>
     image.src = url
   })
 
+
+// Ritaglia l'area selezionata (px) dall'immagine e restituisce un data URL.
+async function getCroppedDataUrl(src: string, area: Area, maxOut = 1000): Promise<string> {
+  const image = await createImage(src);
+  const canvas = document.createElement('canvas');
+  const scale = Math.min(1, maxOut / Math.max(area.width, area.height));
+  canvas.width = Math.round(area.width * scale);
+  canvas.height = Math.round(area.height * scale);
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return src;
+  ctx.drawImage(image, area.x, area.y, area.width, area.height, 0, 0, canvas.width, canvas.height);
+  return canvas.toDataURL('image/jpeg', 0.85);
+}
 
 // Ridimensiona QUALSIASI cover data URL prima dell'upload. Il crop gia' limita a
 // 800px, ma i path "salta crop" / cover passata possono lasciare l'originale a
@@ -126,28 +140,55 @@ const isDupKey = (k: string) => {
   return DUP_ROOTS.some(r => n.includes(r));
 };
 
+// Campi extra preimpostati selezionabili dal dropdown "Aggiungi dato".
+const PRESET_EXTRA_FIELDS: { label: string; placeholder: string }[] = [
+  { label: 'Piano', placeholder: 'es. 3' },
+  { label: 'Totale piani edificio', placeholder: 'es. 5' },
+  { label: 'Ascensore', placeholder: 'es. Sì' },
+  { label: 'Classe energetica', placeholder: 'es. A' },
+  { label: 'Riscaldamento', placeholder: 'es. Autonomo' },
+  { label: 'Aria condizionata', placeholder: 'es. Sì' },
+  { label: 'Arredato', placeholder: 'es. Sì' },
+  { label: 'Balcone', placeholder: 'es. 1' },
+  { label: 'Terrazzo', placeholder: 'es. Sì' },
+  { label: 'Giardino', placeholder: 'es. Privato' },
+  { label: 'Cantina', placeholder: 'es. Sì' },
+  { label: 'Box / Garage', placeholder: 'es. 1' },
+  { label: 'Posto auto', placeholder: 'es. Sì' },
+  { label: 'Esposizione', placeholder: 'es. Sud' },
+  { label: 'Anno di costruzione', placeholder: 'es. 1998' },
+  { label: 'Stato immobile', placeholder: 'es. Ristrutturato' },
+  { label: 'Spese condominiali', placeholder: 'es. 80 €/mese' },
+  { label: 'Tipo di contratto', placeholder: 'es. Vendita' },
+];
+
 // Icona coerente in base al nome del campo importato.
 const iconForKey = (k: string): string => {
   const n = normKey(k);
   if (/bagn|bath/.test(n)) return 'bath';
   if (/camer|letto|bed/.test(n)) return 'bed';
+  if (/spes|condominial|costimensil|costigestion/.test(n)) return 'coins';
+  if (/anno|costruz|year/.test(n)) return 'calendar';
+  if (/totalepian|edific|palazz|fabbric/.test(n)) return 'building';
   if (/local|vani|room/.test(n)) return 'rooms';
   if (/mq|metr|superf|area/.test(n)) return 'area';
   if (/prezz|price|euro|costo/.test(n)) return 'euro';
-  if (/classe|energetic/.test(n)) return 'heating';
-  if (/contratt|vendita|affitto/.test(n)) return 'tag';
+  if (/classe|energetic|epoca|ape/.test(n)) return 'zap';
+  if (/contratt|vendita|affitto|locazion/.test(n)) return 'fileSign';
+  if (/stato|ristruttur|condizioniimmob|nuovo|abitabil/.test(n)) return 'wrench';
+  if (/esposiz|orient/.test(n)) return 'compass';
   if (/piano|piani|floor/.test(n)) return 'floor';
   if (/ascens|elevator/.test(n)) return 'elevator';
   if (/balcon/.test(n)) return 'balcony';
-  if (/terrazz|terrace/.test(n)) return 'terrace';
+  if (/terrazz|terrace/.test(n)) return 'umbrella';
   if (/giardin|garden/.test(n)) return 'garden';
   if (/cantin|cellar/.test(n)) return 'cellar';
   if (/box|garage|posto|parking|auto/.test(n)) return 'parking';
-  if (/riscald|heating/.test(n)) return 'heating';
+  if (/riscald|heating|termo/.test(n)) return 'heating';
   if (/condizion|clima|aria/.test(n)) return 'airConditioning';
   if (/cucin|cooking/.test(n)) return 'cookingPot';
-  if (/soggiorn|salotto|sofa/.test(n)) return 'sofa';
-  if (/zona|quartier|indiriz|via|citt|comun|local/.test(n)) return 'mapPin';
+  if (/soggiorn|salotto|sofa|arred/.test(n)) return 'sofa';
+  if (/zona|quartier|indiriz|via|citt|comun/.test(n)) return 'mapPin';
   if (/tipo|categor/.test(n)) return 'storage';
   return 'tag';
 };
@@ -172,6 +213,7 @@ export function NewProjectModal({
   onImport?: () => void; // apre l'import lista (solo creazione)
 }) {
   const [loading, setLoading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   // Nuovo immobile = 2 step; modifica = step unico (tutti i campi).
   const [step, setStep] = useState<Step>(1);
   const isNew = !editProject;
@@ -180,7 +222,11 @@ export function NewProjectModal({
   const [nome, setNome] = useState(editProject?.nome || '');
   const [addr, setAddr] = useState(editProject?.addr || '');
   const [cover, setCover] = useState(editProject?.cover || ''); // Foto di copertina
-  
+  // Riposizionamento copertina (stesso box, drag, niente zoom/bottoni).
+  const [cropSrc, setCropSrc] = useState<string | null>(null);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [cropArea, setCropArea] = useState<Area | null>(null);
+
   // Tech info (Step 2)
   const [prezzo, setPrezzo] = useState(editProject?.prezzo ? formatNumber(editProject.prezzo.toString()) : '');
   const [mq, setMq] = useState(editProject?.mq ? editProject.mq.toString() : '');
@@ -206,6 +252,32 @@ export function NewProjectModal({
   // Icone "info principali" fisse (default): non piu' personalizzabili.
   const [fieldIcons] = useState<Record<string, string>>(editProject?.icons || loadSavedIcons());
   const [dragOver, setDragOver] = useState(false);
+  // Campi extra (etichetta + valore), scelti da dropdown o personalizzati.
+  const [customFields, setCustomFields] = useState<{ key: string; value: string; custom?: boolean }[]>([]);
+  const [addMenuOpen, setAddMenuOpen] = useState(false);
+  const addMenuRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!addMenuOpen) return;
+    const onDoc = (e: MouseEvent) => { if (addMenuRef.current && !addMenuRef.current.contains(e.target as Node)) setAddMenuOpen(false); };
+    document.addEventListener('mousedown', onDoc);
+    return () => document.removeEventListener('mousedown', onDoc);
+  }, [addMenuOpen]);
+  // Dopo aver aggiunto un campo: focus + scroll sull'input appena creato.
+  const rowInputRefs = useRef<Map<number, HTMLInputElement | null>>(new Map());
+  const pendingFocusRef = useRef<number | null>(null);
+  useEffect(() => {
+    const i = pendingFocusRef.current;
+    if (i == null) return;
+    pendingFocusRef.current = null;
+    const el = rowInputRefs.current.get(i);
+    if (el) { el.focus(); el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+  }, [customFields.length]);
+  // Preset ancora disponibili: esclude quelli gia' presenti (campi import o aggiunti).
+  const usedExtraKeys = new Set<string>([
+    ...Object.keys(extraData).map(normKey),
+    ...customFields.map(f => normKey(f.key)),
+  ]);
+  const availablePresets = PRESET_EXTRA_FIELDS.filter(p => !usedExtraKeys.has(normKey(p.label)));
 
   // Primo immobile obbligatorio: blocca la chiusura via Esc.
   useEffect(() => {
@@ -223,13 +295,15 @@ export function NewProjectModal({
     const reader = new FileReader();
     reader.onload = async () => {
       const raw = reader.result as string;
+      let src = raw;
       try {
-        // Preview buono nel cropper (step 1). La compressione "vera" a pochi px
-        // avviene al salvataggio (handleFinish), non alla selezione.
-        setCover(await downscaleDataUrl(raw, 1400, 0.85));
-      } catch {
-        setCover(raw);
-      }
+        // Immagine sorgente per il cropper (buona qualita', payload contenuto).
+        src = await downscaleDataUrl(raw, 1400, 0.85);
+      } catch { /* usa raw */ }
+      setCrop({ x: 0, y: 0 });
+      setCropArea(null);
+      setCover('');
+      setCropSrc(src);
     };
     reader.readAsDataURL(file);
   }, []);
@@ -238,7 +312,9 @@ export function NewProjectModal({
 
 
   // Campi tecnici ora obbligatori (servono per descrizioni e Post Social).
-  const techFilled = !!(prezzo.trim() && mq.trim() && camere.trim() && bagni.trim());
+  const techFilled = isNew
+    ? !!(prezzo.trim() && mq.trim() && camere.trim() && bagni.trim())
+    : !!(prezzo.trim() && mq.trim());
 
   const handleFinish = async (skip: boolean = false) => {
     if (!nome.trim()) return;
@@ -257,7 +333,12 @@ export function NewProjectModal({
     // evitano fetch appese (R2/API) -> niente piu' "loading infinito".
     try {
       const finalThumb0 = editProject?.thumb || '';
+      // Se c'e' un ritaglio in corso, applicalo ora (il box mostra l'area scelta).
       let finalCover = cover;
+      if (cropSrc) {
+        try { finalCover = cropArea ? await getCroppedDataUrl(cropSrc, cropArea, 1000) : cropSrc; }
+        catch { finalCover = cropSrc; }
+      }
       let finalThumb = finalThumb0;
       if (finalCover && finalCover.startsWith('data:image/')) {
         // Due versioni: cover orizzontale ~500px (card) + thumb ~100px (avatar/lista, come la foto profilo).
@@ -291,7 +372,15 @@ export function NewProjectModal({
         cover: finalCover, // Empty means use gradient
         thumb: finalThumb, // ~100px per avatar/lista
         icons: fieldIcons,
-        ...(editProject ? { import_data: { ...(editProject.import_data as Record<string, unknown> || {}), ...extraData } } : {}),
+        ...(() => {
+          const customObj = Object.fromEntries(
+            customFields.filter(f => f.key.trim()).map(f => [f.key.trim(), f.value.trim()])
+          );
+          if (editProject) {
+            return { import_data: { ...(editProject.import_data as Record<string, unknown> || {}), ...extraData, ...customObj } };
+          }
+          return Object.keys(customObj).length ? { import_data: customObj } : {};
+        })(),
       };
 
       const p: ProjectData | null = editProject
@@ -315,15 +404,15 @@ export function NewProjectModal({
   const handleDelete = async () => {
     if (!editProject) return;
     if (!confirm('Sei sicuro di voler eliminare questo immobile? L\'operazione non è reversibile.')) return;
-    
-    setLoading(true);
+
+    setDeleting(true);
     const ok = await deleteProject(editProject.id);
-    setLoading(false);
-    
+
     if (ok) {
       toast('Immobile eliminato', 'check');
-      if (onDelete) onDelete(editProject.id);
+      if (onDelete) onDelete(editProject.id); // chiude il modal + naviga
     } else {
+      setDeleting(false);
       toast('Errore durante l\'eliminazione', 'x');
     }
   };
@@ -362,7 +451,7 @@ export function NewProjectModal({
       />
       
       {/* Modal Content */}
-      <div style={{ position: 'relative', width: '100%', maxWidth: (editProject || step === 2) ? 720 : 480, background: '#fff', borderRadius: 24, boxShadow: '0 24px 64px rgba(20, 18, 15, 0.2)', overflow: 'hidden', animation: 'orb-float 0.4s ease-out', display: 'flex', flexDirection: 'column', maxHeight: '90vh', transition: 'max-width .25s ease' }}>
+      <div style={{ position: 'relative', width: '100%', maxWidth: editProject ? 720 : 480, background: '#fff', borderRadius: 24, boxShadow: '0 24px 64px rgba(20, 18, 15, 0.2)', overflow: 'hidden', animation: 'orb-float 0.4s ease-out', display: 'flex', flexDirection: 'column', maxHeight: '90vh', transition: 'max-width .25s ease' }}>
         
         {/* Header */}
         <div className="max-md:!p-4" style={{ padding: '24px 32px 20px', borderBottom: '1px solid #f0ede7', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -408,7 +497,25 @@ export function NewProjectModal({
 
               <div>
                 <label style={labelStyle}>Foto di copertina (opzionale)</label>
-                {cover ? (
+                {cropSrc ? (
+                  <div style={{ position: 'relative', width: '100%', height: 180, borderRadius: 16, overflow: 'hidden', border: '1px solid #e4e1da', background: '#211f1c' }}>
+                    <Cropper
+                      image={cropSrc}
+                      crop={crop}
+                      zoom={1}
+                      aspect={1}
+                      objectFit="cover"
+                      showGrid={false}
+                      onCropChange={setCrop}
+                      onCropComplete={(_: Area, px: Area) => setCropArea(px)}
+                    />
+                    <label style={{ position: 'absolute', bottom: 10, left: 10, zIndex: 5, background: 'rgba(0,0,0,0.55)', color: '#fff', padding: '6px 12px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                      <Icon name="image-plus" size={14} color="#fff" />Cambia foto
+                      <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => handleCoverFile(e.target.files?.[0])} />
+                    </label>
+                    <div onClick={() => { setCropSrc(null); setCover(''); }} style={{ position: 'absolute', bottom: 10, right: 10, zIndex: 5, background: 'rgba(0,0,0,0.55)', color: '#fff', padding: '6px 12px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Rimuovi</div>
+                  </div>
+                ) : cover ? (
                   <div style={{ position: 'relative', width: '100%', height: 180, borderRadius: 16, overflow: 'hidden', border: '1px solid #e4e1da', backgroundImage: `url("${cover}")`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
                     <label style={{ position: 'absolute', bottom: 10, left: 10, background: 'rgba(0,0,0,0.55)', color: '#fff', padding: '6px 12px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                       <Icon name="image-plus" size={14} color="#fff" />Cambia foto
@@ -449,7 +556,7 @@ export function NewProjectModal({
               {(editProject || step === 2) && (<>
               {!isNew && <hr style={{ border: 'none', borderTop: '1px solid #f0ede7', margin: '8px 0' }} />}
 
-              <div className="max-md:!grid-cols-2" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+              <div className="max-md:!grid-cols-2" style={{ display: 'grid', gridTemplateColumns: editProject ? 'repeat(3, 1fr)' : 'repeat(2, 1fr)', gap: 16 }}>
                 {iconField('prezzo', `Prezzo (${fieldIcons.prezzo === 'dollar' ? '$' : fieldIcons.prezzo === 'pound' ? '£' : '€'})`, fieldIcons.prezzo, prezzo, v => setPrezzo(formatNumber(v)), 'es. 350.000')}
                 {iconField('mq', 'Metratura (m²)', 'area', mq, v => setMq(formatNumber(v)), 'es. 95')}
                 {iconField('camere', 'Camere', 'bed', camere, v => setCamere(formatNumber(v)), 'es. 2')}
@@ -465,11 +572,92 @@ export function NewProjectModal({
               </div>
 
               {editProject && (
-                <div>
-                  <label style={labelStyle}>Descrizione</label>
-                  <textarea value={descrizione} onChange={e => setDescrizione(e.target.value)} rows={4} placeholder="Descrizione immobile" style={{ ...inputStyle, resize: 'vertical', minHeight: 92 } as React.CSSProperties} />
-                  <div style={{ fontSize: 11.5, color: '#b3aca1', marginTop: 8 }}>Tutti i campi sono modificabili e disponibili per i report.</div>
+              <div>
+                <label style={labelStyle}>Descrizione</label>
+                <textarea value={descrizione} onChange={e => setDescrizione(e.target.value)} rows={4} placeholder="Descrizione immobile" style={{ ...inputStyle, resize: 'vertical', minHeight: 92 } as React.CSSProperties} />
+                <div style={{ fontSize: 11.5, color: '#b3aca1', marginTop: 8 }}>Tutti i campi sono modificabili e disponibili per i report.</div>
+              </div>
+              )}
+
+              {/* Dati aggiuntivi: scegli il dato dal dropdown, poi inserisci il valore */}
+              {editProject && (
+              <div>
+                <label style={labelStyle}>Dati aggiuntivi</label>
+                {customFields.length > 0 && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 12 }}>
+                    {customFields.map((f, i) => {
+                      const ph = PRESET_EXTRA_FIELDS.find(p => p.label === f.key)?.placeholder || 'Valore';
+                      return (
+                        <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                          {f.custom ? (
+                            <input
+                              ref={el => { if (f.custom) rowInputRefs.current.set(i, el); }}
+                              value={f.key}
+                              onChange={e => setCustomFields(prev => prev.map((x, j) => j === i ? { ...x, key: e.target.value } : x))}
+                              placeholder="Nome dato"
+                              style={{ ...inputStyle, flex: '0 0 40%' } as React.CSSProperties}
+                              onFocus={e => e.currentTarget.style.borderColor = '#3B83F6'}
+                              onBlur={e => e.currentTarget.style.borderColor = '#e4e1da'}
+                            />
+                          ) : (
+                            <div style={{ flex: '0 0 40%', display: 'flex', alignItems: 'center', gap: 8, padding: '11px 14px', border: '1px solid #e4e1da', borderRadius: 10, background: '#faf9f7', fontSize: 13.5, fontWeight: 700, color: '#57534c', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              <span style={{ width: 16, height: 16, display: 'flex', flex: 'none' }} dangerouslySetInnerHTML={{ __html: (TPL_ICONS as Record<string, string>)[iconForKey(f.key)] || (TPL_ICONS as Record<string, string>).tag || '' }} />
+                              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{f.key}</span>
+                            </div>
+                          )}
+                          <input
+                            ref={el => { if (!f.custom) rowInputRefs.current.set(i, el); }}
+                            value={f.value}
+                            onChange={e => setCustomFields(prev => prev.map((x, j) => j === i ? { ...x, value: e.target.value } : x))}
+                            placeholder={ph}
+                            style={{ ...inputStyle, flex: 1 } as React.CSSProperties}
+                            onFocus={e => e.currentTarget.style.borderColor = '#3B83F6'}
+                            onBlur={e => e.currentTarget.style.borderColor = '#e4e1da'}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setCustomFields(prev => prev.filter((_, j) => j !== i))}
+                            aria-label="Rimuovi campo"
+                            style={{ flex: 'none', width: 38, height: 38, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e4e1da', borderRadius: 10, background: '#fff', cursor: 'pointer', color: '#8c867d' }}
+                          >
+                            <Icon name="x" size={16} color="#8c867d" />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+                <div ref={addMenuRef} style={{ position: 'relative' }}>
+                  <Box
+                    as="button"
+                    type="button"
+                    onClick={() => setAddMenuOpen(o => !o)}
+                    style={{ ...inputStyle, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', color: '#57534c', fontWeight: 700, textAlign: 'left' } as React.CSSProperties}
+                    hover={s('border-color:var(--border-dark)')}
+                  >
+                    + Aggiungi un dato…
+                    <span style={{ display: 'flex', transition: 'transform .15s', transform: addMenuOpen ? 'rotate(180deg)' : 'none' }}><Icon name="chevron-down" size={16} color="#8c867d" /></span>
+                  </Box>
+                  {addMenuOpen && (
+                    <div style={{ position: 'absolute', bottom: 'calc(100% + 4px)', left: 0, right: 0, background: '#fff', border: '1px solid #e4e1da', borderRadius: 10, boxShadow: '0 -12px 32px rgba(33,31,28,.14)', zIndex: 20, overflow: 'hidden', maxHeight: 280, overflowY: 'auto' }}>
+                      {availablePresets.length > 0 && (
+                        <Box as="button" type="button" onClick={() => { pendingFocusRef.current = customFields.length; setCustomFields(prev => [...prev, ...availablePresets.map(p => ({ key: p.label, value: '' }))]); setAddMenuOpen(false); }} style={s('display:flex;align-items:center;gap:8px;width:100%;padding:11px 14px;border:none;background:#eef4fe;cursor:pointer;font-size:13.5px;font-weight:700;color:#1d5fd0;text-align:left;border-bottom:1px solid #f0ede7') as React.CSSProperties} hover={s('background:#e0ecfd')}>
+                          <Icon name="plus" size={15} color="#1d5fd0" />Aggiungi tutti ({availablePresets.length})
+                        </Box>
+                      )}
+                      {availablePresets.map(p => (
+                        <Box key={p.label} as="button" type="button" onClick={() => { pendingFocusRef.current = customFields.length; setCustomFields(prev => [...prev, { key: p.label, value: '' }]); setAddMenuOpen(false); }} style={s('display:flex;align-items:center;gap:8px;width:100%;padding:10px 14px;border:none;background:transparent;cursor:pointer;font-size:13.5px;font-weight:600;color:#211f1c;text-align:left') as React.CSSProperties} hover={s('background:#faf9f7')}>
+                          <span style={{ width: 16, height: 16, display: 'flex', flex: 'none', color: '#57534c' }} dangerouslySetInnerHTML={{ __html: (TPL_ICONS as Record<string, string>)[iconForKey(p.label)] || (TPL_ICONS as Record<string, string>).tag || '' }} />
+                          {p.label}
+                        </Box>
+                      ))}
+                      <Box as="button" type="button" onClick={() => { pendingFocusRef.current = customFields.length; setCustomFields(prev => [...prev, { key: '', value: '', custom: true }]); setAddMenuOpen(false); }} style={s('display:flex;align-items:center;gap:8px;width:100%;padding:10px 14px;border:none;border-top:1px solid #f0ede7;background:transparent;cursor:pointer;font-size:13.5px;font-weight:600;color:#57534c;text-align:left') as React.CSSProperties} hover={s('background:#faf9f7')}>
+                        <Icon name="plus" size={15} color="#8c867d" />Altro (personalizzato)…
+                      </Box>
+                    </div>
+                  )}
                 </div>
+              </div>
               )}
               </>)}
           </div>
@@ -480,10 +668,11 @@ export function NewProjectModal({
               <div style={{ display: 'flex', gap: 12, marginTop: 0, width: '100%', justifyContent: 'flex-end' }}>
                 {editProject ? (
                   <>
-                    <Box as="button" onClick={handleDelete} disabled={loading} style={s('border:1.5px solid #dc2626;background:#fff;color:#dc2626;font-size:14px;font-weight:700;padding:12px 20px;border-radius:12px;cursor:pointer;flex:1;transition:all 0.2s')} hover={s('background:#dc2626;color:#fff')}>
-                      Elimina Immobile
+                    <Box as="button" onClick={handleDelete} disabled={loading || deleting} style={s('border:1.5px solid #dc2626;background:#fff;color:#dc2626;font-size:14px;font-weight:700;padding:12px 20px;border-radius:12px;cursor:' + (loading || deleting ? 'default' : 'pointer') + ';flex:1;transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:8px;opacity:' + (loading || deleting ? 0.7 : 1))} hover={loading || deleting ? undefined : s('background:#dc2626;color:#fff')}>
+                      {deleting && <span style={{ width: 15, height: 15, border: '2px solid #dc2626', borderTopColor: 'transparent', borderRadius: '50%', display: 'inline-block', animation: 'export-spin .8s linear infinite' }} />}
+                      {deleting ? 'Eliminazione...' : 'Elimina Immobile'}
                     </Box>
-                    <Box as="button" onClick={() => handleFinish(false)} disabled={loading || !techFilled} style={s('border:none;background:#3B83F6;color:#fff;font-size:14px;font-weight:700;padding:12px 20px;border-radius:12px;cursor:' + (loading || !techFilled ? 'default' : 'pointer') + ';flex:1;box-shadow:0 4px 12px rgba(59,131,246,0.25);opacity:' + (loading || !techFilled ? 0.45 : 1))} hover={loading || !techFilled ? undefined : s('background:#2563EB;box-shadow:0 6px 16px rgba(59,131,246,0.3)')}>
+                    <Box as="button" onClick={() => handleFinish(false)} disabled={loading || deleting || !techFilled} style={s('border:none;background:#3B83F6;color:#fff;font-size:14px;font-weight:700;padding:12px 20px;border-radius:12px;cursor:' + (loading || deleting || !techFilled ? 'default' : 'pointer') + ';flex:1;box-shadow:0 4px 12px rgba(59,131,246,0.25);opacity:' + (loading || deleting || !techFilled ? 0.45 : 1))} hover={loading || deleting || !techFilled ? undefined : s('background:#2563EB;box-shadow:0 6px 16px rgba(59,131,246,0.3)')}>
                       {loading ? 'Salvataggio...' : 'Salva modifiche'}
                     </Box>
                   </>

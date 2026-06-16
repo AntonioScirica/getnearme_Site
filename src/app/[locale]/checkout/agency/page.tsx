@@ -722,7 +722,7 @@ function CheckoutAgencyContent() {
               onChange={(e) => { setTermsAccepted(e.target.checked); if (e.target.checked) setError(null); }}
               className="sr-only peer"
             />
-            <div className="w-5 h-5 border-2 border-[#1a1a2e] rounded bg-white peer-checked:bg-blue-500 peer-checked:border-[#1a1a2e] transition-all flex items-center justify-center" style={{ boxShadow: '0 4px 16px rgba(16,24,40,0.08)' }}>
+            <div className="w-5 h-5 border-2 border-[#1a1a2e] rounded bg-white peer-checked:bg-blue-500 peer-checked:border-blue-500 transition-all flex items-center justify-center" style={{ boxShadow: '0 4px 16px rgba(16,24,40,0.08)' }}>
               {termsAccepted && (
                 <svg className="w-3 h-3 text-white" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="2 6 5 9 10 3" />
@@ -747,7 +747,7 @@ function CheckoutAgencyContent() {
               onChange={(e) => setMarketingAccepted(e.target.checked)}
               className="sr-only peer"
             />
-            <div className="w-5 h-5 border-2 border-[#1a1a2e] rounded bg-white peer-checked:bg-blue-500 peer-checked:border-[#1a1a2e] transition-all flex items-center justify-center" style={{ boxShadow: '0 4px 16px rgba(16,24,40,0.08)' }}>
+            <div className="w-5 h-5 border-2 border-[#1a1a2e] rounded bg-white peer-checked:bg-blue-500 peer-checked:border-blue-500 transition-all flex items-center justify-center" style={{ boxShadow: '0 4px 16px rgba(16,24,40,0.08)' }}>
               {marketingAccepted && (
                 <svg className="w-3 h-3 text-white" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="2 6 5 9 10 3" />
@@ -883,10 +883,10 @@ function CheckoutAgencyContent() {
                 </a>
               </div>
             ) : isRedirecting || checkingSubscription ? (
-              /* Redirecting to Stripe or checking subscription */
+              /* Redirecting to Stripe (paid) or checking subscription. Free: nessun pagamento. */
               <div className="text-center py-4">
                 <Loader2 className="w-8 h-8 animate-spin text-blue-500 mx-auto mb-3" />
-                <p className="text-slate-500 text-sm">{t.redirecting}</p>
+                <p className="text-slate-500 text-sm">{hasPlan ? t.redirecting : t.loading}</p>
               </div>
             ) : user && needsConsent ? (
               /* Nuovo utente via Google: accetta i termini una volta sola */
@@ -932,7 +932,7 @@ function CheckoutAgencyContent() {
                       <span>{t.loading}</span>
                     </>
                   ) : (
-                    <span>{t.proceedToPayment}</span>
+                    <span>{hasPlan ? t.proceedToPayment : ({ it: 'Continua', en: 'Continue', es: 'Continuar', fr: 'Continuer', ru: 'Продолжить', uk: 'Продовжити' }[locale as string] || 'Continue')}</span>
                   )}
                 </button>
 
@@ -942,9 +942,11 @@ function CheckoutAgencyContent() {
                   </div>
                 )}
 
+                {hasPlan && (
                 <div className="flex items-center justify-center gap-4 mt-6 text-xs text-slate-400">
                   <span className="flex items-center gap-1"><ShieldIcon /> {t.securePayment}</span>
                 </div>
+                )}
               </>
             ) : !user ? (
               /* Not logged in - show auth UI */

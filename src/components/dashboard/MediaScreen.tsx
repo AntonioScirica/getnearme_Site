@@ -12,7 +12,7 @@ const loadJSZip = () => import('jszip').then(m => m.default);
 
 const DEMO_NEW_ITEM = { src: 'https://images.unsplash.com/photo-1600573472550-8090b5e0745e?w=600&h=600&fit=crop', type: 'photo' as const };
 
-function DemoMediaContent({ demoJobsDone }: { demoJobsDone?: boolean }) {
+function DemoMediaContent({ demoJobsDone, showSkeleton }: { demoJobsDone?: boolean; showSkeleton?: boolean }) {
   const [visibleItems, setVisibleItems] = useState(0);
   const [showNewItem, setShowNewItem] = useState(false);
 
@@ -23,12 +23,19 @@ function DemoMediaContent({ demoJobsDone }: { demoJobsDone?: boolean }) {
     return () => clearInterval(id);
   }, []);
 
+  const [newItemRevealed, setNewItemRevealed] = useState(false);
+  useEffect(() => {
+    if (showSkeleton) {
+      setShowNewItem(true);
+      setNewItemRevealed(false);
+    }
+  }, [showSkeleton]);
+
   useEffect(() => {
     if (demoJobsDone) {
-      const t = setTimeout(() => setShowNewItem(true), 400);
+      const t = setTimeout(() => setNewItemRevealed(true), 800);
       return () => clearTimeout(t);
     }
-    setShowNewItem(false);
   }, [demoJobsDone]);
 
   let globalIdx = 0;
@@ -60,8 +67,21 @@ function DemoMediaContent({ demoJobsDone }: { demoJobsDone?: boolean }) {
                     transition: 'opacity .45s cubic-bezier(.22,1,.36,1), transform .45s cubic-bezier(.22,1,.36,1)',
                     ...(isNew ? { boxShadow: '0 0 0 2px #3B83F6, 0 4px 16px rgba(59,131,246,0.25)' } : {}),
                   }}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={item.src} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    {isNew && !newItemRevealed ? (
+                      <div style={{ width: '100%', height: '100%', background: 'linear-gradient(110deg, #f0ede7 30%, #e8e4dc 38%, #f0ede7 46%)', backgroundSize: '200% 100%', animation: 'demo-ai-shimmer 1.5s ease-in-out infinite', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+                          <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(59,131,246,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3B83F6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M18 14l.7 2.1L21 17l-2.3.9L18 20l-.7-2.1L15 17l2.3-.9L18 14z"/></svg>
+                          </div>
+                          <span style={{ fontSize: 10, fontWeight: 700, color: '#3B83F6', letterSpacing: '.03em' }}>Generazione AI...</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={item.src} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', ...(isNew ? { animation: 'demo-ai-reveal .6s ease-out both' } : {}) }} />
+                      </>
+                    )}
                     {isNew && (
                       <div style={{
                         position: 'absolute', top: 8, left: 8, background: '#3B83F6', color: '#fff',
@@ -122,8 +142,10 @@ export default function MediaScreen({
   project,
   batches,
   loadingBatches,
+  activeVideoJobs = [],
   demoMode = false,
   demoJobsDone = false,
+  demoShowSkeleton = false,
   go,
 }: {
   toast: (msg: string, icon?: string) => void;
@@ -131,8 +153,10 @@ export default function MediaScreen({
   project?: Project;
   batches: BatchInfo[];
   loadingBatches: boolean;
+  activeVideoJobs?: { id: string; title?: string; createdAt: number; projectId?: string | null }[];
   demoMode?: boolean;
   demoJobsDone?: boolean;
+  demoShowSkeleton?: boolean;
   go?: (r: string, params?: { photoUrl?: string }) => void;
 }) {
   const [menuKey, setMenuKey] = useState<string | null>(null);
@@ -287,7 +311,7 @@ export default function MediaScreen({
   }, [project?.id]);
   useEffect(() => { void refreshVideos(); }, [refreshVideos, routeKey]);
 
-  type MediaItem = (BatchPhoto & { batchId: string }) & { isVideo?: boolean; title?: string; videoId?: string };
+  type MediaItem = (BatchPhoto & { batchId: string }) & { isVideo?: boolean; title?: string; videoId?: string; pending?: boolean };
 
   // Raggruppa foto + video per giorno (una sezione al giorno).
   const days = useMemo(() => {
@@ -312,8 +336,30 @@ export default function MediaScreen({
         ensure(v.ts).photos.push({ index: -1 - i, resultUrl: v.url, sourceUrl: null, status: 'completed', batchId: 'video', isVideo: true, title: v.title, videoId: v.id } as MediaItem);
       });
     }
+    // Skeleton dei processi FOTO in corso: una tile per ogni foto ancora da generare.
+    if (filter !== 'video') {
+      for (const batch of projectBatches) {
+        if (batch.status !== 'processing' && batch.status !== 'pending') continue;
+        const pendingN = Math.max(0, batch.totalItems - batch.completedItems);
+        if (pendingN === 0) continue;
+        const day = ensure(new Date(batch.createdAt).getTime());
+        for (let k = 0; k < pendingN; k++) {
+          day.photos.push({ index: -100000 - k, resultUrl: '', sourceUrl: null, status: 'processing', batchId: `pending_${batch.id}`, pending: true } as MediaItem);
+        }
+      }
+    }
+    // Skeleton dei VIDEO in corso (render): una tile per job attivo.
+    if (filter !== 'staging') {
+      activeVideoJobs
+        .filter(j => !project || !j.projectId || j.projectId === project.id)
+        .forEach((j, i) => {
+          ensure(j.createdAt).photos.push({ index: -200000 - i, resultUrl: '', sourceUrl: null, status: 'processing', batchId: 'video-pending', pending: true, isVideo: true, title: j.title } as MediaItem);
+        });
+    }
+    // Processi in corso in cima a ciascun giorno.
+    map.forEach(d => d.photos.sort((a, b) => (b.pending ? 1 : 0) - (a.pending ? 1 : 0)));
     return Array.from(map.values()).sort((a, b) => b.ts - a.ts);
-  }, [validBatches, photosByBatch, filter, videos]);
+  }, [validBatches, projectBatches, photosByBatch, filter, videos, activeVideoJobs, project]);
 
   const anyPhotosLoading = validBatches.some(b => loadingPhotos[b.id] || (!photosByBatch[b.id] && b.completedItems > 0));
 
@@ -344,7 +390,7 @@ export default function MediaScreen({
       </div>
 
       {demoMode ? (
-        <DemoMediaContent demoJobsDone={demoJobsDone} />
+        <DemoMediaContent demoJobsDone={demoJobsDone} showSkeleton={demoShowSkeleton} />
       ) : (loadingBatches || anyPhotosLoading || !videosLoaded) ? (
         <div className="max-md:!grid-cols-2" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 16 }}>
           {[1, 2, 3, 4, 5, 6].map(i => (
@@ -371,9 +417,11 @@ export default function MediaScreen({
             // invarianti al plurale in italiano: "1 foto", "2 video").
             const nVideos = downloadable.filter(p => (p as MediaItem).isVideo).length;
             const nPhotos = downloadable.length - nVideos;
+            const nPending = day.photos.filter(p => (p as MediaItem).pending).length;
             const countLabel = [
               nPhotos > 0 ? `${nPhotos} foto` : '',
               nVideos > 0 ? `${nVideos} video` : '',
+              nPending > 0 ? `${nPending} in elaborazione` : '',
             ].filter(Boolean).join(' · ') || '0 foto';
             return (
               <div key={day.key}>
@@ -428,6 +476,21 @@ export default function MediaScreen({
 
                 <div className="max-md:!grid-cols-2" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 16 }}>
                   {day.photos.slice(0, visibleCounts[day.key] || 20).map((photo, pi) => {
+                    if ((photo as MediaItem).pending) {
+                      const isVid = (photo as MediaItem).isVideo;
+                      return (
+                        <div key={`pending_${photo.batchId}_${photo.index}`} style={{ position: 'relative', aspectRatio: '4/3', borderRadius: 12, overflow: 'hidden', border: '1px solid #f0ede7', background: '#f4f2ee' }}>
+                          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, #efece7 0%, #f7f5f1 50%, #efece7 100%)', backgroundSize: '200% 100%', animation: 'demo-ai-shimmer 1.4s linear infinite' }} />
+                          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+                            <div style={{ width: 36, height: 36, borderRadius: '50%', border: '2.5px solid #d8d4cb', borderTopColor: '#3B83F6', animation: 'export-spin .8s linear infinite' }} />
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: '#57534c' }}>
+                              <Icon name={isVid ? 'film' : 'sparkles'} size={13} color="#3B83F6" />
+                              {isVid ? 'Video in elaborazione' : 'Generazione AI…'}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }
                     if (photo.status === 'failed') {
                       return (
                         <div key={`${photo.batchId}_${photo.index}`} style={{ position: 'relative', aspectRatio: '4/3', borderRadius: 12, border: '1px solid #fca5a5', background: '#fef2f2', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 20, textAlign: 'center', animation: 'media-reveal .7s cubic-bezier(.22,1,.36,1) both', animationDelay: `${pi * 60}ms` }}>
