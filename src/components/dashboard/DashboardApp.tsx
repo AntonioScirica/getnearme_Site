@@ -56,6 +56,8 @@ import { pollRenderProgress, fetchVideoQuota } from '@/lib/aiVideo';
 import MediaScreen from './MediaScreen';
 import ReportScreen from './ReportScreen';
 import ZonaScreen from './ZonaScreen';
+import TeamScreen from './TeamScreen';
+import { autoJoinTeam } from '@/lib/team';
 import { HomeScreen } from './HomeScreen';
 import { NewProjectModal } from './NewProjectModal';
 import { ImportProjectsModal } from './ImportProjectsModal';
@@ -84,7 +86,7 @@ const NAV_SECTIONS = [
   { label: 'Immobili', items: [{ icon: 'building-2', label: 'Tutti gli immobili', route: 'immobili' }] },
   { label: 'Analisi', items: [{ icon: 'file-text', label: 'Report', route: 'report' }, { icon: 'map-pin', label: 'Zona', route: 'quartiere' }] },
   { label: 'Immobile attivo', items: [{ icon: 'layout-dashboard', label: 'Scheda', route: 'home' }, { icon: 'sparkles', label: 'Homestaging AI', route: 'staging' }, { icon: 'film', label: 'Video AI', route: 'video' }, { icon: 'scissors', label: 'Montaggio', route: 'montaggio' }, { icon: 'megaphone', label: 'Post Social', route: 'studio' }, { icon: 'images', label: 'Galleria', route: 'media' }] },
-  { label: 'Agenzia', items: [{ icon: 'palette', label: 'Brand', route: 'brand' }, { icon: 'credit-card', label: 'Piano', route: 'account' }] },
+  { label: 'Agenzia', items: [{ icon: 'palette', label: 'Brand', route: 'brand' }, { icon: 'users', label: 'Team', route: 'team' }, { icon: 'credit-card', label: 'Piano', route: 'account' }] },
 ];
 
 const TOUR_LABEL_TO_ROUTE: Record<string, string> = {};
@@ -298,30 +300,45 @@ const fmt = (n: number) => '€ ' + Number(n || 0).toLocaleString('it-IT');
 /* ───── PLANS DATA ───── */
 const STRIPE_BILLING_PORTAL = 'https://billing.stripe.com/p/login/9B68wP7WH3blfTG15eak000';
 
+// Link di pagamento Stripe per subscription_type.
+// individual_* = link esistenti (€59/€590). agency_* = nuovi (€399 / €3588/anno):
+// crearli con `scripts/create-agency-stripe.mjs` e sostituire i placeholder.
 const STRIPE_PAYMENT_LINKS: Record<string, string> = {
-  agency_monthly: 'https://buy.stripe.com/fZucN5dh17rB5f2bJSak00G',
-  agency_annual: 'https://buy.stripe.com/bJe4gzdh19zJgXK9BKak00H',
+  individual_monthly: 'https://buy.stripe.com/fZucN5dh17rB5f2bJSak00G',
+  individual_annual: 'https://buy.stripe.com/bJe4gzdh19zJgXK9BKak00H',
+  agency_monthly: 'https://buy.stripe.com/cNifZh7WH5jt6j65luak00I',
+  agency_annual: 'https://buy.stripe.com/cNi9AT7WH27h9vidS0ak00J',
 };
 
+// subscription_type → id piano (card). Legacy agency generici → individuale.
 const SUB_TYPE_TO_PLAN: Record<string, string> = {
   free: 'free',
-  agency_monthly: 'monthly',
-  agency_annual: 'annual',
-  // Fallback: qualsiasi tier agency generico/legacy conta come pagante (mensile).
-  agency: 'monthly',
-  agency_quarterly: 'monthly',
-  agency_pro: 'monthly',
-  agency_starter: 'monthly',
+  individual_monthly: 'ind_monthly',
+  individual_annual: 'ind_annual',
+  agency_monthly: 'agy_monthly',
+  agency_annual: 'agy_annual',
+  // Legacy/generici (pre-split): contano come Individuale mensile.
+  agency: 'ind_monthly',
+  agency_quarterly: 'ind_monthly',
+  agency_pro: 'agy_monthly',
+  agency_starter: 'ind_monthly',
 };
 
 const PLAN_TO_SUB_TYPE: Record<string, string> = {
-  monthly: 'agency_monthly',
-  annual: 'agency_annual',
+  ind_monthly: 'individual_monthly',
+  ind_annual: 'individual_annual',
+  agy_monthly: 'agency_monthly',
+  agy_annual: 'agency_annual',
 };
 
-// Voci dalla landing (uguali per tutti i piani). Differenza tra piani = prezzo.
-// Quote uguali: 200 foto AI + 4 video AI/mese (margini ~81-91%).
-const PLAN_FEATURES = [
+// Tier Agenzia = subscription_type che inizia con 'agency' (gating Team/quote).
+function isAgencyTier(subType?: string | null): boolean {
+  return !!subType && subType.startsWith('agency');
+}
+
+type PlanTier = 'individual' | 'agency';
+
+const INDIVIDUAL_FEATURES = [
   '250 foto AI homestaging/mese',
   '4 video AI/mese',
   'Post social illimitati',
@@ -333,6 +350,19 @@ const PLAN_FEATURES = [
   'Supporto prioritario',
 ];
 
+const AGENCY_FEATURES = [
+  'Fino a 5 collaboratori (Team)',
+  'Brand condiviso col team',
+  '2000 foto AI homestaging/mese',
+  '12 video AI/mese',
+  'Post social illimitati',
+  'Montaggio Illimitato',
+  'Report Automatici',
+  'Analisi della zona illimitate',
+  'Import immobili',
+  'Supporto prioritario dedicato',
+];
+
 const FREE_FEATURES = [
   '5 foto AI homestaging',
   '1 video AI',
@@ -341,23 +371,33 @@ const FREE_FEATURES = [
   '5 Analisi di zona',
 ];
 
-const PLANS = [
-  {
-    id: 'free', name: 'Free', price: 0, oldPrice: 0, period: '', badge: null, popular: false,
-    features: FREE_FEATURES,
-    color: 'var(--text-muted)', quotaFoto: 5, quotaVideo: 1, quotaPost: 5,
-  },
-  {
-    id: 'monthly', name: 'Mensile', price: 59, oldPrice: 150, period: '/mese', badge: null, popular: false,
-    features: PLAN_FEATURES,
-    color: 'var(--text-main)', quotaFoto: 250, quotaVideo: 4, quotaPost: 999,
-  },
-  {
-    id: 'annual', name: 'Annuale', price: 590, oldPrice: 1800, period: '/anno', badge: null, popular: true,
-    features: PLAN_FEATURES,
-    color: 'var(--text-main)', quotaFoto: 250, quotaVideo: 4, quotaPost: 999,
-  },
-];
+type Plan = {
+  id: string; name: string; price: number; oldPrice: number; period: string;
+  badge: string | null; popular: boolean; features: string[]; color: string;
+  quotaFoto: number; quotaVideo: number; quotaPost: number; note?: string;
+};
+
+const FREE_PLAN: Plan = {
+  id: 'free', name: 'Free', price: 0, oldPrice: 0, period: '', badge: null, popular: false,
+  features: FREE_FEATURES, color: 'var(--text-muted)', quotaFoto: 5, quotaVideo: 1, quotaPost: 5,
+};
+
+const PLANS_BY_TIER: Record<PlanTier, Plan[]> = {
+  individual: [
+    FREE_PLAN,
+    { id: 'ind_monthly', name: 'Mensile', price: 59, oldPrice: 150, period: '/mese', badge: null, popular: false, features: INDIVIDUAL_FEATURES, color: 'var(--text-main)', quotaFoto: 250, quotaVideo: 4, quotaPost: 999 },
+    { id: 'ind_annual', name: 'Annuale', price: 590, oldPrice: 1800, period: '/anno', badge: 'Più scelto', popular: true, features: INDIVIDUAL_FEATURES, color: 'var(--text-main)', quotaFoto: 250, quotaVideo: 4, quotaPost: 999 },
+  ],
+  agency: [
+    FREE_PLAN,
+    // Prezzo mostrato PER UTENTE (team da 5). Totale reale fatturato: €399/mese, €3588/anno.
+    { id: 'agy_monthly', name: 'Mensile', price: 80, oldPrice: 200, period: '/mese a utente', badge: null, popular: false, features: AGENCY_FEATURES, color: 'var(--text-main)', quotaFoto: 2000, quotaVideo: 12, quotaPost: 999, note: '5 utenti · €399/mese' },
+    { id: 'agy_annual', name: 'Annuale', price: 60, oldPrice: 150, period: '/mese a utente', badge: 'Più scelto', popular: true, features: AGENCY_FEATURES, color: 'var(--text-main)', quotaFoto: 2000, quotaVideo: 12, quotaPost: 999, note: '5 utenti · €299/mese' },
+  ],
+};
+
+// Tutti i piani (per lookup del piano attivo). Free una volta sola.
+const ALL_PLANS: Plan[] = [...PLANS_BY_TIER.individual, ...PLANS_BY_TIER.agency.slice(1)];
 
 // Brand GetNearMe imposto e BLOCCATO per gli account free: watermark + copertina
 // finale dei video, e i loghi mostrati nella sezione Brand. URL assoluti (origin
@@ -1852,11 +1892,15 @@ function UsageBar({ label, used, total, color }: { label: string; used: number; 
   );
 }
 
-function AccountScreen({ credits, toast, go, userData }: { credits: number; toast: (msg: string, icon?: string) => void; go: (r: string) => void; userData: UserData | null }) {
-  // Free e' un tier reale: 'free'/null -> piano Free. I paganti -> monthly/annual.
+function AccountScreen({ credits, toast, go, userData, tierHint }: { credits: number; toast: (msg: string, icon?: string) => void; go: (r: string) => void; userData: UserData | null; tierHint?: PlanTier | null }) {
+  // Free e' un tier reale: 'free'/null -> piano Free. I paganti -> ind_/agy_.
   const activePlan = userData?.subscriptionType ? (SUB_TYPE_TO_PLAN[userData.subscriptionType] ?? 'free') : 'free';
-  const currentPlan = PLANS.find(p => p.id === activePlan) ?? PLANS[0];
+  const currentPlan = ALL_PLANS.find(p => p.id === activePlan) ?? FREE_PLAN;
   const isFree = currentPlan.id === 'free';
+  // Toggle Individuale/Agenzia: default sul tier del piano attivo, o hint da navigazione.
+  const [tier, setTier] = useState<PlanTier>(tierHint ?? (isAgencyTier(userData?.subscriptionType) ? 'agency' : 'individual'));
+  useEffect(() => { if (tierHint) setTier(tierHint); }, [tierHint]);
+  const plans = PLANS_BY_TIER[tier];
 
   return (
     <div style={s('max-width:1160px;margin:0 auto;padding:32px 32px 64px')}>
@@ -1900,9 +1944,26 @@ function AccountScreen({ credits, toast, go, userData }: { credits: number; toas
 
       {/* ── PLAN CARDS ── */}
       <div style={s('margin-bottom:20px')}>
-        <div style={s('font-size:16px;font-weight:800;margin-bottom:14px;letter-spacing:-.2px')}>Confronta i piani</div>
+        <div style={s('display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:14px')}>
+          <div style={s('font-size:16px;font-weight:800;letter-spacing:-.2px')}>Confronta i piani</div>
+          {/* Toggle Individuale / Agenzia */}
+          <div style={{ display: 'inline-flex', background: 'var(--bg-hover)', border: '1px solid var(--border-light)', borderRadius: 12, padding: 3 }}>
+            {(['individual', 'agency'] as PlanTier[]).map((t) => {
+              const on = tier === t;
+              return (
+                <button key={t} onClick={() => setTier(t)} style={{
+                  border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700,
+                  padding: '8px 18px', borderRadius: 9,
+                  background: on ? 'var(--bg-card)' : 'transparent',
+                  color: on ? '#3B83F6' : 'var(--text-muted)',
+                  boxShadow: on ? '0 1px 3px rgba(0,0,0,.08)' : 'none', transition: 'all .15s',
+                }}>{t === 'individual' ? 'Individuale' : 'Agenzia'}</button>
+              );
+            })}
+          </div>
+        </div>
         <div className="max-md:!grid-cols-1" style={s('display:grid;grid-template-columns:repeat(3,1fr);gap:20px;align-items:stretch')}>
-          {PLANS.map((plan) => {
+          {plans.map((plan) => {
             const active = plan.id === activePlan;
             return (
               <Box key={plan.id} style={{
@@ -1952,8 +2013,11 @@ function AccountScreen({ credits, toast, go, userData }: { credits: number; toas
                         <span style={{ fontSize: 48, fontWeight: 800, color: active ? 'var(--bg-card)' : 'var(--text-main)', letterSpacing: -2, lineHeight: 1 }}>{plan.price}€</span>
                         <span style={{ fontSize: 16, fontWeight: 600, color: active ? 'rgba(255,255,255,.55)' : '#b3aca1' }}>{plan.period}</span>
                       </div>
-                      {hasDiscount && (
+                      {hasDiscount && !plan.note && (
                         <div style={{ fontSize: 12.5, fontWeight: 800, color: active ? 'rgba(255,255,255,.8)' : '#009874', marginTop: 6 }}>RISPARMI {saved}€{plan.period}</div>
+                      )}
+                      {plan.note && (
+                        <div style={{ fontSize: 12.5, fontWeight: 700, color: active ? 'rgba(255,255,255,.8)' : 'var(--text-muted)', marginTop: 6 }}>{plan.note}</div>
                       )}
                     </>
                   );
@@ -2721,9 +2785,14 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
   const { data: brandData, mutate: mutateBrand } = useSWR('brand', fetchBrand);
   const rawBrand = brandData?.settings ?? DEFAULT_BRAND_SETTINGS;
   const brandRole = brandData?.role ?? null;
+  // Accesso Agenzia: piano agency diretto OPPURE membro di un team agenzia.
+  const inAgencyTeam = !!brandData?.isTeamMember;
+  const hasAgency = isAgencyTier(userData?.subscriptionType) || inAgencyTeam;
   // Free: brand GetNearMe forzato (loghi non rimovibili, usati in watermark/outro).
+  // I membri di un team agenzia NON sono free per il brand.
   const isFreePlan = !userData?.subscriptionType || userData.subscriptionType === 'free';
-  const brand = useMemo(() => isFreePlan ? { ...rawBrand, logos: gnmBrandLogos() } : rawBrand, [isFreePlan, rawBrand]);
+  const brandLocked = isFreePlan && !inAgencyTeam;
+  const brand = useMemo(() => brandLocked ? { ...rawBrand, logos: gnmBrandLogos() } : rawBrand, [brandLocked, rawBrand]);
   
   const setBrand = useCallback((updater: React.SetStateAction<BrandSettings>) => {
     mutateBrand(prev => {
@@ -2758,6 +2827,17 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
     setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 4000);
   }, []);
 
+  // Auto-join: se l'utente ha un invito team pending per la sua email, lo accetta
+  // al primo caricamento (una volta per sessione utente).
+  const autoJoinedRef = useRef(false);
+  useEffect(() => {
+    if (autoJoinedRef.current || !userData?.id) return;
+    autoJoinedRef.current = true;
+    autoJoinTeam().then((res) => {
+      if (res.data?.success && res.data.team_name) toast(`Sei stato aggiunto al team "${res.data.team_name}"`, 'check');
+    }).catch(() => {});
+  }, [userData?.id, toast]);
+
   const contentRef = React.useRef<HTMLDivElement>(null);
   const [routeKey, setRouteKey] = useState(0);
   const [studioPhoto, setStudioPhoto] = useState<string | null>(null);
@@ -2765,13 +2845,16 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
   const [galleryUnseen, setGalleryUnseen] = useState(0);
   const routeRef = useRef(route);
   useEffect(() => { routeRef.current = route; }, [route]);
-  const go = useCallback((r: string, params?: { photoUrl?: string }) => {
+  const [accountTierHint, setAccountTierHint] = useState<PlanTier | null>(null);
+  const go = useCallback((r: string, params?: { photoUrl?: string; tier?: PlanTier }) => {
     setRoute(r);
     setRouteKey(k => k + 1);
     if (r === 'media') setGalleryUnseen(0);
     if ((r === 'studio' || r === 'video') && params?.photoUrl) setStudioPhoto(params.photoUrl);
     else if (r !== 'studio' && r !== 'video') setStudioPhoto(null);
-    setProjOpen(false); setTrayOpen(false); setProfileOpen(false); contentRef.current?.scrollTo(0, 0); 
+    if (r === 'account' && params?.tier) setAccountTierHint(params.tier);
+    else if (r !== 'account') setAccountTierHint(null);
+    setProjOpen(false); setTrayOpen(false); setProfileOpen(false); contentRef.current?.scrollTo(0, 0);
   }, []);
   const closeMenus = useCallback(() => { if (tourStep !== null && TOUR_DEFS[tourStep]?.sel === '[data-tour-dropdown]') return; setProjOpen(false); setTrayOpen(false); setProfileOpen(false); setNotifOpen(false); }, [tourStep]);
 
@@ -3031,10 +3114,13 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
             )}
           </div>
           <div style={s('flex:1;overflow-y:auto;overflow-x:hidden;padding:6px 0 16px')}>
-            {NAV_SECTIONS.map((sec, si) => (
+            {NAV_SECTIONS.map((sec, si) => {
+              const items = sec.items.filter(it => it.route !== 'team' || hasAgency || isFreePlan);
+              if (!items.length) return null;
+              return (
               <div key={si} style={{ marginBottom: 4 }}>
                 {sec.label && !collapsed && <div title={sec.label === 'Immobile attivo' ? (active?.addr || active?.nome || '') : undefined} style={s('font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#b3aca1;padding:14px 22px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%')}>{sec.label === 'Immobile attivo' ? (active?.addr || active?.nome || 'Immobile attivo') : sec.label}</div>}
-                {sec.items.map((it) => {
+                {items.map((it) => {
                   const a = route === it.route || (it.route === 'progetti' && route === 'progetto');
                   const tourActive = tourStep !== null && TOUR_DEFS[tourStep]?.sel === `[title="${it.label}"]`;
                   const highlighted = a || tourActive;
@@ -3051,7 +3137,8 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                   );
                 })}
               </div>
-            ))}
+              );
+            })}
           </div>
           <div 
             ref={profileRef} 
@@ -3546,7 +3633,9 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
             ) : route === 'report' || route === 'compare' ? (
               <ReportScreen project={active || DEMO_PROJECTS[0]} projects={projects.length ? projects : DEMO_PROJECTS} brand={brand} toast={toast} locked={isFreePlan} go={go} />
             ) : route === 'account' ? (
-              <AccountScreen credits={credits} toast={toast} go={go} userData={userData} />
+              <AccountScreen credits={credits} toast={toast} go={go} userData={userData} tierHint={accountTierHint} />
+            ) : route === 'team' ? (
+              <TeamScreen toast={toast} go={go} isAgency={hasAgency} userData={userData} />
             ) : route === 'brand' ? (
               (!active && tourStep === null) ? (
                 <div style={s('display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 32px;text-align:center;max-width:1160px;margin:0 auto')}>
@@ -3558,7 +3647,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                   <Box as="button" onClick={() => setNewProjOpen(true)} style={s('border:1px solid #3B83F6;background:#3B83F6;color:#fff;font-size:14px;font-weight:700;padding:12px 22px;border-radius:12px;cursor:pointer')} hover={s('background:#2b6fe0;border-color:#2b6fe0')}>Nuovo immobile</Box>
                 </div>
               ) : (
-                <BrandScreen toast={toast} brand={brand} setBrand={setBrand} brandRole={brandRole} demoMode={tourStep !== null} locked={isFreePlan} go={go} />
+                <BrandScreen toast={toast} brand={brand} setBrand={setBrand} brandRole={brandRole} demoMode={tourStep !== null} locked={brandLocked} go={go} />
               )
             ) : route === 'impostazioni' ? (
               <SettingsScreen toast={toast} />

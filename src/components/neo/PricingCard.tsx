@@ -21,6 +21,7 @@ interface PricingPlan {
   savingsLabel: string;
   freeLabel?: string;
   period?: string;
+  priceNote?: string | null;
 }
 
 interface PricingCardProps {
@@ -103,9 +104,14 @@ export default function PricingCard({ plan, href }: PricingCardProps) {
             </span>
             {plan.price > 0 && <span style={{ color: '#6b7280', fontSize: 14, marginLeft: 4 }}>{periodLabel}</span>}
             {/* Savings row — visible or invisible placeholder */}
-            <div className="pricing-savings-row" style={{ marginTop: 6, color: '#009874', fontSize: 13, fontWeight: 800, visibility: hasDiscount ? 'visible' : 'hidden' }}>
-              {hasDiscount ? `${plan.savingsLabel} ${saved}€${periodLabel}` : ' '}
+            <div className="pricing-savings-row" style={{ marginTop: 6, color: '#009874', fontSize: 13, fontWeight: 800, visibility: hasDiscount && !plan.priceNote ? 'visible' : 'hidden' }}>
+              {hasDiscount && !plan.priceNote ? `${plan.savingsLabel} ${saved}€${periodLabel}` : ' '}
             </div>
+            {plan.priceNote && (
+              <div style={{ marginTop: 6, color: '#1a1a2e', fontSize: 14, fontWeight: 700 }}>
+                {plan.priceNote}
+              </div>
+            )}
           </div>
         </div>
         <div style={{ margin: '22px 0', borderTop: '1px dashed #e2e8f0' }} />

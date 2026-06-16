@@ -355,26 +355,69 @@ export const translations = {
         savingsLabel: "RISPARMI",
         progressAgencies: "",
         progressSpots: "",
+        tierToggle: { individual: "Individuale", agency: "Agenzia" },
         plans: [
           {
-            id: "free", name: "Free", users: "Per iniziare", oldPrice: null, price: 0, period: "",
+            id: "free", name: "Free", users: "Per iniziare", oldPrice: null, price: 0, period: "", priceNote: null,
             savingsYear: null, badge: null, popular: false,
             features: ["5 foto AI homestaging", "1 video AI", "5 montaggi video", "5 post social", "5 Analisi di zona"],
             extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Inizia gratis",
           },
           {
-            id: "agency_monthly", name: "Mensile", users: "Tutte le funzioni incluse", oldPrice: 150, price: 59, period: "/mese",
+            id: "individual_monthly", name: "Mensile", users: "Tutte le funzioni incluse", oldPrice: 150, price: 59, period: "/mese", priceNote: null,
             savingsYear: null, badge: null, popular: false,
-            features: ["250 foto AI homestaging/mese", "4 video AI/mese", "Post social illimitati", "Montaggio Illimitato", "Report Automatici", "Analisi della zona", "Import immobili", "Contenuti 100% Brandizzati", "Supporto prioritario"],
+            features: ["250 foto AI homestaging/mese", "4 video AI/mese", "Post social illimitati", "Montaggio Illimitato", "Report Automatici", "Analisi della zona", "Import immobili", "Supporto prioritario"],
             extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Scegli questo piano",
           },
           {
-            id: "agency_annual", name: "Annuale", users: "Tutte le funzioni incluse", oldPrice: 1800, price: 590, period: "/anno",
+            id: "individual_annual", name: "Annuale", users: "Tutte le funzioni incluse", oldPrice: 1800, price: 590, period: "/anno", priceNote: null,
             savingsYear: null, badge: "Più scelto", popular: true,
-            features: ["250 foto AI homestaging/mese", "4 video AI/mese", "Post social illimitati", "Montaggio Illimitato", "Report Automatici", "Analisi della zona", "Import immobili", "Contenuti 100% Brandizzati", "Supporto prioritario"],
+            features: ["250 foto AI homestaging/mese", "4 video AI/mese", "Post social illimitati", "Montaggio Illimitato", "Report Automatici", "Analisi della zona", "Import immobili", "Supporto prioritario"],
             extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Scegli questo piano",
           },
         ],
+        plansByTier: {
+          individual: [
+            {
+              id: "free", name: "Free", users: "Per iniziare", oldPrice: null, price: 0, period: "", priceNote: null,
+              savingsYear: null, badge: null, popular: false,
+              features: ["5 foto AI homestaging", "1 video AI", "5 montaggi video", "5 post social", "5 Analisi di zona"],
+              extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Inizia gratis",
+            },
+            {
+              id: "individual_monthly", name: "Mensile", users: "Tutte le funzioni incluse", oldPrice: 150, price: 59, period: "/mese", priceNote: null,
+              savingsYear: null, badge: null, popular: false,
+              features: ["250 foto AI homestaging/mese", "4 video AI/mese", "Post social illimitati", "Montaggio Illimitato", "Report Automatici", "Analisi della zona", "Import immobili", "Supporto prioritario"],
+              extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Scegli questo piano",
+            },
+            {
+              id: "individual_annual", name: "Annuale", users: "Tutte le funzioni incluse", oldPrice: 1800, price: 590, period: "/anno", priceNote: null,
+              savingsYear: null, badge: "Più scelto", popular: true,
+              features: ["250 foto AI homestaging/mese", "4 video AI/mese", "Post social illimitati", "Montaggio Illimitato", "Report Automatici", "Analisi della zona", "Import immobili", "Supporto prioritario"],
+              extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Scegli questo piano",
+            },
+          ],
+          agency: [
+            {
+              id: "free", name: "Free", users: "Per iniziare", oldPrice: null, price: 0, period: "", priceNote: null,
+              savingsYear: null, badge: null, popular: false,
+              features: ["5 foto AI homestaging", "1 video AI", "5 montaggi video", "5 post social", "5 Analisi di zona"],
+              extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Inizia gratis",
+            },
+            {
+              id: "agency_monthly", name: "Mensile", users: "Per il tuo team", oldPrice: 200, price: 80, period: "/mese a utente", priceNote: "5 utenti · €399/mese",
+              savingsYear: null, badge: null, popular: false,
+              features: ["Fino a 5 collaboratori (Team)", "Brand condiviso col team", "2000 foto AI homestaging/mese", "12 video AI/mese", "Post social illimitati", "Montaggio Illimitato", "Report Automatici", "Analisi della zona illimitate", "Import immobili", "Supporto prioritario dedicato"],
+              extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Scegli questo piano",
+            },
+            {
+              id: "agency_annual", name: "Annuale", users: "Per il tuo team", oldPrice: 150, price: 60, period: "/mese a utente", priceNote: "5 utenti · €299/mese",
+              savingsYear: null, badge: "Più scelto", popular: true,
+              features: ["Fino a 5 collaboratori (Team)", "Brand condiviso col team", "2000 foto AI homestaging/mese", "12 video AI/mese", "Post social illimitati", "Montaggio Illimitato", "Report Automatici", "Analisi della zona illimitate", "Import immobili", "Supporto prioritario dedicato"],
+              extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Scegli questo piano",
+            },
+          ],
+        },
       },
       howItWorks: {
         title: "Operativo in",
@@ -910,26 +953,69 @@ export const translations = {
         savingsLabel: "YOU SAVE",
         progressAgencies: "",
         progressSpots: "",
+        tierToggle: { individual: "Individual", agency: "Agency" },
         plans: [
           {
-            id: "free", name: "Free", users: "To get started", oldPrice: null, price: 0, period: "",
+            id: "free", name: "Free", users: "To get started", oldPrice: null, price: 0, period: "", priceNote: null,
             savingsYear: null, badge: null, popular: false,
             features: ["5 AI homestaging photos", "1 AI video", "5 social posts & stories"],
             extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Start free",
           },
           {
-            id: "agency_monthly", name: "Monthly", users: "All features included", oldPrice: 150, price: 59, period: "/month",
+            id: "individual_monthly", name: "Monthly", users: "All features included", oldPrice: 150, price: 59, period: "/month", priceNote: null,
             savingsYear: null, badge: null, popular: false,
             features: ["250 AI homestaging photos/month", "4 AI videos/month", "Unlimited social posts & stories", "Automatic Video Editor", "100% Branded Content", "Priority support"],
             extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Choose this plan",
           },
           {
-            id: "agency_annual", name: "Annual", users: "All features included", oldPrice: 1800, price: 590, period: "/year",
+            id: "individual_annual", name: "Annual", users: "All features included", oldPrice: 1800, price: 590, period: "/year", priceNote: null,
             savingsYear: null, badge: "Most popular", popular: true,
             features: ["250 AI homestaging photos/month", "4 AI videos/month", "Unlimited social posts & stories", "Automatic Video Editor", "100% Branded Content", "Priority support", "2 months free"],
             extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Choose this plan",
           },
         ],
+        plansByTier: {
+          individual: [
+            {
+              id: "free", name: "Free", users: "To get started", oldPrice: null, price: 0, period: "", priceNote: null,
+              savingsYear: null, badge: null, popular: false,
+              features: ["5 AI homestaging photos", "1 AI video", "5 social posts & stories"],
+              extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Start free",
+            },
+            {
+              id: "individual_monthly", name: "Monthly", users: "All features included", oldPrice: 150, price: 59, period: "/month", priceNote: null,
+              savingsYear: null, badge: null, popular: false,
+              features: ["250 AI homestaging photos/month", "4 AI videos/month", "Unlimited social posts & stories", "Automatic Video Editor", "100% Branded Content", "Priority support"],
+              extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Choose this plan",
+            },
+            {
+              id: "individual_annual", name: "Annual", users: "All features included", oldPrice: 1800, price: 590, period: "/year", priceNote: null,
+              savingsYear: null, badge: "Most popular", popular: true,
+              features: ["250 AI homestaging photos/month", "4 AI videos/month", "Unlimited social posts & stories", "Automatic Video Editor", "100% Branded Content", "Priority support", "2 months free"],
+              extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Choose this plan",
+            },
+          ],
+          agency: [
+            {
+              id: "free", name: "Free", users: "To get started", oldPrice: null, price: 0, period: "", priceNote: null,
+              savingsYear: null, badge: null, popular: false,
+              features: ["5 AI homestaging photos", "1 AI video", "5 social posts & stories"],
+              extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Start free",
+            },
+            {
+              id: "agency_monthly", name: "Monthly", users: "For your team", oldPrice: 200, price: 80, period: "/month per user", priceNote: "5 users · €399/month",
+              savingsYear: null, badge: null, popular: false,
+              features: ["Up to 5 team members", "Brand shared across the team", "2000 AI homestaging photos/month", "12 AI videos/month", "Unlimited social posts", "Unlimited editing", "Automatic reports", "Unlimited zone analysis", "Property import", "Dedicated priority support"],
+              extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Choose this plan",
+            },
+            {
+              id: "agency_annual", name: "Annual", users: "For your team", oldPrice: 150, price: 60, period: "/month per user", priceNote: "5 users · €299/month",
+              savingsYear: null, badge: "Most popular", popular: true,
+              features: ["Up to 5 team members", "Brand shared across the team", "2000 AI homestaging photos/month", "12 AI videos/month", "Unlimited social posts", "Unlimited editing", "Automatic reports", "Unlimited zone analysis", "Property import", "Dedicated priority support"],
+              extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Choose this plan",
+            },
+          ],
+        },
       },
       howItWorks: {
         title: "Up and running in",
@@ -1465,26 +1551,69 @@ export const translations = {
         savingsLabel: "AHORRAS",
         progressAgencies: "",
         progressSpots: "",
+        tierToggle: { individual: "Individual", agency: "Agencia" },
         plans: [
           {
-            id: "free", name: "Free", users: "Para empezar", oldPrice: null, price: 0, period: "",
+            id: "free", name: "Free", users: "Para empezar", oldPrice: null, price: 0, period: "", priceNote: null,
             savingsYear: null, badge: null, popular: false,
             features: ["5 fotos AI homestaging", "1 video AI", "5 posts y stories social"],
             extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Empieza gratis",
           },
           {
-            id: "agency_monthly", name: "Mensual", users: "Todas las funciones incluidas", oldPrice: 150, price: 59, period: "/mes",
+            id: "individual_monthly", name: "Mensual", users: "Todas las funciones incluidas", oldPrice: 150, price: 59, period: "/mes", priceNote: null,
             savingsYear: null, badge: null, popular: false,
             features: ["250 fotos AI homestaging/mes", "4 videos AI/mes", "Posts y stories social ilimitados", "Editor de Video Automático", "Contenidos 100% Personalizados", "Soporte prioritario"],
             extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Elige este plan",
           },
           {
-            id: "agency_annual", name: "Anual", users: "Todas las funciones incluidas", oldPrice: 1800, price: 590, period: "/año",
+            id: "individual_annual", name: "Anual", users: "Todas las funciones incluidas", oldPrice: 1800, price: 590, period: "/año", priceNote: null,
             savingsYear: null, badge: "Más elegido", popular: true,
             features: ["250 fotos AI homestaging/mes", "4 videos AI/mes", "Posts y stories social ilimitados", "Editor de Video Automático", "Contenidos 100% Personalizados", "Soporte prioritario", "2 meses gratis"],
             extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Elige este plan",
           },
         ],
+        plansByTier: {
+          individual: [
+            {
+              id: "free", name: "Free", users: "Para empezar", oldPrice: null, price: 0, period: "", priceNote: null,
+              savingsYear: null, badge: null, popular: false,
+              features: ["5 fotos AI homestaging", "1 video AI", "5 posts y stories social"],
+              extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Empieza gratis",
+            },
+            {
+              id: "individual_monthly", name: "Mensual", users: "Todas las funciones incluidas", oldPrice: 150, price: 59, period: "/mes", priceNote: null,
+              savingsYear: null, badge: null, popular: false,
+              features: ["250 fotos AI homestaging/mes", "4 videos AI/mes", "Posts y stories social ilimitados", "Editor de Video Automático", "Contenidos 100% Personalizados", "Soporte prioritario"],
+              extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Elige este plan",
+            },
+            {
+              id: "individual_annual", name: "Anual", users: "Todas las funciones incluidas", oldPrice: 1800, price: 590, period: "/año", priceNote: null,
+              savingsYear: null, badge: "Más elegido", popular: true,
+              features: ["250 fotos AI homestaging/mes", "4 videos AI/mes", "Posts y stories social ilimitados", "Editor de Video Automático", "Contenidos 100% Personalizados", "Soporte prioritario", "2 meses gratis"],
+              extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Elige este plan",
+            },
+          ],
+          agency: [
+            {
+              id: "free", name: "Free", users: "Para empezar", oldPrice: null, price: 0, period: "", priceNote: null,
+              savingsYear: null, badge: null, popular: false,
+              features: ["5 fotos AI homestaging", "1 video AI", "5 posts y stories social"],
+              extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Empieza gratis",
+            },
+            {
+              id: "agency_monthly", name: "Mensual", users: "Para tu equipo", oldPrice: 200, price: 80, period: "/mes por usuario", priceNote: "5 usuarios · €399/mes",
+              savingsYear: null, badge: null, popular: false,
+              features: ["Hasta 5 colaboradores (Equipo)", "Marca compartida con el equipo", "2000 fotos AI homestaging/mes", "12 videos AI/mes", "Posts sociales ilimitados", "Edicion ilimitada", "Informes automaticos", "Analisis de zona ilimitados", "Importacion de inmuebles", "Soporte prioritario dedicado"],
+              extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Elige este plan",
+            },
+            {
+              id: "agency_annual", name: "Anual", users: "Para tu equipo", oldPrice: 150, price: 60, period: "/mes por usuario", priceNote: "5 usuarios · €299/mes",
+              savingsYear: null, badge: "Más elegido", popular: true,
+              features: ["Hasta 5 colaboradores (Equipo)", "Marca compartida con el equipo", "2000 fotos AI homestaging/mes", "12 videos AI/mes", "Posts sociales ilimitados", "Edicion ilimitada", "Informes automaticos", "Analisis de zona ilimitados", "Importacion de inmuebles", "Soporte prioritario dedicado"],
+              extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Elige este plan",
+            },
+          ],
+        },
       },
       howItWorks: {
         title: "Operativo en",
@@ -2020,26 +2149,69 @@ export const translations = {
         savingsLabel: "ÉCONOMIE",
         progressAgencies: "",
         progressSpots: "",
+        tierToggle: { individual: "Individuel", agency: "Agence" },
         plans: [
           {
-            id: "free", name: "Gratuit", users: "Pour commencer", oldPrice: null, price: 0, period: "",
+            id: "free", name: "Gratuit", users: "Pour commencer", oldPrice: null, price: 0, period: "", priceNote: null,
             savingsYear: null, badge: null, popular: false,
             features: ["5 photos AI homestaging", "1 vidéo AI", "5 posts et stories social"],
             extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Commence gratuitement",
           },
           {
-            id: "agency_monthly", name: "Mensuel", users: "Toutes les fonctions incluses", oldPrice: 150, price: 59, period: "/mois",
+            id: "individual_monthly", name: "Mensuel", users: "Toutes les fonctions incluses", oldPrice: 150, price: 59, period: "/mois", priceNote: null,
             savingsYear: null, badge: null, popular: false,
             features: ["250 photos AI homestaging/mois", "4 vidéos AI/mois", "Posts et stories social illimités", "Éditeur Vidéo Automatique", "Contenus 100% Personnalisés", "Support prioritaire"],
             extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Choisir ce plan",
           },
           {
-            id: "agency_annual", name: "Annuel", users: "Toutes les fonctions incluses", oldPrice: 1800, price: 590, period: "/an",
+            id: "individual_annual", name: "Annuel", users: "Toutes les fonctions incluses", oldPrice: 1800, price: 590, period: "/an", priceNote: null,
             savingsYear: null, badge: "Le plus choisi", popular: true,
             features: ["250 photos AI homestaging/mois", "4 vidéos AI/mois", "Posts et stories social illimités", "Éditeur Vidéo Automatique", "Contenus 100% Personnalisés", "Support prioritaire", "2 mois gratuits"],
             extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Choisir ce plan",
           },
         ],
+        plansByTier: {
+          individual: [
+            {
+              id: "free", name: "Gratuit", users: "Pour commencer", oldPrice: null, price: 0, period: "", priceNote: null,
+              savingsYear: null, badge: null, popular: false,
+              features: ["5 photos AI homestaging", "1 vidéo AI", "5 posts et stories social"],
+              extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Commence gratuitement",
+            },
+            {
+              id: "individual_monthly", name: "Mensuel", users: "Toutes les fonctions incluses", oldPrice: 150, price: 59, period: "/mois", priceNote: null,
+              savingsYear: null, badge: null, popular: false,
+              features: ["250 photos AI homestaging/mois", "4 vidéos AI/mois", "Posts et stories social illimités", "Éditeur Vidéo Automatique", "Contenus 100% Personnalisés", "Support prioritaire"],
+              extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Choisir ce plan",
+            },
+            {
+              id: "individual_annual", name: "Annuel", users: "Toutes les fonctions incluses", oldPrice: 1800, price: 590, period: "/an", priceNote: null,
+              savingsYear: null, badge: "Le plus choisi", popular: true,
+              features: ["250 photos AI homestaging/mois", "4 vidéos AI/mois", "Posts et stories social illimités", "Éditeur Vidéo Automatique", "Contenus 100% Personnalisés", "Support prioritaire", "2 mois gratuits"],
+              extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Choisir ce plan",
+            },
+          ],
+          agency: [
+            {
+              id: "free", name: "Gratuit", users: "Pour commencer", oldPrice: null, price: 0, period: "", priceNote: null,
+              savingsYear: null, badge: null, popular: false,
+              features: ["5 photos AI homestaging", "1 vidéo AI", "5 posts et stories social"],
+              extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Commence gratuitement",
+            },
+            {
+              id: "agency_monthly", name: "Mensuel", users: "Pour ton équipe", oldPrice: 200, price: 80, period: "/mois par utilisateur", priceNote: "5 utilisateurs · 399 €/mois",
+              savingsYear: null, badge: null, popular: false,
+              features: ["Jusqu'à 5 collaborateurs (Équipe)", "Marque partagée avec l'équipe", "2000 photos AI homestaging/mois", "12 vidéos AI/mois", "Posts sociaux illimités", "Montage illimité", "Rapports automatiques", "Analyse de zone illimitée", "Import de biens", "Support prioritaire dédié"],
+              extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Choisir ce plan",
+            },
+            {
+              id: "agency_annual", name: "Annuel", users: "Pour ton équipe", oldPrice: 150, price: 60, period: "/mois par utilisateur", priceNote: "5 utilisateurs · 299 €/mois",
+              savingsYear: null, badge: "Le plus choisi", popular: true,
+              features: ["Jusqu'à 5 collaborateurs (Équipe)", "Marque partagée avec l'équipe", "2000 photos AI homestaging/mois", "12 vidéos AI/mois", "Posts sociaux illimités", "Montage illimité", "Rapports automatiques", "Analyse de zone illimitée", "Import de biens", "Support prioritaire dédié"],
+              extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Choisir ce plan",
+            },
+          ],
+        },
       },
       howItWorks: {
         title: "Opérationnel en",
@@ -2484,26 +2656,69 @@ export const translations = {
         savingsLabel: "ЭКОНОМИЯ",
         progressAgencies: "",
         progressSpots: "",
+        tierToggle: { individual: "Индивидуальный", agency: "Агентство" },
         plans: [
           {
-            id: "free", name: "Free", users: "Чтобы начать", oldPrice: null, price: 0, period: "",
+            id: "free", name: "Free", users: "Чтобы начать", oldPrice: null, price: 0, period: "", priceNote: null,
             savingsYear: null, badge: null, popular: false,
             features: ["5 фото AI homestaging", "1 AI видео", "5 постов и сторис"],
             extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Начать бесплатно",
           },
           {
-            id: "agency_monthly", name: "Месячный", users: "Все функции включены", oldPrice: 150, price: 59, period: "/мес",
+            id: "individual_monthly", name: "Месячный", users: "Все функции включены", oldPrice: 150, price: 59, period: "/мес", priceNote: null,
             savingsYear: null, badge: null, popular: false,
             features: ["250 фото AI homestaging/месяц", "4 AI видео/месяц", "Безлимитные посты и сторис", "Автоматический Видеоредактор", "100% Брендированный Контент", "Приоритетная поддержка"],
             extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Выбрать этот план",
           },
           {
-            id: "agency_annual", name: "Годовой", users: "Все функции включены", oldPrice: 1800, price: 590, period: "/год",
+            id: "individual_annual", name: "Годовой", users: "Все функции включены", oldPrice: 1800, price: 590, period: "/год", priceNote: null,
             savingsYear: null, badge: "Самый популярный", popular: true,
             features: ["250 фото AI homestaging/месяц", "4 AI видео/месяц", "Безлимитные посты и сторис", "Автоматический Видеоредактор", "100% Брендированный Контент", "Приоритетная поддержка", "2 месяца бесплатно"],
             extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Выбрать этот план",
           },
         ],
+        plansByTier: {
+          individual: [
+            {
+              id: "free", name: "Free", users: "Чтобы начать", oldPrice: null, price: 0, period: "", priceNote: null,
+              savingsYear: null, badge: null, popular: false,
+              features: ["5 фото AI homestaging", "1 AI видео", "5 постов и сторис"],
+              extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Начать бесплатно",
+            },
+            {
+              id: "individual_monthly", name: "Месячный", users: "Все функции включены", oldPrice: 150, price: 59, period: "/мес", priceNote: null,
+              savingsYear: null, badge: null, popular: false,
+              features: ["250 фото AI homestaging/месяц", "4 AI видео/месяц", "Безлимитные посты и сторис", "Автоматический Видеоредактор", "100% Брендированный Контент", "Приоритетная поддержка"],
+              extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Выбрать этот план",
+            },
+            {
+              id: "individual_annual", name: "Годовой", users: "Все функции включены", oldPrice: 1800, price: 590, period: "/год", priceNote: null,
+              savingsYear: null, badge: "Самый популярный", popular: true,
+              features: ["250 фото AI homestaging/месяц", "4 AI видео/месяц", "Безлимитные посты и сторис", "Автоматический Видеоредактор", "100% Брендированный Контент", "Приоритетная поддержка", "2 месяца бесплатно"],
+              extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Выбрать этот план",
+            },
+          ],
+          agency: [
+            {
+              id: "free", name: "Free", users: "Чтобы начать", oldPrice: null, price: 0, period: "", priceNote: null,
+              savingsYear: null, badge: null, popular: false,
+              features: ["5 фото AI homestaging", "1 AI видео", "5 постов и сторис"],
+              extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Начать бесплатно",
+            },
+            {
+              id: "agency_monthly", name: "Месячный", users: "Для вашей команды", oldPrice: 200, price: 80, period: "/мес на пользователя", priceNote: "5 пользователей · €399/мес",
+              savingsYear: null, badge: null, popular: false,
+              features: ["До 5 участников команды", "Общий бренд для команды", "2000 фото AI homestaging/месяц", "12 AI видео/месяц", "Безлимитные соцсети", "Безлимитный монтаж", "Автоматические отчёты", "Безлимитный анализ зоны", "Импорт недвижимости", "Выделенная приоритетная поддержка"],
+              extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Выбрать этот план",
+            },
+            {
+              id: "agency_annual", name: "Годовой", users: "Для вашей команды", oldPrice: 150, price: 60, period: "/мес на пользователя", priceNote: "5 пользователей · €299/мес",
+              savingsYear: null, badge: "Самый популярный", popular: true,
+              features: ["До 5 участников команды", "Общий бренд для команды", "2000 фото AI homestaging/месяц", "12 AI видео/месяц", "Безлимитные соцсети", "Безлимитный монтаж", "Автоматические отчёты", "Безлимитный анализ зоны", "Импорт недвижимости", "Выделенная приоритетная поддержка"],
+              extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Выбрать этот план",
+            },
+          ],
+        },
       },
       howItWorks: {
         title: "Готов к работе за",
@@ -2948,26 +3163,69 @@ export const translations = {
         savingsLabel: "ЕКОНОМІЯ",
         progressAgencies: "",
         progressSpots: "",
+        tierToggle: { individual: "Індивідуальний", agency: "Агентство" },
         plans: [
           {
-            id: "free", name: "Free", users: "Для початку", oldPrice: null, price: 0, period: "",
+            id: "free", name: "Free", users: "Для початку", oldPrice: null, price: 0, period: "", priceNote: null,
             savingsYear: null, badge: null, popular: false,
             features: ["5 фото AI homestaging", "1 AI відео", "5 постів і сторіс"],
             extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Починай безкоштовно",
           },
           {
-            id: "agency_monthly", name: "Місячний", users: "Всі функції включені", oldPrice: 150, price: 59, period: "/міс",
+            id: "individual_monthly", name: "Місячний", users: "Всі функції включені", oldPrice: 150, price: 59, period: "/міс", priceNote: null,
             savingsYear: null, badge: null, popular: false,
             features: ["250 фото AI homestaging/місяць", "4 AI відео/місяць", "Безлімітні пости і сторіс", "Автоматичний Відеоредактор", "100% Брендований Контент", "Пріоритетна підтримка"],
             extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Обрати цей план",
           },
           {
-            id: "agency_annual", name: "Річний", users: "Всі функції включені", oldPrice: 1800, price: 590, period: "/рік",
+            id: "individual_annual", name: "Річний", users: "Всі функції включені", oldPrice: 1800, price: 590, period: "/рік", priceNote: null,
             savingsYear: null, badge: "Найпопулярніший", popular: true,
             features: ["250 фото AI homestaging/місяць", "4 AI відео/місяць", "Безлімітні пости і сторіс", "Автоматичний Відеоредактор", "100% Брендований Контент", "Пріоритетна підтримка", "2 місяці безкоштовно"],
             extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Обрати цей план",
           },
         ],
+        plansByTier: {
+          individual: [
+            {
+              id: "free", name: "Free", users: "Для початку", oldPrice: null, price: 0, period: "", priceNote: null,
+              savingsYear: null, badge: null, popular: false,
+              features: ["5 фото AI homestaging", "1 AI відео", "5 постів і сторіс"],
+              extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Починай безкоштовно",
+            },
+            {
+              id: "individual_monthly", name: "Місячний", users: "Всі функції включені", oldPrice: 150, price: 59, period: "/міс", priceNote: null,
+              savingsYear: null, badge: null, popular: false,
+              features: ["250 фото AI homestaging/місяць", "4 AI відео/місяць", "Безлімітні пости і сторіс", "Автоматичний Відеоредактор", "100% Брендований Контент", "Пріоритетна підтримка"],
+              extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Обрати цей план",
+            },
+            {
+              id: "individual_annual", name: "Річний", users: "Всі функції включені", oldPrice: 1800, price: 590, period: "/рік", priceNote: null,
+              savingsYear: null, badge: "Найпопулярніший", popular: true,
+              features: ["250 фото AI homestaging/місяць", "4 AI відео/місяць", "Безлімітні пости і сторіс", "Автоматичний Відеоредактор", "100% Брендований Контент", "Пріоритетна підтримка", "2 місяці безкоштовно"],
+              extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Обрати цей план",
+            },
+          ],
+          agency: [
+            {
+              id: "free", name: "Free", users: "Для початку", oldPrice: null, price: 0, period: "", priceNote: null,
+              savingsYear: null, badge: null, popular: false,
+              features: ["5 фото AI homestaging", "1 AI відео", "5 постів і сторіс"],
+              extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Починай безкоштовно",
+            },
+            {
+              id: "agency_monthly", name: "Місячний", users: "Для вашої команди", oldPrice: 200, price: 80, period: "/міс на користувача", priceNote: "5 користувачів · €399/міс",
+              savingsYear: null, badge: null, popular: false,
+              features: ["До 5 учасників команди", "Спільний бренд для команди", "2000 фото AI homestaging/місяць", "12 AI відео/місяць", "Безлімітні соцмережі", "Безлімітний монтаж", "Автоматичні звіти", "Безлімітний аналіз зони", "Імпорт нерухомості", "Виділена пріоритетна підтримка"],
+              extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Обрати цей план",
+            },
+            {
+              id: "agency_annual", name: "Річний", users: "Для вашої команди", oldPrice: 150, price: 60, period: "/міс на користувача", priceNote: "5 користувачів · €299/міс",
+              savingsYear: null, badge: "Найпопулярніший", popular: true,
+              features: ["До 5 учасників команди", "Спільний бренд для команди", "2000 фото AI homestaging/місяць", "12 AI відео/місяць", "Безлімітні соцмережі", "Безлімітний монтаж", "Автоматичні звіти", "Безлімітний аналіз зони", "Імпорт нерухомості", "Виділена пріоритетна підтримка"],
+              extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Обрати цей план",
+            },
+          ],
+        },
       },
       howItWorks: {
         title: "Готовий до роботи за",

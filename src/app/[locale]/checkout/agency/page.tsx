@@ -10,6 +10,8 @@ import Navbar from '@/components/Navbar';
 
 // Plan ID mapping: homepage IDs → internal subscription IDs
 const PLAN_ID_MAP: Record<string, string> = {
+  individual_monthly: 'individual_monthly',
+  individual_annual: 'individual_annual',
   agency_monthly: 'agency_monthly',
   agency_annual: 'agency_annual',
 };
@@ -26,8 +28,9 @@ interface PlanData {
 }
 
 const PLANS: Record<string, PlanData> = {
-  agency_monthly: {
-    name: 'Mensile',
+  // Individuale (€59/€590)
+  individual_monthly: {
+    name: 'Individuale Mensile',
     price_monthly: 59,
     price_annual: 59,
     original_price: 150,
@@ -36,24 +39,47 @@ const PLANS: Record<string, PlanData> = {
     features_key: 'pro',
     popular: false,
   },
-  agency_annual: {
-    name: 'Annuale',
+  individual_annual: {
+    name: 'Individuale Annuale',
     price_monthly: 590,
     price_annual: 590,
     original_price: 1800,
     payment_link_monthly: 'https://buy.stripe.com/bJe4gzdh19zJgXK9BKak00H',
     payment_link_annual: null,
     features_key: 'pro',
+    popular: false,
+  },
+  // Agenzia (€399/mese, €3588/anno) — prezzo totale team (5 utenti)
+  agency_monthly: {
+    name: 'Agenzia Mensile',
+    price_monthly: 399,
+    price_annual: 399,
+    original_price: 0,
+    payment_link_monthly: 'https://buy.stripe.com/cNifZh7WH5jt6j65luak00I',
+    payment_link_annual: null,
+    features_key: 'pro',
+    popular: false,
+  },
+  agency_annual: {
+    name: 'Agenzia Annuale',
+    price_monthly: 3588,
+    price_annual: 3588,
+    original_price: 0,
+    payment_link_monthly: 'https://buy.stripe.com/cNi9AT7WH27h9vidS0ak00J',
+    payment_link_annual: null,
+    features_key: 'pro',
     popular: true,
   },
 };
 
-const PLAN_DISPLAY_ORDER = ['agency_monthly', 'agency_annual'];
+const PLAN_DISPLAY_ORDER = ['individual_monthly', 'individual_annual', 'agency_monthly', 'agency_annual'];
 
 const TIER_LABELS: Record<string, Record<string, string>> = {
-  user_lite:        { it: 'Lite',         en: 'Lite',      es: 'Lite',       fr: 'Lite',       ru: 'Lite',           uk: 'Lite' },
-  agency_monthly:   { it: 'Mensile',      en: 'Monthly',   es: 'Mensual',    fr: 'Mensuel',    ru: 'Ежемесячно',     uk: 'Щомісячно' },
-  agency_annual:    { it: 'Annuale',      en: 'Annual',    es: 'Anual',      fr: 'Annuel',     ru: 'Ежегодно',       uk: 'Щорічно' },
+  user_lite:          { it: 'Lite',                en: 'Lite',                es: 'Lite',                fr: 'Lite',                ru: 'Lite',            uk: 'Lite' },
+  individual_monthly: { it: 'Individuale Mensile', en: 'Individual Monthly',  es: 'Individual Mensual',  fr: 'Individuel Mensuel',  ru: 'Индив. месяц',    uk: 'Індив. місяць' },
+  individual_annual:  { it: 'Individuale Annuale', en: 'Individual Annual',   es: 'Individual Anual',    fr: 'Individuel Annuel',   ru: 'Индив. год',      uk: 'Індив. рік' },
+  agency_monthly:     { it: 'Agenzia Mensile',     en: 'Agency Monthly',      es: 'Agencia Mensual',     fr: 'Agence Mensuel',      ru: 'Агентство месяц', uk: 'Агенція місяць' },
+  agency_annual:      { it: 'Agenzia Annuale',     en: 'Agency Annual',       es: 'Agencia Anual',       fr: 'Agence Annuel',       ru: 'Агентство год',   uk: 'Агенція рік' },
 };
 
 const translations: Record<string, Record<string, string | string[]>> = {
@@ -432,7 +458,7 @@ function CheckoutAgencyContent() {
   const intervalParam = searchParams.get('interval');
 
   const [interval, setInterval] = useState<'monthly' | 'annual'>(
-    intervalParam === 'annual' || selectedPlanId === 'agency_annual' ? 'annual' : 'monthly'
+    intervalParam === 'annual' || selectedPlanId.endsWith('_annual') ? 'annual' : 'monthly'
   );
   const [user, setUser] = useState<{ id: string; email: string } | null>(null);
   const [isLoading, setIsLoading] = useState(false);

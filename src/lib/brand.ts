@@ -5,6 +5,30 @@
 import { supabase } from './supabase';
 import { getTokenFast } from './staging';
 
+// Edge function team-white-label (brand condiviso col team). Quando l'utente è in
+// un team, il brand viene letto/scritto qui invece che da /api/brand (user_brand).
+const FN_BASE = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1`;
+const ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
+
+// Contesto team rilevato dall'ultimo fetchBrand: indirizza le mutation.
+let teamCtx: { inTeam: boolean; role: 'owner' | 'member' | null } = { inTeam: false, role: null };
+
+async function twlGet(token: string): Promise<{ isTeamMember: boolean; role: 'owner' | 'member'; dirtyFields: string[]; settings: Record<string, string | null> } | null> {
+  try {
+    const res = await fetch(`${FN_BASE}/team-white-label`, { headers: { apikey: ANON_KEY, Authorization: `Bearer ${token}` }, cache: 'no-store' });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch { return null; }
+}
+
+async function twlPost(token: string, body: unknown): Promise<{ success?: boolean; uploadUrl?: string; path?: string; error?: string } | null> {
+  try {
+    const res = await fetch(`${FN_BASE}/team-white-label`, { method: 'POST', headers: { apikey: ANON_KEY, Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch { return null; }
+}
+
 // uid dal JWT (sub), senza supabase.auth.getUser/getSession che vanno in
 // deadlock su navigator.locks (localhost). Token letto da localStorage.
 function uidFromToken(): string | null {
@@ -116,10 +140,34 @@ function rowToSettings(row: Record<string, unknown> | null, signed: Record<LogoK
   };
 }
 
+// team-white-label settings (logo_*_url + campi) → BrandSettings.
+function twlToSettings(s: Record<string, string | null>): BrandSettings {
+  const logos = {} as BrandLogos;
+  for (const k of LOGO_KEYS) logos[k] = s?.[`${k}_url`] ?? null;
+  return {
+    logos,
+    logoOrientation: (s?.logo_orientation as 'vertical' | 'horizontal') || 'vertical',
+    primaryColor: s?.primary_color || '#3B82F6',
+    companyName: s?.company_name || '',
+    companyWebsite: s?.company_website || '',
+    companyEmail: s?.company_email || '',
+    reportFinalTitle: s?.report_final_title || '',
+    reportFinalDesc: s?.report_final_desc || '',
+  };
+}
+
 export async function fetchBrand(): Promise<BrandFetchResult> {
   try {
     const token = getTokenFast();
     if (!token) return { isTeamMember: false, role: 'owner', settings: readLocal() };
+
+    // Prima prova il brand di team (se l'utente è in un team agenzia).
+    const twl = await twlGet(token);
+    if (twl?.isTeamMember) {
+      teamCtx = { inTeam: true, role: twl.role };
+      return { isTeamMember: true, role: twl.role, settings: twlToSettings(twl.settings || {}) };
+    }
+    teamCtx = { inTeam: false, role: null };
 
     const res = await fetch('/api/brand', {
       headers: {
@@ -177,7 +225,21 @@ async function upsertBrand(patch: Record<string, unknown>): Promise<boolean> {
   }
 }
 
-export async function updateBrand(_scope: Scope, updates: Partial<Record<keyof typeof FIELD_TO_DB, string>>): Promise<boolean> {
+export async function updateBrand(scope: Scope, updates: Partial<Record<keyof typeof FIELD_TO_DB, string>>): Promise<boolean> {
+  // In team → scrive su team-white-label (owner: scope team; member: scope user).
+  if (teamCtx.inTeam) {
+    const token = getTokenFast();
+    if (!token) return false;
+    const twlUpdates: Record<string, string> = {};
+    for (const [k, v] of Object.entries(updates)) {
+      const dbKey = FIELD_TO_DB[k];
+      if (dbKey && v !== undefined) twlUpdates[dbKey] = v as string;
+    }
+    if (Object.keys(twlUpdates).length === 0) return true;
+    const res = await twlPost(token, { mode: 'update', scope, updates: twlUpdates });
+    return !!res?.success;
+  }
+
   const uid = await getUid();
   if (!uid) {
     // Local fallback: map client field names onto BrandSettings keys.
@@ -195,7 +257,22 @@ export async function updateBrand(_scope: Scope, updates: Partial<Record<keyof t
 }
 
 // Upload a logo file to storage, then persist its path on the user_brand row.
-export async function uploadBrandLogo(_scope: Scope, logoKey: string, file: File): Promise<boolean> {
+export async function uploadBrandLogo(scope: Scope, logoKey: string, file: File): Promise<boolean> {
+  // In team: signed upload URL → PUT diretto → persisti il path su team-white-label.
+  if (teamCtx.inTeam) {
+    const token = getTokenFast();
+    if (!token) return false;
+    const field = `${logoKey}_url`;
+    const signed = await twlPost(token, { mode: 'upload-url', scope, field, mime: file.type || 'image/png' });
+    if (!signed?.uploadUrl || !signed?.path) return false;
+    try {
+      const put = await fetch(signed.uploadUrl, { method: 'PUT', headers: { 'Content-Type': file.type || 'image/png' }, body: file });
+      if (!put.ok) return false;
+    } catch { return false; }
+    const res = await twlPost(token, { mode: 'update', scope, updates: { [field]: signed.path } });
+    return !!res?.success;
+  }
+
   const uid = await getUid();
   if (!uid) {
     const dataUrl = await fileToDataUrl(file);
@@ -232,7 +309,14 @@ export async function uploadBrandLogo(_scope: Scope, logoKey: string, file: File
   }
 }
 
-export async function removeBrandLogo(_scope: Scope, logoKey: string): Promise<boolean> {
+export async function removeBrandLogo(scope: Scope, logoKey: string): Promise<boolean> {
+  if (teamCtx.inTeam) {
+    const token = getTokenFast();
+    if (!token) return false;
+    const res = await twlPost(token, { mode: 'update', scope, updates: { [`${logoKey}_url`]: null } });
+    return !!res?.success;
+  }
+
   const uid = await getUid();
   if (!uid) {
     const cur = readLocal();

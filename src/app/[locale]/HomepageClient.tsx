@@ -191,8 +191,14 @@ function PricingSection({
     progressSpots: string;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     plans: any[];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    plansByTier?: { individual: any[]; agency: any[] };
+    tierToggle?: { individual: string; agency: string };
   };
 }) {
+  const [tier, setTier] = useState<'individual' | 'agency'>('individual');
+  const tierLabels = data.tierToggle ?? { individual: 'Individuale', agency: 'Agenzia' };
+  const activePlans = data.plansByTier ? data.plansByTier[tier] : data.plans;
   const freeLabel =
     ({ it: 'Gratis', en: 'Free', es: 'Gratis', fr: 'Gratuit', ru: 'Бесплатно', uk: 'Безкоштовно' } as Record<string, string>)[locale] ?? 'Gratis';
 
@@ -247,15 +253,62 @@ function PricingSection({
             </div>
           </div>
 
+          {data.plansByTier && (
+            <div style={{ display: 'flex', justifyContent: 'center', marginTop: 28 }}>
+              <div
+                role="tablist"
+                aria-label="Plan tier"
+                style={{
+                  display: 'inline-flex',
+                  background: '#eff6ff',
+                  border: '1px solid rgba(37,99,235,0.20)',
+                  borderRadius: 999,
+                  padding: 4,
+                  gap: 4,
+                }}
+              >
+                {(['individual', 'agency'] as const).map((t) => {
+                  const active = tier === t;
+                  return (
+                    <button
+                      key={t}
+                      type="button"
+                      role="tab"
+                      aria-selected={active}
+                      onClick={() => setTier(t)}
+                      style={{
+                        appearance: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        padding: '10px 24px',
+                        borderRadius: 999,
+                        fontSize: 15,
+                        fontWeight: 700,
+                        letterSpacing: 0.2,
+                        background: active ? '#2563EB' : 'transparent',
+                        color: active ? '#fff' : '#2563EB',
+                        boxShadow: active ? '0 2px 10px rgba(37,99,235,0.30)' : 'none',
+                        transition: 'all 0.2s ease',
+                      }}
+                    >
+                      {tierLabels[t]}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           <div
             className="grid grid-cols-1 md:grid-cols-3 items-stretch gap-14 md:gap-6 mt-10"
           >
             {(() => {
-              const plans = data.plans as {
+              const plans = activePlans as {
                 id: string; name: string; users: string; oldPrice: number;
                 price: number; savingsYear: number; badge: string | null;
                 popular: boolean; features: string[]; extra: string | null;
-                color: string; bg: string; cta: string;
+                color: string; bg: string; cta: string; period?: string;
+                priceNote?: string | null;
               }[];
               const maxFeatures = Math.max(...plans.map((p) => p.features.length));
               return plans.map((plan) => {
