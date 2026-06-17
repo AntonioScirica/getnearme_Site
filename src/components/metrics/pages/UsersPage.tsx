@@ -5,9 +5,8 @@ import type { MetricsData } from "../types";
 import { fmt, MONO } from "../types";
 import KpiCard from "../ui/KpiCard";
 import StatCard from "../ui/StatCard";
-import BarChart from "../ui/BarChart";
 import Donut from "../ui/Donut";
-import { Users, ShieldCheck, Building2, Activity, Search, ChevronUp, ChevronDown, ChevronsUpDown, Info } from "lucide-react";
+import { Users, ShieldCheck, Building2, Activity, Search, ChevronUp, ChevronDown, ChevronsUpDown, Info, RefreshCw } from "lucide-react";
 
 const DONUT_COLORS = ["#4f46e5", "#3b82f6", "#8b5cf6", "#f59e0b", "#10b981"];
 
@@ -24,7 +23,7 @@ function formatDate(iso: string | null) {
   return new Date(iso).toLocaleDateString("it-IT", { day: "2-digit", month: "short", year: "2-digit" });
 }
 
-type SortKey = "email" | "subscription_type" | "credits" | "total_spent" | "properties_saved" | "full_analyses" | "zone_analyses" | "pdf_reports" | "staging_photos" | "post_png_exports" | "staging_video_exports" | "last_sign_in_at" | "created_at";
+type SortKey = "email" | "subscription_type" | "credits" | "total_spent" | "properties_saved" | "full_analyses" | "zone_analyses" | "pdf_reports" | "staging_photos" | "post_png_exports" | "staging_video_exports" | "estimated_cost" | "created_at";
 type SortDir = "asc" | "desc";
 
 type UserRow = MetricsData["allUsers"][0];
@@ -36,7 +35,7 @@ function SortIcon({ col, sortKey, sortDir }: { col: SortKey; sortKey: SortKey; s
     : <ChevronDown className="w-3 h-3 inline ml-1 text-indigo-500" />;
 }
 
-export default function UsersPage({ data }: { data: MetricsData }) {
+export default function UsersPage({ data, onRefresh, loading }: { data: MetricsData; onRefresh?: () => void; loading?: boolean }) {
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState("all");
   const [sortKey, setSortKey] = useState<SortKey>("created_at");
@@ -50,7 +49,7 @@ export default function UsersPage({ data }: { data: MetricsData }) {
   const totalPostVideo = useMemo(() => data.allUsers.reduce((s, u) => s + (u.post_video_exports || 0), 0), [data.allUsers]);
 
   const agencyCount = data.credits
-    .filter((c) => c.subscription_type === "agency" || c.subscription_type === "agency_subscription")
+    .filter((c) => c.subscription_type !== "free" && c.subscription_type !== "ambassador")
     .reduce((s, c) => s + c.users, 0);
 
   const subscriptionTypes = useMemo(() => {
@@ -79,7 +78,7 @@ export default function UsersPage({ data }: { data: MetricsData }) {
     rows = [...rows].sort((a, b) => {
       let va: string | number = a[sortKey] ?? "";
       let vb: string | number = b[sortKey] ?? "";
-      if (sortKey === "last_sign_in_at" || sortKey === "created_at") {
+      if (sortKey === "created_at") {
         va = va ? new Date(va as string).getTime() : 0;
         vb = vb ? new Date(vb as string).getTime() : 0;
       }
@@ -95,25 +94,51 @@ export default function UsersPage({ data }: { data: MetricsData }) {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold text-gray-100 mb-6">Users</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-semibold text-gray-100">Users</h1>
+        {onRefresh && (
+          <button
+            onClick={onRefresh}
+            disabled={loading}
+            className={`${MONO} flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm border border-white/10 text-gray-400 hover:bg-white/5 hover:text-gray-200 transition-colors disabled:opacity-40`}
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+            Aggiorna
+          </button>
+        )}
+      </div>
 
       {/* KPI row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <KpiCard label="Total Users" value={data.users.total} icon={<Users className="w-[18px] h-[18px]" />} />
         <KpiCard label="Confirmed" value={data.users.confirmed} icon={<ShieldCheck className="w-[18px] h-[18px]" />} />
-        <KpiCard label="Agency" value={agencyCount} icon={<Building2 className="w-[18px] h-[18px]" />} />
+        <KpiCard label="Paganti" value={agencyCount} icon={<Building2 className="w-[18px] h-[18px]" />} />
         <KpiCard label="Active 7d" value={data.sessions.active_7d} sub={`di ${data.sessions.active_30d} attivi 30d`} icon={<Activity className="w-[18px] h-[18px]" />} />
       </div>
 
       {/* Growth + Providers */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-        <StatCard title="User Growth by Month">
-          <BarChart
-            items={data.growth.map((g) => ({
-              label: g.month.slice(5),
-              value: g.new_users,
-            }))}
-          />
+        <StatCard title="Costo totale utenti">
+          {(() => {
+            const totalCost = data.allUsers.reduce((sum, u) => sum + (u.estimated_cost ?? 0), 0);
+            const photoCost = data.allUsers.reduce((sum, u) => sum + (u.staging_photos ?? 0) * 0.036, 0);
+            const videoCost = totalCost - photoCost;
+            return (
+              <div className="flex flex-col items-center justify-center h-full py-6">
+                <span className={`${MONO} text-4xl font-bold ${totalCost > 100 ? "text-red-400" : totalCost > 30 ? "text-amber-400" : "text-emerald-400"}`}>€{totalCost.toFixed(2)}</span>
+                <div className="flex gap-6 mt-4">
+                  <div className="text-center">
+                    <span className={`${MONO} text-lg font-semibold text-gray-200`}>€{photoCost.toFixed(2)}</span>
+                    <p className={`${MONO} text-[10px] text-gray-500 mt-1`}>Foto AI</p>
+                  </div>
+                  <div className="text-center">
+                    <span className={`${MONO} text-lg font-semibold text-gray-200`}>€{videoCost.toFixed(2)}</span>
+                    <p className={`${MONO} text-[10px] text-gray-500 mt-1`}>Video AI</p>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
         </StatCard>
         <StatCard title="Auth Providers">
           <Donut
@@ -204,7 +229,7 @@ export default function UsersPage({ data }: { data: MetricsData }) {
                   </span>
                 </th>
                 <th className={thRClass} onClick={() => handleSort("staging_video_exports")}>Video <SortIcon col="staging_video_exports" sortKey={sortKey} sortDir={sortDir} /></th>
-                <th className={thRClass} onClick={() => handleSort("last_sign_in_at")}>Last Seen <SortIcon col="last_sign_in_at" sortKey={sortKey} sortDir={sortDir} /></th>
+                <th className={thRClass} onClick={() => handleSort("estimated_cost")}>Costo <SortIcon col="estimated_cost" sortKey={sortKey} sortDir={sortDir} /></th>
                 <th className={thRClass} onClick={() => handleSort("created_at")}>Joined <SortIcon col="created_at" sortKey={sortKey} sortDir={sortDir} /></th>
               </tr>
             </thead>
@@ -279,7 +304,7 @@ export default function UsersPage({ data }: { data: MetricsData }) {
                       )}
                     </td>
                     <td className={`${MONO} text-sm py-3 pr-4 text-right ${user.staging_video_exports > 0 ? "text-teal-400" : "text-gray-700"}`}>{user.staging_video_exports > 0 ? fmt(user.staging_video_exports) : "—"}</td>
-                    <td className={`${MONO} text-sm py-3 pr-4 text-right text-gray-500`}>{formatDate(user.last_sign_in_at)}</td>
+                    <td className={`${MONO} text-sm py-3 pr-4 text-right font-medium ${(user.estimated_cost ?? 0) > 5 ? "text-red-400" : (user.estimated_cost ?? 0) > 1 ? "text-amber-400" : "text-gray-500"}`}>{(user.estimated_cost ?? 0) > 0 ? `€${(user.estimated_cost ?? 0).toFixed(2)}` : "—"}</td>
                     <td className={`${MONO} text-sm py-3 pr-4 text-right text-gray-500`}>{formatDate(user.created_at)}</td>
                   </tr>
                   {expanded === user.email && (
@@ -336,7 +361,7 @@ function UserDetail({ user }: { user: MetricsData["allUsers"][0] }) {
       <div className="bg-white/[0.04] rounded-lg p-4 border border-white/[0.06]">
         <p className={`${MONO} text-[10px] uppercase tracking-wider text-gray-400 mb-3`}>Analisi immobili</p>
         <div className="space-y-1">
-          <DetailRow label="Annunci analizzati" value={fmt(user.full_analyses)} />
+          <DetailRow label="Analisi zona" value={fmt(user.full_analyses)} />
           <DetailRow label="Report PDF" value={fmt(user.pdf_reports)} />
         </div>
       </div>
@@ -347,18 +372,20 @@ function UserDetail({ user }: { user: MetricsData["allUsers"][0] }) {
         <div className="space-y-1">
           <DetailRow label="Foto AI" value={fmt(user.staging_photos)} />
           {(() => {
-            const STYLE_LABELS: Record<string, string> = { bright: "Luminoso", modern: "Moderno", neutral: "Neutro", minimal: "Minimal", cozy: "Accogliente", lived: "Vissuto", family: "Famiglia", empty: "Vuoto" };
+            const STYLE_LABELS: Record<string, string> = {
+              modern: "Moderno", nordic: "Nordico", industrial: "Luxury", boho: "Boho", daynight: "Giorno/Notte", empty: "Svuota stanza", custom: "Custom",
+              bright: "Luminoso", neutral: "Neutro", minimal: "Minimal", cozy: "Accogliente", lived: "Vissuto", family: "Famiglia",
+            };
             const byStyle = user.staging_photo_by_style || {};
-            const sorted = Object.entries(STYLE_LABELS)
-              .map(([id, label]) => ({ id, label, count: byStyle[id] ?? 0 }))
-              .sort((a, b) => b.count - a.count)
-              .slice(0, 3);
+            const sorted = Object.entries(byStyle)
+              .filter(([, count]) => count > 0)
+              .sort((a, b) => b[1] - a[1]);
             return (
               <>
-                {sorted.map(({ id, label, count }) => (
+                {sorted.map(([id, count]) => (
                   <div key={id} className="flex justify-between text-sm py-0.5 pl-3">
-                    <span className={`${MONO} text-[11px] text-gray-200`}>↳ {label}</span>
-                    <span className={`${MONO} text-[11px] ${count > 0 ? "text-gray-200" : "text-gray-600"}`}>{count}</span>
+                    <span className={`${MONO} text-[11px] text-gray-200`}>↳ {STYLE_LABELS[id] ?? id}</span>
+                    <span className={`${MONO} text-[11px] text-gray-200`}>{count}</span>
                   </div>
                 ))}
               </>
@@ -395,6 +422,17 @@ function UserDetail({ user }: { user: MetricsData["allUsers"][0] }) {
             );
           })()}
           <DetailRow label="Post Video" value={fmt(user.post_video_exports)} />
+          {(() => {
+            const VID_LABELS: Record<string, string> = { ai_staging: "Before/After", walkthrough: "Walkthrough", classic: "Classico", split: "Split", construction: "Ristrutturazione", day_night: "Giorno/Notte", montaggio: "Montaggio", sottotitoli: "Sottotitoli" };
+            const vt = user.ai_videos_by_template || {};
+            const entries = Object.entries(vt).filter(([,c]) => c > 0).sort((a, b) => b[1] - a[1]);
+            return entries.length > 0 ? entries.map(([tpl, count]) => (
+              <div key={tpl} className="flex justify-between text-sm py-0.5 pl-3">
+                <span className={`${MONO} text-[11px] text-gray-200`}>↳ {VID_LABELS[tpl] ?? tpl}</span>
+                <span className={`${MONO} text-[11px] text-gray-200`}>{count}</span>
+              </div>
+            )) : null;
+          })()}
         </div>
       </div>
 
@@ -410,6 +448,25 @@ function UserDetail({ user }: { user: MetricsData["allUsers"][0] }) {
               </span>
             } />
             <DetailRow label="Membri" value={fmt(user.team.member_count)} />
+          </div>
+        </div>
+      )}
+
+      {/* Costo stimato */}
+      {(user.estimated_cost ?? 0) > 0 && (
+        <div className="bg-white/[0.04] rounded-lg p-4 border border-white/[0.06]">
+          <p className={`${MONO} text-[10px] uppercase tracking-wider text-gray-400 mb-3`}>Costo stimato</p>
+          <div className="space-y-1">
+            <DetailRow label="Totale" value={<span className={`font-medium ${(user.estimated_cost ?? 0) > 5 ? "text-red-400" : (user.estimated_cost ?? 0) > 1 ? "text-amber-400" : "text-gray-200"}`}>€{(user.estimated_cost ?? 0).toFixed(2)}</span>} />
+            {user.staging_photos > 0 && <DetailRow label="Foto AI" value={<span className="text-xs text-gray-400">{fmt(user.staging_photos)} × €0.036 = €{(user.staging_photos * 0.036).toFixed(2)}</span>} />}
+            {(() => {
+              const VID_LABELS: Record<string, string> = { ai_staging: "Before/After", walkthrough: "Walkthrough", classic: "Classico", split: "Split", construction: "Ristrutturazione", day_night: "Giorno/Notte", montaggio: "Montaggio" };
+              const VID_COST: Record<string, number> = { ai_staging: 1.03, walkthrough: 0.78, classic: 0.32, split: 0.32, construction: 0.78, day_night: 0.78, montaggio: 0.003 };
+              const vt = user.ai_videos_by_template || {};
+              return Object.entries(vt).filter(([,c]) => c > 0).map(([tpl, count]) => (
+                <DetailRow key={tpl} label={`↳ ${VID_LABELS[tpl] ?? tpl}`} value={<span className="text-xs text-gray-400">{count} × €{(VID_COST[tpl] ?? 0.5).toFixed(2)} = €{(count * (VID_COST[tpl] ?? 0.5)).toFixed(2)}</span>} />
+              ));
+            })()}
           </div>
         </div>
       )}

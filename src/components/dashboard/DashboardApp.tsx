@@ -2025,7 +2025,7 @@ function AccountScreen({ credits, toast, go, userData, tierHint }: { credits: nu
                         <div style={{ fontSize: 12.5, fontWeight: 800, color: active ? 'rgba(255,255,255,.8)' : '#009874', marginTop: 6 }}>RISPARMI {saved}€{plan.period}</div>
                       )}
                       {plan.note && (
-                        <div style={{ fontSize: 12.5, fontWeight: 700, color: active ? 'rgba(255,255,255,.8)' : 'var(--text-muted)', marginTop: 6 }}>{plan.note}</div>
+                        <div style={{ fontSize: 14, fontWeight: 700, color: active ? 'rgba(255,255,255,.85)' : 'var(--text-muted)', marginTop: 6 }}>{plan.note}</div>
                       )}
                     </>
                   );

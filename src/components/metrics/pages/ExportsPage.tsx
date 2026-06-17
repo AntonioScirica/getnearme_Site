@@ -9,9 +9,8 @@ export default function AgencyPage({ data }: { data: MetricsData }) {
   const teams = data.teamsStats;
   const hourly = data.exportAggregates?.hourly;
 
-  // Agency users: subscription_type starts with "agency"
   const agencyUsers = data.allUsers.filter(u =>
-    u.subscription_type?.startsWith("agency")
+    u.subscription_type !== "free" && u.subscription_type !== "ambassador"
   );
   const agencyCount = agencyUsers.length;
 
@@ -64,7 +63,7 @@ export default function AgencyPage({ data }: { data: MetricsData }) {
           <p className={`${MONO} text-3xl font-semibold text-gray-100`}>{teams.avg_members}</p>
         </div>
         <div className="bg-[#161920] rounded-xl p-5 border border-white/[0.08]">
-          <p className={`${MONO} text-[11px] uppercase tracking-wider text-gray-500 mb-2`}>Utenti agency</p>
+          <p className={`${MONO} text-[11px] uppercase tracking-wider text-gray-500 mb-2`}>Paganti</p>
           <p className={`${MONO} text-3xl font-semibold text-gray-100`}>{fmt(agencyCount)}</p>
         </div>
       </div>
@@ -73,7 +72,7 @@ export default function AgencyPage({ data }: { data: MetricsData }) {
       {agencyCount > 0 && (
         <div className="bg-[#161920] rounded-xl border border-white/[0.08] p-5">
           <div className="flex items-baseline justify-between mb-4">
-            <p className={`${MONO} text-[11px] uppercase tracking-wider text-gray-400`}>Cosa usano di più (utenti agency)</p>
+            <p className={`${MONO} text-[11px] uppercase tracking-wider text-gray-400`}>Cosa usano di più (utenti paganti)</p>
             <p className={`${MONO} text-[10px] text-gray-600`}>media per utente in parentesi</p>
           </div>
           <div className="space-y-2.5">

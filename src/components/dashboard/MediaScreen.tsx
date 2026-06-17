@@ -167,13 +167,8 @@ export default function MediaScreen({
   const [lightbox, setLightbox] = useState<{ resultUrl: string; sourceUrl: string | null; isVideo?: boolean } | null>(null);
   const [localSourceUrls, setLocalSourceUrls] = useState<Record<string, string>>({});
 
-  // Filter batches by current project if project is passed
-  // Currently project filtering is visual-only since backend is returning all user batches
-  // until projects are fully wired.
-  const projectBatches = useMemo(() => {
-    if (!project) return batches;
-    return batches.filter(b => !b.projectId || b.projectId === project.id);
-  }, [batches, project]);
+  // Mostra TUTTI i batch (cross-progetto): la galleria è globale.
+  const projectBatches = batches;
 
   // Fetch photos for completed/processing batches that we haven't fetched yet
   useEffect(() => {
@@ -218,6 +213,7 @@ export default function MediaScreen({
   };
 
   const [actionsOpen, setActionsOpen] = useState<string | null>(null);
+  const [confirmDlg, setConfirmDlg] = useState<{ title: string; sub: string; onYes: () => void } | null>(null);
   const [selectDay, setSelectDay] = useState<string | null>(null);       // giorno in modalità selezione
   const [selected, setSelected] = useState<Set<string>>(new Set());      // chiavi `${batchId}_${index}`
 
@@ -232,20 +228,26 @@ export default function MediaScreen({
     const vids = list.filter(p => (p as MediaItem).isVideo);
     const pics = list.filter(p => !(p as MediaItem).isVideo);
     const n = list.length;
-    if (!window.confirm(`Eliminare ${n} ${n === 1 ? 'elemento' : 'elementi'}? L'azione è irreversibile.`)) return;
-    const { deleteServerVideoJob } = await import('@/lib/videoJobs');
-    await Promise.all([
-      ...pics.map(p => deleteBatchPhoto(p.batchId, p.index)),
-      ...vids.map(p => deleteServerVideoJob((p as MediaItem).videoId!)),
-    ]);
-    if (pics.length) setPhotosByBatch(prev => {
-      const next = { ...prev };
-      for (const p of pics) next[p.batchId] = (next[p.batchId] || []).filter(x => x.index !== p.index);
-      return next;
+    const doDelete = async () => {
+      const { deleteServerVideoJob } = await import('@/lib/videoJobs');
+      await Promise.all([
+        ...pics.map(p => deleteBatchPhoto(p.batchId, p.index)),
+        ...vids.map(p => deleteServerVideoJob((p as MediaItem).videoId!)),
+      ]);
+      if (pics.length) setPhotosByBatch(prev => {
+        const next = { ...prev };
+        for (const p of pics) next[p.batchId] = (next[p.batchId] || []).filter(x => x.index !== p.index);
+        return next;
+      });
+      if (vids.length) setVideos(prev => prev.filter(v => !vids.some(x => (x as MediaItem).videoId === v.id)));
+      exitSelect();
+      toast(n === 1 ? 'Elemento eliminato' : 'Elementi eliminati', 'trash');
+    };
+    setConfirmDlg({
+      title: `Eliminare ${n} ${n === 1 ? 'elemento' : 'elementi'}?`,
+      sub: "L'azione è irreversibile.",
+      onYes: doDelete,
     });
-    if (vids.length) setVideos(prev => prev.filter(v => !vids.some(x => (x as MediaItem).videoId === v.id)));
-    exitSelect();
-    toast(n === 1 ? 'Elemento eliminato' : 'Elementi eliminati', 'trash');
   };
 
   // Scarica come ZIP una lista di foto (solo riuscite con URL valido).
@@ -293,25 +295,25 @@ export default function MediaScreen({
   // Video finiti (R2, scaricabili entro 30gg). Source of truth = tabella
   // ai_video_jobs (cross-device, sopravvive a browser chiuso); localStorage
   // fonde la sessione corrente. Ricaricati al mount + a ogni routeKey.
-  const [videos, setVideos] = useState<{ id: string; url: string; title: string; ts: number }[]>([]);
+  const [videos, setVideos] = useState<{ id: string; url: string; title: string; template: string; ts: number }[]>([]);
   const [videosLoaded, setVideosLoaded] = useState(false);
   const refreshVideos = useCallback(async () => {
     const { finishedVideos, fetchServerVideoJobs, mergeServerJobs } = await import('@/lib/videoJobs');
     const apply = () => {
       const seen = new Set<string>();
-      const out = finishedVideos(project?.id)
+      const out = finishedVideos(undefined)
         .filter(v => v.outputUrl && !seen.has(v.outputUrl) && seen.add(v.outputUrl))
-        .map(v => ({ id: v.id, url: v.outputUrl!, title: v.title, ts: v.createdAt }));
+        .map(v => ({ id: v.id, url: v.outputUrl!, title: v.title, template: v.template, ts: v.createdAt }));
       setVideos(out);
     };
     apply(); // istantaneo da localStorage
     const server = await fetchServerVideoJobs();
     if (server.length) { mergeServerJobs(server); apply(); }
     setVideosLoaded(true);
-  }, [project?.id]);
+  }, []);
   useEffect(() => { void refreshVideos(); }, [refreshVideos, routeKey]);
 
-  type MediaItem = (BatchPhoto & { batchId: string }) & { isVideo?: boolean; title?: string; videoId?: string; pending?: boolean };
+  type MediaItem = (BatchPhoto & { batchId: string }) & { isVideo?: boolean; title?: string; template?: string; videoId?: string; pending?: boolean; createdTs?: number };
 
   // Raggruppa foto + video per giorno (una sezione al giorno).
   const days = useMemo(() => {
@@ -327,13 +329,14 @@ export default function MediaScreen({
         // Tutti i batch_staging sono Foto AI; i video stanno in ai_video_jobs.
         const photos = photosByBatch[batch.id];
         if (!photos || photos.length === 0) continue;
-        const day = ensure(new Date(batch.createdAt).getTime());
-        for (const p of photos) day.photos.push({ ...p, batchId: batch.id });
+        const batchTs = new Date(batch.createdAt).getTime();
+        const day = ensure(batchTs);
+        for (const p of photos) day.photos.push({ ...p, batchId: batch.id, createdTs: batchTs });
       }
     }
     if (filter !== 'staging') {
       videos.forEach((v, i) => {
-        ensure(v.ts).photos.push({ index: -1 - i, resultUrl: v.url, sourceUrl: null, status: 'completed', batchId: 'video', isVideo: true, title: v.title, videoId: v.id } as MediaItem);
+        ensure(v.ts).photos.push({ index: -1 - i, resultUrl: v.url, sourceUrl: null, status: 'completed', batchId: 'video', isVideo: true, title: v.title, template: v.template, videoId: v.id, createdTs: v.ts } as MediaItem);
       });
     }
     // Skeleton dei processi FOTO in corso: una tile per ogni foto ancora da generare.
@@ -351,13 +354,17 @@ export default function MediaScreen({
     // Skeleton dei VIDEO in corso (render): una tile per job attivo.
     if (filter !== 'staging') {
       activeVideoJobs
-        .filter(j => !project || !j.projectId || j.projectId === project.id)
+        .filter(() => true)
         .forEach((j, i) => {
           ensure(j.createdAt).photos.push({ index: -200000 - i, resultUrl: '', sourceUrl: null, status: 'processing', batchId: 'video-pending', pending: true, isVideo: true, title: j.title } as MediaItem);
         });
     }
-    // Processi in corso in cima a ciascun giorno.
-    map.forEach(d => d.photos.sort((a, b) => (b.pending ? 1 : 0) - (a.pending ? 1 : 0)));
+    // Ordine cronologico (recenti prima), processi in corso in cima.
+    map.forEach(d => d.photos.sort((a, b) => {
+      const ap = a.pending ? 1 : 0, bp = b.pending ? 1 : 0;
+      if (ap !== bp) return bp - ap;
+      return (b.createdTs || 0) - (a.createdTs || 0);
+    }));
     return Array.from(map.values()).sort((a, b) => b.ts - a.ts);
   }, [validBatches, projectBatches, photosByBatch, filter, videos, activeVideoJobs, project]);
 
@@ -514,7 +521,7 @@ export default function MediaScreen({
                       const vSelKey = `${photo.batchId}_${photo.index}`;
                       const vSel = selected.has(vSelKey);
                       return (
-                        <div key={`video_${photo.index}`} onClick={() => inSelect ? toggleSelect(vSelKey) : setLightbox({ resultUrl: photo.resultUrl, sourceUrl: null, isVideo: true })} style={{ position: 'relative', aspectRatio: '4/3', borderRadius: 12, overflow: 'hidden', border: vSel ? '2px solid #3B83F6' : '1px solid #f0ede7', background: '#000', cursor: 'pointer', animation: 'media-reveal .7s cubic-bezier(.22,1,.36,1) both', animationDelay: `${pi * 60}ms` }}>
+                        <div key={`video_${photo.index}`} onClick={() => { if (menuKey === vSelKey) { setMenuKey(null); return; } inSelect ? toggleSelect(vSelKey) : setLightbox({ resultUrl: photo.resultUrl, sourceUrl: null, isVideo: true }); }} style={{ position: 'relative', aspectRatio: '4/3', borderRadius: 12, overflow: menuKey === vSelKey ? 'visible' : 'hidden', border: vSel ? '2px solid #3B83F6' : '1px solid #f0ede7', background: '#000', cursor: 'pointer', zIndex: menuKey === vSelKey ? 30 : undefined, animation: 'media-reveal .7s cubic-bezier(.22,1,.36,1) both', animationDelay: `${pi * 60}ms` }}>
                           {/* Cover: video blurrato dietro (riempie) + video contenuto davanti, come le foto verticali. */}
                           <video src={`${photo.resultUrl}#t=0.5`} playsInline preload="metadata" muted style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', filter: 'blur(16px) brightness(.85)', transform: 'scale(1.15)', pointerEvents: 'none' }} />
                           <video src={`${photo.resultUrl}#t=0.5`} playsInline preload="metadata" muted onLoadedData={() => setVidLoaded(m => m[photo.videoId!] ? m : { ...m, [photo.videoId!]: true })} style={{ position: 'relative', width: '100%', height: '100%', objectFit: 'contain', pointerEvents: 'none', ...(vSel ? { opacity: .85 } : {}) }} />
@@ -531,11 +538,27 @@ export default function MediaScreen({
                             </div>
                           )}
                           {!inSelect && (
-                            <a href={photo.resultUrl} download rel="noopener" onClick={e => e.stopPropagation()} title="Scarica" style={{ position: 'absolute', top: 10, right: 10, width: 32, height: 32, borderRadius: '50%', background: 'rgba(20,30,55,0.55)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}>
-                              <Icon name="download" size={15} color="#fff" />
-                            </a>
+                            <>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); setMenuKey(k => k === vSelKey ? null : vSelKey); }}
+                                title="Opzioni"
+                                style={{ position: 'absolute', bottom: 12, right: 12, width: 34, height: 34, borderRadius: '50%', background: 'rgba(20,30,55,0.55)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 6 }}
+                              >
+                                <Icon name="more-vertical" size={16} color="#fff" />
+                              </button>
+                              {menuKey === vSelKey && (
+                                <div onClick={(e) => e.stopPropagation()} style={{ position: 'absolute', top: 'calc(100% + 6px)', right: 0, zIndex: 50, background: '#fff', border: '1px solid #f0ede7', borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', padding: 4, minWidth: 170 }}>
+                                  <Box as="button" onClick={() => { setMenuKey(null); const a = document.createElement('a'); a.href = photo.resultUrl; a.download = `video-ai.mp4`; a.click(); toast('Download avviato...', 'download'); }} style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '10px 12px', borderRadius: 8, border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 13.5, fontWeight: 600, color: '#211f1c', textAlign: 'left' } as React.CSSProperties} hover={{ background: 'var(--bg-hover)' }}>
+                                    <Icon name="download" size={16} color="#57534c" />Scarica
+                                  </Box>
+                                  <Box as="button" onClick={async () => { setMenuKey(null); await handleDeletePhotos([photo]); }} style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '10px 12px', borderRadius: 8, border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 13.5, fontWeight: 600, color: '#dc2626', textAlign: 'left' } as React.CSSProperties} hover={{ background: '#fef2f2' }}>
+                                    <Icon name="trash-2" size={16} color="#dc2626" />Elimina
+                                  </Box>
+                                </div>
+                              )}
+                            </>
                           )}
-                          <span style={{ position: 'absolute', bottom: 8, left: 8, background: 'rgba(0,0,0,.6)', color: '#fff', fontSize: 10.5, fontWeight: 700, padding: '3px 8px', borderRadius: 99, display: 'flex', alignItems: 'center', gap: 4 }}><Icon name="film" size={11} color="#fff" />Video</span>
+                          <span style={{ position: 'absolute', bottom: 8, left: 8, background: 'rgba(0,0,0,.6)', color: '#fff', fontSize: 10.5, fontWeight: 700, padding: '3px 8px', borderRadius: 99, display: 'flex', alignItems: 'center', gap: 4, maxWidth: 'calc(100% - 60px)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}><Icon name="film" size={11} color="#fff" style={{ flexShrink: 0 }} />Video{(photo as MediaItem).template ? ` · ${({ ai_staging: 'Da foto a video', walkthrough: 'Walkthrough', construction: 'Ristrutturazione', day_night: 'Giorno/Notte', classic: 'Classico', montaggio: 'Montaggio' } as Record<string,string>)[(photo as MediaItem).template!] || (photo as MediaItem).template}` : ''}</span>
                           {!vidLoaded[photo.videoId!] && (
                             <div style={{ position: 'absolute', inset: 0, background: '#f4f2ee', animation: 'pulse 1.5s infinite ease-in-out', zIndex: 5 }} />
                           )}
@@ -609,6 +632,23 @@ export default function MediaScreen({
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Confirm dialog */}
+      {confirmDlg && (
+        <div onClick={() => setConfirmDlg(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(24,21,17,.5)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+          <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 420, background: 'var(--bg-card, #fff)', borderRadius: 18, boxShadow: '0 32px 64px rgba(20,18,15,.2)', padding: 28, textAlign: 'center' }}>
+            <div style={{ width: 52, height: 52, borderRadius: '50%', background: '#fef2f2', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+              <Icon name="alert-triangle" size={24} color="#dc2626" />
+            </div>
+            <h3 style={{ margin: '0 0 6px', fontSize: 17, fontWeight: 800 }}>{confirmDlg.title}</h3>
+            <p style={{ margin: '0 0 22px', fontSize: 13.5, color: '#8c867d', lineHeight: 1.5 }}>{confirmDlg.sub}</p>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <Box as="button" onClick={() => setConfirmDlg(null)} style={{ flex: 1, border: '1px solid #d8d4cb', background: '#fff', color: '#8c867d', fontSize: 14, fontWeight: 700, padding: '11px 0', borderRadius: 10, cursor: 'pointer' } as React.CSSProperties} hover={{ background: '#faf9f7' }}>Annulla</Box>
+              <Box as="button" onClick={() => { const fn = confirmDlg.onYes; setConfirmDlg(null); fn(); }} style={{ flex: 1, border: 'none', background: '#dc2626', color: '#fff', fontSize: 14, fontWeight: 700, padding: '11px 0', borderRadius: 10, cursor: 'pointer' } as React.CSSProperties} hover={{ background: '#b91c1c' }}>Elimina</Box>
+            </div>
+          </div>
         </div>
       )}
 

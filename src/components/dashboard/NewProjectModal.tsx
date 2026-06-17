@@ -214,6 +214,7 @@ export function NewProjectModal({
 }) {
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [confirmDel, setConfirmDel] = useState(false);
   // Nuovo immobile = 2 step; modifica = step unico (tutti i campi).
   const [step, setStep] = useState<Step>(1);
   const isNew = !editProject;
@@ -403,8 +404,6 @@ export function NewProjectModal({
 
   const handleDelete = async () => {
     if (!editProject) return;
-    if (!confirm('Sei sicuro di voler eliminare questo immobile? L\'operazione non è reversibile.')) return;
-
     setDeleting(true);
     const ok = await deleteProject(editProject.id);
 
@@ -668,7 +667,7 @@ export function NewProjectModal({
               <div style={{ display: 'flex', gap: 12, marginTop: 0, width: '100%', justifyContent: 'flex-end' }}>
                 {editProject ? (
                   <>
-                    <Box as="button" onClick={handleDelete} disabled={loading || deleting} style={s('border:1.5px solid #dc2626;background:#fff;color:#dc2626;font-size:14px;font-weight:700;padding:12px 20px;border-radius:12px;cursor:' + (loading || deleting ? 'default' : 'pointer') + ';flex:1;transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:8px;opacity:' + (loading || deleting ? 0.7 : 1))} hover={loading || deleting ? undefined : s('background:#dc2626;color:#fff')}>
+                    <Box as="button" onClick={() => setConfirmDel(true)} disabled={loading || deleting} style={s('border:1.5px solid #dc2626;background:#fff;color:#dc2626;font-size:14px;font-weight:700;padding:12px 20px;border-radius:12px;cursor:' + (loading || deleting ? 'default' : 'pointer') + ';flex:1;transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:8px;opacity:' + (loading || deleting ? 0.7 : 1))} hover={loading || deleting ? undefined : s('background:#dc2626;color:#fff')}>
                       {deleting && <span style={{ width: 15, height: 15, border: '2px solid #dc2626', borderTopColor: 'transparent', borderRadius: '50%', display: 'inline-block', animation: 'export-spin .8s linear infinite' }} />}
                       {deleting ? 'Eliminazione...' : 'Elimina Immobile'}
                     </Box>
@@ -696,6 +695,23 @@ export function NewProjectModal({
         </div>
 
       </div>
+
+      {/* Confirm delete dialog */}
+      {confirmDel && (
+        <div onClick={() => setConfirmDel(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(24,21,17,.5)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+          <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 420, background: 'var(--bg-card, #fff)', borderRadius: 18, boxShadow: '0 32px 64px rgba(20,18,15,.2)', padding: 28, textAlign: 'center' }}>
+            <div style={{ width: 52, height: 52, borderRadius: '50%', background: '#fef2f2', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+              <Icon name="alert-triangle" size={24} color="#dc2626" />
+            </div>
+            <h3 style={{ margin: '0 0 6px', fontSize: 17, fontWeight: 800 }}>Eliminare questo immobile?</h3>
+            <p style={{ margin: '0 0 22px', fontSize: 13.5, color: '#8c867d', lineHeight: 1.5 }}>Tutti i dati associati verranno rimossi. L&apos;azione è irreversibile.</p>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <Box as="button" onClick={() => setConfirmDel(false)} style={s('flex:1;border:1px solid #d8d4cb;background:#fff;color:#8c867d;font-size:14px;font-weight:700;padding:11px 0;border-radius:10px;cursor:pointer')} hover={s('background:#faf9f7')}>Annulla</Box>
+              <Box as="button" onClick={() => { setConfirmDel(false); handleDelete(); }} style={{ flex: 1, border: 'none', background: '#dc2626', color: '#fff', fontSize: 14, fontWeight: 700, padding: '11px 0', borderRadius: 10, cursor: 'pointer' }} hover={{ background: '#b91c1c' }}>Elimina</Box>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

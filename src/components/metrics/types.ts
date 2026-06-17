@@ -104,6 +104,8 @@ export interface MetricsData {
     post_video_exports: number;
     staging_video_exports: number;
     team: { role: string; team_id: string; member_count: number; team_name: string } | null;
+    ai_videos_by_template?: Record<string, number>;
+    estimated_cost?: number;
   }[];
   sectionUnlocks: { section: string; count: number }[];
   teamsStats?: {

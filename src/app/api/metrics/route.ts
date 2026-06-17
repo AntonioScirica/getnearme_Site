@@ -89,15 +89,21 @@ export async function GET(request: NextRequest) {
       const res = await admin.from("projects").select("user_id, created_at");
       projectRows = res.data || [];
     } catch { /* tabella assente */ }
-    let batchStagingRows: { user_id: string; completed_items: number; created_at: string }[] = [];
+    let batchStagingRows: { user_id: string; completed_items: number; style: string; created_at: string }[] = [];
     try {
-      const res = await admin.from("batch_staging").select("user_id, completed_items, created_at");
+      const res = await admin.from("batch_staging").select("user_id, completed_items, style, created_at");
       batchStagingRows = res.data || [];
     } catch { /* tabella assente */ }
-    let aiVideoJobRows: { user_id: string; status: string; created_at: string }[] = [];
+    let aiVideoJobRows: { user_id: string; status: string; template: string | null; cost_eur: number | null; created_at: string }[] = [];
     try {
-      const res = await admin.from("ai_video_jobs").select("user_id, status, created_at");
-      aiVideoJobRows = res.data || [];
+      // Try with cost_eur first; if column doesn't exist yet, fall back without it
+      let res = await admin.from("ai_video_jobs").select("user_id, status, template, cost_eur, created_at");
+      if (res.error && res.error.message?.includes("cost_eur")) {
+        res = await admin.from("ai_video_jobs").select("user_id, status, template, created_at");
+        aiVideoJobRows = (res.data || []).map((r: any) => ({ ...r, cost_eur: null }));
+      } else {
+        aiVideoJobRows = res.data || [];
+      }
     } catch { /* tabella assente */ }
 
     const creditRows = creditsRes.data || [];
@@ -114,11 +120,14 @@ export async function GET(request: NextRequest) {
 
     // Exclude admin/test accounts from spending metrics
     const EXCLUDED_EMAILS = [
-      // as.scirica@gmail.com TEMPORANEAMENTE incluso nelle metrics per check
+      "as.scirica@gmail.com",
       "antonioiphoneid@gmail.com",
       "lookgameyt@gmail.com",
       "info@getnearme.it",
       "calogero.scirica@inwind.it",
+      "agency.test@getnearme.it",
+      "agency-test@getnearme.it",
+      "facebook@test.com",
     ];
     const excludedUserIds = new Set(
       creditRows
@@ -406,7 +415,15 @@ export async function GET(request: NextRequest) {
     projectRows.forEach((p) => { if (p.user_id) userProjectCount[p.user_id] = (userProjectCount[p.user_id] || 0) + 1; });
     // Foto AI generate (somma delle foto completate per batch).
     const userBatchPhotos: Record<string, number> = {};
-    batchStagingRows.forEach((b) => { if (b.user_id) userBatchPhotos[b.user_id] = (userBatchPhotos[b.user_id] || 0) + (b.completed_items || 0); });
+    const userBatchPhotosByStyle: Record<string, Record<string, number>> = {};
+    batchStagingRows.forEach((b) => {
+      if (!b.user_id) return;
+      userBatchPhotos[b.user_id] = (userBatchPhotos[b.user_id] || 0) + (b.completed_items || 0);
+      if (b.style && b.completed_items > 0) {
+        if (!userBatchPhotosByStyle[b.user_id]) userBatchPhotosByStyle[b.user_id] = {};
+        userBatchPhotosByStyle[b.user_id][b.style] = (userBatchPhotosByStyle[b.user_id][b.style] || 0) + b.completed_items;
+      }
+    });
     // Video AI consegnati (job in stato done — include i montaggi).
     const userVideoDone: Record<string, number> = {};
     aiVideoJobRows.forEach((v) => { if (v.user_id && v.status === "done") userVideoDone[v.user_id] = (userVideoDone[v.user_id] || 0) + 1; });
@@ -511,6 +528,53 @@ export async function GET(request: NextRequest) {
       authSignInMap[u.id] = u.last_sign_in_at || null;
     });
 
+    // Merge extension export styles + batch_staging styles
+    function mergedPhotoStyles(userId: string): Record<string, number> {
+      const ext = userExportCount[userId]?.staging_photo_by_style || {};
+      const batch = userBatchPhotosByStyle[userId] || {};
+      const merged = { ...ext };
+      for (const [k, v] of Object.entries(batch)) {
+        merged[k] = (merged[k] || 0) + v;
+      }
+      return merged;
+    }
+
+    // Per-user AI video template counts + real cost from DB
+    const userAiVideoByTemplate: Record<string, Record<string, number>> = {};
+    const userAiVideoRealCost: Record<string, number> = {};
+    aiVideoJobRows.forEach((j) => {
+      if (!j.user_id || j.status !== "done" || !j.template) return;
+      if (!userAiVideoByTemplate[j.user_id]) userAiVideoByTemplate[j.user_id] = {};
+      userAiVideoByTemplate[j.user_id][j.template] = (userAiVideoByTemplate[j.user_id][j.template] || 0) + 1;
+      if (j.cost_eur != null) {
+        userAiVideoRealCost[j.user_id] = (userAiVideoRealCost[j.user_id] || 0) + j.cost_eur;
+      }
+    });
+
+    const VIDEO_TEMPLATE_COST: Record<string, number> = {
+      ai_staging: 1.07, walkthrough: 0.78, classic: 0.32, split: 0.32,
+      construction: 1.07, day_night: 1.07, sottotitoli: 0.019, montaggio: 0.003,
+    };
+    const PHOTO_COST = 0.036;
+
+    function computeUserCost(userId: string): number {
+      let cost = 0;
+      cost += ((userStagingCount[userId] || 0) + (userBatchPhotos[userId] || 0)) * PHOTO_COST;
+      const realCost = userAiVideoRealCost[userId] || 0;
+      const realCostJobs = aiVideoJobRows.filter(j => j.user_id === userId && j.status === "done" && j.cost_eur != null).length;
+      const allDoneJobs = aiVideoJobRows.filter(j => j.user_id === userId && j.status === "done").length;
+      if (realCostJobs === allDoneJobs) {
+        cost += realCost;
+      } else {
+        cost += realCost;
+        aiVideoJobRows.forEach(j => {
+          if (j.user_id !== userId || j.status !== "done" || j.cost_eur != null) return;
+          cost += VIDEO_TEMPLATE_COST[j.template || ""] ?? 0.50;
+        });
+      }
+      return +cost.toFixed(2);
+    }
+
     const topUsers = creditRows
       .filter((c: any) => !excludedUserIds.has(c.user_id))
       .map((c: any) => ({
@@ -544,7 +608,7 @@ export async function GET(request: NextRequest) {
         zone_analyses: (userTxCount[c.user_id]?.zone_analyses || 0) + (userExportZone[c.user_id] || 0),
         // Foto AI: staging_usage (estensione) + foto generate dai batch (sito).
         staging_photos: (userStagingCount[c.user_id] || 0) + (userBatchPhotos[c.user_id] || 0),
-        staging_photo_by_style: userExportCount[c.user_id]?.staging_photo_by_style || {},
+        staging_photo_by_style: mergedPhotoStyles(c.user_id),
         post_png_exports: userExportCount[c.user_id]?.post_png || 0,
         post_png_by_size: userExportCount[c.user_id]?.post_png_by_size || {},
         post_png_by_template: userExportCount[c.user_id]?.post_png_by_template || {},
@@ -552,6 +616,8 @@ export async function GET(request: NextRequest) {
         // Video: export staging_video (estensione) + video AI consegnati (sito).
         staging_video_exports: (userExportCount[c.user_id]?.staging_video || 0) + (userVideoDone[c.user_id] || 0),
         team: userTeamInfo[c.user_id] || null,
+        ai_videos_by_template: userAiVideoByTemplate[c.user_id] || {},
+        estimated_cost: computeUserCost(c.user_id),
       }))
       .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
@@ -855,7 +921,7 @@ export async function GET(request: NextRequest) {
       pdf_reports: (userTxCount[c.user_id]?.pdf_reports || 0) + (userExportPdf[c.user_id] || 0),
       zone_analyses: (userTxCount[c.user_id]?.zone_analyses || 0) + (userExportZone[c.user_id] || 0),
       staging_photos: (userStagingCount[c.user_id] || 0) + (userBatchPhotos[c.user_id] || 0),
-      staging_photo_by_style: userExportCount[c.user_id]?.staging_photo_by_style || {},
+      staging_photo_by_style: mergedPhotoStyles(c.user_id),
       post_png_exports: userExportCount[c.user_id]?.post_png || 0,
       post_png_by_size: userExportCount[c.user_id]?.post_png_by_size || {},
       post_png_by_template: userExportCount[c.user_id]?.post_png_by_template || {},

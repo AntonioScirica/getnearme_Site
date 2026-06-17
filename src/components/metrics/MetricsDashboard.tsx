@@ -108,7 +108,7 @@ export default function MetricsDashboard() {
       case "newsletter":
         return <NewsletterPage data={data} />;
       case "users":
-        return <UsersPage data={data} />;
+        return <UsersPage data={data} onRefresh={() => fetchData(authKey)} loading={loading} />;
       case "exports":
         return <ExportsPage data={data} />;
       case "stripe":

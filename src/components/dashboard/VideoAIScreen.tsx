@@ -695,7 +695,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
       const ctx: Record<string, unknown> = {
         renderId: res.renderId, bucketName: res.bucketName || 'ffmpeg', template: layout,
         aspectRatio: res.aspectRatio || aspect, propertyData: propertyData(),
-        keepR2: true, // i Veo-template compongono su Lambda in fase progress: tieni R2
+        keepR2: true, clipCount: clips.length,
       };
       if (res.veoStatusUrl) ctx.veoStatusUrl = res.veoStatusUrl;
       if (res.veoResponseUrl) ctx.veoResponseUrl = res.veoResponseUrl;
