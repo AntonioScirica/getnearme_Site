@@ -84,10 +84,10 @@ async function markPublished(postId, fields) {
 const SCHEDULE = {
   news_morning: { type: 'carousel', rubric: 'news', edition: 'morning' },
   post:         { type: 'carousel', excludeRubrics: ['news', 'prompt'] },
-  video_1:      { type: 'video' },
+  video_1:      { type: 'reel' },
   prompt:       { type: 'prompt', rubric: 'prompt' },
   news_evening: { type: 'carousel', rubric: 'news', edition: 'evening' },
-  video_2:      { type: 'video' },
+  video_2:      { type: 'reel' },
 };
 
 const STORY_TYPE_MAP = {
@@ -131,11 +131,6 @@ export default async function handler(req, res) {
 
   const slotConfig = SCHEDULE[slot];
 
-  // Video publishing disabled: quality not good enough yet.
-  // Videos still generate and arrive on Telegram for review, but never reach IG/TikTok.
-  if (slotConfig.type === 'video') {
-    return res.json({ message: `Video publishing disabled (slot=${slot}), video quality WIP` });
-  }
 
   // No IG credentials configured yet → skip cleanly, don't mark content as failed
   if (!process.env.META_ACCESS_TOKEN) {

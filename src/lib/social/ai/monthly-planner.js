@@ -291,13 +291,20 @@ IMPORTANTE:
     slide_data: { tool: p.tool || 'ChatGPT', use_case: p.use_case, prompt_text: p.prompt_text },
   }));
 
-  // Process daily videos
-  const videoTopics = (plan.videos || []).map(v => ({
+  // Process daily videos — rotate through specific video templates
+  const VIDEO_TEMPLATES = [
+    'video_slider',
+    'video_timelapse',
+    'video_day_night',
+    'video_before_after_stopmotion',
+    'video_before_after_particle',
+  ];
+  const videoTopics = (plan.videos || []).map((v, i) => ({
     date: v.date,
     rubric: 'video',
     title: v.title,
     summary: v.summary,
-    template: 'video',
+    template: VIDEO_TEMPLATES[i % VIDEO_TEMPLATES.length],
     category: 'video',
     video_type: v.video_type,
     hook: v.hook,

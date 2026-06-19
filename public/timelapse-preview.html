@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<title>Timelapse Preview — Reel + Story</title>
+<style>
+  @import url('https://api.fontshare.com/v2/css?f[]=satoshi@400,500,600,700,800,900&display=swap');
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#0a0a0f;color:#fff;font-family:'Satoshi','Helvetica Neue',Arial,sans-serif;display:flex;gap:48px;padding:40px;justify-content:center;align-items:flex-start;min-height:100vh}
+  .col{display:flex;flex-direction:column;align-items:center;gap:12px}
+  .label{font-size:14px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:3px}
+  .frame{border-radius:16px;overflow:hidden;box-shadow:0 12px 60px rgba(0,0,0,0.6);position:relative}
+
+  /* ── REEL ── */
+  .reel-frame{width:270px;height:480px}
+  .reel{width:1080px;height:1920px;background:#0a0a0a;display:flex;flex-direction:column;position:relative;transform-origin:top left;transform:scale(0.25)}
+  .reel-half{flex:1;position:relative;overflow:hidden}
+  .reel-half img,.reel-half video{width:100%;height:100%;object-fit:cover}
+  .reel-label{position:absolute;left:50%;transform:translateX(-50%);font-size:26px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:4px;background:rgba(0,0,0,0.45);backdrop-filter:blur(12px);padding:14px 32px;border-radius:12px;z-index:5}
+  .reel-label-top{top:280px}
+  .reel-label-bottom{bottom:32px}
+  .reel-divider{position:absolute;left:0;right:0;top:50%;height:4px;background:#fff;z-index:10;transform:translateY(-50%)}
+  .reel-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:20}
+  .reel-center-box{background:#fff;border-radius:20px;padding:32px 56px;display:flex;align-items:center;gap:24px;box-shadow:0 8px 40px rgba(0,0,0,0.3)}
+  .reel-center-box span{font-size:32px;font-weight:600;color:#1a1a2e;white-space:nowrap}
+  .reel-center-box img{height:52px;width:auto}
+
+  /* ── STORY ── */
+  .story-frame{width:270px;height:480px}
+  .story{width:1080px;height:1920px;background:#fafaf8;display:flex;flex-direction:column;position:relative;transform-origin:top left;transform:scale(0.25)}
+  .story-photos{flex:0 0 65%;position:relative;overflow:hidden;display:flex}
+  .story-ph{flex:1;position:relative;overflow:hidden}
+  .story-ph img{width:100%;height:100%;object-fit:cover}
+  .story-ph-divider{position:absolute;left:50%;top:0;bottom:0;width:4px;background:#fff;transform:translateX(-50%);z-index:5;box-shadow:0 0 12px rgba(0,0,0,0.2)}
+  .story-lbl{position:absolute;top:50%;transform:translateY(-50%);font-size:26px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:4px;background:rgba(0,0,0,0.45);backdrop-filter:blur(12px);padding:14px 32px;border-radius:12px;z-index:6}
+  .story-lbl-l{left:32px}
+  .story-lbl-r{right:32px}
+  .story-divider{width:100%;height:4px;background:#e5e7eb;flex-shrink:0}
+  .story-card{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:48px 72px}
+  .story-card h2{font-size:72px;font-weight:800;color:#1a1a2e;line-height:1.08;margin-bottom:24px;letter-spacing:-2px}
+  .story-card .accent{color:#10b981}
+  .story-card .desc{font-size:32px;color:#666;line-height:1.5;margin-bottom:32px}
+  .story-card .cta-btn{background:#3B83F6;color:#fff;font-size:32px;font-weight:700;padding:20px 56px;border-radius:14px;display:inline-block;box-shadow:0 6px 24px rgba(59,131,246,0.25)}
+  .story-card .brand{margin-top:24px;font-size:20px;font-weight:700;color:#bbb;letter-spacing:3px;text-transform:uppercase}
+</style>
+</head>
+<body>
+
+<!-- REEL -->
+<div class="col">
+  <div class="label">Reel (1080 x 1920)</div>
+  <div class="frame reel-frame">
+    <div class="reel">
+      <div class="reel-half">
+        <img src="/staging/videos/villa1_finished.jpg" alt="Prima">
+        <div class="reel-label reel-label-top">PRIMA</div>
+      </div>
+      <div class="reel-divider"></div>
+      <div class="reel-half">
+        <video src="/staging/videos/timelapse_villa1.mp4" autoplay loop muted playsinline></video>
+        <div class="reel-label reel-label-bottom">DOPO</div>
+      </div>
+      <div class="reel-center">
+        <div class="reel-center-box">
+          <span>Realizzato con</span>
+          <img src="/logo_blu_nero.svg" alt="GetNearMe">
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STORY -->
+<div class="col">
+  <div class="label">Story (1080 x 1920)</div>
+  <div class="frame story-frame">
+    <div class="story">
+      <div class="story-photos">
+        <div class="story-ph">
+          <img src="/staging/videos/villa1_foundation.jpg" alt="Prima">
+          <div class="story-lbl story-lbl-l">PRIMA</div>
+        </div>
+        <div class="story-ph">
+          <img src="/staging/videos/villa1_finished.jpg" alt="Dopo">
+          <div class="story-lbl story-lbl-r">DOPO</div>
+        </div>
+        <div class="story-ph-divider"></div>
+      </div>
+      <div class="story-divider"></div>
+      <div class="story-card">
+        <h2>Ricostruzione <span class="accent">AI</span></h2>
+        <div class="desc">Dal cantiere fino all'immobile finito.<br>Fondamenta, struttura, risultato finale.</div>
+        <div class="cta-btn">Post sul profilo</div>
+        <div class="brand">GETNEARME.IT</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

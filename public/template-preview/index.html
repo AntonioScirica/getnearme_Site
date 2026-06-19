@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Template Preview — Staging Before/After</title>
+<style>
+body { margin: 0; background: #111; display: flex; gap: 32px; padding: 32px; flex-wrap: wrap; justify-content: center; font-family: sans-serif; }
+h2 { color: #888; width: 100%; text-align: center; font-size: 14px; letter-spacing: 2px; text-transform: uppercase; }
+.frame { border: 1px solid #333; border-radius: 8px; overflow: hidden; }
+.frame-label { color: #666; font-size: 11px; text-align: center; padding: 8px; background: #1a1a1a; }
+</style>
+</head>
+<body>
+
+<h2>Feed Slides (1080×1350)</h2>
+
+<!-- Feed Slide 1: Before/After -->
+<div class="frame">
+<div class="frame-label">Feed — Slide 1 (Before/After)</div>
+<iframe srcdoc='
+<style>
+@import url("https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&display=swap");
+*{margin:0;padding:0;box-sizing:border-box}
+.slide-1{position:relative;background:#fafaf8;font-family:"Satoshi","Helvetica Neue",Arial,sans-serif;overflow:hidden;display:flex;flex-direction:column}
+.top-badge{position:absolute;top:48px;left:50%;transform:translateX(-50%);background:#3B83F6;color:#fff;font-size:22px;font-weight:700;padding:10px 32px;border-radius:12px;z-index:10;box-shadow:0 4px 14px rgba(59,131,246,0.25);letter-spacing:1px}
+.split-container{flex:1;display:flex;position:relative}
+.split-half{flex:1;overflow:hidden;position:relative}
+.split-half img{width:100%;height:100%;object-fit:cover}
+.divider{position:absolute;top:0;bottom:0;left:50%;width:4px;background:#fff;z-index:5;transform:translateX(-50%)}
+.divider-icon{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:48px;height:48px;background:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;z-index:6;box-shadow:0 4px 14px rgba(16,24,40,0.12)}
+.divider-icon svg{width:24px;height:24px}
+.label-before,.label-after{position:absolute;top:100px;font-size:20px;font-weight:700;color:#fff;background:rgba(0,0,0,0.5);padding:6px 16px;border-radius:8px;z-index:5}
+.label-before{left:24px}
+.label-after{right:24px}
+.bottom-bar-center{position:absolute;bottom:0;left:0;right:0;padding:0 60px 48px;display:flex;justify-content:center}
+.badge{background:#3B83F6;color:#fff;font-size:20px;font-weight:700;padding:10px 28px;border-radius:10px;box-shadow:0 4px 14px rgba(59,131,246,0.25)}
+</style>
+<div class="slide-1" style="width:1080px;height:1350px">
+  <div class="top-badge">AI Staging</div>
+  <div class="split-container">
+    <div class="split-half split-before"><img src="/staging/1.jpg"></div>
+    <div class="split-half split-after"><img src="/staging/2.jpg"></div>
+  </div>
+  <div class="divider"></div>
+  <div class="divider-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#1a1a2e" stroke-width="2.5"><path d="M18 8L22 12L18 16"/><path d="M6 8L2 12L6 16"/></svg></div>
+  <div class="label-before">Prima</div>
+  <div class="label-after">Dopo</div>
+  <div class="bottom-bar-center"><div class="badge">GetNearMe</div></div>
+</div>
+' width="216" height="270" style="border:none;transform-origin:top left"></iframe>
+</div>
+
+<!-- Feed Slide 2: CTA -->
+<div class="frame">
+<div class="frame-label">Feed — Slide 2 (CTA)</div>
+<iframe srcdoc='
+<style>
+@import url("https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&display=swap");
+*{margin:0;padding:0;box-sizing:border-box}
+.slide-cta{background:#fafaf8;font-family:"Satoshi","Helvetica Neue",Arial,sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:80px;position:relative;overflow:hidden}
+.deco-circle{position:absolute;top:-80px;right:-100px;width:280px;height:280px;background:#dbeafe;border-radius:50%;border:1px solid #93c5fd;opacity:.5}
+.deco-square{position:absolute;bottom:120px;left:-40px;width:120px;height:120px;background:#dbeafe;border-radius:24px;border:1px solid #93c5fd;opacity:.5;transform:rotate(12deg)}
+.cta-badge{background:#eff6ff;border:1px solid #3B83F6;border-radius:20px;padding:10px 28px;font-size:24px;font-weight:700;color:#1d4ed8;margin-bottom:48px;box-shadow:0 4px 14px rgba(59,131,246,0.15);display:flex;align-items:center;gap:10px}
+.cta-badge svg{width:24px;height:24px}
+h2{font-size:72px;font-weight:900;color:#1a1a2e;line-height:1.05;margin-bottom:28px;letter-spacing:-2px}
+.highlight{color:#3B83F6}
+.cta-sub{font-size:30px;color:#555;line-height:1.55;margin-bottom:52px;max-width:820px}
+.feature-pills{display:flex;gap:16px;margin-bottom:52px;flex-wrap:wrap;justify-content:center}
+.pill{background:#fff;border:1px solid rgba(26,26,46,0.10);border-radius:12px;padding:14px 28px;font-size:22px;font-weight:700;color:#1a1a2e;box-shadow:0 4px 14px rgba(16,24,40,0.06);display:flex;align-items:center;gap:10px}
+.pill svg{width:22px;height:22px}
+.cta-btn{background:#3B83F6;color:#fff;font-size:36px;font-weight:800;padding:28px 72px;border-radius:16px;border:none;display:inline-flex;align-items:center;gap:16px;box-shadow:0 8px 28px rgba(59,131,246,0.25)}
+.cta-btn svg{width:32px;height:32px;stroke-width:3}
+.cta-footer{position:absolute;bottom:48px;font-size:20px;font-weight:700;color:#bbb;letter-spacing:3px;text-transform:uppercase}
+</style>
+<div class="slide-cta" style="width:1080px;height:1350px">
+  <div class="deco-circle"></div><div class="deco-square"></div>
+  <div class="cta-badge"><svg viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>AI Staging</div>
+  <h2>Trasforma i tuoi<br>annunci in <span class="highlight">30 secondi</span></h2>
+  <div class="cta-sub">Staging AI, analisi di zona, template social e video pronti per i tuoi annunci.</div>
+  <div class="feature-pills">
+    <div class="pill"><svg viewBox="0 0 24 24" fill="none" stroke="#1a1a2e" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>Staging AI</div>
+    <div class="pill"><svg viewBox="0 0 24 24" fill="none" stroke="#1a1a2e" stroke-width="2.5"><path d="M14.5 4h-5L7 7H4a2 2 0 00-2 2v9a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>Post Social</div>
+    <div class="pill"><svg viewBox="0 0 24 24" fill="none" stroke="#1a1a2e" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Video AI</div>
+  </div>
+  <div class="cta-btn">Link in bio<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M19 12l-7 7-7-7"/></svg></div>
+  <div class="cta-footer">getnearme.it</div>
+</div>
+' width="216" height="270" style="border:none"></iframe>
+</div>
+
+<!-- Story Staging -->
+<h2>Story (1080×1920)</h2>
+<div class="frame">
+<div class="frame-label">Story — Staging Before/After</div>
+<iframe srcdoc='
+<style>
+@import url("https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&display=swap");
+*{margin:0;padding:0;box-sizing:border-box}
+.vs{font-family:"Satoshi","Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased;position:relative;overflow:hidden;display:flex;flex-direction:column}
+.vs-staging{background:#fafaf8}
+.ba-photo{flex:1;position:relative;overflow:hidden}
+.ba-layer{position:absolute;inset:0;background-size:cover;background-position:center}
+.ba-before{z-index:1}
+.ba-after{z-index:2;clip-path:inset(0 50% 0 0)}
+.ba-slider-line{position:absolute;top:0;bottom:0;left:50%;width:4px;background:#fff;z-index:10;transform:translateX(-50%)}
+.ba-slider-handle{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:56px;height:56px;background:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;z-index:11;box-shadow:0 4px 14px rgba(16,24,40,0.15)}
+.ba-slider-handle svg{width:28px;height:28px}
+.ba-label{position:absolute;bottom:24px;font-size:18px;font-weight:700;color:#fff;background:rgba(0,0,0,0.5);padding:6px 16px;border-radius:8px;z-index:12}
+.ba-label-l{left:24px}
+.ba-label-r{right:24px}
+.vs-bottom{padding:40px 48px;border-top:1px solid rgba(26,26,46,0.10);box-shadow:0 -4px 20px rgba(16,24,40,0.04);background:#fafaf8;text-align:center}
+.vs-title{font-size:44px;font-weight:800;color:#1a1a2e;margin-bottom:16px}
+.hl-blue{color:#3B83F6}
+.vs-desc{font-size:24px;color:#666;line-height:1.5;margin-bottom:24px}
+.vs-btn{display:inline-block;background:#3B83F6;color:#fff;font-size:22px;font-weight:700;padding:14px 40px;border-radius:12px;box-shadow:0 6px 20px rgba(59,131,246,0.25);margin-bottom:20px}
+.vs-footer{font-size:16px;font-weight:600;color:#bbb;letter-spacing:2px;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:6px}
+</style>
+<div class="vs vs-staging" style="width:1080px;height:1920px">
+  <div class="ba-photo">
+    <div class="ba-layer ba-before" style="background-image:url(/staging/1.jpg)"></div>
+    <div class="ba-layer ba-after" style="background-image:url(/staging/2.jpg)"></div>
+    <div class="ba-slider-line"></div>
+    <div class="ba-slider-handle"><svg viewBox="0 0 24 24" fill="none" stroke="#1a1a2e" stroke-width="2.5"><path d="M18 8L22 12L18 16"/><path d="M6 8L2 12L6 16"/></svg></div>
+    <div class="ba-label ba-label-l">PRIMA</div>
+    <div class="ba-label ba-label-r">DOPO</div>
+  </div>
+  <div class="vs-bottom">
+    <div class="vs-title">AI <span class="hl-blue">Staging</span></div>
+    <div class="vs-desc">Trasforma le tue foto con l&#39;AI.<br>Scegli lo stile e vedi il risultato.</div>
+    <div class="vs-btn">Post sul profilo!</div>
+    <div class="vs-footer">GETNEARME.IT</div>
+  </div>
+</div>
+' width="151" height="269" style="border:none"></iframe>
+</div>
+
+<!-- Video Slider -->
+<div class="frame">
+<div class="frame-label">Video Slider (MP4)</div>
+<video src="/staging/slider_demo.mp4" width="270" autoplay loop muted style="border-radius:4px"></video>
+</div>
+
+</body>
+</html>

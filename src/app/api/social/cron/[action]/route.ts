@@ -24,6 +24,7 @@ const LOADERS: Record<string, () => Promise<{ default: ExpressHandler }>> = {
   generate: () => import("@/lib/social/cron/generate.js"),
   publish: () => import("@/lib/social/cron/publish.js"),
   "generate-ped": () => import("@/lib/social/cron/generate-ped.js"),
+  "generate-video": () => import("@/lib/social/cron/generate-video.js"),
   "publish-ped": () => import("@/lib/social/cron/publish-ped.js"),
   "ped-insights": () => import("@/lib/social/cron/ped-insights.js"),
   "monthly-plan": () => import("@/lib/social/cron/monthly-plan.js"),

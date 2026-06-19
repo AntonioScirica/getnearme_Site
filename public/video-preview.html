@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>Video Templates Preview</title>
+<link href="https://fonts.googleapis.com/css2?family=Satoshi:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #111; color: #ccc; font-family: 'Satoshi', system-ui, sans-serif; }
+
+  /* Toolbar */
+  .toolbar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: #1a1a1a; border-bottom: 1px solid #333;
+    display: flex; align-items: center; gap: 16px; padding: 12px 24px;
+  }
+  .toolbar h1 { font-size: 14px; font-weight: 700; color: #fff; letter-spacing: 1px; text-transform: uppercase; }
+  .toolbar .sep { width: 1px; height: 24px; background: #333; }
+  .tab {
+    padding: 6px 16px; border-radius: 8px; font-size: 13px; font-weight: 600;
+    cursor: pointer; border: 1px solid transparent; color: #888; transition: all .15s;
+  }
+  .tab:hover { color: #fff; background: #222; }
+  .tab.active { color: #3B83F6; background: #3B83F6/10; border-color: #3B83F6; background: rgba(59,131,246,0.1); }
+  .toolbar .spacer { flex: 1; }
+  .toolbar .info { font-size: 11px; color: #666; font-family: monospace; }
+
+  /* Canvas area */
+  .canvas-area {
+    margin-top: 56px; padding: 32px;
+    display: flex; flex-wrap: wrap; gap: 32px; justify-content: center; align-items: flex-start;
+  }
+
+  /* Frame wrapper */
+  .frame-wrap { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .frame-label { font-size: 11px; color: #666; font-family: monospace; letter-spacing: 1px; text-transform: uppercase; }
+  .frame-size { font-size: 10px; color: #444; font-family: monospace; }
+  .frame {
+    border-radius: 12px; overflow: hidden;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+    position: relative;
+  }
+
+  /* Template container (scaled down) */
+  .tpl-container {
+    transform-origin: top left;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Hide all templates by default */
+  .template-group { display: none; }
+  .template-group.active { display: flex; flex-wrap: wrap; gap: 32px; justify-content: center; }
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <h1>Video Templates</h1>
+  <div class="sep"></div>
+  <div class="tab active" data-tpl="slider">Slider B/A</div>
+  <div class="tab" data-tpl="stopmotion">Stop Motion</div>
+  <div class="tab" data-tpl="particle">Particle Dust</div>
+  <div class="tab" data-tpl="daynight">Day/Night</div>
+  <div class="tab" data-tpl="timelapse">Timelapse</div>
+  <div class="spacer"></div>
+  <span class="info">scale: 0.25x</span>
+</div>
+
+<div class="canvas-area">
+
+  <!-- ═══ SLIDER BEFORE/AFTER ═══ -->
+  <div class="template-group active" id="tpl-slider">
+
+    <!-- Reel 1080x1920 -->
+    <div class="frame-wrap">
+      <span class="frame-label">Reel / Story</span>
+      <div class="frame" style="width:270px;height:480px">
+        <div class="tpl-container" id="slider-reel" style="width:1080px;height:1920px;transform:scale(0.25);background:#fafaf8;">
+          <!-- Photo area -->
+          <div style="position:absolute;top:60px;left:50%;transform:translateX(-50%);width:700px;height:1244px;border-radius:20px;overflow:hidden;box-shadow:0 12px 40px rgba(16,24,40,0.10);">
+            <img src="/staging/1.jpg" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;">
+            <div class="ba-after-clip" style="position:absolute;top:0;left:0;width:100%;height:100%;clip-path:inset(0 35% 0 0);overflow:hidden;">
+              <img src="/staging/2.jpg" style="width:100%;height:100%;object-fit:cover;">
+            </div>
+            <!-- Slider line -->
+            <div class="ba-slider-line" style="position:absolute;left:65%;top:0;bottom:0;width:3px;background:#fff;transform:translateX(-50%);z-index:5;box-shadow:0 0 12px rgba(0,0,0,0.15);"></div>
+            <!-- Slider handle -->
+            <div class="ba-slider-handle" style="position:absolute;left:65%;top:50%;transform:translate(-50%,-50%);width:60px;height:60px;background:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;z-index:6;box-shadow:0 4px 16px rgba(16,24,40,0.12);">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#1a1a2e" stroke-width="2.5" width="28" height="28"><path d="M18 8L22 12L18 16"/><path d="M6 8L2 12L6 16"/></svg>
+            </div>
+            <!-- Labels -->
+            <div style="position:absolute;top:24px;left:32px;font-size:22px;font-weight:700;color:#1a1a2e;text-transform:uppercase;letter-spacing:3px;z-index:7;background:#fff;padding:10px 24px;border-radius:10px;box-shadow:0 2px 10px rgba(16,24,40,0.06);">PRIMA</div>
+            <div style="position:absolute;top:24px;right:32px;font-size:22px;font-weight:700;color:#1a1a2e;text-transform:uppercase;letter-spacing:3px;z-index:7;background:#fff;padding:10px 24px;border-radius:10px;box-shadow:0 2px 10px rgba(16,24,40,0.06);">DOPO</div>
+          </div>
+          <!-- Bottom card -->
+          <div style="position:absolute;bottom:120px;left:32px;right:32px;padding:48px 56px 52px;background:#fff;border:1px solid rgba(26,26,46,0.10);border-radius:20px;z-index:20;text-align:center;box-shadow:0 8px 32px rgba(16,24,40,0.08);">
+            <div style="font-size:84px;font-weight:800;color:#1a1a2e;line-height:1.08;margin-bottom:24px;letter-spacing:-2px;">AI <span style="color:#3B83F6;">Staging</span></div>
+            <div style="font-size:34px;color:#555;line-height:1.5;margin-bottom:44px;">Trasforma le tue foto con l'AI.<br>Scegli lo stile e vedi il risultato.</div>
+            <div style="display:inline-flex;align-items:center;gap:16px;background:#3B83F6;color:#fff;font-size:36px;font-weight:800;padding:26px 64px;border-radius:14px;box-shadow:0 8px 28px rgba(59,131,246,0.25);">Post sul profilo!</div>
+            <div style="margin-top:36px;font-size:20px;font-weight:700;color:#bbb;letter-spacing:3px;text-transform:uppercase;">GETNEARME.IT</div>
+          </div>
+        </div>
+      </div>
+      <span class="frame-size">1080 × 1920</span>
+    </div>
+
+    <!-- Reel fullscreen 1080x1920 -->
+    <div class="frame-wrap">
+      <span class="frame-label">Reel</span>
+      <div class="frame" style="width:270px;height:480px">
+        <div class="tpl-container" id="slider-reel-fs" style="width:1080px;height:1920px;transform:scale(0.25);background:#0a0a0a;position:relative;">
+          <!-- Fullscreen before photo -->
+          <img src="/staging/1.jpg" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;">
+          <!-- After with animated clip -->
+          <div class="ba-after-clip-fs" style="position:absolute;top:0;left:0;width:100%;height:100%;clip-path:inset(0 35% 0 0);overflow:hidden;">
+            <img src="/staging/2.jpg" style="width:100%;height:100%;object-fit:cover;">
+          </div>
+          <!-- Slider line -->
+          <div class="ba-slider-line-fs" style="position:absolute;left:65%;top:0;bottom:0;width:4px;background:#fff;transform:translateX(-50%);z-index:5;box-shadow:0 0 20px rgba(0,0,0,0.3);"></div>
+          <!-- Slider handle -->
+          <div class="ba-slider-handle-fs" style="position:absolute;left:65%;top:50%;transform:translate(-50%,-50%);width:72px;height:72px;background:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;z-index:6;box-shadow:0 4px 20px rgba(0,0,0,0.25);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#1a1a2e" stroke-width="2.5" width="32" height="32"><path d="M18 8L22 12L18 16"/><path d="M6 8L2 12L6 16"/></svg>
+          </div>
+          <!-- Top bar: PRIMA | AI Staging | DOPO (safe: top 280px) -->
+          <div style="position:absolute;top:280px;left:60px;right:60px;display:flex;align-items:center;justify-content:space-between;z-index:7;">
+            <div style="font-size:26px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:4px;background:rgba(0,0,0,0.45);backdrop-filter:blur(12px);padding:14px 32px;border-radius:12px;">PRIMA</div>
+            <div style="font-size:28px;font-weight:800;color:#fff;background:#3B83F6;padding:14px 36px;border-radius:12px;box-shadow:0 4px 16px rgba(59,131,246,0.35);letter-spacing:1px;">AI Staging</div>
+            <div style="font-size:26px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:4px;background:rgba(0,0,0,0.45);backdrop-filter:blur(12px);padding:14px 32px;border-radius:12px;">DOPO</div>
+          </div>
+          <!-- Bottom box (safe: bottom 440px) -->
+          <div style="position:absolute;bottom:440px;left:0;right:0;z-index:20;display:flex;justify-content:center;">
+            <div style="background:#fff;border-radius:20px;padding:32px 56px;display:flex;align-items:center;gap:24px;box-shadow:0 8px 32px rgba(0,0,0,0.15);">
+              <span style="font-size:32px;font-weight:500;color:#888;letter-spacing:0.5px;">Realizzato con</span>
+              <img src="/logo_blu_nero.png" style="height:52px;">
+            </div>
+          </div>
+        </div>
+      </div>
+      <span class="frame-size">1080 × 1920</span>
+    </div>
+
+    <!-- Feed 1080x1350 -->
+    <div class="frame-wrap">
+      <span class="frame-label">Feed</span>
+      <div class="frame" style="width:270px;height:337px">
+        <div class="tpl-container" id="slider-feed" style="width:1080px;height:1350px;transform:scale(0.25);background:#fafaf8;position:relative;">
+          <!-- Split view -->
+          <div style="position:absolute;top:0;left:0;right:0;bottom:0;display:flex;">
+            <div style="flex:1;overflow:hidden;position:relative;">
+              <img src="/staging/1.jpg" style="width:100%;height:100%;object-fit:cover;">
+              <div style="position:absolute;top:100px;left:24px;font-size:20px;font-weight:700;color:#fff;background:rgba(0,0,0,0.5);padding:6px 16px;border-radius:8px;z-index:5;">Prima</div>
+            </div>
+            <div style="flex:1;overflow:hidden;position:relative;">
+              <img src="/staging/2.jpg" style="width:100%;height:100%;object-fit:cover;">
+              <div style="position:absolute;top:100px;right:24px;font-size:20px;font-weight:700;color:#fff;background:rgba(0,0,0,0.5);padding:6px 16px;border-radius:8px;z-index:5;">Dopo</div>
+            </div>
+          </div>
+          <!-- Divider -->
+          <div style="position:absolute;top:0;bottom:0;left:50%;width:4px;background:#fff;z-index:5;transform:translateX(-50%)"></div>
+          <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:48px;height:48px;background:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;z-index:6;box-shadow:0 4px 14px rgba(16,24,40,0.12);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#1a1a2e" stroke-width="2.5" width="24" height="24"><path d="M18 8L22 12L18 16"/><path d="M6 8L2 12L6 16"/></svg>
+          </div>
+          <!-- Top badge -->
+          <div style="position:absolute;top:48px;left:50%;transform:translateX(-50%);background:#3B83F6;color:#fff;font-size:22px;font-weight:700;padding:10px 32px;border-radius:12px;z-index:10;box-shadow:0 4px 14px rgba(59,131,246,0.25);letter-spacing:1px;">AI Staging</div>
+          <!-- Bottom badge -->
+          <div style="position:absolute;bottom:48px;left:50%;transform:translateX(-50%);">
+            <div style="background:#3B83F6;color:#fff;font-size:20px;font-weight:700;padding:10px 28px;border-radius:10px;box-shadow:0 4px 14px rgba(59,131,246,0.25);">GetNearMe</div>
+          </div>
+        </div>
+      </div>
+      <span class="frame-size">1080 × 1350</span>
+    </div>
+  </div>
+
+  <!-- ═══ STOP MOTION ═══ -->
+  <div class="template-group" id="tpl-stopmotion">
+    <div class="frame-wrap">
+      <span class="frame-label">Reel / Story</span>
+      <div class="frame" style="width:270px;height:480px">
+        <div class="tpl-container" style="width:1080px;height:1920px;transform:scale(0.25);background:#fafaf8;position:relative;">
+          <!-- Two cards overlapping -->
+          <div style="position:absolute;width:440px;height:782px;border-radius:24px;background-size:cover;background-position:center;box-shadow:0 12px 40px rgba(16,24,40,0.12);border:1px solid rgba(26,26,46,0.08);top:140px;left:80px;transform:rotate(-4deg);z-index:2;overflow:hidden;">
+            <img src="/staging/1.jpg" style="width:100%;height:100%;object-fit:cover;">
+            <div style="position:absolute;bottom:28px;left:32px;font-size:26px;font-weight:700;color:#1a1a2e;text-transform:uppercase;letter-spacing:3px;background:#fff;padding:10px 24px;border-radius:10px;z-index:4;box-shadow:0 2px 10px rgba(16,24,40,0.06);">PRIMA</div>
+          </div>
+          <div style="position:absolute;width:440px;height:782px;border-radius:24px;background-size:cover;background-position:center;box-shadow:0 12px 40px rgba(16,24,40,0.12);border:1px solid rgba(26,26,46,0.08);top:380px;right:80px;transform:rotate(3deg);z-index:3;overflow:hidden;">
+            <img src="/staging/2.jpg" style="width:100%;height:100%;object-fit:cover;">
+            <div style="position:absolute;bottom:28px;left:32px;font-size:26px;font-weight:700;color:#1a1a2e;text-transform:uppercase;letter-spacing:3px;background:#fff;padding:10px 24px;border-radius:10px;z-index:4;box-shadow:0 2px 10px rgba(16,24,40,0.06);">DOPO</div>
+          </div>
+          <!-- Play button -->
+          <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:96px;height:96px;background:rgba(255,255,255,0.25);backdrop-filter:blur(16px);border-radius:50%;display:flex;align-items:center;justify-content:center;z-index:6;box-shadow:0 4px 20px rgba(0,0,0,0.15);">
+            <svg viewBox="0 0 24 24" fill="#1a1a2e" width="36" height="36" style="margin-left:4px"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          </div>
+          <!-- Bottom card -->
+          <div style="position:absolute;bottom:120px;left:32px;right:32px;padding:48px 56px 52px;background:#fff;border:1px solid rgba(26,26,46,0.10);border-radius:20px;z-index:20;text-align:center;box-shadow:0 8px 32px rgba(16,24,40,0.08);">
+            <div style="font-size:84px;font-weight:800;color:#1a1a2e;line-height:1.08;margin-bottom:24px;letter-spacing:-2px;"><span style="color:#8b5cf6;">Stop</span> Motion</div>
+            <div style="font-size:34px;color:#555;line-height:1.5;margin-bottom:44px;">I mobili appaiono uno alla volta.<br>Generato con Veo 3.1</div>
+            <div style="display:inline-flex;align-items:center;gap:16px;background:#3B83F6;color:#fff;font-size:36px;font-weight:800;padding:26px 64px;border-radius:14px;box-shadow:0 8px 28px rgba(59,131,246,0.25);">Guarda il video</div>
+            <div style="margin-top:36px;font-size:20px;font-weight:700;color:#bbb;letter-spacing:3px;text-transform:uppercase;">GETNEARME.IT</div>
+          </div>
+        </div>
+      </div>
+      <span class="frame-size">1080 × 1920</span>
+    </div>
+  </div>
+
+  <!-- ═══ PARTICLE DUST ═══ -->
+  <div class="template-group" id="tpl-particle">
+    <div class="frame-wrap">
+      <span class="frame-label">Reel / Story</span>
+      <div class="frame" style="width:270px;height:480px">
+        <div class="tpl-container" style="width:1080px;height:1920px;transform:scale(0.25);background:#fafaf8;position:relative;">
+          <!-- Diagonal split photos -->
+          <div style="position:absolute;top:60px;left:50%;transform:translateX(-50%);width:700px;height:1244px;border-radius:24px;overflow:hidden;box-shadow:0 12px 40px rgba(16,24,40,0.10);border:1px solid rgba(26,26,46,0.08);">
+            <div style="position:absolute;top:0;left:0;right:0;bottom:0;background-size:cover;background-position:center;clip-path:polygon(0 0,100% 0,0 100%);z-index:2;">
+              <img src="/staging/1.jpg" style="width:100%;height:100%;object-fit:cover;">
+            </div>
+            <div style="position:absolute;top:0;left:0;right:0;bottom:0;background-size:cover;background-position:center;clip-path:polygon(100% 0,100% 100%,0 100%);z-index:2;">
+              <img src="/staging/2.jpg" style="width:100%;height:100%;object-fit:cover;">
+            </div>
+            <!-- Diagonal line -->
+            <div style="position:absolute;top:0;left:0;right:0;bottom:0;z-index:3;background:linear-gradient(to bottom right,transparent calc(50% - 2px),#fff calc(50% - 2px),#fff calc(50% + 2px),transparent calc(50% + 2px));"></div>
+            <!-- Labels -->
+            <div style="position:absolute;top:32px;left:32px;font-size:26px;font-weight:700;color:#1a1a2e;text-transform:uppercase;letter-spacing:3px;background:#fff;padding:10px 24px;border-radius:10px;z-index:5;box-shadow:0 2px 10px rgba(16,24,40,0.06);">PRIMA</div>
+            <div style="position:absolute;bottom:100px;right:32px;font-size:26px;font-weight:700;color:#1a1a2e;text-transform:uppercase;letter-spacing:3px;background:#fff;padding:10px 24px;border-radius:10px;z-index:5;box-shadow:0 2px 10px rgba(16,24,40,0.06);">DOPO</div>
+            <!-- Play -->
+            <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:96px;height:96px;background:rgba(255,255,255,0.25);backdrop-filter:blur(16px);border-radius:50%;display:flex;align-items:center;justify-content:center;z-index:6;box-shadow:0 4px 20px rgba(0,0,0,0.15);">
+              <svg viewBox="0 0 24 24" fill="#1a1a2e" width="36" height="36" style="margin-left:4px"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            </div>
+          </div>
+          <!-- Bottom card -->
+          <div style="position:absolute;bottom:120px;left:32px;right:32px;padding:48px 56px 52px;background:#fff;border:1px solid rgba(26,26,46,0.10);border-radius:20px;z-index:20;text-align:center;box-shadow:0 8px 32px rgba(16,24,40,0.08);">
+            <div style="font-size:84px;font-weight:800;color:#1a1a2e;line-height:1.08;margin-bottom:24px;letter-spacing:-2px;">Particle <span style="color:#ec4899;">Dust</span></div>
+            <div style="font-size:34px;color:#555;line-height:1.5;margin-bottom:44px;">Oggetti si dissolvono in particelle<br>e si riformano arredati.</div>
+            <div style="display:inline-flex;align-items:center;gap:16px;background:#3B83F6;color:#fff;font-size:36px;font-weight:800;padding:26px 64px;border-radius:14px;box-shadow:0 8px 28px rgba(59,131,246,0.25);">Guarda il video</div>
+            <div style="margin-top:36px;font-size:20px;font-weight:700;color:#bbb;letter-spacing:3px;text-transform:uppercase;">GETNEARME.IT</div>
+          </div>
+        </div>
+      </div>
+      <span class="frame-size">1080 × 1920</span>
+    </div>
+  </div>
+
+  <!-- ═══ DAY/NIGHT ═══ -->
+  <div class="template-group" id="tpl-daynight">
+    <div class="frame-wrap">
+      <span class="frame-label">Reel / Story</span>
+      <div class="frame" style="width:270px;height:480px">
+        <div class="tpl-container" style="width:1080px;height:1920px;transform:scale(0.25);display:flex;position:relative;">
+          <!-- Left half (day) -->
+          <div style="flex:1;position:relative;overflow:hidden;">
+            <img src="/staging/1.jpg" style="width:100%;height:100%;object-fit:cover;">
+            <div style="position:absolute;top:80px;left:50%;transform:translateX(-50%);font-size:28px;font-weight:700;color:#fff;background:rgba(0,0,0,0.4);padding:10px 28px;border-radius:10px;letter-spacing:2px;">GIORNO</div>
+          </div>
+          <!-- Divider -->
+          <div style="position:absolute;left:50%;top:0;bottom:0;width:3px;background:#fff;z-index:10;transform:translateX(-50%)"></div>
+          <!-- Swap icon -->
+          <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:12;width:68px;height:68px;background:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(16,24,40,0.15);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#1a1a2e" stroke-width="2.5" width="34" height="34"><path d="M18 8L22 12L18 16"/><path d="M6 8L2 12L6 16"/></svg>
+          </div>
+          <!-- Right half (night) -->
+          <div style="flex:1;position:relative;overflow:hidden;">
+            <img src="/staging/2.jpg" style="width:100%;height:100%;object-fit:cover;filter:brightness(0.5) saturate(0.7) hue-rotate(20deg);">
+            <div style="position:absolute;top:80px;left:50%;transform:translateX(-50%);font-size:28px;font-weight:700;color:#fff;background:rgba(0,0,0,0.4);padding:10px 28px;border-radius:10px;letter-spacing:2px;">NOTTE</div>
+          </div>
+          <!-- Bottom card (absolute over both halves) -->
+          <div style="position:absolute;bottom:120px;left:32px;right:32px;padding:48px 56px 52px;background:#fff;border:1px solid rgba(26,26,46,0.10);border-radius:20px;z-index:20;text-align:center;box-shadow:0 8px 32px rgba(16,24,40,0.08);">
+            <div style="font-size:84px;font-weight:800;color:#1a1a2e;line-height:1.08;margin-bottom:24px;letter-spacing:-2px;">Day / <span style="color:#06b6d4;">Night</span></div>
+            <div style="font-size:34px;color:#555;line-height:1.5;margin-bottom:44px;">Vedi come cambia la luce.<br>Giorno e notte a confronto.</div>
+            <div style="display:inline-flex;align-items:center;gap:16px;background:#3B83F6;color:#fff;font-size:36px;font-weight:800;padding:26px 64px;border-radius:14px;box-shadow:0 8px 28px rgba(59,131,246,0.25);">Guarda il video</div>
+            <div style="margin-top:36px;font-size:20px;font-weight:700;color:#bbb;letter-spacing:3px;text-transform:uppercase;">GETNEARME.IT</div>
+          </div>
+        </div>
+      </div>
+      <span class="frame-size">1080 × 1920</span>
+    </div>
+  </div>
+
+  <!-- ═══ TIMELAPSE ═══ -->
+  <div class="template-group" id="tpl-timelapse">
+    <div class="frame-wrap">
+      <span class="frame-label">Reel</span>
+      <div class="frame" style="width:270px;height:480px">
+        <div class="tpl-container" style="width:1080px;height:1920px;transform:scale(0.25);background:#0a0a0a;position:relative;display:flex;flex-direction:column;">
+          <!-- PRIMA — foto finale (top half) -->
+          <div style="flex:1;position:relative;overflow:hidden;">
+            <img src="/staging/videos/villa1_finished.jpg" style="width:100%;height:100%;object-fit:cover;">
+            <div style="position:absolute;top:280px;left:60px;font-size:26px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:4px;background:rgba(0,0,0,0.45);backdrop-filter:blur(12px);padding:14px 32px;border-radius:12px;z-index:5;">PRIMA</div>
+          </div>
+          <!-- Divider -->
+          <div style="position:absolute;left:0;right:0;top:50%;height:4px;background:#fff;z-index:10;transform:translateY(-50%);"></div>
+          <!-- DOPO — video timelapse (bottom half) -->
+          <div style="flex:1;position:relative;overflow:hidden;">
+            <img src="/staging/videos/villa1_structure.jpg" style="width:100%;height:100%;object-fit:cover;">
+            <div style="position:absolute;top:32px;left:60px;font-size:26px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:4px;background:rgba(0,0,0,0.45);backdrop-filter:blur(12px);padding:14px 32px;border-radius:12px;z-index:5;">DOPO</div>
+          </div>
+          <!-- Bottom box -->
+          <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:20;">
+            <div style="background:#fff;border-radius:20px;padding:32px 56px;display:flex;align-items:center;gap:24px;box-shadow:0 8px 32px rgba(0,0,0,0.15);">
+              <span style="font-size:32px;font-weight:500;color:#888;letter-spacing:0.5px;">Realizzato con</span>
+              <img src="/logo_blu_nero.svg" style="height:52px;">
+            </div>
+          </div>
+        </div>
+      </div>
+      <span class="frame-size">1080 × 1920</span>
+    </div>
+
+    <!-- Story -->
+    <div class="frame-wrap">
+      <span class="frame-label">Story</span>
+      <div class="frame" style="width:270px;height:480px">
+        <div class="tpl-container" style="width:1080px;height:1920px;transform:scale(0.25);background:#fafaf8;position:relative;overflow:hidden;font-family:'Satoshi','Helvetica Neue',Arial,sans-serif;">
+          <!-- Photo area: before/after split at 65% -->
+          <div style="position:absolute;top:0;left:0;right:0;bottom:480px;overflow:hidden;">
+            <div style="position:absolute;inset:0;background-image:url(/staging/videos/room1_before.jpg);background-size:cover;background-position:center;z-index:1;"></div>
+            <div style="position:absolute;inset:0;background-image:url(/staging/videos/room1_after.jpg);background-size:cover;background-position:center;z-index:2;clip-path:inset(0 0 0 65%);"></div>
+            <div style="position:absolute;left:65%;top:0;bottom:0;width:3px;background:#fff;transform:translateX(-50%);z-index:5;box-shadow:0 0 12px rgba(0,0,0,0.15);"></div>
+            <div style="position:absolute;left:65%;top:50%;transform:translate(-50%,-50%);width:60px;height:60px;background:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;z-index:6;box-shadow:0 4px 16px rgba(16,24,40,0.12);">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#1a1a2e" stroke-width="2.5" width="28" height="28"><path d="M18 8L22 12L18 16"/><path d="M6 8L2 12L6 16"/></svg>
+            </div>
+            <div style="position:absolute;top:24px;left:32px;font-size:22px;font-weight:700;color:#1a1a2e;text-transform:uppercase;letter-spacing:3px;z-index:7;background:#fff;padding:10px 24px;border-radius:10px;box-shadow:0 2px 10px rgba(16,24,40,0.06);">PRIMA</div>
+            <div style="position:absolute;top:24px;right:32px;font-size:22px;font-weight:700;color:#1a1a2e;text-transform:uppercase;letter-spacing:3px;z-index:7;background:#fff;padding:10px 24px;border-radius:10px;box-shadow:0 2px 10px rgba(16,24,40,0.06);">DOPO</div>
+          </div>
+          <!-- Bottom card -->
+          <div style="position:absolute;bottom:0;left:0;right:0;height:480px;background:#fafaf8;border-top:1px solid rgba(26,26,46,0.10);box-shadow:0 -4px 20px rgba(16,24,40,0.04);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px 48px;">
+            <div style="font-size:72px;font-weight:800;color:#1a1a2e;margin-bottom:20px;letter-spacing:-1px;">Ricostruzione <span style="color:#10b981;">AI</span></div>
+            <div style="font-size:32px;color:#666;line-height:1.5;margin-bottom:32px;">Dal cantiere fino all'immobile finito.<br>Fondamenta, struttura, risultato finale.</div>
+            <div style="display:inline-block;background:#3B83F6;color:#fff;font-size:32px;font-weight:700;padding:20px 56px;border-radius:14px;box-shadow:0 6px 20px rgba(59,131,246,0.25);margin-bottom:24px;">Post sul profilo</div>
+            <div style="font-size:20px;font-weight:600;color:#bbb;letter-spacing:3px;text-transform:uppercase;">GETNEARME.IT</div>
+          </div>
+        </div>
+      </div>
+      <span class="frame-size">1080 × 1920</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// Tab switching
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.template-group').forEach(g => g.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('tpl-' + tab.dataset.tpl).classList.add('active');
+  });
+});
+
+// Slider animation for both story and reel
+// Reel only — animated
+const reelClip = document.querySelector('.ba-after-clip-fs');
+const reelLine = document.querySelector('.ba-slider-line-fs');
+const reelHandle = document.querySelector('.ba-slider-handle-fs');
+let t = 0;
+function animateSlider() {
+  t += 0.002;
+  const pct = 50 + 35 * Math.sin(2 * Math.PI * t);
+  if (reelClip) {
+    reelClip.style.clipPath = `inset(0 ${100 - pct}% 0 0)`;
+    reelLine.style.left = pct + '%';
+    reelHandle.style.left = pct + '%';
+  }
+  requestAnimationFrame(animateSlider);
+}
+animateSlider();
+
+</script>
+
+</body>
+</html>

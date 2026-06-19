@@ -49,7 +49,7 @@ export async function GET(req: NextRequest) {
       const { data: content, error: cErr } = await supabase
         .from("generated_content")
         .select(
-          "id, topic_id, post_id, type, status, publish_date, published_at, ig_post_id, ig_story_id, image_urls, content_data"
+          "id, topic_id, post_id, type, status, publish_date, published_at, ig_post_id, ig_story_id, image_urls, video_url, content_data"
         )
         .eq("account_id", ACCOUNT)
         .gte("publish_date", from)
