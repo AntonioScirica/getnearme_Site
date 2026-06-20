@@ -11,6 +11,7 @@
 // Both are driven by the SAME underlying *D builder functions, so a change to
 // datiCoverD shows up identically in the dashboard preview and the published PNG.
 
+import { applyCta } from "@/lib/social/cta.js";
 import {
   datiCoverD,
   datiInsightD,
@@ -414,8 +415,10 @@ export function buildStoryForTopic(topic: PedTopic, rubricMap: RubricStoryMap = 
 /** Deterministic IG caption for a PED topic (server). Falls back to topic.title. */
 export function buildCaptionForTopic(topic: PedTopic): string {
   const mod = PED_REGISTRY[topic.template];
-  if (mod) return mod.buildCaption(topic);
-  return (topic.title || "").slice(0, 2200);
+  const base = mod ? mod.buildCaption(topic) : (topic.title || "").slice(0, 2200);
+  // Every caption ends with a CTA that drives to GetNearMe — varied by rubric
+  // (comment a keyword / save / link), not always "Commenta DEMO".
+  return applyCta(base, topic.rubric);
 }
 
 /** Client preview slides for a topic (thunks + layout), or null if unknown. */
