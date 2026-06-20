@@ -99,6 +99,47 @@ const STORY_TYPE_MAP = {
   video_2: 'video',
 };
 
+/**
+ * Delete the heavy MP4 files of videos published more than 2h ago, to keep
+ * storage small. Keeps the generated_content row (insights need ig_post_id) and
+ * the .jpg frames (calendar thumbnails) — only the .mp4 files go. The 2h delay
+ * guarantees the story teaser (+10 min) already used the video_url. Idempotent:
+ * nulls video_url once cleaned so each video is processed once.
+ */
+async function cleanupOldVideoFiles() {
+  const cutoff = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
+  const { data, error } = await supabase
+    .from('generated_content')
+    .select('id, topic_id, video_url')
+    .eq('status', 'published')
+    .lt('published_at', cutoff)
+    .not('video_url', 'is', null)
+    .like('video_url', '%/storage/v1/object/public/content/%')
+    .limit(50);
+  if (error || !data?.length) return 0;
+
+  let removed = 0;
+  for (const row of data) {
+    const paths = [];
+    const finalPath = row.video_url.split('/storage/v1/object/public/content/')[1];
+    if (finalPath) paths.push(finalPath.split('?')[0]);
+    // Intermediate render artifacts (seg1/seg2/base/daynight/reveal .mp4).
+    if (row.topic_id) {
+      const { data: files } = await supabase.storage.from('content').list(`social-frames/${row.topic_id}`);
+      for (const f of files || []) {
+        if (f.name.endsWith('.mp4')) paths.push(`social-frames/${row.topic_id}/${f.name}`);
+      }
+    }
+    if (paths.length) {
+      try { await supabase.storage.from('content').remove(paths); removed += paths.length; } catch { /* best effort */ }
+    }
+    // Drop the now-dead link so the row isn't re-scanned (insights keep ig id).
+    await supabase.from('generated_content').update({ video_url: null }).eq('id', row.id);
+  }
+  if (removed) console.log(`cleanupOldVideoFiles: removed ${removed} mp4 file(s)`);
+  return removed;
+}
+
 export default async function handler(req, res) {
   const { checkAuth } = await import('./discover.js');
   if (!checkAuth(req)) {
@@ -112,6 +153,9 @@ export default async function handler(req, res) {
     fetch(`https://${req.headers.host || 'getnearme.it'}/api/social/cron/publish?${qs}`).catch(() => {});
     return res.json({ ok: true, message: `publish triggered async (slot=${req.query.slot || 'none'})` });
   }
+
+  // Housekeeping: clean MP4s published >2h ago (storage hygiene). Best-effort.
+  try { await cleanupOldVideoFiles(); } catch (e) { console.error('video cleanup error:', e.message); }
 
   // Route: ?story=1 → story publishing mode
   if (req.query.story === '1') {
@@ -226,18 +270,9 @@ export default async function handler(req, res) {
       published_at: new Date().toISOString(),
     });
 
-    // Cleanup: delete video from Supabase Storage after publish
-    if (post.type === 'video' && post.video_url?.includes('/storage/v1/object/public/content/')) {
-      try {
-        const storagePath = post.video_url.split('/storage/v1/object/public/content/')[1];
-        if (storagePath) {
-          await supabase.storage.from('content').remove([storagePath]);
-          console.log(`Cleaned up video: ${storagePath}`);
-        }
-      } catch (cleanErr) {
-        console.error('Video cleanup failed:', cleanErr.message);
-      }
-    }
+    // NB: MP4 files are NOT deleted here — the story teaser (+10 min) still
+    // needs the video_url. Cleanup happens 2h after publish via
+    // cleanupOldVideoFiles() (run at the start of every publish invocation).
 
     await sendMessage(
       `✅ [${slot}] Pubblicato: <b>${post.content_data.slides?.[0]?.headline || post.post_id}</b>\n` +

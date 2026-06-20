@@ -53,6 +53,14 @@ const ANGLES = [
   'avatar parlante: presentare gli immobili senza telecamera',
   'risparmio di soldi: una suite sola al posto di Canva + editor + fotografo',
   'team multi-seat: tutta l\'agenzia con lo stesso brand',
+  'prima impressione online: foto e annunci che si fanno notare',
+  'coerenza del brand: ogni post con lo stesso stile dell\'agenzia',
+  'velocita di risposta: pubblicare l\'immobile appena acquisito',
+  'differenziarsi dai colleghi con contenuti curati senza agenzia esterna',
+  'rivalutare immobili difficili da vendere con una presentazione nuova',
+  'caroselli e reel pronti: dal listing al post in pochi clic',
+  'autorevolezza: l\'agente che comunica come un professionista del marketing',
+  'meno strumenti, piu risultati: tutto in un unico posto',
 ];
 
 const SCHEMAS = `
@@ -114,7 +122,33 @@ const RUBRIC_DESC = {
   question: 'domanda provocatoria per agenti su marketing, contenuti, AI',
 };
 
-async function genDay(date, dow, weekIdx) {
+// Pull the titles + hooks already used in the recent past so Claude can avoid
+// repeating them. Looks back ~6 weeks of non-news/non-video topics.
+async function fetchRecentContext(beforeDate) {
+  const since = new Date(`${beforeDate}T12:00:00`);
+  since.setDate(since.getDate() - 42);
+  const sinceStr = since.toISOString().split('T')[0];
+  const { data } = await supabase
+    .from('content_topics')
+    .select('title, slide_data, plan_date')
+    .eq('account_id', accountId)
+    .not('rubric', 'in', '(news,video)')
+    .gte('plan_date', sinceStr)
+    .lt('plan_date', beforeDate)
+    .order('plan_date', { ascending: false })
+    .limit(150);
+  const lines = [];
+  for (const t of data || []) {
+    const sd = t.slide_data || {};
+    const hook = [sd.hook, sd.hookHL].filter(Boolean).join(' ') ||
+      [sd.title, sd.titleHL].filter(Boolean).join(' ') ||
+      [sd.coverTitle, sd.coverHL].filter(Boolean).join(' ') || t.title;
+    if (hook) lines.push(`- ${hook.replace(/<[^>]+>/g, '').trim()}`);
+  }
+  return lines.slice(0, 120).join('\n');
+}
+
+async function genDay(date, dow, weekIdx, avoidList) {
   const { rubric, main } = RUBRIC_BY_DOW[dow];
   // 3 feed: main (rubric) + 2 extra rotated, + 1 tip
   const e1 = EXTRA_FEEDS[(dow + weekIdx) % EXTRA_FEEDS.length];
@@ -128,11 +162,14 @@ async function genDay(date, dow, weekIdx) {
     { t: 'ped-tip', r: 'tip', theme: `consiglio pratico per agenti su ${a1}` },
   ];
   const list = slots.map((s, i) => `${i}) template=${s.t} | tema: ${s.theme}`).join('\n');
+  const avoidBlock = avoidList
+    ? `\nGIÀ PUBBLICATI nelle settimane scorse (NON ripetere questi ganci, titoli, esempi o concetti — proponi angolazioni, esempi e formulazioni NUOVE e diverse):\n${avoidList}\n`
+    : '';
   const prompt = `Sei il copywriter di @getnearme_app per AGENTI IMMOBILIARI italiani.
 ${RULES}
 
 Genera il contenuto per questi ${slots.length} post del ${date}, rispettando ESATTAMENTE lo schema del template indicato. Varia gli argomenti, non ripetere concetti tra i post.
-
+${avoidBlock}
 ${list}
 
 SCHEMI:
@@ -178,12 +215,16 @@ if (replace) {
   console.log(`replaced: removed ${count ?? 0} existing topics`);
 }
 
+// Fetch what was already published recently → fed to Claude to avoid repeats.
+const avoidList = await fetchRecentContext(dates[0]);
+console.log(`anti-repeat: ${avoidList ? avoidList.split('\n').length : 0} ganci recenti passati al copywriter per non ripeterli`);
+
 let total = 0;
 for (const date of dates) {
   const dow = new Date(`${date}T12:00:00`).getDay();
   process.stdout.write(`${date}... `);
   let day;
-  try { day = await genDay(date, dow, weekIdx); } catch (e) { console.log('FAIL', e.message); continue; }
+  try { day = await genDay(date, dow, weekIdx, avoidList); } catch (e) { console.log('FAIL', e.message); continue; }
   const rows = day.map(({ slot, sd }) => {
     const s = cleanSplits({ ...sd });
     if (slot.t === 'ped-tip') s.tipNum = s.tipNum || '1';
