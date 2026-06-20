@@ -14,6 +14,8 @@ import {
   ExternalLink,
   CheckCircle2,
   RefreshCw,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
 
 // ── Shared types, constants, helpers (extracted) ──────────────────────
@@ -563,6 +565,14 @@ function PreviewModal({
   // The stored video_url is the branded share PAGE (/v/<id>, text/html), which a
   // <video> tag can't play. The raw MP4 is served at /d/<id>. Use that for preview.
   const videoSrc = (videoItem?.video_url || "").replace("/v/", "/d/");
+  // Previews autoplay muted (browser requirement); this button unmutes them so
+  // the user can hear the background music.
+  const [isMuted, setIsMuted] = useState(true);
+  const toggleAudio = () => {
+    const next = !isMuted;
+    document.querySelectorAll("video").forEach((v) => { v.muted = next; if (!next) v.play().catch(() => {}); });
+    setIsMuted(next);
+  };
   const item = reelItem;
   const slides = item?.image_urls || [];
   const sd = topic.slide_data || {};
@@ -617,9 +627,21 @@ function PreviewModal({
               )}
             </p>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg text-gray-500 hover:bg-white/5 hover:text-gray-200 shrink-0">
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-1 shrink-0">
+            {videoSrc && (
+              <button
+                onClick={toggleAudio}
+                title={isMuted ? "Attiva audio" : "Disattiva audio"}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${isMuted ? "text-gray-400 hover:bg-white/5 hover:text-gray-200" : "bg-indigo-500/20 text-indigo-300"}`}
+              >
+                {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                {isMuted ? "Audio" : "Audio on"}
+              </button>
+            )}
+            <button onClick={onClose} className="p-1.5 rounded-lg text-gray-500 hover:bg-white/5 hover:text-gray-200">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         <div className="p-5">
