@@ -8,6 +8,8 @@ create table if not exists public.crm_contacts (
   owner text,                       -- Francesco / Alan / Filippo
   contact_name text not null,
   agency text,
+  agency_owner text,
+  website text,
   phone text,
   email text,
   city text,

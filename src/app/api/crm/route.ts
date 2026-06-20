@@ -8,7 +8,7 @@ const ACCOUNT = "getnearme";
 
 // Columns a client may write. Server controls id/account/timestamps.
 const FIELDS = [
-  "owner", "contact_name", "agency", "phone", "email", "city",
+  "owner", "contact_name", "agency", "agency_owner", "website", "phone", "email", "city",
   "status", "source", "notes", "next_action_at", "plan", "value_eur",
 ];
 

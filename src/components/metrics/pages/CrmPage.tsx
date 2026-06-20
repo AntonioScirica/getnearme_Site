@@ -24,6 +24,8 @@ interface Contact {
   owner: string | null;
   contact_name: string;
   agency: string | null;
+  agency_owner: string | null;
+  website: string | null;
   phone: string | null;
   email: string | null;
   city: string | null;
@@ -44,7 +46,7 @@ export default function CrmPage({ authKey }: { authKey: string | null }) {
   const [filterStatus, setFilterStatus] = useState("");
   const [search, setSearch] = useState("");
   // add form
-  const BLANK = { contact_name: "", owner: "Francesco", status: "da_contattare", agency: "", phone: "", email: "", city: "", source: "", plan: "", value_eur: "", notes: "", next_action_at: "" };
+  const BLANK = { contact_name: "", owner: "Francesco", status: "da_contattare", agency: "", agency_owner: "", website: "", phone: "", email: "", city: "", source: "", plan: "", value_eur: "", notes: "", next_action_at: "" };
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState<Record<string, string>>(BLANK);
   const [saving, setSaving] = useState(false);
@@ -182,7 +184,7 @@ export default function CrmPage({ authKey }: { authKey: string | null }) {
         <table className="w-full text-sm">
           <thead>
             <tr className={`${MONO} text-[10px] uppercase tracking-wider text-gray-500 bg-white/[0.02]`}>
-              {["Owner", "Nome", "Agenzia", "Stato", "Fonte", "Telefono", "Email", "Città", "Follow-up", "Piano", "Valore €", "Note", ""].map((h) => (
+              {["Owner", "Nome", "Agenzia", "Proprietario", "Sito", "Stato", "Fonte", "Telefono", "Email", "Città", "Follow-up", "Piano", "Valore €", "Note", ""].map((h) => (
                 <th key={h} className="text-left font-normal px-3 py-2 whitespace-nowrap">{h}</th>
               ))}
             </tr>
@@ -195,6 +197,8 @@ export default function CrmPage({ authKey }: { authKey: string | null }) {
                   <Td><Sel v={c.owner || ""} opts={["", ...OWNERS]} onChange={(v) => patch(c.id, "owner", v)} /></Td>
                   <Td><Txt v={c.contact_name} onSave={(v) => patch(c.id, "contact_name", v)} bold /></Td>
                   <Td><Txt v={c.agency} onSave={(v) => patch(c.id, "agency", v)} /></Td>
+                  <Td><Txt v={c.agency_owner} onSave={(v) => patch(c.id, "agency_owner", v)} /></Td>
+                  <Td><Txt v={c.website} onSave={(v) => patch(c.id, "website", v)} /></Td>
                   <Td>
                     <select value={c.status} onChange={(e) => patch(c.id, "status", e.target.value)}
                       className={`${MONO} text-[11px] rounded-md px-1.5 py-1 border ${st.cls} focus:outline-none`}>
@@ -221,7 +225,7 @@ export default function CrmPage({ authKey }: { authKey: string | null }) {
               );
             })}
             {filtered.length === 0 && (
-              <tr><td colSpan={13} className={`${MONO} text-sm text-gray-600 text-center py-8`}>Nessun contatto. Aggiungine uno sopra.</td></tr>
+              <tr><td colSpan={15} className={`${MONO} text-sm text-gray-600 text-center py-8`}>Nessun contatto. Aggiungine uno sopra.</td></tr>
             )}
           </tbody>
         </table>
@@ -285,8 +289,8 @@ function ContactForm({ form, setForm, onSubmit, onClose, saving, cityOptions, ag
   const set = (k: string, v: string) => setForm({ ...form, [k]: v });
   const inputCls = `${MONO} w-full text-sm bg-white/[0.03] border border-white/[0.08] rounded-lg px-3 py-2 text-gray-200 placeholder:text-gray-600 focus:outline-none focus:border-indigo-500/50`;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6" onClick={onClose}>
-      <div className="bg-[#161920] border border-white/[0.1] rounded-2xl max-w-2xl w-full max-h-[88vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="bg-[#161920] border border-white/[0.1] rounded-2xl max-w-2xl w-full max-h-[88vh] overflow-y-auto">
         <div className="flex items-center justify-between p-5 border-b border-white/[0.08] sticky top-0 bg-[#161920] z-10">
           <h2 className="text-base font-semibold text-gray-100">Nuovo contatto</h2>
           <button onClick={onClose} className="p-1.5 rounded-lg text-gray-500 hover:bg-white/5 hover:text-gray-200"><X className="w-5 h-5" /></button>
@@ -298,6 +302,12 @@ function ContactForm({ form, setForm, onSubmit, onClose, saving, cityOptions, ag
           <Field label="Agenzia">
             <input list="crm-agencies" value={form.agency} onChange={(e) => set("agency", e.target.value)} placeholder="Immobiliare…" className={inputCls} />
             <datalist id="crm-agencies">{agencyOptions.map((a) => <option key={a} value={a} />)}</datalist>
+          </Field>
+          <Field label="Proprietario agenzia">
+            <input value={form.agency_owner} onChange={(e) => set("agency_owner", e.target.value)} placeholder="Nome titolare" className={inputCls} />
+          </Field>
+          <Field label="Sito web">
+            <input value={form.website} onChange={(e) => set("website", e.target.value)} placeholder="agenzia.it" className={inputCls} />
           </Field>
           <Field label="Owner">
             <select value={form.owner} onChange={(e) => set("owner", e.target.value)} className={inputCls}>
