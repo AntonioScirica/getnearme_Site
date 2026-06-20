@@ -561,7 +561,7 @@ function PreviewModal({
 }) {
   const reelItem = items.find(i => i.type === "reel") || items[0] || null;
   const storyItem = items.find(i => i.type === "story") || null;
-  const videoItem = items.find(i => !!i.video_url) || null;
+  const videoItem = items.find(i => i.type === "reel" && !!i.video_url) || items.find(i => !!i.video_url) || null;
   // The stored video_url is the branded share PAGE (/v/<id>, text/html), which a
   // <video> tag can't play. The raw MP4 is served at /d/<id>. Use that for preview.
   const videoSrc = (videoItem?.video_url || "").replace("/v/", "/d/");

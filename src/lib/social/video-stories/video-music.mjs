@@ -57,19 +57,25 @@ async function probeDuration(path, ffprobe = 'ffprobe') {
 }
 
 /**
- * Mux a random R2 track under the video. Returns a NEW mp4 path with audio, or
- * the original path unchanged if no music is available.
+ * Mux a random R2 track under the video.
  * @param {string} videoPath  the silent rendered mp4
  * @param {object} [o]
  * @param {string} [o.ffmpeg]  ffmpeg binary
  * @param {number} [o.volume]  background volume 0..1 (default 0.18)
+ * @param {string[]} [o.exclude]  track keys to avoid (e.g. the reel's track, so
+ *                                the story gets a different song)
+ * @param {string} [o.suffix]   output filename suffix (default '_m')
+ * @returns {Promise<{path: string, track: string|null}>} new mp4 path + chosen
+ *   track key. If no music is available, path = the original (silent), track = null.
  */
-export async function muxMusic(videoPath, { ffmpeg = 'ffmpeg', volume = 0.18 } = {}) {
+export async function muxMusic(videoPath, { ffmpeg = 'ffmpeg', volume = 0.18, exclude = [], suffix = '_m' } = {}) {
   let keys;
   try { keys = await listTracks(); } catch { keys = []; }
-  if (!keys.length) return videoPath; // no R2 / no tracks → stay silent
+  const pool = keys.filter((k) => !exclude.includes(k));
+  const avail = pool.length ? pool : keys;
+  if (!avail.length) return { path: videoPath, track: null }; // no R2 / no tracks → stay silent
 
-  const key = keys[Math.floor(Math.random() * keys.length)];
+  const key = avail[Math.floor(Math.random() * avail.length)];
   const c = await client();
   const { GetObjectCommand } = await import('@aws-sdk/client-s3');
   const obj = await c.send(new GetObjectCommand({ Bucket: BUCKET, Key: key }));
@@ -79,7 +85,7 @@ export async function muxMusic(videoPath, { ffmpeg = 'ffmpeg', volume = 0.18 } =
 
   const dur = await probeDuration(videoPath);
   const fadeStart = Math.max(0, dur - 1.4);
-  const out = videoPath.replace(/\.mp4$/i, '_m.mp4');
+  const out = videoPath.replace(/\.mp4$/i, `${suffix}.mp4`);
   // Loop the track to the video length, lower the volume, fade out at the end,
   // copy the video stream untouched, encode AAC, trim to the video (-shortest).
   await exec(ffmpeg, [
@@ -89,5 +95,5 @@ export async function muxMusic(videoPath, { ffmpeg = 'ffmpeg', volume = 0.18 } =
     '-shortest', '-movflags', '+faststart', out,
   ]);
   await fs.rm(musicPath, { force: true });
-  return out;
+  return { path: out, track: key };
 }

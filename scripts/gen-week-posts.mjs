@@ -353,6 +353,23 @@ Rispondi SOLO JSON: { "caps": [ { "hook":"<gancio max 8 parole>", "body":"<max 2
   } catch { return plan.map((p) => ({ hook: p.label, body: '', caption: 'Realizzato con GetNearMe. Commenta DEMO per la prova gratuita.' })); }
 }
 
+// Mux DIFFERENT random music for the reel vs the story, upload both, set each
+// video_url separately. Returns the reel url (for logging).
+async function finalizeMusic(out, baseName, topicId) {
+  const reel = await muxMusic(out);
+  const story = await muxMusic(out, { exclude: reel.track ? [reel.track] : [], suffix: '_s' });
+  const reelUrl = await uploadFinal(reel.path, `social-videos/${baseName}.mp4`);
+  const storyUrl = await uploadFinal(story.path, `social-videos/${baseName}_story.mp4`);
+  for (const [type, url] of [['reel', reelUrl], ['story', storyUrl]]) {
+    for (let i = 0; i < 12; i++) {
+      const { data } = await supabase.from('generated_content').update({ video_url: url }).eq('topic_id', topicId).eq('type', type).select('id');
+      if (data && data.length) break;
+      await sleep(5000);
+    }
+  }
+  return reelUrl;
+}
+
 // ── Per-template drivers: each renders + returns the final hosted MP4 url ──
 // Slider is Flux-only (sync): it triggers its own generation then renders.
 async function driveSlider(t) {
@@ -360,7 +377,7 @@ async function driveSlider(t) {
   await waitFor(async () => { const n = await listFrames(t.id); return n.includes('before.jpg') && n.includes('after.jpg'); }, { label: `${t.label} frames` });
   const out = `/tmp/wk_${t.id}.mp4`;
   await renderSliderVideo({ beforeUrl: pub(`social-frames/${t.id}/before.jpg`), afterUrl: pub(`social-frames/${t.id}/after.jpg`), outPath: out });
-  return uploadFinal(await muxMusic(out), `social-videos/${t.date}_slider_${t.variant}.mp4`);
+  return finalizeMusic(out, `${t.date}_slider_${t.variant}`, t.id);
 }
 // Kling drivers assume START was already kicked (queue→finalize). They poll-
 // trigger finalize until the clip(s) are re-hosted, then render the overlay.
@@ -368,7 +385,7 @@ async function driveDayNight(t) {
   await waitFor(async () => { await triggerEdge({ topic_id: t.id }); const n = await listFrames(t.id); return n.includes('daynight.mp4'); }, { gap: 20000, tries: 30, label: `${t.label} kling` });
   const out = `/tmp/wk_${t.id}.mp4`;
   await renderDayNightVideo({ videoUrl: pub(`social-frames/${t.id}/daynight.mp4`), outPath: out });
-  return uploadFinal(await muxMusic(out), `social-videos/${t.date}_daynight.mp4`);
+  return finalizeMusic(out, `${t.date}_daynight`, t.id);
 }
 async function driveConstruction(t) {
   await waitFor(async () => { await triggerEdge({ topic_id: t.id }); const n = await listFrames(t.id); return n.includes('seg1.mp4') && n.includes('seg2.mp4'); }, { gap: 25000, tries: 30, label: `${t.label} segments` });
@@ -376,7 +393,7 @@ async function driveConstruction(t) {
   const baseUrl = await uploadFinal(`/tmp/wk_${t.id}_base.mp4`, `social-frames/${t.id}/base.mp4`);
   const out = `/tmp/wk_${t.id}.mp4`;
   await renderConstructionVideo({ videoUrl: baseUrl, outPath: out });
-  return uploadFinal(await muxMusic(out), `social-videos/${t.date}_construction.mp4`);
+  return finalizeMusic(out, `${t.date}_construction`, t.id);
 }
 // Stop-motion + particle: single Kling reveal clip → reveal.mp4 → overlay.
 async function driveReveal(t) {
@@ -384,7 +401,7 @@ async function driveReveal(t) {
   const out = `/tmp/wk_${t.id}.mp4`;
   await renderRevealVideo({ videoUrl: pub(`social-frames/${t.id}/reveal.mp4`), badge: REVEAL_BADGES[t.template] || 'AI Staging', outPath: out });
   const kind = t.template === 'video_before_after_particle' ? 'particle' : 'stopmotion';
-  return uploadFinal(await muxMusic(out), `social-videos/${t.date}_${kind}.mp4`);
+  return finalizeMusic(out, `${t.date}_${kind}`, t.id);
 }
 
 function driveOne(t) {
@@ -428,8 +445,7 @@ if (noVideo) {
   for (const t of videoTopics.filter((t) => t.template === 'video_slider')) {
     try {
       process.stdout.write(`  ${t.label} (${t.date})... `);
-      const url = await driveSlider(t);
-      await setVideoUrl(t.id, url);
+      await driveSlider(t);
       await supabase.from('content_topics').update({ status: 'approved' }).eq('id', t.id);
       console.log('ok (approved)');
     } catch (e) { console.log('FAIL', e.message); }
@@ -439,8 +455,7 @@ if (noVideo) {
   for (const t of klingTopics) {
     try {
       process.stdout.write(`  ${t.label} (${t.date})... `);
-      const url = await driveOne(t);
-      await setVideoUrl(t.id, url);
+      await driveOne(t);
       await supabase.from('content_topics').update({ status: 'approved' }).eq('id', t.id);
       console.log('ok (approved)');
     } catch (e) { console.log('FAIL', e.message); }
