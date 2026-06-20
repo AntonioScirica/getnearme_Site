@@ -20,6 +20,7 @@ import { renderSliderVideo } from '../src/lib/social/video-stories/slider-video.
 import { renderDayNightVideo } from '../src/lib/social/video-stories/daynight-video.mjs';
 import { concatSegments, renderConstructionVideo } from '../src/lib/social/video-stories/construction-video.mjs';
 import { renderRevealVideo, REVEAL_BADGES } from '../src/lib/social/video-stories/reveal-video.mjs';
+import { muxMusic } from '../src/lib/social/video-stories/video-music.mjs';
 
 const SUPA = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabase = createClient(SUPA, process.env.SUPABASE_SERVICE_ROLE_KEY);
@@ -62,14 +63,14 @@ async function driveSlider(t) {
   await waitFor(async () => { const n = await listFrames(t.id); return n.includes('before.jpg') && n.includes('after.jpg'); }, { label: 'slider frames' });
   const out = `/tmp/wk_${t.id}.mp4`;
   await renderSliderVideo({ beforeUrl: pub(`social-frames/${t.id}/before.jpg`), afterUrl: pub(`social-frames/${t.id}/after.jpg`), outPath: out, chromePath: CHROME, ffmpeg: FFMPEG, logoSvg });
-  return uploadFinal(out, `social-videos/${t.plan_date}_slider_${t.slide_data?.slider_variant || 'x'}.mp4`);
+  return uploadFinal(await muxMusic(out, { ffmpeg: FFMPEG }), `social-videos/${t.plan_date}_slider_${t.slide_data?.slider_variant || 'x'}.mp4`);
 }
 async function driveDayNight(t) {
   await triggerEdge({ topic_id: t.id });
   await waitFor(async () => { await triggerEdge({ topic_id: t.id }); const n = await listFrames(t.id); return n.includes('daynight.mp4'); }, { gap: 20000, label: 'daynight kling' });
   const out = `/tmp/wk_${t.id}.mp4`;
   await renderDayNightVideo({ videoUrl: pub(`social-frames/${t.id}/daynight.mp4`), outPath: out, chromePath: CHROME, ffmpeg: FFMPEG, logoSvg });
-  return uploadFinal(out, `social-videos/${t.plan_date}_daynight.mp4`);
+  return uploadFinal(await muxMusic(out, { ffmpeg: FFMPEG }), `social-videos/${t.plan_date}_daynight.mp4`);
 }
 async function driveConstruction(t) {
   await triggerEdge({ topic_id: t.id });
@@ -78,7 +79,7 @@ async function driveConstruction(t) {
   const baseUrl = await uploadFinal(`/tmp/wk_${t.id}_base.mp4`, `social-frames/${t.id}/base.mp4`);
   const out = `/tmp/wk_${t.id}.mp4`;
   await renderConstructionVideo({ videoUrl: baseUrl, outPath: out, chromePath: CHROME, ffmpeg: FFMPEG, logoSvg });
-  return uploadFinal(out, `social-videos/${t.plan_date}_construction.mp4`);
+  return uploadFinal(await muxMusic(out, { ffmpeg: FFMPEG }), `social-videos/${t.plan_date}_construction.mp4`);
 }
 async function driveReveal(t) {
   await triggerEdge({ topic_id: t.id });
@@ -86,7 +87,7 @@ async function driveReveal(t) {
   const out = `/tmp/wk_${t.id}.mp4`;
   await renderRevealVideo({ videoUrl: pub(`social-frames/${t.id}/reveal.mp4`), badge: REVEAL_BADGES[t.template] || 'AI Staging', outPath: out, chromePath: CHROME, ffmpeg: FFMPEG, logoSvg });
   const kind = t.template === 'video_before_after_particle' ? 'particle' : 'stopmotion';
-  return uploadFinal(out, `social-videos/${t.plan_date}_${kind}.mp4`);
+  return uploadFinal(await muxMusic(out, { ffmpeg: FFMPEG }), `social-videos/${t.plan_date}_${kind}.mp4`);
 }
 function driveOne(t) {
   if (t.template === 'video_slider') return driveSlider(t);

@@ -26,11 +26,23 @@ import { renderSliderVideo } from '../src/lib/social/video-stories/slider-video.
 import { renderDayNightVideo } from '../src/lib/social/video-stories/daynight-video.mjs';
 import { concatSegments, renderConstructionVideo } from '../src/lib/social/video-stories/construction-video.mjs';
 import { renderRevealVideo, REVEAL_BADGES } from '../src/lib/social/video-stories/reveal-video.mjs';
-import { trackAnthropicCall } from '../src/lib/social/cost-tracker.js';
+import { muxMusic } from '../src/lib/social/video-stories/video-music.mjs';
 
 const anthropic = new Anthropic({ apiKey: (process.env.ANTHROPIC_API_KEY || '').trim() });
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 const accountId = 'getnearme';
+
+// Log a Claude call to api_usage so the realtime costs page reflects it.
+// Inline (the shared cost-tracker imports a supabase client with different env).
+async function trackAnthropic(operation, usage) {
+  try {
+    const cost = (usage?.input_tokens || 0) * 3 / 1e6 + (usage?.output_tokens || 0) * 15 / 1e6;
+    await supabase.from('api_usage').insert({
+      service: 'anthropic', model: 'claude-sonnet-4-6', operation,
+      input_tokens: usage?.input_tokens || 0, output_tokens: usage?.output_tokens || 0, cost_usd: cost,
+    });
+  } catch { /* non-blocking */ }
+}
 
 // ── Rubric per weekday (mirrors monthly-planner RUBRIC_SCHEDULE) ──
 const RUBRIC_BY_DOW = {
@@ -205,7 +217,7 @@ ${SCHEMAS}
 Rispondi SOLO con JSON valido: { "posts": [ <slide_data nell'ordine 0..${slots.length - 1}> ] }`;
 
   const res = await anthropic.messages.create({ model: 'claude-sonnet-4-6', max_tokens: 8000, messages: [{ role: 'user', content: prompt }] });
-  try { await trackAnthropicCall('claude-sonnet-4-6', 'gen-week-posts', res.usage || {}); } catch { /* non-blocking */ }
+  await trackAnthropic('gen-week-posts', res.usage);
   const m = res.content[0].text.match(/\{[\s\S]*\}/);
   if (!m) throw new Error('no JSON for ' + date);
   const posts = JSON.parse(m[0].replace(/,\s*([}\]])/g, '$1').replace(/[‘’]/g, "'").replace(/[“”]/g, '"')).posts;
@@ -335,7 +347,7 @@ Ogni reel mostra una trasformazione AI fatta con GetNearMe (foto/immobile). Parl
 Rispondi SOLO JSON: { "caps": [ { "hook":"<gancio max 8 parole>", "body":"<max 20 parole>", "caption":"<caption IG max 30 parole + 1 CTA 'Commenta DEMO'>" } x${plan.length} ] }`;
   try {
     const res = await anthropic.messages.create({ model: 'claude-sonnet-4-6', max_tokens: 2000, messages: [{ role: 'user', content: prompt }] });
-    try { await trackAnthropicCall('claude-sonnet-4-6', 'gen-week-video-captions', res.usage || {}); } catch { /* non-blocking */ }
+    await trackAnthropic('gen-week-video-captions', res.usage);
     const m = res.content[0].text.match(/\{[\s\S]*\}/);
     return JSON.parse(m[0].replace(/,\s*([}\]])/g, '$1')).caps;
   } catch { return plan.map((p) => ({ hook: p.label, body: '', caption: 'Realizzato con GetNearMe. Commenta DEMO per la prova gratuita.' })); }
@@ -348,7 +360,7 @@ async function driveSlider(t) {
   await waitFor(async () => { const n = await listFrames(t.id); return n.includes('before.jpg') && n.includes('after.jpg'); }, { label: `${t.label} frames` });
   const out = `/tmp/wk_${t.id}.mp4`;
   await renderSliderVideo({ beforeUrl: pub(`social-frames/${t.id}/before.jpg`), afterUrl: pub(`social-frames/${t.id}/after.jpg`), outPath: out });
-  return uploadFinal(out, `social-videos/${t.date}_slider_${t.variant}.mp4`);
+  return uploadFinal(await muxMusic(out), `social-videos/${t.date}_slider_${t.variant}.mp4`);
 }
 // Kling drivers assume START was already kicked (queue→finalize). They poll-
 // trigger finalize until the clip(s) are re-hosted, then render the overlay.
@@ -356,7 +368,7 @@ async function driveDayNight(t) {
   await waitFor(async () => { await triggerEdge({ topic_id: t.id }); const n = await listFrames(t.id); return n.includes('daynight.mp4'); }, { gap: 20000, tries: 30, label: `${t.label} kling` });
   const out = `/tmp/wk_${t.id}.mp4`;
   await renderDayNightVideo({ videoUrl: pub(`social-frames/${t.id}/daynight.mp4`), outPath: out });
-  return uploadFinal(out, `social-videos/${t.date}_daynight.mp4`);
+  return uploadFinal(await muxMusic(out), `social-videos/${t.date}_daynight.mp4`);
 }
 async function driveConstruction(t) {
   await waitFor(async () => { await triggerEdge({ topic_id: t.id }); const n = await listFrames(t.id); return n.includes('seg1.mp4') && n.includes('seg2.mp4'); }, { gap: 25000, tries: 30, label: `${t.label} segments` });
@@ -364,7 +376,7 @@ async function driveConstruction(t) {
   const baseUrl = await uploadFinal(`/tmp/wk_${t.id}_base.mp4`, `social-frames/${t.id}/base.mp4`);
   const out = `/tmp/wk_${t.id}.mp4`;
   await renderConstructionVideo({ videoUrl: baseUrl, outPath: out });
-  return uploadFinal(out, `social-videos/${t.date}_construction.mp4`);
+  return uploadFinal(await muxMusic(out), `social-videos/${t.date}_construction.mp4`);
 }
 // Stop-motion + particle: single Kling reveal clip → reveal.mp4 → overlay.
 async function driveReveal(t) {
@@ -372,7 +384,7 @@ async function driveReveal(t) {
   const out = `/tmp/wk_${t.id}.mp4`;
   await renderRevealVideo({ videoUrl: pub(`social-frames/${t.id}/reveal.mp4`), badge: REVEAL_BADGES[t.template] || 'AI Staging', outPath: out });
   const kind = t.template === 'video_before_after_particle' ? 'particle' : 'stopmotion';
-  return uploadFinal(out, `social-videos/${t.date}_${kind}.mp4`);
+  return uploadFinal(await muxMusic(out), `social-videos/${t.date}_${kind}.mp4`);
 }
 
 function driveOne(t) {
