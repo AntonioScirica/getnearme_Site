@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { MONO } from "../types";
-import { Plus, Trash2, Search, RefreshCw } from "lucide-react";
+import { Plus, Trash2, Search, RefreshCw, X } from "lucide-react";
 
 // ── Pipeline + option sets ──────────────────────────────────────────
 const STATUSES: { id: string; label: string; cls: string; dot: string }[] = [
@@ -43,10 +43,11 @@ export default function CrmPage({ authKey }: { authKey: string | null }) {
   const [filterOwner, setFilterOwner] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
   const [search, setSearch] = useState("");
-  // quick-add
-  const [qName, setQName] = useState("");
-  const [qOwner, setQOwner] = useState("Francesco");
-  const [qStatus, setQStatus] = useState("da_contattare");
+  // add form
+  const BLANK = { contact_name: "", owner: "Francesco", status: "da_contattare", agency: "", phone: "", email: "", city: "", source: "", plan: "", value_eur: "", notes: "", next_action_at: "" };
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState<Record<string, string>>(BLANK);
+  const [saving, setSaving] = useState(false);
 
   const api = useCallback(
     async (method: string, body?: unknown, qs = "") => {
@@ -77,14 +78,17 @@ export default function CrmPage({ authKey }: { authKey: string | null }) {
 
   useEffect(() => { load(); }, [load]);
 
-  const add = async () => {
-    const name = qName.trim();
-    if (!name) return;
+  const submit = async () => {
+    if (!form.contact_name.trim()) return;
+    setSaving(true);
     try {
-      const d = await api("POST", { contact_name: name, owner: qOwner, status: qStatus });
+      const payload = { ...form, value_eur: form.value_eur ? Number(form.value_eur) : null };
+      const d = await api("POST", payload);
       if (d.contact) setRows((r) => [d.contact, ...r]);
-      setQName("");
+      setForm(BLANK);
+      setShowForm(false);
     } catch (e) { setError(e instanceof Error ? e.message : String(e)); }
+    finally { setSaving(false); }
   };
 
   // Patch a single field, optimistic.
@@ -119,6 +123,9 @@ export default function CrmPage({ authKey }: { authKey: string | null }) {
     () => rows.filter((c) => c.status === "vinto").reduce((s, c) => s + (Number(c.value_eur) || 0), 0),
     [rows]
   );
+  // Remembered values for autocomplete (cities/agencies already used).
+  const cityOptions = useMemo(() => [...new Set(rows.map((c) => c.city).filter(Boolean))].sort() as string[], [rows]);
+  const agencyOptions = useMemo(() => [...new Set(rows.map((c) => c.agency).filter(Boolean))].sort() as string[], [rows]);
 
   return (
     <div>
@@ -147,33 +154,28 @@ export default function CrmPage({ authKey }: { authKey: string | null }) {
         </div>
       </div>
 
-      {/* Quick add */}
-      <div className="flex flex-wrap items-center gap-2 mb-3 p-3 rounded-xl bg-white/[0.02] border border-white/[0.06]">
-        <Plus className="w-4 h-4 text-indigo-400" />
-        <input value={qName} onChange={(e) => setQName(e.target.value)} onKeyDown={(e) => e.key === "Enter" && add()}
-          placeholder="Nuovo contatto: nome / agenzia…" className={`${MONO} flex-1 min-w-[200px] text-sm bg-white/[0.03] border border-white/[0.08] rounded-lg px-3 py-1.5 text-gray-200 placeholder:text-gray-600 focus:outline-none focus:border-indigo-500/50`} />
-        <select value={qOwner} onChange={(e) => setQOwner(e.target.value)} className={`${MONO} text-xs bg-white/[0.03] border border-white/[0.08] rounded-lg px-2 py-1.5 text-gray-300`}>
-          {OWNERS.map((o) => <option key={o} value={o}>{o}</option>)}
-        </select>
-        <select value={qStatus} onChange={(e) => setQStatus(e.target.value)} className={`${MONO} text-xs bg-white/[0.03] border border-white/[0.08] rounded-lg px-2 py-1.5 text-gray-300`}>
-          {STATUSES.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
-        </select>
-        <button onClick={add} className="px-4 py-1.5 rounded-lg text-sm font-medium bg-indigo-500/90 text-white hover:bg-indigo-500">Aggiungi</button>
-      </div>
-
-      {/* Filters */}
+      {/* Toolbar: add button + filters */}
       <div className="flex flex-wrap items-center gap-2 mb-3">
-        <div className="relative">
+        <button onClick={() => { setForm(BLANK); setShowForm(true); }}
+          className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium bg-indigo-500/90 text-white hover:bg-indigo-500">
+          <Plus className="w-4 h-4" /> Aggiungi contatto
+        </button>
+        <div className="relative ml-1">
           <Search className="w-3.5 h-3.5 text-gray-600 absolute left-2.5 top-1/2 -translate-y-1/2" />
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Cerca…" className={`${MONO} text-xs bg-white/[0.03] border border-white/[0.08] rounded-lg pl-8 pr-3 py-1.5 text-gray-300 w-48`} />
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Cerca…" className={`${MONO} text-xs bg-white/[0.03] border border-white/[0.08] rounded-lg pl-8 pr-3 py-2 text-gray-300 w-48`} />
         </div>
-        <select value={filterOwner} onChange={(e) => setFilterOwner(e.target.value)} className={`${MONO} text-xs bg-white/[0.03] border border-white/[0.08] rounded-lg px-2 py-1.5 text-gray-300`}>
+        <select value={filterOwner} onChange={(e) => setFilterOwner(e.target.value)} className={`${MONO} text-xs bg-white/[0.03] border border-white/[0.08] rounded-lg px-2 py-2 text-gray-300`}>
           <option value="">Tutti gli owner</option>
           {OWNERS.map((o) => <option key={o} value={o}>{o}</option>)}
         </select>
         <span className={`${MONO} text-xs text-gray-600`}>{filtered.length} contatti</span>
         {error && <span className={`${MONO} text-xs text-red-400`}>⚠ {error}</span>}
       </div>
+
+      {showForm && (
+        <ContactForm form={form} setForm={setForm} onSubmit={submit} onClose={() => setShowForm(false)}
+          saving={saving} cityOptions={cityOptions} agencyOptions={agencyOptions} />
+      )}
 
       {/* Table */}
       <div className="overflow-x-auto rounded-xl border border-white/[0.06]">
@@ -256,5 +258,92 @@ function Sel({ v, opts, onChange }: { v: string; opts: string[]; onChange: (v: s
       className={`${MONO} text-[11px] bg-transparent text-gray-300 rounded px-1 py-1 focus:outline-none focus:bg-white/[0.06]`}>
       {opts.map((o) => <option key={o} value={o} className="bg-[#161920] text-gray-200">{o || "—"}</option>)}
     </select>
+  );
+}
+
+// ── Add-contact modal form ──────────────────────────────────────────
+function ContactForm({ form, setForm, onSubmit, onClose, saving, cityOptions, agencyOptions }: {
+  form: Record<string, string>;
+  setForm: (f: Record<string, string>) => void;
+  onSubmit: () => void;
+  onClose: () => void;
+  saving: boolean;
+  cityOptions: string[];
+  agencyOptions: string[];
+}) {
+  const set = (k: string, v: string) => setForm({ ...form, [k]: v });
+  const inputCls = `${MONO} w-full text-sm bg-white/[0.03] border border-white/[0.08] rounded-lg px-3 py-2 text-gray-200 placeholder:text-gray-600 focus:outline-none focus:border-indigo-500/50`;
+  const Field = ({ label, children }: { label: string; children: React.ReactNode }) => (
+    <div>
+      <label className={`${MONO} text-[10px] uppercase tracking-wider text-gray-500 mb-1 block`}>{label}</label>
+      {children}
+    </div>
+  );
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6" onClick={onClose}>
+      <div className="bg-[#161920] border border-white/[0.1] rounded-2xl max-w-2xl w-full max-h-[88vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between p-5 border-b border-white/[0.08] sticky top-0 bg-[#161920] z-10">
+          <h2 className="text-base font-semibold text-gray-100">Nuovo contatto</h2>
+          <button onClick={onClose} className="p-1.5 rounded-lg text-gray-500 hover:bg-white/5 hover:text-gray-200"><X className="w-5 h-5" /></button>
+        </div>
+        <div className="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Field label="Nome contatto *">
+            <input autoFocus value={form.contact_name} onChange={(e) => set("contact_name", e.target.value)} onKeyDown={(e) => e.key === "Enter" && onSubmit()} placeholder="Mario Rossi" className={inputCls} />
+          </Field>
+          <Field label="Agenzia">
+            <input list="crm-agencies" value={form.agency} onChange={(e) => set("agency", e.target.value)} placeholder="Immobiliare…" className={inputCls} />
+            <datalist id="crm-agencies">{agencyOptions.map((a) => <option key={a} value={a} />)}</datalist>
+          </Field>
+          <Field label="Owner">
+            <select value={form.owner} onChange={(e) => set("owner", e.target.value)} className={inputCls}>
+              {OWNERS.map((o) => <option key={o} value={o}>{o}</option>)}
+            </select>
+          </Field>
+          <Field label="Stato">
+            <select value={form.status} onChange={(e) => set("status", e.target.value)} className={inputCls}>
+              {STATUSES.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
+            </select>
+          </Field>
+          <Field label="Città">
+            <input list="crm-cities" value={form.city} onChange={(e) => set("city", e.target.value)} placeholder="Milano" className={inputCls} />
+            <datalist id="crm-cities">{cityOptions.map((c) => <option key={c} value={c} />)}</datalist>
+          </Field>
+          <Field label="Fonte">
+            <select value={form.source} onChange={(e) => set("source", e.target.value)} className={inputCls}>
+              <option value="">—</option>
+              {SOURCES.map((s) => <option key={s} value={s}>{s}</option>)}
+            </select>
+          </Field>
+          <Field label="Telefono">
+            <input value={form.phone} onChange={(e) => set("phone", e.target.value)} placeholder="333…" className={inputCls} />
+          </Field>
+          <Field label="Email">
+            <input value={form.email} onChange={(e) => set("email", e.target.value)} placeholder="nome@agenzia.it" className={inputCls} />
+          </Field>
+          <Field label="Prossimo follow-up">
+            <input type="date" value={form.next_action_at} onChange={(e) => set("next_action_at", e.target.value)} className={inputCls} />
+          </Field>
+          <Field label="Piano (se chiuso)">
+            <select value={form.plan} onChange={(e) => set("plan", e.target.value)} className={inputCls}>
+              {PLANS.map((p) => <option key={p} value={p}>{p || "—"}</option>)}
+            </select>
+          </Field>
+          <Field label="Valore € (se chiuso)">
+            <input type="number" value={form.value_eur} onChange={(e) => set("value_eur", e.target.value)} placeholder="0" className={inputCls} />
+          </Field>
+          <div className="sm:col-span-2">
+            <Field label="Note">
+              <textarea value={form.notes} onChange={(e) => set("notes", e.target.value)} rows={2} placeholder="Cosa vi siete detti, prossimi passi…" className={inputCls} />
+            </Field>
+          </div>
+        </div>
+        <div className="flex justify-end gap-2 p-5 border-t border-white/[0.08] sticky bottom-0 bg-[#161920]">
+          <button onClick={onClose} className={`${MONO} px-4 py-2 rounded-lg text-sm text-gray-400 hover:bg-white/5`}>Annulla</button>
+          <button onClick={onSubmit} disabled={saving || !form.contact_name.trim()} className="px-5 py-2 rounded-lg text-sm font-medium bg-indigo-500/90 text-white hover:bg-indigo-500 disabled:opacity-40">
+            {saving ? "Salvo…" : "Crea contatto"}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
