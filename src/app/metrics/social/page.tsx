@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   CalendarDays,
-  Newspaper,
   Wallet,
   TrendingUp,
   LayoutTemplate,
@@ -23,7 +22,6 @@ import {
   type SocialPage,
   type Topic,
   type ContentItem,
-  type NewsItem,
   type CostsData,
   type PostMetric,
   type InsightRow,
@@ -127,7 +125,6 @@ function TemplateFrame({ html, w, h, scale, css }: { html: string; w: number; h:
 const NAV: { id: SocialPage; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
   { id: "calendar", label: "Piano Editoriale", icon: CalendarDays },
   { id: "performance", label: "Performance", icon: TrendingUp },
-  { id: "news", label: "News AI", icon: Newspaper },
   { id: "costs", label: "Costi API", icon: Wallet },
   { id: "templates", label: "Templates", icon: LayoutTemplate },
 ];
@@ -143,7 +140,6 @@ export default function SocialDashboard() {
   const [month, setMonth] = useState(() => new Date().toISOString().slice(0, 7));
   const [topics, setTopics] = useState<Topic[]>([]);
   const [content, setContent] = useState<ContentItem[]>([]);
-  const [news, setNews] = useState<NewsItem[]>([]);
   const [costs, setCosts] = useState<CostsData | null>(null);
   const [perf, setPerf] = useState<PerformanceData | null>(null);
   const [perfDays, setPerfDays] = useState(30);
@@ -193,13 +189,6 @@ export default function SocialDashboard() {
   useEffect(() => {
     if (!authKey) return;
     if (page === "calendar") loadCalendar();
-    if (page === "news") {
-      setLoading(true);
-      fetchView("news")
-        .then((d) => d && setNews(d.news))
-        .catch((e) => setError(e.message))
-        .finally(() => setLoading(false));
-    }
     if (page === "costs") {
       setLoading(true);
       fetchView("costs")
@@ -314,7 +303,6 @@ export default function SocialDashboard() {
             />
           )}
 
-          {page === "news" && <NewsView news={news} loading={loading} />}
           {page === "costs" && <CostsView costs={costs} loading={loading} />}
           {page === "performance" && (
             <PerformanceView perf={perf} loading={loading} days={perfDays} setDays={setPerfDays} />
@@ -807,47 +795,6 @@ function PreviewModal({
           )}
         </div>
       </div>
-    </div>
-  );
-}
-
-// ── News ───────────────────────────────────────────────────────────
-
-function NewsView({ news, loading }: { news: NewsItem[]; loading: boolean }) {
-  return (
-    <div>
-      <h1 className="text-xl font-semibold text-gray-100 mb-6">News AI raccolte</h1>
-      {loading ? (
-        <p className={`${MONO} text-sm text-gray-500`}>Caricamento…</p>
-      ) : news.length === 0 ? (
-        <p className={`${MONO} text-sm text-gray-500`}>
-          Nessuna news ancora. Il cron discover (07:00 / 19:00) riempirà questa lista.
-        </p>
-      ) : (
-        <div className="space-y-2">
-          {news.map((n) => (
-            <a
-              key={n.id}
-              href={n.url}
-              target="_blank"
-              rel="noreferrer"
-              className="block px-4 py-3 rounded-lg bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.05] transition-colors"
-            >
-              <div className="flex items-center gap-2 mb-1">
-                <span className={`${MONO} text-[10px] px-1.5 py-0.5 rounded ${n.source_type === "twitter" ? "bg-sky-500/20 text-sky-300" : "bg-orange-500/20 text-orange-300"}`}>
-                  {n.source_type}
-                </span>
-                <span className={`${MONO} text-[11px] text-gray-500`}>{n.source}</span>
-                <span className={`${MONO} text-[10px] text-gray-600 ml-auto`}>
-                  {new Date(n.discovered_at).toLocaleString("it-IT", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
-                </span>
-              </div>
-              <p className="text-sm text-gray-200 leading-snug">{n.title}</p>
-              {n.summary && <p className="text-xs text-gray-500 mt-1 line-clamp-2">{n.summary}</p>}
-            </a>
-          ))}
-        </div>
-      )}
     </div>
   );
 }
