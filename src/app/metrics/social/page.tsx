@@ -402,14 +402,14 @@ function CalendarView({
           return (
           <div
             key={i}
-            className={`${inMonth ? "bg-[#12141a]" : "bg-[#0d0f14]"} min-h-28 p-1.5 ${date === today ? "ring-1 ring-inset ring-indigo-500/50" : ""}`}
+            className={`bg-[#12141a] min-h-28 p-1.5 ${date === today ? "ring-1 ring-inset ring-indigo-500/50" : ""}`}
           >
             <>
-                <div className={`${MONO} text-[10px] mb-1 ${date === today ? "text-indigo-400" : inMonth ? "text-gray-600" : "text-gray-700/60"}`}>
-                  {Number(date.slice(8, 10))}
+                <div className={`${MONO} text-[10px] mb-1 ${date === today ? "text-indigo-400" : inMonth ? "text-gray-600" : "text-gray-700/70"}`}>
+                  {Number(date.slice(8, 10))}{!inMonth ? `/${Number(date.slice(5, 7))}` : ""}
                 </div>
                 <div className="space-y-1">
-                  {(inMonth ? (topicsByDay[date] || []) : []).map((t) => {
+                  {(topicsByDay[date] || []).map((t) => {
                     const dayTopics = topicsByDay[date] || [];
                     const items = contentByTopic[t.id] || [];
                     const published = items.some((c) => c.published_at);

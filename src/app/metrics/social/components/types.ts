@@ -164,26 +164,40 @@ export function fmtPct(rate: number): string {
 }
 
 // ── Calendar grid helpers ────────────────────────────────────────────
-// Full 7-column grid for `month`, filling the leading/trailing cells with the
-// real adjacent-month dates (like every standard calendar — no empty holes).
-// All cells are real YYYY-MM-DD strings; the view greys out-of-month days.
-export function buildMonthGrid(month: string): string[] {
+// Week-based grid: each Monday→Sunday week belongs to the month that contains
+// its MONDAY. So a boundary week is shown in exactly ONE month (no day appears
+// in two months) while the weeks stay consecutive (no gaps). A month's grid
+// therefore starts on its first "owned" Monday and may spill the last week into
+// the next month (trailing days carry their own content).
+export function gridRange(month: string): { from: string; to: string } {
   const [y, m] = month.split("-").map(Number);
-  const first = new Date(Date.UTC(y, m - 1, 1));
   const daysInMonth = new Date(Date.UTC(y, m, 0)).getUTCDate();
-  const offset = (first.getUTCDay() + 6) % 7; // Monday-first
+  const firstDow = (new Date(Date.UTC(y, m - 1, 1)).getUTCDay() + 6) % 7; // 0=Mon
+  // First Monday that belongs to this month (if the 1st isn't Monday and its
+  // week's Monday is in the previous month, that week belongs to the prev month).
+  const startDom = firstDow === 0 ? 1 : 1 + (7 - firstDow);
+  const lastDow = (new Date(Date.UTC(y, m - 1, daysInMonth)).getUTCDay() + 6) % 7;
+  const lastMondayDom = daysInMonth - lastDow; // Monday of the last owned week
+  const from = new Date(Date.UTC(y, m - 1, startDom)).toISOString().slice(0, 10);
+  const to = new Date(Date.UTC(y, m - 1, lastMondayDom + 6)).toISOString().slice(0, 10);
+  return { from, to };
+}
+
+export function buildMonthGrid(month: string): string[] {
+  const { from } = gridRange(month);
+  const [y, m] = month.split("-").map(Number);
+  const daysInMonth = new Date(Date.UTC(y, m, 0)).getUTCDate();
+  const lastDow = (new Date(Date.UTC(y, m - 1, daysInMonth)).getUTCDay() + 6) % 7;
+  const lastMondayDom = daysInMonth - lastDow;
+  const start = new Date(`${from}T00:00:00Z`);
+  const lastMonday = new Date(Date.UTC(y, m - 1, lastMondayDom));
   const cells: string[] = [];
-  // Trailing days of the previous month.
-  for (let i = offset; i > 0; i--) {
-    cells.push(new Date(Date.UTC(y, m - 1, 1 - i)).toISOString().slice(0, 10));
-  }
-  for (let d = 1; d <= daysInMonth; d++) {
-    cells.push(`${month}-${String(d).padStart(2, "0")}`);
-  }
-  // Leading days of the next month until the grid is full.
-  let nd = 1;
-  while (cells.length % 7 !== 0) {
-    cells.push(new Date(Date.UTC(y, m, nd++)).toISOString().slice(0, 10));
+  for (let d = new Date(start); d <= lastMonday; d.setUTCDate(d.getUTCDate() + 7)) {
+    for (let k = 0; k < 7; k++) {
+      const day = new Date(d);
+      day.setUTCDate(day.getUTCDate() + k);
+      cells.push(day.toISOString().slice(0, 10));
+    }
   }
   return cells;
 }

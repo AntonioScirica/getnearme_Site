@@ -33,12 +33,15 @@ export async function GET(req: NextRequest) {
         new Date().toISOString().slice(0, 7);
       const [y, m] = month.split("-").map(Number);
       const lastDay = new Date(Date.UTC(y, m, 0)).getUTCDate();
-      // Query the FULL visible grid range (incl. leading/trailing adjacent-month
-      // days) so their content shows too — matches buildMonthGrid in the client.
-      const offset = (new Date(Date.UTC(y, m - 1, 1)).getUTCDay() + 6) % 7;
-      const trailing = (7 - ((offset + lastDay) % 7)) % 7;
-      const from = new Date(Date.UTC(y, m - 1, 1 - offset)).toISOString().slice(0, 10);
-      const to = new Date(Date.UTC(y, m, trailing)).toISOString().slice(0, 10);
+      // Query the FULL visible grid range. Weeks belong to the month of their
+      // Monday (matches buildMonthGrid): grid starts on the first owned Monday
+      // and ends on the Sunday of the last owned week (may spill into next month).
+      const firstDow = (new Date(Date.UTC(y, m - 1, 1)).getUTCDay() + 6) % 7;
+      const startDom = firstDow === 0 ? 1 : 1 + (7 - firstDow);
+      const lastDow = (new Date(Date.UTC(y, m - 1, lastDay)).getUTCDay() + 6) % 7;
+      const lastMondayDom = lastDay - lastDow;
+      const from = new Date(Date.UTC(y, m - 1, startDom)).toISOString().slice(0, 10);
+      const to = new Date(Date.UTC(y, m - 1, lastMondayDom + 6)).toISOString().slice(0, 10);
 
       const { data: topics, error: tErr } = await supabase
         .from("content_topics")
