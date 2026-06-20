@@ -21,6 +21,12 @@ cd /Users/antonioscirica/getnearme_Site && node scripts/gen-week-posts.mjs $ARGU
 - `--replace` → sovrascrive i topic non-news di quella settimana.
 - `--no-video` → solo post, salta i 5 video.
 
+**Più settimane in un colpo** (creazione manuale ma copre 2+ settimane, niente cloud):
+```
+cd /Users/antonioscirica/getnearme_Site && node scripts/gen-weeks.mjs 2 $ARGUMENTS
+```
+`gen-weeks.mjs N` genera N settimane consecutive (default 2). Le settimane si concatenano dopo l'ultima nel calendario. Usalo quando l'utente vuole "2 settimane".
+
 Pipeline video (automatica): l'edge `generate-social-video` genera i frame/clip AI (Flux/Kling) e li re-ospita su storage; i template headless bloccati (`slider-video.mjs`, `construction-video.mjs`, `daynight-video.mjs`) renderizzano l'MP4 finale brandizzato e settano `video_url`. La costruzione usa il pattern queue→finalize. Serve `BATCH_STAGING_CRON_SECRET` in env + Chrome e ffmpeg locali (se manca il secret, i video vengono saltati con avviso).
 
 Dopo: verifica i topic sul calendario (`/api/social/data?view=calendar` con header `x-metrics-key`) e riporta riepilogo (giorni, post/giorno, 5 video con titoli, eventuali FAIL). Segnala errori.
