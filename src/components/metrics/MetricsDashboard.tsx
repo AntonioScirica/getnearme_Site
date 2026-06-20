@@ -14,6 +14,7 @@ import StripePage from "./pages/StripePage";
 import AmbassadorPage from "./pages/AmbassadorPage";
 import CostsPage from "./pages/CostsPage";
 import EmailsPage from "./pages/EmailsPage";
+import CrmPage from "./pages/CrmPage";
 
 export default function MetricsDashboard() {
   const [authKey, setAuthKey] = useState<string | null>(null);
@@ -119,6 +120,8 @@ export default function MetricsDashboard() {
         return <CostsPage />;
       case "emails":
         return <EmailsPage />;
+      case "crm":
+        return <CrmPage authKey={authKey} />;
     }
   };
 

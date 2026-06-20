@@ -13,6 +13,7 @@ import {
   Wallet,
   Mail,
   Share2,
+  Contact,
 } from "lucide-react";
 import { MONO } from "./types";
 import type { PageId } from "./types";
@@ -24,6 +25,7 @@ const navItems: { id: PageId; label: string; icon: React.ComponentType<{ classNa
   { id: "exports",     label: "Agenzie",      icon: Building2 },
   { id: "costs",       label: "Costi",        icon: Wallet },
   { id: "emails",      label: "Email",        icon: Mail },
+  { id: "crm",         label: "CRM",          icon: Contact },
 ];
 
 interface SidebarProps {
