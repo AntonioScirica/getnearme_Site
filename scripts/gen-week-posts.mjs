@@ -148,7 +148,30 @@ async function fetchRecentContext(beforeDate) {
   return lines.slice(0, 120).join('\n');
 }
 
-async function genDay(date, dow, weekIdx, avoidList) {
+// Read the latest performance analysis (produced by ped-analyze) so the
+// copywriter calibrates on what actually performed. Empty until ped-analyze runs.
+async function fetchInsightCalibration() {
+  const { data } = await supabase
+    .from('performance_insights')
+    .select('insights')
+    .eq('account_id', accountId)
+    .order('week_end', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const ai = data?.insights?.ai_analysis;
+  if (!ai) return '';
+  const adj = ai.planner_adjustments || {};
+  return [
+    Array.isArray(ai.rubric_ranking) && ai.rubric_ranking.length ? `Rubriche che performano (meglio→peggio): ${ai.rubric_ranking.join(' > ')}` : '',
+    ai.best_hook_pattern ? `Ganci che funzionano: ${ai.best_hook_pattern}` : '',
+    ai.worst_pattern ? `Da evitare: ${ai.worst_pattern}` : '',
+    adj.increase_rubric ? `Dai più spazio a: ${adj.increase_rubric}` : '',
+    adj.hook_style ? `Stile ganci consigliato: ${adj.hook_style}` : '',
+    adj.tone_adjustment ? `Tono: ${adj.tone_adjustment}` : '',
+  ].filter(Boolean).join('\n');
+}
+
+async function genDay(date, dow, weekIdx, avoidList, calib) {
   const { rubric, main } = RUBRIC_BY_DOW[dow];
   // 3 feed: main (rubric) + 2 extra rotated, + 1 tip
   const e1 = EXTRA_FEEDS[(dow + weekIdx) % EXTRA_FEEDS.length];
@@ -165,11 +188,14 @@ async function genDay(date, dow, weekIdx, avoidList) {
   const avoidBlock = avoidList
     ? `\nGIÀ PUBBLICATI nelle settimane scorse (NON ripetere questi ganci, titoli, esempi o concetti — proponi angolazioni, esempi e formulazioni NUOVE e diverse):\n${avoidList}\n`
     : '';
+  const calibBlock = calib
+    ? `\nCALIBRAZIONE DAI DATI (cosa ha funzionato sui post già pubblicati — seguila per migliorare i risultati):\n${calib}\n`
+    : '';
   const prompt = `Sei il copywriter di @getnearme_app per AGENTI IMMOBILIARI italiani.
 ${RULES}
 
 Genera il contenuto per questi ${slots.length} post del ${date}, rispettando ESATTAMENTE lo schema del template indicato. Varia gli argomenti, non ripetere concetti tra i post.
-${avoidBlock}
+${calibBlock}${avoidBlock}
 ${list}
 
 SCHEMI:
@@ -218,13 +244,16 @@ if (replace) {
 // Fetch what was already published recently → fed to Claude to avoid repeats.
 const avoidList = await fetchRecentContext(dates[0]);
 console.log(`anti-repeat: ${avoidList ? avoidList.split('\n').length : 0} ganci recenti passati al copywriter per non ripeterli`);
+// Fetch the latest performance analysis → calibrate the copy on what worked.
+const calib = await fetchInsightCalibration();
+console.log(`calibrazione dai dati: ${calib ? 'attiva' : 'nessuna (ped-analyze non ha ancora prodotto analisi)'}`);
 
 let total = 0;
 for (const date of dates) {
   const dow = new Date(`${date}T12:00:00`).getDay();
   process.stdout.write(`${date}... `);
   let day;
-  try { day = await genDay(date, dow, weekIdx, avoidList); } catch (e) { console.log('FAIL', e.message); continue; }
+  try { day = await genDay(date, dow, weekIdx, avoidList, calib); } catch (e) { console.log('FAIL', e.message); continue; }
   const rows = day.map(({ slot, sd }) => {
     const s = cleanSplits({ ...sd });
     if (slot.t === 'ped-tip') s.tipNum = s.tipNum || '1';
