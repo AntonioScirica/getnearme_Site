@@ -350,7 +350,7 @@ function CalendarView({
 }: {
   month: string;
   setMonth: (m: string) => void;
-  days: (string | null)[];
+  days: string[];
   topicsByDay: Record<string, Topic[]>;
   contentByTopic: Record<string, ContentItem[]>;
   loading: boolean;
@@ -397,18 +397,19 @@ function CalendarView({
             {d}
           </div>
         ))}
-        {days.map((date, i) => (
+        {days.map((date, i) => {
+          const inMonth = date.slice(0, 7) === month;
+          return (
           <div
             key={i}
-            className={`bg-[#12141a] min-h-28 p-1.5 ${date === today ? "ring-1 ring-inset ring-indigo-500/50" : ""}`}
+            className={`${inMonth ? "bg-[#12141a]" : "bg-[#0d0f14]"} min-h-28 p-1.5 ${date === today ? "ring-1 ring-inset ring-indigo-500/50" : ""}`}
           >
-            {date && (
-              <>
-                <div className={`${MONO} text-[10px] mb-1 ${date === today ? "text-indigo-400" : "text-gray-600"}`}>
+            <>
+                <div className={`${MONO} text-[10px] mb-1 ${date === today ? "text-indigo-400" : inMonth ? "text-gray-600" : "text-gray-700/60"}`}>
                   {Number(date.slice(8, 10))}
                 </div>
                 <div className="space-y-1">
-                  {(topicsByDay[date] || []).map((t) => {
+                  {(inMonth ? (topicsByDay[date] || []) : []).map((t) => {
                     const dayTopics = topicsByDay[date] || [];
                     const items = contentByTopic[t.id] || [];
                     const published = items.some((c) => c.published_at);
@@ -435,9 +436,9 @@ function CalendarView({
                   })}
                 </div>
               </>
-            )}
           </div>
-        ))}
+          );
+        })}
       </div>
 
       <p className={`${MONO} mt-3 text-[11px] text-gray-600`}>

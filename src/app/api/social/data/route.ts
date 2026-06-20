@@ -31,10 +31,14 @@ export async function GET(req: NextRequest) {
       const month =
         url.searchParams.get("month") ||
         new Date().toISOString().slice(0, 7);
-      const from = `${month}-01`;
       const [y, m] = month.split("-").map(Number);
       const lastDay = new Date(Date.UTC(y, m, 0)).getUTCDate();
-      const to = `${month}-${String(lastDay).padStart(2, "0")}`;
+      // Query the FULL visible grid range (incl. leading/trailing adjacent-month
+      // days) so their content shows too — matches buildMonthGrid in the client.
+      const offset = (new Date(Date.UTC(y, m - 1, 1)).getUTCDay() + 6) % 7;
+      const trailing = (7 - ((offset + lastDay) % 7)) % 7;
+      const from = new Date(Date.UTC(y, m - 1, 1 - offset)).toISOString().slice(0, 10);
+      const to = new Date(Date.UTC(y, m, trailing)).toISOString().slice(0, 10);
 
       const { data: topics, error: tErr } = await supabase
         .from("content_topics")

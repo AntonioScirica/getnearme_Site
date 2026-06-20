@@ -164,17 +164,27 @@ export function fmtPct(rate: number): string {
 }
 
 // ── Calendar grid helpers ────────────────────────────────────────────
-export function buildMonthGrid(month: string): (string | null)[] {
+// Full 7-column grid for `month`, filling the leading/trailing cells with the
+// real adjacent-month dates (like every standard calendar — no empty holes).
+// All cells are real YYYY-MM-DD strings; the view greys out-of-month days.
+export function buildMonthGrid(month: string): string[] {
   const [y, m] = month.split("-").map(Number);
   const first = new Date(Date.UTC(y, m - 1, 1));
   const daysInMonth = new Date(Date.UTC(y, m, 0)).getUTCDate();
-  // Monday-first offset
-  const offset = (first.getUTCDay() + 6) % 7;
-  const cells: (string | null)[] = Array(offset).fill(null);
+  const offset = (first.getUTCDay() + 6) % 7; // Monday-first
+  const cells: string[] = [];
+  // Trailing days of the previous month.
+  for (let i = offset; i > 0; i--) {
+    cells.push(new Date(Date.UTC(y, m - 1, 1 - i)).toISOString().slice(0, 10));
+  }
   for (let d = 1; d <= daysInMonth; d++) {
     cells.push(`${month}-${String(d).padStart(2, "0")}`);
   }
-  while (cells.length % 7 !== 0) cells.push(null);
+  // Leading days of the next month until the grid is full.
+  let nd = 1;
+  while (cells.length % 7 !== 0) {
+    cells.push(new Date(Date.UTC(y, m, nd++)).toISOString().slice(0, 10));
+  }
   return cells;
 }
 
