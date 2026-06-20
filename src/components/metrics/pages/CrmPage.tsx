@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { MONO } from "../types";
-import { Plus, Trash2, Search, RefreshCw, X } from "lucide-react";
+import { Plus, Trash2, Search, RefreshCw, X, ChevronDown, ChevronLeft, ChevronRight, Calendar } from "lucide-react";
 
 // ── Pipeline + option sets ──────────────────────────────────────────
 const STATUSES: { id: string; label: string; cls: string; dot: string }[] = [
@@ -17,7 +17,15 @@ const STATUSES: { id: string; label: string; cls: string; dot: string }[] = [
 const STATUS_BY = Object.fromEntries(STATUSES.map((s) => [s.id, s]));
 const OWNERS = ["Francesco", "Alan", "Filippo"];
 const SOURCES = ["Chiamata a freddo", "Referral", "Instagram", "Fiera", "Sito", "Altro"];
-const PLANS = ["", "individual", "agency"];
+const PLANS: { id: string; label: string; price: number }[] = [
+  { id: "", label: "—", price: 0 },
+  { id: "lite", label: "Lite — €4,99/mese", price: 4.99 },
+  { id: "agency_starter", label: "Agency Starter — €24/mese", price: 24 },
+  { id: "agency", label: "Agency — €99/mese", price: 99 },
+  { id: "agency_pro", label: "Agency Pro — €149/mese", price: 149 },
+  { id: "agency_annual", label: "Agency Annuale — €300/anno", price: 300 },
+];
+const PLAN_PRICE: Record<string, number> = Object.fromEntries(PLANS.map((p) => [p.id, p.price]));
 
 interface Contact {
   id: string;
@@ -84,7 +92,8 @@ export default function CrmPage({ authKey }: { authKey: string | null }) {
     if (!form.contact_name.trim()) return;
     setSaving(true);
     try {
-      const payload = { ...form, value_eur: form.value_eur ? Number(form.value_eur) : null };
+      const autoVal = form.plan && !form.value_eur ? PLAN_PRICE[form.plan] : null;
+      const payload = { ...form, value_eur: form.value_eur ? Number(form.value_eur) : autoVal };
       const d = await api("POST", payload);
       if (d.contact) setRows((r) => [d.contact, ...r]);
       setForm(BLANK);
@@ -106,13 +115,27 @@ export default function CrmPage({ authKey }: { authKey: string | null }) {
     catch (e) { setError(e instanceof Error ? e.message : String(e)); load(); }
   };
 
+  // Follow-up within 2 days (or overdue) = urgent → floated to the top + flagged.
+  const dueLimit = useMemo(() => { const d = new Date(); d.setHours(23, 59, 59, 999); d.setDate(d.getDate() + 2); return d.getTime(); }, []);
+  const todayStart = useMemo(() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d.getTime(); }, []);
+
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
-    return rows.filter((c) =>
+    const list = rows.filter((c) =>
       (!filterOwner || c.owner === filterOwner) &&
       (!filterStatus || c.status === filterStatus) &&
-      (!q || [c.contact_name, c.agency, c.phone, c.email, c.city, c.notes].some((v) => (v || "").toLowerCase().includes(q)))
+      (!q || [c.contact_name, c.agency, c.agency_owner, c.phone, c.email, c.city, c.notes].some((v) => (v || "").toLowerCase().includes(q)))
     );
+    // Imminent/overdue follow-ups (≤ 2 days) float to the top, soonest first;
+    // everyone else by most-recently-updated.
+    const due = (c: Contact) => (c.next_action_at ? new Date(c.next_action_at + "T00:00:00").getTime() : Infinity);
+    const urgent = (c: Contact) => due(c) <= dueLimit;
+    return list.sort((a, b) => {
+      const ua = urgent(a), ub = urgent(b);
+      if (ua !== ub) return ua ? -1 : 1;
+      if (ua && ub) return due(a) - due(b);
+      return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
+    });
   }, [rows, filterOwner, filterStatus, search]);
 
   // KPIs
@@ -128,6 +151,13 @@ export default function CrmPage({ authKey }: { authKey: string | null }) {
   // Remembered values for autocomplete (cities/agencies already used).
   const cityOptions = useMemo(() => [...new Set(rows.map((c) => c.city).filter(Boolean))].sort() as string[], [rows]);
   const agencyOptions = useMemo(() => [...new Set(rows.map((c) => c.agency).filter(Boolean))].sort() as string[], [rows]);
+  const urgency = (c: Contact): "overdue" | "soon" | null => {
+    if (!c.next_action_at || c.status === "vinto" || c.status === "perso" || c.status === "non_interessato") return null;
+    const t = new Date(c.next_action_at + "T00:00:00").getTime();
+    if (t < todayStart) return "overdue";
+    if (t <= dueLimit) return "soon";
+    return null;
+  };
 
   return (
     <div>
@@ -166,10 +196,10 @@ export default function CrmPage({ authKey }: { authKey: string | null }) {
           <Search className="w-3.5 h-3.5 text-gray-600 absolute left-2.5 top-1/2 -translate-y-1/2" />
           <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Cerca…" className={`${MONO} text-xs bg-white/[0.03] border border-white/[0.08] rounded-lg pl-8 pr-3 py-2 text-gray-300 w-48`} />
         </div>
-        <select value={filterOwner} onChange={(e) => setFilterOwner(e.target.value)} className={`${MONO} text-xs bg-white/[0.03] border border-white/[0.08] rounded-lg px-2 py-2 text-gray-300`}>
+        <SelectBox value={filterOwner} onChange={setFilterOwner} className={`${MONO} text-xs bg-white/[0.03] border border-white/[0.08] rounded-lg pl-3 py-2 text-gray-300`}>
           <option value="">Tutti gli owner</option>
           {OWNERS.map((o) => <option key={o} value={o}>{o}</option>)}
-        </select>
+        </SelectBox>
         <span className={`${MONO} text-xs text-gray-600`}>{filtered.length} contatti</span>
         {error && <span className={`${MONO} text-xs text-red-400`}>⚠ {error}</span>}
       </div>
@@ -180,11 +210,11 @@ export default function CrmPage({ authKey }: { authKey: string | null }) {
       )}
 
       {/* Table */}
-      <div className="overflow-x-auto rounded-xl border border-white/[0.06]">
+      <div className="overflow-x-auto rounded-xl border border-white/[0.06] [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: "none" }}>
         <table className="w-full text-sm">
           <thead>
             <tr className={`${MONO} text-[10px] uppercase tracking-wider text-gray-500 bg-white/[0.02]`}>
-              {["Owner", "Nome", "Agenzia", "Proprietario", "Sito", "Stato", "Fonte", "Telefono", "Email", "Città", "Follow-up", "Piano", "Valore €", "Note", ""].map((h) => (
+              {["Owner", "Proprietario", "Agenzia", "Sito", "Stato", "Fonte", "Telefono", "Email", "Città", "Follow-up", "Piano", "Valore €", "Note", ""].map((h) => (
                 <th key={h} className="text-left font-normal px-3 py-2 whitespace-nowrap">{h}</th>
               ))}
             </tr>
@@ -192,12 +222,12 @@ export default function CrmPage({ authKey }: { authKey: string | null }) {
           <tbody>
             {filtered.map((c) => {
               const st = STATUS_BY[c.status] || STATUSES[0];
+              const u = urgency(c);
               return (
-                <tr key={c.id} className="border-t border-white/[0.05] hover:bg-white/[0.02]">
+                <tr key={c.id} className={`border-t border-white/[0.05] hover:bg-white/[0.04] ${u === "overdue" ? "bg-red-500/[0.07]" : u === "soon" ? "bg-amber-500/[0.06]" : ""}`}>
                   <Td><Sel v={c.owner || ""} opts={["", ...OWNERS]} onChange={(v) => patch(c.id, "owner", v)} /></Td>
                   <Td><Txt v={c.contact_name} onSave={(v) => patch(c.id, "contact_name", v)} bold /></Td>
                   <Td><Txt v={c.agency} onSave={(v) => patch(c.id, "agency", v)} /></Td>
-                  <Td><Txt v={c.agency_owner} onSave={(v) => patch(c.id, "agency_owner", v)} /></Td>
                   <Td><Txt v={c.website} onSave={(v) => patch(c.id, "website", v)} /></Td>
                   <Td>
                     <select value={c.status} onChange={(e) => patch(c.id, "status", e.target.value)}
@@ -210,10 +240,17 @@ export default function CrmPage({ authKey }: { authKey: string | null }) {
                   <Td><Txt v={c.email} onSave={(v) => patch(c.id, "email", v)} /></Td>
                   <Td><Txt v={c.city} onSave={(v) => patch(c.id, "city", v)} /></Td>
                   <Td>
-                    <input type="date" value={c.next_action_at || ""} onChange={(e) => patch(c.id, "next_action_at", e.target.value || null)}
-                      className={`${MONO} text-[11px] bg-transparent text-gray-300 focus:outline-none`} />
+                    <div className="flex items-center gap-1.5">
+                      {u && <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${u === "overdue" ? "bg-red-400" : "bg-amber-400"}`} title={u === "overdue" ? "Follow-up scaduto" : "Follow-up imminente"} />}
+                      <DateField compact value={c.next_action_at} onChange={(v) => patch(c.id, "next_action_at", v)} />
+                    </div>
                   </Td>
-                  <Td><Sel v={c.plan || ""} opts={PLANS} onChange={(v) => patch(c.id, "plan", v)} /></Td>
+                  <Td>
+                    <select value={c.plan || ""} onChange={(e) => { const v = e.target.value; patch(c.id, "plan", v); if (v && (c.value_eur == null || c.value_eur === 0)) patch(c.id, "value_eur", PLAN_PRICE[v]); }}
+                      className={`${MONO} text-[11px] bg-transparent text-gray-300 rounded px-1 py-1 focus:outline-none focus:bg-white/[0.06]`}>
+                      {PLANS.map((p) => <option key={p.id} value={p.id} className="bg-[#161920] text-gray-200">{p.label}</option>)}
+                    </select>
+                  </Td>
                   <Td><Txt v={c.value_eur != null ? String(c.value_eur) : ""} onSave={(v) => patch(c.id, "value_eur", v ? Number(v) : null)} num /></Td>
                   <Td><Txt v={c.notes} onSave={(v) => patch(c.id, "notes", v)} wide /></Td>
                   <Td>
@@ -225,7 +262,7 @@ export default function CrmPage({ authKey }: { authKey: string | null }) {
               );
             })}
             {filtered.length === 0 && (
-              <tr><td colSpan={15} className={`${MONO} text-sm text-gray-600 text-center py-8`}>Nessun contatto. Aggiungine uno sopra.</td></tr>
+              <tr><td colSpan={14} className={`${MONO} text-sm text-gray-600 text-center py-8`}>Nessun contatto. Aggiungine uno sopra.</td></tr>
             )}
           </tbody>
         </table>
@@ -265,6 +302,85 @@ function Sel({ v, opts, onChange }: { v: string; opts: string[]; onChange: (v: s
   );
 }
 
+// Select with a properly-spaced custom chevron (native one sits cramped at the edge).
+function SelectBox({ value, onChange, children, className = "", full }: {
+  value: string; onChange: (v: string) => void; children: React.ReactNode; className?: string; full?: boolean;
+}) {
+  return (
+    <div className={`relative ${full ? "block w-full" : "inline-block"}`}>
+      <select value={value} onChange={(e) => onChange(e.target.value)}
+        className={`appearance-none pr-8 ${className}`}>{children}</select>
+      <ChevronDown className="w-3.5 h-3.5 text-gray-500 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+    </div>
+  );
+}
+
+const MONTHS_IT = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"];
+const DOW_IT = ["Lu", "Ma", "Me", "Gi", "Ve", "Sa", "Do"];
+const toISO = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+const fmtDate = (s: string | null) => {
+  if (!s) return "";
+  const [y, m, d] = s.split("-").map(Number);
+  return `${d} ${MONTHS_IT[m - 1]?.slice(0, 3).toLowerCase()} ${String(y).slice(2)}`;
+};
+
+// Custom date picker: a button + a month-grid popover. Easier than native input.
+function DateField({ value, onChange, compact }: { value: string | null; onChange: (v: string | null) => void; compact?: boolean }) {
+  const [open, setOpen] = useState(false);
+  const [view, setView] = useState(() => (value ? new Date(value + "T12:00:00") : new Date()));
+  const ref = React.useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const close = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [open]);
+
+  const y = view.getFullYear(), m = view.getMonth();
+  const first = new Date(y, m, 1);
+  const offset = (first.getDay() + 6) % 7; // Mon-first
+  const daysInMonth = new Date(y, m + 1, 0).getDate();
+  const cells: (number | null)[] = [...Array(offset).fill(null), ...Array.from({ length: daysInMonth }, (_, i) => i + 1)];
+  const todayISO = toISO(new Date());
+
+  return (
+    <div className="relative" ref={ref}>
+      <button type="button" onClick={() => setOpen((o) => !o)}
+        className={`${MONO} flex items-center gap-1.5 ${compact ? "text-[11px] text-gray-300 px-1.5 py-1 hover:bg-white/[0.06] rounded" : "w-full text-sm bg-white/[0.03] border border-white/[0.08] rounded-lg px-3 py-2 text-gray-200"}`}>
+        <Calendar className="w-3.5 h-3.5 text-gray-500 shrink-0" />
+        <span className={value ? "" : "text-gray-600"}>{value ? fmtDate(value) : "—"}</span>
+      </button>
+      {open && (
+        <div className="absolute z-50 mt-1 left-0 w-60 p-2 rounded-xl bg-[#1b1e26] border border-white/[0.1] shadow-2xl">
+          <div className="flex items-center justify-between mb-2">
+            <button type="button" onClick={() => setView(new Date(y, m - 1, 1))} className="p-1 rounded text-gray-400 hover:bg-white/5"><ChevronLeft className="w-4 h-4" /></button>
+            <span className={`${MONO} text-xs text-gray-200`}>{MONTHS_IT[m]} {y}</span>
+            <button type="button" onClick={() => setView(new Date(y, m + 1, 1))} className="p-1 rounded text-gray-400 hover:bg-white/5"><ChevronRight className="w-4 h-4" /></button>
+          </div>
+          <div className="grid grid-cols-7 gap-0.5 mb-1">
+            {DOW_IT.map((d) => <div key={d} className={`${MONO} text-[9px] text-gray-600 text-center`}>{d}</div>)}
+          </div>
+          <div className="grid grid-cols-7 gap-0.5">
+            {cells.map((day, i) => {
+              if (!day) return <div key={i} />;
+              const iso = toISO(new Date(y, m, day));
+              const sel = iso === value, today = iso === todayISO;
+              return (
+                <button key={i} type="button" onClick={() => { onChange(iso); setOpen(false); }}
+                  className={`${MONO} text-[11px] h-7 rounded ${sel ? "bg-indigo-500 text-white" : today ? "text-indigo-400 hover:bg-white/5" : "text-gray-300 hover:bg-white/5"}`}>{day}</button>
+              );
+            })}
+          </div>
+          <div className="flex justify-between mt-2 pt-2 border-t border-white/[0.06]">
+            <button type="button" onClick={() => { onChange(todayISO); setOpen(false); }} className={`${MONO} text-[11px] text-indigo-400 hover:underline`}>Oggi</button>
+            <button type="button" onClick={() => { onChange(null); setOpen(false); }} className={`${MONO} text-[11px] text-gray-500 hover:underline`}>Pulisci</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // Module-level so it keeps a stable identity across renders (otherwise inputs
 // remount on every keystroke and focus jumps to the autoFocus field).
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
@@ -296,38 +412,35 @@ function ContactForm({ form, setForm, onSubmit, onClose, saving, cityOptions, ag
           <button onClick={onClose} className="p-1.5 rounded-lg text-gray-500 hover:bg-white/5 hover:text-gray-200"><X className="w-5 h-5" /></button>
         </div>
         <div className="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Field label="Nome contatto *">
-            <input autoFocus value={form.contact_name} onChange={(e) => set("contact_name", e.target.value)} onKeyDown={(e) => e.key === "Enter" && onSubmit()} placeholder="Mario Rossi" className={inputCls} />
+          <Field label="Proprietario agenzia *">
+            <input autoFocus value={form.contact_name} onChange={(e) => set("contact_name", e.target.value)} onKeyDown={(e) => e.key === "Enter" && onSubmit()} placeholder="Nome titolare" className={inputCls} />
           </Field>
           <Field label="Agenzia">
             <input list="crm-agencies" value={form.agency} onChange={(e) => set("agency", e.target.value)} placeholder="Immobiliare…" className={inputCls} />
             <datalist id="crm-agencies">{agencyOptions.map((a) => <option key={a} value={a} />)}</datalist>
           </Field>
-          <Field label="Proprietario agenzia">
-            <input value={form.agency_owner} onChange={(e) => set("agency_owner", e.target.value)} placeholder="Nome titolare" className={inputCls} />
-          </Field>
           <Field label="Sito web">
             <input value={form.website} onChange={(e) => set("website", e.target.value)} placeholder="agenzia.it" className={inputCls} />
           </Field>
           <Field label="Owner">
-            <select value={form.owner} onChange={(e) => set("owner", e.target.value)} className={inputCls}>
+            <SelectBox full value={form.owner} onChange={(v) => set("owner", v)} className={inputCls}>
               {OWNERS.map((o) => <option key={o} value={o}>{o}</option>)}
-            </select>
+            </SelectBox>
           </Field>
           <Field label="Stato">
-            <select value={form.status} onChange={(e) => set("status", e.target.value)} className={inputCls}>
+            <SelectBox full value={form.status} onChange={(v) => set("status", v)} className={inputCls}>
               {STATUSES.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
-            </select>
+            </SelectBox>
           </Field>
           <Field label="Città">
             <input list="crm-cities" value={form.city} onChange={(e) => set("city", e.target.value)} placeholder="Milano" className={inputCls} />
             <datalist id="crm-cities">{cityOptions.map((c) => <option key={c} value={c} />)}</datalist>
           </Field>
           <Field label="Fonte">
-            <select value={form.source} onChange={(e) => set("source", e.target.value)} className={inputCls}>
+            <SelectBox full value={form.source} onChange={(v) => set("source", v)} className={inputCls}>
               <option value="">—</option>
               {SOURCES.map((s) => <option key={s} value={s}>{s}</option>)}
-            </select>
+            </SelectBox>
           </Field>
           <Field label="Telefono">
             <input value={form.phone} onChange={(e) => set("phone", e.target.value)} placeholder="333…" className={inputCls} />
@@ -336,12 +449,12 @@ function ContactForm({ form, setForm, onSubmit, onClose, saving, cityOptions, ag
             <input value={form.email} onChange={(e) => set("email", e.target.value)} placeholder="nome@agenzia.it" className={inputCls} />
           </Field>
           <Field label="Prossimo follow-up">
-            <input type="date" value={form.next_action_at} onChange={(e) => set("next_action_at", e.target.value)} className={inputCls} />
+            <DateField value={form.next_action_at || null} onChange={(v) => set("next_action_at", v || "")} />
           </Field>
           <Field label="Piano (se chiuso)">
-            <select value={form.plan} onChange={(e) => set("plan", e.target.value)} className={inputCls}>
-              {PLANS.map((p) => <option key={p} value={p}>{p || "—"}</option>)}
-            </select>
+            <SelectBox full value={form.plan} onChange={(v) => set("plan", v)} className={inputCls}>
+              {PLANS.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
+            </SelectBox>
           </Field>
           <Field label="Valore € (se chiuso)">
             <input type="number" value={form.value_eur} onChange={(e) => set("value_eur", e.target.value)} placeholder="0" className={inputCls} />
