@@ -155,7 +155,7 @@ export default function MetricsDashboard() {
       </div>
 
       {/* Main content */}
-      <main className="flex-1 md:ml-60 min-h-screen">
+      <main className="flex-1 min-w-0 md:ml-60 min-h-screen">
         {/* Mobile header */}
         <div className="md:hidden flex items-center h-14 px-4 bg-[#161920] border-b border-white/10 sticky top-0 z-20">
           <button

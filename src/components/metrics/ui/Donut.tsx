@@ -25,7 +25,7 @@ export default function Donut({ segments, size = 80 }: DonutProps) {
   const gradient = `conic-gradient(${stops.join(", ")})`;
 
   return (
-    <div className="flex items-center gap-6">
+    <div className="flex items-center gap-4 sm:gap-6 min-w-0">
       <div
         className="rounded-full shrink-0"
         style={{

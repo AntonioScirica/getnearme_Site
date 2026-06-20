@@ -215,7 +215,7 @@ export default function OverviewPage({ data }: { data: MetricsData }) {
                 const labels = (data.retention_months ?? []).slice(0, 7);
                 const cohorts = data.retention.slice(-8);
                 return (
-                  <div className="overflow-x-auto -mx-1">
+                  <div className="overflow-x-auto">
                     <table className="w-full text-xs border-separate border-spacing-[2px]">
                       <thead>
                         <tr>
