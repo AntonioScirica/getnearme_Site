@@ -45,6 +45,12 @@ export const VIDEO_STORY_PREVIEWS: Record<string, TplPreview[]> = {
     { label: "Story — CTA + foto", ...STORY, html: storyStagingHtml, css: VIDEO_STORIES_CSS },
     { label: "Video — Slider", ...REELS, platform: "linkedin", html: reelsSlideHtml, css: TEMPLATE_CSS },
   ],
+  // Alias: the planner schedules the before/after slider as template "video_slider".
+  // Same previews so it renders on the calendar (Reel slider + story).
+  "video_slider": [
+    { label: "Reel — Slider", ...REELS, html: reelsSlideHtml, css: TEMPLATE_CSS },
+    { label: "Story — CTA + foto", ...STORY, html: storyStagingHtml, css: VIDEO_STORIES_CSS },
+  ],
   "stop-motion": [
     { label: "Story — Stop Motion", ...STORY, html: storyStopMotionHtml, css: VIDEO_STORIES_CSS },
   ],

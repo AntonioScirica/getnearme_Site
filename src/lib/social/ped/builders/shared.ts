@@ -15,21 +15,25 @@ export const LOGO_SVG_PATH =
 
 // Logo footer SVG used by all PED feed slides (deduplicated: was both
 // LOGO_FOOTER and PED_LOGO_FOOTER in the original files — they are byte-identical).
-export const LOGO_FOOTER = `<svg viewBox="0 0 424 533" xmlns="http://www.w3.org/2000/svg"><path fill="#3B83F6" d="${LOGO_SVG_PATH}"/></svg>getnearme.it`;
+export const LOGO_FOOTER = `<svg width="36" height="36" viewBox="0 0 424 533" xmlns="http://www.w3.org/2000/svg"><path fill="#3B83F6" d="${LOGO_SVG_PATH}"/></svg>getnearme.it`;
 export const PED_LOGO_FOOTER = LOGO_FOOTER;
 
+// All decorative SVGs carry explicit width/height so they never balloon to
+// fill their frame if the stylesheet fails to load (e.g. iframe CSS issues in
+// some browsers). CSS rules override these presentation attributes when the
+// sheet is present, so the visual size stays driven by CSS in the normal case.
 export const PED_SWIPE =
-  '<span class="swipe">Scorri <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg></span>';
+  '<span class="swipe">Scorri <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg></span>';
 
 export const PED_UP_ARROW =
-  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7"/><path d="M8 7h9v9"/></svg>';
+  '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7"/><path d="M8 7h9v9"/></svg>';
 
 // Tip arrow (right-pointing) — used by tipD / pedTipHtml "Come fare" hint.
 export const TIP_ARROW =
-  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>';
+  '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>';
 
 // Small pin icon — used in the story teaser footer.
-export const GNM_ICON_SM = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`;
+export const GNM_ICON_SM = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`;
 
 // ── Default data: referral steps + edu items ─────────────────────────
 // Duplicated verbatim between page.tsx and templates.js — now a single source.

@@ -1,8 +1,9 @@
 import supabase from '../supabase.js';
 import { generateMonthlyPlan } from '../ai/monthly-planner.js';
+import { writePedContent } from '../ai/ped-writer.js';
 import { sendMessage } from '../telegram.js';
 
-export const config = { maxDuration: 120 };
+export const config = { maxDuration: 300 };
 
 export default async function handler(req, res) {
   const { checkAuth } = await import('./discover.js');
@@ -92,8 +93,11 @@ export default async function handler(req, res) {
   const topics = await generateMonthlyPlan(targetYear, targetMonth, pastTitles, recentNews || [], planOpts);
 
   if (!topics.length) {
-    return res.json({ message: 'No topics generated', month: monthLabel });
+    return res.json({ message: 'No topics generated', period: planLabel });
   }
+
+  // Fill FULL slide_data (rich carousels, not skeletons) before saving.
+  await writePedContent(topics);
 
   // Save to DB
   // Check autopilot for status
@@ -111,15 +115,17 @@ export default async function handler(req, res) {
     edition: null,
     account_id: accountId,
     slide_data: {
+      ...(t.slide_data || {}),
       ...(t.use_case ? { use_case: t.use_case } : {}),
       ...(t.video_type ? { video_type: t.video_type, hook: t.hook } : {}),
+      ...(t.slider_variant ? { slider_variant: t.slider_variant } : {}),
     },
   }));
 
   const { error } = await supabase.from('content_topics').insert(inserts);
   if (error) {
     console.error('Insert error:', error.message);
-    return res.json({ month: monthLabel, topics: topics.length, db_error: error.message });
+    return res.json({ month: planLabel, topics: topics.length, db_error: error.message });
   }
 
   // Split rubrics, prompts, and videos
@@ -193,7 +199,7 @@ export default async function handler(req, res) {
   // Approval buttons
   const monthStart = `${targetYear}-${String(targetMonth).padStart(2, '0')}-01`;
   await sendMessage(
-    `👆 Approvi il piano ${monthLabel}?`,
+    `👆 Approvi il piano ${planLabel}?`,
     {
       reply_markup: {
         inline_keyboard: [
@@ -207,7 +213,7 @@ export default async function handler(req, res) {
   );
 
   return res.json({
-    month: monthLabel,
+    month: planLabel,
     topics: topics.length,
     saved: true,
     plan: topics.map(t => ({ date: t.date, rubric: t.rubric, title: t.title })),

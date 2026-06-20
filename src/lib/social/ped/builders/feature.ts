@@ -1,13 +1,30 @@
 // "Feature" carousel (ped-carosello-feature) — cover + insight + cases + CTA.
 
 import { PED_LOGO_FOOTER, PED_SWIPE } from "./shared";
+import { FEATURE_ART } from "./feature-art";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function featCoverD(d: any): string {
+  // Cover visual priority:
+  //  1. d.coverArt  → illustrated, brand-accurate SVG mockup of the platform
+  //  2. d.coverImage → real screenshot URL
+  //  3. fallback     → generic browser mockup
+  const art = d.coverArt ? FEATURE_ART[d.coverArt] : null;
+  let visual: string;
+  let shotClass = "";
+  if (art) {
+    visual = art;
+    shotClass = " cf-visual-shot";
+  } else if (d.coverImage) {
+    visual = `<img class="cf-shot" src="${d.coverImage}" alt="">`;
+    shotClass = " cf-visual-shot";
+  } else {
+    visual = `<div class="mock"><div class="bar"><i style="background:#ef4444"></i><i style="background:#f59e0b"></i><i style="background:#10b981"></i></div><div class="body"><div class="panel"></div><div class="panel acc"></div></div></div>`;
+  }
   return `<div class="ped">
     <div class="deco deco-c1"></div><div class="deco deco-s1"></div>
     <div class="ped-badge badge-blue">Feature</div>
-    <div class="cf-visual"><div class="mock"><div class="bar"><i style="background:#ef4444"></i><i style="background:#f59e0b"></i><i style="background:#10b981"></i></div><div class="body"><div class="panel"></div><div class="panel acc"></div></div></div></div>
+    <div class="cf-visual${shotClass}">${visual}</div>
     <div class="ped-title">${d.coverTitle || ""}<br><span class="hl-blue">${d.coverHL || ""}</span></div>
     <div class="ped-footer">${PED_LOGO_FOOTER}${PED_SWIPE}</div>
   </div>`;

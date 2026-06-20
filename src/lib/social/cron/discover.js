@@ -1,6 +1,5 @@
 import supabase from '../supabase.js';
 import { fetchRSSFeeds } from '../sources/rss.js';
-import { fetchTwitterPosts, ACCOUNTS as TWITTER_ACCOUNTS } from '../sources/twitter.js';
 
 export const config = { maxDuration: 120 };
 
@@ -19,10 +18,44 @@ function checkAuth(req) {
   return received === expected;
 }
 
+function normalizeTitle(t) {
+  return t.toLowerCase().replace(/[^a-zà-ú0-9 ]/g, '').replace(/\s+/g, ' ').trim();
+}
+
+function titleWords(t) {
+  return new Set(normalizeTitle(t).split(' ').filter(w => w.length > 3));
+}
+
+function isSemanticallyDuplicate(newTitle, existingTitles) {
+  const nw = titleWords(newTitle);
+  if (nw.size < 3) return false;
+  for (const existing of existingTitles) {
+    const ew = titleWords(existing);
+    const intersection = [...nw].filter(w => ew.has(w)).length;
+    const similarity = intersection / Math.min(nw.size, ew.size);
+    if (similarity >= 0.6) return true;
+  }
+  return false;
+}
+
 async function upsertItems(items, accountId = 'getnearme') {
+  // Fetch existing titles for semantic dedup
+  const { data: existing } = await supabase
+    .from('ai_news_raw')
+    .select('title')
+    .eq('account_id', accountId)
+    .order('discovered_at', { ascending: false })
+    .limit(200);
+  const existingTitles = (existing || []).map(r => r.title);
+
   let inserted = 0;
+  let deduped = 0;
   for (const item of items) {
     if (!item.title || !item.url) continue;
+    if (isSemanticallyDuplicate(item.title, existingTitles)) {
+      deduped++;
+      continue;
+    }
     const { error } = await supabase
       .from('ai_news_raw')
       .upsert(
@@ -39,9 +72,12 @@ async function upsertItems(items, accountId = 'getnearme') {
         },
         { onConflict: 'url' }
       );
-    if (!error) inserted++;
+    if (!error) {
+      inserted++;
+      existingTitles.push(item.title);
+    }
   }
-  return inserted;
+  return { inserted, deduped };
 }
 
 export { checkAuth, upsertItems };
@@ -70,24 +106,11 @@ export default async function handler(req, res) {
 
   // RSS feeds
   const rssItems = await fetchRSSFeeds(accountId);
-  const rssInserted = await upsertItems(rssItems, accountId);
-  console.log(`RSS [${accountId}]: ${rssItems.length} items, inserted ${rssInserted}`);
-
-  // X/Twitter — all accounts from twitter.js
-  let twitterInserted = 0;
-  let twitterFetched = 0;
-  try {
-    const twitterItems = await fetchTwitterPosts(TWITTER_ACCOUNTS);
-    twitterFetched = twitterItems.length;
-    twitterInserted = await upsertItems(twitterItems, accountId);
-    console.log(`Twitter [${accountId}]: ${twitterFetched} items, inserted ${twitterInserted}`);
-  } catch (e) {
-    console.error('Twitter fetch failed:', e.message);
-  }
+  const { inserted: rssInserted, deduped: rssDeduped } = await upsertItems(rssItems, accountId);
+  console.log(`RSS [${accountId}]: ${rssItems.length} fetched, ${rssInserted} inserted, ${rssDeduped} deduped`);
 
   return res.json({
     account: accountId,
-    rss: { discovered: rssItems.length, inserted: rssInserted },
-    twitter: { accounts: TWITTER_ACCOUNTS.length, fetched: twitterFetched, inserted: twitterInserted },
+    rss: { discovered: rssItems.length, inserted: rssInserted, deduped: rssDeduped },
   });
 }

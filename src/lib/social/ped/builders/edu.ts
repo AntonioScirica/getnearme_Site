@@ -15,7 +15,7 @@ export function eduCoverD(d: any): string {
 }
 
 export function eduItemD(n: number, item: { title: string; text: string; tip: string }): string {
-  return `<div class="ped">
+  return `<div class="ped cei">
     <div class="deco deco-p1"></div><div class="deco deco-s1"></div>
     <div class="ped-badge badge-blue">${n} di ${5}</div>
     <div class="cec-num">${n}</div>
@@ -40,7 +40,7 @@ export function pedEduCoverHtml(): string {
 }
 
 export function pedEduItem(n: number, title: string, text: string, tip: string): string {
-  return `<div class="ped">
+  return `<div class="ped cei">
     <div class="deco deco-s1"></div>
     <div class="cec-num">${n}</div>
     <div class="cec-title">${title}</div>

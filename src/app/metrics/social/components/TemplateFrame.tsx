@@ -1,7 +1,9 @@
-// TemplateFrame — renders template HTML inside a scaled <iframe srcDoc>.
-// Shared preview primitive used by every template preview in the dashboard
-// and the standalone /templates page.
+// TemplateFrame — renders template HTML inside a scaled <iframe>.
+// Uses blob URL instead of srcDoc for cross-browser CSS reliability.
 
+"use client";
+
+import { useEffect, useRef } from "react";
 import { TEMPLATE_CSS } from "@/lib/social/video-stories/builders";
 
 export function TemplateFrame({
@@ -17,10 +19,22 @@ export function TemplateFrame({
   scale: number;
   css?: string;
 }) {
-  const srcDoc = `<!DOCTYPE html><html><head><style>${css || TEMPLATE_CSS}</style></head><body style="margin:0;overflow:hidden">${html}</body></html>`;
+  const ref = useRef<HTMLIFrameElement>(null);
+  const cleanCss = (css || TEMPLATE_CSS).replace(/@import\s+url\([^)]+\);?\s*/g, "");
+  const fullHtml = `<!DOCTYPE html><html><head><link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&display=swap"><style>${cleanCss}</style></head><body style="margin:0;overflow:hidden">${html}</body></html>`;
+
+  useEffect(() => {
+    const iframe = ref.current;
+    if (!iframe) return;
+    const blob = new Blob([fullHtml], { type: "text/html" });
+    const url = URL.createObjectURL(blob);
+    iframe.src = url;
+    return () => URL.revokeObjectURL(url);
+  }, [fullHtml]);
+
   return (
     <iframe
-      srcDoc={srcDoc}
+      ref={ref}
       style={{
         width: w,
         height: h,
@@ -30,7 +44,6 @@ export function TemplateFrame({
         borderRadius: 12,
         pointerEvents: "none",
       }}
-      sandbox="allow-same-origin"
       title="template preview"
     />
   );

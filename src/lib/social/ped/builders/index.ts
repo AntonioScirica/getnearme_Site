@@ -119,6 +119,18 @@ let storyCss = "";
 export function setPreviewCss(feed: string, story: string) {
   feedCss = feed;
   storyCss = story;
+  // STATIC_PREVIEWS is built once at module load, capturing `css: feedCss`
+  // by value while feedCss was still "". Reassigning the variable above does
+  // NOT update those already-created objects, so consumers that read
+  // STATIC_PREVIEWS directly (TemplatesView via TPL_PREVIEWS) would render
+  // PED templates with empty css → TemplateFrame falls back to the video
+  // TEMPLATE_CSS → no `.ped` rules → giant logos. Re-apply the css here, in
+  // place, so every consumer of the shared objects sees the right stylesheet.
+  for (const id of Object.keys(STATIC_PREVIEWS)) {
+    for (const p of STATIC_PREVIEWS[id]) {
+      p.css = p.format === "story" ? story : feed;
+    }
+  }
 }
 
 // ── Caption helper (shared) ──────────────────────────────────────────

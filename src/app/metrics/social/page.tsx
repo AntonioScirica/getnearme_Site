@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
@@ -89,11 +89,26 @@ import {
 // render with the client stylesheets. Done once at module load.
 setPreviewCss(PED_CSS, STORY_CSS);
 
-const TemplateFrameLazy = ({ html, w, h, scale, css }: { html: string; w: number; h: number; scale: number; css?: string }) => {
-  const srcDoc = `<!DOCTYPE html><html><head><style>${css || TEMPLATE_CSS}</style></head><body style="margin:0;overflow:hidden">${html}</body></html>`;
+function TemplateFrame({ html, w, h, scale, css }: { html: string; w: number; h: number; scale: number; css?: string }) {
+  const ref = useRef<HTMLIFrameElement>(null);
+  const cleanCss = (css || TEMPLATE_CSS).replace(/@import\s+url\([^)]+\);?\s*/g, "");
+  // blob-URL iframes resolve root-relative paths against the blob origin, which
+  // breaks <img src="/staging/1.jpg">. A <base> with the real origin fixes it.
+  const baseHref = typeof window !== "undefined" ? `${window.location.origin}/` : "/";
+  const fullHtml = `<!DOCTYPE html><html><head><base href="${baseHref}"><link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&display=swap"><style>${cleanCss}</style></head><body style="margin:0;overflow:hidden">${html}</body></html>`;
+
+  useEffect(() => {
+    const iframe = ref.current;
+    if (!iframe) return;
+    const blob = new Blob([fullHtml], { type: "text/html" });
+    const url = URL.createObjectURL(blob);
+    iframe.src = url;
+    return () => URL.revokeObjectURL(url);
+  }, [fullHtml]);
+
   return (
     <iframe
-      srcDoc={srcDoc}
+      ref={ref}
       style={{
         width: w,
         height: h,
@@ -103,13 +118,9 @@ const TemplateFrameLazy = ({ html, w, h, scale, css }: { html: string; w: number
         borderRadius: 12,
         pointerEvents: "none",
       }}
-      sandbox="allow-same-origin"
       title="template preview"
     />
   );
-};
-function TemplateFrame({ html, w, h, scale, css }: { html: string; w: number; h: number; scale: number; css?: string }) {
-  return <TemplateFrameLazy html={html} w={w} h={h} scale={scale} css={css} />;
 }
 
 
@@ -223,14 +234,15 @@ export default function SocialDashboard() {
       const feed = map[day].filter((t) => !isVideoTopic(t) && !isTipTopic(t));
       const video = map[day].filter((t) => isVideoTopic(t));
       const tips = map[day].filter((t) => isTipTopic(t));
-      const sorted: Topic[] = [];
-      let fi = 0;
-      for (const slot of ["09:00", "12:00", VIDEO_SLOT, "18:00"]) {
-        if (slot === VIDEO_SLOT) { sorted.push(...video); continue; }
-        if (fi < feed.length) sorted.push(feed[fi++]);
-      }
-      while (fi < feed.length) sorted.push(feed[fi++]);
-      sorted.push(...tips);
+      // Chronological order matching the slots used by getPublishTime:
+      // feed → 09:00, 12:00, 16:00, 18:00 (FEED_SLOTS), video → 15:00, tip → 20:00.
+      // Video sits between the 12:00 and 16:00 feed posts.
+      const sorted: Topic[] = [
+        ...feed.slice(0, 2),
+        ...video,
+        ...feed.slice(2),
+        ...tips,
+      ];
       map[day] = sorted;
     }
     return map;
@@ -559,6 +571,9 @@ function PreviewModal({
   const reelItem = items.find(i => i.type === "reel") || items[0] || null;
   const storyItem = items.find(i => i.type === "story") || null;
   const videoItem = items.find(i => !!i.video_url) || null;
+  // The stored video_url is the branded share PAGE (/v/<id>, text/html), which a
+  // <video> tag can't play. The raw MP4 is served at /d/<id>. Use that for preview.
+  const videoSrc = (videoItem?.video_url || "").replace("/v/", "/d/");
   const item = reelItem;
   const slides = item?.image_urls || [];
   const sd = topic.slide_data || {};
@@ -636,7 +651,7 @@ function PreviewModal({
                     <div style={{ position: "absolute", left: 0, right: 0, top: "50%", height: 1, background: "#fff", zIndex: 10, transform: "translateY(-50%)" }} />
                     {/* Bottom half — DOPO video */}
                     <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "50%", overflow: "hidden" }}>
-                      <video src={videoItem.video_url} autoPlay loop muted playsInline style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      <video src={videoSrc} autoPlay loop muted playsInline style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                       <span style={{ position: "absolute", left: "50%", transform: "translateX(-50%)", bottom: 8, fontSize: 7, fontWeight: 700, color: "#fff", textTransform: "uppercase", letterSpacing: 1, background: "rgba(0,0,0,0.45)", backdropFilter: "blur(8px)", padding: "3px 8px", borderRadius: 3 }}>DOPO</span>
                     </div>
                     {/* Center logo box */}
@@ -670,7 +685,7 @@ function PreviewModal({
                     </div>
                     <div style={{ position: "absolute", left: 0, right: 0, top: "50%", height: 1, background: "#fff", zIndex: 10, transform: "translateY(-50%)" }} />
                     <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "50%", overflow: "hidden" }}>
-                      <video src={videoItem.video_url} autoPlay loop muted playsInline style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      <video src={videoSrc} autoPlay loop muted playsInline style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                       <span style={{ position: "absolute", left: "50%", transform: "translateX(-50%)", bottom: 8, fontSize: 7, fontWeight: 700, color: "#fff", textTransform: "uppercase", letterSpacing: 1, background: "rgba(0,0,0,0.45)", backdropFilter: "blur(8px)", padding: "3px 8px", borderRadius: 3 }}>NOTTE</span>
                     </div>
                     <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", zIndex: 20, background: "#fff", borderRadius: 5, padding: "5px 10px", display: "flex", alignItems: "center", gap: 4, boxShadow: "0 2px 8px rgba(0,0,0,0.3)" }}>
@@ -694,7 +709,7 @@ function PreviewModal({
               <div className="flex gap-4 overflow-x-auto pb-3">
                 <div className="shrink-0 flex flex-col items-center">
                   <p className={`${MONO} text-[10px] text-gray-500 mb-1.5`}>Reel</p>
-                  <video src={videoItem.video_url} autoPlay loop muted playsInline className="h-96 rounded-lg border border-white/[0.08]" />
+                  <video src={videoSrc} autoPlay loop muted playsInline className="h-96 rounded-lg border border-white/[0.08]" />
                 </div>
                 {slides.length >= 2 && (
                   <div className="shrink-0 flex flex-col items-center">
@@ -711,7 +726,7 @@ function PreviewModal({
               <div className="flex gap-4 overflow-x-auto pb-3">
                 <div className="shrink-0 flex flex-col items-center">
                   <p className={`${MONO} text-[10px] text-gray-500 mb-1.5`}>Reel</p>
-                  <video src={videoItem.video_url} autoPlay loop muted playsInline className="h-96 rounded-lg border border-white/[0.08]" />
+                  <video src={videoSrc} autoPlay loop muted playsInline className="h-96 rounded-lg border border-white/[0.08]" />
                 </div>
                 {slides.length >= 2 && (
                   <div className="shrink-0 flex flex-col items-center">
@@ -729,7 +744,7 @@ function PreviewModal({
                 <div className="shrink-0 flex flex-col items-center">
                   <p className={`${MONO} text-[10px] text-gray-500 mb-1.5`}>Reel</p>
                   <video
-                    src={videoItem.video_url}
+                    src={videoSrc}
                     autoPlay loop muted playsInline
                     className="h-96 rounded-lg border border-white/[0.08]"
                   />
@@ -1175,24 +1190,21 @@ const TPL_PREVIEWS: Record<string, TplPreview[]> = {
 };
 
 function TemplatesView() {
-  const [selectedTpl, setSelectedTpl] = useState<string | null>(null);
+  const [selectedTpl, setSelectedTpl] = useState<string>(ALL_TEMPLATES[0]?.id ?? "");
 
-  const tplData = selectedTpl ? ALL_TEMPLATES.find((t) => t.id === selectedTpl) : null;
-  const previews = selectedTpl ? TPL_PREVIEWS[selectedTpl] : null;
+  const tplData = ALL_TEMPLATES.find((t) => t.id === selectedTpl) ?? ALL_TEMPLATES[0];
+  const previews = TPL_PREVIEWS[selectedTpl];
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-xl font-semibold text-gray-100">Templates Social</h1>
-          {!tplData && <p className="text-sm text-gray-500 mt-1">Clicca un template per vedere l&apos;anteprima</p>}
-        </div>
+      <div className="mb-5">
+        <h1 className="text-xl font-semibold text-gray-100">Templates Social</h1>
+        <p className="text-sm text-gray-500 mt-1">Seleziona un template a sinistra per vederne le slide</p>
       </div>
 
-      {/* All templates grid */}
-      <div>
-        <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Tutti i template</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+      <div className="flex gap-6 h-[calc(100vh-180px)]">
+        {/* ── Left: template list ── */}
+        <aside className="w-72 shrink-0 overflow-y-auto pr-1 space-y-1.5">
           {ALL_TEMPLATES.map((tpl) => {
             const st = TPL_STATUS[tpl.status] || TPL_STATUS.planned;
             const isSelected = selectedTpl === tpl.id;
@@ -1200,48 +1212,31 @@ function TemplatesView() {
               <button
                 key={tpl.id}
                 onClick={() => setSelectedTpl(tpl.id)}
-                className={`rounded-xl border p-5 transition-colors text-left cursor-pointer ${
+                className={`w-full rounded-lg border px-3.5 py-3 transition-colors text-left cursor-pointer ${
                   isSelected
-                    ? "border-indigo-500/40 bg-indigo-500/[0.06]"
-                    : "border-white/[0.08] bg-white/[0.02] hover:bg-white/[0.04]"
+                    ? "border-indigo-500/40 bg-indigo-500/[0.08]"
+                    : "border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04]"
                 }`}
               >
-                <div className="flex items-start justify-between mb-3">
-                  <h3 className="font-semibold text-gray-100">{tpl.name}</h3>
-                  <span className={`text-[10px] font-medium uppercase tracking-wider px-2 py-0.5 rounded-full border ${st}`}>
+                <div className="flex items-start justify-between gap-2">
+                  <h3 className={`text-sm font-medium ${isSelected ? "text-gray-100" : "text-gray-300"}`}>{tpl.name}</h3>
+                  <span className={`text-[9px] font-medium uppercase tracking-wider px-1.5 py-0.5 rounded-full border shrink-0 ${st}`}>
                     {tpl.status === "ready" ? "Pronto" : tpl.status === "wip" ? "In sviluppo" : "Pianificato"}
                   </span>
                 </div>
-                <p className="text-sm text-gray-500 mb-4">{tpl.description}</p>
-                <div className="space-y-2">
-                  {tpl.formats.map((f) => (
-                    <div key={f.label} className="flex items-center gap-2">
-                      <span className={`${MONO} text-[10px] text-gray-500 bg-white/[0.04] px-2 py-0.5 rounded`}>{f.label}</span>
-                      <span className="text-xs text-gray-600">{f.slides.join(" → ")}</span>
-                    </div>
-                  ))}
-                </div>
+                <p className={`${MONO} text-[10px] text-gray-600 mt-1`}>{tpl.formats.map((f) => f.label.split(" ")[0]).join(" · ")}</p>
               </button>
             );
           })}
-        </div>
-      </div>
+        </aside>
 
-      {/* Preview panel — appears when a template is selected */}
-      {tplData && (
-        <div className="mt-8 pt-8 border-t border-white/[0.08]">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-base font-semibold text-gray-100">{tplData.name}</h2>
-              <p className="text-sm text-gray-500 mt-0.5">{tplData.description}</p>
-            </div>
-            <button
-              onClick={() => setSelectedTpl(null)}
-              className="p-1.5 rounded-lg text-gray-500 hover:bg-white/5 hover:text-gray-200 cursor-pointer"
-            >
-              <X className="w-4 h-4" />
-            </button>
+        {/* ── Right: selected template detail ── */}
+        <main className="flex-1 overflow-y-auto pr-1">
+          <div className="mb-6">
+            <h2 className="text-base font-semibold text-gray-100">{tplData.name}</h2>
+            <p className="text-sm text-gray-500 mt-0.5">{tplData.description}</p>
           </div>
+
           {previews ? (
             <div className="space-y-8">
               {/* Instagram */}
@@ -1249,14 +1244,14 @@ function TemplatesView() {
                 <div>
                   <div className="flex items-center gap-2 mb-4">
                     <h3 className={`${MONO} text-[11px] text-pink-400 uppercase tracking-wider font-medium`}>Instagram</h3>
-                    <span className={`${MONO} text-[10px] text-gray-600`}>Video verticali + Story</span>
+                    <span className={`${MONO} text-[10px] text-gray-600`}>Feed + Story</span>
                   </div>
                   <div className="flex flex-wrap gap-6">
                     {previews.filter((p) => p.platform === "instagram").map((p) => (
                       <div key={p.label} className="flex flex-col items-center">
                         <p className={`${MONO} text-[10px] text-gray-600 uppercase tracking-wider mb-2`}>{p.label}</p>
-                        <div style={{ width: p.frameW, height: p.frameH, borderRadius: 12, overflow: "hidden", boxShadow: "0 8px 40px rgba(0,0,0,.5)" }}>
-                          <TemplateFrame html={p.html()} w={p.w} h={p.h} scale={p.scale} css={p.css} />
+                        <div style={{ width: p.frameW * 1.3, height: p.frameH * 1.3, borderRadius: 12, overflow: "hidden", boxShadow: "0 8px 40px rgba(0,0,0,.5)" }}>
+                          <TemplateFrame html={p.html()} w={p.w} h={p.h} scale={p.scale * 1.3} css={p.css} />
                         </div>
                         <p className={`${MONO} text-[10px] text-gray-600 mt-2`}>{p.w} × {p.h}</p>
                       </div>
@@ -1275,8 +1270,8 @@ function TemplatesView() {
                     {previews.filter((p) => p.platform === "linkedin").map((p) => (
                       <div key={p.label} className="flex flex-col items-center">
                         <p className={`${MONO} text-[10px] text-gray-600 uppercase tracking-wider mb-2`}>{p.label}</p>
-                        <div style={{ width: p.frameW, height: p.frameH, borderRadius: 12, overflow: "hidden", boxShadow: "0 8px 40px rgba(0,0,0,.5)" }}>
-                          <TemplateFrame html={p.html()} w={p.w} h={p.h} scale={p.scale} css={p.css} />
+                        <div style={{ width: p.frameW * 1.3, height: p.frameH * 1.3, borderRadius: 12, overflow: "hidden", boxShadow: "0 8px 40px rgba(0,0,0,.5)" }}>
+                          <TemplateFrame html={p.html()} w={p.w} h={p.h} scale={p.scale * 1.3} css={p.css} />
                         </div>
                         <p className={`${MONO} text-[10px] text-gray-600 mt-2`}>{p.w} × {p.h}</p>
                       </div>
@@ -1290,8 +1285,8 @@ function TemplatesView() {
               <p className="text-sm text-gray-600">Preview non ancora disponibile per questo template</p>
             </div>
           )}
-        </div>
-      )}
+        </main>
+      </div>
     </div>
   );
 }

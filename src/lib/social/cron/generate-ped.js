@@ -25,7 +25,7 @@ import { sendMessage } from '../telegram.js';
 
 export const config = { maxDuration: 300 };
 
-const FEED_SLOTS = ['09:00', '12:00', '18:00'];
+const FEED_SLOTS = ['09:00', '12:00', '16:00', '18:00'];
 const TIP_SLOT = '20:00';
 
 function romeToday() {
@@ -207,5 +207,23 @@ export default async function handler(req, res) {
     );
   }
 
-  return res.json({ day, generated: okCount, results });
+  // ── Trigger the day's video (before/after slider) at the same moment ──
+  // Only Mon/Wed/Fri carry a video topic (planner). Fire-and-forget per topic;
+  // generate-social-video does the heavy AI work and reads slide_data.videoMode.
+  const { data: videoTopics } = await supabase
+    .from('content_topics')
+    .select('id, title')
+    .eq('account_id', accountId)
+    .eq('plan_date', day)
+    .eq('rubric', 'video')
+    .in('status', ['proposed', 'planned', 'approved']);
+  const host = req.headers.host || 'getnearme.it';
+  const secret = process.env.CRON_SECRET || '';
+  for (const vt of (videoTopics || [])) {
+    const qs = new URLSearchParams({ secret, topic_id: vt.id });
+    fetch(`https://${host}/api/social/cron/generate-video?${qs}`).catch(() => {});
+    vlog(`video trigger: ${vt.title} (${vt.id})`);
+  }
+
+  return res.json({ day, generated: okCount, video_triggered: (videoTopics || []).length, results });
 }
