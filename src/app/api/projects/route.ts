@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
       thumb: thumb || '',
       riferimento: typeof riferimento === 'string' ? riferimento : '',
       tipologia: typeof tipologia === 'string' ? tipologia : '',
-      icons: icons || { prezzo: 'euro', mq: 'maximize-2', camere: 'bed', bagni: 'bath' },
+      icons: icons || { prezzo: 'euro', mq: 'area', camere: 'bed', bagni: 'bath' },
     })
     .select('*')
     .single()

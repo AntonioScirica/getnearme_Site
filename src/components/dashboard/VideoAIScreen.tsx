@@ -214,7 +214,7 @@ function CoverStylesGrid({ thumbUrl, logoUrl, title, address, brandColor, isPort
   }, [thumbUrl, logoUrl, title, address, brandColor, isPortrait, styles]);
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: `repeat(${isPortrait ? 4 : 3}, 1fr)`, gap: 10 }}>
+    <div className="max-md:!grid-cols-1" style={{ display: 'grid', gridTemplateColumns: `repeat(${isPortrait ? 4 : 3}, 1fr)`, gap: 10 }}>
       {styles.map(st => (
         <Box key={st.id} onClick={() => onSelect(st.id)} style={{ cursor: 'pointer', borderRadius: 10, overflow: 'hidden', border: selected === st.id ? '2px solid #3B83F6' : '2px solid transparent', boxShadow: selected === st.id ? '0 4px 12px rgba(59,131,246,.18)' : '0 1px 3px rgba(0,0,0,.06)', transition: 'transform .15s, box-shadow .15s', transform: 'translateY(0)' } as React.CSSProperties} hover={selected === st.id ? undefined : { transform: 'translateY(-3px)', boxShadow: '0 8px 20px rgba(0,0,0,.12)' }}>
           <canvas ref={el => { refs.current[st.id] = el; }} style={{ width: '100%', aspectRatio: isPortrait ? '9 / 16' : '16 / 9', display: 'block', background: '#000' }} />
@@ -1150,7 +1150,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
       {/* STEP 0 — template gallery */}
       {step === 0 && (
         <div className="max-md:!grid-cols-1" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
-          {templates.filter(t => t.id !== 'montaggio').map(t => (
+          {templates.filter(t => t.id !== 'montaggio' && t.id !== 'sottotitoli').map(t => (
             <Box key={t.id} onClick={() => { if (quota && displayRemaining <= 0) { if (lockBrand) { toast('Hai finito i video gratuiti. Passa a un piano per continuare.', 'x'); } else { setPacksOpen(true); } return; } setClips([]); setPairs([]); setTpl(t); setStep(NO_AVATAR_LAYOUTS.includes(t.layout || t.id) ? 2 : 1); }} style={{
               background: '#fff', border: '1px solid #f0ede7', borderRadius: 16, overflow: 'hidden', cursor: 'pointer',
               transition: 'box-shadow .15s, transform .15s',
@@ -1175,7 +1175,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
               Nessun avatar disponibile. Accedi con un account Agency per usare i template con presentatore.
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+            <div className="max-md:!grid-cols-2" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
               {avatars.map(a => {
                 const sel = avatar?.id === a.id;
                 return (
@@ -1215,6 +1215,10 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
               })}
             </div>
           )}
+          <StickyNav>
+            <Box as="button" onClick={() => { setStep(0); setTpl(null); setAvatar(null); }} style={s('border:1px solid #e4e1da;background:#fff;font-size:13px;font-weight:600;padding:11px 20px;border-radius:10px;cursor:pointer') as React.CSSProperties} hover={s('background:#f6f4f0')}>Indietro</Box>
+            <div />
+          </StickyNav>
         </div>
       )}
 
@@ -1322,6 +1326,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
                         : c.thumb;
                       return (
                         <div key={c.id}
+                          className="max-md:!flex-col max-md:!items-stretch"
                           onClick={e => e.stopPropagation()}
                           onDragOver={e => { e.preventDefault(); if (overIdx !== idx) setOverIdx(idx); }}
                           onDrop={e => { e.preventDefault(); e.stopPropagation(); if (dragIdx !== null) moveClip(dragIdx, idx); setDragIdx(null); setOverIdx(null); }}
@@ -1332,7 +1337,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
                             boxShadow: isDragging ? '0 8px 24px rgba(0,0,0,.12)' : 'none',
                             opacity: isDragging ? .45 : 1, transition: 'box-shadow .15s, opacity .15s',
                           }}>
-                          <div
+                          <div className="max-md:!hidden"
                             draggable
                             onDragStart={() => setDragIdx(idx)}
                             onDragEnd={() => { setDragIdx(null); setOverIdx(null); }}
@@ -1340,7 +1345,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
                             style={{ flex: 'none', cursor: 'grab', color: '#c4bfb6', display: 'flex', alignItems: 'center', padding: '0 2px', touchAction: 'none' }}>
                             <svg width="14" height="20" viewBox="0 0 14 20" fill="currentColor" aria-hidden><circle cx="4" cy="4" r="1.5"/><circle cx="10" cy="4" r="1.5"/><circle cx="4" cy="10" r="1.5"/><circle cx="10" cy="10" r="1.5"/><circle cx="4" cy="16" r="1.5"/><circle cx="10" cy="16" r="1.5"/></svg>
                           </div>
-                          <div style={{ position: 'relative', width: 116, height: 78, flex: 'none', borderRadius: 8, overflow: 'hidden', background: '#000' }}>
+                          <div className="max-md:!w-full max-md:!h-auto max-md:!aspect-video" style={{ position: 'relative', width: 116, height: 78, flex: 'none', borderRadius: 8, overflow: 'hidden', background: '#000' }}>
                             {c.isPhoto && c.height > c.width && (
                               // eslint-disable-next-line @next/next/no-img-element
                               <img src={c.thumb} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', filter: 'blur(18px) brightness(.85)', transform: 'scale(1.15)' }} />
@@ -1350,7 +1355,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
                             <span style={{ position: 'absolute', top: 5, left: 5, background: 'rgba(33,31,28,.78)', color: '#fff', fontSize: 10, fontWeight: 800, minWidth: 18, height: 18, padding: '0 5px', borderRadius: 99, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{idx + 1}</span>
                           </div>
                           <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <div className="max-md:!flex-wrap" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11.5, fontWeight: 700, color: '#57534c', background: '#f3f1ec', padding: '3px 9px', borderRadius: 99 }}>
                                 <Icon name={c.isPhoto ? 'image' : 'film'} size={12} color="#57534c" />
                                 {c.isPhoto ? 'Foto' : `Video · ${Math.round(c.duration)}s`}

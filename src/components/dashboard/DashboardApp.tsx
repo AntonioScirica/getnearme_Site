@@ -576,6 +576,7 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
   };
   const [platform, setPlatform] = React.useState('instagram');
   const [formatId, setFormatId] = React.useState('ig-post');
+  const [postFilterOpen, setPostFilterOpen] = React.useState(false);
   const [tplId, setTplId] = React.useState('gradient');
   const [bgLoaded, setBgLoaded] = React.useState(false);
   const [fields, setFields] = React.useState(() => ({
@@ -1156,6 +1157,7 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
 
   // Preview: fit to viewport height, reactive on resize
   const [winH, setWinH] = React.useState(typeof window !== 'undefined' ? window.innerHeight : 800);
+  const [winW, setWinW] = React.useState(typeof window !== 'undefined' ? window.innerWidth : 1280);
   const closeAllDropdowns = () => { setIconDropdown(null); setCurrencyDropdown(false); };
 
   // Keyboard navigation for templates
@@ -1174,7 +1176,7 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [step, tplId, exporting]);
   React.useEffect(() => {
-    const onResize = () => setWinH(window.innerHeight);
+    const onResize = () => { setWinH(window.innerHeight); setWinW(window.innerWidth); };
     window.addEventListener('resize', onResize);
     return () => { window.removeEventListener('resize', onResize); };
   }, []);
@@ -1187,22 +1189,23 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
   }, []);
   const maxPvH = winH - 180;
   const scaleByH = maxPvH / curFmt.h;
-  const pvScale = Math.min(0.55, scaleByH);
+  const scaleByW = winW < 768 ? (winW - 32 - 92) / curFmt.w : Infinity;
+  const pvScale = Math.min(0.55, scaleByH, scaleByW);
   const pvW = curFmt.w * pvScale;
   const pvH = curFmt.h * pvScale;
 
   return (
-    <div style={s('max-width:1240px;margin:0 auto;padding:32px 32px 64px')}>
+    <div className="max-md:!px-4 max-md:!pt-4 max-md:!pb-32" style={s('max-width:1240px;margin:0 auto;padding:32px 32px 64px')}>
       {/* header */}
-      <div style={s('display:flex;align-items:center;gap:12px;margin-bottom:22px')}>
+      <div className="max-md:!gap-8" style={s('display:flex;align-items:center;gap:12px;margin-bottom:22px')}>
         {step > 1 && (
           <Box as="button" onClick={() => setStep(step === 3 ? 1 : step - 1)} style={s('border:1px solid var(--border-main);background:var(--bg-card);width:38px;height:38px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center')} hover={s('background:var(--bg-hover)')}>
             <Icon name="arrow-left" size={15} color="var(--text-sec)" />
           </Box>
         )}
         <div style={s('flex:1;min-width:0')}>
-          <h1 style={s('margin:0 0 4px;font-size:25px;font-weight:800;letter-spacing:-.5px')}>{stepTitles[step]}</h1>
-          <div style={s('font-size:13px;color:var(--text-muted)')}>{stepSubs[step]} · passo {step === 1 ? 1 : step === 3 ? 2 : 3} di 3</div>
+          <h1 className="max-md:!text-xl" style={s('margin:0 0 4px;font-size:25px;font-weight:800;letter-spacing:-.5px')}>{stepTitles[step]}</h1>
+          <div className="max-md:!text-xs" style={s('font-size:13px;color:var(--text-muted)')}>{stepSubs[step]} · passo {step === 1 ? 1 : step === 3 ? 2 : 3} di 3</div>
         </div>
         {!demoMode && postQuota && !postQuota.unlimited && (
           postQuota.remaining > 0 ? (
@@ -1222,8 +1225,44 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
 
       {/* STEP 1: template selection */}
       {step === 1 && (
-        <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: 22, alignItems: 'start' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, position: 'sticky', top: 24 }}>
+        <div className="max-md:!flex max-md:!flex-col max-md:!gap-4" style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: 22, alignItems: 'start' }}>
+          {/* Mobile: dropdown button for platform + format */}
+          <div className="md:!hidden" style={{ position: 'relative', width: '100%' }}>
+            <Box as="button" onClick={() => setPostFilterOpen(!postFilterOpen)} style={{
+              width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              padding: '10px 14px', borderRadius: 12, border: '1px solid var(--border-main)',
+              background: 'var(--bg-card)', cursor: 'pointer', fontSize: 13, fontWeight: 700,
+            } as React.CSSProperties} hover={{ background: 'var(--bg-hover)' }}>
+              <span>{PS_PLATFORMS.find(p => p.id === platform)?.label} · {curFmt.label}</span>
+              <Icon name="chevron-down" size={16} color="var(--text-muted)" />
+            </Box>
+            {postFilterOpen && (
+              <>
+                <div onClick={() => setPostFilterOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 40 }} />
+                <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4, zIndex: 50, background: 'var(--bg-card)', border: '1px solid var(--border-main)', borderRadius: 12, boxShadow: '0 12px 32px rgba(0,0,0,.12)', padding: 8 }}>
+                  {PS_PLATFORMS.map(pl => (
+                    <Box key={pl.id} onClick={() => { setPlatform(pl.id); setFormatId(pl.formats[0].id); }} style={{
+                      padding: '8px 12px', borderRadius: 8, cursor: 'pointer', fontSize: 13,
+                      fontWeight: platform === pl.id ? 700 : 500,
+                      color: platform === pl.id ? 'var(--text-main)' : 'var(--text-muted)',
+                      background: platform === pl.id ? '#f1efe9' : 'transparent',
+                    }} hover={{ background: '#f1efe9' }}>{pl.label}</Box>
+                  ))}
+                  <div style={{ height: 1, background: '#ece9e2', margin: '6px 0' }} />
+                  {formats.map(f => (
+                    <Box key={f.id} onClick={() => { setFormatId(f.id); setPostFilterOpen(false); }} style={{
+                      borderWidth: 1, borderStyle: 'solid', borderColor: formatId === f.id ? '#3B83F6' : 'var(--border-main)',
+                      background: formatId === f.id ? '#eef4fe' : 'var(--bg-card)',
+                      color: formatId === f.id ? '#1d5fd0' : 'var(--text-sec)',
+                      fontSize: 11.5, fontWeight: 700, padding: '8px 10px', borderRadius: 8, cursor: 'pointer', marginTop: 4,
+                    }} hover={{ borderColor: '#3B83F6' }}>{f.label}</Box>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+          {/* Desktop: sidebar */}
+          <div className="max-md:!hidden" style={{ display: 'flex', flexDirection: 'column', gap: 4, position: 'sticky', top: 24 }}>
             {PS_PLATFORMS.map(pl => (
               <Box key={pl.id} onClick={() => { setPlatform(pl.id); setFormatId(pl.formats[0].id); }} style={{
                 padding: '10px 14px', borderRadius: 12, cursor: 'pointer', fontSize: 14,
@@ -1249,7 +1288,7 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
                 display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px',
                 background: 'var(--bg-card)', border: '1.5px dashed var(--border-dark)', borderRadius: 12,
                 transition: 'border-color .15s',
-                maxWidth: 940, position: 'relative'
+                maxWidth: 940, position: 'relative', width: '100%'
               }}
               onMouseEnter={e => (e.currentTarget.style.borderColor = '#3B83F6')}
               onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--border-dark)')}
@@ -1280,9 +1319,9 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
                 </div>
               )}
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 300px)', gap: 20, justifyContent: 'start' }}>
+            <div className="max-md:!grid-cols-1 max-md:![grid-template-columns:1fr]" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 300px)', gap: 20, justifyContent: 'start' }}>
             {TEMPLATES.map(tc => {
-              const cardW = 300;
+              const cardW = winW < 768 ? Math.min(winW - 32, 400) : 300;
               // Stesse opts del renderTemplateGrid dell'estensione: formato selezionato, loghi verticali default, foto primaria duplicata per multi-foto
               const tplOpts: Record<string, unknown> = {
                 size: curFmt,
@@ -1330,12 +1369,12 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
 
       {/* STEP 3: edit post (skip step 2, dati vengono dal progetto attivo) */}
       {step === 3 && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 360px', gap: 28, alignItems: 'start' }}>
+        <div className="max-md:!flex max-md:!flex-col max-md:!gap-6" style={{ display: 'grid', gridTemplateColumns: '1fr 360px', gap: 28, alignItems: 'start' }}>
           {(iconDropdown || currencyDropdown) && (
             <div onClick={closeAllDropdowns} style={{ position: 'fixed', inset: 0, zIndex: 40 }} />
           )}
           {/* preview */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, position: 'sticky', top: 16 }}>
+          <div className="max-md:!static" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, position: 'sticky', top: 16 }}>
             {/* preview with arrows on sides */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <Box as="button" onClick={() => { const i = TEMPLATES.findIndex(t => t.id === tplId); setTplId(TEMPLATES[(i - 1 + TEMPLATES.length) % TEMPLATES.length].id); }} style={s('border:1px solid var(--border-main);background:var(--bg-card);width:34px;height:34px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none')} hover={s('background:var(--bg-hover)')}>
@@ -1397,8 +1436,42 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {/* info mini card */}
             <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)', borderRadius: 12, padding: '16px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-              {/* platform row */}
-              <div>
+              {/* Mobile: dropdown for platform + format */}
+              <div className="md:!hidden" style={{ position: 'relative' }}>
+                <Box as="button" onClick={() => setPostFilterOpen(!postFilterOpen)} style={{
+                  width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  padding: '10px 14px', borderRadius: 8, background: 'var(--bg-hover)', cursor: 'pointer', fontSize: 13, fontWeight: 700, border: 'none',
+                } as React.CSSProperties} hover={{ background: '#eeebe3' }}>
+                  <span>{PS_PLATFORMS.find(p => p.id === platform)?.label} · {curFmt.label}</span>
+                  <Icon name="chevron-down" size={16} color="var(--text-muted)" />
+                </Box>
+                {postFilterOpen && (
+                  <>
+                    <div onClick={() => setPostFilterOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 40 }} />
+                    <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4, zIndex: 50, background: 'var(--bg-card)', border: '1px solid var(--border-main)', borderRadius: 12, boxShadow: '0 12px 32px rgba(0,0,0,.12)', padding: 8 }}>
+                      {PS_PLATFORMS.map(pl => (
+                        <Box key={pl.id} onClick={() => { setPlatform(pl.id); setFormatId(pl.formats[0].id); }} style={{
+                          padding: '8px 12px', borderRadius: 8, cursor: 'pointer', fontSize: 13,
+                          fontWeight: platform === pl.id ? 700 : 500,
+                          color: platform === pl.id ? 'var(--text-main)' : 'var(--text-muted)',
+                          background: platform === pl.id ? '#f1efe9' : 'transparent',
+                        }} hover={{ background: '#f1efe9' }}>{pl.label}</Box>
+                      ))}
+                      <div style={{ height: 1, background: '#ece9e2', margin: '6px 0' }} />
+                      {formats.map(f => (
+                        <Box key={f.id} onClick={() => { setFormatId(f.id); setPostFilterOpen(false); }} style={{
+                          borderWidth: 1, borderStyle: 'solid', borderColor: formatId === f.id ? '#3B83F6' : 'var(--border-main)',
+                          background: formatId === f.id ? '#eef4fe' : 'var(--bg-card)',
+                          color: formatId === f.id ? '#1d5fd0' : 'var(--text-sec)',
+                          fontSize: 11.5, fontWeight: 700, padding: '8px 10px', borderRadius: 8, cursor: 'pointer', marginTop: 4,
+                        }} hover={{ borderColor: '#3B83F6' }}>{f.label}</Box>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+              {/* Desktop: platform tabs */}
+              <div className="max-md:!hidden">
                 <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 6 }}>Piattaforma</div>
                 <div style={{ display: 'flex', alignItems: 'center', background: 'var(--bg-hover)', borderRadius: 8, padding: 3 }}>
                   {PS_PLATFORMS.map(pl => (
@@ -1412,8 +1485,8 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
                   ))}
                 </div>
               </div>
-              {/* format row */}
-              <div>
+              {/* Desktop: format tabs */}
+              <div className="max-md:!hidden">
                 <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 6 }}>Formato</div>
                 <div style={{ display: 'flex', alignItems: 'center', background: 'var(--bg-hover)', borderRadius: 8, padding: 3 }}>
                   {formats.map(f => (
@@ -1569,7 +1642,7 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
                           onMouseEnter={e => { e.currentTarget.style.borderColor = '#3B83F6'; e.currentTarget.style.background = 'var(--bg-hover)'; }}
                           onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-main)'; e.currentTarget.style.background = iconDropdown === m.field ? 'var(--bg-hover)' : 'transparent'; }}
                         >
-                          <span style={{ width: 14, height: 14, display: 'flex' }} dangerouslySetInnerHTML={{ __html: (TPL_ICONS as Record<string, string>)[iconKey] || '' }} />
+                          <div style={{ width: 14, height: 14 }} dangerouslySetInnerHTML={{ __html: ((TPL_ICONS as Record<string, string>)[iconKey] || '').replace(/<svg /, '<svg width="14" height="14" style="display:block" ') }} />
                         </div>
                       </div>
                       {iconDropdown === m.field && (
@@ -1590,7 +1663,7 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
                               onMouseEnter={e => { if (fieldIcons[m.field] !== pi.key) { e.currentTarget.style.background = 'var(--bg-hover)'; e.currentTarget.style.color = 'var(--text-main)'; } }}
                               onMouseLeave={e => { if (fieldIcons[m.field] !== pi.key) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#6b7280'; } }}
                             >
-                              <span style={{ width: 16, height: 16, display: 'flex' }} dangerouslySetInnerHTML={{ __html: (TPL_ICONS as Record<string, string>)[pi.key] || '' }} />
+                              <span style={{ width: 16, height: 16, display: 'block' }} dangerouslySetInnerHTML={{ __html: ((TPL_ICONS as Record<string, string>)[pi.key] || '').replace('<svg ', '<svg width="16" height="16" ') }} />
                             </div>
                           ))}
                         </div>
@@ -1970,7 +2043,7 @@ function AccountScreen({ credits, toast, go, userData, tierHint }: { credits: nu
             })}
           </div>
         </div>
-        <div className="max-md:!grid-cols-1" style={s('display:grid;grid-template-columns:repeat(3,1fr);gap:20px;align-items:stretch;margin-top:40px')}>
+        <div className="max-md:!grid-cols-1 max-md:!gap-8" style={s('display:grid;grid-template-columns:repeat(3,1fr);gap:20px;align-items:stretch;margin-top:40px')}>
           {plans.map((plan) => {
             const active = plan.id === activePlan;
             return (
@@ -2926,6 +2999,9 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
     while (idx < TOUR_DEFS.length) {
       const sel = TOUR_DEFS[idx].sel;
       if (sel === '@center') { setTourStep(idx); scheduleFadeIn(); return; }
+      // Mobile: ogni step è una card centrata, niente spotlight su elementi
+      // della sidebar off-canvas. Salta la misurazione DOM.
+      if (isMobile) { if (!skipStep) setTourStep(idx); setTourRect(null); setTourRect2(null); setTourCtaRect(null); scheduleFadeIn(); return; }
       const el = document.querySelector(sel);
       if (el) {
         const r = el.getBoundingClientRect();
@@ -2964,7 +3040,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
       idx++;
     }
     setTourStep(null); setTourRect(null); setTourRect2(null);
-  }, [scheduleFadeIn]);
+  }, [scheduleFadeIn, isMobile]);
   const tourGo = useCallback((n: number) => {
     if (n >= TOUR_DEFS.length || n < 0) { setTourStep(null); setTrayOpen(false); setTourRect2(null); setDemoJobsDone(false); return; }
     const def = TOUR_DEFS[n];
@@ -2988,7 +3064,12 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
     }
     else { if (!isCenter) setDemoJobsDone(false); setTourRect2(null); }
     setTrayOpen(isTray);
-    if (isNewProj) {
+    if (isMobile) {
+      // Mobile: card centrata per ogni step, niente spotlight/measure.
+      if (isNewProj) setProjOpen(false);
+      setTourRect(null); setTourRect2(null); setTourCtaRect(null);
+      setTourStep(n); scheduleFadeIn();
+    } else if (isNewProj) {
       setProjOpen(true);
       setTourStep(n);
       setTimeout(() => tourMeasure(n), 120);
@@ -3000,7 +3081,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
       setTimeout(() => tourMeasure(n, true), isTray ? 250 : 60);
       setTimeout(() => setTourStep(n), 400);
     }
-  }, [tourMeasure, go]);
+  }, [tourMeasure, go, isMobile, scheduleFadeIn]);
   const startTour = useCallback(() => {
     setWelcomeOpen(false); markTutorialSeen(); setCollapsed(false); setTourStep(0); setTourRect(null); setTourRect2(null); setDemoJobsDone(false); setTrayOpen(false);
     setHlFading(true); if (hlFadeTimer.current) clearTimeout(hlFadeTimer.current);
@@ -3038,6 +3119,8 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
   const tipL = tipRef ? (onRight ? Math.max(16, tipRef.x + tipRef.w - 320) : tipRef.x + tipRef.w + 20) : 0;
   const tipT = tipRef ? (onRight ? tipRef.y + tipRef.h + 16 : Math.max(16, tipRef.y - 12)) : 0;
   const tdef = tourStep !== null ? TOUR_DEFS[tourStep] : TOUR_DEFS[0];
+  // Mobile: card centrata per ogni step (la sidebar è off-canvas, niente spotlight).
+  const cardCentered = isMobile || tdef.sel === '@center';
 
   return (
     <div style={{ fontFamily: 'inherit', color: 'var(--text-main)', height: '100vh', overflow: 'hidden', background: '#faf9f7', fontSize: 14, lineHeight: 1.45 }}>
@@ -3073,8 +3156,8 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
             const cy = tourRect ? tourRect.y - pad : 0;
             const cw = tourRect ? tourRect.w + pad * 2 : 0;
             const ch = tourRect ? tourRect.h + pad * 2 : 0;
-            const hasCutout = tourRect && tdef.sel !== '@center';
-            const hasDual = tourRect && tourRect2;
+            const hasCutout = !isMobile && tourRect && tdef.sel !== '@center';
+            const hasDual = !isMobile && tourRect && tourRect2;
             const cutoutOpacity = hlFading ? 0 : 1;
             const interp = 'x .8s cubic-bezier(.16,1,.3,1), y .8s cubic-bezier(.16,1,.3,1), width .8s cubic-bezier(.16,1,.3,1), height .8s cubic-bezier(.16,1,.3,1)';
             return (
@@ -3098,12 +3181,12 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
           })()}
 
           {/* Il catcher a tutto schermo — blocca click fuori senza chiudere il tour */}
-          {(!tourRect || tdef.sel === '@center' || tourRect2) && (
+          {(isMobile || !tourRect || tdef.sel === '@center' || tourRect2) && (
             <div style={{ position: 'absolute', inset: 0, pointerEvents: 'auto' }} />
           )}
 
           {/* I 4 muri invisibili per gli step con tourRect (singolo), lasciano un buco fisico per far passare click/hover */}
-          {tourRect && !tourRect2 && tdef.sel !== '@center' && (
+          {!isMobile && tourRect && !tourRect2 && tdef.sel !== '@center' && (
             (() => {
               const pad = 6;
               return (
@@ -3116,8 +3199,8 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
               );
             })()
           )}
-          {tdef.sel !== '[data-tour="new-project"]' && tdef.sel !== '[data-tour-dropdown]' && (tdef.sel === '@center' || tourRect) && (
-            <div key={tdef.sel === '@center' ? 'center' : 'tip'} style={tdef.sel === '@center'
+          {tdef.sel !== '[data-tour="new-project"]' && (isMobile || tdef.sel !== '[data-tour-dropdown]') && (cardCentered || tourRect) && (
+            <div key={cardCentered ? 'center' : 'tip'} style={cardCentered
               ? { position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%,-50%)', width: 360, maxWidth: 'calc(100vw - 32px)', background: 'var(--bg-card)', borderRadius: 16, boxShadow: '0 24px 64px rgba(20,18,15,.32)', padding: '22px 24px', animation: 'tour-fade-in .5s cubic-bezier(0.16, 1, 0.3, 1) forwards', pointerEvents: 'auto' }
               : { position: 'absolute', left: tipL, top: tipT, width: 300, background: 'var(--bg-card)', borderRadius: 12, boxShadow: '0 16px 48px rgba(20,18,15,.3)', padding: '18px 20px 20px', pointerEvents: 'auto', transition: 'left .8s cubic-bezier(0.16, 1, 0.3, 1), top .8s cubic-bezier(0.16, 1, 0.3, 1), opacity .3s ease' }}>
               <TourAnim key={tourStep} kind={tdef.anim} />
@@ -3190,8 +3273,8 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
           </div>
           <div 
             ref={profileRef} 
-            onMouseEnter={() => setProfileOpen(true)}
-            onMouseLeave={() => setProfileOpen(false)}
+            onMouseEnter={() => { if (hoverNav) setProfileOpen(true); }}
+            onMouseLeave={() => { if (hoverNav) setProfileOpen(false); }}
             style={{ flex: 'none', borderTop: '1px solid var(--border-light)', padding: collapsed ? '12px 6px' : '12px 10px' }}
           >
             <Box onClick={(e) => { e.stopPropagation(); setProfileOpen(o => !o); setProjOpen(false); setTrayOpen(false); }} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: collapsed ? '0' : '10px 12px', borderRadius: collapsed ? '50%' : 12, cursor: 'pointer', justifyContent: collapsed ? 'center' : 'flex-start', width: collapsed ? 42 : 'auto', height: collapsed ? 42 : 'auto', margin: collapsed ? '0 auto' : 0 }} hover={{ background: '#f1efe9' }}>
@@ -3212,10 +3295,10 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                   <div style={{ background: 'var(--bg-card)', borderRadius: 12, boxShadow: '0 16px 48px rgba(33,31,28,.16)', border: '1px solid var(--border-light)', overflow: 'hidden' }}>
                     <div style={s('padding:4px')}>
                       {[
-                        { icon: 'play-circle', label: 'Tutorial', action: () => { setProfileOpen(false); tourReplayRef.current = true; setWelcomeOpen(true); } },
-                        { icon: 'message-square', label: 'Suggerimenti', action: () => { setProfileOpen(false); go('assistenza?type=feature'); } },
-                        { icon: 'settings', label: 'Impostazioni', action: () => { setProfileOpen(false); go('impostazioni'); } },
-                        { icon: 'life-buoy', label: 'Assistenza', action: () => { setProfileOpen(false); go('assistenza'); } },
+                        { icon: 'play-circle', label: 'Tutorial', action: () => { setProfileOpen(false); setMobileMenuOpen(false); tourReplayRef.current = true; setWelcomeOpen(true); } },
+                        { icon: 'message-square', label: 'Suggerimenti', action: () => { setProfileOpen(false); setMobileMenuOpen(false); go('assistenza?type=feature'); } },
+                        { icon: 'settings', label: 'Impostazioni', action: () => { setProfileOpen(false); setMobileMenuOpen(false); go('impostazioni'); } },
+                        { icon: 'life-buoy', label: 'Assistenza', action: () => { setProfileOpen(false); setMobileMenuOpen(false); go('assistenza'); } },
                       ].map(item => (
                         <Box key={item.label} onClick={item.action} style={s('display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:600')} hover={s('background:var(--bg-hover)')}>
                           <Icon name={item.icon} size={16} color="var(--text-sec)" />{item.label}
@@ -3254,7 +3337,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
             <Box as="button" onClick={() => setCollapsed((c) => !c)} className="max-md:!hidden" title="Comprimi menu" aria-label="Comprimi menu" style={s('border:none;background:transparent;width:38px;height:38px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center')} hover={s('background:#f1efe9')}><Icon name="panel-left" size={18} /></Box>
 
             {/* project switcher */}
-            <div data-tour-dropdown className="max-md:!order-10 max-md:!w-full max-md:!basis-full" onMouseEnter={() => { if (hoverNav && tourStep === null) { if (projHoverTimer.current) clearTimeout(projHoverTimer.current); setProjOpen(true); setTrayOpen(false); } }} onMouseLeave={() => { if (hoverNav && tourStep === null) { if (projHoverTimer.current) clearTimeout(projHoverTimer.current); projHoverTimer.current = setTimeout(() => setProjOpen(false), 180); } }} style={{ position: 'relative', ...(tourStep !== null && tdef.sel === '[data-tour-dropdown]' ? { zIndex: 102, pointerEvents: 'none' as const } : {}) }}>
+            <div data-tour-dropdown className="max-md:!order-10 max-md:!w-full max-md:!basis-full" onMouseEnter={() => { if (hoverNav && tourStep === null) { if (projHoverTimer.current) clearTimeout(projHoverTimer.current); setProjOpen(true); setTrayOpen(false); } }} onMouseLeave={() => { if (hoverNav && tourStep === null) { if (projHoverTimer.current) clearTimeout(projHoverTimer.current); projHoverTimer.current = setTimeout(() => setProjOpen(false), 180); } }} style={{ position: 'relative', ...(!isMobile && tourStep !== null && tdef.sel === '[data-tour-dropdown]' ? { zIndex: 102, pointerEvents: 'none' as const } : {}) }}>
               <Box className="max-md:!w-full max-md:!min-w-0" onClick={(e) => { e.stopPropagation(); if (tourStep !== null && TOUR_DEFS[tourStep]?.sel === '[data-tour-dropdown]') return; setProjOpen((o) => !o); setTrayOpen(false); }} style={s(`display:flex;align-items:center;gap:10px;padding:7px 14px 7px 8px;border:1px solid #e9e6df;border-radius:8px;cursor:pointer;background:var(--bg-card);min-height:38px;min-width:240px;justify-content:space-between`)} hover={s('border-color:var(--border-dark);box-shadow:0 2px 8px rgba(33,31,28,.06)')}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
                   {loadingProjects ? (
@@ -3535,7 +3618,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                       ) : (
                       <div className="max-md:!w-full max-md:!flex-col max-md:!gap-3 max-md:!items-stretch" style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
                         {/* Ricerca immobili (mobile) */}
-                        <div className="md:hidden" style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', boxSizing: 'border-box', background: '#faf9f7', border: '1px solid #ece9e2', borderRadius: 10, padding: '0 14px', minHeight: 44 }}>
+                        <div className="md:!hidden" style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', boxSizing: 'border-box', background: '#faf9f7', border: '1px solid #ece9e2', borderRadius: 10, padding: '0 14px', minHeight: 44 }}>
                           <Icon name="search" size={16} color="#8c867d" />
                           <input value={immQuery} onChange={(e) => setImmQuery(e.target.value)} placeholder="Cerca immobile…" style={s('border:none;background:transparent;outline:none;font-size:14px;width:100%;color:var(--text-main)')} />
                         </div>

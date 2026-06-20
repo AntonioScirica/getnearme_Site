@@ -131,7 +131,7 @@ export default function TeamScreen({
           <p style={s('margin:0 0 16px;font-size:13.5px;color:#8c867d;line-height:1.5')}>Dai un nome al team, poi invita i collaboratori via email o con il codice invito.</p>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             <input value={nameInput} onChange={(e) => setNameInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') onCreate(); }} placeholder="Es. Studio Rossi Immobiliare" style={{ flex: 1, minWidth: 220, border: '1px solid #e4e1da', borderRadius: 10, padding: '11px 14px', fontSize: 14, outline: 'none', color: '#211f1c' }} />
-            <Box as="button" onClick={onCreate} disabled={busy} style={s('border:none;background:#3B83F6;color:#fff;font-size:14px;font-weight:700;padding:11px 22px;border-radius:10px;cursor:pointer')} hover={s('background:#2b6fe0')}>Crea team</Box>
+            <Box as="button" onClick={onCreate} disabled={busy} className="max-md:!w-full" style={s('border:none;background:#3B83F6;color:#fff;font-size:14px;font-weight:700;padding:11px 22px;border-radius:10px;cursor:pointer')} hover={s('background:#2b6fe0')}>Crea team</Box>
           </div>
         </div>
       )}
@@ -144,7 +144,7 @@ export default function TeamScreen({
             <div style={s('font-size:11px;font-weight:700;color:#b3aca1;text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px')}>Nome team</div>
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
               <input defaultValue={status.team_name} onChange={(e) => setNameInput(e.target.value)} placeholder={status.team_name || 'Nome team'} style={{ flex: 1, minWidth: 220, border: '1px solid #e4e1da', borderRadius: 10, padding: '10px 14px', fontSize: 14, outline: 'none', color: '#211f1c' }} />
-              <Box as="button" onClick={onRename} disabled={busy} style={s('border:1px solid #d8d4cb;background:#fff;color:#8c867d;font-size:13px;font-weight:700;padding:10px 18px;border-radius:10px;cursor:pointer')} hover={{ borderColor: ACCENT, color: ACCENT }}>Salva</Box>
+              <Box as="button" onClick={onRename} disabled={busy} className="max-md:!w-full" style={s('border:1px solid #d8d4cb;background:#fff;color:#8c867d;font-size:13px;font-weight:700;padding:10px 18px;border-radius:10px;cursor:pointer')} hover={{ borderColor: ACCENT, color: ACCENT }}>Salva</Box>
             </div>
           </div>
 
@@ -153,7 +153,7 @@ export default function TeamScreen({
             <div style={s('font-size:11px;font-weight:700;color:#b3aca1;text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px')}>Invita collaboratori</div>
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 14 }}>
               <input value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') onInvite(); }} placeholder="email@collaboratore.it" type="email" style={{ flex: 1, minWidth: 220, border: '1px solid #e4e1da', borderRadius: 10, padding: '11px 14px', fontSize: 14, outline: 'none', color: '#211f1c' }} />
-              <Box as="button" onClick={onInvite} disabled={busy} style={s('border:none;background:#3B83F6;color:#fff;font-size:14px;font-weight:700;padding:11px 20px;border-radius:10px;cursor:pointer;display:inline-flex;align-items:center;gap:7px')} hover={s('background:#2b6fe0')}>Invita</Box>
+              <Box as="button" onClick={onInvite} disabled={busy} className="max-md:!w-full max-md:!justify-center" style={s('border:none;background:#3B83F6;color:#fff;font-size:14px;font-weight:700;padding:11px 20px;border-radius:10px;cursor:pointer;display:inline-flex;align-items:center;gap:7px')} hover={s('background:#2b6fe0')}>Invita</Box>
             </div>
           </div>
 
@@ -198,7 +198,7 @@ export default function TeamScreen({
 
           {/* Dissolvi */}
           <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <Box as="button" onClick={() => setConfirm({ title: 'Sciogliere il team?', sub: 'Tutti i membri verranno rimossi e gli inviti annullati. Azione irreversibile.', danger: true, onYes: () => wrap(() => dissolveTeam(), 'Team sciolto') })} style={s('border:1px solid #fca5a5;background:#fff;color:#dc2626;font-size:13px;font-weight:700;padding:10px 18px;border-radius:10px;cursor:pointer')} hover={{ background: '#fef2f2' }}>Sciogli team</Box>
+            <Box as="button" onClick={() => setConfirm({ title: 'Sciogliere il team?', sub: 'Tutti i membri verranno rimossi e gli inviti annullati. Azione irreversibile.', danger: true, onYes: () => wrap(() => dissolveTeam(), 'Team sciolto') })} className="max-md:!w-full" style={s('border:1px solid #fca5a5;background:#fff;color:#dc2626;font-size:13px;font-weight:700;padding:10px 18px;border-radius:10px;cursor:pointer')} hover={{ background: '#fef2f2' }}>Sciogli team</Box>
           </div>
         </div>
       )}
@@ -234,7 +234,7 @@ export default function TeamScreen({
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <Box as="button" onClick={() => setConfirm({ title: 'Lasciare il team?', sub: 'Perderai l\'accesso Agenzia condiviso e le risorse del team.', danger: true, onYes: () => wrap(() => leaveTeam(), 'Hai lasciato il team') })} style={s('border:1px solid #fdba74;background:#fff;color:#ea580c;font-size:13px;font-weight:700;padding:10px 18px;border-radius:10px;cursor:pointer')} hover={{ background: '#fff7ed' }}>Lascia team</Box>
+            <Box as="button" onClick={() => setConfirm({ title: 'Lasciare il team?', sub: 'Perderai l\'accesso Agenzia condiviso e le risorse del team.', danger: true, onYes: () => wrap(() => leaveTeam(), 'Hai lasciato il team') })} className="max-md:!w-full" style={s('border:1px solid #fdba74;background:#fff;color:#ea580c;font-size:13px;font-weight:700;padding:10px 18px;border-radius:10px;cursor:pointer')} hover={{ background: '#fff7ed' }}>Lascia team</Box>
           </div>
         </div>
       )}

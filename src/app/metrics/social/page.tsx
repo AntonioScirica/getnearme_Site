@@ -243,8 +243,8 @@ export default function SocialDashboard() {
 
   return (
     <div className="flex h-screen bg-[#0d0f14] text-gray-200">
-      {/* Sidebar */}
-      <aside className="w-60 shrink-0 bg-[#161920] border-r border-white/[0.08] flex flex-col">
+      {/* Sidebar — desktop only */}
+      <aside className="w-60 shrink-0 bg-[#161920] border-r border-white/[0.08] flex-col hidden md:flex">
         <div className="px-5 h-16 flex items-center border-b border-white/[0.08] shrink-0">
           <span className="font-semibold text-gray-100 text-lg">GetNearMe</span>
           <span className={`${MONO} text-[10px] text-gray-500 tracking-wider uppercase ml-2`}>Social</span>
@@ -282,7 +282,35 @@ export default function SocialDashboard() {
 
       {/* Main */}
       <main className="flex-1 overflow-y-auto">
-        <div className="px-8 py-6 max-w-[1400px]">
+        {/* Mobile top bar */}
+        <div className="md:hidden sticky top-0 z-20 bg-[#161920] border-b border-white/[0.08]">
+          <div className="flex items-center justify-between px-4 h-12">
+            <button onClick={() => router.push("/metrics")} className="p-1.5 -ml-1.5 text-gray-500">
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+            <span className="font-semibold text-gray-100 text-sm">Social</span>
+            <div className="w-8" />
+          </div>
+          <div className="flex overflow-x-auto px-2 pb-2 gap-1 no-scrollbar">
+            {NAV.map((item) => {
+              const active = page === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => setPage(item.id)}
+                  className={`whitespace-nowrap px-3 py-1.5 rounded-full text-xs font-medium transition-colors cursor-pointer shrink-0 ${
+                    active
+                      ? "bg-indigo-500/20 text-indigo-400"
+                      : "text-gray-500 hover:text-gray-300"
+                  }`}
+                >
+                  {item.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+        <div className="px-4 py-4 md:px-8 md:py-6 max-w-[1400px]">
           {error && (
             <div className="mb-4 px-4 py-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-300 text-sm">
               {error}
@@ -353,11 +381,14 @@ function CalendarView({
     year: "numeric",
   });
 
+  // Mobile: list of days with topics (calendar grid too dense at 375px)
+  const daysWithTopics = useMemo(() => days.filter(d => d.slice(0, 7) === month && (topicsByDay[d] || []).length > 0), [days, month, topicsByDay]);
+
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-semibold text-gray-100">Piano Editoriale</h1>
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between mb-6 gap-2">
+        <h1 className="text-xl font-semibold text-gray-100 shrink-0 hidden md:block">Piano Editoriale</h1>
+        <div className="flex items-center gap-1 md:gap-2 flex-1 md:flex-none justify-center md:justify-end">
           <button
             onClick={onRefresh}
             disabled={loading}
@@ -381,7 +412,8 @@ function CalendarView({
         </div>
       </div>
 
-      <div className="grid grid-cols-7 gap-px bg-white/[0.06] rounded-xl overflow-hidden border border-white/[0.06]">
+      {/* Desktop: 7-column calendar grid */}
+      <div className="hidden md:grid grid-cols-7 gap-px bg-white/[0.06] rounded-xl overflow-hidden border border-white/[0.06]">
         {["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"].map((d) => (
           <div key={d} className={`${MONO} bg-[#161920] px-2 py-2 text-[10px] uppercase tracking-wider text-gray-500 text-center`}>
             {d}
@@ -427,6 +459,51 @@ function CalendarView({
                 </div>
               </>
           </div>
+          );
+        })}
+      </div>
+
+      {/* Mobile: day-by-day list */}
+      <div className="md:hidden space-y-3">
+        {daysWithTopics.length === 0 && (
+          <p className={`${MONO} text-sm text-gray-600 text-center py-8`}>Nessun contenuto pianificato questo mese.</p>
+        )}
+        {daysWithTopics.map((date) => {
+          const dayName = new Date(`${date}T00:00:00Z`).toLocaleDateString("it-IT", { weekday: "short", day: "numeric" });
+          const isToday = date === today;
+          return (
+            <div key={date} className={`rounded-xl border ${isToday ? "border-indigo-500/40 bg-indigo-500/[0.04]" : "border-white/[0.06] bg-white/[0.02]"} p-3`}>
+              <p className={`${MONO} text-[11px] uppercase tracking-wider mb-2 ${isToday ? "text-indigo-400" : "text-gray-500"}`}>
+                {dayName}
+              </p>
+              <div className="space-y-1.5">
+                {(topicsByDay[date] || []).map((t) => {
+                  const dayTopics = topicsByDay[date] || [];
+                  const items = contentByTopic[t.id] || [];
+                  const published = items.some((c) => c.published_at);
+                  const color = RUBRIC_COLORS[t.rubric] || "bg-gray-500/20 text-gray-300 border-gray-500/30";
+                  const time = getPublishTime(t, dayTopics);
+                  return (
+                    <button
+                      key={t.id}
+                      onClick={() => onSelect(t)}
+                      className={`w-full text-left px-3 py-2 rounded-lg border text-xs leading-snug transition-opacity hover:opacity-80 cursor-pointer ${color}`}
+                    >
+                      <span className="flex items-center gap-1.5">
+                        {published && <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-green-400" />}
+                        <span className="truncate font-medium">{t.title}</span>
+                      </span>
+                      <span className={`${MONO} block mt-0.5 text-[10px] opacity-70`}>
+                        {time} · {t.rubric}
+                        {t.edition && t.rubric === "news" ? ` · ${t.edition === "morning" ? "☀️" : "🌙"}` : ""}
+                        {" · "}
+                        {published ? "Pubblicato" : STATUS_LABELS[t.status] || t.status}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           );
         })}
       </div>
@@ -609,9 +686,9 @@ function PreviewModal({
   const published = !!item?.published_at;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-0 md:p-6" onClick={onClose}>
       <div
-        className="bg-[#161920] border border-white/[0.1] rounded-2xl max-w-3xl w-full max-h-[85vh] overflow-y-auto"
+        className="bg-[#161920] border border-white/[0.1] md:rounded-2xl max-w-3xl w-full h-full md:h-auto md:max-h-[85vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between p-5 border-b border-white/[0.08] sticky top-0 bg-[#161920] z-10">
@@ -890,9 +967,9 @@ function PerformanceView({
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-semibold text-gray-100">Performance Instagram</h1>
-        <div className="flex items-center gap-1 bg-white/[0.04] rounded-lg p-1">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-3">
+        <h1 className="text-lg md:text-xl font-semibold text-gray-100">Performance Instagram</h1>
+        <div className="flex items-center gap-1 bg-white/[0.04] rounded-lg p-1 self-stretch md:self-auto">
           {RANGE_OPTIONS.map((d) => (
             <button
               key={d}
@@ -1020,23 +1097,27 @@ function PerformanceView({
               return (
                 <div
                   key={p.id}
-                  className="flex items-center gap-4 px-4 py-3 rounded-lg bg-white/[0.02] border border-white/[0.06]"
+                  className="flex items-center gap-3 md:gap-4 px-3 md:px-4 py-3 rounded-lg bg-white/[0.02] border border-white/[0.06]"
                 >
                   {p.thumbnail ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={p.thumbnail} alt="" className="w-12 h-15 rounded object-cover border border-white/[0.08] shrink-0" />
+                    <img src={p.thumbnail} alt="" className="w-10 h-13 md:w-12 md:h-15 rounded object-cover border border-white/[0.08] shrink-0" />
                   ) : (
-                    <div className="w-12 h-15 rounded bg-white/[0.04] shrink-0" />
+                    <div className="w-10 h-13 md:w-12 md:h-15 rounded bg-white/[0.04] shrink-0" />
                   )}
                   <div className="min-w-0 flex-1">
                     <p className="text-sm text-gray-200 truncate">{p.hook_text || p.caption || p.ig_post_id || `Post #${p.id}`}</p>
-                    <p className={`${MONO} text-[10px] text-gray-500 mt-0.5 flex items-center gap-2`}>
+                    <p className={`${MONO} text-[10px] text-gray-500 mt-0.5 flex items-center gap-2 flex-wrap`}>
                       <span>{p.publish_date}</span>
                       {p.rubric && <span className={`px-1.5 py-px rounded border ${color}`}>{p.rubric}</span>}
                       {p.content_type && <span>{p.content_type}</span>}
                     </p>
+                    {/* Mobile: engagement inline */}
+                    <p className={`${MONO} text-[10px] text-gray-500 mt-1 md:hidden`}>
+                      👁 {fmtNum(p.reach)} · ❤️ {fmtNum(p.likes)} · 🔖 {fmtNum(p.saves)} · <span className="text-indigo-300">{fmtPct(Number(p.engagement_rate))}</span>
+                    </p>
                   </div>
-                  <div className={`${MONO} text-[11px] text-gray-400 flex items-center gap-4 shrink-0`}>
+                  <div className={`${MONO} text-[11px] text-gray-400 items-center gap-4 shrink-0 hidden md:flex`}>
                     <span title="Reach">👁 {fmtNum(p.reach)}</span>
                     <span title="Like">❤️ {fmtNum(p.likes)}</span>
                     <span title="Salvataggi">🔖 {fmtNum(p.saves)}</span>
@@ -1171,12 +1252,12 @@ function TemplatesView() {
     <div>
       <div className="mb-5">
         <h1 className="text-xl font-semibold text-gray-100">Templates Social</h1>
-        <p className="text-sm text-gray-500 mt-1">Seleziona un template a sinistra per vederne le slide</p>
+        <p className="text-sm text-gray-500 mt-1 hidden md:block">Seleziona un template a sinistra per vederne le slide</p>
       </div>
 
-      <div className="flex gap-6 h-[calc(100vh-180px)]">
-        {/* ── Left: template list ── */}
-        <aside className="w-72 shrink-0 overflow-y-auto pr-1 space-y-1.5">
+      <div className="flex flex-col md:flex-row gap-4 md:gap-6 md:h-[calc(100vh-180px)]">
+        {/* ── Left/Top: template list ── */}
+        <aside className="md:w-72 shrink-0 md:overflow-y-auto pr-0 md:pr-1 flex md:flex-col gap-2 md:gap-1.5 overflow-x-auto pb-2 md:pb-0 no-scrollbar">
           {ALL_TEMPLATES.map((tpl) => {
             const st = TPL_STATUS[tpl.status] || TPL_STATUS.planned;
             const isSelected = selectedTpl === tpl.id;
@@ -1184,26 +1265,26 @@ function TemplatesView() {
               <button
                 key={tpl.id}
                 onClick={() => setSelectedTpl(tpl.id)}
-                className={`w-full rounded-lg border px-3.5 py-3 transition-colors text-left cursor-pointer ${
+                className={`md:w-full shrink-0 rounded-lg border px-3.5 py-2.5 md:py-3 transition-colors text-left cursor-pointer ${
                   isSelected
                     ? "border-indigo-500/40 bg-indigo-500/[0.08]"
                     : "border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04]"
                 }`}
               >
                 <div className="flex items-start justify-between gap-2">
-                  <h3 className={`text-sm font-medium ${isSelected ? "text-gray-100" : "text-gray-300"}`}>{tpl.name}</h3>
-                  <span className={`text-[9px] font-medium uppercase tracking-wider px-1.5 py-0.5 rounded-full border shrink-0 ${st}`}>
+                  <h3 className={`text-xs md:text-sm font-medium whitespace-nowrap ${isSelected ? "text-gray-100" : "text-gray-300"}`}>{tpl.name}</h3>
+                  <span className={`text-[9px] font-medium uppercase tracking-wider px-1.5 py-0.5 rounded-full border shrink-0 hidden md:inline ${st}`}>
                     {tpl.status === "ready" ? "Pronto" : tpl.status === "wip" ? "In sviluppo" : "Pianificato"}
                   </span>
                 </div>
-                <p className={`${MONO} text-[10px] text-gray-600 mt-1`}>{tpl.formats.map((f) => f.label.split(" ")[0]).join(" · ")}</p>
+                <p className={`${MONO} text-[10px] text-gray-600 mt-1 hidden md:block`}>{tpl.formats.map((f) => f.label.split(" ")[0]).join(" · ")}</p>
               </button>
             );
           })}
         </aside>
 
-        {/* ── Right: selected template detail ── */}
-        <main className="flex-1 overflow-y-auto pr-1">
+        {/* ── Right/Bottom: selected template detail ── */}
+        <main className="flex-1 md:overflow-y-auto pr-0 md:pr-1">
           <div className="mb-6">
             <h2 className="text-base font-semibold text-gray-100">{tplData.name}</h2>
             <p className="text-sm text-gray-500 mt-0.5">{tplData.description}</p>

@@ -5,6 +5,20 @@
 // Stampa via iframe.contentWindow.print().
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
+// Dimensioni naturali pagina A4 orizzontale @96dpi (297×210mm) per scalare l'anteprima su mobile.
+const REPORT_W = 1123;
+const REPORT_H = 794;
+
+// Su mobile blocchiamo le altezze in vh delle pagine a px fissi (una pagina A4),
+// così l'iframe può crescere fino all'intero documento senza ricorsione vh→altezza.
+const MOBILE_PAGE_CSS = `<style id="gnm-mobile-pages">
+  .cover-page{height:${REPORT_H}px!important;min-height:${REPORT_H}px!important;}
+  .content-page,.proscons-page,.costs-detail-page,.legal-page,.thanks-page{min-height:${REPORT_H}px!important;}
+  .proscons-frame,.costs-detail-frame{min-height:${REPORT_H - 32}px!important;}
+  .thanks-frame{min-height:${REPORT_H - 24}px!important;}
+  html,body{height:auto!important;}
+</style>`;
 import { s, Box, Icon } from './ui';
 import type { Project } from './types';
 import type { BrandSettings } from '@/lib/brand';
@@ -148,6 +162,31 @@ export default function ReportScreen({
   const accent = '#3B83F6';
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const scrollPos = useRef(0);
+
+  // Mobile: la barra di config diventa un bottom-sheet.
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)');
+    const on = () => setIsMobile(mq.matches);
+    on();
+    mq.addEventListener('change', on);
+    return () => mq.removeEventListener('change', on);
+  }, []);
+  const [configOpen, setConfigOpen] = useState(false);
+
+  // Mobile: scala l'anteprima A4-landscape per adattarla alla larghezza schermo.
+  const previewRef = useRef<HTMLDivElement>(null);
+  const [pvW, setPvW] = useState(0);
+  const [docH, setDocH] = useState(0);
+  useEffect(() => {
+    const el = previewRef.current;
+    if (!el) return;
+    const measure = () => setPvW(el.clientWidth);
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   // Lista immobili selezionabili: piano Free → sempre mockup; altrimenti reali.
   const allProjects = useMemo(
@@ -368,13 +407,25 @@ export default function ReportScreen({
     const doc = iframe.contentDocument;
     if (!doc) return;
     const savedScroll = scrollPos.current;
+    // Mobile: pagine ad altezza px fissa → l'iframe può mostrare tutto il documento.
+    const finalHtml = isMobile ? html.replace('</head>', `${MOBILE_PAGE_CSS}</head>`) : html;
     doc.open();
-    doc.write(html);
+    doc.write(finalHtml);
     doc.close();
     const win = iframe.contentWindow;
     if (win) {
       win.scrollTo(0, savedScroll);
       win.addEventListener('scroll', () => { scrollPos.current = win.scrollY; }, { passive: true });
+    }
+    if (isMobile) {
+      const measure = () => setDocH(doc.documentElement.scrollHeight || doc.body.scrollHeight || 0);
+      measure();
+      // Ri-misura dopo il caricamento di immagini/foto cover.
+      const t = setTimeout(measure, 400);
+      win?.addEventListener('load', measure);
+      void t;
+    } else {
+      setDocH(0);
     }
     if (pendingFocusRef.current && doc) {
       const { title, pcType } = pendingFocusRef.current;
@@ -390,7 +441,7 @@ export default function ReportScreen({
         span.scrollIntoView({ block: 'center', behavior: 'smooth' });
       }
     }
-  }, [buildHtml, hasProperties]);
+  }, [buildHtml, hasProperties, isMobile]);
 
   const handlePrint = () => {
     if (!hasProperties) { toast('Crea o seleziona un immobile', 'x'); return; }
@@ -400,12 +451,10 @@ export default function ReportScreen({
 
   const labelStyle = s('display:block;font-size:11px;font-weight:700;color:#b3aca1;text-transform:uppercase;letter-spacing:.04em;margin:0 0 10px');
 
-  return (
-    <div className="gnm-report-wrap" style={{ display: 'flex', height: '100%', minHeight: 'calc(100vh - 64px)' }}>
-      {/* LEFT: control bar */}
-      <div className="gnm-report-rail max-md:!hidden" style={{ width: 330, flexShrink: 0, borderRight: '1px solid #ece9e2', background: '#faf9f7', overflowY: 'auto', padding: '24px 18px 40px' }}>
-        <h1 style={s('margin:0 0 4px;font-size:20px;font-weight:800;letter-spacing:-.3px')}>Report</h1>
-        <div style={s('color:#8c867d;font-size:13px;margin-bottom:22px')}>Scegli cosa includere nel dossier.</div>
+  const configBody = (
+    <>
+        <h1 className="max-md:!hidden" style={s('margin:0 0 4px;font-size:20px;font-weight:800;letter-spacing:-.3px')}>Report</h1>
+        <div className="max-md:!hidden" style={s('color:#8c867d;font-size:13px;margin-bottom:22px')}>Scegli cosa includere nel dossier.</div>
 
         {locked && (
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, background: '#eef4fe', border: '1px solid #cfe0fb', borderRadius: 10, padding: '10px 12px', marginBottom: 18 }}>
@@ -456,42 +505,71 @@ export default function ReportScreen({
             );
           })}
         </div>
+    </>
+  );
+
+  return (
+    <div className="gnm-report-wrap" style={{ display: 'flex', height: '100%', minHeight: 'calc(100vh - 64px)' }}>
+      {/* LEFT: control bar (desktop) */}
+      <div className="gnm-report-rail max-md:!hidden" style={{ width: 330, flexShrink: 0, borderRight: '1px solid #ece9e2', background: '#faf9f7', overflowY: 'auto', padding: '24px 18px 40px' }}>
+        {configBody}
       </div>
+
+      {/* MOBILE: config bottom-sheet */}
+      {isMobile && configOpen && (
+        <>
+          <div onClick={() => setConfigOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200 }} />
+          <div style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 201, maxHeight: '85vh', overflowY: 'auto', background: '#faf9f7', borderRadius: '18px 18px 0 0', padding: '0 16px 28px', boxShadow: '0 -12px 40px rgba(0,0,0,.2)', WebkitOverflowScrolling: 'touch' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14, position: 'sticky', top: 0, zIndex: 2, background: '#faf9f7', margin: '0 -16px 14px', padding: '14px 16px 10px', borderRadius: '18px 18px 0 0' }}>
+              <span style={{ fontSize: 16, fontWeight: 800, letterSpacing: '-.3px' }}>Configura report</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Box as="button" onClick={() => setConfigOpen(false)} style={s('border:none;background:#3B83F6;color:#fff;font-size:13px;font-weight:700;padding:9px 18px;border-radius:10px;cursor:pointer')} hover={s('background:#2563EB')}>Fatto</Box>
+                <Box as="button" onClick={() => setConfigOpen(false)} aria-label="Chiudi" style={s('border:none;background:transparent;width:34px;height:34px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center')} hover={s('background:#ece9e2')}><Icon name="x" size={18} color="#57534c" /></Box>
+              </div>
+            </div>
+            {configBody}
+          </div>
+        </>
+      )}
 
       {/* RIGHT: preview */}
       <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', background: '#f1efe9' }}>
         {/* Toolbar */}
-        <div className="gnm-report-toolbar" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 24px', borderBottom: '1px solid #e4e1da', background: '#fff' }}>
+        <div className="gnm-report-toolbar max-md:!px-3 max-md:!gap-2 max-md:!flex-wrap" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 24px', borderBottom: '1px solid #e4e1da', background: '#fff' }}>
+          {/* Configura (mobile) */}
+          <Box as="button" className="md:!hidden" onClick={() => setConfigOpen(true)} style={s('border:1px solid #d8d4cb;background:#fff;color:#211f1c;font-size:13px;font-weight:700;padding:9px 14px;border-radius:10px;cursor:pointer;display:inline-flex;align-items:center;gap:7px')} hover={s('background:#f6f4f0')}>
+            <Icon name="settings" size={15} color="#57534c" />Configura
+          </Box>
           {locked ? (
             <>
-              <div style={{ fontSize: 13, color: '#8c867d', flex: 1 }}>Anteprima · A4 · esempio</div>
-              <div onClick={() => go?.('account')} style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#eef4fe', border: '1px solid #cfe0fb', borderRadius: 12, padding: '9px 16px', cursor: go ? 'pointer' : 'default' }}>
+              <div className="max-md:!hidden" style={{ fontSize: 13, color: '#8c867d', flex: 1 }}>Anteprima · A4 · esempio</div>
+              <div onClick={() => go?.('account')} className="max-md:!text-xs max-md:!px-3" style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#eef4fe', border: '1px solid #cfe0fb', borderRadius: 12, padding: '9px 16px', cursor: go ? 'pointer' : 'default', minWidth: 0 }}>
                 <Icon name="lock" size={15} color="#1d5fd0" />
                 <span style={{ fontSize: 13, fontWeight: 600, color: '#1d5fd0' }}>Il Report è riservato ai piani Agency. <span style={{ textDecoration: 'underline', fontWeight: 800 }}>Passa a un piano</span> per usarlo con i tuoi immobili.</span>
               </div>
-              <div style={{ flex: 1 }} />
+              <div className="max-md:!hidden" style={{ flex: 1 }} />
             </>
           ) : (
             <>
-              <div style={{ fontSize: 13, color: '#8c867d', flex: 1 }}>Anteprima · A4 · {mappedProperties.length > 1 ? `${mappedProperties.length} immobili a confronto` : (mappedProperties[0] ? allProjects.find(p => selectedIds.has(p.id))?.nome : 'Nessun immobile')}</div>
+              <div className="max-md:!hidden" style={{ fontSize: 13, color: '#8c867d', flex: 1 }}>Anteprima · A4 · {mappedProperties.length > 1 ? `${mappedProperties.length} immobili a confronto` : (mappedProperties[0] ? allProjects.find(p => selectedIds.has(p.id))?.nome : 'Nessun immobile')}</div>
               {hasProperties && !editing && (
-                <Box as="button" onClick={startEditing} style={{ border: '1.5px solid #d8d4cb', background: '#fff', color: '#8c867d', fontSize: 13, fontWeight: 600, padding: '10px 18px', borderRadius: 10, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }} hover={{ borderColor: accent, color: accent }}>
-                  <Icon name="pencil" size={14} color="currentColor" />Modifica testi
+                <Box as="button" onClick={startEditing} className="max-md:!px-3" style={{ border: '1.5px solid #d8d4cb', background: '#fff', color: '#8c867d', fontSize: 13, fontWeight: 600, padding: '10px 18px', borderRadius: 10, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }} hover={{ borderColor: accent, color: accent }}>
+                  <Icon name="pencil" size={14} color="currentColor" /><span className="max-md:!hidden">Modifica testi</span>
                 </Box>
               )}
               {hasProperties && editing && (
                 <div style={{ display: 'flex', gap: 8 }}>
-                  <Box as="button" onClick={cancelEditing} style={{ border: '1.5px solid #d8d4cb', background: '#fff', color: '#8c867d', fontSize: 13, fontWeight: 600, padding: '8px 16px', borderRadius: 10, cursor: 'pointer' }} hover={{ borderColor: '#ef4444', color: '#ef4444' }}>
+                  <Box as="button" onClick={cancelEditing} className="max-md:!px-3" style={{ border: '1.5px solid #d8d4cb', background: '#fff', color: '#8c867d', fontSize: 13, fontWeight: 600, padding: '8px 16px', borderRadius: 10, cursor: 'pointer' }} hover={{ borderColor: '#ef4444', color: '#ef4444' }}>
                     Annulla
                   </Box>
-                  <Box as="button" onClick={saveEditing} style={{ border: 'none', background: accent, color: '#fff', fontSize: 13, fontWeight: 700, padding: '8px 18px', borderRadius: 10, cursor: 'pointer' }} hover={{ background: '#2563EB' }}>
-                    Salva Modifiche
+                  <Box as="button" onClick={saveEditing} className="max-md:!px-3" style={{ border: 'none', background: accent, color: '#fff', fontSize: 13, fontWeight: 700, padding: '8px 18px', borderRadius: 10, cursor: 'pointer' }} hover={{ background: '#2563EB' }}>
+                    <span className="max-md:!hidden">Salva Modifiche</span><span className="md:!hidden">Salva</span>
                   </Box>
                 </div>
               )}
-              <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
-                <Box as="button" onClick={handlePrint} style={s('border:none;background:#3B83F6;color:#fff;font-size:13.5px;font-weight:700;padding:10px 18px;border-radius:10px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;box-shadow:0 4px 12px rgba(59,131,246,.25)')} hover={s('background:#2563EB')}>
-                  <Icon name="download" size={16} color="#fff" />Scarica PDF
+              <div className="max-md:!flex-none" style={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
+                <Box as="button" onClick={handlePrint} className="max-md:!px-3" style={s('border:none;background:#3B83F6;color:#fff;font-size:13.5px;font-weight:700;padding:10px 18px;border-radius:10px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;box-shadow:0 4px 12px rgba(59,131,246,.25)')} hover={s('background:#2563EB')}>
+                  <Icon name="download" size={16} color="#fff" /><span className="max-md:!hidden">Scarica PDF</span>
                 </Box>
               </div>
             </>
@@ -499,7 +577,7 @@ export default function ReportScreen({
         </div>
 
         {/* Preview iframe */}
-        <div className="gnm-report-scroll" style={{ flex: 1, overflow: 'hidden', padding: 0, position: 'relative' }}>
+        <div ref={previewRef} className="gnm-report-scroll" style={{ flex: 1, overflow: isMobile ? 'auto' : 'hidden', WebkitOverflowScrolling: 'touch', padding: 0, position: 'relative', minWidth: 0 }}>
           {!hasProperties ? (
             <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <div style={s('background:#fff;border:1.5px dashed #d8d4cb;border-radius:14px;padding:56px;text-align:center;max-width:520px')}>
@@ -508,6 +586,16 @@ export default function ReportScreen({
                 <div style={s('color:#8c867d;font-size:13.5px')}>Crea o seleziona un immobile per generare il report.</div>
               </div>
             </div>
+          ) : isMobile && pvW > 0 ? (
+            (() => {
+              const k = pvW / REPORT_W;
+              const ih = docH || REPORT_H;
+              return (
+                <div style={{ position: 'relative', width: pvW, height: ih * k }}>
+                  <iframe ref={iframeRef} title="report" scrolling="no" style={{ position: 'absolute', top: 0, left: 0, width: REPORT_W, height: ih, border: 'none', background: '#fff', transformOrigin: 'top left', transform: `scale(${k})` }} />
+                </div>
+              );
+            })()
           ) : (
             <iframe ref={iframeRef} title="report" style={{ width: '100%', height: '100%', border: 'none', background: '#fff' }} />
           )}
