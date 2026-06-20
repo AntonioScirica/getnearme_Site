@@ -15,6 +15,7 @@
 
 import supabase from '../supabase.js';
 import { sendMessage } from '../telegram.js';
+import { trackAnthropicCall } from '../cost-tracker.js';
 import Anthropic from '@anthropic-ai/sdk';
 
 export const config = { maxDuration: 120 };
@@ -130,6 +131,7 @@ Rispondi SOLO con JSON valido:
   let aiAnalysis;
   try {
     const resp = await anthropic.messages.create({ model: 'claude-sonnet-4-6', max_tokens: 1500, messages: [{ role: 'user', content: prompt }] });
+    await trackAnthropicCall('claude-sonnet-4-6', 'ped-analyze', resp.usage || {});
     const m = resp.content[0].text.match(/\{[\s\S]*\}/);
     aiAnalysis = JSON.parse(m[0].replace(/,\s*([}\]])/g, '$1'));
   } catch (e) {

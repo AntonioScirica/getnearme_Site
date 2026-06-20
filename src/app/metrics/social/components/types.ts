@@ -50,8 +50,9 @@ export interface NewsItem {
 
 export interface CostsData {
   totalUsd: number;
-  byDay: Record<string, { anthropic: number; replicate: number; total: number }>;
+  byDay: Record<string, { anthropic: number; replicate: number; fal: number; total: number }>;
   byOperation: Record<string, number>;
+  byService?: Record<string, number>;
 }
 
 export interface PostMetric {

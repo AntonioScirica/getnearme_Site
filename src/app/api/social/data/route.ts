@@ -81,20 +81,23 @@ export async function GET(req: NextRequest) {
         .limit(2000);
       if (error) throw error;
 
-      const byDay: Record<string, { anthropic: number; replicate: number; total: number }> = {};
+      const byDay: Record<string, { anthropic: number; replicate: number; fal: number; total: number }> = {};
       const byOperation: Record<string, number> = {};
+      const byService: Record<string, number> = {};
       let total = 0;
       for (const row of data || []) {
         const day = String(row.created_at).slice(0, 10);
-        byDay[day] ??= { anthropic: 0, replicate: 0, total: 0 };
+        byDay[day] ??= { anthropic: 0, replicate: 0, fal: 0, total: 0 };
         const cost = Number(row.cost_usd) || 0;
         if (row.service === "anthropic") byDay[day].anthropic += cost;
-        if (row.service === "replicate") byDay[day].replicate += cost;
+        else if (row.service === "replicate") byDay[day].replicate += cost;
+        else if (row.service === "fal") byDay[day].fal += cost;
         byDay[day].total += cost;
         byOperation[row.operation] = (byOperation[row.operation] || 0) + cost;
+        byService[row.service] = (byService[row.service] || 0) + cost;
         total += cost;
       }
-      return NextResponse.json({ totalUsd: total, byDay, byOperation, recent: (data || []).slice(0, 50) });
+      return NextResponse.json({ totalUsd: total, byDay, byOperation, byService, recent: (data || []).slice(0, 50) });
     }
 
     if (view === "performance") {

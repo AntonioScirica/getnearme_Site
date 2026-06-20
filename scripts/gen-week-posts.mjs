@@ -26,6 +26,7 @@ import { renderSliderVideo } from '../src/lib/social/video-stories/slider-video.
 import { renderDayNightVideo } from '../src/lib/social/video-stories/daynight-video.mjs';
 import { concatSegments, renderConstructionVideo } from '../src/lib/social/video-stories/construction-video.mjs';
 import { renderRevealVideo, REVEAL_BADGES } from '../src/lib/social/video-stories/reveal-video.mjs';
+import { trackAnthropicCall } from '../src/lib/social/cost-tracker.js';
 
 const anthropic = new Anthropic({ apiKey: (process.env.ANTHROPIC_API_KEY || '').trim() });
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
@@ -204,6 +205,7 @@ ${SCHEMAS}
 Rispondi SOLO con JSON valido: { "posts": [ <slide_data nell'ordine 0..${slots.length - 1}> ] }`;
 
   const res = await anthropic.messages.create({ model: 'claude-sonnet-4-6', max_tokens: 8000, messages: [{ role: 'user', content: prompt }] });
+  try { await trackAnthropicCall('claude-sonnet-4-6', 'gen-week-posts', res.usage || {}); } catch { /* non-blocking */ }
   const m = res.content[0].text.match(/\{[\s\S]*\}/);
   if (!m) throw new Error('no JSON for ' + date);
   const posts = JSON.parse(m[0].replace(/,\s*([}\]])/g, '$1').replace(/[‘’]/g, "'").replace(/[“”]/g, '"')).posts;
@@ -333,6 +335,7 @@ Ogni reel mostra una trasformazione AI fatta con GetNearMe (foto/immobile). Parl
 Rispondi SOLO JSON: { "caps": [ { "hook":"<gancio max 8 parole>", "body":"<max 20 parole>", "caption":"<caption IG max 30 parole + 1 CTA 'Commenta DEMO'>" } x${plan.length} ] }`;
   try {
     const res = await anthropic.messages.create({ model: 'claude-sonnet-4-6', max_tokens: 2000, messages: [{ role: 'user', content: prompt }] });
+    try { await trackAnthropicCall('claude-sonnet-4-6', 'gen-week-video-captions', res.usage || {}); } catch { /* non-blocking */ }
     const m = res.content[0].text.match(/\{[\s\S]*\}/);
     return JSON.parse(m[0].replace(/,\s*([}\]])/g, '$1')).caps;
   } catch { return plan.map((p) => ({ hook: p.label, body: '', caption: 'Realizzato con GetNearMe. Commenta DEMO per la prova gratuita.' })); }

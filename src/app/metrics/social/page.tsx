@@ -1155,6 +1155,8 @@ function CostsView({ costs, loading }: { costs: CostsData | null; loading: boole
                   <span className="text-violet-400">A ${v.anthropic.toFixed(3)}</span>
                   {" · "}
                   <span className="text-pink-400">R ${v.replicate.toFixed(3)}</span>
+                  {" · "}
+                  <span className="text-amber-400">K ${(v.fal || 0).toFixed(3)}</span>
                   {" · "}${v.total.toFixed(3)}
                 </span>
               </div>
