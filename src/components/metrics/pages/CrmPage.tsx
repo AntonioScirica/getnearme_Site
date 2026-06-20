@@ -261,6 +261,17 @@ function Sel({ v, opts, onChange }: { v: string; opts: string[]; onChange: (v: s
   );
 }
 
+// Module-level so it keeps a stable identity across renders (otherwise inputs
+// remount on every keystroke and focus jumps to the autoFocus field).
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <label className={`${MONO} text-[10px] uppercase tracking-wider text-gray-500 mb-1 block`}>{label}</label>
+      {children}
+    </div>
+  );
+}
+
 // ── Add-contact modal form ──────────────────────────────────────────
 function ContactForm({ form, setForm, onSubmit, onClose, saving, cityOptions, agencyOptions }: {
   form: Record<string, string>;
@@ -273,12 +284,6 @@ function ContactForm({ form, setForm, onSubmit, onClose, saving, cityOptions, ag
 }) {
   const set = (k: string, v: string) => setForm({ ...form, [k]: v });
   const inputCls = `${MONO} w-full text-sm bg-white/[0.03] border border-white/[0.08] rounded-lg px-3 py-2 text-gray-200 placeholder:text-gray-600 focus:outline-none focus:border-indigo-500/50`;
-  const Field = ({ label, children }: { label: string; children: React.ReactNode }) => (
-    <div>
-      <label className={`${MONO} text-[10px] uppercase tracking-wider text-gray-500 mb-1 block`}>{label}</label>
-      {children}
-    </div>
-  );
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6" onClick={onClose}>
       <div className="bg-[#161920] border border-white/[0.1] rounded-2xl max-w-2xl w-full max-h-[88vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
