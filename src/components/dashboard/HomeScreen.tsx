@@ -229,8 +229,8 @@ export function HomeScreen({
               </div>
             </label>
 
-            <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <div className="max-md:!items-center max-md:!text-center" style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 0 }}>
+              <div className="max-md:!justify-center" style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
                 <h1 className="max-md:!text-2xl" style={s('margin:0;font-size:36px;font-weight:800;letter-spacing:-.5px;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.5);line-height:1.1')}>{active.nome}</h1>
               </div>
               <div className="max-md:!justify-center" style={s('color:rgba(255,255,255,.9);font-size:15px;display:flex;align-items:center;gap:6px;margin-top:2px')}><Icon name="map-pin" size={15} color="rgba(255,255,255,.7)" />{active.addr || 'Indirizzo non specificato'}</div>
@@ -253,7 +253,7 @@ export function HomeScreen({
           <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
             
             {/* Quick Summary Row */}
-            <div className="max-md:!grid-cols-2 max-sm:!grid-cols-1" style={s('display:grid;grid-template-columns:repeat(4,1fr);gap:12px')}>
+            <div className="max-md:!grid-cols-2" style={s('display:grid;grid-template-columns:repeat(4,1fr);gap:12px')}>
               {[
                 { 
                   label: active.icons?.prezzo === 'dollar' ? 'Prezzo ($)' : active.icons?.prezzo === 'pound' ? 'Prezzo (£)' : 'Prezzo (€)', 
@@ -295,10 +295,10 @@ export function HomeScreen({
                 <div style={{ position: 'absolute', top: -40, right: -40, width: 220, height: 220, background: 'linear-gradient(135deg, #60A5FA, #93C5FD)', borderRadius: '50%', filter: 'blur(40px)', opacity: 0.35, animation: 'blob-float 14s ease-in-out infinite' }} />
                 <div style={{ position: 'absolute', bottom: -60, left: -50, width: 200, height: 200, background: 'linear-gradient(135deg, #93C5FD, #6366f1)', borderRadius: '50%', filter: 'blur(48px)', opacity: 0.3, animation: 'blob-float-2 18s ease-in-out infinite' }} />
                 
-                <div style={{ width: 56, height: 56, borderRadius: 16, background: 'rgba(255,255,255,.2)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 'auto', border: '1px solid rgba(255,255,255,.2)' }}>
+                <div className="max-md:!w-11 max-md:!h-11 max-md:[&>svg]:!w-5 max-md:[&>svg]:!h-5" style={{ width: 56, height: 56, borderRadius: 16, background: 'rgba(255,255,255,.2)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 'auto', border: '1px solid rgba(255,255,255,.2)' }}>
                   <Icon name="sparkles" size={28} color="#fff" />
                 </div>
-                <div style={{ marginTop: 120 }}>
+                <div className="max-md:!mt-10" style={{ marginTop: 120 }}>
                   <h3 style={s('font-size:24px;font-weight:800;letter-spacing:-.5px;margin:0 0 6px')}>Homestaging AI</h3>
                   <p style={s('font-size:14.5px;color:rgba(255,255,255,.8);margin:0;line-height:1.4')}>Arreda stanze vuote o cambia stile ai tuoi ambienti con l'Intelligenza Artificiale.</p>
                 </div>
@@ -399,7 +399,7 @@ export function HomeScreen({
         <div style={{ marginTop: 40, borderTop: '1px solid #f0ede7', paddingTop: 32 }}>
           <div style={s('display:flex;align-items:baseline;justify-content:space-between;margin-bottom:20px')}>
             <h2 style={s('margin:0;font-size:20px;font-weight:800;letter-spacing:-.3px;color:#211f1c')}>Contenuti recenti</h2>
-            <span onClick={() => go('media')} style={s('font-size:14px;font-weight:700;color:#1d5fd0;cursor:pointer')}>Vedi tutto in Libreria Media</span>
+            <span onClick={() => go('media')} style={s('font-size:14px;font-weight:700;color:#1d5fd0;cursor:pointer')}>Vedi tutto</span>
           </div>
           {loadingRecent ? (
             <div className="max-md:!grid-cols-2" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>

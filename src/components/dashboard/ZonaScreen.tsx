@@ -205,7 +205,10 @@ export default function ZonaScreen({
       // fix dimensioni dopo il mount
       setTimeout(() => map.invalidateSize(), 100);
     })();
-    return () => { cancelled = true; if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; } };
+    // Il container cambia dimensione (es. mappa 16:9 su mobile) → ricalibra i tile.
+    const onResize = () => mapRef.current?.invalidateSize();
+    window.addEventListener('resize', onResize);
+    return () => { window.removeEventListener('resize', onResize); cancelled = true; if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; } };
   }, []);
 
   const colorOf = useCallback((key: string) => POI_CATEGORIES.find((c) => c.key === key)?.color || accent, []);
@@ -431,10 +434,10 @@ export default function ZonaScreen({
   const labelStyle = s('display:block;font-size:11px;font-weight:700;color:#b3aca1;text-transform:uppercase;letter-spacing:.04em;margin:0 0 10px');
 
   return (
-    <div style={{ display: 'flex', height: '100%', minHeight: 'calc(100vh - 64px)' }}>
+    <div className="max-md:!flex-col" style={{ display: 'flex', height: '100%', minHeight: 'calc(100vh - 64px)' }}>
       <style>{`@keyframes spin { to { transform: rotate(360deg); } } @keyframes zfadein { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } } .zona-card { animation: zfadein .38s ease both; } .leaflet-container { font: inherit; } @keyframes zona-ai-pulse { 0%,100% { fill-opacity: .06; stroke-opacity: .6; stroke-width: 2; } 50% { fill-opacity: .26; stroke-opacity: 1; stroke-width: 3.5; } } .zona-analyzing { animation: zona-ai-pulse 1.3s ease-in-out infinite; fill: ${accent}; stroke: ${accent}; filter: drop-shadow(0 0 6px ${accent}aa); }`}</style>
       {/* LEFT: ricerca + risultati */}
-      <div className="max-md:!hidden" style={{ width: 380, flexShrink: 0, borderRight: '1px solid #ece9e2', background: '#faf9f7', overflowY: 'auto', padding: '24px 18px 40px', display: 'flex', flexDirection: 'column' }}>
+      <div className="max-md:!w-full max-md:!border-r-0 max-md:!order-2" style={{ width: 380, flexShrink: 0, borderRight: '1px solid #ece9e2', background: '#faf9f7', overflowY: 'auto', padding: '24px 18px 40px', display: 'flex', flexDirection: 'column' }}>
         <h1 style={s('margin:0 0 4px;font-size:20px;font-weight:800;letter-spacing:-.3px')}>Analisi di zona</h1>
         <div style={s('color:#8c867d;font-size:13px;margin-bottom:20px')}>Inserisci un indirizzo e scopri cosa c&apos;è in zona.</div>
 
@@ -585,7 +588,7 @@ export default function ZonaScreen({
 
       {/* RIGHT: mappa — isolata: i z-index interni di Leaflet (fino a ~1000) restano
           contenuti qui e non sfondano sopra l'header/tray dell'app. */}
-      <div style={{ flex: 1, minWidth: 0, position: 'relative', background: '#e8ebef', isolation: 'isolate', zIndex: 0 }}>
+      <div className="max-md:!order-1 max-md:!flex-none max-md:!w-full max-md:!aspect-video" style={{ flex: 1, minWidth: 0, position: 'relative', background: '#e8ebef', isolation: 'isolate', zIndex: 0 }}>
         <div ref={mapEl} style={{ position: 'absolute', inset: 0 }} />
 
         {/* Controlli disegno area (in alto a destra) */}

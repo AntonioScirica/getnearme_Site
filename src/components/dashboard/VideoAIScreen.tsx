@@ -1119,7 +1119,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
 
   // ── UI ───────────────────────────────────────────────────────────────────
   return (
-    <div ref={rootRef} className="max-md:!px-4 max-md:!py-6" style={s('max-width:1160px;margin:0 auto;padding:32px 32px 104px')}>
+    <div ref={rootRef} className="max-md:!px-4 max-md:!pt-6 max-md:!pb-32" style={s('max-width:1160px;margin:0 auto;padding:32px 32px 104px')}>
       {step === 0 && (
         <div className="max-md:!flex-col max-md:!items-start max-md:!gap-4" style={s('display:flex;align-items:center;justify-content:space-between;margin-bottom:24px')}>
           <div>
@@ -1151,7 +1151,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
       {step === 0 && (
         <div className="max-md:!grid-cols-1" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
           {templates.filter(t => t.id !== 'montaggio').map(t => (
-            <Box key={t.id} onClick={() => { if (quota && displayRemaining <= 0) { if (lockBrand) { toast('Hai finito i video gratuiti. Passa a un piano per continuare.', 'x'); } else { setPacksOpen(true); } return; } setTpl(t); setStep(NO_AVATAR_LAYOUTS.includes(t.layout || t.id) ? 2 : 1); }} style={{
+            <Box key={t.id} onClick={() => { if (quota && displayRemaining <= 0) { if (lockBrand) { toast('Hai finito i video gratuiti. Passa a un piano per continuare.', 'x'); } else { setPacksOpen(true); } return; } setClips([]); setPairs([]); setTpl(t); setStep(NO_AVATAR_LAYOUTS.includes(t.layout || t.id) ? 2 : 1); }} style={{
               background: '#fff', border: '1px solid #f0ede7', borderRadius: 16, overflow: 'hidden', cursor: 'pointer',
               transition: 'box-shadow .15s, transform .15s',
             }} hover={{ boxShadow: '0 12px 32px rgba(33,31,28,.10)', transform: 'translateY(-2px)' }}>
@@ -1445,7 +1445,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
               </div>
               <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:14px;padding:18px;margin-top:12px')}>
                 <div style={s('font-size:13px;font-weight:800;margin-bottom:10px')}>Animazione</div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
+                <div className="max-md:!grid-cols-1" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
                   {AI_STAGING_ANIMATION_STYLES.map(an => {
                     const sel = animStyle === an.id;
                     const meta = ANIM_META[an.id] || { desc: '', icon: '' };
@@ -1519,7 +1519,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
           )}
 
           <StickyNav>
-            <Box as="button" onClick={() => setStep(usesAvatar ? 1 : 0)} style={s('border:1px solid #e4e1da;background:#fff;font-size:13px;font-weight:600;padding:11px 20px;border-radius:10px;cursor:pointer') as React.CSSProperties} hover={s('background:#f6f4f0')}>Indietro</Box>
+            <Box as="button" onClick={() => { setClips([]); setPairs([]); setStep(usesAvatar ? 1 : 0); }} style={s('border:1px solid #e4e1da;background:#fff;font-size:13px;font-weight:600;padding:11px 20px;border-radius:10px;cursor:pointer') as React.CSSProperties} hover={s('background:#f6f4f0')}>Indietro</Box>
             {inlineStep3 ? (
               <Box as="button" onClick={() => { if (mediaReady) handleRender(); }} style={{ border: 'none', background: '#3B83F6', color: '#fff', fontSize: 14, fontWeight: 700, padding: '12px 28px', borderRadius: 10, cursor: mediaReady ? 'pointer' : 'default', opacity: mediaReady ? 1 : 0.4, display: 'flex', alignItems: 'center', gap: 8 }} hover={mediaReady ? { background: '#2b6fe0' } : {}}>
                 <Icon name="sparkles" size={16} color="#fff" />Genera video

@@ -2596,6 +2596,17 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
   const [collapsed, setCollapsed] = useState(false);
   const [projOpen, setProjOpen] = useState(false);
   const projHoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Hover-to-open is a desktop-only nicety; on mobile the panel sits below the
+  // trigger (absolute) so the cursor gap fires mouseleave and the menu flickers.
+  const [hoverNav, setHoverNav] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const hov = window.matchMedia('(min-width: 768px) and (hover: hover)');
+    const narrow = window.matchMedia('(max-width: 767px)');
+    const on = () => { setHoverNav(hov.matches); setIsMobile(narrow.matches); };
+    on(); hov.addEventListener('change', on); narrow.addEventListener('change', on);
+    return () => { hov.removeEventListener('change', on); narrow.removeEventListener('change', on); };
+  }, []);
   const [projQuery, setProjQuery] = useState('');
   const [activeProject, setActiveProject] = useState(() =>
     typeof window !== 'undefined' ? localStorage.getItem('gnm_active_project') ?? 'p1' : 'p1'
@@ -2605,6 +2616,8 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
   const [immMenuId, setImmMenuId] = useState<string | null>(null);
   const [importOpen, setImportOpen] = useState(false);
   const [immActionsOpen, setImmActionsOpen] = useState(false);
+  const [immQuery, setImmQuery] = useState('');
+  const [immExpanded, setImmExpanded] = useState<Set<string>>(new Set());
   const [immSelectMode, setImmSelectMode] = useState(false);
   const [immSelected, setImmSelected] = useState<Set<string>>(new Set());
   const [immDeleting, setImmDeleting] = useState(false);
@@ -3138,7 +3151,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
       {/* APP SHELL */}
       <div data-app-shell style={{ display: 'flex', height: '100%', ['--gnm-content-left' as string]: collapsed ? '64px' : '252px' } as React.CSSProperties}>
         {/* SIDEBAR */}
-        <div className={`max-md:!fixed max-md:!inset-y-0 max-md:!left-0 max-md:!z-[100] max-md:!w-64 max-md:!shadow-2xl ${mobileMenuOpen ? 'max-md:!flex' : 'max-md:!hidden'}`} style={{ width: collapsed ? 64 : 252, flex: 'none', background: 'var(--bg-card)', borderRight: '1px solid var(--border-light)', display: 'flex', flexDirection: 'column', transition: 'width .25s ease', overflow: 'hidden' }}>
+        <div className={`max-md:!fixed max-md:!inset-y-0 max-md:!left-0 max-md:!z-[100] max-md:!w-64 max-md:!shadow-2xl max-md:!flex ${mobileMenuOpen ? 'max-md:!translate-x-0' : 'max-md:!-translate-x-full'}`} style={{ width: collapsed ? 64 : 252, flex: 'none', background: 'var(--bg-card)', borderRight: '1px solid var(--border-light)', display: 'flex', flexDirection: 'column', transition: 'width .25s ease, transform .3s cubic-bezier(.4,0,.2,1)', overflow: 'hidden' }}>
           <div style={s('height:64px;flex:none;display:flex;align-items:center;padding:0 20px;overflow:hidden;justify-content:space-between')}>
             <div style={{ width: collapsed ? 27 : 130, overflow: 'hidden', flex: 'none' }}><img src="/dashboard/logo.svg" alt="GetNearMe" style={{ height: 24, maxWidth: 'none' }} /></div>
             {mobileMenuOpen && (
@@ -3228,14 +3241,12 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
         </div>
 
         {/* MOBILE MENU BACKDROP */}
-        {mobileMenuOpen && (
-          <div className="md:hidden" onClick={() => setMobileMenuOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 99 }} />
-        )}
+        <div className="md:hidden" onClick={() => setMobileMenuOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 99, opacity: mobileMenuOpen ? 1 : 0, pointerEvents: mobileMenuOpen ? 'auto' : 'none', transition: 'opacity .3s ease-in-out' }} />
 
         {/* MAIN */}
         <div className="max-md:!w-full" style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
           {/* HEADER */}
-          <div className="max-md:!px-3 max-md:!gap-2" style={{ height: 64, flex: 'none', background: 'var(--bg-card)', borderBottom: '1px solid var(--border-light)', display: 'flex', alignItems: 'center', gap: 14, padding: '0 20px', position: 'relative', zIndex: tourStep !== null && tdef.sel === '[data-tour-dropdown]' ? 'auto' as any : 30 }}>
+          <div className="max-md:!px-3 max-md:!gap-2 max-md:!flex-wrap max-md:!h-auto max-md:!py-2.5" style={{ height: 64, flex: 'none', background: 'var(--bg-card)', borderBottom: '1px solid var(--border-light)', display: 'flex', alignItems: 'center', gap: 14, padding: '0 20px', position: 'relative', zIndex: tourStep !== null && tdef.sel === '[data-tour-dropdown]' ? 'auto' as any : 30 }}>
             {/* Hamburger (Mobile) */}
             <Box as="button" onClick={() => setMobileMenuOpen(true)} className="md:!hidden" title="Apri menu" aria-label="Apri menu" style={s('border:none;background:transparent;width:38px;height:38px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none')} hover={s('background:#f1efe9')}><Icon name="menu" size={20} /></Box>
             
@@ -3243,28 +3254,28 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
             <Box as="button" onClick={() => setCollapsed((c) => !c)} className="max-md:!hidden" title="Comprimi menu" aria-label="Comprimi menu" style={s('border:none;background:transparent;width:38px;height:38px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center')} hover={s('background:#f1efe9')}><Icon name="panel-left" size={18} /></Box>
 
             {/* project switcher */}
-            <div data-tour-dropdown onMouseEnter={() => { if (tourStep === null) { if (projHoverTimer.current) clearTimeout(projHoverTimer.current); setProjOpen(true); setTrayOpen(false); } }} onMouseLeave={() => { if (tourStep === null) { if (projHoverTimer.current) clearTimeout(projHoverTimer.current); projHoverTimer.current = setTimeout(() => setProjOpen(false), 180); } }} style={{ position: 'relative', ...(tourStep !== null && tdef.sel === '[data-tour-dropdown]' ? { zIndex: 102, pointerEvents: 'none' as const } : {}) }}>
-              <Box onClick={(e) => { e.stopPropagation(); if (tourStep !== null && TOUR_DEFS[tourStep]?.sel === '[data-tour-dropdown]') return; setProjOpen((o) => !o); setTrayOpen(false); }} style={s(`display:flex;align-items:center;gap:10px;padding:7px 14px 7px 8px;border:1px solid #e9e6df;border-radius:8px;cursor:pointer;background:var(--bg-card);min-height:38px;min-width:240px;justify-content:space-between`)} hover={s('border-color:var(--border-dark);box-shadow:0 2px 8px rgba(33,31,28,.06)')}>
+            <div data-tour-dropdown className="max-md:!order-10 max-md:!w-full max-md:!basis-full" onMouseEnter={() => { if (hoverNav && tourStep === null) { if (projHoverTimer.current) clearTimeout(projHoverTimer.current); setProjOpen(true); setTrayOpen(false); } }} onMouseLeave={() => { if (hoverNav && tourStep === null) { if (projHoverTimer.current) clearTimeout(projHoverTimer.current); projHoverTimer.current = setTimeout(() => setProjOpen(false), 180); } }} style={{ position: 'relative', ...(tourStep !== null && tdef.sel === '[data-tour-dropdown]' ? { zIndex: 102, pointerEvents: 'none' as const } : {}) }}>
+              <Box className="max-md:!w-full max-md:!min-w-0" onClick={(e) => { e.stopPropagation(); if (tourStep !== null && TOUR_DEFS[tourStep]?.sel === '[data-tour-dropdown]') return; setProjOpen((o) => !o); setTrayOpen(false); }} style={s(`display:flex;align-items:center;gap:10px;padding:7px 14px 7px 8px;border:1px solid #e9e6df;border-radius:8px;cursor:pointer;background:var(--bg-card);min-height:38px;min-width:240px;justify-content:space-between`)} hover={s('border-color:var(--border-dark);box-shadow:0 2px 8px rgba(33,31,28,.06)')}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
                   {loadingProjects ? (
-                    <div className="max-md:!hidden" style={{ minWidth: 0, flex: 1 }}><div style={s('font-size:13px;font-weight:700;color:var(--text-muted)')}>Caricamento...</div></div>
+                    <div style={{ minWidth: 0, flex: 1 }}><div style={s('font-size:13px;font-weight:700;color:var(--text-muted)')}>Caricamento...</div></div>
                   ) : active ? (
                     <>
                       <div style={{ width: 30, height: 30, borderRadius: '50%', ...getCoverStyle(active, true), flex: 'none' }} />
-                      <div className="max-md:!hidden" style={{ minWidth: 0, flex: 1 }}><div style={s('font-size:11px;color:var(--text-muted);line-height:1.2')}>Immobile attivo</div><div style={s('font-size:13px;font-weight:700;white-space:nowrap;line-height:1.2;overflow:hidden;text-overflow:ellipsis')}>{active.nome}</div></div>
+                      <div style={{ minWidth: 0, flex: 1 }}><div style={s('font-size:11px;color:var(--text-muted);line-height:1.2')}>Immobile attivo</div><div style={s('font-size:13px;font-weight:700;white-space:nowrap;line-height:1.2;overflow:hidden;text-overflow:ellipsis')}>{active.nome}</div></div>
                     </>
                   ) : (
                     <>
                       {tourStep === null && <div style={{ width: 30, height: 30, borderRadius: '50%', backgroundColor: '#f3f1ec', flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="plus" size={14} color="var(--text-muted)" /></div>}
-                      <div className="max-md:!hidden" style={{ minWidth: 0, flex: 1 }}><div style={s(`font-size:13px;font-weight:700;white-space:nowrap;line-height:1.2${tourStep !== null ? ';color:var(--text-muted)' : ''}`)}>{tourStep !== null ? 'I tuoi immobili' : 'Crea il tuo primo immobile'}</div></div>
+                      <div style={{ minWidth: 0, flex: 1 }}><div style={s(`font-size:13px;font-weight:700;white-space:nowrap;line-height:1.2${tourStep !== null ? ';color:var(--text-muted)' : ''}`)}>{tourStep !== null ? 'I tuoi immobili' : 'Crea il tuo primo immobile'}</div></div>
                     </>
                   )}
                 </div>
                 <Icon name="chevron-down" size={14} color="var(--text-muted)" style={{ flex: 'none' }} />
               </Box>
               {projOpen && (
-                <div className="max-md:!fixed max-md:!top-16 max-md:!left-2 max-md:!right-2 max-md:!w-auto" style={s(`position:absolute;top:52px;left:0;width:100%;background:var(--bg-card);border-radius:12px;box-shadow:0 16px 48px rgba(33,31,28,.16);border:1px solid var(--border-light);z-index:99;overflow:hidden;box-shadow:0 16px 48px rgba(33,31,28,.16)`)}>
-                  {tourStep === null && <div style={s('padding:12px 12px 8px')}><div style={s('display:flex;align-items:center;gap:8px;background:#faf9f7;border:1px solid #ece9e2;border-radius:10px;padding:8px 12px')}><Icon name="search" size={15} color="var(--text-muted)" /><input value={projQuery} onChange={(e) => setProjQuery(e.target.value)} placeholder="Cerca immobile…" style={s('border:none;background:transparent;outline:none;font-size:13px;width:100%')} /></div></div>}
+                <div style={s(`position:absolute;top:52px;left:0;width:100%;background:var(--bg-card);border-radius:12px;box-shadow:0 16px 48px rgba(33,31,28,.16);border:1px solid var(--border-light);z-index:99;overflow:hidden;box-shadow:0 16px 48px rgba(33,31,28,.16)`)}>
+                  {tourStep === null && <div style={s('padding:12px 12px 8px')}><div style={s('display:flex;align-items:center;gap:8px;background:#faf9f7;border:1px solid #ece9e2;border-radius:10px;padding:0 14px;min-height:44px')}><Icon name="search" size={15} color="var(--text-muted)" /><input value={projQuery} onChange={(e) => setProjQuery(e.target.value)} placeholder="Cerca immobile…" style={s('border:none;background:transparent;outline:none;font-size:13px;width:100%')} /></div></div>}
                   <div style={{ padding: tourStep !== null ? '12px' : '0 12px 12px', borderBottom: '1px solid var(--border-light)' }}>
                     <Box data-tour="new-project" onClick={() => {
                       const inTourDropdown = tourStep !== null && TOUR_DEFS[tourStep]?.sel === '[data-tour-dropdown]';
@@ -3298,12 +3309,6 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
             </div>
 
             <div style={{ flex: 1 }} />
-
-            <Box as="button" onClick={() => { setCmdkOpen(true); setCmdQuery(''); }} title="Cerca · ⌘K" aria-label="Cerca" className="max-md:!px-3 max-md:!justify-center" style={s('border:1px solid #e9e6df;background:var(--bg-card);display:flex;align-items:center;gap:8px;padding:0 16px;height:40px;border-radius:10px;cursor:pointer;color:var(--text-muted);flex:1;max-width:480px')} hover={s('border-color:var(--border-dark);box-shadow:0 2px 8px rgba(33,31,28,.06)')}>
-              <Icon name="search" size={15} color="#b3aca1" />
-              <span className="max-md:!hidden" style={s('font-size:13px;font-weight:500;color:#b3aca1;flex:1;text-align:left')}>Cerca strumenti, immobili, media</span>
-              <span className="max-md:!hidden" style={s('font-size:10.5px;font-weight:700;background:#f1efe9;color:var(--text-muted);padding:2px 7px;border-radius:6px')}>⌘K</span>
-            </Box>
 
             {/* jobs tray + notifications */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -3493,7 +3498,8 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
               />
             ) : route === 'immobili' ? (
               (() => {
-                const list = projects;
+                const q = immQuery.trim().toLowerCase();
+                const list = q ? projects.filter(p => (p.nome || '').toLowerCase().includes(q) || (p.addr || '').toLowerCase().includes(q)) : projects;
                 // Raggruppa per giorno di creazione (come Galleria).
                 const dayMap = new Map<string, Project[]>();
                 for (const p of list) {
@@ -3527,13 +3533,19 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                           </Box>
                         </div>
                       ) : (
-                      <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-                        <div style={{ position: 'relative' }}>
-                          <Box as="button" onClick={() => setImmActionsOpen(o => !o)} style={s('box-sizing:border-box;border:1px solid #e4e1da;background:var(--bg-card);color:var(--text-main);font-size:13.5px;font-weight:700;line-height:20px;padding:11px 18px;border-radius:10px;cursor:pointer;display:flex;align-items:center;gap:8px;white-space:nowrap')} hover={s('background:#f6f4f0')}>
+                      <div className="max-md:!w-full max-md:!flex-col max-md:!gap-3 max-md:!items-stretch" style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+                        {/* Ricerca immobili (mobile) */}
+                        <div className="md:hidden" style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', boxSizing: 'border-box', background: '#faf9f7', border: '1px solid #ece9e2', borderRadius: 10, padding: '0 14px', minHeight: 44 }}>
+                          <Icon name="search" size={16} color="#8c867d" />
+                          <input value={immQuery} onChange={(e) => setImmQuery(e.target.value)} placeholder="Cerca immobile…" style={s('border:none;background:transparent;outline:none;font-size:14px;width:100%;color:var(--text-main)')} />
+                        </div>
+                        <div className="max-md:!flex max-md:!w-full max-md:!gap-3" style={{ display: 'contents' }}>
+                        <div className="max-md:!flex-1" style={{ position: 'relative' }}>
+                          <Box as="button" className="max-md:!w-full max-md:!justify-center" onClick={() => setImmActionsOpen(o => !o)} style={s('box-sizing:border-box;border:1px solid #e4e1da;background:var(--bg-card);color:var(--text-main);font-size:13.5px;font-weight:700;line-height:20px;padding:11px 18px;border-radius:10px;cursor:pointer;display:flex;align-items:center;gap:8px;white-space:nowrap')} hover={s('background:#f6f4f0')}>
                             Azioni <Icon name="chevron-down" size={16} color="#57534c" />
                           </Box>
                           {immActionsOpen && (
-                            <div onClick={(e) => e.stopPropagation()} style={{ position: 'absolute', top: 'calc(100% + 6px)', right: 0, zIndex: 40, background: '#fff', border: '1px solid #f0ede7', borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', padding: 4, minWidth: 180 }}>
+                            <div onClick={(e) => e.stopPropagation()} className="max-md:!left-1/2 max-md:!right-auto max-md:!-translate-x-1/2" style={{ position: 'absolute', top: 'calc(100% + 6px)', right: 0, zIndex: 40, background: '#fff', border: '1px solid #f0ede7', borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', padding: 4, minWidth: 180 }}>
                               <Box as="button" onClick={() => { setImmActionsOpen(false); setImportOpen(true); }} style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '10px 12px', borderRadius: 8, border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 13.5, fontWeight: 600, color: '#211f1c', textAlign: 'left' } as React.CSSProperties} hover={{ background: 'var(--bg-hover)' }}>
                                 <Icon name="upload" size={16} color="#57534c" />Importa immobili
                               </Box>
@@ -3553,9 +3565,10 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                             </div>
                           )}
                         </div>
-                        <Box as="button" onClick={() => setNewProjOpen(true)} style={s('box-sizing:border-box;border:1px solid #3B83F6;background:#3B83F6;color:var(--bg-card);font-size:13.5px;font-weight:700;line-height:20px;padding:11px 18px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;white-space:nowrap')} hover={s('background:#2b6fe0;border-color:#2b6fe0')}>
+                        <Box as="button" className="max-md:!flex-1" onClick={() => setNewProjOpen(true)} style={s('box-sizing:border-box;border:1px solid #3B83F6;background:#3B83F6;color:var(--bg-card);font-size:13.5px;font-weight:700;line-height:20px;padding:11px 18px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;white-space:nowrap')} hover={s('background:#2b6fe0;border-color:#2b6fe0')}>
                           Nuovo immobile
                         </Box>
+                        </div>
                       </div>
                       )}
                     </div>
@@ -3590,8 +3603,8 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                                 </div>
                               </div>
                             </div>
-                            <div className="max-md:!grid-cols-2" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 16 }}>
-                        {day.items.map(p => (
+                            <div className="max-md:!grid-cols-1" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 16 }}>
+                        {(isMobile && !immExpanded.has(day.key) ? day.items.slice(0, 5) : day.items).map(p => (
                           <Box key={p.id} onClick={() => { if (immSelectMode) { setImmSelected(prev => { const n = new Set(prev); if (n.has(p.id)) n.delete(p.id); else n.add(p.id); return n; }); return; } if (immMenuId === p.id) { setImmMenuId(null); return; } setActiveProject(p.id); go('home'); }} style={{ position: 'relative', background: 'var(--bg-card)', border: immSelectMode && immSelected.has(p.id) ? '2px solid #3B83F6' : '1px solid #ece9e2', borderRadius: 16, overflow: 'hidden', cursor: 'pointer', display: 'flex', flexDirection: 'column', transition: 'transform .18s ease, box-shadow .18s ease', willChange: 'transform' }} hover={s('box-shadow:0 8px 24px rgba(33,31,28,.08);transform:translateY(-2px)')}>
                             {immSelectMode && (
                               <div style={{ position: 'absolute', top: 12, left: 12, width: 26, height: 26, borderRadius: '50%', background: immSelected.has(p.id) ? '#3B83F6' : 'rgba(255,255,255,0.92)', border: immSelected.has(p.id) ? 'none' : '1px solid #d8d4cb', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 6 }}>
@@ -3629,6 +3642,11 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                           </Box>
                         ))}
                             </div>
+                            {isMobile && day.items.length > 5 && !immExpanded.has(day.key) && (
+                              <Box as="button" onClick={() => setImmExpanded(prev => new Set(prev).add(day.key))} style={s('width:100%;margin-top:12px;border:1px solid #e4e1da;background:var(--bg-card);color:var(--text-main);font-size:13.5px;font-weight:700;padding:12px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px')} hover={s('background:#f6f4f0')}>
+                                Vedi altri {day.items.length - 5} <Icon name="chevron-down" size={16} color="#57534c" />
+                              </Box>
+                            )}
                           </div>
                         ))}
                       </div>

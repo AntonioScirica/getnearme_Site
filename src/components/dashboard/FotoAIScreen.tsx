@@ -498,8 +498,8 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
 
   return (
     <div className="max-md:!px-4 max-md:!py-6" style={s('max-width:1160px;margin:0 auto;padding:32px 32px 64px')}>
-      <div className="max-md:!flex-col max-md:!items-start max-md:!gap-4" style={s('display:flex;align-items:center;justify-content:space-between;margin-bottom:24px')}>
-        <div>
+      <div className="max-md:!flex-col max-md:!items-stretch max-md:!gap-3" style={s('display:flex;align-items:center;justify-content:space-between;margin-bottom:24px')}>
+        <div style={{ minWidth: 0 }}>
           <h1 style={s('margin:0 0 4px;font-size:25px;font-weight:800;letter-spacing:-.5px')}>Homestaging AI</h1>
           <div style={s('color:#8c867d;font-size:14px')}>Arreda, svuota o trasforma le foto dei tuoi immobili con l’AI.</div>
         </div>
@@ -507,13 +507,13 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
           <div style={{ width: 140, height: 37, borderRadius: 99, background: 'linear-gradient(90deg,#efece7,#f7f5f1,#efece7)', backgroundSize: '200% 100%', animation: 'demo-ai-shimmer 1.4s linear infinite', flex: 'none' }} />
         )}
         {!demoMode && quota && (quota.remaining > 0 ? (
-          <div style={s('display:inline-flex;align-items:center;justify-content:center;gap:8px;background:#fff;border:1px solid #f0ede7;border-radius:99px;padding:8px 16px')}>
+          <div className={batchDone !== null ? "max-md:!hidden" : "max-md:!w-full"} style={s('display:inline-flex;align-items:center;justify-content:center;gap:8px;background:#fff;border:1px solid #f0ede7;border-radius:99px;padding:8px 16px;flex:none;white-space:nowrap')}>
             <Icon name="image" size={15} color="#3B83F6" />
             <span style={{ fontSize: 13, fontWeight: 700 }}>{quota.remaining} {quota.remaining === 1 ? 'foto rimanente' : 'foto rimanenti'}</span>
           </div>
         ) : lockBrand ? (
           // Free esaurito: CTA verso i piani al posto della pill.
-          <Box as="button" onClick={() => onGoPlan?.()} style={s('display:flex;align-items:center;gap:8px;background:#3B83F6;color:#fff;border:none;border-radius:10px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer') as React.CSSProperties} hover={s('background:#2b6fe0')}>
+          <Box as="button" className="max-md:!w-full max-md:!justify-center" onClick={() => onGoPlan?.()} style={s('display:flex;align-items:center;gap:8px;background:#3B83F6;color:#fff;border:none;border-radius:10px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer;flex:none') as React.CSSProperties} hover={s('background:#2b6fe0')}>
             <Icon name="crown" size={15} color="#fff" />Vedi i piani
           </Box>
         ) : null)}
@@ -578,10 +578,11 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
               )}
             </div>
           )}
-          <div className="max-md:!grid-cols-1 max-md:!flex max-md:!flex-col-reverse" style={{ display: 'grid', gridTemplateColumns: '1fr 360px', gap: 24, alignItems: 'start' }}>
+          <div className="max-md:!grid-cols-1 max-md:!flex max-md:!flex-col max-md:!items-stretch" style={{ display: 'grid', gridTemplateColumns: '1fr 360px', gap: 24, alignItems: 'start' }}>
           {/* left: upload */}
           <div>
             <div
+              className={`max-md:!flex-none max-md:!min-h-0 ${photos.length === 0 && !demoMode ? "max-md:!aspect-video" : ""}`}
               onClick={() => { if (!generating && !revealing && !result) fileRef.current?.click(); }}
               onDragEnter={e => { e.preventDefault(); dragDepth.current++; setDragOver(true); }}
               onDragLeave={e => { e.preventDefault(); if (--dragDepth.current <= 0) { dragDepth.current = 0; setDragOver(false); } }}
@@ -613,9 +614,10 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
                     const ap = photos.find(p => p.id === activePhotoId) || photos[0];
                     const isVertical = ap.h > ap.w;
                     return (
-                      <div key={ap.id} style={{ position: 'relative', borderRadius: 16, overflow: 'visible', marginBottom: 12, ...(isVertical ? { aspectRatio: '4/3' } : {}), animation: 'foto-reveal .45s cubic-bezier(.22,1,.36,1) both' }}>
-                        {/* Inner clipping container for the photo */}
-                        <div style={{ position: 'relative', borderRadius: 16, overflow: 'hidden', zIndex: 4, boxShadow: '0 12px 32px rgba(0,0,0,0.08)' }}>
+                      <div key={ap.id} className={isVertical ? "max-md:!aspect-video" : undefined} style={{ position: 'relative', borderRadius: 16, overflow: 'visible', marginBottom: 12, ...(isVertical ? { aspectRatio: '4/3' } : {}), animation: 'foto-reveal .45s cubic-bezier(.22,1,.36,1) both' }}>
+                        {/* Inner clipping container for the photo. Per le verticali riempie
+                            il box ad aspect-ratio fisso (4/3 desktop, 16/9 mobile) → blur dietro + foto contenuta. */}
+                        <div style={{ position: 'relative', borderRadius: 16, overflow: 'hidden', zIndex: 4, boxShadow: '0 12px 32px rgba(0,0,0,0.08)', ...(isVertical ? { position: 'absolute' as const, inset: 0 } : {}) }}>
                         {isVertical && (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img src={ap.dataUrl} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', filter: 'blur(24px) brightness(.85)', transform: 'scale(1.15)' }} />
@@ -704,7 +706,7 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
                     );
                   })()}
                   {/* thumbnail strip */}
-                  <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', paddingBottom: 10, ...(revealing ? { opacity: 0, pointerEvents: 'none' as const, transition: 'opacity .3s' } : {}) }}>
+                  <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', paddingBottom: 10, ...(revealing ? { opacity: 0, pointerEvents: 'none' as const, height: 0, paddingBottom: 0, overflow: 'hidden' } : {}) }}>
                     {photos.map(p => (
                       <div key={p.id} className="group" onClick={e => { e.stopPropagation(); setActivePhotoId(p.id); }} style={{ position: 'relative', width: 56, height: 56, borderRadius: 8, overflow: 'hidden', cursor: 'pointer', border: (activePhotoId || photos[0].id) === p.id ? '2px solid #3B83F6' : '2px solid transparent', flexShrink: 0 }}>
                         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -725,6 +727,12 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
             </div>
             <input ref={fileRef} type="file" accept="image/*" multiple style={{ position: 'absolute', opacity: 0, width: 1, height: 1, top: -9999, pointerEvents: 'none' }} onChange={e => { if (e.target.files) addFiles(e.target.files); e.target.value = ''; }} />
           </div>
+
+          {/* Divider mobile tra upload e stili (solo con foto caricata).
+              top -24 assorbe il marginBottom:12 del blocco foto + metà gap → spazio simmetrico. */}
+          {photos.length > 0 && (
+            <div className="md:hidden" style={{ height: 1, background: '#ece9e2', margin: '-24px 0 -12px' }} />
+          )}
 
           {/* right: style / angle / prompt OR result actions */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16, ...(generating ? { opacity: .5, pointerEvents: 'none' as const, transition: 'opacity .3s' } : (revealing && revealing !== 'slider' ? { opacity: 0, pointerEvents: 'none' as const, transition: 'opacity .3s' } : (revealing === 'slider' ? { animation: 'result-fade-in .5s ease both' } : {}))) }}>
