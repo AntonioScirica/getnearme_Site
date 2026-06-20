@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { MONO } from "../types";
-import { Plus, Trash2, Search, RefreshCw, X, ChevronDown, ChevronLeft, ChevronRight, Calendar } from "lucide-react";
+import { Plus, Trash2, Pencil, Search, RefreshCw, X, ChevronDown, ChevronLeft, ChevronRight, Calendar } from "lucide-react";
 
 // ── Pipeline + option sets ──────────────────────────────────────────
 const STATUSES: { id: string; label: string; cls: string; dot: string }[] = [
@@ -57,7 +57,21 @@ export default function CrmPage({ authKey }: { authKey: string | null }) {
   const BLANK = { contact_name: "", owner: "Francesco", status: "da_contattare", agency: "", agency_owner: "", website: "", phone: "", email: "", city: "", source: "", plan: "", value_eur: "", notes: "", next_action_at: "" };
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState<Record<string, string>>(BLANK);
+  const [editId, setEditId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+
+  const openCreate = () => { setEditId(null); setForm(BLANK); setShowForm(true); };
+  const openEdit = (c: Contact) => {
+    setEditId(c.id);
+    setForm({
+      contact_name: c.contact_name || "", owner: c.owner || "Francesco", status: c.status || "da_contattare",
+      agency: c.agency || "", agency_owner: c.agency_owner || "", website: c.website || "",
+      phone: c.phone || "", email: c.email || "", city: c.city || "", source: c.source || "",
+      plan: c.plan || "", value_eur: c.value_eur != null ? String(c.value_eur) : "",
+      notes: c.notes || "", next_action_at: c.next_action_at || "",
+    });
+    setShowForm(true);
+  };
 
   const api = useCallback(
     async (method: string, body?: unknown, qs = "") => {
@@ -94,9 +108,15 @@ export default function CrmPage({ authKey }: { authKey: string | null }) {
     try {
       const autoVal = form.plan && !form.value_eur ? PLAN_PRICE[form.plan] : null;
       const payload = { ...form, value_eur: form.value_eur ? Number(form.value_eur) : autoVal };
-      const d = await api("POST", payload);
-      if (d.contact) setRows((r) => [d.contact, ...r]);
+      if (editId) {
+        const d = await api("PATCH", { ...payload, id: editId });
+        if (d.contact) setRows((r) => r.map((c) => (c.id === editId ? d.contact : c)));
+      } else {
+        const d = await api("POST", payload);
+        if (d.contact) setRows((r) => [d.contact, ...r]);
+      }
       setForm(BLANK);
+      setEditId(null);
       setShowForm(false);
     } catch (e) { setError(e instanceof Error ? e.message : String(e)); }
     finally { setSaving(false); }
@@ -188,7 +208,7 @@ export default function CrmPage({ authKey }: { authKey: string | null }) {
 
       {/* Toolbar: add button + filters */}
       <div className="flex flex-wrap items-center gap-2 mb-3">
-        <button onClick={() => { setForm(BLANK); setShowForm(true); }}
+        <button onClick={openCreate}
           className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium bg-indigo-500/90 text-white hover:bg-indigo-500">
           <Plus className="w-4 h-4" /> Aggiungi contatto
         </button>
@@ -205,8 +225,8 @@ export default function CrmPage({ authKey }: { authKey: string | null }) {
       </div>
 
       {showForm && (
-        <ContactForm form={form} setForm={setForm} onSubmit={submit} onClose={() => setShowForm(false)}
-          saving={saving} cityOptions={cityOptions} agencyOptions={agencyOptions} />
+        <ContactForm form={form} setForm={setForm} onSubmit={submit} onClose={() => { setShowForm(false); setEditId(null); }}
+          saving={saving} isEdit={!!editId} cityOptions={cityOptions} agencyOptions={agencyOptions} />
       )}
 
       {/* Table */}
@@ -254,9 +274,14 @@ export default function CrmPage({ authKey }: { authKey: string | null }) {
                   <Td><Txt v={c.value_eur != null ? String(c.value_eur) : ""} onSave={(v) => patch(c.id, "value_eur", v ? Number(v) : null)} num /></Td>
                   <Td><Txt v={c.notes} onSave={(v) => patch(c.id, "notes", v)} wide /></Td>
                   <Td>
-                    <button onClick={() => remove(c.id)} className="p-1 rounded text-gray-600 hover:text-red-400 hover:bg-red-500/10">
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                    <div className="flex items-center gap-0.5">
+                      <button onClick={() => openEdit(c)} title="Modifica" className="p-1 rounded text-gray-600 hover:text-indigo-400 hover:bg-indigo-500/10">
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                      <button onClick={() => remove(c.id)} title="Elimina" className="p-1 rounded text-gray-600 hover:text-red-400 hover:bg-red-500/10">
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </Td>
                 </tr>
               );
@@ -393,12 +418,13 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 // ── Add-contact modal form ──────────────────────────────────────────
-function ContactForm({ form, setForm, onSubmit, onClose, saving, cityOptions, agencyOptions }: {
+function ContactForm({ form, setForm, onSubmit, onClose, saving, isEdit, cityOptions, agencyOptions }: {
   form: Record<string, string>;
   setForm: (f: Record<string, string>) => void;
   onSubmit: () => void;
   onClose: () => void;
   saving: boolean;
+  isEdit: boolean;
   cityOptions: string[];
   agencyOptions: string[];
 }) {
@@ -408,7 +434,7 @@ function ContactForm({ form, setForm, onSubmit, onClose, saving, cityOptions, ag
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="bg-[#161920] border border-white/[0.1] rounded-2xl max-w-2xl w-full max-h-[88vh] overflow-y-auto">
         <div className="flex items-center justify-between p-5 border-b border-white/[0.08] sticky top-0 bg-[#161920] z-10">
-          <h2 className="text-base font-semibold text-gray-100">Nuovo contatto</h2>
+          <h2 className="text-base font-semibold text-gray-100">{isEdit ? "Modifica contatto" : "Nuovo contatto"}</h2>
           <button onClick={onClose} className="p-1.5 rounded-lg text-gray-500 hover:bg-white/5 hover:text-gray-200"><X className="w-5 h-5" /></button>
         </div>
         <div className="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -468,7 +494,7 @@ function ContactForm({ form, setForm, onSubmit, onClose, saving, cityOptions, ag
         <div className="flex justify-end gap-2 p-5 border-t border-white/[0.08] sticky bottom-0 bg-[#161920]">
           <button onClick={onClose} className={`${MONO} px-4 py-2 rounded-lg text-sm text-gray-400 hover:bg-white/5`}>Annulla</button>
           <button onClick={onSubmit} disabled={saving || !form.contact_name.trim()} className="px-5 py-2 rounded-lg text-sm font-medium bg-indigo-500/90 text-white hover:bg-indigo-500 disabled:opacity-40">
-            {saving ? "Salvo…" : "Crea contatto"}
+            {saving ? "Salvo…" : isEdit ? "Salva modifiche" : "Crea contatto"}
           </button>
         </div>
       </div>
