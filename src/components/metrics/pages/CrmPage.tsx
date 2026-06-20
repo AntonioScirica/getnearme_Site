@@ -209,12 +209,12 @@ export default function CrmPage({ authKey }: { authKey: string | null }) {
       {/* Toolbar: add button + filters */}
       <div className="flex flex-wrap items-center gap-2 mb-3">
         <button onClick={openCreate}
-          className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium bg-indigo-500/90 text-white hover:bg-indigo-500">
+          className="flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium bg-indigo-500/90 text-white hover:bg-indigo-500 w-full sm:w-auto">
           <Plus className="w-4 h-4" /> Aggiungi contatto
         </button>
-        <div className="relative ml-1">
+        <div className="relative flex-1 min-w-[8rem] sm:flex-none sm:ml-1">
           <Search className="w-3.5 h-3.5 text-gray-600 absolute left-2.5 top-1/2 -translate-y-1/2" />
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Cerca…" className={`${MONO} text-xs bg-white/[0.03] border border-white/[0.08] rounded-lg pl-8 pr-3 py-2 text-gray-300 w-48`} />
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Cerca…" className={`${MONO} text-xs bg-white/[0.03] border border-white/[0.08] rounded-lg pl-8 pr-3 py-2 text-gray-300 w-full sm:w-48`} />
         </div>
         <SelectBox value={filterOwner} onChange={setFilterOwner} className={`${MONO} text-xs bg-white/[0.03] border border-white/[0.08] rounded-lg pl-3 py-2 text-gray-300`}>
           <option value="">Tutti gli owner</option>
@@ -229,8 +229,8 @@ export default function CrmPage({ authKey }: { authKey: string | null }) {
           saving={saving} isEdit={!!editId} cityOptions={cityOptions} agencyOptions={agencyOptions} />
       )}
 
-      {/* Table */}
-      <div className="overflow-x-auto rounded-xl border border-white/[0.06] [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: "none" }}>
+      {/* Table — desktop */}
+      <div className="hidden md:block overflow-x-auto rounded-xl border border-white/[0.06] [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: "none" }}>
         <table className="w-full text-sm">
           <thead>
             <tr className={`${MONO} text-[10px] uppercase tracking-wider text-gray-500 bg-white/[0.02]`}>
@@ -292,6 +292,66 @@ export default function CrmPage({ authKey }: { authKey: string | null }) {
           </tbody>
         </table>
       </div>
+
+      {/* Cards — mobile */}
+      <div className="md:hidden space-y-2.5">
+        {filtered.map((c) => {
+          const st = STATUS_BY[c.status] || STATUSES[0];
+          const u = urgency(c);
+          return (
+            <div key={c.id} className={`rounded-xl border p-3 ${u === "overdue" ? "border-red-500/30 bg-red-500/[0.06]" : u === "soon" ? "border-amber-500/30 bg-amber-500/[0.05]" : "border-white/[0.07] bg-white/[0.02]"}`}>
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5">
+                    {u && <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${u === "overdue" ? "bg-red-400" : "bg-amber-400"}`} />}
+                    <span className="font-medium text-gray-100 truncate">{c.contact_name || "—"}</span>
+                  </div>
+                  {c.agency && <div className={`${MONO} text-[11px] text-gray-500 truncate mt-0.5`}>{c.agency}</div>}
+                </div>
+                <div className="flex items-center gap-0.5 shrink-0">
+                  <button onClick={() => openEdit(c)} className="p-1.5 rounded-lg text-gray-500 hover:text-indigo-400 hover:bg-indigo-500/10"><Pencil className="w-4 h-4" /></button>
+                  <button onClick={() => remove(c.id)} className="p-1.5 rounded-lg text-gray-500 hover:text-red-400 hover:bg-red-500/10"><Trash2 className="w-4 h-4" /></button>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 mt-2.5 flex-wrap">
+                <select value={c.status} onChange={(e) => patch(c.id, "status", e.target.value)}
+                  className={`${MONO} text-[11px] rounded-md px-2 py-1 border ${st.cls} focus:outline-none`}>
+                  {STATUSES.map((s) => <option key={s.id} value={s.id} className="bg-[#161920] text-gray-200">{s.label}</option>)}
+                </select>
+                {c.owner && <span className={`${MONO} text-[11px] px-2 py-1 rounded-md bg-white/[0.05] text-gray-300`}>{c.owner}</span>}
+                {c.plan && <span className={`${MONO} text-[11px] px-2 py-1 rounded-md bg-green-500/10 text-green-400`}>€{c.value_eur ?? PLAN_PRICE[c.plan]}</span>}
+              </div>
+
+              <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 mt-2.5">
+                <CardKV label="Città" value={c.city} />
+                <CardKV label="Follow-up">
+                  <DateField compact value={c.next_action_at} onChange={(v) => patch(c.id, "next_action_at", v)} />
+                </CardKV>
+                {c.phone && <CardKV label="Telefono"><a href={`tel:${c.phone}`} className="text-indigo-400">{c.phone}</a></CardKV>}
+                {c.email && <CardKV label="Email"><a href={`mailto:${c.email}`} className="text-indigo-400 truncate block">{c.email}</a></CardKV>}
+                {c.website && <CardKV label="Sito"><a href={c.website.startsWith("http") ? c.website : `https://${c.website}`} target="_blank" rel="noopener" className="text-indigo-400 truncate block">{c.website}</a></CardKV>}
+                {c.source && <CardKV label="Fonte" value={c.source} />}
+              </div>
+
+              {c.notes && <p className={`${MONO} text-[11px] text-gray-400 mt-2.5 pt-2.5 border-t border-white/[0.06]`}>{c.notes}</p>}
+            </div>
+          );
+        })}
+        {filtered.length === 0 && (
+          <div className={`${MONO} text-sm text-gray-600 text-center py-10`}>Nessun contatto. Aggiungine uno sopra.</div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Label + value block used in the mobile contact cards.
+function CardKV({ label, value, children }: { label: string; value?: string | null; children?: React.ReactNode }) {
+  return (
+    <div className="min-w-0">
+      <div className={`${MONO} text-[9px] uppercase tracking-wider text-gray-600`}>{label}</div>
+      <div className={`${MONO} text-[12px] text-gray-300 truncate`}>{children ?? (value || "—")}</div>
     </div>
   );
 }
