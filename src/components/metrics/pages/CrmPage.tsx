@@ -477,14 +477,6 @@ function ContactForm({ form, setForm, onSubmit, onClose, saving, isEdit, cityOpt
           <Field label="Prossimo follow-up">
             <DateField value={form.next_action_at || null} onChange={(v) => set("next_action_at", v || "")} />
           </Field>
-          <Field label="Piano (se chiuso)">
-            <SelectBox full value={form.plan} onChange={(v) => set("plan", v)} className={inputCls}>
-              {PLANS.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
-            </SelectBox>
-          </Field>
-          <Field label="Valore € (se chiuso)">
-            <input type="number" value={form.value_eur} onChange={(e) => set("value_eur", e.target.value)} placeholder="0" className={inputCls} />
-          </Field>
           <div className="sm:col-span-2">
             <Field label="Note">
               <textarea value={form.notes} onChange={(e) => set("notes", e.target.value)} rows={2} placeholder="Cosa vi siete detti, prossimi passi…" className={inputCls} />
