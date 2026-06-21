@@ -2797,6 +2797,14 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
         const renderId = (job.ctx as { renderId?: string } | undefined)?.renderId;
         // Job temporaneo (pre-render, ctx vuoto): non si polla, avanza piano.
         if (!renderId) {
+          // Un render sano ottiene un renderId in pochi secondi. Se dopo 3 min
+          // un job 'prep' non ce l'ha ancora, l'avvio è fallito (es. backend non
+          // raggiungibile): lo chiudiamo come fallito così non resta uno
+          // skeleton infinito in galleria e un contatore fantasma.
+          if (Date.now() - (job.createdAt || 0) > 180_000) {
+            setVideoJobs(patchVideoJob(job.id, { stage: 'failed', error: 'Avvio non riuscito' }));
+            continue;
+          }
           setVideoJobs(patchVideoJob(job.id, { progress: Math.min(0.2, (job.progress || 0) + 0.02) }));
           continue;
         }
@@ -2811,7 +2819,20 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
           } else {
             // Usa il progress reale dall'edge (Veo/Lambda); fallback a +0.04.
             const real = typeof (p as unknown as { overallProgress?: number }).overallProgress === 'number' ? (p as unknown as { overallProgress: number }).overallProgress : 0;
-            setVideoJobs(patchVideoJob(job.id, { progress: Math.min(0.96, Math.max(job.progress || 0, real, (job.progress || 0) + 0.04)) }));
+            // I template a stato (construction/video_cuts) avanzano restituendo
+            // un nuovo videoCutsJobs/constructionJobs: va RISALVATO nel ctx, altrimenti
+            // il prossimo poll rimanda lo stato vecchio e il render non avanza mai
+            // (resta bloccato al 96%) se la cron non gira.
+            const pj = p as unknown as { videoCutsJobs?: unknown; constructionJobs?: unknown };
+            const patch: Partial<VideoJob> = { progress: Math.min(0.96, Math.max(job.progress || 0, real, (job.progress || 0) + 0.04)) };
+            if (pj.videoCutsJobs || pj.constructionJobs) {
+              patch.ctx = {
+                ...job.ctx,
+                ...(pj.videoCutsJobs ? { videoCutsJobs: pj.videoCutsJobs } : {}),
+                ...(pj.constructionJobs ? { constructionJobs: pj.constructionJobs } : {}),
+              };
+            }
+            setVideoJobs(patchVideoJob(job.id, patch));
           }
         } catch { /* transiente, riprova al prossimo tick */ }
       }

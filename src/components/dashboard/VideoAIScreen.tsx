@@ -9,18 +9,20 @@ import { s, Box, Icon } from './ui';
 import { getTokenFast, fetchMontaggioQuota, consumeMontaggioQuota, type MontaggioQuota } from '@/lib/staging';
 import type { BrandSettings } from '@/lib/brand';
 import {
-  DEFAULT_VIDEO_TEMPLATES, MONTAGGIO_TEMPLATE, NO_AVATAR_LAYOUTS, ROOM_TYPES,
+  DEFAULT_VIDEO_TEMPLATES, MONTAGGIO_TEMPLATE, MONTAGGIO_LAYOUTS, type MontaggioLayout, NO_AVATAR_LAYOUTS, ROOM_TYPES,
   AI_STAGING_STYLES, AI_STAGING_ANIMATION_STYLES, DAY_NIGHT_DIRECTIONS,
   SUBTITLE_STYLES, COVER_STYLES, MOOD_LABELS,
   fetchVideoConfig, fetchVideoQuota, getMusicLibrary, resolvePreviewUrl,
   getUploadUrls, uploadToPresigned, generateScript, renderAvatar, checkAvatar,
   animatePhotoStart, animatePhotoPoll, transcribeAudio, startRender, pollRenderProgress, detectRooms,
-  createImageThumbnail, createVideoThumbnail, extractFrames, aspectFromDims,
+  createImageThumbnail, createVideoThumbnail, extractFrames, extractFrameAt, dataUrlToBlob, aspectFromDims,
   type VideoTemplate, type VideoAvatar, type VideoQuota, type ScriptSection, type MusicTrack,
   AIVideoError,
 } from '@/lib/aiVideo';
 import { drawCoverOverlay, preloadCoverFonts, renderCoverOverlayBlob } from '@/lib/coverOverlay';
 import { createServerVideoJob } from '@/lib/videoJobs';
+import { VideoCutsEditor, type CutSegment } from './VideoCutsEditor';
+import { VideoCutsTutorial, TutorialButton } from './VideoCutsTutorial';
 
 type Clip = {
   id: string; file: File; thumb: string; duration: number;
@@ -158,6 +160,202 @@ function TrimRange({ duration, start, end, frames, onChange, onPreview }: {
 // `left` = larghezza sidebar via CSS var `--gnm-content-left` (settata in
 // DashboardApp, 0 su mobile via media query in globals.css). Il contenuto
 // interno resta allineato alla colonna (max 1160 + padding 32).
+// Mini-mockup tipo "reel" del layout di montaggio (per il chooser), con foto reali.
+const MONT_HOUSE_IMG = 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=500&q=80&auto=format&fit=crop';
+const MONT_PERSON_IMG = 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&q=80&auto=format&fit=crop';
+// 3 clip diverse nella striscia del montaggio normale.
+const MONT_STRIP_IMGS = [
+  MONT_HOUSE_IMG,
+  'https://images.unsplash.com/photo-1600210492493-0946911123ea?w=300&q=80&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=300&q=80&auto=format&fit=crop',
+];
+function MontaggioDiagram({ kind }: { kind: 'normale' | 'split' | 'pip' }) {
+  const Img = ({ src, style }: { src: string; style?: React.CSSProperties }) => (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src={src} alt="" draggable={false} style={{ objectFit: 'cover', display: 'block', ...style }} />
+  );
+  // Full-bleed 9:16 (come le anteprime di Video AI): niente margine/bordo proprio.
+  const frame: React.CSSProperties = { width: '100%', aspectRatio: '9/16', overflow: 'hidden', position: 'relative', background: '#000' };
+
+  return (
+    <div style={frame}>
+      {kind === 'normale' && (
+        <>
+          {/* sfondo leggermente sfocato così la timeline si legge meglio */}
+          <Img src={MONT_HOUSE_IMG} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', filter: 'blur(2px) brightness(.9)', transform: 'scale(1.06)' }} />
+          <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: '38%', background: 'linear-gradient(to top, rgba(0,0,0,.45), transparent)' }} />
+          {/* striscia clip in basso = sequenza montata; tra due clip un rettangolo
+              overlay bianco a bassa opacità (stile fade) = transizione */}
+          <div style={{ position: 'absolute', bottom: 10, left: 10, right: 10, display: 'flex', alignItems: 'center', gap: 0 }}>
+            {MONT_STRIP_IMGS.map((src, i) => (
+              <React.Fragment key={i}>
+                <span style={{ flex: 1, height: 40, borderRadius: 4, overflow: 'hidden', border: '1.5px solid rgba(255,255,255,.92)', display: 'block' }}>
+                  <Img src={src} style={{ width: '100%', height: '100%' }} />
+                </span>
+                {i < MONT_STRIP_IMGS.length - 1 && (
+                  <span style={{ flex: 'none', width: 22, height: 44, margin: '0 -9px', position: 'relative', zIndex: 2, borderRadius: 4, background: 'rgba(255,255,255,.34)', backdropFilter: 'blur(2.5px)', WebkitBackdropFilter: 'blur(2.5px)', border: '1px solid rgba(255,255,255,.55)' }} />
+                )}
+              </React.Fragment>
+            ))}
+          </div>
+          {/* play centrato */}
+          <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: 34, height: 34, borderRadius: '50%', background: 'rgba(255,255,255,.94)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 10px rgba(0,0,0,.25)' }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="#211f1c" style={{ marginLeft: 2 }}><polygon points="6 3 20 12 6 21 6 3" /></svg>
+          </div>
+        </>
+      )}
+      {kind === 'split' && (
+        <>
+          <Img src="https://images.unsplash.com/photo-1600210492493-0946911123ea?w=500&q=80&auto=format&fit=crop" style={{ position: 'absolute', top: 0, left: 0, right: 0, width: '100%', height: '52%' }} />
+          <Img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&q=80&auto=format&fit=crop" style={{ position: 'absolute', bottom: 0, left: 0, right: 0, width: '100%', height: '48%', objectPosition: 'center 25%' }} />
+          <div style={{ position: 'absolute', top: 'calc(52% - 1px)', left: 0, right: 0, height: 2, background: '#fff' }} />
+        </>
+      )}
+      {kind === 'pip' && (
+        <>
+          <Img src="https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=500&q=80&auto=format&fit=crop" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} />
+          <span style={{ position: 'absolute', right: 8, bottom: 8, width: '34%', height: '26%', borderRadius: 7, overflow: 'hidden', border: '2px solid #fff', boxShadow: '0 2px 6px rgba(0,0,0,.3)', display: 'block' }}>
+            <Img src={MONT_PERSON_IMG} style={{ width: '100%', height: '100%', objectPosition: 'center 25%' }} />
+          </span>
+        </>
+      )}
+    </div>
+  );
+}
+
+// Anteprima LIVE dello Schermo diviso / Riquadro: il parlato parte con audio e
+// in alto (split) o sullo sfondo (pip) scorrono le clip della casa secondo gli
+// slot della timeline. Cliccando si avvia/pausa.
+function SplitLivePreview({ mode, clips, talkingClip, slots, pipPosition, onAddHouse, onAddTalking, onTimeUpdate }: {
+  mode: 'split' | 'pip'; clips: Clip[]; talkingClip: Clip | null; slots: number[];
+  pipPosition: 'br' | 'bl' | 'tr' | 'tl'; onAddHouse: () => void; onAddTalking: () => void; onTimeUpdate?: (t: number) => void;
+}) {
+  const talkRef = React.useRef<HTMLVideoElement>(null);
+  const houseRef = React.useRef<HTMLVideoElement>(null);
+  const tlRef = React.useRef<HTMLDivElement>(null);
+  const [playing, setPlaying] = React.useState(false);
+  const [idx, setIdx] = React.useState(0);
+  const [curTime, setCurTime] = React.useState(0);
+  const talkDur = talkingClip?.duration || 0;
+  // Blob URL creati+revocati nello stesso effect (StrictMode-safe).
+  const [houseUrls, setHouseUrls] = React.useState<string[]>([]);
+  React.useEffect(() => {
+    const us = clips.map(c => URL.createObjectURL(c.file));
+    setHouseUrls(us);
+    return () => us.forEach(u => URL.revokeObjectURL(u));
+  }, [clips]);
+  const [talkUrl, setTalkUrl] = React.useState('');
+  React.useEffect(() => {
+    if (!talkingClip) { setTalkUrl(''); return; }
+    const u = URL.createObjectURL(talkingClip.file);
+    setTalkUrl(u);
+    return () => URL.revokeObjectURL(u);
+  }, [talkingClip]);
+  // Confini cumulativi degli slot (in secondi del parlato).
+  const bounds = React.useMemo(() => { let acc = 0; return slots.map(sd => (acc += sd)); }, [slots]);
+  const onTime = () => {
+    const t = talkRef.current?.currentTime || 0;
+    setCurTime(t); onTimeUpdate?.(t);
+    let k = 0; while (k < bounds.length - 1 && t >= bounds[k]) k++;
+    setIdx(k);
+  };
+  const toggle = () => { const v = talkRef.current; if (!v) return; if (v.paused) v.play().catch(() => {}); else v.pause(); };
+  // Scrub stile iPhone: trascina sulla timeline per cercare nel parlato.
+  const seekFrac = (clientX: number) => {
+    const el = tlRef.current, v = talkRef.current; if (!el || !v || !talkDur) return;
+    const r = el.getBoundingClientRect();
+    const f = Math.max(0, Math.min(1, (clientX - r.left) / r.width));
+    v.currentTime = f * talkDur; setCurTime(f * talkDur); onTimeUpdate?.(f * talkDur);
+  };
+  const scrub = (e: React.PointerEvent) => {
+    e.preventDefault(); seekFrac(e.clientX);
+    const mv = (ev: PointerEvent) => seekFrac(ev.clientX);
+    const up = () => { window.removeEventListener('pointermove', mv); window.removeEventListener('pointerup', up); };
+    window.addEventListener('pointermove', mv); window.addEventListener('pointerup', up);
+  };
+  const mmss = (t: number) => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
+  const ai = Math.min(idx, Math.max(0, clips.length - 1));
+  const active = clips[ai];
+  const houseUrl = houseUrls[ai];
+
+  const HouseFill = active ? (
+    active.isPhoto || !houseUrl
+      // eslint-disable-next-line @next/next/no-img-element
+      ? <img src={active.thumb} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+      // eslint-disable-next-line jsx-a11y/media-has-caption
+      : <video ref={houseRef} key={houseUrl} src={houseUrl} muted loop playsInline style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+  ) : null;
+  // La clip casa parte/stoppa insieme al parlato (e quando cambia clip attiva).
+  React.useEffect(() => {
+    const v = houseRef.current; if (!v) return;
+    if (playing) v.play().catch(() => {}); else v.pause();
+  }, [playing, houseUrl]);
+
+  const PlusZone = ({ label, onClick }: { label: string; onClick: () => void }) => (
+    <button onClick={onClick} style={{ position: 'absolute', inset: 0, border: 'none', cursor: 'pointer', padding: 0, background: 'transparent', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, color: '#fff' }}>
+      <span style={{ width: 38, height: 38, borderRadius: '50%', background: 'rgba(255,255,255,.92)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="plus" size={20} color="#1d5fd0" /></span>
+      <span style={{ fontSize: 12, fontWeight: 800, textShadow: '0 1px 3px rgba(0,0,0,.6)' }}>{label}</span>
+    </button>
+  );
+
+  const playBtn = talkingClip && clips.length > 0 && (
+    <button onClick={(e) => { e.stopPropagation(); toggle(); }} aria-label={playing ? 'Pausa' : 'Play'} style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', zIndex: 5, width: 52, height: 52, borderRadius: '50%', border: 'none', cursor: 'pointer', background: 'rgba(0,0,0,.42)', display: playing ? 'none' : 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="#fff" style={{ marginLeft: 3 }}><polygon points="6 3 20 12 6 21 6 3" /></svg>
+    </button>
+  );
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+    <div onClick={talkingClip && clips.length > 0 ? toggle : undefined} style={{ width: '100%', aspectRatio: '9/16', borderRadius: 16, overflow: 'hidden', position: 'relative', background: '#000', border: '1px solid #e4e1da', cursor: talkingClip && clips.length > 0 ? 'pointer' : 'default' }}>
+      {mode === 'split' ? (
+        <>
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '52%', background: '#11151c', overflow: 'hidden' }}>
+            {clips.length === 0 ? <PlusZone label="Clip della casa" onClick={onAddHouse} /> : HouseFill}
+          </div>
+          <div style={{ position: 'absolute', top: 'calc(52% - 1px)', left: 0, right: 0, height: 2, background: '#fff', zIndex: 3 }} />
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '48%', background: '#171b22', overflow: 'hidden' }}>
+            {talkingClip
+              // eslint-disable-next-line jsx-a11y/media-has-caption
+              ? <video ref={talkRef} src={talkUrl || undefined} playsInline onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} onEnded={() => setPlaying(false)} onTimeUpdate={onTime} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 25%' }} />
+              : <PlusZone label="Tu che parli" onClick={onAddTalking} />}
+          </div>
+        </>
+      ) : (
+        <>
+          <div style={{ position: 'absolute', inset: 0, background: '#11151c', overflow: 'hidden' }}>
+            {clips.length === 0 ? <PlusZone label="Clip della casa" onClick={onAddHouse} /> : HouseFill}
+          </div>
+          <div style={{ position: 'absolute', width: '32%', height: '24%', borderRadius: 10, overflow: 'hidden', border: '2px solid #fff', boxShadow: '0 2px 8px rgba(0,0,0,.4)', zIndex: 4, background: '#171b22', ...(pipPosition === 'tl' ? { top: '7%', left: '6%' } : pipPosition === 'tr' ? { top: '7%', right: '6%' } : pipPosition === 'bl' ? { bottom: '7%', left: '6%' } : { bottom: '7%', right: '6%' }) }}>
+            {talkingClip
+              // eslint-disable-next-line jsx-a11y/media-has-caption
+              ? <video ref={talkRef} src={talkUrl || undefined} playsInline onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} onEnded={() => setPlaying(false)} onTimeUpdate={onTime} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 25%' }} />
+              : <PlusZone label="Tu" onClick={onAddTalking} />}
+          </div>
+        </>
+      )}
+      {playBtn}
+    </div>
+
+    {/* Controllo minimale stile Apple: play/pausa + linea di avanzamento (scrub). */}
+    {talkingClip && (
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <button onClick={toggle} aria-label={playing ? 'Pausa' : 'Play'} style={{ flex: 'none', border: 'none', background: 'transparent', cursor: 'pointer', padding: 0, display: 'flex' }}>
+          {playing
+            ? <svg width="18" height="18" viewBox="0 0 24 24" fill="#211f1c"><rect x="6" y="4" width="4" height="16" rx="1" /><rect x="14" y="4" width="4" height="16" rx="1" /></svg>
+            : <svg width="18" height="18" viewBox="0 0 24 24" fill="#211f1c" style={{ marginLeft: 1 }}><polygon points="6 3 20 12 6 21 6 3" /></svg>}
+        </button>
+        <div ref={tlRef} onPointerDown={scrub} style={{ flex: 1, position: 'relative', height: 16, display: 'flex', alignItems: 'center', cursor: 'pointer', touchAction: 'none', userSelect: 'none' }}>
+          <div style={{ width: '100%', height: 4, borderRadius: 99, background: '#dcd8cf' }} />
+          <div style={{ position: 'absolute', left: 0, height: 4, borderRadius: 99, background: '#3B83F6', width: `${talkDur ? (curTime / talkDur) * 100 : 0}%` }} />
+          <div style={{ position: 'absolute', left: `${talkDur ? (curTime / talkDur) * 100 : 0}%`, transform: 'translateX(-50%)', width: 12, height: 12, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 4px rgba(0,0,0,.3)', border: '1px solid #cfcabf' }} />
+        </div>
+        <span style={{ ...s('font-size:11px;font-weight:700;color:#8c867d'), flex: 'none', fontVariantNumeric: 'tabular-nums' }}>{mmss(curTime)} / {mmss(talkDur)}</span>
+      </div>
+    )}
+    </div>
+  );
+}
+
 function StickyNav({ children, align }: { children: React.ReactNode; align?: 'center'; bleed?: number }) {
   return (
     <div style={{
@@ -298,8 +496,40 @@ function VideoPacksModal({ onClose }: { onClose: () => void }) {
 
 // Preview video di una card template, con skeleton (pulse) finche' il primo
 // frame non e' pronto, poi fade-in. Come MediaScreen, evita il "pop" del video.
-function TplPreview({ src }: { src: string | null }) {
+// Copertina per "Taglia & Arreda" (video_cuts): nessuna clip demo. Usiamo una
+// coppia prima/dopo REALE (stesso ambiente vuoto → arredato) con un wipe che
+// rivela l'arredo, più una timeline col taglio. Colori dalle foto, on-brand.
+function VideoCutsCover() {
+  return (
+    <div style={{ aspectRatio: '3/4', position: 'relative', overflow: 'hidden', background: '#0c1626' }}>
+      <style dangerouslySetInnerHTML={{ __html: `
+        @keyframes vcc-wipe { 0%,18%{clip-path:inset(0 0 0 0)} 55%,76%{clip-path:inset(0 0 0 100%)} 100%{clip-path:inset(0 0 0 0)} }
+        @keyframes vcc-div { 0%,18%{left:0%} 55%,76%{left:100%} 100%{left:0%} }
+        @keyframes vcc-cut { 0%,100%{opacity:.65} 50%{opacity:1} }
+        @keyframes vcc-play { 0%,18%{left:8%} 55%{left:92%} 100%{left:8%} }
+      ` }} />
+      {/* DOPO (arredato) */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/staging/videos/slider_v1_after.jpg" alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+      {/* PRIMA (vuoto) che si rivela */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/staging/videos/slider_v1_before.jpg" alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', animation: 'vcc-wipe 4.4s ease-in-out infinite' }} />
+      {/* linea divisoria prima/dopo */}
+      <div style={{ position: 'absolute', top: 0, bottom: 0, width: 2, marginLeft: -1, background: 'rgba(255,255,255,.92)', boxShadow: '0 0 8px rgba(0,0,0,.45)', animation: 'vcc-div 4.4s ease-in-out infinite' }} />
+      {/* gradiente basso per leggere la timeline */}
+      <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: '40%', background: 'linear-gradient(to top, rgba(8,12,20,.74), transparent)' }} />
+      {/* timeline col taglio */}
+      <div style={{ position: 'absolute', left: 14, right: 14, bottom: 14, height: 7, borderRadius: 99, background: 'rgba(255,255,255,.28)' }}>
+        <div style={{ position: 'absolute', top: -2, left: '34%', width: '32%', height: 11, borderRadius: 4, background: '#3B83F6', boxShadow: '0 0 0 1.5px rgba(255,255,255,.85)', animation: 'vcc-cut 2.2s ease-in-out infinite' }} />
+        <div style={{ position: 'absolute', top: '50%', width: 9, height: 9, marginLeft: -4.5, marginTop: -4.5, borderRadius: '50%', background: '#fff', animation: 'vcc-play 4.4s ease-in-out infinite' }} />
+      </div>
+    </div>
+  );
+}
+
+function TplPreview({ src, templateId }: { src: string | null; templateId?: string }) {
   const [loaded, setLoaded] = React.useState(false);
+  if (templateId === 'video_cuts') return <VideoCutsCover />;
   return (
     <div style={{ aspectRatio: '3/4', background: 'linear-gradient(145deg, #2a2733, #1a1825)', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', ...(src && !loaded ? { animation: 'pulse 1.5s infinite ease-in-out' } : {}) }}>
       {src ? (
@@ -390,6 +620,19 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
     const n = [...cs]; const [m] = n.splice(from, 1); n.splice(to, 0, m); return n;
   });
   const [pairs, setPairs] = React.useState<Pair[]>([]);
+  // video_cuts: momenti marcati dall'utente (template "Taglia & Anima")
+  const [cutSegments, setCutSegments] = React.useState<CutSegment[]>([]);
+  const [cutsConfirm, setCutsConfirm] = React.useState(false);
+  const [showCutsTutorial, setShowCutsTutorial] = React.useState(false);
+  // Montaggio: scelta layout (chooser) + video parlato (split/pip) + angolo PIP.
+  const [montaggioLayout, setMontaggioLayout] = React.useState<MontaggioLayout | null>(null);
+  const [talkingClip, setTalkingClip] = React.useState<Clip | null>(null);
+  // Schermo diviso/Riquadro: durata (secondi) di ogni clip casa nella timeline,
+  // somma = durata del parlato. Timeline trascinabile per aggiustare.
+  const [splitSlots, setSplitSlots] = React.useState<number[]>([]);
+  const [splitTime, setSplitTime] = React.useState(0); // tempo corrente del parlato (per il playhead)
+  const splitTrackRef = React.useRef<HTMLDivElement>(null);
+  const [pipPosition, setPipPosition] = React.useState<'br' | 'bl' | 'tr' | 'tl'>('br');
   // options
   const [sections, setSections] = React.useState<ScriptSection[]>([]);
   const [scriptLoading, setScriptLoading] = React.useState(false);
@@ -444,6 +687,11 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
     : (brand.logos.logo_colored_h || brand.logos.logo_black_h || brand.logos.logo_colored_v || brand.logos.logo_black_v)) || '';
   const hasAnyLogo = Object.values(brand.logos || {}).some(Boolean);
   const outroLogoUrl = (!outroOn || !hasAnyLogo) ? '' : (outroLogoKey === 'auto' ? darkLogoAuto : ((brand.logos as Record<string, string | null>)['logo_' + outroLogoKey] || darkLogoAuto));
+  // Montaggio: se manca il logo scuro (l'outro fa fade a bianco), usa un logo
+  // qualsiasi su sfondo colore brand, così l'outro è sempre visibile.
+  const anyLogo = darkLogoAuto || whiteLogoAuto || (Object.values(brand.logos || {}).find(Boolean) as string | undefined) || '';
+  const montOutroLogo = (!outroOn || !hasAnyLogo) ? '' : (outroLogoKey === 'auto' ? (darkLogoAuto || anyLogo) : ((brand.logos as Record<string, string | null>)['logo_' + outroLogoKey] || darkLogoAuto || anyLogo));
+  const montOutroBg = (montOutroLogo && !darkLogoAuto) ? (brand.primaryColor || '#15110d') : '';
   const outroLogoItems = React.useMemo(() => {
     const labelMap: Record<string, string> = {
       colored_h: 'Colore + Payoff', colored_v: 'Colore', black_h: 'Nero + Payoff', black_v: 'Nero', white_h: 'Bianco + Payoff', white_v: 'Bianco',
@@ -472,6 +720,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
   const fileRef = React.useRef<HTMLInputElement>(null);
   const pairRef = React.useRef<{ pairId: string; slot: 'before' | 'after' } | null>(null);
   const pairFileRef = React.useRef<HTMLInputElement>(null);
+  const talkingFileRef = React.useRef<HTMLInputElement>(null);
   const audioRef = React.useRef<HTMLAudioElement | null>(null);
   const [playingUrl, setPlayingUrl] = React.useState<string | null>(null);
   const rootRef = React.useRef<HTMLDivElement>(null);
@@ -487,14 +736,64 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
   }, [step]);
 
   const layout = tpl?.layout || tpl?.id || '';
+
+  // video_cuts: onboarding automatico la PRIMA volta che si apre il template
+  // (subito, non all'editor). Una sola volta, flag localStorage. Poi solo dal
+  // pulsante "Tutorial".
+  React.useEffect(() => {
+    if (layout === 'video_cuts') {
+      try {
+        if (!localStorage.getItem('gnm_vcuts_onboarded')) {
+          setShowCutsTutorial(true);
+          localStorage.setItem('gnm_vcuts_onboarded', '1');
+        }
+      } catch { /* localStorage non disponibile */ }
+    }
+  }, [layout]);
   const usesAvatar = !!tpl && !NO_AVATAR_LAYOUTS.includes(layout);
   // Layout righe orizzontali (come montaggio): anche per gli avatar (classic/split),
   // così le clip stanno una sotto l'altra con anteprima larga, ambiente e trim.
   const rowLayout = layout === 'montaggio' || usesAvatar;
   const isPhotoTemplate = ['walkthrough', 'ai_staging', 'construction', 'day_night'].includes(layout);
   const singlePhoto = ['ai_staging', 'construction', 'day_night'].includes(layout);
-  const maxClips = layout === 'montaggio' ? MAX_CLIPS_MONTAGGIO : layout === 'sottotitoli' || singlePhoto ? 1 : MAX_CLIPS;
-  const minClips = layout === 'montaggio' ? 3 : layout === 'sottotitoli' || singlePhoto || isPhotoTemplate ? 1 : 3;
+  // Montaggio con video parlato (split / riquadro): clip casa sopra + 1 video parlato.
+  const montSplitPip = layout === 'montaggio' && (montaggioLayout === 'split' || montaggioLayout === 'pip');
+  // Mantiene splitSlots coerente con n. clip + durata parlato (auto-equal di base;
+  // riscala in proporzione se cambia solo la durata).
+  const talkDur = talkingClip?.duration || 0;
+  const nClips = clips.length;
+  React.useEffect(() => {
+    if (!montSplitPip || !talkDur || nClips === 0) { setSplitSlots(prev => (prev.length ? [] : prev)); return; }
+    setSplitSlots(prev => {
+      if (prev.length === nClips) {
+        const sum = prev.reduce((a, b) => a + b, 0) || 1;
+        return prev.map(v => (v / sum) * talkDur);
+      }
+      return Array(nClips).fill(talkDur / nClips);
+    });
+  }, [montSplitPip, nClips, talkDur]);
+  // Trascina il bordo tra la clip i e la i+1 (sposta secondi tra le due).
+  const dragSplitDivider = (i: number) => (e: React.PointerEvent) => {
+    e.preventDefault();
+    const track = splitTrackRef.current; if (!track) return;
+    const rect = track.getBoundingClientRect();
+    const base = [...splitSlots];
+    const a0 = base[i], b0 = base[i + 1];
+    const startX = e.clientX;
+    const MIN = 0.4;
+    const apply = (clientX: number) => {
+      const dx = ((clientX - startX) / rect.width) * talkDur;
+      let a = a0 + dx, b = b0 - dx;
+      if (a < MIN) { b -= (MIN - a); a = MIN; }
+      if (b < MIN) { a -= (MIN - b); b = MIN; }
+      const next = [...base]; next[i] = a; next[i + 1] = b; setSplitSlots(next);
+    };
+    const mv = (ev: PointerEvent) => apply(ev.clientX);
+    const up = () => { window.removeEventListener('pointermove', mv); window.removeEventListener('pointerup', up); };
+    window.addEventListener('pointermove', mv); window.addEventListener('pointerup', up);
+  };
+  const maxClips = layout === 'montaggio' ? MAX_CLIPS_MONTAGGIO : layout === 'sottotitoli' || layout === 'video_cuts' || singlePhoto ? 1 : MAX_CLIPS;
+  const minClips = layout === 'montaggio' ? (montSplitPip ? 1 : 3) : layout === 'sottotitoli' || layout === 'video_cuts' || singlePhoto || isPhotoTemplate ? 1 : 3;
   const usesMusic = layout !== 'sottotitoli';
   const inlineStep3 = ['walkthrough', 'construction', 'before_after', 'ai_staging', 'day_night'].includes(layout);
 
@@ -525,7 +824,8 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
   }, [applyVideoQuota]);
 
   const resetAll = React.useCallback(() => {
-    setStep(0); setTpl(null); setAvatar(null); setClips([]); setPairs([]);
+    setStep(0); setTpl(null); setAvatar(null); setClips([]); setPairs([]); setCutSegments([]); setCutsConfirm(false);
+    setMontaggioLayout(null); setTalkingClip(null); setPipPosition('br');
     setSections([]); setMusicUrl(null); setMusicOpen(false);
     setStagingStyle(AI_STAGING_STYLES[0].id); setAnimStyle(AI_STAGING_ANIMATION_STYLES[0].id);
     setDayNightDir(DAY_NIGHT_DIRECTIONS[0].id); setSubtitleStyle('bold'); setAutoCut(true);
@@ -577,16 +877,21 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
   // ── media handling ─────────────────────────────────────────────────────────
   const addFiles = async (files: FileList | File[]) => {
     const list = Array.from(files);
+    // video_cuts: un solo video. Caricarne uno nuovo azzera i momenti scelti
+    // (puntavano al video precedente).
+    if (layout === 'video_cuts') { setClips([]); setCutSegments([]); }
     const allowVideo = !isPhotoTemplate || layout === 'montaggio';
     const allowPhoto = isPhotoTemplate || layout === 'montaggio';
     const valid = list.filter(f =>
       (allowVideo && f.type.startsWith('video/')) || (allowPhoto && f.type.startsWith('image/'))
     );
     if (!valid.length) { toast(allowPhoto && !allowVideo ? 'Carica immagini' : 'Formato non supportato', 'x'); return; }
-    if (clips.length + valid.length > maxClips) { toast(`Massimo ${maxClips} file`, 'x'); return; }
+    // video_cuts sostituisce sempre il video → base 0, non conta quello vecchio.
+    const baseCount = layout === 'video_cuts' ? 0 : clips.length;
+    if (baseCount + valid.length > maxClips) { toast(`Massimo ${maxClips} file`, 'x'); return; }
     try {
       const converted: Clip[] = [];
-      for (const f of valid) {
+      for (const f of valid.slice(0, layout === 'video_cuts' ? 1 : valid.length)) {
         if (f.type.startsWith('image/')) {
           const thumb = await createImageThumbnail(f);
           const img = new Image();
@@ -601,6 +906,8 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
         }
       }
       setClips(c => [...c, ...converted]);
+      // video_cuts: niente preview in step 2 → dritto all'editor.
+      if (layout === 'video_cuts' && converted.length) { setStep(3); return; }
       // Riconoscimento ambiente + riordino (montaggio/walkthrough), best-effort.
       void autoDetectRooms(converted);
       // Mini-anteprima a frame per la timeline di trim (montaggio + avatar, video).
@@ -702,6 +1009,8 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
       if (res.aiModel) ctx.aiModel = res.aiModel;
       if (res.pairs) ctx.pairs = res.pairs;
       if (res.constructionJobs) ctx.constructionJobs = res.constructionJobs;
+      if (res.videoCutsJobs) ctx.videoCutsJobs = res.videoCutsJobs;
+      if (res.segmentCount) ctx.segmentCount = res.segmentCount;
       // Echo per i template async (Veo/Kling): la copertina finale viene
       // composta dal Lambda in fase progress, serve nel ctx dei poll.
       if (outroLogoUrl) ctx.outroLogoUrl = outroLogoUrl;
@@ -774,6 +1083,62 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
       )}
     </div>
   );
+
+  // ── video_cuts (Taglia & Anima): estrae il primo frame di ogni taglio, carica
+  // frame + video sorgente su R2, poi avvia il render async (restyle + animazione
+  // + assemblaggio FFmpeg). Ogni taglio consuma 1 credito video.
+  const [cutsBusy, setCutsBusy] = React.useState(false);
+  const handleVideoCutsRender = async () => {
+    const clip = clips[0];
+    if (!tpl || !clip || cutSegments.length === 0 || cutsBusy) return;
+    if ((activeRenders ?? 0) >= MAX_CONCURRENT_RENDERS) {
+      toast(`Massimo ${MAX_CONCURRENT_RENDERS} video alla volta. Attendi che finiscano.`, 'x');
+      return;
+    }
+    const need = cutSegments.length;
+    if (quota && displayRemaining < need) {
+      if (lockBrand) { toast(`Servono ${need} crediti video (1 per taglio). Passa a un piano.`, 'x'); return; }
+      setPacksOpen(true);
+      return;
+    }
+    setCutsBusy(true);
+    abortRef.current = false;
+    const prepId = `prep_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    prepJobRef.current = prepId;
+    uiOwnerRef.current = prepId;
+    const aspect = aspectFromDims(clip.width, clip.height);
+    setStep(4); setRenderStage('background'); setRenderProgress(0.05); setRenderError(null); setOutputUrl(null);
+    onVideoJob?.({ id: prepId, title: jobTitle(), template: 'video_cuts', stage: 'render', progress: 0.05, ctx: {}, projectId: project?.id || null, aspect });
+    try {
+      const ordered = [...cutSegments].sort((a, b) => a.tStart - b.tStart);
+      // 1) fotogramma iniziale di ogni taglio (piena risoluzione) → R2
+      const frames = await Promise.all(ordered.map(seg => extractFrameAt(clip.file, seg.tStart)));
+      const photoUrls = await getUploadUrls(frames.length, 'photo', frames.map(() => 'image/jpeg'));
+      await Promise.all(frames.map((f, i) => uploadToPresigned(photoUrls[i].uploadUrl, dataUrlToBlob(f.dataUrl), 'image/jpeg')));
+      // 2) video sorgente → R2
+      const [videoSlot] = await getUploadUrls(1, 'video', [clip.file.type]);
+      await uploadToPresigned(videoSlot.uploadUrl, clip.file, clip.file.type);
+      setRenderProgress(0.2);
+      // 3) avvia il render: ogni taglio [tStart,tEnd] viene rimosso e sostituito
+      const segments = ordered.map((seg, i) => {
+        const st = AI_STAGING_STYLES.find(x => x.id === seg.styleId);
+        return { tStart: seg.tStart, tEnd: Math.max(seg.tStart + 0.5, Math.min(clip.duration, seg.tEnd)), frameUrl: photoUrls[i].readUrl, stylePrompt: st?.prompt || '', animPrompt: null };
+      });
+      const res = await startRender({
+        template: 'video_cuts', sourceVideoUrl: videoSlot.readUrl, segments,
+        aspectRatio: aspect, audioMode: 'original',
+        propertyData: propertyData(), propertyLabel: propertyLabel(),
+        outroLogoUrl, segmentCount: segments.length,
+      });
+      finishRender(res, aspect, prepId);
+    } catch (e) {
+      const msg = e instanceof AIVideoError ? e.message : 'Avvio render non riuscito';
+      setRenderStage('failed'); setRenderError(msg);
+      onVideoJob?.({ id: prepId, title: jobTitle(), template: 'video_cuts', stage: 'failed', progress: 0, ctx: {}, error: msg, projectId: project?.id || null, aspect });
+    } finally {
+      setCutsBusy(false);
+    }
+  };
 
   const handleRender = async () => {
     if (!tpl) return;
@@ -951,17 +1316,30 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
           } catch (e) { console.error('[montaggio] cover overlay upload failed (non-blocking):', e); }
         }
 
+        // Split / Riquadro: carica il video parlato (la sua durata = durata totale).
+        let talkingClipUrl = '';
+        if (montSplitPip && talkingClip) {
+          const [tslot] = await getUploadUrls(1, 'video', [talkingClip.file.type]);
+          await uploadToPresigned(tslot.uploadUrl, talkingClip.file, talkingClip.file.type);
+          talkingClipUrl = tslot.readUrl;
+        }
+        const montTemplate = montaggioLayout === 'split' ? 'montaggio_split' : montaggioLayout === 'pip' ? 'montaggio_pip' : 'montaggio';
+
         setRenderProgress(0.25);
-        console.log('[Montaggio] startRender…', { clips: ordered.length, coverOverlayUrl: !!coverOverlayUrl, musicUrl: !!musicUrl });
+        console.log('[Montaggio] startRender…', { layout: montTemplate, clips: ordered.length, coverOverlayUrl: !!coverOverlayUrl, musicUrl: !!musicUrl });
         const res = await startRender({
-          template: 'montaggio',
+          template: montTemplate,
           avatarDurationSeconds: ordered.reduce((acc, c) => acc + ((c.sourceEnd || c.duration) - (c.sourceStart || 0)), 0),
           musicUrl,
+          ...(talkingClipUrl ? { talkingClipUrl } : {}),
+          ...(montaggioLayout === 'pip' ? { pipPosition } : {}),
+          ...(montSplitPip && splitSlots.length === clips.length ? { clipDurations: splitSlots.map(v => Math.round(v * 100) / 100) } : {}),
           ...(coverTitle.trim() ? { coverTitle: coverTitle.trim(), coverAddress: coverAddress.trim(), coverStyle } : {}),
           ...(coverOverlayUrl ? { coverOverlayUrl } : {}),
           ...(coverLogoUrl ? { coverLogo: coverLogoUrl } : {}),
           ...(watermarkEnabled ? { watermark: { logoUrl: whiteLogo || undefined, position: watermarkPosition, opacity: watermarkOpacity / 100, skipFirst: true } } : {}),
-          outroLogoUrl,
+          outroLogoUrl: montOutroLogo,
+          ...(montOutroBg ? { outroBg: montOutroBg } : {}),
           clips: ordered.map(c => ({
             url: c.uploadedUrl, room: c.room,
             sourceStart: c.sourceStart || 0, sourceEnd: c.sourceEnd || c.duration || 5,
@@ -1090,7 +1468,20 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
   // media step validity
   const mediaReady = layout === 'before_after'
     ? pairs.some(p => p.before && p.after)
-    : clips.length >= minClips;
+    : montSplitPip
+      ? (clips.length >= 1 && !!talkingClip)
+      : clips.length >= minClips;
+
+  // Carica il video parlato (split / riquadro) — singolo video.
+  const addTalkingFile = async (files: FileList | File[]) => {
+    const f = Array.from(files).find(x => x.type.startsWith('video/'));
+    if (!f) { toast('Carica un video', 'x'); return; }
+    try {
+      const { thumb, duration, width, height } = await createVideoThumbnail(f);
+      if (duration > 90) { toast('Video parlato massimo 90 secondi', 'x'); return; }
+      setTalkingClip({ id: `talk_${Date.now()}`, file: f, thumb, duration, width, height, room: 'altro', isPhoto: false, sourceStart: 0, sourceEnd: duration });
+    } catch { toast('Errore lettura video', 'x'); }
+  };
 
   const toggleMusicPlay = (track: MusicTrack) => {
     if (playingUrl === track.url) {
@@ -1151,11 +1542,11 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
       {step === 0 && (
         <div className="max-md:!grid-cols-1" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
           {templates.filter(t => t.id !== 'montaggio' && t.id !== 'sottotitoli').map(t => (
-            <Box key={t.id} onClick={() => { if (quota && displayRemaining <= 0) { if (lockBrand) { toast('Hai finito i video gratuiti. Passa a un piano per continuare.', 'x'); } else { setPacksOpen(true); } return; } setClips([]); setPairs([]); setTpl(t); setStep(NO_AVATAR_LAYOUTS.includes(t.layout || t.id) ? 2 : 1); }} style={{
+            <Box key={t.id} onClick={() => { if (quota && displayRemaining <= 0) { if (lockBrand) { toast('Hai finito i video gratuiti. Passa a un piano per continuare.', 'x'); } else { setPacksOpen(true); } return; } setClips([]); setPairs([]); setCutSegments([]); setTpl(t); setStep(NO_AVATAR_LAYOUTS.includes(t.layout || t.id) ? 2 : 1); }} style={{
               background: '#fff', border: '1px solid #f0ede7', borderRadius: 16, overflow: 'hidden', cursor: 'pointer',
               transition: 'box-shadow .15s, transform .15s',
             }} hover={{ boxShadow: '0 12px 32px rgba(33,31,28,.10)', transform: 'translateY(-2px)' }}>
-              <TplPreview src={resolvePreviewUrl(t.preview_video_url)} />
+              <TplPreview src={resolvePreviewUrl(t.preview_video_url)} templateId={t.id} />
               <div style={{ padding: '14px 16px 16px' }}>
                 <div style={{ fontSize: 14.5, fontWeight: 800, marginBottom: 4 }}>{t.name}</div>
                 <div style={{ fontSize: 12.5, color: '#8c867d', lineHeight: 1.45 }}>{t.description}</div>
@@ -1223,13 +1614,37 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
       )}
 
       {/* STEP 2 — media upload */}
-      {step === 2 && tpl && (
+      {/* STEP montaggio: scelta del layout (Normale / Split / Riquadro) */}
+      {step === 2 && tpl && layout === 'montaggio' && !montaggioLayout && (
+        <div>
+          <div style={{ marginBottom: 20 }}>
+            <h1 style={s('margin:0 0 4px;font-size:25px;font-weight:800;letter-spacing:-.5px')}>Montaggio Automatico</h1>
+            <div style={s('color:#8c867d;font-size:14px')}>Scegli il tipo di video che vuoi creare.</div>
+          </div>
+          <div className="max-md:!grid-cols-1" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
+            {MONTAGGIO_LAYOUTS.map(ml => (
+              <Box key={ml.id} onClick={() => setMontaggioLayout(ml.id)} style={{ background: '#fff', border: '1px solid #f0ede7', borderRadius: 16, overflow: 'hidden', cursor: 'pointer', display: 'flex', flexDirection: 'column' }} hover={{ boxShadow: '0 12px 32px rgba(33,31,28,.10)', transform: 'translateY(-2px)' }}>
+                <MontaggioDiagram kind={ml.id} />
+                <div style={{ padding: '14px 16px 16px' }}>
+                  <div style={s('font-size:16px;font-weight:800;letter-spacing:-.2px;margin-bottom:4px')}>{ml.label}</div>
+                  <div style={s('font-size:13px;color:#8c867d;line-height:1.45')}>{ml.desc}</div>
+                </div>
+              </Box>
+            ))}
+          </div>
+          <StickyNav>
+            <Box as="button" onClick={() => go?.('home')} style={s('border:1px solid #e4e1da;background:#fff;font-size:13px;font-weight:600;padding:11px 20px;border-radius:10px;cursor:pointer') as React.CSSProperties} hover={s('background:#f6f4f0')}>Indietro</Box>
+          </StickyNav>
+        </div>
+      )}
+
+      {step === 2 && tpl && !(layout === 'montaggio' && !montaggioLayout) && !montSplitPip && (
         <div>
           {layout === 'montaggio' ? (
             <div className="max-md:!flex-col max-md:!items-start max-md:!gap-4" style={s('display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:24px')}>
               <div>
-                <h1 style={s('margin:0 0 4px;font-size:25px;font-weight:800;letter-spacing:-.5px')}>Montaggio Automatico</h1>
-                <div style={s('color:#8c867d;font-size:14px')}>{`Carica da ${minClips} a ${maxClips} tra clip e foto: l'AI seleziona i momenti migliori e monta tutto con musica e cover.`}</div>
+                <h1 style={s('margin:0 0 4px;font-size:25px;font-weight:800;letter-spacing:-.5px')}>{montSplitPip ? 'Le clip della casa' : 'Montaggio Automatico'}</h1>
+                <div style={s('color:#8c867d;font-size:14px')}>{montSplitPip ? "Carica le clip dell'immobile (almeno 1). Andranno " + (montaggioLayout === 'split' ? 'nella metà in alto.' : 'a tutto schermo.') : `Carica da ${minClips} a ${maxClips} tra clip e foto: l'AI seleziona i momenti migliori e monta tutto con musica e cover.`}</div>
               </div>
               {/* Skeleton solo se la pill comparirà (montaggio limitato = free); i paid hanno montaggio illimitato -> niente pill. */}
               {!demoMode && !montaggioQuota && lockBrand && (
@@ -1254,6 +1669,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
                 {layout === 'before_after' ? 'Carica le coppie prima/dopo'
                   : singlePhoto ? 'Carica la foto'
                   : layout === 'sottotitoli' ? 'Carica il tuo video (max 90s)'
+                  : layout === 'video_cuts' ? 'Carica il tuo video'
                   : isPhotoTemplate ? `Carica da ${minClips} a ${maxClips} foto`
                   : `Carica da ${minClips} a ${maxClips} clip video`}
               </div>
@@ -1517,6 +1933,48 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
             </div>
           )}
 
+          {/* Split / Riquadro: il tuo video mentre parli */}
+          {montSplitPip && (
+            <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:14px;padding:18px;margin-top:16px')}>
+              <div style={s('font-size:15px;font-weight:800;margin-bottom:4px')}>Il tuo video mentre parli</div>
+              <div style={s('color:#8c867d;font-size:13px;margin-bottom:12px')}>{montaggioLayout === 'split' ? 'Andrà nella metà in basso, sotto le clip della casa.' : "Andrà nel riquadro nell'angolo."} Max 90 secondi. La durata di questo video decide la durata del montaggio.</div>
+              {talkingClip ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={talkingClip.thumb} alt="" style={{ width: 110, height: 72, objectFit: 'cover', borderRadius: 8, background: '#000', flex: 'none' }} />
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div style={s('font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{talkingClip.file.name}</div>
+                    <div style={s('font-size:12px;color:#8c867d')}>{Math.round(talkingClip.duration)}s</div>
+                  </div>
+                  <Box as="button" onClick={() => setTalkingClip(null)} style={s('flex:none;border:1px solid #e4e1da;background:#fff;color:#57534c;font-size:13px;font-weight:700;padding:9px 14px;border-radius:10px;cursor:pointer')} hover={s('background:#f6f4f0')}>Cambia</Box>
+                </div>
+              ) : (
+                <Box as="button" onClick={() => talkingFileRef.current?.click()} style={s('width:100%;border:1.5px dashed #d8d4cb;background:#faf9f7;color:#57534c;font-size:14px;font-weight:700;padding:22px;border-radius:12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px')} hover={s('background:#f1efe9;border-color:#bdb8ae')}>
+                  <Icon name="film" size={22} color="#8c867d" />Carica il tuo video parlato
+                </Box>
+              )}
+              {montaggioLayout === 'pip' && (
+                <div style={{ marginTop: 16 }}>
+                  <div style={s('font-size:13px;font-weight:700;margin-bottom:8px')}>In quale angolo metterti?</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, maxWidth: 280 }}>
+                    {([
+                      { id: 'tl' as const, label: 'In alto a sinistra' },
+                      { id: 'tr' as const, label: 'In alto a destra' },
+                      { id: 'bl' as const, label: 'In basso a sinistra' },
+                      { id: 'br' as const, label: 'In basso a destra' },
+                    ]).map(opt => {
+                      const on = pipPosition === opt.id;
+                      return (
+                        <Box key={opt.id} onClick={() => setPipPosition(opt.id)} style={{ padding: '10px 12px', borderRadius: 10, cursor: 'pointer', fontSize: 12.5, fontWeight: 700, textAlign: 'center', border: `2px solid ${on ? '#3B83F6' : '#e4e1da'}`, background: on ? '#eef4fe' : '#fff', color: on ? '#1d5fd0' : '#57534c' }} hover={{ borderColor: '#3B83F6' }}>{opt.label}</Box>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+          <input ref={talkingFileRef} type="file" accept="video/*" style={{ display: 'none' }} onChange={e => { if (e.target.files) addTalkingFile(e.target.files); e.target.value = ''; }} />
+
           {inlineStep3 && (layout === 'before_after' ? pairs.some(p => p.before && p.after) : clips.length > 0) && (
             <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:14px;padding:6px 18px 14px;margin-top:16px')}>
               {renderOutroSection()}
@@ -1524,7 +1982,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
           )}
 
           <StickyNav>
-            <Box as="button" onClick={() => { setClips([]); setPairs([]); setStep(usesAvatar ? 1 : 0); }} style={s('border:1px solid #e4e1da;background:#fff;font-size:13px;font-weight:600;padding:11px 20px;border-radius:10px;cursor:pointer') as React.CSSProperties} hover={s('background:#f6f4f0')}>Indietro</Box>
+            <Box as="button" onClick={() => { if (layout === 'montaggio') { setClips([]); setTalkingClip(null); setMontaggioLayout(null); } else { setClips([]); setPairs([]); setStep(usesAvatar ? 1 : 0); } }} style={s('border:1px solid #e4e1da;background:#fff;font-size:13px;font-weight:600;padding:11px 20px;border-radius:10px;cursor:pointer') as React.CSSProperties} hover={s('background:#f6f4f0')}>Indietro</Box>
             {inlineStep3 ? (
               <Box as="button" onClick={() => { if (mediaReady) handleRender(); }} style={{ border: 'none', background: '#3B83F6', color: '#fff', fontSize: 14, fontWeight: 700, padding: '12px 28px', borderRadius: 10, cursor: mediaReady ? 'pointer' : 'default', opacity: mediaReady ? 1 : 0.4, display: 'flex', alignItems: 'center', gap: 8 }} hover={mediaReady ? { background: '#2b6fe0' } : {}}>
                 <Icon name="sparkles" size={16} color="#fff" />Genera video
@@ -1532,6 +1990,129 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
             ) : (
               <Box as="button" onClick={() => { if (mediaReady) goToOptions(); }} style={{ border: 'none', background: '#3B83F6', color: '#fff', fontSize: 14, fontWeight: 700, padding: '12px 28px', borderRadius: 10, cursor: mediaReady ? 'pointer' : 'default', opacity: mediaReady ? 1 : 0.4 }} hover={mediaReady ? { background: '#2b6fe0' } : {}}>Continua</Box>
             )}
+          </StickyNav>
+        </div>
+      )}
+
+      {/* STEP 2 — Schermo diviso / Riquadro: due colonne (controlli + preview con +) */}
+      {step === 2 && tpl && montSplitPip && (
+        <div>
+          <div style={{ marginBottom: 20 }}>
+            <h1 style={s('margin:0 0 4px;font-size:25px;font-weight:800;letter-spacing:-.5px')}>{montaggioLayout === 'split' ? 'Schermo diviso' : 'Picture in picture'}</h1>
+            <div style={s('color:#8c867d;font-size:14px')}>Metti le clip della casa e il tuo video parlato nei rispettivi posti. La durata del parlato decide la durata totale.</div>
+          </div>
+
+          <div className="max-md:!grid-cols-1 max-md:!gap-4" style={{ display: 'grid', gridTemplateColumns: '320px 1fr', gap: 24, alignItems: 'start' }}>
+            {/* DESTRA (colonna 2): parlato + timeline clip */}
+            <div style={{ order: 2, display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {/* video parlato */}
+              <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:14px;padding:16px')}>
+                <div style={s('font-size:14px;font-weight:800;margin-bottom:10px')}>Il tuo video mentre parli</div>
+                {talkingClip ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={talkingClip.thumb} alt="" style={{ width: 96, height: 64, objectFit: 'cover', borderRadius: 8, background: '#000', flex: 'none' }} />
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <div style={s('font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{talkingClip.file.name}</div>
+                      <div style={s('font-size:12px;color:#8c867d')}>Durata totale {Math.round(talkingClip.duration)}s</div>
+                    </div>
+                    <Box as="button" onClick={() => setTalkingClip(null)} style={s('flex:none;border:1px solid #e4e1da;background:#fff;color:#57534c;font-size:13px;font-weight:700;padding:8px 12px;border-radius:10px;cursor:pointer')} hover={s('background:#f6f4f0')}>Cambia</Box>
+                  </div>
+                ) : (
+                  <Box as="button" onClick={() => talkingFileRef.current?.click()} style={s('width:100%;border:1.5px dashed #d8d4cb;background:#faf9f7;color:#57534c;font-size:13.5px;font-weight:700;padding:18px;border-radius:12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px')} hover={s('background:#f1efe9;border-color:#bdb8ae')}>
+                    <Icon name="film" size={20} color="#8c867d" />Carica il tuo video parlato (max 90s)
+                  </Box>
+                )}
+              </div>
+
+              {/* timeline clip a tempo */}
+              <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:14px;padding:16px')}>
+                <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 4 }}>
+                  <div style={s('font-size:14px;font-weight:800')}>Quanto dura ogni clip</div>
+                  <Box as="button" onClick={() => fileRef.current?.click()} style={s('border:none;background:#eef4fe;color:#1d5fd0;font-size:12.5px;font-weight:700;padding:7px 12px;border-radius:9px;cursor:pointer;display:inline-flex;align-items:center;gap:6px')} hover={s('background:#e2eefe')}><Icon name="plus" size={14} color="#1d5fd0" />Aggiungi clip</Box>
+                </div>
+                <div style={s('font-size:12.5px;color:#8c867d;margin-bottom:12px')}>Trascina i bordi per decidere quanto dura ogni clip. La somma resta uguale al parlato.</div>
+                {clips.length === 0 ? (
+                  <div style={s('text-align:center;padding:18px;border:1.5px dashed #d8d4cb;border-radius:10px;color:#8c867d;font-size:13px')}>Aggiungi le clip della casa col + nell&apos;anteprima.</div>
+                ) : (
+                  <>
+                    {!talkingClip ? (
+                      <div style={s('text-align:center;padding:16px;border:1.5px dashed #d8d4cb;border-radius:10px;color:#8c867d;font-size:13px')}>Carica il video parlato per regolare i tempi.</div>
+                    ) : (
+                    /* Blocchi clip con durata trascinabile (larghi quanto durano,
+                       somma = durata del parlato). */
+                    <div style={{ position: 'relative' }}>
+                      <div ref={splitTrackRef} style={{ display: 'flex', height: 52, borderRadius: 8, overflow: 'hidden', border: '1px solid #e4e1da', position: 'relative', userSelect: 'none', touchAction: 'none' }}>
+                        {clips.map((c, i) => (
+                          <React.Fragment key={c.id}>
+                            <div style={{ flex: splitSlots[i] || 1, position: 'relative', minWidth: 0, background: '#000' }}>
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src={c.thumb} alt="" draggable={false} style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: .82, pointerEvents: 'none' }} />
+                              <span style={{ position: 'absolute', top: 3, left: 3, width: 16, height: 16, borderRadius: '50%', background: 'rgba(33,31,28,.78)', color: '#fff', fontSize: 9.5, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{i + 1}</span>
+                              <span style={{ position: 'absolute', bottom: 2, left: 0, right: 0, textAlign: 'center', color: '#fff', fontSize: 10, fontWeight: 800, textShadow: '0 1px 3px rgba(0,0,0,.85)' }}>{(splitSlots[i] || 0).toFixed(1)}s</span>
+                            </div>
+                            {i < clips.length - 1 && (
+                              <div onPointerDown={dragSplitDivider(i)} style={{ flex: 'none', width: 12, marginLeft: -6, marginRight: -6, zIndex: 3, cursor: 'ew-resize', display: 'flex', alignItems: 'center', justifyContent: 'center', touchAction: 'none' }}>
+                                <span style={{ width: 4, height: '100%', background: 'rgba(255,255,255,.96)', boxShadow: '0 0 0 1px rgba(0,0,0,.3)' }} />
+                              </div>
+                            )}
+                          </React.Fragment>
+                        ))}
+                      </div>
+                      {/* playhead sincronizzato col play del parlato */}
+                      {talkDur > 0 && (
+                        <div style={{ position: 'absolute', top: -2, bottom: -2, left: `${Math.min(100, (splitTime / talkDur) * 100)}%`, transform: 'translateX(-50%)', width: 3, borderRadius: 2, background: '#3B83F6', boxShadow: '0 0 0 1.5px #fff', pointerEvents: 'none', zIndex: 4 }} />
+                      )}
+                    </div>
+                    )}
+                    {/* lista clip con rimozione */}
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 12 }}>
+                      {clips.map((c, i) => (
+                        <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#f6f4f0', borderRadius: 8, padding: '5px 8px 5px 6px' }}>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={c.thumb} alt="" style={{ width: 30, height: 20, objectFit: 'cover', borderRadius: 4, background: '#000' }} />
+                          <span style={s('font-size:11.5px;font-weight:700;color:#57534c')}>Clip {i + 1}</span>
+                          <button onClick={() => setClips(cs => cs.filter(x => x.id !== c.id))} style={{ border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', padding: 2 }}><Icon name="x" size={13} color="#8c867d" /></button>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* SINISTRA (colonna 1): anteprima LIVE del video diviso */}
+            <div className="max-md:!static max-md:!max-w-[280px] max-md:!mx-auto max-md:!w-full" style={{ order: 1, position: 'sticky', top: 12 }}>
+              <SplitLivePreview
+                mode={montaggioLayout === 'pip' ? 'pip' : 'split'}
+                clips={clips}
+                talkingClip={talkingClip}
+                slots={splitSlots}
+                pipPosition={pipPosition}
+                onAddHouse={() => fileRef.current?.click()}
+                onAddTalking={() => talkingFileRef.current?.click()}
+                onTimeUpdate={setSplitTime}
+              />
+              {montaggioLayout === 'pip' && (
+                <div style={{ marginTop: 12 }}>
+                  <div style={s('font-size:12.5px;font-weight:700;margin-bottom:8px')}>In quale angolo metterti?</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                    {([{ id: 'tl' as const, label: 'Alto sx' }, { id: 'tr' as const, label: 'Alto dx' }, { id: 'bl' as const, label: 'Basso sx' }, { id: 'br' as const, label: 'Basso dx' }]).map(opt => {
+                      const on = pipPosition === opt.id;
+                      return (<Box key={opt.id} onClick={() => setPipPosition(opt.id)} style={{ padding: '9px 10px', borderRadius: 10, cursor: 'pointer', fontSize: 12, fontWeight: 700, textAlign: 'center', border: `2px solid ${on ? '#3B83F6' : '#e4e1da'}`, background: on ? '#eef4fe' : '#fff', color: on ? '#1d5fd0' : '#57534c' }} hover={{ borderColor: '#3B83F6' }}>{opt.label}</Box>);
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <input ref={fileRef} type="file" accept="image/*,video/*" multiple style={{ display: 'none' }} onChange={e => { if (e.target.files) addFiles(e.target.files); e.target.value = ''; }} />
+          <input ref={talkingFileRef} type="file" accept="video/*" style={{ display: 'none' }} onChange={e => { if (e.target.files) addTalkingFile(e.target.files); e.target.value = ''; }} />
+
+          <StickyNav>
+            <Box as="button" onClick={() => { setClips([]); setTalkingClip(null); setMontaggioLayout(null); }} style={s('border:1px solid #e4e1da;background:#fff;font-size:13px;font-weight:600;padding:11px 20px;border-radius:10px;cursor:pointer') as React.CSSProperties} hover={s('background:#f6f4f0')}>Indietro</Box>
+            <Box as="button" onClick={() => { if (mediaReady) goToOptions(); }} style={{ border: 'none', background: '#3B83F6', color: '#fff', fontSize: 14, fontWeight: 700, padding: '12px 28px', borderRadius: 10, cursor: mediaReady ? 'pointer' : 'default', opacity: mediaReady ? 1 : 0.4 }} hover={mediaReady ? { background: '#2b6fe0' } : {}}>Continua</Box>
           </StickyNav>
         </div>
       )}
@@ -1703,6 +2284,19 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
       {/* STEP 3 — options (montaggio: cover → logo → music phases) */}
       {step === 3 && tpl && layout === 'montaggio' && (
         <div>
+          {montSplitPip ? (
+            // Split / Riquadro (con persona): niente cover di apertura, solo la
+            // copertina finale (outro). La voce del video fa da audio.
+            <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:14px;padding:6px 18px 14px')}>
+              {renderOutroSection()}
+              <StickyNav bleed={24}>
+                <Box as="button" onClick={() => setStep(2)} style={s('border:1px solid #e4e1da;background:#fff;font-size:13px;font-weight:600;padding:11px 20px;border-radius:10px;cursor:pointer') as React.CSSProperties} hover={s('background:#f6f4f0')}>Indietro</Box>
+                <Box as="button" onClick={handleRender} style={s('border:none;background:#3B83F6;color:#fff;font-size:14px;font-weight:700;padding:12px 24px;border-radius:10px;cursor:pointer;display:flex;align-items:center;gap:8px') as React.CSSProperties} hover={s('background:#2b6fe0')}>
+                  <Icon name="sparkles" size={16} color="#fff" />Genera video
+                </Box>
+              </StickyNav>
+            </div>
+          ) : (<>
           {montaggioPhase === 'cover' && (
             <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:14px;padding:24px')}>
               <div style={s('font-size:16px;font-weight:800;margin-bottom:4px')}>Cover di apertura</div>
@@ -1867,11 +2461,57 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
               </StickyNav>
             </div>
           )}
+          </>)}
+        </div>
+      )}
+
+      {/* STEP 3 — video_cuts: editor guidato "Taglia & Anima" */}
+      {step === 3 && tpl && layout === 'video_cuts' && clips[0] && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div className="max-md:!flex-col max-md:!items-start max-md:!gap-3" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+            <div>
+              <h2 style={s('margin:0 0 4px;font-size:20px;font-weight:800;letter-spacing:-.3px')}>Trasforma i momenti del tuo video</h2>
+              <div style={s('color:#8c867d;font-size:14px')}>Scegli i punti da animare. L&apos;AI arreda la stanza e crea l&apos;effetto prima/dopo.</div>
+            </div>
+            <TutorialButton onClick={() => setShowCutsTutorial(true)} />
+          </div>
+          <VideoCutsEditor
+            file={clips[0].file}
+            duration={clips[0].duration}
+            segments={cutSegments}
+            onChange={setCutSegments}
+          />
+          <StickyNav>
+            <Box as="button" onClick={() => setStep(2)} style={s('border:1px solid #e4e1da;background:#fff;font-size:13px;font-weight:600;padding:11px 20px;border-radius:10px;cursor:pointer') as React.CSSProperties} hover={s('background:#f6f4f0')}>Indietro</Box>
+            <Box as="button" onClick={() => { if (cutSegments.length > 0) setCutsConfirm(true); }} style={{ border: 'none', background: '#3B83F6', color: '#fff', fontSize: 15, fontWeight: 800, padding: '13px 30px', borderRadius: 11, cursor: cutSegments.length > 0 ? 'pointer' : 'default', opacity: cutSegments.length > 0 ? 1 : 0.4, display: 'flex', alignItems: 'center', gap: 8 }} hover={cutSegments.length > 0 ? { background: '#2b6fe0' } : {}}>
+              <Icon name="sparkles" size={18} color="#fff" />Crea il video
+            </Box>
+          </StickyNav>
+        </div>
+      )}
+
+      {/* Onboarding animato "Taglia & Anima" */}
+      <VideoCutsTutorial open={showCutsTutorial} onClose={() => setShowCutsTutorial(false)} />
+
+      {/* Conferma prima di spendere crediti (video_cuts) */}
+      {cutsConfirm && (
+        <div onClick={() => setCutsConfirm(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(24,21,17,.5)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+          <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 420, background: 'var(--bg-card)', borderRadius: 18, boxShadow: '0 32px 64px rgba(20,18,15,.25)', padding: 26, textAlign: 'center' }}>
+            <div style={{ width: 52, height: 52, borderRadius: 14, background: '#eef4fe', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}><Icon name="sparkles" size={24} color="#3B83F6" /></div>
+            <div style={s('font-size:17px;font-weight:800;margin-bottom:8px')}>Creiamo il tuo video?</div>
+            <div style={s('font-size:14px;color:#57534c;line-height:1.5;margin-bottom:20px')}>
+              Trasformerai <b>{cutSegments.length}</b> {cutSegments.length === 1 ? 'momento' : 'momenti'} e userai <b>{cutSegments.length}</b> {cutSegments.length === 1 ? 'credito' : 'crediti'} video. Il video sarà pronto tra qualche minuto.
+            </div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <Box as="button" onClick={() => setCutsConfirm(false)} style={s('flex:1;border:1px solid #d8d4cb;background:#fff;color:#57534c;font-size:14px;font-weight:700;padding:13px;border-radius:11px;cursor:pointer')} hover={s('background:#faf9f7')}>Annulla</Box>
+              <Box as="button" onClick={() => { setCutsConfirm(false); void handleVideoCutsRender(); }} style={s('flex:1;border:none;background:#3B83F6;color:#fff;font-size:14px;font-weight:800;padding:13px;border-radius:11px;cursor:pointer')} hover={s('background:#2b6fe0')}>Sì, crea</Box>
+            </div>
+          </div>
         </div>
       )}
 
       {/* STEP 3 — options (avatar: tutto in colonna unica) */}
-      {step === 3 && tpl && !inlineStep3 && layout !== 'sottotitoli' && layout !== 'montaggio' && (
+      {step === 3 && tpl && !inlineStep3 && layout !== 'sottotitoli' && layout !== 'montaggio' && layout !== 'video_cuts' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {/* script editor (classic/split) */}

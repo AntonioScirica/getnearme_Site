@@ -179,7 +179,6 @@ export default function MediaScreen({
 
       setLoadingPhotos(prev => ({ ...prev, [batch.id]: true }));
       fetchBatchPhotos(batch.id).then(photos => {
-        console.log(`[Media] batch ${batch.id} photos:`, photos.map(p => ({ idx: p.index, url: p.resultUrl?.slice(0, 80), status: p.status })));
         setPhotosByBatch(prev => ({ ...prev, [batch.id]: photos }));
       }).finally(() => {
         setLoadingPhotos(prev => ({ ...prev, [batch.id]: false }));
@@ -562,6 +561,19 @@ export default function MediaScreen({
                           {!vidLoaded[photo.videoId!] && (
                             <div style={{ position: 'absolute', inset: 0, background: '#f4f2ee', animation: 'pulse 1.5s infinite ease-in-out', zIndex: 5 }} />
                           )}
+                          {/* Countdown scadenza: i video restano 30 giorni su R2. */}
+                          {(() => {
+                            const ts = (photo as MediaItem).createdTs || 0;
+                            if (!ts) return null;
+                            const left = Math.max(0, 30 - Math.floor((Date.now() - ts) / 86400000));
+                            const urgent = left <= 3;
+                            return (
+                              <span title={left <= 0 ? 'Scade oggi: scaricalo per non perderlo' : `Disponibile ancora ${left} ${left === 1 ? 'giorno' : 'giorni'}, poi viene rimosso`} style={{ position: 'absolute', top: 8, right: 8, background: urgent ? 'rgba(220,38,38,.92)' : 'rgba(0,0,0,.55)', color: '#fff', fontSize: 10.5, fontWeight: 700, padding: '3px 8px', borderRadius: 99, display: 'flex', alignItems: 'center', gap: 4, zIndex: 6, backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)' }}>
+                                <Icon name="calendar" size={11} color="#fff" style={{ flexShrink: 0 }} />
+                                {left <= 0 ? 'Scade oggi' : left === 1 ? 'Ultimo giorno' : `${left} giorni`}
+                              </span>
+                            );
+                          })()}
                         </div>
                       );
                     }

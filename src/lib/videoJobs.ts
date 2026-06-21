@@ -135,6 +135,19 @@ export function mergeServerJobs(server: VideoJob[]): VideoJob[] {
     });
   }
   let merged = [...byId.values()].sort((a, b) => b.createdAt - a.createdAt);
+  // Bonifica job 'render' bloccati: senza renderId dopo 3 min (avvio fallito) o
+  // con renderId dopo 30 min (render morto) → falliti. Evita skeleton infiniti
+  // e contatori fantasma anche al solo reload (non solo dal loop di polling).
+  const nowMs = Date.now();
+  merged = merged.map(j => {
+    if (j.stage !== 'render') return j;
+    const age = nowMs - (j.createdAt || 0);
+    const hasRenderId = !!(j.ctx as { renderId?: string } | undefined)?.renderId;
+    if ((!hasRenderId && age > 180_000) || age > 1_800_000) {
+      return { ...j, stage: 'failed' as const, error: hasRenderId ? 'Render interrotto (timeout)' : 'Avvio non riuscito' };
+    }
+    return j;
+  });
   // Riconciliazione orfani: un job "prep_" (temporaneo, senza renderId) e' valido
   // solo finche' non viene sostituito dal render reale. Se esiste gia' un job
   // server dello stesso template+progetto creato nello stesso intervallo, il prep

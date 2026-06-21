@@ -30,6 +30,14 @@ import {
   Brush,
   ImagePlus,
   Wand2,
+  Scissors,
+  Columns2,
+  PictureInPicture2,
+  Globe,
+  Building2,
+  FileText,
+  Users,
+  Smartphone,
 } from "lucide-react";
 import type { Metadata } from "next";
 
@@ -48,7 +56,7 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-const CURRENT_VERSION = "1.3.8";
+const CURRENT_VERSION = "1.4.0";
 
 const updates: {
   version: string;
@@ -66,10 +74,93 @@ const updates: {
   }[];
 }[] = [
   {
-    version: "1.3.8",
-    date: "Maggio 2026",
+    version: "1.4.0",
+    date: "Giugno 2026",
     badge: "Ultima versione",
     badgeColor: "#059669",
+    title: "GetNearMe diventa una piattaforma",
+    subtitle:
+      "Non solo estensione: ora hai una piattaforma web completa. Immobili, report, team, foto e video AI in un unico posto, anche da telefono.",
+    features: [
+      {
+        icon: <Globe size={22} />,
+        title: "Tutto dal browser, anche senza estensione",
+        description:
+          "GetNearMe ora è una piattaforma web completa: Foto AI, Video AI, Post social, Montaggio, Media e Brand li gestisci da un'unica dashboard, senza dipendere dall'estensione.",
+        tag: "Nuovo",
+        tagColor: "#059669",
+      },
+      {
+        icon: <Building2 size={22} />,
+        title: "Pagina Immobili con import ed export",
+        description:
+          "Gestisci tutti i tuoi immobili in un elenco ordinato. Importa ed esporta in CSV, Excel e PDF per portare i dati dentro e fuori in un attimo.",
+        tag: "Nuovo",
+        tagColor: "#059669",
+      },
+      {
+        icon: <FileText size={22} />,
+        title: "Report PDF dell'immobile",
+        description:
+          "Genera un report professionale in PDF con punteggio, mappa, analisi di zona e punti di interesse. Pronto da inviare al cliente.",
+        tag: "Migliorato",
+        tagColor: "#2563eb",
+      },
+      {
+        icon: <Users size={22} />,
+        title: "Team e piano Agenzia",
+        description:
+          "Invita i membri della tua agenzia, condividete galleria e brand, e ognuno lavora con la stessa identità. Logo, colori e testi impostati una volta sola per tutti.",
+        tag: "Nuovo",
+        tagColor: "#059669",
+      },
+      {
+        icon: <Scissors size={22} />,
+        title: "Taglia & Arreda",
+        description:
+          "Carica un video, segna i momenti da togliere: l'AI sostituisce ogni taglio con un'animazione prima/dopo che arreda la stanza, nello stile che scegli. La tua voce continua a sentirsi.",
+        tag: "Nuovo",
+        tagColor: "#059669",
+      },
+      {
+        icon: <Columns2 size={22} />,
+        title: "Montaggio Schermo diviso e Picture in picture",
+        description:
+          "Monta le clip della casa insieme al tuo video mentre parli: schermo diviso (casa sopra, tu sotto) oppure picture in picture (casa a tutto schermo, tu in un angolo).",
+        tag: "Nuovo",
+        tagColor: "#059669",
+      },
+      {
+        icon: <Clapperboard size={22} />,
+        title: "Anteprima live e timeline a tempo",
+        description:
+          "Sistemi le clip su una timeline lunga quanto il tuo parlato, decidi quanto dura ognuna e vedi subito l'anteprima del video mentre parte.",
+        tag: "Nuovo",
+        tagColor: "#059669",
+      },
+      {
+        icon: <Smartphone size={22} />,
+        title: "Tutta la piattaforma da telefono",
+        description:
+          "Dashboard, immobili, creazione contenuti e gestione team sono ora completamente responsive: lavori comodamente anche dallo smartphone.",
+        tag: "Nuovo",
+        tagColor: "#059669",
+      },
+      {
+        icon: <Clock size={22} />,
+        title: "Scadenza video in galleria",
+        description:
+          "Ogni video generato resta disponibile 30 giorni: ora un contatore mostra quanti giorni mancano, così scarichi in tempo quelli che ti servono.",
+        tag: "Migliorato",
+        tagColor: "#2563eb",
+      },
+    ],
+  },
+  {
+    version: "1.3.8",
+    date: "Maggio 2026",
+    badge: "",
+    badgeColor: "#6b7280",
     title: "Foto AI: fino a 30 foto insieme",
     subtitle:
       "Il wizard Foto AI ora supporta più foto in una volta sola. Carica fino a 30 foto, scegli lo stile e genera tutto insieme.",
@@ -441,17 +532,17 @@ export default async function UpdatePage({ params }: Props) {
 
         <div
           style={{
-            background: "linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)",
+            background: "#fff",
             border: "1px solid rgba(26,26,46,0.10)",
             borderRadius: 20,
-            boxShadow: "6px 6px 0px #f59e0b",
+            boxShadow: "0 4px 16px rgba(16,24,40,0.08)",
             overflow: "hidden",
           }}
         >
           <div
             style={{
               padding: "28px 32px 20px",
-              borderBottom: "2px solid rgba(245, 158, 11, 0.2)",
+              borderBottom: "2px solid #f3f4f6",
             }}
           >
             <h2
@@ -475,7 +566,7 @@ export default async function UpdatePage({ params }: Props) {
                 display: "flex",
                 gap: 16,
                 padding: "20px 32px",
-                borderBottom: "1px solid rgba(245, 158, 11, 0.15)",
+                borderBottom: "1px solid #f3f4f6",
                 alignItems: "flex-start",
               }}
             >
@@ -485,7 +576,7 @@ export default async function UpdatePage({ params }: Props) {
                   height: 44,
                   minWidth: 44,
                   borderRadius: 12,
-                  background: "#fff",
+                  background: "#fef3c7",
                   border: "1px solid rgba(26,26,46,0.10)",
                   display: "flex",
                   alignItems: "center",
@@ -535,7 +626,7 @@ export default async function UpdatePage({ params }: Props) {
                   height: 44,
                   minWidth: 44,
                   borderRadius: 12,
-                  background: "#fff",
+                  background: "#fef3c7",
                   border: "1px solid rgba(26,26,46,0.10)",
                   display: "flex",
                   alignItems: "center",

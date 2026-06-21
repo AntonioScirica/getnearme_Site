@@ -35,14 +35,23 @@ export const DEFAULT_VIDEO_TEMPLATES: VideoTemplate[] = [
   { id: 'classic', name: 'Avatar in Primo Piano', description: "L'avatar presenta i tuoi video con script, musica e sottotitoli generati dall'AI.", layout: 'classic', tone_badge: 'Professionale', script_tone: 'professional', preview_video_url: 'classic-preview.mp4' },
   { id: 'split', name: 'Schermo Diviso', description: "Video dell'immobile in alto, avatar in basso. Script, musica e sottotitoli generati dall'AI.", layout: 'split', tone_badge: 'Moderno', script_tone: 'professional', preview_video_url: 'split-preview.mp4' },
   { id: 'sottotitoli', name: 'Sottotitola il tuo video', description: "Carica un video già girato: l'AI taglia pause e silenzi e aggiunge sottotitoli professionali.", layout: 'sottotitoli', tone_badge: 'Il tuo video', script_tone: 'professional', preview_video_url: 'sottotitoli-preview.mp4' },
+  { id: 'video_cuts', name: 'Taglia & Arreda', description: "Carica un video, scegli i punti da tagliare: l'AI sostituisce ogni taglio con un'animazione prima/dopo nello stile che scegli.", layout: 'video_cuts', tone_badge: 'Video → Tagli AI', script_tone: 'professional' },
 ];
 
 export const MONTAGGIO_TEMPLATE: VideoTemplate = {
   id: 'montaggio', name: 'Montaggio Automatico', description: "Carica le clip della casa: l'AI seleziona i momenti migliori, stabilizza, rallenta e monta tutto con musica.", layout: 'montaggio', tone_badge: 'Clip → Montaggio AI', script_tone: 'professional',
 };
 
+// Sotto-layout del Montaggio: l'utente sceglie il formato prima di caricare.
+export type MontaggioLayout = 'normale' | 'split' | 'pip';
+export const MONTAGGIO_LAYOUTS: { id: MontaggioLayout; label: string; desc: string }[] = [
+  { id: 'normale', label: 'Montaggio automatico', desc: "Le clip della casa montate in sequenza con musica, copertina e logo." },
+  { id: 'split', label: 'Schermo diviso', desc: "Sopra scorrono le clip della casa, sotto il tuo video mentre parli." },
+  { id: 'pip', label: 'Picture in picture', desc: "La casa a tutto schermo e tu in un riquadro nell'angolo mentre commenti." },
+];
+
 // Templates that do NOT use the avatar/script pipeline
-export const NO_AVATAR_LAYOUTS = ['walkthrough', 'sottotitoli', 'before_after', 'ai_staging', 'construction', 'day_night', 'montaggio'];
+export const NO_AVATAR_LAYOUTS = ['walkthrough', 'sottotitoli', 'before_after', 'ai_staging', 'construction', 'day_night', 'montaggio', 'montaggio_split', 'montaggio_pip', 'video_cuts'];
 
 // Preview videos: absolute URLs (remote config) pass through; relative names
 // (extension-style "classic-preview.mp4") are served from /public.
@@ -129,11 +138,11 @@ export const ROOM_TYPES = [
 ];
 
 export const AI_STAGING_STYLES = [
-  { id: 'modern', label: 'Moderno', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 9V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v3"/><path d="M2 11v5a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-5a2 2 0 0 0-4 0v2H6v-2a2 2 0 0 0-4 0Z"/><path d="M4 18v2"/><path d="M20 18v2"/></svg>', prompt: "Identifica il tipo di ambiente nella foto (soggiorno, camera, bagno, cucina, ecc.) e sostituisci OGNI mobile, oggetto e complemento con una versione moderna contemporanea dello stesso tipo. Se c'è un tavolo, metti un tavolo moderno. Se ci sono armadi, metti armadi moderni. Stile: linee pulite, palette neutra con accenti di colore, pezzi di design, illuminazione elegante. NON modificare muri, porte, finestre, soffitto, pavimento o elementi architettonici. NON cambiare il layout o aggiungere tipologie di mobili diverse. Risultato fotorealistico, 8k." },
-  { id: 'nordic', label: 'Nordico', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 14l3 3H4l3-3"/><path d="M15 10l3 3H6l3-3"/><path d="M13 6l2 2H9l2-2"/><path d="M12 2v4"/><line x1="12" y1="22" x2="12" y2="14"/></svg>', prompt: "Identifica il tipo di ambiente nella foto (soggiorno, camera, bagno, cucina, ecc.) e sostituisci OGNI mobile, oggetto e complemento con una versione scandinava nordica dello stesso tipo. Se c'è un tavolo, metti un tavolo nordico. Se ci sono armadi, metti armadi nordici. Stile: legno chiaro di quercia/betulla, palette bianca e grigia, pezzi funzionali e minimali, tessuti in lana/lino, aspetto pulito e ordinato. NON modificare muri, porte, finestre, soffitto, pavimento o elementi architettonici. NON cambiare il layout o aggiungere tipologie di mobili diverse. Risultato fotorealistico, 8k." },
-  { id: 'industrial', label: 'Luxury', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 3h12l4 6-10 13L2 9Z"/><path d="M11 3 8 9l4 13 4-13-3-6"/><path d="M2 9h20"/></svg>', prompt: "Identifica il tipo di ambiente nella foto (soggiorno, camera, bagno, cucina, ecc.) e sostituisci OGNI mobile, oggetto e complemento con una versione luxury contemporanea di alta gamma dello stesso tipo. Se c'è un tavolo, metti un tavolo luxury. Se ci sono armadi, metti armadi luxury. Stile: marmo pregiato, travertino, ottone spazzolato, vetro fumé, noce scuro, finiture in rovere, illuminazione ambientale soffusa, texture eleganti, palette neutra di lusso, mobili minimalisti sofisticati. NON modificare muri, porte, finestre, soffitto, pavimento o elementi architettonici. NON cambiare il layout o aggiungere tipologie di mobili diverse. Risultato fotorealistico, 8k." },
-  { id: 'boho', label: 'Boho', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"/><line x1="16" y1="8" x2="2" y2="22"/><line x1="17.5" y1="15" x2="9" y2="15"/></svg>', prompt: "Identifica il tipo di ambiente nella foto (soggiorno, camera, bagno, cucina, ecc.) e sostituisci OGNI mobile, oggetto e complemento con una versione bohemian dello stesso tipo. Se c'è un tavolo, metti un tavolo boho. Se ci sono armadi, metti armadi boho. Stile: rattan, vimini, macramè, legno naturale, piante da interno, toni terrosi, juta, bambù, pattern eclettici. NON modificare muri, porte, finestre, soffitto, pavimento o elementi architettonici. NON cambiare il layout o aggiungere tipologie di mobili diverse. Risultato fotorealistico, 8k." },
-  { id: 'empty', label: 'Vuoto', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="21" x2="21" y2="3"/></svg>', prompt: 'Crea una versione dello stesso ambiente COMPLETAMENTE VUOTO. Rimuovi TUTTO ciò che non fa parte della struttura edilizia, SENZA ECCEZIONI: cucina (anche se a muro o incassata), mobili fissi, pensili, elettrodomestici incassati, mensole, armadi a muro, arredi, decorazioni, oggetti personali, sanitari. Mantieni ESCLUSIVAMENTE: muri, pavimento, soffitto, porte, finestre, battiscopa. NON mantenere cucine, sanitari, mobili o elementi installati. NON aggiungere nuovi oggetti. Mantieni IDENTICHE: inquadratura, prospettiva, dimensioni e geometria. Risultato fotorealistico, 8k.' },
+  { id: 'modern', label: 'Moderno', desc: 'Arredo contemporaneo, linee pulite', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 9V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v3"/><path d="M2 11v5a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-5a2 2 0 0 0-4 0v2H6v-2a2 2 0 0 0-4 0Z"/><path d="M4 18v2"/><path d="M20 18v2"/></svg>', prompt: "Identifica il tipo di ambiente nella foto (soggiorno, camera, bagno, cucina, ecc.) e sostituisci OGNI mobile, oggetto e complemento con una versione moderna contemporanea dello stesso tipo. Se c'è un tavolo, metti un tavolo moderno. Se ci sono armadi, metti armadi moderni. Stile: linee pulite, palette neutra con accenti di colore, pezzi di design, illuminazione elegante. NON modificare muri, porte, finestre, soffitto, pavimento o elementi architettonici. NON cambiare il layout o aggiungere tipologie di mobili diverse. Risultato fotorealistico, 8k." },
+  { id: 'nordic', label: 'Nordico', desc: 'Legno chiaro, bianco, minimale', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 14l3 3H4l3-3"/><path d="M15 10l3 3H6l3-3"/><path d="M13 6l2 2H9l2-2"/><path d="M12 2v4"/><line x1="12" y1="22" x2="12" y2="14"/></svg>', prompt: "Identifica il tipo di ambiente nella foto (soggiorno, camera, bagno, cucina, ecc.) e sostituisci OGNI mobile, oggetto e complemento con una versione scandinava nordica dello stesso tipo. Se c'è un tavolo, metti un tavolo nordico. Se ci sono armadi, metti armadi nordici. Stile: legno chiaro di quercia/betulla, palette bianca e grigia, pezzi funzionali e minimali, tessuti in lana/lino, aspetto pulito e ordinato. NON modificare muri, porte, finestre, soffitto, pavimento o elementi architettonici. NON cambiare il layout o aggiungere tipologie di mobili diverse. Risultato fotorealistico, 8k." },
+  { id: 'industrial', label: 'Luxury', desc: 'Marmo, ottone, alta gamma', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 3h12l4 6-10 13L2 9Z"/><path d="M11 3 8 9l4 13 4-13-3-6"/><path d="M2 9h20"/></svg>', prompt: "Identifica il tipo di ambiente nella foto (soggiorno, camera, bagno, cucina, ecc.) e sostituisci OGNI mobile, oggetto e complemento con una versione luxury contemporanea di alta gamma dello stesso tipo. Se c'è un tavolo, metti un tavolo luxury. Se ci sono armadi, metti armadi luxury. Stile: marmo pregiato, travertino, ottone spazzolato, vetro fumé, noce scuro, finiture in rovere, illuminazione ambientale soffusa, texture eleganti, palette neutra di lusso, mobili minimalisti sofisticati. NON modificare muri, porte, finestre, soffitto, pavimento o elementi architettonici. NON cambiare il layout o aggiungere tipologie di mobili diverse. Risultato fotorealistico, 8k." },
+  { id: 'boho', label: 'Boho', desc: 'Rattan, piante, toni caldi', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"/><line x1="16" y1="8" x2="2" y2="22"/><line x1="17.5" y1="15" x2="9" y2="15"/></svg>', prompt: "Identifica il tipo di ambiente nella foto (soggiorno, camera, bagno, cucina, ecc.) e sostituisci OGNI mobile, oggetto e complemento con una versione bohemian dello stesso tipo. Se c'è un tavolo, metti un tavolo boho. Se ci sono armadi, metti armadi boho. Stile: rattan, vimini, macramè, legno naturale, piante da interno, toni terrosi, juta, bambù, pattern eclettici. NON modificare muri, porte, finestre, soffitto, pavimento o elementi architettonici. NON cambiare il layout o aggiungere tipologie di mobili diverse. Risultato fotorealistico, 8k." },
+  { id: 'empty', label: 'Vuoto', desc: 'Svuota la stanza, solo muri', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="21" x2="21" y2="3"/></svg>', prompt: 'Crea una versione dello stesso ambiente COMPLETAMENTE VUOTO. Rimuovi TUTTO ciò che non fa parte della struttura edilizia, SENZA ECCEZIONI: cucina (anche se a muro o incassata), mobili fissi, pensili, elettrodomestici incassati, mensole, armadi a muro, arredi, decorazioni, oggetti personali, sanitari. Mantieni ESCLUSIVAMENTE: muri, pavimento, soffitto, porte, finestre, battiscopa. NON mantenere cucine, sanitari, mobili o elementi installati. NON aggiungere nuovi oggetti. Mantieni IDENTICHE: inquadratura, prospettiva, dimensioni e geometria. Risultato fotorealistico, 8k.' },
 ];
 
 export const AI_STAGING_ANIMATION_STYLES = [
@@ -434,6 +443,129 @@ export function extractFrames(file: File, count = 8): Promise<string[]> {
     v.onerror = () => done();
     v.src = url;
   });
+}
+
+// Estrae un singolo frame da un video a un dato istante (secondi), come data URL
+// JPEG a piena risoluzione (max 1280px). Usato come "prima" per i tagli AI.
+export function extractFrameAt(file: File, t: number, maxDim = 1280): Promise<{ dataUrl: string; width: number; height: number }> {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const v = document.createElement('video');
+    v.muted = true; v.playsInline = true; v.preload = 'auto';
+    v.onloadeddata = () => { v.currentTime = Math.max(0, Math.min((v.duration || 0), t)); };
+    v.onseeked = () => {
+      const c = document.createElement('canvas');
+      const k = Math.min(1, maxDim / Math.max(v.videoWidth || 1, v.videoHeight || 1));
+      c.width = Math.round((v.videoWidth || maxDim) * k);
+      c.height = Math.round((v.videoHeight || maxDim) * k);
+      try {
+        c.getContext('2d')!.drawImage(v, 0, 0, c.width, c.height);
+        const dataUrl = c.toDataURL('image/jpeg', 0.9);
+        URL.revokeObjectURL(url);
+        resolve({ dataUrl, width: c.width, height: c.height });
+      } catch (e) {
+        URL.revokeObjectURL(url);
+        reject(e instanceof Error ? e : new Error('Frame non estraibile'));
+      }
+    };
+    v.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Video non valido')); };
+    v.src = url;
+  });
+}
+
+// Estrae N frame attorno a un istante `t` (finestra ±windowSec/2), usando UN
+// solo elemento <video> con seek sequenziali (leggero in memoria). Ritorna i
+// frame con il loro timestamp così l'utente sceglie il fotogramma migliore.
+export function extractFramesAround(file: File, t: number, count = 5, windowSec = 3): Promise<{ dataUrl: string; time: number }[]> {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(file);
+    const v = document.createElement('video');
+    v.muted = true; v.playsInline = true; v.preload = 'auto';
+    const out: { dataUrl: string; time: number }[] = [];
+    const c = document.createElement('canvas');
+    let times: number[] = [];
+    let i = 0;
+    const done = () => { URL.revokeObjectURL(url); resolve(out); };
+    const seekNext = () => { if (i >= times.length) { done(); return; } v.currentTime = times[i]; };
+    v.onloadeddata = () => {
+      const d = v.duration || 0;
+      if (!d) { done(); return; }
+      const half = windowSec / 2;
+      const lo = Math.max(0, t - half);
+      const hi = Math.min(d, t + half);
+      const span = Math.max(0.001, hi - lo);
+      times = Array.from({ length: count }, (_, k) => lo + span * (count === 1 ? 0.5 : k / (count - 1)));
+      seekNext();
+    };
+    v.onseeked = () => {
+      const k = Math.min(1, 900 / Math.max(v.videoWidth || 1, v.videoHeight || 1));
+      c.width = Math.round((v.videoWidth || 640) * k);
+      c.height = Math.round((v.videoHeight || 360) * k);
+      try { c.getContext('2d')!.drawImage(v, 0, 0, c.width, c.height); out.push({ dataUrl: c.toDataURL('image/jpeg', 0.85), time: v.currentTime }); } catch { /* tainted */ }
+      i++; seekNext();
+    };
+    v.onerror = () => done();
+    v.src = url;
+  });
+}
+
+// Rileva quanto a lungo la scena resta "ferma" a partire da `tStart`: campiona
+// frame piccoli e misura la differenza pixel col precedente. Quando il movimento
+// riparte (o l'audio... qui solo video), ritorna l'istante di fine. Best-effort:
+// torna tStart + minSpan se non riesce. Usato per proporre in automatico la
+// durata del taglio (la "pausa") in Taglia & Anima.
+export function detectStaticEnd(file: File, tStart: number, maxSpan = 30, step = 0.4): Promise<number> {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(file);
+    const v = document.createElement('video');
+    v.muted = true; v.playsInline = true; v.preload = 'auto';
+    const W = 64, H = 36;
+    const c = document.createElement('canvas'); c.width = W; c.height = H;
+    const ctx = c.getContext('2d', { willReadFrequently: true } as CanvasRenderingContext2DSettings);
+    let prev: Float32Array | null = null;
+    let t = tStart, end = tStart, dur = 0;
+    // Movimento "sostenuto": serve qualche frame di fila sopra soglia prima di
+    // dire che la pausa è finita (un singolo gesto non taglia corto). Memorizziamo
+    // l'istante in cui il movimento è INIZIATO, così tagliamo lì.
+    let streak = 0, streakStart = tStart;
+    const MIN = 0.8, THRESH = 9, NEED = 3; // 3 frame di fila ≈ 1.2s di movimento
+    const finish = () => { URL.revokeObjectURL(url); resolve(Math.max(tStart + MIN, Math.min(end, tStart + maxSpan))); };
+    const gray = (d: Uint8ClampedArray) => { const g = new Float32Array(W * H); for (let i = 0, j = 0; i < d.length; i += 4, j++) g[j] = (d[i] + d[i + 1] + d[i + 2]) / 3; return g; };
+    v.onloadeddata = () => { dur = v.duration || 0; t = tStart; v.currentTime = tStart; };
+    v.onseeked = () => {
+      try {
+        ctx!.drawImage(v, 0, 0, W, H);
+        const g = gray(ctx!.getImageData(0, 0, W, H).data);
+        if (prev) {
+          let diff = 0; for (let i = 0; i < g.length; i++) diff += Math.abs(g[i] - prev[i]);
+          diff /= g.length;
+          if (diff > THRESH) {
+            if (streak === 0) streakStart = t; // primo frame del movimento
+            streak++;
+            if (streak >= NEED) { end = streakStart; finish(); return; } // movimento sostenuto → fine alla ripartenza
+          } else {
+            streak = 0; end = t; // ancora fermo: la pausa continua
+          }
+        } else { end = t; }
+        prev = g;
+      } catch { /* tainted */ }
+      t += step;
+      if (t > Math.min(dur, tStart + maxSpan)) { end = Math.min(dur, tStart + maxSpan); finish(); return; }
+      v.currentTime = t;
+    };
+    v.onerror = () => finish();
+    v.src = url;
+  });
+}
+
+// dataURL → Blob (per upload presigned R2)
+export function dataUrlToBlob(dataUrl: string): Blob {
+  const [head, b64] = dataUrl.split(',');
+  const mime = /:(.*?);/.exec(head)?.[1] || 'image/jpeg';
+  const bin = atob(b64);
+  const arr = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+  return new Blob([arr], { type: mime });
 }
 
 // Detect portrait/landscape from a media's natural dimensions
