@@ -13,6 +13,7 @@ import {
   X,
   ExternalLink,
   CheckCircle2,
+  CheckCheck,
   RefreshCw,
   Volume2,
   VolumeX,
@@ -436,6 +437,7 @@ function CalendarView({
                     const dayTopics = topicsByDay[date] || [];
                     const items = contentByTopic[t.id] || [];
                     const published = items.some((c) => c.published_at);
+                    const storyPublished = items.some((c) => c.ig_story_id);
                     const color = RUBRIC_COLORS[t.rubric] || "bg-gray-500/20 text-gray-300 border-gray-500/30";
                     const time = getPublishTime(t, dayTopics);
                     return (
@@ -445,7 +447,9 @@ function CalendarView({
                         className={`w-full text-left px-1.5 py-1 rounded border text-[10px] leading-tight transition-opacity hover:opacity-80 cursor-pointer ${color}`}
                       >
                         <span className="flex items-center gap-1">
-                          {published && <CheckCircle2 className="w-3 h-3 shrink-0 text-green-400" />}
+                          {published && (storyPublished
+                            ? <CheckCheck className="w-3.5 h-3 shrink-0 text-green-400" aria-label="Post e story pubblicati" />
+                            : <CheckCircle2 className="w-3 h-3 shrink-0 text-green-400" aria-label="Post pubblicato" />)}
                           <span className="truncate">{t.title}</span>
                         </span>
                         <span className={`${MONO} block mt-0.5 text-[9px] opacity-70`}>
@@ -482,6 +486,7 @@ function CalendarView({
                   const dayTopics = topicsByDay[date] || [];
                   const items = contentByTopic[t.id] || [];
                   const published = items.some((c) => c.published_at);
+                  const storyPublished = items.some((c) => c.ig_story_id);
                   const color = RUBRIC_COLORS[t.rubric] || "bg-gray-500/20 text-gray-300 border-gray-500/30";
                   const time = getPublishTime(t, dayTopics);
                   return (
@@ -491,7 +496,9 @@ function CalendarView({
                       className={`w-full text-left px-3 py-2 rounded-lg border text-xs leading-snug transition-opacity hover:opacity-80 cursor-pointer ${color}`}
                     >
                       <span className="flex items-center gap-1.5">
-                        {published && <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-green-400" />}
+                        {published && (storyPublished
+                          ? <CheckCheck className="w-4 h-3.5 shrink-0 text-green-400" aria-label="Post e story pubblicati" />
+                          : <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-green-400" aria-label="Post pubblicato" />)}
                         <span className="truncate font-medium">{t.title}</span>
                       </span>
                       <span className={`${MONO} block mt-0.5 text-[10px] opacity-70`}>
@@ -510,7 +517,7 @@ function CalendarView({
       </div>
 
       <p className={`${MONO} mt-3 text-[11px] text-gray-600`}>
-        Click su un contenuto per l&apos;anteprima reale. ✓ verde = pubblicato su Instagram.
+        Click su un contenuto per l&apos;anteprima reale. ✓ verde = post pubblicato · ✓✓ doppio tick = post e story pubblicati.
       </p>
     </div>
   );
