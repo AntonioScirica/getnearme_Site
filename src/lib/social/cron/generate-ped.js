@@ -89,6 +89,37 @@ export default async function handler(req, res) {
 
   vlog(`trovati ${topics.length} topic per ${day}: ${topics.map((t) => t.title).join(' | ')}`);
 
+  // ── Backfill story (?fix=story) ──────────────────────────────────────
+  // Renders + uploads the story for already-generated posts that have no
+  // story_url yet (e.g. single posts generated before they had a story). Does
+  // NOT re-render the feed nor touch the post status — only adds story_url.
+  if (req.query.fix === 'story') {
+    let done = 0;
+    for (const topic of topics) {
+      const { data: rows } = await supabase
+        .from('generated_content')
+        .select('id, content_data')
+        .eq('topic_id', topic.id)
+        .limit(1);
+      const row = rows?.[0];
+      if (!row || row.content_data?.story_url) continue; // no post, or already has story
+      const storyHtml = buildStoryForTopic(topic);
+      if (!storyHtml) { vlog(`no story for ${topic.title}`); continue; }
+      try {
+        const [storyImg] = await renderPedSlides([{ html: storyHtml, label: 'story' }], STORY_CSS, { width: 1080, height: 1920 }, vlog);
+        const storyPath = `ped/${topic.plan_date}/${topic.id}/story.jpg`;
+        const { error } = await supabase.storage.from('content').upload(storyPath, storyImg, { contentType: 'image/jpeg', upsert: true });
+        if (error) { vlog(`story upload fail ${topic.title}: ${error.message}`); continue; }
+        const { data: urlData } = supabase.storage.from('content').getPublicUrl(storyPath);
+        await supabase.from('generated_content').update({ content_data: { ...row.content_data, story_url: urlData.publicUrl } }).eq('id', row.id);
+        done++;
+        vlog(`story backfilled: ${topic.title}`);
+      } catch (e) { vlog(`story render fail ${topic.title}: ${e.message}`); }
+    }
+    await flushLogs(`PED story backfill ${day}`);
+    return res.json({ message: `story backfill ${day}`, backfilled: done });
+  }
+
   // Compute slot per topic
   const feedTopics = topics.filter((t) => !isVideoTopic(t) && t.rubric !== 'tip');
   const slotFor = (t) => {
