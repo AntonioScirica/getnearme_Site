@@ -54,6 +54,7 @@ import { PED_CSS, STORY_CSS } from "@/lib/social/ped/client-css";
 import {
   setPreviewCss,
   previewsForTopic as buildSlidesForTopic,
+  buildStoryForTopic,
   STATIC_PREVIEWS as PED_STATIC_PREVIEWS,
   type TplPreview,
   type TplFormat,
@@ -618,6 +619,22 @@ function TemplateSlidesPreview({ topic }: { topic: Topic }) {
             </div>
           </div>
         ))}
+        <PedStoryPreview topic={topic} />
+      </div>
+    </div>
+  );
+}
+
+// Anteprima della story PED (caroselli, post singoli, tip) — renderizzata live
+// da slide_data. Per i post singoli la story è derivata dall'hook.
+function PedStoryPreview({ topic }: { topic: Topic }) {
+  const html = topic.slide_data ? buildStoryForTopic(topic) : null;
+  if (!html) return null;
+  return (
+    <div className="shrink-0 flex flex-col items-center">
+      <p className={`${MONO} text-[10px] text-gray-500 mb-1.5`}>Story</p>
+      <div style={{ width: 216, height: 384, borderRadius: 12, overflow: "hidden", boxShadow: "0 8px 40px rgba(0,0,0,.5)" }}>
+        <TemplateFrame html={html} w={1080} h={1920} scale={0.2} css={STORY_CSS} />
       </div>
     </div>
   );
@@ -862,6 +879,7 @@ function PreviewModal({
                     className="h-80 rounded-lg border border-white/[0.08] shrink-0"
                   />
                 ))}
+                <PedStoryPreview topic={topic} />
               </div>
             </>
           ) : topic.rubric === "video" || isVideoTopic(topic) ? (
