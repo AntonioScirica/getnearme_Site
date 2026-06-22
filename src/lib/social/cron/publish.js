@@ -190,8 +190,10 @@ export default async function handler(req, res) {
   let query = supabase
     .from('generated_content')
     .select('*')
+    // I reel sono salvati con status 'ready' (pipeline video), i caroselli con
+    // 'approved'. Entrambi sono pronti da pubblicare.
+    .in('status', ['approved', 'ready'])
     .eq('publish_date', today)
-    .eq('status', 'approved')
     .eq('account_id', accountId)
     .eq('type', slotConfig.type);
 
