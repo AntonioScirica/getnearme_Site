@@ -226,8 +226,8 @@ export default function SocialDashboard() {
       const video = map[day].filter((t) => isVideoTopic(t));
       const tips = map[day].filter((t) => isTipTopic(t));
       // Chronological order matching the slots used by getPublishTime:
-      // feed → 09:00, 12:00, 16:00, 18:00 (FEED_SLOTS), video → 15:00, tip → 20:00.
-      // Video sits between the 12:00 and 16:00 feed posts.
+      // feed → 09:00, 12:00, 18:00, 20:00 (FEED_SLOTS), video → 15:00, tip → 20:00.
+      // Video sits between the 12:00 and 18:00 feed posts.
       const sorted: Topic[] = [
         ...feed.slice(0, 2),
         ...video,

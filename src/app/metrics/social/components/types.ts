@@ -122,7 +122,7 @@ export const RUBRIC_COLORS: Record<string, string> = {
 };
 
 // ── Publish slots ────────────────────────────────────────────────────
-export const FEED_SLOTS = ["09:00", "12:00", "16:00", "18:00"];
+export const FEED_SLOTS = ["09:00", "12:00", "18:00", "20:00"];
 export const VIDEO_SLOT = "15:00";
 export const TIP_SLOT = "20:00";
 
