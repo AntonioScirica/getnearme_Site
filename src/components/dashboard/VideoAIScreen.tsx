@@ -1218,7 +1218,10 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
         if (layout === 'ai_staging') {
           const st = AI_STAGING_STYLES.find(x => x.id === stagingStyle)!;
           const an = AI_STAGING_ANIMATION_STYLES.find(x => x.id === animStyle);
-          res = await startRender({ template: 'ai_staging', ...base, customPrompt: st.prompt, ...(an?.videoPrompt ? { customVideoPrompt: an.videoPrompt } : {}) });
+          // "Mantieni arredo": l'edge genera il vuoto e inverte la coppia FLF
+          // (before=vuoto, after=foto originale) — vedi keepFurniture nell'edge.
+          const keepFurniture = stagingStyle === 'keep';
+          res = await startRender({ template: 'ai_staging', ...base, customPrompt: st.prompt, keepFurniture, ...(an?.videoPrompt ? { customVideoPrompt: an.videoPrompt } : {}) });
         } else if (layout === 'day_night') {
           const dir = DAY_NIGHT_DIRECTIONS.find(x => x.id === dayNightDir)!;
           res = await startRender({ template: 'day_night', ...base, customPrompt: dir.prompt });

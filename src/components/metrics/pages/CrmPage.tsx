@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { MONO } from "../types";
 import { Plus, Trash2, Pencil, Search, RefreshCw, X, ChevronDown, ChevronLeft, ChevronRight, Calendar } from "lucide-react";
 
@@ -41,6 +42,7 @@ interface Contact {
   source: string | null;
   notes: string | null;
   next_action_at: string | null;
+  demo_at: string | null;
   plan: string | null;
   value_eur: number | null;
   updated_at: string;
@@ -54,7 +56,7 @@ export default function CrmPage({ authKey }: { authKey: string | null }) {
   const [filterStatus, setFilterStatus] = useState("");
   const [search, setSearch] = useState("");
   // add form
-  const BLANK = { contact_name: "", owner: "Francesco", status: "da_contattare", agency: "", agency_owner: "", website: "", phone: "", email: "", city: "", source: "", plan: "", value_eur: "", notes: "", next_action_at: "" };
+  const BLANK = { contact_name: "", owner: "Francesco", status: "da_contattare", agency: "", agency_owner: "", website: "", phone: "", email: "", city: "", source: "", plan: "", value_eur: "", notes: "", next_action_at: "", demo_at: "" };
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState<Record<string, string>>(BLANK);
   const [editId, setEditId] = useState<string | null>(null);
@@ -68,7 +70,7 @@ export default function CrmPage({ authKey }: { authKey: string | null }) {
       agency: c.agency || "", agency_owner: c.agency_owner || "", website: c.website || "",
       phone: c.phone || "", email: c.email || "", city: c.city || "", source: c.source || "",
       plan: c.plan || "", value_eur: c.value_eur != null ? String(c.value_eur) : "",
-      notes: c.notes || "", next_action_at: c.next_action_at || "",
+      notes: c.notes || "", next_action_at: c.next_action_at || "", demo_at: c.demo_at || "",
     });
     setShowForm(true);
   };
@@ -234,7 +236,7 @@ export default function CrmPage({ authKey }: { authKey: string | null }) {
         <table className="w-full text-sm">
           <thead>
             <tr className={`${MONO} text-[10px] uppercase tracking-wider text-gray-500 bg-white/[0.02]`}>
-              {["Owner", "Proprietario", "Agenzia", "Sito", "Stato", "Fonte", "Telefono", "Email", "Città", "Follow-up", "Piano", "Valore €", "Note", ""].map((h) => (
+              {["Owner", "Proprietario", "Agenzia", "Sito", "Stato", "Fonte", "Telefono", "Email", "Città", "Follow-up", "Demo", "Piano", "Valore €", "Note", ""].map((h) => (
                 <th key={h} className="text-left font-normal px-3 py-2 whitespace-nowrap">{h}</th>
               ))}
             </tr>
@@ -265,6 +267,7 @@ export default function CrmPage({ authKey }: { authKey: string | null }) {
                       <DateField compact value={c.next_action_at} onChange={(v) => patch(c.id, "next_action_at", v)} />
                     </div>
                   </Td>
+                  <Td><DateField compact value={c.demo_at} onChange={(v) => patch(c.id, "demo_at", v)} /></Td>
                   <Td>
                     <select value={c.plan || ""} onChange={(e) => { const v = e.target.value; patch(c.id, "plan", v); if (v && (c.value_eur == null || c.value_eur === 0)) patch(c.id, "value_eur", PLAN_PRICE[v]); }}
                       className={`${MONO} text-[11px] bg-transparent text-gray-300 rounded px-1 py-1 focus:outline-none focus:bg-white/[0.06]`}>
@@ -287,7 +290,7 @@ export default function CrmPage({ authKey }: { authKey: string | null }) {
               );
             })}
             {filtered.length === 0 && (
-              <tr><td colSpan={14} className={`${MONO} text-sm text-gray-600 text-center py-8`}>Nessun contatto. Aggiungine uno sopra.</td></tr>
+              <tr><td colSpan={15} className={`${MONO} text-sm text-gray-600 text-center py-8`}>Nessun contatto. Aggiungine uno sopra.</td></tr>
             )}
           </tbody>
         </table>
@@ -327,6 +330,9 @@ export default function CrmPage({ authKey }: { authKey: string | null }) {
                 <CardKV label="Città" value={c.city} />
                 <CardKV label="Follow-up">
                   <DateField compact value={c.next_action_at} onChange={(v) => patch(c.id, "next_action_at", v)} />
+                </CardKV>
+                <CardKV label="Demo">
+                  <DateField compact value={c.demo_at} onChange={(v) => patch(c.id, "demo_at", v)} />
                 </CardKV>
                 {c.phone && <CardKV label="Telefono"><a href={`tel:${c.phone}`} className="text-indigo-400">{c.phone}</a></CardKV>}
                 {c.email && <CardKV label="Email"><a href={`mailto:${c.email}`} className="text-indigo-400 truncate block">{c.email}</a></CardKV>}
@@ -409,16 +415,44 @@ const fmtDate = (s: string | null) => {
   return `${d} ${MONTHS_IT[m - 1]?.slice(0, 3).toLowerCase()} ${String(y).slice(2)}`;
 };
 
-// Custom date picker: a button + a month-grid popover. Easier than native input.
-function DateField({ value, onChange, compact }: { value: string | null; onChange: (v: string | null) => void; compact?: boolean }) {
+// Custom date picker: a button + a month-grid popover rendered in a PORTAL with
+// position:fixed. The portal is mandatory — inside the CRM table (overflow-x-auto,
+// which also clips the y-axis) a plain absolute popover gets clipped and looks
+// unclickable. Fixed + portal escapes every overflow container.
+function DateField({ value, onChange, compact, dropUp }: { value: string | null; onChange: (v: string | null) => void; compact?: boolean; dropUp?: boolean }) {
   const [open, setOpen] = useState(false);
+  const [pos, setPos] = useState<{ left: number; top: number; up: boolean } | null>(null);
   const [view, setView] = useState(() => (value ? new Date(value + "T12:00:00") : new Date()));
-  const ref = React.useRef<HTMLDivElement>(null);
+  const btnRef = React.useRef<HTMLButtonElement>(null);
+  const popRef = React.useRef<HTMLDivElement>(null);
+  const POP_W = 240, POP_H = 300;
+
+  const place = useCallback(() => {
+    const r = btnRef.current?.getBoundingClientRect();
+    if (!r) return;
+    const up = dropUp || r.bottom + POP_H > window.innerHeight;
+    const left = Math.min(Math.max(8, r.left), window.innerWidth - POP_W - 8);
+    setPos({ left, top: up ? r.top : r.bottom, up });
+  }, [dropUp]);
+
+  const toggle = () => { if (open) { setOpen(false); return; } place(); setView(value ? new Date(value + "T12:00:00") : new Date()); setOpen(true); };
+
   useEffect(() => {
     if (!open) return;
-    const close = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
-    document.addEventListener("mousedown", close);
-    return () => document.removeEventListener("mousedown", close);
+    const onDown = (e: MouseEvent) => {
+      const t = e.target as Node;
+      if (popRef.current?.contains(t) || btnRef.current?.contains(t)) return;
+      setOpen(false);
+    };
+    const onScrollResize = () => setOpen(false);
+    document.addEventListener("mousedown", onDown);
+    window.addEventListener("resize", onScrollResize);
+    window.addEventListener("scroll", onScrollResize, true);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      window.removeEventListener("resize", onScrollResize);
+      window.removeEventListener("scroll", onScrollResize, true);
+    };
   }, [open]);
 
   const y = view.getFullYear(), m = view.getMonth();
@@ -429,14 +463,15 @@ function DateField({ value, onChange, compact }: { value: string | null; onChang
   const todayISO = toISO(new Date());
 
   return (
-    <div className="relative" ref={ref}>
-      <button type="button" onClick={() => setOpen((o) => !o)}
+    <>
+      <button ref={btnRef} type="button" onClick={toggle}
         className={`${MONO} flex items-center gap-1.5 ${compact ? "text-[11px] text-gray-300 px-1.5 py-1 hover:bg-white/[0.06] rounded" : "w-full text-sm bg-white/[0.03] border border-white/[0.08] rounded-lg px-3 py-2 text-gray-200"}`}>
         <Calendar className="w-3.5 h-3.5 text-gray-500 shrink-0" />
         <span className={value ? "" : "text-gray-600"}>{value ? fmtDate(value) : "—"}</span>
       </button>
-      {open && (
-        <div className="absolute z-50 mt-1 left-0 w-60 p-2 rounded-xl bg-[#1b1e26] border border-white/[0.1] shadow-2xl">
+      {open && pos && createPortal(
+        <div ref={popRef} style={{ position: "fixed", left: pos.left, ...(pos.up ? { bottom: window.innerHeight - pos.top + 4 } : { top: pos.top + 4 }), width: POP_W }}
+          className="z-[200] p-2 rounded-xl bg-[#1b1e26] border border-white/[0.1] shadow-2xl">
           <div className="flex items-center justify-between mb-2">
             <button type="button" onClick={() => setView(new Date(y, m - 1, 1))} className="p-1 rounded text-gray-400 hover:bg-white/5"><ChevronLeft className="w-4 h-4" /></button>
             <span className={`${MONO} text-xs text-gray-200`}>{MONTHS_IT[m]} {y}</span>
@@ -460,9 +495,10 @@ function DateField({ value, onChange, compact }: { value: string | null; onChang
             <button type="button" onClick={() => { onChange(todayISO); setOpen(false); }} className={`${MONO} text-[11px] text-indigo-400 hover:underline`}>Oggi</button>
             <button type="button" onClick={() => { onChange(null); setOpen(false); }} className={`${MONO} text-[11px] text-gray-500 hover:underline`}>Pulisci</button>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
-    </div>
+    </>
   );
 }
 
@@ -535,7 +571,10 @@ function ContactForm({ form, setForm, onSubmit, onClose, saving, isEdit, cityOpt
             <input value={form.email} onChange={(e) => set("email", e.target.value)} placeholder="nome@agenzia.it" className={inputCls} />
           </Field>
           <Field label="Prossimo follow-up">
-            <DateField value={form.next_action_at || null} onChange={(v) => set("next_action_at", v || "")} />
+            <DateField dropUp value={form.next_action_at || null} onChange={(v) => set("next_action_at", v || "")} />
+          </Field>
+          <Field label="Data demo">
+            <DateField dropUp value={form.demo_at || null} onChange={(v) => set("demo_at", v || "")} />
           </Field>
           <div className="sm:col-span-2">
             <Field label="Note">
