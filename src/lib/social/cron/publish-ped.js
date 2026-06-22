@@ -67,13 +67,11 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  // Async mode (skip for dry runs: caller wants the result inline)
-  if (!req.query.sync && !req.query.dry) {
-    const qs = new URLSearchParams(req.query);
-    qs.set('sync', '1');
-    fetch(`https://${req.headers.host || 'getnearme.it'}/api/social/cron/publish-ped?${qs}`).catch(() => {});
-    return res.json({ ok: true, message: `publish-ped triggered async (slot=${req.query.slot || 'none'}, story=${req.query.story || '0'})` });
-  }
+  // Run INLINE (no async self-invoke). On Vercel the fire-and-forget fetch after
+  // res.json() is frequently killed when the function returns, so the real publish
+  // never ran — that's why the cron answered 200 but nothing was posted. The route
+  // (maxDuration 300) lets this finish even if cron-job.org's HTTP client times out;
+  // the dedup check (checkIfPublishedOnIG) makes any cron retry a no-op.
 
   const slot = req.query.slot;
   const slotTime = SLOT_TIMES[slot];

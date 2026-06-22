@@ -146,13 +146,9 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  // Async mode: respond immediately, self-invoke with ?sync=1
-  if (!req.query.sync) {
-    const qs = new URLSearchParams(req.query);
-    qs.set('sync', '1');
-    fetch(`https://${req.headers.host || 'getnearme.it'}/api/social/cron/publish?${qs}`).catch(() => {});
-    return res.json({ ok: true, message: `publish triggered async (slot=${req.query.slot || 'none'})` });
-  }
+  // Run INLINE (no async self-invoke): on Vercel the fire-and-forget fetch after
+  // res.json() is often killed when the function returns, so the publish never ran.
+  // Dedup (checkIfPublishedOnIG) keeps any cron retry a no-op.
 
   // Housekeeping: clean MP4s published >2h ago (storage hygiene). Best-effort.
   try { await cleanupOldVideoFiles(); } catch (e) { console.error('video cleanup error:', e.message); }
