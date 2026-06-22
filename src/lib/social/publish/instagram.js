@@ -1,6 +1,9 @@
 import supabase from '../supabase.js';
 
-const API = 'https://graph.instagram.com/v21.0';
+// IG Content Publishing API via the Facebook Graph host: the app_config token is
+// a Facebook page token (EAA...), same one ped/publish-ig.js uses on graph.facebook.com.
+// graph.instagram.com would reject it ("Cannot parse access token").
+const API = 'https://graph.facebook.com/v21.0';
 
 /**
  * Get valid access token, refreshing if expiring within 7 days.
@@ -172,11 +175,11 @@ export async function publishStory(imageUrl) {
 async function pollContainerStatus(containerId, accessToken, maxAttempts = 30) {
   for (let i = 0; i < maxAttempts; i++) {
     const res = await fetch(
-      `${API}/${containerId}?fields=status_code&access_token=${accessToken}`
+      `${API}/${containerId}?fields=status_code,status&access_token=${accessToken}`
     );
     const data = await res.json();
     if (data.status_code === 'FINISHED') return;
-    if (data.status_code === 'ERROR') throw new Error('IG container processing failed');
+    if (data.status_code === 'ERROR') throw new Error(`IG container processing failed: ${data.status || 'no detail'}`);
     await new Promise(r => setTimeout(r, 5000));
   }
   throw new Error('IG container processing timeout');

@@ -252,7 +252,7 @@ export default async function handler(req, res) {
 
     if (post.type === 'carousel') {
       igId = await publishCarousel(post.image_urls, caption);
-    } else if (post.type === 'video' && post.video_url) {
+    } else if ((post.type === 'video' || post.type === 'reel') && post.video_url) {
       igId = await publishReel(post.video_url, caption);
       try {
         tiktokId = await publishTikTok(post.video_url, caption);
