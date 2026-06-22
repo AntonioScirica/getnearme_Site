@@ -3,6 +3,10 @@ import { publishCarousel, publishReel, publishStory } from '../publish/instagram
 import { publishVideo as publishTikTok } from '../publish/tiktok.js';
 import { renderStory } from '../carousel/story-renderer.js';
 import { sendMessage } from '../telegram.js';
+// Reel story = the calendar slider-story template (before/after card), rendered
+// from the reel's before/after photos at publish time. Bundled by Next (TS ok).
+import { storyStagingHtmlDynamic, VIDEO_STORIES_CSS } from '../video-stories/builders';
+import { renderPedSlides } from '../ped/renderer.js';
 
 export const config = { maxDuration: 120 };
 
@@ -398,6 +402,23 @@ async function handleStoryPublish(req, res) {
 
   try {
     const storyType = STORY_TYPE_MAP[slot] || 'post';
+
+    // Reel slots (video_1/video_2): the story is the calendar slider template
+    // (storyStagingHtmlDynamic) rendered from the reel's before/after photos —
+    // NOT the reel video. Keeps calendar preview == published story.
+    if (slotConfig.type === 'reel') {
+      const imgs = post.image_urls || [];
+      if (imgs.length < 1) return res.json({ message: `Reel ${slot} has no before/after photos for the story` });
+      const html = storyStagingHtmlDynamic(imgs[0], imgs[1] || imgs[0]);
+      const [storyImg] = await renderPedSlides([{ html, label: 'story' }], VIDEO_STORIES_CSS, { width: 1080, height: 1920 });
+      const storyPath = `stories/${post.publish_date}/${slot}.jpg`;
+      await supabase.storage.from('content').upload(storyPath, storyImg, { contentType: 'image/jpeg', upsert: true });
+      const { data: storyUrl } = supabase.storage.from('content').getPublicUrl(storyPath);
+      const storyId = await publishStory(storyUrl.publicUrl);
+      await supabase.from('generated_content').update({ ig_story_id: storyId }).eq('id', post.id);
+      await sendMessage(`📖 [${slot}] Story (slider) pubblicata`);
+      return res.json({ slot, storyId });
+    }
 
     // Get full topic data for richer story content
     let topic = null;
