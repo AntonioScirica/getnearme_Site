@@ -275,7 +275,14 @@ const POST_SINGOLO: PedTemplateModule = {
   name: "Post Singolo",
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   buildSlides: (d: any) => [{ label: "post", html: postSingoloD(d) }],
-  buildStory: (d, rubric, rubricMap = RUBRIC_STORY) => (d.storyHook ? storyTeaserD(d, rubric, rubricMap) : null),
+  // I post singoli hanno sempre una story: se manca uno storyHook dedicato, la
+  // deriva dall'hook del post (così ogni post singolo esce con la sua story).
+  buildStory: (d, rubric, rubricMap = RUBRIC_STORY) =>
+    storyTeaserD(
+      d.storyHook ? d : { ...d, storyHook: d.hook, storyHookHL: d.hookHL, storySub: d.storySub || "" },
+      rubric,
+      rubricMap
+    ),
   buildCaption: (topic) => {
     const d = topic.slide_data || {};
     const parts: string[] = [`${strip(d.hook)} ${strip(d.hookHL)}`.trim()];
@@ -407,7 +414,9 @@ export function buildSlidesForTopic(topic: PedTopic): ServerSlide[] | null {
 /** Story teaser HTML for a PED topic (server). Null if no storyHook. */
 export function buildStoryForTopic(topic: PedTopic, rubricMap: RubricStoryMap = RUBRIC_STORY): string | null {
   const d = topic.slide_data;
-  if (!d?.storyHook) return null;
+  if (!d) return null;
+  // Ogni modulo decide se ha una story: i caroselli/tip richiedono uno storyHook,
+  // i post singoli la derivano dall'hook (vedi POST_SINGOLO.buildStory).
   const mod = PED_REGISTRY[topic.template];
   return mod ? mod.buildStory(d, topic.rubric, rubricMap) : null;
 }
