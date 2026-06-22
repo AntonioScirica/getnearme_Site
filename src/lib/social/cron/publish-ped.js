@@ -151,6 +151,21 @@ export default async function handler(req, res) {
     });
   }
 
+  // Atomic claim: flip approved → publishing so a second concurrent invocation
+  // (cron retry, double cron, manual run) can't double-post the same slot. Only
+  // one update matches status='approved'; the loser exits without publishing.
+  {
+    const { data: claimed } = await supabase
+      .from('generated_content')
+      .update({ status: 'publishing' })
+      .eq('id', post.id)
+      .eq('status', 'approved')
+      .select('id');
+    if (!claimed?.length) {
+      return res.json({ message: `Slot ${slotTime} already being published`, post_id: post.post_id });
+    }
+  }
+
   // Pre-publish dedup: if IG already has it, just mark published
   {
     const recoveredId = await checkIfPublishedOnIG(post);
@@ -202,9 +217,10 @@ export default async function handler(req, res) {
         return res.json({ slot: slotTime, published: post.post_id, igId: recoveredId, recovered: true });
       }
       await sendMessage(`⏳ [PED ${slotTime}] IG rate limit, resta approved per retry: <b>${post.post_id}</b>`);
+      // Release the claim (publishing → approved) so a later cron can retry this slot.
       await supabase
         .from('generated_content')
-        .update({ error: `rate_limit: ${new Date().toISOString()}` })
+        .update({ status: 'approved', error: `rate_limit: ${new Date().toISOString()}` })
         .eq('id', post.id);
     } else {
       await sendMessage(`❌ [PED ${slotTime}] Errore: <b>${post.post_id}</b> — ${err.message}`);

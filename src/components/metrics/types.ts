@@ -84,6 +84,7 @@ export interface MetricsData {
     full_analyses: number;
   }[];
   allUsers: {
+    id: string;
     email: string;
     subscription_type: string;
     credits: number;

@@ -35,7 +35,7 @@ function SortIcon({ col, sortKey, sortDir }: { col: SortKey; sortKey: SortKey; s
     : <ChevronDown className="w-3 h-3 inline ml-1 text-indigo-500" />;
 }
 
-export default function UsersPage({ data, onRefresh, loading }: { data: MetricsData; onRefresh?: () => void; loading?: boolean }) {
+export default function UsersPage({ data, onRefresh, loading, authKey }: { data: MetricsData; onRefresh?: () => void; loading?: boolean; authKey?: string | null }) {
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState("all");
   const [sortKey, setSortKey] = useState<SortKey>("created_at");
@@ -310,7 +310,7 @@ export default function UsersPage({ data, onRefresh, loading }: { data: MetricsD
                   {expanded === user.email && (
                     <tr key={`${user.email}-detail`} className="bg-white/[0.02]">
                       <td colSpan={12} className="px-4 py-4">
-                        <UserDetail user={user} />
+                        <UserDetail user={user} authKey={authKey} />
                       </td>
                     </tr>
                   )}
@@ -338,8 +338,31 @@ function DetailRow({ label, value }: { label: string; value: React.ReactNode }) 
   );
 }
 
-function UserDetail({ user }: { user: MetricsData["allUsers"][0] }) {
+function UserDetail({ user, authKey }: { user: MetricsData["allUsers"][0]; authKey?: string | null }) {
   const earnedPct = user.total_earned > 0 ? (user.total_spent / user.total_earned) * 100 : 0;
+  const [resetting, setResetting] = useState(false);
+  const [resetMsg, setResetMsg] = useState<string | null>(null);
+
+  async function resetQuota() {
+    if (!user.id) { setResetMsg("ID utente mancante"); return; }
+    if (!confirm(`Resettare le quote di ${user.email} al massimo?\n\nVideo, Foto AI, Post e Montaggio tornano disponibili al massimo.`)) return;
+    setResetting(true);
+    setResetMsg(null);
+    try {
+      const res = await fetch("/api/metrics/users/reset-quota", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-metrics-key": authKey || "" },
+        body: JSON.stringify({ user_id: user.id }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "Errore");
+      setResetMsg("Quote resettate al massimo");
+    } catch (e) {
+      setResetMsg(`Errore: ${(e as Error).message}`);
+    } finally {
+      setResetting(false);
+    }
+  }
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -478,6 +501,17 @@ function UserDetail({ user }: { user: MetricsData["allUsers"][0] }) {
           <DetailRow label="Joined" value={<span className="text-xs">{formatDate(user.created_at)}</span>} />
           <DetailRow label="Last seen" value={<span className="text-xs text-gray-400">{formatDate(user.last_sign_in_at)}</span>} />
         </div>
+        <button
+          onClick={resetQuota}
+          disabled={resetting}
+          className="mt-3 w-full flex items-center justify-center gap-1.5 text-xs font-medium px-3 py-2 rounded-md bg-indigo-500/15 text-indigo-300 border border-indigo-500/25 hover:bg-indigo-500/25 disabled:opacity-50 transition-colors"
+        >
+          <RefreshCw className={`w-3 h-3 ${resetting ? "animate-spin" : ""}`} />
+          {resetting ? "Reset..." : "Reset quote (Video/Foto/Post/Montaggio)"}
+        </button>
+        {resetMsg && (
+          <p className={`${MONO} text-[10px] mt-2 ${resetMsg.startsWith("Errore") ? "text-red-400" : "text-emerald-400"}`}>{resetMsg}</p>
+        )}
       </div>
     </div>
   );

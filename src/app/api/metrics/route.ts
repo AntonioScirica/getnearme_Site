@@ -120,7 +120,6 @@ export async function GET(request: NextRequest) {
 
     // Exclude admin/test accounts from spending metrics
     const EXCLUDED_EMAILS = [
-      "as.scirica@gmail.com",
       "antonioiphoneid@gmail.com",
       "lookgameyt@gmail.com",
       "info@getnearme.it",
@@ -593,6 +592,7 @@ export async function GET(request: NextRequest) {
     const allUsers = creditRows
       .filter((c: any) => !excludedUserIds.has(c.user_id))
       .map((c: any) => ({
+        id: c.user_id,
         email: c.email || "(no email)",
         subscription_type: c.subscription_type || "free",
         credits: c.credits,

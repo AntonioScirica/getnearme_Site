@@ -229,6 +229,22 @@ export default async function handler(req, res) {
     return res.json({ message: `Slot "${slot}" already published`, post_id: post.post_id });
   }
 
+  // Atomic claim: flip the row to 'publishing' so a second concurrent invocation
+  // (double cron, retry, manual run) can't double-post the same slot. Only one
+  // update matches the original status; the loser exits without publishing.
+  const claimFrom = post.status;
+  {
+    const { data: claimed } = await supabase
+      .from('generated_content')
+      .update({ status: 'publishing' })
+      .eq('id', post.id)
+      .eq('status', claimFrom)
+      .select('id');
+    if (!claimed?.length) {
+      return res.json({ message: `Slot "${slot}" already being published`, post_id: post.post_id });
+    }
+  }
+
   // Pre-publish dedup: ALWAYS check IG for a caption match before publishing.
   // Covers every stale-state case (silent DB write failures, rate-limit-but-published,
   // manual re-triggers): if the post is already on IG, never publish again.
@@ -301,11 +317,11 @@ export default async function handler(req, res) {
         return res.json({ slot, published: post.post_id, igId: recoveredId, recovered: true });
       }
 
-      // Genuinely not published — keep approved for retry
+      // Genuinely not published — release the claim (publishing → original) for retry
       await sendMessage(`⏳ [${slot}] IG rate limit, retry automatico: <b>${post.post_id}</b>`);
       await supabase
         .from('generated_content')
-        .update({ error: `rate_limit: ${new Date().toISOString()}` })
+        .update({ status: claimFrom, error: `rate_limit: ${new Date().toISOString()}` })
         .eq('id', post.id);
     } else {
       await sendMessage(`❌ [${slot}] Errore: <b>${post.post_id}</b> — ${err.message}`);
