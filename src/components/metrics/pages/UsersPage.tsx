@@ -89,6 +89,23 @@ export default function UsersPage({ data, onRefresh, loading, authKey }: { data:
     return rows;
   }, [data.allUsers, search, filterType, sortKey, sortDir]);
 
+  // Email NON gmail.com (lead pro/agenzie con dominio proprio o provider business).
+  const nonGmail = useMemo(() => {
+    const COMMON = new Set(["gmail.com", "googlemail.com"]);
+    return data.allUsers
+      .filter((u) => u.email && u.email !== "(no email)")
+      .filter((u) => { const d = u.email.split("@")[1]?.toLowerCase(); return d && !COMMON.has(d); })
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  }, [data.allUsers]);
+
+  // Ultimi 10 utenti registrati.
+  const lastSignups = useMemo(() => {
+    return data.allUsers
+      .filter((u) => u.email && u.email !== "(no email)")
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      .slice(0, 10);
+  }, [data.allUsers]);
+
   const thClass = `${MONO} text-[10px] tracking-wider uppercase text-gray-400 pb-3 pr-4 font-medium text-left cursor-pointer select-none hover:text-gray-300 transition-colors whitespace-nowrap`;
   const thRClass = `${MONO} text-[10px] tracking-wider uppercase text-gray-400 pb-3 pr-4 font-medium text-right cursor-pointer select-none hover:text-gray-300 transition-colors whitespace-nowrap`;
 
@@ -148,6 +165,43 @@ export default function UsersPage({ data, onRefresh, loading, authKey }: { data:
               color: DONUT_COLORS[i % DONUT_COLORS.length],
             }))}
           />
+        </StatCard>
+      </div>
+
+      {/* Email non-Gmail + ultimi registrati */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+        <StatCard title={`Email non-Gmail (${nonGmail.length})`}>
+          <div className="max-h-72 overflow-y-auto -mx-2 divide-y divide-white/[0.04]">
+            {nonGmail.length === 0 ? (
+              <div className={`${MONO} text-xs text-gray-600 py-8 text-center`}>Nessuna</div>
+            ) : nonGmail.map((u) => (
+              <button key={u.email} onClick={() => setSearch(u.email)} title="Filtra questa email nella tabella"
+                className="w-full flex items-center justify-between gap-3 px-2 py-2 text-left hover:bg-white/[0.04] transition-colors rounded">
+                <span className={`${MONO} text-[12px] text-gray-200 truncate`}>{u.email}</span>
+                <span className="flex items-center gap-2 shrink-0">
+                  <span className={`${MONO} text-[10px] px-2 py-0.5 rounded ${SUB_COLORS[u.subscription_type] || SUB_COLORS.free}`}>{u.subscription_type}</span>
+                  <span className={`${MONO} text-[10px] text-gray-600 whitespace-nowrap`}>{formatDate(u.created_at)}</span>
+                </span>
+              </button>
+            ))}
+          </div>
+        </StatCard>
+
+        <StatCard title="Ultimi 10 registrati">
+          <div className="max-h-72 overflow-y-auto -mx-2 divide-y divide-white/[0.04]">
+            {lastSignups.length === 0 ? (
+              <div className={`${MONO} text-xs text-gray-600 py-8 text-center`}>Nessuno</div>
+            ) : lastSignups.map((u) => (
+              <button key={u.email} onClick={() => setSearch(u.email)} title="Filtra questa email nella tabella"
+                className="w-full flex items-center justify-between gap-3 px-2 py-2 text-left hover:bg-white/[0.04] transition-colors rounded">
+                <span className={`${MONO} text-[12px] text-gray-200 truncate`}>{u.email}</span>
+                <span className="flex items-center gap-2 shrink-0">
+                  <span className={`${MONO} text-[10px] px-2 py-0.5 rounded ${SUB_COLORS[u.subscription_type] || SUB_COLORS.free}`}>{u.subscription_type}</span>
+                  <span className={`${MONO} text-[10px] text-gray-600 whitespace-nowrap`}>{formatDate(u.created_at)}</span>
+                </span>
+              </button>
+            ))}
+          </div>
         </StatCard>
       </div>
 
@@ -240,7 +294,7 @@ export default function UsersPage({ data, onRefresh, loading, authKey }: { data:
                     onClick={() => setExpanded(expanded === user.email ? null : user.email)}
                     className={`border-b border-white/[0.04] hover:bg-white/[0.03] transition-colors cursor-pointer ${expanded === user.email ? "bg-white/[0.05]" : ""}`}
                   >
-                    <td className={`${MONO} text-sm py-3 pr-4 text-gray-300`}><span className="truncate block max-w-[180px]">{user.email}</span></td>
+                    <td className={`${MONO} text-sm py-3 pr-4 text-gray-300`}><span className="block whitespace-nowrap" title={user.email}>{user.email}</span></td>
                     <td className="py-3 pr-4">
                       <span className={`px-2 py-0.5 rounded text-[10px] uppercase font-medium ${SUB_COLORS[user.subscription_type] || SUB_COLORS.free}`}>{user.subscription_type}</span>
                     </td>
