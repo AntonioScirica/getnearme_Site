@@ -423,14 +423,15 @@ if (noVideo) {
   console.log('\nGenerating 7 videos (this takes ~10-15 min: AI generation + render)...');
   // 1. Build the list of video topics to render.
   let videoTopics = [];
-  if (videosOnly) {
-    // Load the week's existing video topics; skip ones already rendered (reel has video_url).
-    const { data: existing } = await supabase.from('content_topics')
-      .select('id, plan_date, template, title, slide_data')
-      .eq('account_id', accountId).eq('rubric', 'video')
-      .gte('plan_date', dates[0]).lte('plan_date', dates[6])
-      .order('plan_date', { ascending: true });
-    for (const t of (existing || [])) {
+  // In --videos-only, load the week's existing video topics (resume). If none exist
+  // yet (e.g. posts were made with --no-video), fall through and create them.
+  const existingVid = videosOnly ? ((await supabase.from('content_topics')
+    .select('id, plan_date, template, title, slide_data')
+    .eq('account_id', accountId).eq('rubric', 'video')
+    .gte('plan_date', dates[0]).lte('plan_date', dates[6])
+    .order('plan_date', { ascending: true })).data || []) : [];
+  if (videosOnly && existingVid.length) {
+    for (const t of existingVid) {
       const { data: done } = await supabase.from('generated_content')
         .select('id').eq('topic_id', t.id).eq('type', 'reel').not('video_url', 'is', null).limit(1);
       if (done && done.length) { console.log(`  skip ${t.title} (${t.plan_date}) — già renderizzato`); continue; }
@@ -439,7 +440,7 @@ if (noVideo) {
       videoTopics.push({ id: t.id, date: t.plan_date, template: t.template, label: t.title, variant: sd.slider_variant || meta.variant });
       await supabase.from('content_topics').update({ status: 'proposed' }).eq('id', t.id); // reset stuck status
     }
-    console.log(`--videos-only: ${videoTopics.length} video da generare/renderizzare.`);
+    console.log(`--videos-only (resume): ${videoTopics.length} video da generare/renderizzare.`);
   } else {
     const caps = await genVideoCaptions(VIDEO_PLAN);
     // Insert the video topics (status=proposed; edge picks them by topic_id).
