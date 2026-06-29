@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Script from "next/script";
+import AnalyticsEvents from "@/components/AnalyticsEvents";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -43,6 +44,7 @@ function gtag(){dataLayer.push(arguments);}
 gtag('js', new Date());
 gtag('config', '${GA_ID}');`}
       </Script>
+      <AnalyticsEvents />
       {children}
     </>
   );
