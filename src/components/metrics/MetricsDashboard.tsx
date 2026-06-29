@@ -20,6 +20,7 @@ import AmbassadorPage from "./pages/AmbassadorPage";
 import CostsPage from "./pages/CostsPage";
 import EmailsPage from "./pages/EmailsPage";
 import CrmPage from "./pages/CrmPage";
+import AdsPage from "./pages/AdsPage";
 
 // Mobile bottom-nav: 4 primary tabs; everything else lives in the "Altro" sheet.
 const MOBILE_TABS: { id: PageId; label: string; icon: typeof LayoutDashboard }[] = [
@@ -146,6 +147,8 @@ export default function MetricsDashboard() {
         return <EmailsPage />;
       case "crm":
         return <CrmPage authKey={authKey} />;
+      case "ads":
+        return <AdsPage authKey={authKey} />;
     }
   };
 

@@ -120,6 +120,8 @@ export async function GET(request: NextRequest) {
 
     // Exclude admin/test accounts from spending metrics
     const EXCLUDED_EMAILS = [
+      "as.scirica@gmail.com",
+      "software.hubwater@gmail.com",
       "antonioiphoneid@gmail.com",
       "lookgameyt@gmail.com",
       "info@getnearme.it",
