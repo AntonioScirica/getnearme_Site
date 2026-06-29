@@ -11,6 +11,8 @@ export const metadata: Metadata = {
 
 // Meta (Facebook) Pixel — site-wide base code for FB/IG ad campaigns.
 const FB_PIXEL_ID = "1023519243879273";
+// Google Analytics 4 (gtag.js).
+const GA_ID = "G-7EWTZXS1VQ";
 
 export default function RootLayout({
   children,
@@ -30,6 +32,16 @@ s.parentNode.insertBefore(t,s)}(window, document,'script',
 'https://connect.facebook.net/en_US/fbevents.js');
 fbq('init', '${FB_PIXEL_ID}');
 fbq('track', 'PageView');`}
+      </Script>
+      <Script
+        src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
+        strategy="afterInteractive"
+      />
+      <Script id="ga4" strategy="afterInteractive">
+        {`window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', '${GA_ID}');`}
       </Script>
       {children}
     </>
