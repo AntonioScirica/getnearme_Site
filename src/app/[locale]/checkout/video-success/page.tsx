@@ -1,9 +1,11 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { Video } from 'lucide-react';
 import { type Locale } from '@/lib/i18n';
 import Navbar from '@/components/Navbar';
+import { track } from '@/lib/analytics';
 
 const translations: Record<string, Record<string, string>> = {
   it: {
@@ -52,6 +54,8 @@ const translations: Record<string, Record<string, string>> = {
 
 export default function VideoCheckoutSuccessPage() {
   const params = useParams();
+  // Stripe one-time credit-pack payment redirects here → fire the conversion event.
+  useEffect(() => { track('Purchase', { currency: 'EUR' }); }, []);
   const locale = (params.locale as Locale) || 'it';
   const t = translations[locale] || translations.it;
 

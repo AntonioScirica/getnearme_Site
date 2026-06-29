@@ -1,9 +1,11 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { CheckCircle } from 'lucide-react';
 import { type Locale } from '@/lib/i18n';
 import Navbar from '@/components/Navbar';
+import { track } from '@/lib/analytics';
 
 const translations: Record<string, Record<string, string>> = {
   it: {
@@ -46,6 +48,8 @@ const translations: Record<string, Record<string, string>> = {
 
 export default function CheckoutSuccessPage() {
   const params = useParams();
+  // Stripe subscription payment redirects here → fire the conversion event.
+  useEffect(() => { track('Subscribe', { currency: 'EUR' }); }, []);
   const locale = (params.locale as Locale) || 'it';
   const t = translations[locale] || translations.it;
 
