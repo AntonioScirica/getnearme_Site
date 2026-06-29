@@ -243,6 +243,9 @@ const args = process.argv.slice(2);
 const startArg = args.find((a) => /^\d{4}-\d{2}-\d{2}$/.test(a));
 const replace = args.includes('--replace');
 const noVideo = args.includes('--no-video');
+// --videos-only: skip post/topic creation, just generate+render the videos for
+// the week's EXISTING video topics that aren't rendered yet (resume a partial run).
+const videosOnly = args.includes('--videos-only');
 const start = await resolveStart(startArg);
 const startDate = new Date(`${start}T12:00:00`);
 const dates = Array.from({ length: 7 }, (_, i) => { const d = new Date(startDate); d.setDate(d.getDate() + i); return dateStr(d); });
@@ -263,7 +266,8 @@ const calib = await fetchInsightCalibration();
 console.log(`calibrazione dai dati: ${calib ? 'attiva' : 'nessuna (ped-analyze non ha ancora prodotto analisi)'}`);
 
 let total = 0;
-for (const date of dates) {
+if (videosOnly) console.log('--videos-only: skipping posts, only (re)generating videos for existing topics.');
+else for (const date of dates) {
   const dow = new Date(`${date}T12:00:00`).getDay();
   process.stdout.write(`${date}... `);
   let day;
@@ -417,23 +421,42 @@ if (noVideo) {
   console.log('\n⚠ BATCH_STAGING_CRON_SECRET not set — skipping videos. Set it in env to enable automatic video generation.');
 } else {
   console.log('\nGenerating 7 videos (this takes ~10-15 min: AI generation + render)...');
-  const caps = await genVideoCaptions(VIDEO_PLAN);
-
-  // 1. Insert the video topics (status=proposed; edge picks them by topic_id).
-  const videoTopics = [];
-  for (let i = 0; i < VIDEO_PLAN.length; i++) {
-    const p = VIDEO_PLAN[i];
-    const date = dateForDow(p.dow);
-    if (!date) continue;
-    const cap = caps[i] || {};
-    const slide_data = { hook: cap.hook || p.label, body: cap.body || '', caption: cap.caption || '', ...(p.variant ? { slider_variant: p.variant } : {}) };
-    if (replace) await supabase.from('content_topics').delete().eq('account_id', accountId).eq('rubric', 'video').eq('plan_date', date).eq('template', p.template);
-    const { data, error } = await supabase.from('content_topics').insert({
-      plan_date: date, rubric: 'video', category: 'video', template: p.template,
-      title: p.label, summary: cap.body || p.label, status: 'proposed', account_id: accountId, slide_data,
-    }).select('id').single();
-    if (error) { console.log(`  ${p.label}: insert err ${error.message}`); continue; }
-    videoTopics.push({ id: data.id, date, ...p });
+  // 1. Build the list of video topics to render.
+  let videoTopics = [];
+  if (videosOnly) {
+    // Load the week's existing video topics; skip ones already rendered (reel has video_url).
+    const { data: existing } = await supabase.from('content_topics')
+      .select('id, plan_date, template, title, slide_data')
+      .eq('account_id', accountId).eq('rubric', 'video')
+      .gte('plan_date', dates[0]).lte('plan_date', dates[6])
+      .order('plan_date', { ascending: true });
+    for (const t of (existing || [])) {
+      const { data: done } = await supabase.from('generated_content')
+        .select('id').eq('topic_id', t.id).eq('type', 'reel').not('video_url', 'is', null).limit(1);
+      if (done && done.length) { console.log(`  skip ${t.title} (${t.plan_date}) — già renderizzato`); continue; }
+      const sd = typeof t.slide_data === 'string' ? JSON.parse(t.slide_data) : (t.slide_data || {});
+      const meta = VIDEO_PLAN.find((p) => p.template === t.template) || {};
+      videoTopics.push({ id: t.id, date: t.plan_date, template: t.template, label: t.title, variant: sd.slider_variant || meta.variant });
+      await supabase.from('content_topics').update({ status: 'proposed' }).eq('id', t.id); // reset stuck status
+    }
+    console.log(`--videos-only: ${videoTopics.length} video da generare/renderizzare.`);
+  } else {
+    const caps = await genVideoCaptions(VIDEO_PLAN);
+    // Insert the video topics (status=proposed; edge picks them by topic_id).
+    for (let i = 0; i < VIDEO_PLAN.length; i++) {
+      const p = VIDEO_PLAN[i];
+      const date = dateForDow(p.dow);
+      if (!date) continue;
+      const cap = caps[i] || {};
+      const slide_data = { hook: cap.hook || p.label, body: cap.body || '', caption: cap.caption || '', ...(p.variant ? { slider_variant: p.variant } : {}) };
+      if (replace) await supabase.from('content_topics').delete().eq('account_id', accountId).eq('rubric', 'video').eq('plan_date', date).eq('template', p.template);
+      const { data, error } = await supabase.from('content_topics').insert({
+        plan_date: date, rubric: 'video', category: 'video', template: p.template,
+        title: p.label, summary: cap.body || p.label, status: 'proposed', account_id: accountId, slide_data,
+      }).select('id').single();
+      if (error) { console.log(`  ${p.label}: insert err ${error.message}`); continue; }
+      videoTopics.push({ id: data.id, date, ...p });
+    }
   }
 
   // 2. Pre-kick START for every Kling reel (timelapse/day-night/stop-motion/
