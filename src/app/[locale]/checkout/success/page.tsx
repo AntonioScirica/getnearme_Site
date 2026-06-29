@@ -11,38 +11,38 @@ const translations: Record<string, Record<string, string>> = {
   it: {
     title: 'Abbonamento attivato!',
     subtitle: 'Grazie per aver scelto GetNearMe.',
-    cta: 'Inizia ad usare l\'estensione',
-    syncHint: 'Se l\'abbonamento non risulta subito visibile, prova a fare logout e login nell\'estensione.',
+    cta: 'Vai alla dashboard',
+    syncHint: 'Accedi con il tuo account per iniziare a usare la piattaforma.',
   },
   en: {
     title: 'Subscription activated!',
     subtitle: 'Thank you for choosing GetNearMe.',
-    cta: 'Start using the extension',
-    syncHint: 'If the subscription doesn\'t appear right away, try logging out and back in.',
+    cta: 'Go to dashboard',
+    syncHint: 'Sign in with your account to start using the platform.',
   },
   es: {
     title: '¡Suscripción activada!',
     subtitle: 'Gracias por elegir GetNearMe.',
-    cta: 'Empieza a usar la extensión',
-    syncHint: 'Si la suscripción no aparece de inmediato, prueba a cerrar sesión y volver a iniciarla.',
+    cta: 'Ir al panel',
+    syncHint: 'Inicia sesión con tu cuenta para empezar a usar la plataforma.',
   },
   fr: {
     title: 'Abonnement activé !',
     subtitle: 'Merci d\'avoir choisi GetNearMe.',
-    cta: 'Commencer à utiliser l\'extension',
-    syncHint: 'Si l\'abonnement n\'apparaît pas immédiatement, essayez de vous déconnecter puis de vous reconnecter.',
+    cta: 'Aller au tableau de bord',
+    syncHint: 'Connectez-vous avec votre compte pour commencer à utiliser la plateforme.',
   },
   ru: {
     title: 'Подписка активирована!',
     subtitle: 'Спасибо, что выбрали GetNearMe.',
-    cta: 'Начать использовать расширение',
-    syncHint: 'Если подписка не отображается сразу, попробуйте выйти и войти снова.',
+    cta: 'Перейти в панель',
+    syncHint: 'Войдите в аккаунт, чтобы начать пользоваться платформой.',
   },
   uk: {
     title: 'Підписку активовано!',
     subtitle: 'Дякуємо, що обрали GetNearMe.',
-    cta: 'Почати використовувати розширення',
-    syncHint: 'Якщо підписка не з\'являється одразу, спробуйте вийти та увійти знову.',
+    cta: 'Перейти до панелі',
+    syncHint: 'Увійдіть у свій акаунт, щоб почати користуватися платформою.',
   },
 };
 
@@ -68,7 +68,7 @@ export default function CheckoutSuccessPage() {
             <p className="text-lg text-slate-500 mb-6">{t.subtitle}</p>
 
             <a
-              href="https://www.immobiliare.it"
+              href={`/${locale}/dashboard`}
               className="inline-flex items-center justify-center gap-3 px-8 py-4 bg-blue-500 rounded-xl neo-border neo-btn text-white font-bold hover:bg-blue-600 transition-all text-lg"
               style={{ boxShadow: '0 4px 16px rgba(16,24,40,0.08)' }}
             >
