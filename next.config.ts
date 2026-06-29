@@ -6,8 +6,9 @@ const nextConfig: NextConfig = {
   // cron function. It's read at runtime via chromium.executablePath(), so Next's
   // file tracer doesn't include it on its own → the reel story render crashed on
   // Vercel with "/var/task/node_modules/@sparticuz/chromium/bin does not exist".
+  // NB: glob key — "[action]" would be parsed as a char-class, so use "**".
   outputFileTracingIncludes: {
-    "/api/social/cron/[action]": ["./node_modules/@sparticuz/chromium/bin/**"],
+    "/api/social/cron/**": ["./node_modules/@sparticuz/chromium/**"],
   },
   async redirects() {
     return [
