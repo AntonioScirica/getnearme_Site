@@ -6,9 +6,10 @@
 
 import React from 'react';
 import { s, Box, Icon } from './ui';
+import WatermarkDownloadModal from './WatermarkDownloadModal';
 import {
   STAGING_STYLES, STAGING_ANGLES, MAX_BATCH_PHOTOS,
-  fileToResizedDataUrl, startStaging, pollStagingStatus, findLatestProcessingPrediction, createBatchStaging, downloadImage,
+  fileToResizedDataUrl, startStaging, pollStagingStatus, findLatestProcessingPrediction, createBatchStaging,
   fetchStagingQuota, type StagingQuota, getTokenFast,
 } from '@/lib/staging';
 import { saveSingleGenerationToBatch, deleteBatchPhoto } from '@/lib/stagingBatches';
@@ -112,6 +113,7 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
   lockBrand?: boolean; // free: niente acquisto extra, solo stato esaurito
 }) {
   const [quota, setQuota] = React.useState<StagingQuota | null>(null);
+  const [wmUrl, setWmUrl] = React.useState<string | null>(null); // download con logo
   const [packsOpen, setPacksOpen] = React.useState(false);
   React.useEffect(() => { fetchStagingQuota().then(setQuota); }, []);
   // Refetch al ritorno dal checkout pacchetti (aperto in nuova tab): rientrando
@@ -143,7 +145,6 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
   const [dragOver, setDragOver] = React.useState(false);
   const [activePhotoId, setActivePhotoId] = React.useState<string | null>(null);
   const [pending, setPending] = React.useState<Pending | null>(null);
-  const [downloading, setDownloading] = React.useState(false);
   const pollTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const pollingActive = React.useRef(false);
 
@@ -761,10 +762,8 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
                 <div style={{ background: '#fff', border: '1px solid #f0ede7', borderRadius: 16, padding: 20, boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
                   <div style={{ fontSize: 11, fontWeight: 700, color: '#b3aca1', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 14 }}>Risultato</div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    <Box as="button" onClick={async () => { if (downloading) return; setDownloading(true); try { await downloadImage(result.after, 'homestaging-ai.jpg'); } finally { setDownloading(false); } }} style={{ border: 'none', background: 'linear-gradient(135deg, #3B83F6 0%, #6366f1 100%)', color: '#fff', fontSize: 14, fontWeight: 700, padding: '14px 20px', borderRadius: 12, cursor: downloading ? 'default' : 'pointer', opacity: downloading ? .85 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 } as React.CSSProperties} hover={downloading ? undefined : s('opacity:.9')}>
-                      {downloading
-                        ? <><span style={{ width: 16, height: 16, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.4)', borderTopColor: '#fff', animation: 'export-spin 1s linear infinite', display: 'inline-block' }} />Scaricando...</>
-                        : <><Icon name="download" size={16} color="#fff" />Scarica risultato</>}
+                    <Box as="button" onClick={() => setWmUrl(result.after)} style={{ border: 'none', background: 'linear-gradient(135deg, #3B83F6 0%, #6366f1 100%)', color: '#fff', fontSize: 14, fontWeight: 700, padding: '14px 20px', borderRadius: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 } as React.CSSProperties} hover={s('opacity:.9')}>
+                      <Icon name="download" size={16} color="#fff" />Scarica risultato
                     </Box>
                     <div style={{ display: 'flex', gap: 10 }}>
                       <Box as="button" onClick={() => onGoPost?.()} style={{ flex: 1, border: '1.5px solid #3B83F6', background: '#eff6ff', color: '#1d5fd0', fontSize: 14, fontWeight: 700, padding: '13px 20px', borderRadius: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 } as React.CSSProperties} hover={s('background:#dbeafe')}>
@@ -849,6 +848,7 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
       </div>
       )}
       {packsOpen && <PhotoPacksModal onClose={() => setPacksOpen(false)} />}
+      {wmUrl && <WatermarkDownloadModal imageUrl={wmUrl} onClose={() => setWmUrl(null)} />}
     </div>
   );
 }

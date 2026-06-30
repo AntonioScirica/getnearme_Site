@@ -3,8 +3,8 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { s, Box, Icon } from './ui';
 import { fetchUserBatches, fetchBatchPhotos, deleteBatchPhoto, BatchInfo, BatchPhoto } from '@/lib/stagingBatches';
-import { downloadImage } from '@/lib/staging';
 import type { Project } from './types';
+import WatermarkDownloadModal from './WatermarkDownloadModal';
 import Image from 'next/image';
 
 // We import JSZip dynamically when needed for bulk export
@@ -207,11 +207,11 @@ export default function MediaScreen({
 
   const handleDownloadSingle = (url: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    toast('Download avviato...', 'download');
-    downloadImage(url, 'foto-ai.png');
+    setWmUrl(url); // apre il dialog "scarica con logo"
   };
 
   const [actionsOpen, setActionsOpen] = useState<string | null>(null);
+  const [wmUrl, setWmUrl] = useState<string | null>(null); // download foto con logo
   const [confirmDlg, setConfirmDlg] = useState<{ title: string; sub: string; onYes: () => void } | null>(null);
   const [selectDay, setSelectDay] = useState<string | null>(null);       // giorno in modalità selezione
   const [selected, setSelected] = useState<Set<string>>(new Set());      // chiavi `${batchId}_${index}`
@@ -701,6 +701,7 @@ export default function MediaScreen({
           </div>
         </div>
       )}
+      {wmUrl && <WatermarkDownloadModal imageUrl={wmUrl} onClose={() => setWmUrl(null)} />}
     </div>
   );
 }
