@@ -307,9 +307,22 @@ export default function ReferenceGallery({ variant, media = [], posts = [], reel
 
       <style>{`
         @media (max-width: 768px) {
+          /* Mobile: slider orizzontale (swipe) invece di card impilate */
           .ref-gallery {
-            grid-template-columns: 1fr !important;
+            display: flex !important;
+            grid-template-columns: none !important;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            -webkit-overflow-scrolling: touch;
             gap: 12px !important;
+            padding: 0 20px 10px;
+            margin: 0 -20px;
+            scrollbar-width: none;
+          }
+          .ref-gallery::-webkit-scrollbar { display: none; }
+          .ref-gallery > .ref-gallery-item {
+            flex: 0 0 82%;
+            scroll-snap-align: center;
           }
         }
       `}</style>
