@@ -448,6 +448,13 @@ const PS_PLATFORMS = [
     { id: 'li-post', label: 'Post 1080 × 1350', w: 1080, h: 1350 },
     { id: 'li-quadrato', label: 'Quadrato 1080 × 1080', w: 1080, h: 1080 },
   ]},
+  { id: 'whatsapp', label: 'WhatsApp', formats: [
+    // Stato: 9:16, overlay UI WhatsApp (barra nome/timestamp in alto, caption + barra "Rispondi" in basso).
+    { id: 'wa-stato', label: 'Stato 1080 × 1920', w: 1080, h: 1920, safe: { top: 250, bottom: 250, left: 0, right: 0 } },
+    // Immagine in chat: nessun overlay sulla foto, margine standard.
+    { id: 'wa-immagine', label: 'Immagine 1080 × 1350', w: 1080, h: 1350, safe: { top: 60, bottom: 60, left: 60, right: 60 } },
+    { id: 'wa-quadrato', label: 'Quadrato 1080 × 1080', w: 1080, h: 1080, safe: { top: 60, bottom: 60, left: 60, right: 60 } },
+  ]},
 ];
 
 const ANIM_STYLES: { id: string; label: string }[] = [
@@ -1073,7 +1080,7 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
   // scheduled_post (l'edge function publish-due-posts lo pubblica via cron).
   const publishFormat = (): 'feed' | 'story' | 'reel' | 'square' => {
     const id = curFmt.id || '';
-    if (id.includes('story')) return 'story';
+    if (id.includes('story') || id.includes('stato')) return 'story';
     if (id.includes('reel') || id.includes('tt-video')) return 'reel';
     if (id.includes('quadrato')) return 'square';
     return isVideo ? 'reel' : 'feed';
