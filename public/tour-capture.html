@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>GetNearMe — Cattura Tour 360</title>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;background:#000;color:#fff;font-family:system-ui,-apple-system,sans-serif;overflow:hidden}
+  #cam{position:fixed;inset:0;width:100%;height:100%;object-fit:cover}
+  .overlay{position:fixed;inset:0;display:flex;flex-direction:column;justify-content:space-between;pointer-events:none}
+  .top{padding:max(14px,env(safe-area-inset-top)) 16px 14px;text-align:center;background:linear-gradient(#000a,#0000)}
+  .hint{font-size:22px;font-weight:800;text-shadow:0 1px 6px #000}
+  .count{font-size:13px;opacity:.85;margin-top:4px}
+  .bottom{padding:14px 16px max(20px,env(safe-area-inset-bottom));display:flex;flex-direction:column;align-items:center;gap:12px;background:linear-gradient(#0000,#000b)}
+  .radar{width:150px;height:150px;position:relative}
+  .btns{display:flex;gap:12px;pointer-events:auto}
+  button{pointer-events:auto;border:none;border-radius:12px;font-size:15px;font-weight:700;padding:12px 18px;cursor:pointer}
+  .primary{background:#3B83F6;color:#fff}
+  .ghost{background:#ffffff22;color:#fff;backdrop-filter:blur(6px)}
+  #start{position:fixed;inset:0;background:#0c1322;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:28px;text-align:center;pointer-events:auto;z-index:10}
+  #start h1{font-size:24px} #start p{opacity:.8;font-size:15px;line-height:1.5;max-width:340px}
+  .flash{position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none;transition:opacity .08s}
+  .reticle{position:fixed;top:50%;left:50%;width:74px;height:74px;margin:-37px 0 0 -37px;border:3px solid #fff8;border-radius:50%;pointer-events:none;transition:border-color .15s}
+  .reticle.on{border-color:#22c55e;box-shadow:0 0 0 6px #22c55e44}
+</style>
+</head>
+<body>
+<video id="cam" playsinline autoplay muted></video>
+<canvas id="cv" style="display:none"></canvas>
+<div class="reticle" id="ret"></div>
+<div class="flash" id="flash"></div>
+
+<div class="overlay">
+  <div class="top">
+    <div class="hint" id="hint">Pronto</div>
+    <div class="count" id="count">0 / 36 scatti</div>
+  </div>
+  <div class="bottom">
+    <canvas class="radar" id="radar" width="300" height="300"></canvas>
+    <div class="btns">
+      <button class="ghost" id="manual">Scatta a mano</button>
+      <button class="primary" id="dl">Scarica (0)</button>
+    </div>
+  </div>
+</div>
+
+<div id="start">
+  <h1>📸 Cattura Tour 360</h1>
+  <p>Mettiti <b>al centro della stanza</b>, telefono in <b>verticale</b>. Ruota su te stesso seguendo il mirino: quando diventa <b style="color:#22c55e">verde</b> scatta da solo. Fai 3 giri: <b>dritto</b>, poi <b>in alto</b>, poi <b>in basso</b>.</p>
+  <button class="primary" id="go">Avvia cattura</button>
+  <p style="font-size:12px;opacity:.6">Servono i permessi Camera e Movimento. Non camminare: ruota solo il telefono.</p>
+</div>
+
+<script>
+// ── Config: 12 yaw × 3 file (alto/dritto/basso) = 36 target ──
+const YAW_STEPS = 12, YAW_TOL = 13, PITCH_TOL = 14;
+const ROWS = [{name:'mid', pitch:0, label:'dritto'}, {name:'up', pitch:-30, label:'in alto'}, {name:'down', pitch:30, label:'in basso'}];
+const targets = [];
+ROWS.forEach((r,ri)=>{ for(let k=0;k<YAW_STEPS;k++) targets.push({yaw:k*(360/YAW_STEPS), pitch:r.pitch, row:r.name, ri, k, done:false}); });
+const shots = []; // {name, blob}
+
+let yaw0=null, curYaw=0, curPitch=0, oriented=false;
+const $=id=>document.getElementById(id);
+
+function angDiff(a,b){ let d=((a-b+540)%360)-180; return d; }
+
+function onOrient(e){
+  // pitch: telefono verticale che punta all'orizzonte → beta ~90. up<90, down>90.
+  let beta=e.beta||0, alpha=e.alpha||0;
+  if(e.webkitCompassHeading!=null) alpha=e.webkitCompassHeading; // iOS assoluto
+  curPitch = beta - 90; // ~0 all'orizzonte
+  if(yaw0===null) yaw0 = alpha;
+  curYaw = ((alpha - yaw0)%360+360)%360;
+  oriented=true;
+}
+
+function nearestTarget(){
+  let best=null, bd=1e9;
+  for(const t of targets){ if(t.done) continue;
+    const dy=Math.abs(angDiff(curYaw,t.yaw)), dp=Math.abs(curPitch-t.pitch);
+    const score=dy+dp*1.2;
+    if(score<bd){bd=score;best=t;}
+  }
+  return best;
+}
+
+function updateHint(){
+  const t=nearestTarget();
+  if(!t){ $('hint').textContent='✅ Fatto! Scarica le foto'; $('ret').classList.remove('on'); return; }
+  const dy=angDiff(t.yaw,curYaw), dp=t.pitch-curPitch;
+  const aligned = Math.abs(dy)<YAW_TOL && Math.abs(dp)<PITCH_TOL;
+  $('ret').classList.toggle('on', aligned);
+  if(aligned){ $('hint').textContent='● Fermo, scatto…'; capture(t); return; }
+  // hint direzione
+  let h='';
+  if(Math.abs(dp)>PITCH_TOL) h = dp<0 ? 'Alza il telefono ↑' : 'Abbassa il telefono ↓';
+  else h = dy>0 ? 'Ruota a destra →' : '← Ruota a sinistra';
+  $('hint').textContent = h + '  ('+ ROWS[t.ri].label +')';
+}
+
+let lastShot=0;
+function capture(t){
+  const now=Date.now(); if(now-lastShot<700) return; lastShot=now;
+  const v=$('cam'), c=$('cv'); if(!v.videoWidth) return;
+  c.width=v.videoWidth; c.height=v.videoHeight;
+  c.getContext('2d').drawImage(v,0,0,c.width,c.height);
+  c.toBlob(b=>{
+    const name = `r${t.ri}_${String(t.k).padStart(2,'0')}.jpg`;
+    shots.push({name, blob:b}); t.done=true;
+    $('count').textContent = shots.length+' / '+targets.length+' scatti';
+    $('dl').textContent = 'Scarica ('+shots.length+')';
+    $('flash').style.opacity=.9; setTimeout(()=>$('flash').style.opacity=0,90);
+    try{ navigator.vibrate&&navigator.vibrate(40);}catch(e){}
+    drawRadar();
+  },'image/jpeg',0.92);
+}
+
+function manualShot(){
+  const t = nearestTarget(); if(t) capture(t);
+}
+
+function drawRadar(){
+  const c=$('radar'), x=c.getContext('2d'), W=300, cx=150, cy=150;
+  x.clearRect(0,0,W,W);
+  const rings=[110,72,34]; // mid,up,down raggi
+  ROWS.forEach((r,ri)=>{
+    for(let k=0;k<YAW_STEPS;k++){
+      const a=(k*(360/YAW_STEPS)-90)*Math.PI/180, R=rings[ri];
+      const px=cx+Math.cos(a)*R, py=cy+Math.sin(a)*R;
+      const done=targets.find(t=>t.ri===ri&&t.k===k).done;
+      x.beginPath(); x.arc(px,py,7,0,7); x.fillStyle=done?'#22c55e':'#ffffff44'; x.fill();
+    }
+  });
+  // marker posizione attuale
+  if(oriented){
+    const a=(curYaw-90)*Math.PI/180;
+    const ri = curPitch<-PITCH_TOL?1 : curPitch>PITCH_TOL?2 : 0;
+    const R=rings[ri], px=cx+Math.cos(a)*R, py=cy+Math.sin(a)*R;
+    x.beginPath(); x.arc(px,py,11,0,7); x.strokeStyle='#3B83F6'; x.lineWidth=3; x.stroke();
+  }
+}
+
+async function start(){
+  $('start').style.display='none';
+  // permessi orientamento (iOS)
+  try{ if(typeof DeviceOrientationEvent!=='undefined' && DeviceOrientationEvent.requestPermission){ await DeviceOrientationEvent.requestPermission(); } }catch(e){}
+  window.addEventListener('deviceorientation', onOrient, true);
+  // camera
+  try{
+    const s=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment', width:{ideal:1920}, height:{ideal:1440}}, audio:false});
+    $('cam').srcObject=s;
+  }catch(e){ $('hint').textContent='Camera negata. Concedi il permesso e ricarica.'; return; }
+  setInterval(()=>{ updateHint(); drawRadar(); }, 120);
+}
+
+async function download(){
+  if(!shots.length){ alert('Nessuno scatto ancora.'); return; }
+  const zip=new JSZip();
+  shots.forEach(s=>zip.file(s.name, s.blob));
+  const blob=await zip.generateAsync({type:'blob'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='tour360_'+Date.now()+'.zip';
+  document.body.appendChild(a); a.click(); a.remove();
+}
+
+$('go').onclick=start;
+$('manual').onclick=manualShot;
+$('dl').onclick=download;
+</script>
+</body>
+</html>
