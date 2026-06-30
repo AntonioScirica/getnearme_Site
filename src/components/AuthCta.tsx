@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowRight } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 // A trial/signup CTA that becomes a "Go to dashboard" button when the visitor is
@@ -32,7 +31,7 @@ export default function AuthCta({
   if (logged) {
     return (
       <a href={`/${locale}/dashboard`} className={className} style={style}>
-        {dashLabel || "Vai alla dashboard"} <ArrowRight size={18} strokeWidth={2.5} />
+        {dashLabel || "Vai alla dashboard"}
       </a>
     );
   }
