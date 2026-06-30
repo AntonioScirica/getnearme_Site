@@ -27,9 +27,10 @@ interface PricingPlan {
 interface PricingCardProps {
   plan: PricingPlan;
   href: string;
+  current?: boolean;
 }
 
-export default function PricingCard({ plan, href }: PricingCardProps) {
+export default function PricingCard({ plan, href, current = false }: PricingCardProps) {
   const [hovered, setHovered] = useState(false);
 
   const hasDiscount = plan.price > 0 && !!plan.oldPrice && plan.oldPrice > plan.price;
@@ -43,8 +44,8 @@ export default function PricingCard({ plan, href }: PricingCardProps) {
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
         style={{
-          background: plan.popular ? plan.bg : '#fff',
-          border: plan.popular ? `1.5px solid ${plan.color}` : '1px solid rgba(26,26,46,0.10)',
+          background: current ? plan.bg : plan.popular ? plan.bg : '#fff',
+          border: current ? `2px solid ${plan.color}` : plan.popular ? `1.5px solid ${plan.color}` : '1px solid rgba(26,26,46,0.10)',
           borderRadius: 20,
           padding: '40px 28px 32px',
           position: 'relative',
@@ -63,7 +64,7 @@ export default function PricingCard({ plan, href }: PricingCardProps) {
           transition: 'all .3s cubic-bezier(0.4, 0, 0.2, 1)',
         }}
       >
-        {plan.badge && (
+        {(current || plan.badge) && (
           <div
             style={{
               position: 'absolute',
@@ -83,7 +84,7 @@ export default function PricingCard({ plan, href }: PricingCardProps) {
               boxShadow: '0 2px 10px rgba(16,24,40,0.06)',
             }}
           >
-            {plan.badge}
+            {current ? 'Piano attuale' : plan.badge}
           </div>
         )}
         <div style={{ textAlign: 'center' }}>
@@ -178,7 +179,7 @@ export default function PricingCard({ plan, href }: PricingCardProps) {
             boxSizing: 'border-box',
           }}
         >
-          {plan.cta}
+          {current ? 'Vai alla dashboard' : plan.cta}
         </a>
         <style>{`
           @media (max-width: 768px) {

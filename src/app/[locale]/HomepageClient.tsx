@@ -10,6 +10,7 @@ import PricingCard from '@/components/neo/PricingCard';
 import ProgressBar from '@/components/neo/ProgressBar';
 import RevealSection from '@/components/neo/RevealSection';
 import FeatureShowcase from '@/components/neo/FeatureShowcase';
+import { supabase } from '@/lib/supabase';
 
 interface HomepageClientProps {
   variant: string;
@@ -210,6 +211,25 @@ function PricingSection({
     }
   }, []);
 
+  // Piano attuale dell'utente loggato: marca quella card come "attuale" e manda
+  // alla dashboard invece che al checkout. subscription_type == plan.id (stessi
+  // valori: individual_monthly | individual_annual | agency_monthly | agency_annual).
+  const [currentPlan, setCurrentPlan] = useState<string | null>(null);
+  useEffect(() => {
+    let active = true;
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!active || !session?.user) return;
+      const { data } = await supabase
+        .from('user_credits')
+        .select('subscription_type')
+        .eq('user_id', session.user.id)
+        .single();
+      // Free senza riga/NULL ⇒ 'free' (come fa metrics: subscription_type || 'free').
+      if (active) setCurrentPlan(data?.subscription_type || 'free');
+    });
+    return () => { active = false; };
+  }, []);
+
   return (
     <>
       <section
@@ -314,11 +334,13 @@ function PricingSection({
               return plans.map((plan) => {
                 const padded = [...plan.features];
                 while (padded.length < maxFeatures) padded.push('');
+                const isCurrent = !!currentPlan && plan.id === currentPlan;
                 return (
                   <PricingCard
                     key={plan.id}
                     plan={{ ...plan, features: padded, savingsLabel: data.savingsLabel, freeLabel }}
-                    href={plan.price === 0 ? `/${locale}/checkout/agency` : `/${locale}/checkout/agency?plan=${plan.id}`}
+                    href={isCurrent ? `/${locale}/dashboard` : plan.price === 0 ? `/${locale}/checkout/agency` : `/${locale}/checkout/agency?plan=${plan.id}`}
+                    current={isCurrent}
                   />
                 );
               });
