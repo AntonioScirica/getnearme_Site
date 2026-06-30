@@ -11,6 +11,7 @@ import ProgressBar from '@/components/neo/ProgressBar';
 import RevealSection from '@/components/neo/RevealSection';
 import FeatureShowcase from '@/components/neo/FeatureShowcase';
 import { supabase } from '@/lib/supabase';
+import LazyVideo from '@/components/LazyVideo';
 
 interface HomepageClientProps {
   variant: string;
@@ -69,16 +70,11 @@ function FeatureCardClient({
                   style={{ objectFit: 'cover', display: 'block' }}
                 />
               ) : (
-                <video
-                  autoPlay
-                  loop
-                  muted
-                  playsInline
+                <LazyVideo
+                  src={videoSrc}
                   className="w-full h-full"
                   style={{ objectFit: 'cover', display: 'block' }}
-                >
-                  <source src={videoSrc} type="video/mp4" />
-                </video>
+                />
               )}
             </div>
           </div>

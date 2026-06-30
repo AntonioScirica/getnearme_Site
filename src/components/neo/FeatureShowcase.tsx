@@ -8,6 +8,7 @@ import RevealSection from './RevealSection';
 import BeforeAfterSlider, { STAGING_STYLES } from '@/components/BeforeAfterSlider';
 import VideoShowcase, { VIDEO_STYLES } from '@/components/VideoShowcase';
 import SocialShowcase from '@/components/SocialShowcase';
+import LazyVideo from '@/components/LazyVideo';
 
 interface FeatureShowcaseProps {
   feature: { num: string; title: string; desc: string; icon: string; color: string };
@@ -154,16 +155,11 @@ export default function FeatureShowcase({ feature: f, videoSrc, index, reverse }
                       style={{ objectFit: 'cover', display: 'block' }}
                     />
                   ) : (
-                    <video
-                      autoPlay
-                      loop
-                      muted
-                      playsInline
+                    <LazyVideo
+                      src={videoSrc}
                       className="w-full h-full"
                       style={{ objectFit: 'cover', display: 'block' }}
-                    >
-                      <source src={videoSrc} type="video/mp4" />
-                    </video>
+                    />
                   )}
                 </div>
               ) : null}

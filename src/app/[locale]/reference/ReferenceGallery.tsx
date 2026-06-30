@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { Icon } from '@/lib/icons';
 import { X, Play } from 'lucide-react';
+import LazyVideo from '@/components/LazyVideo';
 
 interface MediaItem {
   type: 'image' | 'video';
@@ -191,9 +192,7 @@ export default function ReferenceGallery({ variant, media = [], posts = [], reel
                     }}
                   >
                     <div style={{ position: 'relative', background: '#000' }}>
-                      <video muted playsInline loop autoPlay style={{ width: '100%', display: 'block' }}>
-                        <source src={pair.reel.src} type="video/mp4" />
-                      </video>
+                      <LazyVideo src={pair.reel.src} style={{ width: '100%', display: 'block' }} />
                       <div
                         style={{
                           position: 'absolute',
@@ -260,15 +259,7 @@ export default function ReferenceGallery({ variant, media = [], posts = [], reel
               <div style={{ position: 'relative', background: '#000' }}>
                 {item.type === 'video' ? (
                   <>
-                    <video
-                      muted
-                      playsInline
-                      loop
-                      autoPlay
-                      style={{ width: '100%', display: 'block' }}
-                    >
-                      <source src={item.src} type="video/mp4" />
-                    </video>
+                    <LazyVideo src={item.src} style={{ width: '100%', display: 'block' }} />
                     <div
                       style={{
                         position: 'absolute',
