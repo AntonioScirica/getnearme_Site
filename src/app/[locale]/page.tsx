@@ -233,7 +233,7 @@ export default async function Home({ params }: Props) {
                 muted
                 loop
                 playsInline
-                poster="/staging/1.jpg"
+                poster="/staging/1.webp"
                 aria-label="GetNearMe — home staging AI: prima e dopo"
                 style={{
                   width: "100%",
@@ -552,7 +552,7 @@ export default async function Home({ params }: Props) {
               </div> */}
             </div>
             <div
-              className="grid grid-cols-1 md:grid-cols-3 gap-5"
+              className="reviews-slider grid grid-cols-1 md:grid-cols-3 gap-5"
             >
               {l.testimonials.items.map(
                 (
@@ -574,6 +574,25 @@ export default async function Home({ params }: Props) {
                 )
               )}
             </div>
+            <style>{`
+              @media (max-width: 767px) {
+                .reviews-slider {
+                  display: flex !important;
+                  overflow-x: auto;
+                  scroll-snap-type: x mandatory;
+                  -webkit-overflow-scrolling: touch;
+                  gap: 16px;
+                  padding: 0 20px 8px;
+                  margin: 0 -20px;
+                  scrollbar-width: none;
+                }
+                .reviews-slider::-webkit-scrollbar { display: none; }
+                .reviews-slider > * {
+                  flex: 0 0 85%;
+                  scroll-snap-align: center;
+                }
+              }
+            `}</style>
           </div>
         </section>
 

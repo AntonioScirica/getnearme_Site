@@ -12,8 +12,8 @@ interface Style {
 const STYLES: Style[] = [
   {
     label: 'Moderno',
-    before: '/staging/1.jpg',
-    after: '/staging/2.jpg',
+    before: '/staging/1.webp',
+    after: '/staging/2.webp',
   },
   {
     label: 'Vuoto',
