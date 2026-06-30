@@ -32,11 +32,28 @@ import {
 } from '@/lib/reportHtml';
 import { supabase } from '@/lib/supabase';
 import { trackExport } from '@/lib/staging';
+import { geocodeAddress, fetchZona, type ZonaResult } from '@/lib/poi';
+
+// Analisi di zona nel report: geocodifico + Overpass per immobile. Limitato (le
+// API OSM sono lente/rate-limited e la tabella comparativa mostra max 6 colonne).
+const POI_MAX = 6;
+const POI_RADIUS = 1000;
 
 type SectionId = 'cover' | 'table' | 'prosCons' | 'costs' | 'poi' | 'legal' | 'thanks';
 
-// Sezioni sempre incluse (non rimovibili). POI off finché non abbiamo le coordinate.
-const SECTIONS_ON: Record<SectionId, boolean> = { cover: true, table: true, prosCons: true, costs: true, poi: false, legal: true, thanks: true };
+// Default sezioni (tutte incluse; POI esce solo quando l'analisi di zona è pronta).
+const SECTIONS_ON: Record<SectionId, boolean> = { cover: true, table: true, prosCons: true, costs: true, poi: true, legal: true, thanks: true };
+
+// Sezioni togglabili dalla sidebar.
+const SECTION_TOGGLES: { id: SectionId; label: string; icon: string }[] = [
+  { id: 'cover', label: 'Copertina', icon: 'image' },
+  { id: 'table', label: 'Tabella comparativa', icon: 'table' },
+  { id: 'prosCons', label: 'Pro e contro', icon: 'scale' },
+  { id: 'costs', label: 'Costi', icon: 'euro' },
+  { id: 'poi', label: 'Analisi di zona', icon: 'map-pin' },
+  { id: 'legal', label: 'Note legali', icon: 'lock' },
+  { id: 'thanks', label: 'Ringraziamenti', icon: 'gift' },
+];
 
 const MAX_VISIBLE_COLS = 14;
 
@@ -239,6 +256,49 @@ export default function ReportScreen({
   );
   const hasProperties = mappedProperties.length > 0;
 
+  // ── Analisi di zona automatica (per il report comparativo) ──────────────────
+  // Geocodifico l'indirizzo di ogni immobile (max POI_MAX) e prendo i POI vicini
+  // via Overpass; il risultato (poiDataMap, indicizzato come `properties`) abilita
+  // la sezione comparativa POI del report. Cache per indirizzo + rate-limit OSM.
+  const [poiDataMap, setPoiDataMap] = useState<Record<number, ZonaResult | null>>({});
+  const poiCacheRef = useRef<Map<string, ZonaResult | null>>(new Map());
+  const [poiLoading, setPoiLoading] = useState(false);
+  const poiLoadingRef = useRef(false); // mirror per attendere nella stampa
+  useEffect(() => {
+    const props = mappedProperties.slice(0, POI_MAX);
+    if (!props.length) { setPoiDataMap({}); return; }
+    let cancelled = false;
+    setPoiLoading(true); poiLoadingRef.current = true;
+    (async () => {
+      const map: Record<number, ZonaResult | null> = {};
+      for (let i = 0; i < props.length; i++) {
+        if (cancelled) return;
+        const addr = (props[i].address || '').trim();
+        if (!addr) { map[i] = null; continue; }
+        if (poiCacheRef.current.has(addr)) { map[i] = poiCacheRef.current.get(addr) ?? null; continue; }
+        try {
+          const hit = await geocodeAddress(addr);
+          const zona = hit ? await fetchZona(hit.lat, hit.lng, POI_RADIUS) : null;
+          poiCacheRef.current.set(addr, zona);
+          map[i] = zona;
+        } catch { map[i] = null; }
+        if (cancelled) return;
+        setPoiDataMap({ ...map }); // aggiornamento progressivo (preview si popola)
+        await new Promise((r) => setTimeout(r, 600)); // rate-limit Nominatim/Overpass
+      }
+      if (!cancelled) { setPoiDataMap({ ...map }); setPoiLoading(false); poiLoadingRef.current = false; }
+    })();
+    return () => { cancelled = true; setPoiLoading(false); poiLoadingRef.current = false; };
+  }, [mappedProperties]);
+
+  const [sectionOn, setSectionOn] = useState<Record<SectionId, boolean>>(SECTIONS_ON);
+  const toggleSection = (id: SectionId) => setSectionOn((p) => ({ ...p, [id]: !p[id] }));
+
+  const poiReady = useMemo(
+    () => Object.values(poiDataMap).some((d) => d && Object.values(d).some((arr) => Array.isArray(arr) && arr.length > 0)),
+    [poiDataMap]
+  );
+
   // Chiave per-account: le preferenze colonne NON devono sbordare tra account
   // sullo stesso browser. La chiave generica resta solo come fallback pre-login.
   const colsKeyRef = useRef('gnm-report-cols');
@@ -395,9 +455,10 @@ export default function ReportScreen({
         reportFinalTitle: brand.reportFinalTitle || undefined,
         reportFinalDesc: brand.reportFinalDesc || undefined,
       },
-      options: { sections: SECTIONS_ON, columns: colOn, edits: editsRef.current, prosConsEdits: pcEdits, editable: editing },
+      options: { sections: { ...sectionOn, poi: sectionOn.poi && poiReady }, columns: colOn, edits: editsRef.current, prosConsEdits: pcEdits, editable: editing },
+      poiDataMap,
     });
-  }, [mappedProperties, hasProperties, brand, colOn, pcEdits, editing, selectedLogo, availableLogos]);
+  }, [mappedProperties, hasProperties, brand, colOn, pcEdits, editing, selectedLogo, availableLogos, poiDataMap, poiReady, sectionOn]);
 
   useEffect(() => {
     const iframe = iframeRef.current;
@@ -443,8 +504,13 @@ export default function ReportScreen({
     }
   }, [buildHtml, hasProperties, isMobile]);
 
-  const handlePrint = () => {
+  const handlePrint = async () => {
     if (!hasProperties) { toast('Crea o seleziona un immobile', 'x'); return; }
+    // Attendi l'analisi di zona se ancora in corso, così il PDF la include.
+    if (poiLoadingRef.current) {
+      toast('Completo l\'analisi di zona…');
+      for (let i = 0; i < 40 && poiLoadingRef.current; i++) await new Promise((r) => setTimeout(r, 300));
+    }
     iframeRef.current?.contentWindow?.print();
     void trackExport({ export_type: 'pdf_report' });
   };
@@ -484,6 +550,29 @@ export default function ReportScreen({
                 <div style={{ minWidth: 0, flex: 1 }}>
                   <div style={{ fontSize: 13, fontWeight: 600, color: on ? accent : '#211f1c', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.nome}</div>
                   {p.addr && <div style={{ fontSize: 11.5, color: '#b3aca1', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.addr}</div>}
+                </div>
+              </Box>
+            );
+          })}
+        </div>
+
+        <div style={labelStyle}>Sezioni del report</div>
+        <div style={{ background: '#fff', border: '1px solid #e4e1da', borderRadius: 12, overflow: 'hidden', marginBottom: 24 }}>
+          {SECTION_TOGGLES.map((sct, i) => {
+            const on = !!sectionOn[sct.id];
+            const isPoi = sct.id === 'poi';
+            const poiPending = isPoi && on && poiLoading;
+            const poiNoData = isPoi && on && !poiLoading && !poiReady;
+            return (
+              <Box key={sct.id} onClick={() => toggleSection(sct.id)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', cursor: 'pointer', background: '#fff', borderBottom: i === SECTION_TOGGLES.length - 1 ? 'none' : '1px solid #f0ede7' }} hover={{ background: '#faf9f7' }}>
+                <Icon name={sct.icon} size={15} color={on ? '#211f1c' : '#b3aca1'} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: on ? '#211f1c' : '#8c867d' }}>{sct.label}</div>
+                  {poiPending && <div style={{ fontSize: 11, color: accent }}>Analisi in corso…</div>}
+                  {poiNoData && <div style={{ fontSize: 11, color: '#b3aca1' }}>Nessun dato di zona</div>}
+                </div>
+                <div style={{ width: 36, height: 20, borderRadius: 99, background: on ? accent : '#d8d4cb', position: 'relative', flexShrink: 0, transition: 'background .2s' }}>
+                  <div style={{ position: 'absolute', top: 2, left: on ? 18 : 2, width: 16, height: 16, borderRadius: 99, background: '#fff', transition: 'left .2s', boxShadow: '0 1px 3px rgba(0,0,0,.2)' }} />
                 </div>
               </Box>
             );
@@ -569,7 +658,7 @@ export default function ReportScreen({
               )}
               <div className="max-md:!flex-none" style={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
                 <Box as="button" onClick={handlePrint} className="max-md:!px-3" style={s('border:none;background:#3B83F6;color:#fff;font-size:13.5px;font-weight:700;padding:10px 18px;border-radius:10px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;box-shadow:0 4px 12px rgba(59,131,246,.25)')} hover={s('background:#2563EB')}>
-                  <Icon name="download" size={16} color="#fff" /><span className="max-md:!hidden">Scarica PDF</span>
+                  <Icon name="download" size={16} color="#fff" /><span className="max-md:!hidden">{poiLoading ? 'Analisi zona…' : 'Scarica PDF'}</span>
                 </Box>
               </div>
             </>

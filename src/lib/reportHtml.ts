@@ -1965,14 +1965,13 @@ export function buildReportHtml(args: {
     }
 
     .poi-page {
-      width: 297mm;
-      height: 210mm;
+      width: 100%;
+      min-height: 100vh;
       padding: 32px 40px;
       background: #fff;
       page-break-after: always;
       position: relative;
       box-sizing: border-box;
-      overflow: hidden;
     }
 
     .poi-header {
