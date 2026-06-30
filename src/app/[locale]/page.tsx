@@ -3,6 +3,7 @@ import { Flame, Zap, Lock, TrendingUp, Video, Megaphone, FileText, ArrowRight, L
 import { locales, type Locale } from "@/lib/i18n";
 import { translations } from "@/lib/translations";
 import Navbar from "@/components/Navbar";
+import AuthCta from "@/components/AuthCta";
 import HomepageClient from "./HomepageClient";
 import ReferenceGallery from "./reference/ReferenceGallery";
 
@@ -172,7 +173,8 @@ export default async function Home({ params }: Props) {
               </p>
 
               <div className="flex flex-col md:flex-row gap-3 md:gap-4 justify-center items-center w-full max-w-xs md:max-w-md mx-auto">
-                <a
+                <AuthCta
+                  locale={locale}
                   href="#pricing"
                   className="neo-shadow neo-cta-blue flex-1 text-center w-full"
                   style={{
@@ -187,7 +189,7 @@ export default async function Home({ params }: Props) {
                   }}
                 >
                   {l.hero.ctaPrimary}
-                </a>
+                </AuthCta>
                 <a
                   data-cal-link="getnearme/30min"
                   data-cal-config='{"layout":"month_view"}'
@@ -421,9 +423,9 @@ export default async function Home({ params }: Props) {
               {"Stime indicative sul tempo tipico di preparazione manuale."}
             </p>
             <div style={{ display: "flex", justifyContent: "center", marginTop: 24 }}>
-              <a href="#pricing" className="neo-shadow neo-cta-blue" style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 17, fontWeight: 700, padding: "16px 32px", borderRadius: 12, textDecoration: "none" }}>
+              <AuthCta locale={locale} href="#pricing" className="neo-shadow neo-cta-blue" style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 17, fontWeight: 700, padding: "16px 32px", borderRadius: 12, textDecoration: "none" }}>
                 Prova gratis <ArrowRight size={20} strokeWidth={2.5} />
-              </a>
+              </AuthCta>
             </div>
           </div>
           <style>{`
@@ -464,9 +466,9 @@ export default async function Home({ params }: Props) {
               <a href={`/${locale}/reference`} className="neo-border neo-shadow neo-cta-outline examples-cta-btn" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, background: "#fff", color: "#1a1a2e", fontSize: 17, fontWeight: 700, padding: "16px 32px", borderRadius: 12, textDecoration: "none", border: "1px solid rgba(26,26,46,0.20)" }}>
                 Guarda tutti gli esempi
               </a>
-              <a href="#pricing" className="neo-shadow neo-cta-blue examples-cta-btn" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, fontSize: 17, fontWeight: 700, padding: "16px 32px", borderRadius: 12, textDecoration: "none" }}>
+              <AuthCta locale={locale} href="#pricing" className="neo-shadow neo-cta-blue examples-cta-btn" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, fontSize: 17, fontWeight: 700, padding: "16px 32px", borderRadius: 12, textDecoration: "none" }}>
                 Prova gratis <ArrowRight size={18} strokeWidth={2.5} />
-              </a>
+              </AuthCta>
             </div>
           </div>
           <style>{`
@@ -698,7 +700,8 @@ export default async function Home({ params }: Props) {
               {l.finalCta.desc}
             </p>
             <div className="final-cta-buttons" style={{ display: "flex", gap: 14, flexWrap: "wrap", justifyContent: "center" }}>
-              <a
+              <AuthCta
+                locale={locale}
                 href="#pricing"
                 className="neo-shadow-light neo-cta-blue final-cta-btn"
                 style={{
@@ -715,7 +718,7 @@ export default async function Home({ params }: Props) {
                 }}
               >
                 {l.finalCta.button}
-              </a>
+              </AuthCta>
               <a
                 data-cal-link="getnearme/30min"
                 data-cal-config='{"layout":"month_view"}'

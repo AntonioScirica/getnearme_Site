@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { locales, type Locale } from "@/lib/i18n";
 import { translations } from "@/lib/translations";
 import Navbar from "@/components/Navbar";
+import AuthCta from "@/components/AuthCta";
 import ReferenceGallery from "./ReferenceGallery";
 
 type Props = {
@@ -196,7 +197,8 @@ export default async function ReferencePage({ params }: Props) {
               Crei il tuo account in pochi secondi e inizi subito. Gratis, senza carta.
             </p>
             <div className="ref-cta-buttons" style={{ display: "flex", gap: 14, flexWrap: "wrap", justifyContent: "center" }}>
-              <a
+              <AuthCta
+                locale={locale}
                 href={`/${locale}#pricing`}
                 className="neo-shadow-light neo-cta-blue ref-cta-btn"
                 style={{
@@ -212,7 +214,7 @@ export default async function ReferencePage({ params }: Props) {
                 }}
               >
                 Prova gratis
-              </a>
+              </AuthCta>
               <a
                 data-cal-link="getnearme/30min"
                 data-cal-config='{"layout":"month_view"}'
