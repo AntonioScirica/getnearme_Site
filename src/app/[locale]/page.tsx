@@ -37,9 +37,11 @@ export default async function Home({ params }: Props) {
     >
       {/* Sticky Header: Banner + Navbar */}
       <div className="sticky top-0 z-50">
-        {/* Top Bar */}
-        <div
+        {/* Top Bar — cliccabile → prezzi */}
+        <a
+          href={`/${locale}#pricing`}
           style={{
+            display: "block",
             background: "#1a1a2e",
             color: "#fff",
             padding: "11px 16px",
@@ -47,6 +49,8 @@ export default async function Home({ params }: Props) {
             fontSize: 13,
             fontWeight: 600,
             borderBottom: "1px solid #3B83F6",
+            textDecoration: "none",
+            cursor: "pointer",
           }}
         >
           <span style={{ display: "inline-flex", alignItems: "center", gap: 6, flexWrap: "wrap", justifyContent: "center" }}>
@@ -57,10 +61,7 @@ export default async function Home({ params }: Props) {
             <span className="hidden sm:inline">{l.topBar.expiresIn}</span>
             <HomepageClient variant="countdown-inline" />
           </span>
-          {/* <span style={{ marginLeft: 8, color: "#34d399" }}>
-            — {l.topBar.freeTrialShort}
-          </span> */}
-        </div>
+        </a>
 
         {/* Navbar */}
         <Navbar locale={locale as Locale} />
