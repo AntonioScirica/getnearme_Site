@@ -54,14 +54,12 @@ export default function Navbar({ locale }: NavbarProps) {
     }, [isMenuOpen]);
 
     useEffect(() => {
-        // Validate token server-side (catches deleted accounts)
-        supabase.auth.getUser().then(({ data: { user }, error }) => {
-            if (error || !user) {
-                setIsLoggedIn(false);
-                supabase.auth.signOut();
-            } else {
-                setIsLoggedIn(true);
-            }
+        // Read the persisted session (auto-refreshes an expired access token using
+        // the refresh token). NB: do NOT use getUser()+signOut() here — on return
+        // visits the access token is often expired before the refresh completes, so
+        // getUser() errors and the old code signed the user out, hiding Dashboard.
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            setIsLoggedIn(!!session?.user);
         });
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
