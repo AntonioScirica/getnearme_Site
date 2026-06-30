@@ -6,8 +6,9 @@ import { fetchBrand } from '@/lib/brand';
 
 type Pos = 'tl' | 'tr' | 'bl' | 'br' | 'center';
 const SIZES: Record<string, number> = { S: 0.12, M: 0.18, L: 0.26 };
+// Free / nessun logo agenzia → loghi GetNearMe di default tra cui scegliere.
+const GNM_DEFAULTS = ['/assets/svg/logo_scritta_black_circle.svg', '/assets/svg/logo_scritta_white_circle.svg', '/dashboard/logo.svg'];
 
-// Carica un'immagine via blob (object URL) → canvas non "tainted", toBlob ok.
 async function loadViaBlob(url: string): Promise<HTMLImageElement> {
   const resp = await fetch(url);
   const blob = await resp.blob();
@@ -34,154 +35,201 @@ function place(pos: Pos, w: number, h: number, lw: number, lh: number, pad: numb
   }
 }
 
-async function compose(img: HTMLImageElement, logo: HTMLImageElement | null, pos: Pos, sizePct: number): Promise<Blob> {
+function drawLogo(ctx: CanvasRenderingContext2D, w: number, h: number, logo: HTMLImageElement, pos: Pos, sizePct: number) {
+  const lw = w * sizePct;
+  const lh = lw * (logo.naturalHeight / logo.naturalWidth || 1);
+  const pad = w * 0.03;
+  const [x, y] = place(pos, w, h, lw, lh, pad);
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(logo, x, y, lw, lh);
+}
+
+// Compone immagine + logo → blob JPEG a piena risoluzione.
+async function composeBlob(imgUrl: string, logo: HTMLImageElement | null, pos: Pos, sizePct: number): Promise<Blob> {
+  const im = await loadViaBlob(imgUrl);
   const c = document.createElement('canvas');
-  c.width = img.naturalWidth; c.height = img.naturalHeight;
+  c.width = im.naturalWidth; c.height = im.naturalHeight;
   const ctx = c.getContext('2d')!;
-  ctx.drawImage(img, 0, 0);
-  if (logo) {
-    const lw = c.width * sizePct;
-    const lh = lw * (logo.naturalHeight / logo.naturalWidth || 1);
-    const pad = c.width * 0.03;
-    const [x, y] = place(pos, c.width, c.height, lw, lh, pad);
-    ctx.save();
-    ctx.shadowColor = 'rgba(0,0,0,0.35)';
-    ctx.shadowBlur = c.width * 0.008;
-    ctx.drawImage(logo, x, y, lw, lh);
-    ctx.restore();
-  }
+  ctx.drawImage(im, 0, 0);
+  if (logo) drawLogo(ctx, c.width, c.height, logo, pos, sizePct);
   return await new Promise<Blob>((res) => c.toBlob((b) => res(b!), 'image/jpeg', 0.92));
 }
 
 export default function WatermarkDownloadModal({
   imageUrl,
+  images,
   filename = 'homestaging-ai.jpg',
+  zipName = 'getnearme-foto',
   onClose,
 }: {
-  imageUrl: string;
+  imageUrl?: string;
+  images?: string[];
   filename?: string;
+  zipName?: string;
   onClose: () => void;
 }) {
+  const list = (images && images.length ? images : (imageUrl ? [imageUrl] : []));
+  const isBatch = list.length > 1;
+  const previewUrl = list[0];
+
+  const [logoOpts, setLogoOpts] = useState<string[]>([]);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [withLogo, setWithLogo] = useState(true);
   const [pos, setPos] = useState<Pos>('br');
   const [size, setSize] = useState<keyof typeof SIZES>('M');
   const [busy, setBusy] = useState(false);
+  const [done, setDone] = useState(false); // conferma breve prima di chiudere
+  const [prog, setProg] = useState(0); // foto fatte (batch)
   const imgRef = useRef<HTMLImageElement | null>(null);
   const logoRef = useRef<HTMLImageElement | null>(null);
   const previewRef = useRef<HTMLCanvasElement | null>(null);
 
-  // Carica brand (logo) + immagine all'apertura.
   useEffect(() => {
     let alive = true;
     (async () => {
+      try { if (previewUrl) imgRef.current = await loadViaBlob(previewUrl); } catch { /* */ }
+      let opts = GNM_DEFAULTS;
       try {
         const { settings } = await fetchBrand();
         const l = settings?.logos;
-        const url = l?.logo_colored_h || l?.logo_black_h || l?.logo_colored_v || l?.logo_black_v || l?.logo_white_h || l?.logo_white_v || null;
-        if (alive) { setLogoUrl(url); if (!url) setWithLogo(false); }
-        if (url) logoRef.current = await loadViaBlob(url).catch(() => null);
-      } catch { if (alive) { setWithLogo(false); } }
-      try { imgRef.current = await loadViaBlob(imageUrl); } catch { /* preview off */ }
+        const custom = [l?.logo_colored_h, l?.logo_black_h, l?.logo_white_h, l?.logo_colored_v, l?.logo_black_v, l?.logo_white_v].filter(Boolean) as string[];
+        if (custom.length) opts = custom;
+      } catch { /* default */ }
+      if (alive) { setLogoOpts(opts); setLogoUrl(opts[0]); }
+    })();
+    return () => { alive = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [previewUrl]);
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      logoRef.current = logoUrl ? await loadViaBlob(logoUrl).catch(() => null) : null;
       if (alive) drawPreview();
     })();
     return () => { alive = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [imageUrl]);
+  }, [logoUrl]);
 
-  // Ridisegna l'anteprima al cambio opzioni.
-  useEffect(() => { drawPreview(); /* eslint-disable-next-line */ }, [withLogo, pos, size, logoUrl]);
+  useEffect(() => { drawPreview(); /* eslint-disable-next-line */ }, [withLogo, pos, size]);
 
   function drawPreview() {
     const cv = previewRef.current, img = imgRef.current;
     if (!cv || !img) return;
-    const maxW = 360;
-    const scale = Math.min(1, maxW / img.naturalWidth);
+    const cap = 900;
+    const scale = Math.min(1, cap / img.naturalWidth);
     cv.width = Math.round(img.naturalWidth * scale);
     cv.height = Math.round(img.naturalHeight * scale);
     const ctx = cv.getContext('2d')!;
-    ctx.clearRect(0, 0, cv.width, cv.height);
     ctx.drawImage(img, 0, 0, cv.width, cv.height);
-    const logo = logoRef.current;
-    if (withLogo && logo) {
-      const lw = cv.width * SIZES[size];
-      const lh = lw * (logo.naturalHeight / logo.naturalWidth || 1);
-      const pad = cv.width * 0.03;
-      const [x, y] = place(pos, cv.width, cv.height, lw, lh, pad);
-      ctx.save(); ctx.shadowColor = 'rgba(0,0,0,0.35)'; ctx.shadowBlur = cv.width * 0.012;
-      ctx.drawImage(logo, x, y, lw, lh); ctx.restore();
-    }
+    if (withLogo && logoRef.current) drawLogo(ctx, cv.width, cv.height, logoRef.current, pos, SIZES[size]);
+  }
+
+  function saveBlob(blob: Blob, name: string) {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
   }
 
   async function download() {
-    if (busy) return;
-    setBusy(true);
+    if (busy || done || !list.length) return;
+    setBusy(true); setProg(0);
+    const logo = withLogo ? logoRef.current : null;
     try {
-      const img = imgRef.current || await loadViaBlob(imageUrl);
-      const blob = await compose(img, withLogo ? logoRef.current : null, pos, SIZES[size]);
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = filename;
-      document.body.appendChild(a); a.click(); a.remove();
-      setTimeout(() => URL.revokeObjectURL(a.href), 5000);
-      onClose();
-    } finally { setBusy(false); }
+      if (isBatch) {
+        const JSZip = (await import('jszip')).default;
+        const zip = new JSZip();
+        let n = 0;
+        for (let i = 0; i < list.length; i++) {
+          try { zip.file(`foto_${i + 1}.jpg`, await composeBlob(list[i], logo, pos, SIZES[size])); n++; } catch { /* skip */ }
+          setProg(i + 1);
+        }
+        if (!n) throw new Error('nessuna foto');
+        saveBlob(await zip.generateAsync({ type: 'blob' }), `${zipName}.zip`);
+      } else {
+        saveBlob(await composeBlob(list[0], logo, pos, SIZES[size]), filename);
+      }
+      // Conferma visibile prima di chiudere (la singola è troppo veloce).
+      setBusy(false); setDone(true);
+      setTimeout(onClose, 1100);
+    } catch { setBusy(false); }
   }
 
-  const posBtns: { id: Pos; label: string }[] = [
-    { id: 'tl', label: '↖' }, { id: 'tr', label: '↗' },
-    { id: 'center', label: '◎' },
-    { id: 'bl', label: '↙' }, { id: 'br', label: '↘' },
-  ];
+  const corner = (p: Pos): React.CSSProperties => {
+    if (p === 'center') return { top: '50%', left: '50%', transform: 'translate(-50%,-50%)' };
+    return {
+      top: p[0] === 't' ? 5 : undefined, bottom: p[0] === 'b' ? 5 : undefined,
+      left: p[1] === 'l' ? 5 : undefined, right: p[1] === 'r' ? 5 : undefined,
+    };
+  };
+  const posList: Pos[] = ['tl', 'tr', 'center', 'bl', 'br'];
+  const spinner = <span style={{ width: 16, height: 16, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.45)', borderTopColor: '#fff', animation: 'export-spin 1s linear infinite', display: 'inline-block' }} />;
 
   return (
-    <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(20,18,16,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+    <div onClick={(busy || done) ? undefined : onClose} style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(20,18,16,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
       <div onClick={(e) => e.stopPropagation()} style={{ background: '#fff', borderRadius: 16, width: '100%', maxWidth: 440, maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 18px', borderBottom: '1px solid #f0ede7' }}>
-          <div style={{ fontSize: 16, fontWeight: 800, color: '#211f1c' }}>Scarica foto</div>
-          <Box as="button" onClick={onClose} aria-label="Chiudi" style={s('border:none;background:transparent;width:32px;height:32px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center')} hover={s('background:#f1efe9')}><Icon name="x" size={18} color="#57534c" /></Box>
+          <div style={{ fontSize: 16, fontWeight: 800, color: '#211f1c' }}>{isBatch ? `Scarica ${list.length} foto` : 'Scarica foto'}</div>
+          <Box as="button" onClick={onClose} disabled={busy} aria-label="Chiudi" style={s('border:none;background:transparent;width:32px;height:32px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center')} hover={s('background:#f1efe9')}><Icon name="x" size={18} color="#57534c" /></Box>
         </div>
 
         <div style={{ padding: 18 }}>
-          <div style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid #e4e1da', background: '#faf9f7', display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
-            <canvas ref={previewRef} style={{ maxWidth: '100%', height: 'auto', display: 'block' }} />
+          <div style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid #e4e1da', marginBottom: 16, lineHeight: 0 }}>
+            <canvas ref={previewRef} style={{ width: '100%', height: 'auto', display: 'block' }} />
           </div>
+          {isBatch && <div style={{ fontSize: 11.5, color: '#8c867d', marginTop: -8, marginBottom: 14 }}>Il logo scelto verrà applicato a tutte le {list.length} foto.</div>}
 
-          {logoUrl ? (
+          <Box onClick={() => setWithLogo((v) => !v)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 10, border: '1px solid #e4e1da', cursor: 'pointer', marginBottom: withLogo ? 14 : 0 }} hover={{ background: '#faf9f7' }}>
+            <Icon name="image" size={16} color={withLogo ? '#211f1c' : '#b3aca1'} />
+            <div style={{ flex: 1, fontSize: 13.5, fontWeight: 600, color: withLogo ? '#211f1c' : '#8c867d' }}>Aggiungi logo</div>
+            <div style={{ width: 36, height: 20, borderRadius: 99, background: withLogo ? '#3B83F6' : '#d8d4cb', position: 'relative', flexShrink: 0 }}>
+              <div style={{ position: 'absolute', top: 2, left: withLogo ? 18 : 2, width: 16, height: 16, borderRadius: 99, background: '#fff', transition: 'left .2s' }} />
+            </div>
+          </Box>
+
+          {withLogo && (
             <>
-              <Box onClick={() => setWithLogo((v) => !v)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 10, border: '1px solid #e4e1da', cursor: 'pointer', marginBottom: withLogo ? 14 : 0 }} hover={{ background: '#faf9f7' }}>
-                <Icon name="image" size={16} color={withLogo ? '#211f1c' : '#b3aca1'} />
-                <div style={{ flex: 1, fontSize: 13.5, fontWeight: 600, color: withLogo ? '#211f1c' : '#8c867d' }}>Aggiungi il tuo logo</div>
-                <div style={{ width: 36, height: 20, borderRadius: 99, background: withLogo ? '#3B83F6' : '#d8d4cb', position: 'relative', flexShrink: 0 }}>
-                  <div style={{ position: 'absolute', top: 2, left: withLogo ? 18 : 2, width: 16, height: 16, borderRadius: 99, background: '#fff', transition: 'left .2s' }} />
-                </div>
-              </Box>
-
-              {withLogo && (
+              {logoOpts.length > 1 && (
                 <>
-                  <div style={s('font-size:11px;font-weight:700;color:#b3aca1;text-transform:uppercase;letter-spacing:.04em;margin:14px 0 8px')}>Posizione</div>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 6, marginBottom: 14 }}>
-                    {posBtns.map((p) => (
-                      <Box key={p.id} onClick={() => setPos(p.id)} style={{ textAlign: 'center', padding: '10px 0', borderRadius: 9, border: `1.5px solid ${pos === p.id ? '#3B83F6' : '#e4e1da'}`, background: pos === p.id ? '#eef4fe' : '#fff', color: pos === p.id ? '#1d5fd0' : '#8c867d', fontSize: 17, cursor: 'pointer' }} hover={{ borderColor: '#3B83F6' }}>{p.label}</Box>
-                    ))}
-                  </div>
-                  <div style={s('font-size:11px;font-weight:700;color:#b3aca1;text-transform:uppercase;letter-spacing:.04em;margin:0 0 8px')}>Dimensione</div>
-                  <div style={{ display: 'flex', gap: 6, marginBottom: 4 }}>
-                    {(Object.keys(SIZES) as (keyof typeof SIZES)[]).map((k) => (
-                      <Box key={k} onClick={() => setSize(k)} style={{ flex: 1, textAlign: 'center', padding: '9px 0', borderRadius: 9, border: `1.5px solid ${size === k ? '#3B83F6' : '#e4e1da'}`, background: size === k ? '#eef4fe' : '#fff', color: size === k ? '#1d5fd0' : '#8c867d', fontSize: 13, fontWeight: 700, cursor: 'pointer' }} hover={{ borderColor: '#3B83F6' }}>{k === 'S' ? 'Piccolo' : k === 'M' ? 'Medio' : 'Grande'}</Box>
+                  <div style={s('font-size:11px;font-weight:700;color:#b3aca1;text-transform:uppercase;letter-spacing:.04em;margin:14px 0 8px')}>Logo</div>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
+                    {logoOpts.map((u) => (
+                      <Box key={u} onClick={() => setLogoUrl(u)} style={{ width: 88, height: 46, borderRadius: 9, border: `2px solid ${logoUrl === u ? '#3B83F6' : '#e4e1da'}`, background: '#e9e6df', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 6, cursor: 'pointer' }} hover={{ borderColor: '#3B83F6' }}>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={u} alt="logo" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+                      </Box>
                     ))}
                   </div>
                 </>
               )}
+
+              <div style={s('font-size:11px;font-weight:700;color:#b3aca1;text-transform:uppercase;letter-spacing:.04em;margin:0 0 8px')}>Posizione</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 6, marginBottom: 14 }}>
+                {posList.map((p) => (
+                  <Box key={p} onClick={() => setPos(p)} style={{ position: 'relative', aspectRatio: '4 / 3', borderRadius: 8, border: `1.5px solid ${pos === p ? '#3B83F6' : '#e4e1da'}`, background: pos === p ? '#eef4fe' : '#fff', cursor: 'pointer' }} hover={{ borderColor: '#3B83F6' }}>
+                    <span style={{ position: 'absolute', width: 9, height: 9, borderRadius: 2, background: pos === p ? '#3B83F6' : '#b3aca1', ...corner(p) }} />
+                  </Box>
+                ))}
+              </div>
+
+              <div style={s('font-size:11px;font-weight:700;color:#b3aca1;text-transform:uppercase;letter-spacing:.04em;margin:0 0 8px')}>Dimensione</div>
+              <div style={{ display: 'flex', gap: 6 }}>
+                {(Object.keys(SIZES) as (keyof typeof SIZES)[]).map((k) => (
+                  <Box key={k} onClick={() => setSize(k)} style={{ flex: 1, textAlign: 'center', padding: '9px 0', borderRadius: 9, border: `1.5px solid ${size === k ? '#3B83F6' : '#e4e1da'}`, background: size === k ? '#eef4fe' : '#fff', color: size === k ? '#1d5fd0' : '#8c867d', fontSize: 13, fontWeight: 700, cursor: 'pointer' }} hover={{ borderColor: '#3B83F6' }}>{k === 'S' ? 'Piccolo' : k === 'M' ? 'Medio' : 'Grande'}</Box>
+                ))}
+              </div>
             </>
-          ) : (
-            <div style={{ fontSize: 12.5, color: '#8c867d', background: '#faf9f7', border: '1px solid #e4e1da', borderRadius: 10, padding: '10px 12px' }}>
-              Nessun logo impostato. Caricane uno in <b>Brand</b> per applicarlo alle foto.
-            </div>
           )}
 
-          <Box as="button" onClick={download} disabled={busy} style={{ width: '100%', marginTop: 16, border: 'none', background: busy ? '#9bbef8' : '#3B83F6', color: '#fff', fontSize: 15, fontWeight: 700, padding: '13px 0', borderRadius: 11, cursor: busy ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }} hover={busy ? {} : s('background:#2563EB')}>
-            {busy ? 'Preparo…' : <><Icon name="download" size={16} color="#fff" />{withLogo && logoUrl ? 'Scarica con logo' : 'Scarica'}</>}
+          <Box as="button" onClick={download} disabled={busy || done} style={{ width: '100%', marginTop: 16, border: 'none', background: done ? '#16a34a' : busy ? '#9bbef8' : '#3B83F6', color: '#fff', fontSize: 15, fontWeight: 700, padding: '13px 0', borderRadius: 11, cursor: (busy || done) ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, transition: 'background .2s' }} hover={(busy || done) ? {} : s('background:#2563EB')}>
+            {done
+              ? <><Icon name="check" size={17} color="#fff" />Scaricata!</>
+              : busy
+                ? <>{spinner}{isBatch ? `Preparo ${prog}/${list.length}…` : 'Preparo…'}</>
+                : <><Icon name="download" size={16} color="#fff" />{isBatch ? `Scarica tutte (${list.length})` : (withLogo ? 'Scarica con logo' : 'Scarica')}</>}
           </Box>
         </div>
       </div>

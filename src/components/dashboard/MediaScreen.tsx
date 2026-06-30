@@ -7,8 +7,6 @@ import type { Project } from './types';
 import WatermarkDownloadModal from './WatermarkDownloadModal';
 import Image from 'next/image';
 
-// We import JSZip dynamically when needed for bulk export
-const loadJSZip = () => import('jszip').then(m => m.default);
 
 const DEMO_NEW_ITEM = { src: 'https://images.unsplash.com/photo-1600573472550-8090b5e0745e?w=600&h=600&fit=crop', type: 'photo' as const };
 
@@ -211,7 +209,8 @@ export default function MediaScreen({
   };
 
   const [actionsOpen, setActionsOpen] = useState<string | null>(null);
-  const [wmUrl, setWmUrl] = useState<string | null>(null); // download foto con logo
+  const [wmUrl, setWmUrl] = useState<string | null>(null); // download singolo con logo
+  const [wmBatch, setWmBatch] = useState<{ images: string[]; zipName: string } | null>(null); // download tutte con logo
   const [confirmDlg, setConfirmDlg] = useState<{ title: string; sub: string; onYes: () => void } | null>(null);
   const [selectDay, setSelectDay] = useState<string | null>(null);       // giorno in modalità selezione
   const [selected, setSelected] = useState<Set<string>>(new Set());      // chiavi `${batchId}_${index}`
@@ -249,43 +248,14 @@ export default function MediaScreen({
     });
   };
 
-  // Scarica come ZIP una lista di foto (solo riuscite con URL valido).
-  const handleDownloadPhotos = async (list: (BatchPhoto & { batchId: string })[], zipName: string) => {
-    // I video si scaricano singolarmente (file pesanti, no ZIP misto).
-    const photos = list.filter(p => p.resultUrl && p.status !== 'failed' && !(p as MediaItem).isVideo);
-    if (!photos.length) {
-      toast('Nessuna foto scaricabile', 'x');
-      return;
-    }
-    toast('Preparazione archivio in corso...', 'loader');
-    try {
-      const JSZip = await loadJSZip();
-      const zip = new JSZip();
-      let downloadedCount = 0;
-      await Promise.all(photos.map(async (p, idx) => {
-        try {
-          const res = await fetch(p.resultUrl);
-          const blob = await res.blob();
-          zip.file(`foto_${idx + 1}.png`, blob);
-          downloadedCount++;
-        } catch (e) {
-          console.error('Failed to download photo for zip', e);
-        }
-      }));
-      if (downloadedCount === 0) throw new Error('Nessuna foto scaricata');
-      const zipBlob = await zip.generateAsync({ type: 'blob' });
-      const url = URL.createObjectURL(zipBlob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${zipName}.zip`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-      toast('Archivio ZIP scaricato', 'download');
-    } catch (e) {
-      toast('Errore durante la creazione dello ZIP', 'x');
-    }
+  // "Scarica tutte" → apre il dialog logo/posizione in modalità batch (compone
+  // ogni foto col logo scelto e le zippa). Solo foto valide, no video.
+  const handleDownloadPhotos = (list: (BatchPhoto & { batchId: string })[], zipName: string) => {
+    const images = list
+      .filter(p => p.resultUrl && p.status !== 'failed' && !(p as MediaItem).isVideo)
+      .map(p => p.resultUrl);
+    if (!images.length) { toast('Nessuna foto scaricabile', 'x'); return; }
+    setWmBatch({ images, zipName });
   };
 
   const [visibleCounts, setVisibleCounts] = useState<Record<string, number>>({});
@@ -702,6 +672,7 @@ export default function MediaScreen({
         </div>
       )}
       {wmUrl && <WatermarkDownloadModal imageUrl={wmUrl} onClose={() => setWmUrl(null)} />}
+      {wmBatch && <WatermarkDownloadModal images={wmBatch.images} zipName={wmBatch.zipName} onClose={() => setWmBatch(null)} />}
     </div>
   );
 }
