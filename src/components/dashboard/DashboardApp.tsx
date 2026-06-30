@@ -2851,11 +2851,16 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
   const [welcomeOpen, setWelcomeOpen] = useState(false);
   useEffect(() => {
     if (typeof window === 'undefined' || !tutorialKey) return;
+    // Server flag is the source of truth: localStorage gets wiped on logout (gnm_*
+    // cleanup) / new device, which used to replay onboarding for existing accounts.
+    if (userData?.onboardingCompleted) { try { localStorage.setItem(tutorialKey, '1'); } catch { /* quota */ } return; }
     if (!localStorage.getItem(tutorialKey)) { setWelcomeOpen(true); setRoute('brand'); }
-  }, [tutorialKey]);
+  }, [tutorialKey, userData?.onboardingCompleted]);
   const markTutorialSeen = useCallback(() => {
     try { if (tutorialKey) localStorage.setItem(tutorialKey, '1'); } catch { /* quota */ }
-  }, [tutorialKey]);
+    // Persist server-side so re-login / another device never replays onboarding.
+    if (userData?.id) supabase.from('user_credits').update({ onboarding_completed: true }).eq('user_id', userData.id).then(() => {}, () => {});
+  }, [tutorialKey, userData?.id]);
   const tourReplayRef = useRef(false);
 
   // Quota free trial (foto + video) per spiegarla in onboarding / empty state.
