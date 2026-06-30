@@ -4,6 +4,7 @@ import { locales, type Locale } from "@/lib/i18n";
 import { translations } from "@/lib/translations";
 import Navbar from "@/components/Navbar";
 import AuthCta from "@/components/AuthCta";
+import ScrollCue from "@/components/ScrollCue";
 import HomepageClient from "./HomepageClient";
 import ReferenceGallery from "./reference/ReferenceGallery";
 
@@ -907,6 +908,9 @@ export default async function Home({ params }: Props) {
           `}</style>
         </footer>
       </main>
+
+      {/* Scroll cue (solo mobile, sparisce allo scroll) */}
+      <ScrollCue />
 
       {/* Social Popup */}
       <HomepageClient variant="social-popup" popupMessages={l.popups} />
