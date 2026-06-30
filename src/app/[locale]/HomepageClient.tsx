@@ -335,10 +335,13 @@ function PricingSection({
                 const padded = [...plan.features];
                 while (padded.length < maxFeatures) padded.push('');
                 const isCurrent = !!currentPlan && plan.id === currentPlan;
+                // Loggato: il piano attuale è il riferimento, quindi niente "Più scelto".
+                const popular = currentPlan ? false : plan.popular;
+                const badge = currentPlan ? null : plan.badge;
                 return (
                   <PricingCard
                     key={plan.id}
-                    plan={{ ...plan, features: padded, savingsLabel: data.savingsLabel, freeLabel }}
+                    plan={{ ...plan, popular, badge, features: padded, savingsLabel: data.savingsLabel, freeLabel }}
                     href={isCurrent ? `/${locale}/dashboard` : plan.price === 0 ? `/${locale}/checkout/agency` : `/${locale}/checkout/agency?plan=${plan.id}`}
                     current={isCurrent}
                   />
