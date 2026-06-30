@@ -72,7 +72,7 @@ const METRIC_ICONS = [IconBed, IconBath, IconArea];
 
 function Img({ src }: { src: string }) {
   // eslint-disable-next-line @next/next/no-img-element
-  return <img src={src} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />;
+  return <img src={src} alt="" loading="lazy" decoding="async" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />;
 }
 
 function Address({ color = 'rgba(255,255,255,0.8)' }: { color?: string }) {
@@ -111,7 +111,7 @@ function TplGradient({ photo, bd = 0 }: { photo: string; bd?: number }) {
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%', fontFamily: F, overflow: 'hidden' }}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={photo} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', animation: 'tplKB 10s ease-in-out infinite alternate' }} />
+      <img src={photo} alt="" loading="lazy" decoding="async" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', animation: 'tplKB 10s ease-in-out infinite alternate' }} />
       <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.5) 50%, rgba(0,0,0,0.8) 100%)', ...aFI(bd + 0.2) }} />
       <div style={{ position: 'absolute', inset: 0, padding: '4.5%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', zIndex: 2 }}>
         <div style={{ background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(12px)', border: '0.5px solid rgba(255,255,255,0.25)', borderRadius: 4, padding: '5%', position: 'relative', ...aSU(bd + 0.5) }}>
@@ -136,7 +136,7 @@ function TplBlue({ photo, bd = 0 }: { photo: string; bd?: number }) {
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%', fontFamily: F, overflow: 'hidden' }}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={photo} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', animation: 'tplKB 10s ease-in-out infinite alternate' }} />
+      <img src={photo} alt="" loading="lazy" decoding="async" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', animation: 'tplKB 10s ease-in-out infinite alternate' }} />
       <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse at 86% 9%, rgba(41,103,236,0) 0%, rgba(41,103,236,0.8) 50%, rgba(41,103,236,0.8) 100%)`, ...aFI(bd + 0.2) }} />
       <Badge variant="blue" style={{ position: 'absolute', top: '5%', right: '5%', zIndex: 3, ...aFI(bd + 0.4) }} />
       <div style={{ position: 'absolute', inset: 0, padding: '5%', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', zIndex: 2 }}>
@@ -159,7 +159,7 @@ function TplDiagonal({ photo, bd = 0 }: { photo: string; bd?: number }) {
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%', fontFamily: F, overflow: 'hidden' }}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={photo} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', animation: 'tplKB 10s ease-in-out infinite alternate' }} />
+      <img src={photo} alt="" loading="lazy" decoding="async" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', animation: 'tplKB 10s ease-in-out infinite alternate' }} />
       {/* Accent triangle */}
       <div style={{ position: 'absolute', inset: 0, background: AC, clipPath: 'polygon(0 0, 100% 0, 100% 25%, 0 55%)', zIndex: 1, ...aFI(bd + 0.1) }} />
       {/* Bottom gradient */}
@@ -185,7 +185,7 @@ function TplCentered({ photo, bd = 0 }: { photo: string; bd?: number }) {
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%', fontFamily: F, overflow: 'hidden' }}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={photo} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', animation: 'tplKB 10s ease-in-out infinite alternate' }} />
+      <img src={photo} alt="" loading="lazy" decoding="async" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', animation: 'tplKB 10s ease-in-out infinite alternate' }} />
       <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)', ...aFI(bd + 0.1) }} />
       <div style={{ position: 'absolute', inset: 0, padding: '5%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-between', textAlign: 'center', zIndex: 2 }}>
         <div style={aFI(bd + 0.3)}><Badge variant="white" /></div>
@@ -206,7 +206,7 @@ function TplCard({ photo, bd = 0 }: { photo: string; bd?: number }) {
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%', fontFamily: F, overflow: 'hidden' }}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={photo} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', animation: 'tplKB 10s ease-in-out infinite alternate' }} />
+      <img src={photo} alt="" loading="lazy" decoding="async" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', animation: 'tplKB 10s ease-in-out infinite alternate' }} />
       <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.5) 53%, rgba(0,0,0,0.8) 100%)', ...aFI(bd + 0.1) }} />
       {/* Top bar: price left + badge right */}
       <div style={{ position: 'absolute', top: '5%', left: '5%', right: '5%', display: 'flex', justifyContent: 'space-between', zIndex: 3, ...aSU(bd + 0.3) }}>
@@ -241,7 +241,7 @@ function TplElegant({ photo, bd = 0 }: { photo: string; bd?: number }) {
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%', fontFamily: F, overflow: 'hidden' }}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={photo} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', animation: 'tplKB 10s ease-in-out infinite alternate' }} />
+      <img src={photo} alt="" loading="lazy" decoding="async" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', animation: 'tplKB 10s ease-in-out infinite alternate' }} />
       <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.5) 53%, rgba(0,0,0,0.8) 100%)', ...aFI(bd + 0.2) }} />
       <div style={{ position: 'absolute', inset: 0, padding: '5%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', zIndex: 2 }}>
         {/* Badge outline at top — inline left */}
@@ -263,7 +263,7 @@ function TplTopbar({ photo, bd = 0 }: { photo: string; bd?: number }) {
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%', fontFamily: F, overflow: 'hidden' }}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={photo} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', animation: 'tplKB 10s ease-in-out infinite alternate' }} />
+      <img src={photo} alt="" loading="lazy" decoding="async" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', animation: 'tplKB 10s ease-in-out infinite alternate' }} />
       <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.5) 53%, rgba(0,0,0,0.8) 100%)', ...aFI(bd + 0.1) }} />
       {/* White panel */}
       <div style={{
@@ -301,7 +301,7 @@ function TplClean({ photo, bd = 0 }: { photo: string; bd?: number }) {
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%', fontFamily: F, overflow: 'hidden' }}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={photo} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', animation: 'tplKB 10s ease-in-out infinite alternate' }} />
+      <img src={photo} alt="" loading="lazy" decoding="async" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', animation: 'tplKB 10s ease-in-out infinite alternate' }} />
       <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.5) 53%, rgba(0,0,0,0.8) 100%)', ...aFI(bd + 0.1) }} />
       {/* Glass top bar */}
       <div style={{
@@ -347,7 +347,7 @@ function TplFade({ photo, bd = 0 }: { photo: string; bd?: number }) {
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%', fontFamily: F, overflow: 'hidden' }}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={photo} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', animation: 'tplKB 10s ease-in-out infinite alternate' }} />
+      <img src={photo} alt="" loading="lazy" decoding="async" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', animation: 'tplKB 10s ease-in-out infinite alternate' }} />
       <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(90deg, ${AC} 0%, ${AC}CC 35%, transparent 70%)`, ...aFI(bd + 0.1) }} />
       {/* Badge top-left */}
       <Badge variant="white" style={{ position: 'absolute', top: '5%', left: '5%', zIndex: 3, ...aFI(bd + 0.3) }} />
@@ -397,7 +397,7 @@ function TplArch({ photo, bd = 0 }: { photo: string; bd?: number }) {
         width: '74%', height: '45%', borderRadius: '999px 999px 0 0', overflow: 'hidden', zIndex: 1,
       }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={photo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', transformOrigin: 'center bottom', animation: 'tplKB 10s ease-in-out infinite alternate' }} />
+        <img src={photo} alt="" loading="lazy" decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', transformOrigin: 'center bottom', animation: 'tplKB 10s ease-in-out infinite alternate' }} />
         <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: '60%', background: 'linear-gradient(to top, rgba(0,0,0,0.6), transparent)', pointerEvents: 'none' }} />
       </div>
     </div>
@@ -435,7 +435,7 @@ function TplSplit({ photo, bd = 0 }: { photo: string; bd?: number }) {
       {/* Right photo + accent line */}
       <div style={{ width: '50%', position: 'relative', overflow: 'hidden' }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={photo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', animation: 'tplKB 10s ease-in-out infinite alternate' }} />
+        <img src={photo} alt="" loading="lazy" decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', animation: 'tplKB 10s ease-in-out infinite alternate' }} />
         <div style={{ position: 'absolute', top: 0, left: 0, width: 1, height: '100%', background: AC }} />
       </div>
     </div>

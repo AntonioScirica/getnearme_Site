@@ -5,6 +5,7 @@ import { translations } from "@/lib/translations";
 import Navbar from "@/components/Navbar";
 import AuthCta from "@/components/AuthCta";
 import ScrollCue from "@/components/ScrollCue";
+import HeroVideo from "@/components/HeroVideo";
 import HomepageClient from "./HomepageClient";
 import ReferenceGallery from "./reference/ReferenceGallery";
 
@@ -35,6 +36,10 @@ export default async function Home({ params }: Props) {
       className="min-h-screen overflow-x-clip"
       style={{ background: "#fff", color: "#1a1a2e" }}
     >
+      {/* Preload del poster hero (LCP): Next lo issa nel <head> → carica per primo */}
+      {/* eslint-disable-next-line @next/next/no-head-element */}
+      <link rel="preload" as="image" href="/staging/1.webp" fetchPriority="high" />
+
       {/* Sticky Header: Banner + Navbar */}
       <div className="sticky top-0 z-50">
         {/* Top Bar — cliccabile → prezzi */}
@@ -228,22 +233,11 @@ export default async function Home({ params }: Props) {
                 aspectRatio: "16 / 9",
               }}
             >
-              <video
-                autoPlay
-                muted
-                loop
-                playsInline
+              <HeroVideo
                 poster="/staging/1.webp"
-                aria-label="GetNearMe — home staging AI: prima e dopo"
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  objectFit: "cover",
-                  display: "block",
-                }}
-              >
-                <source src="/staging/prima_dopo.mp4" type="video/mp4" />
-              </video>
+                src="/staging/prima_dopo.mp4"
+                ariaLabel="GetNearMe — home staging AI: prima e dopo"
+              />
             </div>
           </div>
         </section>
