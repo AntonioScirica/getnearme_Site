@@ -419,6 +419,69 @@ export default function ZonaScreen({
     return POI_CATEGORIES.reduce((sum, c) => sum + (result[c.key]?.length || 0), 0);
   }, [result]);
 
+  // PDF: immagine mappa (html2canvas) + una tabella per categoria (autoTable).
+  const [pdfBusy, setPdfBusy] = useState(false);
+  const downloadPdf = async () => {
+    if (!result || pdfBusy) return;
+    setPdfBusy(true);
+    try {
+      const [{ default: jsPDF }, { default: html2canvas }, { default: autoTable }] = await Promise.all([
+        import('jspdf'), import('html2canvas'), import('jspdf-autotable'),
+      ]);
+      const hexToRgb = (h: string): [number, number, number] => {
+        const n = parseInt(h.replace('#', ''), 16);
+        return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+      };
+      const pdf = new jsPDF({ unit: 'pt', format: 'a4' });
+      const W = pdf.internal.pageSize.getWidth();
+      const M = 40;
+      let y = M;
+
+      pdf.setFont('helvetica', 'bold').setFontSize(18).setTextColor(33);
+      pdf.text('Analisi di zona', M, y); y += 22;
+      pdf.setFont('helvetica', 'normal').setFontSize(11).setTextColor(110);
+      const sub = (address || '').trim();
+      if (sub) { pdf.text(sub, M, y, { maxWidth: W - M * 2 }); y += 16; }
+      const radiusLabel = RADIUS_OPTIONS.find((o) => o.value === radius)?.label || `${radius} m`;
+      pdf.text(`Raggio ${radiusLabel} · ${totalFound} luoghi`, M, y); y += 16;
+      pdf.setTextColor(0);
+
+      // Immagine della zona (best effort: i tile cartocdn supportano CORS).
+      // ponytail: se html2canvas non cattura i tile, il PDF esce senza mappa, liste comunque ok.
+      const node = mapEl.current;
+      if (node) {
+        try {
+          const canvas = await html2canvas(node, { useCORS: true, backgroundColor: '#e8ebef', scale: 2 });
+          const drawW = W - M * 2;
+          const drawH = Math.min(drawW * canvas.height / canvas.width, 280);
+          const w2 = drawH * canvas.width / canvas.height;
+          pdf.addImage(canvas.toDataURL('image/jpeg', 0.85), 'JPEG', M + (drawW - w2) / 2, y, w2, drawH);
+          y += drawH + 16;
+        } catch { /* mappa non catturabile: salta */ }
+      }
+
+      for (const cat of POI_CATEGORIES) {
+        const pois = (result[cat.key] || []).slice(0, 50);
+        if (!pois.length) continue;
+        autoTable(pdf, {
+          startY: y,
+          head: [[`${cat.label} (${pois.length})`, 'Distanza']],
+          body: pois.map((p) => [p.name || '—', formatDistance(p.distance)]),
+          headStyles: { fillColor: hexToRgb(cat.color), textColor: 255, fontStyle: 'bold' },
+          columnStyles: { 1: { halign: 'right', cellWidth: 80 } },
+          styles: { fontSize: 9, cellPadding: 4 },
+          margin: { left: M, right: M },
+          theme: 'striped',
+        });
+        y = (pdf as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 12;
+      }
+
+      pdf.save(`analisi-zona${sub ? '-' + sub.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) : ''}.pdf`);
+    } finally {
+      setPdfBusy(false);
+    }
+  };
+
   const toggleCat = (key: string) => setActiveCats((prev) => {
     const next = new Set(prev);
     if (next.has(key)) next.delete(key); else next.add(key);
@@ -545,7 +608,12 @@ export default function ZonaScreen({
           <>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
               <div style={labelStyle}>Cosa c&apos;è in zona</div>
-              <span style={{ fontSize: 12, color: '#8c867d', fontWeight: 600 }}>{totalFound} luoghi</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ fontSize: 12, color: '#8c867d', fontWeight: 600 }}>{totalFound} luoghi</span>
+                <Box as="button" onClick={downloadPdf} disabled={pdfBusy} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, border: `1px solid ${accent}`, background: '#fff', color: accent, fontSize: 12.5, fontWeight: 700, padding: '6px 12px', borderRadius: 9, cursor: pdfBusy ? 'default' : 'pointer', opacity: pdfBusy ? 0.6 : 1 }} hover={pdfBusy ? {} : { background: '#eef4fe' }}>
+                  <Icon name="download" size={14} color={accent} />{pdfBusy ? 'PDF…' : 'PDF'}
+                </Box>
+              </div>
             </div>
             <div key={resultId} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {POI_CATEGORIES.filter((cat) => (result[cat.key] || []).length > 0).map((cat, idx) => {

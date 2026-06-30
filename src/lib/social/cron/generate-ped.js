@@ -241,20 +241,26 @@ export default async function handler(req, res) {
   // ── Trigger the day's video (before/after slider) at the same moment ──
   // Only Mon/Wed/Fri carry a video topic (planner). Fire-and-forget per topic;
   // generate-social-video does the heavy AI work and reads slide_data.videoMode.
-  const { data: videoTopics } = await supabase
-    .from('content_topics')
-    .select('id, title')
-    .eq('account_id', accountId)
-    .eq('plan_date', day)
-    .eq('rubric', 'video')
-    .in('status', ['proposed', 'planned', 'approved']);
-  const host = req.headers.host || 'getnearme.it';
-  const secret = process.env.CRON_SECRET || '';
-  for (const vt of (videoTopics || [])) {
-    const qs = new URLSearchParams({ secret, topic_id: vt.id });
-    fetch(`https://${host}/api/social/cron/generate-video?${qs}`).catch(() => {});
-    vlog(`video trigger: ${vt.title} (${vt.id})`);
+  // novideo: il chiamante (es. gen-week) renderizza i video da sé → non
+  // ri-triggerare (evita doppioni reel/story, come quelli visti il 07-04).
+  let videoTopics = [];
+  if (!req.query.novideo) {
+    const { data } = await supabase
+      .from('content_topics')
+      .select('id, title')
+      .eq('account_id', accountId)
+      .eq('plan_date', day)
+      .eq('rubric', 'video')
+      .in('status', ['proposed', 'planned', 'approved']);
+    videoTopics = data || [];
+    const host = req.headers.host || 'getnearme.it';
+    const secret = process.env.CRON_SECRET || '';
+    for (const vt of videoTopics) {
+      const qs = new URLSearchParams({ secret, topic_id: vt.id });
+      fetch(`https://${host}/api/social/cron/generate-video?${qs}`).catch(() => {});
+      vlog(`video trigger: ${vt.title} (${vt.id})`);
+    }
   }
 
-  return res.json({ day, generated: okCount, video_triggered: (videoTopics || []).length, results });
+  return res.json({ day, generated: okCount, video_triggered: videoTopics.length, results });
 }
