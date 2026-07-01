@@ -261,25 +261,63 @@ export type StartResult =
   | { ok: true; predictionId: string; outputUrl?: string }
   | { ok: false; error: string; quotaExhausted?: boolean; notAuthenticated?: boolean };
 
+// Riconosce se l'immagine è una PLANIMETRIA (line-art: quasi bianco, saturazione
+// bassissima, pochi colori) invece di una foto. Serve per il render 3D automatico.
+// Soglie tarate su dati reali: foto stanza sat>=0.14/colori>=79; planimetria sat~0/colori~12.
+export async function detectFloorPlan(dataUrl: string): Promise<boolean> {
+  try {
+    const img = await new Promise<HTMLImageElement>((res, rej) => {
+      const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = dataUrl;
+    });
+    const w = Math.min(160, img.naturalWidth || 160);
+    const h = Math.max(1, Math.round(w * (img.naturalHeight || 1) / (img.naturalWidth || 1)));
+    const c = document.createElement('canvas'); c.width = w; c.height = h;
+    const ctx = c.getContext('2d'); if (!ctx) return false;
+    ctx.drawImage(img, 0, 0, w, h);
+    const d = ctx.getImageData(0, 0, w, h).data; const n = w * h;
+    let white = 0, satSum = 0; const colors = new Set<number>();
+    for (let i = 0; i < d.length; i += 4) {
+      const r = d[i], g = d[i + 1], b = d[i + 2];
+      const mx = Math.max(r, g, b), mn = Math.min(r, g, b), v = mx / 255;
+      const sat = mx === 0 ? 0 : (mx - mn) / mx;
+      satSum += sat;
+      if (v > 0.90 && sat < 0.12) white++;
+      colors.add(((r >> 4) << 8) | ((g >> 4) << 4) | (b >> 4));
+    }
+    return (white / n) > 0.35 && (satSum / n) < 0.10 && colors.size < 50;
+  } catch { return false; }
+}
+
 export async function startStaging(opts: {
   imageDataUrl: string;
   style?: string | null;
   angle?: string | null;
   customPrompt?: string | null;
+  planimetria?: boolean | null; // decisione UI: true forza render 3D, false lo esclude, null = auto-detect
 }): Promise<StartResult> {
-  const { imageDataUrl, style = null, angle = null, customPrompt = null } = opts;
+  const { imageDataUrl, style = null, angle = null, customPrompt = null, planimetria = null } = opts;
 
   let promptToSend = customPrompt?.trim() || null;
-  if (!promptToSend && angle) {
-    promptToSend = STAGING_ANGLES.find(a => a.id === angle)?.prompt || null;
+  let effAngle = angle;
+  // Planimetria -> render 3D isometrico. Il prompt custom NON e' ammesso (solo lo
+  // stile arreda il render): ignora custom/angolo. Usa la decisione UI se data,
+  // altrimenti auto-detect.
+  const isPlan = planimetria != null ? planimetria : await detectFloorPlan(imageDataUrl);
+  if (isPlan) {
+    promptToSend = null;
+    effAngle = null;
+  }
+  if (!promptToSend && effAngle) {
+    promptToSend = STAGING_ANGLES.find(a => a.id === effAngle)?.prompt || null;
   }
 
   const { data, status, error } = await invokeFn('replicate-staging', {
     action: 'start',
     imageUrl: imageDataUrl,
     style: style || null,
-    angle: angle || null,
+    angle: effAngle || null,
     customPrompt: promptToSend,
+    planimetria: isPlan,
   }, 60_000);
 
   console.log('[staging] start fetch returned', { status, hasData: !!data, error });

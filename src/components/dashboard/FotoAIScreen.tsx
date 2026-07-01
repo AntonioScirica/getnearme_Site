@@ -10,7 +10,7 @@ import WatermarkDownloadModal from './WatermarkDownloadModal';
 import {
   STAGING_STYLES, STAGING_ANGLES, MAX_BATCH_PHOTOS,
   fileToResizedDataUrl, startStaging, pollStagingStatus, findLatestProcessingPrediction, createBatchStaging,
-  fetchStagingQuota, type StagingQuota, getTokenFast,
+  fetchStagingQuota, type StagingQuota, getTokenFast, detectFloorPlan,
 } from '@/lib/staging';
 import { saveSingleGenerationToBatch, deleteBatchPhoto } from '@/lib/stagingBatches';
 import { saveOriginalMedia } from '@/lib/localMediaCache';
@@ -132,6 +132,23 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
   React.useEffect(() => { if (demoMode) setSelStyle('modern'); }, [demoMode]);
   const [selAngle, setSelAngle] = React.useState<string | null>(null);
   const [customPrompt, setCustomPrompt] = React.useState('');
+  // Planimetria rilevata (foto singola) -> render 3D isometrico, niente prompt libero.
+  // `notPlan` = l'utente ha detto "non e' una planimetria" -> torna FotoAI normale.
+  const [detectedPlan, setDetectedPlan] = React.useState(false);
+  const [notPlan, setNotPlan] = React.useState(false);
+  React.useEffect(() => {
+    let cancelled = false;
+    setNotPlan(false); // ogni nuovo upload azzera l'override
+    if (photos.length === 1) {
+      detectFloorPlan(photos[0].dataUrl).then(v => {
+        if (cancelled) return;
+        setDetectedPlan(v);
+        if (v) { setCustomPrompt(''); setSelAngle(null); }
+      });
+    } else setDetectedPlan(false);
+    return () => { cancelled = true; };
+  }, [photos]);
+  const isFloorPlan = detectedPlan && !notPlan;
   const [generating, setGenerating] = React.useState(false);
   const [countdown, setCountdown] = React.useState(GEN_SECONDS);
   const [result, setResult] = React.useState<{ before: string; after: string } | null>(null);
@@ -362,18 +379,18 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
   const isBatch = photos.length > 1;
   const outOfQuota = !!quota && quota.remaining <= 0;
   const notEnoughForBatch = !!quota && photos.length > 1 && photos.length > quota.remaining;
-  const canGenerate = photos.length > 0 && (selStyle || customPrompt.trim()) && !generating && !outOfQuota && !notEnoughForBatch;
+  const canGenerate = photos.length > 0 && (selStyle || customPrompt.trim() || isFloorPlan) && !generating && !outOfQuota && !notEnoughForBatch;
 
   // Start an async single-photo generation: kick off the prediction, persist it,
   // and let the polling effect drive the result. Resilient to tab switches.
-  const beginSingle = async (opts: { imageDataUrl: string; before: string; style: string | null; angle: string | null; customPrompt: string | null; replaceBatchId?: string | null }) => {
+  const beginSingle = async (opts: { imageDataUrl: string; before: string; style: string | null; angle: string | null; customPrompt: string | null; planimetria?: boolean | null; replaceBatchId?: string | null }) => {
     // Start con retry: il primo tentativo può scadere su cold start; il secondo
     // (function calda) di solito va. Prima di ogni retry controlla se una
     // prediction è già stata creata server-side (evita doppio scalo quota).
     let res = await (async () => {
       for (let attempt = 1; attempt <= 2; attempt++) {
         console.log(`[FotoAI] startStaging… (tentativo ${attempt})`);
-        const r = await startStaging({ imageDataUrl: opts.imageDataUrl, style: opts.style, angle: opts.angle, customPrompt: opts.customPrompt });
+        const r = await startStaging({ imageDataUrl: opts.imageDataUrl, style: opts.style, angle: opts.angle, customPrompt: opts.customPrompt, planimetria: opts.planimetria ?? null });
         console.log('[FotoAI] start result:', r.ok ? `ok predictionId=${(r as any).predictionId}` : `FAIL ${r.error}`);
         if (r.ok) return r;
         if (!r.error?.includes('troppo lento')) return r; // errore vero (quota/auth) → non ritentare
@@ -454,6 +471,7 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
           style: selStyle,
           angle: selAngle,
           customPrompt: customPrompt.trim() || null,
+          planimetria: isFloorPlan,
         });
       }
     } catch (err: any) {
@@ -480,6 +498,7 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
         style: null,
         angle: null,
         customPrompt: prompt,
+        planimetria: false, // reprompt edita il render, mai ri-trattarlo come planimetria
         replaceBatchId: currentBatchId.current, // sostituisci la versione precedente
       });
     } catch (err: any) {
@@ -788,8 +807,17 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
               </>
             ) : (
               <>
+                {isFloorPlan && (
+                  <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 14, padding: '12px 14px' }}>
+                    <span style={{ display: 'flex', flexShrink: 0, marginTop: 1 }}><Icon name="sparkles" size={16} color="#1d5fd0" /></span>
+                    <div style={{ fontSize: 12.5, lineHeight: 1.45, color: '#1d5fd0' }}>
+                      <b>Planimetria rilevata.</b> Verrà creato un render 3D isometrico dell'appartamento. Scegli lo stile d'arredo qui sotto.
+                      <button onClick={() => { if (generating) return; setNotPlan(true); }} style={{ display: 'block', marginTop: 6, padding: 0, background: 'none', border: 'none', color: '#1d5fd0', fontWeight: 700, fontSize: 12.5, textDecoration: 'underline', cursor: 'pointer' }}>Non è una planimetria</button>
+                    </div>
+                  </div>
+                )}
                 <div style={{ background: '#fff', border: '1px solid #f0ede7', borderRadius: 16, padding: 20, boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: '#b3aca1', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 14 }}>Stile</div>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: '#b3aca1', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 14 }}>{isFloorPlan ? "Stile d'arredo" : 'Stile'}</div>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
                     {STAGING_STYLES.map(st => {
                       const sel = selStyle === st.id;
@@ -816,10 +844,12 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
                   </div>
                 </div>
 
+                {!isFloorPlan && (
                 <div style={{ background: '#fff', border: '1px solid #f0ede7', borderRadius: 16, padding: 20, boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
                   <div style={{ fontSize: 11, fontWeight: 700, color: '#b3aca1', textTransform: 'uppercase', letterSpacing: '.06em', margin: '0 0 10px' }}>Oppure scrivi cosa vuoi</div>
                   <textarea value={customPrompt} onChange={e => onPrompt(e.target.value)} maxLength={2000} rows={3} placeholder="Es. trasforma in soggiorno moderno con divano color crema e parquet chiaro" style={inputStyle} />
                 </div>
+                )}
 
                 {(() => { const mainActive = canGenerate || outOfQuota; return (
                 <button onClick={outOfQuota ? (lockBrand ? onGoPlan : () => setPacksOpen(true)) : handleGenerate} disabled={!mainActive} className="group" style={{
@@ -835,7 +865,7 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
                   <span className={mainActive ? "group-hover:rotate-12 transition-transform duration-300" : ""} style={{ display: 'flex' }}>
                     <Icon name={outOfQuota ? (lockBrand ? 'crown' : 'zap') : 'sparkles'} size={18} color={mainActive ? "#fff" : "#9ca3af"} />
                   </span>
-                  {outOfQuota ? (lockBrand ? 'Vedi i piani' : 'Ottieni altre foto') : notEnoughForBatch ? `Restano solo ${quota!.remaining} foto` : (isBatch ? `Genera ${photos.length} foto` : 'Genera foto')}
+                  {outOfQuota ? (lockBrand ? 'Vedi i piani' : 'Ottieni altre foto') : notEnoughForBatch ? `Restano solo ${quota!.remaining} foto` : (isBatch ? `Genera ${photos.length} foto` : isFloorPlan ? 'Crea render 3D' : 'Genera foto')}
                 </button>
                 ); })()}
 
