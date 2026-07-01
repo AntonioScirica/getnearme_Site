@@ -340,7 +340,7 @@ type PlanTier = 'individual' | 'agency';
 
 const INDIVIDUAL_FEATURES = [
   '250 foto AI homestaging/mese',
-  '4 video AI/mese',
+  '6 video AI/mese',
   'Post social illimitati',
   'Montaggio Illimitato',
   'Report Automatici',
@@ -385,8 +385,8 @@ const FREE_PLAN: Plan = {
 const PLANS_BY_TIER: Record<PlanTier, Plan[]> = {
   individual: [
     FREE_PLAN,
-    { id: 'ind_monthly', name: 'Mensile', price: 59, oldPrice: 150, period: '/mese', badge: null, popular: false, features: INDIVIDUAL_FEATURES, color: 'var(--text-main)', quotaFoto: 250, quotaVideo: 4, quotaPost: 999 },
-    { id: 'ind_annual', name: 'Annuale', price: 590, oldPrice: 1800, period: '/anno', badge: 'Più scelto', popular: true, features: INDIVIDUAL_FEATURES, color: 'var(--text-main)', quotaFoto: 250, quotaVideo: 4, quotaPost: 999 },
+    { id: 'ind_monthly', name: 'Mensile', price: 59, oldPrice: 150, period: '/mese', badge: null, popular: false, features: INDIVIDUAL_FEATURES, color: 'var(--text-main)', quotaFoto: 250, quotaVideo: 6, quotaPost: 999 },
+    { id: 'ind_annual', name: 'Annuale', price: 590, oldPrice: 1800, period: '/anno', badge: 'Più scelto', popular: true, features: INDIVIDUAL_FEATURES, color: 'var(--text-main)', quotaFoto: 250, quotaVideo: 6, quotaPost: 999 },
   ],
   agency: [
     FREE_PLAN,
