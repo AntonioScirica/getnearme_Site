@@ -88,7 +88,12 @@ export default function WatermarkDownloadModal({
   useEffect(() => {
     let alive = true;
     (async () => {
-      try { if (previewUrl) imgRef.current = await loadViaBlob(previewUrl); } catch { /* */ }
+      try {
+        if (previewUrl) {
+          imgRef.current = await loadViaBlob(previewUrl);
+          if (alive) drawPreview(); // disegna appena l'immagine e' pronta (no race col logo)
+        }
+      } catch { /* */ }
       let opts = GNM_DEFAULTS;
       try {
         const { settings } = await fetchBrand();
