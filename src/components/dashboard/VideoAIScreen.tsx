@@ -20,7 +20,7 @@ import {
   AIVideoError,
 } from '@/lib/aiVideo';
 import { drawCoverOverlay, preloadCoverFonts, renderCoverOverlayBlob } from '@/lib/coverOverlay';
-import { createServerVideoJob } from '@/lib/videoJobs';
+import { createServerVideoJob, renderStartProgress } from '@/lib/videoJobs';
 import { VideoCutsEditor, type CutSegment } from './VideoCutsEditor';
 import { VideoCutsTutorial, TutorialButton } from './VideoCutsTutorial';
 
@@ -1017,9 +1017,11 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
       // Hand off al tray "Lavori in corso": il polling vive a livello app,
       // sopravvive al cambio sezione. Niente polling locale qui.
       // Persisti la riga server: il cron la finalizza anche a browser chiuso.
-      void createServerVideoJob({ id: res.renderId as string, title: jobTitle(), template: layout, status: 'rendering', progress: 0.25, ctx, projectId: project?.id || null, aspect: (res.aspectRatio as string) || aspect });
+      // Progress iniziale alto sui client-animate: l'animazione (il grosso) e' fatta.
+      const startProg = renderStartProgress(layout);
+      void createServerVideoJob({ id: res.renderId as string, title: jobTitle(), template: layout, status: 'rendering', progress: startProg, ctx, projectId: project?.id || null, aspect: (res.aspectRatio as string) || aspect });
       if (onVideoJob) {
-        onVideoJob({ id: res.renderId as string, title: jobTitle(), template: layout, stage: 'render', progress: 0.25, ctx, projectId: project?.id || null, aspect: (res.aspectRatio as string) || aspect, replaceId: owner || prepJobRef.current || undefined });
+        onVideoJob({ id: res.renderId as string, title: jobTitle(), template: layout, stage: 'render', progress: startProg, ctx, projectId: project?.id || null, aspect: (res.aspectRatio as string) || aspect, replaceId: owner || prepJobRef.current || undefined });
         if (prepJobRef.current === owner) prepJobRef.current = null;
         if (ownsUi()) setRenderStage('background');
         return true;

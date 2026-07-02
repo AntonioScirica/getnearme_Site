@@ -51,7 +51,7 @@ import { exportToPng, exportStaticToVideo, downloadBlob } from './templates/expo
 import { fetchBrand, updateBrand, uploadBrandLogo, removeBrandLogo, logoUrlToDataUrl, DEFAULT_BRAND_SETTINGS, type BrandSettings } from '@/lib/brand';
 import FotoAIScreen from './FotoAIScreen';
 import VideoAIScreen from './VideoAIScreen';
-import { loadVideoJobs, upsertVideoJob, patchVideoJob, dismissVideoJob, removeVideoJob, fetchServerVideoJobs, mergeServerJobs, type VideoJob } from '@/lib/videoJobs';
+import { loadVideoJobs, upsertVideoJob, patchVideoJob, dismissVideoJob, removeVideoJob, fetchServerVideoJobs, mergeServerJobs, prepTimeoutMs, deadTimeoutMs, prepCeiling, type VideoJob } from '@/lib/videoJobs';
 import { pollRenderProgress, fetchVideoQuota } from '@/lib/aiVideo';
 import MediaScreen from './MediaScreen';
 import ReportScreen from './ReportScreen';
@@ -2797,7 +2797,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
         // Rete di sicurezza: un render bloccato da oltre 30 min e' morto (anche i
         // construction/Veo finiscono ben prima). Lo si chiude come fallito cosi'
         // non resta a occupare uno slot e impedire nuovi render all'infinito.
-        if (Date.now() - (job.createdAt || 0) > 1_800_000) {
+        if (Date.now() - (job.createdAt || 0) > deadTimeoutMs(job.template)) {
           setVideoJobs(patchVideoJob(job.id, { stage: 'failed', error: 'Render interrotto (timeout)' }));
           continue;
         }
@@ -2808,11 +2808,15 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
           // un job 'prep' non ce l'ha ancora, l'avvio è fallito (es. backend non
           // raggiungibile): lo chiudiamo come fallito così non resta uno
           // skeleton infinito in galleria e un contatore fantasma.
-          if (Date.now() - (job.createdAt || 0) > 180_000) {
+          if (Date.now() - (job.createdAt || 0) > prepTimeoutMs(job.template)) {
             setVideoJobs(patchVideoJob(job.id, { stage: 'failed', error: 'Avvio non riuscito' }));
             continue;
           }
-          setVideoJobs(patchVideoJob(job.id, { progress: Math.min(0.2, (job.progress || 0) + 0.02) }));
+          // Avanzamento "finto" ma sempre in movimento: si avvicina al soffitto del
+          // prep con un incremento minimo garantito -> non sembra mai fermo.
+          const ceil = prepCeiling(job.template);
+          const cur = job.progress || 0;
+          setVideoJobs(patchVideoJob(job.id, { progress: Math.min(ceil, cur + Math.max(0.006, (ceil - cur) * 0.1)) }));
           continue;
         }
         try {

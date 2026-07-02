@@ -24,6 +24,26 @@ export type VideoJob = {
 const KEY = 'gnm_video_jobs';
 const MAX = 40;
 
+// Template che animano le foto LATO CLIENT prima di ottenere un renderId: la fase
+// 'prep' dura minuti (una clip Kling per foto), non secondi. Con la soglia da 3 min
+// venivano marcati falliti a meta' animazione e sparivano dal tray. Soglie estese.
+const CLIENT_ANIMATE = new Set(['walkthrough', 'ai_staging', 'construction', 'day_night']);
+export function prepTimeoutMs(template: string): number {
+  return CLIENT_ANIMATE.has(template) ? 1_200_000 : 180_000; // 20 min vs 3 min (no renderId)
+}
+export function deadTimeoutMs(template: string): number {
+  return CLIENT_ANIMATE.has(template) ? 2_700_000 : 1_800_000; // 45 min vs 30 min (render morto)
+}
+// Client-animate: l'animazione lato client E' il grosso del lavoro (~85%), il render
+// server (concat) e' rapido. La barra 'prep' sale fin quasi a `prepCeiling`, poi il
+// render reale riparte da `renderStartProgress` (piu' alto) -> nessuna regressione.
+export function prepCeiling(template: string): number {
+  return CLIENT_ANIMATE.has(template) ? 0.82 : 0.2;
+}
+export function renderStartProgress(template: string): number {
+  return CLIENT_ANIMATE.has(template) ? 0.85 : 0.25;
+}
+
 export function loadVideoJobs(): VideoJob[] {
   if (typeof window === 'undefined') return [];
   try { return JSON.parse(localStorage.getItem(KEY) || '[]'); } catch { return []; }
@@ -143,7 +163,7 @@ export function mergeServerJobs(server: VideoJob[]): VideoJob[] {
     if (j.stage !== 'render') return j;
     const age = nowMs - (j.createdAt || 0);
     const hasRenderId = !!(j.ctx as { renderId?: string } | undefined)?.renderId;
-    if ((!hasRenderId && age > 180_000) || age > 1_800_000) {
+    if ((!hasRenderId && age > prepTimeoutMs(j.template)) || age > deadTimeoutMs(j.template)) {
       return { ...j, stage: 'failed' as const, error: hasRenderId ? 'Render interrotto (timeout)' : 'Avvio non riuscito' };
     }
     return j;

@@ -15,7 +15,7 @@ import {
 import { saveSingleGenerationToBatch, deleteBatchPhoto } from '@/lib/stagingBatches';
 import { saveOriginalMedia } from '@/lib/localMediaCache';
 
-type Photo = { id: string; dataUrl: string; name: string; w: number; h: number };
+type Photo = { id: string; dataUrl: string; name: string; w: number; h: number; isPlan?: boolean };
 
 const GEN_SECONDS = 45; // countdown estimate, same ballpark as the extension
 const POLL_INTERVAL_MS = 2500;
@@ -153,23 +153,14 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
   const [customPrompt, setCustomPrompt] = React.useState('');
   // Avviso dismissibile quando l'upload viene tagliato dalla quota (es. resti 1 foto, ne carichi 5).
   const [capNote, setCapNote] = React.useState<string | null>(null);
-  // Planimetria rilevata (foto singola) -> render 2D arredato (layout-preserving), niente prompt libero.
-  // `notPlan` = l'utente ha detto "non e' una planimetria" -> torna FotoAI normale.
-  const [detectedPlan, setDetectedPlan] = React.useState(false);
+  // Planimetria = SOLO da sola (una foto, flag isPlan). Rilevata in addFiles e mai
+  // mescolata a foto normali. `notPlan` = "non e' una planimetria" -> torna FotoAI.
+  // `planNotice` = avviso dismissibile quando una planimetria viene rimossa dal mix.
   const [notPlan, setNotPlan] = React.useState(false);
-  React.useEffect(() => {
-    let cancelled = false;
-    setNotPlan(false); // ogni nuovo upload azzera l'override
-    if (photos.length === 1) {
-      detectFloorPlan(photos[0].dataUrl).then(v => {
-        if (cancelled) return;
-        setDetectedPlan(v);
-        if (v) { setCustomPrompt(''); setSelAngle(null); }
-      });
-    } else setDetectedPlan(false);
-    return () => { cancelled = true; };
-  }, [photos]);
-  const isFloorPlan = detectedPlan && !notPlan;
+  const [planNotice, setPlanNotice] = React.useState<string | null>(null);
+  React.useEffect(() => { setNotPlan(false); }, [photos]); // ogni nuovo upload azzera l'override
+  const isFloorPlan = photos.length === 1 && !!photos[0]?.isPlan && !notPlan;
+  React.useEffect(() => { if (isFloorPlan) { setCustomPrompt(''); setSelAngle(null); } }, [isFloorPlan]);
   const [generating, setGenerating] = React.useState(false);
   const [countdown, setCountdown] = React.useState(GEN_SECONDS);
   const [result, setResult] = React.useState<{ before: string; after: string } | null>(null);
@@ -337,7 +328,7 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
   React.useEffect(() => {
     if (!didMount.current) { didMount.current = true; return; }
     clearPending();
-    setPhotos([]); setSelStyle(demoMode ? 'modern' : null); setSelAngle(null); setCustomPrompt(''); setActivePhotoId(null); setCapNote(null);
+    setPhotos([]); setSelStyle(demoMode ? 'modern' : null); setSelAngle(null); setCustomPrompt(''); setActivePhotoId(null); setCapNote(null); setPlanNotice(null);
     setResult(null); setRevealing(null); setReprompt(''); setBatchDone(null); setError(null); setGenerating(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [routeKey]);
@@ -401,7 +392,7 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
       setCapNote(null);
     }
     try {
-      const converted = await Promise.all(accepted.map(async f => {
+      const converted: Photo[] = await Promise.all(accepted.map(async f => {
         const dataUrl = await fileToResizedDataUrl(f);
         const dims = await new Promise<{w:number;h:number}>(res => {
           const img = new Image();
@@ -409,9 +400,25 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
           img.onerror = () => res({ w: 1, h: 1 });
           img.src = dataUrl;
         });
-        return { id: `${Date.now()}-${Math.random()}`, dataUrl, name: f.name, ...dims };
+        const isPlan = await detectFloorPlan(dataUrl);
+        return { id: `${Date.now()}-${Math.random()}`, dataUrl, name: f.name, ...dims, isPlan };
       }));
-      setPhotos(p => [...p, ...converted]);
+      // Regola: planimetria e foto NON coesistono. Se il set risultante mescola
+      // planimetrie e foto -> tieni le foto, togli le planimetrie e avvisa. Se
+      // solo planimetrie -> una sola. La foto vince sempre sulla planimetria.
+      const all = [...photos, ...converted];
+      const photosOnly = all.filter(p => !p.isPlan);
+      const plansOnly = all.filter(p => p.isPlan);
+      let next: Photo[]; let notice: string | null = null;
+      if (photosOnly.length > 0) {
+        next = photosOnly;
+        if (plansOnly.length > 0) notice = 'Planimetria rilevata e rimossa: le planimetrie vanno caricate da sole, non insieme alle foto.';
+      } else {
+        next = plansOnly.slice(0, 1);
+        if (plansOnly.length > 1) notice = 'Carica una sola planimetria alla volta.';
+      }
+      setPhotos(next);
+      setPlanNotice(notice);
       setError(null);
     } catch {
       toast('Errore lettura immagine', 'x');
@@ -566,7 +573,7 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
   const resetAll = () => {
     clearPending();
     currentBatchId.current = null;
-    setPhotos([]); setSelStyle(null); setSelAngle(null); setCustomPrompt(''); setCapNote(null);
+    setPhotos([]); setSelStyle(null); setSelAngle(null); setCustomPrompt(''); setCapNote(null); setPlanNotice(null);
     setResult(null); setRevealing(null); setReprompt(''); setBatchDone(null); setError(null); setGenerating(false); setResultIsPlan(false);
   };
 
@@ -636,6 +643,15 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
               <div style={{ fontSize: 14, color: '#9a3412', lineHeight: 1.5 }}>{capNote}</div>
               <button onClick={() => setCapNote(null)} aria-label="Chiudi" style={{ position: 'absolute', top: 10, right: 10, width: 28, height: 28, border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8 }}>
                 <Icon name="x" size={16} color="#9a3412" />
+              </button>
+            </div>
+          )}
+          {/* Avviso planimetria rimossa dal mix (con X). */}
+          {planNotice && (
+            <div style={{ position: 'relative', width: '100%', boxSizing: 'border-box', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 14, padding: '14px 46px 14px 18px', marginBottom: 20 }}>
+              <div style={{ fontSize: 14, color: '#1d5fd0', lineHeight: 1.5 }}>{planNotice}</div>
+              <button onClick={() => setPlanNotice(null)} aria-label="Chiudi" style={{ position: 'absolute', top: 10, right: 10, width: 28, height: 28, border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8 }}>
+                <Icon name="x" size={16} color="#1d5fd0" />
               </button>
             </div>
           )}
