@@ -452,9 +452,17 @@ export function HomeScreen({
                 <Icon name="image" size={24} color="#8c867d" />
               </div>
               <div style={{ fontSize: 16, fontWeight: 700, color: '#211f1c', marginBottom: 4 }}>Nessun contenuto generato</div>
-              <div style={{ fontSize: 14, color: '#8c867d', maxWidth: 360, lineHeight: 1.5 }}>
+              <div style={{ fontSize: 14, color: '#8c867d', maxWidth: 360, lineHeight: 1.5, marginBottom: 20 }}>
                 Non hai ancora creato render o video AI per questo immobile. Usa gli strumenti qui sopra per iniziare.
               </div>
+              <Box as="button" onClick={() => go('staging')} style={{
+                display: 'inline-flex', alignItems: 'center', gap: 8, border: 'none',
+                background: 'linear-gradient(135deg, #3B83F6 0%, #6366f1 100%)', color: '#fff',
+                fontSize: 14.5, fontWeight: 700, padding: '13px 22px', borderRadius: 12, cursor: 'pointer',
+                boxShadow: '0 8px 24px rgba(99,102,241,0.25)', transition: 'transform .2s',
+              } as React.CSSProperties} hover={{ transform: 'translateY(-1px)' }}>
+                <Icon name="sparkles" size={17} color="#fff" />Crea Home Staging
+              </Box>
             </div>
           )}
         </div>

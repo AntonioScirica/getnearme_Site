@@ -382,6 +382,29 @@ export default function MediaScreen({
           <p style={{ margin: '0 0 24px', color: '#8c867d', fontSize: 14, maxWidth: 360, marginInline: 'auto' }}>
             Le foto generate in Foto AI e i video creati appariranno qui automaticamente.
           </p>
+          <div style={{ display: 'inline-flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
+            {filter !== 'staging' && (
+              <Box as="button" onClick={() => go?.('video')} style={{
+                display: 'inline-flex', alignItems: 'center', gap: 8,
+                fontSize: 14.5, fontWeight: 700, padding: '13px 22px', borderRadius: 12, cursor: 'pointer', transition: 'transform .2s',
+                ...(filter === 'video'
+                  ? { border: 'none', background: 'linear-gradient(135deg, #3B83F6 0%, #6366f1 100%)', color: '#fff', boxShadow: '0 8px 24px rgba(99,102,241,0.25)' }
+                  : { border: '1.5px solid #d8d4cb', background: '#fff', color: '#211f1c' }),
+              } as React.CSSProperties} hover={{ transform: 'translateY(-1px)' }}>
+                <Icon name="film" size={17} color={filter === 'video' ? '#fff' : '#3B83F6'} />Crea Video AI
+              </Box>
+            )}
+            {filter !== 'video' && (
+              <Box as="button" onClick={() => go?.('staging')} style={{
+                display: 'inline-flex', alignItems: 'center', gap: 8, border: 'none',
+                background: 'linear-gradient(135deg, #3B83F6 0%, #6366f1 100%)', color: '#fff',
+                fontSize: 14.5, fontWeight: 700, padding: '13px 22px', borderRadius: 12, cursor: 'pointer',
+                boxShadow: '0 8px 24px rgba(99,102,241,0.25)', transition: 'transform .2s',
+              } as React.CSSProperties} hover={{ transform: 'translateY(-1px)' }}>
+                <Icon name="sparkles" size={17} color="#fff" />Crea Home Staging
+              </Box>
+            )}
+          </div>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>

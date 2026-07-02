@@ -27,6 +27,25 @@ type Pending = { predictionId: string; before: string; style: string | null; cus
 
 import type { Project } from './types';
 
+// Esempi cliccabili: coppia prima/dopo (split con linea) da contenuti reali
+// pubblicati su Instagram (bucket Storage `content`, cartella slider/). Il click
+// auto-seleziona lo stile scritto sotto. Per aggiungerne: nuova coppia + styleId.
+type Example = { before?: string; after: string; label: string; styleId?: string; prompt?: string; note?: string };
+const IG_BASE = 'https://ecrnpyksnfyykqwnutwa.supabase.co/storage/v1/object/public/content';
+const OPT = `${IG_BASE}/examples/opt`; // versioni ottimizzate (WebP 640x480) per le thumbnail
+const STAGING_EXAMPLES: Example[] = [
+  { before: `${OPT}/mod_b.webp`, after: `${OPT}/mod_a.webp`, label: 'Moderno', styleId: 'modern' },
+  { before: `${OPT}/nor_b.webp`, after: `${OPT}/nor_a.webp`, label: 'Nordico', styleId: 'nordic' },
+  { before: `${OPT}/lux_b.webp`, after: `${OPT}/lux_a.webp`, label: 'Luxury', styleId: 'industrial' },
+  { before: `${OPT}/emp_b.webp`, after: `${OPT}/emp_a.webp`, label: 'Svuota stanza', styleId: 'empty' },
+  { before: `${OPT}/dn_b.webp`, after: `${OPT}/dn_a.webp`, label: 'Giorno e Notte', styleId: 'daynight' },
+  // Prompt libero SEMPLICE (micro-edit): prima/dopo mostra l'effetto. Click inserisce il testo.
+  { before: `${OPT}/sofa_b.webp`, after: `${OPT}/sofa_a.webp`, label: 'Cambia il divano in velluto verde', prompt: 'Cambia il divano in velluto verde' },
+  { before: `${OPT}/quad_b.webp`, after: `${OPT}/quad_a.webp`, label: 'Metti un quadro sopra il divano', prompt: 'Metti un quadro sopra il divano' },
+  // Planimetria: illustrativo (il render parte auto all'upload di una planimetria).
+  { before: `${OPT}/plan_b2.webp`, after: `${OPT}/plan_a2.webp`, label: 'Planimetria → render 2D', note: 'Carica una planimetria: il render 2D parte in automatico.' },
+];
+
 // Pacchetti foto extra (Stripe Payment Links reali da ai_photo_packages).
 const PHOTO_PACKS = [
   { id: 'ai-listing-boost', name: 'Listing Boost', photos: 500, price: 50, popular: false, link: 'https://buy.stripe.com/00wdR92Cn6nx36U01aak00A' },
@@ -132,7 +151,9 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
   React.useEffect(() => { if (demoMode) setSelStyle('modern'); }, [demoMode]);
   const [selAngle, setSelAngle] = React.useState<string | null>(null);
   const [customPrompt, setCustomPrompt] = React.useState('');
-  // Planimetria rilevata (foto singola) -> render 3D isometrico, niente prompt libero.
+  // Avviso dismissibile quando l'upload viene tagliato dalla quota (es. resti 1 foto, ne carichi 5).
+  const [capNote, setCapNote] = React.useState<string | null>(null);
+  // Planimetria rilevata (foto singola) -> render 2D arredato (layout-preserving), niente prompt libero.
   // `notPlan` = l'utente ha detto "non e' una planimetria" -> torna FotoAI normale.
   const [detectedPlan, setDetectedPlan] = React.useState(false);
   const [notPlan, setNotPlan] = React.useState(false);
@@ -314,7 +335,7 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
   React.useEffect(() => {
     if (!didMount.current) { didMount.current = true; return; }
     clearPending();
-    setPhotos([]); setSelStyle(demoMode ? 'modern' : null); setSelAngle(null); setCustomPrompt(''); setActivePhotoId(null);
+    setPhotos([]); setSelStyle(demoMode ? 'modern' : null); setSelAngle(null); setCustomPrompt(''); setActivePhotoId(null); setCapNote(null);
     setResult(null); setRevealing(null); setReprompt(''); setBatchDone(null); setError(null); setGenerating(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [routeKey]);
@@ -350,12 +371,35 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
   const addFiles = async (files: FileList | File[]) => {
     const list = Array.from(files).filter(f => f.type.startsWith('image/'));
     if (!list.length) return;
-    if (photos.length + list.length > MAX_BATCH_PHOTOS) {
-      toast(`Massimo ${MAX_BATCH_PHOTOS} foto`, 'x');
+    // Spazio disponibile = min(tetto batch, foto rimanenti nel piano) meno quelle gia' caricate.
+    // Non carichiamo mai piu' foto di quante se ne possano generare: se resti 1 e ne trascini 5,
+    // ne teniamo 1 e mostriamo un banner (con X) invece di caricarle tutte e bloccare il batch.
+    const hardRoom = MAX_BATCH_PHOTOS - photos.length;
+    const quotaRoom = quota ? Math.max(0, quota.remaining - photos.length) : Infinity;
+    const room = Math.min(hardRoom, quotaRoom);
+    if (room <= 0) {
+      if (quota && quotaRoom <= 0) {
+        setCapNote(quota.remaining <= 0
+          ? 'Hai finito le foto di questo mese. Acquista un pacchetto extra per continuare.'
+          : `Hai gia caricato le ${quota.remaining} foto che ti restano questo mese.`);
+      } else {
+        toast(`Massimo ${MAX_BATCH_PHOTOS} foto`, 'x');
+      }
       return;
     }
+    let accepted = list;
+    if (list.length > room) {
+      accepted = list.slice(0, room);
+      if (quota && quotaRoom <= hardRoom) {
+        setCapNote(`Ti ${quota.remaining === 1 ? 'resta 1 foto' : `restano ${quota.remaining} foto`} questo mese: ne ho caricat${accepted.length === 1 ? 'a 1' : `e ${accepted.length}`}, non tutte e ${list.length}. Acquista un pacchetto extra per caricarne di piu.`);
+      } else {
+        toast(`Massimo ${MAX_BATCH_PHOTOS} foto`, 'x');
+      }
+    } else {
+      setCapNote(null);
+    }
     try {
-      const converted = await Promise.all(list.map(async f => {
+      const converted = await Promise.all(accepted.map(async f => {
         const dataUrl = await fileToResizedDataUrl(f);
         const dims = await new Promise<{w:number;h:number}>(res => {
           const img = new Image();
@@ -375,6 +419,15 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
   const pickStyle = (id: string) => { if (generating) return; setSelStyle(v => v === id ? null : id); setSelAngle(null); setCustomPrompt(''); };
   const pickAngle = (id: string) => { if (generating) return; setSelAngle(v => v === id ? null : id); setSelStyle(null); setCustomPrompt(''); };
   const onPrompt = (v: string) => { if (generating) return; setCustomPrompt(v); if (v.trim()) { setSelStyle(null); setSelAngle(null); } };
+  const setupRef = React.useRef<HTMLDivElement>(null);
+  // Click su un esempio: applica lo stile (o il prompt) e riporta l'utente in cima al setup.
+  const applyExample = (ex: Example) => {
+    if (generating) return;
+    if (ex.styleId) { setSelStyle(ex.styleId); setSelAngle(null); setCustomPrompt(''); toast(`Stile "${ex.label}" selezionato`, 'sparkles'); }
+    else if (ex.prompt) { setCustomPrompt(ex.prompt); setSelStyle(null); setSelAngle(null); toast('Prompt inserito', 'sparkles'); }
+    else if (ex.note) { toast(ex.note, 'sparkles'); return; } // planimetria: solo hint, niente selezione/scroll
+    setupRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
 
   const isBatch = photos.length > 1;
   const outOfQuota = !!quota && quota.remaining <= 0;
@@ -510,7 +563,7 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
   const resetAll = () => {
     clearPending();
     currentBatchId.current = null;
-    setPhotos([]); setSelStyle(null); setSelAngle(null); setCustomPrompt('');
+    setPhotos([]); setSelStyle(null); setSelAngle(null); setCustomPrompt(''); setCapNote(null);
     setResult(null); setRevealing(null); setReprompt(''); setBatchDone(null); setError(null); setGenerating(false);
   };
 
@@ -573,7 +626,16 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
 
       {/* ── SETUP (upload + style/prompt) — stays visible during reveal ── */}
       {((!result && batchDone === null) || revealing) && (
-        <div style={{ position: 'relative' }}>
+        <div ref={setupRef} style={{ position: 'relative' }}>
+          {/* Avviso dismissibile: upload tagliato dalla quota (con X per chiudere). */}
+          {capNote && (
+            <div style={{ position: 'relative', width: '100%', boxSizing: 'border-box', background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: 14, padding: '14px 46px 14px 18px', marginBottom: 20 }}>
+              <div style={{ fontSize: 14, color: '#9a3412', lineHeight: 1.5 }}>{capNote}</div>
+              <button onClick={() => setCapNote(null)} aria-label="Chiudi" style={{ position: 'absolute', top: 10, right: 10, width: 28, height: 28, border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8 }}>
+                <Icon name="x" size={16} color="#9a3412" />
+              </button>
+            </div>
+          )}
           {/* Avviso quota esaurita / batch insufficiente: banner a tutta larghezza. */}
           {((outOfQuota && !lockBrand) || notEnoughForBatch) && (
             <div style={{ width: '100%', boxSizing: 'border-box', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 14, padding: '16px 18px', marginBottom: 20 }}>
@@ -811,7 +873,7 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
                   <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 14, padding: '12px 14px' }}>
                     <span style={{ display: 'flex', flexShrink: 0, marginTop: 1 }}><Icon name="sparkles" size={16} color="#1d5fd0" /></span>
                     <div style={{ fontSize: 12.5, lineHeight: 1.45, color: '#1d5fd0' }}>
-                      <b>Planimetria rilevata.</b> Verrà creato un render 3D isometrico dell'appartamento. Scegli lo stile d'arredo qui sotto.
+                      <b>Planimetria rilevata.</b> Verrà creato un render 2D arredato mantenendo la disposizione delle stanze. Scegli lo stile d'arredo qui sotto.
                       <button onClick={() => { if (generating) return; setNotPlan(true); }} style={{ display: 'block', marginTop: 6, padding: 0, background: 'none', border: 'none', color: '#1d5fd0', fontWeight: 700, fontSize: 12.5, textDecoration: 'underline', cursor: 'pointer' }}>Non è una planimetria</button>
                     </div>
                   </div>
@@ -819,7 +881,7 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
                 <div style={{ background: '#fff', border: '1px solid #f0ede7', borderRadius: 16, padding: 20, boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
                   <div style={{ fontSize: 11, fontWeight: 700, color: '#b3aca1', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 14 }}>{isFloorPlan ? "Stile d'arredo" : 'Stile'}</div>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
-                    {STAGING_STYLES.map(st => {
+                    {STAGING_STYLES.filter(st => !isFloorPlan || !['daynight', 'empty'].includes(st.id)).map(st => {
                       const sel = selStyle === st.id;
                       return (
                         <div key={st.id} className="group" onClick={() => pickStyle(st.id)} title={st.desc} style={{
@@ -865,7 +927,7 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
                   <span className={mainActive ? "group-hover:rotate-12 transition-transform duration-300" : ""} style={{ display: 'flex' }}>
                     <Icon name={outOfQuota ? (lockBrand ? 'crown' : 'zap') : 'sparkles'} size={18} color={mainActive ? "#fff" : "#9ca3af"} />
                   </span>
-                  {outOfQuota ? (lockBrand ? 'Vedi i piani' : 'Ottieni altre foto') : notEnoughForBatch ? `Restano solo ${quota!.remaining} foto` : (isBatch ? `Genera ${photos.length} foto` : isFloorPlan ? 'Crea render 3D' : 'Genera foto')}
+                  {outOfQuota ? (lockBrand ? 'Vedi i piani' : 'Ottieni altre foto') : notEnoughForBatch ? `Restano solo ${quota!.remaining} foto` : (isBatch ? `Genera ${photos.length} foto` : isFloorPlan ? 'Crea render 2D' : 'Genera foto')}
                 </button>
                 ); })()}
 
@@ -874,6 +936,50 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
           </div>
         </div>
 
+        {/* Esempi: clicca una foto per auto-selezionare lo stile (o il prompt) scritto sotto. */}
+        <div style={{ marginTop: 32, paddingTop: 32, borderTop: '1px solid #ece9e3' }}>
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ fontSize: 17, fontWeight: 800, color: '#211f1c', letterSpacing: '-.2px' }}>Esempi</div>
+            <div style={{ fontSize: 13.5, color: '#8c867d', marginTop: 3 }}>Clicca una foto per usare quello stile o il prompt</div>
+          </div>
+          <div className="max-md:!grid-cols-2" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+            {STAGING_EXAMPLES.map((ex, i) => {
+              const active = ex.styleId ? selStyle === ex.styleId : (!!ex.prompt && customPrompt === ex.prompt);
+              return (
+                <div key={i} onClick={() => applyExample(ex)} className="group" style={{
+                  borderRadius: 14, overflow: 'hidden', cursor: 'pointer', background: '#fff',
+                  border: active ? '2px solid #3B83F6' : '1px solid #f0ede7',
+                  boxShadow: active ? '0 6px 18px rgba(59,131,246,.15)' : '0 2px 10px rgba(0,0,0,.03)',
+                  transition: 'all .2s cubic-bezier(.4,0,.2,1)',
+                }}>
+                  {/* Prima/dopo (stili/planimetria) split con linea; prompt semplici = immagine singola. */}
+                  <div style={{ position: 'relative', aspectRatio: '4 / 3', background: '#f4f2ee', overflow: 'hidden' }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={ex.after} alt={`${ex.label}${ex.before ? ' dopo' : ''}`} loading="lazy" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                    {ex.before && (
+                      <>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={ex.before} alt={`${ex.label} prima`} loading="lazy" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block', clipPath: 'inset(0 50% 0 0)' }} />
+                        <div style={{ position: 'absolute', top: 0, bottom: 0, left: '50%', width: 2, marginLeft: -1, background: '#fff', boxShadow: '0 0 4px rgba(0,0,0,.45)' }} />
+                        <span style={{ position: 'absolute', bottom: 8, left: 8, background: 'rgba(0,0,0,.55)', color: '#fff', fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 99, backdropFilter: 'blur(2px)' }}>Prima</span>
+                        <span style={{ position: 'absolute', bottom: 8, right: 8, background: 'rgba(0,0,0,.55)', color: '#fff', fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 99, backdropFilter: 'blur(2px)' }}>Dopo</span>
+                      </>
+                    )}
+                    {active && (
+                      <div style={{ position: 'absolute', top: 8, right: 8, background: '#3B83F6', borderRadius: '50%', padding: 3, display: 'flex', border: '2px solid #fff' }}>
+                        <Icon name="check" size={11} color="#fff" />
+                      </div>
+                    )}
+                  </div>
+                  <div style={{ padding: '10px 12px', display: 'flex', alignItems: 'flex-start', gap: 6, minWidth: 0 }} title={ex.label}>
+                    <span style={{ display: 'flex', flexShrink: 0, marginTop: 1 }}><Icon name={ex.prompt ? 'pencil' : 'sparkles'} size={13} color={active ? '#1d5fd0' : '#8c867d'} /></span>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: active ? '#1d5fd0' : '#57534c', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', lineHeight: 1.35 }}>{ex.label}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
 
       </div>
       )}
