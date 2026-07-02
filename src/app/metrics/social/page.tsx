@@ -91,6 +91,18 @@ import {
 // render with the client stylesheets. Done once at module load.
 setPreviewCss(PED_CSS, STORY_CSS);
 
+// Slot orario REALE del topic: legge content_data.slot_time dei contenuti generati
+// (= quello che usa publish-ped per pubblicare). Fallback a getPublishTime (posizione)
+// solo per topic non ancora generati. Evita che le spunte finiscano su righe/orari
+// sbagliati quando l'ordine di generazione non combacia con quello del calendario.
+function slotOf(t: Topic, dayList: Topic[], contentByTopic: Record<string, ContentItem[]>): string {
+  for (const c of (contentByTopic[t.id] || [])) {
+    const s = (c.content_data as { slot_time?: string } | null | undefined)?.slot_time;
+    if (s) return s;
+  }
+  return getPublishTime(t, dayList);
+}
+
 function TemplateFrame({ html, w, h, scale, css }: { html: string; w: number; h: number; scale: number; css?: string }) {
   const ref = useRef<HTMLIFrameElement>(null);
   const cleanCss = (css || TEMPLATE_CSS).replace(/@import\s+url\([^)]+\);?\s*/g, "");
@@ -227,19 +239,18 @@ export default function SocialDashboard() {
       const feed = map[day].filter((t) => !isVideoTopic(t) && !isTipTopic(t));
       const video = map[day].filter((t) => isVideoTopic(t));
       const tips = map[day].filter((t) => isTipTopic(t));
-      // Chronological order matching the slots used by getPublishTime:
-      // feed → 09:00, 12:00, 18:00, 20:00 (FEED_SLOTS), video → 15:00, tip → 20:00.
-      // Video sits between the 12:00 and 18:00 feed posts.
-      const sorted: Topic[] = [
+      // Ordine cronologico per slot REALE (content_data.slot_time). Fallback alla
+      // posizione (getPublishTime) solo per topic non generati.
+      const baseOrder: Topic[] = [
         ...feed.slice(0, 2),
         ...video,
         ...feed.slice(2),
         ...tips,
       ];
-      map[day] = sorted;
+      map[day] = [...baseOrder].sort((a, b) => slotOf(a, baseOrder, contentByTopic).localeCompare(slotOf(b, baseOrder, contentByTopic)));
     }
     return map;
-  }, [topics]);
+  }, [topics, contentByTopic]);
 
   if (!authKey) return null;
 
@@ -330,7 +341,7 @@ export default function SocialDashboard() {
               onRefresh={loadCalendar}
               onSelect={(topic) => {
                 const dayTopics = topicsByDay[topic.plan_date] || [];
-                setPreview({ topic, items: contentByTopic[topic.id] || [], publishTime: getPublishTime(topic, dayTopics) });
+                setPreview({ topic, items: contentByTopic[topic.id] || [], publishTime: slotOf(topic, dayTopics, contentByTopic) });
               }}
             />
           )}
@@ -439,7 +450,7 @@ function CalendarView({
                     const published = items.some((c) => c.published_at);
                     const storyPublished = items.some((c) => c.ig_story_id);
                     const color = RUBRIC_COLORS[t.rubric] || "bg-gray-500/20 text-gray-300 border-gray-500/30";
-                    const time = getPublishTime(t, dayTopics);
+                    const time = slotOf(t, dayTopics, contentByTopic);
                     return (
                       <button
                         key={t.id}
@@ -488,7 +499,7 @@ function CalendarView({
                   const published = items.some((c) => c.published_at);
                   const storyPublished = items.some((c) => c.ig_story_id);
                   const color = RUBRIC_COLORS[t.rubric] || "bg-gray-500/20 text-gray-300 border-gray-500/30";
-                  const time = getPublishTime(t, dayTopics);
+                  const time = slotOf(t, dayTopics, contentByTopic);
                   return (
                     <button
                       key={t.id}

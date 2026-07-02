@@ -474,17 +474,22 @@ export default function ReportScreen({
     doc.write(finalHtml);
     doc.close();
     const win = iframe.contentWindow;
+    // Handler nominati + cleanup: senza rimuoverli, ogni ri-render (edit, toggle
+    // colonne/sezioni) accumula un nuovo listener su contentWindow → memory leak.
+    const onScroll = () => { if (win) scrollPos.current = win.scrollY; };
+    let onLoad: (() => void) | null = null;
+    let measureTimeout: ReturnType<typeof setTimeout> | null = null;
     if (win) {
       win.scrollTo(0, savedScroll);
-      win.addEventListener('scroll', () => { scrollPos.current = win.scrollY; }, { passive: true });
+      win.addEventListener('scroll', onScroll, { passive: true });
     }
     if (isMobile) {
       const measure = () => setDocH(doc.documentElement.scrollHeight || doc.body.scrollHeight || 0);
       measure();
       // Ri-misura dopo il caricamento di immagini/foto cover.
-      const t = setTimeout(measure, 400);
-      win?.addEventListener('load', measure);
-      void t;
+      measureTimeout = setTimeout(measure, 400);
+      onLoad = measure;
+      win?.addEventListener('load', onLoad);
     } else {
       setDocH(0);
     }
@@ -502,6 +507,11 @@ export default function ReportScreen({
         span.scrollIntoView({ block: 'center', behavior: 'smooth' });
       }
     }
+    return () => {
+      win?.removeEventListener('scroll', onScroll);
+      if (onLoad) win?.removeEventListener('load', onLoad);
+      if (measureTimeout) clearTimeout(measureTimeout);
+    };
   }, [buildHtml, hasProperties, isMobile]);
 
   const handlePrint = async () => {

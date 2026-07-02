@@ -117,6 +117,25 @@ export default async function handler(req, res) {
     }
   }
 
+  // Recovery: righe bloccate in 'publishing' (crash/timeout tra claim e
+  // markPublished) non verrebbero mai più riprese. A inizio cron ogni
+  // 'publishing' e' stale: se e' gia' su IG marca pubblicato, altrimenti torna
+  // 'approved' (la dedup pre-publish ricontrolla IG, niente doppioni).
+  {
+    const { data: stuck } = await supabase
+      .from('generated_content')
+      .select('id, ig_post_id')
+      .eq('account_id', accountId)
+      .eq('type', 'ped')
+      .eq('status', 'publishing')
+      .lte('publish_date', day);
+    for (const s of (stuck || [])) {
+      await supabase.from('generated_content')
+        .update(s.ig_post_id ? { status: 'published' } : { status: 'approved', error: 'recovered_from_publishing' })
+        .eq('id', s.id);
+    }
+  }
+
   // ── Post mode ───────────────────────────────────────────────────────
   const { data: posts } = await supabase
     .from('generated_content')

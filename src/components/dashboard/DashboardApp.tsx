@@ -2845,7 +2845,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
             }
             setVideoJobs(patchVideoJob(job.id, patch));
           }
-        } catch { /* transiente, riprova al prossimo tick */ }
+        } catch (e) { console.warn('[video-poll] tick fallito (riprovo):', (e as Error)?.message); /* transiente */ }
       }
       if (!cancelled) await syncServerVideoJobs();
     }, 20000);
