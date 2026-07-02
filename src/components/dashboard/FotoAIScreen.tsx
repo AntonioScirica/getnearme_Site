@@ -173,6 +173,8 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
   const [generating, setGenerating] = React.useState(false);
   const [countdown, setCountdown] = React.useState(GEN_SECONDS);
   const [result, setResult] = React.useState<{ before: string; after: string } | null>(null);
+  // Il risultato mostrato e' un render di planimetria: azioni limitate (solo scarica + crea post).
+  const [resultIsPlan, setResultIsPlan] = React.useState(false);
   const [revealing, setRevealing] = React.useState<'burst' | 'line' | 'slider' | null>(null);
   const [reprompt, setReprompt] = React.useState('');
   const [batchDone, setBatchDone] = React.useState<number | null>(null); // itemCount
@@ -476,6 +478,7 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
     // Caso raro: già pronta al primo colpo
     if (res.outputUrl) {
       setResult({ before: opts.before, after: res.outputUrl });
+      setResultIsPlan(!!opts.planimetria);
       onCreated?.();
       setGenerating(false);
       setRevealing('burst');
@@ -564,7 +567,7 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
     clearPending();
     currentBatchId.current = null;
     setPhotos([]); setSelStyle(null); setSelAngle(null); setCustomPrompt(''); setCapNote(null);
-    setResult(null); setRevealing(null); setReprompt(''); setBatchDone(null); setError(null); setGenerating(false);
+    setResult(null); setRevealing(null); setReprompt(''); setBatchDone(null); setError(null); setGenerating(false); setResultIsPlan(false);
   };
 
   const inputStyle: React.CSSProperties = { width: '100%', border: '1px solid #e4e1da', borderRadius: 10, padding: '11px 14px', fontSize: 13.5, fontFamily: 'inherit', outline: 'none', background: '#fff', resize: 'vertical' };
@@ -821,7 +824,8 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
 
             {revealing === 'slider' && result ? (
               <>
-                {/* Reprompt (sopra) */}
+                {/* Reprompt (sopra) - nascosto sulle planimetrie (non si itera) */}
+                {!resultIsPlan && (
                 <div style={{ background: '#fff', border: '1px solid #f0ede7', borderRadius: 16, padding: 20, boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
                   <div style={{ fontSize: 11, fontWeight: 700, color: '#b3aca1', textTransform: 'uppercase', letterSpacing: '.06em', margin: '0 0 10px' }}>Modifica con un prompt</div>
                   <textarea value={reprompt} onChange={e => setReprompt(e.target.value)} maxLength={2000} rows={3} placeholder="Es. cambia il colore del divano in beige" style={inputStyle} />
@@ -838,6 +842,7 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
                     Rigenera
                   </button>
                 </div>
+                )}
 
                 {/* Export / salvataggio (sotto) */}
                 <div style={{ background: '#fff', border: '1px solid #f0ede7', borderRadius: 16, padding: 20, boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
@@ -851,10 +856,12 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
                         <Icon name="share" size={16} color="#1d5fd0" />
                         Crea post
                       </Box>
+                      {!resultIsPlan && (
                       <Box as="button" onClick={() => onGoVideo?.(result.after)} style={{ flex: 1, border: '1.5px solid #3B83F6', background: '#eff6ff', color: '#1d5fd0', fontSize: 14, fontWeight: 700, padding: '13px 20px', borderRadius: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 } as React.CSSProperties} hover={s('background:#dbeafe')}>
                         <Icon name="film" size={16} color="#1d5fd0" />
                         Crea video
                       </Box>
+                      )}
                     </div>
                     <Box as="button" onClick={resetAll} style={{ border: '1.5px solid #e4e1da', background: '#fff', color: '#211f1c', fontSize: 14, fontWeight: 600, padding: '13px 20px', borderRadius: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 } as React.CSSProperties} hover={s('background:#f8f7f5')}>
                       <Icon name="image-plus" size={16} color="#57534c" />

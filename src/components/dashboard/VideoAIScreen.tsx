@@ -2618,16 +2618,30 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
                 <Box as="button" onClick={startNew} style={s('border:1px solid #e4e1da;background:#fff;font-size:14px;font-weight:700;padding:12px 24px;border-radius:10px;cursor:pointer') as React.CSSProperties} hover={s('background:#f6f4f0')}>Nuovo video</Box>
               </div>
             </div>
-          ) : renderStage === 'failed' ? (
-            <div style={{ textAlign: 'center' }}>
-              <div style={s('width:52px;height:52px;border-radius:16px;background:#fef2f2;display:flex;align-items:center;justify-content:center;margin:0 auto 14px')}>
-                <Icon name="x" size={24} color="#dc2626" />
+          ) : renderStage === 'failed' ? (() => {
+            const isQuota = !!renderError && /quota/i.test(renderError);
+            return (
+            // Popup errore video: messaggio friendly + conferma rimborso credito.
+            <div onClick={startNew} style={{ position: 'fixed', inset: 0, zIndex: 1200, background: 'rgba(20,18,16,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+              <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 18, width: '100%', maxWidth: 400, padding: '28px 24px', textAlign: 'center', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
+                <div style={{ width: 56, height: 56, borderRadius: 16, background: isQuota ? '#fffbeb' : '#fef2f2', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                  <Icon name={isQuota ? 'crown' : 'x'} size={26} color={isQuota ? '#b45309' : '#dc2626'} />
+                </div>
+                <div style={{ fontSize: 18, fontWeight: 800, color: '#211f1c', marginBottom: 8 }}>{isQuota ? 'Quota video esaurita' : 'Il video non è riuscito'}</div>
+                {isQuota ? (
+                  <div style={{ fontSize: 14, color: '#57534c', lineHeight: 1.55, marginBottom: 22 }}>{renderError}</div>
+                ) : (
+                  <>
+                    <div style={{ fontSize: 14, color: '#57534c', lineHeight: 1.55, marginBottom: 6 }}>Ci dispiace, qualcosa è andato storto durante la generazione.</div>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: '#16a34a', marginBottom: 22 }}>Abbiamo rimborsato il credito: non ti è stato scalato nulla.</div>
+                  </>
+                )}
+                <Box as="button" onClick={startNew} style={{ width: '100%', border: 'none', background: '#3B83F6', color: '#fff', fontSize: 14.5, fontWeight: 700, padding: '13px 0', borderRadius: 12, cursor: 'pointer' } as React.CSSProperties} hover={s('background:#2b6fe0')}>{isQuota ? 'Ho capito' : 'Riprova'}</Box>
+                {!isQuota && renderError && <div style={{ fontSize: 11, color: '#c4bdb1', marginTop: 14, wordBreak: 'break-word' }}>{renderError}</div>}
               </div>
-              <div style={s('font-size:16px;font-weight:800;margin-bottom:8px')}>Generazione non riuscita</div>
-              <div style={s('color:#8c867d;font-size:13.5px;margin-bottom:20px')}>{renderError}</div>
-              <Box as="button" onClick={startNew} style={s('border:none;background:#3B83F6;color:#fff;font-size:14px;font-weight:700;padding:12px 24px;border-radius:10px;cursor:pointer') as React.CSSProperties} hover={s('background:#2b6fe0')}>Riprova</Box>
             </div>
-          ) : renderStage === 'background' ? (
+            );
+          })() : renderStage === 'background' ? (
             <div style={{ textAlign: 'center' }}>
               <div style={{ position: 'relative', width: 120, height: 120, margin: '0 auto 22px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 {/* Cerchi che pulsano dietro, molto fade */}
