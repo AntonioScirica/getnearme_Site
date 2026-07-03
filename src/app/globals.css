@@ -312,3 +312,13 @@ html {
     opacity: 0;
   }
 }
+
+/* iOS: input con font-size < 16px fa zoom automatico al focus. Su mobile forziamo
+   16px su tutti i controlli di form per evitare lo zoom (il desktop resta invariato). */
+@media (max-width: 767px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}
