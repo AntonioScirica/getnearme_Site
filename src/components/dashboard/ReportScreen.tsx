@@ -521,6 +521,7 @@ export default function ReportScreen({
       toast('Completo l\'analisi di zona…');
       for (let i = 0; i < 40 && poiLoadingRef.current; i++) await new Promise((r) => setTimeout(r, 300));
     }
+    toast('Apro l\'anteprima di stampa del PDF');
     iframeRef.current?.contentWindow?.print();
     void trackExport({ export_type: 'pdf_report' });
   };
@@ -668,7 +669,7 @@ export default function ReportScreen({
               )}
               <div className="max-md:!flex-none" style={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
                 <Box as="button" onClick={handlePrint} className="max-md:!px-3" style={s('border:none;background:#3B83F6;color:#fff;font-size:13.5px;font-weight:700;padding:10px 18px;border-radius:10px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;box-shadow:0 4px 12px rgba(59,131,246,.25)')} hover={s('background:#2563EB')}>
-                  <Icon name="download" size={16} color="#fff" /><span className="max-md:!hidden">{poiLoading ? 'Analisi zona…' : 'Scarica PDF'}</span>
+                  <Icon name="download" size={16} color="#fff" /><span className="max-md:!hidden">Scarica PDF{poiLoading && <span style={{ fontSize: 11.5, fontWeight: 600, opacity: 0.85 }}> (analisi zona in corso)</span>}</span>
                 </Box>
               </div>
             </>
@@ -682,7 +683,12 @@ export default function ReportScreen({
               <div style={s('background:#fff;border:1.5px dashed #d8d4cb;border-radius:14px;padding:56px;text-align:center;max-width:520px')}>
                 <div style={s('width:52px;height:52px;border-radius:16px;background:#eef4fe;display:flex;align-items:center;justify-content:center;margin:0 auto 14px')}><Icon name="file-text" size={24} color="#3B83F6" /></div>
                 <div style={s('font-size:15px;font-weight:800;margin-bottom:6px')}>Nessun immobile</div>
-                <div style={s('color:#8c867d;font-size:13.5px')}>Crea o seleziona un immobile per generare il report.</div>
+                <div style={s('color:#8c867d;font-size:13.5px')}>Crea o seleziona un immobile dalla barra in alto per generare il report.</div>
+                {go && (
+                  <Box as="button" onClick={() => go('home')} style={s('border:none;background:#3B83F6;color:#fff;font-size:13.5px;font-weight:700;padding:10px 18px;border-radius:10px;cursor:pointer;margin-top:16px;display:inline-flex;align-items:center;gap:8px')} hover={s('background:#2563EB')}>
+                    <Icon name="plus" size={15} color="#fff" />Crea immobile
+                  </Box>
+                )}
               </div>
             </div>
           ) : isMobile && pvW > 0 ? (

@@ -598,7 +598,10 @@ body { font-family: 'Inter', -apple-system, sans-serif; color: #111827; backgrou
             <Icon name="info" size={15} color="#1d5fd0" style={{ marginTop: 1 }} />
             <div style={{ fontSize: 12, lineHeight: 1.45, color: '#1d5fd0', fontWeight: 600 }}>
               {blocked
-                ? <>Hai usato tutte le {FREE_LIMIT} analisi gratuite. <span onClick={() => go?.('account')} style={{ textDecoration: 'underline', fontWeight: 800, cursor: 'pointer' }}>Passa a un piano</span> per analisi illimitate.</>
+                ? <>
+                    <div>Hai usato tutte le {FREE_LIMIT} analisi gratuite, i piani Agency le hanno illimitate.</div>
+                    <Box as="button" onClick={() => go?.('account')} style={s('border:none;background:#3B83F6;color:#fff;font-size:12px;font-weight:700;padding:8px 14px;border-radius:8px;cursor:pointer;margin-top:8px;display:inline-flex;align-items:center')} hover={s('background:#2563EB')}>Passa a un piano</Box>
+                  </>
                 : <>Piano Free: {remaining} analisi di zona rimaste su {FREE_LIMIT}. I piani Agency le hanno illimitate.</>}
             </div>
           </div>

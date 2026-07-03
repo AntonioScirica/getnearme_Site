@@ -394,7 +394,7 @@ export function ImportProjectsModal({
                 </div>
                 <div>
                   <div style={{ fontSize: 16, fontWeight: 800, color: '#211f1c', letterSpacing: '-0.2px' }}>Import completato</div>
-                  <div style={{ fontSize: 13, color: '#8c867d', marginTop: 2 }}>I tuoi immobili sono pronti.</div>
+                  <div style={{ fontSize: 13, color: '#8c867d', marginTop: 2 }}>I tuoi immobili sono pronti. Li trovi in Tutti gli immobili.</div>
                 </div>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>

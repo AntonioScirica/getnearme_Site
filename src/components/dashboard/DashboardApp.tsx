@@ -2688,6 +2688,9 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
     return () => { hov.removeEventListener('change', on); narrow.removeEventListener('change', on); };
   }, []);
   const [projQuery, setProjQuery] = useState('');
+  // Conferma eliminazione immobile (azione distruttiva -> mai one-click).
+  const [confirmDelProj, setConfirmDelProj] = useState<{ id: string; nome: string } | null>(null);
+  const [delProjLoading, setDelProjLoading] = useState(false);
   const [activeProject, setActiveProject] = useState(() =>
     typeof window !== 'undefined' ? localStorage.getItem('gnm_active_project') ?? 'p1' : 'p1'
   );
@@ -3435,9 +3438,16 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
               <div style={{ position: 'relative' }} title="Lavori in corso">
                 <Box as="button" onClick={(e) => { e.stopPropagation(); setTrayOpen((o) => !o); setProjOpen(false); setNotifOpen(false); setProfileOpen(false); }} aria-label="Lavori in corso" style={s('border:none;background:transparent;width:38px;height:38px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;position:relative')} hover={s('background:#f1efe9')}>
                   <Icon name="inbox" size={18} />
-                  {((tourStep !== null && tourStep >= 6) || batches.filter(b => b.status === 'processing' || b.status === 'pending').length > 0 || videoJobs.some(j => j.stage === 'render' && !j.dismissed)) && (
-                    <div style={{ position: 'absolute', top: 6, right: 6, width: 8, height: 8, borderRadius: '50%', background: '#3B83F6', border: '2px solid var(--bg-card)' }} />
-                  )}
+                  {(() => {
+                    // Badge con conteggio job attivi (distinto dal pallino notifiche).
+                    const activeCount = batches.filter(b => b.status === 'processing' || b.status === 'pending').length + videoJobs.filter(j => j.stage === 'render' && !j.dismissed).length;
+                    const showTourDot = tourStep !== null && tourStep >= 6;
+                    if (!activeCount && !showTourDot) return null;
+                    if (activeCount > 0) return (
+                      <div style={{ position: 'absolute', top: 2, right: 2, minWidth: 15, height: 15, padding: '0 3px', boxSizing: 'border-box', borderRadius: 99, background: '#3B83F6', border: '2px solid var(--bg-card)', color: '#fff', fontSize: 9, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}>{activeCount}</div>
+                    );
+                    return <div style={{ position: 'absolute', top: 6, right: 6, width: 8, height: 8, borderRadius: '50%', background: '#3B83F6', border: '2px solid var(--bg-card)' }} />;
+                  })()}
                 </Box>
                 {trayOpen && (
                   <div data-tour-tray style={s('position:absolute;top:46px;right:0;width:330px;background:var(--bg-card);border-radius:12px;box-shadow:0 16px 48px rgba(33,31,28,.16);border:1px solid var(--border-light);overflow:hidden;z-index:50')}>
@@ -3741,7 +3751,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                                 <Box as="button" onClick={() => { setImmMenuId(null); setActiveProject(p.id); setEditProjOpen(true); }} style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '10px 12px', borderRadius: 8, border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 13.5, fontWeight: 600, color: '#211f1c', textAlign: 'left' } as React.CSSProperties} hover={{ background: 'var(--bg-hover)' }}>
                                   <Icon name="pencil" size={16} color="#57534c" />Modifica
                                 </Box>
-                                <Box as="button" onClick={async () => { setImmMenuId(null); const ok = await deleteProject(p.id); if (!ok) { toast('Errore eliminazione', 'x'); return; } if (activeProject === p.id) { const rem = projects.filter(x => x.id !== p.id); setActiveProject(rem[0]?.id || ''); } setProjects(prev => prev.filter(x => x.id !== p.id)); toast('Immobile eliminato', 'check'); }} style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '10px 12px', borderRadius: 8, border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 13.5, fontWeight: 600, color: '#dc2626', textAlign: 'left' } as React.CSSProperties} hover={{ background: '#fef2f2' }}>
+                                <Box as="button" onClick={() => { setImmMenuId(null); setConfirmDelProj({ id: p.id, nome: p.nome }); }} style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '10px 12px', borderRadius: 8, border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 13.5, fontWeight: 600, color: '#dc2626', textAlign: 'left' } as React.CSSProperties} hover={{ background: '#fef2f2' }}>
                                   <Icon name="trash-2" size={16} color="#dc2626" />Elimina
                                 </Box>
                               </div>
@@ -3884,6 +3894,36 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
             toast(`Import: ${res.created} creati, ${res.updated} aggiornati${res.skipped ? `, ${res.skipped} saltati` : ''}`, 'check');
           }}
         />
+      )}
+
+      {/* CONFERMA ELIMINA IMMOBILE */}
+      {confirmDelProj && (
+        <div onClick={() => !delProjLoading && setConfirmDelProj(null)} style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(20,18,16,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: '#fff', borderRadius: 16, width: '100%', maxWidth: 400, padding: '26px 24px', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
+            <div style={{ width: 48, height: 48, borderRadius: 14, background: '#fef2f2', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}>
+              <Icon name="trash-2" size={22} color="#dc2626" />
+            </div>
+            <div style={{ fontSize: 17, fontWeight: 800, color: '#211f1c', marginBottom: 6 }}>Eliminare l&apos;immobile?</div>
+            <div style={{ fontSize: 14, color: '#57534c', lineHeight: 1.5, marginBottom: 22 }}>Stai per eliminare <b>{confirmDelProj.nome || 'questo immobile'}</b>. Questa azione non si può annullare.</div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <Box as="button" onClick={() => !delProjLoading && setConfirmDelProj(null)} style={{ flex: 1, border: '1px solid #e4e1da', background: '#fff', color: '#57534c', fontSize: 14, fontWeight: 700, padding: '12px 0', borderRadius: 10, cursor: 'pointer' } as React.CSSProperties} hover={s('background:#f6f4f0')}>Annulla</Box>
+              <Box as="button" onClick={async () => {
+                if (delProjLoading) return;
+                setDelProjLoading(true);
+                const id = confirmDelProj.id;
+                const ok = await deleteProject(id);
+                setDelProjLoading(false);
+                if (!ok) { toast('Errore eliminazione', 'x'); return; }
+                if (activeProject === id) { const rem = projects.filter(x => x.id !== id); setActiveProject(rem[0]?.id || ''); }
+                setProjects(prev => prev.filter(x => x.id !== id));
+                setConfirmDelProj(null);
+                toast('Immobile eliminato', 'check');
+              }} style={{ flex: 1, border: 'none', background: delProjLoading ? '#f3d4d4' : '#dc2626', color: '#fff', fontSize: 14, fontWeight: 700, padding: '12px 0', borderRadius: 10, cursor: delProjLoading ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 } as React.CSSProperties} hover={delProjLoading ? {} : s('background:#b91c1c')}>
+                {delProjLoading ? (<><span style={{ display: 'inline-flex', animation: 'spin 1s linear infinite' }}><Icon name="loader-circle" size={16} color="#fff" /></span>Elimino...</>) : 'Elimina'}
+              </Box>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* NEW PROJECT MODAL */}

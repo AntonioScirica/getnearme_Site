@@ -175,6 +175,10 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
   const dragDepth = React.useRef(0);
   const [dragOver, setDragOver] = React.useState(false);
   const [activePhotoId, setActivePhotoId] = React.useState<string | null>(null);
+  // Undo eliminazione foto: stash foto + indice, snackbar "Annulla" per 5s (l'ultima eliminazione vince).
+  const [undoDel, setUndoDel] = React.useState<{ photo: Photo; index: number } | null>(null);
+  const undoTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  React.useEffect(() => () => { if (undoTimer.current) clearTimeout(undoTimer.current); }, []);
   const [pending, setPending] = React.useState<Pending | null>(null);
   const pollTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const pollingActive = React.useRef(false);
@@ -328,6 +332,8 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
   React.useEffect(() => {
     if (!didMount.current) { didMount.current = true; return; }
     clearPending();
+    if (undoTimer.current) { clearTimeout(undoTimer.current); undoTimer.current = null; }
+    setUndoDel(null);
     setPhotos([]); setSelStyle(demoMode ? 'modern' : null); setSelAngle(null); setCustomPrompt(''); setActivePhotoId(null); setCapNote(null); setPlanNotice(null);
     setResult(null); setRevealing(null); setReprompt(''); setBatchDone(null); setError(null); setGenerating(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -423,6 +429,24 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
     } catch {
       toast('Errore lettura immagine', 'x');
     }
+  };
+
+  // Rimuove una foto dal batch con possibilità di annullare entro 5 secondi.
+  const removePhoto = (id: string) => {
+    const idx = photos.findIndex(x => x.id === id);
+    if (idx < 0) return;
+    const photo = photos[idx];
+    setPhotos(ph => ph.filter(x => x.id !== id));
+    if (activePhotoId === id) setActivePhotoId(null);
+    if (undoTimer.current) clearTimeout(undoTimer.current);
+    setUndoDel({ photo, index: idx });
+    undoTimer.current = setTimeout(() => { setUndoDel(null); undoTimer.current = null; }, 5000);
+  };
+  const undoRemove = () => {
+    if (!undoDel) return;
+    if (undoTimer.current) { clearTimeout(undoTimer.current); undoTimer.current = null; }
+    setPhotos(ph => { const next = [...ph]; next.splice(Math.min(undoDel.index, next.length), 0, undoDel.photo); return next; });
+    setUndoDel(null);
   };
 
   const pickStyle = (id: string) => { if (generating) return; setSelStyle(v => v === id ? null : id); setSelAngle(null); setCustomPrompt(''); };
@@ -573,6 +597,8 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
   const resetAll = () => {
     clearPending();
     currentBatchId.current = null;
+    if (undoTimer.current) { clearTimeout(undoTimer.current); undoTimer.current = null; }
+    setUndoDel(null);
     setPhotos([]); setSelStyle(null); setSelAngle(null); setCustomPrompt(''); setCapNote(null); setPlanNotice(null);
     setResult(null); setRevealing(null); setReprompt(''); setBatchDone(null); setError(null); setGenerating(false); setResultIsPlan(false);
   };
@@ -585,12 +611,19 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
         <div style={{ minWidth: 0 }}>
           <h1 style={s('margin:0 0 4px;font-size:25px;font-weight:800;letter-spacing:-.5px')}>Homestaging AI</h1>
           <div style={s('color:#8c867d;font-size:14px')}>Arreda, svuota o trasforma le foto dei tuoi immobili con l’AI.</div>
+          {/* Indicatore quota compatto solo mobile (la pill nell'header è nascosta su mobile). */}
+          {!demoMode && quota && (
+            <div className="hidden max-md:!flex" style={{ alignItems: 'center', gap: 6, marginTop: 6, color: '#8c867d', fontSize: 12.5, fontWeight: 600 }}>
+              <Icon name="image" size={13} color="#8c867d" />
+              <span>{quota.remaining > 0 ? `${quota.remaining} ${quota.remaining === 1 ? 'foto rimanente' : 'foto rimanenti'}` : 'Quota esaurita'}</span>
+            </div>
+          )}
         </div>
         {!demoMode && !quota && (
           <div style={{ width: 140, height: 37, borderRadius: 99, background: 'linear-gradient(90deg,#efece7,#f7f5f1,#efece7)', backgroundSize: '200% 100%', animation: 'demo-ai-shimmer 1.4s linear infinite', flex: 'none' }} />
         )}
         {!demoMode && quota && (quota.remaining > 0 ? (
-          <div className={batchDone !== null ? "max-md:!hidden" : "max-md:!w-full"} style={s('display:inline-flex;align-items:center;justify-content:center;gap:8px;background:#fff;border:1px solid #f0ede7;border-radius:99px;padding:8px 16px;flex:none;white-space:nowrap')}>
+          <div className="max-md:!hidden" style={s('display:inline-flex;align-items:center;justify-content:center;gap:8px;background:#fff;border:1px solid #f0ede7;border-radius:99px;padding:8px 16px;flex:none;white-space:nowrap')}>
             <Icon name="image" size={15} color="#3B83F6" />
             <span style={{ fontSize: 13, fontWeight: 700 }}>{quota.remaining} {quota.remaining === 1 ? 'foto rimanente' : 'foto rimanenti'}</span>
           </div>
@@ -682,6 +715,13 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
           <div className="max-md:!grid-cols-1 max-md:!flex max-md:!flex-col max-md:!items-stretch" style={{ display: 'grid', gridTemplateColumns: '1fr 360px', gap: 24, alignItems: 'start' }}>
           {/* left: upload */}
           <div>
+            {/* Snackbar undo: foto rimossa dal batch, "Annulla" la reinserisce alla sua posizione. */}
+            {undoDel && (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, background: '#211f1c', color: '#fff', borderRadius: 12, padding: '10px 16px', marginBottom: 12 }}>
+                <span style={{ fontSize: 13, fontWeight: 600 }}>Foto rimossa.</span>
+                <button onClick={undoRemove} style={{ background: 'transparent', border: 'none', color: '#93c5fd', fontSize: 13, fontWeight: 700, cursor: 'pointer', padding: '2px 4px' }}>Annulla</button>
+              </div>
+            )}
             <div
               className={`max-md:!flex-none max-md:!min-h-0 ${photos.length === 0 && !demoMode ? "max-md:!aspect-video" : ""}`}
               onClick={() => { if (!generating && !revealing && !result) fileRef.current?.click(); }}
@@ -798,7 +838,7 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
                         )}
                         {!generating && !revealing && !result && (
                         <button
-                          onClick={e => { e.stopPropagation(); setPhotos(ph => ph.filter(x => x.id !== ap.id)); if (activePhotoId === ap.id) setActivePhotoId(null); }}
+                          onClick={e => { e.stopPropagation(); removePhoto(ap.id); }}
                           style={{ position: 'absolute', top: 8, right: 8, width: 28, height: 28, borderRadius: '50%', background: 'rgba(33,31,28,.72)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 5 }}
                         ><Icon name="x" size={13} color="#fff" /></button>
                         )}
@@ -813,7 +853,7 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={p.dataUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         <button
-                          onClick={e => { e.stopPropagation(); setPhotos(ph => ph.filter(x => x.id !== p.id)); if (activePhotoId === p.id) setActivePhotoId(null); }}
+                          onClick={e => { e.stopPropagation(); removePhoto(p.id); }}
                           className="opacity-0 group-hover:opacity-100 transition-opacity"
                           style={{ position: 'absolute', top: 2, right: 2, width: 20, height: 20, borderRadius: '50%', background: 'rgba(33,31,28,.85)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2 }}
                         ><Icon name="x" size={10} color="#fff" /></button>
@@ -845,16 +885,16 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
                 <div style={{ background: '#fff', border: '1px solid #f0ede7', borderRadius: 16, padding: 20, boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
                   <div style={{ fontSize: 11, fontWeight: 700, color: '#b3aca1', textTransform: 'uppercase', letterSpacing: '.06em', margin: '0 0 10px' }}>Modifica con un prompt</div>
                   <textarea value={reprompt} onChange={e => setReprompt(e.target.value)} maxLength={2000} rows={3} placeholder="Es. cambia il colore del divano in beige" style={inputStyle} />
-                  <button onClick={handleReprompt} disabled={!reprompt.trim() || generating} style={{
+                  <button onClick={handleReprompt} disabled={!reprompt.trim() || generating} aria-disabled={!reprompt.trim() || generating} style={{
                     marginTop: 10, width: '100%', border: 'none',
-                    background: reprompt.trim() && !generating ? 'linear-gradient(135deg, #3B83F6 0%, #6366f1 100%)' : '#e5e7eb',
-                    color: reprompt.trim() && !generating ? '#fff' : '#9ca3af',
+                    background: reprompt.trim() && !generating ? 'linear-gradient(135deg, #3B83F6 0%, #6366f1 100%)' : '#d1d5db',
+                    color: reprompt.trim() && !generating ? '#fff' : '#6b7280',
                     fontSize: 14, fontWeight: 600, padding: '12px 20px', borderRadius: 10,
                     cursor: reprompt.trim() && !generating ? 'pointer' : 'default',
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                     transition: 'all .2s',
                   }}>
-                    <Icon name="sparkles" size={15} color={reprompt.trim() && !generating ? '#fff' : '#9ca3af'} />
+                    <Icon name="sparkles" size={15} color={reprompt.trim() && !generating ? '#fff' : '#6b7280'} />
                     Rigenera
                   </button>
                 </div>
@@ -937,10 +977,10 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
                 )}
 
                 {(() => { const mainActive = canGenerate || outOfQuota; return (
-                <button onClick={outOfQuota ? (lockBrand ? onGoPlan : () => setPacksOpen(true)) : handleGenerate} disabled={!mainActive} className="group" style={{
+                <button onClick={outOfQuota ? (lockBrand ? onGoPlan : () => setPacksOpen(true)) : handleGenerate} disabled={!mainActive} aria-disabled={!mainActive} className="group" style={{
                   border: 'none',
-                  background: mainActive ? 'linear-gradient(135deg, #3B83F6 0%, #6366f1 100%)' : '#e5e7eb',
-                  color: mainActive ? '#fff' : '#9ca3af',
+                  background: mainActive ? 'linear-gradient(135deg, #3B83F6 0%, #6366f1 100%)' : '#d1d5db',
+                  color: mainActive ? '#fff' : '#6b7280',
                   fontSize: 15, fontWeight: 600,
                   padding: '16px 20px', borderRadius: 14, cursor: mainActive ? 'pointer' : 'default',
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
@@ -948,7 +988,7 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
                   transition: 'all .2s cubic-bezier(.4,0,.2,1)',
                 }}>
                   <span className={mainActive ? "group-hover:rotate-12 transition-transform duration-300" : ""} style={{ display: 'flex' }}>
-                    <Icon name={outOfQuota ? (lockBrand ? 'crown' : 'zap') : 'sparkles'} size={18} color={mainActive ? "#fff" : "#9ca3af"} />
+                    <Icon name={outOfQuota ? (lockBrand ? 'crown' : 'zap') : 'sparkles'} size={18} color={mainActive ? "#fff" : "#6b7280"} />
                   </span>
                   {outOfQuota ? (lockBrand ? 'Vedi i piani' : 'Ottieni altre foto') : notEnoughForBatch ? `Restano solo ${quota!.remaining} foto` : (isBatch ? `Genera ${photos.length} foto` : isFloorPlan ? 'Crea render 2D' : 'Genera foto')}
                 </button>

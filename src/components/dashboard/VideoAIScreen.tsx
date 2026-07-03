@@ -1628,7 +1628,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
           </div>
           <div className="max-md:!grid-cols-1" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
             {MONTAGGIO_LAYOUTS.map(ml => (
-              <Box key={ml.id} onClick={() => setMontaggioLayout(ml.id)} style={{ background: '#fff', border: '1px solid #f0ede7', borderRadius: 16, overflow: 'hidden', cursor: 'pointer', display: 'flex', flexDirection: 'column' }} hover={{ boxShadow: '0 12px 32px rgba(33,31,28,.10)', transform: 'translateY(-2px)' }}>
+              <Box key={ml.id} role="button" tabIndex={0} onClick={() => setMontaggioLayout(ml.id)} onKeyDown={(e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setMontaggioLayout(ml.id); } }} onFocus={(e: React.FocusEvent<HTMLElement>) => { e.currentTarget.style.outline = '2px solid #3B83F6'; e.currentTarget.style.outlineOffset = '2px'; }} onBlur={(e: React.FocusEvent<HTMLElement>) => { e.currentTarget.style.outline = 'none'; }} style={{ background: '#fff', border: '1px solid #f0ede7', borderRadius: 16, overflow: 'hidden', cursor: 'pointer', display: 'flex', flexDirection: 'column' }} hover={{ boxShadow: '0 12px 32px rgba(33,31,28,.10)', transform: 'translateY(-2px)' }}>
                 <MontaggioDiagram kind={ml.id} />
                 <div style={{ padding: '14px 16px 16px' }}>
                   <div style={s('font-size:16px;font-weight:800;letter-spacing:-.2px;margin-bottom:4px')}>{ml.label}</div>
@@ -2625,7 +2625,10 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
             return (
             // Popup errore video: messaggio friendly + conferma rimborso credito.
             <div onClick={startNew} style={{ position: 'fixed', inset: 0, zIndex: 1200, background: 'rgba(20,18,16,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-              <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 18, width: '100%', maxWidth: 400, padding: '28px 24px', textAlign: 'center', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
+              <div onClick={e => e.stopPropagation()} style={{ position: 'relative', background: '#fff', borderRadius: 18, width: '100%', maxWidth: 400, padding: '28px 24px', textAlign: 'center', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
+                <Box as="button" onClick={startNew} aria-label="Chiudi" style={{ position: 'absolute', top: 12, right: 12, width: 30, height: 30, border: 'none', background: 'transparent', borderRadius: 8, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 } as React.CSSProperties} hover={{ background: '#f6f4f0' }}>
+                  <Icon name="x" size={17} color="#8c867d" />
+                </Box>
                 <div style={{ width: 56, height: 56, borderRadius: 16, background: isQuota ? '#fffbeb' : '#fef2f2', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
                   <Icon name={isQuota ? 'crown' : 'x'} size={26} color={isQuota ? '#b45309' : '#dc2626'} />
                 </div>
@@ -2655,9 +2658,13 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
                 <img src="/dashboard/logo-mark-white.svg" alt="" style={{ position: 'relative', width: 56, height: 56, animation: 'aurora-pulse 4s ease-in-out infinite' }} />
               </div>
               <div style={s('font-size:17px;font-weight:800;margin-bottom:6px')}>Video in elaborazione</div>
-              <div style={s('color:#8c867d;font-size:13.5px;max-width:420px;margin:0 auto 24px')}>
+              <div style={s(`color:#8c867d;font-size:13.5px;max-width:420px;margin:0 auto ${renderProgress > 0 ? '10px' : '24px'}`)}>
                 Gira in background: puoi cambiare sezione o chiudere la pagina. Lo trovi nel tray <b>Lavori in corso</b> in alto a destra e poi in <b>Media</b>.
               </div>
+              {/* Percentuale di avanzamento, se disponibile */}
+              {renderProgress > 0 && (
+                <div style={s('color:#8c867d;font-size:12.5px;font-weight:600;margin:0 auto 24px')}>{Math.round(renderProgress * 100)}%</div>
+              )}
               <Box as="button" onClick={startNew} style={s('border:none;background:#3B83F6;color:#fff;font-size:14px;font-weight:700;padding:12px 24px;border-radius:10px;cursor:pointer') as React.CSSProperties} hover={s('background:#2b6fe0')}>Nuovo video</Box>
             </div>
           ) : (

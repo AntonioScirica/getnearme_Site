@@ -470,7 +470,7 @@ export function NewProjectModal({
           <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
               {(editProject || step === 1) && (<>
               <div>
-                <label style={labelStyle}>Nome immobile *</label>
+                <label style={labelStyle}>Nome immobile <span style={{ color: '#dc2626' }}>*</span></label>
                 <input 
                   autoFocus
                   placeholder="es. Attico Brera" 
@@ -483,7 +483,7 @@ export function NewProjectModal({
               </div>
               
               <div>
-                <label style={labelStyle}>Indirizzo *</label>
+                <label style={labelStyle}>Indirizzo <span style={{ color: '#dc2626' }}>*</span></label>
                 <input 
                   placeholder="es. Via Fiori Chiari 12, Milano" 
                   value={addr} 

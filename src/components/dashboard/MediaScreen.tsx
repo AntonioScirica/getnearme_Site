@@ -212,6 +212,18 @@ export default function MediaScreen({
   const [wmUrl, setWmUrl] = useState<string | null>(null); // download singolo con logo
   const [wmBatch, setWmBatch] = useState<{ images: string[]; zipName: string } | null>(null); // download tutte con logo
   const [confirmDlg, setConfirmDlg] = useState<{ title: string; sub: string; onYes: () => void } | null>(null);
+
+  // Conferma a fine download batch: il modal salva lo zip cliccando un anchor
+  // con download "*.zip", intercettiamo quel click (solo a modal aperto) per
+  // il toast, così non scatta se l'utente annulla.
+  useEffect(() => {
+    if (!wmBatch) return;
+    const onDocClick = (e: MouseEvent) => {
+      if (e.target instanceof HTMLAnchorElement && e.target.download.endsWith('.zip')) toast('Download completato', 'check');
+    };
+    document.addEventListener('click', onDocClick, true);
+    return () => document.removeEventListener('click', onDocClick, true);
+  }, [wmBatch, toast]);
   const [selectDay, setSelectDay] = useState<string | null>(null);       // giorno in modalità selezione
   const [selected, setSelected] = useState<Set<string>>(new Set());      // chiavi `${batchId}_${index}`
 
@@ -379,10 +391,10 @@ export default function MediaScreen({
             <Icon name="image" size={28} color="#b3aca1" />
           </div>
           <h3 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 800 }}>Nessun media disponibile</h3>
-          <p style={{ margin: '0 0 24px', color: '#8c867d', fontSize: 14, maxWidth: 360, marginInline: 'auto' }}>
+          <p style={{ margin: 0, color: '#8c867d', fontSize: 14, maxWidth: 360, marginInline: 'auto' }}>
             Le foto generate in Foto AI e i video creati appariranno qui automaticamente.
           </p>
-          <div style={{ display: 'inline-flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center', marginTop: 24 }}>
             {filter !== 'staging' && (
               <Box as="button" onClick={() => go?.('video')} style={{
                 display: 'inline-flex', alignItems: 'center', gap: 8,
@@ -540,10 +552,10 @@ export default function MediaScreen({
                               </button>
                               {menuKey === vSelKey && (
                                 <div onClick={(e) => e.stopPropagation()} style={{ position: 'absolute', top: 'calc(100% + 6px)', right: 0, zIndex: 50, background: '#fff', border: '1px solid #f0ede7', borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', padding: 4, minWidth: 170 }}>
-                                  <Box as="button" onClick={() => { setMenuKey(null); const a = document.createElement('a'); a.href = photo.resultUrl; a.download = `video-ai.mp4`; a.click(); toast('Download avviato...', 'download'); }} style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '10px 12px', borderRadius: 8, border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 13.5, fontWeight: 600, color: '#211f1c', textAlign: 'left' } as React.CSSProperties} hover={{ background: 'var(--bg-hover)' }}>
+                                  <Box as="button" aria-label="Scarica" onClick={() => { setMenuKey(null); const a = document.createElement('a'); a.href = photo.resultUrl; a.download = `video-ai.mp4`; a.click(); toast('Download avviato...', 'download'); }} style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '10px 12px', borderRadius: 8, border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 13.5, fontWeight: 600, color: '#211f1c', textAlign: 'left' } as React.CSSProperties} hover={{ background: 'var(--bg-hover)' }}>
                                     <Icon name="download" size={16} color="#57534c" />Scarica
                                   </Box>
-                                  <Box as="button" onClick={async () => { setMenuKey(null); await handleDeletePhotos([photo]); }} style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '10px 12px', borderRadius: 8, border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 13.5, fontWeight: 600, color: '#dc2626', textAlign: 'left' } as React.CSSProperties} hover={{ background: '#fef2f2' }}>
+                                  <Box as="button" aria-label="Elimina" onClick={async () => { setMenuKey(null); await handleDeletePhotos([photo]); }} style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '10px 12px', borderRadius: 8, border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 13.5, fontWeight: 600, color: '#dc2626', textAlign: 'left' } as React.CSSProperties} hover={{ background: '#fef2f2' }}>
                                     <Icon name="trash-2" size={16} color="#dc2626" />Elimina
                                   </Box>
                                 </div>
@@ -685,11 +697,13 @@ export default function MediaScreen({
               </>
             )}
             
+            {/* Chiusura sempre dentro il viewport (fixed): su mobile il vecchio offset negativo finiva fuori schermo */}
             <button
               onClick={() => setLightbox(null)}
-              style={{ position: 'absolute', top: -30, right: -30, background: 'none', border: 'none', cursor: 'pointer', color: '#fff' }}
+              aria-label="Chiudi"
+              style={{ position: 'fixed', top: 12, right: 12, width: 44, height: 44, borderRadius: '50%', background: 'rgba(0,0,0,.55)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10 }}
             >
-              <Icon name="x" size={24} color="#fff" />
+              <Icon name="x" size={22} color="#fff" />
             </button>
           </div>
         </div>

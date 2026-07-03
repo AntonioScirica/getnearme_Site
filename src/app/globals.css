@@ -245,6 +245,12 @@ html {
   100% { transform: scale(1.6); opacity: 0; }
 }
 
+/* Pulse per gli skeleton di caricamento (es. HomeScreen) */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .5; }
+}
+
 /* Animazioni del tutorial (tour) */
 @keyframes tour-fill { 0% { width: 8%; } 40% { width: 100%; } 70% { width: 100%; } 100% { width: 8%; } }
 @keyframes tour-pop { 0% { transform: scale(0); opacity: 0; } 60% { transform: scale(1.18); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }

@@ -227,6 +227,10 @@ export function HomeScreen({
               <div className="cover-overlay" style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0, transition: 'opacity .2s', pointerEvents: 'none' }}>
                 <Icon name="camera" size={28} color="#fff" />
               </div>
+              {/* Badge camera sempre visibile su mobile (niente hover su touch) */}
+              <div className="max-md:!flex" style={{ display: 'none', position: 'absolute', bottom: 8, right: 8, width: 32, height: 32, borderRadius: '50%', background: 'rgba(0,0,0,.55)', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none', zIndex: 5 }}>
+                <Icon name="camera" size={16} color="#fff" />
+              </div>
             </label>
 
             <div className="max-md:!items-center max-md:!text-center" style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 0 }}>
