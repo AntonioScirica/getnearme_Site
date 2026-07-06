@@ -4,24 +4,25 @@
 // pillar; ai-staging additionally gets the real BeforeAfterSlider component
 // (see blog [slug] page) instead of a flat cover.
 
+// No people/faces in any pool — property/interior shots only (verified by
+// visual audit; sottotitoli-poster, split-poster and primo-piano-poster are
+// talking-head avatar frames and are deliberately excluded).
 const COVERS_BY_PILLAR: Record<string, string[]> = {
   'ai-staging': ['/staging/1.jpg', '/staging/2.jpg'],
   'ai-video': [
     '/reference/immagini-a-video-poster.jpg',
     '/reference/social-reel-poster.jpg',
     '/reference/montaggio-poster.jpg',
-    '/reference/sottotitoli-poster.jpg',
   ],
   'social-media': [
     '/reference/social-post-feed.png',
     '/reference/social-reel-feed-poster.jpg',
     '/reference/social-post-square.png',
-    '/reference/social-reel-square-poster.jpg',
   ],
   'reports-analytics': ['/report/appartamento.png'],
-  'ai-avatar': ['/reference/primo-piano-poster.jpg'],
+  'ai-avatar': ['/reference/giorno-notte-poster.jpg'],
   'agency-productivity': ['/demo/foto_demo.jpg', '/demo/dopo_demo.jpg'],
-  'comparison-geo': ['/reference/split-poster.jpg', '/reference/giorno-notte-poster.jpg'],
+  'comparison-geo': ['/reference/construction-poster.jpg', '/reference/giorno-notte-poster.jpg'],
 };
 
 const FALLBACK_COVER = '/reference/social-post-feed.png';
