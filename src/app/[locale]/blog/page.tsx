@@ -52,44 +52,40 @@ export default async function BlogHubPage({ params }: Props) {
         <Navbar locale={locale} />
       </div>
 
-      <section style={{ padding: "80px 24px 48px", textAlign: "center" }}>
+      <section style={{ padding: "72px 24px 40px", textAlign: "center" }}>
         <h1
           style={{
-            fontSize: "clamp(32px, 5vw, 52px)",
-            fontWeight: 900,
-            lineHeight: 1.1,
-            maxWidth: 700,
-            margin: "0 auto 16px",
+            fontSize: "clamp(28px, 4vw, 40px)",
+            fontWeight: 800,
+            lineHeight: 1.15,
+            maxWidth: 640,
+            margin: "0 auto 14px",
+            color: "#1a1a2e",
           }}
         >
-          Blog per agenti{" "}
-          <span style={{ color: "#f59e0b", textDecoration: "underline", textDecorationThickness: 4, textUnderlineOffset: 6 }}>
-            immobiliari
-          </span>
+          Risorse per agenti immobiliari
         </h1>
-        <p style={{ fontSize: 18, color: "#52525b", maxWidth: 540, margin: "0 auto", lineHeight: 1.6 }}>
+        <p style={{ fontSize: 17, color: "#6b7280", maxWidth: 540, margin: "0 auto", lineHeight: 1.6 }}>
           Home staging AI, video, social media e produttività: guide pratiche per far crescere la tua agenzia.
         </p>
       </section>
 
-      <section style={{ maxWidth: 1080, margin: "0 auto", padding: "0 24px 80px" }}>
+      <section style={{ maxWidth: 1280, margin: "0 auto", padding: "0 24px 80px" }}>
         {posts.length === 0 ? (
           <p style={{ textAlign: "center", color: "#71717a", fontSize: 15 }}>
             Nuovi articoli in arrivo a breve.
           </p>
         ) : (
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 320px), 1fr))",
-              gap: 24,
-            }}
-          >
+          <div className="blog-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 20 }}>
             {posts.map((post) => (
               <BlogPostCard key={post.id} post={post} locale={locale} />
             ))}
           </div>
         )}
+        <style>{`
+          @media (max-width: 1024px) { .blog-grid { grid-template-columns: repeat(2, 1fr) !important; } }
+          @media (max-width: 640px) { .blog-grid { grid-template-columns: 1fr !important; } }
+        `}</style>
       </section>
 
       <section style={{ maxWidth: 780, margin: "0 auto", padding: "0 24px 80px", textAlign: "center" }}>
