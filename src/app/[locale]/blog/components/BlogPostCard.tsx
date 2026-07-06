@@ -39,7 +39,7 @@ export default function BlogPostCard({ post, locale }: { post: BlogPost; locale:
             src={cover}
             alt={post.title}
             loading="lazy"
-            style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+            style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 15%", display: "block" }}
           />
         </div>
         <div style={{ padding: "24px 24px 20px", display: "flex", flexDirection: "column", flex: 1 }}>
@@ -47,7 +47,7 @@ export default function BlogPostCard({ post, locale }: { post: BlogPost; locale:
             style={{
               fontSize: 12,
               fontWeight: 700,
-              color: "#f59e0b",
+              color: "#3B83F6",
               textTransform: "uppercase",
               letterSpacing: 0.5,
               marginBottom: 10,
@@ -61,7 +61,7 @@ export default function BlogPostCard({ post, locale }: { post: BlogPost; locale:
           <p style={{ fontSize: 14, color: "#52525b", margin: "0 0 16px", lineHeight: 1.5, flex: 1 }}>
             {post.seo_description}
           </p>
-          <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 14, fontWeight: 700, color: "#f59e0b" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 14, fontWeight: 700, color: "#3B83F6" }}>
             Leggi l&apos;articolo
             <ChevronRight size={16} />
           </div>

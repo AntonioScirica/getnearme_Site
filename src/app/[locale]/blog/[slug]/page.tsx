@@ -144,7 +144,7 @@ export default async function BlogPostPage({ params }: Props) {
         ) : (
           <div style={{ borderRadius: 16, overflow: "hidden", aspectRatio: "16 / 9", marginBottom: 8 }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={cover} alt={post.title} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+            <img src={cover} alt={post.title} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 15%", display: "block" }} />
           </div>
         )}
       </section>
