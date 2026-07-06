@@ -30,7 +30,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: titles[locale as Locale],
     description: t.cookie.intro.slice(0, 160),
     alternates: {
-      canonical: `https://getnearme.it/${locale}/cookie`,
+      canonical: `https://www.getnearme.it/${locale}/cookie`,
     },
   };
 }

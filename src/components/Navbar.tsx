@@ -127,6 +127,10 @@ export default function Navbar({ locale }: NavbarProps) {
                     <div className="hidden md:flex items-center gap-16 text-sm font-medium text-slate-600 absolute left-1/2 -translate-x-1/2">
                         <button onClick={() => scrollTo('funzionalita')} className="hover:text-black transition-colors cursor-pointer">{t.nav.features}</button>
                         <Link href={`/${locale}/reference`} className="hover:text-black transition-colors">{t.nav.examples}</Link>
+                        {/* Blog is IT-only in V1 — omit the link for other locales rather than ship a dead one. */}
+                        {locale === 'it' && (
+                            <Link href={`/${locale}/blog`} className="hover:text-black transition-colors">{t.nav.blog}</Link>
+                        )}
                         {/* <Link href={`/${locale}/tutorial`} className="hover:text-black transition-colors">{t.nav.tutorial}</Link> */}
                         <button onClick={() => scrollTo('pricing')} className="hover:text-black transition-colors cursor-pointer">{t.nav.pricing}</button>
                         <button onClick={() => scrollTo('faq')} className="hover:text-black transition-colors cursor-pointer">{t.nav.faq}</button>
@@ -178,6 +182,7 @@ export default function Navbar({ locale }: NavbarProps) {
                         {[
                             { id: 'funzionalita', label: t.nav.features },
                             { href: `/${locale}/reference`, label: t.nav.examples },
+                            ...(locale === 'it' ? [{ href: `/${locale}/blog`, label: t.nav.blog }] : []),
                             // { id: 'tutorial', label: t.nav.tutorial },
                             { id: 'pricing', label: t.nav.pricing },
                             { id: 'faq', label: t.nav.faq },

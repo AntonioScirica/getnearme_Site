@@ -29,7 +29,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return {};
   }
   
-  const baseUrl = "https://getnearme.it";
+  const baseUrl = "https://www.getnearme.it";
   
   // Genera alternate languages con x-default
   const languages: Record<string, string> = {};
@@ -151,12 +151,12 @@ export default async function LocaleLayout({ children, params }: Props) {
               "applicationCategory": "BrowserApplication",
               "operatingSystem": "Chrome",
               "description": t.hero.description,
-              "url": `https://getnearme.it/${locale}`,
+              "url": `https://www.getnearme.it/${locale}`,
               "inLanguage": locale,
               "author": {
                 "@type": "Organization",
                 "name": "GetNearMe",
-                "url": "https://getnearme.it",
+                "url": "https://www.getnearme.it",
               },
               "offers": {
                 "@type": "Offer",
@@ -176,7 +176,7 @@ export default async function LocaleLayout({ children, params }: Props) {
               "@context": "https://schema.org",
               "@type": "WebSite",
               "name": "GetNearMe",
-              "url": "https://getnearme.it",
+              "url": "https://www.getnearme.it",
               "inLanguage": locale,
             }),
           }}
@@ -190,8 +190,8 @@ export default async function LocaleLayout({ children, params }: Props) {
               "@context": "https://schema.org",
               "@type": "Organization",
               "name": "GetNearMe",
-              "url": "https://getnearme.it",
-              "logo": "https://getnearme.it/favicon.ico",
+              "url": "https://www.getnearme.it",
+              "logo": "https://www.getnearme.it/favicon.ico",
               "contactPoint": {
                 "@type": "ContactPoint",
                 "email": "info@getnearme.it",

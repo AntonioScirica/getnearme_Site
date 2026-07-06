@@ -30,13 +30,14 @@ export async function generateStaticParams() {
   return locales.map((locale) => ({ locale }));
 }
 
-export async function generateMetadata(): Promise<Metadata> {
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { locale } = await params;
   return {
     title: "Guida completa all'acquisto casa in Italia | GetNearMe",
     description:
       "Dalla ricerca al rogito: 10 capitoli con tutto quello che devi sapere per comprare casa in Italia. Documenti, mutuo, costi, tasse e errori da evitare.",
     alternates: {
-      canonical: "https://getnearme.it/it/guida-acquisto-casa",
+      canonical: `https://www.getnearme.it/${locale}/guida-acquisto-casa`,
     },
     openGraph: {
       title: "Guida completa all'acquisto casa in Italia | GetNearMe",

@@ -39,7 +39,7 @@ export async function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { slug } = await params;
+  const { locale, slug } = await params;
   const chapter = CHAPTERS.find((c) => c.slug === slug);
   if (!chapter) return {};
 
@@ -47,7 +47,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: chapter.seoTitle,
     description: chapter.seoDescription,
     alternates: {
-      canonical: `https://getnearme.it/it/guida-acquisto-casa/${slug}`,
+      canonical: `https://www.getnearme.it/${locale}/guida-acquisto-casa/${slug}`,
     },
     openGraph: {
       title: chapter.seoTitle,
@@ -90,23 +90,23 @@ export default async function ChapterPage({ params }: Props) {
     author: {
       "@type": "Organization",
       name: "GetNearMe",
-      url: "https://getnearme.it",
+      url: "https://www.getnearme.it",
     },
     publisher: {
       "@type": "Organization",
       name: "GetNearMe",
-      url: "https://getnearme.it",
+      url: "https://www.getnearme.it",
     },
     mainEntityOfPage: {
       "@type": "WebPage",
-      "@id": `https://getnearme.it/it/guida-acquisto-casa/${slug}`,
+      "@id": `https://www.getnearme.it/${locale}/guida-acquisto-casa/${slug}`,
     },
     isPartOf: {
       "@type": "WebPage",
       name: "Guida completa all'acquisto casa in Italia",
-      url: "https://getnearme.it/it/guida-acquisto-casa",
+      url: `https://www.getnearme.it/${locale}/guida-acquisto-casa`,
     },
-    inLanguage: "it",
+    inLanguage: locale,
     datePublished: "2026-05-01",
     dateModified: "2026-05-23",
   };

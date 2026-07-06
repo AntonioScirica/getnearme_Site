@@ -21,7 +21,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: `${content.title} — GetNearMe`,
     description: content.description,
     alternates: {
-      canonical: `https://getnearme.it/${locale}/termini`,
+      canonical: `https://www.getnearme.it/${locale}/termini`,
     },
   };
 }

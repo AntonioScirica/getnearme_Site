@@ -1,11 +1,11 @@
 # Robots.txt per GetNearMe
-# https://getnearme.it
+# https://www.getnearme.it
 
 User-agent: *
 Allow: /
 
 # Sitemap
-Sitemap: https://getnearme.it/sitemap.xml
+Sitemap: https://www.getnearme.it/sitemap.xml
 
 # Blocca file di sistema
 Disallow: /_next/
