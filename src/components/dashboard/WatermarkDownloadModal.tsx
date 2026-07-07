@@ -62,12 +62,15 @@ export default function WatermarkDownloadModal({
   filename = 'homestaging-ai.jpg',
   zipName = 'getnearme-foto',
   onClose,
+  lockBrand = false,
 }: {
   imageUrl?: string;
   images?: string[];
   filename?: string;
   zipName?: string;
   onClose: () => void;
+  // Piano Free: il logo GetNearMe e' obbligatorio, non si puo' togliere.
+  lockBrand?: boolean;
 }) {
   const list = (images && images.length ? images : (imageUrl ? [imageUrl] : []));
   const isBatch = list.length > 1;
@@ -187,9 +190,13 @@ export default function WatermarkDownloadModal({
           </div>
           {isBatch && <div style={{ fontSize: 10.5, color: '#8c867d', marginTop: -7, marginBottom: 13 }}>Il logo scelto verrà applicato a tutte le {list.length} foto.</div>}
 
-          <Box onClick={() => setWithLogo((v) => !v)} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '9px 11px', borderRadius: 9, border: '1px solid #e4e1da', cursor: 'pointer', marginBottom: withLogo ? 13 : 0 }} hover={{ background: '#faf9f7' }}>
-            <Icon name="image" size={14} color={withLogo ? '#211f1c' : '#b3aca1'} />
-            <div style={{ flex: 1, fontSize: 12, fontWeight: 600, color: withLogo ? '#211f1c' : '#8c867d' }}>Aggiungi logo</div>
+          <Box
+            onClick={() => { if (lockBrand) return; setWithLogo((v) => !v); }}
+            style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '9px 11px', borderRadius: 9, border: '1px solid #e4e1da', cursor: lockBrand ? 'not-allowed' : 'pointer', marginBottom: withLogo ? 13 : 0, opacity: lockBrand ? 0.85 : 1 }}
+            hover={lockBrand ? {} : { background: '#faf9f7' }}
+          >
+            <Icon name={lockBrand ? 'lock' : 'image'} size={14} color={withLogo ? '#211f1c' : '#b3aca1'} />
+            <div style={{ flex: 1, fontSize: 12, fontWeight: 600, color: withLogo ? '#211f1c' : '#8c867d' }}>{lockBrand ? 'Logo GetNearMe (piano Free)' : 'Aggiungi logo'}</div>
             <div style={{ width: 32, height: 18, borderRadius: 89, background: withLogo ? '#3B83F6' : '#d8d4cb', position: 'relative', flexShrink: 0 }}>
               <div style={{ position: 'absolute', top: 2, left: withLogo ? 16 : 2, width: 14, height: 14, borderRadius: 89, background: '#fff', transition: 'left .2s' }} />
             </div>

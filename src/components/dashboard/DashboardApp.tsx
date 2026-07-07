@@ -2798,23 +2798,6 @@ const getCoverStyle = (p: Project | null | undefined, small = false): React.CSSP
 };
 
 
-// Debug: solo per i test account esclusi dalle metriche (vedi memoria progetto).
-// Il gate vero e' server-side in debug-set-plan; questo serve solo a non
-// mostrare il widget agli utenti normali.
-const DEBUG_TIER_EMAILS = new Set([
-  'antonioiphoneid@gmail.com',
-]);
-const DEBUG_TIER_OPTIONS = [
-  { id: 'free', label: 'Free' },
-  { id: 'starter_monthly', label: 'Starter €14,99' },
-  { id: 'individual_monthly', label: 'Individuale mensile' },
-  { id: 'individual_annual', label: 'Individuale annuale' },
-  { id: 'agency_monthly', label: 'Agenzia mensile (legacy, fisso)' },
-  { id: 'agency_annual', label: 'Agenzia annuale (legacy, fisso)' },
-  { id: 'agency_seat_monthly', label: 'Agenzia seat mensile' },
-  { id: 'agency_seat_annual', label: 'Agenzia seat annuale' },
-];
-
 export default function DashboardApp({ userData }: { userData: UserData | null }) {
   const [route, setRoute] = useState('home');
   const [collapsed, setCollapsed] = useState(false);
@@ -2850,29 +2833,6 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
   const [immDeleting, setImmDeleting] = useState(false);
   const [editProjOpen, setEditProjOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  // Debug: switch piano/quote senza passare da Stripe (solo test account, vedi sopra).
-  const [debugTier, setDebugTier] = useState('starter_monthly');
-  const [debugSeats, setDebugSeats] = useState(4);
-  const [debugBusy, setDebugBusy] = useState(false);
-  const applyDebugTier = async () => {
-    if (debugBusy) return;
-    setDebugBusy(true);
-    try {
-      const resp = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/debug-set-plan`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${getTokenFast()}`, apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tier: debugTier, seats: debugSeats }),
-      });
-      const data = await resp.json().catch(() => null);
-      if (!resp.ok) { toast(data?.error || 'Errore debug switch', 'x'); setDebugBusy(false); return; }
-      toast(`Piano impostato: ${debugTier}`, 'check');
-      setTimeout(() => window.location.reload(), 600);
-    } catch {
-      toast('Errore di rete', 'x');
-      setDebugBusy(false);
-    }
-  };
 
   // Caching with SWR for Projects
   const { data: realProjects = [], isLoading: loadingProjects, mutate: mutateProjects } = useSWR('projects', fetchProjects, {
@@ -4002,6 +3962,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                 demoJobsDone={demoJobsDone}
                 demoShowSkeleton={tourStep === 6}
                 go={go}
+                lockBrand={isFreePlan}
               />
             ) : route === 'video' ? (
               <VideoAIScreen key="video" toast={toast} routeKey={routeKey} brand={brand} project={active || DEMO_PROJECTS[0]} onVideoJob={registerVideoJob} activeRenders={videoJobs.filter(j => j.stage === 'render' && !j.dismissed).length} pendingVideoRenders={videoJobs.filter(j => j.stage === 'render' && !j.dismissed && j.template !== 'montaggio').length} initialPhotoUrl={studioPhoto} preselect={studioPhoto ? 'walkthrough' : undefined} demoMode={tourStep !== null} go={go} lockBrand={isFreePlan} subscriptionType={userData?.subscriptionType} />
@@ -4154,21 +4115,6 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
         />
       )}
 
-      {/* DEBUG: switch piano/quote (solo test account, gate vero e' server-side) */}
-      {userData?.email && DEBUG_TIER_EMAILS.has(userData.email) && (
-        <div style={{ position: 'fixed', bottom: 11, right: 11, zIndex: 9999, background: '#1c1917', color: '#fff', borderRadius: 11, padding: 11, display: 'flex', flexDirection: 'column', gap: 7, boxShadow: '0 8px 24px rgba(0,0,0,0.35)', fontSize: 11, width: 198 }}>
-          <div style={{ fontWeight: 700, opacity: 0.7 }}>DEBUG · piano</div>
-          <select value={debugTier} onChange={e => setDebugTier(e.target.value)} style={{ background: '#292524', color: '#fff', border: '1px solid #44403c', borderRadius: 7, padding: '5px 7px', fontSize: 11 }}>
-            {DEBUG_TIER_OPTIONS.map(o => <option key={o.id} value={o.id}>{o.label}</option>)}
-          </select>
-          {(debugTier === 'agency_seat_monthly' || debugTier === 'agency_seat_annual') && (
-            <input type="number" min={2} max={10} value={debugSeats} onChange={e => setDebugSeats(Math.min(10, Math.max(2, Number(e.target.value) || 2)))} style={{ background: '#292524', color: '#fff', border: '1px solid #44403c', borderRadius: 7, padding: '5px 7px', fontSize: 11 }} />
-          )}
-          <button onClick={applyDebugTier} disabled={debugBusy} style={{ border: 'none', background: '#3B83F6', color: '#fff', fontWeight: 700, borderRadius: 7, padding: '7px 0', cursor: debugBusy ? 'default' : 'pointer', opacity: debugBusy ? 0.6 : 1 }}>
-            {debugBusy ? '...' : 'Applica (ricarica pagina)'}
-          </button>
-        </div>
-      )}
     </div>
   );
 }

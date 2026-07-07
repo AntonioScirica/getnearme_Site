@@ -145,12 +145,14 @@ export default function MediaScreen({
   demoJobsDone = false,
   demoShowSkeleton = false,
   go,
+  lockBrand = false,
 }: {
   toast: (msg: string, icon?: string) => void;
   routeKey: number;
   project?: Project;
   batches: BatchInfo[];
   loadingBatches: boolean;
+  lockBrand?: boolean;
   activeVideoJobs?: { id: string; title?: string; createdAt: number; projectId?: string | null }[];
   demoMode?: boolean;
   demoJobsDone?: boolean;
@@ -720,8 +722,8 @@ export default function MediaScreen({
           </div>
         </div>
       )}
-      {wmUrl && <WatermarkDownloadModal imageUrl={wmUrl} onClose={() => setWmUrl(null)} />}
-      {wmBatch && <WatermarkDownloadModal images={wmBatch.images} zipName={wmBatch.zipName} onClose={() => setWmBatch(null)} />}
+      {wmUrl && <WatermarkDownloadModal imageUrl={wmUrl} onClose={() => setWmUrl(null)} lockBrand={lockBrand} />}
+      {wmBatch && <WatermarkDownloadModal images={wmBatch.images} zipName={wmBatch.zipName} onClose={() => setWmBatch(null)} lockBrand={lockBrand} />}
     </div>
   );
 }

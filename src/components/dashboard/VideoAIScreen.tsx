@@ -718,6 +718,9 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
   const [outputUrl, setOutputUrl] = React.useState<string | null>(null);
   const [renderError, setRenderError] = React.useState<string | null>(null);
   const abortRef = React.useRef(false);
+  // Lock anti doppio-avvio: due click rapidi (o un doppio-fire dell'onClick)
+  // scalavano 2 volte la quota montaggio e creavano 2 job per un solo montaggio.
+  const submittingRef = React.useRef(false);
   const prepJobRef = React.useRef<string | null>(null); // job tray temporaneo (prima del renderId)
   const uiOwnerRef = React.useRef<string | null>(null); // quale render possiede la UI foreground (evita hijack tra render concorrenti)
   const fileRef = React.useRef<HTMLInputElement>(null);
@@ -1150,24 +1153,30 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
 
   const handleRender = async () => {
     if (!tpl) return;
+    if (submittingRef.current) return; // già in avvio: ignora il secondo click
+    submittingRef.current = true;
     if ((activeRenders ?? 0) >= MAX_CONCURRENT_RENDERS) {
       toast(`Massimo ${MAX_CONCURRENT_RENDERS} video alla volta. Attendi che finiscano.`, 'x');
+      submittingRef.current = false;
       return;
     }
     if (layout === 'montaggio') {
       // Montaggio: quota dedicata (5 free, illimitato sui piani pagati).
       if (montaggioQuota && !montaggioQuota.unlimited && montaggioQuota.remaining <= 0) {
         toast('Hai finito i montaggi gratuiti. Passa a un piano per montaggi illimitati.', 'x');
+        submittingRef.current = false;
         return;
       }
       const c = await consumeMontaggioQuota();
       if (c && !c.allowed) {
         setMontaggioQuota({ unlimited: false, remaining: 0 });
         toast('Hai finito i montaggi gratuiti. Passa a un piano per montaggi illimitati.', 'x');
+        submittingRef.current = false;
         return;
       }
       if (c && !c.unlimited && typeof c.remaining === 'number') setMontaggioQuota({ unlimited: false, remaining: c.remaining });
     } else if (quota && displayRemaining <= 0) {
+      submittingRef.current = false;
       if (lockBrand) { go?.('account'); return; }
       setPacksOpen(true); // quota finita (paganti) → mostra i pacchetti extra
       return;
@@ -1419,6 +1428,8 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
       console.error('[video-ai] render failed:', e);
       onVideoJob?.({ id: prepId, title: jobTitle(), template: layout, stage: 'failed', progress: 0, ctx: {}, error: msg, projectId: project?.id || null, aspect: 'portrait' });
       if (prepJobRef.current === prepId) prepJobRef.current = null;
+    } finally {
+      submittingRef.current = false;
     }
   };
 

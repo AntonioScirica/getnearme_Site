@@ -1227,7 +1227,7 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
       </div>
       )}
       {packsOpen && <PhotoPacksModal onClose={() => setPacksOpen(false)} />}
-      {wmUrl && <WatermarkDownloadModal imageUrl={wmUrl} onClose={() => setWmUrl(null)} />}
+      {wmUrl && <WatermarkDownloadModal imageUrl={wmUrl} onClose={() => setWmUrl(null)} lockBrand={lockBrand} />}
     </div>
   );
 }
