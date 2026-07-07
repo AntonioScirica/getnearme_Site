@@ -2285,7 +2285,6 @@ function AccountScreen({ credits, toast, go, userData, tierHint }: { credits: nu
                   // invece del "Piano attuale" morto che non faceva nulla.
                   const seatsChanged = isSeat && active && !!currentSeats && seats !== currentSeats;
                   const seatsLabel = seats > (currentSeats ?? 0) ? 'Aggiungi persone' : 'Riduci posti';
-                  const isActionable = !active || seatsChanged;
                   return (
                 <Box as="button" disabled={seatsBusy} onClick={() => {
                   if (plan.id === 'agy_custom') { window.open('https://cal.com/getnearme/30min', '_blank'); return; }
@@ -2297,15 +2296,18 @@ function AccountScreen({ credits, toast, go, userData, tierHint }: { credits: nu
                 }} style={{
                   marginTop: 25,
                   border: 'none',
-                  background: isActionable ? '#3B83F6' : 'var(--bg-card)',
-                  color: isActionable ? '#fff' : '#3B83F6',
+                  // Colore segue lo sfondo della CARD (bianco su card blu attiva,
+                  // blu su card bianca), MAI l'inverso — altrimenti su una card
+                  // attiva (blu) un bottone blu ci sparisce dentro.
+                  background: active ? 'var(--bg-card)' : '#3B83F6',
+                  color: active ? '#3B83F6' : '#fff',
                   fontSize: 14, fontWeight: 700, padding: '13px 18px', borderRadius: 11,
                   cursor: seatsBusy ? 'default' : 'pointer', minHeight: 43, width: '100%',
                   opacity: seatsBusy ? 0.7 : 1,
                   transition: 'background .2s, transform .15s',
-                  boxShadow: isActionable ? 'none' : '0 2px 8px rgba(0,0,0,.08)',
+                  boxShadow: active ? '0 2px 8px rgba(0,0,0,.08)' : 'none',
                 }} hover={seatsBusy ? {} : {
-                  background: isActionable ? '#2b6fe0' : '#f0f6ff',
+                  background: active ? '#f0f6ff' : '#2b6fe0',
                   transform: 'scale(0.98)',
                 }}>
                   {seatsBusy ? '...' : seatsChanged ? seatsLabel : active ? 'Piano attuale' : plan.id === 'free' ? 'Piano base' : plan.id === 'agy_custom' ? 'Contattaci' : 'Scegli questo piano'}
