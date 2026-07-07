@@ -15,6 +15,7 @@ import {
   Share2,
   Contact,
   Target,
+  ListTodo,
 } from "lucide-react";
 import { MONO } from "./types";
 import type { PageId } from "./types";
@@ -28,6 +29,7 @@ const navItems: { id: PageId; label: string; icon: React.ComponentType<{ classNa
   { id: "emails",      label: "Email",        icon: Mail },
   { id: "crm",         label: "CRM",          icon: Contact },
   { id: "ads",         label: "Ads",          icon: Target },
+  { id: "tasks",       label: "Tasks",        icon: ListTodo },
 ];
 
 interface SidebarProps {

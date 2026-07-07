@@ -192,7 +192,8 @@ export type PageId =
   | "costs"
   | "emails"
   | "crm"
-  | "ads";
+  | "ads"
+  | "tasks";
 
 export const MONO = "font-[family-name:var(--font-jetbrains)]";
 

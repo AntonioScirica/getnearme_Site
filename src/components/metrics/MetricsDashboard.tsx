@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import {
   Loader2, RefreshCw, LogOut, X,
   LayoutDashboard, Users, Contact, Wallet, MoreHorizontal,
-  Megaphone, Building2, Mail, Share2,
+  Megaphone, Building2, Mail, Share2, ListTodo,
 } from "lucide-react";
 import type { MetricsData, PageId } from "./types";
 import { MONO } from "./types";
@@ -21,6 +21,7 @@ import CostsPage from "./pages/CostsPage";
 import EmailsPage from "./pages/EmailsPage";
 import CrmPage from "./pages/CrmPage";
 import AdsPage from "./pages/AdsPage";
+import TasksPage from "./pages/TasksPage";
 
 // Mobile bottom-nav: 4 primary tabs; everything else lives in the "Altro" sheet.
 const MOBILE_TABS: { id: PageId; label: string; icon: typeof LayoutDashboard }[] = [
@@ -33,10 +34,11 @@ const MOBILE_MORE: { id: PageId; label: string; icon: typeof LayoutDashboard }[]
   { id: "newsletter", label: "Marketing", icon: Megaphone },
   { id: "exports", label: "Agenzie", icon: Building2 },
   { id: "emails", label: "Email", icon: Mail },
+  { id: "tasks", label: "Tasks", icon: ListTodo },
 ];
 const PAGE_TITLES: Record<string, string> = {
   overview: "Overview", newsletter: "Marketing", users: "Utenti", exports: "Agenzie",
-  stripe: "Stripe", ambassador: "Ambassador", costs: "Costi", emails: "Email", crm: "CRM",
+  stripe: "Stripe", ambassador: "Ambassador", costs: "Costi", emails: "Email", crm: "CRM", tasks: "Tasks",
 };
 
 export default function MetricsDashboard() {
@@ -149,6 +151,8 @@ export default function MetricsDashboard() {
         return <CrmPage authKey={authKey} />;
       case "ads":
         return <AdsPage authKey={authKey} />;
+      case "tasks":
+        return <TasksPage authKey={authKey} />;
     }
   };
 
