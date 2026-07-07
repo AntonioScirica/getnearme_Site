@@ -24,6 +24,25 @@ function avatarFromUser(user: { user_metadata?: Record<string, unknown> } | null
   return (m?.avatar_url || m?.picture || null) as string | null;
 }
 
+// Le cache client (job video, batch foto, flag) sono in localStorage/IndexedDB
+// NON scoped per utente. Se sullo stesso browser entra un account diverso (o si
+// ricrea l'account dopo averlo cancellato -> nuovo user_id), senza pulirle il
+// nuovo utente si ritroverebbe i contenuti del vecchio. Qui azzeriamo tutto
+// appena l'uid della sessione non combacia con l'ultimo visto in questo browser.
+function guardUserCache(uid: string): void {
+  try {
+    const prev = localStorage.getItem('gnm_last_uid');
+    if (prev && prev !== uid) {
+      for (let i = localStorage.length - 1; i >= 0; i--) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith('gnm_') && k !== 'gnm_last_uid') localStorage.removeItem(k);
+      }
+      try { indexedDB.deleteDatabase('gnm_media_cache'); } catch { /* noop */ }
+    }
+    localStorage.setItem('gnm_last_uid', uid);
+  } catch { /* private mode */ }
+}
+
 async function fetchProfile(userId: string, email: string, avatarUrl: string | null = null): Promise<UserData> {
   // NB: la colonna e' `stripe_agency_subscription_id` (NON `stripe_customer_id`).
   // Selezionare una colonna inesistente faceva fallire l'INTERA query -> data
@@ -63,6 +82,7 @@ export default function DashboardPage() {
         ]);
         const session = sessionRes?.data?.session ?? null;
         if (session?.user) {
+          guardUserCache(session.user.id);
           const profile = await fetchProfile(session.user.id, session.user.email || '', avatarFromUser(session.user));
           setUserData(profile);
         }
@@ -85,6 +105,7 @@ export default function DashboardPage() {
       }
       if (session?.user) {
         const u = session.user;
+        guardUserCache(u.id);
         setTimeout(() => { fetchProfile(u.id, u.email || '', avatarFromUser(u)).then(setUserData).catch(() => {}); }, 0);
       }
     });

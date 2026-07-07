@@ -1032,7 +1032,6 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
 
                 {/* Export / salvataggio (sotto) */}
                 <div style={{ background: '#fff', border: '1px solid #f0ede7', borderRadius: 14, padding: 18, boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: '#b3aca1', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 13 }}>Risultato</div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
                     <Box as="button" onClick={() => setWmUrl(result.after)} style={{ border: 'none', background: 'linear-gradient(135deg, #3B83F6 0%, #6366f1 100%)', color: '#fff', fontSize: 13, fontWeight: 700, padding: '13px 18px', borderRadius: 11, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 } as React.CSSProperties} hover={s('opacity:.9')}>
                       <Icon name="download" size={14} color="#fff" />Scarica risultato
