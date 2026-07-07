@@ -7,8 +7,9 @@
 // card). CRUD via /api/tasks.
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { MONO } from "../types";
-import { Plus, Trash2, Pencil, X, RefreshCw, Calendar, Bell, GripVertical, Clock, Play, Check, ChevronDown } from "lucide-react";
+import { Plus, Trash2, Pencil, X, RefreshCw, Calendar, Bell, GripVertical, Clock, Play, Check, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 
 const COLUMNS: { id: string; label: string; dot: string }[] = [
   { id: "todo", label: "Da fare", dot: "bg-gray-400" },
@@ -47,6 +48,28 @@ const isOverdue = (d: string) => new Date(d + "T23:59:59") < new Date();
 const fmtEst = (h: number) => (h < 1 ? `${Math.round(h * 60)}min` : `${h % 1 === 0 ? h : h.toFixed(1)}h`);
 const isEmail = (e: string) => /.+@.+\..+/.test(e);
 
+// Popover dentro un modale con overflow-y-auto: un dropdown absolute resta
+// tagliato dal contenitore. Ancora la posizione al box e porta il contenuto
+// fuori nel <body> (fixed), cosi' esce sempre visibile.
+function useAnchoredRect(open: boolean, anchorRef: React.RefObject<HTMLElement | null>) {
+  const [rect, setRect] = useState<{ top: number; bottom: number; left: number; width: number } | null>(null);
+  useEffect(() => {
+    if (!open || !anchorRef.current) { setRect(null); return; }
+    const update = () => {
+      const r = anchorRef.current!.getBoundingClientRect();
+      setRect({ top: r.top, bottom: r.bottom, left: r.left, width: r.width });
+    };
+    update();
+    window.addEventListener("scroll", update, true);
+    window.addEventListener("resize", update);
+    return () => {
+      window.removeEventListener("scroll", update, true);
+      window.removeEventListener("resize", update);
+    };
+  }, [open, anchorRef]);
+  return rect;
+}
+
 // ── Combobox tag: chips + input con suggerimenti (email gia' usate) ──
 function TagCombobox({ value, onChange, suggestions }: {
   value: string[];
@@ -56,9 +79,15 @@ function TagCombobox({ value, onChange, suggestions }: {
   const [text, setText] = useState("");
   const [open, setOpen] = useState(false);
   const boxRef = useRef<HTMLDivElement>(null);
+  const dropRef = useRef<HTMLDivElement>(null);
+  const rect = useAnchoredRect(open, boxRef);
 
   useEffect(() => {
-    const close = (e: MouseEvent) => { if (!boxRef.current?.contains(e.target as Node)) setOpen(false); };
+    const close = (e: MouseEvent) => {
+      if (boxRef.current?.contains(e.target as Node)) return;
+      if (dropRef.current?.contains(e.target as Node)) return;
+      setOpen(false);
+    };
     document.addEventListener("mousedown", close);
     return () => document.removeEventListener("mousedown", close);
   }, []);
@@ -92,8 +121,12 @@ function TagCombobox({ value, onChange, suggestions }: {
         {value.length === 0 && <span className="text-sm text-gray-600 py-0.5">Scegli chi taggare</span>}
         <ChevronDown className={`w-3.5 h-3.5 text-gray-500 ml-auto transition-transform ${open ? "rotate-180" : ""}`} />
       </div>
-      {open && (
-        <div className="absolute z-10 mt-1 w-full bg-[#1b1f28] border border-white/10 rounded-lg shadow-xl max-h-56 overflow-y-auto">
+      {open && rect && createPortal(
+        <div
+          ref={dropRef}
+          style={{ position: "fixed", top: rect.bottom + 4, left: rect.left, width: rect.width }}
+          className="z-[100] bg-[#1b1f28] border border-white/10 rounded-lg shadow-xl max-h-56 overflow-y-auto"
+        >
           {peopleOptions.length > 0 && (
             <div className="p-1">
               {peopleOptions.map(([name, email]) => (
@@ -132,9 +165,118 @@ function TagCombobox({ value, onChange, suggestions }: {
               </button>
             ))}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
+  );
+}
+
+const MONTHS_IT = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"];
+const DAYS_IT = ["L", "M", "M", "G", "V", "S", "D"];
+const pad2 = (n: number) => String(n).padStart(2, "0");
+const toISODate = (y: number, m: number, d: number) => `${y}-${pad2(m + 1)}-${pad2(d)}`;
+
+// ── Calendario custom: sostituisce l'input[type=date] nativo del browser ──
+function DatePicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const anchorRef = useRef<HTMLButtonElement>(null);
+  const dropRef = useRef<HTMLDivElement>(null);
+  const rect = useAnchoredRect(open, anchorRef);
+  const today = new Date();
+  const initial = value ? new Date(value + "T00:00:00") : today;
+  const [viewY, setViewY] = useState(initial.getFullYear());
+  const [viewM, setViewM] = useState(initial.getMonth());
+
+  useEffect(() => {
+    const close = (e: MouseEvent) => {
+      if (anchorRef.current?.contains(e.target as Node)) return;
+      if (dropRef.current?.contains(e.target as Node)) return;
+      setOpen(false);
+    };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, []);
+
+  const openPicker = () => {
+    const d = value ? new Date(value + "T00:00:00") : today;
+    setViewY(d.getFullYear());
+    setViewM(d.getMonth());
+    setOpen((o) => !o);
+  };
+
+  const firstDow = (new Date(viewY, viewM, 1).getDay() + 6) % 7; // lun=0
+  const daysInMonth = new Date(viewY, viewM + 1, 0).getDate();
+  const cells: (number | null)[] = [...Array(firstDow).fill(null), ...Array.from({ length: daysInMonth }, (_, i) => i + 1)];
+  const todayISO = toISODate(today.getFullYear(), today.getMonth(), today.getDate());
+
+  const prevMonth = () => setViewM((m) => { if (m === 0) { setViewY((y) => y - 1); return 11; } return m - 1; });
+  const nextMonth = () => setViewM((m) => { if (m === 11) { setViewY((y) => y + 1); return 0; } return m + 1; });
+
+  return (
+    <>
+      <button
+        ref={anchorRef}
+        type="button"
+        onClick={openPicker}
+        className={`w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-left outline-none focus:border-indigo-500/50 cursor-pointer flex items-center justify-between gap-2 ${
+          value ? "text-gray-200" : "text-gray-600"
+        }`}
+      >
+        <span className="truncate">{value ? fmtDue(value) : "Nessuna"}</span>
+        <Calendar className="w-3.5 h-3.5 text-gray-500 shrink-0" />
+      </button>
+      {open && rect && createPortal(
+        <div
+          ref={dropRef}
+          style={{ position: "fixed", top: rect.bottom + 4, left: rect.left }}
+          className="z-[100] w-64 bg-[#1b1f28] border border-white/10 rounded-lg shadow-xl p-2"
+        >
+          <div className="flex items-center justify-between mb-2 px-1">
+            <button onClick={prevMonth} className="p-1 rounded text-gray-400 hover:text-gray-100 hover:bg-white/5 cursor-pointer">
+              <ChevronLeft className="w-3.5 h-3.5" />
+            </button>
+            <span className="text-xs font-medium text-gray-200">{MONTHS_IT[viewM]} {viewY}</span>
+            <button onClick={nextMonth} className="p-1 rounded text-gray-400 hover:text-gray-100 hover:bg-white/5 cursor-pointer">
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+          <div className="grid grid-cols-7 gap-0.5 mb-1">
+            {DAYS_IT.map((d, i) => (
+              <div key={i} className="text-center text-[10px] text-gray-600 py-1">{d}</div>
+            ))}
+          </div>
+          <div className="grid grid-cols-7 gap-0.5">
+            {cells.map((d, i) => {
+              if (d == null) return <div key={i} />;
+              const iso = toISODate(viewY, viewM, d);
+              const selected = iso === value;
+              const isToday = iso === todayISO;
+              return (
+                <button
+                  key={i}
+                  onClick={() => { onChange(iso); setOpen(false); }}
+                  className={`aspect-square rounded text-xs cursor-pointer transition-colors ${
+                    selected ? "bg-indigo-500 text-white" : isToday ? "text-indigo-300 bg-white/5 hover:bg-white/10" : "text-gray-300 hover:bg-white/5"
+                  }`}
+                >
+                  {d}
+                </button>
+              );
+            })}
+          </div>
+          {value && (
+            <button
+              onClick={() => { onChange(""); setOpen(false); }}
+              className="w-full mt-2 text-[11px] text-gray-500 hover:text-red-400 cursor-pointer py-1"
+            >
+              Rimuovi scadenza
+            </button>
+          )}
+        </div>,
+        document.body
+      )}
+    </>
   );
 }
 
@@ -206,6 +348,7 @@ export default function TasksPage({ authKey }: { authKey: string | null }) {
       if (d.task) setTasks((ts) => ts.map((t) => (t.id === id ? d.task : t))); // porta started_at dal server
     } catch {
       setTasks(prev); // rollback
+      alert("Spostamento fallito, riprova.");
     }
   };
 
@@ -356,53 +499,56 @@ export default function TasksPage({ authKey }: { authKey: string | null }) {
                 {items.map((t) => {
                   const subs = t.subtasks || [];
                   const doneN = subs.filter((s) => s.done).length;
+                  const colIdx = COLUMNS.findIndex((c) => c.id === t.status);
+                  const prevCol = colIdx > 0 ? COLUMNS[colIdx - 1] : null;
+                  const nextCol = colIdx < COLUMNS.length - 1 ? COLUMNS[colIdx + 1] : null;
                   return (
                     <div
                       key={t.id}
                       draggable
                       onDragStart={(e) => { setDragId(t.id); e.dataTransfer.setData("text/plain", t.id); e.dataTransfer.effectAllowed = "move"; }}
                       onDragEnd={() => { setDragId(null); setDragOver(null); }}
-                      className={`group rounded-lg border border-white/[0.08] bg-[#161920] p-3 cursor-grab active:cursor-grabbing ${
+                      className={`group rounded-xl border border-white/[0.08] bg-[#161920] p-3.5 shadow-sm hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing ${
                         dragId === t.id ? "opacity-40" : ""
                       }`}
                     >
                       <div className="flex items-start gap-2">
-                        <GripVertical className="w-3.5 h-3.5 text-gray-600 mt-0.5 shrink-0" />
+                        <GripVertical className="w-3.5 h-3.5 text-gray-600 mt-0.5 shrink-0 opacity-40 group-hover:opacity-100 transition-opacity" />
                         <div className="min-w-0 flex-1">
-                          <div className={`text-sm text-gray-200 leading-snug ${t.status === "done" ? "line-through text-gray-500" : ""}`}>{t.title}</div>
-                          {t.notes && <div className="text-xs text-gray-500 mt-1 line-clamp-2">{t.notes}</div>}
+                          <div className={`text-sm font-medium text-gray-100 leading-snug ${t.status === "done" ? "line-through text-gray-500" : ""}`}>{t.title}</div>
+                          {t.notes && <div className="text-xs text-gray-500 mt-1 leading-relaxed line-clamp-2">{t.notes}</div>}
 
-                          {/* sottotask: progress + checklist inline */}
+                          {/* sottotask: progress + checklist in un riquadro dedicato */}
                           {subs.length > 0 && (
-                            <div className="mt-2">
+                            <div className="mt-2.5 rounded-lg bg-white/[0.03] border border-white/[0.05] p-2">
                               <div className="flex items-center gap-2 mb-1.5">
-                                <div className="flex-1 h-1 rounded-full bg-white/10 overflow-hidden">
-                                  <div className="h-full bg-indigo-400 transition-all" style={{ width: `${(doneN / subs.length) * 100}%` }} />
+                                <div className="flex-1 h-1.5 rounded-full bg-white/10 overflow-hidden">
+                                  <div className="h-full rounded-full bg-indigo-400 transition-all" style={{ width: `${(doneN / subs.length) * 100}%` }} />
                                 </div>
-                                <span className={`${MONO} text-[10px] text-gray-500`}>{doneN}/{subs.length}</span>
+                                <span className={`${MONO} text-[10px] text-gray-500 shrink-0`}>{doneN}/{subs.length}</span>
                               </div>
-                              <div className="space-y-1">
+                              <div className="space-y-0.5">
                                 {subs.map((s) => (
                                   <button
                                     key={s.id}
                                     onClick={() => toggleSub(t, s.id)}
-                                    className="w-full flex items-center gap-1.5 text-left cursor-pointer group/sub"
+                                    className="w-full flex items-center gap-2 text-left cursor-pointer group/sub py-0.5"
                                   >
-                                    <span className={`w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 transition-colors ${
-                                      s.done ? "bg-indigo-500 border-indigo-500" : "border-gray-600 group-hover/sub:border-gray-400"
+                                    <span className={`w-4 h-4 rounded-md border-[1.5px] flex items-center justify-center shrink-0 transition-colors ${
+                                      s.done ? "bg-indigo-500 border-indigo-500" : "border-gray-500 group-hover/sub:border-indigo-400"
                                     }`}>
-                                      {s.done && <Check className="w-2.5 h-2.5 text-white" />}
+                                      {s.done && <Check className="w-2.5 h-2.5 text-white" strokeWidth={3} />}
                                     </span>
-                                    <span className={`text-[11px] leading-tight ${s.done ? "line-through text-gray-600" : "text-gray-400"}`}>{s.title}</span>
+                                    <span className={`text-[12px] leading-tight ${s.done ? "line-through text-gray-600" : "text-gray-300"}`}>{s.title}</span>
                                   </button>
                                 ))}
                               </div>
                             </div>
                           )}
 
-                          <div className="flex flex-wrap items-center gap-2 mt-2">
+                          <div className="flex flex-wrap items-center gap-1.5 mt-2.5">
                             {t.assignee && (
-                              <span className="inline-flex items-center gap-1 text-[11px] text-gray-400">
+                              <span className="inline-flex items-center gap-1 text-[11px] text-gray-300 bg-white/5 rounded-full pl-0.5 pr-2 py-0.5">
                                 <span className="w-4 h-4 rounded-full bg-indigo-500/30 text-indigo-300 flex items-center justify-center text-[9px] font-bold">
                                   {t.assignee.slice(0, 1).toUpperCase()}
                                 </span>
@@ -410,37 +556,59 @@ export default function TasksPage({ authKey }: { authKey: string | null }) {
                               </span>
                             )}
                             {t.due_date && (
-                              <span className={`inline-flex items-center gap-1 text-[11px] ${
-                                t.status !== "done" && isOverdue(t.due_date) ? "text-red-400" : "text-gray-500"
+                              <span className={`inline-flex items-center gap-1 text-[11px] rounded-full px-2 py-0.5 ${
+                                t.status !== "done" && isOverdue(t.due_date) ? "text-red-400 bg-red-500/10" : "text-gray-400 bg-white/5"
                               }`}>
                                 <Calendar className="w-3 h-3" /> {fmtDue(t.due_date)}
                               </span>
                             )}
                             {t.estimate_hours != null && (
-                              <span className="inline-flex items-center gap-1 text-[11px] text-gray-500">
+                              <span className="inline-flex items-center gap-1 text-[11px] text-gray-400 bg-white/5 rounded-full px-2 py-0.5">
                                 <Clock className="w-3 h-3" /> {fmtEst(t.estimate_hours)}
                               </span>
                             )}
                             {t.started_at && (
-                              <span className="inline-flex items-center gap-1 text-[11px] text-gray-500" title="Iniziata il">
+                              <span className="inline-flex items-center gap-1 text-[11px] text-gray-400 bg-white/5 rounded-full px-2 py-0.5" title="Iniziata il">
                                 <Play className="w-3 h-3" /> {fmtStart(t.started_at)}
                               </span>
                             )}
                             {(t.tagged_emails?.length ?? 0) > 0 && (
-                              <span className={`${MONO} text-[10px] text-gray-600`}>@{t.tagged_emails!.length}</span>
+                              <span className={`${MONO} text-[10px] text-gray-500 bg-white/5 rounded-full px-2 py-0.5`}>@{t.tagged_emails!.length}</span>
                             )}
                           </div>
                         </div>
-                        <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                      </div>
+
+                      {/* footer: sposta colonna (affidabile, non dipende dal drag) + azioni */}
+                      <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-white/[0.06]">
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => prevCol && move(t.id, prevCol.id)}
+                            disabled={!prevCol}
+                            title={prevCol ? `Sposta in "${prevCol.label}"` : undefined}
+                            className="p-1 rounded text-gray-500 hover:text-gray-200 hover:bg-white/5 disabled:opacity-20 disabled:hover:bg-transparent cursor-pointer disabled:cursor-default"
+                          >
+                            <ChevronLeft className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => nextCol && move(t.id, nextCol.id)}
+                            disabled={!nextCol}
+                            title={nextCol ? `Sposta in "${nextCol.label}"` : undefined}
+                            className="p-1 rounded text-gray-500 hover:text-gray-200 hover:bg-white/5 disabled:opacity-20 disabled:hover:bg-transparent cursor-pointer disabled:cursor-default"
+                          >
+                            <ChevronRight className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                        <div className="flex items-center gap-0.5 opacity-50 group-hover:opacity-100 transition-opacity">
                           {(t.tagged_emails?.length ?? 0) > 0 && (
-                            <button onClick={() => notify(t.id)} disabled={notifying === t.id} className="p-1 text-gray-500 hover:text-amber-400 cursor-pointer" title="Notifica i taggati via mail">
+                            <button onClick={() => notify(t.id)} disabled={notifying === t.id} className="p-1.5 rounded text-gray-500 hover:text-amber-400 hover:bg-white/5 cursor-pointer" title="Notifica i taggati via mail">
                               <Bell className={`w-3.5 h-3.5 ${notifying === t.id ? "animate-pulse" : ""}`} />
                             </button>
                           )}
-                          <button onClick={() => openEdit(t)} className="p-1 text-gray-500 hover:text-gray-200 cursor-pointer" title="Modifica">
+                          <button onClick={() => openEdit(t)} className="p-1.5 rounded text-gray-500 hover:text-gray-200 hover:bg-white/5 cursor-pointer" title="Modifica">
                             <Pencil className="w-3.5 h-3.5" />
                           </button>
-                          <button onClick={() => remove(t.id)} className="p-1 text-gray-500 hover:text-red-400 cursor-pointer" title="Elimina">
+                          <button onClick={() => remove(t.id)} className="p-1.5 rounded text-gray-500 hover:text-red-400 hover:bg-white/5 cursor-pointer" title="Elimina">
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
@@ -477,7 +645,7 @@ export default function TasksPage({ authKey }: { authKey: string | null }) {
                 </div>
                 <div>
                   <label className="text-[11px] text-gray-500 block mb-1">Scadenza</label>
-                  <input type="date" className={input} value={form.due_date} onChange={(e) => setForm({ ...form, due_date: e.target.value })} />
+                  <DatePicker value={form.due_date} onChange={(v) => setForm({ ...form, due_date: v })} />
                 </div>
                 <div>
                   <label className="text-[11px] text-gray-500 block mb-1">Stima (ore)</label>

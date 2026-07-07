@@ -120,17 +120,30 @@ export async function PATCH(req: NextRequest) {
   if (!authed(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const body = await req.json();
   if (!body.id) return NextResponse.json({ error: "id required" }, { status: 400 });
+
+  // Prima di scrivere: chi c'era gia' taggato, per notificare solo i NUOVI tag
+  // dopo l'update (taggare da un task esistente — non solo alla creazione —
+  // deve mandare la mail).
+  const { data: before } = await admin().from("matrix_tasks").select("tagged_emails").eq("id", body.id).single();
+  const prevEmails = new Set((before?.tagged_emails as string[] | null) || []);
+
   const patch = { ...pick(body), updated_at: new Date().toISOString() };
   const { data, error } = await admin().from("matrix_tasks").update(patch).eq("id", body.id).select().single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  let finalTask = data;
   // Data di inizio: la PRIMA volta che il task entra in lavorazione.
   if (data.status === "doing" && !data.started_at) {
     const { data: withStart } = await admin().from("matrix_tasks")
       .update({ started_at: new Date().toISOString() })
       .eq("id", body.id).is("started_at", null).select().single();
-    if (withStart) return NextResponse.json({ task: withStart });
+    if (withStart) finalTask = withStart;
   }
-  return NextResponse.json({ task: data });
+
+  const newEmails = ((finalTask.tagged_emails as string[] | null) || []).filter((e) => !prevEmails.has(e));
+  const sent = newEmails.length > 0 ? await notifyTagged({ ...finalTask, tagged_emails: newEmails } as TaskRow) : 0;
+
+  return NextResponse.json({ task: finalTask, sent });
 }
 
 export async function DELETE(req: NextRequest) {
