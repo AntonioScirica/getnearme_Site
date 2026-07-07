@@ -372,7 +372,7 @@ export const translations = {
             extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Scegli questo piano",
           },
           {
-            id: "individual_monthly", name: "Mensile", users: "Tutte le funzioni incluse", oldPrice: 150, price: 59, period: "/mese", priceNote: null,
+            id: "individual_monthly", name: "Premium", users: "Tutte le funzioni incluse", oldPrice: 150, price: 59, period: "/mese", priceNote: null,
             savingsYear: null, badge: null, popular: false,
             features: ["300 foto AI homestaging/mese", "6 video AI/mese", "Post social illimitati", "Montaggio Illimitato", "Report Automatici", "Analisi della zona", "Import immobili", "Supporto prioritario"],
             extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Scegli questo piano",
@@ -393,7 +393,7 @@ export const translations = {
               extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Scegli questo piano",
             },
             {
-              id: "individual_monthly", name: "Mensile", users: "Tutte le funzioni incluse", oldPrice: 150, price: 59, period: "/mese", priceNote: null,
+              id: "individual_monthly", name: "Premium", users: "Tutte le funzioni incluse", oldPrice: 150, price: 59, period: "/mese", priceNote: null,
               savingsYear: null, badge: null, popular: false,
               features: ["300 foto AI homestaging/mese", "6 video AI/mese", "Post social illimitati", "Montaggio Illimitato", "Report Automatici", "Analisi della zona", "Import immobili", "Supporto prioritario"],
               extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Scegli questo piano",
