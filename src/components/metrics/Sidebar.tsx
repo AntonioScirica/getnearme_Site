@@ -16,6 +16,8 @@ import {
   Contact,
   Target,
   ListTodo,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { MONO } from "./types";
 import type { PageId } from "./types";
@@ -39,6 +41,8 @@ interface SidebarProps {
   onRefresh: () => void;
   onLogout: () => void;
   loading: boolean;
+  light?: boolean;
+  onToggleTheme?: () => void;
 }
 
 export default function Sidebar({
@@ -48,6 +52,8 @@ export default function Sidebar({
   onRefresh,
   onLogout,
   loading,
+  light,
+  onToggleTheme,
 }: SidebarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const router = useRouter();
@@ -103,6 +109,13 @@ export default function Sidebar({
                 Aggiornato {new Date(timestamp).toLocaleString("it-IT", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
               </p>
             )}
+            <button
+              onClick={() => { onToggleTheme?.(); }}
+              className={`${MONO} w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-gray-400 hover:bg-white/5 hover:text-gray-200 transition-colors`}
+            >
+              {light ? <Moon className="w-4 h-4 shrink-0" /> : <Sun className="w-4 h-4 shrink-0" />}
+              {light ? "Dark mode" : "Light mode"}
+            </button>
             <button
               onClick={() => { onRefresh(); setMenuOpen(false); }}
               disabled={loading}

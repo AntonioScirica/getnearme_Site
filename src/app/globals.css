@@ -322,3 +322,22 @@ html {
     font-size: 16px !important;
   }
 }
+
+/* ── Metrics light mode ─────────────────────────────────────────────
+   La console Metrics e' dark-only con colori hardcoded in ogni pagina:
+   la light mode inverte l'intero documento (invert + hue-rotate per
+   mantenere le tinte) e ri-inverte i media cosi' restano naturali.
+   Sicuro per position:fixed perche' il filtro sta sull'elemento root
+   (esente dalla regola del containing block, CSS Filter Effects §Filter
+   Effects on the Root Element). Classe gestita da MetricsDashboard. */
+html.metrics-light {
+  filter: invert(1) hue-rotate(180deg);
+  background: #fff;
+  color-scheme: light;
+}
+html.metrics-light img,
+html.metrics-light video,
+html.metrics-light iframe,
+html.metrics-light canvas {
+  filter: invert(1) hue-rotate(180deg);
+}

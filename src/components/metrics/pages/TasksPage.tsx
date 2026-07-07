@@ -14,7 +14,7 @@ const COLUMNS: { id: string; label: string; dot: string }[] = [
   { id: "done", label: "Fatto", dot: "bg-green-400" },
 ];
 
-const PEOPLE = ["Antonio", "Francesco", "Alan", "Filippo"];
+const PEOPLE = ["Antonio", "Federico", "Matteo"];
 
 interface Task {
   id: string;

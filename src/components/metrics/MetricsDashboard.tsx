@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import {
   Loader2, RefreshCw, LogOut, X,
   LayoutDashboard, Users, Contact, Wallet, MoreHorizontal,
-  Megaphone, Building2, Mail, Share2, ListTodo,
+  Megaphone, Building2, Mail, Share2, ListTodo, Sun, Moon,
 } from "lucide-react";
 import type { MetricsData, PageId } from "./types";
 import { MONO } from "./types";
@@ -42,6 +42,17 @@ const PAGE_TITLES: Record<string, string> = {
 };
 
 export default function MetricsDashboard() {
+  // Light mode: classe su <html> (vedi globals.css, invert+hue-rotate).
+  // Sul root il filtro non rompe i position:fixed (sidebar, modali).
+  const [light, setLight] = useState(false);
+  useEffect(() => {
+    try { setLight(localStorage.getItem("metrics_light") === "1"); } catch { /* private mode */ }
+  }, []);
+  useEffect(() => {
+    document.documentElement.classList.toggle("metrics-light", light);
+    try { localStorage.setItem("metrics_light", light ? "1" : "0"); } catch { /* private mode */ }
+    return () => document.documentElement.classList.remove("metrics-light");
+  }, [light]);
   const [authKey, setAuthKey] = useState<string | null>(null);
   const [data, setData] = useState<MetricsData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -182,6 +193,8 @@ export default function MetricsDashboard() {
           onRefresh={() => fetchData(authKey)}
           onLogout={handleLogout}
           loading={loading}
+          light={light}
+          onToggleTheme={() => setLight((v) => !v)}
         />
       </div>
 
@@ -190,13 +203,22 @@ export default function MetricsDashboard() {
         {/* Mobile app header */}
         <div className="md:hidden flex items-center justify-between h-14 px-4 bg-[#161920]/95 backdrop-blur border-b border-white/10 sticky top-0 z-20" style={{ paddingTop: "env(safe-area-inset-top)" }}>
           <span className="font-semibold text-gray-100 text-base">{PAGE_TITLES[activePage] ?? "Metrics"}</span>
-          <button
-            onClick={() => fetchData(authKey)}
-            disabled={loading}
-            className="p-2 -mr-2 text-gray-400 hover:text-gray-100 transition-colors disabled:opacity-40"
-          >
-            <RefreshCw className={`w-5 h-5 ${loading ? "animate-spin" : ""}`} />
-          </button>
+          <div className="flex items-center">
+            <button
+              onClick={() => setLight((v) => !v)}
+              className="p-2 text-gray-400 hover:text-gray-100 transition-colors"
+              title={light ? "Dark mode" : "Light mode"}
+            >
+              {light ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+            </button>
+            <button
+              onClick={() => fetchData(authKey)}
+              disabled={loading}
+              className="p-2 -mr-2 text-gray-400 hover:text-gray-100 transition-colors disabled:opacity-40"
+            >
+              <RefreshCw className={`w-5 h-5 ${loading ? "animate-spin" : ""}`} />
+            </button>
+          </div>
         </div>
 
         {/* Page content */}
