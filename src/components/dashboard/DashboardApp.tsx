@@ -3335,8 +3335,17 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
   if (cmdq) projects.filter((p) => (p.nome + ' ' + p.addr).toLowerCase().includes(cmdq)).forEach((p) => cmdResults.push({ label: p.nome, sub: p.addr, icon: 'building-2', go: () => { setCmdkOpen(false); setActiveProject(p.id); go('home'); } }));
 
   const tipRef = tourRect2 || tourRect;
-  const onRight = tipRef && tipRef.x > (typeof window !== 'undefined' ? window.innerWidth - 420 : 9999);
-  const tipL = tipRef ? (onRight ? Math.max(16, tipRef.x + tipRef.w - 320) : tipRef.x + tipRef.w + 20) : 0;
+  const TIP_W = 270; // deve combaciare con la width del tooltip (vedi card style sotto)
+  const wW = typeof window !== 'undefined' ? window.innerWidth : 9999;
+  const onRight = tipRef && tipRef.x > wW - 420;
+  // Quando il tooltip va sotto l'elemento evidenziato (onRight), centralo
+  // orizzontalmente sulla parte interessata invece di allinearlo a destra,
+  // clampato ai bordi viewport.
+  const tipL = tipRef
+    ? (onRight
+        ? Math.max(16, Math.min(wW - TIP_W - 16, tipRef.x + tipRef.w / 2 - TIP_W / 2))
+        : tipRef.x + tipRef.w + 20)
+    : 0;
   const tipT = tipRef ? (onRight ? tipRef.y + tipRef.h + 16 : Math.max(16, tipRef.y - 12)) : 0;
   const tdef = tourStep !== null ? TOUR_DEFS[tourStep] : TOUR_DEFS[0];
   // Mobile: card centrata per ogni step (la sidebar è off-canvas, niente spotlight).

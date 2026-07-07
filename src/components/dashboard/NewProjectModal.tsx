@@ -767,6 +767,11 @@ export function NewProjectModal({
                   </>
                 ) : step === 1 ? (
                   <>
+                    {onImport && (
+                      <Box as="button" onClick={() => onImport()} style={s('border:1px solid #e4e1da;background:#fff;color:#211f1c;font-size:13px;font-weight:700;padding:11px 18px;border-radius:11px;cursor:pointer;flex:1;display:flex;align-items:center;justify-content:center;gap:7px')} hover={s('background:#f6f4f0;border-color:#d8d4cb')}>
+                        <Icon name="upload" size={14} color="#57534c" />Importa da file
+                      </Box>
+                    )}
                     <Box as="button" onClick={() => { if (nome.trim() && addr.trim()) setStep(2); }} style={s('border:none;background:#3B83F6;color:#fff;font-size:13px;font-weight:700;padding:11px 18px;border-radius:11px;cursor:' + (nome.trim() && addr.trim() ? 'pointer' : 'default') + ';flex:1;box-shadow:0 4px 12px rgba(59,131,246,0.25);opacity:' + (nome.trim() && addr.trim() ? 1 : 0.45))} hover={nome.trim() && addr.trim() ? s('background:#2563EB') : undefined}>
                       Avanti
                     </Box>
@@ -776,11 +781,6 @@ export function NewProjectModal({
                     <Box as="button" onClick={() => setStep(1)} style={s('border:1px solid #e4e1da;background:#fff;color:#57534c;font-size:13px;font-weight:700;padding:11px 18px;border-radius:11px;cursor:pointer;flex:1')} hover={s('background:#f6f4f0;border-color:#d8d4cb')}>
                       Indietro
                     </Box>
-                    {onImport && (
-                      <Box as="button" onClick={() => onImport()} style={s('border:1px solid #e4e1da;background:#fff;color:#211f1c;font-size:13px;font-weight:700;padding:11px 18px;border-radius:11px;cursor:pointer;flex:1;display:flex;align-items:center;justify-content:center;gap:7px')} hover={s('background:#f6f4f0;border-color:#d8d4cb')}>
-                        <Icon name="upload" size={14} color="#57534c" />Importa da file
-                      </Box>
-                    )}
                     <Box as="button" onClick={() => handleFinish(false)} disabled={loading || !techFilled} style={s('border:none;background:#3B83F6;color:#fff;font-size:13px;font-weight:700;padding:11px 18px;border-radius:11px;cursor:' + (loading || !techFilled ? 'default' : 'pointer') + ';flex:1;box-shadow:0 4px 12px rgba(59,131,246,0.25);opacity:' + (loading || !techFilled ? 0.45 : 1))} hover={loading || !techFilled ? undefined : s('background:#2563EB;box-shadow:0 6px 16px rgba(59,131,246,0.3)')}>
                       {loading ? 'Creazione...' : 'Crea Immobile'}
                     </Box>
