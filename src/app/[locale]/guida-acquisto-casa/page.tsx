@@ -111,7 +111,7 @@ export default async function GuidaAcquistoCasaPage({ params }: Props) {
         style={{
           position: "relative",
           overflow: "hidden",
-          padding: "80px 24px 60px",
+          padding: "72px 22px 54px",
           textAlign: "center",
         }}
       >
@@ -119,10 +119,10 @@ export default async function GuidaAcquistoCasaPage({ params }: Props) {
         <div
           style={{
             position: "absolute",
-            top: 40,
+            top: 36,
             right: "10%",
-            width: 80,
-            height: 80,
+            width: 72,
+            height: 72,
             borderRadius: "50%",
             border: "3px solid #f59e0b",
             opacity: 0.15,
@@ -132,11 +132,11 @@ export default async function GuidaAcquistoCasaPage({ params }: Props) {
         <div
           style={{
             position: "absolute",
-            bottom: 20,
+            bottom: 18,
             left: "8%",
-            width: 60,
-            height: 60,
-            borderRadius: 14,
+            width: 54,
+            height: 54,
+            borderRadius: 13,
             border: "1px solid rgba(26,26,46,0.10)",
             opacity: 0.08,
             transform: "rotate(-12deg)",
@@ -147,15 +147,15 @@ export default async function GuidaAcquistoCasaPage({ params }: Props) {
           style={{
             display: "inline-flex",
             alignItems: "center",
-            gap: 8,
-            padding: "8px 20px",
+            gap: 7,
+            padding: "7px 18px",
             background: "#fff",
             border: "1px solid rgba(26,26,46,0.10)",
-            borderRadius: 100,
+            borderRadius: 90,
             boxShadow: "0 4px 16px rgba(16,24,40,0.08)",
             fontWeight: 700,
-            fontSize: 14,
-            marginBottom: 24,
+            fontSize: 13,
+            marginBottom: 22,
           }}
         >
           <BookOpen size={18} color="#f59e0b" />
@@ -164,11 +164,11 @@ export default async function GuidaAcquistoCasaPage({ params }: Props) {
 
         <h1
           style={{
-            fontSize: "clamp(32px, 5vw, 52px)",
+            fontSize: "clamp(29px, 5vw, 47px)",
             fontWeight: 900,
             lineHeight: 1.1,
-            maxWidth: 700,
-            margin: "0 auto 16px",
+            maxWidth: 630,
+            margin: "0 auto 14px",
           }}
         >
           Guida all&apos;acquisto{" "}
@@ -186,9 +186,9 @@ export default async function GuidaAcquistoCasaPage({ params }: Props) {
 
         <p
           style={{
-            fontSize: 18,
+            fontSize: 16,
             color: "#52525b",
-            maxWidth: 540,
+            maxWidth: 486,
             margin: "0 auto",
             lineHeight: 1.6,
           }}
@@ -208,16 +208,16 @@ export default async function GuidaAcquistoCasaPage({ params }: Props) {
       {/* Chapter Cards Grid */}
       <section
         style={{
-          maxWidth: 880,
+          maxWidth: 792,
           margin: "0 auto",
-          padding: "0 24px 64px",
+          padding: "0 22px 58px",
         }}
       >
         <div
           style={{
             display: "grid",
             gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 360px), 1fr))",
-            gap: 24,
+            gap: 22,
           }}
         >
           {CHAPTERS.map((chapter, idx) => (
@@ -230,9 +230,9 @@ export default async function GuidaAcquistoCasaPage({ params }: Props) {
                 style={{
                   background: "#fff",
                   border: "1px solid rgba(26,26,46,0.10)",
-                  borderRadius: 20,
+                  borderRadius: 18,
                   boxShadow: "0 4px 16px rgba(16,24,40,0.08)",
-                  padding: "28px 28px 24px",
+                  padding: "25px 25px 22px",
                   transition: "transform 0.15s, box-shadow 0.15s",
                   cursor: "pointer",
                   height: "100%",
@@ -246,14 +246,14 @@ export default async function GuidaAcquistoCasaPage({ params }: Props) {
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "space-between",
-                    marginBottom: 16,
+                    marginBottom: 14,
                   }}
                 >
                   <div
                     style={{
-                      width: 52,
-                      height: 52,
-                      borderRadius: 14,
+                      width: 47,
+                      height: 47,
+                      borderRadius: 13,
                       background: "#fef3c7",
                       border: "1px solid rgba(26,26,46,0.10)",
                       display: "flex",
@@ -266,7 +266,7 @@ export default async function GuidaAcquistoCasaPage({ params }: Props) {
                   </div>
                   <span
                     style={{
-                      fontSize: 13,
+                      fontSize: 12,
                       fontWeight: 700,
                       color: "#a1a1aa",
                       textTransform: "uppercase",
@@ -280,9 +280,9 @@ export default async function GuidaAcquistoCasaPage({ params }: Props) {
                 {/* Title */}
                 <h2
                   style={{
-                    fontSize: 20,
+                    fontSize: 18,
                     fontWeight: 800,
-                    margin: "0 0 8px",
+                    margin: "0 0 7px",
                     lineHeight: 1.3,
                   }}
                 >
@@ -292,9 +292,9 @@ export default async function GuidaAcquistoCasaPage({ params }: Props) {
                 {/* Description */}
                 <p
                   style={{
-                    fontSize: 14,
+                    fontSize: 13,
                     color: "#52525b",
-                    margin: "0 0 16px",
+                    margin: "0 0 14px",
                     lineHeight: 1.5,
                     flex: 1,
                   }}
@@ -308,7 +308,7 @@ export default async function GuidaAcquistoCasaPage({ params }: Props) {
                     display: "flex",
                     alignItems: "center",
                     gap: 4,
-                    fontSize: 14,
+                    fontSize: 13,
                     fontWeight: 700,
                     color: "#f59e0b",
                   }}
@@ -325,27 +325,27 @@ export default async function GuidaAcquistoCasaPage({ params }: Props) {
       {/* Timeline Section */}
       <section
         style={{
-          maxWidth: 780,
+          maxWidth: 702,
           margin: "0 auto",
-          padding: "0 24px 64px",
+          padding: "0 22px 58px",
         }}
       >
         <h2
           style={{
-            fontSize: 28,
+            fontSize: 25,
             fontWeight: 900,
             textAlign: "center",
-            margin: "0 0 12px",
+            margin: "0 0 11px",
           }}
         >
           La timeline tipica
         </h2>
         <p
           style={{
-            fontSize: 15,
+            fontSize: 14,
             color: "#71717a",
             textAlign: "center",
-            margin: "0 0 32px",
+            margin: "0 0 29px",
             lineHeight: 1.5,
           }}
         >
@@ -356,7 +356,7 @@ export default async function GuidaAcquistoCasaPage({ params }: Props) {
           style={{
             background: "#fff",
             border: "1px solid rgba(26,26,46,0.10)",
-            borderRadius: 20,
+            borderRadius: 18,
             boxShadow: "0 4px 16px rgba(16,24,40,0.08)",
             overflow: "hidden",
           }}
@@ -367,8 +367,8 @@ export default async function GuidaAcquistoCasaPage({ params }: Props) {
               style={{
                 display: "flex",
                 alignItems: "center",
-                gap: 16,
-                padding: "20px 28px",
+                gap: 14,
+                padding: "18px 25px",
                 borderBottom:
                   idx < timelineSteps.length - 1
                     ? "1px solid #f3f4f6"
@@ -378,10 +378,10 @@ export default async function GuidaAcquistoCasaPage({ params }: Props) {
               {/* Step number */}
               <div
                 style={{
-                  width: 40,
-                  height: 40,
-                  minWidth: 40,
-                  borderRadius: 12,
+                  width: 36,
+                  height: 36,
+                  minWidth: 36,
+                  borderRadius: 11,
                   background:
                     idx === timelineSteps.length - 1 ? "#f59e0b" : "#fef3c7",
                   border: "1px solid rgba(26,26,46,0.10)",
@@ -390,7 +390,7 @@ export default async function GuidaAcquistoCasaPage({ params }: Props) {
                   justifyContent: "center",
                   color: "#1a1a2e",
                   fontWeight: 800,
-                  fontSize: 15,
+                  fontSize: 14,
                 }}
               >
                 {step.icon}
@@ -398,7 +398,7 @@ export default async function GuidaAcquistoCasaPage({ params }: Props) {
 
               {/* Label */}
               <div style={{ flex: 1 }}>
-                <span style={{ fontWeight: 700, fontSize: 15 }}>
+                <span style={{ fontWeight: 700, fontSize: 14 }}>
                   {step.label}
                 </span>
               </div>
@@ -408,13 +408,13 @@ export default async function GuidaAcquistoCasaPage({ params }: Props) {
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  gap: 6,
-                  fontSize: 13,
+                  gap: 5,
+                  fontSize: 12,
                   fontWeight: 600,
                   color: "#71717a",
                   background: "#f4f4f5",
-                  padding: "4px 12px",
-                  borderRadius: 8,
+                  padding: "4px 11px",
+                  borderRadius: 7,
                 }}
               >
                 <Clock size={14} />
@@ -426,10 +426,10 @@ export default async function GuidaAcquistoCasaPage({ params }: Props) {
 
         <p
           style={{
-            fontSize: 13,
+            fontSize: 12,
             color: "#a1a1aa",
             textAlign: "center",
-            marginTop: 16,
+            marginTop: 14,
           }}
         >
           Tempo totale stimato: 4-12 mesi dalla prima ricerca al rogito.
@@ -440,18 +440,18 @@ export default async function GuidaAcquistoCasaPage({ params }: Props) {
       <section
         style={{
           textAlign: "center",
-          padding: "0 24px 80px",
+          padding: "0 22px 72px",
         }}
       >
         <div
           style={{
-            maxWidth: 580,
+            maxWidth: 522,
             margin: "0 auto",
             background: "#1a1a2e",
             border: "1px solid rgba(26,26,46,0.10)",
-            borderRadius: 20,
+            borderRadius: 18,
             boxShadow: "6px 6px 0px #f59e0b",
-            padding: "40px 32px",
+            padding: "36px 29px",
             color: "#fff",
           }}
         >
@@ -460,29 +460,29 @@ export default async function GuidaAcquistoCasaPage({ params }: Props) {
               display: "inline-flex",
               alignItems: "center",
               justifyContent: "center",
-              width: 56,
-              height: 56,
-              borderRadius: 16,
+              width: 50,
+              height: 50,
+              borderRadius: 14,
               background: "rgba(245, 158, 11, 0.15)",
-              marginBottom: 16,
+              marginBottom: 14,
             }}
           >
             <Home size={28} color="#f59e0b" />
           </div>
           <h2
             style={{
-              fontSize: 24,
+              fontSize: 22,
               fontWeight: 900,
-              margin: "0 0 8px",
+              margin: "0 0 7px",
             }}
           >
             Stai cercando casa?
           </h2>
           <p
             style={{
-              fontSize: 15,
+              fontSize: 14,
               color: "#a1a1aa",
-              margin: "0 0 24px",
+              margin: "0 0 22px",
               lineHeight: 1.6,
             }}
           >
@@ -497,14 +497,14 @@ export default async function GuidaAcquistoCasaPage({ params }: Props) {
             style={{
               display: "inline-flex",
               alignItems: "center",
-              gap: 8,
-              padding: "14px 28px",
+              gap: 7,
+              padding: "13px 25px",
               background: "#f59e0b",
               color: "#1a1a2e",
               border: "3px solid #f59e0b",
-              borderRadius: 12,
+              borderRadius: 11,
               fontWeight: 800,
-              fontSize: 15,
+              fontSize: 14,
               textDecoration: "none",
               boxShadow: "4px 4px 0px rgba(255,255,255,0.15)",
               transition: "transform 0.15s, box-shadow 0.15s",
@@ -521,8 +521,8 @@ export default async function GuidaAcquistoCasaPage({ params }: Props) {
       <footer
         style={{
           textAlign: "center",
-          padding: "0 24px 40px",
-          fontSize: 13,
+          padding: "0 22px 36px",
+          fontSize: 12,
           color: "#a1a1aa",
         }}
       >

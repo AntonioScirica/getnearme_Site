@@ -51,30 +51,30 @@ export default function GuideProgress({ totalChapters, chapterSlugs }: Props) {
   return (
     <div
       style={{
-        maxWidth: 880,
+        maxWidth: 792,
         margin: "0 auto",
-        padding: "0 24px 32px",
+        padding: "0 22px 29px",
       }}
     >
       <div
         style={{
           background: allDone ? "#f0fdf4" : "#fff",
           border: `3px solid ${allDone ? "#16a34a" : "#1a1a2e"}`,
-          borderRadius: 16,
+          borderRadius: 14,
           boxShadow: `4px 4px 0px ${allDone ? "#16a34a" : "#1a1a2e"}`,
-          padding: "20px 24px",
+          padding: "18px 22px",
           display: "flex",
           alignItems: "center",
-          gap: 16,
+          gap: 14,
           transition: "all 0.3s",
         }}
       >
         <div
           style={{
-            width: 44,
-            height: 44,
-            minWidth: 44,
-            borderRadius: 12,
+            width: 40,
+            height: 40,
+            minWidth: 40,
+            borderRadius: 11,
             background: allDone ? "#dcfce7" : "#fef3c7",
             border: `2px solid ${allDone ? "#16a34a" : "#1a1a2e"}`,
             display: "flex",
@@ -90,17 +90,17 @@ export default function GuideProgress({ totalChapters, chapterSlugs }: Props) {
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
-              marginBottom: 8,
+              marginBottom: 7,
             }}
           >
-            <span style={{ fontWeight: 700, fontSize: 15 }}>
+            <span style={{ fontWeight: 700, fontSize: 14 }}>
               {allDone
                 ? "Guida completata!"
                 : "Il tuo avanzamento"}
             </span>
             <span
               style={{
-                fontSize: 13,
+                fontSize: 12,
                 fontWeight: 700,
                 color: allDone ? "#16a34a" : "#71717a",
               }}
@@ -110,7 +110,7 @@ export default function GuideProgress({ totalChapters, chapterSlugs }: Props) {
           </div>
           <div
             style={{
-              height: 8,
+              height: 7,
               background: "#e4e4e7",
               borderRadius: 4,
               overflow: "hidden",

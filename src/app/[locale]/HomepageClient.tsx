@@ -38,7 +38,7 @@ function FeatureCardClient({
         className="neo-border"
         style={{
           background: '#fff',
-          borderRadius: 16,
+          borderRadius: 14,
           overflow: 'hidden',
           boxShadow: hovered ? '0 12px 32px rgba(59,131,246,0.12)' : '0 6px 20px rgba(16,24,40,0.06)',
           borderColor: hovered ? '#bfdbfe' : undefined,
@@ -51,11 +51,11 @@ function FeatureCardClient({
         }}
       >
         {videoSrc && (
-          <div style={{ padding: 8 }}>
+          <div style={{ padding: 7 }}>
             <div
               style={{
                 background: '#f8fafc',
-                borderRadius: 12,
+                borderRadius: 11,
                 overflow: 'hidden',
                 border: '1px solid #e2e8f0',
                 aspectRatio: '16 / 10',
@@ -79,17 +79,17 @@ function FeatureCardClient({
             </div>
           </div>
         )}
-        <div style={{ padding: '20px 24px 28px', flex: 1, display: 'flex', flexDirection: 'column' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+        <div style={{ padding: '18px 22px 25px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 11, marginBottom: 13 }}>
             <span
               style={{
-                width: 40,
-                height: 40,
+                width: 36,
+                height: 36,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 background: `${f.color}15`,
-                borderRadius: 12,
+                borderRadius: 11,
                 border: `1px solid ${f.color}25`,
                 color: f.color,
               }}
@@ -99,16 +99,16 @@ function FeatureCardClient({
           </div>
           <h3
             style={{
-              fontSize: 18,
+              fontSize: 16,
               fontWeight: 700,
               color: '#1a1a2e',
-              margin: '0 0 8px',
+              margin: '0 0 7px',
               lineHeight: 1.3,
             }}
           >
             {f.title}
           </h3>
-          <p style={{ color: '#333', fontSize: 14, lineHeight: 1.65, margin: 0 }}>{f.desc}</p>
+          <p style={{ color: '#333', fontSize: 13, lineHeight: 1.65, margin: 0 }}>{f.desc}</p>
         </div>
       </div>
     </RevealSection>
@@ -128,36 +128,36 @@ function StepCard({
         className="neo-border neo-shadow"
         style={{
           textAlign: 'center',
-          maxWidth: 300,
+          maxWidth: 270,
           height: '100%',
           background: s.bg,
-          borderRadius: 16,
-          padding: '32px 24px',
+          borderRadius: 14,
+          padding: '29px 22px',
         }}
       >
         <div
           style={{
             display: 'inline-flex',
-            width: 44,
-            height: 44,
-            borderRadius: 12,
+            width: 40,
+            height: 40,
+            borderRadius: 11,
             background: s.color,
             color: '#fff',
             alignItems: 'center',
             justifyContent: 'center',
             fontWeight: 700,
-            fontSize: 20,
+            fontSize: 18,
             border: '1px solid rgba(26,26,46,0.10)',
             boxShadow: '0 2px 10px rgba(16,24,40,0.06)',
-            marginBottom: 16,
+            marginBottom: 14,
           }}
         >
           {s.step}
         </div>
-        <h3 style={{ fontSize: 18, fontWeight: 700, color: '#1a1a2e', margin: '0 0 8px' }}>
+        <h3 style={{ fontSize: 16, fontWeight: 700, color: '#1a1a2e', margin: '0 0 7px' }}>
           {s.title}
         </h3>
-        <p style={{ color: '#444', fontSize: 14, fontWeight: 500, margin: 0, lineHeight: 1.6 }}>
+        <p style={{ color: '#444', fontSize: 13, fontWeight: 500, margin: 0, lineHeight: 1.6 }}>
           {s.desc.includes('Chrome Web Store') ? (
             <>
               {s.desc.split('Chrome Web Store')[0]}
@@ -196,6 +196,18 @@ function PricingSection({
   const [tier, setTier] = useState<'individual' | 'agency'>('individual');
   const tierLabels = data.tierToggle ?? { individual: 'Individuale', agency: 'Agenzia' };
   const activePlans = data.plansByTier ? data.plansByTier[tier] : data.plans;
+  // Agenzia seat-based: slider utenti condiviso tra card mensile e annuale.
+  // Quote proporzionali: 400 foto/utente, 2,4 video/utente (arrotondato).
+  const [seats, setSeats] = useState(2);
+  // ⟦...⟧ marca i numeri che cambiano con lo slider, per renderizzarli
+  // in semibold (vedi renderSeatFeature) cosi' si nota subito che sono cambiati.
+  const seatMark = (n: number) => (seats > 2 ? `⟦${n}⟧` : String(n));
+  const seatTokens = (s: string) => s
+    .replace('{users}', seatMark(seats))
+    .replace('{photos}', seatMark(400 * seats))
+    .replace('{videos}', seatMark(Math.round(2.4 * seats)));
+  const renderSeatFeature = (f: string) =>
+    f.split(/⟦(\d+)⟧/).map((part, i) => (i % 2 === 1 ? <strong key={i} style={{ fontWeight: 700 }}>{part}</strong> : part));
   const freeLabel =
     ({ it: 'Gratis', en: 'Free', es: 'Gratis', fr: 'Gratuit', ru: 'Бесплатно', uk: 'Безкоштовно' } as Record<string, string>)[locale] ?? 'Gratis';
 
@@ -231,38 +243,55 @@ function PricingSection({
       <section
         id="pricing"
         className="scroll-mt-48"
-        style={{ padding: '80px 0 80px', background: '#fff' }}
+        style={{ padding: '72px 0 72px', background: '#fff' }}
       >
         <div className="max-w-7xl mx-auto px-5 md:px-3">
-          <div style={{ textAlign: 'center', marginBottom: 20 }}>
+          <div style={{ textAlign: 'center', marginBottom: 18 }}>
             <h2
               style={{
-                fontSize: 'clamp(26px, 4.5vw, 38px)',
+                fontSize: 'clamp(23px, 4.5vw, 34px)',
                 fontWeight: 800,
                 color: '#1a1a2e',
                 lineHeight: 1.15,
-                marginBottom: 12,
+                marginBottom: 11,
               }}
             >
-              {data.title1}
-              <br />
-              {data.title2}{' '}
-              <span style={{ color: '#3B83F6' }}>{data.titleHighlight}</span>
-              {data.titleHighlight ? '.' : ''}
+              {locale === 'it' ? (
+                // Copy IT: su mobile va a capo 3 righe (semplifica | le attivita' per |
+                // concentrarti sulle vendite), su desktop 2 (dopo "attivita'"). I <br>
+                // responsive spezzano nei punti giusti a seconda del breakpoint.
+                <>
+                  Velocizza e semplifica{' '}
+                  <br className="md:hidden" />
+                  le attività{' '}
+                  <br className="hidden md:block" />
+                  per{' '}
+                  <br className="md:hidden" />
+                  concentrarti sulle <span style={{ color: '#3B83F6' }}>vendite</span>.
+                </>
+              ) : (
+                <>
+                  {data.title1}
+                  <br />
+                  {data.title2}{' '}
+                  <span style={{ color: '#3B83F6' }}>{data.titleHighlight}</span>
+                  {data.titleHighlight ? '.' : ''}
+                </>
+              )}
             </h2>
-            <p style={{ color: '#333', fontSize: 16, marginBottom: 24 }}>{data.subtitle}</p>
+            <p style={{ color: '#333', fontSize: 14, marginBottom: 22 }}>{data.subtitle}</p>
             <div
               className="neo-border neo-shadow-sm pricing-countdown-box"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: 14,
+                gap: 13,
                 background: '#fff',
-                borderRadius: 14,
-                padding: '14px 24px',
+                borderRadius: 13,
+                padding: '13px 22px',
               }}
             >
-              <span style={{ color: '#555', fontSize: 14, fontWeight: 700 }}>
+              <span style={{ color: '#555', fontSize: 13, fontWeight: 700 }}>
                 🔔 {data.countdownLabel}
               </span>
               <CountdownTimer big />
@@ -270,7 +299,7 @@ function PricingSection({
           </div>
 
           {data.plansByTier && (
-            <div style={{ display: 'flex', justifyContent: 'center', marginTop: 28 }}>
+            <div style={{ display: 'flex', justifyContent: 'center', marginTop: 25 }}>
               <div
                 role="tablist"
                 aria-label="Plan tier"
@@ -296,9 +325,9 @@ function PricingSection({
                         appearance: 'none',
                         border: 'none',
                         cursor: 'pointer',
-                        padding: '10px 24px',
+                        padding: '9px 22px',
                         borderRadius: 999,
-                        fontSize: 15,
+                        fontSize: 14,
                         fontWeight: 700,
                         letterSpacing: 0.2,
                         background: active ? '#2563EB' : 'transparent',
@@ -328,18 +357,29 @@ function PricingSection({
               }[];
               const maxFeatures = Math.max(...plans.map((p) => p.features.length));
               return plans.map((plan) => {
-                const padded = [...plan.features];
+                const isSeatBased = plan.id === 'agency_monthly' || plan.id === 'agency_annual';
+                const padded = [...plan.features].map(f => isSeatBased ? seatTokens(f) : f);
                 while (padded.length < maxFeatures) padded.push('');
+                // Seat-based: il prezzo grande e' il TOTALE (per-utente × N); il period perde
+                // il suffisso "a utente" (primo token = "/mese", "/month", ... in tutti i locali).
+                const price = isSeatBased ? plan.price * seats : plan.price;
+                const oldPrice = isSeatBased && plan.oldPrice ? plan.oldPrice * seats : plan.oldPrice;
+                const period = isSeatBased ? (plan.period ?? '/mese').split(' ')[0] : plan.period;
+                const priceNote = isSeatBased ? null : plan.priceNote;
                 const isCurrent = !!currentPlan && plan.id === currentPlan;
                 // Loggato: il piano attuale è il riferimento, quindi niente "Più scelto".
                 const popular = currentPlan ? false : plan.popular;
                 const badge = currentPlan ? null : plan.badge;
+                const isCustom = plan.id === 'agency_custom';
                 return (
                   <PricingCard
                     key={plan.id}
-                    plan={{ ...plan, popular, badge, features: padded, savingsLabel: data.savingsLabel, freeLabel }}
-                    href={isCurrent ? `/${locale}/dashboard` : plan.price === 0 ? `/${locale}/checkout/agency` : `/${locale}/checkout/agency?plan=${plan.id}`}
+                    plan={{ ...plan, price, oldPrice, period, popular, badge, features: padded, priceNote, savingsLabel: data.savingsLabel, freeLabel: isCustom ? plan.name : freeLabel }}
+                    href={isCurrent ? `/${locale}/dashboard` : plan.price === 0 ? `/${locale}/checkout/agency` : `/${locale}/checkout/agency?plan=${plan.id}${isSeatBased ? `&seats=${seats}` : ''}`}
                     current={isCurrent}
+                    seats={isSeatBased ? seats : undefined}
+                    onSeatsChange={isSeatBased ? setSeats : undefined}
+                    calLink={isCustom ? 'getnearme/30min' : undefined}
                   />
                 );
               });

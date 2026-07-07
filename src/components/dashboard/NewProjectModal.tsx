@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useCallback, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import Cropper, { type Area } from 'react-easy-crop';
 import { s, Box, Icon } from './ui';
 import { createProject, updateProject, deleteProject, ProjectData } from '@/lib/projects';
@@ -107,6 +108,23 @@ function loadSavedIcons(): Record<string, string> {
   } catch { /* ignore */ }
   return { ...DEFAULT_ICONS };
 }
+function saveIcons(icons: Record<string, string>) {
+  try { localStorage.setItem(ICONS_STORAGE_KEY, JSON.stringify(icons)); } catch { /* quota */ }
+}
+
+// Icone selezionabili per i 4 campi "info principali" (prezzo/mq/camere/bagni).
+const PICKER_ICONS: { key: string; label: string }[] = [
+  { key: 'euro', label: 'Euro' }, { key: 'dollar', label: 'Dollaro' }, { key: 'pound', label: 'Sterlina' },
+  { key: 'bed', label: 'Camere' }, { key: 'bath', label: 'Bagni' }, { key: 'area', label: 'Superficie' },
+  { key: 'rooms', label: 'Locali' }, { key: 'sofa', label: 'Soggiorno' }, { key: 'cookingPot', label: 'Cucina' },
+  { key: 'elevator', label: 'Ascensore' }, { key: 'balcony', label: 'Balcone' }, { key: 'terrace', label: 'Terrazzo' },
+  { key: 'garden', label: 'Giardino' }, { key: 'parking', label: 'Parcheggio' }, { key: 'floor', label: 'Piano' },
+];
+const CURRENCY_KEYS = ['euro', 'dollar', 'pound'];
+const getLabelForIcon = (key: string, defaultLabel: string) => {
+  const found = PICKER_ICONS.find(p => p.key === key);
+  return found && !CURRENCY_KEYS.includes(key) ? found.label : defaultLabel;
+};
 
 const formatNumber = (val: string) => {
   const num = val.replace(/\D/g, '');
@@ -250,8 +268,17 @@ export function NewProjectModal({
     ? Object.entries(editProject.import_data as Record<string, unknown>).filter(([, v]) => v !== '' && v != null)
     : [];
   
-  // Icone "info principali" fisse (default): non piu' personalizzabili.
-  const [fieldIcons] = useState<Record<string, string>>(editProject?.icons || loadSavedIcons());
+  // Icone "info principali" (prezzo/mq/camere/bagni): personalizzabili via picker.
+  const [fieldIcons, setFieldIcons] = useState<Record<string, string>>(editProject?.icons || loadSavedIcons());
+  const [iconDropdown, setIconDropdown] = useState<string | null>(null);
+  // Posizione del trigger per renderizzare il picker in un portal (fixed),
+  // cosi' non viene tagliato dall'overflow del body del modal.
+  const [pickerRect, setPickerRect] = useState<DOMRect | null>(null);
+  const togglePicker = (field: string, el: HTMLElement) => {
+    if (iconDropdown === field) { setIconDropdown(null); return; }
+    setPickerRect(el.getBoundingClientRect());
+    setIconDropdown(field);
+  };
   const [dragOver, setDragOver] = useState(false);
   // Campi extra (etichetta + valore), scelti da dropdown o personalizzati.
   const [customFields, setCustomFields] = useState<{ key: string; value: string; custom?: boolean }[]>([]);
@@ -416,18 +443,18 @@ export function NewProjectModal({
     }
   };
 
-  const inputStyle = s('width:100%;padding:11px 14px;border:1px solid #e4e1da;border-radius:10px;font-size:13.5px;outline:none;font-family:inherit;background:#fff;transition:border-color .2s, box-shadow .2s');
-  const inputWithIconStyle = s('width:100%;padding:11px 14px 11px 52px;border:1px solid #e4e1da;border-radius:10px;font-size:13.5px;outline:none;font-family:inherit;background:#fff;transition:border-color .2s, box-shadow .2s');
-  const labelStyle = s('display:block;font-size:12px;font-weight:700;color:#b3aca1;margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em');
+  const inputStyle = s('width:100%;padding:10px 13px;border:1px solid #e4e1da;border-radius:9px;font-size:12px;outline:none;font-family:inherit;background:#fff;transition:border-color .2s, box-shadow .2s');
+  const inputWithIconStyle = s('width:100%;padding:10px 13px 10px 47px;border:1px solid #e4e1da;border-radius:9px;font-size:12px;outline:none;font-family:inherit;background:#fff;transition:border-color .2s, box-shadow .2s');
+  const labelStyle = s('display:block;font-size:11px;font-weight:700;color:#b3aca1;margin-bottom:7px;text-transform:uppercase;letter-spacing:.04em');
 
   // Campo uniforme: label + input con icona e divider verticale.
   const iconField = (key: string, label: string, iconKey: string, value: string, onChange: (v: string) => void, placeholder = '') => (
     <div key={key}>
       <label style={{ ...labelStyle, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={label}>{label}</label>
       <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-        <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, display: 'flex', alignItems: 'center', paddingLeft: 14, gap: 10, color: '#57534c', pointerEvents: 'none' }}>
-          <span style={{ width: 17, height: 17, display: 'flex' }} dangerouslySetInnerHTML={{ __html: (TPL_ICONS as Record<string, string>)[iconKey] || (TPL_ICONS as Record<string, string>).tag || '' }} />
-          <div style={{ width: 1, height: 20, background: '#e4e1da' }} />
+        <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, display: 'flex', alignItems: 'center', paddingLeft: 13, gap: 9, color: '#57534c', pointerEvents: 'none' }}>
+          <span style={{ width: 15, height: 15, display: 'flex' }} dangerouslySetInnerHTML={{ __html: (TPL_ICONS as Record<string, string>)[iconKey] || (TPL_ICONS as Record<string, string>).tag || '' }} />
+          <div style={{ width: 1, height: 18, background: '#e4e1da' }} />
         </div>
         <input
           value={value}
@@ -441,33 +468,108 @@ export function NewProjectModal({
     </div>
   );
 
+  // Come iconField, ma l'icona e' cliccabile e apre un picker per cambiarla
+  // (solo i 4 campi "info principali": prezzo/mq/camere/bagni).
+  const iconFieldPickable = (key: string, label: string, value: string, onChange: (v: string) => void, placeholder = '', allowedKeys?: string[]) => (
+    <div key={key}>
+      <label style={{ ...labelStyle, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={label}>{label}</label>
+      <div style={{ position: 'relative', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+          <div
+            onClick={e => togglePicker(key, e.currentTarget)}
+            style={{ position: 'absolute', left: 0, top: 0, bottom: 0, display: 'flex', alignItems: 'center', paddingLeft: 13, gap: 9, color: '#57534c', cursor: 'pointer' }}
+          >
+            <span style={{ width: 15, height: 15, display: 'flex' }} dangerouslySetInnerHTML={{ __html: (TPL_ICONS as Record<string, string>)[fieldIcons[key]] || (TPL_ICONS as Record<string, string>).tag || '' }} />
+            <div style={{ width: 1, height: 18, background: '#e4e1da' }} />
+          </div>
+          <input
+            value={value}
+            onChange={e => onChange(e.target.value)}
+            placeholder={placeholder}
+            style={inputWithIconStyle}
+            onFocus={e => e.currentTarget.style.borderColor = '#3B83F6'}
+            onBlur={e => e.currentTarget.style.borderColor = '#e4e1da'}
+          />
+        </div>
+        {renderIconPicker(key, allowedKeys)}
+      </div>
+    </div>
+  );
+
+  const renderIconPicker = (field: string, allowedKeys?: string[]) => {
+    if (iconDropdown !== field || !pickerRect) return null;
+    const iconsToShow = allowedKeys ? PICKER_ICONS.filter(p => allowedKeys.includes(p.key)) : PICKER_ICONS.filter(p => !CURRENCY_KEYS.includes(p.key));
+    // Portal su body + fixed: il picker apre sopra l'icona e non viene
+    // tagliato dall'overflow del body scrollabile del modal.
+    return createPortal(
+      <>
+        <div onClick={() => setIconDropdown(null)} style={{ position: 'fixed', inset: 0, zIndex: 99998 }} />
+        <div style={{ position: 'fixed', bottom: (typeof window !== 'undefined' ? window.innerHeight : 0) - pickerRect.top + 7, left: pickerRect.left, zIndex: 99999, background: '#fff', borderRadius: 11, boxShadow: '0 8px 32px rgba(0,0,0,0.12)', border: '1px solid #e4e1da', padding: 7, display: 'grid', gridTemplateColumns: 'repeat(5, 32px)', gap: 4 }}>
+          {iconsToShow.map(pi => (
+            <div
+              key={pi.key}
+              onClick={(e) => {
+                e.stopPropagation();
+                setFieldIcons(prev => {
+                  const newIcons = { ...prev };
+                  const oldIcon = newIcons[field];
+                  const fieldWithSameIcon = Object.keys(newIcons).find(k => k !== field && newIcons[k] === pi.key);
+                  if (fieldWithSameIcon && !CURRENCY_KEYS.includes(pi.key)) {
+                    newIcons[fieldWithSameIcon] = oldIcon;
+                  }
+                  newIcons[field] = pi.key;
+                  saveIcons(newIcons); // salva config per il prossimo immobile
+                  return newIcons;
+                });
+                setIconDropdown(null);
+              }}
+              style={{ width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 7, cursor: 'pointer', border: fieldIcons[field] === pi.key ? '1.5px solid #3B83F6' : '1.5px solid transparent', background: fieldIcons[field] === pi.key ? '#eef4fe' : 'transparent', color: fieldIcons[field] === pi.key ? '#3B83F6' : '#6b7280' }}
+              onMouseEnter={e => { if (fieldIcons[field] !== pi.key) { e.currentTarget.style.background = '#f6f4f0'; e.currentTarget.style.color = '#211f1c'; } }}
+              onMouseLeave={e => { if (fieldIcons[field] !== pi.key) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#6b7280'; } }}
+              title={pi.label}
+            >
+              <span style={{ width: 14, height: 14, display: 'flex' }} dangerouslySetInnerHTML={{ __html: (TPL_ICONS as Record<string, string>)[pi.key] || '' }} />
+            </div>
+          ))}
+        </div>
+      </>,
+      document.body
+    );
+  };
+
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 22 }}>
       {/* Backdrop */}
       <div
         onClick={() => { if (!mandatory) onClose(); }}
         style={{ position: 'absolute', inset: 0, background: 'rgba(24, 21, 17, 0.4)', backdropFilter: 'blur(4px)', animation: 'foto-reveal .3s ease' }}
       />
-      
+
       {/* Modal Content */}
-      <div style={{ position: 'relative', width: '100%', maxWidth: editProject ? 720 : 480, background: '#fff', borderRadius: 24, boxShadow: '0 24px 64px rgba(20, 18, 15, 0.2)', overflow: 'hidden', animation: 'orb-float 0.4s ease-out', display: 'flex', flexDirection: 'column', maxHeight: '90vh', transition: 'max-width .25s ease' }}>
-        
+      <div style={{ position: 'relative', width: '100%', maxWidth: editProject ? 648 : 432, background: '#fff', borderRadius: 22, boxShadow: '0 24px 64px rgba(20, 18, 15, 0.2)', overflow: 'hidden', animation: 'orb-float 0.4s ease-out', display: 'flex', flexDirection: 'column', maxHeight: '90vh', transition: 'max-width .25s ease' }}>
+
         {/* Header */}
-        <div className="max-md:!p-4" style={{ padding: '24px 32px 20px', borderBottom: '1px solid #f0ede7', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div className="max-md:!p-4" style={{ padding: '22px 29px 18px', borderBottom: '1px solid #f0ede7', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
-            <h2 style={{ margin: 0, fontSize: 20, fontWeight: 800, letterSpacing: '-0.3px' }}>{editProject ? 'Modifica Immobile' : 'Nuovo Immobile'}</h2>
-            <div style={{ fontSize: 13, color: '#8c867d', marginTop: 4 }}>
+            <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800, letterSpacing: '-0.3px' }}>{editProject ? 'Modifica Immobile' : 'Nuovo Immobile'}</h2>
+            <div style={{ fontSize: 12, color: '#8c867d', marginTop: 4 }}>
               {isNew ? `Passo ${step} di 2` : 'Inserisci le informazioni per il tuo immobile'}
             </div>
           </div>
-          <button onClick={onClose} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4, borderRadius: 8 }} className="hover:bg-gray-100">
-            <Icon name="x" size={20} color="#8c867d" />
-          </button>
+          {mandatory ? (
+            <button onClick={onClose} style={{ background: 'transparent', border: '1px solid #e4e1da', cursor: 'pointer', padding: '7px 13px', borderRadius: 9, fontSize: 12, fontWeight: 700, color: '#57534c' }} className="hover:bg-gray-100">
+              Crea dopo
+            </button>
+          ) : (
+            <button onClick={onClose} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4, borderRadius: 7 }} className="hover:bg-gray-100">
+              <Icon name="x" size={18} color="#8c867d" />
+            </button>
+          )}
         </div>
 
         {/* Body */}
-        <div className="max-md:!p-4" style={{ padding: '20px 32px 32px', overflowY: 'auto', position: 'relative', zIndex: 10 }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+        <div className="max-md:!p-4" style={{ padding: '18px 29px 29px', overflowY: 'auto', position: 'relative', zIndex: 10 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
               {(editProject || step === 1) && (<>
               <div>
                 <label style={labelStyle}>Nome immobile <span style={{ color: '#dc2626' }}>*</span></label>
@@ -497,7 +599,7 @@ export function NewProjectModal({
               <div>
                 <label style={labelStyle}>Foto di copertina (opzionale)</label>
                 {cropSrc ? (
-                  <div style={{ position: 'relative', width: '100%', height: 180, borderRadius: 16, overflow: 'hidden', border: '1px solid #e4e1da', background: '#211f1c' }}>
+                  <div style={{ position: 'relative', width: '100%', height: 162, borderRadius: 14, overflow: 'hidden', border: '1px solid #e4e1da', background: '#211f1c' }}>
                     <Cropper
                       image={cropSrc}
                       crop={crop}
@@ -508,58 +610,46 @@ export function NewProjectModal({
                       onCropChange={setCrop}
                       onCropComplete={(_: Area, px: Area) => setCropArea(px)}
                     />
-                    <label style={{ position: 'absolute', bottom: 10, left: 10, zIndex: 5, background: 'rgba(0,0,0,0.55)', color: '#fff', padding: '6px 12px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                      <Icon name="image-plus" size={14} color="#fff" />Cambia foto
+                    <label style={{ position: 'absolute', bottom: 9, left: 9, zIndex: 5, background: 'rgba(0,0,0,0.55)', color: '#fff', padding: '5px 11px', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                      <Icon name="image-plus" size={13} color="#fff" />Cambia foto
                       <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => handleCoverFile(e.target.files?.[0])} />
                     </label>
-                    <div onClick={() => { setCropSrc(null); setCover(''); }} style={{ position: 'absolute', bottom: 10, right: 10, zIndex: 5, background: 'rgba(0,0,0,0.55)', color: '#fff', padding: '6px 12px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Rimuovi</div>
+                    <div onClick={() => { setCropSrc(null); setCover(''); }} style={{ position: 'absolute', bottom: 9, right: 9, zIndex: 5, background: 'rgba(0,0,0,0.55)', color: '#fff', padding: '5px 11px', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>Rimuovi</div>
                   </div>
                 ) : cover ? (
-                  <div style={{ position: 'relative', width: '100%', height: 180, borderRadius: 16, overflow: 'hidden', border: '1px solid #e4e1da', backgroundImage: `url("${cover}")`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
-                    <label style={{ position: 'absolute', bottom: 10, left: 10, background: 'rgba(0,0,0,0.55)', color: '#fff', padding: '6px 12px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                      <Icon name="image-plus" size={14} color="#fff" />Cambia foto
+                  <div style={{ position: 'relative', width: '100%', height: 162, borderRadius: 14, overflow: 'hidden', border: '1px solid #e4e1da', backgroundImage: `url("${cover}")`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
+                    <label style={{ position: 'absolute', bottom: 9, left: 9, background: 'rgba(0,0,0,0.55)', color: '#fff', padding: '5px 11px', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                      <Icon name="image-plus" size={13} color="#fff" />Cambia foto
                       <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => handleCoverFile(e.target.files?.[0])} />
                     </label>
-                    <div onClick={() => setCover('')} style={{ position: 'absolute', bottom: 10, right: 10, background: 'rgba(0,0,0,0.55)', color: '#fff', padding: '6px 12px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Rimuovi</div>
+                    <div onClick={() => setCover('')} style={{ position: 'absolute', bottom: 9, right: 9, background: 'rgba(0,0,0,0.55)', color: '#fff', padding: '5px 11px', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>Rimuovi</div>
                   </div>
                 ) : (
                   <label
                     onDragOver={e => { e.preventDefault(); setDragOver(true); }}
                     onDragLeave={() => setDragOver(false)}
                     onDrop={e => { e.preventDefault(); setDragOver(false); handleCoverFile(e.dataTransfer.files?.[0]); }}
-                    style={{ display: 'block', border: `2px dashed ${dragOver ? '#3B83F6' : '#d8d4cb'}`, borderRadius: 16, padding: '32px 20px', textAlign: 'center', background: dragOver ? '#eff6ff' : '#fcfcfb', cursor: 'pointer', transition: 'all .2s', position: 'relative', overflow: 'hidden' }}
+                    style={{ display: 'block', border: `2px dashed ${dragOver ? '#3B83F6' : '#d8d4cb'}`, borderRadius: 14, padding: '29px 18px', textAlign: 'center', background: dragOver ? '#eff6ff' : '#fcfcfb', cursor: 'pointer', transition: 'all .2s', position: 'relative', overflow: 'hidden' }}
                   >
                     <input type="file" accept="image/*" style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', zIndex: 10 }} onChange={e => handleCoverFile(e.target.files?.[0])} />
-                    <div style={{ width: 44, height: 44, borderRadius: 12, background: '#fff', border: '1px solid #f0ede7', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px', boxShadow: '0 4px 12px rgba(0,0,0,0.04)' }}>
-                      <Icon name="image-plus" size={20} color={dragOver ? '#3B83F6' : '#8c867d'} />
+                    <div style={{ width: 40, height: 40, borderRadius: 11, background: '#fff', border: '1px solid #f0ede7', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 11px', boxShadow: '0 4px 12px rgba(0,0,0,0.04)' }}>
+                      <Icon name="image-plus" size={18} color={dragOver ? '#3B83F6' : '#8c867d'} />
                     </div>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: dragOver ? '#3B83F6' : '#57534c' }}>Trascina o clicca qui</div>
-                    <div style={{ fontSize: 12.5, color: '#8c867d', marginTop: 4 }}>Se lasci vuoto, creeremo uno sfondo colorato per te.</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: dragOver ? '#3B83F6' : '#57534c' }}>Trascina o clicca qui</div>
+                    <div style={{ fontSize: 11.5, color: '#8c867d', marginTop: 4 }}>Se lasci vuoto, creeremo uno sfondo colorato per te.</div>
                   </label>
                 )}
               </div>
-              {!editProject && onImport && (
-                <div style={{ marginTop: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '0 0 20px' }}>
-                    <div style={{ flex: 1, height: 1, background: '#e9e6df' }} />
-                    <span style={{ fontSize: 12, fontWeight: 700, color: '#b3aca1', textTransform: 'uppercase', letterSpacing: '.04em' }}>Oppure</span>
-                    <div style={{ flex: 1, height: 1, background: '#e9e6df' }} />
-                  </div>
-                  <Box as="button" onClick={() => onImport()} style={s('width:100%;box-sizing:border-box;border:1px solid #e4e1da;background:#fff;color:#211f1c;font-size:14px;font-weight:700;padding:13px 20px;border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px')} hover={s('background:#f6f4f0;border-color:#d8d4cb')}>
-                    <Icon name="upload" size={16} color="#57534c" />Importa immobili da file
-                  </Box>
-                </div>
-              )}
               </>)}
 
               {(editProject || step === 2) && (<>
-              {!isNew && <hr style={{ border: 'none', borderTop: '1px solid #f0ede7', margin: '8px 0' }} />}
+              {!isNew && <hr style={{ border: 'none', borderTop: '1px solid #f0ede7', margin: '7px 0' }} />}
 
-              <div className="max-md:!grid-cols-2" style={{ display: 'grid', gridTemplateColumns: editProject ? 'repeat(3, 1fr)' : 'repeat(2, 1fr)', gap: 16 }}>
-                {iconField('prezzo', `Prezzo (${fieldIcons.prezzo === 'dollar' ? '$' : fieldIcons.prezzo === 'pound' ? '£' : '€'})`, fieldIcons.prezzo, prezzo, v => setPrezzo(formatNumber(v)), 'es. 350.000')}
-                {iconField('mq', 'Metratura (m²)', 'area', mq, v => setMq(formatNumber(v)), 'es. 95')}
-                {iconField('camere', 'Camere', 'bed', camere, v => setCamere(formatNumber(v)), 'es. 2')}
-                {iconField('bagni', 'Bagni', 'bath', bagni, v => setBagni(formatNumber(v)), 'es. 1')}
+              <div className="max-md:!grid-cols-2" style={{ display: 'grid', gridTemplateColumns: editProject ? 'repeat(3, 1fr)' : 'repeat(2, 1fr)', gap: 14 }}>
+                {iconFieldPickable('prezzo', `Prezzo (${fieldIcons.prezzo === 'dollar' ? '$' : fieldIcons.prezzo === 'pound' ? '£' : '€'})`, prezzo, v => setPrezzo(formatNumber(v)), 'es. 350.000', CURRENCY_KEYS)}
+                {iconFieldPickable('mq', getLabelForIcon(fieldIcons.mq, 'Metratura (m²)'), mq, v => setMq(formatNumber(v)), 'es. 95')}
+                {iconFieldPickable('camere', getLabelForIcon(fieldIcons.camere, 'Camere'), camere, v => setCamere(formatNumber(v)), 'es. 2')}
+                {iconFieldPickable('bagni', getLabelForIcon(fieldIcons.bagni, 'Bagni'), bagni, v => setBagni(formatNumber(v)), 'es. 1')}
                 {editProject && iconField('tipologia', 'Tipologia', 'storage', tipologia, setTipologia, 'es. Appartamento')}
                 {editProject && iconField('locali', 'Locali', 'rooms', locali, v => setLocali(v.replace(/\D/g, '')), 'es. 3')}
                 {editProject && (() => {
@@ -573,8 +663,8 @@ export function NewProjectModal({
               {editProject && (
               <div>
                 <label style={labelStyle}>Descrizione</label>
-                <textarea value={descrizione} onChange={e => setDescrizione(e.target.value)} rows={4} placeholder="Descrizione immobile" style={{ ...inputStyle, resize: 'vertical', minHeight: 92 } as React.CSSProperties} />
-                <div style={{ fontSize: 11.5, color: '#b3aca1', marginTop: 8 }}>Tutti i campi sono modificabili e disponibili per i report.</div>
+                <textarea value={descrizione} onChange={e => setDescrizione(e.target.value)} rows={4} placeholder="Descrizione immobile" style={{ ...inputStyle, resize: 'vertical', minHeight: 83 } as React.CSSProperties} />
+                <div style={{ fontSize: 10.5, color: '#b3aca1', marginTop: 7 }}>Tutti i campi sono modificabili e disponibili per i report.</div>
               </div>
               )}
 
@@ -583,11 +673,11 @@ export function NewProjectModal({
               <div>
                 <label style={labelStyle}>Dati aggiuntivi</label>
                 {customFields.length > 0 && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 12 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 9, marginBottom: 11 }}>
                     {customFields.map((f, i) => {
                       const ph = PRESET_EXTRA_FIELDS.find(p => p.label === f.key)?.placeholder || 'Valore';
                       return (
-                        <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                        <div key={i} style={{ display: 'flex', gap: 7, alignItems: 'center' }}>
                           {f.custom ? (
                             <input
                               ref={el => { if (f.custom) rowInputRefs.current.set(i, el); }}
@@ -599,8 +689,8 @@ export function NewProjectModal({
                               onBlur={e => e.currentTarget.style.borderColor = '#e4e1da'}
                             />
                           ) : (
-                            <div style={{ flex: '0 0 40%', display: 'flex', alignItems: 'center', gap: 8, padding: '11px 14px', border: '1px solid #e4e1da', borderRadius: 10, background: '#faf9f7', fontSize: 13.5, fontWeight: 700, color: '#57534c', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                              <span style={{ width: 16, height: 16, display: 'flex', flex: 'none' }} dangerouslySetInnerHTML={{ __html: (TPL_ICONS as Record<string, string>)[iconForKey(f.key)] || (TPL_ICONS as Record<string, string>).tag || '' }} />
+                            <div style={{ flex: '0 0 40%', display: 'flex', alignItems: 'center', gap: 7, padding: '10px 13px', border: '1px solid #e4e1da', borderRadius: 9, background: '#faf9f7', fontSize: 12, fontWeight: 700, color: '#57534c', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              <span style={{ width: 14, height: 14, display: 'flex', flex: 'none' }} dangerouslySetInnerHTML={{ __html: (TPL_ICONS as Record<string, string>)[iconForKey(f.key)] || (TPL_ICONS as Record<string, string>).tag || '' }} />
                               <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{f.key}</span>
                             </div>
                           )}
@@ -617,9 +707,9 @@ export function NewProjectModal({
                             type="button"
                             onClick={() => setCustomFields(prev => prev.filter((_, j) => j !== i))}
                             aria-label="Rimuovi campo"
-                            style={{ flex: 'none', width: 38, height: 38, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e4e1da', borderRadius: 10, background: '#fff', cursor: 'pointer', color: '#8c867d' }}
+                            style={{ flex: 'none', width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e4e1da', borderRadius: 9, background: '#fff', cursor: 'pointer', color: '#8c867d' }}
                           >
-                            <Icon name="x" size={16} color="#8c867d" />
+                            <Icon name="x" size={14} color="#8c867d" />
                           </button>
                         </div>
                       );
@@ -631,27 +721,27 @@ export function NewProjectModal({
                     as="button"
                     type="button"
                     onClick={() => setAddMenuOpen(o => !o)}
-                    style={{ ...inputStyle, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', color: '#57534c', fontWeight: 700, textAlign: 'left' } as React.CSSProperties}
+                    style={{ ...inputStyle, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', color: '#57534c', fontWeight: 700, textAlign: 'left' } as React.CSSProperties}
                     hover={s('border-color:var(--border-dark)')}
                   >
                     + Aggiungi un dato…
-                    <span style={{ display: 'flex', transition: 'transform .15s', transform: addMenuOpen ? 'rotate(180deg)' : 'none' }}><Icon name="chevron-down" size={16} color="#8c867d" /></span>
+                    <span style={{ display: 'flex', transition: 'transform .15s', transform: addMenuOpen ? 'rotate(180deg)' : 'none' }}><Icon name="chevron-down" size={14} color="#8c867d" /></span>
                   </Box>
                   {addMenuOpen && (
-                    <div style={{ position: 'absolute', bottom: 'calc(100% + 4px)', left: 0, right: 0, background: '#fff', border: '1px solid #e4e1da', borderRadius: 10, boxShadow: '0 -12px 32px rgba(33,31,28,.14)', zIndex: 20, overflow: 'hidden', maxHeight: 280, overflowY: 'auto' }}>
+                    <div style={{ position: 'absolute', bottom: 'calc(100% + 4px)', left: 0, right: 0, background: '#fff', border: '1px solid #e4e1da', borderRadius: 9, boxShadow: '0 -12px 32px rgba(33,31,28,.14)', zIndex: 20, overflow: 'hidden', maxHeight: 252, overflowY: 'auto' }}>
                       {availablePresets.length > 0 && (
-                        <Box as="button" type="button" onClick={() => { pendingFocusRef.current = customFields.length; setCustomFields(prev => [...prev, ...availablePresets.map(p => ({ key: p.label, value: '' }))]); setAddMenuOpen(false); }} style={s('display:flex;align-items:center;gap:8px;width:100%;padding:11px 14px;border:none;background:#eef4fe;cursor:pointer;font-size:13.5px;font-weight:700;color:#1d5fd0;text-align:left;border-bottom:1px solid #f0ede7') as React.CSSProperties} hover={s('background:#e0ecfd')}>
-                          <Icon name="plus" size={15} color="#1d5fd0" />Aggiungi tutti ({availablePresets.length})
+                        <Box as="button" type="button" onClick={() => { pendingFocusRef.current = customFields.length; setCustomFields(prev => [...prev, ...availablePresets.map(p => ({ key: p.label, value: '' }))]); setAddMenuOpen(false); }} style={s('display:flex;align-items:center;gap:7px;width:100%;padding:10px 13px;border:none;background:#eef4fe;cursor:pointer;font-size:12px;font-weight:700;color:#1d5fd0;text-align:left;border-bottom:1px solid #f0ede7') as React.CSSProperties} hover={s('background:#e0ecfd')}>
+                          <Icon name="plus" size={14} color="#1d5fd0" />Aggiungi tutti ({availablePresets.length})
                         </Box>
                       )}
                       {availablePresets.map(p => (
-                        <Box key={p.label} as="button" type="button" onClick={() => { pendingFocusRef.current = customFields.length; setCustomFields(prev => [...prev, { key: p.label, value: '' }]); setAddMenuOpen(false); }} style={s('display:flex;align-items:center;gap:8px;width:100%;padding:10px 14px;border:none;background:transparent;cursor:pointer;font-size:13.5px;font-weight:600;color:#211f1c;text-align:left') as React.CSSProperties} hover={s('background:#faf9f7')}>
-                          <span style={{ width: 16, height: 16, display: 'flex', flex: 'none', color: '#57534c' }} dangerouslySetInnerHTML={{ __html: (TPL_ICONS as Record<string, string>)[iconForKey(p.label)] || (TPL_ICONS as Record<string, string>).tag || '' }} />
+                        <Box key={p.label} as="button" type="button" onClick={() => { pendingFocusRef.current = customFields.length; setCustomFields(prev => [...prev, { key: p.label, value: '' }]); setAddMenuOpen(false); }} style={s('display:flex;align-items:center;gap:7px;width:100%;padding:9px 13px;border:none;background:transparent;cursor:pointer;font-size:12px;font-weight:600;color:#211f1c;text-align:left') as React.CSSProperties} hover={s('background:#faf9f7')}>
+                          <span style={{ width: 14, height: 14, display: 'flex', flex: 'none', color: '#57534c' }} dangerouslySetInnerHTML={{ __html: (TPL_ICONS as Record<string, string>)[iconForKey(p.label)] || (TPL_ICONS as Record<string, string>).tag || '' }} />
                           {p.label}
                         </Box>
                       ))}
-                      <Box as="button" type="button" onClick={() => { pendingFocusRef.current = customFields.length; setCustomFields(prev => [...prev, { key: '', value: '', custom: true }]); setAddMenuOpen(false); }} style={s('display:flex;align-items:center;gap:8px;width:100%;padding:10px 14px;border:none;border-top:1px solid #f0ede7;background:transparent;cursor:pointer;font-size:13.5px;font-weight:600;color:#57534c;text-align:left') as React.CSSProperties} hover={s('background:#faf9f7')}>
-                        <Icon name="plus" size={15} color="#8c867d" />Altro (personalizzato)…
+                      <Box as="button" type="button" onClick={() => { pendingFocusRef.current = customFields.length; setCustomFields(prev => [...prev, { key: '', value: '', custom: true }]); setAddMenuOpen(false); }} style={s('display:flex;align-items:center;gap:7px;width:100%;padding:9px 13px;border:none;border-top:1px solid #f0ede7;background:transparent;cursor:pointer;font-size:12px;font-weight:600;color:#57534c;text-align:left') as React.CSSProperties} hover={s('background:#faf9f7')}>
+                        <Icon name="plus" size={14} color="#8c867d" />Altro (personalizzato)…
                       </Box>
                     </div>
                   )}
@@ -663,30 +753,35 @@ export function NewProjectModal({
         </div>
 
         {/* Footer */}
-        <div className="max-md:!p-4 max-md:!flex-col max-md:!gap-4" style={{ padding: '20px 32px', borderTop: '1px solid #f0ede7', background: '#faf9f7', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', position: 'relative', zIndex: 5 }}>
-              <div style={{ display: 'flex', gap: 12, marginTop: 0, width: '100%', justifyContent: 'flex-end' }}>
+        <div className="max-md:!p-4 max-md:!flex-col max-md:!gap-4" style={{ padding: '18px 29px', borderTop: '1px solid #f0ede7', background: '#faf9f7', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', position: 'relative', zIndex: 5 }}>
+              <div style={{ display: 'flex', gap: 11, marginTop: 0, width: '100%', justifyContent: 'flex-end' }}>
                 {editProject ? (
                   <>
-                    <Box as="button" onClick={() => setConfirmDel(true)} disabled={loading || deleting} style={s('border:1.5px solid #dc2626;background:#fff;color:#dc2626;font-size:14px;font-weight:700;padding:12px 20px;border-radius:12px;cursor:' + (loading || deleting ? 'default' : 'pointer') + ';flex:1;transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:8px;opacity:' + (loading || deleting ? 0.7 : 1))} hover={loading || deleting ? undefined : s('background:#dc2626;color:#fff')}>
-                      {deleting && <span style={{ width: 15, height: 15, border: '2px solid #dc2626', borderTopColor: 'transparent', borderRadius: '50%', display: 'inline-block', animation: 'export-spin .8s linear infinite' }} />}
+                    <Box as="button" onClick={() => setConfirmDel(true)} disabled={loading || deleting} style={s('border:1.5px solid #dc2626;background:#fff;color:#dc2626;font-size:13px;font-weight:700;padding:11px 18px;border-radius:11px;cursor:' + (loading || deleting ? 'default' : 'pointer') + ';flex:1;transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:7px;opacity:' + (loading || deleting ? 0.7 : 1))} hover={loading || deleting ? undefined : s('background:#dc2626;color:#fff')}>
+                      {deleting && <span style={{ width: 14, height: 14, border: '2px solid #dc2626', borderTopColor: 'transparent', borderRadius: '50%', display: 'inline-block', animation: 'export-spin .8s linear infinite' }} />}
                       {deleting ? 'Eliminazione...' : 'Elimina Immobile'}
                     </Box>
-                    <Box as="button" onClick={() => handleFinish(false)} disabled={loading || deleting || !techFilled} style={s('border:none;background:#3B83F6;color:#fff;font-size:14px;font-weight:700;padding:12px 20px;border-radius:12px;cursor:' + (loading || deleting || !techFilled ? 'default' : 'pointer') + ';flex:1;box-shadow:0 4px 12px rgba(59,131,246,0.25);opacity:' + (loading || deleting || !techFilled ? 0.45 : 1))} hover={loading || deleting || !techFilled ? undefined : s('background:#2563EB;box-shadow:0 6px 16px rgba(59,131,246,0.3)')}>
+                    <Box as="button" onClick={() => handleFinish(false)} disabled={loading || deleting || !techFilled} style={s('border:none;background:#3B83F6;color:#fff;font-size:13px;font-weight:700;padding:11px 18px;border-radius:11px;cursor:' + (loading || deleting || !techFilled ? 'default' : 'pointer') + ';flex:1;box-shadow:0 4px 12px rgba(59,131,246,0.25);opacity:' + (loading || deleting || !techFilled ? 0.45 : 1))} hover={loading || deleting || !techFilled ? undefined : s('background:#2563EB;box-shadow:0 6px 16px rgba(59,131,246,0.3)')}>
                       {loading ? 'Salvataggio...' : 'Salva modifiche'}
                     </Box>
                   </>
                 ) : step === 1 ? (
                   <>
-                    <Box as="button" onClick={() => { if (nome.trim() && addr.trim()) setStep(2); }} style={s('border:none;background:#3B83F6;color:#fff;font-size:14px;font-weight:700;padding:12px 20px;border-radius:12px;cursor:' + (nome.trim() && addr.trim() ? 'pointer' : 'default') + ';flex:1;box-shadow:0 4px 12px rgba(59,131,246,0.25);opacity:' + (nome.trim() && addr.trim() ? 1 : 0.45))} hover={nome.trim() && addr.trim() ? s('background:#2563EB') : undefined}>
+                    <Box as="button" onClick={() => { if (nome.trim() && addr.trim()) setStep(2); }} style={s('border:none;background:#3B83F6;color:#fff;font-size:13px;font-weight:700;padding:11px 18px;border-radius:11px;cursor:' + (nome.trim() && addr.trim() ? 'pointer' : 'default') + ';flex:1;box-shadow:0 4px 12px rgba(59,131,246,0.25);opacity:' + (nome.trim() && addr.trim() ? 1 : 0.45))} hover={nome.trim() && addr.trim() ? s('background:#2563EB') : undefined}>
                       Avanti
                     </Box>
                   </>
                 ) : (
                   <>
-                    <Box as="button" onClick={() => setStep(1)} style={s('border:1px solid #e4e1da;background:#fff;color:#57534c;font-size:14px;font-weight:700;padding:12px 20px;border-radius:12px;cursor:pointer;flex:1')} hover={s('background:#f6f4f0;border-color:#d8d4cb')}>
+                    <Box as="button" onClick={() => setStep(1)} style={s('border:1px solid #e4e1da;background:#fff;color:#57534c;font-size:13px;font-weight:700;padding:11px 18px;border-radius:11px;cursor:pointer;flex:1')} hover={s('background:#f6f4f0;border-color:#d8d4cb')}>
                       Indietro
                     </Box>
-                    <Box as="button" onClick={() => handleFinish(false)} disabled={loading || !techFilled} style={s('border:none;background:#3B83F6;color:#fff;font-size:14px;font-weight:700;padding:12px 20px;border-radius:12px;cursor:' + (loading || !techFilled ? 'default' : 'pointer') + ';flex:1;box-shadow:0 4px 12px rgba(59,131,246,0.25);opacity:' + (loading || !techFilled ? 0.45 : 1))} hover={loading || !techFilled ? undefined : s('background:#2563EB;box-shadow:0 6px 16px rgba(59,131,246,0.3)')}>
+                    {onImport && (
+                      <Box as="button" onClick={() => onImport()} style={s('border:1px solid #e4e1da;background:#fff;color:#211f1c;font-size:13px;font-weight:700;padding:11px 18px;border-radius:11px;cursor:pointer;flex:1;display:flex;align-items:center;justify-content:center;gap:7px')} hover={s('background:#f6f4f0;border-color:#d8d4cb')}>
+                        <Icon name="upload" size={14} color="#57534c" />Importa da file
+                      </Box>
+                    )}
+                    <Box as="button" onClick={() => handleFinish(false)} disabled={loading || !techFilled} style={s('border:none;background:#3B83F6;color:#fff;font-size:13px;font-weight:700;padding:11px 18px;border-radius:11px;cursor:' + (loading || !techFilled ? 'default' : 'pointer') + ';flex:1;box-shadow:0 4px 12px rgba(59,131,246,0.25);opacity:' + (loading || !techFilled ? 0.45 : 1))} hover={loading || !techFilled ? undefined : s('background:#2563EB;box-shadow:0 6px 16px rgba(59,131,246,0.3)')}>
                       {loading ? 'Creazione...' : 'Crea Immobile'}
                     </Box>
                   </>
@@ -698,16 +793,16 @@ export function NewProjectModal({
 
       {/* Confirm delete dialog */}
       {confirmDel && (
-        <div onClick={() => setConfirmDel(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(24,21,17,.5)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-          <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 420, background: 'var(--bg-card, #fff)', borderRadius: 18, boxShadow: '0 32px 64px rgba(20,18,15,.2)', padding: 28, textAlign: 'center' }}>
-            <div style={{ width: 52, height: 52, borderRadius: '50%', background: '#fef2f2', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
-              <Icon name="alert-triangle" size={24} color="#dc2626" />
+        <div onClick={() => setConfirmDel(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(24,21,17,.5)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 22 }}>
+          <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 378, background: 'var(--bg-card, #fff)', borderRadius: 16, boxShadow: '0 32px 64px rgba(20,18,15,.2)', padding: 25, textAlign: 'center' }}>
+            <div style={{ width: 47, height: 47, borderRadius: '50%', background: '#fef2f2', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
+              <Icon name="alert-triangle" size={22} color="#dc2626" />
             </div>
-            <h3 style={{ margin: '0 0 6px', fontSize: 17, fontWeight: 800 }}>Eliminare questo immobile?</h3>
-            <p style={{ margin: '0 0 22px', fontSize: 13.5, color: '#8c867d', lineHeight: 1.5 }}>Tutti i dati associati verranno rimossi. L&apos;azione è irreversibile.</p>
-            <div style={{ display: 'flex', gap: 10 }}>
-              <Box as="button" onClick={() => setConfirmDel(false)} style={s('flex:1;border:1px solid #d8d4cb;background:#fff;color:#8c867d;font-size:14px;font-weight:700;padding:11px 0;border-radius:10px;cursor:pointer')} hover={s('background:#faf9f7')}>Annulla</Box>
-              <Box as="button" onClick={() => { setConfirmDel(false); handleDelete(); }} style={{ flex: 1, border: 'none', background: '#dc2626', color: '#fff', fontSize: 14, fontWeight: 700, padding: '11px 0', borderRadius: 10, cursor: 'pointer' }} hover={{ background: '#b91c1c' }}>Elimina</Box>
+            <h3 style={{ margin: '0 0 5px', fontSize: 15, fontWeight: 800 }}>Eliminare questo immobile?</h3>
+            <p style={{ margin: '0 0 20px', fontSize: 12, color: '#8c867d', lineHeight: 1.5 }}>Tutti i dati associati verranno rimossi. L&apos;azione è irreversibile.</p>
+            <div style={{ display: 'flex', gap: 9 }}>
+              <Box as="button" onClick={() => setConfirmDel(false)} style={s('flex:1;border:1px solid #d8d4cb;background:#fff;color:#8c867d;font-size:13px;font-weight:700;padding:10px 0;border-radius:9px;cursor:pointer')} hover={s('background:#faf9f7')}>Annulla</Box>
+              <Box as="button" onClick={() => { setConfirmDel(false); handleDelete(); }} style={{ flex: 1, border: 'none', background: '#dc2626', color: '#fff', fontSize: 13, fontWeight: 700, padding: '10px 0', borderRadius: 9, cursor: 'pointer' }} hover={{ background: '#b91c1c' }}>Elimina</Box>
             </div>
           </div>
         </div>

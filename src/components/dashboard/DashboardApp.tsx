@@ -142,26 +142,26 @@ const TOUR_DEFS = [
 
 // Mini-animazioni per ogni step del tour (CSS, leggere).
 function TourAnim({ kind }: { kind: string }) {
-  const wrap: React.CSSProperties = { height: 106, borderRadius: 12, background: 'linear-gradient(135deg,#eef4fe,var(--bg-hover))', overflow: 'hidden', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 14 };
+  const wrap: React.CSSProperties = { height: 95, borderRadius: 11, background: 'linear-gradient(135deg,#eef4fe,var(--bg-hover))', overflow: 'hidden', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9, marginBottom: 13 };
   if (kind === 'brand') return (
     <div style={wrap}>
       {['#3B83F6', '#5B6CF0', 'var(--text-main)'].map((c, i) => (
-        <div key={i} style={{ width: 26, height: 26, borderRadius: 8, background: c, animation: 'tour-pop .6s both', animationDelay: `${i * 0.18}s`, boxShadow: '0 2px 8px rgba(0,0,0,.12)' }} />
+        <div key={i} style={{ width: 23, height: 23, borderRadius: 7, background: c, animation: 'tour-pop .6s both', animationDelay: `${i * 0.18}s`, boxShadow: '0 2px 8px rgba(0,0,0,.12)' }} />
       ))}
-      <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'var(--bg-card)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'tour-wiggle 5s ease-in-out infinite', boxShadow: '0 2px 8px rgba(0,0,0,.1)' }}><Icon name="palette" size={15} color="#1d5fd0" /></div>
+      <div style={{ width: 27, height: 27, borderRadius: '50%', background: 'var(--bg-card)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'tour-wiggle 5s ease-in-out infinite', boxShadow: '0 2px 8px rgba(0,0,0,.1)' }}><Icon name="palette" size={14} color="#1d5fd0" /></div>
     </div>
   );
   if (kind === 'staging') return (
     <div style={wrap}>
       {/* Prima/Dopo: la parte "dopo" (arredata) si rivela con la linea che scorre dx/sx */}
-      <div style={{ position: 'relative', width: 160, height: 60, borderRadius: 8 }}>
+      <div style={{ position: 'relative', width: 144, height: 54, borderRadius: 7 }}>
         {/* Layer "prima" (sfondo) */}
-        <div style={{ position: 'absolute', inset: 0, borderRadius: 8, background: '#dbeafe' }} />
+        <div style={{ position: 'absolute', inset: 0, borderRadius: 7, background: '#dbeafe' }} />
         
         {/* Layer "dopo" che si rivela, senza overflow:hidden per non tagliare il cerchio */}
-        <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, background: 'linear-gradient(135deg,#93C5FD,#3B83F6 70%,#5B6CF0)', borderRadius: '8px 0 0 8px', animation: 'tour-reveal 3s ease-in-out infinite', display: 'flex', alignItems: 'center', paddingLeft: 10 }}>
+        <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, background: 'linear-gradient(135deg,#93C5FD,#3B83F6 70%,#5B6CF0)', borderRadius: '7px 0 0 7px', animation: 'tour-reveal 3s ease-in-out infinite', display: 'flex', alignItems: 'center', paddingLeft: 9 }}>
           <div style={{ position: 'absolute', top: 0, bottom: 0, right: 0, width: 2, background: 'var(--bg-card)', boxShadow: '0 0 6px rgba(0,0,0,.25)' }} />
-          <div style={{ position: 'absolute', top: '50%', right: -9, transform: 'translateY(-50%)', width: 18, height: 18, borderRadius: '50%', background: 'var(--bg-card)', boxShadow: '0 1px 5px rgba(0,0,0,.25)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ position: 'absolute', top: '50%', right: -9, transform: 'translateY(-50%)', width: 16, height: 16, borderRadius: '50%', background: 'var(--bg-card)', boxShadow: '0 1px 5px rgba(0,0,0,.25)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--text-main)" strokeWidth="2.5"><path d="M8 6l-6 6 6 6M16 6l6 6-6 6" /></svg>
           </div>
         </div>
@@ -169,21 +169,21 @@ function TourAnim({ kind }: { kind: string }) {
     </div>
   );
   if (kind === 'video') return (
-    <div style={{ ...wrap, gap: 12 }}>
+    <div style={{ ...wrap, gap: 11 }}>
       {/* Foto di partenza */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
         {[0, 1, 2].map(i => (
-           <div key={i} style={{ width: 18, height: 18, borderRadius: 3, background: 'var(--border-main)', animation: 'tour-video-squares 4s both infinite', animationDelay: `${i * 0.15}s` }} />
+           <div key={i} style={{ width: 16, height: 16, borderRadius: 3, background: 'var(--border-main)', animation: 'tour-video-squares 4s both infinite', animationDelay: `${i * 0.15}s` }} />
         ))}
       </div>
       
       {/* Freccia */}
-      <Icon name="arrow-right" size={14} color="#b3aca1" />
+      <Icon name="arrow-right" size={13} color="#b3aca1" />
       
       {/* Video Verticale generato */}
-      <div style={{ width: 48, height: 78, borderRadius: 6, background: 'linear-gradient(135deg, #3B83F6, #5B6CF0)', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 24px rgba(59,131,246,.25)' }}>
-        <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(255,255,255,.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'aurora-pulse 2s infinite' }}>
-          <Icon name="sparkles" size={14} color="var(--bg-card)" />
+      <div style={{ width: 43, height: 70, borderRadius: 5, background: 'linear-gradient(135deg, #3B83F6, #5B6CF0)', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 24px rgba(59,131,246,.25)' }}>
+        <div style={{ width: 25, height: 25, borderRadius: '50%', background: 'rgba(255,255,255,.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'aurora-pulse 2s infinite' }}>
+          <Icon name="sparkles" size={13} color="var(--bg-card)" />
         </div>
       </div>
     </div>
@@ -191,31 +191,31 @@ function TourAnim({ kind }: { kind: string }) {
   if (kind === 'montaggio') return (
     <div style={wrap}>
       {[0, 1, 2].map(i => (
-        <div key={i} style={{ width: 30, height: 44, borderRadius: 6, background: ['#93C5FD', '#3B83F6', '#5B6CF0'][i], animation: 'tour-slide .7s both', animationDelay: `${i * 0.2}s` }} />
+        <div key={i} style={{ width: 27, height: 40, borderRadius: 5, background: ['#93C5FD', '#3B83F6', '#5B6CF0'][i], animation: 'tour-slide .7s both', animationDelay: `${i * 0.2}s` }} />
       ))}
-      <Icon name="scissors" size={16} color="var(--text-sec)" />
-      <div style={{ width: 34, height: 44, borderRadius: 6, background: 'linear-gradient(135deg,#3B83F6,#5B6CF0)', animation: 'tour-pop .6s both', animationDelay: '.75s' }} />
+      <Icon name="scissors" size={14} color="var(--text-sec)" />
+      <div style={{ width: 31, height: 40, borderRadius: 5, background: 'linear-gradient(135deg,#3B83F6,#5B6CF0)', animation: 'tour-pop .6s both', animationDelay: '.75s' }} />
     </div>
   );
   if (kind === 'social') return (
     <div style={wrap}>
-      <div style={{ width: 56, background: 'var(--bg-card)', borderRadius: 6, padding: 5, boxShadow: '0 8px 24px rgba(29,95,208,.12)', display: 'flex', flexDirection: 'column', gap: 4, position: 'relative' }}>
+      <div style={{ width: 50, background: 'var(--bg-card)', borderRadius: 5, padding: 4, boxShadow: '0 8px 24px rgba(29,95,208,.12)', display: 'flex', flexDirection: 'column', gap: 4, position: 'relative' }}>
         
         {/* Header (Avatar + Name) */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-          <div style={{ width: 10, height: 10, borderRadius: '50%', background: 'linear-gradient(135deg,#3B83F6,#5B6CF0)' }} />
-          <div style={{ height: 3, width: 16, borderRadius: 2, background: 'var(--border-main)' }} />
+          <div style={{ width: 9, height: 9, borderRadius: '50%', background: 'linear-gradient(135deg,#3B83F6,#5B6CF0)' }} />
+          <div style={{ height: 3, width: 14, borderRadius: 2, background: 'var(--border-main)' }} />
         </div>
         
         {/* Post Image */}
-        <div style={{ width: '100%', height: 38, borderRadius: 3, background: 'var(--bg-body)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <Icon name="image" size={12} color="#b3aca1" />
+        <div style={{ width: '100%', height: 34, borderRadius: 3, background: 'var(--bg-body)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Icon name="image" size={11} color="#b3aca1" />
         </div>
         
         {/* Like/Comment mini icons (simulated with circles) */}
         <div style={{ display: 'flex', gap: 2 }}>
-          <div style={{ width: 5, height: 5, borderRadius: '50%', border: '1px solid #b3aca1' }} />
-          <div style={{ width: 5, height: 5, borderRadius: '50%', border: '1px solid #b3aca1' }} />
+          <div style={{ width: 4, height: 4, borderRadius: '50%', border: '1px solid #b3aca1' }} />
+          <div style={{ width: 4, height: 4, borderRadius: '50%', border: '1px solid #b3aca1' }} />
         </div>
 
         {/* AI Caption Typing */}
@@ -227,30 +227,30 @@ function TourAnim({ kind }: { kind: string }) {
         
         {/* Scintilla AI che fluttua al lato della caption */}
         <div style={{ position: 'absolute', bottom: -5, right: -5, background: 'var(--bg-card)', borderRadius: '50%', padding: 3, boxShadow: '0 2px 8px rgba(0,0,0,.15)', animation: 'tour-bob 2s ease-in-out infinite' }}>
-          <Icon name="sparkles" size={10} color="#3B83F6" />
+          <Icon name="sparkles" size={9} color="#3B83F6" />
         </div>
       </div>
     </div>
   );
   if (kind === 'media') return (
-    <div style={{ ...wrap, padding: 12, display: 'flex', gap: 8, alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{ width: 38, height: 38, borderRadius: 8, background: '#3B83F6', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'tour-tile-loop 6s ease-in-out infinite' }}>
-        <Icon name="image" size={16} color="var(--bg-card)" />
+    <div style={{ ...wrap, padding: 11, display: 'flex', gap: 7, alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ width: 34, height: 34, borderRadius: 7, background: '#3B83F6', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'tour-tile-loop 6s ease-in-out infinite' }}>
+        <Icon name="image" size={14} color="var(--bg-card)" />
       </div>
-      <div style={{ width: 38, height: 38, borderRadius: 8, background: '#93C5FD', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'tour-tile-loop 6s .6s ease-in-out infinite' }}>
-        <Icon name="film" size={16} color="var(--bg-card)" />
+      <div style={{ width: 34, height: 34, borderRadius: 7, background: '#93C5FD', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'tour-tile-loop 6s .6s ease-in-out infinite' }}>
+        <Icon name="film" size={14} color="var(--bg-card)" />
       </div>
-      <div style={{ width: 38, height: 38, borderRadius: 8, background: 'linear-gradient(135deg,#3B83F6,#5B6CF0)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'tour-tile-loop 6s 1.2s ease-in-out infinite' }}>
-        <Icon name="instagram" size={16} color="var(--bg-card)" />
+      <div style={{ width: 34, height: 34, borderRadius: 7, background: 'linear-gradient(135deg,#3B83F6,#5B6CF0)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'tour-tile-loop 6s 1.2s ease-in-out infinite' }}>
+        <Icon name="instagram" size={14} color="var(--bg-card)" />
       </div>
     </div>
   );
   if (kind === 'jobs') return (
     <div style={wrap}>
-      <div style={{ position: 'relative', width: 64, height: 64, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ position: 'absolute', width: 56, height: 56, borderRadius: '50%', border: '1.5px solid rgba(59,131,246,.3)', animation: 'pulse-ring 2.6s linear infinite' }} />
-        <div style={{ width: 40, height: 40, background: 'radial-gradient(circle at 32% 28%, #AECBFF, #3B83F6 70%, #5B6CF0)', animation: 'organic-blob 10s linear infinite', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <img src="/templates/default-logo-vertical.svg" style={{ height: 16, filter: 'brightness(0) invert(1)' }} alt="GetNearMe" />
+      <div style={{ position: 'relative', width: 58, height: 58, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ position: 'absolute', width: 50, height: 50, borderRadius: '50%', border: '1.5px solid rgba(59,131,246,.3)', animation: 'pulse-ring 2.6s linear infinite' }} />
+        <div style={{ width: 36, height: 36, background: 'radial-gradient(circle at 32% 28%, #AECBFF, #3B83F6 70%, #5B6CF0)', animation: 'organic-blob 10s linear infinite', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <img src="/templates/default-logo-vertical.svg" style={{ height: 14, filter: 'brightness(0) invert(1)' }} alt="GetNearMe" />
         </div>
       </div>
     </div>
@@ -258,30 +258,30 @@ function TourAnim({ kind }: { kind: string }) {
   // project (step centrale)
   return (
     <div style={wrap}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
         {/* L'immobile di partenza */}
-        <div style={{ width: 60, height: 60, borderRadius: 14, background: 'var(--bg-card)', boxShadow: '0 12px 32px rgba(29,95,208,.12)', border: '1px solid var(--border-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}>
-          <Icon name="home" size={28} color="#1d5fd0" />
+        <div style={{ width: 54, height: 54, borderRadius: 13, background: 'var(--bg-card)', boxShadow: '0 12px 32px rgba(29,95,208,.12)', border: '1px solid var(--border-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}>
+          <Icon name="home" size={25} color="#1d5fd0" />
         </div>
 
         {/* Freccia */}
         <div style={{ color: '#b3aca1', animation: 'tour-slide 2s alternate infinite', padding: '0 4px' }}>
-          <Icon name="arrow-right" size={20} />
+          <Icon name="arrow-right" size={18} />
         </div>
         
         {/* I contenuti generati */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-          <div style={{ width: 40, height: 40, borderRadius: 10, background: '#eef4fe', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'tour-tile-loop 3s ease-in-out infinite' }}>
-            <Icon name="image" size={18} color="#3B83F6" />
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 7 }}>
+          <div style={{ width: 36, height: 36, borderRadius: 9, background: '#eef4fe', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'tour-tile-loop 3s ease-in-out infinite' }}>
+            <Icon name="image" size={16} color="#3B83F6" />
           </div>
-          <div style={{ width: 40, height: 40, borderRadius: 10, background: '#eef4fe', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'tour-tile-loop 3s .3s ease-in-out infinite' }}>
-            <Icon name="film" size={18} color="#3B83F6" />
+          <div style={{ width: 36, height: 36, borderRadius: 9, background: '#eef4fe', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'tour-tile-loop 3s .3s ease-in-out infinite' }}>
+            <Icon name="film" size={16} color="#3B83F6" />
           </div>
-          <div style={{ width: 40, height: 40, borderRadius: 10, background: '#eef4fe', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'tour-tile-loop 3s .6s ease-in-out infinite' }}>
-            <Icon name="instagram" size={18} color="#3B83F6" />
+          <div style={{ width: 36, height: 36, borderRadius: 9, background: '#eef4fe', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'tour-tile-loop 3s .6s ease-in-out infinite' }}>
+            <Icon name="instagram" size={16} color="#3B83F6" />
           </div>
-          <div style={{ width: 40, height: 40, borderRadius: 10, background: '#eef4fe', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'tour-tile-loop 3s .9s ease-in-out infinite' }}>
-            <Icon name="type" size={18} color="#3B83F6" />
+          <div style={{ width: 36, height: 36, borderRadius: 9, background: '#eef4fe', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'tour-tile-loop 3s .9s ease-in-out infinite' }}>
+            <Icon name="type" size={16} color="#3B83F6" />
           </div>
         </div>
       </div>
@@ -304,8 +304,9 @@ const STRIPE_BILLING_PORTAL = 'https://billing.stripe.com/p/login/9B68wP7WH3blfT
 // individual_* = link esistenti (€59/€590). agency_* = nuovi (€399 / €3588/anno):
 // crearli con `scripts/create-agency-stripe.mjs` e sostituire i placeholder.
 const STRIPE_PAYMENT_LINKS: Record<string, string> = {
+  starter_monthly: 'https://buy.stripe.com/00w14n5Oz7rBcHu8xGak00K',
   individual_monthly: 'https://buy.stripe.com/fZucN5dh17rB5f2bJSak00G',
-  individual_annual: 'https://buy.stripe.com/bJe4gzdh19zJgXK9BKak00H',
+  individual_annual: 'https://buy.stripe.com/bJe4gzdh19zJgXK9BKak00H', // rimosso dalla UI, tenuto per sub grandfathered
   agency_monthly: 'https://buy.stripe.com/cNifZh7WH5jt6j65luak00I',
   agency_annual: 'https://buy.stripe.com/cNi9AT7WH27h9vidS0ak00J',
 };
@@ -313,6 +314,7 @@ const STRIPE_PAYMENT_LINKS: Record<string, string> = {
 // subscription_type → id piano (card). Legacy agency generici → individuale.
 const SUB_TYPE_TO_PLAN: Record<string, string> = {
   free: 'free',
+  starter_monthly: 'starter',
   individual_monthly: 'ind_monthly',
   individual_annual: 'ind_annual',
   agency_monthly: 'agy_monthly',
@@ -325,6 +327,7 @@ const SUB_TYPE_TO_PLAN: Record<string, string> = {
 };
 
 const PLAN_TO_SUB_TYPE: Record<string, string> = {
+  starter: 'starter_monthly',
   ind_monthly: 'individual_monthly',
   ind_annual: 'individual_annual',
   agy_monthly: 'agency_monthly',
@@ -339,7 +342,7 @@ function isAgencyTier(subType?: string | null): boolean {
 type PlanTier = 'individual' | 'agency';
 
 const INDIVIDUAL_FEATURES = [
-  '250 foto AI homestaging/mese',
+  '300 foto AI homestaging/mese',
   '6 video AI/mese',
   'Post social illimitati',
   'Montaggio Illimitato',
@@ -350,11 +353,12 @@ const INDIVIDUAL_FEATURES = [
   'Supporto prioritario',
 ];
 
+// {users}/{photos}/{videos}: risolti a render con lo slider utenti (seat-based 2-10).
 const AGENCY_FEATURES = [
-  'Fino a 5 collaboratori (Team)',
+  '{users} collaboratori inclusi (Team)',
   'Brand condiviso col team',
-  '2000 foto AI homestaging/mese',
-  '12 video AI/mese',
+  '{photos} foto AI homestaging/mese',
+  '{videos} video AI/mese',
   'Post social illimitati',
   'Montaggio Illimitato',
   'Report Automatici',
@@ -363,9 +367,16 @@ const AGENCY_FEATURES = [
   'Supporto prioritario dedicato',
 ];
 
+const AGENCY_CUSTOM_FEATURES = [
+  'Più di 10 collaboratori',
+  'Foto e video su misura',
+  'Onboarding assistito',
+  'Contratto e fatturazione dedicati',
+  'Supporto prioritario dedicato',
+];
+
 const FREE_FEATURES = [
-  '5 foto AI homestaging',
-  '1 video AI',
+  '10 foto AI homestaging',
   '5 montaggi video',
   '5 post social',
   '5 Analisi di zona',
@@ -375,24 +386,35 @@ type Plan = {
   id: string; name: string; price: number; oldPrice: number; period: string;
   badge: string | null; popular: boolean; features: string[]; color: string;
   quotaFoto: number; quotaVideo: number; quotaPost: number; note?: string;
+  hidden?: boolean; // fuori dalle card acquistabili, ma resta nel lookup per sub grandfathered
 };
 
 const FREE_PLAN: Plan = {
   id: 'free', name: 'Free', price: 0, oldPrice: 0, period: '', badge: null, popular: false,
-  features: FREE_FEATURES, color: 'var(--text-muted)', quotaFoto: 5, quotaVideo: 1, quotaPost: 5,
+  features: FREE_FEATURES, color: 'var(--text-muted)', quotaFoto: 10, quotaVideo: 0, quotaPost: 5,
 };
+
+const STARTER_FEATURES = [
+  '100 foto AI homestaging/mese',
+  '1 video AI/mese, tutti i template',
+  '10 montaggi video/mese',
+  '20 post social/mese',
+  'Analisi della zona',
+  'Import immobili',
+];
 
 const PLANS_BY_TIER: Record<PlanTier, Plan[]> = {
   individual: [
     FREE_PLAN,
-    { id: 'ind_monthly', name: 'Mensile', price: 59, oldPrice: 150, period: '/mese', badge: null, popular: false, features: INDIVIDUAL_FEATURES, color: 'var(--text-main)', quotaFoto: 250, quotaVideo: 6, quotaPost: 999 },
-    { id: 'ind_annual', name: 'Annuale', price: 590, oldPrice: 1800, period: '/anno', badge: 'Più scelto', popular: true, features: INDIVIDUAL_FEATURES, color: 'var(--text-main)', quotaFoto: 250, quotaVideo: 6, quotaPost: 999 },
+    { id: 'starter', name: 'Starter', price: 14.99, oldPrice: 19.99, period: '/mese', badge: 'Più scelto', popular: true, features: STARTER_FEATURES, color: 'var(--text-main)', quotaFoto: 100, quotaVideo: 1, quotaPost: 20 },
+    { id: 'ind_monthly', name: 'Mensile', price: 59, oldPrice: 150, period: '/mese', badge: null, popular: false, features: INDIVIDUAL_FEATURES, color: 'var(--text-main)', quotaFoto: 300, quotaVideo: 6, quotaPost: 999 },
+    { id: 'ind_annual', name: 'Annuale', price: 590, oldPrice: 1800, period: '/anno', badge: null, popular: false, features: INDIVIDUAL_FEATURES, color: 'var(--text-main)', quotaFoto: 300, quotaVideo: 6, quotaPost: 999, hidden: true },
   ],
   agency: [
-    FREE_PLAN,
-    // Prezzo mostrato PER UTENTE (team da 5). Totale reale fatturato: €399/mese, €3588/anno.
+    // Prezzo mostrato PER UTENTE (slider 2-10). Totale reale fatturato: prezzo × utenti.
     { id: 'agy_monthly', name: 'Mensile', price: 80, oldPrice: 200, period: '/mese a utente', badge: null, popular: false, features: AGENCY_FEATURES, color: 'var(--text-main)', quotaFoto: 2000, quotaVideo: 12, quotaPost: 999, note: '5 utenti · €399/mese' },
     { id: 'agy_annual', name: 'Annuale', price: 60, oldPrice: 150, period: '/mese a utente', badge: 'Più scelto', popular: true, features: AGENCY_FEATURES, color: 'var(--text-main)', quotaFoto: 2000, quotaVideo: 12, quotaPost: 999, note: '5 utenti · €299/mese' },
+    { id: 'agy_custom', name: 'Custom', price: 0, oldPrice: 0, period: '', badge: null, popular: false, features: AGENCY_CUSTOM_FEATURES, color: 'var(--text-main)', quotaFoto: 0, quotaVideo: 0, quotaPost: 0 },
   ],
 };
 
@@ -466,14 +488,14 @@ const ANIM_STYLES: { id: string; label: string }[] = [
 
 const ANIM_CSS = `
 .aw{position:absolute;border-radius:2px;opacity:0;animation-duration:3.5s;animation-iteration-count:infinite;animation-fill-mode:both}
-.aw-badge{width:18px;height:5px;top:10px;left:8px;background:#6875F5}
-.aw-price{width:38px;height:8px;top:19px;left:8px;background:var(--bg-card)}
-.aw-title{width:50px;height:5px;top:32px;left:8px;background:rgba(255,255,255,.7)}
-.aw-addr{width:28px;height:3px;top:41px;left:8px;background:rgba(255,255,255,.35)}
-.aw-m1{width:16px;height:13px;top:52px;left:5px;background:rgba(255,255,255,.15);border-radius:3px}
-.aw-m2{width:16px;height:13px;top:52px;left:25px;background:rgba(255,255,255,.15);border-radius:3px}
-.aw-m3{width:16px;height:13px;top:52px;left:45px;background:rgba(255,255,255,.15);border-radius:3px}
-.aw-desc{width:54px;height:4px;top:76px;left:8px;background:rgba(255,255,255,.45)}
+.aw-badge{width: 16px;height: 4px;top: 9px;left: 7px;background:#6875F5}
+.aw-price{width: 34px;height: 7px;top: 17px;left: 7px;background:var(--bg-card)}
+.aw-title{width: 45px;height: 4px;top: 29px;left: 7px;background:rgba(255,255,255,.7)}
+.aw-addr{width: 25px;height: 3px;top: 37px;left: 7px;background:rgba(255,255,255,.35)}
+.aw-m1{width: 14px;height: 12px;top: 47px;left: 4px;background:rgba(255,255,255,.15);border-radius:3px}
+.aw-m2{width: 14px;height: 12px;top: 47px;left: 22px;background:rgba(255,255,255,.15);border-radius:3px}
+.aw-m3{width: 14px;height: 12px;top: 47px;left: 40px;background:rgba(255,255,255,.15);border-radius:3px}
+.aw-desc{width: 49px;height: 4px;top: 68px;left: 7px;background:rgba(255,255,255,.45)}
 .aw-badge{animation-delay:.3s}.aw-price{animation-delay:.5s}.aw-title{animation-delay:.7s}
 .aw-addr{animation-delay:.9s}.aw-m1{animation-delay:1.1s}.aw-m2{animation-delay:1.25s}
 .aw-m3{animation-delay:1.4s}.aw-desc{animation-delay:1.6s}
@@ -760,7 +782,7 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
     tplEl.style.height = curFmt.h + 'px';
 
     const wrapper = document.createElement('div');
-    wrapper.style.cssText = `position:fixed;top:0;left:0;width:${curFmt.w}px;height:${curFmt.h}px;opacity:0;pointer-events:none;overflow:visible;z-index:-1;`;
+    wrapper.style.cssText = `position:fixed;top: 0;left: 0;width:${curFmt.w}px;height:${curFmt.h}px;opacity:0;pointer-events:none;overflow:visible;z-index:-1;`;
     wrapper.appendChild(tplEl);
     document.body.appendChild(wrapper);
 
@@ -913,7 +935,7 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
             tplEl.style.width = f.w + 'px';
             tplEl.style.height = f.h + 'px';
             const wrapper = document.createElement('div');
-            wrapper.style.cssText = `position:fixed;top:0;left:0;width:${f.w}px;height:${f.h}px;opacity:0;pointer-events:none;overflow:visible;z-index:-1;`;
+            wrapper.style.cssText = `position:fixed;top: 0;left: 0;width:${f.w}px;height:${f.h}px;opacity:0;pointer-events:none;overflow:visible;z-index:-1;`;
             wrapper.appendChild(tplEl);
             document.body.appendChild(wrapper);
             for (const [cls, val] of Object.entries(blurMap)) {
@@ -949,7 +971,7 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
           vEl.style.width = curFmt.w + 'px';
           vEl.style.height = curFmt.h + 'px';
           const vWrap = document.createElement('div');
-          vWrap.style.cssText = `position:fixed;top:0;left:0;width:${curFmt.w}px;height:${curFmt.h}px;opacity:0;pointer-events:none;overflow:visible;z-index:-1;`;
+          vWrap.style.cssText = `position:fixed;top: 0;left: 0;width:${curFmt.w}px;height:${curFmt.h}px;opacity:0;pointer-events:none;overflow:visible;z-index:-1;`;
           vWrap.appendChild(vEl);
           document.body.appendChild(vWrap);
           for (const [cls, val] of Object.entries(blurMap)) {
@@ -1158,9 +1180,9 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
     setStep(n);
   };
 
-  const inputStyle: React.CSSProperties = { width: '100%', border: '1px solid var(--border-main)', borderRadius: 8, padding: '10px 12px', fontSize: 13, fontFamily: 'inherit', outline: 'none', background: 'var(--bg-card)' };
-  const labelStyle: React.CSSProperties = { display: 'block', fontSize: 12.5, fontWeight: 700, marginBottom: 5 };
-  const smallLabelStyle: React.CSSProperties = { display: 'block', fontSize: 11.5, fontWeight: 700, marginBottom: 5 };
+  const inputStyle: React.CSSProperties = { width: '100%', border: '1px solid var(--border-main)', borderRadius: 7, padding: '9px 11px', fontSize: 11.5, fontFamily: 'inherit', outline: 'none', background: 'var(--bg-card)' };
+  const labelStyle: React.CSSProperties = { display: 'block', fontSize: 11, fontWeight: 700, marginBottom: 4.5 };
+  const smallLabelStyle: React.CSSProperties = { display: 'block', fontSize: 10.5, fontWeight: 700, marginBottom: 4.5 };
 
   // Preview: fit to viewport height, reactive on resize
   const [winH, setWinH] = React.useState(typeof window !== 'undefined' ? window.innerHeight : 800);
@@ -1202,27 +1224,27 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
   const pvH = curFmt.h * pvScale;
 
   return (
-    <div className="max-md:!px-4 max-md:!pt-4 max-md:!pb-32" style={s('max-width:1240px;margin:0 auto;padding:32px 32px 64px')}>
+    <div className="max-md:!px-4 max-md:!pt-4 max-md:!pb-32" style={s('max-width:1240px;margin:0 auto;padding:29px 29px 58px')}>
       {/* header */}
-      <div className="max-md:!gap-8" style={s('display:flex;align-items:center;gap:12px;margin-bottom:22px')}>
+      <div className="max-md:!gap-8" style={s('display:flex;align-items:center;gap:11px;margin-bottom:20px')}>
         {step > 1 && (
-          <Box as="button" onClick={() => setStep(step === 3 ? 1 : step - 1)} style={s('border:1px solid var(--border-main);background:var(--bg-card);width:38px;height:38px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center')} hover={s('background:var(--bg-hover)')}>
-            <Icon name="arrow-left" size={15} color="var(--text-sec)" />
+          <Box as="button" onClick={() => setStep(step === 3 ? 1 : step - 1)} style={s('border:1px solid var(--border-main);background:var(--bg-card);width:34px;height:34px;border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center')} hover={s('background:var(--bg-hover)')}>
+            <Icon name="arrow-left" size={14} color="var(--text-sec)" />
           </Box>
         )}
         <div style={s('flex:1;min-width:0')}>
-          <h1 className="max-md:!text-xl" style={s('margin:0 0 4px;font-size:25px;font-weight:800;letter-spacing:-.5px')}>{stepTitles[step]}</h1>
-          <div className="max-md:!text-xs" style={s('font-size:13px;color:var(--text-muted)')}>{stepSubs[step]} · passo {step === 1 ? 1 : step === 3 ? 2 : 3} di 3</div>
+          <h1 className="max-md:!text-xl" style={s('margin:0 0 4px;font-size:23px;font-weight:800;letter-spacing:-.5px')}>{stepTitles[step]}</h1>
+          <div className="max-md:!text-xs" style={s('font-size:12px;color:var(--text-muted)')}>{stepSubs[step]} · passo {step === 1 ? 1 : step === 3 ? 2 : 3} di 3</div>
         </div>
         {!demoMode && postQuota && !postQuota.unlimited && (
           postQuota.remaining > 0 ? (
-            <div style={s('display:inline-flex;align-items:center;justify-content:center;gap:8px;background:#fff;border:1px solid #f0ede7;border-radius:99px;padding:8px 16px;flex:none')}>
-              <Icon name="megaphone" size={15} color="#3B83F6" />
-              <span style={{ fontSize: 13, fontWeight: 700 }}>{postQuota.remaining} {postQuota.remaining === 1 ? 'post rimanente' : 'post rimanenti'}</span>
+            <div style={s('display:inline-flex;align-items:center;justify-content:center;gap:7px;background:#fff;border:1px solid #f0ede7;border-radius:99px;padding:7px 14px;flex:none')}>
+              <Icon name="megaphone" size={14} color="#3B83F6" />
+              <span style={{ fontSize: 12, fontWeight: 700 }}>{postQuota.remaining} {postQuota.remaining === 1 ? 'post rimanente' : 'post rimanenti'}</span>
             </div>
           ) : (
-            <Box as="button" onClick={() => go?.('account')} style={s('display:flex;align-items:center;gap:8px;background:#3B83F6;color:#fff;border:none;border-radius:10px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer;flex:none') as React.CSSProperties} hover={s('background:#2b6fe0')}>
-              <Icon name="crown" size={15} color="#fff" />Vedi i piani
+            <Box as="button" onClick={() => go?.('account')} style={s('display:flex;align-items:center;gap:7px;background:#3B83F6;color:#fff;border:none;border-radius:9px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;flex:none') as React.CSSProperties} hover={s('background:#2b6fe0')}>
+              <Icon name="crown" size={14} color="#fff" />Vedi i piani
             </Box>
           )
         )}
@@ -1232,36 +1254,36 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
 
       {/* STEP 1: template selection */}
       {step === 1 && (
-        <div className="max-md:!flex max-md:!flex-col max-md:!gap-4" style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: 22, alignItems: 'start' }}>
+        <div className="max-md:!flex max-md:!flex-col max-md:!gap-4" style={{ display: 'grid', gridTemplateColumns: '180px 1fr', gap: 20, alignItems: 'start' }}>
           {/* Mobile: dropdown button for platform + format */}
           <div className="md:!hidden" style={{ position: 'relative', width: '100%' }}>
             <Box as="button" onClick={() => setPostFilterOpen(!postFilterOpen)} style={{
               width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              padding: '10px 14px', borderRadius: 12, border: '1px solid var(--border-main)',
-              background: 'var(--bg-card)', cursor: 'pointer', fontSize: 13, fontWeight: 700,
+              padding: '9px 13px', borderRadius: 11, border: '1px solid var(--border-main)',
+              background: 'var(--bg-card)', cursor: 'pointer', fontSize: 12, fontWeight: 700,
             } as React.CSSProperties} hover={{ background: 'var(--bg-hover)' }}>
               <span>{PS_PLATFORMS.find(p => p.id === platform)?.label} · {curFmt.label}</span>
-              <Icon name="chevron-down" size={16} color="var(--text-muted)" />
+              <Icon name="chevron-down" size={14} color="var(--text-muted)" />
             </Box>
             {postFilterOpen && (
               <>
                 <div onClick={() => setPostFilterOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 40 }} />
-                <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4, zIndex: 50, background: 'var(--bg-card)', border: '1px solid var(--border-main)', borderRadius: 12, boxShadow: '0 12px 32px rgba(0,0,0,.12)', padding: 8 }}>
+                <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4, zIndex: 50, background: 'var(--bg-card)', border: '1px solid var(--border-main)', borderRadius: 11, boxShadow: '0 12px 32px rgba(0,0,0,.12)', padding: 7 }}>
                   {PS_PLATFORMS.map(pl => (
                     <Box key={pl.id} onClick={() => { setPlatform(pl.id); setFormatId(pl.formats[0].id); }} style={{
-                      padding: '8px 12px', borderRadius: 8, cursor: 'pointer', fontSize: 13,
+                      padding: '7px 11px', borderRadius: 7, cursor: 'pointer', fontSize: 12,
                       fontWeight: platform === pl.id ? 700 : 500,
                       color: platform === pl.id ? 'var(--text-main)' : 'var(--text-muted)',
                       background: platform === pl.id ? '#f1efe9' : 'transparent',
                     }} hover={{ background: '#f1efe9' }}>{pl.label}</Box>
                   ))}
-                  <div style={{ height: 1, background: '#ece9e2', margin: '6px 0' }} />
+                  <div style={{ height: 1, background: '#ece9e2', margin: '5px 0' }} />
                   {formats.map(f => (
                     <Box key={f.id} onClick={() => { setFormatId(f.id); setPostFilterOpen(false); }} style={{
                       borderWidth: 1, borderStyle: 'solid', borderColor: formatId === f.id ? '#3B83F6' : 'var(--border-main)',
                       background: formatId === f.id ? '#eef4fe' : 'var(--bg-card)',
                       color: formatId === f.id ? '#1d5fd0' : 'var(--text-sec)',
-                      fontSize: 11.5, fontWeight: 700, padding: '8px 10px', borderRadius: 8, cursor: 'pointer', marginTop: 4,
+                      fontSize: 10.5, fontWeight: 700, padding: '7px 9px', borderRadius: 7, cursor: 'pointer', marginTop: 4,
                     }} hover={{ borderColor: '#3B83F6' }}>{f.label}</Box>
                   ))}
                 </div>
@@ -1269,66 +1291,66 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
             )}
           </div>
           {/* Desktop: sidebar */}
-          <div className="max-md:!hidden" style={{ display: 'flex', flexDirection: 'column', gap: 4, position: 'sticky', top: 24 }}>
+          <div className="max-md:!hidden" style={{ display: 'flex', flexDirection: 'column', gap: 4, position: 'sticky', top: 22 }}>
             {PS_PLATFORMS.map(pl => (
               <Box key={pl.id} onClick={() => { setPlatform(pl.id); setFormatId(pl.formats[0].id); }} style={{
-                padding: '10px 14px', borderRadius: 12, cursor: 'pointer', fontSize: 14,
+                padding: '9px 13px', borderRadius: 11, cursor: 'pointer', fontSize: 13,
                 fontWeight: platform === pl.id ? 700 : 500,
                 color: platform === pl.id ? 'var(--text-main)' : 'var(--text-muted)',
                 background: platform === pl.id ? '#f1efe9' : 'transparent',
               }} hover={{ background: '#f1efe9' }}>{pl.label}</Box>
             ))}
-            <div style={{ height: 1, background: '#ece9e2', margin: '8px 0' }} />
+            <div style={{ height: 1, background: '#ece9e2', margin: '7px 0' }} />
             {formats.map(f => (
               <Box key={f.id} onClick={() => setFormatId(f.id)} style={{
                 borderWidth: 1, borderStyle: 'solid', borderColor: formatId === f.id ? '#3B83F6' : 'var(--border-main)',
                 background: formatId === f.id ? '#eef4fe' : 'var(--bg-card)',
                 color: formatId === f.id ? '#1d5fd0' : 'var(--text-sec)',
-                fontSize: 11.5, fontWeight: 700, padding: '8px 10px', borderRadius: 8, cursor: 'pointer', minHeight: 38, whiteSpace: 'nowrap', display: 'flex', alignItems: 'center',
+                fontSize: 10.5, fontWeight: 700, padding: '7px 9px', borderRadius: 7, cursor: 'pointer', minHeight: 34, whiteSpace: 'nowrap', display: 'flex', alignItems: 'center',
               }} hover={{ borderColor: '#3B83F6' }}>{f.label}</Box>
             ))}
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
             {/* upload cover photo */}
             <div
               style={{
-                display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px',
-                background: 'var(--bg-card)', border: '1.5px dashed var(--border-dark)', borderRadius: 12,
+                display: 'flex', alignItems: 'center', gap: 11, padding: '11px 14px',
+                background: 'var(--bg-card)', border: '1.5px dashed var(--border-dark)', borderRadius: 11,
                 transition: 'border-color .15s',
-                maxWidth: 940, position: 'relative', width: '100%'
+                position: 'relative', width: '100%'
               }}
               onMouseEnter={e => (e.currentTarget.style.borderColor = '#3B83F6')}
               onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--border-dark)')}
             >
-              <div onClick={() => fileInputRef.current?.click()} style={{ display: 'flex', flex: 1, alignItems: 'center', gap: 12, cursor: 'pointer' }}>
+              <div onClick={() => fileInputRef.current?.click()} style={{ display: 'flex', flex: 1, alignItems: 'center', gap: 11, cursor: 'pointer' }}>
                 {coverPhoto !== DEFAULT_PHOTO ? (
-                  <img src={coverPhoto} alt="" style={{ width: 48, height: 48, borderRadius: 8, objectFit: 'cover' }} />
+                  <img src={coverPhoto} alt="" style={{ width: 43, height: 43, borderRadius: 7, objectFit: 'cover' }} />
                 ) : (
-                  <div style={{ width: 48, height: 48, borderRadius: 8, background: 'var(--bg-hover)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Icon name="upload" size={20} color="var(--text-muted)" />
+                  <div style={{ width: 43, height: 43, borderRadius: 7, background: 'var(--bg-hover)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Icon name="upload" size={18} color="var(--text-muted)" />
                   </div>
                 )}
                 <div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-main)' }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-main)' }}>
                     {coverPhoto !== DEFAULT_PHOTO ? 'Cambia foto di sfondo' : 'Carica foto o video'}
                   </div>
-                  <div style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>JPG, PNG, WebP, MP4</div>
+                  <div style={{ fontSize: 10.5, color: 'var(--text-muted)' }}>JPG, PNG, WebP, MP4</div>
                 </div>
               </div>
               {coverPhoto !== DEFAULT_PHOTO && (
-                <div 
+                <div
                   onClick={(e) => { e.stopPropagation(); setCoverPhoto(DEFAULT_PHOTO); }}
-                  style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--bg-hover)', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none', cursor: 'pointer' }}
+                  style={{ width: 29, height: 29, borderRadius: 7, background: 'var(--bg-hover)', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none', cursor: 'pointer' }}
                   onMouseEnter={e => (e.currentTarget.style.background = '#eeebe3')}
                   onMouseLeave={e => (e.currentTarget.style.background = 'var(--bg-hover)')}
                 >
-                  <Icon name="x" size={16} color="var(--text-muted)" />
+                  <Icon name="x" size={14} color="var(--text-muted)" />
                 </div>
               )}
             </div>
-            <div className="max-md:!grid-cols-1 max-md:![grid-template-columns:1fr]" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 300px)', gap: 20, justifyContent: 'start' }}>
+            <div className="max-md:!grid-cols-1 max-md:![grid-template-columns:1fr]" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
             {TEMPLATES.map(tc => {
-              const cardW = winW < 768 ? Math.min(winW - 32, 400) : 300;
+              const cardW = winW < 768 ? Math.min(winW - 32, 400) : (Math.min(winW, 1240) - 58 - 180 - 20 - 40) / 3;
               // Stesse opts del renderTemplateGrid dell'estensione: formato selezionato, loghi verticali default, foto primaria duplicata per multi-foto
               const tplOpts: Record<string, unknown> = {
                 size: curFmt,
@@ -1339,7 +1361,7 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
               if (tc.multiPhoto) tplOpts.photos = getPhotosArray(tc);
               return (
                 <div key={tc.id} onClick={() => { setTplId(tc.id); goStep(3); }} style={{
-                  borderRadius: 14, overflow: 'hidden', cursor: 'pointer',
+                  borderRadius: 13, overflow: 'hidden', cursor: 'pointer',
                   transition: 'transform .15s, box-shadow .15s',
                   transform: 'translateZ(0)',
                   boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.04)',
@@ -1376,30 +1398,30 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
 
       {/* STEP 3: edit post (skip step 2, dati vengono dal progetto attivo) */}
       {step === 3 && (
-        <div className="max-md:!flex max-md:!flex-col max-md:!gap-6" style={{ display: 'grid', gridTemplateColumns: '1fr 360px', gap: 28, alignItems: 'start' }}>
+        <div className="max-md:!flex max-md:!flex-col max-md:!gap-6" style={{ display: 'grid', gridTemplateColumns: '1fr 324px', gap: 25, alignItems: 'start' }}>
           {(iconDropdown || currencyDropdown) && (
             <div onClick={closeAllDropdowns} style={{ position: 'fixed', inset: 0, zIndex: 40 }} />
           )}
           {/* preview */}
-          <div className="max-md:!static" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, position: 'sticky', top: 16 }}>
+          <div className="max-md:!static" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 9, position: 'sticky', top: 14 }}>
             {/* preview with arrows on sides */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <Box as="button" onClick={() => { const i = TEMPLATES.findIndex(t => t.id === tplId); setTplId(TEMPLATES[(i - 1 + TEMPLATES.length) % TEMPLATES.length].id); }} style={s('border:1px solid var(--border-main);background:var(--bg-card);width:34px;height:34px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none')} hover={s('background:var(--bg-hover)')}>
-                <Icon name="arrow-left" size={14} color="var(--text-sec)" />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
+              <Box as="button" onClick={() => { const i = TEMPLATES.findIndex(t => t.id === tplId); setTplId(TEMPLATES[(i - 1 + TEMPLATES.length) % TEMPLATES.length].id); }} style={s('border:1px solid var(--border-main);background:var(--bg-card);width:31px;height:31px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none')} hover={s('background:var(--bg-hover)')}>
+                <Icon name="arrow-left" size={13} color="var(--text-sec)" />
               </Box>
-              <div ref={previewContainerRef} style={{ borderRadius: 12, overflow: 'hidden', boxShadow: '0 12px 36px rgba(33,31,28,.14)', position: 'relative' }}>
+              <div ref={previewContainerRef} style={{ borderRadius: 11, overflow: 'hidden', boxShadow: '0 12px 36px rgba(33,31,28,.14)', position: 'relative' }}>
                 {exporting && (
                   <div style={{
-                    position: 'absolute', inset: 0, zIndex: 10, borderRadius: 12,
+                    position: 'absolute', inset: 0, zIndex: 10, borderRadius: 11,
                     background: 'rgba(0,0,0,.45)', display: 'flex', flexDirection: 'column',
-                    alignItems: 'center', justifyContent: 'center', gap: 14,
+                    alignItems: 'center', justifyContent: 'center', gap: 13,
                   }}>
                     <div style={{
-                      width: 36, height: 36, border: '3px solid rgba(255,255,255,.25)',
+                      width: 32, height: 32, border: '3px solid rgba(255,255,255,.25)',
                       borderTopColor: 'var(--bg-card)', borderRadius: '50%',
                       animation: 'export-spin .8s linear infinite',
                     }} />
-                    <span style={{ color: 'var(--bg-card)', fontSize: 13, fontWeight: 700 }}>
+                    <span style={{ color: 'var(--bg-card)', fontSize: 12, fontWeight: 700 }}>
                       {exporting === 'image' ? 'Esportazione...' : `Esportazione video ${exportProgress}%`}
                     </span>
                   </div>
@@ -1434,43 +1456,43 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
                   }}
                 />
               </div>
-              <Box as="button" onClick={() => { const i = TEMPLATES.findIndex(t => t.id === tplId); setTplId(TEMPLATES[(i + 1) % TEMPLATES.length].id); }} style={s('border:1px solid var(--border-main);background:var(--bg-card);width:34px;height:34px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none')} hover={s('background:var(--bg-hover)')}>
-                <Icon name="arrow-right" size={14} color="var(--text-sec)" />
+              <Box as="button" onClick={() => { const i = TEMPLATES.findIndex(t => t.id === tplId); setTplId(TEMPLATES[(i + 1) % TEMPLATES.length].id); }} style={s('border:1px solid var(--border-main);background:var(--bg-card);width:31px;height:31px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none')} hover={s('background:var(--bg-hover)')}>
+                <Icon name="arrow-right" size={13} color="var(--text-sec)" />
               </Box>
             </div>
           </div>
           {/* sidebar */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             {/* info mini card */}
-            <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)', borderRadius: 12, padding: '16px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)', borderRadius: 11, padding: '14px', display: 'flex', flexDirection: 'column', gap: 13 }}>
               {/* Mobile: dropdown for platform + format */}
               <div className="md:!hidden" style={{ position: 'relative' }}>
                 <Box as="button" onClick={() => setPostFilterOpen(!postFilterOpen)} style={{
                   width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  padding: '10px 14px', borderRadius: 8, background: 'var(--bg-hover)', cursor: 'pointer', fontSize: 13, fontWeight: 700, border: 'none',
+                  padding: '9px 13px', borderRadius: 7, background: 'var(--bg-hover)', cursor: 'pointer', fontSize: 12, fontWeight: 700, border: 'none',
                 } as React.CSSProperties} hover={{ background: '#eeebe3' }}>
                   <span>{PS_PLATFORMS.find(p => p.id === platform)?.label} · {curFmt.label}</span>
-                  <Icon name="chevron-down" size={16} color="var(--text-muted)" />
+                  <Icon name="chevron-down" size={14} color="var(--text-muted)" />
                 </Box>
                 {postFilterOpen && (
                   <>
                     <div onClick={() => setPostFilterOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 40 }} />
-                    <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4, zIndex: 50, background: 'var(--bg-card)', border: '1px solid var(--border-main)', borderRadius: 12, boxShadow: '0 12px 32px rgba(0,0,0,.12)', padding: 8 }}>
+                    <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4, zIndex: 50, background: 'var(--bg-card)', border: '1px solid var(--border-main)', borderRadius: 11, boxShadow: '0 12px 32px rgba(0,0,0,.12)', padding: 7 }}>
                       {PS_PLATFORMS.map(pl => (
                         <Box key={pl.id} onClick={() => { setPlatform(pl.id); setFormatId(pl.formats[0].id); }} style={{
-                          padding: '8px 12px', borderRadius: 8, cursor: 'pointer', fontSize: 13,
+                          padding: '7px 11px', borderRadius: 7, cursor: 'pointer', fontSize: 12,
                           fontWeight: platform === pl.id ? 700 : 500,
                           color: platform === pl.id ? 'var(--text-main)' : 'var(--text-muted)',
                           background: platform === pl.id ? '#f1efe9' : 'transparent',
                         }} hover={{ background: '#f1efe9' }}>{pl.label}</Box>
                       ))}
-                      <div style={{ height: 1, background: '#ece9e2', margin: '6px 0' }} />
+                      <div style={{ height: 1, background: '#ece9e2', margin: '5px 0' }} />
                       {formats.map(f => (
                         <Box key={f.id} onClick={() => { setFormatId(f.id); setPostFilterOpen(false); }} style={{
                           borderWidth: 1, borderStyle: 'solid', borderColor: formatId === f.id ? '#3B83F6' : 'var(--border-main)',
                           background: formatId === f.id ? '#eef4fe' : 'var(--bg-card)',
                           color: formatId === f.id ? '#1d5fd0' : 'var(--text-sec)',
-                          fontSize: 11.5, fontWeight: 700, padding: '8px 10px', borderRadius: 8, cursor: 'pointer', marginTop: 4,
+                          fontSize: 10.5, fontWeight: 700, padding: '7px 9px', borderRadius: 7, cursor: 'pointer', marginTop: 4,
                         }} hover={{ borderColor: '#3B83F6' }}>{f.label}</Box>
                       ))}
                     </div>
@@ -1479,11 +1501,11 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
               </div>
               {/* Desktop: platform tabs */}
               <div className="max-md:!hidden">
-                <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 6 }}>Piattaforma</div>
-                <div style={{ display: 'flex', alignItems: 'center', background: 'var(--bg-hover)', borderRadius: 8, padding: 3 }}>
+                <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 5 }}>Piattaforma</div>
+                <div style={{ display: 'flex', alignItems: 'center', background: 'var(--bg-hover)', borderRadius: 7, padding: 3 }}>
                   {PS_PLATFORMS.map(pl => (
                     <div key={pl.id} onClick={() => { setPlatform(pl.id); setFormatId(pl.formats[0].id); }} style={{
-                      flex: 1, textAlign: 'center', padding: '6px 0', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                      flex: 1, textAlign: 'center', padding: '5px 0', borderRadius: 5, fontSize: 11, fontWeight: 600, cursor: 'pointer',
                       background: platform === pl.id ? 'var(--bg-card)' : 'transparent',
                       color: platform === pl.id ? 'var(--text-main)' : 'var(--text-muted)',
                       boxShadow: platform === pl.id ? '0 1px 3px rgba(0,0,0,.08)' : 'none',
@@ -1494,11 +1516,11 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
               </div>
               {/* Desktop: format tabs */}
               <div className="max-md:!hidden">
-                <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 6 }}>Formato</div>
-                <div style={{ display: 'flex', alignItems: 'center', background: 'var(--bg-hover)', borderRadius: 8, padding: 3 }}>
+                <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 5 }}>Formato</div>
+                <div style={{ display: 'flex', alignItems: 'center', background: 'var(--bg-hover)', borderRadius: 7, padding: 3 }}>
                   {formats.map(f => (
                     <div key={f.id} onClick={() => setFormatId(f.id)} style={{
-                      flex: 1, textAlign: 'center', padding: '6px 0', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                      flex: 1, textAlign: 'center', padding: '5px 0', borderRadius: 5, fontSize: 11, fontWeight: 600, cursor: 'pointer',
                       background: formatId === f.id ? 'var(--bg-card)' : 'transparent',
                       color: formatId === f.id ? '#1d5fd0' : 'var(--text-muted)',
                       boxShadow: formatId === f.id ? '0 1px 3px rgba(0,0,0,.08)' : 'none',
@@ -1510,18 +1532,18 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
                 </div>
               </div>
               {/* template + size */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid var(--bg-body)', paddingTop: 12 }}>
-                <span style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--text-main)' }}>{curTpl.label}</span>
-                <span style={{ fontSize: 11, fontWeight: 600, color: '#b8b3a9', background: 'var(--bg-hover)', padding: '3px 8px', borderRadius: 4 }}>{curFmt.w} × {curFmt.h}</span>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid var(--bg-body)', paddingTop: 11 }}>
+                <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-main)' }}>{curTpl.label}</span>
+                <span style={{ fontSize: 10, fontWeight: 600, color: '#b8b3a9', background: 'var(--bg-hover)', padding: '3px 7px', borderRadius: 4 }}>{curFmt.w} × {curFmt.h}</span>
               </div>
             </div>
             {/* photo upload */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
               <div
                 onClick={() => fileInputRef.current?.click()}
                 style={{
-                  display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px',
-                  background: 'var(--bg-card)', border: '1px solid var(--border-light)', borderRadius: 12,
+                  display: 'flex', alignItems: 'center', gap: 11, padding: '9px 13px',
+                  background: 'var(--bg-card)', border: '1px solid var(--border-light)', borderRadius: 11,
                   cursor: 'pointer', transition: 'border-color .15s',
                 }}
                 onMouseEnter={e => (e.currentTarget.style.borderColor = '#3B83F6')}
@@ -1529,27 +1551,27 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
               >
                 {coverPhoto !== DEFAULT_PHOTO ? (
                   isVideo
-                    ? <div style={{ width: 44, height: 44, borderRadius: 8, overflow: 'hidden', position: 'relative', flexShrink: 0 }}>
+                    ? <div style={{ width: 40, height: 40, borderRadius: 7, overflow: 'hidden', position: 'relative', flexShrink: 0 }}>
                         <img src={videoThumb || ''} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', background: '#1a1825' }} />
                         <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          <div style={{ width: 18, height: 18, borderRadius: '50%', background: 'rgba(255,255,255,.85)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <div style={{ width: 16, height: 16, borderRadius: '50%', background: 'rgba(255,255,255,.85)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             <div style={{ width: 0, height: 0, borderLeft: '6px solid var(--text-main)', borderTop: '4px solid transparent', borderBottom: '4px solid transparent', marginLeft: 1 }} />
                           </div>
                         </div>
                       </div>
-                    : <img src={coverPhoto} alt="" style={{ width: 44, height: 44, borderRadius: 8, objectFit: 'cover' }} />
+                    : <img src={coverPhoto} alt="" style={{ width: 40, height: 40, borderRadius: 7, objectFit: 'cover' }} />
                 ) : (
-                  <div style={{ width: 44, height: 44, borderRadius: 8, background: 'var(--bg-hover)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Icon name="upload" size={18} color="var(--text-muted)" />
+                  <div style={{ width: 40, height: 40, borderRadius: 7, background: 'var(--bg-hover)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Icon name="upload" size={16} color="var(--text-muted)" />
                   </div>
                 )}
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--text-main)' }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-main)' }}>
                     {coverPhoto !== DEFAULT_PHOTO ? (isVideo ? 'Cambia video' : 'Cambia foto principale') : 'Carica foto o video'}
                   </div>
-                  <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>JPG, PNG, WebP, MP4</div>
+                  <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>JPG, PNG, WebP, MP4</div>
                 </div>
-                <Icon name="image" size={16} color="#b8b3a9" />
+                <Icon name="image" size={14} color="#b8b3a9" />
               </div>
               {curTpl.multiPhoto && Array.from({ length: curTpl.multiPhoto - 1 }, (_, i) => (
                 <div key={`extra-${i}`}>
@@ -1557,47 +1579,47 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
                   <div
                     onClick={() => extraFileRefs.current[i]?.click()}
                     style={{
-                      display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px',
-                      background: 'var(--bg-card)', border: '1px solid var(--border-light)', borderRadius: 12,
+                      display: 'flex', alignItems: 'center', gap: 11, padding: '9px 13px',
+                      background: 'var(--bg-card)', border: '1px solid var(--border-light)', borderRadius: 11,
                       cursor: 'pointer', transition: 'border-color .15s',
                     }}
                     onMouseEnter={e => (e.currentTarget.style.borderColor = '#3B83F6')}
                     onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--border-light)')}
                   >
                     {extraPhotos[i] ? (
-                      <img src={extraPhotos[i]} alt="" style={{ width: 44, height: 44, borderRadius: 8, objectFit: 'cover' }} />
+                      <img src={extraPhotos[i]} alt="" style={{ width: 40, height: 40, borderRadius: 7, objectFit: 'cover' }} />
                     ) : (
-                      <div style={{ width: 44, height: 44, borderRadius: 8, background: 'var(--bg-hover)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <Icon name="upload" size={18} color="var(--text-muted)" />
+                      <div style={{ width: 40, height: 40, borderRadius: 7, background: 'var(--bg-hover)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Icon name="upload" size={16} color="var(--text-muted)" />
                       </div>
                     )}
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--text-main)' }}>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-main)' }}>
                         {extraPhotos[i] ? `Cambia foto ${i + 2}` : `Carica foto ${i + 2}`}
                       </div>
-                      <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>JPG, PNG, WebP, MP4</div>
+                      <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>JPG, PNG, WebP, MP4</div>
                     </div>
-                    <Icon name="image" size={16} color="#b8b3a9" />
+                    <Icon name="image" size={14} color="#b8b3a9" />
                   </div>
                 </div>
               ))}
             </div>
             {/* fields card */}
-            <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)', borderRadius: 12, padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' as const, letterSpacing: '0.05em' }}>Dati immobile</div>
+            <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)', borderRadius: 11, padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 11 }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' as const, letterSpacing: '0.05em' }}>Dati immobile</div>
               {hasField('title') && <div><label style={labelStyle}>Titolo</label><input value={fields.titolo} onChange={e => setField('titolo', e.target.value)} placeholder="Es. Appartamento" style={inputStyle} /></div>}
               {hasField('address') && <div><label style={labelStyle}>Indirizzo</label><input value={fields.indirizzo} onChange={e => setField('indirizzo', e.target.value)} placeholder="Es. Milano, Porta Nuova" style={inputStyle} /></div>}
               {hasField('price') && <div style={{ position: 'relative' }}>
                 <label style={labelStyle}>Prezzo</label>
                 <div style={{ position: 'relative' }}>
-                  <input value={fields.prezzo} onChange={e => { const n = e.target.value.replace(/\D/g, ''); setField('prezzo', n ? Number(n).toLocaleString('it-IT') : ''); }} inputMode="numeric" placeholder="250.000" style={{ ...inputStyle, paddingRight: 34 }} />
+                  <input value={fields.prezzo} onChange={e => { const n = e.target.value.replace(/\D/g, ''); setField('prezzo', n ? Number(n).toLocaleString('it-IT') : ''); }} inputMode="numeric" placeholder="250.000" style={{ ...inputStyle, paddingRight: 31 }} />
                   <div
                     onClick={() => { setIconDropdown(null); setCurrencyDropdown(!currencyDropdown); }}
                     style={{
-                      position: 'absolute', right: 5, top: '50%', transform: 'translateY(-50%)',
-                      width: 26, height: 26, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      position: 'absolute', right: 4, top: '50%', transform: 'translateY(-50%)',
+                      width: 23, height: 23, borderRadius: 5, display: 'flex', alignItems: 'center', justifyContent: 'center',
                       cursor: 'pointer', border: '1px solid var(--border-main)', background: currencyDropdown ? 'var(--bg-hover)' : 'transparent',
-                      color: 'var(--text-main)', transition: 'all .15s', fontSize: 13, fontWeight: 700,
+                      color: 'var(--text-main)', transition: 'all .15s', fontSize: 12, fontWeight: 700,
                     }}
                     onMouseEnter={e => { e.currentTarget.style.borderColor = '#3B83F6'; e.currentTarget.style.background = 'var(--bg-hover)'; }}
                     onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-main)'; e.currentTarget.style.background = currencyDropdown ? 'var(--bg-hover)' : 'transparent'; }}
@@ -1608,13 +1630,13 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
                 {currencyDropdown && (
                   <div style={{
                     position: 'absolute', top: '100%', right: 0, zIndex: 50, marginTop: 4,
-                    background: 'var(--bg-card)', border: '1px solid var(--border-main)', borderRadius: 8,
+                    background: 'var(--bg-card)', border: '1px solid var(--border-main)', borderRadius: 7,
                     boxShadow: '0 4px 12px rgba(0,0,0,.10)', padding: 4, display: 'flex', gap: 2,
                   }}>
                     {['€', '$', '£', 'CHF'].map(c => (
                       <div key={c} onClick={() => { setCurrency(c); setCurrencyDropdown(false); }} style={{
-                        width: 36, height: 32, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        cursor: 'pointer', fontSize: 14, fontWeight: 600,
+                        width: 32, height: 29, borderRadius: 5, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        cursor: 'pointer', fontSize: 13, fontWeight: 600,
                         border: currency === c ? '1.5px solid #3B83F6' : '1.5px solid transparent',
                         background: currency === c ? '#eef4fe' : 'transparent',
                         color: currency === c ? '#3B83F6' : '#6b7280', transition: 'all .15s',
@@ -1626,7 +1648,7 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
                   </div>
                 )}
               </div>}
-              {hasField('metrics') && <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 9 }}>
+              {hasField('metrics') && <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
                 {([
                   { field: 'surface', stateKey: 'superficie', label: 'Superficie', placeholder: '0' },
                   { field: 'bedrooms', stateKey: 'camere', label: 'Camere', placeholder: '0' },
@@ -1637,31 +1659,31 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
                     <div key={m.field} style={{ position: 'relative' }}>
                       <label style={smallLabelStyle as React.CSSProperties}>{PICKER_ICONS.find(pi => pi.key === fieldIcons[m.field])?.label || m.label}</label>
                       <div style={{ position: 'relative' }}>
-                        <input value={fields[m.stateKey]} onChange={e => setField(m.stateKey, e.target.value)} placeholder={m.placeholder} style={{ ...inputStyle, paddingRight: 34 }} />
+                        <input value={fields[m.stateKey]} onChange={e => setField(m.stateKey, e.target.value)} placeholder={m.placeholder} style={{ ...inputStyle, paddingRight: 31 }} />
                         <div
                           onClick={() => { setCurrencyDropdown(false); setIconDropdown(iconDropdown === m.field ? null : m.field); }}
                           style={{
-                            position: 'absolute', right: 5, top: '50%', transform: 'translateY(-50%)',
-                            width: 26, height: 26, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            position: 'absolute', right: 4, top: '50%', transform: 'translateY(-50%)',
+                            width: 23, height: 23, borderRadius: 5, display: 'flex', alignItems: 'center', justifyContent: 'center',
                             cursor: 'pointer', border: '1px solid var(--border-main)', background: iconDropdown === m.field ? 'var(--bg-hover)' : 'transparent',
                             color: 'var(--text-main)', transition: 'all .15s',
                           }}
                           onMouseEnter={e => { e.currentTarget.style.borderColor = '#3B83F6'; e.currentTarget.style.background = 'var(--bg-hover)'; }}
                           onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-main)'; e.currentTarget.style.background = iconDropdown === m.field ? 'var(--bg-hover)' : 'transparent'; }}
                         >
-                          <div style={{ width: 14, height: 14 }} dangerouslySetInnerHTML={{ __html: ((TPL_ICONS as Record<string, string>)[iconKey] || '').replace(/<svg /, '<svg width="14" height="14" style="display:block" ') }} />
+                          <div style={{ width: 13, height: 13 }} dangerouslySetInnerHTML={{ __html: ((TPL_ICONS as Record<string, string>)[iconKey] || '').replace(/<svg /, '<svg width="14" height="14" style="display:block" ') }} />
                         </div>
                       </div>
                       {iconDropdown === m.field && (
                         <div style={{
                           position: 'absolute', top: '100%', right: 0, zIndex: 50,
-                          background: 'var(--bg-card)', border: '1px solid var(--border-main)', borderRadius: 8,
+                          background: 'var(--bg-card)', border: '1px solid var(--border-main)', borderRadius: 7,
                           boxShadow: '0 4px 12px rgba(0,0,0,.10)',
-                          display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 4, padding: 6, marginTop: 4,
+                          display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 4, padding: 5, marginTop: 4,
                         }}>
                           {PICKER_ICONS.map(pi => (
                             <div key={pi.key} onClick={() => { setFieldIcons(prev => ({ ...prev, [m.field]: pi.key })); setIconDropdown(null); }} style={{
-                              width: 30, height: 30, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              width: 27, height: 27, borderRadius: 5, display: 'flex', alignItems: 'center', justifyContent: 'center',
                               cursor: 'pointer', border: fieldIcons[m.field] === pi.key ? '1.5px solid #3B83F6' : '1.5px solid transparent',
                               background: fieldIcons[m.field] === pi.key ? '#eef4fe' : 'transparent',
                               color: fieldIcons[m.field] === pi.key ? '#3B83F6' : '#6b7280',
@@ -1670,7 +1692,7 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
                               onMouseEnter={e => { if (fieldIcons[m.field] !== pi.key) { e.currentTarget.style.background = 'var(--bg-hover)'; e.currentTarget.style.color = 'var(--text-main)'; } }}
                               onMouseLeave={e => { if (fieldIcons[m.field] !== pi.key) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#6b7280'; } }}
                             >
-                              <span style={{ width: 16, height: 16, display: 'block' }} dangerouslySetInnerHTML={{ __html: ((TPL_ICONS as Record<string, string>)[pi.key] || '').replace('<svg ', '<svg width="16" height="16" ') }} />
+                              <span style={{ width: 14, height: 14, display: 'block' }} dangerouslySetInnerHTML={{ __html: ((TPL_ICONS as Record<string, string>)[pi.key] || '').replace('<svg ', '<svg width="16" height="16" ') }} />
                             </div>
                           ))}
                         </div>
@@ -1682,13 +1704,13 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
               {hasField('description') && <div><label style={labelStyle}>Descrizione</label><textarea value={fields.descrizione} onChange={e => setField('descrizione', e.target.value)} rows={2} placeholder="Informazioni sull'immobile..." style={{ ...inputStyle, lineHeight: 1.5 }} /></div>}
             </div>
             {/* style card */}
-            <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)', borderRadius: 12, padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' as const, letterSpacing: '0.05em' }}>Stile</div>
+            <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)', borderRadius: 11, padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 11 }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' as const, letterSpacing: '0.05em' }}>Stile</div>
               {/* logo toggle */}
               <div style={s('display:flex;align-items:center;justify-content:space-between')}>
-                <span style={{ fontSize: 13, fontWeight: 600 }}>Logo</span>
-                <div onClick={() => setShowLogo(!showLogo)} style={{ width: 40, height: 24, borderRadius: 99, background: showLogo ? '#3B83F6' : 'var(--border-dark)', position: 'relative', cursor: 'pointer', transition: 'background .2s' }}>
-                  <span style={{ position: 'absolute', top: 3, left: showLogo ? 19 : 3, width: 18, height: 18, borderRadius: '50%', background: 'var(--bg-card)', boxShadow: '0 1px 3px rgba(0,0,0,.2)', transition: 'left .2s' }} />
+                <span style={{ fontSize: 12, fontWeight: 600 }}>Logo</span>
+                <div onClick={() => setShowLogo(!showLogo)} style={{ width: 36, height: 22, borderRadius: 89, background: showLogo ? '#3B83F6' : 'var(--border-dark)', position: 'relative', cursor: 'pointer', transition: 'background .2s' }}>
+                  <span style={{ position: 'absolute', top: 3, left: showLogo ? 19 : 3, width: 16, height: 16, borderRadius: '50%', background: 'var(--bg-card)', boxShadow: '0 1px 3px rgba(0,0,0,.2)', transition: 'left .2s' }} />
                 </div>
               </div>
               {/* logo variant picker — only when logos are loaded in Brand */}
@@ -1700,44 +1722,44 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
                   <>
                     <div style={{ position: 'relative' }}>
                       <Box as="button" onClick={() => setLogoMenuOpen(o => !o)} style={{
-                        width: '100%', border: '1px solid var(--border-main)', borderRadius: 10, padding: '8px 12px',
-                        fontSize: 13, fontWeight: 600, background: 'var(--bg-card)', cursor: 'pointer', color: 'var(--text-main)',
-                        display: 'flex', alignItems: 'center', gap: 10, minHeight: 40,
+                        width: '100%', border: '1px solid var(--border-main)', borderRadius: 9, padding: '7px 11px',
+                        fontSize: 12, fontWeight: 600, background: 'var(--bg-card)', cursor: 'pointer', color: 'var(--text-main)',
+                        display: 'flex', alignItems: 'center', gap: 9, minHeight: 36,
                       }} hover={{ background: '#faf9f7' }}>
                         {cur.src && (
-                          <span style={{ width: 28, height: 20, borderRadius: 4, background: thumbBg(cur.key), display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none', overflow: 'hidden' }}>
+                          <span style={{ width: 25, height: 18, borderRadius: 4, background: thumbBg(cur.key), display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none', overflow: 'hidden' }}>
                             <img src={cur.src} alt="" style={{ maxWidth: '80%', maxHeight: '80%', objectFit: 'contain' }} />
                           </span>
                         )}
                         <span style={{ flex: 1, textAlign: 'left', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{cur.label}</span>
-                        <Icon name="chevron-down" size={15} color="var(--text-muted)" />
+                        <Icon name="chevron-down" size={14} color="var(--text-muted)" />
                       </Box>
                       {logoMenuOpen && (
                         <>
                           <div onClick={() => setLogoMenuOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 40 }} />
                           <div style={{
                             position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 50,
-                            background: 'var(--bg-card)', border: '1px solid var(--border-main)', borderRadius: 10,
-                            boxShadow: '0 8px 24px rgba(33,31,28,.12)', padding: 4, maxHeight: 280, overflowY: 'auto',
+                            background: 'var(--bg-card)', border: '1px solid var(--border-main)', borderRadius: 9,
+                            boxShadow: '0 8px 24px rgba(33,31,28,.12)', padding: 4, maxHeight: 252, overflowY: 'auto',
                           }}>
                             {opts.map(o => (
                               <div key={o.key} onClick={() => { setSelectedLogoKey(o.key); setLogoMenuOpen(false); }} style={{
-                                display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', borderRadius: 7, cursor: 'pointer',
+                                display: 'flex', alignItems: 'center', gap: 9, padding: '7px 9px', borderRadius: 6, cursor: 'pointer',
                                 background: o.key === selectedLogoKey ? '#eef4fe' : 'transparent',
                               }}
                                 onMouseEnter={e => { if (o.key !== selectedLogoKey) e.currentTarget.style.background = 'var(--bg-hover)'; }}
                                 onMouseLeave={e => { if (o.key !== selectedLogoKey) e.currentTarget.style.background = 'transparent'; }}
                               >
                                 {o.src ? (
-                                  <span style={{ width: 32, height: 22, borderRadius: 4, background: thumbBg(o.key), display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none', overflow: 'hidden' }}>
+                                  <span style={{ width: 29, height: 20, borderRadius: 4, background: thumbBg(o.key), display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none', overflow: 'hidden' }}>
                                     <img src={o.src} alt="" style={{ maxWidth: '80%', maxHeight: '80%', objectFit: 'contain' }} />
                                   </span>
                                 ) : (
-                                  <span style={{ width: 32, height: 22, borderRadius: 4, background: 'var(--border-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}>
-                                    <Icon name="sparkles" size={13} color="var(--text-muted)" />
+                                  <span style={{ width: 29, height: 20, borderRadius: 4, background: 'var(--border-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}>
+                                    <Icon name="sparkles" size={12} color="var(--text-muted)" />
                                   </span>
                                 )}
-                                <span style={{ fontSize: 13, fontWeight: o.key === selectedLogoKey ? 700 : 500, color: 'var(--text-main)' }}>{o.label}</span>
+                                <span style={{ fontSize: 12, fontWeight: o.key === selectedLogoKey ? 700 : 500, color: 'var(--text-main)' }}>{o.label}</span>
                               </div>
                             ))}
                           </div>
@@ -1752,9 +1774,9 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
               {supportsFitCover && (
               <>
               <div style={s('display:flex;align-items:center;justify-content:space-between')}>
-                <span style={{ fontSize: 13, fontWeight: 600 }}>Foto full screen</span>
-                <div onClick={() => setFitCover(!fitCover)} style={{ width: 40, height: 24, borderRadius: 99, background: fitCover ? '#3B83F6' : 'var(--border-dark)', position: 'relative', cursor: 'pointer', transition: 'background .2s' }}>
-                  <span style={{ position: 'absolute', top: 3, left: fitCover ? 19 : 3, width: 18, height: 18, borderRadius: '50%', background: 'var(--bg-card)', boxShadow: '0 1px 3px rgba(0,0,0,.2)', transition: 'left .2s' }} />
+                <span style={{ fontSize: 12, fontWeight: 600 }}>Foto full screen</span>
+                <div onClick={() => setFitCover(!fitCover)} style={{ width: 36, height: 22, borderRadius: 89, background: fitCover ? '#3B83F6' : 'var(--border-dark)', position: 'relative', cursor: 'pointer', transition: 'background .2s' }}>
+                  <span style={{ position: 'absolute', top: 3, left: fitCover ? 19 : 3, width: 16, height: 16, borderRadius: '50%', background: 'var(--bg-card)', boxShadow: '0 1px 3px rgba(0,0,0,.2)', transition: 'left .2s' }} />
                 </div>
               </div>
               <div style={{ height: 1, background: 'var(--border-light)', margin: '4px 0' }} />
@@ -1763,19 +1785,19 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
               {/* badge toggle */}
               {hasField('badge') && <div>
                 <div style={s('display:flex;align-items:center;justify-content:space-between')}>
-                  <span style={{ fontSize: 13, fontWeight: 600 }}>Badge</span>
-                  <div onClick={() => setShowBadge(!showBadge)} style={{ width: 40, height: 24, borderRadius: 99, background: showBadge ? '#3B83F6' : 'var(--border-dark)', position: 'relative', cursor: 'pointer', transition: 'background .2s' }}>
-                    <span style={{ position: 'absolute', top: 3, left: showBadge ? 19 : 3, width: 18, height: 18, borderRadius: '50%', background: 'var(--bg-card)', boxShadow: '0 1px 3px rgba(0,0,0,.2)', transition: 'left .2s' }} />
+                  <span style={{ fontSize: 12, fontWeight: 600 }}>Badge</span>
+                  <div onClick={() => setShowBadge(!showBadge)} style={{ width: 36, height: 22, borderRadius: 89, background: showBadge ? '#3B83F6' : 'var(--border-dark)', position: 'relative', cursor: 'pointer', transition: 'background .2s' }}>
+                    <span style={{ position: 'absolute', top: 3, left: showBadge ? 19 : 3, width: 16, height: 16, borderRadius: '50%', background: 'var(--bg-card)', boxShadow: '0 1px 3px rgba(0,0,0,.2)', transition: 'left .2s' }} />
                   </div>
                 </div>
-                {showBadge && <input value={fields.badgeTxt} onChange={e => setField('badgeTxt', e.target.value)} placeholder="Es. Nuovo" style={{ ...inputStyle, marginTop: 8 }} />}
+                {showBadge && <input value={fields.badgeTxt} onChange={e => setField('badgeTxt', e.target.value)} placeholder="Es. Nuovo" style={{ ...inputStyle, marginTop: 7 }} />}
               </div>}
               <div style={{ height: 1, background: 'var(--border-light)', marginTop: 4, marginBottom: 4 }} />
               {/* oscuramento */}
               <div>
-                <div style={s('display:flex;align-items:center;justify-content:space-between;margin-bottom:6px')}>
-                  <span style={{ fontSize: 13, fontWeight: 600 }}>Oscuramento</span>
-                  <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--text-muted)' }}>{oscuramento}%</span>
+                <div style={s('display:flex;align-items:center;justify-content:space-between;margin-bottom:5px')}>
+                  <span style={{ fontSize: 12, fontWeight: 600 }}>Oscuramento</span>
+                  <span style={{ fontSize: 11, fontWeight: 800, color: 'var(--text-muted)' }}>{oscuramento}%</span>
                 </div>
                 <input type="range" min={0} max={100} value={oscuramento} onChange={e => setOscuramento(+e.target.value)} style={{ width: '100%', accentColor: '#3B83F6' }} />
               </div>
@@ -1791,21 +1813,21 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
               const disImg = dis || isVideo;
               const tip = noPhoto ? 'Carica una foto per esportare' : missingExtra ? `Carica tutte le ${curTpl.multiPhoto} foto per esportare` : isVideo ? 'Hai caricato un video: scarica il video' : undefined;
               return (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
               {!demoMode && postQuota && !postQuota.unlimited && (
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: postQuota.remaining > 0 ? 'var(--text-muted)' : '#dc2626' }}>
-                  <Icon name="megaphone" size={13} color={postQuota.remaining > 0 ? 'var(--text-muted)' : '#dc2626'} />
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, fontSize: 11, fontWeight: 700, color: postQuota.remaining > 0 ? 'var(--text-muted)' : '#dc2626' }}>
+                  <Icon name="megaphone" size={12} color={postQuota.remaining > 0 ? 'var(--text-muted)' : '#dc2626'} />
                   {postQuota.remaining > 0 ? `${postQuota.remaining} post gratis rimasti` : 'Post gratis esauriti'}
                 </div>
               )}
-              <Box as="button" title={tip} onClick={() => { if (!disImg) handleExportImage(); }} style={{ border: '1px solid var(--border-main)', background: 'var(--bg-card)', fontSize: 13, fontWeight: 700, padding: '12px 16px', borderRadius: 10, cursor: disImg ? 'default' : 'pointer', minHeight: 42, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: disImg ? 0.4 : 1 }} hover={disImg ? {} : { background: 'var(--bg-hover)' }}>
-                <Icon name="download" size={15} color="var(--text-sec)" />{exporting === 'image' ? 'Esportazione...' : 'Scarica immagine'}
+              <Box as="button" title={tip} onClick={() => { if (!disImg) handleExportImage(); }} style={{ border: '1px solid var(--border-main)', background: 'var(--bg-card)', fontSize: 12, fontWeight: 700, padding: '11px 14px', borderRadius: 9, cursor: disImg ? 'default' : 'pointer', minHeight: 38, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, opacity: disImg ? 0.4 : 1 }} hover={disImg ? {} : { background: 'var(--bg-hover)' }}>
+                <Icon name="download" size={14} color="var(--text-sec)" />{exporting === 'image' ? 'Esportazione...' : 'Scarica immagine'}
               </Box>
-              <Box as="button" title={tip} onClick={() => { if (!dis) setShowAnimPicker(true); }} style={{ border: '1px solid var(--border-main)', background: 'var(--bg-card)', fontSize: 13, fontWeight: 700, padding: '12px 16px', borderRadius: 10, cursor: dis ? 'default' : 'pointer', minHeight: 42, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: dis ? 0.4 : 1 }} hover={dis ? {} : { background: 'var(--bg-hover)' }}>
-                <Icon name="film" size={15} color="var(--text-sec)" />Scarica video
+              <Box as="button" title={tip} onClick={() => { if (!dis) setShowAnimPicker(true); }} style={{ border: '1px solid var(--border-main)', background: 'var(--bg-card)', fontSize: 12, fontWeight: 700, padding: '11px 14px', borderRadius: 9, cursor: dis ? 'default' : 'pointer', minHeight: 38, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, opacity: dis ? 0.4 : 1 }} hover={dis ? {} : { background: 'var(--bg-hover)' }}>
+                <Icon name="film" size={14} color="var(--text-sec)" />Scarica video
               </Box>
-              <Box as="button" title={tip} onClick={() => { if (!disImg) handleExportAll(); }} style={{ border: '1px dashed var(--border-dark)', background: 'transparent', fontSize: 12, fontWeight: 600, padding: '10px 16px', borderRadius: 10, cursor: disImg ? 'default' : 'pointer', minHeight: 38, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: disImg ? 0.4 : 1, color: 'var(--text-muted)' }} hover={disImg ? {} : { background: 'var(--bg-hover)', color: 'var(--text-sec)' }}>
-                <Icon name="layers" size={14} color="var(--text-muted)" />{exporting === 'image' ? 'Esportazione...' : `Scarica tutti (${TEMPLATES.length})`}
+              <Box as="button" title={tip} onClick={() => { if (!disImg) handleExportAll(); }} style={{ border: '1px dashed var(--border-dark)', background: 'transparent', fontSize: 11, fontWeight: 600, padding: '9px 14px', borderRadius: 9, cursor: disImg ? 'default' : 'pointer', minHeight: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, opacity: disImg ? 0.4 : 1, color: 'var(--text-muted)' }} hover={disImg ? {} : { background: 'var(--bg-hover)', color: 'var(--text-sec)' }}>
+                <Icon name="layers" size={13} color="var(--text-muted)" />{exporting === 'image' ? 'Esportazione...' : `Scarica tutti (${TEMPLATES.length})`}
               </Box>
             </div>
             ); })()}
@@ -1816,37 +1838,37 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
       {/* Animation picker modal */}
       {(showAnimPicker || exporting === 'video') && (
         <div onClick={() => { if (exporting !== 'video') setShowAnimPicker(false); }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.45)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div onClick={e => e.stopPropagation()} style={{ background: 'var(--bg-card)', borderRadius: 20, padding: '28px 28px 24px', width: 'min(520px, 92vw)', boxShadow: '0 24px 64px rgba(0,0,0,.22)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: 'var(--bg-card)', borderRadius: 18, padding: '25px 25px 22px', width: 'min(520px, 92vw)', boxShadow: '0 24px 64px rgba(0,0,0,.22)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
               <div>
-                <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-main)' }}>{exporting === 'video' ? 'Generazione video' : 'Stile animazione'}</div>
-                <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 2 }}>{exporting === 'video' ? 'Attendi, stiamo creando il tuo video' : 'Scegli come appaiono gli elementi nel video'}</div>
+                <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text-main)' }}>{exporting === 'video' ? 'Generazione video' : 'Stile animazione'}</div>
+                <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{exporting === 'video' ? 'Attendi, stiamo creando il tuo video' : 'Scegli come appaiono gli elementi nel video'}</div>
               </div>
-              <button onClick={() => { if (exporting === 'video') exportAbortRef.current?.abort(); else setShowAnimPicker(false); }} style={{ border: 'none', background: 'var(--bg-hover)', borderRadius: 8, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }} title={exporting === 'video' ? 'Annulla' : 'Chiudi'}>
-                <Icon name="x" size={16} color="var(--text-sec)" />
+              <button onClick={() => { if (exporting === 'video') exportAbortRef.current?.abort(); else setShowAnimPicker(false); }} style={{ border: 'none', background: 'var(--bg-hover)', borderRadius: 7, width: 29, height: 29, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }} title={exporting === 'video' ? 'Annulla' : 'Chiudi'}>
+                <Icon name="x" size={14} color="var(--text-sec)" />
               </button>
             </div>
             {exporting === 'video' ? (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, padding: '14px 0 26px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, padding: '13px 0 23px' }}>
                 {/* Loader blob come Video AI */}
-                <div style={{ position: 'relative', width: 120, height: 120, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 6 }}>
-                  <div style={{ position: 'absolute', width: 110, height: 110, borderRadius: '50%', border: '1.5px solid rgba(59,131,246,.20)', animation: 'pulse-ring 2.8s ease-out infinite' }} />
-                  <div style={{ position: 'absolute', width: 110, height: 110, borderRadius: '50%', border: '1.5px solid rgba(59,131,246,.20)', animation: 'pulse-ring 2.8s ease-out infinite', animationDelay: '1.4s' }} />
-                  <div style={{ position: 'absolute', width: 72, height: 72, background: 'radial-gradient(circle at 30% 26%, #AECBFF 0%, #3B83F6 46%, #5B6CF0 100%)', opacity: .95, boxShadow: '0 0 30px rgba(91,108,240,.45), 0 0 14px rgba(59,131,246,.55)', animation: 'organic-blob 8s ease-in-out infinite' }} />
+                <div style={{ position: 'relative', width: 108, height: 108, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 5 }}>
+                  <div style={{ position: 'absolute', width: 99, height: 99, borderRadius: '50%', border: '1.5px solid rgba(59,131,246,.20)', animation: 'pulse-ring 2.8s ease-out infinite' }} />
+                  <div style={{ position: 'absolute', width: 99, height: 99, borderRadius: '50%', border: '1.5px solid rgba(59,131,246,.20)', animation: 'pulse-ring 2.8s ease-out infinite', animationDelay: '1.4s' }} />
+                  <div style={{ position: 'absolute', width: 65, height: 65, background: 'radial-gradient(circle at 30% 26%, #AECBFF 0%, #3B83F6 46%, #5B6CF0 100%)', opacity: .95, boxShadow: '0 0 30px rgba(91,108,240,.45), 0 0 14px rgba(59,131,246,.55)', animation: 'organic-blob 8s ease-in-out infinite' }} />
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/dashboard/logo-mark-white.svg" alt="" style={{ position: 'relative', width: 56, height: 56, animation: 'aurora-pulse 4s ease-in-out infinite' }} />
+                  <img src="/dashboard/logo-mark-white.svg" alt="" style={{ position: 'relative', width: 50, height: 50, animation: 'aurora-pulse 4s ease-in-out infinite' }} />
                 </div>
-                <span style={{ fontSize: 32, fontWeight: 800, color: 'var(--text-main)', lineHeight: 1 }}>{exportProgress}%</span>
-                <span style={{ fontSize: 11, fontWeight: 600, color: '#b3aca1', marginTop: 2, textTransform: 'uppercase', letterSpacing: '.06em' }}>Rendering</span>
+                <span style={{ fontSize: 29, fontWeight: 800, color: 'var(--text-main)', lineHeight: 1 }}>{exportProgress}%</span>
+                <span style={{ fontSize: 10, fontWeight: 600, color: '#b3aca1', marginTop: 2, textTransform: 'uppercase', letterSpacing: '.06em' }}>Rendering</span>
               </div>
             ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: 24 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 9, marginBottom: 22 }}>
                 {ANIM_STYLES.map(a => {
                   const sel = animStyle === a.id;
                   return (
                     <div key={a.id} onClick={() => setAnimStyle(a.id)} style={{
-                      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, padding: '14px 6px 10px',
-                      borderRadius: 12, cursor: 'pointer',
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7, padding: '13px 5px 9px',
+                      borderRadius: 11, cursor: 'pointer',
                       border: sel ? '2px solid #3B83F6' : '2px solid transparent',
                       background: sel ? '#eef4fe' : 'var(--bg-hover)',
                       transition: 'all .15s',
@@ -1854,7 +1876,7 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
                       onMouseEnter={e => { if (!sel) e.currentTarget.style.background = '#ece9e2'; }}
                       onMouseLeave={e => { if (!sel) e.currentTarget.style.background = 'var(--bg-hover)'; }}
                     >
-                      <div className={`acp--${a.id}`} style={{ width: 68, height: 95, borderRadius: 8, background: 'linear-gradient(145deg, #2a2733, #1a1825)', position: 'relative', overflow: 'hidden', flexShrink: 0 }}>
+                      <div className={`acp--${a.id}`} style={{ width: 61, height: 86, borderRadius: 7, background: 'linear-gradient(145deg, #2a2733, #1a1825)', position: 'relative', overflow: 'hidden', flexShrink: 0 }}>
                         <div className="aw aw-badge" />
                         <div className="aw aw-price" />
                         <div className="aw aw-title" />
@@ -1864,15 +1886,15 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
                         <div className="aw aw-m3" />
                         <div className="aw aw-desc" />
                       </div>
-                      <span style={{ fontSize: 11, fontWeight: 600, color: sel ? '#1d5fd0' : 'var(--text-sec)' }}>{a.label}</span>
+                      <span style={{ fontSize: 10, fontWeight: 600, color: sel ? '#1d5fd0' : 'var(--text-sec)' }}>{a.label}</span>
                     </div>
                   );
                 })}
               </div>
             )}
             {exporting !== 'video' && (
-              <Box as="button" onClick={() => handleExportVideo()} style={{ border: '2px solid transparent', background: '#3B83F6', color: 'var(--bg-card)', fontSize: 14, fontWeight: 700, padding: '13px 16px', borderRadius: 12, cursor: 'pointer', minHeight: 44, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }} hover={{ background: '#2b6fe0', color: 'var(--bg-card)' }}>
-                <Icon name="download" size={16} color="currentColor" />Scarica video
+              <Box as="button" onClick={() => handleExportVideo()} style={{ border: '2px solid transparent', background: '#3B83F6', color: 'var(--bg-card)', fontSize: 13, fontWeight: 700, padding: '12px 14px', borderRadius: 11, cursor: 'pointer', minHeight: 40, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }} hover={{ background: '#2b6fe0', color: 'var(--bg-card)' }}>
+                <Icon name="download" size={14} color="currentColor" />Scarica video
               </Box>
             )}
           </div>
@@ -1881,42 +1903,42 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
 
       {/* STEP 4: publish */}
       {step === 4 && (
-        <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr', gap: 24, alignItems: 'start', maxWidth: 980 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '288px 1fr', gap: 22, alignItems: 'start', maxWidth: 882 }}>
           {/* preview thumb */}
-          <div style={s('display:flex;flex-direction:column;align-items:center;gap:10px')}>
-            <div style={{ width: 240, aspectRatio: '4/5', borderRadius: 16, overflow: 'hidden', boxShadow: '0 10px 28px rgba(33,31,28,.12)', display: 'flex', flexDirection: 'column', background: 'var(--bg-card)' }}>
+          <div style={s('display:flex;flex-direction:column;align-items:center;gap: 8px')}>
+            <div style={{ width: 216, aspectRatio: '4/5', borderRadius: 14, overflow: 'hidden', boxShadow: '0 10px 28px rgba(33,31,28,.12)', display: 'flex', flexDirection: 'column', background: 'var(--bg-card)' }}>
               <div style={{ flex: 1, background: 'url(https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=400&h=500&fit=crop) center/cover' }} />
-              <div style={{ flex: 'none', background: 'linear-gradient(0deg, rgba(20,18,15,.92), rgba(20,18,15,.78))', padding: '10px 12px' }}>
-                <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--bg-card)' }}>{fields.titolo || 'Appartamento'}</div>
+              <div style={{ flex: 'none', background: 'linear-gradient(0deg, rgba(20,18,15,.92), rgba(20,18,15,.78))', padding: '9px 11px' }}>
+                <div style={{ fontSize: 10, fontWeight: 800, color: 'var(--bg-card)' }}>{fields.titolo || 'Appartamento'}</div>
               </div>
             </div>
-            <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)' }}>{curFmt.label}</span>
+            <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)' }}>{curFmt.label}</span>
           </div>
           {/* publish form */}
-          <div style={s('background:var(--bg-card);border:1px solid var(--border-light);border-radius:12px;padding:22px;display:flex;flex-direction:column;gap:15px')}>
+          <div style={s('background:var(--bg-card);border:1px solid var(--border-light);border-radius:11px;padding: 18px;display:flex;flex-direction:column;gap: 13px')}>
             <div>
-              <div style={{ fontSize: 12.5, fontWeight: 700, marginBottom: 8 }}>Piattaforme</div>
-              <div style={s('display:flex;gap:8px')}>
+              <div style={{ fontSize: 11, fontWeight: 700, marginBottom: 7 }}>Piattaforme</div>
+              <div style={s('display:flex;gap: 6px')}>
                 {(['instagram', 'facebook', 'tiktok'] as const).map(pp => (
                   <Box as="button" key={pp} onClick={() => setPubPlatforms(p => ({ ...p, [pp]: !p[pp] }))} style={{
                     border: `1px solid ${pubPlatforms[pp] ? '#3B83F6' : 'var(--border-main)'}`,
                     background: pubPlatforms[pp] ? '#eef4fe' : 'var(--bg-card)',
                     color: pubPlatforms[pp] ? '#1d5fd0' : 'var(--text-sec)',
-                    fontSize: 13, fontWeight: 700, padding: '9px 18px', borderRadius: 8, cursor: 'pointer', minHeight: 38,
+                    fontSize: 12, fontWeight: 700, padding: '8px 16px', borderRadius: 7, cursor: 'pointer', minHeight: 34,
                     textTransform: 'capitalize',
                   }} hover={{ borderColor: '#3B83F6' }}>{pp}</Box>
                 ))}
               </div>
             </div>
             <div>
-              <div style={{ fontSize: 12.5, fontWeight: 700, marginBottom: 8 }}>Quando</div>
-              <div style={s('display:flex;gap:8px')}>
+              <div style={{ fontSize: 11, fontWeight: 700, marginBottom: 7 }}>Quando</div>
+              <div style={s('display:flex;gap: 6px')}>
                 {(['schedule', 'now'] as const).map(m => (
                   <Box as="button" key={m} onClick={() => setPubMode(m)} style={{
                     border: `1px solid ${pubMode === m ? '#3B83F6' : 'var(--border-main)'}`,
                     background: pubMode === m ? '#eef4fe' : 'var(--bg-card)',
                     color: pubMode === m ? '#1d5fd0' : 'var(--text-sec)',
-                    fontSize: 13, fontWeight: 700, padding: '9px 18px', borderRadius: 8, cursor: 'pointer', minHeight: 38,
+                    fontSize: 12, fontWeight: 700, padding: '8px 16px', borderRadius: 7, cursor: 'pointer', minHeight: 34,
                   }} hover={{ borderColor: '#3B83F6' }}>{m === 'schedule' ? 'Programma' : 'Pubblica ora'}</Box>
                 ))}
               </div>
@@ -1925,36 +1947,36 @@ function PostSocialScreen({ toast, routeKey, brand, project, batches, onProjectU
               <div>
                 <label style={labelStyle}>Data e ora</label>
                 <input type="datetime-local" value={pubDate} onChange={e => setPubDate(e.target.value)} style={inputStyle} />
-                <div style={{ fontSize: 11.5, color: 'var(--text-muted)', marginTop: 5 }}>Instagram consente di programmare fino a 75 giorni in anticipo.</div>
+                <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 4 }}>Instagram consente di programmare fino a 75 giorni in anticipo.</div>
               </div>
             )}
             <div>
-              <div style={s('display:flex;align-items:center;justify-content:space-between;margin-bottom:5px')}>
-                <label style={{ fontSize: 12.5, fontWeight: 700 }}>Caption</label>
-                <span style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--text-muted)' }}>{caption.length}/2200</span>
+              <div style={s('display:flex;align-items:center;justify-content:space-between;margin-bottom:4px')}>
+                <label style={{ fontSize: 11, fontWeight: 700 }}>Caption</label>
+                <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)' }}>{caption.length}/2200</span>
               </div>
               <textarea value={caption} onChange={e => setCaption(e.target.value)} rows={3} maxLength={2200} placeholder="Descrizione del post..." style={{ ...inputStyle, lineHeight: 1.5 }} />
             </div>
             <div><label style={labelStyle}>Hashtags</label><input value={hashtags} onChange={e => setHashtags(e.target.value)} placeholder="#immobiliare #casainvendita" style={inputStyle} /></div>
             <div><label style={labelStyle}>Primo commento (opzionale)</label><input value={firstComment} onChange={e => setFirstComment(e.target.value)} placeholder="Commento automatico dopo la pubblicazione..." style={inputStyle} /></div>
-            <Box as="button" onClick={handlePublish} disabled={publishing} style={s('border:none;background:#3B83F6;color:var(--bg-card);font-size:13.5px;font-weight:700;padding:12px 16px;border-radius:8px;cursor:' + (publishing ? 'default' : 'pointer') + ';min-height:38px;margin-top:4px;opacity:' + (publishing ? 0.6 : 1))} hover={publishing ? undefined : s('background:#2b6fe0')}>
+            <Box as="button" onClick={handlePublish} disabled={publishing} style={s('border:none;background:#3B83F6;color:var(--bg-card);font-size:12px;font-weight:700;padding: 10px 14px;border-radius:7px;cursor:' + (publishing ? 'default' : 'pointer') + ';min-height:38px;margin-top:4px;opacity:' + (publishing ? 0.6 : 1))} hover={publishing ? undefined : s('background:#2b6fe0')}>
               {publishing ? 'Pubblicazione…' : (pubMode === 'schedule' ? 'Programma' : 'Pubblica ora')}
             </Box>
           </div>
         </div>
       )}
       {postsPaywallOpen && (
-        <div onClick={() => setPostsPaywallOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(24,21,17,.55)', backdropFilter: 'blur(4px)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-          <div onClick={e => e.stopPropagation()} style={{ background: 'var(--bg-card)', borderRadius: 20, maxWidth: 420, width: '100%', padding: '32px 28px', textAlign: 'center', boxShadow: '0 24px 64px rgba(0,0,0,.18)' }}>
-            <div style={{ width: 56, height: 56, borderRadius: 16, background: '#eef4fe', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 18px' }}>
-              <Icon name="megaphone" size={26} color="#3B83F6" />
+        <div onClick={() => setPostsPaywallOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(24,21,17,.55)', backdropFilter: 'blur(4px)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 22 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: 'var(--bg-card)', borderRadius: 18, maxWidth: 378, width: '100%', padding: '29px 25px', textAlign: 'center', boxShadow: '0 24px 64px rgba(0,0,0,.18)' }}>
+            <div style={{ width: 50, height: 50, borderRadius: 14, background: '#eef4fe', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 18px' }}>
+              <Icon name="megaphone" size={23} color="#3B83F6" />
             </div>
-            <div style={{ fontSize: 17, fontWeight: 800, marginBottom: 6 }}>Hai esaurito i post gratis</div>
-            <div style={{ fontSize: 13.5, color: 'var(--text-muted)', lineHeight: 1.5, marginBottom: 22 }}>Passa a un piano per creare post social illimitati per i tuoi annunci.</div>
-            <Box as="button" onClick={() => { setPostsPaywallOpen(false); go?.('account'); }} style={s('display:block;width:100%;border:none;background:#3B83F6;color:var(--bg-card);font-size:14px;font-weight:700;padding:13px 16px;border-radius:12px;cursor:pointer;min-height:46px')} hover={s('background:#2b6fe0')}>
+            <div style={{ fontSize: 15, fontWeight: 800, marginBottom: 5 }}>Hai esaurito i post gratis</div>
+            <div style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5, marginBottom: 20 }}>Passa a un piano per creare post social illimitati per i tuoi annunci.</div>
+            <Box as="button" onClick={() => { setPostsPaywallOpen(false); go?.('account'); }} style={s('display:block;width:100%;border:none;background:#3B83F6;color:var(--bg-card);font-size:13px;font-weight:700;padding: 11px 14px;border-radius:11px;cursor:pointer;min-height:41px')} hover={s('background:#2b6fe0')}>
               Vedi i piani
             </Box>
-            <Box as="button" onClick={() => setPostsPaywallOpen(false)} style={s('display:block;margin:10px auto 0;border:none;background:transparent;color:var(--text-muted);font-size:13px;font-weight:600;cursor:pointer')} hover={{ color: 'var(--text-sec)' }}>
+            <Box as="button" onClick={() => setPostsPaywallOpen(false)} style={s('display:block;margin: 8px auto 0;border:none;background:transparent;color:var(--text-muted);font-size:12px;font-weight:600;cursor:pointer')} hover={{ color: 'var(--text-sec)' }}>
               Chiudi
             </Box>
           </div>
@@ -1969,11 +1991,11 @@ function UsageBar({ label, used, total, color }: { label: string; used: number; 
   const pct = Math.min((used / total) * 100, 100);
   return (
     <div style={s('flex:1;min-width:0')}>
-      <div style={s('display:flex;align-items:baseline;justify-content:space-between;margin-bottom:6px')}>
-        <span style={s('font-size:13px;font-weight:700;color:var(--text-main)')}>{label}</span>
-        <span style={s('font-size:12.5px;font-weight:700;color:var(--text-muted)')}>{used} / {total}</span>
+      <div style={s('display:flex;align-items:baseline;justify-content:space-between;margin-bottom:5px')}>
+        <span style={s('font-size:12px;font-weight:700;color:var(--text-main)')}>{label}</span>
+        <span style={s('font-size:11px;font-weight:700;color:var(--text-muted)')}>{used} / {total}</span>
       </div>
-      <div style={{ height: 6, background: 'var(--border-light)', borderRadius: 3, overflow: 'hidden' }}>
+      <div style={{ height: 5, background: 'var(--border-light)', borderRadius: 3, overflow: 'hidden' }}>
         <div style={{ height: '100%', width: pct + '%', background: color, borderRadius: 3, transition: 'width .4s ease' }} />
       </div>
     </div>
@@ -1988,60 +2010,85 @@ function AccountScreen({ credits, toast, go, userData, tierHint }: { credits: nu
   // Toggle Individuale/Agenzia: default sul tier del piano attivo, o hint da navigazione.
   const [tier, setTier] = useState<PlanTier>(tierHint ?? (isAgencyTier(userData?.subscriptionType) ? 'agency' : 'individual'));
   useEffect(() => { if (tierHint) setTier(tierHint); }, [tierHint]);
-  const plans = PLANS_BY_TIER[tier];
+  const plans = PLANS_BY_TIER[tier].filter(p => !p.hidden);
+  // Agenzia seat-based: slider utenti condiviso (2-10), quote 400 foto + 2,4 video/utente.
+  const [seats, setSeats] = useState(2);
+  // ⟦N⟧ marca i numeri sostituiti dallo slider, resi in semibold nel render
+  // (renderSeatFeature) cosi' si nota subito che sono cambiati.
+  const seatMark = (n: number) => (seats > 2 ? `⟦${n}⟧` : String(n));
+  const seatTok = (f: string) => f
+    .replace('{users}', seatMark(seats))
+    .replace('{photos}', seatMark(400 * seats))
+    .replace('{videos}', seatMark(Math.round(2.4 * seats)));
+  const renderSeatFeature = (f: string) =>
+    f.split(/⟦(\d+)⟧/).map((part, i) => (i % 2 === 1 ? <strong key={i} style={{ fontWeight: 700 }}>{part}</strong> : part));
+  const seatCheckout = async (planId: string) => {
+    try {
+      // Fetch diretto con token da getSession (auto-refresh incluso).
+      // Niente supabase.functions.invoke (deadlock storico, vedi aiVideo.ts) e
+      // niente token raw da localStorage (se scaduto il refresh manuale fallisce).
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error('no session');
+      const resp = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/create-checkout-session`, {
+        method: 'POST',
+        headers: {
+          apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string,
+          Authorization: `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          packageId: planId === 'agy_annual' ? 'agency-seat-annual' : 'agency-seat-monthly',
+          seats,
+          successUrl: 'https://www.getnearme.it/dashboard?checkout=success',
+          cancelUrl: 'https://www.getnearme.it/dashboard',
+        }),
+      });
+      const data = await resp.json().catch(() => null);
+      if (!resp.ok || !data?.url) throw new Error(data?.error || `HTTP ${resp.status}`);
+      window.open(data.url, '_blank');
+    } catch (e) {
+      console.error('seat checkout error:', e);
+      toast('Errore nella creazione del pagamento, riprova', 'x');
+    }
+  };
 
   return (
-    <div style={s('max-width:1160px;margin:0 auto;padding:32px 32px 64px')}>
+    <div style={s('max-width:1044px;margin: 0 auto;padding: 26px 29px 58px')}>
       {/* header */}
-      <div style={s('margin-bottom:24px')}>
-        <h1 style={s('margin:0 0 4px;font-size:25px;font-weight:800;letter-spacing:-.5px')}>Piano</h1>
-        <div style={s('color:var(--text-muted);font-size:14px')}>Gestisci il tuo abbonamento.</div>
-      </div>
-
-      {/* ── CURRENT PLAN SUMMARY ── */}
-      <div style={s('background:var(--bg-card);border:1px solid var(--border-light);border-radius:14px;padding:24px 28px;margin-bottom:20px')}>
-        <div className="max-md:!flex-col max-md:!items-start" style={s('display:flex;align-items:center;gap:20px')}>
-          <div style={s('flex:1;min-width:0')}>
-            <div style={s('display:flex;align-items:center;gap:10px')}>
-              <span style={s('font-size:18px;font-weight:800;letter-spacing:-.3px')}>Piano {currentPlan.name}</span>
-              <span style={isFree
-                ? s('font-size:10.5px;font-weight:800;background:var(--border-light);color:var(--text-muted);padding:4px 12px;border-radius:8px;letter-spacing:.03em')
-                : s('font-size:10.5px;font-weight:800;background:#3B83F6;color:var(--bg-card);padding:4px 12px;border-radius:8px;letter-spacing:.03em')}>{isFree ? 'FREE' : 'ATTIVO'}</span>
-            </div>
-            {isFree && (
-              <div style={s('margin-top:6px;font-size:13px;color:var(--text-muted)')}>Passa a un piano per foto, video e post AI illimitati ogni mese.</div>
-            )}
-          </div>
-          {!isFree && (
-            <Box as="button" onClick={async () => {
-              // Apre il Billing Portal Stripe DIRETTO (no re-login): crea una
-              // portal session server-side col customer dell'utente. Fallback al
-              // link generico se non c'e' customer/errore.
-              try {
-                const token = getTokenFast();
-                const res = await fetch('/api/billing-portal', { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ returnUrl: window.location.href }) });
-                const d = await res.json();
-                if (res.ok && d.url) { window.open(d.url, '_blank'); return; }
-                if (d.error === 'no_customer') { toast('Nessun abbonamento attivo da gestire', 'x'); return; }
-              } catch { /* fallback */ }
-              window.open(STRIPE_BILLING_PORTAL, '_blank');
-            }} className="max-md:!w-full" style={s('border:1px solid var(--border-main);background:var(--bg-card);font-size:13px;font-weight:700;padding:10px 18px;border-radius:10px;cursor:pointer;min-height:44px;white-space:nowrap')} hover={s('background:var(--bg-hover)')}>Gestisci piano</Box>
-          )}
+      <div className="max-md:!flex-col max-md:!items-start" style={s('display:flex;align-items:center;justify-content:space-between;gap: 16px;margin-bottom:22px')}>
+        <div>
+          <h1 style={s('margin: 0 0 4px;font-size:22px;font-weight:800;letter-spacing:-.5px')}>Piano</h1>
+          <div style={s('color:var(--text-muted);font-size:13px')}>Gestisci il tuo abbonamento.</div>
         </div>
+        {!isFree && (
+          <Box as="button" onClick={async () => {
+            // Apre il Billing Portal Stripe DIRETTO (no re-login): crea una
+            // portal session server-side col customer dell'utente. Fallback al
+            // link generico se non c'e' customer/errore.
+            try {
+              const token = getTokenFast();
+              const res = await fetch('/api/billing-portal', { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ returnUrl: window.location.href }) });
+              const d = await res.json();
+              if (res.ok && d.url) { window.open(d.url, '_blank'); return; }
+              if (d.error === 'no_customer') { toast('Nessun abbonamento attivo da gestire', 'x'); return; }
+            } catch { /* fallback */ }
+            window.open(STRIPE_BILLING_PORTAL, '_blank');
+          }} className="max-md:!w-full" style={s('border:1px solid var(--border-main);background:var(--bg-card);font-size:12px;font-weight:700;padding: 8px 16px;border-radius:9px;cursor:pointer;min-height:40px;white-space:nowrap;flex:none')} hover={s('background:var(--bg-hover)')}>Gestisci piano</Box>
+        )}
       </div>
 
       {/* ── PLAN CARDS ── */}
-      <div style={s('margin-bottom:20px')}>
-        <div style={s('display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:14px')}>
-          <div style={s('font-size:16px;font-weight:800;letter-spacing:-.2px')}>Confronta i piani</div>
+      <div style={s('margin-bottom:18px')}>
+        <div style={s('display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap: 10px;margin-bottom:13px')}>
+          <div style={s('font-size:14px;font-weight:800;letter-spacing:-.2px')}>Confronta i piani</div>
           {/* Toggle Individuale / Agenzia */}
-          <div style={{ display: 'inline-flex', background: 'var(--bg-hover)', border: '1px solid var(--border-light)', borderRadius: 12, padding: 3 }}>
+          <div style={{ display: 'inline-flex', background: 'var(--bg-hover)', border: '1px solid var(--border-light)', borderRadius: 11, padding: 3 }}>
             {(['individual', 'agency'] as PlanTier[]).map((t) => {
               const on = tier === t;
               return (
                 <button key={t} onClick={() => setTier(t)} style={{
-                  border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700,
-                  padding: '8px 18px', borderRadius: 9,
+                  border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 700,
+                  padding: '7px 16px', borderRadius: 8,
                   background: on ? 'var(--bg-card)' : 'transparent',
                   color: on ? '#3B83F6' : 'var(--text-muted)',
                   boxShadow: on ? '0 1px 3px rgba(0,0,0,.08)' : 'none', transition: 'all .15s',
@@ -2050,15 +2097,23 @@ function AccountScreen({ credits, toast, go, userData, tierHint }: { credits: nu
             })}
           </div>
         </div>
-        <div className="max-md:!grid-cols-1 max-md:!gap-8" style={s('display:grid;grid-template-columns:repeat(3,1fr);gap:20px;align-items:stretch;margin-top:40px')}>
+        <div className="max-md:!grid-cols-1 max-md:!gap-8" style={s('display:grid;grid-template-columns:repeat(3,1fr);gap: 16px;align-items:stretch;margin-top:36px')}>
           {plans.map((plan) => {
             const active = plan.id === activePlan;
+            const isSeat = plan.id === 'agy_monthly' || plan.id === 'agy_annual';
+            const shownFeatures = isSeat ? plan.features.map(seatTok) : plan.features;
+            // Seat-based: prezzo grande = totale (per-utente × N), niente nota; period
+            // senza "a utente" (primo token = "/mese").
+            const shownPrice = isSeat ? plan.price * seats : plan.price;
+            const shownOldPrice = isSeat && plan.oldPrice ? plan.oldPrice * seats : plan.oldPrice;
+            const shownPeriod = isSeat ? plan.period.split(' ')[0] : plan.period;
+            const shownNote = isSeat ? null : plan.note;
             return (
               <Box key={plan.id} style={{
                 background: active ? '#3B83F6' : 'var(--bg-card)',
                 border: active ? '2px solid #3B83F6' : '1.5px solid #ece9e2',
-                borderRadius: 16,
-                padding: '32px 28px 28px',
+                borderRadius: 14,
+                padding: '29px 25px 25px',
                 cursor: 'pointer',
                 position: 'relative',
                 display: 'flex',
@@ -2073,79 +2128,164 @@ function AccountScreen({ credits, toast, go, userData, tierHint }: { credits: nu
                 {plan.badge && (
                   <span style={{
                     position: 'absolute', top: -11, left: '50%', transform: 'translateX(-50%)',
-                    fontSize: 10.5, fontWeight: 800, padding: '5px 16px', borderRadius: 20,
+                    fontSize: 9.5, fontWeight: 800, padding: '4px 14px', borderRadius: 18,
                     whiteSpace: 'nowrap', letterSpacing: '.04em', textTransform: 'uppercase',
                     background: active ? 'var(--bg-card)' : 'var(--text-main)', color: active ? '#3B83F6' : 'var(--bg-card)',
                     boxShadow: '0 2px 8px rgba(33,31,28,.12)',
                   }}>{plan.badge}</span>
                 )}
 
-                <div style={s('display:flex;align-items:center;justify-content:space-between;margin-bottom:6px')}>
-                  <span style={{ fontSize: 15, fontWeight: 700, color: active ? 'rgba(255,255,255,.85)' : 'var(--text-muted)', letterSpacing: '.02em', textTransform: 'uppercase' }}>{plan.name}</span>
-                  {active && <span style={{ fontSize: 11, fontWeight: 800, background: 'rgba(255,255,255,.2)', color: 'var(--bg-card)', padding: '5px 14px', borderRadius: 20, letterSpacing: '.03em' }}>ATTIVO</span>}
+                <div style={s('display:flex;align-items:center;justify-content:space-between;margin-bottom:5px')}>
+                  <span style={{ fontSize: 14, fontWeight: 700, color: active ? 'rgba(255,255,255,.85)' : 'var(--text-muted)', letterSpacing: '.02em', textTransform: 'uppercase' }}>{plan.name}</span>
+                  {active && <span style={{ fontSize: 10, fontWeight: 800, background: 'rgba(255,255,255,.2)', color: 'var(--bg-card)', padding: '4px 13px', borderRadius: 18, letterSpacing: '.03em' }}>ATTIVO</span>}
                 </div>
 
                 {(() => {
-                  const hasDiscount = plan.price > 0 && !!plan.oldPrice && plan.oldPrice > plan.price;
-                  const discountPct = hasDiscount ? Math.round((1 - plan.price / plan.oldPrice) * 100) : 0;
-                  const saved = hasDiscount ? plan.oldPrice - plan.price : 0;
+                  const hasDiscount = shownPrice > 0 && !!shownOldPrice && shownOldPrice > shownPrice;
+                  const discountPct = hasDiscount ? Math.round((1 - shownPrice / shownOldPrice) * 100) : 0;
+                  const saved = hasDiscount ? Math.round(shownOldPrice - shownPrice) : 0;
                   return (
                     <>
                       {hasDiscount && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                          <span style={{ fontSize: 16, fontWeight: 700, textDecoration: 'line-through', color: active ? 'rgba(255,255,255,.6)' : '#b3aca1' }}>{plan.oldPrice}€</span>
-                          <span style={{ background: active ? 'rgba(255,255,255,.2)' : '#3B83F6', color: active ? 'var(--bg-card)' : '#fff', fontSize: 11, fontWeight: 800, padding: '3px 9px', borderRadius: 999 }}>-{discountPct}%</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 4 }}>
+                          <span style={{ fontSize: 14, fontWeight: 700, textDecoration: 'line-through', color: active ? 'rgba(255,255,255,.6)' : '#b3aca1' }}>{shownOldPrice}€</span>
+                          <span style={{ background: active ? 'rgba(255,255,255,.2)' : '#3B83F6', color: active ? 'var(--bg-card)' : '#fff', fontSize: 10, fontWeight: 800, padding: '3px 8px', borderRadius: 899 }}>-{discountPct}%</span>
                         </div>
                       )}
-                      <div style={s('display:flex;align-items:baseline;gap:6px')}>
-                        <span style={{ fontSize: 48, fontWeight: 800, color: active ? 'var(--bg-card)' : 'var(--text-main)', letterSpacing: -2, lineHeight: 1 }}>{plan.price}€</span>
-                        <span style={{ fontSize: 16, fontWeight: 600, color: active ? 'rgba(255,255,255,.55)' : '#b3aca1' }}>{plan.period}</span>
+                      <div style={s('display:flex;align-items:baseline;gap: 4px')}>
+                        <span style={{ fontSize: 43, fontWeight: 800, color: active ? 'var(--bg-card)' : 'var(--text-main)', letterSpacing: -2, lineHeight: 1 }}>
+                          {plan.id === 'agy_custom' ? 'Custom' : `${shownPrice}€`}
+                        </span>
+                        {plan.id !== 'agy_custom' && (
+                          <span style={{ fontSize: 14, fontWeight: 600, color: active ? 'rgba(255,255,255,.55)' : '#b3aca1' }}>{shownPeriod}</span>
+                        )}
                       </div>
-                      {hasDiscount && !plan.note && (
-                        <div style={{ fontSize: 12.5, fontWeight: 800, color: active ? 'rgba(255,255,255,.8)' : '#009874', marginTop: 6 }}>RISPARMI {saved}€{plan.period}</div>
+                      {hasDiscount && !shownNote && (
+                        <div style={{ fontSize: 11, fontWeight: 800, color: active ? 'rgba(255,255,255,.8)' : '#009874', marginTop: 5 }}>RISPARMI {saved}€{shownPeriod}</div>
                       )}
-                      {plan.note && (
-                        <div style={{ fontSize: 14, fontWeight: 700, color: active ? 'rgba(255,255,255,.85)' : 'var(--text-muted)', marginTop: 6 }}>{plan.note}</div>
+                      {shownNote && (
+                        <div style={{ fontSize: 13, fontWeight: 700, color: active ? 'rgba(255,255,255,.85)' : 'var(--text-muted)', marginTop: 5 }}>{shownNote}</div>
                       )}
                     </>
                   );
                 })()}
 
-                <div style={{ height: 1, background: active ? 'rgba(255,255,255,.15)' : 'var(--border-light)', margin: '20px 0' }} />
-
-                <div style={s('display:flex;flex-direction:column;gap:14px;flex:1')}>
-                  {plan.features.map((f, i) => (
-                    <div key={i} style={s('display:flex;align-items:center;gap:12px')}>
-                      <span style={{
-                        width: 22, height: 22, flex: 'none', borderRadius: '50%',
-                        background: active ? 'rgba(255,255,255,.2)' : 'var(--border-light)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                {isSeat && (
+                  <div style={{ marginTop: 14, background: active ? 'rgba(255,255,255,.12)' : 'var(--bg-main, #f8fafc)', border: active ? '1px solid rgba(255,255,255,.18)' : '1px solid var(--border-light)', borderRadius: 13, padding: '13px 14px 11px' }}>
+                    <div style={{ marginBottom: 4 }}>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: active ? 'rgba(255,255,255,.75)' : 'var(--text-muted)', letterSpacing: '.02em' }}>Collaboratori</span>
+                    </div>
+                    <div style={{ position: 'relative', paddingTop: 32 }}>
+                      <div style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: `calc(${(seats - 2) / 8} * (100% - 22px) + 11px)`,
+                        transform: 'translateX(-50%)',
+                        background: active ? 'var(--bg-card)' : '#3B83F6',
+                        color: active ? '#3B83F6' : '#fff',
+                        fontSize: 12, fontWeight: 800, padding: '2px 9px', borderRadius: 7,
+                        boxShadow: active ? '0 2px 8px rgba(0,0,0,.15)' : '0 2px 8px rgba(59,131,246,.35)',
+                        pointerEvents: 'none', whiteSpace: 'nowrap',
                       }}>
-                        <Icon name="check" size={12} color={active ? 'var(--bg-card)' : 'var(--text-muted)'} />
-                      </span>
-                      <span style={{ fontSize: 14.5, fontWeight: 500, color: active ? 'rgba(255,255,255,.92)' : 'var(--text-sec)', lineHeight: 1.45 }}>{f}</span>
+                        {seats}
+                        <span style={{
+                          position: 'absolute', left: '50%', bottom: -4, transform: 'translateX(-50%) rotate(45deg)',
+                          width: 7, height: 7, background: active ? 'var(--bg-card)' : '#3B83F6', borderRadius: 1,
+                        }} />
+                      </div>
+                      <input
+                        type="range" min={2} max={10} step={1} value={seats}
+                        onChange={(e) => setSeats(Number(e.target.value))}
+                        onClick={(e) => e.stopPropagation()}
+                        aria-label="Numero collaboratori"
+                        className="seat-slider"
+                        style={{
+                          width: '100%',
+                          ['--ss-color' as string]: active ? '#fff' : '#3B83F6',
+                          background: active
+                            ? `linear-gradient(to right, #fff ${((seats - 2) / 8) * 100}%, rgba(255,255,255,.25) ${((seats - 2) / 8) * 100}%)`
+                            : `linear-gradient(to right, #3B83F6 ${((seats - 2) / 8) * 100}%, #e5e7eb ${((seats - 2) / 8) * 100}%)`,
+                        }}
+                      />
+                    </div>
+                    <div style={s('display:flex;justify-content:space-between;font-size:10px;font-weight:600;margin-top:5px') as React.CSSProperties} >
+                      <span style={{ color: active ? 'rgba(255,255,255,.6)' : '#b3aca1' }}>2</span>
+                      <span style={{ color: active ? 'rgba(255,255,255,.6)' : '#b3aca1' }}>10</span>
+                    </div>
+                    <style>{`
+                      .seat-slider {
+                        -webkit-appearance: none;
+                        appearance: none;
+                        height: 5px;
+                        border-radius: 999px;
+                        outline: none;
+                        cursor: pointer;
+                        display: block;
+                      }
+                      .seat-slider::-webkit-slider-thumb {
+                        -webkit-appearance: none;
+                        appearance: none;
+                        width: 20px;
+                        height: 20px;
+                        border-radius: 50%;
+                        background: #fff;
+                        border: 3px solid var(--ss-color, #3B83F6);
+                        box-shadow: 0 2px 8px rgba(16,24,40,0.22);
+                        cursor: pointer;
+                        transition: transform .15s ease, box-shadow .15s ease;
+                      }
+                      .seat-slider::-webkit-slider-thumb:hover {
+                        transform: scale(1.12);
+                        box-shadow: 0 4px 14px rgba(16,24,40,0.28);
+                      }
+                      .seat-slider::-moz-range-thumb {
+                        width: 20px;
+                        height: 20px;
+                        border-radius: 50%;
+                        background: #fff;
+                        border: 3px solid var(--ss-color, #3B83F6);
+                        box-shadow: 0 2px 8px rgba(16,24,40,0.22);
+                        cursor: pointer;
+                        transition: transform .15s ease;
+                      }
+                      .seat-slider::-moz-range-thumb:hover { transform: scale(1.12); }
+                      .seat-slider::-moz-range-track { background: transparent; }
+                    `}</style>
+                  </div>
+                )}
+
+                <div style={{ height: 1, background: active ? 'rgba(255,255,255,.15)' : 'var(--border-light)', margin: '18px 0' }} />
+
+                <div style={s('display:flex;flex-direction:column;gap: 12px;flex:1')}>
+                  {shownFeatures.map((f, i) => (
+                    <div key={i} style={s('display:flex;align-items:center;gap: 10px')}>
+                      <Icon name="check" size={14} color={active ? '#fff' : '#3B83F6'} style={{ flex: 'none' }} />
+
+                      <span style={{ fontSize: 13, fontWeight: 500, color: active ? 'rgba(255,255,255,.92)' : 'var(--text-sec)', lineHeight: 1.45 }}>{renderSeatFeature(f)}</span>
                     </div>
                   ))}
                 </div>
 
                 <Box as="button" onClick={() => {
+                  if (plan.id === 'agy_custom') { window.open('https://cal.com/getnearme/30min', '_blank'); return; }
                   if (active) { toast('Sei già su questo piano', 'check'); return; }
                   if (plan.id === 'free') { toast('Per tornare al Free disdici l’abbonamento da “Gestisci piano”'); return; }
+                  if (isSeat) { seatCheckout(plan.id); return; }
                   if (userData) redirectToStripePayment(plan.id, userData.id, userData.email);
                 }} style={{
-                  marginTop: 28,
+                  marginTop: 25,
                   border: 'none',
                   background: active ? 'var(--bg-card)' : '#3B83F6',
                   color: active ? '#3B83F6' : '#fff',
-                  fontSize: 15, fontWeight: 700, padding: '14px 20px', borderRadius: 12,
-                  cursor: 'pointer', minHeight: 48, width: '100%',
+                  fontSize: 14, fontWeight: 700, padding: '13px 18px', borderRadius: 11,
+                  cursor: 'pointer', minHeight: 43, width: '100%',
                   transition: 'background .2s, transform .15s',
                   boxShadow: active ? '0 2px 8px rgba(0,0,0,.08)' : 'none',
                 }} hover={{
                   background: active ? '#f0f6ff' : '#2b6fe0',
                   transform: 'scale(0.98)',
                 }}>
-                  {active ? 'Piano attuale' : plan.id === 'free' ? 'Piano base' : 'Scegli questo piano'}
+                  {active ? 'Piano attuale' : plan.id === 'free' ? 'Piano base' : plan.id === 'agy_custom' ? 'Contattaci' : 'Scegli questo piano'}
                 </Box>
               </Box>
             );
@@ -2235,55 +2375,55 @@ function SettingsScreen({ toast }: { toast: (msg: string, icon?: string) => void
   };
 
   return (
-    <div style={s('max-width:1160px;margin:0 auto;padding:32px 32px 64px')}>
-      <h1 style={s('margin:0 0 4px;font-size:27px;font-weight:800;letter-spacing:-.5px')}>Impostazioni</h1>
-      <div style={s('color:var(--text-muted);font-size:14px;margin-bottom:28px')}>Gestisci il tuo account e le preferenze dell'app.</div>
+    <div style={s('max-width:1044px;margin: 0 auto;padding: 26px 29px 58px')}>
+      <h1 style={s('margin: 0 0 4px;font-size:24px;font-weight:800;letter-spacing:-.5px')}>Impostazioni</h1>
+      <div style={s('color:var(--text-muted);font-size:13px;margin-bottom:25px')}>Gestisci il tuo account e le preferenze dell'app.</div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
         {/* Info Box */}
-        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)', borderRadius: 16, padding: 24 }}>
-          <h3 style={{ margin: '0 0 16px', fontSize: 15, fontWeight: 700 }}>Informazioni</h3>
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)', borderRadius: 14, padding: 22 }}>
+          <h3 style={{ margin: '0 0 14px', fontSize: 14, fontWeight: 700 }}>Informazioni</h3>
           
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid var(--border-light)' }}>
-            <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-main)' }}>Versione App</div>
-            <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>1.0.0</div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 0', borderBottom: '1px solid var(--border-light)' }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-main)' }}>Versione App</div>
+            <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>1.0.0</div>
           </div>
-          <a href="https://www.getnearme.it/it/privacy" target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid var(--border-light)', textDecoration: 'none' }}>
-            <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-main)' }}>Privacy Policy</div>
-            <Icon name="external-link" size={14} color="var(--text-muted)" />
+          <a href="https://www.getnearme.it/it/privacy" target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 0', borderBottom: '1px solid var(--border-light)', textDecoration: 'none' }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-main)' }}>Privacy Policy</div>
+            <Icon name="external-link" size={13} color="var(--text-muted)" />
           </a>
-          <a href="https://www.getnearme.it/it/terms" target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', textDecoration: 'none' }}>
-            <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-main)' }}>Termini e Condizioni</div>
-            <Icon name="external-link" size={14} color="var(--text-muted)" />
+          <a href="https://www.getnearme.it/it/terms" target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 0', textDecoration: 'none' }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-main)' }}>Termini e Condizioni</div>
+            <Icon name="external-link" size={13} color="var(--text-muted)" />
           </a>
         </div>
 
         {/* Preferenze */}
-        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)', borderRadius: 16, padding: 24 }}>
-          <h3 style={{ margin: '0 0 16px', fontSize: 15, fontWeight: 700 }}>Preferenze</h3>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)', borderRadius: 14, padding: 22 }}>
+          <h3 style={{ margin: '0 0 14px', fontSize: 14, fontWeight: 700 }}>Preferenze</h3>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-main)' }}>Geolocalizzazione</div>
-              <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 2, lineHeight: 1.5 }}>Nell&apos;Analisi di zona precompila l&apos;indirizzo con la tua posizione attuale.</div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-main)' }}>Geolocalizzazione</div>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2, lineHeight: 1.5 }}>Nell&apos;Analisi di zona precompila l&apos;indirizzo con la tua posizione attuale.</div>
             </div>
-            <div onClick={toggleGeo} style={{ width: 44, height: 26, borderRadius: 99, background: geoOn ? '#3B83F6' : '#d8d4cb', position: 'relative', flexShrink: 0, cursor: 'pointer', transition: 'background .2s' }}>
-              <div style={{ position: 'absolute', top: 3, left: geoOn ? 21 : 3, width: 20, height: 20, borderRadius: 99, background: '#fff', transition: 'left .2s', boxShadow: '0 1px 3px rgba(0,0,0,.2)' }} />
+            <div onClick={toggleGeo} style={{ width: 40, height: 23, borderRadius: 89, background: geoOn ? '#3B83F6' : '#d8d4cb', position: 'relative', flexShrink: 0, cursor: 'pointer', transition: 'background .2s' }}>
+              <div style={{ position: 'absolute', top: 3, left: geoOn ? 21 : 3, width: 18, height: 18, borderRadius: 89, background: '#fff', transition: 'left .2s', boxShadow: '0 1px 3px rgba(0,0,0,.2)' }} />
             </div>
           </div>
         </div>
 
         {/* Danger Zone */}
-        <div style={{ background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 16, padding: 24, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
+        <div style={{ background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 14, padding: 22, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 14 }}>
           <div style={{ flex: '1 1 300px' }}>
-            <h3 style={{ margin: '0 0 8px', fontSize: 15, fontWeight: 700, color: '#dc2626' }}>Zona Pericolosa</h3>
-            <p style={{ margin: 0, fontSize: 13, color: '#b91c1c', maxWidth: 600 }}>
+            <h3 style={{ margin: '0 0 7px', fontSize: 14, fontWeight: 700, color: '#dc2626' }}>Zona Pericolosa</h3>
+            <p style={{ margin: 0, fontSize: 12, color: '#b91c1c', maxWidth: 540 }}>
               L'eliminazione dell'account è irreversibile. Tutti i tuoi immobili, foto AI, video e brand verranno cancellati definitivamente dai nostri server.
             </p>
           </div>
 
           <div style={{ flex: 'none' }}>
-            <Box as="button" onClick={() => { setDeleteModalOpen(true); setDeleteConfirmText(''); }} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 16px', borderRadius: 8, fontSize: 13.5, fontWeight: 700, background: '#dc2626', color: 'var(--bg-card)', border: 'none', cursor: 'pointer' } as React.CSSProperties} hover={{ background: '#b91c1c' }}>
-              <Icon name="trash" size={16} color="var(--bg-card)" />
+            <Box as="button" onClick={() => { setDeleteModalOpen(true); setDeleteConfirmText(''); }} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '9px 14px', borderRadius: 7, fontSize: 12, fontWeight: 700, background: '#dc2626', color: 'var(--bg-card)', border: 'none', cursor: 'pointer' } as React.CSSProperties} hover={{ background: '#b91c1c' }}>
+              <Icon name="trash" size={14} color="var(--bg-card)" />
               Elimina account
             </Box>
           </div>
@@ -2291,20 +2431,20 @@ function SettingsScreen({ toast }: { toast: (msg: string, icon?: string) => void
       </div>
 
       {deleteModalOpen && (
-        <div onClick={() => setDeleteModalOpen(false)} style={s('position:fixed;inset:0;background:rgba(24,21,17,.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px')}>
-          <div onClick={e => e.stopPropagation()} style={s('width:100%;max-width:440px;background:var(--bg-card);border-radius:20px;box-shadow:0 32px 64px rgba(20,18,15,.2);padding:32px')}>
-            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
-              <div style={{ width: 56, height: 56, borderRadius: '50%', background: '#fef2f2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Icon name="alert-triangle" size={28} color="#dc2626" />
+        <div onClick={() => setDeleteModalOpen(false)} style={s('position:fixed;inset:0;background:rgba(24,21,17,.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding: 20px')}>
+          <div onClick={e => e.stopPropagation()} style={s('width:100%;max-width:396px;background:var(--bg-card);border-radius:18px;box-shadow:0 32px 64px rgba(20,18,15,.2);padding: 26px')}>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 18 }}>
+              <div style={{ width: 50, height: 50, borderRadius: '50%', background: '#fef2f2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Icon name="alert-triangle" size={25} color="#dc2626" />
               </div>
             </div>
-            <h3 style={{ margin: '0 0 6px', fontSize: 20, fontWeight: 800, textAlign: 'center', color: '#1a1a1a' }}>Sei sicuro?</h3>
-            <p style={{ margin: '0 auto 24px', maxWidth: 300, fontSize: 14, color: 'var(--text-sec)', textAlign: 'center', lineHeight: 1.5 }}>
+            <h3 style={{ margin: '0 0 5px', fontSize: 18, fontWeight: 800, textAlign: 'center', color: '#1a1a1a' }}>Sei sicuro?</h3>
+            <p style={{ margin: '0 auto 24px', maxWidth: 270, fontSize: 13, color: 'var(--text-sec)', textAlign: 'center', lineHeight: 1.5 }}>
 Azione <strong>irreversibile</strong>: perderai dati, contenuti e immobili, e l&apos;abbonamento verrà annullato.
             </p>
             
-            <div style={{ marginBottom: 24 }}>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: 'var(--text-main)', marginBottom: 8 }}>
+            <div style={{ marginBottom: 22 }}>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--text-main)', marginBottom: 7 }}>
                 Scrivi <strong style={{ color: '#dc2626' }}>ELIMINA</strong> per confermare:
               </label>
               <input 
@@ -2312,15 +2452,15 @@ Azione <strong>irreversibile</strong>: perderai dati, contenuti e immobili, e l&
                 value={deleteConfirmText} 
                 onChange={e => setDeleteConfirmText(e.target.value)} 
                 placeholder="ELIMINA" 
-                style={{ width: '100%', border: '1px solid var(--border-main)', borderRadius: 10, padding: '12px 16px', fontSize: 14, outline: 'none' }}
+                style={{ width: '100%', border: '1px solid var(--border-main)', borderRadius: 9, padding: '11px 14px', fontSize: 13, outline: 'none' }}
               />
             </div>
 
-            <div style={{ display: 'flex', gap: 12 }}>
-              <Box as="button" onClick={() => setDeleteModalOpen(false)} style={{ flex: 1, padding: '12px', borderRadius: 10, fontSize: 14, fontWeight: 700, background: 'var(--bg-body)', color: 'var(--text-sec)', border: 'none', cursor: 'pointer' } as React.CSSProperties} hover={{ background: '#e9e6df' }}>
+            <div style={{ display: 'flex', gap: 11 }}>
+              <Box as="button" onClick={() => setDeleteModalOpen(false)} style={{ flex: 1, padding: '11px', borderRadius: 9, fontSize: 13, fontWeight: 700, background: 'var(--bg-body)', color: 'var(--text-sec)', border: 'none', cursor: 'pointer' } as React.CSSProperties} hover={{ background: '#e9e6df' }}>
                 Annulla
               </Box>
-              <Box as="button" disabled={deleteConfirmText !== 'ELIMINA' || deleteLoading} onClick={handleDelete} style={{ flex: 1, padding: '12px', borderRadius: 10, fontSize: 14, fontWeight: 700, background: '#dc2626', color: 'var(--bg-card)', border: 'none', cursor: deleteConfirmText !== 'ELIMINA' || deleteLoading ? 'not-allowed' : 'pointer', opacity: deleteConfirmText !== 'ELIMINA' || deleteLoading ? 0.5 : 1 } as React.CSSProperties} hover={deleteConfirmText === 'ELIMINA' && !deleteLoading ? { background: '#b91c1c' } : undefined}>
+              <Box as="button" disabled={deleteConfirmText !== 'ELIMINA' || deleteLoading} onClick={handleDelete} style={{ flex: 1, padding: '11px', borderRadius: 9, fontSize: 13, fontWeight: 700, background: '#dc2626', color: 'var(--bg-card)', border: 'none', cursor: deleteConfirmText !== 'ELIMINA' || deleteLoading ? 'not-allowed' : 'pointer', opacity: deleteConfirmText !== 'ELIMINA' || deleteLoading ? 0.5 : 1 } as React.CSSProperties} hover={deleteConfirmText === 'ELIMINA' && !deleteLoading ? { background: '#b91c1c' } : undefined}>
                 {deleteLoading ? 'Eliminazione...' : 'Conferma ed elimina'}
               </Box>
             </div>
@@ -2364,41 +2504,41 @@ function AssistenzaScreen({ toast, email, defaultType = 'support' }: { toast: (m
   };
 
   return (
-    <div style={s('max-width:800px;margin:0 auto;padding:32px 32px 64px')}>
-      <h1 style={s('margin:0 0 4px;font-size:27px;font-weight:800;letter-spacing:-.5px')}>Assistenza</h1>
-      <div style={s('color:var(--text-muted);font-size:14px;margin-bottom:32px')}>Come possiamo aiutarti? Inviaci una segnalazione o richiedi supporto tecnico.</div>
+    <div style={s('max-width:720px;margin: 0 auto;padding: 26px 29px 58px')}>
+      <h1 style={s('margin: 0 0 4px;font-size:24px;font-weight:800;letter-spacing:-.5px')}>Assistenza</h1>
+      <div style={s('color:var(--text-muted);font-size:13px;margin-bottom:29px')}>Come possiamo aiutarti? Inviaci una segnalazione o richiedi supporto tecnico.</div>
 
-      <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)', borderRadius: 16, padding: 24 }}>
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)', borderRadius: 14, padding: 22 }}>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
           
           <div>
-            <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: 'var(--text-main)', marginBottom: 8 }}>Tipo di richiesta</label>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--text-main)', marginBottom: 7 }}>Tipo di richiesta</label>
             <div style={{ position: 'relative' }}>
               <select 
                 value={type} 
                 onChange={e => setType(e.target.value)}
-                style={{ width: '100%', appearance: 'none', border: '1px solid var(--border-main)', borderRadius: 10, padding: '12px 16px', fontSize: 14, outline: 'none', background: 'var(--bg-card)', color: 'var(--text-main)', cursor: 'pointer' }}
+                style={{ width: '100%', appearance: 'none', border: '1px solid var(--border-main)', borderRadius: 9, padding: '11px 14px', fontSize: 13, outline: 'none', background: 'var(--bg-card)', color: 'var(--text-main)', cursor: 'pointer' }}
               >
                 <option value="support">Assistenza generale</option>
                 <option value="bug">Segnala un problema (Bug)</option>
                 <option value="feature">Richiedi funzione / Suggerimento</option>
               </select>
-              <Icon name="chevron-down" size={16} color="var(--text-muted)" style={{ position: 'absolute', right: 16, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+              <Icon name="chevron-down" size={14} color="var(--text-muted)" style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
             </div>
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: 'var(--text-main)', marginBottom: 8 }}>Messaggio</label>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--text-main)', marginBottom: 7 }}>Messaggio</label>
             <textarea 
               value={message}
               onChange={e => setMessage(e.target.value)}
               placeholder={type === 'feature' ? 'Raccontaci la tua idea: che funzionalità ti servirebbe e perché?' : type === 'bug' ? 'Descrivi il problema nel dettaglio. Cosa stavi facendo quando si è verificato?' : 'Scrivi qui la tua richiesta...'}
-              style={{ width: '100%', border: '1px solid var(--border-main)', borderRadius: 10, padding: '12px 16px', fontSize: 14, outline: 'none', minHeight: 140, resize: 'vertical' }}
+              style={{ width: '100%', border: '1px solid var(--border-main)', borderRadius: 9, padding: '11px 14px', fontSize: 13, outline: 'none', minHeight: 126, resize: 'vertical' }}
             />
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
-            <Box as="button" type="submit" disabled={loading} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '12px 24px', borderRadius: 10, fontSize: 14, fontWeight: 700, background: '#1d5fd0', color: 'var(--bg-card)', border: 'none', cursor: loading ? 'default' : 'pointer', opacity: loading ? 0.7 : 1 } as React.CSSProperties} hover={!loading ? { background: '#1850b0' } : undefined}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 7 }}>
+            <Box as="button" type="submit" disabled={loading} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '11px 22px', borderRadius: 9, fontSize: 13, fontWeight: 700, background: '#1d5fd0', color: 'var(--bg-card)', border: 'none', cursor: loading ? 'default' : 'pointer', opacity: loading ? 0.7 : 1 } as React.CSSProperties} hover={!loading ? { background: '#1850b0' } : undefined}>
               {loading ? 'Invio in corso...' : 'Invia richiesta'}
             </Box>
           </div>
@@ -2513,39 +2653,39 @@ function BrandScreen({ toast, brand: brandProp, setBrand: setBrandParent, brandR
     }
   };
 
-  const inputStyle: React.CSSProperties = { width: '100%', border: '1px solid var(--border-main)', borderRadius: 10, padding: '11px 14px', fontSize: 14, fontFamily: 'inherit', outline: 'none', background: 'var(--bg-card)', transition: 'border-color .2s' };
+  const inputStyle: React.CSSProperties = { width: '100%', border: '1px solid var(--border-main)', borderRadius: 9, padding: '10px 13px', fontSize: 13, fontFamily: 'inherit', outline: 'none', background: 'var(--bg-card)', transition: 'border-color .2s' };
 
   const df = (step: number): React.CSSProperties => demoMode ? { opacity: demoStep >= step ? 1 : 0, transform: demoStep >= step ? 'translateY(0)' : 'translateY(8px)', transition: 'opacity .5s ease, transform .5s ease' } : {};
 
   return (
-    <div className="max-md:!px-4 max-md:!py-6" style={s('max-width:820px;margin:0 auto;padding:32px 32px 64px')}>
-      <div style={s('margin-bottom:24px')}>
-        <h1 style={s('margin:0 0 4px;font-size:25px;font-weight:800;letter-spacing:-.5px')}>Brand</h1>
-        <div style={s('color:var(--text-muted);font-size:14px')}>Personalizza loghi, colori e informazioni che appaiono nei tuoi report e contenuti.</div>
+    <div className="max-md:!px-4 max-md:!py-6" style={s('max-width:738px;margin: 0 auto;padding: 26px 29px 58px')}>
+      <div style={s('margin-bottom:22px')}>
+        <h1 style={s('margin: 0 0 4px;font-size:22px;font-weight:800;letter-spacing:-.5px')}>Brand</h1>
+        <div style={s('color:var(--text-muted);font-size:13px')}>Personalizza loghi, colori e informazioni che appaiono nei tuoi report e contenuti.</div>
       </div>
 
       {locked && !demoMode && (
-        <div onClick={() => go?.('account')} style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#eef4fe', border: '1px solid #cfe0fb', borderRadius: 12, padding: '12px 16px', marginBottom: 20, cursor: go ? 'pointer' : 'default' }}>
-          <Icon name="lock" size={16} color="#1d5fd0" />
-          <div style={{ fontSize: 13, color: '#1d5fd0', fontWeight: 600 }}>Sul piano Free i contenuti usano il brand GetNearMe. <span style={{ textDecoration: 'underline', fontWeight: 800 }}>Passa a un piano</span> per caricare il tuo logo e personalizzare tutto.</div>
+        <div onClick={() => go?.('account')} style={{ display: 'flex', alignItems: 'center', gap: 9, background: '#eef4fe', border: '1px solid #cfe0fb', borderRadius: 11, padding: '11px 14px', marginBottom: 18, cursor: go ? 'pointer' : 'default' }}>
+          <Icon name="lock" size={14} color="#1d5fd0" />
+          <div style={{ fontSize: 12, color: '#1d5fd0', fontWeight: 600 }}>Sul piano Free i contenuti usano il brand GetNearMe. <span style={{ textDecoration: 'underline', fontWeight: 800 }}>Passa a un piano</span> per caricare il tuo logo e personalizzare tutto.</div>
         </div>
       )}
 
       {/* ── LOGO SECTION ── */}
-      <div style={s('background:var(--bg-card);border:1px solid var(--border-light);border-radius:14px;padding:24px 28px;margin-bottom:20px')}>
-        <div style={s('font-size:16px;font-weight:800;margin-bottom:4px;letter-spacing:-.2px')}>Loghi</div>
-        <div style={s('color:var(--text-muted);font-size:13px;margin-bottom:18px')}>Carica le versioni del tuo logo per sfondi chiari e scuri.</div>
-        <div style={s('display:flex;flex-direction:column;gap:28px')}>
+      <div style={s('background:var(--bg-card);border:1px solid var(--border-light);border-radius:13px;padding: 20px 25px;margin-bottom:18px')}>
+        <div style={s('font-size:14px;font-weight:800;margin-bottom:4px;letter-spacing:-.2px')}>Loghi</div>
+        <div style={s('color:var(--text-muted);font-size:12px;margin-bottom:16px')}>Carica le versioni del tuo logo per sfondi chiari e scuri.</div>
+        <div style={s('display:flex;flex-direction:column;gap: 22px')}>
           {LOGO_ROWS.map(row => (
             <div key={row.label}>
-              <div style={s('font-size:12px;font-weight:700;color:#b3aca1;text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px')}>{row.label}</div>
-              <div className="max-md:!grid-cols-2 max-sm:!grid-cols-1" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
+              <div style={s('font-size:11px;font-weight:700;color:#b3aca1;text-transform:uppercase;letter-spacing:.04em;margin-bottom:9px')}>{row.label}</div>
+              <div className="max-md:!grid-cols-2 max-sm:!grid-cols-1" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 13 }}>
                 {row.variants.map(v => {
                   const src = brand.logos[v.key];
                   return (
                     <div key={v.key} style={{ position: 'relative' }}>
                       <Box onClick={() => fileRefs.current[v.key]?.click()} style={{
-                        width: '100%', aspectRatio: '2.4', borderRadius: 12,
+                        width: '100%', aspectRatio: '2.4', borderRadius: 11,
                         background: v.bg, border: v.bg === 'var(--bg-card)' ? '1.5px solid #ece9e2' : 'none',
                         display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
                         overflow: 'hidden', transition: 'box-shadow .2s',
@@ -2563,18 +2703,18 @@ function BrandScreen({ toast, brand: brandProp, setBrand: setBrandParent, brandR
                             }}
                           />
                         ) : (
-                          <Icon name="image-plus" size={20} color={v.bg === 'var(--text-main)' ? 'rgba(255,255,255,.35)' : '#b3aca1'} />
+                          <Icon name="image-plus" size={18} color={v.bg === 'var(--text-main)' ? 'rgba(255,255,255,.35)' : '#b3aca1'} />
                         )}
                       </Box>
                       {src && (
                         <button onClick={() => removeLogo(v.key)} style={{
-                          position: 'absolute', top: 6, right: 6, width: 24, height: 24, borderRadius: '50%',
+                          position: 'absolute', top: 5, right: 5, width: 22, height: 22, borderRadius: '50%',
                           background: 'rgba(33,31,28,.7)', border: 'none', cursor: 'pointer',
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        }}><Icon name="x" size={12} color="var(--bg-card)" /></button>
+                        }}><Icon name="x" size={11} color="var(--bg-card)" /></button>
                       )}
                       <input ref={el => { fileRefs.current[v.key] = el; }} type="file" accept="image/png,image/jpeg,image/svg+xml,image/webp" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) handleLogoUpload(v.key, f); e.target.value = ''; }} />
-                      <div style={s('margin-top:6px;font-size:12px;font-weight:700;color:var(--text-sec)')}>{v.label}</div>
+                      <div style={s('margin-top:5px;font-size:11px;font-weight:700;color:var(--text-sec)')}>{v.label}</div>
                     </div>
                   );
                 })}
@@ -2582,10 +2722,10 @@ function BrandScreen({ toast, brand: brandProp, setBrand: setBrandParent, brandR
             </div>
           ))}
         </div>
-        <div style={{ height: 1, background: 'var(--bg-body)', margin: '20px 0' }} />
-        <div className="max-md:!flex-col max-md:!items-start max-md:!gap-2" style={s('display:flex;align-items:center;gap:12px;justify-content:space-between')}>
-          <span style={s('font-size:13px;font-weight:700;color:var(--text-sec)')}>Logo da usare nei contenuti</span>
-          <select value={brand.logoOrientation} onChange={e => set('logoOrientation', e.target.value as 'vertical' | 'horizontal')} style={{ ...inputStyle, width: 'auto', padding: '8px 12px', cursor: 'pointer' }}>
+        <div style={{ height: 1, background: 'var(--bg-body)', margin: '18px 0' }} />
+        <div className="max-md:!flex-col max-md:!items-start max-md:!gap-2" style={s('display:flex;align-items:center;gap: 10px;justify-content:space-between')}>
+          <span style={s('font-size:12px;font-weight:700;color:var(--text-sec)')}>Logo da usare nei contenuti</span>
+          <select value={brand.logoOrientation} onChange={e => set('logoOrientation', e.target.value as 'vertical' | 'horizontal')} style={{ ...inputStyle, width: 'auto', padding: '7px 11px', cursor: 'pointer' }}>
             <option value="vertical">Solo icona</option>
             <option value="horizontal">Icona + Nome</option>
           </select>
@@ -2593,57 +2733,57 @@ function BrandScreen({ toast, brand: brandProp, setBrand: setBrandParent, brandR
       </div>
 
       {/* ── PRIMARY COLOR ── */}
-      <div style={s('background:var(--bg-card);border:1px solid var(--border-light);border-radius:14px;padding:24px 28px;margin-bottom:20px')}>
-        <div style={s('font-size:16px;font-weight:800;margin-bottom:4px;letter-spacing:-.2px')}>Colore della tua agenzia</div>
-        <div style={s('color:var(--text-muted);font-size:13px;margin-bottom:16px')}>Questo colore viene applicato ai report, ai post e ai video che crei.</div>
-        <div style={s('display:flex;align-items:center;gap:14px')}>
-          <div style={{ width: 44, height: 44, borderRadius: 10, border: '1px solid var(--border-main)', overflow: 'hidden', position: 'relative', cursor: 'pointer', padding: 4, background: 'var(--bg-card)' }}>
-            <div style={{ width: '100%', height: '100%', background: brand.primaryColor, borderRadius: 6, ...df(2) }} />
+      <div style={s('background:var(--bg-card);border:1px solid var(--border-light);border-radius:13px;padding: 20px 25px;margin-bottom:18px')}>
+        <div style={s('font-size:14px;font-weight:800;margin-bottom:4px;letter-spacing:-.2px')}>Colore della tua agenzia</div>
+        <div style={s('color:var(--text-muted);font-size:12px;margin-bottom:14px')}>Questo colore viene applicato ai report, ai post e ai video che crei.</div>
+        <div style={s('display:flex;align-items:center;gap: 12px')}>
+          <div style={{ width: 40, height: 40, borderRadius: 9, border: '1px solid var(--border-main)', overflow: 'hidden', position: 'relative', cursor: 'pointer', padding: 4, background: 'var(--bg-card)' }}>
+            <div style={{ width: '100%', height: '100%', background: brand.primaryColor, borderRadius: 5, ...df(2) }} />
             <input type="color" value={brand.primaryColor} onChange={e => set('primaryColor', e.target.value)} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', width: '100%', height: '100%' }} />
           </div>
-          <span style={s('font-size:13px;font-weight:600;color:var(--text-sec)')}>Clicca per cambiare colore</span>
+          <span style={s('font-size:12px;font-weight:600;color:var(--text-sec)')}>Clicca per cambiare colore</span>
         </div>
       </div>
 
       {/* ── COMPANY INFO ── */}
-      <div style={s('background:var(--bg-card);border:1px solid var(--border-light);border-radius:14px;padding:24px 28px;margin-bottom:20px')}>
-        <div style={s('font-size:16px;font-weight:800;margin-bottom:4px;letter-spacing:-.2px')}>Informazioni agenzia</div>
-        <div style={s('color:var(--text-muted);font-size:13px;margin-bottom:18px')}>Queste informazioni appaiono nei report e nei post che crei.</div>
-        <div style={s('display:flex;flex-direction:column;gap:16px')}>
+      <div style={s('background:var(--bg-card);border:1px solid var(--border-light);border-radius:13px;padding: 20px 25px;margin-bottom:18px')}>
+        <div style={s('font-size:14px;font-weight:800;margin-bottom:4px;letter-spacing:-.2px')}>Informazioni agenzia</div>
+        <div style={s('color:var(--text-muted);font-size:12px;margin-bottom:16px')}>Queste informazioni appaiono nei report e nei post che crei.</div>
+        <div style={s('display:flex;flex-direction:column;gap: 13px')}>
           <div>
-            <label style={s('display:block;font-size:13px;font-weight:700;color:var(--text-sec);margin-bottom:6px')}>Nome agenzia</label>
+            <label style={s('display:block;font-size:12px;font-weight:700;color:var(--text-sec);margin-bottom:5px')}>Nome agenzia</label>
             <input value={brand.companyName} onChange={e => set('companyName', e.target.value)} maxLength={50} placeholder="La Tua Agenzia" style={{ ...inputStyle, ...df(3) }} />
           </div>
           <div>
-            <label style={s('display:block;font-size:13px;font-weight:700;color:var(--text-sec);margin-bottom:6px')}>Sito web <span style={s('color:#b3aca1;font-weight:500')}>(opzionale)</span></label>
+            <label style={s('display:block;font-size:12px;font-weight:700;color:var(--text-sec);margin-bottom:5px')}>Sito web <span style={s('color:#b3aca1;font-weight:500')}>(opzionale)</span></label>
             <input value={brand.companyWebsite} onChange={e => set('companyWebsite', e.target.value)} placeholder="https://www.tuaagenzia.it" type="url" style={{ ...inputStyle, ...df(4) }} />
           </div>
           <div>
-            <label style={s('display:block;font-size:13px;font-weight:700;color:var(--text-sec);margin-bottom:6px')}>Email contatto <span style={s('color:#b3aca1;font-weight:500')}>(opzionale)</span></label>
+            <label style={s('display:block;font-size:12px;font-weight:700;color:var(--text-sec);margin-bottom:5px')}>Email contatto <span style={s('color:#b3aca1;font-weight:500')}>(opzionale)</span></label>
             <input value={brand.companyEmail} onChange={e => set('companyEmail', e.target.value)} placeholder="info@tuaagenzia.it" type="email" style={{ ...inputStyle, ...df(5) }} />
           </div>
         </div>
       </div>
 
       {/* ── REPORT FINAL PAGE ── nascosta (report non attivo) ──
-      <div style={s('background:var(--bg-card);border:1px solid var(--border-light);border-radius:14px;padding:24px 28px;margin-bottom:20px')}>
-        <div style={s('font-size:16px;font-weight:800;margin-bottom:4px;letter-spacing:-.2px')}>Pagina finale del report</div>
-        <div style={s('color:var(--text-muted);font-size:13px;margin-bottom:18px')}>Personalizza il messaggio che i tuoi clienti vedono alla fine del report.</div>
-        <div style={s('display:flex;flex-direction:column;gap:16px')}>
+      <div style={s('background:var(--bg-card);border:1px solid var(--border-light);border-radius:13px;padding: 20px 25px;margin-bottom:18px')}>
+        <div style={s('font-size:14px;font-weight:800;margin-bottom:4px;letter-spacing:-.2px')}>Pagina finale del report</div>
+        <div style={s('color:var(--text-muted);font-size:12px;margin-bottom:16px')}>Personalizza il messaggio che i tuoi clienti vedono alla fine del report.</div>
+        <div style={s('display:flex;flex-direction:column;gap: 13px')}>
           <div>
-            <label style={s('display:block;font-size:13px;font-weight:700;color:var(--text-sec);margin-bottom:6px')}>Titolo finale</label>
+            <label style={s('display:block;font-size:12px;font-weight:700;color:var(--text-sec);margin-bottom:5px')}>Titolo finale</label>
             <input value={brand.reportFinalTitle} onChange={e => set('reportFinalTitle', e.target.value)} maxLength={100} placeholder="Grazie per aver scelto la nostra agenzia" style={inputStyle} />
           </div>
           <div>
-            <label style={s('display:block;font-size:13px;font-weight:700;color:var(--text-sec);margin-bottom:6px')}>Messaggio finale</label>
+            <label style={s('display:block;font-size:12px;font-weight:700;color:var(--text-sec);margin-bottom:5px')}>Messaggio finale</label>
             <textarea value={brand.reportFinalDesc} onChange={e => set('reportFinalDesc', e.target.value)} maxLength={500} rows={4} placeholder="Inserisci un messaggio personalizzato per i tuoi clienti..." style={{ ...inputStyle, resize: 'vertical' }} />
           </div>
         </div>
       </div>
       */}
 
-      <div style={s('display:flex;align-items:center;gap:8px;color:#b3aca1;font-size:12.5px;justify-content:flex-end')}>
-        <Icon name="check" size={14} color="#b3aca1" />Le modifiche vengono salvate automaticamente
+      <div style={s('display:flex;align-items:center;gap: 6px;color:#b3aca1;font-size:11px;justify-content:flex-end')}>
+        <Icon name="check" size={13} color="#b3aca1" />Le modifiche vengono salvate automaticamente
       </div>
     </div>
   );
@@ -2670,6 +2810,23 @@ const getCoverStyle = (p: Project | null | undefined, small = false): React.CSSP
   return { backgroundImage: `linear-gradient(135deg, hsl(${hue}, 80%, 65%), hsl(${(hue + 40) % 360}, 80%, 55%))`, backgroundColor: '#f3f1ec', backgroundSize: 'cover', backgroundPosition: 'center' };
 };
 
+
+// Debug: solo per i test account esclusi dalle metriche (vedi memoria progetto).
+// Il gate vero e' server-side in debug-set-plan; questo serve solo a non
+// mostrare il widget agli utenti normali.
+const DEBUG_TIER_EMAILS = new Set([
+  'antonioiphoneid@gmail.com',
+]);
+const DEBUG_TIER_OPTIONS = [
+  { id: 'free', label: 'Free' },
+  { id: 'starter_monthly', label: 'Starter €14,99' },
+  { id: 'individual_monthly', label: 'Individuale mensile' },
+  { id: 'individual_annual', label: 'Individuale annuale' },
+  { id: 'agency_monthly', label: 'Agenzia mensile (legacy, fisso)' },
+  { id: 'agency_annual', label: 'Agenzia annuale (legacy, fisso)' },
+  { id: 'agency_seat_monthly', label: 'Agenzia seat mensile' },
+  { id: 'agency_seat_annual', label: 'Agenzia seat annuale' },
+];
 
 export default function DashboardApp({ userData }: { userData: UserData | null }) {
   const [route, setRoute] = useState('home');
@@ -2706,7 +2863,30 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
   const [immDeleting, setImmDeleting] = useState(false);
   const [editProjOpen, setEditProjOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  
+
+  // Debug: switch piano/quote senza passare da Stripe (solo test account, vedi sopra).
+  const [debugTier, setDebugTier] = useState('starter_monthly');
+  const [debugSeats, setDebugSeats] = useState(4);
+  const [debugBusy, setDebugBusy] = useState(false);
+  const applyDebugTier = async () => {
+    if (debugBusy) return;
+    setDebugBusy(true);
+    try {
+      const resp = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/debug-set-plan`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${getTokenFast()}`, apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tier: debugTier, seats: debugSeats }),
+      });
+      const data = await resp.json().catch(() => null);
+      if (!resp.ok) { toast(data?.error || 'Errore debug switch', 'x'); setDebugBusy(false); return; }
+      toast(`Piano impostato: ${debugTier}`, 'check');
+      setTimeout(() => window.location.reload(), 600);
+    } catch {
+      toast('Errore di rete', 'x');
+      setDebugBusy(false);
+    }
+  };
+
   // Caching with SWR for Projects
   const { data: realProjects = [], isLoading: loadingProjects, mutate: mutateProjects } = useSWR('projects', fetchProjects, {
     onSuccess: (data) => {
@@ -3163,22 +3343,22 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
   const cardCentered = isMobile || tdef.sel === '@center';
 
   return (
-    <div style={{ fontFamily: 'inherit', color: 'var(--text-main)', height: '100vh', overflow: 'hidden', background: '#faf9f7', fontSize: 14, lineHeight: 1.45 }}>
+    <div style={{ fontFamily: 'inherit', color: 'var(--text-main)', height: '100vh', overflow: 'hidden', background: '#faf9f7', fontSize: 13, lineHeight: 1.45 }}>
 
       {/* WELCOME MODAL */}
       {welcomeOpen && (
-        <div style={s('position:fixed;inset:0;background:rgba(24,21,17,.6);backdrop-filter:blur(4px);z-index:95;display:flex;align-items:center;justify-content:center;padding:24px')}>
-          <div style={{ background: 'linear-gradient(160deg, #eef4fe 0%, var(--bg-hover) 100%)', borderRadius: 24, boxShadow: '0 32px 80px rgba(0,0,0,.15), 0 2px 16px rgba(0,0,0,.05)', width: '100%', maxWidth: 440, overflow: 'hidden', position: 'relative', padding: '44px 40px 32px', textAlign: 'center' }}>
+        <div style={s('position:fixed;inset:0;background:rgba(24,21,17,.6);backdrop-filter:blur(4px);z-index:95;display:flex;align-items:center;justify-content:center;padding: 20px')}>
+          <div style={{ background: 'linear-gradient(160deg, #eef4fe 0%, var(--bg-hover) 100%)', borderRadius: 22, boxShadow: '0 32px 80px rgba(0,0,0,.15), 0 2px 16px rgba(0,0,0,.05)', width: '100%', maxWidth: 396, overflow: 'hidden', position: 'relative', padding: '40px 36px 29px', textAlign: 'center' }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <div style={{ width: 68, height: 68, background: 'var(--bg-card)', borderRadius: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 22px', boxShadow: '0 8px 24px rgba(33,31,28,.1)' }}>
-              <img src="/dashboard/logo-icon.svg" alt="GetNearMe" style={{ width: 40, height: 40 }} />
+            <div style={{ width: 61, height: 61, background: 'var(--bg-card)', borderRadius: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 22px', boxShadow: '0 8px 24px rgba(33,31,28,.1)' }}>
+              <img src="/dashboard/logo-icon.svg" alt="GetNearMe" style={{ width: 36, height: 36 }} />
             </div>
-            <h2 style={s('margin:0 0 4px;font-size:27px;font-weight:800;letter-spacing:-.6px;color:#1a1a1a')}>Benvenuto su GetNearMe</h2>
-            <p style={s('margin:0 auto 20px;max-width:370px;color:var(--text-sec);font-size:15px;line-height:1.5')}>Foto, video e post curati per i tuoi annunci, pronti in pochi minuti. Ti facciamo vedere come.</p>
-            <Box as="button" onClick={startTour} style={s('width:100%;border:none;background:#3B83F6;color:var(--bg-card);font-size:15px;font-weight:700;padding:14px 28px;border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;min-height:48px;transition:all .2s')} hover={s('background:#2b6fe0;transform:translateY(-1px);box-shadow:0 8px 24px rgba(59,131,246,.28)')}>
+            <h2 style={s('margin: 0 0 4px;font-size:24px;font-weight:800;letter-spacing:-.6px;color:#1a1a1a')}>Benvenuto su GetNearMe</h2>
+            <p style={s('margin: 0 auto 18px;max-width:333px;color:var(--text-sec);font-size:14px;line-height:1.5')}>Foto, video e post curati per i tuoi annunci, pronti in pochi minuti. Ti facciamo vedere come.</p>
+            <Box as="button" onClick={startTour} style={s('width:100%;border:none;background:#3B83F6;color:var(--bg-card);font-size:14px;font-weight:700;padding: 12px 25px;border-radius:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap: 6px;min-height:43px;transition:all .2s')} hover={s('background:#2b6fe0;transform:translateY(-1px);box-shadow:0 8px 24px rgba(59,131,246,.28)')}>
               Fai un giro veloce
             </Box>
-            <Box as="button" onClick={() => { closeWelcome(); setCollapsed(false); tourGo(TOUR_DEFS.length - 2); }} style={s('display:block;margin:16px auto 0;text-align:center;width:fit-content;border:none;background:transparent;color:var(--text-muted);font-size:14px;font-weight:600;padding:8px 12px;border-radius:8px;cursor:pointer;transition:color .2s')} hover={{ color: 'var(--text-sec)' }}>
+            <Box as="button" onClick={() => { closeWelcome(); setCollapsed(false); tourGo(TOUR_DEFS.length - 2); }} style={s('display:block;margin: 13px auto 0;text-align:center;width:fit-content;border:none;background:transparent;color:var(--text-muted);font-size:13px;font-weight:600;padding: 6px 11px;border-radius:7px;cursor:pointer;transition:color .2s')} hover={{ color: 'var(--text-sec)' }}>
               Salta e inizia subito
             </Box>
           </div>
@@ -3241,30 +3421,30 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
           )}
           {tdef.sel !== '[data-tour="new-project"]' && (isMobile || tdef.sel !== '[data-tour-dropdown]') && (cardCentered || tourRect) && (
             <div key={cardCentered ? 'center' : 'tip'} style={cardCentered
-              ? { position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%,-50%)', width: 360, maxWidth: 'calc(100vw - 32px)', background: 'var(--bg-card)', borderRadius: 16, boxShadow: '0 24px 64px rgba(20,18,15,.32)', padding: '22px 24px', animation: 'tour-fade-in .5s cubic-bezier(0.16, 1, 0.3, 1) forwards', pointerEvents: 'auto' }
-              : { position: 'absolute', left: tipL, top: tipT, width: 300, background: 'var(--bg-card)', borderRadius: 12, boxShadow: '0 16px 48px rgba(20,18,15,.3)', padding: '18px 20px 20px', pointerEvents: 'auto', transition: 'left .8s cubic-bezier(0.16, 1, 0.3, 1), top .8s cubic-bezier(0.16, 1, 0.3, 1), opacity .3s ease' }}>
+              ? { position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%,-50%)', width: 324, maxWidth: 'calc(100vw - 32px)', background: 'var(--bg-card)', borderRadius: 14, boxShadow: '0 24px 64px rgba(20,18,15,.32)', padding: '20px 22px', animation: 'tour-fade-in .5s cubic-bezier(0.16, 1, 0.3, 1) forwards', pointerEvents: 'auto' }
+              : { position: 'absolute', left: tipL, top: tipT, width: 270, background: 'var(--bg-card)', borderRadius: 11, boxShadow: '0 16px 48px rgba(20,18,15,.3)', padding: '16px 18px 18px', pointerEvents: 'auto', transition: 'left .8s cubic-bezier(0.16, 1, 0.3, 1), top .8s cubic-bezier(0.16, 1, 0.3, 1), opacity .3s ease' }}>
               <TourAnim key={tourStep} kind={tdef.anim} />
               {tdef.sel !== '@center' && tdef.sel !== '[data-tour-dropdown]' && (
-                <div style={s('display:flex;align-items:center;justify-content:space-between;margin-bottom:6px')}>
-                  <span style={s('font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#1d5fd0')}>{(tourStep + 1) + ' di ' + (TOUR_DEFS.length - 2)}</span>
-                  <span onClick={() => { go('immobili'); tourGo(TOUR_DEFS.length - 2); }} style={s('font-size:12px;font-weight:600;color:#b3aca1;cursor:pointer;padding:4px')}>Salta il tour</span>
+                <div style={s('display:flex;align-items:center;justify-content:space-between;margin-bottom:5px')}>
+                  <span style={s('font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#1d5fd0')}>{(tourStep + 1) + ' di ' + (TOUR_DEFS.length - 2)}</span>
+                  <span onClick={() => { go('immobili'); tourGo(TOUR_DEFS.length - 2); }} style={s('font-size:11px;font-weight:600;color:#b3aca1;cursor:pointer;padding: 4px')}>Salta il tour</span>
                 </div>
               )}
               {tdef.sel === '@center' && (
-                <div style={s('font-size:32px;text-align:center;margin-bottom:16px')}>🎉</div>
+                <div style={s('font-size:29px;text-align:center;margin-bottom:14px')}>🎉</div>
               )}
               <div style={s(`font-size:16px;font-weight:800;letter-spacing:-.2px;margin-bottom:4px;${tdef.sel === '@center' ? 'text-align:center;' : ''}`)}>{tdef.title}</div>
               <div style={s(`font-size:13px;color:var(--text-sec);line-height:1.5;margin-bottom:16px;${tdef.sel === '@center' ? 'text-align:center;' : ''}`)}>{tdef.text}</div>
-              <div style={{ height: 1, background: 'var(--border-light)', margin: '0 0 16px' }} />
+              <div style={{ height: 1, background: 'var(--border-light)', margin: '0 0 14px' }} />
               <div style={s('display:flex;align-items:center;justify-content:space-between')}>
-                {tourStep > 0 && tdef.sel !== '@center' && <Box as="button" onClick={() => tourGo(tourStep - 1)} style={s('border:1px solid var(--border-main);background:var(--bg-card);font-size:12.5px;font-weight:700;padding:9px 16px;border-radius:8px;cursor:pointer;min-height:38px')} hover={s('background:var(--bg-hover)')}>Indietro</Box>}
+                {tourStep > 0 && tdef.sel !== '@center' && <Box as="button" onClick={() => tourGo(tourStep - 1)} style={s('border:1px solid var(--border-main);background:var(--bg-card);font-size:11px;font-weight:700;padding: 7px 14px;border-radius:7px;cursor:pointer;min-height:34px')} hover={s('background:var(--bg-hover)')}>Indietro</Box>}
                 {tdef.sel === '@center'
                   ? (tourReplayRef.current
-                    ? <Box as="button" onClick={() => { tourReplayRef.current = false; setTourStep(null); setTourRect(null); setTourRect2(null); setProjOpen(false); go('home'); }} style={s('border:none;background:#3B83F6;color:var(--bg-card);font-size:13.5px;font-weight:700;padding:12px 18px;border-radius:8px;cursor:pointer;width:100%;text-align:center;display:flex;align-items:center;justify-content:center;min-height:44px')} hover={s('background:#2b6fe0;transform:translateY(-1px);box-shadow:0 8px 20px rgba(59,131,246,.25)')}>Ho capito</Box>
-                    : <Box as="button" onClick={() => tourGo(tourStep + 1)} style={s('border:none;background:#3B83F6;color:var(--bg-card);font-size:13.5px;font-weight:700;padding:12px 18px;border-radius:8px;cursor:pointer;width:100%;text-align:center;display:flex;align-items:center;justify-content:center;min-height:44px')} hover={s('background:#2b6fe0;transform:translateY(-1px);box-shadow:0 8px 20px rgba(59,131,246,.25)')}>Avanti</Box>)
+                    ? <Box as="button" onClick={() => { tourReplayRef.current = false; setTourStep(null); setTourRect(null); setTourRect2(null); setProjOpen(false); go('home'); }} style={s('border:none;background:#3B83F6;color:var(--bg-card);font-size:12px;font-weight:700;padding: 10px 16px;border-radius:7px;cursor:pointer;width:100%;text-align:center;display:flex;align-items:center;justify-content:center;min-height:40px')} hover={s('background:#2b6fe0;transform:translateY(-1px);box-shadow:0 8px 20px rgba(59,131,246,.25)')}>Ho capito</Box>
+                    : <Box as="button" onClick={() => tourGo(tourStep + 1)} style={s('border:none;background:#3B83F6;color:var(--bg-card);font-size:12px;font-weight:700;padding: 10px 16px;border-radius:7px;cursor:pointer;width:100%;text-align:center;display:flex;align-items:center;justify-content:center;min-height:40px')} hover={s('background:#2b6fe0;transform:translateY(-1px);box-shadow:0 8px 20px rgba(59,131,246,.25)')}>Avanti</Box>)
                   : tdef.sel === '[data-tour-dropdown]'
-                  ? <Box as="button" onClick={() => { const replay = tourReplayRef.current; tourReplayRef.current = false; setTourStep(null); setTourRect(null); setTourRect2(null); setProjOpen(false); if (replay) { go('home'); } else if (inAgencyTeam) { go('immobili'); } else { setNewProjOpen(true); } }} style={s('border:none;background:#3B83F6;color:var(--bg-card);font-size:13.5px;font-weight:700;padding:12px 18px;border-radius:8px;cursor:pointer;width:100%;text-align:center;display:flex;align-items:center;justify-content:center;min-height:44px')} hover={s('background:#2b6fe0;transform:translateY(-1px);box-shadow:0 8px 20px rgba(59,131,246,.25)')}>{tourReplayRef.current ? 'Ho capito' : (inAgencyTeam ? 'Vedi gli immobili' : 'Aggiungi immobile')}</Box>
-                  : <Box as="button" onClick={() => tourGo(tourStep + 1)} style={s('border:none;background:#3B83F6;color:var(--bg-card);font-size:12.5px;font-weight:700;padding:9px 18px;border-radius:8px;cursor:pointer;margin-left:auto;min-height:38px')} hover={s('background:#2b6fe0')}>Avanti</Box>}
+                  ? <Box as="button" onClick={() => { const replay = tourReplayRef.current; tourReplayRef.current = false; setTourStep(null); setTourRect(null); setTourRect2(null); setProjOpen(false); if (replay) { go('home'); } else if (inAgencyTeam) { go('immobili'); } else { setNewProjOpen(true); } }} style={s('border:none;background:#3B83F6;color:var(--bg-card);font-size:12px;font-weight:700;padding: 10px 16px;border-radius:7px;cursor:pointer;width:100%;text-align:center;display:flex;align-items:center;justify-content:center;min-height:40px')} hover={s('background:#2b6fe0;transform:translateY(-1px);box-shadow:0 8px 20px rgba(59,131,246,.25)')}>{tourReplayRef.current ? 'Ho capito' : (inAgencyTeam ? 'Vedi gli immobili' : 'Aggiungi immobile')}</Box>
+                  : <Box as="button" onClick={() => tourGo(tourStep + 1)} style={s('border:none;background:#3B83F6;color:var(--bg-card);font-size:11px;font-weight:700;padding: 7px 16px;border-radius:7px;cursor:pointer;margin-left:auto;min-height:34px')} hover={s('background:#2b6fe0')}>Avanti</Box>}
               </div>
             </div>
           )}
@@ -3272,22 +3452,22 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
       )}
 
       {/* APP SHELL */}
-      <div data-app-shell style={{ display: 'flex', height: '100%', ['--gnm-content-left' as string]: collapsed ? '64px' : '252px' } as React.CSSProperties}>
+      <div data-app-shell style={{ display: 'flex', height: '100%', ['--gnm-content-left' as string]: collapsed ? '58px' : '227px' } as React.CSSProperties}>
         {/* SIDEBAR */}
-        <div className={`max-md:!fixed max-md:!inset-y-0 max-md:!left-0 max-md:!z-[100] max-md:!w-64 max-md:!shadow-2xl max-md:!flex ${mobileMenuOpen ? 'max-md:!translate-x-0' : 'max-md:!-translate-x-full'}`} style={{ width: collapsed ? 64 : 252, flex: 'none', background: 'var(--bg-card)', borderRight: '1px solid var(--border-light)', display: 'flex', flexDirection: 'column', transition: 'width .25s ease, transform .3s cubic-bezier(.4,0,.2,1)', overflow: 'hidden' }}>
-          <div style={s('height:64px;flex:none;display:flex;align-items:center;padding:0 20px;overflow:hidden;justify-content:space-between')}>
-            <div style={{ width: collapsed ? 27 : 130, overflow: 'hidden', flex: 'none' }}><img src="/dashboard/logo.svg" alt="GetNearMe" style={{ height: 24, maxWidth: 'none' }} /></div>
+        <div className={`max-md:!fixed max-md:!inset-y-0 max-md:!left-0 max-md:!z-[100] max-md:!w-64 max-md:!shadow-2xl max-md:!flex ${mobileMenuOpen ? 'max-md:!translate-x-0' : 'max-md:!-translate-x-full'}`} style={{ width: collapsed ? 58 : 227, flex: 'none', background: 'var(--bg-card)', borderRight: '1px solid var(--border-light)', display: 'flex', flexDirection: 'column', transition: 'width .25s ease, transform .3s cubic-bezier(.4,0,.2,1)', overflow: 'hidden' }}>
+          <div style={s('height:58px;flex:none;display:flex;align-items:center;padding:0 18px;overflow:hidden;justify-content:space-between')}>
+            <div style={{ width: collapsed ? 24 : 117, overflow: 'hidden', flex: 'none' }}><img src="/dashboard/logo.svg" alt="GetNearMe" style={{ height: 22, maxWidth: 'none' }} /></div>
             {mobileMenuOpen && (
-              <Box as="button" onClick={() => setMobileMenuOpen(false)} className="md:!hidden" style={s('border:none;background:transparent;width:32px;height:32px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center')} hover={s('background:#f1efe9')}><Icon name="x" size={18} /></Box>
+              <Box as="button" onClick={() => setMobileMenuOpen(false)} className="md:!hidden" style={s('border:none;background:transparent;width:29px;height:29px;border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center')} hover={s('background:#f1efe9')}><Icon name="x" size={16} /></Box>
             )}
           </div>
-          <div style={s('flex:1;overflow-y:auto;overflow-x:hidden;padding:6px 0 16px')}>
+          <div style={s('flex:1;overflow-y:auto;overflow-x:hidden;padding:5px 0 14px')}>
             {NAV_SECTIONS.map((sec, si) => {
               const items = sec.items.filter(it => it.route !== 'team' || hasAgency || isFreePlan);
               if (!items.length) return null;
               return (
               <div key={si} style={{ marginBottom: 4 }}>
-                {sec.label && !collapsed && <div title={sec.label === 'Immobile attivo' ? (active?.addr || active?.nome || '') : undefined} style={s('font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#b3aca1;padding:14px 22px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%')}>{sec.label === 'Immobile attivo' ? (active?.addr || active?.nome || 'Immobile attivo') : sec.label}</div>}
+                {sec.label && !collapsed && <div title={sec.label === 'Immobile attivo' ? (active?.addr || active?.nome || '') : undefined} style={s('font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#b3aca1;padding:13px 20px 5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%')}>{sec.label === 'Immobile attivo' ? (active?.addr || active?.nome || 'Immobile attivo') : sec.label}</div>}
                 {items.map((it) => {
                   const a = route === it.route || (it.route === 'progetti' && route === 'progetto');
                   const tourActive = tourStep !== null && TOUR_DEFS[tourStep]?.sel === `[title="${it.label}"]`;
@@ -3296,11 +3476,11 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                   const needsProject = sec.label === 'Immobile attivo' || it.route === 'report';
                   const disabled = tourStep === null && needsProject && projects.length === 0;
                   return (
-                    <Box key={it.route} onClick={tourStep !== null ? undefined : (disabled ? () => toast('Crea prima un immobile', 'x') : () => { go(it.route); setMobileMenuOpen(false); })} title={disabled ? 'Crea prima un immobile' : it.label} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', margin: '1px 10px', borderRadius: 12, cursor: tourStep !== null ? 'default' : (disabled ? 'not-allowed' : 'pointer'), background: highlighted ? '#f1efe9' : 'transparent', color: disabled ? 'var(--text-muted)' : (highlighted ? 'var(--text-main)' : 'var(--text-sec)'), fontWeight: highlighted ? 700 : 500, fontSize: 14, whiteSpace: 'nowrap', minHeight: 38, opacity: disabled ? 0.45 : 1 }} hover={tourStep !== null || disabled ? {} : { background: 'var(--bg-hover)' }}>
-                      <Icon name={it.icon} size={18} color={disabled ? 'var(--text-muted)' : (highlighted ? 'var(--text-main)' : 'var(--text-sec)')} />
+                    <Box key={it.route} onClick={tourStep !== null ? undefined : (disabled ? () => toast('Crea prima un immobile', 'x') : () => { go(it.route); setMobileMenuOpen(false); })} title={disabled ? 'Crea prima un immobile' : it.label} style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '9px 11px', margin: '1px 9px', borderRadius: 11, cursor: tourStep !== null ? 'default' : (disabled ? 'not-allowed' : 'pointer'), background: highlighted ? '#f1efe9' : 'transparent', color: disabled ? 'var(--text-muted)' : (highlighted ? 'var(--text-main)' : 'var(--text-sec)'), fontWeight: highlighted ? 700 : 500, fontSize: 13, whiteSpace: 'nowrap', minHeight: 34, opacity: disabled ? 0.45 : 1 }} hover={tourStep !== null || disabled ? {} : { background: 'var(--bg-hover)' }}>
+                      <Icon name={it.icon} size={16} color={disabled ? 'var(--text-muted)' : (highlighted ? 'var(--text-main)' : 'var(--text-sec)')} />
                       {!collapsed && <span>{it.label}</span>}
                       {it.route === 'media' && galleryUnseen > 0 && (
-                        <span style={{ marginLeft: 'auto', flexShrink: 0, background: '#3B83F6', color: '#fff', fontSize: 11, fontWeight: 700, lineHeight: 1, width: 20, height: 20, padding: 0, borderRadius: 6, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <span style={{ marginLeft: 'auto', flexShrink: 0, background: '#3B83F6', color: '#fff', fontSize: 10, fontWeight: 700, lineHeight: 1, width: 18, height: 18, padding: 0, borderRadius: 5, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
                           +{galleryUnseen}
                         </span>
                       )}
@@ -3311,19 +3491,19 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
               );
             })}
           </div>
-          <div 
-            ref={profileRef} 
+          <div
+            ref={profileRef}
             onMouseEnter={() => { if (hoverNav) setProfileOpen(true); }}
             onMouseLeave={() => { if (hoverNav) setProfileOpen(false); }}
-            style={{ flex: 'none', borderTop: '1px solid var(--border-light)', padding: collapsed ? '12px 6px' : '12px 10px' }}
+            style={{ flex: 'none', borderTop: '1px solid var(--border-light)', padding: collapsed ? '11px 5px' : '11px 9px' }}
           >
-            <Box onClick={(e) => { e.stopPropagation(); setProfileOpen(o => !o); setProjOpen(false); setTrayOpen(false); }} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: collapsed ? '0' : '10px 12px', borderRadius: collapsed ? '50%' : 12, cursor: 'pointer', justifyContent: collapsed ? 'center' : 'flex-start', width: collapsed ? 42 : 'auto', height: collapsed ? 42 : 'auto', margin: collapsed ? '0 auto' : 0 }} hover={{ background: '#f1efe9' }}>
+            <Box onClick={(e) => { e.stopPropagation(); setProfileOpen(o => !o); setProjOpen(false); setTrayOpen(false); }} style={{ display: 'flex', alignItems: 'center', gap: 11, padding: collapsed ? '0' : '9px 11px', borderRadius: collapsed ? '50%' : 11, cursor: 'pointer', justifyContent: collapsed ? 'center' : 'flex-start', width: collapsed ? 38 : 'auto', height: collapsed ? 38 : 'auto', margin: collapsed ? '0 auto' : 0 }} hover={{ background: '#f1efe9' }}>
               {userData?.avatarUrl
                 // eslint-disable-next-line @next/next/no-img-element
-                ? <img src={userData.avatarUrl} alt="" referrerPolicy="no-referrer" style={{ width: 34, height: 34, borderRadius: '50%', objectFit: 'cover', flex: 'none' }} />
-                : <div style={s('width:34px;height:34px;border-radius:50%;background:var(--text-main);color:var(--bg-card);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex:none')}>{(userData?.email ?? 'U')[0].toUpperCase()}</div>}
-              {!collapsed && <div style={{ minWidth: 0, flex: 1 }}><div style={s('font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{userData?.email?.split('@')[0] ?? 'Utente'}</div><div style={s('font-size:11px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{userData?.email ?? ''}</div></div>}
-              {!collapsed && <Icon name="chevron-up" size={14} color="var(--text-muted)" style={{ transition: 'transform .2s', transform: profileOpen ? 'none' : 'rotate(180deg)' }} />}
+                ? <img src={userData.avatarUrl} alt="" referrerPolicy="no-referrer" style={{ width: 31, height: 31, borderRadius: '50%', objectFit: 'cover', flex: 'none' }} />
+                : <div style={s('width:31px;height:31px;border-radius:50%;background:var(--text-main);color:var(--bg-card);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex:none')}>{(userData?.email ?? 'U')[0].toUpperCase()}</div>}
+              {!collapsed && <div style={{ minWidth: 0, flex: 1 }}><div style={s('font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{userData?.email?.split('@')[0] ?? 'Utente'}</div><div style={s('font-size:10px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{userData?.email ?? ''}</div></div>}
+              {!collapsed && <Icon name="chevron-up" size={13} color="var(--text-muted)" style={{ transition: 'transform .2s', transform: profileOpen ? 'none' : 'rotate(180deg)' }} />}
             </Box>
             {profileOpen && (() => {
               const rect = profileRef.current?.getBoundingClientRect();
@@ -3331,8 +3511,8 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
               const w = rect ? rect.width - 20 : 220;
               const bottom = rect ? window.innerHeight - rect.top - 12 : 80;
               return (
-                <div style={{ position: 'fixed', bottom, left, width: w, zIndex: 9999, paddingBottom: 16 }}>
-                  <div style={{ background: 'var(--bg-card)', borderRadius: 12, boxShadow: '0 16px 48px rgba(33,31,28,.16)', border: '1px solid var(--border-light)', overflow: 'hidden' }}>
+                <div style={{ position: 'fixed', bottom, left, width: w, zIndex: 9999, paddingBottom: 14 }}>
+                  <div style={{ background: 'var(--bg-card)', borderRadius: 11, boxShadow: '0 16px 48px rgba(33,31,28,.16)', border: '1px solid var(--border-light)', overflow: 'hidden' }}>
                     <div style={s('padding:4px')}>
                       {[
                         { icon: 'play-circle', label: 'Tutorial', action: () => { setProfileOpen(false); setMobileMenuOpen(false); tourReplayRef.current = true; setWelcomeOpen(true); } },
@@ -3340,8 +3520,8 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                         { icon: 'settings', label: 'Impostazioni', action: () => { setProfileOpen(false); setMobileMenuOpen(false); go('impostazioni'); } },
                         { icon: 'life-buoy', label: 'Assistenza', action: () => { setProfileOpen(false); setMobileMenuOpen(false); go('assistenza'); } },
                       ].map(item => (
-                        <Box key={item.label} onClick={item.action} style={s('display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:600')} hover={s('background:var(--bg-hover)')}>
-                          <Icon name={item.icon} size={16} color="var(--text-sec)" />{item.label}
+                        <Box key={item.label} onClick={item.action} style={s('display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:9px;cursor:pointer;font-size:12px;font-weight:600')} hover={s('background:var(--bg-hover)')}>
+                          <Icon name={item.icon} size={14} color="var(--text-sec)" />{item.label}
                         </Box>
                       ))}
                     </div>
@@ -3352,8 +3532,8 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                         // Dopo il logout si torna alla landing (homepage del locale).
                         const loc = window.location.pathname.split('/').filter(Boolean)[0] || 'it';
                         window.location.href = `/${loc}`;
-                      }} style={s('display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:600;color:#dc2626')} hover={s('background:#fef2f2')}>
-                        <Icon name="log-out" size={16} color="#dc2626" />Esci
+                      }} style={s('display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:9px;cursor:pointer;font-size:12px;font-weight:600;color:#dc2626')} hover={s('background:#fef2f2')}>
+                        <Icon name="log-out" size={14} color="#dc2626" />Esci
                       </Box>
                     </div>
                   </div>
@@ -3369,37 +3549,37 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
         {/* MAIN */}
         <div className="max-md:!w-full" style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
           {/* HEADER */}
-          <div className="max-md:!px-3 max-md:!gap-2 max-md:!flex-wrap max-md:!h-auto max-md:!py-2.5" style={{ height: 64, flex: 'none', background: 'var(--bg-card)', borderBottom: '1px solid var(--border-light)', display: 'flex', alignItems: 'center', gap: 14, padding: '0 20px', position: 'relative', zIndex: tourStep !== null && tdef.sel === '[data-tour-dropdown]' ? 'auto' as any : 30 }}>
+          <div className="max-md:!px-3 max-md:!gap-2 max-md:!flex-wrap max-md:!h-auto max-md:!py-2.5" style={{ height: 58, flex: 'none', background: 'var(--bg-card)', borderBottom: '1px solid var(--border-light)', display: 'flex', alignItems: 'center', gap: 13, padding: '0 18px', position: 'relative', zIndex: tourStep !== null && tdef.sel === '[data-tour-dropdown]' ? 'auto' as any : 30 }}>
             {/* Hamburger (Mobile) */}
-            <Box as="button" onClick={() => setMobileMenuOpen(true)} className="md:!hidden" title="Apri menu" aria-label="Apri menu" style={s('border:none;background:transparent;width:38px;height:38px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none')} hover={s('background:#f1efe9')}><Icon name="menu" size={20} /></Box>
-            
+            <Box as="button" onClick={() => setMobileMenuOpen(true)} className="md:!hidden" title="Apri menu" aria-label="Apri menu" style={s('border:none;background:transparent;width:34px;height:34px;border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none')} hover={s('background:#f1efe9')}><Icon name="menu" size={18} /></Box>
+
             {/* Collapse (Desktop) */}
-            <Box as="button" onClick={() => setCollapsed((c) => !c)} className="max-md:!hidden" title="Comprimi menu" aria-label="Comprimi menu" style={s('border:none;background:transparent;width:38px;height:38px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center')} hover={s('background:#f1efe9')}><Icon name="panel-left" size={18} /></Box>
+            <Box as="button" onClick={() => setCollapsed((c) => !c)} className="max-md:!hidden" title="Comprimi menu" aria-label="Comprimi menu" style={s('border:none;background:transparent;width:34px;height:34px;border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center')} hover={s('background:#f1efe9')}><Icon name="panel-left" size={16} /></Box>
 
             {/* project switcher */}
             <div data-tour-dropdown className="max-md:!order-10 max-md:!w-full max-md:!basis-full" onMouseEnter={() => { if (hoverNav && tourStep === null) { if (projHoverTimer.current) clearTimeout(projHoverTimer.current); setProjOpen(true); setTrayOpen(false); } }} onMouseLeave={() => { if (hoverNav && tourStep === null) { if (projHoverTimer.current) clearTimeout(projHoverTimer.current); projHoverTimer.current = setTimeout(() => setProjOpen(false), 180); } }} style={{ position: 'relative', ...(!isMobile && tourStep !== null && tdef.sel === '[data-tour-dropdown]' ? { zIndex: 102, pointerEvents: 'none' as const } : {}) }}>
-              <Box className="max-md:!w-full max-md:!min-w-0" onClick={(e) => { e.stopPropagation(); if (tourStep !== null && TOUR_DEFS[tourStep]?.sel === '[data-tour-dropdown]') return; setProjOpen((o) => !o); setTrayOpen(false); }} style={s(`display:flex;align-items:center;gap:10px;padding:7px 14px 7px 8px;border:1px solid #e9e6df;border-radius:8px;cursor:pointer;background:var(--bg-card);min-height:38px;min-width:240px;justify-content:space-between`)} hover={s('border-color:var(--border-dark);box-shadow:0 2px 8px rgba(33,31,28,.06)')}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
+              <Box className="max-md:!w-full max-md:!min-w-0" onClick={(e) => { e.stopPropagation(); if (tourStep !== null && TOUR_DEFS[tourStep]?.sel === '[data-tour-dropdown]') return; setProjOpen((o) => !o); setTrayOpen(false); }} style={s(`display:flex;align-items:center;gap:9px;padding:6px 13px 6px 7px;border:1px solid #e9e6df;border-radius:7px;cursor:pointer;background:var(--bg-card);min-height:34px;min-width:216px;justify-content:space-between`)} hover={s('border-color:var(--border-dark);box-shadow:0 2px 8px rgba(33,31,28,.06)')}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 9, minWidth: 0, flex: 1 }}>
                   {loadingProjects ? (
-                    <div style={{ minWidth: 0, flex: 1 }}><div style={s('font-size:13px;font-weight:700;color:var(--text-muted)')}>Caricamento...</div></div>
+                    <div style={{ minWidth: 0, flex: 1 }}><div style={s('font-size:12px;font-weight:700;color:var(--text-muted)')}>Caricamento...</div></div>
                   ) : active ? (
                     <>
-                      <div style={{ width: 30, height: 30, borderRadius: '50%', ...getCoverStyle(active, true), flex: 'none' }} />
-                      <div style={{ minWidth: 0, flex: 1 }}><div style={s('font-size:11px;color:var(--text-muted);line-height:1.2')}>Immobile attivo</div><div style={s('font-size:13px;font-weight:700;white-space:nowrap;line-height:1.2;overflow:hidden;text-overflow:ellipsis')}>{active.nome}</div></div>
+                      <div style={{ width: 27, height: 27, borderRadius: '50%', ...getCoverStyle(active, true), flex: 'none' }} />
+                      <div style={{ minWidth: 0, flex: 1 }}><div style={s('font-size:10px;color:var(--text-muted);line-height:1.2')}>Immobile attivo</div><div style={s('font-size:12px;font-weight:700;white-space:nowrap;line-height:1.2;overflow:hidden;text-overflow:ellipsis')}>{active.nome}</div></div>
                     </>
                   ) : (
                     <>
-                      {tourStep === null && <div style={{ width: 30, height: 30, borderRadius: '50%', backgroundColor: '#f3f1ec', flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="plus" size={14} color="var(--text-muted)" /></div>}
-                      <div style={{ minWidth: 0, flex: 1 }}><div style={s(`font-size:13px;font-weight:700;white-space:nowrap;line-height:1.2${tourStep !== null ? ';color:var(--text-muted)' : ''}`)}>{tourStep !== null ? 'I tuoi immobili' : 'Crea il tuo primo immobile'}</div></div>
+                      {tourStep === null && <div style={{ width: 27, height: 27, borderRadius: '50%', backgroundColor: '#f3f1ec', flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="plus" size={13} color="var(--text-muted)" /></div>}
+                      <div style={{ minWidth: 0, flex: 1 }}><div style={s(`font-size:12px;font-weight:700;white-space:nowrap;line-height:1.2${tourStep !== null ? ';color:var(--text-muted)' : ''}`)}>{tourStep !== null ? 'I tuoi immobili' : 'Crea il tuo primo immobile'}</div></div>
                     </>
                   )}
                 </div>
-                <Icon name="chevron-down" size={14} color="var(--text-muted)" style={{ flex: 'none' }} />
+                <Icon name="chevron-down" size={13} color="var(--text-muted)" style={{ flex: 'none' }} />
               </Box>
               {projOpen && (
-                <div style={s(`position:absolute;top:52px;left:0;width:100%;background:var(--bg-card);border-radius:12px;box-shadow:0 16px 48px rgba(33,31,28,.16);border:1px solid var(--border-light);z-index:99;overflow:hidden;box-shadow:0 16px 48px rgba(33,31,28,.16)`)}>
-                  {tourStep === null && <div style={s('padding:12px 12px 8px')}><div style={s('display:flex;align-items:center;gap:8px;background:#faf9f7;border:1px solid #ece9e2;border-radius:10px;padding:0 14px;min-height:44px')}><Icon name="search" size={15} color="var(--text-muted)" /><input value={projQuery} onChange={(e) => setProjQuery(e.target.value)} placeholder="Cerca immobile…" style={s('border:none;background:transparent;outline:none;font-size:13px;width:100%')} /></div></div>}
-                  <div style={{ padding: tourStep !== null ? '12px' : '0 12px 12px', borderBottom: '1px solid var(--border-light)' }}>
+                <div style={s(`position:absolute;top:47px;left:0;width:100%;background:var(--bg-card);border-radius:11px;box-shadow:0 16px 48px rgba(33,31,28,.16);border:1px solid var(--border-light);z-index:99;overflow:hidden;box-shadow:0 16px 48px rgba(33,31,28,.16)`)}>
+                  {tourStep === null && <div style={s('padding:11px 11px 7px')}><div style={s('display:flex;align-items:center;gap:7px;background:#faf9f7;border:1px solid #ece9e2;border-radius:9px;padding:0 13px;min-height:40px')}><Icon name="search" size={14} color="var(--text-muted)" /><input value={projQuery} onChange={(e) => setProjQuery(e.target.value)} placeholder="Cerca immobile…" style={s('border:none;background:transparent;outline:none;font-size:12px;width:100%')} /></div></div>}
+                  <div style={{ padding: tourStep !== null ? '11px' : '0 11px 11px', borderBottom: '1px solid var(--border-light)' }}>
                     <Box data-tour="new-project" onClick={() => {
                       const inTourDropdown = tourStep !== null && TOUR_DEFS[tourStep]?.sel === '[data-tour-dropdown]';
                       if (inTourDropdown && tourReplayRef.current) {
@@ -3414,15 +3594,15 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                         return;
                       }
                       setProjOpen(false); setNewProjOpen(true); setTourStep(null); setTourRect(null); setTourRect2(null); setTourCtaRect(null);
-                    }} style={s(`display:flex;align-items:center;justify-content:center;gap:8px;padding:12px 16px;border-radius:10px;cursor:pointer;color:var(--bg-card);background:#3B83F6;font-weight:700;font-size:13px;min-height:44px;${tourStep !== null && tdef.sel === '[data-tour-dropdown]' ? 'box-shadow:0 0 0 3px rgba(255,255,255,.7),0 0 20px rgba(255,255,255,.4);animation:tour-cta-glow 2s ease-in-out infinite;pointer-events:auto;' : ''}`)} hover={s('background:#2b6fe0')}>{tourStep !== null && tdef.sel === '[data-tour-dropdown]' && tourReplayRef.current && <Icon name="check" size={16} color="var(--bg-card)" />}{tourStep !== null && tdef.sel === '[data-tour-dropdown]' && tourReplayRef.current ? 'Ho capito' : (tourStep !== null && tdef.sel === '[data-tour-dropdown]' && inAgencyTeam ? 'Vedi gli immobili' : (projList.length === 0 ? 'Crea il tuo primo immobile' : 'Nuovo immobile'))}</Box>
+                    }} style={s(`display:flex;align-items:center;justify-content:center;gap:7px;padding:11px 14px;border-radius:9px;cursor:pointer;color:var(--bg-card);background:#3B83F6;font-weight:700;font-size:12px;min-height:40px;${tourStep !== null && tdef.sel === '[data-tour-dropdown]' ? 'box-shadow:0 0 0 3px rgba(255,255,255,.7),0 0 20px rgba(255,255,255,.4);animation:tour-cta-glow 2s ease-in-out infinite;pointer-events:auto;' : ''}`)} hover={s('background:#2b6fe0')}>{tourStep !== null && tdef.sel === '[data-tour-dropdown]' && tourReplayRef.current && <Icon name="check" size={14} color="var(--bg-card)" />}{tourStep !== null && tdef.sel === '[data-tour-dropdown]' && tourReplayRef.current ? 'Ho capito' : (tourStep !== null && tdef.sel === '[data-tour-dropdown]' && inAgencyTeam ? 'Vedi gli immobili' : (projList.length === 0 ? 'Crea il tuo primo immobile' : 'Nuovo immobile'))}</Box>
                   </div>
                   {projList.length > 0 && (
-                    <div style={s('max-height:260px;overflow:auto;padding:8px 6px')}>
+                    <div style={s('max-height:234px;overflow:auto;padding:7px 5px')}>
                       {projList.map((p) => (
-                        <Box key={p.id} onClick={() => { setActiveProject(p.id); setProjOpen(false); }} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 10px', borderRadius: 12, cursor: 'pointer', background: p.id === activeProject ? '#f6faff' : 'transparent', border: p.id === activeProject ? '1px solid #3B83F6' : '1px solid transparent' }} hover={{ background: 'var(--bg-hover)' }}>
-                          <div style={{ width: 34, height: 34, borderRadius: 10, ...getCoverStyle(p, true), flex: 'none' }} />
-                          <div style={{ minWidth: 0, flex: 1 }}><div style={s('font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{p.nome}</div><div style={s('font-size:11px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{p.addr}</div></div>
-                          {p.id === activeProject && <Icon name="check" size={14} color="#3B83F6" />}
+                        <Box key={p.id} onClick={() => { setActiveProject(p.id); setProjOpen(false); }} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 9px', borderRadius: 11, cursor: 'pointer', background: p.id === activeProject ? '#f6faff' : 'transparent', border: p.id === activeProject ? '1px solid #3B83F6' : '1px solid transparent' }} hover={{ background: 'var(--bg-hover)' }}>
+                          <div style={{ width: 31, height: 31, borderRadius: 9, ...getCoverStyle(p, true), flex: 'none' }} />
+                          <div style={{ minWidth: 0, flex: 1 }}><div style={s('font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{p.nome}</div><div style={s('font-size:10px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{p.addr}</div></div>
+                          {p.id === activeProject && <Icon name="check" size={13} color="#3B83F6" />}
                         </Box>
                       ))}
                     </div>
@@ -3436,23 +3616,23 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
             {/* jobs tray + notifications */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <div style={{ position: 'relative' }} title="Lavori in corso">
-                <Box as="button" onClick={(e) => { e.stopPropagation(); setTrayOpen((o) => !o); setProjOpen(false); setNotifOpen(false); setProfileOpen(false); }} aria-label="Lavori in corso" style={s('border:none;background:transparent;width:38px;height:38px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;position:relative')} hover={s('background:#f1efe9')}>
-                  <Icon name="inbox" size={18} />
+                <Box as="button" onClick={(e) => { e.stopPropagation(); setTrayOpen((o) => !o); setProjOpen(false); setNotifOpen(false); setProfileOpen(false); }} aria-label="Lavori in corso" style={s('border:none;background:transparent;width:34px;height:34px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;position:relative')} hover={s('background:#f1efe9')}>
+                  <Icon name="inbox" size={16} />
                   {(() => {
                     // Badge con conteggio job attivi (distinto dal pallino notifiche).
                     const activeCount = batches.filter(b => b.status === 'processing' || b.status === 'pending').length + videoJobs.filter(j => j.stage === 'render' && !j.dismissed).length;
                     const showTourDot = tourStep !== null && tourStep >= 6;
                     if (!activeCount && !showTourDot) return null;
                     if (activeCount > 0) return (
-                      <div style={{ position: 'absolute', top: 2, right: 2, minWidth: 15, height: 15, padding: '0 3px', boxSizing: 'border-box', borderRadius: 99, background: '#3B83F6', border: '2px solid var(--bg-card)', color: '#fff', fontSize: 9, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}>{activeCount}</div>
+                      <div style={{ position: 'absolute', top: 2, right: 2, minWidth: 14, height: 14, padding: '0 3px', boxSizing: 'border-box', borderRadius: 99, background: '#3B83F6', border: '2px solid var(--bg-card)', color: '#fff', fontSize: 9, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}>{activeCount}</div>
                     );
-                    return <div style={{ position: 'absolute', top: 6, right: 6, width: 8, height: 8, borderRadius: '50%', background: '#3B83F6', border: '2px solid var(--bg-card)' }} />;
+                    return <div style={{ position: 'absolute', top: 5, right: 5, width: 7, height: 7, borderRadius: '50%', background: '#3B83F6', border: '2px solid var(--bg-card)' }} />;
                   })()}
                 </Box>
                 {trayOpen && (
-                  <div data-tour-tray style={s('position:absolute;top:46px;right:0;width:330px;background:var(--bg-card);border-radius:12px;box-shadow:0 16px 48px rgba(33,31,28,.16);border:1px solid var(--border-light);overflow:hidden;z-index:50')}>
-                    <div style={s('display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:1px solid var(--bg-body)')}><span style={s('font-size:13.5px;font-weight:800')}>Lavori in corso</span></div>
-                    <div style={{ maxHeight: 320, overflow: 'auto', ...(tourStep !== null ? { minHeight: 80 } : {}) }}>
+                  <div data-tour-tray style={s('position:absolute;top:41px;right:0;width:297px;background:var(--bg-card);border-radius:11px;box-shadow:0 16px 48px rgba(33,31,28,.16);border:1px solid var(--border-light);overflow:hidden;z-index:50')}>
+                    <div style={s('display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--bg-body)')}><span style={s('font-size:12px;font-weight:800')}>Lavori in corso</span></div>
+                    <div style={{ maxHeight: 288, overflow: 'auto', ...(tourStep !== null ? { minHeight: 72 } : {}) }}>
                       {(() => {
                         if (tourStep !== null) {
                           return <DemoTrayJobs onAllDone={() => setDemoJobsDone(true)} />;
@@ -3461,31 +3641,31 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                         const activeBatches = batches.filter(b => (b.status === 'processing' || b.status === 'pending') || ((b.status === 'completed' || b.status === 'partial') && !dismissed.includes(b.id)));
                         const activeVideos = videoJobs.filter(j => !j.dismissed && (j.stage === 'render' || j.stage === 'done' || j.stage === 'failed'));
                         if (activeBatches.length === 0 && activeVideos.length === 0) {
-                          return <div style={s('padding:22px 16px;text-align:center;font-size:13px;color:var(--text-muted)')}>Nessun lavoro in corso.<br />Le generazioni girano qui in background, senza bloccarti.</div>;
+                          return <div style={s('padding:20px 14px;text-align:center;font-size:12px;color:var(--text-muted)')}>Nessun lavoro in corso.<br />Le generazioni girano qui in background, senza bloccarti.</div>;
                         }
                         return (<>{activeBatches.map(b => {
                           const isDone = b.status === 'completed' || b.status === 'partial';
                           const styleObj = STAGING_STYLES.find(s => s.id === b.style);
                           const styleName = styleObj ? styleObj.label : b.style;
                           return (
-                            <div key={b.id} style={{ padding: '12px 16px', borderBottom: '1px solid var(--bg-body)', display: 'flex', gap: 12, position: 'relative' }}>
-                              <div style={{ width: 32, height: 32, borderRadius: 8, background: isDone ? '#e6f4ea' : '#eef4fe', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}>
-                                {isDone ? <Icon name="check" size={16} color="#1e8e3e" /> : <div style={{ width: 14, height: 14, border: '2px solid #3B83F6', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />}
+                            <div key={b.id} style={{ padding: '11px 14px', borderBottom: '1px solid var(--bg-body)', display: 'flex', gap: 11, position: 'relative' }}>
+                              <div style={{ width: 29, height: 29, borderRadius: 7, background: isDone ? '#e6f4ea' : '#eef4fe', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}>
+                                {isDone ? <Icon name="check" size={14} color="#1e8e3e" /> : <div style={{ width: 13, height: 13, border: '2px solid #3B83F6', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />}
                               </div>
                               <div style={{ flex: 1, minWidth: 0 }}>
-                                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 2, paddingRight: 22 }}>Batch Foto AI {styleName ? `· ${styleName}` : ''}</div>
-                                <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 6 }}>
+                                <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 2, paddingRight: 20 }}>Batch Foto AI {styleName ? `· ${styleName}` : ''}</div>
+                                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 5 }}>
                                   {isDone ? 'Completato' : `In elaborazione (${b.completedItems}/${b.totalItems})`}
                                 </div>
                                 {isDone && (
-                                  <div style={{ display: 'flex', gap: 8 }}>
-                                    <button onClick={() => { dismissBatch(b.id); mutateBatches(); setTrayOpen(false); go('media'); }} style={{ padding: '4px 8px', fontSize: 11, fontWeight: 700, borderRadius: 6, border: '1px solid var(--border-main)', background: 'var(--bg-card)', cursor: 'pointer' }}>Vedi in Media</button>
+                                  <div style={{ display: 'flex', gap: 7 }}>
+                                    <button onClick={() => { dismissBatch(b.id); mutateBatches(); setTrayOpen(false); go('media'); }} style={{ padding: '4px 7px', fontSize: 10, fontWeight: 700, borderRadius: 5, border: '1px solid var(--border-main)', background: 'var(--bg-card)', cursor: 'pointer' }}>Vedi in Media</button>
                                   </div>
                                 )}
                               </div>
                               {isDone && (
-                                <button onClick={(e) => { e.stopPropagation(); dismissBatch(b.id); mutateBatches(); }} title="Rimuovi" style={{ position: 'absolute', top: 10, right: 12, width: 22, height: 22, borderRadius: '50%', border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                  <Icon name="x" size={13} color="#b3aca1" />
+                                <button onClick={(e) => { e.stopPropagation(); dismissBatch(b.id); mutateBatches(); }} title="Rimuovi" style={{ position: 'absolute', top: 9, right: 11, width: 20, height: 20, borderRadius: '50%', border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                  <Icon name="x" size={12} color="#b3aca1" />
                                 </button>
                               )}
                             </div>
@@ -3495,28 +3675,28 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                           const isDone = j.stage === 'done';
                           const isFailed = j.stage === 'failed';
                           return (
-                            <div key={j.id} style={{ padding: '12px 16px', borderBottom: '1px solid var(--bg-body)', display: 'flex', gap: 12, position: 'relative' }}>
-                              <div style={{ width: 32, height: 32, borderRadius: 8, background: isDone ? '#e6f4ea' : isFailed ? '#fef2f2' : '#eef4fe', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}>
-                                {isDone ? <Icon name="check" size={16} color="#1e8e3e" /> : isFailed ? <Icon name="x" size={16} color="#dc2626" /> : <div style={{ width: 14, height: 14, border: '2px solid #3B83F6', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />}
+                            <div key={j.id} style={{ padding: '11px 14px', borderBottom: '1px solid var(--bg-body)', display: 'flex', gap: 11, position: 'relative' }}>
+                              <div style={{ width: 29, height: 29, borderRadius: 7, background: isDone ? '#e6f4ea' : isFailed ? '#fef2f2' : '#eef4fe', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}>
+                                {isDone ? <Icon name="check" size={14} color="#1e8e3e" /> : isFailed ? <Icon name="x" size={14} color="#dc2626" /> : <div style={{ width: 13, height: 13, border: '2px solid #3B83F6', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />}
                               </div>
                               <div style={{ flex: 1, minWidth: 0 }}>
-                                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 2, paddingRight: 22, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{j.template === 'montaggio' ? 'Montaggio' : 'Video AI'} · {j.title}</div>
-                                <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 6 }}>
+                                <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 2, paddingRight: 20, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{j.template === 'montaggio' ? 'Montaggio' : 'Video AI'} · {j.title}</div>
+                                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 5 }}>
                                   {isDone ? 'Completato' : isFailed ? (j.error || 'Non riuscito') : `In elaborazione (${Math.round(j.progress * 100)}%) · ${videoEta(j.template)}`}
                                 </div>
                                 {!isDone && !isFailed && (
-                                  <div style={{ height: 4, borderRadius: 2, background: '#eef0f3', overflow: 'hidden', marginBottom: 6 }}>
+                                  <div style={{ height: 4, borderRadius: 2, background: '#eef0f3', overflow: 'hidden', marginBottom: 5 }}>
                                     <div style={{ height: '100%', borderRadius: 2, background: '#3B83F6', width: `${Math.round(j.progress * 100)}%`, transition: 'width .4s' }} />
                                   </div>
                                 )}
                                 {isDone && (
-                                  <div style={{ display: 'flex', gap: 8 }}>
-                                    <button onClick={() => { setVideoJobs(dismissVideoJob(j.id)); setTrayOpen(false); go('media'); }} style={{ padding: '4px 8px', fontSize: 11, fontWeight: 700, borderRadius: 6, border: '1px solid var(--border-main)', background: 'var(--bg-card)', cursor: 'pointer' }}>Vedi in Media</button>
+                                  <div style={{ display: 'flex', gap: 7 }}>
+                                    <button onClick={() => { setVideoJobs(dismissVideoJob(j.id)); setTrayOpen(false); go('media'); }} style={{ padding: '4px 7px', fontSize: 10, fontWeight: 700, borderRadius: 5, border: '1px solid var(--border-main)', background: 'var(--bg-card)', cursor: 'pointer' }}>Vedi in Media</button>
                                   </div>
                                 )}
                               </div>
-                              <button onClick={(e) => { e.stopPropagation(); setVideoJobs(dismissVideoJob(j.id)); }} title={isDone || isFailed ? 'Rimuovi' : 'Annulla'} style={{ position: 'absolute', top: 10, right: 12, width: 22, height: 22, borderRadius: '50%', border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <Icon name="x" size={13} color="#b3aca1" />
+                              <button onClick={(e) => { e.stopPropagation(); setVideoJobs(dismissVideoJob(j.id)); }} title={isDone || isFailed ? 'Rimuovi' : 'Annulla'} style={{ position: 'absolute', top: 9, right: 11, width: 20, height: 20, borderRadius: '50%', border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <Icon name="x" size={12} color="#b3aca1" />
                               </button>
                             </div>
                           );
@@ -3527,18 +3707,18 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                 )}
               </div>
               <div ref={notifRef} style={{ position: 'relative' }}>
-                <Box as="button" onClick={(e) => { e.stopPropagation(); setNotifOpen(o => !o); setProjOpen(false); setTrayOpen(false); setProfileOpen(false); }} title="Notifiche" aria-label="Notifiche" style={s('border:none;background:transparent;width:38px;height:38px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;position:relative')} hover={s('background:#f1efe9')}>
-                  <Icon name="bell" size={18} />
+                <Box as="button" onClick={(e) => { e.stopPropagation(); setNotifOpen(o => !o); setProjOpen(false); setTrayOpen(false); setProfileOpen(false); }} title="Notifiche" aria-label="Notifiche" style={s('border:none;background:transparent;width:34px;height:34px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;position:relative')} hover={s('background:#f1efe9')}>
+                  <Icon name="bell" size={16} />
                   {notifications.filter(n => !n.is_read).length > 0 && (
-                    <div style={{ position: 'absolute', top: 6, right: 6, width: 8, height: 8, borderRadius: '50%', background: '#ef4444', border: '2px solid var(--bg-card)' }} />
+                    <div style={{ position: 'absolute', top: 5, right: 5, width: 7, height: 7, borderRadius: '50%', background: '#ef4444', border: '2px solid var(--bg-card)' }} />
                   )}
                 </Box>
                 {notifOpen && (
-                  <div style={s('position:absolute;top:46px;right:0;width:340px;background:var(--bg-card);border-radius:12px;box-shadow:0 16px 48px rgba(33,31,28,.16);border:1px solid var(--border-light);overflow:hidden;z-index:999')}>
-                    <div style={s('display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:1px solid var(--bg-body)')}>
-                      <span style={s('font-size:13.5px;font-weight:800')}>Notifiche</span>
+                  <div style={s('position:absolute;top:41px;right:0;width:306px;background:var(--bg-card);border-radius:11px;box-shadow:0 16px 48px rgba(33,31,28,.16);border:1px solid var(--border-light);overflow:hidden;z-index:999')}>
+                    <div style={s('display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--bg-body)')}>
+                      <span style={s('font-size:12px;font-weight:800')}>Notifiche</span>
                       {notifications.filter(n => !n.is_read).length > 0 && (
-                        <button 
+                        <button
                           onClick={async (e) => {
                             e.stopPropagation();
                             const unread = notifications.filter(n => !n.is_read).map(n => n.id);
@@ -3546,17 +3726,17 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                             mutateNotifs(prev => prev?.map(n => ({ ...n, is_read: true })), false);
                             await supabase.from('notifications').update({ is_read: true }).in('id', unread);
                           }}
-                          style={{ background: 'transparent', border: 'none', color: '#1d5fd0', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
+                          style={{ background: 'transparent', border: 'none', color: '#1d5fd0', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}
                         >Segna tutte come lette</button>
                       )}
                     </div>
-                    <div style={{ maxHeight: 380, overflowY: 'auto' }}>
+                    <div style={{ maxHeight: 342, overflowY: 'auto' }}>
                       {notifications.length === 0 ? (
-                        <div style={{ padding: '32px 16px', textAlign: 'center', color: 'var(--text-muted)', fontSize: 13.5 }}>Nessuna notifica.</div>
+                        <div style={{ padding: '29px 14px', textAlign: 'center', color: 'var(--text-muted)', fontSize: 12 }}>Nessuna notifica.</div>
                       ) : (
                         notifications.map(n => (
-                          <div 
-                            key={n.id} 
+                          <div
+                            key={n.id}
                             onClick={async (e) => {
                               e.stopPropagation();
                               if (!n.is_read) {
@@ -3564,15 +3744,15 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                                 await supabase.from('notifications').update({ is_read: true }).eq('id', n.id);
                               }
                             }}
-                            style={{ padding: '16px', borderBottom: '1px solid var(--bg-body)', cursor: 'pointer', background: n.is_read ? 'var(--bg-card)' : '#f0fdf4', display: 'flex', gap: 12 }}
+                            style={{ padding: '14px', borderBottom: '1px solid var(--bg-body)', cursor: 'pointer', background: n.is_read ? 'var(--bg-card)' : '#f0fdf4', display: 'flex', gap: 11 }}
                           >
                             <div style={{ flex: 'none', paddingTop: 2 }}>
-                              {n.type === 'info' ? <Icon name="info" size={16} color="#3B83F6" /> : <Icon name="bell" size={16} color="#10b981" />}
+                              {n.type === 'info' ? <Icon name="info" size={14} color="#3B83F6" /> : <Icon name="bell" size={14} color="#10b981" />}
                             </div>
                             <div>
-                              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-main)', marginBottom: 4 }}>{n.title}</div>
-                              <div style={{ fontSize: 13, color: 'var(--text-sec)', lineHeight: 1.4 }}>{n.body}</div>
-                              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 6 }}>
+                              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-main)', marginBottom: 4 }}>{n.title}</div>
+                              <div style={{ fontSize: 12, color: 'var(--text-sec)', lineHeight: 1.4 }}>{n.body}</div>
+                              <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 5 }}>
                                 {new Date(n.created_at).toLocaleDateString('it-IT', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                               </div>
                             </div>
@@ -3590,23 +3770,23 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
           <div ref={contentRef} style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }} onClick={closeMenus}>
             {loadingProjects ? (
               <div className="animate-pulse">
-                <div className="max-md:!h-auto max-md:!min-h-[220px]" style={{ height: 260, background: 'var(--bg-body)', position: 'relative' }}>
-                  <div className="max-md:!p-6 max-md:!pb-6 max-md:!items-center" style={{ maxWidth: 1160, margin: '0 auto', padding: '0 32px', height: '100%', display: 'flex', alignItems: 'flex-end', paddingBottom: 32 }}>
-                    <div className="max-md:!flex-col max-md:!items-center max-md:!mt-12" style={{ display: 'flex', gap: 24, alignItems: 'center', width: '100%' }}>
-                      <div style={{ width: 120, height: 120, borderRadius: 20, background: '#e9e6df' }} />
-                      <div className="max-md:!items-center" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 12 }}>
-                        <div style={{ width: 140, height: 16, background: '#e9e6df', borderRadius: 4 }} />
-                        <div style={{ width: 280, height: 38, background: '#e9e6df', borderRadius: 6 }} />
-                        <div style={{ width: 200, height: 16, background: '#e9e6df', borderRadius: 4 }} />
+                <div className="max-md:!h-auto max-md:!min-h-[220px]" style={{ height: 234, background: 'var(--bg-body)', position: 'relative' }}>
+                  <div className="max-md:!p-6 max-md:!pb-6 max-md:!items-center" style={{ maxWidth: 1044, margin: '0 auto', padding: '0 29px', height: '100%', display: 'flex', alignItems: 'flex-end', paddingBottom: 29 }}>
+                    <div className="max-md:!flex-col max-md:!items-center max-md:!mt-12" style={{ display: 'flex', gap: 22, alignItems: 'center', width: '100%' }}>
+                      <div style={{ width: 108, height: 108, borderRadius: 18, background: '#e9e6df' }} />
+                      <div className="max-md:!items-center" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 11 }}>
+                        <div style={{ width: 126, height: 14, background: '#e9e6df', borderRadius: 4 }} />
+                        <div style={{ width: 252, height: 34, background: '#e9e6df', borderRadius: 5 }} />
+                        <div style={{ width: 180, height: 14, background: '#e9e6df', borderRadius: 4 }} />
                       </div>
                     </div>
                   </div>
                 </div>
-                <div className="max-md:!p-4" style={{ maxWidth: 1160, margin: '0 auto', padding: '48px 32px 32px' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 24 }}>
-                    <div style={{ height: 140, background: 'var(--bg-body)', borderRadius: 16 }} />
-                    <div style={{ height: 140, background: 'var(--bg-body)', borderRadius: 16 }} />
-                    <div style={{ height: 140, background: 'var(--bg-body)', borderRadius: 16 }} />
+                <div className="max-md:!p-4" style={{ maxWidth: 1044, margin: '0 auto', padding: '43px 29px 29px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(270px, 1fr))', gap: 22 }}>
+                    <div style={{ height: 126, background: 'var(--bg-body)', borderRadius: 14 }} />
+                    <div style={{ height: 126, background: 'var(--bg-body)', borderRadius: 14 }} />
+                    <div style={{ height: 126, background: 'var(--bg-body)', borderRadius: 14 }} />
                   </div>
                 </div>
               </div>
@@ -3644,58 +3824,58 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                     items,
                   }));
                 return (
-                  <div className="max-md:!px-4 max-md:!py-6" style={{ maxWidth: 1160, margin: '0 auto', padding: '32px 32px 64px' }}>
-                    <div className="max-md:!flex-col max-md:!items-start max-md:!gap-4" style={s('display:flex;align-items:center;justify-content:space-between;margin-bottom:40px')}>
+                  <div className="max-md:!px-4 max-md:!py-6" style={{ maxWidth: 1044, margin: '0 auto', padding: '29px 29px 58px' }}>
+                    <div className="max-md:!flex-col max-md:!items-start max-md:!gap-4" style={s('display:flex;align-items:center;justify-content:space-between;margin-bottom:36px')}>
                       <div>
-                        <h1 style={s('margin:0 0 4px;font-size:25px;font-weight:800;letter-spacing:-.5px')}>Immobili</h1>
-                        <div style={s('color:#8c867d;font-size:14px')}>{projects.length} immobili · ogni immobile raccoglie foto, staging, video e post</div>
+                        <h1 style={s('margin: 0 0 4px;font-size:22px;font-weight:800;letter-spacing:-.5px')}>Immobili</h1>
+                        <div style={s('color:#8c867d;font-size:13px')}>{projects.length} immobili · ogni immobile raccoglie foto, staging, video e post</div>
                       </div>
                       {immSelectMode ? (
-                        <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-                          <Box as="button" onClick={() => { const all = projects.length > 0 && immSelected.size === projects.length; setImmSelected(all ? new Set() : new Set(projects.map(p => p.id))); }} style={s('box-sizing:border-box;border:1px solid #e4e1da;background:var(--bg-card);color:var(--text-main);font-size:13.5px;font-weight:700;padding:0 18px;height:44px;border-radius:10px;cursor:pointer;display:flex;align-items:center;gap:8px;white-space:nowrap')} hover={s('background:#f6f4f0')}>
+                        <div style={{ display: 'flex', gap: 9, alignItems: 'center', flexWrap: 'wrap' }}>
+                          <Box as="button" onClick={() => { const all = projects.length > 0 && immSelected.size === projects.length; setImmSelected(all ? new Set() : new Set(projects.map(p => p.id))); }} style={s('box-sizing:border-box;border:1px solid #e4e1da;background:var(--bg-card);color:var(--text-main);font-size:12px;font-weight:700;padding: 0 16px;height: 36px;border-radius:9px;cursor:pointer;display:flex;align-items:center;gap: 6px;white-space:nowrap')} hover={s('background:#f6f4f0')}>
                             {projects.length > 0 && immSelected.size === projects.length ? 'Deseleziona tutti' : 'Seleziona tutti'}
                           </Box>
-                          <Box as="button" onClick={async () => { if (!immSelected.size || immDeleting) return; setImmDeleting(true); const ids = [...immSelected]; let ok = 0; for (const id of ids) { if (await deleteProject(id)) ok++; } if (immSelected.has(activeProject)) { const rem = projects.filter(p => !immSelected.has(p.id)); setActiveProject(rem[0]?.id || ''); } setProjects(prev => prev.filter(p => !immSelected.has(p.id))); setImmDeleting(false); setImmSelectMode(false); setImmSelected(new Set()); toast(`${ok} ${ok === 1 ? 'immobile eliminato' : 'immobili eliminati'}`, 'check'); }} style={s('box-sizing:border-box;border:none;background:' + (immSelected.size && !immDeleting ? '#dc2626' : '#f3d4d4') + ';color:#fff;font-size:13.5px;font-weight:700;padding:0 18px;height:44px;border-radius:10px;cursor:' + (immSelected.size && !immDeleting ? 'pointer' : 'default') + ';display:flex;align-items:center;gap:8px;white-space:nowrap')} hover={immSelected.size && !immDeleting ? s('background:#b91c1c') : undefined}>
-                            {immDeleting ? (<><span style={{ display: 'inline-flex', animation: 'spin 1s linear infinite' }}><Icon name="loader-circle" size={16} color="#fff" /></span>Eliminazione...</>) : (<><Icon name="trash-2" size={16} color="#fff" />Elimina{immSelected.size ? ` (${immSelected.size})` : ''}</>)}
+                          <Box as="button" onClick={async () => { if (!immSelected.size || immDeleting) return; setImmDeleting(true); const ids = [...immSelected]; let ok = 0; for (const id of ids) { if (await deleteProject(id)) ok++; } if (immSelected.has(activeProject)) { const rem = projects.filter(p => !immSelected.has(p.id)); setActiveProject(rem[0]?.id || ''); } setProjects(prev => prev.filter(p => !immSelected.has(p.id))); setImmDeleting(false); setImmSelectMode(false); setImmSelected(new Set()); toast(`${ok} ${ok === 1 ? 'immobile eliminato' : 'immobili eliminati'}`, 'check'); }} style={s('box-sizing:border-box;border:none;background:' + (immSelected.size && !immDeleting ? '#dc2626' : '#f3d4d4') + ';color:#fff;font-size:13.5px;font-weight:700;padding: 0 18px;height: 40px;border-radius:10px;cursor:' + (immSelected.size && !immDeleting ? 'pointer' : 'default') + ';display:flex;align-items:center;gap: 7px;white-space:nowrap')} hover={immSelected.size && !immDeleting ? s('background:#b91c1c') : undefined}>
+                            {immDeleting ? (<><span style={{ display: 'inline-flex', animation: 'spin 1s linear infinite' }}><Icon name="loader-circle" size={14} color="#fff" /></span>Eliminazione...</>) : (<><Icon name="trash-2" size={14} color="#fff" />Elimina{immSelected.size ? ` (${immSelected.size})` : ''}</>)}
                           </Box>
-                          <Box as="button" onClick={() => { setImmSelectMode(false); setImmSelected(new Set()); }} style={s('box-sizing:border-box;border:1px solid #e4e1da;background:var(--bg-card);color:var(--text-main);font-size:13.5px;font-weight:700;padding:0 18px;height:44px;border-radius:10px;cursor:pointer;display:flex;align-items:center;white-space:nowrap')} hover={s('background:#f6f4f0')}>
+                          <Box as="button" onClick={() => { setImmSelectMode(false); setImmSelected(new Set()); }} style={s('box-sizing:border-box;border:1px solid #e4e1da;background:var(--bg-card);color:var(--text-main);font-size:12px;font-weight:700;padding: 0 16px;height: 36px;border-radius:9px;cursor:pointer;display:flex;align-items:center;white-space:nowrap')} hover={s('background:#f6f4f0')}>
                             Annulla
                           </Box>
                         </div>
                       ) : (
-                      <div className="max-md:!w-full max-md:!flex-col max-md:!gap-3 max-md:!items-stretch" style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+                      <div className="max-md:!w-full max-md:!flex-col max-md:!gap-3 max-md:!items-stretch" style={{ display: 'flex', gap: 9, alignItems: 'center', flexWrap: 'wrap' }}>
                         {/* Ricerca immobili (mobile) */}
-                        <div className="md:!hidden" style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', boxSizing: 'border-box', background: '#faf9f7', border: '1px solid #ece9e2', borderRadius: 10, padding: '0 14px', minHeight: 44 }}>
-                          <Icon name="search" size={16} color="#8c867d" />
-                          <input value={immQuery} onChange={(e) => setImmQuery(e.target.value)} placeholder="Cerca immobile…" style={s('border:none;background:transparent;outline:none;font-size:14px;width:100%;color:var(--text-main)')} />
+                        <div className="md:!hidden" style={{ display: 'flex', alignItems: 'center', gap: 7, width: '100%', boxSizing: 'border-box', background: '#faf9f7', border: '1px solid #ece9e2', borderRadius: 9, padding: '0 13px', minHeight: 40 }}>
+                          <Icon name="search" size={14} color="#8c867d" />
+                          <input value={immQuery} onChange={(e) => setImmQuery(e.target.value)} placeholder="Cerca immobile…" style={s('border:none;background:transparent;outline:none;font-size:13px;width:100%;color:var(--text-main)')} />
                         </div>
                         <div className="max-md:!flex max-md:!w-full max-md:!gap-3" style={{ display: 'contents' }}>
                         <div className="max-md:!flex-1" style={{ position: 'relative' }}>
-                          <Box as="button" className="max-md:!w-full max-md:!justify-center" onClick={() => setImmActionsOpen(o => !o)} style={s('box-sizing:border-box;border:1px solid #e4e1da;background:var(--bg-card);color:var(--text-main);font-size:13.5px;font-weight:700;line-height:20px;padding:11px 18px;border-radius:10px;cursor:pointer;display:flex;align-items:center;gap:8px;white-space:nowrap')} hover={s('background:#f6f4f0')}>
-                            Azioni <Icon name="chevron-down" size={16} color="#57534c" />
+                          <Box as="button" className="max-md:!w-full max-md:!justify-center" onClick={() => setImmActionsOpen(o => !o)} style={s('box-sizing:border-box;border:1px solid #e4e1da;background:var(--bg-card);color:var(--text-main);font-size:12px;font-weight:700;line-height:20px;padding: 9px 16px;border-radius:9px;cursor:pointer;display:flex;align-items:center;gap: 6px;white-space:nowrap')} hover={s('background:#f6f4f0')}>
+                            Azioni <Icon name="chevron-down" size={14} color="#57534c" />
                           </Box>
                           {immActionsOpen && (
-                            <div onClick={(e) => e.stopPropagation()} className="max-md:!left-1/2 max-md:!right-auto max-md:!-translate-x-1/2" style={{ position: 'absolute', top: 'calc(100% + 6px)', right: 0, zIndex: 40, background: '#fff', border: '1px solid #f0ede7', borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', padding: 4, minWidth: 180 }}>
-                              <Box as="button" onClick={() => { setImmActionsOpen(false); setImportOpen(true); }} style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '10px 12px', borderRadius: 8, border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 13.5, fontWeight: 600, color: '#211f1c', textAlign: 'left' } as React.CSSProperties} hover={{ background: 'var(--bg-hover)' }}>
-                                <Icon name="upload" size={16} color="#57534c" />Importa immobili
+                            <div onClick={(e) => e.stopPropagation()} className="max-md:!left-1/2 max-md:!right-auto max-md:!-translate-x-1/2" style={{ position: 'absolute', top: 'calc(100% + 6px)', right: 0, zIndex: 40, background: '#fff', border: '1px solid #f0ede7', borderRadius: 9, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', padding: 4, minWidth: 162 }}>
+                              <Box as="button" onClick={() => { setImmActionsOpen(false); setImportOpen(true); }} style={{ display: 'flex', alignItems: 'center', gap: 9, width: '100%', padding: '9px 11px', borderRadius: 7, border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 12, fontWeight: 600, color: '#211f1c', textAlign: 'left' } as React.CSSProperties} hover={{ background: 'var(--bg-hover)' }}>
+                                <Icon name="upload" size={14} color="#57534c" />Importa immobili
                               </Box>
-                              <Box as="button" onClick={() => { setImmActionsOpen(false); if (!projects.length) { toast('Nessun immobile', 'x'); return; } setImmSelectMode(true); setImmSelected(new Set()); }} style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '10px 12px', borderRadius: 8, border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 13.5, fontWeight: 600, color: '#211f1c', textAlign: 'left' } as React.CSSProperties} hover={{ background: 'var(--bg-hover)' }}>
-                                <Icon name="check" size={16} color="#57534c" />Seleziona immobili
+                              <Box as="button" onClick={() => { setImmActionsOpen(false); if (!projects.length) { toast('Nessun immobile', 'x'); return; } setImmSelectMode(true); setImmSelected(new Set()); }} style={{ display: 'flex', alignItems: 'center', gap: 9, width: '100%', padding: '9px 11px', borderRadius: 7, border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 12, fontWeight: 600, color: '#211f1c', textAlign: 'left' } as React.CSSProperties} hover={{ background: 'var(--bg-hover)' }}>
+                                <Icon name="check" size={14} color="#57534c" />Seleziona immobili
                               </Box>
-                              <div style={{ height: 1, background: '#f0ede7', margin: '4px 8px' }} />
+                              <div style={{ height: 1, background: '#f0ede7', margin: '4px 7px' }} />
                               {([
                                 { fmt: 'csv', label: 'Esporta CSV', fn: exportProjectsCSV },
                                 { fmt: 'xlsx', label: 'Esporta Excel', fn: exportProjectsXLSX },
                                 { fmt: 'pdf', label: 'Esporta PDF', fn: exportProjectsPDF },
                               ] as const).map((opt) => (
-                                <Box key={opt.fmt} as="button" onClick={() => { setImmActionsOpen(false); if (!projects.length) { toast('Nessun immobile da esportare', 'x'); return; } opt.fn(projects as unknown as ProjectData[]); }} style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '10px 12px', borderRadius: 8, border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 13.5, fontWeight: 600, color: '#211f1c', textAlign: 'left' } as React.CSSProperties} hover={{ background: 'var(--bg-hover)' }}>
-                                  <Icon name="download" size={16} color="#57534c" />{opt.label}
+                                <Box key={opt.fmt} as="button" onClick={() => { setImmActionsOpen(false); if (!projects.length) { toast('Nessun immobile da esportare', 'x'); return; } opt.fn(projects as unknown as ProjectData[]); }} style={{ display: 'flex', alignItems: 'center', gap: 9, width: '100%', padding: '9px 11px', borderRadius: 7, border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 12, fontWeight: 600, color: '#211f1c', textAlign: 'left' } as React.CSSProperties} hover={{ background: 'var(--bg-hover)' }}>
+                                  <Icon name="download" size={14} color="#57534c" />{opt.label}
                                 </Box>
                               ))}
                             </div>
                           )}
                         </div>
-                        <Box as="button" className="max-md:!flex-1" onClick={() => setNewProjOpen(true)} style={s('box-sizing:border-box;border:1px solid #3B83F6;background:#3B83F6;color:var(--bg-card);font-size:13.5px;font-weight:700;line-height:20px;padding:11px 18px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;white-space:nowrap')} hover={s('background:#2b6fe0;border-color:#2b6fe0')}>
+                        <Box as="button" className="max-md:!flex-1" onClick={() => setNewProjOpen(true)} style={s('box-sizing:border-box;border:1px solid #3B83F6;background:#3B83F6;color:var(--bg-card);font-size:12px;font-weight:700;line-height:20px;padding: 9px 16px;border-radius:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;white-space:nowrap')} hover={s('background:#2b6fe0;border-color:#2b6fe0')}>
                           Nuovo immobile
                         </Box>
                         </div>
@@ -3703,78 +3883,87 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                       )}
                     </div>
                     {list.length === 0 ? (
-                      <div style={s('display:flex;flex-direction:column;align-items:center;justify-content:center;padding:72px 32px;text-align:center')}>
-                        <div style={s('width:64px;height:64px;border-radius:16px;background:#f4f2ee;display:flex;align-items:center;justify-content:center;margin-bottom:18px')}>
-                          <Icon name="building-2" size={28} color="#b3aca1" />
+                      <div style={s('display:flex;flex-direction:column;align-items:center;justify-content:center;padding: 58px 29px;text-align:center')}>
+                        <div style={s('width: 52px;height: 52px;border-radius:14px;background:#f4f2ee;display:flex;align-items:center;justify-content:center;margin-bottom:16px')}>
+                          <Icon name="building-2" size={25} color="#b3aca1" />
                         </div>
-                        <h2 style={s('margin:0 0 8px;font-size:20px;font-weight:800;letter-spacing:-.3px')}>Nessun immobile ancora</h2>
-                        <p style={s('margin:0 0 24px;font-size:14px;color:#8c867d;max-width:380px;line-height:1.6')}>Crea il tuo primo immobile o importa la tua lista per iniziare a generare foto AI, video e post.</p>
-                        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center' }}>
-                          <Box as="button" onClick={() => setNewProjOpen(true)} style={s('border:1px solid #3B83F6;background:#3B83F6;color:#fff;font-size:14px;font-weight:700;padding:12px 22px;border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:center')} hover={s('background:#2b6fe0;border-color:#2b6fe0')}>
+                        <h2 style={s('margin: 0 0 7px;font-size:18px;font-weight:800;letter-spacing:-.3px')}>Nessun immobile ancora</h2>
+                        <p style={s('margin: 0 0 22px;font-size:13px;color:#8c867d;max-width:342px;line-height:1.6')}>Crea il tuo primo immobile o importa la tua lista per iniziare a generare foto AI, video e post.</p>
+                        <div style={{ display: 'flex', gap: 9, flexWrap: 'wrap', justifyContent: 'center' }}>
+                          <Box as="button" onClick={() => setNewProjOpen(true)} style={s('border:1px solid #3B83F6;background:#3B83F6;color:#fff;font-size:13px;font-weight:700;padding: 10px 20px;border-radius:11px;cursor:pointer;display:flex;align-items:center;justify-content:center')} hover={s('background:#2b6fe0;border-color:#2b6fe0')}>
                             Nuovo immobile
                           </Box>
-                          <Box as="button" onClick={() => setImportOpen(true)} style={s('border:1px solid #e4e1da;background:var(--bg-card);color:var(--text-main);font-size:14px;font-weight:700;padding:12px 22px;border-radius:12px;cursor:pointer;display:flex;align-items:center;gap:8px')} hover={s('background:#f6f4f0')}>
-                            <Icon name="upload" size={16} color="#57534c" />Importa
+                          <Box as="button" onClick={() => setImportOpen(true)} style={s('border:1px solid #e4e1da;background:var(--bg-card);color:var(--text-main);font-size:13px;font-weight:700;padding: 10px 20px;border-radius:11px;cursor:pointer;display:flex;align-items:center;gap: 6px')} hover={s('background:#f6f4f0')}>
+                            <Icon name="upload" size={14} color="#57534c" />Importa
                           </Box>
                         </div>
                       </div>
                     ) : (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 29 }}>
                         {days.map(day => (
                           <div key={day.key}>
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, borderBottom: '1px solid #f0ede7', paddingBottom: 12 }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                                <div style={{ width: 32, height: 32, borderRadius: 8, background: '#eef4fe', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                  <Icon name="calendar" size={16} color="#3B83F6" />
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14, borderBottom: '1px solid #f0ede7', paddingBottom: 11 }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+                                <div style={{ width: 29, height: 29, borderRadius: 7, background: '#eef4fe', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                  <Icon name="calendar" size={14} color="#3B83F6" />
                                 </div>
                                 <div>
-                                  <div style={{ fontSize: 15, fontWeight: 700, color: '#211f1c', textTransform: 'capitalize' }}>{day.label}</div>
-                                  <div style={{ fontSize: 12.5, color: '#8c867d' }}>{day.items.length} {day.items.length === 1 ? 'immobile' : 'immobili'}</div>
+                                  <div style={{ fontSize: 14, fontWeight: 700, color: '#211f1c', textTransform: 'capitalize' }}>{day.label}</div>
+                                  <div style={{ fontSize: 11, color: '#8c867d' }}>{day.items.length} {day.items.length === 1 ? 'immobile' : 'immobili'}</div>
                                 </div>
                               </div>
                             </div>
-                            <div className="max-md:!grid-cols-1" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 16 }}>
+                            <div className="max-md:!grid-cols-1" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(216px, 1fr))', gap: 14 }}>
                         {(isMobile && !immExpanded.has(day.key) ? day.items.slice(0, 5) : day.items).map(p => (
-                          <Box key={p.id} onClick={() => { if (immSelectMode) { setImmSelected(prev => { const n = new Set(prev); if (n.has(p.id)) n.delete(p.id); else n.add(p.id); return n; }); return; } if (immMenuId === p.id) { setImmMenuId(null); return; } setActiveProject(p.id); go('home'); }} style={{ position: 'relative', background: 'var(--bg-card)', border: immSelectMode && immSelected.has(p.id) ? '2px solid #3B83F6' : '1px solid #ece9e2', borderRadius: 16, overflow: 'hidden', cursor: 'pointer', display: 'flex', flexDirection: 'column', transition: 'transform .18s ease, box-shadow .18s ease', willChange: 'transform' }} hover={s('box-shadow:0 8px 24px rgba(33,31,28,.08);transform:translateY(-2px)')}>
+                          <Box key={p.id} onClick={() => { if (immSelectMode) { setImmSelected(prev => { const n = new Set(prev); if (n.has(p.id)) n.delete(p.id); else n.add(p.id); return n; }); return; } if (immMenuId === p.id) { setImmMenuId(null); return; } setActiveProject(p.id); go('home'); }} style={{ position: 'relative', background: 'var(--bg-card)', border: immSelectMode && immSelected.has(p.id) ? '2px solid #3B83F6' : '1px solid #ece9e2', borderRadius: 14, overflow: 'hidden', cursor: 'pointer', display: 'flex', flexDirection: 'column', transition: 'transform .18s ease, box-shadow .18s ease', willChange: 'transform' }} hover={s('box-shadow:0 8px 24px rgba(33,31,28,.08);transform:translateY(-2px)')}>
                             {immSelectMode && (
-                              <div style={{ position: 'absolute', top: 12, left: 12, width: 26, height: 26, borderRadius: '50%', background: immSelected.has(p.id) ? '#3B83F6' : 'rgba(255,255,255,0.92)', border: immSelected.has(p.id) ? 'none' : '1px solid #d8d4cb', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 6 }}>
-                                {immSelected.has(p.id) && <Icon name="check" size={15} color="#fff" />}
+                              <div style={{ position: 'absolute', top: 11, left: 11, width: 23, height: 23, borderRadius: '50%', background: immSelected.has(p.id) ? '#3B83F6' : 'rgba(255,255,255,0.92)', border: immSelected.has(p.id) ? 'none' : '1px solid #d8d4cb', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 6 }}>
+                                {immSelected.has(p.id) && <Icon name="check" size={14} color="#fff" />}
                               </div>
                             )}
                             {!immSelectMode && (
-                            <button onClick={(e) => { e.stopPropagation(); setImmMenuId(id => id === p.id ? null : p.id); }} title="Azioni" style={{ position: 'absolute', top: 12, right: 12, width: 34, height: 34, borderRadius: '50%', background: 'rgba(20,30,55,0.45)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 6 }}>
-                              <Icon name="more-vertical" size={16} color="#fff" />
+                            <button onClick={(e) => { e.stopPropagation(); setImmMenuId(id => id === p.id ? null : p.id); }} title="Azioni" style={{ position: 'absolute', top: 11, right: 11, width: 31, height: 31, borderRadius: '50%', background: 'rgba(20,30,55,0.45)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 6 }}>
+                              <Icon name="more-vertical" size={14} color="#fff" />
                             </button>
                             )}
                             {!immSelectMode && immMenuId === p.id && (
-                              <div onClick={(e) => e.stopPropagation()} style={{ position: 'absolute', top: 52, right: 12, zIndex: 7, background: '#fff', border: '1px solid #f0ede7', borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', padding: 4, minWidth: 170 }}>
-                                <Box as="button" onClick={() => { setImmMenuId(null); setActiveProject(p.id); setEditProjOpen(true); }} style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '10px 12px', borderRadius: 8, border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 13.5, fontWeight: 600, color: '#211f1c', textAlign: 'left' } as React.CSSProperties} hover={{ background: 'var(--bg-hover)' }}>
-                                  <Icon name="pencil" size={16} color="#57534c" />Modifica
+                              <div onClick={(e) => e.stopPropagation()} style={{ position: 'absolute', top: 47, right: 11, zIndex: 7, background: '#fff', border: '1px solid #f0ede7', borderRadius: 9, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', padding: 4, minWidth: 153 }}>
+                                <Box as="button" onClick={() => { setImmMenuId(null); setActiveProject(p.id); setEditProjOpen(true); }} style={{ display: 'flex', alignItems: 'center', gap: 9, width: '100%', padding: '9px 11px', borderRadius: 7, border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 12, fontWeight: 600, color: '#211f1c', textAlign: 'left' } as React.CSSProperties} hover={{ background: 'var(--bg-hover)' }}>
+                                  <Icon name="pencil" size={14} color="#57534c" />Modifica
                                 </Box>
-                                <Box as="button" onClick={() => { setImmMenuId(null); setConfirmDelProj({ id: p.id, nome: p.nome }); }} style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '10px 12px', borderRadius: 8, border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 13.5, fontWeight: 600, color: '#dc2626', textAlign: 'left' } as React.CSSProperties} hover={{ background: '#fef2f2' }}>
-                                  <Icon name="trash-2" size={16} color="#dc2626" />Elimina
+                                <Box as="button" onClick={() => { setImmMenuId(null); setConfirmDelProj({ id: p.id, nome: p.nome }); }} style={{ display: 'flex', alignItems: 'center', gap: 9, width: '100%', padding: '9px 11px', borderRadius: 7, border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 12, fontWeight: 600, color: '#dc2626', textAlign: 'left' } as React.CSSProperties} hover={{ background: '#fef2f2' }}>
+                                  <Icon name="trash-2" size={14} color="#dc2626" />Elimina
                                 </Box>
                               </div>
                             )}
-                            <div style={{ height: 190, ...getCoverStyle(p) }} />
-                            <div style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 4 }}>
-                              <div style={s('font-size:16px;font-weight:800;color:var(--text-main);white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{p.nome}</div>
-                              <div style={s('font-size:13px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{p.addr}</div>
-                              <div style={s('font-size:13.5px;color:var(--text-main);margin-top:8px')}>
+                            <div style={{ height: 171, ...getCoverStyle(p) }} />
+                            <div style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                              <div style={s('font-size:14px;font-weight:800;color:var(--text-main);white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{p.nome}</div>
+                              <div style={s('font-size:12px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{p.addr}</div>
+                              <div style={s('font-size:12px;color:var(--text-main);margin-top:7px')}>
                                 {p.prezzo ? <strong>€ {p.prezzo.toLocaleString('it-IT')}</strong> : null}
                                 {p.mq ? <span style={s('color:var(--text-muted)')}>{p.prezzo ? '  ·  ' : ''}{p.mq} m²</span> : null}
                                 {p.locali ? <span style={s('color:var(--text-muted)')}>  ·  {p.locali} locali</span> : null}
                               </div>
-                              <div style={s('font-size:12px;color:var(--text-muted);margin-top:12px;padding-top:12px;border-top:1px solid #f0ede7')}>
-                                {(p.nFoto || 0)} foto · {(p.nStaging || 0)} staging · {(p.nVideo || 0)} video · {(p.nPost || 0)} post
-                              </div>
+                              {(() => {
+                                // Conteggi reali da batches/videoJobs (gia' fetchati a livello app) invece
+                                // dei campi p.nFoto/nStaging/nVideo, quasi sempre 0 perche' l'API progetti
+                                // non li calcola mai lato server.
+                                const projPhotos = batches.filter(b => b.projectId === p.id && b.status !== 'failed').reduce((sum, b) => sum + (b.completedItems || 0), 0);
+                                const projVideos = videoJobs.filter(v => v.projectId === p.id && v.stage === 'done').length;
+                                return (
+                                  <div style={s('font-size:11px;color:var(--text-muted);margin-top:11px;padding-top:11px;border-top:1px solid #f0ede7')}>
+                                    {projPhotos} foto · {projPhotos} staging · {projVideos} video · {(p.nPost || 0)} post
+                                  </div>
+                                );
+                              })()}
                             </div>
                           </Box>
                         ))}
                             </div>
                             {isMobile && day.items.length > 5 && !immExpanded.has(day.key) && (
-                              <Box as="button" onClick={() => setImmExpanded(prev => new Set(prev).add(day.key))} style={s('width:100%;margin-top:12px;border:1px solid #e4e1da;background:var(--bg-card);color:var(--text-main);font-size:13.5px;font-weight:700;padding:12px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px')} hover={s('background:#f6f4f0')}>
-                                Vedi altri {day.items.length - 5} <Icon name="chevron-down" size={16} color="#57534c" />
+                              <Box as="button" onClick={() => setImmExpanded(prev => new Set(prev).add(day.key))} style={s('width:100%;margin-top:11px;border:1px solid #e4e1da;background:var(--bg-card);color:var(--text-main);font-size:12px;font-weight:700;padding: 10px;border-radius:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap: 4px')} hover={s('background:#f6f4f0')}>
+                                Vedi altri {day.items.length - 5} <Icon name="chevron-down" size={14} color="#57534c" />
                               </Box>
                             )}
                           </div>
@@ -3815,9 +4004,9 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                 go={go}
               />
             ) : route === 'video' ? (
-              <VideoAIScreen key="video" toast={toast} routeKey={routeKey} brand={brand} project={active || DEMO_PROJECTS[0]} onVideoJob={registerVideoJob} activeRenders={videoJobs.filter(j => j.stage === 'render' && !j.dismissed).length} pendingVideoRenders={videoJobs.filter(j => j.stage === 'render' && !j.dismissed && j.template !== 'montaggio').length} initialPhotoUrl={studioPhoto} preselect={studioPhoto ? 'walkthrough' : undefined} demoMode={tourStep !== null} go={go} lockBrand={isFreePlan} />
+              <VideoAIScreen key="video" toast={toast} routeKey={routeKey} brand={brand} project={active || DEMO_PROJECTS[0]} onVideoJob={registerVideoJob} activeRenders={videoJobs.filter(j => j.stage === 'render' && !j.dismissed).length} pendingVideoRenders={videoJobs.filter(j => j.stage === 'render' && !j.dismissed && j.template !== 'montaggio').length} initialPhotoUrl={studioPhoto} preselect={studioPhoto ? 'walkthrough' : undefined} demoMode={tourStep !== null} go={go} lockBrand={isFreePlan} subscriptionType={userData?.subscriptionType} />
             ) : route === 'montaggio' ? (
-              <VideoAIScreen key="montaggio" toast={toast} routeKey={routeKey} brand={brand} preselect="montaggio" project={active || DEMO_PROJECTS[0]} onVideoJob={registerVideoJob} activeRenders={videoJobs.filter(j => j.stage === 'render' && !j.dismissed).length} pendingVideoRenders={0} demoMode={tourStep !== null} go={go} lockBrand={isFreePlan} />
+              <VideoAIScreen key="montaggio" toast={toast} routeKey={routeKey} brand={brand} preselect="montaggio" project={active || DEMO_PROJECTS[0]} onVideoJob={registerVideoJob} activeRenders={videoJobs.filter(j => j.stage === 'render' && !j.dismissed).length} pendingVideoRenders={0} demoMode={tourStep !== null} go={go} lockBrand={isFreePlan} subscriptionType={userData?.subscriptionType} />
             ) : route === 'quartiere' ? (
               <ZonaScreen key="quartiere" project={active || DEMO_PROJECTS[0]} projects={projects.length ? projects : DEMO_PROJECTS} brand={brand} toast={toast} locked={isFreePlan} go={go} />
             ) : route === 'report' || route === 'compare' ? (
@@ -3828,13 +4017,13 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
               <TeamScreen toast={toast} go={go} isAgency={hasAgency} userData={userData} />
             ) : route === 'brand' ? (
               (!active && tourStep === null && !welcomeOpen) ? (
-                <div style={s('display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 32px;text-align:center;max-width:1160px;margin:0 auto')}>
-                  <div style={s('width:64px;height:64px;border-radius:16px;background:#f4f2ee;display:flex;align-items:center;justify-content:center;margin-bottom:18px')}>
-                    <Icon name="palette" size={28} color="#b3aca1" />
+                <div style={s('display:flex;flex-direction:column;align-items:center;justify-content:center;padding: 65px 29px;text-align:center;max-width:1044px;margin: 0 auto')}>
+                  <div style={s('width: 52px;height: 52px;border-radius:14px;background:#f4f2ee;display:flex;align-items:center;justify-content:center;margin-bottom:16px')}>
+                    <Icon name="palette" size={25} color="#b3aca1" />
                   </div>
-                  <h2 style={s('margin:0 0 8px;font-size:20px;font-weight:800;letter-spacing:-.3px')}>Crea prima un immobile</h2>
-                  <p style={s('margin:0 0 24px;font-size:14px;color:#8c867d;max-width:380px;line-height:1.6')}>Aggiungi un immobile per vedere il tuo brand applicato ai materiali (post, video, report).</p>
-                  <Box as="button" onClick={() => setNewProjOpen(true)} style={s('border:1px solid #3B83F6;background:#3B83F6;color:#fff;font-size:14px;font-weight:700;padding:12px 22px;border-radius:12px;cursor:pointer')} hover={s('background:#2b6fe0;border-color:#2b6fe0')}>Nuovo immobile</Box>
+                  <h2 style={s('margin: 0 0 7px;font-size:18px;font-weight:800;letter-spacing:-.3px')}>Crea prima un immobile</h2>
+                  <p style={s('margin: 0 0 22px;font-size:13px;color:#8c867d;max-width:342px;line-height:1.6')}>Aggiungi un immobile per vedere il tuo brand applicato ai materiali (post, video, report).</p>
+                  <Box as="button" onClick={() => setNewProjOpen(true)} style={s('border:1px solid #3B83F6;background:#3B83F6;color:#fff;font-size:13px;font-weight:700;padding: 10px 20px;border-radius:11px;cursor:pointer')} hover={s('background:#2b6fe0;border-color:#2b6fe0')}>Nuovo immobile</Box>
                 </div>
               ) : (
                 <BrandScreen toast={toast} brand={brand} setBrand={setBrand} brandRole={brandRole} demoMode={tourStep !== null || welcomeOpen} demoPaused={welcomeOpen} locked={brandLocked} go={go} />
@@ -3844,13 +4033,13 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
             ) : route.startsWith('assistenza') ? (
               <AssistenzaScreen toast={toast} email={userData?.email ?? ''} defaultType={route.includes('type=feature') ? 'feature' : 'support'} />
             ) : (
-              <div style={s('max-width:1160px;margin:0 auto;padding:32px 32px 64px')}>
-                <h1 style={s('margin:0 0 4px;font-size:27px;font-weight:800;letter-spacing:-.5px')}>{ROUTE_TITLES[route] ?? route}</h1>
-                <div style={s('color:var(--text-muted);font-size:14px;margin-bottom:28px')}>Schermata in arrivo nelle prossime fasi del porting.</div>
-                <div style={s('background:var(--bg-card);border:1.5px dashed var(--border-dark);border-radius:12px;padding:52px;text-align:center;max-width:560px')}>
-                  <div style={s('width:52px;height:52px;border-radius:16px;background:#eef4fe;display:flex;align-items:center;justify-content:center;margin:0 auto 14px')}><Icon name="sparkles" size={24} color="#3B83F6" /></div>
-                  <div style={s('font-size:15px;font-weight:800;margin-bottom:6px')}>«{ROUTE_TITLES[route] ?? route}» in costruzione</div>
-                  <div style={s('color:var(--text-muted);font-size:13.5px;max-width:380px;margin:0 auto')}>Lo shell, la navigazione e la Home sono pronti. Questa sezione viene portata nella fase successiva.</div>
+              <div style={s('max-width:1044px;margin: 0 auto;padding: 26px 29px 58px')}>
+                <h1 style={s('margin: 0 0 4px;font-size:24px;font-weight:800;letter-spacing:-.5px')}>{ROUTE_TITLES[route] ?? route}</h1>
+                <div style={s('color:var(--text-muted);font-size:13px;margin-bottom:25px')}>Schermata in arrivo nelle prossime fasi del porting.</div>
+                <div style={s('background:var(--bg-card);border:1.5px dashed var(--border-dark);border-radius:11px;padding: 42px;text-align:center;max-width:504px')}>
+                  <div style={s('width: 42px;height: 42px;border-radius:14px;background:#eef4fe;display:flex;align-items:center;justify-content:center;margin: 0 auto 13px')}><Icon name="sparkles" size={22} color="#3B83F6" /></div>
+                  <div style={s('font-size:14px;font-weight:800;margin-bottom:5px')}>«{ROUTE_TITLES[route] ?? route}» in costruzione</div>
+                  <div style={s('color:var(--text-muted);font-size:12px;max-width:342px;margin: 0 auto')}>Lo shell, la navigazione e la Home sono pronti. Questa sezione viene portata nella fase successiva.</div>
                 </div>
               </div>
             )}
@@ -3861,13 +4050,13 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
       {/* ⌘K MODAL */}
       {cmdkOpen && (
         <div onClick={() => setCmdkOpen(false)} style={s('position:fixed;inset:0;background:rgba(24,21,17,.4);z-index:90;display:flex;align-items:flex-start;justify-content:center;padding-top:14vh')}>
-          <div onClick={(e) => e.stopPropagation()} style={s('width:100%;max-width:560px;background:var(--bg-card);border-radius:14px;box-shadow:0 24px 64px rgba(20,18,15,.3);overflow:hidden')}>
-            <div style={s('display:flex;align-items:center;gap:10px;padding:16px 18px;border-bottom:1px solid var(--bg-body)')}><Icon name="search" size={18} color="var(--text-muted)" /><input autoFocus value={cmdQuery} onChange={(e) => setCmdQuery(e.target.value)} placeholder="Cerca strumenti, immobili, media…" style={s('border:none;outline:none;font-size:15px;width:100%;background:transparent')} /><span style={s('font-size:11px;font-weight:700;background:#f1efe9;color:var(--text-muted);padding:3px 8px;border-radius:6px')}>esc</span></div>
-            <div style={s('max-height:340px;overflow:auto;padding:8px')}>
-              {cmdResults.length === 0 ? <div style={s('padding:28px;text-align:center;color:var(--text-muted);font-size:13.5px')}>Nessun risultato.</div> : cmdResults.slice(0, 12).map((r, i) => (
-                <Box key={i} onClick={r.go} style={s('display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:10px;cursor:pointer')} hover={s('background:var(--bg-hover)')}>
-                  <span style={s('width:32px;height:32px;border-radius:9px;background:var(--bg-body);display:flex;align-items:center;justify-content:center;flex:none')}><Icon name={r.icon} size={15} color="var(--text-sec)" /></span>
-                  <div style={{ minWidth: 0 }}><div style={s('font-size:13.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{r.label}</div><div style={s('font-size:11.5px;color:var(--text-muted)')}>{r.sub}</div></div>
+          <div onClick={(e) => e.stopPropagation()} style={s('width:100%;max-width:504px;background:var(--bg-card);border-radius:13px;box-shadow:0 24px 64px rgba(20,18,15,.3);overflow:hidden')}>
+            <div style={s('display:flex;align-items:center;gap: 8px;padding: 13px 16px;border-bottom:1px solid var(--bg-body)')}><Icon name="search" size={16} color="var(--text-muted)" /><input autoFocus value={cmdQuery} onChange={(e) => setCmdQuery(e.target.value)} placeholder="Cerca strumenti, immobili, media…" style={s('border:none;outline:none;font-size:14px;width:100%;background:transparent')} /><span style={s('font-size:10px;font-weight:700;background:#f1efe9;color:var(--text-muted);padding: 3px 7px;border-radius:5px')}>esc</span></div>
+            <div style={s('max-height:306px;overflow:auto;padding: 6px')}>
+              {cmdResults.length === 0 ? <div style={s('padding: 22px;text-align:center;color:var(--text-muted);font-size:12px')}>Nessun risultato.</div> : cmdResults.slice(0, 12).map((r, i) => (
+                <Box key={i} onClick={r.go} style={s('display:flex;align-items:center;gap: 10px;padding: 9px 11px;border-radius:9px;cursor:pointer')} hover={s('background:var(--bg-hover)')}>
+                  <span style={s('width: 26px;height: 26px;border-radius:8px;background:var(--bg-body);display:flex;align-items:center;justify-content:center;flex:none')}><Icon name={r.icon} size={14} color="var(--text-sec)" /></span>
+                  <div style={{ minWidth: 0 }}><div style={s('font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{r.label}</div><div style={s('font-size:10px;color:var(--text-muted)')}>{r.sub}</div></div>
                 </Box>
               ))}
             </div>
@@ -3876,10 +4065,10 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
       )}
 
       {/* TOASTS */}
-      <div style={s('position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:999999;display:flex;flex-direction:column;gap:10px;align-items:center')}>
+      <div style={s('position:fixed;bottom: 20px;left:50%;transform:translateX(-50%);z-index:999999;display:flex;flex-direction:column;gap: 8px;align-items:center')}>
         {toasts.map((t) => (
-          <div key={t.id} style={s('display:flex;align-items:center;gap:10px;background:#3B83F6;color:var(--bg-card);padding:12px 18px;border-radius:10px;box-shadow:0 12px 32px rgba(59,131,246,.32);font-size:13.5px;font-weight:600;max-width:420px')}>
-            <Icon name={t.icon} size={16} color="var(--bg-card)" /><span>{t.msg}{t.link && <><br /><a href={t.link.href} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--bg-card)', textDecoration: 'underline', fontWeight: 700, whiteSpace: 'nowrap' }}>{t.link.label}</a></>}</span>
+          <div key={t.id} style={s('display:flex;align-items:center;gap: 8px;background:#3B83F6;color:var(--bg-card);padding: 10px 16px;border-radius:9px;box-shadow:0 12px 32px rgba(59,131,246,.32);font-size:12px;font-weight:600;max-width:378px')}>
+            <Icon name={t.icon} size={14} color="var(--bg-card)" /><span>{t.msg}{t.link && <><br /><a href={t.link.href} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--bg-card)', textDecoration: 'underline', fontWeight: 700, whiteSpace: 'nowrap' }}>{t.link.label}</a></>}</span>
           </div>
         ))}
       </div>
@@ -3898,15 +4087,15 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
 
       {/* CONFERMA ELIMINA IMMOBILE */}
       {confirmDelProj && (
-        <div onClick={() => !delProjLoading && setConfirmDelProj(null)} style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(20,18,16,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-          <div onClick={(e) => e.stopPropagation()} style={{ background: '#fff', borderRadius: 16, width: '100%', maxWidth: 400, padding: '26px 24px', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
-            <div style={{ width: 48, height: 48, borderRadius: 14, background: '#fef2f2', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}>
-              <Icon name="trash-2" size={22} color="#dc2626" />
+        <div onClick={() => !delProjLoading && setConfirmDelProj(null)} style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(20,18,16,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 14 }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: '#fff', borderRadius: 14, width: '100%', maxWidth: 360, padding: '23px 22px', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
+            <div style={{ width: 43, height: 43, borderRadius: 13, background: '#fef2f2', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 13 }}>
+              <Icon name="trash-2" size={20} color="#dc2626" />
             </div>
-            <div style={{ fontSize: 17, fontWeight: 800, color: '#211f1c', marginBottom: 6 }}>Eliminare l&apos;immobile?</div>
-            <div style={{ fontSize: 14, color: '#57534c', lineHeight: 1.5, marginBottom: 22 }}>Stai per eliminare <b>{confirmDelProj.nome || 'questo immobile'}</b>. Questa azione non si può annullare.</div>
-            <div style={{ display: 'flex', gap: 10 }}>
-              <Box as="button" onClick={() => !delProjLoading && setConfirmDelProj(null)} style={{ flex: 1, border: '1px solid #e4e1da', background: '#fff', color: '#57534c', fontSize: 14, fontWeight: 700, padding: '12px 0', borderRadius: 10, cursor: 'pointer' } as React.CSSProperties} hover={s('background:#f6f4f0')}>Annulla</Box>
+            <div style={{ fontSize: 15, fontWeight: 800, color: '#211f1c', marginBottom: 5 }}>Eliminare l&apos;immobile?</div>
+            <div style={{ fontSize: 13, color: '#57534c', lineHeight: 1.5, marginBottom: 20 }}>Stai per eliminare <b>{confirmDelProj.nome || 'questo immobile'}</b>. Questa azione non si può annullare.</div>
+            <div style={{ display: 'flex', gap: 9 }}>
+              <Box as="button" onClick={() => !delProjLoading && setConfirmDelProj(null)} style={{ flex: 1, border: '1px solid #e4e1da', background: '#fff', color: '#57534c', fontSize: 13, fontWeight: 700, padding: '11px 0', borderRadius: 9, cursor: 'pointer' } as React.CSSProperties} hover={s('background:#f6f4f0')}>Annulla</Box>
               <Box as="button" onClick={async () => {
                 if (delProjLoading) return;
                 setDelProjLoading(true);
@@ -3918,8 +4107,8 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                 setProjects(prev => prev.filter(x => x.id !== id));
                 setConfirmDelProj(null);
                 toast('Immobile eliminato', 'check');
-              }} style={{ flex: 1, border: 'none', background: delProjLoading ? '#f3d4d4' : '#dc2626', color: '#fff', fontSize: 14, fontWeight: 700, padding: '12px 0', borderRadius: 10, cursor: delProjLoading ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 } as React.CSSProperties} hover={delProjLoading ? {} : s('background:#b91c1c')}>
-                {delProjLoading ? (<><span style={{ display: 'inline-flex', animation: 'spin 1s linear infinite' }}><Icon name="loader-circle" size={16} color="#fff" /></span>Elimino...</>) : 'Elimina'}
+              }} style={{ flex: 1, border: 'none', background: delProjLoading ? '#f3d4d4' : '#dc2626', color: '#fff', fontSize: 13, fontWeight: 700, padding: '11px 0', borderRadius: 9, cursor: delProjLoading ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 } as React.CSSProperties} hover={delProjLoading ? {} : s('background:#b91c1c')}>
+                {delProjLoading ? (<><span style={{ display: 'inline-flex', animation: 'spin 1s linear infinite' }}><Icon name="loader-circle" size={14} color="#fff" /></span>Elimino...</>) : 'Elimina'}
               </Box>
             </div>
           </div>
@@ -3963,6 +4152,22 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
             go('immobili'); // dopo eliminazione -> lista "tutti gli immobili"
           }}
         />
+      )}
+
+      {/* DEBUG: switch piano/quote (solo test account, gate vero e' server-side) */}
+      {userData?.email && DEBUG_TIER_EMAILS.has(userData.email) && (
+        <div style={{ position: 'fixed', bottom: 11, right: 11, zIndex: 9999, background: '#1c1917', color: '#fff', borderRadius: 11, padding: 11, display: 'flex', flexDirection: 'column', gap: 7, boxShadow: '0 8px 24px rgba(0,0,0,0.35)', fontSize: 11, width: 198 }}>
+          <div style={{ fontWeight: 700, opacity: 0.7 }}>DEBUG · piano</div>
+          <select value={debugTier} onChange={e => setDebugTier(e.target.value)} style={{ background: '#292524', color: '#fff', border: '1px solid #44403c', borderRadius: 7, padding: '5px 7px', fontSize: 11 }}>
+            {DEBUG_TIER_OPTIONS.map(o => <option key={o.id} value={o.id}>{o.label}</option>)}
+          </select>
+          {(debugTier === 'agency_seat_monthly' || debugTier === 'agency_seat_annual') && (
+            <input type="number" min={2} max={10} value={debugSeats} onChange={e => setDebugSeats(Math.min(10, Math.max(2, Number(e.target.value) || 2)))} style={{ background: '#292524', color: '#fff', border: '1px solid #44403c', borderRadius: 7, padding: '5px 7px', fontSize: 11 }} />
+          )}
+          <button onClick={applyDebugTier} disabled={debugBusy} style={{ border: 'none', background: '#3B83F6', color: '#fff', fontWeight: 700, borderRadius: 7, padding: '7px 0', cursor: debugBusy ? 'default' : 'pointer', opacity: debugBusy ? 0.6 : 1 }}>
+            {debugBusy ? '...' : 'Applica (ricarica pagina)'}
+          </button>
+        </div>
       )}
     </div>
   );

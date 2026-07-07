@@ -10,22 +10,22 @@ export default function InlineCta() {
       style={{
         background: "#fff",
         border: "1px solid rgba(26,26,46,0.10)",
-        borderRadius: 16,
+        borderRadius: 14,
         boxShadow: "0 4px 16px rgba(16,24,40,0.08)",
-        padding: "24px 28px",
-        margin: "32px 0",
+        padding: "22px 25px",
+        margin: "29px 0",
         display: "flex",
         flexWrap: "wrap",
         alignItems: "center",
         justifyContent: "space-between",
-        gap: 16,
+        gap: 14,
       }}
     >
       <div>
-        <p style={{ margin: 0, fontSize: 16, fontWeight: 800, color: "#1a1a2e" }}>
+        <p style={{ margin: 0, fontSize: 14, fontWeight: 800, color: "#1a1a2e" }}>
           Provalo sulla tua prossima proprietà
         </p>
-        <p style={{ margin: "4px 0 0", fontSize: 14, color: "#71717a" }}>
+        <p style={{ margin: "4px 0 0", fontSize: 13, color: "#71717a" }}>
           Staging AI, video e report in pochi minuti.
         </p>
       </div>
@@ -36,11 +36,11 @@ export default function InlineCta() {
         style={{
           display: "inline-flex",
           alignItems: "center",
-          gap: 8,
-          fontSize: 15,
+          gap: 7,
+          fontSize: 14,
           fontWeight: 700,
-          padding: "12px 24px",
-          borderRadius: 10,
+          padding: "11px 22px",
+          borderRadius: 9,
           textDecoration: "none",
           whiteSpace: "nowrap",
           cursor: "pointer",

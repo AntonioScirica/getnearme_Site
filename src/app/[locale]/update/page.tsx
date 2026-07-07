@@ -407,7 +407,7 @@ export default async function UpdatePage({ params }: Props) {
         style={{
           position: "relative",
           overflow: "hidden",
-          padding: "80px 24px 60px",
+          padding: "72px 22px 54px",
           textAlign: "center",
         }}
       >
@@ -415,10 +415,10 @@ export default async function UpdatePage({ params }: Props) {
         <div
           style={{
             position: "absolute",
-            top: 40,
+            top: 36,
             right: "10%",
-            width: 80,
-            height: 80,
+            width: 72,
+            height: 72,
             borderRadius: "50%",
             border: "3px solid #f59e0b",
             opacity: 0.15,
@@ -428,11 +428,11 @@ export default async function UpdatePage({ params }: Props) {
         <div
           style={{
             position: "absolute",
-            bottom: 20,
+            bottom: 18,
             left: "8%",
-            width: 60,
-            height: 60,
-            borderRadius: 14,
+            width: 54,
+            height: 54,
+            borderRadius: 13,
             border: "1px solid rgba(26,26,46,0.10)",
             opacity: 0.08,
             transform: "rotate(-12deg)",
@@ -443,15 +443,15 @@ export default async function UpdatePage({ params }: Props) {
           style={{
             display: "inline-flex",
             alignItems: "center",
-            gap: 8,
-            padding: "8px 20px",
+            gap: 7,
+            padding: "7px 18px",
             background: "#fff",
             border: "1px solid rgba(26,26,46,0.10)",
             borderRadius: 100,
             boxShadow: "0 4px 16px rgba(16,24,40,0.08)",
             fontWeight: 700,
-            fontSize: 14,
-            marginBottom: 24,
+            fontSize: 13,
+            marginBottom: 22,
           }}
         >
           <PartyPopper size={18} color="#f59e0b" />
@@ -460,11 +460,11 @@ export default async function UpdatePage({ params }: Props) {
 
         <h1
           style={{
-            fontSize: "clamp(32px, 5vw, 52px)",
+            fontSize: "clamp(29px, 5vw, 47px)",
             fontWeight: 900,
             lineHeight: 1.1,
-            maxWidth: 700,
-            margin: "0 auto 16px",
+            maxWidth: 630,
+            margin: "0 auto 14px",
           }}
         >
           Scopri le{" "}
@@ -482,9 +482,9 @@ export default async function UpdatePage({ params }: Props) {
 
         <p
           style={{
-            fontSize: 18,
+            fontSize: 16,
             color: "#52525b",
-            maxWidth: 500,
+            maxWidth: 450,
             margin: "0 auto",
             lineHeight: 1.6,
           }}
@@ -498,30 +498,30 @@ export default async function UpdatePage({ params }: Props) {
       {/* Coming Soon */}
       <section
         style={{
-          maxWidth: 780,
+          maxWidth: 702,
           margin: "0 auto",
-          padding: "0 24px 48px",
+          padding: "0 22px 43px",
         }}
       >
         <div
           style={{
             display: "flex",
             alignItems: "center",
-            gap: 12,
-            marginBottom: 20,
+            gap: 11,
+            marginBottom: 18,
           }}
         >
           <div
             style={{
               display: "flex",
               alignItems: "center",
-              gap: 8,
-              padding: "6px 16px",
+              gap: 7,
+              padding: "5px 14px",
               background: "#f59e0b",
               color: "#1a1a2e",
-              borderRadius: 10,
+              borderRadius: 9,
               fontWeight: 800,
-              fontSize: 15,
+              fontSize: 14,
               border: "1px solid rgba(26,26,46,0.10)",
             }}
           >
@@ -534,48 +534,48 @@ export default async function UpdatePage({ params }: Props) {
           style={{
             background: "#fff",
             border: "1px solid rgba(26,26,46,0.10)",
-            borderRadius: 20,
+            borderRadius: 18,
             boxShadow: "0 4px 16px rgba(16,24,40,0.08)",
             overflow: "hidden",
           }}
         >
           <div
             style={{
-              padding: "28px 32px 20px",
+              padding: "25px 29px 18px",
               borderBottom: "2px solid #f3f4f6",
             }}
           >
             <h2
               style={{
-                fontSize: 26,
+                fontSize: 23,
                 fontWeight: 900,
-                margin: "0 0 6px",
+                margin: "0 0 5px",
                 lineHeight: 1.2,
               }}
             >
               Pubblicazione automatica sui social
             </h2>
-            <p style={{ fontSize: 15, color: "#71717a", margin: 0, lineHeight: 1.5 }}>
+            <p style={{ fontSize: 14, color: "#71717a", margin: 0, lineHeight: 1.5 }}>
               Crea il post, scegli data e ora, e GetNearMe pubblica per te su Instagram, Facebook e LinkedIn. Zero copia-incolla, zero app esterne.
             </p>
           </div>
 
-          <div style={{ padding: "8px 0" }}>
+          <div style={{ padding: "7px 0" }}>
             <div
               style={{
                 display: "flex",
-                gap: 16,
-                padding: "20px 32px",
+                gap: 14,
+                padding: "18px 29px",
                 borderBottom: "1px solid #f3f4f6",
                 alignItems: "flex-start",
               }}
             >
               <div
                 style={{
-                  width: 44,
-                  height: 44,
-                  minWidth: 44,
-                  borderRadius: 12,
+                  width: 40,
+                  height: 40,
+                  minWidth: 40,
+                  borderRadius: 11,
                   background: "#fef3c7",
                   border: "1px solid rgba(26,26,46,0.10)",
                   display: "flex",
@@ -587,17 +587,17 @@ export default async function UpdatePage({ params }: Props) {
                 <Share2 size={22} />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                  <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 4 }}>
+                  <h3 style={{ fontSize: 14, fontWeight: 700, margin: 0 }}>
                     Pubblica direttamente dall&apos;estensione
                   </h3>
                   <span
                     style={{
-                      padding: "2px 8px",
+                      padding: "2px 7px",
                       background: "rgba(245, 158, 11, 0.15)",
                       color: "#b45309",
-                      borderRadius: 6,
-                      fontSize: 11,
+                      borderRadius: 5,
+                      fontSize: 10,
                       fontWeight: 700,
                       letterSpacing: 0.3,
                       textTransform: "uppercase",
@@ -606,7 +606,7 @@ export default async function UpdatePage({ params }: Props) {
                     In arrivo
                   </span>
                 </div>
-                <p style={{ fontSize: 14, color: "#52525b", margin: 0, lineHeight: 1.5 }}>
+                <p style={{ fontSize: 13, color: "#52525b", margin: 0, lineHeight: 1.5 }}>
                   Collega i tuoi account social e pubblica post e stories con un click. Scegli il canale, scrivi la caption e vai.
                 </p>
               </div>
@@ -615,17 +615,17 @@ export default async function UpdatePage({ params }: Props) {
             <div
               style={{
                 display: "flex",
-                gap: 16,
-                padding: "20px 32px",
+                gap: 14,
+                padding: "18px 29px",
                 alignItems: "flex-start",
               }}
             >
               <div
                 style={{
-                  width: 44,
-                  height: 44,
-                  minWidth: 44,
-                  borderRadius: 12,
+                  width: 40,
+                  height: 40,
+                  minWidth: 40,
+                  borderRadius: 11,
                   background: "#fef3c7",
                   border: "1px solid rgba(26,26,46,0.10)",
                   display: "flex",
@@ -637,17 +637,17 @@ export default async function UpdatePage({ params }: Props) {
                 <CalendarClock size={22} />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                  <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 4 }}>
+                  <h3 style={{ fontSize: 14, fontWeight: 700, margin: 0 }}>
                     Calendario editoriale e programmazione
                   </h3>
                   <span
                     style={{
-                      padding: "2px 8px",
+                      padding: "2px 7px",
                       background: "rgba(245, 158, 11, 0.15)",
                       color: "#b45309",
-                      borderRadius: 6,
-                      fontSize: 11,
+                      borderRadius: 5,
+                      fontSize: 10,
                       fontWeight: 700,
                       letterSpacing: 0.3,
                       textTransform: "uppercase",
@@ -656,7 +656,7 @@ export default async function UpdatePage({ params }: Props) {
                     In arrivo
                   </span>
                 </div>
-                <p style={{ fontSize: 14, color: "#52525b", margin: 0, lineHeight: 1.5 }}>
+                <p style={{ fontSize: 13, color: "#52525b", margin: 0, lineHeight: 1.5 }}>
                   Pianifica i contenuti in anticipo con un calendario visuale. Programma la pubblicazione automatica e gestisci tutto da un unico posto.
                 </p>
               </div>
@@ -668,50 +668,50 @@ export default async function UpdatePage({ params }: Props) {
       {/* Updates Timeline */}
       <section
         style={{
-          maxWidth: 780,
+          maxWidth: 702,
           margin: "0 auto",
-          padding: "0 24px 80px",
+          padding: "0 22px 72px",
         }}
       >
         {updates.map((update, idx) => (
-          <div key={update.version} style={{ marginBottom: idx < updates.length - 1 ? 56 : 0 }}>
+          <div key={update.version} style={{ marginBottom: idx < updates.length - 1 ? 50 : 0 }}>
             {/* Version Header */}
             <div
               style={{
                 display: "flex",
                 alignItems: "center",
-                gap: 12,
-                marginBottom: 20,
+                gap: 11,
+                marginBottom: 18,
               }}
             >
               <div
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  gap: 8,
-                  padding: "6px 16px",
+                  gap: 7,
+                  padding: "5px 14px",
                   background: "#1a1a2e",
                   color: "#fff",
-                  borderRadius: 10,
+                  borderRadius: 9,
                   fontWeight: 800,
-                  fontSize: 15,
+                  fontSize: 14,
                   border: "1px solid rgba(26,26,46,0.10)",
                 }}
               >
                 v{update.version}
               </div>
-              <span style={{ color: "#71717a", fontSize: 14, fontWeight: 500 }}>
+              <span style={{ color: "#71717a", fontSize: 13, fontWeight: 500 }}>
                 {update.date}
               </span>
               {update.badge && (
                 <span
                   style={{
                     marginLeft: "auto",
-                    padding: "4px 12px",
+                    padding: "4px 11px",
                     background: update.badgeColor,
                     color: "#fff",
-                    borderRadius: 8,
-                    fontSize: 12,
+                    borderRadius: 7,
+                    fontSize: 11,
                     fontWeight: 700,
                     letterSpacing: 0.3,
                   }}
@@ -726,7 +726,7 @@ export default async function UpdatePage({ params }: Props) {
               style={{
                 background: "#fff",
                 border: "1px solid rgba(26,26,46,0.10)",
-                borderRadius: 20,
+                borderRadius: 18,
                 boxShadow: "0 4px 16px rgba(16,24,40,0.08)",
                 overflow: "hidden",
               }}
@@ -734,34 +734,34 @@ export default async function UpdatePage({ params }: Props) {
               {/* Card Header */}
               <div
                 style={{
-                  padding: "28px 32px 20px",
+                  padding: "25px 29px 18px",
                   borderBottom: "2px solid #f3f4f6",
                 }}
               >
                 <h2
                   style={{
-                    fontSize: 26,
+                    fontSize: 23,
                     fontWeight: 900,
-                    margin: "0 0 6px",
+                    margin: "0 0 5px",
                     lineHeight: 1.2,
                   }}
                 >
                   {update.title}
                 </h2>
-                <p style={{ fontSize: 15, color: "#71717a", margin: 0, lineHeight: 1.5 }}>
+                <p style={{ fontSize: 14, color: "#71717a", margin: 0, lineHeight: 1.5 }}>
                   {update.subtitle}
                 </p>
               </div>
 
               {/* Features List */}
-              <div style={{ padding: "8px 0" }}>
+              <div style={{ padding: "7px 0" }}>
                 {update.features.map((feature, fIdx) => (
                   <div
                     key={fIdx}
                     style={{
                       display: "flex",
-                      gap: 16,
-                      padding: "20px 32px",
+                      gap: 14,
+                      padding: "18px 29px",
                       borderBottom:
                         fIdx < update.features.length - 1 ? "1px solid #f3f4f6" : "none",
                       alignItems: "flex-start",
@@ -771,10 +771,10 @@ export default async function UpdatePage({ params }: Props) {
                     {/* Icon */}
                     <div
                       style={{
-                        width: 44,
-                        height: 44,
-                        minWidth: 44,
-                        borderRadius: 12,
+                        width: 40,
+                        height: 40,
+                        minWidth: 40,
+                        borderRadius: 11,
                         background: "#fef3c7",
                         border: "1px solid rgba(26,26,46,0.10)",
                         display: "flex",
@@ -792,13 +792,13 @@ export default async function UpdatePage({ params }: Props) {
                         style={{
                           display: "flex",
                           alignItems: "center",
-                          gap: 8,
+                          gap: 7,
                           marginBottom: 4,
                         }}
                       >
                         <h3
                           style={{
-                            fontSize: 16,
+                            fontSize: 14,
                             fontWeight: 700,
                             margin: 0,
                           }}
@@ -808,11 +808,11 @@ export default async function UpdatePage({ params }: Props) {
                         {feature.tag && (
                           <span
                             style={{
-                              padding: "2px 8px",
+                              padding: "2px 7px",
                               background: `${feature.tagColor}15`,
                               color: feature.tagColor,
-                              borderRadius: 6,
-                              fontSize: 11,
+                              borderRadius: 5,
+                              fontSize: 10,
                               fontWeight: 700,
                               letterSpacing: 0.3,
                               textTransform: "uppercase",
@@ -824,7 +824,7 @@ export default async function UpdatePage({ params }: Props) {
                       </div>
                       <p
                         style={{
-                          fontSize: 14,
+                          fontSize: 13,
                           color: "#52525b",
                           margin: 0,
                           lineHeight: 1.5,
@@ -845,18 +845,18 @@ export default async function UpdatePage({ params }: Props) {
       <section
         style={{
           textAlign: "center",
-          padding: "0 24px 80px",
+          padding: "0 22px 72px",
         }}
       >
         <div
           style={{
-            maxWidth: 580,
+            maxWidth: 522,
             margin: "0 auto",
             background: "#1a1a2e",
             border: "1px solid rgba(26,26,46,0.10)",
-            borderRadius: 20,
+            borderRadius: 18,
             boxShadow: "6px 6px 0px #f59e0b",
-            padding: "40px 32px",
+            padding: "36px 29px",
             color: "#fff",
           }}
         >
@@ -865,29 +865,29 @@ export default async function UpdatePage({ params }: Props) {
               display: "inline-flex",
               alignItems: "center",
               justifyContent: "center",
-              width: 56,
-              height: 56,
-              borderRadius: 16,
+              width: 50,
+              height: 50,
+              borderRadius: 14,
               background: "rgba(245, 158, 11, 0.15)",
-              marginBottom: 16,
+              marginBottom: 14,
             }}
           >
             <Rocket size={28} color="#f59e0b" />
           </div>
           <h2
             style={{
-              fontSize: 24,
+              fontSize: 22,
               fontWeight: 900,
-              margin: "0 0 8px",
+              margin: "0 0 7px",
             }}
           >
             Ti piace GetNearMe?
           </h2>
           <p
             style={{
-              fontSize: 15,
+              fontSize: 14,
               color: "#a1a1aa",
-              margin: "0 0 24px",
+              margin: "0 0 22px",
               lineHeight: 1.6,
             }}
           >
@@ -902,14 +902,14 @@ export default async function UpdatePage({ params }: Props) {
             style={{
               display: "inline-flex",
               alignItems: "center",
-              gap: 8,
-              padding: "14px 28px",
+              gap: 7,
+              padding: "13px 25px",
               background: "#f59e0b",
               color: "#1a1a2e",
               border: "3px solid #f59e0b",
-              borderRadius: 12,
+              borderRadius: 11,
               fontWeight: 800,
-              fontSize: 15,
+              fontSize: 14,
               textDecoration: "none",
               boxShadow: "4px 4px 0px rgba(255,255,255,0.15)",
               transition: "transform 0.15s, box-shadow 0.15s",
@@ -926,8 +926,8 @@ export default async function UpdatePage({ params }: Props) {
       <footer
         style={{
           textAlign: "center",
-          padding: "0 24px 40px",
-          fontSize: 13,
+          padding: "0 22px 36px",
+          fontSize: 12,
           color: "#a1a1aa",
         }}
       >

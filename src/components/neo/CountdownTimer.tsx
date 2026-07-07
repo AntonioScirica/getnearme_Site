@@ -77,27 +77,27 @@ export default function CountdownTimer({ big = false }: CountdownTimerProps) {
 
   if (big) {
     return (
-      <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
+      <span style={{ display: 'inline-flex', gap: 5.5, alignItems: 'center' }}>
         {[pad(h), pad(m), pad(s)].map((v, i) => (
-          <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: 5.5 }}>
             <span
               style={{
                 background: '#1a1a2e',
                 color: '#fff',
-                borderRadius: 8,
-                padding: '6px 10px',
-                fontSize: 20,
+                borderRadius: 7,
+                padding: '5.5px 9px',
+                fontSize: 18,
                 fontWeight: 900,
                 fontFamily: 'monospace',
                 border: '2px solid #333',
-                minWidth: 42,
+                minWidth: 38,
                 textAlign: 'center',
                 display: 'inline-block',
               }}
             >
               {v}
             </span>
-            {i < 2 && <span style={{ color: '#1a1a2e', fontWeight: 900, fontSize: 18 }}>:</span>}
+            {i < 2 && <span style={{ color: '#1a1a2e', fontWeight: 900, fontSize: 16 }}>:</span>}
           </span>
         ))}
       </span>
@@ -109,9 +109,9 @@ export default function CountdownTimer({ big = false }: CountdownTimerProps) {
       style={{
         background: '#fee2e2',
         color: '#dc2626',
-        borderRadius: 8,
-        padding: '3px 10px',
-        fontSize: 13,
+        borderRadius: 7,
+        padding: '2.5px 9px',
+        fontSize: 12,
         fontWeight: 800,
         fontFamily: 'monospace',
         letterSpacing: 1,

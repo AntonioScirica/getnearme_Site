@@ -3,8 +3,8 @@
   "configurations": [
     {
       "name": "getnearme-site",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
+      "runtimeExecutable": "/Users/antonioscirica/.nvm/versions/node/v22.19.0/bin/node",
+      "runtimeArgs": ["node_modules/next/dist/bin/next", "dev"],
       "port": 3000,
       "autoPort": true
     }

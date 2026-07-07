@@ -51,26 +51,26 @@ export default function DemoFormClient({
 
   if (status === 'success') {
     return (
-      <div style={{ textAlign: 'center', padding: '60px 0' }}>
+      <div style={{ textAlign: 'center', padding: '54px 0' }}>
         <div
           style={{
-            width: 72,
-            height: 72,
+            width: 65,
+            height: 65,
             borderRadius: '50%',
             background: '#10b981',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            margin: '0 auto 24px',
-            fontSize: 36,
+            margin: '0 auto 22px',
+            fontSize: 32,
           }}
         >
           ✓
         </div>
-        <h2 style={{ fontSize: 28, fontWeight: 900, color: '#1a1a2e', marginBottom: 8 }}>
+        <h2 style={{ fontSize: 25, fontWeight: 900, color: '#1a1a2e', marginBottom: 7 }}>
           {t.successTitle}
         </h2>
-        <p style={{ color: '#71717a', fontSize: 16, marginBottom: 32 }}>{t.successMessage}</p>
+        <p style={{ color: '#71717a', fontSize: 14, marginBottom: 29 }}>{t.successMessage}</p>
         <Link
           href={`/${locale}`}
           style={{
@@ -78,10 +78,10 @@ export default function DemoFormClient({
             background: '#f59e0b',
             color: '#1a1a2e',
             border: '1px solid rgba(26,26,46,0.10)',
-            padding: '14px 32px',
-            borderRadius: 12,
+            padding: '13px 29px',
+            borderRadius: 11,
             fontWeight: 800,
-            fontSize: 15,
+            fontSize: 14,
             textDecoration: 'none',
             boxShadow: '0 4px 16px rgba(16,24,40,0.08)',
           }}
@@ -94,10 +94,10 @@ export default function DemoFormClient({
 
   const inputStyle: React.CSSProperties = {
     width: '100%',
-    padding: '14px 16px',
+    padding: '13px 14px',
     border: '1px solid rgba(26,26,46,0.10)',
-    borderRadius: 12,
-    fontSize: 15,
+    borderRadius: 11,
+    fontSize: 14,
     fontWeight: 500,
     outline: 'none',
     transition: 'box-shadow 0.15s',
@@ -105,9 +105,9 @@ export default function DemoFormClient({
   };
 
   return (
-    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
       <div>
-        <label style={{ display: 'block', fontSize: 14, fontWeight: 700, color: '#1a1a2e', marginBottom: 6 }}>
+        <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#1a1a2e', marginBottom: 5 }}>
           {t.fieldName} *
         </label>
         <input
@@ -123,7 +123,7 @@ export default function DemoFormClient({
       </div>
 
       <div>
-        <label style={{ display: 'block', fontSize: 14, fontWeight: 700, color: '#1a1a2e', marginBottom: 6 }}>
+        <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#1a1a2e', marginBottom: 5 }}>
           {t.fieldEmail} *
         </label>
         <input
@@ -138,7 +138,7 @@ export default function DemoFormClient({
       </div>
 
       <div>
-        <label style={{ display: 'block', fontSize: 14, fontWeight: 700, color: '#1a1a2e', marginBottom: 6 }}>
+        <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#1a1a2e', marginBottom: 5 }}>
           {t.fieldAgencyName} *
         </label>
         <input
@@ -154,7 +154,7 @@ export default function DemoFormClient({
       </div>
 
       <div>
-        <label style={{ display: 'block', fontSize: 14, fontWeight: 700, color: '#1a1a2e', marginBottom: 6 }}>
+        <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#1a1a2e', marginBottom: 5 }}>
           {t.fieldPhone}
         </label>
         <input
@@ -168,7 +168,7 @@ export default function DemoFormClient({
       </div>
 
       <div>
-        <label style={{ display: 'block', fontSize: 14, fontWeight: 700, color: '#1a1a2e', marginBottom: 6 }}>
+        <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#1a1a2e', marginBottom: 5 }}>
           {t.fieldMessage}
         </label>
         <textarea
@@ -182,7 +182,7 @@ export default function DemoFormClient({
       </div>
 
       {status === 'error' && (
-        <p style={{ color: '#ef4444', fontSize: 14, fontWeight: 600, margin: 0 }}>{t.errorMessage}</p>
+        <p style={{ color: '#ef4444', fontSize: 13, fontWeight: 600, margin: 0 }}>{t.errorMessage}</p>
       )}
 
       <button
@@ -190,13 +190,13 @@ export default function DemoFormClient({
         disabled={status === 'sending'}
         style={{
           width: '100%',
-          padding: '16px',
+          padding: '14px',
           background: status === 'sending' ? '#d97706' : '#f59e0b',
           color: '#1a1a2e',
           border: '1px solid rgba(26,26,46,0.10)',
-          borderRadius: 14,
+          borderRadius: 13,
           fontWeight: 900,
-          fontSize: 16,
+          fontSize: 14,
           cursor: status === 'sending' ? 'wait' : 'pointer',
           boxShadow: '0 4px 16px rgba(16,24,40,0.08)',
           transition: 'all 0.15s',

@@ -18,9 +18,9 @@ export default function FaqAccordion({ items }: { items: FaqItem[] }) {
             style={{
               background: "#fff",
               border: "1px solid rgba(26,26,46,0.10)",
-              borderRadius: 20,
+              borderRadius: 18,
               boxShadow: "0 4px 16px rgba(16,24,40,0.08)",
-              marginBottom: 16,
+              marginBottom: 14.5,
               overflow: "hidden",
             }}
           >
@@ -32,8 +32,8 @@ export default function FaqAccordion({ items }: { items: FaqItem[] }) {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
-                gap: 12,
-                padding: "20px 24px",
+                gap: 11,
+                padding: "18px 22px",
                 background: "none",
                 border: "none",
                 cursor: "pointer",
@@ -41,13 +41,13 @@ export default function FaqAccordion({ items }: { items: FaqItem[] }) {
                 color: "#1a1a2e",
               }}
             >
-              <span style={{ fontSize: 16, fontWeight: 700, lineHeight: 1.4 }}>{item.question}</span>
+              <span style={{ fontSize: 14.5, fontWeight: 700, lineHeight: 1.4 }}>{item.question}</span>
               <ChevronDown
                 size={20}
                 style={{
                   transition: "transform 0.25s ease",
                   transform: open ? "rotate(180deg)" : "rotate(0deg)",
-                  minWidth: 20,
+                  minWidth: 18,
                   color: "#a1a1aa",
                 }}
               />
@@ -63,8 +63,8 @@ export default function FaqAccordion({ items }: { items: FaqItem[] }) {
               <p
                 style={{
                   margin: 0,
-                  padding: "0 24px 20px",
-                  fontSize: 15,
+                  padding: "0 22px 18px",
+                  fontSize: 13.5,
                   lineHeight: 1.7,
                   color: "#3f3f46",
                 }}

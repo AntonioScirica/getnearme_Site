@@ -32,15 +32,15 @@ const FEATURES = [
     title: "Video AI per l'immobile",
     desc: "Reel, walkthrough, before/after, video con avatar parlante e molto altro.",
     media: [
-      { type: "video", src: "/reference/primo-piano.mp4", title: "Avatar in primo piano", desc: "Video con avatar, script e sottotitoli generati dall'AI." },
-      { type: "video", src: "/reference/split.mp4", title: "Schermo diviso", desc: "Immobile e avatar parlante nello stesso video." },
-      { type: "video", src: "/reference/immagini-a-video.mp4", title: "Immagini a Video", desc: "Trasforma le foto dell'immobile in un video animato." },
-      { type: "video", src: "/reference/construction.mp4", title: "Timelapse AI", desc: "Da una foto dell'esterno, l'AI genera il timelapse." },
-      { type: "video", src: "/reference/prima-dopo.mp4", title: "Prima vs Dopo", desc: "Partendo da una foto, l'AI arreda e crea il video." },
-      { type: "video", src: "/reference/giorno-notte.mp4", title: "Giorno e notte", desc: "L'AI trasforma l'illuminazione della scena." },
-      { type: "video", src: "/reference/sottotitoli.mp4", title: "Sottotitoli", desc: "Video con testo descrittivo animato." },
-      { type: "video", src: "/reference/montaggio.mp4", title: "Montaggio", desc: "Montaggio automatico multi-stanza con musica." },
-    ] as { type: "image" | "video"; src: string; aspect?: "vertical" | "horizontal"; title?: string; desc?: string }[],
+      { type: "video", src: "/reference/primo-piano.mp4", poster: "/reference/primo-piano-poster.jpg", title: "Avatar in primo piano", desc: "Video con avatar, script e sottotitoli generati dall'AI." },
+      { type: "video", src: "/reference/split.mp4", poster: "/reference/split-poster.jpg", title: "Schermo diviso", desc: "Immobile e avatar parlante nello stesso video." },
+      { type: "video", src: "/reference/immagini-a-video.mp4", poster: "/reference/immagini-a-video-poster.jpg", title: "Immagini a Video", desc: "Trasforma le foto dell'immobile in un video animato." },
+      { type: "video", src: "/reference/construction.mp4", poster: "/reference/construction-poster.jpg", title: "Timelapse AI", desc: "Da una foto dell'esterno, l'AI genera il timelapse." },
+      { type: "video", src: "/reference/prima-dopo.mp4", poster: "/reference/prima-dopo-poster.jpg", title: "Prima vs Dopo", desc: "Partendo da una foto, l'AI arreda e crea il video." },
+      { type: "video", src: "/reference/giorno-notte.mp4", poster: "/reference/giorno-notte-poster.jpg", title: "Giorno e notte", desc: "L'AI trasforma l'illuminazione della scena." },
+      { type: "video", src: "/reference/sottotitoli.mp4", poster: "/reference/sottotitoli-poster.jpg", title: "Sottotitoli", desc: "Video con testo descrittivo animato." },
+      { type: "video", src: "/reference/montaggio.mp4", poster: "/reference/montaggio-poster.jpg", title: "Montaggio", desc: "Montaggio automatico multi-stanza con musica." },
+    ] as { type: "image" | "video"; src: string; aspect?: "vertical" | "horizontal"; title?: string; desc?: string; poster?: string }[],
   },
   {
     id: "social-posts",
@@ -56,10 +56,10 @@ const FEATURES = [
       { src: "/reference/social-post.png", title: "Post Reel", desc: "Formato 9:16 per Reels e TikTok." },
     ],
     reels: [
-      { src: "/reference/social-reel-feed.mp4", title: "Reel Feed", desc: "Animazione automatica in formato feed." },
-      { src: "/reference/social-reel-square.mp4", title: "Reel Quadrato", desc: "Animazione automatica in formato quadrato." },
-      { src: "/reference/social-reel-story.mp4", title: "Reel Story", desc: "Animazione automatica in formato story." },
-      { src: "/reference/social-reel.mp4", title: "Reel Verticale", desc: "Animazione automatica in formato reel." },
+      { src: "/reference/social-reel-feed.mp4", poster: "/reference/social-reel-feed-poster.jpg", title: "Reel Feed", desc: "Animazione automatica in formato feed." },
+      { src: "/reference/social-reel-square.mp4", poster: "/reference/social-reel-square-poster.jpg", title: "Reel Quadrato", desc: "Animazione automatica in formato quadrato." },
+      { src: "/reference/social-reel-story.mp4", poster: "/reference/social-reel-story-poster.jpg", title: "Reel Story", desc: "Animazione automatica in formato story." },
+      { src: "/reference/social-reel.mp4", poster: "/reference/social-reel-poster.jpg", title: "Reel Verticale", desc: "Animazione automatica in formato reel." },
     ],
     media: [] as { type: "image" | "video"; src: string; aspect?: "vertical" | "horizontal"; title?: string; desc?: string }[],
   },
@@ -81,17 +81,17 @@ export default async function ReferencePage({ params }: Props) {
           <div className="max-w-5xl mx-auto px-5 md:px-6 text-center">
             <h1
               style={{
-                fontSize: "clamp(32px, 5vw, 52px)",
+                fontSize: "clamp(29px, 5vw, 47px)",
                 fontWeight: 900,
                 color: "#fff",
                 lineHeight: 1.1,
-                marginBottom: 16,
+                marginBottom: 14,
               }}
             >
               Esempi reali.{" "}
               <span style={{ color: "#3B83F6" }}>Risultati concreti.</span>
             </h1>
-            <p style={{ color: "#aaa", fontSize: 17, maxWidth: 600, margin: "0 auto" }}>
+            <p style={{ color: "#aaa", fontSize: 15, maxWidth: 540, margin: "0 auto" }}>
               Scopri cosa puoi creare con ogni funzionalità di GetNearMe.
               Video, foto, post e report generati in pochi click.
             </p>
@@ -110,27 +110,27 @@ export default async function ReferencePage({ params }: Props) {
           >
             <div className="max-w-6xl mx-auto px-5 md:px-6">
               {/* Feature header */}
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", marginBottom: 32 }}>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", marginBottom: 29 }}>
                 <span
                   style={{
-                    width: 48,
-                    height: 48,
+                    width: 43,
+                    height: 43,
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                     background: `${f.color}15`,
-                    borderRadius: 14,
+                    borderRadius: 13,
                     border: `2px solid ${f.color}40`,
                     color: f.color,
-                    marginBottom: 12,
+                    marginBottom: 11,
                   }}
                 >
                   <ReferenceGallery variant="icon" iconName={f.icon} />
                 </span>
-                <h2 style={{ fontSize: 28, fontWeight: 900, color: "#1a1a2e", margin: "0 0 8px", lineHeight: 1.2 }}>
+                <h2 style={{ fontSize: 25, fontWeight: 900, color: "#1a1a2e", margin: "0 0 7px", lineHeight: 1.2 }}>
                   {f.title}
                 </h2>
-                <p style={{ color: "#666", fontSize: 16, margin: 0, maxWidth: 600 }}>
+                <p style={{ color: "#666", fontSize: 14, margin: 0, maxWidth: 540 }}>
                   {f.desc}
                 </p>
               </div>
@@ -139,17 +139,17 @@ export default async function ReferencePage({ params }: Props) {
               {f.layout === "social" && f.posts && f.reels ? (
                 <>
                   <ReferenceGallery variant="social" posts={f.posts} reels={f.reels} color={f.color} />
-                  <div style={{ textAlign: "center", marginTop: 36 }}>
+                  <div style={{ textAlign: "center", marginTop: 32 }}>
                     <a
                       href={`/${locale}#pricing`}
                       className="neo-shadow-light neo-cta-blue"
                       style={{
                         display: "inline-block",
                         border: "1px solid rgba(26,26,46,0.10)",
-                        padding: "16px 32px",
-                        borderRadius: 12,
+                        padding: "14px 29px",
+                        borderRadius: 11,
                         fontWeight: 700,
-                        fontSize: 17,
+                        fontSize: 15,
                         textDecoration: "none",
                         letterSpacing: 0.3,
                         boxShadow: "0 2px 10px rgba(16,24,40,0.06)",
@@ -165,11 +165,11 @@ export default async function ReferencePage({ params }: Props) {
                 <div
                   style={{
                     border: `2px dashed ${f.color}40`,
-                    borderRadius: 16,
-                    padding: "48px 24px",
+                    borderRadius: 14,
+                    padding: "43px 22px",
                     textAlign: "center",
                     color: "#999",
-                    fontSize: 15,
+                    fontSize: 14,
                   }}
                 >
                   Contenuti in arrivo...
@@ -180,23 +180,23 @@ export default async function ReferencePage({ params }: Props) {
         ))}
 
         {/* Bottom CTA */}
-        <section style={{ background: "#1a1a2e", padding: "80px 0 120px" }}>
+        <section style={{ background: "#1a1a2e", padding: "72px 0 108px" }}>
           <div className="max-w-5xl mx-auto px-5 md:px-6 text-center">
             <h2
               style={{
-                fontSize: "clamp(30px, 5vw, 52px)",
+                fontSize: "clamp(27px, 5vw, 47px)",
                 fontWeight: 900,
                 lineHeight: 1.1,
                 color: "#fff",
-                marginBottom: 16,
+                marginBottom: 14,
               }}
             >
               Pronto a provare?
             </h2>
-            <p style={{ color: "#aaa", fontSize: 17, marginBottom: 36 }}>
+            <p style={{ color: "#aaa", fontSize: 15, marginBottom: 32 }}>
               Crei il tuo account in pochi secondi e inizi subito. Gratis, senza carta.
             </p>
-            <div className="ref-cta-buttons" style={{ display: "flex", gap: 14, flexWrap: "wrap", justifyContent: "center" }}>
+            <div className="ref-cta-buttons" style={{ display: "flex", gap: 13, flexWrap: "wrap", justifyContent: "center" }}>
               <AuthCta
                 locale={locale}
                 href={`/${locale}#pricing`}
@@ -204,10 +204,10 @@ export default async function ReferencePage({ params }: Props) {
                 style={{
                   display: "inline-block",
                   border: "1px solid rgba(26,26,46,0.10)",
-                  padding: "16px 32px",
-                  borderRadius: 12,
+                  padding: "14px 29px",
+                  borderRadius: 11,
                   fontWeight: 700,
-                  fontSize: 17,
+                  fontSize: 15,
                   textDecoration: "none",
                   textAlign: "center",
                   letterSpacing: 0.3,
@@ -224,10 +224,10 @@ export default async function ReferencePage({ params }: Props) {
                   background: "transparent",
                   color: "#fff",
                   border: "2px solid #fff",
-                  padding: "16px 32px",
-                  borderRadius: 12,
+                  padding: "14px 29px",
+                  borderRadius: 11,
                   fontWeight: 700,
-                  fontSize: 17,
+                  fontSize: 15,
                   textDecoration: "none",
                   textAlign: "center",
                   cursor: "pointer",

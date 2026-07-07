@@ -2,7 +2,7 @@ import React from 'react';
 import Image from 'next/image';
 import { Box, Icon } from './ui';
 import { ProjectData } from '@/lib/projects';
-import { fetchUserBatches, fetchBatchPhotos } from '@/lib/stagingBatches';
+import { fetchRecentPhotos } from '@/lib/stagingBatches';
 
 type RecentPhoto = { url: string; ts: number; isVideo?: boolean };
 
@@ -71,7 +71,7 @@ export function HomeScreen({
   const handleCoverUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !onProjectUpdate) return;
-    
+
     const reader = new FileReader();
     reader.onload = (event) => {
       const img = new window.Image();
@@ -111,18 +111,10 @@ export function HomeScreen({
     setLoadingRecent(true);
     (async () => {
       try {
-        const batches = await fetchUserBatches();
-        const valid = batches.filter(b =>
-          b.completedItems > 0 && b.status !== 'failed' &&
-          (!active?.id || !b.projectId || b.projectId === active.id)
-        );
-        const all: RecentPhoto[] = [];
-        await Promise.all(valid.map(async b => {
-          const photos = await fetchBatchPhotos(b.id);
-          for (const p of photos) {
-            if (p.resultUrl && p.status !== 'failed') all.push({ url: p.resultUrl, ts: new Date(b.createdAt).getTime() });
-          }
-        }));
+        const photos = await fetchRecentPhotos(60);
+        const all: RecentPhoto[] = photos
+          .filter(p => p.resultUrl && p.status !== 'failed' && (!active?.id || !p.projectId || p.projectId === active.id))
+          .map(p => ({ url: p.resultUrl, ts: new Date(p.createdAt).getTime() }));
         // Video AI finiti (tabella + cache locale).
         try {
           const { finishedVideos, fetchServerVideoJobs, mergeServerJobs } = await import('@/lib/videoJobs');
@@ -172,24 +164,24 @@ export function HomeScreen({
   // mostriamo uno stato vuoto invece di crashare su active.nome.
   if (!active) {
     return (
-      <div style={s('max-width:1160px;margin:0 auto;padding:36px 32px 64px')}>
-        <div style={s('display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 32px;text-align:center')}>
-          <img src="/dashboard/logo-icon.svg" alt="GetNearMe" style={{ width: 56, height: 56, marginBottom: 24 }} />
-          <h1 style={s('margin:0 0 8px;font-size:24px;font-weight:800;letter-spacing:-.3px')}>Benvenuto in GetNearMe</h1>
-          <p style={s('margin:0 0 32px;font-size:15px;color:#8c867d;max-width:420px;line-height:1.6')}>Crea il tuo primo immobile per iniziare a generare foto AI, video e post social per i tuoi annunci</p>
-          <Box onClick={() => setNewProjOpen(true)} style={s('display:inline-flex;align-items:center;gap:10px;background:#3B83F6;color:#fff;padding:14px 28px;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;transition:transform .2s,box-shadow .2s')} hover={{ transform: 'translateY(-2px)', boxShadow: '0 8px 24px rgba(59,131,246,.3)' }}>
+      <div style={s('max-width:1044px;margin:0 auto;padding:32px 29px 58px')}>
+        <div style={s('display:flex;flex-direction:column;align-items:center;justify-content:center;padding:72px 29px;text-align:center')}>
+          <img src="/dashboard/logo-icon.svg" alt="GetNearMe" style={{ width: 50, height: 50, marginBottom: 22 }} />
+          <h1 style={s('margin:0 0 7px;font-size:22px;font-weight:800;letter-spacing:-.3px')}>Benvenuto in GetNearMe</h1>
+          <p style={s('margin:0 0 29px;font-size:13.5px;color:#8c867d;max-width:378px;line-height:1.6')}>Crea il tuo primo immobile per iniziare a generare foto AI, video e post social per i tuoi annunci</p>
+          <Box onClick={() => setNewProjOpen(true)} style={s('display:inline-flex;align-items:center;gap:9px;background:#3B83F6;color:#fff;padding:13px 25px;border-radius:11px;font-size:13.5px;font-weight:700;cursor:pointer;transition:transform .2s,box-shadow .2s')} hover={{ transform: 'translateY(-2px)', boxShadow: '0 8px 24px rgba(59,131,246,.3)' }}>
             Crea il tuo primo immobile
           </Box>
-          <div className="max-md:!mt-8 max-md:!grid-cols-1" style={s('margin-top:48px;display:grid;grid-template-columns:repeat(3,1fr);gap:20px;max-width:640px;width:100%')}>
+          <div className="max-md:!mt-8 max-md:!grid-cols-1" style={s('margin-top:43px;display:grid;grid-template-columns:repeat(3,1fr);gap:18px;max-width:576px;width:100%')}>
             {[
               { icon: 'sparkles', title: 'Homestaging AI', desc: 'Arreda e trasforma le foto con un click' },
               { icon: 'film', title: 'Video AI', desc: 'Crea video professionali automaticamente' },
               { icon: 'megaphone', title: 'Post Social', desc: 'Template pronti per Instagram e social' },
             ].map(f => (
-              <div key={f.title} style={s('background:#fff;border:1px solid #f0ede7;border-radius:14px;padding:24px 20px;text-align:center')}>
-                <div style={s('width:44px;height:44px;border-radius:12px;background:#f4f2ee;display:flex;align-items:center;justify-content:center;margin:0 auto 12px')}><Icon name={f.icon} size={20} color="#57534c" /></div>
-                <div style={s('font-size:14px;font-weight:700;margin-bottom:4px')}>{f.title}</div>
-                <div style={s('font-size:12.5px;color:#8c867d;line-height:1.5')}>{f.desc}</div>
+              <div key={f.title} style={s('background:#fff;border:1px solid #f0ede7;border-radius:13px;padding:22px 18px;text-align:center')}>
+                <div style={s('width:40px;height:40px;border-radius:11px;background:#f4f2ee;display:flex;align-items:center;justify-content:center;margin:0 auto 11px')}><Icon name={f.icon} size={18} color="#57534c" /></div>
+                <div style={s('font-size:13px;font-weight:700;margin-bottom:4px')}>{f.title}</div>
+                <div style={s('font-size:11.5px;color:#8c867d;line-height:1.5')}>{f.desc}</div>
               </div>
             ))}
           </div>
@@ -201,14 +193,14 @@ export function HomeScreen({
   return (
     <div>
       {/* ── CINEMATIC HEADER ── */}
-      <div className="max-md:!h-auto max-md:!min-h-[220px]" style={{ position: 'relative', height: 260, background: '#111', overflow: 'hidden' }}>
+      <div className="max-md:!h-auto max-md:!min-h-[220px]" style={{ position: 'relative', height: 234, background: '#111', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', inset: 0, opacity: 0.6, ...getCoverStyle(active), filter: 'blur(10px) brightness(0.6)', transform: 'scale(1.1)' }} />
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, #111, transparent)' }} />
-        <div className="max-md:!p-6 max-md:!pb-6 max-md:!items-center" style={s('max-width:1160px;margin:0 auto;padding:0 32px;height:100%;display:flex;align-items:flex-end;position:relative;z-index:2;padding-bottom:32px')}>
-          <div className="max-md:!flex-col max-md:!items-center max-md:!text-center max-md:!mt-12" style={{ display: 'flex', gap: 24, alignItems: 'center', width: '100%' }}>
-            
-            <label 
-              style={{ cursor: 'pointer', position: 'relative', display: 'block', borderRadius: 20 }}
+        <div className="max-md:!p-6 max-md:!pb-6 max-md:!items-center" style={s('max-width:1044px;margin:0 auto;padding:0 29px;height:100%;display:flex;align-items:flex-end;position:relative;z-index:2;padding-bottom:29px')}>
+          <div className="max-md:!flex-col max-md:!items-center max-md:!text-center max-md:!mt-12" style={{ display: 'flex', gap: 22, alignItems: 'center', width: '100%' }}>
+
+            <label
+              style={{ cursor: 'pointer', position: 'relative', display: 'block', borderRadius: 18 }}
               onMouseEnter={e => {
                 const img = e.currentTarget.querySelector('.cover-img') as HTMLElement;
                 const overlay = e.currentTarget.querySelector('.cover-overlay') as HTMLElement;
@@ -223,24 +215,24 @@ export function HomeScreen({
               }}
             >
               <input type="file" accept="image/*" style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', zIndex: 10 }} onChange={handleCoverUpload} />
-              <div className="cover-img" style={{ width: 120, height: 120, borderRadius: 20, ...getCoverStyle(active), boxShadow: '0 4px 12px rgba(0,0,0,.15)', transition: 'filter .2s' }} />
+              <div className="cover-img" style={{ width: 108, height: 108, borderRadius: 18, ...getCoverStyle(active), boxShadow: '0 4px 12px rgba(0,0,0,.15)', transition: 'filter .2s' }} />
               <div className="cover-overlay" style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0, transition: 'opacity .2s', pointerEvents: 'none' }}>
-                <Icon name="camera" size={28} color="#fff" />
+                <Icon name="camera" size={25} color="#fff" />
               </div>
               {/* Badge camera sempre visibile su mobile (niente hover su touch) */}
-              <div className="max-md:!flex" style={{ display: 'none', position: 'absolute', bottom: 8, right: 8, width: 32, height: 32, borderRadius: '50%', background: 'rgba(0,0,0,.55)', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none', zIndex: 5 }}>
-                <Icon name="camera" size={16} color="#fff" />
+              <div className="max-md:!flex" style={{ display: 'none', position: 'absolute', bottom: 7, right: 7, width: 29, height: 29, borderRadius: '50%', background: 'rgba(0,0,0,.55)', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none', zIndex: 5 }}>
+                <Icon name="camera" size={14} color="#fff" />
               </div>
             </label>
 
             <div className="max-md:!items-center max-md:!text-center" style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 0 }}>
-              <div className="max-md:!justify-center" style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                <h1 className="max-md:!text-2xl" style={s('margin:0;font-size:36px;font-weight:800;letter-spacing:-.5px;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.5);line-height:1.1')}>{active.nome}</h1>
+              <div className="max-md:!justify-center" style={{ display: 'flex', alignItems: 'center', gap: 13 }}>
+                <h1 className="max-md:!text-2xl" style={s('margin:0;font-size:32px;font-weight:800;letter-spacing:-.5px;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.5);line-height:1.1')}>{active.nome}</h1>
               </div>
-              <div className="max-md:!justify-center" style={s('color:rgba(255,255,255,.9);font-size:15px;display:flex;align-items:center;gap:6px;margin-top:2px')}><Icon name="map-pin" size={15} color="rgba(255,255,255,.7)" />{active.addr || 'Indirizzo non specificato'}</div>
+              <div className="max-md:!justify-center" style={s('color:rgba(255,255,255,.9);font-size:13.5px;display:flex;align-items:center;gap:5px;margin-top:2px')}><Icon name="map-pin" size={14} color="rgba(255,255,255,.7)" />{active.addr || 'Indirizzo non specificato'}</div>
               {onEditProject && (
-                <div className="max-md:!text-center" style={{ marginTop: 6 }}>
-                  <button onClick={onEditProject} title="Modifica immobile" style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', color: 'rgba(255,255,255,0.8)', fontSize: 13, fontWeight: 500, textDecoration: 'underline', textUnderlineOffset: 4, transition: 'color 0.2s' }} onMouseEnter={e => e.currentTarget.style.color = '#fff'} onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.8)'}>
+                <div className="max-md:!text-center" style={{ marginTop: 5 }}>
+                  <button onClick={onEditProject} title="Modifica immobile" style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', color: 'rgba(255,255,255,0.8)', fontSize: 12, fontWeight: 500, textDecoration: 'underline', textUnderlineOffset: 4, transition: 'color 0.2s' }} onMouseEnter={e => e.currentTarget.style.color = '#fff'} onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.8)'}>
                     Modifica
                   </button>
                 </div>
@@ -251,84 +243,84 @@ export function HomeScreen({
         </div>
       </div>
 
-      <div className="max-md:!p-4" style={s('max-width:1160px;margin:0 auto;padding:48px 32px 32px')}>
-        <div className="max-md:!grid-cols-1" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 24 }}>
+      <div className="max-md:!p-4" style={s('max-width:1044px;margin:0 auto;padding:43px 29px 29px')}>
+        <div className="max-md:!grid-cols-1" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 22 }}>
           {/* ── LEFT: BENTO BOX ACTIONS ── */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-            
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
+
             {/* Quick Summary Row */}
-            <div className="max-md:!grid-cols-2" style={s('display:grid;grid-template-columns:repeat(4,1fr);gap:12px')}>
+            <div className="max-md:!grid-cols-2" style={s('display:grid;grid-template-columns:repeat(4,1fr);gap:11px')}>
               {[
-                { 
-                  label: active.icons?.prezzo === 'dollar' ? 'Prezzo ($)' : active.icons?.prezzo === 'pound' ? 'Prezzo (£)' : 'Prezzo (€)', 
-                  value: fmt(active.prezzo), 
-                  iconKey: active.icons?.prezzo || 'euro' 
+                {
+                  label: active.icons?.prezzo === 'dollar' ? 'Prezzo ($)' : active.icons?.prezzo === 'pound' ? 'Prezzo (£)' : 'Prezzo (€)',
+                  value: fmt(active.prezzo),
+                  iconKey: active.icons?.prezzo || 'euro'
                 },
-                { 
-                  label: getIconLabel(active.icons?.mq, 'Metratura'), 
-                  value: (active.mq ? active.mq + (['maximize-2', 'area'].includes(active.icons?.mq || '') ? ' m²' : '') : '-'), 
-                  iconKey: active.icons?.mq || 'area' 
+                {
+                  label: getIconLabel(active.icons?.mq, 'Metratura'),
+                  value: (active.mq ? active.mq + (['maximize-2', 'area'].includes(active.icons?.mq || '') ? ' m²' : '') : '-'),
+                  iconKey: active.icons?.mq || 'area'
                 },
-                { 
-                  label: getIconLabel(active.icons?.camere, 'Camere'), 
-                  value: active.camere || '-', 
-                  iconKey: active.icons?.camere || 'bed' 
+                {
+                  label: getIconLabel(active.icons?.camere, 'Camere'),
+                  value: active.camere || '-',
+                  iconKey: active.icons?.camere || 'bed'
                 },
-                { 
-                  label: getIconLabel(active.icons?.bagni, 'Bagni'), 
-                  value: active.bagni || '-', 
-                  iconKey: active.icons?.bagni || 'bath' 
+                {
+                  label: getIconLabel(active.icons?.bagni, 'Bagni'),
+                  value: active.bagni || '-',
+                  iconKey: active.icons?.bagni || 'bath'
                 },
               ].map(st => (
-                <div key={st.label} style={s('background:#fff;border:1px solid #f0ede7;border-radius:14px;padding:16px')}>
-                  <div style={s('display:flex;align-items:center;gap:6px;margin-bottom:6px')}>
-                    <span style={{ width: 14, height: 14, display: 'flex', color: '#b3aca1' }} dangerouslySetInnerHTML={{ __html: (TPL_ICONS as any)[st.iconKey] || '' }} />
-                    <span style={s('font-size:11.5px;font-weight:700;color:#8c867d;text-transform:uppercase;letter-spacing:.04em')}>{st.label}</span>
+                <div key={st.label} style={s('background:#fff;border:1px solid #f0ede7;border-radius:13px;padding:14px')}>
+                  <div style={s('display:flex;align-items:center;gap:5px;margin-bottom:5px')}>
+                    <span style={{ width: 13, height: 13, display: 'flex', color: '#b3aca1' }} dangerouslySetInnerHTML={{ __html: (TPL_ICONS as any)[st.iconKey] || '' }} />
+                    <span style={s('font-size:10.5px;font-weight:700;color:#8c867d;text-transform:uppercase;letter-spacing:.04em')}>{st.label}</span>
                   </div>
-                  <div style={s('font-size:17px;font-weight:800;letter-spacing:-.3px;color:#211f1c')}>{st.value}</div>
+                  <div style={s('font-size:15px;font-weight:800;letter-spacing:-.3px;color:#211f1c')}>{st.value}</div>
                 </div>
               ))}
             </div>
 
             {/* AI Action Grid (Bento) */}
-            <div className="max-md:!grid-cols-1 max-md:!grid-rows-[auto]" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gridTemplateRows: 'repeat(2, 160px)', gap: 16 }}>
-              
+            <div className="max-md:!grid-cols-1 max-md:!grid-rows-[auto]" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gridTemplateRows: 'repeat(2, 1fr)', gap: 14, flex: 1, minHeight: 288 }}>
+
               {/* PRIMARY: Foto AI */}
-              <Box onClick={() => go('staging')} style={{ gridColumn: 'span 1', gridRow: 'span 2', background: 'linear-gradient(135deg, #3B83F6, #1d4ed8)', borderRadius: 20, padding: 32, cursor: 'pointer', position: 'relative', overflow: 'hidden', color: '#fff', border: '1px solid rgba(255,255,255,.1)', transition: 'transform .2s, box-shadow .2s' }} hover={{ transform: 'translateY(-4px)', boxShadow: '0 16px 40px rgba(37,99,235,.25)' }}>
+              <Box onClick={() => go('staging')} style={{ gridColumn: 'span 1', gridRow: 'span 2', background: 'linear-gradient(135deg, #3B83F6, #1d4ed8)', borderRadius: 18, padding: 29, cursor: 'pointer', position: 'relative', overflow: 'hidden', color: '#fff', border: '1px solid rgba(255,255,255,.1)', transition: 'transform .2s, box-shadow .2s' }} hover={{ transform: 'translateY(-4px)', boxShadow: '0 16px 40px rgba(37,99,235,.25)' }}>
                 {/* Blob animati: gradiente fluido che deriva e ruota */}
-                <div style={{ position: 'absolute', top: -40, right: -40, width: 220, height: 220, background: 'linear-gradient(135deg, #60A5FA, #93C5FD)', borderRadius: '50%', filter: 'blur(40px)', opacity: 0.35, animation: 'blob-float 14s ease-in-out infinite' }} />
-                <div style={{ position: 'absolute', bottom: -60, left: -50, width: 200, height: 200, background: 'linear-gradient(135deg, #93C5FD, #6366f1)', borderRadius: '50%', filter: 'blur(48px)', opacity: 0.3, animation: 'blob-float-2 18s ease-in-out infinite' }} />
-                
-                <div className="max-md:!w-11 max-md:!h-11 max-md:[&>svg]:!w-5 max-md:[&>svg]:!h-5" style={{ width: 56, height: 56, borderRadius: 16, background: 'rgba(255,255,255,.2)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 'auto', border: '1px solid rgba(255,255,255,.2)' }}>
-                  <Icon name="sparkles" size={28} color="#fff" />
+                <div style={{ position: 'absolute', top: -36, right: -36, width: 198, height: 198, background: 'linear-gradient(135deg, #60A5FA, #93C5FD)', borderRadius: '50%', filter: 'blur(40px)', opacity: 0.35, animation: 'blob-float 14s ease-in-out infinite' }} />
+                <div style={{ position: 'absolute', bottom: -54, left: -45, width: 180, height: 180, background: 'linear-gradient(135deg, #93C5FD, #6366f1)', borderRadius: '50%', filter: 'blur(48px)', opacity: 0.3, animation: 'blob-float-2 18s ease-in-out infinite' }} />
+
+                <div className="max-md:!w-11 max-md:!h-11 max-md:[&>svg]:!w-5 max-md:[&>svg]:!h-5" style={{ width: 50, height: 50, borderRadius: 14, background: 'rgba(255,255,255,.2)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 'auto', border: '1px solid rgba(255,255,255,.2)' }}>
+                  <Icon name="sparkles" size={25} color="#fff" />
                 </div>
-                <div className="max-md:!mt-10" style={{ marginTop: 120 }}>
-                  <h3 style={s('font-size:24px;font-weight:800;letter-spacing:-.5px;margin:0 0 6px')}>Homestaging AI</h3>
-                  <p style={s('font-size:14.5px;color:rgba(255,255,255,.8);margin:0;line-height:1.4')}>Arreda stanze vuote o cambia stile ai tuoi ambienti con l'Intelligenza Artificiale.</p>
+                <div className="max-md:!mt-10" style={{ marginTop: 108 }}>
+                  <h3 style={s('font-size:22px;font-weight:800;letter-spacing:-.5px;margin:0 0 5px')}>Homestaging AI</h3>
+                  <p style={s('font-size:13px;color:rgba(255,255,255,.8);margin:0;line-height:1.4')}>Arreda stanze vuote o cambia stile ai tuoi ambienti con l'Intelligenza Artificiale.</p>
                 </div>
               </Box>
 
               {/* SECONDARY: Video AI */}
-              <Box onClick={() => go('video')} style={{ background: '#fff', border: '1px solid #f0ede7', borderRadius: 20, padding: 24, cursor: 'pointer', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', transition: 'transform .3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow .3s cubic-bezier(0.4, 0, 0.2, 1)' }} hover={{ transform: 'translateY(-4px)', boxShadow: '0 12px 32px rgba(59,131,246,0.12)', borderColor: '#bfdbfe' }}>
+              <Box onClick={() => go('video')} style={{ background: '#fff', border: '1px solid #f0ede7', borderRadius: 18, padding: 22, cursor: 'pointer', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', transition: 'transform .3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow .3s cubic-bezier(0.4, 0, 0.2, 1)' }} hover={{ transform: 'translateY(-4px)', boxShadow: '0 12px 32px rgba(59,131,246,0.12)', borderColor: '#bfdbfe' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <div style={{ width: 44, height: 44, borderRadius: 12, background: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'transform .3s' }}>
-                    <Icon name="film" size={20} color="#3B83F6" />
+                  <div style={{ width: 40, height: 40, borderRadius: 11, background: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'transform .3s' }}>
+                    <Icon name="film" size={18} color="#3B83F6" />
                   </div>
                 </div>
                 <div>
-                  <h3 style={s('font-size:18px;font-weight:800;letter-spacing:-.3px;margin:0 0 4px;color:#211f1c')}>Crea Video AI</h3>
-                  <p style={s('font-size:13px;color:#8c867d;margin:0')}>Presentatori virtuali per i tuoi reel.</p>
+                  <h3 style={s('font-size:16px;font-weight:800;letter-spacing:-.3px;margin:0 0 4px;color:#211f1c')}>Crea Video AI</h3>
+                  <p style={s('font-size:12px;color:#8c867d;margin:0')}>Presentatori virtuali per i tuoi reel.</p>
                 </div>
               </Box>
 
               {/* SECONDARY: Post Social */}
-              <Box onClick={() => go('studio')} style={{ background: '#fff', border: '1px solid #f0ede7', borderRadius: 20, padding: 24, cursor: 'pointer', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', transition: 'transform .3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow .3s cubic-bezier(0.4, 0, 0.2, 1)' }} hover={{ transform: 'translateY(-4px)', boxShadow: '0 12px 32px rgba(59,131,246,0.12)', borderColor: '#bfdbfe' }}>
-                <div style={{ width: 44, height: 44, borderRadius: 12, background: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'transform .3s' }}>
-                  <Icon name="image-plus" size={20} color="#3B83F6" />
+              <Box onClick={() => go('studio')} style={{ background: '#fff', border: '1px solid #f0ede7', borderRadius: 18, padding: 22, cursor: 'pointer', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', transition: 'transform .3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow .3s cubic-bezier(0.4, 0, 0.2, 1)' }} hover={{ transform: 'translateY(-4px)', boxShadow: '0 12px 32px rgba(59,131,246,0.12)', borderColor: '#bfdbfe' }}>
+                <div style={{ width: 40, height: 40, borderRadius: 11, background: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'transform .3s' }}>
+                  <Icon name="image-plus" size={18} color="#3B83F6" />
                 </div>
                 <div>
-                  <h3 style={s('font-size:18px;font-weight:800;letter-spacing:-.3px;margin:0 0 4px;color:#211f1c')}>Post Social</h3>
-                  <p style={s('font-size:13px;color:#8c867d;margin:0')}>Carousel e grafiche pronte per Instagram.</p>
+                  <h3 style={s('font-size:16px;font-weight:800;letter-spacing:-.3px;margin:0 0 4px;color:#211f1c')}>Post Social</h3>
+                  <p style={s('font-size:12px;color:#8c867d;margin:0')}>Carousel e grafiche pronte per Instagram.</p>
                 </div>
               </Box>
 
@@ -336,49 +328,49 @@ export function HomeScreen({
           </div>
 
           {/* ── RIGHT: HEALTH & STATS ── */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-            
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
+
             {/* Marketing Score */}
-            <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:20px;padding:28px')}>
-              <h3 style={s('margin:0 0 20px;font-size:16px;font-weight:800;letter-spacing:-.3px;color:#211f1c')}>Progresso Marketing</h3>
-              
-              <div style={{ display: 'flex', alignItems: 'center', gap: 20, marginBottom: 24 }}>
-                <div style={{ position: 'relative', width: 72, height: 72 }}>
-                  <svg width="72" height="72" viewBox="0 0 36 36">
+            <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:18px;padding:25px')}>
+              <h3 style={s('margin:0 0 18px;font-size:14px;font-weight:800;letter-spacing:-.3px;color:#211f1c')}>Progresso Marketing</h3>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: 18, marginBottom: 22 }}>
+                <div style={{ position: 'relative', width: 65, height: 65 }}>
+                  <svg width="65" height="65" viewBox="0 0 36 36">
                     <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#f4f2ee" strokeWidth="3" />
                     <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke={completionPct === 100 ? '#10B981' : '#3B83F6'} strokeWidth="3" strokeDasharray={`${completionPct}, 100`} strokeLinecap={completionPct === 0 ? 'butt' : 'round'} style={{ transition: 'stroke-dasharray 1s ease-out, stroke 1s ease-out', opacity: completionPct === 0 ? 0 : 1 }} />
                   </svg>
-                  <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 800, color: '#211f1c' }}>
+                  <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 800, color: '#211f1c' }}>
                     {completionPct}%
                   </div>
                 </div>
                 <div>
-                  <div style={s('font-size:15px;font-weight:700;color:#211f1c;margin-bottom:4px')}>
+                  <div style={s('font-size:13.5px;font-weight:700;color:#211f1c;margin-bottom:4px')}>
                     {completionPct === 100 ? 'Kit Completo!' : completionPct === 0 ? 'Tutto da creare' : 'Quasi pronto'}
                   </div>
-                  <div style={s('font-size:13px;color:#8c867d;line-height:1.4')}>
+                  <div style={s('font-size:12px;color:#8c867d;line-height:1.4')}>
                     {completionPct === 100 ? 'Hai generato tutti i materiali per questo immobile.' : 'Usa gli strumenti AI per completare il set di contenuti del tuo immobile.'}
                   </div>
                 </div>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
                 {[
                   { id: 'foto', label: 'Foto generate', done: hasPhotos, ic: 'sparkles' },
                   { id: 'video', label: 'Video creati', done: hasVideo, ic: 'film' },
                   { id: 'social', label: 'Post Social pronti', done: hasSocial, ic: 'megaphone' },
                 ].map(item => (
-                  <div key={item.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', background: item.done ? '#f0fdf4' : '#f9f8f6', borderRadius: 10, border: `1px solid ${item.done ? '#bbf7d0' : '#f0ede7'}` }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <Icon name={item.ic} size={16} color={item.done ? '#16a34a' : '#b3aca1'} />
-                      <span style={{ fontSize: 13.5, fontWeight: 600, color: item.done ? '#166534' : '#57534c' }}>{item.label}</span>
+                  <div key={item.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 11px', background: item.done ? '#f0fdf4' : '#f9f8f6', borderRadius: 9, border: `1px solid ${item.done ? '#bbf7d0' : '#f0ede7'}` }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+                      <Icon name={item.ic} size={14} color={item.done ? '#16a34a' : '#b3aca1'} />
+                      <span style={{ fontSize: 12, fontWeight: 600, color: item.done ? '#166534' : '#57534c' }}>{item.label}</span>
                     </div>
                     {item.done ? (
-                      <div style={{ width: 18, height: 18, borderRadius: '50%', background: '#16a34a', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}>
-                        <Icon name="check" size={11} color="#fff" />
+                      <div style={{ width: 16, height: 16, borderRadius: '50%', background: '#16a34a', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}>
+                        <Icon name="check" size={10} color="#fff" />
                       </div>
                     ) : (
-                      <div style={{ width: 16, height: 16, borderRadius: '50%', border: '2px solid #d8d4cb' }} />
+                      <div style={{ width: 14, height: 14, borderRadius: '50%', border: '2px solid #d8d4cb' }} />
                     )}
                   </div>
                 ))}
@@ -386,13 +378,13 @@ export function HomeScreen({
             </div>
 
             {/* Other tools link */}
-            <Box onClick={() => go('montaggio')} style={{ background: '#fff', border: '1px dashed #d8d4cb', borderRadius: 16, padding: '16px 20px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 14, transition: 'all .3s cubic-bezier(0.4, 0, 0.2, 1)' }} hover={{ transform: 'translateY(-3px)', background: '#f8fafc', borderColor: '#3B83F6', boxShadow: '0 8px 24px rgba(59,131,246,0.1)' }}>
-              <div style={{ width: 36, height: 36, borderRadius: 10, background: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Icon name="scissors" size={16} color="#3B83F6" />
+            <Box onClick={() => go('montaggio')} style={{ background: '#fff', border: '1px dashed #d8d4cb', borderRadius: 14, padding: '14px 18px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 13, transition: 'all .3s cubic-bezier(0.4, 0, 0.2, 1)' }} hover={{ transform: 'translateY(-3px)', background: '#f8fafc', borderColor: '#3B83F6', boxShadow: '0 8px 24px rgba(59,131,246,0.1)' }}>
+              <div style={{ width: 32, height: 32, borderRadius: 9, background: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Icon name="scissors" size={14} color="#3B83F6" />
               </div>
               <div>
-                <div style={s('font-size:13.5px;font-weight:700;color:#211f1c;margin-bottom:2px')}>Strumento Montaggio</div>
-                <div style={s('font-size:12px;color:#8c867d')}>Mixa le tue riprese reali.</div>
+                <div style={s('font-size:12px;font-weight:700;color:#211f1c;margin-bottom:2px')}>Strumento Montaggio</div>
+                <div style={s('font-size:11px;color:#8c867d')}>Mixa le tue riprese reali.</div>
               </div>
             </Box>
 
@@ -400,22 +392,22 @@ export function HomeScreen({
         </div>
 
         {/* ── RECENT CONTENTS (EMPTY STATE) ── */}
-        <div style={{ marginTop: 40, borderTop: '1px solid #f0ede7', paddingTop: 32 }}>
-          <div style={s('display:flex;align-items:baseline;justify-content:space-between;margin-bottom:20px')}>
-            <h2 style={s('margin:0;font-size:20px;font-weight:800;letter-spacing:-.3px;color:#211f1c')}>Contenuti recenti</h2>
-            <span onClick={() => go('media')} style={s('font-size:14px;font-weight:700;color:#1d5fd0;cursor:pointer')}>Vedi tutto</span>
+        <div style={{ marginTop: 36, borderTop: '1px solid #f0ede7', paddingTop: 29 }}>
+          <div style={s('display:flex;align-items:baseline;justify-content:space-between;margin-bottom:18px')}>
+            <h2 style={s('margin:0;font-size:18px;font-weight:800;letter-spacing:-.3px;color:#211f1c')}>Contenuti recenti</h2>
+            <span onClick={() => go('media')} style={s('font-size:13px;font-weight:700;color:#1d5fd0;cursor:pointer')}>Vedi tutto</span>
           </div>
           {loadingRecent ? (
-            <div className="max-md:!grid-cols-2" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+            <div className="max-md:!grid-cols-2" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 11 }}>
               {[1, 2, 3, 4].map(i => (
-                <div key={i} style={{ aspectRatio: '4/3', borderRadius: 12, background: '#f4f2ee', animation: 'pulse 1.5s infinite ease-in-out' }} />
+                <div key={i} style={{ aspectRatio: '4/3', borderRadius: 11, background: '#f4f2ee', animation: 'pulse 1.5s infinite ease-in-out' }} />
               ))}
             </div>
           ) : recent.length > 0 ? (
             <>
-              <div className="max-md:!grid-cols-2" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+              <div className="max-md:!grid-cols-2" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 11 }}>
                 {recent.map((p, i) => (
-                  <div key={i} onClick={() => setLightbox({ url: p.url, isVideo: p.isVideo })} style={{ position: 'relative', aspectRatio: '4/3', borderRadius: 12, overflow: 'hidden', cursor: 'pointer', border: '1px solid #f0ede7', background: p.isVideo ? '#000' : '#f4f2ee', animation: 'media-reveal .7s cubic-bezier(.22,1,.36,1) both', animationDelay: `${i * 70}ms` }}>
+                  <div key={i} onClick={() => setLightbox({ url: p.url, isVideo: p.isVideo })} style={{ position: 'relative', aspectRatio: '4/3', borderRadius: 11, overflow: 'hidden', cursor: 'pointer', border: '1px solid #f0ede7', background: p.isVideo ? '#000' : '#f4f2ee', animation: 'media-reveal .7s cubic-bezier(.22,1,.36,1) both', animationDelay: `${i * 70}ms` }}>
                     {p.isVideo ? (
                       // eslint-disable-next-line jsx-a11y/media-has-caption
                       <video src={`${p.url}#t=0.5`} muted playsInline preload="metadata" style={{ width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }} />
@@ -424,8 +416,8 @@ export function HomeScreen({
                     )}
                     {p.isVideo ? (
                       <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
-                        <div style={{ background: 'rgba(20,30,55,0.55)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', borderRadius: '50%', width: 46, height: 46, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          <Icon name="play-circle" size={24} color="#fff" />
+                        <div style={{ background: 'rgba(20,30,55,0.55)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', borderRadius: '50%', width: 41, height: 41, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <Icon name="play-circle" size={22} color="#fff" />
                         </div>
                       </div>
                     ) : (
@@ -433,8 +425,8 @@ export function HomeScreen({
                         onMouseEnter={e => e.currentTarget.style.opacity = '1'}
                         onMouseLeave={e => e.currentTarget.style.opacity = '0'}
                       >
-                        <div style={{ background: '#fff', borderRadius: '50%', width: 42, height: 42, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          <Icon name="maximize-2" size={19} color="#211f1c" />
+                        <div style={{ background: '#fff', borderRadius: '50%', width: 38, height: 38, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <Icon name="maximize-2" size={17} color="#211f1c" />
                         </div>
                       </div>
                     )}
@@ -442,30 +434,30 @@ export function HomeScreen({
                 ))}
               </div>
               {hasMoreRecent && (
-                <div style={{ display: 'flex', justifyContent: 'center', marginTop: 20 }}>
-                  <Box onClick={() => go('media')} style={s('display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid #e4e1da;color:#211f1c;padding:10px 20px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer')} hover={{ background: '#f6f4f0' }}>
-                    Vedi altro
-                    <Icon name="arrow-right" size={15} color="#211f1c" />
+                <div style={{ display: 'flex', justifyContent: 'center', marginTop: 18 }}>
+                  <Box onClick={() => go('media')} style={s('display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid #e4e1da;color:#211f1c;padding:9px 18px;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer')} hover={{ background: '#f6f4f0' }}>
+                    Vedi tutti
+                    <Icon name="arrow-right" size={14} color="#211f1c" />
                   </Box>
                 </div>
               )}
             </>
           ) : (
-            <div style={{ background: '#fcfcfb', border: '1px dashed #e4e1da', borderRadius: 16, padding: '48px 24px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              <div style={{ width: 48, height: 48, borderRadius: '50%', background: '#f6f4f0', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
-                <Icon name="image" size={24} color="#8c867d" />
+            <div style={{ background: '#fcfcfb', border: '1px dashed #e4e1da', borderRadius: 14, padding: '43px 22px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <div style={{ width: 43, height: 43, borderRadius: '50%', background: '#f6f4f0', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}>
+                <Icon name="image" size={22} color="#8c867d" />
               </div>
-              <div style={{ fontSize: 16, fontWeight: 700, color: '#211f1c', marginBottom: 4 }}>Nessun contenuto generato</div>
-              <div style={{ fontSize: 14, color: '#8c867d', maxWidth: 360, lineHeight: 1.5, marginBottom: 20 }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: '#211f1c', marginBottom: 4 }}>Nessun contenuto generato</div>
+              <div style={{ fontSize: 13, color: '#8c867d', maxWidth: 360, lineHeight: 1.5, marginBottom: 18 }}>
                 Non hai ancora creato render o video AI per questo immobile. Usa gli strumenti qui sopra per iniziare.
               </div>
               <Box as="button" onClick={() => go('staging')} style={{
                 display: 'inline-flex', alignItems: 'center', gap: 8, border: 'none',
                 background: 'linear-gradient(135deg, #3B83F6 0%, #6366f1 100%)', color: '#fff',
-                fontSize: 14.5, fontWeight: 700, padding: '13px 22px', borderRadius: 12, cursor: 'pointer',
+                fontSize: 13, fontWeight: 700, padding: '12px 20px', borderRadius: 11, cursor: 'pointer',
                 boxShadow: '0 8px 24px rgba(99,102,241,0.25)', transition: 'transform .2s',
               } as React.CSSProperties} hover={{ transform: 'translateY(-1px)' }}>
-                <Icon name="sparkles" size={17} color="#fff" />Crea Home Staging
+                <Icon name="sparkles" size={15} color="#fff" />Crea Home Staging
               </Box>
             </div>
           )}
@@ -474,7 +466,7 @@ export function HomeScreen({
       </div>
 
       {lightbox && (
-        <div onClick={() => setLightbox(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.94)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 40 }}>
+        <div onClick={() => setLightbox(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.94)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 36 }}>
           {lightbox.isVideo ? (
             // controlsList nofullscreen: resta contenuto nel modal, niente super-fullscreen
             <video onClick={e => e.stopPropagation()} src={lightbox.url} controls autoPlay playsInline controlsList="nofullscreen" disablePictureInPicture style={{ maxWidth: '90vw', maxHeight: '88vh', objectFit: 'contain', borderRadius: 12, background: '#000' }} />
@@ -482,8 +474,8 @@ export function HomeScreen({
             // eslint-disable-next-line @next/next/no-img-element
             <img src={lightbox.url} alt="" style={{ maxWidth: '90vw', maxHeight: '88vh', objectFit: 'contain', borderRadius: 12 }} />
           )}
-          <button onClick={() => setLightbox(null)} style={{ position: 'fixed', top: 24, right: 28, background: 'rgba(255,255,255,0.12)', border: 'none', borderRadius: '50%', width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-            <Icon name="x" size={20} color="#fff" />
+          <button onClick={() => setLightbox(null)} style={{ position: 'fixed', top: 22, right: 25, background: 'rgba(255,255,255,0.12)', border: 'none', borderRadius: '50%', width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+            <Icon name="x" size={18} color="#fff" />
           </button>
         </div>
       )}

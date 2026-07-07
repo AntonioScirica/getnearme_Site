@@ -52,31 +52,31 @@ export default async function BlogHubPage({ params }: Props) {
         <Navbar locale={locale} />
       </div>
 
-      <section style={{ padding: "72px 24px 40px", textAlign: "center" }}>
+      <section style={{ padding: "65px 22px 36px", textAlign: "center" }}>
         <h1
           style={{
-            fontSize: "clamp(28px, 4vw, 40px)",
+            fontSize: "clamp(25px, 4vw, 36px)",
             fontWeight: 800,
             lineHeight: 1.15,
-            maxWidth: 640,
-            margin: "0 auto 14px",
+            maxWidth: 576,
+            margin: "0 auto 13px",
             color: "#1a1a2e",
           }}
         >
           Risorse per agenti immobiliari
         </h1>
-        <p style={{ fontSize: 17, color: "#6b7280", maxWidth: 540, margin: "0 auto", lineHeight: 1.6 }}>
+        <p style={{ fontSize: 15, color: "#6b7280", maxWidth: 486, margin: "0 auto", lineHeight: 1.6 }}>
           Home staging AI, video, social media e produttività: guide pratiche per far crescere la tua agenzia.
         </p>
       </section>
 
-      <section style={{ maxWidth: 1280, margin: "0 auto", padding: "0 24px 80px" }}>
+      <section style={{ maxWidth: 1152, margin: "0 auto", padding: "0 22px 72px" }}>
         {posts.length === 0 ? (
-          <p style={{ textAlign: "center", color: "#71717a", fontSize: 15 }}>
+          <p style={{ textAlign: "center", color: "#71717a", fontSize: 14 }}>
             Nuovi articoli in arrivo a breve.
           </p>
         ) : (
-          <div className="blog-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 20 }}>
+          <div className="blog-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 18 }}>
             {posts.map((post) => (
               <BlogPostCard key={post.id} post={post} locale={locale} />
             ))}
@@ -88,21 +88,21 @@ export default async function BlogHubPage({ params }: Props) {
         `}</style>
       </section>
 
-      <section style={{ maxWidth: 780, margin: "0 auto", padding: "0 24px 80px", textAlign: "center" }}>
+      <section style={{ maxWidth: 702, margin: "0 auto", padding: "0 22px 72px", textAlign: "center" }}>
         <div
           style={{
             background: "#fff",
             border: "1px solid rgba(26,26,46,0.10)",
-            borderRadius: 20,
+            borderRadius: 18,
             boxShadow: "0 4px 16px rgba(16,24,40,0.08)",
-            padding: "40px 32px",
+            padding: "36px 29px",
           }}
         >
-          <h2 style={{ fontSize: 26, fontWeight: 800, margin: "0 0 8px", color: "#1a1a2e" }}>Prova GetNearMe gratis</h2>
-          <p style={{ fontSize: 15, color: "#6b7280", margin: "0 0 24px", lineHeight: 1.6 }}>
+          <h2 style={{ fontSize: 23, fontWeight: 800, margin: "0 0 7px", color: "#1a1a2e" }}>Prova GetNearMe gratis</h2>
+          <p style={{ fontSize: 14, color: "#6b7280", margin: "0 0 22px", lineHeight: 1.6 }}>
             Staging AI, video, template social e report brandizzati per la tua agenzia.
           </p>
-          <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 14 }}>
+          <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 13 }}>
             <a
               data-cal-link="getnearme/30min"
               data-cal-config='{"layout":"month_view"}'
@@ -110,11 +110,11 @@ export default async function BlogHubPage({ params }: Props) {
               style={{
                 display: "inline-flex",
                 alignItems: "center",
-                gap: 8,
-                fontSize: 16,
+                gap: 7,
+                fontSize: 14,
                 fontWeight: 700,
-                padding: "14px 28px",
-                borderRadius: 12,
+                padding: "13px 25px",
+                borderRadius: 11,
                 textDecoration: "none",
                 cursor: "pointer",
               }}
@@ -129,13 +129,13 @@ export default async function BlogHubPage({ params }: Props) {
                 display: "inline-flex",
                 alignItems: "center",
                 justifyContent: "center",
-                gap: 8,
+                gap: 7,
                 background: "#fff",
                 color: "#1a1a2e",
-                fontSize: 16,
+                fontSize: 14,
                 fontWeight: 700,
-                padding: "14px 28px",
-                borderRadius: 12,
+                padding: "13px 25px",
+                borderRadius: 11,
                 textDecoration: "none",
               }}
               dashLabel="Vai alla dashboard"

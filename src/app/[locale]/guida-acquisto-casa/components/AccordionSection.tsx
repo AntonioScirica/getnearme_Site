@@ -23,9 +23,9 @@ export default function AccordionSection({
       style={{
         background: "#fff",
         border: "1px solid rgba(26,26,46,0.10)",
-        borderRadius: 20,
+        borderRadius: 18,
         boxShadow: "0 4px 16px rgba(16,24,40,0.08)",
-        marginBottom: 28,
+        marginBottom: 25,
         overflow: "hidden",
         transition: "box-shadow 0.2s",
       }}
@@ -39,8 +39,8 @@ export default function AccordionSection({
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          gap: 12,
-          padding: "24px 32px",
+          gap: 11,
+          padding: "22px 29px",
           background: "none",
           border: "none",
           cursor: "pointer",
@@ -48,19 +48,19 @@ export default function AccordionSection({
           color: "#1a1a2e",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 11 }}>
           <span
             style={{
-              width: 32,
-              height: 32,
-              minWidth: 32,
-              borderRadius: 10,
+              width: 29,
+              height: 29,
+              minWidth: 29,
+              borderRadius: 9,
               background: "#fef3c7",
               border: "1px solid rgba(26,26,46,0.10)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              fontSize: 14,
+              fontSize: 13,
               fontWeight: 800,
             }}
           >
@@ -68,7 +68,7 @@ export default function AccordionSection({
           </span>
           <h2
             style={{
-              fontSize: 20,
+              fontSize: 18,
               fontWeight: 800,
               margin: 0,
               lineHeight: 1.3,
@@ -99,7 +99,7 @@ export default function AccordionSection({
       >
         <div
           style={{
-            padding: "0 32px 28px",
+            padding: "0 29px 25px",
             borderTop: "1px solid #f3f4f6",
           }}
         >
@@ -107,10 +107,10 @@ export default function AccordionSection({
             className="chapter-content"
             dangerouslySetInnerHTML={{ __html: content }}
             style={{
-              fontSize: 15,
+              fontSize: 14,
               lineHeight: 1.7,
               color: "#3f3f46",
-              paddingTop: 20,
+              paddingTop: 18,
             }}
           />
         </div>

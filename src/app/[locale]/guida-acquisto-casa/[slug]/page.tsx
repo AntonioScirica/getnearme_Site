@@ -130,17 +130,17 @@ export default async function ChapterPage({ params }: Props) {
       {/* Breadcrumb */}
       <nav
         style={{
-          maxWidth: 780,
+          maxWidth: 702,
           margin: "0 auto",
-          padding: "24px 24px 0",
+          padding: "22px 22px 0",
         }}
       >
         <div
           style={{
             display: "flex",
             alignItems: "center",
-            gap: 6,
-            fontSize: 13,
+            gap: 5,
+            fontSize: 12,
             color: "#a1a1aa",
             flexWrap: "wrap",
           }}
@@ -168,25 +168,25 @@ export default async function ChapterPage({ params }: Props) {
       {/* Chapter Header */}
       <section
         style={{
-          maxWidth: 780,
+          maxWidth: 702,
           margin: "0 auto",
-          padding: "40px 24px 32px",
+          padding: "36px 22px 29px",
         }}
       >
         <div
           style={{
             display: "flex",
             alignItems: "center",
-            gap: 16,
-            marginBottom: 20,
+            gap: 14,
+            marginBottom: 18,
           }}
         >
           <div
             style={{
-              width: 52,
-              height: 52,
-              minWidth: 52,
-              borderRadius: 14,
+              width: 47,
+              height: 47,
+              minWidth: 47,
+              borderRadius: 13,
               background: "#fef3c7",
               border: "1px solid rgba(26,26,46,0.10)",
               display: "flex",
@@ -200,7 +200,7 @@ export default async function ChapterPage({ params }: Props) {
           <div>
             <span
               style={{
-                fontSize: 13,
+                fontSize: 12,
                 fontWeight: 700,
                 color: "#a1a1aa",
                 textTransform: "uppercase",
@@ -214,10 +214,10 @@ export default async function ChapterPage({ params }: Props) {
 
         <h1
           style={{
-            fontSize: "clamp(28px, 5vw, 42px)",
+            fontSize: "clamp(25px, 5vw, 38px)",
             fontWeight: 900,
             lineHeight: 1.15,
-            margin: "0 0 12px",
+            margin: "0 0 11px",
           }}
         >
           {chapter.title}
@@ -225,7 +225,7 @@ export default async function ChapterPage({ params }: Props) {
 
         <p
           style={{
-            fontSize: 16,
+            fontSize: 14,
             color: "#71717a",
             margin: 0,
             lineHeight: 1.5,
@@ -238,9 +238,9 @@ export default async function ChapterPage({ params }: Props) {
       {/* Chapter Content — Accordion */}
       <section
         style={{
-          maxWidth: 780,
+          maxWidth: 702,
           margin: "0 auto",
-          padding: "0 24px 16px",
+          padding: "0 22px 14px",
         }}
       >
         {chapter.sections.map((section, idx) => (
@@ -258,9 +258,9 @@ export default async function ChapterPage({ params }: Props) {
       {slug === "costi-e-tasse" && (
         <section
           style={{
-            maxWidth: 780,
+            maxWidth: 702,
             margin: "0 auto",
-            padding: "0 24px 16px",
+            padding: "0 22px 14px",
           }}
         >
           <TaxCalculator />
@@ -270,9 +270,9 @@ export default async function ChapterPage({ params }: Props) {
       {/* Checklist */}
       <section
         style={{
-          maxWidth: 780,
+          maxWidth: 702,
           margin: "0 auto",
-          padding: "0 24px 48px",
+          padding: "0 22px 43px",
         }}
       >
         <GuideChecklist slug={slug} items={chapter.checklist} />
@@ -281,15 +281,15 @@ export default async function ChapterPage({ params }: Props) {
       {/* Navigation */}
       <section
         style={{
-          maxWidth: 780,
+          maxWidth: 702,
           margin: "0 auto",
-          padding: "0 24px 48px",
+          padding: "0 22px 43px",
         }}
       >
         <div
           style={{
             display: "flex",
-            gap: 16,
+            gap: 14,
             flexWrap: "wrap",
           }}
         >
@@ -298,7 +298,7 @@ export default async function ChapterPage({ params }: Props) {
               href={`/${locale}/guida-acquisto-casa/${prevChapter.slug}`}
               style={{
                 flex: 1,
-                minWidth: "min(100%, 280px)",
+                minWidth: "min(100%, 252px)",
                 textDecoration: "none",
                 color: "inherit",
               }}
@@ -307,12 +307,12 @@ export default async function ChapterPage({ params }: Props) {
                 style={{
                   background: "#fff",
                   border: "1px solid rgba(26,26,46,0.10)",
-                  borderRadius: 16,
+                  borderRadius: 14,
                   boxShadow: "0 4px 16px rgba(16,24,40,0.08)",
-                  padding: "20px 24px",
+                  padding: "18px 22px",
                   display: "flex",
                   alignItems: "center",
-                  gap: 12,
+                  gap: 11,
                   transition: "transform 0.15s, box-shadow 0.15s",
                 }}
               >
@@ -320,7 +320,7 @@ export default async function ChapterPage({ params }: Props) {
                 <div>
                   <span
                     style={{
-                      fontSize: 12,
+                      fontSize: 11,
                       color: "#a1a1aa",
                       fontWeight: 600,
                       textTransform: "uppercase",
@@ -331,7 +331,7 @@ export default async function ChapterPage({ params }: Props) {
                   </span>
                   <div
                     style={{
-                      fontSize: 15,
+                      fontSize: 14,
                       fontWeight: 700,
                       marginTop: 2,
                     }}
@@ -348,7 +348,7 @@ export default async function ChapterPage({ params }: Props) {
               href={`/${locale}/guida-acquisto-casa/${nextChapter.slug}`}
               style={{
                 flex: 1,
-                minWidth: "min(100%, 280px)",
+                minWidth: "min(100%, 252px)",
                 textDecoration: "none",
                 color: "inherit",
                 marginLeft: !prevChapter ? "auto" : undefined,
@@ -358,13 +358,13 @@ export default async function ChapterPage({ params }: Props) {
                 style={{
                   background: "#fff",
                   border: "1px solid rgba(26,26,46,0.10)",
-                  borderRadius: 16,
+                  borderRadius: 14,
                   boxShadow: "0 4px 16px rgba(16,24,40,0.08)",
-                  padding: "20px 24px",
+                  padding: "18px 22px",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "flex-end",
-                  gap: 12,
+                  gap: 11,
                   textAlign: "right",
                   transition: "transform 0.15s, box-shadow 0.15s",
                 }}
@@ -372,7 +372,7 @@ export default async function ChapterPage({ params }: Props) {
                 <div>
                   <span
                     style={{
-                      fontSize: 12,
+                      fontSize: 11,
                       color: "#a1a1aa",
                       fontWeight: 600,
                       textTransform: "uppercase",
@@ -383,7 +383,7 @@ export default async function ChapterPage({ params }: Props) {
                   </span>
                   <div
                     style={{
-                      fontSize: 15,
+                      fontSize: 14,
                       fontWeight: 700,
                       marginTop: 2,
                     }}
@@ -398,14 +398,14 @@ export default async function ChapterPage({ params }: Props) {
         </div>
 
         {/* Back to guide */}
-        <div style={{ textAlign: "center", marginTop: 24 }}>
+        <div style={{ textAlign: "center", marginTop: 22 }}>
           <Link
             href={`/${locale}/guida-acquisto-casa`}
             style={{
               display: "inline-flex",
               alignItems: "center",
-              gap: 6,
-              fontSize: 14,
+              gap: 5,
+              fontSize: 13,
               fontWeight: 600,
               color: "#71717a",
               textDecoration: "none",
@@ -421,18 +421,18 @@ export default async function ChapterPage({ params }: Props) {
       <section
         style={{
           textAlign: "center",
-          padding: "0 24px 80px",
+          padding: "0 22px 72px",
         }}
       >
         <div
           style={{
-            maxWidth: 580,
+            maxWidth: 522,
             margin: "0 auto",
             background: "#1a1a2e",
             border: "1px solid rgba(26,26,46,0.10)",
-            borderRadius: 20,
+            borderRadius: 18,
             boxShadow: "6px 6px 0px #f59e0b",
-            padding: "40px 32px",
+            padding: "36px 29px",
             color: "#fff",
           }}
         >
@@ -441,29 +441,29 @@ export default async function ChapterPage({ params }: Props) {
               display: "inline-flex",
               alignItems: "center",
               justifyContent: "center",
-              width: 56,
-              height: 56,
-              borderRadius: 16,
+              width: 50,
+              height: 50,
+              borderRadius: 14,
               background: "rgba(245, 158, 11, 0.15)",
-              marginBottom: 16,
+              marginBottom: 14,
             }}
           >
             <Search size={28} color="#f59e0b" />
           </div>
           <h2
             style={{
-              fontSize: 24,
+              fontSize: 22,
               fontWeight: 900,
-              margin: "0 0 8px",
+              margin: "0 0 7px",
             }}
           >
             Analizza ogni annuncio
           </h2>
           <p
             style={{
-              fontSize: 15,
+              fontSize: 14,
               color: "#a1a1aa",
-              margin: "0 0 24px",
+              margin: "0 0 22px",
               lineHeight: 1.6,
             }}
           >
@@ -478,14 +478,14 @@ export default async function ChapterPage({ params }: Props) {
             style={{
               display: "inline-flex",
               alignItems: "center",
-              gap: 8,
-              padding: "14px 28px",
+              gap: 7,
+              padding: "13px 25px",
               background: "#f59e0b",
               color: "#1a1a2e",
               border: "3px solid #f59e0b",
-              borderRadius: 12,
+              borderRadius: 11,
               fontWeight: 800,
-              fontSize: 15,
+              fontSize: 14,
               textDecoration: "none",
               boxShadow: "4px 4px 0px rgba(255,255,255,0.15)",
               transition: "transform 0.15s, box-shadow 0.15s",
@@ -565,8 +565,8 @@ export default async function ChapterPage({ params }: Props) {
       <footer
         style={{
           textAlign: "center",
-          padding: "0 24px 40px",
-          fontSize: 13,
+          padding: "0 22px 36px",
+          fontSize: 12,
           color: "#a1a1aa",
         }}
       >

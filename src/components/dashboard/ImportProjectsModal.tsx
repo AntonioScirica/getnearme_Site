@@ -263,7 +263,7 @@ export function ImportProjectsModal({
 
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 22 }}>
       {/* Backdrop */}
       <div
         onClick={onClose}
@@ -271,25 +271,25 @@ export function ImportProjectsModal({
       />
 
       {/* Modal */}
-      <div style={{ position: 'relative', width: '100%', maxWidth: 560, background: '#fff', borderRadius: 24, boxShadow: '0 24px 64px rgba(20, 18, 15, 0.2)', overflow: 'hidden', display: 'flex', flexDirection: 'column', maxHeight: '90vh' }}>
+      <div style={{ position: 'relative', width: '100%', maxWidth: 504, background: '#fff', borderRadius: 22, boxShadow: '0 24px 64px rgba(20, 18, 15, 0.2)', overflow: 'hidden', display: 'flex', flexDirection: 'column', maxHeight: '90vh' }}>
 
         {/* Header */}
-        <div className="max-md:!p-4" style={{ padding: '24px 32px 20px', borderBottom: '1px solid #f0ede7', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div className="max-md:!p-4" style={{ padding: '22px 29px 18px', borderBottom: '1px solid #f0ede7', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
-            <h2 style={{ margin: 0, fontSize: 20, fontWeight: 800, letterSpacing: '-0.3px' }}>Importa immobili</h2>
-            <div style={{ fontSize: 13, color: '#8c867d', marginTop: 4 }}>
+            <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800, letterSpacing: '-0.3px' }}>Importa immobili</h2>
+            <div style={{ fontSize: 11.5, color: '#8c867d', marginTop: 4 }}>
               {step === 'upload' && 'Carica un file Excel o CSV'}
               {step === 'mapping' && 'Abbina le colonne del file ai campi'}
               {step === 'done' && 'Import completato'}
             </div>
           </div>
-          <button onClick={onClose} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4, borderRadius: 8 }} className="hover:bg-gray-100">
-            <Icon name="x" size={20} color="#8c867d" />
+          <button onClick={onClose} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 4, borderRadius: 7 }} className="hover:bg-gray-100">
+            <Icon name="x" size={18} color="#8c867d" />
           </button>
         </div>
 
         {/* Body */}
-        <div className="max-md:!p-4" style={{ padding: '20px 32px 24px', overflowY: 'auto' }}>
+        <div className="max-md:!p-4" style={{ padding: '18px 29px 22px', overflowY: 'auto' }}>
 
           {/* STEP UPLOAD */}
           {step === 'upload' && (
@@ -301,8 +301,8 @@ export function ImportProjectsModal({
                 style={{
                   display: 'block',
                   border: `2px dashed ${dragOver ? '#3B83F6' : '#d8d4cb'}`,
-                  borderRadius: 16,
-                  padding: '40px 20px',
+                  borderRadius: 14,
+                  padding: '36px 18px',
                   textAlign: 'center',
                   background: dragOver ? '#eff6ff' : '#fcfcfb',
                   cursor: 'pointer',
@@ -317,15 +317,15 @@ export function ImportProjectsModal({
                   style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', zIndex: 10 }}
                   onChange={(e) => handleFile(e.target.files?.[0])}
                 />
-                <div style={{ width: 48, height: 48, borderRadius: 12, background: '#fff', border: '1px solid #f0ede7', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px', boxShadow: '0 4px 12px rgba(0,0,0,0.04)' }}>
-                  <Icon name="upload" size={22} color={dragOver ? '#3B83F6' : '#8c867d'} />
+                <div style={{ width: 43, height: 43, borderRadius: 11, background: '#fff', border: '1px solid #f0ede7', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 13px', boxShadow: '0 4px 12px rgba(0,0,0,0.04)' }}>
+                  <Icon name="upload" size={20} color={dragOver ? '#3B83F6' : '#8c867d'} />
                 </div>
-                <div style={{ fontSize: 15, fontWeight: 700, color: dragOver ? '#3B83F6' : '#57534c' }}>Trascina o clicca qui</div>
-                <div style={{ fontSize: 13, color: '#8c867d', marginTop: 6 }}>Formati supportati: .xlsx, .xls, .csv</div>
+                <div style={{ fontSize: 13.5, fontWeight: 700, color: dragOver ? '#3B83F6' : '#57534c' }}>Trascina o clicca qui</div>
+                <div style={{ fontSize: 11.5, color: '#8c867d', marginTop: 5 }}>Formati supportati: .xlsx, .xls, .csv</div>
               </label>
               {parseError && (
-                <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#dc2626' }}>
-                  <Icon name="alert-triangle" size={16} color="#dc2626" />
+                <div style={{ marginTop: 14, display: 'flex', alignItems: 'center', gap: 7, fontSize: 11.5, color: '#dc2626' }}>
+                  <Icon name="alert-triangle" size={14} color="#dc2626" />
                   {parseError}
                 </div>
               )}
@@ -336,49 +336,49 @@ export function ImportProjectsModal({
           {step === 'mapping' && (
             <>
               {/* File banner */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: '#faf9f7', border: '1px solid #f0ede7', padding: '12px 14px', borderRadius: 14, marginBottom: 20 }}>
-                <div style={{ width: 38, height: 38, borderRadius: 10, background: '#fff', border: '1px solid #f0ede7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <Icon name="file-spreadsheet" size={18} color="#57534c" />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 11, background: '#faf9f7', border: '1px solid #f0ede7', padding: '11px 13px', borderRadius: 13, marginBottom: 18 }}>
+                <div style={{ width: 34, height: 34, borderRadius: 9, background: '#fff', border: '1px solid #f0ede7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Icon name="file-spreadsheet" size={16} color="#57534c" />
                 </div>
-                <div style={{ minWidth: 0, fontSize: 13, color: '#8c867d', lineHeight: 1.4 }}>
+                <div style={{ minWidth: 0, fontSize: 11.5, color: '#8c867d', lineHeight: 1.4 }}>
                   <div style={{ fontWeight: 700, color: '#211f1c', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{fileName || 'File'}</div>
                   <div>{rawRows.length} righe rilevate{skippedClient > 0 && <span style={{ color: '#b3760c' }}>{` · ${skippedClient} senza nome saltate`}</span>}</div>
                 </div>
               </div>
 
               {/* Count hero */}
-              <div style={{ background: '#fff', border: '1px solid #e4e1da', borderRadius: 16, padding: '24px 16px', textAlign: 'center' }}>
-                <div style={{ fontSize: 38, fontWeight: 800, color: '#211f1c', lineHeight: 1, letterSpacing: '-0.5px' }}>{rows.length}</div>
-                <div style={{ fontSize: 14, color: '#57534c', marginTop: 8 }}>{rows.length === 1 ? 'immobile pronto per l\'import' : 'immobili pronti per l\'import'}</div>
+              <div style={{ background: '#fff', border: '1px solid #e4e1da', borderRadius: 14, padding: '22px 14px', textAlign: 'center' }}>
+                <div style={{ fontSize: 34, fontWeight: 800, color: '#211f1c', lineHeight: 1, letterSpacing: '-0.5px' }}>{rows.length}</div>
+                <div style={{ fontSize: 12.5, color: '#57534c', marginTop: 7 }}>{rows.length === 1 ? 'immobile pronto per l\'import' : 'immobili pronti per l\'import'}</div>
               </div>
 
               {/* Recognized fields */}
-              <div style={{ marginTop: 20 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: '#b3aca1', textTransform: 'uppercase', letterSpacing: '.04em' }}>Campi riconosciuti</span>
+              <div style={{ marginTop: 18 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 11 }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: '#b3aca1', textTransform: 'uppercase', letterSpacing: '.04em' }}>Campi riconosciuti</span>
                   {aiLoading && (
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11.5, color: '#3B83F6', fontWeight: 600 }}>
-                      <span style={{ display: 'inline-flex', animation: 'spin 1s linear infinite' }}><Icon name="loader-circle" size={13} color="#3B83F6" /></span>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4.5, fontSize: 10.5, color: '#3B83F6', fontWeight: 600 }}>
+                      <span style={{ display: 'inline-flex', animation: 'spin 1s linear infinite' }}><Icon name="loader-circle" size={12} color="#3B83F6" /></span>
                       AI…
                     </span>
                   )}
                 </div>
                 {recognized.length > 0 ? (
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
                     {recognized.map((lbl) => (
-                      <span key={lbl} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12.5, fontWeight: 600, color: '#16734a', background: '#eef9f0', border: '1px solid #cce8d6', borderRadius: 99, padding: '6px 12px' }}>
-                        <Icon name="check" size={13} color="#16a34a" />{lbl}
+                      <span key={lbl} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11.5, fontWeight: 600, color: '#16734a', background: '#eef9f0', border: '1px solid #cce8d6', borderRadius: 99, padding: '5px 11px' }}>
+                        <Icon name="check" size={12} color="#16a34a" />{lbl}
                       </span>
                     ))}
                   </div>
                 ) : (
-                  <div style={{ fontSize: 13, color: '#8c867d' }}>Nessun campo riconosciuto automaticamente.</div>
+                  <div style={{ fontSize: 11.5, color: '#8c867d' }}>Nessun campo riconosciuto automaticamente.</div>
                 )}
               </div>
 
               {fetchError && (
-                <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#dc2626' }}>
-                  <Icon name="alert-triangle" size={16} color="#dc2626" />
+                <div style={{ marginTop: 14, display: 'flex', alignItems: 'center', gap: 7, fontSize: 11.5, color: '#dc2626' }}>
+                  <Icon name="alert-triangle" size={14} color="#dc2626" />
                   {fetchError}
                 </div>
               )}
@@ -388,40 +388,40 @@ export function ImportProjectsModal({
           {/* STEP DONE */}
           {step === 'done' && result && (
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
-                <div style={{ width: 44, height: 44, borderRadius: 12, background: '#eef9f0', border: '1px solid #cce8d6', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <Icon name="circle-check" size={24} color="#16a34a" />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 11, marginBottom: 18 }}>
+                <div style={{ width: 40, height: 40, borderRadius: 11, background: '#eef9f0', border: '1px solid #cce8d6', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Icon name="circle-check" size={22} color="#16a34a" />
                 </div>
                 <div>
-                  <div style={{ fontSize: 16, fontWeight: 800, color: '#211f1c', letterSpacing: '-0.2px' }}>Import completato</div>
-                  <div style={{ fontSize: 13, color: '#8c867d', marginTop: 2 }}>I tuoi immobili sono pronti. Li trovi in Tutti gli immobili.</div>
+                  <div style={{ fontSize: 14.5, fontWeight: 800, color: '#211f1c', letterSpacing: '-0.2px' }}>Import completato</div>
+                  <div style={{ fontSize: 11.5, color: '#8c867d', marginTop: 2 }}>I tuoi immobili sono pronti. Li trovi in Tutti gli immobili.</div>
                 </div>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 11 }}>
                 {[
                   { label: 'Creati', value: result.created, icon: 'plus', color: '#16a34a', bg: '#eef9f0', bd: '#cce8d6' },
                   { label: 'Aggiornati', value: result.updated, icon: 'refresh-cw', color: '#3B83F6', bg: '#eff4fe', bd: '#d3e3fc' },
                   { label: 'Saltati', value: result.skipped, icon: 'minus', color: '#b3760c', bg: '#fdf8ef', bd: '#f0e4cc' },
                 ].map((stat) => (
-                  <div key={stat.label} style={{ background: '#fff', border: '1px solid #e4e1da', borderRadius: 14, padding: '16px 12px', textAlign: 'center' }}>
-                    <div style={{ width: 32, height: 32, borderRadius: 9, background: stat.bg, border: `1px solid ${stat.bd}`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px' }}>
-                      <Icon name={stat.icon} size={16} color={stat.color} />
+                  <div key={stat.label} style={{ background: '#fff', border: '1px solid #e4e1da', borderRadius: 13, padding: '14px 11px', textAlign: 'center' }}>
+                    <div style={{ width: 29, height: 29, borderRadius: 8, background: stat.bg, border: `1px solid ${stat.bd}`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 9px' }}>
+                      <Icon name={stat.icon} size={14} color={stat.color} />
                     </div>
-                    <div style={{ fontSize: 26, fontWeight: 800, color: '#211f1c', lineHeight: 1 }}>{stat.value}</div>
-                    <div style={{ fontSize: 12, color: '#8c867d', marginTop: 5 }}>{stat.label}</div>
+                    <div style={{ fontSize: 23, fontWeight: 800, color: '#211f1c', lineHeight: 1 }}>{stat.value}</div>
+                    <div style={{ fontSize: 11, color: '#8c867d', marginTop: 4.5 }}>{stat.label}</div>
                   </div>
                 ))}
               </div>
               {result.errors.length > 0 && (
-                <div style={{ marginTop: 20 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 700, color: '#b3760c', marginBottom: 8 }}>
-                    <Icon name="alert-triangle" size={16} color="#b3760c" />
+                <div style={{ marginTop: 18 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 11.5, fontWeight: 700, color: '#b3760c', marginBottom: 7 }}>
+                    <Icon name="alert-triangle" size={14} color="#b3760c" />
                     {result.errors.length === 1 ? '1 avviso' : `${result.errors.length} avvisi`}
                   </div>
-                  <div style={{ maxHeight: 160, overflowY: 'auto', background: '#fdf8ef', border: '1px solid #f0e4cc', borderRadius: 12, padding: '8px 12px' }}>
+                  <div style={{ maxHeight: 144, overflowY: 'auto', background: '#fdf8ef', border: '1px solid #f0e4cc', borderRadius: 11, padding: '7px 11px' }}>
                     {result.errors.map((err, i) => (
-                      <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', fontSize: 12.5, color: '#7a5a16', lineHeight: 1.5, padding: '5px 0', borderBottom: i === result.errors.length - 1 ? 'none' : '1px solid #f0e4cc' }}>
-                        <span style={{ marginTop: 5, width: 4, height: 4, borderRadius: 99, background: '#b3760c', flexShrink: 0 }} />
+                      <div key={i} style={{ display: 'flex', gap: 7, alignItems: 'flex-start', fontSize: 11.5, color: '#7a5a16', lineHeight: 1.5, padding: '4.5px 0', borderBottom: i === result.errors.length - 1 ? 'none' : '1px solid #f0e4cc' }}>
+                        <span style={{ marginTop: 4.5, width: 4, height: 4, borderRadius: 99, background: '#b3760c', flexShrink: 0 }} />
                         {err}
                       </div>
                     ))}
@@ -433,29 +433,29 @@ export function ImportProjectsModal({
         </div>
 
         {/* Footer */}
-        <div className="max-md:!p-4" style={{ padding: '20px 32px', borderTop: '1px solid #f0ede7', background: '#faf9f7', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 12 }}>
+        <div className="max-md:!p-4" style={{ padding: '18px 29px', borderTop: '1px solid #f0ede7', background: '#faf9f7', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 11 }}>
           {step === 'upload' && (
-            <Box as="button" onClick={onClose} style={s('border:1px solid #e4e1da;background:#fff;color:#57534c;font-size:14px;font-weight:700;padding:12px 20px;border-radius:12px;cursor:pointer')} hover={s('background:#f6f4f0;border-color:#d8d4cb')}>
+            <Box as="button" onClick={onClose} style={s('border:1px solid #e4e1da;background:#fff;color:#57534c;font-size:12.5px;font-weight:700;padding:11px 18px;border-radius:11px;cursor:pointer')} hover={s('background:#f6f4f0;border-color:#d8d4cb')}>
               Annulla
             </Box>
           )}
 
           {step === 'mapping' && (
             <>
-              <Box as="button" onClick={() => { setStep('upload'); setFetchError(''); }} disabled={loading} style={s('border:1px solid #e4e1da;background:#fff;color:#57534c;font-size:14px;font-weight:700;padding:12px 20px;border-radius:12px;cursor:pointer')} hover={s('background:#f6f4f0;border-color:#d8d4cb')}>
+              <Box as="button" onClick={() => { setStep('upload'); setFetchError(''); }} disabled={loading} style={s('border:1px solid #e4e1da;background:#fff;color:#57534c;font-size:12.5px;font-weight:700;padding:11px 18px;border-radius:11px;cursor:pointer')} hover={s('background:#f6f4f0;border-color:#d8d4cb')}>
                 Indietro
               </Box>
               <Box
                 as="button"
                 onClick={handleImport}
                 disabled={loading || aiLoading || !rows.length}
-                style={s('border:none;background:#3B83F6;color:#fff;font-size:14px;font-weight:700;padding:12px 20px;border-radius:12px;display:inline-flex;align-items:center;gap:8px;box-shadow:0 4px 12px rgba(59,131,246,0.25);cursor:' + (loading || aiLoading || !rows.length ? 'default' : 'pointer') + ';opacity:' + (loading || aiLoading || !rows.length ? 0.45 : 1))}
+                style={s('border:none;background:#3B83F6;color:#fff;font-size:12.5px;font-weight:700;padding:11px 18px;border-radius:11px;display:inline-flex;align-items:center;gap:7px;box-shadow:0 4px 12px rgba(59,131,246,0.25);cursor:' + (loading || aiLoading || !rows.length ? 'default' : 'pointer') + ';opacity:' + (loading || aiLoading || !rows.length ? 0.45 : 1))}
                 hover={loading || aiLoading || !rows.length ? undefined : s('background:#2563EB;box-shadow:0 6px 16px rgba(59,131,246,0.3)')}
               >
                 {loading || aiLoading ? (
                   <>
                     <span style={{ display: 'inline-flex', animation: 'spin 1s linear infinite' }}>
-                      <Icon name="loader-circle" size={16} color="#fff" />
+                      <Icon name="loader-circle" size={14} color="#fff" />
                     </span>
                     {aiLoading ? 'Analisi colonne...' : 'Importazione...'}
                   </>
@@ -467,9 +467,9 @@ export function ImportProjectsModal({
           )}
 
           {step === 'done' && (
-            <Box as="button" onClick={onClose} style={s('border:none;background:#3B83F6;color:#fff;font-size:14px;font-weight:700;padding:12px 20px;border-radius:12px;cursor:pointer;box-shadow:0 4px 12px rgba(59,131,246,0.25);display:inline-flex;align-items:center;gap:8px')} hover={s('background:#2563EB')}>
+            <Box as="button" onClick={onClose} style={s('border:none;background:#3B83F6;color:#fff;font-size:12.5px;font-weight:700;padding:11px 18px;border-radius:11px;cursor:pointer;box-shadow:0 4px 12px rgba(59,131,246,0.25);display:inline-flex;align-items:center;gap:7px')} hover={s('background:#2563EB')}>
               Avanti
-              <Icon name="arrow-right" size={16} color="#fff" />
+              <Icon name="arrow-right" size={14} color="#fff" />
             </Box>
           )}
         </div>

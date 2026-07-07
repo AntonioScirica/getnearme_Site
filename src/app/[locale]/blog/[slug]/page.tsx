@@ -17,19 +17,19 @@ import InlineCta from "../components/InlineCta";
 export const revalidate = 3600;
 
 const MARKDOWN_COMPONENTS: Components = {
-  h2: (props) => <h2 style={{ fontSize: 24, fontWeight: 800, margin: "32px 0 12px", color: "#1a1a2e" }} {...props} />,
-  h3: (props) => <h3 style={{ fontSize: 19, fontWeight: 700, margin: "24px 0 8px", color: "#1a1a2e" }} {...props} />,
-  p: (props) => <p style={{ margin: "0 0 16px" }} {...props} />,
+  h2: (props) => <h2 style={{ fontSize: 22, fontWeight: 800, margin: "29px 0 11px", color: "#1a1a2e" }} {...props} />,
+  h3: (props) => <h3 style={{ fontSize: 17, fontWeight: 700, margin: "22px 0 7px", color: "#1a1a2e" }} {...props} />,
+  p: (props) => <p style={{ margin: "0 0 14px" }} {...props} />,
   a: (props) => <a style={{ color: "#3B83F6", fontWeight: 700, textDecoration: "underline" }} {...props} />,
   table: (props) => (
-    <div style={{ overflowX: "auto", margin: "16px 0" }}>
-      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14, border: "2px solid #e4e4e7", borderRadius: 12 }} {...props} />
+    <div style={{ overflowX: "auto", margin: "14px 0" }}>
+      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, border: "2px solid #e4e4e7", borderRadius: 11 }} {...props} />
     </div>
   ),
-  th: (props) => <th style={{ textAlign: "left", padding: "10px 14px", fontWeight: 700, background: "#f4f4f5", borderBottom: "2px solid #e4e4e7" }} {...props} />,
-  td: (props) => <td style={{ padding: "10px 14px", borderBottom: "1px solid #f4f4f5" }} {...props} />,
-  ul: (props) => <ul style={{ margin: "8px 0 16px", paddingLeft: 24 }} {...props} />,
-  li: (props) => <li style={{ marginBottom: 6, lineHeight: 1.6 }} {...props} />,
+  th: (props) => <th style={{ textAlign: "left", padding: "9px 13px", fontWeight: 700, background: "#f4f4f5", borderBottom: "2px solid #e4e4e7" }} {...props} />,
+  td: (props) => <td style={{ padding: "9px 13px", borderBottom: "1px solid #f4f4f5" }} {...props} />,
+  ul: (props) => <ul style={{ margin: "7px 0 14px", paddingLeft: 22 }} {...props} />,
+  li: (props) => <li style={{ marginBottom: 5, lineHeight: 1.6 }} {...props} />,
 };
 
 // Splits the article into an intro chunk + one chunk per H2, so InlineCta
@@ -122,8 +122,8 @@ export default async function BlogPostPage({ params }: Props) {
         <Navbar locale={locale} />
       </div>
 
-      <nav style={{ maxWidth: 780, margin: "0 auto", padding: "24px 24px 0" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "#a1a1aa", flexWrap: "wrap" }}>
+      <nav style={{ maxWidth: 780, margin: "0 auto", padding: "22px 22px 0" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, color: "#a1a1aa", flexWrap: "wrap" }}>
           <Link href={`/${locale}`} style={{ color: "#a1a1aa", textDecoration: "none" }}>Home</Link>
           <ChevronRight size={14} />
           <Link href={`/${locale}/blog`} style={{ color: "#a1a1aa", textDecoration: "none" }}>Blog</Link>
@@ -132,25 +132,25 @@ export default async function BlogPostPage({ params }: Props) {
         </div>
       </nav>
 
-      <section style={{ maxWidth: 780, margin: "0 auto", padding: "32px 24px 24px" }}>
-        <h1 style={{ fontSize: "clamp(28px, 5vw, 42px)", fontWeight: 900, lineHeight: 1.15, margin: "0 0 16px" }}>
+      <section style={{ maxWidth: 780, margin: "0 auto", padding: "29px 22px 22px" }}>
+        <h1 style={{ fontSize: "clamp(25px, 5vw, 38px)", fontWeight: 900, lineHeight: 1.15, margin: "0 0 14px" }}>
           {post.title}
         </h1>
 
         {post.pillar === "ai-staging" ? (
-          <div style={{ marginBottom: 8 }}>
+          <div style={{ marginBottom: 7 }}>
             <BeforeAfterSlider />
           </div>
         ) : (
-          <div style={{ borderRadius: 16, overflow: "hidden", aspectRatio: "16 / 9", marginBottom: 8 }}>
+          <div style={{ borderRadius: 14, overflow: "hidden", aspectRatio: "16 / 9", marginBottom: 7 }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={cover} alt={post.title} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 15%", display: "block" }} />
           </div>
         )}
       </section>
 
-      <section style={{ maxWidth: 780, margin: "0 auto", padding: "0 24px 16px" }}>
-        <div style={{ fontSize: 16, lineHeight: 1.7, color: "#3f3f46" }}>
+      <section style={{ maxWidth: 780, margin: "0 auto", padding: "0 22px 14px" }}>
+        <div style={{ fontSize: 14, lineHeight: 1.7, color: "#3f3f46" }}>
           {(() => {
             const sections = splitIntoSections(post.content_markdown);
             const midIndex = Math.floor(sections.length / 2);
@@ -169,16 +169,16 @@ export default async function BlogPostPage({ params }: Props) {
       </section>
 
       {post.faq_items.length > 0 && (
-        <section style={{ maxWidth: 780, margin: "0 auto", padding: "16px 24px 16px" }}>
-          <h2 style={{ fontSize: 24, fontWeight: 800, margin: "0 0 16px" }}>Domande frequenti</h2>
+        <section style={{ maxWidth: 780, margin: "0 auto", padding: "14px 22px 14px" }}>
+          <h2 style={{ fontSize: 22, fontWeight: 800, margin: "0 0 14px" }}>Domande frequenti</h2>
           <FaqAccordion items={post.faq_items} />
         </section>
       )}
 
       {relatedPosts.length > 0 && (
-        <section style={{ maxWidth: 780, margin: "0 auto", padding: "16px 24px 48px" }}>
-          <h2 style={{ fontSize: 20, fontWeight: 800, margin: "0 0 16px" }}>Leggi anche</h2>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 300px), 1fr))", gap: 20 }}>
+        <section style={{ maxWidth: 780, margin: "0 auto", padding: "14px 22px 43px" }}>
+          <h2 style={{ fontSize: 18, fontWeight: 800, margin: "0 0 14px" }}>Leggi anche</h2>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 300px), 1fr))", gap: 18 }}>
             {relatedPosts.map((rp) => (
               <BlogPostCard key={rp.id} post={rp} locale={locale} />
             ))}
@@ -186,23 +186,23 @@ export default async function BlogPostPage({ params }: Props) {
         </section>
       )}
 
-      <section style={{ maxWidth: 780, margin: "0 auto", padding: "0 24px 80px", textAlign: "center" }}>
+      <section style={{ maxWidth: 780, margin: "0 auto", padding: "0 22px 72px", textAlign: "center" }}>
         <div
           style={{
             background: "#fff",
             border: "1px solid rgba(26,26,46,0.10)",
-            borderRadius: 20,
+            borderRadius: 18,
             boxShadow: "0 4px 16px rgba(16,24,40,0.08)",
-            padding: "40px 32px",
+            padding: "36px 29px",
           }}
         >
-          <h2 style={{ fontSize: 26, fontWeight: 800, margin: "0 0 8px", color: "#1a1a2e" }}>
+          <h2 style={{ fontSize: 23, fontWeight: 800, margin: "0 0 7px", color: "#1a1a2e" }}>
             Provalo sulla tua prossima proprietà
           </h2>
-          <p style={{ fontSize: 15, color: "#6b7280", margin: "0 0 24px", lineHeight: 1.6 }}>
+          <p style={{ fontSize: 14, color: "#6b7280", margin: "0 0 22px", lineHeight: 1.6 }}>
             Staging AI, video, template social e report brandizzati per la tua agenzia.
           </p>
-          <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 14 }}>
+          <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 13 }}>
             <a
               data-cal-link="getnearme/30min"
               data-cal-config='{"layout":"month_view"}'
@@ -210,11 +210,11 @@ export default async function BlogPostPage({ params }: Props) {
               style={{
                 display: "inline-flex",
                 alignItems: "center",
-                gap: 8,
-                fontSize: 16,
+                gap: 7,
+                fontSize: 14,
                 fontWeight: 700,
-                padding: "14px 28px",
-                borderRadius: 12,
+                padding: "13px 25px",
+                borderRadius: 11,
                 textDecoration: "none",
                 cursor: "pointer",
               }}
@@ -229,13 +229,13 @@ export default async function BlogPostPage({ params }: Props) {
                 display: "inline-flex",
                 alignItems: "center",
                 justifyContent: "center",
-                gap: 8,
+                gap: 7,
                 background: "#fff",
                 color: "#1a1a2e",
-                fontSize: 16,
+                fontSize: 14,
                 fontWeight: 700,
-                padding: "14px 28px",
-                borderRadius: 12,
+                padding: "13px 25px",
+                borderRadius: 11,
                 textDecoration: "none",
               }}
               dashLabel="Vai alla dashboard"

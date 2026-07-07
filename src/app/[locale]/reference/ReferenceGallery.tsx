@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { Icon } from '@/lib/icons';
-import { X, Play } from 'lucide-react';
+import { X, Play, ChevronLeft, ChevronRight } from 'lucide-react';
 import LazyVideo from '@/components/LazyVideo';
 
 interface MediaItem {
@@ -11,12 +11,18 @@ interface MediaItem {
   aspect?: 'vertical' | 'horizontal';
   title?: string;
   desc?: string;
+  // Frame statico mostrato mentre il video non e' ancora caricato (preload
+  // none): senza, e' un rettangolo nero finche' l'IntersectionObserver non
+  // scatta — su rete lenta/browser in-app puo' durare abbastanza da leggersi
+  // come "non caricato" (visto in Clarity).
+  poster?: string;
 }
 
 interface SocialItem {
   src: string;
   title: string;
   desc: string;
+  poster?: string;
 }
 
 function getSlug(src: string) {
@@ -30,6 +36,9 @@ interface GalleryProps {
   reels?: SocialItem[];
   color?: string;
   iconName?: string;
+  // 'slider': carosello orizzontale con frecce anche su desktop (homepage).
+  // Default 'grid' (pagina /reference, 3 colonne).
+  layout?: 'grid' | 'slider';
 }
 
 function Lightbox({ item, onClose }: { item: MediaItem; onClose: () => void }) {
@@ -58,7 +67,7 @@ function Lightbox({ item, onClose }: { item: MediaItem; onClose: () => void }) {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: 20,
+        padding: 18,
         cursor: 'zoom-out',
       }}
     >
@@ -66,13 +75,13 @@ function Lightbox({ item, onClose }: { item: MediaItem; onClose: () => void }) {
         onClick={onClose}
         style={{
           position: 'absolute',
-          top: 16,
-          right: 16,
+          top: 14,
+          right: 14,
           background: 'rgba(255,255,255,0.3)',
           border: 'none',
           borderRadius: '50%',
-          width: 48,
-          height: 48,
+          width: 43,
+          height: 43,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -90,7 +99,7 @@ function Lightbox({ item, onClose }: { item: MediaItem; onClose: () => void }) {
             muted
             controls
             playsInline
-            style={{ maxWidth: '85vw', maxHeight: '85vh', borderRadius: 8 }}
+            style={{ maxWidth: '85vw', maxHeight: '85vh', borderRadius: 7 }}
           >
             <source src={item.src} type="video/mp4" />
           </video>
@@ -99,7 +108,7 @@ function Lightbox({ item, onClose }: { item: MediaItem; onClose: () => void }) {
           <img
             src={item.src}
             alt=""
-            style={{ maxWidth: '85vw', maxHeight: '85vh', borderRadius: 8, objectFit: 'contain' }}
+            style={{ maxWidth: '85vw', maxHeight: '85vh', borderRadius: 7, objectFit: 'contain' }}
           />
         )}
       </div>
@@ -107,9 +116,34 @@ function Lightbox({ item, onClose }: { item: MediaItem; onClose: () => void }) {
   );
 }
 
-export default function ReferenceGallery({ variant, media = [], posts = [], reels = [], color = '#6366f1', iconName }: GalleryProps) {
+export default function ReferenceGallery({ variant, media = [], posts = [], reels = [], color = '#6366f1', iconName, layout = 'grid' }: GalleryProps) {
   const [lightboxItem, setLightboxItem] = useState<MediaItem | null>(null);
   const refsMap = useRef<Record<string, HTMLDivElement | null>>({});
+  const sliderRef = useRef<HTMLDivElement | null>(null);
+  const [atStart, setAtStart] = useState(true);
+  const [atEnd, setAtEnd] = useState(false);
+  const slideBy = (dir: 1 | -1) => {
+    const el = sliderRef.current;
+    if (el) el.scrollBy({ left: dir * el.clientWidth * 0.9, behavior: 'smooth' });
+  };
+  const updateEdges = useCallback(() => {
+    const el = sliderRef.current;
+    if (!el) return;
+    setAtStart(el.scrollLeft <= 4);
+    setAtEnd(el.scrollLeft + el.clientWidth >= el.scrollWidth - 4);
+  }, []);
+  useEffect(() => {
+    if (layout !== 'slider') return;
+    updateEdges();
+    const el = sliderRef.current;
+    if (!el) return;
+    el.addEventListener('scroll', updateEdges, { passive: true });
+    window.addEventListener('resize', updateEdges);
+    return () => {
+      el.removeEventListener('scroll', updateEdges);
+      window.removeEventListener('resize', updateEdges);
+    };
+  }, [layout, updateEdges, media.length]);
 
   const hashHandled = useRef(false);
 
@@ -150,18 +184,18 @@ export default function ReferenceGallery({ variant, media = [], posts = [], reel
     const pairs = posts.map((p, i) => ({ post: p, reel: reels[i] }));
     return (
       <>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
           {pairs.map((pair, i) => {
             const postSlug = getSlug(pair.post.src);
             const reelSlug = pair.reel ? getSlug(pair.reel.src) : '';
             return (
-              <div key={i} className="ref-social-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, alignItems: 'start' }}>
+              <div key={i} className="ref-social-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 11, alignItems: 'start' }}>
                 <div
                   id={postSlug}
                   ref={(el) => { refsMap.current[postSlug] = el; }}
                   onClick={() => setLightboxItem({ type: 'image', src: pair.post.src, title: pair.post.title, desc: pair.post.desc })}
                   style={{
-                    borderRadius: 12,
+                    borderRadius: 11,
                     overflow: 'hidden',
                     border: '1.5px solid #e2e8f0',
                     cursor: 'zoom-in',
@@ -172,9 +206,9 @@ export default function ReferenceGallery({ variant, media = [], posts = [], reel
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={pair.post.src} alt="" style={{ width: '100%', display: 'block' }} />
                   </div>
-                  <div style={{ padding: '10px 12px 12px' }}>
-                    <h4 style={{ fontSize: 14, fontWeight: 700, color: '#1a1a2e', margin: '0 0 2px', lineHeight: 1.3 }}>{pair.post.title}</h4>
-                    <p style={{ fontSize: 12, color: '#666', margin: 0, lineHeight: 1.4 }}>{pair.post.desc}</p>
+                  <div style={{ padding: '9px 11px 11px' }}>
+                    <h4 style={{ fontSize: 13, fontWeight: 700, color: '#1a1a2e', margin: '0 0 2px', lineHeight: 1.3 }}>{pair.post.title}</h4>
+                    <p style={{ fontSize: 11, color: '#666', margin: 0, lineHeight: 1.4 }}>{pair.post.desc}</p>
                   </div>
                 </div>
 
@@ -184,7 +218,7 @@ export default function ReferenceGallery({ variant, media = [], posts = [], reel
                     ref={(el) => { refsMap.current[reelSlug] = el; }}
                     onClick={() => setLightboxItem({ type: 'video', src: pair.reel.src, title: pair.reel.title, desc: pair.reel.desc })}
                     style={{
-                      borderRadius: 12,
+                      borderRadius: 11,
                       overflow: 'hidden',
                       border: '1.5px solid #e2e8f0',
                       cursor: 'zoom-in',
@@ -192,16 +226,16 @@ export default function ReferenceGallery({ variant, media = [], posts = [], reel
                     }}
                   >
                     <div style={{ position: 'relative', background: '#000' }}>
-                      <LazyVideo src={pair.reel.src} style={{ width: '100%', display: 'block' }} />
+                      <LazyVideo src={pair.reel.src} poster={pair.reel.poster} style={{ width: '100%', display: 'block' }} />
                       <div
                         style={{
                           position: 'absolute',
-                          top: 8,
-                          right: 8,
+                          top: 7,
+                          right: 7,
                           background: 'rgba(0,0,0,0.5)',
                           borderRadius: '50%',
-                          width: 26,
-                          height: 26,
+                          width: 23,
+                          height: 23,
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
@@ -210,9 +244,9 @@ export default function ReferenceGallery({ variant, media = [], posts = [], reel
                         <Play size={12} color="#fff" fill="#fff" />
                       </div>
                     </div>
-                    <div style={{ padding: '10px 12px 12px' }}>
-                      <h4 style={{ fontSize: 14, fontWeight: 700, color: '#1a1a2e', margin: '0 0 2px', lineHeight: 1.3 }}>{pair.reel.title}</h4>
-                      <p style={{ fontSize: 12, color: '#666', margin: 0, lineHeight: 1.4 }}>{pair.reel.desc}</p>
+                    <div style={{ padding: '9px 11px 11px' }}>
+                      <h4 style={{ fontSize: 13, fontWeight: 700, color: '#1a1a2e', margin: '0 0 2px', lineHeight: 1.3 }}>{pair.reel.title}</h4>
+                      <p style={{ fontSize: 11, color: '#666', margin: 0, lineHeight: 1.4 }}>{pair.reel.desc}</p>
                     </div>
                   </div>
                 )}
@@ -236,7 +270,28 @@ export default function ReferenceGallery({ variant, media = [], posts = [], reel
 
   return (
     <>
-      <div className="ref-gallery" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+      <div className={layout === 'slider' ? 'ref-slider-wrap' : undefined} style={{ position: 'relative' }}>
+      {layout === 'slider' && (
+        <>
+          <button
+            aria-label="Precedente"
+            onClick={() => slideBy(-1)}
+            className="ref-slider-arrow"
+            style={{ left: 18, opacity: atStart ? 0 : 1, pointerEvents: atStart ? 'none' : 'auto' }}
+          >
+            <ChevronLeft size={22} strokeWidth={2.5} />
+          </button>
+          <button
+            aria-label="Successivo"
+            onClick={() => slideBy(1)}
+            className="ref-slider-arrow"
+            style={{ right: 18, opacity: atEnd ? 0 : 1, pointerEvents: atEnd ? 'none' : 'auto' }}
+          >
+            <ChevronRight size={22} strokeWidth={2.5} />
+          </button>
+        </>
+      )}
+      <div ref={sliderRef} className={layout === 'slider' ? 'ref-gallery ref-gallery-slider' : 'ref-gallery'} style={layout === 'slider' ? { display: 'flex', gap: 11, overflowX: 'auto', scrollSnapType: 'x proximity', scrollbarWidth: 'none' } : { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 11 }}>
         {media.map((item, i) => {
           const slug = getSlug(item.src);
           return (
@@ -247,7 +302,7 @@ export default function ReferenceGallery({ variant, media = [], posts = [], reel
               onClick={() => setLightboxItem(item)}
               className="ref-gallery-item"
               style={{
-                borderRadius: 12,
+                borderRadius: 11,
                 overflow: 'hidden',
                 border: '1.5px solid #e2e8f0',
                 cursor: 'zoom-in',
@@ -259,16 +314,16 @@ export default function ReferenceGallery({ variant, media = [], posts = [], reel
               <div style={{ position: 'relative', background: '#000' }}>
                 {item.type === 'video' ? (
                   <>
-                    <LazyVideo src={item.src} style={{ width: '100%', display: 'block' }} />
+                    <LazyVideo src={item.src} poster={item.poster} style={{ width: '100%', display: 'block' }} />
                     <div
                       style={{
                         position: 'absolute',
-                        top: 8,
-                        right: 8,
+                        top: 7,
+                        right: 7,
                         background: 'rgba(0,0,0,0.5)',
                         borderRadius: '50%',
-                        width: 26,
-                        height: 26,
+                        width: 23,
+                        height: 23,
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -287,12 +342,12 @@ export default function ReferenceGallery({ variant, media = [], posts = [], reel
                 )}
               </div>
               {item.title && (
-                <div style={{ padding: '10px 12px 12px', flex: 1 }}>
-                  <h4 style={{ fontSize: 14, fontWeight: 700, color: '#1a1a2e', margin: '0 0 2px', lineHeight: 1.3 }}>
+                <div style={{ padding: '9px 11px 11px', flex: 1 }}>
+                  <h4 style={{ fontSize: 13, fontWeight: 700, color: '#1a1a2e', margin: '0 0 2px', lineHeight: 1.3 }}>
                     {item.title}
                   </h4>
                   {item.desc && (
-                    <p style={{ fontSize: 12, color: '#666', margin: 0, lineHeight: 1.4 }}>
+                    <p style={{ fontSize: 11, color: '#666', margin: 0, lineHeight: 1.4 }}>
                       {item.desc}
                     </p>
                   )}
@@ -302,11 +357,63 @@ export default function ReferenceGallery({ variant, media = [], posts = [], reel
           );
         })}
       </div>
+      </div>
 
       {lightboxItem && <Lightbox item={lightboxItem} onClose={closeLightbox} />}
 
       <style>{`
+        /* Full-bleed SOLO desktop: sotto i 768px il blocco mobile piu' in
+           basso gestisce gia' il proprio bleed (margin -20px su .ref-gallery);
+           applicarlo anche qui li farebbe sommare (doppio sfondamento, card
+           attaccate ai bordi). */
+        @media (min-width: 769px) {
+          .ref-slider-wrap {
+            width: 100vw;
+            margin-left: calc(50% - 50vw);
+            margin-right: calc(50% - 50vw);
+          }
+          .ref-gallery-slider {
+            padding-left: max(20px, calc(50vw - 488px));
+            padding-right: max(20px, calc(50vw - 488px));
+            scroll-padding-left: max(20px, calc(50vw - 488px));
+          }
+        }
+        .ref-gallery-slider::-webkit-scrollbar { display: none; }
+        .ref-gallery-slider > .ref-gallery-item {
+          /* Larghezza fissa, non un terzo esatto del contenitore: l'ultima card
+             visibile resta tagliata a meta', segnale visivo che c'e' altro oltre
+             lo schermo (invece di 3 card perfettamente contenute). */
+          flex: 0 0 300px;
+          scroll-snap-align: start;
+        }
+        .ref-slider-arrow {
+          position: absolute;
+          top: 50%;
+          transform: translateY(-50%);
+          z-index: 2;
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          border: 1px solid rgba(26,26,46,0.12);
+          background: #fff;
+          color: #1a1a2e;
+          font-size: 24px;
+          line-height: 1;
+          font-weight: 700;
+          transition: opacity 0.2s ease;
+          cursor: pointer;
+          box-shadow: 0 4px 14px rgba(16,24,40,0.14);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: transform .15s ease, box-shadow .15s ease;
+        }
+        .ref-slider-arrow:hover {
+          transform: translateY(-50%) scale(1.08);
+          box-shadow: 0 6px 18px rgba(16,24,40,0.2);
+        }
         @media (max-width: 768px) {
+          .ref-slider-arrow { display: none; }
           /* Mobile: slider orizzontale (swipe) invece di card impilate */
           .ref-gallery {
             display: flex !important;

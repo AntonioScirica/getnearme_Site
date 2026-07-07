@@ -45,20 +45,32 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'internal_error' }, { status: 500 })
     }
 
-    // 2. Upload to Cloudflare R2 if it's a valid remote URL
+    // 2. Upload to Cloudflare R2 if it's a valid remote URL. Best-effort: se
+    // uploadUrlToR2 lancia (es. URL Replicate scaduta), NON deve far fallire
+    // l'intera richiesta -> altrimenti la riga batch_staging (gia' inserita
+    // sopra) resta orfana senza batch_staging_items e la foto sparisce dalla
+    // Galleria senza errore visibile. Fallback: tieni l'URL originale.
     let finalResultPath = resultUrl || null;
     let finalSourcePath = sourceUrl || null;
 
     if (resultUrl && resultUrl.startsWith('http')) {
-      const key = `staging/${batch.id}/result.jpg`;
-      await uploadUrlToR2(resultUrl, key);
-      finalResultPath = key;
+      try {
+        const key = `staging/${batch.id}/result.jpg`;
+        await uploadUrlToR2(resultUrl, key);
+        finalResultPath = key;
+      } catch (e) {
+        console.error('R2 upload failed for result, falling back to original URL:', e);
+      }
     }
 
     if (sourceUrl && sourceUrl.startsWith('http')) {
-      const key = `staging/${batch.id}/source.jpg`;
-      await uploadUrlToR2(sourceUrl, key);
-      finalSourcePath = key;
+      try {
+        const key = `staging/${batch.id}/source.jpg`;
+        await uploadUrlToR2(sourceUrl, key);
+        finalSourcePath = key;
+      } catch (e) {
+        console.error('R2 upload failed for source, falling back to original URL:', e);
+      }
     }
     // Niente source remoto per la singola: source_path resta NULL (l'originale
     // vive in IndexedDB lato client). Media mostrerà solo il "dopo" se la cache

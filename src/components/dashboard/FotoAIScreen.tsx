@@ -10,17 +10,76 @@ import WatermarkDownloadModal from './WatermarkDownloadModal';
 import {
   STAGING_STYLES, STAGING_ANGLES, MAX_BATCH_PHOTOS,
   fileToResizedDataUrl, startStaging, pollStagingStatus, findLatestProcessingPrediction, createBatchStaging,
-  fetchStagingQuota, type StagingQuota, getTokenFast, detectFloorPlan,
+  fetchStagingQuota, type StagingQuota, getTokenFast, detectFloorPlan, classifyScene, type SceneType, SCENE_STYLE_LABELS, SCENE_STYLE_ICONS,
 } from '@/lib/staging';
 import { saveSingleGenerationToBatch, deleteBatchPhoto } from '@/lib/stagingBatches';
 import { saveOriginalMedia } from '@/lib/localMediaCache';
 
 type Photo = { id: string; dataUrl: string; name: string; w: number; h: number; isPlan?: boolean };
 
-const GEN_SECONDS = 45; // countdown estimate, same ballpark as the extension
 const POLL_INTERVAL_MS = 2500;
 const POLL_MAX_MS = 120_000; // cap totale: oltre questo → timeout client
 const PENDING_KEY = 'gnm_pending_staging';
+
+// Messaggi rotanti durante la generazione: fanno percepire lavoro in corso
+// (l'AI in realtà fa una sola chiamata, ma 45s di "Generazione..." fisso
+// sembra bloccato). Cambiano ogni ~4.5s, ordine mescolato a ogni avvio.
+// Un pool diverso per contesto (interno/esterno/giardino/planimetria): parlare
+// di "stanza" mentre generi una facciata sembra un bug, non solo cosmetica.
+const GEN_MESSAGES_INTERNO = [
+  'Analizzando la foto...', 'Riconoscendo la stanza...', 'Studiando le proporzioni...',
+  'Individuando i mobili...', 'Mappando le luci...', 'Calcolando le ombre...',
+  'Scegliendo i materiali...', 'Selezionando le texture...', 'Applicando lo stile...',
+  'Definendo la palette colori...', 'Posizionando gli arredi...', 'Regolando la prospettiva...',
+  'Rifinendo i dettagli...', 'Bilanciando la luce naturale...', 'Ottimizzando i riflessi...',
+  'Ricostruendo le superfici...', 'Allineando texture e materiali...', 'Curando i particolari...',
+  'Verificando le proporzioni...', 'Migliorando la nitidezza...', 'Calibrando i colori...',
+  'Analizzando l\'architettura...', 'Preservando la struttura...', 'Adattando l\'arredamento...',
+  'Aggiungendo profondità...', 'Rifinendo le texture...', 'Bilanciando i contrasti...',
+  'Componendo la scena...', 'Perfezionando l\'illuminazione...', 'Elaborando i dettagli finali...',
+  'Controllando la coerenza...', 'Armonizzando i colori...', 'Rendendo fotorealistico il risultato...',
+  'Verificando la qualità...', 'Ottimizzando la risoluzione...', 'Rifinendo i bordi...',
+  'Analizzando la composizione...', 'Bilanciando gli spazi...', 'Aggiungendo texture realistiche...',
+  'Simulando i materiali...', 'Calcolando i riflessi di luce...', 'Ricreando l\'atmosfera...',
+  'Perfezionando lo stile scelto...', 'Uniformando l\'illuminazione...', 'Rifinendo gli ultimi dettagli...',
+  'Quasi pronto...', 'Sintetizzando l\'immagine...', 'Ottimizzando il rendering...',
+  'Controllando ogni dettaglio...', 'Preparando il risultato finale...',
+];
+const GEN_MESSAGES_ESTERNO = [
+  'Analizzando la facciata...', 'Riconoscendo la struttura dell\'edificio...', 'Studiando le proporzioni della casa...',
+  'Individuando finestre e porte...', 'Mappando le ombre della facciata...', 'Calcolando la luce esterna...',
+  'Scegliendo i materiali di rivestimento...', 'Selezionando le finiture...', 'Applicando lo stile scelto...',
+  'Definendo la palette colori...', 'Regolando la prospettiva...', 'Rifinendo i dettagli architettonici...',
+  'Bilanciando la luce naturale...', 'Ottimizzando i riflessi sui vetri...', 'Ricostruendo le superfici della facciata...',
+  'Curando i particolari...', 'Verificando le proporzioni dell\'edificio...', 'Migliorando la nitidezza...',
+  'Calibrando i colori della facciata...', 'Preservando la struttura originale...', 'Aggiungendo profondità...',
+  'Perfezionando l\'illuminazione esterna...', 'Rendendo fotorealistico il risultato...', 'Ottimizzando la risoluzione...',
+  'Quasi pronto...', 'Preparando il risultato finale...',
+];
+const GEN_MESSAGES_GIARDINO = [
+  'Analizzando il giardino...', 'Riconoscendo piante e percorsi...', 'Studiando la disposizione dello spazio...',
+  'Mappando le zone verdi...', 'Calcolando la luce naturale...', 'Scegliendo le piante giuste...',
+  'Selezionando l\'arredo da esterno...', 'Applicando lo stile scelto...', 'Definendo la palette colori...',
+  'Posizionando piante e arredi...', 'Regolando la prospettiva...', 'Rifinendo i dettagli del paesaggio...',
+  'Bilanciando luce e ombra...', 'Curando i particolari...', 'Verificando le proporzioni...',
+  'Ricostruendo prato e vialetti...', 'Aggiungendo profondità...', 'Perfezionando l\'illuminazione...',
+  'Rendendo fotorealistico il risultato...', 'Ottimizzando la risoluzione...', 'Quasi pronto...',
+  'Preparando il risultato finale...',
+];
+const GEN_MESSAGES_PLANIMETRIA = [
+  'Analizzando la planimetria...', 'Riconoscendo le stanze...', 'Tracciando muri e aperture...',
+  'Calcolando le proporzioni...', 'Scegliendo i materiali dei pavimenti...', 'Posizionando gli arredi in pianta...',
+  'Definendo la palette colori...', 'Costruendo la vista dall\'alto...', 'Rifinendo i dettagli...',
+  'Bilanciando le ombre...', 'Verificando la disposizione degli ambienti...', 'Aggiungendo profondità agli arredi...',
+  'Perfezionando il render 2D...', 'Ottimizzando la risoluzione...', 'Quasi pronto...',
+  'Preparando il risultato finale...',
+];
+function genMessagesFor(scene: SceneType, isFloorPlan: boolean): string[] {
+  if (isFloorPlan) return GEN_MESSAGES_PLANIMETRIA;
+  if (scene === 'esterno') return GEN_MESSAGES_ESTERNO;
+  if (scene === 'giardino') return GEN_MESSAGES_GIARDINO;
+  return GEN_MESSAGES_INTERNO;
+}
 
 // Pending single-photo generation tracked across tab switches / reload.
 type Pending = { predictionId: string; before: string; style: string | null; customPrompt: string | null; startedAt: number; replaceBatchId?: string | null };
@@ -30,20 +89,31 @@ import type { Project } from './types';
 // Esempi cliccabili: coppia prima/dopo (split con linea) da contenuti reali
 // pubblicati su Instagram (bucket Storage `content`, cartella slider/). Il click
 // auto-seleziona lo stile scritto sotto. Per aggiungerne: nuova coppia + styleId.
-type Example = { before?: string; after: string; label: string; styleId?: string; prompt?: string; note?: string };
+type Example = { before?: string; after: string; label: string; styleId?: string; prompt?: string; note?: string; scene?: SceneType };
 const IG_BASE = 'https://ecrnpyksnfyykqwnutwa.supabase.co/storage/v1/object/public/content';
 const OPT = `${IG_BASE}/examples/opt`; // versioni ottimizzate (WebP 640x480) per le thumbnail
+// Tutti gli esempi in un'unica lista, mostrati sempre insieme (non filtrati
+// per scena): ognuno porta la propria scena, il click imposta quella giusta.
 const STAGING_EXAMPLES: Example[] = [
-  { before: `${OPT}/mod_b.webp`, after: `${OPT}/mod_a.webp`, label: 'Moderno', styleId: 'modern' },
-  { before: `${OPT}/nor_b.webp`, after: `${OPT}/nor_a.webp`, label: 'Nordico', styleId: 'nordic' },
-  { before: `${OPT}/lux_b.webp`, after: `${OPT}/lux_a.webp`, label: 'Luxury', styleId: 'industrial' },
-  { before: `${OPT}/emp_b.webp`, after: `${OPT}/emp_a.webp`, label: 'Svuota stanza', styleId: 'empty' },
-  { before: `${OPT}/dn_b.webp`, after: `${OPT}/dn_a.webp`, label: 'Giorno e Notte', styleId: 'daynight' },
+  { before: `${OPT}/mod_b.webp`, after: `${OPT}/mod_a.webp`, label: 'Moderno', styleId: 'modern', scene: 'interno' },
+  { before: `${OPT}/nor_b.webp`, after: `${OPT}/nor_a.webp`, label: 'Nordico', styleId: 'nordic', scene: 'interno' },
+  { before: `${OPT}/lux_b.webp`, after: `${OPT}/lux_a.webp`, label: 'Luxury', styleId: 'industrial', scene: 'interno' },
+  { before: `${OPT}/emp_b.webp`, after: `${OPT}/emp_a.webp`, label: 'Svuota stanza', styleId: 'empty', scene: 'interno' },
   // Prompt libero SEMPLICE (micro-edit): prima/dopo mostra l'effetto. Click inserisce il testo.
-  { before: `${OPT}/sofa_b.webp`, after: `${OPT}/sofa_a.webp`, label: 'Cambia il divano in velluto verde', prompt: 'Cambia il divano in velluto verde' },
-  { before: `${OPT}/quad_b.webp`, after: `${OPT}/quad_a.webp`, label: 'Metti un quadro sopra il divano', prompt: 'Metti un quadro sopra il divano' },
+  { before: `${OPT}/sofa_b.webp`, after: `${OPT}/sofa_a.webp`, label: 'Cambia il divano in velluto verde', prompt: 'Cambia il divano in velluto verde', scene: 'interno' },
+  { before: `${OPT}/quad_b.webp`, after: `${OPT}/quad_a.webp`, label: 'Metti un quadro sopra il divano', prompt: 'Metti un quadro sopra il divano', scene: 'interno' },
   // Planimetria: illustrativo (il render parte auto all'upload di una planimetria).
-  { before: `${OPT}/plan_b2.webp`, after: `${OPT}/plan_a2.webp`, label: 'Planimetria → render 2D', note: 'Carica una planimetria: il render 2D parte in automatico.' },
+  { before: `${OPT}/plan_b2.webp`, after: `${OPT}/plan_a2.webp`, label: 'Planimetria → render 2D', note: 'Carica una planimetria: il render 2D parte in automatico.', scene: 'interno' },
+];
+const SCENE_EXAMPLES: Example[] = [
+  { before: `${OPT}/modext_b.webp`, after: `${OPT}/modext_a.webp`, label: 'Moderna', styleId: 'modern', scene: 'esterno' },
+  { before: `${OPT}/nordext_b.webp`, after: `${OPT}/nordext_a.webp`, label: 'Nordica', styleId: 'nordic', scene: 'esterno' },
+  { before: `${OPT}/fac_b.webp`, after: `${OPT}/fac_a.webp`, label: 'Rinnova', styleId: 'empty', scene: 'esterno' },
+  { before: `${OPT}/colext_b.webp`, after: `${OPT}/colext_a.webp`, label: 'Cambia il colore della facciata', prompt: 'Cambia il colore della facciata', scene: 'esterno' },
+  { before: `${OPT}/dn_b.webp`, after: `${OPT}/dn_a.webp`, label: 'Giorno e Notte', styleId: 'daynight', scene: 'esterno' },
+  { before: `${OPT}/gard_b.webp`, after: `${OPT}/gard_a.webp`, label: 'Lussuoso', styleId: 'industrial', scene: 'giardino' },
+  { before: `${OPT}/gardrin_b.webp`, after: `${OPT}/gardrin_a.webp`, label: 'Rinnova', styleId: 'empty', scene: 'giardino' },
+  { before: `${OPT}/gardmod_b.webp`, after: `${OPT}/gardmod_a.webp`, label: 'Moderno', styleId: 'modern', scene: 'giardino' },
 ];
 
 // Pacchetti foto extra (Stripe Payment Links reali da ai_photo_packages).
@@ -67,27 +137,27 @@ function PhotoPacksModal({ onClose }: { onClose: () => void }) {
     onClose();
   };
   return (
-    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(24,21,17,.55)', backdropFilter: 'blur(3px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-      <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 540, background: '#fff', borderRadius: 20, boxShadow: '0 28px 72px rgba(20,18,15,.3)', overflow: 'hidden' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 28px', borderBottom: '1px solid #f0ede7' }}>
-          <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, letterSpacing: '-.3px' }}>Pacchetti AI Foto</h3>
-          <button onClick={onClose} aria-label="Chiudi" style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#8c867d' }}><Icon name="x" size={20} color="#8c867d" /></button>
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(24,21,17,.55)', backdropFilter: 'blur(3px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 22 }}>
+      <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 486, background: '#fff', borderRadius: 18, boxShadow: '0 28px 72px rgba(20,18,15,.3)', overflow: 'hidden' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 25px', borderBottom: '1px solid #f0ede7' }}>
+          <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, letterSpacing: '-.3px' }}>Pacchetti AI Foto</h3>
+          <button onClick={onClose} aria-label="Chiudi" style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#8c867d' }}><Icon name="x" size={18} color="#8c867d" /></button>
         </div>
-        <div style={{ padding: '22px 28px 26px' }}>
-          <div style={{ textAlign: 'center', marginBottom: 20 }}>
-            <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 6 }}>Hai esaurito le foto di questo mese</div>
-            <div style={{ fontSize: 13.5, color: '#57534c', lineHeight: 1.5 }}>Acquista un pacchetto extra per continuare a generare foto AI. I crediti extra non scadono e si sommano al tuo piano attuale.</div>
+        <div style={{ padding: '20px 25px 23px' }}>
+          <div style={{ textAlign: 'center', marginBottom: 18 }}>
+            <div style={{ fontSize: 14, fontWeight: 800, marginBottom: 5 }}>Hai esaurito le foto di questo mese</div>
+            <div style={{ fontSize: 12, color: '#57534c', lineHeight: 1.5 }}>Acquista un pacchetto extra per continuare a generare foto AI. I crediti extra non scadono e si sommano al tuo piano attuale.</div>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
             {PHOTO_PACKS.map(p => (
-              <div key={p.id} style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', borderRadius: 14, border: p.popular ? '2px solid #3B83F6' : '1px solid #e4e1da', background: p.popular ? '#eff6ff' : '#fff' }}>
-                <div style={{ width: 42, height: 42, borderRadius: 12, background: p.popular ? '#fff' : '#f4f2ee', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}><Icon name="image" size={19} color={p.popular ? '#1d5fd0' : '#57534c'} /></div>
+              <div key={p.id} style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 13, padding: '13px 14px', borderRadius: 13, border: p.popular ? '2px solid #3B83F6' : '1px solid #e4e1da', background: p.popular ? '#eff6ff' : '#fff' }}>
+                <div style={{ width: 38, height: 38, borderRadius: 11, background: p.popular ? '#fff' : '#f4f2ee', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}><Icon name="image" size={17} color={p.popular ? '#1d5fd0' : '#57534c'} /></div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 14.5, fontWeight: 800, display: 'flex', alignItems: 'center', gap: 8 }}>{p.name}{p.popular && <span style={{ fontSize: 10, fontWeight: 800, color: '#1d5fd0', background: '#dbeafe', padding: '2px 7px', borderRadius: 99, textTransform: 'uppercase', letterSpacing: '.04em' }}>Popolare</span>}</div>
-                  <div style={{ fontSize: 12.5, color: '#8c867d', marginTop: 1 }}>{p.photos} foto AI extra</div>
+                  <div style={{ fontSize: 13, fontWeight: 800, display: 'flex', alignItems: 'center', gap: 7 }}>{p.name}{p.popular && <span style={{ fontSize: 9, fontWeight: 800, color: '#1d5fd0', background: '#dbeafe', padding: '2px 6px', borderRadius: 99, textTransform: 'uppercase', letterSpacing: '.04em' }}>Popolare</span>}</div>
+                  <div style={{ fontSize: 11, color: '#8c867d', marginTop: 1 }}>{p.photos} foto AI extra</div>
                 </div>
-                <div style={{ fontSize: 19, fontWeight: 800, flex: 'none', minWidth: 64, textAlign: 'right' }}>€{p.price}</div>
-                <Box as="button" onClick={() => buy(p.link)} style={{ border: 'none', background: '#3B83F6', color: '#fff', fontSize: 13, fontWeight: 700, padding: '10px 20px', borderRadius: 10, cursor: 'pointer', flex: 'none' } as React.CSSProperties} hover={{ background: '#2b6fe0' }}>Scegli</Box>
+                <div style={{ fontSize: 17, fontWeight: 800, flex: 'none', minWidth: 58, textAlign: 'right' }}>€{p.price}</div>
+                <Box as="button" onClick={() => buy(p.link)} style={{ border: 'none', background: '#3B83F6', color: '#fff', fontSize: 12, fontWeight: 700, padding: '9px 18px', borderRadius: 9, cursor: 'pointer', flex: 'none' } as React.CSSProperties} hover={{ background: '#2b6fe0' }}>Scegli</Box>
               </div>
             ))}
           </div>
@@ -107,13 +177,13 @@ function DemoBeforeAfter() {
     return () => clearTimeout(t);
   }, []);
   return (
-    <div style={{ position: 'relative', borderRadius: 16, overflow: 'hidden', marginBottom: 12, animation: 'foto-reveal .45s cubic-bezier(.22,1,.36,1) both' }}>
-      <div style={{ position: 'relative', borderRadius: 16, overflow: 'hidden', zIndex: 4, boxShadow: '0 12px 32px rgba(0,0,0,0.08)' }}>
+    <div style={{ position: 'relative', borderRadius: 14, overflow: 'hidden', marginBottom: 11, animation: 'foto-reveal .45s cubic-bezier(.22,1,.36,1) both' }}>
+      <div style={{ position: 'relative', borderRadius: 14, overflow: 'hidden', zIndex: 4, boxShadow: '0 12px 32px rgba(0,0,0,0.08)' }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={DEMO_BEFORE} alt="" style={{ position: 'relative', width: '100%', height: 'auto', objectFit: 'cover', display: 'block' }} />
         <InlineSlider before={DEMO_BEFORE} after={DEMO_AFTER} isVertical={false} showImages={phase === 'slider'} interactive={phase === 'slider'} />
-        <span style={{ position: 'absolute', top: 12, left: 12, background: 'rgba(33,31,28,.72)', color: '#fff', fontSize: 11.5, fontWeight: 700, padding: '5px 12px', borderRadius: 99, zIndex: 12, opacity: phase === 'slider' ? 1 : 0, transition: 'opacity .6s' }}>Prima</span>
-        <span style={{ position: 'absolute', top: 12, right: 12, background: 'rgba(33,31,28,.72)', color: '#fff', fontSize: 11.5, fontWeight: 700, padding: '5px 12px', borderRadius: 99, zIndex: 12, opacity: phase === 'slider' ? 1 : 0, transition: 'opacity .6s' }}>Dopo</span>
+        <span style={{ position: 'absolute', top: 11, left: 11, background: 'rgba(33,31,28,.72)', color: '#fff', fontSize: 10.5, fontWeight: 700, padding: '5px 11px', borderRadius: 99, zIndex: 12, opacity: phase === 'slider' ? 1 : 0, transition: 'opacity .6s' }}>Prima</span>
+        <span style={{ position: 'absolute', top: 11, right: 11, background: 'rgba(33,31,28,.72)', color: '#fff', fontSize: 10.5, fontWeight: 700, padding: '5px 11px', borderRadius: 99, zIndex: 12, opacity: phase === 'slider' ? 1 : 0, transition: 'opacity .6s' }}>Dopo</span>
       </div>
     </div>
   );
@@ -148,6 +218,10 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
   React.useEffect(() => { pollStagingStatus('warmup-noop').catch(() => {}); }, []);
   const [photos, setPhotos] = React.useState<Photo[]>([]);
   const [selStyle, setSelStyle] = React.useState<string | null>(demoMode ? 'modern' : null);
+  // Shimmer sotto le foto degli Esempi finche' non finiscono di caricare (loading="lazy" +
+  // CDN esterno: senza placeholder la griglia resta bianca per un attimo ad ogni scroll).
+  const [loadedExamples, setLoadedExamples] = React.useState<Set<number>>(new Set());
+  const markExampleLoaded = (i: number) => setLoadedExamples(prev => prev.has(i) ? prev : new Set(prev).add(i));
   React.useEffect(() => { if (demoMode) setSelStyle('modern'); }, [demoMode]);
   const [selAngle, setSelAngle] = React.useState<string | null>(null);
   const [customPrompt, setCustomPrompt] = React.useState('');
@@ -161,8 +235,42 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
   React.useEffect(() => { setNotPlan(false); }, [photos]); // ogni nuovo upload azzera l'override
   const isFloorPlan = photos.length === 1 && !!photos[0]?.isPlan && !notPlan;
   React.useEffect(() => { if (isFloorPlan) { setCustomPrompt(''); setSelAngle(null); } }, [isFloorPlan]);
+  // Interno/esterno(facciata)/giardino — auto-classificata all'upload (single
+  // photo, non planimetria), l'utente può correggerla col toggle. Giardino non
+  // ha stili d'arredo sensati: forza solo custom prompt.
+  const [scene, setScene] = React.useState<SceneType>('interno');
+  // Il toggle si vede SOLO quando il server non e' riuscito a classificare con
+  // sicurezza (errore/timeout Groq): se ha riconosciuto bene, resta nascosto.
+  const [sceneConfident, setSceneConfident] = React.useState(true);
+  const singlePhotoId = photos.length === 1 ? photos[0].id : null;
+  React.useEffect(() => {
+    // Nessuna foto singola (rimossa, o batch): torna al default "interno"
+    // invece di restare bloccati sull'ultima scena classificata.
+    if (!singlePhotoId || isFloorPlan) { setScene('interno'); setSceneConfident(true); return; }
+    setScene('interno');
+    setSceneConfident(true);
+    let cancelled = false;
+    classifyScene(photos[0].dataUrl).then(({ scene: t, confident }) => {
+      if (cancelled) return;
+      setScene(t);
+      setSceneConfident(confident);
+    });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [singlePhotoId, isFloorPlan]);
+  const pickScene = (t: SceneType) => { if (generating) return; setScene(t); };
+  // Su mobile: stile/scena/prompt restano disattivati finché non carichi una foto
+  // (troppo facile scrollare e toccare senza rendersi conto di non aver caricato nulla).
+  const [isMobile, setIsMobile] = React.useState(false);
+  React.useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)');
+    const on = () => setIsMobile(mq.matches);
+    on();
+    mq.addEventListener('change', on);
+    return () => mq.removeEventListener('change', on);
+  }, []);
   const [generating, setGenerating] = React.useState(false);
-  const [countdown, setCountdown] = React.useState(GEN_SECONDS);
+  const [genMsg, setGenMsg] = React.useState(GEN_MESSAGES_INTERNO[0]);
   const [result, setResult] = React.useState<{ before: string; after: string } | null>(null);
   // Il risultato mostrato e' un render di planimetria: azioni limitate (solo scarica + crea post).
   const [resultIsPlan, setResultIsPlan] = React.useState(false);
@@ -228,7 +336,7 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
         // before può mancare se la generazione è stata recuperata dal server
         // (stato locale perso): in quel caso niente slider, mostra il risultato.
         setResult({ before: pending.before || res.outputUrl, after: res.outputUrl });
-        onCreated?.();
+        if (!pending.replaceBatchId) onCreated?.(); // reprompt sostituisce, non e' una foto nuova
         setGenerating(false);
         setRevealing('burst');
         // Ogni generazione (incl. reprompt) scala 1 dalla quota: aggiorna live.
@@ -355,17 +463,21 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
 @keyframes slider-handle-pop{0%{opacity:0;transform:translate(-50%,-50%) scale(0)}60%{opacity:1;transform:translate(-50%,-50%) scale(1.15)}100%{opacity:1;transform:translate(-50%,-50%) scale(1)}}
 @keyframes export-spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
 @keyframes shimmer-text{0%{background-position:200% center}100%{background-position:-200% center}}
+@keyframes scene-swap-fade{0%{opacity:0;transform:translateY(3px)}100%{opacity:1;transform:translateY(0)}}
 `;
     document.head.appendChild(st);
   }, []);
 
-  // Countdown during generation
+  // Messaggi rotanti: ordine mescolato a ogni avvio, un nuovo messaggio ogni 4.5s.
+  // Pool diverso per contesto (interno/esterno/giardino/planimetria).
   React.useEffect(() => {
     if (!generating) return;
-    setCountdown(GEN_SECONDS);
-    const t = setInterval(() => setCountdown(c => Math.max(c - 1, 0)), 1000);
+    const order = [...genMessagesFor(scene, isFloorPlan)].sort(() => Math.random() - 0.5);
+    let i = 0;
+    setGenMsg(order[0]);
+    const t = setInterval(() => { i = (i + 1) % order.length; setGenMsg(order[i]); }, 4500);
     return () => clearInterval(t);
-  }, [generating]);
+  }, [generating, scene, isFloorPlan]);
 
   const addFiles = async (files: FileList | File[]) => {
     const list = Array.from(files).filter(f => f.type.startsWith('image/'));
@@ -456,12 +568,15 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
   // Click su un esempio: applica lo stile (o il prompt) e riporta l'utente in cima al setup.
   const applyExample = (ex: Example) => {
     if (generating) return;
+    if (ex.scene) setScene(ex.scene); // esempio esterno/giardino: lo stile da solo non basta, serve la scena giusta
     if (ex.styleId) { setSelStyle(ex.styleId); setSelAngle(null); setCustomPrompt(''); toast(`Stile "${ex.label}" selezionato`, 'sparkles'); }
     else if (ex.prompt) { setCustomPrompt(ex.prompt); setSelStyle(null); setSelAngle(null); toast('Prompt inserito', 'sparkles'); }
     else if (ex.note) { toast(ex.note, 'sparkles'); return; } // planimetria: solo hint, niente selezione/scroll
     setupRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
+  const visibleExamples = [...STAGING_EXAMPLES, ...SCENE_EXAMPLES];
+  const lockPreSetup = isMobile && photos.length === 0;
   const isBatch = photos.length > 1;
   const outOfQuota = !!quota && quota.remaining <= 0;
   const notEnoughForBatch = !!quota && photos.length > 1 && photos.length > quota.remaining;
@@ -469,14 +584,14 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
 
   // Start an async single-photo generation: kick off the prediction, persist it,
   // and let the polling effect drive the result. Resilient to tab switches.
-  const beginSingle = async (opts: { imageDataUrl: string; before: string; style: string | null; angle: string | null; customPrompt: string | null; planimetria?: boolean | null; replaceBatchId?: string | null }) => {
+  const beginSingle = async (opts: { imageDataUrl: string; before: string; style: string | null; angle: string | null; customPrompt: string | null; planimetria?: boolean | null; sceneType?: SceneType | null; replaceBatchId?: string | null }) => {
     // Start con retry: il primo tentativo può scadere su cold start; il secondo
     // (function calda) di solito va. Prima di ogni retry controlla se una
     // prediction è già stata creata server-side (evita doppio scalo quota).
     let res = await (async () => {
       for (let attempt = 1; attempt <= 2; attempt++) {
         console.log(`[FotoAI] startStaging… (tentativo ${attempt})`);
-        const r = await startStaging({ imageDataUrl: opts.imageDataUrl, style: opts.style, angle: opts.angle, customPrompt: opts.customPrompt, planimetria: opts.planimetria ?? null });
+        const r = await startStaging({ imageDataUrl: opts.imageDataUrl, style: opts.style, angle: opts.angle, customPrompt: opts.customPrompt, planimetria: opts.planimetria ?? null, sceneType: opts.sceneType ?? null });
         console.log('[FotoAI] start result:', r.ok ? `ok predictionId=${(r as any).predictionId}` : `FAIL ${r.error}`);
         if (r.ok) return r;
         if (!r.error?.includes('troppo lento')) return r; // errore vero (quota/auth) → non ritentare
@@ -510,7 +625,7 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
     if (res.outputUrl) {
       setResult({ before: opts.before, after: res.outputUrl });
       setResultIsPlan(!!opts.planimetria);
-      onCreated?.();
+      if (!opts.replaceBatchId) onCreated?.(); // reprompt sostituisce, non e' una foto nuova
       setGenerating(false);
       setRevealing('burst');
       setQuota(q => q ? { ...q, remaining: Math.max(0, q.remaining - 1) } : q);
@@ -559,6 +674,7 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
           angle: selAngle,
           customPrompt: customPrompt.trim() || null,
           planimetria: isFloorPlan,
+          sceneType: scene,
         });
       }
     } catch (err: any) {
@@ -586,6 +702,7 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
         angle: null,
         customPrompt: prompt,
         planimetria: false, // reprompt edita il render, mai ri-trattarlo come planimetria
+        sceneType: scene, // stessa scena della foto originale
         replaceBatchId: currentBatchId.current, // sostituisci la versione precedente
       });
     } catch (err: any) {
@@ -603,64 +720,64 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
     setResult(null); setRevealing(null); setReprompt(''); setBatchDone(null); setError(null); setGenerating(false); setResultIsPlan(false);
   };
 
-  const inputStyle: React.CSSProperties = { width: '100%', border: '1px solid #e4e1da', borderRadius: 10, padding: '11px 14px', fontSize: 13.5, fontFamily: 'inherit', outline: 'none', background: '#fff', resize: 'vertical' };
+  const inputStyle: React.CSSProperties = { width: '100%', border: '1px solid #e4e1da', borderRadius: 9, padding: '10px 13px', fontSize: 12, fontFamily: 'inherit', outline: 'none', background: '#fff', resize: 'vertical' };
 
   return (
-    <div className="max-md:!px-4 max-md:!py-6" style={s('max-width:1160px;margin:0 auto;padding:32px 32px 64px')}>
-      <div className="max-md:!flex-col max-md:!items-stretch max-md:!gap-3" style={s('display:flex;align-items:center;justify-content:space-between;margin-bottom:24px')}>
+    <div className="max-md:!px-4 max-md:!py-6" style={s('max-width:1044px;margin:0 auto;padding:29px 29px 58px')}>
+      <div className="max-md:!flex-col max-md:!items-stretch max-md:!gap-3" style={s('display:flex;align-items:center;justify-content:space-between;margin-bottom:22px')}>
         <div style={{ minWidth: 0 }}>
-          <h1 style={s('margin:0 0 4px;font-size:25px;font-weight:800;letter-spacing:-.5px')}>Homestaging AI</h1>
-          <div style={s('color:#8c867d;font-size:14px')}>Arreda, svuota o trasforma le foto dei tuoi immobili con l’AI.</div>
+          <h1 style={s('margin:0 0 4px;font-size:23px;font-weight:800;letter-spacing:-.5px')}>Homestaging AI</h1>
+          <div style={s('color:#8c867d;font-size:13px')}>Arreda, svuota o trasforma le foto dei tuoi immobili con l’AI.</div>
           {/* Indicatore quota compatto solo mobile (la pill nell'header è nascosta su mobile). */}
           {!demoMode && quota && (
-            <div className="hidden max-md:!flex" style={{ alignItems: 'center', gap: 6, marginTop: 6, color: '#8c867d', fontSize: 12.5, fontWeight: 600 }}>
-              <Icon name="image" size={13} color="#8c867d" />
+            <div className="hidden max-md:!flex" style={{ width: '100%', alignItems: 'center', justifyContent: 'center', gap: 5, marginTop: 14, background: '#fff', border: '1px solid #f0ede7', borderRadius: 99, padding: '7px 11px', color: '#211f1c', fontSize: 12, fontWeight: 700 }}>
+              <Icon name="image" size={14} color="#3B83F6" />
               <span>{quota.remaining > 0 ? `${quota.remaining} ${quota.remaining === 1 ? 'foto rimanente' : 'foto rimanenti'}` : 'Quota esaurita'}</span>
             </div>
           )}
         </div>
         {!demoMode && !quota && (
-          <div style={{ width: 140, height: 37, borderRadius: 99, background: 'linear-gradient(90deg,#efece7,#f7f5f1,#efece7)', backgroundSize: '200% 100%', animation: 'demo-ai-shimmer 1.4s linear infinite', flex: 'none' }} />
+          <div style={{ width: 126, height: 33, borderRadius: 99, background: 'linear-gradient(90deg,#efece7,#f7f5f1,#efece7)', backgroundSize: '200% 100%', animation: 'demo-ai-shimmer 1.4s linear infinite', flex: 'none' }} />
         )}
         {!demoMode && quota && (quota.remaining > 0 ? (
-          <div className="max-md:!hidden" style={s('display:inline-flex;align-items:center;justify-content:center;gap:8px;background:#fff;border:1px solid #f0ede7;border-radius:99px;padding:8px 16px;flex:none;white-space:nowrap')}>
-            <Icon name="image" size={15} color="#3B83F6" />
-            <span style={{ fontSize: 13, fontWeight: 700 }}>{quota.remaining} {quota.remaining === 1 ? 'foto rimanente' : 'foto rimanenti'}</span>
+          <div className="max-md:!hidden" style={s('display:inline-flex;align-items:center;justify-content:center;gap:7px;background:#fff;border:1px solid #f0ede7;border-radius:99px;padding:7px 14px;flex:none;white-space:nowrap')}>
+            <Icon name="image" size={14} color="#3B83F6" />
+            <span style={{ fontSize: 12, fontWeight: 700 }}>{quota.remaining} {quota.remaining === 1 ? 'foto rimanente' : 'foto rimanenti'}</span>
           </div>
         ) : lockBrand ? (
           // Free esaurito: CTA verso i piani al posto della pill.
-          <Box as="button" className="max-md:!w-full max-md:!justify-center" onClick={() => onGoPlan?.()} style={s('display:flex;align-items:center;gap:8px;background:#3B83F6;color:#fff;border:none;border-radius:10px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer;flex:none') as React.CSSProperties} hover={s('background:#2b6fe0')}>
-            <Icon name="crown" size={15} color="#fff" />Vedi i piani
+          <Box as="button" className="max-md:!w-full max-md:!justify-center" onClick={() => onGoPlan?.()} style={s('display:flex;align-items:center;gap:7px;background:#3B83F6;color:#fff;border:none;border-radius:9px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;flex:none') as React.CSSProperties} hover={s('background:#2b6fe0')}>
+            <Icon name="crown" size={14} color="#fff" />Vedi i piani
           </Box>
         ) : null)}
       </div>
 
       {/* ── GLOBAL ERROR ── */}
       {!generating && error && !result && batchDone === null && (
-        <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#b91c1c', borderRadius: 14, padding: '16px 20px', fontSize: 14, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24 }}>
-          <Icon name="alert-circle" size={18} color="#b91c1c" />
+        <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#b91c1c', borderRadius: 13, padding: '14px 18px', fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 9, marginBottom: 22 }}>
+          <Icon name="alert-circle" size={16} color="#b91c1c" />
           {error}
         </div>
       )}
 
       {/* ── BATCH SUBMITTED ── blob animato col logo al centro */}
       {!generating && batchDone !== null && (
-        <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:16px;padding:64px 24px;text-align:center;width:100%;margin:0 auto')}>
-          <div style={{ position: 'relative', width: 120, height: 120, margin: '0 auto 4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:14px;padding:58px 22px;text-align:center;width:100%;margin:0 auto')}>
+          <div style={{ position: 'relative', width: 108, height: 108, margin: '0 auto 4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             {/* Cerchi che pulsano dietro, molto fade */}
-            <div style={{ position: 'absolute', width: 110, height: 110, borderRadius: '50%', border: '1.5px solid rgba(59,131,246,.20)', animation: 'pulse-ring 2.8s ease-out infinite' }} />
-            <div style={{ position: 'absolute', width: 110, height: 110, borderRadius: '50%', border: '1.5px solid rgba(59,131,246,.20)', animation: 'pulse-ring 2.8s ease-out infinite', animationDelay: '1.4s' }} />
+            <div style={{ position: 'absolute', width: 99, height: 99, borderRadius: '50%', border: '1.5px solid rgba(59,131,246,.20)', animation: 'pulse-ring 2.8s ease-out infinite' }} />
+            <div style={{ position: 'absolute', width: 99, height: 99, borderRadius: '50%', border: '1.5px solid rgba(59,131,246,.20)', animation: 'pulse-ring 2.8s ease-out infinite', animationDelay: '1.4s' }} />
             {/* Blob blu che si muove dietro il logo */}
-            <div style={{ position: 'absolute', width: 72, height: 72, background: 'radial-gradient(circle at 30% 26%, #AECBFF 0%, #3B83F6 46%, #5B6CF0 100%)', opacity: .95, boxShadow: '0 0 30px rgba(91,108,240,.45), 0 0 14px rgba(59,131,246,.55)', animation: 'organic-blob 8s ease-in-out infinite' }} />
+            <div style={{ position: 'absolute', width: 65, height: 65, background: 'radial-gradient(circle at 30% 26%, #AECBFF 0%, #3B83F6 46%, #5B6CF0 100%)', opacity: .95, boxShadow: '0 0 30px rgba(91,108,240,.45), 0 0 14px rgba(59,131,246,.55)', animation: 'organic-blob 8s ease-in-out infinite' }} />
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/dashboard/logo-mark-white.svg" alt="" style={{ position: 'relative', width: 56, height: 56, animation: 'aurora-pulse 4s ease-in-out infinite' }} />
+            <img src="/dashboard/logo-mark-white.svg" alt="" style={{ position: 'relative', width: 50, height: 50, animation: 'aurora-pulse 4s ease-in-out infinite' }} />
           </div>
-          <div style={s('font-size:20px;font-weight:800;margin-bottom:8px')}>{batchDone} foto in elaborazione</div>
-          <div style={s('color:#8c867d;font-size:15px;max-width:500px;margin:0 auto 32px;line-height:1.5')}>
-            Puoi fare quello che vuoi e chiudere la pagina. Le trovi nell'area di lavoro una volta pronte, controlla l'icona&nbsp;<span style={{ display: 'inline-flex', alignItems: 'center', verticalAlign: 'middle', background: '#eef4fe', borderRadius: 6, padding: '2px 6px', gap: 4 }}><Icon name="inbox" size={14} color="#3B83F6" /></span>&nbsp;in alto a destra.
+          <div style={s('font-size:18px;font-weight:800;margin-bottom:7px')}>{batchDone} foto in elaborazione</div>
+          <div style={s('color:#8c867d;font-size:13.5px;max-width:450px;margin:0 auto 29px;line-height:1.5')}>
+            Puoi fare quello che vuoi e chiudere la pagina. Le trovi nell'area di lavoro una volta pronte, controlla l'icona&nbsp;<span style={{ display: 'inline-flex', alignItems: 'center', verticalAlign: 'middle', background: '#eef4fe', borderRadius: 5, padding: '2px 5px', gap: 4 }}><Icon name="inbox" size={13} color="#3B83F6" /></span>&nbsp;in alto a destra.
           </div>
-          <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
-            <Box as="button" onClick={resetAll} style={s('border:none;background:#3B83F6;color:#fff;font-size:14px;font-weight:700;padding:12px 24px;border-radius:10px;cursor:pointer') as React.CSSProperties} hover={s('background:#2b6fe0')}>
+          <div style={{ display: 'flex', gap: 11, justifyContent: 'center' }}>
+            <Box as="button" onClick={resetAll} style={s('border:none;background:#3B83F6;color:#fff;font-size:13px;font-weight:700;padding:11px 22px;border-radius:9px;cursor:pointer') as React.CSSProperties} hover={s('background:#2b6fe0')}>
               Elabora altre foto
             </Box>
           </div>
@@ -672,54 +789,62 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
         <div ref={setupRef} style={{ position: 'relative' }}>
           {/* Avviso dismissibile: upload tagliato dalla quota (con X per chiudere). */}
           {capNote && (
-            <div style={{ position: 'relative', width: '100%', boxSizing: 'border-box', background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: 14, padding: '14px 46px 14px 18px', marginBottom: 20 }}>
-              <div style={{ fontSize: 14, color: '#9a3412', lineHeight: 1.5 }}>{capNote}</div>
-              <button onClick={() => setCapNote(null)} aria-label="Chiudi" style={{ position: 'absolute', top: 10, right: 10, width: 28, height: 28, border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8 }}>
-                <Icon name="x" size={16} color="#9a3412" />
+            <div style={{ position: 'relative', width: '100%', boxSizing: 'border-box', background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: 13, padding: '13px 41px 13px 16px', marginBottom: 18 }}>
+              <div style={{ fontSize: 13, color: '#9a3412', lineHeight: 1.5 }}>
+                {capNote.includes('Acquista un pacchetto extra') ? (() => {
+                  const [before, after] = capNote.split(/(?=Acquista un pacchetto extra)/);
+                  return <>{before}<span onClick={() => setPacksOpen(true)} style={{ color: '#3B83F6', fontWeight: 700, cursor: 'pointer', textDecoration: 'underline' }}>{after}</span></>;
+                })() : capNote}
+              </div>
+              <button onClick={() => setCapNote(null)} aria-label="Chiudi" style={{ position: 'absolute', top: 9, right: 9, width: 25, height: 25, border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 7 }}>
+                <Icon name="x" size={14} color="#9a3412" />
               </button>
             </div>
           )}
           {/* Avviso planimetria rimossa dal mix (con X). */}
           {planNotice && (
-            <div style={{ position: 'relative', width: '100%', boxSizing: 'border-box', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 14, padding: '14px 46px 14px 18px', marginBottom: 20 }}>
-              <div style={{ fontSize: 14, color: '#1d5fd0', lineHeight: 1.5 }}>{planNotice}</div>
-              <button onClick={() => setPlanNotice(null)} aria-label="Chiudi" style={{ position: 'absolute', top: 10, right: 10, width: 28, height: 28, border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8 }}>
-                <Icon name="x" size={16} color="#1d5fd0" />
+            <div style={{ position: 'relative', width: '100%', boxSizing: 'border-box', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 13, padding: '13px 41px 13px 16px', marginBottom: 18 }}>
+              <div style={{ fontSize: 13, color: '#1d5fd0', lineHeight: 1.5 }}>{planNotice}</div>
+              <button onClick={() => setPlanNotice(null)} aria-label="Chiudi" style={{ position: 'absolute', top: 9, right: 9, width: 25, height: 25, border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 7 }}>
+                <Icon name="x" size={14} color="#1d5fd0" />
               </button>
             </div>
           )}
           {/* Avviso quota esaurita / batch insufficiente: banner a tutta larghezza. */}
           {((outOfQuota && !lockBrand) || notEnoughForBatch) && (
-            <div style={{ width: '100%', boxSizing: 'border-box', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 14, padding: '16px 18px', marginBottom: 20 }}>
-              <div style={{ fontSize: 15.5, fontWeight: 700, color: '#1d5fd0', marginBottom: 6 }}>
+            <div style={{ width: '100%', boxSizing: 'border-box', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 13, padding: '14px 16px', marginBottom: 18 }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: '#1d5fd0', marginBottom: 5 }}>
                 {outOfQuota ? 'Hai usato tutte le foto del mese' : 'Foto insufficienti per questo batch'}
               </div>
-              <div style={{ fontSize: 14.5, color: '#3b6fb0', lineHeight: 1.55, marginBottom: 14 }}>
+              <div style={{ fontSize: 13, color: '#3b6fb0', lineHeight: 1.55, marginBottom: 13 }}>
                 {outOfQuota
                   ? 'La quota riparte il primo del mese prossimo. Per averne di più ora, acquista un pacchetto extra: i crediti non scadono e si sommano.'
                   : `Te ne restano ${quota!.remaining}: riduci le foto o acquista un pacchetto extra.`}
               </div>
               {outOfQuota ? (
-                <Box as="button" onClick={() => setPacksOpen(true)} style={s('border:none;background:#3B83F6;color:#fff;font-size:13.5px;font-weight:700;padding:10px 18px;border-radius:10px;cursor:pointer;display:inline-flex;align-items:center;gap:8px') as React.CSSProperties} hover={s('background:#2b6fe0')}>
-                  <Icon name="zap" size={15} color="#fff" />
+                <Box as="button" onClick={() => setPacksOpen(true)} style={s('border:none;background:#3B83F6;color:#fff;font-size:12px;font-weight:700;padding:9px 16px;border-radius:9px;cursor:pointer;display:inline-flex;align-items:center;gap:7px') as React.CSSProperties} hover={s('background:#2b6fe0')}>
+                  <Icon name="zap" size={14} color="#fff" />
                   Ottieni altre foto
                 </Box>
               ) : onGoPlan && (
-                <Box as="button" onClick={onGoPlan} style={s('border:none;background:#3B83F6;color:#fff;font-size:13.5px;font-weight:700;padding:10px 18px;border-radius:10px;cursor:pointer;display:inline-flex;align-items:center;gap:8px') as React.CSSProperties} hover={s('background:#2b6fe0')}>
-                  <Icon name="crown" size={15} color="#fff" />
+                <Box as="button" onClick={onGoPlan} style={s('border:none;background:#3B83F6;color:#fff;font-size:12px;font-weight:700;padding:9px 16px;border-radius:9px;cursor:pointer;display:inline-flex;align-items:center;gap:7px') as React.CSSProperties} hover={s('background:#2b6fe0')}>
+                  <Icon name="crown" size={14} color="#fff" />
                   Vedi i piani
                 </Box>
               )}
             </div>
           )}
-          <div className="max-md:!grid-cols-1 max-md:!flex max-md:!flex-col max-md:!items-stretch" style={{ display: 'grid', gridTemplateColumns: '1fr 360px', gap: 24, alignItems: 'start' }}>
+          <div className="max-md:!grid-cols-1 max-md:!flex max-md:!flex-col max-md:!items-stretch" style={{ display: 'grid', gridTemplateColumns: '1fr 324px', gap: 22, alignItems: 'start' }}>
           {/* left: upload */}
           <div>
-            {/* Snackbar undo: foto rimossa dal batch, "Annulla" la reinserisce alla sua posizione. */}
+            {/* Snackbar undo: foto rimossa dal batch, "Annulla" la reinserisce alla sua posizione.
+                Stesso stile/posizione dei toast standard (fixed, bottom-center) invece di un
+                banner incollato in cima al contenuto: qui serve un bottone con onClick (undo),
+                non riproducibile col toast condiviso che supporta solo un link href. */}
             {undoDel && (
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, background: '#211f1c', color: '#fff', borderRadius: 12, padding: '10px 16px', marginBottom: 12 }}>
-                <span style={{ fontSize: 13, fontWeight: 600 }}>Foto rimossa.</span>
-                <button onClick={undoRemove} style={{ background: 'transparent', border: 'none', color: '#93c5fd', fontSize: 13, fontWeight: 700, cursor: 'pointer', padding: '2px 4px' }}>Annulla</button>
+              <div style={{ position: 'fixed', bottom: 20, left: '50%', transform: 'translateX(-50%)', zIndex: 999999, display: 'flex', alignItems: 'center', gap: 8, background: '#3B83F6', color: '#fff', padding: '10px 16px', borderRadius: 9, boxShadow: '0 12px 32px rgba(59,131,246,.32)', fontSize: 12, fontWeight: 600, maxWidth: 378 }}>
+                <span>Foto rimossa.</span>
+                <button onClick={undoRemove} style={{ background: 'transparent', border: 'none', color: '#fff', textDecoration: 'underline', fontSize: 12, fontWeight: 700, cursor: 'pointer', padding: 0, whiteSpace: 'nowrap' }}>Annulla</button>
               </div>
             )}
             <div
@@ -730,9 +855,9 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
               onDragOver={e => e.preventDefault()}
               onDrop={e => { e.preventDefault(); dragDepth.current = 0; setDragOver(false); addFiles(e.dataTransfer.files); }}
             style={{
-              flex: 1, minHeight: 400,
-              borderRadius: (photos.length === 0 && !demoMode) ? 20 : 0,
-              padding: (photos.length === 0 && !demoMode) ? 24 : 0,
+              flex: 1, minHeight: 360,
+              borderRadius: (photos.length === 0 && !demoMode) ? 18 : 0,
+              padding: (photos.length === 0 && !demoMode) ? 22 : 0,
               border: dragOver ? '2px dashed #3B83F6' : ((photos.length === 0 && !demoMode) ? '2px dashed #d8d4cb' : '2px solid transparent'),
               background: dragOver ? '#eff6ff' : ((photos.length === 0 && !demoMode) ? '#fff' : 'transparent'),
               display: 'flex', flexDirection: 'column', alignItems: (photos.length === 0 && !demoMode) ? 'center' : 'stretch', justifyContent: (photos.length === 0 && !demoMode) ? 'center' : 'flex-start',
@@ -743,11 +868,11 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
                 <DemoBeforeAfter />
               ) : photos.length === 0 ? (
                 <>
-                  <div style={s('width:52px;height:52px;border-radius:16px;background:#eef4fe;display:flex;align-items:center;justify-content:center;margin:0 auto 14px')}>
-                    <Icon name="image-plus" size={24} color="#3B83F6" />
+                  <div style={s('width:47px;height:47px;border-radius:14px;background:#eef4fe;display:flex;align-items:center;justify-content:center;margin:0 auto 13px')}>
+                    <Icon name="image-plus" size={22} color="#3B83F6" />
                   </div>
-                  <div style={s('font-size:15px;font-weight:800;margin-bottom:6px')}>Carica le foto da trasformare</div>
-                  <div style={s('color:#8c867d;font-size:13px')}>Trascina qui o clicca per scegliere</div>
+                  <div style={s('font-size:14px;font-weight:800;margin-bottom:5px')}>Carica le foto da trasformare</div>
+                  <div style={s('color:#8c867d;font-size:12px')}>Trascina qui o clicca per scegliere</div>
                 </>
               ) : (
                 <div>
@@ -755,10 +880,10 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
                     const ap = photos.find(p => p.id === activePhotoId) || photos[0];
                     const isVertical = ap.h > ap.w;
                     return (
-                      <div key={ap.id} className={isVertical ? "max-md:!aspect-video" : undefined} style={{ position: 'relative', borderRadius: 16, overflow: 'visible', marginBottom: 12, ...(isVertical ? { aspectRatio: '4/3' } : {}), animation: 'foto-reveal .45s cubic-bezier(.22,1,.36,1) both' }}>
+                      <div key={ap.id} className={isVertical ? "max-md:!aspect-video" : undefined} style={{ position: 'relative', borderRadius: 14, overflow: 'visible', marginBottom: 11, ...(isVertical ? { aspectRatio: '4/3' } : {}), animation: 'foto-reveal .45s cubic-bezier(.22,1,.36,1) both' }}>
                         {/* Inner clipping container for the photo. Per le verticali riempie
                             il box ad aspect-ratio fisso (4/3 desktop, 16/9 mobile) → blur dietro + foto contenuta. */}
-                        <div style={{ position: 'relative', borderRadius: 16, overflow: 'hidden', zIndex: 4, boxShadow: '0 12px 32px rgba(0,0,0,0.08)', ...(isVertical ? { position: 'absolute' as const, inset: 0 } : {}) }}>
+                        <div style={{ position: 'relative', borderRadius: 14, overflow: 'hidden', zIndex: 4, boxShadow: '0 12px 32px rgba(0,0,0,0.08)', ...(isVertical ? { position: 'absolute' as const, inset: 0 } : {}) }}>
                         {isVertical && (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img src={ap.dataUrl} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', filter: 'blur(24px) brightness(.85)', transform: 'scale(1.15)' }} />
@@ -797,19 +922,19 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
                             {generating && (
                               <div style={{
                                 position: 'absolute',
-                                bottom: 20, left: '50%', transform: 'translateX(-50%)',
+                                bottom: 18, left: '50%', transform: 'translateX(-50%)',
                                 zIndex: 10,
                                 background: 'rgba(0,0,0,0.55)',
                                 backdropFilter: 'blur(16px)',
                                 WebkitBackdropFilter: 'blur(16px)',
                                 borderRadius: 99,
-                                padding: '10px 22px',
-                                display: 'flex', alignItems: 'center', gap: 10,
+                                padding: '9px 20px',
+                                display: 'flex', alignItems: 'center', gap: 9,
                                 whiteSpace: 'nowrap',
                               }}>
-                                <div style={{ width: 16, height: 16, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', animation: 'export-spin 1s linear infinite', flexShrink: 0 }} />
-                                <span style={{ fontSize: 13, fontWeight: 700, background: 'linear-gradient(to right, #dbeafe 20%, #3B83F6 50%, #dbeafe 80%)', backgroundSize: '200% auto', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent', animation: 'shimmer-text 2.5s linear infinite' }}>
-                                  {isBatch && !result ? 'Invio...' : (countdown > 0 ? `Creazione in corso... ${countdown}s` : 'Rifinitura dei dettagli...')}
+                                <div style={{ width: 14, height: 14, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', animation: 'export-spin 1s linear infinite', flexShrink: 0 }} />
+                                <span style={{ fontSize: 12, fontWeight: 700, background: 'linear-gradient(to right, #dbeafe 20%, #3B83F6 50%, #dbeafe 80%)', backgroundSize: '200% auto', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent', animation: 'shimmer-text 2.5s linear infinite' }}>
+                                  {isBatch && !result ? 'Invio...' : genMsg}
                                 </span>
                               </div>
                             )}
@@ -823,44 +948,44 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
                         {/* Labels — appear with the images at slider phase */}
                         {revealing === 'slider' && result && !generating && (
                           <>
-                            <span style={{ position: 'absolute', top: 12, left: 12, background: 'rgba(33,31,28,.72)', color: '#fff', fontSize: 11.5, fontWeight: 700, padding: '5px 12px', borderRadius: 99, zIndex: 12, animation: 'result-fade-in .4s ease both' }}>Prima</span>
-                            <span style={{ position: 'absolute', top: 12, right: 12, background: 'rgba(33,31,28,.72)', color: '#fff', fontSize: 11.5, fontWeight: 700, padding: '5px 12px', borderRadius: 99, zIndex: 12, animation: 'result-fade-in .4s ease both' }}>Dopo</span>
+                            <span style={{ position: 'absolute', top: 11, left: 11, background: 'rgba(33,31,28,.72)', color: '#fff', fontSize: 10.5, fontWeight: 700, padding: '5px 11px', borderRadius: 99, zIndex: 12, animation: 'result-fade-in .4s ease both' }}>Prima</span>
+                            <span style={{ position: 'absolute', top: 11, right: 11, background: 'rgba(33,31,28,.72)', color: '#fff', fontSize: 10.5, fontWeight: 700, padding: '5px 11px', borderRadius: 99, zIndex: 12, animation: 'result-fade-in .4s ease both' }}>Dopo</span>
                           </>
                         )}
                         {/* Reprompt in corso: dim sopra il risultato + spinner, blocca tutto finché pronto */}
                         {generating && result && (
                           <div style={{ position: 'absolute', inset: 0, zIndex: 14, background: 'rgba(20,40,80,0.42)', backdropFilter: 'blur(2px)', WebkitBackdropFilter: 'blur(2px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', borderRadius: 99, padding: '10px 22px', whiteSpace: 'nowrap' }}>
-                              <div style={{ width: 16, height: 16, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', animation: 'export-spin 1s linear infinite', flexShrink: 0 }} />
-                              <span style={{ fontSize: 13, fontWeight: 700, background: 'linear-gradient(to right, #dbeafe 20%, #3B83F6 50%, #dbeafe 80%)', backgroundSize: '200% auto', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent', animation: 'shimmer-text 2.5s linear infinite' }}>Rigenerazione...</span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 9, background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', borderRadius: 99, padding: '9px 20px', whiteSpace: 'nowrap' }}>
+                              <div style={{ width: 14, height: 14, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', animation: 'export-spin 1s linear infinite', flexShrink: 0 }} />
+                              <span style={{ fontSize: 12, fontWeight: 700, background: 'linear-gradient(to right, #dbeafe 20%, #3B83F6 50%, #dbeafe 80%)', backgroundSize: '200% auto', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent', animation: 'shimmer-text 2.5s linear infinite' }}>Rigenerazione...</span>
                             </div>
                           </div>
                         )}
                         {!generating && !revealing && !result && (
                         <button
                           onClick={e => { e.stopPropagation(); removePhoto(ap.id); }}
-                          style={{ position: 'absolute', top: 8, right: 8, width: 28, height: 28, borderRadius: '50%', background: 'rgba(33,31,28,.72)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 5 }}
-                        ><Icon name="x" size={13} color="#fff" /></button>
+                          style={{ position: 'absolute', top: 7, right: 7, width: 25, height: 25, borderRadius: '50%', background: 'rgba(33,31,28,.72)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 5 }}
+                        ><Icon name="x" size={12} color="#fff" /></button>
                         )}
                         </div>
                       </div>
                     );
                   })()}
                   {/* thumbnail strip */}
-                  <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', paddingBottom: 10, ...(revealing ? { opacity: 0, pointerEvents: 'none' as const, height: 0, paddingBottom: 0, overflow: 'hidden' } : {}) }}>
+                  <div style={{ display: 'flex', gap: 9, flexWrap: 'wrap', paddingBottom: 9, ...(revealing ? { opacity: 0, pointerEvents: 'none' as const, height: 0, paddingBottom: 0, overflow: 'hidden' } : {}) }}>
                     {photos.map(p => (
-                      <div key={p.id} className="group" onClick={e => { e.stopPropagation(); setActivePhotoId(p.id); }} style={{ position: 'relative', width: 56, height: 56, borderRadius: 8, overflow: 'hidden', cursor: 'pointer', border: (activePhotoId || photos[0].id) === p.id ? '2px solid #3B83F6' : '2px solid transparent', flexShrink: 0 }}>
+                      <div key={p.id} className="group" onClick={e => { e.stopPropagation(); setActivePhotoId(p.id); }} style={{ position: 'relative', width: 50, height: 50, borderRadius: 7, overflow: 'hidden', cursor: 'pointer', border: (activePhotoId || photos[0].id) === p.id ? '2px solid #3B83F6' : '2px solid transparent', flexShrink: 0 }}>
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={p.dataUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         <button
                           onClick={e => { e.stopPropagation(); removePhoto(p.id); }}
                           className="opacity-0 group-hover:opacity-100 transition-opacity"
-                          style={{ position: 'absolute', top: 2, right: 2, width: 20, height: 20, borderRadius: '50%', background: 'rgba(33,31,28,.85)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2 }}
-                        ><Icon name="x" size={10} color="#fff" /></button>
+                          style={{ position: 'absolute', top: 2, right: 2, width: 18, height: 18, borderRadius: '50%', background: 'rgba(33,31,28,.85)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2 }}
+                        ><Icon name="x" size={9} color="#fff" /></button>
                       </div>
                     ))}
-                    <div style={{ width: 56, height: 56, borderRadius: 8, border: '1.5px dashed #d8d4cb', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <Icon name="plus" size={16} color="#b3aca1" />
+                    <div style={{ width: 50, height: 50, borderRadius: 7, border: '1.5px dashed #d8d4cb', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <Icon name="plus" size={14} color="#b3aca1" />
                     </div>
                   </div>
                 </div>
@@ -872,123 +997,172 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
           {/* Divider mobile tra upload e stili (solo con foto caricata).
               top -24 assorbe il marginBottom:12 del blocco foto + metà gap → spazio simmetrico. */}
           {photos.length > 0 && (
-            <div className="md:hidden" style={{ height: 1, background: '#ece9e2', margin: '-24px 0 -12px' }} />
+            <div className="md:hidden" style={{ height: 1, background: '#ece9e2', margin: '-22px 0 -11px' }} />
           )}
 
           {/* right: style / angle / prompt OR result actions */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, ...(generating ? { opacity: .5, pointerEvents: 'none' as const, transition: 'opacity .3s' } : (revealing && revealing !== 'slider' ? { opacity: 0, pointerEvents: 'none' as const, transition: 'opacity .3s' } : (revealing === 'slider' ? { animation: 'result-fade-in .5s ease both' } : {}))) }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14, ...(generating ? { opacity: .5, pointerEvents: 'none' as const, transition: 'opacity .3s' } : (revealing && revealing !== 'slider' ? { opacity: 0, pointerEvents: 'none' as const, transition: 'opacity .3s' } : (revealing === 'slider' ? { animation: 'result-fade-in .5s ease both' } : {}))) }}>
 
             {revealing === 'slider' && result ? (
               <>
                 {/* Reprompt (sopra) - nascosto sulle planimetrie (non si itera) */}
                 {!resultIsPlan && (
-                <div style={{ background: '#fff', border: '1px solid #f0ede7', borderRadius: 16, padding: 20, boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: '#b3aca1', textTransform: 'uppercase', letterSpacing: '.06em', margin: '0 0 10px' }}>Modifica con un prompt</div>
+                <div style={{ background: '#fff', border: '1px solid #f0ede7', borderRadius: 14, padding: 18, boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
+                  <div style={{ margin: '0 0 11px' }}>
+                    <div style={{ fontSize: 14, fontWeight: 800, color: '#211f1c', letterSpacing: '-0.2px' }}>Hai delle modifiche?</div>
+                    <div style={{ fontSize: 12, color: '#57534c', marginTop: 2 }}>Descrivi cosa vuoi cambiare, rigeneriamo la foto</div>
+                  </div>
                   <textarea value={reprompt} onChange={e => setReprompt(e.target.value)} maxLength={2000} rows={3} placeholder="Es. cambia il colore del divano in beige" style={inputStyle} />
                   <button onClick={handleReprompt} disabled={!reprompt.trim() || generating} aria-disabled={!reprompt.trim() || generating} style={{
-                    marginTop: 10, width: '100%', border: 'none',
+                    marginTop: 9, width: '100%', border: 'none',
                     background: reprompt.trim() && !generating ? 'linear-gradient(135deg, #3B83F6 0%, #6366f1 100%)' : '#d1d5db',
                     color: reprompt.trim() && !generating ? '#fff' : '#6b7280',
-                    fontSize: 14, fontWeight: 600, padding: '12px 20px', borderRadius: 10,
+                    fontSize: 13, fontWeight: 600, padding: '11px 18px', borderRadius: 9,
                     cursor: reprompt.trim() && !generating ? 'pointer' : 'default',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
                     transition: 'all .2s',
                   }}>
-                    <Icon name="sparkles" size={15} color={reprompt.trim() && !generating ? '#fff' : '#6b7280'} />
+                    <Icon name="sparkles" size={14} color={reprompt.trim() && !generating ? '#fff' : '#6b7280'} />
                     Rigenera
                   </button>
                 </div>
                 )}
 
                 {/* Export / salvataggio (sotto) */}
-                <div style={{ background: '#fff', border: '1px solid #f0ede7', borderRadius: 16, padding: 20, boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: '#b3aca1', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 14 }}>Risultato</div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    <Box as="button" onClick={() => setWmUrl(result.after)} style={{ border: 'none', background: 'linear-gradient(135deg, #3B83F6 0%, #6366f1 100%)', color: '#fff', fontSize: 14, fontWeight: 700, padding: '14px 20px', borderRadius: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 } as React.CSSProperties} hover={s('opacity:.9')}>
-                      <Icon name="download" size={16} color="#fff" />Scarica risultato
+                <div style={{ background: '#fff', border: '1px solid #f0ede7', borderRadius: 14, padding: 18, boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: '#b3aca1', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 13 }}>Risultato</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
+                    <Box as="button" onClick={() => setWmUrl(result.after)} style={{ border: 'none', background: 'linear-gradient(135deg, #3B83F6 0%, #6366f1 100%)', color: '#fff', fontSize: 13, fontWeight: 700, padding: '13px 18px', borderRadius: 11, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 } as React.CSSProperties} hover={s('opacity:.9')}>
+                      <Icon name="download" size={14} color="#fff" />Scarica risultato
                     </Box>
-                    <div style={{ display: 'flex', gap: 10 }}>
-                      <Box as="button" onClick={() => onGoPost?.()} style={{ flex: 1, border: '1.5px solid #3B83F6', background: '#eff6ff', color: '#1d5fd0', fontSize: 14, fontWeight: 700, padding: '13px 20px', borderRadius: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 } as React.CSSProperties} hover={s('background:#dbeafe')}>
-                        <Icon name="share" size={16} color="#1d5fd0" />
+                    <div style={{ display: 'flex', gap: 9 }}>
+                      <Box as="button" onClick={() => onGoPost?.()} style={{ flex: 1, border: '1.5px solid #e4e1da', background: '#fff', color: '#211f1c', fontSize: 13, fontWeight: 700, padding: '12px 18px', borderRadius: 11, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 } as React.CSSProperties} hover={s('background:#f8f7f5')}>
+                        <Icon name="share" size={14} color="#57534c" />
                         Crea post
                       </Box>
                       {!resultIsPlan && (
-                      <Box as="button" onClick={() => onGoVideo?.(result.after)} style={{ flex: 1, border: '1.5px solid #3B83F6', background: '#eff6ff', color: '#1d5fd0', fontSize: 14, fontWeight: 700, padding: '13px 20px', borderRadius: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 } as React.CSSProperties} hover={s('background:#dbeafe')}>
-                        <Icon name="film" size={16} color="#1d5fd0" />
+                      <Box as="button" onClick={() => onGoVideo?.(result.after)} style={{ flex: 1, border: '1.5px solid #e4e1da', background: '#fff', color: '#211f1c', fontSize: 13, fontWeight: 700, padding: '12px 18px', borderRadius: 11, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 } as React.CSSProperties} hover={s('background:#f8f7f5')}>
+                        <Icon name="film" size={14} color="#57534c" />
                         Crea video
                       </Box>
                       )}
                     </div>
-                    <Box as="button" onClick={resetAll} style={{ border: '1.5px solid #e4e1da', background: '#fff', color: '#211f1c', fontSize: 14, fontWeight: 600, padding: '13px 20px', borderRadius: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 } as React.CSSProperties} hover={s('background:#f8f7f5')}>
-                      <Icon name="image-plus" size={16} color="#57534c" />
+                    <Box as="button" onClick={resetAll} style={{ border: 'none', background: 'transparent', color: '#57534c', fontSize: 13, fontWeight: 600, padding: '9px 0', cursor: 'pointer', textAlign: 'center' } as React.CSSProperties} hover={s('color:#211f1c')}>
                       Nuova foto
                     </Box>
                   </div>
                 </div>
                 {/* Fuori dal container: dove ritrovare la foto */}
-                <div style={{ textAlign: 'center', fontSize: 12.5, color: '#8a8275', marginTop: 2 }}>
+                <div style={{ textAlign: 'center', fontSize: 11, color: '#8a8275', marginTop: 2 }}>
                   La foto è stata salvata nella tua galleria
                 </div>
               </>
             ) : (
               <>
                 {isFloorPlan && (
-                  <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 14, padding: '12px 14px' }}>
-                    <span style={{ display: 'flex', flexShrink: 0, marginTop: 1 }}><Icon name="sparkles" size={16} color="#1d5fd0" /></span>
-                    <div style={{ fontSize: 12.5, lineHeight: 1.45, color: '#1d5fd0' }}>
+                  <div style={{ display: 'flex', gap: 9, alignItems: 'flex-start', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 13, padding: '11px 13px' }}>
+                    <span style={{ display: 'flex', flexShrink: 0, marginTop: 1 }}><Icon name="sparkles" size={14} color="#1d5fd0" /></span>
+                    <div style={{ fontSize: 11, lineHeight: 1.45, color: '#1d5fd0' }}>
                       <b>Planimetria rilevata.</b> Verrà creato un render 2D arredato mantenendo la disposizione delle stanze. Scegli lo stile d'arredo qui sotto.
-                      <button onClick={() => { if (generating) return; setNotPlan(true); }} style={{ display: 'block', marginTop: 6, padding: 0, background: 'none', border: 'none', color: '#1d5fd0', fontWeight: 700, fontSize: 12.5, textDecoration: 'underline', cursor: 'pointer' }}>Non è una planimetria</button>
+                      <button onClick={() => { if (generating) return; setNotPlan(true); }} style={{ display: 'block', marginTop: 5, padding: 0, background: 'none', border: 'none', color: '#1d5fd0', fontWeight: 700, fontSize: 11, textDecoration: 'underline', cursor: 'pointer' }}>Non è una planimetria</button>
                     </div>
                   </div>
                 )}
-                <div style={{ background: '#fff', border: '1px solid #f0ede7', borderRadius: 16, padding: 20, boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: '#b3aca1', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 14 }}>{isFloorPlan ? "Stile d'arredo" : 'Stile'}</div>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 14, opacity: lockPreSetup ? 0.4 : 1, pointerEvents: lockPreSetup ? 'none' : 'auto', transition: 'opacity .2s' }}>
+                {!isFloorPlan && !isBatch && !sceneConfident && (
+                <div style={{ background: '#fff', border: '1px solid #f0ede7', borderRadius: 14, padding: 18, boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: '#b3aca1', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 13 }}>Tipo di foto</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 9 }}>
+                    {([['interno', 'Interno'], ['esterno', 'Esterno'], ['giardino', 'Giardino']] as [SceneType, string][]).map(([id, label]) => {
+                      const sel = scene === id;
+                      return (
+                        <div key={id} className="group" onClick={() => pickScene(id)} style={{
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '11px 4px',
+                          borderRadius: 11, cursor: 'pointer', textAlign: 'center',
+                          border: '1.5px solid transparent',
+                          outlineWidth: 1.5, outlineStyle: 'solid', outlineOffset: -1.5,
+                          outlineColor: sel ? '#3B83F6' : 'transparent',
+                          background: sel ? '#eff6ff' : '#f8f7f5',
+                          transition: 'background .2s, outline-color .2s',
+                        }}>
+                          <span style={{ fontSize: 11, fontWeight: 600, color: sel ? '#1d5fd0' : '#57534c' }}>{label}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+                )}
+                <div style={{ position: 'relative', background: '#fff', border: '1px solid #f0ede7', borderRadius: 14, padding: 18, boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
+                  <div style={{ opacity: customPrompt.trim() ? 0 : 1, transition: 'opacity .2s' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 13 }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: '#b3aca1', textTransform: 'uppercase', letterSpacing: '.06em' }}>{isFloorPlan ? "Stile d'arredo" : 'Stile'}</div>
+                    <button onClick={() => setSelStyle(null)} style={{ visibility: selStyle ? 'visible' : 'hidden', border: 'none', background: 'none', padding: 0, fontSize: 10, fontWeight: 700, color: '#3B83F6', cursor: 'pointer', lineHeight: 'inherit' }}>Togli stile</button>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 9 }}>
                     {STAGING_STYLES.filter(st => !isFloorPlan || !['daynight', 'empty'].includes(st.id)).map(st => {
                       const sel = selStyle === st.id;
+                      const scened = scene === 'esterno' || scene === 'giardino';
+                      const label = scened ? (SCENE_STYLE_LABELS[scene][st.id] || st.label) : st.label;
+                      const icon = scened ? (SCENE_STYLE_ICONS[scene][st.id] || st.icon) : st.icon;
                       return (
                         <div key={st.id} className="group" onClick={() => pickStyle(st.id)} title={st.desc} style={{
-                          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, padding: '14px 4px',
-                          borderRadius: 12, cursor: 'pointer', textAlign: 'center',
-                          border: sel ? '1.5px solid #3B83F6' : '1.5px solid transparent',
+                          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7, padding: '13px 4px',
+                          borderRadius: 11, cursor: 'pointer', textAlign: 'center',
+                          border: '1.5px solid transparent',
+                          outlineWidth: 1.5, outlineStyle: 'solid', outlineOffset: -1.5,
+                          outlineColor: sel ? '#3B83F6' : 'transparent',
                           background: sel ? '#eff6ff' : '#f8f7f5',
                           boxShadow: sel ? '0 4px 12px rgba(59,131,246,0.12)' : 'none',
-                          transition: 'all .2s cubic-bezier(.4,0,.2,1)',
+                          transition: 'background .2s, outline-color .2s, box-shadow .2s',
                           position: 'relative'
                         }}>
-                          <span className="transition-transform duration-300 group-hover:-translate-y-0.5" style={{ width: 24, height: 24, display: 'flex', color: sel ? '#1d5fd0' : '#57534c' }} dangerouslySetInnerHTML={{ __html: st.icon }} />
-                          <span className="transition-transform duration-300 group-hover:-translate-y-0.5" style={{ fontSize: 11, fontWeight: 600, color: sel ? '#1d5fd0' : '#57534c' }}>{st.label}</span>
+                          <span key={`icon-${st.id}-${scene}`} className="transition-transform duration-300 group-hover:-translate-y-0.5" style={{ width: 22, height: 22, display: 'flex', animation: 'scene-swap-fade .35s ease' }}><Icon name={icon} size={22} color={sel ? '#1d5fd0' : '#57534c'} /></span>
+                          <span key={`label-${st.id}-${scene}`} className="transition-transform duration-300 group-hover:-translate-y-0.5" style={{ fontSize: 10, fontWeight: 600, color: sel ? '#1d5fd0' : '#57534c', animation: 'scene-swap-fade .35s ease' }}>{label}</span>
                           {sel && (
-                            <div style={{ position: 'absolute', top: -6, right: -6, background: '#3B83F6', borderRadius: '50%', padding: 2, display: 'flex', border: '2px solid #fff' }}>
-                              <Icon name="check" size={10} color="#fff" />
+                            <div style={{ position: 'absolute', top: -5, right: -5, background: '#3B83F6', borderRadius: '50%', padding: 2, display: 'flex', border: '2px solid #fff' }}>
+                              <Icon name="check" size={9} color="#fff" />
                             </div>
                           )}
                         </div>
                       );
                     })}
                   </div>
+                  </div>
+                  {!!customPrompt.trim() && (
+                    <button onClick={() => setCustomPrompt('')} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 'none', background: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: '#3B83F6' }}>Cancella il testo per scegliere uno stile</span>
+                    </button>
+                  )}
                 </div>
 
                 {!isFloorPlan && (
-                <div style={{ background: '#fff', border: '1px solid #f0ede7', borderRadius: 16, padding: 20, boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: '#b3aca1', textTransform: 'uppercase', letterSpacing: '.06em', margin: '0 0 10px' }}>Oppure scrivi cosa vuoi</div>
-                  <textarea value={customPrompt} onChange={e => onPrompt(e.target.value)} maxLength={2000} rows={3} placeholder="Es. trasforma in soggiorno moderno con divano color crema e parquet chiaro" style={inputStyle} />
+                <div style={{ position: 'relative', background: '#fff', border: '1px solid #f0ede7', borderRadius: 14, padding: 18, boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
+                  <div style={{ opacity: selStyle ? 0 : 1, transition: 'opacity .2s' }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: '#b3aca1', textTransform: 'uppercase', letterSpacing: '.06em', margin: '0 0 9px' }}>{scene === 'giardino' ? 'Scrivi cosa vuoi cambiare' : 'Scrivi qui le tue modifiche'}</div>
+                    <textarea value={customPrompt} onChange={e => onPrompt(e.target.value)} maxLength={2000} rows={3} placeholder="Es. trasforma in soggiorno moderno con divano color crema e parquet chiaro" style={inputStyle} />
+                  </div>
+                  {selStyle && (
+                    <button onClick={() => setSelStyle(null)} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 'none', background: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: '#3B83F6' }}>Togli stile per poter scrivere</span>
+                    </button>
+                  )}
                 </div>
                 )}
+                </div>
 
                 {(() => { const mainActive = canGenerate || outOfQuota; return (
                 <button onClick={outOfQuota ? (lockBrand ? onGoPlan : () => setPacksOpen(true)) : handleGenerate} disabled={!mainActive} aria-disabled={!mainActive} className="group" style={{
                   border: 'none',
                   background: mainActive ? 'linear-gradient(135deg, #3B83F6 0%, #6366f1 100%)' : '#d1d5db',
                   color: mainActive ? '#fff' : '#6b7280',
-                  fontSize: 15, fontWeight: 600,
-                  padding: '16px 20px', borderRadius: 14, cursor: mainActive ? 'pointer' : 'default',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                  fontSize: 14, fontWeight: 600,
+                  padding: '14px 18px', borderRadius: 13, cursor: mainActive ? 'pointer' : 'default',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
                   boxShadow: mainActive ? '0 8px 24px rgba(99,102,241,0.25)' : 'none',
                   transition: 'all .2s cubic-bezier(.4,0,.2,1)',
                 }}>
                   <span className={mainActive ? "group-hover:rotate-12 transition-transform duration-300" : ""} style={{ display: 'flex' }}>
-                    <Icon name={outOfQuota ? (lockBrand ? 'crown' : 'zap') : 'sparkles'} size={18} color={mainActive ? "#fff" : "#6b7280"} />
+                    <Icon name={outOfQuota ? (lockBrand ? 'crown' : 'zap') : 'sparkles'} size={16} color={mainActive ? "#fff" : "#6b7280"} />
                   </span>
                   {outOfQuota ? (lockBrand ? 'Vedi i piani' : 'Ottieni altre foto') : notEnoughForBatch ? `Restano solo ${quota!.remaining} foto` : (isBatch ? `Genera ${photos.length} foto` : isFloorPlan ? 'Crea render 2D' : 'Genera foto')}
                 </button>
@@ -1000,43 +1174,48 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
         </div>
 
         {/* Esempi: clicca una foto per auto-selezionare lo stile (o il prompt) scritto sotto. */}
-        <div style={{ marginTop: 32, paddingTop: 32, borderTop: '1px solid #ece9e3' }}>
-          <div style={{ marginBottom: 16 }}>
-            <div style={{ fontSize: 17, fontWeight: 800, color: '#211f1c', letterSpacing: '-.2px' }}>Esempi</div>
-            <div style={{ fontSize: 13.5, color: '#8c867d', marginTop: 3 }}>Clicca una foto per usare quello stile o il prompt</div>
+        <div style={{ marginTop: 29, paddingTop: 29, borderTop: '1px solid #ece9e3' }}>
+          <div style={{ marginBottom: 14 }}>
+            <div style={{ fontSize: 15, fontWeight: 800, color: '#211f1c', letterSpacing: '-.2px' }}>Esempi</div>
+            <div style={{ fontSize: 12, color: '#8c867d', marginTop: 3 }}>Clicca una foto per usare quello stile o il prompt</div>
           </div>
-          <div className="max-md:!grid-cols-2" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
-            {STAGING_EXAMPLES.map((ex, i) => {
+          <div className="max-md:!grid-cols-2" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14 }}>
+            {visibleExamples.map((ex, i) => {
               const active = ex.styleId ? selStyle === ex.styleId : (!!ex.prompt && customPrompt === ex.prompt);
               return (
                 <div key={i} onClick={() => applyExample(ex)} className="group" style={{
-                  borderRadius: 14, overflow: 'hidden', cursor: 'pointer', background: '#fff',
+                  borderRadius: 13, overflow: 'hidden', cursor: 'pointer', background: '#fff',
                   border: active ? '2px solid #3B83F6' : '1px solid #f0ede7',
                   boxShadow: active ? '0 6px 18px rgba(59,131,246,.15)' : '0 2px 10px rgba(0,0,0,.03)',
                   transition: 'all .2s cubic-bezier(.4,0,.2,1)',
                 }}>
                   {/* Prima/dopo (stili/planimetria) split con linea; prompt semplici = immagine singola. */}
-                  <div style={{ position: 'relative', aspectRatio: '4 / 3', background: '#f4f2ee', overflow: 'hidden' }}>
+                  <div style={{
+                    position: 'relative', aspectRatio: '4 / 3', overflow: 'hidden',
+                    ...(loadedExamples.has(i)
+                      ? { background: '#f4f2ee' }
+                      : { background: 'linear-gradient(90deg,#efece7,#f7f5f1,#efece7)', backgroundSize: '200% 100%', animation: 'demo-ai-shimmer 1.4s linear infinite' }),
+                  }}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={ex.after} alt={`${ex.label}${ex.before ? ' dopo' : ''}`} loading="lazy" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                    <img src={ex.after} alt={`${ex.label}${ex.before ? ' dopo' : ''}`} loading="lazy" onLoad={() => markExampleLoaded(i)} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block', opacity: loadedExamples.has(i) ? 1 : 0, transition: 'opacity .25s' }} />
                     {ex.before && (
                       <>
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={ex.before} alt={`${ex.label} prima`} loading="lazy" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block', clipPath: 'inset(0 50% 0 0)' }} />
-                        <div style={{ position: 'absolute', top: 0, bottom: 0, left: '50%', width: 2, marginLeft: -1, background: '#fff', boxShadow: '0 0 4px rgba(0,0,0,.45)' }} />
-                        <span style={{ position: 'absolute', bottom: 8, left: 8, background: 'rgba(0,0,0,.55)', color: '#fff', fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 99, backdropFilter: 'blur(2px)' }}>Prima</span>
-                        <span style={{ position: 'absolute', bottom: 8, right: 8, background: 'rgba(0,0,0,.55)', color: '#fff', fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 99, backdropFilter: 'blur(2px)' }}>Dopo</span>
+                        <img src={ex.before} alt={`${ex.label} prima`} loading="lazy" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block', clipPath: 'inset(0 50% 0 0)', opacity: loadedExamples.has(i) ? 1 : 0, transition: 'opacity .25s' }} />
+                        <div style={{ position: 'absolute', top: 0, bottom: 0, left: '50%', width: 2, marginLeft: -1, background: '#fff', boxShadow: '0 0 4px rgba(0,0,0,.45)', opacity: loadedExamples.has(i) ? 1 : 0, transition: 'opacity .25s' }} />
+                        <span style={{ position: 'absolute', bottom: 7, left: 7, background: 'rgba(0,0,0,.55)', color: '#fff', fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 99, backdropFilter: 'blur(2px)', opacity: loadedExamples.has(i) ? 1 : 0, transition: 'opacity .25s' }}>Prima</span>
+                        <span style={{ position: 'absolute', bottom: 7, right: 7, background: 'rgba(0,0,0,.55)', color: '#fff', fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 99, backdropFilter: 'blur(2px)', opacity: loadedExamples.has(i) ? 1 : 0, transition: 'opacity .25s' }}>Dopo</span>
                       </>
                     )}
                     {active && (
-                      <div style={{ position: 'absolute', top: 8, right: 8, background: '#3B83F6', borderRadius: '50%', padding: 3, display: 'flex', border: '2px solid #fff' }}>
-                        <Icon name="check" size={11} color="#fff" />
+                      <div style={{ position: 'absolute', top: 7, right: 7, background: '#3B83F6', borderRadius: '50%', padding: 3, display: 'flex', border: '2px solid #fff' }}>
+                        <Icon name="check" size={10} color="#fff" />
                       </div>
                     )}
                   </div>
-                  <div style={{ padding: '10px 12px', display: 'flex', alignItems: 'flex-start', gap: 6, minWidth: 0 }} title={ex.label}>
-                    <span style={{ display: 'flex', flexShrink: 0, marginTop: 1 }}><Icon name={ex.prompt ? 'pencil' : 'sparkles'} size={13} color={active ? '#1d5fd0' : '#8c867d'} /></span>
-                    <span style={{ fontSize: 13, fontWeight: 600, color: active ? '#1d5fd0' : '#57534c', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', lineHeight: 1.35 }}>{ex.label}</span>
+                  <div style={{ padding: '9px 11px', display: 'flex', alignItems: 'flex-start', gap: 5, minWidth: 0 }} title={ex.label}>
+                    <span style={{ display: 'flex', flexShrink: 0, marginTop: 1 }}><Icon name={ex.prompt ? 'pencil' : 'sparkles'} size={12} color={active ? '#1d5fd0' : '#8c867d'} /></span>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: active ? '#1d5fd0' : '#57534c', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', lineHeight: 1.35 }}>{ex.label}</span>
                   </div>
                 </div>
               );
@@ -1122,8 +1301,8 @@ function InlineSlider({ before, after, isVertical, showImages, interactive }: { 
       {/* Divider line — sweeps top to bottom on mount (slow) */}
       <div style={{ position: 'absolute', top: 0, bottom: 0, left: `${pos}%`, width: 2, background: '#fff', transform: 'translateX(-1px)', boxShadow: '0 0 8px rgba(0,0,0,.35)', animation: 'slider-line-sweep .65s cubic-bezier(.45,.05,.35,1) both' }} />
       {/* Handle circle — separate element (not clipped by the line sweep), pops in once the line lands */}
-      <div style={{ position: 'absolute', top: '50%', left: `${pos}%`, transform: 'translate(-50%,-50%)', width: 36, height: 36, borderRadius: '50%', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 10px rgba(0,0,0,.25)', opacity: 0, animation: 'slider-handle-pop .4s cubic-bezier(.34,1.56,.64,1) .5s forwards' }}>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#211f1c" strokeWidth="2.5"><path d="M8 6l-6 6 6 6M16 6l6 6-6 6" /></svg>
+      <div style={{ position: 'absolute', top: '50%', left: `${pos}%`, transform: 'translate(-50%,-50%)', width: 32, height: 32, borderRadius: '50%', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 10px rgba(0,0,0,.25)', opacity: 0, animation: 'slider-handle-pop .4s cubic-bezier(.34,1.56,.64,1) .5s forwards' }}>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#211f1c" strokeWidth="2.5"><path d="M8 6l-6 6 6 6M16 6l6 6-6 6" /></svg>
       </div>
     </div>
   );

@@ -605,7 +605,7 @@ export function buildReportHtml(args: {
     { key: 'contract', html: `<div class="legend-item">${ico('contract', 16)}<span>Contratto</span></div>` },
   ];
   const visibleLegend = legendItems.filter((it) => colOn(it.key));
-  const LEGEND_ROW = 8;
+  const LEGEND_ROW = 7;
   const legendHtml = visibleLegend.map((it, i) =>
     it.html + ((i + 1) % LEGEND_ROW === 0 && i < visibleLegend.length - 1 ? '\n      <div class="legend-break"></div>' : '')
   ).join('\n      ');

@@ -29,41 +29,41 @@ export default async function SupportPage({ params }: Props) {
         style={{
           minHeight: "100vh",
           background: "#fafafa",
-          padding: "120px 16px 60px",
+          padding: "108px 14px 54px",
         }}
       >
         <div
           style={{
-            maxWidth: 560,
+            maxWidth: 504,
             margin: "0 auto",
           }}
         >
-          <div style={{ textAlign: "center", marginBottom: 40 }}>
+          <div style={{ textAlign: "center", marginBottom: 36 }}>
             <div
               style={{
-                width: 56,
-                height: 56,
+                width: 50,
+                height: 50,
                 borderRadius: "50%",
                 background: "#eff6ff",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                margin: "0 auto 16px",
+                margin: "0 auto 14px",
               }}
             >
               <HeadphonesIcon size={28} color="#2563eb" />
             </div>
             <h1
               style={{
-                fontSize: 32,
+                fontSize: 29,
                 fontWeight: 900,
                 color: "#1a1a2e",
-                marginBottom: 8,
+                marginBottom: 7,
               }}
             >
               Come possiamo aiutarti?
             </h1>
-            <p style={{ color: "#71717a", fontSize: 16, margin: 0 }}>
+            <p style={{ color: "#71717a", fontSize: 14, margin: 0 }}>
               Compila il form e ti risponderemo il prima possibile.
             </p>
           </div>
@@ -71,9 +71,9 @@ export default async function SupportPage({ params }: Props) {
           <div
             style={{
               background: "#fff",
-              borderRadius: 16,
+              borderRadius: 14,
               border: "1px solid #e5e7eb",
-              padding: 32,
+              padding: 29,
             }}
           >
             <SupportFormClient locale={locale} />
@@ -83,8 +83,8 @@ export default async function SupportPage({ params }: Props) {
             style={{
               textAlign: "center",
               color: "#9ca3af",
-              fontSize: 13,
-              marginTop: 24,
+              fontSize: 12,
+              marginTop: 22,
             }}
           >
             Oppure scrivici direttamente a{" "}

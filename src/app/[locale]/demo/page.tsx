@@ -53,25 +53,25 @@ export default async function DemoPage({ params }: Props) {
 
       <section
         style={{
-          maxWidth: 560,
+          maxWidth: 504,
           margin: "0 auto",
-          padding: "60px 24px 80px",
+          padding: "54px 22px 72px",
         }}
       >
-        <div style={{ textAlign: "center", marginBottom: 40 }}>
+        <div style={{ textAlign: "center", marginBottom: 36 }}>
           <div
             style={{
               display: "inline-flex",
               alignItems: "center",
-              gap: 8,
-              padding: "8px 20px",
+              gap: 7,
+              padding: "7px 18px",
               background: "#fff",
               border: "1px solid rgba(26,26,46,0.10)",
-              borderRadius: 100,
+              borderRadius: 90,
               boxShadow: "0 4px 16px rgba(16,24,40,0.08)",
               fontWeight: 700,
-              fontSize: 14,
-              marginBottom: 24,
+              fontSize: 13,
+              marginBottom: 22,
             }}
           >
             📞 Demo personalizzata
@@ -79,15 +79,15 @@ export default async function DemoPage({ params }: Props) {
 
           <h1
             style={{
-              fontSize: "clamp(26px, 4vw, 38px)",
+              fontSize: "clamp(23px, 4vw, 34px)",
               fontWeight: 900,
               lineHeight: 1.15,
-              marginBottom: 12,
+              marginBottom: 11,
             }}
           >
             {demo.pageTitle}
           </h1>
-          <p style={{ color: "#71717a", fontSize: 16, lineHeight: 1.6 }}>
+          <p style={{ color: "#71717a", fontSize: 14, lineHeight: 1.6 }}>
             {demo.pageSubtitle}
           </p>
         </div>
@@ -96,9 +96,9 @@ export default async function DemoPage({ params }: Props) {
           style={{
             background: "#fff",
             border: "1px solid rgba(26,26,46,0.10)",
-            borderRadius: 20,
+            borderRadius: 18,
             boxShadow: "0 4px 16px rgba(16,24,40,0.08)",
-            padding: "32px 28px",
+            padding: "29px 25px",
           }}
         >
           <DemoFormClient t={demo} locale={locale} />

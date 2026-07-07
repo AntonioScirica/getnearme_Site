@@ -526,41 +526,41 @@ export default function ReportScreen({
     void trackExport({ export_type: 'pdf_report' });
   };
 
-  const labelStyle = s('display:block;font-size:11px;font-weight:700;color:#b3aca1;text-transform:uppercase;letter-spacing:.04em;margin:0 0 10px');
+  const labelStyle = s('display:block;font-size:10px;font-weight:700;color:#b3aca1;text-transform:uppercase;letter-spacing:.04em;margin:0 0 9px');
 
   const configBody = (
     <>
-        <h1 className="max-md:!hidden" style={s('margin:0 0 4px;font-size:20px;font-weight:800;letter-spacing:-.3px')}>Report</h1>
-        <div className="max-md:!hidden" style={s('color:#8c867d;font-size:13px;margin-bottom:22px')}>Scegli cosa includere nel dossier.</div>
+        <h1 className="max-md:!hidden" style={s('margin:0 0 4px;font-size:18px;font-weight:800;letter-spacing:-.3px')}>Report</h1>
+        <div className="max-md:!hidden" style={s('color:#8c867d;font-size:12px;margin-bottom:20px')}>Scegli cosa includere nel dossier.</div>
 
         {locked && (
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, background: '#eef4fe', border: '1px solid #cfe0fb', borderRadius: 10, padding: '10px 12px', marginBottom: 18 }}>
-            <Icon name="info" size={15} color="#1d5fd0" style={{ marginTop: 1 }} />
-            <div style={{ fontSize: 12, lineHeight: 1.45, color: '#1d5fd0', fontWeight: 600 }}>Questi sono immobili di esempio. Passa a un piano Agency per generare il Report con i tuoi immobili reali.</div>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 7, background: '#eef4fe', border: '1px solid #cfe0fb', borderRadius: 9, padding: '9px 11px', marginBottom: 16 }}>
+            <Icon name="info" size={14} color="#1d5fd0" style={{ marginTop: 1 }} />
+            <div style={{ fontSize: 11, lineHeight: 1.45, color: '#1d5fd0', fontWeight: 600 }}>Questi sono immobili di esempio. Passa a un piano Agency per generare il Report con i tuoi immobili reali.</div>
           </div>
         )}
 
         <div style={labelStyle}>Immobili da confrontare {selectedIds.size > 0 && <span style={{ color: accent }}>({selectedIds.size})</span>}</div>
         {allProjects.length > 6 && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#fff', border: '1px solid #e4e1da', borderRadius: 10, padding: '8px 10px', marginBottom: 8 }}>
-            <Icon name="search" size={14} color="#b3aca1" />
-            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Cerca immobile…" style={{ border: 'none', outline: 'none', background: 'transparent', fontSize: 13, width: '100%', color: '#211f1c' }} />
-            {q && <span onClick={() => setQ('')} style={{ cursor: 'pointer', display: 'flex' }}><Icon name="x" size={14} color="#b3aca1" /></span>}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7, background: '#fff', border: '1px solid #e4e1da', borderRadius: 9, padding: '7px 9px', marginBottom: 7 }}>
+            <Icon name="search" size={13} color="#b3aca1" />
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Cerca immobile…" style={{ border: 'none', outline: 'none', background: 'transparent', fontSize: 12, width: '100%', color: '#211f1c' }} />
+            {q && <span onClick={() => setQ('')} style={{ cursor: 'pointer', display: 'flex' }}><Icon name="x" size={13} color="#b3aca1" /></span>}
           </div>
         )}
-        <div style={{ marginBottom: 24, maxHeight: 280, overflowY: 'auto', background: '#fff', border: '1px solid #e4e1da', borderRadius: 12 }}>
-          {allProjects.length === 0 && <div style={{ fontSize: 13, color: '#b3aca1', padding: '12px 14px' }}>Nessun immobile disponibile.</div>}
-          {allProjects.length > 0 && filteredProjects.length === 0 && <div style={{ fontSize: 13, color: '#b3aca1', padding: '12px 14px' }}>Nessun risultato per “{q}”.</div>}
+        <div style={{ marginBottom: 22, maxHeight: 252, overflowY: 'auto', background: '#fff', border: '1px solid #e4e1da', borderRadius: 11 }}>
+          {allProjects.length === 0 && <div style={{ fontSize: 12, color: '#b3aca1', padding: '11px 13px' }}>Nessun immobile disponibile.</div>}
+          {allProjects.length > 0 && filteredProjects.length === 0 && <div style={{ fontSize: 12, color: '#b3aca1', padding: '11px 13px' }}>Nessun risultato per “{q}”.</div>}
           {filteredProjects.map((p, i) => {
             const on = selectedIds.has(p.id);
             return (
-              <Box key={p.id} onClick={() => toggleProject(p.id)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', cursor: 'pointer', background: '#fff', borderBottom: i === filteredProjects.length - 1 ? 'none' : '1px solid #f0ede7' }} hover={{ background: '#faf9f7' }}>
-                <span style={{ width: 18, height: 18, borderRadius: 6, flexShrink: 0, border: `1.5px solid ${on ? accent : '#cfcabf'}`, background: on ? accent : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  {on && <Icon name="check" size={12} color="#fff" />}
+              <Box key={p.id} onClick={() => toggleProject(p.id)} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '9px 11px', cursor: 'pointer', background: '#fff', borderBottom: i === filteredProjects.length - 1 ? 'none' : '1px solid #f0ede7' }} hover={{ background: '#faf9f7' }}>
+                <span style={{ width: 16, height: 16, borderRadius: 5, flexShrink: 0, border: `1.5px solid ${on ? accent : '#cfcabf'}`, background: on ? accent : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {on && <Icon name="check" size={11} color="#fff" />}
                 </span>
                 <div style={{ minWidth: 0, flex: 1 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: on ? accent : '#211f1c', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.nome}</div>
-                  {p.addr && <div style={{ fontSize: 11.5, color: '#b3aca1', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.addr}</div>}
+                  <div style={{ fontSize: 12, fontWeight: 600, color: on ? accent : '#211f1c', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.nome}</div>
+                  {p.addr && <div style={{ fontSize: 10.5, color: '#b3aca1', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.addr}</div>}
                 </div>
               </Box>
             );
@@ -568,22 +568,22 @@ export default function ReportScreen({
         </div>
 
         <div style={labelStyle}>Sezioni del report</div>
-        <div style={{ background: '#fff', border: '1px solid #e4e1da', borderRadius: 12, overflow: 'hidden', marginBottom: 24 }}>
+        <div style={{ background: '#fff', border: '1px solid #e4e1da', borderRadius: 11, overflow: 'hidden', marginBottom: 22 }}>
           {SECTION_TOGGLES.map((sct, i) => {
             const on = !!sectionOn[sct.id];
             const isPoi = sct.id === 'poi';
             const poiPending = isPoi && on && poiLoading;
             const poiNoData = isPoi && on && !poiLoading && !poiReady;
             return (
-              <Box key={sct.id} onClick={() => toggleSection(sct.id)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', cursor: 'pointer', background: '#fff', borderBottom: i === SECTION_TOGGLES.length - 1 ? 'none' : '1px solid #f0ede7' }} hover={{ background: '#faf9f7' }}>
-                <Icon name={sct.icon} size={15} color={on ? '#211f1c' : '#b3aca1'} />
+              <Box key={sct.id} onClick={() => toggleSection(sct.id)} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '9px 11px', cursor: 'pointer', background: '#fff', borderBottom: i === SECTION_TOGGLES.length - 1 ? 'none' : '1px solid #f0ede7' }} hover={{ background: '#faf9f7' }}>
+                <Icon name={sct.icon} size={14} color={on ? '#211f1c' : '#b3aca1'} />
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: on ? '#211f1c' : '#8c867d' }}>{sct.label}</div>
-                  {poiPending && <div style={{ fontSize: 11, color: accent }}>Analisi in corso…</div>}
-                  {poiNoData && <div style={{ fontSize: 11, color: '#b3aca1' }}>Nessun dato di zona</div>}
+                  <div style={{ fontSize: 12, fontWeight: 600, color: on ? '#211f1c' : '#8c867d' }}>{sct.label}</div>
+                  {poiPending && <div style={{ fontSize: 10, color: accent }}>Analisi in corso…</div>}
+                  {poiNoData && <div style={{ fontSize: 10, color: '#b3aca1' }}>Nessun dato di zona</div>}
                 </div>
-                <div style={{ width: 36, height: 20, borderRadius: 99, background: on ? accent : '#d8d4cb', position: 'relative', flexShrink: 0, transition: 'background .2s' }}>
-                  <div style={{ position: 'absolute', top: 2, left: on ? 18 : 2, width: 16, height: 16, borderRadius: 99, background: '#fff', transition: 'left .2s', boxShadow: '0 1px 3px rgba(0,0,0,.2)' }} />
+                <div style={{ width: 32, height: 18, borderRadius: 99, background: on ? accent : '#d8d4cb', position: 'relative', flexShrink: 0, transition: 'background .2s' }}>
+                  <div style={{ position: 'absolute', top: 2, left: on ? 16 : 2, width: 14, height: 14, borderRadius: 99, background: '#fff', transition: 'left .2s', boxShadow: '0 1px 3px rgba(0,0,0,.2)' }} />
                 </div>
               </Box>
             );
@@ -591,15 +591,15 @@ export default function ReportScreen({
         </div>
 
         <div style={labelStyle}>Dati in tabella <span style={{ color: '#b3aca1' }}>({activeCount}/{MAX_VISIBLE_COLS})</span></div>
-        <div style={{ background: '#fff', border: '1px solid #e4e1da', borderRadius: 12, overflow: 'hidden' }}>
+        <div style={{ background: '#fff', border: '1px solid #e4e1da', borderRadius: 11, overflow: 'hidden' }}>
           {COLUMNS.map((c, i) => {
             const on = !!colOn[c.id];
             return (
-              <Box key={c.id} onClick={() => toggleCol(c.id)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', cursor: 'pointer', background: '#fff', borderBottom: i === COLUMNS.length - 1 ? 'none' : '1px solid #f0ede7' }} hover={{ background: '#faf9f7' }}>
-                <Icon name={c.icon} size={15} color={on ? '#211f1c' : '#b3aca1'} />
-                <div style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: 600, color: on ? '#211f1c' : '#8c867d' }}>{c.label}</div>
-                <div style={{ width: 36, height: 20, borderRadius: 99, background: on ? accent : '#d8d4cb', position: 'relative', flexShrink: 0, transition: 'background .2s' }}>
-                  <div style={{ position: 'absolute', top: 2, left: on ? 18 : 2, width: 16, height: 16, borderRadius: 99, background: '#fff', transition: 'left .2s', boxShadow: '0 1px 3px rgba(0,0,0,.2)' }} />
+              <Box key={c.id} onClick={() => toggleCol(c.id)} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '9px 11px', cursor: 'pointer', background: '#fff', borderBottom: i === COLUMNS.length - 1 ? 'none' : '1px solid #f0ede7' }} hover={{ background: '#faf9f7' }}>
+                <Icon name={c.icon} size={14} color={on ? '#211f1c' : '#b3aca1'} />
+                <div style={{ flex: 1, minWidth: 0, fontSize: 12, fontWeight: 600, color: on ? '#211f1c' : '#8c867d' }}>{c.label}</div>
+                <div style={{ width: 32, height: 18, borderRadius: 99, background: on ? accent : '#d8d4cb', position: 'relative', flexShrink: 0, transition: 'background .2s' }}>
+                  <div style={{ position: 'absolute', top: 2, left: on ? 16 : 2, width: 14, height: 14, borderRadius: 99, background: '#fff', transition: 'left .2s', boxShadow: '0 1px 3px rgba(0,0,0,.2)' }} />
                 </div>
               </Box>
             );
@@ -611,7 +611,7 @@ export default function ReportScreen({
   return (
     <div className="gnm-report-wrap" style={{ display: 'flex', height: '100%', minHeight: 'calc(100vh - 64px)' }}>
       {/* LEFT: control bar (desktop) */}
-      <div className="gnm-report-rail max-md:!hidden" style={{ width: 330, flexShrink: 0, borderRight: '1px solid #ece9e2', background: '#faf9f7', overflowY: 'auto', padding: '24px 18px 40px' }}>
+      <div className="gnm-report-rail max-md:!hidden" style={{ width: 297, flexShrink: 0, borderRight: '1px solid #ece9e2', background: '#faf9f7', overflowY: 'auto', padding: '22px 16px 36px' }}>
         {configBody}
       </div>
 
@@ -619,12 +619,12 @@ export default function ReportScreen({
       {isMobile && configOpen && (
         <>
           <div onClick={() => setConfigOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200 }} />
-          <div style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 201, maxHeight: '85vh', overflowY: 'auto', background: '#faf9f7', borderRadius: '18px 18px 0 0', padding: '0 16px 28px', boxShadow: '0 -12px 40px rgba(0,0,0,.2)', WebkitOverflowScrolling: 'touch' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14, position: 'sticky', top: 0, zIndex: 2, background: '#faf9f7', margin: '0 -16px 14px', padding: '14px 16px 10px', borderRadius: '18px 18px 0 0' }}>
-              <span style={{ fontSize: 16, fontWeight: 800, letterSpacing: '-.3px' }}>Configura report</span>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <Box as="button" onClick={() => setConfigOpen(false)} style={s('border:none;background:#3B83F6;color:#fff;font-size:13px;font-weight:700;padding:9px 18px;border-radius:10px;cursor:pointer')} hover={s('background:#2563EB')}>Fatto</Box>
-                <Box as="button" onClick={() => setConfigOpen(false)} aria-label="Chiudi" style={s('border:none;background:transparent;width:34px;height:34px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center')} hover={s('background:#ece9e2')}><Icon name="x" size={18} color="#57534c" /></Box>
+          <div style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 201, maxHeight: '85vh', overflowY: 'auto', background: '#faf9f7', borderRadius: '16px 16px 0 0', padding: '0 14px 25px', boxShadow: '0 -12px 40px rgba(0,0,0,.2)', WebkitOverflowScrolling: 'touch' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 13, position: 'sticky', top: 0, zIndex: 2, background: '#faf9f7', margin: '0 -14px 13px', padding: '13px 14px 9px', borderRadius: '16px 16px 0 0' }}>
+              <span style={{ fontSize: 14, fontWeight: 800, letterSpacing: '-.3px' }}>Configura report</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                <Box as="button" onClick={() => setConfigOpen(false)} style={s('border:none;background:#3B83F6;color:#fff;font-size:12px;font-weight:700;padding:8px 16px;border-radius:9px;cursor:pointer')} hover={s('background:#2563EB')}>Fatto</Box>
+                <Box as="button" onClick={() => setConfigOpen(false)} aria-label="Chiudi" style={s('border:none;background:transparent;width:31px;height:31px;border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center')} hover={s('background:#ece9e2')}><Icon name="x" size={16} color="#57534c" /></Box>
               </div>
             </div>
             {configBody}
@@ -635,41 +635,41 @@ export default function ReportScreen({
       {/* RIGHT: preview */}
       <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', background: '#f1efe9' }}>
         {/* Toolbar */}
-        <div className="gnm-report-toolbar max-md:!px-3 max-md:!gap-2 max-md:!flex-wrap" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 24px', borderBottom: '1px solid #e4e1da', background: '#fff' }}>
+        <div className="gnm-report-toolbar max-md:!px-3 max-md:!gap-2 max-md:!flex-wrap" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 22px', borderBottom: '1px solid #e4e1da', background: '#fff' }}>
           {/* Configura (mobile) */}
-          <Box as="button" className="md:!hidden" onClick={() => setConfigOpen(true)} style={s('border:1px solid #d8d4cb;background:#fff;color:#211f1c;font-size:13px;font-weight:700;padding:9px 14px;border-radius:10px;cursor:pointer;display:inline-flex;align-items:center;gap:7px')} hover={s('background:#f6f4f0')}>
-            <Icon name="settings" size={15} color="#57534c" />Configura
+          <Box as="button" className="md:!hidden" onClick={() => setConfigOpen(true)} style={s('border:1px solid #d8d4cb;background:#fff;color:#211f1c;font-size:12px;font-weight:700;padding:8px 13px;border-radius:9px;cursor:pointer;display:inline-flex;align-items:center;gap:6px')} hover={s('background:#f6f4f0')}>
+            <Icon name="settings" size={14} color="#57534c" />Configura
           </Box>
           {locked ? (
             <>
-              <div className="max-md:!hidden" style={{ fontSize: 13, color: '#8c867d', flex: 1 }}>Anteprima · A4 · esempio</div>
-              <div onClick={() => go?.('account')} className="max-md:!text-xs max-md:!px-3" style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#eef4fe', border: '1px solid #cfe0fb', borderRadius: 12, padding: '9px 16px', cursor: go ? 'pointer' : 'default', minWidth: 0 }}>
-                <Icon name="lock" size={15} color="#1d5fd0" />
-                <span style={{ fontSize: 13, fontWeight: 600, color: '#1d5fd0' }}>Il Report è riservato ai piani Agency. <span style={{ textDecoration: 'underline', fontWeight: 800 }}>Passa a un piano</span> per usarlo con i tuoi immobili.</span>
+              <div className="max-md:!hidden" style={{ fontSize: 12, color: '#8c867d', flex: 1 }}>Anteprima · A4 · esempio</div>
+              <div onClick={() => go?.('account')} className="max-md:!text-xs max-md:!px-3" style={{ display: 'flex', alignItems: 'center', gap: 9, background: '#eef4fe', border: '1px solid #cfe0fb', borderRadius: 11, padding: '8px 14px', cursor: go ? 'pointer' : 'default', minWidth: 0 }}>
+                <Icon name="lock" size={14} color="#1d5fd0" />
+                <span style={{ fontSize: 12, fontWeight: 600, color: '#1d5fd0' }}>Il Report è riservato ai piani Agency. <span style={{ textDecoration: 'underline', fontWeight: 800 }}>Passa a un piano</span> per usarlo con i tuoi immobili.</span>
               </div>
               <div className="max-md:!hidden" style={{ flex: 1 }} />
             </>
           ) : (
             <>
-              <div className="max-md:!hidden" style={{ fontSize: 13, color: '#8c867d', flex: 1 }}>Anteprima · A4 · {mappedProperties.length > 1 ? `${mappedProperties.length} immobili a confronto` : (mappedProperties[0] ? allProjects.find(p => selectedIds.has(p.id))?.nome : 'Nessun immobile')}</div>
+              <div className="max-md:!hidden" style={{ fontSize: 12, color: '#8c867d', flex: 1 }}>Anteprima · A4 · {mappedProperties.length > 1 ? `${mappedProperties.length} immobili a confronto` : (mappedProperties[0] ? allProjects.find(p => selectedIds.has(p.id))?.nome : 'Nessun immobile')}</div>
               {hasProperties && !editing && (
-                <Box as="button" onClick={startEditing} className="max-md:!px-3" style={{ border: '1.5px solid #d8d4cb', background: '#fff', color: '#8c867d', fontSize: 13, fontWeight: 600, padding: '10px 18px', borderRadius: 10, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }} hover={{ borderColor: accent, color: accent }}>
-                  <Icon name="pencil" size={14} color="currentColor" /><span className="max-md:!hidden">Modifica testi</span>
+                <Box as="button" onClick={startEditing} className="max-md:!px-3" style={{ border: '1.5px solid #d8d4cb', background: '#fff', color: '#8c867d', fontSize: 12, fontWeight: 600, padding: '9px 16px', borderRadius: 9, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 5 }} hover={{ borderColor: accent, color: accent }}>
+                  <Icon name="pencil" size={13} color="currentColor" /><span className="max-md:!hidden">Modifica testi</span>
                 </Box>
               )}
               {hasProperties && editing && (
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <Box as="button" onClick={cancelEditing} className="max-md:!px-3" style={{ border: '1.5px solid #d8d4cb', background: '#fff', color: '#8c867d', fontSize: 13, fontWeight: 600, padding: '8px 16px', borderRadius: 10, cursor: 'pointer' }} hover={{ borderColor: '#ef4444', color: '#ef4444' }}>
+                <div style={{ display: 'flex', gap: 7 }}>
+                  <Box as="button" onClick={cancelEditing} className="max-md:!px-3" style={{ border: '1.5px solid #d8d4cb', background: '#fff', color: '#8c867d', fontSize: 12, fontWeight: 600, padding: '7px 14px', borderRadius: 9, cursor: 'pointer' }} hover={{ borderColor: '#ef4444', color: '#ef4444' }}>
                     Annulla
                   </Box>
-                  <Box as="button" onClick={saveEditing} className="max-md:!px-3" style={{ border: 'none', background: accent, color: '#fff', fontSize: 13, fontWeight: 700, padding: '8px 18px', borderRadius: 10, cursor: 'pointer' }} hover={{ background: '#2563EB' }}>
+                  <Box as="button" onClick={saveEditing} className="max-md:!px-3" style={{ border: 'none', background: accent, color: '#fff', fontSize: 12, fontWeight: 700, padding: '7px 16px', borderRadius: 9, cursor: 'pointer' }} hover={{ background: '#2563EB' }}>
                     <span className="max-md:!hidden">Salva Modifiche</span><span className="md:!hidden">Salva</span>
                   </Box>
                 </div>
               )}
               <div className="max-md:!flex-none" style={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
-                <Box as="button" onClick={handlePrint} className="max-md:!px-3" style={s('border:none;background:#3B83F6;color:#fff;font-size:13.5px;font-weight:700;padding:10px 18px;border-radius:10px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;box-shadow:0 4px 12px rgba(59,131,246,.25)')} hover={s('background:#2563EB')}>
-                  <Icon name="download" size={16} color="#fff" /><span className="max-md:!hidden">Scarica PDF{poiLoading && <span style={{ fontSize: 11.5, fontWeight: 600, opacity: 0.85 }}> (analisi zona in corso)</span>}</span>
+                <Box as="button" onClick={handlePrint} className="max-md:!px-3" style={s('border:none;background:#3B83F6;color:#fff;font-size:12px;font-weight:700;padding:9px 16px;border-radius:9px;cursor:pointer;display:inline-flex;align-items:center;gap:7px;box-shadow:0 4px 12px rgba(59,131,246,.25)')} hover={s('background:#2563EB')}>
+                  <Icon name="download" size={14} color="#fff" /><span className="max-md:!hidden">Scarica PDF{poiLoading && <span style={{ fontSize: 10.5, fontWeight: 600, opacity: 0.85 }}> (analisi zona in corso)</span>}</span>
                 </Box>
               </div>
             </>
@@ -680,13 +680,13 @@ export default function ReportScreen({
         <div ref={previewRef} className="gnm-report-scroll" style={{ flex: 1, overflow: isMobile ? 'auto' : 'hidden', WebkitOverflowScrolling: 'touch', padding: 0, position: 'relative', minWidth: 0 }}>
           {!hasProperties ? (
             <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <div style={s('background:#fff;border:1.5px dashed #d8d4cb;border-radius:14px;padding:56px;text-align:center;max-width:520px')}>
-                <div style={s('width:52px;height:52px;border-radius:16px;background:#eef4fe;display:flex;align-items:center;justify-content:center;margin:0 auto 14px')}><Icon name="file-text" size={24} color="#3B83F6" /></div>
-                <div style={s('font-size:15px;font-weight:800;margin-bottom:6px')}>Nessun immobile</div>
-                <div style={s('color:#8c867d;font-size:13.5px')}>Crea o seleziona un immobile dalla barra in alto per generare il report.</div>
+              <div style={s('background:#fff;border:1.5px dashed #d8d4cb;border-radius:13px;padding:50px;text-align:center;max-width:468px')}>
+                <div style={s('width:47px;height:47px;border-radius:14px;background:#eef4fe;display:flex;align-items:center;justify-content:center;margin:0 auto 13px')}><Icon name="file-text" size={22} color="#3B83F6" /></div>
+                <div style={s('font-size:13.5px;font-weight:800;margin-bottom:5px')}>Nessun immobile</div>
+                <div style={s('color:#8c867d;font-size:12px')}>Crea o seleziona un immobile dalla barra in alto per generare il report.</div>
                 {go && (
-                  <Box as="button" onClick={() => go('home')} style={s('border:none;background:#3B83F6;color:#fff;font-size:13.5px;font-weight:700;padding:10px 18px;border-radius:10px;cursor:pointer;margin-top:16px;display:inline-flex;align-items:center;gap:8px')} hover={s('background:#2563EB')}>
-                    <Icon name="plus" size={15} color="#fff" />Crea immobile
+                  <Box as="button" onClick={() => go('home')} style={s('border:none;background:#3B83F6;color:#fff;font-size:12px;font-weight:700;padding:9px 16px;border-radius:9px;cursor:pointer;margin-top:14px;display:inline-flex;align-items:center;gap:7px')} hover={s('background:#2563EB')}>
+                    <Icon name="plus" size={14} color="#fff" />Crea immobile
                   </Box>
                 )}
               </div>

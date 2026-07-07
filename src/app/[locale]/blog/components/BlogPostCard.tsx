@@ -25,7 +25,7 @@ export default function BlogPostCard({ post, locale }: { post: BlogPost; locale:
         style={{
           background: "#fff",
           border: "1px solid rgba(26,26,46,0.10)",
-          borderRadius: 16,
+          borderRadius: 14,
           boxShadow: "0 4px 16px rgba(16,24,40,0.08)",
           overflow: "hidden",
           height: "100%",
@@ -42,26 +42,26 @@ export default function BlogPostCard({ post, locale }: { post: BlogPost; locale:
             style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
           />
         </div>
-        <div style={{ padding: "18px 18px 16px", display: "flex", flexDirection: "column", flex: 1 }}>
+        <div style={{ padding: "16px 16px 14px", display: "flex", flexDirection: "column", flex: 1 }}>
           <span
             style={{
-              fontSize: 11,
+              fontSize: 10,
               fontWeight: 700,
               color: "#3B83F6",
               textTransform: "uppercase",
               letterSpacing: 0.5,
-              marginBottom: 8,
+              marginBottom: 7,
             }}
           >
             {PILLAR_LABELS[post.pillar] || post.pillar}
           </span>
-          <h2 style={{ fontSize: 16, fontWeight: 800, margin: "0 0 8px", lineHeight: 1.3 }}>
+          <h2 style={{ fontSize: 14, fontWeight: 800, margin: "0 0 7px", lineHeight: 1.3 }}>
             {post.title}
           </h2>
-          <p style={{ fontSize: 13, color: "#6b7280", margin: "0 0 14px", lineHeight: 1.5, flex: 1 }}>
+          <p style={{ fontSize: 12, color: "#6b7280", margin: "0 0 13px", lineHeight: 1.5, flex: 1 }}>
             {post.seo_description}
           </p>
-          <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 13, fontWeight: 700, color: "#3B83F6" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, fontWeight: 700, color: "#3B83F6" }}>
             Leggi l&apos;articolo
             <ChevronRight size={14} />
           </div>

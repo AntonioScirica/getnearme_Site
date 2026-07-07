@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Flame, Zap, Lock, TrendingUp, Video, Megaphone, FileText, ArrowRight, Link2, Sparkles, Send, Clock, ImagePlus, MapPin, BarChart3 } from "lucide-react";
+import { Flame, Zap, Lock, TrendingUp, Video, Megaphone, FileText, ArrowRight, Link2, Sparkles, Send, Clock, ImagePlus, MapPin, BarChart3, Check } from "lucide-react";
 import { locales, type Locale } from "@/lib/i18n";
 import { translations } from "@/lib/translations";
 import Navbar from "@/components/Navbar";
@@ -7,7 +7,6 @@ import AuthCta from "@/components/AuthCta";
 import ScrollCue from "@/components/ScrollCue";
 import HeroVideo from "@/components/HeroVideo";
 import HomepageClient from "./HomepageClient";
-import ReferenceGallery from "./reference/ReferenceGallery";
 
 
 type Props = {
@@ -49,9 +48,9 @@ export default async function Home({ params }: Props) {
             display: "block",
             background: "#1a1a2e",
             color: "#fff",
-            padding: "11px 16px",
+            padding: "10px 14px",
             textAlign: "center",
-            fontSize: 13,
+            fontSize: 12,
             fontWeight: 600,
             borderBottom: "1px solid #3B83F6",
             textDecoration: "none",
@@ -87,10 +86,10 @@ export default async function Home({ params }: Props) {
             className="hero-shape-circle"
             style={{
               position: "absolute",
-              top: -140,
-              right: -180,
-              width: 240,
-              height: 240,
+              top: -126,
+              right: -162,
+              width: 216,
+              height: 216,
               background: "#dbeafe",
               borderRadius: "50%",
               opacity: 0.5,
@@ -101,12 +100,12 @@ export default async function Home({ params }: Props) {
             className="hero-shape-square"
             style={{
               position: "absolute",
-              top: 380,
-              left: -60,
-              width: 90,
-              height: 90,
+              top: 342,
+              left: -54,
+              width: 81,
+              height: 81,
               background: "#dbeafe",
-              borderRadius: 18,
+              borderRadius: 16,
               opacity: 0.5,
               border: "1px solid #93c5fd",
               transform: "rotate(12deg)",
@@ -116,12 +115,12 @@ export default async function Home({ params }: Props) {
             className="hero-shape-pink"
             style={{
               position: "absolute",
-              bottom: 40,
-              right: -120,
-              width: 160,
-              height: 160,
+              bottom: 36,
+              right: -108,
+              width: 144,
+              height: 144,
               background: "#fce7f3",
-              borderRadius: 24,
+              borderRadius: 22,
               opacity: 0.4,
               border: "1px solid #f9a8d4",
               transform: "rotate(-8deg)",
@@ -137,16 +136,16 @@ export default async function Home({ params }: Props) {
                     display: "inline-block",
                     background: "#eff6ff",
                     border: "1px solid #3B83F6",
-                    borderRadius: 20,
-                    padding: "7px 18px",
-                    fontSize: 13,
+                    borderRadius: 18,
+                    padding: "6px 16px",
+                    fontSize: 12,
                     fontWeight: 700,
                     color: "#1d4ed8",
-                    marginBottom: 28,
+                    marginBottom: 25,
                     boxShadow: "0 4px 14px rgba(59,131,246,0.20)",
                     // display: "inline-flex",
                     alignItems: "center",
-                    gap: 6,
+                    gap: 5,
                   }}
                 >
                   <Zap size={14} color="#1d4ed8" strokeWidth={2.75} />
@@ -154,26 +153,34 @@ export default async function Home({ params }: Props) {
                 </div>
               )}
 
+              <style>{`
+                @media (max-width: 768px) {
+                  .hero-title { font-size: 30px !important; line-height: 1.2 !important; }
+                  .hero-desc { font-size: 16px !important; }
+                }
+              `}</style>
               <h1
+                className="hero-title"
                 style={{
-                  fontSize: "clamp(32px, 5vw, 54px)",
+                  fontSize: "clamp(29px, 5vw, 49px)",
                   fontWeight: 800,
                   lineHeight: 1.05,
-                  margin: "0 0 22px",
+                  margin: "0 0 20px",
                   letterSpacing: "-1px",
                 }}
               >
-                {"L'assistente "}<span style={{ color: "#3B83F6" }}>{"AI per agenti"}</span>{" immobiliari."}
+                {"L'assistente "}<span style={{ color: "#3B83F6" }}>{"AI"}</span>{" "}<br className="md:hidden" /><span style={{ color: "#3B83F6" }}>{"per agenti"}</span>{" immobiliari."}
               </h1>
 
               <p
+                className="hero-desc"
                 style={{
                   color: "#555",
-                  fontSize: 20,
+                  fontSize: 18,
                   lineHeight: 1.7,
-                  maxWidth: 780,
-                  margin: "0 0 24px",
-                  marginTop: -6,
+                  maxWidth: 702,
+                  margin: "0 0 22px",
+                  marginTop: -5,
                 }}
               >
                 {l.hero.desc}
@@ -185,10 +192,10 @@ export default async function Home({ params }: Props) {
                   href="#pricing"
                   className="neo-shadow neo-cta-blue flex-1 text-center w-full"
                   style={{
-                    padding: "16px 18px",
-                    borderRadius: 12,
+                    padding: "14px 16px",
+                    borderRadius: 11,
                     fontWeight: 700,
-                    fontSize: 17,
+                    fontSize: 15,
                     cursor: "pointer",
                     letterSpacing: 0.3,
                     textDecoration: "none",
@@ -204,10 +211,10 @@ export default async function Home({ params }: Props) {
                   style={{
                     background: "#fff",
                     color: "#1a1a2e",
-                    padding: "16px 18px",
-                    borderRadius: 12,
+                    padding: "14px 16px",
+                    borderRadius: 11,
                     fontWeight: 700,
-                    fontSize: 17,
+                    fontSize: 15,
                     cursor: "pointer",
                     textDecoration: "none",
                     border: "1px solid rgba(26,26,46,0.20)",
@@ -221,72 +228,68 @@ export default async function Home({ params }: Props) {
 
             </div>
 
-            {/* Hero tutorial video — 16:9 */}
-            <div
-              className="mt-12 md:mt-16"
-              style={{
-                border: "1px solid rgba(26,26,46,0.10)",
-                borderRadius: 18,
-                boxShadow: "0 12px 30px rgba(16,24,40,0.10)",
-                overflow: "hidden",
-                background: "#1a1a2e",
-                aspectRatio: "16 / 9",
-              }}
-            >
-              <HeroVideo
-                poster="/staging/1.webp"
-                src="/staging/prima_dopo.mp4"
-                ariaLabel="GetNearMe — home staging AI: prima e dopo"
-              />
-            </div>
+            {/* Hero tutorial video — 16:9. Cliccabile: porta alla feature Video AI in basso. */}
+            <a href="#ai-video" className="mt-12 md:mt-16 block" style={{ position: "relative", cursor: "default" }}>
+              <div
+                style={{
+                  border: "1px solid rgba(26,26,46,0.10)",
+                  borderRadius: 16,
+                  boxShadow: "0 12px 30px rgba(16,24,40,0.10)",
+                  overflow: "hidden",
+                  background: "#1a1a2e",
+                  aspectRatio: "16 / 9",
+                }}
+              >
+                <HeroVideo
+                  poster="/staging/timelaps_ai-poster.jpg"
+                  src="/staging/timelaps_ai.mp4"
+                  ariaLabel="GetNearMe — AI timelapse ricostruzione immobile"
+                />
+              </div>
+            </a>
           </div>
         </section>
 
         {/* Operational flow — Dall'annuncio al cliente */}
-        <section style={{ padding: "70px 0", background: "#f3f4f6" }}>
+        <section style={{ padding: "63px 0", background: "#f3f4f6" }}>
           <div className="max-w-7xl mx-auto px-5 md:px-3">
-            <div style={{ textAlign: "center", marginBottom: 48 }}>
+            <div style={{ textAlign: "center", marginBottom: 43 }}>
               <h2
                 style={{
-                  fontSize: "clamp(26px, 4.5vw, 38px)",
+                  fontSize: "clamp(23px, 4.5vw, 34px)",
                   fontWeight: 800,
                   color: "#1a1a2e",
                   lineHeight: 1.15,
-                  marginBottom: 12,
+                  marginBottom: 11,
                 }}
               >
                 {"Dall'annuncio al cliente, "}
                 <span style={{ color: "#3B83F6" }}>in pochi minuti.</span>
               </h2>
-              <p style={{ color: "#555", fontSize: 18, maxWidth: 760, margin: "0 auto", lineHeight: 1.6 }}>
+              <p style={{ color: "#555", fontSize: 16, maxWidth: 684, margin: "0 auto", lineHeight: 1.6 }}>
                 {"Niente da installare, niente da imparare. Carichi le tue foto, l'assistente AI prepara tutto il materiale, già col tuo brand."}
               </p>
             </div>
             {(() => {
               const flowSteps = [
-                { n: "1", icon: ImagePlus, color: "#6366f1", darkColor: "#4338ca", bg: "#eef2ff", title: "Carichi le tue foto", desc: "Carichi le foto dell'immobile, inserisci i dati principali e scegli cosa vuoi ottenere. Il resto lo fa GetNearMe.", chips: ["Foto", "Dati immobile"] },
-                { n: "2", icon: Sparkles, color: "#f59e0b", darkColor: "#b45309", bg: "#fffbeb", title: "L'AI prepara tutto", desc: "In pochi minuti l'assistente genera home staging, video e post social, già col tuo logo e i tuoi colori.", chips: ["Home staging", "Video", "Post social"] },
-                { n: "3", icon: Send, color: "#10b981", darkColor: "#047857", bg: "#ecfdf5", title: "Pubblichi e invii", desc: "Pubblichi sui social, metti sui portali o mandi al cliente. Tutto pronto, senza altri programmi.", chips: ["Portali", "Social", "Cliente"] },
+                { n: "1", icon: ImagePlus, color: "#6366f1", bg: "#eef2ff", title: "Carichi le tue foto", desc: "Carichi le foto dell'immobile, inserisci i dati principali e scegli cosa vuoi ottenere. Il resto lo fa GetNearMe." },
+                { n: "2", icon: Sparkles, color: "#f59e0b", bg: "#fffbeb", title: "L'AI prepara tutto", desc: "In pochi minuti l'assistente genera home staging, video e post social, già col tuo logo e i tuoi colori." },
+                { n: "3", icon: Send, color: "#10b981", bg: "#ecfdf5", title: "Pubblichi e invii", desc: "Pubblichi sui social, metti sui portali o mandi al cliente. Tutto pronto, senza altri programmi." },
               ];
               return (
-                <div className="flow-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 24, alignItems: "stretch" }}>
+                <div className="flow-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 22, alignItems: "stretch" }}>
                   {flowSteps.map((s) => {
                     const IconComp = s.icon;
                     return (
-                      <div key={s.n} className="neo-border neo-shadow flow-card" style={{ background: "#fff", borderRadius: 16, padding: "28px 24px", display: "flex", flexDirection: "column", gap: 14, transition: "all .3s cubic-bezier(0.4, 0, 0.2, 1)", cursor: "default" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                          <span className={`step-icon step-icon-${s.n}`} style={{ width: 48, height: 48, borderRadius: 12, background: s.bg, border: `1px solid ${s.color}33`, color: s.color, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <div key={s.n} className="neo-border neo-shadow flow-card" style={{ background: "#fff", borderRadius: 14, padding: "25px 22px", display: "flex", flexDirection: "column", gap: 13, transition: "all .3s cubic-bezier(0.4, 0, 0.2, 1)", cursor: "default" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 11 }}>
+                          <span className={`step-icon step-icon-${s.n}`} style={{ width: 43, height: 43, borderRadius: 11, background: s.bg, border: `1px solid ${s.color}33`, color: s.color, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                             <IconComp size={22} strokeWidth={2} />
                           </span>
-                          <span style={{ fontSize: 13, fontWeight: 700, color: s.color, textTransform: "uppercase", letterSpacing: 0.5 }}>Passo {s.n}</span>
+                          <span style={{ fontSize: 12, fontWeight: 700, color: s.color, textTransform: "uppercase", letterSpacing: 0.5 }}>Passo {s.n}</span>
                         </div>
-                        <h3 style={{ fontSize: 20, fontWeight: 700, color: "#1a1a2e", margin: 0, lineHeight: 1.25 }}>{s.title}</h3>
-                        <p style={{ color: "#444", fontSize: 15, lineHeight: 1.6, margin: 0, flex: 1 }}>{s.desc}</p>
-                        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 6 }}>
-                          {s.chips.map((c) => (
-                            <span key={c} style={{ fontSize: 12, fontWeight: 600, color: (s as any).darkColor, background: s.bg, border: `1px solid ${(s as any).darkColor}55`, borderRadius: 999, padding: "5px 12px" }}>{c}</span>
-                          ))}
-                        </div>
+                        <h3 style={{ fontSize: 18, fontWeight: 700, color: "#1a1a2e", margin: 0, lineHeight: 1.25 }}>{s.title}</h3>
+                        <p style={{ color: "#444", fontSize: 14, lineHeight: 1.6, margin: 0, flex: 1 }}>{s.desc}</p>
                       </div>
                     );
                   })}
@@ -317,14 +320,14 @@ export default async function Home({ params }: Props) {
 
         {/* Features — Full-Width Alternating */}
         <section id="funzionalita" className="scroll-mt-32">
-          <div style={{ textAlign: "center", padding: "70px 24px 0", background: "#fff" }}>
+          <div style={{ textAlign: "center", padding: "63px 22px 0", background: "#fff" }}>
             <h2
               style={{
-                fontSize: "clamp(26px, 4.5vw, 38px)",
+                fontSize: "clamp(23px, 4.5vw, 34px)",
                 fontWeight: 800,
                 color: "#1a1a2e",
                 lineHeight: 1.15,
-                marginBottom: 12,
+                marginBottom: 11,
               }}
             >
               {l.features.title}{" "}
@@ -339,11 +342,11 @@ export default async function Home({ params }: Props) {
                 {l.features.titleHighlight}
               </span>
             </h2>
-            <p style={{ color: "#555", fontSize: 18, maxWidth: 760, margin: "0 auto", lineHeight: 1.6 }}>
+            <p style={{ color: "#555", fontSize: 16, maxWidth: 684, margin: "0 auto", lineHeight: 1.6 }}>
               {l.features.subtitle}
             </p>
           </div>
-          {l.features.items.map(
+          {l.features.items.slice(0, 3).map(
             (
               f: {
                 num: string;
@@ -367,14 +370,14 @@ export default async function Home({ params }: Props) {
         </section>
 
         {/* Time saved — Ogni attività ti porta via tempo */}
-        <section style={{ padding: "70px 0", background: "#f3f4f6" }}>
+        <section style={{ padding: "63px 0", background: "#f3f4f6" }}>
           <div className="max-w-5xl mx-auto px-5 md:px-3">
-            <div style={{ textAlign: "center", marginBottom: 40 }}>
-              <h2 style={{ fontSize: "clamp(26px, 4.5vw, 36px)", fontWeight: 800, color: "#1a1a2e", lineHeight: 1.15, margin: "0 0 14px" }}>
+            <div style={{ textAlign: "center", marginBottom: 36 }}>
+              <h2 style={{ fontSize: "clamp(23px, 4.5vw, 32px)", fontWeight: 800, color: "#1a1a2e", lineHeight: 1.15, margin: "0 0 13px" }}>
                 Ogni attività ti porta via tempo.<br />
                 <span style={{ color: "#3B83F6" }}>Con GetNearMe, minuti.</span>
               </h2>
-              <p style={{ color: "#666", fontSize: 17, maxWidth: 720, margin: "0 auto", lineHeight: 1.6 }}>
+              <p style={{ color: "#666", fontSize: 15, maxWidth: 648, margin: "0 auto", lineHeight: 1.6 }}>
                 {"Quello che oggi ti richiede ore lo fai in pochi minuti. Su una settimana di lavoro è più di un giorno e mezzo che ti riprendi per clienti e trattative."}
               </p>
             </div>
@@ -382,120 +385,109 @@ export default async function Home({ params }: Props) {
               const DARK = "#0E2344";
               const GREEN = "#009874";
               const timeRows = [
-                { icon: Sparkles, activity: "Home staging di una stanza", before: "~2 ore con designer o Photoshop", after: "30 secondi" },
-                { icon: Video, activity: "Video per l'annuncio", before: "mezza giornata col videomaker", after: "2 minuti" },
-                { icon: Megaphone, activity: "Post per i social", before: "~30 minuti su Canva", after: "1 minuto" },
-                { icon: MapPin, activity: "Analisi di zona", before: "~1 ora tra portali e Google Maps", after: "10 secondi" },
-                { icon: BarChart3, activity: "Report immobile", before: "~45 minuti con Word o PDF", after: "1 minuto" },
+                { icon: Sparkles, activity: "Homestaging", before: "~€1.500", beforeSub: "home staging fisico, ~4 giorni", beforeTime: "~4 giorni", after: "Incluso nel piano" },
+                { icon: Video, activity: "Video", before: "~€250", beforeSub: "videomaker professionista, mezza giornata", beforeTime: "mezza giornata", after: "Incluso nel piano" },
+                { icon: Megaphone, activity: "Post", before: "~€50/post", beforeSub: "social media manager, ~1 giorno", beforeTime: "~1 giorno", after: "Incluso nel piano" },
+                { icon: MapPin, activity: "Zona", before: "~€80", beforeSub: "consulente o agenzia dati, ~1 ora", beforeTime: "~1 ora", after: "Incluso nel piano" },
+                { icon: BarChart3, activity: "Report", before: "~€40", beforeSub: "grafico o assistente, ~45 minuti", beforeTime: "~45 minuti", after: "Incluso nel piano" },
               ];
               return (
-                <div className="neo-border neo-shadow" style={{ background: "#fff", borderRadius: 20, overflow: "hidden" }}>
-                  <div className="time-row time-head" style={{ display: "grid", gridTemplateColumns: "1.5fr 1.2fr 1fr", alignItems: "center", gap: 16, padding: "16px 24px", background: "#1a1a2e", color: "#fff", fontWeight: 700, fontSize: 13, textTransform: "uppercase", letterSpacing: 0.5 }}>
-                    <div>Attività</div>
-                    <div>Come la fai oggi</div>
-                    <div style={{ textAlign: "right" }}>Con GetNearMe</div>
+                <>
+                  <div className="neo-border neo-shadow" style={{ background: "#fff", borderRadius: 18, overflow: "hidden" }}>
+                    <div className="time-row time-head" style={{ display: "grid", gridTemplateColumns: "1.5fr 1.2fr 1fr", alignItems: "center", gap: 14, padding: "14px 22px", background: "#1a1a2e", color: "#fff", fontWeight: 700, fontSize: 12, textTransform: "uppercase", letterSpacing: 0.5 }}>
+                      <div>Attività</div>
+                      <div>Senza</div>
+                      <div style={{ textAlign: "right" }}>Con Get</div>
+                    </div>
+                    {timeRows.map((r, i) => {
+                      const IconComp = r.icon;
+                      return (
+                        <div key={r.activity} className="time-row" style={{ display: "grid", gridTemplateColumns: "1.5fr 1.2fr 1fr", alignItems: "center", gap: 14, padding: "14px 22px", borderTop: i === 0 ? "none" : "1px solid #eef0f4" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 11 }}>
+                            <span style={{ width: 36, height: 36, borderRadius: 9, background: "#eef2ff", border: "1px solid #2563EB22", color: "#2563EB", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                              <IconComp size={18} strokeWidth={2} />
+                            </span>
+                            <span style={{ fontWeight: 700, fontSize: 14, color: DARK }}>{r.activity}</span>
+                          </div>
+                          <div className="time-before">
+                            <div style={{ fontSize: 14, fontWeight: 700, color: "#dc2626" }}>{r.before}</div>
+                            <div className="time-before-sub time-before-sub-full" style={{ fontSize: 11, color: "#9ca3af" }}>{r.beforeSub}</div>
+                            <div className="time-before-sub time-before-sub-short" style={{ fontSize: 11, color: "#9ca3af" }}>{r.beforeTime}</div>
+                          </div>
+                          <div className="time-after" style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 5, fontWeight: 800, fontSize: 14, color: GREEN }}>
+                            <Check size={15} strokeWidth={3} /> <span className="time-after-full">{r.after}</span>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
-                  {timeRows.map((r, i) => {
-                    const IconComp = r.icon;
-                    return (
-                      <div key={r.activity} className="time-row" style={{ display: "grid", gridTemplateColumns: "1.5fr 1.2fr 1fr", alignItems: "center", gap: 16, padding: "16px 24px", borderTop: i === 0 ? "none" : "1px solid #eef0f4" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                          <span style={{ width: 40, height: 40, borderRadius: 10, background: "#eef2ff", border: "1px solid #2563EB22", color: "#2563EB", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                            <IconComp size={18} strokeWidth={2} />
-                          </span>
-                          <span style={{ fontWeight: 700, fontSize: 15, color: DARK }}>{r.activity}</span>
-                        </div>
-                        <div className="time-before" style={{ fontSize: 14, color: "#dc2626", textDecoration: "line-through", textDecorationColor: "rgba(220,38,38,0.35)" }}>{r.before}</div>
-                        <div className="time-after" style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 6, fontWeight: 800, fontSize: 15, color: GREEN }}>
-                          <Clock size={15} strokeWidth={2.5} /> {r.after}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                  <div className="vs-total" style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center", gap: 18, marginTop: 18, background: "#fff", borderRadius: 14, padding: "20px 25px" }}>
+                    <div style={{ textAlign: "center" }}>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Con Agenzia</div>
+                      <div style={{ fontSize: 25, fontWeight: 800, color: "#dc2626", textDecoration: "line-through", textDecorationColor: "rgba(220,38,38,0.35)" }}>~€2.020+</div>
+                    </div>
+                    <div style={{ width: 40, height: 40, borderRadius: "50%", background: "#1a1a2e", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 800 }}>VS</div>
+                    <div style={{ textAlign: "center" }}>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Con GetNearMe</div>
+                      <div style={{ fontSize: 25, fontWeight: 800, color: GREEN }}>da €14,99</div>
+                    </div>
+                  </div>
+                </>
               );
             })()}
-            <p style={{ color: "#6b7280", fontSize: 12, textAlign: "center", marginTop: 14 }}>
-              {"Stime indicative sul tempo tipico di preparazione manuale."}
+            <p style={{ color: "#6b7280", fontSize: 11, textAlign: "center", marginTop: 13 }}>
+              {"Stime indicative sui costi tipici di fornitori esterni per un immobile (home staging fisico, 1 video, 3 post, analisi e report)."}
             </p>
-            <div style={{ display: "flex", justifyContent: "center", marginTop: 24 }}>
-              <AuthCta locale={locale} href="#pricing" className="neo-shadow neo-cta-blue" style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 17, fontWeight: 700, padding: "16px 32px", borderRadius: 12, textDecoration: "none" }}>
+            <div style={{ display: "flex", justifyContent: "center", marginTop: 22 }}>
+              <AuthCta locale={locale} href="#pricing" className="neo-shadow neo-cta-blue" style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: 15, fontWeight: 700, padding: "14px 29px", borderRadius: 11, textDecoration: "none" }}>
                 Prova gratis <ArrowRight size={20} strokeWidth={2.5} />
               </AuthCta>
             </div>
           </div>
           <style>{`
+            .time-before-sub-short { display: none; }
             @media (max-width: 768px) {
-              .time-head { display: none !important; }
-              .time-row { grid-template-columns: 1fr !important; gap: 6px !important; text-align: center; justify-items: center; padding: 20px 16px !important; }
-              .time-row > div:first-child { flex-direction: column !important; gap: 8px !important; }
-              .time-before { text-align: center; }
-              .time-after { justify-content: center !important; }
-            }
-          `}</style>
-        </section>
-
-        {/* Real examples teaser */}
-        <section style={{ padding: "70px 0", background: "#fff" }}>
-          <div className="max-w-5xl mx-auto px-5 md:px-6">
-            <div style={{ textAlign: "center", marginBottom: 36 }}>
-              <h2 style={{ fontSize: "clamp(26px, 4.5vw, 38px)", fontWeight: 800, color: "#1a1a2e", lineHeight: 1.15, marginBottom: 12 }}>
-                Esempi reali. <span style={{ color: "#3B83F6" }}>Risultati concreti.</span>
-              </h2>
-              <p style={{ color: "#555", fontSize: 16, maxWidth: 640, margin: "0 auto", lineHeight: 1.6 }}>
-                {"Guarda cosa puoi creare con GetNearMe: video, reel e post pronti in pochi click. Questi sono risultati reali, generati dall'AI."}
-              </p>
-            </div>
-            <ReferenceGallery
-              variant="gallery"
-              color="#6366f1"
-              media={[
-                { type: "video", src: "/reference/primo-piano.mp4", title: "Avatar in primo piano", desc: "Video con avatar, script e sottotitoli generati dall'AI." },
-                { type: "video", src: "/reference/prima-dopo.mp4", title: "Prima vs Dopo", desc: "Partendo da una foto, l'AI arreda e crea il video." },
-                { type: "video", src: "/reference/giorno-notte.mp4", title: "Giorno e notte", desc: "L'AI trasforma l'illuminazione della scena." },
-                { type: "video", src: "/reference/social-reel.mp4", title: "Reel per i social", desc: "Reel pronto per Instagram, TikTok e Reels." },
-                { type: "video", src: "/reference/construction.mp4", title: "Timelapse AI", desc: "Da una foto dell'esterno, l'AI genera il timelapse." },
-                { type: "video", src: "/reference/split.mp4", title: "Schermo diviso", desc: "Immobile e avatar parlante nello stesso video." },
-              ]}
-            />
-            <div className="examples-cta-row" style={{ display: "flex", gap: 14, flexWrap: "wrap", justifyContent: "center", marginTop: 36 }}>
-              <a href={`/${locale}/reference`} className="neo-border neo-shadow neo-cta-outline examples-cta-btn" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, background: "#fff", color: "#1a1a2e", fontSize: 17, fontWeight: 700, padding: "16px 32px", borderRadius: 12, textDecoration: "none", border: "1px solid rgba(26,26,46,0.20)" }}>
-                Guarda tutti gli esempi
-              </a>
-              <AuthCta locale={locale} href="#pricing" className="neo-shadow neo-cta-blue examples-cta-btn" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, fontSize: 17, fontWeight: 700, padding: "16px 32px", borderRadius: 12, textDecoration: "none" }}>
-                Prova gratis <ArrowRight size={18} strokeWidth={2.5} />
-              </AuthCta>
-            </div>
-          </div>
-          <style>{`
-            @media (max-width: 768px) {
-              .examples-cta-row {
-                flex-direction: column !important;
-                align-items: center !important;
-                gap: 12px !important;
-                max-width: 300px;
-                margin: 36px auto 0 !important;
+              .time-after-full { display: none; }
+              .time-before-sub-full { display: none; }
+              .time-before-sub-short { display: block !important; font-size: 10px !important; line-height: 1.2; }
+              .time-row {
+                grid-template-columns: 1.1fr 1fr 82px !important;
+                gap: 8px !important;
+                padding: 14px 14px !important;
+                text-align: left !important;
+                justify-items: stretch !important;
               }
-              .examples-cta-btn {
-                width: 100% !important;
-                display: flex !important;
-                padding: 16px 20px !important;
-              }
+              .time-head { font-size: 11px !important; letter-spacing: 0.2px !important; }
+              .time-head > div:nth-child(2) { text-align: left !important; padding-left: 18px !important; }
+              .time-head > div:last-child { text-align: center !important; }
+              .time-row > div:first-child span:last-child { font-size: 13.5px !important; line-height: 1.25; }
+              .time-row > div:first-child span:first-child { display: none !important; }
+              .time-before { text-align: left !important; padding-left: 18px !important; }
+              .time-before > div:first-child { font-size: 13px !important; }
+              .time-after { justify-content: center !important; padding-right: 0 !important; }
+              .time-after svg { width: 18px; height: 18px; position: relative; left: -2px; }
+              .vs-total { grid-template-columns: 1fr auto 1fr !important; gap: 10px !important; padding: 16px 14px !important; }
+              .vs-total > div:nth-child(2) { width: 32px !important; height: 32px !important; font-size: 10.5px !important; }
+              .vs-total > div:first-child > div:first-child,
+              .vs-total > div:last-child > div:first-child { font-size: 10px !important; letter-spacing: 0.3px !important; }
+              .vs-total > div:first-child > div:last-child,
+              .vs-total > div:last-child > div:last-child { font-size: 17px !important; }
             }
           `}</style>
         </section>
 
         {/* Testimonials */}
-        <section style={{ padding: "70px 0", background: "#f3f4f6" }}>
+        <section className="testimonials-section" style={{ padding: "63px 0", background: "#f3f4f6" }}>
+          <style>{`@media (max-width: 768px){ .testimonials-section{ padding-top: 32px !important; } }`}</style>
           <div className="max-w-7xl mx-auto px-5 md:px-3">
-            <div style={{ textAlign: "center", marginBottom: 40 }}>
+            <div style={{ textAlign: "center", marginBottom: 36 }}>
               <h2
                 style={{
-                  fontSize: "clamp(26px, 4.5vw, 38px)",
+                  fontSize: "clamp(23px, 4.5vw, 34px)",
                   fontWeight: 800,
                   color: "#1a1a2e",
                   lineHeight: 1.15,
-                  marginBottom: 12,
+                  marginBottom: 11,
                 }}
               >
                 {l.testimonials.title}
@@ -576,7 +568,9 @@ export default async function Home({ params }: Props) {
                   scroll-snap-type: x mandatory;
                   -webkit-overflow-scrolling: touch;
                   gap: 16px;
-                  padding: 0 20px 8px;
+                  /* padding verticale: overflow-x:auto rende overflow-y clip,
+                     senza spazio le ombre delle card vengono tagliate sopra/sotto. */
+                  padding: 16px 20px 22px;
                   margin: 0 -20px;
                   scrollbar-width: none;
                 }
@@ -611,16 +605,16 @@ export default async function Home({ params }: Props) {
         />
 
         {/* FAQ */}
-        <section id="faq" className="scroll-mt-32" style={{ padding: "70px 0", background: "#f3f4f6" }}>
+        <section id="faq" className="scroll-mt-32" style={{ padding: "63px 0", background: "#f3f4f6" }}>
           <div className="max-w-3xl mx-auto px-5 md:px-3">
-            <div style={{ textAlign: "center", marginBottom: 40 }}>
+            <div style={{ textAlign: "center", marginBottom: 36 }}>
               <h2
                 style={{
-                  fontSize: "clamp(26px, 4.5vw, 38px)",
+                  fontSize: "clamp(23px, 4.5vw, 34px)",
                   fontWeight: 800,
                   color: "#1a1a2e",
                   lineHeight: 1.15,
-                  marginBottom: 12,
+                  marginBottom: 11,
                 }}
               >
                 {l.faq.title}{" "}
@@ -628,8 +622,8 @@ export default async function Home({ params }: Props) {
                   style={{
                     background: "#3B83F6",
                     color: "#fff",
-                    padding: "2px 16px",
-                    borderRadius: 10,
+                    padding: "2px 14px",
+                    borderRadius: 9,
                     border: "1px solid rgba(26,26,46,0.10)",
                     boxShadow: "0 2px 10px rgba(16,24,40,0.06)",
                     position: "relative",
@@ -644,7 +638,7 @@ export default async function Home({ params }: Props) {
               style={{
                 display: "flex",
                 flexDirection: "column",
-                gap: 12,
+                gap: 11,
               }}
             >
               {l.faq.items.map(
@@ -664,7 +658,7 @@ export default async function Home({ params }: Props) {
         {/* Final CTA */}
         <section
           style={{
-            padding: "80px 0",
+            padding: "72px 0",
             background: "#1a1a2e",
             position: "relative",
             overflow: "hidden",
@@ -673,10 +667,10 @@ export default async function Home({ params }: Props) {
           <div
             style={{
               position: "absolute",
-              top: -60,
-              right: -60,
-              width: 220,
-              height: 220,
+              top: -54,
+              right: -54,
+              width: 198,
+              height: 198,
               background: "#3B83F6",
               borderRadius: "50%",
               opacity: 0.06,
@@ -685,12 +679,12 @@ export default async function Home({ params }: Props) {
           <div
             style={{
               position: "absolute",
-              bottom: -40,
-              left: -40,
-              width: 180,
-              height: 180,
+              bottom: -36,
+              left: -36,
+              width: 162,
+              height: 162,
               background: "#6366f1",
-              borderRadius: 30,
+              borderRadius: 27,
               opacity: 0.08,
               transform: "rotate(15deg)",
             }}
@@ -700,10 +694,10 @@ export default async function Home({ params }: Props) {
           >
             <h2
               style={{
-                fontSize: "clamp(28px, 4.5vw, 44px)",
+                fontSize: "clamp(25px, 4.5vw, 40px)",
                 fontWeight: 800,
                 lineHeight: 1.1,
-                margin: "0 0 16px",
+                margin: "0 0 14px",
                 color: "#fff",
               }}
             >
@@ -711,7 +705,7 @@ export default async function Home({ params }: Props) {
               <br className="hidden md:block" />
               <span style={{ color: "#3B83F6" }}>{l.finalCta.title2}</span>
             </h2>
-            <p style={{ color: "#aaa", fontSize: 17, marginBottom: 36 }}>
+            <p style={{ color: "#aaa", fontSize: 15, marginBottom: 32 }}>
               {l.finalCta.desc}
             </p>
             <div className="final-cta-buttons" style={{ display: "flex", gap: 14, flexWrap: "wrap", justifyContent: "center" }}>
@@ -722,10 +716,10 @@ export default async function Home({ params }: Props) {
                 style={{
                   display: "inline-block",
                   border: "none",
-                  padding: "16px 32px",
-                  borderRadius: 12,
+                  padding: "14px 29px",
+                  borderRadius: 11,
                   fontWeight: 700,
-                  fontSize: 17,
+                  fontSize: 15,
                   cursor: "pointer",
                   letterSpacing: 0.3,
                   textDecoration: "none",
@@ -743,10 +737,10 @@ export default async function Home({ params }: Props) {
                   background: "transparent",
                   color: "#fff",
                   border: "1px solid rgba(255,255,255,0.5)",
-                  padding: "16px 32px",
-                  borderRadius: 12,
+                  padding: "14px 29px",
+                  borderRadius: 11,
                   fontWeight: 700,
-                  fontSize: 17,
+                  fontSize: 15,
                   cursor: "pointer",
                   textDecoration: "none",
                   textAlign: "center",
@@ -756,7 +750,7 @@ export default async function Home({ params }: Props) {
                 {(l.finalCta as any).buttonDemo}
               </a>
             </div>
-            <div className="final-cta-footer" style={{ color: "#eee", fontSize: 13, marginTop: 20, display: "inline-flex", alignItems: "center", gap: 6, justifyContent: "center" }}>
+            <div className="final-cta-footer" style={{ color: "#eee", fontSize: 12, marginTop: 18, display: "inline-flex", alignItems: "center", gap: 5, justifyContent: "center" }}>
               {(() => {
                 const text = l.finalCta.footer;
                 const first = [...text][0] || "";
@@ -801,7 +795,7 @@ export default async function Home({ params }: Props) {
             borderLeft: "none",
             borderRight: "none",
             borderBottom: "none",
-            padding: "40px 0 32px",
+            padding: "36px 0 29px",
             background: "#fafaf8",
           }}
         >
@@ -810,9 +804,9 @@ export default async function Home({ params }: Props) {
               <div className="md:col-span-1">
                 <h3
                   style={{
-                    fontSize: 22,
+                    fontSize: 20,
                     fontWeight: 700,
-                    marginBottom: 6,
+                    marginBottom: 5,
                     color: "#1a1a2e",
                   }}
                 >
@@ -822,9 +816,9 @@ export default async function Home({ params }: Props) {
                   className="footer-desc"
                   style={{
                     color: "#666",
-                    fontSize: 13,
-                    marginBottom: 24,
-                    maxWidth: 250,
+                    fontSize: 12,
+                    marginBottom: 22,
+                    maxWidth: 225,
                   }}
                 >
                   {t.footer.desc}
@@ -901,12 +895,12 @@ export default async function Home({ params }: Props) {
             </div>
             <div
               style={{
-                paddingTop: 24,
+                paddingTop: 22,
                 borderTop: "2px solid #e5e7eb",
                 textAlign: "center",
               }}
             >
-              <p style={{ color: "#6b7280", fontSize: 13 }}>
+              <p style={{ color: "#6b7280", fontSize: 12 }}>
                 © 2026 GetNearMe. {t.footer.rights}
               </p>
             </div>

@@ -23,11 +23,31 @@ export default function LazyVideo({
   useEffect(() => {
     const v = ref.current;
     if (!v) return;
+
+    // Fallback sincrono: se il video e' gia' visibile al mount (es. prime
+    // card di uno slider orizzontale, niente scroll verticale necessario),
+    // non aspettare il primo callback dell'observer — a volte non arriva
+    // in tempo utile durante un reflow (width 100vw, layout ancora instabile).
+    const isVisibleNow = () => {
+      const r = v.getBoundingClientRect();
+      return r.bottom > -300 && r.top < window.innerHeight + 300 && r.right > 0 && r.left < window.innerWidth;
+    };
+    if (isVisibleNow()) setLoad(true);
+
     const io = new IntersectionObserver(
       (entries) => {
         for (const e of entries) {
-          if (e.isIntersecting) setLoad(true);
-          else v.pause();
+          if (e.isIntersecting) {
+            setLoad(true);
+            // Rilancia play() ad OGNI rientro in vista, non solo al primo. In
+            // uno slider orizzontale il video puo' uscire/rientrare piu'
+            // volte mentre l'utente scorre; se un play() viene interrotto da
+            // un pause() nel mezzo (race), l'effect su [load] non riparte
+            // (load e' gia' true) e il video resta fermo per sempre.
+            v.play().catch(() => {});
+          } else {
+            v.pause();
+          }
         }
       },
       { rootMargin: '300px 0px' },

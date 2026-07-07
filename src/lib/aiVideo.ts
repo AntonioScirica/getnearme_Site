@@ -330,7 +330,7 @@ export async function checkAvatar(jobId: string) {
 }
 
 // Photo animation (walkthrough)
-export async function animatePhotoStart(payload: { photoUrl: string; room: string; duration: string; aspectRatio: string }) {
+export async function animatePhotoStart(payload: { photoUrl: string; room: string; duration: string; aspectRatio: string; photoIndex?: number }) {
   return callEdge<{ success: boolean; requestId: string; statusUrl: string; responseUrl: string; room: string; error?: string }>(
     'generate-ai-video-avatar',
     { mode: 'animate-photo-start', ...payload },

@@ -10,6 +10,7 @@ import Navbar from '@/components/Navbar';
 
 // Plan ID mapping: homepage IDs → internal subscription IDs
 const PLAN_ID_MAP: Record<string, string> = {
+  starter_monthly: 'starter_monthly',
   individual_monthly: 'individual_monthly',
   individual_annual: 'individual_annual',
   agency_monthly: 'agency_monthly',
@@ -28,6 +29,17 @@ interface PlanData {
 }
 
 const PLANS: Record<string, PlanData> = {
+  // Starter (€14,99/mese, no annuale)
+  starter_monthly: {
+    name: 'Starter',
+    price_monthly: 14.99,
+    price_annual: 14.99,
+    original_price: 0,
+    payment_link_monthly: 'https://buy.stripe.com/00w14n5Oz7rBcHu8xGak00K',
+    payment_link_annual: null,
+    features_key: 'starter',
+    popular: false,
+  },
   // Individuale (€59/€590)
   individual_monthly: {
     name: 'Individuale Mensile',
@@ -75,6 +87,7 @@ const PLANS: Record<string, PlanData> = {
 const PLAN_DISPLAY_ORDER = ['individual_monthly', 'individual_annual', 'agency_monthly', 'agency_annual'];
 
 const TIER_LABELS: Record<string, Record<string, string>> = {
+  starter_monthly:    { it: 'Starter',              en: 'Starter',             es: 'Starter',             fr: 'Starter',             ru: 'Starter',         uk: 'Starter' },
   user_lite:          { it: 'Lite',                en: 'Lite',                es: 'Lite',                fr: 'Lite',                ru: 'Lite',            uk: 'Lite' },
   individual_monthly: { it: 'Individuale Mensile', en: 'Individual Monthly',  es: 'Individual Mensual',  fr: 'Individuel Mensuel',  ru: 'Индив. месяц',    uk: 'Індив. місяць' },
   individual_annual:  { it: 'Individuale Annuale', en: 'Individual Annual',   es: 'Individual Anual',    fr: 'Individuel Annuel',   ru: 'Индив. год',      uk: 'Індив. рік' },
@@ -464,7 +477,7 @@ function CheckoutAgencyContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [isEmailLoading, setIsEmailLoading] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
-  const [isSignup, setIsSignup] = useState(false);
+  const [isSignup, setIsSignup] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -479,11 +492,53 @@ function CheckoutAgencyContent() {
 
   const plan = PLANS[selectedPlanId];
 
-  function redirectToPayment(userId: string, userEmail: string) {
-    setIsRedirecting(true);
+  // Agenzia seat-based (slider 2-10 dalla pricing): checkout dinamico con quantity,
+  // via edge function (i payment link fissi non supportano la quantity).
+  const seatsRaw = Number(searchParams.get('seats'));
+  const seats = Number.isFinite(seatsRaw) && seatsRaw >= 2 && seatsRaw <= 10 ? Math.round(seatsRaw) : null;
+  const isSeatCheckout = !!seats && (selectedPlanId === 'agency_monthly' || selectedPlanId === 'agency_annual');
+
+  async function redirectToPayment(userId: string, userEmail: string) {
+    if (isSeatCheckout) {
+      setIsRedirecting(true);
+      try {
+        // Fetch diretto con token da getSession (auto-refresh incluso).
+        // Niente supabase.functions.invoke (deadlock storico, vedi aiVideo.ts) e
+        // niente token raw da localStorage (se scaduto il refresh manuale fallisce).
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.access_token) throw new Error('no session');
+        const resp = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/create-checkout-session`, {
+          method: 'POST',
+          headers: {
+            apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string,
+            Authorization: `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            packageId: selectedPlanId === 'agency_annual' ? 'agency-seat-annual' : 'agency-seat-monthly',
+            seats,
+            successUrl: 'https://www.getnearme.it?checkout=success',
+            cancelUrl: window.location.href.startsWith('https://www.getnearme.it') || window.location.href.startsWith('https://getnearme.it')
+              ? window.location.href
+              : 'https://www.getnearme.it?checkout=cancelled',
+          }),
+        });
+        const data = await resp.json().catch(() => null);
+        if (!resp.ok || !data?.url) throw new Error(data?.error || `HTTP ${resp.status}`);
+        window.location.href = data.url;
+      } catch (e) {
+        console.error('seat checkout error:', e);
+        setIsRedirecting(false);
+        setError('Errore nella creazione del pagamento. Riprova.');
+      }
+      return;
+    }
+
     const paymentLink = interval === 'annual' && plan.payment_link_annual
       ? plan.payment_link_annual
       : plan.payment_link_monthly;
+    if (!paymentLink) { setError('Piano non ancora disponibile per l\'acquisto.'); return; }
+    setIsRedirecting(true);
 
     const url = new URL(paymentLink);
     url.searchParams.set('client_reference_id', userId);
@@ -708,8 +763,10 @@ function CheckoutAgencyContent() {
     setIsEmailLoading(false);
   }
 
-  const currentPrice = plan ? (interval === 'annual' ? plan.price_annual : plan.price_monthly) : 0;
-  const periodLabel = interval === 'annual' ? t.perYear : t.perMonth;
+  const currentPrice = isSeatCheckout && seats
+    ? (selectedPlanId === 'agency_annual' ? 720 * seats : 80 * seats)
+    : plan ? (interval === 'annual' ? plan.price_annual : plan.price_monthly) : 0;
+  const periodLabel = interval === 'annual' || selectedPlanId === 'agency_annual' ? t.perYear : t.perMonth;
 
   function renderConsentBoxes() {
     return (
@@ -773,13 +830,13 @@ function CheckoutAgencyContent() {
     <div className="min-h-screen bg-[#fafaf8] font-sans text-[#1a1a2e]">
       <Navbar locale={locale} />
 
-      <main className="flex items-center justify-center px-4 py-24" style={{ minHeight: 'calc(100vh - 80px)' }}>
+      <main className="flex items-center justify-center px-4 py-24" style={{ minHeight: 'calc(100vh - 72px)' }}>
         <div className="max-w-md w-full">
           <div className="bg-white neo-border rounded-2xl p-8" style={{ boxShadow: '0 4px 16px rgba(16,24,40,0.08)' }}>
 
             {!emailSent && (
             <div className="text-center mb-6">
-              <svg width="48" height="48" viewBox="0 0 75 75" fill="none" xmlns="http://www.w3.org/2000/svg" className="mx-auto">
+              <svg width="43" height="43" viewBox="0 0 75 75" fill="none" xmlns="http://www.w3.org/2000/svg" className="mx-auto">
                 <circle cx="37.3135" cy="37.3135" r="37.3135" fill="#3B83F6"/>
                 <path d="M38.1986 19.2772C37.7253 18.8144 36.9701 18.819 36.5028 19.2878L26.2056 29.5955C25.1745 30.6266 24.2791 31.6652 23.643 33.0023C23.0068 34.3394 22.7008 35.6644 22.6707 37.0738C22.6315 38.8797 22.734 40.5771 23.8736 42.0378C24.8384 43.2739 26.0473 44.3095 27.092 45.4747C28.2391 46.7545 29.4511 47.9951 30.6284 49.2538C30.9434 49.5915 34.6682 53.5394 36.3671 55.3634C36.8299 55.8593 37.6092 55.8774 38.0946 55.4026L48.8621 44.8401C52.6638 41.1107 52.893 35.6237 49.9656 31.2657C48.7988 29.5277 47.1407 28.1002 45.579 26.6726C45.1056 26.24 44.376 26.2551 43.9193 26.7058L34.2628 36.2357C33.806 36.6864 33.7819 37.4145 34.2085 37.8939L36.5239 40.5047C36.9806 41.0203 37.7766 41.0489 38.2695 40.5665L44.7891 34.1826C44.7891 34.1826 47.6833 37 44.8132 40.6193L38.2408 47.1796C37.772 47.6469 37.0153 47.6499 36.5435 47.1871L30.3661 41.1198C30.3661 41.1198 26.0986 37.8984 30.4806 33.554C33.9025 30.1608 38.7368 25.3672 40.6919 23.4302C41.1698 22.9568 41.1667 22.182 40.6859 21.7117L38.1986 19.2772Z" fill="white"/>
               </svg>
@@ -857,7 +914,7 @@ function CheckoutAgencyContent() {
                   className="neo-border bg-white text-[#1a1a2e] hover:bg-slate-50 transition-all flex items-center justify-center gap-2 w-full py-3 rounded-xl font-bold text-base mb-4"
                   style={{ textDecoration: 'none' }}
                 >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
                   Apri la tua email
                 </a>
                 <p className="text-sm text-slate-400">Controlla anche la cartella spam</p>

@@ -68,6 +68,16 @@ export default async function ConfirmPage({ params }: Props) {
           <p className="text-slate-600 leading-relaxed text-lg max-w-xl mx-auto">
             {t.confirm.description}
           </p>
+
+          {/* CTA */}
+          <div className="mt-8">
+            <a
+              href={`/${locale}/dashboard`}
+              className="inline-flex items-center justify-center rounded-xl bg-blue-500 px-8 py-3.5 text-base font-semibold text-white transition hover:bg-blue-600"
+            >
+              {t.confirm.cta}
+            </a>
+          </div>
         </div>
       </main>
 

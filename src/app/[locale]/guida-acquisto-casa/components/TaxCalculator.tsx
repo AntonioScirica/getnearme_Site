@@ -103,22 +103,22 @@ export default function TaxCalculator() {
 
   const selectStyle: React.CSSProperties = {
     appearance: "none",
-    padding: "10px 36px 10px 14px",
+    padding: "9px 32px 9px 13px",
     border: "2px solid #e4e4e7",
-    borderRadius: 10,
-    fontSize: 14,
+    borderRadius: 9,
+    fontSize: 13,
     fontWeight: 600,
-    background: `#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2371717a' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") no-repeat right 12px center`,
+    background: `#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2371717a' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") no-repeat right 11px center`,
     color: "#1a1a2e",
     cursor: "pointer",
     width: "100%",
   };
 
   const inputStyle: React.CSSProperties = {
-    padding: "10px 14px",
+    padding: "9px 13px",
     border: "2px solid #e4e4e7",
-    borderRadius: 10,
-    fontSize: 14,
+    borderRadius: 9,
+    fontSize: 13,
     fontWeight: 600,
     color: "#1a1a2e",
     width: "100%",
@@ -126,10 +126,10 @@ export default function TaxCalculator() {
   };
 
   const labelStyle: React.CSSProperties = {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: 700,
     color: "#71717a",
-    marginBottom: 6,
+    marginBottom: 5,
     display: "block",
   };
 
@@ -138,10 +138,10 @@ export default function TaxCalculator() {
       style={{
         background: "#fff",
         border: "1px solid rgba(26,26,46,0.10)",
-        borderRadius: 20,
+        borderRadius: 18,
         boxShadow: "6px 6px 0px #f59e0b",
-        padding: "32px 32px 28px",
-        marginBottom: 28,
+        padding: "29px 29px 25px",
+        marginBottom: 25,
       }}
     >
       {/* Header */}
@@ -149,15 +149,15 @@ export default function TaxCalculator() {
         style={{
           display: "flex",
           alignItems: "center",
-          gap: 12,
-          marginBottom: 24,
+          gap: 11,
+          marginBottom: 22,
         }}
       >
         <div
           style={{
-            width: 44,
-            height: 44,
-            borderRadius: 12,
+            width: 40,
+            height: 40,
+            borderRadius: 11,
             background: "#fef3c7",
             border: "1px solid rgba(26,26,46,0.10)",
             display: "flex",
@@ -170,14 +170,14 @@ export default function TaxCalculator() {
         <div>
           <h3
             style={{
-              fontSize: 20,
+              fontSize: 18,
               fontWeight: 800,
               margin: 0,
             }}
           >
             Calcolatore imposte e costi
           </h3>
-          <p style={{ fontSize: 13, color: "#71717a", margin: 0 }}>
+          <p style={{ fontSize: 12, color: "#71717a", margin: 0 }}>
             Inserisci i dati per stimare tutti i costi dell&apos;acquisto
           </p>
         </div>
@@ -187,9 +187,9 @@ export default function TaxCalculator() {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 220px), 1fr))",
-          gap: 16,
-          marginBottom: 24,
+          gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 198px), 1fr))",
+          gap: 14,
+          marginBottom: 22,
         }}
       >
         <div>
@@ -294,16 +294,16 @@ export default function TaxCalculator() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          gap: 8,
+          gap: 7,
           width: "100%",
-          padding: "14px 24px",
+          padding: "13px 22px",
           background: priceNum > 0 ? "#1a1a2e" : "#d4d4d8",
           color: priceNum > 0 ? "#fff" : "#a1a1aa",
           border: "3px solid",
           borderColor: priceNum > 0 ? "#1a1a2e" : "#d4d4d8",
-          borderRadius: 12,
+          borderRadius: 11,
           fontWeight: 800,
-          fontSize: 15,
+          fontSize: 14,
           cursor: priceNum > 0 ? "pointer" : "not-allowed",
           transition: "all 0.15s",
         }}
@@ -316,16 +316,16 @@ export default function TaxCalculator() {
       {showResult && priceNum > 0 && (
         <div
           style={{
-            marginTop: 24,
-            paddingTop: 24,
+            marginTop: 22,
+            paddingTop: 22,
             borderTop: "2px solid #f3f4f6",
           }}
         >
           <h4
             style={{
-              fontSize: 16,
+              fontSize: 14,
               fontWeight: 800,
-              margin: "0 0 16px",
+              margin: "0 0 14px",
               color: "#1a1a2e",
             }}
           >
@@ -333,15 +333,15 @@ export default function TaxCalculator() {
           </h4>
 
           {/* Imposte */}
-          <div style={{ marginBottom: 16 }}>
+          <div style={{ marginBottom: 14 }}>
             <div
               style={{
-                fontSize: 13,
+                fontSize: 12,
                 fontWeight: 700,
                 color: "#a1a1aa",
                 textTransform: "uppercase",
                 letterSpacing: 0.5,
-                marginBottom: 8,
+                marginBottom: 7,
               }}
             >
               Imposte
@@ -358,9 +358,9 @@ export default function TaxCalculator() {
             {renditaNum > 0 && seller === "privato" && (
               <div
                 style={{
-                  fontSize: 12,
+                  fontSize: 11,
                   color: "#a1a1aa",
-                  padding: "4px 0 4px 12px",
+                  padding: "4px 0 4px 11px",
                   fontStyle: "italic",
                 }}
               >
@@ -371,15 +371,15 @@ export default function TaxCalculator() {
           </div>
 
           {/* Spese accessorie */}
-          <div style={{ marginBottom: 16 }}>
+          <div style={{ marginBottom: 14 }}>
             <div
               style={{
-                fontSize: 13,
+                fontSize: 12,
                 fontWeight: 700,
                 color: "#a1a1aa",
                 textTransform: "uppercase",
                 letterSpacing: 0.5,
-                marginBottom: 8,
+                marginBottom: 7,
               }}
             >
               Spese accessorie
@@ -404,7 +404,7 @@ export default function TaxCalculator() {
           <div
             style={{
               borderTop: "1px solid rgba(26,26,46,0.10)",
-              paddingTop: 12,
+              paddingTop: 11,
             }}
           >
             <Row
@@ -417,23 +417,23 @@ export default function TaxCalculator() {
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
-                padding: "12px 0 4px",
-                marginTop: 8,
+                padding: "11px 0 4px",
+                marginTop: 7,
                 borderTop: "2px solid #f59e0b",
               }}
             >
-              <span style={{ fontSize: 16, fontWeight: 900 }}>
+              <span style={{ fontSize: 14, fontWeight: 900 }}>
                 Costo totale stimato
               </span>
               <span
-                style={{ fontSize: 20, fontWeight: 900, color: "#f59e0b" }}
+                style={{ fontSize: 18, fontWeight: 900, color: "#f59e0b" }}
               >
                 {formatEuro(totalComplessivo)}
               </span>
             </div>
             <div
               style={{
-                fontSize: 12,
+                fontSize: 11,
                 color: "#a1a1aa",
                 marginTop: 4,
               }}
@@ -446,9 +446,9 @@ export default function TaxCalculator() {
           {/* Disclaimer */}
           <p
             style={{
-              fontSize: 12,
+              fontSize: 11,
               color: "#a1a1aa",
-              marginTop: 16,
+              marginTop: 14,
               lineHeight: 1.5,
               fontStyle: "italic",
             }}
@@ -478,8 +478,8 @@ function Row({
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
-        padding: "6px 0",
-        fontSize: bold ? 15 : 14,
+        padding: "5px 0",
+        fontSize: bold ? 14 : 13,
         fontWeight: bold ? 800 : 500,
         color: bold ? "#1a1a2e" : "#3f3f46",
       }}

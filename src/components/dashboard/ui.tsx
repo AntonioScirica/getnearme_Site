@@ -14,7 +14,7 @@ import {
   TriangleAlert, Lock, MoreVertical, FileSpreadsheet, FileText, RefreshCw, Minus,
   CircleCheck, Table as TableIcon, Scale, Car, Sofa, Fence, Sun, Trees, Warehouse, Snowflake,
   Info, TrainFront, ShoppingBag, Cross, Activity, School, Coffee, Dog, Music, Navigation, Crosshair,
-  TreePine, Link2, Menu,
+  TreePine, Link2, Menu, Moon,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -38,7 +38,7 @@ const ICONS: Record<string, LucideIcon> = {
   car: Car, sofa: Sofa, fence: Fence, sun: Sun, trees: Trees, warehouse: Warehouse, snowflake: Snowflake,
   info: Info, 'train-front': TrainFront, 'shopping-bag': ShoppingBag, cross: Cross, activity: Activity,
   school: School, coffee: Coffee, dog: Dog, music: Music, navigation: Navigation, crosshair: Crosshair,
-  'tree-pine': TreePine, link: Link2, menu: Menu,
+  'tree-pine': TreePine, link: Link2, menu: Menu, moon: Moon,
 };
 
 /** Parse a CSS declaration string into a React style object. */

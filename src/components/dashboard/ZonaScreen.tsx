@@ -119,14 +119,16 @@ export default function ZonaScreen({
     geoAsked.current = true;
     if (!getGeoEnabled()) return;
     if (typeof navigator === 'undefined' || !navigator.geolocation) return;
+    setLocating(true);
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         try {
           const addr = await reverseGeocode(pos.coords.latitude, pos.coords.longitude);
           if (addr) { suppressSug.current = true; setAddress((cur) => cur.trim() ? cur : addr); }
         } catch { /* ignore */ }
+        finally { setLocating(false); }
       },
-      () => { /* permesso negato: lascia vuoto */ },
+      () => { setLocating(false); /* permesso negato: lascia vuoto */ },
       { enableHighAccuracy: false, timeout: 8000, maximumAge: 600000 }
     );
   }, []);
@@ -230,8 +232,8 @@ export default function ZonaScreen({
       L.polygon(area.map((p) => [p.lat, p.lng]), { color: accent, weight: 2, opacity: 0.7, fillOpacity: 0.06, interactive: false, className: loading ? 'zona-analyzing' : '' }).addTo(group);
     } else if (center && !drawMode) {
       // marker centro (immobile/indirizzo) + cerchio raggio (nascosto durante il disegno)
-      const html = `<div style="width:22px;height:22px;border-radius:50%;background:${accent};border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.35)"></div>`;
-      const icon = L.divIcon({ html, className: '', iconSize: [22, 22], iconAnchor: [11, 11] });
+      const html = `<div style="width:20px;height:20px;border-radius:50%;background:${accent};border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.35)"></div>`;
+      const icon = L.divIcon({ html, className: '', iconSize: [20, 20], iconAnchor: [10, 10] });
       centerMarkerRef.current = L.marker([center.lat, center.lng], { icon, zIndexOffset: 1000 }).addTo(group);
       L.circle([center.lat, center.lng], { radius, color: accent, weight: 1, opacity: 0.4, fillOpacity: 0.05 }).addTo(group);
     }
@@ -247,9 +249,9 @@ export default function ZonaScreen({
         for (const poi of result[cat.key] || []) {
           // Lontano: pallino. Vicino (zoom): pin colorato con icona categoria (come estensione).
           const html = showIcons && svg
-            ? `<div style="width:28px;height:28px;border-radius:50%;background:${cat.color};border:2.5px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;color:#fff"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${svg}</svg></div>`
-            : `<div style="width:12px;height:12px;border-radius:50%;background:${cat.color};border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.3)"></div>`;
-          const sz = showIcons && svg ? 28 : 12;
+            ? `<div style="width:25px;height:25px;border-radius:50%;background:${cat.color};border:2.5px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;color:#fff"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${svg}</svg></div>`
+            : `<div style="width:11px;height:11px;border-radius:50%;background:${cat.color};border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.3)"></div>`;
+          const sz = showIcons && svg ? 25 : 11;
           const icon = L.divIcon({ html, className: '', iconSize: [sz, sz], iconAnchor: [sz / 2, sz / 2] });
           const m = L.marker([poi.lat, poi.lng], { icon });
           m.bindTooltip(`${poi.name} · ${formatDistance(poi.distance)}`, { direction: 'top' });
@@ -283,10 +285,10 @@ export default function ZonaScreen({
       drawPoints.forEach((p, i) => {
         // Primo punto evidenziato quando il poligono è chiudibile (≥3 punti).
         const canClose = i === 0 && drawPoints.length >= 3;
-        const sz = canClose ? 18 : 14;
+        const sz = canClose ? 16 : 13;
         const html = canClose
-          ? `<div style="width:18px;height:18px;border-radius:50%;background:${accent};border:3px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.35)"></div>`
-          : `<div style="width:14px;height:14px;border-radius:50%;background:#fff;border:3px solid ${accent};box-shadow:0 1px 3px rgba(0,0,0,.3)"></div>`;
+          ? `<div style="width:16px;height:16px;border-radius:50%;background:${accent};border:3px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.35)"></div>`
+          : `<div style="width:13px;height:13px;border-radius:50%;background:#fff;border:3px solid ${accent};box-shadow:0 1px 3px rgba(0,0,0,.3)"></div>`;
         // interactive:false → il click arriva alla mappa (così il check "vicino al
         // primo punto" chiude il poligono; un marker interattivo lo bloccherebbe).
         const m = L.marker([p.lat, p.lng], { icon: L.divIcon({ html, className: '', iconSize: [sz, sz], iconAnchor: [sz / 2, sz / 2] }), zIndexOffset: 2000 + i, interactive: false });
@@ -583,24 +585,24 @@ body { font-family: 'Inter', -apple-system, sans-serif; color: #111827; backgrou
     window.open(url, '_blank', 'noopener');
   };
 
-  const labelStyle = s('display:block;font-size:11px;font-weight:700;color:#b3aca1;text-transform:uppercase;letter-spacing:.04em;margin:0 0 10px');
+  const labelStyle = s('display:block;font-size:10px;font-weight:700;color:#b3aca1;text-transform:uppercase;letter-spacing:.04em;margin:0 0 9px');
 
   return (
     <div className="max-md:!flex-col" style={{ display: 'flex', height: '100%', minHeight: 'calc(100vh - 64px)' }}>
       <style>{`@keyframes spin { to { transform: rotate(360deg); } } @keyframes zfadein { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } } .zona-card { animation: zfadein .38s ease both; } .leaflet-container { font: inherit; } @keyframes zona-ai-pulse { 0%,100% { fill-opacity: .06; stroke-opacity: .6; stroke-width: 2; } 50% { fill-opacity: .26; stroke-opacity: 1; stroke-width: 3.5; } } .zona-analyzing { animation: zona-ai-pulse 1.3s ease-in-out infinite; fill: ${accent}; stroke: ${accent}; filter: drop-shadow(0 0 6px ${accent}aa); }`}</style>
       {/* LEFT: ricerca + risultati */}
-      <div className="max-md:!w-full max-md:!border-r-0 max-md:!order-2" style={{ width: 380, flexShrink: 0, borderRight: '1px solid #ece9e2', background: '#faf9f7', overflowY: 'auto', padding: '24px 18px 40px', display: 'flex', flexDirection: 'column' }}>
-        <h1 style={s('margin:0 0 4px;font-size:20px;font-weight:800;letter-spacing:-.3px')}>Analisi di zona</h1>
-        <div style={s('color:#8c867d;font-size:13px;margin-bottom:20px')}>Inserisci un indirizzo e scopri cosa c&apos;è in zona.</div>
+      <div className="max-md:!w-full max-md:!border-r-0 max-md:!order-2" style={{ width: 342, flexShrink: 0, borderRight: '1px solid #ece9e2', background: '#faf9f7', overflowY: 'auto', padding: '22px 16px 36px', display: 'flex', flexDirection: 'column' }}>
+        <h1 style={s('margin:0 0 4px;font-size:18px;font-weight:800;letter-spacing:-.3px')}>Analisi di zona</h1>
+        <div style={s('color:#8c867d;font-size:12px;margin-bottom:18px')}>Inserisci un indirizzo e scopri cosa c&apos;è in zona.</div>
 
         {locked && (
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, background: '#eef4fe', border: '1px solid #cfe0fb', borderRadius: 10, padding: '10px 12px', marginBottom: 16 }}>
-            <Icon name="info" size={15} color="#1d5fd0" style={{ marginTop: 1 }} />
-            <div style={{ fontSize: 12, lineHeight: 1.45, color: '#1d5fd0', fontWeight: 600 }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 7, background: '#eef4fe', border: '1px solid #cfe0fb', borderRadius: 9, padding: '9px 11px', marginBottom: 14 }}>
+            <Icon name="info" size={14} color="#1d5fd0" style={{ marginTop: 1 }} />
+            <div style={{ fontSize: 11, lineHeight: 1.45, color: '#1d5fd0', fontWeight: 600 }}>
               {blocked
                 ? <>
                     <div>Hai usato tutte le {FREE_LIMIT} analisi gratuite, i piani Agency le hanno illimitate.</div>
-                    <Box as="button" onClick={() => go?.('account')} style={s('border:none;background:#3B83F6;color:#fff;font-size:12px;font-weight:700;padding:8px 14px;border-radius:8px;cursor:pointer;margin-top:8px;display:inline-flex;align-items:center')} hover={s('background:#2563EB')}>Passa a un piano</Box>
+                    <Box as="button" onClick={() => go?.('account')} style={s('border:none;background:#3B83F6;color:#fff;font-size:11px;font-weight:700;padding:7px 13px;border-radius:7px;cursor:pointer;margin-top:7px;display:inline-flex;align-items:center')} hover={s('background:#2563EB')}>Passa a un piano</Box>
                   </>
                 : <>Piano Free: {remaining} analisi di zona rimaste su {FREE_LIMIT}. I piani Agency le hanno illimitate.</>}
             </div>
@@ -611,24 +613,24 @@ body { font-family: 'Inter', -apple-system, sans-serif; color: #111827; backgrou
         {propsWithAddr.length > 0 && (
           <>
             <div style={labelStyle}>Scegli un immobile</div>
-            <div ref={pickerRef} style={{ position: 'relative', marginBottom: 14 }}>
-              <Box onClick={() => { setPickerOpen((o) => !o); setPickerQ(''); }} style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#fff', border: `1px solid ${pickerOpen ? accent : '#e4e1da'}`, borderRadius: 10, padding: '10px 12px', cursor: 'pointer' }} hover={{ borderColor: accent }}>
-                <Icon name="building-2" size={16} color="#b3aca1" />
-                <span style={{ flex: 1, minWidth: 0, fontSize: 14, color: '#8c867d', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Seleziona dai tuoi immobili</span>
-                <Icon name={pickerOpen ? 'chevron-up' : 'chevron-down'} size={16} color="#b3aca1" />
+            <div ref={pickerRef} style={{ position: 'relative', marginBottom: 13 }}>
+              <Box onClick={() => { setPickerOpen((o) => !o); setPickerQ(''); }} style={{ display: 'flex', alignItems: 'center', gap: 7, background: '#fff', border: `1px solid ${pickerOpen ? accent : '#e4e1da'}`, borderRadius: 9, padding: '9px 11px', cursor: 'pointer' }} hover={{ borderColor: accent }}>
+                <Icon name="building-2" size={14} color="#b3aca1" />
+                <span style={{ flex: 1, minWidth: 0, fontSize: 13, color: '#8c867d', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Seleziona dai tuoi immobili</span>
+                <Icon name={pickerOpen ? 'chevron-up' : 'chevron-down'} size={14} color="#b3aca1" />
               </Box>
               {pickerOpen && (
-                <div style={{ position: 'absolute', top: 'calc(100% + 6px)', left: 0, right: 0, zIndex: 30, background: '#fff', border: '1px solid #e4e1da', borderRadius: 12, boxShadow: '0 8px 28px rgba(0,0,0,.12)', overflow: 'hidden' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', borderBottom: '1px solid #f0ede7' }}>
-                    <Icon name="search" size={14} color="#b3aca1" />
-                    <input autoFocus value={pickerQ} onChange={(e) => setPickerQ(e.target.value)} placeholder="Cerca immobile…" style={{ border: 'none', outline: 'none', background: 'transparent', fontSize: 13, width: '100%', color: '#211f1c' }} />
+                <div style={{ position: 'absolute', top: 'calc(100% + 5px)', left: 0, right: 0, zIndex: 30, background: '#fff', border: '1px solid #e4e1da', borderRadius: 11, boxShadow: '0 8px 28px rgba(0,0,0,.12)', overflow: 'hidden' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '8px 11px', borderBottom: '1px solid #f0ede7' }}>
+                    <Icon name="search" size={13} color="#b3aca1" />
+                    <input autoFocus value={pickerQ} onChange={(e) => setPickerQ(e.target.value)} placeholder="Cerca immobile…" style={{ border: 'none', outline: 'none', background: 'transparent', fontSize: 12, width: '100%', color: '#211f1c' }} />
                   </div>
-                  <div style={{ maxHeight: 240, overflowY: 'auto' }}>
-                    {filteredProps.length === 0 && <div style={{ fontSize: 13, color: '#b3aca1', padding: '12px 14px' }}>Nessun risultato.</div>}
+                  <div style={{ maxHeight: 216, overflowY: 'auto' }}>
+                    {filteredProps.length === 0 && <div style={{ fontSize: 12, color: '#b3aca1', padding: '11px 13px' }}>Nessun risultato.</div>}
                     {filteredProps.map((p) => (
-                      <Box key={p.id} onClick={() => { suppressSug.current = true; setAddress(p.addr); setPickerOpen(false); if (!loading && !blocked) runAnalysis(p.addr); }} style={{ display: 'flex', flexDirection: 'column', gap: 1, padding: '9px 14px', cursor: 'pointer', borderBottom: '1px solid #f6f4f0' }} hover={{ background: '#faf9f7' }}>
-                        <span style={{ fontSize: 13, fontWeight: 600, color: '#211f1c', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.nome}</span>
-                        <span style={{ fontSize: 11.5, color: '#b3aca1', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.addr}</span>
+                      <Box key={p.id} onClick={() => { suppressSug.current = true; setAddress(p.addr); setPickerOpen(false); if (!loading && !blocked) runAnalysis(p.addr); }} style={{ display: 'flex', flexDirection: 'column', gap: 1, padding: '8px 13px', cursor: 'pointer', borderBottom: '1px solid #f6f4f0' }} hover={{ background: '#faf9f7' }}>
+                        <span style={{ fontSize: 12, fontWeight: 600, color: '#211f1c', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.nome}</span>
+                        <span style={{ fontSize: 10.5, color: '#b3aca1', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.addr}</span>
                       </Box>
                     ))}
                   </div>
@@ -640,32 +642,32 @@ body { font-family: 'Inter', -apple-system, sans-serif; color: #111827; backgrou
 
         {/* Input indirizzo */}
         <div style={labelStyle}>{propsWithAddr.length > 0 ? 'Oppure inserisci un indirizzo' : 'Indirizzo'}</div>
-        <div ref={sugBoxRef} style={{ position: 'relative', marginBottom: 12 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#fff', border: `1px solid ${sugOpen ? accent : '#e4e1da'}`, borderRadius: 10, padding: '10px 12px' }}>
-            <Icon name="map-pin" size={16} color="#b3aca1" />
+        <div ref={sugBoxRef} style={{ position: 'relative', marginBottom: 11 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7, background: '#fff', border: `1px solid ${sugOpen ? accent : '#e4e1da'}`, borderRadius: 9, padding: '9px 11px' }}>
+            <Icon name="map-pin" size={14} color="#b3aca1" />
             <input
               value={address}
               onChange={(e) => setAddress(e.target.value)}
               onFocus={() => { if (addrSug.length) setSugOpen(true); }}
               onKeyDown={(e) => { if (e.key === 'Enter' && !loading && address.trim()) { setSugOpen(false); runAnalysis(); } if (e.key === 'Escape') setSugOpen(false); }}
               placeholder="Es. Via Fiori Chiari 12, Milano"
-              style={{ border: 'none', outline: 'none', background: 'transparent', fontSize: 14, width: '100%', color: '#211f1c' }}
+              style={{ border: 'none', outline: 'none', background: 'transparent', fontSize: 13, width: '100%', color: '#211f1c' }}
             />
-            {address && <span onClick={() => { suppressSug.current = true; setAddress(''); setAddrSug([]); setSugOpen(false); }} style={{ cursor: 'pointer', display: 'flex' }}><Icon name="x" size={14} color="#b3aca1" /></span>}
+            {address && <span onClick={() => { suppressSug.current = true; setAddress(''); setAddrSug([]); setSugOpen(false); }} style={{ cursor: 'pointer', display: 'flex' }}><Icon name="x" size={13} color="#b3aca1" /></span>}
             {geoEnabled && (
               <span onClick={() => { if (!locating) useMyLocation(); }} title="Usa la mia posizione" style={{ cursor: locating ? 'default' : 'pointer', display: 'flex', paddingLeft: 4, borderLeft: '1px solid #f0ede7' }}>
                 {locating
-                  ? <span style={{ width: 16, height: 16, border: `2px solid ${accent}`, borderTopColor: 'transparent', borderRadius: '50%', display: 'inline-block', animation: 'spin .8s linear infinite' }} />
-                  : <Icon name="crosshair" size={17} color={accent} />}
+                  ? <span style={{ width: 14, height: 14, border: `2px solid ${accent}`, borderTopColor: 'transparent', borderRadius: '50%', display: 'inline-block', animation: 'spin .8s linear infinite' }} />
+                  : <Icon name="crosshair" size={15} color={accent} />}
               </span>
             )}
           </div>
           {sugOpen && addrSug.length > 0 && (
-            <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, background: '#fff', border: '1px solid #e4e1da', borderRadius: 10, boxShadow: '0 12px 32px rgba(33,31,28,.12)', zIndex: 30, overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, background: '#fff', border: '1px solid #e4e1da', borderRadius: 9, boxShadow: '0 12px 32px rgba(33,31,28,.12)', zIndex: 30, overflow: 'hidden' }}>
               {addrSug.map((hit, i) => (
-                <Box key={`${hit.lat},${hit.lng},${i}`} onClick={() => pickSuggestion(hit)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', cursor: 'pointer', borderBottom: i < addrSug.length - 1 ? '1px solid #f6f4f0' : 'none' }} hover={{ background: '#faf9f7' }}>
-                  <Icon name="map-pin" size={14} color="#b3aca1" />
-                  <span style={{ fontSize: 13, color: '#211f1c', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{hit.label}</span>
+                <Box key={`${hit.lat},${hit.lng},${i}`} onClick={() => pickSuggestion(hit)} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '8px 11px', cursor: 'pointer', borderBottom: i < addrSug.length - 1 ? '1px solid #f6f4f0' : 'none' }} hover={{ background: '#faf9f7' }}>
+                  <Icon name="map-pin" size={13} color="#b3aca1" />
+                  <span style={{ fontSize: 12, color: '#211f1c', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{hit.label}</span>
                 </Box>
               ))}
             </div>
@@ -674,11 +676,11 @@ body { font-family: 'Inter', -apple-system, sans-serif; color: #111827; backgrou
 
         {/* Raggio */}
         <div style={labelStyle}>Raggio</div>
-        <div style={{ display: 'flex', gap: 6, marginBottom: 16 }}>
+        <div style={{ display: 'flex', gap: 5, marginBottom: 14 }}>
           {RADIUS_OPTIONS.map((opt) => {
             const on = radius === opt.value;
             return (
-              <Box key={opt.value} onClick={() => setRadius(opt.value)} style={{ flex: 1, textAlign: 'center', padding: '8px 0', borderRadius: 9, border: `1.5px solid ${on ? accent : '#e4e1da'}`, background: on ? '#eef4fe' : '#fff', color: on ? accent : '#8c867d', fontSize: 13, fontWeight: 700, cursor: 'pointer' }} hover={{ borderColor: accent }}>
+              <Box key={opt.value} onClick={() => setRadius(opt.value)} style={{ flex: 1, textAlign: 'center', padding: '7px 0', borderRadius: 8, border: `1.5px solid ${on ? accent : '#e4e1da'}`, background: on ? '#eef4fe' : '#fff', color: on ? accent : '#8c867d', fontSize: 12, fontWeight: 700, cursor: 'pointer' }} hover={{ borderColor: accent }}>
                 {opt.label}
               </Box>
             );
@@ -689,17 +691,17 @@ body { font-family: 'Inter', -apple-system, sans-serif; color: #111827; backgrou
         {(() => {
           const disabled = loading || blocked || !address.trim();
           return (
-            <Box as="button" onClick={() => runAnalysis()} disabled={disabled} style={{ border: 'none', background: disabled ? '#d8d4cb' : accent, color: '#fff', fontSize: 14, fontWeight: 700, padding: '12px 18px', borderRadius: 11, cursor: disabled ? 'not-allowed' : 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 22, opacity: loading ? 0.7 : 1, transition: 'background .15s' }} hover={disabled ? {} : { background: '#2563EB' }}>
-              {loading ? <><span style={{ width: 15, height: 15, border: '2px solid #fff', borderTopColor: 'transparent', borderRadius: '50%', display: 'inline-block', animation: 'spin 1s linear infinite' }} />Analisi…</> : <><Icon name="navigation" size={16} color="#fff" />Analizza zona</>}
+            <Box as="button" onClick={() => runAnalysis()} disabled={disabled} style={{ border: 'none', background: disabled ? '#d8d4cb' : accent, color: '#fff', fontSize: 13, fontWeight: 700, padding: '11px 16px', borderRadius: 10, cursor: disabled ? 'not-allowed' : 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7, marginBottom: 20, opacity: loading ? 0.7 : 1, transition: 'background .15s' }} hover={disabled ? {} : { background: '#2563EB' }}>
+              {loading ? <><span style={{ width: 13.5, height: 13.5, border: '2px solid #fff', borderTopColor: 'transparent', borderRadius: '50%', display: 'inline-block', animation: 'spin 1s linear infinite' }} />Analisi…</> : <><Icon name="navigation" size={14} color="#fff" />Analizza zona</>}
             </Box>
           );
         })()}
 
         {/* Secondary: scarica PDF dell'analisi (sotto Analizza zona) */}
         {result && (
-          <div style={{ marginTop: -12, marginBottom: 22 }}>
-            <Box as="button" onClick={downloadPdf} disabled={pdfBusy} style={{ width: '100%', boxSizing: 'border-box', border: `1px solid ${accent}`, background: '#fff', color: accent, fontSize: 14, fontWeight: 700, padding: '11px 18px', borderRadius: 11, cursor: pdfBusy ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: pdfBusy ? 0.6 : 1, transition: 'background .15s' }} hover={pdfBusy ? {} : { background: '#eef4fe' }}>
-              <Icon name="download" size={16} color={accent} />{pdfBusy ? 'Preparo il PDF…' : 'Scarica PDF'}
+          <div style={{ marginTop: -11, marginBottom: 20 }}>
+            <Box as="button" onClick={downloadPdf} disabled={pdfBusy} style={{ width: '100%', boxSizing: 'border-box', border: `1px solid ${accent}`, background: '#fff', color: accent, fontSize: 13, fontWeight: 700, padding: '10px 16px', borderRadius: 10, cursor: pdfBusy ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, opacity: pdfBusy ? 0.6 : 1, transition: 'background .15s' }} hover={pdfBusy ? {} : { background: '#eef4fe' }}>
+              <Icon name="download" size={14} color={accent} />{pdfBusy ? 'Preparo il PDF…' : 'Scarica PDF'}
             </Box>
           </div>
         )}
@@ -707,37 +709,37 @@ body { font-family: 'Inter', -apple-system, sans-serif; color: #111827; backgrou
         {/* Risultati */}
         {result && (
           <>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 9 }}>
               <div style={labelStyle}>Cosa c&apos;è in zona</div>
-              <span style={{ fontSize: 12, color: '#8c867d', fontWeight: 600 }}>{totalFound} luoghi</span>
+              <span style={{ fontSize: 11, color: '#8c867d', fontWeight: 600 }}>{totalFound} luoghi</span>
             </div>
-            <div key={resultId} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div key={resultId} style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
               {POI_CATEGORIES.filter((cat) => (result[cat.key] || []).length > 0).map((cat, idx) => {
                 const pois = result[cat.key] || [];
                 const isOpen = expanded === cat.key;
                 const isActive = activeCats.has(cat.key);
                 const nearest = pois[0];
                 return (
-                  <div key={cat.key} className="zona-card" style={{ animationDelay: `${idx * 70}ms`, background: '#fff', border: '1px solid #e4e1da', borderRadius: 12, overflow: 'hidden', opacity: isActive ? 1 : 0.45, transition: 'opacity .15s' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 12px', cursor: 'pointer' }} onClick={() => setExpanded(isOpen ? null : cat.key)}>
-                      <span onClick={(e) => { e.stopPropagation(); toggleCat(cat.key); }} title={isActive ? 'Nascondi sulla mappa' : 'Mostra sulla mappa'} style={{ width: 30, height: 30, borderRadius: 8, flexShrink: 0, background: isActive ? cat.color : '#f0ede7', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                        <Icon name={cat.icon} size={16} color={isActive ? '#fff' : '#b3aca1'} />
+                  <div key={cat.key} className="zona-card" style={{ animationDelay: `${idx * 70}ms`, background: '#fff', border: '1px solid #e4e1da', borderRadius: 11, overflow: 'hidden', opacity: isActive ? 1 : 0.45, transition: 'opacity .15s' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '10px 11px', cursor: 'pointer' }} onClick={() => setExpanded(isOpen ? null : cat.key)}>
+                      <span onClick={(e) => { e.stopPropagation(); toggleCat(cat.key); }} title={isActive ? 'Nascondi sulla mappa' : 'Mostra sulla mappa'} style={{ width: 27, height: 27, borderRadius: 7, flexShrink: 0, background: isActive ? cat.color : '#f0ede7', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                        <Icon name={cat.icon} size={14} color={isActive ? '#fff' : '#b3aca1'} />
                       </span>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 13.5, fontWeight: 700, color: '#211f1c' }}>{cat.label}</div>
-                        <div style={{ fontSize: 11.5, color: '#8c867d', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: '#211f1c' }}>{cat.label}</div>
+                        <div style={{ fontSize: 10.5, color: '#8c867d', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                           {nearest ? `Più vicino: ${formatDistance(nearest.distance)}` : ''}
                         </div>
                       </div>
-                      <span style={{ fontSize: 13, fontWeight: 800, color: accent, minWidth: 22, textAlign: 'right' }}>{pois.length}</span>
-                      <Icon name={isOpen ? 'chevron-up' : 'chevron-down'} size={15} color="#b3aca1" />
+                      <span style={{ fontSize: 12, fontWeight: 800, color: accent, minWidth: 20, textAlign: 'right' }}>{pois.length}</span>
+                      <Icon name={isOpen ? 'chevron-up' : 'chevron-down'} size={13.5} color="#b3aca1" />
                     </div>
                     {isOpen && (
-                      <div style={{ borderTop: '1px solid #f0ede7', maxHeight: 240, overflowY: 'auto' }}>
+                      <div style={{ borderTop: '1px solid #f0ede7', maxHeight: 216, overflowY: 'auto' }}>
                         {pois.slice(0, 30).map((poi) => (
-                          <Box key={`${poi.id}`} onClick={() => openDirections(poi)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px 8px 52px', borderBottom: '1px solid #f6f4f0', cursor: 'pointer' }} hover={{ background: '#faf9f7' }}>
-                            <div style={{ flex: 1, minWidth: 0, fontSize: 12.5, color: '#211f1c', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{poi.name}</div>
-                            <div style={{ fontSize: 12, fontWeight: 700, color: '#8c867d', flexShrink: 0 }}>{formatDistance(poi.distance)}</div>
+                          <Box key={`${poi.id}`} onClick={() => openDirections(poi)} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '7px 11px 7px 47px', borderBottom: '1px solid #f6f4f0', cursor: 'pointer' }} hover={{ background: '#faf9f7' }}>
+                            <div style={{ flex: 1, minWidth: 0, fontSize: 11.5, color: '#211f1c', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{poi.name}</div>
+                            <div style={{ fontSize: 11, fontWeight: 700, color: '#8c867d', flexShrink: 0 }}>{formatDistance(poi.distance)}</div>
                           </Box>
                         ))}
                       </div>
@@ -756,30 +758,30 @@ body { font-family: 'Inter', -apple-system, sans-serif; color: #111827; backgrou
         <div ref={mapEl} style={{ position: 'absolute', inset: 0 }} />
 
         {/* Controlli disegno area (in alto a destra) */}
-        <div style={{ position: 'absolute', top: 14, right: 14, zIndex: 500, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
+        <div style={{ position: 'absolute', top: 13, right: 13, zIndex: 500, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 7 }}>
           {!drawMode ? (
-            <div style={{ display: 'flex', gap: 8 }}>
+            <div style={{ display: 'flex', gap: 7 }}>
               {area && (
-                <Box as="button" onClick={() => removeAreaRef.current()} title="Rimuovi area" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#fff', color: '#8c867d', border: '1px solid #e4e1da', borderRadius: 10, padding: '9px 12px', fontSize: 13, fontWeight: 700, cursor: 'pointer', boxShadow: '0 2px 10px rgba(0,0,0,.10)' }} hover={{ borderColor: '#ef4444', color: '#ef4444' }}>
-                  <Icon name="x" size={15} color="currentColor" />Rimuovi area
+                <Box as="button" onClick={() => removeAreaRef.current()} title="Rimuovi area" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: '#fff', color: '#8c867d', border: '1px solid #e4e1da', borderRadius: 9, padding: '8px 11px', fontSize: 12, fontWeight: 700, cursor: 'pointer', boxShadow: '0 2px 10px rgba(0,0,0,.10)' }} hover={{ borderColor: '#ef4444', color: '#ef4444' }}>
+                  <Icon name="x" size={13.5} color="currentColor" />Rimuovi area
                 </Box>
               )}
-              <Box as="button" onClick={startDraw} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: area ? accent : '#fff', color: area ? '#fff' : '#211f1c', border: `1px solid ${area ? accent : '#e4e1da'}`, borderRadius: 10, padding: '9px 14px', fontSize: 13, fontWeight: 700, cursor: 'pointer', boxShadow: '0 2px 10px rgba(0,0,0,.10)' }} hover={{ borderColor: accent }}>
-                <Icon name="navigation" size={15} color={area ? '#fff' : accent} />{area ? 'Ridisegna area' : 'Disegna area'}
+              <Box as="button" onClick={startDraw} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: area ? accent : '#fff', color: area ? '#fff' : '#211f1c', border: `1px solid ${area ? accent : '#e4e1da'}`, borderRadius: 9, padding: '8px 13px', fontSize: 12, fontWeight: 700, cursor: 'pointer', boxShadow: '0 2px 10px rgba(0,0,0,.10)' }} hover={{ borderColor: accent }}>
+                <Icon name="navigation" size={13.5} color={area ? '#fff' : accent} />{area ? 'Ridisegna area' : 'Disegna area'}
               </Box>
             </div>
           ) : (
-            <div style={{ background: '#fff', border: '1px solid #e4e1da', borderRadius: 12, padding: 12, boxShadow: '0 4px 18px rgba(0,0,0,.12)', width: 230 }}>
-              <div style={{ fontSize: 12.5, fontWeight: 700, color: '#211f1c', marginBottom: 4 }}>Disegna l&apos;area</div>
-              <div style={{ fontSize: 11.5, color: '#8c867d', lineHeight: 1.4, marginBottom: 10 }}>Clicca sulla mappa per aggiungere i vertici ({drawPoints.length}).</div>
-              <Box as="button" onClick={() => runAreaAnalysis()} disabled={drawPoints.length < 3 || loading} style={{ width: '100%', textAlign: 'center', background: drawPoints.length < 3 ? '#d8d4cb' : accent, color: '#fff', border: 'none', borderRadius: 9, padding: '9px 0', fontSize: 13, fontWeight: 700, cursor: drawPoints.length < 3 ? 'not-allowed' : 'pointer', marginBottom: 6 }} hover={drawPoints.length < 3 ? {} : { background: '#2563EB' }}>
+            <div style={{ background: '#fff', border: '1px solid #e4e1da', borderRadius: 11, padding: 11, boxShadow: '0 4px 18px rgba(0,0,0,.12)', width: 207 }}>
+              <div style={{ fontSize: 11.5, fontWeight: 700, color: '#211f1c', marginBottom: 4 }}>Disegna l&apos;area</div>
+              <div style={{ fontSize: 10.5, color: '#8c867d', lineHeight: 1.4, marginBottom: 9 }}>Clicca sulla mappa per aggiungere i vertici ({drawPoints.length}).</div>
+              <Box as="button" onClick={() => runAreaAnalysis()} disabled={drawPoints.length < 3 || loading} style={{ width: '100%', textAlign: 'center', background: drawPoints.length < 3 ? '#d8d4cb' : accent, color: '#fff', border: 'none', borderRadius: 8, padding: '8px 0', fontSize: 12, fontWeight: 700, cursor: drawPoints.length < 3 ? 'not-allowed' : 'pointer', marginBottom: 5 }} hover={drawPoints.length < 3 ? {} : { background: '#2563EB' }}>
                 Analizza area
               </Box>
-              <div style={{ display: 'flex', gap: 6 }}>
-                <Box as="button" onClick={undoPoint} disabled={!drawPoints.length} style={{ flex: 1, textAlign: 'center', background: '#fff', color: '#8c867d', border: '1px solid #e4e1da', borderRadius: 9, padding: '7px 0', fontSize: 12.5, fontWeight: 600, cursor: drawPoints.length ? 'pointer' : 'not-allowed' }} hover={{ borderColor: '#211f1c', color: '#211f1c' }}>
+              <div style={{ display: 'flex', gap: 5 }}>
+                <Box as="button" onClick={undoPoint} disabled={!drawPoints.length} style={{ flex: 1, textAlign: 'center', background: '#fff', color: '#8c867d', border: '1px solid #e4e1da', borderRadius: 8, padding: '6px 0', fontSize: 11.5, fontWeight: 600, cursor: drawPoints.length ? 'pointer' : 'not-allowed' }} hover={{ borderColor: '#211f1c', color: '#211f1c' }}>
                   Annulla punto
                 </Box>
-                <Box as="button" onClick={cancelDraw} style={{ flex: 1, textAlign: 'center', background: '#fff', color: '#8c867d', border: '1px solid #e4e1da', borderRadius: 9, padding: '7px 0', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }} hover={{ borderColor: '#ef4444', color: '#ef4444' }}>
+                <Box as="button" onClick={cancelDraw} style={{ flex: 1, textAlign: 'center', background: '#fff', color: '#8c867d', border: '1px solid #e4e1da', borderRadius: 8, padding: '6px 0', fontSize: 11.5, fontWeight: 600, cursor: 'pointer' }} hover={{ borderColor: '#ef4444', color: '#ef4444' }}>
                   Esci
                 </Box>
               </div>
@@ -789,10 +791,10 @@ body { font-family: 'Inter', -apple-system, sans-serif; color: #111827; backgrou
 
         {!result && !loading && !drawMode && (
           <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
-            <div style={{ background: 'rgba(255,255,255,.92)', borderRadius: 14, padding: '20px 26px', textAlign: 'center', boxShadow: '0 4px 18px rgba(0,0,0,.08)' }}>
-              <div style={{ width: 48, height: 48, borderRadius: 14, background: '#eef4fe', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px' }}><Icon name="map-pin" size={22} color={accent} /></div>
-              <div style={{ fontSize: 14, fontWeight: 800, marginBottom: 4 }}>Analizza una zona</div>
-              <div style={{ fontSize: 13, color: '#8c867d', maxWidth: 260 }}>Inserisci un indirizzo, oppure disegna un&apos;area sulla mappa per vedere i servizi.</div>
+            <div style={{ background: 'rgba(255,255,255,.92)', borderRadius: 13, padding: '18px 23px', textAlign: 'center', boxShadow: '0 4px 18px rgba(0,0,0,.08)' }}>
+              <div style={{ width: 43, height: 43, borderRadius: 13, background: '#eef4fe', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 9px' }}><Icon name="map-pin" size={20} color={accent} /></div>
+              <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 4 }}>Analizza una zona</div>
+              <div style={{ fontSize: 12, color: '#8c867d', maxWidth: 234 }}>Inserisci un indirizzo, oppure disegna un&apos;area sulla mappa per vedere i servizi.</div>
             </div>
           </div>
         )}

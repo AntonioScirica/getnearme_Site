@@ -90,19 +90,19 @@ export default function SocialPopup({ messages }: SocialPopupProps) {
       }}
       style={{
         position: 'fixed',
-        bottom: 16,
-        left: 12,
-        right: 12,
+        bottom: 14,
+        left: 11,
+        right: 11,
         zIndex: 9999,
         background: '#fff',
         border: '1px solid rgba(26,26,46,0.10)',
-        borderRadius: 14,
-        padding: '14px 20px',
+        borderRadius: 13,
+        padding: '13px 18px',
         display: 'flex',
         alignItems: 'center',
-        gap: 12,
-        maxWidth: 370,
-        width: 'calc(100% - 24px)',
+        gap: 11,
+        maxWidth: 333,
+        width: 'calc(100% - 22px)',
         boxShadow: '0 8px 24px rgba(16,24,40,0.14)',
         cursor: 'pointer',
         opacity: fading ? 0 : 1,
@@ -114,8 +114,8 @@ export default function SocialPopup({ messages }: SocialPopupProps) {
         <Icon name={p.icon} size={22} />
       </span>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ color: '#1a1a2e', fontSize: 13, fontWeight: 700, lineHeight: 1.4 }}>{p.text}</div>
-        {p.time && <div style={{ color: '#6b7280', fontSize: 11, marginTop: 2 }}>{p.time}</div>}
+        <div style={{ color: '#1a1a2e', fontSize: 11.5, fontWeight: 700, lineHeight: 1.4 }}>{p.text}</div>
+        {p.time && <div style={{ color: '#6b7280', fontSize: 10, marginTop: 2 }}>{p.time}</div>}
       </div>
       <style>{`
         @keyframes popupFadeIn {

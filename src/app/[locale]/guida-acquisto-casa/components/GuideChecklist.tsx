@@ -92,10 +92,10 @@ export default function GuideChecklist({
       style={{
         background: allDone ? "#f0fdf4" : "#fff",
         border: `3px solid ${allDone ? "#16a34a" : "#1a1a2e"}`,
-        borderRadius: 20,
+        borderRadius: 18,
         boxShadow: `6px 6px 0px ${allDone ? "#16a34a" : "#1a1a2e"}`,
-        padding: "28px 32px",
-        marginBottom: 28,
+        padding: "25px 29px",
+        marginBottom: 25,
         transition: "background 0.3s, border-color 0.3s, box-shadow 0.3s",
       }}
     >
@@ -105,23 +105,23 @@ export default function GuideChecklist({
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          marginBottom: 20,
+          marginBottom: 18,
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
           <ListChecks size={22} color={allDone ? "#16a34a" : "#f59e0b"} />
-          <span style={{ fontWeight: 800, fontSize: 18 }}>
+          <span style={{ fontWeight: 800, fontSize: 16 }}>
             {allDone ? "Completato!" : "Checklist"}
           </span>
         </div>
         <span
           style={{
-            fontSize: 13,
+            fontSize: 12,
             fontWeight: 700,
             color: allDone ? "#16a34a" : "#71717a",
             background: allDone ? "#dcfce7" : "#f4f4f5",
-            padding: "4px 12px",
-            borderRadius: 8,
+            padding: "4px 11px",
+            borderRadius: 7,
           }}
         >
           {doneCount}/{items.length}
@@ -131,10 +131,10 @@ export default function GuideChecklist({
       {/* Progress mini-bar */}
       <div
         style={{
-          height: 6,
+          height: 5,
           background: "#e4e4e7",
           borderRadius: 3,
-          marginBottom: 20,
+          marginBottom: 18,
           overflow: "hidden",
         }}
       >
@@ -150,7 +150,7 @@ export default function GuideChecklist({
       </div>
 
       {/* Items */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
         {items.map((item, i) => (
           <button
             key={i}
@@ -158,11 +158,11 @@ export default function GuideChecklist({
             style={{
               display: "flex",
               alignItems: "flex-start",
-              gap: 12,
-              padding: "10px 14px",
+              gap: 11,
+              padding: "9px 13px",
               background: checked[i] ? "#f0fdf4" : "#fafafa",
               border: `2px solid ${checked[i] ? "#bbf7d0" : "#e4e4e7"}`,
-              borderRadius: 12,
+              borderRadius: 11,
               cursor: "pointer",
               textAlign: "left",
               transition: "all 0.2s",
@@ -172,10 +172,10 @@ export default function GuideChecklist({
           >
             <div
               style={{
-                width: 24,
-                height: 24,
-                minWidth: 24,
-                borderRadius: 7,
+                width: 22,
+                height: 22,
+                minWidth: 22,
+                borderRadius: 6,
                 border: `2px solid ${checked[i] ? "#16a34a" : "#d4d4d8"}`,
                 background: checked[i] ? "#16a34a" : "#fff",
                 display: "flex",
@@ -189,7 +189,7 @@ export default function GuideChecklist({
             </div>
             <span
               style={{
-                fontSize: 14,
+                fontSize: 13,
                 lineHeight: 1.5,
                 fontWeight: 500,
                 textDecoration: checked[i] ? "line-through" : "none",

@@ -456,7 +456,7 @@ const PHOTOS = [
   'https://images.unsplash.com/photo-1600573472550-8090b5e0745e?w=600&h=750&fit=crop',   // giardino
 ];
 
-const ALL_TEMPLATES: { name: string; Component: React.FC<{ photo: string; bd?: number }>; bd: number; photo: string }[] = [
+export const ALL_TEMPLATES: { name: string; Component: React.FC<{ photo: string; bd?: number }>; bd: number; photo: string }[] = [
   { name: 'Gradient', Component: TplGradient, bd: 0, photo: PHOTOS[0] },
   { name: 'Blue', Component: TplBlue, bd: 0.8, photo: PHOTOS[1] },
   { name: 'Diagonal', Component: TplDiagonal, bd: 1.6, photo: PHOTOS[2] },

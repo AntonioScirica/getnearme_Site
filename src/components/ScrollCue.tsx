@@ -25,7 +25,7 @@ export default function ScrollCue() {
       aria-hidden="true"
       style={{
         position: 'fixed',
-        bottom: 18,
+        bottom: 16,
         left: '50%',
         transform: 'translateX(-50%)',
         zIndex: 40,
@@ -36,8 +36,8 @@ export default function ScrollCue() {
     >
       <span
         style={{
-          width: 44,
-          height: 44,
+          width: 40,
+          height: 40,
           borderRadius: 999,
           background: '#fff',
           border: '1px solid rgba(26,26,46,0.10)',
@@ -49,7 +49,7 @@ export default function ScrollCue() {
           animation: 'scroll-cue-bounce 1.6s ease-in-out infinite',
         }}
       >
-        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
           <path d="m6 9 6 6 6-6" />
         </svg>
       </span>

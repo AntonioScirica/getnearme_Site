@@ -52,6 +52,26 @@ export async function fetchBatchPhotos(batchId: string): Promise<BatchPhoto[]> {
   }
 }
 
+export type GalleryPhoto = BatchPhoto & { batchId: string; projectId: string | null; createdAt: string }
+
+// Foto recenti cross-batch in UNA sola richiesta (invece di 1 fetch per
+// batch): risolve la lentezza di Contenuti recenti/Galleria con molti batch.
+export async function fetchRecentPhotos(limit?: number): Promise<GalleryPhoto[]> {
+  const token = getTokenFast()
+  try {
+    const qs = limit ? `?limit=${limit}` : ''
+    const res = await fetch(`/api/staging-batches/photos${qs}`, {
+      headers: { 'Authorization': `Bearer ${token}` },
+    })
+    if (!res.ok) return []
+    const json = await res.json()
+    return json.photos ?? []
+  } catch (err) {
+    console.error('fetchRecentPhotos error:', err)
+    return []
+  }
+}
+
 export async function deleteBatchPhoto(batchId: string, index: number): Promise<boolean> {
   const token = getTokenFast()
   try {

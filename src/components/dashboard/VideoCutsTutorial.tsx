@@ -180,28 +180,28 @@ export function VideoCutsTutorial({ open, onClose }: { open: boolean; onClose: (
   // Portal su body: evita che un antenato con transform sposti il popup fuori
   // centro (position:fixed userebbe quell'antenato come riferimento).
   return createPortal(
-    <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 10000, background: 'rgba(24,21,17,.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 10000, background: 'rgba(24,21,17,.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 18 }}>
       <style dangerouslySetInnerHTML={{ __html: CSS }} />
-      <div onClick={e => e.stopPropagation()} className="max-md:!max-w-full" style={{ width: '100%', maxWidth: 380, background: 'var(--bg-card)', borderRadius: 16, boxShadow: '0 24px 64px rgba(20,18,15,.32)', padding: '22px 24px', animation: 'vct-in .3s cubic-bezier(0.16,1,0.3,1) forwards' }}>
+      <div onClick={e => e.stopPropagation()} className="max-md:!max-w-full" style={{ width: '100%', maxWidth: 342, background: 'var(--bg-card)', borderRadius: 14.5, boxShadow: '0 24px 64px rgba(20,18,15,.32)', padding: '20px 22px', animation: 'vct-in .3s cubic-bezier(0.16,1,0.3,1) forwards' }}>
         {/* area animata, stile tour */}
-        <div style={{ height: 150, borderRadius: 12, background: 'linear-gradient(135deg,#eef4fe,var(--bg-hover))', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}>
+        <div style={{ height: 135, borderRadius: 11, background: 'linear-gradient(135deg,#eef4fe,var(--bg-hover))', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 13 }}>
           {slide.scene}
         </div>
         {/* header: N di M + Salta */}
-        <div style={s('display:flex;align-items:center;justify-content:space-between;margin-bottom:6px')}>
-          <span style={s('font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#1d5fd0')}>{(idx + 1) + ' di ' + SLIDES.length}</span>
-          <span onClick={onClose} style={s('font-size:12px;font-weight:600;color:#b3aca1;cursor:pointer;padding:4px')}>Salta</span>
+        <div style={s('display:flex;align-items:center;justify-content:space-between;margin-bottom:5px')}>
+          <span style={s('font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#1d5fd0')}>{(idx + 1) + ' di ' + SLIDES.length}</span>
+          <span onClick={onClose} style={s('font-size:11px;font-weight:600;color:#b3aca1;cursor:pointer;padding:4px')}>Salta</span>
         </div>
         {/* titolo + testo */}
-        <div style={s('font-size:16px;font-weight:800;letter-spacing:-.2px;margin-bottom:4px')}>{slide.title}</div>
-        <div style={s('font-size:13px;color:var(--text-sec);line-height:1.5;margin-bottom:16px')}>{slide.body}</div>
-        <div style={{ height: 1, background: 'var(--border-light)', margin: '0 0 16px' }} />
+        <div style={s('font-size:14.5px;font-weight:800;letter-spacing:-.2px;margin-bottom:4px')}>{slide.title}</div>
+        <div style={s('font-size:11.5px;color:var(--text-sec);line-height:1.5;margin-bottom:14px')}>{slide.body}</div>
+        <div style={{ height: 1, background: 'var(--border-light)', margin: '0 0 14px' }} />
         {/* footer */}
         <div style={s('display:flex;align-items:center;justify-content:space-between')}>
           {idx > 0
-            ? <Box as="button" onClick={() => setIdx(i => Math.max(0, i - 1))} style={s('border:1px solid var(--border-main);background:var(--bg-card);font-size:12.5px;font-weight:700;padding:9px 16px;border-radius:8px;cursor:pointer;min-height:38px') as React.CSSProperties} hover={s('background:var(--bg-hover)')}>Indietro</Box>
+            ? <Box as="button" onClick={() => setIdx(i => Math.max(0, i - 1))} style={s('border:1px solid var(--border-main);background:var(--bg-card);font-size:11.5px;font-weight:700;padding:8px 14px;border-radius:7px;cursor:pointer;min-height:34px') as React.CSSProperties} hover={s('background:var(--bg-hover)')}>Indietro</Box>
             : <span />}
-          <Box as="button" onClick={() => { if (last) onClose(); else setIdx(i => i + 1); }} style={s(`border:none;background:${ACCENT};color:var(--bg-card);font-size:12.5px;font-weight:700;padding:9px 18px;border-radius:8px;cursor:pointer;margin-left:auto;min-height:38px;display:flex;align-items:center;gap:6px`) as React.CSSProperties} hover={s('background:#2b6fe0')}>
+          <Box as="button" onClick={() => { if (last) onClose(); else setIdx(i => i + 1); }} style={s(`border:none;background:${ACCENT};color:var(--bg-card);font-size:11.5px;font-weight:700;padding:8px 16px;border-radius:7px;cursor:pointer;margin-left:auto;min-height:34px;display:flex;align-items:center;gap:5px`) as React.CSSProperties} hover={s('background:#2b6fe0')}>
             {last ? 'Ho capito' : 'Avanti'}
           </Box>
         </div>
@@ -214,8 +214,8 @@ export function VideoCutsTutorial({ open, onClose }: { open: boolean; onClose: (
 // Pulsantino "Tutorial" da mettere negli step (riapre l'onboarding).
 export function TutorialButton({ onClick }: { onClick: () => void }) {
   return (
-    <Box as="button" onClick={onClick} style={s('flex:none;display:inline-flex;align-items:center;gap:7px;border:1px solid #cfe0fb;background:#eef4fe;color:#1d5fd0;font-size:13px;font-weight:700;padding:9px 14px;border-radius:10px;cursor:pointer') as React.CSSProperties} hover={s('background:#e2eefe')}>
-      <Icon name="circle-help" size={15} color="#1d5fd0" />Tutorial
+    <Box as="button" onClick={onClick} style={s('flex:none;display:inline-flex;align-items:center;gap:6px;border:1px solid #cfe0fb;background:#eef4fe;color:#1d5fd0;font-size:11.5px;font-weight:700;padding:8px 12.5px;border-radius:9px;cursor:pointer') as React.CSSProperties} hover={s('background:#e2eefe')}>
+      <Icon name="circle-help" size={13.5} color="#1d5fd0" />Tutorial
     </Box>
   );
 }

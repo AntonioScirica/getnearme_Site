@@ -32,27 +32,27 @@ export default function SupportFormClient({ locale }: { locale: string }) {
 
   if (status === 'success') {
     return (
-      <div style={{ textAlign: 'center', padding: '60px 0' }}>
+      <div style={{ textAlign: 'center', padding: '54px 0' }}>
         <div
           style={{
-            width: 72,
-            height: 72,
+            width: 65,
+            height: 65,
             borderRadius: '50%',
             background: '#10b981',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            margin: '0 auto 24px',
-            fontSize: 36,
+            margin: '0 auto 22px',
+            fontSize: 32,
             color: '#fff',
           }}
         >
           ✓
         </div>
-        <h2 style={{ fontSize: 28, fontWeight: 900, color: '#1a1a2e', marginBottom: 8 }}>
+        <h2 style={{ fontSize: 25, fontWeight: 900, color: '#1a1a2e', marginBottom: 7 }}>
           Messaggio inviato
         </h2>
-        <p style={{ color: '#71717a', fontSize: 16, marginBottom: 32 }}>
+        <p style={{ color: '#71717a', fontSize: 14, marginBottom: 29 }}>
           Ti risponderemo il prima possibile.
         </p>
         <Link
@@ -62,10 +62,10 @@ export default function SupportFormClient({ locale }: { locale: string }) {
             background: '#f59e0b',
             color: '#1a1a2e',
             border: '1px solid rgba(26,26,46,0.10)',
-            borderRadius: 12,
-            padding: '14px 32px',
+            borderRadius: 11,
+            padding: '13px 29px',
             fontWeight: 900,
-            fontSize: 16,
+            fontSize: 14,
             textDecoration: 'none',
           }}
         >
@@ -76,13 +76,13 @@ export default function SupportFormClient({ locale }: { locale: string }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
       {/* Tipo richiesta */}
       <div>
-        <label style={{ display: 'block', fontSize: 14, fontWeight: 700, color: '#1a1a2e', marginBottom: 8 }}>
+        <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#1a1a2e', marginBottom: 7 }}>
           Tipo di richiesta
         </label>
-        <div style={{ display: 'flex', gap: 12 }}>
+        <div style={{ display: 'flex', gap: 11 }}>
           {(['support', 'bug'] as const).map((t) => (
             <button
               key={t}
@@ -90,22 +90,22 @@ export default function SupportFormClient({ locale }: { locale: string }) {
               onClick={() => setType(t)}
               style={{
                 flex: 1,
-                padding: '12px 16px',
-                borderRadius: 12,
+                padding: '11px 14px',
+                borderRadius: 11,
                 border: `2px solid ${type === t ? '#2563eb' : '#e5e7eb'}`,
                 background: type === t ? '#eff6ff' : '#fff',
                 color: type === t ? '#2563eb' : '#71717a',
                 fontWeight: 700,
-                fontSize: 14,
+                fontSize: 13,
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: 8,
+                gap: 7,
                 transition: 'all 0.15s',
               }}
             >
-              <span style={{ fontSize: 18 }}>{t === 'support' ? '💬' : '🐛'}</span>
+              <span style={{ fontSize: 16 }}>{t === 'support' ? '💬' : '🐛'}</span>
               {t === 'support' ? 'Supporto' : 'Segnala un problema'}
             </button>
           ))}
@@ -116,7 +116,7 @@ export default function SupportFormClient({ locale }: { locale: string }) {
       <div>
         <label
           htmlFor="email"
-          style={{ display: 'block', fontSize: 14, fontWeight: 700, color: '#1a1a2e', marginBottom: 8 }}
+          style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#1a1a2e', marginBottom: 7 }}
         >
           Email
         </label>
@@ -129,10 +129,10 @@ export default function SupportFormClient({ locale }: { locale: string }) {
           placeholder="La tua email"
           style={{
             width: '100%',
-            padding: '14px 16px',
-            borderRadius: 12,
+            padding: '13px 14px',
+            borderRadius: 11,
             border: '2px solid #e5e7eb',
-            fontSize: 15,
+            fontSize: 14,
             outline: 'none',
             boxSizing: 'border-box',
           }}
@@ -143,7 +143,7 @@ export default function SupportFormClient({ locale }: { locale: string }) {
       <div>
         <label
           htmlFor="message"
-          style={{ display: 'block', fontSize: 14, fontWeight: 700, color: '#1a1a2e', marginBottom: 8 }}
+          style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#1a1a2e', marginBottom: 7 }}
         >
           Messaggio
         </label>
@@ -156,10 +156,10 @@ export default function SupportFormClient({ locale }: { locale: string }) {
           placeholder="Descrivi il tuo problema o la tua richiesta..."
           style={{
             width: '100%',
-            padding: '14px 16px',
-            borderRadius: 12,
+            padding: '13px 14px',
+            borderRadius: 11,
             border: '2px solid #e5e7eb',
-            fontSize: 15,
+            fontSize: 14,
             resize: 'vertical',
             outline: 'none',
             fontFamily: 'inherit',
@@ -169,7 +169,7 @@ export default function SupportFormClient({ locale }: { locale: string }) {
       </div>
 
       {status === 'error' && (
-        <p style={{ color: '#dc2626', fontSize: 14, margin: 0 }}>
+        <p style={{ color: '#dc2626', fontSize: 13, margin: 0 }}>
           {errorMsg || 'Errore nell\'invio'}. Riprova o scrivici a info@getnearme.it
         </p>
       )}
@@ -181,10 +181,10 @@ export default function SupportFormClient({ locale }: { locale: string }) {
           background: status === 'sending' ? '#9ca3af' : '#f59e0b',
           color: '#1a1a2e',
           border: '1px solid rgba(26,26,46,0.10)',
-          borderRadius: 12,
-          padding: '16px 32px',
+          borderRadius: 11,
+          padding: '14px 29px',
           fontWeight: 900,
-          fontSize: 16,
+          fontSize: 14,
           cursor: status === 'sending' ? 'not-allowed' : 'pointer',
           width: '100%',
         }}

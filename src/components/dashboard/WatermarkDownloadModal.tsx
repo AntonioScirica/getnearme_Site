@@ -166,32 +166,32 @@ export default function WatermarkDownloadModal({
   const corner = (p: Pos): React.CSSProperties => {
     if (p === 'center') return { top: '50%', left: '50%', transform: 'translate(-50%,-50%)' };
     return {
-      top: p[0] === 't' ? 5 : undefined, bottom: p[0] === 'b' ? 5 : undefined,
-      left: p[1] === 'l' ? 5 : undefined, right: p[1] === 'r' ? 5 : undefined,
+      top: p[0] === 't' ? 4.5 : undefined, bottom: p[0] === 'b' ? 4.5 : undefined,
+      left: p[1] === 'l' ? 4.5 : undefined, right: p[1] === 'r' ? 4.5 : undefined,
     };
   };
   const posList: Pos[] = ['tl', 'tr', 'center', 'bl', 'br'];
-  const spinner = <span style={{ width: 16, height: 16, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.45)', borderTopColor: '#fff', animation: 'export-spin 1s linear infinite', display: 'inline-block' }} />;
+  const spinner = <span style={{ width: 14, height: 14, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.45)', borderTopColor: '#fff', animation: 'export-spin 1s linear infinite', display: 'inline-block' }} />;
 
   return (
-    <div onClick={(busy || done) ? undefined : onClose} style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(20,18,16,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-      <div onClick={(e) => e.stopPropagation()} style={{ background: '#fff', borderRadius: 16, width: '100%', maxWidth: 440, maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 18px', borderBottom: '1px solid #f0ede7' }}>
-          <div style={{ fontSize: 16, fontWeight: 800, color: '#211f1c' }}>{isBatch ? `Scarica ${list.length} foto` : 'Scarica foto'}</div>
-          <Box as="button" onClick={onClose} disabled={busy} aria-label="Chiudi" style={s('border:none;background:transparent;width:32px;height:32px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center')} hover={s('background:#f1efe9')}><Icon name="x" size={18} color="#57534c" /></Box>
+    <div onClick={(busy || done) ? undefined : onClose} style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(20,18,16,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 14 }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ background: '#fff', borderRadius: 14, width: '100%', maxWidth: 396, maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderBottom: '1px solid #f0ede7' }}>
+          <div style={{ fontSize: 14.5, fontWeight: 800, color: '#211f1c' }}>{isBatch ? `Scarica ${list.length} foto` : 'Scarica foto'}</div>
+          <Box as="button" onClick={onClose} disabled={busy} aria-label="Chiudi" style={s('border:none;background:transparent;width:29px;height:29px;border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center')} hover={s('background:#f1efe9')}><Icon name="x" size={16} color="#57534c" /></Box>
         </div>
 
-        <div style={{ padding: 18 }}>
-          <div style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid #e4e1da', marginBottom: 16, lineHeight: 0 }}>
+        <div style={{ padding: 16 }}>
+          <div style={{ borderRadius: 11, overflow: 'hidden', border: '1px solid #e4e1da', marginBottom: 14, lineHeight: 0 }}>
             <canvas ref={previewRef} style={{ width: '100%', height: 'auto', display: 'block' }} />
           </div>
-          {isBatch && <div style={{ fontSize: 11.5, color: '#8c867d', marginTop: -8, marginBottom: 14 }}>Il logo scelto verrà applicato a tutte le {list.length} foto.</div>}
+          {isBatch && <div style={{ fontSize: 10.5, color: '#8c867d', marginTop: -7, marginBottom: 13 }}>Il logo scelto verrà applicato a tutte le {list.length} foto.</div>}
 
-          <Box onClick={() => setWithLogo((v) => !v)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 10, border: '1px solid #e4e1da', cursor: 'pointer', marginBottom: withLogo ? 14 : 0 }} hover={{ background: '#faf9f7' }}>
-            <Icon name="image" size={16} color={withLogo ? '#211f1c' : '#b3aca1'} />
-            <div style={{ flex: 1, fontSize: 13.5, fontWeight: 600, color: withLogo ? '#211f1c' : '#8c867d' }}>Aggiungi logo</div>
-            <div style={{ width: 36, height: 20, borderRadius: 99, background: withLogo ? '#3B83F6' : '#d8d4cb', position: 'relative', flexShrink: 0 }}>
-              <div style={{ position: 'absolute', top: 2, left: withLogo ? 18 : 2, width: 16, height: 16, borderRadius: 99, background: '#fff', transition: 'left .2s' }} />
+          <Box onClick={() => setWithLogo((v) => !v)} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '9px 11px', borderRadius: 9, border: '1px solid #e4e1da', cursor: 'pointer', marginBottom: withLogo ? 13 : 0 }} hover={{ background: '#faf9f7' }}>
+            <Icon name="image" size={14} color={withLogo ? '#211f1c' : '#b3aca1'} />
+            <div style={{ flex: 1, fontSize: 12, fontWeight: 600, color: withLogo ? '#211f1c' : '#8c867d' }}>Aggiungi logo</div>
+            <div style={{ width: 32, height: 18, borderRadius: 89, background: withLogo ? '#3B83F6' : '#d8d4cb', position: 'relative', flexShrink: 0 }}>
+              <div style={{ position: 'absolute', top: 2, left: withLogo ? 16 : 2, width: 14, height: 14, borderRadius: 89, background: '#fff', transition: 'left .2s' }} />
             </div>
           </Box>
 
@@ -199,10 +199,10 @@ export default function WatermarkDownloadModal({
             <>
               {logoOpts.length > 1 && (
                 <>
-                  <div style={s('font-size:11px;font-weight:700;color:#b3aca1;text-transform:uppercase;letter-spacing:.04em;margin:14px 0 8px')}>Logo</div>
-                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
+                  <div style={s('font-size:10px;font-weight:700;color:#b3aca1;text-transform:uppercase;letter-spacing:.04em;margin:13px 0 7px')}>Logo</div>
+                  <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap', marginBottom: 13 }}>
                     {logoOpts.map((u) => (
-                      <Box key={u} onClick={() => setLogoUrl(u)} style={{ width: 88, height: 46, borderRadius: 9, border: `2px solid ${logoUrl === u ? '#3B83F6' : '#e4e1da'}`, background: '#e9e6df', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 6, cursor: 'pointer' }} hover={{ borderColor: '#3B83F6' }}>
+                      <Box key={u} onClick={() => setLogoUrl(u)} style={{ width: 79, height: 41, borderRadius: 8, border: `2px solid ${logoUrl === u ? '#3B83F6' : '#e4e1da'}`, background: '#e9e6df', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 5, cursor: 'pointer' }} hover={{ borderColor: '#3B83F6' }}>
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={u} alt="logo" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
                       </Box>
@@ -211,30 +211,30 @@ export default function WatermarkDownloadModal({
                 </>
               )}
 
-              <div style={s('font-size:11px;font-weight:700;color:#b3aca1;text-transform:uppercase;letter-spacing:.04em;margin:0 0 8px')}>Posizione</div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 6, marginBottom: 14 }}>
+              <div style={s('font-size:10px;font-weight:700;color:#b3aca1;text-transform:uppercase;letter-spacing:.04em;margin:0 0 7px')}>Posizione</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 5, marginBottom: 13 }}>
                 {posList.map((p) => (
-                  <Box key={p} onClick={() => setPos(p)} style={{ position: 'relative', aspectRatio: '4 / 3', borderRadius: 8, border: `1.5px solid ${pos === p ? '#3B83F6' : '#e4e1da'}`, background: pos === p ? '#eef4fe' : '#fff', cursor: 'pointer' }} hover={{ borderColor: '#3B83F6' }}>
-                    <span style={{ position: 'absolute', width: 9, height: 9, borderRadius: 2, background: pos === p ? '#3B83F6' : '#b3aca1', ...corner(p) }} />
+                  <Box key={p} onClick={() => setPos(p)} style={{ position: 'relative', aspectRatio: '4 / 3', borderRadius: 7, border: `1.5px solid ${pos === p ? '#3B83F6' : '#e4e1da'}`, background: pos === p ? '#eef4fe' : '#fff', cursor: 'pointer' }} hover={{ borderColor: '#3B83F6' }}>
+                    <span style={{ position: 'absolute', width: 8, height: 8, borderRadius: 2, background: pos === p ? '#3B83F6' : '#b3aca1', ...corner(p) }} />
                   </Box>
                 ))}
               </div>
 
-              <div style={s('font-size:11px;font-weight:700;color:#b3aca1;text-transform:uppercase;letter-spacing:.04em;margin:0 0 8px')}>Dimensione</div>
-              <div style={{ display: 'flex', gap: 6 }}>
+              <div style={s('font-size:10px;font-weight:700;color:#b3aca1;text-transform:uppercase;letter-spacing:.04em;margin:0 0 7px')}>Dimensione</div>
+              <div style={{ display: 'flex', gap: 5 }}>
                 {(Object.keys(SIZES) as (keyof typeof SIZES)[]).map((k) => (
-                  <Box key={k} onClick={() => setSize(k)} style={{ flex: 1, textAlign: 'center', padding: '9px 0', borderRadius: 9, border: `1.5px solid ${size === k ? '#3B83F6' : '#e4e1da'}`, background: size === k ? '#eef4fe' : '#fff', color: size === k ? '#1d5fd0' : '#8c867d', fontSize: 13, fontWeight: 700, cursor: 'pointer' }} hover={{ borderColor: '#3B83F6' }}>{k === 'S' ? 'Piccolo' : k === 'M' ? 'Medio' : 'Grande'}</Box>
+                  <Box key={k} onClick={() => setSize(k)} style={{ flex: 1, textAlign: 'center', padding: '8px 0', borderRadius: 8, border: `1.5px solid ${size === k ? '#3B83F6' : '#e4e1da'}`, background: size === k ? '#eef4fe' : '#fff', color: size === k ? '#1d5fd0' : '#8c867d', fontSize: 11.5, fontWeight: 700, cursor: 'pointer' }} hover={{ borderColor: '#3B83F6' }}>{k === 'S' ? 'Piccolo' : k === 'M' ? 'Medio' : 'Grande'}</Box>
                 ))}
               </div>
             </>
           )}
 
-          <Box as="button" onClick={download} disabled={busy || done} style={{ width: '100%', marginTop: 16, border: 'none', background: done ? '#16a34a' : busy ? '#9bbef8' : '#3B83F6', color: '#fff', fontSize: 15, fontWeight: 700, padding: '13px 0', borderRadius: 11, cursor: (busy || done) ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, transition: 'background .2s' }} hover={(busy || done) ? {} : s('background:#2563EB')}>
+          <Box as="button" onClick={download} disabled={busy || done} style={{ width: '100%', marginTop: 14, border: 'none', background: done ? '#16a34a' : busy ? '#9bbef8' : '#3B83F6', color: '#fff', fontSize: 13.5, fontWeight: 700, padding: '12px 0', borderRadius: 10, cursor: (busy || done) ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, transition: 'background .2s' }} hover={(busy || done) ? {} : s('background:#2563EB')}>
             {done
-              ? <><Icon name="check" size={17} color="#fff" />Scaricata!</>
+              ? <><Icon name="check" size={15} color="#fff" />Scaricata!</>
               : busy
                 ? <>{spinner}{isBatch ? `Preparo ${prog}/${list.length}…` : 'Preparo…'}</>
-                : <><Icon name="download" size={16} color="#fff" />{isBatch ? `Scarica tutte (${list.length})` : (withLogo ? 'Scarica con logo' : 'Scarica')}</>}
+                : <><Icon name="download" size={14} color="#fff" />{isBatch ? `Scarica tutte (${list.length})` : (withLogo ? 'Scarica con logo' : 'Scarica')}</>}
           </Box>
         </div>
       </div>

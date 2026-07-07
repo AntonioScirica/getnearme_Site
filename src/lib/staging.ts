@@ -94,7 +94,7 @@ export type StagingStyle = {
   id: string;
   label: string;
   desc: string;
-  icon: string; // inline SVG
+  icon: string; // Lucide icon name (see dashboard/ui.tsx ICONS registry)
 };
 
 // 6 style presets (ids must match the edge function's STYLE_PROMPTS keys).
@@ -102,29 +102,43 @@ export type StagingStyle = {
 export const STAGING_STYLES: StagingStyle[] = [
   {
     id: 'modern', label: 'Moderno', desc: 'Linee pulite, palette neutra, pezzi di design',
-    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 9V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v3"/><path d="M2 11v5a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-5a2 2 0 0 0-4 0v2H6v-2a2 2 0 0 0-4 0Z"/><path d="M4 18v2"/><path d="M20 18v2"/></svg>',
+    icon: 'sofa',
   },
   {
     id: 'nordic', label: 'Nordico', desc: 'Legno chiaro, bianco e grigio, minimal',
-    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 14l3 3H4l3-3"/><path d="M15 10l3 3H6l3-3"/><path d="M13 6l2 2H9l2-2"/><path d="M12 2v4"/><line x1="12" y1="22" x2="12" y2="14"/></svg>',
+    icon: 'snowflake',
   },
   {
     id: 'industrial', label: 'Luxury', desc: 'Marmo, ottone, noce scuro, eleganza',
-    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 3h12l4 6-10 13L2 9Z"/><path d="M11 3 8 9l4 13 4-13-3-6"/><path d="M2 9h20"/></svg>',
+    icon: 'crown',
   },
   {
     id: 'boho', label: 'Boho', desc: 'Rattan, piante, toni terrosi, pattern',
-    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"/><line x1="16" y1="8" x2="2" y2="22"/><line x1="17.5" y1="15" x2="9" y2="15"/></svg>',
+    icon: 'palette',
   },
   {
     id: 'daynight', label: 'Giorno e Notte', desc: 'Inverte l’illuminazione della scena',
-    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/><path d="M12 3v1"/><path d="M4.22 5.22l.71.71"/></svg>',
+    icon: 'moon',
   },
   {
     id: 'empty', label: 'Svuota stanza', desc: 'Rimuove mobili e oggetti, stanza vuota',
-    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="21" x2="21" y2="3"/></svg>',
+    icon: 'refresh-cw',
   },
 ];
+
+// Stessi 6 id/stile, ma etichette diverse per esterno/giardino (i prompt dietro
+// sono scene-aware lato edge function, qui cambia solo testo/icona del bottone).
+export const SCENE_STYLE_LABELS: Record<'esterno' | 'giardino', Record<string, string>> = {
+  esterno: { modern: 'Moderna', nordic: 'Nordica', industrial: 'Luxury', boho: 'Mediterranea', daynight: 'Giorno e Notte', empty: 'Rinnova' },
+  giardino: { modern: 'Moderno', nordic: 'Naturale', industrial: 'Lussuoso', boho: 'Mediterraneo', daynight: 'Giorno e Notte', empty: 'Rinnova' },
+};
+
+// Icone per esterno/giardino: tutte e 6 esplicite (niente fallback sull'icona
+// interno, che raffigura arredo e non ha senso su una facciata o un giardino).
+export const SCENE_STYLE_ICONS: Record<'esterno' | 'giardino', Record<string, string>> = {
+  esterno: { modern: 'home', nordic: 'warehouse', industrial: 'crown', boho: 'sun', daynight: 'moon', empty: 'refresh-cw' },
+  giardino: { modern: 'fence', nordic: 'tree-pine', industrial: 'crown', boho: 'sun', daynight: 'moon', empty: 'refresh-cw' },
+};
 
 export type StagingAngle = {
   id: string;
@@ -261,6 +275,46 @@ export type StartResult =
   | { ok: true; predictionId: string; outputUrl?: string }
   | { ok: false; error: string; quotaExhausted?: boolean; notAuthenticated?: boolean };
 
+// Interno/esterno(facciata)/giardino — determina il guard-prompt applicato ai
+// custom prompt lato edge function (buildFinalPrompt). Classificata all'upload
+// per pilotare il toggle UI, invece che rifarla server-side alla generazione.
+export type SceneType = 'interno' | 'esterno' | 'giardino';
+
+// Thumbnail piccola SOLO per la classificazione (Groq deve solo capire interno/
+// esterno/giardino, non serve alta risoluzione): payload molto più leggero
+// della foto a 1500px usata per la generazione -> risposta più veloce.
+async function downscaleForClassify(dataUrl: string, maxDim = 288): Promise<string> {
+  try {
+    const img = await new Promise<HTMLImageElement>((res, rej) => {
+      const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = dataUrl;
+    });
+    let w = img.naturalWidth, h = img.naturalHeight;
+    if (Math.max(w, h) > maxDim) {
+      const k = maxDim / Math.max(w, h);
+      w = Math.round(w * k); h = Math.round(h * k);
+    }
+    const c = document.createElement('canvas'); c.width = w; c.height = h;
+    const ctx = c.getContext('2d');
+    if (!ctx) return dataUrl;
+    ctx.drawImage(img, 0, 0, w, h);
+    return c.toDataURL('image/jpeg', 0.55);
+  } catch {
+    return dataUrl;
+  }
+}
+
+// confident:false = il server non e' riuscito a classificare davvero (errore/
+// timeout Groq) ed e' ricaduto su "interno" di default: in quel caso la UI
+// mostra il toggle Interno/Esterno/Giardino cosi' l'utente puo' correggerlo.
+export async function classifyScene(dataUrl: string): Promise<{ scene: SceneType; confident: boolean }> {
+  const thumb = await downscaleForClassify(dataUrl);
+  const { data } = await invokeFn('replicate-staging', { action: 'classify', imageUrl: thumb }, 15_000);
+  const t = (data as any)?.sceneType;
+  const scene: SceneType = t === 'esterno' || t === 'giardino' ? t : 'interno';
+  const confident = (data as any)?.confident !== false;
+  return { scene, confident };
+}
+
 // Riconosce se l'immagine è una PLANIMETRIA (line-art: quasi bianco, saturazione
 // bassissima, pochi colori) invece di una foto. Serve per il render 3D automatico.
 // Soglie tarate su dati reali: foto stanza sat>=0.14/colori>=79; planimetria sat~0/colori~12.
@@ -294,8 +348,9 @@ export async function startStaging(opts: {
   angle?: string | null;
   customPrompt?: string | null;
   planimetria?: boolean | null; // decisione UI: true forza render 3D, false lo esclude, null = auto-detect
+  sceneType?: SceneType | null; // interno/esterno/giardino, già classificata dal toggle UI
 }): Promise<StartResult> {
-  const { imageDataUrl, style = null, angle = null, customPrompt = null, planimetria = null } = opts;
+  const { imageDataUrl, style = null, angle = null, customPrompt = null, planimetria = null, sceneType = null } = opts;
 
   let promptToSend = customPrompt?.trim() || null;
   let effAngle = angle;
@@ -318,6 +373,7 @@ export async function startStaging(opts: {
     angle: effAngle || null,
     customPrompt: promptToSend,
     planimetria: isPlan,
+    sceneType: isPlan ? null : sceneType,
   }, 60_000);
 
   console.log('[staging] start fetch returned', { status, hasData: !!data, error });
@@ -409,9 +465,9 @@ export async function fetchStagingQuota(): Promise<StagingQuota | null> {
     const { data, error } = await supabase.rpc('get_team_staging_credits', { p_user_id: uid });
     if (error || !data) return null;
     const remaining = Number(data.photo_credits) || 0;
-    // Free trial: monthly_limit e' NULL (grant one-time di 5 foto). Il totale da
-    // mostrare e' 5 fisso, non "remaining" (altrimenti "4 su 4" invece di "4 su 5").
-    const FREE_PHOTO_TRIAL = 5;
+    // Free trial: monthly_limit e' NULL (grant one-time di 10 foto). Il totale da
+    // mostrare e' 10 fisso, non "remaining" (altrimenti "7 su 7" invece di "7 su 10").
+    const FREE_PHOTO_TRIAL = 10;
     const ml = Number(data.monthly_limit);
     const limit = ml > 0 ? ml : Math.max(remaining, FREE_PHOTO_TRIAL);
     return { remaining, limit };

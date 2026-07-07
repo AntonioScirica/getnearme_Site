@@ -58,6 +58,7 @@ function detectRoomFromFilename(filename?: string): string | null {
 type Pair = { id: string; before: { file: File; thumb: string; uploadedUrl?: string } | null; after: { file: File; thumb: string; uploadedUrl?: string } | null; room: string };
 
 const MAX_CLIPS = 6;
+const MAX_CLIPS_WALKTHROUGH_STARTER = 3; // piano Starter: 3 foto × €0,28 Kling = €0,84, sotto il tetto di €1
 const MAX_CLIPS_MONTAGGIO = 30;
 const MAX_PAIRS = 1;
 
@@ -129,13 +130,13 @@ function TrimRange({ duration, start, end, frames, onChange, onPreview }: {
   };
   const sp = duration ? (start / duration) * 100 : 0;
   const ep = duration ? (end / duration) * 100 : 100;
-  const thumb: React.CSSProperties = { position: 'absolute', top: '50%', transform: 'translate(-50%,-50%)', width: 12, height: 26, borderRadius: 4, background: '#fff', border: '2px solid #3B83F6', boxShadow: '0 1px 4px rgba(0,0,0,.3)', cursor: 'ew-resize', touchAction: 'none', zIndex: 3 };
+  const thumb: React.CSSProperties = { position: 'absolute', top: '50%', transform: 'translate(-50%,-50%)', width: 11, height: 23.5, borderRadius: 3.5, background: '#fff', border: '2px solid #3B83F6', boxShadow: '0 1px 4px rgba(0,0,0,.3)', cursor: 'ew-resize', touchAction: 'none', zIndex: 3 };
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-      <Icon name="scissors" size={13} color="#b3aca1" />
-      <div ref={ref} style={{ position: 'relative', flex: 1, height: 30, display: 'flex', alignItems: 'center' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+      <Icon name="scissors" size={11.5} color="#b3aca1" />
+      <div ref={ref} style={{ position: 'relative', flex: 1, height: 27, display: 'flex', alignItems: 'center' }}>
         {/* striscia di frame + stroke grigio */}
-        <div style={{ position: 'absolute', inset: 0, borderRadius: 6, overflow: 'hidden', background: '#e4e1da', display: 'flex', border: '1px solid #b3aca1' }}>
+        <div style={{ position: 'absolute', inset: 0, borderRadius: 5.5, overflow: 'hidden', background: '#e4e1da', display: 'flex', border: '1px solid #b3aca1' }}>
           {frames && frames.length > 0
             ? frames.map((f, i) => (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -144,14 +145,14 @@ function TrimRange({ duration, start, end, frames, onChange, onPreview }: {
             : null}
         </div>
         {/* zone fuori dalla selezione schiarite */}
-        <div style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: `${sp}%`, background: 'rgba(255,255,255,.62)', borderRadius: '6px 0 0 6px' }} />
-        <div style={{ position: 'absolute', top: 0, bottom: 0, right: 0, left: `${ep}%`, background: 'rgba(255,255,255,.62)', borderRadius: '0 6px 6px 0' }} />
+        <div style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: `${sp}%`, background: 'rgba(255,255,255,.62)', borderRadius: '5.5px 0 0 5.5px' }} />
+        <div style={{ position: 'absolute', top: 0, bottom: 0, right: 0, left: `${ep}%`, background: 'rgba(255,255,255,.62)', borderRadius: '0 5.5px 5.5px 0' }} />
         {/* finestra selezione: afferra il CENTRO per spostarla */}
-        <div onPointerDown={moveWindow} title="Trascina per spostare la selezione" style={{ position: 'absolute', top: 0, bottom: 0, left: `${sp}%`, right: `${100 - ep}%`, border: '2px solid #3B83F6', borderRadius: 6, boxSizing: 'border-box', cursor: 'grab', touchAction: 'none', zIndex: 2 }} />
+        <div onPointerDown={moveWindow} title="Trascina per spostare la selezione" style={{ position: 'absolute', top: 0, bottom: 0, left: `${sp}%`, right: `${100 - ep}%`, border: '2px solid #3B83F6', borderRadius: 5.5, boxSizing: 'border-box', cursor: 'grab', touchAction: 'none', zIndex: 2 }} />
         <div onPointerDown={startDrag('start')} title="Inizio" style={{ ...thumb, left: `${sp}%` }} />
         <div onPointerDown={startDrag('end')} title="Fine" style={{ ...thumb, left: `${ep}%` }} />
       </div>
-      <span style={{ fontSize: 10.5, color: '#8c867d', fontWeight: 700, minWidth: 92, textAlign: 'center', fontVariantNumeric: 'tabular-nums' }}>{fmtTime(start)} - {fmtTime(end)}</span>
+      <span style={{ fontSize: 9.5, color: '#8c867d', fontWeight: 700, minWidth: 83, textAlign: 'center', fontVariantNumeric: 'tabular-nums' }}>{fmtTime(start)} - {fmtTime(end)}</span>
     </div>
   );
 }
@@ -186,21 +187,21 @@ function MontaggioDiagram({ kind }: { kind: 'normale' | 'split' | 'pip' }) {
           <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: '38%', background: 'linear-gradient(to top, rgba(0,0,0,.45), transparent)' }} />
           {/* striscia clip in basso = sequenza montata; tra due clip un rettangolo
               overlay bianco a bassa opacità (stile fade) = transizione */}
-          <div style={{ position: 'absolute', bottom: 10, left: 10, right: 10, display: 'flex', alignItems: 'center', gap: 0 }}>
+          <div style={{ position: 'absolute', bottom: 9, left: 9, right: 9, display: 'flex', alignItems: 'center', gap: 0 }}>
             {MONT_STRIP_IMGS.map((src, i) => (
               <React.Fragment key={i}>
-                <span style={{ flex: 1, height: 40, borderRadius: 4, overflow: 'hidden', border: '1.5px solid rgba(255,255,255,.92)', display: 'block' }}>
+                <span style={{ flex: 1, height: 36, borderRadius: 3.5, overflow: 'hidden', border: '1.5px solid rgba(255,255,255,.92)', display: 'block' }}>
                   <Img src={src} style={{ width: '100%', height: '100%' }} />
                 </span>
                 {i < MONT_STRIP_IMGS.length - 1 && (
-                  <span style={{ flex: 'none', width: 22, height: 44, margin: '0 -9px', position: 'relative', zIndex: 2, borderRadius: 4, background: 'rgba(255,255,255,.34)', backdropFilter: 'blur(2.5px)', WebkitBackdropFilter: 'blur(2.5px)', border: '1px solid rgba(255,255,255,.55)' }} />
+                  <span style={{ flex: 'none', width: 20, height: 39.5, margin: '0 -8px', position: 'relative', zIndex: 2, borderRadius: 3.5, background: 'rgba(255,255,255,.34)', backdropFilter: 'blur(2.5px)', WebkitBackdropFilter: 'blur(2.5px)', border: '1px solid rgba(255,255,255,.55)' }} />
                 )}
               </React.Fragment>
             ))}
           </div>
           {/* play centrato */}
-          <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: 34, height: 34, borderRadius: '50%', background: 'rgba(255,255,255,.94)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 10px rgba(0,0,0,.25)' }}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="#211f1c" style={{ marginLeft: 2 }}><polygon points="6 3 20 12 6 21 6 3" /></svg>
+          <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: 30.5, height: 30.5, borderRadius: '50%', background: 'rgba(255,255,255,.94)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 10px rgba(0,0,0,.25)' }}>
+            <svg width="11.5" height="11.5" viewBox="0 0 24 24" fill="#211f1c" style={{ marginLeft: 2 }}><polygon points="6 3 20 12 6 21 6 3" /></svg>
           </div>
         </>
       )}
@@ -214,7 +215,7 @@ function MontaggioDiagram({ kind }: { kind: 'normale' | 'split' | 'pip' }) {
       {kind === 'pip' && (
         <>
           <Img src="https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=500&q=80&auto=format&fit=crop" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} />
-          <span style={{ position: 'absolute', right: 8, bottom: 8, width: '34%', height: '26%', borderRadius: 7, overflow: 'hidden', border: '2px solid #fff', boxShadow: '0 2px 6px rgba(0,0,0,.3)', display: 'block' }}>
+          <span style={{ position: 'absolute', right: 7, bottom: 7, width: '34%', height: '26%', borderRadius: 6.5, overflow: 'hidden', border: '2px solid #fff', boxShadow: '0 2px 6px rgba(0,0,0,.3)', display: 'block' }}>
             <Img src={MONT_PERSON_IMG} style={{ width: '100%', height: '100%', objectPosition: 'center 25%' }} />
           </span>
         </>
@@ -292,21 +293,21 @@ function SplitLivePreview({ mode, clips, talkingClip, slots, pipPosition, onAddH
   }, [playing, houseUrl]);
 
   const PlusZone = ({ label, onClick }: { label: string; onClick: () => void }) => (
-    <button onClick={onClick} style={{ position: 'absolute', inset: 0, border: 'none', cursor: 'pointer', padding: 0, background: 'transparent', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, color: '#fff' }}>
-      <span style={{ width: 38, height: 38, borderRadius: '50%', background: 'rgba(255,255,255,.92)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="plus" size={20} color="#1d5fd0" /></span>
-      <span style={{ fontSize: 12, fontWeight: 800, textShadow: '0 1px 3px rgba(0,0,0,.6)' }}>{label}</span>
+    <button onClick={onClick} style={{ position: 'absolute', inset: 0, border: 'none', cursor: 'pointer', padding: 0, background: 'transparent', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 5.5, color: '#fff' }}>
+      <span style={{ width: 34, height: 34, borderRadius: '50%', background: 'rgba(255,255,255,.92)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="plus" size={18} color="#1d5fd0" /></span>
+      <span style={{ fontSize: 11, fontWeight: 800, textShadow: '0 1px 3px rgba(0,0,0,.6)' }}>{label}</span>
     </button>
   );
 
   const playBtn = talkingClip && clips.length > 0 && (
-    <button onClick={(e) => { e.stopPropagation(); toggle(); }} aria-label={playing ? 'Pausa' : 'Play'} style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', zIndex: 5, width: 52, height: 52, borderRadius: '50%', border: 'none', cursor: 'pointer', background: 'rgba(0,0,0,.42)', display: playing ? 'none' : 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="#fff" style={{ marginLeft: 3 }}><polygon points="6 3 20 12 6 21 6 3" /></svg>
+    <button onClick={(e) => { e.stopPropagation(); toggle(); }} aria-label={playing ? 'Pausa' : 'Play'} style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', zIndex: 5, width: 47, height: 47, borderRadius: '50%', border: 'none', cursor: 'pointer', background: 'rgba(0,0,0,.42)', display: playing ? 'none' : 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="#fff" style={{ marginLeft: 2.5 }}><polygon points="6 3 20 12 6 21 6 3" /></svg>
     </button>
   );
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-    <div onClick={talkingClip && clips.length > 0 ? toggle : undefined} style={{ width: '100%', aspectRatio: '9/16', borderRadius: 16, overflow: 'hidden', position: 'relative', background: '#000', border: '1px solid #e4e1da', cursor: talkingClip && clips.length > 0 ? 'pointer' : 'default' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
+    <div onClick={talkingClip && clips.length > 0 ? toggle : undefined} style={{ width: '100%', aspectRatio: '9/16', borderRadius: 14.5, overflow: 'hidden', position: 'relative', background: '#000', border: '1px solid #e4e1da', cursor: talkingClip && clips.length > 0 ? 'pointer' : 'default' }}>
       {mode === 'split' ? (
         <>
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '52%', background: '#11151c', overflow: 'hidden' }}>
@@ -325,7 +326,7 @@ function SplitLivePreview({ mode, clips, talkingClip, slots, pipPosition, onAddH
           <div style={{ position: 'absolute', inset: 0, background: '#11151c', overflow: 'hidden' }}>
             {clips.length === 0 ? <PlusZone label="Clip della casa" onClick={onAddHouse} /> : HouseFill}
           </div>
-          <div style={{ position: 'absolute', width: '32%', height: '24%', borderRadius: 10, overflow: 'hidden', border: '2px solid #fff', boxShadow: '0 2px 8px rgba(0,0,0,.4)', zIndex: 4, background: '#171b22', ...(pipPosition === 'tl' ? { top: '7%', left: '6%' } : pipPosition === 'tr' ? { top: '7%', right: '6%' } : pipPosition === 'bl' ? { bottom: '7%', left: '6%' } : { bottom: '7%', right: '6%' }) }}>
+          <div style={{ position: 'absolute', width: '32%', height: '24%', borderRadius: 9, overflow: 'hidden', border: '2px solid #fff', boxShadow: '0 2px 8px rgba(0,0,0,.4)', zIndex: 4, background: '#171b22', ...(pipPosition === 'tl' ? { top: '7%', left: '6%' } : pipPosition === 'tr' ? { top: '7%', right: '6%' } : pipPosition === 'bl' ? { bottom: '7%', left: '6%' } : { bottom: '7%', right: '6%' }) }}>
             {talkingClip
               // eslint-disable-next-line jsx-a11y/media-has-caption
               ? <video ref={talkRef} src={talkUrl || undefined} playsInline onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} onEnded={() => setPlaying(false)} onTimeUpdate={onTime} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 25%' }} />
@@ -338,18 +339,18 @@ function SplitLivePreview({ mode, clips, talkingClip, slots, pipPosition, onAddH
 
     {/* Controllo minimale stile Apple: play/pausa + linea di avanzamento (scrub). */}
     {talkingClip && (
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
         <button onClick={toggle} aria-label={playing ? 'Pausa' : 'Play'} style={{ flex: 'none', border: 'none', background: 'transparent', cursor: 'pointer', padding: 0, display: 'flex' }}>
           {playing
-            ? <svg width="18" height="18" viewBox="0 0 24 24" fill="#211f1c"><rect x="6" y="4" width="4" height="16" rx="1" /><rect x="14" y="4" width="4" height="16" rx="1" /></svg>
-            : <svg width="18" height="18" viewBox="0 0 24 24" fill="#211f1c" style={{ marginLeft: 1 }}><polygon points="6 3 20 12 6 21 6 3" /></svg>}
+            ? <svg width="16" height="16" viewBox="0 0 24 24" fill="#211f1c"><rect x="6" y="4" width="4" height="16" rx="1" /><rect x="14" y="4" width="4" height="16" rx="1" /></svg>
+            : <svg width="16" height="16" viewBox="0 0 24 24" fill="#211f1c" style={{ marginLeft: 1 }}><polygon points="6 3 20 12 6 21 6 3" /></svg>}
         </button>
-        <div ref={tlRef} onPointerDown={scrub} style={{ flex: 1, position: 'relative', height: 16, display: 'flex', alignItems: 'center', cursor: 'pointer', touchAction: 'none', userSelect: 'none' }}>
-          <div style={{ width: '100%', height: 4, borderRadius: 99, background: '#dcd8cf' }} />
-          <div style={{ position: 'absolute', left: 0, height: 4, borderRadius: 99, background: '#3B83F6', width: `${talkDur ? (curTime / talkDur) * 100 : 0}%` }} />
-          <div style={{ position: 'absolute', left: `${talkDur ? (curTime / talkDur) * 100 : 0}%`, transform: 'translateX(-50%)', width: 12, height: 12, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 4px rgba(0,0,0,.3)', border: '1px solid #cfcabf' }} />
+        <div ref={tlRef} onPointerDown={scrub} style={{ flex: 1, position: 'relative', height: 14.5, display: 'flex', alignItems: 'center', cursor: 'pointer', touchAction: 'none', userSelect: 'none' }}>
+          <div style={{ width: '100%', height: 3.5, borderRadius: 89, background: '#dcd8cf' }} />
+          <div style={{ position: 'absolute', left: 0, height: 3.5, borderRadius: 89, background: '#3B83F6', width: `${talkDur ? (curTime / talkDur) * 100 : 0}%` }} />
+          <div style={{ position: 'absolute', left: `${talkDur ? (curTime / talkDur) * 100 : 0}%`, transform: 'translateX(-50%)', width: 11, height: 11, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 4px rgba(0,0,0,.3)', border: '1px solid #cfcabf' }} />
         </div>
-        <span style={{ ...s('font-size:11px;font-weight:700;color:#8c867d'), flex: 'none', fontVariantNumeric: 'tabular-nums' }}>{mmss(curTime)} / {mmss(talkDur)}</span>
+        <span style={{ ...s('font-size:10px;font-weight:700;color:#8c867d'), flex: 'none', fontVariantNumeric: 'tabular-nums' }}>{mmss(curTime)} / {mmss(talkDur)}</span>
       </div>
     )}
     </div>
@@ -359,14 +360,14 @@ function SplitLivePreview({ mode, clips, talkingClip, slots, pipPosition, onAddH
 function StickyNav({ children, align }: { children: React.ReactNode; align?: 'center'; bleed?: number }) {
   return (
     <div style={{
-      position: 'fixed', bottom: 0, left: 'var(--gnm-content-left, 252px)', right: 0, zIndex: 30,
+      position: 'fixed', bottom: 0, left: 'var(--gnm-content-left, 227px)', right: 0, zIndex: 30,
       background: 'rgba(252,252,251,0.97)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
       borderTop: '1.5px solid #e4e1da',
     }}>
       <div style={{
-        maxWidth: 1160, margin: '0 auto', padding: '14px 32px',
+        maxWidth: 1044, margin: '0 auto', padding: '12.5px 29px',
         display: 'flex', alignItems: align === 'center' ? 'center' : undefined,
-        justifyContent: 'space-between', gap: 12,
+        justifyContent: 'space-between', gap: 11,
       }}>
         {children}
       </div>
@@ -412,11 +413,11 @@ function CoverStylesGrid({ thumbUrl, logoUrl, title, address, brandColor, isPort
   }, [thumbUrl, logoUrl, title, address, brandColor, isPortrait, styles]);
 
   return (
-    <div className="max-md:!grid-cols-1" style={{ display: 'grid', gridTemplateColumns: `repeat(${isPortrait ? 4 : 3}, 1fr)`, gap: 10 }}>
+    <div className="max-md:!grid-cols-1" style={{ display: 'grid', gridTemplateColumns: `repeat(${isPortrait ? 4 : 3}, 1fr)`, gap: 9 }}>
       {styles.map(st => (
-        <Box key={st.id} onClick={() => onSelect(st.id)} style={{ cursor: 'pointer', borderRadius: 10, overflow: 'hidden', border: selected === st.id ? '2px solid #3B83F6' : '2px solid transparent', boxShadow: selected === st.id ? '0 4px 12px rgba(59,131,246,.18)' : '0 1px 3px rgba(0,0,0,.06)', transition: 'transform .15s, box-shadow .15s', transform: 'translateY(0)' } as React.CSSProperties} hover={selected === st.id ? undefined : { transform: 'translateY(-3px)', boxShadow: '0 8px 20px rgba(0,0,0,.12)' }}>
+        <Box key={st.id} onClick={() => onSelect(st.id)} style={{ cursor: 'pointer', borderRadius: 9, overflow: 'hidden', border: selected === st.id ? '2px solid #3B83F6' : '2px solid transparent', boxShadow: selected === st.id ? '0 4px 12px rgba(59,131,246,.18)' : '0 1px 3px rgba(0,0,0,.06)', transition: 'transform .15s, box-shadow .15s', transform: 'translateY(0)' } as React.CSSProperties} hover={selected === st.id ? undefined : { transform: 'translateY(-3px)', boxShadow: '0 8px 20px rgba(0,0,0,.12)' }}>
           <canvas ref={el => { refs.current[st.id] = el; }} style={{ width: '100%', aspectRatio: isPortrait ? '9 / 16' : '16 / 9', display: 'block', background: '#000' }} />
-          <div style={{ fontSize: 11, fontWeight: 700, textAlign: 'center', padding: '6px 4px', color: selected === st.id ? '#1d5fd0' : '#57534c', background: selected === st.id ? '#eff6ff' : '#fff' }}>{st.label}</div>
+          <div style={{ fontSize: 10, fontWeight: 700, textAlign: 'center', padding: '5.5px 3.5px', color: selected === st.id ? '#1d5fd0' : '#57534c', background: selected === st.id ? '#eff6ff' : '#fff' }}>{st.label}</div>
         </Box>
       ))}
     </div>
@@ -463,28 +464,28 @@ function VideoPacksModal({ onClose }: { onClose: () => void }) {
     onClose();
   };
   return (
-    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(24,21,17,.55)', backdropFilter: 'blur(3px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-      <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 540, background: '#fff', borderRadius: 20, boxShadow: '0 28px 72px rgba(20,18,15,.3)', overflow: 'hidden' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 28px', borderBottom: '1px solid #f0ede7' }}>
-          <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, letterSpacing: '-.3px' }}>Pacchetti AI Video</h3>
-          <button onClick={onClose} aria-label="Chiudi" style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#8c867d' }}><Icon name="x" size={20} color="#8c867d" /></button>
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(24,21,17,.55)', backdropFilter: 'blur(3px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 21.5 }}>
+      <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 486, background: '#fff', borderRadius: 18, boxShadow: '0 28px 72px rgba(20,18,15,.3)', overflow: 'hidden' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 25px', borderBottom: '1px solid #f0ede7' }}>
+          <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, letterSpacing: '-.3px' }}>Pacchetti AI Video</h3>
+          <button onClick={onClose} aria-label="Chiudi" style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#8c867d' }}><Icon name="x" size={18} color="#8c867d" /></button>
         </div>
-        <div style={{ padding: '22px 28px 26px' }}>
-          <div style={{ textAlign: 'center', marginBottom: 20 }}>
-            <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 6 }}>Hai esaurito i video di questo mese</div>
-            <div style={{ fontSize: 13.5, color: '#57534c', lineHeight: 1.5 }}>Acquista un pacchetto extra per continuare a generare video AI. I crediti extra non scadono e si sommano al tuo piano attuale.</div>
+        <div style={{ padding: '20px 25px 23.5px' }}>
+          <div style={{ textAlign: 'center', marginBottom: 18 }}>
+            <div style={{ fontSize: 14.5, fontWeight: 800, marginBottom: 5.5 }}>Hai esaurito i video di questo mese</div>
+            <div style={{ fontSize: 12, color: '#57534c', lineHeight: 1.5 }}>Acquista un pacchetto extra per continuare a generare video AI. I crediti extra non scadono e si sommano al tuo piano attuale.</div>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
             {VIDEO_PACKS.map(p => (
-              <div key={p.id} style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', borderRadius: 14, border: p.popular ? '2px solid #3B83F6' : '1px solid #e4e1da', background: p.popular ? '#eff6ff' : '#fff' }}>
-                <div style={{ width: 42, height: 42, borderRadius: 12, background: p.popular ? '#fff' : '#f4f2ee', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}><Icon name="film" size={19} color={p.popular ? '#1d5fd0' : '#57534c'} /></div>
+              <div key={p.id} style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 12.5, padding: '12.5px 14.5px', borderRadius: 12.5, border: p.popular ? '2px solid #3B83F6' : '1px solid #e4e1da', background: p.popular ? '#eff6ff' : '#fff' }}>
+                <div style={{ width: 38, height: 38, borderRadius: 11, background: p.popular ? '#fff' : '#f4f2ee', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}><Icon name="film" size={17} color={p.popular ? '#1d5fd0' : '#57534c'} /></div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 14.5, fontWeight: 800, display: 'flex', alignItems: 'center', gap: 8 }}>{p.name}{p.popular && <span style={{ fontSize: 10, fontWeight: 800, color: '#1d5fd0', background: '#dbeafe', padding: '2px 7px', borderRadius: 99, textTransform: 'uppercase', letterSpacing: '.04em' }}>Popolare</span>}</div>
-                  <div style={{ fontSize: 12.5, color: '#8c867d', marginTop: 1 }}>{p.videos} video AI extra</div>
+                  <div style={{ fontSize: 13, fontWeight: 800, display: 'flex', alignItems: 'center', gap: 7 }}>{p.name}{p.popular && <span style={{ fontSize: 9, fontWeight: 800, color: '#1d5fd0', background: '#dbeafe', padding: '2px 6.5px', borderRadius: 89, textTransform: 'uppercase', letterSpacing: '.04em' }}>Popolare</span>}</div>
+                  <div style={{ fontSize: 11, color: '#8c867d', marginTop: 1 }}>{p.videos} video AI extra</div>
                 </div>
                 {/* Prezzo + CTA sulla stessa linea, allineati verticalmente */}
-                <div style={{ fontSize: 19, fontWeight: 800, flex: 'none', minWidth: 64, textAlign: 'right' }}>€{p.price}</div>
-                <Box as="button" onClick={() => buy(p.link)} style={{ border: 'none', background: '#3B83F6', color: '#fff', fontSize: 13, fontWeight: 700, padding: '10px 20px', borderRadius: 10, cursor: 'pointer', flex: 'none' } as React.CSSProperties} hover={{ background: '#2b6fe0' }}>Scegli</Box>
+                <div style={{ fontSize: 17, fontWeight: 800, flex: 'none', minWidth: 57.5, textAlign: 'right' }}>€{p.price}</div>
+                <Box as="button" onClick={() => buy(p.link)} style={{ border: 'none', background: '#3B83F6', color: '#fff', fontSize: 11.5, fontWeight: 700, padding: '9px 18px', borderRadius: 9, cursor: 'pointer', flex: 'none' } as React.CSSProperties} hover={{ background: '#2b6fe0' }}>Scegli</Box>
               </div>
             ))}
           </div>
@@ -519,9 +520,9 @@ function VideoCutsCover() {
       {/* gradiente basso per leggere la timeline */}
       <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: '40%', background: 'linear-gradient(to top, rgba(8,12,20,.74), transparent)' }} />
       {/* timeline col taglio */}
-      <div style={{ position: 'absolute', left: 14, right: 14, bottom: 14, height: 7, borderRadius: 99, background: 'rgba(255,255,255,.28)' }}>
-        <div style={{ position: 'absolute', top: -2, left: '34%', width: '32%', height: 11, borderRadius: 4, background: '#3B83F6', boxShadow: '0 0 0 1.5px rgba(255,255,255,.85)', animation: 'vcc-cut 2.2s ease-in-out infinite' }} />
-        <div style={{ position: 'absolute', top: '50%', width: 9, height: 9, marginLeft: -4.5, marginTop: -4.5, borderRadius: '50%', background: '#fff', animation: 'vcc-play 4.4s ease-in-out infinite' }} />
+      <div style={{ position: 'absolute', left: 12.5, right: 12.5, bottom: 12.5, height: 6.5, borderRadius: 89, background: 'rgba(255,255,255,.28)' }}>
+        <div style={{ position: 'absolute', top: -2, left: '34%', width: '32%', height: 10, borderRadius: 3.5, background: '#3B83F6', boxShadow: '0 0 0 1.5px rgba(255,255,255,.85)', animation: 'vcc-cut 2.2s ease-in-out infinite' }} />
+        <div style={{ position: 'absolute', top: '50%', width: 8, height: 8, marginLeft: -4, marginTop: -4, borderRadius: '50%', background: '#fff', animation: 'vcc-play 4.4s ease-in-out infinite' }} />
       </div>
     </div>
   );
@@ -535,7 +536,7 @@ function TplPreview({ src, templateId }: { src: string | null; templateId?: stri
       {src ? (
         <video src={src} muted loop autoPlay playsInline onLoadedData={() => setLoaded(true)} style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: loaded ? 1 : 0, transition: 'opacity .3s' }} />
       ) : (
-        <Icon name="film" size={32} color="rgba(255,255,255,.4)" />
+        <Icon name="film" size={29} color="rgba(255,255,255,.4)" />
       )}
     </div>
   );
@@ -556,31 +557,31 @@ function DemoMontaggioClips() {
     return () => timers.forEach(clearTimeout);
   }, []);
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <div style={{ borderRadius: 12, border: '1.5px dashed #d8d4cb', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, padding: 14, color: '#57534c', fontSize: 13.5, fontWeight: 700, background: '#fcfcfb' }}>
-        <span style={{ width: 26, height: 26, borderRadius: '50%', background: '#eef4fe', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#3B83F6" strokeWidth="2"><path d="M12 5v14M5 12h14" /></svg>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
+      <div style={{ borderRadius: 11, border: '1.5px dashed #d8d4cb', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9, padding: 12.5, color: '#57534c', fontSize: 12, fontWeight: 700, background: '#fcfcfb' }}>
+        <span style={{ width: 23.5, height: 23.5, borderRadius: '50%', background: '#eef4fe', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <svg width="13.5" height="13.5" viewBox="0 0 24 24" fill="none" stroke="#3B83F6" strokeWidth="2"><path d="M12 5v14M5 12h14" /></svg>
         </span>
         Aggiungi clip o foto <span style={{ color: '#a8a299', fontWeight: 600 }}>· {DEMO_CLIPS.length}/15</span>
       </div>
       {DEMO_CLIPS.map((c, idx) => (
         <div key={c.id} style={{
-          display: 'flex', gap: 12, alignItems: 'center', background: '#fff', borderRadius: 12, padding: 10, border: '1px solid #e4e1da',
+          display: 'flex', gap: 11, alignItems: 'center', background: '#fff', borderRadius: 11, padding: 9, border: '1px solid #e4e1da',
           opacity: visible > idx ? 1 : 0, transform: visible > idx ? 'translateY(0)' : 'translateY(8px)', transition: 'opacity .4s ease, transform .4s ease',
         }}>
           <div style={{ flex: 'none', color: '#c4bfb6', display: 'flex', alignItems: 'center', padding: '0 2px' }}>
-            <svg width="14" height="20" viewBox="0 0 14 20" fill="currentColor"><circle cx="4" cy="4" r="1.5"/><circle cx="10" cy="4" r="1.5"/><circle cx="4" cy="10" r="1.5"/><circle cx="10" cy="10" r="1.5"/><circle cx="4" cy="16" r="1.5"/><circle cx="10" cy="16" r="1.5"/></svg>
+            <svg width="12.5" height="18" viewBox="0 0 14 20" fill="currentColor"><circle cx="4" cy="4" r="1.5"/><circle cx="10" cy="4" r="1.5"/><circle cx="4" cy="10" r="1.5"/><circle cx="10" cy="10" r="1.5"/><circle cx="4" cy="16" r="1.5"/><circle cx="10" cy="16" r="1.5"/></svg>
           </div>
-          <div style={{ position: 'relative', width: 116, height: 78, flex: 'none', borderRadius: 8, overflow: 'hidden', background: c.color }}>
-            <span style={{ position: 'absolute', top: 5, left: 5, background: 'rgba(33,31,28,.78)', color: '#fff', fontSize: 10, fontWeight: 800, minWidth: 18, height: 18, padding: '0 5px', borderRadius: 99, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{idx + 1}</span>
+          <div style={{ position: 'relative', width: 104.5, height: 70, flex: 'none', borderRadius: 7, overflow: 'hidden', background: c.color }}>
+            <span style={{ position: 'absolute', top: 4.5, left: 4.5, background: 'rgba(33,31,28,.78)', color: '#fff', fontSize: 9, fontWeight: 800, minWidth: 16, height: 16, padding: '0 4.5px', borderRadius: 89, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{idx + 1}</span>
           </div>
-          <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11.5, fontWeight: 700, color: '#57534c', background: '#f3f1ec', padding: '3px 9px', borderRadius: 99 }}>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#57534c" strokeWidth="2"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/>{!c.isPhoto && <polygon points="10 8 16 12 10 16 10 8" />}</svg>
+          <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 7 }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4.5, fontSize: 10.5, fontWeight: 700, color: '#57534c', background: '#f3f1ec', padding: '2.5px 8px', borderRadius: 89 }}>
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#57534c" strokeWidth="2"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/>{!c.isPhoto && <polygon points="10 8 16 12 10 16 10 8" />}</svg>
               {c.label}
             </span>
             <div style={{ flex: 1 }} />
-            <span style={{ fontSize: 12, fontWeight: 600, color: '#8c867d', background: '#f6f4f0', padding: '4px 10px', borderRadius: 8 }}>{c.room}</span>
+            <span style={{ fontSize: 11, fontWeight: 600, color: '#8c867d', background: '#f6f4f0', padding: '3.5px 9px', borderRadius: 7 }}>{c.room}</span>
           </div>
         </div>
       ))}
@@ -588,7 +589,7 @@ function DemoMontaggioClips() {
   );
 }
 
-export default function VideoAIScreen({ toast, routeKey, brand, preselect, project, onVideoJob, activeRenders, pendingVideoRenders, initialPhotoUrl, demoMode, go, lockBrand }: {
+export default function VideoAIScreen({ toast, routeKey, brand, preselect, project, onVideoJob, activeRenders, pendingVideoRenders, initialPhotoUrl, demoMode, go, lockBrand, subscriptionType }: {
   toast: (msg: string, icon?: string) => void;
   routeKey: number;
   brand: BrandSettings;
@@ -601,7 +602,9 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
   demoMode?: boolean;
   go?: (r: string) => void;
   lockBrand?: boolean; // free: watermark + copertina finale GetNearMe non rimovibili
+  subscriptionType?: string | null; // starter_monthly: walkthrough limitato a 3 foto (costo AI capped a ~€1)
 }) {
+  const isStarterPlan = subscriptionType === 'starter_monthly';
   const [templates, setTemplates] = React.useState<VideoTemplate[]>(DEFAULT_VIDEO_TEMPLATES);
   const [avatars, setAvatars] = React.useState<VideoAvatar[]>([]);
   const [quota, setQuota] = React.useState<VideoQuota | null>(null);
@@ -792,7 +795,10 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
     const up = () => { window.removeEventListener('pointermove', mv); window.removeEventListener('pointerup', up); };
     window.addEventListener('pointermove', mv); window.addEventListener('pointerup', up);
   };
-  const maxClips = layout === 'montaggio' ? MAX_CLIPS_MONTAGGIO : layout === 'sottotitoli' || layout === 'video_cuts' || singlePhoto ? 1 : MAX_CLIPS;
+  const maxClips = layout === 'montaggio' ? MAX_CLIPS_MONTAGGIO
+    : layout === 'sottotitoli' || layout === 'video_cuts' || singlePhoto ? 1
+    : layout === 'walkthrough' && isStarterPlan ? MAX_CLIPS_WALKTHROUGH_STARTER
+    : MAX_CLIPS;
   const minClips = layout === 'montaggio' ? (montSplitPip ? 1 : 3) : layout === 'sottotitoli' || layout === 'video_cuts' || singlePhoto || isPhotoTemplate ? 1 : 3;
   const usesMusic = layout !== 'sottotitoli';
   const inlineStep3 = ['walkthrough', 'construction', 'before_after', 'ai_staging', 'day_night'].includes(layout);
@@ -1057,27 +1063,27 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
   // Sezione "Copertina finale" (outro), riusabile nell'ultimo step di ogni
   // template. Switch ON di default + picker del logo (auto = scuro/colorato).
   const renderOutroSection = () => (
-    <div style={{ margin: '4px 0 0' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 0' }}>
-        <div style={{ minWidth: 0, paddingRight: 12 }}>
-          <div style={{ fontSize: 13.5, fontWeight: 600 }}>Copertina finale</div>
-          <div style={{ fontSize: 12, color: '#8c867d', marginTop: 2 }}>Chiusura con dissolvenza su bianco e logo al centro</div>
+    <div style={{ margin: '3.5px 0 0' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12.5px 0' }}>
+        <div style={{ minWidth: 0, paddingRight: 11 }}>
+          <div style={{ fontSize: 12, fontWeight: 600 }}>Copertina finale</div>
+          <div style={{ fontSize: 11, color: '#8c867d', marginTop: 2 }}>Chiusura con dissolvenza su bianco e logo al centro</div>
         </div>
-        <div onClick={() => { if (lockBrand) { toast('Copertina finale GetNearMe inclusa nel piano Free. Passa a un piano per rimuoverla.', 'x'); return; } if (hasAnyLogo) setOutroOn(v => !v); }} title={lockBrand ? 'Inclusa nel piano Free' : (hasAnyLogo ? '' : 'Carica un logo nella sezione Brand')} style={{ width: 40, height: 24, borderRadius: 99, background: outroOn && hasAnyLogo ? '#3B83F6' : '#d8d4cb', position: 'relative', cursor: lockBrand ? 'not-allowed' : (hasAnyLogo ? 'pointer' : 'not-allowed'), opacity: lockBrand ? 1 : (hasAnyLogo ? 1 : .5), transition: 'background .2s', flex: 'none' }}>
-          <span style={{ position: 'absolute', top: 3, left: outroOn && hasAnyLogo ? 19 : 3, width: 18, height: 18, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,.2)', transition: 'left .2s' }} />
+        <div onClick={() => { if (lockBrand) { toast('Copertina finale GetNearMe inclusa nel piano Free. Passa a un piano per rimuoverla.', 'x'); return; } if (hasAnyLogo) setOutroOn(v => !v); }} title={lockBrand ? 'Inclusa nel piano Free' : (hasAnyLogo ? '' : 'Carica un logo nella sezione Brand')} style={{ width: 36, height: 21.5, borderRadius: 89, background: outroOn && hasAnyLogo ? '#3B83F6' : '#d8d4cb', position: 'relative', cursor: lockBrand ? 'not-allowed' : (hasAnyLogo ? 'pointer' : 'not-allowed'), opacity: lockBrand ? 1 : (hasAnyLogo ? 1 : .5), transition: 'background .2s', flex: 'none' }}>
+          <span style={{ position: 'absolute', top: 2.5, left: outroOn && hasAnyLogo ? 19 : 3, width: 16, height: 16, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,.2)', transition: 'left .2s' }} />
         </div>
       </div>
       {outroOn && hasAnyLogo && (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, padding: '4px 0 0' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, padding: '3.5px 0 0' }}>
           {outroLogoItems.filter(i => i.src).map(it => {
             const sel = outroLogoKey === it.key;
             return (
-              <Box key={it.key} onClick={() => setOutroLogoKey(it.key)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px 6px 6px', borderRadius: 10, cursor: 'pointer', border: sel ? '2px solid #3B83F6' : '1px solid #e4e1da', background: sel ? '#eff6ff' : '#fff' } as React.CSSProperties} hover={sel ? undefined : { background: '#f6f4f0' }}>
-                <span style={{ width: 38, height: 26, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', background: it.white ? '#211f1c' : '#f1efe9', overflow: 'hidden' }}>
+              <Box key={it.key} onClick={() => setOutroLogoKey(it.key)} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '5.5px 9px 5.5px 5.5px', borderRadius: 9, cursor: 'pointer', border: sel ? '2px solid #3B83F6' : '1px solid #e4e1da', background: sel ? '#eff6ff' : '#fff' } as React.CSSProperties} hover={sel ? undefined : { background: '#f6f4f0' }}>
+                <span style={{ width: 34, height: 23.5, borderRadius: 5.5, display: 'flex', alignItems: 'center', justifyContent: 'center', background: it.white ? '#211f1c' : '#f1efe9', overflow: 'hidden' }}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={it.src} alt="" style={{ maxWidth: '82%', maxHeight: '74%', objectFit: 'contain' }} />
                 </span>
-                <span style={{ fontSize: 12, fontWeight: sel ? 700 : 600, color: sel ? '#1d5fd0' : '#57534c' }}>{it.label}</span>
+                <span style={{ fontSize: 11, fontWeight: sel ? 700 : 600, color: sel ? '#1d5fd0' : '#57534c' }}>{it.label}</span>
               </Box>
             );
           })}
@@ -1162,7 +1168,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
       }
       if (c && !c.unlimited && typeof c.remaining === 'number') setMontaggioQuota({ unlimited: false, remaining: c.remaining });
     } else if (quota && displayRemaining <= 0) {
-      if (lockBrand) { toast('Hai finito i video gratuiti. Passa a un piano per continuare.', 'x'); return; }
+      if (lockBrand) { go?.('account'); return; }
       setPacksOpen(true); // quota finita (paganti) → mostra i pacchetti extra
       return;
     }
@@ -1239,8 +1245,9 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
         setRenderProgress(0.15);
         // animate each photo (fal Kling), poll until done
         const animated: { url: string; room: string }[] = [];
-        for (const c of up) {
-          const st = await animatePhotoStart({ photoUrl: c.uploadedUrl!, room: c.room, duration: '5', aspectRatio: aspect });
+        for (let photoIndex = 0; photoIndex < up.length; photoIndex++) {
+          const c = up[photoIndex];
+          const st = await animatePhotoStart({ photoUrl: c.uploadedUrl!, room: c.room, duration: '5', aspectRatio: aspect, photoIndex });
           if (!st.success) throw new AIVideoError(st.error || 'Animazione foto non riuscita');
           let done = false;
           for (let i = 0; i < 300 && !abortRef.current; i++) {
@@ -1500,44 +1507,44 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
     setPlayingUrl(track.url);
   };
 
-  const inputStyle: React.CSSProperties = { width: '100%', border: '1px solid #e4e1da', borderRadius: 10, padding: '11px 14px', fontSize: 13.5, fontFamily: 'inherit', outline: 'none', background: '#fff' };
+  const inputStyle: React.CSSProperties = { width: '100%', border: '1px solid #e4e1da', borderRadius: 9, padding: '10px 12.5px', fontSize: 12, fontFamily: 'inherit', outline: 'none', background: '#fff' };
   // Select ambiente compatto con chevron custom staccata dal bordo destro.
   const roomSelectStyle: React.CSSProperties = {
-    ...inputStyle, flex: 'none', width: 'auto', maxWidth: 180, padding: '7px 32px 7px 10px', fontSize: 12,
+    ...inputStyle, flex: 'none', width: 'auto', maxWidth: 162, padding: '6.5px 29px 6.5px 9px', fontSize: 11,
     appearance: 'none', WebkitAppearance: 'none', MozAppearance: 'none', cursor: 'pointer',
     backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2357534c' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>")`,
     backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center', backgroundSize: '12px',
   };
   const cardSel = (sel: boolean): React.CSSProperties => ({
-    borderRadius: 12, cursor: 'pointer', border: sel ? '2px solid #3B83F6' : '2px solid transparent',
-        background: sel ? '#eef4fe' : '#f6f4f0', transition: 'all .15s', padding: '12px',
+    borderRadius: 11, cursor: 'pointer', border: sel ? '2px solid #3B83F6' : '2px solid transparent',
+        background: sel ? '#eef4fe' : '#f6f4f0', transition: 'all .15s', padding: '11px',
   });
 
   // ── UI ───────────────────────────────────────────────────────────────────
   return (
-    <div ref={rootRef} className="max-md:!px-4 max-md:!pt-6 max-md:!pb-32" style={s('max-width:1160px;margin:0 auto;padding:32px 32px 104px')}>
+    <div ref={rootRef} className="max-md:!px-4 max-md:!pt-6 max-md:!pb-32" style={s('max-width:1044px;margin:0 auto;padding:29px 29px 93.5px')}>
       {step === 0 && (
-        <div className="max-md:!flex-col max-md:!items-start max-md:!gap-4" style={s('display:flex;align-items:center;justify-content:space-between;margin-bottom:24px')}>
+        <div className="max-md:!flex-col max-md:!items-start max-md:!gap-4" style={s('display:flex;align-items:center;justify-content:space-between;margin-bottom:21.5px')}>
           <div>
-            <h1 style={s('margin:0 0 4px;font-size:25px;font-weight:800;letter-spacing:-.5px')}>{preselect === 'montaggio' ? 'Montaggio Automatico' : 'Video AI'}</h1>
-            <div style={s('color:#8c867d;font-size:14px')}>{preselect === 'montaggio' ? "Carica le clip della casa: l'AI monta tutto con musica e cover." : 'Trasforma foto e clip in video pronti per i social.'}</div>
+            <h1 style={s('margin:0 0 3.5px;font-size:22.5px;font-weight:800;letter-spacing:-.5px')}>{preselect === 'montaggio' ? 'Montaggio Automatico' : 'Video AI'}</h1>
+            <div style={s('color:#8c867d;font-size:12.5px')}>{preselect === 'montaggio' ? "Carica le clip della casa: l'AI monta tutto con musica e cover." : 'Trasforma foto e clip in video pronti per i social.'}</div>
           </div>
           {!demoMode && !quota && (
-            <div style={{ width: 140, height: 37, borderRadius: 99, background: 'linear-gradient(90deg,#efece7,#f7f5f1,#efece7)', backgroundSize: '200% 100%', animation: 'demo-ai-shimmer 1.4s linear infinite', flex: 'none' }} />
+            <div style={{ width: 126, height: 33.5, borderRadius: 89, background: 'linear-gradient(90deg,#efece7,#f7f5f1,#efece7)', backgroundSize: '200% 100%', animation: 'demo-ai-shimmer 1.4s linear infinite', flex: 'none' }} />
           )}
           {!demoMode && quota && (displayRemaining > 0 ? (
-            <div style={s('display:inline-flex;align-items:center;justify-content:center;gap:8px;background:#fff;border:1px solid #f0ede7;border-radius:99px;padding:8px 16px')}>
-              <Icon name="film" size={15} color="#3B83F6" />
-              <span style={{ fontSize: 13, fontWeight: 700 }}>{displayRemaining} video {displayRemaining === 1 ? 'rimanente' : 'rimanenti'}</span>
+            <div style={s('display:inline-flex;align-items:center;justify-content:center;gap:7px;background:#fff;border:1px solid #f0ede7;border-radius:89px;padding:7px 14.5px')}>
+              <Icon name="film" size={13.5} color="#3B83F6" />
+              <span style={{ fontSize: 11.5, fontWeight: 700 }}>{displayRemaining} video {displayRemaining === 1 ? 'rimanente' : 'rimanenti'}</span>
             </div>
           ) : lockBrand ? (
             // Free esaurito: CTA verso i piani al posto della pill.
-            <Box as="button" onClick={() => go?.('account')} style={s('display:flex;align-items:center;gap:8px;background:#3B83F6;color:#fff;border:none;border-radius:10px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer') as React.CSSProperties} hover={s('background:#2b6fe0')}>
-              <Icon name="crown" size={15} color="#fff" />Vedi i piani
+            <Box as="button" onClick={() => go?.('account')} style={s('display:flex;align-items:center;gap:7px;background:#3B83F6;color:#fff;border:none;border-radius:9px;padding:8px 14.5px;font-size:11.5px;font-weight:700;cursor:pointer') as React.CSSProperties} hover={s('background:#2b6fe0')}>
+              <Icon name="crown" size={13.5} color="#fff" />Vedi i piani
             </Box>
           ) : (
-            <Box as="button" onClick={() => setPacksOpen(true)} style={s('display:flex;align-items:center;gap:8px;background:#3B83F6;color:#fff;border:none;border-radius:10px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer') as React.CSSProperties} hover={s('background:#2b6fe0')}>
-              <Icon name="zap" size={15} color="#fff" />Ottieni altri video
+            <Box as="button" onClick={() => setPacksOpen(true)} style={s('display:flex;align-items:center;gap:7px;background:#3B83F6;color:#fff;border:none;border-radius:9px;padding:8px 14.5px;font-size:11.5px;font-weight:700;cursor:pointer') as React.CSSProperties} hover={s('background:#2b6fe0')}>
+              <Icon name="zap" size={13.5} color="#fff" />Ottieni altri video
             </Box>
           ))}
         </div>
@@ -1545,16 +1552,16 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
 
       {/* STEP 0 — template gallery */}
       {step === 0 && (
-        <div className="max-md:!grid-cols-1" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+        <div className="max-md:!grid-cols-1" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14.5 }}>
           {templates.filter(t => t.id !== 'montaggio' && t.id !== 'sottotitoli').map(t => (
-            <Box key={t.id} onClick={() => { if (quota && displayRemaining <= 0) { if (lockBrand) { toast('Hai finito i video gratuiti. Passa a un piano per continuare.', 'x'); } else { setPacksOpen(true); } return; } setClips([]); setPairs([]); setCutSegments([]); setTpl(t); setStep(NO_AVATAR_LAYOUTS.includes(t.layout || t.id) ? 2 : 1); }} style={{
-              background: '#fff', border: '1px solid #f0ede7', borderRadius: 16, overflow: 'hidden', cursor: 'pointer',
+            <Box key={t.id} onClick={() => { if (quota && displayRemaining <= 0) { if (lockBrand) { go?.('account'); } else { setPacksOpen(true); } return; } setClips([]); setPairs([]); setCutSegments([]); setTpl(t); setStep(NO_AVATAR_LAYOUTS.includes(t.layout || t.id) ? 2 : 1); }} style={{
+              background: '#fff', border: '1px solid #f0ede7', borderRadius: 14.5, overflow: 'hidden', cursor: 'pointer',
               transition: 'box-shadow .15s, transform .15s',
             }} hover={{ boxShadow: '0 12px 32px rgba(33,31,28,.10)', transform: 'translateY(-2px)' }}>
               <TplPreview src={resolvePreviewUrl(t.preview_video_url)} templateId={t.id} />
-              <div style={{ padding: '14px 16px 16px' }}>
-                <div style={{ fontSize: 14.5, fontWeight: 800, marginBottom: 4 }}>{t.name}</div>
-                <div style={{ fontSize: 12.5, color: '#8c867d', lineHeight: 1.45 }}>{t.description}</div>
+              <div style={{ padding: '12.5px 14.5px 14.5px' }}>
+                <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 3.5 }}>{t.name}</div>
+                <div style={{ fontSize: 11, color: '#8c867d', lineHeight: 1.45 }}>{t.description}</div>
               </div>
             </Box>
           ))}
@@ -1564,20 +1571,20 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
       {/* STEP 1 — avatar (classic/split) */}
       {step === 1 && (
         <div>
-          <div style={s('font-size:16px;font-weight:800;margin-bottom:4px')}>Scegli il tuo avatar</div>
-          <div style={s('color:#8c867d;font-size:13.5px;margin-bottom:16px')}>Seleziona la persona AI che presenterà il tuo immobile. Tutte le voci sono in italiano.</div>
+          <div style={s('font-size:14.5px;font-weight:800;margin-bottom:3.5px')}>Scegli il tuo avatar</div>
+          <div style={s('color:#8c867d;font-size:12px;margin-bottom:14.5px')}>Seleziona la persona AI che presenterà il tuo immobile. Tutte le voci sono in italiano.</div>
           {avatars.length === 0 ? (
-            <div style={s('background:#fff;border:1.5px dashed #d8d4cb;border-radius:12px;padding:40px;text-align:center;color:#8c867d;font-size:13.5px')}>
+            <div style={s('background:#fff;border:1.5px dashed #d8d4cb;border-radius:11px;padding:36px;text-align:center;color:#8c867d;font-size:12px')}>
               Nessun avatar disponibile. Accedi con un account Agency per usare i template con presentatore.
             </div>
           ) : (
-            <div className="max-md:!grid-cols-2" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+            <div className="max-md:!grid-cols-2" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 11 }}>
               {avatars.map(a => {
                 const sel = avatar?.id === a.id;
                 return (
                   <Box key={a.id} onClick={() => { setAvatar(a); setStep(2); }} style={{
                     display: 'flex', flexDirection: 'column' as const, border: sel ? '2px solid #3B82F6' : '2px solid #e4e1da',
-                    borderRadius: 16, cursor: 'pointer', overflow: 'hidden', background: '#fff', position: 'relative' as const,
+                    borderRadius: 14.5, cursor: 'pointer', overflow: 'hidden', background: '#fff', position: 'relative' as const,
                     boxShadow: sel ? '0 0 0 1px #3B82F6, 0 4px 16px rgba(59,130,246,.15)' : 'none',
                     transition: 'all .25s cubic-bezier(.4,0,.2,1)',
                   }} hover={{ borderColor: sel ? '#3B82F6' : '#93C5FD', boxShadow: '0 4px 16px rgba(59,130,246,.1)', transform: 'translateY(-2px)' }}>
@@ -1599,12 +1606,12 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
                           audioRef.current = au;
                           setPlayingUrl(a.voice_sample_url!);
                         }}
-                        style={{ position: 'absolute', top: 8, right: 8, padding: '4px 8px', borderRadius: 16, background: 'rgba(255,255,255,.9)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', color: '#1F2937', fontSize: 10, fontWeight: 600, border: 'none', cursor: 'pointer', zIndex: 2, boxShadow: '0 2px 8px rgba(0,0,0,.12)', transition: 'all .2s' }}
+                        style={{ position: 'absolute', top: 7, right: 7, padding: '3.5px 7px', borderRadius: 14.5, background: 'rgba(255,255,255,.9)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', color: '#1F2937', fontSize: 9, fontWeight: 600, border: 'none', cursor: 'pointer', zIndex: 2, boxShadow: '0 2px 8px rgba(0,0,0,.12)', transition: 'all .2s' }}
                       >{playingUrl === a.voice_sample_url ? '■ Stop' : '▶ Voce'}</button>
                     )}
-                    <div style={{ padding: '10px 10px 12px', display: 'flex', flexDirection: 'column', gap: 2 }}>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: '#1F2937' }}>{a.avatar_name || a.name}</div>
-                      {(a.style || a.gender) && <div style={{ fontSize: 11, color: '#6B7280' }}>{a.style || a.gender}</div>}
+                    <div style={{ padding: '9px 9px 11px', display: 'flex', flexDirection: 'column', gap: 2 }}>
+                      <div style={{ fontSize: 11.5, fontWeight: 700, color: '#1F2937' }}>{a.avatar_name || a.name}</div>
+                      {(a.style || a.gender) && <div style={{ fontSize: 10, color: '#6B7280' }}>{a.style || a.gender}</div>}
                     </div>
                   </Box>
                 );
@@ -1612,7 +1619,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
             </div>
           )}
           <StickyNav>
-            <Box as="button" onClick={() => { setStep(0); setTpl(null); setAvatar(null); }} style={s('border:1px solid #e4e1da;background:#fff;font-size:13px;font-weight:600;padding:11px 20px;border-radius:10px;cursor:pointer') as React.CSSProperties} hover={s('background:#f6f4f0')}>Indietro</Box>
+            <Box as="button" onClick={() => { setStep(0); setTpl(null); setAvatar(null); }} style={s('border:1px solid #e4e1da;background:#fff;font-size:11.5px;font-weight:600;padding:10px 18px;border-radius:9px;cursor:pointer') as React.CSSProperties} hover={s('background:#f6f4f0')}>Indietro</Box>
             <div />
           </StickyNav>
         </div>
@@ -1622,23 +1629,41 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
       {/* STEP montaggio: scelta del layout (Normale / Split / Riquadro) */}
       {step === 2 && tpl && layout === 'montaggio' && !montaggioLayout && (
         <div>
-          <div style={{ marginBottom: 20 }}>
-            <h1 style={s('margin:0 0 4px;font-size:25px;font-weight:800;letter-spacing:-.5px')}>Montaggio Automatico</h1>
-            <div style={s('color:#8c867d;font-size:14px')}>Scegli il tipo di video che vuoi creare.</div>
+          <div className="max-md:!flex-col max-md:!items-start max-md:!gap-4" style={s('display:flex;align-items:center;justify-content:space-between;gap:11px;margin-bottom:18px')}>
+            <div>
+              <h1 style={s('margin:0 0 3.5px;font-size:22.5px;font-weight:800;letter-spacing:-.5px')}>Montaggio Automatico</h1>
+              <div style={s('color:#8c867d;font-size:12.5px')}>Scegli il tipo di video che vuoi creare.</div>
+            </div>
+            {/* Skeleton solo se la pill comparirà (montaggio limitato = free); i paid hanno montaggio illimitato -> niente pill. */}
+            {!demoMode && !montaggioQuota && lockBrand && (
+              <div style={{ width: 144, height: 33.5, borderRadius: 89, background: 'linear-gradient(90deg,#efece7,#f7f5f1,#efece7)', backgroundSize: '200% 100%', animation: 'demo-ai-shimmer 1.4s linear infinite', flex: 'none' }} />
+            )}
+            {!demoMode && montaggioQuota && !montaggioQuota.unlimited && (
+              montaggioQuota.remaining > 0 ? (
+                <div style={s('display:inline-flex;align-items:center;justify-content:center;gap:7px;background:#fff;border:1px solid #f0ede7;border-radius:89px;padding:7px 14.5px;flex:none')}>
+                  <Icon name="scissors" size={13.5} color="#3B83F6" />
+                  <span style={{ fontSize: 11.5, fontWeight: 700 }}>{montaggioQuota.remaining} {montaggioQuota.remaining === 1 ? 'montaggio rimanente' : 'montaggi rimanenti'}</span>
+                </div>
+              ) : (
+                <Box as="button" onClick={() => go?.('account')} style={s('display:flex;align-items:center;gap:7px;background:#3B83F6;color:#fff;border:none;border-radius:9px;padding:8px 14.5px;font-size:11.5px;font-weight:700;cursor:pointer;flex:none') as React.CSSProperties} hover={s('background:#2b6fe0')}>
+                  <Icon name="crown" size={13.5} color="#fff" />Vedi i piani
+                </Box>
+              )
+            )}
           </div>
-          <div className="max-md:!grid-cols-1" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
+          <div className="max-md:!grid-cols-1" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12.5 }}>
             {MONTAGGIO_LAYOUTS.map(ml => (
-              <Box key={ml.id} role="button" tabIndex={0} onClick={() => setMontaggioLayout(ml.id)} onKeyDown={(e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setMontaggioLayout(ml.id); } }} onFocus={(e: React.FocusEvent<HTMLElement>) => { e.currentTarget.style.outline = '2px solid #3B83F6'; e.currentTarget.style.outlineOffset = '2px'; }} onBlur={(e: React.FocusEvent<HTMLElement>) => { e.currentTarget.style.outline = 'none'; }} style={{ background: '#fff', border: '1px solid #f0ede7', borderRadius: 16, overflow: 'hidden', cursor: 'pointer', display: 'flex', flexDirection: 'column' }} hover={{ boxShadow: '0 12px 32px rgba(33,31,28,.10)', transform: 'translateY(-2px)' }}>
+              <Box key={ml.id} role="button" tabIndex={0} onClick={() => setMontaggioLayout(ml.id)} onKeyDown={(e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setMontaggioLayout(ml.id); } }} onFocus={(e: React.FocusEvent<HTMLElement>) => { e.currentTarget.style.outline = '2px solid #3B83F6'; e.currentTarget.style.outlineOffset = '2px'; }} onBlur={(e: React.FocusEvent<HTMLElement>) => { e.currentTarget.style.outline = 'none'; }} style={{ background: '#fff', border: '1px solid #f0ede7', borderRadius: 14.5, overflow: 'hidden', cursor: 'pointer', display: 'flex', flexDirection: 'column' }} hover={{ boxShadow: '0 12px 32px rgba(33,31,28,.10)', transform: 'translateY(-2px)' }}>
                 <MontaggioDiagram kind={ml.id} />
-                <div style={{ padding: '14px 16px 16px' }}>
-                  <div style={s('font-size:16px;font-weight:800;letter-spacing:-.2px;margin-bottom:4px')}>{ml.label}</div>
-                  <div style={s('font-size:13px;color:#8c867d;line-height:1.45')}>{ml.desc}</div>
+                <div style={{ padding: '12.5px 14.5px 14.5px' }}>
+                  <div style={s('font-size:14.5px;font-weight:800;letter-spacing:-.2px;margin-bottom:3.5px')}>{ml.label}</div>
+                  <div style={s('font-size:11.5px;color:#8c867d;line-height:1.45')}>{ml.desc}</div>
                 </div>
               </Box>
             ))}
           </div>
           <StickyNav>
-            <Box as="button" onClick={() => go?.('home')} style={s('border:1px solid #e4e1da;background:#fff;font-size:13px;font-weight:600;padding:11px 20px;border-radius:10px;cursor:pointer') as React.CSSProperties} hover={s('background:#f6f4f0')}>Indietro</Box>
+            <Box as="button" onClick={() => go?.('home')} style={s('border:1px solid #e4e1da;background:#fff;font-size:11.5px;font-weight:600;padding:10px 18px;border-radius:9px;cursor:pointer') as React.CSSProperties} hover={s('background:#f6f4f0')}>Indietro</Box>
           </StickyNav>
         </div>
       )}
@@ -1646,31 +1671,31 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
       {step === 2 && tpl && !(layout === 'montaggio' && !montaggioLayout) && !montSplitPip && (
         <div>
           {layout === 'montaggio' ? (
-            <div className="max-md:!flex-col max-md:!items-start max-md:!gap-4" style={s('display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:24px')}>
+            <div className="max-md:!flex-col max-md:!items-start max-md:!gap-4" style={s('display:flex;align-items:center;justify-content:space-between;gap:11px;margin-bottom:21.5px')}>
               <div>
-                <h1 style={s('margin:0 0 4px;font-size:25px;font-weight:800;letter-spacing:-.5px')}>{montSplitPip ? 'Le clip della casa' : 'Montaggio Automatico'}</h1>
-                <div style={s('color:#8c867d;font-size:14px')}>{montSplitPip ? "Carica le clip dell'immobile (almeno 1). Andranno " + (montaggioLayout === 'split' ? 'nella metà in alto.' : 'a tutto schermo.') : `Carica da ${minClips} a ${maxClips} tra clip e foto: l'AI seleziona i momenti migliori e monta tutto con musica e cover.`}</div>
+                <h1 style={s('margin:0 0 3.5px;font-size:22.5px;font-weight:800;letter-spacing:-.5px')}>{montSplitPip ? 'Le clip della casa' : 'Montaggio Automatico'}</h1>
+                <div style={s('color:#8c867d;font-size:12.5px')}>{montSplitPip ? "Carica le clip dell'immobile (almeno 1). Andranno " + (montaggioLayout === 'split' ? 'nella metà in alto.' : 'a tutto schermo.') : `Carica da ${minClips} a ${maxClips} tra clip e foto: l'AI seleziona i momenti migliori e monta tutto con musica e cover.`}</div>
               </div>
               {/* Skeleton solo se la pill comparirà (montaggio limitato = free); i paid hanno montaggio illimitato -> niente pill. */}
               {!demoMode && !montaggioQuota && lockBrand && (
-                <div style={{ width: 160, height: 37, borderRadius: 99, background: 'linear-gradient(90deg,#efece7,#f7f5f1,#efece7)', backgroundSize: '200% 100%', animation: 'demo-ai-shimmer 1.4s linear infinite', flex: 'none' }} />
+                <div style={{ width: 144, height: 33.5, borderRadius: 89, background: 'linear-gradient(90deg,#efece7,#f7f5f1,#efece7)', backgroundSize: '200% 100%', animation: 'demo-ai-shimmer 1.4s linear infinite', flex: 'none' }} />
               )}
               {!demoMode && montaggioQuota && !montaggioQuota.unlimited && (
                 montaggioQuota.remaining > 0 ? (
-                  <div style={s('display:inline-flex;align-items:center;justify-content:center;gap:8px;background:#fff;border:1px solid #f0ede7;border-radius:99px;padding:8px 16px;flex:none')}>
-                    <Icon name="scissors" size={15} color="#3B83F6" />
-                    <span style={{ fontSize: 13, fontWeight: 700 }}>{montaggioQuota.remaining} {montaggioQuota.remaining === 1 ? 'montaggio rimanente' : 'montaggi rimanenti'}</span>
+                  <div style={s('display:inline-flex;align-items:center;justify-content:center;gap:7px;background:#fff;border:1px solid #f0ede7;border-radius:89px;padding:7px 14.5px;flex:none')}>
+                    <Icon name="scissors" size={13.5} color="#3B83F6" />
+                    <span style={{ fontSize: 11.5, fontWeight: 700 }}>{montaggioQuota.remaining} {montaggioQuota.remaining === 1 ? 'montaggio rimanente' : 'montaggi rimanenti'}</span>
                   </div>
                 ) : (
-                  <Box as="button" onClick={() => go?.('account')} style={s('display:flex;align-items:center;gap:8px;background:#3B83F6;color:#fff;border:none;border-radius:10px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer;flex:none') as React.CSSProperties} hover={s('background:#2b6fe0')}>
-                    <Icon name="crown" size={15} color="#fff" />Vedi i piani
+                  <Box as="button" onClick={() => go?.('account')} style={s('display:flex;align-items:center;gap:7px;background:#3B83F6;color:#fff;border:none;border-radius:9px;padding:8px 14.5px;font-size:11.5px;font-weight:700;cursor:pointer;flex:none') as React.CSSProperties} hover={s('background:#2b6fe0')}>
+                    <Icon name="crown" size={13.5} color="#fff" />Vedi i piani
                   </Box>
                 )
               )}
             </div>
           ) : (
             <>
-              <div style={s('font-size:16px;font-weight:800;margin-bottom:4px')}>
+              <div style={s('font-size:14.5px;font-weight:800;margin-bottom:3.5px')}>
                 {layout === 'before_after' ? 'Carica le coppie prima/dopo'
                   : singlePhoto ? 'Carica la foto'
                   : layout === 'sottotitoli' ? 'Carica il tuo video (max 90s)'
@@ -1678,34 +1703,34 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
                   : isPhotoTemplate ? `Carica da ${minClips} a ${maxClips} foto`
                   : `Carica da ${minClips} a ${maxClips} clip video`}
               </div>
-              <div style={s('color:#8c867d;font-size:13px;margin-bottom:16px')}>{tpl.description}{isPhotoTemplate && !singlePhoto && clips.length > 1 ? ' Trascina le foto per cambiarne l\'ordine.' : ''}</div>
+              <div style={s('color:#8c867d;font-size:11.5px;margin-bottom:14.5px')}>{tpl.description}{isPhotoTemplate && !singlePhoto && clips.length > 1 ? ' Trascina le foto per cambiarne l\'ordine.' : ''}</div>
             </>
           )}
 
           {layout === 'before_after' ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
               {pairs.map(p => (
-                <div key={p.id} style={s('background:#fff;border:1px solid #f0ede7;border-radius:14px;padding:14px;display:flex;gap:12px;align-items:center')}>
+                <div key={p.id} style={s('background:#fff;border:1px solid #f0ede7;border-radius:12.5px;padding:12.5px;display:flex;gap:11px;align-items:center')}>
                   {(['before', 'after'] as const).map(slot => (
                     <div key={slot} onClick={() => { pairRef.current = { pairId: p.id, slot }; pairFileRef.current?.click(); }} style={{
-                      flex: 1, aspectRatio: '4/3', maxWidth: 220, borderRadius: 10, overflow: 'hidden', cursor: 'pointer',
+                      flex: 1, aspectRatio: '4/3', maxWidth: 198, borderRadius: 9, overflow: 'hidden', cursor: 'pointer',
                       border: '1.5px dashed #d8d4cb', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#faf9f7', position: 'relative',
                     }}>
                       {p[slot] ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={p[slot]!.thumb} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       ) : (
-                        <div style={{ textAlign: 'center', color: '#b3aca1', fontSize: 12, fontWeight: 600 }}>
-                          <Icon name="image-plus" size={18} color="#b3aca1" /><div>{slot === 'before' ? 'Prima' : 'Dopo'}</div>
+                        <div style={{ textAlign: 'center', color: '#b3aca1', fontSize: 11, fontWeight: 600 }}>
+                          <Icon name="image-plus" size={16} color="#b3aca1" /><div>{slot === 'before' ? 'Prima' : 'Dopo'}</div>
                         </div>
                       )}
                     </div>
                   ))}
-                  <button onClick={() => setPairs(ps => ps.filter(x => x.id !== p.id))} style={{ border: 'none', background: '#f6f4f0', borderRadius: 8, width: 30, height: 30, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="x" size={13} color="#57534c" /></button>
+                  <button onClick={() => setPairs(ps => ps.filter(x => x.id !== p.id))} style={{ border: 'none', background: '#f6f4f0', borderRadius: 7, width: 27, height: 27, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="x" size={11.5} color="#57534c" /></button>
                 </div>
               ))}
               {pairs.length < MAX_PAIRS && (
-                <Box as="button" onClick={() => setPairs(ps => [...ps, { id: `${Date.now()}`, before: null, after: null, room: 'soggiorno' }])} style={s('border:1.5px dashed #d8d4cb;background:transparent;color:#8c867d;font-size:13px;font-weight:600;padding:14px;border-radius:12px;cursor:pointer') as React.CSSProperties} hover={s('background:#f6f4f0')}>+ Aggiungi coppia</Box>
+                <Box as="button" onClick={() => setPairs(ps => [...ps, { id: `${Date.now()}`, before: null, after: null, room: 'soggiorno' }])} style={s('border:1.5px dashed #d8d4cb;background:transparent;color:#8c867d;font-size:11.5px;font-weight:600;padding:12.5px;border-radius:11px;cursor:pointer') as React.CSSProperties} hover={s('background:#f6f4f0')}>+ Aggiungi coppia</Box>
               )}
               <input ref={pairFileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) addPairFile(f); e.target.value = ''; }} />
             </div>
@@ -1713,22 +1738,22 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
             <div onClick={clips.length === 0 && !demoMode ? () => fileRef.current?.click() : undefined}
               onDragOver={e => e.preventDefault()}
               onDrop={e => { e.preventDefault(); if (e.dataTransfer.files?.length) addFiles(e.dataTransfer.files); }}
-              style={{ border: clips.length === 0 && !demoMode ? '2px dashed #d8d4cb' : '2px solid transparent', background: '#fff', borderRadius: 16, padding: (clips.length || demoMode) ? 20 : 56, cursor: clips.length === 0 && !demoMode ? 'pointer' : 'default', textAlign: 'center' }}>
+              style={{ border: clips.length === 0 && !demoMode ? '2px dashed #d8d4cb' : '2px solid transparent', background: '#fff', borderRadius: 14.5, padding: (clips.length || demoMode) ? 20 : 56, cursor: clips.length === 0 && !demoMode ? 'pointer' : 'default', textAlign: 'center' }}>
               {clips.length === 0 && demoMode && layout === 'montaggio' ? (
                 <DemoMontaggioClips />
               ) : clips.length === 0 ? (
                 <>
-                  <div style={s('width:52px;height:52px;border-radius:16px;background:#eef4fe;display:flex;align-items:center;justify-content:center;margin:0 auto 14px')}>
-                    <Icon name={isPhotoTemplate && layout !== 'montaggio' ? 'image-plus' : 'film'} size={24} color="#3B83F6" />
+                  <div style={s('width:47px;height:47px;border-radius:14.5px;background:#eef4fe;display:flex;align-items:center;justify-content:center;margin:0 auto 12.5px')}>
+                    <Icon name={isPhotoTemplate && layout !== 'montaggio' ? 'image-plus' : 'film'} size={21.5} color="#3B83F6" />
                   </div>
-                  <div style={s('font-size:15px;font-weight:800;margin-bottom:6px')}>Trascina qui o clicca per scegliere</div>
-                  <div style={s('color:#8c867d;font-size:13px')}>{isPhotoTemplate && layout !== 'montaggio' ? 'JPG, PNG, WebP' : layout === 'montaggio' ? 'Video e foto' : 'MP4, MOV, WebM'}</div>
+                  <div style={s('font-size:13.5px;font-weight:800;margin-bottom:5.5px')}>Trascina qui o clicca per scegliere</div>
+                  <div style={s('color:#8c867d;font-size:11.5px')}>{isPhotoTemplate && layout !== 'montaggio' ? 'JPG, PNG, WebP' : layout === 'montaggio' ? 'Video e foto' : 'MP4, MOV, WebM'}</div>
                 </>
               ) : (
-                <div style={rowLayout ? { display: 'flex', flexDirection: 'column', gap: 12 } : { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+                <div style={rowLayout ? { display: 'flex', flexDirection: 'column', gap: 11 } : { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 11 }}>
                   {rowLayout && clips.length < maxClips && (
-                    <Box onClick={(e: React.MouseEvent) => { e.stopPropagation(); fileRef.current?.click(); }} style={{ borderRadius: 12, border: '1.5px dashed #d8d4cb', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, padding: '14px', cursor: 'pointer', color: '#57534c', fontSize: 13.5, fontWeight: 700, background: '#fcfcfb' } as React.CSSProperties} hover={{ background: '#f6f4f0', borderColor: '#3B83F6', color: '#3B83F6' }}>
-                      <span style={{ width: 26, height: 26, borderRadius: '50%', background: '#eef4fe', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="plus" size={15} color="#3B83F6" /></span>
+                    <Box onClick={(e: React.MouseEvent) => { e.stopPropagation(); fileRef.current?.click(); }} style={{ borderRadius: 11, border: '1.5px dashed #d8d4cb', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9, padding: '12.5px', cursor: 'pointer', color: '#57534c', fontSize: 12, fontWeight: 700, background: '#fcfcfb' } as React.CSSProperties} hover={{ background: '#f6f4f0', borderColor: '#3B83F6', color: '#3B83F6' }}>
+                      <span style={{ width: 23.5, height: 23.5, borderRadius: '50%', background: '#eef4fe', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="plus" size={13.5} color="#3B83F6" /></span>
                       {layout === 'montaggio' ? 'Aggiungi clip o foto' : 'Aggiungi clip'} <span style={{ color: '#a8a299', fontWeight: 600 }}>· {clips.length}/{maxClips}</span>
                     </Box>
                   )}
@@ -1752,8 +1777,8 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
                           onDragOver={e => { e.preventDefault(); if (overIdx !== idx) setOverIdx(idx); }}
                           onDrop={e => { e.preventDefault(); e.stopPropagation(); if (dragIdx !== null) moveClip(dragIdx, idx); setDragIdx(null); setOverIdx(null); }}
                           style={{
-                            position: 'relative', display: 'flex', gap: 12, alignItems: 'center',
-                            background: '#fff', borderRadius: 12, padding: 10,
+                            position: 'relative', display: 'flex', gap: 11, alignItems: 'center',
+                            background: '#fff', borderRadius: 11, padding: 9,
                             border: isOver ? '2px solid #3B83F6' : '1px solid #e4e1da',
                             boxShadow: isDragging ? '0 8px 24px rgba(0,0,0,.12)' : 'none',
                             opacity: isDragging ? .45 : 1, transition: 'box-shadow .15s, opacity .15s',
@@ -1764,21 +1789,21 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
                             onDragEnd={() => { setDragIdx(null); setOverIdx(null); }}
                             title="Trascina per riordinare"
                             style={{ flex: 'none', cursor: 'grab', color: '#c4bfb6', display: 'flex', alignItems: 'center', padding: '0 2px', touchAction: 'none' }}>
-                            <svg width="14" height="20" viewBox="0 0 14 20" fill="currentColor" aria-hidden><circle cx="4" cy="4" r="1.5"/><circle cx="10" cy="4" r="1.5"/><circle cx="4" cy="10" r="1.5"/><circle cx="10" cy="10" r="1.5"/><circle cx="4" cy="16" r="1.5"/><circle cx="10" cy="16" r="1.5"/></svg>
+                            <svg width="12.5" height="18" viewBox="0 0 14 20" fill="currentColor" aria-hidden><circle cx="4" cy="4" r="1.5"/><circle cx="10" cy="4" r="1.5"/><circle cx="4" cy="10" r="1.5"/><circle cx="10" cy="10" r="1.5"/><circle cx="4" cy="16" r="1.5"/><circle cx="10" cy="16" r="1.5"/></svg>
                           </div>
-                          <div className="max-md:!w-full max-md:!h-auto max-md:!aspect-video" style={{ position: 'relative', width: 116, height: 78, flex: 'none', borderRadius: 8, overflow: 'hidden', background: '#000' }}>
+                          <div className="max-md:!w-full max-md:!h-auto max-md:!aspect-video" style={{ position: 'relative', width: 104.5, height: 70, flex: 'none', borderRadius: 7, overflow: 'hidden', background: '#000' }}>
                             {c.isPhoto && c.height > c.width && (
                               // eslint-disable-next-line @next/next/no-img-element
                               <img src={c.thumb} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', filter: 'blur(18px) brightness(.85)', transform: 'scale(1.15)' }} />
                             )}
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img src={previewSrc} alt="" style={{ width: '100%', height: '100%', objectFit: c.isPhoto && c.height > c.width ? 'contain' : 'cover', position: 'relative' }} />
-                            <span style={{ position: 'absolute', top: 5, left: 5, background: 'rgba(33,31,28,.78)', color: '#fff', fontSize: 10, fontWeight: 800, minWidth: 18, height: 18, padding: '0 5px', borderRadius: 99, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{idx + 1}</span>
+                            <span style={{ position: 'absolute', top: 4.5, left: 4.5, background: 'rgba(33,31,28,.78)', color: '#fff', fontSize: 9, fontWeight: 800, minWidth: 16, height: 16, padding: '0 4.5px', borderRadius: 89, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{idx + 1}</span>
                           </div>
-                          <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
-                            <div className="max-md:!flex-wrap" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11.5, fontWeight: 700, color: '#57534c', background: '#f3f1ec', padding: '3px 9px', borderRadius: 99 }}>
-                                <Icon name={c.isPhoto ? 'image' : 'film'} size={12} color="#57534c" />
+                          <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 11 }}>
+                            <div className="max-md:!flex-wrap" style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4.5, fontSize: 10.5, fontWeight: 700, color: '#57534c', background: '#f3f1ec', padding: '2.5px 8px', borderRadius: 89 }}>
+                                <Icon name={c.isPhoto ? 'image' : 'film'} size={11} color="#57534c" />
                                 {c.isPhoto ? 'Foto' : `Video · ${Math.round(c.duration)}s`}
                               </span>
                               <div style={{ flex: 1 }} />
@@ -1787,7 +1812,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
                                   {ROOM_TYPES.map(r => <option key={r.id} value={r.id}>{r.label}</option>)}
                                 </select>
                               )}
-                              <Box as="button" onClick={() => setClips(cs => cs.filter(x => x.id !== c.id))} title="Rimuovi" style={{ flex: 'none', width: 32, height: 32, borderRadius: 8, background: '#fff', border: '1px solid #e4e1da', cursor: 'pointer', color: '#b3aca1', display: 'flex', alignItems: 'center', justifyContent: 'center' } as React.CSSProperties} hover={{ background: '#fef2f2', borderColor: '#fca5a5', color: '#dc2626' }}><Icon name="trash" size={14} color="currentColor" /></Box>
+                              <Box as="button" onClick={() => setClips(cs => cs.filter(x => x.id !== c.id))} title="Rimuovi" style={{ flex: 'none', width: 29, height: 29, borderRadius: 7, background: '#fff', border: '1px solid #e4e1da', cursor: 'pointer', color: '#b3aca1', display: 'flex', alignItems: 'center', justifyContent: 'center' } as React.CSSProperties} hover={{ background: '#fef2f2', borderColor: '#fca5a5', color: '#dc2626' }}><Icon name="trash" size={12.5} color="currentColor" /></Box>
                             </div>
                             {trimmable && (
                               <>
@@ -1813,23 +1838,23 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
                         draggable={reorderable}
                         onDragStart={reorderable ? (() => setDragIdx(idx)) : undefined}
                         onDragEnd={reorderable ? (() => { setDragIdx(null); setOverIdx(null); }) : undefined}
-                        style={{ position: 'relative', aspectRatio: '4/3', borderRadius: 10, overflow: 'hidden', cursor: reorderable ? 'grab' : 'default', outline: isOver ? '2px solid #3B83F6' : 'none', outlineOffset: 2 }}>
+                        style={{ position: 'relative', aspectRatio: '4/3', borderRadius: 9, overflow: 'hidden', cursor: reorderable ? 'grab' : 'default', outline: isOver ? '2px solid #3B83F6' : 'none', outlineOffset: 2 }}>
                         {c.isPhoto && c.height > c.width && (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img src={c.thumb} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', filter: 'blur(20px) brightness(.85)', transform: 'scale(1.15)' }} />
                         )}
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={c.thumb} alt="" draggable={false} style={{ width: '100%', height: '100%', objectFit: c.isPhoto && c.height > c.width ? 'contain' : 'cover', position: 'relative' }} />
-                        <span style={{ position: 'absolute', top: 6, left: 6, background: 'rgba(33,31,28,.72)', color: '#fff', fontSize: 10.5, fontWeight: 800, padding: '3px 8px', borderRadius: 99 }}>{idx + 1}{!c.isPhoto && ` · ${Math.round(c.duration)}s`}</span>
-                        <button onClick={() => setClips(cs => cs.filter(x => x.id !== c.id))} style={{ position: 'absolute', top: 6, right: 6, width: 22, height: 22, borderRadius: '50%', background: 'rgba(33,31,28,.72)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="x" size={11} color="#fff" /></button>
+                        <span style={{ position: 'absolute', top: 5.5, left: 5.5, background: 'rgba(33,31,28,.72)', color: '#fff', fontSize: 9.5, fontWeight: 800, padding: '2.5px 7px', borderRadius: 89 }}>{idx + 1}{!c.isPhoto && ` · ${Math.round(c.duration)}s`}</span>
+                        <button onClick={() => setClips(cs => cs.filter(x => x.id !== c.id))} style={{ position: 'absolute', top: 5.5, right: 5.5, width: 20, height: 20, borderRadius: '50%', background: 'rgba(33,31,28,.72)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="x" size={10} color="#fff" /></button>
                       </div>
                       {showRoom && (
-                        <select value={c.room} onChange={e => setClips(cs => cs.map(x => x.id === c.id ? { ...x, room: e.target.value, roomManual: true } : x))} style={{ ...inputStyle, marginTop: 6, padding: '7px 10px', fontSize: 12 }}>
+                        <select value={c.room} onChange={e => setClips(cs => cs.map(x => x.id === c.id ? { ...x, room: e.target.value, roomManual: true } : x))} style={{ ...inputStyle, marginTop: 5.5, padding: '6.5px 9px', fontSize: 11 }}>
                           {ROOM_TYPES.map(r => <option key={r.id} value={r.id}>{r.label}</option>)}
                         </select>
                       )}
                       {trimmable && (
-                        <div style={{ marginTop: 6, background: '#f6f4f0', borderRadius: 8, padding: '8px 10px' }}>
+                        <div style={{ marginTop: 5.5, background: '#f6f4f0', borderRadius: 7, padding: '7px 9px' }}>
                           <TrimRange duration={c.duration} start={c.sourceStart} end={c.sourceEnd}
                             onChange={(st, en) => setClips(cs => cs.map(x => x.id === c.id ? { ...x, sourceStart: st, sourceEnd: en } : x))} />
                         </div>
@@ -1837,8 +1862,8 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
                     </div>
                   ); })}
                   {clips.length < maxClips && !rowLayout && (
-                    <div style={{ aspectRatio: '4/3', borderRadius: 10, border: '1.5px dashed #d8d4cb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <Icon name="plus" size={20} color="#b3aca1" />
+                    <div style={{ aspectRatio: '4/3', borderRadius: 9, border: '1.5px dashed #d8d4cb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Icon name="plus" size={18} color="#b3aca1" />
                     </div>
                   )}
                 </div>
@@ -1850,41 +1875,41 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
           {/* ai_staging inline options */}
           {layout === 'ai_staging' && clips.length > 0 && (
             <>
-              <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:14px;padding:18px;margin-top:16px')}>
-                <div style={s('font-size:13px;font-weight:800;margin-bottom:10px')}>Stile arredamento</div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+              <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:12.5px;padding:16px;margin-top:14.5px')}>
+                <div style={s('font-size:11.5px;font-weight:800;margin-bottom:9px')}>Stile arredamento</div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 7 }}>
                   {AI_STAGING_STYLES.map(st => {
                     const sel = stagingStyle === st.id;
                     return (
                       <div key={st.id} onClick={() => setStagingStyle(st.id)} style={{
-                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, padding: '12px 4px',
-                        borderRadius: 10, cursor: 'pointer', textAlign: 'center',
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5.5, padding: '11px 3.5px',
+                        borderRadius: 9, cursor: 'pointer', textAlign: 'center',
                         border: sel ? '2px solid #3B83F6' : '2px solid transparent',
                         background: sel ? '#eef4fe' : '#f6f4f0', transition: 'all .15s',
                       }}>
-                        <span style={{ width: 22, height: 22, display: 'flex', color: sel ? '#1d5fd0' : '#57534c' }} dangerouslySetInnerHTML={{ __html: st.icon }} />
-                        <span style={{ fontSize: 11, fontWeight: 600, color: sel ? '#1d5fd0' : '#57534c' }}>{st.label}</span>
+                        <span style={{ width: 20, height: 20, display: 'flex', color: sel ? '#1d5fd0' : '#57534c' }} dangerouslySetInnerHTML={{ __html: st.icon }} />
+                        <span style={{ fontSize: 10, fontWeight: 600, color: sel ? '#1d5fd0' : '#57534c' }}>{st.label}</span>
                       </div>
                     );
                   })}
                 </div>
               </div>
-              <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:14px;padding:18px;margin-top:12px')}>
-                <div style={s('font-size:13px;font-weight:800;margin-bottom:10px')}>Animazione</div>
-                <div className="max-md:!grid-cols-1" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
+              <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:12.5px;padding:16px;margin-top:11px')}>
+                <div style={s('font-size:11.5px;font-weight:800;margin-bottom:9px')}>Animazione</div>
+                <div className="max-md:!grid-cols-1" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 9 }}>
                   {AI_STAGING_ANIMATION_STYLES.map(an => {
                     const sel = animStyle === an.id;
                     const meta = ANIM_META[an.id] || { desc: '', icon: '' };
                     return (
                       <div key={an.id} onClick={() => setAnimStyle(an.id)} style={{
-                        display: 'flex', alignItems: 'flex-start', gap: 12, padding: 14, borderRadius: 12, cursor: 'pointer',
+                        display: 'flex', alignItems: 'flex-start', gap: 11, padding: 12.5, borderRadius: 11, cursor: 'pointer',
                         border: sel ? '2px solid #3B83F6' : '2px solid transparent',
                         background: sel ? '#eef4fe' : '#f6f4f0', transition: 'all .15s',
                       }}>
-                        <span style={{ flex: 'none', width: 38, height: 38, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', background: sel ? '#3B83F6' : '#fff', color: sel ? '#fff' : '#57534c', border: sel ? 'none' : '1px solid #e4e1da' }} dangerouslySetInnerHTML={{ __html: meta.icon }} />
+                        <span style={{ flex: 'none', width: 34, height: 34, borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', background: sel ? '#3B83F6' : '#fff', color: sel ? '#fff' : '#57534c', border: sel ? 'none' : '1px solid #e4e1da' }} dangerouslySetInnerHTML={{ __html: meta.icon }} />
                         <div style={{ minWidth: 0 }}>
-                          <div style={{ fontSize: 13.5, fontWeight: 700, color: sel ? '#1d5fd0' : '#211f1c' }}>{an.label}</div>
-                          <div style={{ fontSize: 11.5, color: '#8c867d', marginTop: 2, lineHeight: 1.35 }}>{meta.desc}</div>
+                          <div style={{ fontSize: 12, fontWeight: 700, color: sel ? '#1d5fd0' : '#211f1c' }}>{an.label}</div>
+                          <div style={{ fontSize: 10.5, color: '#8c867d', marginTop: 2, lineHeight: 1.35 }}>{meta.desc}</div>
                         </div>
                       </div>
                     );
@@ -1896,11 +1921,11 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
 
           {/* day_night inline option (Direzione) */}
           {layout === 'day_night' && clips.length > 0 && (
-            <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:14px;padding:18px;margin-top:16px')}>
-              <div style={s('font-size:13px;font-weight:800;margin-bottom:10px')}>Direzione</div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
+            <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:12.5px;padding:16px;margin-top:14.5px')}>
+              <div style={s('font-size:11.5px;font-weight:800;margin-bottom:9px')}>Direzione</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 9 }}>
                 {DAY_NIGHT_DIRECTIONS.map(d => (
-                  <div key={d.id} onClick={() => setDayNightDir(d.id)} style={{ ...cardSel(dayNightDir === d.id), textAlign: 'center', fontSize: 12.5, fontWeight: 700 }}>{d.label}</div>
+                  <div key={d.id} onClick={() => setDayNightDir(d.id)} style={{ ...cardSel(dayNightDir === d.id), textAlign: 'center', fontSize: 11, fontWeight: 700 }}>{d.label}</div>
                 ))}
               </div>
             </div>
@@ -1908,27 +1933,27 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
 
           {/* inline music for templates that skip step 3 */}
           {inlineStep3 && (layout === 'before_after' ? pairs.some(p => p.before && p.after) : clips.length > 0) && (
-            <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:14px;padding:18px;margin-top:16px')}>
-              <div style={s('font-size:13px;font-weight:800;margin-bottom:10px')}>Musica <span style={s('font-weight:500;color:#b3aca1;font-size:12px')}>(opzionale)</span></div>
-              <Box as="button" onClick={() => setMusicOpen(o => !o)} style={s('width:100%;border:1.5px solid #d6d2c9;background:#fff;font-size:13px;font-weight:600;padding:10px 14px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:space-between') as React.CSSProperties} hover={s('background:#faf9f7;border-color:#bdb8ae')}>
+            <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:12.5px;padding:16px;margin-top:14.5px')}>
+              <div style={s('font-size:11.5px;font-weight:800;margin-bottom:9px')}>Musica <span style={s('font-weight:500;color:#b3aca1;font-size:11px')}>(opzionale)</span></div>
+              <Box as="button" onClick={() => setMusicOpen(o => !o)} style={s('width:100%;border:1.5px solid #d6d2c9;background:#fff;font-size:11.5px;font-weight:600;padding:9px 12.5px;border-radius:9px;cursor:pointer;display:flex;align-items:center;justify-content:space-between') as React.CSSProperties} hover={s('background:#faf9f7;border-color:#bdb8ae')}>
                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: musicUrl ? '#1F2937' : '#b3aca1', fontWeight: musicUrl ? 600 : 400 }}>
                   {musicUrl ? (musicLibrary.find(t => t.url === musicUrl)?.title || 'Traccia selezionata') : 'Seleziona la musica del video...'}
                 </span>
-                <Icon name="chevron-down" size={14} color="#8c867d" />
+                <Icon name="chevron-down" size={12.5} color="#8c867d" />
               </Box>
               {musicOpen && (
-                <div style={{ marginTop: 8, maxHeight: 320, overflowY: 'auto', border: '1px solid #f0ede7', borderRadius: 10 }}>
-                  <div onClick={() => { setMusicUrl(null); setMusicOpen(false); }} style={{ padding: '9px 12px', fontSize: 12.5, fontWeight: 600, cursor: 'pointer', color: '#8c867d' }}>Nessuna musica</div>
+                <div style={{ marginTop: 7, maxHeight: 288, overflowY: 'auto', border: '1px solid #f0ede7', borderRadius: 9 }}>
+                  <div onClick={() => { setMusicUrl(null); setMusicOpen(false); }} style={{ padding: '8px 11px', fontSize: 11, fontWeight: 600, cursor: 'pointer', color: '#8c867d' }}>Nessuna musica</div>
                   {Object.keys(MOOD_LABELS).map(mood => (
                     <div key={mood}>
-                      <div style={{ padding: '8px 12px 4px', fontSize: 10.5, fontWeight: 800, color: '#b3aca1', textTransform: 'uppercase', letterSpacing: '.05em' }}>{MOOD_LABELS[mood]}</div>
+                      <div style={{ padding: '7px 11px 3.5px', fontSize: 9.5, fontWeight: 800, color: '#b3aca1', textTransform: 'uppercase', letterSpacing: '.05em' }}>{MOOD_LABELS[mood]}</div>
                       {musicLibrary.filter(t => t.mood === mood).slice(0, 12).map(t => (
-                        <Box key={t.id} onClick={() => { setMusicUrl(t.url); setMusicOpen(false); }} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 12px', cursor: 'pointer', background: musicUrl === t.url ? '#DBEAFE' : 'transparent', borderRadius: 6, border: musicUrl === t.url ? '1.5px solid #3B83F6' : '1.5px solid transparent' }} hover={{ background: musicUrl === t.url ? '#DBEAFE' : '#f6f4f0' }}>
-                          <button onClick={e => { e.stopPropagation(); toggleMusicPlay(t); }} style={{ border: 'none', background: musicUrl === t.url ? '#3B83F6' : '#f0ede7', color: musicUrl === t.url ? '#fff' : '#1F2937', borderRadius: '50%', width: 24, height: 24, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none', fontSize: 10 }}>
+                        <Box key={t.id} onClick={() => { setMusicUrl(t.url); setMusicOpen(false); }} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '6.5px 11px', cursor: 'pointer', background: musicUrl === t.url ? '#DBEAFE' : 'transparent', borderRadius: 5.5, border: musicUrl === t.url ? '1.5px solid #3B83F6' : '1.5px solid transparent' }} hover={{ background: musicUrl === t.url ? '#DBEAFE' : '#f6f4f0' }}>
+                          <button onClick={e => { e.stopPropagation(); toggleMusicPlay(t); }} style={{ border: 'none', background: musicUrl === t.url ? '#3B83F6' : '#f0ede7', color: musicUrl === t.url ? '#fff' : '#1F2937', borderRadius: '50%', width: 21.5, height: 21.5, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none', fontSize: 9 }}>
                             {playingUrl === t.url ? '❚❚' : '►'}
                           </button>
-                          <span style={{ fontSize: 12.5, fontWeight: musicUrl === t.url ? 700 : 500, color: musicUrl === t.url ? '#1D4ED8' : '#1F2937', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{t.title}</span>
-                          {musicUrl === t.url && <Icon name="check" size={14} color="#3B83F6" />}
+                          <span style={{ fontSize: 11, fontWeight: musicUrl === t.url ? 700 : 500, color: musicUrl === t.url ? '#1D4ED8' : '#1F2937', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{t.title}</span>
+                          {musicUrl === t.url && <Icon name="check" size={12.5} color="#3B83F6" />}
                         </Box>
                       ))}
                     </div>
@@ -1940,28 +1965,28 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
 
           {/* Split / Riquadro: il tuo video mentre parli */}
           {montSplitPip && (
-            <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:14px;padding:18px;margin-top:16px')}>
-              <div style={s('font-size:15px;font-weight:800;margin-bottom:4px')}>Il tuo video mentre parli</div>
-              <div style={s('color:#8c867d;font-size:13px;margin-bottom:12px')}>{montaggioLayout === 'split' ? 'Andrà nella metà in basso, sotto le clip della casa.' : "Andrà nel riquadro nell'angolo."} Max 90 secondi. La durata di questo video decide la durata del montaggio.</div>
+            <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:12.5px;padding:16px;margin-top:14.5px')}>
+              <div style={s('font-size:13.5px;font-weight:800;margin-bottom:3.5px')}>Il tuo video mentre parli</div>
+              <div style={s('color:#8c867d;font-size:11.5px;margin-bottom:11px')}>{montaggioLayout === 'split' ? 'Andrà nella metà in basso, sotto le clip della casa.' : "Andrà nel riquadro nell'angolo."} Max 90 secondi. La durata di questo video decide la durata del montaggio.</div>
               {talkingClip ? (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={talkingClip.thumb} alt="" style={{ width: 110, height: 72, objectFit: 'cover', borderRadius: 8, background: '#000', flex: 'none' }} />
+                  <img src={talkingClip.thumb} alt="" style={{ width: 99, height: 65, objectFit: 'cover', borderRadius: 7, background: '#000', flex: 'none' }} />
                   <div style={{ minWidth: 0, flex: 1 }}>
-                    <div style={s('font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{talkingClip.file.name}</div>
-                    <div style={s('font-size:12px;color:#8c867d')}>{Math.round(talkingClip.duration)}s</div>
+                    <div style={s('font-size:11.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{talkingClip.file.name}</div>
+                    <div style={s('font-size:11px;color:#8c867d')}>{Math.round(talkingClip.duration)}s</div>
                   </div>
-                  <Box as="button" onClick={() => setTalkingClip(null)} style={s('flex:none;border:1px solid #e4e1da;background:#fff;color:#57534c;font-size:13px;font-weight:700;padding:9px 14px;border-radius:10px;cursor:pointer')} hover={s('background:#f6f4f0')}>Cambia</Box>
+                  <Box as="button" onClick={() => setTalkingClip(null)} style={s('flex:none;border:1px solid #e4e1da;background:#fff;color:#57534c;font-size:11.5px;font-weight:700;padding:8px 12.5px;border-radius:9px;cursor:pointer')} hover={s('background:#f6f4f0')}>Cambia</Box>
                 </div>
               ) : (
-                <Box as="button" onClick={() => talkingFileRef.current?.click()} style={s('width:100%;border:1.5px dashed #d8d4cb;background:#faf9f7;color:#57534c;font-size:14px;font-weight:700;padding:22px;border-radius:12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px')} hover={s('background:#f1efe9;border-color:#bdb8ae')}>
-                  <Icon name="film" size={22} color="#8c867d" />Carica il tuo video parlato
+                <Box as="button" onClick={() => talkingFileRef.current?.click()} style={s('width:100%;border:1.5px dashed #d8d4cb;background:#faf9f7;color:#57534c;font-size:12.5px;font-weight:700;padding:20px;border-radius:11px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5.5px')} hover={s('background:#f1efe9;border-color:#bdb8ae')}>
+                  <Icon name="film" size={20} color="#8c867d" />Carica il tuo video parlato
                 </Box>
               )}
               {montaggioLayout === 'pip' && (
-                <div style={{ marginTop: 16 }}>
-                  <div style={s('font-size:13px;font-weight:700;margin-bottom:8px')}>In quale angolo metterti?</div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, maxWidth: 280 }}>
+                <div style={{ marginTop: 14.5 }}>
+                  <div style={s('font-size:11.5px;font-weight:700;margin-bottom:7px')}>In quale angolo metterti?</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 7, maxWidth: 252 }}>
                     {([
                       { id: 'tl' as const, label: 'In alto a sinistra' },
                       { id: 'tr' as const, label: 'In alto a destra' },
@@ -1970,7 +1995,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
                     ]).map(opt => {
                       const on = pipPosition === opt.id;
                       return (
-                        <Box key={opt.id} onClick={() => setPipPosition(opt.id)} style={{ padding: '10px 12px', borderRadius: 10, cursor: 'pointer', fontSize: 12.5, fontWeight: 700, textAlign: 'center', border: `2px solid ${on ? '#3B83F6' : '#e4e1da'}`, background: on ? '#eef4fe' : '#fff', color: on ? '#1d5fd0' : '#57534c' }} hover={{ borderColor: '#3B83F6' }}>{opt.label}</Box>
+                        <Box key={opt.id} onClick={() => setPipPosition(opt.id)} style={{ padding: '9px 11px', borderRadius: 9, cursor: 'pointer', fontSize: 11, fontWeight: 700, textAlign: 'center', border: `2px solid ${on ? '#3B83F6' : '#e4e1da'}`, background: on ? '#eef4fe' : '#fff', color: on ? '#1d5fd0' : '#57534c' }} hover={{ borderColor: '#3B83F6' }}>{opt.label}</Box>
                       );
                     })}
                   </div>
@@ -1981,19 +2006,19 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
           <input ref={talkingFileRef} type="file" accept="video/*" style={{ display: 'none' }} onChange={e => { if (e.target.files) addTalkingFile(e.target.files); e.target.value = ''; }} />
 
           {inlineStep3 && (layout === 'before_after' ? pairs.some(p => p.before && p.after) : clips.length > 0) && (
-            <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:14px;padding:6px 18px 14px;margin-top:16px')}>
+            <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:12.5px;padding:5.5px 16px 12.5px;margin-top:14.5px')}>
               {renderOutroSection()}
             </div>
           )}
 
           <StickyNav>
-            <Box as="button" onClick={() => { if (layout === 'montaggio') { setClips([]); setTalkingClip(null); setMontaggioLayout(null); } else { setClips([]); setPairs([]); setStep(usesAvatar ? 1 : 0); } }} style={s('border:1px solid #e4e1da;background:#fff;font-size:13px;font-weight:600;padding:11px 20px;border-radius:10px;cursor:pointer') as React.CSSProperties} hover={s('background:#f6f4f0')}>Indietro</Box>
+            <Box as="button" onClick={() => { if (layout === 'montaggio') { setClips([]); setTalkingClip(null); setMontaggioLayout(null); } else { setClips([]); setPairs([]); setStep(usesAvatar ? 1 : 0); } }} style={s('border:1px solid #e4e1da;background:#fff;font-size:11.5px;font-weight:600;padding:10px 18px;border-radius:9px;cursor:pointer') as React.CSSProperties} hover={s('background:#f6f4f0')}>Indietro</Box>
             {inlineStep3 ? (
-              <Box as="button" onClick={() => { if (mediaReady) handleRender(); }} style={{ border: 'none', background: '#3B83F6', color: '#fff', fontSize: 14, fontWeight: 700, padding: '12px 28px', borderRadius: 10, cursor: mediaReady ? 'pointer' : 'default', opacity: mediaReady ? 1 : 0.4, display: 'flex', alignItems: 'center', gap: 8 }} hover={mediaReady ? { background: '#2b6fe0' } : {}}>
-                <Icon name="sparkles" size={16} color="#fff" />Genera video
+              <Box as="button" onClick={() => { if (mediaReady) handleRender(); }} style={{ border: 'none', background: '#3B83F6', color: '#fff', fontSize: 12.5, fontWeight: 700, padding: '11px 25px', borderRadius: 9, cursor: mediaReady ? 'pointer' : 'default', opacity: mediaReady ? 1 : 0.4, display: 'flex', alignItems: 'center', gap: 7 }} hover={mediaReady ? { background: '#2b6fe0' } : {}}>
+                <Icon name="sparkles" size={14.5} color="#fff" />Genera video
               </Box>
             ) : (
-              <Box as="button" onClick={() => { if (mediaReady) goToOptions(); }} style={{ border: 'none', background: '#3B83F6', color: '#fff', fontSize: 14, fontWeight: 700, padding: '12px 28px', borderRadius: 10, cursor: mediaReady ? 'pointer' : 'default', opacity: mediaReady ? 1 : 0.4 }} hover={mediaReady ? { background: '#2b6fe0' } : {}}>Continua</Box>
+              <Box as="button" onClick={() => { if (mediaReady) goToOptions(); }} style={{ border: 'none', background: '#3B83F6', color: '#fff', fontSize: 12.5, fontWeight: 700, padding: '11px 25px', borderRadius: 9, cursor: mediaReady ? 'pointer' : 'default', opacity: mediaReady ? 1 : 0.4 }} hover={mediaReady ? { background: '#2b6fe0' } : {}}>Continua</Box>
             )}
           </StickyNav>
         </div>
@@ -2002,63 +2027,63 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
       {/* STEP 2 — Schermo diviso / Riquadro: due colonne (controlli + preview con +) */}
       {step === 2 && tpl && montSplitPip && (
         <div>
-          <div style={{ marginBottom: 20 }}>
-            <h1 style={s('margin:0 0 4px;font-size:25px;font-weight:800;letter-spacing:-.5px')}>{montaggioLayout === 'split' ? 'Schermo diviso' : 'Picture in picture'}</h1>
-            <div style={s('color:#8c867d;font-size:14px')}>Metti le clip della casa e il tuo video parlato nei rispettivi posti. La durata del parlato decide la durata totale.</div>
+          <div style={{ marginBottom: 18 }}>
+            <h1 style={s('margin:0 0 3.5px;font-size:22.5px;font-weight:800;letter-spacing:-.5px')}>{montaggioLayout === 'split' ? 'Schermo diviso' : 'Picture in picture'}</h1>
+            <div style={s('color:#8c867d;font-size:12.5px')}>Metti le clip della casa e il tuo video parlato nei rispettivi posti. La durata del parlato decide la durata totale.</div>
           </div>
 
-          <div className="max-md:!grid-cols-1 max-md:!gap-4" style={{ display: 'grid', gridTemplateColumns: '320px 1fr', gap: 24, alignItems: 'start' }}>
+          <div className="max-md:!grid-cols-1 max-md:!gap-4" style={{ display: 'grid', gridTemplateColumns: '288px 1fr', gap: 21.5, alignItems: 'start' }}>
             {/* DESTRA (colonna 2): parlato + timeline clip */}
-            <div style={{ order: 2, display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div style={{ order: 2, display: 'flex', flexDirection: 'column', gap: 14.5 }}>
               {/* video parlato */}
-              <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:14px;padding:16px')}>
-                <div style={s('font-size:14px;font-weight:800;margin-bottom:10px')}>Il tuo video mentre parli</div>
+              <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:12.5px;padding:14.5px')}>
+                <div style={s('font-size:12.5px;font-weight:800;margin-bottom:9px')}>Il tuo video mentre parli</div>
                 {talkingClip ? (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={talkingClip.thumb} alt="" style={{ width: 96, height: 64, objectFit: 'cover', borderRadius: 8, background: '#000', flex: 'none' }} />
+                    <img src={talkingClip.thumb} alt="" style={{ width: 86.5, height: 57.5, objectFit: 'cover', borderRadius: 7, background: '#000', flex: 'none' }} />
                     <div style={{ minWidth: 0, flex: 1 }}>
-                      <div style={s('font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{talkingClip.file.name}</div>
-                      <div style={s('font-size:12px;color:#8c867d')}>Durata totale {Math.round(talkingClip.duration)}s</div>
+                      <div style={s('font-size:11.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{talkingClip.file.name}</div>
+                      <div style={s('font-size:11px;color:#8c867d')}>Durata totale {Math.round(talkingClip.duration)}s</div>
                     </div>
-                    <Box as="button" onClick={() => setTalkingClip(null)} style={s('flex:none;border:1px solid #e4e1da;background:#fff;color:#57534c;font-size:13px;font-weight:700;padding:8px 12px;border-radius:10px;cursor:pointer')} hover={s('background:#f6f4f0')}>Cambia</Box>
+                    <Box as="button" onClick={() => setTalkingClip(null)} style={s('flex:none;border:1px solid #e4e1da;background:#fff;color:#57534c;font-size:11.5px;font-weight:700;padding:7px 11px;border-radius:9px;cursor:pointer')} hover={s('background:#f6f4f0')}>Cambia</Box>
                   </div>
                 ) : (
-                  <Box as="button" onClick={() => talkingFileRef.current?.click()} style={s('width:100%;border:1.5px dashed #d8d4cb;background:#faf9f7;color:#57534c;font-size:13.5px;font-weight:700;padding:18px;border-radius:12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px')} hover={s('background:#f1efe9;border-color:#bdb8ae')}>
-                    <Icon name="film" size={20} color="#8c867d" />Carica il tuo video parlato (max 90s)
+                  <Box as="button" onClick={() => talkingFileRef.current?.click()} style={s('width:100%;border:1.5px dashed #d8d4cb;background:#faf9f7;color:#57534c;font-size:12px;font-weight:700;padding:16px;border-radius:11px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5.5px')} hover={s('background:#f1efe9;border-color:#bdb8ae')}>
+                    <Icon name="film" size={18} color="#8c867d" />Carica il tuo video parlato (max 90s)
                   </Box>
                 )}
               </div>
 
               {/* timeline clip a tempo */}
-              <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:14px;padding:16px')}>
-                <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 4 }}>
-                  <div style={s('font-size:14px;font-weight:800')}>Quanto dura ogni clip</div>
-                  <Box as="button" onClick={() => fileRef.current?.click()} style={s('border:none;background:#eef4fe;color:#1d5fd0;font-size:12.5px;font-weight:700;padding:7px 12px;border-radius:9px;cursor:pointer;display:inline-flex;align-items:center;gap:6px')} hover={s('background:#e2eefe')}><Icon name="plus" size={14} color="#1d5fd0" />Aggiungi clip</Box>
+              <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:12.5px;padding:14.5px')}>
+                <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 3.5 }}>
+                  <div style={s('font-size:12.5px;font-weight:800')}>Quanto dura ogni clip</div>
+                  <Box as="button" onClick={() => fileRef.current?.click()} style={s('border:none;background:#eef4fe;color:#1d5fd0;font-size:11px;font-weight:700;padding:6.5px 11px;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;gap:5.5px')} hover={s('background:#e2eefe')}><Icon name="plus" size={12.5} color="#1d5fd0" />Aggiungi clip</Box>
                 </div>
-                <div style={s('font-size:12.5px;color:#8c867d;margin-bottom:12px')}>Trascina i bordi per decidere quanto dura ogni clip. La somma resta uguale al parlato.</div>
+                <div style={s('font-size:11px;color:#8c867d;margin-bottom:11px')}>Trascina i bordi per decidere quanto dura ogni clip. La somma resta uguale al parlato.</div>
                 {clips.length === 0 ? (
-                  <div style={s('text-align:center;padding:18px;border:1.5px dashed #d8d4cb;border-radius:10px;color:#8c867d;font-size:13px')}>Aggiungi le clip della casa col + nell&apos;anteprima.</div>
+                  <div style={s('text-align:center;padding:16px;border:1.5px dashed #d8d4cb;border-radius:9px;color:#8c867d;font-size:11.5px')}>Aggiungi le clip della casa col + nell&apos;anteprima.</div>
                 ) : (
                   <>
                     {!talkingClip ? (
-                      <div style={s('text-align:center;padding:16px;border:1.5px dashed #d8d4cb;border-radius:10px;color:#8c867d;font-size:13px')}>Carica il video parlato per regolare i tempi.</div>
+                      <div style={s('text-align:center;padding:14.5px;border:1.5px dashed #d8d4cb;border-radius:9px;color:#8c867d;font-size:11.5px')}>Carica il video parlato per regolare i tempi.</div>
                     ) : (
                     /* Blocchi clip con durata trascinabile (larghi quanto durano,
                        somma = durata del parlato). */
                     <div style={{ position: 'relative' }}>
-                      <div ref={splitTrackRef} style={{ display: 'flex', height: 52, borderRadius: 8, overflow: 'hidden', border: '1px solid #e4e1da', position: 'relative', userSelect: 'none', touchAction: 'none' }}>
+                      <div ref={splitTrackRef} style={{ display: 'flex', height: 47, borderRadius: 7, overflow: 'hidden', border: '1px solid #e4e1da', position: 'relative', userSelect: 'none', touchAction: 'none' }}>
                         {clips.map((c, i) => (
                           <React.Fragment key={c.id}>
                             <div style={{ flex: splitSlots[i] || 1, position: 'relative', minWidth: 0, background: '#000' }}>
                               {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img src={c.thumb} alt="" draggable={false} style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: .82, pointerEvents: 'none' }} />
-                              <span style={{ position: 'absolute', top: 3, left: 3, width: 16, height: 16, borderRadius: '50%', background: 'rgba(33,31,28,.78)', color: '#fff', fontSize: 9.5, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{i + 1}</span>
-                              <span style={{ position: 'absolute', bottom: 2, left: 0, right: 0, textAlign: 'center', color: '#fff', fontSize: 10, fontWeight: 800, textShadow: '0 1px 3px rgba(0,0,0,.85)' }}>{(splitSlots[i] || 0).toFixed(1)}s</span>
+                              <span style={{ position: 'absolute', top: 2.5, left: 2.5, width: 14.5, height: 14.5, borderRadius: '50%', background: 'rgba(33,31,28,.78)', color: '#fff', fontSize: 8.5, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{i + 1}</span>
+                              <span style={{ position: 'absolute', bottom: 2, left: 0, right: 0, textAlign: 'center', color: '#fff', fontSize: 9, fontWeight: 800, textShadow: '0 1px 3px rgba(0,0,0,.85)' }}>{(splitSlots[i] || 0).toFixed(1)}s</span>
                             </div>
                             {i < clips.length - 1 && (
-                              <div onPointerDown={dragSplitDivider(i)} style={{ flex: 'none', width: 12, marginLeft: -6, marginRight: -6, zIndex: 3, cursor: 'ew-resize', display: 'flex', alignItems: 'center', justifyContent: 'center', touchAction: 'none' }}>
-                                <span style={{ width: 4, height: '100%', background: 'rgba(255,255,255,.96)', boxShadow: '0 0 0 1px rgba(0,0,0,.3)' }} />
+                              <div onPointerDown={dragSplitDivider(i)} style={{ flex: 'none', width: 11, marginLeft: -5.5, marginRight: -5.5, zIndex: 3, cursor: 'ew-resize', display: 'flex', alignItems: 'center', justifyContent: 'center', touchAction: 'none' }}>
+                                <span style={{ width: 3.5, height: '100%', background: 'rgba(255,255,255,.96)', boxShadow: '0 0 0 1px rgba(0,0,0,.3)' }} />
                               </div>
                             )}
                           </React.Fragment>
@@ -2066,18 +2091,18 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
                       </div>
                       {/* playhead sincronizzato col play del parlato */}
                       {talkDur > 0 && (
-                        <div style={{ position: 'absolute', top: -2, bottom: -2, left: `${Math.min(100, (splitTime / talkDur) * 100)}%`, transform: 'translateX(-50%)', width: 3, borderRadius: 2, background: '#3B83F6', boxShadow: '0 0 0 1.5px #fff', pointerEvents: 'none', zIndex: 4 }} />
+                        <div style={{ position: 'absolute', top: -2, bottom: -2, left: `${Math.min(100, (splitTime / talkDur) * 100)}%`, transform: 'translateX(-50%)', width: 2.5, borderRadius: 2, background: '#3B83F6', boxShadow: '0 0 0 1.5px #fff', pointerEvents: 'none', zIndex: 4 }} />
                       )}
                     </div>
                     )}
                     {/* lista clip con rimozione */}
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 12 }}>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, marginTop: 11 }}>
                       {clips.map((c, i) => (
-                        <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#f6f4f0', borderRadius: 8, padding: '5px 8px 5px 6px' }}>
+                        <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 5.5, background: '#f6f4f0', borderRadius: 7, padding: '4.5px 7px 4.5px 5.5px' }}>
                           {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={c.thumb} alt="" style={{ width: 30, height: 20, objectFit: 'cover', borderRadius: 4, background: '#000' }} />
-                          <span style={s('font-size:11.5px;font-weight:700;color:#57534c')}>Clip {i + 1}</span>
-                          <button onClick={() => setClips(cs => cs.filter(x => x.id !== c.id))} style={{ border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', padding: 2 }}><Icon name="x" size={13} color="#8c867d" /></button>
+                          <img src={c.thumb} alt="" style={{ width: 27, height: 18, objectFit: 'cover', borderRadius: 3.5, background: '#000' }} />
+                          <span style={s('font-size:10.5px;font-weight:700;color:#57534c')}>Clip {i + 1}</span>
+                          <button onClick={() => setClips(cs => cs.filter(x => x.id !== c.id))} style={{ border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', padding: 2 }}><Icon name="x" size={11.5} color="#8c867d" /></button>
                         </div>
                       ))}
                     </div>
@@ -2087,7 +2112,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
             </div>
 
             {/* SINISTRA (colonna 1): anteprima LIVE del video diviso */}
-            <div className="max-md:!static max-md:!max-w-[280px] max-md:!mx-auto max-md:!w-full" style={{ order: 1, position: 'sticky', top: 12 }}>
+            <div className="max-md:!static max-md:!max-w-[280px] max-md:!mx-auto max-md:!w-full" style={{ order: 1, position: 'sticky', top: 11 }}>
               <SplitLivePreview
                 mode={montaggioLayout === 'pip' ? 'pip' : 'split'}
                 clips={clips}
@@ -2099,12 +2124,12 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
                 onTimeUpdate={setSplitTime}
               />
               {montaggioLayout === 'pip' && (
-                <div style={{ marginTop: 12 }}>
-                  <div style={s('font-size:12.5px;font-weight:700;margin-bottom:8px')}>In quale angolo metterti?</div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                <div style={{ marginTop: 11 }}>
+                  <div style={s('font-size:11px;font-weight:700;margin-bottom:7px')}>In quale angolo metterti?</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 7 }}>
                     {([{ id: 'tl' as const, label: 'Alto sx' }, { id: 'tr' as const, label: 'Alto dx' }, { id: 'bl' as const, label: 'Basso sx' }, { id: 'br' as const, label: 'Basso dx' }]).map(opt => {
                       const on = pipPosition === opt.id;
-                      return (<Box key={opt.id} onClick={() => setPipPosition(opt.id)} style={{ padding: '9px 10px', borderRadius: 10, cursor: 'pointer', fontSize: 12, fontWeight: 700, textAlign: 'center', border: `2px solid ${on ? '#3B83F6' : '#e4e1da'}`, background: on ? '#eef4fe' : '#fff', color: on ? '#1d5fd0' : '#57534c' }} hover={{ borderColor: '#3B83F6' }}>{opt.label}</Box>);
+                      return (<Box key={opt.id} onClick={() => setPipPosition(opt.id)} style={{ padding: '8px 9px', borderRadius: 9, cursor: 'pointer', fontSize: 11, fontWeight: 700, textAlign: 'center', border: `2px solid ${on ? '#3B83F6' : '#e4e1da'}`, background: on ? '#eef4fe' : '#fff', color: on ? '#1d5fd0' : '#57534c' }} hover={{ borderColor: '#3B83F6' }}>{opt.label}</Box>);
                     })}
                   </div>
                 </div>
@@ -2116,8 +2141,8 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
           <input ref={talkingFileRef} type="file" accept="video/*" style={{ display: 'none' }} onChange={e => { if (e.target.files) addTalkingFile(e.target.files); e.target.value = ''; }} />
 
           <StickyNav>
-            <Box as="button" onClick={() => { setClips([]); setTalkingClip(null); setMontaggioLayout(null); }} style={s('border:1px solid #e4e1da;background:#fff;font-size:13px;font-weight:600;padding:11px 20px;border-radius:10px;cursor:pointer') as React.CSSProperties} hover={s('background:#f6f4f0')}>Indietro</Box>
-            <Box as="button" onClick={() => { if (mediaReady) goToOptions(); }} style={{ border: 'none', background: '#3B83F6', color: '#fff', fontSize: 14, fontWeight: 700, padding: '12px 28px', borderRadius: 10, cursor: mediaReady ? 'pointer' : 'default', opacity: mediaReady ? 1 : 0.4 }} hover={mediaReady ? { background: '#2b6fe0' } : {}}>Continua</Box>
+            <Box as="button" onClick={() => { setClips([]); setTalkingClip(null); setMontaggioLayout(null); }} style={s('border:1px solid #e4e1da;background:#fff;font-size:11.5px;font-weight:600;padding:10px 18px;border-radius:9px;cursor:pointer') as React.CSSProperties} hover={s('background:#f6f4f0')}>Indietro</Box>
+            <Box as="button" onClick={() => { if (mediaReady) goToOptions(); }} style={{ border: 'none', background: '#3B83F6', color: '#fff', fontSize: 12.5, fontWeight: 700, padding: '11px 25px', borderRadius: 9, cursor: mediaReady ? 'pointer' : 'default', opacity: mediaReady ? 1 : 0.4 }} hover={mediaReady ? { background: '#2b6fe0' } : {}}>Continua</Box>
           </StickyNav>
         </div>
       )}
@@ -2126,16 +2151,16 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
       {step === 3 && tpl && layout === 'sottotitoli' && (
         <div>
           {transcribing ? (
-            <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:16px;padding:48px;text-align:center;max-width:540px;margin:0 auto')}>
-              <div style={{ width: 40, height: 40, border: '4px solid #eef0f3', borderTopColor: '#3B83F6', borderRadius: '50%', animation: 'export-spin .8s linear infinite', margin: '0 auto 16px' }} />
-              <div style={s('font-size:15px;font-weight:800;margin-bottom:6px')}>Trascrizione in corso...</div>
-              <div style={s('color:#8c867d;font-size:13px')}>Stiamo analizzando l'audio del video.</div>
+            <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:14.5px;padding:43px;text-align:center;max-width:486px;margin:0 auto')}>
+              <div style={{ width: 36, height: 36, border: '4px solid #eef0f3', borderTopColor: '#3B83F6', borderRadius: '50%', animation: 'export-spin .8s linear infinite', margin: '0 auto 14.5px' }} />
+              <div style={s('font-size:13.5px;font-weight:800;margin-bottom:5.5px')}>Trascrizione in corso...</div>
+              <div style={s('color:#8c867d;font-size:11.5px')}>Stiamo analizzando l'audio del video.</div>
             </div>
           ) : sottPhase === 'edit' ? (
-        <div className="max-md:!grid-cols-1 max-md:!flex max-md:!flex-col-reverse" style={{ display: 'grid', gridTemplateColumns: '260px 1fr', gap: 20, alignItems: 'start' }}>
+        <div className="max-md:!grid-cols-1 max-md:!flex max-md:!flex-col-reverse" style={{ display: 'grid', gridTemplateColumns: '234px 1fr', gap: 18, alignItems: 'start' }}>
               {/* left: video preview */}
-              <div style={{ position: 'sticky', top: 16 }}>
-                <div style={{ position: 'relative', aspectRatio: '9/16', background: '#000', borderRadius: 12, overflow: 'hidden' }}>
+              <div style={{ position: 'sticky', top: 14.5 }}>
+                <div style={{ position: 'relative', aspectRatio: '9/16', background: '#000', borderRadius: 11, overflow: 'hidden' }}>
                   <video
                     ref={videoPreviewRef}
                     src={videoObjUrl.current || undefined}
@@ -2147,35 +2172,35 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
                     onEnded={() => setVideoPlaying(false)}
                   />
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginTop: 7 }}>
                   <button
                     onClick={() => { const v = videoPreviewRef.current; if (!v) return; v.paused ? v.play() : v.pause(); }}
-                    style={{ border: 'none', background: '#f0ede7', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12 }}
+                    style={{ border: 'none', background: '#f0ede7', borderRadius: 7, width: 29, height: 29, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11 }}
                   >{videoPlaying ? '❚❚' : '▶'}</button>
                   <input
                     type="range" min={0} max={clips[0]?.duration || 1} step={0.1} value={videoTime}
                     onChange={e => { const v = videoPreviewRef.current; if (v) v.currentTime = Number(e.target.value); }}
-                    style={{ flex: 1, height: 4, accentColor: '#3B83F6' }}
+                    style={{ flex: 1, height: 3.5, accentColor: '#3B83F6' }}
                   />
-                  <span style={{ fontSize: 11, color: '#8c867d', fontWeight: 600, minWidth: 32 }}>
+                  <span style={{ fontSize: 10, color: '#8c867d', fontWeight: 600, minWidth: 29 }}>
                     {Math.floor(videoTime / 60)}:{String(Math.floor(videoTime % 60)).padStart(2, '0')}
                   </span>
                 </div>
               </div>
               {/* right: transcript word editor */}
-              <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:14px;padding:20px')}>
-                <div style={s('display:flex;align-items:center;justify-content:space-between;margin-bottom:14px')}>
-                  <div style={s('font-size:14px;font-weight:800')}>Trascrizione</div>
-                  <div style={s('display:flex;align-items:center;gap:10px')}>
-                    <span style={{ fontSize: 12.5, fontWeight: 600, color: '#57534c' }}>Taglia pause e silenzi</span>
-                    <div onClick={() => setAutoCut(v => !v)} style={{ width: 40, height: 24, borderRadius: 99, background: autoCut ? '#3B83F6' : '#d8d4cb', position: 'relative', cursor: 'pointer', transition: 'background .2s' }}>
-                      <span style={{ position: 'absolute', top: 3, left: autoCut ? 19 : 3, width: 18, height: 18, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,.2)', transition: 'left .2s' }} />
+              <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:12.5px;padding:18px')}>
+                <div style={s('display:flex;align-items:center;justify-content:space-between;margin-bottom:12.5px')}>
+                  <div style={s('font-size:12.5px;font-weight:800')}>Trascrizione</div>
+                  <div style={s('display:flex;align-items:center;gap:9px')}>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: '#57534c' }}>Taglia pause e silenzi</span>
+                    <div onClick={() => setAutoCut(v => !v)} style={{ width: 36, height: 21.5, borderRadius: 89, background: autoCut ? '#3B83F6' : '#d8d4cb', position: 'relative', cursor: 'pointer', transition: 'background .2s' }}>
+                      <span style={{ position: 'absolute', top: 2.5, left: autoCut ? 19 : 3, width: 16, height: 16, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,.2)', transition: 'left .2s' }} />
                     </div>
                   </div>
                 </div>
-                <div style={{ fontSize: 12, color: '#b3aca1', marginBottom: 12 }}>Clicca una parola per cercare nel video. Doppio clic per modificarla.</div>
+                <div style={{ fontSize: 11, color: '#b3aca1', marginBottom: 11 }}>Clicca una parola per cercare nel video. Doppio clic per modificarla.</div>
                 {transcription ? (
-                  <div style={{ lineHeight: 2.2, fontSize: 14 }}>
+                  <div style={{ lineHeight: 2.2, fontSize: 12.5 }}>
                     {transcription.wordTimestamps.map((w, i) => {
                       const isCurrent = videoTime >= w.start && videoTime < w.end;
                       const isCut = transcription.keepSegments.length > 0 && !transcription.keepSegments.some(seg => w.start >= seg.start - 0.01 && w.end <= seg.end + 0.01);
@@ -2195,14 +2220,14 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
                                 setEditingWordIdx(null);
                               }}
                               onKeyDown={e => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); if (e.key === 'Escape') setEditingWordIdx(null); }}
-                              style={{ border: 'none', background: '#FEF3C7', outline: '1.5px solid #F59E0B', borderRadius: 3, padding: '1px 4px', fontSize: 14, fontFamily: 'inherit', width: Math.max(40, w.word.length * 9) }}
+                              style={{ border: 'none', background: '#FEF3C7', outline: '1.5px solid #F59E0B', borderRadius: 2.5, padding: '1px 3.5px', fontSize: 12.5, fontFamily: 'inherit', width: Math.max(40, w.word.length * 9) }}
                             />
                           ) : (
                             <span
                               onClick={() => { const v = videoPreviewRef.current; if (v) v.currentTime = w.start; }}
                               onDoubleClick={() => setEditingWordIdx(i)}
                               style={{
-                                padding: '1px 3px', borderRadius: 3, cursor: 'pointer', transition: 'background .1s, color .1s',
+                                padding: '1px 2.5px', borderRadius: 2.5, cursor: 'pointer', transition: 'background .1s, color .1s',
                                 background: isCurrent ? '#3B83F6' : 'transparent',
                                 color: isCut && autoCut ? '#9CA3AF' : isCurrent ? '#fff' : '#1F2937',
                                 textDecoration: isCut && autoCut ? 'line-through' : 'none',
@@ -2216,10 +2241,10 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
                     })}
                   </div>
                 ) : (
-                  <div style={s('color:#b3aca1;font-size:13px;padding:20px 0;text-align:center')}>Nessuna trascrizione disponibile.</div>
+                  <div style={s('color:#b3aca1;font-size:11.5px;padding:18px 0;text-align:center')}>Nessuna trascrizione disponibile.</div>
                 )}
-                <div style={s('display:flex;justify-content:flex-end;margin-top:20px')}>
-                  <Box as="button" onClick={() => setSottPhase('style')} style={{ border: 'none', background: '#3B83F6', color: '#fff', fontSize: 13.5, fontWeight: 700, padding: '11px 22px', borderRadius: 10, cursor: transcription ? 'pointer' : 'default', opacity: transcription ? 1 : 0.4 }} hover={transcription ? { background: '#2b6fe0' } : {}}>
+                <div style={s('display:flex;justify-content:flex-end;margin-top:18px')}>
+                  <Box as="button" onClick={() => setSottPhase('style')} style={{ border: 'none', background: '#3B83F6', color: '#fff', fontSize: 12, fontWeight: 700, padding: '10px 20px', borderRadius: 9, cursor: transcription ? 'pointer' : 'default', opacity: transcription ? 1 : 0.4 }} hover={transcription ? { background: '#2b6fe0' } : {}}>
                     Stile sottotitoli &rarr;
                   </Box>
                 </div>
@@ -2227,10 +2252,10 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
             </div>
           ) : (
             /* sottPhase === 'style' */
-        <div className="max-md:!grid-cols-1 max-md:!flex max-md:!flex-col-reverse" style={{ display: 'grid', gridTemplateColumns: '260px 1fr', gap: 20, alignItems: 'start' }}>
+        <div className="max-md:!grid-cols-1 max-md:!flex max-md:!flex-col-reverse" style={{ display: 'grid', gridTemplateColumns: '234px 1fr', gap: 18, alignItems: 'start' }}>
               {/* left: video preview (sticky) */}
-              <div style={{ position: 'sticky', top: 16 }}>
-                <div style={{ position: 'relative', aspectRatio: '9/16', background: '#000', borderRadius: 12, overflow: 'hidden' }}>
+              <div style={{ position: 'sticky', top: 14.5 }}>
+                <div style={{ position: 'relative', aspectRatio: '9/16', background: '#000', borderRadius: 11, overflow: 'hidden' }}>
                   <video
                     ref={videoPreviewRef}
                     src={videoObjUrl.current || undefined}
@@ -2242,42 +2267,42 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
                     onEnded={() => setVideoPlaying(false)}
                   />
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginTop: 7 }}>
                   <button
                     onClick={() => { const v = videoPreviewRef.current; if (!v) return; v.paused ? v.play() : v.pause(); }}
-                    style={{ border: 'none', background: '#f0ede7', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12 }}
+                    style={{ border: 'none', background: '#f0ede7', borderRadius: 7, width: 29, height: 29, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11 }}
                   >{videoPlaying ? '❚❚' : '▶'}</button>
                   <input
                     type="range" min={0} max={clips[0]?.duration || 1} step={0.1} value={videoTime}
                     onChange={e => { const v = videoPreviewRef.current; if (v) v.currentTime = Number(e.target.value); }}
-                    style={{ flex: 1, height: 4, accentColor: '#3B83F6' }}
+                    style={{ flex: 1, height: 3.5, accentColor: '#3B83F6' }}
                   />
-                  <span style={{ fontSize: 11, color: '#8c867d', fontWeight: 600, minWidth: 32 }}>
+                  <span style={{ fontSize: 10, color: '#8c867d', fontWeight: 600, minWidth: 29 }}>
                     {Math.floor(videoTime / 60)}:{String(Math.floor(videoTime % 60)).padStart(2, '0')}
                   </span>
                 </div>
               </div>
               {/* right: style picker */}
-              <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:14px;padding:20px')}>
-                <div style={s('font-size:14px;font-weight:800;margin-bottom:14px')}>Stile sottotitoli</div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 20 }}>
+              <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:12.5px;padding:18px')}>
+                <div style={s('font-size:12.5px;font-weight:800;margin-bottom:12.5px')}>Stile sottotitoli</div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 7, marginBottom: 18 }}>
                   {SUBTITLE_STYLES.map(st => (
-                    <div key={st.id} onClick={() => setSubtitleStyle(st.id)} style={{ ...cardSel(subtitleStyle === st.id), textAlign: 'center', fontSize: 12.5, fontWeight: 700 }}>{st.label}</div>
+                    <div key={st.id} onClick={() => setSubtitleStyle(st.id)} style={{ ...cardSel(subtitleStyle === st.id), textAlign: 'center', fontSize: 11, fontWeight: 700 }}>{st.label}</div>
                   ))}
                 </div>
                 {/* property info */}
-                <div style={s('border-top:1px solid #f0ede7;padding-top:16px;margin-bottom:16px')}>
-                  <div style={s('font-size:13px;font-weight:800;margin-bottom:10px')}>Immobile <span style={s('font-weight:500;color:#b3aca1;font-size:12px')}>(opzionale)</span></div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div style={s('border-top:1px solid #f0ede7;padding-top:14.5px;margin-bottom:14.5px')}>
+                  <div style={s('font-size:11.5px;font-weight:800;margin-bottom:9px')}>Immobile <span style={s('font-weight:500;color:#b3aca1;font-size:11px')}>(opzionale)</span></div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 9 }}>
                     <input value={propTitle} onChange={e => setPropTitle(e.target.value)} placeholder="Tipologia (es. Trilocale)" style={inputStyle} />
                     <input value={propAddress} onChange={e => setPropAddress(e.target.value)} placeholder="Indirizzo" style={inputStyle} />
                   </div>
                 </div>
                 {renderOutroSection()}
-                <div style={s('display:flex;justify-content:space-between;margin-top:16px')}>
-                  <Box as="button" onClick={() => setSottPhase('edit')} style={s('border:1px solid #e4e1da;background:#fff;font-size:13px;font-weight:600;padding:11px 20px;border-radius:10px;cursor:pointer') as React.CSSProperties} hover={s('background:#f6f4f0')}>&larr; Modifica testo</Box>
-                  <Box as="button" onClick={handleRender} style={s('border:none;background:#3B83F6;color:#fff;font-size:14px;font-weight:700;padding:12px 24px;border-radius:10px;cursor:pointer;display:flex;align-items:center;gap:8px') as React.CSSProperties} hover={s('background:#2b6fe0')}>
-                    <Icon name="sparkles" size={16} color="#fff" />Genera video
+                <div style={s('display:flex;justify-content:space-between;margin-top:14.5px')}>
+                  <Box as="button" onClick={() => setSottPhase('edit')} style={s('border:1px solid #e4e1da;background:#fff;font-size:11.5px;font-weight:600;padding:10px 18px;border-radius:9px;cursor:pointer') as React.CSSProperties} hover={s('background:#f6f4f0')}>&larr; Modifica testo</Box>
+                  <Box as="button" onClick={handleRender} style={s('border:none;background:#3B83F6;color:#fff;font-size:12.5px;font-weight:700;padding:11px 21.5px;border-radius:9px;cursor:pointer;display:flex;align-items:center;gap:7px') as React.CSSProperties} hover={s('background:#2b6fe0')}>
+                    <Icon name="sparkles" size={14.5} color="#fff" />Genera video
                   </Box>
                 </div>
               </div>
@@ -2292,21 +2317,21 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
           {montSplitPip ? (
             // Split / Riquadro (con persona): niente cover di apertura, solo la
             // copertina finale (outro). La voce del video fa da audio.
-            <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:14px;padding:6px 18px 14px')}>
+            <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:12.5px;padding:5.5px 16px 12.5px')}>
               {renderOutroSection()}
               <StickyNav bleed={24}>
-                <Box as="button" onClick={() => setStep(2)} style={s('border:1px solid #e4e1da;background:#fff;font-size:13px;font-weight:600;padding:11px 20px;border-radius:10px;cursor:pointer') as React.CSSProperties} hover={s('background:#f6f4f0')}>Indietro</Box>
-                <Box as="button" onClick={handleRender} style={s('border:none;background:#3B83F6;color:#fff;font-size:14px;font-weight:700;padding:12px 24px;border-radius:10px;cursor:pointer;display:flex;align-items:center;gap:8px') as React.CSSProperties} hover={s('background:#2b6fe0')}>
-                  <Icon name="sparkles" size={16} color="#fff" />Genera video
+                <Box as="button" onClick={() => setStep(2)} style={s('border:1px solid #e4e1da;background:#fff;font-size:11.5px;font-weight:600;padding:10px 18px;border-radius:9px;cursor:pointer') as React.CSSProperties} hover={s('background:#f6f4f0')}>Indietro</Box>
+                <Box as="button" onClick={handleRender} style={s('border:none;background:#3B83F6;color:#fff;font-size:12.5px;font-weight:700;padding:11px 21.5px;border-radius:9px;cursor:pointer;display:flex;align-items:center;gap:7px') as React.CSSProperties} hover={s('background:#2b6fe0')}>
+                  <Icon name="sparkles" size={14.5} color="#fff" />Genera video
                 </Box>
               </StickyNav>
             </div>
           ) : (<>
           {montaggioPhase === 'cover' && (
-            <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:14px;padding:24px')}>
-              <div style={s('font-size:16px;font-weight:800;margin-bottom:4px')}>Cover di apertura</div>
-              <div style={s('color:#8c867d;font-size:13px;margin-bottom:16px')}>Inserisci il titolo che apparirà nella schermata iniziale del video.</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:12.5px;padding:21.5px')}>
+              <div style={s('font-size:14.5px;font-weight:800;margin-bottom:3.5px')}>Cover di apertura</div>
+              <div style={s('color:#8c867d;font-size:11.5px;margin-bottom:14.5px')}>Inserisci il titolo che apparirà nella schermata iniziale del video.</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
                 <input value={coverTitle} onChange={e => setCoverTitle(e.target.value)} maxLength={80} placeholder="Inserisci qui il titolo del video..." style={inputStyle} />
                 <input value={coverAddress} onChange={e => setCoverAddress(e.target.value)} maxLength={100} placeholder="Scrivi qui l'indirizzo dell'immobile... (opzionale)" style={inputStyle} />
                 {(() => {
@@ -2322,32 +2347,32 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
                   };
                   return (
                     <>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid #f0ede7', borderBottom: coverLogoOn ? 'none' : '1px solid #f0ede7', padding: '14px 0', margin: '4px 0 0' }}>
-                        <span style={{ fontSize: 13.5, fontWeight: 600 }}>Aggiungi logo</span>
-                        <div onClick={toggleLogo} title={hasAnyLogo ? '' : 'Carica un logo nella sezione Brand'} style={{ width: 40, height: 24, borderRadius: 99, background: coverLogoOn && hasAnyLogo ? '#3B83F6' : '#d8d4cb', position: 'relative', cursor: hasAnyLogo ? 'pointer' : 'not-allowed', opacity: hasAnyLogo ? 1 : .5, transition: 'background .2s' }}>
-                          <span style={{ position: 'absolute', top: 3, left: coverLogoOn && hasAnyLogo ? 19 : 3, width: 18, height: 18, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,.2)', transition: 'left .2s' }} />
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid #f0ede7', borderBottom: coverLogoOn ? 'none' : '1px solid #f0ede7', padding: '12.5px 0', margin: '3.5px 0 0' }}>
+                        <span style={{ fontSize: 12, fontWeight: 600 }}>Aggiungi logo</span>
+                        <div onClick={toggleLogo} title={hasAnyLogo ? '' : 'Carica un logo nella sezione Brand'} style={{ width: 36, height: 21.5, borderRadius: 89, background: coverLogoOn && hasAnyLogo ? '#3B83F6' : '#d8d4cb', position: 'relative', cursor: hasAnyLogo ? 'pointer' : 'not-allowed', opacity: hasAnyLogo ? 1 : .5, transition: 'background .2s' }}>
+                          <span style={{ position: 'absolute', top: 2.5, left: coverLogoOn && hasAnyLogo ? 19 : 3, width: 16, height: 16, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,.2)', transition: 'left .2s' }} />
                         </div>
                       </div>
                       {/* Picker: quale logo usare (come nei post) */}
                       {coverLogoOn && hasAnyLogo && (
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, padding: '14px 0', borderBottom: '1px solid #f0ede7', margin: '0 0 4px' }}>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, padding: '12.5px 0', borderBottom: '1px solid #f0ede7', margin: '0 0 3.5px' }}>
                           {logoOpts.map(it => {
                             const sel = coverLogoKey === it.key;
                             return (
-                              <Box key={it.key} onClick={() => setCoverLogoKey(it.key)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px 6px 6px', borderRadius: 10, cursor: 'pointer', border: sel ? '2px solid #3B83F6' : '1px solid #e4e1da', background: sel ? '#eff6ff' : '#fff' } as React.CSSProperties} hover={sel ? undefined : { background: '#f6f4f0' }}>
-                                <span style={{ width: 38, height: 26, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', background: it.dark ? '#211f1c' : '#f1efe9', overflow: 'hidden' }}>
+                              <Box key={it.key} onClick={() => setCoverLogoKey(it.key)} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '5.5px 9px 5.5px 5.5px', borderRadius: 9, cursor: 'pointer', border: sel ? '2px solid #3B83F6' : '1px solid #e4e1da', background: sel ? '#eff6ff' : '#fff' } as React.CSSProperties} hover={sel ? undefined : { background: '#f6f4f0' }}>
+                                <span style={{ width: 34, height: 23.5, borderRadius: 5.5, display: 'flex', alignItems: 'center', justifyContent: 'center', background: it.dark ? '#211f1c' : '#f1efe9', overflow: 'hidden' }}>
                                   {it.src
                                     // eslint-disable-next-line @next/next/no-img-element
                                     ? <img src={it.src} alt="" style={{ maxWidth: '82%', maxHeight: '74%', objectFit: 'contain' }} />
-                                    : <Icon name="sparkles" size={13} color="#8c867d" />}
+                                    : <Icon name="sparkles" size={11.5} color="#8c867d" />}
                                 </span>
-                                <span style={{ fontSize: 12, fontWeight: sel ? 700 : 600, color: sel ? '#1d5fd0' : '#57534c' }}>{it.label}</span>
+                                <span style={{ fontSize: 11, fontWeight: sel ? 700 : 600, color: sel ? '#1d5fd0' : '#57534c' }}>{it.label}</span>
                               </Box>
                             );
                           })}
                         </div>
                       )}
-                      <div style={s('font-size:12.5px;font-weight:700;color:#57534c;margin-top:8px')}>Scegli una copertina</div>
+                      <div style={s('font-size:11px;font-weight:700;color:#57534c;margin-top:7px')}>Scegli una copertina</div>
                       <CoverStylesGrid
                         thumbUrl={clips[0]?.thumb || ''}
                         logoUrl={coverLogoUrl}
@@ -2364,40 +2389,40 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
                 })()}
               </div>
               <StickyNav bleed={24}>
-                <Box as="button" onClick={() => setStep(2)} style={s('border:1px solid #e4e1da;background:#fff;font-size:13px;font-weight:600;padding:11px 20px;border-radius:10px;cursor:pointer') as React.CSSProperties} hover={s('background:#f6f4f0')}>Indietro</Box>
+                <Box as="button" onClick={() => setStep(2)} style={s('border:1px solid #e4e1da;background:#fff;font-size:11.5px;font-weight:600;padding:10px 18px;border-radius:9px;cursor:pointer') as React.CSSProperties} hover={s('background:#f6f4f0')}>Indietro</Box>
                 {(() => {
                   const ok = !!coverTitle.trim() && !!coverStyle;
                   return (
-                    <Box as="button" onClick={() => { if (ok) setMontaggioPhase('logo'); }} title={ok ? '' : (!coverTitle.trim() ? 'Inserisci un titolo per la copertina' : 'Scegli una copertina')} style={{ border: 'none', background: '#3B83F6', color: '#fff', fontSize: 13.5, fontWeight: 700, padding: '11px 22px', borderRadius: 10, cursor: ok ? 'pointer' : 'default', opacity: ok ? 1 : 0.45 }} hover={ok ? { background: '#2b6fe0' } : {}}>Avanti</Box>
+                    <Box as="button" onClick={() => { if (ok) setMontaggioPhase('logo'); }} title={ok ? '' : (!coverTitle.trim() ? 'Inserisci un titolo per la copertina' : 'Scegli una copertina')} style={{ border: 'none', background: '#3B83F6', color: '#fff', fontSize: 12, fontWeight: 700, padding: '10px 20px', borderRadius: 9, cursor: ok ? 'pointer' : 'default', opacity: ok ? 1 : 0.45 }} hover={ok ? { background: '#2b6fe0' } : {}}>Avanti</Box>
                   );
                 })()}
               </StickyNav>
             </div>
           )}
           {montaggioPhase === 'logo' && (
-            <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:14px;padding:24px')}>
-              <div style={s('font-size:16px;font-weight:800;margin-bottom:4px')}>Logo e watermark</div>
-              <div style={s('color:#8c867d;font-size:13px;margin-bottom:16px')}>Configura il logo sovrapposto alle clip del video.</div>
+            <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:12.5px;padding:21.5px')}>
+              <div style={s('font-size:14.5px;font-weight:800;margin-bottom:3.5px')}>Logo e watermark</div>
+              <div style={s('color:#8c867d;font-size:11.5px;margin-bottom:14.5px')}>Configura il logo sovrapposto alle clip del video.</div>
               {(() => {
                 const whiteLogo = (brand.logoOrientation === 'vertical' ? (brand.logos.logo_white_v || brand.logos.logo_white_h) : (brand.logos.logo_white_h || brand.logos.logo_white_v)) || '';
                 const posStyle: Record<string, React.CSSProperties> = {
-                  'top-left': { top: 10, left: 10 }, 'top-right': { top: 10, right: 10 },
-                  'bottom-left': { bottom: 10, left: 10 }, 'bottom-right': { bottom: 10, right: 10 },
+                  'top-left': { top: 9, left: 9 }, 'top-right': { top: 9, right: 9 },
+                  'bottom-left': { bottom: 9, left: 9 }, 'bottom-right': { bottom: 9, right: 9 },
                 };
                 return (
                   <>
-                    <div style={s('display:flex;align-items:center;justify-content:space-between;padding-bottom:14px')}>
-                      <span style={{ fontSize: 13.5, fontWeight: 600 }}>Logo nelle clip</span>
-                      <div onClick={() => { if (lockBrand) { toast('Logo GetNearMe incluso nel piano Free. Passa a un piano per rimuoverlo.', 'x'); return; } if (whiteLogo) setWatermarkEnabled(v => !v); }} title={lockBrand ? 'Incluso nel piano Free' : (whiteLogo ? '' : 'Carica un logo bianco in Brand')} style={{ width: 40, height: 24, borderRadius: 99, background: watermarkEnabled && whiteLogo ? '#3B83F6' : '#d8d4cb', position: 'relative', cursor: lockBrand ? 'not-allowed' : (whiteLogo ? 'pointer' : 'not-allowed'), opacity: lockBrand ? 1 : (whiteLogo ? 1 : .5), transition: 'background .2s' }}>
-                        <span style={{ position: 'absolute', top: 3, left: watermarkEnabled && whiteLogo ? 19 : 3, width: 18, height: 18, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,.2)', transition: 'left .2s' }} />
+                    <div style={s('display:flex;align-items:center;justify-content:space-between;padding-bottom:12.5px')}>
+                      <span style={{ fontSize: 12, fontWeight: 600 }}>Logo nelle clip</span>
+                      <div onClick={() => { if (lockBrand) { toast('Logo GetNearMe incluso nel piano Free. Passa a un piano per rimuoverlo.', 'x'); return; } if (whiteLogo) setWatermarkEnabled(v => !v); }} title={lockBrand ? 'Incluso nel piano Free' : (whiteLogo ? '' : 'Carica un logo bianco in Brand')} style={{ width: 36, height: 21.5, borderRadius: 89, background: watermarkEnabled && whiteLogo ? '#3B83F6' : '#d8d4cb', position: 'relative', cursor: lockBrand ? 'not-allowed' : (whiteLogo ? 'pointer' : 'not-allowed'), opacity: lockBrand ? 1 : (whiteLogo ? 1 : .5), transition: 'background .2s' }}>
+                        <span style={{ position: 'absolute', top: 2.5, left: watermarkEnabled && whiteLogo ? 19 : 3, width: 16, height: 16, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,.2)', transition: 'left .2s' }} />
                       </div>
                     </div>
-                    <div style={{ height: 1, background: '#f0ede7', margin: '0 0 16px' }} />
-                    {!whiteLogo && <div onClick={() => go?.('brand')} style={{ fontSize: 12.5, color: '#b45309', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 8, padding: '10px 12px', marginBottom: 16, cursor: go ? 'pointer' : 'default' }}>Nessun logo bianco configurato. <span style={{ textDecoration: 'underline', fontWeight: 700 }}>Caricalo nella sezione Brand</span> per usare il watermark.</div>}
+                    <div style={{ height: 1, background: '#f0ede7', margin: '0 0 14.5px' }} />
+                    {!whiteLogo && <div onClick={() => go?.('brand')} style={{ fontSize: 11, color: '#b45309', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 7, padding: '9px 11px', marginBottom: 14.5, cursor: go ? 'pointer' : 'default' }}>Nessun logo bianco configurato. <span style={{ textDecoration: 'underline', fontWeight: 700 }}>Caricalo nella sezione Brand</span> per usare il watermark.</div>}
                     {watermarkEnabled && whiteLogo && (
-                      <div className="max-md:!flex-col" style={{ display: 'flex', gap: 20, alignItems: 'stretch' }}>
+                      <div className="max-md:!flex-col" style={{ display: 'flex', gap: 18, alignItems: 'stretch' }}>
                         {/* Sinistra: anteprima */}
-                        <div className="max-md:!w-full" style={{ position: 'relative', width: 480, flex: 'none', aspectRatio: '16/9', borderRadius: 10, overflow: 'hidden', background: '#211f1c' }}>
+                        <div className="max-md:!w-full" style={{ position: 'relative', width: 432, flex: 'none', aspectRatio: '16/9', borderRadius: 9, overflow: 'hidden', background: '#211f1c' }}>
                           {clips[0]?.thumb && (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img src={clips[0].thumb} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -2408,16 +2433,16 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
                         </div>
                         {/* Destra: posizione + opacità, alta quanto la foto */}
                         <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
-                          <div style={s('font-size:12.5px;font-weight:700;color:#57534c;margin-bottom:8px')}>Posizione</div>
-                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gridTemplateRows: 'repeat(2, 1fr)', gap: 8, flex: 1, marginBottom: 18, minHeight: 120 }}>
+                          <div style={s('font-size:11px;font-weight:700;color:#57534c;margin-bottom:7px')}>Posizione</div>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gridTemplateRows: 'repeat(2, 1fr)', gap: 7, flex: 1, marginBottom: 16, minHeight: 108 }}>
                             {[{ id: 'top-left', arrow: '↖', text: 'Alto sinistra' }, { id: 'top-right', arrow: '↗', text: 'Alto destra' }, { id: 'bottom-left', arrow: '↙', text: 'Basso sinistra' }, { id: 'bottom-right', arrow: '↘', text: 'Basso destra' }].map(pos => (
-                              <div key={pos.id} onClick={() => setWatermarkPosition(pos.id)} style={{ ...cardSel(watermarkPosition === pos.id), display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, textAlign: 'center', fontSize: 13, fontWeight: 700 }}>
-                                <span style={{ fontSize: 15 }}>{pos.arrow}</span>
+                              <div key={pos.id} onClick={() => setWatermarkPosition(pos.id)} style={{ ...cardSel(watermarkPosition === pos.id), display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 11, textAlign: 'center', fontSize: 11.5, fontWeight: 700 }}>
+                                <span style={{ fontSize: 13.5 }}>{pos.arrow}</span>
                                 <span>{pos.text}</span>
                               </div>
                             ))}
                           </div>
-                          <div style={s('font-size:12.5px;font-weight:700;color:#57534c;margin-bottom:8px')}>Opacità: {watermarkOpacity}%</div>
+                          <div style={s('font-size:11px;font-weight:700;color:#57534c;margin-bottom:7px')}>Opacità: {watermarkOpacity}%</div>
                           <input type="range" min={10} max={100} step={5} value={watermarkOpacity} onChange={e => setWatermarkOpacity(Number(e.target.value))} style={{ width: '100%', accentColor: '#3B83F6' }} />
                         </div>
                       </div>
@@ -2426,28 +2451,28 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
                 );
               })()}
               {/* Musica (unita allo stesso step) */}
-              <div style={s('border-top:1px solid #f0ede7;padding-top:18px;margin-top:18px')}>
-                <div style={s('font-size:14px;font-weight:800;margin-bottom:4px')}>Musica <span style={s('font-weight:500;color:#b3aca1;font-size:12px')}>(opzionale)</span></div>
-                <div style={s('color:#8c867d;font-size:13px;margin-bottom:12px')}>Scegli la colonna sonora del video.</div>
-                <Box as="button" onClick={() => setMusicOpen(o => !o)} style={s('width:100%;border:1.5px solid #d6d2c9;background:#fff;font-size:13px;font-weight:600;padding:10px 14px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:space-between') as React.CSSProperties} hover={s('background:#faf9f7;border-color:#bdb8ae')}>
+              <div style={s('border-top:1px solid #f0ede7;padding-top:16px;margin-top:16px')}>
+                <div style={s('font-size:12.5px;font-weight:800;margin-bottom:3.5px')}>Musica <span style={s('font-weight:500;color:#b3aca1;font-size:11px')}>(opzionale)</span></div>
+                <div style={s('color:#8c867d;font-size:11.5px;margin-bottom:11px')}>Scegli la colonna sonora del video.</div>
+                <Box as="button" onClick={() => setMusicOpen(o => !o)} style={s('width:100%;border:1.5px solid #d6d2c9;background:#fff;font-size:11.5px;font-weight:600;padding:9px 12.5px;border-radius:9px;cursor:pointer;display:flex;align-items:center;justify-content:space-between') as React.CSSProperties} hover={s('background:#faf9f7;border-color:#bdb8ae')}>
                   <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: musicUrl ? '#1F2937' : '#b3aca1', fontWeight: musicUrl ? 600 : 400 }}>
                     {musicUrl ? (musicLibrary.find(t => t.url === musicUrl)?.title || 'Traccia selezionata') : 'Seleziona la musica del video...'}
                   </span>
-                  <Icon name="chevron-down" size={14} color="#8c867d" />
+                  <Icon name="chevron-down" size={12.5} color="#8c867d" />
                 </Box>
                 {musicOpen && (
-                  <div style={{ marginTop: 8, maxHeight: 320, overflowY: 'auto', border: '1px solid #f0ede7', borderRadius: 10 }}>
-                    <div onClick={() => { setMusicUrl(null); setMusicOpen(false); }} style={{ padding: '9px 12px', fontSize: 12.5, fontWeight: 600, cursor: 'pointer', color: '#8c867d' }}>Nessuna musica</div>
+                  <div style={{ marginTop: 7, maxHeight: 288, overflowY: 'auto', border: '1px solid #f0ede7', borderRadius: 9 }}>
+                    <div onClick={() => { setMusicUrl(null); setMusicOpen(false); }} style={{ padding: '8px 11px', fontSize: 11, fontWeight: 600, cursor: 'pointer', color: '#8c867d' }}>Nessuna musica</div>
                     {Object.keys(MOOD_LABELS).map(mood => (
                       <div key={mood}>
-                        <div style={{ padding: '8px 12px 4px', fontSize: 10.5, fontWeight: 800, color: '#b3aca1', textTransform: 'uppercase', letterSpacing: '.05em' }}>{MOOD_LABELS[mood]}</div>
+                        <div style={{ padding: '7px 11px 3.5px', fontSize: 9.5, fontWeight: 800, color: '#b3aca1', textTransform: 'uppercase', letterSpacing: '.05em' }}>{MOOD_LABELS[mood]}</div>
                         {musicLibrary.filter(t => t.mood === mood).slice(0, 12).map(t => (
-                          <Box key={t.id} onClick={() => { setMusicUrl(t.url); setMusicOpen(false); }} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 12px', cursor: 'pointer', background: musicUrl === t.url ? '#DBEAFE' : 'transparent', borderRadius: 6, border: musicUrl === t.url ? '1.5px solid #3B83F6' : '1.5px solid transparent' }} hover={{ background: musicUrl === t.url ? '#DBEAFE' : '#f6f4f0' }}>
-                            <button onClick={e => { e.stopPropagation(); toggleMusicPlay(t); }} style={{ border: 'none', background: musicUrl === t.url ? '#3B83F6' : '#f0ede7', color: musicUrl === t.url ? '#fff' : '#1F2937', borderRadius: '50%', width: 24, height: 24, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none', fontSize: 10 }}>
+                          <Box key={t.id} onClick={() => { setMusicUrl(t.url); setMusicOpen(false); }} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '6.5px 11px', cursor: 'pointer', background: musicUrl === t.url ? '#DBEAFE' : 'transparent', borderRadius: 5.5, border: musicUrl === t.url ? '1.5px solid #3B83F6' : '1.5px solid transparent' }} hover={{ background: musicUrl === t.url ? '#DBEAFE' : '#f6f4f0' }}>
+                            <button onClick={e => { e.stopPropagation(); toggleMusicPlay(t); }} style={{ border: 'none', background: musicUrl === t.url ? '#3B83F6' : '#f0ede7', color: musicUrl === t.url ? '#fff' : '#1F2937', borderRadius: '50%', width: 21.5, height: 21.5, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none', fontSize: 9 }}>
                               {playingUrl === t.url ? '❚❚' : '►'}
                             </button>
-                            <span style={{ fontSize: 12.5, fontWeight: musicUrl === t.url ? 700 : 500, color: musicUrl === t.url ? '#1D4ED8' : '#1F2937', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{t.title}</span>
-                            {musicUrl === t.url && <Icon name="check" size={14} color="#3B83F6" />}
+                            <span style={{ fontSize: 11, fontWeight: musicUrl === t.url ? 700 : 500, color: musicUrl === t.url ? '#1D4ED8' : '#1F2937', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{t.title}</span>
+                            {musicUrl === t.url && <Icon name="check" size={12.5} color="#3B83F6" />}
                           </Box>
                         ))}
                       </div>
@@ -2455,13 +2480,13 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
                   </div>
                 )}
               </div>
-              <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:14px;padding:6px 18px 14px;margin-top:14px')}>
+              <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:12.5px;padding:5.5px 16px 12.5px;margin-top:12.5px')}>
                 {renderOutroSection()}
               </div>
               <StickyNav bleed={24}>
-                <Box as="button" onClick={() => setMontaggioPhase('cover')} style={s('border:1px solid #e4e1da;background:#fff;font-size:13px;font-weight:600;padding:11px 20px;border-radius:10px;cursor:pointer') as React.CSSProperties} hover={s('background:#f6f4f0')}>Indietro</Box>
-                <Box as="button" onClick={handleRender} style={s('border:none;background:#3B83F6;color:#fff;font-size:14px;font-weight:700;padding:12px 24px;border-radius:10px;cursor:pointer;display:flex;align-items:center;gap:8px') as React.CSSProperties} hover={s('background:#2b6fe0')}>
-                  <Icon name="sparkles" size={16} color="#fff" />Genera video
+                <Box as="button" onClick={() => setMontaggioPhase('cover')} style={s('border:1px solid #e4e1da;background:#fff;font-size:11.5px;font-weight:600;padding:10px 18px;border-radius:9px;cursor:pointer') as React.CSSProperties} hover={s('background:#f6f4f0')}>Indietro</Box>
+                <Box as="button" onClick={handleRender} style={s('border:none;background:#3B83F6;color:#fff;font-size:12.5px;font-weight:700;padding:11px 21.5px;border-radius:9px;cursor:pointer;display:flex;align-items:center;gap:7px') as React.CSSProperties} hover={s('background:#2b6fe0')}>
+                  <Icon name="sparkles" size={14.5} color="#fff" />Genera video
                 </Box>
               </StickyNav>
             </div>
@@ -2472,11 +2497,11 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
 
       {/* STEP 3 — video_cuts: editor guidato "Taglia & Anima" */}
       {step === 3 && tpl && layout === 'video_cuts' && clips[0] && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <div className="max-md:!flex-col max-md:!items-start max-md:!gap-3" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14.5 }}>
+          <div className="max-md:!flex-col max-md:!items-start max-md:!gap-3" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 11 }}>
             <div>
-              <h2 style={s('margin:0 0 4px;font-size:20px;font-weight:800;letter-spacing:-.3px')}>Trasforma i momenti del tuo video</h2>
-              <div style={s('color:#8c867d;font-size:14px')}>Scegli i punti da animare. L&apos;AI arreda la stanza e crea l&apos;effetto prima/dopo.</div>
+              <h2 style={s('margin:0 0 3.5px;font-size:18px;font-weight:800;letter-spacing:-.3px')}>Trasforma i momenti del tuo video</h2>
+              <div style={s('color:#8c867d;font-size:12.5px')}>Scegli i punti da animare. L&apos;AI arreda la stanza e crea l&apos;effetto prima/dopo.</div>
             </div>
             <TutorialButton onClick={() => setShowCutsTutorial(true)} />
           </div>
@@ -2487,9 +2512,9 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
             onChange={setCutSegments}
           />
           <StickyNav>
-            <Box as="button" onClick={() => setStep(2)} style={s('border:1px solid #e4e1da;background:#fff;font-size:13px;font-weight:600;padding:11px 20px;border-radius:10px;cursor:pointer') as React.CSSProperties} hover={s('background:#f6f4f0')}>Indietro</Box>
-            <Box as="button" onClick={() => { if (cutSegments.length > 0) setCutsConfirm(true); }} style={{ border: 'none', background: '#3B83F6', color: '#fff', fontSize: 15, fontWeight: 800, padding: '13px 30px', borderRadius: 11, cursor: cutSegments.length > 0 ? 'pointer' : 'default', opacity: cutSegments.length > 0 ? 1 : 0.4, display: 'flex', alignItems: 'center', gap: 8 }} hover={cutSegments.length > 0 ? { background: '#2b6fe0' } : {}}>
-              <Icon name="sparkles" size={18} color="#fff" />Crea il video
+            <Box as="button" onClick={() => setStep(2)} style={s('border:1px solid #e4e1da;background:#fff;font-size:11.5px;font-weight:600;padding:10px 18px;border-radius:9px;cursor:pointer') as React.CSSProperties} hover={s('background:#f6f4f0')}>Indietro</Box>
+            <Box as="button" onClick={() => { if (cutSegments.length > 0) setCutsConfirm(true); }} style={{ border: 'none', background: '#3B83F6', color: '#fff', fontSize: 13.5, fontWeight: 800, padding: '11.5px 27px', borderRadius: 10, cursor: cutSegments.length > 0 ? 'pointer' : 'default', opacity: cutSegments.length > 0 ? 1 : 0.4, display: 'flex', alignItems: 'center', gap: 7 }} hover={cutSegments.length > 0 ? { background: '#2b6fe0' } : {}}>
+              <Icon name="sparkles" size={16} color="#fff" />Crea il video
             </Box>
           </StickyNav>
         </div>
@@ -2500,16 +2525,16 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
 
       {/* Conferma prima di spendere crediti (video_cuts) */}
       {cutsConfirm && (
-        <div onClick={() => setCutsConfirm(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(24,21,17,.5)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-          <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 420, background: 'var(--bg-card)', borderRadius: 18, boxShadow: '0 32px 64px rgba(20,18,15,.25)', padding: 26, textAlign: 'center' }}>
-            <div style={{ width: 52, height: 52, borderRadius: 14, background: '#eef4fe', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}><Icon name="sparkles" size={24} color="#3B83F6" /></div>
-            <div style={s('font-size:17px;font-weight:800;margin-bottom:8px')}>Creiamo il tuo video?</div>
-            <div style={s('font-size:14px;color:#57534c;line-height:1.5;margin-bottom:20px')}>
+        <div onClick={() => setCutsConfirm(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(24,21,17,.5)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 21.5 }}>
+          <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 378, background: 'var(--bg-card)', borderRadius: 16, boxShadow: '0 32px 64px rgba(20,18,15,.25)', padding: 23.5, textAlign: 'center' }}>
+            <div style={{ width: 47, height: 47, borderRadius: 12.5, background: '#eef4fe', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12.5px' }}><Icon name="sparkles" size={21.5} color="#3B83F6" /></div>
+            <div style={s('font-size:15.5px;font-weight:800;margin-bottom:7px')}>Creiamo il tuo video?</div>
+            <div style={s('font-size:12.5px;color:#57534c;line-height:1.5;margin-bottom:18px')}>
               Trasformerai <b>{cutSegments.length}</b> {cutSegments.length === 1 ? 'momento' : 'momenti'} e userai <b>{cutSegments.length}</b> {cutSegments.length === 1 ? 'credito' : 'crediti'} video. Il video sarà pronto tra qualche minuto.
             </div>
-            <div style={{ display: 'flex', gap: 10 }}>
-              <Box as="button" onClick={() => setCutsConfirm(false)} style={s('flex:1;border:1px solid #d8d4cb;background:#fff;color:#57534c;font-size:14px;font-weight:700;padding:13px;border-radius:11px;cursor:pointer')} hover={s('background:#faf9f7')}>Annulla</Box>
-              <Box as="button" onClick={() => { setCutsConfirm(false); void handleVideoCutsRender(); }} style={s('flex:1;border:none;background:#3B83F6;color:#fff;font-size:14px;font-weight:800;padding:13px;border-radius:11px;cursor:pointer')} hover={s('background:#2b6fe0')}>Sì, crea</Box>
+            <div style={{ display: 'flex', gap: 9 }}>
+              <Box as="button" onClick={() => setCutsConfirm(false)} style={s('flex:1;border:1px solid #d8d4cb;background:#fff;color:#57534c;font-size:12.5px;font-weight:700;padding:11.5px;border-radius:10px;cursor:pointer')} hover={s('background:#faf9f7')}>Annulla</Box>
+              <Box as="button" onClick={() => { setCutsConfirm(false); void handleVideoCutsRender(); }} style={s('flex:1;border:none;background:#3B83F6;color:#fff;font-size:12.5px;font-weight:800;padding:11.5px;border-radius:10px;cursor:pointer')} hover={s('background:#2b6fe0')}>Sì, crea</Box>
             </div>
           </div>
         </div>
@@ -2517,27 +2542,27 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
 
       {/* STEP 3 — options (avatar: tutto in colonna unica) */}
       {step === 3 && tpl && !inlineStep3 && layout !== 'sottotitoli' && layout !== 'montaggio' && layout !== 'video_cuts' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14.5 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14.5 }}>
             {/* script editor (classic/split) */}
             {usesAvatar && (
-              <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:14px;padding:20px')}>
-                <div style={s('font-size:14px;font-weight:800;margin-bottom:12px')}>Script del presentatore</div>
+              <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:12.5px;padding:18px')}>
+                <div style={s('font-size:12.5px;font-weight:800;margin-bottom:11px')}>Script del presentatore</div>
                 {scriptLoading ? (
-                  <div style={s('display:flex;align-items:center;gap:12px;color:#8c867d;font-size:13px;padding:20px 0')}>
-                    <div style={{ width: 22, height: 22, border: '3px solid #eef0f3', borderTopColor: '#3B83F6', borderRadius: '50%', animation: 'export-spin .8s linear infinite' }} />
+                  <div style={s('display:flex;align-items:center;gap:11px;color:#8c867d;font-size:11.5px;padding:18px 0')}>
+                    <div style={{ width: 20, height: 20, border: '3px solid #eef0f3', borderTopColor: '#3B83F6', borderRadius: '50%', animation: 'export-spin .8s linear infinite' }} />
                     Generazione script con AI...
                   </div>
                 ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
                     {sections.map(sec => {
                       const wc = sec.text.trim() ? sec.text.trim().split(/\s+/).length : 0;
                       const over = sec.maxWords ? wc > sec.maxWords : false;
                       return (
                       <div key={sec.id}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 5 }}>
-                          <label style={s('font-size:12px;font-weight:700;color:#57534c')}>{sec.label}</label>
-                          {sec.maxWords ? <span style={{ fontSize: 11, fontWeight: 600, color: over ? '#dc2626' : '#b3aca1' }}>{wc}/{sec.maxWords} parole</span> : null}
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4.5 }}>
+                          <label style={s('font-size:11px;font-weight:700;color:#57534c')}>{sec.label}</label>
+                          {sec.maxWords ? <span style={{ fontSize: 10, fontWeight: 600, color: over ? '#dc2626' : '#b3aca1' }}>{wc}/{sec.maxWords} parole</span> : null}
                         </div>
                         <textarea value={sec.text} onChange={e => {
                           let v = e.target.value;
@@ -2559,29 +2584,29 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
           </div>
 
           {/* musica + copertina + CTA (impilati) */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14.5 }}>
             {usesMusic && (
-              <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:14px;padding:18px')}>
-                <div style={s('font-size:13px;font-weight:800;margin-bottom:10px')}>Musica</div>
-                <Box as="button" onClick={() => setMusicOpen(o => !o)} style={s('width:100%;border:1.5px solid #d6d2c9;background:#fff;font-size:13px;font-weight:600;padding:10px 14px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:space-between') as React.CSSProperties} hover={s('background:#faf9f7;border-color:#bdb8ae')}>
+              <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:12.5px;padding:16px')}>
+                <div style={s('font-size:11.5px;font-weight:800;margin-bottom:9px')}>Musica</div>
+                <Box as="button" onClick={() => setMusicOpen(o => !o)} style={s('width:100%;border:1.5px solid #d6d2c9;background:#fff;font-size:11.5px;font-weight:600;padding:9px 12.5px;border-radius:9px;cursor:pointer;display:flex;align-items:center;justify-content:space-between') as React.CSSProperties} hover={s('background:#faf9f7;border-color:#bdb8ae')}>
                   <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: musicUrl ? '#1F2937' : '#b3aca1', fontWeight: musicUrl ? 600 : 400 }}>
                     {musicUrl ? (musicLibrary.find(t => t.url === musicUrl)?.title || 'Traccia selezionata') : 'Seleziona la musica del video...'}
                   </span>
-                  <Icon name="chevron-down" size={14} color="#8c867d" />
+                  <Icon name="chevron-down" size={12.5} color="#8c867d" />
                 </Box>
                 {musicOpen && (
-                  <div style={{ marginTop: 8, maxHeight: 320, overflowY: 'auto', border: '1px solid #f0ede7', borderRadius: 10 }}>
-                    <div onClick={() => { setMusicUrl(null); setMusicOpen(false); }} style={{ padding: '9px 12px', fontSize: 12.5, fontWeight: 600, cursor: 'pointer', color: '#8c867d' }}>Nessuna musica</div>
+                  <div style={{ marginTop: 7, maxHeight: 288, overflowY: 'auto', border: '1px solid #f0ede7', borderRadius: 9 }}>
+                    <div onClick={() => { setMusicUrl(null); setMusicOpen(false); }} style={{ padding: '8px 11px', fontSize: 11, fontWeight: 600, cursor: 'pointer', color: '#8c867d' }}>Nessuna musica</div>
                     {Object.keys(MOOD_LABELS).map(mood => (
                       <div key={mood}>
-                        <div style={{ padding: '8px 12px 4px', fontSize: 10.5, fontWeight: 800, color: '#b3aca1', textTransform: 'uppercase', letterSpacing: '.05em' }}>{MOOD_LABELS[mood]}</div>
+                        <div style={{ padding: '7px 11px 3.5px', fontSize: 9.5, fontWeight: 800, color: '#b3aca1', textTransform: 'uppercase', letterSpacing: '.05em' }}>{MOOD_LABELS[mood]}</div>
                         {musicLibrary.filter(t => t.mood === mood).slice(0, 12).map(t => (
-                          <Box key={t.id} onClick={() => { setMusicUrl(t.url); setMusicOpen(false); }} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 12px', cursor: 'pointer', background: musicUrl === t.url ? '#DBEAFE' : 'transparent', borderRadius: 6, border: musicUrl === t.url ? '1.5px solid #3B83F6' : '1.5px solid transparent' }} hover={{ background: musicUrl === t.url ? '#DBEAFE' : '#f6f4f0' }}>
-                            <button onClick={e => { e.stopPropagation(); toggleMusicPlay(t); }} style={{ border: 'none', background: musicUrl === t.url ? '#3B83F6' : '#f0ede7', color: musicUrl === t.url ? '#fff' : '#1F2937', borderRadius: '50%', width: 24, height: 24, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none', fontSize: 10 }}>
+                          <Box key={t.id} onClick={() => { setMusicUrl(t.url); setMusicOpen(false); }} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '6.5px 11px', cursor: 'pointer', background: musicUrl === t.url ? '#DBEAFE' : 'transparent', borderRadius: 5.5, border: musicUrl === t.url ? '1.5px solid #3B83F6' : '1.5px solid transparent' }} hover={{ background: musicUrl === t.url ? '#DBEAFE' : '#f6f4f0' }}>
+                            <button onClick={e => { e.stopPropagation(); toggleMusicPlay(t); }} style={{ border: 'none', background: musicUrl === t.url ? '#3B83F6' : '#f0ede7', color: musicUrl === t.url ? '#fff' : '#1F2937', borderRadius: '50%', width: 21.5, height: 21.5, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none', fontSize: 9 }}>
                               {playingUrl === t.url ? '❚❚' : '►'}
                             </button>
-                            <span style={{ fontSize: 12.5, fontWeight: musicUrl === t.url ? 700 : 500, color: musicUrl === t.url ? '#1D4ED8' : '#1F2937', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{t.title}</span>
-                            {musicUrl === t.url && <Icon name="check" size={14} color="#3B83F6" />}
+                            <span style={{ fontSize: 11, fontWeight: musicUrl === t.url ? 700 : 500, color: musicUrl === t.url ? '#1D4ED8' : '#1F2937', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{t.title}</span>
+                            {musicUrl === t.url && <Icon name="check" size={12.5} color="#3B83F6" />}
                           </Box>
                         ))}
                       </div>
@@ -2590,13 +2615,13 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
                 )}
               </div>
             )}
-            <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:14px;padding:6px 18px 14px')}>
+            <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:12.5px;padding:5.5px 16px 12.5px')}>
               {renderOutroSection()}
             </div>
             <StickyNav align="center">
-              <Box as="button" onClick={() => setStep(2)} style={s('border:1px solid #e4e1da;background:#fff;font-size:13px;font-weight:600;padding:11px 20px;border-radius:10px;cursor:pointer') as React.CSSProperties} hover={s('background:#f6f4f0')}>Indietro</Box>
-              <Box as="button" onClick={handleRender} style={s('border:none;background:#3B83F6;color:#fff;font-size:14px;font-weight:700;padding:14px 22px;border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px') as React.CSSProperties} hover={s('background:#2b6fe0')}>
-                <Icon name="sparkles" size={16} color="#fff" />Genera video
+              <Box as="button" onClick={() => setStep(2)} style={s('border:1px solid #e4e1da;background:#fff;font-size:11.5px;font-weight:600;padding:10px 18px;border-radius:9px;cursor:pointer') as React.CSSProperties} hover={s('background:#f6f4f0')}>Indietro</Box>
+              <Box as="button" onClick={handleRender} style={s('border:none;background:#3B83F6;color:#fff;font-size:12.5px;font-weight:700;padding:12.5px 20px;border-radius:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px') as React.CSSProperties} hover={s('background:#2b6fe0')}>
+                <Icon name="sparkles" size={14.5} color="#fff" />Genera video
               </Box>
             </StickyNav>
           </div>
@@ -2605,89 +2630,89 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
 
       {/* STEP 4 — render progress / result */}
       {step === 4 && (
-        <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:16px;padding:48px;max-width:640px;margin:0 auto')}>
+        <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:14.5px;padding:43px;max-width:576px;margin:0 auto')}>
           {renderStage === 'done' && outputUrl ? (
             <div style={{ textAlign: 'center' }}>
-              <div style={s('width:52px;height:52px;border-radius:16px;background:#e9f9f0;display:flex;align-items:center;justify-content:center;margin:0 auto 14px')}>
-                <Icon name="check" size={24} color="#10b981" />
+              <div style={s('width:47px;height:47px;border-radius:14.5px;background:#e9f9f0;display:flex;align-items:center;justify-content:center;margin:0 auto 12.5px')}>
+                <Icon name="check" size={21.5} color="#10b981" />
               </div>
-              <div style={s('font-size:17px;font-weight:800;margin-bottom:14px')}>Il tuo video è pronto</div>
-              <video src={outputUrl} controls playsInline style={{ width: '100%', maxHeight: 420, borderRadius: 12, background: '#000', marginBottom: 18 }} />
-              <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
-                <Box as="a" {...({ href: outputUrl, download: 'video-ai.mp4', target: '_blank', rel: 'noopener' } as Record<string, unknown>)} style={s('border:none;background:#3B83F6;color:#fff;font-size:14px;font-weight:700;padding:12px 24px;border-radius:10px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:8px') as React.CSSProperties} hover={s('background:#2b6fe0')}>
-                  <Icon name="download" size={15} color="#fff" />Scarica video
+              <div style={s('font-size:15.5px;font-weight:800;margin-bottom:12.5px')}>Il tuo video è pronto</div>
+              <video src={outputUrl} controls playsInline style={{ width: '100%', maxHeight: 378, borderRadius: 11, background: '#000', marginBottom: 16 }} />
+              <div style={{ display: 'flex', gap: 9, justifyContent: 'center' }}>
+                <Box as="a" {...({ href: outputUrl, download: 'video-ai.mp4', target: '_blank', rel: 'noopener' } as Record<string, unknown>)} style={s('border:none;background:#3B83F6;color:#fff;font-size:12.5px;font-weight:700;padding:11px 21.5px;border-radius:9px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:7px') as React.CSSProperties} hover={s('background:#2b6fe0')}>
+                  <Icon name="download" size={13.5} color="#fff" />Scarica video
                 </Box>
-                <Box as="button" onClick={startNew} style={s('border:1px solid #e4e1da;background:#fff;font-size:14px;font-weight:700;padding:12px 24px;border-radius:10px;cursor:pointer') as React.CSSProperties} hover={s('background:#f6f4f0')}>Nuovo video</Box>
+                <Box as="button" onClick={startNew} style={s('border:1px solid #e4e1da;background:#fff;font-size:12.5px;font-weight:700;padding:11px 21.5px;border-radius:9px;cursor:pointer') as React.CSSProperties} hover={s('background:#f6f4f0')}>Nuovo video</Box>
               </div>
             </div>
           ) : renderStage === 'failed' ? (() => {
             const isQuota = !!renderError && /quota/i.test(renderError);
             return (
             // Popup errore video: messaggio friendly + conferma rimborso credito.
-            <div onClick={startNew} style={{ position: 'fixed', inset: 0, zIndex: 1200, background: 'rgba(20,18,16,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-              <div onClick={e => e.stopPropagation()} style={{ position: 'relative', background: '#fff', borderRadius: 18, width: '100%', maxWidth: 400, padding: '28px 24px', textAlign: 'center', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
-                <Box as="button" onClick={startNew} aria-label="Chiudi" style={{ position: 'absolute', top: 12, right: 12, width: 30, height: 30, border: 'none', background: 'transparent', borderRadius: 8, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 } as React.CSSProperties} hover={{ background: '#f6f4f0' }}>
-                  <Icon name="x" size={17} color="#8c867d" />
+            <div onClick={startNew} style={{ position: 'fixed', inset: 0, zIndex: 1200, background: 'rgba(20,18,16,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 14.5 }}>
+              <div onClick={e => e.stopPropagation()} style={{ position: 'relative', background: '#fff', borderRadius: 16, width: '100%', maxWidth: 360, padding: '25px 21.5px', textAlign: 'center', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
+                <Box as="button" onClick={startNew} aria-label="Chiudi" style={{ position: 'absolute', top: 11, right: 11, width: 27, height: 27, border: 'none', background: 'transparent', borderRadius: 7, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 } as React.CSSProperties} hover={{ background: '#f6f4f0' }}>
+                  <Icon name="x" size={15.5} color="#8c867d" />
                 </Box>
-                <div style={{ width: 56, height: 56, borderRadius: 16, background: isQuota ? '#fffbeb' : '#fef2f2', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
-                  <Icon name={isQuota ? 'crown' : 'x'} size={26} color={isQuota ? '#b45309' : '#dc2626'} />
+                <div style={{ width: 50.5, height: 50.5, borderRadius: 14.5, background: isQuota ? '#fffbeb' : '#fef2f2', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14.5px' }}>
+                  <Icon name={isQuota ? 'crown' : 'x'} size={23.5} color={isQuota ? '#b45309' : '#dc2626'} />
                 </div>
-                <div style={{ fontSize: 18, fontWeight: 800, color: '#211f1c', marginBottom: 8 }}>{isQuota ? 'Quota video esaurita' : 'Il video non è riuscito'}</div>
+                <div style={{ fontSize: 16, fontWeight: 800, color: '#211f1c', marginBottom: 7 }}>{isQuota ? 'Quota video esaurita' : 'Il video non è riuscito'}</div>
                 {isQuota ? (
-                  <div style={{ fontSize: 14, color: '#57534c', lineHeight: 1.55, marginBottom: 22 }}>{renderError}</div>
+                  <div style={{ fontSize: 12.5, color: '#57534c', lineHeight: 1.55, marginBottom: 20 }}>{renderError}</div>
                 ) : (
                   <>
-                    <div style={{ fontSize: 14, color: '#57534c', lineHeight: 1.55, marginBottom: 6 }}>Ci dispiace, qualcosa è andato storto durante la generazione.</div>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: '#16a34a', marginBottom: 22 }}>Abbiamo rimborsato il credito: non ti è stato scalato nulla.</div>
+                    <div style={{ fontSize: 12.5, color: '#57534c', lineHeight: 1.55, marginBottom: 5.5 }}>Ci dispiace, qualcosa è andato storto durante la generazione.</div>
+                    <div style={{ fontSize: 12.5, fontWeight: 700, color: '#16a34a', marginBottom: 20 }}>Abbiamo rimborsato il credito: non ti è stato scalato nulla.</div>
                   </>
                 )}
-                <Box as="button" onClick={startNew} style={{ width: '100%', border: 'none', background: '#3B83F6', color: '#fff', fontSize: 14.5, fontWeight: 700, padding: '13px 0', borderRadius: 12, cursor: 'pointer' } as React.CSSProperties} hover={s('background:#2b6fe0')}>{isQuota ? 'Ho capito' : 'Riprova'}</Box>
-                {!isQuota && renderError && <div style={{ fontSize: 11, color: '#c4bdb1', marginTop: 14, wordBreak: 'break-word' }}>{renderError}</div>}
+                <Box as="button" onClick={startNew} style={{ width: '100%', border: 'none', background: '#3B83F6', color: '#fff', fontSize: 13, fontWeight: 700, padding: '11.5px 0', borderRadius: 11, cursor: 'pointer' } as React.CSSProperties} hover={s('background:#2b6fe0')}>{isQuota ? 'Ho capito' : 'Riprova'}</Box>
+                {!isQuota && renderError && <div style={{ fontSize: 10, color: '#c4bdb1', marginTop: 12.5, wordBreak: 'break-word' }}>{renderError}</div>}
               </div>
             </div>
             );
           })() : renderStage === 'background' ? (
             <div style={{ textAlign: 'center' }}>
-              <div style={{ position: 'relative', width: 120, height: 120, margin: '0 auto 22px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ position: 'relative', width: 108, height: 108, margin: '0 auto 20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 {/* Cerchi che pulsano dietro, molto fade */}
-                <div style={{ position: 'absolute', width: 110, height: 110, borderRadius: '50%', border: '1.5px solid rgba(59,131,246,.20)', animation: 'pulse-ring 2.8s ease-out infinite' }} />
-                <div style={{ position: 'absolute', width: 110, height: 110, borderRadius: '50%', border: '1.5px solid rgba(59,131,246,.20)', animation: 'pulse-ring 2.8s ease-out infinite', animationDelay: '1.4s' }} />
+                <div style={{ position: 'absolute', width: 99, height: 99, borderRadius: '50%', border: '1.5px solid rgba(59,131,246,.20)', animation: 'pulse-ring 2.8s ease-out infinite' }} />
+                <div style={{ position: 'absolute', width: 99, height: 99, borderRadius: '50%', border: '1.5px solid rgba(59,131,246,.20)', animation: 'pulse-ring 2.8s ease-out infinite', animationDelay: '1.4s' }} />
                 {/* Blob blu che si muove dietro il logo */}
-                <div style={{ position: 'absolute', width: 72, height: 72, background: 'radial-gradient(circle at 30% 26%, #AECBFF 0%, #3B83F6 46%, #5B6CF0 100%)', opacity: .95, boxShadow: '0 0 30px rgba(91,108,240,.45), 0 0 14px rgba(59,131,246,.55)', animation: 'organic-blob 8s ease-in-out infinite' }} />
+                <div style={{ position: 'absolute', width: 65, height: 65, background: 'radial-gradient(circle at 30% 26%, #AECBFF 0%, #3B83F6 46%, #5B6CF0 100%)', opacity: .95, boxShadow: '0 0 30px rgba(91,108,240,.45), 0 0 14px rgba(59,131,246,.55)', animation: 'organic-blob 8s ease-in-out infinite' }} />
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/dashboard/logo-mark-white.svg" alt="" style={{ position: 'relative', width: 56, height: 56, animation: 'aurora-pulse 4s ease-in-out infinite' }} />
+                <img src="/dashboard/logo-mark-white.svg" alt="" style={{ position: 'relative', width: 50.5, height: 50.5, animation: 'aurora-pulse 4s ease-in-out infinite' }} />
               </div>
-              <div style={s('font-size:17px;font-weight:800;margin-bottom:6px')}>Video in elaborazione</div>
-              <div style={s(`color:#8c867d;font-size:13.5px;max-width:420px;margin:0 auto ${renderProgress > 0 ? '10px' : '24px'}`)}>
+              <div style={s('font-size:15.5px;font-weight:800;margin-bottom:5.5px')}>Video in elaborazione</div>
+              <div style={s(`color:#8c867d;font-size:12px;max-width:378px;margin:0 auto ${renderProgress > 0 ? '9px' : '21.5px'}`)}>
                 Gira in background: puoi cambiare sezione o chiudere la pagina. Lo trovi nel tray <b>Lavori in corso</b> in alto a destra e poi in <b>Media</b>.
               </div>
               {/* Percentuale di avanzamento, se disponibile */}
               {renderProgress > 0 && (
-                <div style={s('color:#8c867d;font-size:12.5px;font-weight:600;margin:0 auto 24px')}>{Math.round(renderProgress * 100)}%</div>
+                <div style={s('color:#8c867d;font-size:11px;font-weight:600;margin:0 auto 21.5px')}>{Math.round(renderProgress * 100)}%</div>
               )}
-              <Box as="button" onClick={startNew} style={s('border:none;background:#3B83F6;color:#fff;font-size:14px;font-weight:700;padding:12px 24px;border-radius:10px;cursor:pointer') as React.CSSProperties} hover={s('background:#2b6fe0')}>Nuovo video</Box>
+              <Box as="button" onClick={startNew} style={s('border:none;background:#3B83F6;color:#fff;font-size:12.5px;font-weight:700;padding:11px 21.5px;border-radius:9px;cursor:pointer') as React.CSSProperties} hover={s('background:#2b6fe0')}>Nuovo video</Box>
             </div>
           ) : (
             <div style={{ textAlign: 'center' }}>
-              <div style={{ position: 'relative', width: 120, height: 120, margin: '0 auto 22px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ position: 'relative', width: 108, height: 108, margin: '0 auto 20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 {/* Cerchi che pulsano dietro, molto fade */}
-                <div style={{ position: 'absolute', width: 110, height: 110, borderRadius: '50%', border: '1.5px solid rgba(59,131,246,.20)', animation: 'pulse-ring 2.8s ease-out infinite' }} />
-                <div style={{ position: 'absolute', width: 110, height: 110, borderRadius: '50%', border: '1.5px solid rgba(59,131,246,.20)', animation: 'pulse-ring 2.8s ease-out infinite', animationDelay: '1.4s' }} />
+                <div style={{ position: 'absolute', width: 99, height: 99, borderRadius: '50%', border: '1.5px solid rgba(59,131,246,.20)', animation: 'pulse-ring 2.8s ease-out infinite' }} />
+                <div style={{ position: 'absolute', width: 99, height: 99, borderRadius: '50%', border: '1.5px solid rgba(59,131,246,.20)', animation: 'pulse-ring 2.8s ease-out infinite', animationDelay: '1.4s' }} />
                 {/* Blob blu che si muove dietro il logo */}
-                <div style={{ position: 'absolute', width: 72, height: 72, background: 'radial-gradient(circle at 30% 26%, #AECBFF 0%, #3B83F6 46%, #5B6CF0 100%)', opacity: .95, boxShadow: '0 0 30px rgba(91,108,240,.45), 0 0 14px rgba(59,131,246,.55)', animation: 'organic-blob 8s ease-in-out infinite' }} />
+                <div style={{ position: 'absolute', width: 65, height: 65, background: 'radial-gradient(circle at 30% 26%, #AECBFF 0%, #3B83F6 46%, #5B6CF0 100%)', opacity: .95, boxShadow: '0 0 30px rgba(91,108,240,.45), 0 0 14px rgba(59,131,246,.55)', animation: 'organic-blob 8s ease-in-out infinite' }} />
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/dashboard/logo-mark-white.svg" alt="" style={{ position: 'relative', width: 56, height: 56, animation: 'aurora-pulse 4s ease-in-out infinite' }} />
+                <img src="/dashboard/logo-mark-white.svg" alt="" style={{ position: 'relative', width: 50.5, height: 50.5, animation: 'aurora-pulse 4s ease-in-out infinite' }} />
               </div>
-              <div style={s('font-size:16px;font-weight:800;margin-bottom:6px')}>
+              <div style={s('font-size:14.5px;font-weight:800;margin-bottom:5.5px')}>
                 {renderStage === 'uploading' ? 'Caricamento file...'
                   : renderStage === 'avatar' ? 'Sintesi avatar...'
                   : 'Montaggio video...'}
               </div>
-              <div style={s('color:#8c867d;font-size:13px;margin-bottom:18px')}>
+              <div style={s('color:#8c867d;font-size:11.5px;margin-bottom:16px')}>
                 {usesAvatar ? 'Può richiedere fino a 10-15 minuti. Non chiudere la pagina.' : 'Può richiedere qualche minuto. Non chiudere la pagina.'}
               </div>
-              <div style={{ width: '100%', maxWidth: 360, height: 6, borderRadius: 3, background: '#f0ede7', overflow: 'hidden', margin: '0 auto' }}>
-                <div style={{ height: '100%', borderRadius: 3, background: '#3B83F6', width: `${Math.round(renderProgress * 100)}%`, transition: 'width .4s' }} />
+              <div style={{ width: '100%', maxWidth: 324, height: 5.5, borderRadius: 2.5, background: '#f0ede7', overflow: 'hidden', margin: '0 auto' }}>
+                <div style={{ height: '100%', borderRadius: 2.5, background: '#3B83F6', width: `${Math.round(renderProgress * 100)}%`, transition: 'width .4s' }} />
               </div>
             </div>
           )}
