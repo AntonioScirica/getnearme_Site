@@ -86,6 +86,62 @@ function Switch({ checked, onChange, disabled }: { checked: boolean; onChange: (
   );
 }
 
+// ── Pill di stato: un solo controllo per saltare a qualunque colonna, mai
+// orfano (prima con 2 frecce prev/next la prima colonna mostrava solo la
+// freccia destra, sola in mezzo al vuoto) ──
+function StatusPicker({ status, onChange }: { status: string; onChange: (v: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const anchorRef = useRef<HTMLButtonElement>(null);
+  const dropRef = useRef<HTMLDivElement>(null);
+  const rect = useAnchoredRect(open, anchorRef);
+  const current = COLUMNS.find((c) => c.id === status) ?? COLUMNS[0];
+
+  useEffect(() => {
+    const close = (e: MouseEvent) => {
+      if (anchorRef.current?.contains(e.target as Node)) return;
+      if (dropRef.current?.contains(e.target as Node)) return;
+      setOpen(false);
+    };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, []);
+
+  return (
+    <>
+      <button
+        ref={anchorRef}
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="inline-flex items-center gap-1.5 text-[11px] text-gray-400 hover:text-gray-200 hover:bg-white/[0.06] rounded-md px-1.5 py-1 -ml-1.5 cursor-pointer"
+      >
+        <span className={`w-1.5 h-1.5 rounded-full ${current.dot}`} />
+        {current.label}
+      </button>
+      {open && rect && createPortal(
+        <div
+          ref={dropRef}
+          style={{ position: "fixed", top: rect.bottom + 4, left: rect.left }}
+          className="z-[100] w-36 bg-[#1b1f28] border border-white/10 rounded-lg shadow-xl p-1"
+        >
+          {COLUMNS.map((c) => (
+            <button
+              key={c.id}
+              onClick={() => { onChange(c.id); setOpen(false); }}
+              className={`w-full flex items-center gap-2 text-left px-2 py-1.5 rounded text-xs cursor-pointer ${
+                c.id === status ? "text-gray-100 bg-white/5" : "text-gray-400 hover:bg-white/5 hover:text-gray-200"
+              }`}
+            >
+              <span className={`w-1.5 h-1.5 rounded-full ${c.dot}`} />
+              {c.label}
+            </button>
+          ))}
+        </div>,
+        document.body
+      )}
+    </>
+  );
+}
+
 const MONTHS_IT = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"];
 const DAYS_IT = ["L", "M", "M", "G", "V", "S", "D"];
 const pad2 = (n: number) => String(n).padStart(2, "0");
@@ -409,9 +465,6 @@ export default function TasksPage({ authKey }: { authKey: string | null }) {
                 {items.map((t) => {
                   const subs = t.subtasks || [];
                   const doneN = subs.filter((s) => s.done).length;
-                  const colIdx = COLUMNS.findIndex((c) => c.id === t.status);
-                  const prevCol = colIdx > 0 ? COLUMNS[colIdx - 1] : null;
-                  const nextCol = colIdx < COLUMNS.length - 1 ? COLUMNS[colIdx + 1] : null;
                   return (
                     <div
                       key={t.id}
@@ -428,15 +481,10 @@ export default function TasksPage({ authKey }: { authKey: string | null }) {
                       </div>
                       {t.notes && <div className="text-xs text-gray-500 mt-1 leading-relaxed line-clamp-2">{t.notes}</div>}
 
-                      {/* sottotask: progress + checklist, senza box annidato */}
+                      {/* sottotask: checklist piatta, conteggio come testo (niente barra) */}
                       {subs.length > 0 && (
                         <div className="mt-2.5">
-                          <div className="flex items-center gap-2 mb-1.5">
-                            <div className="flex-1 h-1 rounded-full bg-white/[0.06] overflow-hidden">
-                              <div className="h-full rounded-full bg-indigo-400 transition-all" style={{ width: `${(doneN / subs.length) * 100}%` }} />
-                            </div>
-                            <span className={`${MONO} text-[10px] text-gray-500 shrink-0`}>{doneN}/{subs.length}</span>
-                          </div>
+                          <div className={`${MONO} text-[10px] text-gray-600 mb-1`}>{doneN}/{subs.length} completate</div>
                           <div className="space-y-1">
                             {subs.map((s) => (
                               <button
@@ -486,26 +534,7 @@ export default function TasksPage({ authKey }: { authKey: string | null }) {
 
                       {/* sposta colonna (affidabile, sempre visibile) + azioni (a comparsa) */}
                       <div className="flex items-center justify-between mt-2 -mx-1.5">
-                        <div className="flex items-center gap-0.5">
-                          {prevCol && (
-                            <button
-                              onClick={() => move(t.id, prevCol.id)}
-                              title={`Sposta in "${prevCol.label}"`}
-                              className="w-6 h-6 flex items-center justify-center rounded-md text-gray-500 hover:text-gray-200 hover:bg-white/[0.06] cursor-pointer"
-                            >
-                              <ChevronLeft className="w-3.5 h-3.5" />
-                            </button>
-                          )}
-                          {nextCol && (
-                            <button
-                              onClick={() => move(t.id, nextCol.id)}
-                              title={`Sposta in "${nextCol.label}"`}
-                              className="w-6 h-6 flex items-center justify-center rounded-md text-gray-500 hover:text-gray-200 hover:bg-white/[0.06] cursor-pointer"
-                            >
-                              <ChevronRight className="w-3.5 h-3.5" />
-                            </button>
-                          )}
-                        </div>
+                        <StatusPicker status={t.status} onChange={(s) => move(t.id, s)} />
                         <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                           {(t.tagged_emails?.length ?? 0) > 0 && (
                             <button onClick={() => notify(t.id)} disabled={notifying === t.id} className="w-6 h-6 flex items-center justify-center rounded-md text-gray-500 hover:text-amber-400 hover:bg-white/[0.06] cursor-pointer" title="Rimanda mail">
