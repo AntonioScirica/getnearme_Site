@@ -354,10 +354,16 @@ html.metrics-light [class*="text-gray-500"] { color: #6b7280 !important; }
 html.metrics-light [class*="text-gray-600"] { color: #9ca3af !important; }
 html.metrics-light [class*="text-gray-700"] { color: #b3aca1 !important; }
 
-/* bordi/hover a bassa opacita': stesso valore, bianco→nero (simmetrico) */
+/* bordi/hover a bassa opacita': stesso valore, bianco→nero (simmetrico).
+   [class*=...] matcha anche il sottostringa dentro "hover:bg-white/5", quindi
+   dipingeva il container SEMPRE invece che solo su :hover (voci sidebar non
+   selezionate con un box visibile permanente). [class~=...] matcha solo il
+   token esatto separato da spazi, "hover:bg-white/5" gestito a parte con :hover. */
 html.metrics-light [class*="border-white/"] { border-color: rgba(26,26,46,0.10) !important; }
-html.metrics-light [class*="bg-white/5"] { background-color: rgba(26,26,46,0.04) !important; }
-html.metrics-light [class*="bg-white/10"] { background-color: rgba(26,26,46,0.06) !important; }
+html.metrics-light [class~="bg-white/5"] { background-color: rgba(26,26,46,0.04) !important; }
+html.metrics-light [class~="hover:bg-white/5"]:hover { background-color: rgba(26,26,46,0.04) !important; }
+html.metrics-light [class~="bg-white/10"] { background-color: rgba(26,26,46,0.06) !important; }
+html.metrics-light [class~="hover:bg-white/10"]:hover { background-color: rgba(26,26,46,0.06) !important; }
 
 html.metrics-light [class*="border-gray-400"],
 html.metrics-light [class*="border-gray-500"],
