@@ -82,8 +82,23 @@ export default function DashboardPage() {
         ]);
         const session = sessionRes?.data?.session ?? null;
         if (session?.user) {
-          guardUserCache(session.user.id);
-          const profile = await fetchProfile(session.user.id, session.user.email || '', avatarFromUser(session.user));
+          // getSession legge solo il JWT locale: dopo che un account viene
+          // cancellato, l'access token resta valido fino a scadenza (~1h) e
+          // farebbe entrare in dashboard un utente inesistente (anche su un
+          // altro dispositivo/origine). getUser() valida il token lato server:
+          // se l'utente non esiste piu' (401/403) buttiamo giu' la sessione e
+          // lasciamo che il redirect mandi al login. Errori di rete: fail-open
+          // (non sloggare un utente valido solo perche' offline).
+          const { data: userRes, error: userErr } = await supabase.auth.getUser();
+          const status = (userErr as { status?: number } | null)?.status;
+          if (userErr && (status === 401 || status === 403)) {
+            await supabase.auth.signOut().catch(() => {});
+            setLoading(false);
+            return;
+          }
+          const u = userRes?.user ?? session.user;
+          guardUserCache(u.id);
+          const profile = await fetchProfile(u.id, u.email || '', avatarFromUser(u));
           setUserData(profile);
         }
       } catch (e) {
