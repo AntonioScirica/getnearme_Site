@@ -4,7 +4,7 @@
 // sessione. Solo metadati: il file MP4 vive su R2 (cleanup-ai-videos lo pota a
 // 30 giorni).
 
-import { getTokenFast } from './staging';
+import { getTokenFast, refreshTokenFast } from './staging';
 
 export type VideoJob = {
   id: string;            // renderId (async) o id locale (done sync)
@@ -94,14 +94,22 @@ export async function createServerVideoJob(job: {
   progress: number; ctx: Record<string, unknown>; outputUrl?: string;
   projectId: string | null; aspect: string;
 }): Promise<void> {
+  // getTokenFast torna ANON_KEY come fallback (mai vuoto): se il token utente
+  // manca/e' scaduto la POST va in 401 e la riga NON viene creata → il video
+  // resta solo in localStorage e sparisce cross-device. Perche' lo stato
+  // terminale 'done' persista SEMPRE, se la POST fallisce rinfreschiamo il token
+  // e riproviamo una volta.
+  const post = async (token: string) => fetch('/api/video-jobs', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify(job),
+  });
   try {
-    const token = getTokenFast();
-    if (!token) return;
-    await fetch('/api/video-jobs', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify(job),
-    });
+    let res = await post(getTokenFast());
+    if (!res.ok && (res.status === 401 || res.status === 403)) {
+      const fresh = await refreshTokenFast();
+      if (fresh) res = await post(fresh);
+    }
   } catch { /* best-effort: localStorage copre la sessione corrente */ }
 }
 

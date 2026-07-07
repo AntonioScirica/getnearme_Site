@@ -396,7 +396,7 @@ const FREE_PLAN: Plan = {
 
 const STARTER_FEATURES = [
   '100 foto AI homestaging/mese',
-  '1 video AI/mese, tutti i template',
+  '2 video AI/mese, tutti i template',
   '10 montaggi video/mese',
   '20 post social/mese',
   'Analisi della zona',
@@ -406,7 +406,7 @@ const STARTER_FEATURES = [
 const PLANS_BY_TIER: Record<PlanTier, Plan[]> = {
   individual: [
     FREE_PLAN,
-    { id: 'starter', name: 'Starter', price: 14.99, oldPrice: 19.99, period: '/mese', badge: 'Più scelto', popular: true, features: STARTER_FEATURES, color: 'var(--text-main)', quotaFoto: 100, quotaVideo: 1, quotaPost: 20 },
+    { id: 'starter', name: 'Starter', price: 14.99, oldPrice: 19.99, period: '/mese', badge: 'Più scelto', popular: true, features: STARTER_FEATURES, color: 'var(--text-main)', quotaFoto: 100, quotaVideo: 2, quotaPost: 20 },
     { id: 'ind_monthly', name: 'Mensile', price: 59, oldPrice: 150, period: '/mese', badge: null, popular: false, features: INDIVIDUAL_FEATURES, color: 'var(--text-main)', quotaFoto: 300, quotaVideo: 6, quotaPost: 999 },
     { id: 'ind_annual', name: 'Annuale', price: 590, oldPrice: 1800, period: '/anno', badge: null, popular: false, features: INDIVIDUAL_FEATURES, color: 'var(--text-main)', quotaFoto: 300, quotaVideo: 6, quotaPost: 999, hidden: true },
   ],
@@ -2105,7 +2105,6 @@ function AccountScreen({ credits, toast, go, userData, tierHint }: { credits: nu
             // Seat-based: prezzo grande = totale (per-utente × N), niente nota; period
             // senza "a utente" (primo token = "/mese").
             const shownPrice = isSeat ? plan.price * seats : plan.price;
-            const shownOldPrice = isSeat && plan.oldPrice ? plan.oldPrice * seats : plan.oldPrice;
             const shownPeriod = isSeat ? plan.period.split(' ')[0] : plan.period;
             const shownNote = isSeat ? null : plan.note;
             return (
@@ -2141,17 +2140,8 @@ function AccountScreen({ credits, toast, go, userData, tierHint }: { credits: nu
                 </div>
 
                 {(() => {
-                  const hasDiscount = shownPrice > 0 && !!shownOldPrice && shownOldPrice > shownPrice;
-                  const discountPct = hasDiscount ? Math.round((1 - shownPrice / shownOldPrice) * 100) : 0;
-                  const saved = hasDiscount ? Math.round(shownOldPrice - shownPrice) : 0;
                   return (
                     <>
-                      {hasDiscount && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 4 }}>
-                          <span style={{ fontSize: 14, fontWeight: 700, textDecoration: 'line-through', color: active ? 'rgba(255,255,255,.6)' : '#b3aca1' }}>{shownOldPrice}€</span>
-                          <span style={{ background: active ? 'rgba(255,255,255,.2)' : '#3B83F6', color: active ? 'var(--bg-card)' : '#fff', fontSize: 10, fontWeight: 800, padding: '3px 8px', borderRadius: 899 }}>-{discountPct}%</span>
-                        </div>
-                      )}
                       <div style={s('display:flex;align-items:baseline;gap: 4px')}>
                         <span style={{ fontSize: 43, fontWeight: 800, color: active ? 'var(--bg-card)' : 'var(--text-main)', letterSpacing: -2, lineHeight: 1 }}>
                           {plan.id === 'agy_custom' ? 'Custom' : `${shownPrice}€`}
@@ -2160,9 +2150,6 @@ function AccountScreen({ credits, toast, go, userData, tierHint }: { credits: nu
                           <span style={{ fontSize: 14, fontWeight: 600, color: active ? 'rgba(255,255,255,.55)' : '#b3aca1' }}>{shownPeriod}</span>
                         )}
                       </div>
-                      {hasDiscount && !shownNote && (
-                        <div style={{ fontSize: 11, fontWeight: 800, color: active ? 'rgba(255,255,255,.8)' : '#009874', marginTop: 5 }}>RISPARMI {saved}€{shownPeriod}</div>
-                      )}
                       {shownNote && (
                         <div style={{ fontSize: 13, fontWeight: 700, color: active ? 'rgba(255,255,255,.85)' : 'var(--text-muted)', marginTop: 5 }}>{shownNote}</div>
                       )}
@@ -3865,9 +3852,11 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                           </Box>
                           {immActionsOpen && (
                             <div onClick={(e) => e.stopPropagation()} className="max-md:!left-1/2 max-md:!right-auto max-md:!-translate-x-1/2" style={{ position: 'absolute', top: 'calc(100% + 6px)', right: 0, zIndex: 40, background: '#fff', border: '1px solid #f0ede7', borderRadius: 9, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', padding: 4, minWidth: 162 }}>
+                              {!isFreePlan && (
                               <Box as="button" onClick={() => { setImmActionsOpen(false); setImportOpen(true); }} style={{ display: 'flex', alignItems: 'center', gap: 9, width: '100%', padding: '9px 11px', borderRadius: 7, border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 12, fontWeight: 600, color: '#211f1c', textAlign: 'left' } as React.CSSProperties} hover={{ background: 'var(--bg-hover)' }}>
                                 <Icon name="upload" size={14} color="#57534c" />Importa immobili
                               </Box>
+                              )}
                               <Box as="button" onClick={() => { setImmActionsOpen(false); if (!projects.length) { toast('Nessun immobile', 'x'); return; } setImmSelectMode(true); setImmSelected(new Set()); }} style={{ display: 'flex', alignItems: 'center', gap: 9, width: '100%', padding: '9px 11px', borderRadius: 7, border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 12, fontWeight: 600, color: '#211f1c', textAlign: 'left' } as React.CSSProperties} hover={{ background: 'var(--bg-hover)' }}>
                                 <Icon name="check" size={14} color="#57534c" />Seleziona immobili
                               </Box>
@@ -3902,9 +3891,11 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                           <Box as="button" onClick={() => setNewProjOpen(true)} style={s('border:1px solid #3B83F6;background:#3B83F6;color:#fff;font-size:13px;font-weight:700;padding: 10px 20px;border-radius:11px;cursor:pointer;display:flex;align-items:center;justify-content:center')} hover={s('background:#2b6fe0;border-color:#2b6fe0')}>
                             Nuovo immobile
                           </Box>
+                          {!isFreePlan && (
                           <Box as="button" onClick={() => setImportOpen(true)} style={s('border:1px solid #e4e1da;background:var(--bg-card);color:var(--text-main);font-size:13px;font-weight:700;padding: 10px 20px;border-radius:11px;cursor:pointer;display:flex;align-items:center;gap: 6px')} hover={s('background:#f6f4f0')}>
                             <Icon name="upload" size={14} color="#57534c" />Importa
                           </Box>
+                          )}
                         </div>
                       </div>
                     ) : (
@@ -4129,7 +4120,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
         <NewProjectModal
           toast={toast}
           mandatory={projects.length === 0}
-          onImport={() => { setNewProjOpen(false); setImportOpen(true); }}
+          onImport={isFreePlan ? undefined : () => { setNewProjOpen(false); setImportOpen(true); }}
           onClose={() => setNewProjOpen(false)}
           onSuccess={(p) => {
             const isFirst = projects.length === 0;

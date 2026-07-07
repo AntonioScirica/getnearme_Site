@@ -339,7 +339,9 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
         if (!pending.replaceBatchId) onCreated?.(); // reprompt sostituisce, non e' una foto nuova
         setGenerating(false);
         setRevealing('burst');
-        // Ogni generazione (incl. reprompt) scala 1 dalla quota: aggiorna live.
+        // Ogni generazione (incl. reprompt) scala 1 dalla quota: e' una nuova
+        // chiamata AI reale. Il badge galleria invece NON si incrementa sul
+        // reprompt (onCreated gated su replaceBatchId): stessa foto, non nuova.
         setQuota(q => q ? { ...q, remaining: Math.max(0, q.remaining - 1) } : q);
         try {
           const batchId = await saveSingleGenerationToBatch({
