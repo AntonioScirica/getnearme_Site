@@ -65,6 +65,7 @@ function MiniDragCompare({ before, after, label, eager }: { before: string; afte
   return (
     <div
       ref={ref}
+      className="mini-drag-compare"
       onPointerDown={(e) => { updatePos(e.clientX); (e.target as HTMLElement).setPointerCapture(e.pointerId); }}
       onPointerMove={(e) => { if (e.buttons !== 1) return; updatePos(e.clientX); }}
       style={{
@@ -512,6 +513,10 @@ export default function FeatureShowcase({ feature: f, videoSrc, index, reverse }
           pointer-events: none;
           z-index: 1;
           transition: opacity 0.2s ease;
+        }
+        /* Desktop: card home staging un po' piu' alte (3:2 invece di 16:9). */
+        @media (min-width: 769px) {
+          .mini-drag-compare { aspect-ratio: 3 / 2 !important; }
         }
         .feature-mini-arrow {
           width: 34px;

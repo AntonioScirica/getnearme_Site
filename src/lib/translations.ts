@@ -368,7 +368,7 @@ export const translations = {
           {
             id: "starter_monthly", name: "Starter", users: "Per iniziare in piccolo", oldPrice: 19.99, price: 14.99, period: "/mese", priceNote: null,
             savingsYear: null, badge: "Più scelto", popular: true,
-            features: ["100 foto AI homestaging/mese", "1 video AI/mese, tutti i template", "10 montaggi video/mese", "20 post social/mese", "Analisi della zona", "Import immobili"],
+            features: ["100 foto AI homestaging/mese", "2 video AI/mese, tutti i template", "10 montaggi video/mese", "20 post social/mese", "Analisi della zona", "Import immobili"],
             extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Scegli questo piano",
           },
           {
@@ -389,7 +389,7 @@ export const translations = {
             {
               id: "starter_monthly", name: "Starter", users: "Per iniziare in piccolo", oldPrice: 19.99, price: 14.99, period: "/mese", priceNote: null,
               savingsYear: null, badge: "Più scelto", popular: true,
-              features: ["100 foto AI homestaging/mese", "1 video AI/mese, tutti i template", "10 montaggi video/mese", "20 post social/mese", "Analisi della zona", "Import immobili"],
+              features: ["100 foto AI homestaging/mese", "2 video AI/mese, tutti i template", "10 montaggi video/mese", "20 post social/mese", "Analisi della zona", "Import immobili"],
               extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Scegli questo piano",
             },
             {
@@ -975,7 +975,7 @@ export const translations = {
           {
             id: "starter_monthly", name: "Starter", users: "Get started small", oldPrice: 19.99, price: 14.99, period: "/month", priceNote: null,
             savingsYear: null, badge: null, popular: false,
-            features: ["100 AI homestaging photos/month", "1 AI video/month, all templates", "10 video edits/month", "20 social posts/month", "Zone analysis", "Property import"],
+            features: ["100 AI homestaging photos/month", "2 AI video/month, all templates", "10 video edits/month", "20 social posts/month", "Zone analysis", "Property import"],
             extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Choose this plan",
           },
           {
@@ -996,7 +996,7 @@ export const translations = {
             {
               id: "starter_monthly", name: "Starter", users: "Get started small", oldPrice: 19.99, price: 14.99, period: "/month", priceNote: null,
               savingsYear: null, badge: null, popular: false,
-              features: ["100 AI homestaging photos/month", "1 AI video/month, all templates", "10 video edits/month", "20 social posts/month", "Zone analysis", "Property import"],
+              features: ["100 AI homestaging photos/month", "2 AI video/month, all templates", "10 video edits/month", "20 social posts/month", "Zone analysis", "Property import"],
               extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Choose this plan",
             },
             {
@@ -1582,7 +1582,7 @@ export const translations = {
           {
             id: "starter_monthly", name: "Starter", users: "Para empezar poco a poco", oldPrice: 19.99, price: 14.99, period: "/mes", priceNote: null,
             savingsYear: null, badge: null, popular: false,
-            features: ["100 fotos AI homestaging/mes", "1 video AI/mes, todas las plantillas", "10 montajes de video/mes", "20 posts social/mes", "Analisis de zona", "Importacion de inmuebles"],
+            features: ["100 fotos AI homestaging/mes", "2 video AI/mes, todas las plantillas", "10 montajes de video/mes", "20 posts social/mes", "Analisis de zona", "Importacion de inmuebles"],
             extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Elige este plan",
           },
           {
@@ -1603,7 +1603,7 @@ export const translations = {
             {
               id: "starter_monthly", name: "Starter", users: "Para empezar poco a poco", oldPrice: 19.99, price: 14.99, period: "/mes", priceNote: null,
               savingsYear: null, badge: null, popular: false,
-              features: ["100 fotos AI homestaging/mes", "1 video AI/mes, todas las plantillas", "10 montajes de video/mes", "20 posts social/mes", "Analisis de zona", "Importacion de inmuebles"],
+              features: ["100 fotos AI homestaging/mes", "2 video AI/mes, todas las plantillas", "10 montajes de video/mes", "20 posts social/mes", "Analisis de zona", "Importacion de inmuebles"],
               extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Elige este plan",
             },
             {
@@ -2187,7 +2187,7 @@ export const translations = {
           {
             id: "starter_monthly", name: "Starter", users: "Pour demarrer en douceur", oldPrice: 19.99, price: 14.99, period: "/mois", priceNote: null,
             savingsYear: null, badge: null, popular: false,
-            features: ["100 photos AI homestaging/mois", "1 video AI/mois, tous les modeles", "10 montages video/mois", "20 posts social/mois", "Analyse de zone", "Import de biens"],
+            features: ["100 photos AI homestaging/mois", "2 video AI/mois, tous les modeles", "10 montages video/mois", "20 posts social/mois", "Analyse de zone", "Import de biens"],
             extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Choisir ce plan",
           },
           {
@@ -2208,7 +2208,7 @@ export const translations = {
             {
               id: "starter_monthly", name: "Starter", users: "Pour demarrer en douceur", oldPrice: 19.99, price: 14.99, period: "/mois", priceNote: null,
               savingsYear: null, badge: null, popular: false,
-              features: ["100 photos AI homestaging/mois", "1 video AI/mois, tous les modeles", "10 montages video/mois", "20 posts social/mois", "Analyse de zone", "Import de biens"],
+              features: ["100 photos AI homestaging/mois", "2 video AI/mois, tous les modeles", "10 montages video/mois", "20 posts social/mois", "Analyse de zone", "Import de biens"],
               extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Choisir ce plan",
             },
             {
@@ -2695,7 +2695,7 @@ export const translations = {
           {
             id: "starter_monthly", name: "Starter", users: "Чтобы начать с малого", oldPrice: 19.99, price: 14.99, period: "/мес", priceNote: null,
             savingsYear: null, badge: null, popular: false,
-            features: ["100 фото AI homestaging/месяц", "1 AI видео/месяц, все шаблоны", "10 видеомонтажей/месяц", "20 постов/месяц", "Анализ района", "Импорт объектов"],
+            features: ["100 фото AI homestaging/месяц", "2 AI видео/месяц, все шаблоны", "10 видеомонтажей/месяц", "20 постов/месяц", "Анализ района", "Импорт объектов"],
             extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Выбрать этот план",
           },
           {
@@ -2716,7 +2716,7 @@ export const translations = {
             {
               id: "starter_monthly", name: "Starter", users: "Чтобы начать с малого", oldPrice: 19.99, price: 14.99, period: "/мес", priceNote: null,
               savingsYear: null, badge: null, popular: false,
-              features: ["100 фото AI homestaging/месяц", "1 AI видео/месяц, все шаблоны", "10 видеомонтажей/месяц", "20 постов/месяц", "Анализ района", "Импорт объектов"],
+              features: ["100 фото AI homestaging/месяц", "2 AI видео/месяц, все шаблоны", "10 видеомонтажей/месяц", "20 постов/месяц", "Анализ района", "Импорт объектов"],
               extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Выбрать этот план",
             },
             {
@@ -3203,7 +3203,7 @@ export const translations = {
           {
             id: "starter_monthly", name: "Starter", users: "Щоб почати з малого", oldPrice: 19.99, price: 14.99, period: "/міс", priceNote: null,
             savingsYear: null, badge: null, popular: false,
-            features: ["100 фото AI homestaging/місяць", "1 AI відео/місяць, всі шаблони", "10 відеомонтажів/місяць", "20 постів/місяць", "Аналіз району", "Імпорт об'єктів"],
+            features: ["100 фото AI homestaging/місяць", "2 AI відео/місяць, всі шаблони", "10 відеомонтажів/місяць", "20 постів/місяць", "Аналіз району", "Імпорт об'єктів"],
             extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Обрати цей план",
           },
           {
@@ -3224,7 +3224,7 @@ export const translations = {
             {
               id: "starter_monthly", name: "Starter", users: "Щоб почати з малого", oldPrice: 19.99, price: 14.99, period: "/міс", priceNote: null,
               savingsYear: null, badge: null, popular: false,
-              features: ["100 фото AI homestaging/місяць", "1 AI відео/місяць, всі шаблони", "10 відеомонтажів/місяць", "20 постів/місяць", "Аналіз району", "Імпорт об'єктів"],
+              features: ["100 фото AI homestaging/місяць", "2 AI відео/місяць, всі шаблони", "10 відеомонтажів/місяць", "20 постів/місяць", "Аналіз району", "Імпорт об'єктів"],
               extra: null, color: "#2563EB", bg: "#eff6ff", cta: "Обрати цей план",
             },
             {

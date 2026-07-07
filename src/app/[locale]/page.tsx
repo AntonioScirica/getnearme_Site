@@ -230,6 +230,21 @@ export default async function Home({ params }: Props) {
 
             {/* Hero tutorial video — 16:9. Cliccabile: porta alla feature Video AI in basso. */}
             <a href="#ai-video" className="mt-12 md:mt-16 block" style={{ position: "relative", cursor: "default" }}>
+              {/* Foto originale + freccia: mostra che il video parte da questa foto. */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/staging/time.png"
+                alt="Foto originale dell'immobile"
+                className="hidden md:block"
+                style={{ position: "absolute", top: -55, left: -140, width: 130, height: "auto", zIndex: 10 }}
+              />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/staging/time.png"
+                alt="Foto originale dell'immobile"
+                className="block md:hidden"
+                style={{ position: "absolute", top: -18, left: 10, width: 70, height: "auto", zIndex: 10 }}
+              />
               <div
                 style={{
                   border: "1px solid rgba(26,26,46,0.10)",
@@ -371,7 +386,7 @@ export default async function Home({ params }: Props) {
 
         {/* Time saved — Ogni attività ti porta via tempo */}
         <section style={{ padding: "63px 0", background: "#f3f4f6" }}>
-          <div className="max-w-5xl mx-auto px-5 md:px-3">
+          <div className="max-w-4xl mx-auto px-5 md:px-3">
             <div style={{ textAlign: "center", marginBottom: 36 }}>
               <h2 style={{ fontSize: "clamp(23px, 4.5vw, 32px)", fontWeight: 800, color: "#1a1a2e", lineHeight: 1.15, margin: "0 0 13px" }}>
                 Ogni attività ti porta via tempo.<br />
