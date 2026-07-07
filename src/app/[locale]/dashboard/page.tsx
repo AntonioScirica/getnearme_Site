@@ -16,6 +16,7 @@ export type UserData = {
   totalSpent: number;
   avatarUrl: string | null;
   onboardingCompleted: boolean;
+  agencySeats: number | null;
 };
 
 // Avatar dal provider OAuth (Google): user_metadata.avatar_url / picture.
@@ -49,7 +50,7 @@ async function fetchProfile(userId: string, email: string, avatarUrl: string | n
   // null -> subscriptionType sempre 'free' (piano/brand bloccati anche da pagante).
   const { data, error } = await supabase
     .from('user_credits')
-    .select('credits, subscription_type, stripe_agency_subscription_id, total_earned, total_spent, onboarding_completed')
+    .select('credits, subscription_type, stripe_agency_subscription_id, total_earned, total_spent, onboarding_completed, agency_seats')
     .eq('user_id', userId)
     .single();
   if (error) console.error('fetchProfile error:', error.message);
@@ -63,6 +64,7 @@ async function fetchProfile(userId: string, email: string, avatarUrl: string | n
     totalSpent: data?.total_spent ?? 0,
     avatarUrl,
     onboardingCompleted: data?.onboarding_completed ?? false,
+    agencySeats: data?.agency_seats ?? null,
   };
 }
 

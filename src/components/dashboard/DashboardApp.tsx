@@ -2012,7 +2012,32 @@ function AccountScreen({ credits, toast, go, userData, tierHint }: { credits: nu
   useEffect(() => { if (tierHint) setTier(tierHint); }, [tierHint]);
   const plans = PLANS_BY_TIER[tier].filter(p => !p.hidden);
   // Agenzia seat-based: slider utenti condiviso (2-10), quote 400 foto + 2,4 video/utente.
-  const [seats, setSeats] = useState(2);
+  // Parte dai posti REALI dell'utente se gia' su un piano seat (altrimenti 2,
+  // valore di partenza per chi deve ancora sottoscrivere).
+  const currentSeats = userData?.agencySeats ?? null;
+  const [seats, setSeats] = useState(currentSeats ?? 2);
+  const [seatsBusy, setSeatsBusy] = useState(false);
+  useEffect(() => { if (currentSeats) setSeats(currentSeats); }, [currentSeats]);
+  const updateSeats = async (newSeats: number) => {
+    if (seatsBusy) return;
+    setSeatsBusy(true);
+    try {
+      const token = getTokenFast();
+      const resp = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/add-subscription-item`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ packageId: 'agency-seats', newSeats }),
+      });
+      const data = await resp.json().catch(() => null);
+      if (!resp.ok || !data?.success) throw new Error(data?.error || `HTTP ${resp.status}`);
+      toast(`Posti aggiornati a ${newSeats}`, 'check');
+    } catch (e) {
+      console.error('update seats error:', e);
+      toast('Errore aggiornamento posti, riprova', 'x');
+    } finally {
+      setSeatsBusy(false);
+    }
+  };
   // ⟦N⟧ marca i numeri sostituiti dallo slider, resi in semibold nel render
   // (renderSeatFeature) cosi' si nota subito che sono cambiati.
   const seatMark = (n: number) => (seats > 2 ? `⟦${n}⟧` : String(n));
@@ -2253,8 +2278,18 @@ function AccountScreen({ credits, toast, go, userData, tierHint }: { credits: nu
                   ))}
                 </div>
 
-                <Box as="button" onClick={() => {
+                {(() => {
+                  // Su un piano seat gia' attivo, lo slider puo' muoversi
+                  // sopra/sotto i posti REALI: la CTA diventa azionabile
+                  // (aggiorna la quantity Stripe, proration automatica)
+                  // invece del "Piano attuale" morto che non faceva nulla.
+                  const seatsChanged = isSeat && active && !!currentSeats && seats !== currentSeats;
+                  const seatsLabel = seats > (currentSeats ?? 0) ? 'Aggiungi persone' : 'Riduci posti';
+                  const isActionable = !active || seatsChanged;
+                  return (
+                <Box as="button" disabled={seatsBusy} onClick={() => {
                   if (plan.id === 'agy_custom') { window.open('https://cal.com/getnearme/30min', '_blank'); return; }
+                  if (seatsChanged) { updateSeats(seats); return; }
                   if (active) { toast('Sei già su questo piano', 'check'); return; }
                   if (plan.id === 'free') { toast('Per tornare al Free disdici l’abbonamento da “Gestisci piano”'); return; }
                   if (isSeat) { seatCheckout(plan.id); return; }
@@ -2262,18 +2297,21 @@ function AccountScreen({ credits, toast, go, userData, tierHint }: { credits: nu
                 }} style={{
                   marginTop: 25,
                   border: 'none',
-                  background: active ? 'var(--bg-card)' : '#3B83F6',
-                  color: active ? '#3B83F6' : '#fff',
+                  background: isActionable ? '#3B83F6' : 'var(--bg-card)',
+                  color: isActionable ? '#fff' : '#3B83F6',
                   fontSize: 14, fontWeight: 700, padding: '13px 18px', borderRadius: 11,
-                  cursor: 'pointer', minHeight: 43, width: '100%',
+                  cursor: seatsBusy ? 'default' : 'pointer', minHeight: 43, width: '100%',
+                  opacity: seatsBusy ? 0.7 : 1,
                   transition: 'background .2s, transform .15s',
-                  boxShadow: active ? '0 2px 8px rgba(0,0,0,.08)' : 'none',
-                }} hover={{
-                  background: active ? '#f0f6ff' : '#2b6fe0',
+                  boxShadow: isActionable ? 'none' : '0 2px 8px rgba(0,0,0,.08)',
+                }} hover={seatsBusy ? {} : {
+                  background: isActionable ? '#2b6fe0' : '#f0f6ff',
                   transform: 'scale(0.98)',
                 }}>
-                  {active ? 'Piano attuale' : plan.id === 'free' ? 'Piano base' : plan.id === 'agy_custom' ? 'Contattaci' : 'Scegli questo piano'}
+                  {seatsBusy ? '...' : seatsChanged ? seatsLabel : active ? 'Piano attuale' : plan.id === 'free' ? 'Piano base' : plan.id === 'agy_custom' ? 'Contattaci' : 'Scegli questo piano'}
                 </Box>
+                  );
+                })()}
               </Box>
             );
           })}

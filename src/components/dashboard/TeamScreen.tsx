@@ -248,10 +248,10 @@ export default function TeamScreen({
               <Icon name="users" size={22} color="#ea580c" />
             </div>
             <h3 style={s('margin:0 0 5px;font-size:15px;font-weight:800')}>Limite raggiunto</h3>
-            <p style={s('margin:0 0 20px;font-size:12px;color:#8c867d;line-height:1.5')}>Hai raggiunto il massimo di {MAX_MEMBERS} collaboratori.<br/>Contattaci per aggiungere altri slot al tuo team.</p>
+            <p style={s('margin:0 0 20px;font-size:12px;color:#8c867d;line-height:1.5')}>Hai raggiunto il massimo di {MAX_MEMBERS} collaboratori.<br/>Passa a un piano con piu' posti per aggiungerne altri.</p>
             <div style={{ display: 'flex', gap: 9 }}>
               <Box as="button" onClick={() => setLimitPopup(false)} style={s('flex:1;border:1px solid #d8d4cb;background:#fff;color:#8c867d;font-size:13px;font-weight:700;padding:10px 0;border-radius:9px;cursor:pointer')} hover={s('background:#faf9f7')}>Chiudi</Box>
-              <a href="mailto:info@getnearme.it?subject=Richiesta%20slot%20team%20extra" style={{ flex: 1, border: 'none', background: ACCENT, color: '#fff', fontSize: 13, fontWeight: 700, padding: '10px 0', borderRadius: 9, cursor: 'pointer', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Contattaci</a>
+              <Box as="button" onClick={() => { setLimitPopup(false); go?.('account'); }} style={{ flex: 1, border: 'none', background: ACCENT, color: '#fff', fontSize: 13, fontWeight: 700, padding: '10px 0', borderRadius: 9, cursor: 'pointer' }} hover={s('background:#2b6fe0')}>Vedi i piani</Box>
             </div>
           </div>
         </div>
