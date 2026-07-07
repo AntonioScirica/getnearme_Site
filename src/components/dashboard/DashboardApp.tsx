@@ -2017,6 +2017,25 @@ function AccountScreen({ credits, toast, go, userData, tierHint }: { credits: nu
   const currentSeats = userData?.agencySeats ?? null;
   const [seats, setSeats] = useState(currentSeats ?? 2);
   const [seatsBusy, setSeatsBusy] = useState(false);
+  // Conferma prima di addebitare: il cambio posti carica la carta salvata
+  // subito (vedi add-subscription-item), non deve succedere con un click solo.
+  const [seatConfirm, setSeatConfirm] = useState<{ target: number; label: string } | null>(null);
+  const [portalBusy, setPortalBusy] = useState(false);
+  const openBillingPortal = async () => {
+    if (portalBusy) return;
+    setPortalBusy(true);
+    try {
+      const token = getTokenFast();
+      const res = await fetch('/api/billing-portal', { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ returnUrl: window.location.href }) });
+      const d = await res.json();
+      if (res.ok && d.url) { window.open(d.url, '_blank'); return; }
+      toast('Nessun abbonamento attivo da gestire', 'x');
+    } catch {
+      toast('Errore apertura gestione piano', 'x');
+    } finally {
+      setPortalBusy(false);
+    }
+  };
   useEffect(() => { if (currentSeats) setSeats(currentSeats); }, [currentSeats]);
   const updateSeats = async (newSeats: number) => {
     if (seatsBusy) return;
@@ -2288,7 +2307,7 @@ function AccountScreen({ credits, toast, go, userData, tierHint }: { credits: nu
                   return (
                 <Box as="button" disabled={seatsBusy} onClick={() => {
                   if (plan.id === 'agy_custom') { window.open('https://cal.com/getnearme/30min', '_blank'); return; }
-                  if (seatsChanged) { updateSeats(seats); return; }
+                  if (seatsChanged) { setSeatConfirm({ target: seats, label: seatsLabel }); return; }
                   if (active) { toast('Sei già su questo piano', 'check'); return; }
                   if (plan.id === 'free') { toast('Per tornare al Free disdici l’abbonamento da “Gestisci piano”'); return; }
                   if (isSeat) { seatCheckout(plan.id); return; }
@@ -2320,7 +2339,40 @@ function AccountScreen({ credits, toast, go, userData, tierHint }: { credits: nu
         </div>
       </div>
 
-
+      {/* Conferma prima di addebitare il cambio posti (carica la carta salvata) */}
+      {seatConfirm && (
+        <div onClick={() => !seatsBusy && setSeatConfirm(null)} style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(20,18,16,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 14 }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: 'var(--bg-card)', borderRadius: 14, width: '100%', maxWidth: 378, padding: '23px 22px', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
+            <div style={{ width: 43, height: 43, borderRadius: 13, background: '#eef4fe', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 13 }}>
+              <Icon name="credit-card" size={20} color="#3B83F6" />
+            </div>
+            <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--text-main)', marginBottom: 5 }}>{seatConfirm.label} a {seatConfirm.target}?</div>
+            <div style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.5, marginBottom: 20 }}>
+              {seatConfirm.target > (currentSeats ?? 0)
+                ? 'La differenza verrà addebitata subito sulla carta salvata su Stripe.'
+                : 'La differenza verrà scalata dal prossimo rinnovo.'}
+              {' '}Per cambiare carta usa &quot;Gestisci piano&quot;.
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
+              <Box as="button" disabled={seatsBusy} onClick={async () => {
+                const target = seatConfirm.target;
+                setSeatConfirm(null);
+                await updateSeats(target);
+              }} style={{ border: 'none', background: '#3B83F6', color: '#fff', fontSize: 13, fontWeight: 700, padding: '11px 0', borderRadius: 9, cursor: seatsBusy ? 'default' : 'pointer' } as React.CSSProperties} hover={seatsBusy ? {} : s('background:#2b6fe0')}>
+                Conferma pagamento
+              </Box>
+              <div style={{ display: 'flex', gap: 9 }}>
+                <Box as="button" disabled={portalBusy} onClick={openBillingPortal} style={{ flex: 1, border: '1px solid var(--border-main)', background: 'var(--bg-card)', color: 'var(--text-sec)', fontSize: 12.5, fontWeight: 700, padding: '10px 0', borderRadius: 9, cursor: portalBusy ? 'default' : 'pointer' } as React.CSSProperties} hover={portalBusy ? {} : s('background:var(--bg-hover)')}>
+                  {portalBusy ? '...' : 'Gestisci piano'}
+                </Box>
+                <Box as="button" onClick={() => setSeatConfirm(null)} style={{ flex: 1, border: '1px solid var(--border-main)', background: 'var(--bg-card)', color: 'var(--text-sec)', fontSize: 12.5, fontWeight: 700, padding: '10px 0', borderRadius: 9, cursor: 'pointer' } as React.CSSProperties} hover={s('background:var(--bg-hover)')}>
+                  Annulla
+                </Box>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
