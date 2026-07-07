@@ -9,7 +9,7 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const METRICS_KEY = "ZuoQ6k*_6wmBbUQQim!B";
 
-const FIELDS = ["title", "notes", "assignee", "status", "due_date", "tagged_emails"];
+const FIELDS = ["title", "notes", "assignee", "status", "due_date", "tagged_emails", "subtasks", "estimate_hours"];
 const STATUSES = new Set(["todo", "doing", "done"]);
 
 function admin() {
@@ -25,6 +25,19 @@ function pick(obj: Record<string, unknown>) {
   for (const k of FIELDS) if (k in obj) out[k] = obj[k] === "" ? null : obj[k];
   if ("status" in out && !STATUSES.has(String(out.status))) delete out.status;
   if ("tagged_emails" in out && !Array.isArray(out.tagged_emails)) delete out.tagged_emails;
+  // subtasks: array di {id,title,done} — scarta forme diverse, tronca i campi.
+  if ("subtasks" in out) {
+    if (!Array.isArray(out.subtasks)) delete out.subtasks;
+    else out.subtasks = (out.subtasks as Record<string, unknown>[]).slice(0, 50).map((st) => ({
+      id: String(st?.id ?? crypto.randomUUID()),
+      title: String(st?.title ?? "").slice(0, 300),
+      done: !!st?.done,
+    })).filter((st) => st.title.trim());
+  }
+  if ("estimate_hours" in out && out.estimate_hours != null) {
+    const n = Number(out.estimate_hours);
+    out.estimate_hours = Number.isFinite(n) && n > 0 ? Math.min(n, 10000) : null;
+  }
   return out;
 }
 
@@ -110,6 +123,13 @@ export async function PATCH(req: NextRequest) {
   const patch = { ...pick(body), updated_at: new Date().toISOString() };
   const { data, error } = await admin().from("matrix_tasks").update(patch).eq("id", body.id).select().single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  // Data di inizio: la PRIMA volta che il task entra in lavorazione.
+  if (data.status === "doing" && !data.started_at) {
+    const { data: withStart } = await admin().from("matrix_tasks")
+      .update({ started_at: new Date().toISOString() })
+      .eq("id", body.id).is("started_at", null).select().single();
+    if (withStart) return NextResponse.json({ task: withStart });
+  }
   return NextResponse.json({ task: data });
 }
 
