@@ -51,7 +51,7 @@ import { exportToPng, exportStaticToVideo, downloadBlob } from './templates/expo
 import { fetchBrand, updateBrand, uploadBrandLogo, removeBrandLogo, logoUrlToDataUrl, DEFAULT_BRAND_SETTINGS, type BrandSettings } from '@/lib/brand';
 import FotoAIScreen from './FotoAIScreen';
 import VideoAIScreen from './VideoAIScreen';
-import { loadVideoJobs, upsertVideoJob, patchVideoJob, dismissVideoJob, removeVideoJob, fetchServerVideoJobs, mergeServerJobs, prepTimeoutMs, deadTimeoutMs, prepCeiling, type VideoJob } from '@/lib/videoJobs';
+import { loadVideoJobs, upsertVideoJob, patchVideoJob, dismissVideoJob, removeVideoJob, fetchServerVideoJobs, mergeServerJobs, createServerVideoJob, prepTimeoutMs, deadTimeoutMs, prepCeiling, type VideoJob } from '@/lib/videoJobs';
 import { pollRenderProgress, fetchVideoQuota } from '@/lib/aiVideo';
 import MediaScreen from './MediaScreen';
 import ReportScreen from './ReportScreen';
@@ -2124,12 +2124,12 @@ function AccountScreen({ credits, toast, go, userData, tierHint }: { credits: nu
                 transform: active ? 'scale(1.02) translateY(-3px)' : 'translateY(-3px)',
                 boxShadow: active ? '0 20px 56px rgba(59,131,246,.32), 0 6px 16px rgba(59,131,246,.14)' : '0 12px 36px rgba(33,31,28,.10)',
               }}>
-                {plan.badge && (
+                {plan.badge && !active && (
                   <span style={{
                     position: 'absolute', top: -11, left: '50%', transform: 'translateX(-50%)',
                     fontSize: 9.5, fontWeight: 800, padding: '4px 14px', borderRadius: 18,
                     whiteSpace: 'nowrap', letterSpacing: '.04em', textTransform: 'uppercase',
-                    background: active ? 'var(--bg-card)' : 'var(--text-main)', color: active ? '#3B83F6' : 'var(--bg-card)',
+                    background: 'var(--text-main)', color: 'var(--bg-card)',
                     boxShadow: '0 2px 8px rgba(33,31,28,.12)',
                   }}>{plan.badge}</span>
                 )}
@@ -2955,8 +2955,14 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
           if (p?.done && p.outputUrl) {
             setVideoJobs(patchVideoJob(job.id, { stage: 'done', progress: 1, outputUrl: p.outputUrl }));
             if (routeRef.current !== 'media') setGalleryUnseen(n => n + 1); // video pronto -> badge galleria
+            // Finalizza SUBITO anche la riga server (upsert stesso id): senza,
+            // resta 'rendering' finche' il cron non la polla (minuti) e il video
+            // ci mette un'eternita' a comparire in libreria/cross-device.
+            void createServerVideoJob({ id: job.id, title: job.title, template: job.template, status: 'done', progress: 1, ctx: { aiModel: job.ctx?.aiModel, segmentCount: job.ctx?.segmentCount }, outputUrl: p.outputUrl, projectId: job.projectId ?? null, aspect: job.aspect || 'portrait' });
           } else if (p?.error || (p?.done && (p as unknown as { fatalErrorEncountered?: string }).fatalErrorEncountered)) {
-            setVideoJobs(patchVideoJob(job.id, { stage: 'failed', error: p.error || (p as unknown as { fatalErrorEncountered?: string }).fatalErrorEncountered }));
+            const errMsg = p.error || (p as unknown as { fatalErrorEncountered?: string }).fatalErrorEncountered;
+            setVideoJobs(patchVideoJob(job.id, { stage: 'failed', error: errMsg }));
+            void createServerVideoJob({ id: job.id, title: job.title, template: job.template, status: 'failed', progress: job.progress || 0, ctx: {}, projectId: job.projectId ?? null, aspect: job.aspect || 'portrait' });
           } else {
             // Usa il progress reale dall'edge (Veo/Lambda); fallback a +0.04.
             const real = typeof (p as unknown as { overallProgress?: number }).overallProgress === 'number' ? (p as unknown as { overallProgress: number }).overallProgress : 0;

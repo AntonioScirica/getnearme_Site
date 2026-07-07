@@ -118,6 +118,16 @@ export async function POST(req: NextRequest) {
     const status = body.status === 'done' ? 'done' : body.status === 'failed' ? 'failed' : 'rendering'
     const outputUrl = typeof body.outputUrl === 'string' && body.outputUrl.startsWith('http') ? body.outputUrl : null
 
+    // Guard anti doppio-commit: se la riga esiste ed e' gia' quota_committed
+    // (es. finalizzata dal cron prima che il client postasse 'done'), NON va
+    // committata di nuovo — due decrementi per un video solo.
+    const { data: prevRow } = await admin
+      .from('ai_video_jobs')
+      .select('quota_committed')
+      .eq('id', id)
+      .maybeSingle()
+    const alreadyCommitted = !!prevRow?.quota_committed
+
     const { error } = await admin
       .from('ai_video_jobs')
       .upsert({
@@ -131,7 +141,7 @@ export async function POST(req: NextRequest) {
         progress: status === 'done' ? 1 : (typeof body.progress === 'number' ? body.progress : 0.1),
         ctx: body.ctx && typeof body.ctx === 'object' ? body.ctx : {},
         output_url: outputUrl,
-        quota_committed: status === 'done',
+        quota_committed: alreadyCommitted || status === 'done',
         updated_at: new Date().toISOString(),
       }, { onConflict: 'id' })
 
@@ -140,14 +150,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'internal_error' }, { status: 500 })
     }
 
-    // Render sincrono gia' completo allo start: la quota va committata subito
-    // (il cron processa solo le righe 'rendering', quindi non passerebbe di qui).
-    if (status === 'done' && CRON_SECRET) {
+    // Quota: committata al primo 'done' per questa riga (render sincroni gia'
+    // completi allo start + finalizzazione dal client via tray). alreadyCommitted
+    // evita il doppio decremento quando il cron ha gia' finalizzato la riga.
+    // count: video_cuts brucia 1 credito per taglio (segmentCount).
+    if (status === 'done' && !alreadyCommitted && CRON_SECRET) {
       try {
         await fetch(`${FN_BASE}/render-ai-video-final`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'x-cron-secret': CRON_SECRET, 'x-user-id': userId },
-          body: JSON.stringify({ mode: 'commit-quota', template: body.template, aiModel: (body.ctx as any)?.aiModel }),
+          body: JSON.stringify({ mode: 'commit-quota', template: body.template, aiModel: (body.ctx as any)?.aiModel, count: (body.ctx as any)?.segmentCount }),
         })
       } catch (e) {
         console.error('video-jobs commit-quota (sync) failed:', (e as Error)?.message)

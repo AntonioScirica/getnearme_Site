@@ -1072,7 +1072,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
           <div style={{ fontSize: 12, fontWeight: 600 }}>Copertina finale</div>
           <div style={{ fontSize: 11, color: '#8c867d', marginTop: 2 }}>Chiusura con dissolvenza su bianco e logo al centro</div>
         </div>
-        <div onClick={() => { if (lockBrand) { toast('Copertina finale GetNearMe inclusa nel piano Free. Passa a un piano per rimuoverla.', 'x'); return; } if (!hasAnyLogo) { toast('Carica prima un logo nella sezione Brand per usare la copertina finale', 'x'); go?.('brand'); return; } setOutroOn(v => !v); }} title={lockBrand ? 'Inclusa nel piano Free' : (hasAnyLogo ? '' : 'Carica un logo nella sezione Brand')} style={{ width: 36, height: 21.5, borderRadius: 89, background: outroOn && hasAnyLogo ? '#3B83F6' : '#d8d4cb', position: 'relative', cursor: lockBrand ? 'not-allowed' : 'pointer', opacity: lockBrand ? 1 : (hasAnyLogo ? 1 : .5), transition: 'background .2s', flex: 'none' }}>
+        <div onClick={() => { if (lockBrand) { toast('Copertina finale GetNearMe inclusa nel piano Free. Passa a un piano per rimuoverla.', 'x'); return; } if (!hasAnyLogo) { toast('Carica prima un logo nella sezione Brand per usare la copertina finale', 'x'); return; } setOutroOn(v => !v); }} title={lockBrand ? 'Inclusa nel piano Free' : (hasAnyLogo ? '' : 'Carica un logo nella sezione Brand')} style={{ width: 36, height: 21.5, borderRadius: 89, background: outroOn && hasAnyLogo ? '#3B83F6' : '#d8d4cb', position: 'relative', cursor: lockBrand ? 'not-allowed' : 'pointer', opacity: lockBrand ? 1 : (hasAnyLogo ? 1 : .5), transition: 'background .2s', flex: 'none' }}>
           <span style={{ position: 'absolute', top: 2.5, left: outroOn && hasAnyLogo ? 19 : 3, width: 16, height: 16, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,.2)', transition: 'left .2s' }} />
         </div>
       </div>
@@ -1191,6 +1191,10 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
     uiOwnerRef.current = prepId; // questo render possiede la UI finché non se ne avvia un altro
     setStep(4); setRenderStage('background'); setRenderProgress(0.05); setRenderError(null); setOutputUrl(null);
     onVideoJob?.({ id: prepId, title: jobTitle(), template: layout, stage: 'render', progress: 0.05, ctx: {}, projectId: project?.id || null, aspect: clips[0] ? aspectFromDims(clips[0].width, clips[0].height) : 'portrait' });
+    // Job lanciato nel tray: il lock ha gia' fatto il suo (blocca il doppio
+    // click iniziale). Lo rilascio ORA — il render prosegue in background e
+    // l'utente deve poterne avviare subito un altro (fin dentro il MAX).
+    submittingRef.current = false;
     try {
       const aspect = clips[0] ? aspectFromDims(clips[0].width, clips[0].height) : 'portrait';
 
@@ -1428,8 +1432,6 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
       console.error('[video-ai] render failed:', e);
       onVideoJob?.({ id: prepId, title: jobTitle(), template: layout, stage: 'failed', progress: 0, ctx: {}, error: msg, projectId: project?.id || null, aspect: 'portrait' });
       if (prepJobRef.current === prepId) prepJobRef.current = null;
-    } finally {
-      submittingRef.current = false;
     }
   };
 
