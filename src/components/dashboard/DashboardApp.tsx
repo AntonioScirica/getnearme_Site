@@ -407,7 +407,7 @@ const PLANS_BY_TIER: Record<PlanTier, Plan[]> = {
   individual: [
     FREE_PLAN,
     { id: 'starter', name: 'Starter', price: 14.99, oldPrice: 19.99, period: '/mese', badge: 'Più scelto', popular: true, features: STARTER_FEATURES, color: 'var(--text-main)', quotaFoto: 100, quotaVideo: 2, quotaPost: 20 },
-    { id: 'ind_monthly', name: 'Mensile', price: 59, oldPrice: 150, period: '/mese', badge: null, popular: false, features: INDIVIDUAL_FEATURES, color: 'var(--text-main)', quotaFoto: 300, quotaVideo: 6, quotaPost: 999 },
+    { id: 'ind_monthly', name: 'Premium', price: 59, oldPrice: 150, period: '/mese', badge: null, popular: false, features: INDIVIDUAL_FEATURES, color: 'var(--text-main)', quotaFoto: 300, quotaVideo: 6, quotaPost: 999 },
     { id: 'ind_annual', name: 'Annuale', price: 590, oldPrice: 1800, period: '/anno', badge: null, popular: false, features: INDIVIDUAL_FEATURES, color: 'var(--text-main)', quotaFoto: 300, quotaVideo: 6, quotaPost: 999, hidden: true },
   ],
   agency: [
