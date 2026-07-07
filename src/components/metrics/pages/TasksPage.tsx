@@ -8,7 +8,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { MONO } from "../types";
-import { Plus, Trash2, Pencil, X, RefreshCw, Calendar, Bell, GripVertical, Clock, Play, Check } from "lucide-react";
+import { Plus, Trash2, Pencil, X, RefreshCw, Calendar, Bell, GripVertical, Clock, Play, Check, ChevronDown } from "lucide-react";
 
 const COLUMNS: { id: string; label: string; dot: string }[] = [
   { id: "todo", label: "Da fare", dot: "bg-gray-400" },
@@ -17,6 +17,12 @@ const COLUMNS: { id: string; label: string; dot: string }[] = [
 ];
 
 const PEOPLE = ["Antonio", "Federico", "Matteo"];
+// Pill selezionabili nel tag-picker: click diretto invece di scrivere l'email.
+const PEOPLE_EMAILS: Record<string, string> = {
+  Antonio: "as.scirica@gmail.com",
+  Federico: "federicorosati994@gmail.com",
+  Matteo: "m.biritognolo30@gmail.com",
+};
 
 interface Subtask { id: string; title: string; done: boolean }
 interface Task {
@@ -57,51 +63,75 @@ function TagCombobox({ value, onChange, suggestions }: {
     return () => document.removeEventListener("mousedown", close);
   }, []);
 
-  const filtered = suggestions.filter((s) => !value.includes(s) && s.toLowerCase().includes(text.toLowerCase()));
+  // Persone note (nome→email) sempre in cima al dropdown, come pill dirette;
+  // sotto i suggerimenti da email gia' usate su altre task; in fondo l'opzione
+  // "tagga questa email" se il testo digitato ne e' una nuova.
+  const peopleOptions = Object.entries(PEOPLE_EMAILS).filter(([, e]) => !value.includes(e));
+  const filtered = suggestions.filter((s) => !value.includes(s) && !Object.values(PEOPLE_EMAILS).includes(s) && s.toLowerCase().includes(text.toLowerCase()));
   const add = (e: string) => {
     const v = e.trim().toLowerCase();
     if (isEmail(v) && !value.includes(v)) onChange([...value, v]);
     setText("");
   };
+  const label = (email: string) => Object.entries(PEOPLE_EMAILS).find(([, e]) => e === email)?.[0] ?? email;
 
   return (
     <div ref={boxRef} className="relative">
       <div
-        className="w-full bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 flex flex-wrap gap-1.5 items-center cursor-text focus-within:border-indigo-500/50"
-        onClick={(e) => { setOpen(true); (e.currentTarget.querySelector("input") as HTMLInputElement)?.focus(); }}
+        className="w-full bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 flex flex-wrap gap-1.5 items-center cursor-pointer focus-within:border-indigo-500/50"
+        onClick={() => setOpen((o) => !o)}
       >
         {value.map((e) => (
           <span key={e} className="inline-flex items-center gap-1 bg-indigo-500/20 text-indigo-300 text-xs px-2 py-0.5 rounded-full">
-            {e}
+            {label(e)}
             <button onClick={(ev) => { ev.stopPropagation(); onChange(value.filter((x) => x !== e)); }} className="hover:text-white cursor-pointer">
               <X className="w-3 h-3" />
             </button>
           </span>
         ))}
-        <input
-          className="flex-1 min-w-[140px] bg-transparent text-sm text-gray-200 placeholder-gray-600 outline-none py-0.5"
-          placeholder={value.length ? "" : "Scrivi un'email e premi Invio"}
-          value={text}
-          onChange={(e) => { setText(e.target.value); setOpen(true); }}
-          onFocus={() => setOpen(true)}
-          onKeyDown={(e) => {
-            if ((e.key === "Enter" || e.key === ",") && text.trim()) { e.preventDefault(); add(text); }
-            if (e.key === "Backspace" && !text && value.length) onChange(value.slice(0, -1));
-          }}
-        />
+        {value.length === 0 && <span className="text-sm text-gray-600 py-0.5">Scegli chi taggare</span>}
+        <ChevronDown className={`w-3.5 h-3.5 text-gray-500 ml-auto transition-transform ${open ? "rotate-180" : ""}`} />
       </div>
-      {open && (filtered.length > 0 || (text.trim() && isEmail(text.trim()))) && (
-        <div className="absolute z-10 mt-1 w-full bg-[#1b1f28] border border-white/10 rounded-lg shadow-xl max-h-44 overflow-y-auto">
-          {text.trim() && isEmail(text.trim()) && !value.includes(text.trim().toLowerCase()) && (
-            <button onClick={() => add(text)} className="w-full text-left px-3 py-2 text-sm text-indigo-300 hover:bg-white/5 cursor-pointer">
-              Tagga “{text.trim().toLowerCase()}”
-            </button>
+      {open && (
+        <div className="absolute z-10 mt-1 w-full bg-[#1b1f28] border border-white/10 rounded-lg shadow-xl max-h-56 overflow-y-auto">
+          {peopleOptions.length > 0 && (
+            <div className="p-1">
+              {peopleOptions.map(([name, email]) => (
+                <button
+                  key={email}
+                  onClick={() => { onChange([...value, email]); }}
+                  className="w-full flex items-center gap-2 text-left px-2 py-1.5 rounded text-sm text-gray-200 hover:bg-white/5 cursor-pointer"
+                >
+                  <span className="w-5 h-5 rounded-full bg-indigo-500/30 text-indigo-300 flex items-center justify-center text-[10px] font-bold shrink-0">
+                    {name.slice(0, 1)}
+                  </span>
+                  {name}
+                </button>
+              ))}
+            </div>
           )}
-          {filtered.map((s) => (
-            <button key={s} onClick={() => add(s)} className="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-white/5 cursor-pointer">
-              {s}
-            </button>
-          ))}
+          <div className="border-t border-white/[0.06] p-1">
+            <input
+              className="w-full bg-transparent text-sm text-gray-200 placeholder-gray-600 outline-none px-2 py-1.5"
+              placeholder="Oppure scrivi un'altra email…"
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              onKeyDown={(e) => {
+                if ((e.key === "Enter" || e.key === ",") && text.trim()) { e.preventDefault(); add(text); }
+              }}
+              autoFocus={peopleOptions.length === 0}
+            />
+            {text.trim() && isEmail(text.trim()) && !value.includes(text.trim().toLowerCase()) && (
+              <button onClick={() => add(text)} className="w-full text-left px-2 py-1.5 text-sm text-indigo-300 hover:bg-white/5 rounded cursor-pointer">
+                Tagga “{text.trim().toLowerCase()}”
+              </button>
+            )}
+            {filtered.map((s) => (
+              <button key={s} onClick={() => add(s)} className="w-full text-left px-2 py-1.5 text-sm text-gray-300 hover:bg-white/5 rounded cursor-pointer">
+                {s}
+              </button>
+            ))}
+          </div>
         </div>
       )}
     </div>
