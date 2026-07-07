@@ -338,7 +338,7 @@ export async function animatePhotoStart(payload: { photoUrl: string; room: strin
 }
 
 export async function animatePhotoPoll(payload: { statusUrl: string; responseUrl: string; requestId: string; room: string }) {
-  return callEdge<{ success: boolean; status: string; clip?: { url: string; room: string }; error?: string }>(
+  return callEdge<{ success: boolean; status: string; clip?: { url: string; room: string }; error?: string; falBody?: string }>(
     'generate-ai-video-avatar',
     { mode: 'animate-photo-poll', ...payload },
   );

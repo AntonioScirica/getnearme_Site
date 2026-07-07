@@ -979,17 +979,40 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
   });
   const propertyLabel = () => propAddress || propTitle || '';
 
+  // Foto: ridimensiona prima dell'upload. Gli originali (anche 40MP) fanno
+  // rifiutare l'input a fal/Kling (HTTP 422 su risoluzioni fuori range) e
+  // rallentano l'upload. 2048px basta e avanza per un video 1080p.
+  const downscalePhoto = (file: File, maxDim = 2048): Promise<{ blob: Blob; type: string }> =>
+    new Promise((resolve) => {
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      const fallback = () => { URL.revokeObjectURL(url); resolve({ blob: file, type: file.type }); };
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        if (Math.max(img.width, img.height) <= maxDim) { resolve({ blob: file, type: file.type }); return; }
+        const k = maxDim / Math.max(img.width, img.height);
+        const c = document.createElement('canvas');
+        c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+        c.getContext('2d')!.drawImage(img, 0, 0, c.width, c.height);
+        c.toBlob((b) => b ? resolve({ blob: b, type: 'image/jpeg' }) : fallback(), 'image/jpeg', 0.9);
+      };
+      img.onerror = fallback;
+      img.src = url;
+    });
+
   const uploadClips = async (items: Clip[], mediaType: 'video' | 'photo'): Promise<Clip[]> => {
     console.log(`[Video] uploadClips: chiedo ${items.length} URL (${mediaType})…`);
-    const urls = await getUploadUrls(items.length, mediaType, items.map(c => c.file.type));
+    const payloads = mediaType === 'photo'
+      ? await Promise.all(items.map(c => downscalePhoto(c.file)))
+      : items.map(c => ({ blob: c.file as Blob, type: c.file.type }));
+    const urls = await getUploadUrls(items.length, mediaType, payloads.map(p => p.type));
     console.log(`[Video] uploadClips: ottenuti ${urls.length} URL, carico…`);
-    const out: Clip[] = [];
-    for (let i = 0; i < items.length; i++) {
-      await uploadToPresigned(urls[i].uploadUrl, items[i].file, items[i].file.type);
+    // Upload in parallelo: sono presigned URL indipendenti.
+    return Promise.all(items.map(async (item, i) => {
+      await uploadToPresigned(urls[i].uploadUrl, payloads[i].blob, payloads[i].type);
       console.log(`[Video] uploadClips: caricata ${i + 1}/${items.length}`);
-      out.push({ ...items[i], uploadedUrl: urls[i].readUrl });
-    }
-    return out;
+      return { ...item, uploadedUrl: urls[i].readUrl };
+    }));
   };
 
   const jobTitle = () => (coverTitle.trim() || propTitle.trim() || project?.titolo || (layout === 'montaggio' ? 'Montaggio video' : (tpl?.name || 'Video AI')));
@@ -1256,22 +1279,30 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
       if (layout === 'walkthrough') {
         const up = await uploadClips(clips, 'photo');
         setRenderProgress(0.15);
-        // animate each photo (fal Kling), poll until done
-        const animated: { url: string; room: string }[] = [];
-        for (let photoIndex = 0; photoIndex < up.length; photoIndex++) {
-          const c = up[photoIndex];
+        // Anima tutte le foto (fal Kling) IN PARALLELO invece che una alla
+        // volta: ogni clip impiega ~40-60s indipendentemente dalle altre, in
+        // sequenza con 6 foto (max) diventavano 4-6 minuti invece di ~1. Le
+        // submission fal.ai sono indipendenti (nessun rate-limit noto lato
+        // edge). Promise.all preserva l'ordine di `up` — la sequenza delle
+        // stanze nel video finale resta quella dell'upload.
+        const animated = await Promise.all(up.map(async (c, photoIndex) => {
           const st = await animatePhotoStart({ photoUrl: c.uploadedUrl!, room: c.room, duration: '5', aspectRatio: aspect, photoIndex });
           if (!st.success) throw new AIVideoError(st.error || 'Animazione foto non riuscita');
-          let done = false;
           for (let i = 0; i < 300 && !abortRef.current; i++) {
             await sleep(2000);
             const p = await animatePhotoPoll({ statusUrl: st.statusUrl, responseUrl: st.responseUrl, requestId: st.requestId, room: st.room });
-            if (p.success && p.status === 'COMPLETED' && p.clip) { animated.push(p.clip); done = true; break; }
-            if (p.error) throw new AIVideoError(p.error);
+            if (p.success && p.status === 'COMPLETED' && p.clip) {
+              setRenderProgress(pr => Math.min(0.5, pr + 0.3 / up.length));
+              return p.clip;
+            }
+            if (p.error) {
+              // falBody = motivo vero del rifiuto fal (es. 422 su input foto).
+              console.error('[walkthrough] animazione fallita:', p.error, p.falBody || '');
+              throw new AIVideoError(p.error);
+            }
           }
-          if (!done) throw new AIVideoError('Timeout animazione foto');
-          setRenderProgress(pr => Math.min(0.5, pr + 0.3 / up.length));
-        }
+          throw new AIVideoError('Timeout animazione foto');
+        }));
         // Salta i primi 0.3s di ogni clip: Kling genera un frame congelato
         // iniziale, così il movimento parte subito (come l'estensione).
         const AI_SKIP = 0.3;
