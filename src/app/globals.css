@@ -324,20 +324,41 @@ html {
 }
 
 /* ── Metrics light mode ─────────────────────────────────────────────
-   La console Metrics e' dark-only con colori hardcoded in ogni pagina:
-   la light mode inverte l'intero documento (invert + hue-rotate per
-   mantenere le tinte) e ri-inverte i media cosi' restano naturali.
-   Sicuro per position:fixed perche' il filtro sta sull'elemento root
-   (esente dalla regola del containing block, CSS Filter Effects §Filter
-   Effects on the Root Element). Classe gestita da MetricsDashboard. */
-html.metrics-light {
-  filter: invert(1) hue-rotate(180deg);
-  background: #fff;
-  color-scheme: light;
-}
-html.metrics-light img,
-html.metrics-light video,
-html.metrics-light iframe,
-html.metrics-light canvas {
-  filter: invert(1) hue-rotate(180deg);
-}
+   La console Metrics e' dark-only con colori Tailwind hardcoded (bg-[#hex],
+   text-gray-N, border-white/[opacity]) in ogni pagina — riscrivere ogni
+   classe in ~25 file non e' fattibile in una sessione. Invece di un filtro
+   invert() (effetto "negativo" lavato, bruttissimo), qui si rimappa il
+   set di classi realmente usato con selettori d'attributo mirati, sulla
+   stessa palette calda del sito marketing (#faf9f7/#1a1a2e) invece della
+   scala grigia di Tailwind. Specificita' (0,3,1) batte sempre l'utility
+   Tailwind originale (0,1,0), niente !important necessario di suo (usato
+   comunque per blindare da eventuali hover: successivi con pari specificita').
+   Le classi accent (indigo/red/amber-400 sui badge) restano invariate:
+   leggibili anche su bianco, remapparle tutte e' fuori scope. */
+html.metrics-light { color-scheme: light; }
+
+/* superfici: pagina / card-sidebar / modale-più-profondo / header scuro */
+html.metrics-light [class*="bg-[#0d0f14]"] { background-color: #faf9f7 !important; }
+html.metrics-light [class*="bg-[#161920]"] { background-color: #ffffff !important; }
+html.metrics-light [class*="bg-[#1b1f28]"],
+html.metrics-light [class*="bg-[#1b1e26]"] { background-color: #ffffff !important; }
+html.metrics-light [class*="bg-[#12141a]"] { background-color: #f3f2ee !important; }
+
+/* testo: gray-100 (piu' chiaro su dark = testo primario) → quasi-nero del sito,
+   a scendere fino a gray-700 (piu' scuro su dark = testo debole) → grigio chiaro */
+html.metrics-light [class*="text-gray-100"] { color: #1a1a2e !important; }
+html.metrics-light [class*="text-gray-200"] { color: #2a2a3a !important; }
+html.metrics-light [class*="text-gray-300"] { color: #44424f !important; }
+html.metrics-light [class*="text-gray-400"] { color: #57534c !important; }
+html.metrics-light [class*="text-gray-500"] { color: #6b7280 !important; }
+html.metrics-light [class*="text-gray-600"] { color: #9ca3af !important; }
+html.metrics-light [class*="text-gray-700"] { color: #b3aca1 !important; }
+
+/* bordi/hover a bassa opacita': stesso valore, bianco→nero (simmetrico) */
+html.metrics-light [class*="border-white/"] { border-color: rgba(26,26,46,0.10) !important; }
+html.metrics-light [class*="bg-white/5"] { background-color: rgba(26,26,46,0.04) !important; }
+html.metrics-light [class*="bg-white/10"] { background-color: rgba(26,26,46,0.06) !important; }
+
+html.metrics-light [class*="border-gray-400"],
+html.metrics-light [class*="border-gray-500"],
+html.metrics-light [class*="border-gray-600"] { border-color: #d8d4cb !important; }
