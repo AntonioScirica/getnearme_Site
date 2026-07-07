@@ -1,6 +1,6 @@
 'use client';
 
-const DEFAULT_PHOTO = 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&h=750&fit=crop';
+const DEFAULT_PHOTO = 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=320&h=400&fit=crop&q=40&auto=format';
 const AC = '#2967EC';
 const F = "'Poppins', sans-serif";
 
@@ -443,17 +443,17 @@ function TplSplit({ photo, bd = 0 }: { photo: string; bd?: number }) {
 }
 
 const PHOTOS = [
-  'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&h=750&fit=crop',   // villa moderna
-  'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=600&h=750&fit=crop',   // soggiorno luminoso
-  'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=600&h=750&fit=crop',   // casa piscina
-  'https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=600&h=750&fit=crop',   // cucina moderna
-  'https://images.unsplash.com/photo-1560185893-a55cbc8c57e8?w=600&h=750&fit=crop',      // living room
-  'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=600&h=750&fit=crop',   // villa lusso
-  'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600&h=750&fit=crop',   // esterno casa
-  'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=600&h=750&fit=crop',   // casa moderna
-  'https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=600&h=750&fit=crop',   // facciata
-  'https://images.unsplash.com/photo-1605276374104-dee2a0ed3cd6?w=600&h=750&fit=crop',   // terrazzo
-  'https://images.unsplash.com/photo-1600573472550-8090b5e0745e?w=600&h=750&fit=crop',   // giardino
+  'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=320&h=400&fit=crop&q=40&auto=format',   // villa moderna
+  'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=320&h=400&fit=crop&q=40&auto=format',   // soggiorno luminoso
+  'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=320&h=400&fit=crop&q=40&auto=format',   // casa piscina
+  'https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=320&h=400&fit=crop&q=40&auto=format',   // cucina moderna
+  'https://images.unsplash.com/photo-1560185893-a55cbc8c57e8?w=320&h=400&fit=crop&q=40&auto=format',      // living room
+  'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=320&h=400&fit=crop&q=40&auto=format',   // villa lusso
+  'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=320&h=400&fit=crop&q=40&auto=format',   // esterno casa
+  'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=320&h=400&fit=crop&q=40&auto=format',   // casa moderna
+  'https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=320&h=400&fit=crop&q=40&auto=format',   // facciata
+  'https://images.unsplash.com/photo-1605276374104-dee2a0ed3cd6?w=320&h=400&fit=crop&q=40&auto=format',   // terrazzo
+  'https://images.unsplash.com/photo-1600573472550-8090b5e0745e?w=320&h=400&fit=crop&q=40&auto=format',   // giardino
 ];
 
 export const ALL_TEMPLATES: { name: string; Component: React.FC<{ photo: string; bd?: number }>; bd: number; photo: string }[] = [

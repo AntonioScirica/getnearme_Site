@@ -238,13 +238,6 @@ export default async function Home({ params }: Props) {
                 className="hidden md:block"
                 style={{ position: "absolute", top: -55, left: -140, width: 130, height: "auto", zIndex: 10 }}
               />
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/staging/time.png"
-                alt="Foto originale dell'immobile"
-                className="block md:hidden"
-                style={{ position: "absolute", top: -18, left: 10, width: 70, height: "auto", zIndex: 10 }}
-              />
               <div
                 style={{
                   border: "1px solid rgba(26,26,46,0.10)",
