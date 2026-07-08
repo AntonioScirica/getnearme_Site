@@ -9,7 +9,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { MONO } from "../types";
-import { Plus, Trash2, Pencil, X, RefreshCw, Calendar, Bell, GripVertical, Clock, Play, Check, ChevronLeft, ChevronRight, Mail } from "lucide-react";
+import { Plus, Trash2, Pencil, X, RefreshCw, Calendar, Bell, GripVertical, Clock, Play, Check, ChevronLeft, ChevronRight, Mail, Sparkles, Copy, RotateCw } from "lucide-react";
 
 const COLUMNS: { id: string; label: string; dot: string }[] = [
   { id: "todo", label: "Da fare", dot: "bg-gray-400" },
@@ -38,6 +38,7 @@ interface Task {
   started_at: string | null;
   estimate_hours: number | null;
   sort_order: number | null;
+  claude_prompt: string | null;
   created_at: string;
 }
 
@@ -204,6 +205,8 @@ export default function TasksPage({ authKey }: { authKey: string | null }) {
   const [dragOver, setDragOver] = useState<string | null>(null);
   const [dropBefore, setDropBefore] = useState<string | null>(null);
   const [notifying, setNotifying] = useState<string | null>(null);
+  const [expandedPrompt, setExpandedPrompt] = useState<string | null>(null);
+  const [regenerating, setRegenerating] = useState<string | null>(null);
 
   // form (crea/modifica)
   const BLANK = { title: "", notes: "", assignee: PEOPLE[0], due_date: "", estimate_hours: "", status: "todo" };
@@ -316,6 +319,18 @@ export default function TasksPage({ authKey }: { authKey: string | null }) {
       alert("Invio non riuscito");
     } finally {
       setNotifying(null);
+    }
+  };
+
+  const regenPrompt = async (id: string) => {
+    setRegenerating(id);
+    try {
+      const d = await api("POST", { action: "gen_prompt", id });
+      if (d.task) setTasks((ts) => ts.map((t) => (t.id === id ? d.task : t)));
+    } catch {
+      alert("Rigenerazione non riuscita");
+    } finally {
+      setRegenerating(null);
     }
   };
 
@@ -478,6 +493,51 @@ export default function TasksPage({ authKey }: { authKey: string | null }) {
                         <GripVertical className="w-3.5 h-3.5 text-gray-600 mt-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing" />
                       </div>
                       {t.notes && <div className="text-xs text-gray-500 mt-1 leading-relaxed line-clamp-2">{t.notes}</div>}
+
+                      {/* prompt Claude: generato solo su richiesta (bottone), non alla creazione */}
+                      <div className="mt-2">
+                        {t.claude_prompt ? (
+                          <>
+                            <div className="flex items-center gap-1">
+                              <button
+                                onClick={() => setExpandedPrompt((id) => (id === t.id ? null : t.id))}
+                                className="inline-flex items-center gap-1 text-[11px] text-indigo-300/80 hover:text-indigo-300 cursor-pointer"
+                              >
+                                <Sparkles className="w-3 h-3" /> Prompt Claude
+                              </button>
+                              <button
+                                onClick={() => navigator.clipboard.writeText(t.claude_prompt || "")}
+                                className="p-1 rounded text-gray-500 hover:text-indigo-300 hover:bg-white/5 cursor-pointer"
+                                title="Copia prompt"
+                              >
+                                <Copy className="w-3 h-3" />
+                              </button>
+                              <button
+                                onClick={() => regenPrompt(t.id)}
+                                disabled={regenerating === t.id}
+                                className="p-1 rounded text-gray-500 hover:text-gray-200 hover:bg-white/5 cursor-pointer"
+                                title="Rigenera"
+                              >
+                                <RotateCw className={`w-3 h-3 ${regenerating === t.id ? "animate-spin" : ""}`} />
+                              </button>
+                            </div>
+                            {expandedPrompt === t.id && (
+                              <div className="mt-1.5 rounded-md bg-black/20 border border-white/[0.06] p-2">
+                                <pre className="text-[11px] text-gray-400 whitespace-pre-wrap font-sans leading-relaxed">{t.claude_prompt}</pre>
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          <button
+                            onClick={() => regenPrompt(t.id)}
+                            disabled={regenerating === t.id}
+                            className="inline-flex items-center gap-1 text-[11px] text-gray-500 hover:text-indigo-300 cursor-pointer"
+                          >
+                            <Sparkles className={`w-3 h-3 ${regenerating === t.id ? "animate-pulse" : ""}`} />
+                            {regenerating === t.id ? "Genero..." : "Genera prompt Claude"}
+                          </button>
+                        )}
+                      </div>
 
                       {/* sottotask: checklist piatta, conteggio come testo (niente barra) */}
                       {subs.length > 0 && (

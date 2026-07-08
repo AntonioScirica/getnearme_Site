@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
+import Anthropic from "@anthropic-ai/sdk";
 
 // To-do del team per la dashboard Metrics (pagina Tasks). Stesso pattern di
 // /api/crm: service role + x-metrics-key, la tabella non ha policy client.
@@ -49,6 +50,33 @@ type TaskRow = {
   id: string; title: string; notes: string | null; assignee: string | null;
   status: string; due_date: string | null; tagged_emails: string[] | null;
 };
+
+// Genera un prompt pronto da incollare a Claude Code: contesto + obiettivo +
+// come farla, cosi' non serve ririscriverlo a mano quando si passa la task.
+async function generateClaudePrompt(task: { title: string; notes: string | null }): Promise<string | null> {
+  const apiKey = (process.env.ANTHROPIC_API_KEY || "").trim();
+  if (!apiKey) return null;
+  try {
+    const anthropic = new Anthropic({ apiKey });
+    const resp = await anthropic.messages.create({
+      model: "claude-haiku-4-5-20251001",
+      max_tokens: 400,
+      temperature: 0.3,
+      messages: [{
+        role: "user",
+        content: `Trasforma questa task interna del team in un prompt pronto da incollare a Claude Code per eseguirla.
+Titolo: "${task.title}"${task.notes ? `\nNote: ${task.notes}` : ""}
+
+Scrivi SOLO il prompt (in italiano), diretto, senza preamboli ne' virgolette attorno: deve spiegare a Claude il contesto, cosa vuole ottenere la task e come affrontarla. Max 6 righe.`,
+      }],
+    });
+    const text = resp.content.map((b) => (b.type === "text" ? b.text : "")).join("").trim();
+    return text || null;
+  } catch (e) {
+    console.error("claude_prompt gen error:", (e as Error)?.message);
+    return null;
+  }
+}
 
 async function notifyTagged(task: TaskRow): Promise<number> {
   const apiKey = process.env.RESEND_API_KEY;
@@ -113,7 +141,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ sent });
   }
 
+  // Rigenera il prompt Claude (es. dopo aver modificato titolo/note).
+  if (body.action === "gen_prompt") {
+    if (!body.id) return NextResponse.json({ error: "id required" }, { status: 400 });
+    const { data: task, error } = await admin().from("matrix_tasks").select("*").eq("id", body.id).single();
+    if (error || !task) return NextResponse.json({ error: error?.message || "not found" }, { status: 404 });
+    const claude_prompt = await generateClaudePrompt(task as TaskRow);
+    const { data: updated } = await admin().from("matrix_tasks").update({ claude_prompt }).eq("id", body.id).select().single();
+    return NextResponse.json({ task: updated });
+  }
+
   if (!body.title?.trim()) return NextResponse.json({ error: "title required" }, { status: 400 });
+  // Il prompt Claude si genera solo su richiesta esplicita (bottone), non alla creazione.
   const { data, error } = await admin().from("matrix_tasks").insert(pick(body)).select().single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   // Taggare = notificare: chi viene taggato alla creazione riceve subito la mail.
