@@ -37,6 +37,7 @@ interface Task {
   subtasks: Subtask[] | null;
   started_at: string | null;
   estimate_hours: number | null;
+  sort_order: number | null;
   created_at: string;
 }
 
@@ -83,62 +84,6 @@ function Switch({ checked, onChange, disabled }: { checked: boolean; onChange: (
     >
       <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white transition-transform ${checked ? "translate-x-4" : ""}`} />
     </button>
-  );
-}
-
-// ── Pill di stato: un solo controllo per saltare a qualunque colonna, mai
-// orfano (prima con 2 frecce prev/next la prima colonna mostrava solo la
-// freccia destra, sola in mezzo al vuoto) ──
-function StatusPicker({ status, onChange }: { status: string; onChange: (v: string) => void }) {
-  const [open, setOpen] = useState(false);
-  const anchorRef = useRef<HTMLButtonElement>(null);
-  const dropRef = useRef<HTMLDivElement>(null);
-  const rect = useAnchoredRect(open, anchorRef);
-  const current = COLUMNS.find((c) => c.id === status) ?? COLUMNS[0];
-
-  useEffect(() => {
-    const close = (e: MouseEvent) => {
-      if (anchorRef.current?.contains(e.target as Node)) return;
-      if (dropRef.current?.contains(e.target as Node)) return;
-      setOpen(false);
-    };
-    document.addEventListener("mousedown", close);
-    return () => document.removeEventListener("mousedown", close);
-  }, []);
-
-  return (
-    <>
-      <button
-        ref={anchorRef}
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        className="inline-flex items-center gap-1.5 text-[11px] text-gray-400 hover:text-gray-200 hover:bg-white/[0.06] rounded-md px-1.5 py-1 -ml-1.5 cursor-pointer"
-      >
-        <span className={`w-1.5 h-1.5 rounded-full ${current.dot}`} />
-        {current.label}
-      </button>
-      {open && rect && createPortal(
-        <div
-          ref={dropRef}
-          style={{ position: "fixed", top: rect.bottom + 4, left: rect.left }}
-          className="z-[100] w-36 bg-[#1b1f28] border border-white/10 rounded-lg shadow-xl p-1"
-        >
-          {COLUMNS.map((c) => (
-            <button
-              key={c.id}
-              onClick={() => { onChange(c.id); setOpen(false); }}
-              className={`w-full flex items-center gap-2 text-left px-2 py-1.5 rounded text-xs cursor-pointer ${
-                c.id === status ? "text-gray-100 bg-white/5" : "text-gray-400 hover:bg-white/5 hover:text-gray-200"
-              }`}
-            >
-              <span className={`w-1.5 h-1.5 rounded-full ${c.dot}`} />
-              {c.label}
-            </button>
-          ))}
-        </div>,
-        document.body
-      )}
-    </>
   );
 }
 
@@ -257,10 +202,11 @@ export default function TasksPage({ authKey }: { authKey: string | null }) {
   const [filterPerson, setFilterPerson] = useState("");
   const [dragId, setDragId] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState<string | null>(null);
+  const [dropBefore, setDropBefore] = useState<string | null>(null);
   const [notifying, setNotifying] = useState<string | null>(null);
 
   // form (crea/modifica)
-  const BLANK = { title: "", notes: "", assignee: PEOPLE[0], due_date: "", estimate_hours: "" };
+  const BLANK = { title: "", notes: "", assignee: PEOPLE[0], due_date: "", estimate_hours: "", status: "todo" };
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState<Record<string, string>>(BLANK);
   const [formNotify, setFormNotify] = useState(true);
@@ -305,16 +251,38 @@ export default function TasksPage({ authKey }: { authKey: string | null }) {
   }, [tasks]);
   const visible = filterPerson ? tasks.filter((t) => t.assignee === filterPerson) : tasks;
 
-  const move = async (id: string, status: string) => {
+  // sort_order opzionale: se assente il task si sposta solo di colonna (via
+  // "Assegnata a"/edit) mantenendo la posizione; se presente riordina anche
+  // dentro la colonna (drag sopra/sotto un'altra card).
+  const move = async (id: string, status: string, sortOrder?: number) => {
     const prev = tasks;
-    setTasks((ts) => ts.map((t) => (t.id === id ? { ...t, status } : t))); // ottimistico
+    setTasks((ts) => ts.map((t) => (t.id === id ? { ...t, status, ...(sortOrder != null ? { sort_order: sortOrder } : {}) } : t))); // ottimistico
     try {
-      const d = await api("PATCH", { id, status });
+      const d = await api("PATCH", { id, status, ...(sortOrder != null ? { sort_order: sortOrder } : {}) });
       if (d.task) setTasks((ts) => ts.map((t) => (t.id === id ? d.task : t))); // porta started_at dal server
     } catch {
       setTasks(prev); // rollback
       alert("Spostamento fallito, riprova.");
     }
+  };
+
+  // Riordino via drag: calcola un sort_order frazionario tra i due vicini
+  // nella colonna di destinazione (fractional indexing, niente reindex globale).
+  const reorder = (draggedId: string, status: string, beforeId: string | null) => {
+    const colItems = visible
+      .filter((t) => t.status === status && t.id !== draggedId)
+      .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+    const targetIdx = beforeId ? colItems.findIndex((t) => t.id === beforeId) : colItems.length;
+    const prevItem = targetIdx > 0 ? colItems[targetIdx - 1] : null;
+    const nextItem = targetIdx >= 0 && targetIdx < colItems.length ? colItems[targetIdx] : null;
+    const prevOrder = prevItem?.sort_order ?? null;
+    const nextOrder = nextItem?.sort_order ?? null;
+    const newOrder =
+      prevOrder != null && nextOrder != null ? (prevOrder + nextOrder) / 2 :
+      prevOrder != null ? prevOrder + 1000 :
+      nextOrder != null ? nextOrder - 1000 :
+      Date.now();
+    move(draggedId, status, newOrder);
   };
 
   const toggleSub = async (task: Task, subId: string) => {
@@ -357,6 +325,7 @@ export default function TasksPage({ authKey }: { authKey: string | null }) {
     setForm({
       title: t.title, notes: t.notes || "", assignee: t.assignee || PEOPLE[0],
       due_date: t.due_date || "", estimate_hours: t.estimate_hours != null ? String(t.estimate_hours) : "",
+      status: t.status,
     });
     setFormNotify((t.tagged_emails?.length ?? 0) > 0);
     setFormSubs(t.subtasks || []);
@@ -368,14 +337,24 @@ export default function TasksPage({ authKey }: { authKey: string | null }) {
     setSaving(true);
     try {
       const assigneeEmail = PEOPLE_EMAILS[form.assignee];
+      const prevStatus = editId ? tasks.find((t) => t.id === editId)?.status : null;
+      // status cambiato (o task nuova): la fa atterrare in fondo alla colonna di destinazione.
+      let sortOrder: number | undefined;
+      if (!editId || prevStatus !== form.status) {
+        const colTasks = tasks.filter((t) => t.status === form.status && t.id !== editId);
+        const maxOrder = colTasks.reduce((m, t) => Math.max(m, t.sort_order ?? 0), 0);
+        sortOrder = colTasks.length ? maxOrder + 1000 : Date.now();
+      }
       const payload = {
         title: form.title.trim(),
         notes: form.notes.trim() || null,
         assignee: form.assignee || null,
+        status: form.status,
         due_date: form.due_date || null,
         estimate_hours: form.estimate_hours ? Number(form.estimate_hours.replace(",", ".")) : null,
         tagged_emails: formNotify && assigneeEmail ? [assigneeEmail] : [],
         subtasks: formSubs.filter((s) => s.title.trim()),
+        ...(sortOrder != null ? { sort_order: sortOrder } : {}),
       };
       if (editId) {
         const d = await api("PATCH", { ...payload, id: editId });
@@ -439,7 +418,7 @@ export default function TasksPage({ authKey }: { authKey: string | null }) {
       {/* board */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {COLUMNS.map((col) => {
-          const items = visible.filter((t) => t.status === col.id);
+          const items = visible.filter((t) => t.status === col.id).sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
           return (
             <div
               key={col.id}
@@ -449,8 +428,9 @@ export default function TasksPage({ authKey }: { authKey: string | null }) {
                 e.preventDefault();
                 setDragOver(null);
                 const id = e.dataTransfer.getData("text/plain") || dragId;
-                if (id) move(id, col.id);
+                if (id) reorder(id, col.id, null); // spazio vuoto sotto le card = fondo colonna
                 setDragId(null);
+                setDropBefore(null);
               }}
               className={`rounded-xl border p-3 min-h-[300px] transition-colors ${
                 dragOver === col.id ? "border-indigo-500/50 bg-indigo-500/5" : "border-white/[0.08] bg-white/[0.02]"
@@ -462,18 +442,36 @@ export default function TasksPage({ authKey }: { authKey: string | null }) {
                 <span className={`${MONO} text-[11px] text-gray-500 ml-auto`}>{items.length}</span>
               </div>
               <div className="space-y-2">
-                {items.map((t) => {
+                {items.map((t, i) => {
                   const subs = t.subtasks || [];
                   const doneN = subs.filter((s) => s.done).length;
+                  const nextItem = items[i + 1];
                   return (
                     <div
                       key={t.id}
                       draggable
                       onDragStart={(e) => { setDragId(t.id); e.dataTransfer.setData("text/plain", t.id); e.dataTransfer.effectAllowed = "move"; }}
-                      onDragEnd={() => { setDragId(null); setDragOver(null); }}
+                      onDragEnd={() => { setDragId(null); setDragOver(null); setDropBefore(null); }}
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setDragOver(col.id);
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        const isBefore = e.clientY < rect.top + rect.height / 2;
+                        setDropBefore(isBefore ? t.id : (nextItem ? nextItem.id : null));
+                      }}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setDragOver(null);
+                        const id = e.dataTransfer.getData("text/plain") || dragId;
+                        if (id) reorder(id, col.id, dropBefore);
+                        setDragId(null);
+                        setDropBefore(null);
+                      }}
                       className={`group rounded-lg border border-white/[0.08] bg-[#161920] px-3 py-2.5 transition-colors hover:border-white/[0.16] ${
                         dragId === t.id ? "opacity-40" : ""
-                      }`}
+                      } ${dragId && dragId !== t.id && dropBefore === t.id ? "border-t-2 border-t-indigo-400" : ""}`}
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className={`text-sm text-gray-100 leading-snug ${t.status === "done" ? "line-through text-gray-500" : ""}`}>{t.title}</div>
@@ -532,9 +530,8 @@ export default function TasksPage({ authKey }: { authKey: string | null }) {
                         )}
                       </div>
 
-                      {/* sposta colonna (affidabile, sempre visibile) + azioni (a comparsa) */}
-                      <div className="flex items-center justify-between mt-2 -mx-1.5">
-                        <StatusPicker status={t.status} onChange={(s) => move(t.id, s)} />
+                      {/* azioni (a comparsa) — lo stato e' gia' visibile dalla colonna, sposta via drag o dal form */}
+                      <div className="flex items-center justify-end mt-2 -mx-1.5">
                         <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                           {(t.tagged_emails?.length ?? 0) > 0 && (
                             <button onClick={() => notify(t.id)} disabled={notifying === t.id} className="w-6 h-6 flex items-center justify-center rounded-md text-gray-500 hover:text-amber-400 hover:bg-white/[0.06] cursor-pointer" title="Rimanda mail">
@@ -570,6 +567,21 @@ export default function TasksPage({ authKey }: { authKey: string | null }) {
               <button onClick={() => setShowForm(false)} className="text-gray-500 hover:text-gray-200 cursor-pointer"><X className="w-4 h-4" /></button>
             </div>
             <div className="space-y-3">
+              <div className="flex items-center gap-1.5">
+                {COLUMNS.map((c) => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => setForm({ ...form, status: c.id })}
+                    className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg border cursor-pointer transition-colors ${
+                      form.status === c.id ? "bg-indigo-500/20 text-indigo-300 border-indigo-500/40" : "text-gray-500 border-white/10 hover:text-gray-300"
+                    }`}
+                  >
+                    <span className={`w-1.5 h-1.5 rounded-full ${c.dot}`} />
+                    {c.label}
+                  </button>
+                ))}
+              </div>
               <input className={input} placeholder="Titolo *" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} autoFocus />
               <textarea className={`${input} resize-none`} rows={2} placeholder="Note" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
               <div className="grid grid-cols-3 gap-3">

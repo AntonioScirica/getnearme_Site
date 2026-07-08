@@ -9,7 +9,7 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const METRICS_KEY = "ZuoQ6k*_6wmBbUQQim!B";
 
-const FIELDS = ["title", "notes", "assignee", "status", "due_date", "tagged_emails", "subtasks", "estimate_hours"];
+const FIELDS = ["title", "notes", "assignee", "status", "due_date", "tagged_emails", "subtasks", "estimate_hours", "sort_order"];
 const STATUSES = new Set(["todo", "doing", "done"]);
 
 function admin() {
@@ -37,6 +37,10 @@ function pick(obj: Record<string, unknown>) {
   if ("estimate_hours" in out && out.estimate_hours != null) {
     const n = Number(out.estimate_hours);
     out.estimate_hours = Number.isFinite(n) && n > 0 ? Math.min(n, 10000) : null;
+  }
+  if ("sort_order" in out) {
+    const n = Number(out.sort_order);
+    out.sort_order = Number.isFinite(n) ? n : null;
   }
   return out;
 }
@@ -88,6 +92,7 @@ export async function GET(req: NextRequest) {
   if (!authed(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { data, error } = await admin()
     .from("matrix_tasks").select("*")
+    .order("sort_order", { ascending: true, nullsFirst: false })
     .order("due_date", { ascending: true, nullsFirst: false })
     .order("created_at", { ascending: true })
     .limit(2000);
