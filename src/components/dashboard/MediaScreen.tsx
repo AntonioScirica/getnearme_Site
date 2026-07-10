@@ -167,6 +167,23 @@ export default function MediaScreen({
   const [filter, setFilter] = useState<'all' | 'staging' | 'video'>('all');
   const [lightbox, setLightbox] = useState<{ resultUrl: string; sourceUrl: string | null; isVideo?: boolean } | null>(null);
   const [localSourceUrls, setLocalSourceUrls] = useState<Record<string, string>>({});
+  // Box dello slider dimensionato sull'aspect ratio reale della foto: se il box
+  // non combacia con l'immagine, objectFit lascia barre (contain) o taglia i
+  // bordi (cover). Calcolandolo dalla foto vera nessuno dei due succede.
+  const [sliderBox, setSliderBox] = useState<{ w: number; h: number } | null>(null);
+  useEffect(() => {
+    if (!lightbox || lightbox.isVideo || !lightbox.sourceUrl) { setSliderBox(null); return; }
+    const img = new window.Image();
+    img.onload = () => {
+      const ratio = img.naturalWidth / img.naturalHeight;
+      const maxW = Math.min(window.innerWidth * 0.78, 900);
+      const maxH = Math.min(window.innerHeight * 0.78, 900);
+      let w = maxW, h = w / ratio;
+      if (h > maxH) { h = maxH; w = h * ratio; }
+      setSliderBox({ w, h });
+    };
+    img.src = lightbox.resultUrl;
+  }, [lightbox]);
 
   // Mostra TUTTI i batch (cross-progetto): la galleria è globale.
   const projectBatches = batches;
@@ -700,7 +717,10 @@ export default function MediaScreen({
             ) : lightbox.sourceUrl ? (
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 11 }}>
                 <span style={{ color: '#fff', fontSize: 11.5, fontWeight: 700, background: 'rgba(255,255,255,0.2)', padding: '4px 11px', borderRadius: 99 }}>Trascina per confrontare</span>
-                <div className="max-md:!w-[88vw] max-md:!h-[55vh]" style={{ position: 'relative', width: 'min(78vw, 900px)', height: 'min(78vh, 900px)', borderRadius: 11, overflow: 'hidden', background: '#000' }}>
+                <div
+                  className="max-md:!w-[88vw] max-md:!h-[55vh]"
+                  style={{ position: 'relative', width: sliderBox ? sliderBox.w : 'min(78vw, 900px)', height: sliderBox ? sliderBox.h : 'min(78vh, 900px)', borderRadius: 11, overflow: 'hidden', background: '#000', visibility: sliderBox ? 'visible' : 'hidden' }}
+                >
                   <InlineSlider before={lightbox.sourceUrl} after={lightbox.resultUrl} isVertical interactive showImages />
                 </div>
               </div>
