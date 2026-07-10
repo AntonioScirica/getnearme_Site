@@ -1236,7 +1236,7 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
 // Two-phase: line sweeps top→bottom + handle pops (showImages=false), then the
 // before/after images fade in (showImages=true). Stays mounted across the
 // transition so the line/handle CSS animations play once and don't replay.
-function InlineSlider({ before, after, isVertical, showImages, interactive }: { before: string; after: string; isVertical: boolean; showImages: boolean; interactive: boolean }) {
+export function InlineSlider({ before, after, isVertical, showImages, interactive }: { before: string; after: string; isVertical: boolean; showImages: boolean; interactive: boolean }) {
   const [pos, setPos] = React.useState(50);
   const boxRef = React.useRef<HTMLDivElement>(null);
   const dragging = React.useRef(false);

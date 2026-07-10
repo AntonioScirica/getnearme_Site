@@ -5,6 +5,7 @@ import { s, Box, Icon } from './ui';
 import { fetchRecentPhotos, deleteBatchPhoto, BatchInfo, BatchPhoto } from '@/lib/stagingBatches';
 import type { Project } from './types';
 import WatermarkDownloadModal from './WatermarkDownloadModal';
+import { InlineSlider } from './FotoAIScreen';
 import Image from 'next/image';
 
 
@@ -696,19 +697,18 @@ export default function MediaScreen({
                 {/* controlsList nofullscreen: niente super-fullscreen nativo, resta contenuto nel modal */}
                 <video src={lightbox.resultUrl} controls autoPlay playsInline controlsList="nofullscreen" disablePictureInPicture className="max-md:!max-w-[88vw] max-md:!max-h-[60vh]" style={{ maxHeight: '82vh', maxWidth: '46vw', objectFit: 'contain', borderRadius: 11, background: '#000' }} />
               </div>
-            ) : (
-              <>
-                {lightbox.sourceUrl && (
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 11 }}>
-                    <span style={{ color: '#fff', fontSize: 11.5, fontWeight: 700, background: 'rgba(255,255,255,0.2)', padding: '4px 11px', borderRadius: 99 }}>Originale</span>
-                    <img src={lightbox.sourceUrl} alt="Source" className="max-md:!max-w-[80vw] max-md:!max-h-[35vh]" style={{ maxHeight: '80vh', maxWidth: '40vw', objectFit: 'contain', borderRadius: 11 }} />
-                  </div>
-                )}
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 11 }}>
-                  <span style={{ color: '#fff', fontSize: 11.5, fontWeight: 700, background: '#3B83F6', padding: '4px 11px', borderRadius: 99 }}>Generata con AI</span>
-                  <img src={lightbox.resultUrl} alt="Result" className="max-md:!max-w-[80vw] max-md:!max-h-[35vh]" style={{ maxHeight: '80vh', maxWidth: '40vw', objectFit: 'contain', borderRadius: 11 }} />
+            ) : lightbox.sourceUrl ? (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 11 }}>
+                <span style={{ color: '#fff', fontSize: 11.5, fontWeight: 700, background: 'rgba(255,255,255,0.2)', padding: '4px 11px', borderRadius: 99 }}>Trascina per confrontare</span>
+                <div className="max-md:!w-[88vw] max-md:!h-[55vh]" style={{ position: 'relative', width: 'min(78vw, 900px)', height: 'min(78vh, 900px)', borderRadius: 11, overflow: 'hidden', background: '#000' }}>
+                  <InlineSlider before={lightbox.sourceUrl} after={lightbox.resultUrl} isVertical interactive showImages />
                 </div>
-              </>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 11 }}>
+                <span style={{ color: '#fff', fontSize: 11.5, fontWeight: 700, background: '#3B83F6', padding: '4px 11px', borderRadius: 99 }}>Generata con AI</span>
+                <img src={lightbox.resultUrl} alt="Result" className="max-md:!max-w-[80vw] max-md:!max-h-[35vh]" style={{ maxHeight: '80vh', maxWidth: '40vw', objectFit: 'contain', borderRadius: 11 }} />
+              </div>
             )}
 
             {/* Chiusura sempre dentro il viewport (fixed): su mobile il vecchio offset negativo finiva fuori schermo */}
