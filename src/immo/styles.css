@@ -1,0 +1,60 @@
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;0,700&display=swap');
+
+/* Scoped su .immo-root: Next inietta questo CSS globalmente una volta visitata
+   la route /app — regole nude su body/a/input inquinerebbero il resto del sito. */
+.immo-root { min-height: 100dvh; margin: 0; padding: 0; background: #F4F6FA; font-family: 'Instrument Sans', sans-serif; color: #15181F; }
+.immo-root * { box-sizing: border-box; }
+
+.immo-root a { color: #537EEC; text-decoration: none; }
+.immo-root a:hover { color: #3C5BAA; text-decoration: underline; }
+
+.immo-root input, .immo-root textarea, .immo-root select { font-family: 'Instrument Sans', sans-serif; }
+.immo-root input:focus, .immo-root textarea:focus, .immo-root select:focus { outline: none; }
+
+/* Scrollbar: sottile su desktop, nascosta dentro il layout mobile */
+.immo-root *::-webkit-scrollbar { width: 10px; height: 10px; }
+.immo-root *::-webkit-scrollbar-thumb { background: #CBD3E4; border-radius: 99px; border: 3px solid #F4F6FA; }
+.immo-root *::-webkit-scrollbar-track { background: transparent; }
+.no-scrollbar::-webkit-scrollbar, .no-scrollbar *::-webkit-scrollbar { width: 0; height: 0; }
+
+/* Slider (staging prima/dopo) */
+.immo-root input[type=range] { -webkit-appearance: none; appearance: none; background: transparent; }
+.immo-root input[type=range]::-webkit-slider-runnable-track { height: 6px; border-radius: 99px; background: linear-gradient(90deg, #6E56F8, #C9BEFF); }
+.immo-root input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 26px; height: 26px; border-radius: 50%; background: #fff; border: 3px solid #6E56F8; margin-top: -10px; box-shadow: 0 2px 8px rgba(40, 20, 120, .25); cursor: grab; }
+
+@keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+@keyframes slideIn { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: none; } }
+@keyframes popIn { 0% { transform: scale(.3); opacity: 0; } 70% { transform: scale(1.1); } 100% { transform: scale(1); opacity: 1; } }
+@keyframes barUp { from { transform: scaleY(.05); } to { transform: scaleY(1); } }
+@keyframes toastUp { from { opacity: 0; transform: translate(-50%, 10px); } to { opacity: 1; transform: translate(-50%, 0); } }
+@keyframes fillBar { from { width: 4%; } to { width: 97%; } }
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
+@keyframes drift { from { background-position: 0 0; } to { background-position: 60px 60px; } }
+
+/* Campo numerico inline "editabile": sottolineatura tratteggiata che diventa piena al focus */
+.npf { border: none; border-bottom: 1.5px dashed #B7C2DC; padding-bottom: 1px !important; transition: border-color .15s; caret-color: #537EEC; }
+.npf:hover { border-bottom-color: #537EEC; }
+.npf:focus { border-bottom: 1.5px solid #537EEC; }
+
+/* Tooltip della sidebar compressa (solo desktop): etichetta a comparsa all'hover dell'icona */
+.navtip { position: relative; }
+.navtip > .tip {
+  position: absolute; left: calc(100% + 12px); top: 50%; transform: translateY(-50%);
+  background: #15181F; color: #F4F6FA; font-size: 12px; font-weight: 600;
+  padding: 6px 10px; border-radius: 8px; white-space: nowrap;
+  opacity: 0; pointer-events: none; transition: opacity .12s ease; z-index: 200;
+  box-shadow: 0 8px 22px rgba(24, 29, 26, .22);
+}
+.navtip > .tip::before {
+  content: ''; position: absolute; right: 100%; top: 50%; transform: translateY(-50%);
+  border: 5px solid transparent; border-right-color: #15181F;
+}
+.navtip:hover > .tip { opacity: 1; }
+
+/* Utility hover (sostituiscono gli style-hover del prototipo) */
+.hb:hover { filter: brightness(1.06); }
+.hbg:hover { background: #EDF0F7 !important; }
+.hbg2:hover { background: #F4F6FA !important; }
+.hbd:hover { border-color: #537EEC !important; }
+.hsh:hover { box-shadow: 0 6px 18px rgba(24, 29, 26, .07); }
+.hu:hover { text-decoration: underline; }
