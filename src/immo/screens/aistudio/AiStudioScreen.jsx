@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useApp } from '../../store/store.jsx'
 import { ICONS, TOOLS, STYLES, DAYS, COPYTEXTS } from '../../data/seed.js'
+import { generateStaging, fileToResizedDataUrl } from '@/lib/staging'
 import Icon from '../../components/Icon.jsx'
 import Placeholder from '../../components/Placeholder.jsx'
 import Toggle from '../../components/Toggle.jsx'
@@ -21,6 +22,9 @@ const VID_TPLS = [['Reel Tour', '9:16 · 30s', '24px'], ['Cinematic', '16:9 · 6
 const CHSTYLE = { IG: ['Instagram', '#EFECFF', '#4B39C8'], FB: ['Facebook', '#EAF0FD', '#3C5BAA'], LI: ['LinkedIn', '#E4EDF7', '#2E5C8A'] }
 const RECENT_NAV = { staging: 'staging', photoedit: 'photoedit', video: 'videoai', copy: 'copyai', plan: 'planner' }
 const RECENT_ICON = { staging: TOOLS[0].d, photoedit: TOOLS[1].d, video: TOOLS[2].d, copy: TOOLS[3].d, plan: TOOLS[4].d }
+
+// Mappa gli stili del design sui preset reali dell'edge function replicate-staging.
+const STYLE_TO_PRESET = { Moderno: 'modern', Scandinavo: 'nordic', Industriale: 'industrial', Classico: 'boho' }
 
 export default function AiStudioScreen() {
   const { d, ui, nav, setUi, toast, isDesktop, spendCredits, addRecent, publishPost, applyCopy, propById, openProp } = useApp()
@@ -45,6 +49,39 @@ export default function AiStudioScreen() {
 
   const stagPhotoLabel = (STAG_PHOTOS.find(([id]) => id === stag.photo) || [1, 'Soggiorno'])[1]
   const peCr = Object.values(pe).filter(Boolean).length
+
+  // ---- Staging reale (edge function replicate-staging via lib/staging) ----
+  const fileRef = useRef(null)
+  const [stagSrc, setStagSrc] = useState(null)      // data URL foto caricata
+  const [stagOut, setStagOut] = useState(null)      // URL risultato AI
+  const [stagBusy, setStagBusy] = useState(false)
+
+  const pickPhoto = () => fileRef.current?.click()
+  const onPhotoFile = async e => {
+    const f = e.target.files?.[0]
+    e.target.value = ''
+    if (!f) return
+    const dataUrl = await fileToResizedDataUrl(f)
+    setStagSrc(dataUrl)
+    setStagOut(null)
+  }
+  const runStaging = async () => {
+    if (!stagSrc) { toast('Carica prima una foto'); pickPhoto(); return }
+    if (stagBusy) return
+    setStagBusy(true)
+    try {
+      const res = await generateStaging({ imageDataUrl: stagSrc, style: STYLE_TO_PRESET[stag.style] || 'modern' })
+      if (res.ok) {
+        setStagOut(res.outputUrl)
+        addRecent({ t: 'Staging ' + stag.style, sub: 'Generato con AI', k: 'staging' })
+        toast('Staging pronto')
+      } else {
+        toast(res.error)
+      }
+    } finally {
+      setStagBusy(false)
+    }
+  }
 
   const copyToClipboard = () => {
     try { navigator.clipboard.writeText(COPYTEXTS[copy.type]) } catch { /* clipboard non disponibile: solo toast */ }
@@ -122,8 +159,16 @@ export default function AiStudioScreen() {
           <div style={{ display: 'grid', gridTemplateColumns: isDesktop ? 'minmax(0,1.7fr) 320px' : '1fr', gap: 20, alignItems: 'start' }}>
             <div>
               <div style={{ borderRadius: 22, overflow: 'hidden', position: 'relative', height: isDesktop ? 430 : 300, background: '#15181F' }}>
-                <div style={{ position: 'absolute', inset: 0 }}><Placeholder label="PRIMA · stanza vuota" tone="grey" style={{ width: '100%', height: '100%', borderRadius: 0 }} /></div>
-                <div style={{ position: 'absolute', inset: 0, clipPath: `inset(0 0 0 ${stag.pct}%)` }}><Placeholder label={`DOPO · arredata con AI (${stag.style})`} tone="violet" style={{ width: '100%', height: '100%', borderRadius: 0 }} /></div>
+                <div style={{ position: 'absolute', inset: 0 }}>
+                  {stagSrc
+                    ? <img src={stagSrc} alt="Prima" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                    : <Placeholder label="PRIMA · carica una foto" tone="grey" style={{ width: '100%', height: '100%', borderRadius: 0 }} />}
+                </div>
+                <div style={{ position: 'absolute', inset: 0, clipPath: `inset(0 0 0 ${stag.pct}%)` }}>
+                  {stagOut
+                    ? <img src={stagOut} alt="Dopo" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                    : <Placeholder label={stagBusy ? 'GENERAZIONE IN CORSO…' : `DOPO · arredata con AI (${stag.style})`} tone="violet" style={{ width: '100%', height: '100%', borderRadius: 0 }} />}
+                </div>
                 <div style={{ position: 'absolute', top: 0, bottom: 0, left: stag.pct + '%', width: 3, background: '#fff', boxShadow: '0 0 12px rgba(0,0,0,.4)', pointerEvents: 'none' }} />
                 <div style={{ position: 'absolute', top: '50%', left: stag.pct + '%', transform: 'translate(-50%,-50%)', width: 38, height: 38, borderRadius: '50%', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 14px rgba(0,0,0,.35)', pointerEvents: 'none' }}>
                   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#4B39C8" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6 4 12l5 6M15 6l5 6-5 6" /></svg>
@@ -140,16 +185,19 @@ export default function AiStudioScreen() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div style={{ background: '#fff', border: '1px solid #DFE4EF', borderRadius: 18, padding: 16 }}>
                 <div style={{ fontSize: 11.5, fontWeight: 800, letterSpacing: '.06em', textTransform: 'uppercase', color: '#979EB2' }}>Foto</div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 10 }}>
-                  {STAG_PHOTOS.map(([id, t], i) => {
-                    const sel = stag.photo === id
-                    return (
-                      <div key={id} onClick={() => setUi(prev => ({ stag: { ...prev.stag, photo: id } }))} style={{ height: 64, borderRadius: 11, overflow: 'hidden', position: 'relative', cursor: 'pointer', outline: sel ? '2.5px solid #6E56F8' : '1px solid #DFE4EF', outlineOffset: -2 }}>
-                        <Placeholder tone={['warm', 'blue', 'green', 'grey'][i]} style={{ width: '100%', height: '100%', borderRadius: 0 }} />
-                        <div style={{ position: 'absolute', bottom: 5, left: 5, background: 'rgba(24,29,26,.6)', color: '#fff', fontSize: 9, fontWeight: 700, borderRadius: 99, padding: '2px 7px', pointerEvents: 'none' }}>{t}</div>
-                      </div>
-                    )
-                  })}
+                <input ref={fileRef} type="file" accept="image/*" onChange={onPhotoFile} style={{ display: 'none' }} />
+                <div className="hbd" onClick={pickPhoto} style={{ marginTop: 10, minHeight: 74, border: '1.5px dashed #C9BEFF', borderRadius: 13, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, cursor: 'pointer', overflow: 'hidden', position: 'relative' }}>
+                  {stagSrc ? (
+                    <>
+                      <img src={stagSrc} alt="Foto caricata" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <div style={{ position: 'absolute', bottom: 5, left: 5, background: 'rgba(24,29,26,.6)', color: '#fff', fontSize: 9, fontWeight: 700, borderRadius: 99, padding: '2px 7px' }}>Cambia foto</div>
+                    </>
+                  ) : (
+                    <>
+                      <Icon d={ICONS.spark} size={17} stroke="#6E56F8" />
+                      <div style={{ fontSize: 12, fontWeight: 700, color: '#4B39C8' }}>Carica la foto della stanza</div>
+                    </>
+                  )}
                 </div>
               </div>
               <div style={{ background: '#fff', border: '1px solid #DFE4EF', borderRadius: 18, padding: 16 }}>
@@ -169,10 +217,12 @@ export default function AiStudioScreen() {
                   })}
                 </div>
               </div>
-              <div className="hb" onClick={() => { if (spendCredits(1, 'Stanza arredata in 9 secondi')) addRecent({ t: stagPhotoLabel + ' · Staging ' + stag.style, sub: 'Trilocale Porta Romana', k: 'staging' }) }} style={{ minHeight: 48, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, background: '#fff', border: '1.5px solid #C9BEFF', borderRadius: 14, fontWeight: 700, fontSize: 13.5, color: '#4B39C8', cursor: 'pointer' }}>
-                <Icon d={ICONS.spark} size={15} fill="#6E56F8" />Rigenera · 1 credito
+              <div className="hb" onClick={runStaging} style={{ minHeight: 48, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, background: '#6E56F8', color: '#fff', borderRadius: 14, fontWeight: 700, fontSize: 13.5, cursor: 'pointer', opacity: stagBusy ? 0.6 : 1 }}>
+                <Icon d={ICONS.spark} size={15} fill="#fff" stroke="#fff" />{stagBusy ? 'Generazione…' : (stagOut ? 'Rigenera' : 'Genera con AI')}
               </div>
-              <div className="hb" onClick={() => { toast("Staging applicato all'annuncio"); openProp(1) }} style={{ minHeight: 48, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#6E56F8', color: '#fff', borderRadius: 14, fontWeight: 700, fontSize: 13.5, cursor: 'pointer' }}>Applica all'annuncio</div>
+              {stagOut && (
+                <a className="hb" href={stagOut} target="_blank" rel="noreferrer" style={{ minHeight: 48, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fff', border: '1.5px solid #C9BEFF', color: '#4B39C8', borderRadius: 14, fontWeight: 700, fontSize: 13.5, cursor: 'pointer', textDecoration: 'none' }}>Apri / scarica risultato</a>
+              )}
             </div>
           </div>
         )}
