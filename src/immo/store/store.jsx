@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { seedData, seedFreshData, seedUi, COPYTEXTS, DEAL_STAGE_META } from '../data/seed.js'
+import { supabase } from '@/lib/supabase'
 
 // v3: account editabile (session.phone/zone), notifiche solo-email, immobili con `type`.
 // Il bump di chiave fa ripartire dal seed aggiornato le sessioni demo già salvate in localStorage.
@@ -65,6 +66,23 @@ export function AppProvider({ children }) {
   useEffect(() => { try { localStorage.setItem(KEY_DATA, JSON.stringify(d)) } catch { /* pieno o bloccato: ignora */ } }, [d])
   useEffect(() => { try { localStorage.setItem(KEY_UI, JSON.stringify(ui)) } catch { /* ignora */ } }, [ui])
 
+  // Sessione Supabase reale: al mount (refresh o ritorno da OAuth) se c'e' una
+  // sessione valida l'utente entra direttamente, senza ripassare dal login.
+  useEffect(() => {
+    let alive = true
+    supabase.auth.getSession().then(({ data }) => {
+      const u = data?.session?.user
+      if (!alive || !u) return
+      const nm = u.user_metadata?.full_name || u.user_metadata?.name || (u.email || '').split('@')[0]
+      const ini = nm.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+      setD(prev => prev.session.loggedIn
+        ? { ...prev, session: { ...prev.session, name: nm, email: u.email, ini } }
+        : { ...seedData(), session: { ...seedData().session, loggedIn: true, name: nm, email: u.email, ini } })
+      setUiState(prev => (['login', 'signup', 'onboarding'].includes(prev.screen) ? { ...prev, screen: 'network', hist: [] } : prev))
+    }).catch(() => { /* offline: resta sul login */ })
+    return () => { alive = false }
+  }, [])
+
   const api = useMemo(() => {
     const setData = patch => setD(prev => ({ ...prev, ...(typeof patch === 'function' ? patch(prev) : patch) }))
     const setUi = patch => setUiState(prev => ({ ...prev, ...(typeof patch === 'function' ? patch(prev) : patch) }))
@@ -112,13 +130,28 @@ export function AppProvider({ children }) {
       commentsOf: id => d.comments[id] || [],
 
       // ---- sessione ----
-      // Login demo: reinstalla il dataset COMPLETO (utente navigato, agente con storico).
-      login: () => {
+      // Login reale (Supabase). Il resto del dataset resta il seed demo finche'
+      // le singole sezioni non vengono collegate ai dati veri.
+      login: async (email, pass) => {
+        const { data: authData, error } = await supabase.auth.signInWithPassword({ email, password: pass })
+        if (error) { toast(error.message === 'Invalid login credentials' ? 'Email o password sbagliate' : error.message); return false }
+        const u = authData.user
+        const nm = u?.user_metadata?.full_name || u?.user_metadata?.name || (u?.email || email).split('@')[0]
+        const ini = nm.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
         const full = seedData()
-        setData({ ...full, session: { ...full.session, loggedIn: true } })
+        setData({ ...full, session: { ...full.session, loggedIn: true, name: nm, email: u?.email || email, ini } })
         nav('network')
+        return true
       },
-      logout: () => { setData(prev => ({ session: { ...prev.session, loggedIn: false } })); nav('login', { hist: [] }) },
+      // OAuth: redirect a Google via Supabase; al ritorno restoreSession riaggancia.
+      loginWithGoogle: async () => {
+        await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: `${window.location.origin}/app` } })
+      },
+      logout: async () => {
+        try { await supabase.auth.signOut() } catch { /* offline: ignora */ }
+        setData(prev => ({ session: { ...prev.session, loggedIn: false } }))
+        nav('login', { hist: [] })
+      },
       // Registrazione: installa il dataset VUOTO (solo contenuti di altri utenti), imposta la
       // persona scelta e instrada il privato direttamente al feed (niente onboarding da agente).
       finishSignup: (name, mail, role) => {

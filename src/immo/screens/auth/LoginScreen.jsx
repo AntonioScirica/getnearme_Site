@@ -6,14 +6,17 @@ import { useApp } from '../../store/store.jsx'
 // Il form è un unico sotto-componente condiviso, parametrizzato con `dark`.
 
 function LoginForm({ dark }) {
-  const { d, login, nav, toast } = useApp()
-  const [email, setEmail] = useState(d.session.email)
-  const [pass, setPass] = useState('demo123456')
+  const { login, loginWithGoogle, nav, toast } = useApp()
+  const [email, setEmail] = useState('')
+  const [pass, setPass] = useState('')
   const [show, setShow] = useState(false)
+  const [busy, setBusy] = useState(false)
 
-  const tryLogin = () => {
+  const tryLogin = async () => {
     if (!email.trim() || !pass.trim()) { toast('Inserisci email e password'); return }
-    login()
+    if (busy) return
+    setBusy(true)
+    try { await login(email.trim(), pass) } finally { setBusy(false) }
   }
 
   const fieldStyle = dark
@@ -50,25 +53,22 @@ function LoginForm({ dark }) {
         className="hb"
         onClick={tryLogin}
         style={dark
-          ? { minHeight: 52, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#FFFFFF', color: '#3C5BAA', borderRadius: 15, fontWeight: 700, fontSize: 16, cursor: 'pointer' }
-          : { minHeight: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#537EEC', color: '#F4F6FA', borderRadius: 14, fontWeight: 700, fontSize: 15, cursor: 'pointer' }}
-      >Accedi</div>
+          ? { minHeight: 52, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#FFFFFF', color: '#3C5BAA', borderRadius: 15, fontWeight: 700, fontSize: 16, cursor: 'pointer', opacity: busy ? 0.6 : 1 }
+          : { minHeight: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#537EEC', color: '#F4F6FA', borderRadius: 14, fontWeight: 700, fontSize: 15, cursor: 'pointer', opacity: busy ? 0.6 : 1 }}
+      >{busy ? 'Accesso...' : 'Accedi'}</div>
       {!dark && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '4px 0' }}>
           <div style={{ flex: 1, height: 1, background: '#DFE4EF' }} /><span style={{ fontSize: 11.5, color: '#979EB2', fontWeight: 600 }}>oppure</span><div style={{ flex: 1, height: 1, background: '#DFE4EF' }} />
         </div>
       )}
       <div style={{ display: 'flex', gap: 10 }}>
-        {['G · Google', ' · Apple'].map(t => (
-          <div
-            key={t}
-            className={dark ? 'hb' : 'hbg2'}
-            onClick={login}
-            style={dark
-              ? { flex: 1, minHeight: 48, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: 'rgba(255,255,255,.1)', border: '1px solid rgba(255,255,255,.22)', borderRadius: 14, color: '#F4F6FA', fontWeight: 600, fontSize: 14, cursor: 'pointer' }
-              : { flex: 1, minHeight: 46, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fff', border: '1px solid #DFE4EF', borderRadius: 13, fontWeight: 600, fontSize: 13.5, cursor: 'pointer' }}
-          >{t}</div>
-        ))}
+        <div
+          className={dark ? 'hb' : 'hbg2'}
+          onClick={loginWithGoogle}
+          style={dark
+            ? { flex: 1, minHeight: 48, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: 'rgba(255,255,255,.1)', border: '1px solid rgba(255,255,255,.22)', borderRadius: 14, color: '#F4F6FA', fontWeight: 600, fontSize: 14, cursor: 'pointer' }
+            : { flex: 1, minHeight: 46, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fff', border: '1px solid #DFE4EF', borderRadius: 13, fontWeight: 600, fontSize: 13.5, cursor: 'pointer' }}
+        >G · Google</div>
       </div>
       <div style={{ textAlign: 'center', marginTop: 8, fontSize: dark ? 14 : 13.5, color: dark ? 'rgba(255,255,255,.7)' : '#666E82' }}>
         Nuovo su Agente Immo? <span onClick={() => nav('signup')} style={{ color: dark ? '#BECEF8' : '#537EEC', fontWeight: 700, cursor: 'pointer' }}>{dark ? 'Registrati' : 'Crea il profilo gratis'}</span>
