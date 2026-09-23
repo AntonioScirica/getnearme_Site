@@ -29,8 +29,14 @@ const SCHEMA = {
       type: 'array',
       items: {
         type: 'object',
-        properties: { area: { type: 'string', enum: ['titolo', 'descrizione', 'foto', 'dati', 'prezzo'] }, gravita: { type: 'string', enum: ['alta', 'media', 'bassa'] }, testo: str },
-        required: ['area', 'gravita', 'testo'],
+        properties: {
+          area: { type: 'string', enum: ['titolo', 'descrizione', 'foto', 'dati', 'prezzo'] },
+          gravita: { type: 'string', enum: ['alta', 'media', 'bassa'] },
+          problema: str,
+          perche: str,
+          soluzione: str,
+        },
+        required: ['area', 'gravita', 'problema', 'perche', 'soluzione'],
         additionalProperties: false,
       },
     },
@@ -47,8 +53,11 @@ const SYSTEM = `Sei un consulente esperto di annunci immobiliari italiani (immob
 - score: 0-100, qualità complessiva dell'annuncio attuale (completezza dati, titolo, descrizione, foto, coerenza prezzo/dati).
 - sintesi: 1-2 frasi sul giudizio complessivo.
 - punti_forza: 2-4 cose fatte bene.
-- problemi: i difetti concreti, ordinati per gravità. Cita esempi precisi dal testo o dalle foto.
-- dati_mancanti: campi che l'acquirente cerca e non ci sono (es. spese condominiali, riscaldamento, esposizione, anno costruzione).
+- problemi: i difetti concreti, ordinati per gravità, massimo 8. Per ognuno tre campi, scritti per un agente immobiliare che deve agire subito:
+  - problema: cosa non va, citando l'esempio preciso preso dal testo o dalle foto (es. "il titolo dice solo 'Trilocale via Rossi'").
+  - perche: perché fa perdere contatti o fiducia, in una frase.
+  - soluzione: l'azione concreta da fare, pronta da eseguire. Se riguarda il testo, includi la frase corretta da usare tra virgolette.
+- dati_mancanti: campi che l'acquirente cerca e non ci sono (es. spese condominiali, riscaldamento, esposizione, anno costruzione). Solo il nome del dato, breve.
 - foto_consigli: 2-4 consigli sulle foto viste (luce, ordine, inquadrature, stanze mancanti, prima foto). Se non ci sono foto, dillo.
 - titolo: nuovo titolo, max 70 caratteri, concreto, niente maiuscolo urlato ne' emoji.
 - descrizione: nuova descrizione 120-220 parole, italiano naturale, paragrafi brevi. Usa SOLO informazioni presenti nell'annuncio: non inventare. Niente em dash, usa virgole.`
