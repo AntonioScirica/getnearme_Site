@@ -207,18 +207,6 @@ function CopyBtn({ text: t, label = 'Copia', solid = false }: { text: string; la
   );
 }
 
-function buildReport(listing: Listing, a: Analysis, titolo: string, descrizione: string) {
-  const lines = [
-    `ANALISI ANNUNCIO – score ${a.score}/100`, listing.url, '', a.sintesi, '',
-    'COSA SISTEMARE',
-    ...a.problemi.map((p, i) => `${i + 1}. [${GRAVITA[p.gravita].label} · ${p.area}] ${p.problema}\n   Perché: ${p.perche}\n   Come: ${p.soluzione}${p.foto_indice ? `\n   Foto: n. ${p.foto_indice}${p.modifica_foto ? ` (modifica AI: ${p.modifica_foto})` : ' (da rifare)'}` : ''}`),
-    '', 'DATI DA AGGIUNGERE', ...a.dati_mancanti.map(d => `- ${d}`),
-    '', 'FOTO', ...a.foto_consigli.map(f => `- ${f}`),
-    '', 'NUOVO TITOLO', titolo, '', 'NUOVA DESCRIZIONE', descrizione,
-  ];
-  return lines.join('\n');
-}
-
 function Results({ listing, analysis: a, onSaved, onRestart }: { listing: Listing; analysis: Analysis; onSaved: () => void; onRestart: () => void }) {
   const [titolo, setTitolo] = useState(a.titolo);
   const [descrizione, setDescrizione] = useState(a.descrizione);
@@ -258,7 +246,6 @@ function Results({ listing, analysis: a, onSaved, onRestart }: { listing: Listin
               <div className="mt-3 h-2 w-56 overflow-hidden rounded-full bg-canvas"><div className={`h-full rounded-full ${tone.bar}`} style={{ width: `${a.score}%` }} /></div>
             </div>
             <div className="flex flex-col items-end gap-2">
-              <CopyBtn text={buildReport(listing, a, titolo, descrizione)} label="Copia tutto il report" solid />
               <a href={listing.url} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-xs text-muted hover:text-ink"><ExternalLink size={12} /> Apri l&apos;annuncio originale</a>
             </div>
           </div>
