@@ -9,7 +9,7 @@ export default function PropertyDetail({ project, loading, onChange }: { project
   if (loading) return <Loader2 className="animate-spin text-muted" />;
   if (!project) return <p className="text-muted">Immobile non trovato. <a href="#/immobili" className="text-brand">Torna agli immobili</a>.</p>;
 
-  const extra = (project.import_data ?? {}) as { contratto?: string; piano?: string; classe?: string; caratteristiche?: string[]; score?: number; suggerimenti?: string[]; photos?: string[] };
+  const extra = (project.import_data ?? {}) as { contratto?: string; piano?: string; classe?: string; caratteristiche?: string[]; score?: number; suggerimenti?: string[]; photos?: string[]; info?: Record<string, string | undefined> };
   // Foto su R2, elenco URL in import_data.photos (la tabella media non esiste in prod).
   const gallery = extra.photos?.length ? extra.photos : project.cover ? [project.cover] : [];
   const facts = [
@@ -19,7 +19,14 @@ export default function PropertyDetail({ project, loading, onChange }: { project
     ['Bagni', project.bagni],
     ['Piano', extra.piano],
     ['Classe energetica', extra.classe],
-  ].filter(([, v]) => v);
+    // Dati letti dall'estensione (Migliora annuncio): mostrati se presenti.
+    ['Spese condominiali', extra.info?.condominium],
+    ['Riscaldamento', extra.info?.riscaldamento],
+    ['Anno di costruzione', extra.info?.yearBuilt],
+    ['Esposizione', extra.info?.esposizione],
+    ['Posto auto', extra.info?.parking],
+    ['Stato', extra.info?.stato],
+  ].filter(([, v]) => v && typeof v !== 'object');
 
   return (
     <>

@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, Check, Copy, ExternalLink, Link2, Loader2, Lock, Puzzle, Sparkles } from 'lucide-react';
-import { createProject } from '@/lib/projects';
 import { authFetch, extSend, EXTENSION_URL, go } from './api';
 
 // "Migliora annuncio": link portale -> estensione legge l'annuncio in background ->
@@ -19,11 +18,6 @@ type Stage = 'input' | 'opening' | 'scanning' | 'done' | 'no-extension' | 'manua
 const PORTAL_RE = /^https:\/\/(www\.)?(immobiliare\.it|idealista\.(it|com|pt)|casa\.it)\//i;
 const SCAN_STEPS = ['Leggo i dati dell\'annuncio', 'Guardo le foto', 'Valuto titolo e descrizione', 'Cerco i dati mancanti', 'Riscrivo l\'annuncio'];
 
-// "€ 250.000" -> 250000, "95 m²" -> 95
-const toNum = (v: unknown) => {
-  const m = String(v ?? '').match(/\d[\d.]*/);
-  return m ? Number(m[0].replace(/\./g, '')) || 0 : 0;
-};
 const text = (v: unknown) => (typeof v === 'string' ? v : '');
 
 export default function ImproveView({ initialUrl, onSaved }: { initialUrl: string; onSaved: () => void }) {
@@ -228,26 +222,23 @@ function Results({ listing, analysis: a, onSaved, onRestart }: { listing: Listin
   const [descrizione, setDescrizione] = useState(a.descrizione);
   const [showBefore, setShowBefore] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const info = listing.propertyInfo;
   const urgent = a.problemi.filter(p => p.gravita === 'alta').length;
   const tone = a.score >= 75 ? { text: 'text-green-600', bar: 'bg-green-500' } : a.score >= 50 ? { text: 'text-amber-600', bar: 'bg-amber-500' } : { text: 'text-red-600', bar: 'bg-red-500' };
   const words = descrizione.trim().split(/\s+/).filter(Boolean).length;
 
+  // Salvataggio lato server: copia tutte le foto su R2 e tiene tutti i dati dell'estensione.
   const save = async () => {
-    setSaving(true);
-    const p = await createProject({
-      nome: titolo, titolo, descrizione, addr: listing.address, tipologia: text(info.type),
-      prezzo: toNum(info.price), mq: toNum(info.surface), locali: toNum(info.rooms) || undefined,
-      camere: toNum(info.bedrooms), bagni: toNum(info.bathrooms), cover: listing.photos[0] ?? '',
-      import_data: {
-        source: 'portal', url: listing.url, photos: listing.photos, score: a.score,
-        suggerimenti: a.problemi.map(x => x.soluzione), piano: text(info.floor), classe: text(info.energyClass),
-        caratteristiche: Array.isArray(info.features) ? info.features : [],
-        originale: { titolo: listing.title, descrizione: text(info.description) },
-      },
-    });
+    setSaving(true); setSaveError(null);
+    const res = await authFetch('/api/platform/save-listing', {
+      method: 'POST',
+      body: JSON.stringify({ titolo, descrizione, listing, score: a.score, suggerimenti: a.problemi.map(x => x.soluzione) }),
+    }).catch(() => null);
     setSaving(false);
-    if (p) { onSaved(); go(`/immobile/${p.id}`); }
+    if (!res?.ok) { setSaveError('Salvataggio non riuscito, riprova.'); return; }
+    const { id } = await res.json();
+    onSaved(); go(`/immobile/${id}`);
   };
 
   return (
@@ -289,12 +280,13 @@ function Results({ listing, analysis: a, onSaved, onRestart }: { listing: Listin
           <div className="flex flex-wrap items-center gap-2">
             <button onClick={() => setShowBefore(v => !v)} className="rounded-lg border border-line px-4 py-2 text-sm font-medium hover:bg-canvas">{showBefore ? 'Nascondi originale' : 'Confronta con originale'}</button>
             <button onClick={save} disabled={saving} className="flex items-center gap-2 rounded-lg border border-line px-4 py-2 text-sm font-medium hover:bg-canvas disabled:opacity-50">
-              {saving && <Loader2 size={16} className="animate-spin" />} Salva nei miei immobili
+              {saving && <Loader2 size={16} className="animate-spin" />} {saving ? `Salvo ${listing.photos.length} foto...` : 'Salva nei miei immobili'}
             </button>
             <CopyBtn text={`${titolo}\n\n${descrizione}`} label="Copia titolo e descrizione" solid />
           </div>
         </div>
 
+        {saveError && <p className="mt-3 text-sm text-red-600">{saveError}</p>}
         <Field label="Titolo" meta={`${titolo.length}/70`} warn={titolo.length > 70} copyText={titolo}>
           {showBefore && <Before text={listing.title} />}
           <input value={titolo} onChange={e => setTitolo(e.target.value)} className="w-full rounded-lg border border-line px-4 py-3 text-base font-medium outline-none focus:border-ai" />

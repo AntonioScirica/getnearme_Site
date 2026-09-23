@@ -42,7 +42,14 @@ export default async function PublicPropertyPage({ params }: Props) {
     ['Bagni', p.bagni],
     ['Piano', extra.piano],
     ['Classe energetica', extra.classe],
-  ].filter(([, v]) => v);
+    // Dati letti dall'estensione (Migliora annuncio): mostrati se presenti.
+    ['Spese condominiali', extra.info?.condominium],
+    ['Riscaldamento', extra.info?.riscaldamento],
+    ['Anno di costruzione', extra.info?.yearBuilt],
+    ['Esposizione', extra.info?.esposizione],
+    ['Posto auto', extra.info?.parking],
+    ['Stato', extra.info?.stato],
+  ].filter(([, v]) => v && typeof v !== 'object');
 
   return (
     <>

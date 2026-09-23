@@ -1,21 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
 import { createClient } from '@supabase/supabase-js'
-import sharp from 'sharp'
+import { rehostImage } from '@/lib/r2'
 
 const admin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
 )
 
-const s3Client = new S3Client({
-  region: 'auto',
-  endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-  credentials: {
-    accessKeyId: process.env.R2_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
-  },
-})
 
 const getUserId = async (req: NextRequest): Promise<string | null> => {
   const authHeader = req.headers.get('authorization')
@@ -42,40 +33,9 @@ type ImportRow = {
   _raw?: Record<string, unknown> // riga originale completa del file (per report futuri)
 }
 
-// Download an image server-side and re-host it on R2. Returns the public URL, or
-// null if the download/upload fails (caller proceeds without cover).
-async function rehostPhoto(photoUrl: string, userId: string): Promise<string | null> {
-  try {
-    const res = await fetch(photoUrl)
-    if (!res.ok) return null
-    const arrayBuffer = await res.arrayBuffer()
-    const original = Buffer.from(arrayBuffer)
-    if (original.length === 0) return null
-    // Una sola foto = cover OTTIMIZZATA: resize ~500px lato lungo + JPEG q78.
-    // Se l'ottimizzazione fallisce, NON carichiamo l'originale (evitiamo file pesanti).
-    let buffer: Buffer
-    try {
-      buffer = await sharp(original).rotate().resize({ width: 500, height: 500, fit: 'inside', withoutEnlargement: true }).jpeg({ quality: 78 }).toBuffer()
-    } catch (e) {
-      console.error('rehostPhoto resize failed:', e)
-      return null
-    }
-    const rand = Math.random().toString(36).substring(2, 9)
-    const key = `covers/import-${userId}-${Date.now()}-${rand}.jpg`
-
-    await s3Client.send(new PutObjectCommand({
-      Bucket: process.env.R2_BUCKET_NAME,
-      Key: key,
-      Body: buffer,
-      ContentType: 'image/jpeg',
-    }))
-
-    return `${process.env.R2_PUBLIC_URL}/${key}`
-  } catch (err) {
-    console.error('rehostPhoto error:', err)
-    return null
-  }
-}
+// Cover ottimizzata (~500px) su R2: stessa logica di prima, ora in lib/r2.
+const rehostPhoto = (photoUrl: string, userId: string) =>
+  rehostImage(photoUrl, `covers/import-${userId}-${Date.now()}-${Math.random().toString(36).substring(2, 9)}.jpg`, 500, 78)
 
 export const runtime = 'nodejs'
 export const maxDuration = 60

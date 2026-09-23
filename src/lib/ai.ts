@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk'
+import { createClient } from '@supabase/supabase-js'
 
 // Unico punto di accesso all'AI della piattaforma (describe, analyze).
 // Con AI_BASE_URL impostato (endpoint vLLM su RunPod, API compatibile OpenAI) usa il
@@ -8,18 +9,49 @@ import Anthropic from '@anthropic-ai/sdk'
 // Env: AI_BASE_URL (es. https://api.runpod.ai/v2/<endpoint>/openai/v1)
 //      AI_MODEL    (es. Qwen/Qwen3-VL-32B-Instruct-AWQ)
 //      AI_API_KEY  (RunPod API key)
+//      AI_GPU_USD_PER_HOUR (tariffa GPU serverless dell'endpoint, default 1.22 = fascia 48GB)
+//
+// Ogni chiamata viene registrata in ai_usage (utente, tipo, durata, costo stimato):
+// su RunPod costo = durata reale (avvio incluso) x tariffa GPU; su Claude = token x listino.
 
 export type JsonSchema = Record<string, unknown>
 
-type Args = { system: string; text: string; images?: string[]; schema: JsonSchema; maxTokens?: number }
+type Args = { system: string; text: string; images?: string[]; schema: JsonSchema; maxTokens?: number; usage: { userId: string; kind: string } }
+type Tokens = { input?: number; output?: number }
 type Result<T> = { ok: true; data: T } | { ok: false; error: 'refused' | 'empty' | 'failed'; detail?: string }
 
 export async function generateJson<T>(args: Args): Promise<Result<T>> {
-  return process.env.AI_BASE_URL ? viaOpenAiCompat<T>(args) : viaClaude<T>(args)
+  const runpod = !!process.env.AI_BASE_URL
+  const t0 = Date.now()
+  const tokens: Tokens = {}
+  const r = runpod ? await viaOpenAiCompat<T>(args, tokens) : await viaClaude<T>(args, tokens)
+  await logUsage(args.usage, runpod, Date.now() - t0, tokens, r.ok)
+  return r
+}
+
+const CLAUDE_USD_PER_MTOK = { input: 5, output: 25 } // claude-opus-5
+let admin: ReturnType<typeof createClient> | null = null
+
+async function logUsage(u: Args['usage'], runpod: boolean, ms: number, tk: Tokens, ok: boolean) {
+  const gpuPerHour = Number(process.env.AI_GPU_USD_PER_HOUR) || 1.22
+  const cost = runpod
+    ? (ms / 3_600_000) * gpuPerHour
+    : ((tk.input ?? 0) * CLAUDE_USD_PER_MTOK.input + (tk.output ?? 0) * CLAUDE_USD_PER_MTOK.output) / 1e6
+  try {
+    admin ??= createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
+    await admin.from('ai_usage').insert({
+      user_id: u.userId, kind: u.kind, provider: runpod ? 'runpod' : 'anthropic',
+      model: runpod ? process.env.AI_MODEL : 'claude-opus-5',
+      input_tokens: tk.input ?? null, output_tokens: tk.output ?? null,
+      duration_ms: ms, cost_usd: Number(cost.toFixed(6)), ok,
+    } as never)
+  } catch (e) {
+    console.error('ai_usage log failed:', e) // il tracciamento non deve mai bloccare la risposta
+  }
 }
 
 // vLLM / RunPod: chat completions + response_format json_schema (guided decoding).
-async function viaOpenAiCompat<T>({ system, text, images = [], schema, maxTokens = 8000 }: Args): Promise<Result<T>> {
+async function viaOpenAiCompat<T>({ system, text, images = [], schema, maxTokens = 8000 }: Args, tokens: Tokens): Promise<Result<T>> {
   const body = {
     model: process.env.AI_MODEL,
     max_tokens: maxTokens,
@@ -48,6 +80,8 @@ async function viaOpenAiCompat<T>({ system, text, images = [], schema, maxTokens
     if (!res.ok && images.length) res = await call({ ...body, messages: [body.messages[0], { role: 'user', content: [{ type: 'text', text: `${text}\n(Foto non disponibili per l'analisi.)` }] }] })
     if (!res.ok) return { ok: false, error: 'failed', detail: `${res.status} ${(await res.text()).slice(0, 300)}` }
     const json = await res.json()
+    tokens.input = json.usage?.prompt_tokens
+    tokens.output = json.usage?.completion_tokens
     const content = json.choices?.[0]?.message?.content
     if (!content) return { ok: false, error: 'empty' }
     return { ok: true, data: JSON.parse(stripThinking(content)) }
@@ -60,7 +94,7 @@ async function viaOpenAiCompat<T>({ system, text, images = [], schema, maxTokens
 const stripThinking = (s: string) => s.replace(/<think>[\s\S]*?<\/think>/g, '').trim()
 
 let anthropic: Anthropic | null = null
-async function viaClaude<T>({ system, text, images = [], schema, maxTokens = 8000 }: Args): Promise<Result<T>> {
+async function viaClaude<T>({ system, text, images = [], schema, maxTokens = 8000 }: Args, tokens: Tokens): Promise<Result<T>> {
   anthropic ??= new Anthropic()
   const ask = (withPhotos: boolean) => anthropic!.messages.create({
     model: 'claude-opus-5',
@@ -83,6 +117,8 @@ async function viaClaude<T>({ system, text, images = [], schema, maxTokens = 800
       if (!(e instanceof Anthropic.BadRequestError) || !images.length) throw e
       res = await ask(false)
     }
+    tokens.input = res.usage.input_tokens
+    tokens.output = res.usage.output_tokens
     if (res.stop_reason === 'refusal') return { ok: false, error: 'refused' }
     const block = res.content.find(b => b.type === 'text')
     if (!block || block.type !== 'text') return { ok: false, error: 'empty' }

@@ -89,6 +89,7 @@ export async function POST(req: NextRequest) {
     text: `Annuncio attuale (JSON):\n${text}`,
     images: photos.slice(0, MAX_PHOTOS).map(forAi),
     schema: SCHEMA,
+    usage: { userId: data.user.id, kind: 'analyze' },
   })
   if (!r.ok) {
     console.error('analyze error:', r.error, r.detail)

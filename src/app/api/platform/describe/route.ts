@@ -43,6 +43,7 @@ export async function POST(req: NextRequest) {
     system: SYSTEM,
     text: `Dati immobile (JSON):\n${input}`,
     schema: SCHEMA,
+    usage: { userId: data.user.id, kind: 'describe' },
     maxTokens: 4000,
   })
   if (!r.ok) {
