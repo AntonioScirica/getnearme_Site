@@ -9,6 +9,7 @@ import NewPropertyWizard from './NewPropertyWizard';
 import PropertyDetail from './PropertyDetail';
 import PortfolioView from './PortfolioView';
 import ImportView from './ImportView';
+import ImproveView from './ImproveView';
 import { go, formatPrice, authFetch } from './api';
 import ProfileForm, { type Profile } from './ProfileForm';
 
@@ -31,7 +32,7 @@ const NAV = [
 ];
 
 export default function PlatformApp({ userData }: { userData: UserData }) {
-  const route = useHashRoute();
+  const [route, query = ''] = useHashRoute().split('?');
   const [projects, setProjects] = useState<ProjectData[] | null>(null);
 
   const [profile, setProfile] = useState<Profile | null | undefined>(undefined);
@@ -74,7 +75,9 @@ export default function PlatformApp({ userData }: { userData: UserData }) {
 
       <main className="flex-1 overflow-y-auto">
         <div className="mx-auto max-w-6xl px-8 py-10">
-          {route === '/importa' ? (
+          {route === '/migliora' ? (
+            <ImproveView key={query} initialUrl={new URLSearchParams(query).get('url') ?? ''} onSaved={reload} />
+          ) : route === '/importa' ? (
             <ImportView onDone={reload} />
           ) : route === '/nuovo' ? (
             <NewPropertyWizard onCreated={(p) => { reload(); go(`/immobile/${p.id}`); }} />
@@ -105,15 +108,15 @@ function HomeView({ projects }: { projects: ProjectData[] | null }) {
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-ai/10 text-ai"><Sparkles size={20} /></div>
           <h2 className="mt-4 font-display text-xl font-semibold">Migliora un annuncio</h2>
           <p className="mt-1 text-sm text-muted">Incolla il link da immobiliare.it, idealista o casa.it: ti diamo score, nuova descrizione e cosa sistemare.</p>
-          <div className="mt-5 flex gap-2">
-            <div className="flex flex-1 items-center gap-2 rounded-lg border border-line px-3">
+          <form onSubmit={e => { e.preventDefault(); go(`/migliora?url=${encodeURIComponent(url.trim())}`); }} className="mt-5 flex gap-2">
+            <div className="flex flex-1 items-center gap-2 rounded-lg border border-line px-3 focus-within:border-brand">
               <Link2 size={16} className="text-muted" />
               <input value={url} onChange={e => setUrl(e.target.value)} placeholder="https://www.immobiliare.it/annunci/..."
                 className="w-full bg-transparent py-2.5 text-sm outline-none" />
             </div>
-            <button disabled className="rounded-lg bg-ink px-4 text-sm font-medium text-white opacity-40" title="In arrivo">Analizza</button>
-          </div>
-          <p className="mt-2 text-xs text-muted">In arrivo.</p>
+            <button disabled={!url.trim()} className="rounded-lg bg-ai px-4 text-sm font-medium text-white disabled:opacity-40">Analizza</button>
+          </form>
+          <a href="#/migliora" className="mt-2 inline-block text-xs text-muted hover:text-ink">Non hai il link? Incolla il testo</a>
         </section>
 
         <a href="#/nuovo" className="group rounded-2xl border border-line bg-white p-6 transition-shadow hover:shadow-lg">

@@ -380,3 +380,9 @@ html.metrics-light [class~="hover:bg-white/10"]:hover { background-color: rgba(2
 html.metrics-light [class*="border-gray-400"],
 html.metrics-light [class*="border-gray-500"],
 html.metrics-light [class*="border-gray-600"] { border-color: #d8d4cb !important; }
+
+/* Piattaforma: fascio di scansione su "Migliora annuncio" */
+@keyframes gnm-scan {
+  0% { top: -10%; }
+  100% { top: 100%; }
+}

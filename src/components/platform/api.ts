@@ -19,3 +19,20 @@ export const portfolioUrl = (slug: string) => (PORTFOLIO_HOST ? `https://${PORTF
 
 export const setPublic = (id: string, is_public: boolean) =>
   authFetch('/api/projects', { method: 'PUT', body: JSON.stringify({ id, is_public }) }).then(r => r.ok);
+
+// Ponte con l'estensione Chrome (externally_connectable). null = estensione assente
+// o non raggiungibile da questo sito (browser non Chromium, non installata, vecchia).
+const EXT_ID = 'jbnceigldmpkpplanjlednlehloaeoia';
+type ChromeRuntime = { sendMessage: (id: string, msg: unknown, cb: (r: unknown) => void) => void; lastError?: unknown };
+
+export function extSend<T>(msg: unknown): Promise<T | null> {
+  const rt = (window as unknown as { chrome?: { runtime?: ChromeRuntime } }).chrome?.runtime;
+  if (!rt?.sendMessage) return Promise.resolve(null);
+  return new Promise(resolve => {
+    try {
+      rt.sendMessage(EXT_ID, msg, r => { void rt.lastError; resolve((r as T) ?? null); });
+    } catch { resolve(null); }
+  });
+}
+
+export const EXTENSION_URL = 'https://chromewebstore.google.com/detail/jbnceigldmpkpplanjlednlehloaeoia';
