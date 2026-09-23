@@ -313,7 +313,6 @@ function Results({ listing, analysis: a, onSaved, onRestart }: { listing: Listin
                   <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-ink font-display text-sm font-semibold text-white">{i + 1}</span>
                   <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ${g.cls}`}>{g.label}</span>
                   <span className="text-xs uppercase tracking-wide text-muted">{p.area}</span>
-                  <span className="ml-auto"><CopyBtn text={`${p.problema}\nPerché: ${p.perche}\nCome: ${p.soluzione}`} /></span>
                 </div>
                 <p className="mt-3 text-[15px] font-medium leading-snug">{p.problema}</p>
                 <p className="mt-1.5 text-sm text-muted"><span className="font-medium text-ink/70">Perché conta:</span> {p.perche}</p>
@@ -328,7 +327,6 @@ function Results({ listing, analysis: a, onSaved, onRestart }: { listing: Listin
                       <div className="text-xs font-semibold uppercase tracking-wide text-ai">Come sistemarlo</div>
                       <p className="mt-1 text-sm leading-relaxed">{p.soluzione}</p>
                     </div>
-                    <CopyBtn text={p.soluzione} />
                   </div>
                 </div>
               </li>
