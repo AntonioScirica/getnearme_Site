@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import Anthropic from '@anthropic-ai/sdk'
+import { generateJson } from '@/lib/ai'
 import { createClient } from '@supabase/supabase-js'
 
 const admin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
 )
-const anthropic = new Anthropic()
 
 // Genera titolo, descrizione e score di un annuncio a partire dai dati inseriti
 // dall'agente (flow "Crea da zero"). Stesso output servira' al flow "Migliora annuncio".
@@ -40,20 +39,15 @@ export async function POST(req: NextRequest) {
   const input = JSON.stringify({ ...body.property, numero_foto: body.nFoto ?? 0 })
   if (input.length > 8000) return NextResponse.json({ error: 'too_large' }, { status: 400 })
 
-  try {
-    const res = await anthropic.messages.create({
-      model: 'claude-opus-5',
-      max_tokens: 4000,
-      output_config: { effort: 'low', format: { type: 'json_schema', schema: SCHEMA } },
-      system: SYSTEM,
-      messages: [{ role: 'user', content: `Dati immobile (JSON):\n${input}` }],
-    })
-    if (res.stop_reason === 'refusal') return NextResponse.json({ error: 'refused' }, { status: 422 })
-    const text = res.content.find(b => b.type === 'text')
-    if (!text || text.type !== 'text') return NextResponse.json({ error: 'empty' }, { status: 502 })
-    return NextResponse.json(JSON.parse(text.text))
-  } catch (e) {
-    console.error('describe error:', e)
-    return NextResponse.json({ error: 'ai_failed' }, { status: 502 })
+  const r = await generateJson<Record<string, unknown>>({
+    system: SYSTEM,
+    text: `Dati immobile (JSON):\n${input}`,
+    schema: SCHEMA,
+    maxTokens: 4000,
+  })
+  if (!r.ok) {
+    console.error('describe error:', r.error, r.detail)
+    return NextResponse.json({ error: r.error === 'refused' ? 'refused' : 'ai_failed' }, { status: r.error === 'refused' ? 422 : 502 })
   }
+  return NextResponse.json(r.data)
 }

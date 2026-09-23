@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import Anthropic from '@anthropic-ai/sdk'
+import { generateJson } from '@/lib/ai'
 import { createClient } from '@supabase/supabase-js'
 
 const admin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
 )
-const anthropic = new Anthropic()
 
 export const maxDuration = 60
 
@@ -81,35 +80,15 @@ export async function POST(req: NextRequest) {
   })
   if (text.length > 20000) return NextResponse.json({ error: 'too_large' }, { status: 400 })
 
-  const ask = (withPhotos: boolean) => anthropic.messages.create({
-    model: 'claude-opus-5',
-    max_tokens: 8000,
-    output_config: { effort: 'low', format: { type: 'json_schema', schema: SCHEMA } },
+  const r = await generateJson<Record<string, unknown>>({
     system: SYSTEM,
-    messages: [{
-      role: 'user',
-      content: [
-        ...(withPhotos ? photos.slice(0, MAX_PHOTOS).map(url => ({ type: 'image' as const, source: { type: 'url' as const, url } })) : []),
-        { type: 'text' as const, text: `Annuncio attuale (JSON):\n${text}${withPhotos ? '' : '\n(Foto non disponibili per l\'analisi.)'}` },
-      ],
-    }],
+    text: `Annuncio attuale (JSON):\n${text}`,
+    images: photos.slice(0, MAX_PHOTOS),
+    schema: SCHEMA,
   })
-
-  try {
-    let res
-    try {
-      res = await ask(photos.length > 0)
-    } catch (e) {
-      // Il CDN del portale puo' rifiutare il download delle immagini: riprova solo testo.
-      if (!(e instanceof Anthropic.BadRequestError) || !photos.length) throw e
-      res = await ask(false)
-    }
-    if (res.stop_reason === 'refusal') return NextResponse.json({ error: 'refused' }, { status: 422 })
-    const block = res.content.find(b => b.type === 'text')
-    if (!block || block.type !== 'text') return NextResponse.json({ error: 'empty' }, { status: 502 })
-    return NextResponse.json(JSON.parse(block.text))
-  } catch (e) {
-    console.error('analyze error:', e)
-    return NextResponse.json({ error: 'ai_failed' }, { status: 502 })
+  if (!r.ok) {
+    console.error('analyze error:', r.error, r.detail)
+    return NextResponse.json({ error: r.error === 'refused' ? 'refused' : 'ai_failed' }, { status: r.error === 'refused' ? 422 : 502 })
   }
+  return NextResponse.json(r.data)
 }
