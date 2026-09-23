@@ -16,25 +16,53 @@ const getUserId = async (req: NextRequest) => {
   return data.user?.id ?? null
 }
 
+// Primo slug libero tra base, base-2 ... base-99 (lo slug gia' dell'utente conta come libero).
+async function firstFree(base: string, userId: string): Promise<string | null> {
+  const { data } = await admin.from('user_brand').select('portfolio_slug, user_id').like('portfolio_slug', `${base}%`)
+  const taken = new Set((data ?? []).filter(r => r.user_id !== userId).map(r => r.portfolio_slug))
+  for (let i = 1; i < 100; i++) {
+    const s = i === 1 ? base : `${base.slice(0, 36)}-${i}`
+    if (!taken.has(s)) return s
+  }
+  return null
+}
+
+// GET            -> { slug, name } dell'utente
+// GET ?check=xx  -> { available, suggestion }
 export async function GET(req: NextRequest) {
   const userId = await getUserId(req)
   if (!userId) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
-  const { data } = await admin.from('user_brand').select('portfolio_slug').eq('user_id', userId).maybeSingle()
-  return NextResponse.json({ slug: data?.portfolio_slug ?? null })
+
+  const check = req.nextUrl.searchParams.get('check')
+  if (check !== null) {
+    if (!SLUG_RE.test(check)) return NextResponse.json({ available: false, suggestion: null, invalid: true })
+    const suggestion = await firstFree(check, userId)
+    return NextResponse.json({ available: suggestion === check, suggestion })
+  }
+
+  const { data } = await admin.from('user_brand').select('portfolio_slug, display_name').eq('user_id', userId).maybeSingle()
+  return NextResponse.json({ slug: data?.portfolio_slug ?? null, name: data?.display_name ?? null })
 }
 
 export async function PUT(req: NextRequest) {
   const userId = await getUserId(req)
   if (!userId) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
-  let slug: unknown
-  try { ({ slug } = await req.json()) } catch { return NextResponse.json({ error: 'bad_request' }, { status: 400 }) }
+  let body: { slug?: unknown; name?: unknown }
+  try { body = await req.json() } catch { return NextResponse.json({ error: 'bad_request' }, { status: 400 }) }
+  const { slug } = body
+  const name = typeof body.name === 'string' ? body.name.trim() : ''
   if (typeof slug !== 'string' || !SLUG_RE.test(slug)) return NextResponse.json({ error: 'invalid_slug' }, { status: 400 })
+  if (name.length < 2 || name.length > 80) return NextResponse.json({ error: 'invalid_name' }, { status: 400 })
 
-  const { error } = await admin.from('user_brand').upsert({ user_id: userId, portfolio_slug: slug, updated_at: new Date().toISOString() }, { onConflict: 'user_id' })
-  if (error?.code === '23505') return NextResponse.json({ error: 'slug_taken' }, { status: 409 })
+  const { error } = await admin.from('user_brand').upsert(
+    { user_id: userId, portfolio_slug: slug, display_name: name, updated_at: new Date().toISOString() },
+    { onConflict: 'user_id' },
+  )
+  // Il vincolo UNIQUE chiude la race tra check e salvataggio.
+  if (error?.code === '23505') return NextResponse.json({ error: 'slug_taken', suggestion: await firstFree(slug, userId) }, { status: 409 })
   if (error) {
-    console.error('portfolio slug error:', error)
+    console.error('portfolio save error:', error)
     return NextResponse.json({ error: 'internal_server_error' }, { status: 500 })
   }
-  return NextResponse.json({ slug })
+  return NextResponse.json({ slug, name })
 }

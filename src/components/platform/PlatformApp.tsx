@@ -8,7 +8,8 @@ import { fetchProjects, type ProjectData } from '@/lib/projects';
 import NewPropertyWizard from './NewPropertyWizard';
 import PropertyDetail from './PropertyDetail';
 import PortfolioView from './PortfolioView';
-import { go, formatPrice } from './api';
+import { go, formatPrice, authFetch } from './api';
+import ProfileForm, { type Profile } from './ProfileForm';
 
 // Routing a hash (#/immobili, #/nuovo, #/immobile/<id>): back/forward del browser
 // funzionano senza toccare le route Next della vecchia dashboard.
@@ -32,8 +33,17 @@ export default function PlatformApp({ userData }: { userData: UserData }) {
   const route = useHashRoute();
   const [projects, setProjects] = useState<ProjectData[] | null>(null);
 
+  const [profile, setProfile] = useState<Profile | null | undefined>(undefined);
+
   const reload = () => fetchProjects().then(setProjects);
-  useEffect(() => { reload(); }, []);
+  useEffect(() => {
+    reload();
+    authFetch('/api/platform/portfolio').then(r => r.json()).then(d => setProfile({ name: d.name, slug: d.slug })).catch(() => setProfile(null));
+  }, []);
+
+  // Onboarding: finche' l'agente non ha scelto nome + indirizzo portfolio, niente piattaforma.
+  if (profile === undefined) return <div className="flex h-full items-center justify-center bg-canvas"><Loader2 className="animate-spin text-muted" /></div>;
+  if (profile && !profile.slug) return <Onboarding onDone={setProfile} />;
 
   const detailId = route.startsWith('/immobile/') ? route.slice('/immobile/'.length) : null;
 
@@ -149,6 +159,19 @@ function PropertyGrid({ projects }: { projects: ProjectData[] | null }) {
           </div>
         </a>
       ))}
+    </div>
+  );
+}
+
+function Onboarding({ onDone }: { onDone: (p: Profile) => void }) {
+  return (
+    <div className="flex h-full items-center justify-center overflow-y-auto bg-canvas px-6 font-body text-ink">
+      <div className="w-full max-w-md rounded-2xl border border-line bg-white p-8">
+        <div className="font-display text-xl font-bold tracking-tight">GetNearMe</div>
+        <h1 className="mt-6 font-display text-2xl font-bold tracking-tight">Come ti chiami?</h1>
+        <p className="mt-1 text-sm text-muted">Il tuo nome apparirà sul portfolio pubblico, la vetrina con i tuoi immobili da condividere con i clienti.</p>
+        <div className="mt-6"><ProfileForm initial={{ name: null, slug: null }} submitLabel="Continua" onSaved={onDone} /></div>
+      </div>
     </div>
   );
 }

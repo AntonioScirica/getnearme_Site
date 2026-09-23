@@ -14,7 +14,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const brand = await getBrand(slug);
   if (!brand) return { title: 'Portfolio non trovato' };
-  const name = brand.company_name || 'Portfolio immobili';
+  const name = brand.company_name || brand.display_name || 'Portfolio immobili';
   return { title: `${name} | Immobili`, description: `Gli immobili di ${name}.` };
 }
 

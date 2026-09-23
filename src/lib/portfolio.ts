@@ -10,6 +10,7 @@ export type PortfolioBrand = {
   user_id: string
   portfolio_slug: string
   company_name: string | null
+  display_name: string | null
   company_email: string | null
   company_website: string | null
   primary_color: string
@@ -39,7 +40,7 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 export async function getBrand(slug: string): Promise<PortfolioBrand | null> {
   const { data } = await admin
     .from('user_brand')
-    .select('user_id, portfolio_slug, company_name, company_email, company_website, primary_color, logo_colored_h, logo_black_h')
+    .select('user_id, portfolio_slug, company_name, display_name, company_email, company_website, primary_color, logo_colored_h, logo_black_h')
     .eq('portfolio_slug', slug)
     .maybeSingle()
   return data

@@ -4,35 +4,20 @@ import { useEffect, useState } from 'react';
 import { Check, Copy, ExternalLink, Loader2 } from 'lucide-react';
 import type { ProjectData } from '@/lib/projects';
 import { authFetch, formatPrice, portfolioUrl, setPublic } from './api';
-
-const ERRORS: Record<string, string> = {
-  invalid_slug: 'Solo lettere minuscole, numeri e trattini, da 3 a 40 caratteri.',
-  slug_taken: 'Questo indirizzo è già preso, scegline un altro.',
-};
+import ProfileForm, { type Profile } from './ProfileForm';
 
 export default function PortfolioView({ projects, onChange }: { projects: ProjectData[] | null; onChange: () => void }) {
-  const [slug, setSlug] = useState<string | null | undefined>(undefined);
-  const [draft, setDraft] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
+  const [profile, setProfile] = useState<Profile | undefined>(undefined);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    authFetch('/api/platform/portfolio').then(r => r.json()).then(d => { setSlug(d.slug); setDraft(d.slug ?? ''); });
+    authFetch('/api/platform/portfolio').then(r => r.json()).then(d => setProfile({ name: d.name, slug: d.slug }));
   }, []);
-
-  const saveSlug = async () => {
-    setSaving(true); setError(null);
-    const res = await authFetch('/api/platform/portfolio', { method: 'PUT', body: JSON.stringify({ slug: draft }) });
-    const d = await res.json();
-    if (res.ok) setSlug(d.slug); else setError(ERRORS[d.error] ?? 'Salvataggio non riuscito.');
-    setSaving(false);
-  };
 
   const toggle = async (p: ProjectData) => { if (await setPublic(p.id, !p.is_public)) onChange(); };
 
-  if (slug === undefined) return <Loader2 className="animate-spin text-muted" />;
-  const url = slug ? portfolioUrl(slug) : null;
+  if (!profile) return <Loader2 className="animate-spin text-muted" />;
+  const url = profile.slug ? portfolioUrl(profile.slug) : null;
 
   return (
     <>
@@ -40,18 +25,7 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
       <p className="mt-1 text-muted">La tua vetrina pubblica: condividi il link, chi lo apre vede gli immobili che pubblichi.</p>
 
       <section className="mt-8 rounded-2xl border border-line bg-white p-6">
-        <label className="text-sm font-medium">Indirizzo del portfolio</label>
-        <div className="mt-2 flex flex-wrap gap-2">
-          <div className="flex min-w-0 flex-1 items-center rounded-lg border border-line text-sm focus-within:border-brand">
-            <span className="pl-3 text-muted">getnearme.it/it/a/</span>
-            <input value={draft} onChange={e => setDraft(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
-              placeholder="il-tuo-nome" className="min-w-0 flex-1 bg-transparent py-2.5 pr-3 outline-none" />
-          </div>
-          <button onClick={saveSlug} disabled={saving || !draft || draft === slug} className="rounded-lg bg-ink px-5 text-sm font-medium text-white disabled:opacity-40">
-            {saving ? 'Salvo...' : 'Salva'}
-          </button>
-        </div>
-        {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+        <ProfileForm key={profile.slug ?? ''} initial={profile} submitLabel="Salva" onSaved={setProfile} />
         {url && (
           <div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
             <a href={url} target="_blank" rel="noreferrer" className="flex items-center gap-1 font-medium text-brand"><ExternalLink size={14} /> Apri portfolio</a>

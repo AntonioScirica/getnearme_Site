@@ -2,7 +2,7 @@ import type { PortfolioBrand } from '@/lib/portfolio';
 
 export default function PortfolioHeader({ brand, locale }: { brand: PortfolioBrand; locale: string }) {
   const logo = brand.logo_colored_h || brand.logo_black_h;
-  const name = brand.company_name || 'Portfolio immobili';
+  const name = brand.company_name || brand.display_name || 'Portfolio immobili';
   return (
     <header className="border-b border-line bg-white">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-4">
