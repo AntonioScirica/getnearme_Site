@@ -45,6 +45,18 @@
   --font-sans: 'Satoshi', system-ui, -apple-system, sans-serif;
 }
 
+/* Nuova piattaforma (src/components/platform). Font caricati in dashboard/layout.tsx. */
+@theme inline {
+  --color-ink: #15181f;
+  --color-muted: #6b7280;
+  --color-canvas: #f4f6fa;
+  --color-line: #e5e8ef;
+  --color-brand: #537eec;
+  --color-ai: #6e56f8;
+  --font-display: var(--font-bricolage), system-ui, sans-serif;
+  --font-body: var(--font-instrument), system-ui, sans-serif;
+}
+
 @keyframes fade-sequence {
 
   0%,

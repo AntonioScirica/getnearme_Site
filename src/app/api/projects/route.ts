@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'bad_request' }, { status: 400 })
   }
 
-  const { nome, addr, prezzo, mq, bagni, camere, titolo, descrizione, cover, thumb, riferimento, tipologia, icons } = body
+  const { nome, addr, prezzo, mq, bagni, camere, locali, titolo, descrizione, cover, thumb, riferimento, tipologia, icons, import_data } = body
 
   if (!nome) {
     return NextResponse.json({ error: 'missing_name' }, { status: 400 })
@@ -83,6 +83,7 @@ export async function POST(req: NextRequest) {
       mq: typeof mq === 'number' ? mq : 0,
       bagni: typeof bagni === 'number' ? bagni : 0,
       camere: typeof camere === 'number' ? camere : 0,
+      locali: typeof locali === 'number' ? locali : null,
       titolo: titolo || '',
       descrizione: typeof descrizione === 'string' ? descrizione : '',
       cover: cover || '',
@@ -90,6 +91,7 @@ export async function POST(req: NextRequest) {
       riferimento: typeof riferimento === 'string' ? riferimento : '',
       tipologia: typeof tipologia === 'string' ? tipologia : '',
       icons: icons || { prezzo: 'euro', mq: 'area', camere: 'bed', bagni: 'bath' },
+      ...(import_data && typeof import_data === 'object' ? { import_data } : {}),
     })
     .select('*')
     .single()
