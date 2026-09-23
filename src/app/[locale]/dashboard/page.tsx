@@ -76,11 +76,16 @@ async function fetchProfile(userId: string, email: string, avatarUrl: string | n
   };
 }
 
+// Se Supabase non risponde (es. API giu') non restare in caricamento infinito.
+const withTimeout = <T,>(p: PromiseLike<T>, ms = 8000): Promise<T> =>
+  Promise.race([Promise.resolve(p), new Promise<T>((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))]);
+
 export default function DashboardPage() {
   const params = useParams();
   const locale = (params?.locale as string) || 'it';
   const [loading, setLoading] = useState(true);
   const [userData, setUserData] = useState<UserData | null>(null);
+  const [unavailable, setUnavailable] = useState(false);
 
   useEffect(() => {
     async function init() {
@@ -99,7 +104,7 @@ export default function DashboardPage() {
           // se l'utente non esiste piu' (401/403) buttiamo giu' la sessione e
           // lasciamo che il redirect mandi al login. Errori di rete: fail-open
           // (non sloggare un utente valido solo perche' offline).
-          const { data: userRes, error: userErr } = await supabase.auth.getUser();
+          const { data: userRes, error: userErr } = await withTimeout(supabase.auth.getUser());
           const status = (userErr as { status?: number } | null)?.status;
           if (userErr && (status === 401 || status === 403)) {
             await supabase.auth.signOut().catch(() => {});
@@ -108,11 +113,12 @@ export default function DashboardPage() {
           }
           const u = userRes?.user ?? session.user;
           guardUserCache(u.id);
-          const profile = await fetchProfile(u.id, u.email || '', avatarFromUser(u));
+          const profile = await withTimeout(fetchProfile(u.id, u.email || '', avatarFromUser(u)));
           setUserData(profile);
         }
       } catch (e) {
         console.error('dashboard init error', e);
+        if ((e as Error)?.message === 'timeout') setUnavailable(true);
       } finally {
         setLoading(false);
       }
@@ -175,7 +181,7 @@ export default function DashboardPage() {
   // Non autenticato -> mandiamo al login vero (checkout/agency). Niente piu'
   // pagina di login custom: si usa sempre il login del checkout.
   useEffect(() => {
-    if (!loading && !userData) {
+    if (!loading && !userData && !unavailable) {
       // Post eliminazione account: si va alla home landing, non al login.
       let postDelete = false;
       try { postDelete = sessionStorage.getItem('gnm_post_delete') === '1'; } catch { /* private mode */ }
@@ -186,7 +192,16 @@ export default function DashboardPage() {
       }
       window.location.replace(`/${locale}/checkout/agency`);
     }
-  }, [loading, userData, locale]);
+  }, [loading, userData, locale, unavailable]);
+
+  if (unavailable) {
+    return (
+      <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', gap: 14, alignItems: 'center', justifyContent: 'center', background: '#faf9f7', fontSize: 15, color: '#444' }}>
+        <div>Servizio momentaneamente non disponibile.</div>
+        <button onClick={() => window.location.reload()} style={{ padding: '10px 18px', borderRadius: 10, background: '#15181f', color: '#fff', border: 0, cursor: 'pointer' }}>Riprova</button>
+      </div>
+    );
+  }
 
   if (loading || !userData) {
     return (
