@@ -281,10 +281,9 @@ function Results({ listing, analysis: a, onSaved, onRestart }: { listing: Listin
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <button onClick={() => setShowBefore(v => !v)} className="rounded-lg border border-line px-4 py-2 text-sm font-medium hover:bg-canvas">{showBefore ? 'Nascondi originale' : 'Confronta con originale'}</button>
-            <button onClick={save} disabled={saving} className="flex items-center gap-2 rounded-lg border border-line px-4 py-2 text-sm font-medium hover:bg-canvas disabled:opacity-50">
-              {saving && <Loader2 size={16} className="animate-spin" />} {saving ? `Salvo ${listing.photos.length} foto...` : 'Salva nei miei immobili'}
+            <button onClick={save} disabled={saving} className="flex items-center gap-2 rounded-lg bg-ink px-4 py-2 text-sm font-medium text-white disabled:opacity-50">
+              {saving && <Loader2 size={16} className="animate-spin" />} {saving ? `Salvo ${listing.photos.length} foto...` : 'Aggiungi ai miei immobili'}
             </button>
-            <CopyBtn text={`${titolo}\n\n${descrizione}`} label="Copia titolo e descrizione" solid />
           </div>
         </div>
 
