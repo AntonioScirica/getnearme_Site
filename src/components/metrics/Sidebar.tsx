@@ -18,6 +18,7 @@ import {
   ListTodo,
   Sun,
   Moon,
+  Cpu,
 } from "lucide-react";
 import { MONO } from "./types";
 import type { PageId } from "./types";
@@ -28,6 +29,7 @@ const navItems: { id: PageId; label: string; icon: React.ComponentType<{ classNa
   { id: "users",       label: "Utenti",       icon: Users },
   { id: "exports",     label: "Agenzie",      icon: Building2 },
   { id: "costs",       label: "Costi",        icon: Wallet },
+  { id: "runpod",      label: "AI / RunPod",  icon: Cpu },
   { id: "emails",      label: "Email",        icon: Mail },
   { id: "crm",         label: "CRM",          icon: Contact },
   { id: "ads",         label: "Ads",          icon: Target },
