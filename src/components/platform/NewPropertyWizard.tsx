@@ -87,15 +87,9 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
         nome: ai.titolo, titolo: ai.titolo, descrizione: ai.descrizione, addr: form.addr, tipologia: form.tipologia,
         prezzo: p.prezzo, mq: p.mq, locali: p.locali || undefined, camere: p.camere, bagni: p.bagni,
         cover: urls[0] ?? '', thumb,
-        import_data: { source: 'platform', contratto: form.contratto, piano: form.piano, classe: form.classe, caratteristiche: form.caratteristiche, note: form.note, score: ai.score, suggerimenti: ai.suggerimenti },
+        import_data: { source: 'platform', photos: urls, contratto: form.contratto, piano: form.piano, classe: form.classe, caratteristiche: form.caratteristiche, note: form.note, score: ai.score, suggerimenti: ai.suggerimenti },
       });
       if (!project) throw new Error();
-      const { data: { session } } = await supabase.auth.getSession();
-      await Promise.all(urls.map(url => fetch('/api/media', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}` },
-        body: JSON.stringify({ project_id: project.id, url, type: 'original' }),
-      })));
       onCreated(project);
     } catch {
       setError('Salvataggio non riuscito. Riprova.');

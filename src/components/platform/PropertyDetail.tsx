@@ -1,31 +1,16 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { ArrowLeft, Loader2, MapPin } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
 import type { ProjectData } from '@/lib/projects';
 import { formatPrice } from './PlatformApp';
 
-type Media = { id: string; url: string; type: string };
-
 export default function PropertyDetail({ project, loading }: { project?: ProjectData; loading: boolean }) {
-  const [photos, setPhotos] = useState<Media[]>([]);
-
-  useEffect(() => {
-    if (!project) return;
-    (async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
-      const res = await fetch(`/api/media?projectId=${project.id}`, { headers: { Authorization: `Bearer ${session.access_token}` } });
-      if (res.ok) setPhotos(((await res.json()).media ?? []).filter((m: Media) => m.type === 'original').reverse());
-    })();
-  }, [project]);
-
   if (loading) return <Loader2 className="animate-spin text-muted" />;
   if (!project) return <p className="text-muted">Immobile non trovato. <a href="#/immobili" className="text-brand">Torna agli immobili</a>.</p>;
 
-  const extra = (project.import_data ?? {}) as { contratto?: string; piano?: string; classe?: string; caratteristiche?: string[]; score?: number; suggerimenti?: string[] };
-  const gallery = photos.length ? photos.map(p => p.url) : project.cover ? [project.cover] : [];
+  const extra = (project.import_data ?? {}) as { contratto?: string; piano?: string; classe?: string; caratteristiche?: string[]; score?: number; suggerimenti?: string[]; photos?: string[] };
+  // Foto su R2, elenco URL in import_data.photos (la tabella media non esiste in prod).
+  const gallery = extra.photos?.length ? extra.photos : project.cover ? [project.cover] : [];
   const facts = [
     ['Superficie', project.mq ? `${project.mq} m²` : null],
     ['Locali', project.locali],
