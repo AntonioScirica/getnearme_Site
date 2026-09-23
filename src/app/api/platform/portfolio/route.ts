@@ -8,6 +8,9 @@ const admin = createClient(
 
 // Stesso vincolo del CHECK su user_brand.portfolio_slug.
 const SLUG_RE = /^[a-z0-9](?:[a-z0-9-]{1,38}[a-z0-9])$/
+// Sul dominio vetrina questi prefissi non arrivano alla pagina portfolio (esclusi dal matcher in proxy.ts).
+const RESERVED_RE = /^(api|metrics|nfc)/
+const validSlug = (s: string) => SLUG_RE.test(s) && !RESERVED_RE.test(s)
 
 const getUserId = async (req: NextRequest) => {
   const token = req.headers.get('authorization')?.replace('Bearer ', '')
@@ -35,7 +38,7 @@ export async function GET(req: NextRequest) {
 
   const check = req.nextUrl.searchParams.get('check')
   if (check !== null) {
-    if (!SLUG_RE.test(check)) return NextResponse.json({ available: false, suggestion: null, invalid: true })
+    if (!validSlug(check)) return NextResponse.json({ available: false, suggestion: null, invalid: true })
     const suggestion = await firstFree(check, userId)
     return NextResponse.json({ available: suggestion === check, suggestion })
   }
@@ -51,7 +54,7 @@ export async function PUT(req: NextRequest) {
   try { body = await req.json() } catch { return NextResponse.json({ error: 'bad_request' }, { status: 400 }) }
   const { slug } = body
   const name = typeof body.name === 'string' ? body.name.trim() : ''
-  if (typeof slug !== 'string' || !SLUG_RE.test(slug)) return NextResponse.json({ error: 'invalid_slug' }, { status: 400 })
+  if (typeof slug !== 'string' || !validSlug(slug)) return NextResponse.json({ error: 'invalid_slug' }, { status: 400 })
   if (name.length < 2 || name.length > 80) return NextResponse.json({ error: 'invalid_name' }, { status: 400 })
 
   const { error } = await admin.from('user_brand').upsert(

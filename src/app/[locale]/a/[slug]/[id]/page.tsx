@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { ArrowLeft, MapPin } from 'lucide-react';
-import { getBrand, getPublicProperty } from '@/lib/portfolio';
+import { getBrand, getPublicProperty, portfolioBase } from '@/lib/portfolio';
 import PortfolioHeader from '../PortfolioHeader';
 
 export const revalidate = 60;
@@ -21,7 +21,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { property: p } = data;
   const description = p.descrizione?.slice(0, 160);
   return {
-    title: p.titolo || p.nome,
+    title: { absolute: `${p.titolo || p.nome} | ${data.brand.company_name || data.brand.display_name || 'Immobili'}` },
     description,
     openGraph: { title: p.titolo || p.nome, description, images: p.cover ? [p.cover] : [] },
   };
@@ -32,6 +32,7 @@ export default async function PublicPropertyPage({ params }: Props) {
   const data = await load(slug, id);
   if (!data) notFound();
   const { brand, property: p } = data;
+  const base = await portfolioBase(locale, slug);
   const extra = p.import_data ?? {};
   const gallery = extra.photos?.length ? extra.photos : p.cover ? [p.cover] : [];
   const facts = [
@@ -45,9 +46,9 @@ export default async function PublicPropertyPage({ params }: Props) {
 
   return (
     <>
-      <PortfolioHeader brand={brand} locale={locale} />
+      <PortfolioHeader brand={brand} base={base} />
       <main className="mx-auto max-w-6xl px-6 py-8">
-        <a href={`/${locale}/a/${slug}`} className="inline-flex items-center gap-1 text-sm text-muted hover:text-ink"><ArrowLeft size={16} /> Tutti gli immobili</a>
+        <a href={base} className="inline-flex items-center gap-1 text-sm text-muted hover:text-ink"><ArrowLeft size={16} /> Tutti gli immobili</a>
 
         {gallery.length > 0 && (
           <div className="mt-4 grid gap-2 overflow-hidden rounded-2xl sm:h-[28rem] sm:grid-cols-4 sm:grid-rows-2">

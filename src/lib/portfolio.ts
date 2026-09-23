@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { headers } from 'next/headers'
 
 // Lettura pubblica del portfolio: service role lato server, SOLO immobili is_public.
 const admin = createClient(
@@ -57,4 +58,10 @@ export async function getPublicProperty(userId: string, id: string): Promise<Pub
   const { data } = await admin.from('projects').select(PROPERTY_COLS)
     .eq('id', id).eq('user_id', userId).eq('is_public', true).maybeSingle()
   return data
+}
+
+// Base dei link interni: sul dominio vetrina /<slug>, sul sito /<locale>/a/<slug>.
+export async function portfolioBase(locale: string, slug: string): Promise<string> {
+  const host = (await headers()).get('host')?.split(':')[0].replace(/^www\./, '')
+  return host && host === process.env.NEXT_PUBLIC_PORTFOLIO_HOST ? `/${slug}` : `/${locale}/a/${slug}`
 }

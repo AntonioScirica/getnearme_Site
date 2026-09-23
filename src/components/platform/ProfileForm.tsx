@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Check, Loader2, X } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import { authFetch } from './api';
+import { authFetch, portfolioPrefix } from './api';
 
 export type Profile = { name: string | null; slug: string | null };
 
@@ -72,7 +72,7 @@ export default function ProfileForm({ initial, submitLabel, onSaved }: { initial
       <div>
         <label className="mb-1.5 block text-sm font-medium">Indirizzo del tuo portfolio</label>
         <div className="flex items-center rounded-lg border border-line bg-white text-sm focus-within:border-brand">
-          <span className="pl-3 text-muted">getnearme.it/it/a/</span>
+          <span className="pl-3 text-muted">{portfolioPrefix()}</span>
           <input value={slug} onChange={e => { setSlugTouched(true); setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 40)); }}
             placeholder="mario-rossi" className="min-w-0 flex-1 bg-transparent py-2.5 outline-none" />
           <span className="pr-3">
