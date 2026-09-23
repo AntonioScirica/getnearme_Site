@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@supabase/supabase-js'
+import { AI_MOCK, mockDelay, mockFor } from './aiMock'
 
 // Unico punto di accesso all'AI della piattaforma (describe, analyze).
 // Con AI_BASE_URL impostato (endpoint vLLM su RunPod, API compatibile OpenAI) usa il
@@ -21,6 +22,7 @@ type Tokens = { input?: number; output?: number }
 type Result<T> = { ok: true; data: T } | { ok: false; error: 'refused' | 'empty' | 'failed'; detail?: string }
 
 export async function generateJson<T>(args: Args): Promise<Result<T>> {
+  if (AI_MOCK) { await mockDelay(); return { ok: true, data: mockFor<T>(args.usage.kind) } } // niente costi, niente log
   const runpod = !!process.env.AI_BASE_URL
   const t0 = Date.now()
   const tokens: Tokens = {}

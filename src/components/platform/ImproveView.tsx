@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, Camera, Check, Copy, Download, ExternalLink, Link2, Loader2, Lock, Puzzle, Sparkles, Wand2 } from 'lucide-react';
 import { downloadImage, generateStaging } from '@/lib/staging';
+import { AI_MOCK, mockDelay } from '@/lib/aiMock';
 import { authFetch, extSend, EXTENSION_URL, go } from './api';
 
 // "Migliora annuncio": link portale -> estensione legge l'annuncio in background ->
@@ -367,7 +368,8 @@ function PhotoFix({ src, index, edit }: { src: string; index: number; edit: stri
 
   const run = async () => {
     setBusy(true); setErr(null);
-    const r = await generateStaging({ imageDataUrl: src, customPrompt: prompt });
+    // Modalita' finta: nessuna chiamata allo staging (a pagamento), torna la stessa foto.
+    const r = AI_MOCK ? (await mockDelay(2000), { ok: true as const, outputUrl: src }) : await generateStaging({ imageDataUrl: src, customPrompt: prompt });
     setBusy(false);
     if (r.ok) setOut(r.outputUrl); else setErr(r.error);
   };
