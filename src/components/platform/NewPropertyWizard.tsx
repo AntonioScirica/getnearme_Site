@@ -97,7 +97,10 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
   return (
     <div className="mx-auto max-w-3xl">
       <a href="#/" className="inline-flex items-center gap-1 text-sm text-muted hover:text-ink"><ArrowLeft size={16} /> Home</a>
-      <h1 className="mt-4 font-display text-3xl font-bold tracking-tight">Nuovo immobile</h1>
+      <div className="mt-4 flex items-end justify-between gap-4">
+        <h1 className="font-display text-3xl font-bold tracking-tight">Nuovo immobile</h1>
+        <a href="#/importa" className="text-sm text-brand">Importa da CSV o Excel</a>
+      </div>
       <div className="mt-4 flex gap-2">
         {['Dati', 'Foto', 'Annuncio'].map((s, i) => (
           <div key={s} className={`h-1.5 flex-1 rounded-full ${i < step ? 'bg-brand' : 'bg-line'}`} title={s} />

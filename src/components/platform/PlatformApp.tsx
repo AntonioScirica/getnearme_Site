@@ -8,6 +8,7 @@ import { fetchProjects, type ProjectData } from '@/lib/projects';
 import NewPropertyWizard from './NewPropertyWizard';
 import PropertyDetail from './PropertyDetail';
 import PortfolioView from './PortfolioView';
+import ImportView from './ImportView';
 import { go, formatPrice, authFetch } from './api';
 import ProfileForm, { type Profile } from './ProfileForm';
 
@@ -73,7 +74,9 @@ export default function PlatformApp({ userData }: { userData: UserData }) {
 
       <main className="flex-1 overflow-y-auto">
         <div className="mx-auto max-w-6xl px-8 py-10">
-          {route === '/nuovo' ? (
+          {route === '/importa' ? (
+            <ImportView onDone={reload} />
+          ) : route === '/nuovo' ? (
             <NewPropertyWizard onCreated={(p) => { reload(); go(`/immobile/${p.id}`); }} />
           ) : detailId ? (
             <PropertyDetail project={projects?.find(p => p.id === detailId)} loading={projects === null} onChange={reload} />
@@ -118,6 +121,7 @@ function HomeView({ projects }: { projects: ProjectData[] | null }) {
           <h2 className="mt-4 font-display text-xl font-semibold">Crea da zero</h2>
           <p className="mt-1 text-sm text-muted">Inserisci dati e foto: generiamo titolo, descrizione e score, e l&apos;immobile finisce nel tuo portfolio pubblico.</p>
           <span className="mt-5 inline-flex items-center gap-1 text-sm font-medium text-brand">Inizia <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" /></span>
+          <span className="mt-2 block text-xs text-muted">Hai già un file? <span onClick={e => { e.preventDefault(); go('/importa'); }} className="text-brand underline">Importa da CSV o Excel</span></span>
         </a>
       </div>
 
