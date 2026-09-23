@@ -28,3 +28,8 @@ export async function rehostImage(url: string, key: string, maxDim: number, qual
     return null
   }
 }
+
+export async function uploadJpeg(body: Buffer, key: string): Promise<string> {
+  await s3.send(new PutObjectCommand({ Bucket: process.env.R2_BUCKET_NAME, Key: key, Body: body, ContentType: 'image/jpeg' }))
+  return `${process.env.R2_PUBLIC_URL}/${key}`
+}

@@ -34,7 +34,7 @@ export async function generateJson<T>(args: Args): Promise<Result<T>> {
 const CLAUDE_USD_PER_MTOK = { input: 5, output: 25 } // claude-opus-5
 let admin: ReturnType<typeof createClient> | null = null
 
-async function logUsage(u: Args['usage'], runpod: boolean, ms: number, tk: Tokens, ok: boolean) {
+export async function logUsage(u: Args['usage'], runpod: boolean, ms: number, tk: Tokens, ok: boolean, model?: string) {
   const gpuPerHour = Number(process.env.AI_GPU_USD_PER_HOUR) || 1.22
   const cost = runpod
     ? (ms / 3_600_000) * gpuPerHour
@@ -43,7 +43,7 @@ async function logUsage(u: Args['usage'], runpod: boolean, ms: number, tk: Token
     admin ??= createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
     await admin.from('ai_usage').insert({
       user_id: u.userId, kind: u.kind, provider: runpod ? 'runpod' : 'anthropic',
-      model: runpod ? process.env.AI_MODEL : 'claude-opus-5',
+      model: model ?? (runpod ? process.env.AI_MODEL : 'claude-opus-5'),
       input_tokens: tk.input ?? null, output_tokens: tk.output ?? null,
       duration_ms: ms, cost_usd: Number(cost.toFixed(6)), ok,
     } as never)

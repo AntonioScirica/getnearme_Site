@@ -2,8 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, Camera, Check, Copy, Download, ExternalLink, Link2, Loader2, Lock, Puzzle, Sparkles, Wand2 } from 'lucide-react';
-import { downloadImage, generateStaging } from '@/lib/staging';
-import { AI_MOCK, mockDelay } from '@/lib/aiMock';
+import { downloadImage } from '@/lib/staging';
 import { authFetch, extSend, EXTENSION_URL, go } from './api';
 
 // "Migliora annuncio": link portale -> estensione legge l'annuncio in background ->
@@ -352,10 +351,12 @@ function PhotoFix({ src, index, edit }: { src: string; index: number; edit: stri
 
   const run = async () => {
     setBusy(true); setErr(null);
-    // Modalita' finta: nessuna chiamata allo staging (a pagamento), torna la stessa foto.
-    const r = AI_MOCK ? (await mockDelay(2000), { ok: true as const, outputUrl: src }) : await generateStaging({ imageDataUrl: src, customPrompt: prompt });
+    // Qwen-Image sul nostro endpoint RunPod (in modalita' finta la route torna la stessa foto).
+    const res = await authFetch('/api/platform/photo-edit', { method: 'POST', body: JSON.stringify({ imageUrl: src, prompt }) }).catch(() => null);
     setBusy(false);
-    if (r.ok) setOut(r.outputUrl); else setErr(r.error);
+    const d = res ? await res.json().catch(() => ({})) : {};
+    if (res?.ok && d.url) setOut(d.url);
+    else setErr(d.error === 'timeout' ? 'La GPU si sta avviando, riprova tra un minuto.' : 'Modifica non riuscita, riprova.');
   };
 
   return (
