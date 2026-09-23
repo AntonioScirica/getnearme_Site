@@ -22,6 +22,7 @@ export type ProjectData = {
   nStaging?: number
   nVideo?: number
   nPost?: number
+  is_public?: boolean
 }
 
 export async function fetchProjects(): Promise<ProjectData[]> {

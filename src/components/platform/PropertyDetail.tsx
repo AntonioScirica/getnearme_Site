@@ -2,9 +2,10 @@
 
 import { ArrowLeft, Loader2, MapPin } from 'lucide-react';
 import type { ProjectData } from '@/lib/projects';
-import { formatPrice } from './PlatformApp';
+import { formatPrice, setPublic } from './api';
+import { PublicSwitch } from './PortfolioView';
 
-export default function PropertyDetail({ project, loading }: { project?: ProjectData; loading: boolean }) {
+export default function PropertyDetail({ project, loading, onChange }: { project?: ProjectData; loading: boolean; onChange: () => void }) {
   if (loading) return <Loader2 className="animate-spin text-muted" />;
   if (!project) return <p className="text-muted">Immobile non trovato. <a href="#/immobili" className="text-brand">Torna agli immobili</a>.</p>;
 
@@ -22,7 +23,10 @@ export default function PropertyDetail({ project, loading }: { project?: Project
 
   return (
     <>
-      <a href="#/immobili" className="inline-flex items-center gap-1 text-sm text-muted hover:text-ink"><ArrowLeft size={16} /> Immobili</a>
+      <div className="flex items-center justify-between">
+        <a href="#/immobili" className="inline-flex items-center gap-1 text-sm text-muted hover:text-ink"><ArrowLeft size={16} /> Immobili</a>
+        <PublicSwitch on={!!project.is_public} onClick={async () => { if (await setPublic(project.id, !project.is_public)) onChange(); }} />
+      </div>
 
       {gallery.length > 0 && (
         <div className="mt-4 grid h-96 grid-cols-4 grid-rows-2 gap-2 overflow-hidden rounded-2xl">

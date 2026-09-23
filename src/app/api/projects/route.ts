@@ -51,6 +51,7 @@ export async function GET(req: NextRequest) {
     import_data: p.import_data,
     icons: p.icons,
     createdAt: p.created_at,
+    is_public: p.is_public,
   })) || []
 
   return NextResponse.json({ projects: formattedProjects })
@@ -119,6 +120,7 @@ export async function POST(req: NextRequest) {
     import_data: project.import_data,
     icons: project.icons,
     createdAt: project.created_at,
+    is_public: project.is_public,
   }
 
   return NextResponse.json({ project: formattedProject })
@@ -135,7 +137,7 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: 'bad_request' }, { status: 400 })
   }
 
-  const { id, nome, addr, prezzo, mq, bagni, camere, locali, titolo, descrizione, cover, thumb, riferimento, tipologia, icons, import_data } = body
+  const { id, nome, addr, prezzo, mq, bagni, camere, locali, titolo, descrizione, cover, thumb, riferimento, tipologia, icons, import_data, is_public } = body
 
   if (!id) {
     return NextResponse.json({ error: 'missing_id' }, { status: 400 })
@@ -157,6 +159,7 @@ export async function PUT(req: NextRequest) {
   if (tipologia !== undefined) updates.tipologia = tipologia
   if (icons !== undefined) updates.icons = icons
   if (import_data !== undefined) updates.import_data = import_data
+  if (typeof is_public === 'boolean') updates.is_public = is_public
 
   // Team agenzia: i membri possono modificare gli immobili condivisi del team.
   const teamIds = await getTeamUserIds(admin, userId)
@@ -191,6 +194,7 @@ export async function PUT(req: NextRequest) {
     import_data: project.import_data,
     icons: project.icons,
     createdAt: project.created_at,
+    is_public: project.is_public,
   }
 
   return NextResponse.json({ project: formattedProject })

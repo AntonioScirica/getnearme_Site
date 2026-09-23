@@ -7,6 +7,8 @@ import { supabase } from '@/lib/supabase';
 import { fetchProjects, type ProjectData } from '@/lib/projects';
 import NewPropertyWizard from './NewPropertyWizard';
 import PropertyDetail from './PropertyDetail';
+import PortfolioView from './PortfolioView';
+import { go, formatPrice } from './api';
 
 // Routing a hash (#/immobili, #/nuovo, #/immobile/<id>): back/forward del browser
 // funzionano senza toccare le route Next della vecchia dashboard.
@@ -19,10 +21,6 @@ function useHashRoute(): string {
   }, []);
   return route;
 }
-
-export const go = (path: string) => { window.location.hash = path; };
-
-export const formatPrice = (n: number) => (n ? `€ ${n.toLocaleString('it-IT')}` : 'Prezzo n.d.');
 
 const NAV = [
   { path: '/', label: 'Home', icon: Home },
@@ -68,11 +66,11 @@ export default function PlatformApp({ userData }: { userData: UserData }) {
           {route === '/nuovo' ? (
             <NewPropertyWizard onCreated={(p) => { reload(); go(`/immobile/${p.id}`); }} />
           ) : detailId ? (
-            <PropertyDetail project={projects?.find(p => p.id === detailId)} loading={projects === null} />
+            <PropertyDetail project={projects?.find(p => p.id === detailId)} loading={projects === null} onChange={reload} />
           ) : route === '/immobili' ? (
             <PropertyList projects={projects} />
           ) : route === '/portfolio' ? (
-            <p className="text-muted">Portfolio pubblico: in arrivo.</p>
+            <PortfolioView projects={projects} onChange={reload} />
           ) : (
             <HomeView projects={projects} />
           )}

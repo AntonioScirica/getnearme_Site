@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { ArrowLeft, ImagePlus, Loader2, Sparkles, X } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { authFetch } from './api';
 import { createProject, type ProjectData } from '@/lib/projects';
 import { downscaleDataUrl, uploadDataUrl } from '@/lib/imageUpload';
 
@@ -57,10 +57,8 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
   const generate = async () => {
     setStep(3); setBusy('Scrivo titolo e descrizione...'); setError(null);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const res = await fetch('/api/platform/describe', {
+      const res = await authFetch('/api/platform/describe', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}` },
         body: JSON.stringify({ property: property(), nFoto: photos.length }),
       });
       if (!res.ok) throw new Error();
