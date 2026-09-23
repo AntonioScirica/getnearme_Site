@@ -12,9 +12,13 @@ export const maxDuration = 60
 // Flow "Migliora annuncio": riceve lo snapshot letto dall'estensione (o incollato a
 // mano) e restituisce diagnosi + annuncio riscritto. Le foto vanno a Claude come URL
 // dei CDN dei portali, cosi' valuta anche la qualita' del servizio fotografico.
+// Modello: Qwen self-hosted su RunPod via lib/ai (Claude solo come ripiego finche' l'endpoint non c'e').
 // ponytail: niente addebito crediti per ora, da agganciare prima dello switch.
 const PHOTO_RE = /^https:\/\/(?:pwm\.im-cdn\.it|img\d*\.idealista\.(?:it|com|pt)|images?-?\d*\.casa\.it)\//
-const MAX_PHOTOS = 6
+const MAX_PHOTOS = 3
+// Per l'AI bastano foto medie: meno pixel = meno token = meno secondi GPU.
+// immobiliare: stesso id in piu' tagli, m-c e' circa 400-500px.
+const forAi = (url: string) => url.replace(/(pwm\.im-cdn\.it\/image\/\d+)\/[^/]+$/, '$1/m-c.jpg')
 
 const str = { type: 'string' }
 const strList = { type: 'array', items: str }
@@ -83,7 +87,7 @@ export async function POST(req: NextRequest) {
   const r = await generateJson<Record<string, unknown>>({
     system: SYSTEM,
     text: `Annuncio attuale (JSON):\n${text}`,
-    images: photos.slice(0, MAX_PHOTOS),
+    images: photos.slice(0, MAX_PHOTOS).map(forAi),
     schema: SCHEMA,
   })
   if (!r.ok) {
