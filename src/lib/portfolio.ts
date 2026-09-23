@@ -32,7 +32,7 @@ export type PublicProperty = {
   bagni: number
   tipologia: string | null
   cover: string
-  import_data: { photos?: string[]; contratto?: string; piano?: string; classe?: string; caratteristiche?: string[]; info?: Record<string, string | undefined> } | null
+  import_data: Record<string, unknown> | null
 }
 
 const PROPERTY_COLS = 'id, titolo, nome, descrizione, addr, prezzo, mq, locali, camere, bagni, tipologia, cover, import_data'
