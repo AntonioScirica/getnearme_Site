@@ -2,9 +2,17 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import DashboardApp from '@/components/dashboard/DashboardApp';
+
+// Nuova piattaforma (branch ui-rewrite): visibile solo a queste email finche'
+// non si fa lo switch. Switch = rendere sempre <PlatformApp/> e cancellare
+// DashboardApp. ?ui=old forza la vecchia per confronto.
+// ponytail: gate client-side, nasconde solo la UI; i dati restano protetti da RLS.
+const PLATFORM_PREVIEW_EMAILS = ['as.scirica@gmail.com'];
+const PlatformApp = dynamic(() => import('@/components/platform/PlatformApp'), { ssr: false });
 
 export type UserData = {
   id: string;
@@ -188,5 +196,6 @@ export default function DashboardPage() {
     );
   }
 
-  return <DashboardApp userData={userData} />;
+  const showNewPlatform = PLATFORM_PREVIEW_EMAILS.includes(userData.email) && new URLSearchParams(window.location.search).get('ui') !== 'old';
+  return showNewPlatform ? <PlatformApp userData={userData} /> : <DashboardApp userData={userData} />;
 }
