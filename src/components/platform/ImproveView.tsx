@@ -279,85 +279,82 @@ function Results({ listing, analysis: a, onSaved, onRestart }: { listing: Listin
         </div>
       </section>
 
-      <div className="grid gap-8 lg:grid-cols-[1fr_400px]">
-        {/* Colonna sinistra: diagnosi */}
-        <div className="space-y-8">
-          <section>
-            <h2 className="font-display text-xl font-semibold">Cosa sistemare, in ordine di priorità</h2>
-            <p className="mt-1 text-sm text-muted">Per ogni punto: cosa non va, perché ti fa perdere contatti, cosa fare adesso.</p>
-            <ol className="mt-4 space-y-3">
-              {a.problemi.map((p, i) => {
-                const g = GRAVITA[p.gravita];
-                return (
-                  <li key={i} className="rounded-2xl border border-line bg-white p-5">
-                    <div className="flex items-center gap-3">
-                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-ink font-display text-sm font-semibold text-white">{i + 1}</span>
-                      <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ${g.cls}`}>{g.label}</span>
-                      <span className="text-xs uppercase tracking-wide text-muted">{p.area}</span>
-                      <span className="ml-auto"><CopyBtn text={`${p.problema}\nPerché: ${p.perche}\nCome: ${p.soluzione}`} /></span>
-                    </div>
-                    <p className="mt-3 text-[15px] font-medium leading-snug">{p.problema}</p>
-                    <p className="mt-1.5 text-sm text-muted"><span className="font-medium text-ink/70">Perché conta:</span> {p.perche}</p>
-                    <div className="mt-3 flex items-start gap-3 rounded-xl bg-ai/5 p-3.5 ring-1 ring-ai/15">
-                      <Sparkles size={16} className="mt-0.5 shrink-0 text-ai" />
-                      <div className="min-w-0 flex-1">
-                        <div className="text-xs font-semibold uppercase tracking-wide text-ai">Come sistemarlo</div>
-                        <p className="mt-1 text-sm leading-relaxed">{p.soluzione}</p>
-                      </div>
-                      <CopyBtn text={p.soluzione} />
-                    </div>
-                  </li>
-                );
-              })}
-            </ol>
-          </section>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            <Section title="Dati da aggiungere" hint="I compratori li cercano prima di chiamare." copyText={a.dati_mancanti.map(d => `- ${d}`).join('\n')}>
-              {a.dati_mancanti.length ? a.dati_mancanti.map(d => (
-                <li key={d} className="flex items-center gap-2 text-sm"><span className="h-4 w-4 shrink-0 rounded border border-line" />{d}</li>
-              )) : <li className="text-sm text-muted">Nessuno, i dati principali ci sono.</li>}
-            </Section>
-            <Section title="Foto: cosa rifare" hint={`Valutate le prime ${Math.min(6, listing.photos.length)} foto.`} copyText={a.foto_consigli.map(f => `- ${f}`).join('\n')}>
-              {a.foto_consigli.map(f => <li key={f} className="flex gap-2 text-sm"><span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-ai" />{f}</li>)}
-            </Section>
+      {/* Annuncio riscritto: prima cosa, a tutta larghezza */}
+      <section className="rounded-2xl border border-ai/30 bg-white p-6 shadow-[0_8px_30px_-12px] shadow-ai/30">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 className="flex items-center gap-2 font-display text-xl font-semibold"><Sparkles size={18} className="text-ai" /> Annuncio riscritto</h2>
+            <p className="mt-1 text-sm text-muted">Pronto da incollare sul portale. Puoi ritoccarlo qui prima di copiare.</p>
           </div>
-
-          {!!a.punti_forza.length && (
-            <Section title="Cosa funziona già" hint="Da tenere anche nella nuova versione." copyText={a.punti_forza.map(f => `- ${f}`).join('\n')}>
-              {a.punti_forza.map(f => <li key={f} className="flex gap-2 text-sm text-muted"><Check size={15} className="mt-0.5 shrink-0 text-green-600" />{f}</li>)}
-            </Section>
-          )}
+          <div className="flex flex-wrap items-center gap-2">
+            <button onClick={() => setShowBefore(v => !v)} className="rounded-lg border border-line px-4 py-2 text-sm font-medium hover:bg-canvas">{showBefore ? 'Nascondi originale' : 'Confronta con originale'}</button>
+            <button onClick={save} disabled={saving} className="flex items-center gap-2 rounded-lg border border-line px-4 py-2 text-sm font-medium hover:bg-canvas disabled:opacity-50">
+              {saving && <Loader2 size={16} className="animate-spin" />} Salva nei miei immobili
+            </button>
+            <CopyBtn text={`${titolo}\n\n${descrizione}`} label="Copia titolo e descrizione" solid />
+          </div>
         </div>
 
-        {/* Colonna destra: annuncio riscritto */}
-        <aside className="h-fit space-y-4 lg:sticky lg:top-6">
-          <div className="rounded-2xl border border-ai/30 bg-white p-5 shadow-[0_8px_30px_-12px] shadow-ai/30">
-            <div className="flex items-center justify-between">
-              <h2 className="flex items-center gap-2 font-display text-lg font-semibold"><Sparkles size={16} className="text-ai" /> Annuncio riscritto</h2>
-              <button onClick={() => setShowBefore(v => !v)} className="text-xs text-muted hover:text-ink">{showBefore ? 'Nascondi originale' : 'Confronta con originale'}</button>
-            </div>
-            <p className="mt-1 text-xs text-muted">Pronto da incollare sul portale. Puoi ritoccarlo qui prima di copiare.</p>
-
-            <Field label="Titolo" meta={`${titolo.length}/70`} warn={titolo.length > 70} copyText={titolo}>
-              {showBefore && <Before text={listing.title} />}
-              <textarea rows={2} value={titolo} onChange={e => setTitolo(e.target.value)} className="w-full resize-none rounded-lg border border-line px-3 py-2 text-sm font-medium leading-snug outline-none focus:border-ai" />
-            </Field>
-            <Field label="Descrizione" meta={`${words} parole`} copyText={descrizione}>
-              {showBefore && <Before text={text(info.description)} />}
-              <textarea rows={16} value={descrizione} onChange={e => setDescrizione(e.target.value)} className="w-full rounded-lg border border-line px-3 py-2 text-sm leading-relaxed outline-none focus:border-ai" />
-            </Field>
-
-            <div className="mt-4 flex flex-col gap-2">
-              <CopyBtn text={`${titolo}\n\n${descrizione}`} label="Copia titolo e descrizione" solid />
-              <button onClick={save} disabled={saving} className="flex items-center justify-center gap-2 rounded-lg border border-line px-4 py-2 text-sm font-medium hover:bg-canvas disabled:opacity-50">
-                {saving && <Loader2 size={16} className="animate-spin" />} Salva nei miei immobili
-              </button>
-            </div>
+        <Field label="Titolo" meta={`${titolo.length}/70`} warn={titolo.length > 70} copyText={titolo}>
+          {showBefore && <Before text={listing.title} />}
+          <input value={titolo} onChange={e => setTitolo(e.target.value)} className="w-full rounded-lg border border-line px-4 py-3 text-base font-medium outline-none focus:border-ai" />
+        </Field>
+        <Field label="Descrizione" meta={`${words} parole`} copyText={descrizione}>
+          <div className={showBefore ? 'grid gap-4 lg:grid-cols-2' : ''}>
+            {showBefore && <Before text={text(info.description)} tall />}
+            <textarea rows={14} value={descrizione} onChange={e => setDescrizione(e.target.value)} className="w-full rounded-lg border border-line px-4 py-3 text-[15px] leading-relaxed outline-none focus:border-ai" />
           </div>
-          <button onClick={onRestart} className="w-full text-center text-sm text-muted hover:text-ink">Analizza un altro annuncio</button>
-        </aside>
+        </Field>
+      </section>
+
+      {/* Cosa sistemare */}
+      <section>
+        <h2 className="font-display text-xl font-semibold">Cosa sistemare sul portale, in ordine di priorità</h2>
+        <p className="mt-1 text-sm text-muted">Per ogni punto: cosa non va, perché ti fa perdere contatti, cosa fare adesso.</p>
+        <ol className="mt-4 grid gap-4 lg:grid-cols-2">
+          {a.problemi.map((p, i) => {
+            const g = GRAVITA[p.gravita];
+            return (
+              <li key={i} className="flex flex-col rounded-2xl border border-line bg-white p-5">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-ink font-display text-sm font-semibold text-white">{i + 1}</span>
+                  <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ${g.cls}`}>{g.label}</span>
+                  <span className="text-xs uppercase tracking-wide text-muted">{p.area}</span>
+                  <span className="ml-auto"><CopyBtn text={`${p.problema}\nPerché: ${p.perche}\nCome: ${p.soluzione}`} /></span>
+                </div>
+                <p className="mt-3 text-[15px] font-medium leading-snug">{p.problema}</p>
+                <p className="mt-1.5 text-sm text-muted"><span className="font-medium text-ink/70">Perché conta:</span> {p.perche}</p>
+                <div className="mt-auto pt-3">
+                  <div className="flex items-start gap-3 rounded-xl bg-ai/5 p-3.5 ring-1 ring-ai/15">
+                    <Sparkles size={16} className="mt-0.5 shrink-0 text-ai" />
+                    <div className="min-w-0 flex-1">
+                      <div className="text-xs font-semibold uppercase tracking-wide text-ai">Come sistemarlo</div>
+                      <p className="mt-1 text-sm leading-relaxed">{p.soluzione}</p>
+                    </div>
+                    <CopyBtn text={p.soluzione} />
+                  </div>
+                </div>
+              </li>
+            );
+          })}
+        </ol>
+      </section>
+
+      <div className="grid gap-4 lg:grid-cols-3">
+        <Section title="Dati da aggiungere" hint="I compratori li cercano prima di chiamare." copyText={a.dati_mancanti.map(d => `- ${d}`).join('\n')}>
+          {a.dati_mancanti.length ? a.dati_mancanti.map(d => (
+            <li key={d} className="flex items-center gap-2 text-sm"><span className="h-4 w-4 shrink-0 rounded border border-line" />{d}</li>
+          )) : <li className="text-sm text-muted">Nessuno, i dati principali ci sono.</li>}
+        </Section>
+        <Section title="Foto: cosa rifare" hint={`Valutate le prime ${Math.min(3, listing.photos.length)} foto.`} copyText={a.foto_consigli.map(f => `- ${f}`).join('\n')}>
+          {a.foto_consigli.map(f => <li key={f} className="flex gap-2 text-sm"><span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-ai" />{f}</li>)}
+        </Section>
+        <Section title="Cosa funziona già" hint="Da tenere anche nella nuova versione." copyText={a.punti_forza.map(f => `- ${f}`).join('\n')}>
+          {a.punti_forza.map(f => <li key={f} className="flex gap-2 text-sm text-muted"><Check size={15} className="mt-0.5 shrink-0 text-green-600" />{f}</li>)}
+        </Section>
       </div>
+
+      <button onClick={onRestart} className="mx-auto block text-sm text-muted hover:text-ink">Analizza un altro annuncio</button>
     </div>
   );
 }
@@ -389,6 +386,6 @@ function Field({ label, meta, warn, copyText, children }: { label: string; meta:
   );
 }
 
-function Before({ text: t }: { text: string }) {
-  return t ? <p className="mb-2 max-h-40 overflow-y-auto whitespace-pre-line rounded-lg bg-canvas p-3 text-xs leading-relaxed text-muted">{t}</p> : null;
+function Before({ text: t, tall }: { text: string; tall?: boolean }) {
+  return t ? <p className={`mb-2 ${tall ? 'max-h-[26rem]' : 'max-h-40'} overflow-y-auto whitespace-pre-line rounded-lg bg-canvas p-3 text-xs leading-relaxed text-muted`}>{t}</p> : null;
 }
