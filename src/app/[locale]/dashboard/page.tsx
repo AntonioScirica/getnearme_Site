@@ -11,7 +11,7 @@ import DashboardApp from '@/components/dashboard/DashboardApp';
 // non si fa lo switch. Switch = rendere sempre <PlatformApp/> e cancellare
 // DashboardApp. ?ui=old forza la vecchia per confronto.
 // ponytail: gate client-side, nasconde solo la UI; i dati restano protetti da RLS.
-const PLATFORM_PREVIEW_EMAILS = ['as.scirica@gmail.com'];
+const PLATFORM_PREVIEW_EMAILS = ['as.scirica@gmail.com', 'a@gmail.com'];
 const PlatformApp = dynamic(() => import('@/components/platform/PlatformApp'), { ssr: false });
 
 export type UserData = {
