@@ -67,7 +67,25 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const restored = useRef(false);
+  const [zoneBusy, setZoneBusy] = useState(false);
   const done = step >= STEPS.length;
+
+  // Servizi nella zona (OpenStreetMap) appena l'indirizzo e' abbastanza lungo: chip nella
+  // scheda "Dove", righe in d.zona per l'AI e per la pagina della casa.
+  const addr = typeof d.indirizzo === 'string' ? d.indirizzo : '';
+  useEffect(() => {
+    if (addr.length < 9) return;
+    const t = setTimeout(async () => {
+      setZoneBusy(true);
+      try {
+        const r = await authFetch(`/api/platform/zone?address=${encodeURIComponent(addr)}`);
+        const z = r.ok ? await r.json() : null;
+        const lines: string[] = (z?.pois ?? []).map((p: { categoria: string; nome: string; distanza: number }) => `${p.categoria}${p.nome !== p.categoria ? ` ${p.nome}` : ''} a ${p.distanza >= 1000 ? `${(p.distanza / 1000).toFixed(1)} km` : `${p.distanza} m`}`);
+        setD(prev => (prev.indirizzo === addr ? { ...prev, zona: lines } : prev));
+      } catch { /* zona facoltativa */ } finally { setZoneBusy(false); }
+    }, 900);
+    return () => clearTimeout(t);
+  }, [addr]);
 
   useEffect(() => {
     try { const raw = localStorage.getItem(DRAFT_KEY); if (raw) { const x = JSON.parse(raw); setD(x.d ?? { mostra_indirizzo: true }); setNote(x.note ?? ''); } } catch { /* bozza corrotta */ }
@@ -153,6 +171,25 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
               <TextField f={F.indirizzo} v={d.indirizzo} set={v => set('indirizzo', v)} autoFocus big />
               {typeof d.indirizzo === 'string' && d.indirizzo.length > 8 && (
                 <div className="overflow-hidden rounded-2xl ring-1 ring-line"><iframe title="Mappa" loading="lazy" className="h-56 w-full" src={`https://maps.google.com/maps?q=${encodeURIComponent(d.indirizzo)}&z=15&output=embed`} /></div>
+              )}
+              {addr.length >= 9 && (
+                <div className="rounded-2xl bg-white p-4 ring-1 ring-line">
+                  <div className="flex items-center gap-2 text-sm font-medium">Nella zona {zoneBusy && <Loader2 size={14} className="animate-spin text-muted" />}</div>
+                  <p className="mt-0.5 text-xs text-muted">Servizi verificati su OpenStreetMap. Tocca quelli da mettere in evidenza nell&apos;annuncio (massimo 5): l&apos;AI parte da quelli.</p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {(Array.isArray(d.zona) ? d.zona : []).map(l => {
+                      const ev = Array.isArray(d.zona_evidenza) ? d.zona_evidenza : [];
+                      const on = ev.includes(l);
+                      return (
+                        <button type="button" key={l} aria-pressed={on} onClick={() => set('zona_evidenza', on ? ev.filter(x => x !== l) : ev.length < 5 ? [...ev, l] : ev)}
+                          className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs transition-all active:scale-95 ${on ? 'bg-ink font-medium text-white' : 'bg-canvas hover:bg-line/60'}`}>
+                          <Star size={11} className={on ? 'fill-current' : 'text-muted'} /> {l}
+                        </button>
+                      );
+                    })}
+                    {!zoneBusy && !(Array.isArray(d.zona) && d.zona.length) && <span className="text-xs text-muted">Nessun servizio trovato nel raggio di 1 km.</span>}
+                  </div>
+                </div>
               )}
               <Toggle f={F.mostra_indirizzo} v={d.mostra_indirizzo} set={v => set('mostra_indirizzo', v)} />
             </>}

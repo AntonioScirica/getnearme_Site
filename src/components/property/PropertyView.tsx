@@ -1,6 +1,7 @@
 import { Bath, BedDouble, Building, ExternalLink, LayoutTemplate, Mail, MapPin, Ruler, Square } from 'lucide-react';
 import { ENERGY_COLORS, GROUPS, detailsFrom, groupFacts } from '@/lib/propertyFields';
 import Gallery, { ShareButton } from './Gallery';
+import ZoneList from './ZoneList';
 
 // Pagina della casa: stessa vista per il portfolio pubblico e per il dettaglio in piattaforma.
 // Nessun hook qui: si genera lato server (SEO), solo galleria e condivisione sono client.
@@ -131,6 +132,13 @@ export default function PropertyView({ p, contact }: { p: PropertyViewData; cont
               <a href={d.planimetria} target="_blank" rel="noreferrer" className="block overflow-hidden rounded-2xl bg-white p-4 ring-1 ring-line">
                 <img src={d.planimetria} alt="Planimetria" loading="lazy" className="mx-auto max-h-[520px] object-contain" />
               </a>
+            </section>
+          )}
+
+          {Array.isArray(d.zona) && d.zona.length > 0 && (
+            <section className="mt-10">
+              <h2 className="mb-4 font-display text-xl font-semibold">Nella zona</h2>
+              <ZoneList all={d.zona as string[]} featured={Array.isArray(d.zona_evidenza) ? (d.zona_evidenza as string[]) : []} withCta={!!contact} />
             </section>
           )}
 
