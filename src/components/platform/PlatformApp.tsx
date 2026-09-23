@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Home, Building2, Globe, LogOut, Link2, Sparkles, Plus, ArrowRight, MapPin, Loader2 } from 'lucide-react';
+import { Home, Building2, Globe, Gauge, LogOut, Link2, Sparkles, Plus, ArrowRight, MapPin, Loader2 } from 'lucide-react';
 import type { UserData } from '@/app/[locale]/dashboard/page';
 import { supabase } from '@/lib/supabase';
 import { fetchProjects, type ProjectData } from '@/lib/projects';
@@ -10,6 +10,8 @@ import PropertyDetail from './PropertyDetail';
 import PortfolioView from './PortfolioView';
 import ImportView from './ImportView';
 import ImproveView from './ImproveView';
+import CostsView from './CostsView';
+import { isPlatformAdmin } from '@/lib/platformAdmins';
 import { go, formatPrice, authFetch } from './api';
 import ProfileForm, { type Profile } from './ProfileForm';
 
@@ -54,7 +56,7 @@ export default function PlatformApp({ userData }: { userData: UserData }) {
       <aside className="flex w-60 shrink-0 flex-col border-r border-line bg-white px-3 py-5">
         <div className="px-3 pb-6 font-display text-xl font-bold tracking-tight">GetNearMe</div>
         <nav className="flex flex-col gap-1">
-          {NAV.map(({ path, label, icon: Icon }) => {
+          {[...NAV, ...(isPlatformAdmin(userData.email) ? [{ path: '/costi', label: 'Costi AI', icon: Gauge }] : [])].map(({ path, label, icon: Icon }) => {
             const active = route === path || (path === '/immobili' && !!detailId);
             return (
               <a key={path} href={`#${path}`}
@@ -75,7 +77,9 @@ export default function PlatformApp({ userData }: { userData: UserData }) {
 
       <main className="flex-1 overflow-y-auto">
         <div className="mx-auto max-w-6xl px-8 py-10">
-          {route === '/migliora' ? (
+          {route === '/costi' && isPlatformAdmin(userData.email) ? (
+            <CostsView />
+          ) : route === '/migliora' ? (
             <ImproveView key={query} initialUrl={new URLSearchParams(query).get('url') ?? ''} onSaved={reload} />
           ) : route === '/importa' ? (
             <ImportView onDone={reload} />

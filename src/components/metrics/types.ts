@@ -193,8 +193,7 @@ export type PageId =
   | "emails"
   | "crm"
   | "ads"
-  | "tasks"
-  | "runpod";
+  | "tasks";
 
 export const MONO = "font-[family-name:var(--font-jetbrains)]";
 

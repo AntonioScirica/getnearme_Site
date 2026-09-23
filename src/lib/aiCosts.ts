@@ -1,7 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-// Costi AI in tempo reale per la dashboard Metrics:
+// Costi AI in tempo reale (pagina "Costi AI" della piattaforma, solo admin):
 // - RunPod: credito, spesa/ora attuale, limite, stato worker e coda di ogni endpoint
 // - ai_usage: costo stimato per agente e per giorno (mese corrente) + ultime chiamate
 const RUNPOD_KEY = process.env.RUNPOD_API_KEY;
@@ -29,11 +28,7 @@ async function endpointHealth(id: string) {
   }
 }
 
-export async function GET(request: NextRequest) {
-  if (request.headers.get("x-metrics-key") !== "ZuoQ6k*_6wmBbUQQim!B") {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+export async function getAiCosts() {
   const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
@@ -72,7 +67,7 @@ export async function GET(request: NextRequest) {
     if (data?.user?.email) emails.set(id, data.user.email);
   }));
 
-  return NextResponse.json({
+  return {
     runpod: account ? {
       balance: account.clientBalance,
       spendPerHr: account.currentSpendPerHr,
@@ -88,5 +83,5 @@ export async function GET(request: NextRequest) {
       recent: rows.slice(0, 20).map((r) => ({ ...r, email: r.user_id ? emails.get(r.user_id) ?? r.user_id : "?" })),
     },
     fetchedAt: new Date().toISOString(),
-  });
+  };
 }
