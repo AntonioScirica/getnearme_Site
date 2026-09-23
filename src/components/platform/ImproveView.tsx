@@ -1,14 +1,15 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { ArrowLeft, Check, Copy, ExternalLink, Link2, Loader2, Lock, Puzzle, Sparkles } from 'lucide-react';
+import { ArrowLeft, Camera, Check, Copy, Download, ExternalLink, Link2, Loader2, Lock, Puzzle, Sparkles, Wand2 } from 'lucide-react';
+import { downloadImage, generateStaging } from '@/lib/staging';
 import { authFetch, extSend, EXTENSION_URL, go } from './api';
 
 // "Migliora annuncio": link portale -> estensione legge l'annuncio in background ->
 // scansione animata -> diagnosi + annuncio riscritto. Senza estensione: testo incollato.
 
 type Listing = { url: string; title: string; address: string; propertyInfo: Record<string, unknown>; photos: string[] };
-type Problem = { area: string; gravita: 'alta' | 'media' | 'bassa'; problema: string; perche: string; soluzione: string };
+type Problem = { area: string; gravita: 'alta' | 'media' | 'bassa'; problema: string; perche: string; soluzione: string; foto_indice?: number; modifica_foto?: string };
 type Analysis = {
   score: number; sintesi: string; punti_forza: string[]; problemi: Problem[];
   dati_mancanti: string[]; foto_consigli: string[]; titolo: string; descrizione: string;
@@ -209,7 +210,7 @@ function buildReport(listing: Listing, a: Analysis, titolo: string, descrizione:
   const lines = [
     `ANALISI ANNUNCIO – score ${a.score}/100`, listing.url, '', a.sintesi, '',
     'COSA SISTEMARE',
-    ...a.problemi.map((p, i) => `${i + 1}. [${GRAVITA[p.gravita].label} · ${p.area}] ${p.problema}\n   Perché: ${p.perche}\n   Come: ${p.soluzione}`),
+    ...a.problemi.map((p, i) => `${i + 1}. [${GRAVITA[p.gravita].label} · ${p.area}] ${p.problema}\n   Perché: ${p.perche}\n   Come: ${p.soluzione}${p.foto_indice ? `\n   Foto: n. ${p.foto_indice}${p.modifica_foto ? ` (modifica AI: ${p.modifica_foto})` : ' (da rifare)'}` : ''}`),
     '', 'DATI DA AGGIUNGERE', ...a.dati_mancanti.map(d => `- ${d}`),
     '', 'FOTO', ...a.foto_consigli.map(f => `- ${f}`),
     '', 'NUOVO TITOLO', titolo, '', 'NUOVA DESCRIZIONE', descrizione,
@@ -316,6 +317,10 @@ function Results({ listing, analysis: a, onSaved, onRestart }: { listing: Listin
                 </div>
                 <p className="mt-3 text-[15px] font-medium leading-snug">{p.problema}</p>
                 <p className="mt-1.5 text-sm text-muted"><span className="font-medium text-ink/70">Perché conta:</span> {p.perche}</p>
+                {/* Foto indicata dall'AI (1..3 = prime foto dell'annuncio, quelle analizzate) */}
+                {!!p.foto_indice && listing.photos[p.foto_indice - 1] && (
+                  <PhotoFix src={listing.photos[p.foto_indice - 1]} index={p.foto_indice} edit={p.modifica_foto ?? ''} />
+                )}
                 <div className="mt-auto pt-3">
                   <div className="flex items-start gap-3 rounded-xl bg-ai/5 p-3.5 ring-1 ring-ai/15">
                     <Sparkles size={16} className="mt-0.5 shrink-0 text-ai" />
@@ -347,6 +352,64 @@ function Results({ listing, analysis: a, onSaved, onRestart }: { listing: Listin
       </div>
 
       <button onClick={onRestart} className="mx-auto block text-sm text-muted hover:text-ink">Analizza un altro annuncio</button>
+    </div>
+  );
+}
+
+// Foto citata da un problema: miniatura + modifica AI proposta (staging esistente,
+// customPrompt) con prima/dopo e download. Se la modifica e' vuota va rifatta a mano.
+function PhotoFix({ src, index, edit }: { src: string; index: number; edit: string }) {
+  const [open, setOpen] = useState(false);
+  const [prompt, setPrompt] = useState(edit);
+  const [busy, setBusy] = useState(false);
+  const [out, setOut] = useState<string | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+
+  const run = async () => {
+    setBusy(true); setErr(null);
+    const r = await generateStaging({ imageDataUrl: src, customPrompt: prompt });
+    setBusy(false);
+    if (r.ok) setOut(r.outputUrl); else setErr(r.error);
+  };
+
+  return (
+    <div className="mt-3 rounded-xl border border-line p-3">
+      <div className="flex items-center gap-3">
+        <img src={src} alt="" className="h-16 w-24 shrink-0 rounded-lg object-cover" />
+        <div className="min-w-0 flex-1 text-sm">
+          <div className="font-medium">Foto {index} dell&apos;annuncio</div>
+          <div className="text-xs text-muted">{edit ? 'Si può sistemare con l\'AI, senza rifarla.' : 'Va rifatta o sostituita: l\'AI non basta.'}</div>
+        </div>
+        {edit ? (
+          <button onClick={() => setOpen(v => !v)} className="flex shrink-0 items-center gap-1.5 rounded-lg bg-ai px-3 py-2 text-sm font-medium text-white">
+            <Wand2 size={15} /> Sistema con AI
+          </button>
+        ) : <Camera size={18} className="shrink-0 text-muted" />}
+      </div>
+
+      {open && (
+        <div className="mt-3 space-y-3 border-t border-line pt-3">
+          <label className="block text-xs font-semibold uppercase tracking-wide text-muted">Modifica da fare</label>
+          <textarea rows={2} value={prompt} onChange={e => setPrompt(e.target.value)} className="w-full rounded-lg border border-line px-3 py-2 text-sm outline-none focus:border-ai" />
+          {out ? (
+            <>
+              <div className="grid grid-cols-2 gap-2">
+                <figure><img src={src} alt="" className="aspect-[4/3] w-full rounded-lg object-cover" /><figcaption className="mt-1 text-xs text-muted">Prima</figcaption></figure>
+                <figure><img src={out} alt="" className="aspect-[4/3] w-full rounded-lg object-cover" /><figcaption className="mt-1 text-xs text-muted">Dopo</figcaption></figure>
+              </div>
+              <div className="flex gap-2">
+                <button onClick={() => downloadImage(out, `foto-${index}-sistemata.jpg`)} className="flex items-center gap-1.5 rounded-lg bg-ink px-3 py-2 text-sm font-medium text-white"><Download size={15} /> Scarica</button>
+                <button onClick={run} disabled={busy} className="rounded-lg border border-line px-3 py-2 text-sm font-medium disabled:opacity-50">Rigenera</button>
+              </div>
+            </>
+          ) : (
+            <button onClick={run} disabled={busy || !prompt.trim()} className="flex items-center gap-2 rounded-lg bg-ai px-4 py-2 text-sm font-medium text-white disabled:opacity-50">
+              {busy ? <Loader2 size={15} className="animate-spin" /> : <Wand2 size={15} />} {busy ? 'Sto modificando la foto...' : 'Genera'}
+            </button>
+          )}
+          {err && <p className="text-sm text-red-600">{err}</p>}
+        </div>
+      )}
     </div>
   );
 }

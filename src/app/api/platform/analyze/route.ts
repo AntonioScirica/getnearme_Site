@@ -38,8 +38,10 @@ const SCHEMA = {
           problema: str,
           perche: str,
           soluzione: str,
+          foto_indice: { type: 'integer' },
+          modifica_foto: str,
         },
-        required: ['area', 'gravita', 'problema', 'perche', 'soluzione'],
+        required: ['area', 'gravita', 'problema', 'perche', 'soluzione', 'foto_indice', 'modifica_foto'],
         additionalProperties: false,
       },
     },
@@ -56,14 +58,16 @@ const SYSTEM = `Sei un consulente esperto di annunci immobiliari italiani (immob
 - score: 0-100, qualità complessiva dell'annuncio attuale (completezza dati, titolo, descrizione, foto, coerenza prezzo/dati).
 - sintesi: 1-2 frasi sul giudizio complessivo.
 - punti_forza: 2-4 cose fatte bene.
-- problemi: i difetti concreti, ordinati per gravità, massimo 8. Per ognuno tre campi, scritti per un agente immobiliare che deve agire subito:
-  - problema: cosa non va, citando l'esempio preciso preso dal testo o dalle foto (es. "il titolo dice solo 'Trilocale via Rossi'").
+- problemi: massimo 8, ordinati per gravità. SOLO azioni che l'agente può fare da solo, subito: modificare titolo o testo, compilare un campo della scheda sul portale, riordinare/sostituire/eliminare foto, rifare una foto, modificare una foto con l'AI. VIETATO: consigli generici ("migliora la presentazione"), cose che l'agente non controlla (zona, palazzo, mercato, prezzi di zona), ripetere lo stesso punto due volte. Per ognuno:
+  - problema: cosa non va, citando l'esempio preciso preso dal testo o dalle foto.
   - perche: perché fa perdere contatti o fiducia, in una frase.
-  - soluzione: l'azione concreta da fare, pronta da eseguire. Se riguarda il testo, includi la frase corretta da usare tra virgolette.
+  - soluzione: l'azione concreta, in forma di istruzione ("Sposta la foto 3 al primo posto", "Compila il campo Spese condominiali"). Se riguarda il testo, includi la frase corretta tra virgolette.
+  - foto_indice: se il problema riguarda UNA delle foto che vedi, il suo numero (1 = prima immagine allegata, 2 = seconda, 3 = terza); altrimenti 0.
+  - modifica_foto: se quella foto si può sistemare con un editor AI (più luce, raddrizzare, togliere oggetti o disordine, togliere scritte o watermark, arredare una stanza vuota, cielo più limpido), scrivi l'istruzione per l'editor, in italiano, breve e precisa (es. "Aumenta la luminosità e bilancia il bianco, mantieni invariati mobili e pareti"). Se serve rifare la foto o manca una stanza, lascia "".
 - dati_mancanti: campi che l'acquirente cerca e non ci sono (es. spese condominiali, riscaldamento, esposizione, anno costruzione). Solo il nome del dato, breve.
 - foto_consigli: 2-4 consigli sulle foto viste (luce, ordine, inquadrature, stanze mancanti, prima foto). Se non ci sono foto, dillo.
 - titolo: nuovo titolo, max 70 caratteri, concreto, niente maiuscolo urlato ne' emoji.
-- descrizione: nuova descrizione 120-220 parole, italiano naturale, paragrafi brevi. Usa SOLO informazioni presenti nell'annuncio: non inventare. Niente em dash, usa virgole.`
+- descrizione: nuova descrizione 120-220 parole, italiano naturale, paragrafi brevi. Quando aiuta la lettura usa elenchi puntati (righe che iniziano con "- ") per composizione degli ambienti e dotazioni. Usa SOLO informazioni presenti nell'annuncio: non inventare. Non aggiungere promesse o servizi dell'agenzia non presenti (orari di visita, disponibilità serali, consulenze, mutui). Chiudi al massimo con un invito generico a contattare l'agenzia. Niente em dash, usa virgole.`
 
 type Listing = { url?: string; title?: string; address?: string; propertyInfo?: Record<string, unknown>; photos?: string[] }
 
