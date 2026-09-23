@@ -141,20 +141,22 @@ function Scanner({ listing, stage }: { listing: Listing; stage: 'opening' | 'sca
         <div className="relative h-[460px] overflow-hidden p-5">
           {stage === 'opening' ? (
             <div className="animate-pulse space-y-4">
-              <div className="grid h-52 grid-cols-3 gap-2"><div className="col-span-2 rounded-xl bg-canvas" /><div className="rounded-xl bg-canvas" /></div>
+              <div className="grid h-60 grid-cols-3 grid-rows-2 gap-2"><div className="col-span-2 row-span-2 rounded-xl bg-canvas" /><div className="rounded-xl bg-canvas" /><div className="rounded-xl bg-canvas" /></div>
               <div className="h-6 w-2/3 rounded bg-canvas" /><div className="h-4 w-1/3 rounded bg-canvas" />
               <div className="space-y-2 pt-2">{[...Array(5)].map((_, i) => <div key={i} className="h-3 rounded bg-canvas" />)}</div>
               <div className="absolute inset-0 flex items-center justify-center"><span className="flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm shadow"><Loader2 size={16} className="animate-spin" /> Apro l&apos;annuncio...</span></div>
             </div>
           ) : (
             <>
-              <div className="grid h-52 grid-cols-3 gap-2">
-                {listing.photos.slice(0, 3).map((src, i) => <img key={src} src={src} alt="" className={`h-full w-full rounded-xl object-cover ${i === 0 ? 'col-span-2 row-span-2' : ''}`} />)}
-                {!listing.photos.length && <div className="col-span-3 rounded-xl bg-canvas" />}
+              {/* righe esplicite (grid-rows-2 = minmax(0,1fr)): senza, le foto piccole crescono all'altezza naturale e sforano sul testo */}
+              <div className="grid h-60 grid-cols-3 grid-rows-2 gap-2 overflow-hidden">
+                {listing.photos.slice(0, 3).map((src, i) => <img key={src} src={src} alt="" className={`h-full min-h-0 w-full rounded-xl object-cover ${i === 0 ? 'col-span-2 row-span-2' : ''}`} />)}
+                {!listing.photos.length && <div className="col-span-3 row-span-2 rounded-xl bg-canvas" />}
               </div>
               <div className="mt-4 font-display text-xl font-semibold">{listing.title}</div>
               <div className="mt-1 text-sm text-muted">{[text(info.price), text(info.surface), listing.address].filter(Boolean).join(' · ')}</div>
-              <p className="mt-3 line-clamp-6 text-sm leading-relaxed text-muted">{desc}</p>
+              <p className="mt-3 line-clamp-5 text-sm leading-relaxed text-muted">{desc}</p>
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-white to-transparent" />
               <div className="pointer-events-none absolute inset-x-0 h-24 bg-gradient-to-b from-transparent via-ai/25 to-transparent"
                 style={{ animation: 'gnm-scan 2.2s ease-in-out infinite alternate' }}>
                 <div className="absolute inset-x-0 bottom-1/2 h-0.5 bg-ai shadow-[0_0_16px_4px] shadow-ai/60" />
