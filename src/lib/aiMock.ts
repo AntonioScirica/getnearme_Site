@@ -61,19 +61,17 @@ const MOCKS: Record<string, unknown> = {
     descrizione: `[DESCRIZIONE FINTA DI ESEMPIO]
 In zona Bocconi, a pochi minuti dalla metropolitana e dal centro, proponiamo in vendita un trilocale arredato di 95 mq al primo piano di uno stabile signorile con portineria.
 
-L'immobile si compone di:
-- ingresso su salone con cucina a vista
-- camera matrimoniale
-- seconda camera con angolo studio
-- bagno padronale con doccia
+L'immobile si compone di un ampio salone con cucina a vista, una camera matrimoniale, una seconda camera con angolo studio e un bagno padronale con doccia. Gli ambienti sono luminosi e in ottimo stato.
 
 Finiture e dotazioni:
 - parquet in tutti gli ambienti
-- infissi con triplo vetro e tapparelle elettriche
-- aria condizionata e impianto di allarme
+- infissi con triplo vetro
+- tapparelle elettriche
+- aria condizionata
+- impianto di allarme
 - box singolo di proprietà
 
-Lo stabile offre servizi poco comuni in zona: piscina, palestra e lavanderia condominiale. La zona è ben servita da negozi, scuole e mezzi pubblici.
+Lo stabile offre servizi poco comuni in zona, tra cui piscina, palestra e lavanderia condominiale, e la zona è ben servita da negozi, scuole e mezzi pubblici.
 
 Libero subito. Per ricevere la planimetria o fissare una visita contatta la nostra agenzia.`,
   },
@@ -82,15 +80,9 @@ Libero subito. Per ricevere la planimetria o fissare una visita contatta la nost
     descrizione: `[DESCRIZIONE FINTA DI ESEMPIO]
 Vi presentiamo un trilocale ristrutturato in ottimo stato, in zona ben servita a pochi passi dalla metropolitana.
 
-L'immobile si compone di:
-- soggiorno luminoso
-- cucina abitabile
-- due camere da letto
-- bagno finestrato
+L'immobile si compone di un soggiorno luminoso, una cucina abitabile, due camere da letto e un bagno finestrato. Completano la proprietà un balcone e una cantina.
 
-Completano la proprietà un balcone e una cantina. Libero al rogito.
-
-Per informazioni o per fissare una visita contatta la nostra agenzia.`,
+Libero al rogito. Per informazioni o per fissare una visita contatta la nostra agenzia.`,
     score: 64,
     suggerimenti: [
       '[FINTO] Aggiungi la classe energetica e le spese condominiali.',
