@@ -57,36 +57,40 @@ const MOCKS: Record<string, unknown> = {
       'Aggiungi foto di piscina e palestra condominiale: sono il vero punto di forza.',
       'Togli il watermark centrale o riducilo a un logo piccolo in un angolo.',
     ],
-    titolo: '[FINTO] Trilocale arredato con box, piscina e palestra',
+    titolo: '[FINTO] Trilocale arredato con box e piscina condominiale, zona Bocconi',
     descrizione: `[DESCRIZIONE FINTA DI ESEMPIO]
-In zona Bocconi, a pochi minuti dal centro e dalla metropolitana, proponiamo un trilocale arredato di 95 mq al primo piano.
+In zona Bocconi, a pochi minuti dalla metropolitana e dal centro, proponiamo in vendita un trilocale arredato di 95 mq al primo piano di uno stabile signorile con portineria.
 
-Composizione:
-- salone con cucina a vista
+L'immobile si compone di:
+- ingresso su salone con cucina a vista
 - camera matrimoniale
-- bagno padronale con doccia
 - seconda camera con angolo studio
+- bagno padronale con doccia
 
-Dotazioni:
-- parquet
-- infissi con triplo vetro
-- aria condizionata
-- box singolo
+Finiture e dotazioni:
+- parquet in tutti gli ambienti
+- infissi con triplo vetro e tapparelle elettriche
+- aria condizionata e impianto di allarme
+- box singolo di proprietà
 
-Lo stabile è signorile, con portineria, piscina e palestra condominiali. Libero subito. Per informazioni contatta l'agenzia.`,
+Lo stabile offre servizi poco comuni in zona: piscina, palestra e lavanderia condominiale. La zona è ben servita da negozi, scuole e mezzi pubblici.
+
+Libero subito. Per ricevere la planimetria o fissare una visita contatta la nostra agenzia.`,
   },
   describe: {
-    titolo: '[FINTO] Trilocale luminoso con balcone, vicino alla metro',
+    titolo: '[FINTO] Trilocale ristrutturato con balcone, vicino alla metro',
     descrizione: `[DESCRIZIONE FINTA DI ESEMPIO]
-Proponiamo un trilocale luminoso, ristrutturato, in una zona comoda ai servizi.
+Vi presentiamo un trilocale ristrutturato in ottimo stato, in zona ben servita a pochi passi dalla metropolitana.
 
-Composizione:
-- soggiorno
+L'immobile si compone di:
+- soggiorno luminoso
 - cucina abitabile
-- due camere
+- due camere da letto
 - bagno finestrato
 
-Completano la proprietà un balcone e una cantina. Per informazioni contatta l'agenzia.`,
+Completano la proprietà un balcone e una cantina. Libero al rogito.
+
+Per informazioni o per fissare una visita contatta la nostra agenzia.`,
     score: 64,
     suggerimenti: [
       '[FINTO] Aggiungi la classe energetica e le spese condominiali.',
