@@ -78,7 +78,7 @@ export default function PlatformApp({ userData }: { userData: UserData }) {
       </div>
 
       <main className="flex-1 overflow-y-auto">
-        <div key={route} className={`fade-up mx-auto px-6 pb-16 pt-20 lg:pl-60 lg:pr-10 ${route === '/' ? 'max-w-none' : 'max-w-7xl'}`}>
+        <div key={route} className={`fade-up mx-auto px-6 pb-16 pt-20 ${route === '/' ? 'max-w-5xl lg:pt-24' : 'max-w-7xl lg:pl-60 lg:pr-10'}`}>
           {route === '/costi' && isPlatformAdmin(userData.email) ? (
             <CostsView />
           ) : route === '/migliora' ? (
@@ -109,7 +109,7 @@ const ACTIONS = [
   { id: 'nuovo', cover: '/reference/giorno-notte-poster.jpg', a: 'Crea', b: 'da zero', sub: 'Foto e dati: l\'AI scrive l\'annuncio e lo pubblica nel portfolio.', dot: 'bg-brand', tag: 'Nuovo immobile' },
   { id: 'importa', cover: '/staging/4.jpg', a: 'Importa', b: 'dal gestionale', sub: 'Excel o CSV: colonne riconosciute da sole.', dot: 'bg-emerald-500', tag: 'Ho un file' },
 ] as const;
-const TILT = ['-rotate-6 translate-y-4', 'z-10 -translate-y-2', 'rotate-6 translate-y-4'];
+const TILT = ['-rotate-3 translate-y-3', '-translate-y-1', 'rotate-3 translate-y-3'];
 
 export function HomeView({ projects, name }: { projects: ProjectData[] | null; name?: string }) {
   const [linkOpen, setLinkOpen] = useState(false);
@@ -118,13 +118,13 @@ export function HomeView({ projects, name }: { projects: ProjectData[] | null; n
 
   return (
     <div className="flex flex-col items-center">
-      <h1 className="fade-up mt-6 text-center font-display text-5xl font-bold leading-[1.08] tracking-tight md:text-6xl">
+      <h1 className="fade-up mt-6 text-center font-display text-4xl font-bold leading-[1.08] tracking-tight md:text-5xl xl:text-6xl">
         {name ? `Ciao ${name.split(' ')[0]},` : 'Ciao,'}<br />da dove <span className="accent-serif text-[1.12em]">partiamo?</span> 🏡
       </h1>
       <p className="fade-up mt-4 text-center text-lg text-muted" style={{ animationDelay: '.05s' }}>Scegli come vuoi iniziare.</p>
 
       {/* Le tre azioni a ventaglio */}
-      <div className="stagger mt-14 flex items-end justify-center">
+      <div className="stagger mt-14 flex w-full flex-wrap items-end justify-center gap-5 xl:gap-7">
         {ACTIONS.map((c, i) => {
           const active = c.id === 'link' && linkOpen;
           const inner = (
@@ -135,7 +135,7 @@ export function HomeView({ projects, name }: { projects: ProjectData[] | null; n
               <div className="mt-1 text-sm leading-snug text-muted">{c.sub}</div>
             </>
           );
-          const cls = `fan-card group -mx-2 w-44 shrink rounded-2xl bg-white p-3 pb-5 text-left sm:w-52 xl:-mx-3 xl:w-72 ${TILT[i]} ${active ? '!-translate-y-4 !rotate-0 ring-2 ring-ink' : ''}`;
+          const cls = `fan-card group w-56 rounded-2xl bg-white p-3 pb-5 text-left xl:w-72 ${TILT[i]} ${active ? '!-translate-y-4 !rotate-0 ring-2 ring-ink' : ''}`;
           return c.id === 'link'
             ? <button key={c.id} type="button" onClick={() => setLinkOpen(v => !v)} className={cls}>{inner}</button>
             : <a key={c.id} href={`#/${c.id}`} className={cls}>{inner}</a>;
