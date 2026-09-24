@@ -243,7 +243,7 @@ function ImproveTile({ phase, stage, onOpen, onClose, onSubmit, onNew, hover, se
           ) : phase === 'done' ? (
             <button type="button" onClick={onNew} className="blur-in h-11 shrink-0 rounded-full bg-white px-5 text-sm font-semibold hover:bg-ink hover:text-white">Nuova analisi</button>
           ) : (
-            <button disabled={!ok} tabIndex={open ? 0 : -1} className="btn-ink h-11 shrink-0 rounded-full px-6 text-sm font-semibold">{flow ? 'Riprova' : 'Analizza'}</button>
+            <button disabled={!ok} tabIndex={open ? 0 : -1} className="h-11 shrink-0 rounded-full bg-brand px-6 text-sm font-semibold text-white ease-smooth transition-[background-color,opacity,transform] hover:bg-brand/90 active:scale-[0.97] disabled:opacity-30 disabled:active:scale-100">{flow ? 'Riprova' : 'Analizza'}</button>
           )}
         </form>
 
