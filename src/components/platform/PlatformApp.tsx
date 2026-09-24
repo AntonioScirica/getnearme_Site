@@ -9,7 +9,7 @@ import NewPropertyWizard from './NewPropertyWizard';
 import PropertyDetail from './PropertyDetail';
 import PortfolioView from './PortfolioView';
 import ImportView from './ImportView';
-import { BrowserBody, Results, SCAN_STEPS, useImprove, Verdict, type Stage } from './ImproveView';
+import { BrowserBody, Elapsed, Results, SCAN_STEPS, useImprove, Verdict, type Stage } from './ImproveView';
 import CostsView from './CostsView';
 import { isPlatformAdmin } from '@/lib/platformAdmins';
 import ProgressiveBlur from '@/components/ProgressiveBlur';
@@ -264,13 +264,6 @@ function ImproveTile({ phase, stage, onOpen, onClose, onSubmit, onNew, hover, se
       </div>
     </div>
   );
-}
-
-// Tempo trascorso (m:ss) accanto a "Analizzo": l'analisi su GPU dura 1-2 minuti, cosi' si vede che va avanti.
-function Elapsed() {
-  const [s, setS] = useState(0);
-  useEffect(() => { const t = setInterval(() => setS(x => x + 1), 1000); return () => clearInterval(t); }, []);
-  return <span className="tabular-nums text-muted">{Math.floor(s / 60)}:{String(s % 60).padStart(2, '0')}</span>;
 }
 
 // ponytail: stima, non avanzamento reale (Qwen non lo espone). Curva 1 - e^(-t/40): ~50% a 28 s,

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { Children, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { platformFontVars } from '@/lib/platformFonts';
 import { Camera, Check, Copy, Download, ExternalLink, Loader2, Puzzle, Wand2, X } from 'lucide-react';
@@ -27,6 +27,13 @@ export type Stage = 'input' | 'opening' | 'scanning' | 'done' | 'no-extension' |
 // Qualsiasi sito di annunci: l'estensione legge la pagina in modo generico e Qwen ne estrae i dati.
 const LINK_RE = /^https:\/\/[^/\s]+\.[^/\s]+/i;
 export const SCAN_STEPS = ['Leggo i dati dell\'annuncio', 'Guardo le foto', 'Valuto titolo e descrizione', 'Cerco i dati mancanti', 'Riscrivo l\'annuncio'];
+
+// Tempo trascorso (m:ss): analisi e modifiche foto su GPU durano da secondi a minuti, cosi' si vede che va avanti.
+export function Elapsed({ className = 'text-muted' }: { className?: string }) {
+  const [s, setS] = useState(0);
+  useEffect(() => { const t = setInterval(() => setS(x => x + 1), 1000); return () => clearInterval(t); }, []);
+  return <span className={`tabular-nums ${className}`}>{Math.floor(s / 60)}:{String(s % 60).padStart(2, '0')}</span>;
+}
 
 const text = (v: unknown) => (typeof v === 'string' ? v : '');
 const wait = (ms: number) => new Promise(r => setTimeout(r, ms));
@@ -297,14 +304,14 @@ export function Results({ listing, analysis: a, onSaved, onRestart }: { listing:
         </ol>
       </section>
 
-      <div className="grid gap-5 pt-2 lg:grid-cols-3">
+      <div className="space-y-5 pt-2">
         <Section title="Dati da aggiungere" hint="I compratori li cercano prima di chiamare.">
           {a.dati_mancanti.length ? <Checklist items={a.dati_mancanti} /> : <li className="text-sm text-muted">Nessuno, i dati principali ci sono.</li>}
         </Section>
-        <Section title="Foto: cosa rifare" hint={`Valutate le prime ${Math.min(3, listing.photos.length)} foto.`}>
+        <Section limit={3} title="Foto: cosa rifare" hint={`Valutate le prime ${Math.min(3, listing.photos.length)} foto.`}>
           {a.foto_consigli.map(f => <li key={f} className="flex gap-2 text-sm"><span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-ink" />{f}</li>)}
         </Section>
-        <Section title="Cosa funziona già" hint="Da tenere anche nella nuova versione.">
+        <Section limit={3} title="Cosa funziona già" hint="Da tenere anche nella nuova versione.">
           {a.punti_forza.map(f => <li key={f} className="flex gap-2 text-sm text-muted"><Check size={15} className="mt-0.5 shrink-0 text-emerald-600" />{f}</li>)}
         </Section>
       </div>
@@ -408,6 +415,7 @@ const roomLabel = (p: Problem) => {
 // Card di un punto da sistemare. Se riguarda una foto sistemabile con l'AI, la CTA sta in alto a destra.
 function ProblemCard({ p, i, photos }: { p: Problem; i: number; photos: string[] }) {
   const [fix, setFix] = useState(false);
+  const [fixed, setFixed] = useState<string | null>(null); // foto sistemata (scaricata o confermata con Finito)
   const g = GRAVITA[p.gravita];
   // Foto indicata dall'AI (1..3 = prime foto dell'annuncio, quelle analizzate)
   const src = p.foto_indice ? photos[p.foto_indice - 1] : undefined;
@@ -417,20 +425,24 @@ function ProblemCard({ p, i, photos }: { p: Problem; i: number; photos: string[]
       <div className="flex h-8 items-center gap-2.5">
         <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-ink text-sm font-semibold text-white">{i + 1}</span>
         <span className={`rounded-full px-3 py-1 text-xs font-medium ${g.cls}`}>{g.label}</span>
-        {edit && (
+        {edit && (fixed ? (
+          <button onClick={() => setFix(true)} title="Riapri la modifica" className="blur-in ml-auto flex h-8 shrink-0 items-center gap-1.5 rounded-full bg-emerald-50 px-3.5 text-xs font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-700/20">
+            <Check size={14} strokeWidth={3} /> Foto sistemata
+          </button>
+        ) : (
           <button onClick={() => setFix(true)} className="ml-auto flex h-8 shrink-0 items-center gap-1.5 rounded-full bg-brand px-3.5 text-xs font-semibold text-white ease-smooth transition-colors hover:bg-brand/90 active:scale-[0.97]">
             <Wand2 size={14} /> Sistema con AI
           </button>
-        )}
+        ))}
       </div>
       <p className="mt-6 text-[17px] font-semibold leading-snug tracking-tight">{p.problema}</p>
       <p className="mt-2 text-sm leading-relaxed text-muted">{p.perche}</p>
       {src && (
         <div className="mt-4 flex items-center gap-3">
-          <img src={src} alt="" className="h-12 w-16 shrink-0 rounded-xl object-cover" />
+          <img key={fixed ?? src} src={fixed ?? src} alt="" className="blur-in h-12 w-16 shrink-0 rounded-xl object-cover" />
           <div className="min-w-0 text-xs text-muted">
             <div className="font-medium text-ink first-letter:uppercase">{roomLabel(p)}</div>
-            {edit ? 'Si può sistemare con l\'AI, senza rifarla.' : 'Va rifatta o sostituita: l\'AI non basta.'}
+            {fixed ? 'Sistemata con l\'AI, pronta da ricaricare sul portale.' : edit ? 'Si può sistemare con l\'AI, senza rifarla.' : 'Va rifatta o sostituita: l\'AI non basta.'}
           </div>
           {!edit && <Camera size={16} className="ml-auto shrink-0 text-muted" />}
         </div>
@@ -441,7 +453,7 @@ function ProblemCard({ p, i, photos }: { p: Problem; i: number; photos: string[]
           <p className="mt-1 text-sm leading-relaxed text-ink/80">{p.soluzione}</p>
         </div>
       </div>
-      {fix && src && <PhotoFix src={src} label={roomLabel(p)} edit={edit} onClose={() => setFix(false)} />}
+      {fix && src && <PhotoFix src={src} label={roomLabel(p)} edit={edit} onDone={setFixed} onClose={() => setFix(false)} />}
     </li>
   );
 }
@@ -450,7 +462,7 @@ function ProblemCard({ p, i, photos }: { p: Problem; i: number; photos: string[]
 // Messaggi a rotazione durante la modifica (come Foto AI).
 const FIX_MSGS = ['Guardo la foto', 'Applico la modifica', 'Sistemo luce e dettagli', 'Rifinisco i bordi', 'Quasi pronta'];
 
-function PhotoFix({ src, label, edit, onClose }: { src: string; label: string; edit: string; onClose: () => void }) {
+function PhotoFix({ src, label, edit, onDone, onClose }: { src: string; label: string; edit: string; onDone: (url: string) => void; onClose: () => void }) {
   const [prompt, setPrompt] = useState(edit);
   const [busy, setBusy] = useState(false);
   const [out, setOut] = useState<string | null>(null);
@@ -519,6 +531,7 @@ function PhotoFix({ src, label, edit, onClose }: { src: string; label: string; e
                 <div className="absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 items-center gap-2.5 whitespace-nowrap rounded-full bg-black/55 px-5 py-2.5 backdrop-blur-xl">
                   <span className="h-3.5 w-3.5 shrink-0 animate-spin rounded-full border-2 border-white/30 border-t-white" />
                   <span key={msg} className="blur-in bg-clip-text text-xs font-bold text-transparent" style={{ backgroundImage: 'linear-gradient(to right, #dbe5fb 20%, #537eec 50%, #dbe5fb 80%)', backgroundSize: '200% auto', animation: 'gnm-shimmer-text 2.5s linear infinite' }}>{FIX_MSGS[msg]}...</span>
+                  <Elapsed className="text-xs font-bold text-white/70" />
                 </div>
               )}
             </div>
@@ -530,7 +543,7 @@ function PhotoFix({ src, label, edit, onClose }: { src: string; label: string; e
             <>
               <span className={`blur-in bottom-3 left-3 ${tag}`}>Prima</span>
               <span className={`blur-in bottom-3 right-3 ${tag}`}>Dopo</span>
-              <button onClick={() => downloadImage(out!, `${label.replace(/[^a-z]+/gi, '-').replace(/^-|-$/g, '').toLowerCase()}-sistemata.jpg`)}
+              <button onClick={() => { downloadImage(out!, `${label.replace(/[^a-z]+/gi, '-').replace(/^-|-$/g, '').toLowerCase()}-sistemata.jpg`); onDone(out!); }}
                 className="blur-in absolute right-3 top-3 z-[12] flex h-9 items-center gap-1.5 rounded-full bg-white/85 px-3.5 text-xs font-semibold shadow-sm ring-1 ring-black/5 backdrop-blur-md hover:bg-white"><Download size={14} /> Scarica</button>
             </>
           )}
@@ -541,10 +554,22 @@ function PhotoFix({ src, label, edit, onClose }: { src: string; label: string; e
           <textarea rows={2} value={prompt} onChange={e => setPrompt(e.target.value)} placeholder="Es. togli gli oggetti dal tavolo, lascia invariato il resto"
             onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); run(); } }}
             className="min-w-0 flex-1 resize-none bg-transparent py-2 text-sm leading-relaxed outline-none placeholder:text-muted/60" />
-          <button onClick={run} disabled={busy || !prompt.trim()}
-            className="flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-brand px-4 text-[13px] font-semibold text-white ease-smooth transition-[background-color,opacity,transform] hover:bg-brand/90 active:scale-[0.97] disabled:opacity-40">
-            {busy ? <Loader2 size={14} className="animate-spin" /> : <Wand2 size={14} />} {busy ? 'Modifico...' : out ? 'Rigenera' : 'Genera'}
-          </button>
+          {/* Dopo la prima generazione: Rigenera (secondario) a sinistra, Finito (primario) a destra */}
+          {out && !busy && (
+            <button onClick={run} disabled={!prompt.trim()} className="flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-white px-4 text-[13px] font-semibold ring-1 ring-black/10 ease-smooth transition-colors hover:bg-canvas disabled:opacity-40">
+              <Wand2 size={14} /> Rigenera
+            </button>
+          )}
+          {out && !busy ? (
+            <button onClick={() => { onDone(out); onClose(); }} className="flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-brand px-4 text-[13px] font-semibold text-white ease-smooth transition-[background-color,transform] hover:bg-brand/90 active:scale-[0.97]">
+              <Check size={14} strokeWidth={3} /> Finito
+            </button>
+          ) : (
+            <button onClick={run} disabled={busy || !prompt.trim()}
+              className="flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-brand px-4 text-[13px] font-semibold text-white ease-smooth transition-[background-color,opacity,transform] hover:bg-brand/90 active:scale-[0.97] disabled:opacity-40">
+              {busy ? <Loader2 size={14} className="animate-spin" /> : <Wand2 size={14} />} {busy ? <>Modifico <Elapsed className="text-white/80" /></> : 'Genera'}
+            </button>
+          )}
         </div>
         {err && <p className="mt-2 px-1 text-sm text-rose-600">{err}</p>}
       </div>
@@ -553,7 +578,10 @@ function PhotoFix({ src, label, edit, onClose }: { src: string; label: string; e
   );
 }
 
-function Section({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
+function Section({ title, hint, children, limit }: { title: string; hint?: string; children: React.ReactNode; limit?: number }) {
+  const [all, setAll] = useState(false);
+  const items = Children.toArray(children);
+  const hidden = limit && !all ? items.length - limit : 0;
   return (
     <section className={BOX}>
       <div className="flex items-start justify-between gap-2">
@@ -562,7 +590,8 @@ function Section({ title, hint, children }: { title: string; hint?: string; chil
           {hint && <p className="mt-0.5 text-xs text-muted">{hint}</p>}
         </div>
       </div>
-      <ul className="mt-4 space-y-2.5">{children}</ul>
+      <ul className="mt-4 space-y-2.5">{hidden > 0 ? items.slice(0, limit) : items}</ul>
+      {hidden > 0 && <button onClick={() => setAll(true)} className="mt-3 text-sm font-medium text-brand hover:underline">Leggi di più ({hidden})</button>}
     </section>
   );
 }
