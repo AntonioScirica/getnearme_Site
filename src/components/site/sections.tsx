@@ -4,7 +4,7 @@ import { useState, type FormEvent } from 'react';
 import { ArrowRight, ArrowUpRight, Building2, Check, ChevronLeft, ChevronRight, Handshake, Heart, Leaf, Mail, MapPin, Menu, Phone, Quote, Search, ShieldCheck, Sparkles, Star, Users, X } from 'lucide-react';
 import { zoneSlug, type SiteConfig, type SiteProperty } from '@/lib/siteTemplates';
 import { TopBar } from './extras';
-import { Btn, Container, contacts, Eyebrow, Facts, H, Photo, price, SiteLink, typeOf, useSite, zoneOf, pathOf, type Filters, type Page } from './ui';
+import { Btn, Container, contacts, Eyebrow, Facts, FavButton, H, Photo, price, SiteLink, typeOf, useSite, zoneOf, pathOf, type Filters, type Page } from './ui';
 export type { Filters };
 
 // Sezioni dei siti vetrina. Ogni sezione ha piu' varianti: il tema del template sceglie quale usare,
@@ -47,9 +47,9 @@ export function Header({ over }: { over?: boolean }) {
   const navCls = light ? 'text-white/85 hover:text-white' : 'text-[var(--muted)] hover:text-[var(--fg)]';
   const nav = links.map(([l, to]) => <SiteLink key={l} to={to} className={`px-3.5 py-2 text-sm font-medium transition-colors ${navCls}`}>{l}</SiteLink>);
   const cta = cfg.showContact && (
-    <Btn href={preview ? undefined : pathOf(base, { page: 'contatti' })} onClick={preview ? () => go?.({ page: 'contatti' }) : undefined} size="sm" variant={light ? 'light' : t.header === 'minimal' ? 'ink' : 'solid'} className={`hidden !h-10 md:inline-flex ${t.header === 'pill' || t.header === 'minimal' ? '!rounded-full' : ''}`}>
+    <span className="hidden md:block"><Btn href={preview ? undefined : pathOf(base, { page: 'contatti' })} onClick={preview ? () => go?.({ page: 'contatti' }) : undefined} size="sm" variant={light ? 'light' : t.header === 'minimal' ? 'ink' : 'solid'} className={`!h-10 ${t.header === 'pill' || t.header === 'minimal' ? '!rounded-full' : ''}`}>
       {t.header !== 'minimal' && <Phone size={14} />}{cfg.ctaLabel}{t.header === 'minimal' && <ArrowUpRight size={14} />}
-    </Btn>
+    </Btn></span>
   );
   const burger = <button onClick={() => setOpen(v => !v)} className="md:hidden" aria-label="Menu">{open ? <X /> : <Menu />}</button>;
   const mobile = open && <div className="border-t border-[var(--line)] bg-[var(--bg)] px-6 py-4 text-[var(--fg)] md:hidden">{links.map(([l, to]) => <SiteLink key={l} to={to} className="block py-2.5 text-base font-medium">{l}</SiteLink>)}</div>;
@@ -138,14 +138,14 @@ export function SearchForm({ layout = 'bar' }: { layout?: 'bar' | 'stack' | 'adv
     const cities = [...new Set(properties.map(p => p.addr?.split(',').slice(-1)[0]?.trim()).filter(Boolean))] as string[];
     return (
       <form action={preview ? undefined : pathOf(base, { page: 'immobili' })} method="get" onSubmit={submit} className="grid gap-3 md:grid-cols-[1fr_1fr_1fr_1fr_160px]">
-        <input name="rif" value={f.rif ?? ''} onChange={e => setF({ ...f, rif: e.target.value })} placeholder="Codice immobile" className={box} />
+        <input name="rif" value={f.rif ?? ''} onChange={e => setF({ ...f, rif: e.target.value })} placeholder="Codice immobile" className={`${box} hidden md:block`} />
         <select name="tipo" value={f.tipo ?? ''} onChange={e => setF({ ...f, tipo: e.target.value })} className={box}><option value="">Tutte le tipologie</option>{tipi.map(x => <option key={x}>{x}</option>)}</select>
         <select name="q" value={f.q ?? ''} onChange={e => setF({ ...f, q: e.target.value })} className={box}><option value="">Tutte le città</option>{cities.map(x => <option key={x}>{x}</option>)}</select>
         <select name="max" value={f.max ?? ''} onChange={e => setF({ ...f, max: Number(e.target.value) || undefined })} className={box}><option value="">Prezzo massimo</option>{PRICES.map(v => <option key={v} value={v}>{price(v)}</option>)}</select>
         <button type="submit" className="row-span-2 flex h-12 items-center justify-center gap-2 rounded-[calc(var(--r)*0.6)] bg-[var(--c)] text-sm font-bold uppercase tracking-wider text-[var(--on-c,#fff)] transition hover:brightness-105 md:h-full"><Search size={16} /> Cerca</button>
-        <select name="camere" value={f.camere ?? ''} onChange={e => setF({ ...f, camere: Number(e.target.value) || undefined })} className={box}><option value="">N. camere</option>{[1, 2, 3, 4].map(n => <option key={n} value={n}>{n}+ camere</option>)}</select>
-        <select name="bagni" value={f.bagni ?? ''} onChange={e => setF({ ...f, bagni: Number(e.target.value) || undefined })} className={box}><option value="">N. bagni</option>{[1, 2, 3].map(n => <option key={n} value={n}>{n}+ bagni</option>)}</select>
-        <select name="contratto" value={f.contratto ?? ''} onChange={e => setF({ ...f, contratto: e.target.value })} className={box}><option value="">Vendita e affitto</option><option value="vendita">Vendita</option><option value="affitto">Affitto</option></select>
+        <select name="camere" value={f.camere ?? ''} onChange={e => setF({ ...f, camere: Number(e.target.value) || undefined })} className={`${box} hidden md:block`}><option value="">N. camere</option>{[1, 2, 3, 4].map(n => <option key={n} value={n}>{n}+ camere</option>)}</select>
+        <select name="bagni" value={f.bagni ?? ''} onChange={e => setF({ ...f, bagni: Number(e.target.value) || undefined })} className={`${box} hidden md:block`}><option value="">N. bagni</option>{[1, 2, 3].map(n => <option key={n} value={n}>{n}+ bagni</option>)}</select>
+        <select name="contratto" value={f.contratto ?? ''} onChange={e => setF({ ...f, contratto: e.target.value })} className={`${box} hidden md:block`}><option value="">Vendita e affitto</option><option value="vendita">Vendita</option><option value="affitto">Affitto</option></select>
         <span />
       </form>
     );
@@ -363,7 +363,7 @@ export function PropertyCard({ p }: { p: SiteProperty }) {
 
   if (t.card === 'minimal') return (
     <SiteLink to={{ page: 'immobile', id: p.id }} className="group block">
-      <div className="relative"><Photo src={p.cover} alt={p.titolo} zoom className="aspect-[4/3] rounded-[var(--r)]" /><span className="absolute left-3 top-3 rounded-full bg-white px-3 py-1 text-[11px] font-semibold text-neutral-900">{typeOf(p)}</span></div>
+      <div className="relative"><Photo src={p.cover} alt={p.titolo} zoom className="aspect-[4/3] rounded-[var(--r)]" /><span className="absolute left-3 top-3 rounded-full bg-white px-3 py-1 text-[11px] font-semibold text-neutral-900">{typeOf(p)}</span><FavButton id={p.id} className="absolute right-3 top-3" /></div>
       <div className="mt-4 flex items-start justify-between gap-4">
         <div className="min-w-0"><div className="line-clamp-1 text-[17px] font-semibold">{p.titolo}</div>{place}</div>{pr}
       </div>
@@ -374,7 +374,7 @@ export function PropertyCard({ p }: { p: SiteProperty }) {
     <SiteLink to={{ page: 'immobile', id: p.id }} className={`${shell} ring-1 ring-[var(--line)]`}>
       <Photo src={p.cover} alt={p.titolo} zoom className="aspect-[4/3]" />
       <div className="flex flex-1 flex-col p-5">
-        <div className="flex items-center justify-between">{pr}<span className="flex h-8 w-8 items-center justify-center rounded-full ring-1 ring-[var(--line)]"><Heart size={14} /></span></div>
+        <div className="flex items-center justify-between">{pr}<FavButton id={p.id} className="!bg-transparent ring-1 ring-[var(--line)] !shadow-none" /></div>
         <div className="mt-2 line-clamp-1 text-[16px] font-semibold">{p.titolo}</div>{place}
         <Facts p={p} className="mt-4 text-[var(--muted)]" />
       </div>
@@ -385,6 +385,7 @@ export function PropertyCard({ p }: { p: SiteProperty }) {
       <div className="relative">
         <Photo src={p.cover} alt={p.titolo} zoom className="aspect-[4/3]" />
         <div className="absolute left-3 top-3 flex gap-1.5">{riv ? <span className="rounded-[calc(var(--r)*0.5)] bg-[#e5533d] px-2.5 py-1 text-[11px] font-bold uppercase text-white">In evidenza</span> : badge}{t.card === 'badge' && <span className="rounded-[calc(var(--r)*0.5)] bg-white/90 px-2.5 py-1 text-[11px] font-semibold text-neutral-800">{typeOf(p)}</span>}</div>
+        <FavButton id={p.id} className="absolute bottom-3 right-3" />
         {riv && <span className="absolute right-3 top-3 rounded-[calc(var(--r)*0.5)] bg-[var(--c)] px-2.5 py-1 text-[11px] font-bold uppercase text-[var(--on-c,#fff)]">{isRent(p) ? 'Affitto' : 'Disponibile'}</span>}
       </div>
       <div className="flex flex-1 flex-col p-5">
@@ -392,7 +393,7 @@ export function PropertyCard({ p }: { p: SiteProperty }) {
         <Facts p={p} className="mt-3 border-t border-[var(--line)] pt-3 text-[var(--muted)]" />
         {t.card === 'button'
           ? <div className="mt-4 flex items-center justify-between">{pr}<span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--c)] px-4 py-2 text-[13px] font-semibold text-white">Dettagli <ArrowRight size={14} /></span></div>
-          : <div className="mt-4 flex items-center justify-between">{pr}{t.card === 'badge' ? <Heart size={18} className="text-[var(--muted)]" /> : <ArrowRight size={18} className="text-[var(--c)] transition-transform duration-500 group-hover:translate-x-1" />}</div>}
+          : <div className="mt-4 flex items-center justify-between">{pr}{t.card === 'badge' ? <ArrowUpRight size={18} className="text-[var(--muted)]" /> : <ArrowRight size={18} className="text-[var(--c)] transition-transform duration-500 group-hover:translate-x-1" />}</div>}
         {riv && (
           <div className="mt-4 flex items-center gap-2.5 border-t border-[var(--line)] pt-4 text-xs text-[var(--muted)]">
             {cfg.aboutImage ? <Photo src={cfg.aboutImage} className="h-7 w-7 rounded-full" /> : <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--soft)] text-[11px] font-bold text-[var(--fg)]">{initial(name)}</span>}
@@ -410,7 +411,7 @@ export function PropertyRow({ p }: { p: SiteProperty }) {
   const { cfg } = useSite();
   return (
     <SiteLink to={{ page: 'immobile', id: p.id }} className="group grid gap-6 border-b border-[var(--line)] py-8 md:grid-cols-[340px_1fr_auto] md:items-center">
-      <Photo src={p.cover} alt={p.titolo} zoom className="aspect-[4/3] rounded-[var(--r)]" />
+      <div className="relative"><Photo src={p.cover} alt={p.titolo} zoom className="aspect-[4/3] rounded-[var(--r)]" /><FavButton id={p.id} className="absolute right-3 top-3" /></div>
       <div>
         <div className="text-[11px] font-semibold uppercase tracking-[0.25em] text-[var(--muted)]">{typeOf(p)} · {isRent(p) ? 'Affitto' : 'Vendita'}</div>
         <H as="h3" className="mt-2 text-3xl">{p.titolo}</H>

@@ -1,7 +1,7 @@
 'use client';
 
-import { createContext, useContext, type CSSProperties, type ReactNode } from 'react';
-import { Bath, BedDouble, DoorOpen, Maximize2 } from 'lucide-react';
+import { createContext, useContext, useEffect, useState, type CSSProperties, type ReactNode } from 'react';
+import { Bath, BedDouble, DoorOpen, Heart, Maximize2 } from 'lucide-react';
 import type { SiteConfig, SiteProperty, TemplateId } from '@/lib/siteTemplates';
 
 // Base dei siti vetrina: tema per template, contesto del sito, link (veri sul sito, interni
@@ -140,4 +140,36 @@ export function contacts(cfg: SiteConfig, subject?: string) {
     wa: wa ? `https://wa.me/${wa}?text=${encodeURIComponent(msg)}` : '',
     mail: cfg.email ? `mailto:${cfg.email}?subject=${encodeURIComponent(subject ?? 'Informazioni')}` : '',
   };
+}
+
+// Preferiti del visitatore: nel suo browser, uno per sito (niente login)
+const FAV_EVT = 'gnm-fav';
+export function useFavs() {
+  const { base } = useSite();
+  const key = `gnm-fav:${base || 'anteprima'}`;
+  const [ids, setIds] = useState<string[]>([]);
+  useEffect(() => {
+    const load = () => { try { setIds(JSON.parse(localStorage.getItem(key) || '[]')); } catch { setIds([]); } };
+    load();
+    window.addEventListener(FAV_EVT, load);
+    return () => window.removeEventListener(FAV_EVT, load);
+  }, [key]);
+  const toggle = (id: string) => {
+    const next = ids.includes(id) ? ids.filter(x => x !== id) : [...ids, id];
+    localStorage.setItem(key, JSON.stringify(next));
+    window.dispatchEvent(new Event(FAV_EVT));
+  };
+  return { ids, toggle, has: (id: string) => ids.includes(id) };
+}
+
+export function FavButton({ id, className = '' }: { id: string; className?: string }) {
+  const { has, toggle } = useFavs();
+  const on = has(id);
+  return (
+    <button type="button" aria-label={on ? 'Togli dai preferiti' : 'Aggiungi ai preferiti'} aria-pressed={on}
+      onClick={e => { e.preventDefault(); e.stopPropagation(); toggle(id); }}
+      className={`flex h-9 w-9 items-center justify-center rounded-full bg-white/95 text-neutral-800 shadow-sm transition-transform duration-300 hover:scale-110 active:scale-95 ${className}`}>
+      <Heart size={16} className={on ? 'fill-rose-500 text-rose-500' : ''} />
+    </button>
+  );
 }

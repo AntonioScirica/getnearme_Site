@@ -5,7 +5,7 @@ import { ArrowLeft, ChevronLeft, ChevronRight, Expand, Mail, MapPin, MessageCirc
 import { zoneSlug, type SiteProperty } from '@/lib/siteTemplates';
 import { ContactForm, DetailsTable, FeatureList, MapBlock, RichText, ServicesGrid, ShareBar, WhatsAppFloat } from './extras';
 import { AboutBlock, CtaBand, Featured, Footer, Header, Hero, Intro, isRent, PropertyCard, PropertyRow, Reviews, SectionHead, statsOf, tipiOf, Zones, type Filters } from './sections';
-import { Btn, Container, contacts, Eyebrow, Facts, H, Photo, price, SiteLink, SiteRoot, typeOf, useSite, type Page, type SiteCtx } from './ui';
+import { Btn, Container, contacts, Eyebrow, Facts, FavButton, H, Photo, price, SiteLink, SiteRoot, typeOf, useFavs, useSite, type Page, type SiteCtx } from './ui';
 
 // Le 4 pagine del sito vetrina. Struttura comune, ma ogni template sceglie le sue varianti:
 // filtri laterali o in alto, card o righe, galleria a mosaico, slider o a tutto schermo, profilo diviso, con copertina o centrato.
@@ -34,29 +34,31 @@ function PageHead({ eyebrow, title, sub, children }: { eyebrow: string; title: s
 }
 
 // ---------- Immobili ----------
-type F = Filters & { min?: number; camere?: number; bagni?: number; sort?: string };
+type F = Filters & { min?: number; sort?: string; fav?: boolean };
 const PER_PAGE = 9;
 function useFilter(initial?: Filters) {
   const { properties } = useSite();
+  const favs = useFavs();
+  const favIds = favs.ids;
   const [f, setF] = useState<F>({ ...initial });
   const list = useMemo(() => {
     const q = f.q?.toLowerCase().trim();
     const r = properties.filter(p =>
       (!q || `${p.titolo} ${p.addr}`.toLowerCase().includes(q)) && (!f.tipo || p.tipologia?.startsWith(f.tipo)) && (!f.rif || (p.riferimento ?? '').toLowerCase().includes(f.rif.toLowerCase())) &&
       (!f.contratto || (f.contratto === 'affitto') === isRent(p)) && (!f.max || (p.prezzo && p.prezzo <= f.max)) && (!f.min || p.prezzo >= f.min) &&
-      (!f.camere || (p.camere ?? 0) >= f.camere) && (!f.bagni || (p.bagni ?? 0) >= f.bagni));
+      (!f.camere || (p.camere ?? 0) >= f.camere) && (!f.bagni || (p.bagni ?? 0) >= f.bagni) && (!f.fav || favIds.includes(p.id)));
     if (f.sort === 'asc') r.sort((a, b) => (a.prezzo || 9e9) - (b.prezzo || 9e9));
     if (f.sort === 'desc') r.sort((a, b) => b.prezzo - a.prezzo);
     if (f.sort === 'mq') r.sort((a, b) => b.mq - a.mq);
     return r;
-  }, [properties, f]);
-  return { f, setF, set: (p: Partial<F>) => setF(x => ({ ...x, ...p })), list, tipi: tipiOf(properties) };
+  }, [properties, f, favIds]);
+  return { f, setF, set: (p: Partial<F>) => setF(x => ({ ...x, ...p })), list, tipi: tipiOf(properties), favCount: favIds.length };
 }
 
 function ListingsPage({ initial }: { initial?: Filters }) {
   const { t } = useSite();
   const s = useFilter(initial);
-  const { f, set, setF, list, tipi } = s;
+  const { f, set, setF, list, tipi, favCount } = s;
   const [pageN, setPageN] = useState(0);
   const [open, setOpen] = useState(false);
   useEffect(() => { setPageN(0); }, [f]); // eslint-disable-line react-hooks/set-state-in-effect
@@ -64,7 +66,12 @@ function ListingsPage({ initial }: { initial?: Filters }) {
   const shown = list.slice(pageN * PER_PAGE, pageN * PER_PAGE + PER_PAGE);
   const field = 'h-11 w-full rounded-[calc(var(--r)*0.6)] border border-[var(--line)] bg-[var(--surface)] px-3 text-sm outline-none focus:border-[var(--c)]';
   const chip = (on: boolean) => `h-10 flex-1 rounded-[calc(var(--r)*0.6)] border px-3 text-sm font-medium transition-colors ${on ? 'border-[var(--c)] bg-[var(--c)] text-white' : 'border-[var(--line)] bg-[var(--surface)] hover:border-[var(--fg)]'}`;
-  const contratto = <div className="flex gap-2">{[['', 'Tutti'], ['vendita', 'Vendita'], ['affitto', 'Affitto']].map(([v, l]) => <button key={v} onClick={() => set({ contratto: v || undefined })} className={chip((f.contratto ?? '') === v)}>{l}</button>)}</div>;
+  const contratto = (
+    <div className="flex gap-2">
+      {[['', 'Tutti'], ['vendita', 'Vendita'], ['affitto', 'Affitto']].map(([v, l]) => <button key={v} onClick={() => set({ contratto: v || undefined })} className={chip((f.contratto ?? '') === v)}>{l}</button>)}
+      {favCount > 0 && <button onClick={() => set({ fav: !f.fav })} className={`${chip(!!f.fav)} flex !flex-none items-center gap-1.5`}>♥ {favCount}</button>}
+    </div>
+  );
   const zona = <div className="relative"><MapPin size={15} className="absolute left-3 top-3.5 text-[var(--muted)]" /><input value={f.q ?? ''} onChange={e => set({ q: e.target.value })} placeholder="Città, quartiere, via" className={`${field} pl-9`} /></div>;
   const tipo = <select value={f.tipo ?? ''} onChange={e => set({ tipo: e.target.value || undefined })} className={field}><option value="">Tutte le tipologie</option>{tipi.map(x => <option key={x}>{x}</option>)}</select>;
   const prezzo = <div className="flex gap-2"><input type="number" inputMode="numeric" placeholder="Min €" value={f.min ?? ''} onChange={e => set({ min: Number(e.target.value) || undefined })} className={field} /><input type="number" inputMode="numeric" placeholder="Max €" value={f.max ?? ''} onChange={e => set({ max: Number(e.target.value) || undefined })} className={field} /></div>;
@@ -263,7 +270,7 @@ function PropertyPage({ id }: { id: string }) {
           {t.gallery !== 'full' && heading}
           {cfg.showPrices && <div className={`${t.gallery === 'full' ? '' : 'mt-6'} text-4xl font-bold tracking-tight`}>{price(p.prezzo)}{isRent(p) && p.prezzo ? <span className="text-lg font-medium text-[var(--muted)]"> /mese</span> : null}</div>}
           <Facts p={p} full className="mt-8" />
-          <div className="mt-6"><ShareBar title={p.titolo} /></div>
+          <div className="mt-6 flex items-center gap-2"><ShareBar title={p.titolo} /><FavButton id={p.id} className="!h-10 !w-10 ring-1 ring-[var(--line)] !shadow-none" /></div>
           {desc && (
             <div className="mt-12">
               <H className="text-3xl">Descrizione</H>
