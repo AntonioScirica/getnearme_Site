@@ -79,8 +79,9 @@ export default function PlatformApp({ userData }: { userData: UserData }) {
         </div>
       </header>
 
-      <main className="flex-1 overflow-y-auto">
-        <div key={route} className={`fade-up mx-auto max-w-6xl px-6 ${route === '/' || route === '/migliora' ? '' : 'pb-16 pt-8'}`}>
+      <main className={`flex-1 ${route === '/staging' ? 'overflow-hidden' : 'overflow-y-auto'}`}>
+        {/* Home staging: la chat gestisce lo scorrimento da sola (campo fisso in fondo) */}
+        <div key={route} className={`fade-up mx-auto max-w-6xl px-6 ${route === '/staging' ? 'h-full' : route === '/' || route === '/migliora' ? '' : 'pb-16 pt-8'}`}>
           {route === '/costi' && isPlatformAdmin(userData.email) ? (
             <CostsView />
           ) : route === '/migliora' ? (
