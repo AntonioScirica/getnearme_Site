@@ -68,7 +68,14 @@ ${CRITERI_PROMPT}
   - foto_indice: se il problema riguarda UNA delle foto che vedi, il suo numero (1 = prima immagine allegata, 2 = seconda, 3 = terza); altrimenti 0.
   - foto_stanza: se foto_indice > 0, l'ambiente che quella foto mostra, riconosciuto guardandola, in minuscolo con articolo ("la cucina", "il soggiorno", "la camera da letto", "il bagno", "l'androne", "il balcone", "la facciata"); altrimenti "".
   - Nei testi (problema, perche, soluzione, foto_consigli, criteri) chiama SEMPRE le foto per ambiente ("la foto della cucina"), MAI per numero o posizione ("foto 3", "terza foto"); l'unica eccezione è "la prima foto" della galleria quando il problema è proprio quale foto viene mostrata per prima.
-  - modifica_foto: se quella foto si può sistemare con un editor AI (più luce, raddrizzare, togliere oggetti o disordine, arredare una stanza vuota, cielo più limpido), scrivi l'istruzione per l'editor, in italiano, breve e precisa (es. "Aumenta la luminosità e bilancia il bianco, mantieni invariati mobili e pareti"). Se serve rifare la foto o manca una stanza, lascia "".
+  - modifica_foto: istruzione per un editor di immagini generativo (Qwen-Image), che ridisegna il contenuto della foto ma non fa correzioni tecniche. Scrivila SOLO se il problema si risolve con una di queste modifiche di contenuto:
+    - togliere oggetti precisi: disordine su piani e mobili, panni stesi, cavi, bidoni, auto, persone, oggetti personali;
+    - arredare una stanza vuota o spoglia con mobili adatti all'ambiente (home staging);
+    - sostituire un cielo grigio o bianco con un cielo azzurro limpido;
+    - rendere l'ambiente più luminoso, come in una giornata di sole con luce naturale dalle finestre;
+    - riordinare: letto rifatto, cuscini sistemati, tavolo sgombro;
+    - cambiare un materiale o un colore: pareti imbiancate, pavimento diverso.
+    Scrivila in italiano, un'azione concreta sugli elementi visibili (nomina cosa e dove), più "lascia invariati" per ciò che deve restare uguale (es. "Togli le pentole e i barattoli dal piano di lavoro, lascia invariati mobili, pareti e pavimento"). VIETATO chiedere correzioni tecniche o geometriche: raddrizzare, prospettiva, linee verticali, ritagliare, bilanciamento del bianco, esposizione, nitidezza, rumore, risoluzione, grandangolo. Se la foto è storta, sfocata, piccola, inquadrata male o manca una stanza, va rifatta: lascia "" e dillo nella soluzione.
 - dati_mancanti: campi che l'acquirente cerca e non ci sono (es. spese condominiali, riscaldamento, esposizione, anno costruzione). Solo il nome del dato, breve.
 - foto_consigli: 2-4 consigli sulle foto viste (luce, ordine, inquadrature, stanze mancanti, prima foto). Se non ci sono foto, dillo.
 - titolo: nuovo titolo, max 70 caratteri, concreto, niente emoji.

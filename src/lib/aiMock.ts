@@ -7,7 +7,7 @@ export const mockDelay = (ms = 3000) => new Promise(r => setTimeout(r, ms));
 const MOCKS: Record<string, unknown> = {
   analyze: {
     criteri: {
-      foto: { punti: 14, punti_dopo: 27, nota: 'Prima foto sull\'androne, foto della cucina storta e gialla.', limite: 'Mancano foto di bagno e camere: vanno scattate, l\'AI non le crea.' },
+      foto: { punti: 14, punti_dopo: 27, nota: 'Prima foto sull\'androne, foto della cucina scura e ingombra.', limite: 'Mancano foto di bagno e camere: vanno scattate, l\'AI non le crea.' },
       dati: { punti: 16, punti_dopo: 22, nota: 'Mancano spese condominiali, classe energetica, riscaldamento e anno.', limite: 'Anno di costruzione e spese esatte vanno chiesti all\'amministratore.' },
       descrizione: { punti: 11, punti_dopo: 18, nota: 'Contenuti buoni ma con refusi e il telefono nel testo.', limite: 'Senza planimetria e misure delle stanze la descrizione resta generica.' },
       coerenza: { punti: 12, punti_dopo: 15, nota: 'Dati coerenti, penalizzati dai contatti diretti nella descrizione.', limite: '' },
@@ -27,10 +27,10 @@ const MOCKS: Record<string, unknown> = {
         soluzione: 'Sposta al primo posto la foto del salone con cucina a vista e metti l\'androne in fondo alla galleria.',
       },
       {
-        area: 'foto', gravita: 'media', foto_indice: 3, foto_stanza: 'la cucina', modifica_foto: 'Raddrizza le linee verticali e bilancia il bianco, mantieni invariati mobili e pareti',
-        problema: 'La foto della cucina è storta e ha una dominante gialla.',
-        perche: 'Le foto storte e gialle fanno sembrare gli ambienti più vecchi e piccoli.',
-        soluzione: 'Sostituiscila con la versione corretta (usa "Sistema con AI") prima di ricaricarla sul portale.',
+        area: 'foto', gravita: 'media', foto_indice: 3, foto_stanza: 'la cucina', modifica_foto: 'Togli gli oggetti dal piano di lavoro e dalla mensola, rendi la cucina più luminosa con luce naturale dalla porta finestra, lascia invariati mobili, pareti e pavimento',
+        problema: 'La foto della cucina è scura e il piano di lavoro è pieno di oggetti.',
+        perche: 'Una cucina buia e ingombra sembra più piccola e meno curata di quello che è.',
+        soluzione: 'Sostituiscila con la versione sistemata (usa "Sistema con AI") prima di ricaricarla sul portale.',
       },
       {
         area: 'descrizione', gravita: 'media', foto_indice: 0, foto_stanza: '', modifica_foto: '',
@@ -49,7 +49,7 @@ const MOCKS: Record<string, unknown> = {
     foto_consigli: [
       'Metti come prima foto il soggiorno, scattato dall\'angolo per dare profondità.',
       'Aggiungi foto di piscina e palestra condominiale: sono il vero punto di forza.',
-      'Raddrizza le verticali: con foto storte gli ambienti sembrano più piccoli.',
+      'Scatta con il telefono in orizzontale e all\'altezza del petto: gli ambienti sembrano più ampi.',
     ],
     titolo: '[FINTO] Trilocale arredato con box e piscina condominiale, zona Bocconi',
     descrizione: `[DESCRIZIONE FINTA DI ESEMPIO]
