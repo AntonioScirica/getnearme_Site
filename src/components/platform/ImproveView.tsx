@@ -278,7 +278,7 @@ export function Results({ listing, analysis: a, onSaved, onRestart }: { listing:
           <div className={showBefore ? 'grid gap-4 lg:grid-cols-2' : ''}>
             {showBefore && <Before text={text(listing.propertyInfo.description)} tall />}
             <div className="relative">
-              <textarea rows={14} value={descrizione} onChange={e => setDescrizione(e.target.value)} className={`${input} pr-12 text-[15px] leading-relaxed`} />
+              <textarea rows={14} value={descrizione} onChange={e => setDescrizione(e.target.value)} className={`${input} pr-12 text-[15px] leading-relaxed ${showBefore ? 'block h-[26rem] resize-none' : ''}`} />
               <CopyIcon text={descrizione} />
             </div>
           </div>
@@ -437,5 +437,6 @@ function Field({ label, meta, warn, children }: { label: string; meta: string; w
 }
 
 function Before({ text: t, tall }: { text: string; tall?: boolean }) {
-  return t ? <p className={`mb-2 ${tall ? 'max-h-[26rem]' : 'max-h-40'} overflow-y-auto whitespace-pre-line rounded-2xl bg-canvas p-4 text-xs leading-relaxed text-muted`}>{t}</p> : null;
+  // tall = affiancato alla descrizione: stessa altezza del campo (26rem), scorre dentro
+  return t ? <p className={`${tall ? 'h-[26rem]' : 'mb-2 max-h-40 text-xs'} overflow-y-auto whitespace-pre-line rounded-2xl bg-canvas p-4 leading-relaxed text-muted ${tall ? 'text-sm' : ''}`}>{t}</p> : null;
 }
