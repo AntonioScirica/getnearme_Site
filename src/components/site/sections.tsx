@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
-import { ArrowRight, ArrowUpRight, Building2, Check, ChevronLeft, ChevronRight, Handshake, Heart, Leaf, Mail, MapPin, Menu, Phone, Quote, Search, ShieldCheck, Sparkles, Star, Users, X } from 'lucide-react';
+import { ArrowDown, ArrowRight, ArrowUpRight, Building, Building2, ChevronDown, Home, Store, TreePine, Warehouse, Check, ChevronLeft, ChevronRight, Handshake, Heart, Leaf, Mail, MapPin, Menu, Phone, Quote, Search, ShieldCheck, Sparkles, Star, Users, X } from 'lucide-react';
 import { zoneSlug, type SiteConfig, type SiteProperty } from '@/lib/siteTemplates';
-import { TopBar } from './extras';
+import { MapBlock, TopBar } from './extras';
 import { Btn, Container, contacts, Eyebrow, Facts, FavButton, H, Photo, price, SiteLink, typeOf, useSite, zoneOf, pathOf, type Filters, type Page } from './ui';
 export type { Filters };
 
@@ -15,6 +15,16 @@ export const tipiOf = (ps: SiteProperty[]) => [...new Set(ps.map(p => p.tipologi
 export const isRent = (p: SiteProperty) => /affitt/i.test(p.contratto ?? '');
 const heroSrc = (cfg: { heroImage: string }, ps: SiteProperty[]) => cfg.heroImage || ps[0]?.cover || '';
 const initial = (s: string) => s.trim().slice(0, 1).toUpperCase();
+// "Trova la casa giusta per te" -> ["Trova la casa", "giusta per te"]: la seconda parte va in corsivo
+export function splitTitle(t: string): [string, string] {
+  const i = t.indexOf(',');
+  if (i > 0) return [t.slice(0, i + 1), t.slice(i + 1).trim()];
+  const w = t.split(' ');
+  const k = Math.max(1, Math.ceil(w.length / 2));
+  return [w.slice(0, k).join(' '), w.slice(k).join(' ')];
+}
+const Accent = ({ children, color }: { children: string; color?: boolean }) =>
+  <span className={`font-[family-name:var(--font-serif-accent)] font-normal italic ${color ? 'text-[var(--c)]' : 'opacity-60'}`}>{children}</span>;
 // primo paragrafo del testo "chi sono" (il resto, con i sottotitoli, sta nella pagina profilo)
 export const introOf = (cfg: SiteConfig) => cfg.aboutText.split(/\n{2,}/)[0].replace(/^## .*$/gm, '').trim();
 
@@ -89,6 +99,8 @@ export function Header({ over }: { over?: boolean }) {
     </header>
   );
   if (t.header === 'pill') return (
+    <>
+    <TopBar />
     <header className="sticky top-0 z-30 pt-4">
       <Container>
         <div className="flex h-16 items-center gap-6 rounded-full bg-[var(--surface)]/85 px-3 pl-5 shadow-[0_10px_40px_-15px_rgba(22,22,58,.25)] ring-1 ring-[var(--line)] backdrop-blur-xl">
@@ -98,10 +110,11 @@ export function Header({ over }: { over?: boolean }) {
         </div>
       </Container>{mobile}
     </header>
+    </>
   );
   return (
     <header className={light ? 'absolute inset-x-0 top-0 z-30 text-white' : `relative z-30 bg-[var(--bg)] ${t.header === 'plain' ? 'border-b border-[var(--line)]' : ''}`}>
-      {!light && <TopBar />}
+      <TopBar />
       <Container className="flex h-20 items-center gap-6">
         <SiteLink to={{ page: 'home' }} className="min-w-0">{mark}</SiteLink>
         <nav className={`hidden items-center md:flex ${t.header === 'minimal' ? 'mx-auto' : 'ml-auto'}`}>{nav}</nav>
@@ -115,6 +128,7 @@ export function Header({ over }: { over?: boolean }) {
 export function SearchForm({ layout = 'bar' }: { layout?: 'bar' | 'stack' | 'advanced' }) {
   const { properties, base, preview, go } = useSite();
   const [f, setF] = useState<Filters>({ contratto: 'vendita' });
+  const [more, setMore] = useState(false);
   const tipi = tipiOf(properties);
   const hasRent = properties.some(isRent);
   const submit = (e: FormEvent) => { if (!preview) return; e.preventDefault(); go?.({ page: 'immobili', f }); };
@@ -172,6 +186,18 @@ export function SearchForm({ layout = 'bar' }: { layout?: 'bar' | 'stack' | 'adv
           <button type="submit" className="flex h-12 shrink-0 items-center justify-center gap-2 rounded-[calc(var(--r)*0.7)] bg-[var(--c)] px-6 text-sm font-semibold text-white transition hover:brightness-110"><Search size={16} /> Cerca</button>
         </div>
       )}
+
+      {/* altri filtri, come nelle ricerche avanzate dei siti di agenzia */}
+      <div className="mt-3">
+        <button type="button" onClick={() => setMore(v => !v)} className="inline-flex items-center gap-1 text-[13px] font-semibold opacity-80 hover:opacity-100">Altri filtri <ChevronDown size={14} className={`transition-transform ${more ? 'rotate-180' : ''}`} /></button>
+        {more && (
+          <div className="mt-3 grid gap-2 sm:grid-cols-3">
+            <select name="camere" value={f.camere ?? ''} onChange={e => setF({ ...f, camere: Number(e.target.value) || undefined })} className="h-11 rounded-[calc(var(--r)*0.6)] bg-[var(--surface)] px-3 text-sm text-[var(--fg)] outline-none ring-1 ring-[var(--line)]"><option value="">Camere</option>{[1, 2, 3, 4].map(n => <option key={n} value={n}>{n}+ camere</option>)}</select>
+            <select name="bagni" value={f.bagni ?? ''} onChange={e => setF({ ...f, bagni: Number(e.target.value) || undefined })} className="h-11 rounded-[calc(var(--r)*0.6)] bg-[var(--surface)] px-3 text-sm text-[var(--fg)] outline-none ring-1 ring-[var(--line)]"><option value="">Bagni</option>{[1, 2, 3].map(n => <option key={n} value={n}>{n}+ bagni</option>)}</select>
+            <input name="rif" value={f.rif ?? ''} onChange={e => setF({ ...f, rif: e.target.value })} placeholder="Codice immobile" className="h-11 rounded-[calc(var(--r)*0.6)] bg-[var(--surface)] px-3 text-sm text-[var(--fg)] outline-none ring-1 ring-[var(--line)] placeholder:text-[var(--muted)]" />
+          </div>
+        )}
+      </div>
     </form>
   );
 }
@@ -190,6 +216,79 @@ export function Hero() {
   const title = <H as="h1" className={serif ? 'text-[clamp(3rem,6vw,5.4rem)]' : 'text-[clamp(2.5rem,5vw,4.4rem)]'}>{cfg.heroTitle}</H>;
   const sub = <p className="mt-5 max-w-lg text-[17px] leading-relaxed opacity-80">{cfg.heroSubtitle}</p>;
 
+  if (t.hero === 'editorial') {
+    const [a, b] = splitTitle(cfg.heroTitle);
+    return (
+      <section>
+        <Container className="pt-14 md:pt-20">
+          <div className="flex items-end justify-between gap-8">
+            <div>
+              <H as="h1" className="text-[clamp(3.2rem,8vw,7rem)] leading-[0.98]">{a}<br /><Accent>{b}</Accent></H>
+              <p className="mt-6 max-w-md text-[15px] leading-relaxed text-[var(--muted)]">{cfg.heroSubtitle}</p>
+              <div className="mt-7 flex flex-wrap gap-3">
+                <SiteLink to={{ page: 'contatti' }} className="rounded-full bg-[var(--ink)] px-5 py-2.5 text-sm font-medium text-white">Richiedi una consulenza</SiteLink>
+                <SiteLink to={{ page: 'immobili' }} className="rounded-full px-5 py-2.5 text-sm font-medium ring-1 ring-[var(--fg)]/30 hover:ring-[var(--fg)]">Guarda gli immobili</SiteLink>
+              </div>
+            </div>
+            <SiteLink to={{ page: 'immobili' }} aria-label="Scorri" className="hidden h-12 w-12 shrink-0 items-center justify-center rounded-full ring-1 ring-[var(--fg)]/30 md:flex"><ArrowDown size={18} /></SiteLink>
+          </div>
+        </Container>
+        <div className="relative mt-14">
+          <div className="absolute inset-x-0 bottom-0 top-1/2 bg-[var(--ink)]" />
+          <Container className="relative"><Photo src={src} className="aspect-[21/9] rounded-[var(--r)]" /></Container>
+        </div>
+        <div className="bg-[var(--ink)] pb-4 pt-10"><Container><SearchForm /></Container></div>
+      </section>
+    );
+  }
+  if (t.hero === 'tabs') return (
+    <section className="relative">
+      <div className="relative h-[640px] overflow-hidden text-white">
+        <Photo src={src} className="h-full" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/40 to-black/10" />
+        <Container className="absolute inset-0 flex flex-col justify-center pb-20">
+          <Eyebrow className="!text-[var(--c)]">{cfg.city ? `Immobili a ${cfg.city}` : 'Immobili selezionati'}</Eyebrow>
+          <H as="h1" className="mt-4 max-w-2xl text-[clamp(3rem,6vw,5.2rem)]">{cfg.heroTitle}</H>
+          <p className="mt-5 max-w-lg text-[17px] text-white/80">{cfg.heroSubtitle}</p>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <SiteLink to={{ page: 'immobili' }} className="inline-flex items-center gap-2 rounded-[calc(var(--r)*0.6)] bg-[var(--c)] px-6 py-3 text-sm font-semibold text-white">Guarda gli immobili <ArrowRight size={15} /></SiteLink>
+            <SiteLink to={{ page: 'contatti' }} className="inline-flex items-center gap-2 rounded-[calc(var(--r)*0.6)] bg-white px-6 py-3 text-sm font-semibold text-neutral-900">Vuoi vendere?</SiteLink>
+          </div>
+        </Container>
+      </div>
+      <Container className="relative z-10 -mt-16"><div className="rounded-[var(--r)] bg-[var(--surface)] p-4 shadow-[0_30px_70px_-30px_rgba(0,0,0,.35)]"><SearchForm /></div></Container>
+    </section>
+  );
+  if (t.hero === 'sky') {
+    return (
+      <section className="relative">
+        <div className="relative flex h-[620px] items-start justify-center overflow-hidden text-center text-white">
+          <Photo src={src} className="absolute inset-0 h-full" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/45 via-black/15 to-transparent" />
+          <div className="relative px-6 pt-36">
+            <div className="font-[family-name:var(--font-serif-accent)] text-4xl italic md:text-5xl">Compra. Vendi. Affitta.</div>
+            <H as="h1" className="mt-2 text-[clamp(2.6rem,5.5vw,4.6rem)]">{cfg.heroTitle}</H>
+          </div>
+        </div>
+        <Container className="relative z-10 -mt-14 max-w-4xl"><div className="rounded-[calc(var(--r)*1.6)] bg-[var(--surface)] p-2 shadow-[0_25px_60px_-20px_rgba(15,23,42,.3)] [&_form>div:last-child]:shadow-none [&_form>div:last-child]:ring-0"><SearchForm /></div></Container>
+      </section>
+    );
+  }
+  if (t.hero === 'bento') return (
+    <Container className="pt-12">
+      <div className="grid items-end gap-8 md:grid-cols-[1.4fr_1fr]">
+        <H as="h1" className="text-[clamp(2.6rem,5.2vw,4.4rem)]">{cfg.heroTitle}</H>
+        <div className="md:text-right">
+          <p className="text-lg leading-snug">{cfg.heroSubtitle}</p>
+          <SiteLink to={{ page: 'immobili' }} className="mt-5 inline-flex items-center gap-2 rounded-[calc(var(--r)*0.6)] bg-[var(--ink)] px-5 py-3 text-sm font-semibold text-white">Guarda gli immobili <ArrowUpRight size={15} /></SiteLink>
+        </div>
+      </div>
+      <div className="relative mt-10 h-[560px] overflow-hidden rounded-[calc(var(--r)*1.4)]">
+        <Photo src={src} className="h-full" />
+        <div className="absolute bottom-8 left-8 right-8 max-w-4xl rounded-[var(--r)] bg-[var(--surface)] p-4 shadow-2xl"><SearchForm /></div>
+      </div>
+    </Container>
+  );
   if (t.hero === 'banner') return (
     <section>
       <div className="relative flex h-[520px] items-center justify-center overflow-hidden text-center text-white">
@@ -303,6 +402,72 @@ export function Features({ compact, pastel }: { compact?: boolean; pastel?: bool
 export function Intro() {
   const { t, cfg, name, properties } = useSite();
   if (t.intro === 'none') return null;
+  if (t.intro === 'services') {
+    const [a, b] = ['I miei', 'servizi'];
+    return (
+      <section className="bg-[var(--ink)] pb-24 pt-16 text-white">
+        <Container>
+          <div className="flex flex-wrap items-end justify-between gap-6">
+            <div><H className="text-4xl md:text-5xl">{a} <Accent>{b}</Accent></H><p className="mt-3 max-w-md text-sm text-white/60">Dalla valutazione al rogito, ogni passaggio seguito di persona.</p></div>
+            <SiteLink to={{ page: 'servizi' }} className="rounded-full px-5 py-2.5 text-sm ring-1 ring-white/40 hover:bg-white hover:text-[var(--ink)]">Tutti i servizi</SiteLink>
+          </div>
+          <div className="mt-10 grid gap-6 md:grid-cols-3">
+            {cfg.services.slice(0, 3).map((x, i) => (
+              <div key={i}>
+                <Photo src={properties[i]?.cover} className="aspect-[4/3.6] rounded-[var(--r)]" />
+                <div className="mt-5 text-lg font-semibold">{x.title}</div>
+                <p className="mt-2 line-clamp-2 text-sm text-white/60">{x.text}</p>
+                <SiteLink to={{ page: 'servizi' }} className="mt-5 inline-flex rounded-full px-4 py-2 text-xs ring-1 ring-white/40 hover:bg-white hover:text-[var(--ink)]">Scopri il servizio</SiteLink>
+              </div>
+            ))}
+          </div>
+        </Container>
+      </section>
+    );
+  }
+  if (t.intro === 'categories') {
+    const icon = (x: string) => /villa|indipend|rustico|casale/i.test(x) ? Home : /loft|capannone/i.test(x) ? Warehouse : /negozio|ufficio|commerc/i.test(x) ? Store : /terreno/i.test(x) ? TreePine : /attico|mansarda/i.test(x) ? Building : Building2;
+    // sempre 5: prima le tipologie presenti, poi le piu' cercate
+    const tipi = [...new Set([...tipiOf(properties), 'Appartamento', 'Villa', 'Attico', 'Casa indipendente', 'Loft'])].slice(0, 5);
+    return (
+      <Container className="pt-14">
+        <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-5">
+          {tipi.map(x => { const I = icon(x); const n = properties.filter(p => p.tipologia?.startsWith(x)).length; return (
+            <SiteLink key={x} to={{ page: 'immobili', f: { tipo: x } }} className="group flex flex-col items-center text-center">
+              <span className="flex h-16 w-16 items-center justify-center rounded-full bg-[var(--soft)] text-[var(--c)] transition-colors duration-500 group-hover:bg-[var(--c)] group-hover:text-white"><I size={24} /></span>
+              <span className="mt-3 text-sm font-semibold">{x}</span><span className="text-xs text-[var(--muted)]">{n} {n === 1 ? 'immobile' : 'immobili'}</span>
+            </SiteLink>
+          ); })}
+        </div>
+      </Container>
+    );
+  }
+  if (t.intro === 'bento') {
+    const stats = statsOf(cfg, properties);
+    return (
+      <Container className="pt-20">
+        <div className="text-sm text-[var(--muted)]">Chi è {name}</div>
+        <H className="mt-2 text-4xl md:text-5xl">Al tuo fianco, dalla ricerca al rogito</H>
+        <div className="mt-10 grid gap-4 lg:grid-cols-[1.2fr_1fr]">
+          <div className="rounded-[var(--r)] bg-[var(--surface)] p-6 ring-1 ring-[var(--line)]">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div className="max-w-sm"><div className="text-lg font-semibold">Trova la casa giusta vicino a te</div><p className="mt-2 text-sm text-[var(--muted)]">{introOf(cfg)}</p></div>
+              <SiteLink to={{ page: 'immobili' }} className="inline-flex items-center gap-2 rounded-[calc(var(--r)*0.6)] bg-[var(--ink)] px-4 py-2.5 text-xs font-semibold text-white">Immobili in zona <ArrowUpRight size={14} /></SiteLink>
+            </div>
+            <div className="mt-5"><MapBlock addr={cfg.city || properties[0]?.addr || 'Italia'} bare /></div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            {stats.map(x => (
+              <div key={x.l} className="flex flex-col justify-between rounded-[var(--r)] bg-[var(--surface)] p-6 ring-1 ring-[var(--line)]">
+                <div className="flex items-start justify-between"><span className="text-4xl font-bold tracking-tight md:text-5xl">{x.v}</span><ArrowUpRight size={18} className="text-[var(--muted)]" /></div>
+                <span className="mt-8 text-sm">{x.l}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </Container>
+    );
+  }
   if (t.intro === 'text') return (
     <Container className="pt-20 text-center">
       <H className="mx-auto max-w-3xl text-3xl md:text-[2.6rem]">{name} — {cfg.agentRole}{cfg.city ? ` a ${cfg.city}` : ''}</H>
@@ -357,7 +522,7 @@ export function PropertyCard({ p }: { p: SiteProperty }) {
   const { cfg, t, name } = useSite();
   const riv = cfg.template === 'riviera';
   const badge = <span className="rounded-[calc(var(--r)*0.5)] bg-[var(--c)] px-2.5 py-1 text-[11px] font-semibold text-white">{isRent(p) ? 'In affitto' : 'In vendita'}</span>;
-  const pr = cfg.showPrices && <span className="text-lg font-bold text-[var(--fg)]">{price(p.prezzo)}{isRent(p) && p.prezzo ? <span className="text-sm font-medium text-[var(--muted)]"> /mese</span> : null}</span>;
+  const pr = cfg.showPrices && <span className="shrink-0 whitespace-nowrap text-lg font-bold text-[var(--fg)]">{price(p.prezzo)}{isRent(p) && p.prezzo ? <span className="text-sm font-medium text-[var(--muted)]"> /mese</span> : null}</span>;
   const place = <div className="mt-1 flex items-center gap-1 truncate text-[13px] text-[var(--muted)]"><MapPin size={13} className="shrink-0" />{zoneOf(p.addr)}</div>;
   const shell = 'group flex flex-col overflow-hidden rounded-[var(--r)] bg-[var(--surface)] transition-all duration-500 hover:-translate-y-1';
 
@@ -368,6 +533,36 @@ export function PropertyCard({ p }: { p: SiteProperty }) {
         <div className="min-w-0"><div className="line-clamp-1 text-[17px] font-semibold">{p.titolo}</div>{place}</div>{pr}
       </div>
       <Facts p={p} className="mt-3 text-[var(--muted)]" />
+    </SiteLink>
+  );
+  if (t.card === 'label') return (
+    <SiteLink to={{ page: 'immobile', id: p.id }} className={`${shell} shadow-[0_1px_2px_rgba(0,0,0,.04),0_14px_34px_-18px_rgba(15,23,42,.2)] ring-1 ring-[var(--line)]`}>
+      <div className="relative">
+        <Photo src={p.cover} alt={p.titolo} zoom className="aspect-[4/3]" />
+        <span className="absolute left-3 top-3 rounded-full bg-white px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-neutral-900">{typeOf(p)}</span>
+        <FavButton id={p.id} className="absolute right-3 top-3 !h-8 !w-8 !bg-black/35 !text-white backdrop-blur" />
+        <span className="absolute bottom-3 left-3 rounded-[calc(var(--r)*0.4)] bg-[var(--c)] px-2.5 py-1 text-[11px] font-semibold text-white">{isRent(p) ? 'In affitto' : 'In vendita'}</span>
+      </div>
+      <div className="flex flex-1 flex-col p-5">
+        <div className="line-clamp-1 text-[16px] font-bold">{p.titolo}</div>{place}
+        <Facts p={p} className="mt-3 text-[var(--muted)]" />
+        <div className="mt-4 flex items-end justify-between border-t border-[var(--line)] pt-4">
+          {cfg.showPrices ? <div><div className="text-[10px] font-semibold uppercase tracking-wider text-[var(--muted)]">Prezzo</div><div className="text-xl font-bold text-[var(--c)]">{price(p.prezzo)}{isRent(p) && p.prezzo ? <span className="text-sm font-medium text-[var(--muted)]">/mese</span> : null}</div></div> : <span />}
+          <span className="flex h-9 w-9 items-center justify-center rounded-[calc(var(--r)*0.5)] bg-[var(--soft)] text-[var(--c)] transition-transform duration-500 group-hover:translate-x-0.5"><ArrowRight size={16} /></span>
+        </div>
+      </div>
+    </SiteLink>
+  );
+  if (t.card === 'clean') return (
+    <SiteLink to={{ page: 'immobile', id: p.id }} className="group block">
+      <div className="relative">
+        <Photo src={p.cover} alt={p.titolo} zoom className="aspect-[4/3] rounded-[var(--r)]" />
+        <div className="absolute right-3 top-3 flex gap-1.5">{['In evidenza', isRent(p) ? 'Affitto' : 'Vendita'].map(x => <span key={x} className="rounded-[calc(var(--r)*0.4)] bg-white/25 px-2.5 py-1 text-[11px] font-medium text-white backdrop-blur-md">{x}</span>)}</div>
+        <FavButton id={p.id} className="absolute left-3 top-3 !h-8 !w-8" />
+      </div>
+      <div className="mt-4 text-xl font-semibold tracking-tight">{p.titolo}</div>
+      <div className="mt-1.5 flex items-center gap-1 text-sm text-[var(--muted)]"><MapPin size={14} />{zoneOf(p.addr)}</div>
+      <div className="mt-2 flex flex-wrap items-center justify-between gap-2"><Facts p={p} className="text-[var(--muted)]" />{pr}</div>
     </SiteLink>
   );
   if (t.card === 'price') return (
@@ -442,6 +637,7 @@ export function Featured() {
   const head = { eyebrow: 'I nostri immobili', title: t.results === 'rows' ? 'Selezionati per te' : 'In evidenza', sub: 'Le case disponibili adesso.', link: { label: 'Vedi tutti', to: { page: 'immobili' } as Page } };
   if (!properties.length) return <Container className="py-20"><SectionHead {...head} /><p className="mt-8 text-[var(--muted)]">Presto nuovi immobili.</p></Container>;
   if (t.results === 'rows') return <Container className="py-24"><SectionHead {...head} /><div className="mt-6 border-t border-[var(--line)]">{properties.slice(0, 4).map(p => <PropertyRow key={p.id} p={p} />)}</div></Container>;
+  if (t.featured === 'chips') return <FeaturedChips />;
   if (cfg.template === 'bosco') {
     const n = properties.length, show = [0, 1, 2].map(k => properties[(off + k) % n]).filter((p, k, a) => a.indexOf(p) === k);
     return (
@@ -464,7 +660,27 @@ export function Featured() {
   );
 }
 
-// ---------- Chi siamo: 5 varianti ----------
+// In evidenza con filtro rapido a chip per tipologia e titolo con parola in corsivo colorato
+function FeaturedChips() {
+  const { properties } = useSite();
+  const [tipo, setTipo] = useState('');
+  const tipi = tipiOf(properties);
+  const list = properties.filter(p => !tipo || p.tipologia?.startsWith(tipo)).slice(0, 6);
+  return (
+    <Container className="py-24">
+      <H className="mx-auto max-w-2xl text-center text-4xl md:text-5xl">Case scelte una per una, <Accent color>che ti somigliano</Accent></H>
+      <div className="mt-10 flex justify-center gap-2 overflow-x-auto pb-1 [scrollbar-width:none]">
+        {['', ...tipi].map(x => (
+          <button key={x || 'tutti'} onClick={() => setTipo(x)} className={`shrink-0 rounded-full px-5 py-2 text-sm font-medium transition-colors ${tipo === x ? 'bg-[var(--ink)] text-white' : 'bg-[var(--soft)] text-[var(--fg)] hover:bg-[var(--line)]'}`}>{x || 'Tutti'}</button>
+        ))}
+      </div>
+      <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">{list.map(p => <PropertyCard key={p.id} p={p} />)}</div>
+      <div className="mt-10 text-center"><SiteLink to={{ page: 'immobili', f: tipo ? { tipo } : undefined }} className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold ring-1 ring-[var(--line)] hover:ring-[var(--fg)]">Vedi tutti gli immobili <ArrowRight size={15} /></SiteLink></div>
+    </Container>
+  );
+}
+
+// ---------- Chi siamo: 7 varianti ----------
 export function AboutBlock() {
   const { cfg, name, properties, t } = useSite();
   const stats = statsOf(cfg, properties);
@@ -472,6 +688,40 @@ export function AboutBlock() {
   const more = <SiteLink to={{ page: 'agente' }} className="mt-8 inline-flex items-center gap-2 rounded-[min(var(--r),999px)] bg-[var(--c)] px-5 py-3 text-sm font-semibold text-white transition hover:brightness-110">Conoscimi meglio <ArrowRight size={15} /></SiteLink>;
   const checks = <ul className="mt-6 space-y-2.5 text-sm">{['Valutazione gratuita del tuo immobile', 'Foto e annunci curati', 'Assistenza fino al rogito'].map(x => <li key={x} className="flex items-center gap-2.5"><span className="flex h-5 w-5 items-center justify-center rounded-full bg-[var(--c)] text-white"><Check size={12} /></span>{x}</li>)}</ul>;
 
+  if (t.about === 'why') return (
+    <section className="bg-[var(--soft)] py-24">
+      <Container className="grid items-center gap-12 md:grid-cols-2">
+        <Photo src={photo} className="aspect-[5/4] rounded-[var(--r)]" />
+        <div>
+          <Eyebrow>Perché scegliermi</Eyebrow>
+          <H className="mt-3 text-4xl md:text-5xl">Perché scegliere {name}?</H>
+          <p className="mt-4 text-[var(--muted)]">{introOf(cfg)}</p>
+          <div className="mt-8 grid gap-6 sm:grid-cols-2">
+            {FEATURES.map(f => <div key={f.t} className="flex gap-3"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--c)_15%,white)] text-[var(--c)]"><f.i size={17} /></span><div><div className="text-sm font-semibold">{f.t}</div><div className="mt-0.5 text-xs leading-snug text-[var(--muted)]">{f.d}</div></div></div>)}
+          </div>
+        </div>
+      </Container>
+    </section>
+  );
+  if (t.about === 'numbered') {
+    const r = cfg.reviews[0];
+    return (
+      <Container className="grid items-center gap-16 py-24 md:grid-cols-2">
+        <div className="relative pb-10 pr-10">
+          <div className="absolute -left-6 -top-6 h-24 w-24 rounded-full bg-[color-mix(in_srgb,var(--c)_14%,white)]" />
+          <Photo src={photo} className="relative aspect-[4/3.2] rounded-[calc(var(--r)*1.2)]" />
+          {r && <div className="absolute bottom-0 right-0 max-w-[260px] rounded-[var(--r)] bg-[var(--surface)] p-5 shadow-2xl"><div className="flex gap-0.5 text-amber-400">{[0, 1, 2, 3, 4].map(k => <Star key={k} size={14} fill="currentColor" />)}</div><p className="mt-2 text-sm font-semibold leading-snug">“{r.text.slice(0, 90)}{r.text.length > 90 ? '…' : ''}”</p><div className="mt-2 text-xs text-[var(--muted)]">— {r.name}</div></div>}
+        </div>
+        <div>
+          <H className="text-4xl md:text-5xl">Perché scegliere {name}?</H>
+          <ol className="mt-8 space-y-6">
+            {FEATURES.slice(0, 3).map((f, i) => <li key={f.t} className="flex gap-4"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--soft)] text-sm font-bold text-[var(--c)]">{i + 1}</span><div><div className="font-semibold">{f.t}</div><div className="mt-1 text-sm text-[var(--muted)]">{f.d}</div></div></li>)}
+          </ol>
+          <SiteLink to={{ page: 'agente' }} className="mt-8 inline-flex items-center gap-2 text-sm font-semibold text-[var(--c)]">Conoscimi meglio <ArrowRight size={15} /></SiteLink>
+        </div>
+      </Container>
+    );
+  }
   if (t.about === 'dark') return (
     <section className="bg-[var(--ink)] py-24 text-white">
       <Container className="grid items-center gap-14 md:grid-cols-[1.1fr_1fr]">
@@ -566,7 +816,25 @@ export function Reviews() {
 
 // ---------- Zone ----------
 export function Zones() {
-  const { properties, preview, go, base } = useSite();
+  const { properties, preview, go, base, cfg } = useSite();
+  if (cfg.zones.length) {
+    const cover = (name: string) => properties.find(p => p.addr?.toLowerCase().includes(name.toLowerCase()))?.cover ?? properties[0]?.cover;
+    const count = (name: string) => properties.filter(p => p.addr?.toLowerCase().includes(name.toLowerCase())).length;
+    return (
+      <Container className="pb-24">
+        <SectionHead eyebrow="Dove lavoro" title="Scopri le zone" />
+        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {cfg.zones.slice(0, 4).map(z => (
+            <SiteLink key={z.name} to={{ page: 'zona', slug: zoneSlug(z.name) }} className="group relative block aspect-[4/5] overflow-hidden rounded-[var(--r)] text-white">
+              <Photo src={cover(z.name)} zoom className="absolute inset-0 h-full" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/75 to-transparent" />
+              <div className="absolute bottom-5 left-5 right-5"><div className="text-xs uppercase tracking-[0.2em] text-white/70">Casa a</div><div className="text-2xl font-semibold">{z.name}</div><div className="mt-1 text-sm text-white/80">{count(z.name) ? `${count(z.name)} immobili` : 'Scopri la zona'}</div></div>
+            </SiteLink>
+          ))}
+        </div>
+      </Container>
+    );
+  }
   const byZone = Object.entries(properties.reduce<Record<string, SiteProperty[]>>((a, p) => {
     const parts = p.addr?.split(',').map(s => s.trim()).filter(Boolean) ?? [];
     const z = parts.length > 2 ? parts[parts.length - 2] : parts[parts.length - 1]; if (z) (a[z] ??= []).push(p); return a;

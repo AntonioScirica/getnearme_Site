@@ -129,6 +129,10 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
                 fields={[['title', 'Nome del servizio', 70, false], ['text', 'Descrizione', 600, true]]} empty={{ title: '', text: '' }} />
             </Group>
 
+            <Group title="Il tuo metodo">
+              <Field label="In evidenza nella pagina Servizi" value={cfg.method} onChange={v => set({ method: v })} max={1500} area />
+            </Group>
+
             <Group title="Pagine zona">
               <p className="text-xs text-muted">Una pagina per località (es. “Casa a Sirolo”) con il tuo testo e gli annunci di quella zona. Scrivi “## Titolo” per un sottotitolo.</p>
               <ListEditor items={cfg.zones} max={8} addLabel="Aggiungi zona" onChange={v => set({ zones: v })}

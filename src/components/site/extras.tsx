@@ -87,6 +87,9 @@ export function DetailsTable({ p }: { p: SiteProperty }) {
   const rows: [string, string][] = [
     ...(p.riferimento ? [['Codice', p.riferimento] as [string, string]] : []),
     ['Tipologia', p.tipologia?.split('|')[0] || '—'],
+    ['Contratto', /affitt/i.test(p.contratto ?? '') ? 'Affitto' : 'Vendita'],
+    // indirizzo esatto solo se l'agente ha scelto di mostrarlo, altrimenti zona e citta'
+    ['Indirizzo', d.mostra_indirizzo ? p.addr : p.addr?.split(',').map(x => x.trim()).filter(Boolean).slice(-2).join(', ') || '—'],
     ...(p.mq ? [['Superficie', `${p.mq} m²`] as [string, string]] : []),
     ...(p.locali ? [['Locali', String(p.locali)] as [string, string]] : []),
     ...(p.camere ? [['Camere', String(p.camere)] as [string, string]] : []),
@@ -116,7 +119,7 @@ export function FeatureList({ p }: { p: SiteProperty }) {
 }
 
 // Mappa della zona (Leaflet, gratis). Cerchio e non puntino: la posizione esatta resta riservata.
-export function MapBlock({ addr }: { addr: string }) {
+export function MapBlock({ addr, bare }: { addr: string; bare?: boolean }) {
   const el = useRef<HTMLDivElement>(null);
   const [none, setNone] = useState(false);
   useEffect(() => {
@@ -138,6 +141,7 @@ export function MapBlock({ addr }: { addr: string }) {
     return () => { stop = true; map?.remove(); };
   }, [addr]);
   if (none) return null;
+  if (bare) return <div ref={el} className="relative z-0 h-[260px] overflow-hidden rounded-[calc(var(--r)*0.8)] bg-[var(--soft)]" />;
   return (
     <div>
       <H className="text-3xl">Posizione</H>

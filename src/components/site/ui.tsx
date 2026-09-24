@@ -14,10 +14,11 @@ export type Page = { page: 'home' } | { page: 'immobili'; f?: Filters } | { page
 export type Theme = {
   bg: string; fg: string; muted: string; line: string; surface: string; soft: string; ink: string; radius: number;
   header: 'plain' | 'centered' | 'pill' | 'over' | 'minimal' | 'drawer';
-  hero: 'split' | 'full' | 'card' | 'center' | 'form' | 'banner';
-  intro: 'features' | 'welcome' | 'pastel' | 'none' | 'trust' | 'text';
-  card: 'classic' | 'button' | 'badge' | 'minimal' | 'price';
-  about: 'stats' | 'card' | 'checklist' | 'dark' | 'numbers';
+  hero: 'split' | 'full' | 'card' | 'center' | 'form' | 'banner' | 'editorial' | 'tabs' | 'sky' | 'bento';
+  intro: 'features' | 'welcome' | 'pastel' | 'none' | 'trust' | 'text' | 'services' | 'categories' | 'bento';
+  card: 'classic' | 'button' | 'badge' | 'minimal' | 'price' | 'label' | 'clean';
+  featured?: 'chips';
+  about: 'stats' | 'card' | 'checklist' | 'dark' | 'numbers' | 'why' | 'numbered';
   reviews: 'cards' | 'quote';
   cta: 'band' | 'photo' | 'gradient' | 'ink';
   footer: 'dark' | 'soft' | 'ink' | 'light';
@@ -25,23 +26,38 @@ export type Theme = {
   results: 'grid' | 'rows';
   gallery: 'mosaic' | 'slider' | 'full';
   agent: 'split' | 'cover' | 'centered';
+  services: 'cards' | 'list' | 'steps';
+  contact: 'split' | 'card' | 'band';
+  zone: 'sidebar' | 'wide';
 };
 
 export const THEMES: Record<TemplateId, Theme> = {
   prato: { bg: '#ffffff', fg: '#10231a', muted: '#62706a', line: '#e6ece8', surface: '#ffffff', soft: '#f1f6f3', ink: '#0f2a1d', radius: 14,
-    header: 'plain', hero: 'split', intro: 'features', card: 'classic', about: 'stats', reviews: 'cards', cta: 'band', footer: 'dark', listings: 'sidebar', results: 'grid', gallery: 'mosaic', agent: 'split' },
+    header: 'plain', hero: 'split', intro: 'features', card: 'classic', about: 'stats', reviews: 'cards', cta: 'band', footer: 'dark', listings: 'sidebar', results: 'grid', gallery: 'mosaic', agent: 'split', services: 'cards', contact: 'split', zone: 'sidebar' },
   bosco: { bg: '#f6f4ee', fg: '#1d2417', muted: '#6a705f', line: '#e3e0d4', surface: '#ffffff', soft: '#eceade', ink: '#23301b', radius: 26,
-    header: 'centered', hero: 'full', intro: 'welcome', card: 'button', about: 'card', reviews: 'quote', cta: 'photo', footer: 'soft', listings: 'sidebar', results: 'grid', gallery: 'slider', agent: 'cover' },
+    header: 'centered', hero: 'full', intro: 'welcome', card: 'button', about: 'card', reviews: 'quote', cta: 'photo', footer: 'soft', listings: 'sidebar', results: 'grid', gallery: 'slider', agent: 'cover', services: 'steps', contact: 'card', zone: 'wide' },
   cielo: { bg: '#fbfaff', fg: '#16163a', muted: '#6b6d8c', line: '#ebeaf5', surface: '#ffffff', soft: '#f3f2fc', ink: '#16163a', radius: 20,
-    header: 'pill', hero: 'card', intro: 'pastel', card: 'badge', about: 'checklist', reviews: 'cards', cta: 'gradient', footer: 'ink', listings: 'topbar', results: 'grid', gallery: 'mosaic', agent: 'cover' },
+    header: 'pill', hero: 'card', intro: 'pastel', card: 'badge', about: 'checklist', reviews: 'cards', cta: 'gradient', footer: 'ink', listings: 'topbar', results: 'grid', gallery: 'mosaic', agent: 'cover', services: 'cards', contact: 'card', zone: 'sidebar' },
   citta: { bg: '#f5f5f2', fg: '#111111', muted: '#6b6b6b', line: '#e2e2de', surface: '#ffffff', soft: '#ebebe7', ink: '#111111', radius: 10,
-    header: 'over', hero: 'center', intro: 'none', card: 'minimal', about: 'dark', reviews: 'quote', cta: 'ink', footer: 'ink', listings: 'topbar', results: 'rows', gallery: 'full', agent: 'split' },
+    header: 'over', hero: 'center', intro: 'none', card: 'minimal', about: 'dark', reviews: 'quote', cta: 'ink', footer: 'ink', listings: 'topbar', results: 'rows', gallery: 'full', agent: 'split', services: 'list', contact: 'band', zone: 'wide' },
   nord: { bg: '#ffffff', fg: '#111111', muted: '#6b6b6b', line: '#ececec', surface: '#ffffff', soft: '#f6f6f3', ink: '#111111', radius: 18,
-    header: 'minimal', hero: 'form', intro: 'trust', card: 'price', about: 'numbers', reviews: 'cards', cta: 'band', footer: 'light', listings: 'topbar', results: 'grid', gallery: 'slider', agent: 'centered' },
+    header: 'minimal', hero: 'form', intro: 'trust', card: 'price', about: 'numbers', reviews: 'cards', cta: 'band', footer: 'light', listings: 'topbar', results: 'grid', gallery: 'slider', agent: 'centered', services: 'steps', contact: 'split', zone: 'wide' },
   // Riviera: agenzia di zona (sul modello di casalconero.com): barra contatti, logo al centro con menu,
   // foto con titolo e ricerca avanzata sotto, testo di presentazione, card con stato e agente.
   riviera: { bg: '#ffffff', fg: '#222831', muted: '#6b7280', line: '#e8ebee', surface: '#ffffff', soft: '#f4f6f7', ink: '#2b3036', radius: 6,
-    header: 'drawer', hero: 'banner', intro: 'text', card: 'classic', about: 'stats', reviews: 'cards', cta: 'band', footer: 'dark', listings: 'topbar', results: 'grid', gallery: 'slider', agent: 'split' },
+    header: 'drawer', hero: 'banner', intro: 'text', card: 'classic', about: 'stats', reviews: 'cards', cta: 'band', footer: 'dark', listings: 'topbar', results: 'grid', gallery: 'slider', agent: 'split', services: 'list', contact: 'split', zone: 'sidebar' },
+  // Atelier (rif. Ambiente): editoriale, verde scuro, serif con corsivo, servizi con foto su fondo scuro
+  atelier: { bg: '#f7f6f2', fg: '#1b221e', muted: '#6c726d', line: '#e3e2dc', surface: '#ffffff', soft: '#eeede7', ink: '#1d2b24', radius: 4,
+    header: 'minimal', hero: 'editorial', intro: 'services', card: 'minimal', about: 'dark', reviews: 'quote', cta: 'ink', footer: 'ink', listings: 'sidebar', results: 'grid', gallery: 'full', agent: 'split', services: 'list', contact: 'band', zone: 'wide' },
+  // Oro (rif. Nexora): oro e crema, ricerca a schede sulla foto, categorie con icone, perche' sceglierci
+  oro: { bg: '#ffffff', fg: '#1c1a17', muted: '#77716a', line: '#ece6dc', surface: '#ffffff', soft: '#f8f4ec', ink: '#1c1a17', radius: 10,
+    header: 'over', hero: 'tabs', intro: 'categories', card: 'price', about: 'why', reviews: 'cards', cta: 'photo', footer: 'dark', listings: 'topbar', results: 'grid', gallery: 'mosaic', agent: 'cover', services: 'cards', contact: 'split', zone: 'sidebar' },
+  // Orizzonte (rif. Skyline / EstateHorizon): cielo, corsivo nel titolo, ricerca a pillola, filtro a chip, card con etichette
+  orizzonte: { bg: '#ffffff', fg: '#111827', muted: '#6b7280', line: '#eceef3', surface: '#ffffff', soft: '#f4f7fb', ink: '#0f172a', radius: 16,
+    header: 'over', hero: 'sky', intro: 'none', card: 'label', featured: 'chips', about: 'numbered', reviews: 'cards', cta: 'gradient', footer: 'light', listings: 'topbar', results: 'grid', gallery: 'slider', agent: 'centered', services: 'steps', contact: 'card', zone: 'wide' },
+  // Vista (rif. Propvista): titolo a sinistra e testo a destra, modulo sulla foto, riquadri con numeri e mappa
+  vista: { bg: '#f9f9f8', fg: '#111111', muted: '#6b6b6b', line: '#e6e6e3', surface: '#ffffff', soft: '#f1f1ee', ink: '#111111', radius: 14,
+    header: 'plain', hero: 'bento', intro: 'bento', card: 'clean', about: 'checklist', reviews: 'quote', cta: 'band', footer: 'light', listings: 'sidebar', results: 'grid', gallery: 'mosaic', agent: 'split', services: 'cards', contact: 'split', zone: 'sidebar' },
 };
 
 export type SiteCtx = {

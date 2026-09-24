@@ -2,7 +2,7 @@
 // modificabile dall'agente. La configurazione sta in user_metadata.vetrina_site (niente tabelle
 // nuove) e viene sempre ripulita con cleanSite prima di usarla: l'utente puo' scriverla anche da solo.
 
-export type TemplateId = 'prato' | 'bosco' | 'cielo' | 'citta' | 'nord' | 'riviera'
+export type TemplateId = 'prato' | 'bosco' | 'cielo' | 'citta' | 'nord' | 'riviera' | 'atelier' | 'oro' | 'orizzonte' | 'vista'
 export type Service = { title: string; text: string }
 export type ZonePage = { name: string; text: string }
 export type Review = { text: string; name: string; zone: string }
@@ -26,6 +26,7 @@ export type SiteConfig = {
   services: Service[]
   zones: ZonePage[]
   highlights: string[]
+  method: string
   address: string
   legal: string
   instagram: string
@@ -69,6 +70,10 @@ export const TEMPLATES: { id: TemplateId; name: string; desc: string; primary: s
   { id: 'cielo', name: 'Cielo', desc: 'Foto in una card arrotondata, toni morbidi', primary: '#2a2b7c', font: 'sans' },
   { id: 'citta', name: 'Città', desc: 'Bianco e nero, titolo al centro della foto', primary: '#111111', font: 'sans' },
   { id: 'nord', name: 'Nord', desc: 'Moderno, modulo di ricerca dentro la foto', primary: '#ff6a2b', font: 'serif' },
+  { id: 'atelier', name: 'Atelier', desc: 'Editoriale, serif con corsivo e fondo verde scuro', primary: '#1d2b24', font: 'serif' },
+  { id: 'oro', name: 'Oro', desc: 'Oro e crema, ricerca a schede e categorie con icone', primary: '#b8923a', font: 'serif' },
+  { id: 'orizzonte', name: 'Orizzonte', desc: 'Leggero e azzurro, ricerca a pillola e filtri rapidi', primary: '#3b5bdb', font: 'sans' },
+  { id: 'vista', name: 'Vista', desc: 'Pulito e deciso, riquadri con numeri e mappa', primary: '#111111', font: 'sans' },
   { id: 'riviera', name: 'Riviera', desc: 'Agenzia di zona: barra contatti, ricerca avanzata, pagine per località', primary: '#5fc9bd', font: 'sans' },
 ]
 
@@ -88,6 +93,7 @@ export function defaultSite(name: string, email = ''): SiteConfig {
       { title: 'Ricerca su misura', text: 'Cerchi casa da fuori zona o dall’estero? Seleziono per te solo gli immobili giusti e ti mando tutto prima della visita.' },
     ],
     zones: [],
+    method: 'La trattativa non si improvvisa alla fine: si costruisce all’inizio. Studio l’immobile con il proprietario, definisco il prezzo corretto e preparo tutti i documenti prima di metterlo sul mercato. Pubblico solo quando è davvero pronto: meno trattativa, nessuna sorpresa.',
     highlights: ['Esperienza sul territorio', 'Clienti italiani e stranieri', 'Dalla prima visita al rogito'],
     address: '', legal: '', instagram: '', facebook: '', topBar: true, whatsappButton: true,
     reviews: [
@@ -130,6 +136,7 @@ export function cleanSite(raw: unknown, name: string, email = ''): SiteConfig {
     zones: Array.isArray(r.zones)
       ? r.zones.slice(0, 8).map(x => { const o = (x ?? {}) as Record<string, unknown>; return { name: str(o.name, 40, '').trim(), text: str(o.text, 4000, '') } }).filter(x => x.name)
       : d.zones,
+    method: str(r.method, 1500, d.method),
     highlights: Array.isArray(r.highlights) ? r.highlights.slice(0, 6).map(x => str(x, 50, '')).filter(Boolean) : d.highlights,
     address: str(r.address, 120, ''),
     legal: str(r.legal, 160, ''),

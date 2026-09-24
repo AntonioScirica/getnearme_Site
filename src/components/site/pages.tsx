@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { ArrowLeft, ChevronLeft, ChevronRight, Expand, Mail, MapPin, MessageCircle, Phone, Search, SlidersHorizontal, X } from 'lucide-react';
 import { zoneSlug, type SiteProperty } from '@/lib/siteTemplates';
 import { ContactForm, DetailsTable, FeatureList, MapBlock, RichText, ServicesGrid, ShareBar, WhatsAppFloat } from './extras';
-import { AboutBlock, CtaBand, Featured, Footer, Header, Hero, Intro, isRent, PropertyCard, PropertyRow, Reviews, SectionHead, statsOf, tipiOf, Zones, type Filters } from './sections';
+import { AboutBlock, CtaBand, Featured, Footer, Header, Hero, Intro, isRent, PropertyCard, PropertyRow, Reviews, SearchForm, SectionHead, statsOf, tipiOf, Zones, type Filters } from './sections';
 import { Btn, Container, contacts, Eyebrow, Facts, FavButton, H, Photo, price, SiteLink, SiteRoot, typeOf, useFavs, useSite, type Page, type SiteCtx } from './ui';
 
 // Le 4 pagine del sito vetrina. Struttura comune, ma ogni template sceglie le sue varianti:
@@ -244,8 +244,16 @@ function PropertyPage({ id }: { id: string }) {
   if (!p) return <><Header /><Container className="py-24 text-center text-[var(--muted)]">Immobile non trovato.</Container><Footer /></>;
   const similar = properties.filter(x => x.id !== p.id).slice(0, 3);
   const desc = p.descrizione ?? '';
+  const crumbs = (
+    <nav className="mb-5 flex flex-wrap items-center gap-1.5 text-sm opacity-75" aria-label="Percorso">
+      <SiteLink to={{ page: 'home' }} className="hover:underline">Home</SiteLink><span>/</span>
+      <SiteLink to={{ page: 'immobili' }} className="hover:underline">Immobili</SiteLink><span>/</span>
+      <SiteLink to={{ page: 'immobili', f: { tipo: typeOf(p), contratto: isRent(p) ? 'affitto' : 'vendita' } }} className="hover:underline">{typeOf(p)} in {isRent(p) ? 'affitto' : 'vendita'}</SiteLink>
+    </nav>
+  );
   const heading = (
     <>
+      {t.gallery === 'full' && crumbs}
       <div className="flex flex-wrap items-center gap-2">
         <span className="rounded-[calc(var(--r)*0.5)] bg-[var(--c)] px-2.5 py-1 text-[11px] font-semibold text-white">{isRent(p) ? 'In affitto' : 'In vendita'}</span>
         <span className="rounded-[calc(var(--r)*0.5)] bg-[var(--soft)] px-2.5 py-1 text-[11px] font-semibold text-[var(--fg)]">{typeOf(p)}</span>
@@ -261,7 +269,7 @@ function PropertyPage({ id }: { id: string }) {
         <div className="relative"><Gallery p={p} /><Container className="absolute inset-x-0 bottom-10 text-white">{heading}</Container></div>
       ) : (
         <Container className="pt-8">
-          <SiteLink to={{ page: 'immobili' }} className="mb-5 inline-flex items-center gap-1.5 text-sm text-[var(--muted)] hover:text-[var(--fg)]"><ArrowLeft size={15} /> Tutti gli immobili</SiteLink>
+          <div className="text-[var(--muted)]">{crumbs}</div>
           <Gallery p={p} />
         </Container>
       )}
@@ -382,17 +390,50 @@ function AgentPage() {
   );
 }
 
-// ---------- Servizi ----------
+// ---------- Servizi: card, elenco o passi ----------
 function ServicesPage() {
-  const { cfg } = useSite();
+  const { cfg, t } = useSite();
+  let body: ReactNode;
+  if (t.services === 'list') body = (
+    <div className="divide-y divide-[var(--line)] border-y border-[var(--line)]">
+      {cfg.services.map((x, i) => (
+        <div key={i} className="grid gap-4 py-10 md:grid-cols-[120px_1fr_1.4fr] md:items-baseline">
+          <span className="font-display text-5xl font-bold text-[var(--c)]">{String(i + 1).padStart(2, '0')}</span>
+          <H as="h3" className="text-3xl">{x.title}</H>
+          <p className="text-[17px] leading-relaxed text-[var(--muted)]">{x.text}</p>
+        </div>
+      ))}
+    </div>
+  );
+  else if (t.services === 'steps') body = (
+    <ol className="relative space-y-10 border-l-2 border-[var(--line)] pl-10">
+      {cfg.services.map((x, i) => (
+        <li key={i} className="relative">
+          <span className="absolute -left-[3.35rem] flex h-10 w-10 items-center justify-center rounded-full bg-[var(--c)] text-sm font-bold text-[var(--on-c,#fff)] ring-8 ring-[var(--bg)]">{i + 1}</span>
+          <H as="h3" className="text-3xl">{x.title}</H>
+          <p className="mt-3 max-w-2xl text-[17px] leading-relaxed text-[var(--muted)]">{x.text}</p>
+        </li>
+      ))}
+    </ol>
+  );
+  else body = <ServicesGrid numbered />;
   return (
     <>
       <Header />
       <PageHead eyebrow="Servizi" title="Cosa faccio per te" sub="Un percorso chiaro dalla valutazione al rogito, senza sorprese." />
-      <Container className="py-16"><ServicesGrid numbered /></Container>
-      <Container className="pb-20">
+      <Container className={`py-16 ${t.services === 'steps' ? 'max-w-4xl' : ''}`}>{body}</Container>
+      {/* il metodo, in evidenza */}
+      {cfg.method && (
+        <section className="bg-[var(--ink)] py-20 text-white">
+          <Container className="grid gap-8 md:grid-cols-[1fr_1.6fr] md:items-center">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.3em] text-white/60">Il mio metodo di vendita</div>
+            <H className="text-2xl leading-snug md:text-4xl">{cfg.method}</H>
+          </Container>
+        </section>
+      )}
+      <Container className="py-20">
         <div className="grid items-center gap-10 rounded-[calc(var(--r)*1.2)] bg-[var(--soft)] p-8 md:grid-cols-2 md:p-12">
-          <div><H className="text-3xl md:text-4xl">Una consulenza, senza impegno</H><p className="mt-3 text-[var(--muted)]">Raccontami cosa cerchi o cosa vuoi vendere: ti rispondo io, di persona.</p>
+          <div><H className="text-3xl md:text-4xl">Scrivimi per una consulenza gratuita</H><p className="mt-3 text-[var(--muted)]">Raccontami cosa cerchi o cosa vuoi vendere: ti rispondo io, di persona.</p>
             {cfg.highlights.length > 0 && <ul className="mt-6 space-y-2">{cfg.highlights.map(h => <li key={h} className="flex items-center gap-2 text-sm font-medium"><span className="h-1.5 w-1.5 rounded-full bg-[var(--c)]" />{h}</li>)}</ul>}</div>
           <div className="rounded-[var(--r)] bg-[var(--surface)] p-6"><ContactForm compact /></div>
         </div>
@@ -402,50 +443,87 @@ function ServicesPage() {
   );
 }
 
-// ---------- Contatti ----------
+// ---------- Contatti: diviso, card sopra la mappa o fascia ----------
 function ContactPage() {
-  const { cfg, name } = useSite();
+  const { cfg, name, t } = useSite();
   const c = contacts(cfg);
-  return (
-    <>
-      <Header />
-      <PageHead eyebrow="Contatti" title="Scrivimi o chiamami" sub="Rispondo di persona, di solito entro la giornata." />
-      <Container className="grid gap-12 py-16 lg:grid-cols-[1fr_1.3fr]">
-        <div className="space-y-4">
-          <div className="text-lg font-semibold">{name}</div>
-          {cfg.address && <div className="flex items-center gap-3 text-[var(--muted)]"><MapPin size={17} className="text-[var(--c)]" />{cfg.address}</div>}
-          {c.tel && <a href={c.tel} className="flex items-center gap-3"><Phone size={17} className="text-[var(--c)]" />{cfg.phone}</a>}
-          {c.mail && <a href={c.mail} className="flex items-center gap-3"><Mail size={17} className="text-[var(--c)]" />{cfg.email}</a>}
-          {c.wa && <Btn href={c.wa} external className="mt-4"><MessageCircle size={16} /> Scrivimi su WhatsApp</Btn>}
-          {cfg.address && <div className="pt-6"><MapBlock addr={cfg.address} /></div>}
-        </div>
-        <div className="rounded-[var(--r)] bg-[var(--surface)] p-6 ring-1 ring-[var(--line)] md:p-8"><H className="mb-6 text-2xl">Richiedi informazioni</H><ContactForm /></div>
+  const info = (
+    <div className="space-y-4">
+      <div className="text-lg font-semibold">{name}</div>
+      {cfg.address && <div className="flex items-center gap-3 opacity-80"><MapPin size={17} className="text-[var(--c)]" />{cfg.address}</div>}
+      {c.tel && <a href={c.tel} className="flex items-center gap-3"><Phone size={17} className="text-[var(--c)]" />{cfg.phone}</a>}
+      {c.mail && <a href={c.mail} className="flex items-center gap-3"><Mail size={17} className="text-[var(--c)]" />{cfg.email}</a>}
+      {c.wa && <Btn href={c.wa} external className="mt-4"><MessageCircle size={16} /> Scrivimi su WhatsApp</Btn>}
+    </div>
+  );
+  const form = <div className="rounded-[var(--r)] bg-[var(--surface)] p-6 text-[var(--fg)] shadow-[0_30px_80px_-40px_rgba(0,0,0,.35)] ring-1 ring-[var(--line)] md:p-8"><H className="mb-6 text-2xl">Richiedi informazioni</H><ContactForm /></div>;
+  let body: ReactNode;
+  if (t.contact === 'card') body = (
+    <section className="relative">
+      {cfg.address ? <div className="[&_h2]:hidden [&_p]:hidden [&>div>div]:!mt-0 [&>div>div]:!h-[520px] [&>div>div]:!rounded-none"><MapBlock addr={cfg.address} /></div> : <div className="h-72 bg-[var(--soft)]" />}
+      <Container className={`relative z-10 grid gap-8 md:grid-cols-[1fr_1.2fr] ${cfg.address ? '-mt-64' : '-mt-40'} pb-20`}>
+        <div className="self-end rounded-[var(--r)] bg-[var(--surface)] p-8 shadow-[0_30px_80px_-40px_rgba(0,0,0,.35)] ring-1 ring-[var(--line)]">{info}</div>
+        {form}
       </Container>
-      <Footer />
+    </section>
+  );
+  else if (t.contact === 'band') body = (
+    <>
+      <section className="bg-[var(--ink)] py-16 text-white [--muted:rgba(255,255,255,.65)]">
+        <Container className="grid gap-10 md:grid-cols-3">
+          {[['Chiamami', cfg.phone, c.tel], ['Scrivimi', cfg.email, c.mail], ['Passa in ufficio', cfg.address, '']].filter(x => x[1]).map(([l, v, h]) => (
+            <div key={l}><div className="text-[11px] font-semibold uppercase tracking-[0.3em] text-white/50">{l}</div>{h ? <a href={h} className="mt-3 block text-2xl font-semibold">{v}</a> : <div className="mt-3 text-2xl font-semibold">{v}</div>}</div>
+          ))}
+        </Container>
+      </section>
+      <Container className="grid gap-12 py-16 lg:grid-cols-[1.3fr_1fr]">{form}{cfg.address && <MapBlock addr={cfg.address} />}</Container>
     </>
   );
+  else body = (
+    <Container className="grid gap-12 py-16 lg:grid-cols-[1fr_1.3fr]">
+      <div>{info}{cfg.address && <div className="pt-10"><MapBlock addr={cfg.address} /></div>}</div>
+      {form}
+    </Container>
+  );
+  return <><Header /><PageHead eyebrow="Contatti" title="Scrivimi o chiamami" sub="Rispondo di persona, di solito entro la giornata." />{body}<Footer /></>;
 }
 
 // ---------- Pagina di una zona ("Casa a Sirolo"): testo sulla localita' + annunci della zona ----------
 function ZonePage({ slug }: { slug: string }) {
-  const { cfg, properties } = useSite();
+  const { cfg, properties, t } = useSite();
   const z = cfg.zones.find(x => zoneSlug(x.name) === slug) ?? cfg.zones[0];
   if (!z) return <><Header /><Container className="py-24 text-center text-[var(--muted)]">Pagina non trovata.</Container><Footer /></>;
   const here = properties.filter(p => p.addr?.toLowerCase().includes(z.name.toLowerCase()));
+  const list = here.length ? here : properties;
+  const grid = (ps: SiteProperty[]) => t.results === 'rows'
+    ? <div className="border-t border-[var(--line)]">{ps.map(p => <PropertyRow key={p.id} p={p} />)}</div>
+    : <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">{ps.map(p => <PropertyCard key={p.id} p={p} />)}</div>;
+  const head = <PageHead eyebrow="Zona" title={`Casa a ${z.name}`} sub={`${here.length} ${here.length === 1 ? 'immobile disponibile' : 'immobili disponibili'}`} />;
+  if (t.zone === 'wide') return (
+    <>
+      <Header />{head}
+      <Container className="max-w-3xl py-16"><RichText text={z.text} /></Container>
+      <section className="bg-[var(--soft)] py-16">
+        <Container>
+          <SectionHead title={here.length ? `Immobili a ${z.name}` : 'Immobili disponibili'} link={{ label: 'Cerca tra tutti', to: { page: 'immobili', f: { q: z.name } } }} />
+          <div className="mt-8">{grid(list.slice(0, 6))}</div>
+        </Container>
+      </section>
+      <CtaBand /><Footer />
+    </>
+  );
   return (
     <>
-      <Header />
-      <PageHead eyebrow="Zona" title={`Casa a ${z.name}`} sub={`${here.length} ${here.length === 1 ? 'immobile disponibile' : 'immobili disponibili'}`} />
+      <Header />{head}
       <Container className="grid gap-12 py-16 lg:grid-cols-[1fr_340px]">
         <RichText text={z.text} />
-        <aside className="space-y-4">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--muted)]">Ultimi a {z.name}</div>
-          {(here.length ? here : properties).slice(0, 3).map(p => <PropertyCard key={p.id} p={p} />)}
+        <aside className="space-y-8">
+          <div className="rounded-[var(--r)] bg-[var(--soft)] p-5"><div className="mb-4 text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--muted)]">Ricerca avanzata</div><SearchForm layout="stack" /></div>
+          <div className="space-y-4"><div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--muted)]">Ultimi a {z.name}</div>{list.slice(0, 3).map(p => <PropertyCard key={p.id} p={p} />)}</div>
         </aside>
       </Container>
-      {here.length > 3 && <Container className="pb-16"><SectionHead title={`Tutti gli immobili a ${z.name}`} link={{ label: 'Cerca', to: { page: 'immobili', f: { q: z.name } } }} /><div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">{here.slice(3).map(p => <PropertyCard key={p.id} p={p} />)}</div></Container>}
-      <CtaBand />
-      <Footer />
+      {here.length > 3 && <Container className="pb-16"><SectionHead title={`Tutti gli immobili a ${z.name}`} /><div className="mt-8">{grid(here.slice(3))}</div></Container>}
+      <CtaBand /><Footer />
     </>
   );
 }
