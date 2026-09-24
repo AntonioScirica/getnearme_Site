@@ -3,6 +3,7 @@ import { buildStagingPrompt, type SceneType } from '@/lib/stagingPrompts'
 import { isPublicHttpsUrl } from '@/lib/safeUrl'
 import { createClient } from '@supabase/supabase-js'
 import { uploadJpeg } from '@/lib/r2'
+import sharp from 'sharp'
 import { logUsage } from '@/lib/ai'
 import { AI_MOCK, mockDelay } from '@/lib/aiMock'
 
@@ -72,6 +73,23 @@ export async function POST(req: NextRequest) {
     console.error('photo-edit failed:', job.status, job.error || job.output?.error)
     return NextResponse.json({ error: job.status === 'IN_QUEUE' || job.status === 'IN_PROGRESS' ? 'timeout' : 'ai_failed' }, { status: 502 })
   }
-  const url = await uploadJpeg(Buffer.from(b64, 'base64'), `edits/${userId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`)
+  const url = await uploadJpeg(await matchInputShape(Buffer.from(b64, 'base64'), imageBase64, imageUrl), `edits/${userId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`)
   return NextResponse.json({ url, seconds: job.output?.seconds })
+}
+
+// Il modello genera a ~1 MP con lati multipli di 32: le proporzioni cambiano di poco (es. 1920x1440 ->
+// 1184x896) e nel prima/dopo la foto sembra spostata. Riporto il risultato alle proporzioni esatte
+// dell'originale (lato lungo max 1600 px). Se l'originale non si legge, resta com'e'.
+async function matchInputShape(out: Buffer, imageBase64: string, imageUrl: string): Promise<Buffer> {
+  try {
+    const src = imageBase64
+      ? Buffer.from(imageBase64.split(',')[1] ?? '', 'base64')
+      : Buffer.from(await (await fetch(imageUrl, { signal: AbortSignal.timeout(15_000) })).arrayBuffer())
+    const { width = 0, height = 0 } = await sharp(src).metadata()
+    if (!width || !height) return out
+    const k = Math.min(1, 1600 / Math.max(width, height))
+    return await sharp(out).resize(Math.round(width * k), Math.round(height * k), { fit: 'fill' }).jpeg({ quality: 90 }).toBuffer()
+  } catch {
+    return out
+  }
 }

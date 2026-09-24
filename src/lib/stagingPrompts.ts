@@ -10,10 +10,10 @@ export type SceneType = 'interno' | 'esterno' | 'giardino';
 // Nano Banana ridisegnava la stanza da un'altra inquadratura; "aggiungi mobili a questa foto, tutto il
 // resto uguale" tiene prospettiva, finestre e pavimento (prova del 24/09 su stanze vuote).
 const stage = (style: string, look: string) =>
-  `Add ${style} furniture and decor to this exact photo (${look}), only the pieces that suit this room, placed on the existing floor inside the visible space; if there is already furniture, replace it with ${style} pieces of the same kind. This is an additive edit: the photo, camera position, zoom, framing, walls, windows, doors, floor and light stay exactly the same. Do not zoom out and do not show more of the room. Photorealistic.`;
+  `Add ${style} furniture and decor to this exact photo (${look}), only the pieces that suit this room, placed on the existing floor inside the visible space; if there is already furniture, replace it with ${style} pieces of the same kind. This is an additive edit: the photo, camera position, zoom, framing, walls, windows, doors, floor and light stay exactly the same. Do not zoom out and do not show more of the room. Use realistic furniture that people actually buy today (like IKEA or a mid-range Italian furniture store), believable and lived-in but tidy: no designer showroom pieces, no over-styled or futuristic decor. Photorealistic.`;
 
 const STYLE_PROMPTS: Record<string, string> = {
-  modern: stage('modern contemporary', 'clean lines, neutral palette with a few accent colors, light fabrics, black metal details'),
+  modern: stage('simple modern', 'everyday contemporary furniture, neutral colors, light wood and fabric, a few plants'),
   nordic: stage('Scandinavian Nordic', 'light oak and birch wood, white and grey, wool and linen, minimal and cozy'),
   industrial: stage('luxury contemporary', 'marble, travertine, brushed brass, dark walnut, elegant soft lighting'),
   boho: stage('bohemian', 'rattan, wicker, macramé, jute rug, indoor plants, earthy tones'),
