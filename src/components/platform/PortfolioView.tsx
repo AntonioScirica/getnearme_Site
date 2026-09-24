@@ -24,7 +24,7 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
       <h1 className="font-display text-3xl font-bold tracking-tight">Portfolio</h1>
       <p className="mt-1 text-muted">La tua vetrina pubblica: condividi il link, chi lo apre vede gli immobili che pubblichi.</p>
 
-      <section className="mt-8 rounded-2xl border border-line bg-white p-6">
+      <section className="mt-8 card p-6">
         <ProfileForm key={profile.slug ?? ''} initial={profile} submitLabel="Salva" onSaved={setProfile} />
         {url && (
           <div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
@@ -39,7 +39,7 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
       {!projects ? <Loader2 className="mt-4 animate-spin text-muted" /> : !projects.length ? (
         <p className="mt-4 text-sm text-muted">Nessun immobile. <a href="#/nuovo" className="text-brand">Creane uno</a>.</p>
       ) : (
-        <ul className="mt-4 divide-y divide-line overflow-hidden rounded-2xl border border-line bg-white">
+        <ul className="mt-4 divide-y divide-line overflow-hidden card">
           {projects.map(p => (
             <li key={p.id} className="flex items-center gap-4 p-3">
               <div className="h-14 w-20 shrink-0 overflow-hidden rounded-lg bg-canvas">{p.cover && <img src={p.thumb || p.cover} alt="" className="h-full w-full object-cover" />}</div>

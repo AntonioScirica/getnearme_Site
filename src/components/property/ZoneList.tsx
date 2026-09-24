@@ -15,8 +15,8 @@ export default function ZoneList({ all, featured, withCta }: { all: string[]; fe
       {featured.length > 0 && (
         <div className="grid gap-2 sm:grid-cols-2">
           {featured.map(l => (
-            <div key={l} className="flex items-center gap-3 rounded-2xl bg-white p-3.5 ring-1 ring-line">
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand/10 text-brand"><Star size={15} className="fill-current" /></span>
+            <div key={l} className="flex items-center gap-3 card p-3.5">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center icon-badge rounded-full"><Star size={15} className="fill-current" /></span>
               <span className="text-sm font-medium">{l}</span>
             </div>
           ))}
@@ -36,7 +36,7 @@ export default function ZoneList({ all, featured, withCta }: { all: string[]; fe
       )}
       <p className="mt-2 text-xs text-muted">Distanze in linea d&apos;aria, fonte OpenStreetMap.</p>
       {withCta && (
-        <a href={EXTENSION_URL} target="_blank" rel="noreferrer" className="mt-4 flex items-center gap-3 rounded-2xl bg-ink p-4 text-white transition hover:bg-ink/90">
+        <a href={EXTENSION_URL} target="_blank" rel="noreferrer" className="mt-4 flex items-center gap-3 rounded-2xl btn-ink p-4">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/10"><Compass size={20} /></span>
           <span className="min-w-0 flex-1">
             <span className="block text-sm font-semibold">Vuoi l&apos;analisi completa del quartiere?</span>

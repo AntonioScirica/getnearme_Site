@@ -10,6 +10,7 @@ import { createProject, type ProjectData } from '@/lib/projects';
 import { downscaleDataUrl, uploadDataUrl } from '@/lib/imageUpload';
 import { ALL_FIELDS, completeness, type Details, type Field } from '@/lib/propertyFields';
 import { authFetch } from './api';
+import CountUp from './CountUp';
 
 // "Crea da zero", una scheda per volta: foto subito (cosi' la casa prende forma da subito),
 // poi un tema per scheda con grandi card a icone. Quasi tutto a tap, testo al minimo.
@@ -148,7 +149,7 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
         </div>
         <div className="min-w-0 flex-1">
           <div className="truncate font-display text-lg font-semibold">{summary || 'Nuovo immobile'}</div>
-          <div className="text-xs text-muted">{done ? 'Annuncio' : `Scheda ${step + 1} di ${STEPS.length}`} · completezza {comp.score}%</div>
+          <div className="text-xs text-muted">{done ? 'Annuncio' : `Scheda ${step + 1} di ${STEPS.length}`} · completezza <CountUp value={comp.score} duration={400} />%</div>
         </div>
         <a href="#/importa" className="hidden shrink-0 text-xs text-brand sm:block">Importa da CSV</a>
       </div>
@@ -173,7 +174,7 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
                 <div className="overflow-hidden rounded-2xl ring-1 ring-line"><iframe title="Mappa" loading="lazy" className="h-56 w-full" src={`https://maps.google.com/maps?q=${encodeURIComponent(d.indirizzo)}&z=15&output=embed`} /></div>
               )}
               {addr.length >= 9 && (
-                <div className="rounded-2xl bg-white p-4 ring-1 ring-line">
+                <div className="card p-4">
                   <div className="flex items-center gap-2 text-sm font-medium">Nella zona {zoneBusy && <Loader2 size={14} className="animate-spin text-muted" />}</div>
                   <p className="mt-0.5 text-xs text-muted">Servizi verificati su OpenStreetMap. Tocca quelli da mettere in evidenza nell&apos;annuncio (massimo 5): l&apos;AI parte da quelli.</p>
                   <div className="mt-3 flex flex-wrap gap-2">
@@ -182,7 +183,7 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
                       const on = ev.includes(l);
                       return (
                         <button type="button" key={l} aria-pressed={on} onClick={() => set('zona_evidenza', on ? ev.filter(x => x !== l) : ev.length < 5 ? [...ev, l] : ev)}
-                          className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs transition-all active:scale-95 ${on ? 'bg-ink font-medium text-white' : 'bg-canvas hover:bg-line/60'}`}>
+                          className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs transition-all active:scale-95 ${on ? 'btn-primary font-medium' : 'bg-canvas hover:bg-line/60'}`}>
                           <Star size={11} className={on ? 'fill-current' : 'text-muted'} /> {l}
                         </button>
                       );
@@ -194,7 +195,7 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
               <Toggle f={F.mostra_indirizzo} v={d.mostra_indirizzo} set={v => set('mostra_indirizzo', v)} />
             </>}
             {cur.id === 'numeri' && <>
-              <div className="rounded-2xl bg-white p-5 ring-1 ring-line">
+              <div className="card p-5">
                 <NumberField f={F.prezzo} v={d.prezzo} set={v => set('prezzo', v)} big disabled={!!d.trattativa_riservata} suffix={d.contratto === 'Affitto' ? '€/mese' : '€'} />
                 <div className="mt-4"><Toggle f={F.trattativa_riservata} v={d.trattativa_riservata} set={v => set('trattativa_riservata', v)} /></div>
               </div>
@@ -205,7 +206,7 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
             </>}
             {cur.id === 'edificio' && <>
               <Chips f={F.piano} v={d.piano} set={v => set('piano', v)} />
-              <div className="grid gap-3 sm:grid-cols-2"><Counter f={F.piani_edificio} v={d.piani_edificio} set={v => set('piani_edificio', v)} /><div className="rounded-2xl bg-white p-4 ring-1 ring-line"><Toggle f={F.ascensore} v={d.ascensore} set={v => set('ascensore', v)} /></div></div>
+              <div className="grid gap-3 sm:grid-cols-2"><Counter f={F.piani_edificio} v={d.piani_edificio} set={v => set('piani_edificio', v)} /><div className="card p-4"><Toggle f={F.ascensore} v={d.ascensore} set={v => set('ascensore', v)} /></div></div>
               <Cards f={F.stato} v={d.stato} set={v => set('stato', v)} />
               <NumberField f={F.anno} v={d.anno} set={v => set('anno', v)} placeholder="1975" raw />
             </>}
@@ -226,13 +227,13 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
               <Cards f={F.esterni} v={d.esterni} set={v => set('esterni', v)} multi />
               {Array.isArray(d.esterni) && d.esterni.length > 0 && <NumberField f={F.superficie_esterna} v={d.superficie_esterna} set={v => set('superficie_esterna', v)} suffix="m²" />}
               <Cards f={F.posto_auto} v={d.posto_auto} set={v => set('posto_auto', v)} />
-              <div className="rounded-2xl bg-white p-4 ring-1 ring-line"><Toggle f={F.cantina} v={d.cantina} set={v => set('cantina', v)} /></div>
+              <div className="card p-4"><Toggle f={F.cantina} v={d.cantina} set={v => set('cantina', v)} /></div>
             </>}
             {cur.id === 'costi' && <>
               <NumberField f={F.spese_condominiali} v={d.spese_condominiali} set={v => set('spese_condominiali', v)} suffix="€/mese" />
               <Chips f={F.portineria} v={d.portineria} set={v => set('portineria', v)} />
               <Cards f={F.disponibilita} v={d.disponibilita} set={v => set('disponibilita', v)} />
-              {d.contratto === 'Affitto' && <div className="space-y-6 rounded-2xl bg-white p-5 ring-1 ring-line">
+              {d.contratto === 'Affitto' && <div className="space-y-6 card p-5">
                 <Chips f={F.contratto_affitto} v={d.contratto_affitto} set={v => set('contratto_affitto', v)} />
                 <Counter f={F.cauzione} v={d.cauzione} set={v => set('cauzione', v)} inline />
                 <Toggle f={F.spese_incluse} v={d.spese_incluse} set={v => set('spese_incluse', v)} />
@@ -242,10 +243,10 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
             {cur.id === 'note' && <>
               <textarea rows={6} value={note} onChange={e => setNote(e.target.value)} autoFocus placeholder="Es. vicino alla M2, zona silenziosa, vista sul parco, ristrutturato nel 2022, ideale per una famiglia..."
                 className="w-full rounded-2xl bg-white p-5 text-[16px] leading-relaxed outline-none ring-1 ring-line focus:ring-2 focus:ring-brand" />
-              <div className="flex items-center gap-4 rounded-2xl bg-white p-4 ring-1 ring-line">
+              <div className="flex items-center gap-4 card p-4">
                 <div className="flex h-16 w-24 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-canvas">{plan ? <img src={plan} alt="" className="h-full w-full object-contain" /> : <LayoutTemplate size={20} className="text-muted" />}</div>
                 <div className="min-w-0 flex-1"><div className="text-sm font-medium">Planimetria</div><div className="text-xs text-muted">Facoltativa, aumenta i contatti.</div></div>
-                <label className="cursor-pointer rounded-lg border border-line px-3 py-2 text-sm font-medium hover:bg-canvas">{plan ? 'Cambia' : 'Carica'}<input type="file" accept="image/*" className="hidden" onChange={async e => { const f = e.target.files?.[0]; if (f) setPlan(await downscaleDataUrl(await readFile(f), 2000, 0.85)); e.target.value = ''; }} /></label>
+                <label className="cursor-pointer btn-ghost rounded-lg px-3 py-2 text-sm font-medium">{plan ? 'Cambia' : 'Carica'}<input type="file" accept="image/*" className="hidden" onChange={async e => { const f = e.target.files?.[0]; if (f) setPlan(await downscaleDataUrl(await readFile(f), 2000, 0.85)); e.target.value = ''; }} /></label>
                 {plan && <button onClick={() => setPlan(null)} aria-label="Rimuovi" className="text-muted hover:text-ink"><X size={16} /></button>}
               </div>
               <div className="grid gap-4 sm:grid-cols-2"><TextField f={F.riferimento} v={d.riferimento} set={v => set('riferimento', v)} /><TextField f={F.virtual_tour} v={d.virtual_tour} set={v => set('virtual_tour', v)} /></div>
@@ -258,8 +259,8 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
             <div className="flex items-center gap-3">
               {cur.optional && step < STEPS.length - 1 && <button onClick={() => go(step + 1)} className="text-sm text-muted hover:text-ink">Salta</button>}
               {step < STEPS.length - 1
-                ? <button onClick={() => go(step + 1)} disabled={!canNext} className="flex items-center gap-2 rounded-xl bg-ink px-6 py-3 text-sm font-semibold text-white disabled:opacity-40">Avanti <ArrowRight size={16} /></button>
-                : <button onClick={generate} className="flex items-center gap-2 rounded-xl bg-ai px-6 py-3 text-sm font-semibold text-white"><Sparkles size={16} /> Genera l&apos;annuncio</button>}
+                ? <button onClick={() => go(step + 1)} disabled={!canNext} className="flex items-center gap-2 rounded-xl btn-ink rounded-xl px-6 py-3 text-sm font-semibold">Avanti <ArrowRight size={16} /></button>
+                : <button onClick={generate} className="flex items-center gap-2 rounded-xl btn-primary rounded-xl px-6 py-3 text-sm font-semibold"><Sparkles size={16} /> Genera l&apos;annuncio</button>}
             </div>
           </div>
         </section>
@@ -272,23 +273,23 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
           {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
           {ai && (
             <div className={`space-y-5 ${busy ? 'pointer-events-none opacity-50' : ''}`}>
-              <div className="rounded-2xl bg-white p-5 ring-1 ring-ai/30">
+              <div className="card ring-gradient p-5">
                 <label className="text-xs font-semibold uppercase tracking-wide text-muted">Titolo</label>
                 <input value={ai.titolo} onChange={e => setAi({ ...ai, titolo: e.target.value })} className="mt-2 w-full rounded-lg border border-line px-4 py-3 font-medium outline-none focus:border-ai" />
                 <label className="mt-5 block text-xs font-semibold uppercase tracking-wide text-muted">Descrizione</label>
                 <textarea rows={14} value={ai.descrizione} onChange={e => setAi({ ...ai, descrizione: e.target.value })} className="mt-2 w-full rounded-lg border border-line px-4 py-3 text-[15px] leading-relaxed outline-none focus:border-ai" />
               </div>
-              {!!ai.suggerimenti.length && <div className="rounded-2xl bg-white p-5 ring-1 ring-line"><div className="text-sm font-semibold">Per migliorare ancora</div><ul className="mt-2 space-y-1.5 text-sm text-muted">{ai.suggerimenti.map(s => <li key={s} className="flex gap-2"><span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-ai" />{s}</li>)}</ul></div>}
+              {!!ai.suggerimenti.length && <div className="card p-5"><div className="text-sm font-semibold">Per migliorare ancora</div><ul className="mt-2 space-y-1.5 text-sm text-muted">{ai.suggerimenti.map(s => <li key={s} className="flex gap-2"><span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-ai" />{s}</li>)}</ul></div>}
               <div className="flex flex-wrap justify-between gap-3">
                 <button onClick={() => go(STEPS.length - 1)} className="text-sm text-muted hover:text-ink">Modifica i dati</button>
                 <div className="flex gap-3">
-                  <button onClick={generate} className="rounded-xl border border-line bg-white px-4 py-3 text-sm font-medium">Rigenera</button>
-                  <button onClick={save} className="rounded-xl bg-ink px-6 py-3 text-sm font-semibold text-white">Salva immobile</button>
+                  <button onClick={generate} className="btn-ghost rounded-xl px-4 py-3 text-sm font-medium">Rigenera</button>
+                  <button onClick={save} className="rounded-xl btn-ink rounded-xl px-6 py-3 text-sm font-semibold">Salva immobile</button>
                 </div>
               </div>
             </div>
           )}
-          {!ai && !busy && <button onClick={generate} className="rounded-xl bg-ink px-6 py-3 text-sm font-semibold text-white">Riprova</button>}
+          {!ai && !busy && <button onClick={generate} className="rounded-xl btn-ink rounded-xl px-6 py-3 text-sm font-semibold">Riprova</button>}
         </section>
       )}
     </div>
@@ -298,7 +299,7 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
 // ------------------------------------------------------------------ controlli
 
 type Set = (v: Details[string]) => void;
-const sel = (on: boolean) => on ? 'ring-2 ring-brand bg-brand/5' : 'ring-1 ring-line bg-white hover:ring-ink/30';
+const sel = (on: boolean) => on ? 'sel-glow' : 'ring-1 ring-line bg-white hover:ring-ink/30';
 
 function Label({ f }: { f: Field }) { return <div className="mb-3 text-sm font-medium">{f.label}</div>; }
 
@@ -333,7 +334,7 @@ function Chips({ f, v, set, multi }: { f: Field; v: Details[string]; set: Set; m
       <Label f={f} />
       <div className="flex flex-wrap gap-2">
         {f.options!.map(o => <button type="button" key={o} aria-pressed={on(o)} onClick={() => multi ? set(arr.includes(o) ? arr.filter(x => x !== o) : [...arr, o]) : set(v === o ? undefined : o)}
-          className={`rounded-full px-4 py-2 text-sm transition-all active:scale-95 ${on(o) ? 'bg-ink font-medium text-white' : 'bg-white ring-1 ring-line hover:ring-ink/30'}`}>{o}</button>)}
+          className={`rounded-full px-4 py-2 text-sm transition-all active:scale-95 ${on(o) ? 'btn-primary font-medium' : 'bg-white ring-1 ring-line hover:ring-ink/30'}`}>{o}</button>)}
       </div>
     </div>
   );
@@ -351,12 +352,12 @@ function Toggle({ f, v, set }: { f: Field; v: Details[string]; set: Set }) {
 function Counter({ f, v, set, inline }: { f: Field; v: Details[string]; set: Set; inline?: boolean }) {
   const n = Number(v) || 0;
   return (
-    <div className={inline ? 'flex items-center justify-between' : 'rounded-2xl bg-white p-4 text-center ring-1 ring-line'}>
+    <div className={inline ? 'flex items-center justify-between' : 'card p-4 text-center'}>
       <div className={`text-sm font-medium ${inline ? '' : 'text-muted'}`}>{f.label}{f.unit && <span className="text-muted"> ({f.unit})</span>}</div>
       <div className={`flex items-center justify-center gap-3 ${inline ? '' : 'mt-3'}`}>
         <button type="button" aria-label="Meno" onClick={() => set(n > 1 ? n - 1 : undefined)} disabled={!n} className="flex h-10 w-10 items-center justify-center rounded-full bg-canvas transition active:scale-90 disabled:opacity-30"><Minus size={16} /></button>
         <span className="w-8 font-display text-2xl font-bold">{n || '–'}</span>
-        <button type="button" aria-label="Più" onClick={() => set(n + 1)} className="flex h-10 w-10 items-center justify-center rounded-full bg-ink text-white transition active:scale-90"><Plus size={16} /></button>
+        <button type="button" aria-label="Più" onClick={() => set(n + 1)} className="flex h-10 w-10 items-center justify-center btn-primary rounded-full transition active:scale-90"><Plus size={16} /></button>
       </div>
     </div>
   );

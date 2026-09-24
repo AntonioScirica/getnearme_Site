@@ -89,7 +89,7 @@ export default function ProfileForm({ initial, submitLabel, onSaved }: { initial
         {check.state === 'invalid' && <p className="mt-2 text-sm text-red-600">Da 3 a 40 caratteri: lettere minuscole, numeri e trattini.</p>}
       </div>
       {error && <p className="text-sm text-red-600">{error}</p>}
-      <button disabled={!canSave || saving} className="w-full rounded-lg bg-ink py-2.5 text-sm font-medium text-white disabled:opacity-40">
+      <button disabled={!canSave || saving} className="w-full btn-ink rounded-xl py-2.5 text-sm font-semibold">
         {saving ? 'Salvo...' : submitLabel}
       </button>
     </form>

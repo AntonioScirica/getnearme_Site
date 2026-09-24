@@ -4,7 +4,7 @@ export default function PortfolioHeader({ brand, base }: { brand: PortfolioBrand
   const logo = brand.logo_colored_h || brand.logo_black_h;
   const name = brand.company_name || brand.display_name || 'Portfolio immobili';
   return (
-    <header className="border-b border-line bg-white">
+    <header className="glass sticky top-0 z-30 border-b">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-4">
         <a href={base} className="flex min-w-0 items-center gap-3">
           {logo ? <img src={logo} alt={name} className="h-9 max-w-[180px] object-contain" /> : <span className="truncate font-display text-xl font-bold">{name}</span>}

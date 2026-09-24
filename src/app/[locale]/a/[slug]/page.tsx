@@ -31,10 +31,10 @@ export default async function PortfolioPage({ params }: Props) {
       <main className="mx-auto max-w-6xl px-6 py-10">
         <h1 className="font-display text-3xl font-bold tracking-tight">Immobili disponibili</h1>
         <p className="mt-1 text-muted">{properties.length} {properties.length === 1 ? 'immobile' : 'immobili'}</p>
-        <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="stagger mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {properties.map(p => (
-            <a key={p.id} href={`${base}/${p.id}`} className="overflow-hidden rounded-2xl border border-line bg-white transition-shadow hover:shadow-lg">
-              <div className="aspect-[4/3] bg-canvas">{p.cover && <img src={p.cover} alt={p.titolo} className="h-full w-full object-cover" />}</div>
+            <a key={p.id} href={`${base}/${p.id}`} className="group card card-hover overflow-hidden">
+              <div className="aspect-[4/3] overflow-hidden bg-canvas">{p.cover && <img src={p.cover} alt={p.titolo} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />}</div>
               <div className="p-5">
                 <div className="text-xs font-medium uppercase tracking-wide text-muted">{[p.tipologia, p.import_data?.contratto].filter(Boolean).join(' · ')}</div>
                 <div className="mt-1 font-display text-xl font-semibold">{price(p.prezzo)}</div>

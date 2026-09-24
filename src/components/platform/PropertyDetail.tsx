@@ -21,7 +21,7 @@ export default function PropertyDetail({ project, loading, onChange }: { project
       </div>
       <PropertyView p={project} />
       {typeof extra.score === 'number' && (
-        <section className="mt-10 rounded-2xl border border-line bg-white p-6">
+        <section className="mt-10 card p-6">
           <div className="flex items-baseline justify-between"><h2 className="font-display text-lg font-semibold">Qualità dell&apos;annuncio</h2><span className="font-display text-2xl font-bold text-ai">{extra.score}/100</span></div>
           {!!extra.suggerimenti?.length && <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-muted">{extra.suggerimenti.map(s => <li key={s}>{s}</li>)}</ul>}
         </section>

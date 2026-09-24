@@ -84,7 +84,7 @@ export function ShareButton({ title }: { title: string }) {
     setCopied(true); setTimeout(() => setCopied(false), 1500);
   };
   return (
-    <button onClick={share} className="flex items-center gap-2 rounded-xl border border-line bg-white px-4 py-2 text-sm font-medium hover:bg-canvas">
+    <button onClick={share} className="flex items-center gap-2 btn-ghost rounded-xl px-4 py-2 text-sm font-medium">
       {copied ? <Check size={16} className="text-green-600" /> : <Share2 size={16} />} {copied ? 'Link copiato' : 'Condividi'}
     </button>
   );

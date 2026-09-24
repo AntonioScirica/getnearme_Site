@@ -22,7 +22,7 @@ type Data = {
 };
 
 const usd = (n: number, d = 2) => `$${(Number(n) || 0).toFixed(d)}`;
-const card = 'rounded-2xl border border-line bg-white p-5';
+const card = 'card p-5';
 
 export default function CostsView() {
   const [data, setData] = useState<Data | null>(null);

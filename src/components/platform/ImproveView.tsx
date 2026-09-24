@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, Camera, Check, Copy, Download, ExternalLink, Link2, Loader2, Lock, Puzzle, Sparkles, Wand2 } from 'lucide-react';
 import { downloadImage } from '@/lib/staging';
 import { authFetch, extSend, EXTENSION_URL, go } from './api';
+import CountUp from './CountUp';
 
 // "Migliora annuncio": link portale -> estensione legge l'annuncio in background ->
 // scansione animata -> diagnosi + annuncio riscritto. Senza estensione: testo incollato.
@@ -75,21 +76,21 @@ export default function ImproveView({ initialUrl, onSaved }: { initialUrl: strin
             <Link2 size={16} className="text-muted" />
             <input value={url} onChange={e => setUrl(e.target.value)} placeholder="https://www.immobiliare.it/annunci/..." className="w-full bg-transparent py-3 text-sm outline-none" />
           </div>
-          <button className="flex items-center gap-2 rounded-lg bg-ai px-5 text-sm font-medium text-white"><Sparkles size={16} /> Analizza</button>
+          <button className="flex items-center gap-2 btn-primary rounded-xl px-5 text-sm font-semibold"><Sparkles size={16} /> Analizza</button>
         </form>
       )}
       {error && <p className="mt-3 max-w-3xl text-sm text-red-600">{error}</p>}
 
       {stage === 'no-extension' && (
-        <div className="mt-6 max-w-3xl rounded-2xl border border-line bg-white p-6">
+        <div className="mt-6 max-w-3xl card p-6">
           <div className="flex items-start gap-4">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand/10 text-brand"><Puzzle size={20} /></div>
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center icon-badge rounded-xl"><Puzzle size={20} /></div>
             <div>
               <h2 className="font-display text-lg font-semibold">Serve l&apos;estensione GetNearMe per leggere l&apos;annuncio</h2>
               <p className="mt-1 text-sm text-muted">I portali non permettono ad altri siti di leggere le loro pagine: l&apos;estensione lo fa dal tuo browser, in un attimo e in background. Si installa in un click (Chrome, Edge, Brave).</p>
               <div className="mt-4 flex flex-wrap gap-3">
-                <a href={EXTENSION_URL} target="_blank" rel="noreferrer" className="rounded-lg bg-ink px-5 py-2.5 text-sm font-medium text-white">Installa l&apos;estensione</a>
-                <button onClick={() => start()} className="rounded-lg border border-line px-5 py-2.5 text-sm font-medium">L&apos;ho installata, riprova</button>
+                <a href={EXTENSION_URL} target="_blank" rel="noreferrer" className="btn-ink rounded-xl px-5 py-2.5 text-sm font-semibold">Installa l&apos;estensione</a>
+                <button onClick={() => start()} className="btn-ghost rounded-lg px-5 py-2.5 text-sm font-medium">L&apos;ho installata, riprova</button>
                 <button onClick={() => setStage('manual')} className="px-2 text-sm text-muted hover:text-ink">Incolla il testo a mano</button>
               </div>
             </div>
@@ -102,7 +103,7 @@ export default function ImproveView({ initialUrl, onSaved }: { initialUrl: strin
           <label className="mb-1.5 block text-sm font-medium">Oppure incolla il testo dell&apos;annuncio</label>
           <textarea rows={8} value={pasted} onChange={e => setPasted(e.target.value)} placeholder="Titolo, prezzo, caratteristiche e descrizione, copiati dalla pagina dell'annuncio..."
             className="w-full rounded-lg border border-line bg-white px-3 py-2.5 text-sm outline-none focus:border-brand" />
-          <button onClick={analyzePasted} disabled={pasted.trim().length < 80} className="mt-3 rounded-lg bg-ink px-5 py-2.5 text-sm font-medium text-white disabled:opacity-40">Analizza il testo</button>
+          <button onClick={analyzePasted} disabled={pasted.trim().length < 80} className="mt-3 btn-ink rounded-xl px-5 py-2.5 text-sm font-semibold">Analizza il testo</button>
         </div>
       )}
 
@@ -128,7 +129,7 @@ function Scanner({ listing, stage }: { listing: Listing; stage: 'opening' | 'sca
   const desc = text(info.description);
   return (
     <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_280px]">
-      <div className="overflow-hidden rounded-2xl border border-line bg-white shadow-sm">
+      <div className="overflow-hidden card shadow-sm">
         <div className="flex items-center gap-3 border-b border-line bg-canvas px-4 py-2.5">
           <div className="flex gap-1.5"><span className="h-3 w-3 rounded-full bg-[#ff5f57]" /><span className="h-3 w-3 rounded-full bg-[#febc2e]" /><span className="h-3 w-3 rounded-full bg-[#28c840]" /></div>
           <div className="flex min-w-0 flex-1 items-center gap-2 rounded-md bg-white px-3 py-1 text-xs text-muted"><Lock size={11} /> <span className="truncate">{listing.url}</span></div>
@@ -160,7 +161,7 @@ function Scanner({ listing, stage }: { listing: Listing; stage: 'opening' | 'sca
           )}
         </div>
       </div>
-      <ul className="h-fit space-y-3 rounded-2xl border border-line bg-white p-5">
+      <ul className="h-fit space-y-3 card p-5">
         {SCAN_STEPS.map((s, i) => {
           const done = stage === 'scanning' && i < step;
           const active = stage === 'scanning' && i === step;
@@ -197,7 +198,7 @@ function useCopy(): [boolean, (t: string) => void] {
 function CopyBtn({ text: t, label = 'Copia', solid = false }: { text: string; label?: string; solid?: boolean }) {
   const [copied, copy] = useCopy();
   const base = solid
-    ? 'rounded-lg bg-ink px-4 py-2 text-sm font-medium text-white'
+    ? 'btn-ink rounded-xl px-4 py-2 text-sm font-semibold'
     : 'rounded-md px-2 py-1 text-xs font-medium text-muted hover:bg-canvas hover:text-ink';
   return (
     <button type="button" onClick={() => copy(t)} className={`flex shrink-0 items-center gap-1.5 ${base}`}>
@@ -233,7 +234,7 @@ function Results({ listing, analysis: a, onSaved, onRestart }: { listing: Listin
   return (
     <div className="mt-8 space-y-8">
       {/* Verdetto */}
-      <section className="grid gap-0 overflow-hidden rounded-2xl border border-line bg-white md:grid-cols-[280px_1fr]">
+      <section className="card ring-gradient fade-up grid gap-0 overflow-hidden md:grid-cols-[280px_1fr]">
         <div className="aspect-[4/3] bg-canvas md:aspect-auto md:h-full">
           {listing.photos[0] && <img src={listing.photos[0]} alt="" className="h-full w-full object-cover" />}
         </div>
@@ -241,7 +242,7 @@ function Results({ listing, analysis: a, onSaved, onRestart }: { listing: Listin
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <div className="text-xs font-medium uppercase tracking-wide text-muted">Score dell&apos;annuncio attuale</div>
-              <div className={`mt-1 font-display text-6xl font-bold leading-none ${tone.text}`}>{a.score}<span className="text-2xl text-muted">/100</span></div>
+              <div className={`mt-1 font-display text-6xl font-bold leading-none ${tone.text}`}><CountUp value={a.score} /><span className="text-2xl text-muted">/100</span></div>
               <div className="mt-3 h-2 w-56 overflow-hidden rounded-full bg-canvas"><div className={`h-full rounded-full ${tone.bar}`} style={{ width: `${a.score}%` }} /></div>
             </div>
             <div className="flex flex-col items-end gap-2">
@@ -259,15 +260,15 @@ function Results({ listing, analysis: a, onSaved, onRestart }: { listing: Listin
       </section>
 
       {/* Annuncio riscritto: prima cosa, a tutta larghezza */}
-      <section className="rounded-2xl border border-ai/30 bg-white p-6 shadow-[0_8px_30px_-12px] shadow-ai/30">
+      <section className="card ring-gradient p-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h2 className="flex items-center gap-2 font-display text-xl font-semibold"><Sparkles size={18} className="text-ai" /> Annuncio riscritto</h2>
             <p className="mt-1 text-sm text-muted">Pronto da incollare sul portale. Puoi ritoccarlo qui prima di copiare.</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <button onClick={() => setShowBefore(v => !v)} className="rounded-lg border border-line px-4 py-2 text-sm font-medium hover:bg-canvas">{showBefore ? 'Nascondi originale' : 'Confronta con originale'}</button>
-            <button onClick={save} disabled={saving} className="flex items-center gap-2 rounded-lg bg-ink px-4 py-2 text-sm font-medium text-white disabled:opacity-50">
+            <button onClick={() => setShowBefore(v => !v)} className="btn-ghost rounded-lg px-4 py-2 text-sm font-medium">{showBefore ? 'Nascondi originale' : 'Confronta con originale'}</button>
+            <button onClick={save} disabled={saving} className="flex items-center gap-2 btn-ink rounded-xl px-4 py-2 text-sm font-semibold">
               {saving && <Loader2 size={16} className="animate-spin" />} {saving ? `Salvo ${listing.photos.length} foto...` : 'Aggiungi ai miei immobili'}
             </button>
           </div>
@@ -290,11 +291,11 @@ function Results({ listing, analysis: a, onSaved, onRestart }: { listing: Listin
       <section>
         <h2 className="font-display text-xl font-semibold">Cosa sistemare sul portale, in ordine di priorità</h2>
         <p className="mt-1 text-sm text-muted">Per ogni punto: cosa non va, perché ti fa perdere contatti, cosa fare adesso.</p>
-        <ol className="mt-4 grid gap-4 lg:grid-cols-2">
+        <ol className="stagger mt-4 grid gap-4 lg:grid-cols-2">
           {a.problemi.map((p, i) => {
             const g = GRAVITA[p.gravita];
             return (
-              <li key={i} className="flex flex-col rounded-2xl border border-line bg-white p-5">
+              <li key={i} className="card card-hover flex flex-col p-5">
                 <div className="flex items-center gap-3">
                   <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-ink font-display text-sm font-semibold text-white">{i + 1}</span>
                   <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ${g.cls}`}>{g.label}</span>
@@ -368,7 +369,7 @@ function PhotoFix({ src, index, edit }: { src: string; index: number; edit: stri
           <div className="text-xs text-muted">{edit ? 'Si può sistemare con l\'AI, senza rifarla.' : 'Va rifatta o sostituita: l\'AI non basta.'}</div>
         </div>
         {edit ? (
-          <button onClick={() => setOpen(v => !v)} className="flex shrink-0 items-center gap-1.5 rounded-lg bg-ai px-3 py-2 text-sm font-medium text-white">
+          <button onClick={() => setOpen(v => !v)} className="flex shrink-0 items-center gap-1.5 btn-primary rounded-lg px-3 py-2 text-sm font-semibold">
             <Wand2 size={15} /> Sistema con AI
           </button>
         ) : <Camera size={18} className="shrink-0 text-muted" />}
@@ -385,12 +386,12 @@ function PhotoFix({ src, index, edit }: { src: string; index: number; edit: stri
                 <figure><img src={out} alt="" className="aspect-[4/3] w-full rounded-lg object-cover" /><figcaption className="mt-1 text-xs text-muted">Dopo</figcaption></figure>
               </div>
               <div className="flex gap-2">
-                <button onClick={() => downloadImage(out, `foto-${index}-sistemata.jpg`)} className="flex items-center gap-1.5 rounded-lg bg-ink px-3 py-2 text-sm font-medium text-white"><Download size={15} /> Scarica</button>
-                <button onClick={run} disabled={busy} className="rounded-lg border border-line px-3 py-2 text-sm font-medium disabled:opacity-50">Rigenera</button>
+                <button onClick={() => downloadImage(out, `foto-${index}-sistemata.jpg`)} className="flex items-center gap-1.5 btn-ink rounded-lg px-3 py-2 text-sm font-semibold"><Download size={15} /> Scarica</button>
+                <button onClick={run} disabled={busy} className="btn-ghost rounded-lg px-3 py-2 text-sm font-medium disabled:opacity-50">Rigenera</button>
               </div>
             </>
           ) : (
-            <button onClick={run} disabled={busy || !prompt.trim()} className="flex items-center gap-2 rounded-lg bg-ai px-4 py-2 text-sm font-medium text-white disabled:opacity-50">
+            <button onClick={run} disabled={busy || !prompt.trim()} className="flex items-center gap-2 btn-primary rounded-xl px-4 py-2 text-sm font-semibold disabled:opacity-50">
               {busy ? <Loader2 size={15} className="animate-spin" /> : <Wand2 size={15} />} {busy ? 'Sto modificando la foto...' : 'Genera'}
             </button>
           )}
@@ -403,7 +404,7 @@ function PhotoFix({ src, index, edit }: { src: string; index: number; edit: stri
 
 function Section({ title, hint, copyText, children }: { title: string; hint?: string; copyText: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-2xl border border-line bg-white p-5">
+    <section className="card p-5">
       <div className="flex items-start justify-between gap-2">
         <div>
           <h3 className="text-sm font-semibold">{title}</h3>

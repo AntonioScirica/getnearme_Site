@@ -60,12 +60,12 @@ export default function ImportView({ onDone }: { onDone: () => void }) {
       <p className="mt-1 text-muted">Carica l&apos;export del tuo gestionale: riconosciamo le colonne da soli, tu controlli e confermi.</p>
 
       {result ? (
-        <div className="mt-8 rounded-2xl border border-line bg-white p-6">
+        <div className="mt-8 card p-6">
           <h2 className="font-display text-xl font-semibold">Import completato</h2>
           <p className="mt-2 text-sm">{result.created} nuovi, {result.updated} aggiornati{result.skipped ? `, ${result.skipped} saltati` : ''}.</p>
           <div className="mt-5 flex gap-3">
-            <a href="#/immobili" className="rounded-lg bg-ink px-5 py-2.5 text-sm font-medium text-white">Vedi immobili</a>
-            <button onClick={() => { setResult(null); setRawRows([]); setFileName(''); }} className="rounded-lg border border-line px-5 py-2.5 text-sm font-medium">Importa altro file</button>
+            <a href="#/immobili" className="btn-ink rounded-xl px-5 py-2.5 text-sm font-semibold">Vedi immobili</a>
+            <button onClick={() => { setResult(null); setRawRows([]); setFileName(''); }} className="btn-ghost rounded-lg px-5 py-2.5 text-sm font-medium">Importa altro file</button>
           </div>
         </div>
       ) : !rawRows.length ? (
@@ -82,7 +82,7 @@ export default function ImportView({ onDone }: { onDone: () => void }) {
             <span><span className="font-medium">{fileName}</span> · {rawRows.length} righe</span>
             {aiBusy && <span className="flex items-center gap-1.5 text-ai"><Sparkles size={14} /> L&apos;AI sta riconoscendo le colonne...</span>}
           </div>
-          <div className="divide-y divide-line overflow-hidden rounded-2xl border border-line bg-white">
+          <div className="divide-y divide-line overflow-hidden card">
             {TARGET_FIELDS.map(f => (
               <div key={f.key} className="flex items-center gap-4 px-4 py-2.5">
                 <span className="w-40 shrink-0 text-sm font-medium">{f.label}{f.required && ' *'}</span>
@@ -98,7 +98,7 @@ export default function ImportView({ onDone }: { onDone: () => void }) {
           {error && <p className="text-sm text-red-600">{error}</p>}
           <div className="flex items-center justify-between">
             <button onClick={() => { setRawRows([]); setFileName(''); }} className="text-sm text-muted hover:text-ink">Cambia file</button>
-            <button onClick={runImport} disabled={importing || !rows.length} className="flex items-center gap-2 rounded-lg bg-ink px-6 py-2.5 text-sm font-medium text-white disabled:opacity-40">
+            <button onClick={runImport} disabled={importing || !rows.length} className="flex items-center gap-2 btn-ink rounded-xl px-6 py-2.5 text-sm font-semibold">
               {importing && <Loader2 size={16} className="animate-spin" />}
               {importing ? 'Importo... (le foto richiedono qualche secondo)' : `Importa ${rows.length} immobili`}
             </button>

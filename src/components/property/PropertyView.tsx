@@ -80,7 +80,7 @@ export default function PropertyView({ p, contact }: { p: PropertyViewData; cont
           {!!facts.length && (
             <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
               {facts.map(({ icon: Icon, label, value }) => (
-                <div key={label} className="rounded-2xl bg-white p-4 ring-1 ring-line">
+                <div key={label} className="card p-4">
                   <Icon size={18} className="text-brand" />
                   <div className="mt-2 font-display text-lg font-semibold">{value}</div>
                   <div className="text-xs text-muted">{label}</div>
@@ -113,7 +113,7 @@ export default function PropertyView({ p, contact }: { p: PropertyViewData; cont
               <h2 className="mb-4 font-display text-xl font-semibold">Caratteristiche</h2>
               <div className="grid gap-4 sm:grid-cols-2">
                 {groups.map(({ g, facts: gf }) => (
-                  <div key={g.id} className="rounded-2xl bg-white p-5 ring-1 ring-line">
+                  <div key={g.id} className="card p-5">
                     <h3 className="text-sm font-semibold">{g.title}</h3>
                     <dl className="mt-3 space-y-2 text-sm">
                       {gf.map(f => (
@@ -129,7 +129,7 @@ export default function PropertyView({ p, contact }: { p: PropertyViewData; cont
           {typeof d.planimetria === 'string' && d.planimetria && (
             <section className="mt-10">
               <h2 className="mb-4 flex items-center gap-2 font-display text-xl font-semibold"><LayoutTemplate size={20} /> Planimetria</h2>
-              <a href={d.planimetria} target="_blank" rel="noreferrer" className="block overflow-hidden rounded-2xl bg-white p-4 ring-1 ring-line">
+              <a href={d.planimetria} target="_blank" rel="noreferrer" className="block overflow-hidden card p-4">
                 <img src={d.planimetria} alt="Planimetria" loading="lazy" className="mx-auto max-h-[520px] object-contain" />
               </a>
             </section>
@@ -154,7 +154,7 @@ export default function PropertyView({ p, contact }: { p: PropertyViewData; cont
 
         {/* Box prezzo */}
         <aside className="h-fit space-y-4 lg:sticky lg:top-6">
-          <div className="rounded-3xl bg-white p-6 shadow-[0_12px_40px_-16px_rgba(21,24,31,0.25)] ring-1 ring-line">
+          <div className="card ring-gradient rounded-3xl p-6">
             <div className="font-display text-3xl font-bold tracking-tight">{price}</div>
             {perSqm && <div className="mt-1 text-sm text-muted">{perSqm}</div>}
             <dl className="mt-5 space-y-2.5 border-t border-line pt-5 text-sm">
@@ -173,7 +173,7 @@ export default function PropertyView({ p, contact }: { p: PropertyViewData; cont
             <div className="mt-3 flex gap-2">
               <ShareButton title={title} />
               {typeof d.virtual_tour === 'string' && /^https?:\/\//.test(d.virtual_tour) && (
-                <a href={d.virtual_tour} target="_blank" rel="noreferrer" className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-line px-4 py-2 text-sm font-medium hover:bg-canvas"><ExternalLink size={16} /> Virtual tour</a>
+                <a href={d.virtual_tour} target="_blank" rel="noreferrer" className="flex flex-1 items-center justify-center gap-2 btn-ghost rounded-xl px-4 py-2 text-sm font-medium"><ExternalLink size={16} /> Virtual tour</a>
               )}
             </div>
           </div>

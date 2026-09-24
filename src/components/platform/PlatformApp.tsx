@@ -52,15 +52,15 @@ export default function PlatformApp({ userData }: { userData: UserData }) {
   const detailId = route.startsWith('/immobile/') ? route.slice('/immobile/'.length) : null;
 
   return (
-    <div className="flex h-full bg-canvas font-body text-ink">
-      <aside className="flex w-60 shrink-0 flex-col border-r border-line bg-white px-3 py-5">
-        <div className="px-3 pb-6 font-display text-xl font-bold tracking-tight">GetNearMe</div>
+    <div className="gnm-bg flex h-full font-body text-ink">
+      <aside className="glass flex w-60 shrink-0 flex-col border-r px-3 py-5">
+        <div className="flex items-center gap-2 px-3 pb-6"><span className="btn-primary flex h-7 w-7 items-center justify-center rounded-lg text-xs font-bold">G</span><span className="font-display text-xl font-bold tracking-tight">GetNearMe</span></div>
         <nav className="flex flex-col gap-1">
           {[...NAV, ...(isPlatformAdmin(userData.email) ? [{ path: '/costi', label: 'Costi AI', icon: Gauge }] : [])].map(({ path, label, icon: Icon }) => {
             const active = route === path || (path === '/immobili' && !!detailId);
             return (
               <a key={path} href={`#${path}`}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${active ? 'bg-brand/10 text-brand' : 'text-muted hover:bg-canvas hover:text-ink'}`}>
+                className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${active ? 'bg-white text-ai shadow-sm ring-1 ring-ai/15' : 'text-muted hover:bg-white/70 hover:text-ink'}`}>
                 <Icon size={18} /> {label}
               </a>
             );
@@ -76,7 +76,7 @@ export default function PlatformApp({ userData }: { userData: UserData }) {
       </aside>
 
       <main className="flex-1 overflow-y-auto">
-        <div className="mx-auto max-w-6xl px-8 py-10">
+        <div key={route} className="fade-up mx-auto max-w-6xl px-8 py-10">
           {route === '/costi' && isPlatformAdmin(userData.email) ? (
             <CostsView />
           ) : route === '/migliora' ? (
@@ -104,12 +104,12 @@ function HomeView({ projects }: { projects: ProjectData[] | null }) {
   const [url, setUrl] = useState('');
   return (
     <>
-      <h1 className="font-display text-3xl font-bold tracking-tight">Cosa facciamo oggi?</h1>
+      <h1 className="fade-up font-display text-4xl font-bold tracking-tight">Cosa facciamo <span className="gradient-text">oggi?</span></h1>
       <p className="mt-1 text-muted">Migliora un annuncio che hai già online, oppure creane uno nuovo da zero.</p>
 
-      <div className="mt-8 grid gap-5 md:grid-cols-2">
-        <section className="rounded-2xl border border-line bg-white p-6">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-ai/10 text-ai"><Sparkles size={20} /></div>
+      <div className="stagger mt-8 grid gap-5 md:grid-cols-2">
+        <section className="card card-hover p-6">
+          <div className="flex h-10 w-10 items-center justify-center icon-badge rounded-xl"><Sparkles size={20} /></div>
           <h2 className="mt-4 font-display text-xl font-semibold">Migliora un annuncio</h2>
           <p className="mt-1 text-sm text-muted">Incolla il link da immobiliare.it, idealista o casa.it: ti diamo score, nuova descrizione e cosa sistemare.</p>
           <form onSubmit={e => { e.preventDefault(); go(`/migliora?url=${encodeURIComponent(url.trim())}`); }} className="mt-5 flex gap-2">
@@ -118,13 +118,13 @@ function HomeView({ projects }: { projects: ProjectData[] | null }) {
               <input value={url} onChange={e => setUrl(e.target.value)} placeholder="https://www.immobiliare.it/annunci/..."
                 className="w-full bg-transparent py-2.5 text-sm outline-none" />
             </div>
-            <button disabled={!url.trim()} className="rounded-lg bg-ai px-4 text-sm font-medium text-white disabled:opacity-40">Analizza</button>
+            <button disabled={!url.trim()} className="btn-primary rounded-xl px-4 text-sm font-semibold">Analizza</button>
           </form>
           <a href="#/migliora" className="mt-2 inline-block text-xs text-muted hover:text-ink">Non hai il link? Incolla il testo</a>
         </section>
 
-        <a href="#/nuovo" className="group rounded-2xl border border-line bg-white p-6 transition-shadow hover:shadow-lg">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand/10 text-brand"><Plus size={20} /></div>
+        <a href="#/nuovo" className="group card card-hover p-6">
+          <div className="flex h-10 w-10 items-center justify-center icon-badge rounded-xl"><Plus size={20} /></div>
           <h2 className="mt-4 font-display text-xl font-semibold">Crea da zero</h2>
           <p className="mt-1 text-sm text-muted">Inserisci dati e foto: generiamo titolo, descrizione e score, e l&apos;immobile finisce nel tuo portfolio pubblico.</p>
           <span className="mt-5 inline-flex items-center gap-1 text-sm font-medium text-brand">Inizia <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" /></span>
@@ -146,7 +146,7 @@ function PropertyList({ projects }: { projects: ProjectData[] | null }) {
     <>
       <div className="flex items-center justify-between">
         <h1 className="font-display text-3xl font-bold tracking-tight">Immobili</h1>
-        <a href="#/nuovo" className="flex items-center gap-2 rounded-lg bg-ink px-4 py-2 text-sm font-medium text-white"><Plus size={16} /> Nuovo</a>
+        <a href="#/nuovo" className="flex items-center gap-2 btn-ink rounded-xl px-4 py-2 text-sm font-semibold"><Plus size={16} /> Nuovo</a>
       </div>
       <div className="mt-8"><PropertyGrid projects={projects} /></div>
     </>
@@ -157,11 +157,11 @@ function PropertyGrid({ projects }: { projects: ProjectData[] | null }) {
   if (!projects) return <Loader2 className="animate-spin text-muted" />;
   if (!projects.length) return <p className="text-sm text-muted">Nessun immobile ancora. <a href="#/nuovo" className="text-brand">Crea il primo</a>.</p>;
   return (
-    <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="stagger grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
       {projects.map(p => (
-        <a key={p.id} href={`#/immobile/${p.id}`} className="overflow-hidden rounded-2xl border border-line bg-white transition-shadow hover:shadow-lg">
-          <div className="aspect-[4/3] bg-canvas">
-            {p.cover && <img src={p.cover} alt="" className="h-full w-full object-cover" />}
+        <a key={p.id} href={`#/immobile/${p.id}`} className="group card card-hover overflow-hidden">
+          <div className="aspect-[4/3] overflow-hidden bg-canvas">
+            {p.cover && <img src={p.cover} alt="" className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />}
           </div>
           <div className="p-4">
             <div className="font-display text-lg font-semibold">{formatPrice(p.prezzo)}</div>
@@ -177,7 +177,7 @@ function PropertyGrid({ projects }: { projects: ProjectData[] | null }) {
 function Onboarding({ onDone }: { onDone: (p: Profile) => void }) {
   return (
     <div className="flex h-full items-center justify-center overflow-y-auto bg-canvas px-6 font-body text-ink">
-      <div className="w-full max-w-md rounded-2xl border border-line bg-white p-8">
+      <div className="w-full max-w-md card p-8">
         <div className="font-display text-xl font-bold tracking-tight">GetNearMe</div>
         <h1 className="mt-6 font-display text-2xl font-bold tracking-tight">Come ti chiami?</h1>
         <p className="mt-1 text-sm text-muted">Il tuo nome apparirà sul portfolio pubblico, la vetrina con i tuoi immobili da condividere con i clienti.</p>
