@@ -12,8 +12,11 @@ import { authFetch, CARD_SHADOW, warm } from './api';
 // un'altra foto riparte da quella. "Continua da qui" su un risultato vecchio lo rende la base.
 
 type Scene = 'interno' | 'esterno' | 'giardino' | 'planimetria';
+const ROOM_LABEL: Record<string, string> = { soggiorno: 'un soggiorno', cucina: 'una cucina', camera: 'una camera da letto', cameretta: 'una cameretta', bagno: 'un bagno', sala: 'una sala da pranzo', studio: 'uno studio', ingresso: 'un ingresso', corridoio: 'un corridoio', balcone: 'un balcone', cantina: 'una cantina', box: 'un box' };
+const SCENE_LABEL: Record<Scene, string> = { interno: 'un interno', esterno: 'una facciata', giardino: 'un giardino', planimetria: 'una planimetria' };
+
 type Msg =
-  | { id: string; role: 'user'; text?: string; image?: string }
+  | { id: string; role: 'user'; text?: string; image?: string; seen?: string | null }
   | { id: string; role: 'ai'; before: string; out: string | null; busy: boolean; reveal: Reveal; err?: string; text: string };
 
 const SCENES: { id: Scene; label: string }[] = [
@@ -64,8 +67,19 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
     const f = files[0];
     if (!f.type.startsWith('image/')) return;
     const img = await fileToResizedDataUrl(f, 1500);
-    setMsgs(ms => [...ms, { id: uid(), role: 'user', image: img }]);
+    const id = uid();
+    setMsgs(ms => [...ms, { id, role: 'user', image: img, seen: null }]);
     setBase(img);
+    // Riconoscimento del tipo di foto e della stanza: imposta il tipo da solo e lo dice nel messaggio guida
+    try {
+      const r = await authFetch('/api/platform/photo-classify', { method: 'POST', body: JSON.stringify({ imageBase64: img }) });
+      const c = r.ok ? await r.json() : null;
+      if (c?.scene) {
+        setScene(c.scene);
+        const what = c.scene === 'interno' ? (ROOM_LABEL[c.room] ?? 'un interno') : SCENE_LABEL[c.scene as Scene];
+        setMsgs(ms => ms.map(m => (m.id === id && m.role === 'user' ? { ...m, seen: what } : m)));
+      }
+    } catch { /* senza riconoscimento resta il tipo scelto a mano */ }
   };
 
   const send = async () => {
@@ -134,7 +148,7 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
             {/* dopo una foto caricata: l'assistente spiega cosa fare e propone i suggerimenti */}
             {m.image && i === msgs.length - 1 && !busy && (
               <div className="blur-in mt-3 max-w-[85%] rounded-3xl rounded-bl-lg bg-canvas px-4 py-3 text-sm" style={{ animationDelay: '.3s' }}>
-                <p>Foto caricata. Scrivi qui sotto cosa vuoi cambiare, oppure tocca un suggerimento:</p>
+                <p>{m.seen ? <>Sembra <b>{m.seen}</b>. </> : 'Foto caricata. '}Scrivi qui sotto cosa vuoi cambiare, oppure tocca un suggerimento{m.seen ? ' (se ho sbagliato tipo, cambialo sotto il campo)' : ''}:</p>
                 <div className="mt-2.5 flex flex-wrap gap-1.5">{chips}</div>
               </div>
             )}
