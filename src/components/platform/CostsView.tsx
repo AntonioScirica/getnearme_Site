@@ -121,7 +121,7 @@ export default function CostsView() {
           </table>
           {!!data.usage.byKind.length && (
             <div className="mt-4 flex flex-wrap gap-2 text-xs text-muted">
-              {data.usage.byKind.map(k => <span key={k.kind} className="rounded-full bg-canvas px-3 py-1">{k.kind}: {k.calls} · {usd(k.cost, 4)}</span>)}
+              {data.usage.byKind.map(k => <span key={k.kind} className="rounded-full bg-canvas px-3 py-1 ring-1 ring-inset ring-black/10">{k.kind}: {k.calls} · {usd(k.cost, 4)}</span>)}
             </div>
           )}
         </div>

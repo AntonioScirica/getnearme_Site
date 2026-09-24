@@ -156,7 +156,7 @@ export function BrowserBody({ stage, listing, error, url, onRetry, onManual, onT
         {title ? <h3 {...fade(0.2)} className="blur-in line-clamp-1 text-xl font-bold tracking-tight">{title}</h3> : <div className="shimmer h-6 w-2/3 rounded-full" />}
         <div className="mt-3 flex flex-wrap gap-1.5">
           {facts.length
-            ? facts.map((f, i) => <span key={f} {...fade(0.25 + i * 0.05)} className="blur-in rounded-full bg-canvas px-3 py-1 text-xs font-medium text-ink/70">{f}</span>)
+            ? facts.map((f, i) => <span key={f} {...fade(0.25 + i * 0.05)} className="blur-in rounded-full bg-canvas px-3 py-1 text-xs font-medium text-ink/70 ring-1 ring-inset ring-black/10">{f}</span>)
             : ['w-20', 'w-16', 'w-40'].map(w => <span key={w} className={`shimmer h-6 rounded-full ${w}`} />)}
         </div>
         {desc
@@ -203,10 +203,10 @@ export function Verdict({ listing, analysis: a }: { listing: Listing; analysis: 
         </div>
         <p className="blur-in mt-3 line-clamp-3 text-sm leading-relaxed text-ink/80" style={{ animationDelay: '.6s' }}>{a.sintesi}</p>
         <div className="stagger-chips mt-auto flex flex-wrap gap-1.5 pt-3 text-xs">
-          {urgent > 0 && <span className="rounded-full bg-rose-50 px-3 py-1 font-medium text-rose-700">{urgent} da fare subito</span>}
-          <span className="rounded-full bg-canvas px-3 py-1 text-muted">{a.problemi.length} punti da sistemare</span>
-          <span className="rounded-full bg-canvas px-3 py-1 text-muted">{a.dati_mancanti.length} dati mancanti</span>
-          <span className="rounded-full bg-canvas px-3 py-1 text-muted">{listing.photos.length} foto</span>
+          {urgent > 0 && <span className="rounded-full bg-rose-50 px-3 py-1 font-medium text-rose-700 ring-1 ring-inset ring-rose-700/20">{urgent} da fare subito</span>}
+          <span className="rounded-full bg-canvas px-3 py-1 text-muted ring-1 ring-inset ring-black/10">{a.problemi.length} punti da sistemare</span>
+          <span className="rounded-full bg-canvas px-3 py-1 text-muted ring-1 ring-inset ring-black/10">{a.dati_mancanti.length} dati mancanti</span>
+          <span className="rounded-full bg-canvas px-3 py-1 text-muted ring-1 ring-inset ring-black/10">{listing.photos.length} foto</span>
         </div>
       </div>
     </div>
@@ -220,9 +220,9 @@ export function Verdict({ listing, analysis: a }: { listing: Listing; analysis: 
 const BOX = `rounded-[28px] bg-white p-6 sm:p-7 ${CARD_SHADOW}`;
 
 const GRAVITA: Record<Problem['gravita'], { label: string; cls: string }> = {
-  alta: { label: 'Da fare subito', cls: 'bg-rose-50 text-rose-700' },
-  media: { label: 'Consigliato', cls: 'bg-amber-50 text-amber-700' },
-  bassa: { label: 'Rifinitura', cls: 'bg-canvas text-muted' },
+  alta: { label: 'Da fare subito', cls: 'bg-rose-50 text-rose-700 ring-1 ring-inset ring-rose-700/20' },
+  media: { label: 'Consigliato', cls: 'bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-700/20' },
+  bassa: { label: 'Rifinitura', cls: 'bg-canvas text-muted ring-1 ring-inset ring-black/10' },
 };
 
 export function Results({ listing, analysis: a, onSaved, onRestart }: { listing: Listing; analysis: Analysis; onSaved?: () => void; onRestart: () => void }) {
@@ -336,7 +336,7 @@ function ScoreInfo({ a }: { a: Analysis }) {
     // translate-y 2px: centro ottico, il titolo e' quasi tutto minuscolo e il suo centro cade sotto quello delle maiuscole
     <div ref={box} className="relative translate-y-[2px]">
       <button type="button" onClick={() => setOpen(v => !v)} aria-expanded={open} title="Come calcoliamo il punteggio"
-        className="flex h-7 items-center gap-1.5 rounded-full bg-emerald-50 pl-2.5 pr-1 text-sm font-semibold leading-none text-emerald-700 outline-none ease-smooth transition-colors hover:bg-emerald-100 focus-visible:ring-2 focus-visible:ring-emerald-300">
+        className="flex h-7 items-center gap-1.5 rounded-full bg-emerald-50 pl-2.5 pr-1 text-sm font-semibold leading-none text-emerald-700 outline-none ring-1 ring-inset ring-emerald-700/20 ease-smooth transition-colors hover:bg-emerald-100 focus-visible:ring-2 focus-visible:ring-emerald-300">
         {a.score_potenziale}/100
         <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-[11px] font-bold text-emerald-700 ring-1 ring-emerald-200">i</span>
       </button>
