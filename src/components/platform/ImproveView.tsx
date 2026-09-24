@@ -223,16 +223,6 @@ const GRAVITA: Record<Problem['gravita'], { label: string; cls: string }> = {
   bassa: { label: 'Rifinitura', cls: 'bg-canvas text-muted' },
 };
 
-function CopyBtn({ text: t }: { text: string }) {
-  const [copied, setCopied] = useState(false);
-  return (
-    <button type="button" onClick={() => { navigator.clipboard.writeText(t); setCopied(true); setTimeout(() => setCopied(false), 1500); }}
-      className="flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium text-muted hover:bg-canvas hover:text-ink">
-      {copied ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />} {copied ? 'Copiato' : 'Copia'}
-    </button>
-  );
-}
-
 export function Results({ listing, analysis: a, onSaved, onRestart }: { listing: Listing; analysis: Analysis; onSaved?: () => void; onRestart: () => void }) {
   const [titolo, setTitolo] = useState(a.titolo);
   const [descrizione, setDescrizione] = useState(a.descrizione);
@@ -300,15 +290,15 @@ export function Results({ listing, analysis: a, onSaved, onRestart }: { listing:
       </section>
 
       <div className="grid gap-5 pt-2 lg:grid-cols-3">
-        <Section title="Dati da aggiungere" hint="I compratori li cercano prima di chiamare." copyText={a.dati_mancanti.map(d => `- ${d}`).join('\n')}>
+        <Section title="Dati da aggiungere" hint="I compratori li cercano prima di chiamare.">
           {a.dati_mancanti.length ? a.dati_mancanti.map(d => (
             <li key={d} className="flex items-center gap-2 text-sm"><span className="h-4 w-4 shrink-0 rounded-md ring-1 ring-line" />{d}</li>
           )) : <li className="text-sm text-muted">Nessuno, i dati principali ci sono.</li>}
         </Section>
-        <Section title="Foto: cosa rifare" hint={`Valutate le prime ${Math.min(3, listing.photos.length)} foto.`} copyText={a.foto_consigli.map(f => `- ${f}`).join('\n')}>
+        <Section title="Foto: cosa rifare" hint={`Valutate le prime ${Math.min(3, listing.photos.length)} foto.`}>
           {a.foto_consigli.map(f => <li key={f} className="flex gap-2 text-sm"><span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-ink" />{f}</li>)}
         </Section>
-        <Section title="Cosa funziona già" hint="Da tenere anche nella nuova versione." copyText={a.punti_forza.map(f => `- ${f}`).join('\n')}>
+        <Section title="Cosa funziona già" hint="Da tenere anche nella nuova versione.">
           {a.punti_forza.map(f => <li key={f} className="flex gap-2 text-sm text-muted"><Check size={15} className="mt-0.5 shrink-0 text-emerald-600" />{f}</li>)}
         </Section>
       </div>
@@ -318,10 +308,10 @@ export function Results({ listing, analysis: a, onSaved, onRestart }: { listing:
         <h2 className="text-2xl font-bold tracking-tight">Salvalo nei tuoi immobili</h2>
         <p className="max-w-md text-sm text-muted">Tieni la versione riscritta, le {listing.photos.length} foto e tutti i dati dell&apos;annuncio, pronti per il tuo portfolio.</p>
         <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
+          <button onClick={onRestart} className="btn-ghost rounded-full px-5 py-3 text-sm font-medium">Analizza un altro annuncio</button>
           <button onClick={save} disabled={saving} className="flex items-center gap-2 btn-ink rounded-full px-6 py-3 text-sm font-semibold">
             {saving && <Loader2 size={16} className="animate-spin" />} {saving ? `Salvo ${listing.photos.length} foto...` : 'Salva nei miei immobili'}
           </button>
-          <button onClick={onRestart} className="btn-ghost rounded-full px-5 py-3 text-sm font-medium">Analizza un altro annuncio</button>
         </div>
         {saveError && <p className="text-sm text-rose-600">{saveError}</p>}
       </section>
@@ -470,7 +460,7 @@ function PhotoFix({ src, index, edit, onClose }: { src: string; index: number; e
   );
 }
 
-function Section({ title, hint, copyText, children }: { title: string; hint?: string; copyText: string; children: React.ReactNode }) {
+function Section({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
   return (
     <section className={BOX}>
       <div className="flex items-start justify-between gap-2">
@@ -478,7 +468,6 @@ function Section({ title, hint, copyText, children }: { title: string; hint?: st
           <h3 className="font-semibold tracking-tight">{title}</h3>
           {hint && <p className="mt-0.5 text-xs text-muted">{hint}</p>}
         </div>
-        {copyText && <CopyBtn text={copyText} />}
       </div>
       <ul className="mt-4 space-y-2.5">{children}</ul>
     </section>
