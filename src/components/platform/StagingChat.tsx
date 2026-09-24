@@ -179,7 +179,7 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
         <div className="pointer-events-none absolute inset-0"><ProgressiveBlur side="bottom" fade={24} /></div>
         <div className="relative mx-auto max-w-3xl">
           {!empty && msgs[msgs.length - 1]?.role === 'ai' && !busy && <div className="mb-2 flex flex-wrap gap-1.5">{chips}</div>}
-          <div className={`flex items-end gap-1.5 rounded-[26px] bg-white p-2 pl-2.5 ${CARD_SHADOW} ${drag ? 'ring-2 ring-brand' : ''}`}>
+          <div className={`flex items-center gap-1.5 rounded-[26px] bg-white p-2 pl-2.5 ${CARD_SHADOW} ${drag ? 'ring-2 ring-brand' : ''}`}>
             {/* Foto: icona come nelle chat, a sinistra del testo */}
             <label title={base ? 'Carica un\'altra foto' : 'Carica una foto'} className="flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink">
               <ImagePlus size={20} />{picker}
@@ -187,7 +187,7 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
             <textarea rows={1} value={text} onChange={e => { setText(e.target.value); touch(); }} disabled={!base}
               placeholder={!base ? 'Prima carica una foto, poi scrivi qui cosa cambiare' : 'Cosa vuoi cambiare? Es. togli il divano e metti un tavolo da pranzo'}
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
-              className="min-h-10 min-w-0 flex-1 resize-none bg-transparent px-1 py-2.5 text-[15px] leading-relaxed outline-none placeholder:text-muted/60 disabled:cursor-not-allowed" />
+              className="block h-10 min-w-0 flex-1 resize-none bg-transparent px-1 py-2 text-[15px] leading-6 outline-none placeholder:text-muted/60 disabled:cursor-not-allowed" />
             <button onClick={() => send()} disabled={!text.trim() || !base || busy} aria-label="Invia"
               className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand text-white ease-smooth transition-[background-color,opacity,transform] hover:bg-brand/90 active:scale-95 disabled:opacity-40">
               {busy ? <Loader2 size={17} className="animate-spin" /> : <ArrowUp size={18} />}
