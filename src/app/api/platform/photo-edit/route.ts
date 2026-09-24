@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { buildStagingPrompt, type SceneType } from '@/lib/stagingPrompts'
 import { isPublicHttpsUrl } from '@/lib/safeUrl'
 import { createClient } from '@supabase/supabase-js'
 import { uploadJpeg } from '@/lib/r2'
@@ -39,20 +40,26 @@ export async function POST(req: NextRequest) {
   const userId = data.user?.id
   if (!userId) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
 
-  let body: { imageUrl?: string; prompt?: string }
+  // Foto: URL (annunci, R2) oppure caricata dal computer (imageBase64, data URL gia' ridimensionata).
+  // Modifica: testo libero e/o i preset di home staging (stile, vista, scena, planimetria).
+  let body: { imageUrl?: string; imageBase64?: string; prompt?: string; style?: string; angle?: string; scene?: SceneType; planimetria?: boolean }
   try { body = await req.json() } catch { return NextResponse.json({ error: 'bad_request' }, { status: 400 }) }
   const imageUrl = typeof body.imageUrl === 'string' ? body.imageUrl : ''
-  const prompt = typeof body.prompt === 'string' ? body.prompt.trim().slice(0, 1000) : ''
-  if (!prompt || !allowedUrl(imageUrl)) return NextResponse.json({ error: 'bad_request' }, { status: 400 })
+  const imageBase64 = typeof body.imageBase64 === 'string' && /^data:image\/(jpeg|png|webp);base64,/.test(body.imageBase64) && body.imageBase64.length < 8_000_000 ? body.imageBase64 : ''
+  const custom = typeof body.prompt === 'string' ? body.prompt.trim().slice(0, 1000) : ''
+  const scene: SceneType = body.scene === 'esterno' || body.scene === 'giardino' ? body.scene : 'interno'
+  const hasPreset = !!(body.style || body.angle || body.planimetria)
+  if ((!custom && !hasPreset) || (!imageBase64 && !allowedUrl(imageUrl))) return NextResponse.json({ error: 'bad_request' }, { status: 400 })
+  const prompt = buildStagingPrompt({ customPrompt: custom, style: body.style, angle: body.angle, planimetria: !!body.planimetria, scene })
 
   // Modalita' finta: nessuna GPU, torna la stessa foto.
-  if (AI_MOCK) { await mockDelay(2000); return NextResponse.json({ url: imageUrl, mock: true }) }
+  if (AI_MOCK) { await mockDelay(2000); return NextResponse.json({ url: imageUrl || imageBase64, mock: true }) }
   if (!process.env.AI_IMAGE_ENDPOINT_ID || !process.env.RUNPOD_API_KEY) return NextResponse.json({ error: 'not_configured' }, { status: 503 })
 
   const t0 = Date.now()
   let job: RunpodJob
   try {
-    job = await runJob({ image_url: imageUrl, prompt, steps: 12 }) // 12 passaggi: ~8 s invece di 17 a 25, qualita' simile nel confronto del 24/09
+    job = await runJob({ ...(imageBase64 ? { image_base64: imageBase64 } : { image_url: imageUrl }), prompt, steps: 12 }) // 12 passaggi: ~8 s invece di 17 a 25, qualita' simile nel confronto del 24/09
   } catch (e) {
     console.error('photo-edit runpod error:', e)
     await logUsage({ userId, kind: 'photo_edit' }, true, Date.now() - t0, {}, false, 'qwen-image-2.1')

@@ -9,8 +9,10 @@ import NewPropertyWizard from './NewPropertyWizard';
 import PropertyDetail from './PropertyDetail';
 import PortfolioView from './PortfolioView';
 import ImportView from './ImportView';
-import { BrowserBody, Elapsed, Results, SCAN_STEPS, useImprove, Verdict, type Stage } from './ImproveView';
+import { BrowserBody, Results, SCAN_STEPS, useImprove, Verdict, type Stage } from './ImproveView';
+import { Elapsed } from './AiPhoto';
 import CostsView from './CostsView';
+import StagingView from './StagingView';
 import { isPlatformAdmin } from '@/lib/platformAdmins';
 import ProgressiveBlur from '@/components/ProgressiveBlur';
 import { go, formatPrice, authFetch, CARD_SHADOW, warm } from './api';
@@ -84,12 +86,7 @@ export default function PlatformApp({ userData }: { userData: UserData }) {
           ) : route === '/migliora' ? (
             <HomeView key={query} name={profile?.name ?? undefined} initialUrl={new URLSearchParams(query).get('url') ?? ''} onSaved={reload} />
           ) : route === '/staging' ? (
-            // ponytail: segnaposto finche' non portiamo Foto AI nella piattaforma
-            <div className="flex min-h-[60vh] flex-col items-center justify-center text-center">
-              <h1 className="font-display text-4xl font-bold tracking-tight">Home staging</h1>
-              <p className="mt-2 text-muted">Arriva a breve nella nuova piattaforma.</p>
-              <a href="#/" className="btn-ghost mt-6 rounded-full px-5 py-2.5 text-sm font-medium">Torna alla home</a>
-            </div>
+            <StagingView />
           ) : route === '/importa' ? (
             <ImportView onDone={reload} />
           ) : route === '/nuovo' ? (
