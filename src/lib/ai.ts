@@ -74,7 +74,7 @@ async function viaOpenAiCompat<T>({ system, text, images = [], schema, maxTokens
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.AI_API_KEY ?? ''}` },
     body: JSON.stringify(b),
-    signal: AbortSignal.timeout(120_000),
+    signal: AbortSignal.timeout(300_000), // ponytail: analisi lunghe su Qwen; in produzione (maxDuration 60) servira' un job asincrono
   })
   try {
     let res = await call(body)

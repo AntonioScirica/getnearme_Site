@@ -9,7 +9,7 @@ const admin = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
 )
 
-export const maxDuration = 60
+export const maxDuration = 300
 
 // Flow "Migliora annuncio": riceve lo snapshot letto dall'estensione (o incollato a
 // mano) e restituisce diagnosi + annuncio riscritto. Le foto vanno a Claude come URL
