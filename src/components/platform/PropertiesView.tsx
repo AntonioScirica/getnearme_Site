@@ -73,6 +73,10 @@ export default function PropertiesView({ projects }: { projects: ProjectData[] |
 
   return (
     <div className="pb-16">
+      {/* Mappa a tutta larghezza, anche sotto la navbar; in basso sfuma nello sfondo */}
+      <PropertyMap projects={shown} geo={geo} hover={hover} loading={!projects} />
+
+      <div className="relative z-10 mx-auto -mt-24 max-w-6xl px-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <h1 className="blur-in font-display text-4xl font-bold leading-[1.2] tracking-tight">
           Immobili{projects && <span className="ml-3 align-middle text-2xl font-semibold text-muted/60">{projects.length}</span>}
@@ -92,8 +96,6 @@ export default function PropertiesView({ projects }: { projects: ProjectData[] |
         </div>
       </div>
 
-      <PropertyMap projects={shown} geo={geo} hover={hover} loading={!projects} />
-
       {!projects ? (
         <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {[0, 1, 2].map(i => <div key={i} className="aspect-[4/3] animate-pulse rounded-[24px] bg-canvas" />)}
@@ -105,6 +107,7 @@ export default function PropertiesView({ projects }: { projects: ProjectData[] |
       ) : (
         <p className="mt-12 text-center text-sm text-muted">Nessun immobile con questi filtri.</p>
       )}
+      </div>
     </div>
   );
 }
@@ -174,7 +177,7 @@ function PropertyMap({ projects, geo, hover, loading }: { projects: ProjectData[
       const m = Lf.map(el.current, { zoomControl: false, attributionControl: true, scrollWheelZoom: false }).setView([42.5, 12.5], 6);
       m.attributionControl.setPrefix(false);
       Lf.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 19, subdomains: 'abcd', className: 'grayscale', attribution: '© OpenStreetMap © CARTO' }).addTo(m);
-      Lf.control.zoom({ position: 'bottomright' }).addTo(m);
+      Lf.control.zoom({ position: 'topright' }).addTo(m);
       m.on('click', () => setSel(null));
       map.current = m;
       setReady(true);
@@ -198,7 +201,7 @@ function PropertyMap({ projects, geo, hover, loading }: { projects: ProjectData[
     }
     if (pinned.length) {
       const b = Lf.latLngBounds(pinned.map(p => geo[p.addr.trim()] as LatLon));
-      m.fitBounds(b, { padding: [70, 70], maxZoom: 15, animate: false });
+      m.fitBounds(b, { paddingTopLeft: [70, 130], paddingBottomRight: [70, 200], maxZoom: 15, animate: false });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, key]);
@@ -220,7 +223,7 @@ function PropertyMap({ projects, geo, hover, loading }: { projects: ProjectData[
     const follow = () => { const pt = m.latLngToContainerPoint(ll); setPos({ x: pt.x, y: pt.y }); };
     // porta il pin in basso al centro, cosi' la scheda sopra ha spazio
     const size = m.getSize();
-    m.panBy(m.latLngToContainerPoint(ll).subtract([size.x / 2, size.y * 0.86]), { duration: 0.6, easeLinearity: 0.3 });
+    m.panBy(m.latLngToContainerPoint(ll).subtract([size.x / 2, size.y * 0.68]), { duration: 0.6, easeLinearity: 0.3 });
     follow();
     m.on('move zoom', follow);
     return () => { m.off('move zoom', follow); };
@@ -230,8 +233,13 @@ function PropertyMap({ projects, geo, hover, loading }: { projects: ProjectData[
   const waiting = loading || projects.some(p => p.addr?.trim() && !(p.addr.trim() in geo));
 
   return (
-    <div className={`rise relative mt-8 h-[min(58vh,520px)] overflow-hidden rounded-[28px] bg-canvas ${CARD_SHADOW}`} style={{ animationDelay: '.12s' }}>
-      <div ref={el} className="absolute inset-0 z-0" />
+    <div className="relative h-[max(560px,72vh)] overflow-hidden [&_.leaflet-top]:top-20">
+      <div ref={el} className="absolute inset-0 z-0 bg-canvas" style={{ maskImage: 'linear-gradient(to bottom, #000 62%, transparent 97%)', WebkitMaskImage: 'linear-gradient(to bottom, #000 62%, transparent 97%)' }} />
+      {/* sfumatura in basso: blur progressivo sopra la dissolvenza */}
+      {[2, 6, 12].map((b, i) => {
+        const m = `linear-gradient(to bottom, transparent ${i * 20}%, #000 ${40 + i * 20}%)`;
+        return <div key={b} className="pointer-events-none absolute inset-x-0 bottom-0 z-[450] h-56" style={{ backdropFilter: `blur(${b}px)`, WebkitBackdropFilter: `blur(${b}px)`, maskImage: m, WebkitMaskImage: m }} />;
+      })}
       {!pinned.length && (
         <div className="pointer-events-none absolute inset-0 z-[400] flex items-center justify-center">
           <span className="flex items-center gap-2 rounded-full bg-white/90 px-4 py-2 text-[13px] font-medium text-muted shadow-sm ring-1 ring-black/5 backdrop-blur-md">

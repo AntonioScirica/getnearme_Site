@@ -60,7 +60,7 @@ export default function PlatformApp({ userData }: { userData: UserData }) {
 
   return (
     <div className="relative flex h-full flex-col font-body text-ink" style={DOTS}>
-      <header className="sticky top-0 z-30">
+      <header className={`${route === '/immobili' ? 'absolute inset-x-0' : 'sticky'} top-0 z-30`}>
         <ProgressiveBlur />
         <div className="mx-auto flex h-20 max-w-6xl items-center px-6">
           <a href="#/" className="flex items-center gap-2">
@@ -86,7 +86,7 @@ export default function PlatformApp({ userData }: { userData: UserData }) {
 
       <main className={`flex-1 ${route === '/staging' ? 'overflow-hidden' : 'overflow-y-auto'}`}>
         {/* Home staging: la chat gestisce lo scorrimento da sola (campo fisso in fondo) */}
-        <div key={route} className={`fade-up mx-auto max-w-6xl px-6 ${route === '/staging' ? 'h-full' : route === '/' || route === '/migliora' ? '' : 'pb-16 pt-8'}`}>
+        <div key={route} className={`fade-up ${route === '/immobili' ? '' : 'mx-auto max-w-6xl px-6'} ${route === '/immobili' ? '' : route === '/staging' ? 'h-full' : route === '/' || route === '/migliora' ? '' : 'pb-16 pt-8'}`}>
           {route === '/profilo' ? (
             <ProfileView email={userData.email} profile={profile ?? null} onSaved={setProfile} />
           ) : route === '/costi' && isPlatformAdmin(userData.email) ? (
