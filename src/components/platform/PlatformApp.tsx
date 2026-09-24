@@ -224,7 +224,7 @@ function ImproveTile({ phase, stage, onOpen, onClose, onSubmit, onNew, hover, se
             {['bg-[#ff5f57]', 'bg-[#febc2e]', 'bg-[#28c840]'].map(c => <span key={c} className={`h-2.5 w-2.5 rounded-full ${c}`} />)}
           </span>
           <input ref={input} tabIndex={open ? 0 : -1} value={url} readOnly={busy || phase === 'done'} onChange={e => setUrl(e.target.value)} placeholder="https://www.immobiliare.it/annunci/..."
-            className={`min-w-0 flex-1 bg-transparent py-2 outline-none placeholder:text-muted/60 transition-all duration-500 ${flow ? 'text-sm text-muted' : 'text-base'}`} />
+            className={`min-w-0 flex-1 bg-transparent py-2 pr-4 outline-none placeholder:text-muted/60 transition-all duration-500 ${flow ? 'text-sm text-muted' : 'text-base'}`} />
           {busy ? (
             <span className="blur-in flex h-11 shrink-0 items-center gap-2 rounded-full bg-white px-4 text-sm font-medium"><Loader2 size={15} className="animate-spin" /> {stage === 'opening' ? 'Apro' : 'Analizzo'}</span>
           ) : phase === 'done' ? (
