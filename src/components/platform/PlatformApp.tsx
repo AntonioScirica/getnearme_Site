@@ -347,7 +347,7 @@ export function HomeView({ name, initialUrl = '', onSaved }: { name?: string; in
   const close = () => { imp.reset(); setOpen(false); };
   const restart = () => { imp.reset(); setUrl(''); document.querySelector('main')?.scrollTo({ top: 0, behavior: 'smooth' }); };
 
-  const [head, sub] = shown === 'home' ? [TITLE_WORDS(name).join(' '), 'Migliora gli annunci, mettili sul tuo sito, arreda le foto.'] : TITLES[shown];
+  const [head, sub] = shown === 'home' ? [TITLE_WORDS(name).join(' '), 'Migliora, pubblica o arreda.'] : TITLES[shown];
   const subtitle = shown === 'scanning' ? `${SCAN_STEPS[imp.step]}...` : sub;
   // Apertura: parte il container (altre card via, box al centro), la card si trasforma subito dopo, sovrapposta.
   // Chiusura: al contrario, con gli stessi piccoli sfalsamenti.
