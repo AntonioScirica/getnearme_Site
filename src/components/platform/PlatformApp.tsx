@@ -246,7 +246,7 @@ function ImproveTile({ phase, stage, onOpen, onClose, onSubmit, onNew, hover, se
           <input ref={input} tabIndex={open ? 0 : -1} value={url} readOnly={busy || phase === 'done'} onChange={e => setUrl(e.target.value)} placeholder="https://www.immobiliare.it/annunci/..."
             className={`min-w-0 flex-1 bg-transparent py-2 pr-4 outline-none placeholder:text-muted/60 ease-smooth transition-all ${flow ? 'text-sm text-muted' : 'text-base'}`} />
           {busy ? (
-            <span className="blur-in flex h-11 shrink-0 items-center gap-2 rounded-full bg-white px-4 text-sm font-medium"><Loader2 size={15} className="animate-spin" /> {stage === 'opening' ? 'Apro' : 'Analizzo'}</span>
+            <span className="blur-in flex h-11 shrink-0 items-center gap-2 rounded-full bg-white px-4 text-sm font-medium"><Loader2 size={15} className="animate-spin" /> {stage === 'opening' ? 'Apro' : 'Analizzo'} <Elapsed key={stage} /></span>
           ) : phase === 'done' ? (
             <button type="button" onClick={onNew} className="blur-in h-11 shrink-0 rounded-full bg-white px-5 text-sm font-semibold hover:bg-ink hover:text-white">Nuova analisi</button>
           ) : (
@@ -254,11 +254,38 @@ function ImproveTile({ phase, stage, onOpen, onClose, onSubmit, onNew, hover, se
           )}
         </form>
 
+        {/* Barra di avanzamento sotto la barra indirizzi: stima, sale veloce e rallenta verso il 95% */}
+        {stage === 'scanning' && <ScanProgress />}
+
         {/* Corpo del browser: annuncio in scansione, poi verdetto */}
         <div className={`min-h-0 overflow-hidden transition-all ease-smooth ${flow ? 'mt-3 flex-1 opacity-100 delay-[120ms]' : 'max-h-0 flex-none opacity-0'}`}>
           {flow && children}
         </div>
       </div>
+    </div>
+  );
+}
+
+// Tempo trascorso (m:ss) accanto a "Analizzo": l'analisi su GPU dura 1-2 minuti, cosi' si vede che va avanti.
+function Elapsed() {
+  const [s, setS] = useState(0);
+  useEffect(() => { const t = setInterval(() => setS(x => x + 1), 1000); return () => clearInterval(t); }, []);
+  return <span className="tabular-nums text-muted">{Math.floor(s / 60)}:{String(s % 60).padStart(2, '0')}</span>;
+}
+
+// ponytail: stima, non avanzamento reale (Qwen non lo espone). Curva 1 - e^(-t/40): ~50% a 28 s,
+// ~90% a 90 s, ferma al 95%. Se la durata tipica cambia, cambiare TAU.
+const TAU = 40;
+function ScanProgress() {
+  const [p, setP] = useState(0);
+  useEffect(() => {
+    const t0 = Date.now();
+    const t = setInterval(() => setP(Math.min(95, 100 * (1 - Math.exp(-(Date.now() - t0) / 1000 / TAU)))), 500);
+    return () => clearInterval(t);
+  }, []);
+  return (
+    <div className="blur-in mx-5 mt-2 h-1 shrink-0 overflow-hidden rounded-full bg-canvas">
+      <div className="h-full rounded-full bg-brand transition-[width] duration-500 ease-linear" style={{ width: `${p}%` }} />
     </div>
   );
 }

@@ -50,7 +50,8 @@ export function useImprove() {
 
   useEffect(() => {
     if (stage !== 'scanning') return;
-    const t = setInterval(() => setStep(s => Math.min(s + 1, SCAN_STEPS.length - 1)), 2200);
+    // passi distribuiti sulla durata tipica dell'analisi su Qwen (~1-2 min), l'ultimo resta finche' non arriva
+    const t = setInterval(() => setStep(s => Math.min(s + 1, SCAN_STEPS.length - 1)), 14000);
     return () => clearInterval(t);
   }, [stage]);
 
