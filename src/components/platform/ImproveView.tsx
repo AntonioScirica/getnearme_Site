@@ -156,7 +156,7 @@ export function BrowserBody({ stage, listing, error, url, onRetry, onManual, onT
         {title ? <h3 {...fade(0.2)} className="blur-in line-clamp-1 text-xl font-bold tracking-tight">{title}</h3> : <div className="shimmer h-6 w-2/3 rounded-full" />}
         <div className="mt-3 flex flex-wrap gap-1.5">
           {facts.length
-            ? facts.map((f, i) => <span key={f} {...fade(0.25 + i * 0.05)} className="blur-in rounded-full bg-canvas px-3 py-1 text-xs font-medium text-ink/70 ring-1 ring-inset ring-black/10">{f}</span>)
+            ? facts.map((f, i) => <span key={f} {...fade(0.25 + i * 0.05)} className="blur-in rounded-full bg-canvas px-3 py-1.5 text-xs font-medium text-ink/70 ring-1 ring-inset ring-black/10">{f}</span>)
             : ['w-20', 'w-16', 'w-40'].map(w => <span key={w} className={`shimmer h-6 rounded-full ${w}`} />)}
         </div>
         {desc
@@ -203,10 +203,10 @@ export function Verdict({ listing, analysis: a }: { listing: Listing; analysis: 
         </div>
         <p className="blur-in mt-3 line-clamp-3 text-sm leading-relaxed text-ink/80" style={{ animationDelay: '.6s' }}>{a.sintesi}</p>
         <div className="stagger-chips mt-auto flex flex-wrap gap-1.5 pt-3 text-xs">
-          {urgent > 0 && <span className="rounded-full bg-rose-50 px-3 py-1 font-medium text-rose-700 ring-1 ring-inset ring-rose-700/20">{urgent} da fare subito</span>}
-          <span className="rounded-full bg-canvas px-3 py-1 text-muted ring-1 ring-inset ring-black/10">{a.problemi.length} punti da sistemare</span>
-          <span className="rounded-full bg-canvas px-3 py-1 text-muted ring-1 ring-inset ring-black/10">{a.dati_mancanti.length} dati mancanti</span>
-          <span className="rounded-full bg-canvas px-3 py-1 text-muted ring-1 ring-inset ring-black/10">{listing.photos.length} foto</span>
+          {urgent > 0 && <span className="rounded-full bg-rose-50 px-3 py-1.5 font-medium text-rose-700 ring-1 ring-inset ring-rose-700/20">{urgent} da fare subito</span>}
+          <span className="rounded-full bg-canvas px-3 py-1.5 text-muted ring-1 ring-inset ring-black/10">{a.problemi.length} punti da sistemare</span>
+          <span className="rounded-full bg-canvas px-3 py-1.5 text-muted ring-1 ring-inset ring-black/10">{a.dati_mancanti.length} dati mancanti</span>
+          <span className="rounded-full bg-canvas px-3 py-1.5 text-muted ring-1 ring-inset ring-black/10">{listing.photos.length} foto</span>
         </div>
       </div>
     </div>
@@ -410,7 +410,7 @@ function ProblemCard({ p, i, photos }: { p: Problem; i: number; photos: string[]
     <li className={`rise flex flex-col ${BOX}`} style={{ animationDelay: `${1.35 + i * 0.08}s` }}>
       <div className="flex h-8 items-center gap-2.5">
         <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-ink text-sm font-semibold text-white">{i + 1}</span>
-        <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${g.cls}`}>{g.label}</span>
+        <span className={`rounded-full px-3 py-1 text-xs font-medium ${g.cls}`}>{g.label}</span>
         {edit && (
           <button onClick={() => setFix(true)} className="ml-auto flex h-8 shrink-0 items-center gap-1.5 rounded-full bg-brand px-3.5 text-xs font-semibold text-white ease-smooth transition-colors hover:bg-brand/90 active:scale-[0.97]">
             <Wand2 size={14} /> Sistema con AI
@@ -445,6 +445,7 @@ function PhotoFix({ src, label, edit, onClose }: { src: string; label: string; e
   const [prompt, setPrompt] = useState(edit);
   const [busy, setBusy] = useState(false);
   const [out, setOut] = useState<string | null>(null);
+  const [before, setBefore] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
@@ -455,37 +456,66 @@ function PhotoFix({ src, label, edit, onClose }: { src: string; label: string; e
   }, [onClose]);
 
   const run = async () => {
+    if (busy || !prompt.trim()) return;
     setBusy(true); setErr(null);
     // in modalita' finta la route torna la stessa foto
     const res = await authFetch('/api/platform/photo-edit', { method: 'POST', body: JSON.stringify({ imageUrl: src, prompt }) }).catch(() => null);
     setBusy(false);
     const d = res ? await res.json().catch(() => ({})) : {};
-    if (res?.ok && d.url) setOut(d.url);
+    if (res?.ok && d.url) { setOut(d.url); setBefore(false); }
     else setErr(d.error === 'timeout' ? 'La GPU si sta avviando, riprova tra un minuto.' : 'Modifica non riuscita, riprova.');
   };
 
+  const shown = out && !before ? out : src;
+  const glass = 'rounded-full bg-white/85 text-xs font-semibold shadow-sm ring-1 ring-black/5 backdrop-blur-md';
+
   // Portal su body: un antenato con transform (animazioni di ingresso) farebbe da contenitore al fixed e l'overlay non coprirebbe tutto.
   return createPortal(
-    <div role="dialog" aria-modal="true" className={`${platformFontVars} fixed inset-0 z-[60] font-body text-ink flex items-center justify-center bg-black/30 p-4 backdrop-blur-sm`} onMouseDown={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className={`rise relative w-full max-w-2xl rounded-[28px] bg-white p-6 text-left ${CARD_SHADOW}`}>
-        <button onClick={onClose} aria-label="Chiudi" className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full text-muted hover:bg-canvas hover:text-ink"><X size={18} /></button>
-        <h3 className="text-xl font-bold tracking-tight">Sistema {label} con l&apos;AI</h3>
-        <div className="mt-4 grid grid-cols-2 gap-3">
-          <figure><img src={src} alt="" className="aspect-[4/3] w-full rounded-2xl object-cover" /><figcaption className="mt-1.5 text-xs text-muted">Prima</figcaption></figure>
-          <figure>
-            {out ? <img src={out} alt="" className="blur-in aspect-[4/3] w-full rounded-2xl object-cover" /> : <div className={`aspect-[4/3] w-full rounded-2xl ${busy ? 'shimmer' : 'bg-canvas'}`} />}
-            <figcaption className="mt-1.5 text-xs text-muted">Dopo</figcaption>
-          </figure>
+    <div role="dialog" aria-modal="true" className={`${platformFontVars} fixed inset-0 z-[60] flex items-center justify-center bg-black/30 p-4 font-body text-ink backdrop-blur-sm`} onMouseDown={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className={`rise relative w-full max-w-3xl rounded-[28px] bg-white p-5 text-left ${CARD_SHADOW}`}>
+        <div className="flex items-start justify-between gap-4 px-1">
+          <div>
+            <h3 className="text-xl font-bold tracking-tight first-letter:uppercase">{label}</h3>
+            <p className="mt-0.5 text-sm text-muted">Descrivi la modifica, l&apos;AI la applica alla foto.</p>
+          </div>
+          <button onClick={onClose} aria-label="Chiudi" className="-mr-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted hover:bg-canvas hover:text-ink"><X size={18} /></button>
         </div>
-        <label className="mt-5 block text-xs font-semibold text-muted">Modifica da fare</label>
-        <textarea rows={2} value={prompt} onChange={e => setPrompt(e.target.value)} className="mt-1.5 w-full rounded-2xl bg-canvas px-4 py-3 text-sm outline-none focus:bg-white focus:ring-1 focus:ring-ink/15" />
-        {err && <p className="mt-2 text-sm text-rose-600">{err}</p>}
-        <div className="mt-4 flex flex-wrap justify-end gap-2">
-          {out && <button onClick={() => downloadImage(out, `${label.replace(/[^a-z]+/gi, '-').replace(/^-|-$/g, '').toLowerCase()}-sistemata.jpg`)} className="flex items-center gap-1.5 btn-ghost rounded-full px-4 py-2 text-sm font-medium"><Download size={15} /> Scarica</button>}
-          <button onClick={run} disabled={busy || !prompt.trim()} className="flex items-center gap-2 btn-ink rounded-full px-5 py-2 text-sm font-semibold disabled:opacity-50">
-            {busy ? <Loader2 size={15} className="animate-spin" /> : <Wand2 size={15} />} {busy ? 'Sto modificando la foto...' : out ? 'Rigenera' : 'Genera'}
+
+        {/* Una sola foto grande: l'originale, poi il risultato con Prima/Dopo */}
+        <div className="relative mt-4 aspect-[3/2] max-h-[60vh] w-full overflow-hidden rounded-2xl bg-canvas">
+          <img key={shown} src={shown} alt="" className="blur-in absolute inset-0 h-full w-full object-cover" />
+          {busy && (
+            <div className="pointer-events-none absolute inset-0 bg-white/20">
+              <div className="absolute inset-x-0 top-0 h-full will-change-transform" style={{ animation: 'gnm-scan 2.2s ease-in-out infinite alternate' }}>
+                <div className="absolute inset-x-0 top-0 h-24 -translate-y-1/2 bg-gradient-to-b from-transparent via-brand/25 to-transparent" />
+                <div className="absolute inset-x-0 top-0 h-0.5 -translate-y-1/2 bg-brand shadow-[0_0_14px_3px] shadow-brand/50" />
+              </div>
+            </div>
+          )}
+          {out && !busy && (
+            <>
+              <div className={`absolute left-3 top-3 flex p-1 ${glass}`}>
+                {[['Prima', true], ['Dopo', false]].map(([t, b]) => (
+                  <button key={String(t)} onClick={() => setBefore(b as boolean)} className={`rounded-full px-3 py-1 ease-smooth transition-colors ${before === b ? 'bg-ink text-white' : 'text-muted hover:text-ink'}`}>{t}</button>
+                ))}
+              </div>
+              <button onClick={() => downloadImage(out, `${label.replace(/[^a-z]+/gi, '-').replace(/^-|-$/g, '').toLowerCase()}-sistemata.jpg`)}
+                className={`absolute right-3 top-3 flex h-9 items-center gap-1.5 px-3.5 ${glass} hover:bg-white`}><Download size={14} /> Scarica</button>
+            </>
+          )}
+        </div>
+
+        {/* Campo modifica stile home: testo + bottone primario dentro lo stesso contenitore */}
+        <div className="mt-3 flex items-end gap-2 rounded-[22px] bg-canvas p-2 pl-4 ease-smooth transition-colors focus-within:bg-white focus-within:ring-1 focus-within:ring-ink/15">
+          <textarea rows={2} value={prompt} onChange={e => setPrompt(e.target.value)} placeholder="Es. togli gli oggetti dal tavolo, lascia invariato il resto"
+            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); run(); } }}
+            className="min-w-0 flex-1 resize-none bg-transparent py-2 text-sm leading-relaxed outline-none placeholder:text-muted/60" />
+          <button onClick={run} disabled={busy || !prompt.trim()}
+            className="flex h-11 shrink-0 items-center gap-2 rounded-full bg-brand px-5 text-sm font-semibold text-white ease-smooth transition-[background-color,opacity,transform] hover:bg-brand/90 active:scale-[0.97] disabled:opacity-40">
+            {busy ? <Loader2 size={15} className="animate-spin" /> : <Wand2 size={15} />} {busy ? 'Modifico...' : out ? 'Rigenera' : 'Genera'}
           </button>
         </div>
+        {err && <p className="mt-2 px-1 text-sm text-rose-600">{err}</p>}
       </div>
     </div>,
     document.body,
