@@ -135,9 +135,9 @@ function PropertyCard({ p, onHover }: { p: ProjectData; onHover: (on: boolean) =
           ? <img src={p.cover} alt="" className="h-full w-full object-cover ease-smooth transition-transform group-hover:scale-[1.04]" />
           : <div className="flex h-full items-center justify-center text-muted/40"><Building2 size={36} /></div>}
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/45 to-transparent" />
-        <div className="absolute left-3 top-3 flex gap-1.5">
-          {p.is_public && <span className="rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-semibold shadow-sm ring-1 ring-black/5 backdrop-blur-md">In vetrina</span>}
-          {p.tipologia && <span className="rounded-full bg-black/35 px-2.5 py-1 text-[11px] font-medium text-white backdrop-blur-md">{p.tipologia}</span>}
+        <div className="absolute left-3 right-16 top-3 flex min-w-0 gap-1.5">
+          {p.is_public && <span className="shrink-0 whitespace-nowrap rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-semibold shadow-sm ring-1 ring-black/5 backdrop-blur-md">In vetrina</span>}
+          {p.tipologia && <span className="min-w-0 truncate rounded-full bg-black/35 px-2.5 py-1 text-[11px] font-medium text-white backdrop-blur-md">{p.tipologia.split('|')[0].trim()}</span>}
         </div>
         {typeof score === 'number' && <span className="absolute right-3 top-3 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-bold shadow-sm ring-1 ring-black/5 backdrop-blur-md">{score}/100</span>}
         <span className="absolute bottom-3 left-4 font-display text-xl font-bold text-white drop-shadow">{formatPrice(p.prezzo)}</span>
@@ -176,7 +176,10 @@ function PropertyMap({ projects, geo, hover, loading }: { projects: ProjectData[
       L.current = Lf;
       const m = Lf.map(el.current, { zoomControl: false, attributionControl: true, scrollWheelZoom: false, zoomSnap: 0.25, zoomDelta: 0.5 }).setView([42.5, 12.5], 6);
       m.attributionControl.setPrefix(false).setPosition('bottomleft');
-      Lf.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 19, subdomains: 'abcd', className: 'grayscale', attribution: '© OpenStreetMap © CARTO' }).addTo(m);
+      // Esri Light Gray: gratis e senza chiave (CARTO ora la chiede); base + nomi delle strade sopra
+      const esri = (l: string) => `https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_${l}/MapServer/tile/{z}/{y}/{x}`;
+      Lf.tileLayer(esri('Base'), { maxNativeZoom: 16, maxZoom: 19, attribution: '© Esri, OpenStreetMap' }).addTo(m);
+      Lf.tileLayer(esri('Reference'), { maxNativeZoom: 16, maxZoom: 19 }).addTo(m);
       Lf.control.zoom({ position: 'bottomright', zoomInTitle: 'Avvicina', zoomOutTitle: 'Allontana' }).addTo(m);
       m.on('click', () => setSel(null));
       map.current = m;
@@ -238,7 +241,7 @@ function PropertyMap({ projects, geo, hover, loading }: { projects: ProjectData[
   const waiting = loading || projects.some(p => p.addr?.trim() && !(p.addr.trim() in geo));
 
   return (
-    <div className="relative h-[max(560px,72vh)] overflow-hidden [&_.leaflet-bottom.leaflet-right]:bottom-[30%] [&_.leaflet-bar]:overflow-hidden [&_.leaflet-bar]:rounded-2xl [&_.leaflet-bar]:border-0 [&_.leaflet-bar]:shadow-[0_6px_20px_rgba(0,0,0,.12)] [&_.leaflet-bar_a]:h-9 [&_.leaflet-bar_a]:w-9 [&_.leaflet-bar_a]:leading-9">
+    <div className="relative isolate h-[max(560px,72vh)] overflow-hidden [&_.leaflet-bottom.leaflet-right]:bottom-[30%] [&_.leaflet-bar]:overflow-hidden [&_.leaflet-bar]:rounded-2xl [&_.leaflet-bar]:border-0 [&_.leaflet-bar]:shadow-[0_6px_20px_rgba(0,0,0,.12)] [&_.leaflet-bar_a]:h-9 [&_.leaflet-bar_a]:w-9 [&_.leaflet-bar_a]:leading-9">
       <div ref={el} className="absolute inset-0 z-0 bg-canvas" style={{ maskImage: 'linear-gradient(to bottom, #000 62%, transparent 97%)', WebkitMaskImage: 'linear-gradient(to bottom, #000 62%, transparent 97%)' }} />
       {/* sfumatura in basso: blur progressivo sopra la dissolvenza */}
       {[2, 6, 12].map((b, i) => {

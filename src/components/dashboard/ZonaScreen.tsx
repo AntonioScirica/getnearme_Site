@@ -196,8 +196,8 @@ export default function ZonaScreen({
       LRef.current = L as typeof import('leaflet');
       const map = (L as typeof import('leaflet')).map(mapEl.current, { zoomControl: true, attributionControl: false })
         .setView([41.9028, 12.4964], 12);
-      (L as typeof import('leaflet')).tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-        maxZoom: 20, subdomains: 'abcd',
+      (L as typeof import('leaflet')).tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+        maxNativeZoom: 16, maxZoom: 20,
       }).addTo(map);
       markersRef.current = (L as typeof import('leaflet')).layerGroup().addTo(map);
       drawLayerRef.current = (L as typeof import('leaflet')).layerGroup().addTo(map);
