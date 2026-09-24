@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Home, Building2, Globe, Gauge, LogOut, Plus, Loader2, X } from 'lucide-react';
 import type { UserData } from '@/app/[locale]/dashboard/page';
 import { supabase } from '@/lib/supabase';
@@ -104,20 +104,19 @@ export default function PlatformApp({ userData }: { userData: UserData }) {
 // anima al passaggio del mouse. "Migliora" apre il campo link sotto le tessere.
 // Card azione: si inclina verso il mouse (--rx/--ry), riflesso di luce (--sx/--sy) e
 // variabili --mx/--my (-1..1) per la parallasse degli elementi del collage (.par-1/2/3).
-function Tile({ kicker, title, onClick, href, active, index, onHover, children }: { kicker: string; title: string; onClick?: () => void; href?: string; active?: boolean; index: number; onHover?: (on: boolean) => void; children: React.ReactNode }) {
-  const move = (e: React.MouseEvent<HTMLElement>) => {
-    const r = e.currentTarget.getBoundingClientRect();
-    const x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
-    const st = e.currentTarget.style;
-    st.setProperty('--ry', `${(x - 0.5) * 5}deg`); st.setProperty('--rx', `${(0.5 - y) * 4}deg`);
-    st.setProperty('--mx', String((x - 0.5) * 2)); st.setProperty('--my', String((y - 0.5) * 2));
-    st.setProperty('--sx', `${x * 100}%`); st.setProperty('--sy', `${y * 100}%`); st.setProperty('--lift', '-4px');
-  };
-  const leave = (e: React.MouseEvent<HTMLElement>) => {
-    const st = e.currentTarget.style;
-    ['--rx', '--ry', '--mx', '--my', '--lift'].forEach(k => st.removeProperty(k));
-    onHover?.(false);
-  };
+function tiltMove(e: React.MouseEvent<HTMLElement>) {
+  const r = e.currentTarget.getBoundingClientRect();
+  const x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
+  const st = e.currentTarget.style;
+  st.setProperty('--ry', `${(x - 0.5) * 5}deg`); st.setProperty('--rx', `${(0.5 - y) * 4}deg`);
+  st.setProperty('--mx', String((x - 0.5) * 2)); st.setProperty('--my', String((y - 0.5) * 2));
+  st.setProperty('--sx', `${x * 100}%`); st.setProperty('--sy', `${y * 100}%`); st.setProperty('--lift', '-4px');
+}
+function tiltReset(el: HTMLElement) { ['--rx', '--ry', '--mx', '--my', '--lift'].forEach(k => el.style.removeProperty(k)); }
+
+function Tile({ kicker, title, onClick, href, active, index, onHover, intro, wrapRef, wrapClass = '', wrapStyle, children }: { kicker: string; title: string; onClick?: () => void; href?: string; active?: boolean; index: number; onHover?: (on: boolean) => void; intro?: boolean; wrapRef?: React.Ref<HTMLDivElement>; wrapClass?: string; wrapStyle?: React.CSSProperties; children: React.ReactNode }) {
+  const move = tiltMove;
+  const leave = (e: React.MouseEvent<HTMLElement>) => { tiltReset(e.currentTarget); onHover?.(false); };
   const cls = `tilt group relative flex h-[22rem] w-full flex-col overflow-hidden rounded-[28px] bg-white p-6 text-left shadow-[0_1px_2px_rgba(0,0,0,.04),0_8px_24px_-12px_rgba(0,0,0,.12)] ring-1 ring-black/5 hover:shadow-[0_2px_4px_rgba(0,0,0,.04),0_30px_50px_-20px_rgba(0,0,0,.25)] active:scale-[0.985] sm:w-80 ${active ? 'ring-2 ring-ink' : ''}`;
   const props = { className: cls, onMouseMove: move, onMouseEnter: () => onHover?.(true), onMouseLeave: leave };
   const inner = (
@@ -130,7 +129,7 @@ function Tile({ kicker, title, onClick, href, active, index, onHover, children }
   );
   // Ingresso sul contenitore, inclinazione sulla card: due transform che non si sovrascrivono.
   return (
-    <div className="rise w-full sm:w-80" style={{ animationDelay: `${0.25 + index * 0.1}s` }}>
+    <div ref={wrapRef} className={`w-full shrink-0 transition-all duration-500 ease-spring sm:w-80 ${intro ? 'rise' : ''} ${wrapClass}`} style={{ animationDelay: `${0.25 + index * 0.1}s`, ...wrapStyle }}>
       {href ? <a href={href} {...props}>{inner}</a> : <button type="button" onClick={onClick} {...props}>{inner}</button>}
     </div>
   );
@@ -150,61 +149,104 @@ function ScoreBadge({ on }: { on: boolean }) {
   return <span className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold text-white shadow-lg transition-colors duration-300 ${color}`}>{n}{n >= 75 && ' ✓'}</span>;
 }
 
-// Modalita' "Migliora": un solo box centrato con il mini annuncio e il campo link; X o Esc per tornare.
-function LinkFocus({ url, setUrl, ok, onClose }: { url: string; setUrl: (v: string) => void; ok: boolean; onClose: () => void }) {
+const TITLE_WORDS = (name?: string) => (name ? `Ciao ${name.split(' ')[0]}, da dove partiamo?` : 'Da dove partiamo?').split(' ');
+
+const CARD_SHADOW = 'shadow-[0_1px_2px_rgba(0,0,0,.04),0_8px_24px_-12px_rgba(0,0,0,.12)] ring-1 ring-black/5';
+
+// Card "Migliora" che si trasforma: il contenitore si allarga e diventa il box dell'input,
+// la mini scheda annuncio del collage resta come card sopra l'input. X o Esc per tornare.
+function ImproveTile({ open, onOpen, onClose, hover, setHover, intro, url, setUrl, ok }: {
+  open: boolean; onOpen: () => void; onClose: () => void; hover: boolean; setHover: (v: boolean) => void; intro: boolean;
+  url: string; setUrl: (v: string) => void; ok: boolean;
+}) {
+  const input = useRef<HTMLInputElement>(null);
   useEffect(() => {
+    if (!open) return;
+    const t = setTimeout(() => input.current?.focus(), 900);
     const k = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     document.addEventListener('keydown', k);
-    return () => document.removeEventListener('keydown', k);
-  }, [onClose]);
+    return () => { clearTimeout(t); document.removeEventListener('keydown', k); };
+  }, [open, onClose]);
+
   return (
-    <div className="rise relative mt-12 w-full max-w-xl rounded-[28px] bg-white p-7 shadow-[0_2px_4px_rgba(0,0,0,.04),0_30px_60px_-24px_rgba(0,0,0,.25)] ring-1 ring-black/5">
-      <button onClick={onClose} aria-label="Torna indietro" className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full text-muted transition-colors hover:bg-canvas hover:text-ink"><X size={18} /></button>
-      <div className="blur-in mx-auto flex w-fit items-center gap-3 rounded-2xl bg-canvas p-2 pr-4" style={{ animationDelay: '.15s' }}>
-        <img src="/staging/1_real.jpg" alt="" className="h-12 w-16 rounded-xl object-cover" />
-        <div><div className="h-1.5 w-24 rounded bg-line" /><div className="mt-1.5 h-1.5 w-16 rounded bg-line" /></div>
-        <span className="ml-2 rounded-full bg-emerald-500 px-2.5 py-1 text-xs font-bold text-white">86 ✓</span>
+    <div className={`mx-2.5 w-full shrink-0 transition-all duration-500 ease-spring ${open ? 'sm:w-[34rem]' : 'sm:w-80 delay-300'} ${intro ? 'rise' : ''}`} style={{ animationDelay: '0.25s' }}>
+      <div role={open ? undefined : 'button'} tabIndex={open ? -1 : 0}
+        onClick={open ? undefined : onOpen} onKeyDown={e => { if (!open && e.key === 'Enter') onOpen(); }}
+        onMouseMove={open ? undefined : tiltMove} onMouseEnter={() => !open && setHover(true)} onMouseLeave={e => { tiltReset(e.currentTarget); setHover(false); }}
+        className={`${open ? '' : 'tilt cursor-pointer active:scale-[0.985] hover:shadow-[0_2px_4px_rgba(0,0,0,.04),0_30px_50px_-20px_rgba(0,0,0,.25)]'} group relative flex w-full flex-col overflow-hidden rounded-[28px] bg-white p-6 text-left transition-[height,box-shadow] duration-500 ease-spring ${open ? 'h-[12.5rem] delay-300' : 'h-[22rem]'} ${CARD_SHADOW} ${open ? 'shadow-[0_2px_4px_rgba(0,0,0,.04),0_30px_60px_-24px_rgba(0,0,0,.28)]' : ''}`}>
+        {!open && <span className="sheen pointer-events-none absolute inset-0 z-20" />}
+        <button type="button" onClick={onClose} aria-label="Torna indietro" tabIndex={open ? 0 : -1}
+          className={`absolute right-4 top-4 z-30 flex h-9 w-9 items-center justify-center rounded-full text-muted transition-all duration-300 hover:bg-canvas hover:text-ink ${open ? 'scale-100 opacity-100 delay-700' : 'pointer-events-none scale-75 opacity-0'}`}><X size={18} /></button>
+
+        {/* Titolo della card: svanisce e si chiude */}
+        <div className={`overflow-hidden transition-all duration-400 ${open ? 'max-h-0 -translate-y-2 opacity-0 blur-[4px] delay-300' : 'max-h-24 delay-100'}`}>
+          <span className="par-1 block text-sm text-muted">Hai già un annuncio online?</span>
+          <span className="par-1 mt-1 block text-2xl font-bold leading-tight tracking-tight">Miglioralo</span>
+        </div>
+
+        {/* Mini scheda annuncio: resta e diventa la card sopra l'input */}
+        <div className="flex flex-1 items-center justify-center">
+          <div className={`relative transition-all duration-500 ease-spring ${open ? 'w-72 delay-300' : 'w-44'}`}>
+            <div className="par-2">
+              <div className={`flex transition-all duration-500 ease-spring ${open ? 'flex-row items-center gap-3 rounded-2xl bg-canvas p-2 pr-3 delay-300' : 'flex-col rounded-xl bg-white p-2 shadow-md group-hover:-rotate-2'}`}>
+                <img src="/staging/1_real.jpg" alt="" className={`shrink-0 object-cover transition-all duration-500 ease-spring ${open ? 'h-12 w-16 rounded-xl delay-300' : 'h-24 w-full rounded-lg'}`} />
+                <div className={`min-w-0 flex-1 transition-all duration-500 ${open ? '' : 'mt-2'}`}>
+                  {['w-2/3', 'w-2/5', 'w-1/2'].map((w, i) => (
+                    <div key={w} className={`${open ? '' : 'rewrite'} h-1.5 rounded bg-line transition-all duration-500 ${i ? 'mt-1.5' : ''} ${open && i === 2 ? 'hidden' : w}`} />
+                  ))}
+                </div>
+                {open && <span className="blur-in shrink-0" style={{ animationDelay: '.7s' }}><ScoreBadge on /></span>}
+              </div>
+            </div>
+            {!open && <span className="par-3 absolute -right-4 -top-3 z-10"><ScoreBadge on={hover} /></span>}
+          </div>
+        </div>
+
+        {/* Input: compare sotto la mini scheda */}
+        <form onSubmit={e => { e.preventDefault(); if (ok) go(`/migliora?url=${encodeURIComponent(url.trim())}`); }}
+          className={`flex items-center gap-2 overflow-hidden rounded-full bg-canvas pl-5 transition-all duration-500 ease-spring focus-within:bg-white focus-within:ring-1 focus-within:ring-ink/15 ${open ? 'mt-4 max-h-16 translate-y-0 p-1.5 opacity-100 delay-500' : 'pointer-events-none max-h-0 translate-y-4 p-0 opacity-0 duration-200'}`}>
+          <input ref={input} tabIndex={open ? 0 : -1} value={url} onChange={e => setUrl(e.target.value)} placeholder="https://www.immobiliare.it/annunci/..." className="min-w-0 flex-1 bg-transparent py-2 text-base outline-none placeholder:text-muted/60" />
+          <button disabled={!ok} tabIndex={open ? 0 : -1} className="btn-ink h-11 shrink-0 rounded-full px-6 text-sm font-semibold">Analizza</button>
+        </form>
       </div>
-      <form onSubmit={e => { e.preventDefault(); if (ok) go(`/migliora?url=${encodeURIComponent(url.trim())}`); }}
-        className="blur-in mt-6 flex items-center gap-2 rounded-full bg-canvas p-1.5 pl-5 ring-1 ring-transparent transition-shadow focus-within:bg-white focus-within:ring-ink/15 focus-within:shadow-[0_8px_24px_-12px_rgba(0,0,0,.2)]" style={{ animationDelay: '.25s' }}>
-        <input autoFocus value={url} onChange={e => setUrl(e.target.value)} placeholder="https://www.immobiliare.it/annunci/..." className="min-w-0 flex-1 bg-transparent py-2 text-base outline-none placeholder:text-muted/60" />
-        <button disabled={!ok} className="btn-ink h-11 shrink-0 rounded-full px-6 text-sm font-semibold">Analizza</button>
-      </form>
-      <p className="blur-in mt-4 text-center text-xs text-muted" style={{ animationDelay: '.35s' }}>Score, cosa sistemare e testo riscritto. Premi Esc per tornare.</p>
     </div>
   );
 }
 
-const TITLE_WORDS = (name?: string) => (name ? `Ciao ${name.split(' ')[0]}, da dove partiamo?` : 'Da dove partiamo?').split(' ');
-
 export function HomeView({ name }: { projects?: ProjectData[] | null; name?: string }) {
-  const [linkOpen, setLinkOpen] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [title, setTitle] = useState<'home' | 'link'>('home');
+  const [titleOut, setTitleOut] = useState(false);
   const [url, setUrl] = useState('');
-  const [hover, setHover] = useState<number | null>(null);
+  const [hover, setHover] = useState(false);
+  const [intro, setIntro] = useState(true);
   const ok = /^https?:\/\//i.test(url.trim());
+
+  // Il titolo esce, cambia testo a meta' transizione e rientra.
+  const swapTitle = (to: 'home' | 'link') => {
+    setTitleOut(true);
+    setTimeout(() => { setTitle(to); setTitleOut(false); }, 280);
+  };
+  const openLink = () => { setIntro(false); setOpen(true); swapTitle('link'); };
+  const close = useCallback(() => { setOpen(false); swapTitle('home'); }, []);
+
+  const words = title === 'link' ? ['Incolla', 'il', 'link', 'dell\'annuncio'] : TITLE_WORDS(name);
+  // Apertura: prima si muove il container (altre card via, box al centro), poi la card si trasforma.
+  // Chiusura: al contrario, prima la card torna card, poi il container e le altre rientrano sfalsate.
+  const others = (i: number) => `mx-2.5 ${open ? 'pointer-events-none overflow-hidden sm:mx-0! sm:w-0! scale-75 opacity-0 blur-[8px]' : i === 1 ? 'delay-[380ms]' : 'delay-[460ms]'}`;
 
   return (
     <div className="flex min-h-[calc(100vh-5rem)] flex-col items-center justify-center py-10">
-      <h1 className="text-center font-display text-4xl font-bold leading-tight tracking-tight md:text-5xl">
-        {(linkOpen ? ['Incolla', 'il', 'link', 'dell\'annuncio'] : TITLE_WORDS(name)).map((w, i) => <span key={`${linkOpen}-${i}`} className="blur-in inline-block" style={{ animationDelay: `${i * 0.05}s` }}>{w}&nbsp;</span>)}
-        <span key={String(linkOpen)} className="blur-in block text-muted/70" style={{ animationDelay: '0.3s' }}>{linkOpen ? 'Da immobiliare.it, idealista o casa.it.' : 'Migliora, crea o importa i tuoi annunci.'}</span>
+      <h1 className={`text-center font-display text-4xl font-bold leading-tight tracking-tight transition-all duration-300 md:text-5xl ${titleOut ? '-translate-y-3 opacity-0 blur-[6px]' : ''}`}>
+        {words.map((w, i) => <span key={`${title}-${i}`} className="blur-in inline-block" style={{ animationDelay: `${i * 0.05}s` }}>{w}&nbsp;</span>)}
+        <span key={title} className="blur-in block text-muted/70" style={{ animationDelay: '0.3s' }}>{title === 'link' ? 'Da immobiliare.it, idealista o casa.it.' : 'Migliora, crea o importa i tuoi annunci.'}</span>
       </h1>
 
-      {linkOpen ? <LinkFocus url={url} setUrl={setUrl} ok={ok} onClose={() => setLinkOpen(false)} /> : (
-      <div className="mt-14 flex w-full flex-col items-center justify-center gap-5 sm:flex-row">
-        {/* Migliora: scheda annuncio, righe che si riscrivono, score che sale */}
-        <Tile index={0} kicker="Hai già un annuncio online?" title="Miglioralo" onClick={() => { setHover(null); setLinkOpen(true); }} onHover={on => setHover(on ? 0 : null)}>
-          <div className="par-2 absolute left-1/2 top-4 w-44 -translate-x-1/2">
-            <div className="rounded-xl bg-white p-2 shadow-md transition-transform duration-500 ease-spring group-hover:-rotate-2">
-              <img src="/staging/1_real.jpg" alt="" className="h-24 w-full rounded-lg object-cover" />
-              <div className="rewrite mt-2 h-1.5 w-24 rounded bg-line" /><div className="rewrite mt-1 h-1.5 w-16 rounded bg-line" /><div className="rewrite mt-1 h-1.5 w-20 rounded bg-line" />
-            </div>
-          </div>
-          <span className="par-3 absolute top-1 right-[8%] z-10"><ScoreBadge on={hover === 0} /></span>
-        </Tile>
+      <div className="mt-14 flex w-full flex-col items-center justify-center gap-5 sm:flex-row sm:gap-0">
+        <ImproveTile open={open} onOpen={openLink} onClose={close} hover={hover} setHover={setHover} intro={intro} url={url} setUrl={setUrl} ok={ok} />
 
         {/* Crea: foto a ventaglio con molla + "+" che ruota */}
-        <Tile index={1} kicker="Hai un immobile nuovo?" title="Crea da zero" href="#/nuovo">
+        <Tile index={1} intro={intro} wrapClass={others(1)} kicker="Hai un immobile nuovo?" title="Crea da zero" href="#/nuovo">
           {['/staging/4.jpg', '/reference/giorno-notte-poster.jpg', '/staging/2.jpg'].map((src, i) => (
             <div key={src} className={`absolute left-1/2 top-1 ${['par-1', 'par-2 z-10', 'par-3'][i]}`}>
               <img src={src} alt="" className={`h-32 w-24 -translate-x-1/2 rounded-xl object-cover shadow-md ring-2 ring-white transition-transform duration-500 ease-spring ${
@@ -217,7 +259,7 @@ export function HomeView({ name }: { projects?: ProjectData[] | null; name?: str
         </Tile>
 
         {/* Importa: righe del foglio che si accendono, card che entrano */}
-        <Tile index={2} kicker="Hai un file del gestionale?" title="Importalo" href="#/importa">
+        <Tile index={2} intro={intro} wrapClass={others(2)} kicker="Hai un file del gestionale?" title="Importalo" href="#/importa">
           <div className="par-1 absolute left-[6%] top-[calc(50%+4px)] w-28 -translate-y-1/2 rounded-lg bg-white p-1.5 shadow-md">
             <div className="mb-1 h-2 rounded-sm bg-emerald-500/80" />
             {[0, 1, 2, 3, 4].map(r => <div key={r} className="xl-row mt-1 grid grid-cols-3 gap-1">{[0, 1, 2].map(c => <div key={c} className="h-2 rounded-sm bg-line" />)}</div>)}
@@ -232,7 +274,6 @@ export function HomeView({ name }: { projects?: ProjectData[] | null; name?: str
           </div>
         </Tile>
       </div>
-      )}
     </div>
   );
 }
