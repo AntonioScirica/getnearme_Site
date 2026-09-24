@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Download, ImagePlus, Loader2, Plus, RefreshCw, Wand2, X } from 'lucide-react';
 import { downloadImage, fileToResizedDataUrl, SCENE_STYLE_LABELS, STAGING_STYLES } from '@/lib/staging';
 import { ANGLES, type SceneType } from '@/lib/stagingPrompts';
-import { AiPhotoStage, Elapsed, useAiPhoto, useKeepPhotoGpu, type EditRequest } from './AiPhoto';
+import { AiPhotoStage, Elapsed, PhotoChat, useAiPhoto, useKeepPhotoGpu, type EditRequest } from './AiPhoto';
 import { CARD_SHADOW } from './api';
 
 // Home staging nella piattaforma: stessi stili, viste e planimetria di Foto AI (prompt in
@@ -116,68 +116,48 @@ export default function StagingView() {
   );
 }
 
-// Una foto: editor grande con scena, stili a chip, viste e testo libero.
+// Una foto: tipo di foto + modifica a chat (richieste in italiano, versioni, si continua dall'ultima).
+// La planimetria resta a stili: e' un rendering con regole sue, non una richiesta libera.
 function SingleEditor({ item, onChange, onReplace, onAdd }: { item: Item; onChange: (p: Partial<Item>) => void; onReplace: (src: string) => void; onAdd: (f: FileList | null) => void }) {
   const ai = useAiPhoto();
-  const { scene, style, angle, custom } = item;
-  const run = () => ai.run(reqFor(item));
-  const canRun = !ai.busy && !!(custom.trim() || style || angle);
+  const { scene, style } = item;
+  const [key, setKey] = useState(0); // nuova foto = chat da capo
 
   return (
     <div className={`rise mx-auto mt-10 max-w-4xl rounded-[28px] bg-white p-5 ${CARD_SHADOW}`} style={{ animationDelay: '.15s' }}>
-      <div className="relative">
-        <AiPhotoStage src={item.src} busy={ai.busy} out={ai.out} reveal={ai.reveal} msg={ai.msg} fileName={fileName(item)} />
-        {!ai.busy && !ai.out && (
-          <div className="blur-in absolute left-3 top-3 z-[12] flex gap-2">
-            <label className="flex h-9 cursor-pointer items-center gap-1.5 rounded-full bg-white/85 px-3.5 text-xs font-semibold shadow-sm ring-1 ring-black/5 backdrop-blur-md hover:bg-white">
-              <RefreshCw size={13} /> Cambia foto
-              <input type="file" accept="image/*" className="hidden" onChange={async e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) { onReplace(await fileToResizedDataUrl(f, 1500)); ai.reset(); } }} />
-            </label>
-            <label className="flex h-9 cursor-pointer items-center gap-1.5 rounded-full bg-white/85 px-3.5 text-xs font-semibold shadow-sm ring-1 ring-black/5 backdrop-blur-md hover:bg-white">
-              <Plus size={13} /> Più foto
-              <input type="file" accept="image/*" multiple className="hidden" onChange={e => { onAdd(e.target.files); e.target.value = ''; }} />
-            </label>
-          </div>
-        )}
-      </div>
-
-      <div className="mt-5 space-y-5 px-1">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2 px-1">
         <div className="inline-flex rounded-full bg-canvas p-1 ring-1 ring-inset ring-black/5">
           {SCENES.map(s => (
-            <button key={s.id} onClick={() => onChange({ scene: s.id, angle: null, style: s.id === 'planimetria' && (style === 'daynight' || style === 'empty') ? 'modern' : style })}
+            <button key={s.id} onClick={() => onChange({ scene: s.id, style: s.id === 'planimetria' && (style === 'daynight' || style === 'empty') ? 'modern' : style })}
               className={`rounded-full px-4 py-1.5 text-sm font-medium ease-smooth transition-colors ${scene === s.id ? 'bg-white text-ink shadow-sm' : 'text-muted hover:text-ink'}`}>{s.label}</button>
           ))}
         </div>
-
-        <div>
-          <div className="mb-2 text-xs font-semibold text-muted">Stile</div>
-          <div className="flex flex-wrap gap-2">
-            {stylesFor(scene).map(s => (
-              <button key={s.id} title={s.desc} onClick={() => onChange({ style: s.id, angle: null, custom: '' })} className={chip(!custom.trim() && !angle && style === s.id)}>{styleLabel(scene, s.id, s.label)}</button>
-            ))}
-          </div>
+        <div className="flex gap-2">
+          <label className="flex h-9 cursor-pointer items-center gap-1.5 rounded-full bg-canvas px-3.5 text-xs font-semibold ring-1 ring-inset ring-black/10 hover:bg-white">
+            <RefreshCw size={13} /> Cambia foto
+            <input type="file" accept="image/*" className="hidden" onChange={async e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) { onReplace(await fileToResizedDataUrl(f, 1500)); setKey(k => k + 1); ai.reset(); } }} />
+          </label>
+          <label className="flex h-9 cursor-pointer items-center gap-1.5 rounded-full bg-canvas px-3.5 text-xs font-semibold ring-1 ring-inset ring-black/10 hover:bg-white">
+            <Plus size={13} /> Più foto
+            <input type="file" accept="image/*" multiple className="hidden" onChange={e => { onAdd(e.target.files); e.target.value = ''; }} />
+          </label>
         </div>
-
-        {scene === 'interno' && (
-          <div>
-            <div className="mb-2 text-xs font-semibold text-muted">Altre viste della stessa stanza</div>
-            <div className="flex flex-wrap gap-2">
-              {ANGLES.map(a => <button key={a.id} onClick={() => onChange({ angle: a.id, custom: '' })} className={chip(!custom.trim() && angle === a.id)}>{a.label}</button>)}
-            </div>
-          </div>
-        )}
-
-        {/* Testo libero stile home: vince su stile e vista */}
-        <div className="flex items-center gap-2 rounded-[22px] bg-canvas p-2 pl-4 ease-smooth transition-colors focus-within:bg-white focus-within:ring-1 focus-within:ring-ink/15">
-          <textarea rows={2} value={custom} onChange={e => onChange({ custom: e.target.value })} placeholder="Oppure descrivi tu la modifica, es. aggiungi un tavolo da pranzo in legno"
-            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (canRun) run(); } }}
-            className="min-w-0 flex-1 resize-none bg-transparent py-2 text-sm leading-relaxed outline-none placeholder:text-muted/60" />
-          <button onClick={run} disabled={!canRun} className={primary}>
-            {ai.busy ? <Loader2 size={14} className="animate-spin" /> : <Wand2 size={14} />} {ai.busy ? <>Genero <Elapsed className="text-white/80" /></> : ai.out ? 'Rigenera' : 'Genera'}
-          </button>
-        </div>
-        {ai.err && <p className="text-sm text-rose-600">{ai.err}</p>}
       </div>
+
+      {scene === 'planimetria' ? (
+        <>
+          <AiPhotoStage src={item.src} busy={ai.busy} out={ai.out} reveal={ai.reveal} msg={ai.msg} fileName={fileName(item)} />
+          <div className="mt-4 flex flex-wrap items-center gap-2 px-1">
+            {stylesFor('planimetria').map(s => <button key={s.id} onClick={() => onChange({ style: s.id })} className={chip(style === s.id)}>{s.label}</button>)}
+            <button onClick={() => ai.run(reqFor(item))} disabled={ai.busy} className={`${primary} ml-auto`}>
+              {ai.busy ? <><Loader2 size={14} className="animate-spin" /> <Elapsed className="text-white/80" /></> : <><Wand2 size={14} /> {ai.out ? 'Rigenera' : 'Genera'}</>}
+            </button>
+          </div>
+          {ai.err && <p className="mt-2 px-1 text-sm text-rose-600">{ai.err}</p>}
+        </>
+      ) : (
+        <PhotoChat key={`${key}-${item.src.length}`} original={item.src} scene={scene} fileName={fileName(item)} />
+      )}
     </div>
   );
 }

@@ -451,7 +451,7 @@ function ProblemCard({ p, i, photos }: { p: Problem; i: number; photos: string[]
 
 // Modifica foto con l'AI (Qwen-Image su RunPod) in un pannello sopra la pagina: prima/dopo e download.
 function PhotoFix({ src, label, edit, onDone, onClose }: { src: string; label: string; edit: string; onDone: (url: string) => void; onClose: () => void }) {
-  return <PhotoEditModal src={src} title={label} initialPrompt={edit} subtitle="Descrivi la modifica, l'AI la applica alla foto." onDownload={onDone} onClose={onClose}
+  return <PhotoEditModal src={src} title={label} initialText={edit} onClose={onClose}
     actions={[{ label: 'Finito', primary: true, onClick: url => { onDone(url); onClose(); } }]} />;
 }
 

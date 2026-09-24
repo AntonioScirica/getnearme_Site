@@ -583,7 +583,7 @@ function PhotoGrid({ photos, setPhotos, onAdd }: { photos: Photo[]; setPhotos: (
       )}
 
       {editing && (
-        <PhotoEditModal src={srcOf(editing)} title={`Foto ${photos.indexOf(editing) + 1}`} presets={QUICK_PRESETS} onClose={() => setEdit(null)}
+        <PhotoEditModal src={srcOf(editing)} title={`Foto ${photos.indexOf(editing) + 1}`} onClose={() => setEdit(null)}
           actions={[
             { label: 'Tieni entrambe', onClick: url => { addAfter(editing.id, url); setEdit(null); } },
             { label: 'Usa questa', primary: true, onClick: url => { replace(editing.id, url); setEdit(null); } },

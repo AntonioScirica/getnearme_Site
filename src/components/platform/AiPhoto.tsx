@@ -111,28 +111,108 @@ export function AiPhotoStage({ src, busy, out, reveal, msg, fileName, onDownload
 }
 
 // ---------------------------------------------------------------------------
-// Pannello di modifica di una foto, sopra la pagina: foto grande, azioni rapide (preset di home
-// staging), testo libero, poi prima/dopo. Usato da "Sistema con AI" (Migliora) e da "Mettilo sul tuo sito".
-// `actions` = bottoni dopo il risultato (es. Finito, oppure Tieni entrambe / Usa questa).
+// Modifica a chat di una foto: l'agente scrive cosa vuole (in italiano, il servizio lo traduce), vede il
+// prima/dopo, poi continua a chiedere sulla versione ottenuta ("ora piu' moderno", "pareti bianche").
+// Ogni richiesta ha un seme nuovo: la stessa frase ripetuta da' un risultato diverso. Le versioni restano
+// in fila e si puo' ripartire da una qualsiasi. I suggerimenti scrivono nel campo; se il testo resta quello
+// del suggerimento si usa il prompt gia' calibrato (preset), altrimenti il testo dell'agente.
 // ---------------------------------------------------------------------------
-export type Preset = { id: string; label: string; req: Partial<EditRequest> };
-export const QUICK_PRESETS: Preset[] = [
-  { id: 'modern', label: 'Arreda', req: { style: 'modern' } },
-  { id: 'empty', label: 'Svuota', req: { style: 'empty' } },
-  { id: 'day', label: 'Più luce', req: { angle: 'day' } },
-  { id: 'daynight', label: 'Giorno e notte', req: { style: 'daynight' } },
+export type Suggestion = { id: string; label: string; req: Partial<EditRequest> };
+export const QUICK_PRESETS: Suggestion[] = [
+  { id: 'modern', label: 'Arreda in stile moderno', req: { style: 'modern' } },
+  { id: 'nordic', label: 'Arreda in stile nordico', req: { style: 'nordic' } },
+  { id: 'empty', label: 'Svuota la stanza', req: { style: 'empty' } },
+  { id: 'day', label: 'Più luce naturale', req: { angle: 'day' } },
+  { id: 'walls', label: 'Pareti bianche', req: { prompt: 'Pareti bianche' } },
+  { id: 'tidy', label: 'Togli gli oggetti in giro', req: { prompt: 'Togli gli oggetti in giro e il disordine, lascia i mobili' } },
 ];
+type Version = { url: string; text: string };
 
-export function PhotoEditModal({ src, title, subtitle = 'Scegli un\'azione o descrivi la modifica, l\'AI la applica alla foto.', initialPrompt = '', presets = [], actions, onClose, onDownload }: {
-  src: string; title: string; subtitle?: string; initialPrompt?: string; presets?: Preset[];
-  actions: { label: string; primary?: boolean; onClick: (url: string) => void }[];
-  onClose: () => void; onDownload?: (url: string) => void;
+export function PhotoChat({ original, scene, fileName, actions = [], className, initialText = '' }: {
+  original: string; scene?: string; fileName: string; className?: string; initialText?: string;
+  actions?: { label: string; primary?: boolean; onClick: (url: string) => void }[];
 }) {
-  const [prompt, setPrompt] = useState(initialPrompt);
-  const [preset, setPreset] = useState<string | null>(null);
+  const [versions, setVersions] = useState<Version[]>([{ url: original, text: '' }]);
+  const [cur, setCur] = useState(0);
+  const [text, setText] = useState(initialText);
+  const [picked, setPicked] = useState<Suggestion | null>(null);
+  const [runBase, setRunBase] = useState(original);
+  const [pending, setPending] = useState('');
   const ai = useAiPhoto();
-  useKeepPhotoGpu(); // GPU accesa finche' il pannello e' aperto
+  useKeepPhotoGpu();
 
+  // risultato arrivato: diventa una nuova versione e quella corrente
+  useEffect(() => {
+    if (!ai.out) return;
+    const t = setTimeout(() => { setVersions(v => { setCur(v.length); return [...v, { url: ai.out!, text: pending }]; }); }, 0);
+    return () => clearTimeout(t);
+  }, [ai.out]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const send = () => {
+    const t = text.trim();
+    if (ai.busy || !t) return;
+    const base = versions[cur].url;
+    const img = base.startsWith('data:') ? { imageBase64: base } : { imageUrl: base };
+    const useSuggestion = picked && t === picked.label && !picked.req.prompt;
+    setRunBase(base); setPending(t); setText(''); setPicked(null);
+    ai.run({ ...img, ...(scene ? { scene } : {}), ...(useSuggestion ? picked!.req : { prompt: picked?.req.prompt && t === picked.label ? picked.req.prompt : t }) });
+  };
+  const current = versions[cur];
+  const showing = ai.busy || ai.out ? { src: runBase, out: ai.out } : { src: current.url, out: null };
+
+  return (
+    <div className={className}>
+      <AiPhotoStage src={showing.src} busy={ai.busy} out={showing.out} reveal={ai.reveal} msg={ai.msg} fileName={fileName} />
+
+      {/* Versioni: si riparte da una qualsiasi */}
+      {versions.length > 1 && (
+        <div className="mt-3 flex gap-2 overflow-x-auto px-1 pb-1">
+          {versions.map((v, i) => (
+            <button key={v.url} title={v.text || 'Originale'} onClick={() => { if (!ai.busy) { ai.reset(); setCur(i); } }}
+              className={`relative h-14 w-20 shrink-0 overflow-hidden rounded-xl ring-2 ease-smooth transition ${i === cur ? 'ring-brand' : 'ring-transparent opacity-70 hover:opacity-100'}`}>
+              <img src={v.url} alt="" className="h-full w-full object-cover" />
+              <span className="absolute left-1 top-1 rounded-full bg-ink/75 px-1.5 text-[10px] font-semibold text-white">{i === 0 ? 'Orig.' : i}</span>
+            </button>
+          ))}
+        </div>
+      )}
+      {cur > 0 && !ai.busy && <p className="mt-1 px-1 text-xs text-muted">Versione {cur}: «{current.text}». Scrivi un&apos;altra richiesta per continuare da qui.</p>}
+
+      {/* Suggerimenti: scrivono nel campo, poi si possono cambiare */}
+      <div className="mt-3 flex flex-wrap gap-2 px-1">
+        {QUICK_PRESETS.map(x => (
+          <button key={x.id} onClick={() => { setText(x.label); setPicked(x); }}
+            className="rounded-full bg-canvas px-3.5 py-1.5 text-[13px] font-medium text-ink/80 ring-1 ring-inset ring-black/10 ease-smooth transition-colors hover:bg-white">{x.label}</button>
+        ))}
+      </div>
+
+      {/* Campo stile home: richiesta + bottoni nello stesso contenitore */}
+      <div className="mt-3 flex items-center gap-2 rounded-[22px] bg-canvas p-2 pl-4 ease-smooth transition-colors focus-within:bg-white focus-within:ring-1 focus-within:ring-ink/15">
+        <textarea rows={2} value={text} onChange={e => setText(e.target.value)} placeholder={cur ? 'Cosa cambiamo ancora? Es. più moderno, pareti bianche' : 'Cosa vuoi cambiare? Es. togli il divano e metti un tavolo da pranzo'}
+          onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
+          className="min-w-0 flex-1 resize-none bg-transparent py-2 text-sm leading-relaxed outline-none placeholder:text-muted/60" />
+        {cur > 0 && !ai.busy && actions.map(a => (
+          <button key={a.label} onClick={() => a.onClick(current.url)}
+            className={`flex h-9 shrink-0 items-center gap-1.5 rounded-full px-4 text-[13px] font-semibold ease-smooth transition-colors ${a.primary ? 'bg-brand text-white hover:bg-brand/90' : 'bg-white ring-1 ring-black/10 hover:bg-canvas'}`}>
+            {a.primary && <Check size={14} strokeWidth={3} />} {a.label}
+          </button>
+        ))}
+        <button onClick={send} disabled={ai.busy || !text.trim()} aria-label="Invia"
+          className="flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-brand px-4 text-[13px] font-semibold text-white ease-smooth transition-[background-color,opacity,transform] hover:bg-brand/90 active:scale-[0.97] disabled:opacity-40">
+          {ai.busy ? <><Loader2 size={14} className="animate-spin" /> <Elapsed className="text-white/80" /></> : <><Wand2 size={14} /> {cur ? 'Continua' : 'Genera'}</>}
+        </button>
+      </div>
+      {ai.err && <p className="mt-2 px-1 text-sm text-rose-600">{ai.err}</p>}
+    </div>
+  );
+}
+
+// Pannello sopra la pagina con la modifica a chat. `actions` agiscono sulla versione corrente.
+export function PhotoEditModal({ src, title, subtitle = 'Scrivi cosa vuoi cambiare, poi continua a chiedere finché non ti piace.', initialText, actions, onClose }: {
+  src: string; title: string; subtitle?: string; initialText?: string;
+  actions: { label: string; primary?: boolean; onClick: (url: string) => void }[];
+  onClose: () => void;
+}) {
   useEffect(() => {
     // capture + stop: Esc chiude solo il pannello, non la pagina sotto
     const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') { e.stopPropagation(); onClose(); } };
@@ -140,16 +220,9 @@ export function PhotoEditModal({ src, title, subtitle = 'Scegli un\'azione o des
     return () => document.removeEventListener('keydown', esc, true);
   }, [onClose]);
 
-  const image = src.startsWith('data:') ? { imageBase64: src } : { imageUrl: src };
-  const p = presets.find(x => x.id === preset);
-  const canRun = !ai.busy && !!(prompt.trim() || p);
-  const run = () => { if (canRun) ai.run({ ...image, ...(prompt.trim() ? { prompt: prompt.trim() } : p!.req) }); };
-  const { busy, out } = ai;
-  const btn = (primary?: boolean) => `flex h-9 shrink-0 items-center gap-1.5 rounded-full px-4 text-[13px] font-semibold ease-smooth transition-[background-color,opacity,transform] active:scale-[0.97] disabled:opacity-40 ${primary ? 'bg-brand text-white hover:bg-brand/90' : 'bg-white ring-1 ring-black/10 hover:bg-canvas'}`;
-
   // Portal su body: un antenato con transform (animazioni di ingresso) farebbe da contenitore al fixed.
   return createPortal(
-    <div role="dialog" aria-modal="true" className={`${platformFontVars} fixed inset-0 z-[60] flex items-center justify-center bg-black/30 p-4 font-body text-ink backdrop-blur-sm`} onMouseDown={e => { if (e.target === e.currentTarget) onClose(); }}>
+    <div role="dialog" aria-modal="true" className={`${platformFontVars} fixed inset-0 z-[60] flex items-center justify-center overflow-y-auto bg-black/30 p-4 font-body text-ink backdrop-blur-sm`} onMouseDown={e => { if (e.target === e.currentTarget) onClose(); }}>
       <div className={`rise relative w-full max-w-3xl rounded-[28px] bg-white p-5 text-left ${CARD_SHADOW}`}>
         <div className="flex items-start justify-between gap-4 px-1">
           <div>
@@ -158,38 +231,7 @@ export function PhotoEditModal({ src, title, subtitle = 'Scegli un\'azione o des
           </div>
           <button onClick={onClose} aria-label="Chiudi" className="-mr-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted hover:bg-canvas hover:text-ink"><X size={18} /></button>
         </div>
-
-        <div className="mt-4">
-          <AiPhotoStage src={src} busy={busy} out={out} reveal={ai.reveal} msg={ai.msg} onDownload={onDownload}
-            fileName={`${title.replace(/[^a-z]+/gi, '-').replace(/^-|-$/g, '').toLowerCase() || 'foto'}-ai.jpg`} />
-        </div>
-
-        {presets.length > 0 && (
-          <div className="mt-3 flex flex-wrap gap-2 px-1">
-            {presets.map(x => (
-              <button key={x.id} onClick={() => { setPreset(x.id); setPrompt(''); }}
-                className={`rounded-full px-3.5 py-1.5 text-[13px] font-medium ease-smooth transition-colors ${preset === x.id && !prompt.trim() ? 'bg-ink text-white' : 'bg-canvas text-ink/80 ring-1 ring-inset ring-black/10 hover:bg-white'}`}>{x.label}</button>
-            ))}
-          </div>
-        )}
-
-        {/* Campo modifica stile home: testo + bottoni nello stesso contenitore */}
-        <div className="mt-3 flex items-center gap-2 rounded-[22px] bg-canvas p-2 pl-4 ease-smooth transition-colors focus-within:bg-white focus-within:ring-1 focus-within:ring-ink/15">
-          <textarea rows={2} value={prompt} onChange={e => setPrompt(e.target.value)} placeholder="Oppure descrivi tu la modifica, es. togli gli oggetti dal tavolo"
-            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); run(); } }}
-            className="min-w-0 flex-1 resize-none bg-transparent py-2 text-sm leading-relaxed outline-none placeholder:text-muted/60" />
-          {out && !busy ? (
-            <>
-              <button onClick={run} disabled={!canRun} className={btn()}><Wand2 size={14} /> Rigenera</button>
-              {actions.map(a => <button key={a.label} onClick={() => a.onClick(out)} className={btn(a.primary)}>{a.primary && <Check size={14} strokeWidth={3} />} {a.label}</button>)}
-            </>
-          ) : (
-            <button onClick={run} disabled={!canRun} className={btn(true)}>
-              {busy ? <Loader2 size={14} className="animate-spin" /> : <Wand2 size={14} />} {busy ? <>Modifico <Elapsed className="text-white/80" /></> : 'Genera'}
-            </button>
-          )}
-        </div>
-        {ai.err && <p className="mt-2 px-1 text-sm text-rose-600">{ai.err}</p>}
+        <PhotoChat className="mt-4" original={src} initialText={initialText} actions={actions} fileName={`${title.replace(/[^a-z]+/gi, '-').replace(/^-|-$/g, '').toLowerCase() || 'foto'}-ai.jpg`} />
       </div>
     </div>,
     document.body,
