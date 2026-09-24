@@ -2,9 +2,10 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Map as LeafletMap, Marker } from 'leaflet';
-import { ArrowUpRight, Bath, BedDouble, Building2, Loader2, MapPin, Maximize2, Search, X } from 'lucide-react';
+import { ArrowUpRight, Bath, BedDouble, Building2, Footprints, GraduationCap, Hospital, Loader2, MapPin, Maximize2, Pill, School, Search, ShoppingCart, Train, TrainFront, TramFront, Trees, X } from 'lucide-react';
+import type { Poi } from '@/lib/zone';
 import type { ProjectData } from '@/lib/projects';
-import { CARD_SHADOW, formatPrice, go } from './api';
+import { authFetch, CARD_SHADOW, formatPrice, go } from './api';
 
 // Pagina Immobili: in alto la mappa con tutti gli immobili (pin con la foto, clic = scheda),
 // sotto la lista. Le coordinate arrivano dall'indirizzo (Nominatim) e restano in cache nel browser.
@@ -165,7 +166,6 @@ function PropertyMap({ projects, geo, hover, loading }: { projects: ProjectData[
   const markers = useRef<Record<string, Marker>>({});
   const [ready, setReady] = useState(false);
   const [sel, setSel] = useState<string | null>(null);
-  const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
 
   const pinned = projects.filter(p => geo[p.addr?.trim()]);
   const selected = pinned.find(p => p.id === sel) ?? null;
@@ -180,12 +180,15 @@ function PropertyMap({ projects, geo, hover, loading }: { projects: ProjectData[
       if (cancelled || !el.current || map.current) return;
       L.current = Lf;
       const m = Lf.map(el.current, { zoomControl: false, attributionControl: true, scrollWheelZoom: false, zoomSnap: 0.25, zoomDelta: 0.5 }).setView([42.5, 12.5], 6);
-      m.attributionControl.setPrefix(false).setPosition('bottomleft');
-      // OpenStreetMap (gratis, senza chiave) in scala di grigi e schiarita via CSS
-      Lf.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, className: 'map-grey', attribution: '© OpenStreetMap' }).addTo(m);
-      Lf.control.zoom({ position: 'bottomright', zoomInTitle: 'Avvicina', zoomOutTitle: 'Allontana' }).addTo(m);
-      // + e - sopra la parte sfumata
-      m.getContainer().querySelector<HTMLElement>('.leaflet-bottom.leaflet-right')!.style.bottom = '28%';
+      m.attributionControl.setPrefix(false).setPosition('bottomright');
+      // Esri Light Gray (gratis, senza chiave): grigia e senza punti di interesse (negozi, ristoranti...);
+      // sopra solo i nomi di vie e quartieri
+      const esri = (l: string) => `https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_${l}/MapServer/tile/{z}/{y}/{x}`;
+      Lf.tileLayer(esri('Base'), { maxNativeZoom: 16, maxZoom: 19, attribution: '© Esri, OpenStreetMap' }).addTo(m);
+      Lf.tileLayer(esri('Reference'), { maxNativeZoom: 16, maxZoom: 19 }).addTo(m);
+      Lf.control.zoom({ position: 'bottomleft', zoomInTitle: 'Avvicina', zoomOutTitle: 'Allontana' }).addTo(m);
+      // + e - in basso a sinistra, sopra la parte sfumata e il titolo
+      Object.assign(m.getContainer().querySelector<HTMLElement>('.leaflet-bottom.leaflet-left')!.style, { bottom: '34%', left: '12px' });
       // stile come il resto della pagina (il CSS di Leaflet, caricato dopo, vincerebbe sulle classi)
       const bar = m.getContainer().querySelector<HTMLElement>('.leaflet-control-zoom')!;
       Object.assign(bar.style, { border: '0', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 6px 20px rgba(0,0,0,.12)' });
@@ -232,25 +235,23 @@ function PropertyMap({ projects, geo, hover, loading }: { projects: ProjectData[
     });
   }, [hover]);
 
-  // La scheda sta sopra il pin selezionato e lo segue durante lo spostamento
+  // Pin selezionato: evidenziato e spostato al centro della parte di mappa libera (a destra c'e' la sidebar)
   useEffect(() => {
     const m = map.current;
-    if (!m || !selected) { setPos(null); return; }
-    const ll = geo[selected.addr.trim()] as LatLon;
-    const follow = () => { const pt = m.latLngToContainerPoint(ll); setPos({ x: pt.x, y: pt.y }); };
-    // porta il pin in basso al centro, cosi' la scheda sopra ha spazio
+    Object.entries(markers.current).forEach(([id, mk]) => {
+      const pin = mk.getElement()?.querySelector<HTMLElement>('.pin');
+      if (pin) pin.style.boxShadow = id === sel ? '0 0 0 3px #2563eb, 0 8px 20px rgba(0,0,0,.3)' : '';
+    });
+    if (!m || !selected) return;
     const size = m.getSize();
-    m.panBy(m.latLngToContainerPoint(ll).subtract([size.x / 2, size.y * 0.68]), { duration: 0.6, easeLinearity: 0.3 });
-    follow();
-    m.on('move zoom', follow);
-    return () => { m.off('move zoom', follow); };
+    m.panBy(m.latLngToContainerPoint(geo[selected.addr.trim()] as LatLon).subtract([(size.x - 400) / 2, size.y * 0.4]), { duration: 0.6, easeLinearity: 0.3 });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sel]);
 
   const waiting = loading || projects.some(p => p.addr?.trim() && !(p.addr.trim() in geo));
 
   return (
-    <div className="relative isolate h-[max(560px,72vh)] [&_.map-grey]:[filter:grayscale(1)_brightness(1.06)_contrast(.88)] overflow-hidden">
+    <div className="relative isolate h-[max(560px,72vh)] overflow-hidden">
       <div ref={el} className="absolute inset-0 z-0 bg-canvas" style={{ maskImage: 'linear-gradient(to bottom, #000 62%, transparent 97%)', WebkitMaskImage: 'linear-gradient(to bottom, #000 62%, transparent 97%)' }} />
       {/* sfumatura in basso: blur progressivo sopra la dissolvenza */}
       {[2, 6, 12].map((b, i) => {
@@ -264,29 +265,73 @@ function PropertyMap({ projects, geo, hover, loading }: { projects: ProjectData[
           </span>
         </div>
       )}
-      {selected && pos && (
-        <div className="absolute z-[500] w-[280px]" style={{ left: pos.x, top: pos.y, transform: 'translate(-50%, calc(-100% - 34px))' }}>
-          <div className="blur-in overflow-hidden rounded-[22px] bg-white shadow-[0_18px_50px_rgba(0,0,0,.22)] ring-1 ring-black/5">
-            <button onClick={() => go(`/immobile/${selected.id}`)} className="relative block aspect-[2/1] w-full overflow-hidden bg-canvas">
-              {selected.cover && <img src={selected.cover} alt="" className="h-full w-full object-cover ease-smooth transition-transform hover:scale-[1.04]" />}
-              {selected.is_public && <span className="absolute left-2.5 top-2.5 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-semibold shadow-sm backdrop-blur-md">In vetrina</span>}
-            </button>
-            <button onClick={() => setSel(null)} aria-label="Chiudi" className="absolute right-2.5 top-2.5 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 text-muted shadow-sm backdrop-blur-md hover:text-ink"><X size={14} /></button>
-            <div className="p-4">
-              <div className="line-clamp-2 text-[15px] font-semibold leading-snug">{title(selected)}</div>
-              <div className="mt-1 flex items-center gap-1 truncate text-xs text-muted"><MapPin size={12} className="shrink-0" />{place(selected)}</div>
-              <Facts p={selected} className="mt-2.5" />
-              <div className="mt-3.5 flex items-center justify-between gap-3">
-                <span className="font-display text-lg font-bold">{formatPrice(selected.prezzo)}</span>
-                <button onClick={() => go(`/immobile/${selected.id}`)} className="flex h-9 items-center gap-1 rounded-full bg-brand px-4 text-[13px] font-semibold text-white ease-smooth transition-[background-color,transform] hover:bg-brand/90 active:scale-[0.97]">Apri <ArrowUpRight size={14} /></button>
-              </div>
-            </div>
-          </div>
-          {/* punta verso il pin */}
-          <div className="mx-auto -mt-1.5 h-3 w-3 rotate-45 bg-white shadow-[3px_3px_6px_rgba(0,0,0,.08)]" />
-        </div>
-      )}
+      {selected && <NearbySidebar key={selected.id} p={selected} onClose={() => setSel(null)} />}
     </div>
+  );
+}
+
+const POI_ICON: Record<string, typeof Train> = { Metro: TrainFront, Stazione: Train, Tram: TramFront, Supermercato: ShoppingCart, Scuola: School, 'Università': GraduationCap, Parco: Trees, Ospedale: Hospital, Farmacia: Pill };
+const zoneCache: Record<string, Poi[]> = {};
+const km = (m: number) => (m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${m} m`);
+
+// Sidebar a destra sulla mappa: l'immobile e cosa c'e' vicino (stessa fonte dell'estensione: OpenStreetMap).
+// Se l'immobile ha gia' la zona salvata (import_data.zona) la uso, se no la chiedo a /api/platform/zone.
+function NearbySidebar({ p, onClose }: { p: ProjectData; onClose: () => void }) {
+  const saved = (p.import_data as { zona?: Poi[] } | undefined)?.zona;
+  const [pois, setPois] = useState<Poi[] | null>(Array.isArray(saved) && saved.length ? saved : zoneCache[p.id] ?? null);
+  useEffect(() => {
+    if (pois || !p.addr?.trim()) return;
+    authFetch(`/api/platform/zone?address=${encodeURIComponent(p.addr)}`).then(r => r.json()).catch(() => ({}))
+      .then((d: { pois?: Poi[] }) => { zoneCache[p.id] = d.pois ?? []; setPois(d.pois ?? []); });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const groups = (pois ?? []).reduce<Record<string, Poi[]>>((g, x) => ((g[x.categoria] ??= []).push(x), g), {});
+
+  return (
+    <aside className="blur-in absolute bottom-28 right-5 top-24 z-[500] flex w-[360px] flex-col overflow-hidden rounded-[28px] bg-white/95 shadow-[0_18px_50px_rgba(0,0,0,.18)] ring-1 ring-black/5 backdrop-blur-xl">
+      <div className="min-h-0 flex-1 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="relative aspect-[2/1] shrink-0 bg-canvas">
+          {p.cover && <img src={p.cover} alt="" className="h-full w-full object-cover" />}
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/40 to-transparent" />
+          <button onClick={onClose} aria-label="Chiudi" className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-muted shadow-sm backdrop-blur-md hover:text-ink"><X size={15} /></button>
+          <span className="absolute bottom-3 left-4 font-display text-xl font-bold text-white drop-shadow">{formatPrice(p.prezzo)}</span>
+        </div>
+        <div className="p-5">
+          <div className="line-clamp-2 font-semibold leading-snug">{title(p)}</div>
+          <div className="mt-1 flex items-center gap-1 truncate text-[13px] text-muted"><MapPin size={13} className="shrink-0" />{p.addr || 'Indirizzo n.d.'}</div>
+          <Facts p={p} className="mt-2.5" />
+
+          <div className="mt-6 text-[13px] font-semibold">Nelle vicinanze</div>
+          {!pois ? (
+            <div className="mt-3 space-y-2">{[0, 1, 2, 3].map(i => <div key={i} className="h-11 animate-pulse rounded-2xl bg-canvas" />)}</div>
+          ) : !pois.length ? (
+            <p className="mt-2 text-[13px] text-muted">Nessun servizio trovato entro 1 km.</p>
+          ) : (
+            <div className="stagger mt-2 space-y-1">
+              {Object.entries(groups).map(([cat, list]) => {
+                const I = POI_ICON[cat] ?? MapPin;
+                return list.map((x, k) => (
+                  <div key={`${cat}${k}`} className="flex items-center gap-3 rounded-2xl px-2 py-2 ease-smooth transition-colors hover:bg-canvas">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-canvas text-ink/70"><I size={15} /></span>
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-[13px] font-medium">{x.nome !== cat ? x.nome : cat}</div>
+                      <div className="text-[11px] text-muted">{cat}</div>
+                    </div>
+                    <div className="shrink-0 text-right">
+                      <div className="text-[13px] font-semibold">{km(x.distanza)}</div>
+                      <div className="flex items-center justify-end gap-0.5 text-[11px] text-muted"><Footprints size={11} />{Math.max(1, Math.round(x.distanza / 80))} min</div>
+                    </div>
+                  </div>
+                ));
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+      <div className="border-t border-black/5 p-3">
+        <button onClick={() => go(`/immobile/${p.id}`)} className="flex h-11 w-full items-center justify-center gap-1.5 rounded-full bg-brand text-sm font-semibold text-white ease-smooth transition-[background-color,transform] hover:bg-brand/90 active:scale-[0.98]">Apri immobile <ArrowUpRight size={15} /></button>
+      </div>
+    </aside>
   );
 }
 
