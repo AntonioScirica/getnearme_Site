@@ -73,8 +73,7 @@ export default function PlatformApp({ userData }: { userData: UserData }) {
             })}
           </nav>
           <div className="ml-auto flex items-center gap-2.5 md:ml-0">
-            <span className="flex h-10 items-center gap-2 rounded-full bg-white px-4 text-xs font-semibold shadow-sm ring-1 ring-line"><span className="h-2.5 w-2.5 rounded-full bg-amber-400" /> {userData.credits} crediti</span>
-            <a href="#/nuovo" className="btn-ink flex h-10 items-center gap-1.5 rounded-full px-4 text-sm font-semibold"><Plus size={16} /> Metti in vetrina</a>
+            <a href="#/nuovo" className="flex h-10 items-center rounded-full bg-brand px-5 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand/90 active:scale-[0.98]">Metti in vetrina</a>
           </div>
         </div>
       </header>
