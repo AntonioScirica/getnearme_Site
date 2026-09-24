@@ -6,7 +6,13 @@ export const mockDelay = (ms = 3000) => new Promise(r => setTimeout(r, ms));
 
 const MOCKS: Record<string, unknown> = {
   analyze: {
-    score: 58,
+    criteri: {
+      foto: { punti: 14, punti_dopo: 27, nota: 'Prima foto sull\'androne, watermark centrale, foto 3 storta e gialla.' },
+      dati: { punti: 16, punti_dopo: 22, nota: 'Mancano spese condominiali, classe energetica, riscaldamento e anno.' },
+      descrizione: { punti: 11, punti_dopo: 18, nota: 'Contenuti buoni ma maiuscolo, refusi e telefono nel testo.' },
+      coerenza: { punti: 12, punti_dopo: 15, nota: 'Dati coerenti, penalizzati dai contatti diretti nella descrizione.' },
+      titolo: { punti: 5, punti_dopo: 9, nota: 'Tutto maiuscolo, manca il punto di forza (piscina, box).' },
+    },
     sintesi: "[DATI FINTI] Annuncio con buone informazioni su zona e dotazioni, penalizzato da foto poco rappresentative, testo con maiuscole e refusi e contatti diretti nella descrizione.",
     punti_forza: [
       'Composizione degli ambienti descritta stanza per stanza',

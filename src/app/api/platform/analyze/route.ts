@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateJson } from '@/lib/ai'
 import { createClient } from '@supabase/supabase-js'
+import { CRITERI_PROMPT, CRITERI_SCHEMA, withScores } from '@/lib/listingScore'
 
 const admin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -25,7 +26,7 @@ const strList = { type: 'array', items: str }
 const SCHEMA = {
   type: 'object',
   properties: {
-    score: { type: 'integer' },
+    criteri: CRITERI_SCHEMA,
     sintesi: str,
     punti_forza: strList,
     problemi: {
@@ -50,12 +51,13 @@ const SCHEMA = {
     titolo: str,
     descrizione: str,
   },
-  required: ['score', 'sintesi', 'punti_forza', 'problemi', 'dati_mancanti', 'foto_consigli', 'titolo', 'descrizione'],
+  required: ['criteri', 'sintesi', 'punti_forza', 'problemi', 'dati_mancanti', 'foto_consigli', 'titolo', 'descrizione'],
   additionalProperties: false,
 }
 
 const SYSTEM = `Sei un consulente esperto di annunci immobiliari italiani (immobiliare.it, idealista, casa.it). Ricevi un annuncio già pubblicato e lo valuti come farebbe un acquirente esigente e l'algoritmo del portale.
-- score: 0-100, qualità complessiva dell'annuncio attuale (completezza dati, titolo, descrizione, foto, coerenza prezzo/dati).
+- criteri: per ognuno dei criteri qui sotto dai i punti dell'annuncio attuale (punti), i punti che avrebbe dopo aver applicato TUTTE le soluzioni dei problemi e la descrizione e il titolo riscritti (punti_dopo, realistico: se una foto va rifatta e non si può sistemare con l'AI, conta che l'agente la rifaccia), e una nota di una frase sul perché dei punti attuali. Lo score totale è la somma, non scriverlo.
+${CRITERI_PROMPT}
 - sintesi: 1-2 frasi sul giudizio complessivo.
 - punti_forza: 2-4 cose fatte bene.
 - problemi: massimo 8, ordinati per gravità. SOLO azioni che l'agente può fare da solo, subito: modificare titolo o testo, compilare un campo della scheda sul portale, riordinare/sostituire/eliminare foto, rifare una foto, modificare una foto con l'AI. VIETATO: consigli generici ("migliora la presentazione"), cose che l'agente non controlla (zona, palazzo, mercato, prezzi di zona), ripetere lo stesso punto due volte. Per ognuno:
@@ -106,5 +108,5 @@ export async function POST(req: NextRequest) {
     console.error('analyze error:', r.error, r.detail)
     return NextResponse.json({ error: r.error === 'refused' ? 'refused' : 'ai_failed' }, { status: r.error === 'refused' ? 422 : 502 })
   }
-  return NextResponse.json(r.data)
+  return NextResponse.json(withScores(r.data))
 }

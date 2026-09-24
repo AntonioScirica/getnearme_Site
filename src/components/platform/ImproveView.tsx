@@ -6,6 +6,7 @@ import { downloadImage } from '@/lib/staging';
 import { AI_MOCK, mockFor } from '@/lib/aiMock';
 import { authFetch, CARD_SHADOW, extSend, EXTENSION_URL, go } from './api';
 import CountUp from './CountUp';
+import { CRITERI, withScores, type Criteri } from '@/lib/listingScore';
 
 // "Migliora annuncio": link portale -> estensione legge l'annuncio in background ->
 // scansione animata -> diagnosi + annuncio riscritto. Senza estensione: testo incollato.
@@ -14,7 +15,7 @@ import CountUp from './CountUp';
 export type Listing = { url: string; title: string; address: string; propertyInfo: Record<string, unknown>; photos: string[] };
 type Problem = { area: string; gravita: 'alta' | 'media' | 'bassa'; problema: string; perche: string; soluzione: string; foto_indice?: number; modifica_foto?: string };
 export type Analysis = {
-  score: number; sintesi: string; punti_forza: string[]; problemi: Problem[];
+  score: number; score_potenziale: number; criteri: Criteri; sintesi: string; punti_forza: string[]; problemi: Problem[];
   dati_mancanti: string[]; foto_consigli: string[]; titolo: string; descrizione: string;
 };
 export type Stage = 'input' | 'opening' | 'scanning' | 'done' | 'no-extension' | 'manual' | 'error';
@@ -52,7 +53,7 @@ export function useImprove() {
     await Promise.race([Promise.all(l.photos.slice(0, 3).map(src => { const im = new Image(); im.src = src; return im.decode().catch(() => {}); })), wait(5000)]);
     if (id !== run.current) return;
     setListing(l); setStep(0); setStage('scanning');
-    if (demo) { await wait(6000); if (id === run.current) { setAnalysis(mockFor<Analysis>('analyze')); setStage('done'); } return; }
+    if (demo) { await wait(6000); if (id === run.current) { setAnalysis(withScores(mockFor<Analysis>('analyze'))); setStage('done'); } return; }
     const res = await authFetch('/api/platform/analyze', { method: 'POST', body: JSON.stringify({ listing: l }) }).catch(() => null);
     if (id !== run.current) return;
     if (!res?.ok) { setError('Analisi non riuscita, riprova.'); setStage('error'); return; }
@@ -187,11 +188,15 @@ export function Verdict({ listing, analysis: a }: { listing: Listing; analysis: 
         <div className="blur-in flex items-end justify-between gap-3" style={{ animationDelay: '.4s' }}>
           <div>
             <div className="text-xs font-medium text-muted">Score dell&apos;annuncio attuale</div>
-            <div className={`mt-1 text-5xl font-bold leading-none tracking-tight ${tone.text}`}><CountUp value={a.score} delay={400} duration={1200} /><span className="text-xl text-muted">/100</span></div>
+            <div className={`mt-1 text-5xl font-bold leading-none tracking-tight ${tone.text}`}><CountUp value={a.score} delay={400} duration={1200} /><span className="text-xl text-muted">/100</span>
+              {a.score_potenziale > a.score && <span className="ml-3 text-sm font-semibold tracking-normal text-emerald-600">→ {a.score_potenziale} sistemando tutto</span>}</div>
           </div>
           <a href={listing.url} target="_blank" rel="noreferrer" className="flex shrink-0 items-center gap-1 text-xs text-muted hover:text-ink"><ExternalLink size={12} /> Originale</a>
         </div>
-        <div className="blur-in mt-3 h-1.5 overflow-hidden rounded-full bg-canvas" style={{ animationDelay: '.5s' }}><div className={`grow-x h-full rounded-full ${tone.bar}`} style={{ width: `${a.score}%` }} /></div>
+        <div className="blur-in relative mt-3 h-1.5 overflow-hidden rounded-full bg-canvas" style={{ animationDelay: '.5s' }}>
+          <div className="grow-x absolute inset-y-0 left-0 rounded-full bg-emerald-500/25" style={{ width: `${a.score_potenziale}%` }} />
+          <div className={`grow-x absolute inset-y-0 left-0 rounded-full ${tone.bar}`} style={{ width: `${a.score}%` }} />
+        </div>
         <p className="blur-in mt-3 line-clamp-3 text-sm leading-relaxed text-ink/80" style={{ animationDelay: '.6s' }}>{a.sintesi}</p>
         <div className="stagger-chips mt-auto flex flex-wrap gap-1.5 pt-3 text-xs">
           {urgent > 0 && <span className="rounded-full bg-rose-50 px-3 py-1 font-medium text-rose-700">{urgent} da fare subito</span>}
@@ -256,7 +261,7 @@ export function Results({ listing, analysis: a, onSaved, onRestart }: { listing:
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0">
             <h2 className="flex items-center gap-2 text-2xl font-bold tracking-tight"><Sparkles size={20} /> Annuncio riscritto</h2>
-            <p className="mt-1 text-sm text-muted">Pronto da incollare sul portale, puoi ritoccarlo qui.</p>
+            <p className="mt-1 text-sm text-muted">Pronto da incollare sul portale. Con questa versione e le correzioni qui sotto l&apos;annuncio arriva a <b className="font-semibold text-emerald-600">{a.score_potenziale}/100</b>.</p>
           </div>
           <button onClick={() => setShowBefore(v => !v)} className="btn-ghost shrink-0 self-start rounded-full px-4 py-2 text-sm font-medium">{showBefore ? 'Nascondi originale' : 'Confronta con originale'}</button>
         </div>
@@ -279,15 +284,44 @@ export function Results({ listing, analysis: a, onSaved, onRestart }: { listing:
         </Field>
       </section>
 
+      {/* Criteri dello score: ora e dopo le correzioni */}
+      <section className={`rise ${BOX}`} style={{ animationDelay: '1.3s' }}>
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight">Come calcoliamo il punteggio</h2>
+            <p className="mt-1 text-sm text-muted">Cinque criteri, 100 punti in tutto. In verde quanto guadagni applicando le correzioni.</p>
+          </div>
+          <div className="text-right text-sm font-semibold"><span className="text-muted">{a.score}</span> <span className="text-muted">→</span> <span className="text-emerald-600">{a.score_potenziale}</span><span className="text-muted">/100</span></div>
+        </div>
+        <ul className="mt-6 space-y-5">
+          {CRITERI.map(c => {
+            const x = a.criteri[c.key];
+            return (
+              <li key={c.key}>
+                <div className="flex items-baseline justify-between gap-3 text-sm">
+                  <span className="font-semibold">{c.label} <span className="font-normal text-muted">· {c.desc}</span></span>
+                  <span className="shrink-0 tabular-nums"><b>{x.punti}</b>{x.punti_dopo > x.punti && <span className="font-semibold text-emerald-600"> → {x.punti_dopo}</span>}<span className="text-muted">/{c.max}</span></span>
+                </div>
+                <div className="relative mt-2 h-2 overflow-hidden rounded-full bg-canvas">
+                  <div className="grow-x absolute inset-y-0 left-0 rounded-full bg-emerald-500/30" style={{ width: `${(x.punti_dopo / c.max) * 100}%`, animationDelay: '1.5s' }} />
+                  <div className="grow-x absolute inset-y-0 left-0 rounded-full bg-ink" style={{ width: `${(x.punti / c.max) * 100}%`, animationDelay: '1.4s' }} />
+                </div>
+                {x.nota && <p className="mt-1.5 text-xs text-muted">{x.nota}</p>}
+              </li>
+            );
+          })}
+        </ul>
+      </section>
+
       {/* Cosa sistemare */}
-      <section className="rise pt-6" style={{ animationDelay: '1.3s' }}>
+      <section className="rise pt-6" style={{ animationDelay: '1.4s' }}>
         <h2 className="text-center text-3xl font-bold tracking-tight">Cosa sistemare sul portale</h2>
         <p className="mt-1 text-center text-muted">In ordine di priorità: cosa non va, perché ti fa perdere contatti, cosa fare adesso.</p>
         <ol className="mt-8 grid gap-5 lg:grid-cols-2">
           {a.problemi.map((p, i) => {
             const g = GRAVITA[p.gravita];
             return (
-              <li key={i} className={`rise flex flex-col ${BOX}`} style={{ animationDelay: `${1.35 + i * 0.08}s` }}>
+              <li key={i} className={`rise flex flex-col ${BOX}`} style={{ animationDelay: `${1.45 + i * 0.08}s` }}>
                 <div className="flex items-center gap-2.5">
                   <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-ink text-sm font-semibold text-white">{i + 1}</span>
                   <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${g.cls}`}>{g.label}</span>
