@@ -84,6 +84,7 @@ export async function POST(req: NextRequest) {
     console.error('photo-edit failed:', job.status, job.error || job.output?.error)
     return NextResponse.json({ error: job.status === 'IN_QUEUE' || job.status === 'IN_PROGRESS' ? 'timeout' : 'ai_failed' }, { status: 502 })
   }
+  if (process.env.NODE_ENV !== 'production') await debugDump({ imageBase64, imageUrl, region, prompt: (translation.prompt_template ?? prompt), request: translation.request, outB64: b64, translated: (job.output as { translated?: string } | undefined)?.translated })
   const url = await uploadJpeg(await matchInputShape(Buffer.from(b64, 'base64'), imageBase64, imageUrl), `edits/${userId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`)
   return NextResponse.json({ url, seconds: job.output?.seconds })
 }
@@ -103,4 +104,29 @@ async function matchInputShape(out: Buffer, imageBase64: string, imageUrl: strin
   } catch {
     return out
   }
+}
+
+// Solo in sviluppo: salva in /tmp/gnm-debug cosa e' stato mandato al modello (foto con la zona in rosso,
+// il ritaglio che fa il worker, prompt, traduzione, risultato) per controllare le modifiche di una zona.
+async function debugDump(d: { imageBase64: string; imageUrl: string; region: { x: number; y: number; w: number; h: number } | null; prompt: string; request?: string; outB64: string; translated?: string }) {
+  try {
+    const { mkdir, writeFile } = await import('fs/promises')
+    const dir = `/tmp/gnm-debug/${Date.now()}`
+    await mkdir(dir, { recursive: true })
+    const src = d.imageBase64 ? Buffer.from(d.imageBase64.split(',')[1] ?? '', 'base64') : Buffer.from(await (await fetch(d.imageUrl)).arrayBuffer())
+    const { width = 0, height = 0 } = await sharp(src).metadata()
+    await writeFile(`${dir}/1-foto.jpg`, await sharp(src).jpeg().toBuffer())
+    if (d.region && width && height) {
+      const r = d.region
+      const svg = `<svg width="${width}" height="${height}"><rect x="${r.x * width}" y="${r.y * height}" width="${r.w * width}" height="${r.h * height}" fill="none" stroke="red" stroke-width="${Math.max(4, width / 200)}" stroke-dasharray="20 12"/></svg>`
+      await writeFile(`${dir}/2-zona.jpg`, await sharp(src).composite([{ input: Buffer.from(svg) }]).jpeg().toBuffer())
+      // stesso ritaglio del worker (edit_region): zona + 25% di margine + 3%
+      const mx = r.w * 0.25 + 0.03, my = r.h * 0.25 + 0.03
+      const x0 = Math.max(0, Math.floor((r.x - mx) * width)), y0 = Math.max(0, Math.floor((r.y - my) * height))
+      const x1 = Math.min(width, Math.floor((r.x + r.w + mx) * width)), y1 = Math.min(height, Math.floor((r.y + r.h + my) * height))
+      await writeFile(`${dir}/3-ritaglio-al-modello.jpg`, await sharp(src).extract({ left: x0, top: y0, width: x1 - x0, height: y1 - y0 }).jpeg().toBuffer())
+    }
+    await writeFile(`${dir}/4-risultato.jpg`, Buffer.from(d.outB64, 'base64'))
+    await writeFile(`${dir}/prompt.txt`, `richiesta: ${d.request ?? ''}\ntradotta: ${d.translated ?? '(worker vecchio, nessuna traduzione)'}\nzona: ${JSON.stringify(d.region)}\n\nprompt:\n${d.prompt}\n`)
+  } catch (e) { console.error('debugDump', e) }
 }
