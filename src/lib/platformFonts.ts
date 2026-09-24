@@ -1,4 +1,4 @@
-import { Plus_Jakarta_Sans } from 'next/font/google';
+import { Instrument_Serif, Plus_Jakarta_Sans } from 'next/font/google';
 
 // Font della nuova piattaforma e del portfolio pubblico: Plus Jakarta Sans (geometrico, deciso,
 // feeling "Airbnb"). Stessa famiglia per titoli e testo; le variabili CSS mantengono i nomi
@@ -6,4 +6,7 @@ import { Plus_Jakarta_Sans } from 'next/font/google';
 const display = Plus_Jakarta_Sans({ subsets: ['latin'], weight: ['500', '600', '700', '800'], variable: '--font-bricolage', display: 'swap', preload: false });
 const body = Plus_Jakarta_Sans({ subsets: ['latin'], weight: ['400', '500', '600'], variable: '--font-instrument', display: 'swap', preload: false });
 
-export const platformFontVars = `${display.variable} ${body.variable}`;
+// Corsivo serif per le parole d'accento ("Trilocale *luminoso*").
+const serif = Instrument_Serif({ subsets: ['latin'], weight: '400', style: ['normal', 'italic'], variable: '--font-serif-accent', display: 'swap', preload: false });
+
+export const platformFontVars = `${display.variable} ${body.variable} ${serif.variable}`;

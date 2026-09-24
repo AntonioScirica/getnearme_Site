@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Home, Building2, Globe, Gauge, LogOut, Link2, Sparkles, Plus, ArrowRight, Loader2, FileSpreadsheet } from 'lucide-react';
+import { Home, Building2, Globe, Gauge, LogOut, Plus, ArrowUp, Loader2, ImagePlus, Paperclip } from 'lucide-react';
 import type { UserData } from '@/app/[locale]/dashboard/page';
 import { supabase } from '@/lib/supabase';
 import { fetchProjects, type ProjectData } from '@/lib/projects';
@@ -52,28 +52,33 @@ export default function PlatformApp({ userData }: { userData: UserData }) {
   const detailId = route.startsWith('/immobile/') ? route.slice('/immobile/'.length) : null;
 
   return (
-    <div className="gnm-bg flex h-full flex-col font-body text-ink">
-      <header className="glass sticky top-0 z-30 border-b">
-        <div className="mx-auto flex h-20 max-w-6xl items-center gap-8 px-8">
-          <a href="#/" className="flex items-center gap-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-ink text-sm font-extrabold text-white">G</span>
-            <span className="font-display text-xl font-extrabold tracking-tight">GetNearMe</span>
-          </a>
-          <nav className="mx-auto hidden items-center gap-7 text-sm font-medium md:flex">
-            {[...NAV, ...(isPlatformAdmin(userData.email) ? [{ path: '/costi', label: 'Costi AI', icon: Gauge }] : [])].map(({ path, label }) => {
-              const active = route === path || (path === '/immobili' && !!detailId);
-              return <a key={path} href={`#${path}`} aria-current={active ? 'page' : undefined} className={`link-underline py-1 ${active ? 'text-ink' : 'text-muted hover:text-ink'}`}>{label}</a>;
-            })}
-          </nav>
-          <div className="ml-auto flex items-center gap-3 md:ml-0">
-            <a href="#/nuovo" className="btn-ink hidden rounded-full px-5 py-2.5 text-sm font-semibold sm:block">Nuovo annuncio</a>
-            <AccountMenu email={userData.email} credits={userData.credits} name={profile?.name ?? undefined} />
-          </div>
-        </div>
-      </header>
+    <div className="grid-bg relative flex h-full flex-col font-body text-ink">
+      {/* Menu piccolo fluttuante in alto a sinistra */}
+      <aside className="card fixed left-5 top-5 z-30 hidden w-48 p-3 shadow-sm lg:block">
+        <a href="#/" className="flex items-center gap-2 px-2 pb-3 pt-1">
+          <img src="/immo/logo-mark.png" alt="" className="h-7 w-7" />
+          <span className="font-display text-base font-extrabold tracking-tight">Agente <span className="text-brand">Immo</span></span>
+        </a>
+        <nav className="flex flex-col gap-0.5">
+          {[...NAV, ...(isPlatformAdmin(userData.email) ? [{ path: '/costi', label: 'Costi AI', icon: Gauge }] : [])].map(({ path, label, icon: Icon }) => {
+            const active = route === path || (path === '/immobili' && !!detailId);
+            return (
+              <a key={path} href={`#${path}`} className={`flex items-center gap-2.5 rounded-lg px-2 py-1.5 text-sm transition-colors ${active ? 'bg-canvas font-semibold text-ink' : 'text-muted hover:bg-canvas hover:text-ink'}`}>
+                <Icon size={15} /> {label}
+              </a>
+            );
+          })}
+        </nav>
+      </aside>
+
+      {/* In alto a destra: nuovo annuncio, crediti, account */}
+      <div className="fixed right-5 top-5 z-30 flex items-center gap-2.5">
+        <a href="#/nuovo" aria-label="Nuovo annuncio" title="Nuovo annuncio" className="btn-ink flex h-10 w-10 items-center justify-center rounded-full"><Plus size={18} /></a>
+        <AccountMenu email={userData.email} credits={userData.credits} name={profile?.name ?? undefined} />
+      </div>
 
       <main className="flex-1 overflow-y-auto">
-        <div key={route} className="fade-up mx-auto max-w-6xl px-8 py-8">
+        <div key={route} className={`fade-up mx-auto px-6 pb-16 pt-20 lg:pl-60 lg:pr-10 ${route === '/' ? 'max-w-none' : 'max-w-7xl'}`}>
           {route === '/costi' && isPlatformAdmin(userData.email) ? (
             <CostsView />
           ) : route === '/migliora' ? (
@@ -97,75 +102,72 @@ export default function PlatformApp({ userData }: { userData: UserData }) {
   );
 }
 
-// Home stile Airbnb: grande foto (ultimo immobile o foto di default), titolo deciso, barra
-// fluttuante con i tre ingressi; sotto gli immobili a card con foto protagonista.
-const HERO_FALLBACK = '/reference/giorno-notte-poster.jpg';
+// Home: titolo grande, ventaglio di card inclinate (immobili veri o esempi) e UN campo in basso.
+// Incolli un link -> Migliora. Graffetta -> Importa file. Immagine -> Crea da zero.
+const EXAMPLES = [
+  { cover: '/reference/giorno-notte-poster.jpg', a: 'Bilocale', b: 'luminoso', sub: 'Travi a vista, centro storico', score: 86 },
+  { cover: '/staging/2.jpg', a: 'Trilocale', b: 'arredato', sub: 'Home staging con AI', score: 78 },
+  { cover: '/staging/1_real.jpg', a: 'Monolocale', b: 'da rivedere', sub: 'Foto vuote, testo da riscrivere', score: 41 },
+  { cover: '/staging/4.jpg', a: 'Attico', b: 'con terrazzo', sub: 'Descrizione riscritta', score: 91 },
+];
+const TILT = ['-rotate-6 translate-y-3', '-rotate-2', 'rotate-2', 'rotate-6 translate-y-3'];
+const scoreColor = (n: number) => (n >= 75 ? 'bg-emerald-500' : n >= 55 ? 'bg-amber-400' : 'bg-rose-500');
 
 export function HomeView({ projects, name }: { projects: ProjectData[] | null; name?: string }) {
-  const [mode, setMode] = useState<'link' | null>(null);
-  const [url, setUrl] = useState('');
-  const n = projects?.length ?? 0;
-  const pub = projects?.filter(p => p.is_public).length ?? 0;
-  const hero = projects?.find(p => p.cover)?.cover || HERO_FALLBACK;
+  const [text, setText] = useState('');
+  const isLink = /^https?:\/\//i.test(text.trim());
+  const mine = (projects ?? []).filter(p => p.cover).slice(0, 4);
+  const cards = mine.length >= 2
+    ? mine.map(p => {
+        const words = (p.titolo || p.nome || 'Immobile').split(' ');
+        return { cover: p.cover, a: words[0], b: words.slice(1, 3).join(' '), sub: p.addr?.split(',').slice(-1)[0]?.trim() || '', score: (p.import_data as { score?: number } | undefined)?.score ?? null, href: `#/immobile/${p.id}` };
+      })
+    : EXAMPLES.map(e => ({ ...e, href: undefined as string | undefined }));
+
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isLink) go(`/migliora?url=${encodeURIComponent(text.trim())}`);
+  };
 
   return (
-    <>
-      <section className="relative">
-        <div className="fade-up relative h-[420px] overflow-hidden rounded-[28px] bg-canvas">
-          <img src={hero} alt="" className="h-full w-full object-cover object-[center_60%]" />
-          <div className="absolute inset-0 bg-gradient-to-r from-white/85 via-white/40 to-transparent" />
-          <div className="absolute left-10 top-12 max-w-lg">
-            <p className="flex items-center gap-2 text-sm font-medium text-ink/70"><span className="h-px w-6 bg-ink/50" /> {name ? `Ciao ${name.split(' ')[0]}` : 'Per agenti immobiliari'}</p>
-            <h1 className="mt-4 font-display text-6xl font-extrabold leading-[1.02] tracking-tight">Annunci che<br />si fanno notare.</h1>
-          </div>
-        </div>
+    <div className="flex min-h-[calc(100vh-9rem)] flex-col items-center">
+      <h1 className="fade-up mt-6 text-center font-display text-5xl font-bold leading-[1.08] tracking-tight md:text-6xl">
+        Incolla un annuncio.<br />Lo rendiamo <span className="accent-serif text-[1.12em]">irresistibile</span> 🏡
+      </h1>
+      <p className="fade-up mt-4 text-center text-lg text-muted" style={{ animationDelay: '.05s' }}>Score, cosa sistemare e testo riscritto in pochi secondi. Oppure crealo da zero.</p>
 
-        {/* Barra fluttuante: tre ingressi, il primo diventa campo link */}
-        <div className="float-bar fade-up relative z-10 mx-auto -mt-14 flex max-w-4xl items-stretch rounded-[22px] p-2" style={{ animationDelay: '0.1s' }}>
-          {mode === 'link' ? (
-            <form onSubmit={e => { e.preventDefault(); if (url.trim()) go(`/migliora?url=${encodeURIComponent(url.trim())}`); }} className="flex flex-1 items-center gap-3 pl-5">
-              <Link2 size={18} className="shrink-0 text-muted" />
-              <div className="min-w-0 flex-1">
-                <div className="text-sm font-bold">Migliora un annuncio</div>
-                <input autoFocus value={url} onChange={e => setUrl(e.target.value)} placeholder="Incolla il link da immobiliare.it, idealista o casa.it" className="w-full bg-transparent py-0.5 text-sm outline-none placeholder:text-muted" />
-              </div>
-              <button type="button" onClick={() => setMode(null)} className="px-2 text-sm text-muted hover:text-ink">Annulla</button>
-              <button disabled={!url.trim()} aria-label="Analizza" className="btn-ink flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl"><Sparkles size={20} /></button>
-            </form>
-          ) : (
+      {/* Ventaglio di card */}
+      <div className="stagger mt-12 flex items-end justify-center">
+        {cards.map((c, i) => {
+          const inner = (
             <>
-              <BarItem onClick={() => setMode('link')} icon={Link2} title="Migliora un annuncio" sub="Incolla il link del portale" />
-              <span className="my-3 w-px bg-line" />
-              <BarItem href="#/nuovo" icon={Plus} title="Crea da zero" sub="Foto, dati e l'AI scrive" />
-              <span className="my-3 w-px bg-line" />
-              <BarItem href="#/importa" icon={FileSpreadsheet} title="Importa" sub="Excel o CSV del gestionale" />
-              <a href="#/nuovo" aria-label="Crea da zero" className="btn-ink flex h-14 w-14 shrink-0 items-center justify-center self-center rounded-2xl"><ArrowRight size={20} /></a>
+              <div className="aspect-[4/3] overflow-hidden rounded-xl bg-canvas"><img src={c.cover} alt="" className="h-full w-full object-cover" /></div>
+              <div className="mt-3 flex items-center gap-1.5">
+                {typeof c.score === 'number' && <span className={`h-3 w-3 rounded-full ${scoreColor(c.score)}`} />}
+                {typeof c.score === 'number' && <span className="text-xs font-semibold text-muted">{c.score}/100</span>}
+              </div>
+              <div className="mt-1.5 text-[15px] font-semibold leading-tight">{c.a} <span className="accent-serif text-[1.15em]">{c.b}</span></div>
+              <div className="mt-0.5 line-clamp-2 text-xs text-muted">{c.sub}</div>
             </>
-          )}
-        </div>
-      </section>
-
-      <div className="mt-16 flex items-end justify-between">
-        <div>
-          <h2 className="font-display text-3xl font-bold tracking-tight">I tuoi immobili</h2>
-          {n > 0 && <p className="mt-1 text-sm text-muted">{n} {n === 1 ? 'immobile' : 'immobili'} · {pub} nel portfolio</p>}
-        </div>
-        {n > 6 && <a href="#/immobili" className="text-sm font-semibold underline underline-offset-4">Vedi tutti</a>}
+          );
+          const cls = `fan-card -mx-2 w-48 rounded-2xl bg-white p-2.5 pb-4 md:w-56 ${TILT[i % 4]}`;
+          return c.href ? <a key={i} href={c.href} className={cls}>{inner}</a> : <div key={i} className={cls}>{inner}</div>;
+        })}
       </div>
-      <div className="mt-6"><PropertyGrid projects={projects?.slice(0, 6) ?? null} /></div>
-    </>
-  );
-}
 
-function BarItem({ href, onClick, icon: Icon, title, sub }: { href?: string; onClick?: () => void; icon: React.ComponentType<{ size?: number; className?: string }>; title: string; sub: string }) {
-  const cls = 'group flex flex-1 items-center gap-3 rounded-2xl px-5 py-3 text-left transition-colors hover:bg-canvas';
-  const inner = (
-    <>
-      <Icon size={18} className="shrink-0 text-muted transition-colors group-hover:text-ink" />
-      <span className="min-w-0"><span className="block text-sm font-bold">{title}</span><span className="block truncate text-sm text-muted">{sub}</span></span>
-    </>
+      {/* Il campo unico */}
+      <form onSubmit={submit} className="float-bar fade-up mt-auto w-full max-w-2xl rounded-3xl p-3 pt-4" style={{ animationDelay: '.15s' }}>
+        <input value={text} onChange={e => setText(e.target.value)} placeholder="Incolla il link di un annuncio (immobiliare.it, idealista, casa.it)…" className="w-full bg-transparent px-2 text-base outline-none placeholder:text-muted/70" />
+        <div className="mt-4 flex items-center gap-2">
+          <a href="#/importa" title="Importa da Excel o CSV" className="flex h-9 items-center gap-1.5 rounded-full bg-canvas px-3 text-xs font-medium text-muted hover:text-ink"><Paperclip size={15} /> Importa file</a>
+          <a href="#/nuovo" title="Crea da zero" className="flex h-9 items-center gap-1.5 rounded-full bg-canvas px-3 text-xs font-medium text-muted hover:text-ink"><ImagePlus size={15} /> Crea da zero</a>
+          <button disabled={!isLink} aria-label="Analizza" className="btn-ink ml-auto flex h-10 w-10 items-center justify-center rounded-full"><ArrowUp size={18} /></button>
+        </div>
+        {text.trim() && !isLink && <p className="mt-2 px-2 text-xs text-muted">Incolla un link che inizi con https://</p>}
+      </form>
+      <p className="mt-4 text-xs text-muted">{name ? `Ciao ${name.split(' ')[0]} · ` : ''}{projects?.length ? <a href="#/immobili" className="underline underline-offset-2">{projects.length} immobili</a> : 'Nessun immobile ancora'}</p>
+    </div>
   );
-  return href ? <a href={href} className={cls}>{inner}</a> : <button type="button" onClick={onClick} className={cls}>{inner}</button>;
 }
 
 function AccountMenu({ email, credits, name }: { email: string; credits: number; name?: string }) {
@@ -173,10 +175,10 @@ function AccountMenu({ email, credits, name }: { email: string; credits: number;
   const initial = (name || email)[0]?.toUpperCase();
   return (
     <div className="relative">
-      <button onClick={() => setOpen(v => !v)} className="flex items-center gap-2 rounded-full border border-line py-1.5 pl-3 pr-1.5 transition-shadow hover:shadow-md">
-        <span className="text-xs font-medium text-muted">{credits} crediti</span>
-        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-ink text-sm font-bold text-white">{initial}</span>
-      </button>
+      <div className="flex items-center gap-2.5">
+        <span className="flex h-10 items-center gap-2 rounded-full bg-white px-4 text-xs font-semibold shadow-sm ring-1 ring-line"><span className="h-2.5 w-2.5 rounded-full bg-amber-400" /> {credits} crediti</span>
+        <button onClick={() => setOpen(v => !v)} aria-label="Account" className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-sm font-bold shadow-sm ring-1 ring-line transition-shadow hover:shadow-md">{initial}</button>
+      </div>
       {open && (
         <div className="float-bar absolute right-0 top-12 z-40 w-60 rounded-2xl p-2" onMouseLeave={() => setOpen(false)}>
           <div className="px-3 py-2"><div className="truncate text-sm font-semibold">{name || 'Account'}</div><div className="truncate text-xs text-muted">{email}</div></div>
@@ -239,7 +241,7 @@ function Onboarding({ onDone }: { onDone: (p: Profile) => void }) {
   return (
     <div className="flex h-full items-center justify-center overflow-y-auto bg-white px-6 font-body text-ink">
       <div className="w-full max-w-md card p-8">
-        <div className="font-display text-xl font-bold tracking-tight">GetNearMe</div>
+        <div className="flex items-center gap-2"><img src="/immo/logo-mark.png" alt="" className="h-9 w-9" /><span className="font-display text-xl font-extrabold tracking-tight">Agente <span className="text-brand">Immo</span></span></div>
         <h1 className="mt-6 font-display text-2xl font-bold tracking-tight">Come ti chiami?</h1>
         <p className="mt-1 text-sm text-muted">Il tuo nome apparirà sul portfolio pubblico, la vetrina con i tuoi immobili da condividere con i clienti.</p>
         <div className="mt-6"><ProfileForm initial={{ name: null, slug: null }} submitLabel="Continua" onSaved={onDone} /></div>

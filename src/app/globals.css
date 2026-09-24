@@ -397,6 +397,15 @@ html.metrics-light [class*="border-gray-600"] { border-color: #d8d4cb !important
    Usato da components/platform e components/property.
    --------------------------------------------------------------------------- */
 .gnm-bg { background: #fff; }
+/* Sfondo "tavolo di lavoro": avorio con griglia sottile (home e shell) */
+.grid-bg {
+  background-color: #f6f5f1;
+  background-image: linear-gradient(rgba(34,34,34,.045) 1px, transparent 1px), linear-gradient(90deg, rgba(34,34,34,.045) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+.accent-serif { font-family: var(--font-serif-accent), Georgia, serif; font-style: italic; font-weight: 400; }
+.fan-card { transition: transform 0.35s cubic-bezier(.2,.8,.2,1), box-shadow 0.35s; box-shadow: 0 14px 34px -14px rgba(0,0,0,.28); }
+.fan-card:hover { transform: translateY(-10px) rotate(0deg) !important; box-shadow: 0 24px 44px -16px rgba(0,0,0,.35); z-index: 10; }
 .card { background: #fff; border-radius: 1rem; border: 1px solid #ebebeb; }
 .card-hover { transition: box-shadow 0.25s, transform 0.25s cubic-bezier(.2,.8,.2,1); }
 .card-hover:hover { box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08); }
