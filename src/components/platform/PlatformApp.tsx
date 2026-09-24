@@ -73,16 +73,23 @@ export default function PlatformApp({ userData }: { userData: UserData }) {
             })}
           </nav>
           <div className="ml-auto flex items-center gap-2.5 md:ml-0">
-            <a href="#/nuovo" aria-label="Nuovo annuncio" title="Nuovo annuncio" className="btn-ink flex h-10 w-10 items-center justify-center rounded-full"><Plus size={18} /></a>
-            <AccountMenu email={userData.email} credits={userData.credits} name={profile?.name ?? undefined} />
+            <span className="flex h-10 items-center gap-2 rounded-full bg-white px-4 text-xs font-semibold shadow-sm ring-1 ring-line"><span className="h-2.5 w-2.5 rounded-full bg-amber-400" /> {userData.credits} crediti</span>
+            <a href="#/nuovo" className="btn-ink flex h-10 items-center gap-1.5 rounded-full px-4 text-sm font-semibold"><Plus size={16} /> Metti in vetrina</a>
           </div>
         </div>
       </header>
 
+      {/* Profilo: in basso a sinistra, solo icona e scritta; dentro nome, vetrina e uscita */}
+      <a href="#/profilo" className={`fixed bottom-5 left-5 z-30 flex items-center gap-2 rounded-full bg-white py-1.5 pl-1.5 pr-4 text-sm font-medium shadow-sm ring-1 ring-line ease-smooth transition-shadow hover:shadow-md ${route === '/profilo' ? 'ring-ink' : ''}`}>
+        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-canvas text-xs font-bold">{(profile?.name || userData.email)[0]?.toUpperCase()}</span> Profilo
+      </a>
+
       <main className={`flex-1 ${route === '/staging' ? 'overflow-hidden' : 'overflow-y-auto'}`}>
         {/* Home staging: la chat gestisce lo scorrimento da sola (campo fisso in fondo) */}
         <div key={route} className={`fade-up mx-auto max-w-6xl px-6 ${route === '/staging' ? 'h-full' : route === '/' || route === '/migliora' ? '' : 'pb-16 pt-8'}`}>
-          {route === '/costi' && isPlatformAdmin(userData.email) ? (
+          {route === '/profilo' ? (
+            <ProfileView email={userData.email} profile={profile ?? null} onSaved={setProfile} />
+          ) : route === '/costi' && isPlatformAdmin(userData.email) ? (
             <CostsView />
           ) : route === '/migliora' ? (
             <HomeView key={query} name={profile?.name ?? undefined} initialUrl={new URLSearchParams(query).get('url') ?? ''} onSaved={reload} />
@@ -404,22 +411,19 @@ export function HomeView({ name, initialUrl = '', onSaved }: { name?: string; in
   );
 }
 
-function AccountMenu({ email, credits, name }: { email: string; credits: number; name?: string }) {
-  const [open, setOpen] = useState(false);
-  const initial = (name || email)[0]?.toUpperCase();
+// Profilo: nome e indirizzo della vetrina (stesso modulo dell'onboarding), link alla vetrina, uscita.
+function ProfileView({ email, profile, onSaved }: { email: string; profile: Profile | null; onSaved: (p: Profile) => void }) {
   return (
-    <div className="relative">
-      <div className="flex items-center gap-2.5">
-        <span className="flex h-10 items-center gap-2 rounded-full bg-white px-4 text-xs font-semibold shadow-sm ring-1 ring-line"><span className="h-2.5 w-2.5 rounded-full bg-amber-400" /> {credits} crediti</span>
-        <button onClick={() => setOpen(v => !v)} aria-label="Account" className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-sm font-bold shadow-sm ring-1 ring-line ease-smooth transition-shadow hover:shadow-md">{initial}</button>
+    <div className="mx-auto max-w-xl">
+      <h1 className="font-display text-3xl font-bold tracking-tight">Profilo</h1>
+      <p className="mt-1 text-muted">{email}</p>
+      <div className={`mt-8 rounded-[28px] bg-white p-6 ${CARD_SHADOW}`}>
+        <h2 className="font-semibold">La tua vetrina</h2>
+        <p className="mt-1 text-sm text-muted">Il nome che vedono i clienti e l&apos;indirizzo della pagina con le tue case.</p>
+        <div className="mt-5"><ProfileForm initial={profile ?? { name: null, slug: null }} submitLabel="Salva" onSaved={onSaved} /></div>
+        {profile?.slug && <a href="#/portfolio" className="mt-4 inline-flex text-sm font-medium text-brand hover:underline">Gestisci le case in vetrina</a>}
       </div>
-      {open && (
-        <div className="float-bar absolute right-0 top-12 z-40 w-60 rounded-2xl p-2" onMouseLeave={() => setOpen(false)}>
-          <div className="px-3 py-2"><div className="truncate text-sm font-semibold">{name || 'Account'}</div><div className="truncate text-xs text-muted">{email}</div></div>
-          <a href="#/portfolio" className="block rounded-lg px-3 py-2 text-sm hover:bg-canvas">Il mio portfolio</a>
-          <button onClick={() => supabase.auth.signOut()} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm hover:bg-canvas"><LogOut size={15} /> Esci</button>
-        </div>
-      )}
+      <button onClick={() => supabase.auth.signOut()} className="mt-6 flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium text-muted ring-1 ring-line hover:bg-white hover:text-ink"><LogOut size={15} /> Esci</button>
     </div>
   );
 }
