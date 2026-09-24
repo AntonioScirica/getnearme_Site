@@ -204,7 +204,7 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
             </div>
           ))}
           {/* Selezione di una zona: e' un messaggio della chat come gli altri, con i pulsanti sotto la foto */}
-          {selecting && base && <ZonePicker src={base} region={region} points={points} mask={mask} onChange={r => { setRegion(r); setPoints([]); setMask(null); }} onPick={pickAt} onLoad={toBottom} onDone={() => setSelecting(false)} onCancel={() => { clearZone(); setSelecting(false); }} />}
+          {selecting && base && <ZonePicker src={base} region={region} points={points} mask={mask} onChange={r => { setRegion(r); setPoints([]); setMask(null); }} onPick={pickAt} onLoad={toBottom} busy={busy} onSubmit={t => send(t)} onCancel={() => { clearZone(); setSelecting(false); }} />}
 
         </div>
       </div>
@@ -254,7 +254,7 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
 }
 
 // Zona sulla foto corrente: clic su un oggetto = lo seleziona (maschera rossa), trascinare = rettangolo.
-function ZonePicker({ src, region, points, mask, onChange, onPick, onLoad, onDone, onCancel }: { src: string; region: Region | null; points: { x: number; y: number }[]; mask: string | null; onChange: (r: Region | null) => void; onPick: (p: { x: number; y: number }) => void; onLoad: () => void; onDone: () => void; onCancel: () => void }) {
+function ZonePicker({ src, region, points, mask, onChange, onPick, onLoad, busy, onSubmit, onCancel }: { src: string; region: Region | null; points: { x: number; y: number }[]; mask: string | null; onChange: (r: Region | null) => void; onPick: (p: { x: number; y: number }) => void; onLoad: () => void; busy: boolean; onSubmit: (text: string) => void; onCancel: () => void }) {
   const box = useRef<HTMLDivElement>(null);
   const start = useRef<{ x: number; y: number } | null>(null);
   const dragged = useRef(false);
@@ -273,6 +273,7 @@ function ZonePicker({ src, region, points, mask, onChange, onPick, onLoad, onDon
     if (start.current && !dragged.current) onPick(start.current);
     start.current = null;
   };
+  const [text, setText] = useState('');
   const loading = mask === 'loading';
   const ready = (region && region.w > 0.02) || (points.length > 0 && !loading);
   return (
@@ -296,10 +297,15 @@ function ZonePicker({ src, region, points, mask, onChange, onPick, onLoad, onDon
             style={{ left: `${region.x * 100}%`, top: `${region.y * 100}%`, width: `${region.w * 100}%`, height: `${region.h * 100}%` }} />
         )}
       </div>
-      <div className="flex items-center justify-end gap-2 px-1 pb-1 pt-2">
-        <button onClick={onCancel} className="h-9 rounded-full px-4 text-[13px] font-semibold text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink">Annulla</button>
-        <button onClick={onDone} disabled={!ready} className="h-9 rounded-full bg-brand px-5 text-[13px] font-semibold text-white ease-smooth transition-[background-color,opacity] hover:bg-brand/90 disabled:opacity-40">Fatto</button>
-      </div>
+      {/* Richiesta direttamente qui: scrivi cosa fare nella zona e Modifica */}
+      <form onSubmit={e => { e.preventDefault(); if (ready && text.trim() && !busy) onSubmit(text.trim()); }} className="flex items-center gap-2 px-1 pb-1 pt-2">
+        <button type="button" onClick={onCancel} aria-label="Annulla selezione" title="Annulla" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink"><X size={17} /></button>
+        <input value={text} onChange={e => setText(e.target.value)} autoFocus
+          placeholder={ready ? 'Cosa faccio qui? Es. togli la tv' : 'Prima seleziona sulla foto, poi scrivi'}
+          className="h-10 min-w-0 flex-1 rounded-full bg-canvas px-4 text-sm outline-none ease-smooth transition-shadow placeholder:text-muted/60 focus:bg-white focus:ring-1 focus:ring-ink/15" />
+        <button type="submit" disabled={!ready || !text.trim() || busy}
+          className="h-10 shrink-0 rounded-full bg-brand px-5 text-[13px] font-semibold text-white ease-smooth transition-[background-color,opacity,transform] hover:bg-brand/90 active:scale-[0.97] disabled:opacity-40">Modifica</button>
+      </form>
     </div>
     </div>
   );
