@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { ArrowLeft, ChevronLeft, ChevronRight, Expand, Mail, MapPin, MessageCircle, Phone, Search, SlidersHorizontal, X } from 'lucide-react';
-import type { SiteProperty } from '@/lib/siteTemplates';
+import { zoneSlug, type SiteProperty } from '@/lib/siteTemplates';
+import { ContactForm, DetailsTable, FeatureList, MapBlock, RichText, ServicesGrid, ShareBar, WhatsAppFloat } from './extras';
 import { AboutBlock, CtaBand, Featured, Footer, Header, Hero, Intro, isRent, PropertyCard, PropertyRow, Reviews, SectionHead, statsOf, tipiOf, Zones, type Filters } from './sections';
 import { Btn, Container, contacts, Eyebrow, Facts, H, Photo, price, SiteLink, SiteRoot, typeOf, useSite, type Page, type SiteCtx } from './ui';
 
@@ -41,7 +42,7 @@ function useFilter(initial?: Filters) {
   const list = useMemo(() => {
     const q = f.q?.toLowerCase().trim();
     const r = properties.filter(p =>
-      (!q || `${p.titolo} ${p.addr}`.toLowerCase().includes(q)) && (!f.tipo || p.tipologia?.startsWith(f.tipo)) &&
+      (!q || `${p.titolo} ${p.addr}`.toLowerCase().includes(q)) && (!f.tipo || p.tipologia?.startsWith(f.tipo)) && (!f.rif || (p.riferimento ?? '').toLowerCase().includes(f.rif.toLowerCase())) &&
       (!f.contratto || (f.contratto === 'affitto') === isRent(p)) && (!f.max || (p.prezzo && p.prezzo <= f.max)) && (!f.min || p.prezzo >= f.min) &&
       (!f.camere || (p.camere ?? 0) >= f.camere) && (!f.bagni || (p.bagni ?? 0) >= f.bagni));
     if (f.sort === 'asc') r.sort((a, b) => (a.prezzo || 9e9) - (b.prezzo || 9e9));
@@ -208,7 +209,7 @@ function Gallery({ p }: { p: SiteProperty }) {
   return <>{body}<Lightbox photos={photos} i={i} setI={setI} /></>;
 }
 
-function AgentCard({ subject }: { subject?: string }) {
+function AgentCard({ subject, property }: { subject?: string; property?: SiteProperty }) {
   const { cfg, name } = useSite();
   const c = contacts(cfg, subject);
   return (
@@ -223,6 +224,7 @@ function AgentCard({ subject }: { subject?: string }) {
         {c.mail && <Btn href={c.mail} variant="ghost" className="w-full"><Mail size={16} /> Richiedi una visita</Btn>}
         {!c.wa && !c.tel && !c.mail && <p className="text-sm text-[var(--muted)]">Contatti in arrivo.</p>}
       </div>
+      {property && <div className="mt-6 border-t border-[var(--line)] pt-6"><div className="mb-3 text-sm font-semibold">Oppure scrivimi qui</div><ContactForm property={property} compact /></div>}
       <SiteLink to={{ page: 'agente' }} className="mt-4 block text-center text-sm font-medium text-[var(--c)] hover:underline">{cfg.aboutTitle}</SiteLink>
     </div>
   );
@@ -242,7 +244,7 @@ function PropertyPage({ id }: { id: string }) {
         <span className="rounded-[calc(var(--r)*0.5)] bg-[var(--soft)] px-2.5 py-1 text-[11px] font-semibold text-[var(--fg)]">{typeOf(p)}</span>
       </div>
       <H as="h1" className="mt-4 text-4xl md:text-5xl">{p.titolo}</H>
-      <div className="mt-3 flex items-center gap-1.5 opacity-75"><MapPin size={16} /> {p.addr}</div>
+      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 opacity-75"><span className="flex items-center gap-1.5"><MapPin size={16} /> {p.addr}</span>{p.riferimento && <span className="text-sm">Rif. {p.riferimento}</span>}</div>
     </>
   );
   return (
@@ -261,6 +263,7 @@ function PropertyPage({ id }: { id: string }) {
           {t.gallery !== 'full' && heading}
           {cfg.showPrices && <div className={`${t.gallery === 'full' ? '' : 'mt-6'} text-4xl font-bold tracking-tight`}>{price(p.prezzo)}{isRent(p) && p.prezzo ? <span className="text-lg font-medium text-[var(--muted)]"> /mese</span> : null}</div>}
           <Facts p={p} full className="mt-8" />
+          <div className="mt-6"><ShareBar title={p.titolo} /></div>
           {desc && (
             <div className="mt-12">
               <H className="text-3xl">Descrizione</H>
@@ -268,14 +271,17 @@ function PropertyPage({ id }: { id: string }) {
               {desc.length > 400 && <button onClick={() => setMore(v => !v)} className="mt-2 text-sm font-semibold text-[var(--c)]">{more ? 'Mostra meno' : 'Leggi tutto'}</button>}
             </div>
           )}
+          <div className="mt-12"><DetailsTable p={p} /></div>
+          <div className="mt-12 empty:hidden"><FeatureList p={p} /></div>
           {!!p.zona?.length && (
             <div className="mt-12">
               <H className="text-3xl">Nella zona</H>
               <ul className="mt-5 grid gap-2 sm:grid-cols-2">{p.zona.map(z => <li key={z} className="flex items-center gap-2.5 rounded-[calc(var(--r)*0.6)] bg-[var(--soft)] px-4 py-3 text-sm"><MapPin size={14} className="text-[var(--c)]" />{z}</li>)}</ul>
             </div>
           )}
+          {p.addr && <div className="mt-12"><MapBlock addr={p.addr} /></div>}
         </div>
-        <aside><div className="sticky top-24"><AgentCard subject={p.titolo} /></div></aside>
+        <aside><div className="sticky top-24"><AgentCard subject={p.titolo} property={p} /></div></aside>
       </Container>
       {similar.length > 0 && (
         <section className="bg-[var(--soft)] py-20">
@@ -295,6 +301,8 @@ function AgentPage() {
   const { cfg, name, properties, t } = useSite();
   const stats = statsOf(cfg, properties);
   const c = contacts(cfg);
+  // il primo paragrafo va in alto, il resto (con eventuali "## Sottotitoli") sotto come storia
+  const [intro, ...rest] = cfg.aboutText.split(/\n{2,}/);
   const photo = (cls: string) => cfg.aboutImage ? <Photo src={cfg.aboutImage} className={cls} /> : <span className={`flex items-center justify-center bg-[var(--soft)] text-6xl font-bold text-[var(--muted)]/50 ${cls}`}>{name.slice(0, 1)}</span>;
   const buttons = (
     <div className="flex flex-wrap gap-3">
@@ -303,6 +311,7 @@ function AgentPage() {
       {c.mail && <Btn href={c.mail} variant="ghost"><Mail size={16} /> {cfg.email}</Btn>}
     </div>
   );
+  const hl = cfg.highlights.length > 0 && <ul className="grid gap-2 sm:grid-cols-2">{cfg.highlights.map(h => <li key={h} className="flex items-center gap-2 text-sm font-medium"><span className="h-1.5 w-1.5 rounded-full bg-[var(--c)]" />{h}</li>)}</ul>;
   const areas = cfg.areas && <div className="flex flex-wrap gap-2">{cfg.areas.split(',').map(a => a.trim()).filter(Boolean).map(a => <span key={a} className="rounded-full bg-[var(--surface)] px-3.5 py-1.5 text-sm ring-1 ring-[var(--line)]">{a}</span>)}</div>;
   const statRow = cfg.showStats && stats.length > 0 && <div className="grid grid-cols-2 gap-6 md:grid-cols-4">{stats.map(s => <div key={s.l}><div className="text-4xl font-bold tracking-tight text-[var(--c)]">{s.v}</div><div className="mt-1 text-sm text-[var(--muted)]">{s.l}</div></div>)}</div>;
 
@@ -316,8 +325,8 @@ function AgentPage() {
           <div className="mt-6 md:mt-0">
             <Eyebrow>{cfg.agentRole}{cfg.city ? ` · ${cfg.city}` : ''}</Eyebrow>
             <H as="h1" className="mt-3 text-4xl md:text-5xl">{name}</H>
-            <p className="mt-4 max-w-2xl whitespace-pre-line leading-relaxed text-[var(--muted)]">{cfg.aboutText}</p>
-            <div className="mt-6 space-y-5">{areas}{buttons}</div>
+            <p className="mt-4 max-w-2xl leading-relaxed text-[var(--muted)]">{intro}</p>
+            <div className="mt-6 space-y-5">{hl}{areas}{buttons}</div>
           </div>
         </div>
         {statRow && <div className="mt-12">{statRow}</div>}
@@ -329,8 +338,8 @@ function AgentPage() {
       {photo('mx-auto h-44 w-44 rounded-full')}
       <Eyebrow className="mt-8">{cfg.agentRole}{cfg.city ? ` · ${cfg.city}` : ''}</Eyebrow>
       <H as="h1" className="mx-auto mt-4 max-w-3xl text-5xl md:text-7xl">{name}</H>
-      <p className="mx-auto mt-6 max-w-2xl whitespace-pre-line text-lg leading-relaxed text-[var(--muted)]">{cfg.aboutText}</p>
-      <div className="mt-8 flex flex-col items-center gap-5 [&>div]:justify-center">{areas}{buttons}</div>
+      <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-[var(--muted)]">{intro}</p>
+      <div className="mt-8 flex flex-col items-center gap-5 [&>div]:justify-center">{hl}{areas}{buttons}</div>
       {statRow && <div className="mx-auto mt-16 max-w-4xl border-y border-[var(--line)] py-10 text-left">{statRow}</div>}
     </Container>
   );
@@ -341,8 +350,8 @@ function AgentPage() {
         <div>
           <Eyebrow>{cfg.agentRole}{cfg.city ? ` · ${cfg.city}` : ''}</Eyebrow>
           <H as="h1" className="mt-4 text-5xl md:text-6xl">{name}</H>
-          <p className="mt-6 max-w-2xl whitespace-pre-line text-lg leading-relaxed text-[var(--muted)]">{cfg.aboutText}</p>
-          <div className="mt-8 space-y-6">{areas}{buttons}</div>
+          <p className="mt-6 max-w-2xl text-lg leading-relaxed text-[var(--muted)]">{intro}</p>
+          <div className="mt-8 space-y-6">{hl}{areas}{buttons}</div>
           {statRow && <div className="mt-12 border-t border-[var(--line)] pt-10">{statRow}</div>}
         </div>
       </Container>
@@ -352,6 +361,7 @@ function AgentPage() {
     <>
       <Header />
       {top}
+      {rest.length > 0 && <Container className="max-w-3xl pt-20"><RichText text={rest.join('\n\n')} /></Container>}
       <Container className="py-20">
         <SectionHead eyebrow="I miei immobili" title="Cosa sto seguendo" link={{ label: 'Cerca tra tutti', to: { page: 'immobili' } }} />
         <div className="mt-8">{t.results === 'rows'
@@ -365,10 +375,82 @@ function AgentPage() {
   );
 }
 
+// ---------- Servizi ----------
+function ServicesPage() {
+  const { cfg } = useSite();
+  return (
+    <>
+      <Header />
+      <PageHead eyebrow="Servizi" title="Cosa faccio per te" sub="Un percorso chiaro dalla valutazione al rogito, senza sorprese." />
+      <Container className="py-16"><ServicesGrid numbered /></Container>
+      <Container className="pb-20">
+        <div className="grid items-center gap-10 rounded-[calc(var(--r)*1.2)] bg-[var(--soft)] p-8 md:grid-cols-2 md:p-12">
+          <div><H className="text-3xl md:text-4xl">Una consulenza, senza impegno</H><p className="mt-3 text-[var(--muted)]">Raccontami cosa cerchi o cosa vuoi vendere: ti rispondo io, di persona.</p>
+            {cfg.highlights.length > 0 && <ul className="mt-6 space-y-2">{cfg.highlights.map(h => <li key={h} className="flex items-center gap-2 text-sm font-medium"><span className="h-1.5 w-1.5 rounded-full bg-[var(--c)]" />{h}</li>)}</ul>}</div>
+          <div className="rounded-[var(--r)] bg-[var(--surface)] p-6"><ContactForm compact /></div>
+        </div>
+      </Container>
+      <Footer />
+    </>
+  );
+}
+
+// ---------- Contatti ----------
+function ContactPage() {
+  const { cfg, name } = useSite();
+  const c = contacts(cfg);
+  return (
+    <>
+      <Header />
+      <PageHead eyebrow="Contatti" title="Scrivimi o chiamami" sub="Rispondo di persona, di solito entro la giornata." />
+      <Container className="grid gap-12 py-16 lg:grid-cols-[1fr_1.3fr]">
+        <div className="space-y-4">
+          <div className="text-lg font-semibold">{name}</div>
+          {cfg.address && <div className="flex items-center gap-3 text-[var(--muted)]"><MapPin size={17} className="text-[var(--c)]" />{cfg.address}</div>}
+          {c.tel && <a href={c.tel} className="flex items-center gap-3"><Phone size={17} className="text-[var(--c)]" />{cfg.phone}</a>}
+          {c.mail && <a href={c.mail} className="flex items-center gap-3"><Mail size={17} className="text-[var(--c)]" />{cfg.email}</a>}
+          {c.wa && <Btn href={c.wa} external className="mt-4"><MessageCircle size={16} /> Scrivimi su WhatsApp</Btn>}
+          {cfg.address && <div className="pt-6"><MapBlock addr={cfg.address} /></div>}
+        </div>
+        <div className="rounded-[var(--r)] bg-[var(--surface)] p-6 ring-1 ring-[var(--line)] md:p-8"><H className="mb-6 text-2xl">Richiedi informazioni</H><ContactForm /></div>
+      </Container>
+      <Footer />
+    </>
+  );
+}
+
+// ---------- Pagina di una zona ("Casa a Sirolo"): testo sulla localita' + annunci della zona ----------
+function ZonePage({ slug }: { slug: string }) {
+  const { cfg, properties } = useSite();
+  const z = cfg.zones.find(x => zoneSlug(x.name) === slug) ?? cfg.zones[0];
+  if (!z) return <><Header /><Container className="py-24 text-center text-[var(--muted)]">Pagina non trovata.</Container><Footer /></>;
+  const here = properties.filter(p => p.addr?.toLowerCase().includes(z.name.toLowerCase()));
+  return (
+    <>
+      <Header />
+      <PageHead eyebrow="Zona" title={`Casa a ${z.name}`} sub={`${here.length} ${here.length === 1 ? 'immobile disponibile' : 'immobili disponibili'}`} />
+      <Container className="grid gap-12 py-16 lg:grid-cols-[1fr_340px]">
+        <RichText text={z.text} />
+        <aside className="space-y-4">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--muted)]">Ultimi a {z.name}</div>
+          {(here.length ? here : properties).slice(0, 3).map(p => <PropertyCard key={p.id} p={p} />)}
+        </aside>
+      </Container>
+      {here.length > 3 && <Container className="pb-16"><SectionHead title={`Tutti gli immobili a ${z.name}`} link={{ label: 'Cerca', to: { page: 'immobili', f: { q: z.name } } }} /><div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">{here.slice(3).map(p => <PropertyCard key={p.id} p={p} />)}</div></Container>}
+      <CtaBand />
+      <Footer />
+    </>
+  );
+}
+
 export function SitePage({ ctx, page }: { ctx: SiteCtx; page: Page }) {
   return (
     <SiteRoot ctx={ctx}>
-      {page.page === 'home' ? <HomePage /> : page.page === 'immobili' ? <ListingsPage key={JSON.stringify(page.f ?? {})} initial={page.f} /> : page.page === 'immobile' ? <PropertyPage key={page.id} id={page.id} /> : <AgentPage />}
+      <div className="relative">
+        {page.page === 'home' ? <HomePage /> : page.page === 'immobili' ? <ListingsPage key={JSON.stringify(page.f ?? {})} initial={page.f} /> : page.page === 'immobile' ? <PropertyPage key={page.id} id={page.id} />
+          : page.page === 'servizi' ? <ServicesPage /> : page.page === 'contatti' ? <ContactPage /> : page.page === 'zona' ? <ZonePage slug={page.slug} /> : <AgentPage />}
+        <WhatsAppFloat />
+      </div>
     </SiteRoot>
   );
 }

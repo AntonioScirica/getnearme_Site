@@ -7,15 +7,15 @@ import type { SiteConfig, SiteProperty, TemplateId } from '@/lib/siteTemplates';
 // Base dei siti vetrina: tema per template, contesto del sito, link (veri sul sito, interni
 // nell'anteprima dell'editor) e i mattoni piu' piccoli (titoli, pulsanti, foto, dati).
 
-export type Filters = { q?: string; tipo?: string; max?: number; contratto?: string };
-export type Page = { page: 'home' } | { page: 'immobili'; f?: Filters } | { page: 'immobile'; id: string } | { page: 'agente' };
+export type Filters = { q?: string; tipo?: string; max?: number; contratto?: string; camere?: number; bagni?: number; rif?: string };
+export type Page = { page: 'home' } | { page: 'immobili'; f?: Filters } | { page: 'immobile'; id: string } | { page: 'agente' } | { page: 'servizi' } | { page: 'contatti' } | { page: 'zona'; slug: string };
 
 // Ogni template sceglie una variante per ogni parte: stessi dati, siti molto diversi.
 export type Theme = {
   bg: string; fg: string; muted: string; line: string; surface: string; soft: string; ink: string; radius: number;
-  header: 'plain' | 'centered' | 'pill' | 'over' | 'minimal';
-  hero: 'split' | 'full' | 'card' | 'center' | 'form';
-  intro: 'features' | 'welcome' | 'pastel' | 'none' | 'trust';
+  header: 'plain' | 'centered' | 'pill' | 'over' | 'minimal' | 'drawer';
+  hero: 'split' | 'full' | 'card' | 'center' | 'form' | 'banner';
+  intro: 'features' | 'welcome' | 'pastel' | 'none' | 'trust' | 'text';
   card: 'classic' | 'button' | 'badge' | 'minimal' | 'price';
   about: 'stats' | 'card' | 'checklist' | 'dark' | 'numbers';
   reviews: 'cards' | 'quote';
@@ -38,6 +38,10 @@ export const THEMES: Record<TemplateId, Theme> = {
     header: 'over', hero: 'center', intro: 'none', card: 'minimal', about: 'dark', reviews: 'quote', cta: 'ink', footer: 'ink', listings: 'topbar', results: 'rows', gallery: 'full', agent: 'split' },
   nord: { bg: '#ffffff', fg: '#111111', muted: '#6b6b6b', line: '#ececec', surface: '#ffffff', soft: '#f6f6f3', ink: '#111111', radius: 18,
     header: 'minimal', hero: 'form', intro: 'trust', card: 'price', about: 'numbers', reviews: 'cards', cta: 'band', footer: 'light', listings: 'topbar', results: 'grid', gallery: 'slider', agent: 'centered' },
+  // Riviera: agenzia di zona (sul modello di casalconero.com): barra contatti, logo al centro con menu,
+  // foto con titolo e ricerca avanzata sotto, testo di presentazione, card con stato e agente.
+  riviera: { bg: '#ffffff', fg: '#222831', muted: '#6b7280', line: '#e8ebee', surface: '#ffffff', soft: '#f4f6f7', ink: '#2b3036', radius: 6,
+    header: 'drawer', hero: 'banner', intro: 'text', card: 'classic', about: 'stats', reviews: 'cards', cta: 'band', footer: 'dark', listings: 'topbar', results: 'grid', gallery: 'slider', agent: 'split' },
 };
 
 export type SiteCtx = {
@@ -59,8 +63,8 @@ export function SiteRoot({ ctx, children }: { ctx: SiteCtx; children: ReactNode 
   return <Ctx.Provider value={ctx}><div style={style} className="min-h-screen font-body antialiased selection:bg-[var(--c)] selection:text-white">{children}</div></Ctx.Provider>;
 }
 
-export const pathOf = (base: string, p: Page) =>
-  p.page === 'home' ? base || '/' : p.page === 'immobili' ? `${base}/immobili${p.f ? `?${new URLSearchParams(Object.entries(p.f).filter(([, v]) => v).map(([k, v]) => [k, String(v)]))}` : ''}` : p.page === 'agente' ? `${base}/agente` : `${base}/${p.id}`;
+export const pathOf = (base: string, p: Page): string =>
+  p.page === 'home' ? base || '/' : p.page === 'servizi' ? `${base}/servizi` : p.page === 'contatti' ? `${base}/contatti` : p.page === 'zona' ? `${base}/zona/${p.slug}` : p.page === 'immobili' ? `${base}/immobili${p.f ? `?${new URLSearchParams(Object.entries(p.f).filter(([, v]) => v).map(([k, v]) => [k, String(v)]))}` : ''}` : p.page === 'agente' ? `${base}/agente` : `${base}/${p.id}`;
 
 // Link del sito: sul sito vero e' un <a href>, nell'anteprima cambia pagina dentro l'editor
 export function SiteLink({ to, className = '', children, ...rest }: { to: Page; className?: string; children: ReactNode; 'aria-label'?: string; onMouseEnter?: () => void }) {

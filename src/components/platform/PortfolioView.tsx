@@ -45,7 +45,7 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
     .map(p => {
       const d = (p.import_data ?? {}) as { photos?: string[]; zona?: string[]; contratto?: string };
       return { id: p.id, titolo: p.titolo || p.nome, addr: p.addr, prezzo: p.prezzo, mq: p.mq, camere: p.camere, bagni: p.bagni, locali: p.locali, tipologia: p.tipologia, cover: p.cover,
-        descrizione: p.descrizione, photos: Array.isArray(d.photos) && d.photos.length ? d.photos : [p.cover], zona: Array.isArray(d.zona) ? d.zona : [], contratto: d.contratto ?? '' };
+        descrizione: p.descrizione, riferimento: p.riferimento, createdAt: p.createdAt, details: (d as { details?: Record<string, unknown> }).details, photos: Array.isArray(d.photos) && d.photos.length ? d.photos : [p.cover], zona: Array.isArray(d.zona) ? d.zona : [], contratto: d.contratto ?? '' };
     });
   const covers = [...new Set(props.map(p => p.cover).filter(Boolean))].slice(0, 12);
 
@@ -124,6 +124,21 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
               </div>
             </Group>
 
+            <Group title="Servizi">
+              <ListEditor items={cfg.services} max={8} addLabel="Aggiungi servizio" onChange={v => set({ services: v })}
+                fields={[['title', 'Nome del servizio', 70, false], ['text', 'Descrizione', 600, true]]} empty={{ title: '', text: '' }} />
+            </Group>
+
+            <Group title="Pagine zona">
+              <p className="text-xs text-muted">Una pagina per località (es. “Casa a Sirolo”) con il tuo testo e gli annunci di quella zona. Scrivi “## Titolo” per un sottotitolo.</p>
+              <ListEditor items={cfg.zones} max={8} addLabel="Aggiungi zona" onChange={v => set({ zones: v })}
+                fields={[['name', 'Località', 40, false], ['text', 'Testo sulla zona', 4000, true]]} empty={{ name: '', text: '' }} />
+            </Group>
+
+            <Group title="Punti in evidenza">
+              <Field label="Separati da virgola" value={cfg.highlights.join(', ')} onChange={v => set({ highlights: v.split(',').map(x => x.trimStart()).slice(0, 6) })} max={320} />
+            </Group>
+
             <Group title="Recensioni">
               {cfg.reviews.map((r, i) => (
                 <div key={i} className="space-y-2 rounded-2xl bg-canvas p-3">
@@ -143,10 +158,14 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
               <Field label="Telefono" value={cfg.phone} onChange={v => set({ phone: v })} max={20} />
               <Field label="WhatsApp" value={cfg.whatsapp} onChange={v => set({ whatsapp: v })} max={20} />
               <Field label="Email" value={cfg.email} onChange={v => set({ email: v })} max={120} />
+              <Field label="Indirizzo dell'ufficio" value={cfg.address} onChange={v => set({ address: v })} max={120} />
+              <Field label="Instagram (link)" value={cfg.instagram} onChange={v => set({ instagram: v })} max={300} />
+              <Field label="Facebook (link)" value={cfg.facebook} onChange={v => set({ facebook: v })} max={300} />
+              <Field label="P.IVA, REA (piè di pagina)" value={cfg.legal} onChange={v => set({ legal: v })} max={160} />
             </Group>
 
             <Group title="Sezioni">
-              {([['showPrices', 'Mostra i prezzi'], ['showStats', 'Numeri'], ['showAbout', 'Chi sono'], ['showContact', 'Contatti']] as const).map(([k, l]) => (
+              {([['showPrices', 'Mostra i prezzi'], ['showStats', 'Numeri'], ['showAbout', 'Chi sono'], ['showContact', 'Contatti'], ['topBar', 'Barra con telefono ed email'], ['whatsappButton', 'Pulsante WhatsApp fisso']] as const).map(([k, l]) => (
                 <label key={k} className="flex cursor-pointer items-center justify-between py-1 text-sm">
                   {l}
                   <input type="checkbox" checked={cfg[k]} onChange={e => set({ [k]: e.target.checked })} className="h-5 w-9 cursor-pointer appearance-none rounded-full bg-line transition-colors before:block before:h-4 before:w-4 before:translate-x-0.5 before:rounded-full before:bg-white before:shadow before:transition-transform checked:bg-brand checked:before:translate-x-[18px]" />
@@ -186,7 +205,7 @@ function Preview({ children, page, onPage, firstId }: { children: ReactNode; pag
         <span className="flex gap-1.5">{[0, 1, 2].map(i => <span key={i} className="h-2.5 w-2.5 rounded-full bg-line" />)}</span>
         {/* pagine del sito: si naviga anche cliccando dentro l'anteprima */}
         <div className="ml-3 flex rounded-full bg-canvas p-0.5">
-          {([['home', 'Home'], ['immobili', 'Immobili'], ['immobile', 'Scheda'], ['agente', 'Profilo']] as const).map(([id, l]) => (
+          {([['home', 'Home'], ['immobili', 'Immobili'], ['immobile', 'Scheda'], ['agente', 'Profilo'], ['servizi', 'Servizi'], ['contatti', 'Contatti']] as const).map(([id, l]) => (
             <button key={id} disabled={id === 'immobile' && !firstId} onClick={() => onPage(id === 'immobile' ? { page: 'immobile', id: firstId! } : { page: id } as Page)}
               className={`rounded-full px-3 py-1 font-medium ease-smooth transition-colors disabled:opacity-40 ${page.page === id ? 'bg-white text-ink shadow-sm' : 'hover:text-ink'}`}>{l}</button>
           ))}
@@ -199,6 +218,25 @@ function Preview({ children, page, onPage, firstId }: { children: ReactNode; pag
         </div>
       </div>
     </div>
+  );
+}
+
+// Lista modificabile (servizi, zone): campi per voce, togli, aggiungi
+function ListEditor<T extends Record<string, string>>({ items, fields, onChange, max, addLabel, empty }: {
+  items: T[]; fields: [keyof T & string, string, number, boolean][]; onChange: (v: T[]) => void; max: number; addLabel: string; empty: T;
+}) {
+  return (
+    <>
+      {items.map((it, i) => (
+        <div key={i} className="space-y-2 rounded-2xl bg-canvas p-3">
+          {fields.map(([k, label, m, area]) => area
+            ? <textarea key={k} rows={4} value={it[k]} maxLength={m} placeholder={label} onChange={e => onChange(items.map((x, j) => j === i ? { ...x, [k]: e.target.value } : x))} className="w-full resize-y rounded-xl bg-white px-3 py-2 text-sm outline-none" />
+            : <input key={k} value={it[k]} maxLength={m} placeholder={label} onChange={e => onChange(items.map((x, j) => j === i ? { ...x, [k]: e.target.value } : x))} className="w-full rounded-xl bg-white px-3 py-2 text-sm font-medium outline-none" />)}
+          <button onClick={() => onChange(items.filter((_, j) => j !== i))} className="flex items-center gap-1 text-xs text-muted hover:text-rose-600"><Trash2 size={13} /> Togli</button>
+        </div>
+      ))}
+      {items.length < max && <button onClick={() => onChange([...items, { ...empty }])} className="flex items-center gap-1.5 text-sm font-medium text-brand"><Plus size={15} /> {addLabel}</button>}
+    </>
   );
 }
 

@@ -16,6 +16,6 @@ export default async function Listings({ params, searchParams }: Props) {
   const [{ locale, slug }, q] = await Promise.all([params, searchParams]);
   const s = await loadSite(locale, slug);
   if (!s) notFound();
-  const f = { q: q.q?.slice(0, 80) || undefined, tipo: q.tipo?.slice(0, 60) || undefined, max: Number(q.max) || undefined, contratto: q.contratto === 'affitto' || q.contratto === 'vendita' ? q.contratto : undefined };
+  const f = { q: q.q?.slice(0, 80) || undefined, tipo: q.tipo?.slice(0, 60) || undefined, max: Number(q.max) || undefined, contratto: q.contratto === 'affitto' || q.contratto === 'vendita' ? q.contratto : undefined, camere: Number(q.camere) || undefined, bagni: Number(q.bagni) || undefined, rif: q.rif?.slice(0, 30) || undefined };
   return <SitePage ctx={s} page={{ page: 'immobili', f }} />;
 }

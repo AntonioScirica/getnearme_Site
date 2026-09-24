@@ -2,7 +2,8 @@
 
 import { useState, type FormEvent } from 'react';
 import { ArrowRight, ArrowUpRight, Building2, Check, ChevronLeft, ChevronRight, Handshake, Heart, Leaf, Mail, MapPin, Menu, Phone, Quote, Search, ShieldCheck, Sparkles, Star, Users, X } from 'lucide-react';
-import type { SiteConfig, SiteProperty } from '@/lib/siteTemplates';
+import { zoneSlug, type SiteConfig, type SiteProperty } from '@/lib/siteTemplates';
+import { TopBar } from './extras';
 import { Btn, Container, contacts, Eyebrow, Facts, H, Photo, price, SiteLink, typeOf, useSite, zoneOf, pathOf, type Filters, type Page } from './ui';
 export type { Filters };
 
@@ -14,6 +15,8 @@ export const tipiOf = (ps: SiteProperty[]) => [...new Set(ps.map(p => p.tipologi
 export const isRent = (p: SiteProperty) => /affitt/i.test(p.contratto ?? '');
 const heroSrc = (cfg: { heroImage: string }, ps: SiteProperty[]) => cfg.heroImage || ps[0]?.cover || '';
 const initial = (s: string) => s.trim().slice(0, 1).toUpperCase();
+// primo paragrafo del testo "chi sono" (il resto, con i sottotitoli, sta nella pagina profilo)
+export const introOf = (cfg: SiteConfig) => cfg.aboutText.split(/\n{2,}/)[0].replace(/^## .*$/gm, '').trim();
 
 export function statsOf(cfg: SiteConfig, properties: SiteProperty[]) {
   const zones = new Set(properties.map(p => p.addr?.split(',').slice(-1)[0]?.trim()).filter(Boolean)).size;
@@ -27,11 +30,13 @@ export function statsOf(cfg: SiteConfig, properties: SiteProperty[]) {
 }
 
 // ---------- Barra in alto: 5 varianti ----------
-const NAV: [string, Page][] = [['Home', { page: 'home' }], ['Immobili', { page: 'immobili' }]];
+export function navLinks(cfg: SiteConfig): [string, Page][] {
+  return [['Home', { page: 'home' }], ['Immobili', { page: 'immobili' }], ...(cfg.services.length ? [['Servizi', { page: 'servizi' }] as [string, Page]] : []), [cfg.aboutTitle || 'Chi sono', { page: 'agente' }], ['Contatti', { page: 'contatti' }]];
+}
 export function Header({ over }: { over?: boolean }) {
-  const { cfg, name, logo, t } = useSite();
+  const { cfg, name, logo, t, base, preview, go } = useSite();
   const [open, setOpen] = useState(false);
-  const links: [string, Page][] = [...NAV, [cfg.aboutTitle || 'Chi sono', { page: 'agente' }]];
+  const links = navLinks(cfg);
   const light = over && t.header === 'over';
   const mark = logo
     ? <img src={logo} alt={name} className={`h-9 max-w-[170px] object-contain ${light ? 'brightness-0 invert' : ''}`} />
@@ -42,15 +47,40 @@ export function Header({ over }: { over?: boolean }) {
   const navCls = light ? 'text-white/85 hover:text-white' : 'text-[var(--muted)] hover:text-[var(--fg)]';
   const nav = links.map(([l, to]) => <SiteLink key={l} to={to} className={`px-3.5 py-2 text-sm font-medium transition-colors ${navCls}`}>{l}</SiteLink>);
   const cta = cfg.showContact && (
-    <Btn href="#contatti" size="sm" variant={light ? 'light' : t.header === 'minimal' ? 'ink' : 'solid'} className={`hidden !h-10 md:inline-flex ${t.header === 'pill' || t.header === 'minimal' ? '!rounded-full' : ''}`}>
+    <Btn href={preview ? undefined : pathOf(base, { page: 'contatti' })} onClick={preview ? () => go?.({ page: 'contatti' }) : undefined} size="sm" variant={light ? 'light' : t.header === 'minimal' ? 'ink' : 'solid'} className={`hidden !h-10 md:inline-flex ${t.header === 'pill' || t.header === 'minimal' ? '!rounded-full' : ''}`}>
       {t.header !== 'minimal' && <Phone size={14} />}{cfg.ctaLabel}{t.header === 'minimal' && <ArrowUpRight size={14} />}
     </Btn>
   );
   const burger = <button onClick={() => setOpen(v => !v)} className="md:hidden" aria-label="Menu">{open ? <X /> : <Menu />}</button>;
   const mobile = open && <div className="border-t border-[var(--line)] bg-[var(--bg)] px-6 py-4 text-[var(--fg)] md:hidden">{links.map(([l, to]) => <SiteLink key={l} to={to} className="block py-2.5 text-base font-medium">{l}</SiteLink>)}</div>;
 
+  // drawer: barra scura, menu a sinistra che apre il pannello laterale (con le pagine zona), logo al centro
+  if (t.header === 'drawer') return (
+    <header className="relative z-30">
+      <TopBar />
+      <div className="bg-[var(--ink)] text-white">
+        <Container className="grid h-[72px] grid-cols-[1fr_auto_1fr] items-center">
+          <button onClick={() => setOpen(true)} aria-label="Menu" className="flex w-fit items-center gap-2 text-sm font-medium"><Menu size={20} /> <span className="hidden md:inline">Menu</span></button>
+          <SiteLink to={{ page: 'home' }}>{logo ? <img src={logo} alt={name} className="h-10 max-w-[200px] object-contain brightness-0 invert" /> : <span className="text-xl font-bold tracking-tight">#{name.replace(/\s+/g, '')}</span>}</SiteLink>
+          <div className="flex justify-end">{cfg.showContact && <SiteLink to={{ page: 'contatti' }} className="hidden text-sm font-semibold text-[var(--c)] md:block">{cfg.ctaLabel}</SiteLink>}</div>
+        </Container>
+      </div>
+      {open && (
+        <div className="fixed inset-0 z-50 bg-black/40" onClick={() => setOpen(false)}>
+          <nav className="h-full w-[85%] max-w-xs overflow-y-auto bg-[var(--ink)] p-7 text-white" onClick={e => e.stopPropagation()}>
+            <button onClick={() => setOpen(false)} aria-label="Chiudi" className="mb-8"><X /></button>
+            {links.map(([l, to]) => <SiteLink key={l} to={to} className="block border-b border-white/10 py-3.5 text-[15px] font-medium hover:text-[var(--c)]">{l}</SiteLink>)}
+            {cfg.zones.length > 0 && <div className="mt-8 text-[11px] font-semibold uppercase tracking-[0.2em] text-white/50">Zone</div>}
+            {cfg.zones.map(z => <SiteLink key={z.name} to={{ page: 'zona', slug: zoneSlug(z.name) }} className="block py-2.5 text-sm text-white/80 hover:text-white">Casa a {z.name}</SiteLink>)}
+          </nav>
+        </div>
+      )}
+    </header>
+  );
+
   if (t.header === 'centered') return (
     <header className="relative z-30 bg-[var(--bg)]">
+      <TopBar />
       <Container className="grid h-24 grid-cols-[1fr_auto_1fr] items-center">
         <nav className="hidden items-center md:flex">{nav}</nav>
         <SiteLink to={{ page: 'home' }}>{mark}</SiteLink>
@@ -71,6 +101,7 @@ export function Header({ over }: { over?: boolean }) {
   );
   return (
     <header className={light ? 'absolute inset-x-0 top-0 z-30 text-white' : `relative z-30 bg-[var(--bg)] ${t.header === 'plain' ? 'border-b border-[var(--line)]' : ''}`}>
+      {!light && <TopBar />}
       <Container className="flex h-20 items-center gap-6">
         <SiteLink to={{ page: 'home' }} className="min-w-0">{mark}</SiteLink>
         <nav className={`hidden items-center md:flex ${t.header === 'minimal' ? 'mx-auto' : 'ml-auto'}`}>{nav}</nav>
@@ -81,7 +112,7 @@ export function Header({ over }: { over?: boolean }) {
 }
 
 // ---------- Ricerca (Compra/Affitta, zona, tipologia, prezzo) ----------
-export function SearchForm({ layout = 'bar' }: { layout?: 'bar' | 'stack' }) {
+export function SearchForm({ layout = 'bar' }: { layout?: 'bar' | 'stack' | 'advanced' }) {
   const { properties, base, preview, go } = useSite();
   const [f, setF] = useState<Filters>({ contratto: 'vendita' });
   const tipi = tipiOf(properties);
@@ -102,6 +133,23 @@ export function SearchForm({ layout = 'bar' }: { layout?: 'bar' | 'stack' }) {
       </label>
     </>
   );
+  if (layout === 'advanced') {
+    const box = 'h-12 w-full rounded-[calc(var(--r)*0.6)] border border-[var(--line)] bg-[var(--surface)] px-3.5 text-sm text-[var(--fg)] outline-none focus:border-[var(--c)]';
+    const cities = [...new Set(properties.map(p => p.addr?.split(',').slice(-1)[0]?.trim()).filter(Boolean))] as string[];
+    return (
+      <form action={preview ? undefined : pathOf(base, { page: 'immobili' })} method="get" onSubmit={submit} className="grid gap-3 md:grid-cols-[1fr_1fr_1fr_1fr_160px]">
+        <input name="rif" value={f.rif ?? ''} onChange={e => setF({ ...f, rif: e.target.value })} placeholder="Codice immobile" className={box} />
+        <select name="tipo" value={f.tipo ?? ''} onChange={e => setF({ ...f, tipo: e.target.value })} className={box}><option value="">Tutte le tipologie</option>{tipi.map(x => <option key={x}>{x}</option>)}</select>
+        <select name="q" value={f.q ?? ''} onChange={e => setF({ ...f, q: e.target.value })} className={box}><option value="">Tutte le città</option>{cities.map(x => <option key={x}>{x}</option>)}</select>
+        <select name="max" value={f.max ?? ''} onChange={e => setF({ ...f, max: Number(e.target.value) || undefined })} className={box}><option value="">Prezzo massimo</option>{PRICES.map(v => <option key={v} value={v}>{price(v)}</option>)}</select>
+        <button type="submit" className="row-span-2 flex h-12 items-center justify-center gap-2 rounded-[calc(var(--r)*0.6)] bg-[var(--c)] text-sm font-bold uppercase tracking-wider text-[var(--on-c,#fff)] transition hover:brightness-105 md:h-full"><Search size={16} /> Cerca</button>
+        <select name="camere" value={f.camere ?? ''} onChange={e => setF({ ...f, camere: Number(e.target.value) || undefined })} className={box}><option value="">N. camere</option>{[1, 2, 3, 4].map(n => <option key={n} value={n}>{n}+ camere</option>)}</select>
+        <select name="bagni" value={f.bagni ?? ''} onChange={e => setF({ ...f, bagni: Number(e.target.value) || undefined })} className={box}><option value="">N. bagni</option>{[1, 2, 3].map(n => <option key={n} value={n}>{n}+ bagni</option>)}</select>
+        <select name="contratto" value={f.contratto ?? ''} onChange={e => setF({ ...f, contratto: e.target.value })} className={box}><option value="">Vendita e affitto</option><option value="vendita">Vendita</option><option value="affitto">Affitto</option></select>
+        <span />
+      </form>
+    );
+  }
   return (
     <form action={preview ? undefined : pathOf(base, { page: 'immobili' })} method="get" onSubmit={submit}>
       {hasRent && (
@@ -142,6 +190,19 @@ export function Hero() {
   const title = <H as="h1" className={serif ? 'text-[clamp(3rem,6vw,5.4rem)]' : 'text-[clamp(2.5rem,5vw,4.4rem)]'}>{cfg.heroTitle}</H>;
   const sub = <p className="mt-5 max-w-lg text-[17px] leading-relaxed opacity-80">{cfg.heroSubtitle}</p>;
 
+  if (t.hero === 'banner') return (
+    <section>
+      <div className="relative flex h-[520px] items-center justify-center overflow-hidden text-center text-white">
+        <Photo src={src} className="absolute inset-0 h-full" /><div className="absolute inset-0 bg-black/30" />
+        <div className="relative px-6 [text-shadow:0_2px_24px_rgba(0,0,0,.35)]">
+          <div className="font-[family-name:var(--font-serif-accent)] text-3xl italic md:text-4xl">{cfg.city ? 'Benvenuti a' : 'Benvenuti'}</div>
+          <div className="mt-1 font-display text-[clamp(3.2rem,9vw,7rem)] font-extrabold uppercase leading-none tracking-tight">{cfg.city || cfg.heroTitle}</div>
+          <p className="mx-auto mt-4 max-w-md text-lg">{cfg.city ? cfg.heroTitle : cfg.heroSubtitle}</p>
+        </div>
+      </div>
+      <div className="border-b border-[var(--line)] bg-[var(--soft)] py-6"><Container><SearchForm layout="advanced" /></Container></div>
+    </section>
+  );
   if (t.hero === 'split') return (
     <section className="bg-[var(--soft)]">
       <Container className="grid items-center gap-10 py-14 lg:grid-cols-[1fr_1.05fr] lg:py-20">
@@ -242,6 +303,13 @@ export function Features({ compact, pastel }: { compact?: boolean; pastel?: bool
 export function Intro() {
   const { t, cfg, name, properties } = useSite();
   if (t.intro === 'none') return null;
+  if (t.intro === 'text') return (
+    <Container className="pt-20 text-center">
+      <H className="mx-auto max-w-3xl text-3xl md:text-[2.6rem]">{name} — {cfg.agentRole}{cfg.city ? ` a ${cfg.city}` : ''}</H>
+      <p className="mx-auto mt-5 max-w-2xl text-lg leading-relaxed text-[var(--muted)]">{cfg.heroSubtitle}</p>
+      {cfg.zones[0] && <SiteLink to={{ page: 'zona', slug: zoneSlug(cfg.zones[0].name) }} className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-[var(--c)]">Scopri {cfg.zones[0].name} <ArrowRight size={15} /></SiteLink>}
+    </Container>
+  );
   if (t.intro === 'features' || t.intro === 'pastel') return <Container className="pt-14"><Features pastel={t.intro === 'pastel'} /></Container>;
   if (t.intro === 'welcome') return (
     <Container className="pt-16">
@@ -253,7 +321,7 @@ export function Intro() {
         <div>
           <Eyebrow>Benvenuti da {name}</Eyebrow>
           <H className="mt-3 text-4xl md:text-5xl">Case scelte una per una, come le vorresti tu</H>
-          <p className="mt-4 leading-relaxed text-[var(--muted)]">{cfg.aboutText}</p>
+          <p className="mt-4 leading-relaxed text-[var(--muted)]">{introOf(cfg)}</p>
           <div className="mt-7 flex flex-wrap items-center gap-4">
             <SiteLink to={{ page: 'immobili' }} className="inline-flex items-center gap-2 rounded-full bg-[var(--c)] px-6 py-3 text-sm font-semibold text-white"><MapPin size={15} /> Esplora</SiteLink>
             <SiteLink to={{ page: 'agente' }} className="inline-flex items-center gap-1 text-sm font-semibold">{cfg.aboutTitle} <ArrowRight size={14} /></SiteLink>
@@ -274,7 +342,7 @@ export function Intro() {
         </div>
       </div>
       <div>
-        <p className="text-lg leading-relaxed">{cfg.aboutText}</p>
+        <p className="text-lg leading-relaxed">{introOf(cfg)}</p>
         <div className="mt-6 flex items-center gap-5">
           <SiteLink to={{ page: 'immobili' }} className="rounded-full bg-[var(--ink)] px-5 py-2.5 text-sm font-semibold text-white">Tutti gli immobili</SiteLink>
           {cfg.showContact && <a href="#contatti" className="flex items-center gap-2 text-sm font-semibold">Richiedi una chiamata <ArrowRight size={15} /></a>}
@@ -286,7 +354,8 @@ export function Intro() {
 
 // ---------- Card immobile: 5 varianti ----------
 export function PropertyCard({ p }: { p: SiteProperty }) {
-  const { cfg, t } = useSite();
+  const { cfg, t, name } = useSite();
+  const riv = cfg.template === 'riviera';
   const badge = <span className="rounded-[calc(var(--r)*0.5)] bg-[var(--c)] px-2.5 py-1 text-[11px] font-semibold text-white">{isRent(p) ? 'In affitto' : 'In vendita'}</span>;
   const pr = cfg.showPrices && <span className="text-lg font-bold text-[var(--fg)]">{price(p.prezzo)}{isRent(p) && p.prezzo ? <span className="text-sm font-medium text-[var(--muted)]"> /mese</span> : null}</span>;
   const place = <div className="mt-1 flex items-center gap-1 truncate text-[13px] text-[var(--muted)]"><MapPin size={13} className="shrink-0" />{zoneOf(p.addr)}</div>;
@@ -315,7 +384,8 @@ export function PropertyCard({ p }: { p: SiteProperty }) {
     <SiteLink to={{ page: 'immobile', id: p.id }} className={`${shell} shadow-[0_1px_2px_rgba(0,0,0,.04),0_12px_32px_-12px_rgba(0,0,0,.12)] ring-1 ring-[var(--line)] hover:shadow-[0_24px_48px_-16px_rgba(0,0,0,.2)]`}>
       <div className="relative">
         <Photo src={p.cover} alt={p.titolo} zoom className="aspect-[4/3]" />
-        <div className="absolute left-3 top-3 flex gap-1.5">{badge}{t.card === 'badge' && <span className="rounded-[calc(var(--r)*0.5)] bg-white/90 px-2.5 py-1 text-[11px] font-semibold text-neutral-800">{typeOf(p)}</span>}</div>
+        <div className="absolute left-3 top-3 flex gap-1.5">{riv ? <span className="rounded-[calc(var(--r)*0.5)] bg-[#e5533d] px-2.5 py-1 text-[11px] font-bold uppercase text-white">In evidenza</span> : badge}{t.card === 'badge' && <span className="rounded-[calc(var(--r)*0.5)] bg-white/90 px-2.5 py-1 text-[11px] font-semibold text-neutral-800">{typeOf(p)}</span>}</div>
+        {riv && <span className="absolute right-3 top-3 rounded-[calc(var(--r)*0.5)] bg-[var(--c)] px-2.5 py-1 text-[11px] font-bold uppercase text-[var(--on-c,#fff)]">{isRent(p) ? 'Affitto' : 'Disponibile'}</span>}
       </div>
       <div className="flex flex-1 flex-col p-5">
         <div className="line-clamp-1 text-[16px] font-semibold">{p.titolo}</div>{place}
@@ -323,6 +393,13 @@ export function PropertyCard({ p }: { p: SiteProperty }) {
         {t.card === 'button'
           ? <div className="mt-4 flex items-center justify-between">{pr}<span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--c)] px-4 py-2 text-[13px] font-semibold text-white">Dettagli <ArrowRight size={14} /></span></div>
           : <div className="mt-4 flex items-center justify-between">{pr}{t.card === 'badge' ? <Heart size={18} className="text-[var(--muted)]" /> : <ArrowRight size={18} className="text-[var(--c)] transition-transform duration-500 group-hover:translate-x-1" />}</div>}
+        {riv && (
+          <div className="mt-4 flex items-center gap-2.5 border-t border-[var(--line)] pt-4 text-xs text-[var(--muted)]">
+            {cfg.aboutImage ? <Photo src={cfg.aboutImage} className="h-7 w-7 rounded-full" /> : <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--soft)] text-[11px] font-bold text-[var(--fg)]">{initial(name)}</span>}
+            <span className="font-medium text-[var(--fg)]">{name}</span>
+            {p.createdAt && <span className="ml-auto">{new Date(p.createdAt).toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' })}</span>}
+          </div>
+        )}
       </div>
     </SiteLink>
   );
@@ -400,7 +477,7 @@ export function AboutBlock() {
         <div>
           <div className="text-[11px] font-semibold uppercase tracking-[0.35em] text-white/60">{cfg.aboutTitle}</div>
           <H className="mt-5 text-5xl md:text-6xl">{name}</H>
-          <p className="mt-6 max-w-xl text-lg leading-relaxed text-white/70">{cfg.aboutText}</p>
+          <p className="mt-6 max-w-xl text-lg leading-relaxed text-white/70">{introOf(cfg)}</p>
           <div className="mt-10 grid grid-cols-3 gap-6 border-t border-white/15 pt-8">{stats.slice(0, 3).map(s => <div key={s.l}><div className="text-4xl font-bold">{s.v}</div><div className="mt-1 text-xs text-white/60">{s.l}</div></div>)}</div>
         </div>
         <Photo src={photo} className="aspect-[4/5] rounded-[var(--r)]" />
@@ -414,7 +491,7 @@ export function AboutBlock() {
         <div className="p-10 md:p-14">
           <div className="text-xs font-semibold uppercase tracking-[0.25em] text-white/60">{cfg.aboutTitle}</div>
           <H className="mt-4 text-4xl md:text-5xl">{name}</H>
-          <p className="mt-5 leading-relaxed text-white/75">{cfg.aboutText}</p>
+          <p className="mt-5 leading-relaxed text-white/75">{introOf(cfg)}</p>
           <div className="mt-8 flex flex-wrap gap-8">{stats.slice(0, 3).map(s => <div key={s.l}><div className="text-3xl font-semibold">{s.v}</div><div className="text-xs text-white/60">{s.l}</div></div>)}</div>
         </div>
       </div>
@@ -422,7 +499,7 @@ export function AboutBlock() {
   );
   if (t.about === 'checklist') return (
     <Container className="grid items-center gap-12 py-24 lg:grid-cols-[1fr_1.3fr]">
-      <div><Eyebrow>Perché {name}</Eyebrow><H className="mt-3 text-4xl md:text-5xl">Più di un annuncio</H><p className="mt-5 leading-relaxed text-[var(--muted)]">{cfg.aboutText}</p>{checks}{more}</div>
+      <div><Eyebrow>Perché {name}</Eyebrow><H className="mt-3 text-4xl md:text-5xl">Più di un annuncio</H><p className="mt-5 leading-relaxed text-[var(--muted)]">{introOf(cfg)}</p>{checks}{more}</div>
       <Photo src={photo} className="aspect-[5/4] rounded-[calc(var(--r)*1.3)]" />
     </Container>
   );
@@ -433,14 +510,14 @@ export function AboutBlock() {
       </div>
       <div className="mt-14 grid items-center gap-10 md:grid-cols-[auto_1fr]">
         {cfg.aboutImage ? <Photo src={cfg.aboutImage} className="h-40 w-40 rounded-full" /> : <span className="flex h-40 w-40 items-center justify-center rounded-full bg-[var(--soft)] text-5xl font-bold">{initial(name)}</span>}
-        <div><H className="text-3xl md:text-4xl">“{cfg.aboutText}”</H><SiteLink to={{ page: 'agente' }} className="mt-5 inline-flex items-center gap-2 text-sm font-semibold">{name} · {cfg.agentRole} <ArrowRight size={14} /></SiteLink></div>
+        <div><H className="text-3xl md:text-4xl">“{introOf(cfg)}”</H><SiteLink to={{ page: 'agente' }} className="mt-5 inline-flex items-center gap-2 text-sm font-semibold">{name} · {cfg.agentRole} <ArrowRight size={14} /></SiteLink></div>
       </div>
     </Container>
   );
   return (
     <section className="bg-[var(--soft)] py-24">
       <Container className="grid items-center gap-10 lg:grid-cols-[1fr_1.35fr]">
-        <div><Eyebrow>{cfg.aboutTitle}</Eyebrow><H className="mt-3 text-3xl md:text-[2.7rem]">{name}</H><p className="mt-5 leading-relaxed text-[var(--muted)]">{cfg.aboutText}</p>{checks}{more}</div>
+        <div><Eyebrow>{cfg.aboutTitle}</Eyebrow><H className="mt-3 text-3xl md:text-[2.7rem]">{name}</H><p className="mt-5 leading-relaxed text-[var(--muted)]">{introOf(cfg)}</p>{checks}{more}</div>
         <div className="grid gap-4 sm:grid-cols-[1fr_190px]">
           <Photo src={photo} className="aspect-[4/3.2] rounded-[var(--r)] sm:aspect-auto sm:min-h-[400px]" />
           {cfg.showStats && <div className="grid grid-cols-2 gap-4 rounded-[var(--r)] bg-[var(--surface)] p-6 sm:grid-cols-1 sm:content-center">{stats.map(s => <div key={s.l}><div className="text-3xl font-bold tracking-tight text-[var(--c)]">{s.v}</div><div className="text-xs text-[var(--muted)]">{s.l}</div></div>)}</div>}
@@ -542,30 +619,45 @@ export function CtaBand() {
   );
 }
 
-// ---------- Piè di pagina: 4 varianti ----------
+// ---------- Piè di pagina: 4 varianti, stesse colonne (chi sono, contatti, ultimi immobili, link utili) ----------
 export function Footer() {
   const { cfg, name, properties, t } = useSite();
-  const tipi = tipiOf(properties).slice(0, 4);
   const dark = t.footer === 'dark' || t.footer === 'ink';
-  const bg = t.footer === 'dark' ? 'bg-[color-mix(in_srgb,var(--c)_25%,#08110c)] text-white' : t.footer === 'ink' ? 'bg-[#0b0b0f] text-white' : t.footer === 'soft' ? 'bg-[var(--soft)]' : 'border-t border-[var(--line)]';
+  const bg = t.footer === 'dark' ? 'bg-[color-mix(in_srgb,var(--ink)_85%,#000)] text-white' : t.footer === 'ink' ? 'bg-[#0b0b0f] text-white' : t.footer === 'soft' ? 'bg-[var(--soft)]' : 'border-t border-[var(--line)]';
   const mut = dark ? 'text-white/60' : 'text-[var(--muted)]';
+  const head = 'text-[11px] font-semibold uppercase tracking-[0.2em]';
   return (
     <footer className={bg}>
       {t.footer === 'light' && <Container className="pt-16"><div className="font-[family-name:var(--font-serif-accent)] text-[clamp(3rem,10vw,9rem)] leading-none tracking-tight">{name}</div></Container>}
-      <Container className="grid gap-10 py-14 sm:grid-cols-2 lg:grid-cols-4">
-        <div><div className="text-lg font-bold">{name}</div><p className={`mt-3 max-w-xs text-sm ${mut}`}>{cfg.agentRole}{cfg.city ? ` a ${cfg.city}` : ''}. {cfg.heroSubtitle}</p></div>
-        <div><div className="text-sm font-semibold">Link</div><div className={`mt-3 space-y-2 text-sm ${mut}`}>
-          <SiteLink to={{ page: 'home' }} className="block hover:opacity-100">Home</SiteLink><SiteLink to={{ page: 'immobili' }} className="block">Immobili</SiteLink><SiteLink to={{ page: 'agente' }} className="block">{cfg.aboutTitle}</SiteLink>
+      <Container className="grid gap-10 py-16 sm:grid-cols-2 lg:grid-cols-[1.3fr_1fr_1.2fr_1fr]">
+        <div>
+          <div className="text-lg font-bold">{name}</div>
+          <p className={`mt-3 max-w-xs text-sm leading-relaxed ${mut}`}>{cfg.agentRole}{cfg.city ? ` a ${cfg.city}` : ''}. {cfg.heroSubtitle}</p>
+          <div className={`mt-5 space-y-2 text-sm ${mut}`}>
+            {cfg.phone && <div className="flex items-center gap-2"><Phone size={14} />{cfg.phone}</div>}
+            {cfg.email && <div className="flex items-center gap-2"><Mail size={14} />{cfg.email}</div>}
+            {(cfg.address || cfg.city) && <div className="flex items-center gap-2"><MapPin size={14} />{cfg.address || cfg.city}</div>}
+          </div>
+        </div>
+        <div><div className={head}>Pagine</div><div className={`mt-4 space-y-2.5 text-sm ${mut}`}>{navLinks(cfg).map(([l, to]) => <SiteLink key={l} to={to} className="block hover:underline">{l}</SiteLink>)}</div></div>
+        <div><div className={head}>Ultimi immobili</div><div className="mt-4 space-y-3">
+          {properties.slice(0, 3).map(p => (
+            <SiteLink key={p.id} to={{ page: 'immobile', id: p.id }} className="flex items-center gap-3">
+              <Photo src={p.cover} className="h-12 w-16 shrink-0 rounded-[calc(var(--r)*0.5)]" />
+              <span className="min-w-0"><span className="block truncate text-sm font-medium">{p.titolo}</span>{cfg.showPrices && <span className={`text-xs ${mut}`}>{price(p.prezzo)}</span>}</span>
+            </SiteLink>
+          ))}
         </div></div>
-        <div><div className="text-sm font-semibold">Tipologie</div><div className={`mt-3 space-y-2 text-sm ${mut}`}>{tipi.length ? tipi.map(x => <div key={x}>{x}</div>) : <div>Case e appartamenti</div>}</div></div>
-        <div><div className="text-sm font-semibold">Contatti</div><div className={`mt-3 space-y-2 text-sm ${mut}`}>
-          {cfg.phone && <div className="flex items-center gap-2"><Phone size={14} />{cfg.phone}</div>}
-          {cfg.email && <div className="flex items-center gap-2"><Mail size={14} />{cfg.email}</div>}
-          {cfg.city && <div className="flex items-center gap-2"><MapPin size={14} />{cfg.city}</div>}
+        <div><div className={head}>Link utili</div><div className={`mt-4 space-y-2.5 text-sm ${mut}`}>
+          {cfg.zones.map(z => <SiteLink key={z.name} to={{ page: 'zona', slug: zoneSlug(z.name) }} className="block hover:underline">Casa a {z.name}</SiteLink>)}
+          <SiteLink to={{ page: 'immobili', f: { contratto: 'vendita' } }} className="block hover:underline">Immobili in vendita</SiteLink>
+          {properties.some(isRent) && <SiteLink to={{ page: 'immobili', f: { contratto: 'affitto' } }} className="block hover:underline">Immobili in affitto</SiteLink>}
+          {cfg.facebook && <a href={cfg.facebook} target="_blank" rel="noreferrer" className="block hover:underline">Facebook</a>}
+          {cfg.instagram && <a href={cfg.instagram} target="_blank" rel="noreferrer" className="block hover:underline">Instagram</a>}
         </div></div>
       </Container>
       <Container className={`flex flex-wrap justify-between gap-2 border-t py-6 text-xs ${dark ? 'border-white/10 text-white/45' : 'border-[var(--line)] text-[var(--muted)]'}`}>
-        <span>© {new Date().getFullYear()} {name}</span><span>Sito creato con Agente Immo</span>
+        <span>© {new Date().getFullYear()} {name}{cfg.legal ? ` · ${cfg.legal}` : ''}</span><span>Sito creato con Agente Immo</span>
       </Container>
     </footer>
   );
