@@ -447,6 +447,14 @@ html.metrics-light [class*="border-gray-600"] { border-color: #d8d4cb !important
 .blur-in { animation: gnm-blur-in var(--gnm-dur) var(--gnm-ease) both; }
 @keyframes gnm-rise { from { opacity: 0; transform: translateY(24px) scale(.97); } to { opacity: 1; transform: none; } }
 .rise { animation: gnm-rise var(--gnm-dur) var(--gnm-ease) backwards; } /* backwards: a fine animazione torna la transform di .tilt */
+/* Caricamento stile Foto AI (home staging): alone aurora sui bordi della foto, poi slider prima/dopo */
+@keyframes gnm-aurora-edge { 0% { opacity: .78; transform: scale(1.012); } 25% { opacity: 1; transform: scale(1); } 50% { opacity: .82; transform: scale(1.018); } 75% { opacity: 1; transform: scale(1.004); } 100% { opacity: .78; transform: scale(1.012); } }
+@keyframes gnm-aurora-shift { 0% { background-position: 0% 50%; opacity: .45; } 25% { opacity: .55; } 50% { background-position: 100% 50%; opacity: .45; } 75% { opacity: .55; } 100% { background-position: 0% 50%; opacity: .45; } }
+@keyframes gnm-aurora-pulse { 0%, 100% { transform: scale(1) rotate(0deg); } 50% { transform: scale(1.08) rotate(2deg); } }
+@keyframes gnm-aurora-burst { 0% { opacity: .5; } 40% { opacity: .85; } 100% { opacity: 0; } }
+@keyframes gnm-shimmer-text { 0% { background-position: 200% center; } 100% { background-position: -200% center; } }
+@keyframes gnm-slider-sweep { 0% { clip-path: inset(0 0 100% 0); } 100% { clip-path: inset(0 0 0% 0); } }
+@keyframes gnm-slider-pop { 0% { opacity: 0; transform: translate(-50%,-50%) scale(0); } 60% { opacity: 1; transform: translate(-50%,-50%) scale(1.15); } 100% { opacity: 1; transform: translate(-50%,-50%) scale(1); } }
 /* barra che si riempie da sinistra; chip che entrano uno alla volta */
 @keyframes gnm-grow { from { transform: scaleX(0); } }
 .grow-x { transform-origin: left; animation: gnm-grow calc(var(--gnm-dur) * 2) var(--gnm-ease) .5s backwards; }

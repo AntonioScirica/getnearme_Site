@@ -5,7 +5,7 @@ import { s, Box, Icon } from './ui';
 import { fetchRecentPhotos, deleteBatchPhoto, BatchInfo, BatchPhoto } from '@/lib/stagingBatches';
 import type { Project } from './types';
 import WatermarkDownloadModal from './WatermarkDownloadModal';
-import { InlineSlider } from './FotoAIScreen';
+import InlineSlider from '../InlineSlider';
 import Image from 'next/image';
 
 

@@ -8,6 +8,7 @@ import { downloadImage } from '@/lib/staging';
 import { AI_MOCK, mockFor } from '@/lib/aiMock';
 import { authFetch, CARD_SHADOW, extSend, EXTENSION_URL, go } from './api';
 import CountUp from './CountUp';
+import InlineSlider from '@/components/InlineSlider';
 import { CRITERI, withScores, type Criteri } from '@/lib/listingScore';
 
 // "Migliora annuncio": link portale -> estensione legge l'annuncio in background ->
@@ -441,11 +442,16 @@ function ProblemCard({ p, i, photos }: { p: Problem; i: number; photos: string[]
 }
 
 // Modifica foto con l'AI (Qwen-Image su RunPod) in un pannello sopra la pagina: prima/dopo e download.
+// Messaggi a rotazione durante la modifica (come Foto AI).
+const FIX_MSGS = ['Guardo la foto', 'Applico la modifica', 'Sistemo luce e dettagli', 'Rifinisco i bordi', 'Quasi pronta'];
+
 function PhotoFix({ src, label, edit, onClose }: { src: string; label: string; edit: string; onClose: () => void }) {
   const [prompt, setPrompt] = useState(edit);
   const [busy, setBusy] = useState(false);
   const [out, setOut] = useState<string | null>(null);
-  const [before, setBefore] = useState(false);
+  // Rivelazione come Foto AI: burst (l'alone sfuma) -> line (linea + maniglia) -> slider (prima/dopo)
+  const [reveal, setReveal] = useState<'burst' | 'line' | 'slider' | null>(null);
+  const [msg, setMsg] = useState(0);
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
@@ -454,20 +460,29 @@ function PhotoFix({ src, label, edit, onClose }: { src: string; label: string; e
     document.addEventListener('keydown', esc, true);
     return () => document.removeEventListener('keydown', esc, true);
   }, [onClose]);
+  useEffect(() => {
+    if (!busy) return;
+    const t = setInterval(() => setMsg(m => (m + 1) % FIX_MSGS.length), 3500);
+    return () => clearInterval(t);
+  }, [busy]);
 
   const run = async () => {
     if (busy || !prompt.trim()) return;
-    setBusy(true); setErr(null);
+    setBusy(true); setErr(null); setMsg(0); setReveal(null); setOut(null);
     // in modalita' finta la route torna la stessa foto
     const res = await authFetch('/api/platform/photo-edit', { method: 'POST', body: JSON.stringify({ imageUrl: src, prompt }) }).catch(() => null);
+    let d = res ? await res.json().catch(() => ({})) : {};
+    // ponytail: demo senza login (anteprima) in modalita' finta: stessa foto dopo qualche secondo
+    if (AI_MOCK && res?.status === 401) { await wait(5000); d = { url: src }; }
     setBusy(false);
-    const d = res ? await res.json().catch(() => ({})) : {};
-    if (res?.ok && d.url) { setOut(d.url); setBefore(false); }
-    else setErr(d.error === 'timeout' ? 'La GPU si sta avviando, riprova tra un minuto.' : 'Modifica non riuscita, riprova.');
+    if (!d.url) { setErr(d.error === 'timeout' ? 'La GPU si sta avviando, riprova tra un minuto.' : 'Modifica non riuscita, riprova.'); return; }
+    setOut(d.url); setReveal('burst');
+    setTimeout(() => setReveal('line'), 600);
+    setTimeout(() => setReveal('slider'), 1450);
   };
 
-  const shown = out && !before ? out : src;
-  const glass = 'rounded-full bg-white/85 text-xs font-semibold shadow-sm ring-1 ring-black/5 backdrop-blur-md';
+  const aurora = busy || reveal === 'burst';
+  const tag = 'absolute z-[12] rounded-full bg-[rgba(33,31,28,.72)] px-3 py-1.5 text-[11px] font-bold text-white';
 
   // Portal su body: un antenato con transform (animazioni di ingresso) farebbe da contenitore al fixed e l'overlay non coprirebbe tutto.
   return createPortal(
@@ -481,26 +496,37 @@ function PhotoFix({ src, label, edit, onClose }: { src: string; label: string; e
           <button onClick={onClose} aria-label="Chiudi" className="-mr-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted hover:bg-canvas hover:text-ink"><X size={18} /></button>
         </div>
 
-        {/* Una sola foto grande: l'originale, poi il risultato con Prima/Dopo */}
+        {/* Una sola foto grande: l'originale con l'alone mentre lavora, poi lo slider prima/dopo */}
         <div className="relative mt-4 aspect-[3/2] max-h-[60vh] w-full overflow-hidden rounded-2xl bg-canvas">
-          <img key={shown} src={shown} alt="" className="blur-in absolute inset-0 h-full w-full object-cover" />
-          {busy && (
-            <div className="pointer-events-none absolute inset-0 bg-white/20">
-              <div className="absolute inset-x-0 top-0 h-full will-change-transform" style={{ animation: 'gnm-scan 2.2s ease-in-out infinite alternate' }}>
-                <div className="absolute inset-x-0 top-0 h-24 -translate-y-1/2 bg-gradient-to-b from-transparent via-brand/25 to-transparent" />
-                <div className="absolute inset-x-0 top-0 h-0.5 -translate-y-1/2 bg-brand shadow-[0_0_14px_3px] shadow-brand/50" />
-              </div>
-            </div>
-          )}
-          {out && !busy && (
+          <img src={src} alt="" className="absolute inset-0 h-full w-full object-cover" />
+          {aurora && (
             <>
-              <div className={`absolute left-3 top-3 flex p-1 ${glass}`}>
-                {[['Prima', true], ['Dopo', false]].map(([t, b]) => (
-                  <button key={String(t)} onClick={() => setBefore(b as boolean)} className={`rounded-full px-3 py-1 ease-smooth transition-colors ${before === b ? 'bg-ink text-white' : 'text-muted hover:text-ink'}`}>{t}</button>
-                ))}
-              </div>
-              <button onClick={() => downloadImage(out, `${label.replace(/[^a-z]+/gi, '-').replace(/^-|-$/g, '').toLowerCase()}-sistemata.jpg`)}
-                className={`absolute right-3 top-3 flex h-9 items-center gap-1.5 px-3.5 ${glass} hover:bg-white`}><Download size={14} /> Scarica</button>
+              <div className="pointer-events-none absolute inset-0 z-[6]" style={{
+                background: 'radial-gradient(ellipse 86% 76% at 50% 50%, rgba(83,126,236,0) 46%, rgba(83,126,236,.5) 76%, rgba(83,126,236,.95) 100%)',
+                animation: reveal === 'burst' ? 'gnm-aurora-burst .6s ease-out forwards' : 'gnm-aurora-edge 2.4s ease-in-out infinite',
+              }} />
+              <div className="pointer-events-none absolute inset-0 z-[7]" style={{
+                background: 'radial-gradient(ellipse 40% 120% at 0% 50%, rgba(120,160,245,.85) 0%, transparent 55%), radial-gradient(ellipse 40% 120% at 100% 50%, rgba(83,126,236,.85) 0%, transparent 55%), radial-gradient(ellipse 120% 40% at 50% 0%, rgba(83,126,236,.7) 0%, transparent 55%), radial-gradient(ellipse 120% 40% at 50% 100%, rgba(60,100,210,.7) 0%, transparent 55%)',
+                backgroundSize: '200% 200%', mixBlendMode: 'screen',
+                animation: reveal === 'burst' ? 'gnm-aurora-burst .6s ease-out forwards' : 'gnm-aurora-shift 3s ease-in-out infinite, gnm-aurora-pulse 4s ease-in-out infinite',
+              }} />
+              {busy && (
+                <div className="absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 items-center gap-2.5 whitespace-nowrap rounded-full bg-black/55 px-5 py-2.5 backdrop-blur-xl">
+                  <span className="h-3.5 w-3.5 shrink-0 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                  <span key={msg} className="blur-in bg-clip-text text-xs font-bold text-transparent" style={{ backgroundImage: 'linear-gradient(to right, #dbe5fb 20%, #537eec 50%, #dbe5fb 80%)', backgroundSize: '200% auto', animation: 'gnm-shimmer-text 2.5s linear infinite' }}>{FIX_MSGS[msg]}...</span>
+                </div>
+              )}
+            </>
+          )}
+          {out && (reveal === 'line' || reveal === 'slider') && (
+            <InlineSlider before={src} after={out} isVertical={false} showImages={reveal === 'slider'} interactive={reveal === 'slider'} />
+          )}
+          {reveal === 'slider' && (
+            <>
+              <span className={`blur-in bottom-3 left-3 ${tag}`}>Prima</span>
+              <span className={`blur-in bottom-3 right-3 ${tag}`}>Dopo</span>
+              <button onClick={() => downloadImage(out!, `${label.replace(/[^a-z]+/gi, '-').replace(/^-|-$/g, '').toLowerCase()}-sistemata.jpg`)}
+                className="blur-in absolute right-3 top-3 z-[12] flex h-9 items-center gap-1.5 rounded-full bg-white/85 px-3.5 text-xs font-semibold shadow-sm ring-1 ring-black/5 backdrop-blur-md hover:bg-white"><Download size={14} /> Scarica</button>
             </>
           )}
         </div>
