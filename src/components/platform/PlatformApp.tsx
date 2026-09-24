@@ -356,7 +356,7 @@ export function HomeView({ name, initialUrl = '', onSaved }: { name?: string; in
 
   return (
     <div className="flex min-h-[calc(100vh-5rem)] flex-col items-center justify-center py-10">
-      <h1 className={`text-center font-display text-4xl font-bold leading-tight tracking-tight ease-smooth transition-all md:text-5xl ${titleOut ? '-translate-y-3 opacity-0 blur-[6px]' : ''}`}>
+      <h1 className={`text-center font-display text-4xl font-bold leading-[1.2] tracking-tight ease-smooth transition-all md:text-5xl md:leading-[1.2] ${titleOut ? '-translate-y-3 opacity-0 blur-[6px]' : ''}`}>
         {head.split(' ').map((w, i) => <span key={`${shown}-${i}`} className="blur-in inline-block" style={{ animationDelay: `${i * 0.05}s` }}>{w}&nbsp;</span>)}
         <span key={subtitle} className="blur-in block text-muted/70" style={{ animationDelay: shown === 'scanning' ? '0s' : '0.3s' }}>{subtitle}</span>
       </h1>

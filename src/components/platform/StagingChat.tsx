@@ -121,7 +121,7 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
           {/* Vuota: un solo invito, grande e al centro, per caricare la foto */}
           {empty && (
             <div className="flex min-h-[calc(100vh-22rem)] flex-col items-center justify-center">
-              <h1 className="text-center font-display text-4xl font-bold tracking-tight md:text-5xl">
+              <h1 className="text-center font-display text-4xl font-bold leading-[1.2] tracking-tight md:text-5xl md:leading-[1.2]">
                 <span className="blur-in inline-block">Home staging</span>
                 <span className="blur-in block text-muted/70" style={{ animationDelay: '.1s' }}>Carica una foto e chiedi.</span>
               </h1>

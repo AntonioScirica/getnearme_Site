@@ -65,7 +65,7 @@ export default function StagingView() {
 
   return (
     <div className="mx-auto max-w-5xl pb-16 pt-6">
-      <h1 className="text-center font-display text-4xl font-bold tracking-tight md:text-5xl">
+      <h1 className="text-center font-display text-4xl font-bold leading-[1.2] tracking-tight md:text-5xl md:leading-[1.2]">
         <span className="blur-in inline-block">Home staging</span>
         <span className="blur-in block text-muted/70" style={{ animationDelay: '.1s' }}>Scegli cosa fare su ogni foto, poi generale tutte insieme.</span>
       </h1>
