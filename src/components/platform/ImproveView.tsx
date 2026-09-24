@@ -363,7 +363,8 @@ function ScoreInfo({ a }: { a: Analysis }) {
   }, [open]);
   const gap = 100 - a.score_potenziale;
   return (
-    <div ref={box} className="relative">
+    // translate-y 2px: centro ottico, il titolo e' quasi tutto minuscolo e il suo centro cade sotto quello delle maiuscole
+    <div ref={box} className="relative translate-y-[2px]">
       <button type="button" onClick={() => setOpen(v => !v)} aria-expanded={open} title="Come calcoliamo il punteggio"
         className="flex h-7 items-center gap-1.5 rounded-full bg-emerald-50 pl-2.5 pr-1 text-sm font-semibold leading-none text-emerald-700 outline-none ease-smooth transition-colors hover:bg-emerald-100 focus-visible:ring-2 focus-visible:ring-emerald-300">
         {a.score_potenziale}/100
