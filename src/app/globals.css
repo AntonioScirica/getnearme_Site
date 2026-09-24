@@ -447,6 +447,12 @@ html.metrics-light [class*="border-gray-600"] { border-color: #d8d4cb !important
 .blur-in { animation: gnm-blur-in var(--gnm-dur) var(--gnm-ease) both; }
 @keyframes gnm-rise { from { opacity: 0; transform: translateY(24px) scale(.97); } to { opacity: 1; transform: none; } }
 .rise { animation: gnm-rise var(--gnm-dur) var(--gnm-ease) backwards; } /* backwards: a fine animazione torna la transform di .tilt */
+/* barra che si riempie da sinistra; chip che entrano uno alla volta */
+@keyframes gnm-grow { from { transform: scaleX(0); } }
+.grow-x { transform-origin: left; animation: gnm-grow calc(var(--gnm-dur) * 2) var(--gnm-ease) .5s backwards; }
+.stagger-chips > * { animation: gnm-blur-in var(--gnm-dur) var(--gnm-ease) backwards; }
+.stagger-chips > :nth-child(1) { animation-delay: .7s; } .stagger-chips > :nth-child(2) { animation-delay: .78s; }
+.stagger-chips > :nth-child(3) { animation-delay: .86s; } .stagger-chips > :nth-child(4) { animation-delay: .94s; }
 /* card che si inclina verso il mouse: --rx/--ry/--mx/--my impostate da JS */
 .tilt { transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateY(var(--lift, 0)); transition: transform var(--gnm-dur) var(--gnm-ease), box-shadow var(--gnm-dur) var(--gnm-ease); will-change: transform; }
 .tilt:active { --lift: 2px; }
@@ -466,7 +472,7 @@ html.metrics-light [class*="border-gray-600"] { border-color: #d8d4cb !important
 .group:hover .xl-row:nth-child(3) > div { animation-delay: .15s; } .group:hover .xl-row:nth-child(4) > div { animation-delay: .3s; }
 .group:hover .xl-row:nth-child(5) > div { animation-delay: .45s; } .group:hover .xl-row:nth-child(6) > div { animation-delay: .6s; }
 @media (prefers-reduced-motion: reduce) {
-  .blur-in, .rise { animation: none; }
+  .blur-in, .rise, .grow-x, .stagger-chips > * { animation: none; }
   .ease-smooth { transition-duration: 1ms !important; transition-delay: 0s !important; }
   .tilt { transform: none !important; }
   .par-1, .par-2, .par-3 { transform: none !important; }

@@ -172,20 +172,20 @@ export function Verdict({ listing, analysis: a }: { listing: Listing; analysis: 
   const urgent = a.problemi.filter(p => p.gravita === 'alta').length;
   return (
     <div className="flex h-full gap-5 p-2">
-      <div className="blur-in hidden w-64 shrink-0 overflow-hidden rounded-2xl bg-canvas sm:block">
+      <div className="blur-in hidden w-64 shrink-0 overflow-hidden rounded-2xl bg-canvas sm:block" style={{ animationDelay: '.3s' }}>
         {listing.photos[0] && <img src={listing.photos[0]} alt="" className="h-full w-full object-cover" />}
       </div>
       <div className="flex min-w-0 flex-1 flex-col">
-        <div className="blur-in flex items-end justify-between gap-3" style={{ animationDelay: '.08s' }}>
+        <div className="blur-in flex items-end justify-between gap-3" style={{ animationDelay: '.4s' }}>
           <div>
             <div className="text-xs font-medium text-muted">Score dell&apos;annuncio attuale</div>
-            <div className={`mt-1 text-5xl font-bold leading-none tracking-tight ${tone.text}`}><CountUp value={a.score} /><span className="text-xl text-muted">/100</span></div>
+            <div className={`mt-1 text-5xl font-bold leading-none tracking-tight ${tone.text}`}><CountUp value={a.score} delay={400} duration={1200} /><span className="text-xl text-muted">/100</span></div>
           </div>
           <a href={listing.url} target="_blank" rel="noreferrer" className="flex shrink-0 items-center gap-1 text-xs text-muted hover:text-ink"><ExternalLink size={12} /> Originale</a>
         </div>
-        <div className="blur-in mt-3 h-1.5 overflow-hidden rounded-full bg-canvas" style={{ animationDelay: '.12s' }}><div className={`h-full rounded-full ${tone.bar} ease-smooth transition-[width]`} style={{ width: `${a.score}%` }} /></div>
-        <p className="blur-in mt-3 line-clamp-3 text-sm leading-relaxed text-ink/80" style={{ animationDelay: '.16s' }}>{a.sintesi}</p>
-        <div className="blur-in mt-auto flex flex-wrap gap-1.5 pt-3 text-xs" style={{ animationDelay: '.2s' }}>
+        <div className="blur-in mt-3 h-1.5 overflow-hidden rounded-full bg-canvas" style={{ animationDelay: '.5s' }}><div className={`grow-x h-full rounded-full ${tone.bar}`} style={{ width: `${a.score}%` }} /></div>
+        <p className="blur-in mt-3 line-clamp-3 text-sm leading-relaxed text-ink/80" style={{ animationDelay: '.6s' }}>{a.sintesi}</p>
+        <div className="stagger-chips mt-auto flex flex-wrap gap-1.5 pt-3 text-xs">
           {urgent > 0 && <span className="rounded-full bg-rose-50 px-3 py-1 font-medium text-rose-700">{urgent} da fare subito</span>}
           <span className="rounded-full bg-canvas px-3 py-1 text-muted">{a.problemi.length} punti da sistemare</span>
           <span className="rounded-full bg-canvas px-3 py-1 text-muted">{a.dati_mancanti.length} dati mancanti</span>
@@ -244,7 +244,7 @@ export function Results({ listing, analysis: a, onSaved, onRestart }: { listing:
   return (
     <div className="mx-auto mt-6 w-full max-w-[56rem] space-y-6 text-left">
       {/* Annuncio riscritto: prima cosa, a tutta larghezza */}
-      <section className={`rise ${BOX}`} style={{ animationDelay: '.35s' }}>
+      <section className={`rise ${BOX}`} style={{ animationDelay: '.9s' }}>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0">
             <h2 className="flex items-center gap-2 text-2xl font-bold tracking-tight"><Sparkles size={20} /> Annuncio riscritto</h2>
@@ -259,27 +259,33 @@ export function Results({ listing, analysis: a, onSaved, onRestart }: { listing:
         </div>
         {saveError && <p className="mt-3 text-sm text-rose-600">{saveError}</p>}
 
-        <Field label="Titolo" meta={`${titolo.length}/70`} warn={titolo.length > 70} copyText={titolo}>
+        <Field label="Titolo" meta={`${titolo.length}/70`} warn={titolo.length > 70}>
           {showBefore && <Before text={listing.title} />}
-          <input value={titolo} onChange={e => setTitolo(e.target.value)} className={`${input} text-base font-medium`} />
+          <div className="relative">
+            <input value={titolo} onChange={e => setTitolo(e.target.value)} className={`${input} pr-14 text-base font-medium`} />
+            <CopyIcon text={titolo} center />
+          </div>
         </Field>
-        <Field label="Descrizione" meta={`${words} parole`} copyText={descrizione}>
+        <Field label="Descrizione" meta={`${words} parole`}>
           <div className={showBefore ? 'grid gap-4 lg:grid-cols-2' : ''}>
             {showBefore && <Before text={text(listing.propertyInfo.description)} tall />}
-            <textarea rows={14} value={descrizione} onChange={e => setDescrizione(e.target.value)} className={`${input} text-[15px] leading-relaxed`} />
+            <div className="relative">
+              <textarea rows={14} value={descrizione} onChange={e => setDescrizione(e.target.value)} className={`${input} pr-14 text-[15px] leading-relaxed`} />
+              <CopyIcon text={descrizione} />
+            </div>
           </div>
         </Field>
       </section>
 
       {/* Cosa sistemare */}
-      <section className="rise pt-6" style={{ animationDelay: '.45s' }}>
+      <section className="rise pt-6" style={{ animationDelay: '1s' }}>
         <h2 className="text-center text-3xl font-bold tracking-tight">Cosa sistemare sul portale</h2>
         <p className="mt-1 text-center text-muted">In ordine di priorità: cosa non va, perché ti fa perdere contatti, cosa fare adesso.</p>
         <ol className="mt-8 grid gap-5 lg:grid-cols-2">
           {a.problemi.map((p, i) => {
             const g = GRAVITA[p.gravita];
             return (
-              <li key={i} className={`rise flex flex-col ${BOX}`} style={{ animationDelay: `${0.5 + i * 0.06}s` }}>
+              <li key={i} className={`rise flex flex-col ${BOX}`} style={{ animationDelay: `${1.05 + i * 0.08}s` }}>
                 <div className="flex items-center gap-2.5">
                   <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-ink text-sm font-semibold text-white">{i + 1}</span>
                   <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${g.cls}`}>{g.label}</span>
@@ -400,12 +406,22 @@ function Section({ title, hint, copyText, children }: { title: string; hint?: st
   );
 }
 
-function Field({ label, meta, warn, copyText, children }: { label: string; meta: string; warn?: boolean; copyText: string; children: React.ReactNode }) {
+// Copia dentro il campo, in alto a destra: solo icona, diventa spunta per 1,5 s.
+function CopyIcon({ text: t, center }: { text: string; center?: boolean }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button type="button" aria-label="Copia" title="Copia" onClick={() => { navigator.clipboard.writeText(t); setCopied(true); setTimeout(() => setCopied(false), 1500); }}
+      className={`absolute right-2 flex h-9 w-9 ${center ? 'top-1/2 -translate-y-1/2' : 'top-2'} items-center justify-center rounded-full bg-white text-muted shadow-sm ring-1 ring-black/5 ease-smooth transition-colors hover:text-ink`}>
+      {copied ? <Check size={15} className="text-emerald-500" /> : <Copy size={15} />}
+    </button>
+  );
+}
+
+function Field({ label, meta, warn, children }: { label: string; meta: string; warn?: boolean; children: React.ReactNode }) {
   return (
     <div className="mt-5">
-      <div className="mb-1.5 flex items-center justify-between">
+      <div className="mb-1.5">
         <span className="text-xs font-semibold text-muted">{label} <span className={`ml-1 font-normal ${warn ? 'text-rose-600' : ''}`}>{meta}</span></span>
-        <CopyBtn text={copyText} />
       </div>
       {children}
     </div>
