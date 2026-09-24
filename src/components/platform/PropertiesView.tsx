@@ -5,6 +5,7 @@ import type { Map as LeafletMap, Marker } from 'leaflet';
 import { ArrowUpRight, Bath, BedDouble, Building2, Footprints, GraduationCap, Hospital, Loader2, MapPin, Maximize2, Pill, School, Search, ShoppingCart, Train, TrainFront, TramFront, Trees, X } from 'lucide-react';
 import type { Poi } from '@/lib/zone';
 import type { ProjectData } from '@/lib/projects';
+import { FAKE_PROPERTIES } from '@/lib/fakeProperties';
 import { authFetch, CARD_SHADOW, formatPrice, go } from './api';
 
 // Pagina Immobili: in alto la mappa con tutti gli immobili (pin con la foto, clic = scheda),
@@ -65,7 +66,9 @@ function ensureLeafletCss() {
   document.head.appendChild(link);
 }
 
-export default function PropertiesView({ projects }: { projects: ProjectData[] | null }) {
+export default function PropertiesView({ projects: real }: { projects: ProjectData[] | null }) {
+  // ponytail: in sviluppo si aggiungono 10 immobili finti (mappa e lista piene); in produzione mai
+  const projects = useMemo(() => (real && process.env.NODE_ENV === 'development' ? [...real, ...FAKE_PROPERTIES] : real), [real]);
   const [filter, setFilter] = useState<Filter>('tutti');
   const [q, setQ] = useState('');
   const [hover, setHover] = useState<string | null>(null);
@@ -251,7 +254,7 @@ function PropertyMap({ projects, geo, hover, loading }: { projects: ProjectData[
   const waiting = loading || projects.some(p => p.addr?.trim() && !(p.addr.trim() in geo));
 
   return (
-    <div className="relative isolate h-[max(560px,72vh)] overflow-hidden">
+    <div className="relative isolate h-[max(680px,86vh)] overflow-hidden">
       <div ref={el} className="absolute inset-0 z-0 bg-canvas" style={{ maskImage: 'linear-gradient(to bottom, #000 62%, transparent 97%)', WebkitMaskImage: 'linear-gradient(to bottom, #000 62%, transparent 97%)' }} />
       {/* sfumatura in basso: blur progressivo sopra la dissolvenza */}
       {[2, 6, 12].map((b, i) => {
