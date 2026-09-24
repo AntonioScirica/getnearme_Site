@@ -186,9 +186,10 @@ function ImproveTile({ phase, stage, onOpen, onClose, onSubmit, onNew, hover, se
     <div className={`relative mx-2.5 w-full max-w-full shrink-0 transition-all ease-smooth ${width} ${intro ? 'rise' : ''}`} style={{ animationDelay: '0.25s' }}>
       {/* Fascio di scansione blu AgenteImmo: fuori dalla card (niente overflow), sporge dai bordi */}
       {stage === 'scanning' && (
-        <div className="blur-in pointer-events-none absolute -inset-x-5 bottom-4 top-[5.5rem] z-40" style={{ maskImage: 'linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent)' }}>
+        // la maschera taglia tutto cio' che esce dal suo box: il box sborda di 3rem sopra e sotto il percorso della linea, cosi' l'alone non si tronca
+        <div className="blur-in pointer-events-none absolute -inset-x-5 -bottom-8 top-10 z-40" style={{ maskImage: 'linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent)' }}>
           {/* solo transform: gira sul compositor, fluido anche se la pagina e' occupata */}
-          <div className="absolute inset-0 will-change-transform" style={{ animation: 'gnm-scan 2.2s ease-in-out infinite alternate' }}>
+          <div className="absolute inset-x-0 bottom-12 top-12 will-change-transform" style={{ animation: 'gnm-scan 2.2s ease-in-out infinite alternate' }}>
             <div className="absolute inset-x-0 top-0 h-24 -translate-y-1/2 bg-gradient-to-b from-transparent via-brand/20 to-transparent" />
             <div className="absolute inset-x-0 top-0 h-0.5 -translate-y-1/2 bg-brand shadow-[0_0_14px_3px] shadow-brand/50" />
           </div>
@@ -348,7 +349,7 @@ export function HomeView({ name, initialUrl = '', onSaved }: { name?: string; in
         </Tile>
       </div>
 
-      {phase === 'done' && shown === 'done' && imp.listing && imp.analysis && <Results listing={imp.listing} analysis={imp.analysis} onSaved={onSaved} onRestart={restart} />}
+      {phase === 'done' && imp.listing && imp.analysis && <Results listing={imp.listing} analysis={imp.analysis} onSaved={onSaved} onRestart={restart} />}
     </div>
   );
 }

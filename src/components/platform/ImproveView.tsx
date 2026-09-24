@@ -131,26 +131,34 @@ export function BrowserBody({ stage, listing, error, url, onRetry, onManual, onT
     </div>
   );
 
+  // Anteprima dell'annuncio: stessa impaginazione in apertura e in scansione, ogni dato
+  // che manca (o non e' ancora arrivato) resta uno skeleton al suo posto: niente salti.
   const info = listing?.propertyInfo ?? {};
-  if (stage === 'opening' || !listing?.photos.length && !text(info.description)) return (
-    <div className="relative h-full animate-pulse space-y-4 p-2">
-      <div className="grid h-56 grid-cols-3 grid-rows-2 gap-2"><div className="col-span-2 row-span-2 rounded-2xl bg-canvas" /><div className="rounded-2xl bg-canvas" /><div className="rounded-2xl bg-canvas" /></div>
-      <div className="h-6 w-2/3 rounded-full bg-canvas" /><div className="h-4 w-1/3 rounded-full bg-canvas" />
-      <div className="space-y-2 pt-2">{[...Array(4)].map((_, i) => <div key={i} className="h-3 rounded-full bg-canvas" />)}</div>
-    </div>
-  );
-
+  const photos = stage === 'opening' ? [] : listing?.photos ?? [];
+  const title = stage === 'opening' ? '' : listing?.title ?? '';
+  const desc = stage === 'opening' ? '' : text(info.description);
+  const facts = stage === 'opening' ? [] : [text(info.price), text(info.surface), listing?.address ?? ''].filter(Boolean);
+  const fade = (d: number) => ({ className: 'blur-in', style: { animationDelay: `${d}s` } });
   return (
-    <div className="relative h-full overflow-hidden p-2">
+    <div className="relative flex h-full flex-col overflow-hidden p-2">
       {/* righe esplicite (grid-rows-2 = minmax(0,1fr)): senza, le foto piccole crescono all'altezza naturale e sforano sul testo */}
-      <div className="grid h-56 grid-cols-3 grid-rows-2 gap-2 overflow-hidden">
-        {listing!.photos.slice(0, 3).map((src, i) => <img key={src} src={src} alt="" decoding="async" className={`blur-in h-full min-h-0 w-full rounded-2xl object-cover ${i === 0 ? 'col-span-2 row-span-2' : ''}`} style={{ animationDelay: `${i * 0.08}s` }} />)}
-        {!listing!.photos.length && <div className="col-span-3 row-span-2 rounded-2xl bg-canvas" />}
+      <div className="grid h-60 shrink-0 grid-cols-3 grid-rows-2 gap-2 overflow-hidden">
+        {[0, 1, 2].map(i => photos[i]
+          ? <img key={photos[i]} src={photos[i]} alt="" decoding="async" {...fade(i * 0.08)} className={`blur-in h-full min-h-0 w-full rounded-2xl object-cover ${i === 0 ? 'col-span-2 row-span-2' : ''}`} />
+          : <div key={i} className={`shimmer rounded-2xl ${i === 0 ? 'col-span-2 row-span-2' : ''}`} />)}
       </div>
-      <div className="blur-in mt-4 text-xl font-bold tracking-tight" style={{ animationDelay: '.2s' }}>{listing!.title}</div>
-      <div className="blur-in mt-1 text-sm text-muted" style={{ animationDelay: '.25s' }}>{[text(info.price), text(info.surface), listing!.address].filter(Boolean).join(' · ')}</div>
-      <p className="blur-in mt-3 line-clamp-4 text-sm leading-relaxed text-muted" style={{ animationDelay: '.3s' }}>{text(info.description)}</p>
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-white to-transparent" />
+      <div className="px-2 pt-6">
+        {title ? <h3 {...fade(0.2)} className="blur-in line-clamp-1 text-xl font-bold tracking-tight">{title}</h3> : <div className="shimmer h-6 w-2/3 rounded-full" />}
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          {facts.length
+            ? facts.map((f, i) => <span key={f} {...fade(0.25 + i * 0.05)} className="blur-in rounded-full bg-canvas px-3 py-1 text-xs font-medium text-ink/70">{f}</span>)
+            : ['w-20', 'w-16', 'w-40'].map(w => <span key={w} className={`shimmer h-6 rounded-full ${w}`} />)}
+        </div>
+        {desc
+          ? <p {...fade(0.35)} className="blur-in mt-5 line-clamp-4 text-sm leading-relaxed text-muted">{desc}</p>
+          : <div className="mt-5 space-y-2.5">{['w-full', 'w-full', 'w-11/12', 'w-3/5'].map((w, i) => <div key={i} className={`shimmer h-3 rounded-full ${w}`} />)}</div>}
+      </div>
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-white to-transparent" />
     </div>
   );
 }
@@ -244,7 +252,7 @@ export function Results({ listing, analysis: a, onSaved, onRestart }: { listing:
   return (
     <div className="mx-auto mt-6 w-full max-w-[56rem] space-y-6 text-left">
       {/* Annuncio riscritto: prima cosa, a tutta larghezza */}
-      <section className={`rise ${BOX}`} style={{ animationDelay: '.9s' }}>
+      <section className={`rise ${BOX}`} style={{ animationDelay: '1.2s' }}>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0">
             <h2 className="flex items-center gap-2 text-2xl font-bold tracking-tight"><Sparkles size={20} /> Annuncio riscritto</h2>
@@ -262,7 +270,7 @@ export function Results({ listing, analysis: a, onSaved, onRestart }: { listing:
         <Field label="Titolo" meta={`${titolo.length}/70`} warn={titolo.length > 70}>
           {showBefore && <Before text={listing.title} />}
           <div className="relative">
-            <input value={titolo} onChange={e => setTitolo(e.target.value)} className={`${input} pr-14 text-base font-medium`} />
+            <input value={titolo} onChange={e => setTitolo(e.target.value)} className={`${input} pr-12 text-base font-medium`} />
             <CopyIcon text={titolo} center />
           </div>
         </Field>
@@ -270,7 +278,7 @@ export function Results({ listing, analysis: a, onSaved, onRestart }: { listing:
           <div className={showBefore ? 'grid gap-4 lg:grid-cols-2' : ''}>
             {showBefore && <Before text={text(listing.propertyInfo.description)} tall />}
             <div className="relative">
-              <textarea rows={14} value={descrizione} onChange={e => setDescrizione(e.target.value)} className={`${input} pr-14 text-[15px] leading-relaxed`} />
+              <textarea rows={14} value={descrizione} onChange={e => setDescrizione(e.target.value)} className={`${input} pr-12 text-[15px] leading-relaxed`} />
               <CopyIcon text={descrizione} />
             </div>
           </div>
@@ -278,14 +286,14 @@ export function Results({ listing, analysis: a, onSaved, onRestart }: { listing:
       </section>
 
       {/* Cosa sistemare */}
-      <section className="rise pt-6" style={{ animationDelay: '1s' }}>
+      <section className="rise pt-6" style={{ animationDelay: '1.3s' }}>
         <h2 className="text-center text-3xl font-bold tracking-tight">Cosa sistemare sul portale</h2>
         <p className="mt-1 text-center text-muted">In ordine di priorità: cosa non va, perché ti fa perdere contatti, cosa fare adesso.</p>
         <ol className="mt-8 grid gap-5 lg:grid-cols-2">
           {a.problemi.map((p, i) => {
             const g = GRAVITA[p.gravita];
             return (
-              <li key={i} className={`rise flex flex-col ${BOX}`} style={{ animationDelay: `${1.05 + i * 0.08}s` }}>
+              <li key={i} className={`rise flex flex-col ${BOX}`} style={{ animationDelay: `${1.35 + i * 0.08}s` }}>
                 <div className="flex items-center gap-2.5">
                   <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-ink text-sm font-semibold text-white">{i + 1}</span>
                   <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${g.cls}`}>{g.label}</span>
@@ -411,8 +419,8 @@ function CopyIcon({ text: t, center }: { text: string; center?: boolean }) {
   const [copied, setCopied] = useState(false);
   return (
     <button type="button" aria-label="Copia" title="Copia" onClick={() => { navigator.clipboard.writeText(t); setCopied(true); setTimeout(() => setCopied(false), 1500); }}
-      className={`absolute right-2 flex h-9 w-9 ${center ? 'top-1/2 -translate-y-1/2' : 'top-2'} items-center justify-center rounded-full bg-white text-muted shadow-sm ring-1 ring-black/5 ease-smooth transition-colors hover:text-ink`}>
-      {copied ? <Check size={15} className="text-emerald-500" /> : <Copy size={15} />}
+      className={`absolute right-2.5 flex h-7 w-7 ${center ? 'top-1/2 -translate-y-1/2' : 'top-2.5'} items-center justify-center rounded-full bg-white text-muted shadow-sm ring-1 ring-black/5 ease-smooth transition-colors hover:text-ink`}>
+      {copied ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />}
     </button>
   );
 }
