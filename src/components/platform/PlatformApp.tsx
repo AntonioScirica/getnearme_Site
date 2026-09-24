@@ -30,8 +30,8 @@ function useHashRoute(): string {
   return route;
 }
 
-// Sfondo generale: bianco con puntini grigi al 5%.
-export const DOTS: React.CSSProperties = { background: 'radial-gradient(rgba(0,0,0,0.05) 1.2px, transparent 1.2px) 0 0 / 18px 18px, #fff' };
+// Sfondo generale: bianco con puntini grigi al 9%.
+export const DOTS: React.CSSProperties = { background: 'radial-gradient(rgba(0,0,0,0.09) 1.2px, transparent 1.2px) 0 0 / 18px 18px, #fff' };
 
 const NAV = [
   { path: '/', label: 'Home', icon: Home },
