@@ -233,7 +233,7 @@ export function HomeView({ name }: { projects?: ProjectData[] | null; name?: str
   const words = title === 'link' ? ['Incolla', 'il', 'link', 'dell\'annuncio'] : TITLE_WORDS(name);
   // Apertura: parte il container (altre card via, box al centro), la card si trasforma subito dopo, sovrapposta.
   // Chiusura: al contrario, con gli stessi piccoli sfalsamenti.
-  const others = (i: number) => `mx-2.5 ${open ? 'pointer-events-none overflow-hidden sm:mx-0! sm:w-0! scale-75 opacity-0 blur-[8px]' : i === 1 ? 'delay-[160ms]' : 'delay-[220ms]'}`;
+  const others = (i: number) => `mx-2.5 ${open ? 'pointer-events-none overflow-hidden sm:mx-0! sm:w-0! sm:max-h-0 scale-75 opacity-0 blur-[8px]' : `sm:max-h-[24rem] ${i === 1 ? 'delay-[160ms]' : 'delay-[220ms]'}`}`;
 
   return (
     <div className="flex min-h-[calc(100vh-5rem)] flex-col items-center justify-center py-10">
