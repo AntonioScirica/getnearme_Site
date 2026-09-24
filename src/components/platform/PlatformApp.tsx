@@ -65,7 +65,7 @@ export default function PlatformApp({ userData }: { userData: UserData }) {
           <nav className="mx-auto hidden items-center gap-1 rounded-full bg-canvas p-1 md:flex">
             {[...NAV, ...(isPlatformAdmin(userData.email) ? [{ path: '/costi', label: 'Costi AI', icon: Gauge }] : [])].map(({ path, label }) => {
               const active = route === path || (path === '/immobili' && !!detailId);
-              return <a key={path} href={`#${path}`} className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${active ? 'bg-white text-ink shadow-sm' : 'text-muted hover:text-ink'}`}>{label}</a>;
+              return <a key={path} href={`#${path}`} className={`rounded-full px-4 py-1.5 text-sm font-medium ease-smooth transition-colors ${active ? 'bg-white text-ink shadow-sm' : 'text-muted hover:text-ink'}`}>{label}</a>;
             })}
           </nav>
           <div className="ml-auto flex items-center gap-2.5 md:ml-0">
@@ -129,7 +129,7 @@ function Tile({ kicker, title, onClick, href, active, index, onHover, intro, wra
   );
   // Ingresso sul contenitore, inclinazione sulla card: due transform che non si sovrascrivono.
   return (
-    <div ref={wrapRef} className={`w-full shrink-0 transition-all duration-500 ease-spring sm:w-80 ${intro ? 'rise' : ''} ${wrapClass}`} style={{ animationDelay: `${0.25 + index * 0.1}s`, ...wrapStyle }}>
+    <div ref={wrapRef} className={`w-full shrink-0 transition-all ease-smooth sm:w-80 ${intro ? 'rise' : ''} ${wrapClass}`} style={{ animationDelay: `${0.25 + index * 0.1}s`, ...wrapStyle }}>
       {href ? <a href={href} {...props}>{inner}</a> : <button type="button" onClick={onClick} {...props}>{inner}</button>}
     </div>
   );
@@ -146,7 +146,7 @@ function ScoreBadge({ on }: { on: boolean }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [on]);
   const color = n >= 75 ? 'bg-emerald-500' : n >= 55 ? 'bg-amber-400' : 'bg-rose-500';
-  return <span className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold text-white shadow-lg transition-colors duration-300 ${color}`}>{n}{n >= 75 && ' ✓'}</span>;
+  return <span className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold text-white shadow-lg ease-smooth transition-colors ${color}`}>{n}{n >= 75 && ' ✓'}</span>;
 }
 
 const TITLE_WORDS = (name?: string) => (name ? `Ciao ${name.split(' ')[0]}, da dove partiamo?` : 'Da dove partiamo?').split(' ');
@@ -183,7 +183,7 @@ function ImproveTile({ phase, stage, onOpen, onClose, onSubmit, onNew, hover, se
   const height = { closed: 'h-[22rem] p-6', input: 'h-[12.5rem] p-6 delay-[120ms]', browser: 'h-[36rem] p-4', done: 'h-[20rem] p-4' }[phase];
 
   return (
-    <div className={`relative mx-2.5 w-full max-w-full shrink-0 transition-all duration-500 ease-spring ${width} ${intro ? 'rise' : ''}`} style={{ animationDelay: '0.25s' }}>
+    <div className={`relative mx-2.5 w-full max-w-full shrink-0 transition-all ease-smooth ${width} ${intro ? 'rise' : ''}`} style={{ animationDelay: '0.25s' }}>
       {/* Fascio di scansione blu AgenteImmo: fuori dalla card (niente overflow), sporge dai bordi */}
       {stage === 'scanning' && (
         <div className="blur-in pointer-events-none absolute -inset-x-5 bottom-4 top-[5.5rem] z-40" style={{ maskImage: 'linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent)' }}>
@@ -197,26 +197,26 @@ function ImproveTile({ phase, stage, onOpen, onClose, onSubmit, onNew, hover, se
       <div role={open ? undefined : 'button'} tabIndex={open ? -1 : 0}
         onClick={open ? undefined : onOpen} onKeyDown={e => { if (!open && e.key === 'Enter') onOpen(); }}
         onMouseMove={open ? undefined : tiltMove} onMouseEnter={() => !open && setHover(true)} onMouseLeave={e => { tiltReset(e.currentTarget); setHover(false); }}
-        className={`${open ? '' : 'tilt cursor-pointer active:scale-[0.985] hover:shadow-[0_2px_4px_rgba(0,0,0,.04),0_30px_50px_-20px_rgba(0,0,0,.25)]'} group relative flex w-full flex-col overflow-hidden rounded-[28px] bg-white text-left transition-[height,padding,box-shadow] duration-500 ease-spring ${height} ${CARD_SHADOW} ${open ? 'shadow-[0_2px_4px_rgba(0,0,0,.04),0_30px_60px_-24px_rgba(0,0,0,.28)]' : ''}`}>
+        className={`${open ? '' : 'tilt cursor-pointer active:scale-[0.985] hover:shadow-[0_2px_4px_rgba(0,0,0,.04),0_30px_50px_-20px_rgba(0,0,0,.25)]'} group relative flex w-full flex-col overflow-hidden rounded-[28px] bg-white text-left transition-[height,padding,box-shadow] ease-smooth ${height} ${CARD_SHADOW} ${open ? 'shadow-[0_1px_3px_rgba(0,0,0,.04),0_16px_40px_-22px_rgba(0,0,0,.18)]' : ''}`}>
         {!open && <span className="sheen pointer-events-none absolute inset-0 z-20" />}
         <button type="button" onClick={onClose} aria-label="Torna indietro" tabIndex={open ? 0 : -1}
-          className={`absolute z-30 flex h-9 w-9 items-center justify-center rounded-full text-muted transition-all duration-300 hover:bg-canvas hover:text-ink ${flow ? 'right-5 top-[26px]' : 'right-4 top-4'} ${open ? 'scale-100 opacity-100 delay-[450ms]' : 'pointer-events-none scale-75 opacity-0'}`}><X size={18} /></button>
+          className={`absolute z-30 flex h-9 w-9 items-center justify-center rounded-full text-muted ease-smooth transition-all hover:bg-canvas hover:text-ink ${flow ? 'right-5 top-[26px]' : 'right-4 top-4'} ${open ? 'scale-100 opacity-100 delay-[450ms]' : 'pointer-events-none scale-75 opacity-0'}`}><X size={18} /></button>
 
         {/* Titolo della card: svanisce e si chiude */}
-        <div className={`overflow-hidden transition-all duration-500 ease-spring ${open ? 'max-h-0 -translate-y-2 opacity-0 blur-[4px]' : 'max-h-24 delay-100'}`}>
+        <div className={`overflow-hidden transition-all ease-smooth ${open ? 'max-h-0 -translate-y-2 opacity-0 blur-[4px]' : 'max-h-24 delay-100'}`}>
           <span className="par-1 block text-sm text-muted">Hai già un annuncio online?</span>
           <span className="par-1 mt-1 block text-2xl font-bold leading-tight tracking-tight">Miglioralo</span>
         </div>
 
         {/* Mini scheda annuncio: diventa la pill sopra l'input, poi sparisce quando si apre il browser */}
-        <div className={`flex items-center justify-center transition-all duration-500 ease-spring ${flow ? 'max-h-0 flex-none scale-95 overflow-hidden opacity-0' : 'max-h-60 flex-1'}`}>
-          <div className={`relative transition-all duration-500 ease-spring ${open ? 'w-72 delay-[120ms]' : 'w-44'}`}>
+        <div className={`flex items-center justify-center transition-all ease-smooth ${flow ? 'max-h-0 flex-none scale-95 overflow-hidden opacity-0' : 'max-h-60 flex-1'}`}>
+          <div className={`relative transition-all ease-smooth ${open ? 'w-72 delay-[120ms]' : 'w-44'}`}>
             <div className="par-2">
-              <div className={`flex transition-all duration-500 ease-spring ${open ? 'flex-row items-center gap-3 rounded-2xl bg-canvas p-2 pr-3 delay-[120ms]' : 'flex-col rounded-xl bg-white p-2 shadow-md group-hover:-rotate-2'}`}>
-                <img src="/immo/home/card.webp" alt="" decoding="async" className={`shrink-0 object-cover transition-all duration-500 ease-spring ${open ? 'h-12 w-16 rounded-xl delay-[120ms]' : 'h-24 w-full rounded-lg'}`} />
-                <div className={`min-w-0 flex-1 transition-all duration-500 ${open ? '' : 'mt-2'}`}>
+              <div className={`flex transition-all ease-smooth ${open ? 'flex-row items-center gap-3 rounded-2xl bg-canvas p-2 pr-3 delay-[120ms]' : 'flex-col rounded-xl bg-white p-2 shadow-md group-hover:-rotate-2'}`}>
+                <img src="/immo/home/card.webp" alt="" decoding="async" className={`shrink-0 object-cover transition-all ease-smooth ${open ? 'h-12 w-16 rounded-xl delay-[120ms]' : 'h-24 w-full rounded-lg'}`} />
+                <div className={`min-w-0 flex-1 ease-smooth transition-all ${open ? '' : 'mt-2'}`}>
                   {['w-2/3', 'w-2/5', 'w-1/2'].map((w, i) => (
-                    <div key={w} className={`${open ? '' : 'rewrite'} h-1.5 rounded bg-line transition-all duration-500 ${i ? 'mt-1.5' : ''} ${open && i === 2 ? 'hidden' : w}`} />
+                    <div key={w} className={`${open ? '' : 'rewrite'} h-1.5 rounded bg-line ease-smooth transition-all ${i ? 'mt-1.5' : ''} ${open && i === 2 ? 'hidden' : w}`} />
                   ))}
                 </div>
                 {open && <span className="blur-in shrink-0" style={{ animationDelay: '.45s' }}><ScoreBadge on /></span>}
@@ -228,13 +228,13 @@ function ImproveTile({ phase, stage, onOpen, onClose, onSubmit, onNew, hover, se
 
         {/* Campo link: nel browser diventa la barra indirizzi */}
         <form onSubmit={e => { e.preventDefault(); if (ok && !busy) onSubmit(); }}
-          className={`flex shrink-0 items-center gap-2 overflow-hidden rounded-full bg-canvas pl-5 transition-all duration-500 ease-spring focus-within:bg-white focus-within:ring-1 focus-within:ring-ink/15 ${
-            !open ? 'pointer-events-none max-h-0 translate-y-4 p-0 opacity-0 duration-200' : flow ? 'mr-12 max-h-16 p-1.5 opacity-100' : 'mt-4 max-h-16 translate-y-0 p-1.5 opacity-100 delay-[250ms]'}`}>
-          <span className={`flex shrink-0 gap-1.5 overflow-hidden transition-all duration-500 ${flow ? 'max-w-16 opacity-100' : 'max-w-0 opacity-0'}`}>
+          className={`flex shrink-0 items-center gap-2 overflow-hidden rounded-full bg-canvas pl-5 transition-all ease-smooth focus-within:bg-white focus-within:ring-1 focus-within:ring-ink/15 ${
+            !open ? 'pointer-events-none max-h-0 translate-y-4 p-0 opacity-0' : flow ? 'mr-12 max-h-16 p-1.5 opacity-100' : 'mt-4 max-h-16 translate-y-0 p-1.5 opacity-100 delay-[250ms]'}`}>
+          <span className={`flex shrink-0 gap-1.5 overflow-hidden ease-smooth transition-all ${flow ? 'max-w-16 opacity-100' : 'max-w-0 opacity-0'}`}>
             {['bg-[#ff5f57]', 'bg-[#febc2e]', 'bg-[#28c840]'].map(c => <span key={c} className={`h-2.5 w-2.5 rounded-full ${c}`} />)}
           </span>
           <input ref={input} tabIndex={open ? 0 : -1} value={url} readOnly={busy || phase === 'done'} onChange={e => setUrl(e.target.value)} placeholder="https://www.immobiliare.it/annunci/..."
-            className={`min-w-0 flex-1 bg-transparent py-2 pr-4 outline-none placeholder:text-muted/60 transition-all duration-500 ${flow ? 'text-sm text-muted' : 'text-base'}`} />
+            className={`min-w-0 flex-1 bg-transparent py-2 pr-4 outline-none placeholder:text-muted/60 ease-smooth transition-all ${flow ? 'text-sm text-muted' : 'text-base'}`} />
           {busy ? (
             <span className="blur-in flex h-11 shrink-0 items-center gap-2 rounded-full bg-white px-4 text-sm font-medium"><Loader2 size={15} className="animate-spin" /> {stage === 'opening' ? 'Apro' : 'Analizzo'}</span>
           ) : phase === 'done' ? (
@@ -245,7 +245,7 @@ function ImproveTile({ phase, stage, onOpen, onClose, onSubmit, onNew, hover, se
         </form>
 
         {/* Corpo del browser: annuncio in scansione, poi verdetto */}
-        <div className={`min-h-0 overflow-hidden transition-all duration-500 ease-spring ${flow ? 'mt-3 flex-1 opacity-100 delay-[120ms]' : 'max-h-0 flex-none opacity-0'}`}>
+        <div className={`min-h-0 overflow-hidden transition-all ease-smooth ${flow ? 'mt-3 flex-1 opacity-100 delay-[120ms]' : 'max-h-0 flex-none opacity-0'}`}>
           {flow && children}
         </div>
       </div>
@@ -278,7 +278,7 @@ export function HomeView({ name, initialUrl = '', onSaved }: { name?: string; in
   useEffect(() => {
     if (key === shown) return;
     const a = setTimeout(() => setTitleOut(true), 0);
-    const b = setTimeout(() => { setShown(key); setTitleOut(false); }, 280);
+    const b = setTimeout(() => { setShown(key); setTitleOut(false); }, 300);
     return () => { clearTimeout(a); clearTimeout(b); };
   }, [key, shown]);
 
@@ -302,7 +302,7 @@ export function HomeView({ name, initialUrl = '', onSaved }: { name?: string; in
 
   return (
     <div className="flex min-h-[calc(100vh-5rem)] flex-col items-center justify-center py-10">
-      <h1 className={`text-center font-display text-4xl font-bold leading-tight tracking-tight transition-all duration-300 md:text-5xl ${titleOut ? '-translate-y-3 opacity-0 blur-[6px]' : ''}`}>
+      <h1 className={`text-center font-display text-4xl font-bold leading-tight tracking-tight ease-smooth transition-all md:text-5xl ${titleOut ? '-translate-y-3 opacity-0 blur-[6px]' : ''}`}>
         {head.split(' ').map((w, i) => <span key={`${shown}-${i}`} className="blur-in inline-block" style={{ animationDelay: `${i * 0.05}s` }}>{w}&nbsp;</span>)}
         <span key={subtitle} className="blur-in block text-muted/70" style={{ animationDelay: shown === 'scanning' ? '0s' : '0.3s' }}>{subtitle}</span>
       </h1>
@@ -310,21 +310,24 @@ export function HomeView({ name, initialUrl = '', onSaved }: { name?: string; in
       <div className="mt-14 flex w-full flex-col items-center justify-center gap-5 sm:flex-row sm:gap-0">
         <ImproveTile phase={phase} stage={imp.stage} onOpen={openLink} onClose={close} onSubmit={() => imp.start(url)} onNew={restart}
           hover={hover} setHover={setHover} intro={intro} url={url} setUrl={setUrl}>
-          {phase === 'done' && imp.listing && imp.analysis
-            ? <Verdict listing={imp.listing} analysis={imp.analysis} />
-            : <BrowserBody stage={imp.stage} listing={imp.listing} error={imp.error} url={url} onRetry={() => imp.start(url)} onManual={imp.manual} onText={t => imp.analyzeText(url, t)} />}
+          {/* Il contenuto segue il titolo: sfuma, cambia a meta' tempo, rientra (niente salti tra scansione e verdetto) */}
+          <div className={`h-full ease-smooth transition-opacity ${titleOut ? 'opacity-0' : ''}`}>
+            {shown === 'done' && imp.listing && imp.analysis
+              ? <Verdict listing={imp.listing} analysis={imp.analysis} />
+              : <BrowserBody stage={imp.stage} listing={imp.listing} error={imp.error} url={url} onRetry={() => imp.start(url)} onManual={imp.manual} onText={t => imp.analyzeText(url, t)} />}
+          </div>
         </ImproveTile>
 
         {/* Crea: foto a ventaglio con molla + "+" che ruota */}
         <Tile index={1} intro={intro} wrapClass={others(1)} kicker="Hai un immobile nuovo?" title="Crea da zero" href="#/nuovo">
           {['/immo/home/fan-1.webp', '/immo/home/fan-2.webp', '/immo/home/fan-3.webp'].map((src, i) => (
             <div key={src} className={`absolute left-1/2 top-1 ${['par-1', 'par-2 z-10', 'par-3'][i]}`}>
-              <img src={src} alt="" className={`h-32 w-24 -translate-x-1/2 rounded-xl object-cover shadow-md ring-2 ring-white transition-transform duration-500 ease-spring ${
+              <img src={src} alt="" className={`h-32 w-24 -translate-x-1/2 rounded-xl object-cover shadow-md ring-2 ring-white transition-transform ease-smooth ${
                 ['-translate-x-[90%] -rotate-12 group-hover:-translate-x-[118%] group-hover:-rotate-[18deg]', 'group-hover:-translate-y-3 group-hover:scale-105', '-translate-x-[10%] rotate-12 group-hover:translate-x-[18%] group-hover:rotate-[18deg]'][i]}`} />
             </div>
           ))}
           <span className="par-3 absolute -bottom-2 left-1/2 z-20 -translate-x-1/2">
-            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-ink text-white shadow-lg transition-transform duration-500 ease-spring group-hover:rotate-90 group-hover:scale-110"><Plus size={18} /></span>
+            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-ink text-white shadow-lg transition-transform ease-smooth group-hover:rotate-90 group-hover:scale-110"><Plus size={18} /></span>
           </span>
         </Tile>
 
@@ -334,10 +337,10 @@ export function HomeView({ name, initialUrl = '', onSaved }: { name?: string; in
             <div className="mb-1 h-2 rounded-sm bg-emerald-500/80" />
             {[0, 1, 2, 3, 4].map(r => <div key={r} className="xl-row mt-1 grid grid-cols-3 gap-1">{[0, 1, 2].map(c => <div key={c} className="h-2 rounded-sm bg-line" />)}</div>)}
           </div>
-          <span className="par-2 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-lg text-muted transition-transform duration-500 ease-spring group-hover:translate-x-1">→</span>
+          <span className="par-2 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-lg text-muted transition-transform ease-smooth group-hover:translate-x-1">→</span>
           <div className="par-3 absolute right-[6%] top-[calc(50%+4px)] w-20 -translate-y-1/2">
             {['/immo/home/import-1.webp', '/immo/home/import-2.webp'].map((src, i) => (
-              <div key={src} className={`rounded-lg bg-white p-1 shadow-md transition-all duration-500 ease-spring ${i ? 'mt-2 translate-x-3 opacity-60 group-hover:translate-x-0 group-hover:opacity-100' : 'group-hover:-translate-y-1'}`} style={{ transitionDelay: i ? '.12s' : '0s' }}>
+              <div key={src} className={`rounded-lg bg-white p-1 shadow-md transition-all ease-smooth ${i ? 'mt-2 translate-x-3 opacity-60 group-hover:translate-x-0 group-hover:opacity-100' : 'group-hover:-translate-y-1'}`} style={{ transitionDelay: i ? '.12s' : '0s' }}>
                 <img src={src} alt="" className="h-11 w-full rounded-md object-cover" /><div className="mt-1 h-1 w-10 rounded bg-line" />
               </div>
             ))}
@@ -345,7 +348,7 @@ export function HomeView({ name, initialUrl = '', onSaved }: { name?: string; in
         </Tile>
       </div>
 
-      {phase === 'done' && imp.listing && imp.analysis && <Results listing={imp.listing} analysis={imp.analysis} onSaved={onSaved} onRestart={restart} />}
+      {phase === 'done' && shown === 'done' && imp.listing && imp.analysis && <Results listing={imp.listing} analysis={imp.analysis} onSaved={onSaved} onRestart={restart} />}
     </div>
   );
 }
@@ -357,7 +360,7 @@ function AccountMenu({ email, credits, name }: { email: string; credits: number;
     <div className="relative">
       <div className="flex items-center gap-2.5">
         <span className="flex h-10 items-center gap-2 rounded-full bg-white px-4 text-xs font-semibold shadow-sm ring-1 ring-line"><span className="h-2.5 w-2.5 rounded-full bg-amber-400" /> {credits} crediti</span>
-        <button onClick={() => setOpen(v => !v)} aria-label="Account" className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-sm font-bold shadow-sm ring-1 ring-line transition-shadow hover:shadow-md">{initial}</button>
+        <button onClick={() => setOpen(v => !v)} aria-label="Account" className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-sm font-bold shadow-sm ring-1 ring-line ease-smooth transition-shadow hover:shadow-md">{initial}</button>
       </div>
       {open && (
         <div className="float-bar absolute right-0 top-12 z-40 w-60 rounded-2xl p-2" onMouseLeave={() => setOpen(false)}>
@@ -399,7 +402,7 @@ export function PropertyGrid({ projects }: { projects: ProjectData[] | null }) {
         return (
           <a key={p.id} href={`#/immobile/${p.id}`} className="group block">
             <div className="relative aspect-[20/19] overflow-hidden rounded-2xl bg-canvas">
-              {p.cover && <img src={p.cover} alt="" className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.04]" />}
+              {p.cover && <img src={p.cover} alt="" className="h-full w-full object-cover ease-smooth transition group-hover:scale-[1.04]" />}
               {p.is_public && <span className="absolute left-3 top-3 rounded-full bg-white px-3 py-1 text-xs font-semibold shadow-sm">Nel portfolio</span>}
             </div>
             <div className="mt-3 flex items-start justify-between gap-3">

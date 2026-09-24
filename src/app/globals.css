@@ -440,19 +440,21 @@ html.metrics-light [class*="border-gray-600"] { border-color: #d8d4cb !important
 @media (prefers-reduced-motion: reduce) { .fade-up, .stagger > *, .float, .shimmer { animation: none; } }
 
 /* --- Home: animazioni delle card azione ------------------------------------ */
-.ease-spring { transition-timing-function: cubic-bezier(.34, 1.56, .64, 1); }
+/* Un solo tempo e una sola curva per tutte le animazioni della piattaforma */
+:root { --gnm-dur: 600ms; --gnm-ease: cubic-bezier(.22, 1, .36, 1); }
+.ease-smooth { transition-timing-function: var(--gnm-ease); transition-duration: var(--gnm-dur); }
 @keyframes gnm-blur-in { from { opacity: 0; filter: blur(8px); transform: translateY(8px); } to { opacity: 1; filter: blur(0); transform: none; } }
-.blur-in { animation: gnm-blur-in .7s cubic-bezier(.2,.8,.2,1) both; }
-@keyframes gnm-rise { 0% { opacity: 0; transform: translateY(28px) scale(.96); } 70% { opacity: 1; transform: translateY(-4px) scale(1.005); } 100% { opacity: 1; transform: none; } }
-.rise { animation: gnm-rise .8s cubic-bezier(.2,.8,.2,1) backwards; } /* backwards: a fine animazione torna la transform di .tilt */
+.blur-in { animation: gnm-blur-in var(--gnm-dur) var(--gnm-ease) both; }
+@keyframes gnm-rise { from { opacity: 0; transform: translateY(24px) scale(.97); } to { opacity: 1; transform: none; } }
+.rise { animation: gnm-rise var(--gnm-dur) var(--gnm-ease) backwards; } /* backwards: a fine animazione torna la transform di .tilt */
 /* card che si inclina verso il mouse: --rx/--ry/--mx/--my impostate da JS */
-.tilt { transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateY(var(--lift, 0)); transition: transform .45s cubic-bezier(.2,.8,.2,1), box-shadow .45s; will-change: transform; }
+.tilt { transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateY(var(--lift, 0)); transition: transform var(--gnm-dur) var(--gnm-ease), box-shadow var(--gnm-dur) var(--gnm-ease); will-change: transform; }
 .tilt:active { --lift: 2px; }
-.tilt .sheen { background: radial-gradient(320px circle at var(--sx, 50%) var(--sy, 50%), rgba(255,255,255,.18), transparent 50%); opacity: 0; transition: opacity .35s; }
+.tilt .sheen { background: radial-gradient(320px circle at var(--sx, 50%) var(--sy, 50%), rgba(255,255,255,.18), transparent 50%); opacity: 0; transition: opacity var(--gnm-dur) var(--gnm-ease); }
 .tilt:hover .sheen { opacity: 1; }
-.par-1 { transform: translate(calc(var(--mx, 0) * 2px), calc(var(--my, 0) * 2px)); transition: transform .45s cubic-bezier(.2,.8,.2,1); }
-.par-2 { transform: translate(calc(var(--mx, 0) * 4px), calc(var(--my, 0) * 4px)); transition: transform .45s cubic-bezier(.2,.8,.2,1); }
-.par-3 { transform: translate(calc(var(--mx, 0) * 7px), calc(var(--my, 0) * 7px)); transition: transform .45s cubic-bezier(.2,.8,.2,1); }
+.par-1 { transform: translate(calc(var(--mx, 0) * 2px), calc(var(--my, 0) * 2px)); transition: transform var(--gnm-dur) var(--gnm-ease); }
+.par-2 { transform: translate(calc(var(--mx, 0) * 4px), calc(var(--my, 0) * 4px)); transition: transform var(--gnm-dur) var(--gnm-ease); }
+.par-3 { transform: translate(calc(var(--mx, 0) * 7px), calc(var(--my, 0) * 7px)); transition: transform var(--gnm-dur) var(--gnm-ease); }
 /* righe che si "riscrivono" */
 .rewrite { position: relative; overflow: hidden; }
 .rewrite::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(83,126,236,.55), transparent); transform: translateX(-100%); }
@@ -465,7 +467,7 @@ html.metrics-light [class*="border-gray-600"] { border-color: #d8d4cb !important
 .group:hover .xl-row:nth-child(5) > div { animation-delay: .45s; } .group:hover .xl-row:nth-child(6) > div { animation-delay: .6s; }
 @media (prefers-reduced-motion: reduce) {
   .blur-in, .rise { animation: none; }
-  .ease-spring { transition-duration: 1ms !important; transition-delay: 0s !important; }
+  .ease-smooth { transition-duration: 1ms !important; transition-delay: 0s !important; }
   .tilt { transform: none !important; }
   .par-1, .par-2, .par-3 { transform: none !important; }
   .group:hover .rewrite::after, .group:hover .xl-row > div { animation: none; }

@@ -183,7 +183,7 @@ export function Verdict({ listing, analysis: a }: { listing: Listing; analysis: 
           </div>
           <a href={listing.url} target="_blank" rel="noreferrer" className="flex shrink-0 items-center gap-1 text-xs text-muted hover:text-ink"><ExternalLink size={12} /> Originale</a>
         </div>
-        <div className="blur-in mt-3 h-1.5 overflow-hidden rounded-full bg-canvas" style={{ animationDelay: '.12s' }}><div className={`h-full rounded-full ${tone.bar} transition-[width] duration-700`} style={{ width: `${a.score}%` }} /></div>
+        <div className="blur-in mt-3 h-1.5 overflow-hidden rounded-full bg-canvas" style={{ animationDelay: '.12s' }}><div className={`h-full rounded-full ${tone.bar} ease-smooth transition-[width]`} style={{ width: `${a.score}%` }} /></div>
         <p className="blur-in mt-3 line-clamp-3 text-sm leading-relaxed text-ink/80" style={{ animationDelay: '.16s' }}>{a.sintesi}</p>
         <div className="blur-in mt-auto flex flex-wrap gap-1.5 pt-3 text-xs" style={{ animationDelay: '.2s' }}>
           {urgent > 0 && <span className="rounded-full bg-rose-50 px-3 py-1 font-medium text-rose-700">{urgent} da fare subito</span>}
@@ -239,18 +239,18 @@ export function Results({ listing, analysis: a, onSaved, onRestart }: { listing:
     onSaved?.(); go(`/immobile/${id}`);
   };
 
-  const input = 'w-full rounded-2xl bg-canvas px-4 py-3 outline-none transition-colors focus:bg-white focus:ring-1 focus:ring-ink/15';
+  const input = 'w-full rounded-2xl bg-canvas px-4 py-3 outline-none ease-smooth transition-colors focus:bg-white focus:ring-1 focus:ring-ink/15';
 
   return (
     <div className="mx-auto mt-6 w-full max-w-[56rem] space-y-6 text-left">
       {/* Annuncio riscritto: prima cosa, a tutta larghezza */}
       <section className={`rise ${BOX}`} style={{ animationDelay: '.35s' }}>
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0">
             <h2 className="flex items-center gap-2 text-2xl font-bold tracking-tight"><Sparkles size={20} /> Annuncio riscritto</h2>
-            <p className="mt-1 text-sm text-muted">Pronto da incollare sul portale. Puoi ritoccarlo qui prima di copiare.</p>
+            <p className="mt-1 text-sm text-muted">Pronto da incollare sul portale, puoi ritoccarlo qui.</p>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex shrink-0 items-center gap-2">
             <button onClick={() => setShowBefore(v => !v)} className="btn-ghost rounded-full px-4 py-2 text-sm font-medium">{showBefore ? 'Nascondi originale' : 'Confronta con originale'}</button>
             <button onClick={save} disabled={saving} className="flex items-center gap-2 btn-ink rounded-full px-5 py-2 text-sm font-semibold">
               {saving && <Loader2 size={16} className="animate-spin" />} {saving ? `Salvo ${listing.photos.length} foto...` : 'Aggiungi ai miei immobili'}
