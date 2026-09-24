@@ -1,13 +1,11 @@
 'use client';
 
 import { Children, useEffect, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
-import { platformFontVars } from '@/lib/platformFonts';
-import { Camera, Check, Copy, ExternalLink, Loader2, Puzzle, Wand2, X } from 'lucide-react';
+import { Camera, Check, Copy, ExternalLink, Loader2, Puzzle, Wand2 } from 'lucide-react';
 import { AI_MOCK, mockFor } from '@/lib/aiMock';
 import { authFetch, CARD_SHADOW, extSend, EXTENSION_URL, go, warm } from './api';
 import CountUp from './CountUp';
-import { AiPhotoStage, Elapsed, useAiPhoto, useKeepPhotoGpu } from './AiPhoto';
+import { PhotoEditModal } from './AiPhoto';
 import { CRITERI, withScores, type Criteri } from '@/lib/listingScore';
 
 // "Migliora annuncio": link portale -> estensione legge l'annuncio in background ->
@@ -453,64 +451,8 @@ function ProblemCard({ p, i, photos }: { p: Problem; i: number; photos: string[]
 
 // Modifica foto con l'AI (Qwen-Image su RunPod) in un pannello sopra la pagina: prima/dopo e download.
 function PhotoFix({ src, label, edit, onDone, onClose }: { src: string; label: string; edit: string; onDone: (url: string) => void; onClose: () => void }) {
-  const [prompt, setPrompt] = useState(edit);
-  const ai = useAiPhoto();
-  useKeepPhotoGpu(); // GPU accesa finche' il pannello e' aperto
-
-  useEffect(() => {
-    // capture + stop: Esc chiude solo il pannello, non tutto il flusso Migliora
-    const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') { e.stopPropagation(); onClose(); } };
-    document.addEventListener('keydown', esc, true);
-    return () => document.removeEventListener('keydown', esc, true);
-  }, [onClose]);
-
-  const run = () => { if (prompt.trim()) ai.run({ imageUrl: src, prompt }); };
-  const { busy, out } = ai;
-
-  // Portal su body: un antenato con transform (animazioni di ingresso) farebbe da contenitore al fixed e l'overlay non coprirebbe tutto.
-  return createPortal(
-    <div role="dialog" aria-modal="true" className={`${platformFontVars} fixed inset-0 z-[60] flex items-center justify-center bg-black/30 p-4 font-body text-ink backdrop-blur-sm`} onMouseDown={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className={`rise relative w-full max-w-3xl rounded-[28px] bg-white p-5 text-left ${CARD_SHADOW}`}>
-        <div className="flex items-start justify-between gap-4 px-1">
-          <div>
-            <h3 className="text-xl font-bold tracking-tight first-letter:uppercase">{label}</h3>
-            <p className="mt-0.5 text-sm text-muted">Descrivi la modifica, l&apos;AI la applica alla foto.</p>
-          </div>
-          <button onClick={onClose} aria-label="Chiudi" className="-mr-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted hover:bg-canvas hover:text-ink"><X size={18} /></button>
-        </div>
-
-        <div className="mt-4">
-          <AiPhotoStage src={src} busy={busy} out={out} reveal={ai.reveal} msg={ai.msg} onDownload={onDone}
-            fileName={`${label.replace(/[^a-z]+/gi, '-').replace(/^-|-$/g, '').toLowerCase()}-sistemata.jpg`} />
-        </div>
-
-        {/* Campo modifica stile home: testo + bottone primario dentro lo stesso contenitore */}
-        <div className="mt-3 flex items-center gap-2 rounded-[22px] bg-canvas p-2 pl-4 ease-smooth transition-colors focus-within:bg-white focus-within:ring-1 focus-within:ring-ink/15">
-          <textarea rows={2} value={prompt} onChange={e => setPrompt(e.target.value)} placeholder="Es. togli gli oggetti dal tavolo, lascia invariato il resto"
-            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); run(); } }}
-            className="min-w-0 flex-1 resize-none bg-transparent py-2 text-sm leading-relaxed outline-none placeholder:text-muted/60" />
-          {/* Dopo la prima generazione: Rigenera (secondario) a sinistra, Finito (primario) a destra */}
-          {out && !busy && (
-            <button onClick={run} disabled={!prompt.trim()} className="flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-white px-4 text-[13px] font-semibold ring-1 ring-black/10 ease-smooth transition-colors hover:bg-canvas disabled:opacity-40">
-              <Wand2 size={14} /> Rigenera
-            </button>
-          )}
-          {out && !busy ? (
-            <button onClick={() => { onDone(out); onClose(); }} className="flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-brand px-4 text-[13px] font-semibold text-white ease-smooth transition-[background-color,transform] hover:bg-brand/90 active:scale-[0.97]">
-              <Check size={14} strokeWidth={3} /> Finito
-            </button>
-          ) : (
-            <button onClick={run} disabled={busy || !prompt.trim()}
-              className="flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-brand px-4 text-[13px] font-semibold text-white ease-smooth transition-[background-color,opacity,transform] hover:bg-brand/90 active:scale-[0.97] disabled:opacity-40">
-              {busy ? <Loader2 size={14} className="animate-spin" /> : <Wand2 size={14} />} {busy ? <>Modifico <Elapsed className="text-white/80" /></> : 'Genera'}
-            </button>
-          )}
-        </div>
-        {ai.err && <p className="mt-2 px-1 text-sm text-rose-600">{ai.err}</p>}
-      </div>
-    </div>,
-    document.body,
-  );
+  return <PhotoEditModal src={src} title={label} initialPrompt={edit} subtitle="Descrivi la modifica, l'AI la applica alla foto." onDownload={onDone} onClose={onClose}
+    actions={[{ label: 'Finito', primary: true, onClick: url => { onDone(url); onClose(); } }]} />;
 }
 
 function Section({ title, hint, children, limit }: { title: string; hint?: string; children: React.ReactNode; limit?: number }) {
@@ -532,7 +474,7 @@ function Section({ title, hint, children, limit }: { title: string; hint?: strin
 }
 
 // Copia dentro il campo, in alto a destra: solo icona, diventa spunta per 1,5 s.
-function CopyIcon({ text: t, center }: { text: string; center?: boolean }) {
+export function CopyIcon({ text: t, center }: { text: string; center?: boolean }) {
   const [copied, setCopied] = useState(false);
   return (
     <button type="button" aria-label="Copia" title="Copia" onClick={() => { navigator.clipboard.writeText(t); setCopied(true); setTimeout(() => setCopied(false), 1500); }}

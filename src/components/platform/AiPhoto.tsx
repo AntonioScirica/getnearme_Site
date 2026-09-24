@@ -1,11 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Download } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { Check, Download, Loader2, Wand2, X } from 'lucide-react';
+import { platformFontVars } from '@/lib/platformFonts';
 import { downloadImage } from '@/lib/staging';
 import { AI_MOCK } from '@/lib/aiMock';
 import InlineSlider from '@/components/InlineSlider';
-import { authFetch, warm } from './api';
+import { authFetch, CARD_SHADOW, warm } from './api';
 
 // Modifica foto con Qwen-Image, condivisa da "Sistema con AI" (Migliora annuncio) e Home staging:
 // stato della generazione, riquadro con alone mentre lavora e slider prima/dopo alla fine.
@@ -105,5 +107,91 @@ export function AiPhotoStage({ src, busy, out, reveal, msg, fileName, onDownload
         </>
       )}
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Pannello di modifica di una foto, sopra la pagina: foto grande, azioni rapide (preset di home
+// staging), testo libero, poi prima/dopo. Usato da "Sistema con AI" (Migliora) e da Crea da zero.
+// `actions` = bottoni dopo il risultato (es. Finito, oppure Tieni entrambe / Usa questa).
+// ---------------------------------------------------------------------------
+export type Preset = { id: string; label: string; req: Partial<EditRequest> };
+export const QUICK_PRESETS: Preset[] = [
+  { id: 'modern', label: 'Arreda', req: { style: 'modern' } },
+  { id: 'empty', label: 'Svuota', req: { style: 'empty' } },
+  { id: 'day', label: 'Più luce', req: { angle: 'day' } },
+  { id: 'daynight', label: 'Giorno e notte', req: { style: 'daynight' } },
+];
+
+export function PhotoEditModal({ src, title, subtitle = 'Scegli un\'azione o descrivi la modifica, l\'AI la applica alla foto.', initialPrompt = '', presets = [], actions, onClose, onDownload }: {
+  src: string; title: string; subtitle?: string; initialPrompt?: string; presets?: Preset[];
+  actions: { label: string; primary?: boolean; onClick: (url: string) => void }[];
+  onClose: () => void; onDownload?: (url: string) => void;
+}) {
+  const [prompt, setPrompt] = useState(initialPrompt);
+  const [preset, setPreset] = useState<string | null>(null);
+  const ai = useAiPhoto();
+  useKeepPhotoGpu(); // GPU accesa finche' il pannello e' aperto
+
+  useEffect(() => {
+    // capture + stop: Esc chiude solo il pannello, non la pagina sotto
+    const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') { e.stopPropagation(); onClose(); } };
+    document.addEventListener('keydown', esc, true);
+    return () => document.removeEventListener('keydown', esc, true);
+  }, [onClose]);
+
+  const image = src.startsWith('data:') ? { imageBase64: src } : { imageUrl: src };
+  const p = presets.find(x => x.id === preset);
+  const canRun = !ai.busy && !!(prompt.trim() || p);
+  const run = () => { if (canRun) ai.run({ ...image, ...(prompt.trim() ? { prompt: prompt.trim() } : p!.req) }); };
+  const { busy, out } = ai;
+  const btn = (primary?: boolean) => `flex h-9 shrink-0 items-center gap-1.5 rounded-full px-4 text-[13px] font-semibold ease-smooth transition-[background-color,opacity,transform] active:scale-[0.97] disabled:opacity-40 ${primary ? 'bg-brand text-white hover:bg-brand/90' : 'bg-white ring-1 ring-black/10 hover:bg-canvas'}`;
+
+  // Portal su body: un antenato con transform (animazioni di ingresso) farebbe da contenitore al fixed.
+  return createPortal(
+    <div role="dialog" aria-modal="true" className={`${platformFontVars} fixed inset-0 z-[60] flex items-center justify-center bg-black/30 p-4 font-body text-ink backdrop-blur-sm`} onMouseDown={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className={`rise relative w-full max-w-3xl rounded-[28px] bg-white p-5 text-left ${CARD_SHADOW}`}>
+        <div className="flex items-start justify-between gap-4 px-1">
+          <div>
+            <h3 className="text-xl font-bold tracking-tight first-letter:uppercase">{title}</h3>
+            <p className="mt-0.5 text-sm text-muted">{subtitle}</p>
+          </div>
+          <button onClick={onClose} aria-label="Chiudi" className="-mr-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted hover:bg-canvas hover:text-ink"><X size={18} /></button>
+        </div>
+
+        <div className="mt-4">
+          <AiPhotoStage src={src} busy={busy} out={out} reveal={ai.reveal} msg={ai.msg} onDownload={onDownload}
+            fileName={`${title.replace(/[^a-z]+/gi, '-').replace(/^-|-$/g, '').toLowerCase() || 'foto'}-ai.jpg`} />
+        </div>
+
+        {presets.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-2 px-1">
+            {presets.map(x => (
+              <button key={x.id} onClick={() => { setPreset(x.id); setPrompt(''); }}
+                className={`rounded-full px-3.5 py-1.5 text-[13px] font-medium ease-smooth transition-colors ${preset === x.id && !prompt.trim() ? 'bg-ink text-white' : 'bg-canvas text-ink/80 ring-1 ring-inset ring-black/10 hover:bg-white'}`}>{x.label}</button>
+            ))}
+          </div>
+        )}
+
+        {/* Campo modifica stile home: testo + bottoni nello stesso contenitore */}
+        <div className="mt-3 flex items-center gap-2 rounded-[22px] bg-canvas p-2 pl-4 ease-smooth transition-colors focus-within:bg-white focus-within:ring-1 focus-within:ring-ink/15">
+          <textarea rows={2} value={prompt} onChange={e => setPrompt(e.target.value)} placeholder="Oppure descrivi tu la modifica, es. togli gli oggetti dal tavolo"
+            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); run(); } }}
+            className="min-w-0 flex-1 resize-none bg-transparent py-2 text-sm leading-relaxed outline-none placeholder:text-muted/60" />
+          {out && !busy ? (
+            <>
+              <button onClick={run} disabled={!canRun} className={btn()}><Wand2 size={14} /> Rigenera</button>
+              {actions.map(a => <button key={a.label} onClick={() => a.onClick(out)} className={btn(a.primary)}>{a.primary && <Check size={14} strokeWidth={3} />} {a.label}</button>)}
+            </>
+          ) : (
+            <button onClick={run} disabled={!canRun} className={btn(true)}>
+              {busy ? <Loader2 size={14} className="animate-spin" /> : <Wand2 size={14} />} {busy ? <>Modifico <Elapsed className="text-white/80" /></> : 'Genera'}
+            </button>
+          )}
+        </div>
+        {ai.err && <p className="mt-2 px-1 text-sm text-rose-600">{ai.err}</p>}
+      </div>
+    </div>,
+    document.body,
   );
 }
