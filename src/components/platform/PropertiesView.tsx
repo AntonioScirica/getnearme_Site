@@ -175,7 +175,7 @@ function PropertyMap({ projects, geo, hover, loading }: { projects: ProjectData[
       if (cancelled || !el.current || map.current) return;
       L.current = Lf;
       const m = Lf.map(el.current, { zoomControl: false, attributionControl: true, scrollWheelZoom: false, zoomSnap: 0.25, zoomDelta: 0.5 }).setView([42.5, 12.5], 6);
-      m.attributionControl.setPrefix(false);
+      m.attributionControl.setPrefix(false).setPosition('bottomleft');
       Lf.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 19, subdomains: 'abcd', className: 'grayscale', attribution: '© OpenStreetMap © CARTO' }).addTo(m);
       Lf.control.zoom({ position: 'bottomright', zoomInTitle: 'Avvicina', zoomOutTitle: 'Allontana' }).addTo(m);
       m.on('click', () => setSel(null));
