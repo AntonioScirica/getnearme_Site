@@ -42,7 +42,9 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
   const [points, setPoints] = useState<{ x: number; y: number }[]>([]);
   const [mask, setMask] = useState<string | null>(null);
   const clearZone = () => { setRegion(null); setPoints([]); setMask(null); };
-  const end = useRef<HTMLDivElement>(null);
+  const scroller = useRef<HTMLDivElement>(null);
+  // in fondo davvero (padding compreso), cosi' l'ultimo messaggio non resta sotto il campo
+  const toBottom = useCallback(() => requestAnimationFrame(() => scroller.current?.scrollTo({ top: scroller.current.scrollHeight, behavior: 'smooth' })), []);
   const busy = msgs.some(m => m.role === 'ai' && m.busy);
 
   // GPU: si accende appena entri nella chat e resta accesa finche' la usi (segnale ogni 50 s, spegnimento
@@ -57,7 +59,7 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
     return () => clearInterval(t);
   }, []);
 
-  useEffect(() => { end.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }); }, [msgs.length, selecting]);
+  useEffect(() => { toBottom(); }, [msgs.length, selecting, toBottom]);
   useEffect(() => {
     if (!busy) return;
     const t = setInterval(() => setTick(x => x + 1), 3500);
@@ -143,7 +145,7 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
   return (
     // Tutta l'altezza disponibile: la conversazione scorre da sola, il campo e' sempre in fondo alla pagina
     <div className="relative -mx-6 h-full" onDragOver={e => { e.preventDefault(); setDrag(true); }} onDragLeave={() => setDrag(false)} onDrop={e => { e.preventDefault(); setDrag(false); upload(e.dataTransfer.files); }}>
-      <div className="absolute inset-0 overflow-y-auto px-6 pb-36 pt-8 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div ref={scroller} className="absolute inset-0 overflow-y-auto px-6 pb-48 pt-8 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <div className="mx-auto max-w-3xl space-y-6">
           {/* Vuota: un solo invito, grande e al centro, per caricare la foto */}
           {empty && (
@@ -202,8 +204,8 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
             </div>
           ))}
           {/* Selezione di una zona: e' un messaggio della chat come gli altri, con i pulsanti sotto la foto */}
-          {selecting && base && <ZonePicker src={base} region={region} points={points} mask={mask} onChange={r => { setRegion(r); setPoints([]); setMask(null); }} onPick={pickAt} onDone={() => setSelecting(false)} onCancel={() => { clearZone(); setSelecting(false); }} />}
-          <div ref={end} />
+          {selecting && base && <ZonePicker src={base} region={region} points={points} mask={mask} onChange={r => { setRegion(r); setPoints([]); setMask(null); }} onPick={pickAt} onLoad={toBottom} onDone={() => setSelecting(false)} onCancel={() => { clearZone(); setSelecting(false); }} />}
+
         </div>
       </div>
 
@@ -252,7 +254,7 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
 }
 
 // Zona sulla foto corrente: clic su un oggetto = lo seleziona (maschera rossa), trascinare = rettangolo.
-function ZonePicker({ src, region, points, mask, onChange, onPick, onDone, onCancel }: { src: string; region: Region | null; points: { x: number; y: number }[]; mask: string | null; onChange: (r: Region | null) => void; onPick: (p: { x: number; y: number }) => void; onDone: () => void; onCancel: () => void }) {
+function ZonePicker({ src, region, points, mask, onChange, onPick, onLoad, onDone, onCancel }: { src: string; region: Region | null; points: { x: number; y: number }[]; mask: string | null; onChange: (r: Region | null) => void; onPick: (p: { x: number; y: number }) => void; onLoad: () => void; onDone: () => void; onCancel: () => void }) {
   const box = useRef<HTMLDivElement>(null);
   const start = useRef<{ x: number; y: number } | null>(null);
   const dragged = useRef(false);
@@ -277,10 +279,10 @@ function ZonePicker({ src, region, points, mask, onChange, onPick, onDone, onCan
     <div className="blur-in flex justify-start">
     <div className={`w-full max-w-[560px] rounded-3xl rounded-bl-lg bg-white p-2 ${CARD_SHADOW}`}>
       <p className="px-2 pb-2 pt-1 text-sm">{loading ? 'Riconosco l’oggetto…' : 'Clicca un oggetto per selezionarlo, oppure trascina per disegnare una zona.'}</p>
-      <div ref={box} className="relative mx-auto max-h-[50vh] w-fit cursor-crosshair touch-none select-none overflow-hidden rounded-2xl"
+      <div ref={box} className="relative mx-auto max-h-[calc(100vh-24rem)] w-fit cursor-crosshair touch-none select-none overflow-hidden rounded-2xl"
         onPointerDown={e => { (e.target as HTMLElement).setPointerCapture(e.pointerId); start.current = at(e); dragged.current = false; }}
         onPointerMove={move} onPointerUp={up}>
-        <img src={src} alt="" draggable={false} className="block max-h-[50vh] w-auto" />
+        <img src={src} alt="" draggable={false} onLoad={onLoad} className="block max-h-[calc(100vh-24rem)] w-auto" />
         {mask && !loading && (
           <div className="blur-in pointer-events-none absolute inset-0 bg-rose-500/50"
             style={{ maskImage: `url(${mask})`, WebkitMaskImage: `url(${mask})`, maskMode: 'luminance', maskSize: '100% 100%', WebkitMaskSize: '100% 100%' }} />
