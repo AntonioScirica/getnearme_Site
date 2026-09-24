@@ -23,10 +23,15 @@ const title = (p: ProjectData) => p.titolo || p.nome || 'Immobile';
 // ponytail: geocoding dal browser, uno al secondo (limite Nominatim); salvare lat/lon sul progetto se gli immobili diventano centinaia
 const GEO_KEY = 'gnm-geo';
 function useGeo(projects: ProjectData[] | null) {
-  const [geo, setGeo] = useState<Record<string, LatLon | 0>>(() => {
-    try { return JSON.parse(localStorage.getItem(GEO_KEY) || '{}'); } catch { return {}; }
-  });
+  // null finche' non leggo la cache: localStorage solo dopo il montaggio (altrimenti errore di idratazione)
+  const [geo, setGeo] = useState<Record<string, LatLon | 0> | null>(null);
   useEffect(() => {
+    let cached = {};
+    try { cached = JSON.parse(localStorage.getItem(GEO_KEY) || '{}'); } catch {}
+    setGeo(cached); // eslint-disable-line react-hooks/set-state-in-effect
+  }, []);
+  useEffect(() => {
+    if (!geo) return;
     const todo = [...new Set((projects ?? []).map(p => p.addr?.trim()).filter(a => a && !(a in geo)))] as string[];
     if (!todo.length) return;
     let stop = false;
@@ -37,7 +42,7 @@ function useGeo(projects: ProjectData[] | null) {
           .then(x => x.json()).catch(() => null) as { lat: string; lon: string }[] | null;
         if (stop) return;
         if (r) setGeo(g => {
-          const next = { ...g, [addr]: r[0] ? [Number(r[0].lat), Number(r[0].lon)] as LatLon : 0 as const };
+          const next = { ...g!, [addr]: r[0] ? [Number(r[0].lat), Number(r[0].lon)] as LatLon : 0 as const };
           localStorage.setItem(GEO_KEY, JSON.stringify(next));
           return next;
         });
@@ -46,8 +51,8 @@ function useGeo(projects: ProjectData[] | null) {
     })();
     return () => { stop = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [projects]);
-  return geo;
+  }, [projects, !!geo]);
+  return geo ?? {};
 }
 
 function ensureLeafletCss() {
@@ -176,11 +181,15 @@ function PropertyMap({ projects, geo, hover, loading }: { projects: ProjectData[
       L.current = Lf;
       const m = Lf.map(el.current, { zoomControl: false, attributionControl: true, scrollWheelZoom: false, zoomSnap: 0.25, zoomDelta: 0.5 }).setView([42.5, 12.5], 6);
       m.attributionControl.setPrefix(false).setPosition('bottomleft');
-      // Esri Light Gray: gratis e senza chiave (CARTO ora la chiede); base + nomi delle strade sopra
-      const esri = (l: string) => `https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_${l}/MapServer/tile/{z}/{y}/{x}`;
-      Lf.tileLayer(esri('Base'), { maxNativeZoom: 16, maxZoom: 19, attribution: '© Esri, OpenStreetMap' }).addTo(m);
-      Lf.tileLayer(esri('Reference'), { maxNativeZoom: 16, maxZoom: 19 }).addTo(m);
+      // OpenStreetMap (gratis, senza chiave) in scala di grigi e schiarita via CSS
+      Lf.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, className: 'map-grey', attribution: '© OpenStreetMap' }).addTo(m);
       Lf.control.zoom({ position: 'bottomright', zoomInTitle: 'Avvicina', zoomOutTitle: 'Allontana' }).addTo(m);
+      // + e - sopra la parte sfumata
+      m.getContainer().querySelector<HTMLElement>('.leaflet-bottom.leaflet-right')!.style.bottom = '28%';
+      // stile come il resto della pagina (il CSS di Leaflet, caricato dopo, vincerebbe sulle classi)
+      const bar = m.getContainer().querySelector<HTMLElement>('.leaflet-control-zoom')!;
+      Object.assign(bar.style, { border: '0', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 6px 20px rgba(0,0,0,.12)' });
+      bar.querySelectorAll<HTMLElement>('a').forEach(a => Object.assign(a.style, { width: '36px', height: '36px', lineHeight: '36px', color: '#111', border: '0' }));
       m.on('click', () => setSel(null));
       map.current = m;
       setReady(true);
@@ -241,7 +250,7 @@ function PropertyMap({ projects, geo, hover, loading }: { projects: ProjectData[
   const waiting = loading || projects.some(p => p.addr?.trim() && !(p.addr.trim() in geo));
 
   return (
-    <div className="relative isolate h-[max(560px,72vh)] overflow-hidden [&_.leaflet-bottom.leaflet-right]:bottom-[30%] [&_.leaflet-bar]:overflow-hidden [&_.leaflet-bar]:rounded-2xl [&_.leaflet-bar]:border-0 [&_.leaflet-bar]:shadow-[0_6px_20px_rgba(0,0,0,.12)] [&_.leaflet-bar_a]:h-9 [&_.leaflet-bar_a]:w-9 [&_.leaflet-bar_a]:leading-9">
+    <div className="relative isolate h-[max(560px,72vh)] [&_.map-grey]:[filter:grayscale(1)_brightness(1.06)_contrast(.88)] overflow-hidden">
       <div ref={el} className="absolute inset-0 z-0 bg-canvas" style={{ maskImage: 'linear-gradient(to bottom, #000 62%, transparent 97%)', WebkitMaskImage: 'linear-gradient(to bottom, #000 62%, transparent 97%)' }} />
       {/* sfumatura in basso: blur progressivo sopra la dissolvenza */}
       {[2, 6, 12].map((b, i) => {
