@@ -14,6 +14,8 @@ export async function GET(req: NextRequest) {
   if (!data.user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   const address = (req.nextUrl.searchParams.get('address') ?? '').trim().slice(0, 200)
   if (address.length < 6) return NextResponse.json({ error: 'bad_request' }, { status: 400 })
-  const zone = await lookupZone(address)
+  const r = Number(req.nextUrl.searchParams.get('radius'))
+  const radius = Number.isFinite(r) && r > 0 ? Math.min(3000, Math.max(300, Math.round(r))) : undefined
+  const zone = await lookupZone(address, radius)
   return NextResponse.json(zone ?? { pois: [] })
 }

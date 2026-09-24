@@ -26,14 +26,14 @@ const dist = (a: number, b: number, c: number, d: number) => {
   return Math.round(2 * 6371000 * Math.asin(Math.sqrt(h)))
 }
 
-export async function lookupZone(address: string): Promise<Zone | null> {
+export async function lookupZone(address: string, radius = RADIUS): Promise<Zone | null> {
   const geo = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=it&q=${encodeURIComponent(address)}`, {
     headers: { 'User-Agent': UA, 'Accept-Language': 'it' }, signal: AbortSignal.timeout(8000),
   }).then(r => r.json()).catch(() => null) as { lat: string; lon: string; display_name: string }[] | null
   if (!geo?.[0]) return null
   const lat = Number(geo[0].lat), lon = Number(geo[0].lon)
 
-  const q = `[out:json][timeout:20];(${CATS.map(c => `nwr${c.filter}(around:${RADIUS},${lat},${lon});`).join('')});out center tags;`
+  const q = `[out:json][timeout:20];(${CATS.map(c => `nwr${c.filter}(around:${radius},${lat},${lon});`).join('')});out center tags;`
   const data = await fetch('https://overpass-api.de/api/interpreter', {
     method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'User-Agent': UA },
     body: `data=${encodeURIComponent(q)}`, signal: AbortSignal.timeout(25000),

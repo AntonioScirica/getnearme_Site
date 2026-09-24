@@ -275,20 +275,29 @@ function PropertyMap({ projects, geo, hover, loading }: { projects: ProjectData[
 
 const POI_ICON: Record<string, typeof Train> = { Metro: TrainFront, Stazione: Train, Tram: TramFront, Supermercato: ShoppingCart, Scuola: School, 'Università': GraduationCap, Parco: Trees, Ospedale: Hospital, Farmacia: Pill };
 const zoneCache: Record<string, Poi[]> = {};
-const km = (m: number) => (m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${m} m`);
+const km = (m: number) => (m >= 1000 ? `${(m / 1000).toLocaleString('it-IT', { maximumFractionDigits: 1 })} km` : `${m} m`);
 
 // Sidebar a destra sulla mappa: l'immobile e cosa c'e' vicino (stessa fonte dell'estensione: OpenStreetMap).
 // Se l'immobile ha gia' la zona salvata (import_data.zona) la uso, se no la chiedo a /api/platform/zone.
 function NearbySidebar({ p, onClose }: { p: ProjectData; onClose: () => void }) {
   const saved = (p.import_data as { zona?: Poi[] } | undefined)?.zona;
-  const [pois, setPois] = useState<Poi[] | null>(Array.isArray(saved) && saved.length ? saved : zoneCache[p.id] ?? null);
+  const [radius, setRadius] = useState(1000);
+  const ck = `${p.id}:${radius}`;
+  // la zona salvata con l'immobile e' quella a 1 km
+  const [pois, setPois] = useState<Poi[] | 'err' | null>(Array.isArray(saved) && saved.length ? (zoneCache[ck] = saved) : zoneCache[ck] ?? null);
   useEffect(() => {
-    if (pois || !p.addr?.trim()) return;
-    authFetch(`/api/platform/zone?address=${encodeURIComponent(p.addr)}`).then(r => r.json()).catch(() => ({}))
-      .then((d: { pois?: Poi[] }) => { zoneCache[p.id] = d.pois ?? []; setPois(d.pois ?? []); });
+    if (zoneCache[ck]) { setPois(zoneCache[ck]); return; }
+    if (!p.addr?.trim()) { setPois([]); return; }
+    setPois(null);
+    let stop = false;
+    authFetch(`/api/platform/zone?address=${encodeURIComponent(p.addr)}&radius=${radius}`)
+      .then(r => (r.ok ? r.json() : Promise.reject()))
+      .then((d: { pois?: Poi[] }) => { zoneCache[ck] = d.pois ?? []; if (!stop) setPois(zoneCache[ck]); })
+      .catch(() => { if (!stop) setPois('err'); });
+    return () => { stop = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-  const groups = (pois ?? []).reduce<Record<string, Poi[]>>((g, x) => ((g[x.categoria] ??= []).push(x), g), {});
+  }, [ck]);
+  const groups = (Array.isArray(pois) ? pois : []).reduce<Record<string, Poi[]>>((g, x) => ((g[x.categoria] ??= []).push(x), g), {});
 
   return (
     <aside className="blur-in absolute bottom-28 right-5 top-24 z-[500] flex w-[360px] flex-col overflow-hidden rounded-[28px] bg-white/95 shadow-[0_18px_50px_rgba(0,0,0,.18)] ring-1 ring-black/5 backdrop-blur-xl">
@@ -304,11 +313,22 @@ function NearbySidebar({ p, onClose }: { p: ProjectData; onClose: () => void }) 
           <div className="mt-1 flex items-center gap-1 truncate text-[13px] text-muted"><MapPin size={13} className="shrink-0" />{p.addr || 'Indirizzo n.d.'}</div>
           <Facts p={p} className="mt-2.5" />
 
-          <div className="mt-6 text-[13px] font-semibold">Nelle vicinanze</div>
-          {!pois ? (
+          <div className="mt-6 flex items-center justify-between gap-2">
+            <span className="text-[13px] font-semibold">Nelle vicinanze</span>
+            {/* raggio della ricerca */}
+            <div className="flex rounded-full bg-canvas p-0.5">
+              {[500, 1000, 2000, 3000].map(r => (
+                <button key={r} onClick={() => setRadius(r)}
+                  className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ease-smooth transition-colors ${radius === r ? 'bg-white text-ink shadow-sm' : 'text-muted hover:text-ink'}`}>{km(r)}</button>
+              ))}
+            </div>
+          </div>
+          {pois === 'err' ? (
+            <p className="mt-2 text-[13px] text-muted">Non riesco a caricare i servizi, riprova tra poco.</p>
+          ) : !pois ? (
             <div className="mt-3 space-y-2">{[0, 1, 2, 3].map(i => <div key={i} className="h-11 animate-pulse rounded-2xl bg-canvas" />)}</div>
           ) : !pois.length ? (
-            <p className="mt-2 text-[13px] text-muted">Nessun servizio trovato entro 1 km.</p>
+            <p className="mt-2 text-[13px] text-muted">Nessun servizio trovato entro {km(radius)}.</p>
           ) : (
             <div className="stagger mt-2 space-y-1">
               {Object.entries(groups).map(([cat, list]) => {
