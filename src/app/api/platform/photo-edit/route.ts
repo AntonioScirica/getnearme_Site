@@ -67,7 +67,11 @@ export async function POST(req: NextRequest) {
     ...(/\b(pavimento|pavimenti|parquet)\b/i.test(custom) ? ['floor'] : []),
     ...(/\b(soffitto|soffitti)\b/i.test(custom) ? ['ceiling'] : []),
   ] : []
-  if ((region || points.length) && usesText) {
+  // Rettangolo: al modello vanno la foto e la stessa foto con un rettangolo rosso sulla zona (disegnato
+  // dal worker, "mark"); fuori dalla zona il worker rimette la foto originale.
+  if (region && usesText) {
+    translation.prompt_template = 'Edit the first image: {REQUEST}, only inside the area marked by the red rectangle in the second image. Fill any freed area naturally, continuing the same floor, walls and light around it. Keep everything outside the red rectangle exactly the same, same framing and perspective. The result must not contain any red rectangle or outline. Photorealistic.'
+  } else if (points.length && usesText) {
     translation.prompt_template = 'In this close-up crop of a room photo: {REQUEST}. Fill any freed area naturally, continuing the same floor, walls and light around it. Keep the rest of the crop unchanged. Photorealistic.'
   }
   // Seme casuale: la stessa richiesta ripetuta da' ogni volta un risultato diverso (iterare, rigenerare).
@@ -80,7 +84,7 @@ export async function POST(req: NextRequest) {
   const t0 = Date.now()
   let job: RunpodJob
   try {
-    job = await runJob({ ...(imageBase64 ? { image_base64: imageBase64 } : { image_url: imageUrl }), prompt, ...translation, ...(region ? { region } : {}), ...(points.length ? { points } : {}), ...(labels.length ? { labels } : {}), seed, steps: 12 }) // 12 passaggi: ~8 s invece di 17 a 25, qualita' simile nel confronto del 24/09
+    job = await runJob({ ...(imageBase64 ? { image_base64: imageBase64 } : { image_url: imageUrl }), prompt, ...translation, ...(region ? { mark: region } : {}), ...(points.length ? { points } : {}), ...(labels.length ? { labels } : {}), seed, steps: 12 }) // 12 passaggi: ~8 s invece di 17 a 25, qualita' simile nel confronto del 24/09
   } catch (e) {
     console.error('photo-edit runpod error:', e)
     await logUsage({ userId, kind: 'photo_edit' }, true, Date.now() - t0, {}, false, 'qwen-image-2.1')
@@ -115,8 +119,8 @@ async function matchInputShape(out: Buffer, imageBase64: string, imageUrl: strin
   }
 }
 
-// Solo in sviluppo: salva in /tmp/gnm-debug cosa e' stato mandato al modello (foto con la zona in rosso,
-// il ritaglio che fa il worker, prompt, traduzione, risultato) per controllare le modifiche di una zona.
+// Solo in sviluppo: salva in /tmp/gnm-debug cosa e' stato mandato al modello (foto, foto con il rettangolo
+// rosso, prompt, traduzione, risultato) per controllare le modifiche di una zona.
 async function debugDump(d: { imageBase64: string; imageUrl: string; region: { x: number; y: number; w: number; h: number } | null; prompt: string; request?: string; outB64: string; translated?: string }) {
   try {
     const { mkdir, writeFile } = await import('fs/promises')
@@ -127,15 +131,11 @@ async function debugDump(d: { imageBase64: string; imageUrl: string; region: { x
     await writeFile(`${dir}/1-foto.jpg`, await sharp(src).jpeg().toBuffer())
     if (d.region && width && height) {
       const r = d.region
-      const svg = `<svg width="${width}" height="${height}"><rect x="${r.x * width}" y="${r.y * height}" width="${r.w * width}" height="${r.h * height}" fill="none" stroke="red" stroke-width="${Math.max(4, width / 200)}" stroke-dasharray="20 12"/></svg>`
-      await writeFile(`${dir}/2-zona.jpg`, await sharp(src).composite([{ input: Buffer.from(svg) }]).jpeg().toBuffer())
-      // stesso ritaglio del worker (edit_region): zona + 25% di margine + 3%
-      const mx = r.w * 0.25 + 0.03, my = r.h * 0.25 + 0.03
-      const x0 = Math.max(0, Math.floor((r.x - mx) * width)), y0 = Math.max(0, Math.floor((r.y - my) * height))
-      const x1 = Math.min(width, Math.floor((r.x + r.w + mx) * width)), y1 = Math.min(height, Math.floor((r.y + r.h + my) * height))
-      await writeFile(`${dir}/3-ritaglio-al-modello.jpg`, await sharp(src).extract({ left: x0, top: y0, width: x1 - x0, height: y1 - y0 }).jpeg().toBuffer())
+      const svg = `<svg width="${width}" height="${height}"><rect x="${r.x * width}" y="${r.y * height}" width="${r.w * width}" height="${r.h * height}" fill="none" stroke="red" stroke-width="${Math.max(4, Math.floor(width / 200))}"/></svg>`
+      // stessa immagine segnata che disegna il worker (draw_mark): rettangolo rosso pieno
+      await writeFile(`${dir}/2-foto-con-rettangolo.jpg`, await sharp(src).composite([{ input: Buffer.from(svg) }]).jpeg().toBuffer())
     }
-    await writeFile(`${dir}/4-risultato.jpg`, Buffer.from(d.outB64, 'base64'))
+    await writeFile(`${dir}/3-risultato.jpg`, Buffer.from(d.outB64, 'base64'))
     await writeFile(`${dir}/prompt.txt`, `richiesta: ${d.request ?? ''}\ntradotta: ${d.translated ?? '(worker vecchio, nessuna traduzione)'}\nzona: ${JSON.stringify(d.region)}\n\nprompt:\n${d.prompt}\n`)
   } catch (e) { console.error('debugDump', e) }
 }
