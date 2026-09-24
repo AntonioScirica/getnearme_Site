@@ -7,11 +7,11 @@ export const mockDelay = (ms = 3000) => new Promise(r => setTimeout(r, ms));
 const MOCKS: Record<string, unknown> = {
   analyze: {
     criteri: {
-      foto: { punti: 14, punti_dopo: 27, nota: 'Prima foto sull\'androne, watermark centrale, foto 3 storta e gialla.' },
-      dati: { punti: 16, punti_dopo: 22, nota: 'Mancano spese condominiali, classe energetica, riscaldamento e anno.' },
-      descrizione: { punti: 11, punti_dopo: 18, nota: 'Contenuti buoni ma maiuscolo, refusi e telefono nel testo.' },
-      coerenza: { punti: 12, punti_dopo: 15, nota: 'Dati coerenti, penalizzati dai contatti diretti nella descrizione.' },
-      titolo: { punti: 5, punti_dopo: 9, nota: 'Tutto maiuscolo, manca il punto di forza (piscina, box).' },
+      foto: { punti: 14, punti_dopo: 27, nota: 'Prima foto sull\'androne, watermark centrale, foto 3 storta e gialla.', limite: 'Mancano foto di bagno e camere: vanno scattate, l\'AI non le crea.' },
+      dati: { punti: 16, punti_dopo: 22, nota: 'Mancano spese condominiali, classe energetica, riscaldamento e anno.', limite: 'Anno di costruzione e spese esatte vanno chiesti all\'amministratore.' },
+      descrizione: { punti: 11, punti_dopo: 18, nota: 'Contenuti buoni ma maiuscolo, refusi e telefono nel testo.', limite: 'Senza planimetria e misure delle stanze la descrizione resta generica.' },
+      coerenza: { punti: 12, punti_dopo: 15, nota: 'Dati coerenti, penalizzati dai contatti diretti nella descrizione.', limite: '' },
+      titolo: { punti: 5, punti_dopo: 9, nota: 'Tutto maiuscolo, manca il punto di forza (piscina, box).', limite: 'Con 70 caratteri non entrano sia piscina sia box: uno dei due resta fuori.' },
     },
     sintesi: "[DATI FINTI] Annuncio con buone informazioni su zona e dotazioni, penalizzato da foto poco rappresentative, testo con maiuscole e refusi e contatti diretti nella descrizione.",
     punti_forza: [

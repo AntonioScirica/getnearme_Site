@@ -10,7 +10,7 @@ export const CRITERI = [
 ] as const;
 
 export type CriterioKey = (typeof CRITERI)[number]['key'];
-export type Criterio = { punti: number; punti_dopo: number; nota: string };
+export type Criterio = { punti: number; punti_dopo: number; nota: string; limite: string };
 export type Criteri = Record<CriterioKey, Criterio>;
 
 // Schema JSON per l'output strutturato dell'AI.
@@ -18,8 +18,8 @@ export const CRITERI_SCHEMA = {
   type: 'object',
   properties: Object.fromEntries(CRITERI.map(c => [c.key, {
     type: 'object',
-    properties: { punti: { type: 'integer' }, punti_dopo: { type: 'integer' }, nota: { type: 'string' } },
-    required: ['punti', 'punti_dopo', 'nota'],
+    properties: { punti: { type: 'integer' }, punti_dopo: { type: 'integer' }, nota: { type: 'string' }, limite: { type: 'string' } },
+    required: ['punti', 'punti_dopo', 'nota', 'limite'],
     additionalProperties: false,
   }])),
   required: CRITERI.map(c => c.key),
@@ -35,7 +35,7 @@ export function withScores<T extends { criteri?: Partial<Criteri> }>(a: T): T & 
     const x = a.criteri?.[c.key];
     const punti = Math.max(0, Math.min(c.max, Math.round(Number(x?.punti) || 0)));
     const dopo = Math.max(punti, Math.min(c.max, Math.round(Number(x?.punti_dopo) || 0)));
-    criteri[c.key] = { punti, punti_dopo: dopo, nota: String(x?.nota ?? '') };
+    criteri[c.key] = { punti, punti_dopo: dopo, nota: String(x?.nota ?? ''), limite: dopo < c.max ? String(x?.limite ?? '') : '' };
   }
   const sum = (k: 'punti' | 'punti_dopo') => CRITERI.reduce((s, c) => s + criteri[c.key][k], 0);
   return { ...a, criteri, score: sum('punti'), score_potenziale: sum('punti_dopo') };
@@ -43,7 +43,7 @@ export function withScores<T extends { criteri?: Partial<Criteri> }>(a: T): T & 
 
 // ponytail: controllo minimo, `npx tsx src/lib/listingScore.ts`
 if (typeof process !== 'undefined' && process.argv[1]?.endsWith('listingScore.ts')) {
-  const r = withScores({ criteri: { foto: { punti: 40, punti_dopo: 10, nota: '' }, titolo: { punti: 5, punti_dopo: 9, nota: '' } } });
+  const r = withScores({ criteri: { foto: { punti: 40, punti_dopo: 10, nota: '', limite: '' }, titolo: { punti: 5, punti_dopo: 9, nota: '', limite: '' } } });
   console.assert(r.criteri.foto.punti === 30 && r.criteri.foto.punti_dopo === 30, 'clamp e dopo >= ora');
   console.assert(r.score === 35 && r.score_potenziale === 39, 'somme');
   console.log('ok', r.score, r.score_potenziale);

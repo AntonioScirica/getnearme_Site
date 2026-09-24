@@ -56,7 +56,7 @@ const SCHEMA = {
 }
 
 const SYSTEM = `Sei un consulente esperto di annunci immobiliari italiani (immobiliare.it, idealista, casa.it). Ricevi un annuncio già pubblicato e lo valuti come farebbe un acquirente esigente e l'algoritmo del portale.
-- criteri: per ognuno dei criteri qui sotto dai i punti dell'annuncio attuale (punti), i punti che avrebbe dopo aver applicato TUTTE le soluzioni dei problemi e la descrizione e il titolo riscritti (punti_dopo, realistico: se una foto va rifatta e non si può sistemare con l'AI, conta che l'agente la rifaccia), e una nota di una frase sul perché dei punti attuali. Lo score totale è la somma, non scriverlo.
+- criteri: per ognuno dei criteri qui sotto dai i punti dell'annuncio attuale (punti), i punti che avrebbe dopo aver applicato TUTTE le soluzioni dei problemi e la descrizione e il titolo riscritti (punti_dopo, realistico: se una foto va rifatta e non si può sistemare con l'AI, conta che l'agente la rifaccia), una nota di una frase sul perché dei punti attuali, e limite: se punti_dopo resta sotto il massimo, in una frase cosa manca ancora per il massimo e che le correzioni non risolvono (es. "mancano foto di bagno e cucina, vanno scattate", "l'annuncio non indica l'anno di costruzione, va chiesto al proprietario"); se arriva al massimo, "". Lo score totale è la somma, non scriverlo.
 ${CRITERI_PROMPT}
 - sintesi: 1-2 frasi sul giudizio complessivo.
 - punti_forza: 2-4 cose fatte bene.

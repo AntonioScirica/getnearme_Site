@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Camera, Check, Copy, Download, ExternalLink, Loader2, Puzzle, Sparkles, Wand2 } from 'lucide-react';
+import { Camera, Check, Copy, Download, ExternalLink, Loader2, Puzzle, Wand2 } from 'lucide-react';
 import { downloadImage } from '@/lib/staging';
 import { AI_MOCK, mockFor } from '@/lib/aiMock';
 import { authFetch, CARD_SHADOW, extSend, EXTENSION_URL, go } from './api';
@@ -260,8 +260,11 @@ export function Results({ listing, analysis: a, onSaved, onRestart }: { listing:
       <section className={`rise ${BOX}`} style={{ animationDelay: '1.2s' }}>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0">
-            <h2 className="flex items-center gap-2 text-2xl font-bold tracking-tight"><Sparkles size={20} /> Annuncio riscritto</h2>
-            <p className="mt-1 text-sm text-muted">Pronto da incollare sul portale. Con questa versione e le correzioni qui sotto l&apos;annuncio arriva a <b className="font-semibold text-emerald-600">{a.score_potenziale}/100</b>.</p>
+            <div className="flex flex-wrap items-center gap-2.5">
+              <h2 className="text-2xl font-bold tracking-tight">Annuncio riscritto</h2>
+              <ScoreInfo a={a} />
+            </div>
+            <p className="mt-1 text-sm text-muted">Pronto da incollare sul portale. Con questa versione e le correzioni qui sotto arrivi a {a.score_potenziale}/100.</p>
           </div>
           <button onClick={() => setShowBefore(v => !v)} className="btn-ghost shrink-0 self-start rounded-full px-4 py-2 text-sm font-medium">{showBefore ? 'Nascondi originale' : 'Confronta con originale'}</button>
         </div>
@@ -284,44 +287,15 @@ export function Results({ listing, analysis: a, onSaved, onRestart }: { listing:
         </Field>
       </section>
 
-      {/* Criteri dello score: ora e dopo le correzioni */}
-      <section className={`rise ${BOX}`} style={{ animationDelay: '1.3s' }}>
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <h2 className="text-2xl font-bold tracking-tight">Come calcoliamo il punteggio</h2>
-            <p className="mt-1 text-sm text-muted">Cinque criteri, 100 punti in tutto. In verde quanto guadagni applicando le correzioni.</p>
-          </div>
-          <div className="text-right text-sm font-semibold"><span className="text-muted">{a.score}</span> <span className="text-muted">→</span> <span className="text-emerald-600">{a.score_potenziale}</span><span className="text-muted">/100</span></div>
-        </div>
-        <ul className="mt-6 space-y-5">
-          {CRITERI.map(c => {
-            const x = a.criteri[c.key];
-            return (
-              <li key={c.key}>
-                <div className="flex items-baseline justify-between gap-3 text-sm">
-                  <span className="font-semibold">{c.label} <span className="font-normal text-muted">· {c.desc}</span></span>
-                  <span className="shrink-0 tabular-nums"><b>{x.punti}</b>{x.punti_dopo > x.punti && <span className="font-semibold text-emerald-600"> → {x.punti_dopo}</span>}<span className="text-muted">/{c.max}</span></span>
-                </div>
-                <div className="relative mt-2 h-2 overflow-hidden rounded-full bg-canvas">
-                  <div className="grow-x absolute inset-y-0 left-0 rounded-full bg-emerald-500/30" style={{ width: `${(x.punti_dopo / c.max) * 100}%`, animationDelay: '1.5s' }} />
-                  <div className="grow-x absolute inset-y-0 left-0 rounded-full bg-ink" style={{ width: `${(x.punti / c.max) * 100}%`, animationDelay: '1.4s' }} />
-                </div>
-                {x.nota && <p className="mt-1.5 text-xs text-muted">{x.nota}</p>}
-              </li>
-            );
-          })}
-        </ul>
-      </section>
-
       {/* Cosa sistemare */}
-      <section className="rise pt-6" style={{ animationDelay: '1.4s' }}>
+      <section className="rise pt-6" style={{ animationDelay: '1.3s' }}>
         <h2 className="text-center text-3xl font-bold tracking-tight">Cosa sistemare sul portale</h2>
         <p className="mt-1 text-center text-muted">In ordine di priorità: cosa non va, perché ti fa perdere contatti, cosa fare adesso.</p>
         <ol className="mt-8 grid gap-5 lg:grid-cols-2">
           {a.problemi.map((p, i) => {
             const g = GRAVITA[p.gravita];
             return (
-              <li key={i} className={`rise flex flex-col ${BOX}`} style={{ animationDelay: `${1.45 + i * 0.08}s` }}>
+              <li key={i} className={`rise flex flex-col ${BOX}`} style={{ animationDelay: `${1.35 + i * 0.08}s` }}>
                 <div className="flex items-center gap-2.5">
                   <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-ink text-sm font-semibold text-white">{i + 1}</span>
                   <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${g.cls}`}>{g.label}</span>
@@ -372,6 +346,53 @@ export function Results({ listing, analysis: a, onSaved, onRestart }: { listing:
         {saveError && <p className="text-sm text-rose-600">{saveError}</p>}
       </section>
       <div className="pb-6" />
+    </div>
+  );
+}
+
+// Badge "91/100" accanto al titolo + "i": apre i criteri, cosa guadagni e perche' non si arriva a 100.
+function ScoreInfo({ a }: { a: Analysis }) {
+  const [open, setOpen] = useState(false);
+  const box = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const out = (e: MouseEvent) => { if (!box.current?.contains(e.target as Node)) setOpen(false); };
+    const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') { e.stopPropagation(); setOpen(false); } };
+    document.addEventListener('mousedown', out); document.addEventListener('keydown', esc, true);
+    return () => { document.removeEventListener('mousedown', out); document.removeEventListener('keydown', esc, true); };
+  }, [open]);
+  const gap = 100 - a.score_potenziale;
+  return (
+    <div ref={box} className="relative">
+      <button type="button" onClick={() => setOpen(v => !v)} aria-expanded={open} title="Come calcoliamo il punteggio"
+        className="flex items-center gap-1.5 rounded-full bg-emerald-50 py-1 pl-3 pr-1 text-sm font-semibold text-emerald-700 ease-smooth transition-colors hover:bg-emerald-100">
+        {a.score_potenziale}/100
+        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-[11px] font-bold text-emerald-700 ring-1 ring-emerald-200">i</span>
+      </button>
+      {open && (
+        <div className="blur-in absolute left-0 top-full z-50 mt-2 w-[min(26rem,calc(100vw-3rem))] rounded-3xl bg-white p-5 text-left shadow-[0_2px_6px_rgba(0,0,0,.05),0_24px_48px_-16px_rgba(0,0,0,.22)] ring-1 ring-black/5">
+          <div className="text-base font-bold tracking-tight">{gap > 0 ? `Perché ${a.score_potenziale} e non 100` : 'Punteggio pieno'}</div>
+          <p className="mt-1 text-xs text-muted">Cinque criteri, 100 punti. Ora {a.score}, con le correzioni {a.score_potenziale}.{gap > 0 ? ' Quello che manca non si risolve modificando l\'annuncio:' : ''}</p>
+          <ul className="mt-4 space-y-3.5">
+            {CRITERI.map(c => {
+              const x = a.criteri[c.key];
+              return (
+                <li key={c.key}>
+                  <div className="flex items-baseline justify-between gap-3 text-sm">
+                    <span className="font-semibold">{c.label}</span>
+                    <span className="shrink-0 tabular-nums text-muted">{x.punti}{x.punti_dopo > x.punti && <span className="font-semibold text-emerald-600"> → {x.punti_dopo}</span>}/{c.max}</span>
+                  </div>
+                  <div className="relative mt-1.5 h-1.5 overflow-hidden rounded-full bg-canvas">
+                    <div className="absolute inset-y-0 left-0 rounded-full bg-emerald-500/30" style={{ width: `${(x.punti_dopo / c.max) * 100}%` }} />
+                    <div className="absolute inset-y-0 left-0 rounded-full bg-ink" style={{ width: `${(x.punti / c.max) * 100}%` }} />
+                  </div>
+                  <p className="mt-1 text-xs text-muted">{x.punti_dopo < c.max ? (x.limite || x.nota) : 'Pieno con le correzioni.'}</p>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }
