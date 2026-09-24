@@ -37,7 +37,7 @@ export const DOTS: React.CSSProperties = { background: 'radial-gradient(rgba(0,0
 const NAV = [
   { path: '/', label: 'Home', icon: Home },
   { path: '/immobili', label: 'Immobili', icon: Building2 },
-  { path: '/portfolio', label: 'Vetrina', icon: Globe },
+  { path: '/portfolio', label: 'Il mio sito', icon: Globe },
 ];
 
 export default function PlatformApp({ userData }: { userData: UserData }) {
@@ -418,10 +418,10 @@ function ProfileView({ email, profile, onSaved }: { email: string; profile: Prof
       <h1 className="font-display text-3xl font-bold tracking-tight">Profilo</h1>
       <p className="mt-1 text-muted">{email}</p>
       <div className={`mt-8 rounded-[28px] bg-white p-6 ${CARD_SHADOW}`}>
-        <h2 className="font-semibold">La tua vetrina</h2>
+        <h2 className="font-semibold">Il tuo sito personale</h2>
         <p className="mt-1 text-sm text-muted">Il nome che vedono i clienti e l&apos;indirizzo della pagina con le tue case.</p>
         <div className="mt-5"><ProfileForm initial={profile ?? { name: null, slug: null }} submitLabel="Salva" onSaved={onSaved} /></div>
-        {profile?.slug && <a href="#/portfolio" className="mt-4 inline-flex text-sm font-medium text-brand hover:underline">Gestisci le case in vetrina</a>}
+        {profile?.slug && <a href="#/portfolio" className="mt-4 inline-flex text-sm font-medium text-brand hover:underline">Modifica il tuo sito</a>}
       </div>
       <button onClick={() => supabase.auth.signOut()} className="mt-6 flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium text-muted ring-1 ring-line hover:bg-white hover:text-ink"><LogOut size={15} /> Esci</button>
     </div>
@@ -434,7 +434,7 @@ function Onboarding({ onDone }: { onDone: (p: Profile) => void }) {
       <div className="w-full max-w-md card p-8">
         <div className="flex items-center gap-2"><img src="/immo/logo-mark.png" alt="" className="h-9 w-9" /><span className="font-display text-xl font-extrabold tracking-tight">Agente <span className="text-brand">Immo</span></span></div>
         <h1 className="mt-6 font-display text-2xl font-bold tracking-tight">Come ti chiami?</h1>
-        <p className="mt-1 text-sm text-muted">Il tuo nome apparirà sul portfolio pubblico, la vetrina con i tuoi immobili da condividere con i clienti.</p>
+        <p className="mt-1 text-sm text-muted">Il tuo nome apparirà sul tuo sito personale, quello con i tuoi immobili da condividere con i clienti.</p>
         <div className="mt-6"><ProfileForm initial={{ name: null, slug: null }} submitLabel="Continua" onSaved={onDone} /></div>
       </div>
     </div>

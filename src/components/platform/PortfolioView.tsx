@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { ArrowLeft, Check, ChevronDown, Copy, Eye, EyeOff, ExternalLink, ImagePlus, Loader2, Pencil, Plus, RotateCcw, Trash2 } from 'lucide-react';
+import { ArrowLeft, Check, ChevronDown, Copy, Eye, EyeOff, ExternalLink, Globe, ImagePlus, Loader2, Pencil, Plus, RotateCcw, Trash2 } from 'lucide-react';
 import type { ProjectData } from '@/lib/projects';
 import { FAKE_PROPERTIES } from '@/lib/fakeProperties';
 import { FIELD_LABELS, PAGE_SECTIONS, TEMPLATES, TEXTS, zoneSlug, type PageId, type SiteConfig, type SiteProperty, type TemplateId } from '@/lib/siteTemplates';
@@ -59,9 +59,12 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
     <>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="font-display text-4xl font-bold leading-[1.2] tracking-tight">Vetrina</h1>
+          <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-brand/10 px-3 py-1 text-xs font-semibold text-brand"><Globe size={13} /> Il tuo sito personale</div>
+          <h1 className="font-display text-4xl font-bold leading-[1.2] tracking-tight">Il sito con i tuoi immobili</h1>
+          <p className="mt-1 max-w-xl text-sm text-muted">Un sito tutto tuo, con il tuo nome e i tuoi contatti: le case che pubblichi, chi sei, i servizi e le zone in cui lavori. Lo condividi ai clienti e lo trovano su Google.</p>
           {url && (
-            <div className="mt-1 flex items-center gap-3 text-sm">
+            <div className="mt-2 flex items-center gap-3 text-sm">
+              <span className="text-muted">Online su</span>
               <a href={url} target="_blank" rel="noreferrer" className="flex items-center gap-1 font-medium text-brand"><ExternalLink size={14} /> {url.replace(/^https?:\/\//, '')}</a>
               <button onClick={() => { navigator.clipboard.writeText(url); setCopied(true); setTimeout(() => setCopied(false), 1500); }}
                 className="flex items-center gap-1 text-muted hover:text-ink">{copied ? <Check size={14} /> : <Copy size={14} />} {copied ? 'Copiato' : 'Copia'}</button>
@@ -70,7 +73,7 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
         </div>
         <div className="flex items-center gap-2">
           <div className="flex rounded-full bg-white p-1 ring-1 ring-black/10">
-            {([['sito', 'Sito'], ['immobili', 'Immobili e indirizzo']] as const).map(([id, l]) => (
+            {([['sito', 'Aspetto del sito'], ['immobili', 'Immobili e indirizzo']] as const).map(([id, l]) => (
               <button key={id} onClick={() => setTab(id)} className={`rounded-full px-4 py-1.5 text-[13px] font-medium ease-smooth transition-colors ${tab === id ? 'bg-ink text-white' : 'text-muted hover:text-ink'}`}>{l}</button>
             ))}
           </div>
@@ -228,7 +231,8 @@ function CfgField({ k, cfg, set, covers }: { k: keyof SiteConfig; cfg: SiteConfi
 function Gallery({ cfg, name, logo, props, onPick }: { cfg: SiteConfig; name: string; logo: string | null; props: SiteProperty[]; onPick: (id: TemplateId) => void }) {
   return (
     <div className="mt-8">
-      <p className="mb-6 text-sm text-muted">Scegli un modello: entri nell’editor e lo personalizzi. Il sito cambia solo quando premi “Pubblica modifiche”.</p>
+      <h2 className="font-display text-xl font-semibold">Scegli lo stile del tuo sito</h2>
+      <p className="mb-6 mt-1 text-sm text-muted">Dieci stili, tutti già riempiti con i tuoi immobili e i tuoi dati. Ne scegli uno, lo personalizzi e lo pubblichi: il sito online cambia solo quando premi “Pubblica modifiche”.</p>
       <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
         {TEMPLATES.map((t, i) => {
           const used = cfg.template === t.id;
