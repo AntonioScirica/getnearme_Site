@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
 
   // Foto: URL (annunci, R2) oppure caricata dal computer (imageBase64, data URL gia' ridimensionata).
   // Modifica: testo libero e/o i preset di home staging (stile, vista, scena, planimetria).
-  let body: { imageUrl?: string; imageBase64?: string; prompt?: string; style?: string; angle?: string; scene?: SceneType; planimetria?: boolean; seed?: number }
+  let body: { imageUrl?: string; imageBase64?: string; prompt?: string; style?: string; angle?: string; scene?: SceneType; planimetria?: boolean; seed?: number; region?: { x: number; y: number; w: number; h: number } }
   try { body = await req.json() } catch { return NextResponse.json({ error: 'bad_request' }, { status: 400 }) }
   const imageUrl = typeof body.imageUrl === 'string' ? body.imageUrl : ''
   const imageBase64 = typeof body.imageBase64 === 'string' && /^data:image\/(jpeg|png|webp);base64,/.test(body.imageBase64) && body.imageBase64.length < 8_000_000 ? body.imageBase64 : ''
@@ -54,7 +54,13 @@ export async function POST(req: NextRequest) {
   const prompt = buildStagingPrompt({ customPrompt: custom, style: body.style, angle: body.angle, planimetria: !!body.planimetria, scene })
   // Testo libero: il worker lo traduce in inglese (Qwen-Image ignora quasi l'italiano) dentro la stessa cornice.
   const usesText = !!custom && !body.angle && !body.planimetria
-  const translation = usesText ? { request: custom, prompt_template: buildStagingPrompt({ customPrompt: '{REQUEST}', scene }) } : {}
+  const translation: { request?: string; prompt_template?: string } = usesText ? { request: custom, prompt_template: buildStagingPrompt({ customPrompt: '{REQUEST}', scene }) } : {}
+  // Zona selezionata dall'agente (0..1): il worker modifica solo li'. Prompt dedicato: si lavora su un ritaglio.
+  const r = body.region
+  const region = r && [r.x, r.y, r.w, r.h].every(v => typeof v === 'number' && v >= 0 && v <= 1) && r.w > 0.02 && r.h > 0.02 ? { x: r.x, y: r.y, w: r.w, h: r.h } : null
+  if (region && usesText) {
+    translation.prompt_template = 'In this close-up crop of a room photo: {REQUEST}. Fill any freed area naturally, continuing the same floor, walls and light around it. Keep the rest of the crop unchanged. Photorealistic.'
+  }
   // Seme casuale: la stessa richiesta ripetuta da' ogni volta un risultato diverso (iterare, rigenerare).
   const seed = typeof body.seed === 'number' ? body.seed : Math.floor(Math.random() * 1_000_000)
 
@@ -65,7 +71,7 @@ export async function POST(req: NextRequest) {
   const t0 = Date.now()
   let job: RunpodJob
   try {
-    job = await runJob({ ...(imageBase64 ? { image_base64: imageBase64 } : { image_url: imageUrl }), prompt, ...translation, seed, steps: 12 }) // 12 passaggi: ~8 s invece di 17 a 25, qualita' simile nel confronto del 24/09
+    job = await runJob({ ...(imageBase64 ? { image_base64: imageBase64 } : { image_url: imageUrl }), prompt, ...translation, ...(region ? { region } : {}), seed, steps: 12 }) // 12 passaggi: ~8 s invece di 17 a 25, qualita' simile nel confronto del 24/09
   } catch (e) {
     console.error('photo-edit runpod error:', e)
     await logUsage({ userId, kind: 'photo_edit' }, true, Date.now() - t0, {}, false, 'qwen-image-2.1')

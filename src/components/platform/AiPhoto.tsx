@@ -22,7 +22,8 @@ export function Elapsed({ className = 'text-muted' }: { className?: string }) {
 const MSGS = ['Guardo la foto', 'Applico la modifica', 'Sistemo luce e dettagli', 'Rifinisco i bordi', 'Quasi pronta'];
 const wait = (ms: number) => new Promise(r => setTimeout(r, ms));
 
-export type EditRequest = { imageUrl?: string; imageBase64?: string; prompt?: string; style?: string; angle?: string; scene?: string; planimetria?: boolean };
+export type Region = { x: number; y: number; w: number; h: number };
+export type EditRequest = { imageUrl?: string; imageBase64?: string; prompt?: string; style?: string; angle?: string; scene?: string; planimetria?: boolean; region?: Region };
 export type Reveal = 'burst' | 'line' | 'slider' | null;
 
 // GPU accesa finche' il componente che la usa e' a schermo (segnale ogni 50 s, spegnimento a 60 s).
