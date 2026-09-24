@@ -1,15 +1,16 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Download, ImagePlus, Loader2, Plus, RefreshCw, Wand2, X } from 'lucide-react';
+import { Download, Loader2, Plus, Wand2, X } from 'lucide-react';
 import { downloadImage, fileToResizedDataUrl, SCENE_STYLE_LABELS, STAGING_STYLES } from '@/lib/staging';
 import { ANGLES, type SceneType } from '@/lib/stagingPrompts';
-import { AiPhotoStage, Elapsed, PhotoChat, useAiPhoto, useKeepPhotoGpu, type EditRequest } from './AiPhoto';
+import { AiPhotoStage, Elapsed, useAiPhoto, useKeepPhotoGpu, type EditRequest } from './AiPhoto';
+import StagingChat from './StagingChat';
 import { CARD_SHADOW } from './api';
 
-// Home staging nella piattaforma: stessi stili, viste e planimetria di Foto AI (prompt in
-// lib/stagingPrompts), generati con Qwen-Image. Una foto: editor grande. Piu' foto: batch, ogni
-// foto con la sua impostazione, "Genera tutte" le lancia insieme (RunPod le distribuisce sui worker).
+// Home staging nella piattaforma (Qwen-Image, prompt in lib/stagingPrompts). Una foto alla volta: chat
+// (StagingChat). Piu' foto caricate insieme: batch, ogni foto con la sua impostazione, "Genera tutte"
+// le lancia insieme (RunPod le distribuisce sui worker).
 
 type Scene = SceneType | 'planimetria';
 type Item = { id: string; src: string; scene: Scene; style: string | null; angle: string | null; custom: string };
@@ -39,13 +40,11 @@ const newItem = (src: string): Item => ({ id: Math.random().toString(36).slice(2
 // La GPU resta accesa solo mentre ci sono foto caricate in pagina.
 function KeepGpu() { useKeepPhotoGpu(); return null; }
 
-const chip = (on: boolean) => `rounded-full px-3.5 py-2 text-sm font-medium ease-smooth transition-colors ${on ? 'bg-ink text-white' : 'bg-canvas text-ink/80 ring-1 ring-inset ring-black/10 hover:bg-white'}`;
 const primary = 'flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-brand px-4 text-[13px] font-semibold text-white ease-smooth transition-[background-color,opacity,transform] hover:bg-brand/90 active:scale-[0.97] disabled:opacity-40';
 const secondary = 'flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-white px-4 text-[13px] font-semibold ring-1 ring-black/10 ease-smooth transition-colors hover:bg-canvas disabled:opacity-40';
 
 export default function StagingView() {
   const [items, setItems] = useState<Item[]>([]);
-  const [drag, setDrag] = useState(false);
   const [runAll, setRunAll] = useState(0);
   const [done, setDone] = useState<Record<string, string>>({});
 
@@ -61,27 +60,16 @@ export default function StagingView() {
 
   const picker = (multiple: boolean) => <input type="file" accept="image/*" multiple={multiple} className="hidden" onChange={e => { add(e.target.files); e.target.value = ''; }} />;
 
+  // Una foto alla volta: chat. Piu' foto caricate insieme: griglia batch.
+  if (items.length < 2) return <StagingChat onMany={add} />;
+
   return (
     <div className="mx-auto max-w-5xl pb-16 pt-6">
       <h1 className="text-center font-display text-4xl font-bold tracking-tight md:text-5xl">
         <span className="blur-in inline-block">Home staging</span>
-        <span className="blur-in block text-muted/70" style={{ animationDelay: '.1s' }}>Arreda, svuota o cambia la luce delle foto.</span>
+        <span className="blur-in block text-muted/70" style={{ animationDelay: '.1s' }}>Scegli cosa fare su ogni foto, poi generale tutte insieme.</span>
       </h1>
-      {items.length > 0 && <KeepGpu />}
-
-      {items.length === 0 && (
-        <div className={`rise mx-auto mt-10 max-w-4xl rounded-[28px] bg-white p-5 ${CARD_SHADOW}`} style={{ animationDelay: '.15s' }}>
-          <label onDragOver={e => { e.preventDefault(); setDrag(true); }} onDragLeave={() => setDrag(false)} onDrop={e => { e.preventDefault(); setDrag(false); add(e.dataTransfer.files); }}
-            className={`flex aspect-[3/2] max-h-[60vh] w-full cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed ease-smooth transition-colors ${drag ? 'border-brand bg-brand/5' : 'border-line bg-canvas hover:border-ink/20'}`}>
-            <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-black/5"><ImagePlus size={24} /></span>
-            <span className="text-base font-semibold">Trascina qui una o più foto, o clicca per sceglierle</span>
-            <span className="text-sm text-muted">Con più foto scegli lo stile per ognuna e le generi tutte insieme. Fino a 30.</span>
-            {picker(true)}
-          </label>
-        </div>
-      )}
-
-      {items.length === 1 && <SingleEditor item={items[0]} onChange={p => update(items[0].id, p)} onReplace={src => update(items[0].id, { src })} onAdd={add} />}
+      <KeepGpu />
 
       {items.length > 1 && (
         <>
@@ -111,52 +99,6 @@ export default function StagingView() {
             ))}
           </div>
         </>
-      )}
-    </div>
-  );
-}
-
-// Una foto: tipo di foto + modifica a chat (richieste in italiano, versioni, si continua dall'ultima).
-// La planimetria resta a stili: e' un rendering con regole sue, non una richiesta libera.
-function SingleEditor({ item, onChange, onReplace, onAdd }: { item: Item; onChange: (p: Partial<Item>) => void; onReplace: (src: string) => void; onAdd: (f: FileList | null) => void }) {
-  const ai = useAiPhoto();
-  const { scene, style } = item;
-  const [key, setKey] = useState(0); // nuova foto = chat da capo
-
-  return (
-    <div className={`rise mx-auto mt-10 max-w-4xl rounded-[28px] bg-white p-5 ${CARD_SHADOW}`} style={{ animationDelay: '.15s' }}>
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-2 px-1">
-        <div className="inline-flex rounded-full bg-canvas p-1 ring-1 ring-inset ring-black/5">
-          {SCENES.map(s => (
-            <button key={s.id} onClick={() => onChange({ scene: s.id, style: s.id === 'planimetria' && (style === 'daynight' || style === 'empty') ? 'modern' : style })}
-              className={`rounded-full px-4 py-1.5 text-sm font-medium ease-smooth transition-colors ${scene === s.id ? 'bg-white text-ink shadow-sm' : 'text-muted hover:text-ink'}`}>{s.label}</button>
-          ))}
-        </div>
-        <div className="flex gap-2">
-          <label className="flex h-9 cursor-pointer items-center gap-1.5 rounded-full bg-canvas px-3.5 text-xs font-semibold ring-1 ring-inset ring-black/10 hover:bg-white">
-            <RefreshCw size={13} /> Cambia foto
-            <input type="file" accept="image/*" className="hidden" onChange={async e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) { onReplace(await fileToResizedDataUrl(f, 1500)); setKey(k => k + 1); ai.reset(); } }} />
-          </label>
-          <label className="flex h-9 cursor-pointer items-center gap-1.5 rounded-full bg-canvas px-3.5 text-xs font-semibold ring-1 ring-inset ring-black/10 hover:bg-white">
-            <Plus size={13} /> Più foto
-            <input type="file" accept="image/*" multiple className="hidden" onChange={e => { onAdd(e.target.files); e.target.value = ''; }} />
-          </label>
-        </div>
-      </div>
-
-      {scene === 'planimetria' ? (
-        <>
-          <AiPhotoStage src={item.src} busy={ai.busy} out={ai.out} reveal={ai.reveal} msg={ai.msg} fileName={fileName(item)} />
-          <div className="mt-4 flex flex-wrap items-center gap-2 px-1">
-            {stylesFor('planimetria').map(s => <button key={s.id} onClick={() => onChange({ style: s.id })} className={chip(style === s.id)}>{s.label}</button>)}
-            <button onClick={() => ai.run(reqFor(item))} disabled={ai.busy} className={`${primary} ml-auto`}>
-              {ai.busy ? <><Loader2 size={14} className="animate-spin" /> <Elapsed className="text-white/80" /></> : <><Wand2 size={14} /> {ai.out ? 'Rigenera' : 'Genera'}</>}
-            </button>
-          </div>
-          {ai.err && <p className="mt-2 px-1 text-sm text-rose-600">{ai.err}</p>}
-        </>
-      ) : (
-        <PhotoChat key={`${key}-${item.src.length}`} original={item.src} scene={scene} fileName={fileName(item)} />
       )}
     </div>
   );
