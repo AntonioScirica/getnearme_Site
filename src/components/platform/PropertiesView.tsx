@@ -256,6 +256,8 @@ function PropertyMap({ projects, geo, hover, loading }: { projects: ProjectData[
   return (
     <div className="relative isolate h-[max(680px,86vh)] overflow-hidden">
       <div ref={el} className="absolute inset-0 z-0 bg-canvas" style={{ maskImage: 'linear-gradient(to bottom, #000 62%, transparent 97%)', WebkitMaskImage: 'linear-gradient(to bottom, #000 62%, transparent 97%)' }} />
+      {/* sfumatura in alto: la navbar resta leggibile sopra la mappa */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-[450] h-44" style={{ background: 'linear-gradient(to bottom, #fff 0%, rgba(255,255,255,.92) 35%, rgba(255,255,255,.55) 65%, transparent)' }} />
       {/* sfumatura in basso: blur progressivo sopra la dissolvenza */}
       {[2, 6, 12].map((b, i) => {
         const m = `linear-gradient(to bottom, transparent ${i * 20}%, #000 ${40 + i * 20}%)`;
