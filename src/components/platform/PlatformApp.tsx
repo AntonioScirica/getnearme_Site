@@ -13,6 +13,7 @@ import { BrowserBody, Results, SCAN_STEPS, useImprove, Verdict, type Stage } fro
 import { Elapsed } from './AiPhoto';
 import CostsView from './CostsView';
 import StagingView from './StagingView';
+import PropertiesView from './PropertiesView';
 import { isPlatformAdmin } from '@/lib/platformAdmins';
 import ProgressiveBlur from '@/components/ProgressiveBlur';
 import { go, formatPrice, authFetch, CARD_SHADOW, warm } from './api';
@@ -101,7 +102,7 @@ export default function PlatformApp({ userData }: { userData: UserData }) {
           ) : detailId ? (
             <PropertyDetail project={projects?.find(p => p.id === detailId)} loading={projects === null} onChange={reload} />
           ) : route === '/immobili' ? (
-            <PropertyList projects={projects} />
+            <PropertiesView projects={projects} />
           ) : route === '/portfolio' ? (
             <PortfolioView projects={projects} onChange={reload} />
           ) : (
@@ -423,53 +424,6 @@ function ProfileView({ email, profile, onSaved }: { email: string; profile: Prof
         {profile?.slug && <a href="#/portfolio" className="mt-4 inline-flex text-sm font-medium text-brand hover:underline">Gestisci le case in vetrina</a>}
       </div>
       <button onClick={() => supabase.auth.signOut()} className="mt-6 flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium text-muted ring-1 ring-line hover:bg-white hover:text-ink"><LogOut size={15} /> Esci</button>
-    </div>
-  );
-}
-
-function PropertyList({ projects }: { projects: ProjectData[] | null }) {
-  return (
-    <>
-      <div className="flex items-center justify-between">
-        <h1 className="font-display text-3xl font-bold tracking-tight">Immobili</h1>
-        <a href="#/nuovo" className="flex items-center gap-2 btn-ink rounded-xl px-4 py-2 text-sm font-semibold"><Plus size={16} /> Nuovo</a>
-      </div>
-      <div className="mt-8"><PropertyGrid projects={projects} /></div>
-    </>
-  );
-}
-
-export function PropertyGrid({ projects }: { projects: ProjectData[] | null }) {
-  if (!projects) return <Loader2 className="animate-spin text-muted" />;
-  if (!projects.length) return (
-    <div className="card flex flex-col items-center px-6 py-14 text-center">
-      <span className="icon-badge float flex h-14 w-14 items-center justify-center rounded-2xl"><Building2 size={26} /></span>
-      <p className="mt-5 font-display text-lg font-semibold">Ancora nessun immobile</p>
-      <p className="mt-1 max-w-xs text-sm text-muted">Crea il primo annuncio da zero o importa quelli che hai già: compariranno qui e nel tuo portfolio.</p>
-      <a href="#/nuovo" className="btn-primary mt-6 rounded-xl px-6 py-3 text-sm font-semibold">Crea il primo annuncio</a>
-    </div>
-  );
-  return (
-    <div className="stagger grid gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
-      {projects.map(p => {
-        const score = (p.import_data as { score?: number } | undefined)?.score;
-        return (
-          <a key={p.id} href={`#/immobile/${p.id}`} className="group block">
-            <div className="relative aspect-[20/19] overflow-hidden rounded-2xl bg-canvas">
-              {p.cover && <img src={p.cover} alt="" className="h-full w-full object-cover ease-smooth transition group-hover:scale-[1.04]" />}
-              {p.is_public && <span className="absolute left-3 top-3 rounded-full bg-white px-3 py-1 text-xs font-semibold shadow-sm">Nel portfolio</span>}
-            </div>
-            <div className="mt-3 flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <div className="truncate font-semibold">{p.addr?.split(',').slice(-1)[0]?.trim() || 'Indirizzo n.d.'}</div>
-                <div className="truncate text-sm text-muted">{p.titolo || p.nome}</div>
-                <div className="mt-1.5 text-[15px]"><span className="font-semibold">{formatPrice(p.prezzo)}</span>{p.mq ? <span className="text-muted"> · {p.mq} m²</span> : null}</div>
-              </div>
-              {typeof score === 'number' && <span className="badge-warm shrink-0 rounded-full px-2.5 py-0.5 text-xs font-bold">{score}</span>}
-            </div>
-          </a>
-        );
-      })}
     </div>
   );
 }
