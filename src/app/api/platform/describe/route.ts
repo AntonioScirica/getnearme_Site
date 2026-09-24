@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { TITLE_RULES } from '@/lib/titleRules'
 import { generateJson } from '@/lib/ai'
 import { createClient } from '@supabase/supabase-js'
 
@@ -23,7 +24,8 @@ const SCHEMA = {
 }
 
 const SYSTEM = `Sei un copywriter immobiliare italiano esperto. Scrivi annunci per portali come immobiliare.it e idealista.
-- Titolo: max 70 caratteri, concreto (tipologia, zona, punto di forza). Niente maiuscolo urlato, niente emoji.
+- Titolo: MASSIMO 60 caratteri spazi inclusi (immobiliare.it taglia a 60). Regole, da ricerca sui portali:
+${TITLE_RULES}
 - Descrizione: 120-220 parole, italiano naturale, paragrafi brevi. Scrivi in prosa. Usa un elenco puntato (righe che iniziano con "- ") solo se ha davvero senso: molte voci omogenee, di solito 5 o più dotazioni o ambienti, che in una frase diventerebbero un elenco di virgole illeggibile. Al massimo un elenco per descrizione; se le voci sono poche, mettile in una frase. Apri con il punto di forza principale, poi spazi, dotazioni, zona. Usa solo i dati forniti: non inventare caratteristiche, metrature o servizi. Non aggiungere promesse o servizi dell'agenzia non presenti (orari di visita, disponibilità serali, consulenze, mutui). Chiudi al massimo con un invito generico a contattare l'agenzia. Niente em dash, usa virgole.
 - Score: da 0 a 100, quanto e' completo e convincente l'annuncio con i dati disponibili (dati mancanti, foto, chiarezza).
 - Suggerimenti: 2-5 azioni concrete per migliorare l'annuncio (es. dati mancanti da aggiungere, foto da fare).
@@ -33,7 +35,7 @@ VOCE DI TITOLO E DESCRIZIONE: scrivi come un agente immobiliare italiano esperto
 - Prima persona plurale dell'agenzia ("proponiamo", "vi presentiamo", "l'immobile si compone di").
 - Lessico del settore usato con naturalezza: "ottimo stato", "doppia esposizione", "libero al rogito", "spese condominiali contenute", "zona ben servita", "classe energetica".
 - Struttura tipica di un buon annuncio d'agenzia: apertura con tipologia, zona e punto di forza; composizione; finiture e dotazioni; contesto e servizi; condizioni (disponibilità, box/cantina); chiusura con invito a contattare l'agenzia per informazioni o visita.
-- Titolo come lo scrive un agente sul portale: tipologia + punto di forza + zona, senza aggettivi vuoti ("splendido", "imperdibile", "occasione unica").
+- Titolo: segui le regole del titolo qui sopra.
 - Tono professionale, concreto, credibile: niente toni da pubblicità, niente superlativi.`
 
 export async function POST(req: NextRequest) {
