@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Home, Building2, Globe, Gauge, LogOut, Link2, Sparkles, Plus, ArrowRight, MapPin, Loader2 } from 'lucide-react';
+import { Home, Building2, Globe, Gauge, LogOut, Link2, Sparkles, Plus, ArrowRight, MapPin, Loader2, FileSpreadsheet } from 'lucide-react';
 import type { UserData } from '@/app/[locale]/dashboard/page';
 import { supabase } from '@/lib/supabase';
 import { fetchProjects, type ProjectData } from '@/lib/projects';
@@ -92,7 +92,7 @@ export default function PlatformApp({ userData }: { userData: UserData }) {
           ) : route === '/portfolio' ? (
             <PortfolioView projects={projects} onChange={reload} />
           ) : (
-            <HomeView projects={projects} />
+            <HomeView projects={projects} name={profile?.name ?? undefined} />
           )}
         </div>
       </main>
@@ -100,45 +100,60 @@ export default function PlatformApp({ userData }: { userData: UserData }) {
   );
 }
 
-function HomeView({ projects }: { projects: ProjectData[] | null }) {
+// Home: una domanda sola ("Da dove partiamo?") con tre tessere, poi gli immobili con i numeri.
+export function HomeView({ projects, name }: { projects: ProjectData[] | null; name?: string }) {
+  const [mode, setMode] = useState<'link' | null>(null);
   const [url, setUrl] = useState('');
+  const n = projects?.length ?? 0;
+  const pub = projects?.filter(p => p.is_public).length ?? 0;
+  const scores = (projects ?? []).map(p => (p.import_data as { score?: number } | undefined)?.score).filter((x): x is number => typeof x === 'number');
+  const avg = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : null;
+
   return (
     <>
-      <h1 className="fade-up font-display text-4xl font-bold tracking-tight">Cosa facciamo <span className="gradient-text">oggi?</span></h1>
-      <p className="mt-1 text-muted">Migliora un annuncio che hai già online, oppure creane uno nuovo da zero.</p>
+      <p className="fade-up text-sm text-muted">{name ? `Ciao ${name.split(' ')[0]}` : 'Ciao'}</p>
+      <h1 className="fade-up mt-1 font-display text-4xl font-bold tracking-tight">Da dove <span className="gradient-text">partiamo?</span></h1>
 
-      <div className="stagger mt-8 grid gap-5 md:grid-cols-2">
-        <section className="card card-hover p-6">
-          <div className="flex h-10 w-10 items-center justify-center icon-badge rounded-xl"><Sparkles size={20} /></div>
-          <h2 className="mt-4 font-display text-xl font-semibold">Migliora un annuncio</h2>
-          <p className="mt-1 text-sm text-muted">Incolla il link da immobiliare.it, idealista o casa.it: ti diamo score, nuova descrizione e cosa sistemare.</p>
-          <form onSubmit={e => { e.preventDefault(); go(`/migliora?url=${encodeURIComponent(url.trim())}`); }} className="mt-5 flex gap-2">
-            <div className="flex flex-1 items-center gap-2 rounded-lg border border-line px-3 focus-within:border-brand">
-              <Link2 size={16} className="text-muted" />
-              <input value={url} onChange={e => setUrl(e.target.value)} placeholder="https://www.immobiliare.it/annunci/..."
-                className="w-full bg-transparent py-2.5 text-sm outline-none" />
-            </div>
-            <button disabled={!url.trim()} className="btn-primary rounded-xl px-4 text-sm font-semibold">Analizza</button>
-          </form>
-          <a href="#/migliora" className="mt-2 inline-block text-xs text-muted hover:text-ink">Non hai il link? Incolla il testo</a>
-        </section>
-
-        <a href="#/nuovo" className="group card card-hover p-6">
-          <div className="flex h-10 w-10 items-center justify-center icon-badge rounded-xl"><Plus size={20} /></div>
-          <h2 className="mt-4 font-display text-xl font-semibold">Crea da zero</h2>
-          <p className="mt-1 text-sm text-muted">Inserisci dati e foto: generiamo titolo, descrizione e score, e l&apos;immobile finisce nel tuo portfolio pubblico.</p>
-          <span className="mt-5 inline-flex items-center gap-1 text-sm font-medium text-brand">Inizia <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" /></span>
-          <span className="mt-2 block text-xs text-muted">Hai già un file? <span onClick={e => { e.preventDefault(); go('/importa'); }} className="text-brand underline">Importa da CSV o Excel</span></span>
-        </a>
+      <div className="stagger mt-8 grid gap-4 md:grid-cols-3">
+        <Tile active={mode === 'link'} onClick={() => setMode(m => (m === 'link' ? null : 'link'))} icon={Link2} kicker="Ho già un annuncio online" title="Miglioralo" desc="Incolla il link: score, cosa sistemare, testo riscritto." />
+        <Tile href="#/nuovo" icon={Plus} kicker="Parto da zero" title="Crea l'annuncio" desc="Foto, dati e note: l'AI scrive tutto e finisce nel tuo portfolio." />
+        <Tile href="#/importa" icon={FileSpreadsheet} kicker="Ho un file" title="Importa" desc="Excel o CSV del gestionale, colonne riconosciute da sole." />
       </div>
 
-      <div className="mt-12 flex items-end justify-between">
-        <h2 className="font-display text-xl font-semibold">I tuoi immobili</h2>
-        <a href="#/immobili" className="text-sm text-brand">Vedi tutti</a>
+      {mode === 'link' && (
+        <form onSubmit={e => { e.preventDefault(); if (url.trim()) go(`/migliora?url=${encodeURIComponent(url.trim())}`); }} className="card ring-gradient fade-up mt-4 flex flex-col gap-3 p-4 sm:flex-row sm:items-center">
+          <div className="flex min-w-0 flex-1 items-center gap-2 rounded-xl bg-canvas px-4">
+            <Link2 size={18} className="shrink-0 text-muted" />
+            <input autoFocus value={url} onChange={e => setUrl(e.target.value)} placeholder="https://www.immobiliare.it/annunci/..." className="w-full bg-transparent py-3.5 text-base outline-none" />
+          </div>
+          <button disabled={!url.trim()} className="btn-primary flex items-center justify-center gap-2 rounded-xl px-6 py-3.5 text-sm font-semibold"><Sparkles size={16} /> Analizza</button>
+        </form>
+      )}
+
+      <div className="mt-14 flex items-end justify-between">
+        <div>
+          <h2 className="font-display text-2xl font-semibold">I tuoi immobili</h2>
+          {n > 0 && <p className="mt-1 text-sm text-muted">{n} {n === 1 ? 'immobile' : 'immobili'} · {pub} nel portfolio{avg !== null ? ` · score medio ${avg}` : ''}</p>}
+        </div>
+        {n > 6 && <a href="#/immobili" className="text-sm font-medium text-brand">Vedi tutti</a>}
       </div>
-      <div className="mt-4"><PropertyGrid projects={projects?.slice(0, 6) ?? null} /></div>
+      <div className="mt-5"><PropertyGrid projects={projects?.slice(0, 6) ?? null} /></div>
     </>
   );
+}
+
+function Tile({ href, onClick, active, icon: Icon, kicker, title, desc }: { href?: string; onClick?: () => void; active?: boolean; icon: React.ComponentType<{ size?: number; className?: string }>; kicker: string; title: string; desc: string }) {
+  const cls = `card card-hover group relative flex min-h-48 flex-col p-5 text-left ${active ? 'sel-glow' : ''}`;
+  const inner = (
+    <>
+      <span className="icon-badge flex h-11 w-11 items-center justify-center rounded-xl transition-transform group-hover:scale-110"><Icon size={22} /></span>
+      <span className="mt-auto block pt-6 text-xs font-medium uppercase tracking-wide text-muted">{kicker}</span>
+      <span className="mt-1 block font-display text-2xl font-semibold">{title}</span>
+      <span className="mt-1 block text-sm text-muted">{desc}</span>
+      <ArrowRight size={18} className="absolute right-5 top-5 text-muted transition-all group-hover:translate-x-1 group-hover:text-ai" />
+    </>
+  );
+  return href ? <a href={href} className={cls}>{inner}</a> : <button type="button" onClick={onClick} className={cls}>{inner}</button>;
 }
 
 function PropertyList({ projects }: { projects: ProjectData[] | null }) {
@@ -153,9 +168,16 @@ function PropertyList({ projects }: { projects: ProjectData[] | null }) {
   );
 }
 
-function PropertyGrid({ projects }: { projects: ProjectData[] | null }) {
+export function PropertyGrid({ projects }: { projects: ProjectData[] | null }) {
   if (!projects) return <Loader2 className="animate-spin text-muted" />;
-  if (!projects.length) return <p className="text-sm text-muted">Nessun immobile ancora. <a href="#/nuovo" className="text-brand">Crea il primo</a>.</p>;
+  if (!projects.length) return (
+    <div className="card flex flex-col items-center px-6 py-14 text-center">
+      <span className="icon-badge float flex h-14 w-14 items-center justify-center rounded-2xl"><Building2 size={26} /></span>
+      <p className="mt-5 font-display text-lg font-semibold">Ancora nessun immobile</p>
+      <p className="mt-1 max-w-xs text-sm text-muted">Crea il primo annuncio da zero o importa quelli che hai già: compariranno qui e nel tuo portfolio.</p>
+      <a href="#/nuovo" className="btn-primary mt-6 rounded-xl px-6 py-3 text-sm font-semibold">Crea il primo annuncio</a>
+    </div>
+  );
   return (
     <div className="stagger grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
       {projects.map(p => (
