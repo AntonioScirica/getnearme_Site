@@ -13,7 +13,7 @@ import { BrowserBody, Elapsed, Results, SCAN_STEPS, useImprove, Verdict, type St
 import CostsView from './CostsView';
 import { isPlatformAdmin } from '@/lib/platformAdmins';
 import ProgressiveBlur from '@/components/ProgressiveBlur';
-import { go, formatPrice, authFetch, CARD_SHADOW } from './api';
+import { go, formatPrice, authFetch, CARD_SHADOW, warm } from './api';
 import ProfileForm, { type Profile } from './ProfileForm';
 
 // Routing a hash (#/immobili, #/nuovo, #/immobile/<id>): back/forward del browser
@@ -339,12 +339,13 @@ export function HomeView({ name, initialUrl = '', onSaved }: { name?: string; in
   // Arrivo da #/migliora?url=... : parte subito.
   useEffect(() => {
     if (!initialUrl) return;
-    const t = setTimeout(() => { setIntro(false); setOpen(true); imp.start(initialUrl); }, 0);
+    const t = setTimeout(() => { setIntro(false); setOpen(true); warm('analysis'); imp.start(initialUrl); }, 0);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialUrl]);
 
-  const openLink = () => { setIntro(false); setOpen(true); };
+  // Apre Migliora = intenzione di analizzare: si accende la GPU dell'analisi (avvio a freddo ~3,5 min).
+  const openLink = () => { setIntro(false); setOpen(true); warm('analysis'); };
   const close = () => { imp.reset(); setOpen(false); };
   const restart = () => { imp.reset(); setUrl(''); document.querySelector('main')?.scrollTo({ top: 0, behavior: 'smooth' }); };
 

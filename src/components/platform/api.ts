@@ -39,3 +39,11 @@ export const EXTENSION_URL = 'https://chromewebstore.google.com/detail/jbnceigld
 
 // Ombra delle card della piattaforma (home, flusso Migliora, risultati).
 export const CARD_SHADOW = 'shadow-[0_1px_2px_rgba(0,0,0,.04),0_8px_24px_-12px_rgba(0,0,0,.12)] ring-1 ring-black/5';
+
+// Pre-accensione GPU (vedi /api/platform/warm). Una chiamata ogni 45 s per tipo, errori ignorati.
+const warmedAt: Record<string, number> = {};
+export function warm(target: 'analysis' | 'photo') {
+  if (Date.now() - (warmedAt[target] ?? 0) < 45_000) return;
+  warmedAt[target] = Date.now();
+  authFetch('/api/platform/warm', { method: 'POST', body: JSON.stringify({ target }) }).catch(() => {});
+}

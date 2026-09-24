@@ -6,7 +6,7 @@ import { platformFontVars } from '@/lib/platformFonts';
 import { Camera, Check, Copy, Download, ExternalLink, Loader2, Puzzle, Wand2, X } from 'lucide-react';
 import { downloadImage } from '@/lib/staging';
 import { AI_MOCK, mockFor } from '@/lib/aiMock';
-import { authFetch, CARD_SHADOW, extSend, EXTENSION_URL, go } from './api';
+import { authFetch, CARD_SHADOW, extSend, EXTENSION_URL, go, warm } from './api';
 import CountUp from './CountUp';
 import InlineSlider from '@/components/InlineSlider';
 import { CRITERI, withScores, type Criteri } from '@/lib/listingScore';
@@ -81,6 +81,7 @@ export function useImprove() {
     const u = target.trim();
     setError(null); setAnalysis(null);
     if (!LINK_RE.test(u)) { setError('Incolla il link completo dell\'annuncio (inizia con https://).'); setStage('error'); return; }
+    warm('analysis');
     setListing({ url: u, title: '', address: '', propertyInfo: {}, photos: [] });
     setStage('opening');
     const ping = await extSend<{ ok: boolean }>({ type: 'GNM_PING' });
@@ -430,7 +431,7 @@ function ProblemCard({ p, i, photos }: { p: Problem; i: number; photos: string[]
             <Check size={14} strokeWidth={3} /> Foto sistemata
           </button>
         ) : (
-          <button onClick={() => setFix(true)} className="ml-auto flex h-8 shrink-0 items-center gap-1.5 rounded-full bg-brand px-3.5 text-xs font-semibold text-white ease-smooth transition-colors hover:bg-brand/90 active:scale-[0.97]">
+          <button onClick={() => setFix(true)} onMouseEnter={() => warm('photo')} onFocus={() => warm('photo')} className="ml-auto flex h-8 shrink-0 items-center gap-1.5 rounded-full bg-brand px-3.5 text-xs font-semibold text-white ease-smooth transition-colors hover:bg-brand/90 active:scale-[0.97]">
             <Wand2 size={14} /> Sistema con AI
           </button>
         ))}
@@ -477,6 +478,7 @@ function PhotoFix({ src, label, edit, onDone, onClose }: { src: string; label: s
     document.addEventListener('keydown', esc, true);
     return () => document.removeEventListener('keydown', esc, true);
   }, [onClose]);
+  useEffect(() => { warm('photo'); }, []); // pannello aperto: la GPU parte mentre si legge/ritocca l'istruzione
   useEffect(() => {
     if (!busy) return;
     const t = setInterval(() => setMsg(m => (m + 1) % FIX_MSGS.length), 3500);
