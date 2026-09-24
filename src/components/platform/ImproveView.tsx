@@ -261,10 +261,10 @@ export function Results({ listing, analysis: a, onSaved, onRestart }: { listing:
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2.5">
-              <h2 className="text-2xl font-bold tracking-tight">Annuncio riscritto</h2>
+              <h2 className="text-2xl font-bold leading-none tracking-tight">Annuncio riscritto</h2>
               <ScoreInfo a={a} />
             </div>
-            <p className="mt-1 text-sm text-muted">Pronto da incollare sul portale. Con questa versione e le correzioni qui sotto arrivi a {a.score_potenziale}/100.</p>
+            <p className="mt-2 text-sm text-muted">Pronto da incollare sul portale.</p>
           </div>
           <button onClick={() => setShowBefore(v => !v)} className="btn-ghost shrink-0 self-start rounded-full px-4 py-2 text-sm font-medium">{showBefore ? 'Nascondi originale' : 'Confronta con originale'}</button>
         </div>
@@ -365,7 +365,7 @@ function ScoreInfo({ a }: { a: Analysis }) {
   return (
     <div ref={box} className="relative">
       <button type="button" onClick={() => setOpen(v => !v)} aria-expanded={open} title="Come calcoliamo il punteggio"
-        className="flex items-center gap-1.5 rounded-full bg-emerald-50 py-1 pl-3 pr-1 text-sm font-semibold text-emerald-700 ease-smooth transition-colors hover:bg-emerald-100">
+        className="flex h-7 items-center gap-1.5 rounded-full bg-emerald-50 pl-2.5 pr-1 text-sm font-semibold leading-none text-emerald-700 outline-none ease-smooth transition-colors hover:bg-emerald-100 focus-visible:ring-2 focus-visible:ring-emerald-300">
         {a.score_potenziale}/100
         <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-[11px] font-bold text-emerald-700 ring-1 ring-emerald-200">i</span>
       </button>
