@@ -75,7 +75,7 @@ export const useSite = () => {
 export function SiteRoot({ ctx, children }: { ctx: SiteCtx; children: ReactNode }) {
   const t = THEMES[ctx.cfg.template];
   const style = {
-    '--c': ctx.cfg.primary, '--bg': t.bg, '--fg': t.fg, '--muted': t.muted, '--line': t.line, '--surface': t.surface, '--soft': t.soft, '--ink': t.ink, '--r': `${t.radius}px`,
+    '--c': ctx.cfg.primary, '--bg': t.bg, '--fg': t.fg, '--muted': t.muted, '--line': t.line, '--surface': t.surface, '--soft': t.soft, '--ink': t.ink, '--r': `${t.radius}px`, '--rc': `${Math.min(10, Math.round(t.radius / 2))}px`,
     background: t.bg, color: t.fg,
   } as CSSProperties;
   return <Ctx.Provider value={ctx}><div style={style} className="min-h-screen font-body antialiased selection:bg-[var(--c)] selection:text-white">{children}</div></Ctx.Provider>;

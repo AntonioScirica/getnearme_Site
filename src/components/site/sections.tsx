@@ -528,11 +528,11 @@ export function PropertyCard({ p }: { p: SiteProperty }) {
   const badge = <span className="rounded-[calc(var(--r)*0.5)] bg-[var(--c)] px-2.5 py-1 text-[11px] font-semibold text-white">{isRent(p) ? 'In affitto' : 'In vendita'}</span>;
   const pr = cfg.showPrices && <span className="shrink-0 whitespace-nowrap text-lg font-bold text-[var(--fg)]">{price(p.prezzo)}{isRent(p) && p.prezzo ? <span className="text-sm font-medium text-[var(--muted)]"> /mese</span> : null}</span>;
   const place = <div className="mt-1 flex items-center gap-1 truncate text-[13px] text-[var(--muted)]"><MapPin size={13} className="shrink-0" />{zoneOf(p.addr)}</div>;
-  const shell = 'group flex flex-col overflow-hidden rounded-[var(--r)] bg-[var(--surface)] transition-all duration-500 hover:-translate-y-1';
+  const shell = 'group flex flex-col overflow-hidden rounded-[var(--rc)] bg-[var(--surface)] transition-all duration-500 hover:-translate-y-1';
 
   if (t.card === 'minimal') return (
     <SiteLink to={{ page: 'immobile', id: p.id }} className="group block">
-      <div className="relative"><Photo src={p.cover} alt={p.titolo} zoom className="aspect-[4/3] rounded-[var(--r)]" /><span className="absolute left-3 top-3 rounded-full bg-white px-3 py-1 text-[11px] font-semibold text-neutral-900">{typeOf(p)}</span><FavButton id={p.id} className="absolute right-3 top-3" /></div>
+      <div className="relative"><Photo src={p.cover} alt={p.titolo} zoom className="aspect-[4/3] rounded-[var(--rc)]" /><span className="absolute left-3 top-3 rounded-full bg-white px-3 py-1 text-[11px] font-semibold text-neutral-900">{typeOf(p)}</span><FavButton id={p.id} className="absolute right-3 top-3" /></div>
       <div className="mt-4 flex items-start justify-between gap-4">
         <div className="min-w-0"><div className="line-clamp-1 text-[17px] font-semibold">{p.titolo}</div>{place}</div>{pr}
       </div>
@@ -560,7 +560,7 @@ export function PropertyCard({ p }: { p: SiteProperty }) {
   if (t.card === 'clean') return (
     <SiteLink to={{ page: 'immobile', id: p.id }} className="group block">
       <div className="relative">
-        <Photo src={p.cover} alt={p.titolo} zoom className="aspect-[4/3] rounded-[var(--r)]" />
+        <Photo src={p.cover} alt={p.titolo} zoom className="aspect-[4/3] rounded-[var(--rc)]" />
         <div className="absolute right-3 top-3 flex gap-1.5">{['In evidenza', isRent(p) ? 'Affitto' : 'Vendita'].map(x => <span key={x} className="rounded-[calc(var(--r)*0.4)] bg-white/25 px-2.5 py-1 text-[11px] font-medium text-white backdrop-blur-md">{x}</span>)}</div>
         <FavButton id={p.id} className="absolute left-3 top-3 !h-8 !w-8" />
       </div>
@@ -610,7 +610,7 @@ export function PropertyRow({ p }: { p: SiteProperty }) {
   const { cfg } = useSite();
   return (
     <SiteLink to={{ page: 'immobile', id: p.id }} className="group grid gap-6 border-b border-[var(--line)] py-8 md:grid-cols-[340px_1fr_auto] md:items-center">
-      <div className="relative"><Photo src={p.cover} alt={p.titolo} zoom className="aspect-[4/3] rounded-[var(--r)]" /><FavButton id={p.id} className="absolute right-3 top-3" /></div>
+      <div className="relative"><Photo src={p.cover} alt={p.titolo} zoom className="aspect-[4/3] rounded-[var(--rc)]" /><FavButton id={p.id} className="absolute right-3 top-3" /></div>
       <div>
         <div className="text-[11px] font-semibold uppercase tracking-[0.25em] text-[var(--muted)]">{typeOf(p)} · {isRent(p) ? 'Affitto' : 'Vendita'}</div>
         <H as="h3" className="mt-2 text-3xl">{p.titolo}</H>
