@@ -2,7 +2,12 @@
 
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { ArrowLeft, ChevronLeft, ChevronRight, Expand, Mail, MapPin, MessageCircle, Phone, Search, SlidersHorizontal, X } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import { zoneSlug, type SiteProperty } from '@/lib/siteTemplates';
+import { inventPlan } from '@/lib/floorplan';
+
+// three.js solo nel browser
+const Tour3D = dynamic(() => import('@/components/tour3d/Tour3D'), { ssr: false, loading: () => <div className="h-full w-full animate-pulse bg-[var(--soft)]" /> });
 import { ContactForm, DetailsTable, FeatureList, MapBlock, RichText, ServicesGrid, ShareBar, WhatsAppFloat } from './extras';
 import { AboutBlock, CtaBand, Featured, Footer, Header, Hero, Intro, isRent, PropertyCard, PropertyRow, Reviews, SearchForm, SectionHead, statsOf, tipiOf, Zones, type Filters } from './sections';
 import { Btn, Container, contacts, Eyebrow, Facts, FavButton, H, Photo, price, Sec, SiteLink, SiteRoot, typeOf, useFavs, useSite, useT, type Page, type SiteCtx } from './ui';
@@ -289,6 +294,11 @@ function PropertyPage({ id }: { id: string }) {
               {desc.length > 400 && <button onClick={() => setMore(v => !v)} className="mt-2 text-sm font-semibold text-[var(--c)]">{more ? 'Mostra meno' : 'Leggi tutto'}</button>}
             </div></Sec>
           )}
+          <Sec id="property.tour"><div className="mt-12">
+            <H className="text-3xl">{tx('property.tour')}</H>
+            <p className="mt-2 text-sm text-[var(--muted)]">{tx('property.tourText')}</p>
+            <div className="mt-5 h-[460px] overflow-hidden rounded-[var(--r)] ring-1 ring-[var(--line)]"><Tour3D plan={inventPlan({ mq: p.mq, locali: p.locali, camere: p.camere, bagni: p.bagni, photos: p.photos })} /></div>
+          </div></Sec>
           <Sec id="property.details"><div className="mt-12"><DetailsTable p={p} /></div></Sec>
           <Sec id="property.features"><div className="mt-12 empty:hidden"><FeatureList p={p} /></div></Sec>
           {!!p.zona?.length && (
