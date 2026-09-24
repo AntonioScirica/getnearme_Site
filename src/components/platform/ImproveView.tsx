@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Camera, Check, Copy, Download, ExternalLink, Loader2, Puzzle, Wand2 } from 'lucide-react';
+import { Camera, Check, Copy, Download, ExternalLink, Loader2, Puzzle, Wand2, X } from 'lucide-react';
 import { downloadImage } from '@/lib/staging';
 import { AI_MOCK, mockFor } from '@/lib/aiMock';
 import { authFetch, CARD_SHADOW, extSend, EXTENSION_URL, go } from './api';
@@ -293,31 +293,9 @@ export function Results({ listing, analysis: a, onSaved, onRestart }: { listing:
       <section className="rise pt-6" style={{ animationDelay: '1.3s' }}>
         <h2 className="text-center text-3xl font-bold tracking-tight">Cosa sistemare sul portale</h2>
         <p className="mt-1 text-center text-muted">In ordine di priorità: cosa non va, perché ti fa perdere contatti, cosa fare adesso.</p>
-        <ol className="mt-8 grid gap-5 lg:grid-cols-2">
-          {a.problemi.map((p, i) => {
-            const g = GRAVITA[p.gravita];
-            return (
-              <li key={i} className={`rise flex flex-col ${BOX}`} style={{ animationDelay: `${1.35 + i * 0.08}s` }}>
-                <div className="flex items-center gap-2.5">
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-ink text-sm font-semibold text-white">{i + 1}</span>
-                  <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${g.cls}`}>{g.label}</span>
-                  <span className="text-xs text-muted">{p.area}</span>
-                </div>
-                <p className="mt-4 text-[17px] font-semibold leading-snug tracking-tight">{p.problema}</p>
-                <p className="mt-2 text-sm leading-relaxed text-muted">{p.perche}</p>
-                {/* Foto indicata dall'AI (1..3 = prime foto dell'annuncio, quelle analizzate) */}
-                {!!p.foto_indice && listing.photos[p.foto_indice - 1] && (
-                  <PhotoFix src={listing.photos[p.foto_indice - 1]} index={p.foto_indice} edit={p.modifica_foto ?? ''} />
-                )}
-                <div className="mt-auto pt-4">
-                  <div className="rounded-2xl bg-canvas p-4">
-                    <div className="text-xs font-semibold text-ink">Come sistemarlo</div>
-                    <p className="mt-1 text-sm leading-relaxed text-ink/80">{p.soluzione}</p>
-                  </div>
-                </div>
-              </li>
-            );
-          })}
+        {/* auto-rows-fr: tutte le card alte uguali; la modifica foto si apre in un pannello sopra, non allunga la card */}
+        <ol className="mt-8 grid auto-rows-fr gap-5 lg:grid-cols-2">
+          {a.problemi.map((p, i) => <ProblemCard key={i} p={p} i={i} photos={listing.photos} />)}
         </ol>
       </section>
 
@@ -400,18 +378,65 @@ function ScoreInfo({ a }: { a: Analysis }) {
   );
 }
 
-// Foto citata da un problema: miniatura + modifica AI proposta (Qwen-Image su RunPod)
-// con prima/dopo e download. Se la modifica e' vuota va rifatta a mano.
-function PhotoFix({ src, index, edit }: { src: string; index: number; edit: string }) {
-  const [open, setOpen] = useState(false);
+// Card di un punto da sistemare. Se riguarda una foto sistemabile con l'AI, la CTA sta in alto a destra.
+function ProblemCard({ p, i, photos }: { p: Problem; i: number; photos: string[] }) {
+  const [fix, setFix] = useState(false);
+  const g = GRAVITA[p.gravita];
+  // Foto indicata dall'AI (1..3 = prime foto dell'annuncio, quelle analizzate)
+  const src = p.foto_indice ? photos[p.foto_indice - 1] : undefined;
+  const edit = src ? p.modifica_foto ?? '' : '';
+  return (
+    <li className={`rise flex flex-col ${BOX}`} style={{ animationDelay: `${1.35 + i * 0.08}s` }}>
+      <div className="flex h-8 items-center gap-2.5">
+        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-ink text-sm font-semibold text-white">{i + 1}</span>
+        <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${g.cls}`}>{g.label}</span>
+        <span className="text-xs text-muted">{p.area}</span>
+        {edit && (
+          <button onClick={() => setFix(true)} className="ml-auto flex h-8 shrink-0 items-center gap-1.5 btn-ink rounded-full px-3.5 text-xs font-semibold">
+            <Wand2 size={14} /> Sistema con AI
+          </button>
+        )}
+      </div>
+      <p className="mt-4 text-[17px] font-semibold leading-snug tracking-tight">{p.problema}</p>
+      <p className="mt-2 text-sm leading-relaxed text-muted">{p.perche}</p>
+      {src && (
+        <div className="mt-4 flex items-center gap-3">
+          <img src={src} alt="" className="h-12 w-16 shrink-0 rounded-xl object-cover" />
+          <div className="min-w-0 text-xs text-muted">
+            <div className="font-medium text-ink">Foto {p.foto_indice} dell&apos;annuncio</div>
+            {edit ? 'Si può sistemare con l\'AI, senza rifarla.' : 'Va rifatta o sostituita: l\'AI non basta.'}
+          </div>
+          {!edit && <Camera size={16} className="ml-auto shrink-0 text-muted" />}
+        </div>
+      )}
+      <div className="mt-auto pt-4">
+        <div className="rounded-2xl bg-canvas p-4">
+          <div className="text-xs font-semibold text-ink">Come sistemarlo</div>
+          <p className="mt-1 text-sm leading-relaxed text-ink/80">{p.soluzione}</p>
+        </div>
+      </div>
+      {fix && src && <PhotoFix src={src} index={p.foto_indice!} edit={edit} onClose={() => setFix(false)} />}
+    </li>
+  );
+}
+
+// Modifica foto con l'AI (Qwen-Image su RunPod) in un pannello sopra la pagina: prima/dopo e download.
+function PhotoFix({ src, index, edit, onClose }: { src: string; index: number; edit: string; onClose: () => void }) {
   const [prompt, setPrompt] = useState(edit);
   const [busy, setBusy] = useState(false);
   const [out, setOut] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
+  useEffect(() => {
+    // capture + stop: Esc chiude solo il pannello, non tutto il flusso Migliora
+    const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') { e.stopPropagation(); onClose(); } };
+    document.addEventListener('keydown', esc, true);
+    return () => document.removeEventListener('keydown', esc, true);
+  }, [onClose]);
+
   const run = async () => {
     setBusy(true); setErr(null);
-    // Qwen-Image sul nostro endpoint RunPod (in modalita' finta la route torna la stessa foto).
+    // in modalita' finta la route torna la stessa foto
     const res = await authFetch('/api/platform/photo-edit', { method: 'POST', body: JSON.stringify({ imageUrl: src, prompt }) }).catch(() => null);
     setBusy(false);
     const d = res ? await res.json().catch(() => ({})) : {};
@@ -420,43 +445,27 @@ function PhotoFix({ src, index, edit }: { src: string; index: number; edit: stri
   };
 
   return (
-    <div className="mt-4 rounded-2xl ring-1 ring-line p-2.5">
-      <div className="flex items-center gap-3">
-        <img src={src} alt="" className="h-14 w-20 shrink-0 rounded-xl object-cover" />
-        <div className="min-w-0 flex-1 text-sm">
-          <div className="font-medium">Foto {index} dell&apos;annuncio</div>
-          <div className="text-xs text-muted">{edit ? 'Si può sistemare con l\'AI, senza rifarla.' : 'Va rifatta o sostituita: l\'AI non basta.'}</div>
+    <div role="dialog" aria-modal="true" className="fixed inset-0 z-[60] flex items-center justify-center bg-black/30 p-4 backdrop-blur-sm" onMouseDown={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className={`rise relative w-full max-w-2xl rounded-[28px] bg-white p-6 text-left ${CARD_SHADOW}`}>
+        <button onClick={onClose} aria-label="Chiudi" className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full text-muted hover:bg-canvas hover:text-ink"><X size={18} /></button>
+        <h3 className="text-xl font-bold tracking-tight">Sistema la foto {index} con l&apos;AI</h3>
+        <div className="mt-4 grid grid-cols-2 gap-3">
+          <figure><img src={src} alt="" className="aspect-[4/3] w-full rounded-2xl object-cover" /><figcaption className="mt-1.5 text-xs text-muted">Prima</figcaption></figure>
+          <figure>
+            {out ? <img src={out} alt="" className="blur-in aspect-[4/3] w-full rounded-2xl object-cover" /> : <div className={`aspect-[4/3] w-full rounded-2xl ${busy ? 'shimmer' : 'bg-canvas'}`} />}
+            <figcaption className="mt-1.5 text-xs text-muted">Dopo</figcaption>
+          </figure>
         </div>
-        {edit ? (
-          <button onClick={() => setOpen(v => !v)} className="flex shrink-0 items-center gap-1.5 btn-ink rounded-full px-3.5 py-2 text-sm font-semibold">
-            <Wand2 size={15} /> Sistema con AI
+        <label className="mt-5 block text-xs font-semibold text-muted">Modifica da fare</label>
+        <textarea rows={2} value={prompt} onChange={e => setPrompt(e.target.value)} className="mt-1.5 w-full rounded-2xl bg-canvas px-4 py-3 text-sm outline-none focus:bg-white focus:ring-1 focus:ring-ink/15" />
+        {err && <p className="mt-2 text-sm text-rose-600">{err}</p>}
+        <div className="mt-4 flex flex-wrap justify-end gap-2">
+          {out && <button onClick={() => downloadImage(out, `foto-${index}-sistemata.jpg`)} className="flex items-center gap-1.5 btn-ghost rounded-full px-4 py-2 text-sm font-medium"><Download size={15} /> Scarica</button>}
+          <button onClick={run} disabled={busy || !prompt.trim()} className="flex items-center gap-2 btn-ink rounded-full px-5 py-2 text-sm font-semibold disabled:opacity-50">
+            {busy ? <Loader2 size={15} className="animate-spin" /> : <Wand2 size={15} />} {busy ? 'Sto modificando la foto...' : out ? 'Rigenera' : 'Genera'}
           </button>
-        ) : <Camera size={18} className="mr-2 shrink-0 text-muted" />}
-      </div>
-
-      {open && (
-        <div className="blur-in mt-3 space-y-3 border-t border-line px-1 pb-1 pt-3">
-          <label className="block text-xs font-semibold text-muted">Modifica da fare</label>
-          <textarea rows={2} value={prompt} onChange={e => setPrompt(e.target.value)} className="w-full rounded-xl bg-canvas px-3 py-2 text-sm outline-none focus:bg-white focus:ring-1 focus:ring-ink/15" />
-          {out ? (
-            <>
-              <div className="grid grid-cols-2 gap-2">
-                <figure><img src={src} alt="" className="aspect-[4/3] w-full rounded-xl object-cover" /><figcaption className="mt-1 text-xs text-muted">Prima</figcaption></figure>
-                <figure><img src={out} alt="" className="aspect-[4/3] w-full rounded-xl object-cover" /><figcaption className="mt-1 text-xs text-muted">Dopo</figcaption></figure>
-              </div>
-              <div className="flex gap-2">
-                <button onClick={() => downloadImage(out, `foto-${index}-sistemata.jpg`)} className="flex items-center gap-1.5 btn-ink rounded-full px-4 py-2 text-sm font-semibold"><Download size={15} /> Scarica</button>
-                <button onClick={run} disabled={busy} className="btn-ghost rounded-full px-4 py-2 text-sm font-medium disabled:opacity-50">Rigenera</button>
-              </div>
-            </>
-          ) : (
-            <button onClick={run} disabled={busy || !prompt.trim()} className="flex items-center gap-2 btn-ink rounded-full px-4 py-2 text-sm font-semibold disabled:opacity-50">
-              {busy ? <Loader2 size={15} className="animate-spin" /> : <Wand2 size={15} />} {busy ? 'Sto modificando la foto...' : 'Genera'}
-            </button>
-          )}
-          {err && <p className="text-sm text-rose-600">{err}</p>}
         </div>
-      )}
+      </div>
     </div>
   );
 }
