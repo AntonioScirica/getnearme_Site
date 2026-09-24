@@ -506,13 +506,13 @@ function PhotoFix({ src, label, edit, onClose }: { src: string; label: string; e
         </div>
 
         {/* Campo modifica stile home: testo + bottone primario dentro lo stesso contenitore */}
-        <div className="mt-3 flex items-end gap-2 rounded-[22px] bg-canvas p-2 pl-4 ease-smooth transition-colors focus-within:bg-white focus-within:ring-1 focus-within:ring-ink/15">
+        <div className="mt-3 flex items-center gap-2 rounded-[22px] bg-canvas p-2 pl-4 ease-smooth transition-colors focus-within:bg-white focus-within:ring-1 focus-within:ring-ink/15">
           <textarea rows={2} value={prompt} onChange={e => setPrompt(e.target.value)} placeholder="Es. togli gli oggetti dal tavolo, lascia invariato il resto"
             onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); run(); } }}
             className="min-w-0 flex-1 resize-none bg-transparent py-2 text-sm leading-relaxed outline-none placeholder:text-muted/60" />
           <button onClick={run} disabled={busy || !prompt.trim()}
-            className="flex h-11 shrink-0 items-center gap-2 rounded-full bg-brand px-5 text-sm font-semibold text-white ease-smooth transition-[background-color,opacity,transform] hover:bg-brand/90 active:scale-[0.97] disabled:opacity-40">
-            {busy ? <Loader2 size={15} className="animate-spin" /> : <Wand2 size={15} />} {busy ? 'Modifico...' : out ? 'Rigenera' : 'Genera'}
+            className="flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-brand px-4 text-[13px] font-semibold text-white ease-smooth transition-[background-color,opacity,transform] hover:bg-brand/90 active:scale-[0.97] disabled:opacity-40">
+            {busy ? <Loader2 size={14} className="animate-spin" /> : <Wand2 size={14} />} {busy ? 'Modifico...' : out ? 'Rigenera' : 'Genera'}
           </button>
         </div>
         {err && <p className="mt-2 px-1 text-sm text-rose-600">{err}</p>}
