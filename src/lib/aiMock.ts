@@ -7,13 +7,13 @@ export const mockDelay = (ms = 3000) => new Promise(r => setTimeout(r, ms));
 const MOCKS: Record<string, unknown> = {
   analyze: {
     criteri: {
-      foto: { punti: 14, punti_dopo: 27, nota: 'Prima foto sull\'androne, watermark centrale, foto 3 storta e gialla.', limite: 'Mancano foto di bagno e camere: vanno scattate, l\'AI non le crea.' },
+      foto: { punti: 14, punti_dopo: 27, nota: 'Prima foto sull\'androne, foto 3 storta e gialla.', limite: 'Mancano foto di bagno e camere: vanno scattate, l\'AI non le crea.' },
       dati: { punti: 16, punti_dopo: 22, nota: 'Mancano spese condominiali, classe energetica, riscaldamento e anno.', limite: 'Anno di costruzione e spese esatte vanno chiesti all\'amministratore.' },
-      descrizione: { punti: 11, punti_dopo: 18, nota: 'Contenuti buoni ma maiuscolo, refusi e telefono nel testo.', limite: 'Senza planimetria e misure delle stanze la descrizione resta generica.' },
+      descrizione: { punti: 11, punti_dopo: 18, nota: 'Contenuti buoni ma con refusi e il telefono nel testo.', limite: 'Senza planimetria e misure delle stanze la descrizione resta generica.' },
       coerenza: { punti: 12, punti_dopo: 15, nota: 'Dati coerenti, penalizzati dai contatti diretti nella descrizione.', limite: '' },
-      titolo: { punti: 5, punti_dopo: 9, nota: 'Tutto maiuscolo, manca il punto di forza (piscina, box).', limite: 'Con 70 caratteri non entrano sia piscina sia box: uno dei due resta fuori.' },
+      titolo: { punti: 5, punti_dopo: 9, nota: 'Manca il punto di forza (piscina, box) e la zona.', limite: 'Con 70 caratteri non entrano sia piscina sia box: uno dei due resta fuori.' },
     },
-    sintesi: "[DATI FINTI] Annuncio con buone informazioni su zona e dotazioni, penalizzato da foto poco rappresentative, testo con maiuscole e refusi e contatti diretti nella descrizione.",
+    sintesi: "[DATI FINTI] Annuncio con buone informazioni su zona e dotazioni, penalizzato da foto poco rappresentative, refusi e contatti diretti nella descrizione.",
     punti_forza: [
       'Composizione degli ambienti descritta stanza per stanza',
       'Dotazioni concrete: parquet, infissi triplo vetro, aria condizionata, box',
@@ -27,22 +27,10 @@ const MOCKS: Record<string, unknown> = {
         soluzione: 'Sposta al primo posto la foto del salone con cucina a vista e metti l\'androne in fondo alla galleria.',
       },
       {
-        area: 'foto', gravita: 'alta', foto_indice: 2, modifica_foto: 'Rimuovi la scritta rossa al centro della foto ricostruendo pavimento e pareti, aumenta leggermente la luminosità',
-        problema: 'Watermark rosso enorme al centro della foto 2 che copre il soggetto.',
-        perche: 'Nasconde proprio la stanza e abbassa la percezione di professionalità.',
-        soluzione: 'Carica la foto senza watermark o con il logo piccolo in un angolo.',
-      },
-      {
         area: 'foto', gravita: 'media', foto_indice: 3, modifica_foto: 'Raddrizza le linee verticali e bilancia il bianco, mantieni invariati mobili e pareti',
         problema: 'La foto 3 è storta e ha una dominante gialla.',
         perche: 'Le foto storte e gialle fanno sembrare gli ambienti più vecchi e piccoli.',
         soluzione: 'Sostituiscila con la versione corretta (usa "Sistema con AI") prima di ricaricarla sul portale.',
-      },
-      {
-        area: 'descrizione', gravita: 'media', foto_indice: 0, modifica_foto: '',
-        problema: 'Molte parole in MAIUSCOLO: "PALESTRA", "PISCINA", "ARREDATO", "LIBERA SUBITO".',
-        perche: 'Il maiuscolo online si legge come urlato e sembra poco professionale.',
-        soluzione: 'Riscrivi quelle parole in minuscolo, oppure incolla la descrizione riscritta qui sopra.',
       },
       {
         area: 'descrizione', gravita: 'media', foto_indice: 0, modifica_foto: '',
@@ -61,7 +49,7 @@ const MOCKS: Record<string, unknown> = {
     foto_consigli: [
       'Metti come prima foto il soggiorno, scattato dall\'angolo per dare profondità.',
       'Aggiungi foto di piscina e palestra condominiale: sono il vero punto di forza.',
-      'Togli il watermark centrale o riducilo a un logo piccolo in un angolo.',
+      'Raddrizza le verticali: con foto storte gli ambienti sembrano più piccoli.',
     ],
     titolo: '[FINTO] Trilocale arredato con box e piscina condominiale, zona Bocconi',
     descrizione: `[DESCRIZIONE FINTA DI ESEMPIO]

@@ -25,6 +25,8 @@ export const SCAN_STEPS = ['Leggo i dati dell\'annuncio', 'Guardo le foto', 'Val
 
 const text = (v: unknown) => (typeof v === 'string' ? v : '');
 const wait = (ms: number) => new Promise(r => setTimeout(r, ms));
+// Al massimo 4 cose da sistemare (anche se il modello ne manda di piu').
+const cap = (a: Analysis): Analysis => ({ ...a, problemi: (a.problemi ?? []).slice(0, 4) });
 
 // ponytail: annuncio finto solo in modalita' finta senza estensione (anteprima, demo), niente API.
 const MOCK_LISTING = (url: string): Listing => ({
@@ -53,11 +55,11 @@ export function useImprove() {
     await Promise.race([Promise.all(l.photos.slice(0, 3).map(src => { const im = new Image(); im.src = src; return im.decode().catch(() => {}); })), wait(5000)]);
     if (id !== run.current) return;
     setListing(l); setStep(0); setStage('scanning');
-    if (demo) { await wait(6000); if (id === run.current) { setAnalysis(withScores(mockFor<Analysis>('analyze'))); setStage('done'); } return; }
+    if (demo) { await wait(6000); if (id === run.current) { setAnalysis(cap(withScores(mockFor<Analysis>('analyze')))); setStage('done'); } return; }
     const res = await authFetch('/api/platform/analyze', { method: 'POST', body: JSON.stringify({ listing: l }) }).catch(() => null);
     if (id !== run.current) return;
     if (!res?.ok) { setError('Analisi non riuscita, riprova.'); setStage('error'); return; }
-    setAnalysis(await res.json());
+    setAnalysis(cap(await res.json()));
     setStage('done');
   };
 

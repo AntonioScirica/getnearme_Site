@@ -4,7 +4,7 @@
 export const CRITERI = [
   { key: 'foto', label: 'Foto', max: 30, desc: 'Qualità, luce, ordine, prima foto, stanze mostrate' },
   { key: 'dati', label: 'Dati della scheda', max: 25, desc: 'Campi che l\'acquirente cerca: spese, classe, piano, riscaldamento' },
-  { key: 'descrizione', label: 'Descrizione', max: 20, desc: 'Completa, chiara, ben scritta, senza refusi né maiuscolo' },
+  { key: 'descrizione', label: 'Descrizione', max: 20, desc: 'Completa, chiara, ben scritta, senza refusi' },
   { key: 'coerenza', label: 'Affidabilità', max: 15, desc: 'Dati coerenti con foto e testo, niente contatti nel testo' },
   { key: 'titolo', label: 'Titolo', max: 10, desc: 'Tipologia, punto di forza e zona, niente aggettivi vuoti' },
 ] as const;
