@@ -397,6 +397,8 @@ html.metrics-light [class*="border-gray-600"] { border-color: #d8d4cb !important
    Usato da components/platform e components/property.
    --------------------------------------------------------------------------- */
 .gnm-bg { background: #fff; }
+/* Sfondo generale della piattaforma: bianco con puntini grigi al 5% */
+.dots-bg { background: radial-gradient(rgba(0, 0, 0, 0.05) 1.2px, transparent 1.2px) 0 0 / 18px 18px, #fff; }
 /* Sfondo "tavolo di lavoro": avorio con griglia sottile (home e shell) */
 .grid-bg {
   background-color: #f6f5f1;
