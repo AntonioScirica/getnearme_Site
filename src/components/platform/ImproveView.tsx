@@ -259,9 +259,9 @@ export function Results({ listing, analysis: a, onSaved, onRestart }: { listing:
             <p className="mt-1 text-sm text-muted">Pronto da incollare sul portale, puoi ritoccarlo qui.</p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
-            <button onClick={() => setShowBefore(v => !v)} className="btn-ghost rounded-full px-4 py-2 text-sm font-medium">{showBefore ? 'Nascondi originale' : 'Confronta con originale'}</button>
+            <button onClick={() => setShowBefore(v => !v)} className="btn-ghost rounded-full px-4 py-2 text-sm font-medium">{showBefore ? 'Nascondi' : 'Confronta'}</button>
             <button onClick={save} disabled={saving} className="flex items-center gap-2 btn-ink rounded-full px-5 py-2 text-sm font-semibold">
-              {saving && <Loader2 size={16} className="animate-spin" />} {saving ? `Salvo ${listing.photos.length} foto...` : 'Aggiungi ai miei immobili'}
+              {saving && <Loader2 size={16} className="animate-spin" />} {saving ? 'Salvo...' : 'Salva'}
             </button>
           </div>
         </div>
