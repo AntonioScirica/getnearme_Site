@@ -57,7 +57,7 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
     return () => clearInterval(t);
   }, []);
 
-  useEffect(() => { end.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }); }, [msgs.length]);
+  useEffect(() => { end.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }); }, [msgs.length, selecting]);
   useEffect(() => {
     if (!busy) return;
     const t = setInterval(() => setTick(x => x + 1), 3500);
@@ -201,6 +201,8 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
               </div>
             </div>
           ))}
+          {/* Selezione di una zona: e' un messaggio della chat come gli altri, con i pulsanti sotto la foto */}
+          {selecting && base && <ZonePicker src={base} region={region} points={points} mask={mask} onChange={r => { setRegion(r); setPoints([]); setMask(null); }} onPick={pickAt} onDone={() => setSelecting(false)} onCancel={() => { clearZone(); setSelecting(false); }} />}
           <div ref={end} />
         </div>
       </div>
@@ -212,8 +214,6 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
       <div className="absolute inset-x-0 bottom-0 z-20 px-6 pb-5 pt-10">
         <div className="pointer-events-none absolute inset-0"><ProgressiveBlur side="bottom" fade={24} /></div>
         <div className="relative mx-auto max-w-3xl">
-          {/* Selezione di una zona: trascina sulla foto per disegnare il rettangolo */}
-          {selecting && base && <ZonePicker src={base} region={region} points={points} mask={mask} onChange={r => { setRegion(r); setPoints([]); setMask(null); }} onPick={pickAt} onClose={() => setSelecting(false)} />}
           {(region || points.length > 0) && !selecting && (
             <div className="blur-in mb-2 flex items-center gap-2 text-xs">
               <span className="flex items-center gap-1.5 rounded-full bg-rose-50 px-3 py-1.5 font-medium text-rose-700 ring-1 ring-inset ring-rose-700/20"><SquareDashedMousePointer size={13} /> {points.length ? 'Oggetto selezionato' : 'Zona selezionata'}: scrivi cosa fare lì</span>
@@ -252,7 +252,7 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
 }
 
 // Zona sulla foto corrente: clic su un oggetto = lo seleziona (maschera rossa), trascinare = rettangolo.
-function ZonePicker({ src, region, points, mask, onChange, onPick, onClose }: { src: string; region: Region | null; points: { x: number; y: number }[]; mask: string | null; onChange: (r: Region | null) => void; onPick: (p: { x: number; y: number }) => void; onClose: () => void }) {
+function ZonePicker({ src, region, points, mask, onChange, onPick, onDone, onCancel }: { src: string; region: Region | null; points: { x: number; y: number }[]; mask: string | null; onChange: (r: Region | null) => void; onPick: (p: { x: number; y: number }) => void; onDone: () => void; onCancel: () => void }) {
   const box = useRef<HTMLDivElement>(null);
   const start = useRef<{ x: number; y: number } | null>(null);
   const dragged = useRef(false);
@@ -274,15 +274,13 @@ function ZonePicker({ src, region, points, mask, onChange, onPick, onClose }: { 
   const loading = mask === 'loading';
   const ready = (region && region.w > 0.02) || (points.length > 0 && !loading);
   return (
-    <div className={`blur-in mb-2 rounded-[22px] bg-white p-2 ${CARD_SHADOW}`}>
-      <div className="mb-2 flex items-center justify-between gap-3 px-1 text-xs">
-        <span className="font-medium">{loading ? 'Riconosco l’oggetto…' : 'Clicca un oggetto per selezionarlo, o trascina per una zona'}</span>
-        <button onClick={onClose} className="shrink-0 rounded-full bg-ink px-3 py-1 font-semibold text-white">{ready ? 'Fatto' : 'Chiudi'}</button>
-      </div>
-      <div ref={box} className="relative mx-auto max-h-[45vh] w-fit cursor-crosshair touch-none select-none overflow-hidden rounded-2xl"
+    <div className="blur-in flex justify-start">
+    <div className={`w-full max-w-[560px] rounded-3xl rounded-bl-lg bg-white p-2 ${CARD_SHADOW}`}>
+      <p className="px-2 pb-2 pt-1 text-sm">{loading ? 'Riconosco l’oggetto…' : 'Clicca un oggetto per selezionarlo, oppure trascina per disegnare una zona.'}</p>
+      <div ref={box} className="relative mx-auto max-h-[50vh] w-fit cursor-crosshair touch-none select-none overflow-hidden rounded-2xl"
         onPointerDown={e => { (e.target as HTMLElement).setPointerCapture(e.pointerId); start.current = at(e); dragged.current = false; }}
         onPointerMove={move} onPointerUp={up}>
-        <img src={src} alt="" draggable={false} className="block max-h-[45vh] w-auto" />
+        <img src={src} alt="" draggable={false} className="block max-h-[50vh] w-auto" />
         {mask && !loading && (
           <div className="blur-in pointer-events-none absolute inset-0 bg-rose-500/50"
             style={{ maskImage: `url(${mask})`, WebkitMaskImage: `url(${mask})`, maskMode: 'luminance', maskSize: '100% 100%', WebkitMaskSize: '100% 100%' }} />
@@ -296,6 +294,11 @@ function ZonePicker({ src, region, points, mask, onChange, onPick, onClose }: { 
             style={{ left: `${region.x * 100}%`, top: `${region.y * 100}%`, width: `${region.w * 100}%`, height: `${region.h * 100}%` }} />
         )}
       </div>
+      <div className="flex items-center justify-end gap-2 px-1 pb-1 pt-2">
+        <button onClick={onCancel} className="h-9 rounded-full px-4 text-[13px] font-semibold text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink">Annulla</button>
+        <button onClick={onDone} disabled={!ready} className="h-9 rounded-full bg-brand px-5 text-[13px] font-semibold text-white ease-smooth transition-[background-color,opacity] hover:bg-brand/90 disabled:opacity-40">Fatto</button>
+      </div>
+    </div>
     </div>
   );
 }
