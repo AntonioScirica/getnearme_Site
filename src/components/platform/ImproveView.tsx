@@ -258,14 +258,8 @@ export function Results({ listing, analysis: a, onSaved, onRestart }: { listing:
             <h2 className="flex items-center gap-2 text-2xl font-bold tracking-tight"><Sparkles size={20} /> Annuncio riscritto</h2>
             <p className="mt-1 text-sm text-muted">Pronto da incollare sul portale, puoi ritoccarlo qui.</p>
           </div>
-          <div className="flex shrink-0 items-center gap-2">
-            <button onClick={() => setShowBefore(v => !v)} className="btn-ghost rounded-full px-4 py-2 text-sm font-medium">{showBefore ? 'Nascondi' : 'Confronta'}</button>
-            <button onClick={save} disabled={saving} className="flex items-center gap-2 btn-ink rounded-full px-5 py-2 text-sm font-semibold">
-              {saving && <Loader2 size={16} className="animate-spin" />} {saving ? 'Salvo...' : 'Salva'}
-            </button>
-          </div>
+          <button onClick={() => setShowBefore(v => !v)} className="btn-ghost shrink-0 self-start rounded-full px-4 py-2 text-sm font-medium">{showBefore ? 'Nascondi originale' : 'Confronta con originale'}</button>
         </div>
-        {saveError && <p className="mt-3 text-sm text-rose-600">{saveError}</p>}
 
         <Field label="Titolo" meta={`${titolo.length}/70`} warn={titolo.length > 70}>
           {showBefore && <Before text={listing.title} />}
@@ -331,9 +325,19 @@ export function Results({ listing, analysis: a, onSaved, onRestart }: { listing:
         </Section>
       </div>
 
-      <div className="flex justify-center pb-6 pt-4">
-        <button onClick={onRestart} className="btn-ghost rounded-full px-5 py-2.5 text-sm font-medium">Analizza un altro annuncio</button>
-      </div>
+      {/* CTA finale: salva titolo e descrizione (anche ritoccati), foto e dati letti dall'estensione */}
+      <section className={`flex flex-col items-center gap-4 text-center ${BOX} sm:p-10`}>
+        <h2 className="text-2xl font-bold tracking-tight">Salvalo nei tuoi immobili</h2>
+        <p className="max-w-md text-sm text-muted">Tieni la versione riscritta, le {listing.photos.length} foto e tutti i dati dell&apos;annuncio, pronti per il tuo portfolio.</p>
+        <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
+          <button onClick={save} disabled={saving} className="flex items-center gap-2 btn-ink rounded-full px-6 py-3 text-sm font-semibold">
+            {saving && <Loader2 size={16} className="animate-spin" />} {saving ? `Salvo ${listing.photos.length} foto...` : 'Salva nei miei immobili'}
+          </button>
+          <button onClick={onRestart} className="btn-ghost rounded-full px-5 py-3 text-sm font-medium">Analizza un altro annuncio</button>
+        </div>
+        {saveError && <p className="text-sm text-rose-600">{saveError}</p>}
+      </section>
+      <div className="pb-6" />
     </div>
   );
 }
