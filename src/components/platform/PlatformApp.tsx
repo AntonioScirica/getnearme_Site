@@ -263,6 +263,29 @@ function ImproveTile({ phase, stage, onOpen, onClose, onSubmit, onNew, hover, se
   );
 }
 
+// Prima/dopo della tessera Home staging: con il mouse sopra la linea va e viene (1,6 s per corsa,
+// ease-in-out), quando esce torna al centro con la transizione standard: niente scatti ne' in entrata ne' in uscita.
+function StageCompare({ active }: { active: boolean }) {
+  const [p, setP] = useState(50);
+  useEffect(() => {
+    const first = setTimeout(() => setP(active ? 85 : 50), 0);
+    if (!active) return () => clearTimeout(first);
+    let i = 0;
+    const loop = setInterval(() => { i = 1 - i; setP(i ? 15 : 85); }, 1700);
+    return () => { clearTimeout(first); clearInterval(loop); };
+  }, [active]);
+  const t = active ? 'clip-path 1.6s cubic-bezier(.65,0,.35,1), left 1.6s cubic-bezier(.65,0,.35,1)' : 'clip-path var(--gnm-dur) var(--gnm-ease), left var(--gnm-dur) var(--gnm-ease)';
+  return (
+    <div className="relative aspect-[3/2] overflow-hidden rounded-lg">
+      <img src="/immo/home/staging-after.webp" alt="" decoding="async" className="absolute inset-0 h-full w-full object-cover" />
+      <img src="/immo/home/staging-before.webp" alt="" decoding="async" className="absolute inset-0 h-full w-full object-cover" style={{ clipPath: `inset(0 ${100 - p}% 0 0)`, transition: t }} />
+      <span className="absolute inset-y-0 w-0.5 -translate-x-1/2 bg-white shadow-[0_0_6px_rgba(0,0,0,.4)]" style={{ left: `${p}%`, transition: t }}>
+        <span className="absolute left-1/2 top-1/2 flex h-5 w-5 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white text-[9px] font-bold text-ink shadow">‹›</span>
+      </span>
+    </div>
+  );
+}
+
 const TITLES: Record<string, [string, string]> = {
   link: ['Incolla il link dell\'annuncio', 'Da immobiliare.it, idealista o casa.it.'],
   opening: ['Apro l\'annuncio', 'Lo leggo dal tuo browser, in background.'],
@@ -278,6 +301,7 @@ export function HomeView({ name, initialUrl = '', onSaved }: { name?: string; in
   const [open, setOpen] = useState(false);
   const [url, setUrl] = useState(initialUrl);
   const [hover, setHover] = useState(false);
+  const [stageHover, setStageHover] = useState(false);
   const [intro, setIntro] = useState(true);
   const phase: Phase = !open ? 'closed' : imp.stage === 'input' ? 'input' : imp.stage === 'done' ? 'done' : 'browser';
 
@@ -342,15 +366,9 @@ export function HomeView({ name, initialUrl = '', onSaved }: { name?: string; in
         </Tile>
 
         {/* Home staging: stanza vuota -> arredata, la linea prima/dopo scorre al passaggio del mouse */}
-        <Tile index={2} intro={intro} wrapClass={others(2)} kicker="Hai una stanza vuota?" title="Home staging" href="#/staging">
+        <Tile index={2} intro={intro} wrapClass={others(2)} onHover={setStageHover} kicker="Hai una stanza vuota?" title="Home staging" href="#/staging">
           <div className="par-2 absolute left-1/2 top-1/2 w-52 -translate-x-1/2 -translate-y-1/2 rounded-xl bg-white p-1.5 shadow-md transition-transform ease-smooth group-hover:rotate-1">
-            <div className="relative aspect-[3/2] overflow-hidden rounded-lg">
-              <img src="/immo/home/staging-after.webp" alt="" decoding="async" className="absolute inset-0 h-full w-full object-cover" />
-              <img src="/immo/home/staging-before.webp" alt="" decoding="async" className="stage-before absolute inset-0 h-full w-full object-cover" />
-              <span className="stage-line absolute inset-y-0 w-0.5 -translate-x-1/2 bg-white shadow-[0_0_6px_rgba(0,0,0,.4)]">
-                <span className="absolute left-1/2 top-1/2 flex h-5 w-5 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white text-[9px] font-bold text-ink shadow">‹›</span>
-              </span>
-            </div>
+            <StageCompare active={stageHover} />
           </div>
           <span className="par-3 absolute -top-1 right-[14%] z-10 flex items-center gap-1 rounded-full bg-brand px-2.5 py-1 text-[11px] font-bold text-white shadow-lg transition-transform ease-smooth group-hover:scale-110"><Wand2 size={12} /> AI</span>
         </Tile>
