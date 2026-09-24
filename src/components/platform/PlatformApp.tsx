@@ -183,7 +183,15 @@ function ImproveTile({ phase, stage, onOpen, onClose, onSubmit, onNew, hover, se
   const height = { closed: 'h-[22rem] p-6', input: 'h-[12.5rem] p-6 delay-[120ms]', browser: 'h-[36rem] p-4', done: 'h-[20rem] p-4' }[phase];
 
   return (
-    <div className={`mx-2.5 w-full max-w-full shrink-0 transition-all duration-500 ease-spring ${width} ${intro ? 'rise' : ''}`} style={{ animationDelay: '0.25s' }}>
+    <div className={`relative mx-2.5 w-full max-w-full shrink-0 transition-all duration-500 ease-spring ${width} ${intro ? 'rise' : ''}`} style={{ animationDelay: '0.25s' }}>
+      {/* Fascio di scansione blu AgenteImmo: fuori dalla card (niente overflow), sporge dai bordi */}
+      {stage === 'scanning' && (
+        <div className="blur-in pointer-events-none absolute -inset-x-5 bottom-4 top-[5.5rem] z-40">
+          <div className="absolute inset-x-0 h-24 -translate-y-1/2 bg-gradient-to-b from-transparent via-brand/20 to-transparent" style={{ animation: 'gnm-scan 2.2s ease-in-out infinite alternate' }}>
+            <div className="absolute inset-x-0 bottom-1/2 h-0.5 rounded-full bg-brand shadow-[0_0_14px_3px] shadow-brand/50" />
+          </div>
+        </div>
+      )}
       <div role={open ? undefined : 'button'} tabIndex={open ? -1 : 0}
         onClick={open ? undefined : onOpen} onKeyDown={e => { if (!open && e.key === 'Enter') onOpen(); }}
         onMouseMove={open ? undefined : tiltMove} onMouseEnter={() => !open && setHover(true)} onMouseLeave={e => { tiltReset(e.currentTarget); setHover(false); }}
