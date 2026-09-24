@@ -114,10 +114,9 @@ function Tile({ kicker, title, onClick, href, active, children }: { kicker: stri
   return href ? <a href={href} className={cls}>{inner}</a> : <button type="button" onClick={onClick} className={cls}>{inner}</button>;
 }
 
-export function HomeView({ projects, name }: { projects: ProjectData[] | null; name?: string }) {
+export function HomeView({ name }: { projects?: ProjectData[] | null; name?: string }) {
   const [linkOpen, setLinkOpen] = useState(false);
   const [url, setUrl] = useState('');
-  const recent = (projects ?? []).slice(0, 5);
   const ok = /^https?:\/\//i.test(url.trim());
 
   return (
@@ -170,23 +169,6 @@ export function HomeView({ projects, name }: { projects: ProjectData[] | null; n
         </form>
       )}
 
-      {recent.length > 0 && (
-        <div className="mt-20 w-full max-w-4xl">
-          <div className="flex items-end justify-between">
-            <h2 className="text-sm font-semibold">Ultimi immobili</h2>
-            <a href="#/immobili" className="text-sm text-muted hover:text-ink">Vedi tutti ({projects!.length})</a>
-          </div>
-          <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-            {recent.map(p => (
-              <a key={p.id} href={`#/immobile/${p.id}`} className="group block">
-                <div className="aspect-square overflow-hidden rounded-2xl bg-canvas">{p.cover && <img src={p.cover} alt="" className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />}</div>
-                <div className="mt-2 truncate text-sm font-semibold">{p.addr?.split(',').slice(-1)[0]?.trim() || p.titolo}</div>
-                <div className="text-sm text-muted">{formatPrice(p.prezzo)}</div>
-              </a>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
