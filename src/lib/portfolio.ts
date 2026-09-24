@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { headers } from 'next/headers'
+import { cleanSite, type SiteConfig } from './siteTemplates'
 
 // Lettura pubblica del portfolio: service role lato server, SOLO immobili is_public.
 const admin = createClient(
@@ -64,4 +65,10 @@ export async function getPublicProperty(userId: string, id: string): Promise<Pub
 export async function portfolioBase(locale: string, slug: string): Promise<string> {
   const host = (await headers()).get('host')?.split(':')[0].replace(/^www\./, '')
   return host && host === process.env.NEXT_PUBLIC_PORTFOLIO_HOST ? `/${slug}` : `/${locale}/a/${slug}`
+}
+
+// Sito vetrina scelto dall'agente (template, colori, testi), ripulito.
+export async function getSite(brand: PortfolioBrand): Promise<SiteConfig> {
+  const { data } = await admin.auth.admin.getUserById(brand.user_id)
+  return cleanSite(data.user?.user_metadata?.vetrina_site, brand.company_name || brand.display_name || '', brand.company_email || '')
 }
