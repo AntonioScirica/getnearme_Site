@@ -29,7 +29,7 @@ const wait = (ms: number) => new Promise(r => setTimeout(r, ms));
 const MOCK_LISTING = (url: string): Listing => ({
   url, title: 'TRILOCALE ARREDATO CON BOX - ZONA BOCCONI', address: 'Via Bernardino Verro 12, Milano',
   propertyInfo: { price: '€ 598.000', surface: '95 m²', description: 'SPLENDIDO trilocale in contesto con PORTINERIA, PISCINA e PALESTRA. Ingresso, salone con cucina a vista, due camere, doppi servizi. Parquet, infissi triplo vetro, aria condizionata. Box auto. LIBERA SUBITO. TEL. 02/36586417' },
-  photos: ['/staging/1_real.jpg', '/staging/4.jpg', '/staging/2.jpg', '/staging/5.jpg'],
+  photos: ['/immo/home/demo-1.webp', '/immo/home/demo-2.webp', '/immo/home/demo-3.webp', '/immo/home/demo-4.webp'],
 });
 
 export function useImprove() {
@@ -47,6 +47,10 @@ export function useImprove() {
   }, [stage]);
 
   const analyze = async (l: Listing, id = run.current, demo = false) => {
+    // Connessione lenta: resta su "Apro" finche' le prime foto non sono scaricate e decodificate
+    // (max 5 s), cosi' la scansione non parte su riquadri vuoti e la decodifica non blocca l'animazione.
+    await Promise.race([Promise.all(l.photos.slice(0, 3).map(src => { const im = new Image(); im.src = src; return im.decode().catch(() => {}); })), wait(5000)]);
+    if (id !== run.current) return;
     setListing(l); setStep(0); setStage('scanning');
     if (demo) { await wait(6000); if (id === run.current) { setAnalysis(mockFor<Analysis>('analyze')); setStage('done'); } return; }
     const res = await authFetch('/api/platform/analyze', { method: 'POST', body: JSON.stringify({ listing: l }) }).catch(() => null);
@@ -140,7 +144,7 @@ export function BrowserBody({ stage, listing, error, url, onRetry, onManual, onT
     <div className="relative h-full overflow-hidden p-2">
       {/* righe esplicite (grid-rows-2 = minmax(0,1fr)): senza, le foto piccole crescono all'altezza naturale e sforano sul testo */}
       <div className="grid h-56 grid-cols-3 grid-rows-2 gap-2 overflow-hidden">
-        {listing!.photos.slice(0, 3).map((src, i) => <img key={src} src={src} alt="" className={`blur-in h-full min-h-0 w-full rounded-2xl object-cover ${i === 0 ? 'col-span-2 row-span-2' : ''}`} style={{ animationDelay: `${i * 0.08}s` }} />)}
+        {listing!.photos.slice(0, 3).map((src, i) => <img key={src} src={src} alt="" decoding="async" className={`blur-in h-full min-h-0 w-full rounded-2xl object-cover ${i === 0 ? 'col-span-2 row-span-2' : ''}`} style={{ animationDelay: `${i * 0.08}s` }} />)}
         {!listing!.photos.length && <div className="col-span-3 row-span-2 rounded-2xl bg-canvas" />}
       </div>
       <div className="blur-in mt-4 text-xl font-bold tracking-tight" style={{ animationDelay: '.2s' }}>{listing!.title}</div>

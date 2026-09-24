@@ -186,9 +186,11 @@ function ImproveTile({ phase, stage, onOpen, onClose, onSubmit, onNew, hover, se
     <div className={`relative mx-2.5 w-full max-w-full shrink-0 transition-all duration-500 ease-spring ${width} ${intro ? 'rise' : ''}`} style={{ animationDelay: '0.25s' }}>
       {/* Fascio di scansione blu AgenteImmo: fuori dalla card (niente overflow), sporge dai bordi */}
       {stage === 'scanning' && (
-        <div className="blur-in pointer-events-none absolute -inset-x-5 bottom-4 top-[5.5rem] z-40">
-          <div className="absolute inset-x-0 h-24 -translate-y-1/2 bg-gradient-to-b from-transparent via-brand/20 to-transparent" style={{ animation: 'gnm-scan 2.2s ease-in-out infinite alternate' }}>
-            <div className="absolute inset-x-0 bottom-1/2 h-0.5 rounded-full bg-brand shadow-[0_0_14px_3px] shadow-brand/50" />
+        <div className="blur-in pointer-events-none absolute -inset-x-5 bottom-4 top-[5.5rem] z-40" style={{ maskImage: 'linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent)' }}>
+          {/* solo transform: gira sul compositor, fluido anche se la pagina e' occupata */}
+          <div className="absolute inset-0 will-change-transform" style={{ animation: 'gnm-scan 2.2s ease-in-out infinite alternate' }}>
+            <div className="absolute inset-x-0 top-0 h-24 -translate-y-1/2 bg-gradient-to-b from-transparent via-brand/20 to-transparent" />
+            <div className="absolute inset-x-0 top-0 h-0.5 -translate-y-1/2 bg-brand shadow-[0_0_14px_3px] shadow-brand/50" />
           </div>
         </div>
       )}
@@ -211,7 +213,7 @@ function ImproveTile({ phase, stage, onOpen, onClose, onSubmit, onNew, hover, se
           <div className={`relative transition-all duration-500 ease-spring ${open ? 'w-72 delay-[120ms]' : 'w-44'}`}>
             <div className="par-2">
               <div className={`flex transition-all duration-500 ease-spring ${open ? 'flex-row items-center gap-3 rounded-2xl bg-canvas p-2 pr-3 delay-[120ms]' : 'flex-col rounded-xl bg-white p-2 shadow-md group-hover:-rotate-2'}`}>
-                <img src="/staging/1_real.jpg" alt="" className={`shrink-0 object-cover transition-all duration-500 ease-spring ${open ? 'h-12 w-16 rounded-xl delay-[120ms]' : 'h-24 w-full rounded-lg'}`} />
+                <img src="/immo/home/card.webp" alt="" decoding="async" className={`shrink-0 object-cover transition-all duration-500 ease-spring ${open ? 'h-12 w-16 rounded-xl delay-[120ms]' : 'h-24 w-full rounded-lg'}`} />
                 <div className={`min-w-0 flex-1 transition-all duration-500 ${open ? '' : 'mt-2'}`}>
                   {['w-2/3', 'w-2/5', 'w-1/2'].map((w, i) => (
                     <div key={w} className={`${open ? '' : 'rewrite'} h-1.5 rounded bg-line transition-all duration-500 ${i ? 'mt-1.5' : ''} ${open && i === 2 ? 'hidden' : w}`} />
@@ -296,7 +298,7 @@ export function HomeView({ name, initialUrl = '', onSaved }: { name?: string; in
   const subtitle = shown === 'scanning' ? `${SCAN_STEPS[imp.step]}...` : sub;
   // Apertura: parte il container (altre card via, box al centro), la card si trasforma subito dopo, sovrapposta.
   // Chiusura: al contrario, con gli stessi piccoli sfalsamenti.
-  const others = (i: number) => `mx-2.5 ${open ? 'pointer-events-none overflow-hidden sm:mx-0! sm:w-0! sm:max-h-0 scale-75 opacity-0 blur-[8px]' : `sm:max-h-[24rem] ${i === 1 ? 'delay-[160ms]' : 'delay-[220ms]'}`}`;
+  const others = (i: number) => `mx-2.5 ${open ? 'pointer-events-none -my-2.5 max-h-0 overflow-hidden sm:mx-0! sm:my-0 sm:w-0! scale-75 opacity-0 blur-[8px]' : `max-h-[24rem] ${i === 1 ? 'delay-[160ms]' : 'delay-[220ms]'}`}`;
 
   return (
     <div className="flex min-h-[calc(100vh-5rem)] flex-col items-center justify-center py-10">
@@ -315,7 +317,7 @@ export function HomeView({ name, initialUrl = '', onSaved }: { name?: string; in
 
         {/* Crea: foto a ventaglio con molla + "+" che ruota */}
         <Tile index={1} intro={intro} wrapClass={others(1)} kicker="Hai un immobile nuovo?" title="Crea da zero" href="#/nuovo">
-          {['/staging/4.jpg', '/reference/giorno-notte-poster.jpg', '/staging/2.jpg'].map((src, i) => (
+          {['/immo/home/fan-1.webp', '/immo/home/fan-2.webp', '/immo/home/fan-3.webp'].map((src, i) => (
             <div key={src} className={`absolute left-1/2 top-1 ${['par-1', 'par-2 z-10', 'par-3'][i]}`}>
               <img src={src} alt="" className={`h-32 w-24 -translate-x-1/2 rounded-xl object-cover shadow-md ring-2 ring-white transition-transform duration-500 ease-spring ${
                 ['-translate-x-[90%] -rotate-12 group-hover:-translate-x-[118%] group-hover:-rotate-[18deg]', 'group-hover:-translate-y-3 group-hover:scale-105', '-translate-x-[10%] rotate-12 group-hover:translate-x-[18%] group-hover:rotate-[18deg]'][i]}`} />
@@ -334,7 +336,7 @@ export function HomeView({ name, initialUrl = '', onSaved }: { name?: string; in
           </div>
           <span className="par-2 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-lg text-muted transition-transform duration-500 ease-spring group-hover:translate-x-1">→</span>
           <div className="par-3 absolute right-[6%] top-[calc(50%+4px)] w-20 -translate-y-1/2">
-            {['/staging/5.jpg', '/staging/3.jpg'].map((src, i) => (
+            {['/immo/home/import-1.webp', '/immo/home/import-2.webp'].map((src, i) => (
               <div key={src} className={`rounded-lg bg-white p-1 shadow-md transition-all duration-500 ease-spring ${i ? 'mt-2 translate-x-3 opacity-60 group-hover:translate-x-0 group-hover:opacity-100' : 'group-hover:-translate-y-1'}`} style={{ transitionDelay: i ? '.12s' : '0s' }}>
                 <img src={src} alt="" className="h-11 w-full rounded-md object-cover" /><div className="mt-1 h-1 w-10 rounded bg-line" />
               </div>

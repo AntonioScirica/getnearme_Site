@@ -383,8 +383,8 @@ html.metrics-light [class*="border-gray-600"] { border-color: #d8d4cb !important
 
 /* Piattaforma: fascio di scansione su "Migliora annuncio" */
 @keyframes gnm-scan {
-  0% { top: -10%; }
-  100% { top: 100%; }
+  0% { transform: translateY(0); }
+  100% { transform: translateY(100%); }
 }
 
 /* Piattaforma: transizione tra le schede di Crea da zero */
@@ -465,6 +465,7 @@ html.metrics-light [class*="border-gray-600"] { border-color: #d8d4cb !important
 .group:hover .xl-row:nth-child(5) > div { animation-delay: .45s; } .group:hover .xl-row:nth-child(6) > div { animation-delay: .6s; }
 @media (prefers-reduced-motion: reduce) {
   .blur-in, .rise { animation: none; }
+  .ease-spring { transition-duration: 1ms !important; transition-delay: 0s !important; }
   .tilt { transform: none !important; }
   .par-1, .par-2, .par-3 { transform: none !important; }
   .group:hover .rewrite::after, .group:hover .xl-row > div { animation: none; }
