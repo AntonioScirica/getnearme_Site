@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
   // Rettangolo: al modello vanno la foto e la stessa foto con un rettangolo rosso sulla zona (disegnato
   // dal worker, "mark"); fuori dalla zona il worker rimette la foto originale.
   if (region && usesText) {
-    translation.prompt_template = 'Edit the first image: {REQUEST}, only inside the area marked by the red rectangle in the second image. Fill any freed area naturally, continuing the same floor, walls and light around it. Keep everything outside the red rectangle exactly the same, same framing and perspective. The result must not contain any red rectangle or outline. Photorealistic.'
+    translation.prompt_template = 'Edit the first image: {REQUEST}. The request refers to what is inside the area marked by the red rectangle in the second image: change only that area; if it asks to remove, erase everything inside the rectangle completely and show the floor and walls behind it. Fill any freed area naturally, continuing the same floor, walls and light around it. Keep everything outside the red rectangle exactly the same, same framing and perspective. The result must not contain any red rectangle or outline. Photorealistic.'
   } else if (points.length && usesText) {
     translation.prompt_template = 'In this close-up crop of a room photo: {REQUEST}. Fill any freed area naturally, continuing the same floor, walls and light around it. Keep the rest of the crop unchanged. Photorealistic.'
   }
@@ -97,7 +97,7 @@ export async function POST(req: NextRequest) {
     console.error('photo-edit failed:', job.status, job.error || job.output?.error)
     return NextResponse.json({ error: job.status === 'IN_QUEUE' || job.status === 'IN_PROGRESS' ? 'timeout' : 'ai_failed' }, { status: 502 })
   }
-  if (process.env.NODE_ENV !== 'production') await debugDump({ imageBase64, imageUrl, region, prompt: (translation.prompt_template ?? prompt), request: translation.request, outB64: b64, translated: (job.output as { translated?: string } | undefined)?.translated })
+  if (process.env.NODE_ENV !== 'production') await debugDump({ imageBase64, imageUrl, region, prompt: (translation.prompt_template ?? prompt), request: translation.request, outB64: b64, translated: (job.output as { translated?: string } | undefined)?.translated, worker: (job as { workerId?: string }).workerId })
   const url = await uploadJpeg(await matchInputShape(Buffer.from(b64, 'base64'), imageBase64, imageUrl), `edits/${userId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`)
   return NextResponse.json({ url, seconds: job.output?.seconds })
 }
@@ -121,7 +121,7 @@ async function matchInputShape(out: Buffer, imageBase64: string, imageUrl: strin
 
 // Solo in sviluppo: salva in /tmp/gnm-debug cosa e' stato mandato al modello (foto, foto con il rettangolo
 // rosso, prompt, traduzione, risultato) per controllare le modifiche di una zona.
-async function debugDump(d: { imageBase64: string; imageUrl: string; region: { x: number; y: number; w: number; h: number } | null; prompt: string; request?: string; outB64: string; translated?: string }) {
+async function debugDump(d: { imageBase64: string; imageUrl: string; region: { x: number; y: number; w: number; h: number } | null; prompt: string; request?: string; outB64: string; translated?: string; worker?: string }) {
   try {
     const { mkdir, writeFile } = await import('fs/promises')
     const dir = `/tmp/gnm-debug/${Date.now()}`
@@ -136,6 +136,6 @@ async function debugDump(d: { imageBase64: string; imageUrl: string; region: { x
       await writeFile(`${dir}/2-foto-con-rettangolo.jpg`, await sharp(src).composite([{ input: Buffer.from(svg) }]).jpeg().toBuffer())
     }
     await writeFile(`${dir}/3-risultato.jpg`, Buffer.from(d.outB64, 'base64'))
-    await writeFile(`${dir}/prompt.txt`, `richiesta: ${d.request ?? ''}\ntradotta: ${d.translated ?? '(worker vecchio, nessuna traduzione)'}\nzona: ${JSON.stringify(d.region)}\n\nprompt:\n${d.prompt}\n`)
+    await writeFile(`${dir}/prompt.txt`, `richiesta: ${d.request ?? ''}\ntradotta: ${d.translated ?? '(worker vecchio, nessuna traduzione)'}\nzona: ${JSON.stringify(d.region)}\nworker: ${d.worker ?? '?'}\n\nprompt:\n${d.prompt}\n`)
   } catch (e) { console.error('debugDump', e) }
 }
