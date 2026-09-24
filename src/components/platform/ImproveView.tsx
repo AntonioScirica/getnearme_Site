@@ -382,12 +382,12 @@ function ProblemCard({ p, i, photos }: { p: Problem; i: number; photos: string[]
         <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${g.cls}`}>{g.label}</span>
         <span className="text-xs text-muted">{p.area}</span>
         {edit && (
-          <button onClick={() => setFix(true)} className="ml-auto flex h-8 shrink-0 items-center gap-1.5 btn-ink rounded-full px-3.5 text-xs font-semibold">
+          <button onClick={() => setFix(true)} className="ml-auto flex h-8 shrink-0 items-center gap-1.5 rounded-full bg-brand px-3.5 text-xs font-semibold text-white ease-smooth transition-colors hover:bg-brand/90 active:scale-[0.97]">
             <Wand2 size={14} /> Sistema con AI
           </button>
         )}
       </div>
-      <p className="mt-4 text-[17px] font-semibold leading-snug tracking-tight">{p.problema}</p>
+      <p className="mt-6 text-[17px] font-semibold leading-snug tracking-tight">{p.problema}</p>
       <p className="mt-2 text-sm leading-relaxed text-muted">{p.perche}</p>
       {src && (
         <div className="mt-4 flex items-center gap-3">
