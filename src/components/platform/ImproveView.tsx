@@ -291,9 +291,7 @@ export function Results({ listing, analysis: a, onSaved, onRestart }: { listing:
 
       <div className="grid gap-5 pt-2 lg:grid-cols-3">
         <Section title="Dati da aggiungere" hint="I compratori li cercano prima di chiamare.">
-          {a.dati_mancanti.length ? a.dati_mancanti.map(d => (
-            <li key={d} className="flex items-center gap-2 text-sm"><span className="h-4 w-4 shrink-0 rounded-md ring-1 ring-line" />{d}</li>
-          )) : <li className="text-sm text-muted">Nessuno, i dati principali ci sono.</li>}
+          {a.dati_mancanti.length ? <Checklist items={a.dati_mancanti} /> : <li className="text-sm text-muted">Nessuno, i dati principali ci sono.</li>}
         </Section>
         <Section title="Foto: cosa rifare" hint={`Valutate le prime ${Math.min(3, listing.photos.length)} foto.`}>
           {a.foto_consigli.map(f => <li key={f} className="flex gap-2 text-sm"><span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-ink" />{f}</li>)}
@@ -365,6 +363,31 @@ function ScoreInfo({ a }: { a: Analysis }) {
         </div>
       )}
     </div>
+  );
+}
+
+// Checklist vera: spunti i dati man mano che li aggiungi sul portale (stato solo in pagina).
+function Checklist({ items }: { items: string[] }) {
+  const [done, setDone] = useState<Set<string>>(new Set());
+  const toggle = (d: string) => setDone(prev => { const n = new Set(prev); if (n.has(d)) n.delete(d); else n.add(d); return n; });
+  return (
+    <>
+      {items.map(d => {
+        const on = done.has(d);
+        return (
+          <li key={d}>
+            <button type="button" role="checkbox" aria-checked={on} onClick={() => toggle(d)}
+              className="group flex w-full items-center gap-2.5 rounded-xl py-1 text-left text-sm">
+              <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md ease-smooth transition-colors ${on ? 'bg-emerald-500 text-white' : 'ring-1 ring-line group-hover:ring-ink/30'}`}>
+                <Check size={13} strokeWidth={3} className={`ease-smooth transition-[opacity,transform] ${on ? 'scale-100 opacity-100' : 'scale-50 opacity-0'}`} />
+              </span>
+              <span className={`ease-smooth transition-colors ${on ? 'text-muted line-through' : ''}`}>{d}</span>
+            </button>
+          </li>
+        );
+      })}
+      <li className="pt-2 text-xs text-muted">{done.size === items.length ? 'Tutto aggiunto.' : `${done.size} di ${items.length} aggiunti`}</li>
+    </>
   );
 }
 
