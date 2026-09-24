@@ -127,12 +127,11 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
               </h1>
               <label className={`rise mt-10 flex w-full max-w-xl cursor-pointer flex-col items-center gap-4 rounded-[28px] border-2 border-dashed bg-white px-8 py-12 text-center ease-smooth transition-colors ${drag ? 'border-brand bg-brand/5' : 'border-line hover:border-brand/60'} ${CARD_SHADOW}`} style={{ animationDelay: '.2s' }}>
                 <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-brand/10 text-brand"><ImagePlus size={30} /></span>
-                <span className="text-lg font-semibold">1. Carica la foto della stanza</span>
+                <span className="text-lg font-semibold">Carica la foto della stanza</span>
                 <span className="text-sm text-muted">Trascinala qui oppure clicca il pulsante. Va bene anche una facciata, un giardino o una planimetria: la riconosco da solo.</span>
                 <span className="mt-1 flex h-11 items-center gap-2 rounded-full bg-brand px-6 text-sm font-semibold text-white ease-smooth transition-transform hover:scale-[1.03]"><ImagePlus size={16} /> Scegli una foto</span>
                 {picker}
               </label>
-              <p className="mt-6 text-sm text-muted"><b className="text-ink">2.</b> Poi scrivi qui sotto cosa cambiare, in italiano. <b className="text-ink">3.</b> Vedi il prima/dopo e continua a chiedere.</p>
             </div>
           )}
 
