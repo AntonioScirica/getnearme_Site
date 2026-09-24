@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Home, Building2, Globe, Gauge, LogOut, Plus, ArrowUp, Loader2 } from 'lucide-react';
+import { Home, Building2, Globe, Gauge, LogOut, Plus, Loader2, X } from 'lucide-react';
 import type { UserData } from '@/app/[locale]/dashboard/page';
 import { supabase } from '@/lib/supabase';
 import { fetchProjects, type ProjectData } from '@/lib/projects';
@@ -102,73 +102,137 @@ export default function PlatformApp({ userData }: { userData: UserData }) {
 
 // Home minimal: titolo piccolo su due toni, tre tessere dritte con un mini collage che si
 // anima al passaggio del mouse. "Migliora" apre il campo link sotto le tessere.
-function Tile({ kicker, title, onClick, href, active, children }: { kicker: string; title: string; onClick?: () => void; href?: string; active?: boolean; children: React.ReactNode }) {
-  const cls = `group relative flex h-[22rem] w-full flex-col overflow-hidden rounded-[28px] bg-white p-6 text-left shadow-[0_1px_2px_rgba(0,0,0,.04),0_8px_24px_-12px_rgba(0,0,0,.12)] ring-1 ring-black/5 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_2px_4px_rgba(0,0,0,.04),0_20px_40px_-16px_rgba(0,0,0,.2)] sm:w-80 ${active ? 'ring-2 ring-ink' : ''}`;
+// Card azione: si inclina verso il mouse (--rx/--ry), riflesso di luce (--sx/--sy) e
+// variabili --mx/--my (-1..1) per la parallasse degli elementi del collage (.par-1/2/3).
+function Tile({ kicker, title, onClick, href, active, index, onHover, children }: { kicker: string; title: string; onClick?: () => void; href?: string; active?: boolean; index: number; onHover?: (on: boolean) => void; children: React.ReactNode }) {
+  const move = (e: React.MouseEvent<HTMLElement>) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    const x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
+    const st = e.currentTarget.style;
+    st.setProperty('--ry', `${(x - 0.5) * 5}deg`); st.setProperty('--rx', `${(0.5 - y) * 4}deg`);
+    st.setProperty('--mx', String((x - 0.5) * 2)); st.setProperty('--my', String((y - 0.5) * 2));
+    st.setProperty('--sx', `${x * 100}%`); st.setProperty('--sy', `${y * 100}%`); st.setProperty('--lift', '-4px');
+  };
+  const leave = (e: React.MouseEvent<HTMLElement>) => {
+    const st = e.currentTarget.style;
+    ['--rx', '--ry', '--mx', '--my', '--lift'].forEach(k => st.removeProperty(k));
+    onHover?.(false);
+  };
+  const cls = `tilt group relative flex h-[22rem] w-full flex-col overflow-hidden rounded-[28px] bg-white p-6 text-left shadow-[0_1px_2px_rgba(0,0,0,.04),0_8px_24px_-12px_rgba(0,0,0,.12)] ring-1 ring-black/5 hover:shadow-[0_2px_4px_rgba(0,0,0,.04),0_30px_50px_-20px_rgba(0,0,0,.25)] active:scale-[0.985] sm:w-80 ${active ? 'ring-2 ring-ink' : ''}`;
+  const props = { className: cls, onMouseMove: move, onMouseEnter: () => onHover?.(true), onMouseLeave: leave };
   const inner = (
     <>
-      <span className="text-sm text-muted">{kicker}</span>
-      <span className="mt-1 text-2xl font-bold leading-tight tracking-tight">{title}</span>
-      <div className="relative mt-auto h-52 origin-bottom scale-110">{children}</div>
+      <span className="sheen pointer-events-none absolute inset-0 z-20" />
+      <span className="par-1 text-sm text-muted">{kicker}</span>
+      <span className="par-1 mt-1 text-2xl font-bold leading-tight tracking-tight">{title}</span>
+      <div className="flex flex-1 items-center justify-center pt-4"><div className="relative h-40 w-full">{children}</div></div>
     </>
   );
-  return href ? <a href={href} className={cls}>{inner}</a> : <button type="button" onClick={onClick} className={cls}>{inner}</button>;
+  // Ingresso sul contenitore, inclinazione sulla card: due transform che non si sovrascrivono.
+  return (
+    <div className="rise w-full sm:w-80" style={{ animationDelay: `${0.25 + index * 0.1}s` }}>
+      {href ? <a href={href} {...props}>{inner}</a> : <button type="button" onClick={onClick} {...props}>{inner}</button>}
+    </div>
+  );
 }
+
+// Score che sale da 42 a 86 mentre il mouse e' sulla card, colore rosso -> ambra -> verde.
+function ScoreBadge({ on }: { on: boolean }) {
+  const [n, setN] = useState(42);
+  useEffect(() => {
+    let raf = 0; const from = n, to = on ? 86 : 42, t0 = performance.now();
+    const tick = (t: number) => { const k = Math.min(1, (t - t0) / 900); setN(Math.round(from + (to - from) * (1 - Math.pow(1 - k, 3)))); if (k < 1) raf = requestAnimationFrame(tick); };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [on]);
+  const color = n >= 75 ? 'bg-emerald-500' : n >= 55 ? 'bg-amber-400' : 'bg-rose-500';
+  return <span className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold text-white shadow-lg transition-colors duration-300 ${color}`}>{n}{n >= 75 && ' ✓'}</span>;
+}
+
+// Modalita' "Migliora": un solo box centrato con il mini annuncio e il campo link; X o Esc per tornare.
+function LinkFocus({ url, setUrl, ok, onClose }: { url: string; setUrl: (v: string) => void; ok: boolean; onClose: () => void }) {
+  useEffect(() => {
+    const k = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', k);
+    return () => document.removeEventListener('keydown', k);
+  }, [onClose]);
+  return (
+    <div className="rise relative mt-12 w-full max-w-xl rounded-[28px] bg-white p-7 shadow-[0_2px_4px_rgba(0,0,0,.04),0_30px_60px_-24px_rgba(0,0,0,.25)] ring-1 ring-black/5">
+      <button onClick={onClose} aria-label="Torna indietro" className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full text-muted transition-colors hover:bg-canvas hover:text-ink"><X size={18} /></button>
+      <div className="blur-in mx-auto flex w-fit items-center gap-3 rounded-2xl bg-canvas p-2 pr-4" style={{ animationDelay: '.15s' }}>
+        <img src="/staging/1_real.jpg" alt="" className="h-12 w-16 rounded-xl object-cover" />
+        <div><div className="h-1.5 w-24 rounded bg-line" /><div className="mt-1.5 h-1.5 w-16 rounded bg-line" /></div>
+        <span className="ml-2 rounded-full bg-emerald-500 px-2.5 py-1 text-xs font-bold text-white">86 ✓</span>
+      </div>
+      <form onSubmit={e => { e.preventDefault(); if (ok) go(`/migliora?url=${encodeURIComponent(url.trim())}`); }}
+        className="blur-in mt-6 flex items-center gap-2 rounded-full bg-canvas p-1.5 pl-5 ring-1 ring-transparent transition-shadow focus-within:bg-white focus-within:ring-ink/15 focus-within:shadow-[0_8px_24px_-12px_rgba(0,0,0,.2)]" style={{ animationDelay: '.25s' }}>
+        <input autoFocus value={url} onChange={e => setUrl(e.target.value)} placeholder="https://www.immobiliare.it/annunci/..." className="min-w-0 flex-1 bg-transparent py-2 text-base outline-none placeholder:text-muted/60" />
+        <button disabled={!ok} className="btn-ink h-11 shrink-0 rounded-full px-6 text-sm font-semibold">Analizza</button>
+      </form>
+      <p className="blur-in mt-4 text-center text-xs text-muted" style={{ animationDelay: '.35s' }}>Score, cosa sistemare e testo riscritto. Premi Esc per tornare.</p>
+    </div>
+  );
+}
+
+const TITLE_WORDS = (name?: string) => (name ? `Ciao ${name.split(' ')[0]}, da dove partiamo?` : 'Da dove partiamo?').split(' ');
 
 export function HomeView({ name }: { projects?: ProjectData[] | null; name?: string }) {
   const [linkOpen, setLinkOpen] = useState(false);
   const [url, setUrl] = useState('');
+  const [hover, setHover] = useState<number | null>(null);
   const ok = /^https?:\/\//i.test(url.trim());
 
   return (
     <div className="flex min-h-[calc(100vh-5rem)] flex-col items-center justify-center py-10">
-      <h1 className="fade-up text-center font-display text-4xl font-bold leading-tight tracking-tight md:text-5xl">
-        {name ? `Ciao ${name.split(' ')[0]}, da dove partiamo?` : 'Da dove partiamo?'}
-        <span className="block text-muted/70">Migliora, crea o importa i tuoi annunci.</span>
+      <h1 className="text-center font-display text-4xl font-bold leading-tight tracking-tight md:text-5xl">
+        {(linkOpen ? ['Incolla', 'il', 'link', 'dell\'annuncio'] : TITLE_WORDS(name)).map((w, i) => <span key={`${linkOpen}-${i}`} className="blur-in inline-block" style={{ animationDelay: `${i * 0.05}s` }}>{w}&nbsp;</span>)}
+        <span key={String(linkOpen)} className="blur-in block text-muted/70" style={{ animationDelay: '0.3s' }}>{linkOpen ? 'Da immobiliare.it, idealista o casa.it.' : 'Migliora, crea o importa i tuoi annunci.'}</span>
       </h1>
 
-      <div className="stagger mt-14 flex w-full flex-col items-center justify-center gap-5 sm:flex-row">
-        {/* Migliora: scheda annuncio con score che sale */}
-        <Tile kicker="Hai già un annuncio online?" title="Miglioralo" onClick={() => setLinkOpen(v => !v)} active={linkOpen}>
-          <div className="absolute left-1/2 top-2 w-40 -translate-x-1/2 rounded-xl bg-white p-2 shadow-md transition-transform duration-500 group-hover:-translate-y-1 group-hover:-rotate-2">
-            <img src="/staging/1_real.jpg" alt="" className="h-20 w-full rounded-lg object-cover" />
-            <div className="mt-2 h-1.5 w-24 rounded bg-line" /><div className="mt-1 h-1.5 w-16 rounded bg-line" />
+      {linkOpen ? <LinkFocus url={url} setUrl={setUrl} ok={ok} onClose={() => setLinkOpen(false)} /> : (
+      <div className="mt-14 flex w-full flex-col items-center justify-center gap-5 sm:flex-row">
+        {/* Migliora: scheda annuncio, righe che si riscrivono, score che sale */}
+        <Tile index={0} kicker="Hai già un annuncio online?" title="Miglioralo" onClick={() => { setHover(null); setLinkOpen(true); }} onHover={on => setHover(on ? 0 : null)}>
+          <div className="par-2 absolute left-1/2 top-4 w-44 -translate-x-1/2">
+            <div className="rounded-xl bg-white p-2 shadow-md transition-transform duration-500 ease-spring group-hover:-rotate-2">
+              <img src="/staging/1_real.jpg" alt="" className="h-24 w-full rounded-lg object-cover" />
+              <div className="rewrite mt-2 h-1.5 w-24 rounded bg-line" /><div className="rewrite mt-1 h-1.5 w-16 rounded bg-line" /><div className="rewrite mt-1 h-1.5 w-20 rounded bg-line" />
+            </div>
           </div>
-          <span className="absolute left-[18%] top-0 rounded-full bg-rose-500 px-2 py-0.5 text-[11px] font-bold text-white shadow transition-all duration-500 group-hover:opacity-0">42</span>
-          <span className="absolute right-[16%] top-16 rounded-full bg-emerald-500 px-2.5 py-1 text-xs font-bold text-white opacity-0 shadow-md transition-all duration-500 group-hover:-translate-y-2 group-hover:opacity-100">86 ✓</span>
+          <span className="par-3 absolute top-1 right-[8%] z-10"><ScoreBadge on={hover === 0} /></span>
         </Tile>
 
-        {/* Crea: tre foto a ventaglio + "+" */}
-        <Tile kicker="Hai un immobile nuovo?" title="Crea da zero" href="#/nuovo">
+        {/* Crea: foto a ventaglio con molla + "+" che ruota */}
+        <Tile index={1} kicker="Hai un immobile nuovo?" title="Crea da zero" href="#/nuovo">
           {['/staging/4.jpg', '/reference/giorno-notte-poster.jpg', '/staging/2.jpg'].map((src, i) => (
-            <img key={src} src={src} alt="" className={`absolute left-1/2 top-4 h-32 w-24 -translate-x-1/2 rounded-xl object-cover shadow-md ring-2 ring-white transition-transform duration-500 ${
-              ['-rotate-12 -translate-x-[90%] group-hover:-translate-x-[105%] group-hover:-rotate-[16deg]', 'z-10 group-hover:-translate-y-2', 'rotate-12 -translate-x-[10%] group-hover:translate-x-[5%] group-hover:rotate-[16deg]'][i]}`} />
+            <div key={src} className={`absolute left-1/2 top-1 ${['par-1', 'par-2 z-10', 'par-3'][i]}`}>
+              <img src={src} alt="" className={`h-32 w-24 -translate-x-1/2 rounded-xl object-cover shadow-md ring-2 ring-white transition-transform duration-500 ease-spring ${
+                ['-translate-x-[90%] -rotate-12 group-hover:-translate-x-[118%] group-hover:-rotate-[18deg]', 'group-hover:-translate-y-3 group-hover:scale-105', '-translate-x-[10%] rotate-12 group-hover:translate-x-[18%] group-hover:rotate-[18deg]'][i]}`} />
+            </div>
           ))}
-          <span className="absolute bottom-1 left-1/2 z-20 flex h-9 w-9 -translate-x-1/2 items-center justify-center rounded-full bg-ink text-white shadow-lg transition-transform duration-300 group-hover:scale-110"><Plus size={18} /></span>
+          <span className="par-3 absolute -bottom-2 left-1/2 z-20 -translate-x-1/2">
+            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-ink text-white shadow-lg transition-transform duration-500 ease-spring group-hover:rotate-90 group-hover:scale-110"><Plus size={18} /></span>
+          </span>
         </Tile>
 
-        {/* Importa: foglio Excel che diventa card */}
-        <Tile kicker="Hai un file del gestionale?" title="Importalo" href="#/importa">
-          <div className="absolute left-[8%] top-6 w-28 rounded-lg bg-white p-1.5 shadow-md transition-transform duration-500 group-hover:-translate-x-1">
+        {/* Importa: righe del foglio che si accendono, card che entrano */}
+        <Tile index={2} kicker="Hai un file del gestionale?" title="Importalo" href="#/importa">
+          <div className="par-1 absolute left-[6%] top-[calc(50%+4px)] w-28 -translate-y-1/2 rounded-lg bg-white p-1.5 shadow-md">
             <div className="mb-1 h-2 rounded-sm bg-emerald-500/80" />
-            {[0, 1, 2, 3, 4].map(r => <div key={r} className="mt-1 grid grid-cols-3 gap-1">{[0, 1, 2].map(c => <div key={c} className="h-2 rounded-sm bg-line" />)}</div>)}
+            {[0, 1, 2, 3, 4].map(r => <div key={r} className="xl-row mt-1 grid grid-cols-3 gap-1">{[0, 1, 2].map(c => <div key={c} className="h-2 rounded-sm bg-line" />)}</div>)}
           </div>
-          <span className="absolute left-1/2 top-16 -translate-x-1/2 text-lg text-muted transition-transform duration-500 group-hover:translate-x-0">→</span>
-          <div className="absolute right-[8%] top-3 w-20 transition-transform duration-500 group-hover:translate-x-1">
+          <span className="par-2 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-lg text-muted transition-transform duration-500 ease-spring group-hover:translate-x-1">→</span>
+          <div className="par-3 absolute right-[6%] top-[calc(50%+4px)] w-20 -translate-y-1/2">
             {['/staging/5.jpg', '/staging/3.jpg'].map((src, i) => (
-              <div key={src} className={`rounded-lg bg-white p-1 shadow-md ${i ? 'mt-2' : ''}`}><img src={src} alt="" className="h-11 w-full rounded-md object-cover" /><div className="mt-1 h-1 w-10 rounded bg-line" /></div>
+              <div key={src} className={`rounded-lg bg-white p-1 shadow-md transition-all duration-500 ease-spring ${i ? 'mt-2 translate-x-3 opacity-60 group-hover:translate-x-0 group-hover:opacity-100' : 'group-hover:-translate-y-1'}`} style={{ transitionDelay: i ? '.12s' : '0s' }}>
+                <img src={src} alt="" className="h-11 w-full rounded-md object-cover" /><div className="mt-1 h-1 w-10 rounded bg-line" />
+              </div>
             ))}
           </div>
         </Tile>
       </div>
-
-      {linkOpen && (
-        <form onSubmit={e => { e.preventDefault(); if (ok) go(`/migliora?url=${encodeURIComponent(url.trim())}`); }}
-          className="fade-up mt-6 flex w-full max-w-xl items-center gap-2 rounded-full bg-canvas p-1.5 pl-5">
-          <input autoFocus value={url} onChange={e => setUrl(e.target.value)} placeholder="Incolla il link da immobiliare.it, idealista o casa.it" className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted/70" />
-          <button disabled={!ok} className="btn-ink h-10 shrink-0 rounded-full px-5 text-sm font-semibold">Analizza</button>
-        </form>
       )}
-
     </div>
   );
 }
