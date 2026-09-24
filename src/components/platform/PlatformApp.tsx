@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Home, Building2, Globe, Gauge, LogOut, Plus, ArrowUp, Loader2, ImagePlus, Paperclip } from 'lucide-react';
+import { Home, Building2, Globe, Gauge, LogOut, Plus, ArrowUp, Loader2 } from 'lucide-react';
 import type { UserData } from '@/app/[locale]/dashboard/page';
 import { supabase } from '@/lib/supabase';
 import { fetchProjects, type ProjectData } from '@/lib/projects';
@@ -102,70 +102,73 @@ export default function PlatformApp({ userData }: { userData: UserData }) {
   );
 }
 
-// Home: titolo grande, ventaglio di card inclinate (immobili veri o esempi) e UN campo in basso.
-// Incolli un link -> Migliora. Graffetta -> Importa file. Immagine -> Crea da zero.
-const EXAMPLES = [
-  { cover: '/reference/giorno-notte-poster.jpg', a: 'Bilocale', b: 'luminoso', sub: 'Travi a vista, centro storico', score: 86 },
-  { cover: '/staging/2.jpg', a: 'Trilocale', b: 'arredato', sub: 'Home staging con AI', score: 78 },
-  { cover: '/staging/1_real.jpg', a: 'Monolocale', b: 'da rivedere', sub: 'Foto vuote, testo da riscrivere', score: 41 },
-  { cover: '/staging/4.jpg', a: 'Attico', b: 'con terrazzo', sub: 'Descrizione riscritta', score: 91 },
-];
-const TILT = ['-rotate-6 translate-y-3', '-rotate-2', 'rotate-2', 'rotate-6 translate-y-3'];
-const scoreColor = (n: number) => (n >= 75 ? 'bg-emerald-500' : n >= 55 ? 'bg-amber-400' : 'bg-rose-500');
+// Home: titolo grande e le tre azioni come card a ventaglio. "Migliora" apre il campo link
+// sotto il ventaglio; sotto ancora, gli ultimi immobili.
+const ACTIONS = [
+  { id: 'link', cover: '/staging/1_real.jpg', a: 'Migliora', b: 'un annuncio', sub: 'Incolla il link: score, cosa sistemare e testo riscritto.', dot: 'bg-rose-500', tag: 'Ho già un annuncio' },
+  { id: 'nuovo', cover: '/reference/giorno-notte-poster.jpg', a: 'Crea', b: 'da zero', sub: 'Foto e dati: l\'AI scrive l\'annuncio e lo pubblica nel portfolio.', dot: 'bg-brand', tag: 'Nuovo immobile' },
+  { id: 'importa', cover: '/staging/4.jpg', a: 'Importa', b: 'dal gestionale', sub: 'Excel o CSV: colonne riconosciute da sole.', dot: 'bg-emerald-500', tag: 'Ho un file' },
+] as const;
+const TILT = ['-rotate-6 translate-y-4', 'z-10 -translate-y-2', 'rotate-6 translate-y-4'];
 
 export function HomeView({ projects, name }: { projects: ProjectData[] | null; name?: string }) {
-  const [text, setText] = useState('');
-  const isLink = /^https?:\/\//i.test(text.trim());
-  const mine = (projects ?? []).filter(p => p.cover).slice(0, 4);
-  const cards = mine.length >= 2
-    ? mine.map(p => {
-        const words = (p.titolo || p.nome || 'Immobile').split(' ');
-        return { cover: p.cover, a: words[0], b: words.slice(1, 3).join(' '), sub: p.addr?.split(',').slice(-1)[0]?.trim() || '', score: (p.import_data as { score?: number } | undefined)?.score ?? null, href: `#/immobile/${p.id}` };
-      })
-    : EXAMPLES.map(e => ({ ...e, href: undefined as string | undefined }));
-
-  const submit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (isLink) go(`/migliora?url=${encodeURIComponent(text.trim())}`);
-  };
+  const [linkOpen, setLinkOpen] = useState(false);
+  const [url, setUrl] = useState('');
+  const recent = (projects ?? []).slice(0, 5);
 
   return (
-    <div className="flex min-h-[calc(100vh-9rem)] flex-col items-center">
+    <div className="flex flex-col items-center">
       <h1 className="fade-up mt-6 text-center font-display text-5xl font-bold leading-[1.08] tracking-tight md:text-6xl">
-        Incolla un annuncio.<br />Lo rendiamo <span className="accent-serif text-[1.12em]">irresistibile</span> 🏡
+        {name ? `Ciao ${name.split(' ')[0]},` : 'Ciao,'}<br />da dove <span className="accent-serif text-[1.12em]">partiamo?</span> 🏡
       </h1>
-      <p className="fade-up mt-4 text-center text-lg text-muted" style={{ animationDelay: '.05s' }}>Score, cosa sistemare e testo riscritto in pochi secondi. Oppure crealo da zero.</p>
+      <p className="fade-up mt-4 text-center text-lg text-muted" style={{ animationDelay: '.05s' }}>Scegli come vuoi iniziare.</p>
 
-      {/* Ventaglio di card */}
-      <div className="stagger mt-12 flex items-end justify-center">
-        {cards.map((c, i) => {
+      {/* Le tre azioni a ventaglio */}
+      <div className="stagger mt-14 flex items-end justify-center">
+        {ACTIONS.map((c, i) => {
+          const active = c.id === 'link' && linkOpen;
           const inner = (
             <>
-              <div className="aspect-[4/3] overflow-hidden rounded-xl bg-canvas"><img src={c.cover} alt="" className="h-full w-full object-cover" /></div>
-              <div className="mt-3 flex items-center gap-1.5">
-                {typeof c.score === 'number' && <span className={`h-3 w-3 rounded-full ${scoreColor(c.score)}`} />}
-                {typeof c.score === 'number' && <span className="text-xs font-semibold text-muted">{c.score}/100</span>}
-              </div>
-              <div className="mt-1.5 text-[15px] font-semibold leading-tight">{c.a} <span className="accent-serif text-[1.15em]">{c.b}</span></div>
-              <div className="mt-0.5 line-clamp-2 text-xs text-muted">{c.sub}</div>
+              <div className="aspect-[4/3] overflow-hidden rounded-xl bg-canvas"><img src={c.cover} alt="" className="h-full w-full object-cover transition duration-500 group-hover:scale-105" /></div>
+              <div className="mt-3 flex items-center gap-1.5"><span className={`h-2.5 w-2.5 rounded-full ${c.dot}`} /><span className="text-xs font-semibold text-muted">{c.tag}</span></div>
+              <div className="mt-1.5 text-xl font-bold leading-tight tracking-tight">{c.a} <span className="accent-serif text-[1.15em] font-normal">{c.b}</span></div>
+              <div className="mt-1 text-sm leading-snug text-muted">{c.sub}</div>
             </>
           );
-          const cls = `fan-card -mx-2 w-48 rounded-2xl bg-white p-2.5 pb-4 md:w-56 ${TILT[i % 4]}`;
-          return c.href ? <a key={i} href={c.href} className={cls}>{inner}</a> : <div key={i} className={cls}>{inner}</div>;
+          const cls = `fan-card group -mx-2 w-44 shrink rounded-2xl bg-white p-3 pb-5 text-left sm:w-52 xl:-mx-3 xl:w-72 ${TILT[i]} ${active ? '!-translate-y-4 !rotate-0 ring-2 ring-ink' : ''}`;
+          return c.id === 'link'
+            ? <button key={c.id} type="button" onClick={() => setLinkOpen(v => !v)} className={cls}>{inner}</button>
+            : <a key={c.id} href={`#/${c.id}`} className={cls}>{inner}</a>;
         })}
       </div>
 
-      {/* Il campo unico */}
-      <form onSubmit={submit} className="float-bar fade-up mt-auto w-full max-w-2xl rounded-3xl p-3 pt-4" style={{ animationDelay: '.15s' }}>
-        <input value={text} onChange={e => setText(e.target.value)} placeholder="Incolla il link di un annuncio (immobiliare.it, idealista, casa.it)…" className="w-full bg-transparent px-2 text-base outline-none placeholder:text-muted/70" />
-        <div className="mt-4 flex items-center gap-2">
-          <a href="#/importa" title="Importa da Excel o CSV" className="flex h-9 items-center gap-1.5 rounded-full bg-canvas px-3 text-xs font-medium text-muted hover:text-ink"><Paperclip size={15} /> Importa file</a>
-          <a href="#/nuovo" title="Crea da zero" className="flex h-9 items-center gap-1.5 rounded-full bg-canvas px-3 text-xs font-medium text-muted hover:text-ink"><ImagePlus size={15} /> Crea da zero</a>
-          <button disabled={!isLink} aria-label="Analizza" className="btn-ink ml-auto flex h-10 w-10 items-center justify-center rounded-full"><ArrowUp size={18} /></button>
+      {/* Campo link, compare scegliendo "Migliora" */}
+      {linkOpen && (
+        <form onSubmit={e => { e.preventDefault(); if (/^https?:\/\//i.test(url.trim())) go(`/migliora?url=${encodeURIComponent(url.trim())}`); }}
+          className="float-bar fade-up mt-12 flex w-full max-w-2xl items-center gap-2 rounded-full p-2 pl-6">
+          <input autoFocus value={url} onChange={e => setUrl(e.target.value)} placeholder="Incolla il link da immobiliare.it, idealista o casa.it" className="min-w-0 flex-1 bg-transparent text-base outline-none placeholder:text-muted/70" />
+          <button disabled={!/^https?:\/\//i.test(url.trim())} aria-label="Analizza" className="btn-ink flex h-11 shrink-0 items-center gap-2 rounded-full px-5 text-sm font-semibold"><ArrowUp size={16} /> Analizza</button>
+        </form>
+      )}
+
+      {/* Ultimi immobili */}
+      {recent.length > 0 && (
+        <div className="mt-20 w-full max-w-5xl">
+          <div className="flex items-end justify-between">
+            <h2 className="font-display text-xl font-bold tracking-tight">I tuoi ultimi immobili</h2>
+            <a href="#/immobili" className="text-sm font-semibold underline underline-offset-4">Vedi tutti ({projects!.length})</a>
+          </div>
+          <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+            {recent.map(p => (
+              <a key={p.id} href={`#/immobile/${p.id}`} className="group block">
+                <div className="aspect-square overflow-hidden rounded-xl bg-canvas">{p.cover && <img src={p.cover} alt="" className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />}</div>
+                <div className="mt-2 truncate text-sm font-semibold">{p.addr?.split(',').slice(-1)[0]?.trim() || p.titolo}</div>
+                <div className="text-sm text-muted">{formatPrice(p.prezzo)}</div>
+              </a>
+            ))}
+          </div>
         </div>
-        {text.trim() && !isLink && <p className="mt-2 px-2 text-xs text-muted">Incolla un link che inizi con https://</p>}
-      </form>
-      <p className="mt-4 text-xs text-muted">{name ? `Ciao ${name.split(' ')[0]} · ` : ''}{projects?.length ? <a href="#/immobili" className="underline underline-offset-2">{projects.length} immobili</a> : 'Nessun immobile ancora'}</p>
+      )}
     </div>
   );
 }
