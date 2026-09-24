@@ -76,7 +76,7 @@ export default function PlatformApp({ userData }: { userData: UserData }) {
       </header>
 
       <main className="flex-1 overflow-y-auto">
-        <div key={route} className={`fade-up mx-auto max-w-6xl px-6 pb-16 ${route === '/' ? 'pt-16' : 'pt-8'}`}>
+        <div key={route} className={`fade-up mx-auto max-w-6xl px-6 ${route === '/' ? '' : 'pb-16 pt-8'}`}>
           {route === '/costi' && isPlatformAdmin(userData.email) ? (
             <CostsView />
           ) : route === '/migliora' ? (
@@ -120,7 +120,7 @@ export function HomeView({ name }: { projects?: ProjectData[] | null; name?: str
   const ok = /^https?:\/\//i.test(url.trim());
 
   return (
-    <div className="flex flex-col items-center">
+    <div className="flex min-h-[calc(100vh-5rem)] flex-col items-center justify-center py-10">
       <h1 className="fade-up text-center font-display text-4xl font-bold leading-tight tracking-tight md:text-5xl">
         {name ? `Ciao ${name.split(' ')[0]}, da dove partiamo?` : 'Da dove partiamo?'}
         <span className="block text-muted/70">Migliora, crea o importa i tuoi annunci.</span>
