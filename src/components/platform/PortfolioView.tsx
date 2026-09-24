@@ -1,11 +1,11 @@
 'use client';
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Check, Copy, ExternalLink, ImagePlus, Loader2, Plus, Trash2 } from 'lucide-react';
+import { ArrowLeft, Check, Copy, ExternalLink, ImagePlus, Loader2, Pencil, Plus, Trash2 } from 'lucide-react';
 import type { ProjectData } from '@/lib/projects';
 import { FAKE_PROPERTIES } from '@/lib/fakeProperties';
-import { TEMPLATES, type SiteConfig, type SiteProperty } from '@/lib/siteTemplates';
-import { SitePage } from '@/components/site/pages';
+import { TEMPLATES, type SiteConfig, type SiteProperty, type TemplateId } from '@/lib/siteTemplates';
+import { SitePage, SiteThumb } from '@/components/site/pages';
 import type { Page } from '@/components/site/ui';
 import { fileToResizedDataUrl } from '@/lib/staging';
 import { uploadDataUrl } from '@/lib/imageUpload';
@@ -25,6 +25,8 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
   const [saved, setSaved] = useState<'idle' | 'saving' | 'ok'>('idle');
   const [copied, setCopied] = useState(false);
   const [page, setPage] = useState<Page>({ page: 'home' });
+  // null = galleria dei modelli; altrimenti editor del modello scelto
+  const [editing, setEditing] = useState<TemplateId | null>(null);
 
   useEffect(() => {
     authFetch('/api/platform/site').then(r => r.json()).then((d: Site) => { setSite(d); setCfg(d.config); });
@@ -68,7 +70,7 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
               <button key={id} onClick={() => setTab(id)} className={`rounded-full px-4 py-1.5 text-[13px] font-medium ease-smooth transition-colors ${tab === id ? 'bg-ink text-white' : 'text-muted hover:text-ink'}`}>{l}</button>
             ))}
           </div>
-          {tab === 'sito' && (
+          {tab === 'sito' && editing && (
             <button onClick={save} disabled={!dirty || saved === 'saving'}
               className="flex h-10 items-center gap-2 rounded-full bg-brand px-5 text-sm font-semibold text-white ease-smooth transition-[background-color,opacity] hover:bg-brand/90 disabled:opacity-40">
               {saved === 'saving' ? <Loader2 size={15} className="animate-spin" /> : saved === 'ok' ? <Check size={15} /> : null}
@@ -78,22 +80,19 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
         </div>
       </div>
 
-      {tab === 'immobili' ? <PropertiesTab projects={projects} onChange={onChange} /> : (
-        <div className="mt-8 grid items-start gap-6 lg:grid-cols-[340px_1fr]">
+      {tab === 'immobili' ? <PropertiesTab projects={projects} onChange={onChange} /> : !editing ? (
+        <Gallery cfg={site.config} name={site.name || 'La tua agenzia'} logo={site.logo} props={props}
+          onPick={id => { if (id !== cfg.template) set({ template: id, primary: TEMPLATES.find(t => t.id === id)!.primary, font: TEMPLATES.find(t => t.id === id)!.font }); setPage({ page: 'home' }); setEditing(id); }} />
+      ) : (
+        <div className="mt-6">
+          <div className="mb-5 flex flex-wrap items-center gap-3">
+            <button onClick={() => { if (!dirty || confirm('Hai modifiche non pubblicate. Tornare ai modelli e scartarle?')) { setCfg(site.config); setEditing(null); } }}
+              className="flex h-10 items-center gap-2 rounded-full bg-white px-4 text-sm font-medium ring-1 ring-black/10 ease-smooth transition-colors hover:bg-canvas"><ArrowLeft size={15} /> Tutti i modelli</button>
+            <span className="text-sm text-muted">Stai modificando <b className="text-ink">{TEMPLATES.find(t => t.id === cfg.template)?.name}</b>{cfg.template !== site.config.template && ' (non ancora pubblicato)'}</span>
+          </div>
+        <div className="grid items-start gap-6 lg:grid-cols-[340px_1fr]">
           {/* Controlli */}
           <aside className={`space-y-7 rounded-[28px] bg-white p-5 lg:sticky lg:top-24 lg:max-h-[calc(100vh-8rem)] lg:overflow-y-auto [scrollbar-width:none] ${CARD_SHADOW}`}>
-            <Group title="Modello">
-              <div className="grid grid-cols-1 gap-2">
-                {TEMPLATES.map(t => (
-                  <button key={t.id} onClick={() => set({ template: t.id, primary: t.primary, font: t.font })}
-                    className={`flex items-center gap-3 rounded-2xl p-2.5 text-left ring-1 ease-smooth transition-all ${cfg.template === t.id ? 'bg-canvas ring-ink' : 'ring-black/10 hover:bg-canvas'}`}>
-                    <span className="h-10 w-10 shrink-0 rounded-xl" style={{ background: `linear-gradient(135deg, ${t.primary}, #f4f1ec)` }} />
-                    <span className="min-w-0"><span className="block text-sm font-semibold">{t.name}</span><span className="block truncate text-xs text-muted">{t.desc}</span></span>
-                  </button>
-                ))}
-              </div>
-            </Group>
-
             <Group title="Colore e caratteri">
               <div className="flex flex-wrap items-center gap-2">
                 {COLORS.map(c => <button key={c} onClick={() => set({ primary: c })} aria-label={c} className={`h-8 w-8 rounded-full ring-offset-2 ease-smooth transition-shadow ${cfg.primary === c ? 'ring-2 ring-ink' : ''}`} style={{ background: c }} />)}
@@ -183,8 +182,56 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
             <SitePage page={page} ctx={{ cfg, name: site.name || 'La tua agenzia', logo: site.logo, properties: props, base: '', preview: true, go: setPage }} />
           </Preview>
         </div>
+        </div>
       )}
     </>
+  );
+}
+
+// Galleria dei modelli: anteprima vera della home (con i dati dell'agente), clic per entrare nell'editor
+function Gallery({ cfg, name, logo, props, onPick }: { cfg: SiteConfig; name: string; logo: string | null; props: SiteProperty[]; onPick: (id: TemplateId) => void }) {
+  return (
+    <div className="mt-8">
+      <p className="mb-6 text-sm text-muted">Scegli un modello: entri nell’editor e lo personalizzi. Il sito cambia solo quando premi “Pubblica modifiche”.</p>
+      <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+        {TEMPLATES.map((t, i) => {
+          const used = cfg.template === t.id;
+          const tcfg = used ? cfg : { ...cfg, template: t.id, primary: t.primary, font: t.font };
+          return (
+            <div key={t.id} role="button" tabIndex={0} onClick={() => onPick(t.id)} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onPick(t.id); } }}
+              className="group rise cursor-pointer rounded-[22px] text-left outline-none focus-visible:ring-2 focus-visible:ring-brand" style={{ animationDelay: `${i * 0.04}s` }}>
+              <div className={`relative overflow-hidden rounded-[22px] bg-white ring-1 ease-smooth transition-[box-shadow,transform] group-hover:-translate-y-1 ${used ? 'ring-2 ring-brand' : 'ring-black/10'} ${CARD_SHADOW}`}>
+                <Thumb><SiteThumb ctx={{ cfg: tcfg, name, logo, properties: props, base: '', preview: true }} /></Thumb>
+                <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/0 ease-smooth transition-colors group-hover:bg-black/25">
+                  <span className="flex translate-y-2 items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold opacity-0 shadow-lg ease-smooth transition-[opacity,transform] group-hover:translate-y-0 group-hover:opacity-100"><Pencil size={14} /> Personalizza</span>
+                </div>
+                {used && <span className="absolute left-3 top-3 rounded-full bg-brand px-3 py-1 text-xs font-semibold text-white shadow">In uso</span>}
+              </div>
+              <div className="mt-3 flex items-start gap-2.5 px-1">
+                <span className="mt-1 h-3 w-3 shrink-0 rounded-full ring-2 ring-white" style={{ background: t.primary, boxShadow: '0 0 0 1px rgba(0,0,0,.1)' }} />
+                <span><span className="block font-semibold">{t.name}</span><span className="block text-sm text-muted">{t.desc}</span></span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// Miniatura: il sito largo 1280 px rimpicciolito nella card, solo la parte alta, non cliccabile
+function Thumb({ children }: { children: ReactNode }) {
+  const box = useRef<HTMLDivElement>(null);
+  const [k, setK] = useState(0.3);
+  useEffect(() => {
+    const ro = new ResizeObserver(() => { if (box.current) setK(box.current.clientWidth / 1280); });
+    if (box.current) ro.observe(box.current);
+    return () => ro.disconnect();
+  }, []);
+  return (
+    <div ref={box} className="pointer-events-none relative aspect-[16/11] select-none overflow-hidden" aria-hidden>
+      <div style={{ width: 1280, transform: `scale(${k})`, transformOrigin: 'top left' }}>{children}</div>
+    </div>
   );
 }
 

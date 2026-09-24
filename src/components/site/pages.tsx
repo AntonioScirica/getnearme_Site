@@ -528,6 +528,11 @@ function ZonePage({ slug }: { slug: string }) {
   );
 }
 
+// Anteprima leggera per la galleria dei modelli: solo barra, apertura e prima sezione
+export function SiteThumb({ ctx }: { ctx: SiteCtx }) {
+  return <SiteRoot ctx={ctx}><Header over /><Hero /><Intro /></SiteRoot>;
+}
+
 export function SitePage({ ctx, page }: { ctx: SiteCtx; page: Page }) {
   return (
     <SiteRoot ctx={ctx}>
