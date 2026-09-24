@@ -36,3 +36,6 @@ export function extSend<T>(msg: unknown): Promise<T | null> {
 }
 
 export const EXTENSION_URL = 'https://chromewebstore.google.com/detail/jbnceigldmpkpplanjlednlehloaeoia';
+
+// Ombra delle card della piattaforma (home, flusso Migliora, risultati).
+export const CARD_SHADOW = 'shadow-[0_1px_2px_rgba(0,0,0,.04),0_8px_24px_-12px_rgba(0,0,0,.12)] ring-1 ring-black/5';

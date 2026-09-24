@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Home, Building2, Globe, Gauge, LogOut, Plus, Loader2, X } from 'lucide-react';
 import type { UserData } from '@/app/[locale]/dashboard/page';
 import { supabase } from '@/lib/supabase';
@@ -9,10 +9,10 @@ import NewPropertyWizard from './NewPropertyWizard';
 import PropertyDetail from './PropertyDetail';
 import PortfolioView from './PortfolioView';
 import ImportView from './ImportView';
-import ImproveView from './ImproveView';
+import { BrowserBody, Results, SCAN_STEPS, useImprove, Verdict, type Stage } from './ImproveView';
 import CostsView from './CostsView';
 import { isPlatformAdmin } from '@/lib/platformAdmins';
-import { go, formatPrice, authFetch } from './api';
+import { go, formatPrice, authFetch, CARD_SHADOW } from './api';
 import ProfileForm, { type Profile } from './ProfileForm';
 
 // Routing a hash (#/immobili, #/nuovo, #/immobile/<id>): back/forward del browser
@@ -76,11 +76,11 @@ export default function PlatformApp({ userData }: { userData: UserData }) {
       </header>
 
       <main className="flex-1 overflow-y-auto">
-        <div key={route} className={`fade-up mx-auto max-w-6xl px-6 ${route === '/' ? '' : 'pb-16 pt-8'}`}>
+        <div key={route} className={`fade-up mx-auto max-w-6xl px-6 ${route === '/' || route === '/migliora' ? '' : 'pb-16 pt-8'}`}>
           {route === '/costi' && isPlatformAdmin(userData.email) ? (
             <CostsView />
           ) : route === '/migliora' ? (
-            <ImproveView key={query} initialUrl={new URLSearchParams(query).get('url') ?? ''} onSaved={reload} />
+            <HomeView key={query} name={profile?.name ?? undefined} initialUrl={new URLSearchParams(query).get('url') ?? ''} onSaved={reload} />
           ) : route === '/importa' ? (
             <ImportView onDone={reload} />
           ) : route === '/nuovo' ? (
@@ -92,7 +92,7 @@ export default function PlatformApp({ userData }: { userData: UserData }) {
           ) : route === '/portfolio' ? (
             <PortfolioView projects={projects} onChange={reload} />
           ) : (
-            <HomeView projects={projects} name={profile?.name ?? undefined} />
+            <HomeView name={profile?.name ?? undefined} onSaved={reload} />
           )}
         </div>
       </main>
@@ -151,32 +151,46 @@ function ScoreBadge({ on }: { on: boolean }) {
 
 const TITLE_WORDS = (name?: string) => (name ? `Ciao ${name.split(' ')[0]}, da dove partiamo?` : 'Da dove partiamo?').split(' ');
 
-const CARD_SHADOW = 'shadow-[0_1px_2px_rgba(0,0,0,.04),0_8px_24px_-12px_rgba(0,0,0,.12)] ring-1 ring-black/5';
 
-// Card "Migliora" che si trasforma: il contenitore si allarga e diventa il box dell'input,
-// la mini scheda annuncio del collage resta come card sopra l'input. X o Esc per tornare.
-function ImproveTile({ open, onOpen, onClose, hover, setHover, intro, url, setUrl, ok }: {
-  open: boolean; onOpen: () => void; onClose: () => void; hover: boolean; setHover: (v: boolean) => void; intro: boolean;
-  url: string; setUrl: (v: string) => void; ok: boolean;
+// Card "Migliora" che si trasforma in quattro fasi, sempre lo stesso box:
+// closed (card) -> input (mini scheda + campo link) -> browser (il campo diventa la barra
+// indirizzi, dentro l'annuncio in scansione) -> done (verdetto; i risultati escono sotto).
+type Phase = 'closed' | 'input' | 'browser' | 'done';
+
+function ImproveTile({ phase, stage, onOpen, onClose, onSubmit, onNew, hover, setHover, intro, url, setUrl, children }: {
+  phase: Phase; stage: Stage; onOpen: () => void; onClose: () => void; onSubmit: () => void; onNew: () => void;
+  hover: boolean; setHover: (v: boolean) => void; intro: boolean; url: string; setUrl: (v: string) => void; children: React.ReactNode;
 }) {
   const input = useRef<HTMLInputElement>(null);
+  const open = phase !== 'closed';
+  const flow = phase === 'browser' || phase === 'done';
+  const busy = stage === 'opening' || stage === 'scanning';
+  const ok = /^https?:\/\//i.test(url.trim());
+
+  useEffect(() => {
+    if (phase !== 'input') return;
+    const t = setTimeout(() => input.current?.focus(), 600);
+    return () => clearTimeout(t);
+  }, [phase]);
   useEffect(() => {
     if (!open) return;
-    const t = setTimeout(() => input.current?.focus(), 600);
     const k = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     document.addEventListener('keydown', k);
-    return () => { clearTimeout(t); document.removeEventListener('keydown', k); };
+    return () => document.removeEventListener('keydown', k);
   }, [open, onClose]);
 
+  const width = { closed: 'sm:w-80 delay-[120ms]', input: 'sm:w-[34rem]', browser: 'sm:w-[56rem]', done: 'sm:w-[56rem]' }[phase];
+  const height = { closed: 'h-[22rem] p-6', input: 'h-[12.5rem] p-6 delay-[120ms]', browser: 'h-[36rem] p-4', done: 'h-[20rem] p-4' }[phase];
+
   return (
-    <div className={`mx-2.5 w-full shrink-0 transition-all duration-500 ease-spring ${open ? 'sm:w-[34rem]' : 'sm:w-80 delay-[120ms]'} ${intro ? 'rise' : ''}`} style={{ animationDelay: '0.25s' }}>
+    <div className={`mx-2.5 w-full max-w-full shrink-0 transition-all duration-500 ease-spring ${width} ${intro ? 'rise' : ''}`} style={{ animationDelay: '0.25s' }}>
       <div role={open ? undefined : 'button'} tabIndex={open ? -1 : 0}
         onClick={open ? undefined : onOpen} onKeyDown={e => { if (!open && e.key === 'Enter') onOpen(); }}
         onMouseMove={open ? undefined : tiltMove} onMouseEnter={() => !open && setHover(true)} onMouseLeave={e => { tiltReset(e.currentTarget); setHover(false); }}
-        className={`${open ? '' : 'tilt cursor-pointer active:scale-[0.985] hover:shadow-[0_2px_4px_rgba(0,0,0,.04),0_30px_50px_-20px_rgba(0,0,0,.25)]'} group relative flex w-full flex-col overflow-hidden rounded-[28px] bg-white p-6 text-left transition-[height,box-shadow] duration-500 ease-spring ${open ? 'h-[12.5rem] delay-[120ms]' : 'h-[22rem]'} ${CARD_SHADOW} ${open ? 'shadow-[0_2px_4px_rgba(0,0,0,.04),0_30px_60px_-24px_rgba(0,0,0,.28)]' : ''}`}>
+        className={`${open ? '' : 'tilt cursor-pointer active:scale-[0.985] hover:shadow-[0_2px_4px_rgba(0,0,0,.04),0_30px_50px_-20px_rgba(0,0,0,.25)]'} group relative flex w-full flex-col overflow-hidden rounded-[28px] bg-white text-left transition-[height,padding,box-shadow] duration-500 ease-spring ${height} ${CARD_SHADOW} ${open ? 'shadow-[0_2px_4px_rgba(0,0,0,.04),0_30px_60px_-24px_rgba(0,0,0,.28)]' : ''}`}>
         {!open && <span className="sheen pointer-events-none absolute inset-0 z-20" />}
         <button type="button" onClick={onClose} aria-label="Torna indietro" tabIndex={open ? 0 : -1}
-          className={`absolute right-4 top-4 z-30 flex h-9 w-9 items-center justify-center rounded-full text-muted transition-all duration-300 hover:bg-canvas hover:text-ink ${open ? 'scale-100 opacity-100 delay-[450ms]' : 'pointer-events-none scale-75 opacity-0'}`}><X size={18} /></button>
+          className={`absolute z-30 flex h-9 w-9 items-center justify-center rounded-full text-muted transition-all duration-300 hover:bg-canvas hover:text-ink ${flow ? 'right-5 top-[26px]' : 'right-4 top-4'} ${open ? 'scale-100 opacity-100 delay-[450ms]' : 'pointer-events-none scale-75 opacity-0'}`}><X size={18} /></button>
 
         {/* Titolo della card: svanisce e si chiude */}
         <div className={`overflow-hidden transition-all duration-500 ease-spring ${open ? 'max-h-0 -translate-y-2 opacity-0 blur-[4px]' : 'max-h-24 delay-100'}`}>
@@ -184,8 +198,8 @@ function ImproveTile({ open, onOpen, onClose, hover, setHover, intro, url, setUr
           <span className="par-1 mt-1 block text-2xl font-bold leading-tight tracking-tight">Miglioralo</span>
         </div>
 
-        {/* Mini scheda annuncio: resta e diventa la card sopra l'input */}
-        <div className="flex flex-1 items-center justify-center">
+        {/* Mini scheda annuncio: diventa la pill sopra l'input, poi sparisce quando si apre il browser */}
+        <div className={`flex items-center justify-center transition-all duration-500 ease-spring ${flow ? 'max-h-0 flex-none scale-95 overflow-hidden opacity-0' : 'max-h-60 flex-1'}`}>
           <div className={`relative transition-all duration-500 ease-spring ${open ? 'w-72 delay-[120ms]' : 'w-44'}`}>
             <div className="par-2">
               <div className={`flex transition-all duration-500 ease-spring ${open ? 'flex-row items-center gap-3 rounded-2xl bg-canvas p-2 pr-3 delay-[120ms]' : 'flex-col rounded-xl bg-white p-2 shadow-md group-hover:-rotate-2'}`}>
@@ -202,35 +216,76 @@ function ImproveTile({ open, onOpen, onClose, hover, setHover, intro, url, setUr
           </div>
         </div>
 
-        {/* Input: compare sotto la mini scheda */}
-        <form onSubmit={e => { e.preventDefault(); if (ok) go(`/migliora?url=${encodeURIComponent(url.trim())}`); }}
-          className={`flex items-center gap-2 overflow-hidden rounded-full bg-canvas pl-5 transition-all duration-500 ease-spring focus-within:bg-white focus-within:ring-1 focus-within:ring-ink/15 ${open ? 'mt-4 max-h-16 translate-y-0 p-1.5 opacity-100 delay-[250ms]' : 'pointer-events-none max-h-0 translate-y-4 p-0 opacity-0 duration-200'}`}>
-          <input ref={input} tabIndex={open ? 0 : -1} value={url} onChange={e => setUrl(e.target.value)} placeholder="https://www.immobiliare.it/annunci/..." className="min-w-0 flex-1 bg-transparent py-2 text-base outline-none placeholder:text-muted/60" />
-          <button disabled={!ok} tabIndex={open ? 0 : -1} className="btn-ink h-11 shrink-0 rounded-full px-6 text-sm font-semibold">Analizza</button>
+        {/* Campo link: nel browser diventa la barra indirizzi */}
+        <form onSubmit={e => { e.preventDefault(); if (ok && !busy) onSubmit(); }}
+          className={`flex shrink-0 items-center gap-2 overflow-hidden rounded-full bg-canvas pl-5 transition-all duration-500 ease-spring focus-within:bg-white focus-within:ring-1 focus-within:ring-ink/15 ${
+            !open ? 'pointer-events-none max-h-0 translate-y-4 p-0 opacity-0 duration-200' : flow ? 'mr-12 max-h-16 p-1.5 opacity-100' : 'mt-4 max-h-16 translate-y-0 p-1.5 opacity-100 delay-[250ms]'}`}>
+          <span className={`flex shrink-0 gap-1.5 overflow-hidden transition-all duration-500 ${flow ? 'max-w-16 opacity-100' : 'max-w-0 opacity-0'}`}>
+            {['bg-[#ff5f57]', 'bg-[#febc2e]', 'bg-[#28c840]'].map(c => <span key={c} className={`h-2.5 w-2.5 rounded-full ${c}`} />)}
+          </span>
+          <input ref={input} tabIndex={open ? 0 : -1} value={url} readOnly={busy || phase === 'done'} onChange={e => setUrl(e.target.value)} placeholder="https://www.immobiliare.it/annunci/..."
+            className={`min-w-0 flex-1 bg-transparent py-2 outline-none placeholder:text-muted/60 transition-all duration-500 ${flow ? 'text-sm text-muted' : 'text-base'}`} />
+          {busy ? (
+            <span className="blur-in flex h-11 shrink-0 items-center gap-2 rounded-full bg-white px-4 text-sm font-medium"><Loader2 size={15} className="animate-spin" /> {stage === 'opening' ? 'Apro' : 'Analizzo'}</span>
+          ) : phase === 'done' ? (
+            <button type="button" onClick={onNew} className="blur-in h-11 shrink-0 rounded-full bg-white px-5 text-sm font-semibold hover:bg-ink hover:text-white">Nuova analisi</button>
+          ) : (
+            <button disabled={!ok} tabIndex={open ? 0 : -1} className="btn-ink h-11 shrink-0 rounded-full px-6 text-sm font-semibold">{flow ? 'Riprova' : 'Analizza'}</button>
+          )}
         </form>
+
+        {/* Corpo del browser: annuncio in scansione, poi verdetto */}
+        <div className={`min-h-0 overflow-hidden transition-all duration-500 ease-spring ${flow ? 'mt-3 flex-1 opacity-100 delay-[120ms]' : 'max-h-0 flex-none opacity-0'}`}>
+          {flow && children}
+        </div>
       </div>
     </div>
   );
 }
 
-export function HomeView({ name }: { projects?: ProjectData[] | null; name?: string }) {
+const TITLES: Record<string, [string, string]> = {
+  link: ['Incolla il link dell\'annuncio', 'Da immobiliare.it, idealista o casa.it.'],
+  opening: ['Apro l\'annuncio', 'Lo leggo dal tuo browser, in background.'],
+  scanning: ['Sto analizzando l\'annuncio', ''],
+  done: ['Ecco il tuo annuncio, migliorato', 'Score, versione riscritta e cosa sistemare.'],
+  'no-extension': ['Manca solo un passo', 'Installa l\'estensione per leggere l\'annuncio.'],
+  error: ['Non riesco a leggerlo', 'Riprova o incolla il testo dell\'annuncio.'],
+  manual: ['Incolla il testo dell\'annuncio', 'Titolo, prezzo, caratteristiche e descrizione.'],
+};
+
+export function HomeView({ name, initialUrl = '', onSaved }: { name?: string; initialUrl?: string; onSaved?: () => void }) {
+  const imp = useImprove();
   const [open, setOpen] = useState(false);
-  const [title, setTitle] = useState<'home' | 'link'>('home');
-  const [titleOut, setTitleOut] = useState(false);
-  const [url, setUrl] = useState('');
+  const [url, setUrl] = useState(initialUrl);
   const [hover, setHover] = useState(false);
   const [intro, setIntro] = useState(true);
-  const ok = /^https?:\/\//i.test(url.trim());
+  const phase: Phase = !open ? 'closed' : imp.stage === 'input' ? 'input' : imp.stage === 'done' ? 'done' : 'browser';
 
-  // Il titolo esce, cambia testo a meta' transizione e rientra.
-  const swapTitle = (to: 'home' | 'link') => {
-    setTitleOut(true);
-    setTimeout(() => { setTitle(to); setTitleOut(false); }, 280);
-  };
-  const openLink = () => { setIntro(false); setOpen(true); swapTitle('link'); };
-  const close = useCallback(() => { setOpen(false); swapTitle('home'); }, []);
+  // Titolo: quando cambia fase esce, cambia testo a meta' transizione e rientra.
+  const key = phase === 'closed' ? 'home' : phase === 'input' ? 'link' : imp.stage;
+  const [shown, setShown] = useState(key);
+  const [titleOut, setTitleOut] = useState(false);
+  useEffect(() => {
+    if (key === shown) return;
+    const a = setTimeout(() => setTitleOut(true), 0);
+    const b = setTimeout(() => { setShown(key); setTitleOut(false); }, 280);
+    return () => { clearTimeout(a); clearTimeout(b); };
+  }, [key, shown]);
 
-  const words = title === 'link' ? ['Incolla', 'il', 'link', 'dell\'annuncio'] : TITLE_WORDS(name);
+  // Arrivo da #/migliora?url=... : parte subito.
+  useEffect(() => {
+    if (!initialUrl) return;
+    const t = setTimeout(() => { setIntro(false); setOpen(true); imp.start(initialUrl); }, 0);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialUrl]);
+
+  const openLink = () => { setIntro(false); setOpen(true); };
+  const close = () => { imp.reset(); setOpen(false); };
+  const restart = () => { imp.reset(); setUrl(''); document.querySelector('main')?.scrollTo({ top: 0, behavior: 'smooth' }); };
+
+  const [head, sub] = shown === 'home' ? [TITLE_WORDS(name).join(' '), 'Migliora, crea o importa i tuoi annunci.'] : TITLES[shown];
+  const subtitle = shown === 'scanning' ? `${SCAN_STEPS[imp.step]}...` : sub;
   // Apertura: parte il container (altre card via, box al centro), la card si trasforma subito dopo, sovrapposta.
   // Chiusura: al contrario, con gli stessi piccoli sfalsamenti.
   const others = (i: number) => `mx-2.5 ${open ? 'pointer-events-none overflow-hidden sm:mx-0! sm:w-0! sm:max-h-0 scale-75 opacity-0 blur-[8px]' : `sm:max-h-[24rem] ${i === 1 ? 'delay-[160ms]' : 'delay-[220ms]'}`}`;
@@ -238,12 +293,17 @@ export function HomeView({ name }: { projects?: ProjectData[] | null; name?: str
   return (
     <div className="flex min-h-[calc(100vh-5rem)] flex-col items-center justify-center py-10">
       <h1 className={`text-center font-display text-4xl font-bold leading-tight tracking-tight transition-all duration-300 md:text-5xl ${titleOut ? '-translate-y-3 opacity-0 blur-[6px]' : ''}`}>
-        {words.map((w, i) => <span key={`${title}-${i}`} className="blur-in inline-block" style={{ animationDelay: `${i * 0.05}s` }}>{w}&nbsp;</span>)}
-        <span key={title} className="blur-in block text-muted/70" style={{ animationDelay: '0.3s' }}>{title === 'link' ? 'Da immobiliare.it, idealista o casa.it.' : 'Migliora, crea o importa i tuoi annunci.'}</span>
+        {head.split(' ').map((w, i) => <span key={`${shown}-${i}`} className="blur-in inline-block" style={{ animationDelay: `${i * 0.05}s` }}>{w}&nbsp;</span>)}
+        <span key={subtitle} className="blur-in block text-muted/70" style={{ animationDelay: shown === 'scanning' ? '0s' : '0.3s' }}>{subtitle}</span>
       </h1>
 
       <div className="mt-14 flex w-full flex-col items-center justify-center gap-5 sm:flex-row sm:gap-0">
-        <ImproveTile open={open} onOpen={openLink} onClose={close} hover={hover} setHover={setHover} intro={intro} url={url} setUrl={setUrl} ok={ok} />
+        <ImproveTile phase={phase} stage={imp.stage} onOpen={openLink} onClose={close} onSubmit={() => imp.start(url)} onNew={restart}
+          hover={hover} setHover={setHover} intro={intro} url={url} setUrl={setUrl}>
+          {phase === 'done' && imp.listing && imp.analysis
+            ? <Verdict listing={imp.listing} analysis={imp.analysis} />
+            : <BrowserBody stage={imp.stage} listing={imp.listing} error={imp.error} url={url} onRetry={() => imp.start(url)} onManual={imp.manual} onText={t => imp.analyzeText(url, t)} />}
+        </ImproveTile>
 
         {/* Crea: foto a ventaglio con molla + "+" che ruota */}
         <Tile index={1} intro={intro} wrapClass={others(1)} kicker="Hai un immobile nuovo?" title="Crea da zero" href="#/nuovo">
@@ -274,6 +334,8 @@ export function HomeView({ name }: { projects?: ProjectData[] | null; name?: str
           </div>
         </Tile>
       </div>
+
+      {phase === 'done' && imp.listing && imp.analysis && <Results listing={imp.listing} analysis={imp.analysis} onSaved={onSaved} onRestart={restart} />}
     </div>
   );
 }
