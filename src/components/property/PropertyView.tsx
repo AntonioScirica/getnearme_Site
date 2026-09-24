@@ -2,6 +2,7 @@ import { Bath, BedDouble, Building, ExternalLink, LayoutTemplate, Mail, MapPin, 
 import { ENERGY_COLORS, GROUPS, detailsFrom, groupFacts } from '@/lib/propertyFields';
 import Gallery, { ShareButton } from './Gallery';
 import ZoneList from './ZoneList';
+import ProgressiveBlur from '../ProgressiveBlur';
 
 // Pagina della casa: stessa vista per il portfolio pubblico e per il dettaglio in piattaforma.
 // Nessun hook qui: si genera lato server (SEO), solo galleria e condivisione sono client.
@@ -188,7 +189,8 @@ export default function PropertyView({ p, contact }: { p: PropertyViewData; cont
 
       {/* Mobile: barra fissa prezzo + contatto */}
       {mailto && (
-        <div className="fixed inset-x-0 bottom-0 z-40 flex items-center justify-between gap-3 border-t border-line bg-white/95 px-5 py-3 backdrop-blur md:hidden">
+        <div className="fixed inset-x-0 bottom-0 z-40 flex items-center justify-between gap-3 px-5 py-3 md:hidden">
+          <ProgressiveBlur side="bottom" />
           <div className="min-w-0"><div className="truncate font-display text-lg font-bold">{price}</div>{place && <div className="truncate text-xs text-muted">{place}</div>}</div>
           <a href={mailto} className="shrink-0 rounded-xl px-5 py-3 text-sm font-semibold text-white" style={{ background: contact?.color || '#15181f' }}>Contatta</a>
         </div>

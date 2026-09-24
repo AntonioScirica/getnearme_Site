@@ -12,6 +12,7 @@ import ImportView from './ImportView';
 import { BrowserBody, Results, SCAN_STEPS, useImprove, Verdict, type Stage } from './ImproveView';
 import CostsView from './CostsView';
 import { isPlatformAdmin } from '@/lib/platformAdmins';
+import ProgressiveBlur from '@/components/ProgressiveBlur';
 import { go, formatPrice, authFetch, CARD_SHADOW } from './api';
 import ProfileForm, { type Profile } from './ProfileForm';
 
@@ -56,7 +57,8 @@ export default function PlatformApp({ userData }: { userData: UserData }) {
 
   return (
     <div className="relative flex h-full flex-col font-body text-ink" style={DOTS}>
-      <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-md">
+      <header className="sticky top-0 z-30">
+        <ProgressiveBlur />
         <div className="mx-auto flex h-20 max-w-6xl items-center px-6">
           <a href="#/" className="flex items-center gap-2">
             <img src="/immo/logo-mark.png" alt="" className="h-8 w-8" />
