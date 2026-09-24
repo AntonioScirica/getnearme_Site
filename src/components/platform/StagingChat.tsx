@@ -38,6 +38,10 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
   const [faded, setFaded] = useState<Set<string>>(new Set()); // messaggi dopo un "Ricomincia da qui"
   const [selecting, setSelecting] = useState(false);
   const [region, setRegion] = useState<Region | null>(null);
+  // Clic sugli oggetti: punti + maschera dell'oggetto riconosciuto (anteprima)
+  const [points, setPoints] = useState<{ x: number; y: number }[]>([]);
+  const [mask, setMask] = useState<string | null>(null);
+  const clearZone = () => { setRegion(null); setPoints([]); setMask(null); };
   const end = useRef<HTMLDivElement>(null);
   const busy = msgs.some(m => m.role === 'ai' && m.busy);
 
@@ -92,13 +96,14 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
     const id = uid();
     const before = base;
     const zone = region;
-    setMsgs(ms => [...ms, { id: uid(), role: 'user', text: t, region: zone ?? undefined }, { id, role: 'ai', before, out: null, busy: true, reveal: null, text: t }]);
-    setText(''); setPicked(null); setRegion(null); setSelecting(false);
+    const pts = points;
+    setMsgs(ms => [...ms, { id: uid(), role: 'user', text: t, region: zone ?? (pts.length ? { x: 0, y: 0, w: 0, h: 0 } : undefined) }, { id, role: 'ai', before, out: null, busy: true, reveal: null, text: t }]);
+    setText(''); setPicked(null); clearZone(); setSelecting(false);
     const req: EditRequest = {
       ...(before.startsWith('data:') ? { imageBase64: before } : { imageUrl: before }),
       ...(scene === 'planimetria'
         ? { planimetria: true, style: planStyle(t) }
-        : { scene, ...(zone ? { prompt: pk?.req.prompt && t === pk.label ? pk.req.prompt : t, region: zone } : pk && t === pk.label && !pk.req.prompt ? pk.req : { prompt: pk?.req.prompt && t === pk.label ? pk.req.prompt : t }) }),
+        : { scene, ...(zone || pts.length ? { prompt: pk?.req.prompt && t === pk.label ? pk.req.prompt : t, ...(pts.length ? { points: pts } : { region: zone! }) } : pk && t === pk.label && !pk.req.prompt ? pk.req : { prompt: pk?.req.prompt && t === pk.label ? pk.req.prompt : t }) }),
     };
     const res = await authFetch('/api/platform/photo-edit', { method: 'POST', body: JSON.stringify(req) }).catch(() => null);
     let d = res ? await res.json().catch(() => ({})) : {};
@@ -115,7 +120,17 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
   const restartFrom = (i: number, url: string) => {
     setFaded(f => new Set([...f, ...msgs.slice(i + 1).map(x => x.id)]));
     setMsgs(ms => [...ms, { id: uid(), role: 'divider', image: url }]);
-    setBase(url); setRegion(null); setSelecting(false);
+    setBase(url); clearZone(); setSelecting(false);
+  };
+  // Clic su un oggetto: il worker (SAM) ritorna la maschera, mostrata sulla foto. Piu' clic = piu' oggetti.
+  const pickAt = async (p: { x: number; y: number }) => {
+    if (!base) return;
+    touch();
+    const pts = [...points, p];
+    setRegion(null); setPoints(pts); setMask('loading');
+    const res = await authFetch('/api/platform/photo-mask', { method: 'POST', body: JSON.stringify({ ...(base.startsWith('data:') ? { imageBase64: base } : { imageUrl: base }), points: pts }) }).catch(() => null);
+    const d = res ? await res.json().catch(() => ({})) : {};
+    setMask(d.mask ?? null);
   };
   const empty = msgs.length === 0;
   const picker = <input type="file" accept="image/*" multiple className="hidden" onChange={e => { upload(e.target.files); e.target.value = ''; }} />;
@@ -198,12 +213,12 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
         <div className="pointer-events-none absolute inset-0"><ProgressiveBlur side="bottom" fade={24} /></div>
         <div className="relative mx-auto max-w-3xl">
           {/* Selezione di una zona: trascina sulla foto per disegnare il rettangolo */}
-          {selecting && base && <ZonePicker src={base} region={region} onChange={setRegion} onClose={() => setSelecting(false)} />}
-          {region && !selecting && (
+          {selecting && base && <ZonePicker src={base} region={region} points={points} mask={mask} onChange={r => { setRegion(r); setPoints([]); setMask(null); }} onPick={pickAt} onClose={() => setSelecting(false)} />}
+          {(region || points.length > 0) && !selecting && (
             <div className="blur-in mb-2 flex items-center gap-2 text-xs">
-              <span className="flex items-center gap-1.5 rounded-full bg-rose-50 px-3 py-1.5 font-medium text-rose-700 ring-1 ring-inset ring-rose-700/20"><SquareDashedMousePointer size={13} /> Zona selezionata: scrivi cosa fare lì</span>
+              <span className="flex items-center gap-1.5 rounded-full bg-rose-50 px-3 py-1.5 font-medium text-rose-700 ring-1 ring-inset ring-rose-700/20"><SquareDashedMousePointer size={13} /> {points.length ? 'Oggetto selezionato' : 'Zona selezionata'}: scrivi cosa fare lì</span>
               <button onClick={() => setSelecting(true)} className="font-medium text-muted hover:text-ink">Cambia</button>
-              <button onClick={() => setRegion(null)} aria-label="Togli zona" className="text-muted hover:text-ink"><X size={14} /></button>
+              <button onClick={clearZone} aria-label="Togli zona" className="text-muted hover:text-ink"><X size={14} /></button>
             </div>
           )}
           {/* Suggerimenti: una riga sola sopra il campo, scorre di lato; toccati partono subito */}
@@ -217,12 +232,12 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
             </label>
             {base && (
               <button onClick={() => setSelecting(v => !v)} title="Seleziona una zona della foto" aria-pressed={selecting}
-                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ease-smooth transition-colors ${selecting || region ? 'bg-rose-50 text-rose-600' : 'text-muted hover:bg-canvas hover:text-ink'}`}>
+                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ease-smooth transition-colors ${selecting || region || points.length ? 'bg-rose-50 text-rose-600' : 'text-muted hover:bg-canvas hover:text-ink'}`}>
                 <SquareDashedMousePointer size={19} />
               </button>
             )}
             <textarea rows={1} value={text} onChange={e => { setText(e.target.value); touch(); }} disabled={!base}
-              placeholder={!base ? 'Prima carica una foto, poi scrivi qui cosa cambiare' : region ? 'Cosa faccio nella zona? Es. togli il letto' : 'Cosa vuoi cambiare? Es. togli il divano e metti un tavolo da pranzo'}
+              placeholder={!base ? 'Prima carica una foto, poi scrivi qui cosa cambiare' : region || points.length ? 'Cosa faccio nella zona? Es. togli il letto' : 'Cosa vuoi cambiare? Es. togli il divano e metti un tavolo da pranzo'}
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
               className="block h-10 min-w-0 flex-1 resize-none bg-transparent px-1 py-2 text-[15px] leading-6 outline-none placeholder:text-muted/60 disabled:cursor-not-allowed" />
             <button onClick={() => send()} disabled={!text.trim() || !base || busy} aria-label="Invia"
@@ -236,10 +251,11 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
   );
 }
 
-// Disegno della zona sulla foto corrente: si trascina un rettangolo (bordo rosso tratteggiato).
-function ZonePicker({ src, region, onChange, onClose }: { src: string; region: Region | null; onChange: (r: Region | null) => void; onClose: () => void }) {
+// Zona sulla foto corrente: clic su un oggetto = lo seleziona (maschera rossa), trascinare = rettangolo.
+function ZonePicker({ src, region, points, mask, onChange, onPick, onClose }: { src: string; region: Region | null; points: { x: number; y: number }[]; mask: string | null; onChange: (r: Region | null) => void; onPick: (p: { x: number; y: number }) => void; onClose: () => void }) {
   const box = useRef<HTMLDivElement>(null);
   const start = useRef<{ x: number; y: number } | null>(null);
+  const dragged = useRef(false);
   const at = (e: React.PointerEvent) => {
     const r = box.current!.getBoundingClientRect();
     return { x: Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)), y: Math.min(1, Math.max(0, (e.clientY - r.top) / r.height)) };
@@ -247,18 +263,34 @@ function ZonePicker({ src, region, onChange, onClose }: { src: string; region: R
   const move = (e: React.PointerEvent) => {
     if (!start.current) return;
     const p = at(e), s = start.current;
+    if (!dragged.current && Math.hypot(p.x - s.x, p.y - s.y) < 0.02) return;
+    dragged.current = true;
     onChange({ x: Math.min(s.x, p.x), y: Math.min(s.y, p.y), w: Math.abs(p.x - s.x), h: Math.abs(p.y - s.y) });
   };
+  const up = () => {
+    if (start.current && !dragged.current) onPick(start.current);
+    start.current = null;
+  };
+  const loading = mask === 'loading';
+  const ready = (region && region.w > 0.02) || (points.length > 0 && !loading);
   return (
     <div className={`blur-in mb-2 rounded-[22px] bg-white p-2 ${CARD_SHADOW}`}>
-      <div className="mb-2 flex items-center justify-between px-1 text-xs">
-        <span className="font-medium">Trascina sulla foto per selezionare la zona da modificare</span>
-        <button onClick={onClose} className="rounded-full bg-ink px-3 py-1 font-semibold text-white">{region && region.w > 0.02 ? 'Fatto' : 'Chiudi'}</button>
+      <div className="mb-2 flex items-center justify-between gap-3 px-1 text-xs">
+        <span className="font-medium">{loading ? 'Riconosco l’oggetto…' : 'Clicca un oggetto per selezionarlo, o trascina per una zona'}</span>
+        <button onClick={onClose} className="shrink-0 rounded-full bg-ink px-3 py-1 font-semibold text-white">{ready ? 'Fatto' : 'Chiudi'}</button>
       </div>
       <div ref={box} className="relative mx-auto max-h-[45vh] w-fit cursor-crosshair touch-none select-none overflow-hidden rounded-2xl"
-        onPointerDown={e => { (e.target as HTMLElement).setPointerCapture(e.pointerId); start.current = at(e); onChange(null); }}
-        onPointerMove={move} onPointerUp={() => { start.current = null; }}>
+        onPointerDown={e => { (e.target as HTMLElement).setPointerCapture(e.pointerId); start.current = at(e); dragged.current = false; }}
+        onPointerMove={move} onPointerUp={up}>
         <img src={src} alt="" draggable={false} className="block max-h-[45vh] w-auto" />
+        {mask && !loading && (
+          <div className="blur-in pointer-events-none absolute inset-0 bg-rose-500/50"
+            style={{ maskImage: `url(${mask})`, WebkitMaskImage: `url(${mask})`, maskMode: 'luminance', maskSize: '100% 100%', WebkitMaskSize: '100% 100%' }} />
+        )}
+        {points.map((p, i) => (
+          <span key={i} className={`pointer-events-none absolute h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-rose-500 ring-2 ring-white ${loading ? 'animate-pulse' : ''}`}
+            style={{ left: `${p.x * 100}%`, top: `${p.y * 100}%` }} />
+        ))}
         {region && (
           <div className="pointer-events-none absolute border-2 border-dashed border-rose-500 bg-rose-500/10 shadow-[0_0_0_9999px_rgba(0,0,0,.35)]"
             style={{ left: `${region.x * 100}%`, top: `${region.y * 100}%`, width: `${region.w * 100}%`, height: `${region.h * 100}%` }} />

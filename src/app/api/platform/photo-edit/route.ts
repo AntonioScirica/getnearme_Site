@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
 
   // Foto: URL (annunci, R2) oppure caricata dal computer (imageBase64, data URL gia' ridimensionata).
   // Modifica: testo libero e/o i preset di home staging (stile, vista, scena, planimetria).
-  let body: { imageUrl?: string; imageBase64?: string; prompt?: string; style?: string; angle?: string; scene?: SceneType; planimetria?: boolean; seed?: number; region?: { x: number; y: number; w: number; h: number } }
+  let body: { imageUrl?: string; imageBase64?: string; prompt?: string; style?: string; angle?: string; scene?: SceneType; planimetria?: boolean; seed?: number; region?: { x: number; y: number; w: number; h: number }; points?: { x: number; y: number }[] }
   try { body = await req.json() } catch { return NextResponse.json({ error: 'bad_request' }, { status: 400 }) }
   const imageUrl = typeof body.imageUrl === 'string' ? body.imageUrl : ''
   const imageBase64 = typeof body.imageBase64 === 'string' && /^data:image\/(jpeg|png|webp);base64,/.test(body.imageBase64) && body.imageBase64.length < 8_000_000 ? body.imageBase64 : ''
@@ -58,7 +58,16 @@ export async function POST(req: NextRequest) {
   // Zona selezionata dall'agente (0..1): il worker modifica solo li'. Prompt dedicato: si lavora su un ritaglio.
   const r = body.region
   const region = r && [r.x, r.y, r.w, r.h].every(v => typeof v === 'number' && v >= 0 && v <= 1) && r.w > 0.02 && r.h > 0.02 ? { x: r.x, y: r.y, w: r.w, h: r.h } : null
-  if (region && usesText) {
+  // Clic sugli oggetti (maschera SAM nel worker)
+  const points = Array.isArray(body.points) ? body.points.filter(p => p && [p.x, p.y].every(v => typeof v === 'number' && v >= 0 && v <= 1)).slice(0, 10) : []
+  // Senza zona ne' clic: se la richiesta parla di pareti, pavimento o soffitto si modifica solo quell'elemento
+  // (riconosciuto nel worker), cosi' "pareti bianche" non tocca i mobili bianchi.
+  const labels = !region && !points.length && usesText ? [
+    ...(/\b(pareti|parete|muri|muro|muratura)\b/i.test(custom) ? ['wall'] : []),
+    ...(/\b(pavimento|pavimenti|parquet)\b/i.test(custom) ? ['floor'] : []),
+    ...(/\b(soffitto|soffitti)\b/i.test(custom) ? ['ceiling'] : []),
+  ] : []
+  if ((region || points.length) && usesText) {
     translation.prompt_template = 'In this close-up crop of a room photo: {REQUEST}. Fill any freed area naturally, continuing the same floor, walls and light around it. Keep the rest of the crop unchanged. Photorealistic.'
   }
   // Seme casuale: la stessa richiesta ripetuta da' ogni volta un risultato diverso (iterare, rigenerare).
@@ -71,7 +80,7 @@ export async function POST(req: NextRequest) {
   const t0 = Date.now()
   let job: RunpodJob
   try {
-    job = await runJob({ ...(imageBase64 ? { image_base64: imageBase64 } : { image_url: imageUrl }), prompt, ...translation, ...(region ? { region } : {}), seed, steps: 12 }) // 12 passaggi: ~8 s invece di 17 a 25, qualita' simile nel confronto del 24/09
+    job = await runJob({ ...(imageBase64 ? { image_base64: imageBase64 } : { image_url: imageUrl }), prompt, ...translation, ...(region ? { region } : {}), ...(points.length ? { points } : {}), ...(labels.length ? { labels } : {}), seed, steps: 12 }) // 12 passaggi: ~8 s invece di 17 a 25, qualita' simile nel confronto del 24/09
   } catch (e) {
     console.error('photo-edit runpod error:', e)
     await logUsage({ userId, kind: 'photo_edit' }, true, Date.now() - t0, {}, false, 'qwen-image-2.1')
