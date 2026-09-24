@@ -110,7 +110,7 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
   // i suggerimenti partono subito, senza passare dal campo
   const chips = (scene === 'planimetria' ? [] : QUICK_PRESETS).map(x => (
     <button key={x.id} disabled={busy} onClick={() => send(x.label, x)}
-      className="rounded-full bg-white px-3 py-1.5 text-xs font-medium text-ink/80 ring-1 ring-inset ring-black/10 ease-smooth transition-colors hover:bg-brand hover:text-white disabled:opacity-40">{x.label}</button>
+      className="shrink-0 whitespace-nowrap rounded-full bg-white px-3.5 py-1.5 text-[13px] font-medium text-ink/80 shadow-sm ring-1 ring-inset ring-black/10 ease-smooth transition-colors hover:bg-brand hover:text-white disabled:opacity-40">{x.label}</button>
   ));
 
   return (
@@ -145,8 +145,7 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
               </div>
               {m.image && i === msgs.length - 1 && !busy && (
                 <div className="blur-in mt-6 max-w-[85%] rounded-3xl rounded-bl-lg bg-canvas px-4 py-3 text-sm" style={{ animationDelay: '.3s' }}>
-                  <p>{m.seen ? <>Sembra <b>{m.seen}</b>. </> : 'Foto caricata. '}Cosa vuoi cambiare? Scrivilo qui sotto o tocca un suggerimento:</p>
-                  <div className="mt-2.5 flex flex-wrap gap-1.5">{chips}</div>
+                  <p>{m.seen ? <>Sembra <b>{m.seen}</b>. </> : 'Foto caricata. '}Cosa vuoi cambiare? Scrivilo qui sotto o tocca un suggerimento.</p>
                 </div>
               )}
             </div>
@@ -177,7 +176,10 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
       <div className="absolute inset-x-0 bottom-0 z-20 px-6 pb-5 pt-10">
         <div className="pointer-events-none absolute inset-0"><ProgressiveBlur side="bottom" fade={24} /></div>
         <div className="relative mx-auto max-w-3xl">
-          {!empty && msgs[msgs.length - 1]?.role === 'ai' && !busy && <div className="mb-2 flex flex-wrap gap-1.5">{chips}</div>}
+          {/* Suggerimenti: una riga sola sopra il campo, scorre di lato; toccati partono subito */}
+          {base && !busy && (
+            <div className="blur-in -mx-1 mb-2 flex gap-1.5 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" style={{ maskImage: 'linear-gradient(90deg, #000 90%, transparent)' }}>{chips}</div>
+          )}
           <div className={`flex items-center gap-1.5 rounded-[26px] bg-white p-2 pl-2.5 ${CARD_SHADOW} ${drag ? 'ring-2 ring-brand' : ''}`}>
             {/* Foto: icona come nelle chat, a sinistra del testo */}
             <label title={base ? 'Carica un\'altra foto' : 'Carica una foto'} className="flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink">

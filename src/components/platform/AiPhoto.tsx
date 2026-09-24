@@ -119,12 +119,11 @@ export function AiPhotoStage({ src, busy, out, reveal, msg, fileName, onDownload
 // ---------------------------------------------------------------------------
 export type Suggestion = { id: string; label: string; req: Partial<EditRequest> };
 export const QUICK_PRESETS: Suggestion[] = [
-  { id: 'modern', label: 'Arreda in stile moderno', req: { style: 'modern' } },
-  { id: 'nordic', label: 'Arreda in stile nordico', req: { style: 'nordic' } },
+  { id: 'modern', label: 'Arreda moderno', req: { style: 'modern' } },
+  { id: 'nordic', label: 'Arreda nordico', req: { style: 'nordic' } },
   { id: 'empty', label: 'Svuota la stanza', req: { style: 'empty' } },
   { id: 'day', label: 'Più luce naturale', req: { angle: 'day' } },
-  { id: 'walls', label: 'Pareti bianche', req: { prompt: 'Pareti bianche' } },
-  { id: 'tidy', label: 'Togli gli oggetti in giro', req: { prompt: 'Togli gli oggetti in giro e il disordine, lascia i mobili' } },
+  { id: 'tidy', label: 'Togli il disordine', req: { prompt: 'Togli gli oggetti in giro e il disordine, lascia i mobili' } },
 ];
 type Version = { url: string; text: string };
 
