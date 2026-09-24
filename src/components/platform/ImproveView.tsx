@@ -377,12 +377,9 @@ function ProblemCard({ p, i, photos }: { p: Problem; i: number; photos: string[]
   const edit = src ? p.modifica_foto ?? '' : '';
   return (
     <li className={`rise flex flex-col ${BOX}`} style={{ animationDelay: `${1.35 + i * 0.08}s` }}>
-      <div className="flex h-12 items-center gap-3">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-ink text-sm font-semibold text-white">{i + 1}</span>
-        <div className="flex flex-col items-start gap-1">
-          <span className="text-xs font-medium capitalize text-muted">{p.area}</span>
-          <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${g.cls}`}>{g.label}</span>
-        </div>
+      <div className="flex h-8 items-center gap-2.5">
+        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-ink text-sm font-semibold text-white">{i + 1}</span>
+        <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${g.cls}`}>{g.label}</span>
         {edit && (
           <button onClick={() => setFix(true)} className="ml-auto flex h-8 shrink-0 items-center gap-1.5 rounded-full bg-brand px-3.5 text-xs font-semibold text-white ease-smooth transition-colors hover:bg-brand/90 active:scale-[0.97]">
             <Wand2 size={14} /> Sistema con AI
