@@ -2,7 +2,8 @@
 // modificabile dall'agente. La configurazione sta in user_metadata.vetrina_site (niente tabelle
 // nuove) e viene sempre ripulita con cleanSite prima di usarla: l'utente puo' scriverla anche da solo.
 
-export type TemplateId = 'maison' | 'chiaro' | 'agente' | 'notte' | 'rivista'
+export type TemplateId = 'prato' | 'bosco' | 'cielo' | 'citta' | 'nord'
+export type Review = { text: string; name: string; zone: string }
 
 export type SiteConfig = {
   template: TemplateId
@@ -14,6 +15,12 @@ export type SiteConfig = {
   aboutTitle: string
   aboutText: string
   aboutImage: string
+  agentRole: string
+  areas: string
+  years: string
+  sold: string
+  clients: string
+  reviews: Review[]
   ctaLabel: string
   phone: string
   whatsapp: string
@@ -35,25 +42,35 @@ export type SiteProperty = {
   bagni?: number | null
   tipologia?: string | null
   cover: string
+  photos?: string[]
+  descrizione?: string
+  locali?: number | null
+  contratto?: string
+  zona?: string[]
 }
 
 export const TEMPLATES: { id: TemplateId; name: string; desc: string; primary: string; font: SiteConfig['font'] }[] = [
-  { id: 'maison', name: 'Maison', desc: 'Editoriale, foto a tutto schermo e nome in grande', primary: '#8a6a4f', font: 'serif' },
-  { id: 'chiaro', name: 'Chiaro', desc: 'Pulito e luminoso, titolo al centro e numeri', primary: '#2563eb', font: 'sans' },
-  { id: 'agente', name: 'Agente', desc: 'Il tuo volto e la tua storia prima delle case', primary: '#5b7a5e', font: 'serif' },
-  { id: 'notte', name: 'Notte', desc: 'Scuro ed elegante, per immobili di pregio', primary: '#c9a96e', font: 'serif' },
-  { id: 'rivista', name: 'Rivista', desc: 'Impaginato come un magazine, colore deciso', primary: '#e4572e', font: 'sans' },
+  { id: 'prato', name: 'Prato', desc: 'Classico da agenzia: ricerca a sinistra, foto a destra', primary: '#1d5b3c', font: 'sans' },
+  { id: 'bosco', name: 'Bosco', desc: 'Foto a tutto schermo, ricerca che la accavalla', primary: '#4d7a2c', font: 'serif' },
+  { id: 'cielo', name: 'Cielo', desc: 'Foto in una card arrotondata, toni morbidi', primary: '#2a2b7c', font: 'sans' },
+  { id: 'citta', name: 'Città', desc: 'Bianco e nero, titolo al centro della foto', primary: '#111111', font: 'sans' },
+  { id: 'nord', name: 'Nord', desc: 'Moderno, modulo di ricerca dentro la foto', primary: '#ff6a2b', font: 'serif' },
 ]
 
 export function defaultSite(name: string, email = ''): SiteConfig {
   return {
-    template: 'chiaro', primary: '#2563eb', font: 'sans',
-    heroTitle: name ? `${name}, la tua prossima casa` : 'La tua prossima casa',
-    heroSubtitle: 'Immobili selezionati, seguiti dall’inizio alla fine. Scegli, visita, entra.',
+    template: 'prato', primary: '#1d5b3c', font: 'sans',
+    heroTitle: 'Trova la casa giusta per te',
+    heroSubtitle: 'Immobili selezionati e un agente che ti segue dalla prima visita al rogito.',
     heroImage: '', aboutTitle: 'Chi sono',
     aboutText: 'Seguo ogni immobile come se fosse mio: valutazione, foto, visite e trattativa. Ti accompagno fino al rogito, senza sorprese.',
-    aboutImage: '', ctaLabel: 'Contattami', phone: '', whatsapp: '', email, city: '',
+    aboutImage: '', agentRole: 'Agente immobiliare', areas: '', years: '10', sold: '', clients: '', ctaLabel: 'Contattami', phone: '', whatsapp: '', email, city: '',
     showPrices: true, showStats: true, showAbout: true, showContact: true,
+    reviews: [
+      { text: 'Ci ha seguiti in tutto, dalla prima visita al notaio. Sempre disponibile e chiaro su ogni passaggio.', name: 'Giulia e Marco', zone: '' },
+      { text: 'Venduto in poche settimane al prezzo giusto. Foto e annuncio fatti benissimo.', name: 'Roberto', zone: '' },
+      { text: 'Professionale e onesto: ci ha sconsigliato una casa che non faceva per noi. Raro.', name: 'Elena', zone: '' },
+    ],
   }
 }
 
@@ -77,6 +94,14 @@ export function cleanSite(raw: unknown, name: string, email = ''): SiteConfig {
     aboutTitle: str(r.aboutTitle, 60, d.aboutTitle),
     aboutText: str(r.aboutText, 900, d.aboutText),
     aboutImage: img(r.aboutImage),
+    agentRole: str(r.agentRole, 60, d.agentRole),
+    areas: str(r.areas, 160, ''),
+    years: str(r.years, 4, d.years).replace(/\D/g, ''),
+    sold: str(r.sold, 6, '').replace(/\D/g, ''),
+    clients: str(r.clients, 6, '').replace(/\D/g, ''),
+    reviews: Array.isArray(r.reviews)
+      ? r.reviews.slice(0, 3).map(x => { const o = (x ?? {}) as Record<string, unknown>; return { text: str(o.text, 300, ''), name: str(o.name, 60, ''), zone: str(o.zone, 60, '') } }).filter(x => x.text)
+      : d.reviews,
     ctaLabel: str(r.ctaLabel, 30, d.ctaLabel) || d.ctaLabel,
     phone: phone(r.phone),
     whatsapp: phone(r.whatsapp),

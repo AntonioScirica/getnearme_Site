@@ -1,0 +1,139 @@
+'use client';
+
+import { createContext, useContext, type CSSProperties, type ReactNode } from 'react';
+import { Bath, BedDouble, DoorOpen, Maximize2 } from 'lucide-react';
+import type { SiteConfig, SiteProperty, TemplateId } from '@/lib/siteTemplates';
+
+// Base dei siti vetrina: tema per template, contesto del sito, link (veri sul sito, interni
+// nell'anteprima dell'editor) e i mattoni piu' piccoli (titoli, pulsanti, foto, dati).
+
+export type Filters = { q?: string; tipo?: string; max?: number; contratto?: string };
+export type Page = { page: 'home' } | { page: 'immobili'; f?: Filters } | { page: 'immobile'; id: string } | { page: 'agente' };
+
+// Ogni template sceglie una variante per ogni parte: stessi dati, siti molto diversi.
+export type Theme = {
+  bg: string; fg: string; muted: string; line: string; surface: string; soft: string; ink: string; radius: number;
+  header: 'plain' | 'centered' | 'pill' | 'over' | 'minimal';
+  hero: 'split' | 'full' | 'card' | 'center' | 'form';
+  intro: 'features' | 'welcome' | 'pastel' | 'none' | 'trust';
+  card: 'classic' | 'button' | 'badge' | 'minimal' | 'price';
+  about: 'stats' | 'card' | 'checklist' | 'dark' | 'numbers';
+  reviews: 'cards' | 'quote';
+  cta: 'band' | 'photo' | 'gradient' | 'ink';
+  footer: 'dark' | 'soft' | 'ink' | 'light';
+  listings: 'sidebar' | 'topbar';
+  results: 'grid' | 'rows';
+  gallery: 'mosaic' | 'slider' | 'full';
+  agent: 'split' | 'cover' | 'centered';
+};
+
+export const THEMES: Record<TemplateId, Theme> = {
+  prato: { bg: '#ffffff', fg: '#10231a', muted: '#62706a', line: '#e6ece8', surface: '#ffffff', soft: '#f1f6f3', ink: '#0f2a1d', radius: 14,
+    header: 'plain', hero: 'split', intro: 'features', card: 'classic', about: 'stats', reviews: 'cards', cta: 'band', footer: 'dark', listings: 'sidebar', results: 'grid', gallery: 'mosaic', agent: 'split' },
+  bosco: { bg: '#f6f4ee', fg: '#1d2417', muted: '#6a705f', line: '#e3e0d4', surface: '#ffffff', soft: '#eceade', ink: '#23301b', radius: 26,
+    header: 'centered', hero: 'full', intro: 'welcome', card: 'button', about: 'card', reviews: 'quote', cta: 'photo', footer: 'soft', listings: 'sidebar', results: 'grid', gallery: 'slider', agent: 'cover' },
+  cielo: { bg: '#fbfaff', fg: '#16163a', muted: '#6b6d8c', line: '#ebeaf5', surface: '#ffffff', soft: '#f3f2fc', ink: '#16163a', radius: 20,
+    header: 'pill', hero: 'card', intro: 'pastel', card: 'badge', about: 'checklist', reviews: 'cards', cta: 'gradient', footer: 'ink', listings: 'topbar', results: 'grid', gallery: 'mosaic', agent: 'cover' },
+  citta: { bg: '#f5f5f2', fg: '#111111', muted: '#6b6b6b', line: '#e2e2de', surface: '#ffffff', soft: '#ebebe7', ink: '#111111', radius: 10,
+    header: 'over', hero: 'center', intro: 'none', card: 'minimal', about: 'dark', reviews: 'quote', cta: 'ink', footer: 'ink', listings: 'topbar', results: 'rows', gallery: 'full', agent: 'split' },
+  nord: { bg: '#ffffff', fg: '#111111', muted: '#6b6b6b', line: '#ececec', surface: '#ffffff', soft: '#f6f6f3', ink: '#111111', radius: 18,
+    header: 'minimal', hero: 'form', intro: 'trust', card: 'price', about: 'numbers', reviews: 'cards', cta: 'band', footer: 'light', listings: 'topbar', results: 'grid', gallery: 'slider', agent: 'centered' },
+};
+
+export type SiteCtx = {
+  cfg: SiteConfig; name: string; logo?: string | null; properties: SiteProperty[]; base: string;
+  preview?: boolean; go?: (p: Page) => void;
+};
+const Ctx = createContext<SiteCtx | null>(null);
+export const useSite = () => {
+  const c = useContext(Ctx)!;
+  return { ...c, t: THEMES[c.cfg.template] };
+};
+
+export function SiteRoot({ ctx, children }: { ctx: SiteCtx; children: ReactNode }) {
+  const t = THEMES[ctx.cfg.template];
+  const style = {
+    '--c': ctx.cfg.primary, '--bg': t.bg, '--fg': t.fg, '--muted': t.muted, '--line': t.line, '--surface': t.surface, '--soft': t.soft, '--ink': t.ink, '--r': `${t.radius}px`,
+    background: t.bg, color: t.fg,
+  } as CSSProperties;
+  return <Ctx.Provider value={ctx}><div style={style} className="min-h-screen font-body antialiased selection:bg-[var(--c)] selection:text-white">{children}</div></Ctx.Provider>;
+}
+
+export const pathOf = (base: string, p: Page) =>
+  p.page === 'home' ? base || '/' : p.page === 'immobili' ? `${base}/immobili${p.f ? `?${new URLSearchParams(Object.entries(p.f).filter(([, v]) => v).map(([k, v]) => [k, String(v)]))}` : ''}` : p.page === 'agente' ? `${base}/agente` : `${base}/${p.id}`;
+
+// Link del sito: sul sito vero e' un <a href>, nell'anteprima cambia pagina dentro l'editor
+export function SiteLink({ to, className = '', children, ...rest }: { to: Page; className?: string; children: ReactNode; 'aria-label'?: string; onMouseEnter?: () => void }) {
+  const { base, preview, go } = useSite();
+  if (preview) return <a role="link" tabIndex={0} className={`cursor-pointer ${className}`} onClick={() => go?.(to)} {...rest}>{children}</a>;
+  return <a href={pathOf(base, to)} className={className} {...rest}>{children}</a>;
+}
+
+export function H({ as: Tag = 'h2', className = '', children }: { as?: 'h1' | 'h2' | 'h3'; className?: string; children: ReactNode }) {
+  const { cfg } = useSite();
+  const f = cfg.font === 'serif' ? 'font-[family-name:var(--font-serif-accent)] font-normal tracking-[-0.015em]' : 'font-display font-bold tracking-[-0.03em]';
+  return <Tag className={`${f} leading-[1.05] text-balance ${className}`}>{children}</Tag>;
+}
+
+export const Eyebrow = ({ children, className = '' }: { children: ReactNode; className?: string }) =>
+  <div className={`text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--c)] ${className}`}>{children}</div>;
+
+export function Btn({ children, href, onClick, variant = 'solid', size = 'md', className = '', external }: {
+  children: ReactNode; href?: string; onClick?: () => void; variant?: 'solid' | 'ghost' | 'light' | 'ink'; size?: 'sm' | 'md' | 'lg'; className?: string; external?: boolean;
+}) {
+  const { preview } = useSite();
+  const v = { solid: 'bg-[var(--c)] text-[var(--on-c,#fff)] hover:brightness-110', ink: 'bg-[var(--fg)] text-[var(--bg)] hover:opacity-85', light: 'bg-white text-neutral-900 hover:bg-white/90', ghost: 'ring-1 ring-inset ring-[var(--line)] hover:ring-[var(--fg)]' }[variant];
+  const s = { sm: 'h-9 px-4 text-[13px]', md: 'h-11 px-5 text-sm', lg: 'h-13 px-7 text-[15px]' }[size];
+  const cls = `inline-flex shrink-0 items-center justify-center gap-2 rounded-[min(var(--r),999px)] font-semibold transition-all duration-500 ease-[cubic-bezier(.22,1,.36,1)] active:scale-[.98] ${v} ${s} ${className}`;
+  if (href && !preview) return <a href={href} className={cls} {...(external ? { target: '_blank', rel: 'noreferrer' } : {})}>{children}</a>;
+  return <button type="button" onClick={onClick} className={cls}>{children}</button>;
+}
+
+export const Photo = ({ src, alt = '', className = '', zoom }: { src?: string; alt?: string; className?: string; zoom?: boolean }) => (
+  <div className={`overflow-hidden bg-[var(--soft)] ${className}`}>
+    {src && <img src={src} alt={alt} loading="lazy" className={`h-full w-full object-cover ${zoom ? 'transition-transform duration-[900ms] ease-[cubic-bezier(.22,1,.36,1)] group-hover:scale-[1.04]' : ''}`} />}
+  </div>
+);
+
+export const price = (n: number) => (n ? `€ ${Number(n).toLocaleString('it-IT')}` : 'Trattativa riservata');
+export const zoneOf = (addr: string) => addr?.split(',').map(s => s.trim()).filter(Boolean).slice(-2).join(', ') || '';
+export const typeOf = (p: SiteProperty) => p.tipologia?.split('|')[0].trim() || 'Immobile';
+
+export function Facts({ p, className = '', full }: { p: SiteProperty; className?: string; full?: boolean }) {
+  const items = [
+    p.mq ? { i: Maximize2, v: `${p.mq} m²`, l: 'Superficie' } : null,
+    full && p.locali ? { i: DoorOpen, v: String(p.locali), l: 'Locali' } : null,
+    p.camere ? { i: BedDouble, v: String(p.camere), l: p.camere === 1 ? 'Camera' : 'Camere' } : null,
+    p.bagni ? { i: Bath, v: String(p.bagni), l: p.bagni === 1 ? 'Bagno' : 'Bagni' } : null,
+  ].filter(Boolean) as { i: typeof Bath; v: string; l: string }[];
+  if (full) return (
+    <div className={`grid grid-cols-2 gap-px overflow-hidden rounded-[var(--r)] bg-[var(--line)] sm:grid-cols-4 ${className}`}>
+      {items.map(x => (
+        <div key={x.l} className="bg-[var(--surface)] p-5">
+          <x.i size={18} className="text-[var(--c)]" />
+          <div className="mt-3 text-xl font-semibold">{x.v}</div>
+          <div className="text-xs text-[var(--muted)]">{x.l}</div>
+        </div>
+      ))}
+    </div>
+  );
+  return (
+    <div className={`flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] ${className}`}>
+      {items.map(x => <span key={x.l} className="flex items-center gap-1.5"><x.i size={14} className="opacity-60" />{x.l === 'Superficie' ? x.v : `${x.v} ${x.l.toLowerCase()}`}</span>)}
+    </div>
+  );
+}
+
+export const Container = ({ children, className = '' }: { children: ReactNode; className?: string }) =>
+  <div className={`mx-auto w-full max-w-[1240px] px-6 md:px-10 ${className}`}>{children}</div>;
+
+// Foto e contatti dell'agente
+export function contacts(cfg: SiteConfig, subject?: string) {
+  const wa = cfg.whatsapp.replace(/\D/g, '');
+  const msg = subject ? `Ciao, vorrei informazioni su: ${subject}` : 'Ciao, vorrei informazioni';
+  return {
+    tel: cfg.phone ? `tel:${cfg.phone.replace(/\s/g, '')}` : '',
+    wa: wa ? `https://wa.me/${wa}?text=${encodeURIComponent(msg)}` : '',
+    mail: cfg.email ? `mailto:${cfg.email}?subject=${encodeURIComponent(subject ?? 'Informazioni')}` : '',
+  };
+}

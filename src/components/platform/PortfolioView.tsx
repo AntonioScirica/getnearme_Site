@@ -1,19 +1,22 @@
 'use client';
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Check, Copy, ExternalLink, Loader2, Monitor } from 'lucide-react';
+import { Check, Copy, ExternalLink, ImagePlus, Loader2, Plus, Trash2 } from 'lucide-react';
 import type { ProjectData } from '@/lib/projects';
 import { FAKE_PROPERTIES } from '@/lib/fakeProperties';
 import { TEMPLATES, type SiteConfig, type SiteProperty } from '@/lib/siteTemplates';
-import SiteRenderer from '@/components/site/SiteRenderer';
+import { SitePage } from '@/components/site/pages';
+import type { Page } from '@/components/site/ui';
+import { fileToResizedDataUrl } from '@/lib/staging';
+import { uploadDataUrl } from '@/lib/imageUpload';
 import { authFetch, CARD_SHADOW, formatPrice, portfolioUrl, setPublic } from './api';
 import ProfileForm, { type Profile } from './ProfileForm';
 
 // Vetrina: l'agente sceglie uno dei 5 template e modifica colori, testi, foto, contatti e sezioni,
-// con l'anteprima dal vivo accanto (stesso SiteRenderer della pagina pubblica, con i suoi immobili).
+// con l'anteprima dal vivo accanto (stesse pagine del sito pubblico, con i suoi immobili).
 
 type Site = { slug: string | null; name: string; email: string; logo: string | null; config: SiteConfig };
-const COLORS = ['#2563eb', '#0f766e', '#5b7a5e', '#8a6a4f', '#c9a96e', '#e4572e', '#be185d', '#111111'];
+const COLORS = ['#1d5b3c', '#4d7a2c', '#2a2b7c', '#1f6feb', '#111111', '#ff6a2b', '#be185d', '#8a6a4f'];
 
 export default function PortfolioView({ projects, onChange }: { projects: ProjectData[] | null; onChange: () => void }) {
   const [tab, setTab] = useState<'sito' | 'immobili'>('sito');
@@ -21,6 +24,7 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
   const [cfg, setCfg] = useState<SiteConfig | null>(null);
   const [saved, setSaved] = useState<'idle' | 'saving' | 'ok'>('idle');
   const [copied, setCopied] = useState(false);
+  const [page, setPage] = useState<Page>({ page: 'home' });
 
   useEffect(() => {
     authFetch('/api/platform/site').then(r => r.json()).then((d: Site) => { setSite(d); setCfg(d.config); });
@@ -38,7 +42,11 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
 
   const pub = (projects ?? []).filter(p => p.is_public);
   const props: SiteProperty[] = (pub.length ? pub : process.env.NODE_ENV === 'development' ? FAKE_PROPERTIES : [])
-    .map(p => ({ id: p.id, titolo: p.titolo || p.nome, addr: p.addr, prezzo: p.prezzo, mq: p.mq, camere: p.camere, bagni: p.bagni, tipologia: p.tipologia, cover: p.cover }));
+    .map(p => {
+      const d = (p.import_data ?? {}) as { photos?: string[]; zona?: string[]; contratto?: string };
+      return { id: p.id, titolo: p.titolo || p.nome, addr: p.addr, prezzo: p.prezzo, mq: p.mq, camere: p.camere, bagni: p.bagni, locali: p.locali, tipologia: p.tipologia, cover: p.cover,
+        descrizione: p.descrizione, photos: Array.isArray(d.photos) && d.photos.length ? d.photos : [p.cover], zona: Array.isArray(d.zona) ? d.zona : [], contratto: d.contratto ?? '' };
+    });
   const covers = [...new Set(props.map(p => p.cover).filter(Boolean))].slice(0, 12);
 
   return (
@@ -79,7 +87,7 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
                 {TEMPLATES.map(t => (
                   <button key={t.id} onClick={() => set({ template: t.id, primary: t.primary, font: t.font })}
                     className={`flex items-center gap-3 rounded-2xl p-2.5 text-left ring-1 ease-smooth transition-all ${cfg.template === t.id ? 'bg-canvas ring-ink' : 'ring-black/10 hover:bg-canvas'}`}>
-                    <span className="h-10 w-10 shrink-0 rounded-xl" style={{ background: `linear-gradient(135deg, ${t.primary}, ${t.id === 'notte' ? '#0d0d0f' : '#f4f1ec'})` }} />
+                    <span className="h-10 w-10 shrink-0 rounded-xl" style={{ background: `linear-gradient(135deg, ${t.primary}, #f4f1ec)` }} />
                     <span className="min-w-0"><span className="block text-sm font-semibold">{t.name}</span><span className="block truncate text-xs text-muted">{t.desc}</span></span>
                   </button>
                 ))}
@@ -103,10 +111,31 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
               <Pics label="Foto di copertina" covers={covers} value={cfg.heroImage} onChange={v => set({ heroImage: v })} />
             </Group>
 
-            <Group title="Chi sono">
-              <Field label="Titolo sezione" value={cfg.aboutTitle} onChange={v => set({ aboutTitle: v })} max={60} />
-              <Field label="Testo" value={cfg.aboutText} onChange={v => set({ aboutText: v })} max={900} area />
-              <Pics label="Foto" covers={covers} value={cfg.aboutImage} onChange={v => set({ aboutImage: v })} />
+            <Group title="Il tuo profilo">
+              <Pics label="La tua foto" covers={[]} value={cfg.aboutImage} onChange={v => set({ aboutImage: v })} />
+              <Field label="Ruolo" value={cfg.agentRole} onChange={v => set({ agentRole: v })} max={60} />
+              <Field label="Nome della pagina" value={cfg.aboutTitle} onChange={v => set({ aboutTitle: v })} max={60} />
+              <Field label="Chi sei, in poche righe" value={cfg.aboutText} onChange={v => set({ aboutText: v })} max={900} area />
+              <Field label="Zone in cui lavori (separate da virgola)" value={cfg.areas} onChange={v => set({ areas: v })} max={160} />
+              <div className="grid grid-cols-3 gap-2">
+                <Field label="Anni" value={cfg.years} onChange={v => set({ years: v.replace(/\D/g, '') })} max={4} />
+                <Field label="Venduti" value={cfg.sold} onChange={v => set({ sold: v.replace(/\D/g, '') })} max={6} />
+                <Field label="Clienti" value={cfg.clients} onChange={v => set({ clients: v.replace(/\D/g, '') })} max={6} />
+              </div>
+            </Group>
+
+            <Group title="Recensioni">
+              {cfg.reviews.map((r, i) => (
+                <div key={i} className="space-y-2 rounded-2xl bg-canvas p-3">
+                  <textarea rows={2} value={r.text} maxLength={300} placeholder="Cosa ha detto il cliente" onChange={e => set({ reviews: cfg.reviews.map((x, k) => k === i ? { ...x, text: e.target.value } : x) })}
+                    className="w-full resize-none rounded-xl bg-white px-3 py-2 text-sm outline-none" />
+                  <div className="flex gap-2">
+                    <input value={r.name} maxLength={60} placeholder="Nome" onChange={e => set({ reviews: cfg.reviews.map((x, k) => k === i ? { ...x, name: e.target.value } : x) })} className="min-w-0 flex-1 rounded-xl bg-white px-3 py-2 text-sm outline-none" />
+                    <button onClick={() => set({ reviews: cfg.reviews.filter((_, k) => k !== i) })} aria-label="Togli" className="px-2 text-muted hover:text-rose-600"><Trash2 size={15} /></button>
+                  </div>
+                </div>
+              ))}
+              {cfg.reviews.length < 3 && <button onClick={() => set({ reviews: [...cfg.reviews, { text: '', name: '', zone: '' }] })} className="flex items-center gap-1.5 text-sm font-medium text-brand"><Plus size={15} /> Aggiungi recensione</button>}
             </Group>
 
             <Group title="Contatti">
@@ -127,8 +156,8 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
           </aside>
 
           {/* Anteprima dal vivo */}
-          <Preview>
-            <SiteRenderer cfg={cfg} name={site.name || 'La tua agenzia'} logo={site.logo} properties={props} base="" preview />
+          <Preview page={page} onPage={setPage} firstId={props[0]?.id}>
+            <SitePage page={page} ctx={{ cfg, name: site.name || 'La tua agenzia', logo: site.logo, properties: props, base: '', preview: true, go: setPage }} />
           </Preview>
         </div>
       )}
@@ -137,7 +166,7 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
 }
 
 // Il sito in scala dentro una finestra "browser": largo 1280 px come su un computer, rimpicciolito.
-function Preview({ children }: { children: ReactNode }) {
+function Preview({ children, page, onPage, firstId }: { children: ReactNode; page: Page; onPage: (p: Page) => void; firstId?: string }) {
   const box = useRef<HTMLDivElement>(null);
   const inner = useRef<HTMLDivElement>(null);
   const [k, setK] = useState(0.5);
@@ -155,9 +184,15 @@ function Preview({ children }: { children: ReactNode }) {
     <div className={`overflow-hidden rounded-[28px] bg-white ${CARD_SHADOW}`}>
       <div className="flex items-center gap-2 border-b border-line px-4 py-3 text-xs text-muted">
         <span className="flex gap-1.5">{[0, 1, 2].map(i => <span key={i} className="h-2.5 w-2.5 rounded-full bg-line" />)}</span>
-        <span className="ml-3 flex items-center gap-1.5"><Monitor size={13} /> Anteprima dal vivo</span>
+        {/* pagine del sito: si naviga anche cliccando dentro l'anteprima */}
+        <div className="ml-3 flex rounded-full bg-canvas p-0.5">
+          {([['home', 'Home'], ['immobili', 'Immobili'], ['immobile', 'Scheda'], ['agente', 'Profilo']] as const).map(([id, l]) => (
+            <button key={id} disabled={id === 'immobile' && !firstId} onClick={() => onPage(id === 'immobile' ? { page: 'immobile', id: firstId! } : { page: id } as Page)}
+              className={`rounded-full px-3 py-1 font-medium ease-smooth transition-colors disabled:opacity-40 ${page.page === id ? 'bg-white text-ink shadow-sm' : 'hover:text-ink'}`}>{l}</button>
+          ))}
+        </div>
       </div>
-      <div ref={box} className="h-[calc(100vh-12rem)] overflow-y-auto overflow-x-hidden [scrollbar-width:thin]"
+      <div ref={box} key={JSON.stringify(page)} className="h-[calc(100vh-12rem)] overflow-y-auto overflow-x-hidden [scrollbar-width:thin]"
         onClickCapture={e => { if ((e.target as HTMLElement).closest('a')) e.preventDefault(); }}>
         <div style={{ height: h * k }}>
           <div ref={inner} style={{ width: 1280, transform: `scale(${k})`, transformOrigin: 'top left' }}>{children}</div>
@@ -191,18 +226,33 @@ function Seg<T extends string>({ value, onChange, options }: { value: T; onChang
   );
 }
 
-// Foto dalla lista degli immobili (automatica = la prima)
+// Foto: carica dal computer, oppure scegli tra quelle degli immobili (Auto = la prima)
 function Pics({ label, covers, value, onChange }: { label: string; covers: string[]; value: string; onChange: (v: string) => void }) {
+  const [busy, setBusy] = useState(false);
+  const upload = async (f?: File) => {
+    if (!f?.type.startsWith('image/')) return;
+    setBusy(true);
+    const url = await uploadDataUrl(await fileToResizedDataUrl(f, 1800), 'vetrina');
+    setBusy(false);
+    if (url) onChange(url);
+  };
+  const own = value && !covers.includes(value);
   return (
     <div>
       <span className="mb-1 block text-xs font-medium text-ink/70">{label}</span>
       <div className="grid grid-cols-4 gap-1.5">
-        <button onClick={() => onChange('')} className={`flex aspect-square items-center justify-center rounded-xl bg-canvas text-[10px] font-medium text-muted ring-offset-1 ${!value ? 'ring-2 ring-ink' : ''}`}>Auto</button>
+        <label className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-0.5 rounded-xl bg-canvas text-[10px] font-medium text-muted ring-1 ring-dashed ring-black/15 hover:text-ink">
+          {busy ? <Loader2 size={15} className="animate-spin" /> : <ImagePlus size={15} />}Carica
+          <input type="file" accept="image/*" className="hidden" onChange={e => { upload(e.target.files?.[0]); e.target.value = ''; }} />
+        </label>
+        {own && <button onClick={() => onChange(value)} className="aspect-square overflow-hidden rounded-xl ring-2 ring-ink ring-offset-1"><img src={value} alt="" className="h-full w-full object-cover" /></button>}
+        {covers.length > 0 && <button onClick={() => onChange('')} className={`flex aspect-square items-center justify-center rounded-xl bg-canvas text-[10px] font-medium text-muted ring-offset-1 ${!value ? 'ring-2 ring-ink' : ''}`}>Auto</button>}
         {covers.map(c => (
           <button key={c} onClick={() => onChange(c)} className={`aspect-square overflow-hidden rounded-xl ring-offset-1 ${value === c ? 'ring-2 ring-ink' : ''}`}>
             <img src={c} alt="" className="h-full w-full object-cover" />
           </button>
         ))}
+        {!covers.length && value && <button onClick={() => onChange('')} className="flex aspect-square items-center justify-center rounded-xl bg-canvas text-[10px] font-medium text-muted">Togli</button>}
       </div>
     </div>
   );
