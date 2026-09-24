@@ -4,8 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 import { ArrowUp, ImagePlus, Loader2, RotateCcw } from 'lucide-react';
 import { fileToResizedDataUrl } from '@/lib/staging';
 import { AI_MOCK } from '@/lib/aiMock';
-import { AiPhotoStage, QUICK_PRESETS, useKeepPhotoGpu, type EditRequest, type Reveal, type Suggestion } from './AiPhoto';
-import { authFetch, CARD_SHADOW } from './api';
+import { AiPhotoStage, QUICK_PRESETS, type EditRequest, type Reveal, type Suggestion } from './AiPhoto';
+import { authFetch, CARD_SHADOW, warm } from './api';
 
 // Home staging come chat: l'agente carica una foto nella conversazione, scrive cosa vuole (in italiano,
 // il servizio traduce), riceve il prima/dopo e continua a chiedere sull'ultimo risultato. Caricare
@@ -24,7 +24,6 @@ const wait = (ms: number) => new Promise(r => setTimeout(r, ms));
 // planimetria: rendering con regole sue, dal testo prendo solo lo stile dell'arredo
 const planStyle = (t: string) => (/nordic|scandinav/i.test(t) ? 'nordic' : /lusso|luxury|elegan/i.test(t) ? 'industrial' : /boho/i.test(t) ? 'boho' : 'modern');
 
-function KeepGpu() { useKeepPhotoGpu(); return null; }
 
 export default function StagingChat({ onMany }: { onMany: (files: FileList) => void }) {
   const [msgs, setMsgs] = useState<Msg[]>([]);
@@ -37,6 +36,18 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
   const end = useRef<HTMLDivElement>(null);
   const busy = msgs.some(m => m.role === 'ai' && m.busy);
 
+  // GPU: si accende appena entri nella chat e resta accesa finche' la usi (segnale ogni 50 s, spegnimento
+  // a 60 s). Dopo 5 minuti senza scrivere, caricare o generare non la teniamo piu' accesa; uscendo dalla
+  // pagina si spegne da sola. Qualsiasi attivita' la riaccende.
+  const lastActive = useRef(0);
+  const touch = () => { if (Date.now() - lastActive.current > 5 * 60_000) warm('photo'); lastActive.current = Date.now(); };
+  useEffect(() => {
+    lastActive.current = Date.now();
+    warm('photo');
+    const t = setInterval(() => { if (Date.now() - lastActive.current < 5 * 60_000) warm('photo'); }, 50_000);
+    return () => clearInterval(t);
+  }, []);
+
   useEffect(() => { end.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }); }, [msgs.length]);
   useEffect(() => {
     if (!busy) return;
@@ -48,6 +59,7 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
 
   const upload = async (files: FileList | null) => {
     if (!files?.length) return;
+    touch();
     if (files.length > 1) { onMany(files); return; } // piu' foto insieme: vista a griglia
     const f = files[0];
     if (!f.type.startsWith('image/')) return;
@@ -59,6 +71,7 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
   const send = async () => {
     const t = text.trim();
     if (!t || !base || busy) return;
+    touch();
     const id = uid();
     const before = base;
     setMsgs(ms => [...ms, { id: uid(), role: 'user', text: t }, { id, role: 'ai', before, out: null, busy: true, reveal: null, text: t }]);
@@ -85,7 +98,6 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
   return (
     <div className={`mx-auto flex max-w-3xl flex-col ${empty ? 'min-h-[calc(100vh-12rem)] justify-center' : ''} pb-8 pt-6`}
       onDragOver={e => { e.preventDefault(); setDrag(true); }} onDragLeave={() => setDrag(false)} onDrop={e => { e.preventDefault(); setDrag(false); upload(e.dataTransfer.files); }}>
-      {base && <KeepGpu />}
 
       {empty && (
         <h1 className="mb-8 text-center font-display text-4xl font-bold tracking-tight md:text-5xl">
@@ -134,7 +146,7 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
             <label title="Carica una foto" className="flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full bg-canvas text-ink/80 ring-1 ring-inset ring-black/10 hover:bg-white">
               <ImagePlus size={18} />{picker}
             </label>
-            <textarea rows={1} value={text} onChange={e => setText(e.target.value)} disabled={!base}
+            <textarea rows={1} value={text} onChange={e => { setText(e.target.value); touch(); }} disabled={!base}
               placeholder={!base ? 'Carica o trascina una foto per iniziare' : scene === 'planimetria' ? 'Che stile di arredo? Es. moderno, nordico' : 'Cosa vuoi cambiare? Es. togli il divano e metti un tavolo da pranzo'}
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
               className="min-h-10 min-w-0 flex-1 resize-none bg-transparent px-1 py-2.5 text-[15px] leading-relaxed outline-none placeholder:text-muted/60 disabled:cursor-not-allowed" />
