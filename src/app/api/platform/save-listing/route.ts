@@ -18,6 +18,7 @@ const MAX_PHOTOS = 40
 const PARALLEL = 6
 
 const toNum = (v: unknown) => {
+  if (typeof v === 'number') return Number.isFinite(v) ? Math.round(v) : 0 // numeri della scheda AI (niente "95.5" -> 955)
   const m = String(v ?? '').match(/\d[\d.]*/)
   return m ? Number(m[0].replace(/\./g, '')) || 0 : 0
 }
@@ -25,6 +26,7 @@ const str = (v: unknown, max = 200) => (typeof v === 'string' ? v.slice(0, max) 
 
 type Body = {
   titolo?: string; descrizione?: string; score?: number; suggerimenti?: string[]
+  details?: Record<string, unknown> // scheda completa estratta da Qwen (campi di propertyFields)
   listing?: { url?: string; title?: string; address?: string; propertyInfo?: Record<string, unknown>; photos?: string[] }
 }
 
@@ -42,6 +44,9 @@ export async function POST(req: NextRequest) {
   if (!l || !titolo) return NextResponse.json({ error: 'bad_request' }, { status: 400 })
   const info = l.propertyInfo && typeof l.propertyInfo === 'object' ? l.propertyInfo : {}
   if (JSON.stringify(info).length > 30000) return NextResponse.json({ error: 'too_large' }, { status: 400 })
+  const details = b.details && typeof b.details === 'object' && !Array.isArray(b.details) ? b.details : {}
+  if (JSON.stringify(details).length > 20000) return NextResponse.json({ error: 'too_large' }, { status: 400 })
+  const d = details as Record<string, unknown>
 
   // Foto: copia su R2 a 1600px, a gruppi di PARALLEL, mantenendo l'ordine.
   const sources = (Array.isArray(l.photos) ? l.photos : []).filter(u => typeof u === 'string' && PHOTO_RE.test(u)).slice(0, MAX_PHOTOS)
@@ -58,13 +63,14 @@ export async function POST(req: NextRequest) {
     nome: titolo,
     titolo,
     descrizione: str(b.descrizione, 10000),
-    addr: str(l.address, 300),
-    tipologia: str(info.type, 100),
-    prezzo: toNum(info.price),
-    mq: toNum(info.surface),
-    locali: toNum(info.rooms) || null,
-    camere: toNum(info.bedrooms),
-    bagni: toNum(info.bathrooms),
+    // scheda estratta dall'AI prima, dati dei selettori dell'estensione come ripiego
+    addr: str(d.indirizzo, 300) || str(l.address, 300),
+    tipologia: str(d.tipologia, 100) || str(info.type, 100),
+    prezzo: toNum(d.prezzo) || toNum(info.price),
+    mq: toNum(d.superficie) || toNum(info.surface),
+    locali: toNum(d.locali) || toNum(info.rooms) || null,
+    camere: toNum(d.camere) || toNum(info.bedrooms),
+    bagni: toNum(d.bagni) || toNum(info.bathrooms),
     cover: photos[0] ?? '',
     thumb: thumb ?? '',
     import_data: {
@@ -77,6 +83,7 @@ export async function POST(req: NextRequest) {
       classe: str(info.energyClass, 20),
       caratteristiche: Array.isArray(info.features) ? info.features.slice(0, 50) : [],
       originale: { titolo: str(l.title, 300), descrizione: str(info.description, 10000) },
+      details, // scheda completa (stessi campi di Crea da zero): la legge la pagina della casa
       info, // tutto quello che ha letto l'estensione (spese, riscaldamento, anno, esposizione, box...)
     },
   }).select('id').single()

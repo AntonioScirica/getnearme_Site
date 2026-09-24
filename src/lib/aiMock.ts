@@ -69,6 +69,14 @@ Lo stabile offre servizi poco comuni in zona, tra cui piscina, palestra e lavand
 
 Libero subito. Per ricevere la planimetria o fissare una visita contatta la nostra agenzia.`,
   },
+  extract: {
+    titolo: 'TRILOCALE ARREDATO CON BOX - ZONA BOCCONI',
+    descrizione: '[DATI FINTI] SPLENDIDO trilocale in contesto con PORTINERIA, PISCINA e PALESTRA. Ingresso, salone con cucina a vista, due camere, doppi servizi. Parquet, infissi triplo vetro, aria condizionata. Box auto. LIBERA SUBITO.',
+    contratto: 'Vendita', tipologia: 'Appartamento', indirizzo: 'Via Bernardino Verro 12, Milano', prezzo: 598000, superficie: 95,
+    locali: 3, camere: 2, bagni: 2, piano: '1°', stato: 'Ottimo / Ristrutturato', ascensore: true, arredato: 'Arredato', cucina: 'A vista',
+    dotazioni: ['Parquet'], infissi: 'Triplo vetro', climatizzazione: 'Autonoma', posto_auto: 'Box singolo', portineria: 'Intera giornata',
+    esterni: ['Piscina'], disponibilita: 'Libero subito', altri_dati: ['palestra condominiale', 'doppi servizi'],
+  },
   describe: {
     titolo: '[FINTO] Trilocale ristrutturato con balcone, vicino alla metro',
     descrizione: `[DESCRIZIONE FINTA DI ESEMPIO]

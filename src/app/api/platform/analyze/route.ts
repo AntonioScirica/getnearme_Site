@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { generateJson } from '@/lib/ai'
 import { createClient } from '@supabase/supabase-js'
 import { CRITERI_PROMPT, CRITERI_SCHEMA, withScores } from '@/lib/listingScore'
+import { EXTRACT_SCHEMA, EXTRACT_SYSTEM, rawForAi, toDetails, type RawPage } from '@/lib/listingExtract'
 
 const admin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -89,7 +90,7 @@ VOCE DI TITOLO E DESCRIZIONE: scrivi come un agente immobiliare italiano esperto
 - Titolo come lo scrive un agente sul portale: tipologia + punto di forza + zona, senza aggettivi vuoti ("splendido", "imperdibile", "occasione unica").
 - Tono professionale, concreto, credibile: niente toni da pubblicità, niente superlativi.`
 
-type Listing = { url?: string; title?: string; address?: string; propertyInfo?: Record<string, unknown>; photos?: string[] }
+type Listing = { url?: string; title?: string; address?: string; propertyInfo?: Record<string, unknown>; photos?: string[]; raw?: RawPage }
 
 export async function POST(req: NextRequest) {
   const token = req.headers.get('authorization')?.replace('Bearer ', '')
@@ -102,10 +103,22 @@ export async function POST(req: NextRequest) {
   if (!listing || typeof listing !== 'object') return NextResponse.json({ error: 'bad_request' }, { status: 400 })
 
   const photos = (Array.isArray(listing.photos) ? listing.photos : []).filter(u => typeof u === 'string' && PHOTO_RE.test(u))
-  const text = JSON.stringify({
-    url: listing.url, titolo: listing.title, indirizzo: listing.address,
-    dati: listing.propertyInfo, numero_foto_totali: photos.length,
-  })
+
+  // Passo 1: pagina grezza -> scheda completa (qualsiasi portale, anche i dati visibili solo cliccando).
+  // Se manca la pagina o l'estrazione fallisce si va avanti con i dati dei selettori dell'estensione.
+  let scheda: ReturnType<typeof toDetails> | null = null
+  if (listing.raw && typeof listing.raw === 'object') {
+    const ex = await generateJson<Record<string, unknown>>({
+      system: EXTRACT_SYSTEM, text: rawForAi(listing.raw), schema: EXTRACT_SCHEMA, maxTokens: 3000,
+      usage: { userId: data.user.id, kind: 'extract' },
+    })
+    if (ex.ok) scheda = toDetails(ex.data)
+    else console.error('extract error:', ex.error, ex.detail)
+  }
+
+  const text = JSON.stringify(scheda
+    ? { url: listing.url, titolo: scheda.titolo || listing.title, descrizione: scheda.descrizione, indirizzo: listing.address, dati: scheda.details, altri_dati: scheda.altri, numero_foto_totali: photos.length }
+    : { url: listing.url, titolo: listing.title, indirizzo: listing.address, dati: listing.propertyInfo, numero_foto_totali: photos.length })
   if (text.length > 20000) return NextResponse.json({ error: 'too_large' }, { status: 400 })
 
   const r = await generateJson<Record<string, unknown>>({
@@ -119,5 +132,5 @@ export async function POST(req: NextRequest) {
     console.error('analyze error:', r.error, r.detail)
     return NextResponse.json({ error: r.error === 'refused' ? 'refused' : 'ai_failed' }, { status: r.error === 'refused' ? 422 : 502 })
   }
-  return NextResponse.json(withScores(r.data))
+  return NextResponse.json({ ...withScores(r.data), scheda })
 }
