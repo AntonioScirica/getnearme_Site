@@ -6,7 +6,7 @@ export const CRITERI = [
   { key: 'dati', label: 'Dati della scheda', max: 25, desc: 'Campi che l\'acquirente cerca: spese, classe, piano, riscaldamento' },
   { key: 'descrizione', label: 'Descrizione', max: 20, desc: 'Completa, chiara, ben scritta, senza refusi' },
   { key: 'coerenza', label: 'Affidabilità', max: 15, desc: 'Dati coerenti con foto e testo, niente contatti nel testo' },
-  { key: 'titolo', label: 'Titolo', max: 10, desc: 'Tipologia, punto di forza e zona, niente aggettivi vuoti' },
+  { key: 'titolo', label: 'Titolo', max: 10, desc: 'Zona per prima, tipologia precisa e un punto di forza, max 60 caratteri' },
 ] as const;
 
 export type CriterioKey = (typeof CRITERI)[number]['key'];

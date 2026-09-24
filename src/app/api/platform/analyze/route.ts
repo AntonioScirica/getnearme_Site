@@ -78,7 +78,13 @@ ${CRITERI_PROMPT}
     Scrivila in italiano, un'azione concreta sugli elementi visibili (nomina cosa e dove), più "lascia invariati" per ciò che deve restare uguale (es. "Togli le pentole e i barattoli dal piano di lavoro, lascia invariati mobili, pareti e pavimento"). VIETATO chiedere correzioni tecniche o geometriche: raddrizzare, prospettiva, linee verticali, ritagliare, bilanciamento del bianco, esposizione, nitidezza, rumore, risoluzione, grandangolo. Se la foto è storta, sfocata, piccola, inquadrata male o manca una stanza, va rifatta: lascia "" e dillo nella soluzione.
 - dati_mancanti: campi che l'acquirente cerca e non ci sono (es. spese condominiali, riscaldamento, esposizione, anno costruzione). Solo il nome del dato, breve.
 - foto_consigli: 2-4 consigli sulle foto viste (luce, ordine, inquadrature, stanze mancanti, prima foto). Se non ci sono foto, dillo.
-- titolo: nuovo titolo, max 70 caratteri, concreto, niente emoji.
+- titolo: nuovo titolo, MASSIMO 60 caratteri spazi inclusi (immobiliare.it taglia a 60). Regole, da ricerca sui portali:
+  - Il portale genera già da solo il titolo principale (tipologia + via + città) e mostra accanto prezzo, m², locali, bagni e piano: il titolo dell'agente NON li ripete (niente prezzo, niente numero locali, niente città). I m² solo se sono un argomento di vendita ("terrazzo di 85 mq").
+  - Ordine: [luogo che chi cerca riconosce] + [tipologia precisa] + [UN punto di forza reale]. Il luogo viene PRIMA: quartiere o micro-zona, fermata della metro, università, oppure la via se è una via nota che vale da sola (es. Corso Garibaldi). Se la via è poco nota, apri con il quartiere.
+  - Tipologia precisa: monolocale, bilocale, trilocale, quadrilocale, attico, mansarda, loft, villino (mai "immobile" o "appartamento" se si può essere più precisi).
+  - Un solo punto di forza concreto e presente nell'annuncio: terrazzo, box, giardino, ultimo piano, ristrutturato, vista, a 2 minuti dalla metro. Per l'affitto: arredato, disponibilità, vicinanza a università o metro.
+  - Vietati: aggettivi vuoti (splendido, imperdibile, occasione unica, affare, bello, grande), maiuscolo, emoji, "!", telefono, email, codici di riferimento.
+  - Esempi buoni: "Esquilino, trilocale a 50 m dalla Metro A" · "Morena, trilocale ristrutturato con terrazzo di 85 mq" · "Porta Venezia, ultimo piano d'epoca con box" · "Bocconi, bilocale arredato vicino alla M2". Da evitare: "SPLENDIDO TRE LOCALI SIGNORILE", "Appartamento".
 - MAI segnalare, in nessun campo (problemi, foto_consigli, criteri, sintesi): watermark o loghi sulle foto, testo o parole in maiuscolo. Non sono problemi per questa analisi.
 - descrizione: la descrizione originale riscritta meglio, NON riassunta. Tieni TUTTE le informazioni dell'originale e dei dati (ambienti, misure, piano, finiture, dotazioni, spese, servizi e luoghi vicini, trasporti, distanze, disponibilità): se l'originale nomina scuole, negozi, metro o parchi vicini, restano tutti. Riorganizza in paragrafi brevi e ordinati (apertura con tipologia, zona e punto di forza; composizione; finiture e dotazioni; zona e servizi vicini; condizioni), correggi refusi e forma. Lunghezza simile all'originale o maggiore, mai più corta. Prosa; un elenco puntato (righe che iniziano con "- ") solo per 5 o più voci omogenee, al massimo uno. Usa SOLO informazioni presenti nell'annuncio: non inventare. Non aggiungere promesse o servizi dell'agenzia non presenti (orari di visita, disponibilità serali, consulenze, mutui). Chiudi al massimo con un invito generico a contattare l'agenzia. Niente em dash, usa virgole.
 
@@ -86,7 +92,7 @@ VOCE DI TITOLO E DESCRIZIONE: scrivi come un agente immobiliare italiano esperto
 - Prima persona plurale dell'agenzia ("proponiamo", "vi presentiamo", "l'immobile si compone di").
 - Lessico del settore usato con naturalezza: "ottimo stato", "doppia esposizione", "libero al rogito", "spese condominiali contenute", "zona ben servita", "classe energetica".
 - Struttura tipica di un buon annuncio d'agenzia: apertura con tipologia, zona e punto di forza; composizione; finiture e dotazioni; contesto e servizi; condizioni (disponibilità, box/cantina); chiusura con invito a contattare l'agenzia per informazioni o visita.
-- Titolo come lo scrive un agente sul portale: tipologia + punto di forza + zona, senza aggettivi vuoti ("splendido", "imperdibile", "occasione unica").
+- Titolo: segui le regole del campo titolo qui sopra.
 - Tono professionale, concreto, credibile: niente toni da pubblicità, niente superlativi.`
 
 type Listing = { url?: string; title?: string; address?: string; propertyInfo?: Record<string, unknown>; photos?: string[] }

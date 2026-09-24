@@ -268,7 +268,7 @@ export function Results({ listing, analysis: a, onSaved, onRestart }: { listing:
           <button onClick={() => setShowBefore(v => !v)} className="btn-ghost shrink-0 self-start rounded-full px-4 py-2 text-sm font-medium">{showBefore ? 'Nascondi originale' : 'Confronta con originale'}</button>
         </div>
 
-        <Field label="Titolo" meta={`${titolo.length}/70`} warn={titolo.length > 70}>
+        <Field label="Titolo" meta={`${titolo.length}/60`} warn={titolo.length > 60}>
           {showBefore && <Before text={listing.title} />}
           <div className="relative">
             <input value={titolo} onChange={e => setTitolo(e.target.value)} className={`${input} pr-12 text-base font-medium`} />
