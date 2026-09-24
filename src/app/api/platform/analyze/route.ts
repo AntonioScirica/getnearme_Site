@@ -61,9 +61,9 @@ const SYSTEM = `Sei un consulente esperto di annunci immobiliari italiani (immob
 ${CRITERI_PROMPT}
 - sintesi: 1-2 frasi sul giudizio complessivo.
 - punti_forza: 2-4 cose fatte bene.
-- problemi: massimo 4, i più importanti, ordinati per gravità. SOLO azioni che l'agente può fare da solo, subito: modificare titolo o testo, compilare un campo della scheda sul portale, riordinare/sostituire/eliminare foto, rifare una foto, modificare una foto con l'AI. VIETATO: consigli generici ("migliora la presentazione"), cose che l'agente non controlla (zona, palazzo, mercato, prezzi di zona), ripetere lo stesso punto due volte. Per ognuno:
+- problemi: da 2 a 4, i più importanti, ordinati per gravità, ognuno su un aspetto DIVERSO (mai due problemi sullo stesso titolo, sulla stessa foto o sullo stesso dato). Segnala SOLO ciò che vedi davvero nei dati, nel testo o nelle foto ricevuti: MAI dire che un'informazione è falsa, errata o "non presente nell'immobile", perché non puoi verificarlo; l'unica eccezione è una contraddizione dentro l'annuncio stesso (es. il testo dice 3 camere e i dati 2), citando entrambe le parti. SOLO azioni che l'agente può fare da solo, subito: modificare titolo o testo, compilare un campo della scheda sul portale, riordinare/sostituire/eliminare foto, rifare una foto, modificare una foto con l'AI. VIETATO: consigli generici ("migliora la presentazione"), cose che l'agente non controlla (zona, palazzo, mercato, prezzi di zona), ripetere lo stesso punto due volte. Per ognuno:
   - problema: cosa non va, citando l'esempio preciso preso dal testo o dalle foto.
-  - perche: perché fa perdere contatti o fiducia, in una frase.
+  - perche: la conseguenza per l'agente (meno clic, meno contatti, meno fiducia), in una frase, con parole DIVERSE dal problema: mai ripetere il problema.
   - soluzione: l'azione concreta, in forma di istruzione ("Metti la foto del soggiorno al primo posto", "Compila il campo Spese condominiali"). Se riguarda il testo, includi la frase corretta tra virgolette.
   - foto_indice: se il problema riguarda UNA delle foto che vedi, il suo numero (1 = prima immagine allegata, 2 = seconda, 3 = terza); altrimenti 0.
   - foto_stanza: se foto_indice > 0, l'ambiente che quella foto mostra, riconosciuto guardandola, in minuscolo con articolo ("la cucina", "il soggiorno", "la camera da letto", "il bagno", "l'androne", "il balcone", "la facciata"); altrimenti "".
@@ -80,7 +80,7 @@ ${CRITERI_PROMPT}
 - foto_consigli: 2-4 consigli sulle foto viste (luce, ordine, inquadrature, stanze mancanti, prima foto). Se non ci sono foto, dillo.
 - titolo: nuovo titolo, max 70 caratteri, concreto, niente emoji.
 - MAI segnalare, in nessun campo (problemi, foto_consigli, criteri, sintesi): watermark o loghi sulle foto, testo o parole in maiuscolo. Non sono problemi per questa analisi.
-- descrizione: nuova descrizione 120-220 parole, italiano naturale, paragrafi brevi. Scrivi in prosa. Usa un elenco puntato (righe che iniziano con "- ") solo se ha davvero senso: molte voci omogenee, di solito 5 o più dotazioni o ambienti, che in una frase diventerebbero un elenco di virgole illeggibile. Al massimo un elenco per descrizione; se le voci sono poche, mettile in una frase. Usa SOLO informazioni presenti nell'annuncio: non inventare. Non aggiungere promesse o servizi dell'agenzia non presenti (orari di visita, disponibilità serali, consulenze, mutui). Chiudi al massimo con un invito generico a contattare l'agenzia. Niente em dash, usa virgole.
+- descrizione: la descrizione originale riscritta meglio, NON riassunta. Tieni TUTTE le informazioni dell'originale e dei dati (ambienti, misure, piano, finiture, dotazioni, spese, servizi e luoghi vicini, trasporti, distanze, disponibilità): se l'originale nomina scuole, negozi, metro o parchi vicini, restano tutti. Riorganizza in paragrafi brevi e ordinati (apertura con tipologia, zona e punto di forza; composizione; finiture e dotazioni; zona e servizi vicini; condizioni), correggi refusi e forma. Lunghezza simile all'originale o maggiore, mai più corta. Prosa; un elenco puntato (righe che iniziano con "- ") solo per 5 o più voci omogenee, al massimo uno. Usa SOLO informazioni presenti nell'annuncio: non inventare. Non aggiungere promesse o servizi dell'agenzia non presenti (orari di visita, disponibilità serali, consulenze, mutui). Chiudi al massimo con un invito generico a contattare l'agenzia. Niente em dash, usa virgole.
 
 VOCE DI TITOLO E DESCRIZIONE: scrivi come un agente immobiliare italiano esperto che pubblica l'annuncio della propria agenzia sul portale.
 - Prima persona plurale dell'agenzia ("proponiamo", "vi presentiamo", "l'immobile si compone di").
@@ -118,5 +118,18 @@ export async function POST(req: NextRequest) {
     console.error('analyze error:', r.error, r.detail)
     return NextResponse.json({ error: r.error === 'refused' ? 'refused' : 'ai_failed' }, { status: r.error === 'refused' ? 422 : 502 })
   }
-  return NextResponse.json(withScores(r.data))
+  return NextResponse.json(withScores(dedupe(r.data)))
+}
+
+// Il modello a volte ripete lo stesso problema: via i doppioni (stesso testo, o stessa area + stessa foto).
+function dedupe<T extends Record<string, unknown>>(a: T): T {
+  const norm = (x: unknown) => String(x ?? '').toLowerCase().replace(/[^a-z0-9àèéìòù]+/g, ' ').trim()
+  const seen = new Set<string>()
+  const problemi = (Array.isArray(a.problemi) ? a.problemi : []).filter((p: Record<string, unknown>) => {
+    const keys = [norm(p.problema), norm(p.soluzione), p.foto_indice ? `foto-${p.foto_indice}` : '']
+    if (keys.some(k => k && seen.has(k))) return false
+    keys.forEach(k => k && seen.add(k))
+    return true
+  })
+  return { ...a, problemi }
 }
