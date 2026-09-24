@@ -21,8 +21,6 @@ type Problem = { area: string; gravita: 'alta' | 'media' | 'bassa'; problema: st
 export type Analysis = {
   score: number; score_potenziale: number; criteri: Criteri; sintesi: string; punti_forza: string[]; problemi: Problem[];
   dati_mancanti: string[]; foto_consigli: string[]; titolo: string; descrizione: string;
-  // scheda completa letta da Qwen dalla pagina grezza (assente in demo o se l'estrazione fallisce)
-  scheda?: { titolo: string; descrizione: string; details: Record<string, unknown>; altri: string[] } | null;
 };
 export type Stage = 'input' | 'opening' | 'scanning' | 'done' | 'no-extension' | 'manual' | 'error';
 
@@ -63,7 +61,7 @@ export function useImprove() {
     if (id !== run.current) return;
     setListing(l); setStep(0); setStage('scanning');
     if (demo) { await wait(6000); if (id === run.current) { setAnalysis(cap(withScores(mockFor<Analysis>('analyze')))); setStage('done'); } return; }
-    const res = await authFetch('/api/platform/analyze', { method: 'POST', body: JSON.stringify({ listing: l }) }).catch(() => null);
+    const res = await authFetch('/api/platform/analyze', { method: 'POST', body: JSON.stringify({ listing: { ...l, raw: undefined } }) }).catch(() => null);
     if (id !== run.current) return;
     if (!res?.ok) { setError('Analisi non riuscita, riprova.'); setStage('error'); return; }
     setAnalysis(cap(await res.json()));
@@ -245,7 +243,7 @@ export function Results({ listing, analysis: a, onSaved, onRestart }: { listing:
     setSaving(true); setSaveError(null);
     const res = await authFetch('/api/platform/save-listing', {
       method: 'POST',
-      body: JSON.stringify({ titolo, descrizione, listing: { ...listing, raw: undefined }, details: a.scheda?.details, score: a.score, suggerimenti: a.problemi.map(x => x.soluzione) }),
+      body: JSON.stringify({ titolo, descrizione, listing: { ...listing, raw: undefined }, score: a.score, suggerimenti: a.problemi.map(x => x.soluzione) }),
     }).catch(() => null);
     setSaving(false);
     if (!res?.ok) { setSaveError('Salvataggio non riuscito, riprova.'); return; }
@@ -271,7 +269,7 @@ export function Results({ listing, analysis: a, onSaved, onRestart }: { listing:
         </div>
 
         <Field label="Titolo" meta={`${titolo.length}/70`} warn={titolo.length > 70}>
-          {showBefore && <Before text={a.scheda?.titolo || listing.title} />}
+          {showBefore && <Before text={listing.title} />}
           <div className="relative">
             <input value={titolo} onChange={e => setTitolo(e.target.value)} className={`${input} pr-12 text-base font-medium`} />
             <CopyIcon text={titolo} center />
@@ -279,7 +277,7 @@ export function Results({ listing, analysis: a, onSaved, onRestart }: { listing:
         </Field>
         <Field label="Descrizione" meta={`${words} parole`}>
           <div className={showBefore ? 'grid gap-4 lg:grid-cols-2' : ''}>
-            {showBefore && <Before text={a.scheda?.descrizione || text(listing.propertyInfo.description)} tall />}
+            {showBefore && <Before text={text(listing.propertyInfo.description)} tall />}
             <div className="relative">
               <textarea rows={14} value={descrizione} onChange={e => setDescrizione(e.target.value)} className={`${input} pr-12 text-[15px] leading-relaxed ${showBefore ? 'block h-[26rem] resize-none' : ''}`} />
               <CopyIcon text={descrizione} />
