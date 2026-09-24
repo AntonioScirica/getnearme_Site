@@ -500,13 +500,13 @@ function PhotoFix({ src, label, edit, onClose }: { src: string; label: string; e
         <div className="relative mt-4 aspect-[3/2] max-h-[60vh] w-full overflow-hidden rounded-2xl bg-canvas">
           <img src={src} alt="" className="absolute inset-0 h-full w-full object-cover" />
           {aurora && (
-            <>
-              <div className="pointer-events-none absolute inset-0 z-[6]" style={{
+            <div className="pointer-events-none absolute inset-0 z-[6]" style={{ animation: 'gnm-fade var(--gnm-dur) var(--gnm-ease) both' }}>
+              <div className="absolute inset-0" style={{
                 background: 'radial-gradient(ellipse 86% 76% at 50% 50%, rgba(83,126,236,0) 46%, rgba(83,126,236,.5) 76%, rgba(83,126,236,.95) 100%)',
                 animation: reveal === 'burst' ? 'gnm-aurora-burst .6s ease-out forwards' : 'gnm-aurora-edge 2.4s ease-in-out infinite',
               }} />
-              <div className="pointer-events-none absolute inset-0 z-[7]" style={{
-                background: 'radial-gradient(ellipse 40% 120% at 0% 50%, rgba(120,160,245,.85) 0%, transparent 55%), radial-gradient(ellipse 40% 120% at 100% 50%, rgba(83,126,236,.85) 0%, transparent 55%), radial-gradient(ellipse 120% 40% at 50% 0%, rgba(83,126,236,.7) 0%, transparent 55%), radial-gradient(ellipse 120% 40% at 50% 100%, rgba(60,100,210,.7) 0%, transparent 55%)',
+              <div className="absolute inset-0" style={{
+                background: 'radial-gradient(ellipse 40% 120% at 0% 50%, rgba(83,126,236,.85) 0%, transparent 55%), radial-gradient(ellipse 40% 120% at 100% 50%, rgba(83,126,236,.85) 0%, transparent 55%), radial-gradient(ellipse 120% 40% at 50% 0%, rgba(83,126,236,.7) 0%, transparent 55%), radial-gradient(ellipse 120% 40% at 50% 100%, rgba(83,126,236,.7) 0%, transparent 55%)',
                 backgroundSize: '200% 200%', mixBlendMode: 'screen',
                 animation: reveal === 'burst' ? 'gnm-aurora-burst .6s ease-out forwards' : 'gnm-aurora-shift 3s ease-in-out infinite, gnm-aurora-pulse 4s ease-in-out infinite',
               }} />
@@ -516,7 +516,7 @@ function PhotoFix({ src, label, edit, onClose }: { src: string; label: string; e
                   <span key={msg} className="blur-in bg-clip-text text-xs font-bold text-transparent" style={{ backgroundImage: 'linear-gradient(to right, #dbe5fb 20%, #537eec 50%, #dbe5fb 80%)', backgroundSize: '200% auto', animation: 'gnm-shimmer-text 2.5s linear infinite' }}>{FIX_MSGS[msg]}...</span>
                 </div>
               )}
-            </>
+            </div>
           )}
           {out && (reveal === 'line' || reveal === 'slider') && (
             <InlineSlider before={src} after={out} isVertical={false} showImages={reveal === 'slider'} interactive={reveal === 'slider'} />

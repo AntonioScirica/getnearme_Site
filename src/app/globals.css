@@ -448,6 +448,7 @@ html.metrics-light [class*="border-gray-600"] { border-color: #d8d4cb !important
 @keyframes gnm-rise { from { opacity: 0; transform: translateY(24px) scale(.97); } to { opacity: 1; transform: none; } }
 .rise { animation: gnm-rise var(--gnm-dur) var(--gnm-ease) backwards; } /* backwards: a fine animazione torna la transform di .tilt */
 /* Caricamento stile Foto AI (home staging): alone aurora sui bordi della foto, poi slider prima/dopo */
+@keyframes gnm-fade { from { opacity: 0; } }
 @keyframes gnm-aurora-edge { 0% { opacity: .78; transform: scale(1.012); } 25% { opacity: 1; transform: scale(1); } 50% { opacity: .82; transform: scale(1.018); } 75% { opacity: 1; transform: scale(1.004); } 100% { opacity: .78; transform: scale(1.012); } }
 @keyframes gnm-aurora-shift { 0% { background-position: 0% 50%; opacity: .45; } 25% { opacity: .55; } 50% { background-position: 100% 50%; opacity: .45; } 75% { opacity: .55; } 100% { background-position: 0% 50%; opacity: .45; } }
 @keyframes gnm-aurora-pulse { 0%, 100% { transform: scale(1) rotate(0deg); } 50% { transform: scale(1.08) rotate(2deg); } }
@@ -461,6 +462,13 @@ html.metrics-light [class*="border-gray-600"] { border-color: #d8d4cb !important
 .stagger-chips > * { animation: gnm-blur-in var(--gnm-dur) var(--gnm-ease) backwards; }
 .stagger-chips > :nth-child(1) { animation-delay: .7s; } .stagger-chips > :nth-child(2) { animation-delay: .78s; }
 .stagger-chips > :nth-child(3) { animation-delay: .86s; } .stagger-chips > :nth-child(4) { animation-delay: .94s; }
+/* Tessera Home staging: prima/dopo con la linea che scorre al passaggio del mouse */
+.stage-before { clip-path: inset(0 50% 0 0); }
+.stage-line { left: 50%; }
+.group:hover .stage-before { animation: gnm-stage-clip 3.2s var(--gnm-ease) infinite; }
+.group:hover .stage-line { animation: gnm-stage-line 3.2s var(--gnm-ease) infinite; }
+@keyframes gnm-stage-clip { 0%, 100% { clip-path: inset(0 50% 0 0); } 33% { clip-path: inset(0 12% 0 0); } 66% { clip-path: inset(0 88% 0 0); } }
+@keyframes gnm-stage-line { 0%, 100% { left: 50%; } 33% { left: 88%; } 66% { left: 12%; } }
 /* card che si inclina verso il mouse: --rx/--ry/--mx/--my impostate da JS */
 .tilt { transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateY(var(--lift, 0)); transition: transform var(--gnm-dur) var(--gnm-ease), box-shadow var(--gnm-dur) var(--gnm-ease); will-change: transform; }
 .tilt:active { --lift: 2px; }
@@ -481,6 +489,7 @@ html.metrics-light [class*="border-gray-600"] { border-color: #d8d4cb !important
 .group:hover .xl-row:nth-child(5) > div { animation-delay: .45s; } .group:hover .xl-row:nth-child(6) > div { animation-delay: .6s; }
 @media (prefers-reduced-motion: reduce) {
   .blur-in, .rise, .grow-x, .stagger-chips > * { animation: none; }
+  .group:hover .stage-before, .group:hover .stage-line { animation: none; }
   .ease-smooth { transition-duration: 1ms !important; transition-delay: 0s !important; }
   .tilt { transform: none !important; }
   .par-1, .par-2, .par-3 { transform: none !important; }

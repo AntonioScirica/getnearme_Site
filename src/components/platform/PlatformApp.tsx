@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Home, Building2, Globe, Gauge, LogOut, Plus, Loader2, X } from 'lucide-react';
+import { Home, Building2, Globe, Gauge, LogOut, Plus, Loader2, X, Wand2 } from 'lucide-react';
 import type { UserData } from '@/app/[locale]/dashboard/page';
 import { supabase } from '@/lib/supabase';
 import { fetchProjects, type ProjectData } from '@/lib/projects';
@@ -83,6 +83,13 @@ export default function PlatformApp({ userData }: { userData: UserData }) {
             <CostsView />
           ) : route === '/migliora' ? (
             <HomeView key={query} name={profile?.name ?? undefined} initialUrl={new URLSearchParams(query).get('url') ?? ''} onSaved={reload} />
+          ) : route === '/staging' ? (
+            // ponytail: segnaposto finche' non portiamo Foto AI nella piattaforma
+            <div className="flex min-h-[60vh] flex-col items-center justify-center text-center">
+              <h1 className="font-display text-4xl font-bold tracking-tight">Home staging</h1>
+              <p className="mt-2 text-muted">Arriva a breve nella nuova piattaforma.</p>
+              <a href="#/" className="btn-ghost mt-6 rounded-full px-5 py-2.5 text-sm font-medium">Torna alla home</a>
+            </div>
           ) : route === '/importa' ? (
             <ImportView onDone={reload} />
           ) : route === '/nuovo' ? (
@@ -297,7 +304,7 @@ export function HomeView({ name, initialUrl = '', onSaved }: { name?: string; in
   const close = () => { imp.reset(); setOpen(false); };
   const restart = () => { imp.reset(); setUrl(''); document.querySelector('main')?.scrollTo({ top: 0, behavior: 'smooth' }); };
 
-  const [head, sub] = shown === 'home' ? [TITLE_WORDS(name).join(' '), 'Migliora, crea o importa i tuoi annunci.'] : TITLES[shown];
+  const [head, sub] = shown === 'home' ? [TITLE_WORDS(name).join(' '), 'Migliora, crea o arreda i tuoi annunci.'] : TITLES[shown];
   const subtitle = shown === 'scanning' ? `${SCAN_STEPS[imp.step]}...` : sub;
   // Apertura: parte il container (altre card via, box al centro), la card si trasforma subito dopo, sovrapposta.
   // Chiusura: al contrario, con gli stessi piccoli sfalsamenti.
@@ -334,20 +341,18 @@ export function HomeView({ name, initialUrl = '', onSaved }: { name?: string; in
           </span>
         </Tile>
 
-        {/* Importa: righe del foglio che si accendono, card che entrano */}
-        <Tile index={2} intro={intro} wrapClass={others(2)} kicker="Hai un file del gestionale?" title="Importalo" href="#/importa">
-          <div className="par-1 absolute left-[6%] top-[calc(50%+4px)] w-28 -translate-y-1/2 rounded-lg bg-white p-1.5 shadow-md">
-            <div className="mb-1 h-2 rounded-sm bg-emerald-500/80" />
-            {[0, 1, 2, 3, 4].map(r => <div key={r} className="xl-row mt-1 grid grid-cols-3 gap-1">{[0, 1, 2].map(c => <div key={c} className="h-2 rounded-sm bg-line" />)}</div>)}
+        {/* Home staging: stanza vuota -> arredata, la linea prima/dopo scorre al passaggio del mouse */}
+        <Tile index={2} intro={intro} wrapClass={others(2)} kicker="Hai una stanza vuota?" title="Home staging" href="#/staging">
+          <div className="par-2 absolute left-1/2 top-1/2 w-52 -translate-x-1/2 -translate-y-1/2 rounded-xl bg-white p-1.5 shadow-md transition-transform ease-smooth group-hover:rotate-1">
+            <div className="relative aspect-[3/2] overflow-hidden rounded-lg">
+              <img src="/immo/home/staging-after.webp" alt="" decoding="async" className="absolute inset-0 h-full w-full object-cover" />
+              <img src="/immo/home/staging-before.webp" alt="" decoding="async" className="stage-before absolute inset-0 h-full w-full object-cover" />
+              <span className="stage-line absolute inset-y-0 w-0.5 -translate-x-1/2 bg-white shadow-[0_0_6px_rgba(0,0,0,.4)]">
+                <span className="absolute left-1/2 top-1/2 flex h-5 w-5 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white text-[9px] font-bold text-ink shadow">‹›</span>
+              </span>
+            </div>
           </div>
-          <span className="par-2 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-lg text-muted transition-transform ease-smooth group-hover:translate-x-1">→</span>
-          <div className="par-3 absolute right-[6%] top-[calc(50%+4px)] w-20 -translate-y-1/2">
-            {['/immo/home/import-1.webp', '/immo/home/import-2.webp'].map((src, i) => (
-              <div key={src} className={`rounded-lg bg-white p-1 shadow-md transition-all ease-smooth ${i ? 'mt-2 translate-x-3 opacity-60 group-hover:translate-x-0 group-hover:opacity-100' : 'group-hover:-translate-y-1'}`} style={{ transitionDelay: i ? '.12s' : '0s' }}>
-                <img src={src} alt="" className="h-11 w-full rounded-md object-cover" /><div className="mt-1 h-1 w-10 rounded bg-line" />
-              </div>
-            ))}
-          </div>
+          <span className="par-3 absolute -top-1 right-[14%] z-10 flex items-center gap-1 rounded-full bg-brand px-2.5 py-1 text-[11px] font-bold text-white shadow-lg transition-transform ease-smooth group-hover:scale-110"><Wand2 size={12} /> AI</span>
         </Tile>
       </div>
 
