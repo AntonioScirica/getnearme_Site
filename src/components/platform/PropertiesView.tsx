@@ -182,7 +182,7 @@ function PropertyMap({ projects, geo, hover, loading }: { projects: ProjectData[
       const Lf = (mod.default ?? mod) as typeof import('leaflet');
       if (cancelled || !el.current || map.current) return;
       L.current = Lf;
-      const m = Lf.map(el.current, { zoomControl: false, attributionControl: true, scrollWheelZoom: false, zoomSnap: 0.25, zoomDelta: 0.5 }).setView([42.5, 12.5], 6);
+      const m = Lf.map(el.current, { zoomControl: false, attributionControl: true, scrollWheelZoom: false, zoomSnap: 0, zoomDelta: 0.5 }).setView([42.5, 12.5], 6);
       m.attributionControl.setPrefix(false).setPosition('bottomright');
       // Esri Light Gray (gratis, senza chiave): grigia e senza punti di interesse (negozi, ristoranti...);
       // sopra solo i nomi di vie e quartieri
@@ -196,6 +196,13 @@ function PropertyMap({ projects, geo, hover, loading }: { projects: ProjectData[
       const bar = m.getContainer().querySelector<HTMLElement>('.leaflet-control-zoom')!;
       Object.assign(bar.style, { border: '0', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 6px 20px rgba(0,0,0,.12)' });
       bar.querySelectorAll<HTMLElement>('a').forEach(a => Object.assign(a.style, { width: '36px', height: '36px', lineHeight: '36px', color: '#111', border: '0' }));
+      // Pizzico sul trackpad (arriva come rotella con ctrlKey): zoom fluido sotto le dita. Lo scorrimento
+      // normale con due dita resta alla pagina, cosi' la mappa non blocca lo scroll.
+      m.getContainer().addEventListener('wheel', e => {
+        if (!e.ctrlKey) return;
+        e.preventDefault();
+        m.setZoomAround(m.mouseEventToContainerPoint(e), m.getZoom() - e.deltaY * 0.012, { animate: false });
+      }, { passive: false });
       m.on('click', () => setSel(null));
       map.current = m;
       setReady(true);
