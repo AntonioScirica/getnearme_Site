@@ -40,9 +40,10 @@ const SCHEMA = {
           perche: str,
           soluzione: str,
           foto_indice: { type: 'integer' },
+          foto_stanza: str,
           modifica_foto: str,
         },
-        required: ['area', 'gravita', 'problema', 'perche', 'soluzione', 'foto_indice', 'modifica_foto'],
+        required: ['area', 'gravita', 'problema', 'perche', 'soluzione', 'foto_indice', 'foto_stanza', 'modifica_foto'],
         additionalProperties: false,
       },
     },
@@ -63,8 +64,10 @@ ${CRITERI_PROMPT}
 - problemi: massimo 4, i più importanti, ordinati per gravità. SOLO azioni che l'agente può fare da solo, subito: modificare titolo o testo, compilare un campo della scheda sul portale, riordinare/sostituire/eliminare foto, rifare una foto, modificare una foto con l'AI. VIETATO: consigli generici ("migliora la presentazione"), cose che l'agente non controlla (zona, palazzo, mercato, prezzi di zona), ripetere lo stesso punto due volte. Per ognuno:
   - problema: cosa non va, citando l'esempio preciso preso dal testo o dalle foto.
   - perche: perché fa perdere contatti o fiducia, in una frase.
-  - soluzione: l'azione concreta, in forma di istruzione ("Sposta la foto 3 al primo posto", "Compila il campo Spese condominiali"). Se riguarda il testo, includi la frase corretta tra virgolette.
+  - soluzione: l'azione concreta, in forma di istruzione ("Metti la foto del soggiorno al primo posto", "Compila il campo Spese condominiali"). Se riguarda il testo, includi la frase corretta tra virgolette.
   - foto_indice: se il problema riguarda UNA delle foto che vedi, il suo numero (1 = prima immagine allegata, 2 = seconda, 3 = terza); altrimenti 0.
+  - foto_stanza: se foto_indice > 0, l'ambiente che quella foto mostra, riconosciuto guardandola, in minuscolo con articolo ("la cucina", "il soggiorno", "la camera da letto", "il bagno", "l'androne", "il balcone", "la facciata"); altrimenti "".
+  - Nei testi (problema, perche, soluzione, foto_consigli, criteri) chiama SEMPRE le foto per ambiente ("la foto della cucina"), MAI per numero o posizione ("foto 3", "terza foto"); l'unica eccezione è "la prima foto" della galleria quando il problema è proprio quale foto viene mostrata per prima.
   - modifica_foto: se quella foto si può sistemare con un editor AI (più luce, raddrizzare, togliere oggetti o disordine, arredare una stanza vuota, cielo più limpido), scrivi l'istruzione per l'editor, in italiano, breve e precisa (es. "Aumenta la luminosità e bilancia il bianco, mantieni invariati mobili e pareti"). Se serve rifare la foto o manca una stanza, lascia "".
 - dati_mancanti: campi che l'acquirente cerca e non ci sono (es. spese condominiali, riscaldamento, esposizione, anno costruzione). Solo il nome del dato, breve.
 - foto_consigli: 2-4 consigli sulle foto viste (luce, ordine, inquadrature, stanze mancanti, prima foto). Se non ci sono foto, dillo.

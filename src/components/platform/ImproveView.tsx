@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { platformFontVars } from '@/lib/platformFonts';
 import { Camera, Check, Copy, Download, ExternalLink, Loader2, Puzzle, Wand2, X } from 'lucide-react';
 import { downloadImage } from '@/lib/staging';
 import { AI_MOCK, mockFor } from '@/lib/aiMock';
@@ -13,7 +15,7 @@ import { CRITERI, withScores, type Criteri } from '@/lib/listingScore';
 // Il flusso vive nella home (HomeView): la card "Miglioralo" diventa il browser e poi il verdetto.
 
 export type Listing = { url: string; title: string; address: string; propertyInfo: Record<string, unknown>; photos: string[] };
-type Problem = { area: string; gravita: 'alta' | 'media' | 'bassa'; problema: string; perche: string; soluzione: string; foto_indice?: number; modifica_foto?: string };
+type Problem = { area: string; gravita: 'alta' | 'media' | 'bassa'; problema: string; perche: string; soluzione: string; foto_indice?: number; foto_stanza?: string; modifica_foto?: string };
 export type Analysis = {
   score: number; score_potenziale: number; criteri: Criteri; sintesi: string; punti_forza: string[]; problemi: Problem[];
   dati_mancanti: string[]; foto_consigli: string[]; titolo: string; descrizione: string;
@@ -391,6 +393,12 @@ function Checklist({ items }: { items: string[] }) {
   );
 }
 
+// "la foto della cucina" (stanza riconosciuta dall'AI); se manca, "la foto 3" come ripiego.
+const roomLabel = (p: Problem) => {
+  const r = (p.foto_stanza ?? '').trim();
+  return r ? `la foto ${r.startsWith('l\'') ? `del${r.replace(/^l'/, 'l\'')}` : r.replace(/^(il|lo|la|i|gli|le) /, (_, a: string) => ({ il: 'del ', lo: 'dello ', la: 'della ', i: 'dei ', gli: 'degli ', le: 'delle ' } as Record<string, string>)[a])}` : `la foto ${p.foto_indice}`;
+};
+
 // Card di un punto da sistemare. Se riguarda una foto sistemabile con l'AI, la CTA sta in alto a destra.
 function ProblemCard({ p, i, photos }: { p: Problem; i: number; photos: string[] }) {
   const [fix, setFix] = useState(false);
@@ -415,7 +423,7 @@ function ProblemCard({ p, i, photos }: { p: Problem; i: number; photos: string[]
         <div className="mt-4 flex items-center gap-3">
           <img src={src} alt="" className="h-12 w-16 shrink-0 rounded-xl object-cover" />
           <div className="min-w-0 text-xs text-muted">
-            <div className="font-medium text-ink">Foto {p.foto_indice} dell&apos;annuncio</div>
+            <div className="font-medium text-ink first-letter:uppercase">{roomLabel(p)}</div>
             {edit ? 'Si può sistemare con l\'AI, senza rifarla.' : 'Va rifatta o sostituita: l\'AI non basta.'}
           </div>
           {!edit && <Camera size={16} className="ml-auto shrink-0 text-muted" />}
@@ -427,13 +435,13 @@ function ProblemCard({ p, i, photos }: { p: Problem; i: number; photos: string[]
           <p className="mt-1 text-sm leading-relaxed text-ink/80">{p.soluzione}</p>
         </div>
       </div>
-      {fix && src && <PhotoFix src={src} index={p.foto_indice!} edit={edit} onClose={() => setFix(false)} />}
+      {fix && src && <PhotoFix src={src} label={roomLabel(p)} edit={edit} onClose={() => setFix(false)} />}
     </li>
   );
 }
 
 // Modifica foto con l'AI (Qwen-Image su RunPod) in un pannello sopra la pagina: prima/dopo e download.
-function PhotoFix({ src, index, edit, onClose }: { src: string; index: number; edit: string; onClose: () => void }) {
+function PhotoFix({ src, label, edit, onClose }: { src: string; label: string; edit: string; onClose: () => void }) {
   const [prompt, setPrompt] = useState(edit);
   const [busy, setBusy] = useState(false);
   const [out, setOut] = useState<string | null>(null);
@@ -456,11 +464,12 @@ function PhotoFix({ src, index, edit, onClose }: { src: string; index: number; e
     else setErr(d.error === 'timeout' ? 'La GPU si sta avviando, riprova tra un minuto.' : 'Modifica non riuscita, riprova.');
   };
 
-  return (
-    <div role="dialog" aria-modal="true" className="fixed inset-0 z-[60] flex items-center justify-center bg-black/30 p-4 backdrop-blur-sm" onMouseDown={e => { if (e.target === e.currentTarget) onClose(); }}>
+  // Portal su body: un antenato con transform (animazioni di ingresso) farebbe da contenitore al fixed e l'overlay non coprirebbe tutto.
+  return createPortal(
+    <div role="dialog" aria-modal="true" className={`${platformFontVars} fixed inset-0 z-[60] font-body text-ink flex items-center justify-center bg-black/30 p-4 backdrop-blur-sm`} onMouseDown={e => { if (e.target === e.currentTarget) onClose(); }}>
       <div className={`rise relative w-full max-w-2xl rounded-[28px] bg-white p-6 text-left ${CARD_SHADOW}`}>
         <button onClick={onClose} aria-label="Chiudi" className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full text-muted hover:bg-canvas hover:text-ink"><X size={18} /></button>
-        <h3 className="text-xl font-bold tracking-tight">Sistema la foto {index} con l&apos;AI</h3>
+        <h3 className="text-xl font-bold tracking-tight">Sistema {label} con l&apos;AI</h3>
         <div className="mt-4 grid grid-cols-2 gap-3">
           <figure><img src={src} alt="" className="aspect-[4/3] w-full rounded-2xl object-cover" /><figcaption className="mt-1.5 text-xs text-muted">Prima</figcaption></figure>
           <figure>
@@ -472,13 +481,14 @@ function PhotoFix({ src, index, edit, onClose }: { src: string; index: number; e
         <textarea rows={2} value={prompt} onChange={e => setPrompt(e.target.value)} className="mt-1.5 w-full rounded-2xl bg-canvas px-4 py-3 text-sm outline-none focus:bg-white focus:ring-1 focus:ring-ink/15" />
         {err && <p className="mt-2 text-sm text-rose-600">{err}</p>}
         <div className="mt-4 flex flex-wrap justify-end gap-2">
-          {out && <button onClick={() => downloadImage(out, `foto-${index}-sistemata.jpg`)} className="flex items-center gap-1.5 btn-ghost rounded-full px-4 py-2 text-sm font-medium"><Download size={15} /> Scarica</button>}
+          {out && <button onClick={() => downloadImage(out, `${label.replace(/[^a-z]+/gi, '-').replace(/^-|-$/g, '').toLowerCase()}-sistemata.jpg`)} className="flex items-center gap-1.5 btn-ghost rounded-full px-4 py-2 text-sm font-medium"><Download size={15} /> Scarica</button>}
           <button onClick={run} disabled={busy || !prompt.trim()} className="flex items-center gap-2 btn-ink rounded-full px-5 py-2 text-sm font-semibold disabled:opacity-50">
             {busy ? <Loader2 size={15} className="animate-spin" /> : <Wand2 size={15} />} {busy ? 'Sto modificando la foto...' : out ? 'Rigenera' : 'Genera'}
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

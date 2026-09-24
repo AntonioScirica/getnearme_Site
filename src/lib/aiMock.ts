@@ -7,7 +7,7 @@ export const mockDelay = (ms = 3000) => new Promise(r => setTimeout(r, ms));
 const MOCKS: Record<string, unknown> = {
   analyze: {
     criteri: {
-      foto: { punti: 14, punti_dopo: 27, nota: 'Prima foto sull\'androne, foto 3 storta e gialla.', limite: 'Mancano foto di bagno e camere: vanno scattate, l\'AI non le crea.' },
+      foto: { punti: 14, punti_dopo: 27, nota: 'Prima foto sull\'androne, foto della cucina storta e gialla.', limite: 'Mancano foto di bagno e camere: vanno scattate, l\'AI non le crea.' },
       dati: { punti: 16, punti_dopo: 22, nota: 'Mancano spese condominiali, classe energetica, riscaldamento e anno.', limite: 'Anno di costruzione e spese esatte vanno chiesti all\'amministratore.' },
       descrizione: { punti: 11, punti_dopo: 18, nota: 'Contenuti buoni ma con refusi e il telefono nel testo.', limite: 'Senza planimetria e misure delle stanze la descrizione resta generica.' },
       coerenza: { punti: 12, punti_dopo: 15, nota: 'Dati coerenti, penalizzati dai contatti diretti nella descrizione.', limite: '' },
@@ -21,25 +21,25 @@ const MOCKS: Record<string, unknown> = {
     ],
     problemi: [
       {
-        area: 'foto', gravita: 'alta', foto_indice: 1, modifica_foto: '',
+        area: 'foto', gravita: 'alta', foto_indice: 1, foto_stanza: 'l\'androne', modifica_foto: '',
         problema: "La prima foto mostra l'androne condominiale, non l'appartamento.",
         perche: 'La prima foto decide se l\'annuncio viene aperto: un androne non fa capire cosa si compra.',
         soluzione: 'Sposta al primo posto la foto del salone con cucina a vista e metti l\'androne in fondo alla galleria.',
       },
       {
-        area: 'foto', gravita: 'media', foto_indice: 3, modifica_foto: 'Raddrizza le linee verticali e bilancia il bianco, mantieni invariati mobili e pareti',
-        problema: 'La foto 3 è storta e ha una dominante gialla.',
+        area: 'foto', gravita: 'media', foto_indice: 3, foto_stanza: 'la cucina', modifica_foto: 'Raddrizza le linee verticali e bilancia il bianco, mantieni invariati mobili e pareti',
+        problema: 'La foto della cucina è storta e ha una dominante gialla.',
         perche: 'Le foto storte e gialle fanno sembrare gli ambienti più vecchi e piccoli.',
         soluzione: 'Sostituiscila con la versione corretta (usa "Sistema con AI") prima di ricaricarla sul portale.',
       },
       {
-        area: 'descrizione', gravita: 'media', foto_indice: 0, modifica_foto: '',
+        area: 'descrizione', gravita: 'media', foto_indice: 0, foto_stanza: '', modifica_foto: '',
         problema: 'Nel testo c\'è il telefono dell\'agenzia: "TEL. 02/36586417".',
         perche: 'I portali penalizzano i contatti nel testo e perdi il tracciamento delle richieste.',
         soluzione: 'Elimina la riga del telefono: il portale mostra già i tuoi contatti nel box agenzia.',
       },
       {
-        area: 'dati', gravita: 'media', foto_indice: 0, modifica_foto: '',
+        area: 'dati', gravita: 'media', foto_indice: 0, foto_stanza: '', modifica_foto: '',
         problema: 'Mancano le spese condominiali, con piscina e palestra sono una domanda certa.',
         perche: 'Chi vede servizi costosi vuole sapere subito quanto paga al mese.',
         soluzione: 'Compila il campo "Spese condominiali" nella scheda dell\'annuncio sul portale.',
