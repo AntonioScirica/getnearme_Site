@@ -94,25 +94,50 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
 
   const empty = msgs.length === 0;
   const picker = <input type="file" accept="image/*" multiple className="hidden" onChange={e => { upload(e.target.files); e.target.value = ''; }} />;
+  const chips = (scene === 'planimetria' ? [] : QUICK_PRESETS).map(x => (
+    <button key={x.id} onClick={() => { setText(x.label); setPicked(x); }}
+      className="rounded-full bg-white px-3 py-1.5 text-xs font-medium text-ink/80 ring-1 ring-inset ring-black/10 ease-smooth transition-colors hover:bg-canvas">{x.label}</button>
+  ));
 
   return (
-    <div className={`mx-auto flex max-w-3xl flex-col ${empty ? 'min-h-[calc(100vh-12rem)] justify-center' : ''} pb-8 pt-6`}
+    // Pagina a tutta altezza: conversazione che scorre in mezzo, campo della chat sempre in basso
+    <div className="mx-auto flex min-h-[calc(100vh-7rem)] max-w-3xl flex-col"
       onDragOver={e => { e.preventDefault(); setDrag(true); }} onDragLeave={() => setDrag(false)} onDrop={e => { e.preventDefault(); setDrag(false); upload(e.dataTransfer.files); }}>
 
-      {empty && (
-        <h1 className="mb-8 text-center font-display text-4xl font-bold tracking-tight md:text-5xl">
-          <span className="blur-in inline-block">Home staging</span>
-          <span className="blur-in block text-muted/70" style={{ animationDelay: '.1s' }}>Carica una foto e chiedi quello che vuoi.</span>
-        </h1>
-      )}
+      <div className="flex-1 space-y-4 pb-6 pt-6">
+        {/* Vuota: un solo invito, grande e al centro, per caricare la foto */}
+        {empty && (
+          <div className="flex min-h-[calc(100vh-18rem)] flex-col items-center justify-center">
+            <h1 className="text-center font-display text-4xl font-bold tracking-tight md:text-5xl">
+              <span className="blur-in inline-block">Home staging</span>
+              <span className="blur-in block text-muted/70" style={{ animationDelay: '.1s' }}>Carica una foto, poi chiedi quello che vuoi.</span>
+            </h1>
+            <label className={`rise mt-10 flex w-full max-w-xl cursor-pointer flex-col items-center gap-4 rounded-[28px] border-2 border-dashed bg-white px-8 py-12 text-center ease-smooth transition-colors ${drag ? 'border-brand bg-brand/5' : 'border-line hover:border-brand/60'} ${CARD_SHADOW}`} style={{ animationDelay: '.2s' }}>
+              <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-brand/10 text-brand"><ImagePlus size={30} /></span>
+              <span className="text-lg font-semibold">1. Carica la foto della stanza</span>
+              <span className="text-sm text-muted">Trascinala qui oppure clicca il pulsante. Va bene anche una facciata, un giardino o una planimetria.</span>
+              <span className="mt-1 flex h-11 items-center gap-2 rounded-full bg-brand px-6 text-sm font-semibold text-white ease-smooth transition-transform hover:scale-[1.03]"><ImagePlus size={16} /> Scegli una foto</span>
+              {picker}
+            </label>
+            <p className="mt-6 text-sm text-muted"><b className="text-ink">2.</b> Poi scrivi qui sotto cosa cambiare, in italiano. <b className="text-ink">3.</b> Vedi il prima/dopo e continua a chiedere.</p>
+          </div>
+        )}
 
-      {/* Conversazione */}
-      <div className="space-y-4">
-        {msgs.map(m => m.role === 'user' ? (
-          <div key={m.id} className="blur-in flex justify-end">
-            {m.image
-              ? <img src={m.image} alt="" className="max-h-72 max-w-[75%] rounded-3xl object-cover ring-1 ring-black/5" />
-              : <div className="max-w-[75%] rounded-3xl rounded-br-lg bg-ink px-4 py-2.5 text-sm text-white">{m.text}</div>}
+        {/* Conversazione */}
+        {msgs.map((m, i) => m.role === 'user' ? (
+          <div key={m.id} className="blur-in">
+            <div className="flex justify-end">
+              {m.image
+                ? <img src={m.image} alt="" className="max-h-72 max-w-[75%] rounded-3xl object-cover ring-1 ring-black/5" />
+                : <div className="max-w-[75%] rounded-3xl rounded-br-lg bg-ink px-4 py-2.5 text-sm text-white">{m.text}</div>}
+            </div>
+            {/* dopo una foto caricata: l'assistente spiega cosa fare e propone i suggerimenti */}
+            {m.image && i === msgs.length - 1 && !busy && (
+              <div className="blur-in mt-3 max-w-[85%] rounded-3xl rounded-bl-lg bg-canvas px-4 py-3 text-sm" style={{ animationDelay: '.3s' }}>
+                <p>Foto caricata. Scrivi qui sotto cosa vuoi cambiare, oppure tocca un suggerimento:</p>
+                <div className="mt-2.5 flex flex-wrap gap-1.5">{chips}</div>
+              </div>
+            )}
           </div>
         ) : (
           <div key={m.id} className={`blur-in rounded-[24px] bg-white p-2.5 ${CARD_SHADOW}`}>
@@ -131,23 +156,16 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
         <div ref={end} />
       </div>
 
-      {/* Composer: sempre in basso, stile home */}
-      <div className={`${empty ? '' : 'sticky bottom-4 mt-6'} z-20`}>
-        {base && !busy && (
-          <div className="mb-2 flex flex-wrap gap-1.5">
-            {(scene === 'planimetria' ? [] : QUICK_PRESETS).map(x => (
-              <button key={x.id} onClick={() => { setText(x.label); setPicked(x); }}
-                className="rounded-full bg-white/90 px-3 py-1.5 text-xs font-medium text-ink/80 ring-1 ring-inset ring-black/10 backdrop-blur ease-smooth transition-colors hover:bg-white">{x.label}</button>
-            ))}
-          </div>
-        )}
+      {/* Campo della chat: sempre in basso, con il pulsante Foto ben visibile */}
+      <div className="sticky bottom-0 z-20 -mx-6 bg-gradient-to-t from-white via-white/95 to-transparent px-6 pb-4 pt-6">
+        {base && !busy && !empty && msgs[msgs.length - 1]?.role === 'ai' && <div className="mb-2 flex flex-wrap gap-1.5">{chips}</div>}
         <div className={`rounded-[26px] bg-white p-2 ${CARD_SHADOW} ${drag ? 'ring-2 ring-brand' : ''}`}>
           <div className="flex items-end gap-2">
-            <label title="Carica una foto" className="flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full bg-canvas text-ink/80 ring-1 ring-inset ring-black/10 hover:bg-white">
-              <ImagePlus size={18} />{picker}
+            <label title="Carica una foto" className={`flex h-10 shrink-0 cursor-pointer items-center gap-1.5 rounded-full px-3.5 text-sm font-semibold ease-smooth transition-colors ${base ? 'bg-canvas text-ink/80 ring-1 ring-inset ring-black/10 hover:bg-white' : 'bg-brand text-white hover:bg-brand/90'}`}>
+              <ImagePlus size={17} /> {base ? 'Altra foto' : 'Carica foto'}{picker}
             </label>
             <textarea rows={1} value={text} onChange={e => { setText(e.target.value); touch(); }} disabled={!base}
-              placeholder={!base ? 'Carica o trascina una foto per iniziare' : scene === 'planimetria' ? 'Che stile di arredo? Es. moderno, nordico' : 'Cosa vuoi cambiare? Es. togli il divano e metti un tavolo da pranzo'}
+              placeholder={!base ? 'Prima carica una foto, poi scrivi qui cosa cambiare' : scene === 'planimetria' ? 'Che stile di arredo? Es. moderno, nordico' : 'Cosa vuoi cambiare? Es. togli il divano e metti un tavolo da pranzo'}
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
               className="min-h-10 min-w-0 flex-1 resize-none bg-transparent px-1 py-2.5 text-[15px] leading-relaxed outline-none placeholder:text-muted/60 disabled:cursor-not-allowed" />
             <button onClick={send} disabled={!text.trim() || !base || busy} aria-label="Invia"
@@ -156,11 +174,11 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
             </button>
           </div>
           <div className="mt-1.5 flex items-center gap-1 px-1">
+            <span className="mr-1 text-[11px] text-muted">Tipo di foto:</span>
             {SCENES.map(s => (
               <button key={s.id} onClick={() => setScene(s.id)}
                 className={`rounded-full px-3 py-1 text-xs font-medium ease-smooth transition-colors ${scene === s.id ? 'bg-canvas text-ink ring-1 ring-inset ring-black/10' : 'text-muted hover:text-ink'}`}>{s.label}</button>
             ))}
-            <span className="ml-auto hidden text-[11px] text-muted sm:block">Più foto insieme? Caricale tutte: le fai in blocco.</span>
           </div>
         </div>
       </div>
