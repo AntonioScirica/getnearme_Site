@@ -228,16 +228,18 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
             <div className="blur-in -mx-1 mb-2 flex gap-1.5 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" style={{ maskImage: 'linear-gradient(90deg, #000 90%, transparent)' }}>{chips}</div>
           )}
           <div className={`flex items-center gap-1.5 rounded-[26px] bg-white p-2 pl-2.5 ${CARD_SHADOW} ${drag ? 'ring-2 ring-brand' : ''}`}>
-            {/* Foto: icona come nelle chat, a sinistra del testo */}
-            <label title={base ? 'Carica un\'altra foto' : 'Carica una foto'} className="flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink">
-              <ImagePlus size={20} />{picker}
-            </label>
-            {base && (
-              <button onClick={() => setSelecting(v => !v)} title="Seleziona una zona della foto" aria-pressed={selecting}
-                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ease-smooth transition-colors ${selecting || region || points.length ? 'bg-rose-50 text-rose-600' : 'text-muted hover:bg-canvas hover:text-ink'}`}>
-                <SquareDashedMousePointer size={19} />
-              </button>
-            )}
+            {/* foto e zona vicine, come un gruppo di strumenti */}
+            <div className="flex shrink-0 items-center">
+              <label title={base ? 'Carica un\'altra foto' : 'Carica una foto'} className="flex h-10 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink">
+                <ImagePlus size={20} />{picker}
+              </label>
+              {base && (
+                <button onClick={() => setSelecting(v => !v)} title="Seleziona una zona della foto" aria-pressed={selecting}
+                  className={`flex h-10 w-9 shrink-0 items-center justify-center rounded-full ease-smooth transition-colors ${selecting || region || points.length ? 'bg-rose-50 text-rose-600' : 'text-muted hover:bg-canvas hover:text-ink'}`}>
+                  <SquareDashedMousePointer size={19} />
+                </button>
+              )}
+            </div>
             <textarea rows={1} value={text} onChange={e => { setText(e.target.value); touch(); }} disabled={!base}
               placeholder={!base ? 'Prima carica una foto, poi scrivi qui cosa cambiare' : region || points.length ? 'Cosa faccio nella zona? Es. togli il letto' : 'Cosa vuoi cambiare? Es. togli il divano e metti un tavolo da pranzo'}
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
