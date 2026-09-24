@@ -123,7 +123,7 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
             <div className="flex min-h-[calc(100vh-22rem)] flex-col items-center justify-center">
               <h1 className="text-center font-display text-4xl font-bold tracking-tight md:text-5xl">
                 <span className="blur-in inline-block">Home staging</span>
-                <span className="blur-in block text-muted/70" style={{ animationDelay: '.1s' }}>Carica una foto, poi chiedi quello che vuoi.</span>
+                <span className="blur-in block text-muted/70" style={{ animationDelay: '.1s' }}>Carica una foto e chiedi.</span>
               </h1>
               <label className={`rise mt-10 flex w-full max-w-xl cursor-pointer flex-col items-center gap-4 rounded-[28px] border-2 border-dashed bg-white px-8 py-12 text-center ease-smooth transition-colors ${drag ? 'border-brand bg-brand/5' : 'border-line hover:border-brand/60'} ${CARD_SHADOW}`} style={{ animationDelay: '.2s' }}>
                 <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-brand/10 text-brand"><ImagePlus size={30} /></span>
