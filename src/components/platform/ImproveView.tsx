@@ -147,9 +147,9 @@ export function BrowserBody({ stage, listing, error, url, onRetry, onManual, onT
       <div className="blur-in mt-1 text-sm text-muted" style={{ animationDelay: '.25s' }}>{[text(info.price), text(info.surface), listing!.address].filter(Boolean).join(' · ')}</div>
       <p className="blur-in mt-3 line-clamp-4 text-sm leading-relaxed text-muted" style={{ animationDelay: '.3s' }}>{text(info.description)}</p>
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-white to-transparent" />
-      {/* Fascio di scansione: neutro, niente luce colorata */}
-      <div className="pointer-events-none absolute inset-x-0 h-24 bg-gradient-to-b from-transparent via-ink/[0.04] to-transparent" style={{ animation: 'gnm-scan 2.2s ease-in-out infinite alternate' }}>
-        <div className="absolute inset-x-6 bottom-1/2 h-px bg-ink/30" />
+      {/* Fascio di scansione nel blu AgenteImmo */}
+      <div className="pointer-events-none absolute inset-x-0 h-24 bg-gradient-to-b from-transparent via-brand/20 to-transparent" style={{ animation: 'gnm-scan 2.2s ease-in-out infinite alternate' }}>
+        <div className="absolute inset-x-0 bottom-1/2 h-0.5 rounded-full bg-brand shadow-[0_0_14px_3px] shadow-brand/50" />
       </div>
     </div>
   );
