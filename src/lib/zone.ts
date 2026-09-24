@@ -4,6 +4,7 @@
 
 const RADIUS = 1200
 const UA = 'GetNearMe/1.0 (https://getnearme.it)'
+const OVERPASS = ['https://overpass-api.de/api/interpreter', 'https://overpass.private.coffee/api/interpreter', 'https://maps.mail.ru/osm/tools/overpass/api/interpreter']
 
 export type Poi = { categoria: string; nome: string; distanza: number }
 export type Zone = { lat: number; lon: number; luogo: string; pois: Poi[] }
@@ -33,11 +34,16 @@ export async function lookupZone(address: string, radius = RADIUS): Promise<Zone
   if (!geo?.[0]) return null
   const lat = Number(geo[0].lat), lon = Number(geo[0].lon)
 
-  const q = `[out:json][timeout:20];(${CATS.map(c => `nwr${c.filter}(around:${radius},${lat},${lon});`).join('')});out center tags;`
-  const data = await fetch('https://overpass-api.de/api/interpreter', {
-    method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'User-Agent': UA },
-    body: `data=${encodeURIComponent(q)}`, signal: AbortSignal.timeout(25000),
-  }).then(r => r.json()).catch(() => null) as { elements: { lat?: number; lon?: number; center?: { lat: number; lon: number }; tags?: Record<string, string> }[] } | null
+  const q = `[out:json][timeout:25];(${CATS.map(c => `nwr${c.filter}(around:${radius},${lat},${lon});`).join('')});out center tags;`
+  // Overpass pubblico risponde 429 quando e' carico: provo i mirror in ordine
+  let data: { elements: { lat?: number; lon?: number; center?: { lat: number; lon: number }; tags?: Record<string, string> }[] } | null = null
+  for (const url of OVERPASS) {
+    data = await fetch(url, {
+      method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'User-Agent': UA },
+      body: `data=${encodeURIComponent(q)}`, signal: AbortSignal.timeout(25000),
+    }).then(r => (r.ok ? r.json() : null)).catch(() => null)
+    if (data) break
+  }
   if (!data) return { lat, lon, luogo: geo[0].display_name, pois: [] }
 
   const pois: Poi[] = []

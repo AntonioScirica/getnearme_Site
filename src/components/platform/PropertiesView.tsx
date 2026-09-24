@@ -326,7 +326,7 @@ function NearbySidebar({ p, onClose }: { p: ProjectData; onClose: () => void }) 
             <span className="text-[13px] font-semibold">Nelle vicinanze</span>
             {/* raggio della ricerca */}
             <div className="flex rounded-full bg-canvas p-0.5">
-              {[500, 1000, 2000, 3000].map(r => (
+              {[500, 1000, 2000, 5000].map(r => (
                 <button key={r} onClick={() => setRadius(r)}
                   className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ease-smooth transition-colors ${radius === r ? 'bg-white text-ink shadow-sm' : 'text-muted hover:text-ink'}`}>{km(r)}</button>
               ))}
