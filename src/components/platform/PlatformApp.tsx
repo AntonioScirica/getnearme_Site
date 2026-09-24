@@ -373,7 +373,7 @@ export function HomeView({ name, initialUrl = '', onSaved }: { name?: string; in
         </ImproveTile>
 
         {/* Crea: foto a ventaglio con molla + "+" che ruota */}
-        <Tile index={1} intro={intro} wrapClass={others(1)} kicker="Hai preso un immobile nuovo?" title="Aggiungilo alla tua vetrina" href="#/nuovo">
+        <Tile index={1} intro={intro} wrapClass={others(1)} kicker="Hai preso un immobile nuovo?" title="Mettilo in vetrina" href="#/nuovo">
           {/* la vetrina e' la pagina AgenteImmo dell'agente: si capisce dalla barra indirizzi */}
           <span className="par-1 absolute -top-3 left-1/2 z-20 flex -translate-x-1/2 items-center gap-1.5 whitespace-nowrap rounded-full bg-white px-3 py-1 text-[11px] font-medium text-muted shadow-md ring-1 ring-black/5 transition-transform ease-smooth group-hover:-translate-y-1"><Globe size={11} className="text-brand" /> agenteimmo.me/<span className="text-ink">{vetrina}</span></span>
           {['/immo/home/fan-1.webp', '/immo/home/fan-2.webp', '/immo/home/fan-3.webp'].map((src, i) => (
