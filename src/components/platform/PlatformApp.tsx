@@ -344,6 +344,7 @@ export function HomeView({ name, initialUrl = '', onSaved }: { name?: string; in
 
   // Apre Migliora = intenzione di analizzare: si accende la GPU dell'analisi (avvio a freddo ~3,5 min).
   const openLink = () => { setIntro(false); setOpen(true); warm('analysis'); };
+  const vetrina = (name ?? 'tuonome').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   const close = () => { imp.reset(); setOpen(false); };
   const restart = () => { imp.reset(); setUrl(''); document.querySelector('main')?.scrollTo({ top: 0, behavior: 'smooth' }); };
 
@@ -372,9 +373,11 @@ export function HomeView({ name, initialUrl = '', onSaved }: { name?: string; in
         </ImproveTile>
 
         {/* Crea: foto a ventaglio con molla + "+" che ruota */}
-        <Tile index={1} intro={intro} wrapClass={others(1)} kicker="Hai preso un immobile nuovo?" title="Mettilo sul tuo sito" href="#/nuovo">
+        <Tile index={1} intro={intro} wrapClass={others(1)} kicker="Hai preso un immobile nuovo?" title="Aggiungilo alla tua vetrina" href="#/nuovo">
+          {/* la vetrina e' la pagina AgenteImmo dell'agente: si capisce dalla barra indirizzi */}
+          <span className="par-1 absolute -top-3 left-1/2 z-20 flex -translate-x-1/2 items-center gap-1.5 whitespace-nowrap rounded-full bg-white px-3 py-1 text-[11px] font-medium text-muted shadow-md ring-1 ring-black/5 transition-transform ease-smooth group-hover:-translate-y-1"><Globe size={11} className="text-brand" /> agenteimmo.me/<span className="text-ink">{vetrina}</span></span>
           {['/immo/home/fan-1.webp', '/immo/home/fan-2.webp', '/immo/home/fan-3.webp'].map((src, i) => (
-            <div key={src} className={`absolute left-1/2 top-1 ${['par-1', 'par-2 z-10', 'par-3'][i]}`}>
+            <div key={src} className={`absolute left-1/2 top-4 ${['par-1', 'par-2 z-10', 'par-3'][i]}`}>
               <img src={src} alt="" className={`h-32 w-24 -translate-x-1/2 rounded-xl object-cover shadow-md ring-2 ring-white transition-transform ease-smooth ${
                 ['-translate-x-[90%] -rotate-12 group-hover:-translate-x-[118%] group-hover:-rotate-[18deg]', 'group-hover:-translate-y-3 group-hover:scale-105', '-translate-x-[10%] rotate-12 group-hover:translate-x-[18%] group-hover:rotate-[18deg]'][i]}`} />
             </div>

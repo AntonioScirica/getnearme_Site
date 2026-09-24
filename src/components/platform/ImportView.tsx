@@ -55,7 +55,7 @@ export default function ImportView({ onDone }: { onDone: () => void }) {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <a href="#/nuovo" className="inline-flex items-center gap-1 text-sm text-muted hover:text-ink"><ArrowLeft size={16} /> Nuovo immobile sul tuo sito</a>
+      <a href="#/nuovo" className="inline-flex items-center gap-1 text-sm text-muted hover:text-ink"><ArrowLeft size={16} /> Nuovo immobile nella tua vetrina</a>
       <h1 className="mt-4 font-display text-3xl font-bold tracking-tight">Importa da CSV o Excel</h1>
       <p className="mt-1 text-muted">Carica l&apos;export del tuo gestionale: riconosciamo le colonne da soli, tu controlli e confermi.</p>
 

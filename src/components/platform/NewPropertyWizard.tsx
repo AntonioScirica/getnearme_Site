@@ -182,7 +182,7 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
           {photos[0] ? <img key={srcOf(photos[0])} src={srcOf(photos[0])} alt="" className="blur-in h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center text-muted"><ImagePlus size={16} /></div>}
         </div>
         <div className="min-w-0 flex-1">
-          <div className="truncate font-display text-lg font-semibold">{summary || 'Nuovo immobile sul tuo sito'}</div>
+          <div className="truncate font-display text-lg font-semibold">{summary || 'Nuovo immobile nella tua vetrina'}</div>
           <div className="text-xs text-muted">{done ? 'Pronto' : `Scheda ${step + 1} di ${STEPS.length}`} · completezza <CountUp value={comp.score} duration={400} />%
             <span className={`ml-2 inline-flex items-center gap-1 text-emerald-600 ease-smooth transition-opacity ${savedShown ? 'opacity-100' : 'opacity-0'}`}><Check size={11} strokeWidth={3} /> Bozza salvata</span></div>
         </div>
@@ -306,7 +306,7 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
       {/* Pronto per il portale: tutto da copiare e incollare, foto pronte, pubblicazione sul sito */}
       {done && (
         <section className="mt-8" style={{ animation: 'gnm-in-right var(--gnm-dur) var(--gnm-ease) both' }}>
-          <h1 className="font-display text-3xl font-bold tracking-tight">Pronto per il tuo sito e per il portale</h1>
+          <h1 className="font-display text-3xl font-bold tracking-tight">Pronto per la tua vetrina e per il portale</h1>
           <p className="mt-1 text-muted">Copia e incolla su immobiliare.it, idealista o dove pubblichi. E lo hai anche sul tuo sito.</p>
           {busy && <div className="mt-6 flex items-center gap-2 text-muted"><Loader2 size={18} className="animate-spin" /> {busy}</div>}
           {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
@@ -351,7 +351,7 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
               {/* Sito dell'agente */}
               <div className="rise card p-5" style={{ animationDelay: '.3s' }}>
                 <button type="button" role="switch" aria-checked={publish} onClick={() => setPublish(v => !v)} className="flex w-full items-center justify-between gap-4 text-left">
-                  <span><span className="text-sm font-semibold">Pubblica anche sul tuo sito</span>
+                  <span><span className="text-sm font-semibold">Pubblica nella tua vetrina AgenteImmo</span>
                     <span className="block text-xs text-muted">{slug ? `Comparirà su ${portfolioUrl(slug).replace(/^https?:\/\//, '')}` : 'Comparirà nella tua pagina con tutte le tue case.'}</span></span>
                   <span className={`relative h-7 w-12 shrink-0 rounded-full ease-smooth transition-colors ${publish ? 'bg-brand' : 'bg-line'}`}><span className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow ease-smooth transition-all ${publish ? 'left-6' : 'left-1'}`} /></span>
                 </button>
