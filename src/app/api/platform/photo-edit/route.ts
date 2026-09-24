@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { isPublicHttpsUrl } from '@/lib/safeUrl'
 import { createClient } from '@supabase/supabase-js'
 import { uploadJpeg } from '@/lib/r2'
 import { logUsage } from '@/lib/ai'
@@ -14,7 +15,7 @@ export const maxDuration = 300
 // Solo foto dei CDN dei portali o del nostro R2: il worker non scarica URL arbitrari.
 const ALLOWED = /^https:\/\/(?:pwm\.im-cdn\.it|img\d*\.idealista\.(?:it|com|pt)|images?-?\d*\.casa\.it)\//
 const RUNPOD = 'https://api.runpod.ai/v2'
-const allowedUrl = (u: string) => ALLOWED.test(u) || (!!process.env.R2_PUBLIC_URL && u.startsWith(`${process.env.R2_PUBLIC_URL}/`))
+const allowedUrl = (u: string) => ALLOWED.test(u) || (!!process.env.R2_PUBLIC_URL && u.startsWith(`${process.env.R2_PUBLIC_URL}/`)) || isPublicHttpsUrl(u)
 
 type RunpodJob = { id?: string; status?: string; output?: { image_base64?: string; error?: string; seconds?: number }; error?: string }
 

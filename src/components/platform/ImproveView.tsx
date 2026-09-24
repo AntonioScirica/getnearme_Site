@@ -26,7 +26,8 @@ export type Analysis = {
 };
 export type Stage = 'input' | 'opening' | 'scanning' | 'done' | 'no-extension' | 'manual' | 'error';
 
-const PORTAL_RE = /^https:\/\/(www\.)?(immobiliare\.it|idealista\.(it|com|pt)|casa\.it)\//i;
+// Qualsiasi sito di annunci: l'estensione legge la pagina in modo generico e Qwen ne estrae i dati.
+const LINK_RE = /^https:\/\/[^/\s]+\.[^/\s]+/i;
 export const SCAN_STEPS = ['Leggo i dati dell\'annuncio', 'Guardo le foto', 'Valuto titolo e descrizione', 'Cerco i dati mancanti', 'Riscrivo l\'annuncio'];
 
 const text = (v: unknown) => (typeof v === 'string' ? v : '');
@@ -73,7 +74,7 @@ export function useImprove() {
     const id = ++run.current;
     const u = target.trim();
     setError(null); setAnalysis(null);
-    if (!PORTAL_RE.test(u)) { setError('Incolla il link di un annuncio da immobiliare.it, idealista o casa.it.'); setStage('error'); return; }
+    if (!LINK_RE.test(u)) { setError('Incolla il link completo dell\'annuncio (inizia con https://).'); setStage('error'); return; }
     setListing({ url: u, title: '', address: '', propertyInfo: {}, photos: [] });
     setStage('opening');
     const ping = await extSend<{ ok: boolean }>({ type: 'GNM_PING' });
@@ -85,7 +86,9 @@ export function useImprove() {
     const r = await extSend<{ ok: boolean; data?: Listing; error?: string }>({ type: 'GNM_IMPORT_LISTING', url: u });
     if (id !== run.current) return;
     if (!r?.ok || !r.data) {
-      setError(r?.error === 'timeout'
+      setError(r?.error === 'not_a_listing'
+        ? 'Questa pagina non sembra un annuncio immobiliare (non trovo prezzo e superficie). Controlla il link.'
+        : r?.error === 'timeout'
         ? 'Non sono riuscito a leggere l\'annuncio (pagina lenta, rimossa o con verifica anti-bot). Aprilo una volta nel browser e riprova, oppure incolla il testo.'
         : 'Import non riuscito. Riprova o incolla il testo dell\'annuncio.');
       setStage('error');

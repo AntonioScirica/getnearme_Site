@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { isPublicHttpsUrl } from '@/lib/safeUrl'
 import { generateJson } from '@/lib/ai'
 import { createClient } from '@supabase/supabase-js'
 import { CRITERI_PROMPT, CRITERI_SCHEMA, withScores } from '@/lib/listingScore'
@@ -16,7 +17,6 @@ export const maxDuration = 60
 // dei CDN dei portali, cosi' valuta anche la qualita' del servizio fotografico.
 // Modello: Qwen self-hosted su RunPod via lib/ai (Claude solo come ripiego finche' l'endpoint non c'e').
 // ponytail: niente addebito crediti per ora, da agganciare prima dello switch.
-const PHOTO_RE = /^https:\/\/(?:pwm\.im-cdn\.it|img\d*\.idealista\.(?:it|com|pt)|images?-?\d*\.casa\.it)\//
 const MAX_PHOTOS = 3
 // Per l'AI bastano foto medie: meno pixel = meno token = meno secondi GPU.
 // immobiliare: stesso id in piu' tagli, m-c e' circa 400-500px.
@@ -102,7 +102,7 @@ export async function POST(req: NextRequest) {
   try { ({ listing } = await req.json()) } catch { return NextResponse.json({ error: 'bad_request' }, { status: 400 }) }
   if (!listing || typeof listing !== 'object') return NextResponse.json({ error: 'bad_request' }, { status: 400 })
 
-  const photos = (Array.isArray(listing.photos) ? listing.photos : []).filter(u => typeof u === 'string' && PHOTO_RE.test(u))
+  const photos = (Array.isArray(listing.photos) ? listing.photos : []).filter(isPublicHttpsUrl) // foto di qualsiasi sito di annunci, solo https pubblico
 
   // Passo 1: pagina grezza -> scheda completa (qualsiasi portale, anche i dati visibili solo cliccando).
   // Se manca la pagina o l'estrazione fallisce si va avanti con i dati dei selettori dell'estensione.

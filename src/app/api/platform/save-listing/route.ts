@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { isPublicHttpsUrl } from '@/lib/safeUrl'
 import { createClient } from '@supabase/supabase-js'
 import { rehostImage } from '@/lib/r2'
 
@@ -13,7 +14,6 @@ export const maxDuration = 60
 // "Salva nei miei immobili" da Migliora annuncio: copia TUTTE le foto su R2 (non
 // dipendiamo piu' dal CDN del portale) e salva tutti i dati letti dall'estensione.
 // Solo URL dei CDN dei portali: il server non scarica indirizzi arbitrari (SSRF).
-const PHOTO_RE = /^https:\/\/(?:pwm\.im-cdn\.it|img\d*\.idealista\.(?:it|com|pt)|images?-?\d*\.casa\.it)\//
 const MAX_PHOTOS = 40
 const PARALLEL = 6
 
@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
   const d = details as Record<string, unknown>
 
   // Foto: copia su R2 a 1600px, a gruppi di PARALLEL, mantenendo l'ordine.
-  const sources = (Array.isArray(l.photos) ? l.photos : []).filter(u => typeof u === 'string' && PHOTO_RE.test(u)).slice(0, MAX_PHOTOS)
+  const sources = (Array.isArray(l.photos) ? l.photos : []).filter(isPublicHttpsUrl) // foto di qualsiasi sito di annunci, solo https pubblico.slice(0, MAX_PHOTOS)
   const stamp = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
   const photos: string[] = []
   for (let i = 0; i < sources.length; i += PARALLEL) {
