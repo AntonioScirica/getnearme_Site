@@ -14,7 +14,8 @@ import { PhotoEditModal, QUICK_PRESETS, type EditRequest } from './AiPhoto';
 import { CopyIcon } from './ImproveView';
 import CountUp from './CountUp';
 
-// "Crea da zero": hai appena preso un immobile, AgenteImmo ti prepara tutto per il portale.
+// "Mettilo sul tuo sito": hai appena preso un immobile, AgenteImmo lo mette sul tuo sito (che si
+// costruisce da solo, casa dopo casa) e ti prepara tutto per il portale.
 // Una scheda per volta: prima i dati facili (quasi tutto a tap), in fondo le foto con le
 // modifiche AI (arreda, svuota, luce, prima/dopo), poi la pagina "Pronto per il portale".
 // Bozza (dati e note, non foto) salvata in automatico.
@@ -181,8 +182,8 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
           {photos[0] ? <img key={srcOf(photos[0])} src={srcOf(photos[0])} alt="" className="blur-in h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center text-muted"><ImagePlus size={16} /></div>}
         </div>
         <div className="min-w-0 flex-1">
-          <div className="truncate font-display text-lg font-semibold">{summary || 'Nuovo immobile'}</div>
-          <div className="text-xs text-muted">{done ? 'Pronto per il portale' : `Scheda ${step + 1} di ${STEPS.length}`} · completezza <CountUp value={comp.score} duration={400} />%
+          <div className="truncate font-display text-lg font-semibold">{summary || 'Nuovo immobile sul tuo sito'}</div>
+          <div className="text-xs text-muted">{done ? 'Pronto' : `Scheda ${step + 1} di ${STEPS.length}`} · completezza <CountUp value={comp.score} duration={400} />%
             <span className={`ml-2 inline-flex items-center gap-1 text-emerald-600 ease-smooth transition-opacity ${savedShown ? 'opacity-100' : 'opacity-0'}`}><Check size={11} strokeWidth={3} /> Bozza salvata</span></div>
         </div>
         <a href="#/importa" className="hidden shrink-0 text-xs text-brand sm:block">Importa da CSV</a>
@@ -305,7 +306,7 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
       {/* Pronto per il portale: tutto da copiare e incollare, foto pronte, pubblicazione sul sito */}
       {done && (
         <section className="mt-8" style={{ animation: 'gnm-in-right var(--gnm-dur) var(--gnm-ease) both' }}>
-          <h1 className="font-display text-3xl font-bold tracking-tight">Pronto per il portale</h1>
+          <h1 className="font-display text-3xl font-bold tracking-tight">Pronto per il tuo sito e per il portale</h1>
           <p className="mt-1 text-muted">Copia e incolla su immobiliare.it, idealista o dove pubblichi. E lo hai anche sul tuo sito.</p>
           {busy && <div className="mt-6 flex items-center gap-2 text-muted"><Loader2 size={18} className="animate-spin" /> {busy}</div>}
           {error && <p className="mt-4 text-sm text-red-600">{error}</p>}

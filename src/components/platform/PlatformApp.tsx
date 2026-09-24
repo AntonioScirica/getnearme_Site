@@ -346,7 +346,7 @@ export function HomeView({ name, initialUrl = '', onSaved }: { name?: string; in
   const close = () => { imp.reset(); setOpen(false); };
   const restart = () => { imp.reset(); setUrl(''); document.querySelector('main')?.scrollTo({ top: 0, behavior: 'smooth' }); };
 
-  const [head, sub] = shown === 'home' ? [TITLE_WORDS(name).join(' '), 'Migliora, crea o arreda i tuoi annunci.'] : TITLES[shown];
+  const [head, sub] = shown === 'home' ? [TITLE_WORDS(name).join(' '), 'Migliora gli annunci, mettili sul tuo sito, arreda le foto.'] : TITLES[shown];
   const subtitle = shown === 'scanning' ? `${SCAN_STEPS[imp.step]}...` : sub;
   // Apertura: parte il container (altre card via, box al centro), la card si trasforma subito dopo, sovrapposta.
   // Chiusura: al contrario, con gli stessi piccoli sfalsamenti.
@@ -371,7 +371,7 @@ export function HomeView({ name, initialUrl = '', onSaved }: { name?: string; in
         </ImproveTile>
 
         {/* Crea: foto a ventaglio con molla + "+" che ruota */}
-        <Tile index={1} intro={intro} wrapClass={others(1)} kicker="Hai un immobile nuovo?" title="Crea da zero" href="#/nuovo">
+        <Tile index={1} intro={intro} wrapClass={others(1)} kicker="Hai preso un immobile nuovo?" title="Mettilo sul tuo sito" href="#/nuovo">
           {['/immo/home/fan-1.webp', '/immo/home/fan-2.webp', '/immo/home/fan-3.webp'].map((src, i) => (
             <div key={src} className={`absolute left-1/2 top-1 ${['par-1', 'par-2 z-10', 'par-3'][i]}`}>
               <img src={src} alt="" className={`h-32 w-24 -translate-x-1/2 rounded-xl object-cover shadow-md ring-2 ring-white transition-transform ease-smooth ${

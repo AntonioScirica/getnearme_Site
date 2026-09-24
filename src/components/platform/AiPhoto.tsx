@@ -112,7 +112,7 @@ export function AiPhotoStage({ src, busy, out, reveal, msg, fileName, onDownload
 
 // ---------------------------------------------------------------------------
 // Pannello di modifica di una foto, sopra la pagina: foto grande, azioni rapide (preset di home
-// staging), testo libero, poi prima/dopo. Usato da "Sistema con AI" (Migliora) e da Crea da zero.
+// staging), testo libero, poi prima/dopo. Usato da "Sistema con AI" (Migliora) e da "Mettilo sul tuo sito".
 // `actions` = bottoni dopo il risultato (es. Finito, oppure Tieni entrambe / Usa questa).
 // ---------------------------------------------------------------------------
 export type Preset = { id: string; label: string; req: Partial<EditRequest> };
