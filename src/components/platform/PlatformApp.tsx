@@ -162,40 +162,40 @@ function ImproveTile({ open, onOpen, onClose, hover, setHover, intro, url, setUr
   const input = useRef<HTMLInputElement>(null);
   useEffect(() => {
     if (!open) return;
-    const t = setTimeout(() => input.current?.focus(), 900);
+    const t = setTimeout(() => input.current?.focus(), 600);
     const k = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     document.addEventListener('keydown', k);
     return () => { clearTimeout(t); document.removeEventListener('keydown', k); };
   }, [open, onClose]);
 
   return (
-    <div className={`mx-2.5 w-full shrink-0 transition-all duration-500 ease-spring ${open ? 'sm:w-[34rem]' : 'sm:w-80 delay-300'} ${intro ? 'rise' : ''}`} style={{ animationDelay: '0.25s' }}>
+    <div className={`mx-2.5 w-full shrink-0 transition-all duration-500 ease-spring ${open ? 'sm:w-[34rem]' : 'sm:w-80 delay-[120ms]'} ${intro ? 'rise' : ''}`} style={{ animationDelay: '0.25s' }}>
       <div role={open ? undefined : 'button'} tabIndex={open ? -1 : 0}
         onClick={open ? undefined : onOpen} onKeyDown={e => { if (!open && e.key === 'Enter') onOpen(); }}
         onMouseMove={open ? undefined : tiltMove} onMouseEnter={() => !open && setHover(true)} onMouseLeave={e => { tiltReset(e.currentTarget); setHover(false); }}
-        className={`${open ? '' : 'tilt cursor-pointer active:scale-[0.985] hover:shadow-[0_2px_4px_rgba(0,0,0,.04),0_30px_50px_-20px_rgba(0,0,0,.25)]'} group relative flex w-full flex-col overflow-hidden rounded-[28px] bg-white p-6 text-left transition-[height,box-shadow] duration-500 ease-spring ${open ? 'h-[12.5rem] delay-300' : 'h-[22rem]'} ${CARD_SHADOW} ${open ? 'shadow-[0_2px_4px_rgba(0,0,0,.04),0_30px_60px_-24px_rgba(0,0,0,.28)]' : ''}`}>
+        className={`${open ? '' : 'tilt cursor-pointer active:scale-[0.985] hover:shadow-[0_2px_4px_rgba(0,0,0,.04),0_30px_50px_-20px_rgba(0,0,0,.25)]'} group relative flex w-full flex-col overflow-hidden rounded-[28px] bg-white p-6 text-left transition-[height,box-shadow] duration-500 ease-spring ${open ? 'h-[12.5rem] delay-[120ms]' : 'h-[22rem]'} ${CARD_SHADOW} ${open ? 'shadow-[0_2px_4px_rgba(0,0,0,.04),0_30px_60px_-24px_rgba(0,0,0,.28)]' : ''}`}>
         {!open && <span className="sheen pointer-events-none absolute inset-0 z-20" />}
         <button type="button" onClick={onClose} aria-label="Torna indietro" tabIndex={open ? 0 : -1}
-          className={`absolute right-4 top-4 z-30 flex h-9 w-9 items-center justify-center rounded-full text-muted transition-all duration-300 hover:bg-canvas hover:text-ink ${open ? 'scale-100 opacity-100 delay-700' : 'pointer-events-none scale-75 opacity-0'}`}><X size={18} /></button>
+          className={`absolute right-4 top-4 z-30 flex h-9 w-9 items-center justify-center rounded-full text-muted transition-all duration-300 hover:bg-canvas hover:text-ink ${open ? 'scale-100 opacity-100 delay-[450ms]' : 'pointer-events-none scale-75 opacity-0'}`}><X size={18} /></button>
 
         {/* Titolo della card: svanisce e si chiude */}
-        <div className={`overflow-hidden transition-all duration-400 ${open ? 'max-h-0 -translate-y-2 opacity-0 blur-[4px] delay-300' : 'max-h-24 delay-100'}`}>
+        <div className={`overflow-hidden transition-all duration-500 ease-spring ${open ? 'max-h-0 -translate-y-2 opacity-0 blur-[4px]' : 'max-h-24 delay-100'}`}>
           <span className="par-1 block text-sm text-muted">Hai già un annuncio online?</span>
           <span className="par-1 mt-1 block text-2xl font-bold leading-tight tracking-tight">Miglioralo</span>
         </div>
 
         {/* Mini scheda annuncio: resta e diventa la card sopra l'input */}
         <div className="flex flex-1 items-center justify-center">
-          <div className={`relative transition-all duration-500 ease-spring ${open ? 'w-72 delay-300' : 'w-44'}`}>
+          <div className={`relative transition-all duration-500 ease-spring ${open ? 'w-72 delay-[120ms]' : 'w-44'}`}>
             <div className="par-2">
-              <div className={`flex transition-all duration-500 ease-spring ${open ? 'flex-row items-center gap-3 rounded-2xl bg-canvas p-2 pr-3 delay-300' : 'flex-col rounded-xl bg-white p-2 shadow-md group-hover:-rotate-2'}`}>
-                <img src="/staging/1_real.jpg" alt="" className={`shrink-0 object-cover transition-all duration-500 ease-spring ${open ? 'h-12 w-16 rounded-xl delay-300' : 'h-24 w-full rounded-lg'}`} />
+              <div className={`flex transition-all duration-500 ease-spring ${open ? 'flex-row items-center gap-3 rounded-2xl bg-canvas p-2 pr-3 delay-[120ms]' : 'flex-col rounded-xl bg-white p-2 shadow-md group-hover:-rotate-2'}`}>
+                <img src="/staging/1_real.jpg" alt="" className={`shrink-0 object-cover transition-all duration-500 ease-spring ${open ? 'h-12 w-16 rounded-xl delay-[120ms]' : 'h-24 w-full rounded-lg'}`} />
                 <div className={`min-w-0 flex-1 transition-all duration-500 ${open ? '' : 'mt-2'}`}>
                   {['w-2/3', 'w-2/5', 'w-1/2'].map((w, i) => (
                     <div key={w} className={`${open ? '' : 'rewrite'} h-1.5 rounded bg-line transition-all duration-500 ${i ? 'mt-1.5' : ''} ${open && i === 2 ? 'hidden' : w}`} />
                   ))}
                 </div>
-                {open && <span className="blur-in shrink-0" style={{ animationDelay: '.7s' }}><ScoreBadge on /></span>}
+                {open && <span className="blur-in shrink-0" style={{ animationDelay: '.45s' }}><ScoreBadge on /></span>}
               </div>
             </div>
             {!open && <span className="par-3 absolute -right-4 -top-3 z-10"><ScoreBadge on={hover} /></span>}
@@ -204,7 +204,7 @@ function ImproveTile({ open, onOpen, onClose, hover, setHover, intro, url, setUr
 
         {/* Input: compare sotto la mini scheda */}
         <form onSubmit={e => { e.preventDefault(); if (ok) go(`/migliora?url=${encodeURIComponent(url.trim())}`); }}
-          className={`flex items-center gap-2 overflow-hidden rounded-full bg-canvas pl-5 transition-all duration-500 ease-spring focus-within:bg-white focus-within:ring-1 focus-within:ring-ink/15 ${open ? 'mt-4 max-h-16 translate-y-0 p-1.5 opacity-100 delay-500' : 'pointer-events-none max-h-0 translate-y-4 p-0 opacity-0 duration-200'}`}>
+          className={`flex items-center gap-2 overflow-hidden rounded-full bg-canvas pl-5 transition-all duration-500 ease-spring focus-within:bg-white focus-within:ring-1 focus-within:ring-ink/15 ${open ? 'mt-4 max-h-16 translate-y-0 p-1.5 opacity-100 delay-[250ms]' : 'pointer-events-none max-h-0 translate-y-4 p-0 opacity-0 duration-200'}`}>
           <input ref={input} tabIndex={open ? 0 : -1} value={url} onChange={e => setUrl(e.target.value)} placeholder="https://www.immobiliare.it/annunci/..." className="min-w-0 flex-1 bg-transparent py-2 text-base outline-none placeholder:text-muted/60" />
           <button disabled={!ok} tabIndex={open ? 0 : -1} className="btn-ink h-11 shrink-0 rounded-full px-6 text-sm font-semibold">Analizza</button>
         </form>
@@ -231,9 +231,9 @@ export function HomeView({ name }: { projects?: ProjectData[] | null; name?: str
   const close = useCallback(() => { setOpen(false); swapTitle('home'); }, []);
 
   const words = title === 'link' ? ['Incolla', 'il', 'link', 'dell\'annuncio'] : TITLE_WORDS(name);
-  // Apertura: prima si muove il container (altre card via, box al centro), poi la card si trasforma.
-  // Chiusura: al contrario, prima la card torna card, poi il container e le altre rientrano sfalsate.
-  const others = (i: number) => `mx-2.5 ${open ? 'pointer-events-none overflow-hidden sm:mx-0! sm:w-0! scale-75 opacity-0 blur-[8px]' : i === 1 ? 'delay-[380ms]' : 'delay-[460ms]'}`;
+  // Apertura: parte il container (altre card via, box al centro), la card si trasforma subito dopo, sovrapposta.
+  // Chiusura: al contrario, con gli stessi piccoli sfalsamenti.
+  const others = (i: number) => `mx-2.5 ${open ? 'pointer-events-none overflow-hidden sm:mx-0! sm:w-0! scale-75 opacity-0 blur-[8px]' : i === 1 ? 'delay-[160ms]' : 'delay-[220ms]'}`;
 
   return (
     <div className="flex min-h-[calc(100vh-5rem)] flex-col items-center justify-center py-10">
