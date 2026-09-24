@@ -174,10 +174,10 @@ function PropertyMap({ projects, geo, hover, loading }: { projects: ProjectData[
       const Lf = (mod.default ?? mod) as typeof import('leaflet');
       if (cancelled || !el.current || map.current) return;
       L.current = Lf;
-      const m = Lf.map(el.current, { zoomControl: false, attributionControl: true, scrollWheelZoom: false }).setView([42.5, 12.5], 6);
+      const m = Lf.map(el.current, { zoomControl: false, attributionControl: true, scrollWheelZoom: false, zoomSnap: 0.25, zoomDelta: 0.5 }).setView([42.5, 12.5], 6);
       m.attributionControl.setPrefix(false);
       Lf.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 19, subdomains: 'abcd', className: 'grayscale', attribution: '© OpenStreetMap © CARTO' }).addTo(m);
-      Lf.control.zoom({ position: 'topright' }).addTo(m);
+      Lf.control.zoom({ position: 'bottomright', zoomInTitle: 'Avvicina', zoomOutTitle: 'Allontana' }).addTo(m);
       m.on('click', () => setSel(null));
       map.current = m;
       setReady(true);
@@ -201,7 +201,12 @@ function PropertyMap({ projects, geo, hover, loading }: { projects: ProjectData[
     }
     if (pinned.length) {
       const b = Lf.latLngBounds(pinned.map(p => geo[p.addr.trim()] as LatLon));
-      m.fitBounds(b, { paddingTopLeft: [70, 130], paddingBottomRight: [70, 200], maxZoom: 15, animate: false });
+      // una sola vista con tutti gli immobili, il piu' vicino possibile (spazio per navbar e sfumatura)
+      m.setMinZoom(0); m.setMaxZoom(19);
+      m.fitBounds(b, { paddingTopLeft: [60, 110], paddingBottomRight: [60, 220], maxZoom: 16, animate: false });
+      // + e - muovono solo di poco attorno a quella vista
+      const z = m.getZoom();
+      m.setMinZoom(z - 1.5); m.setMaxZoom(Math.min(19, z + 2));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, key]);
@@ -233,7 +238,7 @@ function PropertyMap({ projects, geo, hover, loading }: { projects: ProjectData[
   const waiting = loading || projects.some(p => p.addr?.trim() && !(p.addr.trim() in geo));
 
   return (
-    <div className="relative h-[max(560px,72vh)] overflow-hidden [&_.leaflet-top]:top-20">
+    <div className="relative h-[max(560px,72vh)] overflow-hidden [&_.leaflet-bottom.leaflet-right]:bottom-[30%] [&_.leaflet-bar]:overflow-hidden [&_.leaflet-bar]:rounded-2xl [&_.leaflet-bar]:border-0 [&_.leaflet-bar]:shadow-[0_6px_20px_rgba(0,0,0,.12)] [&_.leaflet-bar_a]:h-9 [&_.leaflet-bar_a]:w-9 [&_.leaflet-bar_a]:leading-9">
       <div ref={el} className="absolute inset-0 z-0 bg-canvas" style={{ maskImage: 'linear-gradient(to bottom, #000 62%, transparent 97%)', WebkitMaskImage: 'linear-gradient(to bottom, #000 62%, transparent 97%)' }} />
       {/* sfumatura in basso: blur progressivo sopra la dissolvenza */}
       {[2, 6, 12].map((b, i) => {
