@@ -36,7 +36,7 @@ export const DOTS: React.CSSProperties = { background: 'radial-gradient(rgba(0,0
 const NAV = [
   { path: '/', label: 'Home', icon: Home },
   { path: '/immobili', label: 'Immobili', icon: Building2 },
-  { path: '/portfolio', label: 'Portfolio', icon: Globe },
+  { path: '/portfolio', label: 'Vetrina', icon: Globe },
 ];
 
 export default function PlatformApp({ userData }: { userData: UserData }) {
