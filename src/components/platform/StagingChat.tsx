@@ -175,6 +175,9 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
                 {m.out && !m.busy && (
                   <div className="flex items-center justify-between gap-2 px-2 pb-1 pt-2 text-xs text-muted">
                     <span className="truncate">«{m.text}»</span>
+                    {/* Modifica: seleziona una zona su questa foto e scrivi cosa fare li' */}
+                    <button onClick={() => { if (base !== m.out) restartFrom(i, m.out!); setSelecting(true); }}
+                      className="ml-auto flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 font-medium text-ink hover:bg-canvas"><SquareDashedMousePointer size={12} /> Modifica</button>
                     {base !== m.out
                       ? <button onClick={() => restartFrom(i, m.out!)} className="flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 font-medium text-brand hover:bg-brand/5"><RotateCcw size={12} /> Ricomincia da qui</button>
                       : <span className="shrink-0 font-medium text-emerald-600">Si continua da qui</span>}
