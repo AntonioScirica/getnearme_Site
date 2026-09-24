@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
   const t0 = Date.now()
   let job: RunpodJob
   try {
-    job = await runJob({ image_url: imageUrl, prompt })
+    job = await runJob({ image_url: imageUrl, prompt, steps: 12 }) // 12 passaggi: ~8 s invece di 17 a 25, qualita' simile nel confronto del 24/09
   } catch (e) {
     console.error('photo-edit runpod error:', e)
     await logUsage({ userId, kind: 'photo_edit' }, true, Date.now() - t0, {}, false, 'qwen-image-2.1')

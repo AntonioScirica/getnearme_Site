@@ -478,7 +478,13 @@ function PhotoFix({ src, label, edit, onDone, onClose }: { src: string; label: s
     document.addEventListener('keydown', esc, true);
     return () => document.removeEventListener('keydown', esc, true);
   }, [onClose]);
-  useEffect(() => { warm('photo'); }, []); // pannello aperto: la GPU parte mentre si legge/ritocca l'istruzione
+  // Pannello aperto: la GPU parte subito e resta accesa finche' e' aperto (segnale ogni 50 s,
+  // l'endpoint si spegne 60 s dopo l'ultimo). Chiuso il pannello, si spegne da sola dopo un minuto.
+  useEffect(() => {
+    warm('photo');
+    const t = setInterval(() => warm('photo'), 50_000);
+    return () => clearInterval(t);
+  }, []);
   useEffect(() => {
     if (!busy) return;
     const t = setInterval(() => setMsg(m => (m + 1) % FIX_MSGS.length), 3500);
