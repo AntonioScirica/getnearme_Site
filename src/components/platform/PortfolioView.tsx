@@ -1,10 +1,10 @@
 'use client';
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { ArrowLeft, Check, Copy, ExternalLink, ImagePlus, Loader2, Pencil, Plus, Trash2 } from 'lucide-react';
+import { ArrowLeft, Check, ChevronDown, Copy, Eye, EyeOff, ExternalLink, ImagePlus, Loader2, Pencil, Plus, RotateCcw, Trash2 } from 'lucide-react';
 import type { ProjectData } from '@/lib/projects';
 import { FAKE_PROPERTIES } from '@/lib/fakeProperties';
-import { TEMPLATES, type SiteConfig, type SiteProperty, type TemplateId } from '@/lib/siteTemplates';
+import { FIELD_LABELS, PAGE_SECTIONS, TEMPLATES, TEXTS, zoneSlug, type PageId, type SiteConfig, type SiteProperty, type TemplateId } from '@/lib/siteTemplates';
 import { SitePage, SiteThumb } from '@/components/site/pages';
 import type { Page } from '@/components/site/ui';
 import { fileToResizedDataUrl } from '@/lib/staging';
@@ -16,6 +16,8 @@ import ProfileForm, { type Profile } from './ProfileForm';
 // con l'anteprima dal vivo accanto (stesse pagine del sito pubblico, con i suoi immobili).
 
 type Site = { slug: string | null; name: string; email: string; logo: string | null; config: SiteConfig };
+const PAGES = [['home', 'Home'], ['immobili', 'Immobili'], ['immobile', 'Scheda'], ['agente', 'Profilo'], ['servizi', 'Servizi'], ['contatti', 'Contatti'], ['zona', 'Zona']] as const;
+const pageOf = (id: PageId, firstId?: string, zone?: string): Page => id === 'immobile' ? { page: 'immobile', id: firstId ?? '' } : id === 'zona' ? { page: 'zona', slug: zone ?? '' } : { page: id } as Page;
 const COLORS = ['#1d5b3c', '#4d7a2c', '#2a2b7c', '#1f6feb', '#111111', '#ff6a2b', '#be185d', '#8a6a4f'];
 
 export default function PortfolioView({ projects, onChange }: { projects: ProjectData[] | null; onChange: () => void }) {
@@ -27,6 +29,8 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
   const [page, setPage] = useState<Page>({ page: 'home' });
   // null = galleria dei modelli; altrimenti editor del modello scelto
   const [editing, setEditing] = useState<TemplateId | null>(null);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [editMode, setEditMode] = useState(true);
 
   useEffect(() => {
     authFetch('/api/platform/site').then(r => r.json()).then((d: Site) => { setSite(d); setCfg(d.config); });
@@ -91,8 +95,84 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
             <span className="text-sm text-muted">Stai modificando <b className="text-ink">{TEMPLATES.find(t => t.id === cfg.template)?.name}</b>{cfg.template !== site.config.template && ' (non ancora pubblicato)'}</span>
           </div>
         <div className="grid items-start gap-6 lg:grid-cols-[340px_1fr]">
-          {/* Controlli */}
-          <aside className={`space-y-7 rounded-[28px] bg-white p-5 lg:sticky lg:top-24 lg:max-h-[calc(100vh-8rem)] lg:overflow-y-auto [scrollbar-width:none] ${CARD_SHADOW}`}>
+          {/* Controlli: sezioni della pagina aperta (clic nell'anteprima = apre la sezione) o impostazioni generali */}
+          <SideEditor cfg={cfg} set={set} page={page} onPage={setPage} firstId={props[0]?.id} covers={covers} selected={selected} setSelected={setSelected} />
+
+          {/* Anteprima dal vivo */}
+          <Preview page={page} onPage={p => { setPage(p); setSelected(null); }} firstId={props[0]?.id} editMode={editMode} setEditMode={setEditMode}>
+            <SitePage page={page} ctx={{ cfg, name: site.name || 'La tua agenzia', logo: site.logo, properties: props, base: '', preview: true, go: p => { setPage(p); setSelected(null); }, editMode, selected, onSelect: setSelected }} />
+          </Preview>
+        </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+// Colonna dell'editor: scheda Pagina (sezioni della pagina aperta, nello stesso ordine del sito) e Generale
+function SideEditor({ cfg, set, page, onPage, firstId, covers, selected, setSelected }: {
+  cfg: SiteConfig; set: (p: Partial<SiteConfig>) => void; page: Page; onPage: (p: Page) => void; firstId?: string; covers: string[]; selected: string | null; setSelected: (id: string | null) => void;
+}) {
+  const [tab, setTab] = useState<'pagina' | 'generale'>('pagina');
+  const refs = useRef<Record<string, HTMLDivElement | null>>({});
+  const scroller = useRef<HTMLDivElement>(null);
+  const secs = PAGE_SECTIONS[page.page as PageId] ?? [];
+  // clic su una sezione nell'anteprima: apri la scheda Pagina e porta la sezione in vista
+  useEffect(() => {
+    if (!selected) return;
+    setTab('pagina'); // eslint-disable-line react-hooks/set-state-in-effect
+    // scorre solo la colonna, non la pagina
+    setTimeout(() => { const el = refs.current[selected], box = scroller.current; if (el && box) box.scrollTo({ top: el.offsetTop - 8, behavior: 'smooth' }); }, 60);
+  }, [selected]);
+  const hidden = new Set(cfg.hidden);
+  const toggleHide = (id: string) => set({ hidden: hidden.has(id) ? cfg.hidden.filter(x => x !== id) : [...cfg.hidden, id] });
+
+  return (
+    <aside className={`rounded-[28px] bg-white lg:sticky lg:top-24 lg:flex lg:max-h-[calc(100vh-8rem)] lg:flex-col ${CARD_SHADOW}`}>
+      <div className="flex gap-1 border-b border-line p-2">
+        {([['pagina', 'Pagina'], ['generale', 'Generale']] as const).map(([id, l]) => (
+          <button key={id} onClick={() => setTab(id)} className={`flex-1 rounded-full py-2 text-sm font-medium ease-smooth transition-colors ${tab === id ? 'bg-ink text-white' : 'text-muted hover:text-ink'}`}>{l}</button>
+        ))}
+      </div>
+      <div ref={scroller} className="relative min-h-0 flex-1 overflow-y-auto p-4 [scrollbar-width:none]">
+        {tab === 'pagina' ? (
+          <>
+            <label className="mb-3 block">
+              <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-muted">Pagina che stai modificando</span>
+              <select value={page.page} onChange={e => onPage(pageOf(e.target.value as PageId, firstId, cfg.zones[0] ? zoneSlug(cfg.zones[0].name) : ''))}
+                className="h-10 w-full rounded-2xl bg-canvas px-3 text-sm font-medium outline-none">
+                {PAGES.map(([id, l]) => <option key={id} value={id} disabled={(id === 'immobile' && !firstId) || (id === 'zona' && !cfg.zones.length)}>{l}</option>)}
+              </select>
+            </label>
+            <p className="mb-4 text-xs text-muted">Clicca un elemento nell’anteprima per modificarlo, oppure apri una sezione qui sotto.</p>
+            <div className="space-y-2">
+              {secs.map(sec => {
+                const open = selected === sec.id, off = hidden.has(sec.id);
+                return (
+                  <div key={sec.id} ref={el => { refs.current[sec.id] = el; }} className={`scroll-mt-2 rounded-2xl ring-1 ease-smooth transition-colors ${open ? 'bg-canvas ring-brand/40' : 'ring-black/10'}`}>
+                    <div className="flex items-center gap-2 p-3">
+                      <button onClick={() => setSelected(open ? null : sec.id)} className={`flex min-w-0 flex-1 items-center gap-2 text-left text-sm font-semibold ${off ? 'text-muted line-through' : ''}`}>
+                        <ChevronDown size={15} className={`shrink-0 ease-smooth transition-transform ${open ? '' : '-rotate-90'}`} />{sec.label}
+                      </button>
+                      {sec.hideable && <button onClick={() => toggleHide(sec.id)} title={off ? 'Mostra la sezione' : 'Nascondi la sezione'} className="text-muted hover:text-ink">{off ? <EyeOff size={16} /> : <Eye size={16} />}</button>}
+                    </div>
+                    {open && (
+                      <div className="space-y-3 border-t border-black/5 p-3">
+                        {sec.note && <p className="text-xs text-muted">{sec.note}</p>}
+                        {sec.cfg?.map(k => <CfgField key={k} k={k} cfg={cfg} set={set} covers={covers} />)}
+                        {sec.texts?.map(k => (
+                          <TextField key={k} label={FIELD_LABELS[k] ?? k} value={cfg.texts[k] ?? ''} placeholder={TEXTS[k]} long={TEXTS[k].length > 60}
+                            onChange={v => { const next = { ...cfg.texts }; if (v) next[k] = v; else delete next[k]; set({ texts: next }); }} />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        ) : (
+          <div className="space-y-7">
             <Group title="Colore e caratteri">
               <div className="flex flex-wrap items-center gap-2">
                 {COLORS.map(c => <button key={c} onClick={() => set({ primary: c })} aria-label={c} className={`h-8 w-8 rounded-full ring-offset-2 ease-smooth transition-shadow ${cfg.primary === c ? 'ring-2 ring-ink' : ''}`} style={{ background: c }} />)}
@@ -102,90 +182,46 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
               </div>
               <Seg value={cfg.font} onChange={v => set({ font: v })} options={[['serif', 'Elegante'], ['sans', 'Moderno']]} />
             </Group>
-
-            <Group title="Apertura">
-              <Field label="Titolo" value={cfg.heroTitle} onChange={v => set({ heroTitle: v })} max={90} />
-              <Field label="Sottotitolo" value={cfg.heroSubtitle} onChange={v => set({ heroSubtitle: v })} max={200} area />
-              <Field label="Città o zona" value={cfg.city} onChange={v => set({ city: v })} max={60} />
-              <Pics label="Foto di copertina" covers={covers} value={cfg.heroImage} onChange={v => set({ heroImage: v })} />
-            </Group>
-
-            <Group title="Il tuo profilo">
-              <Pics label="La tua foto" covers={[]} value={cfg.aboutImage} onChange={v => set({ aboutImage: v })} />
-              <Field label="Ruolo" value={cfg.agentRole} onChange={v => set({ agentRole: v })} max={60} />
-              <Field label="Nome della pagina" value={cfg.aboutTitle} onChange={v => set({ aboutTitle: v })} max={60} />
-              <Field label="Chi sei, in poche righe" value={cfg.aboutText} onChange={v => set({ aboutText: v })} max={900} area />
-              <Field label="Zone in cui lavori (separate da virgola)" value={cfg.areas} onChange={v => set({ areas: v })} max={160} />
-              <div className="grid grid-cols-3 gap-2">
-                <Field label="Anni" value={cfg.years} onChange={v => set({ years: v.replace(/\D/g, '') })} max={4} />
-                <Field label="Venduti" value={cfg.sold} onChange={v => set({ sold: v.replace(/\D/g, '') })} max={6} />
-                <Field label="Clienti" value={cfg.clients} onChange={v => set({ clients: v.replace(/\D/g, '') })} max={6} />
-              </div>
-            </Group>
-
-            <Group title="Servizi">
-              <ListEditor items={cfg.services} max={8} addLabel="Aggiungi servizio" onChange={v => set({ services: v })}
-                fields={[['title', 'Nome del servizio', 70, false], ['text', 'Descrizione', 600, true]]} empty={{ title: '', text: '' }} />
-            </Group>
-
-            <Group title="Il tuo metodo">
-              <Field label="In evidenza nella pagina Servizi" value={cfg.method} onChange={v => set({ method: v })} max={1500} area />
-            </Group>
-
-            <Group title="Pagine zona">
-              <p className="text-xs text-muted">Una pagina per località (es. “Casa a Sirolo”) con il tuo testo e gli annunci di quella zona. Scrivi “## Titolo” per un sottotitolo.</p>
-              <ListEditor items={cfg.zones} max={8} addLabel="Aggiungi zona" onChange={v => set({ zones: v })}
-                fields={[['name', 'Località', 40, false], ['text', 'Testo sulla zona', 4000, true]]} empty={{ name: '', text: '' }} />
-            </Group>
-
-            <Group title="Punti in evidenza">
-              <Field label="Separati da virgola" value={cfg.highlights.join(', ')} onChange={v => set({ highlights: v.split(',').map(x => x.trimStart()).slice(0, 6) })} max={320} />
-            </Group>
-
-            <Group title="Recensioni">
-              {cfg.reviews.map((r, i) => (
-                <div key={i} className="space-y-2 rounded-2xl bg-canvas p-3">
-                  <textarea rows={2} value={r.text} maxLength={300} placeholder="Cosa ha detto il cliente" onChange={e => set({ reviews: cfg.reviews.map((x, k) => k === i ? { ...x, text: e.target.value } : x) })}
-                    className="w-full resize-none rounded-xl bg-white px-3 py-2 text-sm outline-none" />
-                  <div className="flex gap-2">
-                    <input value={r.name} maxLength={60} placeholder="Nome" onChange={e => set({ reviews: cfg.reviews.map((x, k) => k === i ? { ...x, name: e.target.value } : x) })} className="min-w-0 flex-1 rounded-xl bg-white px-3 py-2 text-sm outline-none" />
-                    <button onClick={() => set({ reviews: cfg.reviews.filter((_, k) => k !== i) })} aria-label="Togli" className="px-2 text-muted hover:text-rose-600"><Trash2 size={15} /></button>
-                  </div>
-                </div>
-              ))}
-              {cfg.reviews.length < 3 && <button onClick={() => set({ reviews: [...cfg.reviews, { text: '', name: '', zone: '' }] })} className="flex items-center gap-1.5 text-sm font-medium text-brand"><Plus size={15} /> Aggiungi recensione</button>}
-            </Group>
-
-            <Group title="Contatti">
-              <Field label="Pulsante" value={cfg.ctaLabel} onChange={v => set({ ctaLabel: v })} max={30} />
-              <Field label="Telefono" value={cfg.phone} onChange={v => set({ phone: v })} max={20} />
-              <Field label="WhatsApp" value={cfg.whatsapp} onChange={v => set({ whatsapp: v })} max={20} />
-              <Field label="Email" value={cfg.email} onChange={v => set({ email: v })} max={120} />
-              <Field label="Indirizzo dell'ufficio" value={cfg.address} onChange={v => set({ address: v })} max={120} />
-              <Field label="Instagram (link)" value={cfg.instagram} onChange={v => set({ instagram: v })} max={300} />
-              <Field label="Facebook (link)" value={cfg.facebook} onChange={v => set({ facebook: v })} max={300} />
-              <Field label="P.IVA, REA (piè di pagina)" value={cfg.legal} onChange={v => set({ legal: v })} max={160} />
-            </Group>
-
-            <Group title="Sezioni">
-              {([['showPrices', 'Mostra i prezzi'], ['showStats', 'Numeri'], ['showAbout', 'Chi sono'], ['showContact', 'Contatti'], ['topBar', 'Barra con telefono ed email'], ['whatsappButton', 'Pulsante WhatsApp fisso']] as const).map(([k, l]) => (
-                <label key={k} className="flex cursor-pointer items-center justify-between py-1 text-sm">
-                  {l}
-                  <input type="checkbox" checked={cfg[k]} onChange={e => set({ [k]: e.target.checked })} className="h-5 w-9 cursor-pointer appearance-none rounded-full bg-line transition-colors before:block before:h-4 before:w-4 before:translate-x-0.5 before:rounded-full before:bg-white before:shadow before:transition-transform checked:bg-brand checked:before:translate-x-[18px]" />
-                </label>
-              ))}
-            </Group>
-          </aside>
-
-          {/* Anteprima dal vivo */}
-          <Preview page={page} onPage={setPage} firstId={props[0]?.id}>
-            <SitePage page={page} ctx={{ cfg, name: site.name || 'La tua agenzia', logo: site.logo, properties: props, base: '', preview: true, go: setPage }} />
-          </Preview>
-        </div>
-        </div>
-      )}
-    </>
+            <Group title="Recapiti">{(['ctaLabel', 'phone', 'whatsapp', 'email', 'address'] as const).map(k => <CfgField key={k} k={k} cfg={cfg} set={set} covers={covers} />)}</Group>
+            <Group title="Social e dati legali">{(['instagram', 'facebook', 'legal'] as const).map(k => <CfgField key={k} k={k} cfg={cfg} set={set} covers={covers} />)}</Group>
+            <Group title="In tutte le pagine">{(['topBar', 'whatsappButton', 'showPrices', 'showStats'] as const).map(k => <CfgField key={k} k={k} cfg={cfg} set={set} covers={covers} />)}</Group>
+          </div>
+        )}
+      </div>
+    </aside>
   );
+}
+
+// Testo del sito: vuoto = testo di partenza (mostrato in grigio), con ripristino
+function TextField({ label, value, placeholder, long, onChange }: { label: string; value: string; placeholder: string; long?: boolean; onChange: (v: string) => void }) {
+  const cls = 'w-full rounded-2xl bg-white px-3.5 py-2.5 text-sm outline-none ring-1 ring-black/5 ease-smooth transition-shadow placeholder:text-ink/40 focus:ring-ink/20';
+  return (
+    <label className="block">
+      <span className="mb-1 flex items-center justify-between text-xs font-medium text-ink/70">{label}{value && <button type="button" onClick={() => onChange('')} className="flex items-center gap-1 text-[11px] text-muted hover:text-ink"><RotateCcw size={11} /> Originale</button>}</span>
+      {long ? <textarea rows={2} value={value} placeholder={placeholder} maxLength={600} onChange={e => onChange(e.target.value)} className={`${cls} resize-none`} />
+        : <input value={value} placeholder={placeholder} maxLength={600} onChange={e => onChange(e.target.value)} className={cls} />}
+    </label>
+  );
+}
+
+// Un campo della configurazione, con il controllo giusto per il tipo
+function CfgField({ k, cfg, set, covers }: { k: keyof SiteConfig; cfg: SiteConfig; set: (p: Partial<SiteConfig>) => void; covers: string[] }) {
+  const label = FIELD_LABELS[k] ?? k;
+  const v = cfg[k];
+  if (typeof v === 'boolean') return (
+    <label className="flex cursor-pointer items-center justify-between py-1 text-sm">{label}
+      <input type="checkbox" checked={v} onChange={e => set({ [k]: e.target.checked })} className="h-5 w-9 cursor-pointer appearance-none rounded-full bg-line transition-colors before:block before:h-4 before:w-4 before:translate-x-0.5 before:rounded-full before:bg-white before:shadow before:transition-transform checked:bg-brand checked:before:translate-x-[18px]" />
+    </label>
+  );
+  if (k === 'heroImage') return <Pics label={label} covers={covers} value={cfg.heroImage} onChange={x => set({ heroImage: x })} />;
+  if (k === 'aboutImage') return <Pics label={label} covers={[]} value={cfg.aboutImage} onChange={x => set({ aboutImage: x })} />;
+  if (k === 'highlights') return <Field label={`${label} (separati da virgola)`} value={cfg.highlights.join(', ')} onChange={x => set({ highlights: x.split(',').map(y => y.trimStart()).slice(0, 6) })} max={320} />;
+  if (k === 'services') return <ListEditor items={cfg.services} max={8} addLabel="Aggiungi servizio" onChange={x => set({ services: x })} fields={[['title', 'Nome del servizio', 70, false], ['text', 'Descrizione', 600, true]]} empty={{ title: '', text: '' }} />;
+  if (k === 'zones') return <><p className="text-xs text-muted">Una pagina per località (es. “Casa a Sirolo”). Scrivi “## Titolo” per un sottotitolo.</p><ListEditor items={cfg.zones} max={8} addLabel="Aggiungi zona" onChange={x => set({ zones: x })} fields={[['name', 'Località', 40, false], ['text', 'Testo sulla zona', 4000, true]]} empty={{ name: '', text: '' }} /></>;
+  if (k === 'reviews') return <ListEditor items={cfg.reviews} max={3} addLabel="Aggiungi recensione" onChange={x => set({ reviews: x })} fields={[['text', 'Cosa ha detto il cliente', 300, true], ['name', 'Nome', 60, false]]} empty={{ text: '', name: '', zone: '' }} />;
+  if (k === 'years' || k === 'sold' || k === 'clients') return <Field label={label} value={String(v)} onChange={x => set({ [k]: x.replace(/\D/g, '') })} max={6} />;
+  const long = k === 'aboutText' || k === 'method' || k === 'heroSubtitle';
+  return <Field label={label} value={String(v ?? '')} onChange={x => set({ [k]: x })} max={k === 'aboutText' ? 900 : k === 'method' ? 1500 : 300} area={long} />;
 }
 
 // Galleria dei modelli: anteprima vera della home (con i dati dell'agente), clic per entrare nell'editor
@@ -236,7 +272,7 @@ function Thumb({ children }: { children: ReactNode }) {
 }
 
 // Il sito in scala dentro una finestra "browser": largo 1280 px come su un computer, rimpicciolito.
-function Preview({ children, page, onPage, firstId }: { children: ReactNode; page: Page; onPage: (p: Page) => void; firstId?: string }) {
+function Preview({ children, page, onPage, firstId, editMode, setEditMode }: { children: ReactNode; page: Page; onPage: (p: Page) => void; firstId?: string; editMode: boolean; setEditMode: (v: boolean) => void }) {
   const box = useRef<HTMLDivElement>(null);
   const inner = useRef<HTMLDivElement>(null);
   const [k, setK] = useState(0.5);
@@ -256,10 +292,13 @@ function Preview({ children, page, onPage, firstId }: { children: ReactNode; pag
         <span className="flex gap-1.5">{[0, 1, 2].map(i => <span key={i} className="h-2.5 w-2.5 rounded-full bg-line" />)}</span>
         {/* pagine del sito: si naviga anche cliccando dentro l'anteprima */}
         <div className="ml-3 flex rounded-full bg-canvas p-0.5">
-          {([['home', 'Home'], ['immobili', 'Immobili'], ['immobile', 'Scheda'], ['agente', 'Profilo'], ['servizi', 'Servizi'], ['contatti', 'Contatti']] as const).map(([id, l]) => (
-            <button key={id} disabled={id === 'immobile' && !firstId} onClick={() => onPage(id === 'immobile' ? { page: 'immobile', id: firstId! } : { page: id } as Page)}
+          {PAGES.map(([id, l]) => (
+            <button key={id} disabled={id === 'immobile' && !firstId} onClick={() => onPage(pageOf(id, firstId))}
               className={`rounded-full px-3 py-1 font-medium ease-smooth transition-colors disabled:opacity-40 ${page.page === id ? 'bg-white text-ink shadow-sm' : 'hover:text-ink'}`}>{l}</button>
           ))}
+        </div>
+        <div className="ml-auto flex rounded-full bg-canvas p-0.5">
+          {([[true, 'Modifica'], [false, 'Naviga']] as const).map(([v, l]) => <button key={l} onClick={() => setEditMode(v)} className={`rounded-full px-3 py-1 font-medium ease-smooth transition-colors ${editMode === v ? 'bg-white text-ink shadow-sm' : 'hover:text-ink'}`}>{l}</button>)}
         </div>
       </div>
       <div ref={box} key={JSON.stringify(page)} className="h-[calc(100vh-12rem)] overflow-y-auto overflow-x-hidden [scrollbar-width:thin]"

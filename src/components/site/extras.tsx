@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Check, Facebook, Instagram, Loader2, Mail, MessageCircle, Phone, Printer, Share2 } from 'lucide-react';
 import { ESSENTIALS, GROUPS, type Field } from '@/lib/propertyFields';
 import type { SiteProperty } from '@/lib/siteTemplates';
-import { contacts, H, useSite } from './ui';
+import { contacts, H, useSite, useT } from './ui';
 
 // Parti aggiunte sul modello dei siti di agenzia di zona (es. casalconero.com): barra contatti,
 // WhatsApp fisso, modulo di contatto vero, dettagli e caratteristiche dell'immobile, mappa, servizi.
@@ -41,6 +41,7 @@ export function WhatsAppFloat() {
 // Modulo di contatto: la richiesta arriva per email all'agente (/api/site/lead)
 export function ContactForm({ property, compact }: { property?: SiteProperty; compact?: boolean }) {
   const { preview, base } = useSite();
+  const tx = useT();
   const [state, setState] = useState<'idle' | 'sending' | 'ok' | 'err'>('idle');
   const submit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -54,7 +55,7 @@ export function ContactForm({ property, compact }: { property?: SiteProperty; co
   if (state === 'ok') return (
     <div className="flex flex-col items-center gap-3 rounded-[var(--r)] bg-[var(--soft)] px-6 py-10 text-center">
       <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--c)] text-white"><Check /></span>
-      <div className="font-semibold">Richiesta inviata</div><p className="text-sm text-[var(--muted)]">Ti rispondo al più presto.</p>
+      <div className="font-semibold">{tx('form.done')}</div><p className="text-sm text-[var(--muted)]">Ti rispondo al più presto.</p>
     </div>
   );
   const field = 'h-11 w-full rounded-[calc(var(--r)*0.6)] border border-[var(--line)] bg-[var(--surface)] px-3.5 text-sm outline-none transition-colors focus:border-[var(--c)]';
@@ -70,7 +71,7 @@ export function ContactForm({ property, compact }: { property?: SiteProperty; co
       <input name="website" tabIndex={-1} autoComplete="off" className="hidden" aria-hidden />
       <label className="flex items-start gap-2 text-xs text-[var(--muted)]"><input type="checkbox" name="privacy" required className="mt-0.5 accent-[var(--c)]" /> Ho letto e accetto l’informativa privacy e acconsento a essere ricontattato.</label>
       <button disabled={state === 'sending'} className="flex h-12 w-full items-center justify-center gap-2 rounded-[calc(var(--r)*0.6)] bg-[var(--c)] text-sm font-semibold text-[var(--on-c,#fff)] transition hover:brightness-110 disabled:opacity-60">
-        {state === 'sending' && <Loader2 size={15} className="animate-spin" />} Invia richiesta
+        {state === 'sending' && <Loader2 size={15} className="animate-spin" />} {tx('form.button')}
       </button>
       {state === 'err' && <p className="text-sm text-rose-600">Invio non riuscito, riprova o chiamami.</p>}
     </form>
@@ -83,6 +84,7 @@ const SKIP = new Set(['indirizzo', 'mostra_indirizzo', 'trattativa_riservata', '
 const fmt = (f: Field, v: unknown) => (typeof v === 'boolean' ? (v ? 'Sì' : 'No') : `${v}${f.unit ? ` ${f.unit}` : ''}`);
 
 export function DetailsTable({ p }: { p: SiteProperty }) {
+  const tx = useT();
   const d = p.details ?? {};
   const rows: [string, string][] = [
     ...(p.riferimento ? [['Codice', p.riferimento] as [string, string]] : []),
@@ -98,7 +100,7 @@ export function DetailsTable({ p }: { p: SiteProperty }) {
   ];
   return (
     <div>
-      <H className="text-3xl">Dettagli</H>
+      <H className="text-3xl">{tx('property.details')}</H>
       <dl className="mt-5 grid overflow-hidden rounded-[var(--r)] ring-1 ring-[var(--line)] sm:grid-cols-2">
         {rows.map(([k, v]) => <div key={k} className="flex justify-between gap-4 border-b border-[var(--line)] px-4 py-3 text-sm sm:odd:border-r"><dt className="text-[var(--muted)]">{k}</dt><dd className="text-right font-medium">{v}</dd></div>)}
       </dl>
@@ -107,12 +109,13 @@ export function DetailsTable({ p }: { p: SiteProperty }) {
 }
 
 export function FeatureList({ p }: { p: SiteProperty }) {
+  const tx = useT();
   const d = p.details ?? {};
   const items = ALL.filter(f => f.type === 'multi').flatMap(f => (Array.isArray(d[f.key]) ? (d[f.key] as string[]) : []));
   if (!items.length) return null;
   return (
     <div>
-      <H className="text-3xl">Caratteristiche</H>
+      <H className="text-3xl">{tx('property.features')}</H>
       <ul className="mt-5 grid gap-x-6 gap-y-3 sm:grid-cols-2 md:grid-cols-3">{items.map(x => <li key={x} className="flex items-center gap-2.5 text-sm"><span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--c)_15%,transparent)] text-[var(--c)]"><Check size={12} /></span>{x}</li>)}</ul>
     </div>
   );
@@ -120,6 +123,7 @@ export function FeatureList({ p }: { p: SiteProperty }) {
 
 // Mappa della zona (Leaflet, gratis). Cerchio e non puntino: la posizione esatta resta riservata.
 export function MapBlock({ addr, bare }: { addr: string; bare?: boolean }) {
+  const tx = useT();
   const el = useRef<HTMLDivElement>(null);
   const [none, setNone] = useState(false);
   useEffect(() => {
@@ -144,7 +148,7 @@ export function MapBlock({ addr, bare }: { addr: string; bare?: boolean }) {
   if (bare) return <div ref={el} className="relative z-0 h-[260px] overflow-hidden rounded-[calc(var(--r)*0.8)] bg-[var(--soft)]" />;
   return (
     <div>
-      <H className="text-3xl">Posizione</H>
+      <H className="text-3xl">{tx('property.map')}</H>
       <div ref={el} className="relative z-0 mt-5 h-[340px] overflow-hidden rounded-[var(--r)] bg-[var(--soft)]" />
       <p className="mt-2 text-xs text-[var(--muted)]">Zona indicativa, l’indirizzo esatto te lo do su richiesta.</p>
     </div>

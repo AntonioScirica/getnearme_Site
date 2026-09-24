@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import { Bath, BedDouble, DoorOpen, Heart, Maximize2 } from 'lucide-react';
-import type { SiteConfig, SiteProperty, TemplateId } from '@/lib/siteTemplates';
+import { PAGE_SECTIONS, TEXTS, type SiteConfig, type SiteProperty, type TemplateId } from '@/lib/siteTemplates';
 
 // Base dei siti vetrina: tema per template, contesto del sito, link (veri sul sito, interni
 // nell'anteprima dell'editor) e i mattoni piu' piccoli (titoli, pulsanti, foto, dati).
@@ -63,6 +63,8 @@ export const THEMES: Record<TemplateId, Theme> = {
 export type SiteCtx = {
   cfg: SiteConfig; name: string; logo?: string | null; properties: SiteProperty[]; base: string;
   preview?: boolean; go?: (p: Page) => void;
+  // editor: in modalita' modifica i clic selezionano la sezione invece di navigare
+  editMode?: boolean; selected?: string | null; onSelect?: (id: string) => void;
 };
 const Ctx = createContext<SiteCtx | null>(null);
 export const useSite = () => {
@@ -84,8 +86,8 @@ export const pathOf = (base: string, p: Page): string =>
 
 // Link del sito: sul sito vero e' un <a href>, nell'anteprima cambia pagina dentro l'editor
 export function SiteLink({ to, className = '', children, ...rest }: { to: Page; className?: string; children: ReactNode; 'aria-label'?: string; onMouseEnter?: () => void }) {
-  const { base, preview, go } = useSite();
-  if (preview) return <a role="link" tabIndex={0} className={`cursor-pointer ${className}`} onClick={() => go?.(to)} {...rest}>{children}</a>;
+  const { base, preview, go, editMode } = useSite();
+  if (preview) return <a role="link" tabIndex={0} className={`cursor-pointer ${className}`} onClick={() => { if (!editMode) go?.(to); }} {...rest}>{children}</a>;
   return <a href={pathOf(base, to)} className={className} {...rest}>{children}</a>;
 }
 
@@ -187,5 +189,28 @@ export function FavButton({ id, className = '' }: { id: string; className?: stri
       className={`flex h-9 w-9 items-center justify-center rounded-full bg-white/95 text-neutral-800 shadow-sm transition-transform duration-300 hover:scale-110 active:scale-95 ${className}`}>
       <Heart size={16} className={on ? 'fill-rose-500 text-rose-500' : ''} />
     </button>
+  );
+}
+
+// Testo del sito: quello scritto dall'agente o quello di partenza
+export function useT() {
+  const { cfg } = useSite();
+  return (key: string) => cfg.texts[key] || TEXTS[key] || '';
+}
+
+const LABELS: Record<string, string> = Object.fromEntries(Object.values(PAGE_SECTIONS).flat().map(x => [x.id, x.label]));
+
+// Sezione del sito: sparisce se l'agente l'ha nascosta; nell'editor si evidenzia e si seleziona al clic
+export function Sec({ id, children }: { id: string; children: ReactNode }) {
+  const { cfg, preview, editMode, selected, onSelect } = useSite();
+  if (cfg.hidden.includes(id)) return null;
+  if (!preview || !editMode) return <>{children}</>;
+  const on = selected === id;
+  return (
+    <div data-sec={id} className={`group/sec relative cursor-pointer outline-offset-[-3px] ${on ? 'outline outline-[3px] outline-[#3b82f6]' : 'hover:outline hover:outline-2 hover:outline-[#3b82f6]/70'}`}
+      onClickCapture={e => e.preventDefault()} onClick={e => { e.stopPropagation(); onSelect?.(id); }}>
+      <span className={`pointer-events-none absolute left-3 top-3 z-[60] rounded-md bg-[#3b82f6] px-2.5 py-1 font-sans text-[13px] font-semibold text-white shadow ${on ? '' : 'opacity-0 group-hover/sec:opacity-100'}`}>{LABELS[id] ?? id}</span>
+      {children}
+    </div>
   );
 }

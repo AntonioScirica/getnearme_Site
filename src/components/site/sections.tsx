@@ -4,7 +4,7 @@ import { useState, type FormEvent } from 'react';
 import { ArrowDown, ArrowRight, ArrowUpRight, Building, Building2, ChevronDown, Home, Store, TreePine, Warehouse, Check, ChevronLeft, ChevronRight, Handshake, Heart, Leaf, Mail, MapPin, Menu, Phone, Quote, Search, ShieldCheck, Sparkles, Star, Users, X } from 'lucide-react';
 import { zoneSlug, type SiteConfig, type SiteProperty } from '@/lib/siteTemplates';
 import { MapBlock, TopBar } from './extras';
-import { Btn, Container, contacts, Eyebrow, Facts, FavButton, H, Photo, price, SiteLink, typeOf, useSite, zoneOf, pathOf, type Filters, type Page } from './ui';
+import { Btn, Container, contacts, Eyebrow, Facts, FavButton, H, Photo, price, SiteLink, typeOf, useSite, useT, zoneOf, pathOf, type Filters, type Page } from './ui';
 export type { Filters };
 
 // Sezioni dei siti vetrina. Ogni sezione ha piu' varianti: il tema del template sceglie quale usare,
@@ -129,6 +129,7 @@ export function SearchForm({ layout = 'bar' }: { layout?: 'bar' | 'stack' | 'adv
   const { properties, base, preview, go } = useSite();
   const [f, setF] = useState<Filters>({ contratto: 'vendita' });
   const [more, setMore] = useState(false);
+  const tx = useT();
   const tipi = tipiOf(properties);
   const hasRent = properties.some(isRent);
   const submit = (e: FormEvent) => { if (!preview) return; e.preventDefault(); go?.({ page: 'immobili', f }); };
@@ -156,7 +157,7 @@ export function SearchForm({ layout = 'bar' }: { layout?: 'bar' | 'stack' | 'adv
         <select name="tipo" value={f.tipo ?? ''} onChange={e => setF({ ...f, tipo: e.target.value })} className={box}><option value="">Tutte le tipologie</option>{tipi.map(x => <option key={x}>{x}</option>)}</select>
         <select name="q" value={f.q ?? ''} onChange={e => setF({ ...f, q: e.target.value })} className={box}><option value="">Tutte le città</option>{cities.map(x => <option key={x}>{x}</option>)}</select>
         <select name="max" value={f.max ?? ''} onChange={e => setF({ ...f, max: Number(e.target.value) || undefined })} className={box}><option value="">Prezzo massimo</option>{PRICES.map(v => <option key={v} value={v}>{price(v)}</option>)}</select>
-        <button type="submit" className="row-span-2 flex h-12 items-center justify-center gap-2 rounded-[calc(var(--r)*0.6)] bg-[var(--c)] text-sm font-bold uppercase tracking-wider text-[var(--on-c,#fff)] transition hover:brightness-105 md:h-full"><Search size={16} /> Cerca</button>
+        <button type="submit" className="row-span-2 flex h-12 items-center justify-center gap-2 rounded-[calc(var(--r)*0.6)] bg-[var(--c)] text-sm font-bold uppercase tracking-wider text-[var(--on-c,#fff)] transition hover:brightness-105 md:h-full"><Search size={16} /> {tx('search.button')}</button>
         <select name="camere" value={f.camere ?? ''} onChange={e => setF({ ...f, camere: Number(e.target.value) || undefined })} className={`${box} hidden md:block`}><option value="">N. camere</option>{[1, 2, 3, 4].map(n => <option key={n} value={n}>{n}+ camere</option>)}</select>
         <select name="bagni" value={f.bagni ?? ''} onChange={e => setF({ ...f, bagni: Number(e.target.value) || undefined })} className={`${box} hidden md:block`}><option value="">N. bagni</option>{[1, 2, 3].map(n => <option key={n} value={n}>{n}+ bagni</option>)}</select>
         <select name="contratto" value={f.contratto ?? ''} onChange={e => setF({ ...f, contratto: e.target.value })} className={`${box} hidden md:block`}><option value="">Vendita e affitto</option><option value="vendita">Vendita</option><option value="affitto">Affitto</option></select>
@@ -178,18 +179,18 @@ export function SearchForm({ layout = 'bar' }: { layout?: 'bar' | 'stack' | 'adv
       {layout === 'stack' ? (
         <div className="space-y-3">
           <div className="space-y-3 [&>label]:rounded-[calc(var(--r)*0.6)] [&>label]:border [&>label]:border-[var(--line)] [&>label]:px-3.5 [&>label]:py-2">{fields}</div>
-          <button type="submit" className="flex h-12 w-full items-center justify-center gap-2 rounded-[calc(var(--r)*0.6)] bg-[var(--c)] text-sm font-semibold text-white transition hover:brightness-110"><Search size={16} /> Cerca</button>
+          <button type="submit" className="flex h-12 w-full items-center justify-center gap-2 rounded-[calc(var(--r)*0.6)] bg-[var(--c)] text-sm font-semibold text-white transition hover:brightness-110"><Search size={16} /> {tx('search.button')}</button>
         </div>
       ) : (
         <div className="flex flex-col gap-3 rounded-[var(--r)] bg-[var(--surface)] p-3 pl-5 shadow-[0_20px_60px_-20px_rgba(0,0,0,.25)] ring-1 ring-black/[.04] md:flex-row md:items-center md:gap-5">
           <div className="flex flex-1 flex-col gap-3 md:flex-row md:items-center md:gap-5 md:[&>label+label]:border-l md:[&>label+label]:border-[var(--line)] md:[&>label+label]:pl-5">{fields}</div>
-          <button type="submit" className="flex h-12 shrink-0 items-center justify-center gap-2 rounded-[calc(var(--r)*0.7)] bg-[var(--c)] px-6 text-sm font-semibold text-white transition hover:brightness-110"><Search size={16} /> Cerca</button>
+          <button type="submit" className="flex h-12 shrink-0 items-center justify-center gap-2 rounded-[calc(var(--r)*0.7)] bg-[var(--c)] px-6 text-sm font-semibold text-white transition hover:brightness-110"><Search size={16} /> {tx('search.button')}</button>
         </div>
       )}
 
       {/* altri filtri, come nelle ricerche avanzate dei siti di agenzia */}
       <div className="mt-3">
-        <button type="button" onClick={() => setMore(v => !v)} className="inline-flex items-center gap-1 text-[13px] font-semibold opacity-80 hover:opacity-100">Altri filtri <ChevronDown size={14} className={`transition-transform ${more ? 'rotate-180' : ''}`} /></button>
+        <button type="button" onClick={() => setMore(v => !v)} className="inline-flex items-center gap-1 text-[13px] font-semibold opacity-80 hover:opacity-100">{tx('search.more')} <ChevronDown size={14} className={`transition-transform ${more ? 'rotate-180' : ''}`} /></button>
         {more && (
           <div className="mt-3 grid gap-2 sm:grid-cols-3">
             <select name="camere" value={f.camere ?? ''} onChange={e => setF({ ...f, camere: Number(e.target.value) || undefined })} className="h-11 rounded-[calc(var(--r)*0.6)] bg-[var(--surface)] px-3 text-sm text-[var(--fg)] outline-none ring-1 ring-[var(--line)]"><option value="">Camere</option>{[1, 2, 3, 4].map(n => <option key={n} value={n}>{n}+ camere</option>)}</select>
@@ -205,6 +206,7 @@ export function SearchForm({ layout = 'bar' }: { layout?: 'bar' | 'stack' | 'adv
 // ---------- Apertura: 5 impostazioni ----------
 export function Hero() {
   const { cfg, properties, t } = useSite();
+  const tx = useT();
   const src = heroSrc(cfg, properties);
   const trust = (cfg.clients || cfg.years) && (
     <div className="flex items-center gap-3 rounded-[calc(var(--r)*0.8)] bg-white/95 px-4 py-3 text-neutral-900 shadow-lg backdrop-blur">
@@ -226,8 +228,8 @@ export function Hero() {
               <H as="h1" className="text-[clamp(3.2rem,8vw,7rem)] leading-[0.98]">{a}<br /><Accent>{b}</Accent></H>
               <p className="mt-6 max-w-md text-[15px] leading-relaxed text-[var(--muted)]">{cfg.heroSubtitle}</p>
               <div className="mt-7 flex flex-wrap gap-3">
-                <SiteLink to={{ page: 'contatti' }} className="rounded-full bg-[var(--ink)] px-5 py-2.5 text-sm font-medium text-white">Richiedi una consulenza</SiteLink>
-                <SiteLink to={{ page: 'immobili' }} className="rounded-full px-5 py-2.5 text-sm font-medium ring-1 ring-[var(--fg)]/30 hover:ring-[var(--fg)]">Guarda gli immobili</SiteLink>
+                <SiteLink to={{ page: 'contatti' }} className="rounded-full bg-[var(--ink)] px-5 py-2.5 text-sm font-medium text-white">{tx('hero.cta2')}</SiteLink>
+                <SiteLink to={{ page: 'immobili' }} className="rounded-full px-5 py-2.5 text-sm font-medium ring-1 ring-[var(--fg)]/30 hover:ring-[var(--fg)]">{tx('hero.cta')}</SiteLink>
               </div>
             </div>
             <SiteLink to={{ page: 'immobili' }} aria-label="Scorri" className="hidden h-12 w-12 shrink-0 items-center justify-center rounded-full ring-1 ring-[var(--fg)]/30 md:flex"><ArrowDown size={18} /></SiteLink>
@@ -247,11 +249,11 @@ export function Hero() {
         <Photo src={src} className="h-full" />
         <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/40 to-black/10" />
         <Container className="absolute inset-0 flex flex-col justify-center pb-20">
-          <Eyebrow className="!text-[var(--c)]">{cfg.city ? `Immobili a ${cfg.city}` : 'Immobili selezionati'}</Eyebrow>
+          <Eyebrow className="!text-[var(--c)]">{cfg.city ? `Immobili a ${cfg.city}` : tx('hero.eyebrow')}</Eyebrow>
           <H as="h1" className="mt-4 max-w-2xl text-[clamp(3rem,6vw,5.2rem)]">{cfg.heroTitle}</H>
           <p className="mt-5 max-w-lg text-[17px] text-white/80">{cfg.heroSubtitle}</p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <SiteLink to={{ page: 'immobili' }} className="inline-flex items-center gap-2 rounded-[calc(var(--r)*0.6)] bg-[var(--c)] px-6 py-3 text-sm font-semibold text-white">Guarda gli immobili <ArrowRight size={15} /></SiteLink>
+            <SiteLink to={{ page: 'immobili' }} className="inline-flex items-center gap-2 rounded-[calc(var(--r)*0.6)] bg-[var(--c)] px-6 py-3 text-sm font-semibold text-white">{tx('hero.cta')} <ArrowRight size={15} /></SiteLink>
             <SiteLink to={{ page: 'contatti' }} className="inline-flex items-center gap-2 rounded-[calc(var(--r)*0.6)] bg-white px-6 py-3 text-sm font-semibold text-neutral-900">Vuoi vendere?</SiteLink>
           </div>
         </Container>
@@ -280,7 +282,7 @@ export function Hero() {
         <H as="h1" className="text-[clamp(2.6rem,5.2vw,4.4rem)]">{cfg.heroTitle}</H>
         <div className="md:text-right">
           <p className="text-lg leading-snug">{cfg.heroSubtitle}</p>
-          <SiteLink to={{ page: 'immobili' }} className="mt-5 inline-flex items-center gap-2 rounded-[calc(var(--r)*0.6)] bg-[var(--ink)] px-5 py-3 text-sm font-semibold text-white">Guarda gli immobili <ArrowUpRight size={15} /></SiteLink>
+          <SiteLink to={{ page: 'immobili' }} className="mt-5 inline-flex items-center gap-2 rounded-[calc(var(--r)*0.6)] bg-[var(--ink)] px-5 py-3 text-sm font-semibold text-white">{tx('hero.cta')} <ArrowUpRight size={15} /></SiteLink>
         </div>
       </div>
       <div className="relative mt-10 h-[560px] overflow-hidden rounded-[calc(var(--r)*1.4)]">
@@ -306,7 +308,7 @@ export function Hero() {
     <section className="bg-[var(--soft)]">
       <Container className="grid items-center gap-10 py-14 lg:grid-cols-[1fr_1.05fr] lg:py-20">
         <div>
-          <Eyebrow>{cfg.city ? `Immobili a ${cfg.city}` : 'La tua casa ti aspetta'}</Eyebrow>
+          <Eyebrow>{cfg.city ? `Immobili a ${cfg.city}` : tx('hero.eyebrow')}</Eyebrow>
           <div className="mt-4">{title}</div>{sub}
           <div className="relative z-10 mt-9 lg:-mr-40"><SearchForm /></div>
         </div>
@@ -325,7 +327,7 @@ export function Hero() {
         <Container className="absolute inset-0 flex flex-col justify-center pb-16">
           {cfg.city && <span className="mb-6 inline-flex w-fit items-center gap-1.5 rounded-full bg-white/90 px-3.5 py-1.5 text-xs font-semibold text-[var(--c)]"><Leaf size={13} /> {cfg.city}</span>}
           <div className="max-w-2xl">{title}</div>{sub}
-          <SiteLink to={{ page: 'immobili' }} className="mt-8 inline-flex w-fit items-center gap-2 rounded-full border border-white/70 px-6 py-3 text-sm font-semibold transition hover:bg-white hover:text-neutral-900">Guarda gli immobili <ArrowRight size={16} /></SiteLink>
+          <SiteLink to={{ page: 'immobili' }} className="mt-8 inline-flex w-fit items-center gap-2 rounded-full border border-white/70 px-6 py-3 text-sm font-semibold transition hover:bg-white hover:text-neutral-900">{tx('hero.cta')} <ArrowRight size={16} /></SiteLink>
         </Container>
       </div>
       <Container className="relative z-10 -mt-16"><div className="rounded-[calc(var(--r)*1.3)] bg-[var(--bg)] p-3 shadow-[0_30px_80px_-30px_rgba(0,0,0,.35)]"><SearchForm /></div></Container>
@@ -366,7 +368,7 @@ export function Hero() {
         <div className="relative grid min-h-[620px] items-end gap-8 p-8 md:grid-cols-[1fr_360px] md:p-12">
           <div className="max-w-xl">
             {title}
-            <SiteLink to={{ page: 'immobili' }} className="mt-8 inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-neutral-900">Tutti gli immobili <ArrowUpRight size={15} /></SiteLink>
+            <SiteLink to={{ page: 'immobili' }} className="mt-8 inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-neutral-900">{tx('hero.cta')} <ArrowUpRight size={15} /></SiteLink>
           </div>
           <div className="self-center rounded-[var(--r)] bg-white p-6 text-neutral-900 shadow-2xl">
             <H className="text-3xl">Cosa stai cercando?</H>
@@ -380,13 +382,14 @@ export function Hero() {
 }
 
 // ---------- Intro dopo l'apertura: 4 varianti (citta le mette dentro l'apertura) ----------
-const FEATURES = [
-  { i: ShieldCheck, t: 'Affidabilità', d: 'Ogni immobile verificato, documenti in ordine prima della visita.', tint: '#e7f0ff' },
-  { i: Users, t: 'Consulenza vera', d: 'Un agente che ti segue di persona, non un call center.', tint: '#f3e8ff' },
-  { i: Building2, t: 'Scelta selezionata', d: 'Poche case, quelle giuste: niente annunci fantasma.', tint: '#e8f7ef' },
-  { i: Handshake, t: 'Fino al rogito', d: 'Trattativa, mutuo e notaio: ti accompagno in ogni passo.', tint: '#fff1e6' },
-];
+const FEATURE_ICONS = [ShieldCheck, Users, Building2, Handshake];
+const TINTS = ['#e7f0ff', '#f3e8ff', '#e8f7ef', '#fff1e6'];
+function useFeatures() {
+  const tx = useT();
+  return FEATURE_ICONS.map((i, k) => ({ i, t: tx(`feature.${k + 1}.title`), d: tx(`feature.${k + 1}.text`), tint: TINTS[k] }));
+}
 export function Features({ compact, pastel }: { compact?: boolean; pastel?: boolean }) {
+  const FEATURES = useFeatures();
   return (
     <div className={`grid gap-3 sm:grid-cols-2 lg:grid-cols-4 ${compact ? 'rounded-[var(--r)] bg-[var(--surface)] p-3 shadow-[0_20px_60px_-25px_rgba(0,0,0,.25)]' : ''}`}>
       {FEATURES.map(f => (
@@ -401,6 +404,7 @@ export function Features({ compact, pastel }: { compact?: boolean; pastel?: bool
 
 export function Intro() {
   const { t, cfg, name, properties } = useSite();
+  const tx = useT();
   if (t.intro === 'none') return null;
   if (t.intro === 'services') {
     const [a, b] = ['I miei', 'servizi'];
@@ -485,10 +489,10 @@ export function Intro() {
         </div>
         <div>
           <Eyebrow>Benvenuti da {name}</Eyebrow>
-          <H className="mt-3 text-4xl md:text-5xl">Case scelte una per una, come le vorresti tu</H>
+          <H className="mt-3 text-4xl md:text-5xl">{tx('intro.title')}</H>
           <p className="mt-4 leading-relaxed text-[var(--muted)]">{introOf(cfg)}</p>
           <div className="mt-7 flex flex-wrap items-center gap-4">
-            <SiteLink to={{ page: 'immobili' }} className="inline-flex items-center gap-2 rounded-full bg-[var(--c)] px-6 py-3 text-sm font-semibold text-white"><MapPin size={15} /> Esplora</SiteLink>
+            <SiteLink to={{ page: 'immobili' }} className="inline-flex items-center gap-2 rounded-full bg-[var(--c)] px-6 py-3 text-sm font-semibold text-white"><MapPin size={15} /> {tx('intro.button')}</SiteLink>
             <SiteLink to={{ page: 'agente' }} className="inline-flex items-center gap-1 text-sm font-semibold">{cfg.aboutTitle} <ArrowRight size={14} /></SiteLink>
           </div>
         </div>
@@ -633,8 +637,9 @@ export function SectionHead({ eyebrow, title, sub, link, center }: { eyebrow?: s
 // ---------- In evidenza: griglia, righe o carosello a seconda del template ----------
 export function Featured() {
   const { properties, t, cfg } = useSite();
+  const tx = useT();
   const [off, setOff] = useState(0);
-  const head = { eyebrow: 'I nostri immobili', title: t.results === 'rows' ? 'Selezionati per te' : 'In evidenza', sub: 'Le case disponibili adesso.', link: { label: 'Vedi tutti', to: { page: 'immobili' } as Page } };
+  const head = { eyebrow: tx('featured.eyebrow'), title: tx('featured.title'), sub: tx('featured.sub'), link: { label: tx('featured.link'), to: { page: 'immobili' } as Page } };
   if (!properties.length) return <Container className="py-20"><SectionHead {...head} /><p className="mt-8 text-[var(--muted)]">Presto nuovi immobili.</p></Container>;
   if (t.results === 'rows') return <Container className="py-24"><SectionHead {...head} /><div className="mt-6 border-t border-[var(--line)]">{properties.slice(0, 4).map(p => <PropertyRow key={p.id} p={p} />)}</div></Container>;
   if (t.featured === 'chips') return <FeaturedChips />;
@@ -663,19 +668,21 @@ export function Featured() {
 // In evidenza con filtro rapido a chip per tipologia e titolo con parola in corsivo colorato
 function FeaturedChips() {
   const { properties } = useSite();
+  const tx = useT();
+  const [ta, tb] = splitTitle(tx('intro.title'));
   const [tipo, setTipo] = useState('');
   const tipi = tipiOf(properties);
   const list = properties.filter(p => !tipo || p.tipologia?.startsWith(tipo)).slice(0, 6);
   return (
     <Container className="py-24">
-      <H className="mx-auto max-w-2xl text-center text-4xl md:text-5xl">Case scelte una per una, <Accent color>che ti somigliano</Accent></H>
+      <H className="mx-auto max-w-2xl text-center text-4xl md:text-5xl">{ta} <Accent color>{tb}</Accent></H>
       <div className="mt-10 flex justify-center gap-2 overflow-x-auto pb-1 [scrollbar-width:none]">
         {['', ...tipi].map(x => (
           <button key={x || 'tutti'} onClick={() => setTipo(x)} className={`shrink-0 rounded-full px-5 py-2 text-sm font-medium transition-colors ${tipo === x ? 'bg-[var(--ink)] text-white' : 'bg-[var(--soft)] text-[var(--fg)] hover:bg-[var(--line)]'}`}>{x || 'Tutti'}</button>
         ))}
       </div>
       <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">{list.map(p => <PropertyCard key={p.id} p={p} />)}</div>
-      <div className="mt-10 text-center"><SiteLink to={{ page: 'immobili', f: tipo ? { tipo } : undefined }} className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold ring-1 ring-[var(--line)] hover:ring-[var(--fg)]">Vedi tutti gli immobili <ArrowRight size={15} /></SiteLink></div>
+      <div className="mt-10 text-center"><SiteLink to={{ page: 'immobili', f: tipo ? { tipo } : undefined }} className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold ring-1 ring-[var(--line)] hover:ring-[var(--fg)]">{tx('featured.link')} <ArrowRight size={15} /></SiteLink></div>
     </Container>
   );
 }
@@ -683,10 +690,12 @@ function FeaturedChips() {
 // ---------- Chi siamo: 7 varianti ----------
 export function AboutBlock() {
   const { cfg, name, properties, t } = useSite();
+  const tx = useT();
+  const FEATURES = useFeatures();
   const stats = statsOf(cfg, properties);
   const photo = cfg.aboutImage || properties[1]?.cover || properties[0]?.cover;
-  const more = <SiteLink to={{ page: 'agente' }} className="mt-8 inline-flex items-center gap-2 rounded-[min(var(--r),999px)] bg-[var(--c)] px-5 py-3 text-sm font-semibold text-white transition hover:brightness-110">Conoscimi meglio <ArrowRight size={15} /></SiteLink>;
-  const checks = <ul className="mt-6 space-y-2.5 text-sm">{['Valutazione gratuita del tuo immobile', 'Foto e annunci curati', 'Assistenza fino al rogito'].map(x => <li key={x} className="flex items-center gap-2.5"><span className="flex h-5 w-5 items-center justify-center rounded-full bg-[var(--c)] text-white"><Check size={12} /></span>{x}</li>)}</ul>;
+  const more = <SiteLink to={{ page: 'agente' }} className="mt-8 inline-flex items-center gap-2 rounded-[min(var(--r),999px)] bg-[var(--c)] px-5 py-3 text-sm font-semibold text-white transition hover:brightness-110">{tx('about.cta')} <ArrowRight size={15} /></SiteLink>;
+  const checks = <ul className="mt-6 space-y-2.5 text-sm">{[tx('about.check.1'), tx('about.check.2'), tx('about.check.3')].filter(Boolean).map(x => <li key={x} className="flex items-center gap-2.5"><span className="flex h-5 w-5 items-center justify-center rounded-full bg-[var(--c)] text-white"><Check size={12} /></span>{x}</li>)}</ul>;
 
   if (t.about === 'why') return (
     <section className="bg-[var(--soft)] py-24">
@@ -717,7 +726,7 @@ export function AboutBlock() {
           <ol className="mt-8 space-y-6">
             {FEATURES.slice(0, 3).map((f, i) => <li key={f.t} className="flex gap-4"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--soft)] text-sm font-bold text-[var(--c)]">{i + 1}</span><div><div className="font-semibold">{f.t}</div><div className="mt-1 text-sm text-[var(--muted)]">{f.d}</div></div></li>)}
           </ol>
-          <SiteLink to={{ page: 'agente' }} className="mt-8 inline-flex items-center gap-2 text-sm font-semibold text-[var(--c)]">Conoscimi meglio <ArrowRight size={15} /></SiteLink>
+          <SiteLink to={{ page: 'agente' }} className="mt-8 inline-flex items-center gap-2 text-sm font-semibold text-[var(--c)]">{tx('about.cta')} <ArrowRight size={15} /></SiteLink>
         </div>
       </Container>
     );
@@ -781,6 +790,7 @@ export function AboutBlock() {
 // ---------- Recensioni: card o citazione grande a scorrimento ----------
 export function Reviews() {
   const { cfg, t } = useSite();
+  const tx = useT();
   const [i, setI] = useState(0);
   if (!cfg.reviews.length) return null;
   if (t.reviews === 'quote') {
@@ -797,7 +807,7 @@ export function Reviews() {
   }
   return (
     <Container className="py-24">
-      <SectionHead eyebrow="Recensioni" title="Cosa dicono i clienti" />
+      <SectionHead eyebrow={tx('reviews.eyebrow')} title={tx('reviews.title')} />
       <div className="mt-10 grid gap-5 md:grid-cols-3">
         {cfg.reviews.map((r, k) => (
           <figure key={k} className="flex flex-col rounded-[var(--r)] bg-[var(--surface)] p-7 ring-1 ring-[var(--line)]">
@@ -817,12 +827,13 @@ export function Reviews() {
 // ---------- Zone ----------
 export function Zones() {
   const { properties, preview, go, base, cfg } = useSite();
+  const tx = useT();
   if (cfg.zones.length) {
     const cover = (name: string) => properties.find(p => p.addr?.toLowerCase().includes(name.toLowerCase()))?.cover ?? properties[0]?.cover;
     const count = (name: string) => properties.filter(p => p.addr?.toLowerCase().includes(name.toLowerCase())).length;
     return (
       <Container className="pb-24">
-        <SectionHead eyebrow="Dove lavoro" title="Scopri le zone" />
+        <SectionHead eyebrow={tx('zones.eyebrow')} title={tx('zones.title')} />
         <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {cfg.zones.slice(0, 4).map(z => (
             <SiteLink key={z.name} to={{ page: 'zona', slug: zoneSlug(z.name) }} className="group relative block aspect-[4/5] overflow-hidden rounded-[var(--r)] text-white">
@@ -842,7 +853,7 @@ export function Zones() {
   if (byZone.length < 2) return null;
   return (
     <Container className="pb-24">
-      <SectionHead eyebrow="Dove lavoro" title="Cerca per zona" />
+      <SectionHead eyebrow={tx('zones.eyebrow')} title={tx('zones.title')} />
       <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {byZone.map(([z, ps]) => (
           <a key={z} href={preview ? undefined : pathOf(base, { page: 'immobili', f: { q: z } })} onClick={preview ? () => go?.({ page: 'immobili', f: { q: z } }) : undefined}
@@ -860,6 +871,7 @@ export function Zones() {
 // ---------- Fascia contatti: 4 varianti ----------
 export function CtaBand() {
   const { cfg, t, properties } = useSite();
+  const tx = useT();
   const c = contacts(cfg);
   if (!cfg.showContact) return null;
   const buttons = (
@@ -870,7 +882,7 @@ export function CtaBand() {
       {!c.tel && !c.wa && !c.mail && <span className="text-sm text-white/80">Aggiungi telefono o email nell’editor.</span>}
     </div>
   );
-  const text = <div><H className="text-3xl md:text-5xl">Pronto a trovare casa?</H><p className="mt-3 max-w-md text-white/80">Scrivimi o chiamami: rispondo di persona, senza impegno.</p></div>;
+  const text = <div><H className="text-3xl md:text-5xl">{tx('cta.title')}</H><p className="mt-3 max-w-md text-white/80">{tx('cta.text')}</p></div>;
   if (t.cta === 'photo') return (
     <Container className="pb-24"><section id="contatti" className="relative overflow-hidden rounded-[calc(var(--r)*1.3)] px-8 py-20 text-center text-white md:px-16">
       <Photo src={properties[2]?.cover || properties[0]?.cover} className="absolute inset-0 h-full" /><div className="absolute inset-0 bg-[var(--ink)]/75" />

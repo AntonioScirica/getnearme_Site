@@ -33,6 +33,8 @@ export type SiteConfig = {
   facebook: string
   topBar: boolean
   whatsappButton: boolean
+  texts: Record<string, string>
+  hidden: string[]
   ctaLabel: string
   phone: string
   whatsapp: string
@@ -95,7 +97,7 @@ export function defaultSite(name: string, email = ''): SiteConfig {
     zones: [],
     method: 'La trattativa non si improvvisa alla fine: si costruisce all’inizio. Studio l’immobile con il proprietario, definisco il prezzo corretto e preparo tutti i documenti prima di metterlo sul mercato. Pubblico solo quando è davvero pronto: meno trattativa, nessuna sorpresa.',
     highlights: ['Esperienza sul territorio', 'Clienti italiani e stranieri', 'Dalla prima visita al rogito'],
-    address: '', legal: '', instagram: '', facebook: '', topBar: true, whatsappButton: true,
+    address: '', legal: '', instagram: '', facebook: '', topBar: true, whatsappButton: true, texts: {}, hidden: [],
     reviews: [
       { text: 'Ci ha seguiti in tutto, dalla prima visita al notaio. Sempre disponibile e chiaro su ogni passaggio.', name: 'Giulia e Marco', zone: '' },
       { text: 'Venduto in poche settimane al prezzo giusto. Foto e annuncio fatti benissimo.', name: 'Roberto', zone: '' },
@@ -143,6 +145,9 @@ export function cleanSite(raw: unknown, name: string, email = ''): SiteConfig {
     instagram: url(r.instagram),
     facebook: url(r.facebook),
     topBar: bool(r.topBar, d.topBar),
+    // solo chiavi conosciute, testi corti
+    texts: r.texts && typeof r.texts === 'object' ? Object.fromEntries(Object.entries(r.texts as Record<string, unknown>).filter(([k, v]) => k in TEXTS && typeof v === 'string').map(([k, v]) => [k, (v as string).slice(0, 600)])) : {},
+    hidden: Array.isArray(r.hidden) ? r.hidden.filter((x): x is string => typeof x === 'string' && HIDEABLE.has(x)) : [],
     whatsappButton: bool(r.whatsappButton, d.whatsappButton),
     reviews: Array.isArray(r.reviews)
       ? r.reviews.slice(0, 3).map(x => { const o = (x ?? {}) as Record<string, unknown>; return { text: str(o.text, 300, ''), name: str(o.name, 60, ''), zone: str(o.zone, 60, '') } }).filter(x => x.text)
@@ -161,3 +166,109 @@ export function cleanSite(raw: unknown, name: string, email = ''): SiteConfig {
 
 // "casa-a-sirolo" <-> "Sirolo": indirizzo delle pagine zona
 export const zoneSlug = (name: string) => name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+
+// ---------- Testi modificabili e sezioni per pagina ----------
+// Ogni testo del sito ha una chiave e un valore di partenza; l'agente salva solo quelli che cambia
+// (cfg.texts). Le sezioni si possono nascondere (cfg.hidden). L'editor mostra le sezioni della pagina aperta.
+export const TEXTS: Record<string, string> = {
+  'hero.eyebrow': 'Immobili selezionati', 'hero.cta': 'Guarda gli immobili', 'hero.cta2': 'Richiedi una consulenza',
+  'search.button': 'Cerca', 'search.more': 'Altri filtri',
+  'intro.title': 'Case scelte una per una, come le vorresti tu', 'intro.button': 'Esplora',
+  'feature.1.title': 'Affidabilità', 'feature.1.text': 'Ogni immobile verificato, documenti in ordine prima della visita.',
+  'feature.2.title': 'Consulenza vera', 'feature.2.text': 'Un agente che ti segue di persona, non un call center.',
+  'feature.3.title': 'Scelta selezionata', 'feature.3.text': 'Poche case, quelle giuste: niente annunci fantasma.',
+  'feature.4.title': 'Fino al rogito', 'feature.4.text': 'Trattativa, mutuo e notaio: ti accompagno in ogni passo.',
+  'featured.eyebrow': 'I nostri immobili', 'featured.title': 'In evidenza', 'featured.sub': 'Le case disponibili adesso.', 'featured.link': 'Vedi tutti',
+  'about.check.1': 'Valutazione gratuita del tuo immobile', 'about.check.2': 'Foto e annunci curati', 'about.check.3': 'Assistenza fino al rogito', 'about.cta': 'Conoscimi meglio',
+  'reviews.eyebrow': 'Recensioni', 'reviews.title': 'Cosa dicono i clienti',
+  'zones.eyebrow': 'Dove lavoro', 'zones.title': 'Scopri le zone',
+  'cta.title': 'Pronto a trovare casa?', 'cta.text': 'Scrivimi o chiamami: rispondo di persona, senza impegno.',
+  'listings.eyebrow': 'Immobili', 'listings.title': 'Tutti gli immobili', 'listings.empty': 'Nessun immobile con questi filtri.',
+  'property.details': 'Dettagli', 'property.features': 'Caratteristiche', 'property.zone': 'Nella zona', 'property.map': 'Posizione', 'property.desc': 'Descrizione',
+  'property.form': 'Oppure scrivimi qui', 'property.similar': 'Potrebbero interessarti',
+  'agent.listingsEyebrow': 'I miei immobili', 'agent.listingsTitle': 'Cosa sto seguendo',
+  'services.eyebrow': 'Servizi', 'services.title': 'Cosa faccio per te', 'services.sub': 'Un percorso chiaro dalla valutazione al rogito, senza sorprese.',
+  'services.methodLabel': 'Il mio metodo di vendita', 'services.formTitle': 'Scrivimi per una consulenza gratuita', 'services.formText': 'Raccontami cosa cerchi o cosa vuoi vendere: ti rispondo io, di persona.',
+  'contact.eyebrow': 'Contatti', 'contact.title': 'Scrivimi o chiamami', 'contact.sub': 'Rispondo di persona, di solito entro la giornata.', 'contact.formTitle': 'Richiedi informazioni',
+  'form.button': 'Invia richiesta', 'form.done': 'Richiesta inviata',
+  'zone.eyebrow': 'Zona',
+}
+
+export type SectionDef = { id: string; label: string; texts?: string[]; hideable?: boolean; cfg?: (keyof SiteConfig)[]; note?: string }
+export type PageId = 'home' | 'immobili' | 'immobile' | 'agente' | 'servizi' | 'contatti' | 'zona'
+
+export const PAGE_SECTIONS: Record<PageId, SectionDef[]> = {
+  home: [
+    { id: 'header', label: 'Barra in alto', cfg: ['ctaLabel', 'topBar'] },
+    { id: 'home.hero', label: 'Apertura', texts: ['hero.eyebrow', 'hero.cta', 'hero.cta2', 'search.button', 'search.more'], cfg: ['heroTitle', 'heroSubtitle', 'city', 'heroImage'] },
+    { id: 'home.intro', label: 'Dopo l’apertura', hideable: true, texts: ['intro.title', 'intro.button', 'feature.1.title', 'feature.1.text', 'feature.2.title', 'feature.2.text', 'feature.3.title', 'feature.3.text', 'feature.4.title', 'feature.4.text'] },
+    { id: 'home.featured', label: 'Immobili in evidenza', hideable: true, texts: ['featured.eyebrow', 'featured.title', 'featured.sub', 'featured.link'], cfg: ['showPrices'] },
+    { id: 'home.about', label: 'Chi sono', hideable: true, texts: ['about.check.1', 'about.check.2', 'about.check.3', 'about.cta'], cfg: ['aboutTitle', 'aboutText', 'aboutImage', 'years', 'sold', 'clients', 'showStats'] },
+    { id: 'home.reviews', label: 'Recensioni', hideable: true, texts: ['reviews.eyebrow', 'reviews.title'], cfg: ['reviews'] },
+    { id: 'home.zones', label: 'Zone', hideable: true, texts: ['zones.eyebrow', 'zones.title'], cfg: ['zones'] },
+    { id: 'cta', label: 'Fascia contatti', hideable: true, texts: ['cta.title', 'cta.text'], cfg: ['phone', 'whatsapp', 'email'] },
+    { id: 'footer', label: 'Piè di pagina', cfg: ['address', 'legal', 'instagram', 'facebook'] },
+  ],
+  immobili: [
+    { id: 'header', label: 'Barra in alto', cfg: ['ctaLabel', 'topBar'] },
+    { id: 'listings.head', label: 'Titolo della pagina', texts: ['listings.eyebrow', 'listings.title', 'listings.empty'] },
+    { id: 'cta', label: 'Fascia contatti', hideable: true, texts: ['cta.title', 'cta.text'] },
+    { id: 'footer', label: 'Piè di pagina', cfg: ['address', 'legal'] },
+  ],
+  immobile: [
+    { id: 'property.desc', label: 'Descrizione', hideable: true, texts: ['property.desc'], note: 'Il testo lo prendi dall’immobile.' },
+    { id: 'property.details', label: 'Dettagli', hideable: true, texts: ['property.details'] },
+    { id: 'property.features', label: 'Caratteristiche', hideable: true, texts: ['property.features'] },
+    { id: 'property.zone', label: 'Nella zona', hideable: true, texts: ['property.zone'] },
+    { id: 'property.map', label: 'Mappa', hideable: true, texts: ['property.map'] },
+    { id: 'property.agent', label: 'Scheda agente e modulo', texts: ['property.form', 'form.button', 'form.done'], cfg: ['phone', 'whatsapp', 'email'] },
+    { id: 'property.similar', label: 'Immobili simili', hideable: true, texts: ['property.similar'] },
+  ],
+  agente: [
+    { id: 'agent.top', label: 'Il tuo profilo', cfg: ['aboutImage', 'agentRole', 'aboutTitle', 'aboutText', 'areas', 'highlights', 'years', 'sold', 'clients', 'showStats'] },
+    { id: 'agent.listings', label: 'I tuoi immobili', hideable: true, texts: ['agent.listingsEyebrow', 'agent.listingsTitle'] },
+    { id: 'home.reviews', label: 'Recensioni', hideable: true, texts: ['reviews.eyebrow', 'reviews.title'], cfg: ['reviews'] },
+    { id: 'cta', label: 'Fascia contatti', hideable: true, texts: ['cta.title', 'cta.text'] },
+  ],
+  servizi: [
+    { id: 'services.head', label: 'Titolo della pagina', texts: ['services.eyebrow', 'services.title', 'services.sub'] },
+    { id: 'services.list', label: 'Servizi', cfg: ['services'] },
+    { id: 'services.method', label: 'Il tuo metodo', hideable: true, texts: ['services.methodLabel'], cfg: ['method'] },
+    { id: 'services.form', label: 'Consulenza gratuita', hideable: true, texts: ['services.formTitle', 'services.formText', 'form.button'], cfg: ['highlights'] },
+  ],
+  contatti: [
+    { id: 'contact.head', label: 'Titolo della pagina', texts: ['contact.eyebrow', 'contact.title', 'contact.sub'] },
+    { id: 'contact.info', label: 'I tuoi recapiti', cfg: ['phone', 'whatsapp', 'email', 'address'] },
+    { id: 'contact.form', label: 'Modulo', texts: ['contact.formTitle', 'form.button', 'form.done'] },
+  ],
+  zona: [
+    { id: 'zone.page', label: 'Pagine zona', texts: ['zone.eyebrow'], cfg: ['zones'] },
+    { id: 'cta', label: 'Fascia contatti', hideable: true, texts: ['cta.title', 'cta.text'] },
+  ],
+}
+export const HIDEABLE = new Set(Object.values(PAGE_SECTIONS).flat().filter(s => s.hideable).map(s => s.id))
+
+// Nomi leggibili dei campi nell'editor
+export const FIELD_LABELS: Record<string, string> = {
+  'hero.eyebrow': 'Scritta sopra il titolo', 'hero.cta': 'Pulsante principale', 'hero.cta2': 'Pulsante secondario', 'search.button': 'Pulsante di ricerca', 'search.more': 'Link “altri filtri”',
+  'intro.title': 'Titolo', 'intro.button': 'Pulsante',
+  'feature.1.title': 'Punto 1', 'feature.1.text': 'Punto 1, testo', 'feature.2.title': 'Punto 2', 'feature.2.text': 'Punto 2, testo',
+  'feature.3.title': 'Punto 3', 'feature.3.text': 'Punto 3, testo', 'feature.4.title': 'Punto 4', 'feature.4.text': 'Punto 4, testo',
+  'featured.eyebrow': 'Scritta sopra il titolo', 'featured.title': 'Titolo', 'featured.sub': 'Sottotitolo', 'featured.link': 'Link “vedi tutti”',
+  'about.check.1': 'Punto elenco 1', 'about.check.2': 'Punto elenco 2', 'about.check.3': 'Punto elenco 3', 'about.cta': 'Pulsante',
+  'reviews.eyebrow': 'Scritta sopra il titolo', 'reviews.title': 'Titolo', 'zones.eyebrow': 'Scritta sopra il titolo', 'zones.title': 'Titolo',
+  'cta.title': 'Titolo', 'cta.text': 'Testo',
+  'listings.eyebrow': 'Scritta sopra il titolo', 'listings.title': 'Titolo', 'listings.empty': 'Messaggio senza risultati',
+  'property.details': 'Titolo', 'property.features': 'Titolo', 'property.zone': 'Titolo', 'property.map': 'Titolo', 'property.desc': 'Titolo',
+  'property.form': 'Titolo del modulo', 'property.similar': 'Titolo',
+  'agent.listingsEyebrow': 'Scritta sopra il titolo', 'agent.listingsTitle': 'Titolo',
+  'services.eyebrow': 'Scritta sopra il titolo', 'services.title': 'Titolo', 'services.sub': 'Sottotitolo', 'services.methodLabel': 'Etichetta',
+  'services.formTitle': 'Titolo', 'services.formText': 'Testo',
+  'contact.eyebrow': 'Scritta sopra il titolo', 'contact.title': 'Titolo', 'contact.sub': 'Sottotitolo', 'contact.formTitle': 'Titolo del modulo',
+  'form.button': 'Pulsante del modulo', 'form.done': 'Messaggio dopo l’invio', 'zone.eyebrow': 'Scritta sopra il titolo',
+  heroTitle: 'Titolo', heroSubtitle: 'Sottotitolo', city: 'Città o zona', heroImage: 'Foto di copertina', ctaLabel: 'Pulsante contatti', topBar: 'Barra con telefono ed email',
+  aboutTitle: 'Nome della sezione', aboutText: 'Chi sei', aboutImage: 'La tua foto', agentRole: 'Ruolo', areas: 'Zone in cui lavori', highlights: 'Punti in evidenza',
+  years: 'Anni di esperienza', sold: 'Immobili venduti', clients: 'Clienti seguiti', showStats: 'Mostra i numeri', showPrices: 'Mostra i prezzi',
+  reviews: 'Recensioni', zones: 'Pagine zona', services: 'Servizi', method: 'Il tuo metodo',
+  phone: 'Telefono', whatsapp: 'WhatsApp', email: 'Email', address: 'Indirizzo dell’ufficio', legal: 'P.IVA, REA', instagram: 'Instagram (link)', facebook: 'Facebook (link)',
+}

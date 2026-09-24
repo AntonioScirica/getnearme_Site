@@ -5,13 +5,13 @@ import { ArrowLeft, ChevronLeft, ChevronRight, Expand, Mail, MapPin, MessageCirc
 import { zoneSlug, type SiteProperty } from '@/lib/siteTemplates';
 import { ContactForm, DetailsTable, FeatureList, MapBlock, RichText, ServicesGrid, ShareBar, WhatsAppFloat } from './extras';
 import { AboutBlock, CtaBand, Featured, Footer, Header, Hero, Intro, isRent, PropertyCard, PropertyRow, Reviews, SearchForm, SectionHead, statsOf, tipiOf, Zones, type Filters } from './sections';
-import { Btn, Container, contacts, Eyebrow, Facts, FavButton, H, Photo, price, SiteLink, SiteRoot, typeOf, useFavs, useSite, type Page, type SiteCtx } from './ui';
+import { Btn, Container, contacts, Eyebrow, Facts, FavButton, H, Photo, price, Sec, SiteLink, SiteRoot, typeOf, useFavs, useSite, useT, type Page, type SiteCtx } from './ui';
 
 // Le 4 pagine del sito vetrina. Struttura comune, ma ogni template sceglie le sue varianti:
 // filtri laterali o in alto, card o righe, galleria a mosaico, slider o a tutto schermo, profilo diviso, con copertina o centrato.
 
 function HomePage() {
-  return <><Header over /><Hero /><Intro /><Featured /><AboutBlock /><Reviews /><Zones /><CtaBand /><Footer /></>;
+  return <><Sec id="header"><Header over /></Sec><Sec id="home.hero"><Hero /></Sec><Sec id="home.intro"><Intro /></Sec><Sec id="home.featured"><Featured /></Sec><Sec id="home.about"><AboutBlock /></Sec><Sec id="home.reviews"><Reviews /></Sec><Sec id="home.zones"><Zones /></Sec><Sec id="cta"><CtaBand /></Sec><Sec id="footer"><Footer /></Sec></>;
 }
 
 // Testata delle pagine interne, diversa per template
@@ -57,6 +57,7 @@ function useFilter(initial?: Filters) {
 
 function ListingsPage({ initial }: { initial?: Filters }) {
   const { t } = useSite();
+  const tx = useT();
   const s = useFilter(initial);
   const { f, set, setF, list, tipi, favCount } = s;
   const [pageN, setPageN] = useState(0);
@@ -97,7 +98,7 @@ function ListingsPage({ initial }: { initial?: Filters }) {
       {t.results === 'rows'
         ? <div className="border-t border-[var(--line)]">{shown.map(p => <PropertyRow key={p.id} p={p} />)}</div>
         : <div className={`grid gap-6 sm:grid-cols-2 ${t.listings === 'topbar' ? 'lg:grid-cols-3' : 'xl:grid-cols-3'}`}>{shown.map(p => <PropertyCard key={p.id} p={p} />)}</div>}
-      {!list.length && <div className="rounded-[var(--r)] bg-[var(--soft)] px-6 py-16 text-center text-[var(--muted)]">Nessun immobile con questi filtri. <button onClick={() => setF({})} className="font-semibold text-[var(--c)]">Azzera</button></div>}
+      {!list.length && <div className="rounded-[var(--r)] bg-[var(--soft)] px-6 py-16 text-center text-[var(--muted)]">{tx('listings.empty')} <button onClick={() => setF({})} className="font-semibold text-[var(--c)]">Azzera</button></div>}
       {pages > 1 && (
         <div className="mt-12 flex items-center justify-center gap-2">
           <button disabled={!pageN} onClick={() => setPageN(n => n - 1)} className="flex h-10 w-10 items-center justify-center rounded-full disabled:opacity-30"><ChevronLeft size={18} /></button>
@@ -107,15 +108,15 @@ function ListingsPage({ initial }: { initial?: Filters }) {
       )}
     </>
   );
-  const title = f.q ? `Immobili a ${f.q}` : 'Tutti gli immobili';
+  const title = f.q ? `Immobili a ${f.q}` : tx('listings.title');
   const sub = `${list.length} ${list.length === 1 ? 'risultato' : 'risultati'}`;
 
   return (
     <>
-      <Header />
+      <Sec id="header"><Header /></Sec>
       {t.listings === 'topbar' ? (
         <>
-          <PageHead eyebrow="Immobili" title={title} sub={sub} />
+          <Sec id="listings.head"><PageHead eyebrow={tx('listings.eyebrow')} title={title} sub={sub} /></Sec>
           {/* filtri in una barra sopra i risultati */}
           <Container className={t.header === 'over' ? '-mt-8 relative z-10' : 'mt-4'}>
             <div className="flex flex-col gap-3 rounded-[var(--r)] bg-[var(--surface)] p-3 shadow-[0_20px_60px_-25px_rgba(0,0,0,.25)] ring-1 ring-[var(--line)] lg:flex-row lg:items-center">
@@ -130,7 +131,7 @@ function ListingsPage({ initial }: { initial?: Filters }) {
         </>
       ) : (
         <>
-          <PageHead eyebrow="Immobili" title={title} sub={sub} />
+          <Sec id="listings.head"><PageHead eyebrow={tx('listings.eyebrow')} title={title} sub={sub} /></Sec>
           <Container className="grid gap-10 py-12 lg:grid-cols-[280px_1fr]">
             <aside className="hidden lg:block"><div className="sticky top-6 rounded-[var(--r)] bg-[var(--surface)] p-5 ring-1 ring-[var(--line)]">{sidebar}</div></aside>
             <div>
@@ -151,8 +152,8 @@ function ListingsPage({ initial }: { initial?: Filters }) {
           )}
         </>
       )}
-      <CtaBand />
-      <Footer />
+      <Sec id="cta"><CtaBand /></Sec>
+      <Sec id="footer"><Footer /></Sec>
     </>
   );
 }
@@ -218,6 +219,7 @@ function Gallery({ p }: { p: SiteProperty }) {
 
 function AgentCard({ subject, property }: { subject?: string; property?: SiteProperty }) {
   const { cfg, name } = useSite();
+  const tx = useT();
   const c = contacts(cfg, subject);
   return (
     <div id="contatti" className="rounded-[var(--r)] bg-[var(--surface)] p-6 shadow-[0_20px_50px_-25px_rgba(0,0,0,.25)] ring-1 ring-[var(--line)]">
@@ -231,7 +233,7 @@ function AgentCard({ subject, property }: { subject?: string; property?: SitePro
         {c.mail && <Btn href={c.mail} variant="ghost" className="w-full"><Mail size={16} /> Richiedi una visita</Btn>}
         {!c.wa && !c.tel && !c.mail && <p className="text-sm text-[var(--muted)]">Contatti in arrivo.</p>}
       </div>
-      {property && <div className="mt-6 border-t border-[var(--line)] pt-6"><div className="mb-3 text-sm font-semibold">Oppure scrivimi qui</div><ContactForm property={property} compact /></div>}
+      {property && <div className="mt-6 border-t border-[var(--line)] pt-6"><div className="mb-3 text-sm font-semibold">{tx('property.form')}</div><ContactForm property={property} compact /></div>}
       <SiteLink to={{ page: 'agente' }} className="mt-4 block text-center text-sm font-medium text-[var(--c)] hover:underline">{cfg.aboutTitle}</SiteLink>
     </div>
   );
@@ -239,9 +241,10 @@ function AgentCard({ subject, property }: { subject?: string; property?: SitePro
 
 function PropertyPage({ id }: { id: string }) {
   const { properties, cfg, t } = useSite();
+  const tx = useT();
   const p = properties.find(x => x.id === id) ?? properties[0];
   const [more, setMore] = useState(false);
-  if (!p) return <><Header /><Container className="py-24 text-center text-[var(--muted)]">Immobile non trovato.</Container><Footer /></>;
+  if (!p) return <><Sec id="header"><Header /></Sec><Container className="py-24 text-center text-[var(--muted)]">Immobile non trovato.</Container><Footer /></>;
   const similar = properties.filter(x => x.id !== p.id).slice(0, 3);
   const desc = p.descrizione ?? '';
   const crumbs = (
@@ -264,7 +267,7 @@ function PropertyPage({ id }: { id: string }) {
   );
   return (
     <>
-      <Header />
+      <Sec id="header"><Header /></Sec>
       {t.gallery === 'full' ? (
         <div className="relative"><Gallery p={p} /><Container className="absolute inset-x-0 bottom-10 text-white">{heading}</Container></div>
       ) : (
@@ -280,33 +283,33 @@ function PropertyPage({ id }: { id: string }) {
           <Facts p={p} full className="mt-8" />
           <div className="mt-6 flex items-center gap-2"><ShareBar title={p.titolo} /><FavButton id={p.id} className="!h-10 !w-10 ring-1 ring-[var(--line)] !shadow-none" /></div>
           {desc && (
-            <div className="mt-12">
-              <H className="text-3xl">Descrizione</H>
+            <Sec id="property.desc"><div className="mt-12">
+              <H className="text-3xl">{tx('property.desc')}</H>
               <p className={`mt-4 whitespace-pre-line text-[17px] leading-relaxed text-[var(--muted)] ${more ? '' : 'line-clamp-6'}`}>{desc}</p>
               {desc.length > 400 && <button onClick={() => setMore(v => !v)} className="mt-2 text-sm font-semibold text-[var(--c)]">{more ? 'Mostra meno' : 'Leggi tutto'}</button>}
-            </div>
+            </div></Sec>
           )}
-          <div className="mt-12"><DetailsTable p={p} /></div>
-          <div className="mt-12 empty:hidden"><FeatureList p={p} /></div>
+          <Sec id="property.details"><div className="mt-12"><DetailsTable p={p} /></div></Sec>
+          <Sec id="property.features"><div className="mt-12 empty:hidden"><FeatureList p={p} /></div></Sec>
           {!!p.zona?.length && (
-            <div className="mt-12">
-              <H className="text-3xl">Nella zona</H>
+            <Sec id="property.zone"><div className="mt-12">
+              <H className="text-3xl">{tx('property.zone')}</H>
               <ul className="mt-5 grid gap-2 sm:grid-cols-2">{p.zona.map(z => <li key={z} className="flex items-center gap-2.5 rounded-[calc(var(--r)*0.6)] bg-[var(--soft)] px-4 py-3 text-sm"><MapPin size={14} className="text-[var(--c)]" />{z}</li>)}</ul>
-            </div>
+            </div></Sec>
           )}
-          {p.addr && <div className="mt-12"><MapBlock addr={p.addr} /></div>}
+          {p.addr && <Sec id="property.map"><div className="mt-12"><MapBlock addr={p.addr} /></div></Sec>}
         </div>
-        <aside><div className="sticky top-24"><AgentCard subject={p.titolo} property={p} /></div></aside>
+        <aside><div className="sticky top-24"><Sec id="property.agent"><AgentCard subject={p.titolo} property={p} /></Sec></div></aside>
       </Container>
       {similar.length > 0 && (
-        <section className="bg-[var(--soft)] py-20">
+        <Sec id="property.similar"><section className="bg-[var(--soft)] py-20">
           <Container>
-            <SectionHead title="Potrebbero interessarti" link={{ label: 'Vedi tutti', to: { page: 'immobili' } }} />
+            <SectionHead title={tx('property.similar')} link={{ label: 'Vedi tutti', to: { page: 'immobili' } }} />
             <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">{similar.map(x => <PropertyCard key={x.id} p={x} />)}</div>
           </Container>
-        </section>
+        </section></Sec>
       )}
-      <Footer />
+      <Sec id="footer"><Footer /></Sec>
     </>
   );
 }
@@ -314,6 +317,7 @@ function PropertyPage({ id }: { id: string }) {
 // ---------- Profilo agente: 3 impostazioni ----------
 function AgentPage() {
   const { cfg, name, properties, t } = useSite();
+  const tx = useT();
   const stats = statsOf(cfg, properties);
   const c = contacts(cfg);
   // il primo paragrafo va in alto, il resto (con eventuali "## Sottotitoli") sotto come storia
@@ -374,18 +378,18 @@ function AgentPage() {
   );
   return (
     <>
-      <Header />
-      {top}
-      {rest.length > 0 && <Container className="max-w-3xl pt-20"><RichText text={rest.join('\n\n')} /></Container>}
-      <Container className="py-20">
-        <SectionHead eyebrow="I miei immobili" title="Cosa sto seguendo" link={{ label: 'Cerca tra tutti', to: { page: 'immobili' } }} />
+      <Sec id="header"><Header /></Sec>
+      <Sec id="agent.top">{top}
+      {rest.length > 0 && <Container className="max-w-3xl pt-20"><RichText text={rest.join('\n\n')} /></Container>}</Sec>
+      <Sec id="agent.listings"><Container className="py-20">
+        <SectionHead eyebrow={tx('agent.listingsEyebrow')} title={tx('agent.listingsTitle')} link={{ label: 'Cerca tra tutti', to: { page: 'immobili' } }} />
         <div className="mt-8">{t.results === 'rows'
           ? <div className="border-t border-[var(--line)]">{properties.slice(0, 4).map(p => <PropertyRow key={p.id} p={p} />)}</div>
           : <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">{properties.slice(0, 6).map(p => <PropertyCard key={p.id} p={p} />)}</div>}</div>
-      </Container>
-      <Reviews />
-      <CtaBand />
-      <Footer />
+      </Container></Sec>
+      <Sec id="home.reviews"><Reviews /></Sec>
+      <Sec id="cta"><CtaBand /></Sec>
+      <Sec id="footer"><Footer /></Sec>
     </>
   );
 }
@@ -393,6 +397,7 @@ function AgentPage() {
 // ---------- Servizi: card, elenco o passi ----------
 function ServicesPage() {
   const { cfg, t } = useSite();
+  const tx = useT();
   let body: ReactNode;
   if (t.services === 'list') body = (
     <div className="divide-y divide-[var(--line)] border-y border-[var(--line)]">
@@ -419,26 +424,26 @@ function ServicesPage() {
   else body = <ServicesGrid numbered />;
   return (
     <>
-      <Header />
-      <PageHead eyebrow="Servizi" title="Cosa faccio per te" sub="Un percorso chiaro dalla valutazione al rogito, senza sorprese." />
-      <Container className={`py-16 ${t.services === 'steps' ? 'max-w-4xl' : ''}`}>{body}</Container>
+      <Sec id="header"><Header /></Sec>
+      <Sec id="services.head"><PageHead eyebrow={tx('services.eyebrow')} title={tx('services.title')} sub={tx('services.sub')} /></Sec>
+      <Sec id="services.list"><Container className={`py-16 ${t.services === 'steps' ? 'max-w-4xl' : ''}`}>{body}</Container></Sec>
       {/* il metodo, in evidenza */}
       {cfg.method && (
-        <section className="bg-[var(--ink)] py-20 text-white">
+        <Sec id="services.method"><section className="bg-[var(--ink)] py-20 text-white">
           <Container className="grid gap-8 md:grid-cols-[1fr_1.6fr] md:items-center">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.3em] text-white/60">Il mio metodo di vendita</div>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.3em] text-white/60">{tx('services.methodLabel')}</div>
             <H className="text-2xl leading-snug md:text-4xl">{cfg.method}</H>
           </Container>
-        </section>
+        </section></Sec>
       )}
-      <Container className="py-20">
+      <Sec id="services.form"><Container className="py-20">
         <div className="grid items-center gap-10 rounded-[calc(var(--r)*1.2)] bg-[var(--soft)] p-8 md:grid-cols-2 md:p-12">
-          <div><H className="text-3xl md:text-4xl">Scrivimi per una consulenza gratuita</H><p className="mt-3 text-[var(--muted)]">Raccontami cosa cerchi o cosa vuoi vendere: ti rispondo io, di persona.</p>
+          <div><H className="text-3xl md:text-4xl">{tx('services.formTitle')}</H><p className="mt-3 text-[var(--muted)]">{tx('services.formText')}</p>
             {cfg.highlights.length > 0 && <ul className="mt-6 space-y-2">{cfg.highlights.map(h => <li key={h} className="flex items-center gap-2 text-sm font-medium"><span className="h-1.5 w-1.5 rounded-full bg-[var(--c)]" />{h}</li>)}</ul>}</div>
           <div className="rounded-[var(--r)] bg-[var(--surface)] p-6"><ContactForm compact /></div>
         </div>
-      </Container>
-      <Footer />
+      </Container></Sec>
+      <Sec id="footer"><Footer /></Sec>
     </>
   );
 }
@@ -446,6 +451,7 @@ function ServicesPage() {
 // ---------- Contatti: diviso, card sopra la mappa o fascia ----------
 function ContactPage() {
   const { cfg, name, t } = useSite();
+  const tx = useT();
   const c = contacts(cfg);
   const info = (
     <div className="space-y-4">
@@ -456,7 +462,7 @@ function ContactPage() {
       {c.wa && <Btn href={c.wa} external className="mt-4"><MessageCircle size={16} /> Scrivimi su WhatsApp</Btn>}
     </div>
   );
-  const form = <div className="rounded-[var(--r)] bg-[var(--surface)] p-6 text-[var(--fg)] shadow-[0_30px_80px_-40px_rgba(0,0,0,.35)] ring-1 ring-[var(--line)] md:p-8"><H className="mb-6 text-2xl">Richiedi informazioni</H><ContactForm /></div>;
+  const form = <Sec id="contact.form"><div className="rounded-[var(--r)] bg-[var(--surface)] p-6 text-[var(--fg)] shadow-[0_30px_80px_-40px_rgba(0,0,0,.35)] ring-1 ring-[var(--line)] md:p-8"><H className="mb-6 text-2xl">{tx('contact.formTitle')}</H><ContactForm /></div></Sec>;
   let body: ReactNode;
   if (t.contact === 'card') body = (
     <section className="relative">
@@ -485,23 +491,24 @@ function ContactPage() {
       {form}
     </Container>
   );
-  return <><Header /><PageHead eyebrow="Contatti" title="Scrivimi o chiamami" sub="Rispondo di persona, di solito entro la giornata." />{body}<Footer /></>;
+  return <><Sec id="header"><Header /></Sec><Sec id="contact.head"><PageHead eyebrow={tx('contact.eyebrow')} title={tx('contact.title')} sub={tx('contact.sub')} /></Sec><Sec id="contact.info">{body}</Sec><Sec id="footer"><Footer /></Sec></>;
 }
 
 // ---------- Pagina di una zona ("Casa a Sirolo"): testo sulla localita' + annunci della zona ----------
 function ZonePage({ slug }: { slug: string }) {
   const { cfg, properties, t } = useSite();
+  const tx = useT();
   const z = cfg.zones.find(x => zoneSlug(x.name) === slug) ?? cfg.zones[0];
-  if (!z) return <><Header /><Container className="py-24 text-center text-[var(--muted)]">Pagina non trovata.</Container><Footer /></>;
+  if (!z) return <><Sec id="header"><Header /></Sec><Container className="py-24 text-center text-[var(--muted)]">Pagina non trovata.</Container><Footer /></>;
   const here = properties.filter(p => p.addr?.toLowerCase().includes(z.name.toLowerCase()));
   const list = here.length ? here : properties;
   const grid = (ps: SiteProperty[]) => t.results === 'rows'
     ? <div className="border-t border-[var(--line)]">{ps.map(p => <PropertyRow key={p.id} p={p} />)}</div>
     : <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">{ps.map(p => <PropertyCard key={p.id} p={p} />)}</div>;
-  const head = <PageHead eyebrow="Zona" title={`Casa a ${z.name}`} sub={`${here.length} ${here.length === 1 ? 'immobile disponibile' : 'immobili disponibili'}`} />;
+  const head = <PageHead eyebrow={tx('zone.eyebrow')} title={`Casa a ${z.name}`} sub={`${here.length} ${here.length === 1 ? 'immobile disponibile' : 'immobili disponibili'}`} />;
   if (t.zone === 'wide') return (
     <>
-      <Header />{head}
+      <Sec id="header"><Header /></Sec><Sec id="zone.page">{head}</Sec>
       <Container className="max-w-3xl py-16"><RichText text={z.text} /></Container>
       <section className="bg-[var(--soft)] py-16">
         <Container>
@@ -509,12 +516,12 @@ function ZonePage({ slug }: { slug: string }) {
           <div className="mt-8">{grid(list.slice(0, 6))}</div>
         </Container>
       </section>
-      <CtaBand /><Footer />
+      <Sec id="cta"><CtaBand /></Sec><Sec id="footer"><Footer /></Sec>
     </>
   );
   return (
     <>
-      <Header />{head}
+      <Sec id="header"><Header /></Sec><Sec id="zone.page">{head}</Sec>
       <Container className="grid gap-12 py-16 lg:grid-cols-[1fr_340px]">
         <RichText text={z.text} />
         <aside className="space-y-8">
@@ -523,7 +530,7 @@ function ZonePage({ slug }: { slug: string }) {
         </aside>
       </Container>
       {here.length > 3 && <Container className="pb-16"><SectionHead title={`Tutti gli immobili a ${z.name}`} /><div className="mt-8">{grid(here.slice(3))}</div></Container>}
-      <CtaBand /><Footer />
+      <Sec id="cta"><CtaBand /></Sec><Sec id="footer"><Footer /></Sec>
     </>
   );
 }
