@@ -243,3 +243,32 @@ export function NearbyList({ p }: { p: SiteProperty }) {
     </div>
   );
 }
+
+// Indirizzo cliccabile: apre Google Maps. "Quanto dista da te?" chiede la posizione (solo al clic) e mostra la
+// distanza in linea d'aria. Se l'agente non mostra l'indirizzo esatto qui arriva gia' solo zona e citta'.
+export function AddressLink({ addr, className = '', iconSize = 16 }: { addr: string; className?: string; iconSize?: number }) {
+  const { preview } = useSite();
+  const [dist, setDist] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const measure = async () => {
+    if (!navigator.geolocation) { setDist('posizione non disponibile'); return; }
+    setBusy(true);
+    const here = await new Promise<GeolocationPosition | null>(ok => navigator.geolocation.getCurrentPosition(ok, () => ok(null), { timeout: 10000 }));
+    const r = here && await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=it&q=${encodeURIComponent(addr)}`).then(x => x.json()).catch(() => null) as { lat: string; lon: string }[] | null;
+    setBusy(false);
+    if (!here) { setDist('posizione non concessa'); return; }
+    if (!r?.[0]) { setDist('indirizzo non trovato'); return; }
+    const rad = Math.PI / 180, a = here.coords.latitude, b = here.coords.longitude, c = Number(r[0].lat), d = Number(r[0].lon);
+    const h = Math.sin((c - a) * rad / 2) ** 2 + Math.cos(a * rad) * Math.cos(c * rad) * Math.sin((d - b) * rad / 2) ** 2;
+    const km = 2 * 6371 * Math.asin(Math.sqrt(h));
+    setDist(km < 1 ? `a ${Math.round(km * 1000 / 10) * 10} m da te` : `a ${km.toFixed(km < 10 ? 1 : 0).replace('.', ',')} km da te`);
+  };
+  return (
+    <span className={`inline-flex flex-wrap items-center gap-x-3 gap-y-1 ${className}`}>
+      <a href={preview ? undefined : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addr)}`} target="_blank" rel="noopener"
+        className="inline-flex items-center gap-1.5 underline-offset-4 hover:underline"><MapPin size={iconSize} className="shrink-0" />{addr}</a>
+      {dist ? <span className="text-sm opacity-80">{dist}</span>
+        : <button type="button" onClick={measure} disabled={busy} className="inline-flex items-center gap-1 text-sm font-medium text-[var(--c)] hover:underline disabled:opacity-60">{busy && <Loader2 size={13} className="animate-spin" />}Quanto dista da te?</button>}
+    </span>
+  );
+}

@@ -4,9 +4,9 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { ArrowLeft, ChevronLeft, ChevronRight, Expand, Mail, MapPin, MessageCircle, Phone, Search, SlidersHorizontal, X } from 'lucide-react';
 import { zoneSlug, type SiteProperty } from '@/lib/siteTemplates';
 
-import { ContactForm, DetailsTable, FeatureList, MapBlock, NearbyList, RichText, ServicesGrid, ShareBar, WhatsAppFloat } from './extras';
+import { AddressLink, ContactForm, DetailsTable, FeatureList, MapBlock, NearbyList, RichText, ServicesGrid, ShareBar, WhatsAppFloat } from './extras';
 import { AboutBlock, CtaBand, Featured, Footer, Header, Hero, Intro, isRent, PropertyCard, PropertyRow, Reviews, SearchForm, SectionHead, statsOf, tipiOf, Zones, type Filters } from './sections';
-import { Btn, Container, contacts, Eyebrow, Facts, FavButton, H, Photo, price, Sec, SiteLink, SiteRoot, typeOf, useFavs, useSite, useT, type Page, type SiteCtx, Select } from './ui';
+import { Btn, Container, contacts, Eyebrow, Facts, FavButton, H, Photo, price, Sec, SiteLink, SiteRoot, typeOf, useFavs, useSite, useT, zoneOf, type Page, type SiteCtx, Select } from './ui';
 
 // Le 4 pagine del sito vetrina. Struttura comune, ma ogni template sceglie le sue varianti:
 // filtri laterali o in alto, card o righe, galleria a mosaico, slider o a tutto schermo, profilo diviso, con copertina o centrato.
@@ -274,7 +274,7 @@ function PropertyPage({ id }: { id: string }) {
         <span className="rounded-[calc(var(--r)*0.5)] bg-[var(--soft)] px-2.5 py-1 text-[11px] font-semibold text-[var(--fg)]">{typeOf(p)}</span>
       </div>
       <H as="h1" className="mt-4 text-4xl md:text-5xl">{p.titolo}</H>
-      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 opacity-75"><span className="flex items-center gap-1.5"><MapPin size={16} /> {p.addr}</span>{p.riferimento && <span className="text-sm">Rif. {p.riferimento}</span>}</div>
+      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 opacity-75"><AddressLink addr={(p.details as { mostra_indirizzo?: boolean } | undefined)?.mostra_indirizzo ? p.addr : zoneOf(p.addr) || p.addr} />{p.riferimento && <span className="text-sm">Rif. {p.riferimento}</span>}</div>
     </>
   );
   return (
@@ -472,7 +472,7 @@ function ContactPage() {
   const info = (
     <div className="space-y-4">
       <div className="text-lg font-semibold">{name}</div>
-      {cfg.address && <div className="flex items-center gap-3 opacity-80"><MapPin size={17} className="text-[var(--c)]" />{cfg.address}</div>}
+      {cfg.address && <div className="opacity-80"><AddressLink addr={cfg.address} iconSize={17} /></div>}
       {c.tel && <a href={c.tel} className="flex items-center gap-3"><Phone size={17} className="text-[var(--c)]" />{cfg.phone}</a>}
       {c.mail && <a href={c.mail} className="flex items-center gap-3"><Mail size={17} className="text-[var(--c)]" />{cfg.email}</a>}
       {c.wa && <Btn href={c.wa} external className="mt-4"><MessageCircle size={16} /> Scrivimi su WhatsApp</Btn>}

@@ -619,7 +619,7 @@ export function PropertyRow({ p }: { p: SiteProperty }) {
       <div>
         <div className="text-[11px] font-semibold uppercase tracking-[0.25em] text-[var(--muted)]">{typeOf(p)} · {isRent(p) ? 'Affitto' : 'Vendita'}</div>
         <H as="h3" className="mt-2 text-3xl">{p.titolo}</H>
-        <div className="mt-2 flex items-center gap-1 text-sm text-[var(--muted)]"><MapPin size={14} />{p.addr}</div>
+        <div className="mt-2 flex items-center gap-1 text-sm text-[var(--muted)]"><MapPin size={14} />{(p.details as { mostra_indirizzo?: boolean } | undefined)?.mostra_indirizzo ? p.addr : zoneOf(p.addr)}</div>
         <Facts p={p} className="mt-4 text-[var(--muted)]" />
       </div>
       <div className="flex items-center gap-5 md:flex-col md:items-end">
