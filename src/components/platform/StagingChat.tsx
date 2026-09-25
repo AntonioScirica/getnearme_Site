@@ -208,7 +208,7 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
 
   // selezione zona: prende il posto del messaggio che contiene la foto di lavoro, cosi' la card si trasforma sul posto
   const zoneOwner = selecting && base ? msgs.findLastIndex(m => (m.role === 'ai' && m.out === base) || (m.role === 'user' && m.image === base)) : -1;
-  const zonePicker = selecting && base ? <ZonePicker src={base} region={region} points={points} mask={mask} onChange={r => { setRegion(r); setPoints([]); setMask(null); }} onPick={pickAt} onPreview={previewAt} onSegments={segmentsOf} onLoad={toBottom} busy={busy} onSubmit={t => send(t)} onCancel={() => { clearZone(); setSelecting(false); }} /> : null;
+  const zonePicker = (inline?: number) => selecting && base ? <ZonePicker inline={inline} src={base} region={region} points={points} mask={mask} onChange={r => { setRegion(r); setPoints([]); setMask(null); }} onPick={pickAt} onPreview={previewAt} onSegments={segmentsOf} onLoad={toBottom} busy={busy} onSubmit={t => send(t)} onCancel={() => { clearZone(); setSelecting(false); }} /> : null;
 
   return (
     // Tutta l'altezza disponibile: la conversazione scorre da sola, il campo e' sempre in fondo alla pagina
@@ -233,9 +233,9 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
           )}
 
           {/* Conversazione: le foto sono messaggi, quelle di AgenteImmo a sinistra e piu' piccole */}
-          {msgs.map((m, i) => i === zoneOwner ? (
+          {msgs.map((m, i) => i === zoneOwner && m.role === 'user' ? (
             // il messaggio con la foto su cui si lavora diventa lui stesso la selezione della zona (niente messaggio nuovo)
-            <div key={m.id} className="flex justify-start">{zonePicker}</div>
+            <div key={m.id} className="flex justify-start">{zonePicker()}</div>
           ) : m.role === 'divider' ? (
             <div key={m.id} className="blur-in flex items-center gap-3 py-2 text-xs font-medium text-muted">
               <span className="h-px flex-1 bg-line" />
@@ -265,6 +265,8 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
           ) : (
             <div key={m.id} className={`blur-in flex justify-start ease-smooth transition-opacity ${faded.has(m.id) ? 'opacity-35 hover:opacity-80' : ''}`}>
               <div className={`w-full rounded-3xl rounded-bl-2xl bg-white p-2 ${CARD_SHADOW}`} style={{ maxWidth: `min(560px, calc(60vh * ${ratios[m.before] ?? 1.5} + 16px))` }}><AutoSize>
+                {/* Modifica: la foto resta dov'e' e diventa selezionabile, sotto cambiano solo i pulsanti */}
+                {i === zoneOwner ? zonePicker(ratios[m.before] ?? 1.5) : <>
                 {/* raggio interno = esterno - padding: se la foto tocca l'angolo della coda (16px), 8px */}
                 {/* clic sulla foto = a tutto schermo con prima/dopo (non se trascini il cursore prima/dopo o premi Scarica) */}
                 <div className={`relative ${m.out && !m.busy ? 'cursor-zoom-in' : ''}`} style={{ aspectRatio: ratios[m.before] ?? 1.5 }} data-base-photo={m.out && m.out === base ? '' : undefined}
@@ -283,7 +285,7 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
                     {/* a destra: Modifica (zona su questa foto) e Ricomincia da qui; "Si continua da qui" solo dopo esserci tornati */}
                     <div className="flex shrink-0 items-center gap-1">
                       {resumed === m.out && base === m.out && <span className="flex h-8 items-center px-2 font-medium text-emerald-600">Si continua da qui</span>}
-                      <button onClick={e => { morphFrom(e.currentTarget.closest('.rounded-3xl'), 'zone'); if (base !== m.out) restartFrom(i, m.out!); setSelecting(true); }}
+                      <button onClick={() => { if (base !== m.out) restartFrom(i, m.out!); setSelecting(true); }}
                         className="flex h-8 items-center gap-1.5 rounded-full px-3 font-medium leading-none text-ink hover:bg-canvas"><SquareDashedMousePointer size={14} className="translate-y-px" /> Modifica</button>
                       {base !== m.out && (
                         <>
@@ -296,11 +298,12 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
                     </div>
                   </div>
                 )}
+                </>}
               </AutoSize></div>
             </div>
           ))}
           {/* Selezione di una zona: e' un messaggio della chat come gli altri, con i pulsanti sotto la foto */}
-          {zoneOwner < 0 && zonePicker}
+          {zoneOwner < 0 && zonePicker()}
 
         </div>
       </div>
@@ -358,7 +361,7 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
 type Tool = 'rect' | 'points';
 // cursore per selezionare gli oggetti: mirino tondo blu con il centro bianco
 const TARGET_CURSOR = `url("data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28"><circle cx="14" cy="14" r="10" fill="rgba(37,99,235,.18)" stroke="#2563eb" stroke-width="2"/><circle cx="14" cy="14" r="3" fill="#fff" stroke="#2563eb" stroke-width="1.5"/></svg>')}") 14 14, pointer`;
-function ZonePicker({ src, region, points, mask, onChange, onPick, onPreview, onSegments, onLoad, busy, onSubmit, onCancel }: { src: string; region: Region | null; points: { x: number; y: number }[]; mask: string | null; onChange: (r: Region | null) => void; onPick: (p: { x: number; y: number }) => void; onPreview: (p: { x: number; y: number }) => Promise<string | null>; onSegments: () => Promise<string | null>; onLoad: () => void; busy: boolean; onSubmit: (text: string) => void; onCancel: () => void }) {
+function ZonePicker({ inline, src, region, points, mask, onChange, onPick, onPreview, onSegments, onLoad, busy, onSubmit, onCancel }: { inline?: number; src: string; region: Region | null; points: { x: number; y: number }[]; mask: string | null; onChange: (r: Region | null) => void; onPick: (p: { x: number; y: number }) => void; onPreview: (p: { x: number; y: number }) => Promise<string | null>; onSegments: () => Promise<string | null>; onLoad: () => void; busy: boolean; onSubmit: (text: string) => void; onCancel: () => void }) {
   const box = useRef<HTMLDivElement>(null);
   const start = useRef<{ x: number; y: number } | null>(null);
   const [tool, setTool] = useState<Tool>('rect');
@@ -433,15 +436,11 @@ function ZonePicker({ src, region, points, mask, onChange, onPick, onPreview, on
   const [text, setText] = useState('');
   const loading = mask === 'loading';
   const ready = (region && region.w > 0.02) || (points.length > 0 && !loading);
-  return (
-    <div className="flex justify-start">
-    <MorphTarget id="zone" className={`w-fit max-w-[min(640px,100%)] rounded-3xl rounded-bl-2xl bg-white p-2 ${CARD_SHADOW}`}>
-      {/* il limite sta sulla card: dentro foto e riga la seguono (un limite in % sul blocco interno veniva ignorato e la card restava larga come la foto originale) */}
-      <div className="w-fit max-w-full">
-      <div ref={box} className={`relative mx-auto max-h-[calc(100vh-24rem)] w-fit touch-none select-none overflow-hidden rounded-2xl ${tool === 'rect' ? 'cursor-crosshair' : ''}`}
-        style={tool === 'points' ? { cursor: TARGET_CURSOR } : undefined}
+  const photo = (
+      <div ref={box} className={`relative touch-none ${inline ? 'w-full' : 'mx-auto max-h-[calc(100vh-24rem)] w-fit'} select-none overflow-hidden rounded-2xl ${tool === 'rect' ? 'cursor-crosshair' : ''}`}
+        style={{ ...(inline ? { aspectRatio: inline } : {}), ...(tool === 'points' ? { cursor: TARGET_CURSOR } : {}) }}
         onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerLeave={leave}>
-        <img src={src} alt="" draggable={false} onLoad={onLoad} className="block max-h-[calc(100vh-24rem)] w-auto max-w-full" />
+        <img src={src} alt="" draggable={false} onLoad={onLoad} className={inline ? 'block h-full w-full object-cover' : 'block max-h-[calc(100vh-24rem)] w-auto max-w-full'} />
         <button type="button" onPointerDown={e => e.stopPropagation()} onClick={onCancel} aria-label="Annulla selezione" title="Annulla"
           className="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-ink shadow-sm backdrop-blur ease-smooth transition-colors hover:bg-white"><X size={16} /></button>
         {tool === 'points' && hover && !loading && (
@@ -461,7 +460,9 @@ function ZonePicker({ src, region, points, mask, onChange, onPick, onPreview, on
             style={{ left: `${region.x * 100}%`, top: `${region.y * 100}%`, width: `${region.w * 100}%`, height: `${region.h * 100}%` }} />
         )}
       </div>
-      {/* Richiesta direttamente qui: scrivi cosa fare nella zona e Modifica */}
+  );
+  // Richiesta direttamente qui: scrivi cosa fare nella zona e Modifica
+  const form = (
       <form onSubmit={e => { e.preventDefault(); if (ready && text.trim() && !busy) onSubmit(text.trim()); }} className="flex w-0 min-w-full items-center gap-2 pt-2">
         {/* campo con dentro, a destra, gli strumenti di selezione (solo icone, nome nel tooltip) */}
         <div className="flex h-10 min-w-0 flex-1 items-center rounded-full bg-canvas pl-4 pr-1 ease-smooth transition-shadow focus-within:bg-white focus-within:ring-1 focus-within:ring-ink/15">
@@ -478,6 +479,15 @@ function ZonePicker({ src, region, points, mask, onChange, onPick, onPreview, on
         <button type="submit" disabled={!ready || !text.trim() || busy}
           className="h-10 shrink-0 rounded-full bg-brand px-5 text-[13px] font-semibold text-white ease-smooth transition-[background-color,opacity,transform] hover:bg-brand/90 active:scale-[0.97] disabled:opacity-40">Modifica</button>
       </form>
+  );
+  // dentro la card del risultato: stessa foto, stesso posto, cambiano solo i controlli sotto
+  if (inline) return <>{photo}<div className="blur-in">{form}</div></>;
+  return (
+    <div className="flex justify-start">
+    <MorphTarget id="zone" className={`w-fit max-w-[min(640px,100%)] rounded-3xl rounded-bl-2xl bg-white p-2 ${CARD_SHADOW}`}>
+      <div className="w-fit max-w-full">
+      {photo}
+      {form}
       </div>
     </MorphTarget>
     </div>
