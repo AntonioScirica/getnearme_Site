@@ -603,6 +603,8 @@ function PortalFields({ d }: { d: Details }) {
     .map(f => ({ key: f.key, label: f.label, value: formatValue(f, d[f.key]) }))
     .filter((x): x is { key: string; label: string; value: string } => !!x.value);
   const [copied, setCopied] = useState<string | null>(null);
+  const [edges, setEdges] = useState({ top: false, bottom: rows.length > 7 });
+  const fadeMask = `linear-gradient(to bottom, ${edges.top ? 'transparent' : '#000'}, #000 24px, #000 calc(100% - 40px), ${edges.bottom ? 'transparent' : '#000'})`;
   const copy = (k: string, t: string) => { navigator.clipboard.writeText(t); setCopied(k); setTimeout(() => setCopied(null), 1500); };
   if (!rows.length) return null;
   return (
@@ -612,8 +614,10 @@ function PortalFields({ d }: { d: Details }) {
         <button onClick={() => copy('*', rows.map(r => `${r.label}: ${r.value}`).join('\n'))} className="flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium text-muted hover:bg-canvas hover:text-ink">
           {copied === '*' ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />} Copia tutti</button>
       </div>
-      {/* sfumata in alto e in basso: si capisce che la lista continua */}
-      <dl className="mt-3 max-h-72 divide-y divide-line overflow-y-auto pr-1 [scrollbar-width:thin]" style={{ maskImage: 'linear-gradient(to bottom, transparent, #000 16px, #000 calc(100% - 40px), transparent)', WebkitMaskImage: 'linear-gradient(to bottom, transparent, #000 16px, #000 calc(100% - 40px), transparent)' }}>
+      {/* sfumata solo dove la lista continua: in alto se hai scorso, in basso finche' non sei in fondo */}
+      <dl onScroll={e => { const el = e.currentTarget; setEdges({ top: el.scrollTop > 2, bottom: el.scrollTop + el.clientHeight < el.scrollHeight - 2 }); }}
+        className="mt-3 max-h-72 divide-y divide-line overflow-y-auto pr-1 [scrollbar-width:thin]"
+        style={{ maskImage: fadeMask, WebkitMaskImage: fadeMask }}>
         {rows.map(r => (
           <div key={r.key} className="group flex items-center justify-between gap-4 py-2 text-sm">
             <dt className="text-muted">{r.label}</dt>
