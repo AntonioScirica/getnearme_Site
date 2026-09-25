@@ -175,6 +175,13 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
     const d = res ? await res.json().catch(() => ({})) : {};
     return d.mask ?? null;
   };
+  // tutti gli oggetti della foto in una mappa (per l'anteprima istantanea); null se il worker non la sa fare
+  const segmentsOf = async (): Promise<string | null> => {
+    if (!base) return null;
+    const res = await authFetch('/api/platform/photo-mask', { method: 'POST', body: JSON.stringify({ ...(base.startsWith('data:') ? { imageBase64: base } : { imageUrl: base }), segments: true }) }).catch(() => null);
+    const d = res ? await res.json().catch(() => ({})) : {};
+    return d.segments ?? null;
+  };
   const empty = msgs.length === 0;
   const picker = <input type="file" accept="image/*" multiple className="hidden" onChange={e => { upload(e.target.files); e.target.value = ''; }} />;
   // i suggerimenti partono subito, senza passare dal campo
@@ -261,7 +268,7 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
             </div>
           ))}
           {/* Selezione di una zona: e' un messaggio della chat come gli altri, con i pulsanti sotto la foto */}
-          {selecting && base && <ZonePicker src={base} region={region} points={points} mask={mask} onChange={r => { setRegion(r); setPoints([]); setMask(null); }} onPick={pickAt} onPreview={previewAt} onLoad={toBottom} busy={busy} onSubmit={t => send(t)} onCancel={() => { clearZone(); setSelecting(false); }} />}
+          {selecting && base && <ZonePicker src={base} region={region} points={points} mask={mask} onChange={r => { setRegion(r); setPoints([]); setMask(null); }} onPick={pickAt} onPreview={previewAt} onSegments={segmentsOf} onLoad={toBottom} busy={busy} onSubmit={t => send(t)} onCancel={() => { clearZone(); setSelecting(false); }} />}
 
         </div>
       </div>
@@ -316,7 +323,9 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
 // Zona sulla foto: due strumenti. Rettangolo (di partenza): trascina. Oggetti: clicca; fermando il mouse
 // su un oggetto compare l'anteprima di cosa verrebbe selezionato.
 type Tool = 'rect' | 'points';
-function ZonePicker({ src, region, points, mask, onChange, onPick, onPreview, onLoad, busy, onSubmit, onCancel }: { src: string; region: Region | null; points: { x: number; y: number }[]; mask: string | null; onChange: (r: Region | null) => void; onPick: (p: { x: number; y: number }) => void; onPreview: (p: { x: number; y: number }) => Promise<string | null>; onLoad: () => void; busy: boolean; onSubmit: (text: string) => void; onCancel: () => void }) {
+// cursore per selezionare gli oggetti: mirino tondo blu con il centro bianco
+const TARGET_CURSOR = `url("data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28"><circle cx="14" cy="14" r="10" fill="rgba(37,99,235,.18)" stroke="#2563eb" stroke-width="2"/><circle cx="14" cy="14" r="3" fill="#fff" stroke="#2563eb" stroke-width="1.5"/></svg>')}") 14 14, pointer`;
+function ZonePicker({ src, region, points, mask, onChange, onPick, onPreview, onSegments, onLoad, busy, onSubmit, onCancel }: { src: string; region: Region | null; points: { x: number; y: number }[]; mask: string | null; onChange: (r: Region | null) => void; onPick: (p: { x: number; y: number }) => void; onPreview: (p: { x: number; y: number }) => Promise<string | null>; onSegments: () => Promise<string | null>; onLoad: () => void; busy: boolean; onSubmit: (text: string) => void; onCancel: () => void }) {
   const box = useRef<HTMLDivElement>(null);
   const start = useRef<{ x: number; y: number } | null>(null);
   const [tool, setTool] = useState<Tool>('rect');
@@ -325,6 +334,36 @@ function ZonePicker({ src, region, points, mask, onChange, onPick, onPreview, on
   const cache = useRef(new Map<string, string | null>());
   // l'anteprima include i punti gia' scelti: se cambiano, quelle salvate non valgono piu'
   useEffect(() => { cache.current.clear(); }, [points.length]);
+  // Mappa degli oggetti: chiesta una volta quando scegli "Oggetti", poi l'anteprima e' istantanea (niente rete)
+  const seg = useRef<{ w: number; h: number; ids: Uint8ClampedArray; masks: Map<number, string> } | null>(null);
+  const segAsked = useRef(false);
+  const hoverId = useRef(0);
+  useEffect(() => {
+    if (tool !== 'points' || segAsked.current) return;
+    segAsked.current = true;
+    onSegments().then(url => {
+      if (!url) return;
+      const im = new Image();
+      im.onload = () => {
+        const c = document.createElement('canvas'); c.width = im.width; c.height = im.height;
+        const g = c.getContext('2d')!; g.drawImage(im, 0, 0);
+        const d = g.getImageData(0, 0, c.width, c.height).data;
+        const ids = new Uint8ClampedArray(c.width * c.height);
+        for (let i = 0; i < ids.length; i++) ids[i] = d[i * 4];
+        seg.current = { w: c.width, h: c.height, ids, masks: new Map() };
+      };
+      im.src = url;
+    });
+  }, [tool, onSegments]);
+  const maskOf = (id: number) => {
+    const s = seg.current!;
+    const hit = s.masks.get(id); if (hit) return hit;
+    const c = document.createElement('canvas'); c.width = s.w; c.height = s.h;
+    const g = c.getContext('2d')!; const img = g.createImageData(s.w, s.h);
+    for (let i = 0; i < s.ids.length; i++) { const v = s.ids[i] === id ? 255 : 0; img.data[i * 4] = img.data[i * 4 + 1] = img.data[i * 4 + 2] = v; img.data[i * 4 + 3] = 255; }
+    g.putImageData(img, 0, 0);
+    const url = c.toDataURL(); s.masks.set(id, url); return url;
+  };
   const at = (e: React.PointerEvent) => {
     const r = box.current!.getBoundingClientRect();
     return { x: Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)), y: Math.min(1, Math.max(0, (e.clientY - r.top) / r.height)) };
@@ -343,25 +382,33 @@ function ZonePicker({ src, region, points, mask, onChange, onPick, onPreview, on
       onChange({ x: Math.min(s.x, p.x), y: Math.min(s.y, p.y), w: Math.abs(p.x - s.x), h: Math.abs(p.y - s.y) });
       return;
     }
-    // oggetti: anteprima dopo 350 ms di mouse fermo (posizioni gia' viste in memoria, griglia 3%)
+    // oggetti: con la mappa l'oggetto sotto il mouse si vede subito
+    if (seg.current) {
+      const s = seg.current;
+      const id = s.ids[Math.min(s.h - 1, Math.floor(p.y * s.h)) * s.w + Math.min(s.w - 1, Math.floor(p.x * s.w))];
+      if (id !== hoverId.current) { hoverId.current = id; setHover(id ? maskOf(id) : null); }
+      return;
+    }
+    // senza mappa (worker vecchio): anteprima dal server dopo 120 ms di mouse fermo (posizioni gia' viste in memoria)
     if (timer.current) clearTimeout(timer.current);
     const key = `${Math.round(p.x * 33)}:${Math.round(p.y * 33)}`;
     if (cache.current.has(key)) { setHover(cache.current.get(key)!); return; }
-    timer.current = setTimeout(async () => { const m = await onPreview(p); cache.current.set(key, m); setHover(m); }, 350);
+    timer.current = setTimeout(async () => { const m = await onPreview(p); cache.current.set(key, m); setHover(m); }, 120);
   };
-  const leave = () => { if (timer.current) clearTimeout(timer.current); setHover(null); };
+  const leave = () => { if (timer.current) clearTimeout(timer.current); hoverId.current = 0; setHover(null); };
   const up = () => { start.current = null; };
   const [text, setText] = useState('');
   const loading = mask === 'loading';
   const ready = (region && region.w > 0.02) || (points.length > 0 && !loading);
   return (
     <div className="blur-in flex justify-start">
-    <div className={`w-full max-w-[560px] rounded-3xl rounded-bl-2xl bg-white p-2 ${CARD_SHADOW}`}>
-      {/* foto e riga sotto nello stesso blocco: la riga e' larga quanto la foto, non di piu' */}
-      <div className="mx-auto w-fit max-w-full">
-      <div ref={box} className={`relative mx-auto max-h-[calc(100vh-24rem)] w-fit touch-none select-none overflow-hidden rounded-2xl ${tool === 'rect' ? 'cursor-crosshair' : 'cursor-pointer'}`}
+    <div className={`w-fit max-w-full rounded-3xl rounded-bl-2xl bg-white p-2 ${CARD_SHADOW}`}>
+      {/* foto e riga sotto nello stesso blocco: riga e card larghe quanto la foto, non di piu' */}
+      <div className="w-fit max-w-[min(100%,640px)]">
+      <div ref={box} className={`relative mx-auto max-h-[calc(100vh-24rem)] w-fit touch-none select-none overflow-hidden rounded-2xl ${tool === 'rect' ? 'cursor-crosshair' : ''}`}
+        style={tool === 'points' ? { cursor: TARGET_CURSOR } : undefined}
         onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerLeave={leave}>
-        <img src={src} alt="" draggable={false} onLoad={onLoad} className="block max-h-[calc(100vh-24rem)] w-auto" />
+        <img src={src} alt="" draggable={false} onLoad={onLoad} className="block max-h-[calc(100vh-24rem)] w-auto max-w-full" />
         <button type="button" onPointerDown={e => e.stopPropagation()} onClick={onCancel} aria-label="Annulla selezione" title="Annulla"
           className="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-ink shadow-sm backdrop-blur ease-smooth transition-colors hover:bg-white"><X size={16} /></button>
         {tool === 'points' && hover && !loading && (
