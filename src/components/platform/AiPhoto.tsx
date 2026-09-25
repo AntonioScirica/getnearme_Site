@@ -68,10 +68,20 @@ export function useAiPhoto() {
 }
 
 // Riquadro foto: originale con alone blu mentre lavora, poi slider prima/dopo con Scarica.
-export function AiPhotoStage({ src, busy, out, reveal, msg, fileName, onDownload, parked, className = 'aspect-[3/2] max-h-[60vh]' }: {
-  src: string; busy: boolean; out: string | null; reveal: Reveal; msg: number; fileName: string; onDownload?: (url: string) => void; parked?: boolean; className?: string;
+export function AiPhotoStage({ src, busy, out, reveal, msg, fileName, onDownload, parked, onUnpark, className = 'aspect-[3/2] max-h-[60vh]' }: {
+  src: string; busy: boolean; out: string | null; reveal: Reveal; msg: number; fileName: string; onDownload?: (url: string) => void; parked?: boolean; onUnpark?: () => void; className?: string;
 }) {
   const [saved, setSaved] = useState(false);
+  // larghezza vera dell'etichetta (Scarica / Scaricato): serve un numero per animare il passaggio a cerchio
+  const labelRef = useRef<HTMLSpanElement>(null);
+  const [labelW, setLabelW] = useState<number>();
+  useEffect(() => {
+    const el = labelRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => setLabelW(el.offsetWidth));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [reveal, out]);
   const savedT = useRef<ReturnType<typeof setTimeout>>(undefined);
   const aurora = busy || reveal === 'burst';
   const tag = 'absolute z-[12] rounded-full bg-[rgba(33,31,28,.72)] px-3 py-1.5 text-[11px] font-bold text-white';
@@ -105,10 +115,16 @@ export function AiPhotoStage({ src, busy, out, reveal, msg, fileName, onDownload
         <>
           <span className={`blur-in bottom-3 left-3 ${tag}`}>Prima</span>
           <span className={`blur-in bottom-3 right-3 ${tag}`}>Dopo</span>
-          {/* dopo il clic dice "Scaricato" per 2 secondi, poi torna Scarica */}
-          <button onClick={() => { downloadImage(out, fileName); onDownload?.(out); setSaved(true); clearTimeout(savedT.current); savedT.current = setTimeout(() => setSaved(false), 2000); }}
-            className="blur-in absolute right-3 top-3 z-[12] flex h-9 items-center gap-1.5 rounded-full bg-white/85 px-3.5 text-xs font-semibold shadow-sm ring-1 ring-black/5 backdrop-blur-md hover:bg-white">
-            {saved ? <span key="ok" className="blur-in flex items-center gap-1.5 text-emerald-700"><Check size={14} /> Scaricato</span> : <span key="dl" className="blur-in flex items-center gap-1.5"><Download size={14} /> Scarica</span>}
+          {/* un solo pulsante: Scarica (dopo il clic "Scaricato" per 2 s); con `parked` (Modifica aperta) si stringe e diventa la X.
+              Sta sopra la selezione (z-30) cosi' non ci sono mai due pulsanti uno sull'altro. */}
+          <button onPointerDown={e => e.stopPropagation()} aria-label={parked ? 'Annulla selezione' : 'Scarica'}
+            onClick={() => { if (parked) { onUnpark?.(); return; } downloadImage(out, fileName); onDownload?.(out); setSaved(true); clearTimeout(savedT.current); savedT.current = setTimeout(() => setSaved(false), 2000); }}
+            style={{ width: parked ? 36 : labelW }}
+            className="blur-in absolute right-3 top-3 z-30 flex h-9 items-center justify-center overflow-hidden rounded-full bg-white/85 text-xs font-semibold shadow-sm ring-1 ring-black/5 backdrop-blur-md ease-smooth transition-[width,background-color] hover:bg-white">
+            <span ref={labelRef} className={`flex shrink-0 items-center gap-1.5 whitespace-nowrap px-3.5 ease-smooth transition-opacity ${parked ? 'opacity-0' : ''}`}>
+              {saved ? <span key="ok" className="blur-in flex items-center gap-1.5 text-emerald-700"><Check size={14} /> Scaricato</span> : <span key="dl" className="blur-in flex items-center gap-1.5"><Download size={14} /> Scarica</span>}
+            </span>
+            <X size={16} className={`absolute ease-smooth transition-opacity ${parked ? '' : 'opacity-0'}`} />
           </button>
         </>
       )}

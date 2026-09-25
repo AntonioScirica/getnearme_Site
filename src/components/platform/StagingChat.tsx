@@ -58,6 +58,8 @@ const planStyle = (t: string) => (/nordic|scandinav/i.test(t) ? 'nordic' : /luss
 
 export default function StagingChat({ onMany }: { onMany: (files: FileList | File[]) => void }) {
   const [library, setLibrary] = useState(false); // scelta foto: vetrina o computer
+  // chiusura di Modifica: 300 ms in cui selezione e campo sfumano mentre il pulsante torna Scarica e il divisore rientra
+  const [zoneClosing, setZoneClosing] = useState(false);
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [base, setBase] = useState<string | null>(null); // immagine su cui lavora la prossima richiesta
   const [resumed, setResumed] = useState<string | null>(null); // versione da cui si e' ripartiti a mano
@@ -212,7 +214,11 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList | Fil
 
   // selezione zona: prende il posto del messaggio che contiene la foto di lavoro, cosi' la card si trasforma sul posto
   const zoneOwner = selecting && base ? msgs.findLastIndex(m => (m.role === 'ai' && m.out === base) || (m.role === 'user' && m.image === base)) : -1;
-  const zonePicker = (inline?: number) => selecting && base ? <ZonePicker inline={inline} src={base} region={region} points={points} mask={mask} onChange={r => { setRegion(r); setPoints([]); setMask(null); }} onPick={pickAt} onPreview={previewAt} onSegments={segmentsOf} onLoad={toBottom} busy={busy} onSubmit={t => send(t)} onCancel={() => { clearZone(); setSelecting(false); }} /> : null;
+  const cancelZone = () => {
+    setZoneClosing(true);
+    setTimeout(() => { clearZone(); setSelecting(false); setZoneClosing(false); }, 300);
+  };
+  const zonePicker = (inline?: number) => selecting && base ? <ZonePicker inline={inline} src={base} region={region} points={points} mask={mask} onChange={r => { setRegion(r); setPoints([]); setMask(null); }} onPick={pickAt} onPreview={previewAt} onSegments={segmentsOf} onLoad={toBottom} busy={busy} onSubmit={t => send(t)} closing={zoneClosing} onCancel={inline ? cancelZone : () => { clearZone(); setSelecting(false); }} /> : null;
 
   return (
     // Tutta l'altezza disponibile: la conversazione scorre da sola, il campo e' sempre in fondo alla pagina
@@ -284,7 +290,7 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList | Fil
                     if (!m.out || m.busy || (e.target as HTMLElement).closest('button, a')) return;
                     if (d && Math.hypot(e.clientX - d.x, e.clientY - d.y) > 6) return;
                     setViewer({ src: m.out, before: m.before });
-                  }}><AiPhotoStage parked={i === zoneOwner} src={m.before} busy={m.busy} out={m.out} reveal={m.reveal} msg={tick % 5} fileName="home-staging.jpg" className={`h-full ${m.err || (m.out && !m.busy) ? '' : '!rounded-bl-[8px]'}`} />
+                  }}><AiPhotoStage parked={i === zoneOwner && !zoneClosing} onUnpark={cancelZone} src={m.before} busy={m.busy} out={m.out} reveal={m.reveal} msg={tick % 5} fileName="home-staging.jpg" className={`h-full ${m.err || (m.out && !m.busy) ? '' : '!rounded-bl-[8px]'}`} />
                 </div>
                 {/* Modifica: la foto sotto resta montata e ferma, la selezione ci si appoggia sopra; sotto cambiano solo i controlli */}
                 {i === zoneOwner ? zonePicker(ratios[m.before] ?? 1.5) : <>
@@ -373,7 +379,7 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList | Fil
 type Tool = 'rect' | 'points';
 // cursore per selezionare gli oggetti: mirino tondo blu con il centro bianco
 const TARGET_CURSOR = `url("data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28"><circle cx="14" cy="14" r="10" fill="rgba(37,99,235,.18)" stroke="#2563eb" stroke-width="2"/><circle cx="14" cy="14" r="3" fill="#fff" stroke="#2563eb" stroke-width="1.5"/></svg>')}") 14 14, pointer`;
-function ZonePicker({ inline, src, region, points, mask, onChange, onPick, onPreview, onSegments, onLoad, busy, onSubmit, onCancel }: { inline?: number; src: string; region: Region | null; points: { x: number; y: number }[]; mask: string | null; onChange: (r: Region | null) => void; onPick: (p: { x: number; y: number }) => void; onPreview: (p: { x: number; y: number }) => Promise<string | null>; onSegments: () => Promise<string | null>; onLoad: () => void; busy: boolean; onSubmit: (text: string) => void; onCancel: () => void }) {
+function ZonePicker({ inline, closing = false, src, region, points, mask, onChange, onPick, onPreview, onSegments, onLoad, busy, onSubmit, onCancel }: { inline?: number; closing?: boolean; src: string; region: Region | null; points: { x: number; y: number }[]; mask: string | null; onChange: (r: Region | null) => void; onPick: (p: { x: number; y: number }) => void; onPreview: (p: { x: number; y: number }) => Promise<string | null>; onSegments: () => Promise<string | null>; onLoad: () => void; busy: boolean; onSubmit: (text: string) => void; onCancel: () => void }) {
   const box = useRef<HTMLDivElement>(null);
   const start = useRef<{ x: number; y: number } | null>(null);
   const [tool, setTool] = useState<Tool>('rect');
@@ -446,29 +452,14 @@ function ZonePicker({ inline, src, region, points, mask, onChange, onPick, onPre
   const leave = () => { if (timer.current) clearTimeout(timer.current); hoverId.current = 0; setHover(null); };
   const up = () => { start.current = null; };
   const [text, setText] = useState('');
-  // ponytail: larghezza di "Scarica" fissa (92px), misurarla se cambia il testo
-  const [pill, setPill] = useState(!!inline);
-  // chiusura al contrario: la X torna Scarica, selezione e campo sfumano, poi la card si riaccorcia
-  const [closing, setClosing] = useState(false);
-  const cancel = () => {
-    if (!inline) { onCancel(); return; }
-    setClosing(true); setPill(true);
-    setTimeout(onCancel, 300); // meta' tempo: sfuma via e subito tornano i pulsanti (dissolvenza incrociata)
-  };
-  useEffect(() => { const t = setTimeout(() => setPill(false), 30); return () => clearTimeout(t); }, []);
   // fuoco sul campo senza far scorrere la chat (autoFocus e onLoad->in fondo facevano il saltino)
   const focused = useRef(false);
   const loading = mask === 'loading';
   const ready = (region && region.w > 0.02) || (points.length > 0 && !loading);
+  // X della selezione a parte (nella card del risultato la X e' il pulsante Scarica stesso, in AiPhotoStage)
   const closeBtn = (
-  <>
-        {/* nella card del risultato il pulsante Scarica si stringe e diventa la X */}
-        <button type="button" onPointerDown={e => e.stopPropagation()} onClick={cancel} aria-label="Annulla selezione" title="Annulla" style={{ width: pill ? 92 : 36, ...(closing ? { transitionDuration: '300ms' } : {}) }}
-          className="pointer-events-auto absolute right-3 top-3 z-10 flex h-9 items-center justify-center overflow-hidden rounded-full bg-white/85 text-ink shadow-sm ring-1 ring-black/5 backdrop-blur-md ease-smooth transition-[width,background-color] hover:bg-white">
-          <span className={`absolute flex items-center gap-1.5 whitespace-nowrap text-xs font-semibold ease-smooth transition-opacity ${pill ? 'opacity-100' : 'opacity-0'}`}><Download size={14} /> Scarica</span>
-          <X size={16} className={`ease-smooth transition-opacity ${pill ? 'opacity-0' : 'opacity-100'}`} />
-        </button>
-  </>
+    <button type="button" onPointerDown={e => e.stopPropagation()} onClick={onCancel} aria-label="Annulla selezione" title="Annulla"
+      className="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/85 text-ink shadow-sm ring-1 ring-black/5 backdrop-blur-md ease-smooth transition-colors hover:bg-white"><X size={16} /></button>
   );
   const photo = (
       <div ref={box} className={`touch-none ${inline ? `absolute inset-x-0 bottom-full z-20 ease-smooth transition-opacity ${closing ? 'pointer-events-none' : ''}` : 'relative mx-auto max-h-[calc(100vh-24rem)] w-fit'} select-none overflow-hidden rounded-2xl ${tool === 'rect' ? 'cursor-crosshair' : ''}`}
@@ -518,8 +509,6 @@ function ZonePicker({ inline, src, region, points, mask, onChange, onPick, onPre
   if (inline) return (
     <div className="relative">
       {photo}
-      {/* la X sta fuori dalla foto che sfuma: in chiusura resta piena e si allarga fino a Scarica */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-full z-30" style={{ aspectRatio: inline }}>{closeBtn}</div>
       {/* in chiusura l'animazione d'ingresso va tolta, altrimenti il suo "both" tiene l'opacita' a 1 e il campo sparisce di colpo */}
       <div className="duration-300 ease-smooth transition-opacity" style={closing ? { opacity: 0 } : { animation: 'gnm-fade var(--gnm-dur) var(--gnm-ease) .25s both' }}>{form}</div>
     </div>
