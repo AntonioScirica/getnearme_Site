@@ -30,6 +30,7 @@ const planStyle = (t: string) => (/nordic|scandinav/i.test(t) ? 'nordic' : /luss
 export default function StagingChat({ onMany }: { onMany: (files: FileList) => void }) {
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [base, setBase] = useState<string | null>(null); // immagine su cui lavora la prossima richiesta
+  const [resumed, setResumed] = useState<string | null>(null); // versione da cui si e' ripartiti a mano
   const [text, setText] = useState('');
   const [picked, setPicked] = useState<Suggestion | null>(null);
   const [scene, setScene] = useState<Scene>('interno');
@@ -120,6 +121,7 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
   // Ricomincia da qui: i messaggi successivi restano (si puo' ripartire anche da li') ma sbiaditi,
   // e in fondo un divisore con la versione da cui si riparte
   const restartFrom = (i: number, url: string) => {
+    setResumed(url);
     setFaded(f => new Set([...f, ...msgs.slice(i + 1).map(x => x.id)]));
     setMsgs(ms => [...ms, { id: uid(), role: 'divider', image: url }]);
     setBase(url); clearZone(); setSelecting(false);
@@ -191,14 +193,16 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
                 <AiPhotoStage src={m.before} busy={m.busy} out={m.out} reveal={m.reveal} msg={tick % 5} fileName="home-staging.jpg" className={`aspect-[3/2] ${m.err || (m.out && !m.busy) ? '' : '!rounded-bl-[8px]'}`} />
                 {m.err && <p className="px-2 pt-2 text-sm text-rose-600">{m.err}</p>}
                 {m.out && !m.busy && (
-                  <div className="flex items-center justify-between gap-2 px-2 pb-1 pt-2 text-xs text-muted">
-                    <span className="truncate">«{m.text}»</span>
-                    {/* Modifica: seleziona una zona su questa foto e scrivi cosa fare li' */}
-                    <button onClick={() => { if (base !== m.out) restartFrom(i, m.out!); setSelecting(true); }}
-                      className="ml-auto flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 font-medium text-ink hover:bg-canvas"><SquareDashedMousePointer size={12} /> Modifica</button>
-                    {base !== m.out
-                      ? <button onClick={() => restartFrom(i, m.out!)} className="flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 font-medium text-brand hover:bg-brand/5"><RotateCcw size={12} /> Ricomincia da qui</button>
-                      : <span className="shrink-0 font-medium text-emerald-600">Si continua da qui</span>}
+                  <div className="flex items-center gap-3 px-2 pt-2 text-xs text-muted">
+                    <span className="min-w-0 flex-1 truncate">{m.text}</span>
+                    {/* a destra: Modifica (zona su questa foto) e Ricomincia da qui; "Si continua da qui" solo dopo esserci tornati */}
+                    <div className="flex shrink-0 items-center gap-1">
+                      {base !== m.out
+                        ? <button onClick={() => restartFrom(i, m.out!)} className="flex h-8 items-center gap-1.5 rounded-full px-3 font-medium text-brand hover:bg-brand/5"><RotateCcw size={13} /> Ricomincia da qui</button>
+                        : resumed === m.out && <span className="flex h-8 items-center px-3 font-medium text-emerald-600">Si continua da qui</span>}
+                      <button onClick={() => { if (base !== m.out) restartFrom(i, m.out!); setSelecting(true); }}
+                        className="flex h-8 items-center gap-1.5 rounded-full px-3 font-medium text-ink hover:bg-canvas"><SquareDashedMousePointer size={13} /> Modifica</button>
+                    </div>
                   </div>
                 )}
               </div>
