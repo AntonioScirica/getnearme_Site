@@ -5,13 +5,12 @@ import { useEffect, useMemo, useRef, useState, type ComponentType } from 'react'
 import {
   ArrowLeft, ArrowRight, Ban, Building, Building2, CalendarClock, Car, Check, ChefHat, Crown, DoorOpen, Fence, FileSignature,
   Flame, Flower2, GripVertical, Hammer, Home, ImagePlus, KeyRound, LayoutTemplate, Loader2, Minus, Plus, Snowflake, Sofa, Sparkles,
-  Star, Sun as SunIcon, Tag, Tent, ThumbsUp, TreePine, UserRound, Utensils, Warehouse, Waves, X, ParkingCircle, CircleCheck, Wand2, Copy, Download,
+  Star, Sun as SunIcon, Tag, Tent, ThumbsUp, TreePine, UserRound, Utensils, Warehouse, Waves, X, ParkingCircle, CircleCheck, Copy, Download,
 } from 'lucide-react';
 import { createProject, type ProjectData } from '@/lib/projects';
 import { downscaleDataUrl, uploadDataUrl } from '@/lib/imageUpload';
 import { ALL_FIELDS, completeness, ENERGY_COLORS, inkOn, formatValue, visible, type Details, type Field } from '@/lib/propertyFields';
 import { authFetch, portfolioUrl, setPublic } from './api';
-import { PhotoEditModal, QUICK_PRESETS, type EditRequest } from './AiPhoto';
 import { CopyIcon } from './ImproveView';
 import CountUp from './CountUp';
 
@@ -59,7 +58,7 @@ const STEPS: Step[] = [
   { id: 'esterni', title: 'Spazi esterni e auto', sub: 'Tra le ricerche più usate dai compratori.', keys: ['esterni', 'superficie_esterna', 'posto_auto', 'cantina'], optional: true },
   { id: 'costi', title: 'Costi e disponibilità', sub: 'Le prime domande che fanno al telefono.', keys: ['spese_condominiali', 'portineria', 'disponibilita', 'contratto_affitto', 'cauzione', 'spese_incluse', 'proprieta'], optional: true },
   { id: 'note', title: 'Note e punti di forza', sub: 'Scrivi come parleresti a un cliente: l\'AI le usa per l\'annuncio.', keys: ['riferimento', 'virtual_tour'], optional: true },
-  { id: 'foto', title: 'Le foto', sub: 'Riordinale trascinandole, la prima è la copertina. Migliorale con l\'AI prima di pubblicarle.', keys: [] },
+  { id: 'foto', title: 'Le foto', sub: 'Carica le foto e riordinale trascinandole: la prima è la copertina. Potrai migliorarle con l\'AI dopo, quando vuoi.', keys: [] },
 ];
 
 const filled = (v: Details[string]) => v !== undefined && v !== '' && v !== false && !(Array.isArray(v) && !v.length);
@@ -507,33 +506,12 @@ function Compass({ v, set }: { v: Details[string]; set: SetV }) {
   );
 }
 
-// Foto: trascina per riordinare (desktop), frecce e "Copertina" a tap (mobile). Ogni foto si migliora
-// con l'AI (pannello con arreda/svuota/luce/testo libero e prima/dopo); "Migliora tutte" applica la stessa
-// azione a tutte insieme. La foto migliorata sostituisce l'originale (ripristinabile) o si aggiunge accanto.
+// Foto: solo caricamento e ordine (trascina su desktop, frecce e "Copertina" a tap su mobile). Niente AI qui:
+// si creano l'immobile e le foto senza cambiare schermata, i miglioramenti si fanno dopo (chat, Galleria).
 function PhotoGrid({ photos, setPhotos, onAdd }: { photos: Photo[]; setPhotos: (fn: (p: Photo[]) => Photo[]) => void; onAdd: (f: FileList | null) => void }) {
   const [drag, setDrag] = useState<number | null>(null);
   const [over, setOver] = useState<number | null>(null);
-  const [edit, setEdit] = useState<string | null>(null);
-  const [working, setWorking] = useState<Set<string>>(new Set());
   const move = (from: number, to: number) => setPhotos(p => { if (to < 0 || to >= p.length || from === to) return p; const n = [...p]; const [x] = n.splice(from, 1); n.splice(to, 0, x); return n; });
-  const replace = (id: string, url: string) => setPhotos(ps => ps.map(x => (x.id === id ? { ...x, url, original: x.original ?? srcOf(x), ai: true } : x)));
-  const addAfter = (id: string, url: string) => setPhotos(ps => { const i = ps.findIndex(x => x.id === id); const n = [...ps]; n.splice(i + 1, 0, { id: uid(), dataUrl: url, url, ai: true }); return n; });
-  const restore = (id: string) => setPhotos(ps => ps.map(x => (x.id === id && x.original ? { id: x.id, dataUrl: x.original.startsWith('data:') ? x.original : x.dataUrl, url: x.original.startsWith('data:') ? undefined : x.original } : x)));
-
-  // Migliora tutte: stessa azione su ogni foto, 3 alla volta (i worker GPU in parallelo)
-  const improveAll = async (req: Partial<EditRequest>) => {
-    const queue = photos.filter(p => !working.has(p.id));
-    setWorking(new Set(queue.map(p => p.id)));
-    const one = async (p: Photo) => {
-      const src = srcOf(p);
-      const res = await authFetch('/api/platform/photo-edit', { method: 'POST', body: JSON.stringify({ ...(src.startsWith('data:') ? { imageBase64: src } : { imageUrl: src }), ...req }) }).catch(() => null);
-      const d = res?.ok ? await res.json().catch(() => ({})) : {};
-      if (d.url) replace(p.id, d.url);
-      setWorking(w => { const n = new Set(w); n.delete(p.id); return n; });
-    };
-    for (let i = 0; i < queue.length; i += 3) await Promise.all(queue.slice(i, i + 3).map(one));
-  };
-  const editing = photos.find(p => p.id === edit);
 
   return (
     <div>
@@ -545,15 +523,6 @@ function PhotoGrid({ photos, setPhotos, onAdd }: { photos: Photo[]; setPhotos: (
         <input type="file" accept="image/*" multiple className="hidden" onChange={e => { onAdd(e.target.files); e.target.value = ''; }} />
       </label>
 
-      {photos.length > 1 && (
-        <div className="mt-4 flex flex-wrap items-center gap-2">
-          <span className="mr-1 text-sm font-medium">Migliora tutte:</span>
-          {QUICK_PRESETS.map(x => (
-            <button key={x.id} disabled={working.size > 0} onClick={() => improveAll(x.req)} className="rounded-full bg-canvas px-3.5 py-1.5 text-[13px] font-medium ring-1 ring-inset ring-black/10 ease-smooth transition-colors hover:bg-white disabled:opacity-40">{x.label}</button>
-          ))}
-          {working.size > 0 && <span className="flex items-center gap-1.5 text-xs text-muted"><Loader2 size={13} className="animate-spin" /> {working.size} in lavorazione</span>}
-        </div>
-      )}
 
       {photos.length > 0 && (
         <ul className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -562,18 +531,8 @@ function PhotoGrid({ photos, setPhotos, onAdd }: { photos: Photo[]; setPhotos: (
               onDrop={e => { e.preventDefault(); if (drag !== null) move(drag, i); setDrag(null); setOver(null); }}
               className={`group relative overflow-hidden rounded-2xl bg-canvas ring-2 ease-smooth transition ${i === 0 ? 'col-span-2 aspect-[16/9] sm:col-span-2' : 'aspect-[4/3]'} ${over === i && drag !== i ? 'ring-brand' : 'ring-transparent'} ${drag === i ? 'opacity-40' : ''} cursor-grab`}>
               <img key={srcOf(p)} src={srcOf(p)} alt="" className="blur-in pointer-events-none h-full w-full object-cover" />
-              {working.has(p.id) && (
-                <div className="pointer-events-none absolute inset-0" style={{ background: 'radial-gradient(ellipse 86% 76% at 50% 50%, rgba(83,126,236,0) 46%, rgba(83,126,236,.55) 80%, rgba(83,126,236,.95) 100%)', animation: 'gnm-fade var(--gnm-dur) var(--gnm-ease) both, gnm-aurora-edge 2.4s ease-in-out infinite' }} />
-              )}
               <span className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-ink/75 px-2.5 py-1 text-xs text-white">{i === 0 ? <><Star size={11} /> Copertina</> : <><GripVertical size={11} /> {i + 1}</>}</span>
-              {p.ai && <span className="absolute left-2 top-9 flex items-center gap-1 rounded-full bg-brand px-2 py-0.5 text-[11px] font-semibold text-white"><Sparkles size={10} /> AI</span>}
               <button onClick={() => setPhotos(ps => ps.filter(x => x.id !== p.id))} aria-label="Rimuovi foto" className="absolute right-2 top-2 rounded-full bg-white/90 p-1 opacity-0 ease-smooth transition group-hover:opacity-100 max-md:opacity-100"><X size={14} /></button>
-              {!working.has(p.id) && (
-                <div className="absolute inset-x-2 top-1/2 flex -translate-y-1/2 justify-center gap-2 opacity-0 ease-smooth transition group-hover:opacity-100 max-md:opacity-100">
-                  <button onClick={() => setEdit(p.id)} className="flex items-center gap-1.5 rounded-full bg-brand px-3.5 py-2 text-xs font-semibold text-white shadow-lg ease-smooth transition-transform hover:scale-105"><Wand2 size={13} /> Migliora con AI</button>
-                  {p.original && <button onClick={() => restore(p.id)} className="rounded-full bg-white/90 px-3 py-2 text-xs font-semibold shadow">Ripristina</button>}
-                </div>
-              )}
               <div className="absolute inset-x-2 bottom-2 flex justify-between opacity-0 ease-smooth transition group-hover:opacity-100 max-md:opacity-100">
                 <button onClick={() => move(i, i - 1)} disabled={i === 0} aria-label="Sposta prima" className="rounded-full bg-white/90 p-1.5 disabled:opacity-0"><ArrowLeft size={14} /></button>
                 {i > 0 && <button onClick={() => move(i, 0)} className="rounded-full bg-white/90 px-2.5 py-1 text-xs font-medium">Copertina</button>}
@@ -584,13 +543,6 @@ function PhotoGrid({ photos, setPhotos, onAdd }: { photos: Photo[]; setPhotos: (
         </ul>
       )}
 
-      {editing && (
-        <PhotoEditModal src={srcOf(editing)} title={`Foto ${photos.indexOf(editing) + 1}`} onClose={() => setEdit(null)}
-          actions={[
-            { label: 'Tieni entrambe', onClick: url => { addAfter(editing.id, url); setEdit(null); } },
-            { label: 'Usa questa', primary: true, onClick: url => { replace(editing.id, url); setEdit(null); } },
-          ]} />
-      )}
     </div>
   );
 }
