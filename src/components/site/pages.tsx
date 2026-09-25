@@ -310,7 +310,7 @@ function PropertyPage({ id }: { id: string }) {
                 <ul className="mb-12 mt-5 grid gap-2 sm:grid-cols-2">{p.zona.map(z => <li key={z} className="flex items-center gap-2.5 rounded-[calc(var(--r)*0.6)] bg-[var(--soft)] px-4 py-3 text-sm"><MapPin size={14} className="text-[var(--c)]" />{z}</li>)}</ul>
               </>}
               {/* le 10 cose piu' vicine, con il raggio a scelta */}
-              {p.addr && <NearbyList p={p} />}
+              {p.addr && (p.details as { distanze_auto?: boolean } | undefined)?.distanze_auto !== false && <NearbyList p={p} />}
             </div></Sec>
           )}
           {p.addr && <Sec id="property.map"><div className="mt-12"><MapBlock addr={p.addr} /></div></Sec>}

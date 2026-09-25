@@ -144,19 +144,20 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
     setPhotos(p => [...p, ...added].slice(0, 40));
   };
 
-  const generate = async () => {
+  const generate = async (auto?: boolean) => {
+    const distanze = auto ?? d.distanze_auto !== false;
     setDir(1); setStep(STEPS.length); setBusy('Scrivo titolo e descrizione...'); setError(null);
     try {
       // distanze automatiche: se la ricerca dei servizi non e' ancora arrivata, la si fa ora
       let zona = Array.isArray(d.zona) ? d.zona : [];
-      if (d.distanze_auto !== false && !zona.length && addr.length >= 9) {
+      if (distanze && !zona.length && addr.length >= 9) {
         setBusy('Cerco i servizi vicini...');
         const z = await authFetch(`/api/platform/zone?address=${encodeURIComponent(addr)}`).then(r => (r.ok ? r.json() : null)).catch(() => null);
         zona = (z?.pois ?? []).map((p: { categoria: string; nome: string; distanza: number }) => `${p.categoria}${p.nome !== p.categoria ? ` ${p.nome}` : ''} a ${p.distanza >= 1000 ? `${(p.distanza / 1000).toFixed(1)} km` : `${p.distanza} m`}`);
         if (zona.length) setD(prev => ({ ...prev, zona }));
         setBusy('Scrivo titolo e descrizione...');
       }
-      const res = await authFetch('/api/platform/describe', { method: 'POST', body: JSON.stringify({ property: { ...d, zona, distanze_auto: d.distanze_auto !== false, note_agente: note, numero_foto: photos.length, planimetria: !!plan }, nFoto: photos.length }) });
+      const res = await authFetch('/api/platform/describe', { method: 'POST', body: JSON.stringify({ property: { ...d, zona, distanze_auto: distanze, note_agente: note, numero_foto: photos.length, planimetria: !!plan }, nFoto: photos.length }) });
       if (!res.ok) throw new Error();
       setAi(await res.json());
     } catch { setError('Generazione non riuscita. Riprova.'); } finally { setBusy(null); }
@@ -262,14 +263,6 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
                   </div>
                 </div>
               )}
-              {/* attivo di base: le distanze dai servizi entrano da sole nella descrizione */}
-                  <label className="flex cursor-pointer items-center justify-between gap-3 rounded-2xl bg-canvas px-3.5 py-2.5 text-sm">
-                    <span>Aggiungo io le distanze dai servizi vicini nell&apos;annuncio</span>
-                    <button type="button" role="switch" aria-checked={d.distanze_auto !== false} onClick={() => set('distanze_auto', d.distanze_auto === false)}
-                      className={`relative h-6 w-10 shrink-0 rounded-full ease-smooth transition-colors ${d.distanze_auto !== false ? 'bg-brand' : 'bg-line'}`}>
-                      <span className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow-sm ease-smooth transition-transform ${d.distanze_auto !== false ? 'translate-x-4' : ''}`} />
-                    </button>
-                  </label>
               <Toggle f={F.mostra_indirizzo} v={d.mostra_indirizzo} set={v => set('mostra_indirizzo', v)} />
             </>}
             {cur.id === 'numeri' && <>
@@ -340,7 +333,7 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
               {back && ai && <button onClick={() => { setBack(false); go(STEPS.length); }} className="flex items-center gap-2 rounded-full bg-brand px-6 py-3 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand/90">Torna all&apos;annuncio <ArrowRight size={16} /></button>}
               {back && ai ? null : step < STEPS.length - 1
                 ? <button onClick={() => go(step + 1)} disabled={!canNext} className="flex items-center gap-2 btn-ink rounded-full px-6 py-3 text-sm font-semibold">Avanti <ArrowRight size={16} /><span className="ml-1 hidden text-xs font-normal text-white/50 sm:inline">Invio</span></button>
-                : <button onClick={generate} className="flex items-center gap-2 rounded-full bg-brand px-6 py-3 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand/90 active:scale-[0.98]">Continua creazione <ArrowRight size={16} /></button>}
+                : <button onClick={() => generate()} className="flex items-center gap-2 rounded-full bg-brand px-6 py-3 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand/90 active:scale-[0.98]">Continua creazione <ArrowRight size={16} /></button>}
             </div>
             </div>
           </div>,
@@ -404,18 +397,30 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
                 </button>
               </div>
 
+              {/* Cose vicine: attivo di base. Distanze dai servizi nella descrizione e "Cosa c'e' vicino" sulla scheda del sito.
+                  Cambiandolo, titolo e descrizione si riscrivono */}
+              <div className="rise card p-5" style={{ animationDelay: '.35s' }}>
+                <button type="button" role="switch" aria-checked={d.distanze_auto !== false} disabled={!!busy}
+                  onClick={() => { const on = d.distanze_auto === false; setD(prev => ({ ...prev, distanze_auto: on })); generate(on); }}
+                  className="flex w-full items-center justify-between gap-4 text-left">
+                  <span><span className="text-sm font-semibold">Aggiungo io cosa c&apos;è vicino</span>
+                    <span className="block text-xs text-muted">Distanze da metro, scuole, supermercati e parchi nella descrizione, e l&apos;elenco dei servizi vicini sulla scheda del tuo sito.</span></span>
+                  <span className={`relative h-7 w-12 shrink-0 rounded-full ease-smooth transition-colors ${d.distanze_auto !== false ? 'bg-brand' : 'bg-line'}`}><span className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow ease-smooth transition-all ${d.distanze_auto !== false ? 'left-6' : 'left-1'}`} /></span>
+                </button>
+              </div>
+
               {!!ai.suggerimenti.length && <div className="card p-5"><div className="text-sm font-semibold">Per migliorare ancora</div><ul className="mt-2 space-y-1.5 text-sm text-muted">{ai.suggerimenti.map(x => <li key={x} className="flex gap-2"><span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-brand" />{x}</li>)}</ul></div>}
 
               <div className="flex flex-wrap items-center justify-between gap-3 pb-6">
                 <button onClick={() => go(STEPS.length - 1)} className="text-sm text-muted hover:text-ink">Modifica i dati</button>
                 <div className="flex gap-2">
-                  <button onClick={generate} className="btn-ghost rounded-full px-5 py-3 text-sm font-medium">Riscrivi</button>
+                  <button onClick={() => generate()} className="btn-ghost rounded-full px-5 py-3 text-sm font-medium">Riscrivi</button>
                   <button onClick={save} className="flex items-center gap-2 rounded-full bg-brand px-6 py-3 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand/90"><Check size={16} strokeWidth={3} /> Salva immobile</button>
                 </div>
               </div>
             </div>
           )}
-          {!ai && !busy && <button onClick={generate} className="mt-6 btn-ink rounded-full px-6 py-3 text-sm font-semibold">Riprova</button>}
+          {!ai && !busy && <button onClick={() => generate()} className="mt-6 btn-ink rounded-full px-6 py-3 text-sm font-semibold">Riprova</button>}
         </section>
       )}
     </div>
