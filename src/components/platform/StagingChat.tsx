@@ -434,13 +434,15 @@ function ZonePicker({ inline, src, region, points, mask, onChange, onPick, onPre
   const leave = () => { if (timer.current) clearTimeout(timer.current); hoverId.current = 0; setHover(null); };
   const up = () => { start.current = null; };
   const [text, setText] = useState('');
+  // fuoco sul campo senza far scorrere la chat (autoFocus e onLoad->in fondo facevano il saltino)
+  const focused = useRef(false);
   const loading = mask === 'loading';
   const ready = (region && region.w > 0.02) || (points.length > 0 && !loading);
   const photo = (
       <div ref={box} className={`relative touch-none ${inline ? 'w-full' : 'mx-auto max-h-[calc(100vh-24rem)] w-fit'} select-none overflow-hidden rounded-2xl ${tool === 'rect' ? 'cursor-crosshair' : ''}`}
         style={{ ...(inline ? { aspectRatio: inline } : {}), ...(tool === 'points' ? { cursor: TARGET_CURSOR } : {}) }}
         onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerLeave={leave}>
-        <img src={src} alt="" draggable={false} onLoad={onLoad} className={inline ? 'block h-full w-full object-cover' : 'block max-h-[calc(100vh-24rem)] w-auto max-w-full'} />
+        <img src={src} alt="" draggable={false} onLoad={inline ? undefined : onLoad} className={inline ? 'block h-full w-full object-cover' : 'block max-h-[calc(100vh-24rem)] w-auto max-w-full'} />
         <button type="button" onPointerDown={e => e.stopPropagation()} onClick={onCancel} aria-label="Annulla selezione" title="Annulla"
           className="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-ink shadow-sm backdrop-blur ease-smooth transition-colors hover:bg-white"><X size={16} /></button>
         {tool === 'points' && hover && !loading && (
@@ -466,7 +468,7 @@ function ZonePicker({ inline, src, region, points, mask, onChange, onPick, onPre
       <form onSubmit={e => { e.preventDefault(); if (ready && text.trim() && !busy) onSubmit(text.trim()); }} className="flex w-0 min-w-full items-center gap-2 pt-2">
         {/* campo con dentro, a destra, gli strumenti di selezione (solo icone, nome nel tooltip) */}
         <div className="flex h-10 min-w-0 flex-1 items-center rounded-full bg-canvas pl-4 pr-1 ease-smooth transition-shadow focus-within:bg-white focus-within:ring-1 focus-within:ring-ink/15">
-          <input value={text} onChange={e => setText(e.target.value)} autoFocus
+          <input ref={el => { if (el && !focused.current) { focused.current = true; el.focus({ preventScroll: true }); } }} value={text} onChange={e => setText(e.target.value)}
             placeholder={loading ? 'Riconosco l’oggetto…' : ready ? 'Cosa faccio qui? Es. togli la tv' : tool === 'rect' ? 'Trascina sulla foto per disegnare la zona' : 'Passa sopra un oggetto e cliccalo'}
             className="h-full min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted/60" />
           {([['rect', 'Rettangolo: trascina per disegnare la zona', SquareDashed], ['points', 'Oggetti: clicca per selezionarli', MousePointerClick]] as const).map(([id, l, I]) => (
@@ -481,7 +483,8 @@ function ZonePicker({ inline, src, region, points, mask, onChange, onPick, onPre
       </form>
   );
   // dentro la card del risultato: stessa foto, stesso posto, cambiano solo i controlli sotto
-  if (inline) return <>{photo}<div className="blur-in">{form}</div></>;
+  // prima la card si allunga (AutoSize), poi il campo compare
+  if (inline) return <>{photo}<div className="blur-in" style={{ animationDelay: '.25s' }}>{form}</div></>;
   return (
     <div className="flex justify-start">
     <MorphTarget id="zone" className={`w-fit max-w-[min(640px,100%)] rounded-3xl rounded-bl-2xl bg-white p-2 ${CARD_SHADOW}`}>
