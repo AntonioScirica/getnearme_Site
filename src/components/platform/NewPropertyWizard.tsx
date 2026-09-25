@@ -10,6 +10,7 @@ import {
 import { createProject, type ProjectData } from '@/lib/projects';
 import { downscaleDataUrl, uploadDataUrl } from '@/lib/imageUpload';
 import ProgressiveBlur from '@/components/ProgressiveBlur';
+import FitImage from '@/components/ui/FitImage';
 import { ALL_FIELDS, completeness, ENERGY_COLORS, inkOn, formatValue, visible, type Details, type Field } from '@/lib/propertyFields';
 import { authFetch, portfolioUrl, setPublic } from './api';
 import { CopyIcon } from './ImproveView';
@@ -539,8 +540,9 @@ function PhotoGrid({ photos, setPhotos, onAdd, extra }: { photos: Photo[]; setPh
           {photos.map((p, i) => (
             <li key={p.id} draggable onDragStart={() => setDrag(i)} onDragEnd={() => { setDrag(null); setOver(null); }} onDragOver={e => { e.preventDefault(); setOver(i); }}
               onDrop={e => { e.preventDefault(); if (drag !== null) move(drag, i); setDrag(null); setOver(null); }}
-              className={`group relative overflow-hidden rounded-2xl bg-canvas ring-2 ease-smooth transition ${i === 0 ? 'col-span-2 aspect-[16/9] sm:row-span-2 sm:aspect-auto' : 'aspect-[4/3]'} ${over === i && drag !== i ? 'ring-brand' : 'ring-transparent'} ${drag === i ? 'opacity-40' : ''} cursor-grab`}>
-              <img key={srcOf(p)} src={srcOf(p)} alt="" className="blur-in pointer-events-none h-full w-full object-cover" />
+              className={`group relative overflow-hidden rounded-2xl bg-canvas ring-2 ease-smooth transition ${i === 0 ? 'col-span-2 aspect-[16/9] sm:row-span-2 sm:aspect-auto sm:min-h-[280px]' : 'aspect-[4/3]'} ${over === i && drag !== i ? 'ring-brand' : 'ring-transparent'} ${drag === i ? 'opacity-40' : ''} cursor-grab`}>
+              {/* immagine assoluta: non allunga la riga della griglia; verticali intere con lo sfondo sfocato */}
+              <div key={srcOf(p)} className="blur-in pointer-events-none absolute inset-0"><FitImage src={srcOf(p)} /></div>
               <span className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-ink/75 px-2.5 py-1 text-xs text-white">{i === 0 ? <><Star size={11} /> Copertina</> : <><GripVertical size={11} /> {i + 1}</>}</span>
               <button onClick={() => setPhotos(ps => ps.filter(x => x.id !== p.id))} aria-label="Rimuovi foto" className="absolute right-2 top-2 rounded-full bg-white/90 p-1 opacity-0 ease-smooth transition group-hover:opacity-100 max-md:opacity-100"><X size={14} /></button>
               <div className="absolute inset-x-2 bottom-2 flex justify-between opacity-0 ease-smooth transition group-hover:opacity-100 max-md:opacity-100">

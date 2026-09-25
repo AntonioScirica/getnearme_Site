@@ -199,7 +199,7 @@ function Gallery({ p }: { p: SiteProperty }) {
   if (t.gallery === 'slider') body = (
     <div>
       <div className="relative aspect-[16/9] overflow-hidden rounded-[var(--r)]">
-        <button onClick={() => setI(cur)} className="h-full w-full"><Photo src={photos[cur]} className="h-full" /></button>
+        <button onClick={() => setI(cur)} className="h-full w-full"><Photo src={photos[cur]} fit className="h-full" /></button>
         {photos.length > 1 && <>
           <button onClick={() => setCur((cur - 1 + photos.length) % photos.length)} className="absolute left-4 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-neutral-900 shadow"><ChevronLeft size={18} /></button>
           <button onClick={() => setCur((cur + 1) % photos.length)} className="absolute right-4 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-neutral-900 shadow"><ChevronRight size={18} /></button>
@@ -213,7 +213,7 @@ function Gallery({ p }: { p: SiteProperty }) {
   );
   else if (t.gallery === 'full') body = (
     <div className="relative h-[70vh] min-h-[480px] overflow-hidden">
-      <button onClick={() => setI(0)} className="h-full w-full"><Photo src={photos[0]} className="h-full" /></button>
+      <button onClick={() => setI(0)} className="h-full w-full"><Photo src={photos[0]} fit className="h-full" /></button>
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
       {all}
     </div>
@@ -221,7 +221,7 @@ function Gallery({ p }: { p: SiteProperty }) {
   else body = (
     <div className="relative grid h-[480px] grid-cols-4 grid-rows-2 gap-2 overflow-hidden rounded-[var(--r)] md:h-[540px]">
       {photos.slice(0, 5).map((src, k) => (
-        <button key={k} onClick={() => setI(k)} className={`group relative overflow-hidden ${k === 0 ? 'col-span-4 row-span-2 md:col-span-2' : 'hidden md:block'}`}><Photo src={src} zoom className="h-full" /></button>
+        <button key={k} onClick={() => setI(k)} className={`group relative overflow-hidden ${k === 0 ? 'col-span-4 row-span-2 md:col-span-2' : 'hidden md:block'}`}><Photo src={src} zoom fit className="h-full" /></button>
       ))}
       {all}
     </div>

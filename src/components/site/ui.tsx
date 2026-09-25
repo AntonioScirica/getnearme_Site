@@ -2,6 +2,7 @@
 
 import { Children, createContext, isValidElement, useContext, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactElement, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import FitImage from '@/components/ui/FitImage';
 import { Bath, BedDouble, Check, ChevronDown, DoorOpen, Heart, Maximize2 } from 'lucide-react';
 import { FONTS, fontCss, PAGE_SECTIONS, pageHidden, TEXTS, type SiteConfig, type SiteProperty, type TemplateId } from '@/lib/siteTemplates';
 
@@ -124,12 +125,14 @@ export function Btn({ children, href, onClick, variant = 'solid', size = 'md', c
 // mostrano una casa di esempio (scelta in modo fisso dal punto della pagina). Sul sito vero restano vuoti.
 const PLACEHOLDERS = ['/staging/1.jpg', '/staging/2.jpg', '/staging/3.jpg', '/staging/4.jpg', '/staging/5.jpg', '/staging/6.jpg'];
 const pick = (key: string) => PLACEHOLDERS[[...key].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7) % PLACEHOLDERS.length];
-export function Photo({ src, alt = '', className = '', zoom }: { src?: string; alt?: string; className?: string; zoom?: boolean }) {
+// fit: foto verticali intere con lo sfondo sfocato (gallerie della scheda) invece che ritagliate
+export function Photo({ src, alt = '', className = '', zoom, fit }: { src?: string; alt?: string; className?: string; zoom?: boolean; fit?: boolean }) {
   const preview = useContext(Ctx)?.preview;
   const shown = src || (preview ? pick(alt + className) : '');
   return (
-    <div className={`overflow-hidden bg-[var(--soft)] ${className}`}>
-      {shown && <img src={shown} alt={alt} loading="lazy" className={`h-full w-full object-cover ${zoom ? 'transition-transform duration-[900ms] ease-[cubic-bezier(.22,1,.36,1)] group-hover:scale-[1.04]' : ''}`} />}
+    <div className={`overflow-hidden bg-[var(--soft)] ${fit ? 'relative' : ''} ${className}`}>
+      {shown && fit && <FitImage src={shown} alt={alt} imgClassName={zoom ? 'transition-transform duration-[900ms] ease-[cubic-bezier(.22,1,.36,1)] group-hover:scale-[1.04]' : ''} />}
+      {shown && !fit && <img src={shown} alt={alt} loading="lazy" className={`h-full w-full object-cover ${zoom ? 'transition-transform duration-[900ms] ease-[cubic-bezier(.22,1,.36,1)] group-hover:scale-[1.04]' : ''}`} />}
     </div>
   );
 }
