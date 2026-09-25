@@ -80,7 +80,20 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList | Fil
   const clearZone = () => { setRegion(null); setPoints([]); setMask(null); };
   const scroller = useRef<HTMLDivElement>(null);
   // in fondo davvero (padding compreso), cosi' l'ultimo messaggio non resta sotto il campo
-  const toBottom = useCallback(() => requestAnimationFrame(() => scroller.current?.scrollTo({ top: scroller.current.scrollHeight, behavior: 'smooth' })), []);
+  // scorrimento in fondo con ease-in-out (600 ms); il fondo si rilegge a ogni fotogramma, cosi' segue la card che cresce
+  const scrollAnim = useRef(0);
+  const toBottom = useCallback(() => {
+    const el = scroller.current;
+    if (!el) return;
+    cancelAnimationFrame(scrollAnim.current);
+    const from = el.scrollTop, t0 = performance.now();
+    const step = (now: number) => {
+      const k = Math.min(1, (now - t0) / 600), e = k < 0.5 ? 4 * k ** 3 : 1 - (-2 * k + 2) ** 3 / 2;
+      el.scrollTop = from + (el.scrollHeight - el.clientHeight - from) * e;
+      if (k < 1) scrollAnim.current = requestAnimationFrame(step);
+    };
+    scrollAnim.current = requestAnimationFrame(step);
+  }, []);
   const busy = msgs.some(m => m.role === 'ai' && m.busy);
 
   // GPU: si accende appena entri nella chat e resta accesa finche' la usi (segnale ogni 50 s, spegnimento
@@ -157,6 +170,8 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList | Fil
     setBase(d.url); // la prossima richiesta continua da qui
     setTimeout(() => patch(id, { reveal: 'line' }), 600);
     setTimeout(() => patch(id, { reveal: 'slider' }), 1450);
+    // foto pronta: si scorre in fondo per vederla tutta, compresa la riga sotto (arriva con lo slider)
+    toBottom(); setTimeout(toBottom, 1500);
   };
 
   // Ricomincia da qui: i messaggi successivi restano (si puo' ripartire anche da li') ma sbiaditi,
