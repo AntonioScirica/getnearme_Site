@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 
 // Cambio di testo con una passata di luce blu dentro le lettere: il vecchio resta davanti alla banda, il nuovo esce dietro.
 // `swapKey` cambia = parte l'effetto. Il vecchio e' solo decorativo (niente clic, nascosto ai lettori di schermo).
@@ -8,7 +8,8 @@ export default function LightSwap({ swapKey, children, className = '' }: { swapK
   const prev = useRef<{ key: string; node: ReactNode }>({ key: swapKey, node: children });
   const [old, setOld] = useState<{ key: string; node: ReactNode } | null>(null);
 
-  useEffect(() => {
+  // prima del disegno a schermo: niente fotogramma col testo nuovo senza effetto
+  useLayoutEffect(() => {
     if (prev.current.key !== swapKey) {
       setOld(prev.current);
       const t = setTimeout(() => setOld(null), 1700);

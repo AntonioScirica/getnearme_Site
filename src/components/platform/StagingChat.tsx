@@ -101,14 +101,18 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
     if (files.length > 1) { onMany(files); return; } // piu' foto insieme: vista a griglia
     const f = files[0];
     if (!f.type.startsWith('image/')) return;
+    // Riconoscimento su una copia piccola (448 px): parte subito, carica poco e il modello la legge in un terzo del tempo
+    const small = await fileToResizedDataUrl(f, 448);
+    const classified = authFetch('/api/platform/photo-classify', { method: 'POST', body: JSON.stringify({ imageBase64: small }) }).catch(() => null);
     const img = await fileToResizedDataUrl(f, 1500);
     const id = uid();
     setMsgs(ms => [...ms, { id, role: 'user', image: img, seen: null }]);
     setKind(null); // nuova foto: suggerimenti generici finche' non la riconosce
     setBase(img);
-    // Riconoscimento del tipo di foto e della stanza: imposta il tipo da solo e lo dice nel messaggio guida
+    // Tipo di foto e stanza: imposta il tipo da solo e lo dice nel messaggio guida
     try {
-      const r = await authFetch('/api/platform/photo-classify', { method: 'POST', body: JSON.stringify({ imageBase64: img }) });
+      const r = await classified;
+      if (!r) return;
       const c = r.ok ? await r.json() : null;
       if (c?.scene) {
         setScene(c.scene);
