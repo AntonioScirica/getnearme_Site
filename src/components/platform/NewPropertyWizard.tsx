@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef, useState, type ComponentType } from 'react'
 import {
   ArrowLeft, ArrowRight, Ban, Building, Building2, CalendarClock, Car, Check, ChefHat, Crown, DoorOpen, Fence, FileSignature,
   Flame, Flower2, GripVertical, Hammer, Home, ImagePlus, KeyRound, LayoutTemplate, Loader2, Minus, Plus, Snowflake, Sofa, Sparkles,
-  Star, Sun as SunIcon, Tag, Tent, ThumbsUp, TreePine, UserRound, Utensils, Warehouse, Waves, X, ParkingCircle, CircleCheck, Copy, Download,
+  Star, Sun as SunIcon, Tag, Tent, ThumbsUp, TreePine, UserRound, Utensils, Warehouse, Waves, X, ParkingCircle, CircleCheck, Copy,
 } from 'lucide-react';
 import { createProject, type ProjectData } from '@/lib/projects';
 import { downscaleDataUrl, uploadDataUrl } from '@/lib/imageUpload';
@@ -56,10 +56,10 @@ const STEPS: Step[] = [
   { id: 'dove', title: 'Dove si trova?', sub: 'Via e città. Puoi nascondere il numero civico nell\'annuncio.', keys: ['indirizzo', 'mostra_indirizzo'] },
   { id: 'numeri', title: 'I numeri', sub: 'Prezzo, superficie e ambienti.', keys: ['prezzo', 'trattativa_riservata', 'superficie', 'locali', 'camere', 'bagni'] },
   { id: 'edificio', title: 'Piano e stato', sub: 'Come si presenta la casa.', keys: ['piano', 'piani_edificio', 'ascensore', 'stato', 'anno'], optional: true },
-  { id: 'energia', title: 'Energia e impianti', sub: 'La classe energetica è obbligatoria negli annunci.', keys: ['classe_energetica', 'ipe', 'riscaldamento', 'alimentazione', 'climatizzazione', 'infissi'], optional: true },
+  { id: 'energia', title: 'Energia e impianti', sub: 'La classe energetica è obbligatoria negli annunci.', keys: ['classe_energetica', 'ipe', 'riscaldamento', 'alimentazione', 'emissione', 'climatizzazione', 'infissi', 'materiale_infissi'], optional: true },
   { id: 'interni', title: 'Gli interni', sub: 'I dettagli che rendono viva la descrizione.', keys: ['cucina', 'arredato', 'esposizione', 'dotazioni'], optional: true },
   { id: 'esterni', title: 'Spazi esterni e auto', sub: 'Tra le ricerche più usate dai compratori.', keys: ['esterni', 'superficie_esterna', 'posto_auto', 'cantina'], optional: true },
-  { id: 'costi', title: 'Costi e disponibilità', sub: 'Le prime domande che fanno al telefono.', keys: ['spese_condominiali', 'portineria', 'disponibilita', 'contratto_affitto', 'cauzione', 'spese_incluse', 'proprieta'], optional: true },
+  { id: 'costi', title: 'Costi e disponibilità', sub: 'Le prime domande che fanno al telefono.', keys: ['spese_condominiali', 'portineria', 'accesso_disabili', 'disponibilita', 'contratto_affitto', 'cauzione', 'spese_incluse', 'proprieta'], optional: true },
   { id: 'note', title: 'Codice e tour virtuale', sub: 'Il codice di riferimento è quello del tuo gestionale: serve a ritrovare l\'immobile e ad aggiornarlo quando reimporti il file.', keys: ['riferimento', 'virtual_tour'], optional: true },
   { id: 'foto', title: 'Le foto', sub: 'Carica le foto e riordinale trascinandole: la prima è la copertina. Potrai migliorarle con l\'AI dopo, quando vuoi.', keys: [] },
 ];
@@ -247,14 +247,6 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
                 <div className="card p-4">
                   <div className="flex items-center gap-2 text-sm font-medium">Nella zona {zoneBusy && <Loader2 size={14} className="animate-spin text-muted" />}</div>
                   <p className="mt-0.5 text-xs text-muted">Servizi verificati su OpenStreetMap. Tocca quelli da mettere in evidenza nell&apos;annuncio (massimo 5): l&apos;AI parte da quelli.</p>
-                  {/* attivo di base: le distanze dai servizi entrano da sole nella descrizione */}
-                  <label className="mt-3 flex cursor-pointer items-center justify-between gap-3 rounded-2xl bg-canvas px-3.5 py-2.5 text-sm">
-                    <span>Aggiungo io le distanze dai servizi vicini nell&apos;annuncio</span>
-                    <button type="button" role="switch" aria-checked={d.distanze_auto !== false} onClick={() => set('distanze_auto', d.distanze_auto === false)}
-                      className={`relative h-6 w-10 shrink-0 rounded-full ease-smooth transition-colors ${d.distanze_auto !== false ? 'bg-brand' : 'bg-line'}`}>
-                      <span className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow-sm ease-smooth transition-transform ${d.distanze_auto !== false ? 'translate-x-4' : ''}`} />
-                    </button>
-                  </label>
                   <div className="mt-3 flex flex-wrap gap-2">
                     {(Array.isArray(d.zona) ? d.zona : []).map(l => {
                       const ev = Array.isArray(d.zona_evidenza) ? d.zona_evidenza : [];
@@ -270,6 +262,14 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
                   </div>
                 </div>
               )}
+              {/* attivo di base: le distanze dai servizi entrano da sole nella descrizione */}
+                  <label className="flex cursor-pointer items-center justify-between gap-3 rounded-2xl bg-canvas px-3.5 py-2.5 text-sm">
+                    <span>Aggiungo io le distanze dai servizi vicini nell&apos;annuncio</span>
+                    <button type="button" role="switch" aria-checked={d.distanze_auto !== false} onClick={() => set('distanze_auto', d.distanze_auto === false)}
+                      className={`relative h-6 w-10 shrink-0 rounded-full ease-smooth transition-colors ${d.distanze_auto !== false ? 'bg-brand' : 'bg-line'}`}>
+                      <span className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow-sm ease-smooth transition-transform ${d.distanze_auto !== false ? 'translate-x-4' : ''}`} />
+                    </button>
+                  </label>
               <Toggle f={F.mostra_indirizzo} v={d.mostra_indirizzo} set={v => set('mostra_indirizzo', v)} />
             </>}
             {cur.id === 'numeri' && <>
@@ -290,10 +290,13 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
             </>}
             {cur.id === 'energia' && <>
               <EnergyScale v={d.classe_energetica} set={v => set('classe_energetica', v)} />
+              <NumberField f={F.ipe} v={d.ipe} set={v => set('ipe', v)} suffix="kWh/m²a" />
               <Cards f={F.riscaldamento} v={d.riscaldamento} set={v => set('riscaldamento', v)} />
               {d.riscaldamento && d.riscaldamento !== 'Assente' && <Chips f={F.alimentazione} v={d.alimentazione} set={v => set('alimentazione', v)} />}
+              {d.riscaldamento && d.riscaldamento !== 'Assente' && <Chips f={F.emissione} v={d.emissione} set={v => set('emissione', v)} />}
               <Cards f={F.climatizzazione} v={d.climatizzazione} set={v => set('climatizzazione', v)} />
               <Chips f={F.infissi} v={d.infissi} set={v => set('infissi', v)} />
+              <Chips f={F.materiale_infissi} v={d.materiale_infissi} set={v => set('materiale_infissi', v)} />
             </>}
             {cur.id === 'interni' && <>
               <Cards f={F.cucina} v={d.cucina} set={v => set('cucina', v)} />
@@ -310,6 +313,7 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
             {cur.id === 'costi' && <>
               <NumberField f={F.spese_condominiali} v={d.spese_condominiali} set={v => set('spese_condominiali', v)} suffix="€/mese" />
               <Chips f={F.portineria} v={d.portineria} set={v => set('portineria', v)} />
+              <div className="card p-4"><Toggle f={F.accesso_disabili} v={d.accesso_disabili} set={v => set('accesso_disabili', v)} /></div>
               <Cards f={F.disponibilita} v={d.disponibilita} set={v => set('disponibilita', v)} />
               {d.contratto === 'Affitto' && <div className="space-y-6 card p-5">
                 <Chips f={F.contratto_affitto} v={d.contratto_affitto} set={v => set('contratto_affitto', v)} />
@@ -606,7 +610,7 @@ function PortalFields({ d }: { d: Details }) {
         <button onClick={() => copy('*', rows.map(r => `${r.label}: ${r.value}`).join('\n'))} className="flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium text-muted hover:bg-canvas hover:text-ink">
           {copied === '*' ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />} Copia tutti</button>
       </div>
-      <dl className="mt-3 divide-y divide-line">
+      <dl className="mt-3 max-h-72 divide-y divide-line overflow-y-auto pr-1 [scrollbar-width:thin]">
         {rows.map(r => (
           <div key={r.key} className="group flex items-center justify-between gap-4 py-2 text-sm">
             <dt className="text-muted">{r.label}</dt>
@@ -621,30 +625,12 @@ function PortalFields({ d }: { d: Details }) {
   );
 }
 
-// Foto pronte da caricare, nell'ordine scelto: scarica tutto in un unico file .zip.
-function ReadyPhotos({ photos, title }: { photos: Photo[]; title: string }) {
-  const [zipping, setZipping] = useState(false);
-  const download = async () => {
-    setZipping(true);
-    try {
-      const JSZip = (await import('jszip')).default;
-      const zip = new JSZip();
-      await Promise.all(photos.map(async (p, i) => zip.file(`${String(i + 1).padStart(2, '0')}${i === 0 ? '-copertina' : ''}.jpg`, await (await fetch(srcOf(p))).blob())));
-      const blob = await zip.generateAsync({ type: 'blob' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = `${(title || 'foto-annuncio').replace(/[^a-z0-9]+/gi, '-').toLowerCase()}.zip`;
-      a.click();
-      setTimeout(() => URL.revokeObjectURL(a.href), 5000);
-    } finally { setZipping(false); }
-  };
+// Foto pronte, nell'ordine scelto.
+function ReadyPhotos({ photos }: { photos: Photo[]; title?: string }) {
   return (
     <div className="rise card p-5" style={{ animationDelay: '.24s' }}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div><div className="text-sm font-semibold">Foto, nell&apos;ordine giusto</div><div className="text-xs text-muted">{photos.length} foto{photos.some(p => p.ai) ? `, ${photos.filter(p => p.ai).length} migliorate con l'AI` : ''}. Caricale sul portale in quest&apos;ordine.</div></div>
-        <div className="flex gap-2">
-          <button onClick={download} disabled={zipping} className="flex items-center gap-1.5 btn-ink rounded-full px-4 py-2 text-sm font-semibold">{zipping ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />} Scarica tutte</button>
-        </div>
       </div>
       <div className="mt-4 grid grid-cols-4 gap-2 sm:grid-cols-6">
         {photos.map((p, i) => (
