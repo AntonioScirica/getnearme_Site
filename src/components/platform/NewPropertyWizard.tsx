@@ -361,9 +361,11 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
               <div className="rise flex flex-wrap items-center gap-5 card p-5" style={{ animationDelay: '.05s' }}>
                 <div className="font-display text-4xl font-bold tracking-tight"><CountUp value={comp.score} />%</div>
                 <div className="min-w-0 flex-1">
-                  <div className="text-sm font-semibold">{comp.missing.length ? 'Mancano ancora' : 'Completezza dell’annuncio'}</div>
-                  {comp.missing.length ? (
+                  {/* anche le foto contano: servono almeno 12 per il punteggio pieno */}
+                  <div className="text-sm font-semibold">{comp.missing.length || photos.length < 12 ? 'Mancano ancora' : 'Completezza dell’annuncio'}</div>
+                  {comp.missing.length || photos.length < 12 ? (
                     <div className="mt-2 flex flex-wrap gap-1.5">
+                      {photos.length < 12 && <button onClick={() => { setBack(true); go(STEPS.findIndex(st => st.id === 'foto')); }} className="rounded-full bg-canvas px-3 py-1.5 text-xs font-medium ring-1 ring-inset ring-black/10 hover:bg-white">{12 - photos.length === 1 ? 'Un’altra foto' : `Altre ${12 - photos.length} foto`}</button>}
                       {comp.missing.slice(0, 6).map(f => {
                         const at = STEPS.findIndex(st => st.keys.includes(f.key));
                         return <button key={f.key} onClick={() => { if (at >= 0) { setBack(true); go(at); } }} className="rounded-full bg-canvas px-3 py-1.5 text-xs font-medium ring-1 ring-inset ring-black/10 hover:bg-white">{f.label}</button>;
