@@ -165,15 +165,20 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
     } catch { setError('Generazione non riuscita. Riprova.'); } finally { setBusy(null); }
   };
 
+  const [saving, setSaving] = useState<{ n: number; total: number; label: string } | null>(null);
   const save = async () => {
     if (!ai) return;
     setError(null);
+    // avanzamento reale: una tacca per foto caricata, poi planimetria/copertina e salvataggio
+    const total = photos.length + 2;
+    setSaving({ n: 0, total, label: 'Preparo il salvataggio' });
     try {
       const urls: string[] = [];
-      for (const [i, p] of photos.entries()) { setBusy(`Carico foto ${i + 1} di ${photos.length}...`); const u = p.url ?? await uploadDataUrl(p.dataUrl, 'properties'); if (u) urls.push(u); }
-      setBusy('Salvo immobile...');
+      for (const [i, p] of photos.entries()) { setSaving({ n: i, total, label: `Carico la foto ${i + 1} di ${photos.length}` }); const u = p.url ?? await uploadDataUrl(p.dataUrl, 'properties'); if (u) urls.push(u); }
+      setSaving({ n: photos.length, total, label: plan ? 'Carico la planimetria' : 'Preparo la copertina' });
       const planUrl = plan ? await uploadDataUrl(plan, 'properties') : '';
       const thumb = photos[0] ? (photos[0].url ?? await uploadDataUrl(await downscaleDataUrl(photos[0].dataUrl, 100, 0.8), 'covers')) : '';
+      setSaving({ n: photos.length + 1, total, label: publish ? 'Salvo e pubblico sul tuo sito' : 'Salvo l’immobile' });
       const project = await createProject({
         nome: ai.titolo, titolo: ai.titolo, descrizione: ai.descrizione, addr: String(d.indirizzo ?? ''), tipologia: String(d.tipologia ?? ''),
         prezzo: Number(d.prezzo) || 0, mq: Number(d.superficie) || 0, locali: Number(d.locali) || undefined, camere: Number(d.camere) || 0, bagni: Number(d.bagni) || 0,
@@ -183,8 +188,9 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
       if (!project) throw new Error();
       if (publish) await setPublic(project.id, true);
       localStorage.removeItem(DRAFT_KEY);
+      setSaving({ n: total, total, label: 'Fatto' });
       onCreated(project);
-    } catch { setError('Salvataggio non riuscito. Riprova.'); } finally { setBusy(null); }
+    } catch { setError('Salvataggio non riuscito. Riprova.'); } finally { setBusy(null); setSaving(null); }
   };
 
   // Riassunto vivo in testa: la scheda che prende forma.
@@ -192,6 +198,22 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
 
   return (
     <div className="mx-auto max-w-3xl">
+      {/* Salvataggio: finestra con l'avanzamento reale (foto caricate) */}
+      {saving && createPortal(
+        <div className="blur-in fixed inset-0 z-[260] flex items-center justify-center bg-black/40 p-6 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-[32px] bg-white p-6 shadow-2xl">
+            <div className="flex items-center gap-4">
+              <div className="h-14 w-14 shrink-0 overflow-hidden rounded-2xl bg-canvas">{photos[0] && <img src={srcOf(photos[0])} alt="" className="h-full w-full object-cover" />}</div>
+              <div className="min-w-0"><div className="truncate font-semibold">{ai?.titolo || 'Il tuo immobile'}</div><div className="text-sm text-muted">{saving.label}</div></div>
+            </div>
+            <div className="mt-5 h-2 overflow-hidden rounded-full bg-canvas">
+              <div className="h-full rounded-full bg-brand ease-smooth transition-[width]" style={{ width: `${Math.round((saving.n / saving.total) * 100)}%` }} />
+            </div>
+            <div className="mt-2 text-right text-xs font-medium text-muted">{Math.round((saving.n / saving.total) * 100)}%</div>
+          </div>
+        </div>,
+        document.body,
+      )}
       {/* Testa: copertina + riassunto + progresso */}
       <div className="flex items-center gap-4">
         {/* freccia = passo precedente (dal primo passo torna alla home) */}
