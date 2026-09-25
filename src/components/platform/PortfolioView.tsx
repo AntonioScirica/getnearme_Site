@@ -252,18 +252,21 @@ function Gallery({ cfg, name, logo, props, onPick }: { cfg: SiteConfig; name: st
           const used = cfg.template === t.id;
           const tcfg = used ? cfg : { ...cfg, template: t.id, primary: t.primary, font: t.font };
           return (
+            // stessa card delle altre pagine (Galleria): bianca 24 con la miniatura 16 dentro e una riga sotto.
+            // Passando sopra la miniatura scorre lenta verso il basso e mostra tutta la home.
             <div key={t.id} role="button" tabIndex={0} onClick={e => pick(t.id, e.currentTarget)} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(t.id, e.currentTarget); } }}
-              className={`group rise cursor-pointer rounded-[22px] text-left outline-none ease-smooth transition-[opacity,transform,filter] focus-visible:ring-2 focus-visible:ring-brand ${leaving && leaving !== t.id ? 'pointer-events-none scale-90 opacity-0 blur-[8px]' : ''}`} style={{ animationDelay: `${i * 0.04}s`, transitionDelay: leaving ? `${(i % 3) * 40}ms` : undefined }}>
-              <div data-thumb className={`relative overflow-hidden rounded-[22px] bg-white ring-1 ease-smooth transition-[box-shadow,transform] group-hover:-translate-y-1 ${used ? 'ring-2 ring-brand' : 'ring-black/10'} ${CARD_SHADOW}`}>
+              className={`group rise cursor-pointer rounded-3xl bg-white p-2 text-left outline-none ease-smooth transition-[opacity,transform,filter,box-shadow] focus-visible:ring-2 focus-visible:ring-brand ${CARD_SHADOW} ${used ? '!ring-2 !ring-brand' : ''} ${leaving && leaving !== t.id ? 'pointer-events-none scale-90 opacity-0 blur-[8px]' : ''}`} style={{ animationDelay: `${i * 0.04}s`, transitionDelay: leaving ? `${(i % 3) * 40}ms` : undefined }}>
+              <div data-thumb className="relative overflow-hidden rounded-2xl bg-canvas">
                 <MorphTarget id={`tpl-${t.id}`}><Thumb><SiteThumb ctx={{ cfg: tcfg, name, logo, properties: props, base: '', preview: true }} /></Thumb></MorphTarget>
-                <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/0 ease-smooth transition-colors group-hover:bg-black/25">
-                  <span className="flex translate-y-2 items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold opacity-0 shadow-lg ease-smooth transition-[opacity,transform] group-hover:translate-y-0 group-hover:opacity-100"><Pencil size={14} /> Personalizza</span>
-                </div>
-                {used && <span className="absolute left-3 top-3 rounded-full bg-brand px-3 py-1 text-xs font-semibold text-white shadow">In uso</span>}
               </div>
-              <div className="mt-3 flex items-start gap-2.5 px-1">
-                <span className="mt-1 h-3 w-3 shrink-0 rounded-full ring-2 ring-white" style={{ background: t.primary, boxShadow: '0 0 0 1px rgba(0,0,0,.1)' }} />
-                <span><span className="block font-semibold">{t.name}</span><span className="block text-sm text-muted">{t.desc}</span></span>
+              <div className="flex min-h-12 items-center gap-3 px-2 pt-2">
+                <span className="min-w-0 flex-1">
+                  <span className="block text-sm font-semibold">{t.name}</span>
+                  <span className="block truncate text-xs text-muted">{t.desc}</span>
+                </span>
+                {used
+                  ? <span className="shrink-0 rounded-full bg-brand/10 px-3 py-1 text-xs font-semibold text-brand">In uso</span>
+                  : <span className="flex h-8 shrink-0 items-center gap-1.5 rounded-full px-3 text-xs font-medium text-ink opacity-0 ease-smooth transition-opacity group-hover:bg-canvas group-hover:opacity-100"><Pencil size={13} /> Personalizza</span>}
               </div>
             </div>
           );
@@ -274,17 +277,28 @@ function Gallery({ cfg, name, logo, props, onPick }: { cfg: SiteConfig; name: st
 }
 
 // Miniatura: il sito largo 1280 px rimpicciolito nella card, solo la parte alta, non cliccabile
+// Passando sopra (group-hover della card) scorre verso il fondo della pagina in 6 s e torna su uscendo.
 function Thumb({ children }: { children: ReactNode }) {
   const box = useRef<HTMLDivElement>(null);
+  const page = useRef<HTMLDivElement>(null);
   const [k, setK] = useState(0.3);
+  const [scroll, setScroll] = useState(0);
   useEffect(() => {
-    const ro = new ResizeObserver(() => { if (box.current) setK(box.current.clientWidth / 1280); });
+    const ro = new ResizeObserver(() => {
+      if (!box.current || !page.current) return;
+      const kk = box.current.clientWidth / 1280;
+      setK(kk);
+      setScroll(Math.max(0, page.current.offsetHeight * kk - box.current.clientHeight));
+    });
     if (box.current) ro.observe(box.current);
+    if (page.current) ro.observe(page.current);
     return () => ro.disconnect();
   }, []);
   return (
-    <div ref={box} className="pointer-events-none relative aspect-[16/11] select-none overflow-hidden" aria-hidden>
-      <div style={{ width: 1280, transform: `scale(${k})`, transformOrigin: 'top left' }}>{children}</div>
+    <div ref={box} className="pointer-events-none relative aspect-[4/3] select-none overflow-hidden" aria-hidden style={{ ['--thumb-scroll' as string]: `-${scroll}px` }}>
+      <div className="transition-transform duration-[6000ms] ease-in-out group-hover:[transform:translateY(var(--thumb-scroll))]">
+        <div ref={page} style={{ width: 1280, transform: `scale(${k})`, transformOrigin: 'top left', height: 'max-content' }}>{children}</div>
+      </div>
     </div>
   );
 }
