@@ -157,7 +157,9 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
         if (zona.length) setD(prev => ({ ...prev, zona }));
         setBusy('Scrivo titolo e descrizione...');
       }
-      const res = await authFetch('/api/platform/describe', { method: 'POST', body: JSON.stringify({ property: { ...d, zona, distanze_auto: distanze, note_agente: note, numero_foto: photos.length, planimetria: !!plan }, nFoto: photos.length }) });
+      // tutti i dati compilati, con etichetta e valore leggibili (es. "Classe energetica: G", "Spese condominiali: 120 €/mese")
+      const dati = ALL_FIELDS.filter(f => visible(f, d)).map(f => { const v = formatValue(f, d[f.key]); return v ? `${f.label}: ${v}` : null; }).filter(Boolean);
+      const res = await authFetch('/api/platform/describe', { method: 'POST', body: JSON.stringify({ property: { dati, ...d, zona, distanze_auto: distanze, note_agente: note, numero_foto: photos.length, planimetria: !!plan }, nFoto: photos.length }) });
       if (!res.ok) throw new Error();
       setAi(await res.json());
     } catch { setError('Generazione non riuscita. Riprova.'); } finally { setBusy(null); }
@@ -409,7 +411,6 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
                 </button>
               </div>
 
-              {!!ai.suggerimenti.length && <div className="card p-5"><div className="text-sm font-semibold">Per migliorare ancora</div><ul className="mt-2 space-y-1.5 text-sm text-muted">{ai.suggerimenti.map(x => <li key={x} className="flex gap-2"><span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-brand" />{x}</li>)}</ul></div>}
 
               <div className="flex flex-wrap items-center justify-between gap-3 pb-6">
                 <button onClick={() => go(STEPS.length - 1)} className="text-sm text-muted hover:text-ink">Modifica i dati</button>

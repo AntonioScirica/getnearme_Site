@@ -26,7 +26,7 @@ const SCHEMA = {
 const SYSTEM = `Sei un copywriter immobiliare italiano esperto. Scrivi annunci per portali come immobiliare.it e idealista.
 - Titolo: MASSIMO 60 caratteri spazi inclusi (immobiliare.it taglia a 60). Regole, da ricerca sui portali:
 ${TITLE_RULES}
-- Descrizione: 120-220 parole, italiano naturale, paragrafi brevi. Scrivi in prosa. Usa un elenco puntato (righe che iniziano con "- ") solo se ha davvero senso: molte voci omogenee, di solito 5 o più dotazioni o ambienti, che in una frase diventerebbero un elenco di virgole illeggibile. Al massimo un elenco per descrizione; se le voci sono poche, mettile in una frase. Apri con il punto di forza principale, poi spazi, dotazioni, zona. Usa solo i dati forniti: non inventare caratteristiche, metrature o servizi. Non aggiungere promesse o servizi dell'agenzia non presenti (orari di visita, disponibilità serali, consulenze, mutui). Chiudi al massimo con un invito generico a contattare l'agenzia. Niente em dash, usa virgole.
+- Descrizione: 180-300 parole, italiano naturale, paragrafi brevi separati da una riga vuota. Usa TUTTI i dati utili forniti (trovi l'elenco leggibile in "dati"): non lasciare fuori classe energetica, riscaldamento, infissi, piano e ascensore, esposizione, stato, dotazioni, esterni, posto auto e cantina, spese, disponibilita' quando ci sono. Ordine: 1) apertura con tipologia, zona e punto di forza; 2) composizione e metratura; 3) finiture, impianti ed efficienza; 4) esterni e pertinenze; 5) zona con i servizi vicini e le distanze; 6) costi, disponibilita' e invito a contattare l'agenzia. Scrivi in prosa. Usa un elenco puntato (righe che iniziano con "- ") solo se ha davvero senso: molte voci omogenee, di solito 5 o più dotazioni o ambienti, che in una frase diventerebbero un elenco di virgole illeggibile. Al massimo un elenco per descrizione. Usa solo i dati forniti: non inventare caratteristiche, metrature o servizi. Non aggiungere promesse o servizi dell'agenzia non presenti (orari di visita, disponibilità serali, consulenze, mutui). Niente em dash, usa virgole.
 - Score: da 0 a 100, quanto e' completo e convincente l'annuncio con i dati disponibili (dati mancanti, foto, chiarezza).
 - Suggerimenti: 2-5 azioni concrete per migliorare l'annuncio (es. dati mancanti da aggiungere, foto da fare).
 - Se nei dati c'e' "zona" (servizi verificati su OpenStreetMap con distanze), dedica 1-2 frasi alla zona citando SOLO quei servizi, dando priorita' a quelli in "zona_evidenza" (scelti dall'agente), con le distanze arrotondate (es. "a circa 400 metri dalla stazione Tibaldi"). Se "zona" manca o e' vuota, non descrivere servizi di zona che non conosci.
@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
   let body: { property?: Record<string, unknown>; nFoto?: number }
   try { body = await req.json() } catch { return NextResponse.json({ error: 'bad_request' }, { status: 400 }) }
   const input = JSON.stringify({ ...body.property, numero_foto: body.nFoto ?? 0 })
-  if (input.length > 8000) return NextResponse.json({ error: 'too_large' }, { status: 400 })
+  if (input.length > 16000) return NextResponse.json({ error: "too_large" }, { status: 400 })
 
   const r = await generateJson<Record<string, unknown>>({
     system: SYSTEM,
