@@ -180,7 +180,8 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
     <div className="mx-auto max-w-3xl">
       {/* Testa: copertina + riassunto + progresso */}
       <div className="flex items-center gap-4">
-        <a href="#/" className="text-muted hover:text-ink" aria-label="Home"><ArrowLeft size={18} /></a>
+        {/* freccia = passo precedente (dal primo passo torna alla home) */}
+        <button type="button" onClick={() => (step > 0 ? go(Math.min(step, STEPS.length) - 1) : (location.hash = '#/'))} className="flex h-9 w-9 items-center justify-center rounded-full text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink" aria-label={step > 0 ? 'Passo precedente' : 'Home'}><ArrowLeft size={18} /></button>
         <div className="h-12 w-16 shrink-0 overflow-hidden rounded-lg bg-canvas ring-1 ring-line">
           {photos[0] ? <img key={srcOf(photos[0])} src={srcOf(photos[0])} alt="" className="blur-in h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center text-muted"><ImagePlus size={16} /></div>}
         </div>
@@ -310,7 +311,7 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
           <div className="pointer-events-none fixed inset-x-0 bottom-0 z-30 pb-6 pt-12">
             <div className="absolute inset-0"><ProgressiveBlur side="bottom" fade={24} /></div>
             <div className="pointer-events-auto relative mx-auto flex max-w-3xl items-center justify-between gap-3 px-6">
-            <button onClick={() => step > 0 && go(step - 1)} disabled={step === 0} className="text-sm text-muted hover:text-ink disabled:opacity-0">Indietro <span className="hidden text-xs text-muted/60 sm:inline">Esc</span></button>
+            <span />
             <div className="flex items-center gap-3">
               {cur.optional && step < STEPS.length - 1 && <button onClick={() => go(step + 1)} className="text-sm text-muted hover:text-ink">Salta</button>}
               {step < STEPS.length - 1
