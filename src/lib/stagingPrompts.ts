@@ -74,6 +74,19 @@ const FURNISH: Record<string, string> = {
 
 // Stessa logica di buildFinalPrompt delle edge function: planimetria > vista > testo libero
 // (con la protezione adatta alla scena) > stile preset.
+// "Altra versione": il seme da solo cambia poco (stessa richiesta = quasi la stessa foto). Ogni variante
+// sposta palette, materiali e forme dei mobili restando nello stesso stile.
+export const VARIANTS = [
+  'For this version choose different furniture pieces from a typical attempt: warm oak wood, off-white fabrics, a round coffee or bedside table, sage green accents.',
+  'For this version use a different combination: walnut wood details, light grey fabrics, rectangular shapes, navy blue accents.',
+  'For this version use a different combination: white lacquered fronts, beige linen, rounded soft shapes, terracotta accents.',
+  'For this version use a different combination: light ash wood, cream and sand tones, slim metal legs, mustard yellow accents.',
+  'For this version use a different combination: natural oak, warm white, upholstered headboard or sofa in taupe, dusty pink accents.',
+  'For this version use a different combination: dark wood accents on a light base, stone grey fabrics, black metal details, olive green accents.',
+  'For this version use a different combination: birch wood, white and pale blue, simple Scandinavian shapes, a striped rug.',
+  'For this version use a different combination: warm honey wood, ivory fabrics, cane or rattan details, deep green accents.',
+];
+
 // Cosa mettere per tipo di stanza negli stili: senza, in una cucina aperta arredava solo i pensili e lasciava vuoto il resto
 const ROOM_FURNISH: Record<string, string> = {
   cucina: 'This room is a kitchen: furnish it completely, the kitchen units AND the free floor space: a dining table with four chairs, a pendant lamp above the table; if part of the room is a living area, a sofa and a coffee table there.',
