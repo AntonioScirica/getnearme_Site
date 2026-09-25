@@ -279,9 +279,9 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList | Fil
             </div>
           ) : (
             <div key={m.id} className={`blur-in flex justify-start ease-smooth transition-opacity ${faded.has(m.id) ? 'opacity-35 hover:opacity-80' : ''}`}>
-              <div className={`w-full rounded-3xl rounded-bl-2xl bg-white p-2 ${CARD_SHADOW}`} style={{ maxWidth: `min(560px, calc(60vh * ${ratios[m.before] ?? 1.5} + 16px))` }}><AutoSize>
+              <div className={`w-full rounded-3xl bg-white p-2 ${CARD_SHADOW}`} style={{ maxWidth: `min(560px, calc(60vh * ${ratios[m.before] ?? 1.5} + 16px))` }}><AutoSize>
                 {/* Modifica: la foto resta dov'e' e diventa selezionabile, sotto cambiano solo i pulsanti */}
-                {/* raggio interno = esterno - padding: se la foto tocca l'angolo della coda (16px), 8px */}
+                {/* card con foto: angoli tutti uguali (24), foto 16 = 24 - padding 8; la coda resta solo sui fumetti di testo */}
                 {/* clic sulla foto = a tutto schermo con prima/dopo (non se trascini il cursore prima/dopo o premi Scarica) */}
                 <div className={`relative ${m.out && !m.busy ? 'cursor-zoom-in' : ''}`} style={{ aspectRatio: ratios[m.before] ?? 1.5 }} data-base-photo={m.out && m.out === base ? '' : undefined}
                   onPointerDown={e => { downAt.current = { x: e.clientX, y: e.clientY }; }}
@@ -290,7 +290,7 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList | Fil
                     if (!m.out || m.busy || (e.target as HTMLElement).closest('button, a')) return;
                     if (d && Math.hypot(e.clientX - d.x, e.clientY - d.y) > 6) return;
                     setViewer({ src: m.out, before: m.before });
-                  }}><AiPhotoStage parked={i === zoneOwner && !zoneClosing} onUnpark={cancelZone} src={m.before} busy={m.busy} out={m.out} reveal={m.reveal} msg={tick % 5} fileName="home-staging.jpg" className={`h-full ${m.err || (m.out && !m.busy) ? '' : '!rounded-bl-[8px]'}`} />
+                  }}><AiPhotoStage parked={i === zoneOwner && !zoneClosing} onUnpark={cancelZone} src={m.before} busy={m.busy} out={m.out} reveal={m.reveal} msg={tick % 5} fileName="home-staging.jpg" className="h-full" />
                 </div>
                 {/* Modifica: la foto sotto resta montata e ferma, la selezione ci si appoggia sopra; sotto cambiano solo i controlli */}
                 {i === zoneOwner ? zonePicker(ratios[m.before] ?? 1.5) : <>
@@ -515,7 +515,7 @@ function ZonePicker({ inline, closing = false, src, region, points, mask, onChan
   );
   return (
     <div className="flex justify-start">
-    <MorphTarget id="zone" className={`w-fit max-w-[min(640px,100%)] rounded-3xl rounded-bl-2xl bg-white p-2 ${CARD_SHADOW}`}>
+    <MorphTarget id="zone" className={`w-fit max-w-[min(640px,100%)] rounded-3xl bg-white p-2 ${CARD_SHADOW}`}>
       <div className="w-fit max-w-full">
       {photo}
       {form}
