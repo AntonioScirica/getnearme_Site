@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ArrowUp, ImagePlus, Loader2, MousePointerClick, RotateCcw, SquareDashed, SquareDashedMousePointer, X } from 'lucide-react';
+import { ArrowUp, Download, ImagePlus, Loader2, MousePointerClick, RotateCcw, SquareDashed, SquareDashedMousePointer, X } from 'lucide-react';
 import { fileToResizedDataUrl } from '@/lib/staging';
 import { AI_MOCK } from '@/lib/aiMock';
 import { AiPhotoStage, QUICK_PRESETS, type EditRequest, type Region, type Reveal, type Suggestion } from './AiPhoto';
@@ -434,6 +434,9 @@ function ZonePicker({ inline, src, region, points, mask, onChange, onPick, onPre
   const leave = () => { if (timer.current) clearTimeout(timer.current); hoverId.current = 0; setHover(null); };
   const up = () => { start.current = null; };
   const [text, setText] = useState('');
+  // ponytail: larghezza di "Scarica" fissa (92px), misurarla se cambia il testo
+  const [pill, setPill] = useState(!!inline);
+  useEffect(() => { const t = setTimeout(() => setPill(false), 30); return () => clearTimeout(t); }, []);
   // fuoco sul campo senza far scorrere la chat (autoFocus e onLoad->in fondo facevano il saltino)
   const focused = useRef(false);
   const loading = mask === 'loading';
@@ -443,8 +446,12 @@ function ZonePicker({ inline, src, region, points, mask, onChange, onPick, onPre
         style={{ ...(inline ? { aspectRatio: inline } : {}), ...(tool === 'points' ? { cursor: TARGET_CURSOR } : {}) }}
         onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerLeave={leave}>
         <img src={src} alt="" draggable={false} onLoad={inline ? undefined : onLoad} className={inline ? 'block h-full w-full object-cover' : 'block max-h-[calc(100vh-24rem)] w-auto max-w-full'} />
-        <button type="button" onPointerDown={e => e.stopPropagation()} onClick={onCancel} aria-label="Annulla selezione" title="Annulla"
-          className="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-ink shadow-sm backdrop-blur ease-smooth transition-colors hover:bg-white"><X size={16} /></button>
+        {/* nella card del risultato il pulsante Scarica si stringe e diventa la X */}
+        <button type="button" onPointerDown={e => e.stopPropagation()} onClick={onCancel} aria-label="Annulla selezione" title="Annulla" style={{ width: pill ? 92 : 36 }}
+          className="absolute right-3 top-3 z-10 flex h-9 items-center justify-center overflow-hidden rounded-full bg-white/85 text-ink shadow-sm ring-1 ring-black/5 backdrop-blur-md ease-smooth transition-[width,background-color] hover:bg-white">
+          <span className={`absolute flex items-center gap-1.5 whitespace-nowrap text-xs font-semibold ease-smooth transition-opacity ${pill ? 'opacity-100' : 'opacity-0'}`}><Download size={14} /> Scarica</span>
+          <X size={16} className={`ease-smooth transition-opacity ${pill ? 'opacity-0' : 'opacity-100'}`} />
+        </button>
         {tool === 'points' && hover && !loading && (
           <div className="pointer-events-none absolute inset-0 bg-brand/35 ease-smooth transition-opacity"
             style={{ maskImage: `url(${hover})`, WebkitMaskImage: `url(${hover})`, maskMode: 'luminance', maskSize: '100% 100%', WebkitMaskSize: '100% 100%' }} />
@@ -483,8 +490,8 @@ function ZonePicker({ inline, src, region, points, mask, onChange, onPick, onPre
       </form>
   );
   // dentro la card del risultato: stessa foto, stesso posto, cambiano solo i controlli sotto
-  // prima la card si allunga (AutoSize), poi il campo compare
-  if (inline) return <>{photo}<div className="blur-in" style={{ animationDelay: '.25s' }}>{form}</div></>;
+  // prima la card si allunga (AutoSize), poi il campo compare: solo dissolvenza, uno spostamento verso il basso finiva tagliato dal bordo
+  if (inline) return <>{photo}<div className="pb-px" style={{ animation: 'gnm-fade var(--gnm-dur) var(--gnm-ease) .25s both' }}>{form}</div></>;
   return (
     <div className="flex justify-start">
     <MorphTarget id="zone" className={`w-fit max-w-[min(640px,100%)] rounded-3xl rounded-bl-2xl bg-white p-2 ${CARD_SHADOW}`}>
