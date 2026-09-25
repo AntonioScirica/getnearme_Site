@@ -122,6 +122,8 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
   const comp = useMemo(() => completeness(d, photos.length), [d, photos.length]);
   const cur = STEPS[step];
   const canNext = !cur || cur.optional || cur.keys.every(k => k === 'mostra_indirizzo' || k === 'trattativa_riservata' || (k === 'prezzo' ? filled(d.prezzo) || !!d.trattativa_riservata : ['locali', 'camere', 'bagni'].includes(k) || filled(d[k])));
+  // tornando dal riepilogo a un passo, si rientra all'annuncio con un clic (senza rifare i passi ne' rigenerare)
+  const [back, setBack] = useState(false);
   const go = (n: number) => { setDir(n > step ? 1 : -1); setStep(n); document.querySelector('main')?.scrollTo({ top: 0, behavior: 'smooth' }); };
 
   // Tastiera: Invio avanti, Esc indietro (non nei campi di testo lungo e non con un pannello aperto)
@@ -129,7 +131,7 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
     const k = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement;
       if (document.querySelector('[role=dialog]') || t.tagName === 'TEXTAREA') return;
-      if (e.key === 'Enter' && !done && canNext) { e.preventDefault(); if (step < STEPS.length - 1) go(step + 1); else generate(); }
+      if (e.key === 'Enter' && !done && canNext) { e.preventDefault(); if (back && ai) { setBack(false); go(STEPS.length); } else if (step < STEPS.length - 1) go(step + 1); else generate(); }
       if (e.key === 'Escape' && step > 0 && t.tagName !== 'INPUT') go(step - 1);
     };
     document.addEventListener('keydown', k);
@@ -181,7 +183,7 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
       {/* Testa: copertina + riassunto + progresso */}
       <div className="flex items-center gap-4">
         {/* freccia = passo precedente (dal primo passo torna alla home) */}
-        <button type="button" onClick={() => (step > 0 ? go(Math.min(step, STEPS.length) - 1) : (location.hash = '#/'))} className="flex h-9 w-9 items-center justify-center rounded-full text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink" aria-label={step > 0 ? 'Passo precedente' : 'Home'}><ArrowLeft size={18} /></button>
+        <button type="button" onClick={() => { if (done && ai) setBack(true); if (step > 0) go(Math.min(step, STEPS.length) - 1); else location.hash = '#/'; }} className="flex h-9 w-9 items-center justify-center rounded-full text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink" aria-label={step > 0 ? 'Passo precedente' : 'Home'}><ArrowLeft size={18} /></button>
         <div className="h-12 w-16 shrink-0 overflow-hidden rounded-lg bg-canvas ring-1 ring-line">
           {photos[0] ? <img key={srcOf(photos[0])} src={srcOf(photos[0])} alt="" className="blur-in h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center text-muted"><ImagePlus size={16} /></div>}
         </div>
@@ -314,7 +316,8 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
             <span />
             <div className="flex items-center gap-3">
               {cur.optional && step < STEPS.length - 1 && <button onClick={() => go(step + 1)} className="text-sm text-muted hover:text-ink">Salta</button>}
-              {step < STEPS.length - 1
+              {back && ai && <button onClick={() => { setBack(false); go(STEPS.length); }} className="flex items-center gap-2 rounded-full bg-brand px-6 py-3 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand/90">Torna all&apos;annuncio <ArrowRight size={16} /></button>}
+              {back && ai ? null : step < STEPS.length - 1
                 ? <button onClick={() => go(step + 1)} disabled={!canNext} className="flex items-center gap-2 btn-ink rounded-full px-6 py-3 text-sm font-semibold">Avanti <ArrowRight size={16} /><span className="ml-1 hidden text-xs font-normal text-white/50 sm:inline">Invio</span></button>
                 : <button onClick={generate} className="flex items-center gap-2 rounded-full bg-brand px-6 py-3 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand/90 active:scale-[0.98]">Continua creazione <ArrowRight size={16} /></button>}
             </div>
@@ -338,12 +341,12 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
               <div className="rise flex flex-wrap items-center gap-5 card p-5" style={{ animationDelay: '.05s' }}>
                 <div className="font-display text-4xl font-bold tracking-tight"><CountUp value={comp.score} />%</div>
                 <div className="min-w-0 flex-1">
-                  <div className="text-sm font-semibold">Completezza dell&apos;annuncio</div>
+                  <div className="text-sm font-semibold">{comp.missing.length ? 'Mancano ancora' : 'Completezza dell’annuncio'}</div>
                   {comp.missing.length ? (
                     <div className="mt-2 flex flex-wrap gap-1.5">
                       {comp.missing.slice(0, 6).map(f => {
                         const at = STEPS.findIndex(st => st.keys.includes(f.key));
-                        return <button key={f.key} onClick={() => at >= 0 && go(at)} className="rounded-full bg-canvas px-3 py-1.5 text-xs font-medium ring-1 ring-inset ring-black/10 hover:bg-white">+ {f.label}</button>;
+                        return <button key={f.key} onClick={() => { if (at >= 0) { setBack(true); go(at); } }} className="rounded-full bg-canvas px-3 py-1.5 text-xs font-medium ring-1 ring-inset ring-black/10 hover:bg-white">{f.label}</button>;
                       })}
                     </div>
                   ) : <div className="mt-1 text-sm text-muted">Tutti i dati principali ci sono.</div>}
