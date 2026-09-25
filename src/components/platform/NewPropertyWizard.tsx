@@ -415,7 +415,6 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
               <div className="flex flex-wrap items-center justify-between gap-3 pb-6">
                 <button onClick={() => go(STEPS.length - 1)} className="text-sm text-muted hover:text-ink">Modifica i dati</button>
                 <div className="flex gap-2">
-                  <button onClick={() => generate()} className="btn-ghost rounded-full px-5 py-3 text-sm font-medium">Riscrivi</button>
                   <button onClick={save} className="flex items-center gap-2 rounded-full bg-brand px-6 py-3 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand/90"><Check size={16} strokeWidth={3} /> Salva immobile</button>
                 </div>
               </div>
