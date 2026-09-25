@@ -113,10 +113,12 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
           onPick={id => { if (id !== cfg.template) set({ template: id, primary: TEMPLATES.find(t => t.id === id)!.primary, font: TEMPLATES.find(t => t.id === id)!.font }); setPage({ page: 'home' }); setEditing(id); }} />
       ) : (
         <div className="mt-6 pb-24">
-          <div className="blur-in mb-5 flex flex-wrap items-center gap-3" style={{ animationDelay: '.2s' }}>
+          {/* torna ai modelli e modello aperto nella stessa pillola alta 40, come le schede che sostituisce */}
+          <div className="blur-in mb-5 flex h-10 w-fit items-center rounded-full bg-white p-1 text-sm ring-1 ring-black/10" style={{ animationDelay: '.2s' }}>
             <button onClick={() => { if (!dirty || confirm('Hai modifiche non pubblicate. Tornare ai modelli e scartarle?')) { morphFrom(document.querySelector('[data-morph="preview"]'), `tpl-${cfg.template}`); setCfg(site.config); setEditing(null); } }}
-              className="flex h-10 items-center gap-2 rounded-full bg-white px-4 text-sm font-medium ring-1 ring-black/10 ease-smooth transition-colors hover:bg-canvas"><ArrowLeft size={15} /> Tutti i modelli</button>
-            <span className="text-sm text-muted">Stai modificando <b className="text-ink">{TEMPLATES.find(t => t.id === cfg.template)?.name}</b>{cfg.template !== site.config.template && ' (non ancora pubblicato)'}</span>
+              className="flex h-8 items-center gap-2 rounded-full px-3 font-medium ease-smooth transition-colors hover:bg-canvas"><ArrowLeft size={15} /> Tutti i modelli</button>
+            <span className="mx-1 h-4 w-px bg-line" aria-hidden />
+            <span className="px-3 text-muted">Stai modificando <b className="text-ink">{TEMPLATES.find(t => t.id === cfg.template)?.name}</b>{cfg.template !== site.config.template && ' (non ancora pubblicato)'}</span>
           </div>
         <div className="grid items-start gap-6 lg:grid-cols-[340px_minmax(0,1fr)]">
           {/* Controlli: sezioni della pagina aperta (clic nell'anteprima = apre la sezione) o impostazioni generali */}
