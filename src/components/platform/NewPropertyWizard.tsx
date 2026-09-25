@@ -643,7 +643,6 @@ function ReadyPhotos({ photos, title, onEdit }: { photos: Photo[]; title: string
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div><div className="text-sm font-semibold">Foto, nell&apos;ordine giusto</div><div className="text-xs text-muted">{photos.length} foto{photos.some(p => p.ai) ? `, ${photos.filter(p => p.ai).length} migliorate con l'AI` : ''}. Caricale sul portale in quest&apos;ordine.</div></div>
         <div className="flex gap-2">
-          <button onClick={onEdit} className="btn-ghost rounded-full px-4 py-2 text-sm font-medium">Modifica foto</button>
           <button onClick={download} disabled={zipping} className="flex items-center gap-1.5 btn-ink rounded-full px-4 py-2 text-sm font-semibold">{zipping ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />} Scarica tutte</button>
         </div>
       </div>
