@@ -11,7 +11,7 @@ import Dropdown, { type DropdownOption } from '@/components/ui/Dropdown';
 import Tooltip from '@/components/ui/Tooltip';
 import LightSwap from '@/components/ui/LightSwap';
 import AutoSize from '@/components/ui/AutoSize';
-import { MorphTarget, morphFrom } from '@/components/ui/Morph';
+import { MorphTarget } from '@/components/ui/Morph';
 import PhotoViewer from '@/components/ui/PhotoViewer';
 import LibraryPicker from './LibraryPicker';
 
@@ -320,13 +320,6 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList | Fil
       <div className="absolute inset-x-0 bottom-0 z-20 px-6 pb-5 pt-10">
         <div className="pointer-events-none absolute inset-0"><ProgressiveBlur side="bottom" fade={24} /></div>
         <div className="relative mx-auto max-w-3xl">
-          {region && !selecting && (
-            <div className="blur-in mb-2 flex items-center gap-2 text-xs">
-              <span className="flex items-center gap-1.5 rounded-full bg-rose-50 px-3 py-1.5 font-medium text-rose-700 ring-1 ring-inset ring-rose-700/20"><SquareDashedMousePointer size={13} /> Zona selezionata: scrivi cosa fare lì</span>
-              <button onClick={() => { morphFrom(document.querySelector('[data-base-photo]'), 'zone'); setSelecting(true); }} className="font-medium text-muted hover:text-ink">Cambia</button>
-              <button onClick={clearZone} aria-label="Togli zona" className="text-muted hover:text-ink"><X size={14} /></button>
-            </div>
-          )}
           {/* Suggerimenti: una riga sola sopra il campo, scorre di lato; toccati partono subito */}
           {base && !busy && (
             <div className="blur-in -mx-1 mb-2 flex gap-1.5 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" style={{ maskImage: 'linear-gradient(90deg, #000 90%, transparent)' }}>{chips}</div>
@@ -337,12 +330,6 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList | Fil
               <button type="button" onClick={() => setLibrary(true)} title={base ? 'Carica un\'altra foto' : 'Carica una foto'} className="flex h-10 w-9 shrink-0 items-center justify-center rounded-full text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink">
                 <ImagePlus size={20} />
               </button>
-              {base && (
-                <button onClick={() => { if (!selecting) morphFrom(document.querySelector('[data-base-photo]'), 'zone'); setSelecting(v => !v); }} title="Seleziona una zona della foto" aria-pressed={selecting}
-                  className={`flex h-10 w-9 shrink-0 items-center justify-center rounded-full ease-smooth transition-colors ${selecting || region ? 'bg-rose-50 text-rose-600' : 'text-muted hover:bg-canvas hover:text-ink'}`}>
-                  <SquareDashedMousePointer size={19} />
-                </button>
-              )}
             </div>
             <textarea rows={1} value={text} onChange={e => { setText(e.target.value); touch(); }} disabled={!base}
               placeholder={!base ? 'Prima carica una foto, poi scrivi qui cosa cambiare' : region ? 'Cosa faccio nella zona? Es. togli il letto' : 'Cosa vuoi cambiare? Es. togli il divano e metti un tavolo da pranzo'}
@@ -374,18 +361,34 @@ function ZonePicker({ inline, closing = false, src, region, onChange, onLoad, bu
     const r = box.current!.getBoundingClientRect();
     return { x: Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)), y: Math.min(1, Math.max(0, (e.clientY - r.top) / r.height)) };
   };
-  const pickTool = (t: Tool) => { setTool(t); setPath(null); onChange(null); };
+  // Forma: trascinando si disegna a mano libera; cliccando si mettono punti uniti da linee dritte,
+  // e si chiude cliccando sul primo punto o con doppio clic.
+  const [clicks, setClicks] = useState<{ x: number; y: number }[]>([]);
+  const [cursor, setCursor] = useState<{ x: number; y: number } | null>(null);
+  const pressed = useRef<{ x: number; y: number } | null>(null);
+  const finish = (ps: { x: number; y: number }[]) => {
+    setPath(null); setClicks([]);
+    if (ps.length < 3) return;
+    const poly = ps.length > 200 ? ps.filter((_, i) => i % Math.ceil(ps.length / 200) === 0) : ps;
+    const xs = poly.map(p => p.x), ys = poly.map(p => p.y);
+    const x = Math.min(...xs), y = Math.min(...ys);
+    onChange({ x, y, w: Math.max(...xs) - x, h: Math.max(...ys) - y, poly });
+  };
+  const pickTool = (t: Tool) => { setTool(t); setPath(null); setClicks([]); onChange(null); };
   const down = (e: React.PointerEvent) => {
     (e.target as HTMLElement).setPointerCapture(e.pointerId);
     const p = at(e);
-    if (tool === 'lasso') { onChange(null); setPath([p]); return; }
+    if (tool === 'lasso') { pressed.current = p; if (!clicks.length) onChange(null); return; }
     start.current = p;
   };
   const move = (e: React.PointerEvent) => {
     const p = at(e);
     if (tool === 'lasso') {
+      setCursor(p);
+      const s0 = pressed.current;
+      if (!s0 || clicks.length) return; // a punti: nessun disegno trascinando
       // un punto ogni ~0.6% di foto: forma fedele senza migliaia di punti
-      setPath(ps => (ps && Math.hypot(p.x - ps[ps.length - 1].x, p.y - ps[ps.length - 1].y) > 0.006 ? [...ps, p] : ps));
+      setPath(ps => (!ps ? (Math.hypot(p.x - s0.x, p.y - s0.y) > 0.01 ? [s0, p] : null) : Math.hypot(p.x - ps[ps.length - 1].x, p.y - ps[ps.length - 1].y) > 0.006 ? [...ps, p] : ps));
       return;
     }
     if (!start.current) return;
@@ -395,19 +398,21 @@ function ZonePicker({ inline, closing = false, src, region, onChange, onLoad, bu
   };
   const up = () => {
     start.current = null;
-    if (tool !== 'lasso' || !path) return;
-    setPath(null);
-    if (path.length < 3) return;
-    const poly = path.length > 200 ? path.filter((_, i) => i % Math.ceil(path.length / 200) === 0) : path;
-    const xs = poly.map(p => p.x), ys = poly.map(p => p.y);
-    const x = Math.min(...xs), y = Math.min(...ys);
-    onChange({ x, y, w: Math.max(...xs) - x, h: Math.max(...ys) - y, poly });
+    if (tool !== 'lasso') return;
+    const p = pressed.current; pressed.current = null;
+    if (path) { finish(path); return; } // mano libera
+    if (!p) return;
+    // clic: nuovo punto, oppure chiusura se sei vicino al primo
+    if (clicks.length >= 3 && Math.hypot(p.x - clicks[0].x, p.y - clicks[0].y) < 0.025) { finish(clicks); return; }
+    setClicks(cs => [...cs, p]);
   };
+  const dbl = () => { if (tool === 'lasso' && clicks.length >= 3) finish(clicks); };
   const [text, setText] = useState('');
   // fuoco sul campo senza far scorrere la chat (autoFocus e onLoad->in fondo facevano il saltino)
   const focused = useRef(false);
   const ready = !!region && region.w > 0.02 && region.h > 0.02;
-  const shape = path ?? region?.poly ?? null;
+  const drawing = !!path || clicks.length > 0;
+  const shape = path ?? (clicks.length ? [...clicks, ...(cursor ? [cursor] : [])] : region?.poly ?? null);
   const pts = (ps: { x: number; y: number }[]) => ps.map(p => `${p.x * 100},${p.y * 100}`).join(' ');
   // X della selezione a parte (nella card del risultato la X e' il pulsante Scarica stesso, in AiPhotoStage)
   const closeBtn = (
@@ -417,20 +422,27 @@ function ZonePicker({ inline, closing = false, src, region, onChange, onLoad, bu
   const photo = (
       <div ref={box} className={`touch-none ${inline ? `absolute inset-x-0 bottom-full z-20 ease-smooth transition-opacity ${closing ? 'pointer-events-none' : ''}` : 'relative mx-auto max-h-[calc(100vh-24rem)] w-fit'} select-none overflow-hidden rounded-2xl cursor-crosshair`}
         style={inline ? { aspectRatio: inline, ...(closing ? { opacity: 0, transitionDuration: '300ms' } : { animation: 'gnm-fade var(--gnm-dur) var(--gnm-ease) .45s both' }) } : undefined}
-        onPointerDown={down} onPointerMove={move} onPointerUp={up}>
+        onPointerDown={down} onPointerMove={move} onPointerUp={up} onDoubleClick={dbl} onPointerLeave={() => setCursor(null)}>
         <img src={src} alt="" draggable={false} onLoad={inline ? undefined : onLoad} className={inline ? 'block h-full w-full object-cover' : 'block max-h-[calc(100vh-24rem)] w-auto max-w-full'} />
         {!inline && closeBtn}
-        {region && !region.poly && !path && (
+        {region && !region.poly && !drawing && (
           <div className="pointer-events-none absolute border-2 border-dashed border-rose-500 bg-rose-500/10 shadow-[0_0_0_9999px_rgba(0,0,0,.35)]"
             style={{ left: `${region.x * 100}%`, top: `${region.y * 100}%`, width: `${region.w * 100}%`, height: `${region.h * 100}%` }} />
         )}
         {shape && (
           <svg className="pointer-events-none absolute inset-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none">
             {/* fuori dalla forma chiusa si scurisce, come per il rettangolo */}
-            {!path && <path d={`M0 0H100V100H0Z M${pts(shape)}Z`} fill="rgba(0,0,0,.35)" fillRule="evenodd" />}
-            <polygon points={pts(shape)} fill="rgba(244,63,94,.1)" stroke="#f43f5e" strokeWidth={2} strokeDasharray="6 4" vectorEffect="non-scaling-stroke" strokeLinejoin="round" style={path ? { fill: 'none' } : undefined} />
+            {!drawing && <path d={`M0 0H100V100H0Z M${pts(shape)}Z`} fill="rgba(0,0,0,.35)" fillRule="evenodd" />}
+            {drawing
+              ? <polyline points={pts(shape)} fill="none" stroke="#f43f5e" strokeWidth={2} strokeDasharray="6 4" vectorEffect="non-scaling-stroke" strokeLinejoin="round" />
+              : <polygon points={pts(shape)} fill="rgba(244,63,94,.1)" stroke="#f43f5e" strokeWidth={2} strokeDasharray="6 4" vectorEffect="non-scaling-stroke" strokeLinejoin="round" />}
           </svg>
         )}
+        {/* punti messi a clic: il primo piu' grande, cliccandolo si chiude la forma */}
+        {clicks.map((p, i) => (
+          <span key={i} className={`pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 rounded-full bg-white ring-2 ring-rose-500 ${i === 0 && clicks.length >= 3 ? 'h-4 w-4' : 'h-2.5 w-2.5'}`}
+            style={{ left: `${p.x * 100}%`, top: `${p.y * 100}%` }} />
+        ))}
       </div>
   );
   // Richiesta direttamente qui: scrivi cosa fare nella zona e Modifica
@@ -439,9 +451,9 @@ function ZonePicker({ inline, closing = false, src, region, onChange, onLoad, bu
         {/* campo con dentro, a destra, gli strumenti di selezione (solo icone, nome nel tooltip) */}
         <div className="flex h-10 min-w-0 flex-1 items-center rounded-full border border-transparent bg-canvas pl-4 pr-1 ease-smooth transition-colors focus-within:border-ink/15 focus-within:bg-white">
           <input ref={el => { if (el && !focused.current) { focused.current = true; el.focus({ preventScroll: true }); } }} value={text} onChange={e => setText(e.target.value)}
-            placeholder={ready ? 'Cosa faccio qui? Es. togli la tv' : tool === 'rect' ? 'Trascina sulla foto per disegnare la zona' : 'Disegna sulla foto il contorno di cosa cambiare'}
+            placeholder={ready ? 'Cosa faccio qui? Es. togli la tv' : tool === 'rect' ? 'Trascina sulla foto per disegnare la zona' : clicks.length ? 'Clicca il primo punto o fai doppio clic per chiudere' : 'Disegna il contorno o clicca punto per punto'}
             className="h-full min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted/60" />
-          {([['rect', 'Rettangolo: trascina per disegnare la zona', SquareDashed], ['lasso', 'Forma libera: disegna il contorno', Lasso]] as const).map(([id, l, I]) => (
+          {([['rect', 'Rettangolo: trascina per disegnare la zona', SquareDashed], ['lasso', 'Forma: disegna il contorno o clicca i punti', Lasso]] as const).map(([id, l, I]) => (
             <Tooltip key={id} label={l}>
               <button type="button" onClick={() => pickTool(id)} aria-label={l} aria-pressed={tool === id}
                 className={`flex h-8 w-8 items-center justify-center rounded-full ease-smooth transition-colors ${tool === id ? 'bg-ink text-white' : 'text-muted hover:text-ink'}`}><I size={15} /></button>
