@@ -67,31 +67,42 @@ function ListingsPage({ initial }: { initial?: Filters }) {
   const pages = Math.ceil(list.length / PER_PAGE);
   const shown = list.slice(pageN * PER_PAGE, pageN * PER_PAGE + PER_PAGE);
   const field = 'h-11 w-full rounded-[calc(var(--r)*0.6)] border border-[var(--line)] bg-[var(--surface)] px-3 text-sm outline-none focus:border-[var(--c)]';
-  const chip = (on: boolean) => `h-10 flex-1 rounded-[calc(var(--r)*0.6)] border px-3 text-sm font-medium transition-colors ${on ? 'border-[var(--c)] bg-[var(--c)] text-white' : 'border-[var(--line)] bg-[var(--surface)] hover:border-[var(--fg)]'}`;
+  // controlli segmentati: una pista chiara con le voci dentro, la scelta e' una pillola piena; stanno sempre nella larghezza
+  const seg = 'grid gap-1 rounded-[calc(var(--r)*0.6)] bg-[var(--soft)] p-1';
+  const segBtn = (on: boolean) => `h-9 min-w-0 truncate rounded-[calc(var(--r)*0.45)] px-1 text-[13px] font-medium transition-colors ${on ? 'bg-[var(--c)] text-white shadow-sm' : 'text-[var(--muted)] hover:bg-[var(--surface)] hover:text-[var(--fg)]'}`;
   const contratto = (
     <div className="flex gap-2">
-      {[['', 'Tutti'], ['vendita', 'Vendita'], ['affitto', 'Affitto']].map(([v, l]) => <button key={v} onClick={() => set({ contratto: v || undefined })} className={chip((f.contratto ?? '') === v)}>{l}</button>)}
-      {favCount > 0 && <button onClick={() => set({ fav: !f.fav })} className={`${chip(!!f.fav)} flex !flex-none items-center gap-1.5`}>♥ {favCount}</button>}
+      <div className={`${seg} flex-1 grid-cols-3`}>
+        {[['', 'Tutti'], ['vendita', 'Vendita'], ['affitto', 'Affitto']].map(([v, l]) => <button key={v} onClick={() => set({ contratto: v || undefined })} className={segBtn((f.contratto ?? '') === v)}>{l}</button>)}
+      </div>
+      {favCount > 0 && <button onClick={() => set({ fav: !f.fav })} className={`flex h-11 shrink-0 items-center gap-1.5 rounded-[calc(var(--r)*0.6)] border px-3 text-sm font-medium transition-colors ${f.fav ? 'border-[var(--c)] bg-[var(--c)] text-white' : 'border-[var(--line)] bg-[var(--surface)]'}`}>♥ {favCount}</button>}
     </div>
   );
   const zona = <div className="relative"><MapPin size={15} className="absolute left-3 top-3.5 text-[var(--muted)]" /><input value={f.q ?? ''} onChange={e => set({ q: e.target.value })} placeholder="Città, quartiere, via" className={`${field} pl-9`} /></div>;
   const tipo = <Select value={f.tipo ?? ''} onChange={e => set({ tipo: e.target.value || undefined })} className={field}><option value="">Tutte le tipologie</option>{tipi.map(x => <option key={x}>{x}</option>)}</Select>;
-  const prezzo = <div className="flex gap-2"><input type="number" inputMode="numeric" placeholder="Min €" value={f.min ?? ''} onChange={e => set({ min: Number(e.target.value) || undefined })} className={field} /><input type="number" inputMode="numeric" placeholder="Max €" value={f.max ?? ''} onChange={e => set({ max: Number(e.target.value) || undefined })} className={field} /></div>;
-  const counts = (k: 'camere' | 'bagni') => <div className="flex gap-2">{[0, 1, 2, 3, 4].map(n => <button key={n} onClick={() => set({ [k]: n || undefined })} className={chip((f[k] ?? 0) === n)}>{n ? `${n}+` : 'Tutti'}</button>)}</div>;
+  const prezzo = (
+    <div className="flex items-center gap-2">
+      <input type="number" inputMode="numeric" placeholder="Da €" value={f.min ?? ''} onChange={e => set({ min: Number(e.target.value) || undefined })} className={`${field} min-w-0`} />
+      <span className="text-[var(--muted)]">–</span>
+      <input type="number" inputMode="numeric" placeholder="A €" value={f.max ?? ''} onChange={e => set({ max: Number(e.target.value) || undefined })} className={`${field} min-w-0`} />
+    </div>
+  );
+  const counts = (k: 'camere' | 'bagni') => <div className={`${seg} grid-cols-5`}>{[0, 1, 2, 3, 4].map(n => <button key={n} onClick={() => set({ [k]: n || undefined })} className={segBtn((f[k] ?? 0) === n)}>{n ? `${n}+` : 'Tutti'}</button>)}</div>;
+  const lab = 'mb-2 block text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--muted)]';
   const sort = (
     <Select value={f.sort ?? ''} onChange={e => set({ sort: e.target.value || undefined })} className="h-11 rounded-[calc(var(--r)*0.6)] border border-[var(--line)] bg-[var(--surface)] px-3 text-sm outline-none">
       <option value="">Più recenti</option><option value="asc">Prezzo crescente</option><option value="desc">Prezzo decrescente</option><option value="mq">Più grandi</option>
     </Select>
   );
   const sidebar = (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {contratto}
-      <label className="block"><span className="mb-1.5 block text-xs font-semibold">Zona</span>{zona}</label>
-      <label className="block"><span className="mb-1.5 block text-xs font-semibold">Tipologia</span>{tipo}</label>
-      <div><span className="mb-1.5 block text-xs font-semibold">Prezzo</span>{prezzo}</div>
-      <div><span className="mb-1.5 block text-xs font-semibold">Camere</span>{counts('camere')}</div>
-      <div><span className="mb-1.5 block text-xs font-semibold">Bagni</span>{counts('bagni')}</div>
-      <button onClick={() => setF({})} className="text-sm font-semibold text-[var(--c)] hover:underline">Azzera filtri</button>
+      <label className="block"><span className={lab}>Zona</span>{zona}</label>
+      <label className="block"><span className={lab}>Tipologia</span>{tipo}</label>
+      <div><span className={lab}>Prezzo</span>{prezzo}</div>
+      <div><span className={lab}>Camere</span>{counts('camere')}</div>
+      <div><span className={lab}>Bagni</span>{counts('bagni')}</div>
+      <button onClick={() => setF({})} className="h-10 w-full rounded-[calc(var(--r)*0.6)] border border-[var(--line)] text-sm font-medium text-[var(--muted)] transition-colors hover:border-[var(--fg)] hover:text-[var(--fg)]">Azzera filtri</button>
     </div>
   );
   const results = (
