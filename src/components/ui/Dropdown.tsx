@@ -56,7 +56,8 @@ export default function Dropdown<T extends string>({ value, options, onChange, c
     <>
       <button ref={btn} type="button" onClick={toggle} aria-haspopup="listbox" aria-expanded={open}
         className={`inline-flex items-center gap-0.5 rounded-full outline-none ease-smooth transition-colors hover:text-brand focus-visible:ring-2 focus-visible:ring-brand/40 ${className}`}>
-        {children ?? current?.label}
+        {/* nomi lunghi: una riga sola con i puntini, sia nel pulsante sia nelle voci */}
+        {children ?? <span className="max-w-[16rem] truncate">{current?.label}</span>}
         <ChevronDown size={14} strokeWidth={2.5} className={`shrink-0 translate-y-px ease-smooth transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
       {open && pos && createPortal(
@@ -70,7 +71,7 @@ export default function Dropdown<T extends string>({ value, options, onChange, c
                 <button type="button" role="option" aria-selected={o.value === value} onMouseEnter={() => setActive(i)}
                   onClick={() => { onChange(o.value); setOpen(false); btn.current?.focus(); }}
                   className={`flex h-10 w-full items-center justify-between gap-3 rounded-lg px-3 text-left ease-smooth transition-colors ${i === active ? 'bg-canvas' : ''} ${o.value === value ? 'font-semibold' : ''}`}>
-                  {o.label}{o.value === value && <Check size={15} className="shrink-0 text-brand" />}
+                  <span className="min-w-0 truncate" title={o.label}>{o.label}</span>{o.value === value && <Check size={15} className="shrink-0 text-brand" />}
                 </button>
               </div>
             );
