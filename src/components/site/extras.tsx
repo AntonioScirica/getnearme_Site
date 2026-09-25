@@ -1,8 +1,9 @@
 'use client';
 
 import LeafletMap from '@/components/ui/LeafletMap';
-import { useCallback, useState, type FormEvent } from 'react';
-import { Check, Facebook, Instagram, Loader2, Mail, MessageCircle, Phone, Printer, Share2 } from 'lucide-react';
+import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { Check, Facebook, GraduationCap, Hospital, Instagram, Loader2, Mail, MapPin, MessageCircle, Phone, Pill, Printer, School, Share2, ShoppingCart, Train, TrainFront, TramFront, Trees } from 'lucide-react';
+import { authFetch } from '@/components/platform/api';
 import { ESSENTIALS, GROUPS, type Field } from '@/lib/propertyFields';
 import type { SiteProperty } from '@/lib/siteTemplates';
 import { contacts, H, useSite, useT } from './ui';
@@ -182,6 +183,56 @@ export function ServicesGrid({ numbered }: { numbered?: boolean }) {
           <p className="mt-3 leading-relaxed text-[var(--muted)]">{s.text}</p>
         </div>
       ))}
+    </div>
+  );
+}
+
+// Le 10 cose piu' vicine all'immobile (OpenStreetMap), con il raggio a scelta. Sul sito vero le chiede per
+// slug + id dell'immobile pubblicato; nell'anteprima dell'editor (immobili anche finti) passa per l'indirizzo.
+const POI_ICON: Record<string, typeof Train> = { Metro: TrainFront, Stazione: Train, Tram: TramFront, Supermercato: ShoppingCart, Scuola: School, 'Università': GraduationCap, Parco: Trees, Ospedale: Hospital, Farmacia: Pill };
+const RADII = [[500, '500 m'], [1000, '1 km'], [2000, '2 km'], [5000, '5 km']] as const;
+const far = (m: number) => (m < 1000 ? `${Math.round(m / 10) * 10} m` : `${(m / 1000).toFixed(1).replace('.', ',')} km`);
+export function NearbyList({ p }: { p: SiteProperty }) {
+  const { base, preview } = useSite();
+  const [radius, setRadius] = useState(1000);
+  const [pois, setPois] = useState<{ categoria: string; nome: string; distanza: number }[] | null>(null);
+  useEffect(() => {
+    let stop = false;
+    const slug = base.split('/').filter(Boolean).pop() ?? '';
+    const req = preview
+      ? authFetch(`/api/platform/zone?address=${encodeURIComponent(p.addr)}&radius=${radius}`)
+      : fetch(`/api/site/zone?slug=${encodeURIComponent(slug)}&id=${encodeURIComponent(p.id)}&r=${radius}`);
+    req.then(r => (r.ok ? r.json() : null)).catch(() => null)
+      .then(d => { if (!stop) setPois(((d?.pois ?? []) as { categoria: string; nome: string; distanza: number }[]).filter(x => x.distanza <= radius).sort((a, b) => a.distanza - b.distanza).slice(0, 10)); });
+    return () => { stop = true; };
+  }, [base, preview, p.addr, p.id, radius]);
+  return (
+    <div>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <H className="text-3xl">Cosa c’è vicino</H>
+        <div className="grid grid-cols-4 gap-1 rounded-[calc(var(--r)*0.6)] bg-[var(--soft)] p-1">
+          {RADII.map(([r, l]) => (
+            <button key={r} type="button" onClick={() => { setRadius(r); setPois(null); }}
+              className={`h-8 rounded-[calc(var(--r)*0.45)] px-3 text-[13px] font-medium transition-colors ${radius === r ? 'bg-[var(--c)] text-white shadow-sm' : 'text-[var(--muted)] hover:bg-[var(--surface)] hover:text-[var(--fg)]'}`}>{l}</button>
+          ))}
+        </div>
+      </div>
+      {pois === null ? (
+        <ul className="mt-5 grid gap-2 sm:grid-cols-2">{Array.from({ length: 6 }, (_, i) => <li key={i} className="h-14 animate-pulse rounded-[calc(var(--r)*0.6)] bg-[var(--soft)]" />)}</ul>
+      ) : pois.length ? (
+        <ul className="mt-5 grid gap-2 sm:grid-cols-2">
+          {pois.map(x => {
+            const I = POI_ICON[x.categoria] ?? MapPin;
+            return (
+              <li key={`${x.categoria}-${x.nome}-${x.distanza}`} className="flex items-center gap-3 rounded-[calc(var(--r)*0.6)] bg-[var(--soft)] px-4 py-3 text-sm">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--surface)] text-[var(--c)]"><I size={16} /></span>
+                <span className="min-w-0 flex-1"><span className="block truncate font-medium">{x.nome}</span><span className="block text-xs text-[var(--muted)]">{x.categoria}</span></span>
+                <span className="shrink-0 text-right text-xs"><span className="block font-semibold">{far(x.distanza)}</span><span className="block text-[var(--muted)]">{Math.max(1, Math.round(x.distanza / 80))} min a piedi</span></span>
+              </li>
+            );
+          })}
+        </ul>
+      ) : <p className="mt-5 rounded-[calc(var(--r)*0.6)] bg-[var(--soft)] px-4 py-6 text-center text-sm text-[var(--muted)]">Nessun servizio trovato entro {far(radius)}: prova un raggio più ampio.</p>}
     </div>
   );
 }

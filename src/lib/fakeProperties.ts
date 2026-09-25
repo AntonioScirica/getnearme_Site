@@ -4,14 +4,14 @@ import type { ProjectData } from './projects'
 const photos = ['2005025054', '2005025068', '2005025050', '2005025056', '2005025058', '2005025060'].map(i => `https://pwm.im-cdn.it/image/${i}/xxl.jpg`)
 const rows: [string, string, number, number, number, number][] = [
   ['Trilocale arredato con box, zona Prati', 'Via Cola di Rienzo 120, Roma', 598000, 95, 2, 1],
-  ['Bilocale ristrutturato vicino alla metro', 'Via Tuscolana 210, Roma', 289000, 60, 1, 1],
+  ['Bilocale ristrutturato vicino alla metro', 'Via Tuscolana 210, 00182 Roma', 289000, 60, 1, 1],
   ['Attico con terrazzo vista cupole', 'Via del Corso 300, Roma', 1250000, 180, 3, 2],
-  ['Quadrilocale luminoso, San Giovanni', 'Via Appia Nuova 45, Roma', 640000, 120, 3, 2],
+  ['Quadrilocale luminoso, San Giovanni', 'Via Appia Nuova 45, 00183 Roma', 640000, 120, 3, 2],
   ['Loft in ex fabbrica, Ostiense', 'Via Ostiense 95, Roma', 420000, 85, 1, 1],
   ['Trilocale con balcone, Monteverde', 'Via di Donna Olimpia 20, Roma', 520000, 90, 2, 1],
   ['Bilocale a Trastevere', 'Via della Lungaretta 44, Roma', 375000, 55, 1, 1],
   ['Quadrilocale signorile, Parioli', 'Viale Parioli 60, Roma', 1480000, 160, 3, 3],
-  ['Trilocale nuovo con giardino, EUR', 'Viale Europa 8, Roma', 890000, 105, 2, 2],
+  ['Trilocale nuovo con giardino, EUR', 'Viale Europa 100, 00144 Roma', 890000, 105, 2, 2],
   ['Monolocale arredato, San Lorenzo', 'Via dei Volsci 30, Roma', 219000, 38, 1, 1],
 ]
 export const FAKE_PROPERTIES: ProjectData[] = rows.map(([titolo, addr, prezzo, mq, camere, bagni], i) => ({

@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { ArrowLeft, ChevronLeft, ChevronRight, Expand, Mail, MapPin, MessageCircle, Phone, Search, SlidersHorizontal, X } from 'lucide-react';
 import { zoneSlug, type SiteProperty } from '@/lib/siteTemplates';
 
-import { ContactForm, DetailsTable, FeatureList, MapBlock, RichText, ServicesGrid, ShareBar, WhatsAppFloat } from './extras';
+import { ContactForm, DetailsTable, FeatureList, MapBlock, NearbyList, RichText, ServicesGrid, ShareBar, WhatsAppFloat } from './extras';
 import { AboutBlock, CtaBand, Featured, Footer, Header, Hero, Intro, isRent, PropertyCard, PropertyRow, Reviews, SearchForm, SectionHead, statsOf, tipiOf, Zones, type Filters } from './sections';
 import { Btn, Container, contacts, Eyebrow, Facts, FavButton, H, Photo, price, Sec, SiteLink, SiteRoot, typeOf, useFavs, useSite, useT, type Page, type SiteCtx, Select } from './ui';
 
@@ -303,10 +303,14 @@ function PropertyPage({ id }: { id: string }) {
           )}
           <Sec id="property.details"><div className="mt-12"><DetailsTable p={p} /></div></Sec>
           <Sec id="property.features"><div className="mt-12 empty:hidden"><FeatureList p={p} /></div></Sec>
-          {!!p.zona?.length && (
+          {(!!p.zona?.length || !!p.addr) && (
             <Sec id="property.zone"><div className="mt-12">
-              <H className="text-3xl">{tx('property.zone')}</H>
-              <ul className="mt-5 grid gap-2 sm:grid-cols-2">{p.zona.map(z => <li key={z} className="flex items-center gap-2.5 rounded-[calc(var(--r)*0.6)] bg-[var(--soft)] px-4 py-3 text-sm"><MapPin size={14} className="text-[var(--c)]" />{z}</li>)}</ul>
+              {!!p.zona?.length && <>
+                <H className="text-3xl">{tx('property.zone')}</H>
+                <ul className="mb-12 mt-5 grid gap-2 sm:grid-cols-2">{p.zona.map(z => <li key={z} className="flex items-center gap-2.5 rounded-[calc(var(--r)*0.6)] bg-[var(--soft)] px-4 py-3 text-sm"><MapPin size={14} className="text-[var(--c)]" />{z}</li>)}</ul>
+              </>}
+              {/* le 10 cose piu' vicine, con il raggio a scelta */}
+              {p.addr && <NearbyList p={p} />}
             </div></Sec>
           )}
           {p.addr && <Sec id="property.map"><div className="mt-12"><MapBlock addr={p.addr} /></div></Sec>}
