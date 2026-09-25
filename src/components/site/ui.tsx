@@ -118,11 +118,19 @@ export function Btn({ children, href, onClick, variant = 'solid', size = 'md', c
   return <button type="button" onClick={onClick} className={cls}>{children}</button>;
 }
 
-export const Photo = ({ src, alt = '', className = '', zoom }: { src?: string; alt?: string; className?: string; zoom?: boolean }) => (
-  <div className={`overflow-hidden bg-[var(--soft)] ${className}`}>
-    {src && <img src={src} alt={alt} loading="lazy" className={`h-full w-full object-cover ${zoom ? 'transition-transform duration-[900ms] ease-[cubic-bezier(.22,1,.36,1)] group-hover:scale-[1.04]' : ''}`} />}
-  </div>
-);
+// Foto segnaposto solo nell'anteprima dell'editor: finche' l'agente non mette le sue, i riquadri vuoti
+// mostrano una casa di esempio (scelta in modo fisso dal punto della pagina). Sul sito vero restano vuoti.
+const PLACEHOLDERS = ['/staging/1.jpg', '/staging/2.jpg', '/staging/3.jpg', '/staging/4.jpg', '/staging/5.jpg', '/staging/6.jpg'];
+const pick = (key: string) => PLACEHOLDERS[[...key].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7) % PLACEHOLDERS.length];
+export function Photo({ src, alt = '', className = '', zoom }: { src?: string; alt?: string; className?: string; zoom?: boolean }) {
+  const preview = useContext(Ctx)?.preview;
+  const shown = src || (preview ? pick(alt + className) : '');
+  return (
+    <div className={`overflow-hidden bg-[var(--soft)] ${className}`}>
+      {shown && <img src={shown} alt={alt} loading="lazy" className={`h-full w-full object-cover ${zoom ? 'transition-transform duration-[900ms] ease-[cubic-bezier(.22,1,.36,1)] group-hover:scale-[1.04]' : ''}`} />}
+    </div>
+  );
+}
 
 export const price = (n: number) => (n ? `€ ${Number(n).toLocaleString('it-IT')}` : 'Trattativa riservata');
 export const zoneOf = (addr: string) => addr?.split(',').map(s => s.trim()).filter(Boolean).slice(-2).join(', ') || '';
