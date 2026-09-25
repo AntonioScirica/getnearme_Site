@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { buildStagingPrompt, roomKey, variantText, type SceneType } from '@/lib/stagingPrompts'
+import { buildStagingPrompt, roomKey, variantText, isRestyle, type SceneType } from '@/lib/stagingPrompts'
 import { isPublicHttpsUrl } from '@/lib/safeUrl'
 import { createClient } from '@supabase/supabase-js'
 import { uploadJpeg, uploadMarker } from '@/lib/r2'
@@ -53,10 +53,12 @@ export async function POST(req: NextRequest) {
   if ((!custom && !hasPreset) || (!imageBase64 && !allowedUrl(imageUrl))) return NextResponse.json({ error: 'bad_request' }, { status: 400 })
   // Altra versione: una combinazione di palette e materiali diversa (solo stili e richieste di arredo, non viste)
   const vary = typeof body.variant === 'number' && body.variant > 0 && !body.angle ? ` ${variantText(body.style, body.variant)}` : ''
-  const prompt = buildStagingPrompt({ customPrompt: custom, style: body.style, angle: body.angle, planimetria: !!body.planimetria, scene, room: roomKey(typeof body.room === 'string' ? body.room : '') }) + vary
+  const roomK = roomKey(typeof body.room === 'string' ? body.room : '')
+  const restyle = isRestyle(custom) // "balcone stile moderno": si arreda come uno stile, non "cambia solo quello che chiedo"
+  const prompt = buildStagingPrompt({ customPrompt: custom, style: body.style, angle: body.angle, planimetria: !!body.planimetria, scene, room: roomK, restyle }) + vary
   // Testo libero: il worker lo traduce in inglese (Qwen-Image ignora quasi l'italiano) dentro la stessa cornice.
   const usesText = !!custom && !body.angle && !body.planimetria
-  const translation: { request?: string; prompt_template?: string } = usesText ? { request: custom, prompt_template: buildStagingPrompt({ customPrompt: '{REQUEST}', scene }) } : {}
+  const translation: { request?: string; prompt_template?: string } = usesText ? { request: custom, prompt_template: buildStagingPrompt({ customPrompt: '{REQUEST}', scene, room: roomK, restyle }) } : {}
   // Zona selezionata dall'agente (0..1): il worker modifica solo li'. Prompt dedicato: si lavora su un ritaglio.
   const r = body.region
   // Forma libera (lazo): poligono in 0..1, max 300 punti; senza, e' un rettangolo

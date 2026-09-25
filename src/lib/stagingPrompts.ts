@@ -13,7 +13,7 @@ export type SceneType = 'interno' | 'esterno' | 'giardino';
 // casa vera ristrutturata e arredata con mobili normali. Vale per tutti gli stili e per le richieste libere.
 const LISTING_PHOTO = "The result must look like a professional photo of a real Italian apartment for a real estate listing: bright and even natural daylight, clean and tidy, straight vertical lines, true colors, real materials and real furniture. NOT a Pinterest, magazine or CGI render: no dramatic mood lighting, no golden hour, no heavy styling.";
 const stage = (style: string, look: string) =>
-  `Add ${style} furniture and decor to this exact photo (${look}), only the pieces that suit this room, placed on the existing floor inside the visible space; if there is already furniture, replace it with ${style} pieces of the same kind. This is an additive edit: the camera position, zoom, framing, walls, windows, doors and floor stay exactly the same. Do not zoom out and do not show more of the room. Use real furniture that Italian families actually buy today (IKEA, Mondo Convenienza, a mid-range Italian kitchen or furniture store): simple shapes, white or light wood fronts, fabric sofas and armchairs, a plain rug, a simple pendant or floor lamp; in kitchens flat handle-less cabinets, a light worktop and built-in steel appliances. Neutral base (white, beige, light grey, light oak) with at most one or two soft color accents (sage green, blue, mustard). Only a few simple accessories: a vase, a couple of books, a throw, one or two plants; nothing on the walls unless it was already there. Tidy and ready to show, no clutter and no personal items. ${LISTING_PHOTO}`;
+  `Add ${style} furniture and decor to this exact photo (${look}), only the pieces that suit this room, placed on the existing floor inside the visible space; if there is already furniture, replace it with ${style} pieces of the same kind. Remove anything old, broken or out of place: loose boards and panels, boxes, junk, clutter, worn furniture and personal items. This is an additive edit: the camera position, zoom, framing, walls, windows, doors and floor stay exactly the same. Do not zoom out and do not show more of the room. Use real furniture that Italian families actually buy today (IKEA, Mondo Convenienza, a mid-range Italian kitchen or furniture store): simple shapes, white or light wood fronts, fabric sofas and armchairs, a plain rug, a simple pendant or floor lamp; in kitchens flat handle-less cabinets, a light worktop and built-in steel appliances. Neutral base (white, beige, light grey, light oak) with at most one or two soft color accents (sage green, blue, mustard). Only a few simple accessories: a vase, a couple of books, a throw, one or two plants; nothing on the walls unless it was already there. Tidy and ready to show, no clutter and no personal items. ${LISTING_PHOTO}`;
 
 const STYLE_PROMPTS: Record<string, string> = {
   modern: stage('simple modern', 'white fronts and light oak, a light grey fabric sofa, a simple round coffee table, one or two cushions in soft blue or mustard'),
@@ -137,7 +137,12 @@ const ROOM_FURNISH: Record<string, string> = {
 }
 export const roomKey = (label?: string | null) => Object.keys(ROOM_FURNISH).find(k => label?.toLowerCase().includes(k === 'camera' ? 'camera da letto' : k)) ?? ''
 
-export function buildStagingPrompt(o: { style?: string | null; customPrompt?: string | null; angle?: string | null; planimetria?: boolean; scene?: SceneType; room?: string }): string {
+// Richieste a parole che chiedono di arredare o cambiare stile ("balcone stile moderno", "arredala nordica"):
+// con la formula "cambia solo quello che chiedo" il modello non toccava nulla. Vanno trattate come uno stile.
+const RESTYLE = /\b(stile|moderno|moderna|nordico|nordica|scandinavo|scandinava|minimal|contemporaneo|contemporanea|industriale|boho|arreda\w*|rinnova\w*|rifai|rifalla|trasforma\w*|ristruttura\w*|home staging)\b/i;
+export const isRestyle = (text?: string | null) => !!text && RESTYLE.test(text) && !/\b(togli|rimuovi|elimina|cancella)\b/i.test(text);
+
+export function buildStagingPrompt(o: { style?: string | null; customPrompt?: string | null; angle?: string | null; planimetria?: boolean; scene?: SceneType; room?: string; restyle?: boolean }): string {
   const scene = o.scene ?? 'interno';
   if (o.planimetria) return PLANIMETRIA_BASE + (FURNISH[o.style || ''] || FURNISH.modern) + NO_TEXT;
   const styles = scene === 'esterno' ? STYLE_PROMPTS_ESTERNO : scene === 'giardino' ? STYLE_PROMPTS_GIARDINO : STYLE_PROMPTS;
@@ -149,6 +154,10 @@ export function buildStagingPrompt(o: { style?: string | null; customPrompt?: st
   if (custom) {
     if (scene === 'esterno') return `BUILDING LOCKED: Preserve EXACTLY the house facade, roofline, windows, doors, walls, materials, colors, and the camera angle/perspective. FORBIDDEN: changing the building's structure, adding new floors, altering the facade shape. ALLOWED: adding or modifying garden elements, terrace furniture, landscaping, driveway, plants as requested. USER EDIT REQUEST (apply in any language): "${custom}". Apply the requested changes to the surroundings while keeping the building itself identical. Photorealistic result, 8K architectural photography.${OUTDOOR_LOCK}${NO_TEXT}`;
     if (scene === 'giardino') return `GARDEN EDIT: Preserve the existing layout, any visible building structure, paths, boundaries and the camera angle/perspective exactly. ALLOWED: freely adding or modifying plants, furniture, decking, lighting as requested. USER EDIT REQUEST (apply in any language): "${custom}". Photorealistic result, 8K outdoor photography.${OUTDOOR_LOCK}${NO_TEXT}`;
+    if (o.restyle && scene === 'interno') {
+      const furnishRoom = o.room && ROOM_FURNISH[o.room] ? ` ${ROOM_FURNISH[o.room]}` : '';
+      return stage('new', `as requested: ${custom}`) + furnishRoom + NO_TEXT_PLAIN;
+    }
     // Stessa formula "additiva" degli stili: cambia solo quello che chiede l'agente, la foto resta quella.
     return `Edit this exact photo: ${custom}. Change only what is requested; everything else stays exactly the same: camera position, zoom, framing, perspective, walls, windows, doors, furniture, decorations and light (unless the request is about them). Do not zoom out and do not show more of the room.${ONLY_REQUESTED} If new furniture is requested, it must be real furniture that Italian families actually buy today (IKEA, Mondo Convenienza, mid-range Italian stores). ${LISTING_PHOTO}${NO_TEXT_PLAIN}`;
   }
