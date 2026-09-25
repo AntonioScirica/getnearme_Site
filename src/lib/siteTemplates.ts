@@ -217,7 +217,6 @@ export const PAGE_SECTIONS: Record<PageId, SectionDef[]> = {
   ],
   immobile: [
     { id: 'property.desc', label: 'Descrizione', hideable: true, texts: ['property.desc'], note: 'Il testo lo prendi dall’immobile.' },
-    { id: 'property.tour', label: 'Tour 3D', hideable: true, texts: ['property.tour', 'property.tourText'] },
     { id: 'property.details', label: 'Dettagli', hideable: true, texts: ['property.details'] },
     { id: 'property.features', label: 'Caratteristiche', hideable: true, texts: ['property.features'] },
     { id: 'property.zone', label: 'Nella zona', hideable: true, texts: ['property.zone'] },
