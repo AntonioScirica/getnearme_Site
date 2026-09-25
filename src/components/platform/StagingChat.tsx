@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ArrowUp, ImagePlus, LayoutGrid, Loader2, Monitor, MousePointerClick, RotateCcw, SquareDashed, SquareDashedMousePointer, X } from 'lucide-react';
+import { ArrowUp, ImagePlus, Lasso, LayoutGrid, Loader2, Monitor, RotateCcw, SquareDashed, SquareDashedMousePointer, X } from 'lucide-react';
 import { fileToResizedDataUrl } from '@/lib/staging';
 import { AI_MOCK } from '@/lib/aiMock';
 import { AiPhotoStage, QUICK_PRESETS, type EditRequest, type Region, type Reveal, type Suggestion } from './AiPhoto';
@@ -73,10 +73,7 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList | Fil
   const [faded, setFaded] = useState<Set<string>>(new Set()); // messaggi dopo un "Ricomincia da qui"
   const [selecting, setSelecting] = useState(false);
   const [region, setRegion] = useState<Region | null>(null);
-  // Clic sugli oggetti: punti + maschera dell'oggetto riconosciuto (anteprima)
-  const [points, setPoints] = useState<{ x: number; y: number }[]>([]);
-  const [mask, setMask] = useState<string | null>(null);
-  const clearZone = () => { setRegion(null); setPoints([]); setMask(null); };
+  const clearZone = () => setRegion(null);
   const scroller = useRef<HTMLDivElement>(null);
   // in fondo davvero (padding compreso), cosi' l'ultimo messaggio non resta sotto il campo
   // scorrimento in fondo con ease-in-out (600 ms); il fondo si rilegge a ogni fotogramma, cosi' segue la card che cresce
@@ -152,14 +149,13 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList | Fil
     const id = uid();
     const before = base;
     const zone = region;
-    const pts = points;
-    setMsgs(ms => [...ms, { id: uid(), role: 'user', text: t, region: zone ?? (pts.length ? { x: 0, y: 0, w: 0, h: 0 } : undefined) }, { id, role: 'ai', before, out: null, busy: true, reveal: null, text: t }]);
+    setMsgs(ms => [...ms, { id: uid(), role: 'user', text: t, region: zone ?? undefined }, { id, role: 'ai', before, out: null, busy: true, reveal: null, text: t }]);
     setText(''); setPicked(null); clearZone(); setSelecting(false);
     const req: EditRequest = {
       ...(before.startsWith('data:') ? { imageBase64: before } : { imageUrl: before }),
       ...(scene === 'planimetria'
         ? { planimetria: true, style: planStyle(t) }
-        : { scene, ...(zone || pts.length ? { prompt: pk?.req.prompt && t === pk.label ? pk.req.prompt : t, ...(pts.length ? { points: pts } : { region: zone! }) } : pk && t === pk.label && !pk.req.prompt ? pk.req : { prompt: pk?.req.prompt && t === pk.label ? pk.req.prompt : t }) }),
+        : { scene, ...(zone ? { prompt: pk?.req.prompt && t === pk.label ? pk.req.prompt : t, region: zone } : pk && t === pk.label && !pk.req.prompt ? pk.req : { prompt: pk?.req.prompt && t === pk.label ? pk.req.prompt : t }) }),
     };
     const res = await authFetch('/api/platform/photo-edit', { method: 'POST', body: JSON.stringify(req) }).catch(() => null);
     let d = res ? await res.json().catch(() => ({})) : {};
@@ -181,30 +177,6 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList | Fil
     const src = msgs[i];
     setMsgs(ms => [...ms, { id: uid(), role: 'divider', image: url }, ...(src?.role === 'ai' ? [{ ...src, id: uid(), busy: false, reveal: 'slider' as const, err: undefined }] : [])]);
     setBase(url); clearZone(); setSelecting(false);
-  };
-  // Clic su un oggetto: il worker (SAM) ritorna la maschera, mostrata sulla foto. Piu' clic = piu' oggetti.
-  const pickAt = async (p: { x: number; y: number }) => {
-    if (!base) return;
-    touch();
-    const pts = [...points, p];
-    setRegion(null); setPoints(pts); setMask('loading');
-    const res = await authFetch('/api/platform/photo-mask', { method: 'POST', body: JSON.stringify({ ...(base.startsWith('data:') ? { imageBase64: base } : { imageUrl: base }), points: pts }) }).catch(() => null);
-    const d = res ? await res.json().catch(() => ({})) : {};
-    setMask(d.mask ?? null);
-  };
-  // anteprima: maschera dell'oggetto sotto il mouse, senza confermarlo
-  const previewAt = async (p: { x: number; y: number }): Promise<string | null> => {
-    if (!base) return null;
-    const res = await authFetch('/api/platform/photo-mask', { method: 'POST', body: JSON.stringify({ ...(base.startsWith('data:') ? { imageBase64: base } : { imageUrl: base }), points: [...points, p] }) }).catch(() => null);
-    const d = res ? await res.json().catch(() => ({})) : {};
-    return d.mask ?? null;
-  };
-  // tutti gli oggetti della foto in una mappa (per l'anteprima istantanea); null se il worker non la sa fare
-  const segmentsOf = async (): Promise<string | null> => {
-    if (!base) return null;
-    const res = await authFetch('/api/platform/photo-mask', { method: 'POST', body: JSON.stringify({ ...(base.startsWith('data:') ? { imageBase64: base } : { imageUrl: base }), segments: true }) }).catch(() => null);
-    const d = res ? await res.json().catch(() => ({})) : {};
-    return d.segments ?? null;
   };
   const closeLibrary = useCallback(() => setLibrary(false), []);
   const empty = msgs.length === 0;
@@ -233,7 +205,7 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList | Fil
     setZoneClosing(true);
     setTimeout(() => { clearZone(); setSelecting(false); setZoneClosing(false); }, 300);
   };
-  const zonePicker = (inline?: number) => selecting && base ? <ZonePicker inline={inline} src={base} region={region} points={points} mask={mask} onChange={r => { setRegion(r); setPoints([]); setMask(null); }} onPick={pickAt} onPreview={previewAt} onSegments={segmentsOf} onLoad={toBottom} busy={busy} onSubmit={t => send(t)} closing={zoneClosing} onCancel={inline ? cancelZone : () => { clearZone(); setSelecting(false); }} /> : null;
+  const zonePicker = (inline?: number) => selecting && base ? <ZonePicker inline={inline} src={base} region={region} onChange={setRegion} onLoad={toBottom} busy={busy} onSubmit={t => send(t)} closing={zoneClosing} onCancel={inline ? cancelZone : () => { clearZone(); setSelecting(false); }} /> : null;
 
   return (
     // Tutta l'altezza disponibile: la conversazione scorre da sola, il campo e' sempre in fondo alla pagina
@@ -348,9 +320,9 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList | Fil
       <div className="absolute inset-x-0 bottom-0 z-20 px-6 pb-5 pt-10">
         <div className="pointer-events-none absolute inset-0"><ProgressiveBlur side="bottom" fade={24} /></div>
         <div className="relative mx-auto max-w-3xl">
-          {(region || points.length > 0) && !selecting && (
+          {region && !selecting && (
             <div className="blur-in mb-2 flex items-center gap-2 text-xs">
-              <span className="flex items-center gap-1.5 rounded-full bg-rose-50 px-3 py-1.5 font-medium text-rose-700 ring-1 ring-inset ring-rose-700/20"><SquareDashedMousePointer size={13} /> {points.length ? 'Oggetto selezionato' : 'Zona selezionata'}: scrivi cosa fare lì</span>
+              <span className="flex items-center gap-1.5 rounded-full bg-rose-50 px-3 py-1.5 font-medium text-rose-700 ring-1 ring-inset ring-rose-700/20"><SquareDashedMousePointer size={13} /> Zona selezionata: scrivi cosa fare lì</span>
               <button onClick={() => { morphFrom(document.querySelector('[data-base-photo]'), 'zone'); setSelecting(true); }} className="font-medium text-muted hover:text-ink">Cambia</button>
               <button onClick={clearZone} aria-label="Togli zona" className="text-muted hover:text-ink"><X size={14} /></button>
             </div>
@@ -367,13 +339,13 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList | Fil
               </button>
               {base && (
                 <button onClick={() => { if (!selecting) morphFrom(document.querySelector('[data-base-photo]'), 'zone'); setSelecting(v => !v); }} title="Seleziona una zona della foto" aria-pressed={selecting}
-                  className={`flex h-10 w-9 shrink-0 items-center justify-center rounded-full ease-smooth transition-colors ${selecting || region || points.length ? 'bg-rose-50 text-rose-600' : 'text-muted hover:bg-canvas hover:text-ink'}`}>
+                  className={`flex h-10 w-9 shrink-0 items-center justify-center rounded-full ease-smooth transition-colors ${selecting || region ? 'bg-rose-50 text-rose-600' : 'text-muted hover:bg-canvas hover:text-ink'}`}>
                   <SquareDashedMousePointer size={19} />
                 </button>
               )}
             </div>
             <textarea rows={1} value={text} onChange={e => { setText(e.target.value); touch(); }} disabled={!base}
-              placeholder={!base ? 'Prima carica una foto, poi scrivi qui cosa cambiare' : region || points.length ? 'Cosa faccio nella zona? Es. togli il letto' : 'Cosa vuoi cambiare? Es. togli il divano e metti un tavolo da pranzo'}
+              placeholder={!base ? 'Prima carica una foto, poi scrivi qui cosa cambiare' : region ? 'Cosa faccio nella zona? Es. togli il letto' : 'Cosa vuoi cambiare? Es. togli il divano e metti un tavolo da pranzo'}
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
               className="block h-10 min-w-0 flex-1 resize-none bg-transparent px-1 py-2 text-[15px] leading-6 outline-none placeholder:text-muted/60 disabled:cursor-not-allowed" />
             <button onClick={() => send()} disabled={!text.trim() || !base || busy} aria-label="Invia"
@@ -390,112 +362,74 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList | Fil
 // Zona sulla foto corrente: clic su un oggetto = lo seleziona (maschera rossa), trascinare = rettangolo.
 // Zona sulla foto: due strumenti. Rettangolo (di partenza): trascina. Oggetti: clicca; fermando il mouse
 // su un oggetto compare l'anteprima di cosa verrebbe selezionato.
-type Tool = 'rect' | 'points';
-// cursore per selezionare gli oggetti: mirino tondo blu con il centro bianco
-const TARGET_CURSOR = `url("data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28"><circle cx="14" cy="14" r="10" fill="rgba(37,99,235,.18)" stroke="#2563eb" stroke-width="2"/><circle cx="14" cy="14" r="3" fill="#fff" stroke="#2563eb" stroke-width="1.5"/></svg>')}") 14 14, pointer`;
-function ZonePicker({ inline, closing = false, src, region, points, mask, onChange, onPick, onPreview, onSegments, onLoad, busy, onSubmit, onCancel }: { inline?: number; closing?: boolean; src: string; region: Region | null; points: { x: number; y: number }[]; mask: string | null; onChange: (r: Region | null) => void; onPick: (p: { x: number; y: number }) => void; onPreview: (p: { x: number; y: number }) => Promise<string | null>; onSegments: () => Promise<string | null>; onLoad: () => void; busy: boolean; onSubmit: (text: string) => void; onCancel: () => void }) {
+type Tool = 'rect' | 'lasso';
+// Zona: rettangolo trascinato o forma libera (lazo) disegnata col mouse; la forma libera arriva come
+// poligono (poly) con il suo rettangolo di ingombro, cosi' il resto del flusso resta quello del rettangolo.
+function ZonePicker({ inline, closing = false, src, region, onChange, onLoad, busy, onSubmit, onCancel }: { inline?: number; closing?: boolean; src: string; region: Region | null; onChange: (r: Region | null) => void; onLoad: () => void; busy: boolean; onSubmit: (text: string) => void; onCancel: () => void }) {
   const box = useRef<HTMLDivElement>(null);
   const start = useRef<{ x: number; y: number } | null>(null);
   const [tool, setTool] = useState<Tool>('rect');
-  const [hover, setHover] = useState<string | null>(null);
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const cache = useRef(new Map<string, string | null>());
-  // l'anteprima include i punti gia' scelti: se cambiano, quelle salvate non valgono piu'
-  useEffect(() => { cache.current.clear(); }, [points.length]);
-  // Mappa degli oggetti: chiesta una volta quando scegli "Oggetti", poi l'anteprima e' istantanea (niente rete)
-  const seg = useRef<{ w: number; h: number; ids: Uint8ClampedArray; masks: Map<number, string> } | null>(null);
-  const segAsked = useRef(false);
-  const hoverId = useRef(0);
-  useEffect(() => {
-    if (tool !== 'points' || segAsked.current) return;
-    segAsked.current = true;
-    onSegments().then(url => {
-      if (!url) return;
-      const im = new Image();
-      im.onload = () => {
-        const c = document.createElement('canvas'); c.width = im.width; c.height = im.height;
-        const g = c.getContext('2d')!; g.drawImage(im, 0, 0);
-        const d = g.getImageData(0, 0, c.width, c.height).data;
-        const ids = new Uint8ClampedArray(c.width * c.height);
-        for (let i = 0; i < ids.length; i++) ids[i] = d[i * 4];
-        seg.current = { w: c.width, h: c.height, ids, masks: new Map() };
-      };
-      im.src = url;
-    });
-  }, [tool, onSegments]);
-  const maskOf = (id: number) => {
-    const s = seg.current!;
-    const hit = s.masks.get(id); if (hit) return hit;
-    const c = document.createElement('canvas'); c.width = s.w; c.height = s.h;
-    const g = c.getContext('2d')!; const img = g.createImageData(s.w, s.h);
-    for (let i = 0; i < s.ids.length; i++) { const v = s.ids[i] === id ? 255 : 0; img.data[i * 4] = img.data[i * 4 + 1] = img.data[i * 4 + 2] = v; img.data[i * 4 + 3] = 255; }
-    g.putImageData(img, 0, 0);
-    const url = c.toDataURL(); s.masks.set(id, url); return url;
-  };
+  const [path, setPath] = useState<{ x: number; y: number }[] | null>(null); // lazo mentre lo disegni
   const at = (e: React.PointerEvent) => {
     const r = box.current!.getBoundingClientRect();
     return { x: Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)), y: Math.min(1, Math.max(0, (e.clientY - r.top) / r.height)) };
   };
-  const pickTool = (t: Tool) => { setTool(t); setHover(null); onChange(null); };
+  const pickTool = (t: Tool) => { setTool(t); setPath(null); onChange(null); };
   const down = (e: React.PointerEvent) => {
-    if (tool === 'points') { setHover(null); onPick(at(e)); return; }
-    (e.target as HTMLElement).setPointerCapture(e.pointerId); start.current = at(e);
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    const p = at(e);
+    if (tool === 'lasso') { onChange(null); setPath([p]); return; }
+    start.current = p;
   };
   const move = (e: React.PointerEvent) => {
     const p = at(e);
-    if (tool === 'rect') {
-      if (!start.current) return;
-      const s = start.current;
-      if (Math.hypot(p.x - s.x, p.y - s.y) < 0.02) return;
-      onChange({ x: Math.min(s.x, p.x), y: Math.min(s.y, p.y), w: Math.abs(p.x - s.x), h: Math.abs(p.y - s.y) });
+    if (tool === 'lasso') {
+      // un punto ogni ~0.6% di foto: forma fedele senza migliaia di punti
+      setPath(ps => (ps && Math.hypot(p.x - ps[ps.length - 1].x, p.y - ps[ps.length - 1].y) > 0.006 ? [...ps, p] : ps));
       return;
     }
-    // oggetti: con la mappa l'oggetto sotto il mouse si vede subito
-    if (seg.current) {
-      const s = seg.current;
-      const id = s.ids[Math.min(s.h - 1, Math.floor(p.y * s.h)) * s.w + Math.min(s.w - 1, Math.floor(p.x * s.w))];
-      if (id !== hoverId.current) { hoverId.current = id; setHover(id ? maskOf(id) : null); }
-      return;
-    }
-    // senza mappa (worker vecchio): anteprima dal server dopo 120 ms di mouse fermo (posizioni gia' viste in memoria)
-    if (timer.current) clearTimeout(timer.current);
-    const key = `${Math.round(p.x * 33)}:${Math.round(p.y * 33)}`;
-    if (cache.current.has(key)) { setHover(cache.current.get(key)!); return; }
-    timer.current = setTimeout(async () => { const m = await onPreview(p); cache.current.set(key, m); setHover(m); }, 120);
+    if (!start.current) return;
+    const s = start.current;
+    if (Math.hypot(p.x - s.x, p.y - s.y) < 0.02) return;
+    onChange({ x: Math.min(s.x, p.x), y: Math.min(s.y, p.y), w: Math.abs(p.x - s.x), h: Math.abs(p.y - s.y) });
   };
-  const leave = () => { if (timer.current) clearTimeout(timer.current); hoverId.current = 0; setHover(null); };
-  const up = () => { start.current = null; };
+  const up = () => {
+    start.current = null;
+    if (tool !== 'lasso' || !path) return;
+    setPath(null);
+    if (path.length < 3) return;
+    const poly = path.length > 200 ? path.filter((_, i) => i % Math.ceil(path.length / 200) === 0) : path;
+    const xs = poly.map(p => p.x), ys = poly.map(p => p.y);
+    const x = Math.min(...xs), y = Math.min(...ys);
+    onChange({ x, y, w: Math.max(...xs) - x, h: Math.max(...ys) - y, poly });
+  };
   const [text, setText] = useState('');
   // fuoco sul campo senza far scorrere la chat (autoFocus e onLoad->in fondo facevano il saltino)
   const focused = useRef(false);
-  const loading = mask === 'loading';
-  const ready = (region && region.w > 0.02) || (points.length > 0 && !loading);
+  const ready = !!region && region.w > 0.02 && region.h > 0.02;
+  const shape = path ?? region?.poly ?? null;
+  const pts = (ps: { x: number; y: number }[]) => ps.map(p => `${p.x * 100},${p.y * 100}`).join(' ');
   // X della selezione a parte (nella card del risultato la X e' il pulsante Scarica stesso, in AiPhotoStage)
   const closeBtn = (
     <button type="button" onPointerDown={e => e.stopPropagation()} onClick={onCancel} aria-label="Annulla selezione" title="Annulla"
       className="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/85 text-ink shadow-sm ring-1 ring-black/5 backdrop-blur-md ease-smooth transition-colors hover:bg-white"><X size={16} /></button>
   );
   const photo = (
-      <div ref={box} className={`touch-none ${inline ? `absolute inset-x-0 bottom-full z-20 ease-smooth transition-opacity ${closing ? 'pointer-events-none' : ''}` : 'relative mx-auto max-h-[calc(100vh-24rem)] w-fit'} select-none overflow-hidden rounded-2xl ${tool === 'rect' ? 'cursor-crosshair' : ''}`}
-        style={{ ...(inline ? { aspectRatio: inline, ...(closing ? { opacity: 0, transitionDuration: '300ms' } : { animation: 'gnm-fade var(--gnm-dur) var(--gnm-ease) .45s both' }) } : {}), ...(tool === 'points' ? { cursor: TARGET_CURSOR } : {}) }}
-        onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerLeave={leave}>
+      <div ref={box} className={`touch-none ${inline ? `absolute inset-x-0 bottom-full z-20 ease-smooth transition-opacity ${closing ? 'pointer-events-none' : ''}` : 'relative mx-auto max-h-[calc(100vh-24rem)] w-fit'} select-none overflow-hidden rounded-2xl cursor-crosshair`}
+        style={inline ? { aspectRatio: inline, ...(closing ? { opacity: 0, transitionDuration: '300ms' } : { animation: 'gnm-fade var(--gnm-dur) var(--gnm-ease) .45s both' }) } : undefined}
+        onPointerDown={down} onPointerMove={move} onPointerUp={up}>
         <img src={src} alt="" draggable={false} onLoad={inline ? undefined : onLoad} className={inline ? 'block h-full w-full object-cover' : 'block max-h-[calc(100vh-24rem)] w-auto max-w-full'} />
         {!inline && closeBtn}
-        {tool === 'points' && hover && !loading && (
-          <div className="pointer-events-none absolute inset-0 bg-brand/35 ease-smooth transition-opacity"
-            style={{ maskImage: `url(${hover})`, WebkitMaskImage: `url(${hover})`, maskMode: 'luminance', maskSize: '100% 100%', WebkitMaskSize: '100% 100%' }} />
-        )}
-        {mask && !loading && (
-          <div className="blur-in pointer-events-none absolute inset-0 bg-rose-500/50"
-            style={{ maskImage: `url(${mask})`, WebkitMaskImage: `url(${mask})`, maskMode: 'luminance', maskSize: '100% 100%', WebkitMaskSize: '100% 100%' }} />
-        )}
-        {points.map((p, i) => (
-          <span key={i} className={`pointer-events-none absolute h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-rose-500 ring-2 ring-white ${loading ? 'animate-pulse' : ''}`}
-            style={{ left: `${p.x * 100}%`, top: `${p.y * 100}%` }} />
-        ))}
-        {region && (
+        {region && !region.poly && !path && (
           <div className="pointer-events-none absolute border-2 border-dashed border-rose-500 bg-rose-500/10 shadow-[0_0_0_9999px_rgba(0,0,0,.35)]"
             style={{ left: `${region.x * 100}%`, top: `${region.y * 100}%`, width: `${region.w * 100}%`, height: `${region.h * 100}%` }} />
+        )}
+        {shape && (
+          <svg className="pointer-events-none absolute inset-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+            {/* fuori dalla forma chiusa si scurisce, come per il rettangolo */}
+            {!path && <path d={`M0 0H100V100H0Z M${pts(shape)}Z`} fill="rgba(0,0,0,.35)" fillRule="evenodd" />}
+            <polygon points={pts(shape)} fill="rgba(244,63,94,.1)" stroke="#f43f5e" strokeWidth={2} strokeDasharray="6 4" vectorEffect="non-scaling-stroke" strokeLinejoin="round" style={path ? { fill: 'none' } : undefined} />
+          </svg>
         )}
       </div>
   );
@@ -505,9 +439,9 @@ function ZonePicker({ inline, closing = false, src, region, points, mask, onChan
         {/* campo con dentro, a destra, gli strumenti di selezione (solo icone, nome nel tooltip) */}
         <div className="flex h-10 min-w-0 flex-1 items-center rounded-full border border-transparent bg-canvas pl-4 pr-1 ease-smooth transition-colors focus-within:border-ink/15 focus-within:bg-white">
           <input ref={el => { if (el && !focused.current) { focused.current = true; el.focus({ preventScroll: true }); } }} value={text} onChange={e => setText(e.target.value)}
-            placeholder={loading ? 'Riconosco l’oggetto…' : ready ? 'Cosa faccio qui? Es. togli la tv' : tool === 'rect' ? 'Trascina sulla foto per disegnare la zona' : 'Passa sopra un oggetto e cliccalo'}
+            placeholder={ready ? 'Cosa faccio qui? Es. togli la tv' : tool === 'rect' ? 'Trascina sulla foto per disegnare la zona' : 'Disegna sulla foto il contorno di cosa cambiare'}
             className="h-full min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted/60" />
-          {([['rect', 'Rettangolo: trascina per disegnare la zona', SquareDashed], ['points', 'Oggetti: clicca per selezionarli', MousePointerClick]] as const).map(([id, l, I]) => (
+          {([['rect', 'Rettangolo: trascina per disegnare la zona', SquareDashed], ['lasso', 'Forma libera: disegna il contorno', Lasso]] as const).map(([id, l, I]) => (
             <Tooltip key={id} label={l}>
               <button type="button" onClick={() => pickTool(id)} aria-label={l} aria-pressed={tool === id}
                 className={`flex h-8 w-8 items-center justify-center rounded-full ease-smooth transition-colors ${tool === id ? 'bg-ink text-white' : 'text-muted hover:text-ink'}`}><I size={15} /></button>

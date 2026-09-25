@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
 
   // Foto: URL (annunci, R2) oppure caricata dal computer (imageBase64, data URL gia' ridimensionata).
   // Modifica: testo libero e/o i preset di home staging (stile, vista, scena, planimetria).
-  let body: { imageUrl?: string; imageBase64?: string; prompt?: string; style?: string; angle?: string; scene?: SceneType; planimetria?: boolean; seed?: number; region?: { x: number; y: number; w: number; h: number }; points?: { x: number; y: number }[] }
+  let body: { imageUrl?: string; imageBase64?: string; prompt?: string; style?: string; angle?: string; scene?: SceneType; planimetria?: boolean; seed?: number; region?: { x: number; y: number; w: number; h: number; poly?: { x: number; y: number }[] }; points?: { x: number; y: number }[] }
   try { body = await req.json() } catch { return NextResponse.json({ error: 'bad_request' }, { status: 400 }) }
   const imageUrl = typeof body.imageUrl === 'string' ? body.imageUrl : ''
   const imageBase64 = typeof body.imageBase64 === 'string' && /^data:image\/(jpeg|png|webp);base64,/.test(body.imageBase64) && body.imageBase64.length < 8_000_000 ? body.imageBase64 : ''
@@ -57,7 +57,9 @@ export async function POST(req: NextRequest) {
   const translation: { request?: string; prompt_template?: string } = usesText ? { request: custom, prompt_template: buildStagingPrompt({ customPrompt: '{REQUEST}', scene }) } : {}
   // Zona selezionata dall'agente (0..1): il worker modifica solo li'. Prompt dedicato: si lavora su un ritaglio.
   const r = body.region
-  const region = r && [r.x, r.y, r.w, r.h].every(v => typeof v === 'number' && v >= 0 && v <= 1) && r.w > 0.02 && r.h > 0.02 ? { x: r.x, y: r.y, w: r.w, h: r.h } : null
+  // Forma libera (lazo): poligono in 0..1, max 300 punti; senza, e' un rettangolo
+  const poly = Array.isArray(r?.poly) ? r.poly.filter(p => p && [p.x, p.y].every(v => typeof v === 'number' && v >= 0 && v <= 1)).slice(0, 300).map(p => ({ x: p.x, y: p.y })) : []
+  const region = r && [r.x, r.y, r.w, r.h].every(v => typeof v === 'number' && v >= 0 && v <= 1) && r.w > 0.02 && r.h > 0.02 ? { x: r.x, y: r.y, w: r.w, h: r.h, ...(poly.length >= 3 ? { poly } : {}) } : null
   // Clic sugli oggetti (maschera SAM nel worker)
   const points = Array.isArray(body.points) ? body.points.filter(p => p && [p.x, p.y].every(v => typeof v === 'number' && v >= 0 && v <= 1)).slice(0, 10) : []
   // Senza zona ne' clic: se la richiesta parla di pareti, pavimento o soffitto si modifica solo quell'elemento
@@ -70,7 +72,8 @@ export async function POST(req: NextRequest) {
   // Rettangolo: al modello vanno la foto e la stessa foto con un rettangolo rosso sulla zona (disegnato
   // dal worker, "mark"); fuori dalla zona il worker rimette la foto originale.
   if (region && usesText) {
-    translation.prompt_template = 'Edit the first image: {REQUEST}. The request refers to what is inside the area marked by the red rectangle in the second image: change only that area; if it asks to remove, erase everything inside the rectangle completely and show the floor and walls behind it. Do not add any new object, decoration or wall art that was not requested. Fill any freed area naturally, continuing the same floor, walls and light around it. Keep everything outside the red rectangle exactly the same, same framing and perspective. The result must not contain any red rectangle or outline. Photorealistic.'
+    const mk = region.poly ? 'red outline' : 'red rectangle'
+    translation.prompt_template = `Edit the first image: {REQUEST}. The request refers to what is inside the area marked by the ${mk} in the second image: change only that area; if it asks to remove, erase the whole object inside the ${mk} completely, including all its parts, and show the floor and walls behind it. Do not add any new object, decoration or wall art that was not requested. Fill any freed area naturally, continuing the same floor, walls and light around it. Keep everything outside the ${mk} exactly the same, same framing and perspective. The result must not contain any red rectangle or outline. Photorealistic.`
   } else if (points.length && usesText) {
     translation.prompt_template = 'In this close-up crop of a room photo: {REQUEST}. Do not add anything that was not requested. Fill any freed area naturally, continuing the same floor, walls and light around it. Keep the rest of the crop unchanged. Photorealistic.'
   }
