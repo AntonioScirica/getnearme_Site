@@ -3,8 +3,9 @@
 import { useMemo, useState } from 'react';
 import { ArrowLeft, FileSpreadsheet, Loader2, Sparkles } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import { TARGET_FIELDS, aiMapColumns, autoMapColumns, buildImportRows, readSheet, type ImportResult } from '@/lib/propertyImport';
-import { authFetch } from './api';
+import { DETAIL_FIELDS, TARGET_FIELDS, aiMapColumns, autoMapColumns, buildImportRows, readSheet, type ImportResult } from '@/lib/propertyImport';
+import { authFetch, CARD_SHADOW } from './api';
+import Dropdown from '@/components/ui/Dropdown';
 
 // Import immobili da CSV/Excel (logica condivisa con la vecchia dashboard in lib/propertyImport).
 export default function ImportView({ onDone }: { onDone: () => void }) {
@@ -17,6 +18,16 @@ export default function ImportView({ onDone }: { onDone: () => void }) {
   const [error, setError] = useState<string | null>(null);
 
   const cols = rawRows.length ? Object.keys(rawRows[0]) : [];
+  const [allDetails, setAllDetails] = useState(false); // campi della scheda: di base solo quelli trovati nel file
+  const colOptions = [{ value: '', label: 'Non presente' }, ...cols.map(c => ({ value: c, label: c }))];
+  const row = (key: string, label: string, required?: boolean) => (
+    <div key={key} className="flex items-center gap-4 px-4 py-2">
+      <span className="w-44 shrink-0 text-sm font-medium">{label}{required && ' *'}</span>
+      <Dropdown value={mapping[key] ?? ''} options={colOptions} onChange={v => setMapping(m => ({ ...m, [key]: v }))} className="h-10 min-w-0 flex-1 justify-between bg-canvas px-4 text-sm" />
+      <span className="hidden w-48 truncate text-xs text-muted md:block">{mapping[key] ? String(rawRows[0][mapping[key]] ?? '') : ''}</span>
+    </div>
+  );
+  const foundDetails = DETAIL_FIELDS.filter(f => mapping[`d:${f.key}`]);
   const { rows, skippedClient } = useMemo(() => buildImportRows(rawRows, mapping), [rawRows, mapping]);
 
   const onFile = async (file?: File) => {
@@ -32,7 +43,7 @@ export default function ImportView({ onDone }: { onDone: () => void }) {
       const ai = await aiMapColumns(c, json[0], session?.access_token);
       if (ai) setMapping(prev => {
         const m = { ...prev };
-        for (const f of TARGET_FIELDS) if (ai[f.key] && c.includes(ai[f.key])) m[f.key] = ai[f.key];
+        for (const k of [...TARGET_FIELDS.map(f => f.key as string), ...DETAIL_FIELDS.map(f => `d:${f.key}`)]) if (ai[k] && c.includes(ai[k])) m[k] = ai[k];
         return m;
       });
     } catch {
@@ -82,18 +93,20 @@ export default function ImportView({ onDone }: { onDone: () => void }) {
             <span><span className="font-medium">{fileName}</span> · {rawRows.length} righe</span>
             {aiBusy && <span className="flex items-center gap-1.5 text-ai"><Sparkles size={14} /> L&apos;AI sta riconoscendo le colonne...</span>}
           </div>
-          <div className="divide-y divide-line overflow-hidden card">
-            {TARGET_FIELDS.map(f => (
-              <div key={f.key} className="flex items-center gap-4 px-4 py-2.5">
-                <span className="w-40 shrink-0 text-sm font-medium">{f.label}{f.required && ' *'}</span>
-                <select value={mapping[f.key] ?? ''} onChange={e => setMapping(m => ({ ...m, [f.key]: e.target.value }))}
-                  className="min-w-0 flex-1 rounded-lg border border-line bg-white px-3 py-2 text-sm outline-none focus:border-brand">
-                  <option value="">Non presente</option>
-                  {cols.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
-                <span className="hidden w-48 truncate text-xs text-muted md:block">{mapping[f.key] ? String(rawRows[0][mapping[f.key]] ?? '') : ''}</span>
+          <div className={`divide-y divide-line overflow-hidden rounded-3xl bg-white ${CARD_SHADOW}`}>
+            {TARGET_FIELDS.map(f => row(f.key, f.label, f.required))}
+          </div>
+          {/* campi della scheda (classe energetica, piano, riscaldamento...): valori riconosciuti e normalizzati riga per riga */}
+          <div>
+            <div className="flex items-center justify-between pb-2">
+              <span className="text-sm font-semibold">Altri dati della scheda <span className="font-normal text-muted">{foundDetails.length} trovati</span></span>
+              <button onClick={() => setAllDetails(v => !v)} className="rounded-full px-3 py-1.5 text-xs font-medium text-muted hover:bg-canvas hover:text-ink">{allDetails ? 'Solo quelli trovati' : 'Mostra tutti'}</button>
+            </div>
+            {(allDetails ? DETAIL_FIELDS : foundDetails).length > 0 && (
+              <div className={`divide-y divide-line overflow-hidden rounded-3xl bg-white ${CARD_SHADOW}`}>
+                {(allDetails ? DETAIL_FIELDS : foundDetails).map(f => row(`d:${f.key}`, f.label))}
               </div>
-            ))}
+            )}
           </div>
           {error && <p className="text-sm text-red-600">{error}</p>}
           <div className="flex items-center justify-between">

@@ -3,6 +3,7 @@
 // Backend: /api/projects/map-columns (AI) + /api/projects/import.
 
 import * as XLSX from 'xlsx';
+import { ALL_FIELDS, type Field } from './propertyFields';
 
 // Contratto API concordato col backend.
 export type ImportRow = {
@@ -20,6 +21,7 @@ export type ImportRow = {
   photoUrl?: string;
   photoUrls?: string[]; // piu' URL nella cella foto: il server usa la prima raggiungibile
   _raw?: Record<string, unknown>; // riga originale completa (salvata per report futuri)
+  details?: Record<string, unknown>; // campi della scheda (classe energetica, piano, riscaldamento...) gia' normalizzati
 };
 
 export type ImportResult = { created: number; updated: number; skipped: number; errors: string[] };
@@ -42,6 +44,49 @@ export const TARGET_FIELDS: { key: TargetKey; label: string; required?: boolean;
   { key: 'tipologia', label: 'Tipologia', synonyms: ['tipo_immobile', 'tipologia', 'tipo immobile', 'cosa è', 'cosa e', 'tipo', 'category', 'typology'] },
   { key: 'photoUrl', label: 'Foto / URL', synonyms: ['url foto', 'foto url', 'foto', 'immagine', 'photo', 'image', 'cover', 'foto1', 'immagine1'] },
 ];
+
+// Campi della scheda oltre a quelli base: nella mappatura hanno chiave "d:<campo>".
+const BASE_COVERED = new Set(['tipologia', 'indirizzo', 'prezzo', 'superficie', 'locali', 'camere', 'bagni', 'riferimento', 'mostra_indirizzo', 'trattativa_riservata'])
+export const DETAIL_FIELDS: Field[] = ALL_FIELDS.filter(f => !BASE_COVERED.has(f.key))
+// sinonimi tipici dei gestionali (oltre all'etichetta del campo)
+const DETAIL_SYNONYMS: Record<string, string[]> = {
+  contratto: ['contratto', 'tipo contratto', 'vendita/affitto', 'causale'],
+  classe_energetica: ['classe energetica', 'classe_energetica', 'ape', 'classe'],
+  ipe: ['ipe', 'epgl', 'indice prestazione'],
+  piano: ['piano'],
+  anno: ['anno costruzione', 'anno_costruzione', 'anno'],
+  stato: ['stato immobile', 'condizioni', 'stato'],
+  spese_condominiali: ['spese condominiali', 'spese_condominiali', 'condominio'],
+  riscaldamento: ['riscaldamento', 'tipo riscaldamento'],
+  climatizzazione: ['aria condizionata', 'climatizzazione', 'condizionatore'],
+  ascensore: ['ascensore'],
+  posto_auto: ['posto auto', 'box', 'garage', 'posto_auto'],
+  cantina: ['cantina'],
+  arredato: ['arredato', 'arredamento'],
+  esposizione: ['esposizione'],
+  piani_edificio: ['piani edificio', 'piani_edificio', 'totale piani'],
+  superficie_esterna: ['superficie esterna', 'giardino mq', 'terrazzo mq'],
+  virtual_tour: ['virtual tour', 'tour virtuale', 'matterport'],
+}
+
+const fold = (v: unknown) => String(v ?? '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim()
+const YES = /^(si|s|yes|y|true|1|x|presente|incluso|incluse)$/
+const NO = /^(no|n|false|0|assente|non presente)$/
+// Valore della cella -> valore del campo della scheda (null = non riconosciuto: si lascia vuoto)
+export function normalizeDetail(f: Field, raw: unknown): unknown {
+  const t = fold(raw)
+  if (!t) return null
+  if (f.type === 'toggle') return YES.test(t) ? true : NO.test(t) ? false : null
+  if (f.type === 'number' || f.type === 'stepper') { const n = parseNumeric(raw); return n === undefined ? null : n }
+  if (f.type === 'text') return String(raw).trim()
+  const opts = f.options ?? []
+  const match = (x: string) => {
+    const y = fold(x).replace(/^classe\s+/, '')
+    return opts.find(o => fold(o) === y) ?? opts.find(o => fold(o).startsWith(y) || y.startsWith(fold(o))) ?? opts.find(o => y.length >= 3 && fold(o).includes(y)) ?? null
+  }
+  if (f.type === 'multi') { const v = t.split(/[,;|/]+/).map(x => match(x.trim())).filter(Boolean); return v.length ? [...new Set(v)] : null }
+  return match(t)
+}
 
 const NUMERIC_FIELDS: TargetKey[] = ['prezzo', 'mq', 'locali', 'camere', 'bagni'];
 
@@ -83,6 +128,13 @@ export function autoMapColumns(cols: string[]): Record<string, string> {
     map[field.key] = found;
     if (found) used.add(found);
   }
+  // campi della scheda: sinonimi + etichetta del campo, solo colonne non gia' usate
+  for (const f of DETAIL_FIELDS) {
+    const syns = [...(DETAIL_SYNONYMS[f.key] ?? []), fold(f.label)]
+    const col = syns.map(syn => cols.find(c => !used.has(c) && matchSyn(c, syn))).find(Boolean) ?? ''
+    map[`d:${f.key}`] = col
+    if (col) used.add(col)
+  }
   // I file agenzia raramente hanno una colonna "Nome": fallback su titolo,
   // indirizzo o riferimento (puo' condividere la colonna con quei campi).
   if (!map['nome']) map['nome'] = map['titolo'] || map['addr'] || map['riferimento'] || cols[0] || '';
@@ -105,10 +157,11 @@ export function buildImportRows(rawRows: Record<string, unknown>[], mapping: Rec
       if (!col) continue;
       const val = r[col];
       if (field.key === 'photoUrl') {
-        // La cella foto puo' contenere piu' URL (separati da , ; | spazio): li
-        // estraggo tutti; il server prova in ordine e tiene il primo raggiungibile.
-        const urls = String(val ?? '').match(/https?:\/\/[^\s,;|]+/g);
-        if (urls && urls.length) row.photoUrls = urls;
+        // tutte le foto: la cella mappata (anche con piu' URL separati da , ; | spazio) e ogni altra colonna
+        // foto/immagine (foto1, foto2...). Il server usa la prima raggiungibile come copertina e le salva tutte.
+        const photoCols = [col, ...Object.keys(r).filter(k => k !== col && /foto|immagin|photo|image|img/i.test(k))];
+        const urls = photoCols.flatMap(k => String(r[k] ?? '').match(/https?:\/\/[^\s,;|"']+/g) ?? []);
+        if (urls.length) row.photoUrls = [...new Set(urls)];
       } else if (NUMERIC_FIELDS.includes(field.key)) {
         const num = parseNumeric(val);
         if (num !== undefined) (row as Record<string, unknown>)[field.key] = num;
@@ -117,6 +170,14 @@ export function buildImportRows(rawRows: Record<string, unknown>[], mapping: Rec
         if (str) (row as Record<string, unknown>)[field.key] = str;
       }
     }
+    const details: Record<string, unknown> = {};
+    for (const f of DETAIL_FIELDS) {
+      const col = mapping[`d:${f.key}`];
+      if (!col) continue;
+      const v = normalizeDetail(f, r[col]);
+      if (v !== null && v !== undefined) details[f.key] = v;
+    }
+    if (Object.keys(details).length) row.details = details;
     rows.push(row);
   }
   return { rows, skippedClient };

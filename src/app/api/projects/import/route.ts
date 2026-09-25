@@ -31,6 +31,30 @@ type ImportRow = {
   photoUrl?: string        // singola foto (retrocompat)
   photoUrls?: string[]     // piu' candidati: si usa la prima raggiungibile
   _raw?: Record<string, unknown> // riga originale completa del file (per report futuri)
+  details?: Record<string, unknown> // campi della scheda gia' normalizzati dal client
+}
+
+// Tutte le foto della riga in taglia grande (per la galleria del sito), max 20, 5 alla volta
+const rehostGallery = async (urls: string[], userId: string) => {
+  const out: string[] = []
+  const list = urls.slice(0, 20)
+  for (let i = 0; i < list.length; i += 5) {
+    const got = await Promise.all(list.slice(i, i + 5).map(u => rehostImage(u.trim(), `properties/${userId}/import-${Date.now()}-${Math.random().toString(36).slice(2, 9)}.jpg`, 1600, 85)))
+    out.push(...got.filter((x): x is string => !!x))
+  }
+  return out
+}
+// campi della scheda: solo valori semplici (testo, numero, si/no, elenco di testi), testi corti
+const cleanDetails = (d: unknown): Record<string, unknown> => {
+  if (!d || typeof d !== 'object') return {}
+  const out: Record<string, unknown> = {}
+  for (const [k, v] of Object.entries(d as Record<string, unknown>).slice(0, 60)) {
+    if (!/^[a-z_]{2,40}$/.test(k)) continue
+    if (typeof v === 'boolean' || (typeof v === 'number' && Number.isFinite(v))) out[k] = v
+    else if (typeof v === 'string' && v.trim()) out[k] = v.trim().slice(0, 300)
+    else if (Array.isArray(v)) { const a = v.filter((x): x is string => typeof x === 'string').map(x => x.slice(0, 80)).slice(0, 30); if (a.length) out[k] = a }
+  }
+  return out
 }
 
 // Cover ottimizzata (~500px) su R2: stessa logica di prima, ora in lib/r2.
@@ -87,7 +111,13 @@ export async function POST(req: NextRequest) {
       if (cover) break // prima immagine scaricata con successo
     }
 
-    const raw: Record<string, unknown> | null = row._raw && typeof row._raw === 'object' ? row._raw : null
+    const raw0: Record<string, unknown> | null = row._raw && typeof row._raw === 'object' ? row._raw : null
+    // oltre alla riga grezza: campi della scheda (details) e tutte le foto grandi (photos), letti da scheda e sito
+    const details = cleanDetails(row.details)
+    const photos = photoCandidates.length ? await rehostGallery(photoCandidates, userId) : []
+    const raw: Record<string, unknown> | null = raw0 || Object.keys(details).length || photos.length
+      ? { ...(raw0 ?? {}), ...(Object.keys(details).length ? { details } : {}), ...(photos.length ? { photos } : {}) }
+      : null
 
     // Solo i campi REALMENTE presenti in questa riga: in update non sovrascrivono
     // con vuoti i dati gia' salvati da import precedenti (camere c'era prima, il
@@ -124,7 +154,8 @@ export async function POST(req: NextRequest) {
       if (existing) {
         // Merge: accumula le colonne grezze (vecchie + nuove), le mancanti restano.
         const prevRaw = (existing.import_data && typeof existing.import_data === 'object') ? existing.import_data as Record<string, unknown> : {}
-        const mergedRaw = raw ? { ...prevRaw, ...raw } : (existing.import_data ?? null)
+        // details si fondono campo per campo (quelli non nel file restano), photos si sostituiscono se ce ne sono di nuove
+        const mergedRaw = raw ? { ...prevRaw, ...raw, ...(raw.details ? { details: { ...((prevRaw.details as Record<string, unknown>) ?? {}), ...(raw.details as Record<string, unknown>) } } : {}) } : (existing.import_data ?? null)
         const { error: updErr } = await admin
           .from('projects')
           .update({ ...present, import_data: mergedRaw, updated_at: new Date().toISOString() })
