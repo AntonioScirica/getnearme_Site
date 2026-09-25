@@ -610,7 +610,8 @@ function PortalFields({ d }: { d: Details }) {
         <button onClick={() => copy('*', rows.map(r => `${r.label}: ${r.value}`).join('\n'))} className="flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium text-muted hover:bg-canvas hover:text-ink">
           {copied === '*' ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />} Copia tutti</button>
       </div>
-      <dl className="mt-3 max-h-72 divide-y divide-line overflow-y-auto pr-1 [scrollbar-width:thin]">
+      {/* sfumata in alto e in basso: si capisce che la lista continua */}
+      <dl className="mt-3 max-h-72 divide-y divide-line overflow-y-auto pr-1 [scrollbar-width:thin]" style={{ maskImage: 'linear-gradient(to bottom, transparent, #000 16px, #000 calc(100% - 40px), transparent)', WebkitMaskImage: 'linear-gradient(to bottom, transparent, #000 16px, #000 calc(100% - 40px), transparent)' }}>
         {rows.map(r => (
           <div key={r.key} className="group flex items-center justify-between gap-4 py-2 text-sm">
             <dt className="text-muted">{r.label}</dt>
