@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { createProject, type ProjectData } from '@/lib/projects';
 import { downscaleDataUrl, uploadDataUrl } from '@/lib/imageUpload';
+import ProgressiveBlur from '@/components/ProgressiveBlur';
 import { ALL_FIELDS, completeness, ENERGY_COLORS, inkOn, formatValue, visible, type Details, type Field } from '@/lib/propertyFields';
 import { authFetch, portfolioUrl, setPublic } from './api';
 import { CopyIcon } from './ImproveView';
@@ -198,15 +199,21 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
           <h1 className="font-display text-3xl font-bold tracking-tight">{cur.title}</h1>
           <p className="mt-1 text-muted">{cur.sub}</p>
           <div className="mt-7 space-y-8">
-            {cur.id === 'foto' && <PhotoGrid photos={photos} setPhotos={setPhotos} onAdd={addPhotos} />}
-            {cur.id === 'foto' && (
-              <div className="flex items-center gap-4 card p-4">
-                <div className="flex h-16 w-24 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-canvas">{plan ? <img src={plan} alt="" className="h-full w-full object-contain" /> : <LayoutTemplate size={20} className="text-muted" />}</div>
-                <div className="min-w-0 flex-1"><div className="text-sm font-medium">Planimetria</div><div className="text-xs text-muted">Facoltativa, aumenta i contatti.</div></div>
-                <label className="cursor-pointer btn-ghost rounded-full px-4 py-2 text-sm font-medium">{plan ? 'Cambia' : 'Carica'}<input type="file" accept="image/*" className="hidden" onChange={async e => { const f = e.target.files?.[0]; if (f) setPlan(await downscaleDataUrl(await readFile(f), 2000, 0.85)); e.target.value = ''; }} /></label>
-                {plan && <button onClick={() => setPlan(null)} aria-label="Rimuovi" className="text-muted hover:text-ink"><X size={16} /></button>}
-              </div>
-            )}
+            {cur.id === 'foto' && <PhotoGrid photos={photos} setPhotos={setPhotos} onAdd={addPhotos} extra={
+              // planimetria subito sotto "Aggiungi foto": stesso riquadro tratteggiato, piu' basso
+              plan ? (
+                <div className="mt-3 flex items-center gap-4 rounded-3xl bg-white p-3 ring-1 ring-line">
+                  <div className="flex h-16 w-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-canvas"><img src={plan} alt="" className="h-full w-full object-contain" /></div>
+                  <div className="min-w-0 flex-1 text-sm font-medium">Planimetria</div>
+                  <label className="cursor-pointer rounded-full px-4 py-2 text-sm font-medium hover:bg-canvas">Cambia<input type="file" accept="image/*" className="hidden" onChange={async e => { const f = e.target.files?.[0]; if (f) setPlan(await downscaleDataUrl(await readFile(f), 2000, 0.85)); e.target.value = ''; }} /></label>
+                  <button onClick={() => setPlan(null)} aria-label="Togli la planimetria" className="mr-1 rounded-full p-2 text-muted hover:bg-canvas hover:text-ink"><X size={16} /></button>
+                </div>
+              ) : (
+                <label className="mt-3 flex cursor-pointer items-center justify-center gap-2 rounded-3xl border-2 border-dashed border-line bg-white py-4 text-muted ease-smooth transition hover:border-brand hover:text-brand">
+                  <LayoutTemplate size={18} /><span className="text-sm font-medium">Aggiungi planimetria</span><span className="text-xs">facoltativa, aumenta i contatti</span>
+                  <input type="file" accept="image/*" className="hidden" onChange={async e => { const f = e.target.files?.[0]; if (f) setPlan(await downscaleDataUrl(await readFile(f), 2000, 0.85)); e.target.value = ''; }} />
+                </label>
+              )} />}
             {cur.id === 'tipo' && <>
               <Cards f={F.contratto} v={d.contratto} set={v => set('contratto', v)} big />
               {d.contratto && <Cards f={F.tipologia} v={d.tipologia} set={v => set('tipologia', v)} />}
@@ -290,8 +297,9 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
             </>}
           </div>
 
-          {/* Navigazione */}
-          <div className="mt-10 flex items-center justify-between gap-3 border-t border-line pt-6">
+          {/* Navigazione: fissa in basso con la sfumatura progressiva, sempre a portata (anche "Prepara l'annuncio") */}
+          <div className="sticky bottom-0 z-20 mt-10 flex items-center justify-between gap-3 pb-6 pt-10">
+            <div className="pointer-events-none absolute inset-x-[-24px] inset-y-0 -z-10"><ProgressiveBlur side="bottom" fade={24} /></div>
             <button onClick={() => step > 0 && go(step - 1)} disabled={step === 0} className="text-sm text-muted hover:text-ink disabled:opacity-0">Indietro <span className="hidden text-xs text-muted/60 sm:inline">Esc</span></button>
             <div className="flex items-center gap-3">
               {cur.optional && step < STEPS.length - 1 && <button onClick={() => go(step + 1)} className="text-sm text-muted hover:text-ink">Salta</button>}
@@ -508,7 +516,7 @@ function Compass({ v, set }: { v: Details[string]; set: SetV }) {
 
 // Foto: solo caricamento e ordine (trascina su desktop, frecce e "Copertina" a tap su mobile). Niente AI qui:
 // si creano l'immobile e le foto senza cambiare schermata, i miglioramenti si fanno dopo (chat, Galleria).
-function PhotoGrid({ photos, setPhotos, onAdd }: { photos: Photo[]; setPhotos: (fn: (p: Photo[]) => Photo[]) => void; onAdd: (f: FileList | null) => void }) {
+function PhotoGrid({ photos, setPhotos, onAdd, extra }: { photos: Photo[]; setPhotos: (fn: (p: Photo[]) => Photo[]) => void; onAdd: (f: FileList | null) => void; extra?: React.ReactNode }) {
   const [drag, setDrag] = useState<number | null>(null);
   const [over, setOver] = useState<number | null>(null);
   const move = (from: number, to: number) => setPhotos(p => { if (to < 0 || to >= p.length || from === to) return p; const n = [...p]; const [x] = n.splice(from, 1); n.splice(to, 0, x); return n; });
@@ -522,6 +530,7 @@ function PhotoGrid({ photos, setPhotos, onAdd }: { photos: Photo[]; setPhotos: (
         {!photos.length && <span className="text-xs">Consigliate almeno 10: tutte le stanze, esterni e vista</span>}
         <input type="file" accept="image/*" multiple className="hidden" onChange={e => { onAdd(e.target.files); e.target.value = ''; }} />
       </label>
+      {extra}
 
 
       {photos.length > 0 && (
