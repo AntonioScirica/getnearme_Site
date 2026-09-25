@@ -298,7 +298,7 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
               <Chips f={F.proprieta} v={d.proprieta} set={v => set('proprieta', v)} />
             </>}
             {cur.id === 'note' && <>
-              <div className="grid gap-4 sm:grid-cols-2"><TextField f={F.riferimento} v={d.riferimento} set={v => set('riferimento', v)} /><TextField f={F.virtual_tour} v={d.virtual_tour} set={v => set('virtual_tour', v)} /></div>
+              <div className="grid gap-4 sm:grid-cols-2"><TextField f={{ ...F.riferimento, label: 'Codice di riferimento (opzionale)' }} v={d.riferimento} set={v => set('riferimento', v)} /><TextField f={F.virtual_tour} v={d.virtual_tour} set={v => set('virtual_tour', v)} /></div>
             </>}
           </div>
 
