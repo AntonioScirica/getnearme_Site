@@ -6,7 +6,7 @@ import type { ProjectData } from '@/lib/projects';
 import Tooltip from '@/components/ui/Tooltip';
 import Dropdown from '@/components/ui/Dropdown';
 import { FAKE_PROPERTIES } from '@/lib/fakeProperties';
-import { FIELD_LABELS, PAGE_SECTIONS, TEMPLATES, TEXTS, zoneSlug, type PageId, type SiteConfig, type SiteProperty, type TemplateId } from '@/lib/siteTemplates';
+import { FIELD_LABELS, FONTS, fontCss, PAGE_SECTIONS, TEMPLATES, TEXTS, zoneSlug, type PageId, type SiteConfig, type SiteProperty, type TemplateId } from '@/lib/siteTemplates';
 import { SitePage, SiteThumb } from '@/components/site/pages';
 import type { Page } from '@/components/site/ui';
 import { fileToResizedDataUrl } from '@/lib/staging';
@@ -47,7 +47,25 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
     authFetch('/api/platform/site').then(r => r.json()).then((d: Site) => { setSite(d); setCfg(d.config); });
   }, []);
 
-  if (!site || !cfg) return <Loader2 className="animate-spin text-muted" />;
+  // caricamento: scheletro con la stessa forma della pagina (titolo, indirizzo, schede, card dei modelli)
+  if (!site || !cfg) return (
+    <div aria-busy className="animate-pulse">
+      <div className="flex items-end justify-between gap-4 border-b border-line pb-6">
+        <div><div className="h-9 w-48 rounded-full bg-line/70" /><div className="mt-3 h-4 w-72 rounded-full bg-line/50" /></div>
+        <div className="h-10 w-72 rounded-full bg-line/50" />
+      </div>
+      <div className="mt-6 h-10 w-56 rounded-full bg-line/50" />
+      <div className="mt-6 h-4 w-96 max-w-full rounded-full bg-line/40" />
+      <div className="mt-6 grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+        {[0, 1, 2, 3, 4, 5].map(i => (
+          <div key={i} className="rounded-3xl bg-white p-2 ring-1 ring-black/5">
+            <div className="aspect-[4/3] rounded-2xl bg-line/50" />
+            <div className="flex min-h-12 items-center px-2 pt-2"><div className="h-4 w-24 rounded-full bg-line/60" /></div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
   const url = site.slug ? portfolioUrl(site.slug) : null;
   const dirty = JSON.stringify(cfg) !== JSON.stringify(site.config);
   const set = (p: Partial<SiteConfig>) => setCfg(c => ({ ...c!, ...p }));
@@ -215,8 +233,9 @@ function SideEditor({ cfg, set, page, onPage, firstId, covers, selected, setSele
                   <input type="color" value={cfg.primary} onChange={e => set({ primary: e.target.value })} className="absolute inset-0 cursor-pointer opacity-0" />
                 </label>
               </div>
-              <Seg value={cfg.font} onChange={v => set({ font: v })} options={[['serif', 'Elegante'], ['sans', 'Moderno']]} />
             </Group>
+            <Group title="Carattere dei titoli"><FontPicker cfg={cfg} set={set} /></Group>
+            <Group title="Logo in alto"><LogoField cfg={cfg} set={set} /></Group>
             <Group title="Recapiti">{(['ctaLabel', 'phone', 'whatsapp', 'email', 'address'] as const).map(k => <CfgField key={k} k={k} cfg={cfg} set={set} covers={covers} />)}</Group>
             <Group title="Social e dati legali">{(['instagram', 'facebook', 'legal'] as const).map(k => <CfgField key={k} k={k} cfg={cfg} set={set} covers={covers} />)}</Group>
             <Group title="In tutte le pagine">{(['topBar', 'whatsappButton', 'showPrices', 'showStats'] as const).map(k => <CfgField key={k} k={k} cfg={cfg} set={set} covers={covers} />)}</Group>
@@ -236,6 +255,61 @@ function TextField({ label, value, placeholder, long, onChange }: { label: strin
       {long ? <textarea rows={2} value={value} placeholder={placeholder} maxLength={600} onChange={e => onChange(e.target.value)} className={`${cls} resize-none`} />
         : <input value={value} placeholder={placeholder} maxLength={600} onChange={e => onChange(e.target.value)} className={cls} />}
     </label>
+  );
+}
+
+// Carattere dei titoli: i due del modello e i Google Fonts, ognuno scritto nel suo carattere
+function FontPicker({ cfg, set }: { cfg: SiteConfig; set: (p: Partial<SiteConfig>) => void }) {
+  const opts: { key: string; label: string; style: React.CSSProperties; on: boolean; pick: () => void }[] = [
+    { key: 'serif', label: 'Elegante', style: { fontFamily: 'var(--font-serif-accent)' }, on: !cfg.headingFont && cfg.font === 'serif', pick: () => set({ font: 'serif', headingFont: '' }) },
+    { key: 'sans', label: 'Moderno', style: {}, on: !cfg.headingFont && cfg.font === 'sans', pick: () => set({ font: 'sans', headingFont: '' }) },
+    ...FONTS.map(f => ({ key: f.id, label: f.label, style: { fontFamily: `'${f.family}', ${f.serif ? 'serif' : 'sans-serif'}`, fontWeight: f.weight }, on: cfg.headingFont === f.id, pick: () => set({ headingFont: f.id }) })),
+  ];
+  return (
+    <>
+      {/* tutti i caratteri caricati qui, per vederli nell'elenco */}
+      <link rel="stylesheet" href={fontCss(FONTS.map(f => f.id))} precedence="default" />
+      <div className="grid grid-cols-2 gap-2">
+        {opts.map(o => (
+          <button key={o.key} type="button" onClick={o.pick}
+            className={`flex h-14 items-center justify-center rounded-2xl px-2 text-[17px] ease-smooth transition-colors ${o.on ? 'bg-white ring-2 ring-brand' : 'bg-canvas hover:bg-line/60'}`}>
+            <span className={`truncate ${o.key === 'sans' ? 'font-display font-bold' : ''}`} style={o.style}>{o.label}</span>
+          </button>
+        ))}
+      </div>
+    </>
+  );
+}
+
+// Logo dell'agenzia: caricalo (PNG trasparente ideale) e scegli quanto e' alto
+function LogoField({ cfg, set }: { cfg: SiteConfig; set: (p: Partial<SiteConfig>) => void }) {
+  const [busy, setBusy] = useState(false);
+  const upload = async (f?: File) => {
+    if (!f?.type.startsWith('image/')) return;
+    setBusy(true);
+    const url = await uploadDataUrl(await fileToResizedDataUrl(f, 800), 'vetrina');
+    setBusy(false);
+    if (url) set({ logo: url });
+  };
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-3">
+        <div className="flex h-16 min-w-0 flex-1 items-center justify-center rounded-2xl bg-canvas px-3">
+          {cfg.logo ? <img src={cfg.logo} alt="" style={{ height: Math.min(48, cfg.logoSize) }} className="max-w-full object-contain" /> : <span className="text-xs text-muted">Nessun logo: in alto c’è il tuo nome</span>}
+        </div>
+        <label className="flex h-10 shrink-0 cursor-pointer items-center gap-1.5 rounded-full bg-canvas px-4 text-sm font-medium hover:bg-line/60">
+          {busy ? <Loader2 size={15} className="animate-spin" /> : <ImagePlus size={15} />} {cfg.logo ? 'Cambia' : 'Carica'}
+          <input type="file" accept="image/*" className="hidden" onChange={e => { upload(e.target.files?.[0]); e.target.value = ''; }} />
+        </label>
+        {cfg.logo && <button type="button" onClick={() => set({ logo: '' })} aria-label="Togli il logo" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-muted hover:bg-canvas hover:text-ink"><Trash2 size={15} /></button>}
+      </div>
+      {cfg.logo && (
+        <label className="block">
+          <span className="mb-1 flex justify-between text-xs font-medium text-ink/70">Grandezza <span className="text-muted">{cfg.logoSize}px</span></span>
+          <input type="range" min={20} max={96} step={2} value={cfg.logoSize} onChange={e => set({ logoSize: Number(e.target.value) })} className="w-full accent-[var(--color-brand,#2563eb)]" />
+        </label>
+      )}
+    </div>
   );
 }
 
@@ -440,13 +514,6 @@ function Field({ label, value, onChange, max, area }: { label: string; value: st
   );
 }
 
-function Seg<T extends string>({ value, onChange, options }: { value: T; onChange: (v: T) => void; options: readonly (readonly [T, string])[] }) {
-  return (
-    <div className="flex rounded-full bg-canvas p-1">
-      {options.map(([v, l]) => <button key={v} onClick={() => onChange(v)} className={`flex-1 rounded-full py-1.5 text-[13px] font-medium ease-smooth transition-colors ${value === v ? 'bg-white shadow-sm' : 'text-muted hover:text-ink'}`}>{l}</button>)}
-    </div>
-  );
-}
 
 // Foto: carica dal computer, oppure scegli tra quelle degli immobili (Auto = la prima)
 function Pics({ label, covers, value, onChange }: { label: string; covers: string[]; value: string; onChange: (v: string) => void }) {

@@ -46,12 +46,13 @@ export function navLinks(cfg: SiteConfig): [string, Page][] {
   return [['Home', { page: 'home' }], ['Immobili', { page: 'immobili' }], ...(cfg.services.length ? [['Servizi', { page: 'servizi' }] as [string, Page]] : []), [cfg.aboutTitle || 'Chi sono', { page: 'agente' }], ['Contatti', { page: 'contatti' }]];
 }
 export function Header({ over }: { over?: boolean }) {
-  const { cfg, name, logo, t, base, preview, go } = useSite();
+  const { cfg, name, logo: profileLogo, t, base, preview, go } = useSite();
+  const logo = cfg.logo || profileLogo; // logo scelto nel sito, altrimenti quello del profilo
   const [open, setOpen] = useState(false);
   const links = navLinks(cfg);
   const light = over && t.header === 'over';
   const mark = logo
-    ? <img src={logo} alt={name} className={`h-9 max-w-[170px] object-contain ${light ? 'brightness-0 invert' : ''}`} />
+    ? <img src={logo} alt={name} style={{ height: cfg.logoSize, maxWidth: cfg.logoSize * 6 }} className={`object-contain ${light ? 'brightness-0 invert' : ''}`} />
     : <span className="flex items-center gap-2.5">
         <span className={`flex h-9 w-9 items-center justify-center text-white ${t.header === 'minimal' ? 'rounded-full bg-[var(--ink)]' : 'rounded-[calc(var(--r)*0.6)] bg-[var(--c)]'}`}><Building2 size={17} /></span>
         <span className={`truncate font-bold tracking-tight ${t.header === 'centered' ? 'font-[family-name:var(--font-serif-accent)] text-2xl font-normal' : 'text-[17px]'}`}>{name}</span>
@@ -73,7 +74,7 @@ export function Header({ over }: { over?: boolean }) {
       <div className="bg-[var(--ink)] text-white">
         <Container className="grid h-[72px] grid-cols-[1fr_auto_1fr] items-center">
           <button onClick={() => setOpen(true)} aria-label="Menu" className="flex w-fit items-center gap-2 text-sm font-medium"><Menu size={20} /> <span className="hidden md:inline">Menu</span></button>
-          <SiteLink to={{ page: 'home' }}>{logo ? <img src={logo} alt={name} className="h-10 max-w-[200px] object-contain brightness-0 invert" /> : <span className="text-xl font-bold tracking-tight">#{name.replace(/\s+/g, '')}</span>}</SiteLink>
+          <SiteLink to={{ page: 'home' }}>{logo ? <img src={logo} alt={name} style={{ height: cfg.logoSize, maxWidth: cfg.logoSize * 6 }} className="object-contain brightness-0 invert" /> : <span className="text-xl font-bold tracking-tight">#{name.replace(/\s+/g, '')}</span>}</SiteLink>
           <div className="flex justify-end">{cfg.showContact && <SiteLink to={{ page: 'contatti' }} className="hidden text-sm font-semibold text-[var(--c)] md:block">{cfg.ctaLabel}</SiteLink>}</div>
         </Container>
       </div>

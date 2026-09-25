@@ -11,6 +11,9 @@ export type SiteConfig = {
   template: TemplateId
   primary: string
   font: 'serif' | 'sans'
+  headingFont: string // '' = quello del modello (font), altrimenti una chiave di FONTS
+  logo: string // logo dell'agenzia in alto (vuoto = quello del profilo o il nome)
+  logoSize: number // altezza del logo in px
   heroTitle: string
   heroSubtitle: string
   heroImage: string
@@ -79,9 +82,29 @@ export const TEMPLATES: { id: TemplateId; name: string; desc: string; primary: s
   { id: 'riviera', name: 'Riviera', desc: 'Agenzia di zona: barra contatti, ricerca avanzata, pagine per località', primary: '#5fc9bd', font: 'sans' },
 ]
 
+// Caratteri per i titoli (Google Fonts, caricati solo quando servono)
+export const FONTS: { id: string; label: string; family: string; serif: boolean; weight: number }[] = [
+  { id: 'playfair', label: 'Playfair Display', family: 'Playfair Display', serif: true, weight: 600 },
+  { id: 'cormorant', label: 'Cormorant', family: 'Cormorant Garamond', serif: true, weight: 600 },
+  { id: 'dmserif', label: 'DM Serif', family: 'DM Serif Display', serif: true, weight: 400 },
+  { id: 'lora', label: 'Lora', family: 'Lora', serif: true, weight: 600 },
+  { id: 'fraunces', label: 'Fraunces', family: 'Fraunces', serif: true, weight: 600 },
+  { id: 'montserrat', label: 'Montserrat', family: 'Montserrat', serif: false, weight: 700 },
+  { id: 'raleway', label: 'Raleway', family: 'Raleway', serif: false, weight: 700 },
+  { id: 'outfit', label: 'Outfit', family: 'Outfit', serif: false, weight: 600 },
+  { id: 'manrope', label: 'Manrope', family: 'Manrope', serif: false, weight: 700 },
+  { id: 'spacegrotesk', label: 'Space Grotesk', family: 'Space Grotesk', serif: false, weight: 600 },
+  { id: 'josefin', label: 'Josefin Sans', family: 'Josefin Sans', serif: false, weight: 600 },
+  { id: 'syne', label: 'Syne', family: 'Syne', serif: false, weight: 700 },
+]
+export const fontCss = (ids: string[]) => {
+  const fs = FONTS.filter(f => ids.includes(f.id))
+  return fs.length ? `https://fonts.googleapis.com/css2?${fs.map(f => `family=${f.family.replace(/ /g, '+')}:wght@${f.weight}`).join('&')}&display=swap` : ''
+}
+
 export function defaultSite(name: string, email = ''): SiteConfig {
   return {
-    template: 'prato', primary: '#1d5b3c', font: 'sans',
+    template: 'prato', primary: '#1d5b3c', font: 'sans', headingFont: '', logo: '', logoSize: 36,
     heroTitle: 'Trova la casa giusta per te',
     heroSubtitle: 'Immobili selezionati e un agente che ti segue dalla prima visita al rogito.',
     heroImage: '', aboutTitle: 'Chi sono',
@@ -121,6 +144,9 @@ export function cleanSite(raw: unknown, name: string, email = ''): SiteConfig {
     template,
     primary: typeof r.primary === 'string' && /^#[0-9a-f]{6}$/i.test(r.primary) ? r.primary : TEMPLATES.find(t => t.id === template)!.primary,
     font: r.font === 'serif' || r.font === 'sans' ? r.font : d.font,
+    headingFont: FONTS.some(f => f.id === r.headingFont) ? (r.headingFont as string) : '',
+    logo: img(r.logo),
+    logoSize: typeof r.logoSize === 'number' && Number.isFinite(r.logoSize) ? Math.round(Math.min(96, Math.max(20, r.logoSize))) : d.logoSize,
     heroTitle: str(r.heroTitle, 90, d.heroTitle),
     heroSubtitle: str(r.heroSubtitle, 200, d.heroSubtitle),
     heroImage: img(r.heroImage),

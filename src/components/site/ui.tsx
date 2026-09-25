@@ -3,7 +3,7 @@
 import { Children, createContext, isValidElement, useContext, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactElement, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { Bath, BedDouble, Check, ChevronDown, DoorOpen, Heart, Maximize2 } from 'lucide-react';
-import { PAGE_SECTIONS, TEXTS, type SiteConfig, type SiteProperty, type TemplateId } from '@/lib/siteTemplates';
+import { FONTS, fontCss, PAGE_SECTIONS, TEXTS, type SiteConfig, type SiteProperty, type TemplateId } from '@/lib/siteTemplates';
 
 // Base dei siti vetrina: tema per template, contesto del sito, link (veri sul sito, interni
 // nell'anteprima dell'editor) e i mattoni piu' piccoli (titoli, pulsanti, foto, dati).
@@ -81,7 +81,9 @@ export function SiteRoot({ ctx, children }: { ctx: SiteCtx; children: ReactNode 
     '--c': ctx.cfg.primary, '--bg': t.bg, '--fg': t.fg, '--muted': t.muted, '--line': t.line, '--surface': t.surface, '--soft': t.soft, '--ink': t.ink, '--r': `${t.radius}px`, '--rc': `${Math.min(10, Math.round(t.radius / 2))}px`,
     background: t.bg, color: t.fg,
   } as CSSProperties;
-  return <Ctx.Provider value={ctx}><div data-site-root style={style} className="relative min-h-screen font-body antialiased selection:bg-[var(--c)] selection:text-white">{children}</div></Ctx.Provider>;
+  // carattere dei titoli scelto dall'agente: il foglio di Google Fonts va nella pagina (React lo sposta nel <head>)
+  const fontHref = fontCss([ctx.cfg.headingFont]);
+  return <Ctx.Provider value={ctx}>{fontHref && <link rel="stylesheet" href={fontHref} precedence="default" />}<div data-site-root style={style} className="relative min-h-screen font-body antialiased selection:bg-[var(--c)] selection:text-white">{children}</div></Ctx.Provider>;
 }
 
 export const pathOf = (base: string, p: Page): string =>
@@ -96,6 +98,8 @@ export function SiteLink({ to, className = '', children, ...rest }: { to: Page; 
 
 export function H({ as: Tag = 'h2', className = '', children }: { as?: 'h1' | 'h2' | 'h3'; className?: string; children: ReactNode }) {
   const { cfg } = useSite();
+  const custom = FONTS.find(x => x.id === cfg.headingFont);
+  if (custom) return <Tag className={`leading-[1.08] text-balance ${custom.serif ? 'tracking-[-0.01em]' : 'tracking-[-0.02em]'} ${className}`} style={{ fontFamily: `'${custom.family}', ${custom.serif ? 'serif' : 'sans-serif'}`, fontWeight: custom.weight }}>{children}</Tag>;
   const f = cfg.font === 'serif' ? 'font-[family-name:var(--font-serif-accent)] font-normal tracking-[-0.015em]' : 'font-display font-bold tracking-[-0.03em]';
   return <Tag className={`${f} leading-[1.05] text-balance ${className}`}>{children}</Tag>;
 }
