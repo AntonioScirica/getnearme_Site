@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Check, Download, Layers, Loader2, Search, Trash2, Wand2 } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import PhotoViewer from '@/components/ui/PhotoViewer';
+import ProgressiveBlur from '@/components/ProgressiveBlur';
 import Dropdown from '@/components/ui/Dropdown';
 import { downloadImage } from '@/lib/staging';
 import { fetchProjects, type ProjectData } from '@/lib/projects';
@@ -142,7 +143,7 @@ export default function MediaView() {
       ) : !filtered.length ? (
         <p className="flex h-64 items-center justify-center text-sm text-muted">Nessuna foto con questi filtri.</p>
       ) : (
-        <div className="space-y-10 pt-8">
+        <div className={`space-y-10 pt-8 ${selecting ? 'pb-28' : ''}`}>
           {groups.map(([k, list]) => (
             <section key={k}>
               <h2 className="flex items-baseline gap-2 pb-4 font-semibold">{nameOf(k === 'nessuna' ? null : k)} <span className="text-sm font-normal text-muted">{count(k)} foto</span></h2>
@@ -175,8 +176,10 @@ export default function MediaView() {
       {/* barra della selezione: in basso, fissa. In un portal: dentro la pagina un antenato con transform
           (animazione d'ingresso) la ancorava al fondo del contenuto invece che dello schermo */}
       {selecting && createPortal(
-        <div className="blur-in pointer-events-none fixed inset-x-0 bottom-6 z-40 flex justify-center px-6">
-          <div className={`pointer-events-auto flex items-center gap-2 rounded-full bg-white p-2 pl-5 text-sm ${CARD_SHADOW}`}>
+        <div className="blur-in pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center px-6 pb-6 pt-16">
+          {/* sfumatura progressiva sotto la barra: le foto scorrono dietro e la barra resta leggibile */}
+          <div className="absolute inset-0"><ProgressiveBlur side="bottom" fade={24} /></div>
+          <div className={`pointer-events-auto relative flex items-center gap-2 rounded-full bg-white p-2 pl-5 text-sm ${CARD_SHADOW}`}>
             <span className="font-medium">{sel.size} selezionate</span>
             <button type="button" onClick={() => setSel(new Set(filtered.map(m => m.id)))} className="h-9 rounded-full px-3 font-medium text-muted hover:bg-canvas hover:text-ink">Seleziona tutte</button>
             <button type="button" disabled={!sel.size} onClick={() => setConfirm(true)} className="flex h-9 items-center gap-1.5 rounded-full bg-rose-600 px-4 font-semibold text-white ease-smooth transition-opacity hover:bg-rose-700 disabled:opacity-40"><Trash2 size={14} /> Elimina</button>
