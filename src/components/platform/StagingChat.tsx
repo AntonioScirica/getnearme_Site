@@ -183,7 +183,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
 
   const patch = (id: string, p: Partial<Extract<Msg, { role: 'ai' }>>) => setMsgs(ms => ms.map(m => (m.id === id && m.role === 'ai' ? { ...m, ...p } : m)));
 
-  const upload = async (files: FileList | File[] | null, projectId?: string | null, sourceUrl?: string) => {
+  const upload = async (files: FileList | File[] | null, projectId?: string | null, sourceUrl?: string, early?: Promise<Response | null>) => {
     if (!files?.length) return;
     setProject(projectId ?? null); setOrigin(sourceUrl ?? null);
     touch();
@@ -192,14 +192,18 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
     if (!f.type.startsWith('image/')) return;
     // Riconoscimento su una copia piccola (448 px): parte subito, carica poco e il modello la legge in un terzo del tempo
     const small = await fileToResizedDataUrl(f, 448);
-    const classified = authFetch('/api/platform/photo-classify', { method: 'POST', body: JSON.stringify({ imageBase64: small }) }).catch(() => null);
+    // foto di un immobile: il server risponde dalla memoria dell'immobile se l'ha gia' riconosciuta
+    const classified = early ?? authFetch('/api/platform/photo-classify', { method: 'POST', body: JSON.stringify({ imageBase64: small, ...(projectId && sourceUrl ? { projectId, photoUrl: sourceUrl } : {}) }) }).catch(() => null);
     const img = await fileToResizedDataUrl(f, 1500);
     const id = uid();
     setMsgs(ms => [...ms, { id, role: 'user', image: img, seen: null }]);
     setKind(null); // nuova foto: suggerimenti generici finche' non la riconosce
     setRoomState(null);
     setBase(img);
-    // Tipo di foto e stanza: imposta il tipo da solo e lo dice nel messaggio guida
+    await applySeen(id, classified);
+  };
+  // Tipo di foto e stanza: imposta il tipo da solo e lo dice nel messaggio guida
+  const applySeen = async (id: string, classified: Promise<Response | null>) => {
     try {
       const r = await classified;
       if (!r) return;
@@ -285,7 +289,16 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   useEffect(() => {
     if (started.current || !initial?.photo) return;
     started.current = true;
-    toFile(initial.photo).then(f => upload([f], initial.project ?? null, initial.photo)).catch(() => {});
+    // riconoscimento subito, in parallelo al download della foto (spesso e' gia' in memoria dell'immobile)
+    const early = authFetch('/api/platform/photo-classify', { method: 'POST', body: JSON.stringify({ imageUrl: initial.photo, ...(initial.project ? { projectId: initial.project, photoUrl: initial.photo } : {}) }) }).catch(() => null);
+    // la foto dell'immobile e' gia' online: entra subito in chat con il suo indirizzo, senza scaricarla e ridimensionarla
+    const id = uid(), photo = initial.photo;
+    queueMicrotask(() => {
+      setProject(initial.project ?? null); setOrigin(photo); touch();
+      setMsgs(ms => [...ms, { id, role: 'user', image: photo, seen: null }]);
+      setKind(null); setRoomState(null); setBase(photo);
+      applySeen(id, early);
+    });
   }, [initial]); // eslint-disable-line react-hooks/exhaustive-deps
   // risultato nell'immobile: accanto all'originale o al posto suo
   const putInProperty = async (m: Extract<Msg, { role: 'ai' }>, mode: 'add' | 'replace') => {

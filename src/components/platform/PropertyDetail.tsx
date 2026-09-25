@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, ExternalLink, Info, Loader2, Sparkles, Star, Wand2, X } from 'lucide-react';
 import FitImage from '@/components/ui/FitImage';
 import { TEMPLATES, type TemplateId } from '@/lib/siteTemplates';
@@ -51,6 +51,14 @@ function PhotoManager({ project, onChange }: { project: ProjectData; onChange: (
   const d = (project.import_data ?? {}) as { photos?: unknown; prima?: Record<string, string> };
   const photos = Array.isArray(d.photos) ? d.photos.filter((x): x is string => typeof x === 'string') : project.cover ? [project.cover] : [];
   const [busy, setBusy] = useState<string | null>(null);
+  // passando sopra una foto si fa gia' riconoscere la stanza: quando la apri in chat la risposta e' in memoria
+  const warmed = useRef(new Set<string>());
+  const prefetch = (src: string) => {
+    const known = (d as { rooms?: Record<string, unknown> }).rooms?.[src];
+    if (known || warmed.current.has(src)) return;
+    warmed.current.add(src);
+    authFetch('/api/platform/photo-classify', { method: 'POST', body: JSON.stringify({ imageUrl: src, projectId: project.id, photoUrl: src }) }).catch(() => {});
+  };
   const act = async (mode: 'remove' | 'cover', photo: string) => {
     if (mode === 'remove' && !confirm('Togliere questa foto dall’immobile?')) return;
     setBusy(photo);
@@ -66,7 +74,7 @@ function PhotoManager({ project, onChange }: { project: ProjectData; onChange: (
       {photos.length ? (
         <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
           {photos.map(src => (
-            <li key={src} className="group relative aspect-[4/3] overflow-hidden rounded-2xl bg-canvas">
+            <li key={src} onMouseEnter={() => prefetch(src)} className="group relative aspect-[4/3] overflow-hidden rounded-2xl bg-canvas">
               <FitImage src={src} />
               {src === project.cover && <span className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-ink/75 px-2.5 py-1 text-[11px] font-semibold text-white"><Star size={10} /> Copertina</span>}
               {d.prima?.[src] && <span className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-brand px-2.5 py-1 text-[11px] font-semibold text-white"><Sparkles size={10} /> Prima / Dopo</span>}
