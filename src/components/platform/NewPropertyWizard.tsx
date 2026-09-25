@@ -205,7 +205,7 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
               plan ? (
                 // riga compatta: card 24 con padding 8, miniatura 16 (concentrica), azioni a pillola
                 <div className={`mt-3 flex items-center gap-3 rounded-3xl bg-white p-2 pr-3 ${CARD_SHADOW}`}>
-                  <div className="relative h-14 w-20 shrink-0 overflow-hidden rounded-2xl bg-canvas"><img src={plan} alt="" className="h-full w-full object-contain" /></div>
+                  <div className="relative h-14 w-20 shrink-0 overflow-hidden rounded-2xl bg-canvas"><img src={plan} alt="" className="h-full w-full object-cover" /></div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5 text-sm font-semibold"><LayoutTemplate size={14} className="text-muted" /> Planimetria</div>
                     <div className="text-xs text-muted">Pronta, andrà nell&apos;annuncio dopo le foto</div>
