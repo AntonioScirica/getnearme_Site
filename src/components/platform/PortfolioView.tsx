@@ -106,7 +106,7 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
               className="flex h-10 items-center gap-2 rounded-full bg-white px-4 text-sm font-medium ring-1 ring-black/10 ease-smooth transition-colors hover:bg-canvas"><ArrowLeft size={15} /> Tutti i modelli</button>
             <span className="text-sm text-muted">Stai modificando <b className="text-ink">{TEMPLATES.find(t => t.id === cfg.template)?.name}</b>{cfg.template !== site.config.template && ' (non ancora pubblicato)'}</span>
           </div>
-        <div className="grid items-start gap-6 lg:grid-cols-[340px_1fr]">
+        <div className="grid items-start gap-6 lg:grid-cols-[340px_minmax(0,1fr)]">
           {/* Controlli: sezioni della pagina aperta (clic nell'anteprima = apre la sezione) o impostazioni generali */}
           <SideEditor cfg={cfg} set={set} page={page} onPage={setPage} firstId={props[0]?.id} covers={covers} selected={selected} setSelected={setSelected} />
 
@@ -332,7 +332,8 @@ function Preview({ children, page, onPage, firstId, editMode, setEditMode, vtNam
     return () => ro.disconnect();
   }, []);
   return (
-    <MorphTarget id={vtName ?? 'preview'}>
+    // min-w-0: e' la colonna della griglia; senza, il sito largo 1280 px la allargava e l'anteprima usciva dallo schermo
+    <MorphTarget id={vtName ?? 'preview'} className="min-w-0">
     <div data-morph="preview" className={`overflow-hidden rounded-[28px] bg-white ${CARD_SHADOW}`}>
       <div className="flex items-center gap-2 border-b border-line px-4 py-3 text-xs text-muted">
         <span className="flex gap-1.5">{[0, 1, 2].map(i => <span key={i} className="h-2.5 w-2.5 rounded-full bg-line" />)}</span>
