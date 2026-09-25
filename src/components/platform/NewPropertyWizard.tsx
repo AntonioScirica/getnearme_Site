@@ -12,7 +12,7 @@ import { downscaleDataUrl, uploadDataUrl } from '@/lib/imageUpload';
 import ProgressiveBlur from '@/components/ProgressiveBlur';
 import FitImage from '@/components/ui/FitImage';
 import { ALL_FIELDS, completeness, ENERGY_COLORS, inkOn, formatValue, visible, type Details, type Field } from '@/lib/propertyFields';
-import { authFetch, portfolioUrl, setPublic } from './api';
+import { authFetch, CARD_SHADOW, portfolioUrl, setPublic } from './api';
 import { CopyIcon } from './ImproveView';
 import CountUp from './CountUp';
 
@@ -203,11 +203,17 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
             {cur.id === 'foto' && <PhotoGrid photos={photos} setPhotos={setPhotos} onAdd={addPhotos} extra={
               // planimetria subito sotto "Aggiungi foto": stesso riquadro tratteggiato, piu' basso
               plan ? (
-                <div className="mt-3 flex items-center gap-4 rounded-3xl bg-white p-3 ring-1 ring-line">
-                  <div className="flex h-16 w-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-canvas"><img src={plan} alt="" className="h-full w-full object-contain" /></div>
-                  <div className="min-w-0 flex-1 text-sm font-medium">Planimetria</div>
-                  <label className="cursor-pointer rounded-full px-4 py-2 text-sm font-medium hover:bg-canvas">Cambia<input type="file" accept="image/*" className="hidden" onChange={async e => { const f = e.target.files?.[0]; if (f) setPlan(await downscaleDataUrl(await readFile(f), 2000, 0.85)); e.target.value = ''; }} /></label>
-                  <button onClick={() => setPlan(null)} aria-label="Togli la planimetria" className="mr-1 rounded-full p-2 text-muted hover:bg-canvas hover:text-ink"><X size={16} /></button>
+                // riga compatta: card 24 con padding 8, miniatura 16 (concentrica), azioni a pillola
+                <div className={`mt-3 flex items-center gap-3 rounded-3xl bg-white p-2 pr-3 ${CARD_SHADOW}`}>
+                  <div className="relative h-14 w-20 shrink-0 overflow-hidden rounded-2xl bg-canvas"><img src={plan} alt="" className="h-full w-full object-contain" /></div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5 text-sm font-semibold"><LayoutTemplate size={14} className="text-muted" /> Planimetria</div>
+                    <div className="text-xs text-muted">Pronta, andrà nell&apos;annuncio dopo le foto</div>
+                  </div>
+                  <label className="flex h-9 cursor-pointer items-center gap-1.5 rounded-full bg-canvas px-4 text-[13px] font-medium ease-smooth transition-colors hover:bg-line/60"><ImagePlus size={14} /> Cambia
+                    <input type="file" accept="image/*" className="hidden" onChange={async e => { const f = e.target.files?.[0]; if (f) setPlan(await downscaleDataUrl(await readFile(f), 2000, 0.85)); e.target.value = ''; }} />
+                  </label>
+                  <button onClick={() => setPlan(null)} aria-label="Togli la planimetria" className="flex h-9 w-9 items-center justify-center rounded-full text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink"><X size={16} /></button>
                 </div>
               ) : (
                 <label className="mt-3 flex cursor-pointer items-center justify-center gap-2 rounded-3xl border-2 border-dashed border-line bg-white py-4 text-muted ease-smooth transition hover:border-brand hover:text-brand">
