@@ -48,12 +48,14 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
   };
 
   const pub = (projects ?? []).filter(p => p.is_public);
-  const props: SiteProperty[] = (pub.length ? pub : process.env.NODE_ENV === 'development' ? FAKE_PROPERTIES : [])
-    .map(p => {
+  const toSite = (p: ProjectData): SiteProperty => {
       const d = (p.import_data ?? {}) as { photos?: string[]; zona?: string[]; contratto?: string };
       return { id: p.id, titolo: p.titolo || p.nome, addr: p.addr, prezzo: p.prezzo, mq: p.mq, camere: p.camere, bagni: p.bagni, locali: p.locali, tipologia: p.tipologia, cover: p.cover,
         descrizione: p.descrizione, riferimento: p.riferimento, createdAt: p.createdAt, details: (d as { details?: Record<string, unknown> }).details, photos: Array.isArray(d.photos) && d.photos.length ? d.photos : [p.cover], zona: Array.isArray(d.zona) ? d.zona : [], contratto: d.contratto ?? '' };
-    });
+  };
+  const props: SiteProperty[] = (pub.length ? pub : process.env.NODE_ENV === 'development' ? FAKE_PROPERTIES : []).map(toSite);
+  // miniature dei modelli: sempre piene di case, le tue piu' quelle di esempio fino a 9 (solo anteprima, non va online)
+  const showcase = [...props, ...FAKE_PROPERTIES.filter(f => !props.some(p => p.id === f.id)).map(toSite)].slice(0, Math.max(9, props.length));
   const covers = [...new Set(props.map(p => p.cover).filter(Boolean))].slice(0, 12);
 
   return (
@@ -95,7 +97,7 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
         </div>
 
       {tab === 'immobili' ? <PropertiesTab projects={projects} onChange={onChange} /> : !editing ? (
-        <Gallery cfg={site.config} name={site.name || 'La tua agenzia'} logo={site.logo} props={props}
+        <Gallery cfg={site.config} name={site.name || 'La tua agenzia'} logo={site.logo} props={showcase}
           onPick={id => { if (id !== cfg.template) set({ template: id, primary: TEMPLATES.find(t => t.id === id)!.primary, font: TEMPLATES.find(t => t.id === id)!.font }); setPage({ page: 'home' }); setEditing(id); }} />
       ) : (
         <div className="mt-6">
@@ -306,7 +308,8 @@ function Thumb({ children }: { children: ReactNode }) {
   }, []);
   return (
     <div ref={box} data-thumb-box className="pointer-events-none relative aspect-[4/3] select-none overflow-hidden" aria-hidden style={{ ['--thumb-scroll' as string]: `-${scroll}px` }}>
-      <div className="transition-transform duration-[6000ms] ease-in-out group-hover:[transform:translateY(var(--thumb-scroll))]">
+      {/* in hover scende piano (6 s); uscendo torna in cima in 800 ms, sempre ease-in-out */}
+      <div className="transition-transform duration-[800ms] ease-in-out group-hover:duration-[6000ms] group-hover:[transform:translateY(var(--thumb-scroll))]">
         <div ref={page} style={{ width: 1280, transform: `scale(${k})`, transformOrigin: 'top left', height: 'max-content' }}>{children}</div>
       </div>
     </div>
