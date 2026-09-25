@@ -448,10 +448,6 @@ html.metrics-light [class*="border-gray-600"] { border-color: #d8d4cb !important
 /* Testo che si riscrive "con l'AI": ogni parola entra sfocata e colorata e si assesta (ritardo per parola via style) */
 @keyframes gnm-ai-word { 0% { opacity: 0; filter: blur(6px); color: var(--color-brand, #2563eb); } 55% { opacity: 1; filter: blur(0); color: var(--color-brand, #2563eb); } 100% { opacity: 1; filter: none; } }
 .ai-word { display: inline-block; animation: gnm-ai-word var(--gnm-dur) var(--gnm-ease) both; }
-/* Trasformazioni tra stati (lib/morph.ts): stessa durata e curva di tutte le animazioni */
-::view-transition-group(*) { animation-duration: var(--gnm-dur); animation-timing-function: var(--gnm-ease); }
-::view-transition-old(*), ::view-transition-new(*) { animation-duration: calc(var(--gnm-dur) * .6); animation-timing-function: var(--gnm-ease); }
-::view-transition-new(root) { animation-delay: calc(var(--gnm-dur) * .25); }
 /* Passata di luce: il testo nuovo esce dietro una banda blu che scorre DENTRO le lettere (componente LightSwap) */
 @keyframes gnm-swap { from { mask-position: 100% 0; -webkit-mask-position: 100% 0; } to { mask-position: 0 0; -webkit-mask-position: 0 0; } }
 @keyframes gnm-swap-light { from { background-position: -40% 0; } to { background-position: 140% 0; } }
