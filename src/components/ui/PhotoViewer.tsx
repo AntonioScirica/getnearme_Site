@@ -27,15 +27,19 @@ export default function PhotoViewer({ src, before, steps, onClose }: { src: stri
   const cur = list[i] ?? list[list.length - 1];
 
   return createPortal(
-    <div className="blur-in fixed inset-0 z-[250] flex flex-col items-center justify-center gap-4 bg-black/85 p-6 backdrop-blur-sm" onClick={onClose}>
-      <img key={cur.src} src={cur.src} alt="" onClick={e => e.stopPropagation()}
-        className={`blur-in max-w-[92vw] rounded-2xl object-contain shadow-2xl ${all ? 'max-h-[70vh]' : 'max-h-[82vh]'}`} />
+    <div className="blur-in fixed inset-0 z-[250] flex flex-col items-center gap-4 bg-black/85 p-6 backdrop-blur-sm" onClick={onClose}>
+      {/* area foto a misura fissa (tutto lo spazio sopra i controlli): cambiando passaggio la foto non si sposta */}
+      <div className="flex min-h-0 w-full flex-1 items-center justify-center">
+        <img key={cur.src} src={cur.src} alt="" onClick={e => e.stopPropagation()}
+          className="blur-in max-h-full max-w-[92vw] rounded-2xl object-contain shadow-2xl" />
+      </div>
       <button onClick={onClose} aria-label="Chiudi" className="absolute right-5 top-5 flex h-11 w-11 items-center justify-center rounded-full bg-white/15 text-white ease-smooth transition-colors hover:bg-white/25"><X size={20} /></button>
       {list.length > 1 && (
-        <div className="flex flex-col items-center gap-3" onClick={e => e.stopPropagation()}>
+        <div className="flex shrink-0 flex-col items-center gap-3" onClick={e => e.stopPropagation()}>
           {/* tutti i passaggi: miniature dall'originale all'ultima versione */}
-          {all && (
-            <div className="blur-in flex max-w-[92vw] gap-2 overflow-x-auto rounded-2xl bg-white/10 p-2 [scrollbar-width:none]">
+          {/* sempre al suo posto (invisibile finche' chiusa): aprendola la foto non si rimpicciolisce */}
+          {list.length > 2 && (
+            <div className={`flex max-w-[92vw] gap-2 overflow-x-auto rounded-2xl bg-white/10 p-2 ease-smooth transition-opacity [scrollbar-width:none] ${all ? '' : 'pointer-events-none opacity-0'}`}>
               {list.map((s, j) => (
                 <button key={s.src} onClick={() => setI(j)} title={s.label} className={`relative h-16 w-24 shrink-0 overflow-hidden rounded-lg ring-2 ease-smooth transition-[box-shadow,opacity] ${j === i ? 'ring-white' : 'opacity-60 ring-transparent hover:opacity-100'}`}>
                   <img src={s.src} alt="" className="h-full w-full object-cover" />
@@ -56,7 +60,8 @@ export default function PhotoViewer({ src, before, steps, onClose }: { src: stri
               </button>
             )}
           </div>
-          {all && i > 0 && i < list.length - 1 && <p className="text-sm text-white/80">{cur.label}</p>}
+          {/* riga sempre presente (anche vuota): cosi' l'altezza dei controlli non cambia */}
+          {list.length > 2 && <p className="h-5 max-w-[80vw] truncate text-sm text-white/80">{i > 0 && i < list.length - 1 ? cur.label : ''}</p>}
         </div>
       )}
     </div>,

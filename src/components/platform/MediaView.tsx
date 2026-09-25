@@ -153,7 +153,7 @@ export default function MediaView() {
                       </span>
                     </button>
                     <div className="flex min-h-12 items-center gap-3 px-2 pt-2 text-xs text-muted">
-                      <span className="min-w-0 flex-1 truncate">{m.text ? <><span className="text-ink">{m.text}</span> · </> : null}{DAY.format(m.at)}</span>
+                      <span className="min-w-0 flex-1 truncate">{DAY.format(m.at)}</span>
                       <button type="button" onClick={() => downloadImage(m.dopo, 'agenteimmo.jpg')} className="flex h-8 shrink-0 items-center gap-1.5 rounded-full px-3 font-medium leading-none text-ink hover:bg-canvas"><Download size={14} className="translate-y-px" /> Scarica</button>
                     </div>
                   </div>
