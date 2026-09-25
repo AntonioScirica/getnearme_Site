@@ -147,7 +147,7 @@ export default function PropertyView({ p, contact }: { p: PropertyViewData; cont
           {showAddr && p.addr && (
             <section className="mt-10">
               <h2 className="mb-4 font-display text-xl font-semibold">Dove si trova</h2>
-              <LeafletMap addr={p.addr} className="h-80 rounded-2xl bg-canvas ring-1 ring-line" />
+              <LeafletMap addr={p.addr} photo={p.cover || undefined} className="h-80 rounded-2xl bg-canvas ring-1 ring-line" />
             </section>
           )}
         </div>
