@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { ArrowLeft, Check, ChevronDown, Copy, Eye, EyeOff, ExternalLink, Globe, ImagePlus, Loader2, Pencil, Plus, RotateCcw, Trash2 } from 'lucide-react';
 import type { ProjectData } from '@/lib/projects';
+import Tooltip from '@/components/ui/Tooltip';
 import { FAKE_PROPERTIES } from '@/lib/fakeProperties';
 import { FIELD_LABELS, PAGE_SECTIONS, TEMPLATES, TEXTS, zoneSlug, type PageId, type SiteConfig, type SiteProperty, type TemplateId } from '@/lib/siteTemplates';
 import { SitePage, SiteThumb } from '@/components/site/pages';
@@ -58,22 +59,28 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
 
   return (
     <>
-      {/* intestazione: link del sito e schede sulla stessa riga (stessa altezza, 40px), divisore sotto */}
+      {/* intestazione come la Galleria: titolo e una riga a sinistra, indirizzo del sito a destra; sotto il divisore
+          le schede e Pubblica */}
       <div className="flex flex-wrap items-end justify-between gap-4 border-b border-line pb-6">
         <div>
-          <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-brand/10 px-3 py-1 text-xs font-semibold text-brand"><Globe size={13} /> Il tuo sito personale</div>
-          <h1 className="font-display text-4xl font-bold leading-[1.2] tracking-tight">Il sito con i tuoi immobili</h1>
-          <p className="mt-1 max-w-xl text-sm text-muted">Un sito tutto tuo, con il tuo nome e i tuoi contatti: le case che pubblichi, chi sei, i servizi e le zone in cui lavori. Lo condividi ai clienti e lo trovano su Google.</p>
-          {url && (
-            <div className="mt-2 flex h-10 items-center gap-3 text-sm">
-              <span className="text-muted">Online su</span>
-              <a href={url} target="_blank" rel="noreferrer" className="flex items-center gap-1 font-medium text-brand"><ExternalLink size={14} /> {url.replace(/^https?:\/\//, '')}</a>
-              <button onClick={() => { navigator.clipboard.writeText(url); setCopied(true); setTimeout(() => setCopied(false), 1500); }}
-                className="flex items-center gap-1 text-muted hover:text-ink">{copied ? <Check size={14} /> : <Copy size={14} />} {copied ? 'Copiato' : 'Copia'}</button>
-            </div>
-          )}
+          <h1 className="font-display text-3xl font-bold tracking-tight">Il mio sito</h1>
+          <p className="pt-1 text-sm text-muted">Il tuo sito con le tue case, da condividere con i clienti.</p>
         </div>
-        <div className="flex items-center gap-2">
+        {url && (
+          <div className="flex h-10 min-w-0 items-center gap-1 rounded-full bg-white pl-4 pr-1 text-sm ring-1 ring-line">
+            <Globe size={15} className="shrink-0 text-muted" />
+            <a href={url} target="_blank" rel="noreferrer" className="min-w-0 truncate px-1.5 font-medium hover:text-brand">{url.replace(/^https?:\/\//, '')}</a>
+            <Tooltip label={copied ? 'Copiato' : 'Copia il link'}>
+              <button onClick={() => { navigator.clipboard.writeText(url); setCopied(true); setTimeout(() => setCopied(false), 1500); }} aria-label="Copia il link"
+                className="flex h-8 w-8 items-center justify-center rounded-full text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink">{copied ? <Check size={15} /> : <Copy size={15} />}</button>
+            </Tooltip>
+            <Tooltip label="Apri il sito">
+              <a href={url} target="_blank" rel="noreferrer" aria-label="Apri il sito" className="flex h-8 w-8 items-center justify-center rounded-full text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink"><ExternalLink size={15} /></a>
+            </Tooltip>
+          </div>
+        )}
+      </div>
+      <div className="flex flex-wrap items-center justify-between gap-2 pt-6">
           <div className="flex h-10 items-center rounded-full bg-white p-1 ring-1 ring-black/10">
             {([['sito', 'Aspetto del sito'], ['immobili', 'Immobili e indirizzo']] as const).map(([id, l]) => (
               <button key={id} onClick={() => setTab(id)} className={`flex h-8 items-center rounded-full px-4 text-[13px] font-medium ease-smooth transition-colors ${tab === id ? 'bg-ink text-white' : 'text-muted hover:text-ink'}`}>{l}</button>
@@ -87,7 +94,6 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
             </button>
           )}
         </div>
-      </div>
 
       {tab === 'immobili' ? <PropertiesTab projects={projects} onChange={onChange} /> : !editing ? (
         <Gallery cfg={site.config} name={site.name || 'La tua agenzia'} logo={site.logo} props={props}
@@ -240,9 +246,8 @@ function Gallery({ cfg, name, logo, props, onPick }: { cfg: SiteConfig; name: st
     setTimeout(() => { morphFrom(el.querySelector('[data-thumb]'), `tpl-${id}`); onPick(id); }, 260);
   };
   return (
-    <div className="mt-8">
-      <h2 className="font-display text-xl font-semibold">Scegli lo stile del tuo sito</h2>
-      <p className="mb-6 mt-1 text-sm text-muted">Dieci stili, tutti già riempiti con i tuoi immobili e i tuoi dati. Ne scegli uno, lo personalizzi e lo pubblichi: il sito online cambia solo quando premi “Pubblica modifiche”.</p>
+    <div className="mt-6">
+      <p className="mb-6 text-sm text-muted">Dieci stili già pronti con i tuoi immobili: scegline uno e personalizzalo. Online cambia solo quando pubblichi.</p>
       <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
         {TEMPLATES.map((t, i) => {
           const used = cfg.template === t.id;
