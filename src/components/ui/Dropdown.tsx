@@ -18,7 +18,7 @@ export default function Dropdown<T extends string>({ value, options, onChange, c
   const btn = useRef<HTMLButtonElement>(null);
   const menu = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
-  const [pos, setPos] = useState<{ left: number; top: number; up: boolean } | null>(null);
+  const [pos, setPos] = useState<{ left: number; top: number; up: boolean; max: number } | null>(null);
   const [active, setActive] = useState(0);
   const current = options.find(o => o.value === value);
 
@@ -26,9 +26,11 @@ export default function Dropdown<T extends string>({ value, options, onChange, c
     if (!open || !btn.current) return;
     const place = () => {
       const r = btn.current!.getBoundingClientRect();
+      // si apre dalla parte con piu' spazio e non esce mai dallo schermo (si accorcia e scorre)
       const h = Math.min(360, options.length * 40 + 40);
-      const up = window.innerHeight - r.bottom < h + 16 && r.top > h;
-      setPos({ left: align === 'end' ? r.right : r.left, top: up ? r.top - 8 : r.bottom + 8, up });
+      const below = window.innerHeight - r.bottom - 24, above = r.top - 24;
+      const up = below < h && above > below;
+      setPos({ left: align === 'end' ? r.right : r.left, top: up ? r.top - 8 : r.bottom + 8, up, max: Math.max(120, Math.min(360, up ? above : below)) });
     };
     place();
     window.addEventListener('scroll', place, true); window.addEventListener('resize', place);
@@ -53,13 +55,13 @@ export default function Dropdown<T extends string>({ value, options, onChange, c
   return (
     <>
       <button ref={btn} type="button" onClick={toggle} aria-haspopup="listbox" aria-expanded={open}
-        className={`inline-flex items-center gap-1 rounded-lg outline-none ease-smooth transition-colors hover:text-brand focus-visible:ring-2 focus-visible:ring-brand/40 ${className}`}>
+        className={`inline-flex items-center gap-0.5 rounded-lg outline-none ease-smooth transition-colors hover:text-brand focus-visible:ring-2 focus-visible:ring-brand/40 ${className}`}>
         {children ?? current?.label}
-        <ChevronDown size={15} className={`shrink-0 ease-smooth transition-transform ${open ? 'rotate-180' : ''}`} />
+        <ChevronDown size={14} strokeWidth={2.5} className={`shrink-0 translate-y-px ease-smooth transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
       {open && pos && createPortal(
         <div ref={menu} role="listbox" className="blur-in fixed z-[200] max-h-[360px] w-60 overflow-y-auto rounded-2xl bg-white p-2 text-sm text-ink shadow-[0_18px_50px_-12px_rgba(0,0,0,.25)] ring-1 ring-black/5 [scrollbar-width:none]"
-          style={{ left: pos.left, top: pos.top, transform: `translate(${align === 'end' ? '-100%' : '0'}, ${pos.up ? '-100%' : '0'})` }}>
+          style={{ left: pos.left, top: pos.top, maxHeight: pos.max, transform: `translate(${align === 'end' ? '-100%' : '0'}, ${pos.up ? '-100%' : '0'})` }}>
           {options.map((o, i) => {
             const head = o.group && o.group !== options[i - 1]?.group ? o.group : null;
             return (

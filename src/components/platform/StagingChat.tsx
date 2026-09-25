@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { ArrowUp, ImagePlus, Loader2, RotateCcw, SquareDashedMousePointer, X } from 'lucide-react';
 import { fileToResizedDataUrl } from '@/lib/staging';
 import { AI_MOCK } from '@/lib/aiMock';
@@ -22,6 +22,22 @@ const SEEN_OPTIONS: DropdownOption<string>[] = [
   ...['soggiorno', 'cucina', 'camera', 'cameretta', 'bagno', 'sala', 'studio', 'ingresso', 'corridoio', 'balcone', 'cantina', 'box'].map(r => ({ value: `room:${r}`, label: ROOM_LABEL[r], group: 'Interno' })),
   ...(['esterno', 'giardino', 'planimetria'] as const).map(x => ({ value: `scene:${x}`, label: SCENE_LABEL[x], group: 'Altro' })),
 ];
+// Suggerimenti in base a cosa c'e' nella foto (la cucina non ha "Arreda nordico", la facciata non ha "Svuota la stanza")
+const S = (id: string, label: string, req: Suggestion['req']): Suggestion => ({ id, label, req });
+const EMPTY = S('empty', 'Svuota la stanza', { style: 'empty' }), LIGHT = S('day', 'Più luce naturale', { angle: 'day' }), TIDY = QUICK_PRESETS.find(x => x.id === 'tidy')!;
+function suggestionsFor(kind: string | null): Suggestion[] {
+  switch (kind) {
+    case 'room:cucina': return [S('k-modern', 'Cucina moderna', { prompt: 'Rinnova la cucina in stile moderno: ante lisce, piano di lavoro chiaro, elettrodomestici da incasso' }), S('k-wood', 'Bianco e legno', { prompt: 'Rendi la cucina bianca con dettagli in legno chiaro' }), TIDY, LIGHT, EMPTY];
+    case 'room:camera': return [S('b-modern', 'Camera moderna', { prompt: 'Arreda come camera da letto moderna: letto matrimoniale, comodini, armadio, tessili neutri' }), S('b-nordic', 'Camera accogliente', { prompt: 'Arreda come camera da letto accogliente in stile nordico, legno chiaro e tessili morbidi' }), TIDY, LIGHT, EMPTY];
+    case 'room:cameretta': return [S('c-kids', 'Cameretta bambini', { prompt: 'Arreda come cameretta per bambini: lettino, scrivania, giochi ordinati, colori tenui' }), S('c-teen', 'Camera ragazzi', { prompt: 'Arreda come camera per ragazzi: letto singolo, scrivania, libreria' }), TIDY, LIGHT, EMPTY];
+    case 'room:bagno': return [S('w-modern', 'Bagno moderno', { prompt: 'Rinnova il bagno in stile moderno: sanitari sospesi, doccia in vetro, piastrelle chiare grandi' }), S('w-light', 'Piastrelle chiare', { prompt: 'Cambia le piastrelle con piastrelle chiare moderne, lascia sanitari e disposizione' }), TIDY, LIGHT];
+    case 'room:balcone': return [S('o-furnish', 'Arreda il balcone', { prompt: 'Arreda il balcone con un tavolino, due sedie da esterno e qualche pianta' }), S('o-plants', 'Aggiungi piante', { prompt: 'Aggiungi piante e fiori in vaso lungo il balcone' }), S('o-night', 'Giorno e notte', { style: 'daynight' }), TIDY];
+    case 'scene:esterno': return [S('f-renew', 'Rinnova la facciata', { style: 'empty' }), S('f-modern', 'Facciata moderna', { style: 'modern' }), S('f-sky', 'Cielo azzurro', { prompt: 'Cielo azzurro limpido e luce di sole, senza cambiare l’edificio' }), S('f-night', 'Giorno e notte', { style: 'daynight' })];
+    case 'scene:giardino': return [S('g-renew', 'Giardino curato', { style: 'empty' }), S('g-furnish', 'Arreda il giardino', { prompt: 'Aggiungi un tavolo con sedie da esterno e un ombrellone, lascia prato e piante' }), S('g-modern', 'Giardino moderno', { style: 'modern' }), S('g-night', 'Luci di sera', { style: 'daynight' })];
+    case 'scene:planimetria': return [];
+    default: return QUICK_PRESETS;
+  }
+}
 const seenLabel = (k: string) => SEEN_OPTIONS.find(o => o.value === k)?.label ?? 'un interno';
 
 type Msg =
@@ -42,6 +58,7 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
   const [text, setText] = useState('');
   const [picked, setPicked] = useState<Suggestion | null>(null);
   const [scene, setScene] = useState<Scene>('interno');
+  const [kind, setKind] = useState<string | null>(null); // es. "room:cucina", "scene:giardino": decide i suggerimenti
   const [tick, setTick] = useState(0); // messaggi a rotazione durante la generazione
   const [drag, setDrag] = useState(false);
   const [faded, setFaded] = useState<Set<string>>(new Set()); // messaggi dopo un "Ricomincia da qui"
@@ -86,6 +103,7 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
     const img = await fileToResizedDataUrl(f, 1500);
     const id = uid();
     setMsgs(ms => [...ms, { id, role: 'user', image: img, seen: null }]);
+    setKind(null); // nuova foto: suggerimenti generici finche' non la riconosce
     setBase(img);
     // Riconoscimento del tipo di foto e della stanza: imposta il tipo da solo e lo dice nel messaggio guida
     try {
@@ -95,6 +113,7 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
         setScene(c.scene);
         const what = c.scene === 'interno' ? `room:${ROOM_LABEL[c.room] ? c.room : 'soggiorno'}` : `scene:${c.scene}`;
         setMsgs(ms => ms.map(m => (m.id === id && m.role === 'user' ? { ...m, seen: what } : m)));
+        setKind(what);
       }
     } catch { /* senza riconoscimento resta il tipo scelto a mano */ }
   };
@@ -147,7 +166,7 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
   const empty = msgs.length === 0;
   const picker = <input type="file" accept="image/*" multiple className="hidden" onChange={e => { upload(e.target.files); e.target.value = ''; }} />;
   // i suggerimenti partono subito, senza passare dal campo
-  const chips = (scene === 'planimetria' ? [] : QUICK_PRESETS).map(x => (
+  const chips = suggestionsFor(kind).map(x => (
     <button key={x.id} disabled={busy} onClick={() => send(x.label, x)}
       className="shrink-0 whitespace-nowrap rounded-full bg-white px-3.5 py-1.5 text-[13px] font-medium text-ink/80 shadow-sm ring-1 ring-inset ring-black/10 ease-smooth transition-colors hover:bg-brand hover:text-white disabled:opacity-40">{x.label}</button>
   ));
@@ -190,11 +209,18 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
               </div>
               {m.image && i === msgs.length - 1 && !busy && (
                 <div className="blur-in mt-6 max-w-[85%] rounded-3xl rounded-bl-2xl bg-canvas px-4 py-3 text-sm" style={{ animationDelay: '.3s' }}>
-                  <p>{m.seen ? <>Sembra{' '}
-                    <Dropdown value={m.seen} options={SEEN_OPTIONS} className="font-bold" onChange={v => {
-                      setMsgs(ms => ms.map(x => (x.id === m.id && x.role === 'user' ? { ...x, seen: v } : x)));
-                      setScene(v.startsWith('scene:') ? (v.slice(6) as Scene) : 'interno');
-                    }}>{seenLabel(m.seen)}</Dropdown>. </> : 'Foto caricata. '}Cosa vuoi cambiare? Scrivilo qui sotto o tocca un suggerimento.</p>
+                  {/* quando riconosce la foto il messaggio si riscrive parola per parola (key = cosa ha visto) */}
+                  <p key={m.seen ?? 'caricata'}>{(() => {
+                    const words: (string | ReactNode)[] = m.seen
+                      ? ['Sembra', <Dropdown key="d" value={m.seen} options={SEEN_OPTIONS} className="font-bold" onChange={v => {
+                          setMsgs(ms => ms.map(x => (x.id === m.id && x.role === 'user' ? { ...x, seen: v } : x)));
+                          setScene(v.startsWith('scene:') ? (v.slice(6) as Scene) : 'interno'); setKind(v);
+                        }}>{seenLabel(m.seen)}</Dropdown>, '.', ...'Cosa vuoi cambiare? Scrivilo qui sotto o tocca un suggerimento.'.split(' ')]
+                      : 'Foto caricata. Cosa vuoi cambiare? Scrivilo qui sotto o tocca un suggerimento.'.split(' ');
+                    return words.map((w, k) => (
+                      <span key={k} className={m.seen ? 'ai-word' : ''} style={m.seen ? { animationDelay: `${k * 45}ms` } : undefined}>{w}{words[k + 1] === '.' ? '' : ' '}</span>
+                    ));
+                  })()}</p>
                 </div>
               )}
             </div>
