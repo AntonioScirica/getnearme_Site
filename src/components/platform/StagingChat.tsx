@@ -267,7 +267,6 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
             <div key={m.id} className={`blur-in flex justify-start ease-smooth transition-opacity ${faded.has(m.id) ? 'opacity-35 hover:opacity-80' : ''}`}>
               <div className={`w-full rounded-3xl rounded-bl-2xl bg-white p-2 ${CARD_SHADOW}`} style={{ maxWidth: `min(560px, calc(60vh * ${ratios[m.before] ?? 1.5} + 16px))` }}><AutoSize>
                 {/* Modifica: la foto resta dov'e' e diventa selezionabile, sotto cambiano solo i pulsanti */}
-                {i === zoneOwner ? zonePicker(ratios[m.before] ?? 1.5) : <>
                 {/* raggio interno = esterno - padding: se la foto tocca l'angolo della coda (16px), 8px */}
                 {/* clic sulla foto = a tutto schermo con prima/dopo (non se trascini il cursore prima/dopo o premi Scarica) */}
                 <div className={`relative ${m.out && !m.busy ? 'cursor-zoom-in' : ''}`} style={{ aspectRatio: ratios[m.before] ?? 1.5 }} data-base-photo={m.out && m.out === base ? '' : undefined}
@@ -279,6 +278,8 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
                     setViewer({ src: m.out, before: m.before });
                   }}><AiPhotoStage src={m.before} busy={m.busy} out={m.out} reveal={m.reveal} msg={tick % 5} fileName="home-staging.jpg" className={`h-full ${m.err || (m.out && !m.busy) ? '' : '!rounded-bl-[8px]'}`} />
                 </div>
+                {/* Modifica: la foto sotto resta montata e ferma, la selezione ci si appoggia sopra; sotto cambiano solo i controlli */}
+                {i === zoneOwner ? zonePicker(ratios[m.before] ?? 1.5) : <>
                 {m.err && <p className="blur-in px-2 pt-2 text-sm text-rose-600">{m.err}</p>}
                 {m.out && !m.busy && (
                   <div className="blur-in flex items-center gap-3 px-2 pt-2 text-xs text-muted">
@@ -437,18 +438,25 @@ function ZonePicker({ inline, src, region, points, mask, onChange, onPick, onPre
   const [text, setText] = useState('');
   // ponytail: larghezza di "Scarica" fissa (92px), misurarla se cambia il testo
   const [pill, setPill] = useState(!!inline);
+  // chiusura al contrario: la X torna Scarica, selezione e campo sfumano, poi la card si riaccorcia
+  const [closing, setClosing] = useState(false);
+  const cancel = () => {
+    if (!inline) { onCancel(); return; }
+    setClosing(true); setPill(true);
+    setTimeout(onCancel, 600);
+  };
   useEffect(() => { const t = setTimeout(() => setPill(false), 30); return () => clearTimeout(t); }, []);
   // fuoco sul campo senza far scorrere la chat (autoFocus e onLoad->in fondo facevano il saltino)
   const focused = useRef(false);
   const loading = mask === 'loading';
   const ready = (region && region.w > 0.02) || (points.length > 0 && !loading);
   const photo = (
-      <div ref={box} className={`relative touch-none ${inline ? 'w-full' : 'mx-auto max-h-[calc(100vh-24rem)] w-fit'} select-none overflow-hidden rounded-2xl ${tool === 'rect' ? 'cursor-crosshair' : ''}`}
-        style={{ ...(inline ? { aspectRatio: inline } : {}), ...(tool === 'points' ? { cursor: TARGET_CURSOR } : {}) }}
+      <div ref={box} className={`touch-none ${inline ? `absolute inset-x-0 bottom-full z-20 ease-smooth transition-opacity ${closing ? 'pointer-events-none opacity-0' : ''}` : 'relative mx-auto max-h-[calc(100vh-24rem)] w-fit'} select-none overflow-hidden rounded-2xl ${tool === 'rect' ? 'cursor-crosshair' : ''}`}
+        style={{ ...(inline ? { aspectRatio: inline, animation: 'gnm-fade var(--gnm-dur) var(--gnm-ease) both' } : {}), ...(tool === 'points' ? { cursor: TARGET_CURSOR } : {}) }}
         onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerLeave={leave}>
         <img src={src} alt="" draggable={false} onLoad={inline ? undefined : onLoad} className={inline ? 'block h-full w-full object-cover' : 'block max-h-[calc(100vh-24rem)] w-auto max-w-full'} />
         {/* nella card del risultato il pulsante Scarica si stringe e diventa la X */}
-        <button type="button" onPointerDown={e => e.stopPropagation()} onClick={onCancel} aria-label="Annulla selezione" title="Annulla" style={{ width: pill ? 92 : 36 }}
+        <button type="button" onPointerDown={e => e.stopPropagation()} onClick={cancel} aria-label="Annulla selezione" title="Annulla" style={{ width: pill ? 92 : 36 }}
           className="absolute right-3 top-3 z-10 flex h-9 items-center justify-center overflow-hidden rounded-full bg-white/85 text-ink shadow-sm ring-1 ring-black/5 backdrop-blur-md ease-smooth transition-[width,background-color] hover:bg-white">
           <span className={`absolute flex items-center gap-1.5 whitespace-nowrap text-xs font-semibold ease-smooth transition-opacity ${pill ? 'opacity-100' : 'opacity-0'}`}><Download size={14} /> Scarica</span>
           <X size={16} className={`ease-smooth transition-opacity ${pill ? 'opacity-0' : 'opacity-100'}`} />
@@ -475,7 +483,7 @@ function ZonePicker({ inline, src, region, points, mask, onChange, onPick, onPre
   const form = (
       <form onSubmit={e => { e.preventDefault(); if (ready && text.trim() && !busy) onSubmit(text.trim()); }} className="flex w-0 min-w-full items-center gap-2 pt-2">
         {/* campo con dentro, a destra, gli strumenti di selezione (solo icone, nome nel tooltip) */}
-        <div className="flex h-10 min-w-0 flex-1 items-center rounded-full bg-canvas pl-4 pr-1 ease-smooth transition-shadow focus-within:bg-white focus-within:ring-1 focus-within:ring-ink/15">
+        <div className="flex h-10 min-w-0 flex-1 items-center rounded-full border border-transparent bg-canvas pl-4 pr-1 ease-smooth transition-colors focus-within:border-ink/15 focus-within:bg-white">
           <input ref={el => { if (el && !focused.current) { focused.current = true; el.focus({ preventScroll: true }); } }} value={text} onChange={e => setText(e.target.value)}
             placeholder={loading ? 'Riconosco l’oggetto…' : ready ? 'Cosa faccio qui? Es. togli la tv' : tool === 'rect' ? 'Trascina sulla foto per disegnare la zona' : 'Passa sopra un oggetto e cliccalo'}
             className="h-full min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted/60" />
@@ -492,7 +500,12 @@ function ZonePicker({ inline, src, region, points, mask, onChange, onPick, onPre
   );
   // dentro la card del risultato: stessa foto, stesso posto, cambiano solo i controlli sotto
   // prima la card si allunga (AutoSize), poi il campo compare: solo dissolvenza, uno spostamento verso il basso finiva tagliato dal bordo
-  if (inline) return <>{photo}<div className="pb-px" style={{ animation: 'gnm-fade var(--gnm-dur) var(--gnm-ease) .25s both' }}>{form}</div></>;
+  if (inline) return (
+    <div className="relative">
+      {photo}
+      <div className={`ease-smooth transition-opacity ${closing ? 'opacity-0' : ''}`} style={{ animation: 'gnm-fade var(--gnm-dur) var(--gnm-ease) .25s both' }}>{form}</div>
+    </div>
+  );
   return (
     <div className="flex justify-start">
     <MorphTarget id="zone" className={`w-fit max-w-[min(640px,100%)] rounded-3xl rounded-bl-2xl bg-white p-2 ${CARD_SHADOW}`}>
