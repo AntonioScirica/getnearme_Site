@@ -172,15 +172,17 @@ export default function MediaView() {
           {shown < filtered.length && <div ref={sentinel} className="flex h-16 items-center justify-center text-muted"><Loader2 size={18} className="animate-spin" /></div>}
         </div>
       )}
-      {/* barra della selezione: in basso, fissa */}
-      {selecting && (
-        <div className="blur-in fixed inset-x-0 bottom-6 z-40 flex justify-center px-6">
-          <div className={`flex items-center gap-2 rounded-full bg-white p-2 pl-5 text-sm ${CARD_SHADOW}`}>
+      {/* barra della selezione: in basso, fissa. In un portal: dentro la pagina un antenato con transform
+          (animazione d'ingresso) la ancorava al fondo del contenuto invece che dello schermo */}
+      {selecting && createPortal(
+        <div className="blur-in pointer-events-none fixed inset-x-0 bottom-6 z-40 flex justify-center px-6">
+          <div className={`pointer-events-auto flex items-center gap-2 rounded-full bg-white p-2 pl-5 text-sm ${CARD_SHADOW}`}>
             <span className="font-medium">{sel.size} selezionate</span>
             <button type="button" onClick={() => setSel(new Set(filtered.map(m => m.id)))} className="h-9 rounded-full px-3 font-medium text-muted hover:bg-canvas hover:text-ink">Seleziona tutte</button>
             <button type="button" disabled={!sel.size} onClick={() => setConfirm(true)} className="flex h-9 items-center gap-1.5 rounded-full bg-rose-600 px-4 font-semibold text-white ease-smooth transition-opacity hover:bg-rose-700 disabled:opacity-40"><Trash2 size={14} /> Elimina</button>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
       {confirm && createPortal(
         <div className="blur-in fixed inset-0 z-[260] flex items-center justify-center bg-black/40 p-6 backdrop-blur-sm" onClick={() => !deleting && setConfirm(false)}>
