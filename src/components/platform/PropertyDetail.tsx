@@ -60,9 +60,8 @@ function PhotoManager({ project, onChange }: { project: ProjectData; onChange: (
   };
   return (
     <section className={`mb-6 rounded-3xl bg-white p-4 ${CARD_SHADOW}`}>
-      <div className="flex flex-wrap items-end justify-between gap-3 px-1 pb-3">
+      <div className="flex flex-wrap items-end justify-between gap-3 px-1 pb-5">
         <div><h2 className="font-display text-lg font-semibold">Le foto</h2><p className="text-sm text-muted">Passa sopra una foto per migliorarla con l’AI. Il risultato torna qui, accanto all’originale, e sul sito si vede il prima/dopo.</p></div>
-        <a href={`#/staging?project=${project.id}`} className="flex h-9 items-center gap-1.5 rounded-full bg-canvas px-4 text-sm font-medium hover:bg-line/60"><Wand2 size={14} /> Apri la chat</a>
       </div>
       {photos.length ? (
         <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
