@@ -934,7 +934,7 @@ export function Footer() {
         </div></div>
       </Container>
       <Container className={`flex flex-wrap justify-between gap-2 border-t py-6 text-xs ${dark ? 'border-white/10 text-white/45' : 'border-[var(--line)] text-[var(--muted)]'}`}>
-        <span>© {new Date().getFullYear()} {name}{cfg.legal ? ` · ${cfg.legal}` : ''}</span><span>Sito creato con Agente Immo</span>
+        <span>© {new Date().getFullYear()} {name}{cfg.legal ? ` · ${cfg.legal}` : ''}</span><a href="/" target="_blank" rel="noopener" className="hover:underline">Sito creato con Agente Immo</a>
       </Container>
     </footer>
   );
