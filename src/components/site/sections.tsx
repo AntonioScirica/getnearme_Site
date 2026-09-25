@@ -45,6 +45,7 @@ export function statsOf(cfg: SiteConfig, properties: SiteProperty[]) {
 export function navLinks(cfg: SiteConfig): [string, Page][] {
   return [['Home', { page: 'home' }], ['Immobili', { page: 'immobili' }], ...(cfg.services.length ? [['Servizi', { page: 'servizi' }] as [string, Page]] : []), [cfg.aboutTitle || 'Chi sono', { page: 'agente' }], ['Contatti', { page: 'contatti' }]];
 }
+// altezze minime, non fisse: con il logo piu' grande la barra cresce invece di tagliarlo
 export function Header({ over }: { over?: boolean }) {
   const { cfg, name, logo: profileLogo, t, base, preview, go } = useSite();
   const logo = cfg.logo || profileLogo; // logo scelto nel sito, altrimenti quello del profilo
@@ -72,7 +73,7 @@ export function Header({ over }: { over?: boolean }) {
     <header className="relative z-30">
       <TopBar />
       <div className="bg-[var(--ink)] text-white">
-        <Container className="grid h-[72px] grid-cols-[1fr_auto_1fr] items-center">
+        <Container className="grid min-h-[72px] py-3 grid-cols-[1fr_auto_1fr] items-center">
           <button onClick={() => setOpen(true)} aria-label="Menu" className="flex w-fit items-center gap-2 text-sm font-medium"><Menu size={20} /> <span className="hidden md:inline">Menu</span></button>
           <SiteLink to={{ page: 'home' }}>{logo ? <img src={logo} alt={name} style={{ height: cfg.logoSize, maxWidth: cfg.logoSize * 6 }} className="object-contain brightness-0 invert" /> : <span className="text-xl font-bold tracking-tight">#{name.replace(/\s+/g, '')}</span>}</SiteLink>
           <div className="flex justify-end">{cfg.showContact && <SiteLink to={{ page: 'contatti' }} className="hidden text-sm font-semibold text-[var(--c)] md:block">{cfg.ctaLabel}</SiteLink>}</div>
@@ -94,7 +95,7 @@ export function Header({ over }: { over?: boolean }) {
   if (t.header === 'centered') return (
     <header className="relative z-30 bg-[var(--bg)]">
       <TopBar />
-      <Container className="grid h-24 grid-cols-[1fr_auto_1fr] items-center">
+      <Container className="grid min-h-24 py-3 grid-cols-[1fr_auto_1fr] items-center">
         <nav className="hidden items-center md:flex">{nav}</nav>
         <SiteLink to={{ page: 'home' }}>{mark}</SiteLink>
         <div className="flex justify-end gap-3">{cta}{burger}</div>
@@ -106,7 +107,7 @@ export function Header({ over }: { over?: boolean }) {
     <TopBar />
     <header className="sticky top-0 z-30 pt-4">
       <Container>
-        <div className="flex h-16 items-center gap-6 rounded-full bg-[var(--surface)]/85 px-3 pl-5 shadow-[0_10px_40px_-15px_rgba(22,22,58,.25)] ring-1 ring-[var(--line)] backdrop-blur-xl">
+        <div className="flex min-h-16 items-center gap-6 rounded-full py-2 bg-[var(--surface)]/85 px-3 pl-5 shadow-[0_10px_40px_-15px_rgba(22,22,58,.25)] ring-1 ring-[var(--line)] backdrop-blur-xl">
           <SiteLink to={{ page: 'home' }}>{mark}</SiteLink>
           <nav className="mx-auto hidden items-center md:flex">{nav}</nav>
           <div className="ml-auto flex items-center gap-3 md:ml-0">{cta}{burger}</div>
@@ -118,7 +119,7 @@ export function Header({ over }: { over?: boolean }) {
   return (
     <header className={light ? 'absolute inset-x-0 top-0 z-30 text-white' : `relative z-30 bg-[var(--bg)] ${t.header === 'plain' ? 'border-b border-[var(--line)]' : ''}`}>
       <TopBar />
-      <Container className="flex h-20 items-center gap-6">
+      <Container className="flex min-h-20 items-center gap-6 py-3">
         <SiteLink to={{ page: 'home' }} className="min-w-0">{mark}</SiteLink>
         <nav className={`hidden items-center md:flex ${t.header === 'minimal' ? 'mx-auto' : 'ml-auto'}`}>{nav}</nav>
         <div className="ml-auto flex items-center gap-3 md:ml-0">{cta}{burger}</div>

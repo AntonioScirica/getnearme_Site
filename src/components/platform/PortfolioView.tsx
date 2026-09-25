@@ -287,21 +287,24 @@ function LogoField({ cfg, set }: { cfg: SiteConfig; set: (p: Partial<SiteConfig>
     if (url) set({ logo: url });
   };
   return (
-    <div className="space-y-3">
-      <div className="flex items-center gap-3">
-        <div className="flex h-16 min-w-0 flex-1 items-center justify-center rounded-2xl bg-canvas px-3">
-          {cfg.logo ? <img src={cfg.logo} alt="" style={{ height: Math.min(48, cfg.logoSize) }} className="max-w-full object-contain" /> : <span className="text-xs text-muted">Nessun logo: in alto c’è il tuo nome</span>}
-        </div>
-        <label className="flex h-10 shrink-0 cursor-pointer items-center gap-1.5 rounded-full bg-canvas px-4 text-sm font-medium hover:bg-line/60">
-          {busy ? <Loader2 size={15} className="animate-spin" /> : <ImagePlus size={15} />} {cfg.logo ? 'Cambia' : 'Carica'}
+    <div className="rounded-2xl bg-canvas p-2">
+      {/* anteprima: il logo come appare nella barra del sito (fino a 64px qui) */}
+      <div className="flex h-24 items-center justify-center rounded-xl bg-white px-4">
+        {cfg.logo
+          ? <img src={cfg.logo} alt="" style={{ height: Math.min(64, cfg.logoSize) }} className="max-w-full object-contain" />
+          : <span className="text-center text-xs text-muted">Nessun logo<br />in alto c’è il tuo nome</span>}
+      </div>
+      <div className="flex items-center gap-2 px-1 pt-2">
+        <label className="flex h-9 cursor-pointer items-center gap-1.5 rounded-full bg-white px-4 text-[13px] font-medium ring-1 ring-black/5 hover:bg-line/40">
+          {busy ? <Loader2 size={14} className="animate-spin" /> : <ImagePlus size={14} />} {cfg.logo ? 'Cambia logo' : 'Carica logo'}
           <input type="file" accept="image/*" className="hidden" onChange={e => { upload(e.target.files?.[0]); e.target.value = ''; }} />
         </label>
-        {cfg.logo && <button type="button" onClick={() => set({ logo: '' })} aria-label="Togli il logo" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-muted hover:bg-canvas hover:text-ink"><Trash2 size={15} /></button>}
+        {cfg.logo && <button type="button" onClick={() => set({ logo: '' })} className="flex h-9 items-center gap-1.5 rounded-full px-3 text-[13px] font-medium text-muted hover:bg-white hover:text-ink"><Trash2 size={14} /> Togli</button>}
       </div>
       {cfg.logo && (
-        <label className="block">
-          <span className="mb-1 flex justify-between text-xs font-medium text-ink/70">Grandezza <span className="text-muted">{cfg.logoSize}px</span></span>
-          <input type="range" min={20} max={96} step={2} value={cfg.logoSize} onChange={e => set({ logoSize: Number(e.target.value) })} className="w-full accent-[var(--color-brand,#2563eb)]" />
+        <label className="block px-1 pb-1 pt-4">
+          <span className="flex items-center justify-between text-xs font-medium text-ink/70">Grandezza <span className="rounded-full bg-white px-2 py-0.5 text-[11px] text-muted">{cfg.logoSize}px</span></span>
+          <input type="range" min={20} max={96} step={2} value={cfg.logoSize} onChange={e => set({ logoSize: Number(e.target.value) })} className="mt-2 w-full accent-[#2563eb]" />
         </label>
       )}
     </div>
