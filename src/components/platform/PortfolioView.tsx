@@ -144,7 +144,7 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
           <SideEditor cfg={cfg} set={set} page={page} onPage={setPage} firstId={props[0]?.id} covers={covers} selected={selected} setSelected={setSelected} getUsed={getUsed} />
 
           {/* Anteprima dal vivo */}
-          <Preview wa={cfg.whatsappButton} vtName={`tpl-${cfg.template}`} page={page} onPage={p => { setPage(p); setSelected(null); }} firstId={props[0]?.id} editMode={editMode} setEditMode={setEditMode}>
+          <Preview zone={zoneSlug(withPlaceholders(cfg).zones[0]?.name ?? '')} wa={cfg.whatsappButton} vtName={`tpl-${cfg.template}`} page={page} onPage={p => { setPage(p); setSelected(null); }} firstId={props[0]?.id} editMode={editMode} setEditMode={setEditMode}>
             <SitePage page={page} ctx={{ cfg: withPlaceholders(cfg), name: site.name || 'La tua agenzia', logo: site.logo, properties: props, base: '', preview: true, go: p => { setPage(p); setSelected(null); }, editMode, selected, onSelect: setSelected, onText: noteText }} />
           </Preview>
         </div>
@@ -194,8 +194,8 @@ function SideEditor({ cfg, set, page, onPage, firstId, covers, selected, setSele
             <label className="mb-3 block">
               <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-muted">Pagina che stai modificando</span>
               <Dropdown value={page.page as PageId} className="h-10 w-full justify-between bg-canvas px-4 text-sm font-medium"
-                options={PAGES.filter(([id]) => !((id === 'immobile' && !firstId) || (id === 'zona' && !cfg.zones.length))).map(([id, l]) => ({ value: id, label: l }))}
-                onChange={v => onPage(pageOf(v, firstId, cfg.zones[0] ? zoneSlug(cfg.zones[0].name) : ''))} />
+                options={PAGES.filter(([id]) => !(id === 'immobile' && !firstId)).map(([id, l]) => ({ value: id, label: l }))}
+                onChange={v => onPage(pageOf(v, firstId, zoneSlug(withPlaceholders(cfg).zones[0]?.name ?? '')))} />
             </label>
             <p className="mb-4 text-xs text-muted">Clicca un elemento nell’anteprima per modificarlo, oppure apri una sezione qui sotto.</p>
             <div className="space-y-2">
@@ -433,7 +433,7 @@ function Thumb({ children }: { children: ReactNode }) {
 }
 
 // Il sito in scala dentro una finestra "browser": largo 1280 px come su un computer, rimpicciolito.
-function Preview({ children, page, onPage, firstId, editMode, setEditMode, vtName, wa }: { children: ReactNode; page: Page; onPage: (p: Page) => void; firstId?: string; editMode: boolean; setEditMode: (v: boolean) => void; vtName?: string; wa?: boolean }) {
+function Preview({ children, page, onPage, firstId, zone, editMode, setEditMode, vtName, wa }: { children: ReactNode; page: Page; onPage: (p: Page) => void; firstId?: string; zone?: string; editMode: boolean; setEditMode: (v: boolean) => void; vtName?: string; wa?: boolean }) {
   const box = useRef<HTMLDivElement>(null);
   const inner = useRef<HTMLDivElement>(null);
   const [k, setK] = useState(0.5);
@@ -446,7 +446,7 @@ function Preview({ children, page, onPage, firstId, editMode, setEditMode, vtNam
     if (box.current) ro.observe(box.current);
     if (inner.current) ro.observe(inner.current);
     return () => ro.disconnect();
-  }, []);
+  }, [page]); // cambiando pagina il contenitore si rimonta (key): va osservato quello nuovo, o resta l'altezza della pagina prima
   return (
     // min-w-0: e' la colonna della griglia; senza, il sito largo 1280 px la allargava e l'anteprima usciva dallo schermo
     <MorphTarget id={vtName ?? 'preview'} className="min-w-0">
@@ -458,7 +458,7 @@ function Preview({ children, page, onPage, firstId, editMode, setEditMode, vtNam
         {/* pagine del sito: si naviga anche cliccando dentro l'anteprima */}
         <div className="ml-3 flex rounded-full bg-canvas p-0.5">
           {PAGES.map(([id, l]) => (
-            <button key={id} disabled={id === 'immobile' && !firstId} onClick={() => onPage(pageOf(id, firstId))}
+            <button key={id} disabled={id === 'immobile' && !firstId} onClick={() => onPage(pageOf(id, firstId, zone))}
               className={`rounded-full px-3 py-1 font-medium ease-smooth transition-colors disabled:opacity-40 ${page.page === id ? 'bg-white text-ink shadow-sm' : 'hover:text-ink'}`}>{l}</button>
           ))}
         </div>
@@ -468,7 +468,8 @@ function Preview({ children, page, onPage, firstId, editMode, setEditMode, vtNam
       </div>
       <div ref={box} key={JSON.stringify(page)} className="h-[calc(100vh-12rem)] overflow-y-auto overflow-x-hidden [scrollbar-width:thin]"
         onClickCapture={e => { if ((e.target as HTMLElement).closest('a')) e.preventDefault(); }}>
-        <div style={{ height: h * k }}>
+        {/* overflow nascosto: il sito rimpicciolito occupa comunque la sua altezza piena nel layout e sotto restava spazio vuoto */}
+        <div style={{ height: h * k, overflow: 'hidden' }}>
           <div ref={inner} style={{ width: 1280, transform: `scale(${k})`, transformOrigin: 'top left' }}>{children}</div>
         </div>
       </div>
