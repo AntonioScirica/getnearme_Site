@@ -443,7 +443,7 @@ function ZonePicker({ inline, src, region, points, mask, onChange, onPick, onPre
   const cancel = () => {
     if (!inline) { onCancel(); return; }
     setClosing(true); setPill(true);
-    setTimeout(onCancel, 600);
+    setTimeout(onCancel, 300); // meta' tempo: sfuma via e subito tornano i pulsanti (dissolvenza incrociata)
   };
   useEffect(() => { const t = setTimeout(() => setPill(false), 30); return () => clearTimeout(t); }, []);
   // fuoco sul campo senza far scorrere la chat (autoFocus e onLoad->in fondo facevano il saltino)
@@ -451,8 +451,8 @@ function ZonePicker({ inline, src, region, points, mask, onChange, onPick, onPre
   const loading = mask === 'loading';
   const ready = (region && region.w > 0.02) || (points.length > 0 && !loading);
   const photo = (
-      <div ref={box} className={`touch-none ${inline ? `absolute inset-x-0 bottom-full z-20 ease-smooth transition-opacity ${closing ? 'pointer-events-none opacity-0' : ''}` : 'relative mx-auto max-h-[calc(100vh-24rem)] w-fit'} select-none overflow-hidden rounded-2xl ${tool === 'rect' ? 'cursor-crosshair' : ''}`}
-        style={{ ...(inline ? { aspectRatio: inline, animation: 'gnm-fade var(--gnm-dur) var(--gnm-ease) both' } : {}), ...(tool === 'points' ? { cursor: TARGET_CURSOR } : {}) }}
+      <div ref={box} className={`touch-none ${inline ? `absolute inset-x-0 bottom-full z-20 ease-smooth transition-opacity ${closing ? 'pointer-events-none' : ''}` : 'relative mx-auto max-h-[calc(100vh-24rem)] w-fit'} select-none overflow-hidden rounded-2xl ${tool === 'rect' ? 'cursor-crosshair' : ''}`}
+        style={{ ...(inline ? { aspectRatio: inline, ...(closing ? { opacity: 0, transitionDuration: '300ms' } : { animation: 'gnm-fade var(--gnm-dur) var(--gnm-ease) both' }) } : {}), ...(tool === 'points' ? { cursor: TARGET_CURSOR } : {}) }}
         onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerLeave={leave}>
         <img src={src} alt="" draggable={false} onLoad={inline ? undefined : onLoad} className={inline ? 'block h-full w-full object-cover' : 'block max-h-[calc(100vh-24rem)] w-auto max-w-full'} />
         {/* nella card del risultato il pulsante Scarica si stringe e diventa la X */}
@@ -503,7 +503,8 @@ function ZonePicker({ inline, src, region, points, mask, onChange, onPick, onPre
   if (inline) return (
     <div className="relative">
       {photo}
-      <div className={`ease-smooth transition-opacity ${closing ? 'opacity-0' : ''}`} style={{ animation: 'gnm-fade var(--gnm-dur) var(--gnm-ease) .25s both' }}>{form}</div>
+      {/* in chiusura l'animazione d'ingresso va tolta, altrimenti il suo "both" tiene l'opacita' a 1 e il campo sparisce di colpo */}
+      <div className="duration-300 ease-smooth transition-opacity" style={closing ? { opacity: 0 } : { animation: 'gnm-fade var(--gnm-dur) var(--gnm-ease) .25s both' }}>{form}</div>
     </div>
   );
   return (
