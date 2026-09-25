@@ -19,6 +19,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function Zone({ params }: Props) {
   const { locale, slug, zona } = await params;
   const s = await loadSite(locale, slug);
-  if (!s || !s.cfg.zones.some(x => zoneSlug(x.name) === zona)) notFound();
+  if (!s || s.cfg.hidden.includes('page:zona') || !s.cfg.zones.some(x => zoneSlug(x.name) === zona)) notFound(); // anche se l'agente ha nascosto le pagine zona
   return <SitePage ctx={s} page={{ page: 'zona', slug: zona }} />;
 }

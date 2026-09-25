@@ -194,9 +194,22 @@ function SideEditor({ cfg, set, page, onPage, firstId, covers, selected, setSele
             <label className="mb-3 block">
               <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-muted">Pagina che stai modificando</span>
               <Dropdown value={page.page as PageId} className="h-10 w-full justify-between bg-canvas px-4 text-sm font-medium"
-                options={PAGES.filter(([id]) => !(id === 'immobile' && !firstId)).map(([id, l]) => ({ value: id, label: l }))}
+                options={PAGES.filter(([id]) => !(id === 'immobile' && !firstId)).map(([id, l]) => ({ value: id, label: cfg.hidden.includes(`page:${id}`) ? `${l} (nascosta)` : l }))}
                 onChange={v => onPage(pageOf(v, firstId, zoneSlug(withPlaceholders(cfg).zones[0]?.name ?? '')))} />
             </label>
+            {/* ogni pagina tranne la Home si puo' togliere dal sito: esce dal menu e il suo indirizzo non si apre piu' */}
+            {page.page !== 'home' && (() => {
+              const key = `page:${page.page}`, on = !cfg.hidden.includes(key);
+              return (
+                <div className={`mb-3 flex items-center justify-between gap-3 rounded-2xl px-3.5 py-2.5 text-sm ${on ? 'bg-canvas' : 'bg-rose-50'}`}>
+                  <span>{on ? 'Pagina visibile nel sito' : <span className="text-rose-700">Pagina nascosta: non è nel menu e il suo link non si apre</span>}</span>
+                  <button type="button" role="switch" aria-checked={on} onClick={() => set({ hidden: on ? [...cfg.hidden, key] : cfg.hidden.filter(x => x !== key) })}
+                    className={`relative h-6 w-10 shrink-0 rounded-full ease-smooth transition-colors ${on ? 'bg-brand' : 'bg-line'}`}>
+                    <span className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow-sm ease-smooth transition-transform ${on ? 'translate-x-4' : ''}`} />
+                  </button>
+                </div>
+              );
+            })()}
             <p className="mb-4 text-xs text-muted">Clicca un elemento nell’anteprima per modificarlo, oppure apri una sezione qui sotto.</p>
             <div className="space-y-2">
               {secs.map(sec => {

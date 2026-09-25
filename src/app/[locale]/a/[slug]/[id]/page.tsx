@@ -19,6 +19,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function PublicPropertyPage({ params }: Props) {
   const { locale, slug, id } = await params;
   const s = await loadSite(locale, slug);
-  if (!s || !s.properties.some(x => x.id === id)) notFound();
+  if (!s || s.cfg.hidden.includes('page:immobile') || !s.properties.some(x => x.id === id)) notFound(); // anche se l'agente ha nascosto le schede
   return <SitePage ctx={s} page={{ page: 'immobile', id }} />;
 }

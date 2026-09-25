@@ -15,6 +15,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function Page({ params }: Props) {
   const { locale, slug } = await params;
   const s = await loadSite(locale, slug);
-  if (!s) notFound();
+  if (!s || s.cfg.hidden.includes('page:servizi')) notFound(); // pagina nascosta dall'agente
   return <SitePage ctx={s} page={{ page: 'servizi' }} />;
 }

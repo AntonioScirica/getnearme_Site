@@ -2,7 +2,7 @@
 
 import { useState, type FormEvent } from 'react';
 import { ArrowDown, ArrowRight, ArrowUpRight, Building, Building2, ChevronDown, Home, Store, TreePine, Warehouse, Check, ChevronLeft, ChevronRight, Handshake, Heart, Leaf, Mail, MapPin, Menu, Phone, Quote, Search, ShieldCheck, Sparkles, Star, Users, X } from 'lucide-react';
-import { zoneSlug, type SiteConfig, type SiteProperty } from '@/lib/siteTemplates';
+import { pageHidden, zoneSlug, type SiteConfig, type SiteProperty } from '@/lib/siteTemplates';
 import { MapBlock, TopBar } from './extras';
 import { Btn, Container, contacts, Eyebrow, Facts, FavButton, H, Photo, price, SiteLink, typeOf, useSite, useT, zoneOf, pathOf, type Filters, type Page, Select } from './ui';
 export type { Filters };
@@ -43,7 +43,8 @@ export function statsOf(cfg: SiteConfig, properties: SiteProperty[]) {
 
 // ---------- Barra in alto: 5 varianti ----------
 export function navLinks(cfg: SiteConfig): [string, Page][] {
-  return [['Home', { page: 'home' }], ['Immobili', { page: 'immobili' }], ...(cfg.services.length ? [['Servizi', { page: 'servizi' }] as [string, Page]] : []), [cfg.aboutTitle || 'Chi sono', { page: 'agente' }], ['Contatti', { page: 'contatti' }]];
+  const all: [string, Page][] = [['Home', { page: 'home' }], ['Immobili', { page: 'immobili' }], ...(cfg.services.length ? [['Servizi', { page: 'servizi' }] as [string, Page]] : []), [cfg.aboutTitle || 'Chi sono', { page: 'agente' }], ['Contatti', { page: 'contatti' }]];
+  return all.filter(([, to]) => !pageHidden(cfg, to.page)); // pagine nascoste: fuori dal menu e dal piè di pagina
 }
 // altezze minime, non fisse: con il logo piu' grande la barra cresce invece di tagliarlo
 export function Header({ over }: { over?: boolean }) {
@@ -60,7 +61,7 @@ export function Header({ over }: { over?: boolean }) {
       </span>;
   const navCls = light ? 'text-white/85 hover:text-white' : 'text-[var(--muted)] hover:text-[var(--fg)]';
   const nav = links.map(([l, to]) => <SiteLink key={l} to={to} className={`px-3.5 py-2 text-sm font-medium transition-colors ${navCls}`}>{l}</SiteLink>);
-  const cta = cfg.showContact && (
+  const cta = cfg.showContact && !pageHidden(cfg, 'contatti') && (
     <span className="hidden md:block"><Btn href={preview ? undefined : pathOf(base, { page: 'contatti' })} onClick={preview ? () => go?.({ page: 'contatti' }) : undefined} size="sm" variant={light ? 'light' : t.header === 'minimal' ? 'ink' : 'solid'} className={`!h-10 ${t.header === 'pill' || t.header === 'minimal' ? '!rounded-full' : ''}`}>
       {t.header !== 'minimal' && <Phone size={14} />}{cfg.ctaLabel}{t.header === 'minimal' && <ArrowUpRight size={14} />}
     </Btn></span>
@@ -926,7 +927,7 @@ export function Footer() {
         </div>
         <div><div className={head}>Pagine</div><div className={`mt-4 space-y-2.5 text-sm ${mut}`}>{navLinks(cfg).map(([l, to]) => <SiteLink key={l} to={to} className="block hover:underline">{l}</SiteLink>)}</div></div>
         <div><div className={head}>Link utili</div><div className={`mt-4 space-y-2.5 text-sm ${mut}`}>
-          {cfg.zones.map(z => <SiteLink key={z.name} to={{ page: 'zona', slug: zoneSlug(z.name) }} className="block hover:underline">Casa a {z.name}</SiteLink>)}
+          {!pageHidden(cfg, 'zona') && cfg.zones.map(z => <SiteLink key={z.name} to={{ page: 'zona', slug: zoneSlug(z.name) }} className="block hover:underline">Casa a {z.name}</SiteLink>)}
           <SiteLink to={{ page: 'immobili', f: { contratto: 'vendita' } }} className="block hover:underline">Immobili in vendita</SiteLink>
           {properties.some(isRent) && <SiteLink to={{ page: 'immobili', f: { contratto: 'affitto' } }} className="block hover:underline">Immobili in affitto</SiteLink>}
           {cfg.facebook && <a href={cfg.facebook} target="_blank" rel="noreferrer" className="block hover:underline">Facebook</a>}

@@ -3,7 +3,7 @@
 import { Children, createContext, isValidElement, useContext, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactElement, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { Bath, BedDouble, Check, ChevronDown, DoorOpen, Heart, Maximize2 } from 'lucide-react';
-import { FONTS, fontCss, PAGE_SECTIONS, TEXTS, type SiteConfig, type SiteProperty, type TemplateId } from '@/lib/siteTemplates';
+import { FONTS, fontCss, PAGE_SECTIONS, pageHidden, TEXTS, type SiteConfig, type SiteProperty, type TemplateId } from '@/lib/siteTemplates';
 
 // Base dei siti vetrina: tema per template, contesto del sito, link (veri sul sito, interni
 // nell'anteprima dell'editor) e i mattoni piu' piccoli (titoli, pulsanti, foto, dati).
@@ -91,7 +91,9 @@ export const pathOf = (base: string, p: Page): string =>
 
 // Link del sito: sul sito vero e' un <a href>, nell'anteprima cambia pagina dentro l'editor
 export function SiteLink({ to, className = '', children, ...rest }: { to: Page; className?: string; children: ReactNode; 'aria-label'?: string; onMouseEnter?: () => void }) {
-  const { base, preview, go, editMode } = useSite();
+  const { base, preview, go, editMode, cfg } = useSite();
+  // pagina nascosta dall'agente: il collegamento resta come testo, senza portare a una pagina che non c'e'
+  if (to.page !== 'home' && pageHidden(cfg, to.page)) return <span className={className}>{children}</span>;
   if (preview) return <a role="link" tabIndex={0} className={`cursor-pointer ${className}`} onClick={() => { if (!editMode) go?.(to); }} {...rest}>{children}</a>;
   return <a href={pathOf(base, to)} className={className} {...rest}>{children}</a>;
 }

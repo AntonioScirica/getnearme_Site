@@ -191,7 +191,7 @@ export function cleanSite(raw: unknown, name: string, email = ''): SiteConfig {
     topBar: bool(r.topBar, d.topBar),
     // solo chiavi conosciute, testi corti
     texts: r.texts && typeof r.texts === 'object' ? Object.fromEntries(Object.entries(r.texts as Record<string, unknown>).filter(([k, v]) => k in TEXTS && typeof v === 'string').map(([k, v]) => [k, (v as string).slice(0, 600)])) : {},
-    hidden: Array.isArray(r.hidden) ? r.hidden.filter((x): x is string => typeof x === 'string' && HIDEABLE.has(x)) : [],
+    hidden: Array.isArray(r.hidden) ? r.hidden.filter((x): x is string => typeof x === 'string' && (HIDEABLE.has(x) || HIDEABLE_PAGES.some(p => x === `page:${p}`))) : [],
     whatsappButton: bool(r.whatsappButton, d.whatsappButton),
     reviews: Array.isArray(r.reviews)
       ? r.reviews.slice(0, 3).map(x => { const o = (x ?? {}) as Record<string, unknown>; return { text: str(o.text, 300, ''), name: str(o.name, 60, ''), zone: str(o.zone, 60, '') } }).filter(x => x.text)
@@ -291,6 +291,9 @@ export const PAGE_SECTIONS: Record<PageId, SectionDef[]> = {
     { id: 'cta', label: 'Fascia contatti', hideable: true, texts: ['cta.title', 'cta.text'] },
   ],
 }
+// Pagine che l'agente puo' togliere dal sito (la Home no): chiave "page:<id>" in cfg.hidden
+export const HIDEABLE_PAGES: PageId[] = ['immobili', 'immobile', 'agente', 'servizi', 'contatti', 'zona']
+export const pageHidden = (cfg: SiteConfig, id: string) => cfg.hidden.includes(`page:${id}`)
 export const HIDEABLE = new Set(Object.values(PAGE_SECTIONS).flat().filter(s => s.hideable).map(s => s.id))
 
 // Nomi leggibili dei campi nell'editor
