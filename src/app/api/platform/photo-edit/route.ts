@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { buildStagingPrompt, type SceneType } from '@/lib/stagingPrompts'
 import { isPublicHttpsUrl } from '@/lib/safeUrl'
 import { createClient } from '@supabase/supabase-js'
-import { uploadJpeg, getJson, putJson } from '@/lib/r2'
+import { uploadJpeg, uploadMarker } from '@/lib/r2'
 import sharp from 'sharp'
 import { logUsage } from '@/lib/ai'
 import { AI_MOCK, mockDelay } from '@/lib/aiMock'
@@ -108,17 +108,15 @@ export async function POST(req: NextRequest) {
   // Media: accanto al risultato si salva anche il "prima" (<chiave>-prima.jpg), cosi' la pagina Media
   // mostra ogni modifica con prima e dopo leggendo solo la cartella su R2 (niente tabella).
   await savePrima(imageBase64, imageUrl, `${key}-prima.jpg`)
-  // indice per la ricerca in Galleria: richiesta e tipo di stanza di ogni foto
-  // ponytail: leggi-modifica-scrivi senza lock, due modifiche nello stesso istante possono perdere una voce; tabella se serve
+  // Dati per la Galleria (richiesta, stanza, foto di partenza) nel NOME di un file vuoto accanto al risultato:
+  // un file per modifica, quindi nessun conflitto anche con piu' foto generate insieme, e la Galleria li legge
+  // tutti con il solo elenco della cartella.
   const room = typeof body.room === 'string' ? body.room.slice(0, 40) : ''
   const what = custom || [body.style, body.angle, body.planimetria ? 'planimetria' : ''].filter(Boolean).join(' ')
-  const idxKey = `edits/${userId}/index.json`
-  const idx = (await getJson<Record<string, { text: string; room: string; from?: string }>>(idxKey)) ?? {}
-  // se la foto di partenza e' un risultato precedente, si collega: la Galleria mostra la catena come una foto sola
   const mine = `${process.env.R2_PUBLIC_URL}/edits/${userId}/`
   const from = imageUrl.startsWith(mine) ? imageUrl.slice(`${process.env.R2_PUBLIC_URL}/`.length) : undefined
-  idx[`${key}.jpg`] = { text: what.slice(0, 200), room, ...(from ? { from } : {}) }
-  await putJson(idxKey, idx).catch(e => console.error('media index', e))
+  const meta = Buffer.from(JSON.stringify({ t: what.slice(0, 160), r: room, ...(from ? { f: from } : {}) })).toString('base64url')
+  await uploadMarker(`${key}.meta.${meta}`).catch(e => console.error('media meta', e))
   return NextResponse.json({ url, seconds: job.output?.seconds })
 }
 

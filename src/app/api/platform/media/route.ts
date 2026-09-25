@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { listKeys, publicUrl, getJson } from '@/lib/r2'
+import { listKeys, publicUrl } from '@/lib/r2'
 
 const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 
 type Entry = { text: string; room: string; from?: string }
 
-// Galleria: una voce per foto di partenza. Le modifiche fatte una sull'altra (index.json, campo "from")
+// Galleria: una voce per foto di partenza. Le modifiche fatte una sull'altra (campo "from" nei file .meta)
 // diventano una catena: si mostra l'ultima versione, con il prima dell'inizio e tutti i passaggi.
 export async function GET(req: NextRequest) {
   const token = req.headers.get('authorization')?.replace('Bearer ', '')
@@ -15,7 +15,14 @@ export async function GET(req: NextRequest) {
   const userId = data.user?.id
   if (!userId) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   try {
-    const [keys, idx] = await Promise.all([listKeys(`edits/${userId}/`), getJson<Record<string, Entry>>(`edits/${userId}/index.json`)])
+    const keys = await listKeys(`edits/${userId}/`)
+    // dati di ogni modifica: file vuoti "<risultato>.meta.<json base64url>"
+    const idx: Record<string, Entry> = {}
+    for (const { key } of keys) {
+      const m = key.match(/^(.+)\.meta\.([\w-]+)$/)
+      if (!m) continue
+      try { const d = JSON.parse(Buffer.from(m[2], 'base64url').toString()); idx[`${m[1]}.jpg`] = { text: d.t ?? '', room: d.r ?? '', from: d.f } } catch { /* nome rovinato: si ignora */ }
+    }
     const all = new Set(keys.map(k => k.key))
     const at = new Map(keys.map(k => [k.key, k.at]))
     const results = keys.filter(k => k.key.endsWith('.jpg') && !k.key.endsWith('-prima.jpg')).map(k => k.key)
