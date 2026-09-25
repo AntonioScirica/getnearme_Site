@@ -60,6 +60,7 @@ const planStyle = (t: string) => (/nordic|scandinav/i.test(t) ? 'nordic' : /luss
 
 export default function StagingChat({ onMany }: { onMany: (files: FileList | File[]) => void }) {
   const [library, setLibrary] = useState(false); // scelta foto: vetrina o computer
+  const [project, setProject] = useState<string | null>(null); // immobile della foto (se scelta dalla vetrina): la Galleria raggruppa per casa
   const [otherFor, setOtherFor] = useState<string | null>(null); // messaggio in cui l'agente scrive a mano cos'e' la foto
   // chiusura di Modifica: 300 ms in cui selezione e campo sfumano mentre il pulsante torna Scarica e il divisore rientra
   const [zoneClosing, setZoneClosing] = useState(false);
@@ -116,8 +117,9 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList | Fil
 
   const patch = (id: string, p: Partial<Extract<Msg, { role: 'ai' }>>) => setMsgs(ms => ms.map(m => (m.id === id && m.role === 'ai' ? { ...m, ...p } : m)));
 
-  const upload = async (files: FileList | File[] | null) => {
+  const upload = async (files: FileList | File[] | null, projectId?: string | null) => {
     if (!files?.length) return;
+    setProject(projectId ?? null);
     touch();
     if (files.length > 1) { onMany(files); return; } // piu' foto insieme: vista a griglia
     const f = files[0];
@@ -155,6 +157,8 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList | Fil
     setMsgs(ms => [...ms, { id: uid(), role: 'user', text: t, region: zone ?? undefined }, { id, role: 'ai', before, out: null, busy: true, reveal: null, text: t }]);
     setText(''); setPicked(null); clearZone(); setSelecting(false);
     const req: EditRequest = {
+      ...(project ? { projectId: project } : {}),
+      ...(kind ? { room: seenLabel(kind) } : {}),
       ...(before.startsWith('data:') ? { imageBase64: before } : { imageUrl: before }),
       ...(scene === 'planimetria'
         ? { planimetria: true, style: planStyle(t) }

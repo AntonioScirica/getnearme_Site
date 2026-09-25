@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand, ListObjectsV2Command } from '@aws-sdk/client-s3'
+import { S3Client, PutObjectCommand, ListObjectsV2Command, GetObjectCommand } from '@aws-sdk/client-s3'
 import sharp from 'sharp'
 
 // Copia un'immagine remota su R2, ridimensionata (lato lungo maxDim) e in JPEG.
@@ -47,3 +47,14 @@ export async function listKeys(prefix: string, max = 2000): Promise<{ key: strin
 }
 
 export const publicUrl = (key: string) => `${process.env.R2_PUBLIC_URL}/${key}`
+
+// JSON piccoli su R2 (indici per utente). null se non c'e' o non si legge.
+export async function getJson<T>(key: string): Promise<T | null> {
+  try {
+    const r = await s3.send(new GetObjectCommand({ Bucket: process.env.R2_BUCKET_NAME, Key: key }))
+    return JSON.parse(await r.Body!.transformToString()) as T
+  } catch { return null }
+}
+export async function putJson(key: string, data: unknown) {
+  await s3.send(new PutObjectCommand({ Bucket: process.env.R2_BUCKET_NAME, Key: key, Body: JSON.stringify(data), ContentType: 'application/json' }))
+}

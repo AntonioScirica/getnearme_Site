@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { buildStagingPrompt, type SceneType } from '@/lib/stagingPrompts'
 import { isPublicHttpsUrl } from '@/lib/safeUrl'
 import { createClient } from '@supabase/supabase-js'
-import { uploadJpeg } from '@/lib/r2'
+import { uploadJpeg, getJson, putJson } from '@/lib/r2'
 import sharp from 'sharp'
 import { logUsage } from '@/lib/ai'
 import { AI_MOCK, mockDelay } from '@/lib/aiMock'
@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
 
   // Foto: URL (annunci, R2) oppure caricata dal computer (imageBase64, data URL gia' ridimensionata).
   // Modifica: testo libero e/o i preset di home staging (stile, vista, scena, planimetria).
-  let body: { imageUrl?: string; imageBase64?: string; prompt?: string; style?: string; angle?: string; scene?: SceneType; planimetria?: boolean; seed?: number; region?: { x: number; y: number; w: number; h: number; poly?: { x: number; y: number }[] }; points?: { x: number; y: number }[] }
+  let body: { imageUrl?: string; imageBase64?: string; prompt?: string; style?: string; angle?: string; scene?: SceneType; planimetria?: boolean; seed?: number; region?: { x: number; y: number; w: number; h: number; poly?: { x: number; y: number }[] }; projectId?: string; room?: string; points?: { x: number; y: number }[] }
   try { body = await req.json() } catch { return NextResponse.json({ error: 'bad_request' }, { status: 400 }) }
   const imageUrl = typeof body.imageUrl === 'string' ? body.imageUrl : ''
   const imageBase64 = typeof body.imageBase64 === 'string' && /^data:image\/(jpeg|png|webp);base64,/.test(body.imageBase64) && body.imageBase64.length < 8_000_000 ? body.imageBase64 : ''
@@ -101,11 +101,24 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: job.status === 'IN_QUEUE' || job.status === 'IN_PROGRESS' ? 'timeout' : 'ai_failed' }, { status: 502 })
   }
   if (process.env.NODE_ENV !== 'production') await debugDump({ imageBase64, imageUrl, region, prompt: (translation.prompt_template ?? prompt), request: translation.request, outB64: b64, translated: (job.output as { translated?: string } | undefined)?.translated, worker: (job as { workerId?: string }).workerId })
-  const key = `edits/${userId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+  // foto di un immobile (scelta dalla vetrina): cartella casa-<id>, la Galleria le raggruppa per casa
+  const projectId = typeof body.projectId === 'string' && /^[\w-]{1,64}$/.test(body.projectId) ? body.projectId : ''
+  const key = `edits/${userId}/${projectId ? `casa-${projectId}/` : ''}${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
   const url = await uploadJpeg(await matchInputShape(Buffer.from(b64, 'base64'), imageBase64, imageUrl), `${key}.jpg`)
   // Media: accanto al risultato si salva anche il "prima" (<chiave>-prima.jpg), cosi' la pagina Media
   // mostra ogni modifica con prima e dopo leggendo solo la cartella su R2 (niente tabella).
   await savePrima(imageBase64, imageUrl, `${key}-prima.jpg`)
+  // indice per la ricerca in Galleria: richiesta e tipo di stanza di ogni foto
+  // ponytail: leggi-modifica-scrivi senza lock, due modifiche nello stesso istante possono perdere una voce; tabella se serve
+  const room = typeof body.room === 'string' ? body.room.slice(0, 40) : ''
+  const what = custom || [body.style, body.angle, body.planimetria ? 'planimetria' : ''].filter(Boolean).join(' ')
+  const idxKey = `edits/${userId}/index.json`
+  const idx = (await getJson<Record<string, { text: string; room: string; from?: string }>>(idxKey)) ?? {}
+  // se la foto di partenza e' un risultato precedente, si collega: la Galleria mostra la catena come una foto sola
+  const mine = `${process.env.R2_PUBLIC_URL}/edits/${userId}/`
+  const from = imageUrl.startsWith(mine) ? imageUrl.slice(`${process.env.R2_PUBLIC_URL}/`.length) : undefined
+  idx[`${key}.jpg`] = { text: what.slice(0, 200), room, ...(from ? { from } : {}) }
+  await putJson(idxKey, idx).catch(e => console.error('media index', e))
   return NextResponse.json({ url, seconds: job.output?.seconds })
 }
 

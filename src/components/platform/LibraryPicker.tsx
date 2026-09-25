@@ -22,7 +22,7 @@ const toFile = async (url: string) => {
   return new File([blob], 'foto.jpg', { type: blob.type || 'image/jpeg' });
 };
 
-export default function LibraryPicker({ onFiles, onClose }: { onFiles: (files: File[]) => void; onClose: () => void }) {
+export default function LibraryPicker({ onFiles, onClose }: { onFiles: (files: File[], projectId?: string | null) => void; onClose: () => void }) {
   const [projects, setProjects] = useState<ProjectData[] | null>(null);
   const [open, setOpen] = useState<ProjectData | null>(null);
   const [loading, setLoading] = useState<string | null>(null);
@@ -38,9 +38,9 @@ export default function LibraryPicker({ onFiles, onClose }: { onFiles: (files: F
     return () => document.removeEventListener('keydown', k);
   }, [onClose]);
 
-  const pick = async (url: string) => {
+  const pick = async (url: string, projectId?: string | null) => {
     setLoading(url); setErr(false);
-    try { onFiles([await toFile(url)]); onClose(); } catch { setErr(true); } finally { setLoading(null); }
+    try { onFiles([await toFile(url)], projectId); onClose(); } catch { setErr(true); } finally { setLoading(null); }
   };
   const list = projects?.filter(p => photosOf(p).length) ?? [];
 
@@ -74,7 +74,7 @@ export default function LibraryPicker({ onFiles, onClose }: { onFiles: (files: F
             : media.length ? (
               <div key="media" className="blur-in grid grid-cols-2 gap-3 sm:grid-cols-3">
                 {media.map(m => (
-                  <button key={m.dopo} onClick={() => pick(m.dopo)} disabled={!!loading} className="relative overflow-hidden rounded-2xl ease-smooth transition-opacity hover:opacity-90 disabled:opacity-60">
+                  <button key={m.dopo} onClick={() => pick(m.dopo, m.casa)} disabled={!!loading} className="relative overflow-hidden rounded-2xl ease-smooth transition-opacity hover:opacity-90 disabled:opacity-60">
                     <img src={m.dopo} alt="" loading="lazy" className="aspect-[4/3] w-full object-cover" />
                     {loading === m.dopo && <span className="absolute inset-0 flex items-center justify-center bg-white/60"><Loader2 size={20} className="animate-spin" /></span>}
                   </button>
@@ -98,7 +98,7 @@ export default function LibraryPicker({ onFiles, onClose }: { onFiles: (files: F
           ) : (
             <div key={open.id} className="blur-in grid grid-cols-2 gap-3 sm:grid-cols-3">
               {photosOf(open).map(u => (
-                <button key={u} onClick={() => pick(u)} disabled={!!loading} className="relative overflow-hidden rounded-2xl ease-smooth transition-opacity hover:opacity-90 disabled:opacity-60">
+                <button key={u} onClick={() => pick(u, open.id)} disabled={!!loading} className="relative overflow-hidden rounded-2xl ease-smooth transition-opacity hover:opacity-90 disabled:opacity-60">
                   <img src={u} alt="" className="aspect-[4/3] w-full object-cover" />
                   {loading === u && <span className="absolute inset-0 flex items-center justify-center bg-white/60"><Loader2 size={20} className="animate-spin" /></span>}
                 </button>
