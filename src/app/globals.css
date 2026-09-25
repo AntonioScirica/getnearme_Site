@@ -443,7 +443,7 @@ html.metrics-light [class*="border-gray-600"] { border-color: #d8d4cb !important
 /* Un solo tempo e una sola curva per tutte le animazioni della piattaforma */
 :root { --gnm-dur: 600ms; --gnm-ease: cubic-bezier(.22, 1, .36, 1); }
 .ease-smooth { transition-timing-function: var(--gnm-ease); transition-duration: var(--gnm-dur); }
-@keyframes gnm-blur-in { from { opacity: 0; filter: blur(8px); transform: translateY(8px); } to { opacity: 1; filter: blur(0); transform: none; } }
+@keyframes gnm-blur-in { from { opacity: 0; filter: blur(8px); } to { opacity: 1; filter: blur(0); } }
 .blur-in { animation: gnm-blur-in var(--gnm-dur) var(--gnm-ease) both; }
 /* Testo che si riscrive "con l'AI": ogni parola entra sfocata e colorata e si assesta (ritardo per parola via style) */
 @keyframes gnm-ai-word { 0% { opacity: 0; filter: blur(6px); color: var(--color-brand, #2563eb); } 55% { opacity: 1; filter: blur(0); color: var(--color-brand, #2563eb); } 100% { opacity: 1; filter: none; } }
