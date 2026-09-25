@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ArrowUp, Download, ImagePlus, LayoutGrid, Loader2, Monitor, MousePointerClick, RotateCcw, SquareDashed, SquareDashedMousePointer, X } from 'lucide-react';
+import { ArrowUp, ImagePlus, LayoutGrid, Loader2, Monitor, MousePointerClick, RotateCcw, SquareDashed, SquareDashedMousePointer, X } from 'lucide-react';
 import { fileToResizedDataUrl } from '@/lib/staging';
 import { AI_MOCK } from '@/lib/aiMock';
 import { AiPhotoStage, QUICK_PRESETS, type EditRequest, type Region, type Reveal, type Suggestion } from './AiPhoto';
