@@ -13,7 +13,9 @@ import LightSwap from '@/components/ui/LightSwap';
 import AutoSize from '@/components/ui/AutoSize';
 import { MorphTarget } from '@/components/ui/Morph';
 import PhotoViewer from '@/components/ui/PhotoViewer';
-import LibraryPicker, { toFile } from './LibraryPicker';
+import LibraryPicker from './LibraryPicker';
+import { fetchProjects, type ProjectData } from '@/lib/projects';
+import { uploadDataUrl } from '@/lib/imageUpload';
 
 // Home staging come chat: l'agente carica una foto nella conversazione, scrive cosa vuole (in italiano,
 // il servizio traduce), riceve il prima/dopo e continua a chiedere sull'ultimo risultato. Caricare
@@ -124,7 +126,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   const [library, setLibrary] = useState(false); // scelta foto: vetrina o computer
   const [project, setProject] = useState<string | null>(null); // immobile della foto (se scelta dalla vetrina): la Galleria raggruppa per casa
   const [origin, setOrigin] = useState<string | null>(null); // foto originale dell'immobile da cui si e' partiti (per il prima/dopo)
-  const [added, setAdded] = useState<Record<string, 'busy' | 'ok' | 'err'>>({}); // risultati messi nell'immobile
+  const [saveOpen, setSaveOpen] = useState<string | null>(null); // risultato con il pannello "Salva nell'immobile" aperto
   // com'e' la stanza nella foto di lavoro (vuota, disordinata, datata, arredata): cambia suggerimento e proposte
   const [roomState, setRoomState] = useState<string | null>(null);
   const [otherFor, setOtherFor] = useState<string | null>(null); // messaggio in cui l'agente scrive a mano cos'e' la foto
@@ -300,13 +302,6 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
       applySeen(id, early);
     });
   }, [initial]); // eslint-disable-line react-hooks/exhaustive-deps
-  // risultato nell'immobile: accanto all'originale o al posto suo
-  const putInProperty = async (m: Extract<Msg, { role: 'ai' }>, mode: 'add' | 'replace') => {
-    if (!project || !m.out) return;
-    setAdded(a => ({ ...a, [m.id]: 'busy' }));
-    const r = await authFetch('/api/platform/property-photo', { method: 'POST', body: JSON.stringify({ projectId: project, mode, before: origin ?? undefined, after: m.out }) }).catch(() => null);
-    setAdded(a => ({ ...a, [m.id]: r?.ok ? 'ok' : 'err' }));
-  };
   const closeLibrary = useCallback(() => setLibrary(false), []);
   const empty = msgs.length === 0;
   const picker = <input type="file" accept="image/*" multiple className="hidden" onChange={e => { upload(e.target.files); e.target.value = ''; }} />;
@@ -432,14 +427,8 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                     <div className="flex shrink-0 items-center gap-1">
                       <button onClick={() => { if (base !== m.out) restartFrom(i, m.out!); setSelecting(true); }}
                         className="flex h-8 items-center gap-1.5 rounded-full px-3 font-medium leading-none text-ink hover:bg-canvas"><SquareDashedMousePointer size={14} className="translate-y-px" /> Modifica</button>
-                      {project && (
-                        added[m.id] === 'ok'
-                          ? <a href={`#/immobile/${project}`} className="flex h-8 items-center gap-1.5 rounded-full px-3 font-medium leading-none text-emerald-700 hover:bg-emerald-50"><Check size={14} className="translate-y-px" /> Nell’immobile, vedi</a>
-                          : <Dropdown value="" options={[{ value: 'add', label: 'Accanto all’originale (prima/dopo sul sito)' }, { value: 'replace', label: 'Al posto dell’originale' }]}
-                              onChange={v => putInProperty(m, v as 'add' | 'replace')} className="h-8 px-3 font-medium leading-none text-ink hover:bg-canvas">
-                              {added[m.id] === 'busy' ? <Loader2 size={14} className="animate-spin" /> : <Building2 size={14} className="translate-y-px" />} {added[m.id] === 'err' ? 'Riprova' : 'Nell’immobile'}
-                            </Dropdown>
-                      )}
+                      <button onClick={() => setSaveOpen(v => (v === m.id ? null : m.id))} aria-expanded={saveOpen === m.id}
+                        className={`flex h-8 items-center gap-1.5 rounded-full px-3 font-medium leading-none ${saveOpen === m.id ? 'bg-canvas text-ink' : 'text-ink hover:bg-canvas'}`}><Building2 size={14} className="translate-y-px" /> Salva nell’immobile</button>
                       {m.req && (
                         <Tooltip label="Stesso stile, un'altra versione">
                           <button onClick={() => variant(m)} disabled={busy} aria-label="Stesso stile, un'altra versione" className="flex h-8 items-center gap-1.5 rounded-full px-3 font-medium leading-none text-ink hover:bg-canvas disabled:opacity-40"><Shuffle size={14} className="translate-y-px" /> Altra versione</button>
@@ -455,6 +444,9 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                       )}
                     </div>
                   </div>
+                )}
+                {m.out && !m.busy && saveOpen === m.id && (
+                  <SaveToProperty key={m.id} before={m.before} after={m.out} projectId={project} origin={origin} onClose={() => setSaveOpen(null)} />
                 )}
                 </>}
               </AutoSize></div>
@@ -636,6 +628,66 @@ function ZonePicker({ inline, closing = false, src, region, onChange, onLoad, bu
       {form}
       </div>
     </MorphTarget>
+    </div>
+  );
+}
+
+// Salva un risultato in un immobile, con due scelte chiare:
+// - Prima e dopo: la foto nuova si aggiunge e sul sito si confronta con l'originale (cursore);
+// - Sostituisci: prende il posto dell'originale (solo se la foto di partenza era gia' di quell'immobile).
+// Vale anche per foto caricate dal computer: si sceglie l'immobile, e l'originale viene salvato solo per il prima/dopo.
+function SaveToProperty({ before, after, projectId, origin, onClose }: { before: string; after: string; projectId: string | null; origin: string | null; onClose: () => void }) {
+  const [projects, setProjects] = useState<ProjectData[] | null>(null);
+  const [pid, setPid] = useState<string>(projectId ?? '');
+  const [mode, setMode] = useState<'add' | 'replace'>('add');
+  const [state, setState] = useState<'idle' | 'busy' | 'ok' | 'err'>('idle');
+  useEffect(() => { fetchProjects().then(setProjects); }, []);
+  const p = projects?.find(x => x.id === pid);
+  const photosOf = (x?: ProjectData) => { const d = (x?.import_data ?? {}) as { photos?: unknown }; return Array.isArray(d.photos) ? d.photos as string[] : x?.cover ? [x.cover] : []; };
+  // sostituire ha senso solo se la foto di partenza e' una foto di questo immobile
+  const canReplace = !!origin && photosOf(p).includes(origin);
+  const save = async () => {
+    if (!pid) return;
+    setState('busy');
+    // l'originale caricato dal computer va messo online per il prima/dopo
+    const beforeUrl = canReplace ? origin! : before.startsWith('data:') ? await uploadDataUrl(before, 'properties') : before;
+    const r = await authFetch('/api/platform/property-photo', { method: 'POST', body: JSON.stringify({ projectId: pid, mode: canReplace ? mode : 'add', before: beforeUrl || undefined, after }) }).catch(() => null);
+    setState(r?.ok ? 'ok' : 'err');
+  };
+  const option = (id: 'add' | 'replace', title: string, text: string, visual: React.ReactNode) => (
+    <button type="button" onClick={() => setMode(id)} aria-pressed={mode === id}
+      className={`flex min-w-0 flex-1 items-center gap-3 rounded-2xl p-2 pr-3 text-left ring-1 ease-smooth transition-colors ${mode === id ? 'bg-white ring-2 ring-brand' : 'bg-white ring-line hover:ring-ink/20'}`}>
+      <span className="relative h-12 w-16 shrink-0 overflow-hidden rounded-xl bg-canvas">{visual}</span>
+      <span className="min-w-0"><span className="block text-[13px] font-semibold">{title}</span><span className="block text-xs leading-snug text-muted">{text}</span></span>
+    </button>
+  );
+  if (state === 'ok') return (
+    <div className="blur-in mx-2 mt-2 flex items-center justify-between gap-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+      <span className="flex items-center gap-2"><Check size={16} /> Salvata in {p?.titolo || p?.nome || 'immobile'}</span>
+      <a href={`#/immobile/${pid}`} className="font-semibold hover:underline">Vedi l’immobile</a>
+    </div>
+  );
+  return (
+    <div className="blur-in mx-2 mt-2 rounded-2xl bg-canvas p-3">
+      <div className="flex items-center justify-between gap-3 pb-3">
+        <span className="text-sm font-semibold">Salva nell’immobile</span>
+        {/* immobile gia' noto se la foto viene da li'; altrimenti si sceglie */}
+        {projects === null ? <Loader2 size={15} className="animate-spin text-muted" /> : (
+          <Dropdown value={pid} align="end" options={[{ value: '', label: 'Scegli l’immobile' }, ...projects.map(x => ({ value: x.id, label: x.titolo || x.nome || x.addr }))]}
+            onChange={setPid} className="h-9 max-w-[60%] rounded-full bg-white px-4 text-[13px] font-medium" />
+        )}
+      </div>
+      <div className="flex flex-col gap-2 sm:flex-row">
+        {option('add', 'Prima e dopo', 'Aggiunge questa foto: sul sito si confronta con l’originale.',
+          <><img src={before} alt="" className="absolute inset-0 h-full w-full object-cover" /><img src={after} alt="" className="absolute inset-0 h-full w-full object-cover" style={{ clipPath: 'inset(0 0 0 50%)' }} /><span className="absolute inset-y-0 left-1/2 w-0.5 -translate-x-1/2 bg-white" /></>)}
+        {canReplace && option('replace', 'Sostituisci', 'Prende il posto della foto originale nell’immobile.',
+          <img src={after} alt="" className="absolute inset-0 h-full w-full object-cover" />)}
+      </div>
+      <div className="flex items-center justify-end gap-2 pt-3">
+        {state === 'err' && <span className="mr-auto text-xs text-rose-600">Non sono riuscito a salvarla, riprova.</span>}
+        <button onClick={onClose} className="h-9 rounded-full px-4 text-[13px] font-medium text-muted hover:bg-white hover:text-ink">Annulla</button>
+        <button onClick={save} disabled={!pid || state === 'busy'} className="flex h-9 items-center gap-1.5 rounded-full bg-brand px-4 text-[13px] font-semibold text-white hover:bg-brand/90 disabled:opacity-40">{state === 'busy' && <Loader2 size={14} className="animate-spin" />} Salva</button>
+      </div>
     </div>
   );
 }
