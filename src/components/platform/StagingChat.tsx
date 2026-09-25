@@ -451,17 +451,22 @@ function ZonePicker({ inline, src, region, points, mask, onChange, onPick, onPre
   const focused = useRef(false);
   const loading = mask === 'loading';
   const ready = (region && region.w > 0.02) || (points.length > 0 && !loading);
+  const closeBtn = (
+  <>
+        {/* nella card del risultato il pulsante Scarica si stringe e diventa la X */}
+        <button type="button" onPointerDown={e => e.stopPropagation()} onClick={cancel} aria-label="Annulla selezione" title="Annulla" style={{ width: pill ? 92 : 36, ...(closing ? { transitionDuration: '300ms' } : {}) }}
+          className="pointer-events-auto absolute right-3 top-3 z-10 flex h-9 items-center justify-center overflow-hidden rounded-full bg-white/85 text-ink shadow-sm ring-1 ring-black/5 backdrop-blur-md ease-smooth transition-[width,background-color] hover:bg-white">
+          <span className={`absolute flex items-center gap-1.5 whitespace-nowrap text-xs font-semibold ease-smooth transition-opacity ${pill ? 'opacity-100' : 'opacity-0'}`}><Download size={14} /> Scarica</span>
+          <X size={16} className={`ease-smooth transition-opacity ${pill ? 'opacity-0' : 'opacity-100'}`} />
+        </button>
+  </>
+  );
   const photo = (
       <div ref={box} className={`touch-none ${inline ? `absolute inset-x-0 bottom-full z-20 ease-smooth transition-opacity ${closing ? 'pointer-events-none' : ''}` : 'relative mx-auto max-h-[calc(100vh-24rem)] w-fit'} select-none overflow-hidden rounded-2xl ${tool === 'rect' ? 'cursor-crosshair' : ''}`}
         style={{ ...(inline ? { aspectRatio: inline, ...(closing ? { opacity: 0, transitionDuration: '300ms' } : { animation: 'gnm-fade var(--gnm-dur) var(--gnm-ease) both' }) } : {}), ...(tool === 'points' ? { cursor: TARGET_CURSOR } : {}) }}
         onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerLeave={leave}>
         <img src={src} alt="" draggable={false} onLoad={inline ? undefined : onLoad} className={inline ? 'block h-full w-full object-cover' : 'block max-h-[calc(100vh-24rem)] w-auto max-w-full'} />
-        {/* nella card del risultato il pulsante Scarica si stringe e diventa la X */}
-        <button type="button" onPointerDown={e => e.stopPropagation()} onClick={cancel} aria-label="Annulla selezione" title="Annulla" style={{ width: pill ? 92 : 36 }}
-          className="absolute right-3 top-3 z-10 flex h-9 items-center justify-center overflow-hidden rounded-full bg-white/85 text-ink shadow-sm ring-1 ring-black/5 backdrop-blur-md ease-smooth transition-[width,background-color] hover:bg-white">
-          <span className={`absolute flex items-center gap-1.5 whitespace-nowrap text-xs font-semibold ease-smooth transition-opacity ${pill ? 'opacity-100' : 'opacity-0'}`}><Download size={14} /> Scarica</span>
-          <X size={16} className={`ease-smooth transition-opacity ${pill ? 'opacity-0' : 'opacity-100'}`} />
-        </button>
+        {!inline && closeBtn}
         {tool === 'points' && hover && !loading && (
           <div className="pointer-events-none absolute inset-0 bg-brand/35 ease-smooth transition-opacity"
             style={{ maskImage: `url(${hover})`, WebkitMaskImage: `url(${hover})`, maskMode: 'luminance', maskSize: '100% 100%', WebkitMaskSize: '100% 100%' }} />
@@ -504,6 +509,8 @@ function ZonePicker({ inline, src, region, points, mask, onChange, onPick, onPre
   if (inline) return (
     <div className="relative">
       {photo}
+      {/* la X sta fuori dalla foto che sfuma: in chiusura resta piena e si allarga fino a Scarica */}
+      <div className="pointer-events-none absolute inset-x-0 bottom-full z-30" style={{ aspectRatio: inline }}>{closeBtn}</div>
       {/* in chiusura l'animazione d'ingresso va tolta, altrimenti il suo "both" tiene l'opacita' a 1 e il campo sparisce di colpo */}
       <div className="duration-300 ease-smooth transition-opacity" style={closing ? { opacity: 0 } : { animation: 'gnm-fade var(--gnm-dur) var(--gnm-ease) .25s both' }}>{form}</div>
     </div>
