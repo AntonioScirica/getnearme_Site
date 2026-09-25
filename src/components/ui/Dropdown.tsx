@@ -55,7 +55,7 @@ export default function Dropdown<T extends string>({ value, options, onChange, c
   return (
     <>
       <button ref={btn} type="button" onClick={toggle} aria-haspopup="listbox" aria-expanded={open}
-        className={`inline-flex items-center gap-0.5 rounded-lg outline-none ease-smooth transition-colors hover:text-brand focus-visible:ring-2 focus-visible:ring-brand/40 ${className}`}>
+        className={`inline-flex items-center gap-0.5 rounded-full outline-none ease-smooth transition-colors hover:text-brand focus-visible:ring-2 focus-visible:ring-brand/40 ${className}`}>
         {children ?? current?.label}
         <ChevronDown size={14} strokeWidth={2.5} className={`shrink-0 translate-y-px ease-smooth transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>

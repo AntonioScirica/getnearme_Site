@@ -123,7 +123,7 @@ export default function MediaView() {
         <Dropdown value={casa} options={casaOptions} onChange={setCasa} className={pill} />
         <Dropdown value={period} options={PERIODS.map(p => ({ value: p.value, label: p.label }))} onChange={setPeriod} className={pill} />
         {items && <span className="ml-auto text-sm text-muted">{filtered.length} foto</span>}
-        {!!items?.length && <button type="button" onClick={() => (selecting ? stopSelecting() : setSelecting(true))} className={`${pill} ease-smooth transition-colors ${selecting ? 'bg-ink text-white ring-ink' : 'hover:bg-canvas'}`}>{selecting ? 'Annulla' : 'Seleziona'}</button>}
+        {!!items?.length && <button type="button" onClick={() => (selecting ? stopSelecting() : setSelecting(true))} className={`h-10 rounded-full px-4 text-sm font-medium outline-none ring-1 ease-smooth transition-colors focus-visible:ring-2 focus-visible:ring-brand/40 ${selecting ? 'bg-ink text-white ring-ink' : 'bg-white ring-line hover:bg-canvas'}`}>{selecting ? 'Annulla' : 'Seleziona'}</button>}
       </div>
 
       {note && <p className="blur-in pt-4 text-sm text-rose-600">{note}</p>}
