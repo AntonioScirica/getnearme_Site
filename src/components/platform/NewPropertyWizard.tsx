@@ -387,7 +387,7 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
               <PortalFields d={d} />
 
               {/* Foto nell'ordine giusto, gia' migliorate */}
-              {photos.length > 0 && <ReadyPhotos photos={photos} title={ai.titolo} onEdit={() => go(STEPS.findIndex(st => st.id === 'foto'))} />}
+              {photos.length > 0 && <ReadyPhotos photos={photos} title={ai.titolo} />}
 
               {/* Sito dell'agente */}
               <div className="rise card p-5" style={{ animationDelay: '.3s' }}>
@@ -622,7 +622,7 @@ function PortalFields({ d }: { d: Details }) {
 }
 
 // Foto pronte da caricare, nell'ordine scelto: scarica tutto in un unico file .zip.
-function ReadyPhotos({ photos, title, onEdit }: { photos: Photo[]; title: string; onEdit: () => void }) {
+function ReadyPhotos({ photos, title }: { photos: Photo[]; title: string }) {
   const [zipping, setZipping] = useState(false);
   const download = async () => {
     setZipping(true);
