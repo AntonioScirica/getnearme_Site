@@ -74,7 +74,22 @@ const FURNISH: Record<string, string> = {
 
 // Stessa logica di buildFinalPrompt delle edge function: planimetria > vista > testo libero
 // (con la protezione adatta alla scena) > stile preset.
-export function buildStagingPrompt(o: { style?: string | null; customPrompt?: string | null; angle?: string | null; planimetria?: boolean; scene?: SceneType }): string {
+// Cosa mettere per tipo di stanza negli stili: senza, in una cucina aperta arredava solo i pensili e lasciava vuoto il resto
+const ROOM_FURNISH: Record<string, string> = {
+  cucina: 'This room is a kitchen: furnish it completely, the kitchen units AND the free floor space: a dining table with four chairs, a pendant lamp above the table; if part of the room is a living area, a sofa and a coffee table there.',
+  soggiorno: 'This room is a living room: a sofa, an armchair, a coffee table, a TV unit, a rug, a floor lamp and curtains; fill the whole visible floor in a natural way.',
+  sala: 'This room is a dining room: a dining table with six chairs, a sideboard, a pendant lamp above the table.',
+  camera: 'This room is a bedroom: a double bed with bedding and cushions, two bedside tables with lamps, a wardrobe, a rug and curtains.',
+  cameretta: "This room is a child's bedroom: a single bed, a desk with a chair, a bookcase, a rug, soft colors.",
+  studio: 'This room is a home office: a desk with an office chair, a bookcase, a lamp, a rug.',
+  ingresso: 'This room is an entrance hall: a slim shoe cabinet, a mirror, a coat rack, a small rug.',
+  corridoio: 'This room is a hallway: a slim console, a runner rug, simple wall lights.',
+  bagno: 'This room is a bathroom: a vanity unit with sink and mirror, towels, a small plant; keep sanitary fixtures where they are.',
+  balcone: 'This is a balcony: a small outdoor table with two chairs and some potted plants.',
+}
+export const roomKey = (label?: string | null) => Object.keys(ROOM_FURNISH).find(k => label?.toLowerCase().includes(k === 'camera' ? 'camera da letto' : k)) ?? ''
+
+export function buildStagingPrompt(o: { style?: string | null; customPrompt?: string | null; angle?: string | null; planimetria?: boolean; scene?: SceneType; room?: string }): string {
   const scene = o.scene ?? 'interno';
   if (o.planimetria) return PLANIMETRIA_BASE + (FURNISH[o.style || ''] || FURNISH.modern) + NO_TEXT;
   const styles = scene === 'esterno' ? STYLE_PROMPTS_ESTERNO : scene === 'giardino' ? STYLE_PROMPTS_GIARDINO : STYLE_PROMPTS;
@@ -89,5 +104,6 @@ export function buildStagingPrompt(o: { style?: string | null; customPrompt?: st
     // Stessa formula "additiva" degli stili: cambia solo quello che chiede l'agente, la foto resta quella.
     return `Edit this exact photo: ${custom}. Change only what is requested; everything else stays exactly the same: camera position, zoom, framing, perspective, walls, windows, doors, furniture, decorations and light (unless the request is about them). Do not zoom out and do not show more of the room.${ONLY_REQUESTED} If new furniture is requested, it must be real furniture that Italian families actually buy today (IKEA, Mondo Convenienza, mid-range Italian stores). ${LISTING_PHOTO}${NO_TEXT_PLAIN}`;
   }
-  return (styles[o.style || ''] || styles.modern) + NO_TEXT;
+  const furnish = scene === 'interno' && o.style !== 'empty' && o.style !== 'daynight' && o.room && ROOM_FURNISH[o.room] ? ` ${ROOM_FURNISH[o.room]}` : '';
+  return (styles[o.style || ''] || styles.modern) + furnish + NO_TEXT;
 }

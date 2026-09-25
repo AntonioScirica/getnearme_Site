@@ -9,7 +9,7 @@ export const maxDuration = 120
 
 // Tipo di foto (interno/esterno/giardino/planimetria) e stanza, dal servizio foto (stesso worker di
 // photo-edit, input { classify: true }). Costa ~1 s di GPU; se il worker e' spento aspetta l'avvio.
-export type Classified = { scene: 'interno' | 'esterno' | 'giardino' | 'planimetria'; room: string }
+export type Classified = { scene: 'interno' | 'esterno' | 'giardino' | 'planimetria'; room: string; state?: string }
 
 export async function POST(req: NextRequest) {
   const token = req.headers.get('authorization')?.replace('Bearer ', '')
@@ -35,5 +35,5 @@ export async function POST(req: NextRequest) {
   }).then(x => x.json()).catch(() => null)
   const out = r?.output as Partial<Classified> | undefined
   if (!out?.scene) return NextResponse.json({ error: r?.status === 'IN_QUEUE' || r?.status === 'IN_PROGRESS' ? 'timeout' : 'ai_failed' }, { status: 502 })
-  return NextResponse.json({ scene: out.scene, room: out.room ?? '' })
+  return NextResponse.json({ scene: out.scene, room: out.room ?? '', state: out.state ?? '' }) // state: vuota | disordinata | datata | arredata (worker da e347f27)
 }

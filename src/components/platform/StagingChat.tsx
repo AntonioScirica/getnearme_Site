@@ -70,6 +70,8 @@ const planStyle = (t: string) => (/nordic|scandinav/i.test(t) ? 'nordic' : /luss
 export default function StagingChat({ onMany }: { onMany: (files: FileList | File[]) => void }) {
   const [library, setLibrary] = useState(false); // scelta foto: vetrina o computer
   const [project, setProject] = useState<string | null>(null); // immobile della foto (se scelta dalla vetrina): la Galleria raggruppa per casa
+  // com'e' la stanza nella foto di lavoro (vuota, disordinata, datata, arredata): cambia suggerimento e proposte
+  const [roomState, setRoomState] = useState<string | null>(null);
   const [otherFor, setOtherFor] = useState<string | null>(null); // messaggio in cui l'agente scrive a mano cos'e' la foto
   // chiusura di Modifica: 300 ms in cui selezione e campo sfumano mentre il pulsante torna Scarica e il divisore rientra
   const [zoneClosing, setZoneClosing] = useState(false);
@@ -140,6 +142,7 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList | Fil
     const id = uid();
     setMsgs(ms => [...ms, { id, role: 'user', image: img, seen: null }]);
     setKind(null); // nuova foto: suggerimenti generici finche' non la riconosce
+    setRoomState(null);
     setBase(img);
     // Tipo di foto e stanza: imposta il tipo da solo e lo dice nel messaggio guida
     try {
@@ -151,6 +154,7 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList | Fil
         const what = c.scene === 'interno' ? `room:${ROOM_LABEL[c.room] ? c.room : 'soggiorno'}` : `scene:${c.scene}`;
         setMsgs(ms => ms.map(m => (m.id === id && m.role === 'user' ? { ...m, seen: what } : m)));
         setKind(what);
+        setRoomState(c.state || null);
       }
     } catch { /* senza riconoscimento resta il tipo scelto a mano */ }
   };
@@ -190,6 +194,10 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList | Fil
     if (!d.url) { patch(id, { busy: false, err: d.error === 'timeout' ? 'La GPU si sta avviando, riprova tra un minuto.' : 'Modifica non riuscita, riprova.' }); return; }
     patch(id, { busy: false, out: d.url, reveal: 'burst' });
     setBase(d.url); // la prossima richiesta continua da qui
+    // stato della stanza dopo la modifica: subito una stima dalla richiesta, poi lo guarda il modello sul risultato
+    setRoomState(req.style === 'empty' ? 'vuota' : req.style ? 'arredata' : null);
+    authFetch('/api/platform/photo-classify', { method: 'POST', body: JSON.stringify({ imageUrl: d.url }) })
+      .then(r => (r.ok ? r.json() : null)).then(c => { if (c?.state) setRoomState(c.state); }).catch(() => {});
     setTimeout(() => patch(id, { reveal: 'line' }), 600);
     setTimeout(() => patch(id, { reveal: 'slider' }), 1450);
     // foto pronta: si scorre in fondo per vederla tutta, compresa la riga sotto (arriva con lo slider)
@@ -211,13 +219,16 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList | Fil
   const hint = !base ? 'Prima carica una foto, poi scrivi qui cosa cambiare'
     : busy ? 'Sto creando la foto, intanto scrivi la prossima modifica'
     : lastAi?.err ? 'Non è andata: riprova o chiedilo in un altro modo'
+    : roomState === 'vuota' ? `La stanza è vuota: arredala? Es. ${(kind && FIRST[kind.replace(/^(room|scene):/, '')]) || 'arreda in stile moderno'}`
+    : roomState === 'disordinata' ? 'Es. togli il disordine e gli oggetti personali, lascia i mobili'
+    : roomState === 'datata' ? 'Es. rinnova pavimento, pareti e mobili in stile moderno'
     : done ? `Vuoi ritoccare qualcosa? Es. ${AFTER[(done - 1) % AFTER.length]}`
     : `Cosa vuoi cambiare? Es. ${(kind && FIRST[kind.replace(/^(room|scene):/, '')]) || 'togli il divano e metti un tavolo da pranzo'}`;
   const closeLibrary = useCallback(() => setLibrary(false), []);
   const empty = msgs.length === 0;
   const picker = <input type="file" accept="image/*" multiple className="hidden" onChange={e => { upload(e.target.files); e.target.value = ''; }} />;
   // i suggerimenti partono subito, senza passare dal campo
-  const chips = suggestionsFor(kind).map(x => (
+  const chips = suggestionsFor(kind).filter(x => roomState !== 'vuota' || (x.id !== 'empty' && x.id !== 'tidy')).map(x => (
     <button key={x.id} disabled={busy} onClick={() => send(x.label, x)}
       className="shrink-0 whitespace-nowrap rounded-full bg-white px-3.5 py-1.5 text-[13px] font-medium text-ink/80 shadow-sm ring-1 ring-inset ring-black/10 ease-smooth transition-colors hover:bg-brand hover:text-white disabled:opacity-40">{x.label}</button>
   ));
