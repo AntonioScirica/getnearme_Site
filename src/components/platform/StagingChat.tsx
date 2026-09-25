@@ -282,7 +282,8 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
                 {i === zoneOwner ? zonePicker(ratios[m.before] ?? 1.5) : <>
                 {m.err && <p className="blur-in px-2 pt-2 text-sm text-rose-600">{m.err}</p>}
                 {m.out && !m.busy && (
-                  <div className="blur-in flex items-center gap-3 px-2 pt-2 text-xs text-muted">
+                  <div className="blur-in flex min-h-12 items-center gap-3 px-2 pt-2 text-xs text-muted">
+                    {/* alta quanto il campo di Modifica (8 + 40): aprendo e chiudendo la card non cambia altezza */}
                     <span className="min-w-0 flex-1 truncate">{m.text}</span>
                     {/* a destra: Modifica (zona su questa foto) e Ricomincia da qui; "Si continua da qui" solo dopo esserci tornati */}
                     <div className="flex shrink-0 items-center gap-1">
