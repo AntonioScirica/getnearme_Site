@@ -67,11 +67,11 @@ export default function ProfileForm({ initial, submitLabel, onSaved }: { initial
       <div>
         <label className="mb-1.5 block text-sm font-medium">Nome e cognome (o nome agenzia)</label>
         <input value={name} onChange={e => onName(e.target.value)} maxLength={80} placeholder="Mario Rossi" autoFocus={!initial.name}
-          className="w-full rounded-lg border border-line bg-white px-3 py-2.5 text-sm outline-none focus:border-brand" />
+          className="w-full rounded-full border border-line bg-white px-4 py-2.5 text-sm outline-none focus:border-brand" />
       </div>
       <div>
         <label className="mb-1.5 block text-sm font-medium">Indirizzo del tuo portfolio</label>
-        <div className="flex items-center rounded-lg border border-line bg-white text-sm focus-within:border-brand">
+        <div className="flex items-center rounded-full border border-line bg-white pl-1 text-sm focus-within:border-brand">
           <span className="pl-3 text-muted">{portfolioPrefix()}</span>
           <input value={slug} onChange={e => { setSlugTouched(true); setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 40)); }}
             placeholder="mario-rossi" className="min-w-0 flex-1 bg-transparent py-2.5 outline-none" />
@@ -89,7 +89,7 @@ export default function ProfileForm({ initial, submitLabel, onSaved }: { initial
         {check.state === 'invalid' && <p className="mt-2 text-sm text-red-600">Da 3 a 40 caratteri: lettere minuscole, numeri e trattini.</p>}
       </div>
       {error && <p className="text-sm text-red-600">{error}</p>}
-      <button disabled={!canSave || saving} className="w-full btn-ink rounded-xl py-2.5 text-sm font-semibold">
+      <button disabled={!canSave || saving} className="w-full btn-ink rounded-full py-2.5 text-sm font-semibold">
         {saving ? 'Salvo...' : submitLabel}
       </button>
     </form>

@@ -160,6 +160,8 @@ export function detailsFrom(importData: Record<string, unknown> | null | undefin
 }
 
 // Colori ufficiali APE, dalla A4 (verde) alla G (rosso).
+// scritta leggibile sopra un colore: scura sui colori chiari (giallo, verde chiaro), bianca sugli scuri
+export const inkOn = (hex: string) => { const n = parseInt(hex.replace('#', ''), 16); return ((n >> 16) * 299 + ((n >> 8) & 255) * 587 + (n & 255) * 114) / 1000 > 150 ? '#1a1a1a' : '#fff'; };
 export const ENERGY_COLORS: Record<string, string> = {
   A4: '#00843d', A3: '#1a9a44', A2: '#4db848', A1: '#8dc63f', B: '#c8d400', C: '#fff200',
   D: '#fdb913', E: '#f47920', F: '#ed1c24', G: '#b31b1b',

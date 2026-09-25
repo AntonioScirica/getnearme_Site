@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { createProject, type ProjectData } from '@/lib/projects';
 import { downscaleDataUrl, uploadDataUrl } from '@/lib/imageUpload';
-import { ALL_FIELDS, completeness, formatValue, visible, type Details, type Field } from '@/lib/propertyFields';
+import { ALL_FIELDS, completeness, ENERGY_COLORS, inkOn, formatValue, visible, type Details, type Field } from '@/lib/propertyFields';
 import { authFetch, portfolioUrl, setPublic } from './api';
 import { PhotoEditModal, QUICK_PRESETS, type EditRequest } from './AiPhoto';
 import { CopyIcon } from './ImproveView';
@@ -470,14 +470,15 @@ function TextField({ f, v, set, autoFocus, big }: { f: Field; v: Details[string]
 
 // Classe energetica: la scala colorata dell'APE, si tocca la lettera.
 function EnergyScale({ v, set }: { v: Details[string]; set: SetV }) {
-  const colors: Record<string, string> = { A4: '#00843d', A3: '#1a9a44', A2: '#4db848', A1: '#8dc63f', B: '#c8d400', C: '#fff200', D: '#fdb913', E: '#f47920', F: '#ed1c24', G: '#b31b1b' };
+  const colors = ENERGY_COLORS;
   return (
     <div>
       <Label f={F.classe_energetica} />
       <div className="flex flex-wrap items-end gap-1.5">
         {Object.entries(colors).map(([k, c]) => (
           <button type="button" key={k} onClick={() => set(v === k ? undefined : k)} aria-pressed={v === k}
-            className={`flex w-12 items-center justify-center rounded-lg text-sm font-bold text-white ease-smooth transition-all active:scale-95 ${v === k ? 'h-14 ring-2 ring-ink ring-offset-2' : 'h-10 opacity-60 hover:opacity-100'}`} style={{ background: c }}>{k}</button>
+            // colori pieni con la scritta in contrasto (bianco sul giallo non si leggeva); scelta piu' alta con il bordo
+            className={`flex w-12 items-center justify-center rounded-lg text-sm font-bold ease-smooth transition-all active:scale-95 ${v === k ? 'h-14 ring-2 ring-ink ring-offset-2' : 'h-10 hover:brightness-95'}`} style={{ background: c, color: inkOn(c) }}>{k}</button>
         ))}
         <button type="button" onClick={() => set(v === 'In attesa' ? undefined : 'In attesa')} className={`h-10 rounded-lg px-3 text-sm ${v === 'In attesa' ? 'bg-ink text-white' : 'bg-white ring-1 ring-line'}`}>In attesa</button>
       </div>

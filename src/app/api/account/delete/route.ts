@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { deleteKeys, listKeys } from '@/lib/r2';
 
 export const dynamic = 'force-dynamic';
 
@@ -57,6 +58,12 @@ export async function DELETE(req: NextRequest) {
     if (credits?.stripe_agency_subscription_id) {
       await cancelStripeSubscription(credits.stripe_agency_subscription_id);
     }
+
+    // Foto create in Galleria e caricate per il sito: via anche da R2 (best effort, non blocca l'eliminazione)
+    try {
+      const keys = (await Promise.all([`edits/${user.id}/`, `vetrina/${user.id}/`].map(p => listKeys(p, 10000)))).flat().map(k => k.key);
+      if (keys.length) await deleteKeys(keys);
+    } catch (e) { console.error('account delete r2:', (e as Error)?.message); }
 
     // Hard delete: le righe dipendenti vengono rimosse via ON DELETE CASCADE / SET NULL
     // (migration 20260614120000_account_deletion_cascade.sql)

@@ -1,9 +1,6 @@
 import LeafletMap from '@/components/ui/LeafletMap';
 import { Bath, BedDouble, Building, ExternalLink, LayoutTemplate, Mail, MapPin, Ruler, Square } from 'lucide-react';
-import { ENERGY_COLORS, GROUPS, detailsFrom, groupFacts } from '@/lib/propertyFields';
-
-// colore chiaro? (luminanza percepita) per scegliere la scritta scura o bianca
-const light = (hex: string) => { const n = parseInt(hex.replace('#', ''), 16); return ((n >> 16) * 299 + ((n >> 8) & 255) * 587 + (n & 255) * 114) / 1000 > 150; };
+import { ENERGY_COLORS, GROUPS, detailsFrom, groupFacts, inkOn } from '@/lib/propertyFields';
 import Gallery, { ShareButton } from './Gallery';
 import ZoneList from './ZoneList';
 import ProgressiveBlur from '../ProgressiveBlur';
@@ -109,7 +106,7 @@ export default function PropertyView({ p, contact }: { p: PropertyViewData; cont
                   // non scelte: colore tenue e scritta scura (con l'opacita' la scritta bianca spariva); scelta: colore pieno,
                   // scritta bianca o scura in base alla luminosita' del colore (su giallo il bianco non si legge)
                   <div key={k} className={`flex w-10 items-center justify-center rounded-md text-xs font-bold transition-all ${k === energy ? 'h-12 ring-2 ring-ink ring-offset-2' : 'h-7 text-ink/60'}`}
-                    style={k === energy ? { background: ENERGY_COLORS[k], color: light(ENERGY_COLORS[k]) ? '#1a1a1a' : '#fff' } : { background: `color-mix(in srgb, ${ENERGY_COLORS[k]} 30%, white)` }}>{k}</div>
+                    style={k === energy ? { background: ENERGY_COLORS[k], color: inkOn(ENERGY_COLORS[k]) } : { background: `color-mix(in srgb, ${ENERGY_COLORS[k]} 30%, white)` }}>{k}</div>
                 ))}
               </div>
               <p className="mt-3 text-sm text-muted">Classe {energy}{d.ipe ? ` · IPE ${d.ipe} kWh/m²a` : ''}</p>

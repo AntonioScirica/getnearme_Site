@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Home, Building2, Globe, Gauge, LogOut, Plus, Loader2, X, Wand2, Images } from 'lucide-react';
+import { Home, Building2, Globe, Gauge, LogOut, Plus, Loader2, X, Wand2, Images, ExternalLink } from 'lucide-react';
 import type { UserData } from '@/app/[locale]/dashboard/page';
 import { supabase } from '@/lib/supabase';
 import { fetchProjects, type ProjectData } from '@/lib/projects';
@@ -433,7 +433,16 @@ function ProfileView({ email, profile, onSaved, admin }: { email: string; profil
           <Gauge size={18} className="text-muted" /><span className="flex-1"><span className="block font-semibold">Costi AI</span><span className="block text-sm text-muted">Spesa per le foto e i video generati</span></span>
         </a>
       )}
-      <button onClick={() => supabase.auth.signOut()} className="mt-6 flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium text-muted ring-1 ring-line hover:bg-white hover:text-ink"><LogOut size={15} /> Esci</button>
+      {/* documenti legali */}
+      <div className={`mt-4 rounded-[28px] bg-white p-2 ${CARD_SHADOW}`}>
+        {([['Privacy', '/it/privacy'], ['Termini e condizioni', '/it/termini'], ['Cookie', '/it/cookie'], ['Come cancelliamo i dati', '/it/data-deletion']] as const).map(([l, href]) => (
+          <a key={href} href={href} target="_blank" rel="noopener" className="flex h-12 items-center justify-between rounded-[20px] px-4 text-sm font-medium ease-smooth transition-colors hover:bg-canvas">{l}<ExternalLink size={15} className="text-muted" /></a>
+        ))}
+      </div>
+      <div className="mt-6 flex items-center justify-between gap-3">
+        <button onClick={() => supabase.auth.signOut()} className="flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium text-muted ring-1 ring-line hover:bg-white hover:text-ink"><LogOut size={15} /> Esci</button>
+        <DeleteAccount />
+      </div>
     </div>
   );
 }
@@ -448,5 +457,42 @@ function Onboarding({ onDone }: { onDone: (p: Profile) => void }) {
         <div className="mt-6"><ProfileForm initial={{ name: null, slug: null }} submitLabel="Continua" onSaved={onDone} /></div>
       </div>
     </div>
+  );
+}
+
+// Eliminazione dell'account: conferma scrivendo ELIMINA. Cancella account, immobili, sito, foto create e
+// l'abbonamento Stripe (/api/account/delete), poi esce.
+function DeleteAccount() {
+  const [open, setOpen] = useState(false);
+  const [word, setWord] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+  const run = async () => {
+    setBusy(true); setErr('');
+    const r = await authFetch('/api/account/delete', { method: 'DELETE' }).catch(() => null);
+    if (!r?.ok) { setBusy(false); setErr('Non sono riuscito a eliminare l’account, riprova o scrivici.'); return; }
+    await supabase.auth.signOut();
+    window.location.href = '/';
+  };
+  return (
+    <>
+      <button onClick={() => setOpen(true)} className="rounded-full px-4 py-2.5 text-sm font-medium text-rose-600 hover:bg-rose-50">Elimina account</button>
+      {open && (
+        <div className="blur-in fixed inset-0 z-[260] flex items-center justify-center bg-black/40 p-6 backdrop-blur-sm" onClick={() => !busy && setOpen(false)}>
+          <div onClick={e => e.stopPropagation()} className="w-full max-w-md rounded-[32px] bg-white p-6 shadow-2xl">
+            <h2 className="text-lg font-semibold">Eliminare l’account?</h2>
+            <p className="pt-2 text-sm text-muted">Cancelliamo per sempre il tuo account, gli immobili, il tuo sito, le foto della Galleria e l’eventuale abbonamento. Non si può annullare.</p>
+            <label className="mt-5 block text-xs font-medium text-ink/70">Per confermare scrivi <b>ELIMINA</b>
+              <input value={word} onChange={e => setWord(e.target.value)} autoFocus className="mt-1.5 h-11 w-full rounded-full bg-canvas px-4 text-sm outline-none focus:bg-white focus:ring-1 focus:ring-ink/15" />
+            </label>
+            {err && <p className="pt-3 text-sm text-rose-600">{err}</p>}
+            <div className="flex justify-end gap-2 pt-6">
+              <button disabled={busy} onClick={() => setOpen(false)} className="h-10 rounded-full px-4 text-sm font-medium hover:bg-canvas">Annulla</button>
+              <button disabled={busy || word.trim() !== 'ELIMINA'} onClick={run} className="flex h-10 items-center gap-2 rounded-full bg-rose-600 px-5 text-sm font-semibold text-white hover:bg-rose-700 disabled:opacity-40">{busy && <Loader2 size={15} className="animate-spin" />} Elimina per sempre</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
