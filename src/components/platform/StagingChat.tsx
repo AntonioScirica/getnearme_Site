@@ -179,7 +179,8 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList | Fil
   const restartFrom = (i: number, url: string) => {
     setResumed(url);
     setFaded(f => new Set([...f, ...msgs.slice(i + 1).map(x => x.id)]));
-    setMsgs(ms => [...ms, { id: uid(), role: 'divider', image: url }]);
+    // divisore e poi la foto rimessa come messaggio tuo: e' come se l'avessi mandata ora
+    setMsgs(ms => [...ms, { id: uid(), role: 'divider', image: url }, { id: uid(), role: 'user', image: url, seen: kind }]);
     setBase(url); clearZone(); setSelecting(false);
   };
   // Clic su un oggetto: il worker (SAM) ritorna la maschera, mostrata sulla foto. Piu' clic = piu' oggetti.
@@ -269,7 +270,7 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList | Fil
           ) : m.role === 'divider' ? (
             <div key={m.id} className="blur-in flex items-center gap-3 py-2 text-xs font-medium text-muted">
               <span className="h-px flex-1 bg-line" />
-              <img src={m.image} alt="" className="h-8 w-12 rounded-lg object-cover ring-1 ring-black/5" /> Ripreso da questa versione
+              Ripreso da questa versione
               <span className="h-px flex-1 bg-line" />
             </div>
           ) : m.role === 'user' ? (
