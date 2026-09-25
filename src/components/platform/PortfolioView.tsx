@@ -12,7 +12,6 @@ import { fileToResizedDataUrl } from '@/lib/staging';
 import { uploadDataUrl } from '@/lib/imageUpload';
 import { authFetch, CARD_SHADOW, formatPrice, portfolioUrl, setPublic } from './api';
 import { MorphTarget, morphFrom } from '@/components/ui/Morph';
-import ProfileForm, { type Profile } from './ProfileForm';
 
 // Vetrina: l'agente sceglie uno dei 5 template e modifica colori, testi, foto, contatti e sezioni,
 // con l'anteprima dal vivo accanto (stesse pagine del sito pubblico, con i suoi immobili).
@@ -82,7 +81,7 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
       </div>
       <div className="flex flex-wrap items-center justify-between gap-2 pt-6">
           <div className="flex h-10 items-center rounded-full bg-white p-1 ring-1 ring-black/10">
-            {([['sito', 'Aspetto del sito'], ['immobili', 'Immobili e indirizzo']] as const).map(([id, l]) => (
+            {([['sito', 'Aspetto del sito'], ['immobili', 'Immobili']] as const).map(([id, l]) => (
               <button key={id} onClick={() => setTab(id)} className={`flex h-8 items-center rounded-full px-4 text-[13px] font-medium ease-smooth transition-colors ${tab === id ? 'bg-ink text-white' : 'text-muted hover:text-ink'}`}>{l}</button>
             ))}
           </div>
@@ -408,11 +407,10 @@ function Pics({ label, covers, value, onChange }: { label: string; covers: strin
 }
 
 function PropertiesTab({ projects, onChange }: { projects: ProjectData[] | null; onChange: () => void }) {
-  const [profile, setProfile] = useState<Profile | undefined>(undefined);
-  useEffect(() => { authFetch('/api/platform/portfolio').then(r => r.json()).then(d => setProfile({ name: d.name, slug: d.slug })); }, []);
+  // nome e indirizzo del sito stanno solo nel Profilo
   const toggle = async (p: ProjectData) => { if (await setPublic(p.id, !p.is_public)) onChange(); };
   return (
-    <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_380px]">
+    <div className="mt-8">
       <div>
         <h2 className="font-display text-xl font-semibold">Immobili in vetrina</h2>
         {!projects ? <Loader2 className="mt-4 animate-spin text-muted" /> : !projects.length ? (
@@ -432,10 +430,6 @@ function PropertiesTab({ projects, onChange }: { projects: ProjectData[] | null;
           </ul>
         )}
       </div>
-      <section className={`h-fit rounded-[24px] bg-white p-6 ${CARD_SHADOW}`}>
-        <h2 className="mb-4 font-display text-xl font-semibold">Nome e indirizzo</h2>
-        {profile ? <ProfileForm key={profile.slug ?? ''} initial={profile} submitLabel="Salva" onSaved={setProfile} /> : <Loader2 className="animate-spin text-muted" />}
-      </section>
     </div>
   );
 }
