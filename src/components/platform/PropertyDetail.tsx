@@ -28,7 +28,7 @@ export default function PropertyDetail({ project, loading, onChange }: { project
       {/* avviso: qui e' la scheda della piattaforma, sul sito cambia con il modello scelto */}
       <div className={`mb-6 flex flex-wrap items-center gap-3 rounded-3xl bg-white p-2 pl-4 text-sm ${CARD_SHADOW}`}>
         <Info size={16} className="shrink-0 text-brand" />
-        <span className="min-w-0 flex-1 text-muted">Questa è la scheda nella piattaforma. Sul tuo sito l&apos;immobile si vede con lo stile del modello scelto{site?.template ? <> (<b className="text-ink">{TEMPLATES.find(t => t.id === site.template)?.name}</b>)</> : ''}: colori, caratteri e disposizione cambiano.</span>
+        <span className="min-w-0 flex-1 truncate text-muted">Sul tuo sito si vedrà con lo stile del modello {site?.template ? <b className="text-ink">{TEMPLATES.find(t => t.id === site.template)?.name}</b> : 'scelto'}.</span>
         <a href="#/portfolio" className="flex h-9 items-center rounded-full px-3 font-medium hover:bg-canvas">Cambia modello</a>
         {project.is_public && site?.slug && <a href={`${portfolioUrl(site.slug)}/${project.id}`} target="_blank" rel="noopener" className="flex h-9 items-center gap-1.5 rounded-full bg-canvas px-4 font-medium hover:bg-line/60">Vedi sul sito <ExternalLink size={14} /></a>}
       </div>
