@@ -94,7 +94,7 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
           onPick={id => { if (id !== cfg.template) set({ template: id, primary: TEMPLATES.find(t => t.id === id)!.primary, font: TEMPLATES.find(t => t.id === id)!.font }); setPage({ page: 'home' }); setEditing(id); }} />
       ) : (
         <div className="mt-6">
-          <div className="mb-5 flex flex-wrap items-center gap-3">
+          <div className="blur-in mb-5 flex flex-wrap items-center gap-3" style={{ animationDelay: '.2s' }}>
             <button onClick={() => { if (!dirty || confirm('Hai modifiche non pubblicate. Tornare ai modelli e scartarle?')) { morphFrom(document.querySelector('[data-morph="preview"]'), `tpl-${cfg.template}`); setCfg(site.config); setEditing(null); } }}
               className="flex h-10 items-center gap-2 rounded-full bg-white px-4 text-sm font-medium ring-1 ring-black/10 ease-smooth transition-colors hover:bg-canvas"><ArrowLeft size={15} /> Tutti i modelli</button>
             <span className="text-sm text-muted">Stai modificando <b className="text-ink">{TEMPLATES.find(t => t.id === cfg.template)?.name}</b>{cfg.template !== site.config.template && ' (non ancora pubblicato)'}</span>
@@ -133,7 +133,8 @@ function SideEditor({ cfg, set, page, onPage, firstId, covers, selected, setSele
   const toggleHide = (id: string) => set({ hidden: hidden.has(id) ? cfg.hidden.filter(x => x !== id) : [...cfg.hidden, id] });
 
   return (
-    <aside className={`rounded-[28px] bg-white lg:sticky lg:top-24 lg:flex lg:max-h-[calc(100vh-8rem)] lg:flex-col ${CARD_SHADOW}`}>
+    // compare dopo, mentre l'anteprima si sta ancora trasformando dalla card scelta
+    <aside className={`blur-in rounded-[28px] bg-white lg:sticky lg:top-24 lg:flex lg:max-h-[calc(100vh-8rem)] lg:flex-col ${CARD_SHADOW}`} style={{ animationDelay: '.3s' }}>
       <div className="flex gap-1 border-b border-line p-2">
         {([['pagina', 'Pagina'], ['generale', 'Generale']] as const).map(([id, l]) => (
           <button key={id} onClick={() => setTab(id)} className={`flex-1 rounded-full py-2 text-sm font-medium ease-smooth transition-colors ${tab === id ? 'bg-ink text-white' : 'text-muted hover:text-ink'}`}>{l}</button>
