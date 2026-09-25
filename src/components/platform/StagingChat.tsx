@@ -26,6 +26,7 @@ const SCENE_LABEL: Record<Scene, string> = { interno: 'un interno', esterno: 'un
 const SEEN_OPTIONS: DropdownOption<string>[] = [
   ...['soggiorno', 'cucina', 'camera', 'cameretta', 'bagno', 'sala', 'studio', 'ingresso', 'corridoio', 'balcone', 'cantina', 'box'].map(r => ({ value: `room:${r}`, label: ROOM_LABEL[r], group: 'Interno' })),
   ...(['esterno', 'giardino', 'planimetria'] as const).map(x => ({ value: `scene:${x}`, label: SCENE_LABEL[x], group: 'Altro' })),
+  { value: 'other', label: 'Altro, lo scrivo io', group: 'Altro' },
 ];
 // Suggerimenti in base a cosa c'e' nella foto (la cucina non ha "Arreda nordico", la facciata non ha "Svuota la stanza")
 const S = (id: string, label: string, req: Suggestion['req']): Suggestion => ({ id, label, req });
@@ -43,7 +44,8 @@ function suggestionsFor(kind: string | null): Suggestion[] {
     default: return QUICK_PRESETS;
   }
 }
-const seenLabel = (k: string) => SEEN_OPTIONS.find(o => o.value === k)?.label ?? 'un interno';
+// "custom:..." = scritto dall'agente quando nessuna voce va bene
+const seenLabel = (k: string) => (k.startsWith('custom:') ? k.slice(7) : SEEN_OPTIONS.find(o => o.value === k)?.label ?? 'un interno');
 
 type Msg =
   | { id: string; role: 'divider'; image: string }
@@ -58,6 +60,7 @@ const planStyle = (t: string) => (/nordic|scandinav/i.test(t) ? 'nordic' : /luss
 
 export default function StagingChat({ onMany }: { onMany: (files: FileList | File[]) => void }) {
   const [library, setLibrary] = useState(false); // scelta foto: vetrina o computer
+  const [otherFor, setOtherFor] = useState<string | null>(null); // messaggio in cui l'agente scrive a mano cos'e' la foto
   // chiusura di Modifica: 300 ms in cui selezione e campo sfumano mentre il pulsante torna Scarica e il divisore rientra
   const [zoneClosing, setZoneClosing] = useState(false);
   const [msgs, setMsgs] = useState<Msg[]>([]);
@@ -256,10 +259,23 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList | Fil
                   {/* quando riconosce la foto il messaggio si riscrive parola per parola (key = cosa ha visto) */}
                   <AutoSize><LightSwap swapKey={m.seen ?? 'caricata'}>
                     <p>{m.seen ? <>Sembra{' '}
+                      {otherFor === m.id ? (
+                        // "Altro": campo al posto della voce, Invio conferma, Esc annulla
+                        <input autoFocus placeholder="es. una mansarda" maxLength={40} className="w-40 border-b border-ink/30 bg-transparent font-bold outline-none placeholder:font-normal placeholder:text-muted/60"
+                          onKeyDown={e => {
+                            if (e.key === 'Escape') setOtherFor(null);
+                            if (e.key !== 'Enter') return;
+                            const v = e.currentTarget.value.trim();
+                            if (v) { setMsgs(ms => ms.map(x => (x.id === m.id && x.role === 'user' ? { ...x, seen: `custom:${v}` } : x))); setScene('interno'); setKind(null); }
+                            setOtherFor(null);
+                          }} onBlur={() => setOtherFor(null)} />
+                      ) : (
                       <Dropdown value={m.seen} options={SEEN_OPTIONS} className="font-bold" onChange={v => {
+                        if (v === 'other') { setOtherFor(m.id); return; }
                         setMsgs(ms => ms.map(x => (x.id === m.id && x.role === 'user' ? { ...x, seen: v } : x)));
                         setScene(v.startsWith('scene:') ? (v.slice(6) as Scene) : 'interno'); setKind(v);
-                      }}>{seenLabel(m.seen)}</Dropdown>. </> : 'Foto caricata. '}Cosa vuoi cambiare? Scrivilo qui sotto o tocca un suggerimento.</p>
+                      }}>{seenLabel(m.seen)}</Dropdown>
+                      )}. </> : 'Foto caricata. '}Cosa vuoi cambiare? Scrivilo qui sotto o tocca un suggerimento.</p>
                   </LightSwap></AutoSize>
                 </div>
               )}
