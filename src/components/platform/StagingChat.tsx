@@ -360,6 +360,8 @@ function ZonePicker({ src, region, points, mask, onChange, onPick, onPreview, on
       <div ref={box} className={`relative mx-auto max-h-[calc(100vh-24rem)] w-fit touch-none select-none overflow-hidden rounded-2xl ${tool === 'rect' ? 'cursor-crosshair' : 'cursor-pointer'}`}
         onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerLeave={leave}>
         <img src={src} alt="" draggable={false} onLoad={onLoad} className="block max-h-[calc(100vh-24rem)] w-auto" />
+        <button type="button" onPointerDown={e => e.stopPropagation()} onClick={onCancel} aria-label="Annulla selezione" title="Annulla"
+          className="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-ink shadow-sm backdrop-blur ease-smooth transition-colors hover:bg-white"><X size={16} /></button>
         {tool === 'points' && hover && !loading && (
           <div className="pointer-events-none absolute inset-0 bg-brand/35 ease-smooth transition-opacity"
             style={{ maskImage: `url(${hover})`, WebkitMaskImage: `url(${hover})`, maskMode: 'luminance', maskSize: '100% 100%', WebkitMaskSize: '100% 100%' }} />
@@ -378,17 +380,16 @@ function ZonePicker({ src, region, points, mask, onChange, onPick, onPreview, on
         )}
       </div>
       {/* Richiesta direttamente qui: scrivi cosa fare nella zona e Modifica */}
-      <form onSubmit={e => { e.preventDefault(); if (ready && text.trim() && !busy) onSubmit(text.trim()); }} className="flex items-center gap-2 px-1 pb-1 pt-2">
-        <button type="button" onClick={onCancel} aria-label="Annulla selezione" title="Annulla" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink"><X size={17} /></button>
-        <input value={text} onChange={e => setText(e.target.value)} autoFocus
-          placeholder={loading ? 'Riconosco l’oggetto…' : ready ? 'Cosa faccio qui? Es. togli la tv' : tool === 'rect' ? 'Trascina sulla foto per disegnare la zona' : 'Passa sopra un oggetto e cliccalo'}
-          className="h-10 min-w-0 flex-1 rounded-full bg-canvas px-4 text-sm outline-none ease-smooth transition-shadow placeholder:text-muted/60 focus:bg-white focus:ring-1 focus:ring-ink/15" />
-        {/* strumenti di selezione: solo icone, il nome nel tooltip */}
-        <div className="flex shrink-0 items-center rounded-full bg-canvas p-1">
+      <form onSubmit={e => { e.preventDefault(); if (ready && text.trim() && !busy) onSubmit(text.trim()); }} className="flex items-center gap-2 pt-2">
+        {/* campo con dentro, a destra, gli strumenti di selezione (solo icone, nome nel tooltip) */}
+        <div className="flex h-10 min-w-0 flex-1 items-center rounded-full bg-canvas pl-4 pr-1 ease-smooth transition-shadow focus-within:bg-white focus-within:ring-1 focus-within:ring-ink/15">
+          <input value={text} onChange={e => setText(e.target.value)} autoFocus
+            placeholder={loading ? 'Riconosco l’oggetto…' : ready ? 'Cosa faccio qui? Es. togli la tv' : tool === 'rect' ? 'Trascina sulla foto per disegnare la zona' : 'Passa sopra un oggetto e cliccalo'}
+            className="h-full min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted/60" />
           {([['rect', 'Rettangolo: trascina per disegnare la zona', SquareDashed], ['points', 'Oggetti: clicca per selezionarli', MousePointerClick]] as const).map(([id, l, I]) => (
             <Tooltip key={id} label={l}>
               <button type="button" onClick={() => pickTool(id)} aria-label={l} aria-pressed={tool === id}
-                className={`flex h-8 w-8 items-center justify-center rounded-full ease-smooth transition-colors ${tool === id ? 'bg-white text-ink shadow-sm' : 'text-muted hover:text-ink'}`}><I size={16} /></button>
+                className={`flex h-8 w-8 items-center justify-center rounded-full ease-smooth transition-colors ${tool === id ? 'bg-ink text-white' : 'text-muted hover:text-ink'}`}><I size={15} /></button>
             </Tooltip>
           ))}
         </div>
