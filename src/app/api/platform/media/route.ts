@@ -31,7 +31,8 @@ export async function GET(req: NextRequest) {
     const rootOf = (k: string) => { let r = k; for (let i = 0; i < 50 && idx?.[r]?.from && all.has(idx[r].from!); i++) r = idx[r].from!; return r }
     const chains = new Map<string, string[]>()
     for (const k of results) { const r = rootOf(k); chains.set(r, [...(chains.get(r) ?? []), k]) }
-    const items = [...chains.entries()].map(([root, list]) => {
+    // foto create prima della Galleria (senza prima ne' dati): non si mostrano, restano su R2
+    const items = [...chains.entries()].filter(([root, list]) => all.has(root.replace(/\.jpg$/, '-prima.jpg')) || list.some(k => idx[k])).map(([root, list]) => {
       const last = list.reduce((a, b) => ((at.get(b) ?? 0) > (at.get(a) ?? 0) ? b : a))
       // passaggi fino all'ultima versione (ramo che porta a lei), dal primo al piu' recente
       const path: string[] = []
