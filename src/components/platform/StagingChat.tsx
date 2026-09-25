@@ -357,14 +357,6 @@ function ZonePicker({ src, region, points, mask, onChange, onPick, onPreview, on
   return (
     <div className="blur-in flex justify-start">
     <div className={`w-full max-w-[560px] rounded-3xl rounded-bl-2xl bg-white p-2 ${CARD_SHADOW}`}>
-      <div className="flex flex-wrap items-center gap-2 px-1 pb-2">
-        <div className="flex rounded-full bg-canvas p-1">
-          {([['rect', 'Rettangolo', SquareDashed], ['points', 'Oggetti', MousePointerClick]] as const).map(([id, l, I]) => (
-            <button key={id} type="button" onClick={() => pickTool(id)} className={`flex h-8 items-center gap-1.5 rounded-full px-3 text-[13px] font-medium leading-none ease-smooth transition-colors ${tool === id ? 'bg-white text-ink shadow-sm' : 'text-muted hover:text-ink'}`}><I size={14} className="translate-y-px" /> {l}</button>
-          ))}
-        </div>
-        <span className="text-xs text-muted">{loading ? 'Riconosco l’oggetto…' : tool === 'rect' ? 'Trascina sulla foto per disegnare la zona' : 'Passa sopra un oggetto per vederlo, clicca per selezionarlo'}</span>
-      </div>
       <div ref={box} className={`relative mx-auto max-h-[calc(100vh-24rem)] w-fit touch-none select-none overflow-hidden rounded-2xl ${tool === 'rect' ? 'cursor-crosshair' : 'cursor-pointer'}`}
         onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerLeave={leave}>
         <img src={src} alt="" draggable={false} onLoad={onLoad} className="block max-h-[calc(100vh-24rem)] w-auto" />
@@ -389,8 +381,17 @@ function ZonePicker({ src, region, points, mask, onChange, onPick, onPreview, on
       <form onSubmit={e => { e.preventDefault(); if (ready && text.trim() && !busy) onSubmit(text.trim()); }} className="flex items-center gap-2 px-1 pb-1 pt-2">
         <button type="button" onClick={onCancel} aria-label="Annulla selezione" title="Annulla" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink"><X size={17} /></button>
         <input value={text} onChange={e => setText(e.target.value)} autoFocus
-          placeholder={ready ? 'Cosa faccio qui? Es. togli la tv' : 'Prima seleziona sulla foto, poi scrivi'}
+          placeholder={loading ? 'Riconosco l’oggetto…' : ready ? 'Cosa faccio qui? Es. togli la tv' : tool === 'rect' ? 'Trascina sulla foto per disegnare la zona' : 'Passa sopra un oggetto e cliccalo'}
           className="h-10 min-w-0 flex-1 rounded-full bg-canvas px-4 text-sm outline-none ease-smooth transition-shadow placeholder:text-muted/60 focus:bg-white focus:ring-1 focus:ring-ink/15" />
+        {/* strumenti di selezione: solo icone, il nome nel tooltip */}
+        <div className="flex shrink-0 items-center rounded-full bg-canvas p-1">
+          {([['rect', 'Rettangolo: trascina per disegnare la zona', SquareDashed], ['points', 'Oggetti: clicca per selezionarli', MousePointerClick]] as const).map(([id, l, I]) => (
+            <Tooltip key={id} label={l}>
+              <button type="button" onClick={() => pickTool(id)} aria-label={l} aria-pressed={tool === id}
+                className={`flex h-8 w-8 items-center justify-center rounded-full ease-smooth transition-colors ${tool === id ? 'bg-white text-ink shadow-sm' : 'text-muted hover:text-ink'}`}><I size={16} /></button>
+            </Tooltip>
+          ))}
+        </div>
         <button type="submit" disabled={!ready || !text.trim() || busy}
           className="h-10 shrink-0 rounded-full bg-brand px-5 text-[13px] font-semibold text-white ease-smooth transition-[background-color,opacity,transform] hover:bg-brand/90 active:scale-[0.97] disabled:opacity-40">Modifica</button>
       </form>
