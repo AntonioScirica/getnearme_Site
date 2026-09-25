@@ -210,7 +210,7 @@ export function Hero() {
   const { cfg, properties, t } = useSite();
   const tx = useT();
   const src = heroSrc(cfg, properties);
-  const trust = (cfg.clients || cfg.years) && (
+  const trust = cfg.showStats && (cfg.clients || cfg.years) && (
     <div className="flex items-center gap-3 rounded-[calc(var(--r)*0.8)] bg-white/95 px-4 py-3 text-neutral-900 shadow-lg backdrop-blur">
       <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--c)_12%,white)] text-[var(--c)]"><Users size={17} /></span>
       <span><span className="block text-[11px] text-neutral-500">{cfg.clients ? 'Clienti seguiti' : 'Esperienza'}</span><span className="block text-base font-bold">{cfg.clients ? `${cfg.clients}+` : `${cfg.years} anni`}</span></span>
