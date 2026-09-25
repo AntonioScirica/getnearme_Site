@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ArrowUp, ImagePlus, Lasso, Shuffle, LayoutGrid, Loader2, Monitor, RotateCcw, SquareDashed, SquareDashedMousePointer, X } from 'lucide-react';
+import { ArrowUp, Building2, Check, ImagePlus, Lasso, Shuffle, LayoutGrid, Loader2, Monitor, RotateCcw, SquareDashed, SquareDashedMousePointer, X } from 'lucide-react';
 import { fileToResizedDataUrl } from '@/lib/staging';
 import { AI_MOCK } from '@/lib/aiMock';
 import { AiPhotoStage, QUICK_PRESETS, type EditRequest, type Region, type Reveal, type Suggestion } from './AiPhoto';
@@ -13,7 +13,7 @@ import LightSwap from '@/components/ui/LightSwap';
 import AutoSize from '@/components/ui/AutoSize';
 import { MorphTarget } from '@/components/ui/Morph';
 import PhotoViewer from '@/components/ui/PhotoViewer';
-import LibraryPicker from './LibraryPicker';
+import LibraryPicker, { toFile } from './LibraryPicker';
 
 // Home staging come chat: l'agente carica una foto nella conversazione, scrive cosa vuole (in italiano,
 // il servizio traduce), riceve il prima/dopo e continua a chiedere sull'ultimo risultato. Caricare
@@ -120,9 +120,11 @@ const AFTER = ['cuscini verdi sul divano', 'togli il quadro', 'pavimento in rove
 const planStyle = (t: string) => (/nordic|scandinav/i.test(t) ? 'nordic' : /lusso|luxury|elegan/i.test(t) ? 'industrial' : /boho/i.test(t) ? 'boho' : 'modern');
 
 
-export default function StagingChat({ onMany }: { onMany: (files: FileList | File[]) => void }) {
+export default function StagingChat({ onMany, initial }: { onMany: (files: FileList | File[]) => void; initial?: { photo?: string; project?: string } }) {
   const [library, setLibrary] = useState(false); // scelta foto: vetrina o computer
   const [project, setProject] = useState<string | null>(null); // immobile della foto (se scelta dalla vetrina): la Galleria raggruppa per casa
+  const [origin, setOrigin] = useState<string | null>(null); // foto originale dell'immobile da cui si e' partiti (per il prima/dopo)
+  const [added, setAdded] = useState<Record<string, 'busy' | 'ok' | 'err'>>({}); // risultati messi nell'immobile
   // com'e' la stanza nella foto di lavoro (vuota, disordinata, datata, arredata): cambia suggerimento e proposte
   const [roomState, setRoomState] = useState<string | null>(null);
   const [otherFor, setOtherFor] = useState<string | null>(null); // messaggio in cui l'agente scrive a mano cos'e' la foto
@@ -181,9 +183,9 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList | Fil
 
   const patch = (id: string, p: Partial<Extract<Msg, { role: 'ai' }>>) => setMsgs(ms => ms.map(m => (m.id === id && m.role === 'ai' ? { ...m, ...p } : m)));
 
-  const upload = async (files: FileList | File[] | null, projectId?: string | null) => {
+  const upload = async (files: FileList | File[] | null, projectId?: string | null, sourceUrl?: string) => {
     if (!files?.length) return;
-    setProject(projectId ?? null);
+    setProject(projectId ?? null); setOrigin(sourceUrl ?? null);
     touch();
     if (files.length > 1) { onMany(files); return; } // piu' foto insieme: vista a griglia
     const f = files[0];
@@ -238,8 +240,8 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList | Fil
     touch();
     const id = uid();
     setMsgs(ms => [...ms, { id: uid(), role: 'user', text: 'Stesso stile, un’altra versione' }, { id, role: 'ai', before: m.before, out: null, busy: true, reveal: null, text: m.text, req: m.req }]);
-    // variante a caso: palette e materiali diversi nello stesso stile (vedi variantText)
-    await run(id, { ...m.req, variant: 1 + Math.floor(Math.random() * 100000) }, m.before);
+    // variante: palette e materiali diversi nello stesso stile, la sceglie il server (vedi variantText)
+    await run(id, { ...m.req, variant: -1 }, m.before);
   };
   const run = async (id: string, req: EditRequest, before: string) => {
     const res = await authFetch('/api/platform/photo-edit', { method: 'POST', body: JSON.stringify(req) }).catch(() => null);
@@ -278,6 +280,20 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList | Fil
     : roomState === 'datata' ? 'Es. rinnova pavimento, pareti e mobili in stile moderno'
     : done ? `Vuoi ritoccare qualcosa? Es. ${AFTER[(done - 1) % AFTER.length]}`
     : `Cosa vuoi cambiare? Es. ${(kind && FIRST[kind.replace(/^(room|scene):/, '')]) || 'togli il divano e metti un tavolo da pranzo'}`;
+  // arrivo da un immobile (#/staging?photo=...&project=...): la foto entra subito in chat
+  const started = useRef(false);
+  useEffect(() => {
+    if (started.current || !initial?.photo) return;
+    started.current = true;
+    toFile(initial.photo).then(f => upload([f], initial.project ?? null, initial.photo)).catch(() => {});
+  }, [initial]); // eslint-disable-line react-hooks/exhaustive-deps
+  // risultato nell'immobile: accanto all'originale o al posto suo
+  const putInProperty = async (m: Extract<Msg, { role: 'ai' }>, mode: 'add' | 'replace') => {
+    if (!project || !m.out) return;
+    setAdded(a => ({ ...a, [m.id]: 'busy' }));
+    const r = await authFetch('/api/platform/property-photo', { method: 'POST', body: JSON.stringify({ projectId: project, mode, before: origin ?? undefined, after: m.out }) }).catch(() => null);
+    setAdded(a => ({ ...a, [m.id]: r?.ok ? 'ok' : 'err' }));
+  };
   const closeLibrary = useCallback(() => setLibrary(false), []);
   const empty = msgs.length === 0;
   const picker = <input type="file" accept="image/*" multiple className="hidden" onChange={e => { upload(e.target.files); e.target.value = ''; }} />;
@@ -403,6 +419,14 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList | Fil
                     <div className="flex shrink-0 items-center gap-1">
                       <button onClick={() => { if (base !== m.out) restartFrom(i, m.out!); setSelecting(true); }}
                         className="flex h-8 items-center gap-1.5 rounded-full px-3 font-medium leading-none text-ink hover:bg-canvas"><SquareDashedMousePointer size={14} className="translate-y-px" /> Modifica</button>
+                      {project && (
+                        added[m.id] === 'ok'
+                          ? <a href={`#/immobile/${project}`} className="flex h-8 items-center gap-1.5 rounded-full px-3 font-medium leading-none text-emerald-700 hover:bg-emerald-50"><Check size={14} className="translate-y-px" /> Nell’immobile, vedi</a>
+                          : <Dropdown value="" options={[{ value: 'add', label: 'Accanto all’originale (prima/dopo sul sito)' }, { value: 'replace', label: 'Al posto dell’originale' }]}
+                              onChange={v => putInProperty(m, v as 'add' | 'replace')} className="h-8 px-3 font-medium leading-none text-ink hover:bg-canvas">
+                              {added[m.id] === 'busy' ? <Loader2 size={14} className="animate-spin" /> : <Building2 size={14} className="translate-y-px" />} {added[m.id] === 'err' ? 'Riprova' : 'Nell’immobile'}
+                            </Dropdown>
+                      )}
                       {m.req && (
                         <Tooltip label="Stesso stile, un'altra versione">
                           <button onClick={() => variant(m)} disabled={busy} aria-label="Stesso stile, un'altra versione" className="flex h-8 items-center gap-1.5 rounded-full px-3 font-medium leading-none text-ink hover:bg-canvas disabled:opacity-40"><Shuffle size={14} className="translate-y-px" /> Altra versione</button>

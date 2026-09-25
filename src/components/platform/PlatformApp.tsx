@@ -96,7 +96,7 @@ export default function PlatformApp({ userData }: { userData: UserData }) {
           ) : route === '/migliora' ? (
             <HomeView key={query} name={profile?.name ?? undefined} initialUrl={new URLSearchParams(query).get('url') ?? ''} onSaved={reload} />
           ) : route === '/staging' ? (
-            <StagingView />
+            <StagingView initial={{ photo: new URLSearchParams(query).get('photo') ?? undefined, project: new URLSearchParams(query).get('project') ?? undefined }} />
           ) : route === '/galleria' ? (
             <MediaView />
           ) : route === '/importa' ? (

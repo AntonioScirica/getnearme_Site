@@ -52,7 +52,9 @@ export async function POST(req: NextRequest) {
   const hasPreset = !!(body.style || body.angle || body.planimetria)
   if ((!custom && !hasPreset) || (!imageBase64 && !allowedUrl(imageUrl))) return NextResponse.json({ error: 'bad_request' }, { status: 400 })
   // Altra versione: una combinazione di palette e materiali diversa (solo stili e richieste di arredo, non viste)
-  const vary = typeof body.variant === 'number' && body.variant > 0 && !body.angle ? ` ${variantText(body.style, body.variant)}` : ''
+  // -1 = scegli tu una variante a caso
+  const variantN = typeof body.variant === 'number' ? (body.variant < 0 ? 1 + Math.floor(Math.random() * 100000) : body.variant) : 0
+  const vary = variantN > 0 && !body.angle ? ` ${variantText(body.style, variantN)}` : ''
   const roomK = roomKey(typeof body.room === 'string' ? body.room : '')
   const restyle = isRestyle(custom) // "balcone stile moderno": si arreda come uno stile, non "cambia solo quello che chiedo"
   const prompt = buildStagingPrompt({ customPrompt: custom, style: body.style, angle: body.angle, planimetria: !!body.planimetria, scene, room: roomK, restyle }) + vary

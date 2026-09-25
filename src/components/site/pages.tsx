@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { ArrowLeft, ChevronLeft, ChevronRight, Expand, Mail, MapPin, MessageCircle, Phone, Search, SlidersHorizontal, X } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, Expand, Mail, MapPin, MessageCircle, Phone, Search, SlidersHorizontal, Sparkles, X } from 'lucide-react';
+import InlineSlider from '@/components/InlineSlider';
 import { zoneSlug, type SiteProperty } from '@/lib/siteTemplates';
 
 import { AddressLink, ContactForm, DetailsTable, FeatureList, MapBlock, NearbyList, RichText, ServicesGrid, ShareBar, WhatsAppFloat } from './extras';
@@ -171,16 +172,24 @@ function ListingsPage({ initial }: { initial?: Filters }) {
 }
 
 // ---------- Scheda immobile ----------
-function Lightbox({ photos, i, setI }: { photos: string[]; i: number | null; setI: (n: number | null) => void }) {
+// prima/dopo: le foto AI hanno l'originale in p.prima; a tutto schermo si confrontano con il cursore
+function Lightbox({ photos, prima, i, setI }: { photos: string[]; prima?: Record<string, string>; i: number | null; setI: (n: number | null) => void }) {
   useEffect(() => {
     if (i === null) return;
     const k = (e: KeyboardEvent) => { if (e.key === 'Escape') setI(null); if (e.key === 'ArrowRight') setI((i + 1) % photos.length); if (e.key === 'ArrowLeft') setI((i - 1 + photos.length) % photos.length); };
     window.addEventListener('keydown', k); return () => window.removeEventListener('keydown', k);
   }, [i, photos.length, setI]);
   if (i === null) return null;
+  const before = prima?.[photos[i]];
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/92" onClick={() => setI(null)}>
-      <img src={photos[i]} alt="" className="max-h-[86vh] max-w-[92vw] object-contain" onClick={e => e.stopPropagation()} />
+      {before ? (
+        <div className="relative aspect-[3/2] max-h-[86vh] w-[min(92vw,calc(86vh*1.5))] overflow-hidden rounded-[var(--rc)]" onClick={e => e.stopPropagation()}>
+          <InlineSlider before={before} after={photos[i]} isVertical={false} showImages interactive />
+          <span className="pointer-events-none absolute bottom-3 left-3 z-20 rounded-full bg-black/55 px-3 py-1 text-xs font-semibold text-white">Prima</span>
+          <span className="pointer-events-none absolute bottom-3 right-3 z-20 rounded-full bg-black/55 px-3 py-1 text-xs font-semibold text-white">Dopo</span>
+        </div>
+      ) : <img src={photos[i]} alt="" className="max-h-[86vh] max-w-[92vw] object-contain" onClick={e => e.stopPropagation()} />}
       <button className="absolute right-5 top-5 text-white" onClick={() => setI(null)} aria-label="Chiudi"><X size={28} /></button>
       <button className="absolute left-4 top-1/2 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/15 text-white" onClick={e => { e.stopPropagation(); setI((i - 1 + photos.length) % photos.length); }}><ChevronLeft /></button>
       <button className="absolute right-4 top-1/2 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/15 text-white" onClick={e => { e.stopPropagation(); setI((i + 1) % photos.length); }}><ChevronRight /></button>
@@ -192,6 +201,8 @@ function Lightbox({ photos, i, setI }: { photos: string[]; i: number | null; set
 function Gallery({ p }: { p: SiteProperty }) {
   const { t } = useSite();
   const photos = p.photos?.length ? p.photos : p.cover ? [p.cover] : [];
+  // etichetta sulle foto AI che hanno l'originale: aprendole si vede il prima/dopo
+  const tag = (src: string) => p.prima?.[src] ? <span className="pointer-events-none absolute left-3 top-3 z-10 flex items-center gap-1 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-semibold text-neutral-900 shadow"><Sparkles size={11} /> Prima / Dopo</span> : null;
   const [i, setI] = useState<number | null>(null);
   const [cur, setCur] = useState(0);
   const all = photos.length > 1 && <button onClick={() => setI(0)} className="absolute bottom-4 right-4 flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-neutral-900 shadow-lg"><Expand size={14} /> {photos.length} foto</button>;
@@ -199,7 +210,7 @@ function Gallery({ p }: { p: SiteProperty }) {
   if (t.gallery === 'slider') body = (
     <div>
       <div className="relative aspect-[16/9] overflow-hidden rounded-[var(--r)]">
-        <button onClick={() => setI(cur)} className="h-full w-full"><Photo src={photos[cur]} fit className="h-full" /></button>
+        <button onClick={() => setI(cur)} className="h-full w-full"><Photo src={photos[cur]} fit className="h-full" /></button>{tag(photos[cur])}
         {photos.length > 1 && <>
           <button onClick={() => setCur((cur - 1 + photos.length) % photos.length)} className="absolute left-4 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-neutral-900 shadow"><ChevronLeft size={18} /></button>
           <button onClick={() => setCur((cur + 1) % photos.length)} className="absolute right-4 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-neutral-900 shadow"><ChevronRight size={18} /></button>
@@ -213,7 +224,7 @@ function Gallery({ p }: { p: SiteProperty }) {
   );
   else if (t.gallery === 'full') body = (
     <div className="relative h-[70vh] min-h-[480px] overflow-hidden">
-      <button onClick={() => setI(0)} className="h-full w-full"><Photo src={photos[0]} fit className="h-full" /></button>
+      <button onClick={() => setI(0)} className="h-full w-full"><Photo src={photos[0]} fit className="h-full" /></button>{tag(photos[0])}
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
       {all}
     </div>
@@ -221,12 +232,12 @@ function Gallery({ p }: { p: SiteProperty }) {
   else body = (
     <div className="relative grid h-[480px] grid-cols-4 grid-rows-2 gap-2 overflow-hidden rounded-[var(--r)] md:h-[540px]">
       {photos.slice(0, 5).map((src, k) => (
-        <button key={k} onClick={() => setI(k)} className={`group relative overflow-hidden ${k === 0 ? 'col-span-4 row-span-2 md:col-span-2' : 'hidden md:block'}`}><Photo src={src} zoom fit className="h-full" /></button>
+        <button key={k} onClick={() => setI(k)} className={`group relative overflow-hidden ${k === 0 ? 'col-span-4 row-span-2 md:col-span-2' : 'hidden md:block'}`}><Photo src={src} zoom fit className="h-full" />{tag(src)}</button>
       ))}
       {all}
     </div>
   );
-  return <>{body}<Lightbox photos={photos} i={i} setI={setI} /></>;
+  return <>{body}<Lightbox photos={photos} prima={p.prima} i={i} setI={setI} /></>;
 }
 
 function AgentCard({ subject, property }: { subject?: string; property?: SiteProperty }) {

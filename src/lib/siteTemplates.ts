@@ -67,6 +67,7 @@ export type SiteProperty = {
   riferimento?: string
   createdAt?: string
   details?: Record<string, unknown>
+  prima?: Record<string, string> // foto AI -> foto originale (per il prima/dopo nella galleria)
 }
 
 export const TEMPLATES: { id: TemplateId; name: string; desc: string; primary: string; font: SiteConfig['font'] }[] = [

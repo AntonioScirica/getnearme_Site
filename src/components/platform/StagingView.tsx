@@ -43,7 +43,7 @@ function KeepGpu() { useKeepPhotoGpu(); return null; }
 const primary = 'flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-brand px-4 text-[13px] font-semibold text-white ease-smooth transition-[background-color,opacity,transform] hover:bg-brand/90 active:scale-[0.97] disabled:opacity-40';
 const secondary = 'flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-white px-4 text-[13px] font-semibold ring-1 ring-black/10 ease-smooth transition-colors hover:bg-canvas disabled:opacity-40';
 
-export default function StagingView() {
+export default function StagingView({ initial }: { initial?: { photo?: string; project?: string } } = {}) {
   const [items, setItems] = useState<Item[]>([]);
   const [runAll, setRunAll] = useState(0);
   const [done, setDone] = useState<Record<string, string>>({});
@@ -61,7 +61,7 @@ export default function StagingView() {
   const picker = (multiple: boolean) => <input type="file" accept="image/*" multiple={multiple} className="hidden" onChange={e => { add(e.target.files); e.target.value = ''; }} />;
 
   // Una foto alla volta: chat. Piu' foto caricate insieme: griglia batch.
-  if (items.length < 2) return <StagingChat onMany={add} />;
+  if (items.length < 2) return <StagingChat onMany={add} initial={initial} />;
 
   return (
     <div className="mx-auto max-w-5xl pb-16 pt-6">

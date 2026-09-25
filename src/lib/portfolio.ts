@@ -70,12 +70,13 @@ export async function getSite(brand: PortfolioBrand): Promise<SiteConfig> {
 
 // Immobile pubblico nella forma usata dai siti vetrina (foto, zona e contratto da import_data).
 export function toSiteProperty(p: PublicProperty): SiteProperty {
-  const d = (p.import_data ?? {}) as { photos?: unknown; zona?: unknown; contratto?: unknown; details?: unknown }
+  const d = (p.import_data ?? {}) as { photos?: unknown; zona?: unknown; contratto?: unknown; details?: unknown; prima?: unknown }
+  const prima = d.prima && typeof d.prima === 'object' ? Object.fromEntries(Object.entries(d.prima as Record<string, unknown>).filter((e): e is [string, string] => typeof e[1] === 'string')) : undefined
   const photos = Array.isArray(d.photos) ? d.photos.filter((x): x is string => typeof x === 'string').slice(0, 40) : []
   return {
     id: p.id, titolo: p.titolo || p.nome, addr: p.addr, prezzo: p.prezzo, mq: p.mq, camere: p.camere, bagni: p.bagni, locali: p.locali,
     tipologia: p.tipologia, cover: p.cover, descrizione: p.descrizione, photos: photos.length ? photos : p.cover ? [p.cover] : [],
-    riferimento: p.riferimento ?? '', createdAt: p.created_at, details: d.details && typeof d.details === 'object' ? d.details as Record<string, unknown> : undefined,
+    prima, riferimento: p.riferimento ?? '', createdAt: p.created_at, details: d.details && typeof d.details === 'object' ? d.details as Record<string, unknown> : undefined,
     contratto: typeof d.contratto === 'string' ? d.contratto : typeof (d.details as { contratto?: unknown } | undefined)?.contratto === 'string' ? String((d.details as { contratto: string }).contratto) : '', zona: Array.isArray(d.zona) ? d.zona.filter((x): x is string => typeof x === 'string').slice(0, 12) : [],
   }
 }

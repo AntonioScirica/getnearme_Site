@@ -15,13 +15,13 @@ const photosOf = (p: ProjectData) => {
   return list.length ? list : p.cover ? [p.cover] : [];
 };
 // le foto degli annunci stanno su altri siti: passano dal nostro proxy per poterle leggere
-const toFile = async (url: string) => {
+export const toFile = async (url: string) => {
   const src = url.startsWith('data:') || url.startsWith('/') ? url : `/api/site/img?u=${encodeURIComponent(url)}`;
   const blob = await (await fetch(src)).blob();
   return new File([blob], 'foto.jpg', { type: blob.type || 'image/jpeg' });
 };
 
-export default function LibraryPicker({ onFiles, onClose }: { onFiles: (files: File[], projectId?: string | null) => void; onClose: () => void }) {
+export default function LibraryPicker({ onFiles, onClose }: { onFiles: (files: File[], projectId?: string | null, sourceUrl?: string) => void; onClose: () => void }) {
   const [projects, setProjects] = useState<ProjectData[] | null>(null);
   const [open, setOpen] = useState<ProjectData | null>(null);
   const [loading, setLoading] = useState<string | null>(null);
@@ -35,7 +35,7 @@ export default function LibraryPicker({ onFiles, onClose }: { onFiles: (files: F
 
   const pick = async (url: string, projectId?: string | null) => {
     setLoading(url); setErr(false);
-    try { onFiles([await toFile(url)], projectId); onClose(); } catch { setErr(true); } finally { setLoading(null); }
+    try { onFiles([await toFile(url)], projectId, url); onClose(); } catch { setErr(true); } finally { setLoading(null); }
   };
   const list = projects?.filter(p => photosOf(p).length) ?? [];
 
