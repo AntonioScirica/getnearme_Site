@@ -254,7 +254,7 @@ function Gallery({ cfg, name, logo, props, onPick }: { cfg: SiteConfig; name: st
           return (
             // stessa card delle altre pagine (Galleria): bianca 24 con la miniatura 16 dentro e una riga sotto.
             // Passando sopra la miniatura scorre lenta verso il basso e mostra tutta la home.
-            <div key={t.id} role="button" tabIndex={0} onClick={e => pick(t.id, e.currentTarget)} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(t.id, e.currentTarget); } }}
+            <div key={t.id} role="button" tabIndex={0} onMouseEnter={e => measureThumb(e.currentTarget)} onClick={e => pick(t.id, e.currentTarget)} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(t.id, e.currentTarget); } }}
               className={`group rise cursor-pointer rounded-3xl bg-white p-2 text-left outline-none ease-smooth transition-[opacity,transform,filter,box-shadow] focus-visible:ring-2 focus-visible:ring-brand ${CARD_SHADOW} ${used ? '!ring-2 !ring-brand' : ''} ${leaving && leaving !== t.id ? 'pointer-events-none scale-90 opacity-0 blur-[8px]' : ''}`} style={{ animationDelay: `${i * 0.04}s`, transitionDelay: leaving ? `${(i % 3) * 40}ms` : undefined }}>
               <div data-thumb className="relative overflow-hidden rounded-2xl bg-canvas">
                 <MorphTarget id={`tpl-${t.id}`}><Thumb><SiteThumb ctx={{ cfg: tcfg, name, logo, properties: props, base: '', preview: true }} /></Thumb></MorphTarget>
@@ -277,6 +277,16 @@ function Gallery({ cfg, name, logo, props, onPick }: { cfg: SiteConfig; name: st
 }
 
 // Miniatura: il sito largo 1280 px rimpicciolito nella card, solo la parte alta, non cliccabile
+// Distanza dello scorrimento misurata anche all'ingresso del mouse: se la misura iniziale e' arrivata prima
+// che la pagina finisse di caricare (immagini), valeva 0 e alcune card non scorrevano.
+function measureThumb(card: HTMLElement) {
+  const box = card.querySelector<HTMLElement>('[data-thumb-box]');
+  const page = box?.firstElementChild?.firstElementChild as HTMLElement | null;
+  if (!box || !page) return;
+  const k = box.clientWidth / 1280;
+  box.style.setProperty('--thumb-scroll', `-${Math.max(0, page.offsetHeight * k - box.clientHeight)}px`);
+}
+
 // Passando sopra (group-hover della card) scorre verso il fondo della pagina in 6 s e torna su uscendo.
 function Thumb({ children }: { children: ReactNode }) {
   const box = useRef<HTMLDivElement>(null);
@@ -295,7 +305,7 @@ function Thumb({ children }: { children: ReactNode }) {
     return () => ro.disconnect();
   }, []);
   return (
-    <div ref={box} className="pointer-events-none relative aspect-[4/3] select-none overflow-hidden" aria-hidden style={{ ['--thumb-scroll' as string]: `-${scroll}px` }}>
+    <div ref={box} data-thumb-box className="pointer-events-none relative aspect-[4/3] select-none overflow-hidden" aria-hidden style={{ ['--thumb-scroll' as string]: `-${scroll}px` }}>
       <div className="transition-transform duration-[6000ms] ease-in-out group-hover:[transform:translateY(var(--thumb-scroll))]">
         <div ref={page} style={{ width: 1280, transform: `scale(${k})`, transformOrigin: 'top left', height: 'max-content' }}>{children}</div>
       </div>

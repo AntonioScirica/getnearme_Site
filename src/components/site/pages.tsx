@@ -538,7 +538,8 @@ function ZonePage({ slug }: { slug: string }) {
 
 // Anteprima leggera per la galleria dei modelli: solo barra, apertura e prima sezione
 export function SiteThumb({ ctx }: { ctx: SiteCtx }) {
-  return <SiteRoot ctx={ctx}><Header over /><Hero /><Intro /></SiteRoot>;
+  // tutta la home: nella galleria dei modelli la miniatura ci scorre sopra al passaggio del mouse
+  return <SiteRoot ctx={ctx}><HomePage /></SiteRoot>;
 }
 
 export function SitePage({ ctx, page }: { ctx: SiteCtx; page: Page }) {
