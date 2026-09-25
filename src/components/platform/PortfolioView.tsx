@@ -308,8 +308,8 @@ function Thumb({ children }: { children: ReactNode }) {
   }, []);
   return (
     <div ref={box} data-thumb-box className="pointer-events-none relative aspect-[4/3] select-none overflow-hidden" aria-hidden style={{ ['--thumb-scroll' as string]: `-${scroll}px` }}>
-      {/* in hover scende piano (6 s); uscendo torna in cima in 800 ms, sempre ease-in-out */}
-      <div className="transition-transform duration-[800ms] ease-in-out group-hover:duration-[6000ms] group-hover:[transform:translateY(var(--thumb-scroll))]">
+      {/* in hover scende piano (6 s); uscendo torna in cima in 1,6 s, sempre ease-in-out */}
+      <div className="transition-transform duration-[1600ms] ease-in-out group-hover:duration-[6000ms] group-hover:[transform:translateY(var(--thumb-scroll))]">
         <div ref={page} style={{ width: 1280, transform: `scale(${k})`, transformOrigin: 'top left', height: 'max-content' }}>{children}</div>
       </div>
     </div>
