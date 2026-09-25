@@ -8,6 +8,7 @@ import { AiPhotoStage, QUICK_PRESETS, type EditRequest, type Region, type Reveal
 import { authFetch, CARD_SHADOW, warm } from './api';
 import ProgressiveBlur from '@/components/ProgressiveBlur';
 import Dropdown, { type DropdownOption } from '@/components/ui/Dropdown';
+import Tooltip from '@/components/ui/Tooltip';
 
 // Home staging come chat: l'agente carica una foto nella conversazione, scrive cosa vuole (in italiano,
 // il servizio traduce), riceve il prima/dopo e continua a chiedere sull'ultimo risultato. Caricare
@@ -208,11 +209,17 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
                     <span className="min-w-0 flex-1 truncate">{m.text}</span>
                     {/* a destra: Modifica (zona su questa foto) e Ricomincia da qui; "Si continua da qui" solo dopo esserci tornati */}
                     <div className="flex shrink-0 items-center gap-1">
-                      {base !== m.out
-                        ? <button onClick={() => restartFrom(i, m.out!)} className="flex h-8 items-center gap-1.5 rounded-full px-3 font-medium leading-none text-brand hover:bg-brand/5"><RotateCcw size={14} className="translate-y-px" /> Ricomincia da qui</button>
-                        : resumed === m.out && <span className="flex h-8 items-center px-3 font-medium text-emerald-600">Si continua da qui</span>}
+                      {resumed === m.out && base === m.out && <span className="flex h-8 items-center px-2 font-medium text-emerald-600">Si continua da qui</span>}
                       <button onClick={() => { if (base !== m.out) restartFrom(i, m.out!); setSelecting(true); }}
                         className="flex h-8 items-center gap-1.5 rounded-full px-3 font-medium leading-none text-ink hover:bg-canvas"><SquareDashedMousePointer size={14} className="translate-y-px" /> Modifica</button>
+                      {base !== m.out && (
+                        <>
+                          <span className="mx-1 h-4 w-px bg-line" aria-hidden />
+                          <Tooltip label="Ricomincia da qui">
+                            <button onClick={() => restartFrom(i, m.out!)} aria-label="Ricomincia da qui" className="flex h-8 w-8 items-center justify-center rounded-full text-brand hover:bg-brand/5"><RotateCcw size={15} /></button>
+                          </Tooltip>
+                        </>
+                      )}
                     </div>
                   </div>
                 )}
