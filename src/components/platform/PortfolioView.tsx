@@ -57,13 +57,14 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
 
   return (
     <>
-      <div className="flex flex-wrap items-end justify-between gap-4">
+      {/* intestazione: link del sito e schede sulla stessa riga (stessa altezza, 40px), divisore sotto */}
+      <div className="flex flex-wrap items-end justify-between gap-4 border-b border-line pb-6">
         <div>
           <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-brand/10 px-3 py-1 text-xs font-semibold text-brand"><Globe size={13} /> Il tuo sito personale</div>
           <h1 className="font-display text-4xl font-bold leading-[1.2] tracking-tight">Il sito con i tuoi immobili</h1>
           <p className="mt-1 max-w-xl text-sm text-muted">Un sito tutto tuo, con il tuo nome e i tuoi contatti: le case che pubblichi, chi sei, i servizi e le zone in cui lavori. Lo condividi ai clienti e lo trovano su Google.</p>
           {url && (
-            <div className="mt-2 flex items-center gap-3 text-sm">
+            <div className="mt-2 flex h-10 items-center gap-3 text-sm">
               <span className="text-muted">Online su</span>
               <a href={url} target="_blank" rel="noreferrer" className="flex items-center gap-1 font-medium text-brand"><ExternalLink size={14} /> {url.replace(/^https?:\/\//, '')}</a>
               <button onClick={() => { navigator.clipboard.writeText(url); setCopied(true); setTimeout(() => setCopied(false), 1500); }}
@@ -72,9 +73,9 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
           )}
         </div>
         <div className="flex items-center gap-2">
-          <div className="flex rounded-full bg-white p-1 ring-1 ring-black/10">
+          <div className="flex h-10 items-center rounded-full bg-white p-1 ring-1 ring-black/10">
             {([['sito', 'Aspetto del sito'], ['immobili', 'Immobili e indirizzo']] as const).map(([id, l]) => (
-              <button key={id} onClick={() => setTab(id)} className={`rounded-full px-4 py-1.5 text-[13px] font-medium ease-smooth transition-colors ${tab === id ? 'bg-ink text-white' : 'text-muted hover:text-ink'}`}>{l}</button>
+              <button key={id} onClick={() => setTab(id)} className={`flex h-8 items-center rounded-full px-4 text-[13px] font-medium ease-smooth transition-colors ${tab === id ? 'bg-ink text-white' : 'text-muted hover:text-ink'}`}>{l}</button>
             ))}
           </div>
           {tab === 'sito' && editing && (
