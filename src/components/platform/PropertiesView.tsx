@@ -221,7 +221,8 @@ function PropertyMap({ projects, geo, hover, loading }: { projects: ProjectData[
     markers.current = {};
     for (const p of pinned) {
       const ll = geo[p.addr.trim()] as LatLon;
-      const html = `<div class="pin h-12 w-12 overflow-hidden rounded-full bg-canvas ring-[3px] ring-white shadow-[0_6px_16px_rgba(0,0,0,.25)] transition-transform duration-[600ms] ease-[cubic-bezier(.22,1,.36,1)] hover:scale-110">${p.cover ? `<img src="${encodeURI(p.cover)}" alt="" class="h-full w-full object-cover" />` : ''}</div>`;
+      // foto come sfondo (cover): riempie sempre il cerchio, anche con le regole di Leaflet sulle <img> dei marker
+      const html = `<div class="pin transition-transform duration-[600ms] ease-[cubic-bezier(.22,1,.36,1)] hover:scale-110" style="width:48px;height:48px;border-radius:9999px;border:3px solid #fff;box-shadow:${PIN_SHADOW};background:#f4f4f5 ${p.cover ? `url('${encodeURI(p.cover)}')` : ''} center/cover no-repeat;box-sizing:border-box"></div>`;
       const mk = Lf.marker(ll, { icon: Lf.divIcon({ html, className: '', iconSize: [48, 48], iconAnchor: [24, 24] }), riseOnHover: true })
         .on('click', e => { Lf.DomEvent.stopPropagation(e); setSel(p.id); })
         .addTo(m);
@@ -245,7 +246,7 @@ function PropertyMap({ projects, geo, hover, loading }: { projects: ProjectData[
   useEffect(() => {
     Object.entries(markers.current).forEach(([id, mk]) => {
       const pin = mk.getElement()?.querySelector<HTMLElement>('.pin');
-      if (pin) { pin.style.transform = id === hover ? 'scale(1.25)' : ''; pin.style.boxShadow = id === hover ? '0 0 0 3px var(--color-brand, #2563eb), 0 8px 20px rgba(0,0,0,.3)' : ''; }
+      if (pin) { pin.style.transform = id === hover ? 'scale(1.25)' : ''; pin.style.boxShadow = id === hover ? '0 0 0 3px var(--color-brand, #2563eb), 0 8px 20px rgba(0,0,0,.3)' : PIN_SHADOW; }
       mk.setZIndexOffset(id === hover ? 1000 : 0);
     });
   }, [hover]);
@@ -255,7 +256,7 @@ function PropertyMap({ projects, geo, hover, loading }: { projects: ProjectData[
     const m = map.current;
     Object.entries(markers.current).forEach(([id, mk]) => {
       const pin = mk.getElement()?.querySelector<HTMLElement>('.pin');
-      if (pin) pin.style.boxShadow = id === sel ? '0 0 0 3px #2563eb, 0 8px 20px rgba(0,0,0,.3)' : '';
+      if (pin) pin.style.boxShadow = id === sel ? '0 0 0 3px #2563eb, 0 8px 20px rgba(0,0,0,.3)' : PIN_SHADOW;
     });
     if (!m || !selected) return;
     const size = m.getSize();
@@ -287,6 +288,7 @@ function PropertyMap({ projects, geo, hover, loading }: { projects: ProjectData[
   );
 }
 
+const PIN_SHADOW = '0 6px 16px rgba(0,0,0,.25)';
 const POI_ICON: Record<string, typeof Train> = { Metro: TrainFront, Stazione: Train, Tram: TramFront, Supermercato: ShoppingCart, Scuola: School, 'Università': GraduationCap, Parco: Trees, Ospedale: Hospital, Farmacia: Pill };
 const zoneCache: Record<string, Poi[]> = {};
 const km = (m: number) => (m >= 1000 ? `${(m / 1000).toLocaleString('it-IT', { maximumFractionDigits: 1 })} km` : `${m} m`);

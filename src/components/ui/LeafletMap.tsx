@@ -52,7 +52,7 @@ export default function LeafletMap({ addr, className = '', circle, color = '#256
       }, { passive: false });
       const c = getComputedStyle(el.current).getPropertyValue('--c').trim() || color;
       if (circle) L.circle(ll, { radius: 250, color: c, fillColor: c, fillOpacity: 0.18, weight: 2 }).addTo(m);
-      else if (photo) L.marker(ll, { icon: L.divIcon({ html: `<div style="width:48px;height:48px;border-radius:9999px;overflow:hidden;border:3px solid #fff;box-shadow:0 6px 16px rgba(0,0,0,.25);background:#eee"><img src="${encodeURI(photo)}" alt="" style="width:100%;height:100%;object-fit:cover" /></div>`, className: '', iconSize: [48, 48], iconAnchor: [24, 24] }) }).addTo(m);
+      else if (photo) L.marker(ll, { icon: L.divIcon({ html: `<div style="width:48px;height:48px;border-radius:9999px;border:3px solid #fff;box-shadow:0 6px 16px rgba(0,0,0,.25);background:#eee url('${encodeURI(photo)}') center/cover no-repeat;box-sizing:border-box"></div>`, className: '', iconSize: [48, 48], iconAnchor: [24, 24] }) }).addTo(m);
       else L.circleMarker(ll, { radius: 9, color: '#fff', weight: 3, fillColor: c, fillOpacity: 1 }).addTo(m);
     }, 700);
     return () => { stop = true; clearTimeout(t); map?.remove(); };
