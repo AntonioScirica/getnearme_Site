@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { Check, ChevronDown } from 'lucide-react';
 
@@ -8,7 +8,8 @@ import { Check, ChevronDown } from 'lucide-react';
 // spunta sulla voce scelta, gruppi con titolo. Si apre sotto (o sopra se manca spazio), in un portal
 // cosi' nessun contenitore lo taglia. Tastiera: frecce, Invio, Esc.
 
-export type DropdownOption<T extends string> = { value: T; label: string; group?: string };
+// style: aspetto della voce (es. il carattere di un font), usato anche nel pulsante quando e' scelta
+export type DropdownOption<T extends string> = { value: T; label: string; group?: string; style?: CSSProperties };
 
 export default function Dropdown<T extends string>({ value, options, onChange, children, className = '', align = 'start' }: {
   value: T; options: DropdownOption<T>[]; onChange: (v: T) => void;
@@ -57,7 +58,7 @@ export default function Dropdown<T extends string>({ value, options, onChange, c
       <button ref={btn} type="button" onClick={toggle} aria-haspopup="listbox" aria-expanded={open}
         className={`inline-flex items-center gap-0.5 rounded-full outline-none ease-smooth transition-colors hover:text-brand focus-visible:ring-2 focus-visible:ring-brand/40 ${className}`}>
         {/* nomi lunghi: una riga sola con i puntini, sia nel pulsante sia nelle voci */}
-        {children ?? <span className="max-w-[16rem] truncate">{current?.label}</span>}
+        {children ?? <span className="max-w-[16rem] truncate" style={current?.style}>{current?.label}</span>}
         <ChevronDown size={14} strokeWidth={2.5} className={`shrink-0 translate-y-px ease-smooth transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
       {open && pos && createPortal(
@@ -71,7 +72,7 @@ export default function Dropdown<T extends string>({ value, options, onChange, c
                 <button type="button" role="option" aria-selected={o.value === value} onMouseEnter={() => setActive(i)}
                   onClick={() => { onChange(o.value); setOpen(false); btn.current?.focus(); }}
                   className={`flex h-10 w-full items-center justify-between gap-3 rounded-lg px-3 text-left ease-smooth transition-colors ${i === active ? 'bg-canvas' : ''} ${o.value === value ? 'font-semibold' : ''}`}>
-                  <span className="min-w-0 truncate" title={o.label}>{o.label}</span>{o.value === value && <Check size={15} className="shrink-0 text-brand" />}
+                  <span className="min-w-0 truncate" title={o.label} style={o.style}>{o.label}</span>{o.value === value && <Check size={15} className="shrink-0 text-brand" />}
                 </button>
               </div>
             );

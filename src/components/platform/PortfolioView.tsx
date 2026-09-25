@@ -258,25 +258,20 @@ function TextField({ label, value, placeholder, long, onChange }: { label: strin
   );
 }
 
-// Carattere dei titoli: i due del modello e i Google Fonts, ognuno scritto nel suo carattere
+// Carattere dei titoli: menu a tendina, ogni voce scritta nel suo carattere (i due del modello e i Google Fonts)
 function FontPicker({ cfg, set }: { cfg: SiteConfig; set: (p: Partial<SiteConfig>) => void }) {
-  const opts: { key: string; label: string; style: React.CSSProperties; on: boolean; pick: () => void }[] = [
-    { key: 'serif', label: 'Elegante', style: { fontFamily: 'var(--font-serif-accent)' }, on: !cfg.headingFont && cfg.font === 'serif', pick: () => set({ font: 'serif', headingFont: '' }) },
-    { key: 'sans', label: 'Moderno', style: {}, on: !cfg.headingFont && cfg.font === 'sans', pick: () => set({ font: 'sans', headingFont: '' }) },
-    ...FONTS.map(f => ({ key: f.id, label: f.label, style: { fontFamily: `'${f.family}', ${f.serif ? 'serif' : 'sans-serif'}`, fontWeight: f.weight }, on: cfg.headingFont === f.id, pick: () => set({ headingFont: f.id }) })),
+  const value = cfg.headingFont || cfg.font;
+  const options = [
+    { value: 'serif', label: 'Elegante (del modello)', group: 'Del modello', style: { fontFamily: 'var(--font-serif-accent)', fontSize: 17 } },
+    { value: 'sans', label: 'Moderno (del modello)', group: 'Del modello', style: { fontWeight: 700 } },
+    ...FONTS.map(f => ({ value: f.id, label: f.label, group: f.serif ? 'Con grazie' : 'Senza grazie', style: { fontFamily: `'${f.family}', ${f.serif ? 'serif' : 'sans-serif'}`, fontWeight: f.weight, fontSize: 16 } })),
   ];
   return (
     <>
-      {/* tutti i caratteri caricati qui, per vederli nell'elenco */}
+      {/* tutti i caratteri caricati qui, per vederli nel menu */}
       <link rel="stylesheet" href={fontCss(FONTS.map(f => f.id))} precedence="default" />
-      <div className="grid grid-cols-2 gap-2">
-        {opts.map(o => (
-          <button key={o.key} type="button" onClick={o.pick}
-            className={`flex h-14 items-center justify-center rounded-2xl px-2 text-[17px] ease-smooth transition-colors ${o.on ? 'bg-white ring-2 ring-brand' : 'bg-canvas hover:bg-line/60'}`}>
-            <span className={`truncate ${o.key === 'sans' ? 'font-display font-bold' : ''}`} style={o.style}>{o.label}</span>
-          </button>
-        ))}
-      </div>
+      <Dropdown value={value} options={options} className="h-11 w-full justify-between bg-canvas px-4 text-sm"
+        onChange={v => (v === 'serif' || v === 'sans' ? set({ font: v, headingFont: '' }) : set({ headingFont: v }))} />
     </>
   );
 }
