@@ -35,17 +35,22 @@ export default function PhotoViewer({ src, before, steps, onClose }: { src: stri
       </div>
       <button onClick={onClose} aria-label="Chiudi" className="absolute right-5 top-5 flex h-11 w-11 items-center justify-center rounded-full bg-white/15 text-white ease-smooth transition-colors hover:bg-white/25"><X size={20} /></button>
       {list.length > 1 && (
-        <div className="flex shrink-0 flex-col items-center gap-3" onClick={e => e.stopPropagation()}>
-          {/* tutti i passaggi: miniature dall'originale all'ultima versione */}
-          {/* sempre al suo posto (invisibile finche' chiusa): aprendola la foto non si rimpicciolisce */}
+        <div className="flex shrink-0 flex-col items-center" onClick={e => e.stopPropagation()}>
+          {/* passaggi: chiusi non occupano spazio; aprendoli la fascia cresce (righe della griglia 0fr -> 1fr)
+              e la foto si rimpicciolisce insieme, senza scatti */}
           {list.length > 2 && (
-            <div className={`flex max-w-[92vw] gap-2 overflow-x-auto rounded-2xl bg-white/10 p-2 ease-smooth transition-opacity [scrollbar-width:none] ${all ? '' : 'pointer-events-none opacity-0'}`}>
+            <div className={`grid ease-smooth transition-[grid-template-rows,opacity] ${all ? 'grid-rows-[1fr]' : 'pointer-events-none grid-rows-[0fr] opacity-0'}`}>
+            <div className="min-h-0 overflow-hidden"><div className="flex flex-col items-center gap-3 pb-3">
+            <div className="flex max-w-[92vw] gap-2 overflow-x-auto rounded-2xl bg-white/10 p-2 [scrollbar-width:none]">
               {list.map((s, j) => (
                 <button key={s.src} onClick={() => setI(j)} title={s.label} className={`relative h-16 w-24 shrink-0 overflow-hidden rounded-lg ring-2 ease-smooth transition-[box-shadow,opacity] ${j === i ? 'ring-white' : 'opacity-60 ring-transparent hover:opacity-100'}`}>
                   <img src={s.src} alt="" className="h-full w-full object-cover" />
                   <span className="absolute inset-x-0 bottom-0 truncate bg-black/50 px-1.5 py-0.5 text-[10px] font-medium text-white">{j === 0 ? 'Prima' : `${j}. ${s.label}`}</span>
                 </button>
               ))}
+            </div>
+            <p className="h-5 max-w-[80vw] truncate text-sm text-white/80">{i > 0 && i < list.length - 1 ? cur.label : ''}</p>
+            </div></div>
             </div>
           )}
           <div className="flex items-center gap-2">
@@ -55,13 +60,11 @@ export default function PhotoViewer({ src, before, steps, onClose }: { src: stri
               ))}
             </div>
             {list.length > 2 && (
-              <button onClick={() => setAll(v => !v)} aria-pressed={all} className={`flex h-11 items-center gap-2 rounded-full px-4 text-sm font-semibold ease-smooth transition-colors ${all ? 'bg-white text-ink' : 'bg-white/15 text-white hover:bg-white/25'}`}>
+              <button onClick={() => setAll(v => !v)} aria-pressed={all} className={`flex h-11 outline-none focus-visible:ring-2 focus-visible:ring-white/60 items-center gap-2 rounded-full px-4 text-sm font-semibold ease-smooth transition-colors ${all ? 'bg-white text-ink' : 'bg-white/15 text-white hover:bg-white/25'}`}>
                 <Layers size={15} /> Tutti i passaggi ({list.length - 1})
               </button>
             )}
           </div>
-          {/* riga sempre presente (anche vuota): cosi' l'altezza dei controlli non cambia */}
-          {list.length > 2 && <p className="h-5 max-w-[80vw] truncate text-sm text-white/80">{i > 0 && i < list.length - 1 ? cur.label : ''}</p>}
         </div>
       )}
     </div>,
