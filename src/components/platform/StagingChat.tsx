@@ -357,6 +357,8 @@ function ZonePicker({ src, region, points, mask, onChange, onPick, onPreview, on
   return (
     <div className="blur-in flex justify-start">
     <div className={`w-full max-w-[560px] rounded-3xl rounded-bl-2xl bg-white p-2 ${CARD_SHADOW}`}>
+      {/* foto e riga sotto nello stesso blocco: la riga e' larga quanto la foto, non di piu' */}
+      <div className="mx-auto w-fit max-w-full">
       <div ref={box} className={`relative mx-auto max-h-[calc(100vh-24rem)] w-fit touch-none select-none overflow-hidden rounded-2xl ${tool === 'rect' ? 'cursor-crosshair' : 'cursor-pointer'}`}
         onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerLeave={leave}>
         <img src={src} alt="" draggable={false} onLoad={onLoad} className="block max-h-[calc(100vh-24rem)] w-auto" />
@@ -380,7 +382,7 @@ function ZonePicker({ src, region, points, mask, onChange, onPick, onPreview, on
         )}
       </div>
       {/* Richiesta direttamente qui: scrivi cosa fare nella zona e Modifica */}
-      <form onSubmit={e => { e.preventDefault(); if (ready && text.trim() && !busy) onSubmit(text.trim()); }} className="flex items-center gap-2 pt-2">
+      <form onSubmit={e => { e.preventDefault(); if (ready && text.trim() && !busy) onSubmit(text.trim()); }} className="flex w-0 min-w-full items-center gap-2 pt-2">
         {/* campo con dentro, a destra, gli strumenti di selezione (solo icone, nome nel tooltip) */}
         <div className="flex h-10 min-w-0 flex-1 items-center rounded-full bg-canvas pl-4 pr-1 ease-smooth transition-shadow focus-within:bg-white focus-within:ring-1 focus-within:ring-ink/15">
           <input value={text} onChange={e => setText(e.target.value)} autoFocus
@@ -396,6 +398,7 @@ function ZonePicker({ src, region, points, mask, onChange, onPick, onPreview, on
         <button type="submit" disabled={!ready || !text.trim() || busy}
           className="h-10 shrink-0 rounded-full bg-brand px-5 text-[13px] font-semibold text-white ease-smooth transition-[background-color,opacity,transform] hover:bg-brand/90 active:scale-[0.97] disabled:opacity-40">Modifica</button>
       </form>
+      </div>
     </div>
     </div>
   );
