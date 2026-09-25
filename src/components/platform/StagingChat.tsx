@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { ArrowUp, Building2, Check, ImagePlus, Lasso, Shuffle, LayoutGrid, Loader2, Monitor, RotateCcw, SquareDashed, SquareDashedMousePointer, X } from 'lucide-react';
 import { fileToResizedDataUrl } from '@/lib/staging';
 import { AI_MOCK } from '@/lib/aiMock';
@@ -303,6 +304,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
     });
   }, [initial]); // eslint-disable-line react-hooks/exhaustive-deps
   const closeLibrary = useCallback(() => setLibrary(false), []);
+  const closeSave = useCallback(() => setSaveOpen(null), []);
   const empty = msgs.length === 0;
   const picker = <input type="file" accept="image/*" multiple className="hidden" onChange={e => { upload(e.target.files); e.target.value = ''; }} />;
   // i suggerimenti partono subito, senza passare dal campo
@@ -446,7 +448,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                   </div>
                 )}
                 {m.out && !m.busy && saveOpen === m.id && (
-                  <SaveToProperty key={m.id} before={m.before} after={m.out} projectId={project} origin={origin} onClose={() => setSaveOpen(null)} />
+                  <SaveToProperty key={m.id} before={m.before} after={m.out} projectId={project} origin={origin} onClose={closeSave} />
                 )}
                 </>}
               </AutoSize></div>
@@ -632,62 +634,95 @@ function ZonePicker({ inline, closing = false, src, region, onChange, onLoad, bu
   );
 }
 
-// Salva un risultato in un immobile, con due scelte chiare:
-// - Prima e dopo: la foto nuova si aggiunge e sul sito si confronta con l'originale (cursore);
-// - Sostituisci: prende il posto dell'originale (solo se la foto di partenza era gia' di quell'immobile).
-// Vale anche per foto caricate dal computer: si sceglie l'immobile, e l'originale viene salvato solo per il prima/dopo.
+// Salva un risultato in un immobile, in una finestra con due scelte animate con le foto vere:
+// - Prima e dopo: la foto nuova si aggiunge; l'animazione mostra il cursore che scorre tra originale e nuova;
+// - Sostituisci: l'animazione mostra la nuova che scende e prende il posto dell'originale
+//   (solo se la foto di partenza era gia' di quell'immobile).
+// Vale anche per foto caricate dal computer: si sceglie l'immobile, l'originale va online solo per il prima/dopo.
+const SAVE_ANIM = `
+@keyframes gnm-sv-clip { 0%,12% { clip-path: inset(0 0 0 100%) } 42%,55% { clip-path: inset(0 0 0 0) } 78%,100% { clip-path: inset(0 0 0 50%) } }
+@keyframes gnm-sv-line { 0%,12% { left: 100% } 42%,55% { left: 0% } 78%,100% { left: 50% } }
+@keyframes gnm-sv-drop { 0%,18% { transform: translateY(-105%) } 50%,100% { transform: translateY(0) } }
+@keyframes gnm-sv-old { 0%,18% { transform: scale(1); opacity: 1; filter: blur(0) } 50%,100% { transform: scale(.92); opacity: 0; filter: blur(4px) } }
+@keyframes gnm-sv-tag { 0%,45% { opacity: 0; transform: translateY(4px) } 60%,100% { opacity: 1; transform: none } }
+`;
 function SaveToProperty({ before, after, projectId, origin, onClose }: { before: string; after: string; projectId: string | null; origin: string | null; onClose: () => void }) {
   const [projects, setProjects] = useState<ProjectData[] | null>(null);
   const [pid, setPid] = useState<string>(projectId ?? '');
   const [mode, setMode] = useState<'add' | 'replace'>('add');
   const [state, setState] = useState<'idle' | 'busy' | 'ok' | 'err'>('idle');
   useEffect(() => { fetchProjects().then(setProjects); }, []);
+  useEffect(() => {
+    const k = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', k);
+    return () => document.removeEventListener('keydown', k);
+  }, [onClose]);
   const p = projects?.find(x => x.id === pid);
   const photosOf = (x?: ProjectData) => { const d = (x?.import_data ?? {}) as { photos?: unknown }; return Array.isArray(d.photos) ? d.photos as string[] : x?.cover ? [x.cover] : []; };
-  // sostituire ha senso solo se la foto di partenza e' una foto di questo immobile
   const canReplace = !!origin && photosOf(p).includes(origin);
+  const chosen = canReplace ? mode : 'add';
   const save = async () => {
     if (!pid) return;
     setState('busy');
-    // l'originale caricato dal computer va messo online per il prima/dopo
     const beforeUrl = canReplace ? origin! : before.startsWith('data:') ? await uploadDataUrl(before, 'properties') : before;
-    const r = await authFetch('/api/platform/property-photo', { method: 'POST', body: JSON.stringify({ projectId: pid, mode: canReplace ? mode : 'add', before: beforeUrl || undefined, after }) }).catch(() => null);
+    const r = await authFetch('/api/platform/property-photo', { method: 'POST', body: JSON.stringify({ projectId: pid, mode: chosen, before: beforeUrl || undefined, after }) }).catch(() => null);
     setState(r?.ok ? 'ok' : 'err');
   };
-  const option = (id: 'add' | 'replace', title: string, text: string, visual: React.ReactNode) => (
-    <button type="button" onClick={() => setMode(id)} aria-pressed={mode === id}
-      className={`flex min-w-0 flex-1 items-center gap-3 rounded-2xl p-2 pr-3 text-left ring-1 ease-smooth transition-colors ${mode === id ? 'bg-white ring-2 ring-brand' : 'bg-white ring-line hover:ring-ink/20'}`}>
-      <span className="relative h-12 w-16 shrink-0 overflow-hidden rounded-xl bg-canvas">{visual}</span>
-      <span className="min-w-0"><span className="block text-[13px] font-semibold">{title}</span><span className="block text-xs leading-snug text-muted">{text}</span></span>
+  const tag = 'absolute bottom-2 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-semibold text-white';
+  const option = (id: 'add' | 'replace', title: string, text: string, visual: React.ReactNode, off?: boolean) => (
+    <button type="button" onClick={() => setMode(id)} aria-pressed={chosen === id} disabled={off}
+      className={`flex min-w-0 flex-1 flex-col rounded-3xl bg-white p-2 text-left ring-1 ease-smooth transition-shadow disabled:cursor-not-allowed disabled:opacity-45 ${chosen === id ? 'ring-2 ring-brand' : 'ring-line enabled:hover:ring-ink/20'}`}>
+      <span className="relative block aspect-[4/3] w-full overflow-hidden rounded-2xl bg-canvas">{visual}</span>
+      <span className="block px-1.5 pb-1 pt-2.5"><span className="block text-sm font-semibold">{title}</span><span className="block text-xs leading-snug text-muted">{text}</span></span>
     </button>
   );
-  if (state === 'ok') return (
-    <div className="blur-in mx-2 mt-2 flex items-center justify-between gap-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-      <span className="flex items-center gap-2"><Check size={16} /> Salvata in {p?.titolo || p?.nome || 'immobile'}</span>
-      <a href={`#/immobile/${pid}`} className="font-semibold hover:underline">Vedi l’immobile</a>
-    </div>
-  );
-  return (
-    <div className="blur-in mx-2 mt-2 rounded-2xl bg-canvas p-3">
-      <div className="flex items-center justify-between gap-3 pb-3">
-        <span className="text-sm font-semibold">Salva nell’immobile</span>
-        {/* immobile gia' noto se la foto viene da li'; altrimenti si sceglie */}
-        {projects === null ? <Loader2 size={15} className="animate-spin text-muted" /> : (
-          <Dropdown value={pid} align="end" options={[{ value: '', label: 'Scegli l’immobile' }, ...projects.map(x => ({ value: x.id, label: x.titolo || x.nome || x.addr }))]}
-            onChange={setPid} className="h-9 max-w-[60%] rounded-full bg-white px-4 text-[13px] font-medium" />
-        )}
+  return createPortal(
+    <div className="blur-in fixed inset-0 z-[260] flex items-center justify-center bg-black/40 p-6 backdrop-blur-sm" onClick={() => state !== 'busy' && onClose()}>
+      <style>{SAVE_ANIM}</style>
+      <div onClick={e => e.stopPropagation()} className="w-full max-w-xl rounded-[32px] bg-white p-6 shadow-2xl">
+        {state === 'ok' ? (
+          <div className="blur-in flex flex-col items-center gap-3 py-6 text-center">
+            <span className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-emerald-600"><Check size={26} /></span>
+            <div className="text-lg font-semibold">Salvata in {p?.titolo || p?.nome || 'immobile'}</div>
+            <p className="text-sm text-muted">{chosen === 'add' ? 'Sul sito la trovi con l’etichetta Prima / Dopo.' : 'Ha preso il posto della foto originale.'}</p>
+            <div className="flex gap-2 pt-2">
+              <button onClick={onClose} className="h-10 rounded-full px-5 text-sm font-medium hover:bg-canvas">Chiudi</button>
+              <a href={`#/immobile/${pid}`} className="flex h-10 items-center rounded-full bg-brand px-5 text-sm font-semibold text-white hover:bg-brand/90">Vedi l’immobile</a>
+            </div>
+          </div>
+        ) : <>
+          <div className="flex items-start justify-between gap-3">
+            <div><h2 className="text-lg font-semibold">Salva nell’immobile</h2><p className="text-sm text-muted">Scegli dove metterla e come.</p></div>
+            <button onClick={onClose} aria-label="Chiudi" className="flex h-9 w-9 items-center justify-center rounded-full text-muted hover:bg-canvas hover:text-ink"><X size={18} /></button>
+          </div>
+          <div className="mt-4">
+            {projects === null ? <div className="h-11 animate-pulse rounded-full bg-canvas" /> : (
+              <Dropdown value={pid} options={[{ value: '', label: 'Scegli l’immobile' }, ...projects.map(x => ({ value: x.id, label: x.titolo || x.nome || x.addr }))]}
+                onChange={setPid} className="h-11 w-full justify-between rounded-full bg-canvas px-4 text-sm font-medium" />
+            )}
+          </div>
+          <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+            {option('add', 'Prima e dopo', 'Aggiunge la foto nuova: sul sito si confronta con l’originale.', <>
+              <img src={before} alt="" className="absolute inset-0 h-full w-full object-cover" />
+              <img src={after} alt="" className="absolute inset-0 h-full w-full object-cover" style={{ animation: 'gnm-sv-clip 3.6s cubic-bezier(.22,1,.36,1) infinite' }} />
+              <span className="absolute inset-y-0 w-0.5 -translate-x-1/2 bg-white shadow" style={{ animation: 'gnm-sv-line 3.6s cubic-bezier(.22,1,.36,1) infinite' }} />
+              <span className={`${tag} left-2`}>Prima</span><span className={`${tag} right-2`}>Dopo</span>
+            </>)}
+            {/* sempre visibile, spenta quando la foto di partenza non e' di quell'immobile: si capisce che esiste */}
+            {option('replace', 'Sostituisci', canReplace ? 'La foto nuova prende il posto dell’originale.' : 'Solo se parti da una foto di questo immobile.', <>
+              <img src={before} alt="" className="absolute inset-0 h-full w-full object-cover" style={{ animation: 'gnm-sv-old 3.2s cubic-bezier(.22,1,.36,1) infinite' }} />
+              <img src={after} alt="" className="absolute inset-0 h-full w-full object-cover" style={{ animation: 'gnm-sv-drop 3.2s cubic-bezier(.22,1,.36,1) infinite' }} />
+              <span className={`${tag} right-2`} style={{ animation: 'gnm-sv-tag 3.2s cubic-bezier(.22,1,.36,1) infinite' }}>Nuova</span>
+            </>, !canReplace)}
+          </div>
+          <div className="flex items-center justify-end gap-2 pt-5">
+            {state === 'err' && <span className="mr-auto text-xs text-rose-600">Non sono riuscito a salvarla, riprova.</span>}
+            <button onClick={onClose} className="h-10 rounded-full px-4 text-sm font-medium text-muted hover:bg-canvas hover:text-ink">Annulla</button>
+            <button onClick={save} disabled={!pid || state === 'busy'} className="flex h-10 items-center gap-1.5 rounded-full bg-brand px-5 text-sm font-semibold text-white hover:bg-brand/90 disabled:opacity-40">{state === 'busy' && <Loader2 size={14} className="animate-spin" />} Salva</button>
+          </div>
+        </>}
       </div>
-      <div className="flex flex-col gap-2 sm:flex-row">
-        {option('add', 'Prima e dopo', 'Aggiunge questa foto: sul sito si confronta con l’originale.',
-          <><img src={before} alt="" className="absolute inset-0 h-full w-full object-cover" /><img src={after} alt="" className="absolute inset-0 h-full w-full object-cover" style={{ clipPath: 'inset(0 0 0 50%)' }} /><span className="absolute inset-y-0 left-1/2 w-0.5 -translate-x-1/2 bg-white" /></>)}
-        {canReplace && option('replace', 'Sostituisci', 'Prende il posto della foto originale nell’immobile.',
-          <img src={after} alt="" className="absolute inset-0 h-full w-full object-cover" />)}
-      </div>
-      <div className="flex items-center justify-end gap-2 pt-3">
-        {state === 'err' && <span className="mr-auto text-xs text-rose-600">Non sono riuscito a salvarla, riprova.</span>}
-        <button onClick={onClose} className="h-9 rounded-full px-4 text-[13px] font-medium text-muted hover:bg-white hover:text-ink">Annulla</button>
-        <button onClick={save} disabled={!pid || state === 'busy'} className="flex h-9 items-center gap-1.5 rounded-full bg-brand px-4 text-[13px] font-semibold text-white hover:bg-brand/90 disabled:opacity-40">{state === 'busy' && <Loader2 size={14} className="animate-spin" />} Salva</button>
-      </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
