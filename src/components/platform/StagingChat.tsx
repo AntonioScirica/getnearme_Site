@@ -63,6 +63,59 @@ const FIRST: Record<string, string> = {
   balcone: 'tavolino con due sedie e piante', cantina: 'scaffali ordinati e luce', box: 'pavimento pulito e scaffali',
   esterno: 'facciata ridipinta bianca', giardino: 'prato curato e un tavolo da esterno', planimetria: 'arredala in stile moderno',
 };
+// mentre genera: una frase a caso per ogni foto (scelta dall'id del messaggio, resta la stessa finche' lavora)
+const BUSY_HINTS = [
+  'Sto creando la foto, intanto scrivi la prossima modifica',
+  'Ci lavoro su, tu pensa già al prossimo ritocco',
+  'Qualche secondo e arriva, intanto dimmi cosa cambiare dopo',
+  'Sto sistemando la stanza, scrivi pure la prossima idea',
+  'Quasi pronta, cosa vuoi toccare subito dopo?',
+  'Sto arredando, intanto annota il prossimo dettaglio',
+  'La foto è in lavorazione, prepara la prossima richiesta',
+  'Un attimo e te la mostro, poi cosa facciamo?',
+  'Sto dando forma alla stanza, tu pensa al passo dopo',
+  'In arrivo, nel frattempo scrivi cosa migliorare',
+  'Sto mettendo a posto ogni dettaglio, poi tocca a te',
+  'Lavoro in corso, scrivi già il prossimo cambio',
+  'Sto rifinendo la foto, cosa aggiungiamo dopo?',
+  'Ancora un momento, intanto dimmi il prossimo desiderio',
+  'Sto preparando la nuova versione, pensa al ritocco successivo',
+  'La stanza sta cambiando, scrivi cosa vuoi dopo',
+  'Sto posizionando i mobili, intanto scrivi la prossima idea',
+  'Quasi fatto, vuoi già cambiare qualcos’altro?',
+  'Sto curando luce e dettagli, tu scrivi il prossimo passo',
+  'Un momento ancora, poi possiamo ritoccarla',
+  'Sto componendo la foto, intanto pensa ai colori',
+  'La nuova versione arriva, scrivi pure cosa sistemare',
+  'Sto lavorando alla foto, prepara il prossimo ritocco',
+  'Ci siamo quasi, intanto dimmi cosa non ti convince',
+  'Sto trasformando la stanza, pensa già al dettaglio dopo',
+  'Tra poco la vedi, intanto scrivi la prossima modifica',
+  'Sto scegliendo i mobili giusti, tu scrivi cosa cambiare',
+  'Foto in preparazione, qual è il prossimo tocco?',
+  'Sto sistemando gli ultimi dettagli, poi continuiamo',
+  'Ancora qualche secondo, intanto pensa a tende e tappeti',
+  'Sto mettendo in ordine la stanza, poi cosa facciamo?',
+  'In lavorazione, scrivi già cosa vuoi vedere dopo',
+  'Sto rendendo la foto più bella, tu pensa al prossimo passo',
+  'Quasi pronta, intanto scegli cosa ritoccare',
+  'Sto arredando con calma, scrivi la prossima richiesta',
+  'La foto sta nascendo, intanto dimmi cosa aggiungere',
+  'Sto bilanciando colori e luce, poi tocca a te',
+  'Un istante e arriva, cosa cambiamo dopo?',
+  'Sto rifinendo la stanza, scrivi il prossimo dettaglio',
+  'Lavoro sulla foto, tu pensa a come migliorarla ancora',
+  'Sto preparando il risultato, intanto scrivi un’altra idea',
+  'Quasi finito, vuoi provare un altro stile dopo?',
+  'Sto creando la versione nuova, annota cosa sistemare',
+  'La stanza prende forma, scrivi pure il prossimo cambio',
+  'Sto aggiungendo gli ultimi tocchi, poi continuiamo insieme',
+  'Ancora poco, intanto pensa a pareti e pavimento',
+  'Sto lavorando per te, scrivi già la prossima modifica',
+  'Foto quasi pronta, cosa vuoi ritoccare dopo?',
+  'Sto sistemando tutto, intanto scrivi cosa ti piacerebbe',
+  'Qualche istante e ci siamo, pensa al prossimo ritocco',
+];
 const AFTER = ['cuscini verdi sul divano', 'togli il quadro', 'pavimento in rovere chiaro', 'più luce naturale', 'tende di lino bianche', 'una pianta vicino alla finestra'];
 const planStyle = (t: string) => (/nordic|scandinav/i.test(t) ? 'nordic' : /lusso|luxury|elegan/i.test(t) ? 'industrial' : /boho/i.test(t) ? 'boho' : 'modern');
 
@@ -217,7 +270,7 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList | Fil
   const lastAi = [...msgs].reverse().find((m): m is Extract<Msg, { role: 'ai' }> => m.role === 'ai');
   const done = msgs.filter(m => m.role === 'ai' && m.out && !m.busy).length;
   const hint = !base ? 'Prima carica una foto, poi scrivi qui cosa cambiare'
-    : busy ? 'Sto creando la foto, intanto scrivi la prossima modifica'
+    : busy && lastAi ? BUSY_HINTS[[...lastAi.id].reduce((h, c) => h + c.charCodeAt(0), 0) % BUSY_HINTS.length]
     : lastAi?.err ? 'Non è andata: riprova o chiedilo in un altro modo'
     : roomState === 'vuota' ? `La stanza è vuota: arredala? Es. ${(kind && FIRST[kind.replace(/^(room|scene):/, '')]) || 'arreda in stile moderno'}`
     : roomState === 'disordinata' ? 'Es. togli il disordine e gli oggetti personali, lascia i mobili'
