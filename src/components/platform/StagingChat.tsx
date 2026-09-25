@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
-import { ArrowUp, ImagePlus, Loader2, RotateCcw, SquareDashedMousePointer, X } from 'lucide-react';
+import { ArrowUp, ImagePlus, Loader2, MousePointerClick, RotateCcw, SquareDashed, SquareDashedMousePointer, X } from 'lucide-react';
 import { fileToResizedDataUrl } from '@/lib/staging';
 import { AI_MOCK } from '@/lib/aiMock';
 import { AiPhotoStage, QUICK_PRESETS, type EditRequest, type Region, type Reveal, type Suggestion } from './AiPhoto';
@@ -163,6 +163,13 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
     const d = res ? await res.json().catch(() => ({})) : {};
     setMask(d.mask ?? null);
   };
+  // anteprima: maschera dell'oggetto sotto il mouse, senza confermarlo
+  const previewAt = async (p: { x: number; y: number }): Promise<string | null> => {
+    if (!base) return null;
+    const res = await authFetch('/api/platform/photo-mask', { method: 'POST', body: JSON.stringify({ ...(base.startsWith('data:') ? { imageBase64: base } : { imageUrl: base }), points: [...points, p] }) }).catch(() => null);
+    const d = res ? await res.json().catch(() => ({})) : {};
+    return d.mask ?? null;
+  };
   const empty = msgs.length === 0;
   const picker = <input type="file" accept="image/*" multiple className="hidden" onChange={e => { upload(e.target.files); e.target.value = ''; }} />;
   // i suggerimenti partono subito, senza passare dal campo
@@ -253,7 +260,7 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
             </div>
           ))}
           {/* Selezione di una zona: e' un messaggio della chat come gli altri, con i pulsanti sotto la foto */}
-          {selecting && base && <ZonePicker src={base} region={region} points={points} mask={mask} onChange={r => { setRegion(r); setPoints([]); setMask(null); }} onPick={pickAt} onLoad={toBottom} busy={busy} onSubmit={t => send(t)} onCancel={() => { clearZone(); setSelecting(false); }} />}
+          {selecting && base && <ZonePicker src={base} region={region} points={points} mask={mask} onChange={r => { setRegion(r); setPoints([]); setMask(null); }} onPick={pickAt} onPreview={previewAt} onLoad={toBottom} busy={busy} onSubmit={t => send(t)} onCancel={() => { clearZone(); setSelecting(false); }} />}
 
         </div>
       </div>
@@ -305,36 +312,65 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
 }
 
 // Zona sulla foto corrente: clic su un oggetto = lo seleziona (maschera rossa), trascinare = rettangolo.
-function ZonePicker({ src, region, points, mask, onChange, onPick, onLoad, busy, onSubmit, onCancel }: { src: string; region: Region | null; points: { x: number; y: number }[]; mask: string | null; onChange: (r: Region | null) => void; onPick: (p: { x: number; y: number }) => void; onLoad: () => void; busy: boolean; onSubmit: (text: string) => void; onCancel: () => void }) {
+// Zona sulla foto: due strumenti. Rettangolo (di partenza): trascina. Oggetti: clicca; fermando il mouse
+// su un oggetto compare l'anteprima di cosa verrebbe selezionato.
+type Tool = 'rect' | 'points';
+function ZonePicker({ src, region, points, mask, onChange, onPick, onPreview, onLoad, busy, onSubmit, onCancel }: { src: string; region: Region | null; points: { x: number; y: number }[]; mask: string | null; onChange: (r: Region | null) => void; onPick: (p: { x: number; y: number }) => void; onPreview: (p: { x: number; y: number }) => Promise<string | null>; onLoad: () => void; busy: boolean; onSubmit: (text: string) => void; onCancel: () => void }) {
   const box = useRef<HTMLDivElement>(null);
   const start = useRef<{ x: number; y: number } | null>(null);
-  const dragged = useRef(false);
+  const [tool, setTool] = useState<Tool>('rect');
+  const [hover, setHover] = useState<string | null>(null);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cache = useRef(new Map<string, string | null>());
+  // l'anteprima include i punti gia' scelti: se cambiano, quelle salvate non valgono piu'
+  useEffect(() => { cache.current.clear(); }, [points.length]);
   const at = (e: React.PointerEvent) => {
     const r = box.current!.getBoundingClientRect();
     return { x: Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)), y: Math.min(1, Math.max(0, (e.clientY - r.top) / r.height)) };
   };
+  const pickTool = (t: Tool) => { setTool(t); setHover(null); onChange(null); };
+  const down = (e: React.PointerEvent) => {
+    if (tool === 'points') { setHover(null); onPick(at(e)); return; }
+    (e.target as HTMLElement).setPointerCapture(e.pointerId); start.current = at(e);
+  };
   const move = (e: React.PointerEvent) => {
-    if (!start.current) return;
-    const p = at(e), s = start.current;
-    if (!dragged.current && Math.hypot(p.x - s.x, p.y - s.y) < 0.02) return;
-    dragged.current = true;
-    onChange({ x: Math.min(s.x, p.x), y: Math.min(s.y, p.y), w: Math.abs(p.x - s.x), h: Math.abs(p.y - s.y) });
+    const p = at(e);
+    if (tool === 'rect') {
+      if (!start.current) return;
+      const s = start.current;
+      if (Math.hypot(p.x - s.x, p.y - s.y) < 0.02) return;
+      onChange({ x: Math.min(s.x, p.x), y: Math.min(s.y, p.y), w: Math.abs(p.x - s.x), h: Math.abs(p.y - s.y) });
+      return;
+    }
+    // oggetti: anteprima dopo 350 ms di mouse fermo (posizioni gia' viste in memoria, griglia 3%)
+    if (timer.current) clearTimeout(timer.current);
+    const key = `${Math.round(p.x * 33)}:${Math.round(p.y * 33)}`;
+    if (cache.current.has(key)) { setHover(cache.current.get(key)!); return; }
+    timer.current = setTimeout(async () => { const m = await onPreview(p); cache.current.set(key, m); setHover(m); }, 350);
   };
-  const up = () => {
-    if (start.current && !dragged.current) onPick(start.current);
-    start.current = null;
-  };
+  const leave = () => { if (timer.current) clearTimeout(timer.current); setHover(null); };
+  const up = () => { start.current = null; };
   const [text, setText] = useState('');
   const loading = mask === 'loading';
   const ready = (region && region.w > 0.02) || (points.length > 0 && !loading);
   return (
     <div className="blur-in flex justify-start">
     <div className={`w-full max-w-[560px] rounded-3xl rounded-bl-2xl bg-white p-2 ${CARD_SHADOW}`}>
-      <p className="px-2 pb-2 pt-1 text-sm">{loading ? 'Riconosco l’oggetto…' : 'Clicca un oggetto per selezionarlo, oppure trascina per disegnare una zona.'}</p>
-      <div ref={box} className="relative mx-auto max-h-[calc(100vh-24rem)] w-fit cursor-crosshair touch-none select-none overflow-hidden rounded-2xl"
-        onPointerDown={e => { (e.target as HTMLElement).setPointerCapture(e.pointerId); start.current = at(e); dragged.current = false; }}
-        onPointerMove={move} onPointerUp={up}>
+      <div className="flex flex-wrap items-center gap-2 px-1 pb-2">
+        <div className="flex rounded-full bg-canvas p-1">
+          {([['rect', 'Rettangolo', SquareDashed], ['points', 'Oggetti', MousePointerClick]] as const).map(([id, l, I]) => (
+            <button key={id} type="button" onClick={() => pickTool(id)} className={`flex h-8 items-center gap-1.5 rounded-full px-3 text-[13px] font-medium leading-none ease-smooth transition-colors ${tool === id ? 'bg-white text-ink shadow-sm' : 'text-muted hover:text-ink'}`}><I size={14} className="translate-y-px" /> {l}</button>
+          ))}
+        </div>
+        <span className="text-xs text-muted">{loading ? 'Riconosco l’oggetto…' : tool === 'rect' ? 'Trascina sulla foto per disegnare la zona' : 'Passa sopra un oggetto per vederlo, clicca per selezionarlo'}</span>
+      </div>
+      <div ref={box} className={`relative mx-auto max-h-[calc(100vh-24rem)] w-fit touch-none select-none overflow-hidden rounded-2xl ${tool === 'rect' ? 'cursor-crosshair' : 'cursor-pointer'}`}
+        onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerLeave={leave}>
         <img src={src} alt="" draggable={false} onLoad={onLoad} className="block max-h-[calc(100vh-24rem)] w-auto" />
+        {tool === 'points' && hover && !loading && (
+          <div className="pointer-events-none absolute inset-0 bg-brand/35 ease-smooth transition-opacity"
+            style={{ maskImage: `url(${hover})`, WebkitMaskImage: `url(${hover})`, maskMode: 'luminance', maskSize: '100% 100%', WebkitMaskSize: '100% 100%' }} />
+        )}
         {mask && !loading && (
           <div className="blur-in pointer-events-none absolute inset-0 bg-rose-500/50"
             style={{ maskImage: `url(${mask})`, WebkitMaskImage: `url(${mask})`, maskMode: 'luminance', maskSize: '100% 100%', WebkitMaskSize: '100% 100%' }} />
