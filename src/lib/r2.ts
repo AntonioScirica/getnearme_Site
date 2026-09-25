@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand, ListObjectsV2Command } from '@aws-sdk/client-s3'
+import { S3Client, PutObjectCommand, ListObjectsV2Command, DeleteObjectsCommand } from '@aws-sdk/client-s3'
 import sharp from 'sharp'
 
 // Copia un'immagine remota su R2, ridimensionata (lato lungo maxDim) e in JPEG.
@@ -51,4 +51,10 @@ export const publicUrl = (key: string) => `${process.env.R2_PUBLIC_URL}/${key}`
 // File vuoto: l'informazione sta nel nome (vedi photo-edit, dati della Galleria)
 export async function uploadMarker(key: string) {
   await s3.send(new PutObjectCommand({ Bucket: process.env.R2_BUCKET_NAME, Key: key, Body: '' }))
+}
+
+export async function deleteKeys(keys: string[]) {
+  for (let i = 0; i < keys.length; i += 1000) {
+    await s3.send(new DeleteObjectsCommand({ Bucket: process.env.R2_BUCKET_NAME, Delete: { Objects: keys.slice(i, i + 1000).map(Key => ({ Key })), Quiet: true } }))
+  }
 }
