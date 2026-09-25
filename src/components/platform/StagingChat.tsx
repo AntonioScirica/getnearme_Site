@@ -197,14 +197,15 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
 
   // proporzioni vere delle foto: il risultato segue la foto (verticale resta verticale)
   const [ratios, setRatios] = useState<Record<string, number>>({});
+  // si misura la foto di lavoro appena scelta: quando arriva il messaggio del risultato ha gia' la forma giusta (niente saltino)
   useEffect(() => {
-    for (const m of msgs) {
-      if (m.role !== 'ai' || ratios[m.before]) continue;
+    const srcs = [base, ...msgs.map(m => (m.role === 'ai' ? m.before : null))].filter((x): x is string => !!x && !ratios[x]);
+    for (const src of new Set(srcs)) {
       const img = new Image();
-      img.onload = () => setRatios(r => ({ ...r, [m.before]: img.naturalWidth / img.naturalHeight }));
-      img.src = m.before;
+      img.onload = () => setRatios(r => ({ ...r, [src]: img.naturalWidth / img.naturalHeight }));
+      img.src = src;
     }
-  }, [msgs, ratios]);
+  }, [base, msgs, ratios]);
 
   // selezione zona: prende il posto del messaggio che contiene la foto di lavoro, cosi' la card si trasforma sul posto
   const zoneOwner = selecting && base ? msgs.findLastIndex(m => (m.role === 'ai' && m.out === base) || (m.role === 'user' && m.image === base)) : -1;
