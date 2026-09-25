@@ -10,6 +10,7 @@ import type { Page } from '@/components/site/ui';
 import { fileToResizedDataUrl } from '@/lib/staging';
 import { uploadDataUrl } from '@/lib/imageUpload';
 import { authFetch, CARD_SHADOW, formatPrice, portfolioUrl, setPublic } from './api';
+import { morph } from '@/lib/morph';
 import ProfileForm, { type Profile } from './ProfileForm';
 
 // Vetrina: l'agente sceglie uno dei 5 template e modifica colori, testi, foto, contatti e sezioni,
@@ -90,11 +91,11 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
 
       {tab === 'immobili' ? <PropertiesTab projects={projects} onChange={onChange} /> : !editing ? (
         <Gallery cfg={site.config} name={site.name || 'La tua agenzia'} logo={site.logo} props={props}
-          onPick={id => { if (id !== cfg.template) set({ template: id, primary: TEMPLATES.find(t => t.id === id)!.primary, font: TEMPLATES.find(t => t.id === id)!.font }); setPage({ page: 'home' }); setEditing(id); }} />
+          onPick={id => morph(() => { if (id !== cfg.template) set({ template: id, primary: TEMPLATES.find(t => t.id === id)!.primary, font: TEMPLATES.find(t => t.id === id)!.font }); setPage({ page: 'home' }); setEditing(id); })} />
       ) : (
         <div className="mt-6">
           <div className="mb-5 flex flex-wrap items-center gap-3">
-            <button onClick={() => { if (!dirty || confirm('Hai modifiche non pubblicate. Tornare ai modelli e scartarle?')) { setCfg(site.config); setEditing(null); } }}
+            <button onClick={() => { if (!dirty || confirm('Hai modifiche non pubblicate. Tornare ai modelli e scartarle?')) { morph(() => { setCfg(site.config); setEditing(null); }); } }}
               className="flex h-10 items-center gap-2 rounded-full bg-white px-4 text-sm font-medium ring-1 ring-black/10 ease-smooth transition-colors hover:bg-canvas"><ArrowLeft size={15} /> Tutti i modelli</button>
             <span className="text-sm text-muted">Stai modificando <b className="text-ink">{TEMPLATES.find(t => t.id === cfg.template)?.name}</b>{cfg.template !== site.config.template && ' (non ancora pubblicato)'}</span>
           </div>
@@ -103,7 +104,7 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
           <SideEditor cfg={cfg} set={set} page={page} onPage={setPage} firstId={props[0]?.id} covers={covers} selected={selected} setSelected={setSelected} />
 
           {/* Anteprima dal vivo */}
-          <Preview page={page} onPage={p => { setPage(p); setSelected(null); }} firstId={props[0]?.id} editMode={editMode} setEditMode={setEditMode}>
+          <Preview vtName={`tpl-${cfg.template}`} page={page} onPage={p => { setPage(p); setSelected(null); }} firstId={props[0]?.id} editMode={editMode} setEditMode={setEditMode}>
             <SitePage page={page} ctx={{ cfg, name: site.name || 'La tua agenzia', logo: site.logo, properties: props, base: '', preview: true, go: p => { setPage(p); setSelected(null); }, editMode, selected, onSelect: setSelected }} />
           </Preview>
         </div>
@@ -242,7 +243,7 @@ function Gallery({ cfg, name, logo, props, onPick }: { cfg: SiteConfig; name: st
             <div key={t.id} role="button" tabIndex={0} onClick={() => onPick(t.id)} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onPick(t.id); } }}
               className="group rise cursor-pointer rounded-[22px] text-left outline-none focus-visible:ring-2 focus-visible:ring-brand" style={{ animationDelay: `${i * 0.04}s` }}>
               <div className={`relative overflow-hidden rounded-[22px] bg-white ring-1 ease-smooth transition-[box-shadow,transform] group-hover:-translate-y-1 ${used ? 'ring-2 ring-brand' : 'ring-black/10'} ${CARD_SHADOW}`}>
-                <Thumb><SiteThumb ctx={{ cfg: tcfg, name, logo, properties: props, base: '', preview: true }} /></Thumb>
+                <div style={{ viewTransitionName: `tpl-${t.id}` }}><Thumb><SiteThumb ctx={{ cfg: tcfg, name, logo, properties: props, base: '', preview: true }} /></Thumb></div>
                 <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/0 ease-smooth transition-colors group-hover:bg-black/25">
                   <span className="flex translate-y-2 items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold opacity-0 shadow-lg ease-smooth transition-[opacity,transform] group-hover:translate-y-0 group-hover:opacity-100"><Pencil size={14} /> Personalizza</span>
                 </div>
@@ -277,7 +278,7 @@ function Thumb({ children }: { children: ReactNode }) {
 }
 
 // Il sito in scala dentro una finestra "browser": largo 1280 px come su un computer, rimpicciolito.
-function Preview({ children, page, onPage, firstId, editMode, setEditMode }: { children: ReactNode; page: Page; onPage: (p: Page) => void; firstId?: string; editMode: boolean; setEditMode: (v: boolean) => void }) {
+function Preview({ children, page, onPage, firstId, editMode, setEditMode, vtName }: { children: ReactNode; page: Page; onPage: (p: Page) => void; firstId?: string; editMode: boolean; setEditMode: (v: boolean) => void; vtName?: string }) {
   const box = useRef<HTMLDivElement>(null);
   const inner = useRef<HTMLDivElement>(null);
   const [k, setK] = useState(0.5);
@@ -292,7 +293,7 @@ function Preview({ children, page, onPage, firstId, editMode, setEditMode }: { c
     return () => ro.disconnect();
   }, []);
   return (
-    <div className={`overflow-hidden rounded-[28px] bg-white ${CARD_SHADOW}`}>
+    <div className={`overflow-hidden rounded-[28px] bg-white ${CARD_SHADOW}`} style={vtName ? { viewTransitionName: vtName } : undefined}>
       <div className="flex items-center gap-2 border-b border-line px-4 py-3 text-xs text-muted">
         <span className="flex gap-1.5">{[0, 1, 2].map(i => <span key={i} className="h-2.5 w-2.5 rounded-full bg-line" />)}</span>
         {/* pagine del sito: si naviga anche cliccando dentro l'anteprima */}

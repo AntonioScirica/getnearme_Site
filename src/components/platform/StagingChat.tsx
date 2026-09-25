@@ -10,6 +10,8 @@ import ProgressiveBlur from '@/components/ProgressiveBlur';
 import Dropdown, { type DropdownOption } from '@/components/ui/Dropdown';
 import Tooltip from '@/components/ui/Tooltip';
 import LightSwap from '@/components/ui/LightSwap';
+import AutoSize from '@/components/ui/AutoSize';
+import { morph } from '@/lib/morph';
 
 // Home staging come chat: l'agente carica una foto nella conversazione, scrive cosa vuole (in italiano,
 // il servizio traduce), riceve il prima/dopo e continua a chiedere sull'ultimo risultato. Caricare
@@ -223,35 +225,35 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
             <div key={m.id} className={`blur-in ease-smooth transition-opacity ${faded.has(m.id) ? 'opacity-35 hover:opacity-80' : ''}`}>
               <div className="flex justify-end">
                 {m.image
-                  ? <img src={m.image} alt="" className="max-h-56 max-w-[60%] rounded-3xl rounded-br-2xl object-cover ring-1 ring-black/5" />
+                  ? <img src={m.image} alt="" style={{ viewTransitionName: base === m.image && !selecting ? 'zone-photo' : undefined }} className="max-h-56 max-w-[60%] rounded-3xl rounded-br-2xl object-cover ring-1 ring-black/5" />
                   : <div className="max-w-[75%] rounded-3xl rounded-br-2xl bg-ink px-4 py-2.5 text-sm text-white">{m.region && <span className="mr-1.5 inline-flex items-center gap-1 rounded-full bg-white/15 px-2 py-0.5 text-[11px]"><SquareDashedMousePointer size={11} /> zona</span>}{m.text}</div>}
               </div>
               {m.image && i === msgs.length - 1 && !busy && (
                 <div className="blur-in mt-6 max-w-[85%] rounded-3xl rounded-bl-2xl bg-canvas px-4 py-3 text-sm" style={{ animationDelay: '.3s' }}>
                   {/* quando riconosce la foto il messaggio si riscrive parola per parola (key = cosa ha visto) */}
-                  <LightSwap swapKey={m.seen ?? 'caricata'}>
+                  <AutoSize><LightSwap swapKey={m.seen ?? 'caricata'}>
                     <p>{m.seen ? <>Sembra{' '}
                       <Dropdown value={m.seen} options={SEEN_OPTIONS} className="font-bold" onChange={v => {
                         setMsgs(ms => ms.map(x => (x.id === m.id && x.role === 'user' ? { ...x, seen: v } : x)));
                         setScene(v.startsWith('scene:') ? (v.slice(6) as Scene) : 'interno'); setKind(v);
                       }}>{seenLabel(m.seen)}</Dropdown>. </> : 'Foto caricata. '}Cosa vuoi cambiare? Scrivilo qui sotto o tocca un suggerimento.</p>
-                  </LightSwap>
+                  </LightSwap></AutoSize>
                 </div>
               )}
             </div>
           ) : (
             <div key={m.id} className={`blur-in flex justify-start ease-smooth transition-opacity ${faded.has(m.id) ? 'opacity-35 hover:opacity-80' : ''}`}>
-              <div className={`w-full max-w-[560px] rounded-3xl rounded-bl-2xl bg-white p-2 ${CARD_SHADOW}`}>
+              <div className={`w-full max-w-[560px] rounded-3xl rounded-bl-2xl bg-white p-2 ${CARD_SHADOW}`}><AutoSize>
                 {/* raggio interno = esterno - padding: se la foto tocca l'angolo della coda (16px), 8px */}
-                <AiPhotoStage src={m.before} busy={m.busy} out={m.out} reveal={m.reveal} msg={tick % 5} fileName="home-staging.jpg" className={`aspect-[3/2] ${m.err || (m.out && !m.busy) ? '' : '!rounded-bl-[8px]'}`} />
-                {m.err && <p className="px-2 pt-2 text-sm text-rose-600">{m.err}</p>}
+                <div style={{ viewTransitionName: m.out && m.out === base && !selecting ? 'zone-photo' : undefined }}><AiPhotoStage src={m.before} busy={m.busy} out={m.out} reveal={m.reveal} msg={tick % 5} fileName="home-staging.jpg" className={`aspect-[3/2] ${m.err || (m.out && !m.busy) ? '' : '!rounded-bl-[8px]'}`} /></div>
+                {m.err && <p className="blur-in px-2 pt-2 text-sm text-rose-600">{m.err}</p>}
                 {m.out && !m.busy && (
-                  <div className="flex items-center gap-3 px-2 pt-2 text-xs text-muted">
+                  <div className="blur-in flex items-center gap-3 px-2 pt-2 text-xs text-muted">
                     <span className="min-w-0 flex-1 truncate">{m.text}</span>
                     {/* a destra: Modifica (zona su questa foto) e Ricomincia da qui; "Si continua da qui" solo dopo esserci tornati */}
                     <div className="flex shrink-0 items-center gap-1">
                       {resumed === m.out && base === m.out && <span className="flex h-8 items-center px-2 font-medium text-emerald-600">Si continua da qui</span>}
-                      <button onClick={() => { if (base !== m.out) restartFrom(i, m.out!); setSelecting(true); }}
+                      <button onClick={() => morph(() => { if (base !== m.out) restartFrom(i, m.out!); setSelecting(true); })}
                         className="flex h-8 items-center gap-1.5 rounded-full px-3 font-medium leading-none text-ink hover:bg-canvas"><SquareDashedMousePointer size={14} className="translate-y-px" /> Modifica</button>
                       {base !== m.out && (
                         <>
@@ -264,11 +266,11 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
                     </div>
                   </div>
                 )}
-              </div>
+              </AutoSize></div>
             </div>
           ))}
           {/* Selezione di una zona: e' un messaggio della chat come gli altri, con i pulsanti sotto la foto */}
-          {selecting && base && <ZonePicker src={base} region={region} points={points} mask={mask} onChange={r => { setRegion(r); setPoints([]); setMask(null); }} onPick={pickAt} onPreview={previewAt} onSegments={segmentsOf} onLoad={toBottom} busy={busy} onSubmit={t => send(t)} onCancel={() => { clearZone(); setSelecting(false); }} />}
+          {selecting && base && <ZonePicker src={base} region={region} points={points} mask={mask} onChange={r => { setRegion(r); setPoints([]); setMask(null); }} onPick={pickAt} onPreview={previewAt} onSegments={segmentsOf} onLoad={toBottom} busy={busy} onSubmit={t => send(t)} onCancel={() => morph(() => { clearZone(); setSelecting(false); })} />}
 
         </div>
       </div>
@@ -283,7 +285,7 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
           {(region || points.length > 0) && !selecting && (
             <div className="blur-in mb-2 flex items-center gap-2 text-xs">
               <span className="flex items-center gap-1.5 rounded-full bg-rose-50 px-3 py-1.5 font-medium text-rose-700 ring-1 ring-inset ring-rose-700/20"><SquareDashedMousePointer size={13} /> {points.length ? 'Oggetto selezionato' : 'Zona selezionata'}: scrivi cosa fare lì</span>
-              <button onClick={() => setSelecting(true)} className="font-medium text-muted hover:text-ink">Cambia</button>
+              <button onClick={() => morph(() => setSelecting(true))} className="font-medium text-muted hover:text-ink">Cambia</button>
               <button onClick={clearZone} aria-label="Togli zona" className="text-muted hover:text-ink"><X size={14} /></button>
             </div>
           )}
@@ -298,7 +300,7 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
                 <ImagePlus size={20} />{picker}
               </label>
               {base && (
-                <button onClick={() => setSelecting(v => !v)} title="Seleziona una zona della foto" aria-pressed={selecting}
+                <button onClick={() => morph(() => setSelecting(v => !v))} title="Seleziona una zona della foto" aria-pressed={selecting}
                   className={`flex h-10 w-9 shrink-0 items-center justify-center rounded-full ease-smooth transition-colors ${selecting || region || points.length ? 'bg-rose-50 text-rose-600' : 'text-muted hover:bg-canvas hover:text-ink'}`}>
                   <SquareDashedMousePointer size={19} />
                 </button>
@@ -406,7 +408,7 @@ function ZonePicker({ src, region, points, mask, onChange, onPick, onPreview, on
       {/* il limite sta sulla card: dentro foto e riga la seguono (un limite in % sul blocco interno veniva ignorato e la card restava larga come la foto originale) */}
       <div className="w-fit max-w-full">
       <div ref={box} className={`relative mx-auto max-h-[calc(100vh-24rem)] w-fit touch-none select-none overflow-hidden rounded-2xl ${tool === 'rect' ? 'cursor-crosshair' : ''}`}
-        style={tool === 'points' ? { cursor: TARGET_CURSOR } : undefined}
+        style={{ viewTransitionName: 'zone-photo', ...(tool === 'points' ? { cursor: TARGET_CURSOR } : {}) }}
         onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerLeave={leave}>
         <img src={src} alt="" draggable={false} onLoad={onLoad} className="block max-h-[calc(100vh-24rem)] w-auto max-w-full" />
         <button type="button" onPointerDown={e => e.stopPropagation()} onClick={onCancel} aria-label="Annulla selezione" title="Annulla"
