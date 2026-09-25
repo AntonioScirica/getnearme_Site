@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ArrowUp, ImagePlus, Loader2, MousePointerClick, RotateCcw, SquareDashed, SquareDashedMousePointer, X } from 'lucide-react';
 import { fileToResizedDataUrl } from '@/lib/staging';
 import { AI_MOCK } from '@/lib/aiMock';
@@ -9,6 +9,7 @@ import { authFetch, CARD_SHADOW, warm } from './api';
 import ProgressiveBlur from '@/components/ProgressiveBlur';
 import Dropdown, { type DropdownOption } from '@/components/ui/Dropdown';
 import Tooltip from '@/components/ui/Tooltip';
+import LightSwap from '@/components/ui/LightSwap';
 
 // Home staging come chat: l'agente carica una foto nella conversazione, scrive cosa vuole (in italiano,
 // il servizio traduce), riceve il prima/dopo e continua a chiedere sull'ultimo risultato. Caricare
@@ -217,17 +218,13 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
               {m.image && i === msgs.length - 1 && !busy && (
                 <div className="blur-in mt-6 max-w-[85%] rounded-3xl rounded-bl-2xl bg-canvas px-4 py-3 text-sm" style={{ animationDelay: '.3s' }}>
                   {/* quando riconosce la foto il messaggio si riscrive parola per parola (key = cosa ha visto) */}
-                  <p key={m.seen ?? 'caricata'}>{(() => {
-                    const words: (string | ReactNode)[] = m.seen
-                      ? ['Sembra', <Dropdown key="d" value={m.seen} options={SEEN_OPTIONS} className="font-bold" onChange={v => {
-                          setMsgs(ms => ms.map(x => (x.id === m.id && x.role === 'user' ? { ...x, seen: v } : x)));
-                          setScene(v.startsWith('scene:') ? (v.slice(6) as Scene) : 'interno'); setKind(v);
-                        }}>{seenLabel(m.seen)}</Dropdown>, '.', ...'Cosa vuoi cambiare? Scrivilo qui sotto o tocca un suggerimento.'.split(' ')]
-                      : 'Foto caricata. Cosa vuoi cambiare? Scrivilo qui sotto o tocca un suggerimento.'.split(' ');
-                    return words.map((w, k) => (
-                      <span key={k} className={m.seen ? 'ai-word' : ''} style={m.seen ? { animationDelay: `${k * 45}ms` } : undefined}>{w}{words[k + 1] === '.' ? '' : ' '}</span>
-                    ));
-                  })()}</p>
+                  <LightSwap swapKey={m.seen ?? 'caricata'}>
+                    <p>{m.seen ? <>Sembra{' '}
+                      <Dropdown value={m.seen} options={SEEN_OPTIONS} className="font-bold" onChange={v => {
+                        setMsgs(ms => ms.map(x => (x.id === m.id && x.role === 'user' ? { ...x, seen: v } : x)));
+                        setScene(v.startsWith('scene:') ? (v.slice(6) as Scene) : 'interno'); setKind(v);
+                      }}>{seenLabel(m.seen)}</Dropdown>. </> : 'Foto caricata. '}Cosa vuoi cambiare? Scrivilo qui sotto o tocca un suggerimento.</p>
+                  </LightSwap>
                 </div>
               )}
             </div>

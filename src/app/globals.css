@@ -448,6 +448,13 @@ html.metrics-light [class*="border-gray-600"] { border-color: #d8d4cb !important
 /* Testo che si riscrive "con l'AI": ogni parola entra sfocata e colorata e si assesta (ritardo per parola via style) */
 @keyframes gnm-ai-word { 0% { opacity: 0; filter: blur(6px); color: var(--color-brand, #2563eb); } 55% { opacity: 1; filter: blur(0); color: var(--color-brand, #2563eb); } 100% { opacity: 1; filter: none; } }
 .ai-word { display: inline-block; animation: gnm-ai-word var(--gnm-dur) var(--gnm-ease) both; }
+/* Passata di luce: il testo nuovo esce dietro una banda blu che copre il vecchio (componente LightSwap) */
+@keyframes gnm-swap { from { mask-position: 100% 0; -webkit-mask-position: 100% 0; } to { mask-position: 0 0; -webkit-mask-position: 0 0; } }
+@keyframes gnm-swap-glow { from { left: -30%; opacity: 0; } 15% { opacity: 1; } 85% { opacity: 1; } to { left: 105%; opacity: 0; } }
+@keyframes gnm-swap-shadow { from { text-shadow: 0 0 14px rgba(59,130,246,.75); color: #2563eb; } to { text-shadow: 0 0 0 rgba(59,130,246,0); } }
+.swap-new { mask-image: linear-gradient(90deg, #000 42%, transparent 58%); -webkit-mask-image: linear-gradient(90deg, #000 42%, transparent 58%); mask-size: 260% 100%; -webkit-mask-size: 260% 100%; animation: gnm-swap 1s var(--gnm-ease) both, gnm-swap-shadow 1.4s var(--gnm-ease) both; }
+.swap-old { mask-image: linear-gradient(90deg, transparent 42%, #000 58%); -webkit-mask-image: linear-gradient(90deg, transparent 42%, #000 58%); mask-size: 260% 100%; -webkit-mask-size: 260% 100%; animation: gnm-swap 1s var(--gnm-ease) both; }
+.swap-glow { position: absolute; top: -6px; bottom: -6px; width: 22%; pointer-events: none; background: linear-gradient(90deg, transparent, rgba(59,130,246,.45), transparent); filter: blur(10px); animation: gnm-swap-glow 1s var(--gnm-ease) both; }
 @keyframes gnm-rise { from { opacity: 0; transform: translateY(24px) scale(.97); } to { opacity: 1; transform: none; } }
 .rise { animation: gnm-rise var(--gnm-dur) var(--gnm-ease) backwards; } /* backwards: a fine animazione torna la transform di .tilt */
 /* Caricamento stile Foto AI (home staging): alone aurora sui bordi della foto, poi slider prima/dopo */
