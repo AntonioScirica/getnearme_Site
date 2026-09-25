@@ -538,7 +538,7 @@ export function PropertyCard({ p }: { p: SiteProperty }) {
     <SiteLink to={{ page: 'immobile', id: p.id }} className="group block">
       <div className="relative"><Photo src={p.cover} alt={p.titolo} zoom className="aspect-[4/3] rounded-[var(--rc)]" /><span className="absolute left-3 top-3 rounded-full bg-white px-3 py-1 text-[11px] font-semibold text-neutral-900">{typeOf(p)}</span><FavButton id={p.id} className="absolute right-3 top-3" /></div>
       <div className="mt-4 flex items-start justify-between gap-4">
-        <div className="min-w-0"><div className="line-clamp-1 text-[17px] font-semibold">{p.titolo}</div>{place}</div>{pr}
+        <div className="min-w-0"><div className="line-clamp-2 text-[17px] font-semibold leading-snug">{p.titolo}</div>{place}</div>{pr}
       </div>
       <Facts p={p} className="mt-3 text-[var(--muted)]" />
     </SiteLink>
@@ -552,7 +552,7 @@ export function PropertyCard({ p }: { p: SiteProperty }) {
         <span className="absolute bottom-3 left-3 rounded-[calc(var(--r)*0.4)] bg-[var(--c)] px-2.5 py-1 text-[11px] font-semibold text-white">{isRent(p) ? 'In affitto' : 'In vendita'}</span>
       </div>
       <div className="flex flex-1 flex-col p-5">
-        <div className="line-clamp-1 text-[16px] font-bold">{p.titolo}</div>{place}
+        <div className="line-clamp-2 min-h-[2.75em] text-[16px] font-bold leading-snug">{p.titolo}</div>{place}
         <Facts p={p} className="mt-3 text-[var(--muted)]" />
         <div className="mt-4 flex items-end justify-between border-t border-[var(--line)] pt-4">
           {cfg.showPrices ? <div><div className="text-[10px] font-semibold uppercase tracking-wider text-[var(--muted)]">Prezzo</div><div className="text-xl font-bold text-[var(--c)]">{price(p.prezzo)}{isRent(p) && p.prezzo ? <span className="text-sm font-medium text-[var(--muted)]">/mese</span> : null}</div></div> : <span />}
@@ -568,7 +568,7 @@ export function PropertyCard({ p }: { p: SiteProperty }) {
         <div className="absolute right-3 top-3 flex gap-1.5">{['In evidenza', isRent(p) ? 'Affitto' : 'Vendita'].map(x => <span key={x} className="rounded-[calc(var(--r)*0.4)] bg-white/25 px-2.5 py-1 text-[11px] font-medium text-white backdrop-blur-md">{x}</span>)}</div>
         <FavButton id={p.id} className="absolute left-3 top-3 !h-8 !w-8" />
       </div>
-      <div className="mt-4 text-xl font-semibold tracking-tight">{p.titolo}</div>
+      <div className="mt-4 line-clamp-2 text-xl font-semibold leading-snug tracking-tight">{p.titolo}</div>
       <div className="mt-1.5 flex items-center gap-1 text-sm text-[var(--muted)]"><MapPin size={14} />{zoneOf(p.addr)}</div>
       <div className="mt-2 flex flex-wrap items-center justify-between gap-2"><Facts p={p} className="text-[var(--muted)]" />{pr}</div>
     </SiteLink>
@@ -578,7 +578,7 @@ export function PropertyCard({ p }: { p: SiteProperty }) {
       <Photo src={p.cover} alt={p.titolo} zoom className="aspect-[4/3]" />
       <div className="flex flex-1 flex-col p-5">
         <div className="flex items-center justify-between">{pr}<FavButton id={p.id} className="!bg-transparent ring-1 ring-[var(--line)] !shadow-none" /></div>
-        <div className="mt-2 line-clamp-1 text-[16px] font-semibold">{p.titolo}</div>{place}
+        <div className="mt-2 line-clamp-2 min-h-[2.75em] text-[16px] font-semibold leading-snug">{p.titolo}</div>{place}
         <Facts p={p} className="mt-4 text-[var(--muted)]" />
       </div>
     </SiteLink>
@@ -592,7 +592,7 @@ export function PropertyCard({ p }: { p: SiteProperty }) {
         {riv && <span className="absolute right-3 top-3 rounded-[calc(var(--r)*0.5)] bg-[var(--c)] px-2.5 py-1 text-[11px] font-bold uppercase text-[var(--on-c,#fff)]">{isRent(p) ? 'Affitto' : 'Disponibile'}</span>}
       </div>
       <div className="flex flex-1 flex-col p-5">
-        <div className="line-clamp-1 text-[16px] font-semibold">{p.titolo}</div>{place}
+        <div className="line-clamp-2 min-h-[2.75em] text-[16px] font-semibold leading-snug">{p.titolo}</div>{place}
         <Facts p={p} className="mt-3 border-t border-[var(--line)] pt-3 text-[var(--muted)]" />
         {t.card === 'button'
           ? <div className="mt-4 flex items-center justify-between">{pr}<span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--c)] px-4 py-2 text-[13px] font-semibold text-white">Dettagli <ArrowRight size={14} /></span></div>

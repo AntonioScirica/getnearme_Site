@@ -147,8 +147,9 @@ export function Facts({ p, className = '', full }: { p: SiteProperty; className?
     </div>
   );
   return (
-    <div className={`flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] ${className}`}>
-      {items.map(x => <span key={x.l} className="flex items-center gap-1.5"><x.i size={14} className="opacity-60" />{x.l === 'Superficie' ? x.v : `${x.v} ${x.l.toLowerCase()}`}</span>)}
+    // nelle card: icona e numero (il nome sta nel tooltip), sempre su una riga anche nelle card strette
+    <div className={`flex items-center gap-x-4 overflow-hidden whitespace-nowrap text-[13px] ${className}`}>
+      {items.map(x => <span key={x.l} title={x.l} className="flex shrink-0 items-center gap-1.5"><x.i size={15} className="opacity-60" />{x.v}</span>)}
     </div>
   );
 }
@@ -193,7 +194,7 @@ export function FavButton({ id, className = '' }: { id: string; className?: stri
   return (
     <button type="button" aria-label={on ? 'Togli dai preferiti' : 'Aggiungi ai preferiti'} aria-pressed={on}
       onClick={e => { e.preventDefault(); e.stopPropagation(); toggle(id); }}
-      className={`flex h-9 w-9 items-center justify-center rounded-full bg-white/95 text-neutral-800 shadow-sm transition-transform duration-300 hover:scale-110 active:scale-95 ${className}`}>
+      className={`flex h-9 w-9 items-center justify-center rounded-full bg-white/95 text-neutral-800 shadow-sm outline-none transition-transform duration-300 hover:scale-110 focus-visible:ring-2 focus-visible:ring-[var(--c)] active:scale-95 ${className}`}>
       <Heart size={16} className={on ? 'fill-rose-500 text-rose-500' : ''} />
     </button>
   );
