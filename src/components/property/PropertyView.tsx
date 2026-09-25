@@ -1,3 +1,4 @@
+import LeafletMap from '@/components/ui/LeafletMap';
 import { Bath, BedDouble, Building, ExternalLink, LayoutTemplate, Mail, MapPin, Ruler, Square } from 'lucide-react';
 import { ENERGY_COLORS, GROUPS, detailsFrom, groupFacts } from '@/lib/propertyFields';
 import Gallery, { ShareButton } from './Gallery';
@@ -146,9 +147,7 @@ export default function PropertyView({ p, contact }: { p: PropertyViewData; cont
           {showAddr && p.addr && (
             <section className="mt-10">
               <h2 className="mb-4 font-display text-xl font-semibold">Dove si trova</h2>
-              <div className="overflow-hidden rounded-2xl ring-1 ring-line">
-                <iframe title="Mappa" loading="lazy" className="h-80 w-full" src={`https://maps.google.com/maps?q=${encodeURIComponent(p.addr)}&z=15&output=embed`} />
-              </div>
+              <LeafletMap addr={p.addr} className="h-80 rounded-2xl bg-canvas ring-1 ring-line" />
             </section>
           )}
         </div>

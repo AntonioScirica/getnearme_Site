@@ -1,5 +1,6 @@
 'use client';
 
+import LeafletMap from '@/components/ui/LeafletMap';
 import { useEffect, useMemo, useRef, useState, type ComponentType } from 'react';
 import {
   ArrowLeft, ArrowRight, Ban, Building, Building2, CalendarClock, Car, Check, ChefHat, Crown, DoorOpen, Fence, FileSignature,
@@ -214,7 +215,7 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
             {cur.id === 'dove' && <>
               <TextField f={F.indirizzo} v={d.indirizzo} set={v => set('indirizzo', v)} autoFocus big />
               {typeof d.indirizzo === 'string' && d.indirizzo.length > 8 && (
-                <div className="overflow-hidden rounded-2xl ring-1 ring-line"><iframe title="Mappa" loading="lazy" className="h-56 w-full" src={`https://maps.google.com/maps?q=${encodeURIComponent(d.indirizzo)}&z=15&output=embed`} /></div>
+                <LeafletMap addr={d.indirizzo} className="h-56 rounded-2xl bg-canvas ring-1 ring-line" />
               )}
               {addr.length >= 9 && (
                 <div className="card p-4">

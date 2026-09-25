@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import LeafletMap from '@/components/ui/LeafletMap';
+import { useCallback, useState, type FormEvent } from 'react';
 import { Check, Facebook, Instagram, Loader2, Mail, MessageCircle, Phone, Printer, Share2 } from 'lucide-react';
 import { ESSENTIALS, GROUPS, type Field } from '@/lib/propertyFields';
 import type { SiteProperty } from '@/lib/siteTemplates';
@@ -125,32 +126,14 @@ export function FeatureList({ p }: { p: SiteProperty }) {
 // Mappa della zona (Leaflet, gratis). Cerchio e non puntino: la posizione esatta resta riservata.
 export function MapBlock({ addr, bare }: { addr: string; bare?: boolean }) {
   const tx = useT();
-  const el = useRef<HTMLDivElement>(null);
   const [none, setNone] = useState(false);
-  useEffect(() => {
-    let map: import('leaflet').Map | null = null, stop = false;
-    (async () => {
-      if (!document.getElementById('leaflet-css')) Object.assign(document.head.appendChild(document.createElement('link')), { id: 'leaflet-css', rel: 'stylesheet', href: 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css' });
-      const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=it&q=${encodeURIComponent(addr)}`).then(x => x.json()).catch(() => null) as { lat: string; lon: string }[] | null;
-      if (stop || !el.current) return;
-      if (!r?.[0]) { setNone(true); return; }
-      const mod = await import('leaflet'); const L = (mod.default ?? mod) as typeof import('leaflet');
-      const ll: [number, number] = [Number(r[0].lat), Number(r[0].lon)];
-      map = L.map(el.current, { scrollWheelZoom: false, attributionControl: true }).setView(ll, 15);
-      map.attributionControl.setPrefix(false);
-      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', { maxNativeZoom: 16, maxZoom: 18, attribution: '© Esri, OpenStreetMap' }).addTo(map);
-      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}', { maxNativeZoom: 16, maxZoom: 18 }).addTo(map);
-      const c = getComputedStyle(el.current).getPropertyValue('--c') || '#333';
-      L.circle(ll, { radius: 250, color: c, fillColor: c, fillOpacity: 0.18, weight: 2 }).addTo(map);
-    })();
-    return () => { stop = true; map?.remove(); };
-  }, [addr]);
+  const missing = useCallback(() => setNone(true), []);
   if (none) return null;
-  if (bare) return <div ref={el} className="relative z-0 h-[260px] overflow-hidden rounded-[calc(var(--r)*0.8)] bg-[var(--soft)]" />;
+  if (bare) return <LeafletMap addr={addr} circle onMissing={missing} className="h-[260px] rounded-[calc(var(--r)*0.8)] bg-[var(--soft)]" />;
   return (
     <div>
       <H className="text-3xl">{tx('property.map')}</H>
-      <div ref={el} className="relative z-0 mt-5 h-[340px] overflow-hidden rounded-[var(--r)] bg-[var(--soft)]" />
+      <LeafletMap addr={addr} circle onMissing={missing} className="mt-5 h-[340px] rounded-[var(--r)] bg-[var(--soft)]" />
       <p className="mt-2 text-xs text-[var(--muted)]">Zona indicativa, l’indirizzo esatto te lo do su richiesta.</p>
     </div>
   );
