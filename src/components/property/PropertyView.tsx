@@ -42,7 +42,8 @@ function Description({ text }: { text: string }) {
   );
 }
 
-export default function PropertyView({ p, contact }: { p: PropertyViewData; contact?: PropertyContact }) {
+// hideGallery: in piattaforma le foto stanno gia' nella sezione "Le foto" sopra
+export default function PropertyView({ p, contact, hideGallery }: { p: PropertyViewData; contact?: PropertyContact; hideGallery?: boolean }) {
   const imp = (p.import_data ?? {}) as { photos?: string[] };
   const d = detailsFrom(p.import_data);
   const photos = imp.photos?.length ? imp.photos : p.cover ? [p.cover] : [];
@@ -67,7 +68,7 @@ export default function PropertyView({ p, contact }: { p: PropertyViewData; cont
 
   return (
     <article className="pb-24 md:pb-0">
-      <Gallery photos={photos} title={title} />
+      {!hideGallery && <Gallery photos={photos} title={title} />}
 
       <div className="mt-8 grid gap-10 lg:grid-cols-[1fr_360px]">
         <div className="min-w-0">

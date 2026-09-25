@@ -34,7 +34,7 @@ export default function PropertyDetail({ project, loading, onChange }: { project
       </div>
       {/* le foto: da qui ogni foto va all'AI, e una foto AI torna qui accanto all'originale (prima/dopo sul sito) */}
       <PhotoManager project={project} onChange={onChange} />
-      <PropertyView p={project} />
+      <PropertyView p={project} hideGallery />
       {typeof extra.score === 'number' && (
         <section className="mt-10 card p-6">
           <div className="flex items-baseline justify-between"><h2 className="font-display text-lg font-semibold">Qualità dell&apos;annuncio</h2><span className="font-display text-2xl font-bold text-ai">{extra.score}/100</span></div>
@@ -73,11 +73,10 @@ function PhotoManager({ project, onChange }: { project: ProjectData; onChange: (
               {d.prima?.[src] && <span className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-brand px-2.5 py-1 text-[11px] font-semibold text-white"><Sparkles size={10} /> Prima / Dopo</span>}
               {busy === src ? <span className="absolute inset-0 flex items-center justify-center bg-white/60"><Loader2 size={18} className="animate-spin" /></span> : (
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/35 opacity-0 ease-smooth transition-opacity group-hover:opacity-100">
+                  {/* togli: in alto a destra; al centro l'azione principale e, uguale ma secondaria, Copertina */}
+                  <button onClick={() => act('remove', src)} aria-label="Togli la foto" className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-ink hover:bg-white"><X size={14} /></button>
                   <a href={`#/staging?project=${project.id}&photo=${encodeURIComponent(src)}`} className="flex h-9 items-center gap-1.5 rounded-full bg-brand px-4 text-xs font-semibold text-white shadow-lg ease-smooth transition-transform hover:scale-105"><Wand2 size={13} /> Migliora con l’AI</a>
-                  <div className="flex gap-2">
-                    {src !== project.cover && <button onClick={() => act('cover', src)} className="h-8 rounded-full bg-white/90 px-3 text-xs font-medium hover:bg-white">Copertina</button>}
-                    <button onClick={() => act('remove', src)} aria-label="Togli la foto" className="flex h-8 w-8 items-center justify-center rounded-full bg-white/90 hover:bg-white"><X size={14} /></button>
-                  </div>
+                  {src !== project.cover && <button onClick={() => act('cover', src)} className="flex h-9 items-center gap-1.5 rounded-full bg-white px-4 text-xs font-semibold text-ink shadow-lg ease-smooth transition-transform hover:scale-105"><Star size={13} /> Copertina</button>}
                 </div>
               )}
             </li>
