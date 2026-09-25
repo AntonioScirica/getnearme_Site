@@ -101,8 +101,21 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: job.status === 'IN_QUEUE' || job.status === 'IN_PROGRESS' ? 'timeout' : 'ai_failed' }, { status: 502 })
   }
   if (process.env.NODE_ENV !== 'production') await debugDump({ imageBase64, imageUrl, region, prompt: (translation.prompt_template ?? prompt), request: translation.request, outB64: b64, translated: (job.output as { translated?: string } | undefined)?.translated, worker: (job as { workerId?: string }).workerId })
-  const url = await uploadJpeg(await matchInputShape(Buffer.from(b64, 'base64'), imageBase64, imageUrl), `edits/${userId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`)
+  const key = `edits/${userId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+  const url = await uploadJpeg(await matchInputShape(Buffer.from(b64, 'base64'), imageBase64, imageUrl), `${key}.jpg`)
+  // Media: accanto al risultato si salva anche il "prima" (<chiave>-prima.jpg), cosi' la pagina Media
+  // mostra ogni modifica con prima e dopo leggendo solo la cartella su R2 (niente tabella).
+  await savePrima(imageBase64, imageUrl, `${key}-prima.jpg`)
   return NextResponse.json({ url, seconds: job.output?.seconds })
+}
+
+async function savePrima(imageBase64: string, imageUrl: string, key: string) {
+  try {
+    const src = imageBase64
+      ? Buffer.from(imageBase64.split(',')[1] ?? '', 'base64')
+      : Buffer.from(await (await fetch(imageUrl, { signal: AbortSignal.timeout(15_000) })).arrayBuffer())
+    await uploadJpeg(await sharp(src).rotate().resize({ width: 1600, height: 1600, fit: 'inside', withoutEnlargement: true }).jpeg({ quality: 85 }).toBuffer(), key)
+  } catch (e) { console.error('savePrima', e) } // senza "prima" il risultato resta comunque nei Media
 }
 
 // Il modello genera a ~1 MP con lati multipli di 32: le proporzioni cambiano di poco (es. 1920x1440 ->

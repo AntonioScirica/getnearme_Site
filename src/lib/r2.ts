@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
+import { S3Client, PutObjectCommand, ListObjectsV2Command } from '@aws-sdk/client-s3'
 import sharp from 'sharp'
 
 // Copia un'immagine remota su R2, ridimensionata (lato lungo maxDim) e in JPEG.
@@ -33,3 +33,17 @@ export async function uploadJpeg(body: Buffer, key: string): Promise<string> {
   await s3.send(new PutObjectCommand({ Bucket: process.env.R2_BUCKET_NAME, Key: key, Body: body, ContentType: 'image/jpeg' }))
   return `${process.env.R2_PUBLIC_URL}/${key}`
 }
+
+// Chiavi sotto un prefisso (con data di caricamento), fino a `max`.
+export async function listKeys(prefix: string, max = 2000): Promise<{ key: string; at: number }[]> {
+  const out: { key: string; at: number }[] = []
+  let token: string | undefined
+  do {
+    const r = await s3.send(new ListObjectsV2Command({ Bucket: process.env.R2_BUCKET_NAME, Prefix: prefix, ContinuationToken: token }))
+    for (const o of r.Contents ?? []) if (o.Key) out.push({ key: o.Key, at: o.LastModified?.getTime() ?? 0 })
+    token = r.IsTruncated ? r.NextContinuationToken : undefined
+  } while (token && out.length < max)
+  return out
+}
+
+export const publicUrl = (key: string) => `${process.env.R2_PUBLIC_URL}/${key}`

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Home, Building2, Globe, Gauge, LogOut, Plus, Loader2, X, Wand2 } from 'lucide-react';
+import { Home, Building2, Globe, Gauge, LogOut, Plus, Loader2, X, Wand2, Images } from 'lucide-react';
 import type { UserData } from '@/app/[locale]/dashboard/page';
 import { supabase } from '@/lib/supabase';
 import { fetchProjects, type ProjectData } from '@/lib/projects';
@@ -13,6 +13,7 @@ import { BrowserBody, Results, SCAN_STEPS, useImprove, Verdict, type Stage } fro
 import { Elapsed } from './AiPhoto';
 import CostsView from './CostsView';
 import StagingView from './StagingView';
+import MediaView from './MediaView';
 import PropertiesView from './PropertiesView';
 import { isPlatformAdmin } from '@/lib/platformAdmins';
 import ProgressiveBlur from '@/components/ProgressiveBlur';
@@ -38,6 +39,7 @@ const NAV = [
   { path: '/', label: 'Home', icon: Home },
   { path: '/immobili', label: 'Immobili', icon: Building2 },
   { path: '/portfolio', label: 'Il mio sito', icon: Globe },
+  { path: '/galleria', label: 'Galleria', icon: Images },
 ];
 
 export default function PlatformApp({ userData }: { userData: UserData }) {
@@ -68,7 +70,7 @@ export default function PlatformApp({ userData }: { userData: UserData }) {
             <span className="font-display text-lg font-extrabold tracking-tight">Agente <span className="text-brand">Immo</span></span>
           </a>
           <nav className="mx-auto hidden items-center gap-1 rounded-full bg-canvas p-1 md:flex">
-            {[...NAV, ...(isPlatformAdmin(userData.email) ? [{ path: '/costi', label: 'Costi AI', icon: Gauge }] : [])].map(({ path, label }) => {
+            {NAV.map(({ path, label }) => {
               const active = route === path || (path === '/immobili' && !!detailId);
               return <a key={path} href={`#${path}`} className={`rounded-full px-4 py-1.5 text-sm font-medium ease-smooth transition-colors ${active ? 'bg-white text-ink shadow-sm' : 'text-muted hover:text-ink'}`}>{label}</a>;
             })}
@@ -88,13 +90,15 @@ export default function PlatformApp({ userData }: { userData: UserData }) {
         {/* Home staging: la chat gestisce lo scorrimento da sola (campo fisso in fondo) */}
         <div key={route} className={`fade-up ${route === '/immobili' ? '' : 'mx-auto max-w-6xl px-6'} ${route === '/immobili' ? '' : route === '/staging' ? 'h-full' : route === '/' || route === '/migliora' ? '' : 'pb-16 pt-8'}`}>
           {route === '/profilo' ? (
-            <ProfileView email={userData.email} profile={profile ?? null} onSaved={setProfile} />
+            <ProfileView email={userData.email} profile={profile ?? null} onSaved={setProfile} admin={isPlatformAdmin(userData.email)} />
           ) : route === '/costi' && isPlatformAdmin(userData.email) ? (
             <CostsView />
           ) : route === '/migliora' ? (
             <HomeView key={query} name={profile?.name ?? undefined} initialUrl={new URLSearchParams(query).get('url') ?? ''} onSaved={reload} />
           ) : route === '/staging' ? (
             <StagingView />
+          ) : route === '/galleria' ? (
+            <MediaView />
           ) : route === '/importa' ? (
             <ImportView onDone={reload} />
           ) : route === '/nuovo' ? (
@@ -412,7 +416,7 @@ export function HomeView({ name, initialUrl = '', onSaved }: { name?: string; in
 }
 
 // Profilo: nome e indirizzo della vetrina (stesso modulo dell'onboarding), link alla vetrina, uscita.
-function ProfileView({ email, profile, onSaved }: { email: string; profile: Profile | null; onSaved: (p: Profile) => void }) {
+function ProfileView({ email, profile, onSaved, admin }: { email: string; profile: Profile | null; onSaved: (p: Profile) => void; admin: boolean }) {
   return (
     <div className="mx-auto max-w-xl">
       <h1 className="font-display text-3xl font-bold tracking-tight">Profilo</h1>
@@ -423,6 +427,12 @@ function ProfileView({ email, profile, onSaved }: { email: string; profile: Prof
         <div className="mt-5"><ProfileForm initial={profile ?? { name: null, slug: null }} submitLabel="Salva" onSaved={onSaved} /></div>
         {profile?.slug && <a href="#/portfolio" className="mt-4 inline-flex text-sm font-medium text-brand hover:underline">Modifica il tuo sito</a>}
       </div>
+      {/* Costi AI: solo per gli amministratori, qui invece che nel menu */}
+      {admin && (
+        <a href="#/costi" className={`mt-4 flex items-center gap-3 rounded-[28px] bg-white p-6 ease-smooth transition-shadow hover:shadow-md ${CARD_SHADOW}`}>
+          <Gauge size={18} className="text-muted" /><span className="flex-1"><span className="block font-semibold">Costi AI</span><span className="block text-sm text-muted">Spesa per le foto e i video generati</span></span>
+        </a>
+      )}
       <button onClick={() => supabase.auth.signOut()} className="mt-6 flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium text-muted ring-1 ring-line hover:bg-white hover:text-ink"><LogOut size={15} /> Esci</button>
     </div>
   );
