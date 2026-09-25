@@ -18,3 +18,22 @@ export const FAKE_PROPERTIES: ProjectData[] = rows.map(([titolo, addr, prezzo, m
   id: `fake-${i}`, nome: '', titolo, addr, prezzo, mq, camere, bagni, tipologia: 'Appartamento',
   cover: photos[i % photos.length], is_public: i % 3 !== 1, import_data: { score: 55 + ((i * 7) % 35) },
 }))
+
+// Solo in sviluppo: Galleria di prova per i primi 4 immobili finti (prima, dopo e passaggi)
+const S = (n: string) => `/staging/${n}`
+type FakeMedia = { id: string; dopo: string; prima: string | null; at: number; casa: string | null; text: string; room: string; steps: { url: string; text: string }[]; all: string; keys: string[] }
+const fm = (i: number, casa: number, hoursAgo: number, room: string, prima: string, steps: [string, string][]): FakeMedia => ({
+  id: `fake-media-${i}`, casa: `fake-${casa}`, room, prima, at: Date.parse('2026-09-25T12:00:00Z') - hoursAgo * 3_600_000,
+  dopo: steps[steps.length - 1][0], text: steps[steps.length - 1][1], steps: steps.map(([url, text]) => ({ url, text })),
+  all: steps.map(s => s[1]).join(' '), keys: [],
+})
+// 4 immobili x 15 lavori = 60 foto: abbastanza per vedere lo scorrimento infinito (24 alla volta)
+const ROOMS = ['un soggiorno', 'una cucina', 'una camera da letto', 'un bagno', 'un balcone', 'uno studio', 'una sala da pranzo']
+const REQS = ['Arreda moderno', 'Arreda nordico', 'Cucina moderna', 'Camera accogliente', 'Bagno moderno', 'Arreda il balcone', 'cuscini verdi sul divano', 'togli il quadro', 'pavimento in rovere chiaro', 'più luce naturale', 'tende di lino bianche', 'Svuota la stanza']
+const AFTERS = ['1.jpg', '2.jpg', '3.jpg', '4.jpg', '5.jpg', '6.jpg'].map(S)
+const BEFORES = [S('1_real.jpg'), S('2_real.jpg'), S('before.jpg'), '/demo/foto_demo.jpg', ...photos]
+export const FAKE_MEDIA: FakeMedia[] = Array.from({ length: 60 }, (_, i) => {
+  const n = 1 + (i % 3) // 1-3 passaggi
+  return fm(i, i % 4, i * 7 + (i % 5), ROOMS[i % ROOMS.length], BEFORES[i % BEFORES.length],
+    Array.from({ length: n }, (_, j) => [AFTERS[(i + j) % AFTERS.length], REQS[(i * 3 + j) % REQS.length]] as [string, string]))
+})

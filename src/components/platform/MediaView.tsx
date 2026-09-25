@@ -8,9 +8,10 @@ import Dropdown from '@/components/ui/Dropdown';
 import { downloadImage } from '@/lib/staging';
 import { fetchProjects, type ProjectData } from '@/lib/projects';
 import { authFetch, CARD_SHADOW } from './api';
+import { FAKE_MEDIA, FAKE_PROPERTIES } from '@/lib/fakeProperties';
 
 // Una voce = una foto di partenza: ultima versione (dopo), originale (prima) e i passaggi in mezzo.
-export type MediaItem = { dopo: string; prima: string | null; at: number; casa: string | null; text: string; room: string; steps: { url: string; text: string }[]; all: string; keys: string[] };
+export type MediaItem = { id: string; dopo: string; prima: string | null; at: number; casa: string | null; text: string; room: string; steps: { url: string; text: string }[]; all: string; keys: string[] };
 
 export async function fetchMedia(): Promise<MediaItem[]> {
   const r = await authFetch('/api/platform/media').catch(() => null);
@@ -50,18 +51,25 @@ export default function MediaView() {
   const stopSelecting = () => { setSelecting(false); setSel(new Set()); };
   const remove = async () => {
     setDeleting(true);
-    const chosen = (items ?? []).filter(m => sel.has(m.dopo));
-    const r = await authFetch('/api/platform/media', { method: 'DELETE', body: JSON.stringify({ keys: chosen.flatMap(m => m.keys) }) }).catch(() => null);
-    const d = r?.ok ? await r.json() : null;
+    const chosen = (items ?? []).filter(m => sel.has(m.id));
+    const keys = chosen.flatMap(m => m.keys); // le foto finte di sviluppo non hanno chiavi: si tolgono solo dalla lista
+    const r = keys.length ? await authFetch('/api/platform/media', { method: 'DELETE', body: JSON.stringify({ keys }) }).catch(() => null) : null;
+    const d = keys.length ? (r?.ok ? await r.json() : null) : { kept: 0 };
     setDeleting(false); setConfirm(false);
     if (!d) { setNote('Non sono riuscito a eliminarle, riprova.'); return; }
-    setItems(await fetchMedia());
+    const fresh = keys.length ? await fetchMedia() : (items ?? []).filter(m => m.keys.length);
+    setItems(dev ? [...fresh, ...(items ?? []).filter(m => !m.keys.length && !sel.has(m.id))].sort((a, b) => b.at - a.at) : fresh);
     setNote(d.kept ? `Alcune foto sono usate in un immobile e sono rimaste: toglile prima dall'immobile.` : '');
     stopSelecting();
   };
   const [now] = useState(() => Date.now()); // riferimento per i periodi (Oggi, 7 giorni...)
   const sentinel = useRef<HTMLDivElement>(null);
-  useEffect(() => { fetchMedia().then(setItems); fetchProjects().then(setProjects); }, []);
+  // in sviluppo si aggiungono 4 immobili finti con le loro foto, per provare gruppi, filtri e passaggi
+  const dev = process.env.NODE_ENV === 'development';
+  useEffect(() => {
+    fetchMedia().then(m => setItems(dev ? [...m, ...FAKE_MEDIA].sort((a, b) => b.at - a.at) : m));
+    fetchProjects().then(p => setProjects(dev ? [...p, ...FAKE_PROPERTIES.slice(0, 4)] : p));
+  }, [dev]);
 
   const nameOf = (id: string | null) => {
     const p = id ? projects.find(x => x.id === id) : null;
@@ -140,10 +148,10 @@ export default function MediaView() {
               <h2 className="flex items-baseline gap-2 pb-4 font-semibold">{nameOf(k === 'nessuna' ? null : k)} <span className="text-sm font-normal text-muted">{count(k)} foto</span></h2>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {list.map(m => (
-                  <div key={m.dopo} className={`blur-in group rounded-3xl bg-white p-2 ease-smooth transition-shadow ${CARD_SHADOW} ${sel.has(m.dopo) ? '!ring-2 !ring-brand' : ''}`}>
-                    <button type="button" onClick={() => (selecting ? toggle(m.dopo) : setViewer(m))} className={`relative block aspect-[4/3] w-full overflow-hidden rounded-2xl bg-canvas ${selecting ? 'cursor-pointer' : 'cursor-zoom-in'}`}>
+                  <div key={m.id} className={`blur-in group rounded-3xl bg-white p-2 ease-smooth transition-shadow ${CARD_SHADOW} ${sel.has(m.id) ? '!ring-2 !ring-brand' : ''}`}>
+                    <button type="button" onClick={() => (selecting ? toggle(m.id) : setViewer(m))} className={`relative block aspect-[4/3] w-full overflow-hidden rounded-2xl bg-canvas ${selecting ? 'cursor-pointer' : 'cursor-zoom-in'}`}>
                       {selecting && (
-                        <span className={`absolute right-3 top-3 z-10 flex h-7 w-7 items-center justify-center rounded-full ring-2 ease-smooth transition-colors ${sel.has(m.dopo) ? 'bg-brand text-white ring-brand' : 'bg-white/80 text-transparent ring-white'}`}><Check size={15} strokeWidth={3} /></span>
+                        <span className={`absolute right-3 top-3 z-10 flex h-7 w-7 items-center justify-center rounded-full ring-2 ease-smooth transition-colors ${sel.has(m.id) ? 'bg-brand text-white ring-brand' : 'bg-white/80 text-transparent ring-white'}`}><Check size={15} strokeWidth={3} /></span>
                       )}
                       <img src={m.dopo} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
                       {m.prima && <img src={m.prima} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover opacity-0 ease-smooth transition-opacity group-hover:opacity-100" />}
@@ -169,7 +177,7 @@ export default function MediaView() {
         <div className="blur-in fixed inset-x-0 bottom-6 z-40 flex justify-center px-6">
           <div className={`flex items-center gap-2 rounded-full bg-white p-2 pl-5 text-sm ${CARD_SHADOW}`}>
             <span className="font-medium">{sel.size} selezionate</span>
-            <button type="button" onClick={() => setSel(new Set(filtered.map(m => m.dopo)))} className="h-9 rounded-full px-3 font-medium text-muted hover:bg-canvas hover:text-ink">Seleziona tutte</button>
+            <button type="button" onClick={() => setSel(new Set(filtered.map(m => m.id)))} className="h-9 rounded-full px-3 font-medium text-muted hover:bg-canvas hover:text-ink">Seleziona tutte</button>
             <button type="button" disabled={!sel.size} onClick={() => setConfirm(true)} className="flex h-9 items-center gap-1.5 rounded-full bg-rose-600 px-4 font-semibold text-white ease-smooth transition-opacity hover:bg-rose-700 disabled:opacity-40"><Trash2 size={14} /> Elimina</button>
           </div>
         </div>

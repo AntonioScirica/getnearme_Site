@@ -39,6 +39,7 @@ export async function GET(req: NextRequest) {
       for (let k: string | undefined = last, i = 0; k && i < 50; k = idx?.[k]?.from, i++) path.unshift(k)
       const prima = root.replace(/\.jpg$/, '-prima.jpg')
       return {
+        id: last,
         dopo: publicUrl(last),
         prima: all.has(prima) ? publicUrl(prima) : null,
         at: at.get(last) ?? 0,
