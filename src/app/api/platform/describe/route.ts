@@ -30,6 +30,7 @@ ${TITLE_RULES}
 - Score: da 0 a 100, quanto e' completo e convincente l'annuncio con i dati disponibili (dati mancanti, foto, chiarezza).
 - Suggerimenti: 2-5 azioni concrete per migliorare l'annuncio (es. dati mancanti da aggiungere, foto da fare).
 - Se nei dati c'e' "zona" (servizi verificati su OpenStreetMap con distanze), dedica 1-2 frasi alla zona citando SOLO quei servizi, dando priorita' a quelli in "zona_evidenza" (scelti dall'agente), con le distanze arrotondate (es. "a circa 400 metri dalla stazione Tibaldi"). Se "zona" manca o e' vuota, non descrivere servizi di zona che non conosci.
+- Se "distanze_auto" e' true: nella descrizione cita sempre i 3-5 servizi piu' vicini di "zona" con la distanza (metro, stazione, scuole, supermercati, parchi), e nei suggerimenti NON chiedere di aggiungere distanze, stazioni o servizi di zona: li aggiungiamo noi in automatico.
 
 VOCE DI TITOLO E DESCRIZIONE: scrivi come un agente immobiliare italiano esperto che pubblica l'annuncio della propria agenzia sul portale.
 - Prima persona plurale dell'agenzia ("proponiamo", "vi presentiamo", "l'immobile si compone di").

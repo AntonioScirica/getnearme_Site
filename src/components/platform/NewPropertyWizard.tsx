@@ -147,7 +147,16 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
   const generate = async () => {
     setDir(1); setStep(STEPS.length); setBusy('Scrivo titolo e descrizione...'); setError(null);
     try {
-      const res = await authFetch('/api/platform/describe', { method: 'POST', body: JSON.stringify({ property: { ...d, note_agente: note, numero_foto: photos.length, planimetria: !!plan }, nFoto: photos.length }) });
+      // distanze automatiche: se la ricerca dei servizi non e' ancora arrivata, la si fa ora
+      let zona = Array.isArray(d.zona) ? d.zona : [];
+      if (d.distanze_auto !== false && !zona.length && addr.length >= 9) {
+        setBusy('Cerco i servizi vicini...');
+        const z = await authFetch(`/api/platform/zone?address=${encodeURIComponent(addr)}`).then(r => (r.ok ? r.json() : null)).catch(() => null);
+        zona = (z?.pois ?? []).map((p: { categoria: string; nome: string; distanza: number }) => `${p.categoria}${p.nome !== p.categoria ? ` ${p.nome}` : ''} a ${p.distanza >= 1000 ? `${(p.distanza / 1000).toFixed(1)} km` : `${p.distanza} m`}`);
+        if (zona.length) setD(prev => ({ ...prev, zona }));
+        setBusy('Scrivo titolo e descrizione...');
+      }
+      const res = await authFetch('/api/platform/describe', { method: 'POST', body: JSON.stringify({ property: { ...d, zona, distanze_auto: d.distanze_auto !== false, note_agente: note, numero_foto: photos.length, planimetria: !!plan }, nFoto: photos.length }) });
       if (!res.ok) throw new Error();
       setAi(await res.json());
     } catch { setError('Generazione non riuscita. Riprova.'); } finally { setBusy(null); }
@@ -238,6 +247,14 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
                 <div className="card p-4">
                   <div className="flex items-center gap-2 text-sm font-medium">Nella zona {zoneBusy && <Loader2 size={14} className="animate-spin text-muted" />}</div>
                   <p className="mt-0.5 text-xs text-muted">Servizi verificati su OpenStreetMap. Tocca quelli da mettere in evidenza nell&apos;annuncio (massimo 5): l&apos;AI parte da quelli.</p>
+                  {/* attivo di base: le distanze dai servizi entrano da sole nella descrizione */}
+                  <label className="mt-3 flex cursor-pointer items-center justify-between gap-3 rounded-2xl bg-canvas px-3.5 py-2.5 text-sm">
+                    <span>Aggiungo io le distanze dai servizi vicini nell&apos;annuncio</span>
+                    <button type="button" role="switch" aria-checked={d.distanze_auto !== false} onClick={() => set('distanze_auto', d.distanze_auto === false)}
+                      className={`relative h-6 w-10 shrink-0 rounded-full ease-smooth transition-colors ${d.distanze_auto !== false ? 'bg-brand' : 'bg-line'}`}>
+                      <span className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow-sm ease-smooth transition-transform ${d.distanze_auto !== false ? 'translate-x-4' : ''}`} />
+                    </button>
+                  </label>
                   <div className="mt-3 flex flex-wrap gap-2">
                     {(Array.isArray(d.zona) ? d.zona : []).map(l => {
                       const ev = Array.isArray(d.zona_evidenza) ? d.zona_evidenza : [];
