@@ -44,14 +44,17 @@ export default function LibraryPicker({ onFiles, onClose }: { onFiles: (files: F
       <div onClick={e => e.stopPropagation()} className="flex h-[min(640px,85vh)] w-full max-w-3xl flex-col rounded-[32px] bg-white p-6 shadow-2xl">
         <div className="flex items-center gap-2 pb-4">
           {open && <button onClick={() => setOpen(null)} aria-label="Indietro" className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-canvas"><ArrowLeft size={18} /></button>}
-          <h2 className="min-w-0 flex-1 truncate text-lg font-semibold">{open ? open.titolo || open.nome : 'Scegli una foto'}</h2>
+          {/* titolo e descrizione in un blocco: la descrizione sta subito sotto il titolo */}
+          <div className="min-w-0 flex-1">
+            <h2 className="truncate text-lg font-semibold leading-tight">{open ? open.titolo || open.nome : 'Scegli una foto'}</h2>
+            {!open && <p className="pt-0.5 text-sm text-muted">Dalla tua vetrina: scegli l&apos;immobile e poi la foto.</p>}
+          </div>
           <label className="flex h-9 cursor-pointer items-center gap-2 rounded-full bg-canvas px-4 text-sm font-medium ease-smooth transition-colors hover:bg-line">
             <Monitor size={15} /> Dal computer
             <input type="file" accept="image/*" multiple className="hidden" onChange={e => { const f = Array.from(e.target.files ?? []); if (f.length) { onFiles(f); onClose(); } }} />
           </label>
           <button onClick={onClose} aria-label="Chiudi" className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-canvas"><X size={18} /></button>
         </div>
-        {!open && <p className="-mt-2 pb-4 text-sm text-muted">Dalla tua vetrina: scegli l&apos;immobile e poi la foto.</p>}
         {err && <p className="pb-3 text-sm text-rose-600">Non riesco a scaricare questa foto, provane un&apos;altra.</p>}
         <div className="-mx-1 min-h-0 flex-1 overflow-y-auto px-1 [scrollbar-width:thin]">
           {projects === null ? (
