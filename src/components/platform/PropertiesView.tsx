@@ -6,6 +6,7 @@ import { ArrowUpRight, Bath, BedDouble, Building2, Footprints, GraduationCap, Ho
 import type { Poi } from '@/lib/zone';
 import type { ProjectData } from '@/lib/projects';
 import { FAKE_PROPERTIES } from '@/lib/fakeProperties';
+import { addFitButton } from '@/components/ui/LeafletMap';
 import { authFetch, CARD_SHADOW, formatPrice, go } from './api';
 
 // Pagina Immobili: in alto la mappa con tutti gli immobili (pin con la foto, clic = scheda),
@@ -167,6 +168,7 @@ function PropertyMap({ projects, geo, hover, loading }: { projects: ProjectData[
   const map = useRef<LeafletMap | null>(null);
   const L = useRef<typeof import('leaflet') | null>(null);
   const markers = useRef<Record<string, Marker>>({});
+  const fit = useRef<(() => void) | null>(null); // torna alla vista con tutti gli immobili (pulsante Centra)
   const [ready, setReady] = useState(false);
   const [sel, setSel] = useState<string | null>(null);
 
@@ -196,6 +198,7 @@ function PropertyMap({ projects, geo, hover, loading }: { projects: ProjectData[
       const bar = m.getContainer().querySelector<HTMLElement>('.leaflet-control-zoom')!;
       Object.assign(bar.style, { border: '0', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 6px 20px rgba(0,0,0,.12)' });
       bar.querySelectorAll<HTMLElement>('a').forEach(a => Object.assign(a.style, { width: '36px', height: '36px', lineHeight: '36px', color: '#111', border: '0' }));
+      addFitButton(bar, () => fit.current?.());
       // Pizzico sul trackpad (arriva come rotella con ctrlKey): zoom fluido sotto le dita. Lo scorrimento
       // normale con due dita resta alla pagina, cosi' la mappa non blocca lo scroll.
       m.getContainer().addEventListener('wheel', e => {
@@ -229,6 +232,8 @@ function PropertyMap({ projects, geo, hover, loading }: { projects: ProjectData[
       // una sola vista con tutti gli immobili, il piu' vicino possibile (spazio per navbar e sfumatura)
       m.setMinZoom(0); m.setMaxZoom(19);
       m.fitBounds(b, { paddingTopLeft: [60, 110], paddingBottomRight: [60, 220], maxZoom: 16, animate: false });
+      // "Centra": torna a questa vista con tutti gli immobili
+      fit.current = () => m.flyToBounds(b, { paddingTopLeft: [60, 110], paddingBottomRight: [60, 220], maxZoom: 16, duration: 0.6 });
       // + e - muovono solo di poco attorno a quella vista
       const z = m.getZoom();
       m.setMinZoom(z - 1.5); m.setMaxZoom(Math.min(19, z + 2));

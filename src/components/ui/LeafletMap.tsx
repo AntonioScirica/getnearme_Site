@@ -7,6 +7,17 @@ import { useEffect, useRef, useState } from 'react';
 // `circle`: zona indicativa (cerchio di 250 m) invece del punto esatto.
 // Stessa mappa della pagina Immobili: + e - in basso a sinistra (angoli 16, ombra), pizzico del trackpad per lo zoom,
 // `photo`: pin con la foto tonda come nella pagina Immobili.
+// Terzo pulsante sotto + e -: rimette la mappa inquadrata come all'inizio (stesso stile dei due sopra)
+export function addFitButton(bar: HTMLElement, onFit: () => void) {
+  const a = document.createElement('a');
+  a.href = '#'; a.title = 'Centra'; a.setAttribute('role', 'button'); a.setAttribute('aria-label', 'Centra la mappa');
+  a.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-2px"><path d="M3 8V5a2 2 0 0 1 2-2h3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3"/><circle cx="12" cy="12" r="2.5"/></svg>';
+  Object.assign(a.style, { width: '36px', height: '36px', lineHeight: '36px', color: '#111', border: '0', borderTop: '1px solid #eee', display: 'block', textAlign: 'center' });
+  a.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); onFit(); });
+  a.addEventListener('dblclick', e => e.stopPropagation());
+  bar.appendChild(a);
+}
+
 export default function LeafletMap({ addr, className = '', circle, color = '#2563eb', photo, onMissing }: { addr: string; className?: string; circle?: boolean; color?: string; photo?: string; onMissing?: () => void }) {
   const el = useRef<HTMLDivElement>(null);
   const [missing, setMissing] = useState(false);
@@ -32,6 +43,7 @@ export default function LeafletMap({ addr, className = '', circle, color = '#256
       const bar = m.getContainer().querySelector<HTMLElement>('.leaflet-control-zoom')!;
       Object.assign(bar.style, { border: '0', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 6px 20px rgba(0,0,0,.12)' });
       bar.querySelectorAll<HTMLElement>('a').forEach(a => Object.assign(a.style, { width: '36px', height: '36px', lineHeight: '36px', color: '#111', border: '0' }));
+      addFitButton(bar, () => m.flyTo(ll, 15, { duration: 0.6 }));
       // pizzico sul trackpad (rotella con ctrlKey): zoom sotto le dita; lo scorrimento normale resta alla pagina
       m.getContainer().addEventListener('wheel', e => {
         if (!e.ctrlKey) return;
