@@ -175,20 +175,20 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
             <div key={m.id} className={`blur-in ease-smooth transition-opacity ${faded.has(m.id) ? 'opacity-35 hover:opacity-80' : ''}`}>
               <div className="flex justify-end">
                 {m.image
-                  ? <img src={m.image} alt="" className="max-h-56 max-w-[60%] rounded-3xl rounded-br-lg object-cover ring-1 ring-black/5" />
-                  : <div className="max-w-[75%] rounded-3xl rounded-br-lg bg-ink px-4 py-2.5 text-sm text-white">{m.region && <span className="mr-1.5 inline-flex items-center gap-1 rounded-full bg-white/15 px-2 py-0.5 text-[11px]"><SquareDashedMousePointer size={11} /> zona</span>}{m.text}</div>}
+                  ? <img src={m.image} alt="" className="max-h-56 max-w-[60%] rounded-3xl rounded-br-2xl object-cover ring-1 ring-black/5" />
+                  : <div className="max-w-[75%] rounded-3xl rounded-br-2xl bg-ink px-4 py-2.5 text-sm text-white">{m.region && <span className="mr-1.5 inline-flex items-center gap-1 rounded-full bg-white/15 px-2 py-0.5 text-[11px]"><SquareDashedMousePointer size={11} /> zona</span>}{m.text}</div>}
               </div>
               {m.image && i === msgs.length - 1 && !busy && (
-                <div className="blur-in mt-6 max-w-[85%] rounded-3xl rounded-bl-xl bg-canvas px-4 py-3 text-sm" style={{ animationDelay: '.3s' }}>
+                <div className="blur-in mt-6 max-w-[85%] rounded-3xl rounded-bl-2xl bg-canvas px-4 py-3 text-sm" style={{ animationDelay: '.3s' }}>
                   <p>{m.seen ? <>Sembra <b>{m.seen}</b>. </> : 'Foto caricata. '}Cosa vuoi cambiare? Scrivilo qui sotto o tocca un suggerimento.</p>
                 </div>
               )}
             </div>
           ) : (
             <div key={m.id} className={`blur-in flex justify-start ease-smooth transition-opacity ${faded.has(m.id) ? 'opacity-35 hover:opacity-80' : ''}`}>
-              <div className={`w-full max-w-[560px] rounded-3xl rounded-bl-xl bg-white p-2 ${CARD_SHADOW}`}>
-                {/* raggio interno = esterno - padding: se la foto tocca l'angolo della coda, 4px */}
-                <AiPhotoStage src={m.before} busy={m.busy} out={m.out} reveal={m.reveal} msg={tick % 5} fileName="home-staging.jpg" className={`aspect-[3/2] ${m.err || (m.out && !m.busy) ? '' : '!rounded-bl-[4px]'}`} />
+              <div className={`w-full max-w-[560px] rounded-3xl rounded-bl-2xl bg-white p-2 ${CARD_SHADOW}`}>
+                {/* raggio interno = esterno - padding: se la foto tocca l'angolo della coda (16px), 8px */}
+                <AiPhotoStage src={m.before} busy={m.busy} out={m.out} reveal={m.reveal} msg={tick % 5} fileName="home-staging.jpg" className={`aspect-[3/2] ${m.err || (m.out && !m.busy) ? '' : '!rounded-bl-[8px]'}`} />
                 {m.err && <p className="px-2 pt-2 text-sm text-rose-600">{m.err}</p>}
                 {m.out && !m.busy && (
                   <div className="flex items-center justify-between gap-2 px-2 pb-1 pt-2 text-xs text-muted">
@@ -281,7 +281,7 @@ function ZonePicker({ src, region, points, mask, onChange, onPick, onLoad, busy,
   const ready = (region && region.w > 0.02) || (points.length > 0 && !loading);
   return (
     <div className="blur-in flex justify-start">
-    <div className={`w-full max-w-[560px] rounded-3xl rounded-bl-xl bg-white p-2 ${CARD_SHADOW}`}>
+    <div className={`w-full max-w-[560px] rounded-3xl rounded-bl-2xl bg-white p-2 ${CARD_SHADOW}`}>
       <p className="px-2 pb-2 pt-1 text-sm">{loading ? 'Riconosco l’oggetto…' : 'Clicca un oggetto per selezionarlo, oppure trascina per disegnare una zona.'}</p>
       <div ref={box} className="relative mx-auto max-h-[calc(100vh-24rem)] w-fit cursor-crosshair touch-none select-none overflow-hidden rounded-2xl"
         onPointerDown={e => { (e.target as HTMLElement).setPointerCapture(e.pointerId); start.current = at(e); dragged.current = false; }}
