@@ -238,8 +238,8 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList | Fil
     touch();
     const id = uid();
     setMsgs(ms => [...ms, { id: uid(), role: 'user', text: 'Stesso stile, un’altra versione' }, { id, role: 'ai', before: m.before, out: null, busy: true, reveal: null, text: m.text, req: m.req }]);
-    // variante a caso: palette e materiali diversi nello stesso stile (vedi VARIANTS)
-    await run(id, { ...m.req, variant: 1 + Math.floor(Math.random() * 1000) }, m.before);
+    // variante a caso: palette e materiali diversi nello stesso stile (vedi variantText)
+    await run(id, { ...m.req, variant: 1 + Math.floor(Math.random() * 100000) }, m.before);
   };
   const run = async (id: string, req: EditRequest, before: string) => {
     const res = await authFetch('/api/platform/photo-edit', { method: 'POST', body: JSON.stringify(req) }).catch(() => null);

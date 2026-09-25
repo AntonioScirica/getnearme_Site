@@ -75,17 +75,50 @@ const FURNISH: Record<string, string> = {
 // Stessa logica di buildFinalPrompt delle edge function: planimetria > vista > testo libero
 // (con la protezione adatta alla scena) > stile preset.
 // "Altra versione": il seme da solo cambia poco (stessa richiesta = quasi la stessa foto). Ogni variante
-// sposta palette, materiali e forme dei mobili restando nello stesso stile.
-export const VARIANTS = [
-  'For this version choose different furniture pieces from a typical attempt: warm oak wood, off-white fabrics, a round coffee or bedside table, sage green accents.',
-  'For this version use a different combination: walnut wood details, light grey fabrics, rectangular shapes, navy blue accents.',
-  'For this version use a different combination: white lacquered fronts, beige linen, rounded soft shapes, terracotta accents.',
-  'For this version use a different combination: light ash wood, cream and sand tones, slim metal legs, mustard yellow accents.',
-  'For this version use a different combination: natural oak, warm white, upholstered headboard or sofa in taupe, dusty pink accents.',
-  'For this version use a different combination: dark wood accents on a light base, stone grey fabrics, black metal details, olive green accents.',
-  'For this version use a different combination: birch wood, white and pale blue, simple Scandinavian shapes, a striped rug.',
-  'For this version use a different combination: warm honey wood, ivory fabrics, cane or rattan details, deep green accents.',
-];
+// combina legno, tessuti, forme, colore d'accento e un dettaglio scelti tra quelli adatti allo stile:
+// 4-6 opzioni per voce danno centinaia di combinazioni diverse per ogni stile.
+type Pool = { wood: string[]; fabric: string[]; shape: string[]; accent: string[]; detail: string[] };
+const POOLS: Record<string, Pool> = {
+  modern: {
+    wood: ['warm oak', 'light oak', 'walnut details', 'white lacquered fronts', 'grey-washed oak', 'natural ash'],
+    fabric: ['light grey fabric', 'off-white bouclé', 'beige linen', 'warm taupe fabric', 'pale grey velvet'],
+    shape: ['clean rectangular shapes', 'soft rounded shapes', 'slim metal legs', 'low wide proportions'],
+    accent: ['sage green', 'navy blue', 'mustard yellow', 'terracotta', 'dusty pink', 'olive green'],
+    detail: ['a round coffee table', 'a striped rug', 'a globe pendant lamp', 'linen curtains', 'a large plant in a ceramic pot'],
+  },
+  nordic: {
+    wood: ['birch', 'light oak', 'pale ash', 'whitewashed pine', 'natural beech'],
+    fabric: ['white linen', 'soft grey wool', 'cream bouclé', 'light beige cotton', 'pale blue fabric'],
+    shape: ['simple Scandinavian shapes', 'tapered wooden legs', 'rounded edges', 'slatted wood details'],
+    accent: ['pale blue', 'sage green', 'warm grey', 'soft yellow', 'dusty rose'],
+    detail: ['a wool rug with a subtle pattern', 'a white pendant lamp', 'a sheepskin throw', 'a wooden wall shelf', 'a paper lamp', 'linen curtains'],
+  },
+  industrial: {
+    wood: ['smoked oak', 'walnut', 'dark oak accents', 'concrete-look surfaces', 'light stone surfaces'],
+    fabric: ['stone grey fabric', 'charcoal fabric', 'warm beige', 'cognac leather', 'ivory bouclé'],
+    shape: ['black metal details', 'strong rectangular shapes', 'open oak shelves with warm LED light', 'slim brushed steel legs'],
+    accent: ['olive green', 'deep blue', 'rust orange', 'warm white', 'bronze'],
+    detail: ['a large grey rug', 'a black arc floor lamp', 'a low media unit', 'sheer white curtains', 'a round travertine side table', 'a tall plant'],
+  },
+  boho: {
+    wood: ['honey oak', 'light teak', 'natural pine', 'bamboo', 'rattan and cane'],
+    fabric: ['ivory cotton', 'sand linen', 'oatmeal fabric', 'warm cream bouclé', 'light terracotta cotton'],
+    shape: ['soft organic shapes', 'woven cane details', 'low rounded furniture', 'natural fibre textures'],
+    accent: ['terracotta', 'deep green', 'ochre', 'sage', 'rust', 'warm pink'],
+    detail: ['a jute rug', 'a woven pendant lamp', 'linen curtains', 'a large plant in a basket', 'a striped cotton throw'],
+  },
+};
+const variantPool = (style?: string | null) => POOLS[style && POOLS[style] ? style : 'modern'];
+export const variantCount = (style?: string | null) => { const p = variantPool(style); return p.wood.length * p.fabric.length * p.shape.length * p.accent.length * p.detail.length; };
+// n -> combinazione (numero in base mista: ogni voce ha il suo indice)
+export function variantText(style: string | null | undefined, n: number): string {
+  const p = variantPool(style);
+  let k = Math.abs(Math.floor(n));
+  const pick = (a: string[]) => { const x = a[k % a.length]; k = Math.floor(k / a.length); return x; };
+  const wood = pick(p.wood), fabric = pick(p.fabric), shape = pick(p.shape), accent = pick(p.accent), detail = pick(p.detail);
+  return `For this version use a different combination in the same style: ${wood}, ${fabric}, ${shape}, ${accent} accents and ${detail}.`;
+}
+
 
 // Cosa mettere per tipo di stanza negli stili: senza, in una cucina aperta arredava solo i pensili e lasciava vuoto il resto
 const ROOM_FURNISH: Record<string, string> = {
