@@ -230,12 +230,13 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList | Fil
                 <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-brand/10 text-brand"><ImagePlus size={30} /></span>
                 <span className="text-lg font-semibold">Carica la foto della stanza</span>
                 <span className="text-sm text-muted">Trascinala qui oppure clicca il pulsante. Va bene anche una facciata, un giardino o una planimetria: la riconosco da solo.</span>
+                {/* il campo file deve stare prima del pulsante vetrina: la label attiva il primo controllo che contiene, e un <button> lo e' */}
+                {picker}
                 <span className="mt-1 flex flex-wrap items-center justify-center gap-2">
                   <span className="flex h-11 items-center gap-2 rounded-full bg-canvas px-6 text-sm font-semibold text-ink ease-smooth transition-colors hover:bg-line"><Monitor size={16} /> Dal computer</span>
                   {/* dentro la label: senza preventDefault aprirebbe anche la scelta file */}
                   <button type="button" onClick={e => { e.preventDefault(); setLibrary(true); }} className="flex h-11 items-center gap-2 rounded-full bg-brand px-6 text-sm font-semibold text-white ease-smooth transition-transform hover:scale-[1.03]"><LayoutGrid size={16} /> Dalla tua vetrina</button>
                 </span>
-                {picker}
               </label>
             </div>
           )}

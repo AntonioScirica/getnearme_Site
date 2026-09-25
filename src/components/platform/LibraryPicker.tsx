@@ -8,6 +8,7 @@ import { FAKE_PROPERTIES } from '@/lib/fakeProperties';
 
 // Scelta della foto per la chat: dalla vetrina (gli immobili dell'agente, poi le foto di quello scelto) o dal computer.
 // Finestra ad altezza fissa: passando da immobili a foto non cambia misura.
+// la prima foto dell'annuncio e' in taglia grande: la copertina salvata puo' essere una miniatura
 const photosOf = (p: ProjectData) => {
   const d = (p.import_data ?? {}) as { photos?: unknown };
   const list = Array.isArray(d.photos) ? d.photos.filter((x): x is string => typeof x === 'string') : [];
@@ -60,7 +61,7 @@ export default function LibraryPicker({ onFiles, onClose }: { onFiles: (files: F
               <div key="case" className="blur-in grid grid-cols-2 gap-3 sm:grid-cols-3">
                 {list.map(p => (
                   <button key={p.id} onClick={() => setOpen(p)} className="group rounded-2xl p-2 text-left ease-smooth transition-colors hover:bg-canvas">
-                    <img src={p.thumb || p.cover} alt="" className="aspect-[4/3] w-full rounded-lg object-cover" />
+                    <img src={photosOf(p)[0]} alt="" className="aspect-[4/3] w-full rounded-lg object-cover" />
                     <p className="truncate pt-2 text-sm font-medium">{p.titolo || p.nome}</p>
                     <p className="truncate text-xs text-muted">{p.addr} · {photosOf(p).length} foto</p>
                   </button>
