@@ -4,7 +4,7 @@ import { useState, type FormEvent } from 'react';
 import { ArrowDown, ArrowRight, ArrowUpRight, Building, Building2, ChevronDown, Home, Store, TreePine, Warehouse, Check, ChevronLeft, ChevronRight, Handshake, Heart, Leaf, Mail, MapPin, Menu, Phone, Quote, Search, ShieldCheck, Sparkles, Star, Users, X } from 'lucide-react';
 import { zoneSlug, type SiteConfig, type SiteProperty } from '@/lib/siteTemplates';
 import { MapBlock, TopBar } from './extras';
-import { Btn, Container, contacts, Eyebrow, Facts, FavButton, H, Photo, price, SiteLink, typeOf, useSite, useT, zoneOf, pathOf, type Filters, type Page } from './ui';
+import { Btn, Container, contacts, Eyebrow, Facts, FavButton, H, Photo, price, SiteLink, typeOf, useSite, useT, zoneOf, pathOf, type Filters, type Page, Select } from './ui';
 export type { Filters };
 
 // Sezioni dei siti vetrina. Ogni sezione ha piu' varianti: il tema del template sceglie quale usare,
@@ -141,10 +141,10 @@ export function SearchForm({ layout = 'bar' }: { layout?: 'bar' | 'stack' | 'adv
         <span className="flex items-center gap-2"><MapPin size={15} className="shrink-0 text-[var(--c)]" /><input name="q" value={f.q ?? ''} onChange={e => setF({ ...f, q: e.target.value })} placeholder="Città, quartiere, via" className={input} /></span>
       </label>
       <label className="block min-w-0 flex-1"><span className={label}>Tipologia</span>
-        <select name="tipo" value={f.tipo ?? ''} onChange={e => setF({ ...f, tipo: e.target.value })} className={`${input} cursor-pointer`}><option value="">Tutte</option>{tipi.map(x => <option key={x}>{x}</option>)}</select>
+        <Select name="tipo" value={f.tipo ?? ''} onChange={e => setF({ ...f, tipo: e.target.value })} className={`${input} cursor-pointer`}><option value="">Tutte</option>{tipi.map(x => <option key={x}>{x}</option>)}</Select>
       </label>
       <label className="block min-w-0 flex-1"><span className={label}>Prezzo massimo</span>
-        <select name="max" value={f.max ?? ''} onChange={e => setF({ ...f, max: Number(e.target.value) || undefined })} className={`${input} cursor-pointer`}><option value="">Qualsiasi</option>{PRICES.map(v => <option key={v} value={v}>{price(v)}</option>)}</select>
+        <Select name="max" value={f.max ?? ''} onChange={e => setF({ ...f, max: Number(e.target.value) || undefined })} className={`${input} cursor-pointer`}><option value="">Qualsiasi</option>{PRICES.map(v => <option key={v} value={v}>{price(v)}</option>)}</Select>
       </label>
     </>
   );
@@ -154,13 +154,13 @@ export function SearchForm({ layout = 'bar' }: { layout?: 'bar' | 'stack' | 'adv
     return (
       <form action={preview ? undefined : pathOf(base, { page: 'immobili' })} method="get" onSubmit={submit} className="grid gap-3 md:grid-cols-[1fr_1fr_1fr_1fr_160px]">
         <input name="rif" value={f.rif ?? ''} onChange={e => setF({ ...f, rif: e.target.value })} placeholder="Codice immobile" className={`${box} hidden md:block`} />
-        <select name="tipo" value={f.tipo ?? ''} onChange={e => setF({ ...f, tipo: e.target.value })} className={box}><option value="">Tutte le tipologie</option>{tipi.map(x => <option key={x}>{x}</option>)}</select>
-        <select name="q" value={f.q ?? ''} onChange={e => setF({ ...f, q: e.target.value })} className={box}><option value="">Tutte le città</option>{cities.map(x => <option key={x}>{x}</option>)}</select>
-        <select name="max" value={f.max ?? ''} onChange={e => setF({ ...f, max: Number(e.target.value) || undefined })} className={box}><option value="">Prezzo massimo</option>{PRICES.map(v => <option key={v} value={v}>{price(v)}</option>)}</select>
+        <Select name="tipo" value={f.tipo ?? ''} onChange={e => setF({ ...f, tipo: e.target.value })} className={box}><option value="">Tutte le tipologie</option>{tipi.map(x => <option key={x}>{x}</option>)}</Select>
+        <Select name="q" value={f.q ?? ''} onChange={e => setF({ ...f, q: e.target.value })} className={box}><option value="">Tutte le città</option>{cities.map(x => <option key={x}>{x}</option>)}</Select>
+        <Select name="max" value={f.max ?? ''} onChange={e => setF({ ...f, max: Number(e.target.value) || undefined })} className={box}><option value="">Prezzo massimo</option>{PRICES.map(v => <option key={v} value={v}>{price(v)}</option>)}</Select>
         <button type="submit" className="row-span-2 flex h-12 items-center justify-center gap-2 rounded-[calc(var(--r)*0.6)] bg-[var(--c)] text-sm font-bold uppercase tracking-wider text-[var(--on-c,#fff)] transition hover:brightness-105 md:h-full"><Search size={16} /> {tx('search.button')}</button>
-        <select name="camere" value={f.camere ?? ''} onChange={e => setF({ ...f, camere: Number(e.target.value) || undefined })} className={`${box} hidden md:block`}><option value="">N. camere</option>{[1, 2, 3, 4].map(n => <option key={n} value={n}>{n}+ camere</option>)}</select>
-        <select name="bagni" value={f.bagni ?? ''} onChange={e => setF({ ...f, bagni: Number(e.target.value) || undefined })} className={`${box} hidden md:block`}><option value="">N. bagni</option>{[1, 2, 3].map(n => <option key={n} value={n}>{n}+ bagni</option>)}</select>
-        <select name="contratto" value={f.contratto ?? ''} onChange={e => setF({ ...f, contratto: e.target.value })} className={`${box} hidden md:block`}><option value="">Vendita e affitto</option><option value="vendita">Vendita</option><option value="affitto">Affitto</option></select>
+        <Select name="camere" value={f.camere ?? ''} onChange={e => setF({ ...f, camere: Number(e.target.value) || undefined })} className={`${box} hidden md:block`}><option value="">N. camere</option>{[1, 2, 3, 4].map(n => <option key={n} value={n}>{n}+ camere</option>)}</Select>
+        <Select name="bagni" value={f.bagni ?? ''} onChange={e => setF({ ...f, bagni: Number(e.target.value) || undefined })} className={`${box} hidden md:block`}><option value="">N. bagni</option>{[1, 2, 3].map(n => <option key={n} value={n}>{n}+ bagni</option>)}</Select>
+        <Select name="contratto" value={f.contratto ?? ''} onChange={e => setF({ ...f, contratto: e.target.value })} className={`${box} hidden md:block`}><option value="">Vendita e affitto</option><option value="vendita">Vendita</option><option value="affitto">Affitto</option></Select>
         <span />
       </form>
     );
@@ -193,8 +193,8 @@ export function SearchForm({ layout = 'bar' }: { layout?: 'bar' | 'stack' | 'adv
         <button type="button" onClick={() => setMore(v => !v)} className="inline-flex items-center gap-1 text-[13px] font-semibold opacity-80 hover:opacity-100">{tx('search.more')} <ChevronDown size={14} className={`transition-transform ${more ? 'rotate-180' : ''}`} /></button>
         {more && (
           <div className="mt-3 grid gap-2 sm:grid-cols-3">
-            <select name="camere" value={f.camere ?? ''} onChange={e => setF({ ...f, camere: Number(e.target.value) || undefined })} className="h-11 rounded-[calc(var(--r)*0.6)] bg-[var(--surface)] px-3 text-sm text-[var(--fg)] outline-none ring-1 ring-[var(--line)]"><option value="">Camere</option>{[1, 2, 3, 4].map(n => <option key={n} value={n}>{n}+ camere</option>)}</select>
-            <select name="bagni" value={f.bagni ?? ''} onChange={e => setF({ ...f, bagni: Number(e.target.value) || undefined })} className="h-11 rounded-[calc(var(--r)*0.6)] bg-[var(--surface)] px-3 text-sm text-[var(--fg)] outline-none ring-1 ring-[var(--line)]"><option value="">Bagni</option>{[1, 2, 3].map(n => <option key={n} value={n}>{n}+ bagni</option>)}</select>
+            <Select name="camere" value={f.camere ?? ''} onChange={e => setF({ ...f, camere: Number(e.target.value) || undefined })} className="h-11 rounded-[calc(var(--r)*0.6)] bg-[var(--surface)] px-3 text-sm text-[var(--fg)] outline-none ring-1 ring-[var(--line)]"><option value="">Camere</option>{[1, 2, 3, 4].map(n => <option key={n} value={n}>{n}+ camere</option>)}</Select>
+            <Select name="bagni" value={f.bagni ?? ''} onChange={e => setF({ ...f, bagni: Number(e.target.value) || undefined })} className="h-11 rounded-[calc(var(--r)*0.6)] bg-[var(--surface)] px-3 text-sm text-[var(--fg)] outline-none ring-1 ring-[var(--line)]"><option value="">Bagni</option>{[1, 2, 3].map(n => <option key={n} value={n}>{n}+ bagni</option>)}</Select>
             <input name="rif" value={f.rif ?? ''} onChange={e => setF({ ...f, rif: e.target.value })} placeholder="Codice immobile" className="h-11 rounded-[calc(var(--r)*0.6)] bg-[var(--surface)] px-3 text-sm text-[var(--fg)] outline-none ring-1 ring-[var(--line)] placeholder:text-[var(--muted)]" />
           </div>
         )}
@@ -910,7 +910,7 @@ export function Footer() {
   return (
     <footer className={bg}>
       {t.footer === 'light' && <Container className="pt-16"><div className="font-[family-name:var(--font-serif-accent)] text-[clamp(3rem,10vw,9rem)] leading-none tracking-tight">{name}</div></Container>}
-      <Container className="grid gap-10 py-16 sm:grid-cols-2 lg:grid-cols-[1.3fr_1fr_1.2fr_1fr]">
+      <Container className="grid gap-10 py-16 sm:grid-cols-2 lg:grid-cols-[1.3fr_1fr_1fr]">
         <div>
           <div className="text-lg font-bold">{name}</div>
           <p className={`mt-3 max-w-xs text-sm leading-relaxed ${mut}`}>{cfg.agentRole}{cfg.city ? ` a ${cfg.city}` : ''}. {cfg.heroSubtitle}</p>
@@ -921,14 +921,6 @@ export function Footer() {
           </div>
         </div>
         <div><div className={head}>Pagine</div><div className={`mt-4 space-y-2.5 text-sm ${mut}`}>{navLinks(cfg).map(([l, to]) => <SiteLink key={l} to={to} className="block hover:underline">{l}</SiteLink>)}</div></div>
-        <div><div className={head}>Ultimi immobili</div><div className="mt-4 space-y-3">
-          {properties.slice(0, 3).map(p => (
-            <SiteLink key={p.id} to={{ page: 'immobile', id: p.id }} className="flex items-center gap-3">
-              <Photo src={p.cover} className="h-12 w-16 shrink-0 rounded-[calc(var(--r)*0.5)]" />
-              <span className="min-w-0"><span className="block truncate text-sm font-medium">{p.titolo}</span>{cfg.showPrices && <span className={`text-xs ${mut}`}>{price(p.prezzo)}</span>}</span>
-            </SiteLink>
-          ))}
-        </div></div>
         <div><div className={head}>Link utili</div><div className={`mt-4 space-y-2.5 text-sm ${mut}`}>
           {cfg.zones.map(z => <SiteLink key={z.name} to={{ page: 'zona', slug: zoneSlug(z.name) }} className="block hover:underline">Casa a {z.name}</SiteLink>)}
           <SiteLink to={{ page: 'immobili', f: { contratto: 'vendita' } }} className="block hover:underline">Immobili in vendita</SiteLink>

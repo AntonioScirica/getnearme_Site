@@ -4,6 +4,9 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { ArrowLeft, Check, ChevronDown, Copy, Eye, EyeOff, ExternalLink, Globe, ImagePlus, Loader2, Pencil, Plus, RotateCcw, Trash2 } from 'lucide-react';
 import type { ProjectData } from '@/lib/projects';
 import Tooltip from '@/components/ui/Tooltip';
+import { createPortal } from 'react-dom';
+import ProgressiveBlur from '@/components/ProgressiveBlur';
+import Dropdown from '@/components/ui/Dropdown';
 import { FAKE_PROPERTIES } from '@/lib/fakeProperties';
 import { FIELD_LABELS, PAGE_SECTIONS, TEMPLATES, TEXTS, zoneSlug, type PageId, type SiteConfig, type SiteProperty, type TemplateId } from '@/lib/siteTemplates';
 import { SitePage, SiteThumb } from '@/components/site/pages';
@@ -81,26 +84,35 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
           </div>
         )}
       </div>
-      <div className="flex flex-wrap items-center justify-between gap-2 pt-6">
-          <div className="flex h-10 items-center rounded-full bg-white p-1 ring-1 ring-black/10">
-            {([['sito', 'Aspetto del sito'], ['immobili', 'Immobili']] as const).map(([id, l]) => (
-              <button key={id} onClick={() => setTab(id)} className={`flex h-8 items-center rounded-full px-4 text-[13px] font-medium ease-smooth transition-colors ${tab === id ? 'bg-ink text-white' : 'text-muted hover:text-ink'}`}>{l}</button>
-            ))}
-          </div>
-          {tab === 'sito' && editing && (
+      {/* dentro l'editor di un modello le schede spariscono: si torna con "Tutti i modelli" */}
+      {!(tab === 'sito' && editing) && (
+        <div className="flex h-10 w-fit items-center rounded-full bg-white p-1 ring-1 ring-black/10 mt-6">
+          {([['sito', 'Aspetto del sito'], ['immobili', 'Immobili']] as const).map(([id, l]) => (
+            <button key={id} onClick={() => setTab(id)} className={`flex h-8 items-center rounded-full px-4 text-[13px] font-medium ease-smooth transition-colors ${tab === id ? 'bg-ink text-white' : 'text-muted hover:text-ink'}`}>{l}</button>
+          ))}
+        </div>
+      )}
+      {/* Pubblica: barra fissa in basso con sfumatura progressiva, sempre a portata mentre modifichi */}
+      {tab === 'sito' && editing && createPortal(
+        <div className="blur-in pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center px-6 pb-6 pt-16">
+          <div className="absolute inset-0"><ProgressiveBlur side="bottom" fade={24} /></div>
+          <div className={`pointer-events-auto relative flex items-center gap-3 rounded-full bg-white p-2 pl-5 text-sm ${CARD_SHADOW}`}>
+            <span className={dirty ? 'font-medium' : 'text-muted'}>{saved === 'ok' ? 'Sito aggiornato' : dirty ? 'Modifiche non pubblicate' : 'Nessuna modifica da pubblicare'}</span>
             <button onClick={save} disabled={!dirty || saved === 'saving'}
               className="flex h-10 items-center gap-2 rounded-full bg-brand px-5 text-sm font-semibold text-white ease-smooth transition-[background-color,opacity] hover:bg-brand/90 disabled:opacity-40">
               {saved === 'saving' ? <Loader2 size={15} className="animate-spin" /> : saved === 'ok' ? <Check size={15} /> : null}
               {saved === 'ok' ? 'Pubblicato' : 'Pubblica modifiche'}
             </button>
-          )}
-        </div>
+          </div>
+        </div>,
+        document.body,
+      )}
 
       {tab === 'immobili' ? <PropertiesTab projects={projects} onChange={onChange} /> : !editing ? (
         <Gallery cfg={site.config} name={site.name || 'La tua agenzia'} logo={site.logo} props={showcase}
           onPick={id => { if (id !== cfg.template) set({ template: id, primary: TEMPLATES.find(t => t.id === id)!.primary, font: TEMPLATES.find(t => t.id === id)!.font }); setPage({ page: 'home' }); setEditing(id); }} />
       ) : (
-        <div className="mt-6">
+        <div className="mt-6 pb-24">
           <div className="blur-in mb-5 flex flex-wrap items-center gap-3" style={{ animationDelay: '.2s' }}>
             <button onClick={() => { if (!dirty || confirm('Hai modifiche non pubblicate. Tornare ai modelli e scartarle?')) { morphFrom(document.querySelector('[data-morph="preview"]'), `tpl-${cfg.template}`); setCfg(site.config); setEditing(null); } }}
               className="flex h-10 items-center gap-2 rounded-full bg-white px-4 text-sm font-medium ring-1 ring-black/10 ease-smooth transition-colors hover:bg-canvas"><ArrowLeft size={15} /> Tutti i modelli</button>
@@ -128,7 +140,14 @@ function SideEditor({ cfg, set, page, onPage, firstId, covers, selected, setSele
   const [tab, setTab] = useState<'pagina' | 'generale'>('pagina');
   const refs = useRef<Record<string, HTMLDivElement | null>>({});
   const scroller = useRef<HTMLDivElement>(null);
-  const secs = PAGE_SECTIONS[page.page as PageId] ?? [];
+  // sezioni nell'ordine in cui compaiono nell'anteprima (ogni modello le dispone a modo suo)
+  const [order, setOrder] = useState<string[]>([]);
+  useEffect(() => {
+    const t = setTimeout(() => setOrder([...document.querySelectorAll('[data-morph="preview"] [data-sec]')].map(e => e.getAttribute('data-sec')!)), 150);
+    return () => clearTimeout(t);
+  }, [page, cfg.template]); // non su "nascondi": le sezioni nascoste non sono nell'anteprima e finirebbero in fondo
+  const rank = (id: string) => { const i = order.indexOf(id); return i < 0 ? 999 : i; };
+  const secs = [...(PAGE_SECTIONS[page.page as PageId] ?? [])].sort((a, b) => rank(a.id) - rank(b.id));
   // clic su una sezione nell'anteprima: apri la scheda Pagina e porta la sezione in vista
   useEffect(() => {
     if (!selected) return;
@@ -152,17 +171,16 @@ function SideEditor({ cfg, set, page, onPage, firstId, covers, selected, setSele
           <>
             <label className="mb-3 block">
               <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-muted">Pagina che stai modificando</span>
-              <select value={page.page} onChange={e => onPage(pageOf(e.target.value as PageId, firstId, cfg.zones[0] ? zoneSlug(cfg.zones[0].name) : ''))}
-                className="h-10 w-full rounded-2xl bg-canvas px-3 text-sm font-medium outline-none">
-                {PAGES.map(([id, l]) => <option key={id} value={id} disabled={(id === 'immobile' && !firstId) || (id === 'zona' && !cfg.zones.length)}>{l}</option>)}
-              </select>
+              <Dropdown value={page.page as PageId} className="h-10 w-full justify-between bg-canvas px-4 text-sm font-medium"
+                options={PAGES.filter(([id]) => !((id === 'immobile' && !firstId) || (id === 'zona' && !cfg.zones.length))).map(([id, l]) => ({ value: id, label: l }))}
+                onChange={v => onPage(pageOf(v, firstId, cfg.zones[0] ? zoneSlug(cfg.zones[0].name) : ''))} />
             </label>
             <p className="mb-4 text-xs text-muted">Clicca un elemento nell’anteprima per modificarlo, oppure apri una sezione qui sotto.</p>
             <div className="space-y-2">
               {secs.map(sec => {
                 const open = selected === sec.id, off = hidden.has(sec.id);
                 return (
-                  <div key={sec.id} ref={el => { refs.current[sec.id] = el; }} className={`scroll-mt-2 rounded-2xl ring-1 ease-smooth transition-colors ${open ? 'bg-canvas ring-brand/40' : 'ring-black/10'}`}>
+                  <div key={sec.id} ref={el => { refs.current[sec.id] = el; }} className={`scroll-mt-2 rounded-2xl ring-1 ease-smooth transition-colors ${open ? 'ring-brand/40' : 'ring-black/10'}`}>
                     <div className="flex items-center gap-2 p-3">
                       <button onClick={() => setSelected(open ? null : sec.id)} className={`flex min-w-0 flex-1 items-center gap-2 text-left text-sm font-semibold ${off ? 'text-muted line-through' : ''}`}>
                         <ChevronDown size={15} className={`shrink-0 ease-smooth transition-transform ${open ? '' : '-rotate-90'}`} />{sec.label}
@@ -207,7 +225,7 @@ function SideEditor({ cfg, set, page, onPage, firstId, covers, selected, setSele
 
 // Testo del sito: vuoto = testo di partenza (mostrato in grigio), con ripristino
 function TextField({ label, value, placeholder, long, onChange }: { label: string; value: string; placeholder: string; long?: boolean; onChange: (v: string) => void }) {
-  const cls = 'w-full rounded-2xl bg-white px-3.5 py-2.5 text-sm outline-none ring-1 ring-black/5 ease-smooth transition-shadow placeholder:text-ink/40 focus:ring-ink/20';
+  const cls = 'w-full rounded-2xl bg-canvas px-3.5 py-2.5 text-sm outline-none ease-smooth transition-shadow placeholder:text-ink/40 focus:bg-white focus:ring-1 focus:ring-ink/15';
   return (
     <label className="block">
       <span className="mb-1 flex items-center justify-between text-xs font-medium text-ink/70">{label}{value && <button type="button" onClick={() => onChange('')} className="flex items-center gap-1 text-[11px] text-muted hover:text-ink"><RotateCcw size={11} /> Originale</button>}</span>
@@ -222,8 +240,12 @@ function CfgField({ k, cfg, set, covers }: { k: keyof SiteConfig; cfg: SiteConfi
   const label = FIELD_LABELS[k] ?? k;
   const v = cfg[k];
   if (typeof v === 'boolean') return (
-    <label className="flex cursor-pointer items-center justify-between py-1 text-sm">{label}
-      <input type="checkbox" checked={v} onChange={e => set({ [k]: e.target.checked })} className="h-5 w-9 cursor-pointer appearance-none rounded-full bg-line transition-colors before:block before:h-4 before:w-4 before:translate-x-0.5 before:rounded-full before:bg-white before:shadow before:transition-transform checked:bg-brand checked:before:translate-x-[18px]" />
+    <label className="flex cursor-pointer items-center justify-between gap-3 py-1 text-sm">{label}
+      {/* interruttore: pista 40x24, pallino 20 centrato (2px di margine), scorre di 16 */}
+      <button type="button" role="switch" aria-checked={v} onClick={() => set({ [k]: !v })}
+        className={`relative h-6 w-10 shrink-0 rounded-full ease-smooth transition-colors ${v ? 'bg-brand' : 'bg-line'}`}>
+        <span className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow-sm ease-smooth transition-transform ${v ? 'translate-x-4' : ''}`} />
+      </button>
     </label>
   );
   if (k === 'heroImage') return <Pics label={label} covers={covers} value={cfg.heroImage} onChange={x => set({ heroImage: x })} />;

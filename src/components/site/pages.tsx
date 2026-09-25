@@ -6,7 +6,7 @@ import { zoneSlug, type SiteProperty } from '@/lib/siteTemplates';
 
 import { ContactForm, DetailsTable, FeatureList, MapBlock, RichText, ServicesGrid, ShareBar, WhatsAppFloat } from './extras';
 import { AboutBlock, CtaBand, Featured, Footer, Header, Hero, Intro, isRent, PropertyCard, PropertyRow, Reviews, SearchForm, SectionHead, statsOf, tipiOf, Zones, type Filters } from './sections';
-import { Btn, Container, contacts, Eyebrow, Facts, FavButton, H, Photo, price, Sec, SiteLink, SiteRoot, typeOf, useFavs, useSite, useT, type Page, type SiteCtx } from './ui';
+import { Btn, Container, contacts, Eyebrow, Facts, FavButton, H, Photo, price, Sec, SiteLink, SiteRoot, typeOf, useFavs, useSite, useT, type Page, type SiteCtx, Select } from './ui';
 
 // Le 4 pagine del sito vetrina. Struttura comune, ma ogni template sceglie le sue varianti:
 // filtri laterali o in alto, card o righe, galleria a mosaico, slider o a tutto schermo, profilo diviso, con copertina o centrato.
@@ -75,13 +75,13 @@ function ListingsPage({ initial }: { initial?: Filters }) {
     </div>
   );
   const zona = <div className="relative"><MapPin size={15} className="absolute left-3 top-3.5 text-[var(--muted)]" /><input value={f.q ?? ''} onChange={e => set({ q: e.target.value })} placeholder="Città, quartiere, via" className={`${field} pl-9`} /></div>;
-  const tipo = <select value={f.tipo ?? ''} onChange={e => set({ tipo: e.target.value || undefined })} className={field}><option value="">Tutte le tipologie</option>{tipi.map(x => <option key={x}>{x}</option>)}</select>;
+  const tipo = <Select value={f.tipo ?? ''} onChange={e => set({ tipo: e.target.value || undefined })} className={field}><option value="">Tutte le tipologie</option>{tipi.map(x => <option key={x}>{x}</option>)}</Select>;
   const prezzo = <div className="flex gap-2"><input type="number" inputMode="numeric" placeholder="Min €" value={f.min ?? ''} onChange={e => set({ min: Number(e.target.value) || undefined })} className={field} /><input type="number" inputMode="numeric" placeholder="Max €" value={f.max ?? ''} onChange={e => set({ max: Number(e.target.value) || undefined })} className={field} /></div>;
   const counts = (k: 'camere' | 'bagni') => <div className="flex gap-2">{[0, 1, 2, 3, 4].map(n => <button key={n} onClick={() => set({ [k]: n || undefined })} className={chip((f[k] ?? 0) === n)}>{n ? `${n}+` : 'Tutti'}</button>)}</div>;
   const sort = (
-    <select value={f.sort ?? ''} onChange={e => set({ sort: e.target.value || undefined })} className="h-11 rounded-[calc(var(--r)*0.6)] border border-[var(--line)] bg-[var(--surface)] px-3 text-sm outline-none">
+    <Select value={f.sort ?? ''} onChange={e => set({ sort: e.target.value || undefined })} className="h-11 rounded-[calc(var(--r)*0.6)] border border-[var(--line)] bg-[var(--surface)] px-3 text-sm outline-none">
       <option value="">Più recenti</option><option value="asc">Prezzo crescente</option><option value="desc">Prezzo decrescente</option><option value="mq">Più grandi</option>
-    </select>
+    </Select>
   );
   const sidebar = (
     <div className="space-y-6">
@@ -122,8 +122,8 @@ function ListingsPage({ initial }: { initial?: Filters }) {
           <Container className={t.header === 'over' ? '-mt-8 relative z-10' : 'mt-4'}>
             <div className="flex flex-col gap-3 rounded-[var(--r)] bg-[var(--surface)] p-3 shadow-[0_20px_60px_-25px_rgba(0,0,0,.25)] ring-1 ring-[var(--line)] lg:flex-row lg:items-center">
               <div className="flex-[1.4]">{zona}</div><div className="flex-1">{tipo}</div>
-              <div className="flex-1"><select value={f.max ?? ''} onChange={e => set({ max: Number(e.target.value) || undefined })} className={field}><option value="">Qualsiasi prezzo</option>{[150000, 250000, 400000, 600000, 1000000].map(v => <option key={v} value={v}>Fino a {price(v)}</option>)}</select></div>
-              <div className="flex-1"><select value={f.camere ?? ''} onChange={e => set({ camere: Number(e.target.value) || undefined })} className={field}><option value="">Camere</option>{[1, 2, 3, 4].map(n => <option key={n} value={n}>{n}+ camere</option>)}</select></div>
+              <div className="flex-1"><Select value={f.max ?? ''} onChange={e => set({ max: Number(e.target.value) || undefined })} className={field}><option value="">Qualsiasi prezzo</option>{[150000, 250000, 400000, 600000, 1000000].map(v => <option key={v} value={v}>Fino a {price(v)}</option>)}</Select></div>
+              <div className="flex-1"><Select value={f.camere ?? ''} onChange={e => set({ camere: Number(e.target.value) || undefined })} className={field}><option value="">Camere</option>{[1, 2, 3, 4].map(n => <option key={n} value={n}>{n}+ camere</option>)}</Select></div>
               <button className="flex h-11 shrink-0 items-center justify-center gap-2 rounded-[calc(var(--r)*0.6)] bg-[var(--c)] px-5 text-sm font-semibold text-white"><Search size={15} /> Cerca</button>
             </div>
             <div className="mt-6 flex items-center justify-between gap-3"><div className="w-72">{contratto}</div>{sort}</div>

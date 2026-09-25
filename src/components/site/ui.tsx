@@ -1,7 +1,8 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, type CSSProperties, type ReactNode } from 'react';
-import { Bath, BedDouble, DoorOpen, Heart, Maximize2 } from 'lucide-react';
+import { Children, createContext, isValidElement, useContext, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactElement, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
+import { Bath, BedDouble, Check, ChevronDown, DoorOpen, Heart, Maximize2 } from 'lucide-react';
 import { PAGE_SECTIONS, TEXTS, type SiteConfig, type SiteProperty, type TemplateId } from '@/lib/siteTemplates';
 
 // Base dei siti vetrina: tema per template, contesto del sito, link (veri sul sito, interni
@@ -78,7 +79,7 @@ export function SiteRoot({ ctx, children }: { ctx: SiteCtx; children: ReactNode 
     '--c': ctx.cfg.primary, '--bg': t.bg, '--fg': t.fg, '--muted': t.muted, '--line': t.line, '--surface': t.surface, '--soft': t.soft, '--ink': t.ink, '--r': `${t.radius}px`, '--rc': `${Math.min(10, Math.round(t.radius / 2))}px`,
     background: t.bg, color: t.fg,
   } as CSSProperties;
-  return <Ctx.Provider value={ctx}><div style={style} className="min-h-screen font-body antialiased selection:bg-[var(--c)] selection:text-white">{children}</div></Ctx.Provider>;
+  return <Ctx.Provider value={ctx}><div data-site-root style={style} className="relative min-h-screen font-body antialiased selection:bg-[var(--c)] selection:text-white">{children}</div></Ctx.Provider>;
 }
 
 export const pathOf = (base: string, p: Page): string =>
@@ -212,5 +213,63 @@ export function Sec({ id, children }: { id: string; children: ReactNode }) {
       <span className={`pointer-events-none absolute left-3 top-3 z-[60] rounded-md bg-[#3b82f6] px-2.5 py-1 font-sans text-[13px] font-semibold text-white shadow ${on ? '' : 'opacity-0 group-hover/sec:opacity-100'}`}>{LABELS[id] ?? id}</span>
       {children}
     </div>
+  );
+}
+
+// Menu a tendina dei siti, al posto del <select> del browser: stessi colori, angoli e caratteri del tema.
+// Si usa come un <select> (stessi <option> dentro, onChange con e.target.value, name per i form GET).
+// Il menu va nella radice del sito (portal su [data-site-root]) cosi' nessun contenitore lo taglia e
+// prende le variabili del tema; nell'anteprima rimpicciolita la posizione si divide per la scala.
+type Opt = { value: string; label: string };
+export function Select({ value, onChange, name, className = '', children }: { value: string | number; onChange: (e: { target: { value: string } }) => void; name?: string; className?: string; children: ReactNode }) {
+  const opts: Opt[] = Children.toArray(children).filter(isValidElement).map(o => {
+    const p = (o as ReactElement<{ value?: string | number; children?: ReactNode }>).props;
+    return { value: String(p.value ?? p.children ?? ''), label: String(p.children ?? '') };
+  });
+  const cur = opts.find(o => o.value === String(value ?? '')) ?? opts[0];
+  const btn = useRef<HTMLButtonElement>(null);
+  const [open, setOpen] = useState(false);
+  const [pos, setPos] = useState<{ root: HTMLElement; left: number; top: number; width: number } | null>(null);
+  useLayoutEffect(() => {
+    if (!open || !btn.current) return;
+    const root = btn.current.closest<HTMLElement>('[data-site-root]');
+    if (!root) return;
+    const place = () => {
+      const r = btn.current!.getBoundingClientRect(), rr = root.getBoundingClientRect(), k = rr.width / root.offsetWidth || 1;
+      setPos({ root, left: (r.left - rr.left) / k, top: (r.bottom - rr.top) / k + 6, width: r.width / k });
+    };
+    place();
+    window.addEventListener('resize', place); window.addEventListener('scroll', place, true);
+    return () => { window.removeEventListener('resize', place); window.removeEventListener('scroll', place, true); };
+  }, [open]);
+  useEffect(() => {
+    if (!open) return;
+    const out = (e: PointerEvent) => { if (!btn.current?.contains(e.target as Node) && !(e.target as HTMLElement).closest?.('[data-site-menu]')) setOpen(false); };
+    const key = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
+    document.addEventListener('pointerdown', out); document.addEventListener('keydown', key);
+    return () => { document.removeEventListener('pointerdown', out); document.removeEventListener('keydown', key); };
+  }, [open]);
+  return (
+    <>
+      {name && <input type="hidden" name={name} value={String(value ?? '')} />}
+      <button ref={btn} type="button" onClick={() => setOpen(v => !v)} aria-haspopup="listbox" aria-expanded={open}
+        className={`${className} flex items-center justify-between gap-2 text-left`}>
+        <span className="min-w-0 truncate">{cur?.label}</span>
+        <ChevronDown size={15} className={`shrink-0 opacity-60 transition-transform duration-300 ${open ? 'rotate-180' : ''}`} />
+      </button>
+      {open && pos && createPortal(
+        <div data-site-menu role="listbox" className="absolute z-[80] max-h-72 overflow-y-auto rounded-[var(--rc)] border border-[var(--line)] bg-[var(--surface)] p-1.5 text-sm text-[var(--fg)] shadow-[0_18px_50px_-12px_rgba(0,0,0,.25)]"
+          style={{ left: pos.left, top: pos.top, minWidth: Math.max(180, pos.width), animation: 'gnm-fade .3s ease both' }}>
+          {opts.map(o => (
+            <button key={o.value} type="button" role="option" aria-selected={o.value === cur?.value}
+              onClick={() => { onChange({ target: { value: o.value } }); setOpen(false); }}
+              className={`flex w-full items-center justify-between gap-3 rounded-[calc(var(--rc)*0.7)] px-3 py-2 text-left transition-colors hover:bg-[var(--soft)] ${o.value === cur?.value ? 'font-semibold' : ''}`}>
+              {o.label}{o.value === cur?.value && <Check size={14} className="shrink-0 text-[var(--c)]" />}
+            </button>
+          ))}
+        </div>,
+        pos.root,
+      )}
+    </>
   );
 }
