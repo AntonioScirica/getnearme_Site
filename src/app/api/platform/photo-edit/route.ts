@@ -70,9 +70,9 @@ export async function POST(req: NextRequest) {
   // Rettangolo: al modello vanno la foto e la stessa foto con un rettangolo rosso sulla zona (disegnato
   // dal worker, "mark"); fuori dalla zona il worker rimette la foto originale.
   if (region && usesText) {
-    translation.prompt_template = 'Edit the first image: {REQUEST}. The request refers to what is inside the area marked by the red rectangle in the second image: change only that area; if it asks to remove, erase everything inside the rectangle completely and show the floor and walls behind it. Fill any freed area naturally, continuing the same floor, walls and light around it. Keep everything outside the red rectangle exactly the same, same framing and perspective. The result must not contain any red rectangle or outline. Photorealistic.'
+    translation.prompt_template = 'Edit the first image: {REQUEST}. The request refers to what is inside the area marked by the red rectangle in the second image: change only that area; if it asks to remove, erase everything inside the rectangle completely and show the floor and walls behind it. Do not add any new object, decoration or wall art that was not requested. Fill any freed area naturally, continuing the same floor, walls and light around it. Keep everything outside the red rectangle exactly the same, same framing and perspective. The result must not contain any red rectangle or outline. Photorealistic.'
   } else if (points.length && usesText) {
-    translation.prompt_template = 'In this close-up crop of a room photo: {REQUEST}. Fill any freed area naturally, continuing the same floor, walls and light around it. Keep the rest of the crop unchanged. Photorealistic.'
+    translation.prompt_template = 'In this close-up crop of a room photo: {REQUEST}. Do not add anything that was not requested. Fill any freed area naturally, continuing the same floor, walls and light around it. Keep the rest of the crop unchanged. Photorealistic.'
   }
   // Seme casuale: la stessa richiesta ripetuta da' ogni volta un risultato diverso (iterare, rigenerare).
   const seed = typeof body.seed === 'number' ? body.seed : Math.floor(Math.random() * 1_000_000)

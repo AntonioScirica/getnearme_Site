@@ -44,6 +44,11 @@ const STYLE_PROMPTS_GIARDINO: Record<string, string> = {
 // Vietare qualsiasi testo: i modelli a volte inventano scritte su poster e insegne.
 const NO_TEXT = ' ABSOLUTELY NO TEXT: do not render any letters, words, writing, captions, signage, neon signs, posters with text, logos, brand names, watermarks, or numbers anywhere in the image. Wall art and decor must be purely abstract or pictorial with zero text.';
 
+// Per le richieste libere: niente scritte, ma senza nominare quadri o decorazioni (il modello li aggiungeva)
+const NO_TEXT_PLAIN = ' Do not add any text, letters, logos or watermarks.';
+// Solo quello che e' chiesto: niente oggetti in piu' (prima aggiungeva quadri e mobili anche per "togli la sedia")
+const ONLY_REQUESTED = ' Do not add anything that was not requested: no new furniture, decorations, wall art, pictures, plants, lamps or objects. If the request is to remove something, remove only that and show the same wall, floor and light that are behind it.';
+
 const LIGHTING_LOCK = 'This is a LIGHTING-ONLY edit. DO NOT remove, add, move, resize, reshape, recolor, or alter ANY object in the scene — every piece of furniture, wall, ceiling, floor, door, window, curtain, rug, lamp, painting, shelf, plant, and decorative item must remain EXACTLY as in the original photo with identical shape, position, size, color, material, and texture. DO NOT change the camera angle, perspective, framing, or composition in any way.';
 
 // Viste: stesse di Foto AI (src/lib/staging.ts STAGING_ANGLES), avvolte nel modello "nuova inquadratura".
@@ -79,7 +84,7 @@ export function buildStagingPrompt(o: { style?: string | null; customPrompt?: st
     if (scene === 'esterno') return `BUILDING LOCKED: Preserve EXACTLY the house facade, roofline, windows, doors, walls, materials, colors, and the camera angle/perspective. FORBIDDEN: changing the building's structure, adding new floors, altering the facade shape. ALLOWED: adding or modifying garden elements, pool, terrace furniture, landscaping, driveway, plants as requested. USER EDIT REQUEST (apply in any language): "${custom}". Apply the requested changes to the surroundings while keeping the building itself identical. Photorealistic result, 8K architectural photography.${NO_TEXT}`;
     if (scene === 'giardino') return `GARDEN EDIT: Preserve the existing layout, any visible building structure, paths, boundaries and the camera angle/perspective exactly. ALLOWED: freely adding or modifying plants, furniture, pool, decking, lighting as requested. USER EDIT REQUEST (apply in any language): "${custom}". Photorealistic result, 8K outdoor photography.${NO_TEXT}`;
     // Stessa formula "additiva" degli stili: cambia solo quello che chiede l'agente, la foto resta quella.
-    return `Edit this exact photo: ${custom}. Change only what is requested; everything else stays exactly the same: camera position, zoom, framing, perspective, walls, windows, doors and light (unless the request is about them). Do not zoom out and do not show more of the room. Furniture must look real and commercially available today, not showroom or futuristic. Photorealistic.${NO_TEXT}`;
+    return `Edit this exact photo: ${custom}. Change only what is requested; everything else stays exactly the same: camera position, zoom, framing, perspective, walls, windows, doors, furniture, decorations and light (unless the request is about them). Do not zoom out and do not show more of the room.${ONLY_REQUESTED} If new furniture is requested, it must look real and commercially available today. Photorealistic.${NO_TEXT_PLAIN}`;
   }
   return (styles[o.style || ''] || styles.modern) + NO_TEXT;
 }
