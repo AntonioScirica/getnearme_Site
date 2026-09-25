@@ -195,6 +195,17 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
       className="shrink-0 whitespace-nowrap rounded-full bg-white px-3.5 py-1.5 text-[13px] font-medium text-ink/80 shadow-sm ring-1 ring-inset ring-black/10 ease-smooth transition-colors hover:bg-brand hover:text-white disabled:opacity-40">{x.label}</button>
   ));
 
+  // proporzioni vere delle foto: il risultato segue la foto (verticale resta verticale)
+  const [ratios, setRatios] = useState<Record<string, number>>({});
+  useEffect(() => {
+    for (const m of msgs) {
+      if (m.role !== 'ai' || ratios[m.before]) continue;
+      const img = new Image();
+      img.onload = () => setRatios(r => ({ ...r, [m.before]: img.naturalWidth / img.naturalHeight }));
+      img.src = m.before;
+    }
+  }, [msgs, ratios]);
+
   // selezione zona: prende il posto del messaggio che contiene la foto di lavoro, cosi' la card si trasforma sul posto
   const zoneOwner = selecting && base ? msgs.findLastIndex(m => (m.role === 'ai' && m.out === base) || (m.role === 'user' && m.image === base)) : -1;
   const zonePicker = selecting && base ? <ZonePicker src={base} region={region} points={points} mask={mask} onChange={r => { setRegion(r); setPoints([]); setMask(null); }} onPick={pickAt} onPreview={previewAt} onSegments={segmentsOf} onLoad={toBottom} busy={busy} onSubmit={t => send(t)} onCancel={() => { clearZone(); setSelecting(false); }} /> : null;
@@ -253,17 +264,17 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
             </div>
           ) : (
             <div key={m.id} className={`blur-in flex justify-start ease-smooth transition-opacity ${faded.has(m.id) ? 'opacity-35 hover:opacity-80' : ''}`}>
-              <div className={`w-full max-w-[560px] rounded-3xl rounded-bl-2xl bg-white p-2 ${CARD_SHADOW}`}><AutoSize>
+              <div className={`w-full rounded-3xl rounded-bl-2xl bg-white p-2 ${CARD_SHADOW}`} style={{ maxWidth: `min(560px, calc(60vh * ${ratios[m.before] ?? 1.5} + 16px))` }}><AutoSize>
                 {/* raggio interno = esterno - padding: se la foto tocca l'angolo della coda (16px), 8px */}
                 {/* clic sulla foto = a tutto schermo con prima/dopo (non se trascini il cursore prima/dopo o premi Scarica) */}
-                <div className={`relative ${m.out && !m.busy ? 'cursor-zoom-in' : ''}`} data-base-photo={m.out && m.out === base ? '' : undefined}
+                <div className={`relative ${m.out && !m.busy ? 'cursor-zoom-in' : ''}`} style={{ aspectRatio: ratios[m.before] ?? 1.5 }} data-base-photo={m.out && m.out === base ? '' : undefined}
                   onPointerDown={e => { downAt.current = { x: e.clientX, y: e.clientY }; }}
                   onClick={e => {
                     const d = downAt.current;
                     if (!m.out || m.busy || (e.target as HTMLElement).closest('button, a')) return;
                     if (d && Math.hypot(e.clientX - d.x, e.clientY - d.y) > 6) return;
                     setViewer({ src: m.out, before: m.before });
-                  }}><AiPhotoStage src={m.before} busy={m.busy} out={m.out} reveal={m.reveal} msg={tick % 5} fileName="home-staging.jpg" className={`aspect-[3/2] ${m.err || (m.out && !m.busy) ? '' : '!rounded-bl-[8px]'}`} />
+                  }}><AiPhotoStage src={m.before} busy={m.busy} out={m.out} reveal={m.reveal} msg={tick % 5} fileName="home-staging.jpg" className={`h-full ${m.err || (m.out && !m.busy) ? '' : '!rounded-bl-[8px]'}`} />
                 </div>
                 {m.err && <p className="blur-in px-2 pt-2 text-sm text-rose-600">{m.err}</p>}
                 {m.out && !m.busy && (
