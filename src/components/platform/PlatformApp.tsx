@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Home, Building2, Globe, Gauge, LogOut, Plus, Loader2, X, Wand2, Images, ExternalLink, UserRound } from 'lucide-react';
+import { Home, Building2, Globe, Gauge, LogOut, Plus, Loader2, X, Wand2, Images, ExternalLink, UserRound, ArrowLeft } from 'lucide-react';
 import type { UserData } from '@/app/[locale]/dashboard/page';
 import { supabase } from '@/lib/supabase';
 import { fetchProjects, type ProjectData } from '@/lib/projects';
@@ -59,12 +59,18 @@ export default function PlatformApp({ userData }: { userData: UserData }) {
   if (profile && !profile.slug) return <Onboarding onDone={setProfile} />;
 
   const detailId = route.startsWith('/immobile/') ? route.slice('/immobile/'.length) : null;
+  const chat = route === '/staging';
 
   return (
     <div className="relative flex h-full flex-col font-body text-ink" style={DOTS}>
       <header className={`${route === '/immobili' ? 'absolute inset-x-0' : 'sticky'} top-0 z-30`}>
         <ProgressiveBlur />
         <div className="mx-auto flex h-20 max-w-6xl items-center px-6">
+          {/* in chat: niente logo, menu e Metti in vetrina, solo Indietro (la chat ha tutto lo spazio) */}
+          {chat ? (
+            <button type="button" onClick={() => (history.length > 1 ? history.back() : (location.hash = '#/'))}
+              className="flex h-10 items-center gap-1.5 rounded-full px-3 text-sm font-medium text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink"><ArrowLeft size={18} /> Indietro</button>
+          ) : <>
           <a href="#/" className="flex items-center gap-2">
             <img src="/immo/logo-mark.png" alt="" className="h-8 w-8" />
             <span className="font-display text-lg font-extrabold tracking-tight">Agente <span className="text-brand">Immo</span></span>
@@ -78,14 +84,14 @@ export default function PlatformApp({ userData }: { userData: UserData }) {
           <div className="ml-auto flex items-center gap-2.5 md:ml-0">
             <a href="#/nuovo" className="flex h-10 items-center rounded-full bg-brand px-5 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand/90 active:scale-[0.98]">Metti in vetrina</a>
           </div>
+          </>}
         </div>
       </header>
 
-      {/* Profilo: in basso a sinistra, solo icona e scritta; dentro nome, vetrina e uscita */}
-      {/* Profilo: solo icona e testo; in home al centro in basso, nelle altre pagine in basso a sinistra */}
-      <a href="#/profilo" className={`fixed bottom-5 z-30 flex h-10 items-center gap-2 rounded-full bg-white px-4 text-sm font-medium shadow-sm ring-1 ring-line ease-smooth transition-shadow hover:shadow-md ${route === '/' ? 'left-1/2 -translate-x-1/2' : 'left-5'} ${route === '/profilo' ? 'ring-ink' : ''}`}>
+      {/* Profilo: solo icona e testo; in home al centro in basso, nelle altre pagine in basso a sinistra, in chat no */}
+      {!chat && <a href="#/profilo" className={`fixed bottom-5 z-30 flex h-10 items-center gap-2 rounded-full bg-white px-4 text-sm font-medium shadow-sm ring-1 ring-line ease-smooth transition-shadow hover:shadow-md ${route === '/' ? 'left-1/2 -translate-x-1/2' : 'left-5'} ${route === '/profilo' ? 'ring-ink' : ''}`}>
         <UserRound size={16} className="text-muted" /> Profilo
-      </a>
+      </a>}
 
       <main className={`flex-1 ${route === '/staging' ? 'overflow-hidden' : 'overflow-y-auto'}`}>
         {/* Home staging: la chat gestisce lo scorrimento da sola (campo fisso in fondo) */}

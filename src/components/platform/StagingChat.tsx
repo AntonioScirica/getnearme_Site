@@ -640,11 +640,11 @@ function ZonePicker({ inline, closing = false, src, region, onChange, onLoad, bu
 //   (solo se la foto di partenza era gia' di quell'immobile).
 // Vale anche per foto caricate dal computer: si sceglie l'immobile, l'originale va online solo per il prima/dopo.
 const SAVE_ANIM = `
-@keyframes gnm-sv-clip { 0%,12% { clip-path: inset(0 0 0 100%) } 42%,55% { clip-path: inset(0 0 0 0) } 78%,100% { clip-path: inset(0 0 0 50%) } }
-@keyframes gnm-sv-line { 0%,12% { left: 100% } 42%,55% { left: 0% } 78%,100% { left: 50% } }
-@keyframes gnm-sv-drop { 0%,18% { transform: translateY(-105%) } 50%,100% { transform: translateY(0) } }
-@keyframes gnm-sv-old { 0%,18% { transform: scale(1); opacity: 1; filter: blur(0) } 50%,100% { transform: scale(.92); opacity: 0; filter: blur(4px) } }
-@keyframes gnm-sv-tag { 0%,45% { opacity: 0; transform: translateY(4px) } 60%,100% { opacity: 1; transform: none } }
+@keyframes gnm-sv-clip { 0%,15% { clip-path: inset(0 0 0 100%) } 45%,58% { clip-path: inset(0 0 0 0) } 85%,100% { clip-path: inset(0 0 0 50%) } }
+@keyframes gnm-sv-line { 0%,15% { left: 100% } 45%,58% { left: 0% } 85%,100% { left: 50% } }
+@keyframes gnm-sv-new { 0%,20% { opacity: 0; transform: scale(1.06) } 55%,88% { opacity: 1; transform: scale(1) } 100% { opacity: 0; transform: scale(1) } }
+@keyframes gnm-sv-tag { 0%,45% { opacity: 0 } 60%,85% { opacity: 1 } 100% { opacity: 0 } }
+@keyframes gnm-sv-tagold { 0%,25% { opacity: 1 } 40%,90% { opacity: 0 } 100% { opacity: 1 } }
 `;
 function SaveToProperty({ before, after, projectId, origin, onClose }: { before: string; after: string; projectId: string | null; origin: string | null; onClose: () => void }) {
   const [projects, setProjects] = useState<ProjectData[] | null>(null);
@@ -704,15 +704,17 @@ function SaveToProperty({ before, after, projectId, origin, onClose }: { before:
           <div className="mt-4 flex flex-col gap-3 sm:flex-row">
             {option('add', 'Prima e dopo', 'Aggiunge la foto nuova: sul sito si confronta con l’originale.', <>
               <img src={before} alt="" className="absolute inset-0 h-full w-full object-cover" />
-              <img src={after} alt="" className="absolute inset-0 h-full w-full object-cover" style={{ animation: 'gnm-sv-clip 3.6s cubic-bezier(.22,1,.36,1) infinite' }} />
-              <span className="absolute inset-y-0 w-0.5 -translate-x-1/2 bg-white shadow" style={{ animation: 'gnm-sv-line 3.6s cubic-bezier(.22,1,.36,1) infinite' }} />
+              <img src={after} alt="" className="absolute inset-0 h-full w-full object-cover" style={{ animation: 'gnm-sv-clip 6s cubic-bezier(.65,0,.35,1) infinite' }} />
+              <span className="absolute inset-y-0 w-0.5 -translate-x-1/2 bg-white shadow" style={{ animation: 'gnm-sv-line 6s cubic-bezier(.65,0,.35,1) infinite' }} />
               <span className={`${tag} left-2`}>Prima</span><span className={`${tag} right-2`}>Dopo</span>
             </>)}
             {/* sempre visibile, spenta quando la foto di partenza non e' di quell'immobile: si capisce che esiste */}
             {option('replace', 'Sostituisci', canReplace ? 'La foto nuova prende il posto dell’originale.' : 'Solo se parti da una foto di questo immobile.', <>
-              <img src={before} alt="" className="absolute inset-0 h-full w-full object-cover" style={{ animation: 'gnm-sv-old 3.2s cubic-bezier(.22,1,.36,1) infinite' }} />
-              <img src={after} alt="" className="absolute inset-0 h-full w-full object-cover" style={{ animation: 'gnm-sv-drop 3.2s cubic-bezier(.22,1,.36,1) infinite' }} />
-              <span className={`${tag} right-2`} style={{ animation: 'gnm-sv-tag 3.2s cubic-bezier(.22,1,.36,1) infinite' }}>Nuova</span>
+              {/* dissolvenza lenta: l'originale resta sotto, la nuova compare sopra con un leggero zoom e resta */}
+              <img src={before} alt="" className="absolute inset-0 h-full w-full object-cover" />
+              <img src={after} alt="" className="absolute inset-0 h-full w-full object-cover" style={{ animation: 'gnm-sv-new 6s cubic-bezier(.65,0,.35,1) infinite' }} />
+              <span className={`${tag} left-2`} style={{ animation: 'gnm-sv-tagold 6s cubic-bezier(.65,0,.35,1) infinite' }}>Originale</span>
+              <span className={`${tag} right-2`} style={{ animation: 'gnm-sv-tag 6s cubic-bezier(.65,0,.35,1) infinite' }}>Nuova</span>
             </>, !canReplace)}
           </div>
           <div className="flex items-center justify-end gap-2 pt-5">
