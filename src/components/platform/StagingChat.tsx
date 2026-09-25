@@ -62,7 +62,6 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList | Fil
   const [zoneClosing, setZoneClosing] = useState(false);
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [base, setBase] = useState<string | null>(null); // immagine su cui lavora la prossima richiesta
-  const [resumed, setResumed] = useState<string | null>(null); // versione da cui si e' ripartiti a mano
   const [viewer, setViewer] = useState<{ src: string; before?: string } | null>(null); // foto a tutto schermo
   const downAt = useRef<{ x: number; y: number } | null>(null);
   const [text, setText] = useState('');
@@ -177,10 +176,10 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList | Fil
   // Ricomincia da qui: i messaggi successivi restano (si puo' ripartire anche da li') ma sbiaditi,
   // e in fondo un divisore con la versione da cui si riparte
   const restartFrom = (i: number, url: string) => {
-    setResumed(url);
     setFaded(f => new Set([...f, ...msgs.slice(i + 1).map(x => x.id)]));
-    // divisore e poi la foto rimessa come messaggio tuo: e' come se l'avessi mandata ora
-    setMsgs(ms => [...ms, { id: uid(), role: 'divider', image: url }, { id: uid(), role: 'user', image: url, seen: kind }]);
+    // divisore e poi una copia del risultato come messaggio dell'AI: si riparte da li' come se fosse appena arrivato
+    const src = msgs[i];
+    setMsgs(ms => [...ms, { id: uid(), role: 'divider', image: url }, ...(src?.role === 'ai' ? [{ ...src, id: uid(), busy: false, reveal: 'slider' as const, err: undefined }] : [])]);
     setBase(url); clearZone(); setSelecting(false);
   };
   // Clic su un oggetto: il worker (SAM) ritorna la maschera, mostrata sulla foto. Piu' clic = piu' oggetti.
@@ -317,7 +316,6 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList | Fil
                     <span className="min-w-0 flex-1 truncate">{m.text}</span>
                     {/* a destra: Modifica (zona su questa foto) e Ricomincia da qui; "Si continua da qui" solo dopo esserci tornati */}
                     <div className="flex shrink-0 items-center gap-1">
-                      {resumed === m.out && base === m.out && <span className="flex h-8 items-center px-2 font-medium text-emerald-600">Si continua da qui</span>}
                       <button onClick={() => { if (base !== m.out) restartFrom(i, m.out!); setSelecting(true); }}
                         className="flex h-8 items-center gap-1.5 rounded-full px-3 font-medium leading-none text-ink hover:bg-canvas"><SquareDashedMousePointer size={14} className="translate-y-px" /> Modifica</button>
                       {base !== m.out && (
