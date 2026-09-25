@@ -1,6 +1,7 @@
 'use client';
 
 import LeafletMap from '@/components/ui/LeafletMap';
+import { iconFor } from '@/lib/fieldIcons';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { Check, Facebook, GraduationCap, Hospital, Instagram, Loader2, Mail, MapPin, MessageCircle, Phone, Pill, Printer, School, Share2, ShoppingCart, Train, TrainFront, TramFront, Trees } from 'lucide-react';
 import { authFetch } from '@/components/platform/api';
@@ -89,23 +90,29 @@ const fmt = (f: Field, v: unknown) => (typeof v === 'boolean' ? (v ? 'Sì' : 'No
 export function DetailsTable({ p }: { p: SiteProperty }) {
   const tx = useT();
   const d = p.details ?? {};
-  const rows: [string, string][] = [
-    ...(p.riferimento ? [['Codice', p.riferimento] as [string, string]] : []),
-    ['Tipologia', p.tipologia?.split('|')[0] || '—'],
-    ['Contratto', /affitt/i.test(p.contratto ?? '') ? 'Affitto' : 'Vendita'],
+  // [chiave (per l'icona), etichetta, valore]
+  type Row = [string, string, string];
+  const rows: Row[] = [
+    ...(p.riferimento ? [['riferimento', 'Codice', p.riferimento] as Row] : []),
+    ['tipologia', 'Tipologia', p.tipologia?.split('|')[0] || '—'],
+    ['contratto', 'Contratto', /affitt/i.test(p.contratto ?? '') ? 'Affitto' : 'Vendita'],
     // indirizzo esatto solo se l'agente ha scelto di mostrarlo, altrimenti zona e citta'
-    ['Indirizzo', d.mostra_indirizzo ? p.addr : p.addr?.split(',').map(x => x.trim()).filter(Boolean).slice(-2).join(', ') || '—'],
-    ...(p.mq ? [['Superficie', `${p.mq} m²`] as [string, string]] : []),
-    ...(p.locali ? [['Locali', String(p.locali)] as [string, string]] : []),
-    ...(p.camere ? [['Camere', String(p.camere)] as [string, string]] : []),
-    ...(p.bagni ? [['Bagni', String(p.bagni)] as [string, string]] : []),
-    ...ALL.filter(f => !SKIP.has(f.key) && f.type !== 'multi' && d[f.key] !== undefined && d[f.key] !== '' && d[f.key] !== false).map(f => [f.label, fmt(f, d[f.key])] as [string, string]),
+    ['indirizzo', 'Indirizzo', d.mostra_indirizzo ? p.addr : p.addr?.split(',').map(x => x.trim()).filter(Boolean).slice(-2).join(', ') || '—'],
+    ...(p.mq ? [['superficie', 'Superficie', `${p.mq} m²`] as Row] : []),
+    ...(p.locali ? [['locali', 'Locali', String(p.locali)] as Row] : []),
+    ...(p.camere ? [['camere', 'Camere', String(p.camere)] as Row] : []),
+    ...(p.bagni ? [['bagni', 'Bagni', String(p.bagni)] as Row] : []),
+    ...ALL.filter(f => !SKIP.has(f.key) && f.type !== 'multi' && d[f.key] !== undefined && d[f.key] !== '' && d[f.key] !== false).map(f => [f.key, f.label, fmt(f, d[f.key])] as Row),
   ];
   return (
     <div>
       <H className="text-3xl">{tx('property.details')}</H>
       <dl className="mt-5 grid overflow-hidden rounded-[var(--r)] ring-1 ring-[var(--line)] sm:grid-cols-2">
-        {rows.map(([k, v]) => <div key={k} className="flex justify-between gap-4 border-b border-[var(--line)] px-4 py-3 text-sm sm:odd:border-r"><dt className="text-[var(--muted)]">{k}</dt><dd className="text-right font-medium">{v}</dd></div>)}
+        {rows.map(([key, k, v]) => { const I = iconFor(key); return (
+          <div key={k} className="flex items-center justify-between gap-4 border-b border-[var(--line)] px-4 py-3 text-sm sm:odd:border-r">
+            <dt className="flex min-w-0 items-center gap-2.5 text-[var(--muted)]"><I size={16} className="shrink-0 text-[var(--c)]" />{k}</dt><dd className="text-right font-medium">{v}</dd>
+          </div>
+        ); })}
       </dl>
     </div>
   );
