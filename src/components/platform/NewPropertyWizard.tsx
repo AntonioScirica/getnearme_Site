@@ -59,7 +59,7 @@ const STEPS: Step[] = [
   { id: 'interni', title: 'Gli interni', sub: 'I dettagli che rendono viva la descrizione.', keys: ['cucina', 'arredato', 'esposizione', 'dotazioni'], optional: true },
   { id: 'esterni', title: 'Spazi esterni e auto', sub: 'Tra le ricerche più usate dai compratori.', keys: ['esterni', 'superficie_esterna', 'posto_auto', 'cantina'], optional: true },
   { id: 'costi', title: 'Costi e disponibilità', sub: 'Le prime domande che fanno al telefono.', keys: ['spese_condominiali', 'portineria', 'disponibilita', 'contratto_affitto', 'cauzione', 'spese_incluse', 'proprieta'], optional: true },
-  { id: 'note', title: 'Note e punti di forza', sub: 'Scrivi come parleresti a un cliente: l\'AI le usa per l\'annuncio.', keys: ['riferimento', 'virtual_tour'], optional: true },
+  { id: 'note', title: 'Codice e tour virtuale', sub: 'Il codice di riferimento è quello del tuo gestionale: serve a ritrovare l\'immobile e ad aggiornarlo quando reimporti il file.', keys: ['riferimento', 'virtual_tour'], optional: true },
   { id: 'foto', title: 'Le foto', sub: 'Carica le foto e riordinale trascinandole: la prima è la copertina. Potrai migliorarle con l\'AI dopo, quando vuoi.', keys: [] },
 ];
 
@@ -298,8 +298,6 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
               <Chips f={F.proprieta} v={d.proprieta} set={v => set('proprieta', v)} />
             </>}
             {cur.id === 'note' && <>
-              <textarea rows={6} value={note} onChange={e => setNote(e.target.value)} autoFocus placeholder="Es. vicino alla M2, zona silenziosa, vista sul parco, ristrutturato nel 2022, ideale per una famiglia..."
-                className="w-full rounded-2xl bg-white p-5 text-[16px] leading-relaxed outline-none ring-1 ring-line focus:ring-2 focus:ring-brand" />
               <div className="grid gap-4 sm:grid-cols-2"><TextField f={F.riferimento} v={d.riferimento} set={v => set('riferimento', v)} /><TextField f={F.virtual_tour} v={d.virtual_tour} set={v => set('virtual_tour', v)} /></div>
             </>}
           </div>
@@ -312,7 +310,7 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
               {cur.optional && step < STEPS.length - 1 && <button onClick={() => go(step + 1)} className="text-sm text-muted hover:text-ink">Salta</button>}
               {step < STEPS.length - 1
                 ? <button onClick={() => go(step + 1)} disabled={!canNext} className="flex items-center gap-2 btn-ink rounded-full px-6 py-3 text-sm font-semibold">Avanti <ArrowRight size={16} /><span className="ml-1 hidden text-xs font-normal text-white/50 sm:inline">Invio</span></button>
-                : <button onClick={generate} className="flex items-center gap-2 rounded-full bg-brand px-6 py-3 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand/90 active:scale-[0.98]"><Sparkles size={16} /> Prepara l&apos;annuncio</button>}
+                : <button onClick={generate} className="flex items-center gap-2 rounded-full bg-brand px-6 py-3 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand/90 active:scale-[0.98]">Continua creazione <ArrowRight size={16} /></button>}
             </div>
           </div>
         </section>

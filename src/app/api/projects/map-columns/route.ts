@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import Anthropic from '@anthropic-ai/sdk'
+import { generateJson } from '@/lib/ai'
 import { DETAIL_FIELDS } from '@/lib/propertyImport'
 
 export const runtime = 'nodejs'
@@ -34,9 +34,6 @@ export async function POST(req: NextRequest) {
   const headers = Array.isArray(body.headers) ? body.headers.filter((h): h is string => typeof h === 'string') : []
   if (!headers.length) return NextResponse.json({ error: 'no_headers' }, { status: 400 })
 
-  const apiKey = (process.env.ANTHROPIC_API_KEY || '').trim()
-  if (!apiKey) return NextResponse.json({ error: 'no_api_key' }, { status: 503 })
-
   const sampleLine = body.sample
     ? '\nEsempio prima riga (valori): ' + JSON.stringify(body.sample).slice(0, 800)
     : ''
@@ -61,20 +58,19 @@ Campi target:
 Campi della scheda (usali solo se c'e' una colonna che li contiene davvero):
 ${DETAIL_FIELDS.map(f => `- d:${f.key}: ${f.label}${f.options?.length ? ` (valori tipo: ${f.options.slice(0, 6).join(', ')})` : ''}`).join('\n')}
 
-Rispondi SOLO con un oggetto JSON valido, chiavi = i campi target, valori = nome colonna esatto (copiato dagli header) o null. Nessun altro testo.`
+Rispondi SOLO con un oggetto JSON valido, chiavi = i campi target, valori = nome colonna esatto (copiato dagli header) o stringa vuota. Nessun altro testo.`
 
   try {
-    const anthropic = new Anthropic({ apiKey })
-    const resp = await anthropic.messages.create({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 1500,
-      temperature: 0,
-      messages: [{ role: 'user', content: prompt }],
+    // stesso modello dei testi della piattaforma (Qwen su RunPod, ripiego su Claude): lib/ai
+    const r = await generateJson<Record<string, unknown>>({
+      system: 'Sei un mappatore di colonne per import immobiliari. Rispondi solo con il JSON richiesto.',
+      text: prompt,
+      schema: { type: 'object', properties: Object.fromEntries(TARGET_KEYS.map(k => [k, { type: 'string' }])), additionalProperties: false },
+      usage: { userId, kind: 'map_columns' },
+      maxTokens: 1500,
     })
-    const text = resp.content.map((b) => (b.type === 'text' ? b.text : '')).join('')
-    const match = text.match(/\{[\s\S]*\}/)
-    if (!match) return NextResponse.json({ error: 'parse_failed' }, { status: 502 })
-    const parsed = JSON.parse(match[0]) as Record<string, unknown>
+    if (!r.ok) return NextResponse.json({ error: 'ai_failed' }, { status: 502 })
+    const parsed = r.data
 
     // Valida: solo chiavi note + valori che sono header reali.
     const mapping: Record<string, string> = {}
