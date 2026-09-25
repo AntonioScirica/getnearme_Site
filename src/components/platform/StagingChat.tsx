@@ -402,9 +402,9 @@ function ZonePicker({ src, region, points, mask, onChange, onPick, onPreview, on
   const ready = (region && region.w > 0.02) || (points.length > 0 && !loading);
   return (
     <div className="blur-in flex justify-start">
-    <div className={`w-fit max-w-full rounded-3xl rounded-bl-2xl bg-white p-2 ${CARD_SHADOW}`}>
-      {/* foto e riga sotto nello stesso blocco: riga e card larghe quanto la foto, non di piu' */}
-      <div className="w-fit max-w-[min(100%,640px)]">
+    <div className={`w-fit max-w-[min(640px,100%)] rounded-3xl rounded-bl-2xl bg-white p-2 ${CARD_SHADOW}`}>
+      {/* il limite sta sulla card: dentro foto e riga la seguono (un limite in % sul blocco interno veniva ignorato e la card restava larga come la foto originale) */}
+      <div className="w-fit max-w-full">
       <div ref={box} className={`relative mx-auto max-h-[calc(100vh-24rem)] w-fit touch-none select-none overflow-hidden rounded-2xl ${tool === 'rect' ? 'cursor-crosshair' : ''}`}
         style={tool === 'points' ? { cursor: TARGET_CURSOR } : undefined}
         onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerLeave={leave}>
