@@ -75,8 +75,11 @@ function PhotoManager({ project, onChange }: { project: ProjectData; onChange: (
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/35 opacity-0 ease-smooth transition-opacity group-hover:opacity-100">
                   {/* togli: in alto a destra; al centro l'azione principale e, uguale ma secondaria, Copertina */}
                   <button onClick={() => act('remove', src)} aria-label="Togli la foto" className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-ink hover:bg-white"><X size={14} /></button>
-                  <a href={`#/staging?project=${project.id}&photo=${encodeURIComponent(src)}`} className="flex h-9 items-center gap-1.5 rounded-full bg-brand px-4 text-xs font-semibold text-white shadow-lg ease-smooth transition-transform hover:scale-105"><Wand2 size={13} /> Migliora con l’AI</a>
-                  {src !== project.cover && <button onClick={() => act('cover', src)} className="flex h-9 items-center gap-1.5 rounded-full bg-white px-4 text-xs font-semibold text-ink shadow-lg ease-smooth transition-transform hover:scale-105"><Star size={13} /> Copertina</button>}
+                  {/* colonna larga quanto il pulsante piu' largo: i due pulsanti hanno la stessa larghezza */}
+                  <div className="flex w-fit flex-col gap-2">
+                    <a href={`#/staging?project=${project.id}&photo=${encodeURIComponent(src)}`} className="flex h-9 items-center justify-center gap-1.5 rounded-full bg-brand px-4 text-xs font-semibold text-white shadow-lg ease-smooth transition-transform hover:scale-105"><Wand2 size={13} /> Migliora con l’AI</a>
+                    {src !== project.cover && <button onClick={() => act('cover', src)} className="flex h-9 items-center justify-center gap-1.5 rounded-full bg-white px-4 text-xs font-semibold text-ink shadow-lg ease-smooth transition-transform hover:scale-105"><Star size={13} /> Copertina</button>}
+                  </div>
                 </div>
               )}
             </li>
