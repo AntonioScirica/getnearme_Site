@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Check, Download, Loader2, Wand2, X } from 'lucide-react';
 import { platformFontVars } from '@/lib/platformFonts';
@@ -68,9 +68,11 @@ export function useAiPhoto() {
 }
 
 // Riquadro foto: originale con alone blu mentre lavora, poi slider prima/dopo con Scarica.
-export function AiPhotoStage({ src, busy, out, reveal, msg, fileName, onDownload, className = 'aspect-[3/2] max-h-[60vh]' }: {
-  src: string; busy: boolean; out: string | null; reveal: Reveal; msg: number; fileName: string; onDownload?: (url: string) => void; className?: string;
+export function AiPhotoStage({ src, busy, out, reveal, msg, fileName, onDownload, parked, className = 'aspect-[3/2] max-h-[60vh]' }: {
+  src: string; busy: boolean; out: string | null; reveal: Reveal; msg: number; fileName: string; onDownload?: (url: string) => void; parked?: boolean; className?: string;
 }) {
+  const [saved, setSaved] = useState(false);
+  const savedT = useRef<ReturnType<typeof setTimeout>>(undefined);
   const aurora = busy || reveal === 'burst';
   const tag = 'absolute z-[12] rounded-full bg-[rgba(33,31,28,.72)] px-3 py-1.5 text-[11px] font-bold text-white';
   return (
@@ -97,14 +99,17 @@ export function AiPhotoStage({ src, busy, out, reveal, msg, fileName, onDownload
         </div>
       )}
       {out && (reveal === 'line' || reveal === 'slider') && (
-        <InlineSlider before={src} after={out} isVertical={false} showImages={reveal === 'slider'} interactive={reveal === 'slider'} />
+        <InlineSlider before={src} after={out} isVertical={false} showImages={reveal === 'slider'} interactive={reveal === 'slider'} parked={parked} />
       )}
       {reveal === 'slider' && out && (
         <>
           <span className={`blur-in bottom-3 left-3 ${tag}`}>Prima</span>
           <span className={`blur-in bottom-3 right-3 ${tag}`}>Dopo</span>
-          <button onClick={() => { downloadImage(out, fileName); onDownload?.(out); }}
-            className="blur-in absolute right-3 top-3 z-[12] flex h-9 items-center gap-1.5 rounded-full bg-white/85 px-3.5 text-xs font-semibold shadow-sm ring-1 ring-black/5 backdrop-blur-md hover:bg-white"><Download size={14} /> Scarica</button>
+          {/* dopo il clic dice "Scaricato" per 2 secondi, poi torna Scarica */}
+          <button onClick={() => { downloadImage(out, fileName); onDownload?.(out); setSaved(true); clearTimeout(savedT.current); savedT.current = setTimeout(() => setSaved(false), 2000); }}
+            className="blur-in absolute right-3 top-3 z-[12] flex h-9 items-center gap-1.5 rounded-full bg-white/85 px-3.5 text-xs font-semibold shadow-sm ring-1 ring-black/5 backdrop-blur-md hover:bg-white">
+            {saved ? <span key="ok" className="blur-in flex items-center gap-1.5 text-emerald-700"><Check size={14} /> Scaricato</span> : <span key="dl" className="blur-in flex items-center gap-1.5"><Download size={14} /> Scarica</span>}
+          </button>
         </>
       )}
     </div>

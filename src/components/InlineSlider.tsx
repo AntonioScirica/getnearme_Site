@@ -7,11 +7,24 @@ import { useEffect, useRef, useState } from 'react';
 // Two-phase: line sweeps top→bottom + handle pops (showImages=false), then the
 // before/after images fade in (showImages=true). Stays mounted across the
 // transition so the line/handle CSS animations play once and don't replay.
-export default function InlineSlider({ before, after, isVertical, showImages, interactive }: { before: string; after: string; isVertical: boolean; showImages: boolean; interactive: boolean }) {
+// `parked`: il divisore scorre tutto a sinistra (resta solo il Dopo) e sparisce; tolto, torna al centro.
+export default function InlineSlider({ before, after, isVertical, showImages, interactive, parked = false }: { before: string; after: string; isVertical: boolean; showImages: boolean; interactive: boolean; parked?: boolean }) {
   const [pos, setPos] = useState(50);
   const boxRef = useRef<HTMLDivElement>(null);
   const dragging = useRef(false);
   const userTouched = useRef(false);
+  const [sliding, setSliding] = useState(false);
+  // cambio di parked: si riparte dal centro e per 600 ms le posizioni scorrono invece di scattare
+  const [prevParked, setPrevParked] = useState(parked);
+  if (prevParked !== parked) { setPrevParked(parked); setPos(50); setSliding(true); }
+  useEffect(() => {
+    if (!sliding) return;
+    userTouched.current = true; // niente oscillazione automatica dopo
+    const t = setTimeout(() => setSliding(false), 600);
+    return () => clearTimeout(t);
+  }, [sliding]);
+  const at = parked ? 0 : pos;
+  const glide = sliding ? 'var(--gnm-dur) var(--gnm-ease)' : null;
 
   const updateFromEvent = (clientX: number) => {
     const r = boxRef.current?.getBoundingClientRect();
@@ -65,15 +78,15 @@ export default function InlineSlider({ before, after, isVertical, showImages, in
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={after} alt="Dopo" draggable={false} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: isVertical ? 'contain' : 'cover', display: 'block' }} />
         {/* Before image (clipped) */}
-        <div style={{ position: 'absolute', inset: 0, clipPath: `inset(0 ${100 - pos}% 0 0)` }}>
+        <div style={{ position: 'absolute', inset: 0, clipPath: `inset(0 ${100 - at}% 0 0)`, transition: glide ? `clip-path ${glide}` : undefined }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={before} alt="Prima" draggable={false} style={{ width: '100%', height: '100%', objectFit: isVertical ? 'contain' : 'cover', display: 'block' }} />
         </div>
       </div>
       {/* Divider line — sweeps top to bottom on mount (slow) */}
-      <div style={{ position: 'absolute', top: 0, bottom: 0, left: `${pos}%`, width: 2, background: '#fff', transform: 'translateX(-1px)', boxShadow: '0 0 8px rgba(0,0,0,.35)', animation: 'gnm-slider-sweep .65s cubic-bezier(.45,.05,.35,1) both' }} />
+      <div style={{ position: 'absolute', top: 0, bottom: 0, left: `${at}%`, width: 2, background: '#fff', transform: 'translateX(-1px)', boxShadow: '0 0 8px rgba(0,0,0,.35)', animation: 'gnm-slider-sweep .65s cubic-bezier(.45,.05,.35,1) both', opacity: parked ? 0 : 1, transition: glide ? `left ${glide}, opacity ${glide}` : undefined }} />
       {/* Handle circle — separate element (not clipped by the line sweep), pops in once the line lands */}
-      <div style={{ position: 'absolute', top: '50%', left: `${pos}%`, transform: 'translate(-50%,-50%)', width: 32, height: 32, borderRadius: '50%', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 10px rgba(0,0,0,.25)', opacity: 0, animation: 'gnm-slider-pop .4s cubic-bezier(.34,1.56,.64,1) .5s forwards' }}>
+      <div style={{ position: 'absolute', top: '50%', left: `${at}%`, transition: glide ? `left ${glide}, scale ${glide}` : undefined, scale: parked ? '0' : '1', transform: 'translate(-50%,-50%)', width: 32, height: 32, borderRadius: '50%', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 10px rgba(0,0,0,.25)', opacity: 0, animation: 'gnm-slider-pop .4s cubic-bezier(.34,1.56,.64,1) .5s forwards' }}>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#211f1c" strokeWidth="2.5"><path d="M8 6l-6 6 6 6M16 6l6 6-6 6" /></svg>
       </div>
     </div>

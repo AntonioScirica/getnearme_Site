@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ArrowUp, Download, ImagePlus, Loader2, MousePointerClick, RotateCcw, SquareDashed, SquareDashedMousePointer, X } from 'lucide-react';
+import { ArrowUp, Download, ImagePlus, LayoutGrid, Loader2, Monitor, MousePointerClick, RotateCcw, SquareDashed, SquareDashedMousePointer, X } from 'lucide-react';
 import { fileToResizedDataUrl } from '@/lib/staging';
 import { AI_MOCK } from '@/lib/aiMock';
 import { AiPhotoStage, QUICK_PRESETS, type EditRequest, type Region, type Reveal, type Suggestion } from './AiPhoto';
@@ -13,6 +13,7 @@ import LightSwap from '@/components/ui/LightSwap';
 import AutoSize from '@/components/ui/AutoSize';
 import { MorphTarget, morphFrom } from '@/components/ui/Morph';
 import PhotoViewer from '@/components/ui/PhotoViewer';
+import LibraryPicker from './LibraryPicker';
 
 // Home staging come chat: l'agente carica una foto nella conversazione, scrive cosa vuole (in italiano,
 // il servizio traduce), riceve il prima/dopo e continua a chiedere sull'ultimo risultato. Caricare
@@ -55,7 +56,8 @@ const wait = (ms: number) => new Promise(r => setTimeout(r, ms));
 const planStyle = (t: string) => (/nordic|scandinav/i.test(t) ? 'nordic' : /lusso|luxury|elegan/i.test(t) ? 'industrial' : /boho/i.test(t) ? 'boho' : 'modern');
 
 
-export default function StagingChat({ onMany }: { onMany: (files: FileList) => void }) {
+export default function StagingChat({ onMany }: { onMany: (files: FileList | File[]) => void }) {
+  const [library, setLibrary] = useState(false); // scelta foto: vetrina o computer
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [base, setBase] = useState<string | null>(null); // immagine su cui lavora la prossima richiesta
   const [resumed, setResumed] = useState<string | null>(null); // versione da cui si e' ripartiti a mano
@@ -100,7 +102,7 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
 
   const patch = (id: string, p: Partial<Extract<Msg, { role: 'ai' }>>) => setMsgs(ms => ms.map(m => (m.id === id && m.role === 'ai' ? { ...m, ...p } : m)));
 
-  const upload = async (files: FileList | null) => {
+  const upload = async (files: FileList | File[] | null) => {
     if (!files?.length) return;
     touch();
     if (files.length > 1) { onMany(files); return; } // piu' foto insieme: vista a griglia
@@ -187,6 +189,7 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
     const d = res ? await res.json().catch(() => ({})) : {};
     return d.segments ?? null;
   };
+  const closeLibrary = useCallback(() => setLibrary(false), []);
   const empty = msgs.length === 0;
   const picker = <input type="file" accept="image/*" multiple className="hidden" onChange={e => { upload(e.target.files); e.target.value = ''; }} />;
   // i suggerimenti partono subito, senza passare dal campo
@@ -227,7 +230,11 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
                 <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-brand/10 text-brand"><ImagePlus size={30} /></span>
                 <span className="text-lg font-semibold">Carica la foto della stanza</span>
                 <span className="text-sm text-muted">Trascinala qui oppure clicca il pulsante. Va bene anche una facciata, un giardino o una planimetria: la riconosco da solo.</span>
-                <span className="mt-1 flex h-11 items-center gap-2 rounded-full bg-brand px-6 text-sm font-semibold text-white ease-smooth transition-transform hover:scale-[1.03]"><ImagePlus size={16} /> Scegli una foto</span>
+                <span className="mt-1 flex flex-wrap items-center justify-center gap-2">
+                  <span className="flex h-11 items-center gap-2 rounded-full bg-canvas px-6 text-sm font-semibold text-ink ease-smooth transition-colors hover:bg-line"><Monitor size={16} /> Dal computer</span>
+                  {/* dentro la label: senza preventDefault aprirebbe anche la scelta file */}
+                  <button type="button" onClick={e => { e.preventDefault(); setLibrary(true); }} className="flex h-11 items-center gap-2 rounded-full bg-brand px-6 text-sm font-semibold text-white ease-smooth transition-transform hover:scale-[1.03]"><LayoutGrid size={16} /> Dalla tua vetrina</button>
+                </span>
                 {picker}
               </label>
             </div>
@@ -276,7 +283,7 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
                     if (!m.out || m.busy || (e.target as HTMLElement).closest('button, a')) return;
                     if (d && Math.hypot(e.clientX - d.x, e.clientY - d.y) > 6) return;
                     setViewer({ src: m.out, before: m.before });
-                  }}><AiPhotoStage src={m.before} busy={m.busy} out={m.out} reveal={m.reveal} msg={tick % 5} fileName="home-staging.jpg" className={`h-full ${m.err || (m.out && !m.busy) ? '' : '!rounded-bl-[8px]'}`} />
+                  }}><AiPhotoStage parked={i === zoneOwner} src={m.before} busy={m.busy} out={m.out} reveal={m.reveal} msg={tick % 5} fileName="home-staging.jpg" className={`h-full ${m.err || (m.out && !m.busy) ? '' : '!rounded-bl-[8px]'}`} />
                 </div>
                 {/* Modifica: la foto sotto resta montata e ferma, la selezione ci si appoggia sopra; sotto cambiano solo i controlli */}
                 {i === zoneOwner ? zonePicker(ratios[m.before] ?? 1.5) : <>
@@ -311,6 +318,7 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
         </div>
       </div>
 
+      {library && <LibraryPicker onFiles={upload} onClose={closeLibrary} />}
       {viewer && <PhotoViewer src={viewer.src} before={viewer.before} onClose={() => setViewer(null)} />}
       {/* Sfumatura progressiva in alto e in basso: la conversazione scorre sotto */}
       <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-6"><ProgressiveBlur side="top" fade={24} /></div>
@@ -333,9 +341,9 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
           <div className={`flex items-center gap-1.5 rounded-[26px] bg-white p-2 pl-2.5 ${CARD_SHADOW} ${drag ? 'ring-2 ring-brand' : ''}`}>
             {/* foto e zona vicine, come un gruppo di strumenti */}
             <div className="flex shrink-0 items-center">
-              <label title={base ? 'Carica un\'altra foto' : 'Carica una foto'} className="flex h-10 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink">
-                <ImagePlus size={20} />{picker}
-              </label>
+              <button type="button" onClick={() => setLibrary(true)} title={base ? 'Carica un\'altra foto' : 'Carica una foto'} className="flex h-10 w-9 shrink-0 items-center justify-center rounded-full text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink">
+                <ImagePlus size={20} />
+              </button>
               {base && (
                 <button onClick={() => { if (!selecting) morphFrom(document.querySelector('[data-base-photo]'), 'zone'); setSelecting(v => !v); }} title="Seleziona una zona della foto" aria-pressed={selecting}
                   className={`flex h-10 w-9 shrink-0 items-center justify-center rounded-full ease-smooth transition-colors ${selecting || region || points.length ? 'bg-rose-50 text-rose-600' : 'text-muted hover:bg-canvas hover:text-ink'}`}>
@@ -463,7 +471,7 @@ function ZonePicker({ inline, src, region, points, mask, onChange, onPick, onPre
   );
   const photo = (
       <div ref={box} className={`touch-none ${inline ? `absolute inset-x-0 bottom-full z-20 ease-smooth transition-opacity ${closing ? 'pointer-events-none' : ''}` : 'relative mx-auto max-h-[calc(100vh-24rem)] w-fit'} select-none overflow-hidden rounded-2xl ${tool === 'rect' ? 'cursor-crosshair' : ''}`}
-        style={{ ...(inline ? { aspectRatio: inline, ...(closing ? { opacity: 0, transitionDuration: '300ms' } : { animation: 'gnm-fade var(--gnm-dur) var(--gnm-ease) both' }) } : {}), ...(tool === 'points' ? { cursor: TARGET_CURSOR } : {}) }}
+        style={{ ...(inline ? { aspectRatio: inline, ...(closing ? { opacity: 0, transitionDuration: '300ms' } : { animation: 'gnm-fade var(--gnm-dur) var(--gnm-ease) .45s both' }) } : {}), ...(tool === 'points' ? { cursor: TARGET_CURSOR } : {}) }}
         onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerLeave={leave}>
         <img src={src} alt="" draggable={false} onLoad={inline ? undefined : onLoad} className={inline ? 'block h-full w-full object-cover' : 'block max-h-[calc(100vh-24rem)] w-auto max-w-full'} />
         {!inline && closeBtn}
