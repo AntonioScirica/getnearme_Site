@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ArrowUp, ImagePlus, Lasso, LayoutGrid, Loader2, Monitor, RotateCcw, SquareDashed, SquareDashedMousePointer, X } from 'lucide-react';
+import { ArrowUp, ImagePlus, Lasso, Shuffle, LayoutGrid, Loader2, Monitor, RotateCcw, SquareDashed, SquareDashedMousePointer, X } from 'lucide-react';
 import { fileToResizedDataUrl } from '@/lib/staging';
 import { AI_MOCK } from '@/lib/aiMock';
 import { AiPhotoStage, QUICK_PRESETS, type EditRequest, type Region, type Reveal, type Suggestion } from './AiPhoto';
@@ -50,7 +50,7 @@ const seenLabel = (k: string) => (k.startsWith('custom:') ? k.slice(7) : SEEN_OP
 type Msg =
   | { id: string; role: 'divider'; image: string }
   | { id: string; role: 'user'; text?: string; image?: string; seen?: string | null; region?: Region }
-  | { id: string; role: 'ai'; before: string; out: string | null; busy: boolean; reveal: Reveal; err?: string; text: string };
+  | { id: string; role: 'ai'; before: string; out: string | null; busy: boolean; reveal: Reveal; err?: string; text: string; req?: EditRequest };
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 const wait = (ms: number) => new Promise(r => setTimeout(r, ms));
@@ -154,7 +154,6 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList | Fil
     const id = uid();
     const before = base;
     const zone = region;
-    setMsgs(ms => [...ms, { id: uid(), role: 'user', text: t, region: zone ?? undefined }, { id, role: 'ai', before, out: null, busy: true, reveal: null, text: t }]);
     setText(''); setPicked(null); clearZone(); setSelecting(false);
     const req: EditRequest = {
       ...(project ? { projectId: project } : {}),
@@ -164,6 +163,18 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList | Fil
         ? { planimetria: true, style: planStyle(t) }
         : { scene, ...(zone ? { prompt: pk?.req.prompt && t === pk.label ? pk.req.prompt : t, region: zone } : pk && t === pk.label && !pk.req.prompt ? pk.req : { prompt: pk?.req.prompt && t === pk.label ? pk.req.prompt : t }) }),
     };
+    setMsgs(ms => [...ms, { id: uid(), role: 'user', text: t, region: zone ?? undefined }, { id, role: 'ai', before, out: null, busy: true, reveal: null, text: t, req }]);
+    await run(id, req, before);
+  };
+  // Stesso stile ma diverso: stessa richiesta sulla stessa foto di partenza, nuovo seme (lo sceglie il server)
+  const variant = async (m: Extract<Msg, { role: 'ai' }>) => {
+    if (!m.req || busy) return;
+    touch();
+    const id = uid();
+    setMsgs(ms => [...ms, { id: uid(), role: 'user', text: 'Stesso stile, un’altra versione' }, { id, role: 'ai', before: m.before, out: null, busy: true, reveal: null, text: m.text, req: m.req }]);
+    await run(id, m.req, m.before);
+  };
+  const run = async (id: string, req: EditRequest, before: string) => {
     const res = await authFetch('/api/platform/photo-edit', { method: 'POST', body: JSON.stringify(req) }).catch(() => null);
     let d = res ? await res.json().catch(() => ({})) : {};
     if (AI_MOCK && res?.status === 401) { await wait(4000); d = { url: before }; } // anteprima senza login
@@ -310,6 +321,11 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList | Fil
                     <div className="flex shrink-0 items-center gap-1">
                       <button onClick={() => { if (base !== m.out) restartFrom(i, m.out!); setSelecting(true); }}
                         className="flex h-8 items-center gap-1.5 rounded-full px-3 font-medium leading-none text-ink hover:bg-canvas"><SquareDashedMousePointer size={14} className="translate-y-px" /> Modifica</button>
+                      {m.req && (
+                        <Tooltip label="Stesso stile, un'altra versione">
+                          <button onClick={() => variant(m)} disabled={busy} aria-label="Stesso stile, un'altra versione" className="flex h-8 items-center gap-1.5 rounded-full px-3 font-medium leading-none text-ink hover:bg-canvas disabled:opacity-40"><Shuffle size={14} className="translate-y-px" /> Altra versione</button>
+                        </Tooltip>
+                      )}
                       {base !== m.out && (
                         <>
                           <span className="mx-1 h-4 w-px bg-line" aria-hidden />
