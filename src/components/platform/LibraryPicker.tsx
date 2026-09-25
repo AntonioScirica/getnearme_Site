@@ -5,7 +5,6 @@ import { createPortal } from 'react-dom';
 import { ArrowLeft, Loader2, Monitor, X } from 'lucide-react';
 import { fetchProjects, type ProjectData } from '@/lib/projects';
 import { FAKE_PROPERTIES } from '@/lib/fakeProperties';
-import { fetchMedia, type MediaItem } from './MediaView';
 
 // Scelta della foto per la chat: dalla vetrina (gli immobili dell'agente, poi le foto di quello scelto) o dal computer.
 // Finestra ad altezza fissa: passando da immobili a foto non cambia misura.
@@ -27,10 +26,6 @@ export default function LibraryPicker({ onFiles, onClose }: { onFiles: (files: F
   const [open, setOpen] = useState<ProjectData | null>(null);
   const [loading, setLoading] = useState<string | null>(null);
   const [err, setErr] = useState(false);
-  // due fonti: gli immobili della vetrina o le foto gia' create (Media)
-  const [src, setSrc] = useState<'vetrina' | 'media'>('vetrina');
-  const [media, setMedia] = useState<MediaItem[] | null>(null);
-  useEffect(() => { if (src === 'media' && !media) fetchMedia().then(setMedia); }, [src, media]);
   useEffect(() => {
     fetchProjects().then(ps => setProjects(ps.length || process.env.NODE_ENV !== 'development' ? ps : FAKE_PROPERTIES));
     const k = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -52,7 +47,7 @@ export default function LibraryPicker({ onFiles, onClose }: { onFiles: (files: F
           {/* titolo e descrizione in un blocco: la descrizione sta subito sotto il titolo */}
           <div className="min-w-0 flex-1">
             <h2 className="truncate text-lg font-semibold leading-tight">{open ? open.titolo || open.nome : 'Scegli una foto'}</h2>
-            {!open && <p className="pt-0.5 text-sm text-muted">{src === 'vetrina' ? 'Dalla tua vetrina: scegli l’immobile e poi la foto.' : 'Dalla tua galleria: le foto già create con l’AI.'}</p>}
+            {!open && <p className="pt-0.5 text-sm text-muted">Dalla tua vetrina: scegli l’immobile e poi la foto.</p>}
           </div>
           <label className="flex h-9 cursor-pointer items-center gap-2 rounded-full bg-canvas px-4 text-sm font-medium ease-smooth transition-colors hover:bg-line">
             <Monitor size={15} /> Dal computer
@@ -60,28 +55,9 @@ export default function LibraryPicker({ onFiles, onClose }: { onFiles: (files: F
           </label>
           <button onClick={onClose} aria-label="Chiudi" className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-canvas"><X size={18} /></button>
         </div>
-        {!open && (
-          <div className="mb-4 flex w-fit rounded-full bg-canvas p-1 text-sm font-medium">
-            {([['vetrina', 'La tua vetrina'], ['media', 'Galleria']] as const).map(([k, l]) => (
-              <button key={k} type="button" onClick={() => setSrc(k)} className={`h-8 rounded-full px-4 ease-smooth transition-colors ${src === k ? 'bg-white text-ink shadow-sm' : 'text-muted hover:text-ink'}`}>{l}</button>
-            ))}
-          </div>
-        )}
         {err && <p className="pb-3 text-sm text-rose-600">Non riesco a scaricare questa foto, provane un&apos;altra.</p>}
         <div className="-mx-1 min-h-0 flex-1 overflow-y-auto px-1 [scrollbar-width:thin]">
-          {src === 'media' && !open ? (
-            media === null ? <div className="flex h-full items-center justify-center text-muted"><Loader2 size={20} className="animate-spin" /></div>
-            : media.length ? (
-              <div key="media" className="blur-in grid grid-cols-2 gap-3 sm:grid-cols-3">
-                {media.map(m => (
-                  <button key={m.dopo} onClick={() => pick(m.dopo, m.casa)} disabled={!!loading} className="relative overflow-hidden rounded-2xl ease-smooth transition-opacity hover:opacity-90 disabled:opacity-60">
-                    <img src={m.dopo} alt="" loading="lazy" className="aspect-[4/3] w-full object-cover" />
-                    {loading === m.dopo && <span className="absolute inset-0 flex items-center justify-center bg-white/60"><Loader2 size={20} className="animate-spin" /></span>}
-                  </button>
-                ))}
-              </div>
-            ) : <p className="flex h-full items-center justify-center text-sm text-muted">Non hai ancora creato foto con l&apos;AI.</p>
-          ) : projects === null ? (
+          {projects === null ? (
             <div className="flex h-full items-center justify-center text-muted"><Loader2 size={20} className="animate-spin" /></div>
           ) : !open ? (
             list.length ? (
