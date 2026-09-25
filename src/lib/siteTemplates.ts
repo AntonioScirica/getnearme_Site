@@ -269,7 +269,7 @@ export const FIELD_LABELS: Record<string, string> = {
   'form.button': 'Pulsante del modulo', 'form.done': 'Messaggio dopo l’invio', 'zone.eyebrow': 'Scritta sopra il titolo',
   heroTitle: 'Titolo', heroSubtitle: 'Sottotitolo', city: 'Città o zona', heroImage: 'Foto di copertina', ctaLabel: 'Pulsante contatti', topBar: 'Barra con telefono ed email',
   aboutTitle: 'Nome della sezione', aboutText: 'Chi sei', aboutImage: 'La tua foto', agentRole: 'Ruolo', areas: 'Zone in cui lavori', highlights: 'Punti in evidenza',
-  years: 'Anni di esperienza', sold: 'Immobili venduti', clients: 'Clienti seguiti', showStats: 'Mostra i numeri', showPrices: 'Mostra i prezzi',
+  years: 'Anni di esperienza', sold: 'Immobili venduti', clients: 'Clienti seguiti', showStats: 'Mostra i numeri (anni, immobili, clienti)', whatsappButton: 'Pulsante WhatsApp', showPrices: 'Mostra i prezzi',
   reviews: 'Recensioni', zones: 'Pagine zona', services: 'Servizi', method: 'Il tuo metodo',
   phone: 'Telefono', whatsapp: 'WhatsApp', email: 'Email', address: 'Indirizzo dell’ufficio', legal: 'P.IVA, REA', instagram: 'Instagram (link)', facebook: 'Facebook (link)',
 }

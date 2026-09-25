@@ -28,7 +28,9 @@ const Accent = ({ children, color }: { children: string; color?: boolean }) =>
 // primo paragrafo del testo "chi sono" (il resto, con i sottotitoli, sta nella pagina profilo)
 export const introOf = (cfg: SiteConfig) => cfg.aboutText.split(/\n{2,}/)[0].replace(/^## .*$/gm, '').trim();
 
+// numeri del profilo; "Mostra i numeri" spento = nessun numero, e i blocchi che li usano si riadattano
 export function statsOf(cfg: SiteConfig, properties: SiteProperty[]) {
+  if (!cfg.showStats) return [];
   const zones = new Set(properties.map(p => p.addr?.split(',').slice(-1)[0]?.trim()).filter(Boolean)).size;
   return [
     cfg.years && { v: `${cfg.years}+`, l: 'Anni di esperienza' },
@@ -452,7 +454,7 @@ export function Intro() {
       <Container className="pt-20">
         <div className="text-sm text-[var(--muted)]">Chi è {name}</div>
         <H className="mt-2 text-4xl md:text-5xl">Al tuo fianco, dalla ricerca al rogito</H>
-        <div className="mt-10 grid gap-4 lg:grid-cols-[1.2fr_1fr]">
+        <div className={`mt-10 grid gap-4 ${stats.length ? 'lg:grid-cols-[1.2fr_1fr]' : ''}`}>
           <div className="rounded-[var(--r)] bg-[var(--surface)] p-6 ring-1 ring-[var(--line)]">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="max-w-sm"><div className="text-lg font-semibold">Trova la casa giusta vicino a te</div><p className="mt-2 text-sm text-[var(--muted)]">{introOf(cfg)}</p></div>
@@ -460,14 +462,14 @@ export function Intro() {
             </div>
             <div className="mt-5"><MapBlock addr={cfg.city || properties[0]?.addr || 'Italia'} bare /></div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          {stats.length > 0 && <div className="grid grid-cols-2 gap-4">
             {stats.map(x => (
               <div key={x.l} className="flex flex-col justify-between rounded-[var(--r)] bg-[var(--surface)] p-6 ring-1 ring-[var(--line)]">
                 <div className="flex items-start justify-between"><span className="text-4xl font-bold tracking-tight md:text-5xl">{x.v}</span><ArrowUpRight size={18} className="text-[var(--muted)]" /></div>
                 <span className="mt-8 text-sm">{x.l}</span>
               </div>
             ))}
-          </div>
+          </div>}
         </div>
       </Container>
     );
@@ -504,7 +506,7 @@ export function Intro() {
   return (
     <Container className="grid gap-10 pt-20 md:grid-cols-2 md:items-end">
       <div>
-        <H className="text-5xl md:text-6xl">{stats[0]?.v ?? properties.length} {stats[0]?.l.toLowerCase() ?? 'immobili'}.</H>
+        <H className="text-5xl md:text-6xl">{stats[0] ? `${stats[0].v} ${stats[0].l.toLowerCase()}.` : 'Case scelte con cura.'}</H>
         <div className="mt-6 flex items-center gap-3">
           <span className="flex -space-x-2">{cfg.reviews.slice(0, 3).map((r, i) => <span key={i} className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--soft)] text-xs font-bold ring-2 ring-white">{initial(r.name)}</span>)}<span className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--c)] text-white ring-2 ring-white"><Star size={14} fill="currentColor" /></span></span>
           <span className="text-sm text-[var(--muted)]">Clienti che ci hanno scelto</span>
@@ -738,7 +740,7 @@ export function AboutBlock() {
           <div className="text-[11px] font-semibold uppercase tracking-[0.35em] text-white/60">{cfg.aboutTitle}</div>
           <H className="mt-5 text-5xl md:text-6xl">{name}</H>
           <p className="mt-6 max-w-xl text-lg leading-relaxed text-white/70">{introOf(cfg)}</p>
-          <div className="mt-10 grid grid-cols-3 gap-6 border-t border-white/15 pt-8">{stats.slice(0, 3).map(s => <div key={s.l}><div className="text-4xl font-bold">{s.v}</div><div className="mt-1 text-xs text-white/60">{s.l}</div></div>)}</div>
+          {stats.length > 0 && <div className="mt-10 grid grid-cols-3 gap-6 border-t border-white/15 pt-8">{stats.slice(0, 3).map(s => <div key={s.l}><div className="text-4xl font-bold">{s.v}</div><div className="mt-1 text-xs text-white/60">{s.l}</div></div>)}</div>}
         </div>
         <Photo src={photo} className="aspect-[4/5] rounded-[var(--r)]" />
       </Container>
@@ -752,7 +754,7 @@ export function AboutBlock() {
           <div className="text-xs font-semibold uppercase tracking-[0.25em] text-white/60">{cfg.aboutTitle}</div>
           <H className="mt-4 text-4xl md:text-5xl">{name}</H>
           <p className="mt-5 leading-relaxed text-white/75">{introOf(cfg)}</p>
-          <div className="mt-8 flex flex-wrap gap-8">{stats.slice(0, 3).map(s => <div key={s.l}><div className="text-3xl font-semibold">{s.v}</div><div className="text-xs text-white/60">{s.l}</div></div>)}</div>
+          {stats.length > 0 && <div className="mt-8 flex flex-wrap gap-8">{stats.slice(0, 3).map(s => <div key={s.l}><div className="text-3xl font-semibold">{s.v}</div><div className="text-xs text-white/60">{s.l}</div></div>)}</div>}
         </div>
       </div>
     </Container>
@@ -765,10 +767,10 @@ export function AboutBlock() {
   );
   if (t.about === 'numbers') return (
     <Container className="py-24">
-      <div className="grid gap-px overflow-hidden rounded-[var(--r)] bg-[var(--line)] md:grid-cols-4">
+      {stats.length > 0 && <div className="mb-14 grid gap-px overflow-hidden rounded-[var(--r)] bg-[var(--line)] md:grid-cols-4">
         {stats.map(s => <div key={s.l} className="bg-[var(--surface)] p-8"><H className="text-5xl">{s.v}</H><div className="mt-2 text-sm text-[var(--muted)]">{s.l}</div></div>)}
-      </div>
-      <div className="mt-14 grid items-center gap-10 md:grid-cols-[auto_1fr]">
+      </div>}
+      <div className="grid items-center gap-10 md:grid-cols-[auto_1fr]">
         {cfg.aboutImage ? <Photo src={cfg.aboutImage} className="h-40 w-40 rounded-full" /> : <span className="flex h-40 w-40 items-center justify-center rounded-full bg-[var(--soft)] text-5xl font-bold">{initial(name)}</span>}
         <div><H className="text-3xl md:text-4xl">“{introOf(cfg)}”</H><SiteLink to={{ page: 'agente' }} className="mt-5 inline-flex items-center gap-2 text-sm font-semibold">{name} · {cfg.agentRole} <ArrowRight size={14} /></SiteLink></div>
       </div>
@@ -778,9 +780,9 @@ export function AboutBlock() {
     <section className="bg-[var(--soft)] py-24">
       <Container className="grid items-center gap-10 lg:grid-cols-[1fr_1.35fr]">
         <div><Eyebrow>{cfg.aboutTitle}</Eyebrow><H className="mt-3 text-3xl md:text-[2.7rem]">{name}</H><p className="mt-5 leading-relaxed text-[var(--muted)]">{introOf(cfg)}</p>{checks}{more}</div>
-        <div className="grid gap-4 sm:grid-cols-[1fr_190px]">
+        <div className={`grid gap-4 ${stats.length ? 'sm:grid-cols-[1fr_190px]' : ''}`}>
           <Photo src={photo} className="aspect-[4/3.2] rounded-[var(--r)] sm:aspect-auto sm:min-h-[400px]" />
-          {cfg.showStats && <div className="grid grid-cols-2 gap-4 rounded-[var(--r)] bg-[var(--surface)] p-6 sm:grid-cols-1 sm:content-center">{stats.map(s => <div key={s.l}><div className="text-3xl font-bold tracking-tight text-[var(--c)]">{s.v}</div><div className="text-xs text-[var(--muted)]">{s.l}</div></div>)}</div>}
+          {stats.length > 0 && <div className="grid grid-cols-2 gap-4 rounded-[var(--r)] bg-[var(--surface)] p-6 sm:grid-cols-1 sm:content-center">{stats.map(s => <div key={s.l}><div className="text-3xl font-bold tracking-tight text-[var(--c)]">{s.v}</div><div className="text-xs text-[var(--muted)]">{s.l}</div></div>)}</div>}
         </div>
       </Container>
     </section>
