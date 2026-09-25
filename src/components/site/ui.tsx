@@ -66,6 +66,8 @@ export type SiteCtx = {
   preview?: boolean; go?: (p: Page) => void;
   // editor: in modalita' modifica i clic selezionano la sezione invece di navigare
   editMode?: boolean; selected?: string | null; onSelect?: (id: string) => void;
+  // editor: segna quali testi usa davvero il modello aperto (gli altri non si mostrano tra i campi)
+  onText?: (key: string) => void;
 };
 const Ctx = createContext<SiteCtx | null>(null);
 export const useSite = () => {
@@ -195,8 +197,8 @@ export function FavButton({ id, className = '' }: { id: string; className?: stri
 
 // Testo del sito: quello scritto dall'agente o quello di partenza
 export function useT() {
-  const { cfg } = useSite();
-  return (key: string) => cfg.texts[key] || TEXTS[key] || '';
+  const { cfg, onText } = useSite();
+  return (key: string) => { onText?.(key); return cfg.texts[key] || TEXTS[key] || ''; };
 }
 
 const LABELS: Record<string, string> = Object.fromEntries(Object.values(PAGE_SECTIONS).flat().map(x => [x.id, x.label]));

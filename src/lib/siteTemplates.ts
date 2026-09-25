@@ -194,23 +194,24 @@ export const TEXTS: Record<string, string> = {
   'zone.eyebrow': 'Zona',
 }
 
-export type SectionDef = { id: string; label: string; texts?: string[]; hideable?: boolean; cfg?: (keyof SiteConfig)[]; note?: string }
+// order: testi e impostazioni mescolati nell'ordine in cui si vedono nella sezione (senza: prima i testi, poi le impostazioni)
+export type SectionDef = { id: string; label: string; texts?: string[]; hideable?: boolean; cfg?: (keyof SiteConfig)[]; note?: string; order?: string[] }
 export type PageId = 'home' | 'immobili' | 'immobile' | 'agente' | 'servizi' | 'contatti' | 'zona'
 
 export const PAGE_SECTIONS: Record<PageId, SectionDef[]> = {
   home: [
-    { id: 'header', label: 'Barra in alto', cfg: ['ctaLabel', 'topBar'] },
-    { id: 'home.hero', label: 'Apertura', texts: ['hero.eyebrow', 'hero.cta', 'hero.cta2', 'search.button', 'search.more'], cfg: ['heroTitle', 'heroSubtitle', 'city', 'heroImage'] },
+    { id: 'header', label: 'Barra in alto', cfg: ['ctaLabel', 'topBar'], order: ['topBar', 'ctaLabel'] },
+    { id: 'home.hero', label: 'Apertura', texts: ['hero.eyebrow', 'hero.cta', 'hero.cta2', 'search.button', 'search.more'], cfg: ['heroTitle', 'heroSubtitle', 'city', 'heroImage'], order: ['hero.eyebrow', 'heroTitle', 'heroSubtitle', 'hero.cta', 'hero.cta2', 'city', 'search.button', 'search.more', 'heroImage'] },
     { id: 'home.intro', label: 'Dopo l’apertura', hideable: true, texts: ['intro.title', 'intro.button', 'feature.1.title', 'feature.1.text', 'feature.2.title', 'feature.2.text', 'feature.3.title', 'feature.3.text', 'feature.4.title', 'feature.4.text'] },
-    { id: 'home.featured', label: 'Immobili in evidenza', hideable: true, texts: ['featured.eyebrow', 'featured.title', 'featured.sub', 'featured.link'], cfg: ['showPrices'] },
-    { id: 'home.about', label: 'Chi sono', hideable: true, texts: ['about.check.1', 'about.check.2', 'about.check.3', 'about.cta'], cfg: ['aboutTitle', 'aboutText', 'aboutImage', 'years', 'sold', 'clients', 'showStats'] },
+    { id: 'home.featured', label: 'Immobili in evidenza', hideable: true, texts: ['featured.eyebrow', 'featured.title', 'featured.sub', 'featured.link'], cfg: ['showPrices'], order: ['featured.eyebrow', 'featured.title', 'featured.sub', 'showPrices', 'featured.link'] },
+    { id: 'home.about', label: 'Chi sono', hideable: true, texts: ['about.check.1', 'about.check.2', 'about.check.3', 'about.cta'], cfg: ['aboutTitle', 'aboutText', 'aboutImage', 'years', 'sold', 'clients', 'showStats'], order: ['aboutImage', 'aboutTitle', 'aboutText', 'about.check.1', 'about.check.2', 'about.check.3', 'showStats', 'years', 'sold', 'clients', 'about.cta'] },
     { id: 'home.reviews', label: 'Recensioni', hideable: true, texts: ['reviews.eyebrow', 'reviews.title'], cfg: ['reviews'] },
     { id: 'home.zones', label: 'Zone', hideable: true, texts: ['zones.eyebrow', 'zones.title'], cfg: ['zones'] },
     { id: 'cta', label: 'Fascia contatti', hideable: true, texts: ['cta.title', 'cta.text'], cfg: ['phone', 'whatsapp', 'email'] },
     { id: 'footer', label: 'Piè di pagina', cfg: ['address', 'legal', 'instagram', 'facebook'] },
   ],
   immobili: [
-    { id: 'header', label: 'Barra in alto', cfg: ['ctaLabel', 'topBar'] },
+    { id: 'header', label: 'Barra in alto', cfg: ['ctaLabel', 'topBar'], order: ['topBar', 'ctaLabel'] },
     { id: 'listings.head', label: 'Titolo della pagina', texts: ['listings.eyebrow', 'listings.title', 'listings.empty'] },
     { id: 'cta', label: 'Fascia contatti', hideable: true, texts: ['cta.title', 'cta.text'] },
     { id: 'footer', label: 'Piè di pagina', cfg: ['address', 'legal'] },
@@ -221,7 +222,7 @@ export const PAGE_SECTIONS: Record<PageId, SectionDef[]> = {
     { id: 'property.features', label: 'Caratteristiche', hideable: true, texts: ['property.features'] },
     { id: 'property.zone', label: 'Nella zona', hideable: true, texts: ['property.zone'] },
     { id: 'property.map', label: 'Mappa', hideable: true, texts: ['property.map'] },
-    { id: 'property.agent', label: 'Scheda agente e modulo', texts: ['property.form', 'form.button', 'form.done'], cfg: ['phone', 'whatsapp', 'email'] },
+    { id: 'property.agent', label: 'Scheda agente e modulo', texts: ['property.form', 'form.button', 'form.done'], cfg: ['phone', 'whatsapp', 'email'], order: ['phone', 'whatsapp', 'email', 'property.form', 'form.button', 'form.done'] },
     { id: 'property.similar', label: 'Immobili simili', hideable: true, texts: ['property.similar'] },
   ],
   agente: [
@@ -234,7 +235,7 @@ export const PAGE_SECTIONS: Record<PageId, SectionDef[]> = {
     { id: 'services.head', label: 'Titolo della pagina', texts: ['services.eyebrow', 'services.title', 'services.sub'] },
     { id: 'services.list', label: 'Servizi', cfg: ['services'] },
     { id: 'services.method', label: 'Il tuo metodo', hideable: true, texts: ['services.methodLabel'], cfg: ['method'] },
-    { id: 'services.form', label: 'Consulenza gratuita', hideable: true, texts: ['services.formTitle', 'services.formText', 'form.button'], cfg: ['highlights'] },
+    { id: 'services.form', label: 'Consulenza gratuita', hideable: true, texts: ['services.formTitle', 'services.formText', 'form.button'], cfg: ['highlights'], order: ['services.formTitle', 'services.formText', 'highlights', 'form.button'] },
   ],
   contatti: [
     { id: 'contact.head', label: 'Titolo della pagina', texts: ['contact.eyebrow', 'contact.title', 'contact.sub'] },

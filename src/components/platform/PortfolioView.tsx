@@ -31,6 +31,15 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
   const [saved, setSaved] = useState<'idle' | 'saving' | 'ok'>('idle');
   const [copied, setCopied] = useState(false);
   const [page, setPage] = useState<Page>({ page: 'home' });
+  // testi che l'anteprima del modello aperto legge davvero: l'editor mostra solo quei campi.
+  // ponytail: insieme che cresce finche' non cambi modello; se una variante smette di usare un testo resta visibile fino al cambio
+  const usedTexts = useRef(new Set<string>());
+  const usedTpl = useRef('');
+  const getUsed = () => usedTexts.current;
+  const noteText = (k: string) => {
+    if (usedTpl.current !== cfg?.template) { usedTpl.current = cfg?.template ?? ''; usedTexts.current = new Set(); }
+    usedTexts.current.add(k);
+  };
   // null = galleria dei modelli; altrimenti editor del modello scelto
   const [editing, setEditing] = useState<TemplateId | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
@@ -122,11 +131,11 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
           </div>
         <div className="grid items-start gap-6 lg:grid-cols-[340px_minmax(0,1fr)]">
           {/* Controlli: sezioni della pagina aperta (clic nell'anteprima = apre la sezione) o impostazioni generali */}
-          <SideEditor cfg={cfg} set={set} page={page} onPage={setPage} firstId={props[0]?.id} covers={covers} selected={selected} setSelected={setSelected} />
+          <SideEditor cfg={cfg} set={set} page={page} onPage={setPage} firstId={props[0]?.id} covers={covers} selected={selected} setSelected={setSelected} getUsed={getUsed} />
 
           {/* Anteprima dal vivo */}
           <Preview vtName={`tpl-${cfg.template}`} page={page} onPage={p => { setPage(p); setSelected(null); }} firstId={props[0]?.id} editMode={editMode} setEditMode={setEditMode}>
-            <SitePage page={page} ctx={{ cfg, name: site.name || 'La tua agenzia', logo: site.logo, properties: props, base: '', preview: true, go: p => { setPage(p); setSelected(null); }, editMode, selected, onSelect: setSelected }} />
+            <SitePage page={page} ctx={{ cfg, name: site.name || 'La tua agenzia', logo: site.logo, properties: props, base: '', preview: true, go: p => { setPage(p); setSelected(null); }, editMode, selected, onSelect: setSelected, onText: noteText }} />
           </Preview>
         </div>
         </div>
@@ -136,16 +145,17 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
 }
 
 // Colonna dell'editor: scheda Pagina (sezioni della pagina aperta, nello stesso ordine del sito) e Generale
-function SideEditor({ cfg, set, page, onPage, firstId, covers, selected, setSelected }: {
-  cfg: SiteConfig; set: (p: Partial<SiteConfig>) => void; page: Page; onPage: (p: Page) => void; firstId?: string; covers: string[]; selected: string | null; setSelected: (id: string | null) => void;
+function SideEditor({ cfg, set, page, onPage, firstId, covers, selected, setSelected, getUsed }: {
+  cfg: SiteConfig; set: (p: Partial<SiteConfig>) => void; page: Page; onPage: (p: Page) => void; firstId?: string; covers: string[]; selected: string | null; setSelected: (id: string | null) => void; getUsed: () => Set<string>;
 }) {
   const [tab, setTab] = useState<'pagina' | 'generale'>('pagina');
   const refs = useRef<Record<string, HTMLDivElement | null>>({});
   const scroller = useRef<HTMLDivElement>(null);
   // sezioni nell'ordine in cui compaiono nell'anteprima (ogni modello le dispone a modo suo)
   const [order, setOrder] = useState<string[]>([]);
+  const [used, setUsed] = useState<Set<string> | null>(null); // testi che il modello mostra davvero
   useEffect(() => {
-    const t = setTimeout(() => setOrder([...document.querySelectorAll('[data-morph="preview"] [data-sec]')].map(e => e.getAttribute('data-sec')!)), 150);
+    const t = setTimeout(() => { setOrder([...document.querySelectorAll('[data-morph="preview"] [data-sec]')].map(e => e.getAttribute('data-sec')!)); setUsed(new Set(getUsed())); }, 150);
     return () => clearTimeout(t);
   }, [page, cfg.template]); // non su "nascondi": le sezioni nascoste non sono nell'anteprima e finirebbero in fondo
   const rank = (id: string) => { const i = order.indexOf(id); return i < 0 ? 999 : i; };
@@ -192,11 +202,11 @@ function SideEditor({ cfg, set, page, onPage, firstId, covers, selected, setSele
                     {open && (
                       <div className="space-y-3 border-t border-black/5 p-3">
                         {sec.note && <p className="text-xs text-muted">{sec.note}</p>}
-                        {sec.cfg?.map(k => <CfgField key={k} k={k} cfg={cfg} set={set} covers={covers} />)}
-                        {sec.texts?.map(k => (
-                          <TextField key={k} label={FIELD_LABELS[k] ?? k} value={cfg.texts[k] ?? ''} placeholder={TEXTS[k]} long={TEXTS[k].length > 60}
-                            onChange={v => { const next = { ...cfg.texts }; if (v) next[k] = v; else delete next[k]; set({ texts: next }); }} />
-                        ))}
+                        {/* campi nell'ordine in cui si vedono nella sezione */}
+                        {(sec.order ?? [...(sec.texts ?? []), ...(sec.cfg ?? [])]).filter(k => (sec.cfg as string[] | undefined)?.includes(k) || !used?.size || used.has(k)).map(k => (sec.cfg as string[] | undefined)?.includes(k)
+                          ? <CfgField key={k} k={k as keyof SiteConfig} cfg={cfg} set={set} covers={covers} />
+                          : <TextField key={k} label={FIELD_LABELS[k] ?? k} value={cfg.texts[k] ?? ''} placeholder={TEXTS[k]} long={TEXTS[k].length > 60}
+                              onChange={v => { const next = { ...cfg.texts }; if (v) next[k] = v; else delete next[k]; set({ texts: next }); }} />)}
                       </div>
                     )}
                   </div>
