@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Home, Building2, Globe, Gauge, LogOut, Plus, Loader2, X, Wand2, Images, ExternalLink } from 'lucide-react';
+import { Home, Building2, Globe, Gauge, LogOut, Plus, Loader2, X, Wand2, Images, ExternalLink, UserRound } from 'lucide-react';
 import type { UserData } from '@/app/[locale]/dashboard/page';
 import { supabase } from '@/lib/supabase';
 import { fetchProjects, type ProjectData } from '@/lib/projects';
@@ -82,8 +82,9 @@ export default function PlatformApp({ userData }: { userData: UserData }) {
       </header>
 
       {/* Profilo: in basso a sinistra, solo icona e scritta; dentro nome, vetrina e uscita */}
-      <a href="#/profilo" className={`fixed bottom-5 left-5 z-30 flex items-center gap-2 rounded-full bg-white py-1.5 pl-1.5 pr-4 text-sm font-medium shadow-sm ring-1 ring-line ease-smooth transition-shadow hover:shadow-md ${route === '/profilo' ? 'ring-ink' : ''}`}>
-        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-canvas text-xs font-bold">{(profile?.name || userData.email)[0]?.toUpperCase()}</span> Profilo
+      {/* Profilo: solo icona e testo; in home al centro in basso, nelle altre pagine in basso a sinistra */}
+      <a href="#/profilo" className={`fixed bottom-5 z-30 flex h-10 items-center gap-2 rounded-full bg-white px-4 text-sm font-medium shadow-sm ring-1 ring-line ease-smooth transition-shadow hover:shadow-md ${route === '/' ? 'left-1/2 -translate-x-1/2' : 'left-5'} ${route === '/profilo' ? 'ring-ink' : ''}`}>
+        <UserRound size={16} className="text-muted" /> Profilo
       </a>
 
       <main className={`flex-1 ${route === '/staging' ? 'overflow-hidden' : 'overflow-y-auto'}`}>
