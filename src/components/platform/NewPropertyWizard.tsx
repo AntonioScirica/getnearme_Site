@@ -10,6 +10,7 @@ import {
 import { createProject, type ProjectData } from '@/lib/projects';
 import { downscaleDataUrl, uploadDataUrl } from '@/lib/imageUpload';
 import ProgressiveBlur from '@/components/ProgressiveBlur';
+import { createPortal } from 'react-dom';
 import FitImage from '@/components/ui/FitImage';
 import { ALL_FIELDS, completeness, ENERGY_COLORS, inkOn, formatValue, visible, type Details, type Field } from '@/lib/propertyFields';
 import { authFetch, CARD_SHADOW, portfolioUrl, setPublic } from './api';
@@ -302,9 +303,13 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
             </>}
           </div>
 
-          {/* Navigazione: fissa in basso con la sfumatura progressiva, sempre a portata (anche "Prepara l'annuncio") */}
-          <div className="sticky bottom-0 z-20 mt-10 flex items-center justify-between gap-3 pb-6 pt-10">
-            <div className="pointer-events-none absolute inset-x-[-24px] inset-y-0 -z-10"><ProgressiveBlur side="bottom" fade={24} /></div>
+          {/* Navigazione: sempre in fondo allo schermo (anche con poco contenuto), con la sfumatura progressiva.
+              In un portal: un antenato con animazione (transform) ancorerebbe il fixed alla pagina */}
+          <div className="h-28" aria-hidden />
+          {createPortal(
+          <div className="pointer-events-none fixed inset-x-0 bottom-0 z-30 pb-6 pt-12">
+            <div className="absolute inset-0"><ProgressiveBlur side="bottom" fade={24} /></div>
+            <div className="pointer-events-auto relative mx-auto flex max-w-3xl items-center justify-between gap-3 px-6">
             <button onClick={() => step > 0 && go(step - 1)} disabled={step === 0} className="text-sm text-muted hover:text-ink disabled:opacity-0">Indietro <span className="hidden text-xs text-muted/60 sm:inline">Esc</span></button>
             <div className="flex items-center gap-3">
               {cur.optional && step < STEPS.length - 1 && <button onClick={() => go(step + 1)} className="text-sm text-muted hover:text-ink">Salta</button>}
@@ -312,7 +317,10 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
                 ? <button onClick={() => go(step + 1)} disabled={!canNext} className="flex items-center gap-2 btn-ink rounded-full px-6 py-3 text-sm font-semibold">Avanti <ArrowRight size={16} /><span className="ml-1 hidden text-xs font-normal text-white/50 sm:inline">Invio</span></button>
                 : <button onClick={generate} className="flex items-center gap-2 rounded-full bg-brand px-6 py-3 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand/90 active:scale-[0.98]">Continua creazione <ArrowRight size={16} /></button>}
             </div>
-          </div>
+            </div>
+          </div>,
+          document.body,
+          )}
         </section>
       )}
 
