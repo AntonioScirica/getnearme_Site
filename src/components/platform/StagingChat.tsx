@@ -7,6 +7,7 @@ import { AI_MOCK } from '@/lib/aiMock';
 import { AiPhotoStage, QUICK_PRESETS, type EditRequest, type Region, type Reveal, type Suggestion } from './AiPhoto';
 import { authFetch, CARD_SHADOW, warm } from './api';
 import ProgressiveBlur from '@/components/ProgressiveBlur';
+import Dropdown, { type DropdownOption } from '@/components/ui/Dropdown';
 
 // Home staging come chat: l'agente carica una foto nella conversazione, scrive cosa vuole (in italiano,
 // il servizio traduce), riceve il prima/dopo e continua a chiedere sull'ultimo risultato. Caricare
@@ -15,6 +16,12 @@ import ProgressiveBlur from '@/components/ProgressiveBlur';
 type Scene = 'interno' | 'esterno' | 'giardino' | 'planimetria';
 const ROOM_LABEL: Record<string, string> = { soggiorno: 'un soggiorno', cucina: 'una cucina', camera: 'una camera da letto', cameretta: 'una cameretta', bagno: 'un bagno', sala: 'una sala da pranzo', studio: 'uno studio', ingresso: 'un ingresso', corridoio: 'un corridoio', balcone: 'un balcone', cantina: 'una cantina', box: 'un box' };
 const SCENE_LABEL: Record<Scene, string> = { interno: 'un interno', esterno: 'una facciata', giardino: 'un giardino', planimetria: 'una planimetria' };
+// Cosa sembra la foto: correggibile dal menu nel messaggio ("room:cucina" oppure "scene:esterno")
+const SEEN_OPTIONS: DropdownOption<string>[] = [
+  ...['soggiorno', 'cucina', 'camera', 'cameretta', 'bagno', 'sala', 'studio', 'ingresso', 'corridoio', 'balcone', 'cantina', 'box'].map(r => ({ value: `room:${r}`, label: ROOM_LABEL[r], group: 'Interno' })),
+  ...(['esterno', 'giardino', 'planimetria'] as const).map(x => ({ value: `scene:${x}`, label: SCENE_LABEL[x], group: 'Altro' })),
+];
+const seenLabel = (k: string) => SEEN_OPTIONS.find(o => o.value === k)?.label ?? 'un interno';
 
 type Msg =
   | { id: string; role: 'divider'; image: string }
@@ -85,7 +92,7 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
       const c = r.ok ? await r.json() : null;
       if (c?.scene) {
         setScene(c.scene);
-        const what = c.scene === 'interno' ? (ROOM_LABEL[c.room] ?? 'un interno') : SCENE_LABEL[c.scene as Scene];
+        const what = c.scene === 'interno' ? `room:${ROOM_LABEL[c.room] ? c.room : 'soggiorno'}` : `scene:${c.scene}`;
         setMsgs(ms => ms.map(m => (m.id === id && m.role === 'user' ? { ...m, seen: what } : m)));
       }
     } catch { /* senza riconoscimento resta il tipo scelto a mano */ }
@@ -182,7 +189,11 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
               </div>
               {m.image && i === msgs.length - 1 && !busy && (
                 <div className="blur-in mt-6 max-w-[85%] rounded-3xl rounded-bl-2xl bg-canvas px-4 py-3 text-sm" style={{ animationDelay: '.3s' }}>
-                  <p>{m.seen ? <>Sembra <b>{m.seen}</b>. </> : 'Foto caricata. '}Cosa vuoi cambiare? Scrivilo qui sotto o tocca un suggerimento.</p>
+                  <p>{m.seen ? <>Sembra{' '}
+                    <Dropdown value={m.seen} options={SEEN_OPTIONS} className="font-bold" onChange={v => {
+                      setMsgs(ms => ms.map(x => (x.id === m.id && x.role === 'user' ? { ...x, seen: v } : x)));
+                      setScene(v.startsWith('scene:') ? (v.slice(6) as Scene) : 'interno');
+                    }}>{seenLabel(m.seen)}</Dropdown>. </> : 'Foto caricata. '}Cosa vuoi cambiare? Scrivilo qui sotto o tocca un suggerimento.</p>
                 </div>
               )}
             </div>
@@ -198,10 +209,10 @@ export default function StagingChat({ onMany }: { onMany: (files: FileList) => v
                     {/* a destra: Modifica (zona su questa foto) e Ricomincia da qui; "Si continua da qui" solo dopo esserci tornati */}
                     <div className="flex shrink-0 items-center gap-1">
                       {base !== m.out
-                        ? <button onClick={() => restartFrom(i, m.out!)} className="flex h-8 items-center gap-1.5 rounded-full px-3 font-medium text-brand hover:bg-brand/5"><RotateCcw size={13} /> Ricomincia da qui</button>
+                        ? <button onClick={() => restartFrom(i, m.out!)} className="flex h-8 items-center gap-1.5 rounded-full px-3 font-medium leading-none text-brand hover:bg-brand/5"><RotateCcw size={14} className="translate-y-px" /> Ricomincia da qui</button>
                         : resumed === m.out && <span className="flex h-8 items-center px-3 font-medium text-emerald-600">Si continua da qui</span>}
                       <button onClick={() => { if (base !== m.out) restartFrom(i, m.out!); setSelecting(true); }}
-                        className="flex h-8 items-center gap-1.5 rounded-full px-3 font-medium text-ink hover:bg-canvas"><SquareDashedMousePointer size={13} /> Modifica</button>
+                        className="flex h-8 items-center gap-1.5 rounded-full px-3 font-medium leading-none text-ink hover:bg-canvas"><SquareDashedMousePointer size={14} className="translate-y-px" /> Modifica</button>
                     </div>
                   </div>
                 )}
