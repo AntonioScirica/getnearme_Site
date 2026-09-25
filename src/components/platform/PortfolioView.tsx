@@ -6,7 +6,7 @@ import type { ProjectData } from '@/lib/projects';
 import Tooltip from '@/components/ui/Tooltip';
 import Dropdown from '@/components/ui/Dropdown';
 import { FAKE_PROPERTIES } from '@/lib/fakeProperties';
-import { FIELD_LABELS, FONTS, fontCss, PAGE_SECTIONS, TEMPLATES, TEXTS, zoneSlug, type PageId, type SiteConfig, type SiteProperty, type TemplateId } from '@/lib/siteTemplates';
+import { FIELD_LABELS, FONTS, fontCss, PAGE_SECTIONS, PLACEHOLDERS, withPlaceholders, TEMPLATES, TEXTS, zoneSlug, type PageId, type SiteConfig, type SiteProperty, type TemplateId } from '@/lib/siteTemplates';
 import { SitePage, SiteThumb } from '@/components/site/pages';
 import type { Page } from '@/components/site/ui';
 import { fileToResizedDataUrl } from '@/lib/staging';
@@ -144,8 +144,8 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
           <SideEditor cfg={cfg} set={set} page={page} onPage={setPage} firstId={props[0]?.id} covers={covers} selected={selected} setSelected={setSelected} getUsed={getUsed} />
 
           {/* Anteprima dal vivo */}
-          <Preview wa={cfg.whatsappButton && !!cfg.whatsapp.replace(/\D/g, '')} vtName={`tpl-${cfg.template}`} page={page} onPage={p => { setPage(p); setSelected(null); }} firstId={props[0]?.id} editMode={editMode} setEditMode={setEditMode}>
-            <SitePage page={page} ctx={{ cfg, name: site.name || 'La tua agenzia', logo: site.logo, properties: props, base: '', preview: true, go: p => { setPage(p); setSelected(null); }, editMode, selected, onSelect: setSelected, onText: noteText }} />
+          <Preview wa={cfg.whatsappButton} vtName={`tpl-${cfg.template}`} page={page} onPage={p => { setPage(p); setSelected(null); }} firstId={props[0]?.id} editMode={editMode} setEditMode={setEditMode}>
+            <SitePage page={page} ctx={{ cfg: withPlaceholders(cfg), name: site.name || 'La tua agenzia', logo: site.logo, properties: props, base: '', preview: true, go: p => { setPage(p); setSelected(null); }, editMode, selected, onSelect: setSelected, onText: noteText }} />
           </Preview>
         </div>
         </div>
@@ -330,9 +330,9 @@ function CfgField({ k, cfg, set, covers }: { k: keyof SiteConfig; cfg: SiteConfi
   if (k === 'services') return <ListEditor items={cfg.services} max={8} addLabel="Aggiungi servizio" onChange={x => set({ services: x })} fields={[['title', 'Nome del servizio', 70, false], ['text', 'Descrizione', 600, true]]} empty={{ title: '', text: '' }} />;
   if (k === 'zones') return <><p className="text-xs text-muted">Una pagina per località (es. “Casa a Sirolo”). Scrivi “## Titolo” per un sottotitolo.</p><ListEditor items={cfg.zones} max={8} addLabel="Aggiungi zona" onChange={x => set({ zones: x })} fields={[['name', 'Località', 40, false], ['text', 'Testo sulla zona', 4000, true]]} empty={{ name: '', text: '' }} /></>;
   if (k === 'reviews') return <ListEditor items={cfg.reviews} max={3} addLabel="Aggiungi recensione" onChange={x => set({ reviews: x })} fields={[['text', 'Cosa ha detto il cliente', 300, true], ['name', 'Nome', 60, false]]} empty={{ text: '', name: '', zone: '' }} />;
-  if (k === 'years' || k === 'sold' || k === 'clients') return <Field label={label} value={String(v)} onChange={x => set({ [k]: x.replace(/\D/g, '') })} max={6} />;
+  if (k === 'years' || k === 'sold' || k === 'clients') return <Field label={label} value={String(v)} placeholder={PLACEHOLDERS[k]} onChange={x => set({ [k]: x.replace(/\D/g, '') })} max={6} />;
   const long = k === 'aboutText' || k === 'method' || k === 'heroSubtitle';
-  return <Field label={label} value={String(v ?? '')} onChange={x => set({ [k]: x })} max={k === 'aboutText' ? 900 : k === 'method' ? 1500 : 300} area={long} />;
+  return <Field label={label} value={String(v ?? '')} placeholder={PLACEHOLDERS[k]} onChange={x => set({ [k]: x })} max={k === 'aboutText' ? 900 : k === 'method' ? 1500 : 300} area={long} />;
 }
 
 // Riporta in cima la pagina (ease-in-out, 600 ms), poi `done`: scegliendo un modello in basso l'editor si apre in alto.
@@ -500,14 +500,14 @@ const Group = ({ title, children }: { title: string; children: ReactNode }) => (
   <div><div className="mb-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted">{title}</div><div className="space-y-2.5">{children}</div></div>
 );
 
-function Field({ label, value, onChange, max, area }: { label: string; value: string; onChange: (v: string) => void; max: number; area?: boolean }) {
-  const cls = 'w-full rounded-2xl bg-canvas px-3.5 py-2.5 text-sm outline-none ease-smooth transition-shadow focus:bg-white focus:ring-1 focus:ring-ink/15';
+function Field({ label, value, onChange, max, area, placeholder }: { label: string; value: string; onChange: (v: string) => void; max: number; area?: boolean; placeholder?: string }) {
+  const cls = 'w-full rounded-2xl bg-canvas px-3.5 py-2.5 text-sm outline-none ease-smooth transition-shadow placeholder:text-ink/35 focus:bg-white focus:ring-1 focus:ring-ink/15';
   return (
     <label className="block">
       <span className="mb-1 block text-xs font-medium text-ink/70">{label}</span>
       {area
-        ? <textarea rows={3} value={value} maxLength={max} onChange={e => onChange(e.target.value)} className={`${cls} resize-none`} />
-        : <input value={value} maxLength={max} onChange={e => onChange(e.target.value)} className={cls} />}
+        ? <textarea rows={3} value={value} placeholder={placeholder} maxLength={max} onChange={e => onChange(e.target.value)} className={`${cls} resize-none`} />
+        : <input value={value} placeholder={placeholder} maxLength={max} onChange={e => onChange(e.target.value)} className={cls} />}
     </label>
   );
 }

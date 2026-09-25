@@ -102,6 +102,24 @@ export const fontCss = (ids: string[]) => {
   return fs.length ? `https://fonts.googleapis.com/css2?${fs.map(f => `family=${f.family.replace(/ /g, '+')}:wght@${f.weight}`).join('&')}&display=swap` : ''
 }
 
+// Esempi per i campi vuoti: nell'editor sono il testo grigio dei campi e nell'anteprima riempiono il sito,
+// cosi' si vede com'e' il modello completo. Sul sito pubblicato non compaiono mai.
+export const PLACEHOLDERS: Partial<Record<keyof SiteConfig, string>> = {
+  phone: '+39 333 123 4567', whatsapp: '+39 333 123 4567', email: 'nome@agenzia.it', address: 'Via Roma 12, Milano', city: 'Milano',
+  instagram: 'https://instagram.com/tuaagenzia', facebook: 'https://facebook.com/tuaagenzia', legal: 'P.IVA 01234567890 · REA MI-123456',
+  areas: 'Centro, Porta Romana, Navigli', years: '10', sold: '120', clients: '300',
+}
+const SAMPLE_ZONES = [
+  { name: 'Centro', text: 'Case in centro storico, a due passi da negozi, servizi e mezzi.' },
+  { name: 'Navigli', text: 'Appartamenti luminosi lungo i canali, zona viva di giorno e di sera.' },
+]
+export function withPlaceholders(c: SiteConfig): SiteConfig {
+  const out = { ...c } as Record<string, unknown>
+  for (const [k, v] of Object.entries(PLACEHOLDERS)) if (!out[k]) out[k] = v
+  if (!c.zones.length) out.zones = SAMPLE_ZONES
+  return out as SiteConfig
+}
+
 export function defaultSite(name: string, email = ''): SiteConfig {
   return {
     template: 'prato', primary: '#1d5b3c', font: 'sans', headingFont: '', logo: '', logoSize: 36,
