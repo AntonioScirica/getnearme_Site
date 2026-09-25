@@ -1,11 +1,9 @@
 'use client';
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { ArrowLeft, Check, ChevronDown, Copy, Eye, EyeOff, ExternalLink, Globe, ImagePlus, Loader2, Pencil, Plus, RotateCcw, Trash2 } from 'lucide-react';
+import { ArrowLeft, Check, MessageCircle, ChevronDown, Copy, Eye, EyeOff, ExternalLink, Globe, ImagePlus, Loader2, Pencil, Plus, RotateCcw, Trash2 } from 'lucide-react';
 import type { ProjectData } from '@/lib/projects';
 import Tooltip from '@/components/ui/Tooltip';
-import { createPortal } from 'react-dom';
-import ProgressiveBlur from '@/components/ProgressiveBlur';
 import Dropdown from '@/components/ui/Dropdown';
 import { FAKE_PROPERTIES } from '@/lib/fakeProperties';
 import { FIELD_LABELS, PAGE_SECTIONS, TEMPLATES, TEXTS, zoneSlug, type PageId, type SiteConfig, type SiteProperty, type TemplateId } from '@/lib/siteTemplates';
@@ -101,40 +99,34 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
           ))}
         </div>
       )}
-      {/* Pubblica: barra fissa in basso con sfumatura progressiva, sempre a portata mentre modifichi */}
-      {tab === 'sito' && editing && createPortal(
-        <div className="blur-in pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center px-6 pb-6 pt-16">
-          <div className="absolute inset-0"><ProgressiveBlur side="bottom" fade={24} /></div>
-          <div className={`pointer-events-auto relative flex items-center gap-3 rounded-full bg-white p-2 pl-5 text-sm ${CARD_SHADOW}`}>
-            <span className={dirty ? 'font-medium' : 'text-muted'}>{saved === 'ok' ? 'Sito aggiornato' : dirty ? 'Modifiche non pubblicate' : 'Nessuna modifica da pubblicare'}</span>
+
+      {tab === 'immobili' ? <PropertiesTab projects={projects} onChange={onChange} /> : !editing ? (
+        <Gallery cfg={site.config} name={site.name || 'La tua agenzia'} logo={site.logo} props={showcase}
+          onPick={id => { if (id !== cfg.template) set({ template: id, primary: TEMPLATES.find(t => t.id === id)!.primary, font: TEMPLATES.find(t => t.id === id)!.font }); setPage({ page: 'home' }); setEditing(id); }} />
+      ) : (
+        <div className="mt-6">
+          {/* a sinistra si torna ai modelli, a destra si pubblica */}
+          <div className="blur-in mb-5 flex flex-wrap items-center justify-between gap-3" style={{ animationDelay: '.2s' }}>
+          <div className="flex h-10 w-fit items-center rounded-full bg-white p-1 text-sm ring-1 ring-black/10">
+            <button onClick={() => { if (!dirty || confirm('Hai modifiche non pubblicate. Tornare ai modelli e scartarle?')) { morphFrom(document.querySelector('[data-morph="preview"]'), `tpl-${cfg.template}`); setCfg(site.config); setEditing(null); } }}
+              className="flex h-8 items-center gap-2 rounded-full px-3 font-medium ease-smooth transition-colors hover:bg-canvas"><ArrowLeft size={15} /> Tutti i modelli</button>
+          </div>
+          {/* Pubblica a destra, sulla stessa riga */}
+          <div className="flex items-center gap-3 text-sm">
+            <span className={dirty ? 'font-medium' : 'text-muted'}>{saved === 'ok' ? 'Sito aggiornato' : dirty ? 'Modifiche non pubblicate' : ''}</span>
             <button onClick={save} disabled={!dirty || saved === 'saving'}
               className="flex h-10 items-center gap-2 rounded-full bg-brand px-5 text-sm font-semibold text-white ease-smooth transition-[background-color,opacity] hover:bg-brand/90 disabled:opacity-40">
               {saved === 'saving' ? <Loader2 size={15} className="animate-spin" /> : saved === 'ok' ? <Check size={15} /> : null}
               {saved === 'ok' ? 'Pubblicato' : 'Pubblica modifiche'}
             </button>
           </div>
-        </div>,
-        document.body,
-      )}
-
-      {tab === 'immobili' ? <PropertiesTab projects={projects} onChange={onChange} /> : !editing ? (
-        <Gallery cfg={site.config} name={site.name || 'La tua agenzia'} logo={site.logo} props={showcase}
-          onPick={id => { if (id !== cfg.template) set({ template: id, primary: TEMPLATES.find(t => t.id === id)!.primary, font: TEMPLATES.find(t => t.id === id)!.font }); setPage({ page: 'home' }); setEditing(id); }} />
-      ) : (
-        <div className="mt-6 pb-24">
-          {/* torna ai modelli e modello aperto nella stessa pillola alta 40, come le schede che sostituisce */}
-          <div className="blur-in mb-5 flex h-10 w-fit items-center rounded-full bg-white p-1 text-sm ring-1 ring-black/10" style={{ animationDelay: '.2s' }}>
-            <button onClick={() => { if (!dirty || confirm('Hai modifiche non pubblicate. Tornare ai modelli e scartarle?')) { morphFrom(document.querySelector('[data-morph="preview"]'), `tpl-${cfg.template}`); setCfg(site.config); setEditing(null); } }}
-              className="flex h-8 items-center gap-2 rounded-full px-3 font-medium ease-smooth transition-colors hover:bg-canvas"><ArrowLeft size={15} /> Tutti i modelli</button>
-            <span className="mx-1 h-4 w-px bg-line" aria-hidden />
-            <span className="px-3 text-muted">Stai modificando <b className="text-ink">{TEMPLATES.find(t => t.id === cfg.template)?.name}</b>{cfg.template !== site.config.template && ' (non ancora pubblicato)'}</span>
           </div>
         <div className="grid items-start gap-6 lg:grid-cols-[340px_minmax(0,1fr)]">
           {/* Controlli: sezioni della pagina aperta (clic nell'anteprima = apre la sezione) o impostazioni generali */}
           <SideEditor cfg={cfg} set={set} page={page} onPage={setPage} firstId={props[0]?.id} covers={covers} selected={selected} setSelected={setSelected} getUsed={getUsed} />
 
           {/* Anteprima dal vivo */}
-          <Preview vtName={`tpl-${cfg.template}`} page={page} onPage={p => { setPage(p); setSelected(null); }} firstId={props[0]?.id} editMode={editMode} setEditMode={setEditMode}>
+          <Preview wa={cfg.whatsappButton && !!cfg.whatsapp.replace(/\D/g, '')} vtName={`tpl-${cfg.template}`} page={page} onPage={p => { setPage(p); setSelected(null); }} firstId={props[0]?.id} editMode={editMode} setEditMode={setEditMode}>
             <SitePage page={page} ctx={{ cfg, name: site.name || 'La tua agenzia', logo: site.logo, properties: props, base: '', preview: true, go: p => { setPage(p); setSelected(null); }, editMode, selected, onSelect: setSelected, onText: noteText }} />
           </Preview>
         </div>
@@ -252,7 +244,7 @@ function CfgField({ k, cfg, set, covers }: { k: keyof SiteConfig; cfg: SiteConfi
   const label = FIELD_LABELS[k] ?? k;
   const v = cfg[k];
   if (typeof v === 'boolean') return (
-    <label className="flex cursor-pointer items-center justify-between gap-3 py-1 text-sm">{label}
+    <label className="flex cursor-pointer items-center justify-between gap-3 py-1 text-sm"><span>{label}{k === 'whatsappButton' && v && !cfg.whatsapp && <span className="block text-xs text-rose-600">Compare solo con il numero WhatsApp in Recapiti</span>}</span>
       {/* interruttore: pista 40x24, pallino 20 centrato (2px di margine), scorre di 16 */}
       <button type="button" role="switch" aria-checked={v} onClick={() => set({ [k]: !v })}
         className={`relative h-6 w-10 shrink-0 rounded-full ease-smooth transition-colors ${v ? 'bg-brand' : 'bg-line'}`}>
@@ -271,6 +263,20 @@ function CfgField({ k, cfg, set, covers }: { k: keyof SiteConfig; cfg: SiteConfi
   return <Field label={label} value={String(v ?? '')} onChange={x => set({ [k]: x })} max={k === 'aboutText' ? 900 : k === 'method' ? 1500 : 300} area={long} />;
 }
 
+// Riporta in cima la pagina (ease-in-out, 600 ms), poi `done`: scegliendo un modello in basso l'editor si apre in alto.
+function scrollTopEased(el: HTMLElement, done?: () => void) {
+  const from = el.scrollTop, t0 = performance.now();
+  let fired = false;
+  const finish = () => { if (!fired) { fired = true; done?.(); } };
+  setTimeout(() => { el.scrollTop = 0; finish(); }, 800); // sicurezza: con la scheda nascosta i fotogrammi non partono
+  const step = (now: number) => {
+    const k = Math.min(1, (now - t0) / 600), e = k < 0.5 ? 4 * k ** 3 : 1 - (-2 * k + 2) ** 3 / 2;
+    el.scrollTop = from * (1 - e);
+    if (k < 1) requestAnimationFrame(step); else finish();
+  };
+  requestAnimationFrame(step);
+}
+
 // Galleria dei modelli: anteprima vera della home (con i dati dell'agente), clic per entrare nell'editor
 function Gallery({ cfg, name, logo, props, onPick }: { cfg: SiteConfig; name: string; logo: string | null; props: SiteProperty[]; onPick: (id: TemplateId) => void }) {
   // come in home: al clic le altre card escono (piu' piccole, sfocate), poi la card scelta diventa l'editor
@@ -278,7 +284,11 @@ function Gallery({ cfg, name, logo, props, onPick }: { cfg: SiteConfig; name: st
   const pick = (id: TemplateId, el: HTMLElement) => {
     if (leaving) return;
     setLeaving(id);
-    setTimeout(() => { morphFrom(el.querySelector('[data-thumb]'), `tpl-${id}`); onPick(id); }, 260);
+    // prima si torna in cima (mentre le altre card escono), poi la card scelta diventa l'editor:
+    // cambiando pagina a meta' scorrimento il browser taglierebbe lo scroll di colpo
+    const go = () => { morphFrom(el.querySelector('[data-thumb]'), `tpl-${id}`); onPick(id); };
+    const main = el.closest('main');
+    if (main && main.scrollTop > 0) scrollTopEased(main, go); else setTimeout(go, 260);
   };
   return (
     <div className="mt-6">
@@ -351,7 +361,7 @@ function Thumb({ children }: { children: ReactNode }) {
 }
 
 // Il sito in scala dentro una finestra "browser": largo 1280 px come su un computer, rimpicciolito.
-function Preview({ children, page, onPage, firstId, editMode, setEditMode, vtName }: { children: ReactNode; page: Page; onPage: (p: Page) => void; firstId?: string; editMode: boolean; setEditMode: (v: boolean) => void; vtName?: string }) {
+function Preview({ children, page, onPage, firstId, editMode, setEditMode, vtName, wa }: { children: ReactNode; page: Page; onPage: (p: Page) => void; firstId?: string; editMode: boolean; setEditMode: (v: boolean) => void; vtName?: string; wa?: boolean }) {
   const box = useRef<HTMLDivElement>(null);
   const inner = useRef<HTMLDivElement>(null);
   const [k, setK] = useState(0.5);
@@ -368,7 +378,9 @@ function Preview({ children, page, onPage, firstId, editMode, setEditMode, vtNam
   return (
     // min-w-0: e' la colonna della griglia; senza, il sito largo 1280 px la allargava e l'anteprima usciva dallo schermo
     <MorphTarget id={vtName ?? 'preview'} className="min-w-0">
-    <div data-morph="preview" className={`overflow-hidden rounded-[28px] bg-white ${CARD_SHADOW}`}>
+    <div data-morph="preview" className={`relative overflow-hidden rounded-[28px] bg-white ${CARD_SHADOW}`}>
+      {/* pulsante WhatsApp del sito: fisso nell'angolo come sul sito vero */}
+      {wa && <span className="pointer-events-none absolute bottom-4 right-5 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-[#25d366] text-white shadow-[0_10px_30px_-5px_rgba(37,211,102,.6)]"><MessageCircle size={21} fill="currentColor" /></span>}
       <div className="flex items-center gap-2 border-b border-line px-4 py-3 text-xs text-muted">
         <span className="flex gap-1.5">{[0, 1, 2].map(i => <span key={i} className="h-2.5 w-2.5 rounded-full bg-line" />)}</span>
         {/* pagine del sito: si naviga anche cliccando dentro l'anteprima */}

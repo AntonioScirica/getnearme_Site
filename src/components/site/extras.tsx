@@ -29,7 +29,8 @@ export function TopBar() {
 export function WhatsAppFloat() {
   const { cfg, preview } = useSite();
   const c = contacts(cfg);
-  if (!cfg.whatsappButton || !c.wa) return null;
+  // nell'anteprima dell'editor lo disegna Preview, fisso nell'angolo della finestra (qui finirebbe in fondo alla pagina)
+  if (!cfg.whatsappButton || !c.wa || preview) return null;
   return (
     <a href={preview ? undefined : c.wa} target="_blank" rel="noreferrer" aria-label="Scrivimi su WhatsApp"
       className={`${preview ? 'absolute' : 'fixed'} bottom-5 right-5 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-[#25d366] text-white shadow-[0_10px_30px_-5px_rgba(37,211,102,.6)] transition-transform duration-500 hover:scale-110`}>
