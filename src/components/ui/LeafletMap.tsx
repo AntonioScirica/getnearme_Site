@@ -25,13 +25,14 @@ export default function LeafletMap({ addr, className = '', circle, color = '#256
     let map: import('leaflet').Map | null = null, stop = false;
     const t = setTimeout(async () => {
       if (!document.getElementById('leaflet-css')) Object.assign(document.head.appendChild(document.createElement('link')), { id: 'leaflet-css', rel: 'stylesheet', href: 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css' });
-      const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=it&q=${encodeURIComponent(addr)}`).then(x => x.json()).catch(() => null) as { lat: string; lon: string }[] | null;
+      // passa dal nostro server (cache, niente blocchi CORS del browser)
+      const g = await fetch(`/api/site/geocode?q=${encodeURIComponent(addr)}`).then(x => (x.ok ? x.json() : null)).catch(() => null) as { lat: number; lon: number } | null;
       if (stop || !el.current) return;
-      if (!r?.[0]) { setMissing(true); onMissing?.(); return; }
+      if (!g) { setMissing(true); onMissing?.(); return; }
       setMissing(false);
       const mod = await import('leaflet'); const L = (mod.default ?? mod) as typeof import('leaflet');
       if (stop || !el.current) return;
-      const ll: [number, number] = [Number(r[0].lat), Number(r[0].lon)];
+      const ll: [number, number] = [g.lat, g.lon];
       const m = L.map(el.current, { zoomControl: false, attributionControl: true, scrollWheelZoom: false, zoomSnap: 0, zoomDelta: 0.5 }).setView(ll, 15);
       map = m;
       m.attributionControl.setPrefix(false).setPosition('bottomright');

@@ -254,11 +254,11 @@ export function AddressLink({ addr, className = '', iconSize = 16 }: { addr: str
     if (!navigator.geolocation) { setDist('posizione non disponibile'); return; }
     setBusy(true);
     const here = await new Promise<GeolocationPosition | null>(ok => navigator.geolocation.getCurrentPosition(ok, () => ok(null), { timeout: 10000 }));
-    const r = here && await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=it&q=${encodeURIComponent(addr)}`).then(x => x.json()).catch(() => null) as { lat: string; lon: string }[] | null;
+    const g = here && await fetch(`/api/site/geocode?q=${encodeURIComponent(addr)}`).then(x => (x.ok ? x.json() : null)).catch(() => null) as { lat: number; lon: number } | null;
     setBusy(false);
     if (!here) { setDist('posizione non concessa'); return; }
-    if (!r?.[0]) { setDist('indirizzo non trovato'); return; }
-    const rad = Math.PI / 180, a = here.coords.latitude, b = here.coords.longitude, c = Number(r[0].lat), d = Number(r[0].lon);
+    if (!g) { setDist('indirizzo non trovato'); return; }
+    const rad = Math.PI / 180, a = here.coords.latitude, b = here.coords.longitude, c = g.lat, d = g.lon;
     const h = Math.sin((c - a) * rad / 2) ** 2 + Math.cos(a * rad) * Math.cos(c * rad) * Math.sin((d - b) * rad / 2) ** 2;
     const km = 2 * 6371 * Math.asin(Math.sqrt(h));
     setDist(km < 1 ? `a ${Math.round(km * 1000 / 10) * 10} m da te` : `a ${km.toFixed(km < 10 ? 1 : 0).replace('.', ',')} km da te`);
