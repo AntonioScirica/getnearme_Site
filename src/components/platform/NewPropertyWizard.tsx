@@ -348,8 +348,7 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
       {/* Pronto per il portale: tutto da copiare e incollare, foto pronte, pubblicazione sul sito */}
       {done && (
         <section className="mt-8" style={{ animation: 'gnm-in-right var(--gnm-dur) var(--gnm-ease) both' }}>
-          <h1 className="font-display text-3xl font-bold tracking-tight">Pronto per la tua vetrina e per il portale</h1>
-          <p className="mt-1 text-muted">Copia e incolla su immobiliare.it, idealista o dove pubblichi. E lo hai anche sul tuo sito.</p>
+          <h1 className="font-display text-3xl font-bold tracking-tight">Quasi pronto per il tuo sito</h1>
           {busy && <div className="mt-6 flex items-center gap-2 text-muted"><Loader2 size={18} className="animate-spin" /> {busy}</div>}
           {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
           {ai && (
