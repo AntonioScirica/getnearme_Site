@@ -105,13 +105,13 @@ export const fontCss = (ids: string[]) => {
 // Esempi per i campi vuoti: nell'editor sono il testo grigio dei campi e nell'anteprima riempiono il sito,
 // cosi' si vede com'e' il modello completo. Sul sito pubblicato non compaiono mai.
 export const PLACEHOLDERS: Partial<Record<keyof SiteConfig, string>> = {
-  phone: '+39 333 123 4567', whatsapp: '+39 333 123 4567', email: 'nome@agenzia.it', address: 'Via Roma 12, Milano', city: 'Milano',
-  instagram: 'https://instagram.com/tuaagenzia', facebook: 'https://facebook.com/tuaagenzia', legal: 'P.IVA 01234567890 · REA MI-123456',
-  areas: 'Centro, Porta Romana, Navigli', years: '10', sold: '120', clients: '300',
+  phone: '+39 333 123 4567', whatsapp: '+39 333 123 4567', email: 'nome@agenzia.it', address: 'Via del Corso 12, Roma', city: 'Roma',
+  instagram: 'https://instagram.com/tuaagenzia', facebook: 'https://facebook.com/tuaagenzia', legal: 'P.IVA 01234567890 · REA RM-123456',
+  areas: 'Centro, Trastevere, Prati', years: '10', sold: '120', clients: '300',
 }
 const SAMPLE_ZONES = [
   { name: 'Centro', text: 'Case in centro storico, a due passi da negozi, servizi e mezzi.' },
-  { name: 'Navigli', text: 'Appartamenti luminosi lungo i canali, zona viva di giorno e di sera.' },
+  { name: 'Trastevere', text: 'Vicoli, piazze e trattorie: appartamenti con carattere a due passi dal centro.' },
 ]
 export function withPlaceholders(c: SiteConfig): SiteConfig {
   const out = { ...c } as Record<string, unknown>
