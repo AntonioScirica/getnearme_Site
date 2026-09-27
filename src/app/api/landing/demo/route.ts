@@ -19,7 +19,7 @@ export const maxDuration = 300
 // ponytail: IP condivisi (uffici, 4G) si dividono la prova; tabella dedicata se serve un limite per dispositivo.
 const PER_IP = 1
 const PER_DAY = 100 // ~6 EUR/giorno al massimo con Nano Banana 2
-const STYLES = ['modern', 'nordic', 'industrial'] as const
+const STYLES = ['modern', 'nordic', 'empty'] as const // empty = svuota la stanza
 const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 
 export async function POST(req: NextRequest) {
@@ -48,10 +48,11 @@ export async function POST(req: NextRequest) {
 
   // foto ridotta a 1536 px: basta per il modello e per l'anteprima
   const src = await sharp(Buffer.from(image.split(',')[1], 'base64')).rotate().resize({ width: 1536, height: 1536, fit: 'inside' }).jpeg({ quality: 88 }).toBuffer()
-  const look = custom ? `as requested by the agent (in Italian): "${custom}"` : STYLE_LOOK[style]
+  const look = custom ? `as requested by the agent (in Italian): "${custom}"` : style === 'empty' ? '' : STYLE_LOOK[style]
   const img = `data:image/jpeg;base64,${src.toString('base64')}`
-  const nb = await nanoBanana({ userId: '', image: img, prompt: stagePrompt({ task: 'furnish', room: '', style: look }), kind: 'landing_demo_image' })
-  const staged = nb ?? (await guidedEdit({ userId: '', input: { image_base64: img }, task: 'furnish', room: 'the room in the photo (recognize its type)', style: look, seed: Math.floor(Math.random() * 1_000_000) })).image
+  const empty = style === 'empty' && !custom
+  const nb = await nanoBanana({ userId: '', image: img, prompt: stagePrompt({ task: empty ? 'empty' : 'furnish', room: '', style: look }), kind: 'landing_demo_image' })
+  const staged = nb ?? (await guidedEdit({ userId: '', input: { image_base64: img }, task: empty ? 'empty' : 'furnish', room: 'the room in the photo (recognize its type)', style: look, seed: Math.floor(Math.random() * 1_000_000) })).image
   if (!staged) { await giveBack(); return NextResponse.json({ error: 'failed', left: PER_IP - used }, { status: 502 }) }
   const { width = 1024, height = 1024 } = await sharp(src).metadata()
   const done = await finish(Buffer.from(staged, 'base64'))

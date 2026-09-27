@@ -29,8 +29,10 @@ import { MUSIC_CATALOG } from '@/lib/aiVideoMusic'
 const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 const FAL = 'https://queue.fal.run/fal-ai/veo3.1'
 const HOLD = 2.5
-// Veo a 4 s (0,03 $/s: 0,12 $ invece di 0,24 $ a 8 s, 27/09). Se il movimento risulta troppo compresso: 6s.
-const VEO_SECONDS = 4
+// Veo Lite primo/ultimo fotogramma su fal accetta SOLO 8 s (con 4 s rifiuta il lavoro: "Input should be '8s'").
+// Provato il 27/09 anche con la sola foto iniziale a 4 e 6 s (0,15-0,21 $): la camera si sposta e il popup
+// non viene. Si resta qui: 0,24 $ di Veo a video.
+const VEO_SECONDS = 8
 
 // Corto e "remove only": con il blocco lungo della stanza davanti Qwen allargava l'inquadratura (prova del 27/09)
 const EMPTY_PROMPT = 'Remove only the movable furniture and loose objects from this room: sofas, armchairs, chairs, tables, beds, freestanding cabinets, rugs, cushions, blankets, lamps, plants, decor and personal items. Keep exactly the same, pixel for pixel: walls, ceiling and lights, windows and doors with their frames, curtains, mirrors and built-in or mirrored wardrobes, the TV wall unit with its shelves, the kitchen, bathroom fixtures, radiators, sockets, the floor with its exact material and color (continue the same floor where the furniture stood), the daylight and the camera position, zoom and framing. Photorealistic.'

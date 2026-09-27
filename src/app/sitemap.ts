@@ -1,6 +1,5 @@
 import { MetadataRoute } from "next";
 import { locales } from "@/lib/i18n";
-import { CHAPTERS } from "./[locale]/guida-acquisto-casa/data";
 import { getPublishedPosts } from "@/lib/blog";
 import { GUIDES } from "@/lib/guides";
 
@@ -28,15 +27,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     });
   });
 
-  // ===== GUIDA ACQUISTO CASA =====
-  // Hub page
-  entries.push({ url: `${baseUrl}/it/guida-acquisto-casa`, lastModified: new Date("2026-05-23"), changeFrequency: "monthly", priority: 0.8 });
-
-  // Chapter pages
-  // (solo italiano: il contenuto non e' tradotto, le altre lingue hanno canonical su /it)
-  CHAPTERS.forEach((chapter) => {
-    entries.push({ url: `${baseUrl}/it/guida-acquisto-casa/${chapter.slug}`, lastModified: new Date("2026-05-23"), changeFrequency: "monthly", priority: 0.7 });
-  });
+  // Guida acquisto casa (GetNearMe): rimossa, rimanda alla home
 
   // ===== BLOG (IT-only in V1) =====
   entries.push({

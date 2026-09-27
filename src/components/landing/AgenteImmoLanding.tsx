@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import AuthCta from '@/components/AuthCta';
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
-import { ArrowRight, Check, ChevronLeft, ChevronRight, MessageCircle, Clapperboard, FileText, Globe, ImagePlus, Images, Loader2, MapPin, Pencil, Search, Sparkles, Upload, Users, Wand2 } from 'lucide-react';
+import { ArrowDown, ArrowRight, Check, Hammer, Lock, Moon, ChevronLeft, ChevronRight, MessageCircle, Clapperboard, FileText, Globe, ImagePlus, Images, Loader2, MapPin, Pencil, Search, Sparkles, Upload, Users, Wand2 } from 'lucide-react';
 
 // Landing di Agente Immo per gli agenti: tre promesse (home staging AI, video, sito pronto) con lo stesso
 // linguaggio della piattaforma: bianco, puntini, card 28/16, pillole, un solo tempo (600ms, ease-smooth).
@@ -214,7 +214,9 @@ function Compare() {
 // Due piani con lo stesso prodotto (stessa qualita', sito compreso): cambiano solo i crediti e come si paga.
 // Prova gratis in pagina, senza account: una foto arredata dall'AI e poi il suo video (1 + 1 al giorno per IP, limite nel server).
 // Si vede il prima/dopo; per scaricarla serve l'account.
-const DEMO_STYLES = [['modern', 'Moderno', 'Modern'], ['nordic', 'Nordico', 'Nordic'], ['industrial', 'Elegante', 'Elegant']] as const;
+// template del video nella prova: i primi due gratis, gli altri solo con un piano
+const VIDEO_TEMPLATES = [['popup', 'Popup', 'Pop-up', Sparkles], ['gravity', 'Dall\'alto', 'From above', ArrowDown], ['particles', 'Particelle', 'Particles', Wand2], ['stopmotion', 'Stop-motion', 'Stop-motion', Clapperboard], ['cantiere', 'Cantiere', 'Construction', Hammer], ['daynight', 'Giorno e notte', 'Day to night', Moon]] as const;
+const DEMO_STYLES = [['modern', 'Moderno', 'Modern'], ['nordic', 'Nordico', 'Nordic'], ['empty', 'Svuota', 'Empty it']] as const;
 function TryIt() {
   const L = useL();
   const [before, setBefore] = useState<string | null>(null);
@@ -249,7 +251,7 @@ function TryIt() {
     const d = await r?.json().catch(() => null) as { image?: string; url?: string; left?: number; error?: string } | null;
     setBusy(false);
     if (typeof d?.left === 'number') setLeft(d.left);
-    if (d?.image) { setPhotoUrl(d.url ?? null); return setAfter(d.image); }
+    if (d?.image) { setPhotoUrl(d.url ?? null); setEmptied(style === 'empty' && !text.trim()); return setAfter(d.image); }
     setMsg(d?.error === 'limit' ? L('Hai già fatto la prova di oggi. Crea l\'account per continuare.', "You've used today's free try. Create an account to continue.") : d?.error === 'busy' ? L('Ci sono molte prove in corso, riprova tra qualche minuto.', "Lots of tries running right now, try again in a few minutes.") : L('Non siamo riusciti ad arredare questa foto. Prova con un\'altra stanza.', "We couldn't stage this photo. Try another room."));
   };
   // Scarica: la prova resta nel browser, si entra (login o registrazione) e dopo l'onboarding la piattaforma la fa scaricare
@@ -257,11 +259,13 @@ function TryIt() {
     try { localStorage.setItem('agenteimmo:demo', JSON.stringify({ photo: photoUrl, video: withVideo ? video : null })); } catch { /* spazio pieno: si entra comunque */ }
     window.location.href = APP;
   };
-  const toVideo = async () => {
+  const [picking, setPicking] = useState(false); // scelta del template del video
+  const [emptied, setEmptied] = useState(false); // stanza svuotata: il video dei mobili non ha senso, si scarica e basta
+  const toVideo = async (anim: 'popup' | 'gravity') => {
     if (!after || vBusy) return;
-    setVBusy(true); setMsg('');
+    setPicking(false); setVBusy(true); setMsg('');
     const fail = (e?: string) => { setVBusy(false); setMsg(e === 'limit' ? L('Hai già fatto il video di prova oggi. Crea l\'account per farne altri.', "You've made today's free video. Create an account to make more.") : e === 'busy' ? L('Ci sono molti video in corso, riprova tra qualche minuto.', "Lots of videos running right now, try again in a few minutes.") : L('Non siamo riusciti a fare il video di questa foto. Riprova con un\'altra stanza.', "We couldn't make a video of this photo. Try another room.")); };
-    const r = await fetch('/api/landing/demo-video', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ image: after }) }).catch(() => null);
+    const r = await fetch('/api/landing/demo-video', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ image: after, anim }) }).catch(() => null);
     const d = await r?.json().catch(() => null) as { job?: string; error?: string } | null;
     if (!d?.job) return fail(d?.error);
     // Veo lavora 1-2 minuti: si controlla ogni 5 s, per massimo 5 minuti
@@ -315,21 +319,36 @@ function TryIt() {
               <input value={text} onChange={e => setText(e.target.value.slice(0, 200))} onKeyDown={e => e.key === 'Enter' && run()} placeholder={L('Scrivi come la vuoi, es. soggiorno moderno con divano grigio', "Describe it, e.g. modern living room with a grey sofa")}
                 className="min-w-0 flex-1 bg-transparent px-2 text-[15px] outline-none placeholder:text-muted/70" />
               {after
-                ? video
-                  ? <button type="button" onClick={() => keep(true)} className="inline-flex h-11 w-full shrink-0 items-center justify-center gap-2 rounded-2xl bg-ink px-5 text-sm font-semibold text-white sm:w-auto">{L('Scarica tutto', "Download all")} <ArrowRight size={15} /></button>
-                  : <button type="button" disabled={vBusy} onClick={toVideo} className="inline-flex h-11 w-full shrink-0 items-center justify-center gap-2 rounded-2xl bg-ai px-5 text-sm font-semibold text-white disabled:opacity-50 sm:w-auto"><Clapperboard size={15} /> {L('Trasforma in video', "Turn into video")}</button>
+                ? video || emptied
+                  ? <button type="button" onClick={() => keep(!!video)} className="inline-flex h-11 w-full shrink-0 items-center justify-center gap-2 rounded-2xl bg-ink px-5 text-sm font-semibold text-white sm:w-auto">{L('Scarica tutto', "Download all")} <ArrowRight size={15} /></button>
+                  : <button type="button" disabled={vBusy} onClick={() => setPicking(p => !p)} className="inline-flex h-11 w-full shrink-0 items-center justify-center gap-2 rounded-2xl bg-ai px-5 text-sm font-semibold text-white disabled:opacity-50 sm:w-auto"><Clapperboard size={15} /> {L('Trasforma in video', "Turn into video")}</button>
                 : <button type="button" disabled={busy || left <= 0} onClick={() => (before ? run() : input.current?.click())} className="inline-flex h-11 w-full shrink-0 items-center justify-center gap-2 rounded-2xl bg-ink px-5 text-sm font-semibold text-white disabled:opacity-40 sm:w-auto"><Sparkles size={15} /> {before ? L('Arreda', "Stage it") : L('Carica foto', "Upload photo")}</button>}
             </div>
+            {/* template del video: Popup e Dall'alto nella prova, gli altri si vedono ma portano ai prezzi */}
+            {picking && after && !video && (
+              <div className="blur-in mt-3 rounded-[20px] bg-canvas p-3">
+                <div className="px-1 pb-2 text-sm font-semibold">{L('Scegli l\'animazione del video', "Pick the video animation")}</div>
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                  {VIDEO_TEMPLATES.map(([k, it, eng, Icon]) => {
+                    const free = k === 'popup' || k === 'gravity';
+                    const cls = 'flex h-12 items-center gap-2 rounded-2xl px-3 text-left text-sm font-semibold ease-smooth transition-colors';
+                    return free
+                      ? <button key={k} type="button" onClick={() => toVideo(k)} className={`${cls} bg-white ring-1 ring-black/5 hover:ring-ai`}><Icon size={16} className="shrink-0 text-ai" />{L(it, eng)}</button>
+                      : <a key={k} href="#prezzi" className={`${cls} text-muted ring-1 ring-black/5 hover:text-ink`}><Lock size={14} className="shrink-0" />{L(it, eng)}<span className="ml-auto text-[11px] font-medium">{L('Con un piano', "With a plan")}</span></a>;
+                  })}
+                </div>
+              </div>
+            )}
             <div className="mt-4 flex flex-wrap items-center justify-center gap-2 sm:mt-3 sm:justify-start">
               <span className="hidden text-sm text-muted sm:inline">{L('Oppure scegli uno stile:', "Or pick a style:")}</span>
               {DEMO_STYLES.map(([k, l, e]) => (
                 <button key={k} type="button" onClick={() => { setStyle(k); setText(''); }} className={`h-9 rounded-full px-4 text-sm font-semibold ease-smooth transition-colors ${style === k && !text ? 'bg-ink text-white' : 'bg-canvas text-muted hover:text-ink'}`}>{L(l, e)}</button>
               ))}
-              <span className="mt-1 w-full text-center text-sm text-muted sm:ml-auto sm:mt-0 sm:w-auto sm:text-left">{video ? L('Prova finita per oggi', "Free try done for today") : after ? L('Ti resta 1 video gratis', "1 free video left") : L('Prova gratis: 1 foto e 1 video', "Free: 1 photo and 1 video")}</span>
+              <span className="mt-1 w-full text-center text-sm text-muted sm:ml-auto sm:mt-0 sm:w-auto sm:text-left">{video || emptied ? L('Prova finita per oggi', "Free try done for today") : after ? L('Ti resta 1 video gratis', "1 free video left") : L('Prova gratis: 1 foto e 1 video', "Free: 1 photo and 1 video")}</span>
             </div>
           </div>
         </div>
-        {after && <p className="mt-3 text-center text-sm text-muted">{video ? L('Foto e video pronti per l\'annuncio e i social. Per scaricarli entra o crea l\'account, è gratis.', "Photo and video ready for your listing and socials. Sign in or create a free account to download them.") : <>{L('Ora trasformala in un video per i social, gratis. Oppure', "Now turn it into a video for social media, free. Or")} <button type="button" onClick={() => keep(false)} className="font-medium text-ink underline underline-offset-4">{L('scarica solo la foto', "download just the photo")}</button>.</>}{left > 0 && <> {L('Oppure scegli un altro stile e', "Or pick another style and")} <button type="button" onClick={run} className="font-medium text-ink underline underline-offset-4">{L('rifai la prova', "try again")}</button>.</>}</p>}
+        {after && <p className="mt-3 text-center text-sm text-muted">{video ? L('Foto e video pronti per l\'annuncio e i social. Per scaricarli entra o crea l\'account, è gratis.', "Photo and video ready for your listing and socials. Sign in or create a free account to download them.") : emptied ? L('Stanza svuotata. Per scaricarla entra o crea l\'account, è gratis.', "Room emptied. Sign in or create a free account to download it.") : <>{L('Ora trasformala in un video per i social, gratis. Oppure', "Now turn it into a video for social media, free. Or")} <button type="button" onClick={() => keep(false)} className="font-medium text-ink underline underline-offset-4">{L('scarica solo la foto', "download just the photo")}</button>.</>}{left > 0 && <> {L('Oppure scegli un altro stile e', "Or pick another style and")} <button type="button" onClick={run} className="font-medium text-ink underline underline-offset-4">{L('rifai la prova', "try again")}</button>.</>}</p>}
         {msg && <p className="mt-3 text-center text-sm text-rose-600">{msg} {left <= 0 && <a href={APP} className="font-medium text-ink underline underline-offset-4">{L('Crea l\'account', "Create an account")}</a>}</p>}
     </>
   );

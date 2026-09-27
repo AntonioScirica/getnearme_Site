@@ -15,7 +15,7 @@ const OWNER = 'landing' // cartella su R2 e firma del lavoro
 const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 
 export async function POST(req: NextRequest) {
-  const body = await req.json().catch(() => null) as { image?: unknown } | null
+  const body = await req.json().catch(() => null) as { image?: unknown; anim?: unknown } | null
   const image = typeof body?.image === 'string' ? body.image : ''
   if (!/^data:image\/(jpeg|png|webp);base64,/.test(image) || image.length > 4_000_000) return NextResponse.json({ error: 'bad_image' }, { status: 400 })
 
@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
   if (all >= PER_DAY) return NextResponse.json({ error: 'busy' }, { status: 429 })
   const { data: slot } = free ? { data: null } : await admin.from('ai_usage').insert({ user_id: null, kind: 'landing_demo_video', provider: 'counter', model: who, duration_ms: 0, cost_usd: 0, ok: true } as never).select('id').single()
 
-  const { status, ...r } = await startVideo(OWNER, '', { imageUrl: '', imageBase64: image, anim: 'popup' })
+  const { status, ...r } = await startVideo(OWNER, '', { imageUrl: '', imageBase64: image, anim: body?.anim === 'gravity' ? 'gravity' : 'popup' }) // nella prova solo Popup e Dall'alto
   // non partito: la prova si restituisce
   if (!r.job && slot) await admin.from('ai_usage').delete().eq('id', (slot as { id: string }).id)
   return NextResponse.json(r, typeof status === 'number' ? { status } : undefined)

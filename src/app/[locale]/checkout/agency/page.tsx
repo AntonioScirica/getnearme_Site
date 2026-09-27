@@ -7,6 +7,7 @@ import { isDisposableEmail } from '@/lib/disposableEmails';
 import { CheckCircle, Loader2 } from 'lucide-react';
 import { type Locale } from '@/lib/i18n';
 import { platformFontVars } from '@/lib/platformFonts';
+import { isBuy, startCheckout } from '@/lib/startCheckout';
 
 // Plan ID mapping: homepage IDs → internal subscription IDs
 const PLAN_ID_MAP: Record<string, string> = {
@@ -467,9 +468,18 @@ function CheckoutAgencyContent() {
 
   // Dopo l'accesso si torna dove si era (es. /it/dashboard#/piano?buy=pro_yearly). Solo pagine della piattaforma.
   const nextParam = searchParams.get('next') ?? '';
-  const dest = /^\/(it|en)\/dashboard(?![^#?/])/.test(nextParam) ? nextParam : `/${locale}/dashboard`;
-  const rawPlanParam = searchParams.get('plan');
-  const hasPlan = !!rawPlanParam;
+  // ?plan= dei vecchi piani GetNearMe: niente prezzi vecchi, dopo l'accesso si va ai piani di Agente Immo
+  const oldPlan = !!searchParams.get('plan');
+  const dest = /^\/(it|en)\/dashboard(?![^#?/])/.test(nextParam) ? nextParam : `/${locale}/dashboard${oldPlan ? '#/piano' : ''}`;
+  // ?buy= (piano scelto sulla landing): dopo l'accesso dritti a Stripe; se non riesce, pagina dei piani
+  const buyParam = searchParams.get('buy');
+  const buy = isBuy(buyParam) ? buyParam : null;
+  const go = async () => {
+    if (buy) { setIsRedirecting(true); if (await startCheckout(buy, { replace: true, back: locale === 'en' ? 'en' : 'it' })) return; }
+    window.location.replace(buy ? `/${locale}/dashboard#/piano` : dest);
+  };
+  const rawPlanParam = null as string | null;
+  const hasPlan = false;
   const selectedPlanId = PLAN_ID_MAP[rawPlanParam || 'agency_monthly'] || 'agency_monthly';
   const intervalParam = searchParams.get('interval');
 
@@ -587,7 +597,7 @@ function CheckoutAgencyContent() {
         .single();
 
       if (data?.subscription_type && data.subscription_type !== 'free' && data.subscription_type !== 'ambassador') {
-        window.location.href = dest;
+        void go();
         return;
       }
     } catch {
@@ -598,7 +608,7 @@ function CheckoutAgencyContent() {
 
     if (!hasPlan) {
       // No plan selected - redirect to dashboard
-      window.location.href = dest;
+      void go();
       return;
     }
 
@@ -639,7 +649,7 @@ function CheckoutAgencyContent() {
       } else {
         // Existing session (not OAuth callback). Se non c'e' un piano selezionato
         // siamo in modalita' LOGIN (non checkout) → vai dritto alla dashboard.
-        if (!hasPlan) { window.location.href = dest; return; }
+        if (!hasPlan) { void go(); return; }
         setUser({ id: userId, email: userEmail });
 
         // Check if user already accepted terms (from previous login/consent)
@@ -661,7 +671,7 @@ function CheckoutAgencyContent() {
             .single();
 
           if (data?.subscription_type && data.subscription_type !== 'free' && data.subscription_type !== 'ambassador') {
-            window.location.href = dest;
+            void go();
             return;
           }
         } catch {

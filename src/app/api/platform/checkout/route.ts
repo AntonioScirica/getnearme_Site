@@ -8,13 +8,15 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 const PRICES = { starter: 'ai_starter_monthly', pro_yearly: 'ai_pro_yearly', pro_quarterly: 'ai_pro_quarterly' } as const
 const SITE = 'https://agenteimmo.me'
+// ritorno da Stripe sullo stesso sito da cui si e' partiti (in sviluppo localhost o IP di rete), mai verso altri domini
+const siteOf = (req: NextRequest) => { const o = req.nextUrl.origin; return /^https?:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+)(:\d+)?$/.test(o) ? o : SITE }
 
 // Checkout Stripe per i piani. Si fattura a societa' e professionisti: ragione sociale e indirizzo, Partita IVA e
 // codice SDI o PEC per la fattura elettronica, tutti obbligatori. Regime forfettario: niente IVA sul prezzo.
 export async function POST(req: NextRequest) {
   const u = await authUser(req)
   if (!u) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
-  const body = await req.json().catch(() => null) as { plan?: string } | null
+  const body = await req.json().catch(() => null) as { plan?: string; back?: string } | null
   const lookup = PRICES[body?.plan as keyof typeof PRICES]
   if (!lookup) return NextResponse.json({ error: 'bad_plan' }, { status: 400 })
   const price = (await stripe.prices.list({ lookup_keys: [lookup], active: true, limit: 1 })).data[0]
@@ -40,8 +42,9 @@ export async function POST(req: NextRequest) {
     custom_fields: [{ key: 'sdi', label: { type: 'custom', custom: 'Codice SDI o PEC (fattura elettronica)' }, type: 'text', optional: false }],
     custom_text: { submit: { message: 'Prezzo finale: operazione senza IVA, regime forfettario (art. 1, commi 54-89, L. 190/2014). Riceverai la fattura elettronica.' } },
     allow_promotion_codes: true,
-    success_url: `${SITE}/it/dashboard#/piano?ok=1`,
-    cancel_url: `${SITE}/it/dashboard#/piano`,
+    success_url: `${siteOf(req)}/it/dashboard#/piano?ok=1`,
+    // partito dalla landing: annullando si torna ai prezzi della landing, non alla piattaforma
+    cancel_url: body?.back === 'it' || body?.back === 'en' ? `${siteOf(req)}/${body.back}#prezzi` : `${siteOf(req)}/it/dashboard#/piano`,
   })
   return NextResponse.json({ url: session.url })
 }

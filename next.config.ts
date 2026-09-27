@@ -20,6 +20,18 @@ const nextConfig: NextConfig = {
       { source: "/home", destination: "/", permanent: true },
       { source: "/:locale/agente-immo", destination: "/:locale", permanent: true },
       { source: "/:locale/blog/getnearme-vs-canva-strumenti-agenti-immobiliari", destination: "/it/blog/agente-immo-vs-canva-strumenti-agenti-immobiliari", permanent: true },
+      // pagine di GetNearMe (estensione, vecchi piani, guida acquisto casa): non esistono piu', si va alla home
+      { source: "/:locale/ambassador/:path*", destination: "/:locale", permanent: true },
+      { source: "/:locale/demo/:path*", destination: "/:locale", permanent: true },
+      { source: "/:locale/download/:path*", destination: "/:locale", permanent: true },
+      { source: "/:locale/pricing_ext/:path*", destination: "/:locale", permanent: true },
+      { source: "/:locale/reference/:path*", destination: "/:locale", permanent: true },
+      { source: "/:locale/tutorial/:path*", destination: "/:locale", permanent: true },
+      { source: "/:locale/update/:path*", destination: "/:locale", permanent: true },
+      { source: "/:locale/guida-acquisto-casa/:path*", destination: "/:locale", permanent: true },
+      { source: "/:locale/bonus-result/:path*", destination: "/:locale", permanent: true },
+      { source: "/:locale/checkout/success", destination: "/:locale/dashboard#/piano", permanent: true },
+      { source: "/:locale/checkout/video-success", destination: "/:locale/dashboard", permanent: true },
     ];
   },
   images: {

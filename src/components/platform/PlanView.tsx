@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { Check, Globe, Loader2, Sparkles, X } from 'lucide-react';
 import { authFetch, CARD_SHADOW } from './api';
+import { isBuy, type Buy } from '@/lib/startCheckout';
+export { isBuy };
 import { PRICING, photosFor, videosFor } from '@/lib/pricing';
 
 export type Credits = { plan: 'none' | 'starter' | 'pro'; balance: number; monthly: number; renews: string | null; until: string | null; unlimited?: boolean };
@@ -37,8 +39,6 @@ async function checkout(plan: 'starter' | 'pro_yearly' | 'pro_quarterly') {
 }
 
 // Pagina del piano: saldo, scelta del piano, pagamento con Stripe (dati di fatturazione raccolti da Stripe)
-type Buy = 'starter' | 'pro_yearly' | 'pro_quarterly';
-export const isBuy = (v: string | null): v is Buy => v === 'starter' || v === 'pro_yearly' || v === 'pro_quarterly';
 // buy = piano scelto sulla landing (anche prima del login): si va dritti a Stripe
 export default function PlanView({ ok, buy }: { ok?: boolean; buy?: Buy }) {
   const c = useCredits();
