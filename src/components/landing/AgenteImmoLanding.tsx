@@ -11,6 +11,7 @@ import { ArrowDown, ArrowRight, Check, Hammer, Lock, Moon, ChevronLeft, ChevronR
 
 import { FAQ } from '@/lib/landingFaq';
 import { PRICING, photosFor, videosFor } from '@/lib/pricing';
+import { tiltMove, tiltReset } from '@/components/ui/tilt';
 import { startCheckout, type Buy } from '@/lib/startCheckout';
 import dynamic from 'next/dynamic';
 
@@ -216,7 +217,17 @@ function Compare() {
 // Prova gratis in pagina, senza account: una foto arredata dall'AI e poi il suo video (1 + 1 al giorno per IP, limite nel server).
 // Si vede il prima/dopo; per scaricarla serve l'account.
 // template del video nella prova: i primi due gratis, gli altri solo con un piano
-const VIDEO_TEMPLATES = [['popup', 'Popup', 'Pop-up', Sparkles], ['gravity', 'Dall\'alto', 'From above', ArrowDown], ['particles', 'Particelle', 'Particles', Wand2], ['stopmotion', 'Stop-motion', 'Stop-motion', Clapperboard], ['cantiere', 'Cantiere', 'Construction', Hammer], ['daynight', 'Giorno e notte', 'Day to night', Moon]] as const;
+const SAMPLES = 'https://pub-a668674eaa484e8e8f2f10c264392bfc.r2.dev/spike-video/stili';
+// esempi di particelle, stop-motion, cantiere e giorno/notte: le clip vere dei reel di GetNearMe (senza scritte)
+const REELS = 'https://ecrnpyksnfyykqwnutwa.supabase.co/storage/v1/object/public/content/social-frames';
+const VIDEO_TEMPLATES = [
+  ['popup', 'Popup', 'Pop-up', 'I mobili spuntano uno alla volta', 'Furniture pops in piece by piece', `${SAMPLES}/F12_rianima.mp4`],
+  ['gravity', 'Dall\'alto', 'From above', 'I mobili cadono dall\'alto e si posano', 'Furniture drops in from above', `${SAMPLES}/F9_gravity.mp4`],
+  ['particles', 'Particelle', 'Particles', 'Si compongono da una polvere dorata', 'Built from golden dust', `${REELS}/90917b29-e0ff-425b-b3f0-45fa303c6f9d/reveal.mp4`],
+  ['stopmotion', 'Stop-motion', 'Stop-motion', 'Compaiono a scatti, uno per volta', 'Appear frame by frame', `${REELS}/9be10bf3-bbb7-4984-8cf6-c1cbe42a1f25/reveal.mp4`],
+  ['cantiere', 'Cantiere', 'Construction', 'Dal cantiere alla casa finita', 'From building site to finished home', `${REELS}/bbe5b3fa-e484-4f34-8c55-341f02907f19/base.mp4`],
+  ['daynight', 'Giorno e notte', 'Day to night', 'Scende la sera, si accendono le luci', 'Evening falls, lights come on', `${REELS}/b4938420-a308-413b-853f-0ea38719dd5e/daynight.mp4`],
+] as const;
 const DEMO_STYLES = [['modern', 'Moderno', 'Modern'], ['nordic', 'Nordico', 'Nordic'], ['empty', 'Svuota', 'Empty it']] as const;
 // ?simula=1: prova senza AI e senza costi (il server la accetta solo dagli IP senza limiti e in sviluppo).
 // In sviluppo e' sempre attiva; ?vero=1 per la prova vera.
@@ -293,18 +304,31 @@ function TryIt() {
                 <BeforeAfter before={before} after={after} auto={false} className="aspect-[4/3] md:aspect-[16/10]" />
                 {/* template del video dentro la foto: Popup e Dall'alto nella prova, gli altri si vedono ma portano ai prezzi */}
                 {picking && !vBusy && (
-                  <div className="blur-in absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/35 p-3 backdrop-blur-md sm:p-6">
+                  <div className="blur-in absolute inset-0 z-10 flex flex-col items-center overflow-y-auto bg-black/35 p-3 backdrop-blur-md sm:justify-center sm:p-6">
                     <div className="mb-3 rounded-full bg-white px-4 py-1.5 text-sm font-semibold shadow sm:mb-4">{L('Scegli l\'animazione del video', "Pick the video animation")}</div>
-                    <div className="grid w-full max-w-2xl grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3">
-                      {VIDEO_TEMPLATES.map(([k, it, eng, Icon]) => {
+                    {/* stesse card della chat della piattaforma: video d'esempio, nome, descrizione */}
+                    <div className="grid w-full max-w-3xl grid-cols-2 gap-3 sm:grid-cols-3">
+                      {VIDEO_TEMPLATES.map(([k, it, eng, dIt, dEn, sample], n) => {
                         const free = k === 'popup' || k === 'gravity';
-                        const cls = 'flex flex-col items-start gap-2 rounded-[20px] p-3 text-left text-sm font-semibold shadow-lg ease-smooth transition-transform sm:p-4';
-                        return free
-                          ? <button key={k} type="button" onClick={() => toVideo(k)} className={`${cls} bg-white hover:scale-[1.03]`}><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-ai/10 text-ai"><Icon size={17} /></span>{L(it, eng)}</button>
-                          : <a key={k} href="#prezzi" className={`${cls} bg-white/80 text-muted hover:bg-white`}><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-canvas"><Lock size={15} /></span><span className="flex w-full items-center justify-between gap-1">{L(it, eng)}<span className="text-[11px] font-medium">{L('Con un piano', "With a plan")}</span></span></a>;
+                        const body = <>
+                          <span className="sheen pointer-events-none absolute inset-0 z-20" />
+                          <span className="relative block">
+                            <video src={sample} autoPlay loop muted playsInline className="aspect-video w-full rounded-[16px] bg-canvas object-cover" />
+                            {!free && <span className="absolute inset-0 flex items-center justify-center rounded-[16px] bg-white/30"><span className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-ink shadow"><Lock size={14} /></span></span>}
+                          </span>
+                          <span className="flex items-center justify-between gap-1 px-2 pt-2 text-sm font-semibold">{L(it, eng)}</span>
+                          <span className="block px-2 pb-2 text-xs text-muted">{L(dIt, dEn)}</span>
+                        </>;
+                        const cls = 'tilt group relative flex w-full flex-col overflow-hidden rounded-[24px] bg-white p-1.5 text-left shadow-[0_1px_2px_rgba(0,0,0,.04),0_8px_24px_-12px_rgba(0,0,0,.12)] ring-1 ring-black/5 hover:shadow-[0_2px_4px_rgba(0,0,0,.04),0_30px_50px_-20px_rgba(0,0,0,.25)] active:scale-[0.985]';
+                        return (
+                          <div key={k} className="rise" style={{ animationDelay: `${0.05 + n * 0.06}s` }}>
+                            {free
+                              ? <button type="button" onClick={() => toVideo(k)} onMouseMove={tiltMove} onMouseLeave={e => tiltReset(e.currentTarget)} className={cls}>{body}</button>
+                              : <a href="#prezzi" onMouseMove={tiltMove} onMouseLeave={e => tiltReset(e.currentTarget)} className={cls}>{body}</a>}
+                          </div>
+                        );
                       })}
                     </div>
-                    <button type="button" onClick={() => setPicking(false)} className="mt-3 text-sm font-medium text-white underline underline-offset-4 sm:mt-4">{L('Torna alla foto', "Back to the photo")}</button>
                   </div>
                 )}
                 {vBusy && (
@@ -343,11 +367,15 @@ function TryIt() {
               </>}
               {after
                 ? video || emptied
-                  ? <button type="button" onClick={() => keep(!!video)} className="inline-flex h-11 w-full shrink-0 items-center justify-center gap-2 rounded-2xl bg-ink px-5 text-sm font-semibold text-white">{L('Scarica tutto', "Download all")} <ArrowRight size={15} /></button>
-                  : <button type="button" disabled={vBusy} onClick={() => setPicking(p => !p)} className="inline-flex h-11 w-full shrink-0 items-center justify-center gap-2 rounded-2xl bg-ai px-5 text-sm font-semibold text-white disabled:opacity-50"><Clapperboard size={15} /> {L('Trasforma in video', "Turn into video")}</button>
+                  ? <button type="button" onClick={() => keep(!!video)} className="inline-flex h-11 w-full shrink-0 items-center justify-center gap-2 rounded-2xl bg-ink px-5 text-sm font-semibold text-white">{L(video ? 'Scarica tutto' : 'Scarica', video ? "Download all" : "Download")} <ArrowRight size={15} /></button>
+                  : <div className="grid w-full grid-cols-2 gap-2">
+                      <button type="button" onClick={() => keep(false)} className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-white px-4 text-sm font-semibold text-ink ring-1 ring-black/10 hover:ring-ink">{L('Scarica', "Download")}</button>
+                      <button type="button" disabled={vBusy} onClick={() => setPicking(p => !p)} className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-ai px-4 text-sm font-semibold text-white disabled:opacity-50"><Clapperboard size={15} /> {L('Trasforma in video', "Turn into video")}</button>
+                    </div>
                 : <button type="button" disabled={busy || left <= 0} onClick={() => (before ? run() : input.current?.click())} className="inline-flex h-11 w-full shrink-0 items-center justify-center gap-2 rounded-2xl bg-ink px-5 text-sm font-semibold text-white disabled:opacity-40 sm:w-auto"><Sparkles size={15} /> {before ? L('Arreda', "Stage it") : L('Carica foto', "Upload photo")}</button>}
             </div>
-            <div className="mt-4 flex flex-wrap items-center justify-center gap-2 sm:mt-3 sm:justify-start">
+            {/* stili solo prima dell'arredo: nel passo del video non servono */}
+            {!after && <div className="mt-4 flex flex-wrap items-center justify-center gap-2 sm:mt-3 sm:justify-start">
               <span className="hidden text-sm text-muted sm:inline">{L('Oppure scegli uno stile:', "Or pick a style:")}</span>
               {DEMO_STYLES.map(([k, l, e]) => (
                 <button key={k} type="button" onClick={() => { setStyle(k); setText(''); }} className={`h-9 rounded-full px-4 text-sm font-semibold ease-smooth transition-colors ${style === k && !text ? 'bg-ink text-white' : 'bg-canvas text-muted hover:text-ink'}`}>{L(l, e)}</button>
@@ -355,7 +383,7 @@ function TryIt() {
               {/* ci sono altri stili (nella piattaforma): la pillola non fa nulla */}
               <span aria-hidden className="flex h-9 w-9 items-center justify-center gap-0.5 rounded-full bg-canvas">{[0, 1, 2].map(i => <span key={i} className="h-[3px] w-[3px] rounded-full bg-muted" />)}</span>
               <span className="mt-1 w-full text-center text-sm text-muted sm:ml-auto sm:mt-0 sm:w-auto sm:text-left">{video || emptied ? L('Prova finita per oggi', "Free try done for today") : after ? L('Ti resta 1 video gratis', "1 free video left") : L('Prova gratis: 1 foto e 1 video', "Free: 1 photo and 1 video")}</span>
-            </div>
+            </div>}
           </div>
         </div>
         {after && <p className="mt-3 text-center text-sm text-muted">{video ? L('Foto e video pronti per l\'annuncio e i social. Per scaricarli entra o crea l\'account, è gratis.', "Photo and video ready for your listing and socials. Sign in or create a free account to download them.") : emptied ? L('Stanza svuotata. Per scaricarla entra o crea l\'account, è gratis.', "Room emptied. Sign in or create a free account to download it.") : <>{L('Ora trasformala in un video per i social, gratis. Oppure', "Now turn it into a video for social media, free. Or")} <button type="button" onClick={() => keep(false)} className="font-medium text-ink underline underline-offset-4">{L('scarica solo la foto', "download just the photo")}</button>.</>}{left > 0 && <> {L('Oppure scegli un altro stile e', "Or pick another style and")} <button type="button" onClick={run} className="font-medium text-ink underline underline-offset-4">{L('rifai la prova', "try again")}</button>.</>}</p>}
