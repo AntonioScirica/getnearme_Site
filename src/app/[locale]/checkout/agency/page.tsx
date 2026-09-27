@@ -815,7 +815,7 @@ function CheckoutAgencyContent() {
   const cont = hasPlan ? t.proceedToPayment : (en ? 'Continue' : 'Continua');
   return (
     <div className={`${platformFontVars} dots-bg flex min-h-screen flex-col font-body text-ink antialiased`}>
-      <header className="mx-auto flex w-full max-w-6xl items-center px-4 py-5">
+      <header className="mx-auto flex w-full max-w-6xl items-center justify-center px-4 py-5">
         <a href={`/${locale === 'en' ? 'en' : 'it'}`} className="flex items-center gap-2">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/immo/logo-mark.png" alt="" className="h-8 w-8" />
