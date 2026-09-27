@@ -84,7 +84,8 @@ const Cta = ({ href = '#prova', children, ghost = false, className = '', onClick
   </a>;
 
 // Prima/dopo: si trascina col mouse, da fermo scorre da solo avanti e indietro
-function BeforeAfter({ before, after, className = '', auto = true }: { before: string; after: string; className?: string; auto?: boolean }) {
+// contain: foto intera (anche verticale) con la stessa foto sfocata dietro, niente zoom
+function BeforeAfter({ before, after, className = '', auto = true, contain = false }: { before: string; after: string; className?: string; auto?: boolean; contain?: boolean }) {
   const L = useL();
   const [p, setP] = useState(50);
   const [drag, setDrag] = useState(false);
@@ -105,8 +106,9 @@ function BeforeAfter({ before, after, className = '', auto = true }: { before: s
   return (
     <div className={`relative select-none overflow-hidden ${className}`} onPointerDown={e => { setIdle(false); setDrag(true); e.currentTarget.setPointerCapture(e.pointerId); move(e); }}
       onPointerMove={move} onPointerUp={() => setDrag(false)} onPointerCancel={() => setDrag(false)} style={{ cursor: 'ew-resize', touchAction: 'none' }}>
-      <img src={after} alt={L('Dopo il home staging', "After virtual staging")} className="absolute inset-0 h-full w-full object-cover" draggable={false} />
-      <img src={before} alt={L('Prima', "Before")} className="absolute inset-0 h-full w-full object-cover" draggable={false} style={{ clipPath: `inset(0 ${100 - p}% 0 0)`, transition: t }} />
+      {contain && <img src={after} alt="" aria-hidden className="absolute inset-0 h-full w-full scale-110 object-cover opacity-80 blur-2xl" draggable={false} />}
+      <img src={after} alt={L('Dopo il home staging', "After virtual staging")} className={`absolute inset-0 h-full w-full ${contain ? 'object-contain' : 'object-cover'}`} draggable={false} />
+      <img src={before} alt={L('Prima', "Before")} className={`absolute inset-0 h-full w-full ${contain ? 'object-contain' : 'object-cover'}`} draggable={false} style={{ clipPath: `inset(0 ${100 - p}% 0 0)`, transition: t }} />
       <span className="absolute left-4 top-4 rounded-full bg-black/55 px-3 py-1 text-xs font-semibold text-white backdrop-blur">{L('Prima', "Before")}</span>
       <span className="absolute right-4 top-4 flex items-center gap-1 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-ink backdrop-blur"><Sparkles size={12} className="text-ai" /> {L('Dopo', "After")}</span>
       <span className="absolute inset-y-0 w-0.5 -translate-x-1/2 bg-white shadow-[0_0_10px_rgba(0,0,0,.45)]" style={{ left: `${p}%`, transition: t }}>
@@ -233,6 +235,9 @@ const DEMO_STYLES = [['modern', 'Moderno', 'Modern'], ['nordic', 'Nordico', 'Nor
 // In sviluppo e' sempre attiva; ?vero=1 per la prova vera.
 const simulate = () => { const q = new URLSearchParams(location.search); return q.has('simula') || (process.env.NODE_ENV === 'development' && !q.has('vero')); };
 
+// riquadro della prova: sempre le stesse dimensioni, qualunque sia la foto
+const BOX = 'aspect-[4/3] md:aspect-[16/10]';
+
 function TryIt() {
   const L = useL();
   const [before, setBefore] = useState<string | null>(null);
@@ -298,10 +303,10 @@ function TryIt() {
         <div className="rounded-[28px] bg-white p-1.5 shadow-[0_0_0_1px_rgba(0,0,0,.05),0_0_80px_-10px_rgba(110,86,248,.45),0_40px_100px_-40px_rgba(0,0,0,.35)] sm:rounded-[32px] sm:p-2">
           <div className="relative overflow-hidden rounded-[22px] bg-canvas sm:rounded-[24px]">
             {video ? (
-              <video src={video} autoPlay muted loop playsInline className="aspect-[4/3] w-full bg-canvas object-cover md:aspect-[16/10]" />
+              <div className={`relative overflow-hidden ${BOX}`}>{after && <img src={after} alt="" aria-hidden className="absolute inset-0 h-full w-full scale-110 object-cover opacity-80 blur-2xl" />}<video src={video} autoPlay muted loop playsInline className="absolute inset-0 h-full w-full object-contain" /></div>
             ) : after && before ? (
               <div className="relative">
-                <BeforeAfter before={before} after={after} auto={false} className="aspect-[4/3] md:aspect-[16/10]" />
+                <BeforeAfter before={before} after={after} auto={false} contain className={BOX} />
                 {/* template del video dentro la foto: Popup e Dall'alto nella prova, gli altri si vedono ma portano ai prezzi */}
                 {picking && !vBusy && (
                   <div className="blur-in absolute inset-0 z-10 flex flex-col items-center overflow-y-auto bg-black/35 p-3 backdrop-blur-md sm:justify-center sm:p-6">
@@ -339,8 +344,9 @@ function TryIt() {
                 )}
               </div>
             ) : before ? (
-              <div className="relative aspect-[4/3] md:aspect-[16/10]">
-                <img src={before} alt={L('La tua foto', "Your photo")} className="absolute inset-0 h-full w-full object-cover" />
+              <div className={`relative overflow-hidden ${BOX}`}>
+                <img src={before} alt="" aria-hidden className="absolute inset-0 h-full w-full scale-110 object-cover opacity-80 blur-2xl" />
+                <img src={before} alt={L('La tua foto', "Your photo")} className="absolute inset-0 h-full w-full object-contain" />
                 {busy && (
                   <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-white/55 backdrop-blur-[2px]">
                     <Loader2 size={28} className="animate-spin text-ai" />
@@ -350,7 +356,7 @@ function TryIt() {
               </div>
             ) : (
               <div className="relative" onDragOver={e => e.preventDefault()} onDrop={e => { e.preventDefault(); pick(e.dataTransfer.files[0]); }}>
-                <BeforeAfter before="/immo/home/demo-before.webp" after="/immo/home/demo-after.webp" className="aspect-[4/3] md:aspect-[16/9]" />
+                <BeforeAfter before="/immo/home/demo-before.webp" after="/immo/home/demo-after.webp" className={BOX} />
                 <button type="button" onClick={() => input.current?.click()} className="absolute bottom-4 left-1/2 hidden -translate-x-1/2 items-center gap-2.5 whitespace-nowrap rounded-full bg-ink px-5 py-3 text-sm font-semibold sm:flex sm:bottom-5 sm:px-7 sm:py-4 sm:text-base text-white shadow-[0_0_0_6px_rgba(255,255,255,.35),0_20px_40px_-10px_rgba(0,0,0,.5)] ease-smooth transition-transform hover:scale-[1.04]">
                   <ImagePlus size={18} /> {L('Carica la foto di una tua stanza', "Upload a photo of a room")}
                 </button>
