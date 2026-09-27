@@ -34,7 +34,7 @@ const SEEN_OPTIONS: DropdownOption<string>[] = [
 ];
 // Suggerimenti in base a cosa c'e' nella foto (la cucina non ha "Arreda nordico", la facciata non ha "Svuota la stanza")
 const S = (id: string, label: string, req: Suggestion['req']): Suggestion => ({ id, label, req });
-const EMPTY = S('empty', 'Svuota la stanza', { style: 'empty' }), LIGHT = S('day', 'Più luce naturale', { angle: 'day' }), TIDY = QUICK_PRESETS.find(x => x.id === 'tidy')!;
+const EMPTY = S('empty', 'Svuota la stanza', { style: 'empty' }), LIGHT = S('day', 'Luminoso', { angle: 'day' }), TIDY = QUICK_PRESETS.find(x => x.id === 'tidy')!;
 function suggestionsFor(kind: string | null): Suggestion[] {
   switch (kind) {
     case 'room:cucina': return [S('k-modern', 'Cucina moderna', { prompt: 'Rinnova la cucina in stile moderno: ante lisce, piano di lavoro chiaro, elettrodomestici da incasso' }), S('k-wood', 'Bianco e legno', { prompt: 'Rendi la cucina bianca con dettagli in legno chiaro' }), TIDY, LIGHT, EMPTY];

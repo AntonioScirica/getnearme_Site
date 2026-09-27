@@ -144,7 +144,7 @@ export const QUICK_PRESETS: Suggestion[] = [
   { id: 'modern', label: 'Arreda moderno', req: { style: 'modern' } },
   { id: 'nordic', label: 'Arreda nordico', req: { style: 'nordic' } },
   { id: 'empty', label: 'Svuota la stanza', req: { style: 'empty' } },
-  { id: 'day', label: 'Più luce naturale', req: { angle: 'day' } },
+  { id: 'day', label: 'Luminoso', req: { angle: 'day' } },
   { id: 'tidy', label: 'Togli il disordine', req: { prompt: 'Togli gli oggetti in giro e il disordine, lascia i mobili' } },
 ];
 type Version = { url: string; text: string };
