@@ -46,6 +46,9 @@ const NAV = [
 export default function PlatformApp({ userData }: { userData: UserData }) {
   const [route, query = ''] = useHashRoute().split('?');
   const [projects, setProjects] = useState<ProjectData[] | null>(null);
+  // chat di home staging aperta almeno una volta: da li' resta montata (vedi sotto)
+  const [stagingSeen, setStagingSeen] = useState(false);
+  if (route === '/staging' && !stagingSeen) setStagingSeen(true);
 
   const [profile, setProfile] = useState<Profile | null | undefined>(undefined);
 
@@ -95,16 +98,20 @@ export default function PlatformApp({ userData }: { userData: UserData }) {
       </a>}
 
       <main className={`flex-1 ${route === '/staging' ? 'overflow-hidden' : 'overflow-y-auto'}`}>
-        {/* Home staging: la chat gestisce lo scorrimento da sola (campo fisso in fondo) */}
-        <div key={route} className={`fade-up ${route === '/immobili' ? '' : 'mx-auto max-w-6xl px-6'} ${route === '/immobili' ? '' : route === '/staging' ? 'h-full' : route === '/' || route === '/migliora' ? '' : 'pb-16 pt-8'}`}>
+        {/* Home staging: la chat gestisce lo scorrimento da sola (campo fisso in fondo). Una volta aperta resta montata
+            (nascosta nelle altre pagine): cambiando pagina conversazione, lavori in corso e risultati non si perdono */}
+        {stagingSeen && (
+          <div className={route === '/staging' ? 'fade-up mx-auto h-full max-w-6xl px-6' : 'hidden'}>
+            <StagingView initial={{ photo: route === '/staging' ? new URLSearchParams(query).get('photo') ?? undefined : undefined, project: route === '/staging' ? new URLSearchParams(query).get('project') ?? undefined : undefined }} />
+          </div>
+        )}
+        {route !== '/staging' && <div key={route} className={`fade-up ${route === '/immobili' ? '' : 'mx-auto max-w-6xl px-6'} ${route === '/immobili' ? '' : route === '/staging' ? 'h-full' : route === '/' || route === '/migliora' ? '' : 'pb-16 pt-8'}`}>
           {route === '/profilo' ? (
             <ProfileView email={userData.email} profile={profile ?? null} onSaved={setProfile} admin={isPlatformAdmin(userData.email)} />
           ) : route === '/costi' && isPlatformAdmin(userData.email) ? (
             <CostsView />
           ) : route === '/migliora' ? (
             <HomeView key={query} name={profile?.name ?? undefined} initialUrl={new URLSearchParams(query).get('url') ?? ''} onSaved={reload} />
-          ) : route === '/staging' ? (
-            <StagingView initial={{ photo: new URLSearchParams(query).get('photo') ?? undefined, project: new URLSearchParams(query).get('project') ?? undefined }} />
           ) : route === '/galleria' ? (
             <MediaView />
           ) : route === '/importa' ? (
@@ -120,7 +127,7 @@ export default function PlatformApp({ userData }: { userData: UserData }) {
           ) : (
             <HomeView name={profile?.name ?? undefined} onSaved={reload} />
           )}
-        </div>
+        </div>}
       </main>
     </div>
   );
