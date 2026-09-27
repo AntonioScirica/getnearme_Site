@@ -11,6 +11,9 @@ import { ArrowRight, Award, Check, Clapperboard, Clock, FileText, Globe, Images,
 
 import { FAQ } from '@/lib/landingFaq';
 
+// guide SEO linkate dal fondo pagina (collegamenti interni verso le pagine che devono posizionarsi)
+const GUIDE_LINKS = [['/it/agente-immobiliare', 'Agente immobiliare'], ['/it/come-diventare-agente-immobiliare', 'Come diventare agente immobiliare'], ['/it/provvigione-agente-immobiliare', 'Provvigione agente immobiliare'], ['/it/software-agenti-immobiliari', 'Software per agenti immobiliari'], ['/it/home-staging-virtuale', 'Home staging virtuale']];
+
 const APP = '/it/dashboard';
 const VIDEO = 'https://pub-a668674eaa484e8e8f2f10c264392bfc.r2.dev/spike-video/out/bbb243664b.mp4';
 const VIDEO2 = 'https://pub-a668674eaa484e8e8f2f10c264392bfc.r2.dev/spike-video/out/d626678fc2.mp4';
@@ -358,7 +361,7 @@ export default function AgenteImmoLanding() {
 
       <footer className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 pb-10 text-sm text-muted">
         <span className="flex items-center gap-2"><img src="/immo/logo-mark.png" alt="" className="h-6 w-6" /> © {new Date().getFullYear()} Agente Immo</span>
-        <span className="flex flex-wrap gap-5"><Link href="/it/agente-immobiliare" className="hover:text-ink">Guida all&apos;agente immobiliare</Link><Link href="/it/privacy" className="hover:text-ink">Privacy</Link><Link href="/it/cookie" className="hover:text-ink">Cookie</Link><Link href="/it/termini" className="hover:text-ink">Termini</Link><a href="mailto:info@agenteimmo.me" className="hover:text-ink">Contatti</a></span>
+        <span className="flex flex-wrap gap-5">{GUIDE_LINKS.map(([href, l]) => <Link key={href} href={href} className="hover:text-ink">{l}</Link>)}<Link href="/it/privacy" className="hover:text-ink">Privacy</Link><Link href="/it/cookie" className="hover:text-ink">Cookie</Link><Link href="/it/termini" className="hover:text-ink">Termini</Link><a href="mailto:info@agenteimmo.me" className="hover:text-ink">Contatti</a></span>
       </footer>
     </div>
   );

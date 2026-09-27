@@ -2,6 +2,7 @@ import { MetadataRoute } from "next";
 import { locales } from "@/lib/i18n";
 import { CHAPTERS } from "./[locale]/guida-acquisto-casa/data";
 import { getPublishedPosts } from "@/lib/blog";
+import { GUIDES } from "@/lib/guides";
 
 const baseUrl = "https://agenteimmo.me";
 
@@ -11,7 +12,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // ===== LANDING PAGES =====
   // Home e guida pilastro: solo italiano (le altre lingue rimandano a /it)
   entries.push({ url: `${baseUrl}/it`, lastModified: new Date(), changeFrequency: "weekly", priority: 1.0 });
-  entries.push({ url: `${baseUrl}/it/agente-immobiliare`, lastModified: new Date("2026-09-27"), changeFrequency: "monthly", priority: 0.9 });
+  GUIDES.forEach((g, i) => entries.push({ url: `${baseUrl}/it/${g.slug}`, lastModified: new Date(g.updated), changeFrequency: "monthly", priority: i === 0 ? 0.9 : 0.8 }));
 
   // Pagine legali per ogni lingua
   const legalPages = ["/privacy", "/cookie", "/termini"];

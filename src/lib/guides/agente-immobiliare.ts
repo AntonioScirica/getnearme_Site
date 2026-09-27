@@ -3,11 +3,9 @@
 // D.Lgs. 59/2010 (fine del ruolo, iscrizione al REA), D.Lgs. 231/2007 (antiriciclaggio), D.Lgs. 192/2005 (APE).
 // Niente cifre inventate: dove i valori cambiano (provvigioni, corsi, guadagni) si dice da cosa dipendono.
 
-export const UPDATED = '2026-09-27';
+import type { Guide } from './types';
 
-export type Section = { id: string; title: string; html: string };
-
-export const SECTIONS: Section[] = [
+const SECTIONS: Guide['sections'] = [
   {
     id: 'chi-e',
     title: 'Chi è e cosa fa l\'agente immobiliare',
@@ -112,7 +110,7 @@ export const SECTIONS: Section[] = [
   },
 ];
 
-export const FAQ: [string, string][] = [
+const FAQ: Guide['faq'] = [
   ['Serve la laurea per fare l\'agente immobiliare?', 'No. Serve il diploma di scuola secondaria di secondo grado, poi il corso di formazione riconosciuto dalla Regione e l\'esame di abilitazione alla Camera di Commercio.'],
   ['Quanto dura il corso per agente immobiliare?', 'Dipende dalla Regione, che stabilisce durata e programma dei corsi abilitanti. Controlla l\'elenco dei corsi autorizzati nella tua Regione.'],
   ['Si può fare l\'agente immobiliare senza un\'agenzia?', 'Sì. Dopo l\'abilitazione puoi aprire una ditta individuale e lavorare in proprio, oppure collaborare con un\'agenzia esistente.'],
@@ -120,3 +118,15 @@ export const FAQ: [string, string][] = [
   ['Quando si paga l\'agente immobiliare?', 'La provvigione matura quando l\'affare è concluso grazie al suo intervento, di solito con l\'accettazione della proposta o la firma del preliminare, salvo accordi diversi.'],
   ['Come trova clienti un agente immobiliare?', 'Presidiando una zona, restando visibile con costanza sui social, presentandosi ai proprietari con materiale concreto (foto, video, sito) e coltivando una rete di contatti che segnala chi vuole vendere.'],
 ];
+
+export const agenteImmobiliare: Guide = {
+  slug: 'agente-immobiliare',
+  label: 'Agente immobiliare',
+  title: 'Agente immobiliare: cosa fa, come diventarlo, quanto guadagna (guida 2026)',
+  description: 'Guida completa all\'agente immobiliare: cosa fa, requisiti, corso ed esame per diventarlo, provvigioni e guadagni, e come trovare più incarichi e vendere prima.',
+  h1: 'Agente immobiliare: cosa fa, come diventarlo, quanto guadagna e come trovare incarichi',
+  intro: 'Tutto quello che serve sapere sul mestiere di agente immobiliare in Italia: il lavoro di tutti i giorni, requisiti ed esame, provvigioni, e cosa fa davvero la differenza per acquisire più incarichi e vendere prima.',
+  updated: '2026-09-27',
+  sections: SECTIONS,
+  faq: FAQ,
+};
