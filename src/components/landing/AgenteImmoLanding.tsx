@@ -10,6 +10,7 @@ import { ArrowRight, Award, Check, Clapperboard, Clock, FileText, Globe, Images,
 // Le animazioni entrano quando la sezione arriva in vista (blur-in), niente scatti.
 
 import { FAQ } from '@/lib/landingFaq';
+import { PRICING } from '@/lib/pricing';
 
 // guide SEO linkate dal fondo pagina (collegamenti interni verso le pagine che devono posizionarsi)
 const GUIDE_LINKS = [['/it/agente-immobiliare', 'Agente immobiliare'], ['/it/come-diventare-agente-immobiliare', 'Come diventare agente immobiliare'], ['/it/provvigione-agente-immobiliare', 'Provvigione agente immobiliare'], ['/it/software-agenti-immobiliari', 'Software per agenti immobiliari'], ['/it/home-staging-virtuale', 'Home staging virtuale']];
@@ -155,6 +156,45 @@ function useInView(margin = '0px') {
 
 const STYLES = ['Moderno', 'Nordico', 'Contemporaneo', 'Naturale', 'Svuota la stanza', 'Giorno → notte'];
 
+// Un solo pacchetto: il sito non costa nulla in piu' a noi e chi non lo vuole semplicemente non lo pubblica.
+// Foto "illimitate" con uso ragionevole (vedi termini), video contati perche' costano davvero.
+
+function Pricing() {
+  const [yearly, setYearly] = useState(true);
+  const p = yearly ? PRICING.yearly : PRICING.quarterly;
+  const billed = yearly ? `${PRICING.yearly * 12} € fatturati ogni anno` : `${PRICING.quarterly * 3} € fatturati ogni 3 mesi`;
+  return (
+    <section id="prezzi" className="mx-auto max-w-6xl px-4 py-20">
+      <Reveal className="mx-auto max-w-2xl text-center">
+        <Pill>Prezzi</Pill>
+        <h2 className="mt-5 font-display text-4xl font-extrabold leading-[1.05] tracking-tight md:text-5xl">Un solo piano. Tutto incluso.</h2>
+        <p className="mt-5 text-lg leading-relaxed text-muted">Meno di un home staging per un solo immobile, per tutti i tuoi immobili.</p>
+      </Reveal>
+      <Reveal delay={120} className="mx-auto mt-10 max-w-md">
+        <div className="mx-auto flex w-fit rounded-full bg-white p-1 ring-1 ring-black/5">
+          {([[false, 'Trimestrale'], [true, 'Annuale']] as const).map(([y, l]) => (
+            <button key={l} type="button" onClick={() => setYearly(y)} className={`h-10 rounded-full px-5 text-sm font-semibold ease-smooth transition-colors ${yearly === y ? 'bg-ink text-white' : 'text-muted hover:text-ink'}`}>
+              {l}{y && <span className={`ml-2 rounded-full px-2 py-0.5 text-[11px] ${yearly ? 'bg-white/15' : 'bg-brand/10 text-brand'}`}>-{Math.round((1 - PRICING.yearly / PRICING.quarterly) * 100)}%</span>}
+            </button>
+          ))}
+        </div>
+        <div className="mt-6 rounded-[32px] bg-white p-8 ring-1 ring-black/5 shadow-[0_40px_100px_-40px_rgba(0,0,0,.35)]">
+          <div className="text-sm font-semibold text-muted">Agente Immo</div>
+          <div className="mt-3 flex items-end gap-2"><span key={p} className="blur-in font-display text-6xl font-extrabold tracking-tight">{p} €</span><span className="pb-2 text-muted">/ mese</span></div>
+          <div key={billed} className="blur-in mt-1 text-sm text-muted">{billed}</div>
+          <ul className="mt-7 space-y-3 text-[15px]">
+            {['Foto arredate illimitate, per tutti i tuoi immobili', `${PRICING.videos} video al mese per social e portali`, 'Il tuo sito con tutti i tuoi immobili, sul tuo nome', 'Annunci, report PDF e cosa c\'è vicino, per ogni immobile', 'Lo disdici quando vuoi, alla fine del periodo'].map(x => (
+              <li key={x} className="flex items-start gap-3"><span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand/10 text-brand"><Check size={12} /></span>{x}</li>
+            ))}
+          </ul>
+          <Cta className="mt-8 w-full justify-center">Prova gratis {PRICING.trialDays} giorni</Cta>
+          <p className="mt-3 text-center text-xs text-muted">Nessuna carta per la prova. Prezzi finali, senza IVA aggiunta.</p>
+        </div>
+      </Reveal>
+    </section>
+  );
+}
+
 export default function AgenteImmoLanding() {
   const [siteRef, siteOn] = useInView('-15%');
   const [videoRef, videoOn] = useInView('-10%');
@@ -164,7 +204,7 @@ export default function AgenteImmoLanding() {
   const vid2 = useRef<HTMLVideoElement>(null);
   // i video (1,5 MB) si scaricano solo quando la sezione arriva in vista: prima non rubano banda al primo schermo
   const [videoSeen, setVideoSeen] = useState(false);
-  useEffect(() => { if (videoOn) setVideoSeen(true); }, [videoOn]);
+  if (videoOn && !videoSeen) setVideoSeen(true); // aggiornamento in render: niente effetto a cascata
   useEffect(() => { [vid, vid2].forEach(v => { if (!v.current) return; if (videoOn) v.current.play().catch(() => {}); else v.current.pause(); }); }, [videoOn, videoSeen]);
 
   return (
@@ -175,7 +215,7 @@ export default function AgenteImmoLanding() {
           <nav className="glass flex h-14 w-full items-center gap-2 rounded-full border px-2 pl-4 shadow-[0_10px_40px_-15px_rgba(0,0,0,.2)]">
             <a href="#top" className="flex items-center gap-2"><img src="/immo/logo-mark.png" alt="" className="h-8 w-8" /><span className="font-display text-lg font-extrabold tracking-tight">Agente <span className="text-brand">Immo</span></span></a>
             <div className="mx-auto hidden items-center gap-1 md:flex">
-              {[['#perche', 'Perché'], ['#staging', 'Annunci'], ['#video', 'Social'], ['#sito', 'Il tuo sito']].map(([h, l]) => <a key={h} href={h} className="rounded-full px-3.5 py-2 text-sm font-medium text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink">{l}</a>)}
+              {[['#perche', 'Perché'], ['#staging', 'Annunci'], ['#video', 'Social'], ['#sito', 'Il tuo sito'], ['#prezzi', 'Prezzi']].map(([h, l]) => <a key={h} href={h} className="rounded-full px-3.5 py-2 text-sm font-medium text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink">{l}</a>)}
             </div>
             <AuthCta locale="it" href={APP} dashLabel="Dashboard" className="hidden px-3 text-sm font-semibold text-ink sm:block">Accedi</AuthCta>
             <Cta className="!h-10 !px-5 text-sm">Inizia gratis</Cta>
@@ -332,6 +372,9 @@ export default function AgenteImmoLanding() {
           })}
         </div>
       </section>
+
+      {/* prezzi: un solo piano (foto, video e sito), trimestrale o annuale, 7 giorni di prova. Numeri in PRICING */}
+      <Pricing />
 
       {/* domande frequenti: testo visibile + FAQPage in JSON-LD (stesse risposte, vedi FAQ) */}
       <section id="domande" className="mx-auto max-w-3xl px-4 py-16">

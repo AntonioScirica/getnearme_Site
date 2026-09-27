@@ -3,6 +3,7 @@ import { permanentRedirect } from 'next/navigation';
 import { locales } from '@/lib/i18n';
 import { platformFontVars } from '@/lib/platformFonts';
 import { FAQ } from '@/lib/landingFaq';
+import { PRICING } from '@/lib/pricing';
 import AgenteImmoLanding from '@/components/landing/AgenteImmoLanding';
 
 // Home di agenteimmo.me: landing di Agente Immo. Esiste solo in italiano: le altre lingue rimandano a /it
@@ -33,6 +34,7 @@ const jsonLd = {
       '@type': 'SoftwareApplication', name: 'Agente Immo', applicationCategory: 'BusinessApplication', operatingSystem: 'Web',
       url: URL, description: DESC, inLanguage: 'it-IT', audience: { '@type': 'BusinessAudience', audienceType: 'Agenti immobiliari e agenzie immobiliari' },
       featureList: ['Home staging virtuale con AI', 'Video immobiliari per i social', 'Sito personale per agente immobiliare', 'Annunci e report per ogni immobile'],
+      offers: { '@type': 'AggregateOffer', priceCurrency: 'EUR', lowPrice: PRICING.yearly, highPrice: PRICING.quarterly, offerCount: 2, description: 'Prezzo mensile: abbonamento annuale o trimestrale' },
       publisher: { '@id': 'https://agenteimmo.me/#org' },
     },
     { '@type': 'FAQPage', mainEntity: FAQ.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) },
