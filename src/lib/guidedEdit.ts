@@ -34,7 +34,7 @@ export async function guidedEdit(o: { userId: string; input: { image_base64: str
   }
   if (o.task === 'furnish' && (plan.add.length || plan.restyle.length)) {
     prompt = addFurniturePrompt(plan)
-    const a = await runJob({ image_base64: `data:image/jpeg;base64,${cur}`, prompt, seed: o.seed + 1, steps: 12 })
+    const a = await runJob({ image_base64: `data:image/jpeg;base64,${cur}`, prompt, seed: o.seed + 1, steps: 12 }) // 28 passaggi: piu' dettaglio ma allarga l'inquadratura (27/09)
     if (!a.output?.image_base64) return {}
     cur = a.output.image_base64
   }

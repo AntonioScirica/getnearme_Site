@@ -26,11 +26,13 @@ export const EMPTY_KEEP = 'Empty this room completely, as for a listing of an em
 // Arredo in due passi (photo-edit): 1) EMPTY_KEEP svuota, 2) Claude guarda la stanza vuota e decide QUALI mobili e DOVE
 // (furnishPlanPrompt), 3) Qwen li aggiunge alla foto vuota (addFurniturePrompt). Sostituire i mobili in un colpo solo
 // faceva reinventare la stanza (muretto sparito, pareti e finestre spostate) e arredare senza logica (27/09).
+// Materiali veri e con contrasto (non la solita ricetta bianco + rovere + divano grigio + cuscino senape, "sempre standard"):
+// Claude sceglie da qui la combinazione adatta alla stanza (vedi editPlanPrompt)
 export const STYLE_LOOK: Record<string, string> = {
-  modern: 'simple modern style: white fronts and light oak, light grey fabrics, simple rounded shapes, one or two cushions in soft blue or mustard',
-  nordic: 'simple Scandinavian style: light oak and white, linen fabrics, a wool rug, a white pendant lamp',
-  industrial: 'good quality contemporary style: white and warm grey fronts, concrete-look or light stone surfaces, open oak shelves, calm colors',
-  boho: 'warm natural style: light wood, linen and cotton, a jute rug, one plant, warm sand, terracotta and sage tones',
+  modern: 'contemporary Italian style: matt anthracite or warm grey handle-less fronts combined with natural oak, concrete-look or grey stone worktop and backsplash, black metal details, a textured grey or taupe fabric sofa, walnut or oak wood accents, a few dark teal or cream cushions, one large abstract print',
+  nordic: 'Scandinavian style: light oak and white with black metal details, linen and wool in off-white, sand and soft grey, a textured wool rug, rattan or paper pendant, green plants',
+  industrial: 'elegant contemporary style: walnut wood, warm greige fronts, marble or light stone surfaces, brushed brass or black details, velvet or boucle upholstery in deep green, camel or cream',
+  boho: 'warm natural Mediterranean style: light wood, rattan and cane, linen and cotton, a jute rug, terracotta, sand and sage tones, ceramics and plants',
 };
 // Piano di Claude sulla foto ORIGINALE: elenchi con solo cio' che c'e' davvero (Qwen inventa le cose nominate che non ci
 // sono e da solo non distingue fisso da mobile: 27/09 cucina inventata al posto della parete TV, armadio a specchio tolto).
@@ -39,7 +41,7 @@ export const editPlanPrompt = (room: string, task: 'empty' | 'furnish', style: s
 Room type: ${room || 'decide it from the photo'}.
 Task: ${task === 'empty'
     ? 'empty the room for an unfurnished listing: remove the furniture and every loose object, keep everything built in.'
-    : `restage the room in this style: ${style}. Remove the current furniture and loose objects, then furnish it again in the style. If there is a fitted kitchen, restyle its cabinet fronts and worktop in the style keeping the same layout and the appliances where they are.`}
+    : `restage the room in this style: ${style}. Remove the current furniture and loose objects, then furnish it again in the style. Choose ONE coherent design for this room from the style (specific colors and materials that suit its light, floor and size, with real contrast, not everything white). If there is a fitted kitchen, restyle its cabinet fronts, handles, worktop and backsplash in that design keeping the same layout and the appliances where they are.`}
 Reply with JSON only:
 {"remove": [...], "keep": [...], "restyle": [...], "add": [...]}
 - remove: every movable piece of furniture and every loose object visible, GROUPED by area in at most 8 short sentences (the editor ignores long lists), each saying where: for example "all the objects on the kitchen worktop and on top of the wall cabinets", "all the pictures and frames on the right wall", "the sofa, the ottoman, the coffee table and the rug in the foreground". Include furniture (sofas, armchairs, chairs, stools, tables, beds, bedside tables, freestanding cabinets and bookcases, rugs, lamps, plants) and everything on worktops, counters, shelves, tops of cabinets, pictures and calendars on walls, towels, bins, boxes, personal items.
@@ -51,7 +53,7 @@ Reply with JSON only:
 export const leftoverPrompt = (remove: string[]) => `Image 1 is the original photo, image 2 is the same photo after an AI editor was asked to remove these things: ${remove.join(' | ')}.
 List what from that list is still visible in image 2, even partially, grouped in at most 4 short sentences with positions. Reply with JSON only: {"left": ["..."]} (empty list if everything was removed).`;
 export const removePrompt = (p: Pick<EditPlan, 'remove' | 'keep'>) => `Remove from this photo only these things: ${p.remove.join(' ')} Where they were, show the same walls and floor continuing behind them. Keep exactly the same, pixel for pixel: ${p.keep.join(' ')} Also keep the daylight and the camera position, zoom and framing exactly the same. Do not add anything. Photorealistic.`;
-export const addFurniturePrompt = (p: EditPlan) => `Edit this exact photo without changing the room. The camera position, zoom, framing and perspective stay exactly the same, and these stay exactly where they are, pixel for pixel: ${p.keep.join(' ')} ${p.restyle.length ? `Restyle only: ${p.restyle.join(' ')} ` : ''}Add only these pieces, standing on the visible floor, exactly where described: ${p.add.join(' ')} Nothing else. Same light and colors as the photo. Photorealistic real estate listing photo. Do not add any text, letters, logos or watermarks.`;
+export const addFurniturePrompt = (p: EditPlan) => `Edit this exact photo without changing the room. The camera position, zoom, framing and perspective stay exactly the same, and these stay exactly where they are, pixel for pixel: ${p.keep.join(' ')} ${p.restyle.length ? `Restyle only: ${p.restyle.join(' ')} ` : ''}Add only these pieces, standing on the visible floor, exactly where described: ${p.add.join(' ')} Nothing else. Same daylight as the photo. Professional interior photography: realistic materials and textures, natural soft shadows under and behind every piece, real reflections, true contrast, not overexposed, not a flat or plastic render. Do not add any text, letters, logos or watermarks.`;
 
 const STYLE_PROMPTS: Record<string, string> = {
   // lo stile dice solo materiali e colori: QUALI mobili li decide il tipo di stanza (ROOM_FURNISH). Con "divano e
