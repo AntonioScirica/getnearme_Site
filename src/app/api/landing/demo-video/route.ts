@@ -27,10 +27,12 @@ export async function POST(req: NextRequest) {
     if (mine) q = q.eq('model', who)
     return (await q).count ?? 0
   }
-  const [used, all] = await Promise.all([count(true), count(false)])
+  // IP senza limiti (i nostri, LANDING_FREE_IPS separati da virgola) e sviluppo locale: niente contatore
+  const free = process.env.NODE_ENV === 'development' || (process.env.LANDING_FREE_IPS ?? '').split(',').map(x => x.trim()).includes(ip)
+  const [used, all] = free ? [0, 0] : await Promise.all([count(true), count(false)])
   if (used >= PER_IP) return NextResponse.json({ error: 'limit' }, { status: 429 })
   if (all >= PER_DAY) return NextResponse.json({ error: 'busy' }, { status: 429 })
-  const { data: slot } = await admin.from('ai_usage').insert({ user_id: null, kind: 'landing_demo_video', provider: 'counter', model: who, duration_ms: 0, cost_usd: 0, ok: true } as never).select('id').single()
+  const { data: slot } = free ? { data: null } : await admin.from('ai_usage').insert({ user_id: null, kind: 'landing_demo_video', provider: 'counter', model: who, duration_ms: 0, cost_usd: 0, ok: true } as never).select('id').single()
 
   const { status, ...r } = await startVideo(OWNER, '', { imageUrl: '', imageBase64: image, anim: 'popup' })
   // non partito: la prova si restituisce

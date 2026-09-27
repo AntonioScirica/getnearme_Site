@@ -36,11 +36,13 @@ export async function POST(req: NextRequest) {
     if (mine) q = q.eq('model', who)
     return (await q).count ?? 0
   }
-  const [used, all] = await Promise.all([count(true), count(false)])
+  // IP senza limiti (i nostri, LANDING_FREE_IPS separati da virgola) e sviluppo locale: niente contatore
+  const free = process.env.NODE_ENV === 'development' || (process.env.LANDING_FREE_IPS ?? '').split(',').map(x => x.trim()).includes(ip)
+  const [used, all] = free ? [0, 0] : await Promise.all([count(true), count(false)])
   if (used >= PER_IP) return NextResponse.json({ error: 'limit', left: 0 }, { status: 429 })
   if (all >= PER_DAY) return NextResponse.json({ error: 'busy' }, { status: 429 })
   // si prenota la prova prima di generare: richieste in parallelo dallo stesso IP non superano il limite di molto
-  const { data: slot } = await admin.from('ai_usage').insert({ user_id: null, kind: 'landing_demo', provider: 'counter', model: who, duration_ms: 0, cost_usd: 0, ok: true } as never).select('id').single()
+  const { data: slot } = free ? { data: null } : await admin.from('ai_usage').insert({ user_id: null, kind: 'landing_demo', provider: 'counter', model: who, duration_ms: 0, cost_usd: 0, ok: true } as never).select('id').single()
   const giveBack = () => slot && admin.from('ai_usage').delete().eq('id', (slot as { id: string }).id)
 
   // foto ridotta a 1536 px: basta per il modello e per l'anteprima
@@ -52,5 +54,5 @@ export async function POST(req: NextRequest) {
   if (!staged) { await giveBack(); return NextResponse.json({ error: 'failed', left: PER_IP - used }, { status: 502 }) }
   const { width = 1024, height = 1024 } = await sharp(src).metadata()
   const out = await sharp(await finish(Buffer.from(staged, 'base64'))).resize(Math.round(width * Math.min(1, 1024 / Math.max(width, height))), Math.round(height * Math.min(1, 1024 / Math.max(width, height))), { fit: 'fill' }).jpeg({ quality: 82 }).toBuffer()
-  return NextResponse.json({ image: `data:image/jpeg;base64,${out.toString('base64')}`, left: PER_IP - used - 1 })
+  return NextResponse.json({ image: `data:image/jpeg;base64,${out.toString('base64')}`, left: free ? 99 : PER_IP - used - 1 })
 }
