@@ -3,6 +3,7 @@ import { createHash } from 'crypto'
 import sharp from 'sharp'
 import { createClient } from '@supabase/supabase-js'
 import { guidedEdit } from '@/lib/guidedEdit'
+import { nanoBanana, stagePrompt } from '@/lib/nanoBanana'
 import { STYLE_LOOK } from '@/lib/stagingPrompts'
 import { finish } from '@/lib/finish'
 
@@ -10,7 +11,7 @@ export const runtime = 'nodejs'
 export const maxDuration = 300
 
 // Prova anonima dalla landing: una foto arredata nello stile scelto, senza account (per scaricare serve l'account:
-// qui si restituisce solo un'anteprima a 1024 px). Costo ~0,045 EUR a foto.
+// qui si restituisce solo un'anteprima a 1024 px). Nano Banana 2, ~0,065 EUR a foto (ripiego: Qwen + Opus).
 // Limiti senza tabelle nuove: una riga "contatore" in ai_usage (kind landing_demo, provider counter, model = hash
 // dell'IP), 3 prove al giorno per IP e un tetto globale giornaliero.
 // ponytail: IP condivisi (uffici, 4G) si dividono le 3 prove; tabella dedicata se serve un limite per dispositivo.
@@ -42,9 +43,12 @@ export async function POST(req: NextRequest) {
 
   // foto ridotta a 1536 px: basta per il modello e per l'anteprima
   const src = await sharp(Buffer.from(image.split(',')[1], 'base64')).rotate().resize({ width: 1536, height: 1536, fit: 'inside' }).jpeg({ quality: 88 }).toBuffer()
-  const g = await guidedEdit({ userId: '', input: { image_base64: `data:image/jpeg;base64,${src.toString('base64')}` }, task: 'furnish', room: 'the room in the photo (recognize its type)', style: custom ? `as requested by the agent (in Italian): "${custom}"` : STYLE_LOOK[style], seed: Math.floor(Math.random() * 1_000_000) })
-  if (!g.image) return NextResponse.json({ error: 'failed', left: PER_IP - used - 1 }, { status: 502 })
+  const look = custom ? `as requested by the agent (in Italian): "${custom}"` : STYLE_LOOK[style]
+  const img = `data:image/jpeg;base64,${src.toString('base64')}`
+  const nb = await nanoBanana({ userId: '', image: img, prompt: stagePrompt({ task: 'furnish', room: '', style: look }), kind: 'landing_demo_image' })
+  const staged = nb ?? (await guidedEdit({ userId: '', input: { image_base64: img }, task: 'furnish', room: 'the room in the photo (recognize its type)', style: look, seed: Math.floor(Math.random() * 1_000_000) })).image
+  if (!staged) return NextResponse.json({ error: 'failed', left: PER_IP - used - 1 }, { status: 502 })
   const { width = 1024, height = 1024 } = await sharp(src).metadata()
-  const out = await sharp(await finish(Buffer.from(g.image, 'base64'))).resize(Math.round(width * Math.min(1, 1024 / Math.max(width, height))), Math.round(height * Math.min(1, 1024 / Math.max(width, height))), { fit: 'fill' }).jpeg({ quality: 82 }).toBuffer()
+  const out = await sharp(await finish(Buffer.from(staged, 'base64'))).resize(Math.round(width * Math.min(1, 1024 / Math.max(width, height))), Math.round(height * Math.min(1, 1024 / Math.max(width, height))), { fit: 'fill' }).jpeg({ quality: 82 }).toBuffer()
   return NextResponse.json({ image: `data:image/jpeg;base64,${out.toString('base64')}`, left: PER_IP - used - 1 })
 }

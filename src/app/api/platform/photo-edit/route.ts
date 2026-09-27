@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { buildStagingPrompt, roomKey, variantText, isRestyle, isFurnishing, roomLabel, STYLE_LOOK, type SceneType } from '@/lib/stagingPrompts'
 import { guidedEdit } from '@/lib/guidedEdit'
+import { nanoBanana, stagePrompt } from '@/lib/nanoBanana'
 import { brighten } from '@/lib/brighten'
 import { finish } from '@/lib/finish'
 import { createClient } from '@supabase/supabase-js'
@@ -91,6 +92,7 @@ export async function POST(req: NextRequest) {
   const t0 = Date.now()
   let job: RunpodJob
   let used = translation.prompt_template ?? prompt // prompt dell'ultimo passo, per il debug
+  let gemini = false // foto fatta da Nano Banana 2 (costo registrato in nanoBanana, non come GPU)
   try {
     const input = imageBase64 ? { image_base64: imageBase64 } : { image_url: imageUrl }
     // Guidati da Claude (src/lib/guidedEdit.ts): arredo, svuota e ogni richiesta scritta o chip sugli interni.
@@ -105,9 +107,18 @@ export async function POST(req: NextRequest) {
     if (guided) {
       const task = body.style === 'empty' ? 'empty' : furnishReq ? 'furnish' : 'edit'
       const reference = typeof body.reference === 'string' && ((/^data:image\/(jpeg|png|webp);base64,/.test(body.reference) && body.reference.length < 8_000_000) || allowedUrl(body.reference)) ? body.reference : undefined
-      const g = await guidedEdit({ userId, input, reference, styleRef, task, room: roomLabel(roomK), style: task === 'edit' ? custom : (body.style && STYLE_LOOK[body.style] ? STYLE_LOOK[body.style] : `as requested by the agent (in Italian): "${custom}"`) + vary, seed })
-      used = g.prompt || prompt
-      job = g.image ? { status: 'COMPLETED', output: { image_base64: g.image } } : await runJob({ ...input, prompt, ...translation, seed, steps: 12 }) // senza piano: vecchio passaggio unico
+      const style = task === 'edit' ? custom : (body.style && STYLE_LOOK[body.style] ? STYLE_LOOK[body.style] : `as requested by the agent (in Italian): "${custom}"`) + vary
+      // Nano Banana 2 (src/lib/nanoBanana.ts): una chiamata, niente GPU. Se Google non risponde, il vecchio flusso Qwen + Opus.
+      const nbPrompt = stagePrompt({ task, room: roomLabel(roomK), style, styleRef: !!styleRef })
+      const nb = process.env.GEMINI_API_KEY ? await nanoBanana({ userId, image: imageBase64 || imageUrl, prompt: nbPrompt, styleRef }) : null
+      if (nb) {
+        gemini = true; used = nbPrompt
+        job = { status: 'COMPLETED', output: { image_base64: nb } }
+      } else {
+        const g = await guidedEdit({ userId, input, reference, styleRef, task, room: roomLabel(roomK), style, seed })
+        used = g.prompt || prompt
+        job = g.image ? { status: 'COMPLETED', output: { image_base64: g.image } } : await runJob({ ...input, prompt, ...translation, seed, steps: 12 }) // senza piano: vecchio passaggio unico
+      }
     } else {
       job = await runJob({ ...input, prompt, ...translation, ...(region ? { mark: region } : {}), ...(points.length ? { points } : {}), ...(labels.length ? { labels } : {}), seed, steps: 12 }) // 12 passaggi: ~8 s invece di 17 a 25, qualita' simile nel confronto del 24/09
     }
@@ -119,7 +130,7 @@ export async function POST(req: NextRequest) {
   }
   const ms = Date.now() - t0
   const b64 = job.output?.image_base64
-  await logUsage({ userId, kind: 'photo_edit' }, true, ms, {}, !!b64, 'qwen-image-2.1')
+  if (!gemini) await logUsage({ userId, kind: 'photo_edit' }, true, ms, {}, !!b64, 'qwen-image-2.1')
   if (!b64) {
     console.error('photo-edit failed:', job.status, job.error || job.output?.error)
     return NextResponse.json({ error: job.status === 'IN_QUEUE' || job.status === 'IN_PROGRESS' ? 'timeout' : 'ai_failed' }, { status: 502 })

@@ -6,6 +6,7 @@ import { mkdtemp, readFile, rm, writeFile } from 'fs/promises'
 import { tmpdir } from 'os'
 import { join } from 'path'
 import sharp from 'sharp'
+import { nanoBanana } from '@/lib/nanoBanana'
 import Anthropic from '@anthropic-ai/sdk'
 import ffmpegPath from 'ffmpeg-static'
 import { runJob, allowedUrl } from '@/lib/runpodImage'
@@ -31,6 +32,8 @@ export const maxDuration = 300
 const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 const FAL = 'https://queue.fal.run/fal-ai/veo3.1'
 const HOLD = 2.5
+// Veo a 4 s (0,03 $/s: 0,12 $ invece di 0,24 $ a 8 s, 27/09). Se il movimento risulta troppo compresso: 6s.
+const VEO_SECONDS = 4
 
 // Corto e "remove only": con il blocco lungo della stanza davanti Qwen allargava l'inquadratura (prova del 27/09)
 const EMPTY_PROMPT = 'Remove only the movable furniture and loose objects from this room: sofas, armchairs, chairs, tables, beds, freestanding cabinets, rugs, cushions, blankets, lamps, plants, decor and personal items. Keep exactly the same, pixel for pixel: walls, ceiling and lights, windows and doors with their frames, curtains, mirrors and built-in or mirrored wardrobes, the TV wall unit with its shelves, the kitchen, bathroom fixtures, radiators, sockets, the floor with its exact material and color (continue the same floor where the furniture stood), the daylight and the camera position, zoom and framing. Photorealistic.'
@@ -46,9 +49,9 @@ const VANISH: Record<Anim, string> = {
 const prompt = (order: string, anim: Anim) => 'Elegant, satisfying real-estate animation with a perfectly still, locked-off camera: identical framing for the whole video, no pan, no zoom. Walls, ceiling, curtains, built-in furniture, doors, windows, floor and daylight never change. '
   + `These are the only objects that disappear, in exactly these quantities: ${order}. Nothing new ever appears. The last frame is identical to the final empty image. `
   + 'The camera is exactly the one of the first and last image for the whole video: same lens, same framing, same distance, it never moves. '
-  + 'The furnished room is shown perfectly still for half a second. Then the objects vanish one after another in a quick smooth cascade, consecutive objects overlapping slightly in time like a wave: first the small objects on top of the furniture, then the pieces closest to the camera, then the pieces further back. '
+  + 'The furnished room is shown perfectly still for a quarter of a second. Then the objects vanish one after another in a quick smooth cascade, consecutive objects overlapping slightly in time like a wave: first the small objects on top of the furniture, then the pieces closest to the camera, then the pieces further back. '
   + VANISH[anim]
-  + `Order: ${order}. By the fourth second the room is completely empty and identical to the last image; from then on nothing moves or changes at all.`
+  + `Order: ${order}. By the third second the room is completely empty and identical to the last image; from then on nothing moves or changes at all.`
 // dall'alto: i pezzi volano per davvero, niente divieti di volo
 const negFor = (anim: Anim) => (anim === 'gravity' ? NEG.replace('flying objects, floating objects, ', 'tumbling objects, rotating objects, ') : NEG)
 
@@ -93,11 +96,17 @@ export async function POST(req: NextRequest) {
     // a volte Qwen lascia un mobile (27/09: letto rimasto con un seme su due), allora si riprova con un altro seme.
     let empty: Buffer | null = null, items: string[] = []
     for (let attempt = 0; attempt < 2; attempt++) {
-      const t0 = Date.now()
-      const job = await runJob({ image_url: fullUrl, prompt: EMPTY_PROMPT, seed: Math.floor(Math.random() * 1_000_000), steps: 12 })
-      await logUsage({ userId, kind: 'video_empty' }, true, Date.now() - t0, {}, !!job.output?.image_base64, 'qwen-image-2.1')
-      if (!job.output?.image_base64) return NextResponse.json({ error: job.status === 'IN_QUEUE' || job.status === 'IN_PROGRESS' ? 'timeout' : 'ai_failed' }, { status: 502 })
-      empty = await sharp(Buffer.from(job.output.image_base64, 'base64')).resize(W, H, { fit: 'fill' }).jpeg({ quality: 95 }).toBuffer()
+      // Nano Banana 2 (una chiamata, niente GPU); se Google non risponde, Qwen come prima
+      const nb = await nanoBanana({ userId, image: fullUrl, prompt: `${EMPTY_PROMPT} The result must line up exactly with the original photo: same camera, framing and perspective. Photorealistic, no text.`, kind: 'video_empty' })
+      let out = nb
+      if (!out) {
+        const t0 = Date.now()
+        const job = await runJob({ image_url: fullUrl, prompt: EMPTY_PROMPT, seed: Math.floor(Math.random() * 1_000_000), steps: 12 })
+        await logUsage({ userId, kind: 'video_empty' }, true, Date.now() - t0, {}, !!job.output?.image_base64, 'qwen-image-2.1')
+        if (!job.output?.image_base64) return NextResponse.json({ error: job.status === 'IN_QUEUE' || job.status === 'IN_PROGRESS' ? 'timeout' : 'ai_failed' }, { status: 502 })
+        out = job.output.image_base64
+      }
+      empty = await sharp(Buffer.from(out, 'base64')).resize(W, H, { fit: 'fill' }).jpeg({ quality: 95 }).toBuffer()
       // nomi semplici e quantita' esatte: descrizioni sbagliate cambiano la forma ai mobili
       const t1 = Date.now()
       const msg = await new Anthropic().messages.create({
@@ -122,7 +131,7 @@ export async function POST(req: NextRequest) {
     // 4. Veo al contrario: dalla foto arredata alla vuota
     const q = await fal(`${FAL}/lite/first-last-frame-to-video`, {
       first_frame_url: fullUrl, last_frame_url: emptyUrl, prompt: prompt(order, anim), negative_prompt: negFor(anim),
-      duration: '8s', aspect_ratio: landscape ? '16:9' : '9:16', resolution: '720p', generate_audio: false, seed: Math.floor(Math.random() * 1_000_000),
+      duration: `${VEO_SECONDS}s`, aspect_ratio: landscape ? '16:9' : '9:16', resolution: '720p', generate_audio: false, seed: Math.floor(Math.random() * 1_000_000),
     })
     if (!q.request_id) { console.error('video fal submit', q); return NextResponse.json({ error: 'ai_failed' }, { status: 502 }) }
     // il nome va nel lavoro firmato: a fine montaggio il video si salva accanto alla sua foto (copertina in Galleria)
@@ -204,7 +213,7 @@ function cutPoint(raw: Buffer, px: number, fps = 24): number {
   const peak = mv.indexOf(Math.max(...mv))
   let calm = -1
   for (let i = peak; i < n - 12; i++) if (still(i)) { calm = i; break }
-  if (calm < 0) return 4 // ponytail: nessun fermo trovato, taglio fisso a 4 s (Veo finisce entro i 4 s come da prompt)
+  if (calm < 0) return VEO_SECONDS - 1 // ponytail: nessun fermo trovato, taglio fisso (il prompt chiede il vuoto entro il terzo secondo)
   let diss = n - 1
   for (let i = calm + 6; i < n - 12; i++) if (dl[i] - dl[i + 12] > 0.6 && still(i)) { diss = i; break }
   return Math.max(calm + 6, Math.min(diss - 2, calm + 24)) / fps
