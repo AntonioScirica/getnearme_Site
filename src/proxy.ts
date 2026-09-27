@@ -36,9 +36,12 @@ export function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Redirect alla versione localizzata di default (it)
+  // Redirect alla versione localizzata. Solo la home senza lingua segue il browser: italiano (o nessuna lingua,
+  // come i crawler) -> /it, qualsiasi altra lingua -> /en. Il resto va sempre in italiano.
   const url = request.nextUrl.clone();
-  url.pathname = `/${defaultLocale}${pathname}`;
+  const accept = request.headers.get('accept-language')?.trim().toLowerCase() ?? '';
+  const lang = pathname === '/' && accept && !accept.startsWith('it') ? 'en' : defaultLocale;
+  url.pathname = `/${lang}${pathname === '/' ? '' : pathname}`;
 
   return NextResponse.redirect(url, 307);
 }

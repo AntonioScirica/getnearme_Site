@@ -275,8 +275,8 @@ function TryIt() {
   };
   return (
     <>
-        <div className="rounded-[32px] bg-white p-2 shadow-[0_0_0_1px_rgba(0,0,0,.05),0_0_80px_-10px_rgba(110,86,248,.45),0_40px_100px_-40px_rgba(0,0,0,.35)]">
-          <div className="relative overflow-hidden rounded-[24px] bg-canvas">
+        <div className="rounded-[28px] bg-white p-1.5 shadow-[0_0_0_1px_rgba(0,0,0,.05),0_0_80px_-10px_rgba(110,86,248,.45),0_40px_100px_-40px_rgba(0,0,0,.35)] sm:rounded-[32px] sm:p-2">
+          <div className="relative overflow-hidden rounded-[22px] bg-canvas sm:rounded-[24px]">
             {video ? (
               <video src={video} autoPlay muted loop playsInline className="aspect-[4/3] w-full bg-canvas object-cover md:aspect-[16/10]" />
             ) : after && before ? (
@@ -302,14 +302,14 @@ function TryIt() {
             ) : (
               <div className="relative" onDragOver={e => e.preventDefault()} onDrop={e => { e.preventDefault(); pick(e.dataTransfer.files[0]); }}>
                 <BeforeAfter before="/immo/home/demo-before.webp" after="/immo/home/demo-after.webp" className="aspect-[4/3] md:aspect-[16/9]" />
-                <button type="button" onClick={() => input.current?.click()} className="absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-2.5 whitespace-nowrap rounded-full bg-ink px-5 py-3 text-sm font-semibold sm:bottom-5 sm:px-7 sm:py-4 sm:text-base text-white shadow-[0_0_0_6px_rgba(255,255,255,.35),0_20px_40px_-10px_rgba(0,0,0,.5)] ease-smooth transition-transform hover:scale-[1.04]">
+                <button type="button" onClick={() => input.current?.click()} className="absolute bottom-4 left-1/2 hidden -translate-x-1/2 items-center gap-2.5 whitespace-nowrap rounded-full bg-ink px-5 py-3 text-sm font-semibold sm:flex sm:bottom-5 sm:px-7 sm:py-4 sm:text-base text-white shadow-[0_0_0_6px_rgba(255,255,255,.35),0_20px_40px_-10px_rgba(0,0,0,.5)] ease-smooth transition-transform hover:scale-[1.04]">
                   <ImagePlus size={18} /> {L('Carica la foto di una tua stanza', "Upload a photo of a room")}
                 </button>
               </div>
             )}
             <input ref={input} type="file" accept="image/*" className="hidden" onChange={e => { pick(e.target.files?.[0]); e.target.value = ''; }} />
           </div>
-          <div className="p-3">
+          <div className="px-1.5 pb-2 pt-3 sm:p-3">
             <div className="flex flex-wrap items-center gap-2 rounded-[20px] bg-canvas p-2 pl-2 ring-1 ring-black/5 focus-within:bg-white focus-within:ring-2 focus-within:ring-ai sm:flex-nowrap">
               <button type="button" onClick={() => input.current?.click()} aria-label={L('Carica una foto', "Upload a photo")} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-ink shadow-sm ring-1 ring-black/5 hover:bg-line/40"><ImagePlus size={18} /></button>
               <input value={text} onChange={e => setText(e.target.value.slice(0, 200))} onKeyDown={e => e.key === 'Enter' && run()} placeholder={L('Scrivi come la vuoi, es. soggiorno moderno con divano grigio', "Describe it, e.g. modern living room with a grey sofa")}
@@ -320,12 +320,12 @@ function TryIt() {
                   : <button type="button" disabled={vBusy} onClick={toVideo} className="inline-flex h-11 w-full shrink-0 items-center justify-center gap-2 rounded-2xl bg-ai px-5 text-sm font-semibold text-white disabled:opacity-50 sm:w-auto"><Clapperboard size={15} /> {L('Trasforma in video', "Turn into video")}</button>
                 : <button type="button" disabled={busy || left <= 0} onClick={() => (before ? run() : input.current?.click())} className="inline-flex h-11 w-full shrink-0 items-center justify-center gap-2 rounded-2xl bg-ink px-5 text-sm font-semibold text-white disabled:opacity-40 sm:w-auto"><Sparkles size={15} /> {before ? L('Arreda', "Stage it") : L('Carica foto', "Upload photo")}</button>}
             </div>
-            <div className="mt-3 flex flex-wrap items-center gap-2">
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-2 sm:mt-3 sm:justify-start">
               <span className="hidden text-sm text-muted sm:inline">{L('Oppure scegli uno stile:', "Or pick a style:")}</span>
               {DEMO_STYLES.map(([k, l, e]) => (
                 <button key={k} type="button" onClick={() => { setStyle(k); setText(''); }} className={`h-9 rounded-full px-4 text-sm font-semibold ease-smooth transition-colors ${style === k && !text ? 'bg-ink text-white' : 'bg-canvas text-muted hover:text-ink'}`}>{L(l, e)}</button>
               ))}
-              <span className="w-full text-sm text-muted sm:ml-auto sm:w-auto">{video ? L('Prova finita per oggi', "Free try done for today") : after ? L('Ti resta 1 video gratis', "1 free video left") : L('Prova gratis: 1 foto e 1 video', "Free: 1 photo and 1 video")}</span>
+              <span className="mt-1 w-full text-center text-sm text-muted sm:ml-auto sm:mt-0 sm:w-auto sm:text-left">{video ? L('Prova finita per oggi', "Free try done for today") : after ? L('Ti resta 1 video gratis', "1 free video left") : L('Prova gratis: 1 foto e 1 video', "Free: 1 photo and 1 video")}</span>
             </div>
           </div>
         </div>
@@ -448,12 +448,12 @@ function Landing({ faq }: { faq: [string, string][] }) {
       {/* 01 home staging */}
       <Band id="staging">
         <div className="grid items-center gap-10 md:grid-cols-2 md:gap-16">
-          <Reveal anim="in-left" className="text-center md:text-left">
+          <Reveal anim="in-left">
             <Eyebrow n="01">{L('Annunci che si notano', "Listings that stand out")}</Eyebrow>
             <h2 className={H2}>{L('Chi scorre non si ferma su una stanza vuota.', "Nobody stops scrolling for an empty room.")}</h2>
             <p className="mt-5 text-base leading-relaxed text-muted md:text-lg">{L('Vuota, una casa sembra piccola e fredda. Arredata, chi guarda ci si immagina dentro e ti chiama.', "Empty, a home looks small and cold. Staged, buyers picture themselves there and call you.")}</p>
             <ul className="mt-6 space-y-3 text-[15px]">
-              {[L('La prima foto ferma chi scorre', "The first photo stops the scroll"), L('Il cliente capisce subito come vivrebbe quella casa', "Buyers instantly see how they'd live there"), L('Nessun home staging vero da pagare o da organizzare', "No physical staging to pay for or organize")].map(x => <li key={x} className="flex items-start justify-center gap-3 md:justify-start">{CHECK}{x}</li>)}
+              {[L('La prima foto ferma chi scorre', "The first photo stops the scroll"), L('Il cliente capisce subito come vivrebbe quella casa', "Buyers instantly see how they'd live there"), L('Nessun home staging vero da pagare o da organizzare', "No physical staging to pay for or organize")].map(x => <li key={x} className="flex items-start gap-3">{CHECK}{x}</li>)}
             </ul>
             <Cta className="mt-8">{L('Prova gratis', "Try it free")}</Cta>
           </Reveal>
@@ -471,12 +471,12 @@ function Landing({ faq }: { faq: [string, string][] }) {
       {/* 02 video */}
       <Band id="video" tone="canvas">
         <div ref={videoRef} className="grid items-center gap-10 md:grid-cols-2 md:gap-16">
-          <Reveal className="text-center md:order-2 md:text-left" anim="in-right">
+          <Reveal className="md:order-2" anim="in-right">
             <Eyebrow n="02">{L('Farti conoscere', "Get known")}</Eyebrow>
             <h2 className={H2}>{L('Ogni casa diventa un video per i tuoi social.', "Every home becomes a video for your socials.")}</h2>
             <p className="mt-5 text-base leading-relaxed text-muted md:text-lg">{L('Nella tua zona i clienti chiamano l\'agente che vedono ogni settimana sui social. Qui ogni incarico diventa un video, senza videomaker.', "Locally, clients call the agent they see every week on social media. Here every listing becomes a video, no videographer.")}</p>
             <ul className="mt-6 space-y-3 text-[15px]">
-              {[L('Ti fai conoscere nella tua zona, non solo sul portale', "Get known in your area, not just on the portal"), L('Ogni incarico diventa un contenuto da pubblicare', "Every listing becomes something to post"), L('Niente riprese, niente montaggio, niente videomaker', "No filming, no editing, no videographer")].map(x => <li key={x} className="flex items-start justify-center gap-3 md:justify-start">{CHECK}{x}</li>)}
+              {[L('Ti fai conoscere nella tua zona, non solo sul portale', "Get known in your area, not just on the portal"), L('Ogni incarico diventa un contenuto da pubblicare', "Every listing becomes something to post"), L('Niente riprese, niente montaggio, niente videomaker', "No filming, no editing, no videographer")].map(x => <li key={x} className="flex items-start gap-3">{CHECK}{x}</li>)}
             </ul>
             <Cta className="mt-8">{L('Prova gratis', "Try it free")}</Cta>
           </Reveal>
@@ -497,12 +497,12 @@ function Landing({ faq }: { faq: [string, string][] }) {
       {/* 03 sito */}
       <Band id="sito">
         <div ref={siteRef} className="grid items-center gap-10 md:grid-cols-2 md:gap-16">
-          <Reveal anim="in-left" className="text-center md:text-left">
+          <Reveal anim="in-left">
             <Eyebrow n="03">{L('Il sito te lo facciamo noi', "We build your website")}</Eyebrow>
             <h2 className={H2}>{L('Il tuo sito lo facciamo noi, tu scegli lo stile.', "We build your website, you just pick the style.")}</h2>
             <p className="mt-5 text-base leading-relaxed text-muted md:text-lg">{L('Appena ti iscrivi hai il tuo sito, con il tuo nome. Scegli il modello, metti logo e colori: gli immobili ci finiscono da soli.', "Sign up and your website is ready, with your name. Pick a template, add your logo and colors: your listings land there on their own.")}</p>
             <ul className="mt-6 space-y-3 text-[15px]">
-              {[L('Incluso nell\'abbonamento, niente web agency da pagare', "Included in your plan, no web agency to pay"), L('Ogni immobile che carichi è subito online', "Every property you upload is live right away"), L('Le richieste arrivano a te, non a un portale', "Inquiries come to you, not to a portal")].map(x => <li key={x} className="flex items-start justify-center gap-3 md:justify-start">{CHECK}{x}</li>)}
+              {[L('Incluso nell\'abbonamento, niente web agency da pagare', "Included in your plan, no web agency to pay"), L('Ogni immobile che carichi è subito online', "Every property you upload is live right away"), L('Le richieste arrivano a te, non a un portale', "Inquiries come to you, not to a portal")].map(x => <li key={x} className="flex items-start gap-3">{CHECK}{x}</li>)}
             </ul>
             <Cta href={APP} className="mt-8">{L('Crea il tuo sito', "Create your website")}</Cta>
           </Reveal>
