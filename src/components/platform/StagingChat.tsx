@@ -56,10 +56,12 @@ type Msg =
   | { id: string; role: 'user'; text?: string; image?: string; seen?: string | null; region?: Region }
   | { id: string; role: 'ai'; before: string; out: string | null; busy: boolean; reveal: Reveal; err?: string; text: string; req?: EditRequest }
   // video in chat: UN messaggio che si trasforma a ogni scelta (template, arredo, tre anteprime, video)
-  | { id: string; role: 'video'; step: 'template' | 'anim' | 'mode' | 'previews' | 'render'; photo: string; anim?: VideoAnim; picks: string[]; previews?: (string | null)[]; url?: string; err?: string };
+  | { id: string; role: 'video'; step: 'template' | 'anim' | 'mode' | 'previews' | 'render'; photo: string; anim?: VideoAnim; picks: VideoPick[]; previews?: (string | null)[]; url?: string; err?: string };
 
 // Macro template video, ognuno con i suoi stili di animazione (card con anteprima in loop)
 type VideoAnim = 'popup' | 'gravity';
+// scelta gia' fatta: miniatura (video del template o foto) con il nome sotto, sopra la domanda
+type VideoPick = { label: string; src: string };
 const R2_SPIKE = 'https://pub-a668674eaa484e8e8f2f10c264392bfc.r2.dev/spike-video/stili';
 type VideoCard = { id: string; label: string; desc: string; sample: string };
 const VIDEO_TEMPLATES: (VideoCard & { anims: (VideoCard & { id: VideoAnim })[] })[] = [
@@ -273,7 +275,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   // tre anteprime in parallelo dello stile scelto (foto: costano poco), poi l'agente sceglie quella del video
   const stylePreviews = (m: VideoMsg, label: string, req: { style?: string; prompt?: string }) => {
     touch();
-    patchV(m.id, { step: 'previews', picks: [...m.picks, label], previews: [null, null, null] });
+    patchV(m.id, { step: 'previews', picks: [...m.picks, { label, src: m.photo }], previews: [null, null, null] });
     const body = { ...(project ? { projectId: project } : {}), ...(kind ? { room: seenLabel(kind) } : {}), ...(m.photo.startsWith('data:') ? { imageBase64: m.photo } : { imageUrl: m.photo }), scene: 'interno', ...req, variant: -1 };
     [0, 1, 2].forEach(k => {
       authFetch('/api/platform/photo-edit', { method: 'POST', body: JSON.stringify(body) }).then(r => (r.ok ? r.json() : {})).catch(() => ({}))
@@ -283,7 +285,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   // Video: il server svuota la foto, fa partire Veo e poi monta; qui si controlla ogni 6 s (circa 2 minuti in tutto)
   const makeVideo = async (m: VideoMsg, photo: string, pick: string) => {
     touch();
-    patchV(m.id, { step: 'render', photo, picks: [...m.picks, pick], err: undefined });
+    patchV(m.id, { step: 'render', photo, picks: [...m.picks, { label: pick, src: photo }], err: undefined });
     const fail = 'Video non riuscito, riprova.';
     const res = await authFetch('/api/platform/video', { method: 'POST', body: JSON.stringify({ ...(photo.startsWith('data:') ? { imageBase64: photo } : { imageUrl: photo }), anim: m.anim, ...(project ? { projectId: project } : {}) }) }).catch(() => null);
     const d = res ? await res.json().catch(() => ({})) : {};
@@ -431,16 +433,28 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
               <div className={`rounded-[32px] ease-smooth transition-colors duration-[600ms] ${m.step === 'mode' ? 'bg-canvas' : 'bg-transparent'}`}>
                 <div className="p-4 pb-6">
                   {/* passo nuovo: il vecchio sfuma, il contenitore cambia altezza (AutoSize), poi il nuovo appare */}
+                  {/* scelte fatte: miniature sopra la domanda; restano ferme tra un passo e l'altro, entra solo l'ultima */}
+                  {m.picks.length > 0 && (
+                    <div className="flex flex-wrap gap-3 px-2 pb-4">
+                      {m.picks.map(p => (
+                        <div key={p.label} className="blur-in w-24">
+                          {p.src.endsWith('.mp4')
+                            ? <video src={p.src} autoPlay loop muted playsInline className="aspect-video w-full rounded-xl object-cover shadow-sm ring-1 ring-black/5" />
+                            : <img src={p.src} alt="" className="aspect-video w-full rounded-xl object-cover shadow-sm ring-1 ring-black/5" />}
+                          <span className="mt-1 block truncate text-[11px] text-muted">{p.label}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                   <StepSwap step={m.step}>
-                  <div className="flex flex-wrap items-center gap-1.5 px-2 pb-4 text-sm">
+                  <div className="px-2 pb-4 text-sm">
                     <span className="font-medium">{m.step === 'template' ? 'Che video vuoi creare?' : m.step === 'anim' ? 'Con quale animazione?' : m.step === 'mode' ? 'Tengo i mobili che ci sono o arredo in un nuovo stile?' : m.step === 'previews' ? (m.previews?.some(p => !p) ? 'Preparo tre proposte…' : 'Scegli quella per il video') : m.url ? 'Ecco il video' : m.err ? '' : 'Creo il video, circa 2 minuti'}</span>
-                    {m.picks.map(p => <span key={p} className="rounded-full bg-white px-2.5 py-0.5 text-xs text-muted ring-1 ring-inset ring-black/5">{p}</span>)}
                   </div>
                     {(m.step === 'template' || m.step === 'anim') && (
                       <div className="grid gap-4 sm:grid-cols-2">
-                        {(m.step === 'template' ? VIDEO_TEMPLATES : VIDEO_TEMPLATES.find(t => t.label === m.picks[0])?.anims ?? []).map((t, k) => (
-                          <div key={t.id} className="rise" style={{ animationDelay: `${0.35 + k * 0.1}s` }}>
-                            <button onClick={() => patchV(m.id, m.step === 'template' ? { step: 'anim', picks: [t.label] } : { step: 'mode', anim: t.id as VideoAnim, picks: [...m.picks, t.label] })}
+                        {(m.step === 'template' ? VIDEO_TEMPLATES : VIDEO_TEMPLATES.find(t => t.label === m.picks[0]?.label)?.anims ?? []).map((t, k) => (
+                          <div key={t.id} className="rise" style={{ animationDelay: `${0.05 + k * 0.06}s` }}>
+                            <button onClick={() => patchV(m.id, m.step === 'template' ? { step: 'anim', picks: [{ label: t.label, src: t.sample }] } : { step: 'mode', anim: t.id as VideoAnim, picks: [...m.picks, { label: t.label, src: t.sample }] })}
                               onMouseMove={tiltMove} onMouseLeave={e => tiltReset(e.currentTarget)} className="tilt group relative flex w-full flex-col overflow-hidden rounded-[28px] bg-white p-2 text-left shadow-[0_1px_2px_rgba(0,0,0,.04),0_8px_24px_-12px_rgba(0,0,0,.12)] ring-1 ring-black/5 hover:shadow-[0_2px_4px_rgba(0,0,0,.04),0_30px_50px_-20px_rgba(0,0,0,.25)] active:scale-[0.985]">
                               <span className="sheen pointer-events-none absolute inset-0 z-20" />
                               <video src={t.sample} autoPlay loop muted playsInline className="aspect-video w-full rounded-[20px] object-cover" />
@@ -453,7 +467,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                     )}
                     {m.step === 'mode' && (
                       <div className="px-1">
-                        <div className="stagger-chips flex flex-wrap gap-1.5">
+                        <div className="flex flex-wrap gap-1.5">
                           <button onClick={() => makeVideo(m, m.photo, 'Stanza com’è')} className="shrink-0 whitespace-nowrap rounded-full bg-ink px-3.5 py-1.5 text-[13px] font-medium text-white shadow-sm ease-smooth transition-colors hover:bg-brand">Tieni la stanza com’è</button>
                           {VIDEO_STYLES.map(x => <button key={x.id} onClick={() => stylePreviews(m, x.label, { style: x.id })} className="shrink-0 whitespace-nowrap rounded-full bg-white px-3.5 py-1.5 text-[13px] font-medium text-ink/80 shadow-sm ring-1 ring-inset ring-black/10 ease-smooth transition-colors hover:bg-brand hover:text-white">{x.label}</button>)}
                         </div>
@@ -465,7 +479,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                     {m.step === 'previews' && (
                       <div className="grid grid-cols-3 gap-3">
                         {m.previews?.map((p, k) => (
-                          <div key={k} className="rise" style={{ animationDelay: `${0.35 + k * 0.1}s` }}>
+                          <div key={k} className="rise" style={{ animationDelay: `${0.05 + k * 0.06}s` }}>
                             <button disabled={!p || p === 'err'} onClick={() => p && makeVideo(m, p, `Proposta ${k + 1}`)} onMouseMove={tiltMove} onMouseLeave={e => tiltReset(e.currentTarget)} className="tilt group relative flex w-full flex-col overflow-hidden rounded-[28px] bg-white p-2 text-left shadow-[0_1px_2px_rgba(0,0,0,.04),0_8px_24px_-12px_rgba(0,0,0,.12)] ring-1 ring-black/5 hover:shadow-[0_2px_4px_rgba(0,0,0,.04),0_30px_50px_-20px_rgba(0,0,0,.25)] active:scale-[0.985]">
                               <span className="sheen pointer-events-none absolute inset-0 z-20" />
                               <span className="relative block overflow-hidden rounded-[20px]" style={{ aspectRatio: ratios[m.photo] ?? 1.5 }}>
@@ -885,5 +899,5 @@ function StepSwap({ step, children }: { step: string; children: React.ReactNode 
     return () => clearTimeout(t);
   }, [leaving, step]);
   // stesso elemento (key = passo corrente): in uscita cambia solo la classe, cosi' sfuma invece di sparire
-  return <div key={cur} className={leaving ? 'opacity-0 transition-opacity duration-200 ease-smooth' : 'blur-in'} style={leaving ? undefined : { animationDelay: '.25s' }}>{leaving ? old : children}</div>;
+  return <div key={cur} className={leaving ? 'opacity-0 transition-opacity duration-200 ease-smooth' : 'blur-in'} style={leaving ? undefined : { animationDelay: '.05s' }}>{leaving ? old : children}</div>;
 }
