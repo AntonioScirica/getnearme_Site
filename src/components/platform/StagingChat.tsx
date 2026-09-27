@@ -537,9 +537,9 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                   : <div className="max-w-[75%] rounded-3xl rounded-br-2xl bg-ink px-4 py-2.5 text-sm text-white">{m.region && <span className="mr-1.5 inline-flex items-center gap-1 rounded-full bg-white/15 px-2 py-0.5 text-[11px]"><SquareDashedMousePointer size={11} /> zona</span>}{m.text}</div>}
               </div>
               {m.image && i === msgs.length - 1 && !busy && (
-                <div className="blur-in mt-6 max-w-[85%] rounded-3xl rounded-bl-2xl bg-canvas px-4 py-3 text-sm" style={{ animationDelay: '.3s' }}>
+                <div className="blur-in mt-6 w-fit max-w-[85%] rounded-3xl rounded-bl-2xl bg-canvas px-4 py-3 text-sm" style={{ animationDelay: '.3s' }}>
                   {/* quando riconosce la foto il messaggio si riscrive parola per parola (key = cosa ha visto) */}
-                  <AutoSize><LightSwap swapKey={m.seen ?? 'caricata'}>
+                  <AutoSize width><LightSwap swapKey={m.seen ?? 'caricata'}>
                     <p>{m.seen ? <>Sembra{' '}
                       {otherFor === m.id ? (
                         // "Altro": campo al posto della voce, Invio conferma, Esc annulla
