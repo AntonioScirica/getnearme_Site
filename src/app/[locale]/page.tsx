@@ -6,10 +6,10 @@ import AgenteImmoLanding from '@/components/landing/AgenteImmoLanding';
 // Home di agenteimmo.me: landing di Agente Immo (solo in italiano, stessa pagina per ogni lingua).
 // ponytail: la vecchia landing GetNearMe (estensione) e' nella storia git, prima del commit che l'ha sostituita.
 export const metadata: Metadata = {
-  title: { absolute: 'Agente Immo, foto arredate, video e sito per agenti immobiliari' },
-  description: 'Carichi le foto di un immobile: l\'AI lo arreda, ne fa un video e lo pubblica sul tuo sito, già pronto con il tuo nome. Prova gratis, senza carta.',
+  title: { absolute: 'Agente Immo, più incarichi e case vendute prima' },
+  description: 'Più incarichi e case vendute prima: ogni immobile si presenta al meglio, con foto arredate, video e il tuo sito, senza fotografo né web agency da pagare. Prova gratis, senza carta.',
   alternates: { canonical: 'https://agenteimmo.me/it' },
-  openGraph: { title: 'Agente Immo', description: 'Foto arredate, video e sito. Pronti in minuti.', images: ['/immo/home/staging-after.webp'] },
+  openGraph: { title: 'Agente Immo', description: 'Più incarichi, case vendute prima. Senza spendere di più.', images: ['/immo/home/staging-after.webp'] },
 };
 
 export function generateStaticParams() {

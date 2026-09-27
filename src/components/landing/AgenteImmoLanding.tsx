@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import AuthCta from '@/components/AuthCta';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { ArrowRight, Check, Clapperboard, FileText, Globe, Images, MapPin, Sparkles, Upload, Users, Wand2 } from 'lucide-react';
+import { ArrowRight, Award, Check, Clapperboard, Clock, FileText, Globe, Images, MapPin, Sparkles, Upload, Users, Wallet, Wand2 } from 'lucide-react';
 
 // Landing di Agente Immo per gli agenti: tre promesse (home staging AI, video, sito pronto) con lo stesso
 // linguaggio della piattaforma: bianco, puntini, card 28/16, pillole, un solo tempo (600ms, ease-smooth).
@@ -167,7 +167,7 @@ export default function AgenteImmoLanding() {
           <nav className="glass flex h-14 w-full items-center gap-2 rounded-full border px-2 pl-4 shadow-[0_10px_40px_-15px_rgba(0,0,0,.2)]">
             <a href="#top" className="flex items-center gap-2"><img src="/immo/logo-mark.png" alt="" className="h-8 w-8" /><span className="font-display text-lg font-extrabold tracking-tight">Agente <span className="text-brand">Immo</span></span></a>
             <div className="mx-auto hidden items-center gap-1 md:flex">
-              {[['#staging', 'Home staging'], ['#video', 'Video'], ['#sito', 'Il tuo sito'], ['#come', 'Come funziona']].map(([h, l]) => <a key={h} href={h} className="rounded-full px-3.5 py-2 text-sm font-medium text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink">{l}</a>)}
+              {[['#perche', 'Perché'], ['#staging', 'Annunci'], ['#video', 'Social'], ['#sito', 'Il tuo sito']].map(([h, l]) => <a key={h} href={h} className="rounded-full px-3.5 py-2 text-sm font-medium text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink">{l}</a>)}
             </div>
             <AuthCta locale="it" href={APP} dashLabel="Dashboard" className="hidden px-3 text-sm font-semibold text-ink sm:block">Accedi</AuthCta>
             <Cta className="!h-10 !px-5 text-sm">Inizia gratis</Cta>
@@ -180,13 +180,13 @@ export default function AgenteImmoLanding() {
         <div className="mx-auto max-w-3xl text-center">
           <Reveal><Pill><Sparkles size={13} className="text-ai" /> Per agenti immobiliari, in Italia</Pill></Reveal>
           <h1 className="mt-6 font-display text-[44px] font-extrabold leading-[1.02] tracking-[-0.03em] md:text-[76px]">
-            {'Foto arredate, video e sito.'.split(' ').map((w, i) => <span key={i} className="blur-in inline-block" style={{ animationDelay: `${80 + i * 60}ms` }}>{w}&nbsp;</span>)}
-            <span className="block text-muted/60">{'Pronti in minuti.'.split(' ').map((w, i) => <span key={i} className="blur-in inline-block" style={{ animationDelay: `${420 + i * 60}ms` }}>{w}&nbsp;</span>)}</span>
+            {'Più incarichi, case vendute prima.'.split(' ').map((w, i) => <span key={i} className="blur-in inline-block" style={{ animationDelay: `${80 + i * 60}ms` }}>{w}&nbsp;</span>)}
+            <span className="block text-muted/60">{'Senza spendere di più.'.split(' ').map((w, i) => <span key={i} className="blur-in inline-block" style={{ animationDelay: `${420 + i * 60}ms` }}>{w}&nbsp;</span>)}</span>
           </h1>
-          <Reveal delay={600}><p className="mx-auto mt-6 max-w-xl text-lg leading-relaxed text-muted">Carichi le foto di un immobile. L&apos;AI lo arreda, ne fa un video e lo pubblica sul tuo sito, già pronto con il tuo nome. Tu pensi a vendere.</p></Reveal>
+          <Reveal delay={600}><p className="mx-auto mt-6 max-w-xl text-lg leading-relaxed text-muted">Il proprietario sceglie l&apos;agente che presenta meglio la sua casa. L&apos;acquirente si ferma sull&apos;annuncio che si nota. Con Agente Immo ogni tuo immobile si presenta al meglio dal primo giorno, senza fotografo, home stager e web agency da pagare.</p></Reveal>
           <Reveal delay={700} className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <Cta>Inizia gratis, senza carta</Cta>
-            <Cta ghost href="#staging">Guarda come funziona</Cta>
+            <Cta ghost href="#perche">Perché ti serve</Cta>
           </Reveal>
         </div>
 
@@ -209,19 +209,44 @@ export default function AgenteImmoLanding() {
         </Reveal>
 
         <Reveal delay={900} className="mx-auto mt-10 flex max-w-3xl flex-wrap justify-center gap-x-8 gap-y-3 text-sm text-muted">
-          {['Foto arredata in circa 20 secondi', 'Video da una foto in 2 minuti', 'Sito online al primo immobile', 'Nessuna carta per provare'].map(x => <span key={x} className="flex items-center gap-2"><Check size={14} className="text-brand" />{x}</span>)}
+          {['Annunci che si notano tra cento uguali', 'Fai bella figura con chi ti affida casa', 'Meno ore davanti al computer', 'Nessuna carta per provare'].map(x => <span key={x} className="flex items-center gap-2"><Check size={14} className="text-brand" />{x}</span>)}
         </Reveal>
+      </section>
+
+      {/* perche' ti serve: i problemi dell'agente, non i passaggi del prodotto */}
+      <section id="perche" className="mx-auto max-w-6xl px-4 py-20">
+        <Reveal className="mx-auto max-w-2xl text-center">
+          <Pill>Perché ti serve</Pill>
+          <h2 className="mt-5 font-display text-4xl font-extrabold leading-[1.05] tracking-tight md:text-5xl">Vendere casa oggi è una gara di immagine.</h2>
+          <p className="mt-5 text-lg leading-relaxed text-muted">E si gioca prima ancora della prima visita.</p>
+        </Reveal>
+        <ol className="mt-12 grid gap-4 md:grid-cols-3">
+          {[
+            [Award, 'Gli incarichi si vincono in presentazione', 'Il proprietario affida la casa a chi gli mostra meglio come la venderà. Ti presenti con foto arredate, un video e il tuo sito, non con una promessa.'],
+            [Clock, 'Il tuo tempo vale in strada, non al computer', 'Ogni ora passata a sistemare foto, scrivere annunci e aggiornare siti è un\'ora tolta a clienti e visite.'],
+            [Wallet, 'Fotografo, stager, web agency: costi che non rientrano', 'Per ogni immobile servirebbe un professionista diverso. Qui paghi un abbonamento e ce li hai tutti, per tutti gli immobili.'],
+          ].map(([I, t, d], i) => {
+            const Icon = I as typeof Upload;
+            return (
+              <Reveal key={t as string} as="li" delay={i * 120} className="group relative overflow-hidden rounded-[28px] bg-white p-7 ring-1 ring-black/5 shadow-[0_1px_2px_rgba(0,0,0,.04),0_8px_24px_-12px_rgba(0,0,0,.12)] ease-smooth transition-shadow hover:shadow-[0_30px_50px_-20px_rgba(0,0,0,.25)]">
+                <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-ink text-white"><Icon size={20} /></span>
+                <h3 className="mt-6 font-display text-2xl font-bold tracking-tight">{t as string}</h3>
+                <p className="mt-2 leading-relaxed text-muted">{d as string}</p>
+              </Reveal>
+            );
+          })}
+        </ol>
       </section>
 
       {/* 1. home staging */}
       <section id="staging" className="mx-auto max-w-6xl px-4 py-20">
         <div className="grid items-center gap-10 md:grid-cols-2 md:gap-16">
           <Reveal>
-            <Pill><Wand2 size={13} className="text-ai" /> Home staging AI</Pill>
-            <h2 className="mt-5 font-display text-4xl font-extrabold leading-[1.05] tracking-tight md:text-5xl">Una stanza vuota vende male. Arredala in un clic.</h2>
-            <p className="mt-5 text-lg leading-relaxed text-muted">Scegli lo stile o scrivi cosa vuoi, in italiano. L&apos;AI aggiunge i mobili giusti per quella stanza e lascia tutto il resto com&apos;è: muri, finestre, pavimento, prospettiva. Foto da annuncio, non da rivista.</p>
+            <Pill><Wand2 size={13} className="text-ai" /> Annunci che si notano</Pill>
+            <h2 className="mt-5 font-display text-4xl font-extrabold leading-[1.05] tracking-tight md:text-5xl">Chi scorre il portale non si ferma su una stanza vuota.</h2>
+            <p className="mt-5 text-lg leading-relaxed text-muted">Vuota o arredata male, una casa sembra più piccola e più fredda di com&apos;è. Arredata, chi guarda ci si immagina dentro e ti chiama per vederla. E il proprietario vede che per la sua casa ti stai impegnando davvero.</p>
             <ul className="mt-6 space-y-3 text-[15px]">
-              {['Riconosce la stanza da sola: cucina, camera, bagno, balcone', 'Svuota, arreda, rinnova o cambia solo un dettaglio con il lazo', 'Prima e dopo salvati nell\'immobile, pronti per il sito'].map(x => <li key={x} className="flex items-start gap-3"><span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand/10 text-brand"><Check size={12} /></span>{x}</li>)}
+              {['La prima foto ferma chi scorre', 'Il cliente capisce subito come vivrebbe quella casa', 'Nessun home staging vero da pagare o da organizzare'].map(x => <li key={x} className="flex items-start gap-3"><span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand/10 text-brand"><Check size={12} /></span>{x}</li>)}
             </ul>
             <Cta className="mt-8">Prova sulla tua foto</Cta>
           </Reveal>
@@ -238,11 +263,11 @@ export default function AgenteImmoLanding() {
       <section id="video" className="mx-auto max-w-6xl px-4 py-20">
         <div ref={videoRef} className="grid items-center gap-10 md:grid-cols-2 md:gap-16">
           <Reveal className="md:order-2">
-            <Pill><Clapperboard size={13} className="text-brand" /> Video AI</Pill>
-            <h2 className="mt-5 font-display text-4xl font-extrabold leading-[1.05] tracking-tight md:text-5xl">Da una foto, un video che si muove davvero.</h2>
-            <p className="mt-5 text-lg leading-relaxed text-muted">La camera entra nella stanza, la stanza resta quella. Reel per Instagram e TikTok, video per il portale, prima e dopo animati: dalle foto che hai già, senza riprese.</p>
+            <Pill><Clapperboard size={13} className="text-brand" /> Farti conoscere</Pill>
+            <h2 className="mt-5 font-display text-4xl font-extrabold leading-[1.05] tracking-tight md:text-5xl">I video fanno vedere le case. E fanno vedere te.</h2>
+            <p className="mt-5 text-lg leading-relaxed text-muted">Nella tua zona i clienti chiamano l&apos;agente che vedono ogni settimana su Instagram e TikTok. Un videomaker costa e ci mette giorni: qui ogni nuovo incarico diventa un video, e tu resti presente senza fermarti a girare.</p>
             <ul className="mt-6 space-y-3 text-[15px]">
-              {['Clip in alta definizione, verticali o orizzontali', 'Reel da più stanze montato con musica e testi', 'Giorno che diventa notte, cantiere che diventa casa'].map(x => <li key={x} className="flex items-start gap-3"><span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand/10 text-brand"><Check size={12} /></span>{x}</li>)}
+              {['Ti fai conoscere nella tua zona, non solo sul portale', 'Ogni incarico diventa un contenuto da pubblicare', 'Niente riprese, niente montaggio, niente videomaker'].map(x => <li key={x} className="flex items-start gap-3"><span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand/10 text-brand"><Check size={12} /></span>{x}</li>)}
             </ul>
             <Cta className="mt-8">Crea il primo video</Cta>
           </Reveal>
@@ -263,11 +288,11 @@ export default function AgenteImmoLanding() {
       <section id="sito" className="mx-auto max-w-6xl px-4 py-20">
         <div ref={siteRef} className="grid items-center gap-10 md:grid-cols-2 md:gap-16">
           <Reveal>
-            <Pill><Globe size={13} className="text-brand" /> Il tuo sito, pronto</Pill>
-            <h2 className="mt-5 font-display text-4xl font-extrabold leading-[1.05] tracking-tight md:text-5xl">Il sito della tua agenzia c&apos;è già. Devi solo scegliere il modello.</h2>
-            <p className="mt-5 text-lg leading-relaxed text-muted">Ogni immobile che carichi finisce sul tuo sito con foto, descrizione, mappa e cosa c&apos;è vicino. Modelli pronti, i tuoi colori e il tuo logo, modulo contatti, privacy e cookie a norma. Anche sul tuo dominio.</p>
+            <Pill><Globe size={13} className="text-brand" /> Il tuo sito</Pill>
+            <h2 className="mt-5 font-display text-4xl font-extrabold leading-[1.05] tracking-tight md:text-5xl">Sui portali sei uno dei tanti. Sul tuo sito sei l&apos;unico.</h2>
+            <p className="mt-5 text-lg leading-relaxed text-muted">Sul portale l&apos;acquirente sceglie la casa, non l&apos;agente, e accanto ci sono cento concorrenti. Il tuo sito è il posto dove ci sei solo tu: lo mandi ai clienti, lo metti in firma, lo mostri al proprietario per fargli vedere dove finirà la sua casa.</p>
             <ul className="mt-6 space-y-3 text-[15px]">
-              {['Pagine immobili con prima e dopo, tour virtuale, report PDF da scaricare', 'Pagine di zona per farti trovare su Google', 'Cambi modello quando vuoi, senza rifare niente'].map(x => <li key={x} className="flex items-start gap-3"><span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand/10 text-brand"><Check size={12} /></span>{x}</li>)}
+              {['I contatti arrivano a te, non a un portale', 'Un biglietto da visita per chi deve scegliere a chi affidare casa', 'Ti fai trovare su Google nella tua zona'].map(x => <li key={x} className="flex items-start gap-3"><span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand/10 text-brand"><Check size={12} /></span>{x}</li>)}
             </ul>
             <Cta className="mt-8">Metti online il primo immobile</Cta>
           </Reveal>
@@ -275,44 +300,19 @@ export default function AgenteImmoLanding() {
         </div>
       </section>
 
-      {/* come funziona */}
-      <section id="come" className="mx-auto max-w-6xl px-4 py-20">
-        <Reveal className="mx-auto max-w-2xl text-center">
-          <Pill>Come funziona</Pill>
-          <h2 className="mt-5 font-display text-4xl font-extrabold leading-[1.05] tracking-tight md:text-5xl">Tre passi, un immobile pronto.</h2>
-        </Reveal>
-        <ol className="mt-12 grid gap-4 md:grid-cols-3">
-          {[
-            [Upload, 'Carica', 'Le foto, un link dell\'annuncio o il CSV del gestionale. La scheda si compila da sola, descrizione compresa.'],
-            [Wand2, 'Migliora', 'Arreda le stanze vuote, crea i video, correggi i dettagli parlando con l\'AI in italiano.'],
-            [Globe, 'Pubblica', 'Un clic e l\'immobile è sul tuo sito, con report PDF, mappa e servizi vicini. Condividi il link.'],
-          ].map(([I, t, d], i) => {
-            const Icon = I as typeof Upload;
-            return (
-              <Reveal key={t as string} as="li" delay={i * 120} className="group relative overflow-hidden rounded-[28px] bg-white p-7 ring-1 ring-black/5 shadow-[0_1px_2px_rgba(0,0,0,.04),0_8px_24px_-12px_rgba(0,0,0,.12)] ease-smooth transition-shadow hover:shadow-[0_30px_50px_-20px_rgba(0,0,0,.25)]">
-                <span className="absolute right-6 top-5 font-display text-6xl font-extrabold text-canvas ease-smooth transition-colors group-hover:text-brand/15">{i + 1}</span>
-                <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-ink text-white"><Icon size={20} /></span>
-                <h3 className="mt-6 font-display text-2xl font-bold tracking-tight">{t as string}</h3>
-                <p className="mt-2 leading-relaxed text-muted">{d as string}</p>
-              </Reveal>
-            );
-          })}
-        </ol>
-      </section>
-
       {/* tutto il resto */}
       <section className="mx-auto max-w-6xl px-4 py-12">
         <Reveal className="mx-auto max-w-2xl text-center">
-          <h2 className="font-display text-3xl font-extrabold tracking-tight md:text-4xl">E tutto quello che serve intorno.</h2>
+          <h2 className="font-display text-3xl font-extrabold tracking-tight md:text-4xl">E il lavoro noioso sparisce.</h2>
         </Reveal>
         <div className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {[
-            [FileText, 'Report PDF per ogni immobile', 'Brochure con foto, caratteristiche, costi reali e servizi vicini, col tuo logo.'],
-            [Sparkles, 'Descrizioni che si scrivono da sole', 'Testo dell\'annuncio completo e naturale, con la zona già dentro.'],
-            [MapPin, 'Cosa c\'è vicino, in automatico', 'Metro, scuole, supermercati e parchi con la distanza a piedi.'],
-            [Images, 'Galleria di tutte le modifiche', 'Ogni foto con la sua storia: originale, versioni, passaggi.'],
-            [Upload, 'Import dal gestionale', 'CSV o link: campi riconosciuti e normalizzati, foto in alta qualità.'],
-            [Users, 'Tutta l\'agenzia', 'Più agenti sullo stesso account, ognuno con i suoi immobili.'],
+            [FileText, 'Il cliente si ricorda di te', 'Dopo la visita riparte con un report della casa col tuo logo, da girare a chi deve decidere.'],
+            [Sparkles, 'Annunci pronti in un attimo', 'Il testo si scrive da solo: tu lo rileggi e pubblichi.'],
+            [MapPin, 'Risposte prima delle domande', 'Scuole, metro e negozi vicini sono già nell\'annuncio: meno telefonate a vuoto.'],
+            [Images, 'Tutto in un posto', 'Foto, video e versioni di ogni immobile sempre a portata, anche dal telefono.'],
+            [Upload, 'Parti da quello che hai', 'Gli immobili che hai già non li ricarichi a mano.'],
+            [Users, 'Tutta l\'agenzia con la stessa immagine', 'Ogni agente con i suoi immobili, tutti presentati allo stesso livello.'],
           ].map(([I, t, d], i) => {
             const Icon = I as typeof Upload;
             return (
@@ -330,7 +330,7 @@ export default function AgenteImmoLanding() {
         <Reveal className="relative overflow-hidden rounded-[32px] bg-ink px-6 py-16 text-center text-white md:py-24">
           <div className="pointer-events-none absolute inset-0 opacity-30" style={{ background: 'radial-gradient(600px circle at 20% 0%, rgba(83,126,236,.8), transparent 60%), radial-gradient(500px circle at 90% 100%, rgba(110,86,248,.7), transparent 60%)' }} />
           <div className="relative">
-            <h2 className="mx-auto max-w-2xl font-display text-4xl font-extrabold leading-[1.05] tracking-tight md:text-6xl">Il prossimo immobile, fallo così.</h2>
+            <h2 className="mx-auto max-w-2xl font-display text-4xl font-extrabold leading-[1.05] tracking-tight md:text-6xl">Il prossimo incarico, vincilo così.</h2>
             <p className="mx-auto mt-5 max-w-xl text-lg text-white/70">Provi gratis, senza carta. Se non ti serve, non paghi niente.</p>
             <a href={APP} className="mt-8 inline-flex h-13 items-center gap-2 rounded-full bg-white px-7 text-[15px] font-semibold text-ink ease-smooth transition-transform hover:scale-[1.03] active:scale-[.98]">Inizia gratis <ArrowRight size={16} /></a>
           </div>
