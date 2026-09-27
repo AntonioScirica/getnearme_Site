@@ -218,14 +218,13 @@ function Compare() {
 // Si vede il prima/dopo; per scaricarla serve l'account.
 // template del video nella prova: i primi due gratis, gli altri solo con un piano
 const SAMPLES = 'https://pub-a668674eaa484e8e8f2f10c264392bfc.r2.dev/spike-video/stili';
-// esempi: le clip vere dei reel di GetNearMe. Lo stop-motion esiste solo montato (con badge e firma GetNearMe):
-// nella card 16:9 il verticale si vede solo al centro, badge e firma restano fuori
+// esempi: le clip vere dei reel di GetNearMe (senza scritte); lo stop-motion e' la demo in public/staging/videos
 const REELS = 'https://ecrnpyksnfyykqwnutwa.supabase.co/storage/v1/object/public/content/social-frames';
 const VIDEO_TEMPLATES = [
   ['popup', 'Popup', 'Pop-up', 'I mobili spuntano uno alla volta', 'Furniture pops in piece by piece', `${REELS}/9be10bf3-bbb7-4984-8cf6-c1cbe42a1f25/reveal.mp4`],
   ['gravity', 'Dall\'alto', 'From above', 'I mobili cadono dall\'alto e si posano', 'Furniture drops in from above', `${SAMPLES}/F9_gravity.mp4`],
   ['particles', 'Particelle', 'Particles', 'Si compongono da una polvere dorata', 'Built from golden dust', `${REELS}/90917b29-e0ff-425b-b3f0-45fa303c6f9d/reveal.mp4`],
-  ['stopmotion', 'Stop-motion', 'Stop-motion', 'Compaiono a scatti, uno per volta', 'Appear frame by frame', `${REELS.replace('social-frames', 'social-videos')}/2026-07-09_stopmotion_story.mp4`],
+  ['stopmotion', 'Stop-motion', 'Stop-motion', 'Compaiono a scatti, uno per volta', 'Appear frame by frame', '/staging/videos/stopmotion_room_v2.mp4'],
   ['cantiere', 'Cantiere', 'Construction', 'Dal cantiere alla casa finita', 'From building site to finished home', `${REELS}/bbe5b3fa-e484-4f34-8c55-341f02907f19/base.mp4`],
   ['daynight', 'Giorno e notte', 'Day to night', 'Scende la sera, si accendono le luci', 'Evening falls, lights come on', `${REELS}/b4938420-a308-413b-853f-0ea38719dd5e/daynight.mp4`],
 ] as const;
