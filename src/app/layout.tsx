@@ -23,7 +23,7 @@ export default function RootLayout({
 }) {
   return (
     <>
-      <Trackers>
+      <Trackers kind="ads">
       <Script id="meta-pixel" strategy="lazyOnload">
         {`!function(f,b,e,v,n,t,s)
 {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
@@ -36,6 +36,8 @@ s.parentNode.insertBefore(t,s)}(window, document,'script',
 fbq('init', '${FB_PIXEL_ID}');
 fbq('track', 'PageView');`}
       </Script>
+      </Trackers>
+      <Trackers kind="stats">
       <Script
         src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
         strategy="lazyOnload"

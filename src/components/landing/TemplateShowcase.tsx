@@ -49,7 +49,7 @@ function Bar({ name, agent = AGENTS[0], label = 'Modello' }: { name: string; age
     <div className="flex h-12 items-center gap-2 border-b border-line bg-canvas px-4">
       <span className="flex gap-1.5">{['#ff5f57', '#febc2e', '#28c840'].map(c => <span key={c} className="h-2.5 w-2.5 rounded-full" style={{ background: c }} />)}</span>
       <span className="mx-auto flex h-7 items-center gap-1.5 rounded-full bg-white px-3 text-[11px] font-medium text-muted ring-1 ring-black/5"><Globe size={11} className="text-brand" /><span>agenteimmo.me/<span className="text-ink">{slug(agent)}</span></span></span>
-      <span key={name} className={`rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold text-muted ring-1 ring-black/5 ${name ? 'blur-in' : 'opacity-0'}`}>{label}: {name || '-'}</span>
+      <span key={name} className={`hidden whitespace-nowrap rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold text-muted ring-1 ring-black/5 sm:inline ${name ? 'blur-in' : 'opacity-0'}`}>{label}: {name || '-'}</span>
     </div>
   );
 }
@@ -71,7 +71,7 @@ export default function TemplateShowcase({ active, en = false }: { active: boole
   // posizione -1 = quella appena uscita (a sinistra, invisibile), 0 = davanti, 1..DEPTH-1 dietro, DEPTH e oltre = in fondo, invisibile
   const cards = TEMPLATES.map((t, idx) => { const rel = (((idx - i) % N) + N) % N; return { id: t.id, p: rel === N - 1 ? -1 : Math.min(rel, DEPTH) }; });
   return (
-    <div className="relative pr-[72px] pt-16">
+    <div className="relative pr-12 pt-12 sm:pr-[72px] sm:pt-16">
       {/* dà l'altezza al mazzo */}
       <div ref={sizer} className="invisible"><Bar name="" /><div className="aspect-[4/3]" /></div>
       {cards.map(({ p, id }) => {
@@ -79,7 +79,7 @@ export default function TemplateShowcase({ active, en = false }: { active: boole
           ? { transform: 'translate(-64px, 24px) scale(1.02)', opacity: 0, zIndex: 20 }
           : { transform: `translate(${p * 36}px, ${-p * 32}px) scale(${1 - p * 0.05})`, opacity: p >= DEPTH ? 0 : 1 - p * 0.15, zIndex: 10 - p };
         return (
-          <div key={id} className="absolute bottom-0 left-0 right-[72px] origin-top-right" style={{ ...style, transition: 'transform 1s cubic-bezier(.65,0,.35,1), opacity 1s cubic-bezier(.65,0,.35,1)' }}>
+          <div key={id} className="absolute bottom-0 left-0 right-12 origin-top-right sm:right-[72px]" style={{ ...style, transition: 'transform 1s cubic-bezier(.65,0,.35,1), opacity 1s cubic-bezier(.65,0,.35,1)' }}>
             <Window id={id} k={k} front={p === 0} label={en ? 'Template' : 'Modello'} />
           </div>
         );
