@@ -76,7 +76,7 @@ export function Header({ over }: { over?: boolean }) {
     </SiteLink>
   );
   const burger = <button onClick={() => setOpen(v => !v)} className="md:hidden" aria-label="Menu">{open ? <X /> : <Menu />}</button>;
-  const mobile = open && <div className="border-t border-[var(--line)] bg-[var(--bg)] px-6 py-4 text-[var(--fg)] md:hidden">{links.map(([l, to]) => <SiteLink key={l} to={to} className="block py-2.5 text-base font-medium">{l}</SiteLink>)}</div>;
+  const mobile = open && <div className="border-t border-[var(--line)] bg-[var(--bg)] px-4 py-4 sm:px-6 text-[var(--fg)] md:hidden">{links.map(([l, to]) => <SiteLink key={l} to={to} className="block py-2.5 text-base font-medium">{l}</SiteLink>)}</div>;
 
   // drawer: barra scura, menu a sinistra che apre il pannello laterale (con le pagine zona), logo al centro
   if (t.header === 'drawer') return (
@@ -105,7 +105,7 @@ export function Header({ over }: { over?: boolean }) {
   if (t.header === 'centered') return (
     <header className="relative z-30 bg-[var(--bg)]">
       <TopBar />
-      <Container className="grid min-h-24 py-3 grid-cols-[1fr_auto_1fr] items-center">
+      <Container className="flex min-h-20 items-center justify-between py-3 md:grid md:min-h-24 md:grid-cols-[1fr_auto_1fr]">
         <nav className="hidden items-center md:flex">{nav}</nav>
         <SiteLink to={{ page: 'home' }}>{mark}</SiteLink>
         <div className="flex justify-end gap-3">{fav}{cta}{burger}</div>
@@ -196,7 +196,7 @@ export function SearchForm({ layout = 'bar' }: { layout?: 'bar' | 'stack' | 'adv
           <button type="submit" className="flex h-12 w-full items-center justify-center gap-2 rounded-[calc(var(--r)*0.6)] bg-[var(--c)] text-sm font-semibold text-white transition hover:brightness-110"><Search size={16} /> {tx('search.button')}</button>
         </div>
       ) : (
-        <div className="flex flex-col gap-3 rounded-[var(--r)] bg-[var(--surface)] p-3 pl-5 shadow-[0_20px_60px_-20px_rgba(0,0,0,.25)] ring-1 ring-black/[.04] md:flex-row md:items-center md:gap-5">
+        <div className="flex flex-col gap-3 rounded-[var(--r)] bg-[var(--surface)] p-3 pl-4 md:pl-5 shadow-[0_20px_60px_-20px_rgba(0,0,0,.25)] ring-1 ring-black/[.04] md:flex-row md:items-center md:gap-5">
           <div className="flex flex-1 flex-col gap-3 md:flex-row md:items-center md:gap-5 md:[&>label+label]:border-l md:[&>label+label]:border-[var(--line)] md:[&>label+label]:pl-5">{fields}</div>
           <button type="submit" className="flex h-12 shrink-0 items-center justify-center gap-2 rounded-[calc(var(--r)*0.7)] bg-[var(--c)] px-6 text-sm font-semibold text-white transition hover:brightness-110"><Search size={16} /> {tx('search.button')}</button>
         </div>
@@ -251,18 +251,19 @@ export function Hero() {
         </Container>
         <div className="relative mt-14">
           <div className="absolute inset-x-0 bottom-0 top-1/2 bg-[var(--ink)]" />
-          <Container className="relative"><Photo src={src} className="aspect-[21/9] rounded-[var(--r)]" /></Container>
+          <Container className="relative"><Photo src={src} className="aspect-[4/3] rounded-[var(--r)] md:aspect-[21/9]" /></Container>
         </div>
-        <div className="bg-[var(--ink)] pb-4 pt-10"><Container><SearchForm /></Container></div>
+        <div className="bg-[var(--ink)] pb-4 pt-10 text-white"><Container><SearchForm /></Container></div>
       </section>
     );
   }
   if (t.hero === 'tabs') return (
     <section className="relative">
-      <div className="relative h-[640px] overflow-hidden text-white">
-        <Photo src={src} className="h-full" />
+      {/* alta almeno 640: su telefono il testo e' piu' alto e la foto cresce con lui (non finisce sotto la barra) */}
+      <div className="relative min-h-[640px] overflow-hidden text-white">
+        <Photo src={src} className="absolute inset-0 h-full" />
         <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/40 to-black/10" />
-        <Container className="absolute inset-0 flex flex-col justify-center pb-20">
+        <Container className="relative flex min-h-[640px] flex-col justify-center pb-24 pt-32 md:pb-20 md:pt-24">
           <Eyebrow className="!text-[var(--c)]">{cfg.city ? `Immobili a ${cfg.city}` : tx('hero.eyebrow')}</Eyebrow>
           <H as="h1" className="mt-4 max-w-2xl text-[clamp(3rem,6vw,5.2rem)]">{cfg.heroTitle}</H>
           <p className="mt-5 max-w-lg text-[17px] text-white/80">{cfg.heroSubtitle}</p>
@@ -272,7 +273,7 @@ export function Hero() {
           </div>
         </Container>
       </div>
-      <Container className="relative z-10 -mt-16"><div className="rounded-[var(--r)] bg-[var(--surface)] p-4 shadow-[0_30px_70px_-30px_rgba(0,0,0,.35)]"><SearchForm /></div></Container>
+      <Container className="relative z-10 -mt-16"><div className="rounded-[var(--r)] bg-[var(--surface)] p-2 shadow-[0_30px_70px_-30px_rgba(0,0,0,.35)] sm:p-4"><SearchForm /></div></Container>
     </section>
   );
   if (t.hero === 'sky') {
@@ -299,10 +300,12 @@ export function Hero() {
           <SiteLink to={{ page: 'immobili' }} className="mt-5 inline-flex items-center gap-2 rounded-[calc(var(--r)*0.6)] bg-[var(--ink)] px-5 py-3 text-sm font-semibold text-white">{tx('hero.cta')} <ArrowUpRight size={15} /></SiteLink>
         </div>
       </div>
-      <div className="relative mt-10 h-[560px] overflow-hidden rounded-[calc(var(--r)*1.4)]">
+      {/* su telefono la ricerca sta sotto la foto: sopra la coprirebbe tutta */}
+      <div className="relative mt-8 h-[300px] overflow-hidden rounded-[calc(var(--r)*1.4)] sm:mt-10 sm:h-[560px]">
         <Photo src={src} className="h-full" />
-        <div className="absolute bottom-8 left-8 right-8 max-w-4xl rounded-[var(--r)] bg-[var(--surface)] p-4 shadow-2xl"><SearchForm /></div>
+        <div className="absolute bottom-8 left-8 right-8 hidden max-w-4xl rounded-[var(--r)] bg-[var(--surface)] p-4 shadow-2xl sm:block"><SearchForm /></div>
       </div>
+      <div className="mt-3 rounded-[var(--r)] bg-[var(--surface)] p-2 shadow-[0_20px_50px_-25px_rgba(0,0,0,.25)] ring-1 ring-[var(--line)] sm:hidden"><SearchForm /></div>
     </Container>
   );
   if (t.hero === 'banner') return (
@@ -344,15 +347,15 @@ export function Hero() {
           <SiteLink to={{ page: 'immobili' }} className="mt-8 inline-flex w-fit items-center gap-2 rounded-full border border-white/70 px-6 py-3 text-sm font-semibold transition hover:bg-white hover:text-neutral-900">{tx('hero.cta')} <ArrowRight size={16} /></SiteLink>
         </Container>
       </div>
-      <Container className="relative z-10 -mt-16"><div className="rounded-[calc(var(--r)*1.3)] bg-[var(--bg)] p-3 shadow-[0_30px_80px_-30px_rgba(0,0,0,.35)]"><SearchForm /></div></Container>
+      <Container className="relative z-10 -mt-16"><div className="rounded-[calc(var(--r)*1.3)] bg-[var(--bg)] p-2 shadow-[0_30px_80px_-30px_rgba(0,0,0,.35)] sm:p-3"><SearchForm /></div></Container>
     </section>
   );
   if (t.hero === 'card') return (
-    <Container className="pt-6">
-      <section className="relative overflow-hidden rounded-[calc(var(--r)*1.6)] text-white">
+    <Container className="sm:pt-6">
+      <section className="relative -mx-4 overflow-hidden text-white sm:mx-0 sm:rounded-[calc(var(--r)*1.6)]">
         <Photo src={src} className="absolute inset-0 h-full" />
         <div className="absolute inset-0 bg-gradient-to-r from-[var(--ink)]/75 via-[var(--ink)]/25 to-transparent" />
-        <div className="relative flex min-h-[620px] flex-col justify-between p-8 md:p-14">
+        <div className="relative flex min-h-[620px] flex-col justify-between p-4 sm:p-8 md:p-14">
           <div className="flex justify-end">{trust}</div>
           <div className="max-w-xl">{title}{sub}</div>
           <div className="mx-auto mt-10 w-full max-w-4xl"><SearchForm /></div>
@@ -375,16 +378,18 @@ export function Hero() {
     </section>
   );
   return (
-    <Container className="pt-6">
-      <section className="relative overflow-hidden rounded-[calc(var(--r)*1.6)] text-white">
+    <Container className="sm:pt-6">
+      <section className="relative -mx-4 overflow-hidden text-white sm:mx-0 sm:rounded-[calc(var(--r)*1.6)]">
         <Photo src={src} className="absolute inset-0 h-full" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-black/10" />
-        <div className="relative grid min-h-[620px] items-end gap-8 p-8 md:grid-cols-[1fr_360px] md:p-12">
+        {/* su telefono titolo e ricerca coprono tutta la foto: velo in piu' perche' il titolo si legga */}
+        <div className="absolute inset-0 bg-black/30 md:hidden" />
+        <div className="relative grid min-h-[620px] items-end gap-8 p-4 sm:p-8 md:grid-cols-[1fr_360px] md:p-12">
           <div className="max-w-xl">
             {title}
             <SiteLink to={{ page: 'immobili' }} className="mt-8 inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-neutral-900">{tx('hero.cta')} <ArrowUpRight size={15} /></SiteLink>
           </div>
-          <div className="self-center rounded-[var(--r)] bg-white p-6 text-neutral-900 shadow-2xl">
+          <div className="self-center rounded-[var(--r)] bg-white p-4 text-neutral-900 shadow-2xl sm:p-6">
             <H className="text-3xl">Cosa stai cercando?</H>
             <p className="mb-5 mt-1 text-sm text-neutral-500">{cfg.heroSubtitle}</p>
             <SearchForm layout="stack" />
@@ -488,7 +493,7 @@ export function Intro() {
   }
   if (t.intro === 'text') return (
     <Container className="pt-20 text-center">
-      <H className="mx-auto max-w-3xl text-3xl md:text-[2.6rem]">{name} — {cfg.agentRole}{cfg.city ? ` a ${cfg.city}` : ''}</H>
+      <H className="mx-auto max-w-3xl text-3xl md:text-[2.6rem]">{name}, {cfg.agentRole}{cfg.city ? ` a ${cfg.city}` : ''}</H>
       <p className="mx-auto mt-5 max-w-2xl text-lg leading-relaxed text-[var(--muted)]">{cfg.heroSubtitle}</p>
       {cfg.zones[0] && <SiteLink to={{ page: 'zona', slug: zoneSlug(cfg.zones[0].name) }} className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-[var(--c)]">Scopri {cfg.zones[0].name} <ArrowRight size={15} /></SiteLink>}
     </Container>
@@ -545,7 +550,7 @@ export function PropertyCard({ p }: { p: SiteProperty }) {
   const shell = 'group flex flex-col overflow-hidden rounded-[var(--rc)] bg-[var(--surface)] transition-all duration-500 hover:-translate-y-1';
 
   if (t.card === 'minimal') return (
-    <SiteLink to={{ page: 'immobile', id: p.id }} className="group block">
+    <SiteLink to={{ page: 'immobile', id: p.id }} className="group block min-w-0">
       <div className="relative"><Photo src={p.cover} alt={p.titolo} zoom className="aspect-[4/3] rounded-[var(--rc)]" /><span className="absolute left-3 top-3 rounded-full bg-white px-3 py-1 text-[11px] font-semibold text-neutral-900">{typeOf(p)}</span><FavButton id={p.id} className="absolute right-3 top-3" /></div>
       <div className="mt-4 flex items-start justify-between gap-4">
         <div className="min-w-0"><div className="line-clamp-2 text-[17px] font-semibold leading-snug">{p.titolo}</div>{place}</div>{pr}
@@ -572,7 +577,7 @@ export function PropertyCard({ p }: { p: SiteProperty }) {
     </SiteLink>
   );
   if (t.card === 'clean') return (
-    <SiteLink to={{ page: 'immobile', id: p.id }} className="group block">
+    <SiteLink to={{ page: 'immobile', id: p.id }} className="group block min-w-0">
       <div className="relative">
         <Photo src={p.cover} alt={p.titolo} zoom className="aspect-[4/3] rounded-[var(--rc)]" />
         <div className="absolute right-3 top-3 flex gap-1.5">{['In evidenza', isRent(p) ? 'Affitto' : 'Vendita'].map(x => <span key={x} className="rounded-[calc(var(--r)*0.4)] bg-white/25 px-2.5 py-1 text-[11px] font-medium text-white backdrop-blur-md">{x}</span>)}</div>
@@ -780,7 +785,7 @@ export function AboutBlock() {
   if (t.about === 'numbers') return (
     <Container className="py-24">
       {stats.length > 0 && <div className="mb-14 grid gap-px overflow-hidden rounded-[var(--r)] bg-[var(--line)] md:grid-cols-4">
-        {stats.map(s => <div key={s.l} className="bg-[var(--surface)] p-8"><H className="text-5xl">{s.v}</H><div className="mt-2 text-sm text-[var(--muted)]">{s.l}</div></div>)}
+        {stats.map(s => <div key={s.l} className="bg-[var(--surface)] p-5 sm:p-8"><H className="text-4xl sm:text-5xl">{s.v}</H><div className="mt-2 text-sm text-[var(--muted)]">{s.l}</div></div>)}
       </div>}
       <div className="grid items-center gap-10 md:grid-cols-[auto_1fr]">
         {cfg.aboutImage ? <Photo src={cfg.aboutImage} className="h-40 w-40 rounded-full" /> : <span className="flex h-40 w-40 items-center justify-center rounded-full bg-[var(--soft)] text-5xl font-bold">{initial(name)}</span>}
@@ -824,7 +829,7 @@ export function Reviews() {
       <SectionHead eyebrow={tx('reviews.eyebrow')} title={tx('reviews.title')} />
       <div className="mt-10 grid gap-5 md:grid-cols-3">
         {cfg.reviews.map((r, k) => (
-          <figure key={k} className="flex flex-col rounded-[var(--r)] bg-[var(--surface)] p-7 ring-1 ring-[var(--line)]">
+          <figure key={k} className="flex flex-col rounded-[var(--r)] bg-[var(--surface)] p-5 ring-1 ring-[var(--line)] sm:p-7">
             <div className="flex gap-0.5 text-[var(--c)]">{[0, 1, 2, 3, 4].map(s => <Star key={s} size={14} fill="currentColor" />)}</div>
             <blockquote className="mt-4 flex-1 leading-relaxed">“{r.text}”</blockquote>
             <figcaption className="mt-6 flex items-center gap-3 border-t border-[var(--line)] pt-5">
@@ -904,13 +909,13 @@ export function CtaBand() {
     </section></Container>
   );
   if (t.cta === 'gradient') return (
-    <Container className="pb-24"><section id="contatti" className="flex flex-col items-start justify-between gap-8 rounded-[calc(var(--r)*1.3)] px-8 py-14 text-white md:flex-row md:items-center md:px-14" style={{ background: 'linear-gradient(120deg, var(--c), color-mix(in srgb, var(--c) 55%, #a78bfa))' }}>{text}{buttons}</section></Container>
+    <Container className="pb-24"><section id="contatti" className="flex flex-col items-start justify-between gap-8 rounded-[calc(var(--r)*1.3)] px-6 py-10 sm:px-8 sm:py-14 text-white md:flex-row md:items-center md:px-14" style={{ background: 'linear-gradient(120deg, var(--c), color-mix(in srgb, var(--c) 55%, #a78bfa))' }}>{text}{buttons}</section></Container>
   );
   if (t.cta === 'ink') return (
     <section id="contatti" className="bg-[var(--ink)] py-24 text-white"><Container className="flex flex-col items-start justify-between gap-8 md:flex-row md:items-end">{text}{buttons}</Container></section>
   );
   return (
-    <Container className="pb-24"><section id="contatti" className="flex flex-col items-start justify-between gap-8 rounded-[calc(var(--r)*1.2)] bg-[var(--c)] px-8 py-12 text-white md:flex-row md:items-center md:px-12">{text}{buttons}</section></Container>
+    <Container className="pb-24"><section id="contatti" className="flex flex-col items-start justify-between gap-8 rounded-[calc(var(--r)*1.2)] bg-[var(--c)] px-6 sm:px-8 py-12 text-white md:flex-row md:items-center md:px-12">{text}{buttons}</section></Container>
   );
 }
 

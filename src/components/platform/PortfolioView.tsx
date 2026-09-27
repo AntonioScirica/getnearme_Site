@@ -617,9 +617,11 @@ export function PublicSwitch({ on, onClick, labels = ['Pubblico', 'Privato'] }: 
 // cornice della larghezza scelta. La cornice carica #/anteprima/<id>?solo=1 (solo il sito): cosi' le regole
 // responsive del sito vedono davvero la larghezza del telefono, non un sito da computer rimpicciolito.
 const DEVICES = [['pc', 'PC', '100%'], ['tablet', 'Tablet', '834px'], ['phone', 'Telefono', '390px']] as const;
-export function TemplatePreview({ id, projects, solo }: { id: TemplateId; projects: ProjectData[] | null; solo: boolean }) {
+// pagina: pagina iniziale della cornice (?pagina=immobili ecc.), per aprire subito una pagina precisa
+export function TemplatePreview({ id, projects, solo, pagina }: { id: TemplateId; projects: ProjectData[] | null; solo: boolean; pagina?: string | null }) {
   const [site, setSite] = useState<{ name: string; logo: string | null; config: SiteConfig } | null>(null);
   const [page, setPage] = useState<Page>({ page: 'home' });
+  const opened = useRef(false);
   const [device, setDevice] = useState<(typeof DEVICES)[number][0]>('pc');
   useEffect(() => { if (solo) authFetch('/api/platform/site').then(r => r.json()).then(setSite).catch(() => {}); }, [solo]);
   const t = TEMPLATES.find(x => x.id === id) ?? TEMPLATES[0];
@@ -628,6 +630,9 @@ export function TemplatePreview({ id, projects, solo }: { id: TemplateId; projec
     const pub = (projects ?? []).filter(p => p.is_public).map(toSite);
     const props = [...pub, ...FAKE_PROPERTIES.filter(f => !pub.some(p => p.id === f.id)).map(toSite)].slice(0, Math.max(9, pub.length));
     const cfg = withPlaceholders(site.config.template === t.id ? site.config : { ...site.config, template: t.id, primary: t.primary, font: t.font });
+    const start: Page | null = pagina === 'immobile' ? { page: 'immobile', id: props[0]?.id ?? '' } : pagina === 'zona' ? { page: 'zona', slug: zoneSlug(cfg.zones[0]?.name ?? '') }
+      : pagina === 'privacy' ? { page: 'legal', doc: 'privacy' } : pagina && ['immobili', 'agente', 'servizi', 'contatti'].includes(pagina) ? { page: pagina } as Page : null;
+    if (start && page.page === 'home' && !opened.current) { opened.current = true; queueMicrotask(() => setPage(start)); }
     return <div className="h-full overflow-y-auto bg-white"><SitePage page={page} ctx={{ cfg, name: site.name || 'La tua agenzia', logo: site.logo, properties: props, base: '', preview: true, go: setPage }} /></div>;
   }
   const w = DEVICES.find(d => d[0] === device)![2];

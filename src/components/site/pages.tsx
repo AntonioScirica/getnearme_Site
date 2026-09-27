@@ -247,7 +247,7 @@ function AgentCard({ subject, property }: { subject?: string; property?: SitePro
   const tx = useT();
   const c = contacts(cfg, subject);
   return (
-    <div id="contatti" className="rounded-[var(--r)] bg-[var(--surface)] p-6 shadow-[0_20px_50px_-25px_rgba(0,0,0,.25)] ring-1 ring-[var(--line)]">
+    <div id="contatti" className="rounded-[var(--r)] bg-[var(--surface)] p-4 sm:p-6 shadow-[0_20px_50px_-25px_rgba(0,0,0,.25)] ring-1 ring-[var(--line)]">
       <div className="flex items-center gap-3.5">
         {cfg.aboutImage ? <Photo src={cfg.aboutImage} alt={name} className="h-14 w-14 rounded-full" /> : <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--c)] text-lg font-bold text-white">{name.slice(0, 1)}</span>}
         <div className="min-w-0"><div className="truncate font-semibold">{name}</div><div className="text-sm text-[var(--muted)]">{cfg.agentRole}</div></div>
@@ -352,7 +352,8 @@ function AgentPage() {
   const c = contacts(cfg);
   // il primo paragrafo va in alto, il resto (con eventuali "## Sottotitoli") sotto come storia
   const [intro, ...rest] = cfg.aboutText.split(/\n{2,}/);
-  const photo = (cls: string) => cfg.aboutImage ? <Photo src={cfg.aboutImage} alt={name} className={cls} /> : <span className={`flex items-center justify-center bg-[var(--soft)] text-6xl font-bold text-[var(--muted)]/50 ${cls}`}>{name.slice(0, 1)}</span>;
+  // senza foto: iniziale su fondo tenue, su telefono bassa (niente mezzo schermo vuoto)
+  const photo = (cls: string) => cfg.aboutImage ? <Photo src={cfg.aboutImage} alt={name} className={cls} /> : <span className={`flex items-center justify-center bg-[var(--soft)] text-6xl font-bold text-[var(--muted)]/50 ${cls.replace('aspect-[4/5]', 'aspect-[16/9] md:aspect-[4/5]')}`}>{name.slice(0, 1)}</span>;
   const buttons = (
     <div className="flex flex-wrap gap-3">
       {c.wa && <Btn href={c.wa} external><MessageCircle size={16} /> WhatsApp</Btn>}
@@ -467,10 +468,10 @@ function ServicesPage() {
         </section></Sec>
       )}
       <Sec id="services.form"><Container className="py-20">
-        <div className="grid items-center gap-10 rounded-[calc(var(--r)*1.2)] bg-[var(--soft)] p-8 md:grid-cols-2 md:p-12">
+        <div className="-mx-4 grid items-center gap-8 bg-[var(--soft)] p-4 sm:mx-0 sm:gap-10 sm:rounded-[calc(var(--r)*1.2)] sm:p-8 md:grid-cols-2 md:p-12">
           <div><H className="text-3xl md:text-4xl">{tx('services.formTitle')}</H><p className="mt-3 text-[var(--muted)]">{tx('services.formText')}</p>
             {cfg.highlights.length > 0 && <ul className="mt-6 space-y-2">{cfg.highlights.map(h => <li key={h} className="flex items-center gap-2 text-sm font-medium"><span className="h-1.5 w-1.5 rounded-full bg-[var(--c)]" />{h}</li>)}</ul>}</div>
-          <div className="rounded-[var(--r)] bg-[var(--surface)] p-6"><ContactForm compact /></div>
+          <div className="rounded-[var(--r)] bg-[var(--surface)] p-4 sm:p-6"><ContactForm compact /></div>
         </div>
       </Container></Sec>
       <Sec id="footer"><Footer /></Sec>
@@ -492,13 +493,13 @@ function ContactPage() {
       {c.wa && <Btn href={c.wa} external className="mt-4"><MessageCircle size={16} /> Scrivimi su WhatsApp</Btn>}
     </div>
   );
-  const form = <Sec id="contact.form"><div className="rounded-[var(--r)] bg-[var(--surface)] p-6 text-[var(--fg)] shadow-[0_30px_80px_-40px_rgba(0,0,0,.35)] ring-1 ring-[var(--line)] md:p-8"><H className="mb-6 text-2xl">{tx('contact.formTitle')}</H><ContactForm /></div></Sec>;
+  const form = <Sec id="contact.form"><div className="rounded-[var(--r)] bg-[var(--surface)] p-4 text-[var(--fg)] shadow-[0_30px_80px_-40px_rgba(0,0,0,.35)] ring-1 ring-[var(--line)] sm:p-6 md:p-8"><H className="mb-6 text-2xl">{tx('contact.formTitle')}</H><ContactForm /></div></Sec>;
   let body: ReactNode;
   if (t.contact === 'card') body = (
     <section className="relative">
-      {cfg.address ? <div className="[&_h2]:hidden [&_p]:hidden [&>div>div]:!mt-0 [&>div>div]:!h-[520px] [&>div>div]:!rounded-none"><MapBlock addr={cfg.address} /></div> : <div className="h-72 bg-[var(--soft)]" />}
-      <Container className={`relative z-10 grid gap-8 md:grid-cols-[1fr_1.2fr] ${cfg.address ? '-mt-64' : '-mt-40'} pb-20`}>
-        <div className="self-end rounded-[var(--r)] bg-[var(--surface)] p-8 shadow-[0_30px_80px_-40px_rgba(0,0,0,.35)] ring-1 ring-[var(--line)]">{info}</div>
+      {cfg.address ? <div className="[&_h2]:hidden [&_p]:hidden [&>div>div]:!mt-0 [&>div>div]:!h-[340px] md:[&>div>div]:!h-[520px] [&>div>div]:!rounded-none"><MapBlock addr={cfg.address} /></div> : <div className="h-72 bg-[var(--soft)]" />}
+      <Container className={`relative z-10 grid gap-8 md:grid-cols-[1fr_1.2fr] ${cfg.address ? '-mt-16 md:-mt-64' : '-mt-16 md:-mt-40'} pb-20`}>
+        <div className="self-end rounded-[var(--r)] bg-[var(--surface)] p-5 sm:p-8 shadow-[0_30px_80px_-40px_rgba(0,0,0,.35)] ring-1 ring-[var(--line)]">{info}</div>
         {form}
       </Container>
     </section>
@@ -535,7 +536,7 @@ function ZonePage({ slug }: { slug: string }) {
   const grid = (ps: SiteProperty[]) => t.results === 'rows'
     ? <div className="border-t border-[var(--line)]">{ps.map(p => <PropertyRow key={p.id} p={p} />)}</div>
     : <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">{ps.map(p => <PropertyCard key={p.id} p={p} />)}</div>;
-  const head = <PageHead eyebrow={tx('zone.eyebrow')} title={`Casa a ${z.name}`} sub={`${here.length} ${here.length === 1 ? 'immobile disponibile' : 'immobili disponibili'}`} />;
+  const head = <PageHead eyebrow={tx('zone.eyebrow')} title={`Casa a ${z.name}`} sub={here.length ? `${here.length} ${here.length === 1 ? 'immobile disponibile' : 'immobili disponibili'}` : 'Al momento nessun immobile qui: ecco gli altri disponibili'} />;
   if (t.zone === 'wide') return (
     <>
       <Sec id="header"><Header /></Sec><Sec id="zone.page">{head}</Sec>
@@ -555,8 +556,8 @@ function ZonePage({ slug }: { slug: string }) {
       <Container className="grid gap-12 py-16 lg:grid-cols-[1fr_340px]">
         <RichText text={z.text} />
         <aside className="space-y-8">
-          <div className="rounded-[var(--r)] bg-[var(--soft)] p-5"><div className="mb-4 text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--muted)]">Ricerca avanzata</div><SearchForm layout="stack" /></div>
-          <div className="space-y-4"><div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--muted)]">Ultimi a {z.name}</div>{list.slice(0, 3).map(p => <PropertyCard key={p.id} p={p} />)}</div>
+          <div className="rounded-[var(--r)] bg-[var(--soft)] p-4 sm:p-5"><div className="mb-4 text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--muted)]">Ricerca avanzata</div><SearchForm layout="stack" /></div>
+          <div className="space-y-4"><div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--muted)]">{here.length ? `Ultimi a ${z.name}` : 'Immobili disponibili'}</div>{list.slice(0, 3).map(p => <PropertyCard key={p.id} p={p} />)}</div>
         </aside>
       </Container>
       {here.length > 3 && <Container className="pb-16"><SectionHead title={`Tutti gli immobili a ${z.name}`} /><div className="mt-8">{grid(here.slice(3))}</div></Container>}

@@ -272,7 +272,7 @@ export function ServicesGrid({ numbered }: { numbered?: boolean }) {
   return (
     <div className="grid gap-5 md:grid-cols-2">
       {cfg.services.map((s, i) => (
-        <div key={i} className="rounded-[var(--r)] bg-[var(--surface)] p-7 ring-1 ring-[var(--line)]">
+        <div key={i} className="rounded-[var(--r)] bg-[var(--surface)] p-5 ring-1 ring-[var(--line)] sm:p-7">
           <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--c)_14%,transparent)] text-sm font-bold text-[var(--c)]">{numbered ? String(i + 1).padStart(2, '0') : <Check size={18} />}</span>
           <H as="h3" className="mt-5 text-2xl">{s.title}</H>
           <p className="mt-3 leading-relaxed text-[var(--muted)]">{s.text}</p>

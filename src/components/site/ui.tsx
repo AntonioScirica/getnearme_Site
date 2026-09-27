@@ -149,9 +149,10 @@ export function Facts({ p, className = '', full }: { p: SiteProperty; className?
     p.bagni ? { i: Bath, v: String(p.bagni), l: p.bagni === 1 ? 'Bagno' : 'Bagni' } : null,
   ].filter(Boolean) as { i: typeof Bath; v: string; l: string }[];
   if (full) return (
-    <div className={`grid grid-cols-2 gap-px overflow-hidden rounded-[var(--r)] bg-[var(--line)] sm:grid-cols-4 ${className}`}>
+    // su telefono tante colonne quanti i dati (max 3 per riga): niente caselle vuote
+    <div className={`grid gap-px overflow-hidden rounded-[var(--r)] bg-[var(--line)] ${items.length === 4 ? 'grid-cols-2' : items.length === 2 ? 'grid-cols-2' : items.length === 1 ? 'grid-cols-1' : 'grid-cols-3'} sm:grid-cols-4 ${className}`}>
       {items.map(x => (
-        <div key={x.l} className="bg-[var(--surface)] p-5">
+        <div key={x.l} className="min-w-0 bg-[var(--surface)] p-4 sm:p-5">
           <x.i size={18} className="text-[var(--c)]" />
           <div className="mt-3 text-xl font-semibold">{x.v}</div>
           <div className="text-xs text-[var(--muted)]">{x.l}</div>
@@ -168,7 +169,7 @@ export function Facts({ p, className = '', full }: { p: SiteProperty; className?
 }
 
 export const Container = ({ children, className = '' }: { children: ReactNode; className?: string }) =>
-  <div className={`mx-auto w-full max-w-[1240px] px-6 md:px-10 ${className}`}>{children}</div>;
+  <div className={`mx-auto w-full max-w-[1240px] px-4 sm:px-6 md:px-10 ${className}`}>{children}</div>;
 
 // Foto e contatti dell'agente
 export function contacts(cfg: SiteConfig, subject?: string) {

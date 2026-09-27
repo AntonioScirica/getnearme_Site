@@ -79,7 +79,7 @@ export default function PlatformApp({ userData }: { userData: UserData }) {
   }} />;
 
   // anteprima di un modello del sito (aperta in un'altra scheda dalla galleria dei modelli)
-  if (route.startsWith('/anteprima/')) return <TemplatePreview id={route.slice('/anteprima/'.length) as TemplateId} projects={projects} solo={new URLSearchParams(query).get('solo') === '1'} />;
+  if (route.startsWith('/anteprima/')) return <TemplatePreview id={route.slice('/anteprima/'.length) as TemplateId} projects={projects} solo={new URLSearchParams(query).get('solo') === '1'} pagina={new URLSearchParams(query).get('pagina')} />;
   const detailId = route.startsWith('/immobile/') ? route.slice('/immobile/'.length) : null;
   const chat = route === '/staging';
 
