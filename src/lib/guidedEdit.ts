@@ -10,11 +10,11 @@ import { editPlanPrompt, leftoverPrompt, removePrompt, removeInBoxPrompt, addFur
 //   2. Qwen toglie; Claude (Sonnet) controlla cosa e' rimasto e, se serve, secondo passaggio con la lista corta
 //   3. (arredo) Qwen rinnova i fissi (es. ante della cucina) e aggiunge i pezzi nella stanza vuota
 // Senza piano (il modello non risponde) torna image vuota: chi chiama usa il vecchio passaggio unico.
-export async function guidedEdit(o: { userId: string; input: { image_base64: string } | { image_url: string }; task: 'empty' | 'furnish' | 'edit'; room: string; style: string; seed: number }): Promise<{ image?: string; prompt?: string; plan?: EditPlan }> {
+export async function guidedEdit(o: { userId: string; input: { image_base64: string } | { image_url: string }; task: 'empty' | 'furnish' | 'edit'; room: string; style: string; seed: number; planModel?: string }): Promise<{ image?: string; prompt?: string; plan?: EditPlan }> {
   const orig = 'image_base64' in o.input
     ? o.input.image_base64.split(',').pop() ?? ''
     : Buffer.from(await (await fetch(o.input.image_url, { signal: AbortSignal.timeout(20_000) })).arrayBuffer()).toString('base64')
-  const plan = parsePlan(await askJson(o.userId, [orig], editPlanPrompt(o.room, o.task, o.style)))
+  const plan = parsePlan(await askJson(o.userId, [orig], editPlanPrompt(o.room, o.task, o.style), o.planModel))
   // il modello a volte mette tra le cose da togliere la cucina, il forno o le pareti (27/09: cucina sostituita da un'isola):
   // i fissi non si tolgono mai, salvo "gli oggetti sopra" (quelli si' che vanno via); cambiarli e' compito di restyle
   // si guarda solo l'oggetto (prima di "on/in/against/near..."), non la posizione: "il divano sul lato sinistro del pavimento" va tolto
