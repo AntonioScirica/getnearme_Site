@@ -29,10 +29,11 @@ export async function rehostImage(url: string, key: string, maxDim: number, qual
   }
 }
 
-export async function uploadJpeg(body: Buffer, key: string): Promise<string> {
-  await s3.send(new PutObjectCommand({ Bucket: process.env.R2_BUCKET_NAME, Key: key, Body: body, ContentType: 'image/jpeg' }))
+export async function uploadFile(body: Buffer, key: string, contentType: string): Promise<string> {
+  await s3.send(new PutObjectCommand({ Bucket: process.env.R2_BUCKET_NAME, Key: key, Body: body, ContentType: contentType }))
   return `${process.env.R2_PUBLIC_URL}/${key}`
 }
+export const uploadJpeg = (body: Buffer, key: string) => uploadFile(body, key, 'image/jpeg')
 
 // Chiavi sotto un prefisso (con data di caricamento), fino a `max`.
 export async function listKeys(prefix: string, max = 2000): Promise<{ key: string; at: number }[]> {

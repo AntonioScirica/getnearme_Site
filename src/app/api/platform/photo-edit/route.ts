@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { buildStagingPrompt, roomKey, variantText, isRestyle, type SceneType } from '@/lib/stagingPrompts'
-import { isPublicHttpsUrl } from '@/lib/safeUrl'
 import { createClient } from '@supabase/supabase-js'
 import { uploadJpeg, uploadMarker } from '@/lib/r2'
 import sharp from 'sharp'
 import { logUsage } from '@/lib/ai'
 import { AI_MOCK, mockDelay } from '@/lib/aiMock'
+import { runJob, allowedUrl, type RunpodJob } from '@/lib/runpodImage'
 
 const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 
@@ -14,26 +14,6 @@ export const maxDuration = 300
 
 // "Sistema con AI": modifica una foto con Qwen-Image 2.1 sul nostro endpoint RunPod
 // (repo getnearme-qwen-image-worker). Risultato salvato su R2, costo in ai_usage.
-// Solo foto dei CDN dei portali o del nostro R2: il worker non scarica URL arbitrari.
-const ALLOWED = /^https:\/\/(?:pwm\.im-cdn\.it|img\d*\.idealista\.(?:it|com|pt)|images?-?\d*\.casa\.it)\//
-const RUNPOD = 'https://api.runpod.ai/v2'
-const allowedUrl = (u: string) => ALLOWED.test(u) || (!!process.env.R2_PUBLIC_URL && u.startsWith(`${process.env.R2_PUBLIC_URL}/`)) || isPublicHttpsUrl(u)
-
-type RunpodJob = { id?: string; status?: string; output?: { image_base64?: string; error?: string; seconds?: number }; error?: string }
-
-async function runJob(input: Record<string, unknown>): Promise<RunpodJob> {
-  const id = process.env.AI_IMAGE_ENDPOINT_ID
-  const headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RUNPOD_API_KEY}` }
-  // runsync attende fino a ~90 s; se il lavoro non e' finito (avvio a freddo) si prosegue con /status.
-  let job: RunpodJob = await fetch(`${RUNPOD}/${id}/runsync`, { method: 'POST', headers, body: JSON.stringify({ input }), signal: AbortSignal.timeout(120_000) }).then(r => r.json())
-  const deadline = Date.now() + 240_000
-  while (job.id && (job.status === 'IN_QUEUE' || job.status === 'IN_PROGRESS') && Date.now() < deadline) {
-    await new Promise(r => setTimeout(r, 3000))
-    job = await fetch(`${RUNPOD}/${id}/status/${job.id}`, { headers, signal: AbortSignal.timeout(20_000) }).then(r => r.json())
-  }
-  return job
-}
-
 export async function POST(req: NextRequest) {
   const token = req.headers.get('authorization')?.replace('Bearer ', '')
   if (!token) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })

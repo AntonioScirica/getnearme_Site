@@ -19,6 +19,7 @@ import { isPlatformAdmin } from '@/lib/platformAdmins';
 import ProgressiveBlur from '@/components/ProgressiveBlur';
 import { go, formatPrice, authFetch, CARD_SHADOW, warm } from './api';
 import ProfileForm, { type Profile } from './ProfileForm';
+import { tiltMove, tiltReset } from '@/components/ui/tilt';
 
 // Routing a hash (#/immobili, #/nuovo, #/immobile/<id>): back/forward del browser
 // funzionano senza toccare le route Next della vecchia dashboard.
@@ -90,7 +91,7 @@ export default function PlatformApp({ userData }: { userData: UserData }) {
 
       {/* Profilo: solo icona e testo; in home al centro in basso, nelle altre pagine in basso a sinistra, in chat no */}
       {!chat && <a href="#/profilo" className={`fixed bottom-5 z-30 flex h-10 items-center gap-2 rounded-full bg-white px-4 text-sm font-medium shadow-sm ring-1 ring-line ease-smooth transition-shadow hover:shadow-md ${route === '/' ? 'left-1/2 -translate-x-1/2' : 'left-5'} ${route === '/profilo' ? 'ring-ink' : ''}`}>
-        <UserRound size={16} className="text-muted" /> Profilo
+        <UserRound size={16} className="text-muted" /> Il mio profilo
       </a>}
 
       <main className={`flex-1 ${route === '/staging' ? 'overflow-hidden' : 'overflow-y-auto'}`}>
@@ -129,15 +130,6 @@ export default function PlatformApp({ userData }: { userData: UserData }) {
 // anima al passaggio del mouse. "Migliora" apre il campo link sotto le tessere.
 // Card azione: si inclina verso il mouse (--rx/--ry), riflesso di luce (--sx/--sy) e
 // variabili --mx/--my (-1..1) per la parallasse degli elementi del collage (.par-1/2/3).
-function tiltMove(e: React.MouseEvent<HTMLElement>) {
-  const r = e.currentTarget.getBoundingClientRect();
-  const x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
-  const st = e.currentTarget.style;
-  st.setProperty('--ry', `${(x - 0.5) * 5}deg`); st.setProperty('--rx', `${(0.5 - y) * 4}deg`);
-  st.setProperty('--mx', String((x - 0.5) * 2)); st.setProperty('--my', String((y - 0.5) * 2));
-  st.setProperty('--sx', `${x * 100}%`); st.setProperty('--sy', `${y * 100}%`); st.setProperty('--lift', '-4px');
-}
-function tiltReset(el: HTMLElement) { ['--rx', '--ry', '--mx', '--my', '--lift'].forEach(k => el.style.removeProperty(k)); }
 
 function Tile({ kicker, title, onClick, href, active, index, onHover, intro, wrapRef, wrapClass = '', wrapStyle, children }: { kicker: string; title: string; onClick?: () => void; href?: string; active?: boolean; index: number; onHover?: (on: boolean) => void; intro?: boolean; wrapRef?: React.Ref<HTMLDivElement>; wrapClass?: string; wrapStyle?: React.CSSProperties; children: React.ReactNode }) {
   const move = tiltMove;
@@ -149,7 +141,7 @@ function Tile({ kicker, title, onClick, href, active, index, onHover, intro, wra
       <span className="sheen pointer-events-none absolute inset-0 z-20" />
       <span className="par-1 text-sm text-muted">{kicker}</span>
       <span className="par-1 mt-1 text-2xl font-bold leading-tight tracking-tight">{title}</span>
-      <div className="flex flex-1 items-center justify-center pt-4"><div className="relative h-40 w-full">{children}</div></div>
+      <div className="flex flex-1 items-center justify-center pt-4"><div className="relative h-40 w-full scale-110">{children}</div></div>
     </>
   );
   // Ingresso sul contenitore, inclinazione sulla card: due transform che non si sovrascrivono.
@@ -236,10 +228,10 @@ function ImproveTile({ phase, stage, onOpen, onClose, onSubmit, onNew, hover, se
 
         {/* Mini scheda annuncio: diventa la pill sopra l'input, poi sparisce quando si apre il browser */}
         <div className={`flex items-center justify-center transition-all ease-smooth ${flow ? 'max-h-0 flex-none scale-95 overflow-hidden opacity-0' : 'max-h-60 flex-1'}`}>
-          <div className={`relative transition-all ease-smooth ${open ? 'w-72 delay-[120ms]' : 'w-44'}`}>
+          <div className={`relative transition-all ease-smooth ${open ? 'w-72 delay-[120ms]' : 'w-48'}`}>
             <div className="par-2">
               <div className={`flex transition-all ease-smooth ${open ? 'flex-row items-center gap-3 rounded-2xl bg-canvas p-2 pr-3 delay-[120ms]' : 'flex-col rounded-xl bg-white p-2 shadow-md group-hover:-rotate-2'}`}>
-                <img src="/immo/home/card.webp" alt="" decoding="async" className={`shrink-0 object-cover transition-all ease-smooth ${open ? 'h-12 w-16 rounded-xl delay-[120ms]' : 'h-24 w-full rounded-lg'}`} />
+                <img src="/immo/home/card.webp" alt="" decoding="async" className={`shrink-0 object-cover transition-all ease-smooth ${open ? 'h-12 w-16 rounded-xl delay-[120ms]' : 'h-[6.5rem] w-full rounded-lg'}`} />
                 <div className={`min-w-0 flex-1 ease-smooth transition-all ${open ? '' : 'mt-2'}`}>
                   {['w-2/3', 'w-2/5', 'w-1/2'].map((w, i) => (
                     <div key={w} className={`${open ? '' : 'rewrite'} h-1.5 rounded bg-line ease-smooth transition-all ${i ? 'mt-1.5' : ''} ${open && i === 2 ? 'hidden' : w}`} />
@@ -395,8 +387,8 @@ export function HomeView({ name, initialUrl = '', onSaved }: { name?: string; in
           {/* la vetrina e' la pagina AgenteImmo dell'agente: si capisce dalla barra indirizzi */}
           <span className="par-1 absolute -top-3 left-1/2 z-20 -translate-x-1/2"><span className="flex items-center gap-1.5 whitespace-nowrap rounded-full bg-white px-3 py-1 text-[11px] font-medium text-muted shadow-md ring-1 ring-black/5 ease-smooth transition-[translate] group-hover:-translate-y-1"><Globe size={11} className="text-brand" /> agenteimmo.me/<span className="text-ink">{vetrina}</span></span></span>
           {['/immo/home/fan-1.webp', '/immo/home/fan-2.webp', '/immo/home/fan-3.webp'].map((src, i) => (
-            <div key={src} className={`absolute left-1/2 top-4 ${['par-1', 'par-2 z-10', 'par-3'][i]}`}>
-              <img src={src} alt="" className={`h-32 w-24 -translate-x-1/2 rounded-xl object-cover shadow-md ring-2 ring-white transition-transform ease-smooth ${
+            <div key={src} className={`absolute left-1/2 ${i === 1 ? 'top-4' : 'top-6'} ${['par-1', 'par-2 z-10', 'par-3'][i]}`}>
+              <img src={src} alt="" className={`${i === 1 ? 'h-32' : 'h-28'} w-24 -translate-x-1/2 rounded-xl object-cover shadow-md ring-2 ring-white transition-transform ease-smooth ${
                 ['-translate-x-[90%] -rotate-12 group-hover:-translate-x-[118%] group-hover:-rotate-[18deg]', 'group-hover:-translate-y-3 group-hover:scale-105', '-translate-x-[10%] rotate-12 group-hover:translate-x-[18%] group-hover:rotate-[18deg]'][i]}`} />
             </div>
           ))}
@@ -426,7 +418,7 @@ export function HomeView({ name, initialUrl = '', onSaved }: { name?: string; in
 function ProfileView({ email, profile, onSaved, admin }: { email: string; profile: Profile | null; onSaved: (p: Profile) => void; admin: boolean }) {
   return (
     <div className="mx-auto max-w-xl">
-      <h1 className="font-display text-3xl font-bold tracking-tight">Profilo</h1>
+      <h1 className="font-display text-3xl font-bold tracking-tight">Il mio profilo</h1>
       <p className="mt-1 text-muted">{email}</p>
       <div className={`mt-8 rounded-[28px] bg-white p-6 ${CARD_SHADOW}`}>
         <h2 className="font-semibold">Il tuo sito personale</h2>

@@ -2,11 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowUp, Building2, Check, ImagePlus, Lasso, Shuffle, LayoutGrid, Loader2, Monitor, RotateCcw, SquareDashed, SquareDashedMousePointer, X } from 'lucide-react';
+import { ArrowUp, Building2, Check, Clapperboard, Download, ExternalLink, ImagePlus, Lasso, Shuffle, LayoutGrid, Loader2, Monitor, RotateCcw, SquareDashed, SquareDashedMousePointer, X } from 'lucide-react';
 import { fileToResizedDataUrl } from '@/lib/staging';
 import { AI_MOCK } from '@/lib/aiMock';
 import { AiPhotoStage, QUICK_PRESETS, type EditRequest, type Region, type Reveal, type Suggestion } from './AiPhoto';
-import { authFetch, CARD_SHADOW, warm } from './api';
+import { authFetch, CARD_SHADOW, portfolioUrl, warm } from './api';
 import ProgressiveBlur from '@/components/ProgressiveBlur';
 import Dropdown, { type DropdownOption } from '@/components/ui/Dropdown';
 import Tooltip from '@/components/ui/Tooltip';
@@ -16,6 +16,7 @@ import { MorphTarget } from '@/components/ui/Morph';
 import PhotoViewer from '@/components/ui/PhotoViewer';
 import LibraryPicker from './LibraryPicker';
 import { fetchProjects, type ProjectData } from '@/lib/projects';
+import { tiltMove, tiltReset } from '@/components/ui/tilt';
 import { uploadDataUrl } from '@/lib/imageUpload';
 
 // Home staging come chat: l'agente carica una foto nella conversazione, scrive cosa vuole (in italiano,
@@ -53,7 +54,21 @@ const seenLabel = (k: string) => (k.startsWith('custom:') ? k.slice(7) : SEEN_OP
 type Msg =
   | { id: string; role: 'divider'; image: string }
   | { id: string; role: 'user'; text?: string; image?: string; seen?: string | null; region?: Region }
-  | { id: string; role: 'ai'; before: string; out: string | null; busy: boolean; reveal: Reveal; err?: string; text: string; req?: EditRequest };
+  | { id: string; role: 'ai'; before: string; out: string | null; busy: boolean; reveal: Reveal; err?: string; text: string; req?: EditRequest }
+  // video in chat: UN messaggio che si trasforma a ogni scelta (template, arredo, tre anteprime, video)
+  | { id: string; role: 'video'; step: 'template' | 'anim' | 'mode' | 'previews' | 'render'; photo: string; anim?: VideoAnim; picks: string[]; previews?: (string | null)[]; url?: string; err?: string };
+
+// Macro template video, ognuno con i suoi stili di animazione (card con anteprima in loop)
+type VideoAnim = 'popup' | 'gravity';
+const R2_SPIKE = 'https://pub-a668674eaa484e8e8f2f10c264392bfc.r2.dev/spike-video/stili';
+type VideoCard = { id: string; label: string; desc: string; sample: string };
+const VIDEO_TEMPLATES: (VideoCard & { anims: (VideoCard & { id: VideoAnim })[] })[] = [
+  { id: 'prima-dopo', label: 'Prima e dopo', desc: 'Dalla stanza vuota a quella arredata', sample: `${R2_SPIKE}/F12_rianima.mp4`, anims: [
+    { id: 'popup', label: 'Popup', desc: 'I mobili spuntano uno alla volta', sample: `${R2_SPIKE}/F12_rianima.mp4` },
+    { id: 'gravity', label: 'Dall’alto', desc: 'I mobili cadono dall’alto e si posano', sample: `${R2_SPIKE}/F9_gravity.mp4` },
+  ] },
+];
+const VIDEO_STYLES = [{ id: 'modern', label: 'Moderno' }, { id: 'nordic', label: 'Nordico' }, { id: 'industrial', label: 'Luxury' }, { id: 'boho', label: 'Boho' }];
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 const wait = (ms: number) => new Promise(r => setTimeout(r, ms));
@@ -250,6 +265,38 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
     // variante: palette e materiali diversi nello stesso stile, la sceglie il server (vedi variantText)
     await run(id, { ...m.req, variant: -1 }, m.before);
   };
+  // Video: il server svuota la foto, fa partire Veo e poi monta; qui si controlla ogni 6 s (circa 2 minuti in tutto)
+  const askVideo = (photo: string) => { touch(); setMsgs(ms => [...ms, { id: uid(), role: 'user', text: 'Crea un video' }, { id: uid(), role: 'video', step: 'template', photo, picks: [] }]); toBottom(); };
+  type VideoMsg = Extract<Msg, { role: 'video' }>;
+  const patchV = (id: string, p: Partial<VideoMsg> | ((m: VideoMsg) => Partial<VideoMsg>)) =>
+    setMsgs(ms => ms.map(m => (m.id === id && m.role === 'video' ? { ...m, ...(typeof p === 'function' ? p(m) : p) } : m)));
+  // tre anteprime in parallelo dello stile scelto (foto: costano poco), poi l'agente sceglie quella del video
+  const stylePreviews = (m: VideoMsg, label: string, req: { style?: string; prompt?: string }) => {
+    touch();
+    patchV(m.id, { step: 'previews', picks: [...m.picks, label], previews: [null, null, null] });
+    const body = { ...(project ? { projectId: project } : {}), ...(kind ? { room: seenLabel(kind) } : {}), ...(m.photo.startsWith('data:') ? { imageBase64: m.photo } : { imageUrl: m.photo }), scene: 'interno', ...req, variant: -1 };
+    [0, 1, 2].forEach(k => {
+      authFetch('/api/platform/photo-edit', { method: 'POST', body: JSON.stringify(body) }).then(r => (r.ok ? r.json() : {})).catch(() => ({}))
+        .then((d: { url?: string }) => patchV(m.id, x => ({ previews: x.previews?.map((p, j) => (j === k ? d.url ?? 'err' : p)) })));
+    });
+  };
+  // Video: il server svuota la foto, fa partire Veo e poi monta; qui si controlla ogni 6 s (circa 2 minuti in tutto)
+  const makeVideo = async (m: VideoMsg, photo: string, pick: string) => {
+    touch();
+    patchV(m.id, { step: 'render', photo, picks: [...m.picks, pick], err: undefined });
+    const fail = 'Video non riuscito, riprova.';
+    const res = await authFetch('/api/platform/video', { method: 'POST', body: JSON.stringify({ ...(photo.startsWith('data:') ? { imageBase64: photo } : { imageUrl: photo }), anim: m.anim, ...(project ? { projectId: project } : {}) }) }).catch(() => null);
+    const d = res ? await res.json().catch(() => ({})) : {};
+    if (!d.job) { patchV(m.id, { err: d.error === 'timeout' ? 'La GPU si sta avviando, riprova tra un minuto.' : d.error === 'nothing_to_animate' ? 'Nella foto non ci sono mobili da animare.' : fail }); return; }
+    for (let k = 0; k < 80; k++) {
+      await wait(6000);
+      const r = await authFetch(`/api/platform/video?job=${encodeURIComponent(d.job)}`).catch(() => null);
+      const v = r ? await r.json().catch(() => ({})) : {};
+      if (v.url) { patchV(m.id, { url: v.url }); toBottom(); return; }
+      if (v.error) { patchV(m.id, { err: fail }); return; }
+    }
+    patchV(m.id, { err: fail });
+  };
   const run = async (id: string, req: EditRequest, before: string) => {
     const res = await authFetch('/api/platform/photo-edit', { method: 'POST', body: JSON.stringify(req) }).catch(() => null);
     let d = res ? await res.json().catch(() => ({})) : {};
@@ -308,16 +355,20 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   const empty = msgs.length === 0;
   const picker = <input type="file" accept="image/*" multiple className="hidden" onChange={e => { upload(e.target.files); e.target.value = ''; }} />;
   // i suggerimenti partono subito, senza passare dal campo
-  const chips = suggestionsFor(kind).filter(x => roomState !== 'vuota' || (x.id !== 'empty' && x.id !== 'tidy')).map(x => (
+  const videoChip = base && roomState !== 'vuota' && scene === 'interno' ? [
+    <button key="video" disabled={busy} onClick={() => askVideo(base)}
+      className="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-ink px-3.5 py-1.5 text-[13px] font-medium text-white shadow-sm ease-smooth transition-colors hover:bg-brand disabled:opacity-40"><Clapperboard size={13} /> Crea video</button>,
+  ] : [];
+  const chips = [...videoChip, ...suggestionsFor(kind).filter(x => roomState !== 'vuota' || (x.id !== 'empty' && x.id !== 'tidy')).map(x => (
     <button key={x.id} disabled={busy} onClick={() => send(x.label, x)}
       className="shrink-0 whitespace-nowrap rounded-full bg-white px-3.5 py-1.5 text-[13px] font-medium text-ink/80 shadow-sm ring-1 ring-inset ring-black/10 ease-smooth transition-colors hover:bg-brand hover:text-white disabled:opacity-40">{x.label}</button>
-  ));
+  ))];
 
   // proporzioni vere delle foto: il risultato segue la foto (verticale resta verticale)
   const [ratios, setRatios] = useState<Record<string, number>>({});
   // si misura la foto di lavoro appena scelta: quando arriva il messaggio del risultato ha gia' la forma giusta (niente saltino)
   useEffect(() => {
-    const srcs = [base, ...msgs.map(m => (m.role === 'ai' ? m.before : null))].filter((x): x is string => !!x && !ratios[x]);
+    const srcs = [base, ...msgs.map(m => (m.role === 'ai' ? m.before : m.role === 'video' ? m.photo : null))].filter((x): x is string => !!x && !ratios[x]);
     for (const src of new Set(srcs)) {
       const img = new Image();
       img.onload = () => setRatios(r => ({ ...r, [src]: img.naturalWidth / img.naturalHeight }));
@@ -370,6 +421,86 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
               Ripreso da questa versione
               <span className="h-px flex-1 bg-line" />
             </div>
+          ) : m.role === 'video' ? (
+            // video: tutta la larghezza, un solo contenitore che cambia contenuto a ogni scelta (le scelte fatte restano in alto)
+            <div key={m.id} className="blur-in">
+              {/* sfondo grigio da messaggio solo nel passo in cui si scrive; card, anteprime e video stanno sul foglio */}
+              <div className={`rounded-[32px] ease-smooth transition-colors duration-[600ms] ${m.step === 'mode' ? 'bg-canvas' : 'bg-transparent'}`}><AutoSize>
+                {/* padding dentro AutoSize: inclinazione e ombra delle card non vengono tagliate */}
+                <div className="p-4 pb-6">
+                  {/* passo nuovo: il vecchio sfuma, il contenitore cambia altezza (AutoSize), poi il nuovo appare */}
+                  <StepSwap step={m.step}>
+                  <div className="flex flex-wrap items-center gap-1.5 px-2 pb-4 text-sm">
+                    <span className="font-medium">{m.step === 'template' ? 'Che video vuoi creare?' : m.step === 'anim' ? 'Con quale animazione?' : m.step === 'mode' ? 'Tengo i mobili che ci sono o arredo in un nuovo stile?' : m.step === 'previews' ? (m.previews?.some(p => !p) ? 'Preparo tre proposte…' : 'Scegli quella per il video') : m.url ? 'Ecco il video' : m.err ? '' : 'Creo il video, circa 2 minuti'}</span>
+                    {m.picks.map(p => <span key={p} className="rounded-full bg-white px-2.5 py-0.5 text-xs text-muted ring-1 ring-inset ring-black/5">{p}</span>)}
+                  </div>
+                    {(m.step === 'template' || m.step === 'anim') && (
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        {(m.step === 'template' ? VIDEO_TEMPLATES : VIDEO_TEMPLATES.find(t => t.label === m.picks[0])?.anims ?? []).map((t, k) => (
+                          <div key={t.id} className="rise" style={{ animationDelay: `${0.35 + k * 0.1}s` }}>
+                            <button onClick={() => patchV(m.id, m.step === 'template' ? { step: 'anim', picks: [t.label] } : { step: 'mode', anim: t.id as VideoAnim, picks: [...m.picks, t.label] })}
+                              onMouseMove={tiltMove} onMouseLeave={e => tiltReset(e.currentTarget)} className="tilt group relative flex w-full flex-col overflow-hidden rounded-[28px] bg-white p-2 text-left shadow-[0_1px_2px_rgba(0,0,0,.04),0_8px_24px_-12px_rgba(0,0,0,.12)] ring-1 ring-black/5 hover:shadow-[0_2px_4px_rgba(0,0,0,.04),0_30px_50px_-20px_rgba(0,0,0,.25)] active:scale-[0.985]">
+                              <span className="sheen pointer-events-none absolute inset-0 z-20" />
+                              <video src={t.sample} autoPlay loop muted playsInline className="aspect-video w-full rounded-[20px] object-cover" />
+                              <span className="block px-3 pt-3 font-semibold">{t.label}</span>
+                              <span className="block px-3 pb-3 text-xs text-muted">{t.desc}</span>
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {m.step === 'mode' && (
+                      <div className="px-1">
+                        <div className="stagger-chips flex flex-wrap gap-1.5">
+                          <button onClick={() => makeVideo(m, m.photo, 'Stanza com’è')} className="shrink-0 whitespace-nowrap rounded-full bg-ink px-3.5 py-1.5 text-[13px] font-medium text-white shadow-sm ease-smooth transition-colors hover:bg-brand">Tieni la stanza com’è</button>
+                          {VIDEO_STYLES.map(x => <button key={x.id} onClick={() => stylePreviews(m, x.label, { style: x.id })} className="shrink-0 whitespace-nowrap rounded-full bg-white px-3.5 py-1.5 text-[13px] font-medium text-ink/80 shadow-sm ring-1 ring-inset ring-black/10 ease-smooth transition-colors hover:bg-brand hover:text-white">{x.label}</button>)}
+                        </div>
+                        <input placeholder="Oppure scrivi lo stile, es. classico con legno scuro" maxLength={200}
+                          onKeyDown={e => { const v = e.currentTarget.value.trim(); if (e.key === 'Enter' && v) stylePreviews(m, v, { prompt: `Arreda la stanza in stile ${v}` }); }}
+                          className="mt-3 h-10 w-full rounded-full bg-white px-4 text-[13px] outline-none ring-1 ring-inset ring-black/10 placeholder:text-muted/60 focus:ring-brand" />
+                      </div>
+                    )}
+                    {m.step === 'previews' && (
+                      <div className="grid grid-cols-3 gap-3">
+                        {m.previews?.map((p, k) => (
+                          <div key={k} className="rise" style={{ animationDelay: `${0.35 + k * 0.1}s` }}>
+                            <button disabled={!p || p === 'err'} onClick={() => p && makeVideo(m, p, `Proposta ${k + 1}`)} onMouseMove={tiltMove} onMouseLeave={e => tiltReset(e.currentTarget)} className="tilt group relative flex w-full flex-col overflow-hidden rounded-[28px] bg-white p-2 text-left shadow-[0_1px_2px_rgba(0,0,0,.04),0_8px_24px_-12px_rgba(0,0,0,.12)] ring-1 ring-black/5 hover:shadow-[0_2px_4px_rgba(0,0,0,.04),0_30px_50px_-20px_rgba(0,0,0,.25)] active:scale-[0.985]">
+                              <span className="sheen pointer-events-none absolute inset-0 z-20" />
+                              <span className="relative block overflow-hidden rounded-[20px]" style={{ aspectRatio: ratios[m.photo] ?? 1.5 }}>
+                                {p && p !== 'err'
+                                  ? <img src={p} alt={`Proposta ${k + 1}`} className="blur-in absolute inset-0 h-full w-full object-cover" />
+                                  : <>
+                                    <img src={m.photo} alt="" className={`absolute inset-0 h-full w-full scale-110 object-cover ${p === 'err' ? 'opacity-30' : 'blur-md'}`} />
+                                    <span className="absolute inset-0 flex items-center justify-center text-xs font-medium text-white">{p === 'err' ? <span className="text-ink/60">Non riuscita</span> : <Loader2 size={18} className="animate-spin" />}</span>
+                                  </>}
+                              </span>
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {m.step === 'render' && (
+                      <div className="mx-auto" style={{ maxWidth: (ratios[m.photo] ?? 1.5) >= 1 ? 720 : 340 }}>
+                        <div className="relative overflow-hidden rounded-[20px] bg-white" style={{ aspectRatio: (ratios[m.photo] ?? 1.5) >= 1 ? 16 / 9 : 9 / 16 }}>
+                          {m.url
+                            ? <video src={m.url} autoPlay loop muted playsInline controls className="blur-in absolute inset-0 h-full w-full object-cover" />
+                            : <>
+                              <img src={m.photo} alt="" className={`absolute inset-0 h-full w-full scale-105 object-cover ${m.err ? 'opacity-40' : 'blur-md'}`} />
+                              {!m.err && <div className="absolute inset-0 flex items-center justify-center bg-black/20 text-white"><Loader2 size={22} className="animate-spin" /></div>}
+                            </>}
+                        </div>
+                        {m.err && <p className="blur-in px-2 pt-3 text-sm text-rose-600">{m.err}</p>}
+                        {m.url && (
+                          <div className="blur-in flex justify-end pt-3">
+                            <a href={m.url} download target="_blank" rel="noopener noreferrer" className="flex h-8 items-center gap-1.5 rounded-full bg-white px-3 text-xs font-medium text-ink ring-1 ring-inset ring-black/10 hover:bg-canvas"><Download size={14} className="translate-y-px" /> Scarica</a>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </StepSwap>
+                </div>
+              </AutoSize></div>
+            </div>
           ) : m.role === 'user' ? (
             <div key={m.id} className={`blur-in ease-smooth transition-opacity ${faded.has(m.id) ? 'opacity-35 hover:opacity-80' : ''}`}>
               <div className="flex justify-end">
@@ -398,7 +529,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                         setMsgs(ms => ms.map(x => (x.id === m.id && x.role === 'user' ? { ...x, seen: v } : x)));
                         setScene(v.startsWith('scene:') ? (v.slice(6) as Scene) : 'interno'); setKind(v);
                       }}>{seenLabel(m.seen)}</Dropdown>
-                      )}. </> : 'Foto caricata. '}Cosa vuoi cambiare? Scrivilo qui sotto o tocca un suggerimento.</p>
+                      )}. </> : 'Foto caricata. '}Cosa vuoi cambiare?</p>
                   </LightSwap></AutoSize>
                 </div>
               )}
@@ -431,6 +562,9 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                         className="flex h-8 items-center gap-1.5 rounded-full px-3 font-medium leading-none text-ink hover:bg-canvas"><SquareDashedMousePointer size={14} className="translate-y-px" /> Modifica</button>
                       <button onClick={() => setSaveOpen(v => (v === m.id ? null : m.id))} aria-expanded={saveOpen === m.id}
                         className={`flex h-8 items-center gap-1.5 rounded-full px-3 font-medium leading-none ${saveOpen === m.id ? 'bg-canvas text-ink' : 'text-ink hover:bg-canvas'}`}><Building2 size={14} className="translate-y-px" /> Salva nell’immobile</button>
+                      <Tooltip label="I mobili compaiono uno alla volta">
+                        <button onClick={() => askVideo(m.out!)} disabled={busy} className="flex h-8 items-center gap-1.5 rounded-full px-3 font-medium leading-none text-ink hover:bg-canvas disabled:opacity-40"><Clapperboard size={14} className="translate-y-px" /> Video</button>
+                      </Tooltip>
                       {m.req && (
                         <Tooltip label="Stesso stile, un'altra versione">
                           <button onClick={() => variant(m)} disabled={busy} aria-label="Stesso stile, un'altra versione" className="flex h-8 items-center gap-1.5 rounded-full px-3 font-medium leading-none text-ink hover:bg-canvas disabled:opacity-40"><Shuffle size={14} className="translate-y-px" /> Altra versione</button>
@@ -651,7 +785,11 @@ function SaveToProperty({ before, after, projectId, origin, onClose }: { before:
   const [pid, setPid] = useState<string>(projectId ?? '');
   const [mode, setMode] = useState<'add' | 'replace'>('add');
   const [state, setState] = useState<'idle' | 'busy' | 'ok' | 'err'>('idle');
-  useEffect(() => { fetchProjects().then(setProjects); }, []);
+  // un solo immobile: scelto da solo, senza menu
+  // indirizzo del sito: "Vedi l'immobile" apre la casa online se e' pubblica
+  const [slug, setSlug] = useState<string | null>(null);
+  useEffect(() => { authFetch('/api/platform/site').then(r => r.json()).then(d => setSlug(d.slug ?? null)).catch(() => {}); }, []);
+  useEffect(() => { fetchProjects().then(ps => { setProjects(ps); if (ps?.length === 1) setPid(v => v || ps[0].id); }); }, []);
   useEffect(() => {
     const k = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     document.addEventListener('keydown', k);
@@ -687,20 +825,22 @@ function SaveToProperty({ before, after, projectId, origin, onClose }: { before:
             <p className="text-sm text-muted">{chosen === 'add' ? 'Sul sito la trovi con l’etichetta Prima / Dopo.' : 'Ha preso il posto della foto originale.'}</p>
             <div className="flex gap-2 pt-2">
               <button onClick={onClose} className="h-10 rounded-full px-5 text-sm font-medium hover:bg-canvas">Chiudi</button>
-              <a href={`#/immobile/${pid}`} className="flex h-10 items-center rounded-full bg-brand px-5 text-sm font-semibold text-white hover:bg-brand/90">Vedi l’immobile</a>
+              {p?.is_public && slug
+                ? <a href={`${portfolioUrl(slug)}/${pid}`} target="_blank" rel="noopener" className="flex h-10 items-center gap-1.5 rounded-full bg-brand px-5 text-sm font-semibold text-white hover:bg-brand/90">Vedi sul sito <ExternalLink size={14} /></a>
+                : <a href={`#/immobile/${pid}`} className="flex h-10 items-center rounded-full bg-brand px-5 text-sm font-semibold text-white hover:bg-brand/90">Vedi l’immobile</a>}
             </div>
           </div>
         ) : <>
           <div className="flex items-start justify-between gap-3">
-            <div><h2 className="text-lg font-semibold">Salva nell’immobile</h2><p className="text-sm text-muted">Scegli dove metterla e come.</p></div>
+            <div><h2 className="text-lg font-semibold">Salva nell’immobile</h2><p className="text-sm text-muted">{projects?.length === 1 ? `In ${p?.titolo || p?.nome || 'immobile'}, scegli come.` : 'Scegli dove metterla e come.'}</p></div>
             <button onClick={onClose} aria-label="Chiudi" className="flex h-9 w-9 items-center justify-center rounded-full text-muted hover:bg-canvas hover:text-ink"><X size={18} /></button>
           </div>
-          <div className="mt-4">
+          {projects?.length !== 1 && <div className="mt-4">
             {projects === null ? <div className="h-11 animate-pulse rounded-full bg-canvas" /> : (
               <Dropdown value={pid} options={[{ value: '', label: 'Scegli l’immobile' }, ...projects.map(x => ({ value: x.id, label: x.titolo || x.nome || x.addr }))]}
                 onChange={setPid} className="h-11 w-full justify-between rounded-full bg-canvas px-4 text-sm font-medium" />
             )}
-          </div>
+          </div>}
           <div className="mt-4 flex flex-col gap-3 sm:flex-row">
             {option('add', 'Prima e dopo', 'Aggiunge la foto nuova: sul sito si confronta con l’originale.', <>
               <img src={before} alt="" className="absolute inset-0 h-full w-full object-cover" />
@@ -727,4 +867,20 @@ function SaveToProperty({ before, after, projectId, origin, onClose }: { before:
     </div>,
     document.body,
   );
+}
+
+// Cambio di passo nello stesso contenitore: il contenuto vecchio sfuma (200 ms), poi entra il nuovo
+// (AutoSize intanto porta il contenitore alla nuova altezza). Stesso passo: il contenuto si aggiorna e basta.
+function StepSwap({ step, children }: { step: string; children: React.ReactNode }) {
+  const [cur, setCur] = useState(step);
+  const [old, setOld] = useState<React.ReactNode>(children);
+  const leaving = step !== cur;
+  if (!leaving && old !== children) setOld(children); // ultimo contenuto del passo corrente, per la dissolvenza in uscita
+  useEffect(() => {
+    if (!leaving) return;
+    const t = setTimeout(() => setCur(step), 200);
+    return () => clearTimeout(t);
+  }, [leaving, step]);
+  // stesso elemento (key = passo corrente): in uscita cambia solo la classe, cosi' sfuma invece di sparire
+  return <div key={cur} className={leaving ? 'opacity-0 transition-opacity duration-200 ease-smooth' : 'blur-in'} style={leaving ? undefined : { animationDelay: '.25s' }}>{leaving ? old : children}</div>;
 }
