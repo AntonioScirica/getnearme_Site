@@ -11,9 +11,6 @@ export type SceneType = 'interno' | 'esterno' | 'giardino';
 // resto uguale" tiene prospettiva, finestre e pavimento (prova del 24/09 su stanze vuote).
 // Resa di riferimento (foto dell'utente del 25/09): foto professionale di un annuncio immobiliare italiano,
 // casa vera ristrutturata e arredata con mobili normali. Vale per tutti gli stili e per le richieste libere.
-// Stessa luce della foto: "luce naturale piena e uniforme" su una foto scura faceva ridipingere pareti e parete TV e
-// allargare l'inquadratura (prova del 27/09). Resa da annuncio vero, ma la foto resta quella.
-const LISTING_PHOTO = "Same light, exposure and colors as the photo. The result must look like a real photo of a real Italian apartment for a real estate listing: clean and tidy, straight vertical lines, real materials and real furniture. NOT a Pinterest, magazine or CGI render.";
 // Prompt CORTO: con il blocco lungo della stanza e le regole di arredo (versione del 25/09) Qwen allargava
 // l'inquadratura (letto piu' piccolo, piu' stanza visibile, prova del 27/09 su 3 anteprime su 3); la forma
 // "sostituisci solo i mobili ... tieni identico pixel per pixel ... stessa inquadratura" la tiene.
@@ -23,7 +20,8 @@ const stage = (style: string, look: string) =>
 
 // Svuota: "togli solo i mobili, tieni identico pixel per pixel" tiene l'inquadratura e la stanza (prove del 27/09);
 // la versione vecchia toglieva anche tende, mensole, parete TV e cucina. Primo passo anche dell'arredo (vedi photo-edit).
-export const EMPTY_KEEP = 'Remove only the movable furniture and loose objects from this room: sofas, armchairs, chairs, tables, beds, freestanding cabinets and bookcases, rugs, cushions, blankets, lamps, plants, decor, boxes, bags and personal items. Keep exactly the same, pixel for pixel: walls, ceiling and lights, windows and doors with their frames, curtains, mirrors and built-in or mirrored wardrobes, the TV wall unit with its shelves, the kitchen, bathroom fixtures, radiators, sockets, the floor with its exact material and color (continue the same floor where the furniture stood), the daylight and the camera position, zoom and framing. Photorealistic.';
+// NON nominare cucina, TV, ecc. tra le cose da tenere: se nella foto non ci sono Qwen le inventa (27/09: cucina al posto della parete TV)
+export const EMPTY_KEEP = 'Empty this room completely, as for a listing of an empty apartment. Remove all the movable furniture (sofas, armchairs, chairs, stools, tables, beds, freestanding cabinets and bookcases, rugs, lamps, plants) and every loose object, including everything standing on worktops, shelves and on top of cabinets, and the pictures, frames and calendars hanging on the walls. Do not add anything new. Keep exactly the same, pixel for pixel, everything that is built into the room: walls, ceiling and ceiling lights, windows and doors, curtains, mirrors, built-in wardrobes and fitted units with their built-in appliances, radiators, the floor with its exact material and color (continue the same floor where things stood), the daylight and the camera position, zoom and framing. Photorealistic.';
 
 // Arredo in due passi (photo-edit): 1) EMPTY_KEEP svuota, 2) Claude guarda la stanza vuota e decide QUALI mobili e DOVE
 // (furnishPlanPrompt), 3) Qwen li aggiunge alla foto vuota (addFurniturePrompt). Sostituire i mobili in un colpo solo
@@ -34,11 +32,26 @@ export const STYLE_LOOK: Record<string, string> = {
   industrial: 'good quality contemporary style: white and warm grey fronts, concrete-look or light stone surfaces, open oak shelves, calm colors',
   boho: 'warm natural style: light wood, linen and cotton, a jute rug, one plant, warm sand, terracotta and sage tones',
 };
-export const furnishPlanPrompt = (room: string, style: string) => `The image is an empty room of a real Italian apartment, photographed for a real estate listing. Room type: ${room || 'decide it from the photo'}. Style wanted: ${style}.
-Plan the furniture a professional Italian home stager would put in THIS room so that it makes sense and sells the space: look at the visible floor, the walls, the windows, doors, radiators and passages. Only pieces that belong in this room type and physically fit in the visible floor area, never blocking doors, windows, radiators or passages, nothing floating or cut in half at the edges unless it naturally continues out of frame. Real furniture that Italian families buy today (IKEA, Mondo Convenienza), in the wanted style. From 3 to 7 pieces, then at most 3 small accessories.
-For each item write one short English sentence: what it is, its color and material, and exactly where it stands in the photo (for example "against the left wall, facing the window", "in the middle of the floor", "in the right corner next to the radiator").
-Reply with JSON only: {"pieces": ["..."]}`;
-export const addFurniturePrompt = (pieces: string[]) => `Add furniture to this exact photo without changing anything else. The camera position, zoom, framing and perspective stay exactly the same: walls, windows, doors, ceiling, curtains, radiators and floor stay exactly where they are, pixel for pixel. Add only these pieces, standing on the visible floor, exactly where described: ${pieces.join(' ')} Nothing else. Same light and colors as the photo. Photorealistic real estate listing photo. Do not add any text, letters, logos or watermarks.`;
+// Piano di Claude sulla foto ORIGINALE: elenchi con solo cio' che c'e' davvero (Qwen inventa le cose nominate che non ci
+// sono e da solo non distingue fisso da mobile: 27/09 cucina inventata al posto della parete TV, armadio a specchio tolto).
+export type EditPlan = { remove: string[]; keep: string[]; restyle: string[]; add: string[] };
+export const editPlanPrompt = (room: string, task: 'empty' | 'furnish', style: string) => `You are directing an AI photo editor that edits photos of real Italian apartments for real estate listings. It follows literal lists only, and it invents things that are named but not visible, so name ONLY things that are really visible in this photo, each with where it is in the photo.
+Room type: ${room || 'decide it from the photo'}.
+Task: ${task === 'empty'
+    ? 'empty the room for an unfurnished listing: remove the furniture and every loose object, keep everything built in.'
+    : `restage the room in this style: ${style}. Remove the current furniture and loose objects, then furnish it again in the style. If there is a fitted kitchen, restyle its cabinet fronts and worktop in the style keeping the same layout and the appliances where they are.`}
+Reply with JSON only:
+{"remove": [...], "keep": [...], "restyle": [...], "add": [...]}
+- remove: every movable piece of furniture and every loose object visible, GROUPED by area in at most 8 short sentences (the editor ignores long lists), each saying where: for example "all the objects on the kitchen worktop and on top of the wall cabinets", "all the pictures and frames on the right wall", "the sofa, the ottoman, the coffee table and the rug in the foreground". Include furniture (sofas, armchairs, chairs, stools, tables, beds, bedside tables, freestanding cabinets and bookcases, rugs, lamps, plants) and everything on worktops, counters, shelves, tops of cabinets, pictures and calendars on walls, towels, bins, boxes, personal items.
+- keep: every built-in element visible that must stay exactly the same, in at most 6 short sentences with positions: walls and half walls, pillars, beams, ceiling and ceiling lights, windows, doors, curtains, mirrors, built-in or mirrored wardrobes, fitted kitchen units and built-in appliances, TV wall units fixed to the wall, radiators, air conditioners, the floor material.
+- restyle: ${task === 'empty' ? 'always []' : 'fixed elements to restyle in the style and how (for example the fitted kitchen: fronts and worktop), [] if none'}.
+- add: ${task === 'empty' ? 'always []' : 'what a professional Italian home stager would put in THIS room: 3 to 7 pieces that belong in this room type and fit the visible floor, then at most 3 small accessories; real furniture Italian families buy today (IKEA, Mondo Convenienza) in the style; for each, what it is, color and material, and exactly where it stands; never block doors, windows, radiators or passages'}.`;
+// Controllo dopo la rimozione: cosa della lista e' ancora visibile (un secondo passaggio con la lista corta di solito basta;
+// 27/09 il letto e il divano in primo piano restavano al primo colpo)
+export const leftoverPrompt = (remove: string[]) => `Image 1 is the original photo, image 2 is the same photo after an AI editor was asked to remove these things: ${remove.join(' | ')}.
+List what from that list is still visible in image 2, even partially, grouped in at most 4 short sentences with positions. Reply with JSON only: {"left": ["..."]} (empty list if everything was removed).`;
+export const removePrompt = (p: Pick<EditPlan, 'remove' | 'keep'>) => `Remove from this photo only these things: ${p.remove.join(' ')} Where they were, show the same walls and floor continuing behind them. Keep exactly the same, pixel for pixel: ${p.keep.join(' ')} Also keep the daylight and the camera position, zoom and framing exactly the same. Do not add anything. Photorealistic.`;
+export const addFurniturePrompt = (p: EditPlan) => `Edit this exact photo without changing the room. The camera position, zoom, framing and perspective stay exactly the same, and these stay exactly where they are, pixel for pixel: ${p.keep.join(' ')} ${p.restyle.length ? `Restyle only: ${p.restyle.join(' ')} ` : ''}Add only these pieces, standing on the visible floor, exactly where described: ${p.add.join(' ')} Nothing else. Same light and colors as the photo. Photorealistic real estate listing photo. Do not add any text, letters, logos or watermarks.`;
 
 const STYLE_PROMPTS: Record<string, string> = {
   // lo stile dice solo materiali e colori: QUALI mobili li decide il tipo di stanza (ROOM_FURNISH). Con "divano e
