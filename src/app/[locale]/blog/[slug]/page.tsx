@@ -13,6 +13,7 @@ import { getCoverImage } from "@/lib/blog-images";
 import FaqAccordion from "../components/FaqAccordion";
 import BlogPostCard from "../components/BlogPostCard";
 import InlineCta from "../components/InlineCta";
+import { GUIDES } from "@/lib/guides";
 
 export const revalidate = 3600;
 
@@ -174,6 +175,16 @@ export default async function BlogPostPage({ params }: Props) {
           <FaqAccordion items={post.faq_items} />
         </section>
       )}
+
+      {/* guide di riferimento: ogni articolo passa link alla pagina pilastro e alle satelliti */}
+      <section style={{ maxWidth: 780, margin: "0 auto", padding: "14px 22px 14px" }}>
+        <h2 style={{ fontSize: 18, fontWeight: 800, margin: "0 0 10px" }}>Guide per agenti immobiliari</h2>
+        <ul style={{ display: "flex", flexWrap: "wrap", gap: 10, listStyle: "none", padding: 0, margin: 0 }}>
+          {GUIDES.map((g) => (
+            <li key={g.slug}><Link href={`/it/${g.slug}`} style={{ display: "inline-block", padding: "8px 14px", borderRadius: 999, background: "#f7f7f7", fontSize: 14, fontWeight: 600, color: "#222" }}>{g.label}</Link></li>
+          ))}
+        </ul>
+      </section>
 
       {relatedPosts.length > 0 && (
         <section style={{ maxWidth: 780, margin: "0 auto", padding: "14px 22px 43px" }}>
