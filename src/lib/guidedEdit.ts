@@ -29,13 +29,15 @@ export async function guidedEdit(o: { userId: string; input: { image_base64: str
   let cur = orig, prompt = ''
   if (plan.remove.length) {
     prompt = removePrompt(plan)
-    const r = await runJob({ image_base64: `data:image/jpeg;base64,${orig}`, prompt, seed: o.seed, steps: 12 })
+    // togliere e' piu' semplice che arredare: 8 passaggi bastano (~30% di tempo in meno)
+    const r = await runJob({ image_base64: `data:image/jpeg;base64,${orig}`, prompt, seed: o.seed, steps: 8 })
     if (!r.output?.image_base64) return {}
     cur = r.output.image_base64
     // controllo (Opus) di cosa e' rimasto, con il riquadro di ogni oggetto; poi un passaggio per oggetto solo dentro
     // il suo riquadro (mark nel worker: fuori resta la foto). Al massimo 2 giri.
-    // arredo: un giro solo (i mobili coprono il resto); svuota: due
-    for (let k = 0; k < (o.task === 'empty' ? 2 : 1); k++) {
+    // controllo di cosa e' rimasto solo per "Svuota" (la stanza deve uscire vuota davvero). Nell'arredo i mobili nuovi
+    // vanno al posto dei vecchi e il prompt dice "nient'altro": si risparmiano 10-30 s (tempi da 40 a 80 s, 27/09)
+    for (let k = 0; k < (o.task === 'empty' ? 2 : 0); k++) {
       // prima i piu' grandi: con 4 per giro prendeva un cappellino e lasciava tavolo e sedia (27/09)
       const left = parseLeft(await askJson(o.userId, [orig, cur], leftoverPrompt(plan.remove), FAST)).sort((a, b) => b.box.w * b.box.h - a.box.w * a.box.h).slice(0, 4)
       if (!left.length) break
@@ -44,12 +46,12 @@ export async function guidedEdit(o: { userId: string; input: { image_base64: str
       const big = left.filter(it => it.box.w * it.box.h > 0.1), small = left.filter(it => it.box.w * it.box.h <= 0.1)
       if (big.length) {
         prompt = removePrompt({ remove: big.map(it => it.what), keep: plan.keep })
-        const r = await runJob({ image_base64: `data:image/jpeg;base64,${cur}`, prompt, seed: o.seed + 10 * (k + 1), steps: 12 })
+        const r = await runJob({ image_base64: `data:image/jpeg;base64,${cur}`, prompt, seed: o.seed + 10 * (k + 1), steps: 8 })
         if (r.output?.image_base64) cur = r.output.image_base64
       }
       for (const [n, it] of small.entries()) {
         prompt = removeInBoxPrompt(it.what)
-        const r = await runJob({ image_base64: `data:image/jpeg;base64,${cur}`, prompt, mark: it.box, seed: o.seed + 10 * (k + 1) + n + 1, steps: 12 })
+        const r = await runJob({ image_base64: `data:image/jpeg;base64,${cur}`, prompt, mark: it.box, seed: o.seed + 10 * (k + 1) + n + 1, steps: 8 })
         if (r.output?.image_base64) cur = await blendBox(cur, r.output.image_base64, it.box)
       }
     }
