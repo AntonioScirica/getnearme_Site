@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Script from "next/script";
 import Trackers from "@/components/Trackers";
+import CookieBanner from "@/components/CookieBanner";
 import { notFound } from "next/navigation";
 import {
   locales,
@@ -142,6 +143,7 @@ export default async function LocaleLayout({ children, params }: Props) {
         suppressHydrationWarning
       >
         {children}
+        <CookieBanner />
         {/* Analytics + embed deferiti (lazyOnload): non competono col primo paint. */}
         <Trackers>
         <Script id="ms-clarity" strategy="lazyOnload">

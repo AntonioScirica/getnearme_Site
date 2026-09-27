@@ -224,7 +224,7 @@ export const translations = {
       ]
     },
     cookie: {
-      update: "Ultimo aggiornamento: 22/12/2025",
+      update: "Ultimo aggiornamento: 27/09/2026",
       intro: "La presente Cookie Policy si applica esclusivamente al sito web agenteimmo.me.",
       sections: [
         {
@@ -233,7 +233,7 @@ export const translations = {
         },
         {
           t: "2. Tipologie di cookie utilizzate",
-          c: "Il sito utilizza: cookie tecnici, necessari al funzionamento del sito e alla gestione delle preferenze dell’utente; eventuali cookie di terze parti collegati a servizi tecnici o di pagamento."
+          c: "Il sito utilizza: cookie tecnici, necessari al funzionamento del sito, all’accesso all’area riservata e a ricordare la scelta sui cookie; solo con il consenso dell’utente, cookie di analisi e di marketing di terze parti: Google Analytics 4 (Google Ireland Ltd.) e Microsoft Clarity (Microsoft Ireland Operations Ltd.) per statistiche e analisi della navigazione, Meta Pixel (Meta Platforms Ireland Ltd.) per misurare le campagne pubblicitarie. Senza consenso questi servizi non vengono caricati. I siti personali degli agenti (agenteimmo.me/nome) non usano cookie di analisi o marketing."
         },
         {
           t: "3. Gestione dei cookie",
@@ -241,7 +241,7 @@ export const translations = {
         },
         {
           t: "4. Consenso",
-          c: "I cookie tecnici non richiedono il consenso dell’utente. Per eventuali cookie non tecnici viene richiesto il consenso tramite apposito banner."
+          c: "I cookie tecnici non richiedono il consenso dell’utente. Per i cookie di analisi e marketing il consenso viene chiesto con il banner alla prima visita, dove si può accettare o rifiutare con la stessa facilità (chiudere il banner equivale a rifiutare). La scelta vale 6 mesi e si può cambiare in qualsiasi momento dal link “Preferenze cookie” in fondo alla pagina."
         }
       ]
     },
@@ -831,7 +831,7 @@ export const translations = {
       ]
     },
     cookie: {
-      update: "Last update: 12/22/2025",
+      update: "Last update: 09/27/2026",
       intro: "This Cookie Policy applies exclusively to the agenteimmo.me website.",
       sections: [
         {
@@ -840,7 +840,7 @@ export const translations = {
         },
         {
           t: "2. Types of cookies used",
-          c: "The site uses: technical cookies, necessary for the site to function and to manage user preferences; any third-party cookies linked to technical or payment services."
+          c: "The site uses: technical cookies, needed for the site to work, to access the private area and to remember your cookie choice; only with your consent, third-party analytics and marketing cookies: Google Analytics 4 (Google Ireland Ltd.) and Microsoft Clarity (Microsoft Ireland Operations Ltd.) for visit statistics and browsing analysis, Meta Pixel (Meta Platforms Ireland Ltd.) to measure ad campaigns. Without consent these services are not loaded. Agents' personal websites (agenteimmo.me/name) do not use analytics or marketing cookies."
         },
         {
           t: "3. Cookie management",
@@ -848,7 +848,7 @@ export const translations = {
         },
         {
           t: "4. Consent",
-          c: "Technical cookies do not require user consent. For any non-technical cookies, consent is requested via a specific banner."
+          c: "Technical cookies do not require consent. For analytics and marketing cookies, consent is requested through the banner on your first visit, where you can accept or reject just as easily (closing the banner counts as rejecting). Your choice lasts 6 months and can be changed at any time from the \"Cookie settings\" link at the bottom of the page."
         }
       ]
     },

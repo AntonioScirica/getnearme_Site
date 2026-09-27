@@ -579,12 +579,12 @@ function Landing({ faq }: { faq: [string, string][] }) {
             [L('Prodotto', "Product"), [['#staging', 'Home staging'], ['#video', L('Video per i social', "Social videos")], ['#sito', L('Il tuo sito', "Your website")], ['#prezzi', L('Prezzi', "Pricing")], ['#domande', L('Domande frequenti', "FAQ")]]],
             // le guide sono articoli in italiano: nella versione inglese la colonna non c'e'
             ...(en ? [] : [['Guide', GUIDE_LINKS]]),
-            ['Agente Immo', [['/it/privacy', 'Privacy'], ['/it/cookie', 'Cookie'], ['/it/termini', L('Termini', "Terms")], ['mailto:info@agenteimmo.me', L('Contatti', "Contact")]]],
+            ['Agente Immo', [['/it/privacy', 'Privacy'], ['/it/cookie', 'Cookie'], ['/it/termini', L('Termini', "Terms")], ['mailto:info@agenteimmo.me', L('Contatti', "Contact")], ['#cookie', L('Preferenze cookie', "Cookie settings")]]],
           ] as [string, string[][]][]).map(([h, links]) => (
             <nav key={h} aria-label={h}>
               <div className="text-sm font-semibold">{h}</div>
               <ul className="mt-4 space-y-2.5 text-sm text-muted">
-                {links.map(([href, l]) => <li key={href}>{href.startsWith('/') ? <Link href={href} className="ease-smooth transition-colors hover:text-ink">{l}</Link> : <a href={href} className="ease-smooth transition-colors hover:text-ink">{l}</a>}</li>)}
+                {links.map(([href, l]) => <li key={href}>{href === '#cookie' ? <button type="button" onClick={() => window.dispatchEvent(new Event('agenteimmo:cookie-prefs'))} className="ease-smooth transition-colors hover:text-ink">{l}</button> : href.startsWith('/') ? <Link href={href} className="ease-smooth transition-colors hover:text-ink">{l}</Link> : <a href={href} className="ease-smooth transition-colors hover:text-ink">{l}</a>}</li>)}
               </ul>
             </nav>
           ))}
