@@ -1,12 +1,13 @@
 import sharp from 'sharp'
 import { runJob } from '@/lib/runpodImage'
-import { generateJson } from '@/lib/ai'
+import Anthropic from '@anthropic-ai/sdk'
+import { logUsage } from '@/lib/ai'
 import { editPlanPrompt, leftoverPrompt, removePrompt, addFurniturePrompt, type EditPlan } from '@/lib/stagingPrompts'
 
 // Svuota, arreda e modifiche guidate da un piano del modello di visione. Qwen da solo non distingue fisso da mobile e inventa le cose nominate che non ci
 // sono; sostituire i mobili in un colpo gli faceva reinventare la stanza (27/09). Quindi:
-//   1. il modello di visione guarda la foto originale: cosa togliere (raggruppato per zona), cosa tenere, cosa rinnovare, cosa aggiungere e dove
-//   2. Qwen toglie; il modello di visione controlla cosa e' rimasto e, se serve, secondo passaggio con la lista corta
+//   1. Claude (Opus) guarda la foto originale: cosa togliere (raggruppato per zona), cosa tenere, cosa rinnovare, cosa aggiungere e dove
+//   2. Qwen toglie; Claude (Sonnet) controlla cosa e' rimasto e, se serve, secondo passaggio con la lista corta
 //   3. (arredo) Qwen rinnova i fissi (es. ante della cucina) e aggiunge i pezzi nella stanza vuota
 // Senza piano (il modello non risponde) torna image vuota: chi chiama usa il vecchio passaggio unico.
 export async function guidedEdit(o: { userId: string; input: { image_base64: string } | { image_url: string }; task: 'empty' | 'furnish' | 'edit'; room: string; style: string; seed: number }): Promise<{ image?: string; prompt?: string; plan?: EditPlan }> {
@@ -28,7 +29,7 @@ export async function guidedEdit(o: { userId: string; input: { image_base64: str
     cur = r.output.image_base64
     // controllo e fino a 2 passaggi sulla lista corta di cio' che e' rimasto
     for (let k = 0; k < 2; k++) {
-      const left = (await ask(o.userId, [orig, cur], leftoverPrompt(plan.remove))).left ?? []
+      const left = (await ask(o.userId, [orig, cur], leftoverPrompt(plan.remove), 'claude-sonnet-5')).left ?? []
       if (!left.length) break
       prompt = removePrompt({ remove: left, keep: plan.keep })
       const again = await runJob({ image_base64: `data:image/jpeg;base64,${cur}`, prompt, seed: o.seed + 2 + k, steps: 12 })
@@ -45,25 +46,28 @@ export async function guidedEdit(o: { userId: string; input: { image_base64: str
   return { image: cur, prompt, plan }
 }
 
-// Il nostro modello di visione (qwen-analisi su RunPod, via generateJson: niente Claude, niente costi a token) guarda la foto
-// (o originale + risultato) e risponde in JSON con le liste. Errore = liste vuote (la richiesta non si blocca).
+// Fissi che non si tolgono mai (solo gli oggetti sopra): vedi il filtro in guidedEdit
 const FIXED = /\b(kitchen|cabinets?|cupboards?|worktop|countertop|counter|backsplash|splashback|stove|hob|oven|hood|sink|tap|island|peninsula|appliances?|fridge|refrigerator|dishwasher|walls?|half[- ]wall|pillar|ceiling|windows?|doors?|radiators?|wardrobes?|built[- ]in|floor|tiles|curtains?|shelves)\b/i
 const ON_TOP = /\b(items?|objects?|things|clutter|on (the|top)|above)\b/i
-const LIST = { type: 'array', items: { type: 'string' } }
-const SCHEMA = { type: 'object', additionalProperties: false, required: ['remove', 'keep', 'restyle', 'add', 'left'], properties: { remove: LIST, keep: LIST, restyle: LIST, add: LIST, left: LIST } }
-async function ask(userId: string, imagesB64: string[], text: string): Promise<EditPlan & { left?: string[] }> {
-  const empty = { remove: [], keep: [], restyle: [], add: [], left: [] }
+
+// Claude guarda la foto (o originale + risultato) e risponde in JSON. Opus per il piano, Sonnet per il controllo.
+// Il nostro modello (qwen-analisi) e' stato provato il 27/09: liste incoerenti (su 4 prove una sola completa), scartato.
+// Errore = liste vuote (la richiesta non si blocca: chi chiama ripiega sul passaggio unico).
+async function ask(userId: string, imagesB64: string[], text: string, model = 'claude-opus-5-5'): Promise<EditPlan & { left?: string[] }> {
+  const t0 = Date.now()
   try {
-    const images = await Promise.all(imagesB64.map(async b => `data:image/jpeg;base64,${(await sharp(Buffer.from(b, 'base64')).resize({ width: 1024, height: 1024, fit: 'inside' }).jpeg({ quality: 85 }).toBuffer()).toString('base64')}`))
-    const r = await generateJson<EditPlan & { left: string[] }>({
-      system: 'You plan edits of real estate photos for an AI image editor. Answer only with the JSON asked. Fields not requested are empty lists.',
-      text, images, schema: SCHEMA, maxTokens: 2000, usage: { userId, kind: 'staging_plan' },
+    const imgs = await Promise.all(imagesB64.map(async b => (await sharp(Buffer.from(b, 'base64')).resize({ width: 1024, height: 1024, fit: 'inside' }).jpeg({ quality: 85 }).toBuffer()).toString('base64')))
+    const msg = await new Anthropic().messages.create({
+      model, max_tokens: 4000,
+      messages: [{ role: 'user', content: [...imgs.map(data => ({ type: 'image' as const, source: { type: 'base64' as const, media_type: 'image/jpeg' as const, data } })), { type: 'text', text }] }],
     })
-    if (!r.ok) { console.error('staging plan', r.error, r.detail); return empty }
+    await logUsage({ userId, kind: 'staging_plan' }, false, Date.now() - t0, { input: msg.usage.input_tokens, output: msg.usage.output_tokens }, true, model)
+    const txt = msg.content.find(c => c.type === 'text')?.text ?? ''
+    const r = JSON.parse(txt.slice(txt.indexOf('{'), txt.lastIndexOf('}') + 1))
     const list = (x: unknown) => (Array.isArray(x) ? x.filter((v): v is string => typeof v === 'string').slice(0, 12) : [])
-    return { remove: list(r.data.remove), keep: list(r.data.keep), restyle: list(r.data.restyle), add: list(r.data.add), left: list(r.data.left) }
+    return { remove: list(r.remove), keep: list(r.keep), restyle: list(r.restyle), add: list(r.add), left: list(r.left) }
   } catch (e) {
     console.error('staging plan', e)
-    return empty
+    return { remove: [], keep: [], restyle: [], add: [], left: [] }
   }
 }
