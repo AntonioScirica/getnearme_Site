@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowUp, Building2, Check, ChevronLeft, Clapperboard, Download, ExternalLink, ImagePlus, Lasso, Shuffle, LayoutGrid, Loader2, Monitor, RotateCcw, SquareDashed, SquareDashedMousePointer, X } from 'lucide-react';
+import { ArrowDownToLine, ArrowUp, Building2, Check, ChevronLeft, Clapperboard, Columns2, Image as ImageIcon, Palette, Sofa, Sparkles, Download, ExternalLink, ImagePlus, Lasso, Shuffle, LayoutGrid, Loader2, Monitor, RotateCcw, SquareDashed, SquareDashedMousePointer, X } from 'lucide-react';
 import { fileToResizedDataUrl } from '@/lib/staging';
 import { AI_MOCK } from '@/lib/aiMock';
 import { AiPhotoStage, QUICK_PRESETS, type EditRequest, type Region, type Reveal, type Suggestion } from './AiPhoto';
@@ -60,8 +60,9 @@ type Msg =
 
 // Macro template video, ognuno con i suoi stili di animazione (card con anteprima in loop)
 type VideoAnim = 'popup' | 'gravity';
-// scelta gia' fatta: miniatura (video del template o foto) con il nome sotto, sopra la domanda
-type VideoPick = { label: string; src: string };
+// scelta gia' fatta: etichetta con icona (o la foto scelta) sopra la domanda
+type VideoPick = { label: string; icon: 'split' | 'pop' | 'drop' | 'style' | 'keep' | 'photo'; src?: string };
+const PICK_ICON = { split: Columns2, pop: Sparkles, drop: ArrowDownToLine, style: Palette, keep: Sofa, photo: ImageIcon };
 const R2_SPIKE = 'https://pub-a668674eaa484e8e8f2f10c264392bfc.r2.dev/spike-video/stili';
 type VideoCard = { id: string; label: string; desc: string; sample: string };
 const VIDEO_TEMPLATES: (VideoCard & { anims: (VideoCard & { id: VideoAnim })[] })[] = [
@@ -275,7 +276,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   // tre anteprime in parallelo dello stile scelto (foto: costano poco), poi l'agente sceglie quella del video
   const stylePreviews = (m: VideoMsg, label: string, req: { style?: string; prompt?: string }) => {
     touch();
-    patchV(m.id, { step: 'previews', picks: [...m.picks, { label, src: m.photo }], previews: [null, null, null] });
+    patchV(m.id, { step: 'previews', picks: [...m.picks, { label, icon: 'style' }], previews: [null, null, null] });
     const body = { ...(project ? { projectId: project } : {}), ...(kind ? { room: seenLabel(kind) } : {}), ...(m.photo.startsWith('data:') ? { imageBase64: m.photo } : { imageUrl: m.photo }), scene: 'interno', ...req, variant: -1 };
     [0, 1, 2].forEach(k => {
       authFetch('/api/platform/photo-edit', { method: 'POST', body: JSON.stringify(body) }).then(r => (r.ok ? r.json() : {})).catch(() => ({}))
@@ -285,7 +286,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   // Video: il server svuota la foto, fa partire Veo e poi monta; qui si controlla ogni 6 s (circa 2 minuti in tutto)
   const makeVideo = async (m: VideoMsg, photo: string, pick: string) => {
     touch();
-    patchV(m.id, { step: 'render', photo, picks: [...m.picks, { label: pick, src: photo }], err: undefined });
+    patchV(m.id, { step: 'render', photo, picks: [...m.picks, pick === 'Stanza com’è' ? { label: pick, icon: 'keep' } : { label: pick, icon: 'photo', src: photo }], err: undefined });
     const fail = 'Video non riuscito, riprova.';
     const res = await authFetch('/api/platform/video', { method: 'POST', body: JSON.stringify({ ...(photo.startsWith('data:') ? { imageBase64: photo } : { imageUrl: photo }), anim: m.anim, ...(project ? { projectId: project } : {}) }) }).catch(() => null);
     const d = res ? await res.json().catch(() => ({})) : {};
@@ -435,15 +436,18 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                   {/* passo nuovo: il vecchio sfuma, il contenitore cambia altezza (AutoSize), poi il nuovo appare */}
                   {/* scelte fatte: miniature sopra la domanda; restano ferme tra un passo e l'altro, entra solo l'ultima */}
                   {m.picks.length > 0 && m.step !== 'anim' && (
-                    <div className="flex flex-wrap gap-3 px-2 pb-4">
-                      {m.picks.map(p => (
-                        <div key={p.label} className="blur-in w-24">
-                          {p.src.endsWith('.mp4')
-                            ? <video src={p.src} autoPlay loop muted playsInline className="aspect-video w-full rounded-xl object-cover shadow-sm ring-1 ring-black/5" />
-                            : <img src={p.src} alt="" className="aspect-video w-full rounded-xl object-cover shadow-sm ring-1 ring-black/5" />}
-                          <span className="mt-1 block truncate text-[11px] text-muted">{p.label}</span>
-                        </div>
-                      ))}
+                    <div className="flex flex-wrap gap-2 px-2 pb-4">
+                      {m.picks.map(p => {
+                        const Icon = PICK_ICON[p.icon];
+                        return (
+                          <span key={p.label} className="blur-in flex items-center gap-2 rounded-2xl bg-white py-1.5 pl-1.5 pr-3 text-xs font-medium shadow-sm ring-1 ring-black/5">
+                            {p.src
+                              ? <img src={p.src} alt="" className="h-7 w-7 rounded-xl object-cover" />
+                              : <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-brand/10 text-brand"><Icon size={15} /></span>}
+                            {p.label}
+                          </span>
+                        );
+                      })}
                     </div>
                   )}
                   <StepSwap step={m.step}>
@@ -459,7 +463,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                       <div className="grid gap-4 sm:grid-cols-2">
                         {(m.step === 'template' ? VIDEO_TEMPLATES : VIDEO_TEMPLATES.find(t => t.label === m.picks[0]?.label)?.anims ?? []).map((t, k) => (
                           <div key={t.id} className="rise" style={{ animationDelay: `${0.05 + k * 0.06}s` }}>
-                            <button onClick={() => patchV(m.id, m.step === 'template' ? { step: 'anim', picks: [{ label: t.label, src: t.sample }] } : { step: 'mode', anim: t.id as VideoAnim, picks: [...m.picks, { label: t.label, src: t.sample }] })}
+                            <button onClick={() => patchV(m.id, m.step === 'template' ? { step: 'anim', picks: [{ label: t.label, icon: 'split' }] } : { step: 'mode', anim: t.id as VideoAnim, picks: [...m.picks, { label: t.label, icon: t.id === 'gravity' ? 'drop' : 'pop' }] })}
                               onMouseMove={tiltMove} onMouseLeave={e => tiltReset(e.currentTarget)} className="tilt group relative flex w-full flex-col overflow-hidden rounded-[28px] bg-white p-2 text-left shadow-[0_1px_2px_rgba(0,0,0,.04),0_8px_24px_-12px_rgba(0,0,0,.12)] ring-1 ring-black/5 hover:shadow-[0_2px_4px_rgba(0,0,0,.04),0_30px_50px_-20px_rgba(0,0,0,.25)] active:scale-[0.985]">
                               <span className="sheen pointer-events-none absolute inset-0 z-20" />
                               <video src={t.sample} autoPlay loop muted playsInline className="aspect-video w-full rounded-[20px] object-cover" />
