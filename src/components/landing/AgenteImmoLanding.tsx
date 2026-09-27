@@ -510,7 +510,7 @@ function Landing({ faq }: { faq: [string, string][] }) {
             {/* su telefono il bottone va sotto i modelli */}
             <span className="hidden md:block"><Cta href={APP} className="mt-8">{L('Crea il tuo sito', "Create your website")}</Cta></span>
           </Reveal>
-          <Reveal delay={150} anim="in-right"><div className="parallax"><Tilt className="rounded-[24px]"><TemplateShowcase active={siteOn} en={en} /></Tilt></div></Reveal>
+          <Reveal delay={150} anim="in-right" className="mt-6 md:mt-0"><div className="parallax"><Tilt className="rounded-[24px]"><TemplateShowcase active={siteOn} en={en} /></Tilt></div></Reveal>
           <div className="flex justify-center pt-6 md:hidden"><Cta href={APP}>{L('Crea il tuo sito', "Create your website")}</Cta></div>
         </div>
       </Band>
