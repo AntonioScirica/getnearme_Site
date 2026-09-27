@@ -149,19 +149,22 @@ export default function MediaView() {
               <h2 className="flex items-baseline gap-2 pb-4 font-semibold">{nameOf(k === 'nessuna' ? null : k)} <span className="text-sm font-normal text-muted">{count(k)} foto</span></h2>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {list.map(m => (
-                  <div key={m.id} className={`blur-in group rounded-3xl bg-white p-2 ease-smooth transition-shadow ${CARD_SHADOW} ${sel.has(m.id) ? '!ring-2 !ring-brand' : ''}`}>
+                  <div key={m.id} className={`blur-in group rounded-3xl bg-white p-2 ease-smooth transition-shadow ${CARD_SHADOW} ${sel.has(m.id) ? '!ring-2 !ring-brand' : ''}`}
+                    onMouseEnter={m.video ? e => { const v = e.currentTarget.querySelector<HTMLVideoElement>('video[data-play]'); if (v) { v.currentTime = 0; v.play().catch(() => {}); } } : undefined}
+                    onMouseLeave={m.video ? e => { const v = e.currentTarget.querySelector<HTMLVideoElement>('video[data-play]'); setTimeout(() => { if (v && !v.closest('.group')?.matches(':hover')) v.pause(); }, 600); /* si ferma a fine dissolvenza, se nel frattempo non si e' tornati sopra */ } : undefined}>
                     <button type="button" onClick={() => (selecting ? toggle(m.id) : setViewer(m))} className={`relative block aspect-[4/3] w-full overflow-hidden rounded-2xl bg-canvas ${selecting ? 'cursor-pointer' : 'cursor-zoom-in'}`}>
                       {selecting && (
                         <span className={`absolute right-3 top-3 z-10 flex h-7 w-7 items-center justify-center rounded-full ring-2 ease-smooth transition-colors ${sel.has(m.id) ? 'bg-brand text-white ring-brand' : 'bg-white/80 text-transparent ring-white'}`}><Check size={15} strokeWidth={3} /></span>
                       )}
                       {/* video: copertina ferma, parte al passaggio del mouse */}
                       {m.video
-                        // fermo sull'ultimo fotogramma (la stanza arredata); in hover parte dall'inizio e gira tutto
-                        ? <video src={m.video} muted loop playsInline preload="auto"
-                            onLoadedMetadata={e => { e.currentTarget.currentTime = Math.max(0, e.currentTarget.duration - 0.05); }}
-                            onMouseEnter={e => { e.currentTarget.currentTime = 0; e.currentTarget.play().catch(() => {}); }}
-                            onMouseLeave={e => { const v = e.currentTarget; v.pause(); v.currentTime = Math.max(0, v.duration - 0.05); }}
-                            className="absolute inset-0 h-full w-full object-cover" />
+                        // due strati: sopra l'ultimo fotogramma fermo (la stanza arredata), sotto il video che in hover
+                        // riparte dall'inizio; lo strato fermo sfuma (600 ms) invece di saltare al primo fotogramma
+                        ? <>
+                          <video data-play src={m.video} muted loop playsInline preload="auto" className="absolute inset-0 h-full w-full object-cover" />
+                          <video src={m.video} muted playsInline preload="auto" onLoadedMetadata={e => { e.currentTarget.currentTime = Math.max(0, e.currentTarget.duration - 0.05); }}
+                            className="absolute inset-0 h-full w-full object-cover ease-smooth transition-opacity duration-[600ms] group-hover:opacity-0" />
+                        </>
                         : <img src={m.dopo} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover" />}
                       {m.video && <span className="absolute bottom-3 left-3 flex items-center gap-1 rounded-full bg-black/55 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur"><Clapperboard size={12} /> Video</span>}
                       {m.prima && <img src={m.prima} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover opacity-0 ease-smooth transition-opacity group-hover:opacity-100" />}
