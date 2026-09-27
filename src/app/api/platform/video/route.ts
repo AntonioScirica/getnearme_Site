@@ -84,7 +84,9 @@ export async function POST(req: NextRequest) {
     const landscape = width >= height
     const [W, H] = landscape ? [1280, 720] : [720, 1280]
     const full = await sharp(src).rotate().resize(W, H, { fit: 'cover' }).jpeg({ quality: 95 }).toBuffer()
-    const key = `videos/${userId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+    const pid = typeof body.projectId === 'string' && /^[\w-]{1,64}$/.test(body.projectId) ? body.projectId : ''
+    const name = `${pid ? `casa-${pid}/` : ''}${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+    const key = `videos/${userId}/${name}`
     const fullUrl = await uploadJpeg(full, `${key}-arredata.jpg`)
 
     // 2-3. Qwen svuota (stessa inquadratura), Opus elenca i pezzi e controlla che la stanza sia davvero vuota:
@@ -123,7 +125,8 @@ export async function POST(req: NextRequest) {
       duration: '8s', aspect_ratio: landscape ? '16:9' : '9:16', resolution: '720p', generate_audio: false, seed: Math.floor(Math.random() * 1_000_000),
     })
     if (!q.request_id) { console.error('video fal submit', q); return NextResponse.json({ error: 'ai_failed' }, { status: 502 }) }
-    return NextResponse.json({ job: `${q.request_id}.${sign(userId, q.request_id)}` })
+    // il nome va nel lavoro firmato: a fine montaggio il video si salva accanto alla sua foto (copertina in Galleria)
+    return NextResponse.json({ job: `${q.request_id}.${name.replace('/', '~')}.${sign(userId, `${q.request_id}.${name}`)}` })
   } catch (e) {
     console.error('video start', e)
     return NextResponse.json({ error: 'ai_failed' }, { status: 502 })
@@ -133,11 +136,13 @@ export async function POST(req: NextRequest) {
 export async function GET(req: NextRequest) {
   const userId = await userOf(req)
   if (!userId) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
-  const [id, sig] = (req.nextUrl.searchParams.get('job') ?? '').split('.')
-  if (id === 'mock' && AI_MOCK) return NextResponse.json({ url: 'https://pub-a668674eaa484e8e8f2f10c264392bfc.r2.dev/spike-video/stili/F12_rianima.mp4' })
-  if (!id || !/^[\w-]{8,64}$/.test(id) || !sig || sig.length !== 22 || !timingSafeEqual(Buffer.from(sig), Buffer.from(sign(userId, id)))) return NextResponse.json({ error: 'bad_request' }, { status: 400 })
+  const job = req.nextUrl.searchParams.get('job') ?? ''
+  if (job === 'mock' && AI_MOCK) return NextResponse.json({ url: 'https://pub-a668674eaa484e8e8f2f10c264392bfc.r2.dev/spike-video/stili/F12_rianima.mp4' })
+  const [id, tilde, sig] = job.split('.')
+  const name = (tilde ?? '').replace('~', '/')
+  if (!id || !/^[\w-]{8,64}$/.test(id) || !/^(casa-[\w-]{1,64}\/)?\d+-[a-z0-9]+$/.test(name) || !sig || sig.length !== 22 || !timingSafeEqual(Buffer.from(sig), Buffer.from(sign(userId, `${id}.${name}`)))) return NextResponse.json({ error: 'bad_request' }, { status: 400 })
 
-  const key = `videos/${userId}/${id}.mp4`
+  const key = `videos/${userId}/${name}.mp4`
   const url = `${process.env.R2_PUBLIC_URL}/${key}`
   if ((await fetch(url, { method: 'HEAD' })).ok) return NextResponse.json({ url }) // gia' montato
 

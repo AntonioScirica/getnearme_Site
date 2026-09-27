@@ -50,8 +50,15 @@ export async function GET(req: NextRequest) {
         all: list.map(k => idx?.[k]?.text ?? '').join(' '), // per la ricerca
         keys: list, // tutti i risultati della catena, anche i rami: servono per cancellarla intera
       }
-    }).sort((a, b) => b.at - a.at)
-    return NextResponse.json({ items })
+    })
+    // video della chat (videos/<utente>/[casa-<id>/]<nome>.mp4), copertina = la foto da cui e' nato (<nome>-arredata.jpg)
+    const vkeys = await listKeys(`videos/${userId}/`)
+    const vall = new Set(vkeys.map(k => k.key))
+    const videos = vkeys.filter(k => k.key.endsWith('.mp4')).map(({ key, at: t }) => {
+      const cover = key.replace(/\.mp4$/, '-arredata.jpg')
+      return { id: key, video: publicUrl(key), dopo: vall.has(cover) ? publicUrl(cover) : '', prima: null, at: t, casa: key.match(/\/casa-([\w-]+)\//)?.[1] ?? null, text: 'Video', room: '', steps: [], all: 'video', keys: [key] }
+    })
+    return NextResponse.json({ items: [...items, ...videos].sort((a, b) => b.at - a.at) })
   } catch (e) {
     console.error('media list', e)
     return NextResponse.json({ error: 'failed' }, { status: 502 })
@@ -69,10 +76,15 @@ export async function DELETE(req: NextRequest) {
   if (!userId) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   let body: { keys?: unknown }
   try { body = await req.json() } catch { return NextResponse.json({ error: 'bad_request' }, { status: 400 }) }
-  const mine = `edits/${userId}/`
-  const want = (Array.isArray(body.keys) ? body.keys : []).filter((k): k is string => typeof k === 'string' && k.startsWith(mine) && k.endsWith('.jpg') && !k.includes('..')).slice(0, 2000)
-  if (!want.length) return NextResponse.json({ error: 'bad_request' }, { status: 400 })
+  const mine = `edits/${userId}/`, myVideos = `videos/${userId}/`
+  const raw = (Array.isArray(body.keys) ? body.keys : []).filter((k): k is string => typeof k === 'string' && !k.includes('..')).slice(0, 2000)
+  const want = raw.filter(k => k.startsWith(mine) && k.endsWith('.jpg'))
+  const vids = raw.filter(k => k.startsWith(myVideos) && k.endsWith('.mp4'))
+  if (!want.length && !vids.length) return NextResponse.json({ error: 'bad_request' }, { status: 400 })
   try {
+    // video: l'mp4 con le sue due foto di lavoro (arredata e vuota)
+    if (vids.length) await deleteKeys(vids.flatMap(k => [k, k.replace(/\.mp4$/, '-arredata.jpg'), k.replace(/\.mp4$/, '-vuota.jpg')]))
+    if (!want.length) return NextResponse.json({ deleted: vids.length, kept: 0 })
     const { data: projects } = await admin.from('projects').select('cover, import_data').in('user_id', await getTeamUserIds(admin, userId))
     const used = JSON.stringify(projects ?? [])
     const keep = want.filter(k => used.includes(k))
@@ -81,7 +93,7 @@ export async function DELETE(req: NextRequest) {
     const bases = del.map(k => k.replace(/\.jpg$/, ''))
     const keys = all.map(x => x.key).filter(k => bases.some(b => k === `${b}.jpg` || k === `${b}-prima.jpg` || k.startsWith(`${b}.meta.`)))
     if (keys.length) await deleteKeys(keys)
-    return NextResponse.json({ deleted: del.length, kept: keep.length })
+    return NextResponse.json({ deleted: del.length + vids.length, kept: keep.length })
   } catch (e) {
     console.error('media delete', e)
     return NextResponse.json({ error: 'failed' }, { status: 502 })

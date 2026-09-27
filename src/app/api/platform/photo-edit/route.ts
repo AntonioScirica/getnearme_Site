@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
 
   // Foto: URL (annunci, R2) oppure caricata dal computer (imageBase64, data URL gia' ridimensionata).
   // Modifica: testo libero e/o i preset di home staging (stile, vista, scena, planimetria).
-  let body: { imageUrl?: string; imageBase64?: string; prompt?: string; style?: string; angle?: string; scene?: SceneType; planimetria?: boolean; seed?: number; region?: { x: number; y: number; w: number; h: number; poly?: { x: number; y: number }[] }; projectId?: string; room?: string; variant?: number; points?: { x: number; y: number }[] }
+  let body: { imageUrl?: string; imageBase64?: string; prompt?: string; style?: string; angle?: string; scene?: SceneType; planimetria?: boolean; seed?: number; region?: { x: number; y: number; w: number; h: number; poly?: { x: number; y: number }[] }; projectId?: string; room?: string; variant?: number; preview?: boolean; points?: { x: number; y: number }[] }
   try { body = await req.json() } catch { return NextResponse.json({ error: 'bad_request' }, { status: 400 }) }
   const imageUrl = typeof body.imageUrl === 'string' ? body.imageUrl : ''
   const imageBase64 = typeof body.imageBase64 === 'string' && /^data:image\/(jpeg|png|webp);base64,/.test(body.imageBase64) && body.imageBase64.length < 8_000_000 ? body.imageBase64 : ''
@@ -90,6 +90,11 @@ export async function POST(req: NextRequest) {
   if (process.env.NODE_ENV !== 'production') await debugDump({ imageBase64, imageUrl, region, prompt: (translation.prompt_template ?? prompt), request: translation.request, outB64: b64, translated: (job.output as { translated?: string } | undefined)?.translated, worker: (job as { workerId?: string }).workerId })
   // foto di un immobile (scelta dalla vetrina): cartella casa-<id>, la Galleria le raggruppa per casa
   const projectId = typeof body.projectId === 'string' && /^[\w-]{1,64}$/.test(body.projectId) ? body.projectId : ''
+  // anteprime per il video (tre proposte tra cui scegliere): cartella a parte, non vanno in Galleria
+  if (body.preview === true) {
+    const url = await uploadJpeg(await matchInputShape(Buffer.from(b64, 'base64'), imageBase64, imageUrl), `previews/${userId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`)
+    return NextResponse.json({ url, seconds: job.output?.seconds })
+  }
   const key = `edits/${userId}/${projectId ? `casa-${projectId}/` : ''}${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
   const url = await uploadJpeg(await matchInputShape(Buffer.from(b64, 'base64'), imageBase64, imageUrl), `${key}.jpg`)
   // Media: accanto al risultato si salva anche il "prima" (<chiave>-prima.jpg), cosi' la pagina Media

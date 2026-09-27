@@ -277,7 +277,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   const stylePreviews = (m: VideoMsg, label: string, req: { style?: string; prompt?: string }) => {
     touch();
     patchV(m.id, { step: 'previews', picks: [...m.picks, { label, icon: 'style' }], previews: [null, null, null] });
-    const body = { ...(project ? { projectId: project } : {}), ...(kind ? { room: seenLabel(kind) } : {}), ...(m.photo.startsWith('data:') ? { imageBase64: m.photo } : { imageUrl: m.photo }), scene: 'interno', ...req, variant: -1 };
+    const body = { ...(project ? { projectId: project } : {}), ...(kind ? { room: seenLabel(kind) } : {}), ...(m.photo.startsWith('data:') ? { imageBase64: m.photo } : { imageUrl: m.photo }), scene: 'interno', ...req, variant: -1, preview: true };
     [0, 1, 2].forEach(k => {
       authFetch('/api/platform/photo-edit', { method: 'POST', body: JSON.stringify(body) }).then(r => (r.ok ? r.json() : {})).catch(() => ({}))
         .then((d: { url?: string }) => patchV(m.id, x => ({ previews: x.previews?.map((p, j) => (j === k ? d.url ?? 'err' : p)) })));
