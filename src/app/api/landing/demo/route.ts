@@ -13,9 +13,10 @@ export const maxDuration = 300
 // Prova anonima dalla landing: una foto arredata nello stile scelto, senza account (per scaricare serve l'account:
 // qui si restituisce solo un'anteprima a 1024 px). Nano Banana 2, ~0,065 EUR a foto (ripiego: Qwen + Opus).
 // Limiti senza tabelle nuove: una riga "contatore" in ai_usage (kind landing_demo, provider counter, model = hash
-// dell'IP), 3 prove al giorno per IP e un tetto globale giornaliero.
-// ponytail: IP condivisi (uffici, 4G) si dividono le 3 prove; tabella dedicata se serve un limite per dispositivo.
-const PER_IP = 3
+// dell'IP), 1 foto al giorno per IP (poi 1 video, /api/landing/demo-video) e un tetto globale giornaliero.
+// Se la foto non riesce la prova si restituisce (si cancella la riga contatore appena creata).
+// ponytail: IP condivisi (uffici, 4G) si dividono la prova; tabella dedicata se serve un limite per dispositivo.
+const PER_IP = 1
 const PER_DAY = 100 // ~6 EUR/giorno al massimo con Nano Banana 2
 const STYLES = ['modern', 'nordic', 'industrial'] as const
 const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
@@ -39,7 +40,8 @@ export async function POST(req: NextRequest) {
   if (used >= PER_IP) return NextResponse.json({ error: 'limit', left: 0 }, { status: 429 })
   if (all >= PER_DAY) return NextResponse.json({ error: 'busy' }, { status: 429 })
   // si prenota la prova prima di generare: richieste in parallelo dallo stesso IP non superano il limite di molto
-  await admin.from('ai_usage').insert({ user_id: null, kind: 'landing_demo', provider: 'counter', model: who, duration_ms: 0, cost_usd: 0, ok: true } as never)
+  const { data: slot } = await admin.from('ai_usage').insert({ user_id: null, kind: 'landing_demo', provider: 'counter', model: who, duration_ms: 0, cost_usd: 0, ok: true } as never).select('id').single()
+  const giveBack = () => slot && admin.from('ai_usage').delete().eq('id', (slot as { id: string }).id)
 
   // foto ridotta a 1536 px: basta per il modello e per l'anteprima
   const src = await sharp(Buffer.from(image.split(',')[1], 'base64')).rotate().resize({ width: 1536, height: 1536, fit: 'inside' }).jpeg({ quality: 88 }).toBuffer()
@@ -47,7 +49,7 @@ export async function POST(req: NextRequest) {
   const img = `data:image/jpeg;base64,${src.toString('base64')}`
   const nb = await nanoBanana({ userId: '', image: img, prompt: stagePrompt({ task: 'furnish', room: '', style: look }), kind: 'landing_demo_image' })
   const staged = nb ?? (await guidedEdit({ userId: '', input: { image_base64: img }, task: 'furnish', room: 'the room in the photo (recognize its type)', style: look, seed: Math.floor(Math.random() * 1_000_000) })).image
-  if (!staged) return NextResponse.json({ error: 'failed', left: PER_IP - used - 1 }, { status: 502 })
+  if (!staged) { await giveBack(); return NextResponse.json({ error: 'failed', left: PER_IP - used }, { status: 502 }) }
   const { width = 1024, height = 1024 } = await sharp(src).metadata()
   const out = await sharp(await finish(Buffer.from(staged, 'base64'))).resize(Math.round(width * Math.min(1, 1024 / Math.max(width, height))), Math.round(height * Math.min(1, 1024 / Math.max(width, height))), { fit: 'fill' }).jpeg({ quality: 82 }).toBuffer()
   return NextResponse.json({ image: `data:image/jpeg;base64,${out.toString('base64')}`, left: PER_IP - used - 1 })

@@ -201,7 +201,7 @@ function Compare() {
 }
 
 // Due piani con lo stesso prodotto (stessa qualita', sito compreso): cambiano solo i crediti e come si paga.
-// Prova gratis in pagina, senza account: una foto della tua casa arredata dall'AI (max 3 al giorno, limite nel server).
+// Prova gratis in pagina, senza account: una foto arredata dall'AI e poi il suo video (1 + 1 al giorno per IP, limite nel server).
 // Si vede il prima/dopo; per scaricarla serve l'account.
 const DEMO_STYLES = [['modern', 'Moderno'], ['nordic', 'Nordico'], ['industrial', 'Elegante']] as const;
 function TryIt() {
@@ -210,8 +210,11 @@ function TryIt() {
   const [style, setStyle] = useState<(typeof DEMO_STYLES)[number][0]>('modern');
   const [text, setText] = useState(''); // richiesta scritta: se c'e', vince sullo stile
   const [busy, setBusy] = useState(false);
-  const [left, setLeft] = useState(3);
+  const [left, setLeft] = useState(1);
   const [msg, setMsg] = useState('');
+  // secondo passo: la foto arredata diventa un video (1 al giorno, vedi /api/landing/demo-video)
+  const [video, setVideo] = useState<string | null>(null);
+  const [vBusy, setVBusy] = useState(false);
   const input = useRef<HTMLInputElement>(null);
   const pick = (f?: File) => {
     if (!f || !f.type.startsWith('image/')) return;
@@ -221,27 +224,53 @@ function TryIt() {
       const k = Math.min(1, 1600 / Math.max(img.width, img.height));
       const c = document.createElement('canvas'); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
       c.getContext('2d')!.drawImage(img, 0, 0, c.width, c.height);
-      setBefore(c.toDataURL('image/jpeg', 0.88)); setAfter(null); setMsg('');
+      setBefore(c.toDataURL('image/jpeg', 0.88)); setAfter(null); setVideo(null); setMsg('');
       URL.revokeObjectURL(img.src);
     };
     img.src = URL.createObjectURL(f);
   };
   const run = async () => {
     if (!before || busy) return;
-    setBusy(true); setMsg(''); setAfter(null);
+    setBusy(true); setMsg(''); setAfter(null); setVideo(null);
     const r = await fetch('/api/landing/demo', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ image: before, style, prompt: text.trim() }) }).catch(() => null);
     const d = await r?.json().catch(() => null) as { image?: string; left?: number; error?: string } | null;
     setBusy(false);
     if (typeof d?.left === 'number') setLeft(d.left);
     if (d?.image) return setAfter(d.image);
-    setMsg(d?.error === 'limit' ? 'Hai usato le 3 prove di oggi. Crea l\'account per continuare.' : d?.error === 'busy' ? 'Ci sono molte prove in corso, riprova tra qualche minuto.' : 'Non siamo riusciti ad arredare questa foto. Prova con un\'altra stanza.');
+    setMsg(d?.error === 'limit' ? 'Hai già fatto la prova di oggi. Crea l\'account per continuare.' : d?.error === 'busy' ? 'Ci sono molte prove in corso, riprova tra qualche minuto.' : 'Non siamo riusciti ad arredare questa foto. Prova con un\'altra stanza.');
+  };
+  const toVideo = async () => {
+    if (!after || vBusy) return;
+    setVBusy(true); setMsg('');
+    const fail = (e?: string) => { setVBusy(false); setMsg(e === 'limit' ? 'Hai già fatto il video di prova oggi. Crea l\'account per farne altri.' : e === 'busy' ? 'Ci sono molti video in corso, riprova tra qualche minuto.' : 'Non siamo riusciti a fare il video di questa foto. Riprova con un\'altra stanza.'); };
+    const r = await fetch('/api/landing/demo-video', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ image: after }) }).catch(() => null);
+    const d = await r?.json().catch(() => null) as { job?: string; error?: string } | null;
+    if (!d?.job) return fail(d?.error);
+    // Veo lavora 1-2 minuti: si controlla ogni 5 s, per massimo 5 minuti
+    for (let i = 0; i < 60; i++) {
+      await new Promise(res => setTimeout(res, 5000));
+      const g = await fetch(`/api/landing/demo-video?job=${encodeURIComponent(d.job)}`).then(x => x.json()).catch(() => null) as { url?: string; status?: string; error?: string } | null;
+      if (g?.url) { setVBusy(false); return setVideo(g.url); }
+      if (g?.error) return fail(g.error);
+    }
+    fail();
   };
   return (
     <>
         <div className="rounded-[32px] bg-white p-2 shadow-[0_0_0_1px_rgba(0,0,0,.05),0_0_80px_-10px_rgba(110,86,248,.45),0_40px_100px_-40px_rgba(0,0,0,.35)]">
           <div className="relative overflow-hidden rounded-[24px] bg-canvas">
-            {after && before ? (
-              <BeforeAfter before={before} after={after} auto={false} className="aspect-[4/3] md:aspect-[16/10]" />
+            {video ? (
+              <video src={video} autoPlay muted loop playsInline className="aspect-[4/3] w-full bg-canvas object-cover md:aspect-[16/10]" />
+            ) : after && before ? (
+              <div className="relative">
+                <BeforeAfter before={before} after={after} auto={false} className="aspect-[4/3] md:aspect-[16/10]" />
+                {vBusy && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-white/55 backdrop-blur-[2px]">
+                    <Loader2 size={28} className="animate-spin text-ai" />
+                    <span className="rounded-full bg-white px-4 py-1.5 text-sm font-semibold shadow">Stiamo facendo il video, 1-2 minuti</span>
+                  </div>
+                )}
+              </div>
             ) : before ? (
               <div className="relative aspect-[4/3] md:aspect-[16/10]">
                 <img src={before} alt="La tua foto" className="absolute inset-0 h-full w-full object-cover" />
@@ -267,8 +296,9 @@ function TryIt() {
               <button type="button" onClick={() => input.current?.click()} aria-label="Carica una foto" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-ink shadow-sm ring-1 ring-black/5 hover:bg-line/40"><ImagePlus size={18} /></button>
               <input value={text} onChange={e => setText(e.target.value.slice(0, 200))} onKeyDown={e => e.key === 'Enter' && run()} placeholder="Scrivi come la vuoi, es. soggiorno moderno con divano grigio"
                 className="min-w-0 flex-1 bg-transparent px-2 text-[15px] outline-none placeholder:text-muted/70" />
+              {after && !video && <button type="button" disabled={vBusy} onClick={toVideo} className="inline-flex h-11 shrink-0 items-center gap-2 rounded-2xl bg-ai px-5 text-sm font-semibold text-white disabled:opacity-50"><Clapperboard size={15} /> Trasforma in video</button>}
               {after
-                ? <a href={APP} className="inline-flex h-11 shrink-0 items-center gap-2 rounded-2xl bg-ink px-5 text-sm font-semibold text-white">Scaricala <ArrowRight size={15} /></a>
+                ? <a href={APP} className={`inline-flex h-11 shrink-0 items-center gap-2 rounded-2xl px-5 text-sm font-semibold ${video ? 'bg-ink text-white' : 'bg-white text-ink ring-1 ring-black/10'}`}>Scarica{video ? ' il video' : 'la'} <ArrowRight size={15} /></a>
                 : <button type="button" disabled={busy || left <= 0} onClick={() => (before ? run() : input.current?.click())} className="inline-flex h-11 shrink-0 items-center gap-2 rounded-2xl bg-ink px-5 text-sm font-semibold text-white disabled:opacity-40"><Sparkles size={15} /> {before ? 'Arreda' : 'Carica foto'}</button>}
             </div>
             <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -276,11 +306,11 @@ function TryIt() {
               {DEMO_STYLES.map(([k, l]) => (
                 <button key={k} type="button" onClick={() => { setStyle(k); setText(''); }} className={`h-9 rounded-full px-4 text-sm font-semibold ease-smooth transition-colors ${style === k && !text ? 'bg-ink text-white' : 'bg-canvas text-muted hover:text-ink'}`}>{l}</button>
               ))}
-              <span className="ml-auto text-sm text-muted">{left > 0 ? `Ti restano ${left} prove gratis` : 'Prove finite per oggi'}</span>
+              <span className="ml-auto text-sm text-muted">{video ? 'Prova finita per oggi' : after ? 'Ti resta 1 video gratis' : 'Prova gratis: 1 foto e 1 video'}</span>
             </div>
           </div>
         </div>
-        {after && <p className="mt-3 text-center text-sm text-muted">Per scaricarla in alta qualità crea l&apos;account.{left > 0 && <> Oppure scegli un altro stile e <button type="button" onClick={run} className="font-medium text-ink underline underline-offset-4">rifai la prova</button>.</>}</p>}
+        {after && <p className="mt-3 text-center text-sm text-muted">{video ? 'Il video è pronto per Instagram e TikTok. ' : 'Ora trasformala in un video per i social, gratis. '}Per scaricare crea l&apos;account.{left > 0 && <> Oppure scegli un altro stile e <button type="button" onClick={run} className="font-medium text-ink underline underline-offset-4">rifai la prova</button>.</>}</p>}
         {msg && <p className="mt-3 text-center text-sm text-rose-600">{msg} {left <= 0 && <a href={APP} className="font-medium text-ink underline underline-offset-4">Crea l&apos;account</a>}</p>}
     </>
   );
@@ -382,7 +412,7 @@ export default function AgenteImmoLanding() {
         </div>
 
         <Reveal delay={900} className="mx-auto mt-10 flex max-w-3xl flex-wrap justify-center gap-x-8 gap-y-3 text-sm text-muted">
-          {['La prima foto ferma chi scorre', 'Il proprietario vede subito cosa farai per lui', 'Prova gratis, senza registrarti'].map(x => <span key={x} className="flex items-center gap-2"><Check size={14} className="text-brand" />{x}</span>)}
+          {['La prima foto ferma chi scorre', 'Il proprietario vede subito cosa farai per lui', '1 foto e 1 video gratis, senza registrarti'].map(x => <span key={x} className="flex items-center gap-2"><Check size={14} className="text-brand" />{x}</span>)}
         </Reveal>
       </section>
 
