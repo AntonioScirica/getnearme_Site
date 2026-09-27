@@ -439,11 +439,11 @@ export default function AgenteImmoLanding() {
       <Band id="sito">
         <div ref={siteRef} className="grid items-center gap-10 md:grid-cols-2 md:gap-16">
           <Reveal anim="in-left">
-            <Eyebrow n="03">Il tuo sito, già pronto</Eyebrow>
-            <h2 className={H2}>Sul tuo sito non sei uno dei tanti agenti.</h2>
-            <p className="mt-5 text-lg leading-relaxed text-muted">Sul portale l&apos;acquirente sceglie la casa, non l&apos;agente. Il sito te lo diamo noi, già fatto e finito: scegli uno dei nostri modelli, metti logo e colori, e ogni immobile che carichi ci finisce da solo. Niente web agency, niente da costruire.</p>
+            <Eyebrow n="03">Il sito te lo facciamo noi</Eyebrow>
+            <h2 className={H2}>Il tuo sito lo facciamo noi, tu scegli lo stile.</h2>
+            <p className="mt-5 text-lg leading-relaxed text-muted">Appena ti iscrivi hai già il tuo sito personale, con il tuo nome, pronto da pubblicare. Non devi costruire niente: scegli uno dei nostri modelli, metti logo e colori, e ogni immobile che carichi ci finisce da solo. Sul portale sei uno dei tanti, qui sei l&apos;unico agente.</p>
             <ul className="mt-6 space-y-3 text-[15px]">
-              {['Pronto in un minuto: scegli il modello, il resto è già fatto', 'Ogni immobile che carichi è subito online, con foto e descrizione', 'I contatti arrivano a te, non a un portale', 'Ti fai trovare su Google nella tua zona'].map(x => <li key={x} className="flex items-start gap-3">{CHECK}{x}</li>)}
+              {['Incluso nell\'abbonamento, niente web agency da pagare', 'Già fatto: scegli il modello e pubblichi', 'Ogni immobile che carichi è subito online', 'Le richieste arrivano a te, non a un portale'].map(x => <li key={x} className="flex items-start gap-3">{CHECK}{x}</li>)}
             </ul>
             <Cta href={APP} className="mt-8">Crea il tuo sito</Cta>
           </Reveal>
