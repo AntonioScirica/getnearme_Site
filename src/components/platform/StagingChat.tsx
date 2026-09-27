@@ -387,7 +387,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   return (
     // Tutta l'altezza disponibile: la conversazione scorre da sola, il campo e' sempre in fondo alla pagina
     <div className="relative -mx-6 h-full" onDragOver={e => { e.preventDefault(); setDrag(true); }} onDragLeave={() => setDrag(false)} onDrop={e => { e.preventDefault(); setDrag(false); upload(e.dataTransfer.files); }}>
-      <div ref={scroller} className="absolute inset-0 overflow-y-auto px-6 pb-48 pt-8 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div ref={scroller} className="absolute inset-0 overflow-y-auto overflow-x-hidden px-6 pb-48 pt-8 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <div className="mx-auto max-w-3xl space-y-6">
           {/* Vuota: un solo invito, grande e al centro, per caricare la foto */}
           {empty && (
@@ -425,8 +425,10 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
             // video: tutta la larghezza, un solo contenitore che cambia contenuto a ogni scelta (le scelte fatte restano in alto)
             <div key={m.id} className="blur-in">
               {/* sfondo grigio da messaggio solo nel passo in cui si scrive; card, anteprime e video stanno sul foglio */}
-              <div className={`rounded-[32px] ease-smooth transition-colors duration-[600ms] ${m.step === 'mode' ? 'bg-canvas' : 'bg-transparent'}`}><AutoSize>
-                {/* padding dentro AutoSize: inclinazione e ombra delle card non vengono tagliate */}
+              {/* AutoSize taglia cio' che esce: la sua area si allarga con margini negativi e lo stesso padding dentro,
+                  cosi' l'ombra delle card in hover (fino a ~60 px sotto, ~30 ai lati) resta visibile e l'impaginazione non cambia */}
+              <AutoSize className="-mx-8 -mb-16"><div className="px-8 pb-16">
+              <div className={`rounded-[32px] ease-smooth transition-colors duration-[600ms] ${m.step === 'mode' ? 'bg-canvas' : 'bg-transparent'}`}>
                 <div className="p-4 pb-6">
                   {/* passo nuovo: il vecchio sfuma, il contenitore cambia altezza (AutoSize), poi il nuovo appare */}
                   <StepSwap step={m.step}>
@@ -499,7 +501,8 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                     )}
                   </StepSwap>
                 </div>
-              </AutoSize></div>
+              </div>
+              </div></AutoSize>
             </div>
           ) : m.role === 'user' ? (
             <div key={m.id} className={`blur-in ease-smooth transition-opacity ${faded.has(m.id) ? 'opacity-35 hover:opacity-80' : ''}`}>
