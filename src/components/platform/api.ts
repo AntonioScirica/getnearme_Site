@@ -7,7 +7,8 @@ export async function authFetch(path: string, init: RequestInit = {}) {
     headers: { 'Content-Type': 'application/json', ...init.headers, Authorization: `Bearer ${session?.access_token}` },
   });
   // crediti: 402 = finiti (si apre la scelta del piano); dopo foto e video riusciti il contatore si aggiorna
-  if (res.status === 402) window.dispatchEvent(new Event('agenteimmo:no-credits'));
+  // x-no-modal: chi chiama lo spiega da se' (la chat risponde con un messaggio)
+  if (res.status === 402 && !new Headers(init.headers).has('x-no-modal')) window.dispatchEvent(new Event('agenteimmo:no-credits'));
   else if (res.ok && /\/api\/platform\/(photo-edit|video)/.test(path)) window.dispatchEvent(new Event('agenteimmo:credits'));
   return res;
 }

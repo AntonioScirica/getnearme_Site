@@ -51,6 +51,19 @@ function suggestionsFor(kind: string | null): Suggestion[] {
 // "custom:..." = scritto dall'agente quando nessuna voce va bene
 const seenLabel = (k: string) => (k.startsWith('custom:') ? k.slice(7) : SEEN_OPTIONS.find(o => o.value === k)?.label ?? 'un interno');
 
+// Crediti finiti: la chat lo dice nel messaggio (niente finestra sopra) e porta ai piani
+const NO_CREDITS = 'no_credits';
+const QUIET = { 'x-no-modal': '1' };
+function ErrLine({ err, className = '' }: { err: string; className?: string }) {
+  if (err !== NO_CREDITS) return <p className={`blur-in px-2 text-sm text-rose-600 ${className}`}>{err}</p>;
+  return (
+    <p className={`blur-in flex flex-wrap items-center gap-x-3 gap-y-2 px-2 text-sm ${className}`}>
+      <span>Hai finito i crediti: per arredare foto e creare video scegli un piano.</span>
+      <a href="#/piano" className="inline-flex h-9 items-center rounded-full bg-ink px-4 text-sm font-semibold text-white">Vedi i piani</a>
+    </p>
+  );
+}
+
 type Msg =
   | { id: string; role: 'divider'; image: string }
   | { id: string; role: 'user'; text?: string; image?: string; seen?: string | null; region?: Region; style?: { src: string; author?: string; authorUrl?: string } }
@@ -319,7 +332,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
     patchV(m.id, { step: 'previews', picks: [...m.picks, { label, icon: 'style' }], previews: [null, null] });
     const body = { ...(project ? { projectId: project } : {}), ...(kind ? { room: seenLabel(kind) } : {}), ...(m.photo.startsWith('data:') ? { imageBase64: m.photo } : { imageUrl: m.photo }), scene: 'interno', ...req, variant: -1, preview: true, ...(sourcePhoto && sourcePhoto !== m.photo ? { reference: sourcePhoto } : {}) };
     [0, 1].forEach(k => {
-      authFetch('/api/platform/photo-edit', { method: 'POST', body: JSON.stringify(body) }).then(r => (r.ok ? r.json() : {})).catch(() => ({}))
+      authFetch('/api/platform/photo-edit', { method: 'POST', headers: QUIET, body: JSON.stringify(body) }).then(r => (r.status === 402 ? (patchV(m.id, { err: NO_CREDITS }), {}) : r.ok ? r.json() : {})).catch(() => ({}))
         .then((d: { url?: string }) => patchV(m.id, x => ({ previews: x.previews?.map((p, j) => (j === k ? d.url ?? 'err' : p)) })));
     });
   };
@@ -328,9 +341,9 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
     touch();
     patchV(m.id, { step: 'render', photo, picks: [...m.picks, pick === 'Stanza com’è' ? { label: pick, icon: 'keep' } : { label: pick, icon: 'photo', src: photo }], err: undefined });
     const fail = 'Video non riuscito, riprova.';
-    const res = await authFetch('/api/platform/video', { method: 'POST', body: JSON.stringify({ ...(photo.startsWith('data:') ? { imageBase64: photo } : { imageUrl: photo }), anim: m.anim, ...(project ? { projectId: project } : {}) }) }).catch(() => null);
+    const res = await authFetch('/api/platform/video', { method: 'POST', headers: QUIET, body: JSON.stringify({ ...(photo.startsWith('data:') ? { imageBase64: photo } : { imageUrl: photo }), anim: m.anim, ...(project ? { projectId: project } : {}) }) }).catch(() => null);
     const d = res ? await res.json().catch(() => ({})) : {};
-    if (!d.job) { patchV(m.id, { err: d.error === 'timeout' ? 'La GPU si sta avviando, riprova tra un minuto.' : d.error === 'nothing_to_animate' ? 'Nella foto non ci sono mobili da animare.' : fail }); return; }
+    if (!d.job) { patchV(m.id, { err: d.error === 'no_credits' ? NO_CREDITS : d.error === 'timeout' ? 'La GPU si sta avviando, riprova tra un minuto.' : d.error === 'nothing_to_animate' ? 'Nella foto non ci sono mobili da animare.' : fail }); return; }
     patchV(m.id, { job: d.job });
     await pollVideo(m.id, d.job);
   };
@@ -353,8 +366,9 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
     for (const m of saved?.msgs ?? []) if (m.role === 'video' && m.job && !m.url && !m.err) void pollVideo(m.id, m.job);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const run = async (id: string, req: EditRequest, before: string) => {
-    const res = await authFetch('/api/platform/photo-edit', { method: 'POST', body: JSON.stringify(req) }).catch(() => null);
+    const res = await authFetch('/api/platform/photo-edit', { method: 'POST', headers: QUIET, body: JSON.stringify(req) }).catch(() => null);
     let d = res ? await res.json().catch(() => ({})) : {};
+    if (d.error === 'no_credits') { patch(id, { busy: false, err: NO_CREDITS }); return; }
     if (AI_MOCK && res?.status === 401) { await wait(4000); d = { url: before }; } // anteprima senza login
     if (!d.url) { patch(id, { busy: false, err: d.error === 'timeout' ? 'La GPU si sta avviando, riprova tra un minuto.' : 'Modifica non riuscita, riprova.' }); return; }
     patch(id, { busy: false, out: d.url, reveal: 'burst' });
@@ -383,6 +397,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   const done = msgs.filter(m => m.role === 'ai' && m.out && !m.busy).length;
   const hint = !base ? 'Prima carica una foto, poi scrivi qui cosa cambiare'
     : busy && lastAi ? BUSY_HINTS[[...lastAi.id].reduce((h, c) => h + c.charCodeAt(0), 0) % BUSY_HINTS.length]
+    : lastAi?.err === NO_CREDITS ? 'Per continuare scegli un piano'
     : lastAi?.err ? 'Non è andata: riprova o chiedilo in un altro modo'
     : roomState === 'vuota' ? `La stanza è vuota: arredala? Es. ${(kind && FIRST[kind.replace(/^(room|scene):/, '')]) || 'arreda in stile moderno'}`
     : roomState === 'disordinata' ? 'Es. togli il disordine e gli oggetti personali, lascia i mobili'
@@ -570,7 +585,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                               {!m.err && <div className="absolute inset-0 flex items-center justify-center bg-black/20 text-white"><Loader2 size={22} className="animate-spin" /></div>}
                             </>}
                         </div>
-                        {m.err && <p className="blur-in px-2 pt-3 text-sm text-rose-600">{m.err}</p>}
+                        {m.err && <ErrLine err={m.err} className="pt-3" />}
                         {m.url && (
                           <div className="blur-in flex justify-end pt-3">
                             <a href={m.url} download target="_blank" rel="noopener noreferrer" className="flex h-8 items-center gap-1.5 rounded-full bg-white px-3 text-xs font-medium text-ink ring-1 ring-inset ring-black/10 hover:bg-canvas"><Download size={14} className="translate-y-px" /> Scarica</a>
@@ -633,7 +648,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                 </div>
                 {/* Modifica: la foto sotto resta montata e ferma, la selezione ci si appoggia sopra; sotto cambiano solo i controlli */}
                 {i === zoneOwner ? zonePicker(ratios[m.before] ?? 1.5) : <>
-                {m.err && <p className="blur-in px-2 pt-2 text-sm text-rose-600">{m.err}</p>}
+                {m.err && <ErrLine err={m.err} className="pt-2" />}
                 {m.out && !m.busy && (
                   <div className={`blur-in flex min-h-12 items-center gap-3 px-2 pt-2 text-xs text-muted ${isNarrow(m.before) ? 'justify-center' : 'justify-end'}`}>
                     {/* alta quanto il campo di Modifica (8 + 40): aprendo e chiudendo la card non cambia altezza.

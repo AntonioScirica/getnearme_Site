@@ -214,6 +214,7 @@ function TryIt() {
   const [msg, setMsg] = useState('');
   // secondo passo: la foto arredata diventa un video (1 al giorno, vedi /api/landing/demo-video)
   const [video, setVideo] = useState<string | null>(null);
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null); // foto intera su R2, da scaricare dopo la registrazione
   const [vBusy, setVBusy] = useState(false);
   const input = useRef<HTMLInputElement>(null);
   const pick = (f?: File) => {
@@ -233,11 +234,16 @@ function TryIt() {
     if (!before || busy) return;
     setBusy(true); setMsg(''); setAfter(null); setVideo(null);
     const r = await fetch('/api/landing/demo', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ image: before, style, prompt: text.trim() }) }).catch(() => null);
-    const d = await r?.json().catch(() => null) as { image?: string; left?: number; error?: string } | null;
+    const d = await r?.json().catch(() => null) as { image?: string; url?: string; left?: number; error?: string } | null;
     setBusy(false);
     if (typeof d?.left === 'number') setLeft(d.left);
-    if (d?.image) return setAfter(d.image);
+    if (d?.image) { setPhotoUrl(d.url ?? null); return setAfter(d.image); }
     setMsg(d?.error === 'limit' ? 'Hai già fatto la prova di oggi. Crea l\'account per continuare.' : d?.error === 'busy' ? 'Ci sono molte prove in corso, riprova tra qualche minuto.' : 'Non siamo riusciti ad arredare questa foto. Prova con un\'altra stanza.');
+  };
+  // Scarica: la prova resta nel browser, si entra (login o registrazione) e dopo l'onboarding la piattaforma la fa scaricare
+  const keep = (withVideo: boolean) => {
+    try { localStorage.setItem('agenteimmo:demo', JSON.stringify({ photo: photoUrl, video: withVideo ? video : null })); } catch { /* spazio pieno: si entra comunque */ }
+    window.location.href = APP;
   };
   const toVideo = async () => {
     if (!after || vBusy) return;
@@ -296,9 +302,10 @@ function TryIt() {
               <button type="button" onClick={() => input.current?.click()} aria-label="Carica una foto" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-ink shadow-sm ring-1 ring-black/5 hover:bg-line/40"><ImagePlus size={18} /></button>
               <input value={text} onChange={e => setText(e.target.value.slice(0, 200))} onKeyDown={e => e.key === 'Enter' && run()} placeholder="Scrivi come la vuoi, es. soggiorno moderno con divano grigio"
                 className="min-w-0 flex-1 bg-transparent px-2 text-[15px] outline-none placeholder:text-muted/70" />
-              {after && !video && <button type="button" disabled={vBusy} onClick={toVideo} className="inline-flex h-11 shrink-0 items-center gap-2 rounded-2xl bg-ai px-5 text-sm font-semibold text-white disabled:opacity-50"><Clapperboard size={15} /> Trasforma in video</button>}
               {after
-                ? <a href={APP} className={`inline-flex h-11 shrink-0 items-center gap-2 rounded-2xl px-5 text-sm font-semibold ${video ? 'bg-ink text-white' : 'bg-white text-ink ring-1 ring-black/10'}`}>Scarica{video ? ' il video' : 'la'} <ArrowRight size={15} /></a>
+                ? video
+                  ? <button type="button" onClick={() => keep(true)} className="inline-flex h-11 shrink-0 items-center gap-2 rounded-2xl bg-ink px-5 text-sm font-semibold text-white">Scarica tutto <ArrowRight size={15} /></button>
+                  : <button type="button" disabled={vBusy} onClick={toVideo} className="inline-flex h-11 shrink-0 items-center gap-2 rounded-2xl bg-ai px-5 text-sm font-semibold text-white disabled:opacity-50"><Clapperboard size={15} /> Trasforma in video</button>
                 : <button type="button" disabled={busy || left <= 0} onClick={() => (before ? run() : input.current?.click())} className="inline-flex h-11 shrink-0 items-center gap-2 rounded-2xl bg-ink px-5 text-sm font-semibold text-white disabled:opacity-40"><Sparkles size={15} /> {before ? 'Arreda' : 'Carica foto'}</button>}
             </div>
             <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -310,7 +317,7 @@ function TryIt() {
             </div>
           </div>
         </div>
-        {after && <p className="mt-3 text-center text-sm text-muted">{video ? 'Il video è pronto per Instagram e TikTok. ' : 'Ora trasformala in un video per i social, gratis. '}Per scaricare crea l&apos;account.{left > 0 && <> Oppure scegli un altro stile e <button type="button" onClick={run} className="font-medium text-ink underline underline-offset-4">rifai la prova</button>.</>}</p>}
+        {after && <p className="mt-3 text-center text-sm text-muted">{video ? 'Foto e video pronti per l\'annuncio e i social. Per scaricarli entra o crea l\'account, è gratis.' : <>Ora trasformala in un video per i social, gratis. Oppure <button type="button" onClick={() => keep(false)} className="font-medium text-ink underline underline-offset-4">scarica solo la foto</button>.</>}{left > 0 && <> Oppure scegli un altro stile e <button type="button" onClick={run} className="font-medium text-ink underline underline-offset-4">rifai la prova</button>.</>}</p>}
         {msg && <p className="mt-3 text-center text-sm text-rose-600">{msg} {left <= 0 && <a href={APP} className="font-medium text-ink underline underline-offset-4">Crea l&apos;account</a>}</p>}
     </>
   );

@@ -110,3 +110,44 @@ export function NoCreditsModal() {
     </div>
   );
 }
+
+// La prova fatta sulla landing (foto arredata e video): dopo registrazione e onboarding si scarica da qui.
+// Resta nel browser (localStorage) finche' l'agente non chiude la finestra.
+export function DemoDownload() {
+  // letto una volta al montaggio (solo client: la piattaforma non si renderizza sul server)
+  const [demo, setDemo] = useState<{ photo?: string | null; video?: string | null } | null>(() => {
+    try { const d = JSON.parse(localStorage.getItem('agenteimmo:demo') ?? 'null'); return d?.photo || d?.video ? d : null; } catch { return null; }
+  });
+  const [busy, setBusy] = useState<string | null>(null);
+  if (!demo) return null;
+  const close = () => { localStorage.removeItem('agenteimmo:demo'); setDemo(null); };
+  const save = async (url: string, name: string) => {
+    setBusy(name);
+    try {
+      const blob = await (await fetch(url)).blob();
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob); a.download = name; a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+    } catch { window.open(url, '_blank'); } // ponytail: se il download diretto non va, si apre il file
+    setBusy(null);
+  };
+  return (
+    <div className="blur-in fixed inset-0 z-[250] flex items-center justify-center bg-black/40 p-6 backdrop-blur-sm" onClick={close}>
+      <div onClick={e => e.stopPropagation()} className="relative w-full max-w-lg rounded-[32px] bg-white p-7 text-center shadow-2xl">
+        <button type="button" onClick={close} aria-label="Chiudi" className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full text-muted hover:bg-canvas"><X size={16} /></button>
+        <h2 className="font-display text-2xl font-extrabold tracking-tight">La tua prova è pronta</h2>
+        <p className="mt-2 text-sm text-muted">Ecco quello che hai creato sulla nostra pagina. Scaricalo e usalo per il tuo annuncio.</p>
+        <div className={`mt-5 grid gap-2 ${demo.photo && demo.video ? 'grid-cols-2' : ''}`}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          {demo.photo && <img src={demo.photo} alt="Foto arredata" className="aspect-[4/3] w-full rounded-[20px] object-cover" />}
+          {demo.video && <video src={demo.video} autoPlay muted loop playsInline className="aspect-[4/3] w-full rounded-[20px] bg-canvas object-cover" />}
+        </div>
+        <div className="mt-5 flex flex-wrap justify-center gap-2">
+          {demo.photo && <button type="button" disabled={!!busy} onClick={() => save(demo.photo!, 'agenteimmo-foto.jpg')} className="inline-flex h-11 items-center gap-2 rounded-full bg-ink px-5 text-sm font-semibold text-white disabled:opacity-50">{busy === 'agenteimmo-foto.jpg' && <Loader2 size={15} className="animate-spin" />}Scarica la foto</button>}
+          {demo.video && <button type="button" disabled={!!busy} onClick={() => save(demo.video!, 'agenteimmo-video.mp4')} className="inline-flex h-11 items-center gap-2 rounded-full bg-ink px-5 text-sm font-semibold text-white disabled:opacity-50">{busy === 'agenteimmo-video.mp4' && <Loader2 size={15} className="animate-spin" />}Scarica il video</button>}
+        </div>
+        <p className="mt-5 text-sm text-muted">Per arredare le tue case, fare video e pubblicare il sito <a href="#/piano" onClick={close} className="font-medium text-ink underline underline-offset-4">scegli un piano</a>.</p>
+      </div>
+    </div>
+  );
+}

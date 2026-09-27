@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getCredits } from '@/lib/credits'
 import { isPublicHttpsUrl } from '@/lib/safeUrl'
 import { generateJson } from '@/lib/ai'
 import { createClient } from '@supabase/supabase-js'
@@ -97,6 +98,8 @@ export async function POST(req: NextRequest) {
   if (!token) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   const { data } = await admin.auth.getUser(token)
   if (!data.user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
+  // senza crediti niente AI (anche se questa funzione non ne scala): si apre la scelta del piano
+  if ((await getCredits(data.user.id)).balance <= 0) return NextResponse.json({ error: 'no_credits' }, { status: 402 })
 
   let listing: Listing
   try { ({ listing } = await req.json()) } catch { return NextResponse.json({ error: 'bad_request' }, { status: 400 }) }

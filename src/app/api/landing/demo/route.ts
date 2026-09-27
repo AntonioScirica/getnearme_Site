@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createHash } from 'crypto'
+import { createHash, randomBytes } from 'crypto'
+import { uploadJpeg } from '@/lib/r2'
 import sharp from 'sharp'
 import { createClient } from '@supabase/supabase-js'
 import { guidedEdit } from '@/lib/guidedEdit'
@@ -53,6 +54,9 @@ export async function POST(req: NextRequest) {
   const staged = nb ?? (await guidedEdit({ userId: '', input: { image_base64: img }, task: 'furnish', room: 'the room in the photo (recognize its type)', style: look, seed: Math.floor(Math.random() * 1_000_000) })).image
   if (!staged) { await giveBack(); return NextResponse.json({ error: 'failed', left: PER_IP - used }, { status: 502 }) }
   const { width = 1024, height = 1024 } = await sharp(src).metadata()
-  const out = await sharp(await finish(Buffer.from(staged, 'base64'))).resize(Math.round(width * Math.min(1, 1024 / Math.max(width, height))), Math.round(height * Math.min(1, 1024 / Math.max(width, height))), { fit: 'fill' }).jpeg({ quality: 82 }).toBuffer()
-  return NextResponse.json({ image: `data:image/jpeg;base64,${out.toString('base64')}`, left: free ? 99 : PER_IP - used - 1 })
+  const done = await finish(Buffer.from(staged, 'base64'))
+  // foto intera su R2 (chiave casuale): dopo la registrazione la piattaforma la fa scaricare (DemoDownload)
+  const url = await uploadJpeg(await sharp(done).jpeg({ quality: 92 }).toBuffer(), `landing/${Date.now()}-${randomBytes(6).toString('hex')}.jpg`).catch(() => null)
+  const out = await sharp(done).resize(Math.round(width * Math.min(1, 1024 / Math.max(width, height))), Math.round(height * Math.min(1, 1024 / Math.max(width, height))), { fit: 'fill' }).jpeg({ quality: 82 }).toBuffer()
+  return NextResponse.json({ image: `data:image/jpeg;base64,${out.toString('base64')}`, url, left: free ? 99 : PER_IP - used - 1 })
 }
