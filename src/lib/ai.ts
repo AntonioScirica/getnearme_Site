@@ -31,14 +31,20 @@ export async function generateJson<T>(args: Args): Promise<Result<T>> {
   return r
 }
 
-const CLAUDE_USD_PER_MTOK = { input: 5, output: 25 } // claude-opus-5
+// prezzi per milione di token (listino Anthropic, verificato il 27/09/2026); modello non in tabella = Opus 5
+const CLAUDE_USD_PER_MTOK: Record<string, { input: number; output: number }> = {
+  'claude-opus-5-5': { input: 4, output: 20 },
+  'claude-opus-5': { input: 5, output: 25 },
+  'claude-sonnet-5': { input: 2, output: 10 },
+  'claude-haiku-4-5-20251001': { input: 1, output: 5 },
+}
 let admin: ReturnType<typeof createClient> | null = null
 
 export async function logUsage(u: Args['usage'], runpod: boolean, ms: number, tk: Tokens, ok: boolean, model?: string) {
   const gpuPerHour = Number(process.env.AI_GPU_USD_PER_HOUR) || 1.22
   const cost = runpod
     ? (ms / 3_600_000) * gpuPerHour
-    : ((tk.input ?? 0) * CLAUDE_USD_PER_MTOK.input + (tk.output ?? 0) * CLAUDE_USD_PER_MTOK.output) / 1e6
+    : (p => ((tk.input ?? 0) * p.input + (tk.output ?? 0) * p.output) / 1e6)(CLAUDE_USD_PER_MTOK[model ?? ''] ?? CLAUDE_USD_PER_MTOK['claude-opus-5'])
   try {
     admin ??= createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
     await admin.from('ai_usage').insert({
