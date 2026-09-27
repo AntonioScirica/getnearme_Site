@@ -189,13 +189,11 @@ function SiteIncluded() {
 }
 
 // Quanto costa oggi farlo senza di noi (stime indicative di mercato, come nella vecchia landing GetNearMe)
-// e il conto che conta: un incarico in piu' ripaga anni di abbonamento.
 const WITHOUT: [typeof Globe, string, string, string][] = [
   [Wand2, 'Home staging', '~1.500 €', 'home stager, circa 4 giorni per casa'],
   [Clapperboard, 'Video della casa', '~250 €', 'videomaker, mezza giornata'],
   [Globe, 'Sito con i tuoi immobili', '~1.500 €', 'web agency, 2-4 settimane'],
   [Sparkles, 'Foto sistemate e più luminose', '~150 €', 'fotografo o fotoritocco, per casa'],
-  [FileText, 'Report PDF da lasciare al cliente', '~40 €', 'grafico, circa 45 minuti'],
 ];
 function Compare() {
   return (
@@ -218,13 +216,9 @@ function Compare() {
         ))}
         <div className="grid grid-cols-[1.4fr_1fr_auto] items-center gap-4 border-t border-line bg-canvas px-6 py-5">
           <span className="font-display text-lg font-extrabold">Totale</span>
-          <span className="font-display text-xl font-extrabold text-rose-600 line-through decoration-rose-300">~3.440 €</span>
+          <span className="font-display text-xl font-extrabold text-rose-600 line-through decoration-rose-300">~3.400 €</span>
           <span className="text-right font-display text-xl font-extrabold text-emerald-600">da {PRICING.starter} €/mese</span>
         </div>
-      </Reveal>
-      <Reveal delay={200} className="mt-6 rounded-[28px] bg-ink p-7 text-white md:flex md:items-center md:gap-8">
-        <div className="font-display text-5xl font-extrabold tracking-tight md:shrink-0">+1</div>
-        <p className="mt-3 text-lg leading-relaxed text-white/80 md:mt-0"><span className="font-semibold text-white">Basta un incarico in più per ripagarlo per anni.</span> Su una casa da 200.000 € con provvigione al 3%, un incarico vale 6.000 €: più di 8 anni di piano Pro.</p>
       </Reveal>
       <p className="mt-4 text-center text-xs text-muted">Costi indicativi di mercato per una singola casa; il sito è una spesa una tantum più la manutenzione.</p>
     </section>
