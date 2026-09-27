@@ -425,8 +425,9 @@ export default function AgenteImmoLanding() {
               <Tilt className="overflow-hidden rounded-[24px] bg-white p-2 shadow-[0_30px_80px_-30px_rgba(0,0,0,.3)] ring-1 ring-black/5">
                 <video ref={vid} src={videoSeen ? VIDEO : undefined} poster="https://pub-a668674eaa484e8e8f2f10c264392bfc.r2.dev/spike-video/soggiorno.jpg" muted loop playsInline preload="none" className="aspect-video w-full rounded-2xl bg-canvas object-cover" />
               </Tilt>
-              <div className="absolute -bottom-8 -right-4 w-[46%] rotate-[4deg] overflow-hidden rounded-[20px] bg-white p-1.5 shadow-[0_24px_60px_-24px_rgba(0,0,0,.4)] ring-1 ring-black/5 md:-right-10">
-                <video ref={vid2} src={videoSeen ? VIDEO2 : undefined} poster="https://pub-a668674eaa484e8e8f2f10c264392bfc.r2.dev/spike-video/cucina.jpg" muted loop playsInline preload="none" className="aspect-video w-full rounded-[14px] bg-canvas object-cover" />
+              {/* verticale, come un reel: stesso video tagliato al centro */}
+              <div className="absolute -bottom-12 -right-4 w-[30%] rotate-[4deg] overflow-hidden rounded-[24px] bg-white p-1.5 shadow-[0_24px_60px_-24px_rgba(0,0,0,.4)] ring-1 ring-black/5 md:-right-10">
+                <video ref={vid2} src={videoSeen ? VIDEO2 : undefined} poster="https://pub-a668674eaa484e8e8f2f10c264392bfc.r2.dev/spike-video/cucina.jpg" muted loop playsInline preload="none" className="aspect-[9/16] w-full rounded-[18px] bg-canvas object-cover" />
               </div>
             </div>
           </Reveal>
