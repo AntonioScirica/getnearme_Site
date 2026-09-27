@@ -218,8 +218,9 @@ function Compare() {
 // template del video nella prova: i primi due gratis, gli altri solo con un piano
 const VIDEO_TEMPLATES = [['popup', 'Popup', 'Pop-up', Sparkles], ['gravity', 'Dall\'alto', 'From above', ArrowDown], ['particles', 'Particelle', 'Particles', Wand2], ['stopmotion', 'Stop-motion', 'Stop-motion', Clapperboard], ['cantiere', 'Cantiere', 'Construction', Hammer], ['daynight', 'Giorno e notte', 'Day to night', Moon]] as const;
 const DEMO_STYLES = [['modern', 'Moderno', 'Modern'], ['nordic', 'Nordico', 'Nordic'], ['empty', 'Svuota', 'Empty it']] as const;
-// ?simula=1: prova senza AI e senza costi (il server la accetta solo dagli IP senza limiti e in sviluppo)
-const simulate = () => new URLSearchParams(location.search).has('simula');
+// ?simula=1: prova senza AI e senza costi (il server la accetta solo dagli IP senza limiti e in sviluppo).
+// In sviluppo e' sempre attiva; ?vero=1 per la prova vera.
+const simulate = () => { const q = new URLSearchParams(location.search); return q.has('simula') || (process.env.NODE_ENV === 'development' && !q.has('vero')); };
 
 function TryIt() {
   const L = useL();
@@ -349,7 +350,7 @@ function TryIt() {
                 <button key={k} type="button" onClick={() => { setStyle(k); setText(''); }} className={`h-9 rounded-full px-4 text-sm font-semibold ease-smooth transition-colors ${style === k && !text ? 'bg-ink text-white' : 'bg-canvas text-muted hover:text-ink'}`}>{L(l, e)}</button>
               ))}
               {/* ci sono altri stili (nella piattaforma): la pillola non fa nulla */}
-              <span aria-hidden className="flex h-9 w-9 items-center justify-center gap-0.5 rounded-full bg-canvas">{[0, 1, 2].map(i => <span key={i} className="h-1 w-1 rounded-full bg-muted" />)}</span>
+              <span aria-hidden className="flex h-9 w-9 items-center justify-center gap-0.5 rounded-full bg-canvas">{[0, 1, 2].map(i => <span key={i} className="h-[3px] w-[3px] rounded-full bg-muted" />)}</span>
               <span className="mt-1 w-full text-center text-sm text-muted sm:ml-auto sm:mt-0 sm:w-auto sm:text-left">{video || emptied ? L('Prova finita per oggi', "Free try done for today") : after ? L('Ti resta 1 video gratis', "1 free video left") : L('Prova gratis: 1 foto e 1 video', "Free: 1 photo and 1 video")}</span>
             </div>
           </div>
