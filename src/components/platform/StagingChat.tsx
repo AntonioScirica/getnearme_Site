@@ -199,6 +199,8 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
     scrollAnim.current = requestAnimationFrame(step);
   }, []);
   const busy = msgs.some(m => m.role === 'ai' && m.busy);
+  // foto reale caricata per ultima (la stanza vera): va con ogni richiesta, cosi' dopo "Svuota" si sa ancora che era una cucina
+  const sourcePhoto = [...msgs].reverse().find((m): m is Extract<Msg, { role: 'user' }> => m.role === 'user' && !!m.image)?.image ?? null;
 
   // GPU: si accende appena entri nella chat e resta accesa finche' la usi (segnale ogni 50 s, spegnimento
   // a 60 s). Dopo 5 minuti senza scrivere, caricare o generare non la teniamo piu' accesa; uscendo dalla
@@ -272,6 +274,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
     setText(''); setPicked(null); clearZone(); setSelecting(false);
     const req: EditRequest = {
       ...(project ? { projectId: project } : {}),
+      ...(sourcePhoto && sourcePhoto !== before ? { reference: sourcePhoto } : {}),
       ...(kind ? { room: seenLabel(kind) } : {}),
       ...(before.startsWith('data:') ? { imageBase64: before } : { imageUrl: before }),
       ...(scene === 'planimetria'
@@ -299,7 +302,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   const stylePreviews = (m: VideoMsg, label: string, req: { style?: string; prompt?: string }) => {
     touch();
     patchV(m.id, { step: 'previews', picks: [...m.picks, { label, icon: 'style' }], previews: [null, null] });
-    const body = { ...(project ? { projectId: project } : {}), ...(kind ? { room: seenLabel(kind) } : {}), ...(m.photo.startsWith('data:') ? { imageBase64: m.photo } : { imageUrl: m.photo }), scene: 'interno', ...req, variant: -1, preview: true };
+    const body = { ...(project ? { projectId: project } : {}), ...(kind ? { room: seenLabel(kind) } : {}), ...(m.photo.startsWith('data:') ? { imageBase64: m.photo } : { imageUrl: m.photo }), scene: 'interno', ...req, variant: -1, preview: true, ...(sourcePhoto && sourcePhoto !== m.photo ? { reference: sourcePhoto } : {}) };
     [0, 1].forEach(k => {
       authFetch('/api/platform/photo-edit', { method: 'POST', body: JSON.stringify(body) }).then(r => (r.ok ? r.json() : {})).catch(() => ({}))
         .then((d: { url?: string }) => patchV(m.id, x => ({ previews: x.previews?.map((p, j) => (j === k ? d.url ?? 'err' : p)) })));

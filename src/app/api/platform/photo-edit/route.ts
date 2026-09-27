@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
 
   // Foto: URL (annunci, R2) oppure caricata dal computer (imageBase64, data URL gia' ridimensionata).
   // Modifica: testo libero e/o i preset di home staging (stile, vista, scena, planimetria).
-  let body: { imageUrl?: string; imageBase64?: string; prompt?: string; style?: string; angle?: string; scene?: SceneType; planimetria?: boolean; seed?: number; region?: { x: number; y: number; w: number; h: number; poly?: { x: number; y: number }[] }; projectId?: string; room?: string; variant?: number; preview?: boolean; points?: { x: number; y: number }[] }
+  let body: { imageUrl?: string; imageBase64?: string; prompt?: string; style?: string; angle?: string; scene?: SceneType; planimetria?: boolean; seed?: number; region?: { x: number; y: number; w: number; h: number; poly?: { x: number; y: number }[] }; projectId?: string; room?: string; variant?: number; preview?: boolean; reference?: string; points?: { x: number; y: number }[] }
   try { body = await req.json() } catch { return NextResponse.json({ error: 'bad_request' }, { status: 400 }) }
   const imageUrl = typeof body.imageUrl === 'string' ? body.imageUrl : ''
   const imageBase64 = typeof body.imageBase64 === 'string' && /^data:image\/(jpeg|png|webp);base64,/.test(body.imageBase64) && body.imageBase64.length < 8_000_000 ? body.imageBase64 : ''
@@ -85,7 +85,8 @@ export async function POST(req: NextRequest) {
     const guided = scene === 'interno' && !region && !points.length && !labels.length && !body.angle && !body.planimetria && (furnishReq || body.style === 'empty' || !!custom)
     if (guided) {
       const task = body.style === 'empty' ? 'empty' : furnishReq ? 'furnish' : 'edit'
-      const g = await guidedEdit({ userId, input, task, room: roomLabel(roomK), style: task === 'edit' ? custom : (body.style && STYLE_LOOK[body.style] ? STYLE_LOOK[body.style] : `as requested by the agent (in Italian): "${custom}"`) + vary, seed })
+      const reference = typeof body.reference === 'string' && ((/^data:image\/(jpeg|png|webp);base64,/.test(body.reference) && body.reference.length < 8_000_000) || allowedUrl(body.reference)) ? body.reference : undefined
+      const g = await guidedEdit({ userId, input, reference, task, room: roomLabel(roomK), style: task === 'edit' ? custom : (body.style && STYLE_LOOK[body.style] ? STYLE_LOOK[body.style] : `as requested by the agent (in Italian): "${custom}"`) + vary, seed })
       used = g.prompt || prompt
       job = g.image ? { status: 'COMPLETED', output: { image_base64: g.image } } : await runJob({ ...input, prompt, ...translation, seed, steps: 12 }) // senza piano: vecchio passaggio unico
     } else {

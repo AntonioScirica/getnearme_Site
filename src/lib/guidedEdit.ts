@@ -10,11 +10,13 @@ import { editPlanPrompt, leftoverPrompt, removePrompt, removeInBoxPrompt, addFur
 //   2. Qwen toglie; Claude (Sonnet) controlla cosa e' rimasto e, se serve, secondo passaggio con la lista corta
 //   3. (arredo) Qwen rinnova i fissi (es. ante della cucina) e aggiunge i pezzi nella stanza vuota
 // Senza piano (il modello non risponde) torna image vuota: chi chiama usa il vecchio passaggio unico.
-export async function guidedEdit(o: { userId: string; input: { image_base64: string } | { image_url: string }; task: 'empty' | 'furnish' | 'edit'; room: string; style: string; seed: number; planModel?: string }): Promise<{ image?: string; prompt?: string; plan?: EditPlan }> {
+export async function guidedEdit(o: { userId: string; input: { image_base64: string } | { image_url: string }; reference?: string; task: 'empty' | 'furnish' | 'edit'; room: string; style: string; seed: number; planModel?: string }): Promise<{ image?: string; prompt?: string; plan?: EditPlan }> {
   const orig = 'image_base64' in o.input
     ? o.input.image_base64.split(',').pop() ?? ''
     : Buffer.from(await (await fetch(o.input.image_url, { signal: AbortSignal.timeout(20_000) })).arrayBuffer()).toString('base64')
-  const plan = parsePlan(await askJson(o.userId, [orig], editPlanPrompt(o.room, o.task, o.style), o.planModel))
+  // foto reale di partenza (se questa e' gia' un risultato, es. dopo "Svuota"): il piano sa che stanza era e cosa c'era di fisso
+  const ref = o.reference ? await toB64(o.reference) : null
+  const plan = parsePlan(await askJson(o.userId, ref ? [ref, orig] : [orig], (ref ? REFERENCE_NOTE : '') + editPlanPrompt(o.room, o.task, o.style), o.planModel))
   // il modello a volte mette tra le cose da togliere la cucina, il forno o le pareti (27/09: cucina sostituita da un'isola):
   // i fissi non si tolgono mai, salvo "gli oggetti sopra" (quelli si' che vanno via); cambiarli e' compito di restyle
   // si guarda solo l'oggetto (prima di "on/in/against/near..."), non la posizione: "il divano sul lato sinistro del pavimento" va tolto
@@ -64,6 +66,11 @@ export async function guidedEdit(o: { userId: string; input: { image_base64: str
 
 // controlli semplici (cosa e' rimasto, stanza uguale?): modello veloce; il piano resta a Opus
 const FAST = 'claude-haiku-4-5-20251001'
+
+const REFERENCE_NOTE = `Image 1 is the ORIGINAL photo of this room, as it really is. Image 2 is the current photo, already edited before (for example emptied): plan the edit on image 2, but it is the same room with the same purpose. If image 1 has fixed elements that image 2 lost (a fitted kitchen, bathroom fixtures, a TV wall unit), and the task is to furnish or restage, add them back in the same place in the style. Room type is decided by image 1.\n\n`
+async function toB64(src: string): Promise<string> {
+  return src.startsWith('data:') ? src.split(',').pop() ?? '' : Buffer.from(await (await fetch(src, { signal: AbortSignal.timeout(20_000) })).arrayBuffer()).toString('base64')
+}
 
 // Fissi che non si tolgono mai (solo gli oggetti sopra): vedi il filtro in guidedEdit
 const FIXED = /\b(kitchen|cabinets?|cupboards?|worktop|countertop|counter|backsplash|splashback|stove|hob|oven|hood|sink|tap|island|peninsula|appliances?|fridge|refrigerator|dishwasher|walls?|half[- ]wall|pillar|ceiling|windows?|doors?|radiators?|wardrobes?|built[- ]in|floor|tiles|curtains?|shelves|toilet|wc|bidet|wash ?basin|basin|vanity|shower|bath ?tub|sanitary)\b/i

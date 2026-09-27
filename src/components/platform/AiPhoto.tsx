@@ -23,7 +23,7 @@ const MSGS = ['Guardo la foto', 'Applico la modifica', 'Sistemo luce e dettagli'
 const wait = (ms: number) => new Promise(r => setTimeout(r, ms));
 
 export type Region = { x: number; y: number; w: number; h: number; poly?: { x: number; y: number }[] };
-export type EditRequest = { imageUrl?: string; imageBase64?: string; prompt?: string; style?: string; angle?: string; scene?: string; planimetria?: boolean; region?: Region; points?: { x: number; y: number }[]; projectId?: string; room?: string; variant?: number };
+export type EditRequest = { imageUrl?: string; imageBase64?: string; prompt?: string; style?: string; angle?: string; scene?: string; planimetria?: boolean; region?: Region; points?: { x: number; y: number }[]; projectId?: string; room?: string; variant?: number; reference?: string };
 export type Reveal = 'burst' | 'line' | 'slider' | null;
 
 // GPU accesa finche' il componente che la usa e' a schermo (segnale ogni 50 s, spegnimento a 60 s).
