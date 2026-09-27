@@ -349,7 +349,7 @@ function TryIt() {
                 <button key={k} type="button" onClick={() => { setStyle(k); setText(''); }} className={`h-9 rounded-full px-4 text-sm font-semibold ease-smooth transition-colors ${style === k && !text ? 'bg-ink text-white' : 'bg-canvas text-muted hover:text-ink'}`}>{L(l, e)}</button>
               ))}
               {/* ci sono altri stili (nella piattaforma): la pillola non fa nulla */}
-              <span aria-hidden className="flex h-9 items-center gap-1 rounded-full bg-canvas px-4">{[0, 1, 2].map(i => <span key={i} className="h-1 w-1 rounded-full bg-muted" />)}</span>
+              <span aria-hidden className="flex h-9 w-9 items-center justify-center gap-0.5 rounded-full bg-canvas">{[0, 1, 2].map(i => <span key={i} className="h-1 w-1 rounded-full bg-muted" />)}</span>
               <span className="mt-1 w-full text-center text-sm text-muted sm:ml-auto sm:mt-0 sm:w-auto sm:text-left">{video || emptied ? L('Prova finita per oggi', "Free try done for today") : after ? L('Ti resta 1 video gratis', "1 free video left") : L('Prova gratis: 1 foto e 1 video', "Free: 1 photo and 1 video")}</span>
             </div>
           </div>
