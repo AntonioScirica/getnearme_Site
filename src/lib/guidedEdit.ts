@@ -10,12 +10,12 @@ import { editPlanPrompt, leftoverPrompt, removePrompt, addFurniturePrompt, type 
 //   2. Qwen toglie; Claude controlla cosa e' rimasto e, se serve, secondo passaggio con la lista corta
 //   3. (arredo) Qwen rinnova i fissi (es. ante della cucina) e aggiunge i pezzi nella stanza vuota
 // Senza piano (Claude non risponde) torna image vuota: chi chiama usa il vecchio passaggio unico.
-export async function guidedEdit(o: { userId: string; input: { image_base64: string } | { image_url: string }; task: 'empty' | 'furnish'; room: string; style: string; seed: number }): Promise<{ image?: string; prompt?: string; plan?: EditPlan }> {
+export async function guidedEdit(o: { userId: string; input: { image_base64: string } | { image_url: string }; task: 'empty' | 'furnish' | 'edit'; room: string; style: string; seed: number }): Promise<{ image?: string; prompt?: string; plan?: EditPlan }> {
   const orig = 'image_base64' in o.input
     ? o.input.image_base64.split(',').pop() ?? ''
     : Buffer.from(await (await fetch(o.input.image_url, { signal: AbortSignal.timeout(20_000) })).arrayBuffer()).toString('base64')
   const plan = await ask(o.userId, [orig], editPlanPrompt(o.room, o.task, o.style))
-  if (!plan.remove.length && !plan.add.length) return {}
+  if (!plan.remove.length && !plan.add.length && !plan.restyle.length) return {}
   let cur = orig, prompt = ''
   if (plan.remove.length) {
     prompt = removePrompt(plan)
@@ -32,7 +32,7 @@ export async function guidedEdit(o: { userId: string; input: { image_base64: str
       cur = again.output.image_base64
     }
   }
-  if (o.task === 'furnish' && (plan.add.length || plan.restyle.length)) {
+  if (o.task !== 'empty' && (plan.add.length || plan.restyle.length)) {
     prompt = addFurniturePrompt(plan)
     const a = await runJob({ image_base64: `data:image/jpeg;base64,${cur}`, prompt, seed: o.seed + 1, steps: 12 }) // 28 passaggi: piu' dettaglio ma allarga l'inquadratura (27/09)
     if (!a.output?.image_base64) return {}

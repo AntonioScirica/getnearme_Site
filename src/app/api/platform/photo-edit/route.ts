@@ -34,7 +34,10 @@ export async function POST(req: NextRequest) {
   if ((!custom && !hasPreset) || (!imageBase64 && !allowedUrl(imageUrl))) return NextResponse.json({ error: 'bad_request' }, { status: 400 })
   // Altra versione: una combinazione di palette e materiali diversa (solo stili e richieste di arredo, non viste)
   // -1 = scegli tu una variante a caso
-  const variantN = typeof body.variant === 'number' ? (body.variant < 0 ? 1 + Math.floor(Math.random() * 100000) : body.variant) : 0
+  // ogni arredo e' una versione nuova (combinazione di materiali e colori a caso), anche dal chip dello stile o dal testo:
+  // prima solo "Altra versione" cambiava davvero, cliccando di nuovo lo stile veniva simile
+  const furnishReq = isFurnishing({ style: body.style, customPrompt: custom, angle: body.angle, planimetria: body.planimetria, scene: body.scene === 'esterno' || body.scene === 'giardino' ? body.scene : 'interno', restyle: isRestyle(custom) })
+  const variantN = typeof body.variant === 'number' && body.variant > 0 ? body.variant : body.variant === -1 || furnishReq ? 1 + Math.floor(Math.random() * 100000) : 0
   const vary = variantN > 0 && !body.angle ? ` ${variantText(body.style, variantN)}` : ''
   const roomK = roomKey(typeof body.room === 'string' ? body.room : '')
   const restyle = isRestyle(custom) // "balcone stile moderno": si arreda come uno stile, non "cambia solo quello che chiedo"
@@ -77,10 +80,12 @@ export async function POST(req: NextRequest) {
   let used = translation.prompt_template ?? prompt // prompt dell'ultimo passo, per il debug
   try {
     const input = imageBase64 ? { image_base64: imageBase64 } : { image_url: imageUrl }
-    const furnishing = isFurnishing({ style: body.style, customPrompt: custom, angle: body.angle, planimetria: body.planimetria, scene, restyle })
-    if ((furnishing || (body.style === 'empty' && scene === 'interno')) && !region && !points.length) {
-      // Svuota e arreda guidati da Claude (src/lib/guidedEdit.ts)
-      const g = await guidedEdit({ userId, input, task: furnishing ? 'furnish' : 'empty', room: roomLabel(roomK), style: (body.style && STYLE_LOOK[body.style] ? STYLE_LOOK[body.style] : `as requested by the agent (in Italian): "${custom}"`) + vary, seed })
+    // Guidati da Claude (src/lib/guidedEdit.ts): arredo, svuota e ogni richiesta scritta o chip sugli interni.
+    // Restano sul passaggio unico: luce (angle), zona o clic, pareti/pavimento/soffitto (maschera nel worker), planimetria, esterni.
+    const guided = scene === 'interno' && !region && !points.length && !labels.length && !body.angle && !body.planimetria && (furnishReq || body.style === 'empty' || !!custom)
+    if (guided) {
+      const task = body.style === 'empty' ? 'empty' : furnishReq ? 'furnish' : 'edit'
+      const g = await guidedEdit({ userId, input, task, room: roomLabel(roomK), style: task === 'edit' ? custom : (body.style && STYLE_LOOK[body.style] ? STYLE_LOOK[body.style] : `as requested by the agent (in Italian): "${custom}"`) + vary, seed })
       used = g.prompt || prompt
       job = g.image ? { status: 'COMPLETED', output: { image_base64: g.image } } : await runJob({ ...input, prompt, ...translation, seed, steps: 12 }) // senza piano: vecchio passaggio unico
     } else {
