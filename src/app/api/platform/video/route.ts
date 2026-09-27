@@ -7,6 +7,8 @@ import { tmpdir } from 'os'
 import { join } from 'path'
 import sharp from 'sharp'
 import { nanoBanana } from '@/lib/nanoBanana'
+import { canAfford, spendOnce } from '@/lib/credits'
+import { CREDIT_COST } from '@/lib/pricing'
 import Anthropic from '@anthropic-ai/sdk'
 import ffmpegPath from 'ffmpeg-static'
 import { runJob, allowedUrl } from '@/lib/runpodImage'
@@ -77,6 +79,8 @@ export async function POST(req: NextRequest) {
   const imageBase64 = typeof body.imageBase64 === 'string' && /^data:image\/(jpeg|png|webp);base64,/.test(body.imageBase64) && body.imageBase64.length < 8_000_000 ? body.imageBase64 : ''
   const anim: Anim = body.anim === 'gravity' ? 'gravity' : 'popup'
   if (!imageBase64 && !allowedUrl(imageUrl)) return NextResponse.json({ error: 'bad_request' }, { status: 400 })
+  // crediti: controllo all'avvio, si scalano solo a video consegnato (GET)
+  if (!(await canAfford(userId, 'video'))) return NextResponse.json({ error: 'no_credits', cost: CREDIT_COST.video }, { status: 402 })
   if (AI_MOCK) { await mockDelay(2000); return NextResponse.json({ job: 'mock' }) }
   if (!process.env.FAL_API_KEY || !process.env.AI_IMAGE_ENDPOINT_ID || !process.env.RUNPOD_API_KEY) return NextResponse.json({ error: 'not_configured' }, { status: 503 })
 
@@ -180,7 +184,8 @@ export async function GET(req: NextRequest) {
       + `[1:a]atrim=end=${total.toFixed(2)},afade=t=out:st=${(total - 1.2).toFixed(2)}:d=1.2,volume=0.8[a]`,
       '-map', '[v]', '-map', '[a]', '-c:v', 'libx264', '-crf', '18', '-preset', 'medium', '-c:a', 'aac', '-b:a', '128k', '-shortest', '-movflags', '+faststart', final])
     await uploadFile(await readFile(final), key, 'video/mp4')
-    return NextResponse.json({ url })
+    const credits = await spendOnce(userId, 'video', id)
+    return NextResponse.json({ url, credits })
   } catch (e) {
     console.error('video montaggio', e)
     return NextResponse.json({ error: 'ai_failed' }, { status: 502 })

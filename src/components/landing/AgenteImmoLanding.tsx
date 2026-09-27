@@ -293,7 +293,7 @@ function Pricing() {
           <Credits n={PRICING.starterCredits} />
           <SiteIncluded />
           <div className="min-h-8 flex-1" />
-          <Cta ghost href={APP} className="w-full justify-center">Scegli Starter</Cta>
+          <Cta ghost href={`${APP}#/piano`} className="w-full justify-center">Scegli Starter</Cta>
         </Reveal>
         <Reveal delay={160} className="relative flex flex-col rounded-[32px] bg-white p-8 ring-2 ring-ink shadow-[0_40px_100px_-40px_rgba(0,0,0,.35)]">
           <span className="absolute -top-3 left-8 rounded-full bg-ink px-3 py-1 text-xs font-semibold text-white">Consigliato</span>
@@ -310,7 +310,7 @@ function Pricing() {
           <Credits n={PRICING.credits} />
           <SiteIncluded />
           <div className="min-h-8 flex-1" />
-          <Cta href={APP} className="w-full justify-center">Scegli Pro</Cta>
+          <Cta href={`${APP}#/piano`} className="w-full justify-center">Scegli Pro</Cta>
         </Reveal>
       </div>
       <p className="mt-6 text-center text-sm text-muted">Prima di scegliere, <a href="#prova" className="font-medium text-ink underline underline-offset-4">provalo gratis sulla tua foto</a>, senza registrarti. Prezzi finali, senza IVA aggiunta.</p>

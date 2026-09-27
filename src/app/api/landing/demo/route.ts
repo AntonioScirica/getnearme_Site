@@ -16,7 +16,7 @@ export const maxDuration = 300
 // dell'IP), 3 prove al giorno per IP e un tetto globale giornaliero.
 // ponytail: IP condivisi (uffici, 4G) si dividono le 3 prove; tabella dedicata se serve un limite per dispositivo.
 const PER_IP = 3
-const PER_DAY = 300
+const PER_DAY = 100 // ~6 EUR/giorno al massimo con Nano Banana 2
 const STYLES = ['modern', 'nordic', 'industrial'] as const
 const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 

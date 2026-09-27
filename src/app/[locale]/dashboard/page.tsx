@@ -6,7 +6,6 @@ import dynamic from 'next/dynamic';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import DashboardApp from '@/components/dashboard/DashboardApp';
-import { isPlatformAdmin } from '@/lib/platformAdmins';
 
 // Nuova piattaforma (branch ui-rewrite): visibile solo agli admin (lib/platformAdmins)
 // finche' non si fa lo switch. Switch = rendere sempre <PlatformApp/> e cancellare
@@ -211,6 +210,7 @@ export default function DashboardPage() {
     );
   }
 
-  const showNewPlatform = isPlatformAdmin(userData.email) && new URLSearchParams(window.location.search).get('ui') !== 'old';
+  // Agente Immo e' la piattaforma per tutti (27/09/2026); la vecchia dashboard resta solo con ?ui=old
+  const showNewPlatform = new URLSearchParams(window.location.search).get('ui') !== 'old';
   return showNewPlatform ? <PlatformApp userData={userData} /> : <DashboardApp userData={userData} />;
 }

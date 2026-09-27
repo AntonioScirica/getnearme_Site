@@ -2,10 +2,14 @@ import { supabase } from '@/lib/supabase';
 
 export async function authFetch(path: string, init: RequestInit = {}) {
   const { data: { session } } = await supabase.auth.getSession();
-  return fetch(path, {
+  const res = await fetch(path, {
     ...init,
     headers: { 'Content-Type': 'application/json', ...init.headers, Authorization: `Bearer ${session?.access_token}` },
   });
+  // crediti: 402 = finiti (si apre la scelta del piano); dopo foto e video riusciti il contatore si aggiorna
+  if (res.status === 402) window.dispatchEvent(new Event('agenteimmo:no-credits'));
+  else if (res.ok && /\/api\/platform\/(photo-edit|video)/.test(path)) window.dispatchEvent(new Event('agenteimmo:credits'));
+  return res;
 }
 
 export const go = (path: string) => { window.location.hash = path; };

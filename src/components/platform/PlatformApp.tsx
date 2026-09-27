@@ -21,6 +21,7 @@ import ProgressiveBlur from '@/components/ProgressiveBlur';
 import { go, formatPrice, authFetch, CARD_SHADOW, warm } from './api';
 import ProfileForm, { type Profile } from './ProfileForm';
 import Onboarding from './Onboarding';
+import PlanView, { CreditsPill, NoCreditsModal } from './PlanView';
 import { tiltMove, tiltReset } from '@/components/ui/tilt';
 
 // Routing a hash (#/immobili, #/nuovo, #/immobile/<id>): back/forward del browser
@@ -76,6 +77,7 @@ export default function PlatformApp({ userData }: { userData: UserData }) {
 
   return (
     <div className="relative flex h-full flex-col font-body text-ink" style={DOTS}>
+      <NoCreditsModal />
       <header style={morph ? { viewTransitionName: 'ob-nav' } : undefined} className={`${route === '/immobili' ? 'absolute inset-x-0' : 'sticky'} top-0 z-30`}>
         <ProgressiveBlur />
         <div className="mx-auto flex h-20 max-w-6xl items-center px-6">
@@ -95,6 +97,7 @@ export default function PlatformApp({ userData }: { userData: UserData }) {
             })}
           </nav>
           <div className="ml-auto flex items-center gap-2.5 md:ml-0">
+            <CreditsPill />
             <a href="#/nuovo" className="flex h-10 items-center rounded-full bg-brand px-5 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand/90 active:scale-[0.98]">Metti in vetrina</a>
           </div>
           </>}
@@ -111,6 +114,8 @@ export default function PlatformApp({ userData }: { userData: UserData }) {
         <div key={route} className={`${morph ? '' : 'fade-up'} ${route === '/immobili' ? '' : 'mx-auto max-w-6xl px-6'} ${route === '/immobili' ? '' : route === '/staging' ? 'h-full' : route === '/' || route === '/migliora' ? '' : 'pb-16 pt-8'}`}>
           {route === '/profilo' ? (
             <ProfileView email={userData.email} profile={profile ?? null} onSaved={setProfile} admin={isPlatformAdmin(userData.email)} />
+          ) : route === '/piano' ? (
+            <PlanView ok={new URLSearchParams(query).get('ok') === '1'} />
           ) : route === '/costi' && isPlatformAdmin(userData.email) ? (
             <CostsView />
           ) : route === '/migliora' ? (

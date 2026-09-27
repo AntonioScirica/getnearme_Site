@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { buildStagingPrompt, roomKey, variantText, isRestyle, isFurnishing, roomLabel, STYLE_LOOK, type SceneType } from '@/lib/stagingPrompts'
 import { guidedEdit } from '@/lib/guidedEdit'
 import { nanoBanana, stagePrompt } from '@/lib/nanoBanana'
+import { canAfford, spend, type Action } from '@/lib/credits'
+import { CREDIT_COST } from '@/lib/pricing'
 import { brighten } from '@/lib/brighten'
 import { finish } from '@/lib/finish'
 import { createClient } from '@supabase/supabase-js'
@@ -86,6 +88,9 @@ export async function POST(req: NextRequest) {
   const seed = typeof body.seed === 'number' ? body.seed : Math.floor(Math.random() * 1_000_000)
 
   // Modalita' finta: nessuna GPU, torna la stessa foto.
+  // Crediti: si controlla prima di generare, si scalano solo a foto riuscita (src/lib/credits.ts)
+  const action: Action = body.angle === 'day' ? 'luminoso' : body.style === 'empty' ? 'svuota' : furnishReq ? 'arreda' : 'modifica'
+  if (!(await canAfford(userId, action))) return NextResponse.json({ error: 'no_credits', cost: CREDIT_COST[action] }, { status: 402 })
   if (AI_MOCK) { await mockDelay(2000); return NextResponse.json({ url: imageUrl || imageBase64, mock: true }) }
   if (!process.env.AI_IMAGE_ENDPOINT_ID || !process.env.RUNPOD_API_KEY) return NextResponse.json({ error: 'not_configured' }, { status: 503 })
 
@@ -131,6 +136,7 @@ export async function POST(req: NextRequest) {
   const ms = Date.now() - t0
   const b64 = job.output?.image_base64
   if (!gemini) await logUsage({ userId, kind: 'photo_edit' }, true, ms, {}, !!b64, 'qwen-image-2.1')
+  const creditsLeft = b64 ? await spend(userId, action, { preview: !!body.preview }) : null
   if (!b64) {
     console.error('photo-edit failed:', job.status, job.error || job.output?.error)
     return NextResponse.json({ error: job.status === 'IN_QUEUE' || job.status === 'IN_PROGRESS' ? 'timeout' : 'ai_failed' }, { status: 502 })
@@ -145,7 +151,7 @@ export async function POST(req: NextRequest) {
   // anteprime per il video (tre proposte tra cui scegliere): cartella a parte, non vanno in Galleria
   if (body.preview === true) {
     const url = await uploadJpeg(await shaped(), `previews/${userId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`)
-    return NextResponse.json({ url, seconds: job.output?.seconds })
+    return NextResponse.json({ url, seconds: job.output?.seconds, credits: creditsLeft })
   }
   const key = `edits/${userId}/${projectId ? `casa-${projectId}/` : ''}${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
   const url = await uploadJpeg(await shaped(), `${key}.jpg`)
@@ -161,7 +167,7 @@ export async function POST(req: NextRequest) {
   const from = imageUrl.startsWith(mine) ? imageUrl.slice(`${process.env.R2_PUBLIC_URL}/`.length) : undefined
   const meta = Buffer.from(JSON.stringify({ t: what.slice(0, 160), r: room, ...(from ? { f: from } : {}) })).toString('base64url')
   await uploadMarker(`${key}.meta.${meta}`).catch(e => console.error('media meta', e))
-  return NextResponse.json({ url, seconds: job.output?.seconds })
+  return NextResponse.json({ url, seconds: job.output?.seconds, credits: creditsLeft })
 }
 
 async function savePrima(imageBase64: string, imageUrl: string, key: string) {
