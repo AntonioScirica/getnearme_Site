@@ -56,7 +56,7 @@ type Msg =
   | { id: string; role: 'user'; text?: string; image?: string; seen?: string | null; region?: Region }
   | { id: string; role: 'ai'; before: string; out: string | null; busy: boolean; reveal: Reveal; err?: string; text: string; req?: EditRequest }
   // video in chat: UN messaggio che si trasforma a ogni scelta (template, arredo, due anteprime, video)
-  | { id: string; role: 'video'; step: 'template' | 'anim' | 'mode' | 'previews' | 'render'; photo: string; anim?: VideoAnim; picks: VideoPick[]; previews?: (string | null)[]; url?: string; err?: string };
+  | { id: string; role: 'video'; step: 'template' | 'anim' | 'mode' | 'previews' | 'render'; photo: string; anim?: VideoAnim; picks: VideoPick[]; previews?: (string | null)[]; url?: string; err?: string; job?: string };
 
 // Macro template video, ognuno con i suoi stili di animazione (card con anteprima in loop)
 type VideoAnim = 'popup' | 'gravity';
@@ -141,24 +141,41 @@ const AFTER = ['cuscini verdi sul divano', 'togli il quadro', 'pavimento in rove
 const planStyle = (t: string) => (/nordic|scandinav/i.test(t) ? 'nordic' : /lusso|luxury|elegan/i.test(t) ? 'industrial' : /boho/i.test(t) ? 'boho' : 'modern');
 
 
+// Conversazione salvata nella memoria della scheda (sessionStorage): se Chrome ricarica una scheda rimasta in background
+// (risparmio memoria) la chat torna com'era. Cambiando pagina della piattaforma si cancella (la chat riparte vuota, come prima).
+const SAVE_KEY = 'gnm-staging-chat';
+type Saved = { msgs: Msg[]; base: string | null; kind: string | null; scene: Scene; roomState: string | null; project: string | null; origin: string | null };
+function loadSaved(): Saved | null {
+  try {
+    const raw = sessionStorage.getItem(SAVE_KEY);
+    if (!raw) return null;
+    const d = JSON.parse(raw) as Saved;
+    // lavori interrotti dalla ricarica: la foto non si puo' riprendere (e' comunque nella Galleria), il video si' (job)
+    d.msgs = d.msgs.map(m => (m.role === 'ai' && m.busy ? { ...m, busy: false, err: 'La pagina si è ricaricata mentre lavorava: trovi il risultato nella Galleria.' }
+      : m.role === 'video' && m.previews?.some(p => !p) ? { ...m, previews: m.previews.map(p => p ?? 'err') } : m));
+    return d;
+  } catch { return null; }
+}
+
 export default function StagingChat({ onMany, initial }: { onMany: (files: FileList | File[]) => void; initial?: { photo?: string; project?: string } }) {
+  const [saved] = useState(loadSaved);
   const [library, setLibrary] = useState(false); // scelta foto: vetrina o computer
-  const [project, setProject] = useState<string | null>(null); // immobile della foto (se scelta dalla vetrina): la Galleria raggruppa per casa
-  const [origin, setOrigin] = useState<string | null>(null); // foto originale dell'immobile da cui si e' partiti (per il prima/dopo)
+  const [project, setProject] = useState<string | null>(saved?.project ?? null); // immobile della foto (se scelta dalla vetrina): la Galleria raggruppa per casa
+  const [origin, setOrigin] = useState<string | null>(saved?.origin ?? null); // foto originale dell'immobile da cui si e' partiti (per il prima/dopo)
   const [saveOpen, setSaveOpen] = useState<string | null>(null); // risultato con il pannello "Salva nell'immobile" aperto
   // com'e' la stanza nella foto di lavoro (vuota, disordinata, datata, arredata): cambia suggerimento e proposte
-  const [roomState, setRoomState] = useState<string | null>(null);
+  const [roomState, setRoomState] = useState<string | null>(saved?.roomState ?? null);
   const [otherFor, setOtherFor] = useState<string | null>(null); // messaggio in cui l'agente scrive a mano cos'e' la foto
   // chiusura di Modifica: 300 ms in cui selezione e campo sfumano mentre il pulsante torna Scarica e il divisore rientra
   const [zoneClosing, setZoneClosing] = useState(false);
-  const [msgs, setMsgs] = useState<Msg[]>([]);
-  const [base, setBase] = useState<string | null>(null); // immagine su cui lavora la prossima richiesta
+  const [msgs, setMsgs] = useState<Msg[]>(saved?.msgs ?? []);
+  const [base, setBase] = useState<string | null>(saved?.base ?? null); // immagine su cui lavora la prossima richiesta
   const [viewer, setViewer] = useState<{ src: string; before?: string } | null>(null); // foto a tutto schermo
   const downAt = useRef<{ x: number; y: number } | null>(null);
   const [text, setText] = useState('');
   const [picked, setPicked] = useState<Suggestion | null>(null);
-  const [scene, setScene] = useState<Scene>('interno');
-  const [kind, setKind] = useState<string | null>(null); // es. "room:cucina", "scene:giardino": decide i suggerimenti
+  const [scene, setScene] = useState<Scene>(saved?.scene ?? 'interno');
+  const [kind, setKind] = useState<string | null>(saved?.kind ?? null); // es. "room:cucina", "scene:giardino": decide i suggerimenti
   const [tick, setTick] = useState(0); // messaggi a rotazione durante la generazione
   const [drag, setDrag] = useState(false);
   const [faded, setFaded] = useState<Set<string>>(new Set()); // messaggi dopo un "Ricomincia da qui"
@@ -202,6 +219,11 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
     return () => clearInterval(t);
   }, [busy]);
 
+  useEffect(() => {
+    try { sessionStorage.setItem(SAVE_KEY, JSON.stringify({ msgs, base, kind, scene, roomState, project, origin })); } catch { /* troppo grande: si salva al prossimo cambio */ }
+  }, [msgs, base, kind, scene, roomState, project, origin]);
+  // uscita dalla chat (altra pagina della piattaforma): conversazione chiusa. Una ricarica della scheda non passa di qui.
+  useEffect(() => () => { try { sessionStorage.removeItem(SAVE_KEY); } catch { /* niente */ } }, []);
   const patch = (id: string, p: Partial<Extract<Msg, { role: 'ai' }>>) => setMsgs(ms => ms.map(m => (m.id === id && m.role === 'ai' ? { ...m, ...p } : m)));
 
   const upload = async (files: FileList | File[] | null, projectId?: string | null, sourceUrl?: string, early?: Promise<Response | null>) => {
@@ -291,15 +313,27 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
     const res = await authFetch('/api/platform/video', { method: 'POST', body: JSON.stringify({ ...(photo.startsWith('data:') ? { imageBase64: photo } : { imageUrl: photo }), anim: m.anim, ...(project ? { projectId: project } : {}) }) }).catch(() => null);
     const d = res ? await res.json().catch(() => ({})) : {};
     if (!d.job) { patchV(m.id, { err: d.error === 'timeout' ? 'La GPU si sta avviando, riprova tra un minuto.' : d.error === 'nothing_to_animate' ? 'Nella foto non ci sono mobili da animare.' : fail }); return; }
+    patchV(m.id, { job: d.job });
+    await pollVideo(m.id, d.job);
+  };
+  const pollVideo = async (id: string, job: string) => {
+    const fail = 'Video non riuscito, riprova.';
     for (let k = 0; k < 80; k++) {
       await wait(6000);
-      const r = await authFetch(`/api/platform/video?job=${encodeURIComponent(d.job)}`).catch(() => null);
+      const r = await authFetch(`/api/platform/video?job=${encodeURIComponent(job)}`).catch(() => null);
       const v = r ? await r.json().catch(() => ({})) : {};
-      if (v.url) { patchV(m.id, { url: v.url }); toBottom(); return; }
-      if (v.error) { patchV(m.id, { err: fail }); return; }
+      if (v.url) { patchV(id, { url: v.url }); toBottom(); return; }
+      if (v.error) { patchV(id, { err: fail }); return; }
     }
-    patchV(m.id, { err: fail });
+    patchV(id, { err: fail });
   };
+  // dopo una ricarica della scheda: i video che stavano lavorando riprendono il controllo
+  const resumed = useRef(false);
+  useEffect(() => {
+    if (resumed.current) return;
+    resumed.current = true;
+    for (const m of saved?.msgs ?? []) if (m.role === 'video' && m.job && !m.url && !m.err) void pollVideo(m.id, m.job);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const run = async (id: string, req: EditRequest, before: string) => {
     const res = await authFetch('/api/platform/photo-edit', { method: 'POST', body: JSON.stringify(req) }).catch(() => null);
     let d = res ? await res.json().catch(() => ({})) : {};
@@ -338,7 +372,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
     : done ? `Vuoi ritoccare qualcosa? Es. ${AFTER[(done - 1) % AFTER.length]}`
     : `Cosa vuoi cambiare? Es. ${(kind && FIRST[kind.replace(/^(room|scene):/, '')]) || 'togli il divano e metti un tavolo da pranzo'}`;
   // arrivo da un immobile (#/staging?photo=...&project=...): la foto entra subito in chat
-  const started = useRef(false);
+  const started = useRef(!!saved); // conversazione ripresa dopo una ricarica: la foto dell'indirizzo c'e' gia'
   useEffect(() => {
     if (started.current || !initial?.photo) return;
     started.current = true;
