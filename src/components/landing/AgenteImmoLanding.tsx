@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import AuthCta from '@/components/AuthCta';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { ArrowRight, Award, Check, ChevronLeft, ChevronRight, MessageCircle, Palette, Phone, ShieldCheck, Clapperboard, Clock, FileText, Globe, ImagePlus, Images, Loader2, MapPin, Sparkles, Upload, Users, Wallet, Wand2 } from 'lucide-react';
+import { ArrowRight, Award, Check, ChevronLeft, ChevronRight, MessageCircle, Clapperboard, Clock, FileText, Globe, ImagePlus, Images, Loader2, MapPin, Sparkles, Upload, Users, Wallet, Wand2 } from 'lucide-react';
 
 // Landing di Agente Immo per gli agenti: tre promesse (home staging AI, video, sito pronto) con lo stesso
 // linguaggio della piattaforma: bianco, puntini, card 28/16, pillole, un solo tempo (600ms, ease-smooth).
@@ -175,14 +175,14 @@ function Credits({ n }: { n: number }) {
 
 // il sito: stesso blocco dei crediti (titolo grande), sotto cosa c'e' dentro in due colonne.
 // Solo funzioni che esistono davvero nei siti degli agenti (niente traduzione finche' non c'e').
-const SITE_PERKS: [typeof Globe, string][] = [[FileText, 'Report PDF di ogni casa'], [Phone, 'Contatti a email e telefono'], [MessageCircle, 'Pulsante WhatsApp'], [MapPin, 'Pagine di zona su Google'], [Palette, 'Il tuo logo e i tuoi colori'], [ShieldCheck, 'Privacy e cookie a norma']];
+const SITE_PERKS: [typeof Globe, string][] = [[Sparkles, 'Ogni casa online da sola, con il prima e dopo'], [MessageCircle, 'Richieste su email, telefono e WhatsApp'], [FileText, 'Report PDF da scaricare per ogni casa'], [MapPin, 'Ti trovano su Google nella tua zona']];
 function SiteIncluded() {
   return (
     <div className="mt-3 rounded-[20px] bg-canvas p-5">
       <div className="flex items-center gap-2 font-display text-xl font-extrabold tracking-tight"><Globe size={16} className="text-brand" /> Il tuo sito incluso</div>
       <div className="mt-1 pl-6 text-[15px] text-muted">agenteimmo.me/<span className="text-ink">tuonome</span>, già fatto con i nostri modelli</div>
-      <ul className="mt-4 grid grid-cols-1 gap-x-4 gap-y-2.5 pl-6 text-sm sm:grid-cols-2">
-        {SITE_PERKS.map(([Icon, l]) => <li key={l} className="flex items-center gap-2"><Icon size={14} className="shrink-0 text-brand" />{l}</li>)}
+      <ul className="mt-4 space-y-2.5 pl-6 text-[15px]">
+        {SITE_PERKS.map(([Icon, l]) => <li key={l} className="flex items-center gap-2.5"><Icon size={15} className="shrink-0 text-brand" />{l}</li>)}
       </ul>
     </div>
   );
