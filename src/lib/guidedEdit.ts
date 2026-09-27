@@ -19,7 +19,8 @@ export async function guidedEdit(o: { userId: string; input: { image_base64: str
   // i fissi non si tolgono mai, salvo "gli oggetti sopra" (quelli si' che vanno via); cambiarli e' compito di restyle
   // si guarda solo l'oggetto (prima di "on/in/against/near..."), non la posizione: "il divano sul lato sinistro del pavimento" va tolto
   const head = (r: string) => r.split(/\b(?:on|in|at|against|near|next to|by|under|beside|along|behind|to the|from|of the room)\b/i)[0]
-  plan.remove = plan.remove.filter(r => !FIXED.test(head(r)) || ON_TOP.test(r))
+  // "Svuota" toglie anche la cucina (stanza nuda): li' si blocca solo l'architettura
+  plan.remove = plan.remove.filter(r => !(o.task === 'empty' ? ARCH : FIXED).test(head(r)) || ON_TOP.test(r))
   if (!plan.remove.length && !plan.add.length && !plan.restyle.length) return {}
   let cur = orig, prompt = ''
   if (plan.remove.length) {
@@ -48,6 +49,7 @@ export async function guidedEdit(o: { userId: string; input: { image_base64: str
 
 // Fissi che non si tolgono mai (solo gli oggetti sopra): vedi il filtro in guidedEdit
 const FIXED = /\b(kitchen|cabinets?|cupboards?|worktop|countertop|counter|backsplash|splashback|stove|hob|oven|hood|sink|tap|island|peninsula|appliances?|fridge|refrigerator|dishwasher|walls?|half[- ]wall|pillar|ceiling|windows?|doors?|radiators?|wardrobes?|built[- ]in|floor|tiles|curtains?|shelves)\b/i
+const ARCH = /\b(walls?|half[- ]wall|pillar|ceiling|windows?|doors?|radiators?|wardrobes?|floor|tiles|curtains?)\b/i
 const ON_TOP = /\b(items?|objects?|things|clutter|on (the|top)|above)\b/i
 
 // Claude guarda la foto (o originale + risultato) e risponde in JSON. Opus per il piano, Sonnet per il controllo.
