@@ -383,6 +383,8 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   }, [base, msgs, ratios]);
 
   // selezione zona: prende il posto del messaggio che contiene la foto di lavoro, cosi' la card si trasforma sul posto
+  // card del risultato stretta (foto verticale): i pulsanti diventano solo icone
+  const isNarrow = (src: string) => (ratios[src] ?? 1.5) < 1;
   const zoneOwner = selecting && base ? msgs.findLastIndex(m => (m.role === 'ai' && m.out === base) || (m.role === 'user' && m.image === base)) : -1;
   const cancelZone = () => {
     setZoneClosing(true);
@@ -582,23 +584,16 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                 {i === zoneOwner ? zonePicker(ratios[m.before] ?? 1.5) : <>
                 {m.err && <p className="blur-in px-2 pt-2 text-sm text-rose-600">{m.err}</p>}
                 {m.out && !m.busy && (
-                  <div className="blur-in flex min-h-12 items-center gap-3 px-2 pt-2 text-xs text-muted">
-                    {/* alta quanto il campo di Modifica (8 + 40): aprendo e chiudendo la card non cambia altezza */}
-                    <span className="min-w-0 flex-1 truncate">{m.text}</span>
+                  <div className={`blur-in flex min-h-12 items-center gap-3 px-2 pt-2 text-xs text-muted ${isNarrow(m.before) ? 'justify-center' : ''}`}>
+                    {/* alta quanto il campo di Modifica (8 + 40): aprendo e chiudendo la card non cambia altezza.
+                        Foto verticale (card stretta): solo icone con il nome al passaggio, senza la didascalia */}
+                    {!isNarrow(m.before) && <span className="min-w-0 flex-1 truncate">{m.text}</span>}
                     {/* a destra: Modifica (zona su questa foto) e Ricomincia da qui; "Si continua da qui" solo dopo esserci tornati */}
                     <div className="flex shrink-0 items-center gap-1">
-                      <button onClick={() => { if (base !== m.out) restartFrom(i, m.out!); setSelecting(true); }}
-                        className="flex h-8 items-center gap-1.5 rounded-full px-3 font-medium leading-none text-ink hover:bg-canvas"><SquareDashedMousePointer size={14} className="translate-y-px" /> Modifica</button>
-                      <button onClick={() => setSaveOpen(v => (v === m.id ? null : m.id))} aria-expanded={saveOpen === m.id}
-                        className={`flex h-8 items-center gap-1.5 rounded-full px-3 font-medium leading-none ${saveOpen === m.id ? 'bg-canvas text-ink' : 'text-ink hover:bg-canvas'}`}><Building2 size={14} className="translate-y-px" /> Salva nell’immobile</button>
-                      <Tooltip label="I mobili compaiono uno alla volta">
-                        <button onClick={() => askVideo(m.out!)} disabled={busy} className="flex h-8 items-center gap-1.5 rounded-full px-3 font-medium leading-none text-ink hover:bg-canvas disabled:opacity-40"><Clapperboard size={14} className="translate-y-px" /> Video</button>
-                      </Tooltip>
-                      {m.req && (
-                        <Tooltip label="Stesso stile, un'altra versione">
-                          <button onClick={() => variant(m)} disabled={busy} aria-label="Stesso stile, un'altra versione" className="flex h-8 items-center gap-1.5 rounded-full px-3 font-medium leading-none text-ink hover:bg-canvas disabled:opacity-40"><Shuffle size={14} className="translate-y-px" /> Altra versione</button>
-                        </Tooltip>
-                      )}
+                      <Act narrow={isNarrow(m.before)} icon={<SquareDashedMousePointer size={14} className="translate-y-px" />} label="Modifica" onClick={() => { if (base !== m.out) restartFrom(i, m.out!); setSelecting(true); }} />
+                      <Act narrow={isNarrow(m.before)} icon={<Building2 size={14} className="translate-y-px" />} label="Salva nell’immobile" active={saveOpen === m.id} onClick={() => setSaveOpen(v => (v === m.id ? null : m.id))} />
+                      <Act narrow={isNarrow(m.before)} icon={<Clapperboard size={14} className="translate-y-px" />} label="Video" tip="I mobili compaiono uno alla volta" disabled={busy} onClick={() => askVideo(m.out!)} />
+                      {m.req && <Act narrow={isNarrow(m.before)} icon={<Shuffle size={14} className="translate-y-px" />} label="Altra versione" tip="Stesso stile, un'altra versione" disabled={busy} onClick={() => variant(m)} />}
                       {base !== m.out && (
                         <>
                           <span className="mx-1 h-4 w-px bg-line" aria-hidden />
@@ -912,4 +907,13 @@ function StepSwap({ step, children }: { step: string; children: React.ReactNode 
   }, [leaving, step]);
   // stesso elemento (key = passo corrente): in uscita cambia solo la classe, cosi' sfuma invece di sparire
   return <div key={cur} className={leaving ? 'opacity-0 transition-opacity duration-200 ease-smooth' : 'blur-in'} style={leaving ? undefined : { animationDelay: '.05s' }}>{leaving ? old : children}</div>;
+}
+
+// Pulsante della card del risultato: con testo, oppure (card stretta, foto verticale) solo icona tonda con il nome in tooltip
+function Act({ icon, label, tip, narrow, active, disabled, onClick }: { icon: React.ReactNode; label: string; tip?: string; narrow: boolean; active?: boolean; disabled?: boolean; onClick: () => void }) {
+  const tone = active ? 'bg-canvas text-ink' : 'text-ink hover:bg-canvas';
+  const btn = narrow
+    ? <button onClick={onClick} disabled={disabled} aria-label={label} aria-pressed={active} className={`flex h-9 w-9 items-center justify-center rounded-full disabled:opacity-40 ${tone}`}>{icon}</button>
+    : <button onClick={onClick} disabled={disabled} aria-pressed={active} className={`flex h-8 items-center gap-1.5 rounded-full px-3 font-medium leading-none disabled:opacity-40 ${tone}`}>{icon} {label}</button>;
+  return narrow || tip ? <Tooltip label={narrow ? label : tip!}>{btn}</Tooltip> : btn;
 }
