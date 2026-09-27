@@ -433,7 +433,7 @@ export default function AgenteImmoLanding() {
         </div>
 
         <Reveal delay={900} className="mx-auto mt-10 flex max-w-3xl flex-wrap justify-center gap-x-8 gap-y-3 text-sm text-muted">
-          {['La prima foto ferma chi scorre', 'Il proprietario vede subito cosa farai per lui', `~3.400 € di professionisti inclusi, da ${PRICING.starter} € al mese`, 'Prova gratis, senza registrarti'].map(x => <span key={x} className="flex items-center gap-2"><Check size={14} className="text-brand" />{x}</span>)}
+          {['La prima foto ferma chi scorre', 'Il proprietario vede subito cosa farai per lui', 'Prova gratis, senza registrarti'].map(x => <span key={x} className="flex items-center gap-2"><Check size={14} className="text-brand" />{x}</span>)}
         </Reveal>
       </section>
 
