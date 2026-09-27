@@ -482,7 +482,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                         </div>
                         <input placeholder="Oppure scrivi lo stile, es. classico con legno scuro" maxLength={200}
                           onKeyDown={e => { const v = e.currentTarget.value.trim(); if (e.key === 'Enter' && v) stylePreviews(m, v, { prompt: `Arreda la stanza in stile ${v}` }); }}
-                          className="mt-3 h-10 w-full rounded-full bg-white px-4 text-[13px] outline-none ring-1 ring-inset ring-black/10 placeholder:text-muted/60 focus:ring-brand" />
+                          className="mt-3 h-12 w-full rounded-full bg-white px-5 text-sm outline-none ring-1 ring-inset ring-black/10 placeholder:text-muted/60 focus:ring-brand" />
                       </div>
                     )}
                     {m.step === 'previews' && (
