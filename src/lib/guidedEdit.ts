@@ -2,7 +2,7 @@ import sharp from 'sharp'
 import { runJob } from '@/lib/runpodImage'
 import Anthropic from '@anthropic-ai/sdk'
 import { logUsage } from '@/lib/ai'
-import { editPlanPrompt, leftoverPrompt, removePrompt, removeInBoxPrompt, zoneInBoxPrompt, sameRoomPrompt, addFurniturePrompt, type EditPlan, type Box, type Zone } from '@/lib/stagingPrompts'
+import { editPlanPrompt, leftoverPrompt, removePrompt, removeInBoxPrompt, zoneInBoxPrompt, sameRoomPrompt, surfacePrompt, addFurniturePrompt, type EditPlan, type Box, type Zone } from '@/lib/stagingPrompts'
 
 // Svuota, arreda e modifiche guidate da un piano del modello di visione. Qwen da solo non distingue fisso da mobile e inventa le cose nominate che non ci
 // sono; sostituire i mobili in un colpo gli faceva reinventare la stanza (27/09). Quindi:
@@ -22,7 +22,7 @@ export async function guidedEdit(o: { userId: string; input: { image_base64: str
   // "Svuota" toglie anche la cucina (stanza nuda): li' si blocca solo l'architettura
   // richiesta scritta ("togli la vasca"): si toglie cio' che chiede, niente filtro
   if (o.task !== 'edit') plan.remove = plan.remove.filter(r => !(o.task === 'empty' ? ARCH : FIXED).test(head(r)) || ON_TOP.test(head(r)))
-  if (!plan.remove.length && !plan.add.length && !plan.restyle.length) return {}
+  if (!plan.remove.length && !plan.add.length && !plan.restyle.length && !Object.values(plan.surfaces ?? {}).some(Boolean)) return {}
   let cur = orig, prompt = ''
   if (plan.remove.length) {
     prompt = removePrompt(plan)
@@ -35,11 +35,29 @@ export async function guidedEdit(o: { userId: string; input: { image_base64: str
       // prima i piu' grandi: con 4 per giro prendeva un cappellino e lasciava tavolo e sedia (27/09)
       const left = parseLeft(await askJson(o.userId, [orig, cur], leftoverPrompt(plan.remove))).sort((a, b) => b.box.w * b.box.h - a.box.w * a.box.h).slice(0, 4)
       if (!left.length) break
-      for (const [n, it] of left.entries()) {
+      // oggetti grandi (>10% della foto): passaggio su tutta la foto con la lista corta (nel riquadro il modello riempie
+      // con macchie sfocate: cucina e penisola, 27/09). Riquadro solo per gli oggetti piccoli.
+      const big = left.filter(it => it.box.w * it.box.h > 0.1), small = left.filter(it => it.box.w * it.box.h <= 0.1)
+      if (big.length) {
+        prompt = removePrompt({ remove: big.map(it => it.what), keep: plan.keep })
+        const r = await runJob({ image_base64: `data:image/jpeg;base64,${cur}`, prompt, seed: o.seed + 10 * (k + 1), steps: 12 })
+        if (r.output?.image_base64) cur = r.output.image_base64
+      }
+      for (const [n, it] of small.entries()) {
         prompt = removeInBoxPrompt(it.what)
-        const r = await runJob({ image_base64: `data:image/jpeg;base64,${cur}`, prompt, mark: it.box, seed: o.seed + 10 * (k + 1) + n, steps: 12 })
+        const r = await runJob({ image_base64: `data:image/jpeg;base64,${cur}`, prompt, mark: it.box, seed: o.seed + 10 * (k + 1) + n + 1, steps: 12 })
         if (r.output?.image_base64) cur = await blendBox(cur, r.output.image_base64, it.box)
       }
+    }
+  }
+  // ristrutturazione: pavimento, soffitto e pareti uno alla volta, ciascuno con la sua maschera (labels ADE20K nel worker)
+  if (o.task === 'furnish') {
+    for (const [key, label] of [['floor', 'floor'], ['walls', 'wall'], ['ceiling', 'ceiling']] as const) {
+      const desc = plan.surfaces?.[key]
+      if (!desc) continue
+      prompt = surfacePrompt(key, desc)
+      const r = await runJob({ image_base64: `data:image/jpeg;base64,${cur}`, prompt, labels: [label], seed: o.seed + 50, steps: 12 })
+      if (r.output?.image_base64) cur = r.output.image_base64
     }
   }
   if (o.task !== 'empty' && (plan.add.length || plan.restyle.length)) {
@@ -90,7 +108,11 @@ async function askJson(userId: string, imagesB64: string[], text: string, model 
   }
 }
 const list = (x: unknown) => (Array.isArray(x) ? x.filter((v): v is string => typeof v === 'string').slice(0, 12) : [])
-const parsePlan = (r: Record<string, unknown>): EditPlan => ({ remove: list(r.remove), keep: list(r.keep), restyle: zones(r.restyle), add: zones(r.add) })
+const str = (x: unknown) => (typeof x === 'string' ? x.trim().slice(0, 300) : '')
+const parsePlan = (r: Record<string, unknown>): EditPlan => {
+  const s = (r.surfaces ?? {}) as Record<string, unknown>
+  return { remove: list(r.remove), keep: list(r.keep), restyle: zones(r.restyle), add: zones(r.add), surfaces: { floor: str(s.floor), ceiling: str(s.ceiling), walls: str(s.walls) } }
+}
 // zone {what, box}; accetta anche stringhe (senza riquadro: si ripiega sul passaggio unico)
 function zones(x: unknown): Zone[] {
   if (!Array.isArray(x)) return []
