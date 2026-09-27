@@ -70,7 +70,9 @@ export async function guidedEdit(o: { userId: string; input: { image_base64: str
     // tiene finestre, porte, pareti e inquadratura meglio del solo testo e dei riquadri)
     const empty = cur
     prompt = addFurniturePrompt(plan)
-    const a = await runJob({ image_base64: `data:image/jpeg;base64,${empty}`, prompt, control: 'depth', seed: o.seed + 1, steps: 12 })
+    // la foto di stile va anche a Qwen (style_image nel worker): la vede davvero, non solo la descrizione di Claude
+    const styleIn = o.styleRef ? (o.styleRef.startsWith('data:') ? { style_image_base64: o.styleRef } : { style_image_url: o.styleRef }) : {}
+    const a = await runJob({ image_base64: `data:image/jpeg;base64,${empty}`, prompt, control: 'depth', ...styleIn, seed: o.seed + 1, steps: 12 })
     if (!a.output?.image_base64) return {}
     cur = a.output.image_base64
     lap('arredo_gpu')
@@ -80,7 +82,7 @@ export async function guidedEdit(o: { userId: string; input: { image_base64: str
     lap('controllo_haiku')
     if (chk.ok === false) {
       prompt = `${prompt} Important: ${typeof chk.why === 'string' ? chk.why.slice(0, 200) : 'place every piece exactly where described'}.`
-      const b = await runJob({ image_base64: `data:image/jpeg;base64,${empty}`, prompt, control: 'depth', seed: o.seed + 7, steps: 12 })
+      const b = await runJob({ image_base64: `data:image/jpeg;base64,${empty}`, prompt, control: 'depth', ...styleIn, seed: o.seed + 7, steps: 12 })
       if (b.output?.image_base64) cur = b.output.image_base64
       lap('riprova_gpu')
     }
@@ -93,7 +95,7 @@ const FAST = 'claude-haiku-4-5-20251001'
 
 const REFERENCE_NOTE = `Image 1 is the ORIGINAL photo of this room, as it really is. Image 2 is the current photo, already edited before (for example emptied): plan the edit on image 2, but it is the same room with the same purpose. If image 1 has fixed elements that image 2 lost (a fitted kitchen, bathroom fixtures, a TV wall unit), and the task is to furnish or restage, add them back in the same place in the style. Room type is decided by image 1.\n\n`
 // foto di stile scelta dall'agente: e' SEMPRE l'ultima immagine; da li' colori, materiali, tipi di mobili e atmosfera, non la pianta
-const STYLE_REF_NOTE = `The LAST image is a style reference chosen by the agent (it is not this room): take from it the colors, materials, finishes, furniture types and mood, and apply them to this room with a layout that fits this room. The style reference comes before any other style description.\n\n`
+const STYLE_REF_NOTE = `The LAST image is a style reference chosen by the agent (it is not this room). The image editor will also see it directly: plan which pieces go where in this room in that style, briefly.\n\n`
 async function toB64(src: string): Promise<string> {
   return src.startsWith('data:') ? src.split(',').pop() ?? '' : Buffer.from(await (await fetch(src, { signal: AbortSignal.timeout(20_000) })).arrayBuffer()).toString('base64')
 }
