@@ -82,7 +82,10 @@ async function askJson(userId: string, imagesB64: string[], text: string, model 
     const msg = await new Anthropic().messages.create({
       model, max_tokens: 4000,
       messages: [{ role: 'user', content: [...imgs.map(data => ({ type: 'image' as const, source: { type: 'base64' as const, media_type: 'image/jpeg' as const, data } })), { type: 'text', text }] }],
-    })
+      // Opus 5.5 ragiona di nascosto (~900 token di thinking a piano, pagati come uscita): con effort basso niente
+      // ragionamento, piano uguale (prova del 27/09), costo dimezzato
+      ...(model.startsWith('claude-opus') ? { output_config: { effort: 'low' } } : {}),
+    } as Anthropic.MessageCreateParamsNonStreaming) as Anthropic.Message
     await logUsage({ userId, kind: 'staging_plan' }, false, Date.now() - t0, { input: msg.usage.input_tokens, output: msg.usage.output_tokens }, true, model)
     const txt = msg.content.find(c => c.type === 'text')?.text ?? ''
     return JSON.parse(txt.slice(txt.indexOf('{'), txt.lastIndexOf('}') + 1))
