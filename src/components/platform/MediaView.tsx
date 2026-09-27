@@ -41,6 +41,7 @@ export default function MediaView() {
   const [q, setQ] = useState('');
   const [casa, setCasa] = useState('tutte');
   const [period, setPeriod] = useState<Period>('tutto');
+  const [tipo, setTipo] = useState<'tutto' | 'foto' | 'video'>('tutto');
   const [shown, setShown] = useState(PAGE);
   // selezione multipla per cancellare
   const [selecting, setSelecting] = useState(false);
@@ -83,15 +84,16 @@ export default function MediaView() {
     const since = days ? now - days * 86_400_000 : 0;
     return items.filter(m => {
       if (casa !== 'tutte' && (m.casa ?? 'nessuna') !== casa) return false;
+      if (tipo !== 'tutto' && !!m.video !== (tipo === 'video')) return false;
       if (m.at < since) return false;
       if (!words.length) return true;
       const p = m.casa ? projects.find(x => x.id === m.casa) : null;
       const hay = norm([m.room, m.all, p?.titolo, p?.nome, p?.addr].filter(Boolean).join(' '));
       return words.every(w => hay.includes(w));
     });
-  }, [items, projects, q, casa, period, now]);
+  }, [items, projects, q, casa, period, tipo, now]);
   // filtri cambiati: si riparte dalla prima pagina
-  const key = `${q}|${casa}|${period}`;
+  const key = `${q}|${casa}|${period}|${tipo}`;
   const [prevKey, setPrevKey] = useState(key);
   if (key !== prevKey) { setPrevKey(key); setShown(PAGE); }
 
@@ -129,9 +131,10 @@ export default function MediaView() {
           <Search size={16} className="shrink-0 text-muted" />
           <input value={q} onChange={e => setQ(e.target.value)} placeholder="Cerca per stanza, casa o richiesta" className="h-full min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted/60" />
         </label>
+        <Dropdown value={tipo} options={[{ value: 'tutto', label: 'Foto e video' }, { value: 'foto', label: 'Solo foto' }, { value: 'video', label: 'Solo video' }]} onChange={setTipo} className={pill} />
         <Dropdown value={casa} options={casaOptions} onChange={setCasa} className={pill} />
         <Dropdown value={period} options={PERIODS.map(p => ({ value: p.value, label: p.label }))} onChange={setPeriod} className={pill} />
-        {items && <span className="ml-auto text-sm text-muted">{filtered.length} foto</span>}
+        {items && <span className="ml-auto text-sm text-muted">{filtered.length} {tipo === 'video' ? 'video' : tipo === 'foto' ? 'foto' : 'elementi'}</span>}
         {!!items?.length && <button type="button" onClick={() => (selecting ? stopSelecting() : setSelecting(true))} className={`h-10 rounded-full px-4 text-sm font-medium outline-none ring-1 ease-smooth transition-colors focus-visible:ring-2 focus-visible:ring-brand/40 ${selecting ? 'bg-ink text-white ring-ink' : 'bg-white ring-line hover:bg-canvas'}`}>{selecting ? 'Annulla' : 'Seleziona'}</button>}
       </div>
 
@@ -141,12 +144,12 @@ export default function MediaView() {
       ) : !items.length ? (
         <p className="flex h-64 items-center justify-center text-sm text-muted">Qui finiranno le foto che crei nella chat di home staging.</p>
       ) : !filtered.length ? (
-        <p className="flex h-64 items-center justify-center text-sm text-muted">Nessuna foto con questi filtri.</p>
+        <p className="flex h-64 items-center justify-center text-sm text-muted">Niente con questi filtri.</p>
       ) : (
         <div className={`space-y-10 pt-8 ${selecting ? 'pb-28' : ''}`}>
           {groups.map(([k, list]) => (
             <section key={k}>
-              <h2 className="flex items-baseline gap-2 pb-4 font-semibold">{nameOf(k === 'nessuna' ? null : k)} <span className="text-sm font-normal text-muted">{count(k)} foto</span></h2>
+              <h2 className="flex items-baseline gap-2 pb-4 font-semibold">{nameOf(k === 'nessuna' ? null : k)} <span className="text-sm font-normal text-muted">{count(k)} {tipo === 'video' ? 'video' : tipo === 'foto' ? 'foto' : 'elementi'}</span></h2>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {list.map(m => (
                   <div key={m.id} className={`blur-in group rounded-3xl bg-white p-2 ease-smooth transition-shadow ${CARD_SHADOW} ${sel.has(m.id) ? '!ring-2 !ring-brand' : ''}`}
