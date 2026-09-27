@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // solo sviluppo: aprire il dev server dal telefono sulla stessa rete (IP del Mac)
+  allowedDevOrigins: ["192.168.1.*"],
   serverExternalPackages: ["@sparticuz/chromium", "puppeteer-core", "ffmpeg-static"],
   // Ship the @sparticuz/chromium binary (brotli files in bin/) into the social
   // cron function. It's read at runtime via chromium.executablePath(), so Next's

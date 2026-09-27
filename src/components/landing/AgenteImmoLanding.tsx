@@ -345,7 +345,7 @@ function Pricing() {
       <Reveal className="mx-auto max-w-2xl text-center">
         <Pill>{L('Prezzi', "Pricing")}</Pill>
         <h2 className="mt-5 font-display text-4xl font-extrabold leading-[1.05] tracking-tight md:text-5xl">{L('Meno di un caffè al giorno. Per tutte le case.', "Less than a coffee a day. For every home.")}</h2>
-        <p className="mt-5 text-base leading-relaxed text-muted md:text-lg">{L('Sito, foto e video in entrambi i piani. Cambiano solo i crediti, cioè quante foto e video fai al mese.', "Website, photos and videos in both plans. Only the credits change, meaning how many photos and videos you make each month.")}</p>
+        <p className="mt-5 text-base leading-relaxed text-muted md:text-lg">{L('Sito, foto e video in entrambi i piani. Cambiano solo i crediti.', "Website, photos and videos in both plans. Only the credits change.")}</p>
       </Reveal>
       <div className="mx-auto mt-12 grid max-w-4xl items-stretch gap-5 md:grid-cols-2">
         <Reveal delay={80} className="flex flex-col rounded-[32px] bg-white p-8 ring-1 ring-black/5">
@@ -428,7 +428,7 @@ function Landing({ faq }: { faq: [string, string][] }) {
             <span className="block sm:whitespace-nowrap">{L('Vinci più incarichi.', "Win more listings.").split(' ').map((w, i) => <span key={i} className="blur-in inline-block" style={{ animationDelay: `${i * 40}ms` }}>{w}&nbsp;</span>)}</span>
             <span className="block text-balance text-brand sm:whitespace-nowrap">{L('Presenta meglio ogni casa.', "Present every home better.").split(' ').map((w, i) => <span key={i} className="blur-in inline-block" style={{ animationDelay: `${360 + i * 40}ms` }}>{w}&nbsp;</span>)}</span>
           </p>
-          <Reveal delay={600}><p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-muted md:text-lg">{L('Tre agenzie in gara per lo stesso incarico: lo prende chi arriva con la casa già arredata, un video pronto e la sua pagina sul proprio sito. Con Agente Immo ce l\'hai in un minuto, per ogni immobile, senza fotografo, home stager e web agency da pagare.', "Three agencies competing for the same listing: it goes to the one who shows up with the home already staged, a video ready and its own page on their website. With Agente Immo you get all of it in a minute, for every property, without paying a photographer, a home stager or a web agency.")}</p></Reveal>
+          <Reveal delay={600}><p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-muted md:text-lg">{L('L\'incarico va a chi arriva con la casa già arredata, un video pronto e il suo sito. Con Agente Immo ce l\'hai in un minuto, senza fotografo né web agency.', "The listing goes to the agent who shows up with the home staged, a video ready and their own website. With Agente Immo you get it in a minute, no photographer or web agency.")}</p></Reveal>
           <Reveal delay={700} className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <Cta>{L('Prova gratis sulla tua foto', "Try it free on your photo")}</Cta>
             <span className="hidden sm:block"><Cta ghost href="#prezzi">{L('Vedi i prezzi', "See pricing")}</Cta></span>
@@ -448,12 +448,12 @@ function Landing({ faq }: { faq: [string, string][] }) {
       {/* 01 home staging */}
       <Band id="staging">
         <div className="grid items-center gap-10 md:grid-cols-2 md:gap-16">
-          <Reveal anim="in-left">
+          <Reveal anim="in-left" className="text-center md:text-left">
             <Eyebrow n="01">{L('Annunci che si notano', "Listings that stand out")}</Eyebrow>
             <h2 className={H2}>{L('Chi scorre non si ferma su una stanza vuota.', "Nobody stops scrolling for an empty room.")}</h2>
-            <p className="mt-5 text-base leading-relaxed text-muted md:text-lg">{L('Vuota, una casa sembra più piccola e più fredda di com\'è. Arredata, chi guarda ci si immagina dentro e ti chiama per vederla. Carichi la foto, scegli lo stile, in un minuto è pronta.', "Empty, a home looks smaller and colder than it is. Furnished, buyers picture themselves living there and call you to see it. Upload the photo, pick a style, it's ready in a minute.")}</p>
+            <p className="mt-5 text-base leading-relaxed text-muted md:text-lg">{L('Vuota, una casa sembra piccola e fredda. Arredata, chi guarda ci si immagina dentro e ti chiama.', "Empty, a home looks small and cold. Staged, buyers picture themselves there and call you.")}</p>
             <ul className="mt-6 space-y-3 text-[15px]">
-              {[L('La prima foto ferma chi scorre', "The first photo stops the scroll"), L('Il cliente capisce subito come vivrebbe quella casa', "Buyers instantly see how they'd live there"), L('Nessun home staging vero da pagare o da organizzare', "No physical staging to pay for or organize")].map(x => <li key={x} className="flex items-start gap-3">{CHECK}{x}</li>)}
+              {[L('La prima foto ferma chi scorre', "The first photo stops the scroll"), L('Il cliente capisce subito come vivrebbe quella casa', "Buyers instantly see how they'd live there"), L('Nessun home staging vero da pagare o da organizzare', "No physical staging to pay for or organize")].map(x => <li key={x} className="flex items-start justify-center gap-3 md:justify-start">{CHECK}{x}</li>)}
             </ul>
             <Cta className="mt-8">{L('Prova gratis', "Try it free")}</Cta>
           </Reveal>
@@ -471,12 +471,12 @@ function Landing({ faq }: { faq: [string, string][] }) {
       {/* 02 video */}
       <Band id="video" tone="canvas">
         <div ref={videoRef} className="grid items-center gap-10 md:grid-cols-2 md:gap-16">
-          <Reveal className="md:order-2" anim="in-right">
+          <Reveal className="text-center md:order-2 md:text-left" anim="in-right">
             <Eyebrow n="02">{L('Farti conoscere', "Get known")}</Eyebrow>
             <h2 className={H2}>{L('Ogni casa diventa un video per i tuoi social.', "Every home becomes a video for your socials.")}</h2>
-            <p className="mt-5 text-base leading-relaxed text-muted md:text-lg">{L('Nella tua zona i clienti chiamano l\'agente che vedono ogni settimana su Instagram e TikTok. Un videomaker costa e ci mette giorni: qui ogni nuovo incarico diventa un video, e tu resti presente senza fermarti a girare.', "In your area, clients call the agent they see every week on Instagram and TikTok. A videographer is expensive and takes days: here every new listing becomes a video, and you stay visible without stopping to film.")}</p>
+            <p className="mt-5 text-base leading-relaxed text-muted md:text-lg">{L('Nella tua zona i clienti chiamano l\'agente che vedono ogni settimana sui social. Qui ogni incarico diventa un video, senza videomaker.', "Locally, clients call the agent they see every week on social media. Here every listing becomes a video, no videographer.")}</p>
             <ul className="mt-6 space-y-3 text-[15px]">
-              {[L('Ti fai conoscere nella tua zona, non solo sul portale', "Get known in your area, not just on the portal"), L('Ogni incarico diventa un contenuto da pubblicare', "Every listing becomes something to post"), L('Niente riprese, niente montaggio, niente videomaker', "No filming, no editing, no videographer")].map(x => <li key={x} className="flex items-start gap-3">{CHECK}{x}</li>)}
+              {[L('Ti fai conoscere nella tua zona, non solo sul portale', "Get known in your area, not just on the portal"), L('Ogni incarico diventa un contenuto da pubblicare', "Every listing becomes something to post"), L('Niente riprese, niente montaggio, niente videomaker', "No filming, no editing, no videographer")].map(x => <li key={x} className="flex items-start justify-center gap-3 md:justify-start">{CHECK}{x}</li>)}
             </ul>
             <Cta className="mt-8">{L('Prova gratis', "Try it free")}</Cta>
           </Reveal>
@@ -497,12 +497,12 @@ function Landing({ faq }: { faq: [string, string][] }) {
       {/* 03 sito */}
       <Band id="sito">
         <div ref={siteRef} className="grid items-center gap-10 md:grid-cols-2 md:gap-16">
-          <Reveal anim="in-left">
+          <Reveal anim="in-left" className="text-center md:text-left">
             <Eyebrow n="03">{L('Il sito te lo facciamo noi', "We build your website")}</Eyebrow>
             <h2 className={H2}>{L('Il tuo sito lo facciamo noi, tu scegli lo stile.', "We build your website, you just pick the style.")}</h2>
-            <p className="mt-5 text-base leading-relaxed text-muted md:text-lg">{L('Appena ti iscrivi hai già il tuo sito personale, con il tuo nome, pronto da pubblicare. Non devi costruire niente: scegli uno dei nostri modelli, metti logo e colori, e ogni immobile che carichi ci finisce da solo. Sul portale sei uno dei tanti, qui sei l\'unico agente.', "As soon as you sign up you already have your own website, with your name, ready to publish. Nothing to build: pick one of our templates, add your logo and colors, and every property you upload lands there on its own. On the portal you're one of many, here you're the only agent.")}</p>
+            <p className="mt-5 text-base leading-relaxed text-muted md:text-lg">{L('Appena ti iscrivi hai il tuo sito, con il tuo nome. Scegli il modello, metti logo e colori: gli immobili ci finiscono da soli.', "Sign up and your website is ready, with your name. Pick a template, add your logo and colors: your listings land there on their own.")}</p>
             <ul className="mt-6 space-y-3 text-[15px]">
-              {[L('Incluso nell\'abbonamento, niente web agency da pagare', "Included in your plan, no web agency to pay"), L('Già fatto: scegli il modello e pubblichi', "Ready-made: pick a template and publish"), L('Ogni immobile che carichi è subito online', "Every property you upload is live right away"), L('Le richieste arrivano a te, non a un portale', "Inquiries come to you, not to a portal")].map(x => <li key={x} className="flex items-start gap-3">{CHECK}{x}</li>)}
+              {[L('Incluso nell\'abbonamento, niente web agency da pagare', "Included in your plan, no web agency to pay"), L('Ogni immobile che carichi è subito online', "Every property you upload is live right away"), L('Le richieste arrivano a te, non a un portale', "Inquiries come to you, not to a portal")].map(x => <li key={x} className="flex items-start justify-center gap-3 md:justify-start">{CHECK}{x}</li>)}
             </ul>
             <Cta href={APP} className="mt-8">{L('Crea il tuo sito', "Create your website")}</Cta>
           </Reveal>
@@ -565,7 +565,7 @@ function Landing({ faq }: { faq: [string, string][] }) {
           <div className="pointer-events-none absolute inset-0 opacity-30" style={{ background: 'radial-gradient(600px circle at 20% 0%, rgba(83,126,236,.8), transparent 60%), radial-gradient(500px circle at 90% 100%, rgba(110,86,248,.7), transparent 60%)' }} />
           <div className="relative">
             <h2 className="mx-auto max-w-2xl font-display text-4xl font-extrabold leading-[1.05] tracking-tight md:text-6xl">{L('Il prossimo incarico, vincilo così.', "Win your next listing like this.")}</h2>
-            <p className="mx-auto mt-5 max-w-xl text-lg text-white/70">{L('Carica la foto di una tua casa e guarda il risultato. Gratis, senza registrarti.', "Upload a photo of one of your homes and see the result. Free, no sign-up.")}</p>
+            <p className="mx-auto mt-5 max-w-xl text-lg text-white/70">{L('Carica una foto e guarda il risultato. Gratis, senza registrarti.', "Upload a photo and see the result. Free, no sign-up.")}</p>
             <a href="#prova" className="mt-8 inline-flex h-13 items-center gap-2 rounded-full bg-white px-7 text-[15px] font-semibold text-ink ease-smooth transition-transform hover:scale-[1.03] active:scale-[.98]">{L('Prova gratis', "Try it free")} <ArrowRight size={16} /></a>
           </div>
         </Reveal>
@@ -573,10 +573,10 @@ function Landing({ faq }: { faq: [string, string][] }) {
 
       {/* footer: marchio a sinistra, tre colonne di link (prodotto, guide SEO, legale), riga finale */}
       <footer className="border-t border-line bg-canvas">
-        <div className={`mx-auto grid max-w-6xl gap-10 px-4 py-16 ${en ? 'md:grid-cols-[1.4fr_1fr_1fr]' : 'md:grid-cols-[1.4fr_1fr_1.2fr_1fr]'}`}>
+        <div className={`mx-auto grid max-w-6xl gap-10 px-4 py-16 text-center md:text-left ${en ? 'md:grid-cols-[1.4fr_1fr_1fr]' : 'md:grid-cols-[1.4fr_1fr_1.2fr_1fr]'}`}>
           <div>
-            <a href="#top" className="flex items-center gap-2"><img src="/immo/logo-mark.png" alt="" className="h-8 w-8" /><span className="font-display text-lg font-extrabold tracking-tight">Agente <span className="text-brand">Immo</span></span></a>
-            <p className="mt-4 max-w-xs text-sm leading-relaxed text-muted">{L('Foto arredate, video e il tuo sito per ogni immobile. Il software per agenti immobiliari.', "Staged photos, videos and your website for every property. The software for real estate agents.")}</p>
+            <a href="#top" className="flex items-center justify-center gap-2 md:justify-start"><img src="/immo/logo-mark.png" alt="" className="h-8 w-8" /><span className="font-display text-lg font-extrabold tracking-tight">Agente <span className="text-brand">Immo</span></span></a>
+            <p className="mx-auto mt-4 max-w-xs text-sm md:mx-0 leading-relaxed text-muted">{L('Foto arredate, video e il tuo sito per ogni immobile. Il software per agenti immobiliari.', "Staged photos, videos and your website for every property. The software for real estate agents.")}</p>
             <Cta className="mt-6 !h-10 !px-5 text-sm">{L('Prova gratis', "Try it free")}</Cta>
           </div>
           {([
@@ -593,7 +593,7 @@ function Landing({ faq }: { faq: [string, string][] }) {
             </nav>
           ))}
         </div>
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 border-t border-line px-4 py-6 text-xs text-muted">
+        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 border-t border-line px-4 py-6 text-xs text-muted md:flex-row">
           <span>© {new Date().getFullYear()} Agente Immo</span>
           <span className="flex items-center gap-4">
             <span className="flex gap-2">{(['it', 'en'] as const).map(l => <a key={l} href={`/${l}`} hrefLang={l} className={`${(en ? 'en' : 'it') === l ? 'font-semibold text-ink' : 'hover:text-ink'}`}>{l === 'it' ? 'Italiano' : 'English'}</a>)}</span>

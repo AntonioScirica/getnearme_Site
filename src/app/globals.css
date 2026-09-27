@@ -530,7 +530,10 @@ html.metrics-light [class*="border-gray-600"] { border-color: #d8d4cb !important
 .in-left { animation: gnm-in-left var(--gnm-dur) var(--gnm-ease) both; }
 .in-right { animation: gnm-in-right var(--gnm-dur) var(--gnm-ease) both; }
 @keyframes gnm-parallax { from { transform: translateY(56px); } to { transform: translateY(-56px); } }
-@supports (animation-timeline: view()) {
-  .parallax { animation: gnm-parallax linear both; animation-timeline: view(); animation-range: entry 0% exit 100%; }
+/* solo da tablet in su: su telefono le immagini restano ferme mentre si scorre */
+@media (min-width: 768px) {
+  @supports (animation-timeline: view()) {
+    .parallax { animation: gnm-parallax linear both; animation-timeline: view(); animation-range: entry 0% exit 100%; }
+  }
 }
 @media (prefers-reduced-motion: reduce) { .in-left, .in-right, .parallax, .blur-in, .rise { animation: none; opacity: 1; } }
