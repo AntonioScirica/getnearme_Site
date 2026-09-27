@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { isDisposableEmail } from '@/lib/disposableEmails';
 import { CheckCircle, Loader2 } from 'lucide-react';
 import { type Locale } from '@/lib/i18n';
-import Navbar from '@/components/Navbar';
+import { platformFontVars } from '@/lib/platformFonts';
 
 // Plan ID mapping: homepage IDs → internal subscription IDs
 const PLAN_ID_MAP: Record<string, string> = {
@@ -465,6 +465,9 @@ function CheckoutAgencyContent() {
   const locale = (params.locale as Locale) || 'it';
   const t = translations[locale] || translations.it;
 
+  // Dopo l'accesso si torna dove si era (es. /it/dashboard#/piano?buy=pro_yearly). Solo pagine della piattaforma.
+  const nextParam = searchParams.get('next') ?? '';
+  const dest = /^\/(it|en)\/dashboard(?![^#?/])/.test(nextParam) ? nextParam : `/${locale}/dashboard`;
   const rawPlanParam = searchParams.get('plan');
   const hasPlan = !!rawPlanParam;
   const selectedPlanId = PLAN_ID_MAP[rawPlanParam || 'agency_monthly'] || 'agency_monthly';
@@ -584,7 +587,7 @@ function CheckoutAgencyContent() {
         .single();
 
       if (data?.subscription_type && data.subscription_type !== 'free' && data.subscription_type !== 'ambassador') {
-        window.location.href = `/${locale}/dashboard`;
+        window.location.href = dest;
         return;
       }
     } catch {
@@ -595,7 +598,7 @@ function CheckoutAgencyContent() {
 
     if (!hasPlan) {
       // No plan selected - redirect to dashboard
-      window.location.href = `/${locale}/dashboard`;
+      window.location.href = dest;
       return;
     }
 
@@ -636,7 +639,7 @@ function CheckoutAgencyContent() {
       } else {
         // Existing session (not OAuth callback). Se non c'e' un piano selezionato
         // siamo in modalita' LOGIN (non checkout) → vai dritto alla dashboard.
-        if (!hasPlan) { window.location.href = `/${locale}/dashboard`; return; }
+        if (!hasPlan) { window.location.href = dest; return; }
         setUser({ id: userId, email: userEmail });
 
         // Check if user already accepted terms (from previous login/consent)
@@ -658,7 +661,7 @@ function CheckoutAgencyContent() {
             .single();
 
           if (data?.subscription_type && data.subscription_type !== 'free' && data.subscription_type !== 'ambassador') {
-            window.location.href = `/${locale}/dashboard`;
+            window.location.href = dest;
             return;
           }
         } catch {
@@ -768,349 +771,150 @@ function CheckoutAgencyContent() {
     : plan ? (interval === 'annual' ? plan.price_annual : plan.price_monthly) : 0;
   const periodLabel = interval === 'annual' || selectedPlanId === 'agency_annual' ? t.perYear : t.perMonth;
 
+  const en = locale === 'en';
+  const box = (on: boolean) => `mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md ring-1 ease-smooth transition-colors ${on ? 'bg-ink ring-ink text-white' : 'bg-white ring-black/15'}`;
+  const tick = <svg className="h-3 w-3" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="2 6 5 9 10 3" /></svg>;
+  const input = 'h-12 w-full rounded-2xl bg-canvas px-4 text-[15px] text-ink outline-none ring-1 ring-black/5 placeholder:text-muted/70 focus:bg-white focus:ring-2 focus:ring-brand disabled:opacity-50';
+  const primary = 'flex h-12 w-full items-center justify-center gap-2 rounded-full bg-ink px-6 text-[15px] font-semibold text-white ease-smooth transition-colors hover:bg-black disabled:opacity-40';
+  const errBox = (m: string) => <div className="mt-4 rounded-2xl bg-rose-50 px-4 py-3 text-sm text-rose-700">{m}</div>;
+
   function renderConsentBoxes() {
     return (
-      <div ref={consentRef} className="mt-6 pt-6 border-t-2 border-[#1a1a2e]/20 space-y-3">
-        <label className="flex items-center gap-3 cursor-pointer group">
-          <div className="relative shrink-0">
-            <input
-              type="checkbox"
-              checked={termsAccepted}
-              onChange={(e) => { setTermsAccepted(e.target.checked); if (e.target.checked) setError(null); }}
-              className="sr-only peer"
-            />
-            <div className="w-5 h-5 border-2 border-[#1a1a2e] rounded bg-white peer-checked:bg-blue-500 peer-checked:border-blue-500 transition-all flex items-center justify-center" style={{ boxShadow: '0 4px 16px rgba(16,24,40,0.08)' }}>
-              {termsAccepted && (
-                <svg className="w-3 h-3 text-white" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="2 6 5 9 10 3" />
-                </svg>
-              )}
-            </div>
-          </div>
-          <span className="text-sm text-slate-600 leading-tight">
+      <div ref={consentRef} className="mt-6 space-y-3 border-t border-line pt-5">
+        <label className="flex cursor-pointer items-start gap-3">
+          <input type="checkbox" checked={termsAccepted} onChange={(e) => { setTermsAccepted(e.target.checked); if (e.target.checked) setError(null); }} className="peer sr-only" />
+          <span className={box(termsAccepted)}>{termsAccepted && tick}</span>
+          <span className="text-sm leading-snug text-muted">
             {t.acceptTerms}{' '}
-            <a href={`/${locale}/termini`} target="_blank" rel="noopener noreferrer" className="text-blue-500 font-semibold hover:underline">{t.termsOfService}</a>
+            <a href={`/${locale}/termini`} target="_blank" rel="noopener noreferrer" className="font-medium text-ink underline underline-offset-4">{t.termsOfService}</a>
             {' '}{t.andThe}{' '}
-            <a href={`/${locale}/privacy`} target="_blank" rel="noopener noreferrer" className="text-blue-500 font-semibold hover:underline">{t.privacyPolicy}</a>
+            <a href={`/${locale}/privacy`} target="_blank" rel="noopener noreferrer" className="font-medium text-ink underline underline-offset-4">{t.privacyPolicy}</a>
             {' *'}
           </span>
         </label>
-
-        <label className="flex items-center gap-3 cursor-pointer group">
-          <div className="relative shrink-0">
-            <input
-              type="checkbox"
-              checked={marketingAccepted}
-              onChange={(e) => setMarketingAccepted(e.target.checked)}
-              className="sr-only peer"
-            />
-            <div className="w-5 h-5 border-2 border-[#1a1a2e] rounded bg-white peer-checked:bg-blue-500 peer-checked:border-blue-500 transition-all flex items-center justify-center" style={{ boxShadow: '0 4px 16px rgba(16,24,40,0.08)' }}>
-              {marketingAccepted && (
-                <svg className="w-3 h-3 text-white" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="2 6 5 9 10 3" />
-                </svg>
-              )}
-            </div>
-          </div>
-          <span className="text-sm text-slate-600 leading-tight">
-            {t.marketingConsent}
-          </span>
+        <label className="flex cursor-pointer items-start gap-3">
+          <input type="checkbox" checked={marketingAccepted} onChange={(e) => setMarketingAccepted(e.target.checked)} className="peer sr-only" />
+          <span className={box(marketingAccepted)}>{marketingAccepted && tick}</span>
+          <span className="text-sm leading-snug text-muted">{t.marketingConsent}</span>
         </label>
-
-        {!termsAccepted && error === (t.termsRequired as string) && (
-          <div className="mt-4 p-4 bg-red-50 neo-border rounded-xl text-red-700 text-sm text-center">
-            {t.termsRequired}
-          </div>
-        )}
+        {!termsAccepted && error === (t.termsRequired as string) && errBox(t.termsRequired as string)}
       </div>
     );
   }
 
+  const cont = hasPlan ? t.proceedToPayment : (en ? 'Continue' : 'Continua');
   return (
-    <div className="min-h-screen bg-[#fafaf8] font-sans text-[#1a1a2e]">
-      <Navbar locale={locale} />
+    <div className={`${platformFontVars} dots-bg flex min-h-screen flex-col font-body text-ink antialiased`}>
+      <header className="mx-auto flex w-full max-w-6xl items-center px-4 py-5">
+        <a href={`/${locale === 'en' ? 'en' : 'it'}`} className="flex items-center gap-2">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/immo/logo-mark.png" alt="" className="h-8 w-8" />
+          <span className="font-display text-lg font-extrabold tracking-tight">Agente <span className="text-brand">Immo</span></span>
+        </a>
+      </header>
 
-      <main className="flex items-center justify-center px-4 py-24" style={{ minHeight: 'calc(100vh - 72px)' }}>
-        <div className="max-w-md w-full">
-          <div className="bg-white neo-border rounded-2xl p-8" style={{ boxShadow: '0 4px 16px rgba(16,24,40,0.08)' }}>
+      <main className="flex flex-1 items-center justify-center px-4 pb-16 pt-4">
+        <div className="blur-in w-full max-w-md rounded-[32px] bg-white p-7 shadow-[0_30px_80px_-30px_rgba(0,0,0,.25)] ring-1 ring-black/5 sm:p-8">
 
-            {!emailSent && (
-            <div className="text-center mb-6">
-              <svg width="43" height="43" viewBox="0 0 75 75" fill="none" xmlns="http://www.w3.org/2000/svg" className="mx-auto">
-                <circle cx="37.3135" cy="37.3135" r="37.3135" fill="#3B83F6"/>
-                <path d="M38.1986 19.2772C37.7253 18.8144 36.9701 18.819 36.5028 19.2878L26.2056 29.5955C25.1745 30.6266 24.2791 31.6652 23.643 33.0023C23.0068 34.3394 22.7008 35.6644 22.6707 37.0738C22.6315 38.8797 22.734 40.5771 23.8736 42.0378C24.8384 43.2739 26.0473 44.3095 27.092 45.4747C28.2391 46.7545 29.4511 47.9951 30.6284 49.2538C30.9434 49.5915 34.6682 53.5394 36.3671 55.3634C36.8299 55.8593 37.6092 55.8774 38.0946 55.4026L48.8621 44.8401C52.6638 41.1107 52.893 35.6237 49.9656 31.2657C48.7988 29.5277 47.1407 28.1002 45.579 26.6726C45.1056 26.24 44.376 26.2551 43.9193 26.7058L34.2628 36.2357C33.806 36.6864 33.7819 37.4145 34.2085 37.8939L36.5239 40.5047C36.9806 41.0203 37.7766 41.0489 38.2695 40.5665L44.7891 34.1826C44.7891 34.1826 47.6833 37 44.8132 40.6193L38.2408 47.1796C37.772 47.6469 37.0153 47.6499 36.5435 47.1871L30.3661 41.1198C30.3661 41.1198 26.0986 37.8984 30.4806 33.554C33.9025 30.1608 38.7368 25.3672 40.6919 23.4302C41.1698 22.9568 41.1667 22.182 40.6859 21.7117L38.1986 19.2772Z" fill="white"/>
-              </svg>
+          {hasPlan && (
+            <div className="mb-6 rounded-[20px] bg-canvas p-5 text-center">
+              <div className="text-sm font-semibold text-muted">{plan.name}</div>
+              <div className="mt-1"><span className="font-display text-4xl font-extrabold tracking-tight">€{currentPrice}</span><span className="text-muted">{periodLabel}</span></div>
+              {plan.payment_link_annual && (
+                <div className="mt-4 inline-flex rounded-full bg-white p-1 ring-1 ring-black/5">
+                  {(['monthly', 'annual'] as const).map(iv => (
+                    <button key={iv} onClick={() => setInterval(iv)} className={`h-8 rounded-full px-4 text-xs font-semibold ease-smooth transition-colors ${interval === iv ? 'bg-ink text-white' : 'text-muted hover:text-ink'}`}>{iv === 'monthly' ? t.monthly : t.annual}</button>
+                  ))}
+                </div>
+              )}
             </div>
-            )}
+          )}
 
-            {hasPlan && (
-              <div className="bg-[#fafaf8] neo-border rounded-xl p-6 mb-6" style={{ boxShadow: '0 4px 16px rgba(16,24,40,0.08)' }}>
-                <div className="text-center">
-                  <div className="text-lg font-bold text-[#1a1a2e]">{plan.name}</div>
-                  <div className="mt-2">
-                    <span className="text-4xl font-bold text-blue-500">€{currentPrice}</span>
-                    <span className="text-slate-500">{periodLabel}</span>
-                  </div>
-                  {plan.original_price > plan.price_monthly && (
-                    <p className="text-sm text-slate-400 line-through mt-1">
-                      €{plan.original_price}{periodLabel}
-                    </p>
-                  )}
-                </div>
+          {emailSent ? (
+            <div className="py-4 text-center">
+              <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-brand/10 text-brand"><CheckCircle className="h-6 w-6" /></span>
+              <h1 className="mt-4 font-display text-2xl font-extrabold tracking-tight">{t.checkEmail}</h1>
+              <p className="mt-2 text-muted">{t.checkEmailDesc}</p>
+              <div className="mt-4 rounded-2xl bg-canvas px-4 py-3 font-medium">{email}</div>
+              <a
+                href={
+                  email.endsWith('@gmail.com') ? 'https://mail.google.com' :
+                  email.endsWith('@outlook.com') || email.endsWith('@hotmail.com') || email.endsWith('@live.com') ? 'https://outlook.live.com' :
+                  email.endsWith('@yahoo.com') || email.endsWith('@yahoo.it') ? 'https://mail.yahoo.com' :
+                  email.endsWith('@icloud.com') ? 'https://www.icloud.com/mail' :
+                  `mailto:${email}`
+                }
+                target="_blank" rel="noopener noreferrer" className={`${primary} mt-5`}
+              >{en ? 'Open your email' : 'Apri la tua email'}</a>
+              <button onClick={() => { setEmailSent(false); setIsSignup(false); setPassword(''); setError(null); }} className="mt-3 h-11 w-full rounded-full text-sm font-semibold text-ink ring-1 ring-black/10 hover:ring-ink">
+                {en ? 'Go to sign in' : 'Vai all\'accesso'}
+              </button>
+              <p className="mt-4 text-sm text-muted">{en ? 'Check your spam folder too.' : 'Controlla anche la cartella spam.'}</p>
+            </div>
+          ) : user && existingSubscription ? (
+            <div className="text-center">
+              <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-600"><CheckCircle className="h-6 w-6" /></span>
+              <h1 className="mt-4 font-display text-2xl font-extrabold tracking-tight">{t.alreadySubscribed}</h1>
+              <p className="mt-2 text-muted">{t.currentPlan}: <strong className="text-ink">{TIER_LABELS[existingSubscription]?.[locale] || existingSubscription}</strong></p>
+              <a href="https://billing.stripe.com/p/login/9B68wP7WH3blfTG15eak000" target="_blank" rel="noopener noreferrer" className={`${primary} mt-6`}>{t.manageSub}</a>
+            </div>
+          ) : isRedirecting || checkingSubscription ? (
+            <div className="py-6 text-center">
+              <Loader2 className="mx-auto h-7 w-7 animate-spin text-brand" />
+              <p className="mt-3 text-sm text-muted">{hasPlan ? t.redirecting : t.loading}</p>
+            </div>
+          ) : user && needsConsent ? (
+            <>
+              <h1 className="text-center font-display text-2xl font-extrabold tracking-tight">{en ? 'One last step' : 'Ultimo passaggio'}</h1>
+              <p className="mt-2 text-center text-sm text-muted">{t.loggedInAs} <strong className="text-ink">{user.email}</strong></p>
+              {renderConsentBoxes()}
+              <button onClick={handleConsentContinue} disabled={checkingSubscription} className={`${primary} mt-6`}>{cont}</button>
+              {error && error !== (t.termsRequired as string) && errBox(error)}
+            </>
+          ) : user && !existingSubscription ? (
+            <>
+              <p className="text-center text-sm text-muted">{t.loggedInAs} <strong className="text-ink">{user.email}</strong></p>
+              <button onClick={() => { setError(null); proceedAfterLogin(user.id, user.email, true, false); }} disabled={checkingSubscription} className={`${primary} mt-5`}>{cont}</button>
+              {error && errBox(error)}
+            </>
+          ) : !user ? (
+            <>
+              <h1 className="text-center font-display text-2xl font-extrabold tracking-tight">{isSignup ? (en ? 'Create your account' : 'Crea il tuo account') : (en ? 'Welcome back' : 'Bentornato')}</h1>
+              <p className="mt-2 text-center text-sm text-muted">{isSignup ? (en ? 'Free, no credit card needed.' : 'Gratis, senza carta di credito.') : (en ? 'Sign in to Agente Immo.' : 'Accedi ad Agente Immo.')}</p>
 
-                {/* Billing interval toggle */}
-                {plan.payment_link_annual && (
-                  <div className="flex justify-center mt-4">
-                    <div className="inline-flex bg-white neo-border rounded-lg p-0.5">
-                      <button
-                        onClick={() => setInterval('monthly')}
-                        className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${
-                          interval === 'monthly'
-                            ? 'bg-blue-500 text-white'
-                            : 'text-slate-500 hover:text-slate-700'
-                        }`}
-                      >
-                        {t.monthly}
-                      </button>
-                      <button
-                        onClick={() => setInterval('annual')}
-                        className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${
-                          interval === 'annual'
-                            ? 'bg-blue-500 text-white'
-                            : 'text-slate-500 hover:text-slate-700'
-                        }`}
-                      >
-                        {t.annual}
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
+              <button onClick={handleGoogleLogin} disabled={isLoading || isEmailLoading} className="mt-6 flex h-12 w-full items-center justify-center gap-3 rounded-full bg-white text-[15px] font-semibold text-ink ring-1 ring-black/10 ease-smooth transition-shadow hover:ring-ink disabled:opacity-50">
+                {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <GoogleIcon />}<span>{t.loginButton}</span>
+              </button>
 
-            {/* Email confirmation sent */}
-            {emailSent ? (
-              <div className="text-center py-8">
-                <CheckCircle className="w-12 h-12 text-blue-500 mx-auto mb-4" />
-                <h2 className="text-xl font-bold text-[#1a1a2e] mb-2">{t.checkEmail}</h2>
-                <p className="text-base text-slate-500 mb-5">{t.checkEmailDesc}</p>
-                <div className="p-3 bg-slate-50 rounded-xl text-base text-slate-600 font-medium mb-4">{email}</div>
-                <button
-                  onClick={() => { setEmailSent(false); setIsSignup(false); setPassword(''); setError(null); }}
-                  className="neo-cta-blue w-full py-3 rounded-xl font-bold text-base mb-3"
-                >
-                  {({ it: 'Vai al login', en: 'Go to login', es: 'Ir al inicio de sesión', fr: 'Aller à la connexion', ru: 'Перейти ко входу', uk: 'Перейти до входу' }[locale as string] || 'Go to login')}
+              <div className="my-5 flex items-center gap-4 text-xs font-medium text-muted"><span className="h-px flex-1 bg-line" />{t.orDivider}<span className="h-px flex-1 bg-line" /></div>
+
+              <form onSubmit={handleEmailAuth} className="space-y-3">
+                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t.emailPlaceholder as string} required autoComplete="email" disabled={isLoading || isEmailLoading} className={input} />
+                <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={t.passwordPlaceholder as string} required autoComplete={isSignup ? 'new-password' : 'current-password'} disabled={isLoading || isEmailLoading} className={input} />
+                {!isSignup && <div className="text-right"><a href={`/${locale}/forgot-password`} className="text-sm font-medium text-muted hover:text-ink">{en ? 'Forgot your password?' : 'Password dimenticata?'}</a></div>}
+                <button type="submit" disabled={isLoading || isEmailLoading || !email.trim() || !password} className={primary}>
+                  {isEmailLoading && <Loader2 className="h-5 w-5 animate-spin" />}<span>{isSignup ? t.emailSignupButton : t.emailLoginButton}</span>
                 </button>
-                <a
-                  href={
-                    email.endsWith('@gmail.com') ? 'https://mail.google.com' :
-                    email.endsWith('@outlook.com') || email.endsWith('@hotmail.com') || email.endsWith('@live.com') ? 'https://outlook.live.com' :
-                    email.endsWith('@yahoo.com') || email.endsWith('@yahoo.it') ? 'https://mail.yahoo.com' :
-                    email.endsWith('@icloud.com') ? 'https://www.icloud.com/mail' :
-                    `mailto:${email}`
-                  }
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="neo-border bg-white text-[#1a1a2e] hover:bg-slate-50 transition-all flex items-center justify-center gap-2 w-full py-3 rounded-xl font-bold text-base mb-4"
-                  style={{ textDecoration: 'none' }}
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
-                  Apri la tua email
-                </a>
-                <p className="text-sm text-slate-400">Controlla anche la cartella spam</p>
-              </div>
-            ) : /* Already subscribed */
-            user && existingSubscription ? (
-              <div className="text-center">
-                <div className="w-16 h-16 bg-green-100 neo-border rounded-full flex items-center justify-center mx-auto mb-4">
-                  <CheckCircle className="w-8 h-8 text-green-600" />
-                </div>
-                <h2 className="text-xl font-bold text-[#1a1a2e] mb-2">{t.alreadySubscribed}</h2>
-                <p className="text-slate-500 mb-6">
-                  {t.currentPlan}: <strong>{TIER_LABELS[existingSubscription]?.[locale] || existingSubscription}</strong>
-                </p>
-                <a
-                  href="https://billing.stripe.com/p/login/9B68wP7WH3blfTG15eak000"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-block px-6 py-3 bg-[#1a1a2e] text-white rounded-xl neo-border neo-btn font-bold hover:bg-[#2a2a3e] transition-all"
-                  style={{ boxShadow: '4px 4px 0px #3B83F6' }}
-                >
-                  {t.manageSub}
-                </a>
-              </div>
-            ) : isRedirecting || checkingSubscription ? (
-              /* Redirecting to Stripe (paid) or checking subscription. Free: nessun pagamento. */
-              <div className="text-center py-4">
-                <Loader2 className="w-8 h-8 animate-spin text-blue-500 mx-auto mb-3" />
-                <p className="text-slate-500 text-sm">{hasPlan ? t.redirecting : t.loading}</p>
-              </div>
-            ) : user && needsConsent ? (
-              /* Nuovo utente via Google: accetta i termini una volta sola */
-              <>
-                <h2 className="text-xl font-bold text-center mb-2">{t.loginTitle}</h2>
-                <p className="text-sm text-center text-slate-500 mb-2">{t.loggedInAs} <strong>{user.email}</strong></p>
-                {renderConsentBoxes()}
-                <button
-                  onClick={handleConsentContinue}
-                  disabled={checkingSubscription}
-                  className="mt-6 w-full flex items-center justify-center gap-3 px-6 py-4 bg-blue-500 rounded-xl neo-border neo-btn text-white font-bold hover:bg-blue-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                  style={{ boxShadow: '0 4px 16px rgba(16,24,40,0.08)' }}
-                >
-                  {checkingSubscription ? (
-                    <><Loader2 className="w-5 h-5 animate-spin" /><span>{t.loading}</span></>
-                  ) : (
-                    <span>{hasPlan ? t.proceedToPayment : ({ it: 'Continua', en: 'Continue', es: 'Continuar', fr: 'Continuer', ru: 'Продолжить', uk: 'Продовжити' }[locale as string] || 'Continue')}</span>
-                  )}
+              </form>
+
+              {error && error !== (t.termsRequired as string) && errBox(error)}
+
+              <p className="mt-5 text-center text-sm text-muted">
+                {isSignup ? (t.hasAccount as string) : (t.noAccount as string)}{' '}
+                <button onClick={() => { setIsSignup(!isSignup); setError(null); }} className="font-semibold text-ink underline underline-offset-4">
+                  {isSignup ? (en ? 'Sign in' : 'Accedi') : (en ? 'Create account' : 'Crea account')}
                 </button>
-                {error && error !== (t.termsRequired as string) && (
-                  <div className="mt-4 p-4 bg-red-50 neo-border rounded-xl text-red-700 text-sm">{error}</div>
-                )}
-              </>
-            ) : user && !existingSubscription ? (
-              /* Logged in, no subscription - proceed directly */
-              <>
-                <div className="text-center mb-6">
-                  <p className="text-slate-500 text-sm">{t.loggedInAs} <strong>{user.email}</strong></p>
-                </div>
+              </p>
 
-                <button
-                  onClick={() => {
-                    setError(null);
-                    proceedAfterLogin(user.id, user.email, true, false);
-                  }}
-                  disabled={checkingSubscription}
-                  className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-blue-500 rounded-xl neo-border neo-btn text-white font-bold hover:bg-blue-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                  style={{ boxShadow: '0 4px 16px rgba(16,24,40,0.08)' }}
-                >
-                  {checkingSubscription ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      <span>{t.loading}</span>
-                    </>
-                  ) : (
-                    <span>{hasPlan ? t.proceedToPayment : ({ it: 'Continua', en: 'Continue', es: 'Continuar', fr: 'Continuer', ru: 'Продолжить', uk: 'Продовжити' }[locale as string] || 'Continue')}</span>
-                  )}
-                </button>
+              {isSignup && renderConsentBoxes()}
 
-                {error && (
-                  <div className="mt-4 p-4 bg-red-50 neo-border rounded-xl text-red-700 text-sm">
-                    {error}
-                  </div>
-                )}
-
-                {hasPlan && (
-                <div className="flex items-center justify-center gap-4 mt-6 text-xs text-slate-400">
-                  <span className="flex items-center gap-1"><ShieldIcon /> {t.securePayment}</span>
-                </div>
-                )}
-              </>
-            ) : !user ? (
-              /* Not logged in - show auth UI */
-              <>
-                <h2 className="text-xl font-bold text-center mb-2">{t.loginTitle}</h2>
-                <p className="text-base text-center text-gray-500 mb-6 whitespace-pre-line">{t.loginSubtitle}</p>
-
-                <button
-                  onClick={handleGoogleLogin}
-                  disabled={isLoading || isEmailLoading}
-                  className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-white neo-border rounded-xl text-[#1a1a2e] font-bold hover:bg-slate-50 transition-all neo-btn disabled:opacity-50 disabled:cursor-not-allowed"
-                  style={{ boxShadow: '0 4px 16px rgba(16,24,40,0.08)' }}
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      <span>{t.loading}</span>
-                    </>
-                  ) : (
-                    <>
-                      <GoogleIcon />
-                      <span>{t.loginButton}</span>
-                    </>
-                  )}
-                </button>
-
-                <div className="flex items-center gap-4 my-6">
-                  <div className="flex-1 h-px bg-[#1a1a2e]/20" />
-                  <span className="text-slate-400 text-sm font-bold">{t.orDivider}</span>
-                  <div className="flex-1 h-px bg-[#1a1a2e]/20" />
-                </div>
-
-                <form onSubmit={handleEmailAuth} className="space-y-4">
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder={t.emailPlaceholder as string}
-                    required
-                    disabled={isLoading || isEmailLoading}
-                    className="w-full px-4 py-3 neo-border rounded-xl text-[#1a1a2e] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
-                  />
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder={t.passwordPlaceholder as string}
-                    required
-                    disabled={isLoading || isEmailLoading}
-                    className="w-full px-4 py-3 neo-border rounded-xl text-[#1a1a2e] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
-                  />
-                  <button
-                    type="submit"
-                    disabled={isLoading || isEmailLoading || !email.trim() || !password}
-                    className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-blue-500 rounded-xl neo-border neo-btn text-white font-bold hover:bg-blue-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                    style={{ boxShadow: '0 4px 16px rgba(16,24,40,0.08)' }}
-                  >
-                    {isEmailLoading ? (
-                      <>
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                        <span>{t.loading}</span>
-                      </>
-                    ) : (
-                      <span>{isSignup ? t.emailSignupButton : t.emailLoginButton}</span>
-                    )}
-                  </button>
-                </form>
-
-                {error && error !== (t.termsRequired as string) && (
-                  <div className="mt-4 p-4 bg-red-50 neo-border rounded-xl text-red-700 text-sm">
-                    {error}
-                  </div>
-                )}
-
-                <p className="text-center text-sm text-slate-500 mt-4">
-                  {isSignup ? (t.hasAccount as string) : (t.noAccount as string)}{' '}
-                  <button
-                    onClick={() => { setIsSignup(!isSignup); setError(null); }}
-                    className="text-blue-500 font-bold hover:underline"
-                  >
-                    {isSignup ? (t.emailLoginButton as string) : (t.emailSignupButton as string)}
-                  </button>
-                </p>
-
-                {renderConsentBoxes()}
-
-                {hasPlan && (
-                <div className="flex items-center justify-center gap-4 mt-6 text-xs text-slate-400">
-                  <span className="flex items-center gap-1"><ShieldIcon /> {t.securePayment}</span>
-                </div>
-                )}
-              </>
-            ) : null}
-
-          </div>
+              {hasPlan && <div className="mt-6 flex items-center justify-center gap-1 text-xs text-muted"><ShieldIcon /> {t.securePayment}</div>}
+            </>
+          ) : null}
         </div>
       </main>
 
-      <footer className="bg-slate-900 text-white">
-        <div className="max-w-7xl mx-auto px-4 pt-8 pb-8">
-          <div className="pt-4 border-t border-slate-800">
-            <p className="text-slate-400 text-sm font-light text-center">
-              © 2025 Agente Immo. {t.footer}
-            </p>
-          </div>
-        </div>
-      </footer>
+      <footer className="pb-8 text-center text-xs text-muted">© {new Date().getFullYear()} Agente Immo · <a href={`/${locale}/privacy`} className="hover:text-ink">Privacy</a> · <a href={`/${locale}/termini`} className="hover:text-ink">{en ? 'Terms' : 'Termini'}</a></footer>
     </div>
   );
 }

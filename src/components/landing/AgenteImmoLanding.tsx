@@ -355,7 +355,7 @@ function Pricing() {
           <Credits n={PRICING.starterCredits} />
           <SiteIncluded />
           <div className="min-h-8 flex-1" />
-          <Cta ghost href={`${APP}#/piano`} className="w-full justify-center">{L('Scegli Starter', "Choose Starter")}</Cta>
+          <Cta ghost href={`${APP}#/piano?buy=starter`} className="w-full justify-center">{L('Scegli Starter', "Choose Starter")}</Cta>
         </Reveal>
         <Reveal delay={160} className="relative flex flex-col rounded-[32px] bg-white p-8 ring-2 ring-ink shadow-[0_40px_100px_-40px_rgba(0,0,0,.35)]">
           <span className="absolute -top-3 left-8 rounded-full bg-ink px-3 py-1 text-xs font-semibold text-white">{L('Consigliato', "Recommended")}</span>
@@ -372,7 +372,7 @@ function Pricing() {
           <Credits n={PRICING.credits} />
           <SiteIncluded />
           <div className="min-h-8 flex-1" />
-          <Cta href={`${APP}#/piano`} className="w-full justify-center">{L('Scegli Pro', "Choose Pro")}</Cta>
+          <Cta href={`${APP}#/piano?buy=${yearly ? 'pro_yearly' : 'pro_quarterly'}`} className="w-full justify-center">{L('Scegli Pro', "Choose Pro")}</Cta>
         </Reveal>
       </div>
       <p className="mt-6 text-center text-sm text-muted">{L('Prima di scegliere,', "Before choosing,")} <a href="#prova" className="font-medium text-ink underline underline-offset-4">{L('provalo gratis sulla tua foto', "try it free on your photo")}</a>{L(', senza registrarti. Prezzi finali, senza IVA aggiunta.', ", no sign-up needed. Final prices, no VAT added.")}</p>
@@ -410,12 +410,8 @@ function Landing({ faq }: { faq: [string, string][] }) {
             <div className="mx-auto hidden items-center gap-1 md:flex">
               {[['#staging', L('Annunci', "Listings")], ['#video', 'Social'], ['#sito', L('Il tuo sito', "Your website")], ['#prezzi', L('Prezzi', "Pricing")]].map(([h, l]) => <a key={h} href={h} className="rounded-full px-3.5 py-2 text-sm font-medium text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink">{l}</a>)}
             </div>
-            {/* lingua: pillola IT / EN, quella attiva piena */}
-            <span className="ml-auto hidden h-9 items-center rounded-full bg-canvas p-1 text-xs font-semibold sm:flex md:ml-0">
-              {(['it', 'en'] as const).map(l => <a key={l} href={`/${l}`} hrefLang={l} aria-current={(en ? 'en' : 'it') === l ? 'true' : undefined} className={`flex h-7 items-center rounded-full px-2.5 uppercase ease-smooth transition-colors ${(en ? 'en' : 'it') === l ? 'bg-white text-ink shadow-sm' : 'text-muted hover:text-ink'}`}>{l}</a>)}
-            </span>
             <AuthCta locale="it" href={APP} dashLabel="Dashboard" className="hidden px-3 text-sm font-semibold text-ink sm:block">{L('Accedi', "Sign in")}</AuthCta>
-            <Cta className="ml-auto !h-10 shrink-0 whitespace-nowrap !px-4 text-sm sm:ml-0 sm:!px-5">{L('Prova gratis', "Try it free")}</Cta>
+            <Cta className="ml-auto !h-10 shrink-0 whitespace-nowrap !px-4 text-sm sm:!px-5 md:ml-0">{L('Prova gratis', "Try it free")}</Cta>
           </nav>
         </div>
       </header>
@@ -575,6 +571,14 @@ function Landing({ faq }: { faq: [string, string][] }) {
           </div>
         </Reveal>
       </section>
+
+      {/* lingua: pillola fissa in basso a destra, la lingua attiva nel cerchio bianco */}
+      <nav aria-label="Lingua" className="fixed bottom-4 right-4 z-40 flex h-11 items-center rounded-full bg-canvas/90 p-1 text-sm font-semibold shadow-[0_10px_30px_-10px_rgba(0,0,0,.25)] ring-1 ring-black/5 backdrop-blur">
+        {(['it', 'en'] as const).map(l => {
+          const on = (en ? 'en' : 'it') === l;
+          return <a key={l} href={`/${l}`} hrefLang={l} aria-current={on ? 'true' : undefined} className={`flex h-9 w-9 items-center justify-center rounded-full uppercase ease-smooth transition-colors ${on ? 'bg-white text-ink shadow-sm' : 'text-muted hover:text-ink'}`}>{l}</a>;
+        })}
+      </nav>
 
       {/* footer: marchio a sinistra, tre colonne di link (prodotto, guide SEO, legale), riga finale */}
       <footer className="border-t border-line bg-canvas">

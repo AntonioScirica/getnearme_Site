@@ -21,7 +21,7 @@ import ProgressiveBlur from '@/components/ProgressiveBlur';
 import { go, formatPrice, authFetch, CARD_SHADOW, warm } from './api';
 import ProfileForm, { type Profile } from './ProfileForm';
 import Onboarding from './Onboarding';
-import PlanView, { CreditsPill, DemoDownload, NoCreditsModal } from './PlanView';
+import PlanView, { CreditsPill, DemoDownload, isBuy, NoCreditsModal } from './PlanView';
 import { tiltMove, tiltReset } from '@/components/ui/tilt';
 
 // Routing a hash (#/immobili, #/nuovo, #/immobile/<id>): back/forward del browser
@@ -66,6 +66,8 @@ export default function PlatformApp({ userData }: { userData: UserData }) {
   if (profile === undefined) return <div className="flex h-full items-center justify-center bg-canvas"><Loader2 className="animate-spin text-muted" /></div>;
   // #/benvenuto la rimostra a chi vuole rivederla.
   if (profile && (!profile.slug || route === '/benvenuto')) return <Onboarding onDone={p => {
+    // arrivato scegliendo un piano sulla landing: finito l'onboarding si va dritti al pagamento
+    if (/^#\/piano\?buy=/.test(location.hash)) { setProfile(p); return; }
     // hashchange lanciato a mano: e' sincrono, cosi' la home e' gia' nel DOM quando il browser cattura lo stato nuovo
     const swap = () => flushSync(() => { history.replaceState(null, '', '#/'); window.dispatchEvent(new HashChangeEvent('hashchange')); setMorphAt('/'); setProfile(p); });
     if (!document.startViewTransition) return swap();
@@ -116,7 +118,7 @@ export default function PlatformApp({ userData }: { userData: UserData }) {
           {route === '/profilo' ? (
             <ProfileView email={userData.email} profile={profile ?? null} onSaved={setProfile} admin={isPlatformAdmin(userData.email)} />
           ) : route === '/piano' ? (
-            <PlanView ok={new URLSearchParams(query).get('ok') === '1'} />
+            <PlanView ok={new URLSearchParams(query).get('ok') === '1'} buy={(b => (isBuy(b) ? b : undefined))(new URLSearchParams(query).get('buy'))} />
           ) : route === '/costi' && isPlatformAdmin(userData.email) ? (
             <CostsView />
           ) : route === '/migliora' ? (

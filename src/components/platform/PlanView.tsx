@@ -37,11 +37,19 @@ async function checkout(plan: 'starter' | 'pro_yearly' | 'pro_quarterly') {
 }
 
 // Pagina del piano: saldo, scelta del piano, pagamento con Stripe (dati di fatturazione raccolti da Stripe)
-export default function PlanView({ ok }: { ok?: boolean }) {
+type Buy = 'starter' | 'pro_yearly' | 'pro_quarterly';
+export const isBuy = (v: string | null): v is Buy => v === 'starter' || v === 'pro_yearly' || v === 'pro_quarterly';
+// buy = piano scelto sulla landing (anche prima del login): si va dritti a Stripe
+export default function PlanView({ ok, buy }: { ok?: boolean; buy?: Buy }) {
   const c = useCredits();
-  const [yearly, setYearly] = useState(true);
-  const [busy, setBusy] = useState('');
-  const go = async (p: 'starter' | 'pro_yearly' | 'pro_quarterly') => { setBusy(p); await checkout(p); setBusy(''); };
+  const [yearly, setYearly] = useState(buy !== 'pro_quarterly');
+  const [busy, setBusy] = useState<string>(buy ?? '');
+  const go = async (p: Buy) => { setBusy(p); await checkout(p); setBusy(''); };
+  useEffect(() => {
+    if (!buy) return;
+    history.replaceState(null, '', '#/piano'); // tornando indietro da Stripe non riparte da solo
+    void go(buy);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const card = (name: string, price: number, sub: string, credits: number, cta: React.ReactNode, strong = false) => (
     <div className={`flex flex-col rounded-[28px] bg-white p-7 ${strong ? 'ring-2 ring-ink' : CARD_SHADOW}`}>
       <div className="text-sm font-semibold text-muted">{name}</div>

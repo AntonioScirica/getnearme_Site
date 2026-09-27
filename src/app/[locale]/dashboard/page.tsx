@@ -189,7 +189,8 @@ export default function DashboardPage() {
         window.location.replace(`/${locale}`);
         return;
       }
-      window.location.replace(`/${locale}/checkout/agency`);
+      // si torna qui (anche #/piano?buy=...) dopo l'accesso
+      window.location.replace(`/${locale}/checkout/agency?next=${encodeURIComponent(location.pathname + location.search + location.hash)}`);
     }
   }, [loading, userData, locale, unavailable]);
 
