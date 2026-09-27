@@ -1,7 +1,7 @@
 // Call-to-action for every social caption — varied by post, always driving to
-// GetNearMe via comment-keyword / save / engagement.
+// Agente Immo via comment-keyword / save / engagement.
 // IMPORTANT: NO links or domains in the caption. Instagram restricted the
-// account for "adding links", so captions must not contain getnearme.it, "link
+// account for "adding links", so captions must not contain agenteimmo.me, "link
 // in bio" or the word "link". Conversion stays on comment-keyword (auto-DM) and
 // engagement. Single source of truth: PED caption builder, weekly command, worker.
 

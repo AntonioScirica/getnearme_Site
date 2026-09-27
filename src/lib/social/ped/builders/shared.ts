@@ -9,13 +9,13 @@
 // separately and the builder functions stay CSS-agnostic (they emit HTML
 // class names only). The host picks which CSS to attach.
 
-// ── GetNearMe logo path ──────────────────────────────────────────────
+// ── Agente Immo logo path ──────────────────────────────────────────────
 export const LOGO_SVG_PATH =
   "M224.816 4.98C217.966-1.72 207.036-1.65 200.274 5.13L51.253 154.306c-14.922 14.922-27.88 29.952-37.086 49.303-9.206 19.35-13.635 38.526-14.071 58.923-.567 26.135.975 49.699 17.468 70.838 13.962 17.889 31.458 32.876 46.576 49.739 16.601 18.521 34.14 36.475 51.178 54.691 4.56 4.887 58.465 62.021 83.051 88.418 6.698 7.177 17.976 7.439 25.001.567L379.138 374.925c55.018-53.971 58.334-133.379 15.969-196.448-16.885-25.153-40.882-45.812-63.483-66.471-6.85-6.261-17.409-6.043-24.019.48L167.856 250.403c-6.61 6.522-6.959 17.059-.785 23.997l33.508 37.784c6.61 7.461 18.129 7.875 25.262.894L320.193 220.69s41.885 40.773.349 93.152L225.427 408.782c-6.785 6.763-17.736 6.807-24.564.109L111.463 321.084s-61.759-46.619.658-109.491c49.521-49.106 119.483-118.479 147.778-146.512 6.915-6.85 6.871-18.063-.088-24.87L224.816 4.98z";
 
 // Logo footer SVG used by all PED feed slides (deduplicated: was both
 // LOGO_FOOTER and PED_LOGO_FOOTER in the original files — they are byte-identical).
-export const LOGO_FOOTER = `<svg width="36" height="36" viewBox="0 0 424 533" xmlns="http://www.w3.org/2000/svg"><path fill="#3B83F6" d="${LOGO_SVG_PATH}"/></svg>getnearme.it`;
+export const LOGO_FOOTER = `<svg width="36" height="36" viewBox="0 0 424 533" xmlns="http://www.w3.org/2000/svg"><path fill="#3B83F6" d="${LOGO_SVG_PATH}"/></svg>agenteimmo.me`;
 export const PED_LOGO_FOOTER = LOGO_FOOTER;
 
 // All decorative SVGs carry explicit width/height so they never balloon to
@@ -45,12 +45,12 @@ export const REF_STEPS: [string, string, string][] = [
   ],
   [
     "Noi facciamo la demo",
-    "Il nostro team contatta l'agenzia, organizza la demo e presenta GetNearMe nel dettaglio.",
+    "Il nostro team contatta l'agenzia, organizza la demo e presenta Agente Immo nel dettaglio.",
     "Non devi seguire la trattativa.",
   ],
   [
     "L'agenzia decide",
-    "Nessuna pressione. L'agenzia valuta in autonomia se attivare GetNearMe per il proprio lavoro.",
+    "Nessuna pressione. L'agenzia valuta in autonomia se attivare Agente Immo per il proprio lavoro.",
     "Tu non hai obblighi dopo la segnalazione.",
   ],
   [

@@ -60,7 +60,7 @@ export default function EmailOnlyPage() {
             </div>
           </div>
           <h1 className="text-xl font-semibold text-gray-100 text-center mb-1">
-            GetNearMe
+            Agente Immo
           </h1>
           <p className={`${MONO} text-[11px] tracking-wider uppercase text-gray-500 text-center mb-8`}>
             Email Console

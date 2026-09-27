@@ -17,11 +17,11 @@ export default async function handler(req, res) {
   if (!req.query.sync) {
     const qs = new URLSearchParams(req.query);
     qs.set('sync', '1');
-    fetch(`https://${req.headers.host || 'getnearme.it'}/api/social/cron/generate?${qs}`).catch(() => {});
+    fetch(`https://${req.headers.host || 'agenteimmo.me'}/api/social/cron/generate?${qs}`).catch(() => {});
     return res.json({ ok: true, message: `generate triggered async (type=${req.query.type || 'carousel'})` });
   }
 
-  // Video: not supported on GetNearMe (carousel/prompt only)
+  // Video: not supported on Agente Immo (carousel/prompt only)
   if (req.query.type === 'video') {
     return res.json({ message: 'Video generation not available on this project' });
   }

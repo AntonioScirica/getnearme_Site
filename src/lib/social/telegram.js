@@ -6,7 +6,7 @@ export async function sendMessage(text, options = {}) {
   const body = {
     chat_id: CHAT_ID,
     // Prefix: same bot+chat as ai-for-dumbs, messages must be distinguishable
-    text: `🏠 <b>[GetNearMe]</b> ${text}`,
+    text: `🏠 <b>[Agente Immo]</b> ${text}`,
     parse_mode: 'HTML',
     ...options,
   };

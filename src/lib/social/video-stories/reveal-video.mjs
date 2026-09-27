@@ -12,7 +12,7 @@
 //  furnished result at the end.
 //
 //  Spec: 1080×1920, 10s, 30fps. Configurable top badge + white "Realizzato
-//  con GetNearMe" box at bottom. Safe-area aware.
+//  con Agente Immo" box at bottom. Safe-area aware.
 // ─────────────────────────────────────────────────────────────────────────
 
 import fs from 'node:fs/promises';

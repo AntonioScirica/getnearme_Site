@@ -159,7 +159,7 @@ const DATI: PedTemplateModule = {
     if (d.insight) parts.push(strip(d.insight));
     const pill = d.ctaPill;
     if (pill) {
-      const hint = strip(d.ctaHint || d.ctaSub || "Ricevi il link per provare GetNearMe.");
+      const hint = strip(d.ctaHint || d.ctaSub || "Ricevi il link per provare Agente Immo.");
       parts.push(`Commenta "${pill}", ${hint.charAt(0).toLowerCase()}${hint.slice(1)}`);
     }
     parts.push(HASHTAGS);
@@ -203,7 +203,7 @@ const EDU: PedTemplateModule = {
     if (items.length) parts.push(items.join("\n"));
     const pill = d.ctaPill;
     if (pill) {
-      const hint = strip(d.ctaHint || d.ctaSub || "Ricevi il link per provare GetNearMe.");
+      const hint = strip(d.ctaHint || d.ctaSub || "Ricevi il link per provare Agente Immo.");
       parts.push(`Commenta "${pill}", ${hint.charAt(0).toLowerCase()}${hint.slice(1)}`);
     }
     parts.push(HASHTAGS);
@@ -249,7 +249,7 @@ const FEATURE: PedTemplateModule = {
     if (d.yesText) parts.push(strip(d.yesText));
     const pill = d.ctaPill;
     if (pill) {
-      const hint = strip(d.ctaHint || d.ctaSub || "Ricevi il link per provare GetNearMe.");
+      const hint = strip(d.ctaHint || d.ctaSub || "Ricevi il link per provare Agente Immo.");
       parts.push(`Commenta "${pill}", ${hint.charAt(0).toLowerCase()}${hint.slice(1)}`);
     }
     parts.push(HASHTAGS);
@@ -289,7 +289,7 @@ const POST_SINGOLO: PedTemplateModule = {
     if (d.body) parts.push(strip(d.body));
     const pill = d.ctaPill;
     if (pill) {
-      const hint = strip(d.ctaHint || "Ricevi il link per provare GetNearMe");
+      const hint = strip(d.ctaHint || "Ricevi il link per provare Agente Immo");
       parts.push(`Commenta "${pill}", ${hint.charAt(0).toLowerCase()}${hint.slice(1)}`);
     }
     parts.push(HASHTAGS);
@@ -320,7 +320,7 @@ const TIP: PedTemplateModule = {
     if (d.how) parts.push(`Come fare: ${strip(d.how)}`);
     const pill = d.ctaPill;
     if (pill) {
-      const hint = strip(d.ctaHint || d.ctaSub || "Ricevi il link per provare GetNearMe.");
+      const hint = strip(d.ctaHint || d.ctaSub || "Ricevi il link per provare Agente Immo.");
       parts.push(`Commenta "${pill}", ${hint.charAt(0).toLowerCase()}${hint.slice(1)}`);
     }
     parts.push(HASHTAGS);
@@ -359,7 +359,7 @@ const REFERRAL: PedTemplateModule = {
     if (d.coverSub) parts.push(strip(d.coverSub));
     const pill = d.ctaPill;
     if (pill) {
-      const hint = strip(d.ctaHint || d.ctaSub || "Ricevi il link per provare GetNearMe.");
+      const hint = strip(d.ctaHint || d.ctaSub || "Ricevi il link per provare Agente Immo.");
       parts.push(`Commenta "${pill}", ${hint.charAt(0).toLowerCase()}${hint.slice(1)}`);
     }
     parts.push(HASHTAGS);
@@ -425,7 +425,7 @@ export function buildStoryForTopic(topic: PedTopic, rubricMap: RubricStoryMap = 
 export function buildCaptionForTopic(topic: PedTopic): string {
   const mod = PED_REGISTRY[topic.template];
   const base = mod ? mod.buildCaption(topic) : (topic.title || "").slice(0, 2200);
-  // Every caption ends with a CTA that drives to GetNearMe — varied by rubric
+  // Every caption ends with a CTA that drives to Agente Immo — varied by rubric
   // (comment a keyword / save / link), not always "Commenta DEMO".
   return applyCta(base, topic.rubric);
 }

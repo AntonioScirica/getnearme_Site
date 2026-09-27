@@ -19,7 +19,7 @@ export default async function handler(req, res) {
   // This prevents cron-job.org 30s timeout from killing the request
   if (!req.query.sync) {
     // Fire-and-forget: call ourselves with sync=1
-    const selfUrl = `https://${req.headers.host || 'getnearme.it'}/api/social/cron/plan?sync=1&edition=${edition}&account=${accountId}&secret=${req.query.secret || ''}`;
+    const selfUrl = `https://${req.headers.host || 'agenteimmo.me'}/api/social/cron/plan?sync=1&edition=${edition}&account=${accountId}&secret=${req.query.secret || ''}`;
     fetch(selfUrl).catch(() => {});
     return res.json({ ok: true, message: `Plan ${edition} triggered async`, date: today });
   }
@@ -237,7 +237,7 @@ export default async function handler(req, res) {
   // Chain generate right away: there is no generate cron between the 18:30
   // evening plan and the 20:00 publish, so evening news would never render.
   // Harmless for morning too (the 08:30 generate cron becomes a no-op backup).
-  const genUrl = `https://${req.headers.host || 'getnearme.it'}/api/social/cron/generate?account=${accountId}&secret=${req.query.secret || ''}`;
+  const genUrl = `https://${req.headers.host || 'agenteimmo.me'}/api/social/cron/generate?account=${accountId}&secret=${req.query.secret || ''}`;
   fetch(genUrl).catch(() => {});
   console.log(`Chained generate for ${edition}`);
 

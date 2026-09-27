@@ -17,7 +17,7 @@ const jetbrains = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "GetNearMe Metrics",
+  title: "Agente Immo Metrics",
   robots: { index: false, follow: false },
 };
 

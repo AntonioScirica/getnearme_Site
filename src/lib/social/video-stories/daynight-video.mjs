@@ -10,7 +10,7 @@
 //  and captures it frame-by-frame; ffmpeg encodes the MP4.
 //
 //  Spec: 1080×1920, 15s, 30fps. "DA GIORNO A NOTTE" top badge, white
-//  "Realizzato con GetNearMe" box at the bottom. Safe-area aware.
+//  "Realizzato con Agente Immo" box at the bottom. Safe-area aware.
 // ─────────────────────────────────────────────────────────────────────────
 
 import fs from 'node:fs/promises';

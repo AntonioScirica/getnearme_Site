@@ -47,7 +47,7 @@ export default async function handler(req, res) {
   if (!req.query.sync) {
     const qs = new URLSearchParams(req.query);
     qs.set('sync', '1');
-    fetch(`https://${req.headers.host || 'getnearme.it'}/api/social/cron/generate-ped?${qs}`).catch(() => {});
+    fetch(`https://${req.headers.host || 'agenteimmo.me'}/api/social/cron/generate-ped?${qs}`).catch(() => {});
     return res.json({ ok: true, message: 'generate-ped triggered async' });
   }
 
@@ -253,7 +253,7 @@ export default async function handler(req, res) {
       .eq('rubric', 'video')
       .in('status', ['proposed', 'planned', 'approved']);
     videoTopics = data || [];
-    const host = req.headers.host || 'getnearme.it';
+    const host = req.headers.host || 'agenteimmo.me';
     const secret = process.env.CRON_SECRET || '';
     for (const vt of videoTopics) {
       const qs = new URLSearchParams({ secret, topic_id: vt.id });

@@ -259,7 +259,7 @@ export default function SocialDashboard() {
       {/* Sidebar — desktop only */}
       <aside className="w-60 shrink-0 bg-[#161920] border-r border-white/[0.08] flex-col hidden md:flex">
         <div className="px-5 h-16 flex items-center border-b border-white/[0.08] shrink-0">
-          <span className="font-semibold text-gray-100 text-lg">GetNearMe</span>
+          <span className="font-semibold text-gray-100 text-lg">Agente Immo</span>
           <span className={`${MONO} text-[10px] text-gray-500 tracking-wider uppercase ml-2`}>Social</span>
         </div>
         <nav className="flex-1 py-4 px-3 space-y-0.5">
@@ -707,7 +707,7 @@ function PreviewModal({
   // Hashtags: prefer generated, fallback to rubric-based
   let hashtags = item?.content_data?.hashtags || [];
   if (!hashtags.length) {
-    const base = ["GetNearMe", "immobiliare", "agenteimmobiliare"];
+    const base = ["AgenteImmo", "immobiliare", "agenteimmobiliare"];
     const rubricTags: Record<string, string[]> = {
       "roma-milano": ["mercatoimmobiliare", "Milano", "Roma"],
       educativo: ["homestaging", "tips", "realestate"],
@@ -781,7 +781,7 @@ function PreviewModal({
                     <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", zIndex: 20, background: "#fff", borderRadius: 5, padding: "5px 10px", display: "flex", alignItems: "center", gap: 4, boxShadow: "0 2px 8px rgba(0,0,0,0.3)" }}>
                       <span style={{ fontSize: 6, fontWeight: 600, color: "#1a1a2e", whiteSpace: "nowrap" }}>Realizzato con</span>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src="/logo_blu_nero.svg" alt="GetNearMe" style={{ height: 10 }} />
+                      <img src="/logo_blu_nero.svg" alt="Agente Immo" style={{ height: 10 }} />
                     </div>
                   </div>
                 </div>
@@ -814,7 +814,7 @@ function PreviewModal({
                     <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", zIndex: 20, background: "#fff", borderRadius: 5, padding: "5px 10px", display: "flex", alignItems: "center", gap: 4, boxShadow: "0 2px 8px rgba(0,0,0,0.3)" }}>
                       <span style={{ fontSize: 6, fontWeight: 600, color: "#1a1a2e", whiteSpace: "nowrap" }}>Realizzato con</span>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src="/logo_blu_nero.svg" alt="GetNearMe" style={{ height: 10 }} />
+                      <img src="/logo_blu_nero.svg" alt="Agente Immo" style={{ height: 10 }} />
                     </div>
                   </div>
                 </div>

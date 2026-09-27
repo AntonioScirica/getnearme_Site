@@ -82,7 +82,7 @@ export const ROOM_FULL_SVG = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w
 export const ARROW_ARC_SVG = '<svg viewBox="0 0 94 29" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M88.1266 9.57854C87.3044 12.6015 86.5639 15.5492 85.6513 18.882C87.7071 18.7237 88.9347 17.5167 89.4596 16.1269C91.0341 11.9575 92.5327 7.70694 93.6407 3.36357C94.285 0.882061 92.5236 -0.514612 90.0537 0.176354C85.913 1.27486 81.8422 2.61087 77.6956 3.86575C77.4565 3.93514 77.1386 4.00161 77.0541 4.15505C76.64 4.68771 76.3805 5.30441 76.0423 5.91819C76.5847 6.17328 77.1154 6.74114 77.5907 6.68055C79.2529 6.50758 80.8421 6.1753 82.4285 5.9212C83.3004 5.79708 84.0964 5.59185 85.3416 6.02972C84.4406 6.93572 83.5367 7.91991 82.6356 8.82591C63.2037 26.7368 34.95 29.5992 12.1136 16.1426C9.1829 14.3892 6.50002 12.3318 3.65385 10.425C2.65361 9.76135 1.65045 9.17589 0.65021 8.51225C0.408182 8.65983 0.241976 8.88853 -5.13402e-05 9.03611C0.209937 9.74861 0.25372 10.6898 0.787383 11.1795C2.45837 12.886 4.12935 14.5924 6.04528 16.0732C25.0471 30.8745 52.1899 32.4337 73.7129 19.7683C77.8245 17.3377 81.4899 14.1857 85.301 11.3524C86.1117 10.7562 86.7678 10.076 87.5026 9.3987C87.663 9.32638 87.8963 9.41336 88.1266 9.57854Z" fill="#3B83F6"/></svg>';
 export const PLAY_SVG = '<svg viewBox="0 0 24 24" fill="#fff" xmlns="http://www.w3.org/2000/svg"><polygon points="8,5 20,12 8,19"/></svg>';
 export const CHEVRONS_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="#3B83F6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 16l-4-4 4-4"/><path d="M17 8l4 4-4 4"/></svg>';
-export const LOGO_FOOTER = `<svg viewBox="0 0 424 533" xmlns="http://www.w3.org/2000/svg"><path fill="#3B83F6" d="${LOGO_SVG_PATH}"/></svg>getnearme.it`;
+export const LOGO_FOOTER = `<svg viewBox="0 0 424 533" xmlns="http://www.w3.org/2000/svg"><path fill="#3B83F6" d="${LOGO_SVG_PATH}"/></svg>agenteimmo.me`;
 
 export const VIDEO_STORIES_CSS = `
 @import url('https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&display=swap');
@@ -386,7 +386,7 @@ export function reelTimelapseHtml(photoUrl: string, videoUrl: string): string {
     <div class="tl-center">
       <div class="tl-center-box">
         <span>Realizzato con</span>
-        <img src="/logo_blu_nero.svg" alt="GetNearMe">
+        <img src="/logo_blu_nero.svg" alt="Agente Immo">
       </div>
     </div>
   </div>`;
@@ -507,7 +507,7 @@ export function feedSlide1Html(): string {
     <div class="divider-icon">${ARROWS_SVG}</div>
     <div class="label-before">Prima</div>
     <div class="label-after">Dopo</div>
-    <div class="bottom-bar-center"><div class="badge">GetNearMe</div></div>
+    <div class="bottom-bar-center"><div class="badge">Agente Immo</div></div>
   </div>`;
 }
 
@@ -523,7 +523,7 @@ export function feedSlide2Html(): string {
       <div class="pill"><svg viewBox="0 0 24 24" fill="none" stroke="#1a1a2e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Video AI</div>
     </div>
     <div class="cta-btn">Link in bio<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M19 12l-7 7-7-7"/></svg></div>
-    <div class="cta-footer">getnearme.it</div>
+    <div class="cta-footer">agenteimmo.me</div>
   </div>`;
 }
 
@@ -540,7 +540,7 @@ export function storyCtaHtml(): string {
     <h2>Vedi il risultato<br><span class="highlight">completo</span></h2>
     <div class="cta-sub">Staging AI per trasformare i tuoi annunci immobiliari in pochi secondi.</div>
     <div class="cta-btn">Guarda nel profilo<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg></div>
-    <div class="cta-footer">getnearme.it</div>
+    <div class="cta-footer">agenteimmo.me</div>
   </div>`;
 }
 
@@ -555,7 +555,7 @@ export function reelsSlideHtml(): string {
     <div class="divider-icon">${ARROWS_SVG}</div>
     <div class="label-before" style="top:278px">Prima</div>
     <div class="label-after" style="top:278px">Dopo</div>
-    <div class="bottom-bar-center" style="padding:0 60px 280px"><div class="badge">GetNearMe</div></div>
+    <div class="bottom-bar-center" style="padding:0 60px 280px"><div class="badge">Agente Immo</div></div>
   </div>`;
 }
 
@@ -579,7 +579,7 @@ export function statsHeroHtml(): string {
       <div class="stat-desc">Il mercato residenziale italiano registra un aumento delle transazioni rispetto allo stesso periodo dell&apos;anno precedente.</div>
     </div>
     <div class="bottom-brand">
-      <span class="brand-name" style="display:flex;align-items:center;gap:10px">${LOGO_BLUE}getnearme.it</span>
+      <span class="brand-name" style="display:flex;align-items:center;gap:10px">${LOGO_BLUE}agenteimmo.me</span>
       <span class="swipe-hint">Scorri${ARROW_RIGHT_SVG}</span>
     </div>
   </div>`;
@@ -613,7 +613,7 @@ export function statsCtaHtml(): string {
       <div class="pill">${DL_SVG.replace('stroke="currentColor"', 'stroke="#1a1a2e"')}Report PDF</div>
     </div>
     <div class="cta-btn">Link in bio<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M19 12l-7 7-7-7"/></svg></div>
-    <div class="cta-footer">${LOGO_BLUE}getnearme.it</div>
+    <div class="cta-footer">${LOGO_BLUE}agenteimmo.me</div>
   </div>`;
 }
 
@@ -628,9 +628,9 @@ export function statsStoryHtml(): string {
       <div class="source">Fonte: ISTAT</div>
     </div>
     <h2>Il mercato<br><span class="highlight">cresce</span></h2>
-    <div class="cta-sub">Scopri i dati della tua zona con l&apos;analisi gratuita di GetNearMe.</div>
+    <div class="cta-sub">Scopri i dati della tua zona con l&apos;analisi gratuita di Agente Immo.</div>
     <div class="cta-btn">Guarda nel profilo<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg></div>
-    <div class="cta-footer">${LOGO_BLUE}getnearme.it</div>
+    <div class="cta-footer">${LOGO_BLUE}agenteimmo.me</div>
   </div>`;
 }
 
@@ -645,6 +645,6 @@ export function statsReelHtml(): string {
       <div class="reel-desc">Il mercato residenziale italiano registra segnali positivi, soprattutto nelle grandi citta.</div>
       <div class="reel-source">Fonte: ISTAT, Q1 2026</div>
     </div>
-    <div class="reel-brand">${LOGO_WHITE}getnearme.it</div>
+    <div class="reel-brand">${LOGO_WHITE}agenteimmo.me</div>
   </div>`;
 }

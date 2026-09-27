@@ -32,7 +32,7 @@ const EDU_TOPIC: PedTopic = {
       {
         title: "Analisi della zona",
         text: "Il cliente compra il quartiere quanto la casa. Mostra servizi, trasporti e scuole con dati reali, non con aggettivi.",
-        tip: "Con GetNearMe generi la mappa servizi della zona in un clic.",
+        tip: "Con Agente Immo generi la mappa servizi della zona in un clic.",
       },
       {
         title: "Prezzo giustificato dai dati OMI",
@@ -42,7 +42,7 @@ const EDU_TOPIC: PedTopic = {
       {
         title: "Punteggio dell'immobile",
         text: "Un voto sintetico su luminosità, stato e posizione aiuta il cliente a capire il valore in 5 secondi.",
-        tip: "Il punteggio GetNearMe è calcolato in automatico.",
+        tip: "Il punteggio Agente Immo è calcolato in automatico.",
       },
       {
         title: "Staging delle stanze vuote",
@@ -57,7 +57,7 @@ const EDU_TOPIC: PedTopic = {
     ],
     // CTA slide
     ctaKicker: "Tutti e 5 i punti, da un solo annuncio",
-    ctaTitle: "GetNearMe trasforma l'annuncio in report, analisi zona e staging",
+    ctaTitle: "Agente Immo trasforma l'annuncio in report, analisi zona e staging",
     ctaHL: "in pochi clic",
     badgeColor: "blue",
     ctaPill: "DEMO",
@@ -80,7 +80,7 @@ const TIP_TOPIC: PedTopic = {
     title: "Porta i dati OMI",
     titleHL: "al primo appuntamento",
     body: "Il proprietario sopravvaluta quasi sempre. <strong>Arriva con il valore OMI della zona e 3 comparabili</strong>: la trattativa sul prezzo parte dai numeri, non dalle opinioni.",
-    how: "Apri la zona su GetNearMe, esporta il confronto e portalo stampato.",
+    how: "Apri la zona su Agente Immo, esporta il confronto e portalo stampato.",
   },
 };
 

@@ -293,8 +293,8 @@ export const ALL_TEMPLATES: GalleryTemplate[] = [
   },
   {
     id: "ped-tip",
-    name: "Tip GetNearMe",
-    description: "Mini tip pratico su come usare GetNearMe in scenari reali. 1 al giorno, 28 nel PED",
+    name: "Tip Agente Immo",
+    description: "Mini tip pratico su come usare Agente Immo in scenari reali. 1 al giorno, 28 nel PED",
     formats: [{ label: "IG Feed 1080×1350", slides: ["Tip card"] }],
     status: "ready",
   },

@@ -14,7 +14,7 @@
 //   - before (left, desaturated) / after (right) with a vertical divider
 //   - divider sweeps prima↔dopo with EASE-IN-OUT (cosine), continuous, no holds
 //   - "AI STAGING" top badge, PRIMA/DOPO labels, white "Realizzato con
-//     GetNearMe" box at the BOTTOM (no blue badge)
+//     Agente Immo" box at the BOTTOM (no blue badge)
 //   - safe-area aware (top elements ≥170px, brand box ≥420px from bottom)
 // ─────────────────────────────────────────────────────────────────────────
 

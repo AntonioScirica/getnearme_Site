@@ -7,7 +7,7 @@
 //  in a <video>, composites the brand overlay, and captures it frame-by-frame.
 //
 //  Spec: 1080×1920, 10s, 30fps. "DA TERRENO A CASA" top badge, white
-//  "Realizzato con GetNearMe" box at the bottom. Safe-area aware. One-way
+//  "Realizzato con Agente Immo" box at the bottom. Safe-area aware. One-way
 //  (scavo→finito), no ping-pong — construction never reverses.
 // ─────────────────────────────────────────────────────────────────────────
 

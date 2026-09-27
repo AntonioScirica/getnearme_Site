@@ -55,7 +55,7 @@ Rispondi SOLO con un JSON valido (niente markdown):
   "breakdown_title": "Dettaglio per zona",
   "breakdown_source": "Fonte: ISTAT, Nomisma — Q1 2026",
   "story_title": "Il mercato <highlight>cresce</highlight>",
-  "story_subtitle": "Scopri i dati della tua zona con l'analisi gratuita di GetNearMe.",
+  "story_subtitle": "Scopri i dati della tua zona con l'analisi gratuita di Agente Immo.",
   "reel_title": "Compravendite in crescita nel primo trimestre 2026",
   "reel_desc": "Breve per il reel (max 120 char)",
   "caption": "Caption Instagram completa con emoji e hashtag (max 2200 char)",

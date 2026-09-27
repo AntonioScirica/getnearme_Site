@@ -40,7 +40,7 @@ export default async function handler(req, res) {
   if (!req.query.sync) {
     const qs = new URLSearchParams(req.query);
     qs.set('sync', '1');
-    fetch(`https://${req.headers.host || 'getnearme.it'}/api/social/cron/ped-analyze?${qs}`).catch(() => {});
+    fetch(`https://${req.headers.host || 'agenteimmo.me'}/api/social/cron/ped-analyze?${qs}`).catch(() => {});
     return res.json({ ok: true, message: 'ped-analyze triggered async' });
   }
 

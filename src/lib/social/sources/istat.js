@@ -16,7 +16,7 @@ async function fetchJson(url, accept = 'application/json') {
   const timer = setTimeout(() => ctrl.abort(), TIMEOUT);
   try {
     const res = await fetch(url, {
-      headers: { Accept: accept, 'User-Agent': 'GetNearMe-Stats/1.0' },
+      headers: { Accept: accept, 'User-Agent': 'Agente Immo-Stats/1.0' },
       signal: ctrl.signal,
     });
     clearTimeout(timer);

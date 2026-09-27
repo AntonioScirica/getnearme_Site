@@ -55,7 +55,7 @@ export function pedEduCtaHtml(): string {
     <div class="deco deco-c1"></div>
     <div class="deco deco-p1"></div>
     <div class="pcta-kicker">Tutti e 5 i punti, da un solo annuncio</div>
-    <div class="pcta-title">GetNearMe trasforma l'annuncio in report, analisi zona e staging <span class="hl-blue">in pochi clic</span></div>
+    <div class="pcta-title">Agente Immo trasforma l'annuncio in report, analisi zona e staging <span class="hl-blue">in pochi clic</span></div>
     <div class="pcta-pill">Commenta "DEMO"</div>
     <div class="pcta-sub">Ricevi in DM il link per prenotare una demo gratuita.</div>
     <div class="ped-footer" style="width:100%">${PED_LOGO_FOOTER}</div>

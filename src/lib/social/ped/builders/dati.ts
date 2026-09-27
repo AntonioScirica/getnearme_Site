@@ -57,7 +57,7 @@ export function pedCtaD(d: any): string {
     <div class="pcta-kicker">${d.ctaKicker || ""}</div>
     <div class="pcta-title">${d.ctaTitle || ""} <span class="${d.badgeColor === "blue" ? "hl-blue" : "hl-amber"}">${d.ctaHL || ""}</span></div>
     <div class="pcta-pill">Commenta "${d.ctaPill || "DEMO"}"</div>
-    <div class="pcta-sub">${d.ctaSub || "Ricevi il link per provare GetNearMe."}</div>
+    <div class="pcta-sub">${d.ctaSub || "Ricevi il link per provare Agente Immo."}</div>
     <div class="ped-footer" style="width:100%">${PED_LOGO_FOOTER}</div>
   </div>`;
 }
@@ -111,7 +111,7 @@ export function pedDatiCtaHtml(): string {
     <div class="pcta-kicker">Vuoi lavorare così ogni giorno?</div>
     <div class="pcta-title">Trasforma ogni annuncio in report, post e analisi <span class="hl-amber">in pochi clic</span></div>
     <div class="pcta-pill">Commenta "MERCATO"</div>
-    <div class="pcta-sub">Ricevi in DM il link all'estensione GetNearMe e provala sul tuo prossimo annuncio.</div>
+    <div class="pcta-sub">Ricevi in DM il link all'estensione Agente Immo e provala sul tuo prossimo annuncio.</div>
     <div class="ped-footer" style="width:100%">${PED_LOGO_FOOTER}</div>
   </div>`;
 }

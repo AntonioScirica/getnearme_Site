@@ -53,7 +53,7 @@ export default async function handler(req, res) {
     qs.set('secret', req.query.secret || '');
     qs.set('sync', '1');
     if (topicId) qs.set('topic_id', topicId);
-    const selfUrl = `https://${req.headers.host || 'getnearme.it'}/api/social/cron/generate-video?${qs}`;
+    const selfUrl = `https://${req.headers.host || 'agenteimmo.me'}/api/social/cron/generate-video?${qs}`;
     fetch(selfUrl).catch(() => {});
     return res.json({
       ok: true,

@@ -190,7 +190,7 @@ export default async function handler(req, res) {
   if (!req.query.sync) {
     const qs = new URLSearchParams(req.query);
     qs.set('sync', '1');
-    fetch(`https://${req.headers.host || 'getnearme.it'}/api/social/cron/ped-insights?${qs}`).catch(() => {});
+    fetch(`https://${req.headers.host || 'agenteimmo.me'}/api/social/cron/ped-insights?${qs}`).catch(() => {});
     return res.json({ ok: true, message: `ped-insights triggered async (report=${req.query.report || '0'})` });
   }
 

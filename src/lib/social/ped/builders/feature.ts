@@ -103,7 +103,7 @@ export function pedFeatCtaHtml(): string {
     <div class="pcta-kicker">Direttamente dal tuo annuncio</div>
     <div class="pcta-title">Scegli lo stile e vedi il risultato <span class="hl-blue">in pochi secondi</span></div>
     <div class="pcta-pill">Commenta "STAGING"</div>
-    <div class="pcta-sub">Ricevi il link per provare GetNearMe sulle tue foto.</div>
+    <div class="pcta-sub">Ricevi il link per provare Agente Immo sulle tue foto.</div>
     <div class="ped-footer" style="width:100%">${PED_LOGO_FOOTER}</div>
   </div>`;
 }

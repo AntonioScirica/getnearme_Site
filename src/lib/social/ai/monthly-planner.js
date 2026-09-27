@@ -21,17 +21,17 @@ const RUBRIC_SCHEDULE = {
   0: { rubric: 'education', template: 'ped-carosello-edu' },    // Sunday (rotation restart)
 };
 
-// GetNearMe (web) = suite AI che CREA i contenuti marketing degli immobili
+// Agente Immo (web) = suite AI che CREA i contenuti marketing degli immobili
 // per gli agenti: staging AI (arreda stanze vuote), video AI (tour/reel da
 // foto), template social pronti, avatar parlante, gestione team multi-seat.
 // I contenuti editoriali parlano SOLO di questo. FUORI SCOPE: analisi zona,
 // prezzi/OMI, mappa servizi, punteggio immobile, report PDF — quelle sono
 // feature dell'estensione, NON del prodotto web promosso sui social.
 const RUBRIC_DESCRIPTIONS = {
-  education: 'Due modalita: "tips" (70%) = tutorial pratico per AGENTI IMMOBILIARI su come creare contenuti migliori con GetNearMe — arredare le foto di stanze vuote con lo staging AI, trasformare le foto in un video tour, creare post social che portano contatti, usare un avatar parlante per presentare un immobile in video. "topic" (30%) = concetto utile su marketing immobiliare digitale spiegato in modo pratico — perche il video converte piu delle foto, cos\'e il virtual staging, come funziona un avatar AI, social media per agenzie.',
+  education: 'Due modalita: "tips" (70%) = tutorial pratico per AGENTI IMMOBILIARI su come creare contenuti migliori con Agente Immo — arredare le foto di stanze vuote con lo staging AI, trasformare le foto in un video tour, creare post social che portano contatti, usare un avatar parlante per presentare un immobile in video. "topic" (30%) = concetto utile su marketing immobiliare digitale spiegato in modo pratico — perche il video converte piu delle foto, cos\'e il virtual staging, come funziona un avatar AI, social media per agenzie.',
   people: 'Storie di agenti — profili di agenti e agenzie che hanno rinnovato la propria presentazione degli immobili: chi e passato alle foto con staging AI, ai video tour, ai contenuti social. Come hanno cambiato il modo di mostrare gli immobili e i risultati ottenuti.',
   myths: 'Miti & Realta per Agenti — sfatare miti su marketing immobiliare e contenuti AI. "Lo staging AI si vede che e finto" "I video non servono, bastano le foto" "Le foto col telefono vanno bene" "I social non portano clienti a un\'agenzia". Risposte pratiche con esempi.',
-  tools: 'GetNearMe Feature Spotlight — presenta UNA feature della suite contenuti con caso d\'uso CONCRETO per l\'agente. Non "esiste questa feature" ma "con questa feature pubblichi un annuncio molto piu attraente in 2 minuti". Step by step pratico. Features SOLO suite contenuti: staging AI (arredo virtuale stanze vuote), video AI (tour/reel da foto), template post social pronti, avatar parlante (presentazioni video), multi-seat (tutto il team con lo stesso brand). NON analisi/OMI/mappa/report PDF.',
+  tools: 'Agente Immo Feature Spotlight — presenta UNA feature della suite contenuti con caso d\'uso CONCRETO per l\'agente. Non "esiste questa feature" ma "con questa feature pubblichi un annuncio molto piu attraente in 2 minuti". Step by step pratico. Features SOLO suite contenuti: staging AI (arredo virtuale stanze vuote), video AI (tour/reel da foto), template post social pronti, avatar parlante (presentazioni video), multi-seat (tutto il team con lo stesso brand). NON analisi/OMI/mappa/report PDF.',
   world: 'Marketing Immobiliare & Trend Digitali — come cambia la presentazione degli immobili, ruolo di video e social nel settore, cosa fanno le agenzie che comunicano meglio. Spunti che l\'agente puo usare nei propri contenuti, non analisi di mercato.',
   question: 'La Domanda per Agenti — domanda provocatoria su marketing, contenuti e AI nel lavoro dell\'agente. "Il video tour sostituira le foto?" "Staging AI: valorizzazione o inganno?" "I social servono davvero a un\'agenzia?" Collegata a fatti recenti.',
 };
@@ -63,7 +63,7 @@ const PROMPT_DESCRIPTION = `Tip per Agenti Immobiliari — un consiglio pratico 
 - Alterna tra: staging foto, video, post social, avatar, presentazione immobile, brand agenzia
 - Collega a trend di marketing/social recenti quando rilevante
 - Consiglio specifico, actionable, che l'agente puo applicare OGGI
-- Chiudi SEMPRE con CTA verso GetNearMe ("Arreda le foto con lo staging AI di GetNearMe", "Trasforma l'annuncio in video con GetNearMe")
+- Chiudi SEMPRE con CTA verso Agente Immo ("Arreda le foto con lo staging AI di Agente Immo", "Trasforma l'annuncio in video con Agente Immo")
 - FUORI SCOPE: analisi zona, prezzi/OMI, mappa servizi, punteggio immobile, report PDF (sono estensione, non il prodotto social)
 Esempi: "Come far sembrare nuova una stanza vuota in 1 minuto", "Perche il primo post di un immobile dovrebbe essere un video"
 Esempi avanzati: "Come usare lo staging AI per ripubblicare un annuncio fermo", "Avatar parlante: presenta 10 immobili senza metterti davanti alla camera"`;
@@ -179,7 +179,7 @@ USA QUESTE INFORMAZIONI per calibrare i topic di questo mese.\n`;
     max_tokens: 16000,
     messages: [{
       role: 'user',
-      content: `Sei il direttore editoriale di @getnearme_app, account Instagram/TikTok rivolto ad AGENTI IMMOBILIARI italiani. GetNearMe e una suite AI che CREA i contenuti marketing degli immobili al posto dell'agente: staging AI (arreda virtualmente le stanze vuote nelle foto), video AI (trasforma le foto in video tour/reel), template di post social pronti, avatar parlante (presenta gli immobili in video), gestione team multi-seat. Sostituisce Canva + editor video + lavoro manuale.
+      content: `Sei il direttore editoriale di @getnearme_app, account Instagram/TikTok rivolto ad AGENTI IMMOBILIARI italiani. Agente Immo e una suite AI che CREA i contenuti marketing degli immobili al posto dell'agente: staging AI (arreda virtualmente le stanze vuote nelle foto), video AI (trasforma le foto in video tour/reel), template di post social pronti, avatar parlante (presenta gli immobili in video), gestione team multi-seat. Sostituisce Canva + editor video + lavoro manuale.
 
 FUORI SCOPE (NON parlarne MAI): analisi zona, prezzi/€ al m², dati OMI, mappa servizi/trasporti/scuole, punteggio immobile, report PDF. Quelle sono feature dell'estensione Chrome, NON del prodotto promosso su questo account.
 
@@ -208,7 +208,7 @@ Tipi di video (ruota tra questi):
 - Pillola: spiega un concetto che l'agente deve conoscere in 30 secondi ("Come funziona lo staging AI", "Perche il video converte piu delle foto")
 - Tips rapido: trucco pratico per i contenuti dell'agente (foto, video, post social, avatar)
 - Mito sfatato: sfata un mito che i clienti dicono agli agenti o che circola nel settore
-- Feature GetNearMe: mostra una feature di GetNearMe utile per l'agente
+- Feature Agente Immo: mostra una feature di Agente Immo utile per l'agente
 - Fatto WOW: dato sorprendente sul settore immobiliare che l'agente puo usare con i clienti
 - Confronto: metodi tradizionali vs digitali, portali vs social, foto normali vs staging AI
 - Domanda: domanda provocatoria per agenti che genera commenti
@@ -216,18 +216,18 @@ ${pastSection}${newsSection}${performanceSection}
 == REGOLE ==
 1. PRATICO SOPRA TUTTO. Ogni topic deve insegnare all'AGENTE a FARE qualcosa o dare info UTILE per il suo lavoro. Mai teoria astratta. L'agente deve pensare "questo lo uso domani in ufficio".
 2. Per "education": regola 70/30 SETTIMANALE. ~70% "tips" (come arredare le foto con lo staging AI, come fare un video tour, come creare un post social efficace, come usare l'avatar) e ~30% "topic" (spiegazione concetto: virtual staging, video marketing immobiliare, avatar AI, social per agenzie). Specifica "difficulty" nel JSON solo per education.
-3. Per "tools": UNA feature GetNearMe per post. Caso d'uso dell'agente + problema reale dell'agente + soluzione in 3 step. Features disponibili (SOLO suite contenuti): staging AI (arredo virtuale stanze vuote), video AI (tour/reel da foto), template post social pronti, avatar parlante (presentazioni video), multi-seat (team con stesso brand). MAI analisi/OMI/mappa/punteggio/report PDF.
+3. Per "tools": UNA feature Agente Immo per post. Caso d'uso dell'agente + problema reale dell'agente + soluzione in 3 step. Features disponibili (SOLO suite contenuti): staging AI (arredo virtuale stanze vuote), video AI (tour/reel da foto), template post social pronti, avatar parlante (presentazioni video), multi-seat (team con stesso brand). MAI analisi/OMI/mappa/punteggio/report PDF.
 4. Per "world": trend di marketing immobiliare e contenuti digitali che l'agente puo cavalcare nei propri post (video, social, presentazione immobili). NON analisi di mercato/prezzi.
 5. Per "myths": miti che i clienti dicono agli agenti o che circolano nel settore. Risposte con dati che l'agente puo citare.
 6. Per "people": storie di agenti innovativi, agenzie che usano tecnologia, figure proptech.
 7. Per "question": domanda polarizzante PER AGENTI che genera commenti tra professionisti.
 8. COLLEGATI ALLE NEWS RECENTI quando possibile.
 9. ALMENO 30% topic collegati a news recenti.
-10. VARIETA: non ripetere stessa feature GetNearMe o stessa citta in settimane consecutive.
+10. VARIETA: non ripetere stessa feature Agente Immo o stessa citta in settimane consecutive.
 11. Pubblico: AGENTI IMMOBILIARI italiani. Linguaggio professionale ma accessibile. Possono essere sia agenti tech-savvy che tradizionali.
-12. Per i TIP: ogni tip deve essere diverso. Copri: acquisizione incarichi, presentazione immobile, gestione obiezioni, pricing, marketing, documentazione, tecnologia, social media per agenzie. Chiudi SEMPRE con CTA verso GetNearMe.
+12. Per i TIP: ogni tip deve essere diverso. Copri: acquisizione incarichi, presentazione immobile, gestione obiezioni, pricing, marketing, documentazione, tecnologia, social media per agenzie. Chiudi SEMPRE con CTA verso Agente Immo.
 13. Per i VIDEO: ogni video e un concetto singolo utile per l'agente. Il video NON deve ripetere lo stesso argomento della rubrica o del tip dello stesso giorno.
-14. CTA: ogni post deve avere un aggancio naturale a GetNearMe per l'agente ("Genera il report per il cliente con GetNearMe", "Usa lo staging AI di GetNearMe per valorizzare l'annuncio").
+14. CTA: ogni post deve avere un aggancio naturale a Agente Immo per l'agente ("Genera il report per il cliente con Agente Immo", "Usa lo staging AI di Agente Immo per valorizzare l'annuncio").
 
 Rispondi SOLO con JSON valido con questa struttura:
 {
@@ -246,7 +246,7 @@ Rispondi SOLO con JSON valido con questa struttura:
       "title": "Titolo breve del tip (max 60 char)",
       "prompt_text": "Il consiglio completo (max 300 char)",
       "use_case": "Categoria: staging|video|post-social|avatar|presentazione|personal-brand|team",
-      "tool": "GetNearMe"
+      "tool": "Agente Immo"
     }
   ],
   "videos": [
@@ -321,7 +321,7 @@ IMPORTANTE:
           hookHL: '',
           body: t.summary || '',
           ctaPill: 'PROVA',
-          ctaHint: 'Scopri GetNearMe gratis',
+          ctaHint: 'Scopri Agente Immo gratis',
         };
         break;
     }
@@ -350,8 +350,8 @@ IMPORTANTE:
       title: p.title || '',
       titleHL: '',
       body: p.prompt_text || '',
-      how: 'Scopri di più su GetNearMe',
-      tool: p.tool || 'GetNearMe',
+      how: 'Scopri di più su Agente Immo',
+      tool: p.tool || 'Agente Immo',
       use_case: p.use_case,
       prompt_text: p.prompt_text,
     },

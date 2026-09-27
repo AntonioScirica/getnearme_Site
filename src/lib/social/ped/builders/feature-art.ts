@@ -1,4 +1,4 @@
-// Illustrated, brand-accurate SVG mockups of the GetNearMe platform for the
+// Illustrated, brand-accurate SVG mockups of the Agente Immo platform for the
 // "Feature" carousel cover. Used instead of real screenshots (the product is
 // behind auth). Keyed by feature; picked via slide_data.coverArt.
 //
@@ -49,7 +49,7 @@ function appShell(items: { label: string; icon: string }[], section: string, act
     <line x1="212" y1="0" x2="212" y2="500" stroke="#e4e1da" stroke-width="1.5"/>
     <circle cx="40" cy="36" r="12" fill="#3B82F6"/>
     <g transform="translate(33.96,28.4) scale(0.0285)"><path fill="#fff" d="${LOGO_SVG_PATH}"/></g>
-    <text x="60" y="41" font-family="Satoshi,sans-serif" font-size="15.5" font-weight="800" fill="#211f1c" letter-spacing="-0.3">GetNearMe</text>
+    <text x="60" y="41" font-family="Satoshi,sans-serif" font-size="15.5" font-weight="800" fill="#211f1c" letter-spacing="-0.3">Agente Immo</text>
     <text x="28" y="84" font-family="Satoshi,sans-serif" font-size="11" font-weight="700" fill="#a39c91" letter-spacing="1.2">${section}</text>
     ${nav}
     ${inner}
