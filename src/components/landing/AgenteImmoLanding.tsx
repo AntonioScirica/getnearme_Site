@@ -252,12 +252,12 @@ function TryIt() {
     window.location.href = APP;
   };
   const [picking, setPicking] = useState(false); // scelta del template del video
-  const [emptied, setEmptied] = useState(false); // stanza svuotata: il video dei mobili non ha senso, si scarica e basta
-  const toVideo = async (anim: 'popup' | 'gravity') => {
+  const [emptied, setEmptied] = useState(false); // stanza svuotata: il video va dalla foto originale alla vuota (i mobili spariscono)
+  const toVideo = async (anim: 'popup' | 'gravity', vanish = false) => {
     if (!after || vBusy) return;
     setPicking(false); setVBusy(true); setMsg('');
     const fail = (e?: string) => { setVBusy(false); setMsg(e === 'limit' ? L('Hai già fatto il video di prova oggi. Crea l\'account per farne altri.', "You've made today's free video. Create an account to make more.") : e === 'busy' ? L('Ci sono molti video in corso, riprova tra qualche minuto.', "Lots of videos running right now, try again in a few minutes.") : L('Non siamo riusciti a fare il video di questa foto. Riprova con un\'altra stanza.', "We couldn't make a video of this photo. Try another room.")); };
-    const r = await fetch('/api/landing/demo-video', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ image: after, anim, mock: simulate() }) }).catch(() => null);
+    const r = await fetch('/api/landing/demo-video', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(vanish ? { image: before, empty: after, anim, mock: simulate() } : { image: after, anim, mock: simulate() }) }).catch(() => null);
     const d = await r?.json().catch(() => null) as { job?: string; error?: string } | null;
     if (!d?.job) return fail(d?.error);
     // Veo lavora 1-2 minuti: si controlla ogni 5 s, per massimo 5 minuti
@@ -343,11 +343,12 @@ function TryIt() {
                 className="min-w-0 flex-1 bg-transparent px-2 text-[15px] outline-none placeholder:text-muted/70" />
               </>}
               {after
-                ? video || emptied
+                ? video
                   ? <button type="button" onClick={() => keep(!!video)} className="inline-flex h-11 w-full shrink-0 items-center justify-center gap-2 rounded-2xl bg-ink px-5 text-sm font-semibold text-white">{L(video ? 'Scarica tutto' : 'Scarica', video ? "Download all" : "Download")} <ArrowRight size={15} /></button>
                   : <div className="grid w-full grid-cols-2 gap-2">
                       <button type="button" onClick={() => keep(false)} className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-white px-4 text-sm font-semibold text-ink ring-1 ring-black/10 hover:ring-ink">{L('Scarica', "Download")}</button>
-                      <button type="button" disabled={vBusy} onClick={() => setPicking(p => !p)} className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-ai px-4 text-sm font-semibold text-white disabled:opacity-50"><Clapperboard size={15} /> {L('Trasforma in video', "Turn into video")}</button>
+                      {/* svuotata: il video va dalla foto originale alla stanza vuota (i mobili spariscono), niente template */}
+                      <button type="button" disabled={vBusy} onClick={() => (emptied ? toVideo('popup', true) : setPicking(p => !p))} className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-ai px-4 text-sm font-semibold text-white disabled:opacity-50"><Clapperboard size={15} /> {L('Trasforma in video', "Turn into video")}</button>
                     </div>
                 : <button type="button" disabled={busy || left <= 0} onClick={() => (before ? run() : input.current?.click())} className="inline-flex h-11 w-full shrink-0 items-center justify-center gap-2 rounded-2xl bg-ink px-5 text-sm font-semibold text-white disabled:opacity-40 sm:w-auto"><Sparkles size={15} /> {before ? L('Arreda', "Stage it") : L('Carica foto', "Upload photo")}</button>}
             </div>
@@ -359,11 +360,11 @@ function TryIt() {
               ))}
               {/* ci sono altri stili (nella piattaforma): la pillola non fa nulla */}
               <span aria-hidden className="flex h-9 w-9 items-center justify-center gap-0.5 rounded-full bg-canvas">{[0, 1, 2].map(i => <span key={i} className="h-[3px] w-[3px] rounded-full bg-muted" />)}</span>
-              <span className="mt-1 w-full text-center text-sm text-muted sm:ml-auto sm:mt-0 sm:w-auto sm:text-left">{video || emptied ? L('Prova finita per oggi', "Free try done for today") : after ? L('Ti resta 1 video gratis', "1 free video left") : L('Prova gratis: 1 foto e 1 video', "Free: 1 photo and 1 video")}</span>
+              <span className="mt-1 w-full text-center text-sm text-muted sm:ml-auto sm:mt-0 sm:w-auto sm:text-left">{video ? L('Prova finita per oggi', "Free try done for today") : after ? L('Ti resta 1 video gratis', "1 free video left") : L('Prova gratis: 1 foto e 1 video', "Free: 1 photo and 1 video")}</span>
             </div>}
           </div>
         </div>
-        {after && <p className="mt-3 text-center text-sm text-muted">{video ? L('Foto e video pronti per l\'annuncio e i social. Per scaricarli entra o crea l\'account, è gratis.', "Photo and video ready for your listing and socials. Sign in or create a free account to download them.") : emptied ? L('Stanza svuotata. Per scaricarla entra o crea l\'account, è gratis.', "Room emptied. Sign in or create a free account to download it.") : <>{L('Ora trasformala in un video per i social, gratis. Oppure', "Now turn it into a video for social media, free. Or")} <button type="button" onClick={() => keep(false)} className="font-medium text-ink underline underline-offset-4">{L('scarica solo la foto', "download just the photo")}</button>.</>}</p>}
+        {after && <p className="mt-3 text-center text-sm text-muted">{video ? L('Foto e video pronti per l\'annuncio e i social. Per scaricarli entra o crea l\'account, è gratis.', "Photo and video ready for your listing and socials. Sign in or create a free account to download them.") : <>{emptied ? L('Ora fai il video in cui i mobili spariscono, gratis. Oppure', "Now make the video where the furniture disappears, free. Or") : L('Ora trasformala in un video per i social, gratis. Oppure', "Now turn it into a video for social media, free. Or")} <button type="button" onClick={() => keep(false)} className="font-medium text-ink underline underline-offset-4">{L('scarica solo la foto', "download just the photo")}</button>.</>}</p>}
         {msg && <p className="mt-3 text-center text-sm text-rose-600">{msg} {left <= 0 && <a href={APP} className="font-medium text-ink underline underline-offset-4">{L('Crea l\'account', "Create an account")}</a>}</p>}
     </>
   );

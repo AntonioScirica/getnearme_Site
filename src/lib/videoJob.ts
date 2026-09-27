@@ -84,7 +84,9 @@ export type VideoResult = { job?: string; url?: string; id?: string; status?: nu
 export type Anim = 'popup' | 'gravity' | 'particles' | 'stopmotion' | 'cantiere' | 'daynight'
 export const parseAnim = (a: unknown): Anim => (['gravity', 'particles', 'stopmotion', 'cantiere', 'daynight'] as const).find(x => x === a) ?? 'popup'
 
-export async function startVideo(owner: string, logUser: string, o: { imageUrl: string; imageBase64: string; projectId?: string; anim: Anim }): Promise<VideoResult> {
+// empty = stanza gia' svuotata (prova "Svuota" della landing): niente Nano Banana, e il video va IN AVANTI:
+// i mobili della foto originale spariscono uno alla volta e resta la stanza vuota.
+export async function startVideo(owner: string, logUser: string, o: { imageUrl: string; imageBase64: string; projectId?: string; anim: Anim; empty?: string }): Promise<VideoResult> {
   const { imageUrl, imageBase64, anim } = o
   const pid = o.projectId ?? '' // gia' validato dalla rotta
   if (AI_MOCK) { await mockDelay(2000); return { job: 'mock' } }
@@ -97,7 +99,7 @@ export async function startVideo(owner: string, logUser: string, o: { imageUrl: 
     const landscape = width >= height
     const [W, H] = landscape ? [1280, 720] : [720, 1280]
     const full = await sharp(src).rotate().resize(W, H, { fit: 'cover' }).jpeg({ quality: 95 }).toBuffer()
-    const name = `${pid ? `casa-${pid}/` : ''}${Date.now()}-${Math.random().toString(36).slice(2, 8)}${anim === 'daynight' ? '-f' : ''}`
+    const name = `${pid ? `casa-${pid}/` : ''}${Date.now()}-${Math.random().toString(36).slice(2, 8)}${anim === 'daynight' || o.empty ? '-f' : ''}`
     const key = `videos/${owner}/${name}`
     const fullUrl = await uploadJpeg(full, `${key}-arredata.jpg`)
 
@@ -121,7 +123,7 @@ export async function startVideo(owner: string, logUser: string, o: { imageUrl: 
     let empty: Buffer | null = null, items: string[] = []
     for (let attempt = 0; attempt < 2; attempt++) {
       // Nano Banana 2 (una chiamata, niente GPU); se Google non risponde, Qwen come prima
-      const nb = await nanoBanana({ userId: logUser, image: fullUrl, prompt: `${EMPTY_PROMPT} The result must line up exactly with the original photo: same camera, framing and perspective. Photorealistic, no text.`, kind: 'video_empty' })
+      const nb = o.empty ? o.empty.split(',').pop()! : await nanoBanana({ userId: logUser, image: fullUrl, prompt: `${EMPTY_PROMPT} The result must line up exactly with the original photo: same camera, framing and perspective. Photorealistic, no text.`, kind: 'video_empty' })
       let out = nb
       if (!out) {
         const t0 = Date.now()
@@ -146,7 +148,7 @@ export async function startVideo(owner: string, logUser: string, o: { imageUrl: 
       const txt = msg.content.find(c => c.type === 'text')?.text ?? '' // i modelli nuovi possono mettere prima un blocco di ragionamento
       const r = JSON.parse(txt.slice(txt.indexOf('{'), txt.lastIndexOf('}') + 1)) as { items?: string[]; empty?: boolean }
       items = r.items ?? []
-      if (r.empty !== false) break
+      if (r.empty !== false || o.empty) break // stanza vuota data da fuori: nessun altro tentativo
     }
     if (!items.length || !empty) return { error: 'nothing_to_animate', status: 422 }
     const emptyUrl = await uploadJpeg(empty, `${key}-vuota.jpg`)
