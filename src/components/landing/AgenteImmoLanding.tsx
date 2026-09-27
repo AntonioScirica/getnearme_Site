@@ -256,11 +256,11 @@ export default function AgenteImmoLanding() {
 
       {/* hero */}
       <section id="top" className="mx-auto max-w-6xl px-4 pb-16 pt-14 md:pt-20">
-        <div className="mx-auto max-w-3xl text-center">
+        <div className="mx-auto max-w-5xl text-center">
           <Reveal><h1><Pill><Sparkles size={13} className="text-ai" /> Il software per agenti immobiliari</Pill></h1></Reveal>
-          <p className="mt-6 font-display text-[44px] font-extrabold leading-[1.02] tracking-[-0.03em] md:text-[76px]">
-            {'Più incarichi, case vendute prima.'.split(' ').map((w, i) => <span key={i} className="blur-in inline-block" style={{ animationDelay: `${i * 40}ms` }}>{w}&nbsp;</span>)}
-            <span className="block text-muted/60">{'Senza spendere di più.'.split(' ').map((w, i) => <span key={i} className="blur-in inline-block" style={{ animationDelay: `${160 + i * 40}ms` }}>{w}&nbsp;</span>)}</span>
+          <p className="mx-auto mt-6 w-fit font-display text-[clamp(24px,5.2vw,60px)] font-extrabold leading-[1.05] tracking-[-0.03em]">
+            <span className="block sm:whitespace-nowrap">{'Più incarichi, case vendute prima.'.split(' ').map((w, i) => <span key={i} className="blur-in inline-block" style={{ animationDelay: `${i * 40}ms` }}>{w}&nbsp;</span>)}</span>
+            <span className="block text-muted/60 sm:whitespace-nowrap">{'Senza spendere di più.'.split(' ').map((w, i) => <span key={i} className="blur-in inline-block" style={{ animationDelay: `${160 + i * 40}ms` }}>{w}&nbsp;</span>)}</span>
           </p>
           <Reveal delay={600}><p className="mx-auto mt-6 max-w-xl text-lg leading-relaxed text-muted">Il proprietario sceglie l&apos;agente che presenta meglio la sua casa. L&apos;acquirente si ferma sull&apos;annuncio che si nota. Con Agente Immo ogni tuo immobile si presenta al meglio dal primo giorno, senza fotografo, home stager e web agency da pagare.</p></Reveal>
           <Reveal delay={700} className="mt-8 flex flex-wrap items-center justify-center gap-3">
