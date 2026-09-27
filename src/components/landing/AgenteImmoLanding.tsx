@@ -217,6 +217,12 @@ function TryIt() {
   const [text, setText] = useState(''); // richiesta scritta: se c'e', vince sullo stile
   const [busy, setBusy] = useState(false);
   const [left, setLeft] = useState(1);
+  // chi torna dopo aver usato la prova di oggi: al posto dell'esempio, i piani (?piani=1 per vederla in sviluppo)
+  const [used, setUsed] = useState(false);
+  useEffect(() => {
+    const force = new URLSearchParams(location.search).has('piani');
+    fetch('/api/landing/demo').then(r => r.json()).then((d: { left?: number }) => { if (force || d.left === 0) { setUsed(true); setLeft(0); } }).catch(() => {});
+  }, []);
   const [msg, setMsg] = useState('');
   // secondo passo: la foto arredata diventa un video (1 al giorno, vedi /api/landing/demo-video)
   const [video, setVideo] = useState<string | null>(null);
@@ -328,6 +334,13 @@ function TryIt() {
             ) : (
               <div className="relative" onDragOver={e => e.preventDefault()} onDrop={e => { e.preventDefault(); pick(e.dataTransfer.files[0]); }}>
                 <BeforeAfter before="/immo/home/demo-before.webp" after="/immo/home/demo-after.webp" className={BOX} />
+                {used && (
+                  <div className="blur-in absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 bg-black/40 p-6 text-center backdrop-blur-md">
+                    <div className="max-w-md font-display text-2xl font-extrabold tracking-tight text-white md:text-3xl">{L('Hai già usato la prova gratis di oggi', "You've used today's free try")}</div>
+                    <p className="max-w-sm text-sm text-white/80">{L('Con un piano arredi tutte le tue case, fai i video e pubblichi il tuo sito.', "With a plan you stage all your homes, make videos and publish your website.")}</p>
+                    <a href="#prezzi" className="inline-flex h-12 items-center gap-2 rounded-full bg-white px-6 text-[15px] font-semibold text-ink ease-smooth transition-transform hover:scale-[1.03]">{L('Vedi i piani', "See the plans")} <ArrowRight size={16} /></a>
+                  </div>
+                )}
                 <button type="button" onClick={() => input.current?.click()} className="absolute bottom-4 left-1/2 hidden -translate-x-1/2 items-center gap-2.5 whitespace-nowrap rounded-full bg-ink px-5 py-3 text-sm font-semibold sm:flex sm:bottom-5 sm:px-7 sm:py-4 sm:text-base text-white shadow-[0_0_0_6px_rgba(255,255,255,.35),0_20px_40px_-10px_rgba(0,0,0,.5)] ease-smooth transition-transform hover:scale-[1.04]">
                   <ImagePlus size={18} /> {L('Carica la foto di una tua stanza', "Upload a photo of a room")}
                 </button>

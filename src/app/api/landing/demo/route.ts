@@ -66,3 +66,13 @@ export async function POST(req: NextRequest) {
   const out = await sharp(done).resize(Math.round(width * Math.min(1, 1024 / Math.max(width, height))), Math.round(height * Math.min(1, 1024 / Math.max(width, height))), { fit: 'fill' }).jpeg({ quality: 82 }).toBuffer()
   return NextResponse.json({ image: `data:image/jpeg;base64,${out.toString('base64')}`, url, left: free ? 99 : PER_IP - used - 1 })
 }
+
+// Stato della prova per chi torna sulla pagina: left = foto gratis rimaste oggi (0 = prova gia' usata, si mostrano i piani).
+export async function GET(req: NextRequest) {
+  const ip = (req.headers.get('x-forwarded-for')?.split(',')[0] ?? req.headers.get('x-real-ip') ?? 'unknown').trim()
+  const free = process.env.NODE_ENV === 'development' || (process.env.LANDING_FREE_IPS ?? '').split(',').map(x => x.trim()).includes(ip)
+  if (free) return NextResponse.json({ left: 99 })
+  const who = createHash('sha256').update(`${ip}|${process.env.SUPABASE_SERVICE_ROLE_KEY?.slice(-12)}`).digest('hex').slice(0, 24)
+  const { count } = await admin.from('ai_usage').select('id', { count: 'exact', head: true }).eq('kind', 'landing_demo').eq('model', who).gte('created_at', new Date(Date.now() - 86_400_000).toISOString())
+  return NextResponse.json({ left: Math.max(0, PER_IP - (count ?? 0)) })
+}
