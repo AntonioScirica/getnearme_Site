@@ -17,6 +17,7 @@ const nextConfig: NextConfig = {
       { source: "/:locale/home", destination: "/:locale", permanent: true },
       { source: "/home", destination: "/", permanent: true },
       { source: "/:locale/agente-immo", destination: "/:locale", permanent: true },
+      { source: "/:locale/blog/getnearme-vs-canva-strumenti-agenti-immobiliari", destination: "/it/blog/agente-immo-vs-canva-strumenti-agenti-immobiliari", permanent: true },
     ];
   },
   images: {

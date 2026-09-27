@@ -9,15 +9,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const entries: MetadataRoute.Sitemap = [];
 
   // ===== LANDING PAGES =====
-  // Homepage per ogni lingua
-  locales.forEach((locale) => {
-    entries.push({
-      url: `${baseUrl}/${locale}`,
-      lastModified: new Date(),
-      changeFrequency: "weekly",
-      priority: 1.0,
-    });
-  });
+  // Home e guida pilastro: solo italiano (le altre lingue rimandano a /it)
+  entries.push({ url: `${baseUrl}/it`, lastModified: new Date(), changeFrequency: "weekly", priority: 1.0 });
+  entries.push({ url: `${baseUrl}/it/agente-immobiliare`, lastModified: new Date("2026-09-27"), changeFrequency: "monthly", priority: 0.9 });
 
   // Pagine legali per ogni lingua
   const legalPages = ["/privacy", "/cookie", "/termini"];
@@ -34,25 +28,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // ===== GUIDA ACQUISTO CASA =====
   // Hub page
-  locales.forEach((locale) => {
-    entries.push({
-      url: `${baseUrl}/${locale}/guida-acquisto-casa`,
-      lastModified: new Date("2026-05-23"),
-      changeFrequency: "monthly",
-      priority: 0.8,
-    });
-  });
+  entries.push({ url: `${baseUrl}/it/guida-acquisto-casa`, lastModified: new Date("2026-05-23"), changeFrequency: "monthly", priority: 0.8 });
 
   // Chapter pages
+  // (solo italiano: il contenuto non e' tradotto, le altre lingue hanno canonical su /it)
   CHAPTERS.forEach((chapter) => {
-    locales.forEach((locale) => {
-      entries.push({
-        url: `${baseUrl}/${locale}/guida-acquisto-casa/${chapter.slug}`,
-        lastModified: new Date("2026-05-23"),
-        changeFrequency: "monthly",
-        priority: 0.7,
-      });
-    });
+    entries.push({ url: `${baseUrl}/it/guida-acquisto-casa/${chapter.slug}`, lastModified: new Date("2026-05-23"), changeFrequency: "monthly", priority: 0.7 });
   });
 
   // ===== BLOG (IT-only in V1) =====

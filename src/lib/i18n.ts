@@ -43,7 +43,7 @@ export const ogLocaleMap: Record<Locale, string> = {
 
 // Titoli SEO localizzati (≤60 caratteri ideali)
 export const seoTitles: Record<Locale, string> = {
-  it: 'Agente Immo | Assistente AI per Agenti Immobiliari | Foto, Video, Report',
+  it: 'Agente Immo, il software per agenti immobiliari',
   en: 'Agente Immo | AI Assistant for Real Estate Agents | Photos, Video, Reports',
   es: 'Agente Immo | Asistente IA para Agentes Inmobiliarios | Fotos, Vídeo, Informes',
   fr: 'Agente Immo | Assistant IA pour Agents Immobiliers | Photos, Vidéo, Rapports',
@@ -53,7 +53,7 @@ export const seoTitles: Record<Locale, string> = {
 
 // Descrizioni SEO localizzate (≤155 caratteri ideali)
 export const seoDescriptions: Record<Locale, string> = {
-  it: 'L\'assistente AI per agenti immobiliari: home staging, video, post social, report col tuo brand e analisi di zona per ogni immobile, in pochi minuti. Provalo gratis, senza carta.',
+  it: 'Il software per agenti immobiliari che ti fa vincere più incarichi: foto arredate con l\'AI, video per i social e il tuo sito, senza fotografo né web agency. Prova gratis.',
   en: "The AI assistant for real estate agents: home staging, video, social posts, branded reports and area analysis for every listing, in minutes. What takes you hours today, you do from one place. Try it free, no card.",
   es: "El asistente IA para agentes inmobiliarios: home staging, vídeos, posts sociales, informes con tu marca y análisis de zona para cada inmueble, en minutos. Lo que hoy te lleva horas, lo haces desde un solo sitio. Pruébalo gratis, sin tarjeta.",
   fr: "L'assistant IA pour les agents immobiliers : home staging, vidéos, posts sociaux, rapports à ton image et analyse de quartier pour chaque bien, en quelques minutes. Ce qui te prend des heures aujourd'hui, tu le fais depuis un seul endroit. Essaie-le gratuitement, sans carte.",

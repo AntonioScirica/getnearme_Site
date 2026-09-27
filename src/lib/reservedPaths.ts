@@ -2,7 +2,7 @@
 // pagine della piattaforma (senza lingua vengono rimandate a /it/...), cartelle di public/, rotte di sistema.
 // Nessuno slug puo' usarli. Se aggiungi una cartella in src/app/[locale] o in public/, aggiungila qui.
 export const RESERVED = new Set([
-  'a', 'agente-immo', 'ambassador', 'blog', 'bonus-result', 'checkout', 'confirm', 'cookie', 'dashboard', 'data-deletion', 'demo',
+  'a', 'agente-immo', 'agente-immobiliare', 'ambassador', 'blog', 'bonus-result', 'checkout', 'confirm', 'cookie', 'dashboard', 'data-deletion', 'demo',
   'download', 'forgot-password', 'guida-acquisto-casa', 'pricing_ext', 'privacy', 'reference', 'reset-password', 'social-connected',
   'support', 'termini', 'tutorial', 'unsubscribe-success', 'update', 'home', 'login', 'signup', 'prezzi', 'pricing', 'app',
   'api', 'metrics', 'nfc', 'assets', 'immo', 'fonts', 'report', 'staging', 'templates', 'vendor', 'video-previews', 'email-previews',

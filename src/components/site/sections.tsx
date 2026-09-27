@@ -945,7 +945,7 @@ export function Footer() {
       </Container>
       <Container className={`flex flex-wrap justify-between gap-2 border-t py-6 text-xs ${dark ? 'border-white/10 text-white/45' : 'border-[var(--line)] text-[var(--muted)]'}`}>
         <span>© {new Date().getFullYear()} {name}{cfg.legal ? ` · ${cfg.legal}` : ''}</span>
-        <span className="flex flex-wrap gap-x-4 gap-y-1"><SiteLink to={{ page: 'legal', doc: 'privacy' }} className="hover:underline">Privacy</SiteLink><SiteLink to={{ page: 'legal', doc: 'cookie' }} className="hover:underline">Cookie</SiteLink><a href="/" target="_blank" rel="noopener" className="hover:underline">Sito creato con Agente Immo</a></span>
+        <span className="flex flex-wrap gap-x-4 gap-y-1"><SiteLink to={{ page: 'legal', doc: 'privacy' }} className="hover:underline">Privacy</SiteLink><SiteLink to={{ page: 'legal', doc: 'cookie' }} className="hover:underline">Cookie</SiteLink><a href="https://agenteimmo.me/it" target="_blank" rel="noopener" className="hover:underline">Sito per agenti immobiliari creato con Agente Immo</a></span>
       </Container>
     </footer>
   );

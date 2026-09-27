@@ -518,3 +518,10 @@ html.metrics-light [class*="border-gray-600"] { border-color: #d8d4cb !important
 ::view-transition-group(ob-logo) { animation-duration: 1400ms; z-index: 2; }
 @keyframes gnm-pop-in { 0% { opacity: 0; transform: scale(0); } 60% { opacity: 1; transform: scale(1.12); } 100% { opacity: 1; transform: scale(1); } }
 .pop { animation: gnm-pop-in var(--gnm-dur) var(--gnm-ease) both; }
+/* Guide SEO (es. /it/agente-immobiliare): testo lungo leggibile, stesso linguaggio della piattaforma */
+.guide h2 { margin-top: 3rem; font-family: var(--font-bricolage), sans-serif; font-size: 1.75rem; line-height: 1.2; font-weight: 800; letter-spacing: -0.02em; }
+.guide h3 { margin-top: 1.75rem; font-size: 1.125rem; font-weight: 700; }
+.guide p { margin-top: 1rem; font-size: 1.0625rem; line-height: 1.75; color: #333; }
+.guide ul, .guide ol { margin-top: 1rem; padding-left: 1.25rem; font-size: 1.0625rem; line-height: 1.7; color: #333; }
+.guide ul { list-style: disc; } .guide ol { list-style: decimal; }
+.guide li { margin-top: .5rem; } .guide strong { color: #222; font-weight: 600; }

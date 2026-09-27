@@ -47,7 +47,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: chapter.seoTitle,
     description: chapter.seoDescription,
     alternates: {
-      canonical: `https://agenteimmo.me/${locale}/guida-acquisto-casa/${slug}`,
+      canonical: `https://agenteimmo.me/it/guida-acquisto-casa/${slug}`,
     },
     openGraph: {
       title: chapter.seoTitle,
@@ -99,12 +99,12 @@ export default async function ChapterPage({ params }: Props) {
     },
     mainEntityOfPage: {
       "@type": "WebPage",
-      "@id": `https://agenteimmo.me/${locale}/guida-acquisto-casa/${slug}`,
+      "@id": `https://agenteimmo.me/it/guida-acquisto-casa/${slug}`,
     },
     isPartOf: {
       "@type": "WebPage",
       name: "Guida completa all'acquisto casa in Italia",
-      url: `https://agenteimmo.me/${locale}/guida-acquisto-casa`,
+      url: `https://agenteimmo.me/it/guida-acquisto-casa`,
     },
     inLanguage: locale,
     datePublished: "2026-05-01",

@@ -9,6 +9,8 @@ import { ArrowRight, Award, Check, Clapperboard, Clock, FileText, Globe, Images,
 // linguaggio della piattaforma: bianco, puntini, card 28/16, pillole, un solo tempo (600ms, ease-smooth).
 // Le animazioni entrano quando la sezione arriva in vista (blur-in), niente scatti.
 
+import { FAQ } from '@/lib/landingFaq';
+
 const APP = '/it/dashboard';
 const VIDEO = 'https://pub-a668674eaa484e8e8f2f10c264392bfc.r2.dev/spike-video/out/bbb243664b.mp4';
 const VIDEO2 = 'https://pub-a668674eaa484e8e8f2f10c264392bfc.r2.dev/spike-video/out/d626678fc2.mp4';
@@ -178,11 +180,11 @@ export default function AgenteImmoLanding() {
       {/* hero */}
       <section id="top" className="mx-auto max-w-6xl px-4 pb-16 pt-14 md:pt-20">
         <div className="mx-auto max-w-3xl text-center">
-          <Reveal><Pill><Sparkles size={13} className="text-ai" /> Per agenti immobiliari, in Italia</Pill></Reveal>
-          <h1 className="mt-6 font-display text-[44px] font-extrabold leading-[1.02] tracking-[-0.03em] md:text-[76px]">
+          <Reveal><h1><Pill><Sparkles size={13} className="text-ai" /> Il software per agenti immobiliari</Pill></h1></Reveal>
+          <p className="mt-6 font-display text-[44px] font-extrabold leading-[1.02] tracking-[-0.03em] md:text-[76px]">
             {'Più incarichi, case vendute prima.'.split(' ').map((w, i) => <span key={i} className="blur-in inline-block" style={{ animationDelay: `${80 + i * 60}ms` }}>{w}&nbsp;</span>)}
             <span className="block text-muted/60">{'Senza spendere di più.'.split(' ').map((w, i) => <span key={i} className="blur-in inline-block" style={{ animationDelay: `${420 + i * 60}ms` }}>{w}&nbsp;</span>)}</span>
-          </h1>
+          </p>
           <Reveal delay={600}><p className="mx-auto mt-6 max-w-xl text-lg leading-relaxed text-muted">Il proprietario sceglie l&apos;agente che presenta meglio la sua casa. L&apos;acquirente si ferma sull&apos;annuncio che si nota. Con Agente Immo ogni tuo immobile si presenta al meglio dal primo giorno, senza fotografo, home stager e web agency da pagare.</p></Reveal>
           <Reveal delay={700} className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <Cta>Inizia gratis, senza carta</Cta>
@@ -325,6 +327,23 @@ export default function AgenteImmoLanding() {
         </div>
       </section>
 
+      {/* domande frequenti: testo visibile + FAQPage in JSON-LD (stesse risposte, vedi FAQ) */}
+      <section id="domande" className="mx-auto max-w-3xl px-4 py-16">
+        <Reveal className="text-center">
+          <Pill>Domande frequenti</Pill>
+          <h2 className="mt-5 font-display text-3xl font-extrabold tracking-tight md:text-4xl">Quello che ci chiedono gli agenti immobiliari</h2>
+        </Reveal>
+        <p className="mt-6 text-center text-muted">Vuoi sapere di più sul mestiere? Leggi la <Link href="/it/agente-immobiliare" className="font-medium text-ink underline underline-offset-4">guida completa all&apos;agente immobiliare</Link>.</p>
+        <div className="mt-10 space-y-3">
+          {FAQ.map(([q, a]) => (
+            <details key={q} className="group rounded-[24px] bg-white p-5 ring-1 ring-black/5 open:shadow-[0_20px_40px_-20px_rgba(0,0,0,.2)]">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-semibold">{q}<ArrowRight size={16} className="shrink-0 text-muted ease-smooth transition-transform group-open:rotate-90" /></summary>
+              <p className="mt-3 leading-relaxed text-muted">{a}</p>
+            </details>
+          ))}
+        </div>
+      </section>
+
       {/* cta finale */}
       <section className="mx-auto max-w-6xl px-4 py-20">
         <Reveal className="relative overflow-hidden rounded-[32px] bg-ink px-6 py-16 text-center text-white md:py-24">
@@ -339,7 +358,7 @@ export default function AgenteImmoLanding() {
 
       <footer className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 pb-10 text-sm text-muted">
         <span className="flex items-center gap-2"><img src="/immo/logo-mark.png" alt="" className="h-6 w-6" /> © {new Date().getFullYear()} Agente Immo</span>
-        <span className="flex gap-5"><Link href="/it/privacy" className="hover:text-ink">Privacy</Link><Link href="/it/cookie" className="hover:text-ink">Cookie</Link><Link href="/it/termini" className="hover:text-ink">Termini</Link><a href="mailto:info@agenteimmo.me" className="hover:text-ink">Contatti</a></span>
+        <span className="flex flex-wrap gap-5"><Link href="/it/agente-immobiliare" className="hover:text-ink">Guida all&apos;agente immobiliare</Link><Link href="/it/privacy" className="hover:text-ink">Privacy</Link><Link href="/it/cookie" className="hover:text-ink">Cookie</Link><Link href="/it/termini" className="hover:text-ink">Termini</Link><a href="mailto:info@agenteimmo.me" className="hover:text-ink">Contatti</a></span>
       </footer>
     </div>
   );
