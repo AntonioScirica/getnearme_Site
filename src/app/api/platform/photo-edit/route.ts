@@ -53,7 +53,13 @@ export async function POST(req: NextRequest) {
   const r = body.region
   // Forma libera (lazo): poligono in 0..1, max 300 punti; senza, e' un rettangolo
   const poly = Array.isArray(r?.poly) ? r.poly.filter(p => p && [p.x, p.y].every(v => typeof v === 'number' && v >= 0 && v <= 1)).slice(0, 300).map(p => ({ x: p.x, y: p.y })) : []
-  const region = r && [r.x, r.y, r.w, r.h].every(v => typeof v === 'number' && v >= 0 && v <= 1) && r.w > 0.02 && r.h > 0.02 ? { x: r.x, y: r.y, w: r.w, h: r.h, ...(poly.length >= 3 ? { poly } : {}) } : null
+  const drawn = r && [r.x, r.y, r.w, r.h].every(v => typeof v === 'number' && v >= 0 && v <= 1) && r.w > 0.02 && r.h > 0.02 ? { x: r.x, y: r.y, w: r.w, h: r.h, ...(poly.length >= 3 ? { poly } : {}) } : null
+  // togliere qualcosa dentro una zona: si lavora su TUTTA la foto dicendo dov'e' l'oggetto (niente "mark", che fuori dalla
+  // zona rimette la foto): luce e ombra di una lampada vanno oltre la zona e lasciavano un rettangolo scuro (27/09)
+  const removing = /\b(togli|rimuovi|elimina|cancella|leva)\b/i.test(custom)
+  const region: { x: number; y: number; w: number; h: number; poly?: { x: number; y: number }[] } | null = drawn && removing ? null : drawn
+  // posizione della zona a parole (per la rimozione su tutta la foto)
+  const where = drawn ? `${drawn.y + drawn.h / 2 < 0.34 ? 'top' : drawn.y + drawn.h / 2 > 0.66 ? 'bottom' : 'middle'} ${drawn.x + drawn.w / 2 < 0.34 ? 'left' : drawn.x + drawn.w / 2 > 0.66 ? 'right' : 'centre'} of the photo (about ${Math.round((drawn.x + drawn.w / 2) * 100)}% from the left and ${Math.round((drawn.y + drawn.h / 2) * 100)}% from the top)` : ''
   // Clic sugli oggetti (maschera SAM nel worker)
   const points = Array.isArray(body.points) ? body.points.filter(p => p && [p.x, p.y].every(v => typeof v === 'number' && v >= 0 && v <= 1)).slice(0, 10) : []
   // Senza zona ne' clic: se la richiesta parla di pareti, pavimento o soffitto si modifica solo quell'elemento
@@ -65,9 +71,11 @@ export async function POST(req: NextRequest) {
   ] : []
   // Rettangolo: al modello vanno la foto e la stessa foto con un rettangolo rosso sulla zona (disegnato
   // dal worker, "mark"); fuori dalla zona il worker rimette la foto originale.
-  if (region && usesText) {
+  if (drawn && removing && usesText) {
+    translation.prompt_template = `Edit this exact photo: {REQUEST}. The object to remove is in the ${where}. Remove it completely together with everything it causes: its shadow on the floor, walls and ceiling and, if it is a lamp or any light source, its light, glow, halo and reflections, so the whole room looks as it would without it, with its normal daylight. Fill the freed area continuing the same wall, ceiling or floor. Everything else stays exactly the same: walls, windows, furniture and the camera position, zoom and framing. Do not add anything. Photorealistic.`
+  } else if (region && usesText) {
     const mk = region.poly ? 'red outline' : 'red rectangle'
-    translation.prompt_template = `Edit the first image: {REQUEST}. The request refers to what is inside the area marked by the ${mk} in the second image: change only that area; if it asks to remove, erase the whole object inside the ${mk} completely, including all its parts, and show the floor and walls behind it. Do not add any new object, decoration or wall art that was not requested. Fill any freed area naturally, continuing the same floor, walls and light around it. Keep everything outside the ${mk} exactly the same, same framing and perspective. The result must not contain any red rectangle or outline. Photorealistic.`
+    translation.prompt_template = `Edit the first image: {REQUEST}. The request refers to what is inside the area marked by the ${mk} in the second image: change only that area; if it asks to remove, erase the whole object inside the ${mk} completely, including all its parts, and show the floor and walls behind it. Do not add any new object, decoration or wall art that was not requested. Fill any freed area naturally, continuing the same floor, walls and light around it. Keep everything outside the ${mk} exactly the same, same framing and perspective. The result must not contain any red rectangle or outline. When something is removed, remove also everything it causes: its shadow on the floor and walls and, if it is a lamp or any light source, its light, glow, halo and reflections, so the area looks as it would without it, with the room's normal light. Photorealistic.`
   } else if (points.length && usesText) {
     translation.prompt_template = 'In this close-up crop of a room photo: {REQUEST}. Do not add anything that was not requested. Fill any freed area naturally, continuing the same floor, walls and light around it. Keep the rest of the crop unchanged. Photorealistic.'
   }
@@ -92,7 +100,7 @@ export async function POST(req: NextRequest) {
       job = { status: 'COMPLETED', output: { image_base64: (await brighten(src)).toString('base64') } }
       used = 'brighten (curva esposizione, niente AI)'
     } else {
-    const guided = scene === 'interno' && !region && !points.length && !labels.length && !body.angle && !body.planimetria && (furnishReq || body.style === 'empty' || !!custom)
+    const guided = scene === 'interno' && !drawn && !points.length && !labels.length && !body.angle && !body.planimetria && (furnishReq || body.style === 'empty' || !!custom)
     if (guided) {
       const task = body.style === 'empty' ? 'empty' : furnishReq ? 'furnish' : 'edit'
       const reference = typeof body.reference === 'string' && ((/^data:image\/(jpeg|png|webp);base64,/.test(body.reference) && body.reference.length < 8_000_000) || allowedUrl(body.reference)) ? body.reference : undefined
