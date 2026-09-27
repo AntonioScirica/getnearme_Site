@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import AuthCta from '@/components/AuthCta';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { ArrowRight, Check, ChevronLeft, ChevronRight, MessageCircle, Clapperboard, FileText, Globe, ImagePlus, Images, Loader2, MapPin, Sparkles, Upload, Users, Wand2 } from 'lucide-react';
+import { ArrowRight, Check, ChevronLeft, ChevronRight, MessageCircle, Clapperboard, FileText, Globe, ImagePlus, Images, Loader2, MapPin, Pencil, Search, Sparkles, Upload, Users, Wand2 } from 'lucide-react';
 
 // Landing di Agente Immo per gli agenti: tre promesse (home staging AI, video, sito pronto) con lo stesso
 // linguaggio della piattaforma: bianco, puntini, card 28/16, pillole, un solo tempo (600ms, ease-smooth).
@@ -17,7 +17,8 @@ import dynamic from 'next/dynamic';
 const TemplateShowcase = dynamic(() => import('./TemplateShowcase'), { ssr: false, loading: () => <div className="aspect-[4/3] rounded-[24px] bg-canvas" /> });
 
 // guide SEO linkate dal fondo pagina (collegamenti interni verso le pagine che devono posizionarsi)
-const GUIDE_LINKS = [['/it/agente-immobiliare', 'Agente immobiliare'], ['/it/come-diventare-agente-immobiliare', 'Come diventare agente immobiliare'], ['/it/provvigione-agente-immobiliare', 'Provvigione agente immobiliare'], ['/it/software-agenti-immobiliari', 'Software per agenti immobiliari'], ['/it/home-staging-virtuale', 'Home staging virtuale']];
+// ponytail: le guide per chi inizia (come diventare, provvigione) restano online ma non si linkano da qui: la landing parla ad agenti gia' in attivita'
+const GUIDE_LINKS = [['/it/acquisire-incarichi-immobiliari', 'Come acquisire più incarichi'], ['/it/intelligenza-artificiale-agenti-immobiliari', 'AI per agenti immobiliari'], ['/it/video-immobiliari-social', 'Video immobiliari per i social'], ['/it/home-staging-virtuale', 'Home staging virtuale'], ['/it/software-agenti-immobiliari', 'Software per agenti immobiliari']];
 
 const APP = '/it/dashboard';
 const VIDEO = 'https://pub-a668674eaa484e8e8f2f10c264392bfc.r2.dev/spike-video/out/bbb243664b.mp4';
@@ -149,7 +150,7 @@ function Credits({ n }: { n: number }) {
 
 // il sito: stesso blocco dei crediti (titolo grande), sotto cosa c'e' dentro in due colonne.
 // Solo funzioni che esistono davvero nei siti degli agenti (niente traduzione finche' non c'e').
-const SITE_PERKS: [typeof Globe, string][] = [[Sparkles, 'Ogni casa online in automatico'], [MessageCircle, 'Richieste su email, telefono e WhatsApp'], [FileText, 'Report PDF da scaricare per ogni casa'], [MapPin, 'Ti trovano su Google nella tua zona']];
+const SITE_PERKS: [typeof Globe, string][] = [[Search, 'SEO: ti trovano su Google nella tua zona'], [Pencil, 'Modifichi tutto: colori, testi, foto, sezioni'], [MessageCircle, 'Le richieste arrivano a te, non al portale'], [Sparkles, 'Ogni casa che carichi va online da sola']];
 function SiteIncluded() {
   return (
     <div className="mt-3 rounded-[20px] bg-canvas p-5">
