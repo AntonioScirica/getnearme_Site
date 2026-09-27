@@ -16,6 +16,7 @@ const nextConfig: NextConfig = {
     return [
       { source: "/:locale/home", destination: "/:locale", permanent: true },
       { source: "/home", destination: "/", permanent: true },
+      { source: "/:locale/agente-immo", destination: "/:locale", permanent: true },
     ];
   },
   images: {
