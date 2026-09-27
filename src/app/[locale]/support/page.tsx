@@ -14,7 +14,7 @@ export async function generateStaticParams() {
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
-    title: "Assistenza - GetNearMe",
+    title: "Assistenza - Agente Immo",
     description: "Hai bisogno di aiuto? Contattaci e ti risponderemo il prima possibile.",
   };
 }
@@ -88,8 +88,8 @@ export default async function SupportPage({ params }: Props) {
             }}
           >
             Oppure scrivici direttamente a{" "}
-            <a href="mailto:info@getnearme.it" style={{ color: "#2563eb" }}>
-              info@getnearme.it
+            <a href="mailto:info@agenteimmo.me" style={{ color: "#2563eb" }}>
+              info@agenteimmo.me
             </a>
           </p>
         </div>

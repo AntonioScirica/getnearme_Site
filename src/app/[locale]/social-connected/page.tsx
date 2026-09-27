@@ -42,7 +42,7 @@ const content: Record<Locale, {
   it: {
     success: {
       title: "Account collegato!",
-      desc: "Puoi chiudere questa pagina e tornare all'estensione GetNearMe.",
+      desc: "Puoi chiudere questa pagina e tornare all'estensione Agente Immo.",
       close: "Chiudi questa pagina",
     },
     error: {
@@ -55,7 +55,7 @@ const content: Record<Locale, {
   en: {
     success: {
       title: "Account connected!",
-      desc: "You can close this page and return to the GetNearMe extension.",
+      desc: "You can close this page and return to the Agente Immo extension.",
       close: "Close this page",
     },
     error: {
@@ -68,7 +68,7 @@ const content: Record<Locale, {
   es: {
     success: {
       title: "Cuenta conectada!",
-      desc: "Puedes cerrar esta página y volver a la extensión GetNearMe.",
+      desc: "Puedes cerrar esta página y volver a la extensión Agente Immo.",
       close: "Cerrar esta página",
     },
     error: {
@@ -81,7 +81,7 @@ const content: Record<Locale, {
   fr: {
     success: {
       title: "Compte connecté !",
-      desc: "Vous pouvez fermer cette page et retourner à l'extension GetNearMe.",
+      desc: "Vous pouvez fermer cette page et retourner à l'extension Agente Immo.",
       close: "Fermer cette page",
     },
     error: {
@@ -94,7 +94,7 @@ const content: Record<Locale, {
   ru: {
     success: {
       title: "Аккаунт подключён!",
-      desc: "Вы можете закрыть эту страницу и вернуться к расширению GetNearMe.",
+      desc: "Вы можете закрыть эту страницу и вернуться к расширению Agente Immo.",
       close: "Закрыть страницу",
     },
     error: {
@@ -107,7 +107,7 @@ const content: Record<Locale, {
   uk: {
     success: {
       title: "Акаунт підключено!",
-      desc: "Ви можете закрити цю сторінку і повернутися до розширення GetNearMe.",
+      desc: "Ви можете закрити цю сторінку і повернутися до розширення Agente Immo.",
       close: "Закрити сторінку",
     },
     error: {
@@ -184,7 +184,7 @@ export default async function SocialConnectedPage({ params, searchParams }: Prop
         <div className="max-w-7xl mx-auto px-4 pt-8 pb-8">
           <div className="pt-4 border-t border-slate-800">
             <p className="text-slate-400 text-sm font-light text-center">
-              © 2025 GetNearMe.
+              © 2025 Agente Immo.
             </p>
           </div>
         </div>

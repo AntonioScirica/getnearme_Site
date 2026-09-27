@@ -17,11 +17,11 @@ export const privacyContent: Record<Locale, LegalPage> = {
   en: {
     title: "Privacy Policy",
     lastUpdated: "Last Updated: 02 April 2026",
-    description: "Privacy Policy for the GetNearMe browser extension.",
+    description: "Privacy Policy for the Agente Immo browser extension.",
     blocks: [
       { type: "h2", text: "1. Introduction and Data Controller" },
-      { type: "p", text: "This Privacy Policy governs the processing of personal data in connection with the use of the GetNearMe browser extension (the \"Service\"). This Policy is intended to comply with Regulation (EU) 2016/679 (GDPR), Italian Legislative Decree 196/2003 (Italian Privacy Code) as amended by Legislative Decree 101/2018, and Directive 2002/58/EC (ePrivacy Directive) regarding access to and storage of information on user terminal equipment." },
-      { type: "p", text: "Data Controller: Antonio Scirica acting commercially under the trade name \"GetNearMe\"\nEmail: as.scirica@gmail.com" },
+      { type: "p", text: "This Privacy Policy governs the processing of personal data in connection with the use of the Agente Immo browser extension (the \"Service\"). This Policy is intended to comply with Regulation (EU) 2016/679 (GDPR), Italian Legislative Decree 196/2003 (Italian Privacy Code) as amended by Legislative Decree 101/2018, and Directive 2002/58/EC (ePrivacy Directive) regarding access to and storage of information on user terminal equipment." },
+      { type: "p", text: "Data Controller: Antonio Scirica acting commercially under the trade name \"Agente Immo\"\nEmail: as.scirica@gmail.com" },
       { type: "h2", text: "2. Nature of Data Processing" },
       { type: "p", text: "To ensure data minimization and strictly respect third-party intellectual property rights, the Service operates primarily as a local, client-side utility." },
       { type: "ul", items: [
@@ -93,7 +93,7 @@ export const privacyContent: Record<Locale, LegalPage> = {
         "Referral data: retained for the duration of the inviting user's account.",
         "AI images (Virtual Staging): processed in real time and not stored by the Controller. AI providers (Replicate) delete images within 24 hours of processing.",
         "AI description analysis: text is transmitted to Groq solely for the duration of processing and is not stored.",
-        "Social media access tokens: stored for the duration of the account connection, automatically refreshed every ~50 days, and deleted immediately upon User disconnection or account deletion. Media uploaded for scheduled publishing is deleted from storage within minutes after successful publication, and within 7 days if publishing fails. The User may revoke access at any time via Facebook/Instagram settings (Settings → Apps and Websites) or from the GetNearMe Settings panel."
+        "Social media access tokens: stored for the duration of the account connection, automatically refreshed every ~50 days, and deleted immediately upon User disconnection or account deletion. Media uploaded for scheduled publishing is deleted from storage within minutes after successful publication, and within 7 days if publishing fails. The User may revoke access at any time via Facebook/Instagram settings (Settings → Apps and Websites) or from the Agente Immo Settings panel."
       ]},
       { type: "h2", text: "8. Automated Decision-Making and Profiling" },
       { type: "p", text: "Pursuant to Art. 22 of the GDPR, we inform you that the Service uses automated decision-making processes in the following features:" },
@@ -122,11 +122,11 @@ export const privacyContent: Record<Locale, LegalPage> = {
   it: {
     title: "Informativa sulla Privacy",
     lastUpdated: "Ultimo aggiornamento: 02 aprile 2026",
-    description: "Informativa sulla Privacy per l'estensione browser GetNearMe.",
+    description: "Informativa sulla Privacy per l'estensione browser Agente Immo.",
     blocks: [
       { type: "h2", text: "1. Introduzione e Titolare del Trattamento" },
-      { type: "p", text: "La presente Informativa sulla Privacy disciplina il trattamento dei dati personali in relazione all'utilizzo dell'estensione browser GetNearMe (il \"Servizio\"). La presente Informativa è volta a rispettare il Regolamento (UE) 2016/679 (GDPR), il D.Lgs. 196/2003 (Codice Privacy italiano) come modificato dal D.Lgs. 101/2018 e la Direttiva 2002/58/CE (Direttiva ePrivacy) in materia di accesso e archiviazione delle informazioni sui dispositivi terminali degli utenti." },
-      { type: "p", text: "Titolare del Trattamento: Antonio Scirica, operante commercialmente con il nome \"GetNearMe\"\nEmail: as.scirica@gmail.com" },
+      { type: "p", text: "La presente Informativa sulla Privacy disciplina il trattamento dei dati personali in relazione all'utilizzo dell'estensione browser Agente Immo (il \"Servizio\"). La presente Informativa è volta a rispettare il Regolamento (UE) 2016/679 (GDPR), il D.Lgs. 196/2003 (Codice Privacy italiano) come modificato dal D.Lgs. 101/2018 e la Direttiva 2002/58/CE (Direttiva ePrivacy) in materia di accesso e archiviazione delle informazioni sui dispositivi terminali degli utenti." },
+      { type: "p", text: "Titolare del Trattamento: Antonio Scirica, operante commercialmente con il nome \"Agente Immo\"\nEmail: as.scirica@gmail.com" },
       { type: "h2", text: "2. Natura del Trattamento dei Dati" },
       { type: "p", text: "Per garantire la minimizzazione dei dati e il rigoroso rispetto dei diritti di proprietà intellettuale di terzi, il Servizio opera principalmente come utilità locale, lato client." },
       { type: "ul", items: [
@@ -198,7 +198,7 @@ export const privacyContent: Record<Locale, LegalPage> = {
         "Dati referral: conservati per tutta la durata dell'account dell'utente invitante.",
         "Immagini AI (Virtual Staging): elaborate in tempo reale e non conservate dal Titolare. I fornitori AI (Replicate) eliminano le immagini entro 24 ore dall'elaborazione.",
         "Analisi descrizioni AI: il testo viene trasmesso a Groq per la sola durata dell'elaborazione e non viene conservato.",
-        "Token di accesso social media: conservati per la durata della connessione dell'account, rinnovati automaticamente ogni ~50 giorni e cancellati immediatamente alla disconnessione dell'Utente o all'eliminazione dell'account. I media caricati per la pubblicazione programmata sono cancellati dallo storage entro pochi minuti dalla pubblicazione riuscita, ed entro 7 giorni in caso di pubblicazione fallita. L'Utente può revocare l'accesso in qualsiasi momento dalle impostazioni Facebook/Instagram (Impostazioni → App e siti web) o dal pannello Impostazioni di GetNearMe."
+        "Token di accesso social media: conservati per la durata della connessione dell'account, rinnovati automaticamente ogni ~50 giorni e cancellati immediatamente alla disconnessione dell'Utente o all'eliminazione dell'account. I media caricati per la pubblicazione programmata sono cancellati dallo storage entro pochi minuti dalla pubblicazione riuscita, ed entro 7 giorni in caso di pubblicazione fallita. L'Utente può revocare l'accesso in qualsiasi momento dalle impostazioni Facebook/Instagram (Impostazioni → App e siti web) o dal pannello Impostazioni di Agente Immo."
       ]},
       { type: "h2", text: "8. Decisioni Automatizzate e Profilazione" },
       { type: "p", text: "Ai sensi dell'Art. 22 del GDPR, informiamo che il Servizio utilizza processi decisionali automatizzati nelle seguenti funzionalità:" },
@@ -227,11 +227,11 @@ export const privacyContent: Record<Locale, LegalPage> = {
   es: {
     title: "Política de Privacidad",
     lastUpdated: "Última actualización: 02 de abril de 2026",
-    description: "Política de Privacidad para la extensión de navegador GetNearMe.",
+    description: "Política de Privacidad para la extensión de navegador Agente Immo.",
     blocks: [
       { type: "h2", text: "1. Introducción y Responsable del Tratamiento" },
-      { type: "p", text: "Esta Política de Privacidad regula el tratamiento de datos personales en relación con el uso de la extensión de navegador GetNearMe (el \"Servicio\"). Esta Política tiene como objetivo cumplir con el Reglamento (UE) 2016/679 (RGPD), el D.Lgs. 196/2003 (Código de Privacidad italiano) modificado por el D.Lgs. 101/2018, y la Directiva 2002/58/CE (Directiva ePrivacy) en materia de acceso y almacenamiento de información en los equipos terminales de los usuarios." },
-      { type: "p", text: "Responsable del Tratamiento: Antonio Scirica, operando comercialmente bajo el nombre comercial \"GetNearMe\"\nEmail: as.scirica@gmail.com" },
+      { type: "p", text: "Esta Política de Privacidad regula el tratamiento de datos personales en relación con el uso de la extensión de navegador Agente Immo (el \"Servicio\"). Esta Política tiene como objetivo cumplir con el Reglamento (UE) 2016/679 (RGPD), el D.Lgs. 196/2003 (Código de Privacidad italiano) modificado por el D.Lgs. 101/2018, y la Directiva 2002/58/CE (Directiva ePrivacy) en materia de acceso y almacenamiento de información en los equipos terminales de los usuarios." },
+      { type: "p", text: "Responsable del Tratamiento: Antonio Scirica, operando comercialmente bajo el nombre comercial \"Agente Immo\"\nEmail: as.scirica@gmail.com" },
       { type: "h2", text: "2. Naturaleza del Tratamiento de Datos" },
       { type: "p", text: "Para garantizar la minimización de datos y respetar estrictamente los derechos de propiedad intelectual de terceros, el Servicio opera principalmente como una utilidad local, del lado del cliente." },
       { type: "ul", items: [
@@ -303,7 +303,7 @@ export const privacyContent: Record<Locale, LegalPage> = {
         "Datos de referidos: conservados durante la vigencia de la cuenta del usuario que invita.",
         "Imágenes AI (Virtual Staging): procesadas en tiempo real y no almacenadas por el Responsable. Los proveedores AI (Replicate) eliminan las imágenes en un plazo de 24 horas tras el procesamiento.",
         "Análisis de descripciones AI: el texto se transmite a Groq únicamente durante el procesamiento y no se almacena.",
-        "Tokens de acceso de redes sociales: almacenados durante la conexión de la cuenta, renovados automáticamente cada ~50 días y eliminados inmediatamente tras la desconexión del Usuario o eliminación de la cuenta. Los medios cargados para publicación programada se eliminan del almacenamiento en minutos tras la publicación exitosa, y en 7 días si la publicación falla. El Usuario puede revocar el acceso en cualquier momento desde la configuración de Facebook/Instagram (Configuración → Apps y sitios web) o desde el panel de Configuración de GetNearMe."
+        "Tokens de acceso de redes sociales: almacenados durante la conexión de la cuenta, renovados automáticamente cada ~50 días y eliminados inmediatamente tras la desconexión del Usuario o eliminación de la cuenta. Los medios cargados para publicación programada se eliminan del almacenamiento en minutos tras la publicación exitosa, y en 7 días si la publicación falla. El Usuario puede revocar el acceso en cualquier momento desde la configuración de Facebook/Instagram (Configuración → Apps y sitios web) o desde el panel de Configuración de Agente Immo."
       ]},
       { type: "h2", text: "8. Decisiones Automatizadas y Elaboración de Perfiles" },
       { type: "p", text: "De conformidad con el Art. 22 del RGPD, le informamos que el Servicio utiliza procesos de toma de decisiones automatizados en las siguientes funcionalidades:" },
@@ -332,11 +332,11 @@ export const privacyContent: Record<Locale, LegalPage> = {
   fr: {
     title: "Politique de Confidentialité",
     lastUpdated: "Dernière mise à jour : 02 avril 2026",
-    description: "Politique de Confidentialité pour l'extension de navigateur GetNearMe.",
+    description: "Politique de Confidentialité pour l'extension de navigateur Agente Immo.",
     blocks: [
       { type: "h2", text: "1. Introduction et Responsable du Traitement" },
-      { type: "p", text: "La présente Politique de Confidentialité régit le traitement des données personnelles dans le cadre de l'utilisation de l'extension de navigateur GetNearMe (le \"Service\"). Cette Politique vise à respecter le Règlement (UE) 2016/679 (RGPD), le D.Lgs. 196/2003 (Code de la Protection des Données italien) tel que modifié par le D.Lgs. 101/2018, et la Directive 2002/58/CE (Directive ePrivacy) concernant l'accès et le stockage d'informations sur les équipements terminaux des utilisateurs." },
-      { type: "p", text: "Responsable du Traitement : Antonio Scirica, opérant commercialement sous le nom commercial \"GetNearMe\"\nEmail : as.scirica@gmail.com" },
+      { type: "p", text: "La présente Politique de Confidentialité régit le traitement des données personnelles dans le cadre de l'utilisation de l'extension de navigateur Agente Immo (le \"Service\"). Cette Politique vise à respecter le Règlement (UE) 2016/679 (RGPD), le D.Lgs. 196/2003 (Code de la Protection des Données italien) tel que modifié par le D.Lgs. 101/2018, et la Directive 2002/58/CE (Directive ePrivacy) concernant l'accès et le stockage d'informations sur les équipements terminaux des utilisateurs." },
+      { type: "p", text: "Responsable du Traitement : Antonio Scirica, opérant commercialement sous le nom commercial \"Agente Immo\"\nEmail : as.scirica@gmail.com" },
       { type: "h2", text: "2. Nature du Traitement des Données" },
       { type: "p", text: "Pour garantir la minimisation des données et respecter strictement les droits de propriété intellectuelle des tiers, le Service fonctionne principalement comme un utilitaire local, côté client." },
       { type: "ul", items: [
@@ -408,7 +408,7 @@ export const privacyContent: Record<Locale, LegalPage> = {
         "Données de parrainage : conservées pendant la durée du compte de l'utilisateur parrain.",
         "Images AI (Virtual Staging) : traitées en temps réel et non conservées par le Responsable. Les fournisseurs AI (Replicate) suppriment les images dans un délai de 24 heures après le traitement.",
         "Analyse de descriptions AI : le texte est transmis à Groq uniquement pendant la durée du traitement et n'est pas conservé.",
-        "Jetons d'accès aux réseaux sociaux : conservés pendant la durée de la connexion du compte, renouvelés automatiquement tous les ~50 jours et supprimés immédiatement lors de la déconnexion de l'Utilisateur ou de la suppression du compte. Les médias téléchargés pour publication programmée sont supprimés du stockage dans les minutes suivant la publication réussie, et dans les 7 jours en cas d'échec. L'Utilisateur peut révoquer l'accès à tout moment depuis les paramètres Facebook/Instagram (Paramètres → Apps et sites web) ou depuis le panneau Paramètres de GetNearMe."
+        "Jetons d'accès aux réseaux sociaux : conservés pendant la durée de la connexion du compte, renouvelés automatiquement tous les ~50 jours et supprimés immédiatement lors de la déconnexion de l'Utilisateur ou de la suppression du compte. Les médias téléchargés pour publication programmée sont supprimés du stockage dans les minutes suivant la publication réussie, et dans les 7 jours en cas d'échec. L'Utilisateur peut révoquer l'accès à tout moment depuis les paramètres Facebook/Instagram (Paramètres → Apps et sites web) ou depuis le panneau Paramètres de Agente Immo."
       ]},
       { type: "h2", text: "8. Décisions Automatisées et Profilage" },
       { type: "p", text: "Conformément à l'Art. 22 du RGPD, nous vous informons que le Service utilise des processus de prise de décision automatisés dans les fonctionnalités suivantes :" },
@@ -437,11 +437,11 @@ export const privacyContent: Record<Locale, LegalPage> = {
   ru: {
     title: "Политика конфиденциальности",
     lastUpdated: "Последнее обновление: 02 апреля 2026",
-    description: "Политика конфиденциальности расширения браузера GetNearMe.",
+    description: "Политика конфиденциальности расширения браузера Agente Immo.",
     blocks: [
       { type: "h2", text: "1. Введение и Контролёр данных" },
-      { type: "p", text: "Настоящая Политика конфиденциальности регулирует обработку персональных данных в связи с использованием расширения браузера GetNearMe (\"Сервис\"). Настоящая Политика направлена на соблюдение Регламента (ЕС) 2016/679 (GDPR), D.Lgs. 196/2003 (Итальянский Кодекс конфиденциальности) с изменениями D.Lgs. 101/2018 и Директивы 2002/58/EC (Директива ePrivacy) в отношении доступа к информации и её хранения на терминальном оборудовании пользователей." },
-      { type: "p", text: "Контролёр данных: Антонио Шрика, действующий коммерчески под торговым наименованием \"GetNearMe\"\nEmail: as.scirica@gmail.com" },
+      { type: "p", text: "Настоящая Политика конфиденциальности регулирует обработку персональных данных в связи с использованием расширения браузера Agente Immo (\"Сервис\"). Настоящая Политика направлена на соблюдение Регламента (ЕС) 2016/679 (GDPR), D.Lgs. 196/2003 (Итальянский Кодекс конфиденциальности) с изменениями D.Lgs. 101/2018 и Директивы 2002/58/EC (Директива ePrivacy) в отношении доступа к информации и её хранения на терминальном оборудовании пользователей." },
+      { type: "p", text: "Контролёр данных: Антонио Шрика, действующий коммерчески под торговым наименованием \"Agente Immo\"\nEmail: as.scirica@gmail.com" },
       { type: "h2", text: "2. Характер обработки данных" },
       { type: "p", text: "Для обеспечения минимизации данных и строгого соблюдения прав интеллектуальной собственности третьих лиц Сервис функционирует преимущественно как локальная, клиентская утилита." },
       { type: "ul", items: [
@@ -513,7 +513,7 @@ export const privacyContent: Record<Locale, LegalPage> = {
         "Реферальные данные: хранятся в течение срока действия аккаунта приглашающего пользователя.",
         "AI-изображения (Virtual Staging): обрабатываются в реальном времени и не хранятся Контролёром. Провайдеры ИИ (Replicate) удаляют изображения в течение 24 часов после обработки.",
         "AI-анализ описаний: текст передаётся в Groq только на время обработки и не сохраняется.",
-        "Токены доступа к соцсетям: хранятся в течение подключения аккаунта, автоматически обновляются каждые ~50 дней и удаляются немедленно при отключении Пользователя или удалении аккаунта. Медиафайлы, загруженные для запланированной публикации, удаляются из хранилища в течение нескольких минут после успешной публикации и в течение 7 дней в случае сбоя. Пользователь может отозвать доступ в любое время через настройки Facebook/Instagram (Настройки → Приложения и сайты) или через панель Настройки GetNearMe."
+        "Токены доступа к соцсетям: хранятся в течение подключения аккаунта, автоматически обновляются каждые ~50 дней и удаляются немедленно при отключении Пользователя или удалении аккаунта. Медиафайлы, загруженные для запланированной публикации, удаляются из хранилища в течение нескольких минут после успешной публикации и в течение 7 дней в случае сбоя. Пользователь может отозвать доступ в любое время через настройки Facebook/Instagram (Настройки → Приложения и сайты) или через панель Настройки Agente Immo."
       ]},
       { type: "h2", text: "8. Автоматизированное принятие решений и профилирование" },
       { type: "p", text: "В соответствии со Ст. 22 GDPR сообщаем, что Сервис использует автоматизированные процессы принятия решений в следующих функциях:" },
@@ -542,11 +542,11 @@ export const privacyContent: Record<Locale, LegalPage> = {
   uk: {
     title: "Політика конфіденційності",
     lastUpdated: "Останнє оновлення: 02 квітня 2026",
-    description: "Політика конфіденційності розширення браузера GetNearMe.",
+    description: "Політика конфіденційності розширення браузера Agente Immo.",
     blocks: [
       { type: "h2", text: "1. Вступ та Контролер даних" },
-      { type: "p", text: "Ця Політика конфіденційності регулює обробку персональних даних у зв'язку з використанням розширення браузера GetNearMe (\"Сервіс\"). Ця Політика спрямована на дотримання Регламенту (ЄС) 2016/679 (GDPR), D.Lgs. 196/2003 (Італійський Кодекс конфіденційності) зі змінами D.Lgs. 101/2018 та Директиви 2002/58/EC (Директива ePrivacy) щодо доступу до інформації та її зберігання на термінальному обладнанні користувачів." },
-      { type: "p", text: "Контролер даних: Антоніо Шріка, що діє комерційно під торговою назвою \"GetNearMe\"\nEmail: as.scirica@gmail.com" },
+      { type: "p", text: "Ця Політика конфіденційності регулює обробку персональних даних у зв'язку з використанням розширення браузера Agente Immo (\"Сервіс\"). Ця Політика спрямована на дотримання Регламенту (ЄС) 2016/679 (GDPR), D.Lgs. 196/2003 (Італійський Кодекс конфіденційності) зі змінами D.Lgs. 101/2018 та Директиви 2002/58/EC (Директива ePrivacy) щодо доступу до інформації та її зберігання на термінальному обладнанні користувачів." },
+      { type: "p", text: "Контролер даних: Антоніо Шріка, що діє комерційно під торговою назвою \"Agente Immo\"\nEmail: as.scirica@gmail.com" },
       { type: "h2", text: "2. Характер обробки даних" },
       { type: "p", text: "Для забезпечення мінімізації даних та суворого дотримання прав інтелектуальної власності третіх осіб Сервіс функціонує переважно як локальна, клієнтська утиліта." },
       { type: "ul", items: [
@@ -618,7 +618,7 @@ export const privacyContent: Record<Locale, LegalPage> = {
         "Реферальні дані: зберігаються протягом терміну дії акаунту запрошуючого користувача.",
         "ШІ-зображення (Virtual Staging): обробляються в реальному часі та не зберігаються Контролером. Провайдери ШІ (Replicate) видаляють зображення протягом 24 годин після обробки.",
         "ШІ-аналіз описів: текст передається до Groq лише на час обробки та не зберігається.",
-        "Токени доступу до соцмереж: зберігаються протягом підключення акаунту, автоматично оновлюються кожні ~50 днів та видаляються негайно при відключенні Користувача або видаленні акаунту. Медіафайли, завантажені для запланованої публікації, видаляються зі сховища протягом кількох хвилин після успішної публікації та протягом 7 днів у разі помилки. Користувач може відкликати доступ у будь-який момент через налаштування Facebook/Instagram (Налаштування → Додатки та сайти) або через панель Налаштування GetNearMe."
+        "Токени доступу до соцмереж: зберігаються протягом підключення акаунту, автоматично оновлюються кожні ~50 днів та видаляються негайно при відключенні Користувача або видаленні акаунту. Медіафайли, завантажені для запланованої публікації, видаляються зі сховища протягом кількох хвилин після успішної публікації та протягом 7 днів у разі помилки. Користувач може відкликати доступ у будь-який момент через налаштування Facebook/Instagram (Налаштування → Додатки та сайти) або через панель Налаштування Agente Immo."
       ]},
       { type: "h2", text: "8. Автоматизоване прийняття рішень та профілювання" },
       { type: "p", text: "Відповідно до Ст. 22 GDPR повідомляємо, що Сервіс використовує автоматизовані процеси прийняття рішень у таких функціях:" },
@@ -650,23 +650,23 @@ export const termsContent: Record<Locale, LegalPage> = {
   en: {
     title: "Terms of Service",
     lastUpdated: "Last Updated: 02 April 2026",
-    description: "Terms of Service for the GetNearMe browser extension.",
+    description: "Terms of Service for the Agente Immo browser extension.",
     blocks: [
       { type: "h2", text: "1. Acceptance of Terms" },
-      { type: "p", text: "By installing or using the GetNearMe extension (\"Service\"), you agree to be bound by these Terms of Service (\"Terms\"). You affirm that you are at least 18 years of age and are fully able and competent to enter into this agreement. If you do not agree, you must immediately uninstall the Service." },
+      { type: "p", text: "By installing or using the Agente Immo extension (\"Service\"), you agree to be bound by these Terms of Service (\"Terms\"). You affirm that you are at least 18 years of age and are fully able and competent to enter into this agreement. If you do not agree, you must immediately uninstall the Service." },
       { type: "h2", text: "2. License and Nature of Service" },
       { type: "p", text: "2.1. User Agent: The Service operates as a \"User Agent\" — a software tool that acts exclusively on behalf of and under the direct control of the individual User, analogous to how a web browser (itself a user agent) renders and presents web content for the User. The Extension does not act autonomously, does not independently crawl or index websites, and processes only the content already visible on the page the User is currently viewing. All analysis is initiated by the User and executed locally in the User's browser session." },
       { type: "p", text: "2.2. Limited License: We grant you a revocable, non-exclusive, non-transferable license to use the Service solely for your personal or internal business analysis of real estate market data." },
-      { type: "p", text: "2.3. Data Volatility and Local Storage: The User acknowledges that GetNearMe is a client-side tool that stores detailed analysis data (e.g., prices, property characteristics) exclusively in the browser's local storage (Local Storage)." },
+      { type: "p", text: "2.3. Data Volatility and Local Storage: The User acknowledges that Agente Immo is a client-side tool that stores detailed analysis data (e.g., prices, property characteristics) exclusively in the browser's local storage (Local Storage)." },
       { type: "ul", items: [
-        "a) No Remote Backup: GetNearMe does not maintain backup copies of listing content on its own servers.",
+        "a) No Remote Backup: Agente Immo does not maintain backup copies of listing content on its own servers.",
         "b) User Responsibility: It is the User's sole responsibility to save or export generated reports (e.g., as PDF) immediately after the analysis.",
-        "c) Data Loss: Uninstalling the extension, clearing the browser cache, or using system cleaning software will result in the irreversible loss of saved data and analysis history. GetNearMe shall under no circumstances be able to recover such data nor refund credits used for analyses lost due to local actions by the User."
+        "c) Data Loss: Uninstalling the extension, clearing the browser cache, or using system cleaning software will result in the irreversible loss of saved data and analysis history. Agente Immo shall under no circumstances be able to recover such data nor refund credits used for analyses lost due to local actions by the User."
       ]},
       { type: "p", text: "2.4. Personal Use of Reports: Analysis reports, PDF exports, social media posts, and any other output generated by the Service are intended solely for the User's personal, informational, or internal business use. The User shall not redistribute, resell, sublicense, or publicly publish such outputs for commercial purposes or in a manner that could infringe upon the intellectual property rights of third parties (including the source platforms from which data was analyzed)." },
-      { type: "p", text: "2.5. Social Media Publishing (Optional, Agency users): The Service may publish content to the User's connected Instagram Business account or Facebook Page on the User's behalf, only upon the User's explicit scheduling or immediate publish request. By connecting these accounts, the User authorizes GetNearMe to act on their behalf strictly within the scope of these Terms and grants GetNearMe permission to call the Instagram Graph API and Facebook Graph API solely for the purpose of publishing content the User has prepared. The User is solely responsible for the published content, including compliance with the Instagram Community Guidelines, Facebook Community Standards, applicable copyright law, and the Terms of Service of Meta Platforms, Inc. GetNearMe does not own, modify, or claim rights over the User's published content. The User may revoke this authorization at any time from the GetNearMe Settings panel or from Facebook/Instagram settings (see Data Deletion Instructions)." },
+      { type: "p", text: "2.5. Social Media Publishing (Optional, Agency users): The Service may publish content to the User's connected Instagram Business account or Facebook Page on the User's behalf, only upon the User's explicit scheduling or immediate publish request. By connecting these accounts, the User authorizes Agente Immo to act on their behalf strictly within the scope of these Terms and grants Agente Immo permission to call the Instagram Graph API and Facebook Graph API solely for the purpose of publishing content the User has prepared. The User is solely responsible for the published content, including compliance with the Instagram Community Guidelines, Facebook Community Standards, applicable copyright law, and the Terms of Service of Meta Platforms, Inc. Agente Immo does not own, modify, or claim rights over the User's published content. The User may revoke this authorization at any time from the Agente Immo Settings panel or from Facebook/Instagram settings (see Data Deletion Instructions)." },
       { type: "h2", text: "3. Restrictions and Intellectual Property" },
-      { type: "p", text: "3.1. Independence: GetNearMe is an independent software tool. We are not affiliated with, endorsed by, sponsored by, or officially connected to any real estate platform (such as Immobiliare.it, Idealista, or others). All third-party trademarks are the property of their respective owners and are used solely for descriptive compatibility purposes (Nominative Fair Use)." },
+      { type: "p", text: "3.1. Independence: Agente Immo is an independent software tool. We are not affiliated with, endorsed by, sponsored by, or officially connected to any real estate platform (such as Immobiliare.it, Idealista, or others). All third-party trademarks are the property of their respective owners and are used solely for descriptive compatibility purposes (Nominative Fair Use)." },
       { type: "p", text: "3.2. Prohibited Conduct: You explicitly agree NOT to use the Service to:" },
       { type: "ul", items: [
         "Perform mass extraction of data for the purpose of creating a competing database, search engine, or commercial service.",
@@ -677,16 +677,16 @@ export const termsContent: Record<Locale, LegalPage> = {
       { type: "h2", text: "4. Disclaimers and Limitations of Liability" },
       { type: "p", text: "4.1. Estimated Values: Any \"Estimated Total\" or financial calculation provided by the Service represents an indicative estimate of costs associated with a property purchase (e.g., agency fees, notary costs, taxes). These estimates are for informational purposes only and do not constitute a binding offer or professional financial quote." },
       { type: "p", text: "4.2. Data Reliability: The information visualized by the Service is derived from publicly available data, information present in the analyzed listings, and automatic processing. We do not verify energy classes via official certificates (APE) nor guarantee the accuracy of data in the source listings. Inaccuracies or omissions in the original third-party listing may be reflected in the Service's report." },
-      { type: "p", text: "4.3. No Professional Advice: The Service does not substitute technical, legal, fiscal, or real estate verification performed by qualified professionals. To the extent permitted by applicable law, GetNearMe assumes no responsibility for decisions made based on the information provided." },
+      { type: "p", text: "4.3. No Professional Advice: The Service does not substitute technical, legal, fiscal, or real estate verification performed by qualified professionals. To the extent permitted by applicable law, Agente Immo assumes no responsibility for decisions made based on the information provided." },
       { type: "h2", text: "5. Credits, Payments, and Refunds" },
       { type: "p", text: "5.1. Purchase of Credits: The Service operates on a credit-based system. Credits are virtual units used solely to unlock specific features or analyses within the Extension. Credits do not represent prepaid funds, electronic money, or stored value, have no monetary value outside the Service, and cannot be exchanged for cash, refunded, or transferred to other accounts." },
-      { type: "p", text: "5.2. Payment Processing: All payments are processed securely and exclusively by Stripe in accordance with its own terms and privacy policies. GetNearMe does not store or have access to users' full payment card details. By purchasing credits, you authorize Stripe to charge your selected payment method for the applicable amount." },
+      { type: "p", text: "5.2. Payment Processing: All payments are processed securely and exclusively by Stripe in accordance with its own terms and privacy policies. Agente Immo does not store or have access to users' full payment card details. By purchasing credits, you authorize Stripe to charge your selected payment method for the applicable amount." },
       { type: "p", text: "5.3. Waiver of Right of Withdrawal: By purchasing digital credits, you expressly consent to the immediate performance of the contract and expressly acknowledge that, once the credits are credited to your account, you lose your right of withdrawal (cooling-off period) in accordance with Article 16(m) of Directive 2011/83/EU on Consumer Rights." },
       { type: "p", text: "5.4. Refund Policy: All purchases of credits are final and non-refundable, except where mandatory consumer protection laws provide otherwise. No refunds will be issued for unused credits or if you choose to stop using the Service." },
-      { type: "p", text: "In the event of a proven technical error attributable solely to GetNearMe (for example, credits paid for but not credited to the user's account), the user may contact support at as.scirica@gmail.com for verification and rectification." },
+      { type: "p", text: "In the event of a proven technical error attributable solely to Agente Immo (for example, credits paid for but not credited to the user's account), the user may contact support at as.scirica@gmail.com for verification and rectification." },
       { type: "h2", text: "6. Liability" },
-      { type: "p", text: "To the maximum extent permitted by applicable law, GetNearMe shall not be liable for any indirect, incidental, special, or consequential damages, including loss of profits, data, use, or goodwill, arising out of or in connection with your use of, or inability to use, the Service." },
-      { type: "p", text: "The Service is provided for informational and illustrative purposes only and relies on publicly available information, third-party platforms, and automated processing. GetNearMe does not guarantee the accuracy, completeness, or availability of any information, estimates, or AI-generated outputs and is not responsible for decisions or actions taken based on the Service." },
+      { type: "p", text: "To the maximum extent permitted by applicable law, Agente Immo shall not be liable for any indirect, incidental, special, or consequential damages, including loss of profits, data, use, or goodwill, arising out of or in connection with your use of, or inability to use, the Service." },
+      { type: "p", text: "The Service is provided for informational and illustrative purposes only and relies on publicly available information, third-party platforms, and automated processing. Agente Immo does not guarantee the accuracy, completeness, or availability of any information, estimates, or AI-generated outputs and is not responsible for decisions or actions taken based on the Service." },
       { type: "p", text: "These limitations apply only to the extent permitted by applicable law." },
       { type: "h2", text: "7. Termination" },
       { type: "p", text: "We reserve the right to suspend or terminate your access to the Service immediately, without prior notice, if you breach these Terms, particularly regarding the unauthorized mass extraction of data or violation of third-party rights." },
@@ -700,23 +700,23 @@ export const termsContent: Record<Locale, LegalPage> = {
   it: {
     title: "Termini di Servizio",
     lastUpdated: "Ultimo aggiornamento: 02 aprile 2026",
-    description: "Termini di Servizio per l'estensione browser GetNearMe.",
+    description: "Termini di Servizio per l'estensione browser Agente Immo.",
     blocks: [
       { type: "h2", text: "1. Accettazione dei Termini" },
-      { type: "p", text: "Installando o utilizzando l'estensione GetNearMe (\"Servizio\"), l'utente accetta di essere vincolato dai presenti Termini di Servizio (\"Termini\"). L'utente dichiara di avere almeno 18 anni e di essere pienamente capace e competente per stipulare il presente accordo. In caso di disaccordo, l'utente deve immediatamente disinstallare il Servizio." },
+      { type: "p", text: "Installando o utilizzando l'estensione Agente Immo (\"Servizio\"), l'utente accetta di essere vincolato dai presenti Termini di Servizio (\"Termini\"). L'utente dichiara di avere almeno 18 anni e di essere pienamente capace e competente per stipulare il presente accordo. In caso di disaccordo, l'utente deve immediatamente disinstallare il Servizio." },
       { type: "h2", text: "2. Licenza e Natura del Servizio" },
       { type: "p", text: "2.1. User Agent: Il Servizio opera come \"User Agent\" — uno strumento software che agisce esclusivamente per conto e sotto il diretto controllo dell'Utente individuale, analogamente a come un browser web (esso stesso un user agent) renderizza e presenta i contenuti web per l'Utente. L'Estensione non agisce in modo autonomo, non effettua crawling o indicizzazione indipendente di siti web e elabora esclusivamente il contenuto già visibile nella pagina che l'Utente sta attualmente visualizzando. Ogni analisi è avviata dall'Utente ed eseguita localmente nella sessione del browser dell'Utente." },
       { type: "p", text: "2.2. Licenza Limitata: Concediamo una licenza revocabile, non esclusiva e non trasferibile per utilizzare il Servizio esclusivamente per l'analisi personale o aziendale interna di dati del mercato immobiliare." },
-      { type: "p", text: "2.3. Volatilità dei Dati e Archiviazione Locale: L'Utente riconosce che GetNearMe è uno strumento \"Client-Side\" che memorizza i dati dettagliati delle analisi (es. prezzi, caratteristiche immobili) esclusivamente nella memoria locale del browser (Local Storage)." },
+      { type: "p", text: "2.3. Volatilità dei Dati e Archiviazione Locale: L'Utente riconosce che Agente Immo è uno strumento \"Client-Side\" che memorizza i dati dettagliati delle analisi (es. prezzi, caratteristiche immobili) esclusivamente nella memoria locale del browser (Local Storage)." },
       { type: "ul", items: [
-        "a) Nessun Backup Remoto: GetNearMe non conserva copie di backup del contenuto degli annunci sui propri server.",
+        "a) Nessun Backup Remoto: Agente Immo non conserva copie di backup del contenuto degli annunci sui propri server.",
         "b) Responsabilità dell'Utente: È esclusiva responsabilità dell'Utente salvare o esportare i report generati (es. come PDF) immediatamente dopo l'analisi.",
-        "c) Perdita Dati: La disinstallazione dell'estensione, la pulizia della cache del browser o l'uso di software di pulizia sistema comporteranno la perdita irreversibile dei dati salvati e dello storico analisi. GetNearMe non potrà in alcun caso recuperare tali dati né rimborsare i crediti utilizzati per analisi andate perse a causa di azioni locali dell'Utente."
+        "c) Perdita Dati: La disinstallazione dell'estensione, la pulizia della cache del browser o l'uso di software di pulizia sistema comporteranno la perdita irreversibile dei dati salvati e dello storico analisi. Agente Immo non potrà in alcun caso recuperare tali dati né rimborsare i crediti utilizzati per analisi andate perse a causa di azioni locali dell'Utente."
       ]},
       { type: "p", text: "2.4. Uso Personale dei Report: I report di analisi, le esportazioni PDF, i post per social media e qualsiasi altro output generato dal Servizio sono destinati esclusivamente all'uso personale, informativo o aziendale interno dell'Utente. L'Utente non deve ridistribuire, rivendere, sublicenziare o pubblicare pubblicamente tali output per scopi commerciali o in modo che possa violare i diritti di proprietà intellettuale di terzi (incluse le piattaforme di origine da cui i dati sono stati analizzati)." },
-      { type: "p", text: "2.5. Pubblicazione Social Media (Opzionale, utenti Agency): Il Servizio può pubblicare contenuti sull'account Instagram Business o Pagina Facebook collegati dall'Utente, esclusivamente su esplicita programmazione o richiesta di pubblicazione immediata da parte dell'Utente. Collegando tali account, l'Utente autorizza GetNearMe ad agire per suo conto nei limiti dei presenti Termini e concede a GetNearMe il permesso di chiamare le API Instagram Graph e Facebook Graph al solo scopo di pubblicare contenuti predisposti dall'Utente. L'Utente è l'unico responsabile dei contenuti pubblicati, inclusa la conformità alle Linee Guida della Community di Instagram, agli Standard della Community di Facebook, alla normativa applicabile sul diritto d'autore e ai Termini di Servizio di Meta Platforms, Inc. GetNearMe non possiede, modifica o rivendica diritti sui contenuti pubblicati dall'Utente. L'Utente può revocare questa autorizzazione in qualsiasi momento dal pannello Impostazioni di GetNearMe o dalle impostazioni Facebook/Instagram (vedi Istruzioni Cancellazione Dati)." },
+      { type: "p", text: "2.5. Pubblicazione Social Media (Opzionale, utenti Agency): Il Servizio può pubblicare contenuti sull'account Instagram Business o Pagina Facebook collegati dall'Utente, esclusivamente su esplicita programmazione o richiesta di pubblicazione immediata da parte dell'Utente. Collegando tali account, l'Utente autorizza Agente Immo ad agire per suo conto nei limiti dei presenti Termini e concede a Agente Immo il permesso di chiamare le API Instagram Graph e Facebook Graph al solo scopo di pubblicare contenuti predisposti dall'Utente. L'Utente è l'unico responsabile dei contenuti pubblicati, inclusa la conformità alle Linee Guida della Community di Instagram, agli Standard della Community di Facebook, alla normativa applicabile sul diritto d'autore e ai Termini di Servizio di Meta Platforms, Inc. Agente Immo non possiede, modifica o rivendica diritti sui contenuti pubblicati dall'Utente. L'Utente può revocare questa autorizzazione in qualsiasi momento dal pannello Impostazioni di Agente Immo o dalle impostazioni Facebook/Instagram (vedi Istruzioni Cancellazione Dati)." },
       { type: "h2", text: "3. Restrizioni e Proprietà Intellettuale" },
-      { type: "p", text: "3.1. Indipendenza: GetNearMe è uno strumento software indipendente. Non siamo affiliati, approvati, sponsorizzati o ufficialmente collegati ad alcuna piattaforma immobiliare (come Immobiliare.it, Idealista o altre). Tutti i marchi di terze parti sono di proprietà dei rispettivi titolari e sono utilizzati esclusivamente a fini descrittivi di compatibilità (Nominative Fair Use)." },
+      { type: "p", text: "3.1. Indipendenza: Agente Immo è uno strumento software indipendente. Non siamo affiliati, approvati, sponsorizzati o ufficialmente collegati ad alcuna piattaforma immobiliare (come Immobiliare.it, Idealista o altre). Tutti i marchi di terze parti sono di proprietà dei rispettivi titolari e sono utilizzati esclusivamente a fini descrittivi di compatibilità (Nominative Fair Use)." },
       { type: "p", text: "3.2. Condotta Vietata: L'utente si impegna esplicitamente a NON utilizzare il Servizio per:" },
       { type: "ul", items: [
         "Effettuare estrazione massiva di dati allo scopo di creare un database concorrente, un motore di ricerca o un servizio commerciale.",
@@ -727,16 +727,16 @@ export const termsContent: Record<Locale, LegalPage> = {
       { type: "h2", text: "4. Esclusioni e Limitazioni di Responsabilità" },
       { type: "p", text: "4.1. Valori Stimati: Qualsiasi \"Totale Stimato\" o calcolo finanziario fornito dal Servizio rappresenta una stima indicativa dei costi associati all'acquisto di un immobile (es. commissioni di agenzia, costi notarili, imposte). Queste stime hanno scopo puramente informativo e non costituiscono un'offerta vincolante o una quotazione finanziaria professionale." },
       { type: "p", text: "4.2. Affidabilità dei Dati: Le informazioni visualizzate dal Servizio derivano da dati pubblicamente disponibili, informazioni presenti negli annunci analizzati ed elaborazione automatica. Non verifichiamo le classi energetiche tramite certificati ufficiali (APE) né garantiamo l'accuratezza dei dati negli annunci di origine. Inesattezze o omissioni nell'annuncio originale di terze parti possono riflettersi nel report del Servizio." },
-      { type: "p", text: "4.3. Nessuna Consulenza Professionale: Il Servizio non sostituisce la verifica tecnica, legale, fiscale o immobiliare svolta da professionisti qualificati. Nei limiti consentiti dalla legge applicabile, GetNearMe non assume alcuna responsabilità per le decisioni prese sulla base delle informazioni fornite." },
+      { type: "p", text: "4.3. Nessuna Consulenza Professionale: Il Servizio non sostituisce la verifica tecnica, legale, fiscale o immobiliare svolta da professionisti qualificati. Nei limiti consentiti dalla legge applicabile, Agente Immo non assume alcuna responsabilità per le decisioni prese sulla base delle informazioni fornite." },
       { type: "h2", text: "5. Crediti, Pagamenti e Rimborsi" },
       { type: "p", text: "5.1. Acquisto di Crediti: Il Servizio opera su un sistema basato su crediti. I crediti sono unità virtuali utilizzate esclusivamente per sbloccare funzionalità o analisi specifiche all'interno dell'Estensione. I crediti non rappresentano fondi prepagati, moneta elettronica o valore conservato, non hanno valore monetario al di fuori del Servizio e non possono essere scambiati in denaro, rimborsati o trasferiti ad altri account." },
-      { type: "p", text: "5.2. Elaborazione dei Pagamenti: Tutti i pagamenti sono elaborati in modo sicuro ed esclusivamente da Stripe in conformità con i propri termini e politiche sulla privacy. GetNearMe non memorizza né ha accesso ai dati completi delle carte di pagamento degli utenti. Acquistando crediti, l'utente autorizza Stripe ad addebitare il metodo di pagamento selezionato per l'importo applicabile." },
+      { type: "p", text: "5.2. Elaborazione dei Pagamenti: Tutti i pagamenti sono elaborati in modo sicuro ed esclusivamente da Stripe in conformità con i propri termini e politiche sulla privacy. Agente Immo non memorizza né ha accesso ai dati completi delle carte di pagamento degli utenti. Acquistando crediti, l'utente autorizza Stripe ad addebitare il metodo di pagamento selezionato per l'importo applicabile." },
       { type: "p", text: "5.3. Rinuncia al Diritto di Recesso: Acquistando crediti digitali, l'utente acconsente espressamente all'esecuzione immediata del contratto e riconosce espressamente che, una volta accreditati i crediti sul proprio account, perde il diritto di recesso (periodo di ripensamento) ai sensi dell'Articolo 16(m) della Direttiva 2011/83/UE sui Diritti dei Consumatori." },
       { type: "p", text: "5.4. Politica di Rimborso: Tutti gli acquisti di crediti sono definitivi e non rimborsabili, salvo diversa disposizione delle leggi obbligatorie a tutela dei consumatori. Non verranno emessi rimborsi per crediti non utilizzati o in caso di cessazione dell'uso del Servizio." },
-      { type: "p", text: "In caso di errore tecnico comprovato attribuibile esclusivamente a GetNearMe (ad esempio, crediti pagati ma non accreditati sull'account dell'utente), l'utente può contattare il supporto all'indirizzo as.scirica@gmail.com per la verifica e la rettifica." },
+      { type: "p", text: "In caso di errore tecnico comprovato attribuibile esclusivamente a Agente Immo (ad esempio, crediti pagati ma non accreditati sull'account dell'utente), l'utente può contattare il supporto all'indirizzo as.scirica@gmail.com per la verifica e la rettifica." },
       { type: "h2", text: "6. Responsabilità" },
-      { type: "p", text: "Nei limiti massimi consentiti dalla legge applicabile, GetNearMe non sarà responsabile per danni indiretti, incidentali, speciali o consequenziali, inclusa la perdita di profitti, dati, utilizzo o avviamento, derivanti dall'uso o dall'impossibilità di utilizzare il Servizio." },
-      { type: "p", text: "Il Servizio è fornito esclusivamente a scopo informativo e illustrativo e si basa su informazioni pubblicamente disponibili, piattaforme di terze parti ed elaborazione automatizzata. GetNearMe non garantisce l'accuratezza, la completezza o la disponibilità di qualsiasi informazione, stima o output generato dall'IA e non è responsabile per decisioni o azioni intraprese sulla base del Servizio." },
+      { type: "p", text: "Nei limiti massimi consentiti dalla legge applicabile, Agente Immo non sarà responsabile per danni indiretti, incidentali, speciali o consequenziali, inclusa la perdita di profitti, dati, utilizzo o avviamento, derivanti dall'uso o dall'impossibilità di utilizzare il Servizio." },
+      { type: "p", text: "Il Servizio è fornito esclusivamente a scopo informativo e illustrativo e si basa su informazioni pubblicamente disponibili, piattaforme di terze parti ed elaborazione automatizzata. Agente Immo non garantisce l'accuratezza, la completezza o la disponibilità di qualsiasi informazione, stima o output generato dall'IA e non è responsabile per decisioni o azioni intraprese sulla base del Servizio." },
       { type: "p", text: "Queste limitazioni si applicano solo nella misura consentita dalla legge applicabile." },
       { type: "h2", text: "7. Risoluzione" },
       { type: "p", text: "Ci riserviamo il diritto di sospendere o terminare immediatamente l'accesso al Servizio, senza preavviso, in caso di violazione dei presenti Termini, in particolare per quanto riguarda l'estrazione massiva non autorizzata di dati o la violazione dei diritti di terzi." },
@@ -750,23 +750,23 @@ export const termsContent: Record<Locale, LegalPage> = {
   es: {
     title: "Términos de Servicio",
     lastUpdated: "Última actualización: 02 de abril de 2026",
-    description: "Términos de Servicio para la extensión de navegador GetNearMe.",
+    description: "Términos de Servicio para la extensión de navegador Agente Immo.",
     blocks: [
       { type: "h2", text: "1. Aceptación de los Términos" },
-      { type: "p", text: "Al instalar o usar la extensión GetNearMe (\"Servicio\"), usted acepta quedar vinculado por estos Términos de Servicio (\"Términos\"). Usted afirma que tiene al menos 18 años de edad y que es plenamente capaz y competente para celebrar este acuerdo. Si no está de acuerdo, debe desinstalar inmediatamente el Servicio." },
+      { type: "p", text: "Al instalar o usar la extensión Agente Immo (\"Servicio\"), usted acepta quedar vinculado por estos Términos de Servicio (\"Términos\"). Usted afirma que tiene al menos 18 años de edad y que es plenamente capaz y competente para celebrar este acuerdo. Si no está de acuerdo, debe desinstalar inmediatamente el Servicio." },
       { type: "h2", text: "2. Licencia y Naturaleza del Servicio" },
       { type: "p", text: "2.1. User Agent: El Servicio opera como un \"User Agent\" — una herramienta de software que actúa exclusivamente en nombre y bajo el control directo del Usuario individual, de manera análoga a como un navegador web (que también es un user agent) renderiza y presenta el contenido web para el Usuario. La Extensión no actúa de forma autónoma, no realiza rastreo o indexación independiente de sitios web, y procesa únicamente el contenido ya visible en la página que el Usuario está visualizando actualmente. Todo análisis es iniciado por el Usuario y ejecutado localmente en la sesión del navegador del Usuario." },
       { type: "p", text: "2.2. Licencia Limitada: Le otorgamos una licencia revocable, no exclusiva e intransferible para usar el Servicio exclusivamente para su análisis personal o empresarial interno de datos del mercado inmobiliario." },
-      { type: "p", text: "2.3. Volatilidad de los Datos y Almacenamiento Local: El Usuario reconoce que GetNearMe es una herramienta del lado del cliente que almacena los datos detallados de los análisis (ej. precios, características de los inmuebles) exclusivamente en el almacenamiento local del navegador (Local Storage)." },
+      { type: "p", text: "2.3. Volatilidad de los Datos y Almacenamiento Local: El Usuario reconoce que Agente Immo es una herramienta del lado del cliente que almacena los datos detallados de los análisis (ej. precios, características de los inmuebles) exclusivamente en el almacenamiento local del navegador (Local Storage)." },
       { type: "ul", items: [
-        "a) Sin Copia de Seguridad Remota: GetNearMe no mantiene copias de seguridad del contenido de los anuncios en sus propios servidores.",
+        "a) Sin Copia de Seguridad Remota: Agente Immo no mantiene copias de seguridad del contenido de los anuncios en sus propios servidores.",
         "b) Responsabilidad del Usuario: Es responsabilidad exclusiva del Usuario guardar o exportar los informes generados (ej. como PDF) inmediatamente después del análisis.",
-        "c) Pérdida de Datos: La desinstalación de la extensión, la limpieza de la caché del navegador o el uso de software de limpieza del sistema resultarán en la pérdida irreversible de los datos guardados y del historial de análisis. GetNearMe no podrá en ningún caso recuperar dichos datos ni reembolsar los créditos utilizados para análisis perdidos debido a acciones locales del Usuario."
+        "c) Pérdida de Datos: La desinstalación de la extensión, la limpieza de la caché del navegador o el uso de software de limpieza del sistema resultarán en la pérdida irreversible de los datos guardados y del historial de análisis. Agente Immo no podrá en ningún caso recuperar dichos datos ni reembolsar los créditos utilizados para análisis perdidos debido a acciones locales del Usuario."
       ]},
       { type: "p", text: "2.4. Uso Personal de los Informes: Los informes de análisis, exportaciones PDF, publicaciones para redes sociales y cualquier otro resultado generado por el Servicio están destinados exclusivamente al uso personal, informativo o empresarial interno del Usuario. El Usuario no debe redistribuir, revender, sublicenciar ni publicar públicamente dichos resultados con fines comerciales ni de manera que pueda infringir los derechos de propiedad intelectual de terceros (incluidas las plataformas de origen de las que se analizaron los datos)." },
-      { type: "p", text: "2.5. Publicación en Redes Sociales (Opcional, usuarios Agency): El Servicio puede publicar contenido en la cuenta Instagram Business o Página de Facebook conectada por el Usuario, únicamente bajo programación explícita o solicitud de publicación inmediata del Usuario. Al conectar dichas cuentas, el Usuario autoriza a GetNearMe a actuar en su nombre dentro de los límites de estos Términos y concede a GetNearMe permiso para llamar a las API Instagram Graph y Facebook Graph con el único propósito de publicar contenido preparado por el Usuario. El Usuario es el único responsable del contenido publicado, incluido el cumplimiento de las Normas de la Comunidad de Instagram, las Normas Comunitarias de Facebook, la normativa de derechos de autor aplicable y los Términos de Servicio de Meta Platforms, Inc. GetNearMe no posee, modifica ni reclama derechos sobre el contenido publicado por el Usuario. El Usuario puede revocar esta autorización en cualquier momento desde el panel Configuración de GetNearMe o desde la configuración de Facebook/Instagram (ver Instrucciones de Eliminación de Datos)." },
+      { type: "p", text: "2.5. Publicación en Redes Sociales (Opcional, usuarios Agency): El Servicio puede publicar contenido en la cuenta Instagram Business o Página de Facebook conectada por el Usuario, únicamente bajo programación explícita o solicitud de publicación inmediata del Usuario. Al conectar dichas cuentas, el Usuario autoriza a Agente Immo a actuar en su nombre dentro de los límites de estos Términos y concede a Agente Immo permiso para llamar a las API Instagram Graph y Facebook Graph con el único propósito de publicar contenido preparado por el Usuario. El Usuario es el único responsable del contenido publicado, incluido el cumplimiento de las Normas de la Comunidad de Instagram, las Normas Comunitarias de Facebook, la normativa de derechos de autor aplicable y los Términos de Servicio de Meta Platforms, Inc. Agente Immo no posee, modifica ni reclama derechos sobre el contenido publicado por el Usuario. El Usuario puede revocar esta autorización en cualquier momento desde el panel Configuración de Agente Immo o desde la configuración de Facebook/Instagram (ver Instrucciones de Eliminación de Datos)." },
       { type: "h2", text: "3. Restricciones y Propiedad Intelectual" },
-      { type: "p", text: "3.1. Independencia: GetNearMe es una herramienta de software independiente. No estamos afiliados, respaldados, patrocinados ni oficialmente conectados con ninguna plataforma inmobiliaria (como Immobiliare.it, Idealista u otras). Todas las marcas comerciales de terceros son propiedad de sus respectivos titulares y se utilizan exclusivamente con fines descriptivos de compatibilidad (Nominative Fair Use)." },
+      { type: "p", text: "3.1. Independencia: Agente Immo es una herramienta de software independiente. No estamos afiliados, respaldados, patrocinados ni oficialmente conectados con ninguna plataforma inmobiliaria (como Immobiliare.it, Idealista u otras). Todas las marcas comerciales de terceros son propiedad de sus respectivos titulares y se utilizan exclusivamente con fines descriptivos de compatibilidad (Nominative Fair Use)." },
       { type: "p", text: "3.2. Conducta Prohibida: Usted acepta explícitamente NO utilizar el Servicio para:" },
       { type: "ul", items: [
         "Realizar extracción masiva de datos con el propósito de crear una base de datos competidora, motor de búsqueda o servicio comercial.",
@@ -777,16 +777,16 @@ export const termsContent: Record<Locale, LegalPage> = {
       { type: "h2", text: "4. Exclusiones y Limitaciones de Responsabilidad" },
       { type: "p", text: "4.1. Valores Estimados: Cualquier \"Total Estimado\" o cálculo financiero proporcionado por el Servicio representa una estimación indicativa de costos asociados con la compra de una propiedad (ej. comisiones de agencia, costos notariales, impuestos). Estas estimaciones son solo para fines informativos y no constituyen una oferta vinculante o una cotización financiera profesional." },
       { type: "p", text: "4.2. Fiabilidad de los Datos: La información visualizada por el Servicio se deriva de datos públicamente disponibles, información presente en los anuncios analizados y procesamiento automático. No verificamos las clases energéticas mediante certificados oficiales (APE) ni garantizamos la exactitud de los datos en los anuncios de origen. Las inexactitudes u omisiones en el anuncio original de terceros pueden reflejarse en el informe del Servicio." },
-      { type: "p", text: "4.3. Sin Asesoramiento Profesional: El Servicio no sustituye la verificación técnica, legal, fiscal o inmobiliaria realizada por profesionales cualificados. En la medida permitida por la ley aplicable, GetNearMe no asume responsabilidad por las decisiones tomadas basándose en la información proporcionada." },
+      { type: "p", text: "4.3. Sin Asesoramiento Profesional: El Servicio no sustituye la verificación técnica, legal, fiscal o inmobiliaria realizada por profesionales cualificados. En la medida permitida por la ley aplicable, Agente Immo no asume responsabilidad por las decisiones tomadas basándose en la información proporcionada." },
       { type: "h2", text: "5. Créditos, Pagos y Reembolsos" },
       { type: "p", text: "5.1. Compra de Créditos: El Servicio opera con un sistema basado en créditos. Los créditos son unidades virtuales utilizadas exclusivamente para desbloquear funciones o análisis específicos dentro de la Extensión. Los créditos no representan fondos prepagados, dinero electrónico o valor almacenado, no tienen valor monetario fuera del Servicio y no pueden canjearse por efectivo, reembolsarse ni transferirse a otras cuentas." },
-      { type: "p", text: "5.2. Procesamiento de Pagos: Todos los pagos son procesados de forma segura y exclusivamente por Stripe de acuerdo con sus propios términos y políticas de privacidad. GetNearMe no almacena ni tiene acceso a los datos completos de las tarjetas de pago de los usuarios. Al comprar créditos, usted autoriza a Stripe a cobrar su método de pago seleccionado por el monto aplicable." },
+      { type: "p", text: "5.2. Procesamiento de Pagos: Todos los pagos son procesados de forma segura y exclusivamente por Stripe de acuerdo con sus propios términos y políticas de privacidad. Agente Immo no almacena ni tiene acceso a los datos completos de las tarjetas de pago de los usuarios. Al comprar créditos, usted autoriza a Stripe a cobrar su método de pago seleccionado por el monto aplicable." },
       { type: "p", text: "5.3. Renuncia al Derecho de Desistimiento: Al comprar créditos digitales, usted consiente expresamente la ejecución inmediata del contrato y reconoce expresamente que, una vez que los créditos son acreditados en su cuenta, pierde su derecho de desistimiento (período de reflexión) de acuerdo con el Artículo 16(m) de la Directiva 2011/83/UE sobre Derechos de los Consumidores." },
       { type: "p", text: "5.4. Política de Reembolso: Todas las compras de créditos son definitivas y no reembolsables, excepto cuando las leyes obligatorias de protección al consumidor dispongan lo contrario. No se emitirán reembolsos por créditos no utilizados o si decide dejar de usar el Servicio." },
-      { type: "p", text: "En caso de error técnico comprobado atribuible exclusivamente a GetNearMe (por ejemplo, créditos pagados pero no acreditados en la cuenta del usuario), el usuario puede contactar con soporte en as.scirica@gmail.com para verificación y rectificación." },
+      { type: "p", text: "En caso de error técnico comprobado atribuible exclusivamente a Agente Immo (por ejemplo, créditos pagados pero no acreditados en la cuenta del usuario), el usuario puede contactar con soporte en as.scirica@gmail.com para verificación y rectificación." },
       { type: "h2", text: "6. Responsabilidad" },
-      { type: "p", text: "En la máxima medida permitida por la ley aplicable, GetNearMe no será responsable de daños indirectos, incidentales, especiales o consecuentes, incluida la pérdida de beneficios, datos, uso o fondo de comercio, que surjan del uso o la imposibilidad de uso del Servicio." },
-      { type: "p", text: "El Servicio se proporciona únicamente con fines informativos e ilustrativos y se basa en información públicamente disponible, plataformas de terceros y procesamiento automatizado. GetNearMe no garantiza la exactitud, integridad o disponibilidad de ninguna información, estimación o resultado generado por IA y no es responsable de las decisiones o acciones tomadas basándose en el Servicio." },
+      { type: "p", text: "En la máxima medida permitida por la ley aplicable, Agente Immo no será responsable de daños indirectos, incidentales, especiales o consecuentes, incluida la pérdida de beneficios, datos, uso o fondo de comercio, que surjan del uso o la imposibilidad de uso del Servicio." },
+      { type: "p", text: "El Servicio se proporciona únicamente con fines informativos e ilustrativos y se basa en información públicamente disponible, plataformas de terceros y procesamiento automatizado. Agente Immo no garantiza la exactitud, integridad o disponibilidad de ninguna información, estimación o resultado generado por IA y no es responsable de las decisiones o acciones tomadas basándose en el Servicio." },
       { type: "p", text: "Estas limitaciones se aplican solo en la medida permitida por la ley aplicable." },
       { type: "h2", text: "7. Terminación" },
       { type: "p", text: "Nos reservamos el derecho de suspender o terminar su acceso al Servicio inmediatamente, sin previo aviso, si incumple estos Términos, particularmente en lo que respecta a la extracción masiva no autorizada de datos o la violación de derechos de terceros." },
@@ -800,23 +800,23 @@ export const termsContent: Record<Locale, LegalPage> = {
   fr: {
     title: "Conditions d'Utilisation",
     lastUpdated: "Dernière mise à jour : 02 avril 2026",
-    description: "Conditions d'Utilisation pour l'extension de navigateur GetNearMe.",
+    description: "Conditions d'Utilisation pour l'extension de navigateur Agente Immo.",
     blocks: [
       { type: "h2", text: "1. Acceptation des Conditions" },
-      { type: "p", text: "En installant ou en utilisant l'extension GetNearMe (\"Service\"), vous acceptez d'être lié par les présentes Conditions d'Utilisation (\"Conditions\"). Vous affirmez avoir au moins 18 ans et être pleinement capable et compétent pour conclure cet accord. Si vous n'êtes pas d'accord, vous devez immédiatement désinstaller le Service." },
+      { type: "p", text: "En installant ou en utilisant l'extension Agente Immo (\"Service\"), vous acceptez d'être lié par les présentes Conditions d'Utilisation (\"Conditions\"). Vous affirmez avoir au moins 18 ans et être pleinement capable et compétent pour conclure cet accord. Si vous n'êtes pas d'accord, vous devez immédiatement désinstaller le Service." },
       { type: "h2", text: "2. Licence et Nature du Service" },
       { type: "p", text: "2.1. User Agent : Le Service fonctionne comme un \"User Agent\" — un outil logiciel qui agit exclusivement pour le compte et sous le contrôle direct de l'Utilisateur individuel, de manière analogue à la façon dont un navigateur web (lui-même un user agent) affiche et présente le contenu web pour l'Utilisateur. L'Extension n'agit pas de manière autonome, ne parcourt ni n'indexe de manière indépendante les sites web, et ne traite que le contenu déjà visible sur la page que l'Utilisateur consulte actuellement. Toute analyse est initiée par l'Utilisateur et exécutée localement dans la session du navigateur de l'Utilisateur." },
       { type: "p", text: "2.2. Licence Limitée : Nous vous accordons une licence révocable, non exclusive et non transférable pour utiliser le Service uniquement pour votre analyse personnelle ou professionnelle interne de données du marché immobilier." },
-      { type: "p", text: "2.3. Volatilité des Données et Stockage Local : L'Utilisateur reconnaît que GetNearMe est un outil côté client qui stocke les données détaillées des analyses (ex. prix, caractéristiques des biens) exclusivement dans le stockage local du navigateur (Local Storage)." },
+      { type: "p", text: "2.3. Volatilité des Données et Stockage Local : L'Utilisateur reconnaît que Agente Immo est un outil côté client qui stocke les données détaillées des analyses (ex. prix, caractéristiques des biens) exclusivement dans le stockage local du navigateur (Local Storage)." },
       { type: "ul", items: [
-        "a) Pas de Sauvegarde Distante : GetNearMe ne conserve pas de copies de sauvegarde du contenu des annonces sur ses propres serveurs.",
+        "a) Pas de Sauvegarde Distante : Agente Immo ne conserve pas de copies de sauvegarde du contenu des annonces sur ses propres serveurs.",
         "b) Responsabilité de l'Utilisateur : Il est de la responsabilité exclusive de l'Utilisateur de sauvegarder ou d'exporter les rapports générés (ex. en PDF) immédiatement après l'analyse.",
-        "c) Perte de Données : La désinstallation de l'extension, le nettoyage du cache du navigateur ou l'utilisation de logiciels de nettoyage système entraîneront la perte irréversible des données sauvegardées et de l'historique des analyses. GetNearMe ne pourra en aucun cas récupérer ces données ni rembourser les crédits utilisés pour des analyses perdues en raison d'actions locales de l'Utilisateur."
+        "c) Perte de Données : La désinstallation de l'extension, le nettoyage du cache du navigateur ou l'utilisation de logiciels de nettoyage système entraîneront la perte irréversible des données sauvegardées et de l'historique des analyses. Agente Immo ne pourra en aucun cas récupérer ces données ni rembourser les crédits utilisés pour des analyses perdues en raison d'actions locales de l'Utilisateur."
       ]},
       { type: "p", text: "2.4. Utilisation Personnelle des Rapports : Les rapports d'analyse, exports PDF, publications pour réseaux sociaux et tout autre résultat généré par le Service sont destinés exclusivement à l'usage personnel, informatif ou professionnel interne de l'Utilisateur. L'Utilisateur ne doit pas redistribuer, revendre, sous-licencier ou publier publiquement ces résultats à des fins commerciales ni d'une manière susceptible de porter atteinte aux droits de propriété intellectuelle de tiers (y compris les plateformes d'origine à partir desquelles les données ont été analysées)." },
-      { type: "p", text: "2.5. Publication sur les Réseaux Sociaux (Optionnelle, utilisateurs Agency) : Le Service peut publier du contenu sur le compte Instagram Business ou la Page Facebook connectés par l'Utilisateur, uniquement sur programmation explicite ou demande de publication immédiate de l'Utilisateur. En connectant ces comptes, l'Utilisateur autorise GetNearMe à agir en son nom dans les limites des présents Conditions et accorde à GetNearMe la permission d'appeler les API Instagram Graph et Facebook Graph dans le seul but de publier le contenu préparé par l'Utilisateur. L'Utilisateur est seul responsable du contenu publié, y compris la conformité aux Règles de la Communauté Instagram, aux Standards de la Communauté Facebook, à la législation applicable sur le droit d'auteur et aux Conditions d'Utilisation de Meta Platforms, Inc. GetNearMe ne possède pas, ne modifie pas ni ne revendique de droits sur le contenu publié par l'Utilisateur. L'Utilisateur peut révoquer cette autorisation à tout moment depuis le panneau Paramètres de GetNearMe ou depuis les paramètres Facebook/Instagram (voir Instructions de Suppression des Données)." },
+      { type: "p", text: "2.5. Publication sur les Réseaux Sociaux (Optionnelle, utilisateurs Agency) : Le Service peut publier du contenu sur le compte Instagram Business ou la Page Facebook connectés par l'Utilisateur, uniquement sur programmation explicite ou demande de publication immédiate de l'Utilisateur. En connectant ces comptes, l'Utilisateur autorise Agente Immo à agir en son nom dans les limites des présents Conditions et accorde à Agente Immo la permission d'appeler les API Instagram Graph et Facebook Graph dans le seul but de publier le contenu préparé par l'Utilisateur. L'Utilisateur est seul responsable du contenu publié, y compris la conformité aux Règles de la Communauté Instagram, aux Standards de la Communauté Facebook, à la législation applicable sur le droit d'auteur et aux Conditions d'Utilisation de Meta Platforms, Inc. Agente Immo ne possède pas, ne modifie pas ni ne revendique de droits sur le contenu publié par l'Utilisateur. L'Utilisateur peut révoquer cette autorisation à tout moment depuis le panneau Paramètres de Agente Immo ou depuis les paramètres Facebook/Instagram (voir Instructions de Suppression des Données)." },
       { type: "h2", text: "3. Restrictions et Propriété Intellectuelle" },
-      { type: "p", text: "3.1. Indépendance : GetNearMe est un outil logiciel indépendant. Nous ne sommes affiliés, approuvés, sponsorisés ni officiellement liés à aucune plateforme immobilière (telle qu'Immobiliare.it, Idealista ou d'autres). Toutes les marques de tiers sont la propriété de leurs détenteurs respectifs et sont utilisées uniquement à des fins descriptives de compatibilité (Nominative Fair Use)." },
+      { type: "p", text: "3.1. Indépendance : Agente Immo est un outil logiciel indépendant. Nous ne sommes affiliés, approuvés, sponsorisés ni officiellement liés à aucune plateforme immobilière (telle qu'Immobiliare.it, Idealista ou d'autres). Toutes les marques de tiers sont la propriété de leurs détenteurs respectifs et sont utilisées uniquement à des fins descriptives de compatibilité (Nominative Fair Use)." },
       { type: "p", text: "3.2. Conduite Interdite : Vous acceptez explicitement de NE PAS utiliser le Service pour :" },
       { type: "ul", items: [
         "Effectuer une extraction massive de données dans le but de créer une base de données concurrente, un moteur de recherche ou un service commercial.",
@@ -827,16 +827,16 @@ export const termsContent: Record<Locale, LegalPage> = {
       { type: "h2", text: "4. Exclusions et Limitations de Responsabilité" },
       { type: "p", text: "4.1. Valeurs Estimées : Tout \"Total Estimé\" ou calcul financier fourni par le Service représente une estimation indicative des coûts associés à l'achat d'un bien immobilier (ex. frais d'agence, frais de notaire, taxes). Ces estimations sont fournies à titre informatif uniquement et ne constituent pas une offre contraignante ou un devis financier professionnel." },
       { type: "p", text: "4.2. Fiabilité des Données : Les informations visualisées par le Service proviennent de données publiquement disponibles, d'informations présentes dans les annonces analysées et d'un traitement automatique. Nous ne vérifions pas les classes énergétiques via des certificats officiels (APE) et ne garantissons pas l'exactitude des données dans les annonces sources. Les inexactitudes ou omissions dans l'annonce originale du tiers peuvent se refléter dans le rapport du Service." },
-      { type: "p", text: "4.3. Pas de Conseil Professionnel : Le Service ne remplace pas la vérification technique, juridique, fiscale ou immobilière effectuée par des professionnels qualifiés. Dans la mesure permise par la loi applicable, GetNearMe n'assume aucune responsabilité pour les décisions prises sur la base des informations fournies." },
+      { type: "p", text: "4.3. Pas de Conseil Professionnel : Le Service ne remplace pas la vérification technique, juridique, fiscale ou immobilière effectuée par des professionnels qualifiés. Dans la mesure permise par la loi applicable, Agente Immo n'assume aucune responsabilité pour les décisions prises sur la base des informations fournies." },
       { type: "h2", text: "5. Crédits, Paiements et Remboursements" },
       { type: "p", text: "5.1. Achat de Crédits : Le Service fonctionne sur un système de crédits. Les crédits sont des unités virtuelles utilisées uniquement pour débloquer des fonctionnalités ou analyses spécifiques au sein de l'Extension. Les crédits ne représentent pas des fonds prépayés, de la monnaie électronique ou de la valeur stockée, n'ont aucune valeur monétaire en dehors du Service et ne peuvent être échangés contre de l'argent, remboursés ou transférés à d'autres comptes." },
-      { type: "p", text: "5.2. Traitement des Paiements : Tous les paiements sont traités de manière sécurisée et exclusivement par Stripe conformément à ses propres conditions et politiques de confidentialité. GetNearMe ne stocke pas et n'a pas accès aux détails complets des cartes de paiement des utilisateurs. En achetant des crédits, vous autorisez Stripe à débiter votre moyen de paiement sélectionné du montant applicable." },
+      { type: "p", text: "5.2. Traitement des Paiements : Tous les paiements sont traités de manière sécurisée et exclusivement par Stripe conformément à ses propres conditions et politiques de confidentialité. Agente Immo ne stocke pas et n'a pas accès aux détails complets des cartes de paiement des utilisateurs. En achetant des crédits, vous autorisez Stripe à débiter votre moyen de paiement sélectionné du montant applicable." },
       { type: "p", text: "5.3. Renonciation au Droit de Rétractation : En achetant des crédits numériques, vous consentez expressément à l'exécution immédiate du contrat et reconnaissez expressément que, une fois les crédits crédités sur votre compte, vous perdez votre droit de rétractation (délai de réflexion) conformément à l'Article 16(m) de la Directive 2011/83/UE relative aux Droits des Consommateurs." },
       { type: "p", text: "5.4. Politique de Remboursement : Tous les achats de crédits sont définitifs et non remboursables, sauf disposition contraire des lois obligatoires de protection des consommateurs. Aucun remboursement ne sera émis pour les crédits non utilisés ou si vous choisissez de cesser d'utiliser le Service." },
-      { type: "p", text: "En cas d'erreur technique prouvée attribuable exclusivement à GetNearMe (par exemple, crédits payés mais non crédités sur le compte de l'utilisateur), l'utilisateur peut contacter le support à as.scirica@gmail.com pour vérification et rectification." },
+      { type: "p", text: "En cas d'erreur technique prouvée attribuable exclusivement à Agente Immo (par exemple, crédits payés mais non crédités sur le compte de l'utilisateur), l'utilisateur peut contacter le support à as.scirica@gmail.com pour vérification et rectification." },
       { type: "h2", text: "6. Responsabilité" },
-      { type: "p", text: "Dans la mesure maximale permise par la loi applicable, GetNearMe ne sera pas responsable de tout dommage indirect, accessoire, spécial ou consécutif, y compris la perte de profits, de données, d'utilisation ou de clientèle, résultant de l'utilisation ou de l'impossibilité d'utiliser le Service." },
-      { type: "p", text: "Le Service est fourni à des fins informatives et illustratives uniquement et repose sur des informations publiquement disponibles, des plateformes tierces et un traitement automatisé. GetNearMe ne garantit pas l'exactitude, l'exhaustivité ou la disponibilité de toute information, estimation ou résultat généré par l'IA et n'est pas responsable des décisions ou actions entreprises sur la base du Service." },
+      { type: "p", text: "Dans la mesure maximale permise par la loi applicable, Agente Immo ne sera pas responsable de tout dommage indirect, accessoire, spécial ou consécutif, y compris la perte de profits, de données, d'utilisation ou de clientèle, résultant de l'utilisation ou de l'impossibilité d'utiliser le Service." },
+      { type: "p", text: "Le Service est fourni à des fins informatives et illustratives uniquement et repose sur des informations publiquement disponibles, des plateformes tierces et un traitement automatisé. Agente Immo ne garantit pas l'exactitude, l'exhaustivité ou la disponibilité de toute information, estimation ou résultat généré par l'IA et n'est pas responsable des décisions ou actions entreprises sur la base du Service." },
       { type: "p", text: "Ces limitations ne s'appliquent que dans la mesure permise par la loi applicable." },
       { type: "h2", text: "7. Résiliation" },
       { type: "p", text: "Nous nous réservons le droit de suspendre ou de résilier votre accès au Service immédiatement, sans préavis, si vous enfreignez les présentes Conditions, notamment en ce qui concerne l'extraction massive non autorisée de données ou la violation des droits de tiers." },
@@ -850,23 +850,23 @@ export const termsContent: Record<Locale, LegalPage> = {
   ru: {
     title: "Условия использования",
     lastUpdated: "Последнее обновление: 02 апреля 2026",
-    description: "Условия использования расширения браузера GetNearMe.",
+    description: "Условия использования расширения браузера Agente Immo.",
     blocks: [
       { type: "h2", text: "1. Принятие условий" },
-      { type: "p", text: "Устанавливая или используя расширение GetNearMe (\"Сервис\"), вы соглашаетесь соблюдать настоящие Условия использования (\"Условия\"). Вы подтверждаете, что вам исполнилось 18 лет и вы полностью дееспособны для заключения данного соглашения. Если вы не согласны, вы должны немедленно удалить Сервис." },
+      { type: "p", text: "Устанавливая или используя расширение Agente Immo (\"Сервис\"), вы соглашаетесь соблюдать настоящие Условия использования (\"Условия\"). Вы подтверждаете, что вам исполнилось 18 лет и вы полностью дееспособны для заключения данного соглашения. Если вы не согласны, вы должны немедленно удалить Сервис." },
       { type: "h2", text: "2. Лицензия и характер Сервиса" },
       { type: "p", text: "2.1. User Agent: Сервис работает как \"User Agent\" — программный инструмент, действующий исключительно от имени и под непосредственным контролем индивидуального Пользователя, аналогично тому, как веб-браузер (сам являющийся user agent) отображает и представляет веб-контент для Пользователя. Расширение не действует автономно, не осуществляет независимый обход или индексацию веб-сайтов и обрабатывает только контент, уже видимый на странице, которую Пользователь просматривает в данный момент. Любой анализ инициируется Пользователем и выполняется локально в сеансе браузера Пользователя." },
       { type: "p", text: "2.2. Ограниченная лицензия: Мы предоставляем вам отзывную, неисключительную, непередаваемую лицензию на использование Сервиса исключительно для личного или внутреннего делового анализа данных рынка недвижимости." },
-      { type: "p", text: "2.3. Волатильность данных и локальное хранение: Пользователь признаёт, что GetNearMe является клиентским инструментом, который хранит детальные данные анализа (напр., цены, характеристики недвижимости) исключительно в локальном хранилище браузера (Local Storage)." },
+      { type: "p", text: "2.3. Волатильность данных и локальное хранение: Пользователь признаёт, что Agente Immo является клиентским инструментом, который хранит детальные данные анализа (напр., цены, характеристики недвижимости) исключительно в локальном хранилище браузера (Local Storage)." },
       { type: "ul", items: [
-        "a) Отсутствие удалённого резервного копирования: GetNearMe не хранит резервные копии содержания объявлений на своих серверах.",
+        "a) Отсутствие удалённого резервного копирования: Agente Immo не хранит резервные копии содержания объявлений на своих серверах.",
         "b) Ответственность пользователя: Исключительная ответственность за сохранение или экспорт сгенерированных отчётов (напр., в формате PDF) сразу после анализа лежит на Пользователе.",
-        "c) Потеря данных: Удаление расширения, очистка кэша браузера или использование программ для очистки системы приведут к необратимой потере сохранённых данных и истории анализов. GetNearMe ни при каких обстоятельствах не сможет восстановить эти данные и не возместит кредиты, использованные для анализов, утраченных в результате локальных действий Пользователя."
+        "c) Потеря данных: Удаление расширения, очистка кэша браузера или использование программ для очистки системы приведут к необратимой потере сохранённых данных и истории анализов. Agente Immo ни при каких обстоятельствах не сможет восстановить эти данные и не возместит кредиты, использованные для анализов, утраченных в результате локальных действий Пользователя."
       ]},
       { type: "p", text: "2.4. Личное использование отчётов: Аналитические отчёты, экспорт в PDF, публикации для социальных сетей и любые другие результаты, сгенерированные Сервисом, предназначены исключительно для личного, информационного или внутреннего делового использования Пользователем. Пользователь не должен перераспределять, перепродавать, сублицензировать или публично публиковать такие результаты в коммерческих целях или способом, который может нарушить права интеллектуальной собственности третьих лиц (включая платформы-источники, с которых были проанализированы данные)." },
-      { type: "p", text: "2.5. Публикация в социальных сетях (Опционально, пользователи Agency): Сервис может публиковать контент в подключённом аккаунте Instagram Business или Странице Facebook Пользователя только по явному планированию или запросу немедленной публикации от Пользователя. Подключая эти аккаунты, Пользователь уполномочивает GetNearMe действовать от его имени в рамках настоящих Условий и предоставляет GetNearMe разрешение на вызов Instagram Graph API и Facebook Graph API исключительно с целью публикации контента, подготовленного Пользователем. Пользователь несёт единоличную ответственность за опубликованный контент, включая соблюдение Правил сообщества Instagram, Стандартов сообщества Facebook, применимого законодательства об авторском праве и Условий использования Meta Platforms, Inc. GetNearMe не владеет, не изменяет и не претендует на права в отношении опубликованного Пользователем контента. Пользователь может отозвать это разрешение в любое время из панели Настройки GetNearMe или из настроек Facebook/Instagram (см. Инструкции по удалению данных)." },
+      { type: "p", text: "2.5. Публикация в социальных сетях (Опционально, пользователи Agency): Сервис может публиковать контент в подключённом аккаунте Instagram Business или Странице Facebook Пользователя только по явному планированию или запросу немедленной публикации от Пользователя. Подключая эти аккаунты, Пользователь уполномочивает Agente Immo действовать от его имени в рамках настоящих Условий и предоставляет Agente Immo разрешение на вызов Instagram Graph API и Facebook Graph API исключительно с целью публикации контента, подготовленного Пользователем. Пользователь несёт единоличную ответственность за опубликованный контент, включая соблюдение Правил сообщества Instagram, Стандартов сообщества Facebook, применимого законодательства об авторском праве и Условий использования Meta Platforms, Inc. Agente Immo не владеет, не изменяет и не претендует на права в отношении опубликованного Пользователем контента. Пользователь может отозвать это разрешение в любое время из панели Настройки Agente Immo или из настроек Facebook/Instagram (см. Инструкции по удалению данных)." },
       { type: "h2", text: "3. Ограничения и интеллектуальная собственность" },
-      { type: "p", text: "3.1. Независимость: GetNearMe является независимым программным инструментом. Мы не аффилированы, не одобрены, не спонсированы и не связаны официально ни с одной платформой недвижимости (такой как Immobiliare.it, Idealista или другие). Все товарные знаки третьих лиц являются собственностью их соответствующих владельцев и используются исключительно в описательных целях совместимости (Nominative Fair Use)." },
+      { type: "p", text: "3.1. Независимость: Agente Immo является независимым программным инструментом. Мы не аффилированы, не одобрены, не спонсированы и не связаны официально ни с одной платформой недвижимости (такой как Immobiliare.it, Idealista или другие). Все товарные знаки третьих лиц являются собственностью их соответствующих владельцев и используются исключительно в описательных целях совместимости (Nominative Fair Use)." },
       { type: "p", text: "3.2. Запрещённые действия: Вы явно соглашаетесь НЕ использовать Сервис для:" },
       { type: "ul", items: [
         "Массового извлечения данных с целью создания конкурирующей базы данных, поисковой системы или коммерческого сервиса.",
@@ -877,16 +877,16 @@ export const termsContent: Record<Locale, LegalPage> = {
       { type: "h2", text: "4. Отказ от ответственности и ограничения" },
       { type: "p", text: "4.1. Оценочные значения: Любой \"Расчётный итог\" или финансовый расчёт, предоставленный Сервисом, представляет собой ориентировочную оценку затрат, связанных с покупкой недвижимости (напр., агентские комиссии, нотариальные расходы, налоги). Эти оценки носят исключительно информационный характер и не являются обязывающим предложением или профессиональной финансовой котировкой." },
       { type: "p", text: "4.2. Достоверность данных: Информация, визуализируемая Сервисом, основана на общедоступных данных, информации из анализируемых объявлений и автоматической обработке. Мы не проверяем энергетические классы через официальные сертификаты (APE) и не гарантируем точность данных в исходных объявлениях. Неточности или пропуски в оригинальном стороннем объявлении могут отразиться в отчёте Сервиса." },
-      { type: "p", text: "4.3. Отсутствие профессиональной консультации: Сервис не заменяет техническую, юридическую, налоговую или риэлторскую проверку, выполняемую квалифицированными специалистами. В пределах, допускаемых применимым законодательством, GetNearMe не несёт ответственности за решения, принятые на основе предоставленной информации." },
+      { type: "p", text: "4.3. Отсутствие профессиональной консультации: Сервис не заменяет техническую, юридическую, налоговую или риэлторскую проверку, выполняемую квалифицированными специалистами. В пределах, допускаемых применимым законодательством, Agente Immo не несёт ответственности за решения, принятые на основе предоставленной информации." },
       { type: "h2", text: "5. Кредиты, платежи и возвраты" },
       { type: "p", text: "5.1. Покупка кредитов: Сервис работает на системе кредитов. Кредиты — это виртуальные единицы, используемые исключительно для разблокировки определённых функций или аналитики в Расширении. Кредиты не являются предоплаченными средствами, электронными деньгами или сохранённой стоимостью, не имеют денежной ценности вне Сервиса и не могут быть обменяны на наличные, возвращены или переведены на другие аккаунты." },
-      { type: "p", text: "5.2. Обработка платежей: Все платежи обрабатываются безопасно и исключительно Stripe в соответствии с его собственными условиями и политиками конфиденциальности. GetNearMe не хранит и не имеет доступа к полным данным платёжных карт пользователей. Приобретая кредиты, вы уполномочиваете Stripe списать средства с выбранного способа оплаты на применимую сумму." },
+      { type: "p", text: "5.2. Обработка платежей: Все платежи обрабатываются безопасно и исключительно Stripe в соответствии с его собственными условиями и политиками конфиденциальности. Agente Immo не хранит и не имеет доступа к полным данным платёжных карт пользователей. Приобретая кредиты, вы уполномочиваете Stripe списать средства с выбранного способа оплаты на применимую сумму." },
       { type: "p", text: "5.3. Отказ от права на отзыв: Приобретая цифровые кредиты, вы явно соглашаетесь на немедленное исполнение договора и явно признаёте, что после зачисления кредитов на ваш аккаунт вы теряете право на отзыв (период обдумывания) в соответствии со Статьёй 16(m) Директивы 2011/83/ЕС о правах потребителей." },
       { type: "p", text: "5.4. Политика возврата: Все покупки кредитов являются окончательными и невозвратными, за исключением случаев, предусмотренных обязательным законодательством о защите прав потребителей. Возвраты не производятся за неиспользованные кредиты или при прекращении использования Сервиса." },
-      { type: "p", text: "В случае подтверждённой технической ошибки, относящейся исключительно к GetNearMe (например, кредиты оплачены, но не зачислены на аккаунт пользователя), пользователь может обратиться в поддержку по адресу as.scirica@gmail.com для проверки и исправления." },
+      { type: "p", text: "В случае подтверждённой технической ошибки, относящейся исключительно к Agente Immo (например, кредиты оплачены, но не зачислены на аккаунт пользователя), пользователь может обратиться в поддержку по адресу as.scirica@gmail.com для проверки и исправления." },
       { type: "h2", text: "6. Ответственность" },
-      { type: "p", text: "В максимальной степени, допускаемой применимым законодательством, GetNearMe не несёт ответственности за любые косвенные, побочные, особые или последующие убытки, включая упущенную выгоду, потерю данных, использования или деловой репутации, возникающие в связи с использованием или невозможностью использования Сервиса." },
-      { type: "p", text: "Сервис предоставляется исключительно в информационных и иллюстративных целях и основан на общедоступной информации, сторонних платформах и автоматизированной обработке. GetNearMe не гарантирует точность, полноту или доступность какой-либо информации, оценок или результатов, сгенерированных ИИ, и не несёт ответственности за решения или действия, предпринятые на основе Сервиса." },
+      { type: "p", text: "В максимальной степени, допускаемой применимым законодательством, Agente Immo не несёт ответственности за любые косвенные, побочные, особые или последующие убытки, включая упущенную выгоду, потерю данных, использования или деловой репутации, возникающие в связи с использованием или невозможностью использования Сервиса." },
+      { type: "p", text: "Сервис предоставляется исключительно в информационных и иллюстративных целях и основан на общедоступной информации, сторонних платформах и автоматизированной обработке. Agente Immo не гарантирует точность, полноту или доступность какой-либо информации, оценок или результатов, сгенерированных ИИ, и не несёт ответственности за решения или действия, предпринятые на основе Сервиса." },
       { type: "p", text: "Эти ограничения применяются только в пределах, допускаемых применимым законодательством." },
       { type: "h2", text: "7. Прекращение" },
       { type: "p", text: "Мы оставляем за собой право немедленно приостановить или прекратить ваш доступ к Сервису без предварительного уведомления в случае нарушения настоящих Условий, особенно в отношении несанкционированного массового извлечения данных или нарушения прав третьих лиц." },
@@ -900,23 +900,23 @@ export const termsContent: Record<Locale, LegalPage> = {
   uk: {
     title: "Умови використання",
     lastUpdated: "Останнє оновлення: 02 квітня 2026",
-    description: "Умови використання розширення браузера GetNearMe.",
+    description: "Умови використання розширення браузера Agente Immo.",
     blocks: [
       { type: "h2", text: "1. Прийняття умов" },
-      { type: "p", text: "Встановлюючи або використовуючи розширення GetNearMe (\"Сервіс\"), ви погоджуєтесь дотримуватись цих Умов використання (\"Умови\"). Ви підтверджуєте, що вам виповнилось 18 років і ви повністю дієздатні для укладення цієї угоди. Якщо ви не погоджуєтесь, ви повинні негайно видалити Сервіс." },
+      { type: "p", text: "Встановлюючи або використовуючи розширення Agente Immo (\"Сервіс\"), ви погоджуєтесь дотримуватись цих Умов використання (\"Умови\"). Ви підтверджуєте, що вам виповнилось 18 років і ви повністю дієздатні для укладення цієї угоди. Якщо ви не погоджуєтесь, ви повинні негайно видалити Сервіс." },
       { type: "h2", text: "2. Ліцензія та характер Сервісу" },
       { type: "p", text: "2.1. User Agent: Сервіс працює як \"User Agent\" — програмний інструмент, що діє виключно від імені та під безпосереднім контролем індивідуального Користувача, аналогічно тому, як веб-браузер (сам будучи user agent) відображає та представляє веб-контент для Користувача. Розширення не діє автономно, не здійснює незалежний обхід або індексацію веб-сайтів і обробляє лише контент, вже видимий на сторінці, яку Користувач переглядає в даний момент. Будь-який аналіз ініціюється Користувачем і виконується локально в сеансі браузера Користувача." },
       { type: "p", text: "2.2. Обмежена ліцензія: Ми надаємо вам відкличну, невиключну, непередавану ліцензію на використання Сервісу виключно для особистого або внутрішнього ділового аналізу даних ринку нерухомості." },
-      { type: "p", text: "2.3. Волатильність даних та локальне зберігання: Користувач визнає, що GetNearMe є клієнтським інструментом, який зберігає детальні дані аналізу (напр., ціни, характеристики нерухомості) виключно в локальному сховищі браузера (Local Storage)." },
+      { type: "p", text: "2.3. Волатильність даних та локальне зберігання: Користувач визнає, що Agente Immo є клієнтським інструментом, який зберігає детальні дані аналізу (напр., ціни, характеристики нерухомості) виключно в локальному сховищі браузера (Local Storage)." },
       { type: "ul", items: [
-        "a) Відсутність віддаленого резервного копіювання: GetNearMe не зберігає резервні копії вмісту оголошень на своїх серверах.",
+        "a) Відсутність віддаленого резервного копіювання: Agente Immo не зберігає резервні копії вмісту оголошень на своїх серверах.",
         "b) Відповідальність користувача: Виключна відповідальність за збереження або експорт згенерованих звітів (напр., у форматі PDF) одразу після аналізу лежить на Користувачеві.",
-        "c) Втрата даних: Видалення розширення, очищення кешу браузера або використання програм для очищення системи призведуть до безповоротної втрати збережених даних та історії аналізів. GetNearMe за жодних обставин не зможе відновити ці дані та не відшкодує кредити, використані для аналізів, втрачених внаслідок локальних дій Користувача."
+        "c) Втрата даних: Видалення розширення, очищення кешу браузера або використання програм для очищення системи призведуть до безповоротної втрати збережених даних та історії аналізів. Agente Immo за жодних обставин не зможе відновити ці дані та не відшкодує кредити, використані для аналізів, втрачених внаслідок локальних дій Користувача."
       ]},
       { type: "p", text: "2.4. Особисте використання звітів: Аналітичні звіти, експорт у PDF, публікації для соціальних мереж та будь-які інші результати, згенеровані Сервісом, призначені виключно для особистого, інформаційного або внутрішнього ділового використання Користувачем. Користувач не повинен перерозповсюджувати, перепродавати, субліцензувати або публічно публікувати такі результати в комерційних цілях або способом, що може порушити права інтелектуальної власності третіх осіб (включаючи платформи-джерела, з яких були проаналізовані дані)." },
-      { type: "p", text: "2.5. Публікація у соцмережах (Опціонально, користувачі Agency): Сервіс може публікувати контент у підключеному акаунті Instagram Business або Сторінці Facebook Користувача лише за явним плануванням або запитом негайної публікації від Користувача. Підключаючи ці акаунти, Користувач уповноважує GetNearMe діяти від його імені в межах цих Умов та надає GetNearMe дозвіл викликати Instagram Graph API та Facebook Graph API виключно з метою публікації контенту, підготовленого Користувачем. Користувач несе одноосібну відповідальність за опублікований контент, включаючи дотримання Правил спільноти Instagram, Стандартів спільноти Facebook, застосовного законодавства про авторське право та Умов використання Meta Platforms, Inc. GetNearMe не володіє, не змінює та не претендує на права щодо опублікованого Користувачем контенту. Користувач може відкликати цей дозвіл у будь-який час з панелі Налаштування GetNearMe або з налаштувань Facebook/Instagram (див. Інструкції з видалення даних)." },
+      { type: "p", text: "2.5. Публікація у соцмережах (Опціонально, користувачі Agency): Сервіс може публікувати контент у підключеному акаунті Instagram Business або Сторінці Facebook Користувача лише за явним плануванням або запитом негайної публікації від Користувача. Підключаючи ці акаунти, Користувач уповноважує Agente Immo діяти від його імені в межах цих Умов та надає Agente Immo дозвіл викликати Instagram Graph API та Facebook Graph API виключно з метою публікації контенту, підготовленого Користувачем. Користувач несе одноосібну відповідальність за опублікований контент, включаючи дотримання Правил спільноти Instagram, Стандартів спільноти Facebook, застосовного законодавства про авторське право та Умов використання Meta Platforms, Inc. Agente Immo не володіє, не змінює та не претендує на права щодо опублікованого Користувачем контенту. Користувач може відкликати цей дозвіл у будь-який час з панелі Налаштування Agente Immo або з налаштувань Facebook/Instagram (див. Інструкції з видалення даних)." },
       { type: "h2", text: "3. Обмеження та інтелектуальна власність" },
-      { type: "p", text: "3.1. Незалежність: GetNearMe є незалежним програмним інструментом. Ми не афілійовані, не схвалені, не спонсоровані та не пов'язані офіційно з жодною платформою нерухомості (такою як Immobiliare.it, Idealista або інші). Усі товарні знаки третіх осіб є власністю їхніх відповідних власників і використовуються виключно в описових цілях сумісності (Nominative Fair Use)." },
+      { type: "p", text: "3.1. Незалежність: Agente Immo є незалежним програмним інструментом. Ми не афілійовані, не схвалені, не спонсоровані та не пов'язані офіційно з жодною платформою нерухомості (такою як Immobiliare.it, Idealista або інші). Усі товарні знаки третіх осіб є власністю їхніх відповідних власників і використовуються виключно в описових цілях сумісності (Nominative Fair Use)." },
       { type: "p", text: "3.2. Заборонені дії: Ви явно погоджуєтесь НЕ використовувати Сервіс для:" },
       { type: "ul", items: [
         "Масового видобування даних з метою створення конкуруючої бази даних, пошукової системи або комерційного сервісу.",
@@ -927,16 +927,16 @@ export const termsContent: Record<Locale, LegalPage> = {
       { type: "h2", text: "4. Застереження та обмеження відповідальності" },
       { type: "p", text: "4.1. Оціночні значення: Будь-який \"Розрахунковий підсумок\" або фінансовий розрахунок, наданий Сервісом, являє собою орієнтовну оцінку витрат, пов'язаних з придбанням нерухомості (напр., агентські комісії, нотаріальні витрати, податки). Ці оцінки носять виключно інформаційний характер і не є обов'язковою пропозицією або професійною фінансовою котировкою." },
       { type: "p", text: "4.2. Достовірність даних: Інформація, візуалізована Сервісом, базується на загальнодоступних даних, інформації з аналізованих оголошень та автоматичній обробці. Ми не перевіряємо енергетичні класи через офіційні сертифікати (APE) і не гарантуємо точність даних у вихідних оголошеннях. Неточності або пропуски в оригінальному сторонньому оголошенні можуть відобразитися у звіті Сервісу." },
-      { type: "p", text: "4.3. Відсутність професійної консультації: Сервіс не замінює технічну, юридичну, податкову або ріелторську перевірку, виконувану кваліфікованими фахівцями. У межах, допустимих чинним законодавством, GetNearMe не несе відповідальності за рішення, прийняті на основі наданої інформації." },
+      { type: "p", text: "4.3. Відсутність професійної консультації: Сервіс не замінює технічну, юридичну, податкову або ріелторську перевірку, виконувану кваліфікованими фахівцями. У межах, допустимих чинним законодавством, Agente Immo не несе відповідальності за рішення, прийняті на основі наданої інформації." },
       { type: "h2", text: "5. Кредити, платежі та повернення" },
       { type: "p", text: "5.1. Придбання кредитів: Сервіс працює на системі кредитів. Кредити — це віртуальні одиниці, що використовуються виключно для розблокування певних функцій або аналітики в Розширенні. Кредити не є передоплаченими коштами, електронними грошима або збереженою вартістю, не мають грошової цінності поза Сервісом і не можуть бути обміняні на готівку, повернені або переведені на інші акаунти." },
-      { type: "p", text: "5.2. Обробка платежів: Усі платежі обробляються безпечно та виключно Stripe відповідно до його власних умов та політик конфіденційності. GetNearMe не зберігає та не має доступу до повних даних платіжних карток користувачів. Купуючи кредити, ви уповноважуєте Stripe списати кошти з обраного способу оплати на відповідну суму." },
+      { type: "p", text: "5.2. Обробка платежів: Усі платежі обробляються безпечно та виключно Stripe відповідно до його власних умов та політик конфіденційності. Agente Immo не зберігає та не має доступу до повних даних платіжних карток користувачів. Купуючи кредити, ви уповноважуєте Stripe списати кошти з обраного способу оплати на відповідну суму." },
       { type: "p", text: "5.3. Відмова від права на відкликання: Купуючи цифрові кредити, ви явно погоджуєтесь на негайне виконання договору та явно визнаєте, що після зарахування кредитів на ваш акаунт ви втрачаєте право на відкликання (період обдумування) відповідно до Статті 16(m) Директиви 2011/83/ЄС про права споживачів." },
       { type: "p", text: "5.4. Політика повернення: Усі покупки кредитів є остаточними та неповоротними, за винятком випадків, передбачених обов'язковим законодавством про захист прав споживачів. Повернення не здійснюються за невикористані кредити або при припиненні використання Сервісу." },
-      { type: "p", text: "У разі підтвердженої технічної помилки, що відноситься виключно до GetNearMe (наприклад, кредити оплачені, але не зараховані на акаунт користувача), користувач може звернутися до підтримки за адресою as.scirica@gmail.com для перевірки та виправлення." },
+      { type: "p", text: "У разі підтвердженої технічної помилки, що відноситься виключно до Agente Immo (наприклад, кредити оплачені, але не зараховані на акаунт користувача), користувач може звернутися до підтримки за адресою as.scirica@gmail.com для перевірки та виправлення." },
       { type: "h2", text: "6. Відповідальність" },
-      { type: "p", text: "У максимальному обсязі, допустимому чинним законодавством, GetNearMe не несе відповідальності за будь-які непрямі, випадкові, особливі або наслідкові збитки, включаючи втрату прибутку, даних, використання або ділової репутації, що виникають у зв'язку з використанням або неможливістю використання Сервісу." },
-      { type: "p", text: "Сервіс надається виключно в інформаційних та ілюстративних цілях і базується на загальнодоступній інформації, сторонніх платформах та автоматизованій обробці. GetNearMe не гарантує точність, повноту або доступність будь-якої інформації, оцінок або результатів, згенерованих ШІ, і не несе відповідальності за рішення або дії, вжиті на основі Сервісу." },
+      { type: "p", text: "У максимальному обсязі, допустимому чинним законодавством, Agente Immo не несе відповідальності за будь-які непрямі, випадкові, особливі або наслідкові збитки, включаючи втрату прибутку, даних, використання або ділової репутації, що виникають у зв'язку з використанням або неможливістю використання Сервісу." },
+      { type: "p", text: "Сервіс надається виключно в інформаційних та ілюстративних цілях і базується на загальнодоступній інформації, сторонніх платформах та автоматизованій обробці. Agente Immo не гарантує точність, повноту або доступність будь-якої інформації, оцінок або результатів, згенерованих ШІ, і не несе відповідальності за рішення або дії, вжиті на основі Сервісу." },
       { type: "p", text: "Ці обмеження застосовуються лише в межах, допустимих чинним законодавством." },
       { type: "h2", text: "7. Припинення" },
       { type: "p", text: "Ми залишаємо за собою право негайно призупинити або припинити ваш доступ до Сервісу без попереднього повідомлення у разі порушення цих Умов, зокрема щодо несанкціонованого масового видобування даних або порушення прав третіх осіб." },
@@ -955,18 +955,18 @@ export const dataDeletionContent: Record<Locale, LegalPage> = {
   en: {
     title: "Data Deletion Instructions",
     lastUpdated: "Last updated: 14 May 2026",
-    description: "How to request deletion of your data from GetNearMe and revoke access from connected Instagram or Facebook accounts.",
+    description: "How to request deletion of your data from Agente Immo and revoke access from connected Instagram or Facebook accounts.",
     blocks: [
-      { type: "p", text: "GetNearMe takes your data privacy seriously. This page explains how to delete the data we hold about you and how to revoke access from any Instagram or Facebook account you may have connected to our service." },
-      { type: "h2", text: "1. Delete your GetNearMe account" },
-      { type: "p", text: "To request full deletion of your GetNearMe account and all associated personal data (email, user ID, transactional records subject to legal retention, social media access tokens, scheduled posts), send an email to:" },
+      { type: "p", text: "Agente Immo takes your data privacy seriously. This page explains how to delete the data we hold about you and how to revoke access from any Instagram or Facebook account you may have connected to our service." },
+      { type: "h2", text: "1. Delete your Agente Immo account" },
+      { type: "p", text: "To request full deletion of your Agente Immo account and all associated personal data (email, user ID, transactional records subject to legal retention, social media access tokens, scheduled posts), send an email to:" },
       { type: "p", text: "as.scirica@gmail.com" },
-      { type: "p", text: "Subject: \"Account Deletion Request\". Include the email address associated with your GetNearMe account. We will process the request and confirm deletion within 30 days, in accordance with Article 17 GDPR." },
+      { type: "p", text: "Subject: \"Account Deletion Request\". Include the email address associated with your Agente Immo account. We will process the request and confirm deletion within 30 days, in accordance with Article 17 GDPR." },
       { type: "h2", text: "2. Revoke Instagram / Facebook access only" },
-      { type: "p", text: "If you only want to disconnect your Instagram Business or Facebook Page from GetNearMe without deleting your account, you have three options:" },
-      { type: "h3", text: "Option A — From GetNearMe (recommended)" },
+      { type: "p", text: "If you only want to disconnect your Instagram Business or Facebook Page from Agente Immo without deleting your account, you have three options:" },
+      { type: "h3", text: "Option A — From Agente Immo (recommended)" },
       { type: "ul", items: [
-        "Open the GetNearMe browser extension.",
+        "Open the Agente Immo browser extension.",
         "Open Settings → Social Accounts.",
         "Click \"Disconnect\" next to the Instagram or Facebook account.",
         "Access tokens are revoked immediately on our side and removed from our database."
@@ -974,14 +974,14 @@ export const dataDeletionContent: Record<Locale, LegalPage> = {
       { type: "h3", text: "Option B — From Facebook" },
       { type: "ul", items: [
         "Go to https://www.facebook.com/settings?tab=business_tools.",
-        "Locate \"GetNearMe\" in the list of connected business tools.",
+        "Locate \"Agente Immo\" in the list of connected business tools.",
         "Click \"Remove\".",
         "This revokes our access tokens at the Meta level. We will detect the revocation on the next API call and remove the corresponding row from our database."
       ]},
       { type: "h3", text: "Option C — From Instagram" },
       { type: "ul", items: [
         "Open the Instagram app → Settings → Apps and Websites → Active.",
-        "Find \"GetNearMe\" and tap \"Remove\".",
+        "Find \"Agente Immo\" and tap \"Remove\".",
         "Access is revoked immediately."
       ]},
       { type: "h2", text: "3. What data is deleted" },
@@ -1004,18 +1004,18 @@ export const dataDeletionContent: Record<Locale, LegalPage> = {
   it: {
     title: "Istruzioni per la Cancellazione dei Dati",
     lastUpdated: "Ultimo aggiornamento: 14 maggio 2026",
-    description: "Come richiedere la cancellazione dei dati personali da GetNearMe e revocare l'accesso agli account Instagram o Facebook collegati.",
+    description: "Come richiedere la cancellazione dei dati personali da Agente Immo e revocare l'accesso agli account Instagram o Facebook collegati.",
     blocks: [
-      { type: "p", text: "GetNearMe prende sul serio la tua privacy. Questa pagina spiega come cancellare i dati che conserviamo su di te e come revocare l'accesso a qualsiasi account Instagram o Facebook collegato al nostro servizio." },
-      { type: "h2", text: "1. Cancella il tuo account GetNearMe" },
-      { type: "p", text: "Per richiedere la cancellazione completa dell'account GetNearMe e di tutti i dati personali associati (email, ID utente, dati transazionali soggetti a conservazione legale, token di accesso social, post programmati), invia una email a:" },
+      { type: "p", text: "Agente Immo prende sul serio la tua privacy. Questa pagina spiega come cancellare i dati che conserviamo su di te e come revocare l'accesso a qualsiasi account Instagram o Facebook collegato al nostro servizio." },
+      { type: "h2", text: "1. Cancella il tuo account Agente Immo" },
+      { type: "p", text: "Per richiedere la cancellazione completa dell'account Agente Immo e di tutti i dati personali associati (email, ID utente, dati transazionali soggetti a conservazione legale, token di accesso social, post programmati), invia una email a:" },
       { type: "p", text: "as.scirica@gmail.com" },
-      { type: "p", text: "Oggetto: \"Richiesta cancellazione account\". Includi l'indirizzo email associato al tuo account GetNearMe. Elaboreremo la richiesta e confermeremo la cancellazione entro 30 giorni, in conformità con l'Art. 17 GDPR." },
+      { type: "p", text: "Oggetto: \"Richiesta cancellazione account\". Includi l'indirizzo email associato al tuo account Agente Immo. Elaboreremo la richiesta e confermeremo la cancellazione entro 30 giorni, in conformità con l'Art. 17 GDPR." },
       { type: "h2", text: "2. Revoca solo l'accesso Instagram / Facebook" },
-      { type: "p", text: "Se vuoi solo scollegare il tuo account Instagram Business o Pagina Facebook da GetNearMe senza cancellare l'account, hai tre opzioni:" },
-      { type: "h3", text: "Opzione A — Da GetNearMe (consigliato)" },
+      { type: "p", text: "Se vuoi solo scollegare il tuo account Instagram Business o Pagina Facebook da Agente Immo senza cancellare l'account, hai tre opzioni:" },
+      { type: "h3", text: "Opzione A — Da Agente Immo (consigliato)" },
       { type: "ul", items: [
-        "Apri l'estensione browser GetNearMe.",
+        "Apri l'estensione browser Agente Immo.",
         "Apri Impostazioni → Account Social.",
         "Clicca \"Scollega\" accanto all'account Instagram o Facebook.",
         "I token di accesso sono revocati immediatamente dal nostro lato e rimossi dal nostro database."
@@ -1023,14 +1023,14 @@ export const dataDeletionContent: Record<Locale, LegalPage> = {
       { type: "h3", text: "Opzione B — Da Facebook" },
       { type: "ul", items: [
         "Vai su https://www.facebook.com/settings?tab=business_tools.",
-        "Trova \"GetNearMe\" nella lista degli strumenti business collegati.",
+        "Trova \"Agente Immo\" nella lista degli strumenti business collegati.",
         "Clicca \"Rimuovi\".",
         "Questo revoca i nostri token a livello Meta. Rileveremo la revoca alla successiva chiamata API e rimuoveremo la riga corrispondente dal nostro database."
       ]},
       { type: "h3", text: "Opzione C — Da Instagram" },
       { type: "ul", items: [
         "Apri l'app Instagram → Impostazioni → App e siti web → Attive.",
-        "Trova \"GetNearMe\" e tocca \"Rimuovi\".",
+        "Trova \"Agente Immo\" e tocca \"Rimuovi\".",
         "L'accesso viene revocato immediatamente."
       ]},
       { type: "h2", text: "3. Quali dati vengono cancellati" },
@@ -1053,18 +1053,18 @@ export const dataDeletionContent: Record<Locale, LegalPage> = {
   es: {
     title: "Instrucciones para la Eliminación de Datos",
     lastUpdated: "Última actualización: 14 de mayo de 2026",
-    description: "Cómo solicitar la eliminación de tus datos de GetNearMe y revocar el acceso a las cuentas de Instagram o Facebook conectadas.",
+    description: "Cómo solicitar la eliminación de tus datos de Agente Immo y revocar el acceso a las cuentas de Instagram o Facebook conectadas.",
     blocks: [
-      { type: "p", text: "GetNearMe toma en serio tu privacidad. Esta página explica cómo eliminar los datos que conservamos sobre ti y cómo revocar el acceso a cualquier cuenta de Instagram o Facebook conectada a nuestro servicio." },
-      { type: "h2", text: "1. Elimina tu cuenta de GetNearMe" },
-      { type: "p", text: "Para solicitar la eliminación completa de la cuenta GetNearMe y todos los datos personales asociados, envía un correo a:" },
+      { type: "p", text: "Agente Immo toma en serio tu privacidad. Esta página explica cómo eliminar los datos que conservamos sobre ti y cómo revocar el acceso a cualquier cuenta de Instagram o Facebook conectada a nuestro servicio." },
+      { type: "h2", text: "1. Elimina tu cuenta de Agente Immo" },
+      { type: "p", text: "Para solicitar la eliminación completa de la cuenta Agente Immo y todos los datos personales asociados, envía un correo a:" },
       { type: "p", text: "as.scirica@gmail.com" },
-      { type: "p", text: "Asunto: \"Solicitud de eliminación de cuenta\". Incluye la dirección de correo asociada a tu cuenta GetNearMe. Procesaremos la solicitud y confirmaremos la eliminación en un plazo de 30 días, conforme al Art. 17 RGPD." },
+      { type: "p", text: "Asunto: \"Solicitud de eliminación de cuenta\". Incluye la dirección de correo asociada a tu cuenta Agente Immo. Procesaremos la solicitud y confirmaremos la eliminación en un plazo de 30 días, conforme al Art. 17 RGPD." },
       { type: "h2", text: "2. Revocar solo el acceso a Instagram / Facebook" },
-      { type: "p", text: "Si solo deseas desconectar tu cuenta Instagram Business o Página de Facebook de GetNearMe sin eliminar la cuenta, tienes tres opciones:" },
-      { type: "h3", text: "Opción A — Desde GetNearMe (recomendado)" },
+      { type: "p", text: "Si solo deseas desconectar tu cuenta Instagram Business o Página de Facebook de Agente Immo sin eliminar la cuenta, tienes tres opciones:" },
+      { type: "h3", text: "Opción A — Desde Agente Immo (recomendado)" },
       { type: "ul", items: [
-        "Abre la extensión del navegador GetNearMe.",
+        "Abre la extensión del navegador Agente Immo.",
         "Abre Configuración → Cuentas Sociales.",
         "Haz clic en \"Desconectar\" junto a la cuenta de Instagram o Facebook.",
         "Los tokens de acceso se revocan inmediatamente y se eliminan de nuestra base de datos."
@@ -1072,14 +1072,14 @@ export const dataDeletionContent: Record<Locale, LegalPage> = {
       { type: "h3", text: "Opción B — Desde Facebook" },
       { type: "ul", items: [
         "Ve a https://www.facebook.com/settings?tab=business_tools.",
-        "Localiza \"GetNearMe\" en la lista de herramientas empresariales conectadas.",
+        "Localiza \"Agente Immo\" en la lista de herramientas empresariales conectadas.",
         "Haz clic en \"Eliminar\".",
         "Esto revoca nuestros tokens a nivel de Meta."
       ]},
       { type: "h3", text: "Opción C — Desde Instagram" },
       { type: "ul", items: [
         "Abre la app Instagram → Configuración → Apps y sitios web → Activos.",
-        "Encuentra \"GetNearMe\" y toca \"Eliminar\".",
+        "Encuentra \"Agente Immo\" y toca \"Eliminar\".",
         "El acceso se revoca inmediatamente."
       ]},
       { type: "h2", text: "3. Qué datos se eliminan" },
@@ -1100,18 +1100,18 @@ export const dataDeletionContent: Record<Locale, LegalPage> = {
   fr: {
     title: "Instructions de Suppression des Données",
     lastUpdated: "Dernière mise à jour : 14 mai 2026",
-    description: "Comment demander la suppression de vos données de GetNearMe et révoquer l'accès aux comptes Instagram ou Facebook connectés.",
+    description: "Comment demander la suppression de vos données de Agente Immo et révoquer l'accès aux comptes Instagram ou Facebook connectés.",
     blocks: [
-      { type: "p", text: "GetNearMe prend votre confidentialité au sérieux. Cette page explique comment supprimer les données que nous détenons sur vous et comment révoquer l'accès à tout compte Instagram ou Facebook connecté à notre service." },
-      { type: "h2", text: "1. Supprimez votre compte GetNearMe" },
-      { type: "p", text: "Pour demander la suppression complète du compte GetNearMe et de toutes les données personnelles associées, envoyez un email à :" },
+      { type: "p", text: "Agente Immo prend votre confidentialité au sérieux. Cette page explique comment supprimer les données que nous détenons sur vous et comment révoquer l'accès à tout compte Instagram ou Facebook connecté à notre service." },
+      { type: "h2", text: "1. Supprimez votre compte Agente Immo" },
+      { type: "p", text: "Pour demander la suppression complète du compte Agente Immo et de toutes les données personnelles associées, envoyez un email à :" },
       { type: "p", text: "as.scirica@gmail.com" },
-      { type: "p", text: "Objet : « Demande de suppression de compte ». Incluez l'adresse email associée à votre compte GetNearMe. Nous traiterons la demande et confirmerons la suppression dans un délai de 30 jours, conformément à l'Art. 17 RGPD." },
+      { type: "p", text: "Objet : « Demande de suppression de compte ». Incluez l'adresse email associée à votre compte Agente Immo. Nous traiterons la demande et confirmerons la suppression dans un délai de 30 jours, conformément à l'Art. 17 RGPD." },
       { type: "h2", text: "2. Révoquer uniquement l'accès Instagram / Facebook" },
-      { type: "p", text: "Si vous souhaitez uniquement déconnecter votre compte Instagram Business ou Page Facebook de GetNearMe sans supprimer le compte, vous avez trois options :" },
-      { type: "h3", text: "Option A — Depuis GetNearMe (recommandé)" },
+      { type: "p", text: "Si vous souhaitez uniquement déconnecter votre compte Instagram Business ou Page Facebook de Agente Immo sans supprimer le compte, vous avez trois options :" },
+      { type: "h3", text: "Option A — Depuis Agente Immo (recommandé)" },
       { type: "ul", items: [
-        "Ouvrez l'extension navigateur GetNearMe.",
+        "Ouvrez l'extension navigateur Agente Immo.",
         "Ouvrez Paramètres → Comptes Sociaux.",
         "Cliquez sur « Déconnecter » à côté du compte Instagram ou Facebook.",
         "Les jetons d'accès sont révoqués immédiatement et supprimés de notre base de données."
@@ -1119,13 +1119,13 @@ export const dataDeletionContent: Record<Locale, LegalPage> = {
       { type: "h3", text: "Option B — Depuis Facebook" },
       { type: "ul", items: [
         "Allez sur https://www.facebook.com/settings?tab=business_tools.",
-        "Trouvez « GetNearMe » dans la liste des outils d'entreprise connectés.",
+        "Trouvez « Agente Immo » dans la liste des outils d'entreprise connectés.",
         "Cliquez sur « Supprimer »."
       ]},
       { type: "h3", text: "Option C — Depuis Instagram" },
       { type: "ul", items: [
         "Ouvrez l'app Instagram → Paramètres → Apps et sites web → Actifs.",
-        "Trouvez « GetNearMe » et appuyez sur « Supprimer ».",
+        "Trouvez « Agente Immo » et appuyez sur « Supprimer ».",
         "L'accès est révoqué immédiatement."
       ]},
       { type: "h2", text: "3. Quelles données sont supprimées" },
@@ -1146,18 +1146,18 @@ export const dataDeletionContent: Record<Locale, LegalPage> = {
   ru: {
     title: "Инструкции по удалению данных",
     lastUpdated: "Последнее обновление: 14 мая 2026",
-    description: "Как запросить удаление ваших данных из GetNearMe и отозвать доступ к подключённым аккаунтам Instagram или Facebook.",
+    description: "Как запросить удаление ваших данных из Agente Immo и отозвать доступ к подключённым аккаунтам Instagram или Facebook.",
     blocks: [
-      { type: "p", text: "GetNearMe серьёзно относится к вашей конфиденциальности. Эта страница объясняет, как удалить данные, которые мы храним о вас, и как отозвать доступ к любому подключённому аккаунту Instagram или Facebook." },
-      { type: "h2", text: "1. Удалите свой аккаунт GetNearMe" },
-      { type: "p", text: "Чтобы запросить полное удаление аккаунта GetNearMe и всех связанных персональных данных, отправьте письмо на:" },
+      { type: "p", text: "Agente Immo серьёзно относится к вашей конфиденциальности. Эта страница объясняет, как удалить данные, которые мы храним о вас, и как отозвать доступ к любому подключённому аккаунту Instagram или Facebook." },
+      { type: "h2", text: "1. Удалите свой аккаунт Agente Immo" },
+      { type: "p", text: "Чтобы запросить полное удаление аккаунта Agente Immo и всех связанных персональных данных, отправьте письмо на:" },
       { type: "p", text: "as.scirica@gmail.com" },
-      { type: "p", text: "Тема: «Запрос на удаление аккаунта». Укажите адрес электронной почты, связанный с вашим аккаунтом GetNearMe. Мы обработаем запрос и подтвердим удаление в течение 30 дней в соответствии со ст. 17 GDPR." },
+      { type: "p", text: "Тема: «Запрос на удаление аккаунта». Укажите адрес электронной почты, связанный с вашим аккаунтом Agente Immo. Мы обработаем запрос и подтвердим удаление в течение 30 дней в соответствии со ст. 17 GDPR." },
       { type: "h2", text: "2. Отозвать только доступ Instagram / Facebook" },
-      { type: "p", text: "Если вы хотите только отключить аккаунт Instagram Business или Страницу Facebook от GetNearMe, не удаляя аккаунт, у вас есть три варианта:" },
-      { type: "h3", text: "Вариант A — Из GetNearMe (рекомендуется)" },
+      { type: "p", text: "Если вы хотите только отключить аккаунт Instagram Business или Страницу Facebook от Agente Immo, не удаляя аккаунт, у вас есть три варианта:" },
+      { type: "h3", text: "Вариант A — Из Agente Immo (рекомендуется)" },
       { type: "ul", items: [
-        "Откройте расширение браузера GetNearMe.",
+        "Откройте расширение браузера Agente Immo.",
         "Откройте Настройки → Социальные аккаунты.",
         "Нажмите «Отключить» рядом с аккаунтом Instagram или Facebook.",
         "Токены доступа отзываются немедленно и удаляются из нашей базы данных."
@@ -1165,13 +1165,13 @@ export const dataDeletionContent: Record<Locale, LegalPage> = {
       { type: "h3", text: "Вариант B — Из Facebook" },
       { type: "ul", items: [
         "Перейдите на https://www.facebook.com/settings?tab=business_tools.",
-        "Найдите «GetNearMe» в списке подключённых бизнес-инструментов.",
+        "Найдите «Agente Immo» в списке подключённых бизнес-инструментов.",
         "Нажмите «Удалить»."
       ]},
       { type: "h3", text: "Вариант C — Из Instagram" },
       { type: "ul", items: [
         "Откройте приложение Instagram → Настройки → Приложения и сайты → Активные.",
-        "Найдите «GetNearMe» и нажмите «Удалить».",
+        "Найдите «Agente Immo» и нажмите «Удалить».",
         "Доступ отзывается немедленно."
       ]},
       { type: "h2", text: "3. Какие данные удаляются" },
@@ -1192,18 +1192,18 @@ export const dataDeletionContent: Record<Locale, LegalPage> = {
   uk: {
     title: "Інструкції з видалення даних",
     lastUpdated: "Останнє оновлення: 14 травня 2026",
-    description: "Як запросити видалення ваших даних з GetNearMe та відкликати доступ до підключених акаунтів Instagram або Facebook.",
+    description: "Як запросити видалення ваших даних з Agente Immo та відкликати доступ до підключених акаунтів Instagram або Facebook.",
     blocks: [
-      { type: "p", text: "GetNearMe серйозно ставиться до вашої конфіденційності. Ця сторінка пояснює, як видалити дані, які ми зберігаємо про вас, та як відкликати доступ до будь-якого підключеного акаунта Instagram або Facebook." },
-      { type: "h2", text: "1. Видаліть свій акаунт GetNearMe" },
-      { type: "p", text: "Щоб запросити повне видалення акаунта GetNearMe та всіх пов'язаних персональних даних, надішліть листа на:" },
+      { type: "p", text: "Agente Immo серйозно ставиться до вашої конфіденційності. Ця сторінка пояснює, як видалити дані, які ми зберігаємо про вас, та як відкликати доступ до будь-якого підключеного акаунта Instagram або Facebook." },
+      { type: "h2", text: "1. Видаліть свій акаунт Agente Immo" },
+      { type: "p", text: "Щоб запросити повне видалення акаунта Agente Immo та всіх пов'язаних персональних даних, надішліть листа на:" },
       { type: "p", text: "as.scirica@gmail.com" },
-      { type: "p", text: "Тема: «Запит на видалення акаунта». Вкажіть адресу електронної пошти, пов'язану з вашим акаунтом GetNearMe. Ми обробимо запит та підтвердимо видалення протягом 30 днів відповідно до ст. 17 GDPR." },
+      { type: "p", text: "Тема: «Запит на видалення акаунта». Вкажіть адресу електронної пошти, пов'язану з вашим акаунтом Agente Immo. Ми обробимо запит та підтвердимо видалення протягом 30 днів відповідно до ст. 17 GDPR." },
       { type: "h2", text: "2. Відкликати лише доступ Instagram / Facebook" },
-      { type: "p", text: "Якщо ви хочете лише відключити акаунт Instagram Business або Сторінку Facebook від GetNearMe, не видаляючи акаунт, у вас є три варіанти:" },
-      { type: "h3", text: "Варіант A — З GetNearMe (рекомендовано)" },
+      { type: "p", text: "Якщо ви хочете лише відключити акаунт Instagram Business або Сторінку Facebook від Agente Immo, не видаляючи акаунт, у вас є три варіанти:" },
+      { type: "h3", text: "Варіант A — З Agente Immo (рекомендовано)" },
       { type: "ul", items: [
-        "Відкрийте розширення браузера GetNearMe.",
+        "Відкрийте розширення браузера Agente Immo.",
         "Відкрийте Налаштування → Соціальні акаунти.",
         "Натисніть «Відключити» поруч з акаунтом Instagram або Facebook.",
         "Токени доступу відкликаються негайно та видаляються з нашої бази даних."
@@ -1211,13 +1211,13 @@ export const dataDeletionContent: Record<Locale, LegalPage> = {
       { type: "h3", text: "Варіант B — З Facebook" },
       { type: "ul", items: [
         "Перейдіть на https://www.facebook.com/settings?tab=business_tools.",
-        "Знайдіть «GetNearMe» у списку підключених бізнес-інструментів.",
+        "Знайдіть «Agente Immo» у списку підключених бізнес-інструментів.",
         "Натисніть «Видалити»."
       ]},
       { type: "h3", text: "Варіант C — З Instagram" },
       { type: "ul", items: [
         "Відкрийте додаток Instagram → Налаштування → Додатки та сайти → Активні.",
-        "Знайдіть «GetNearMe» та торкніться «Видалити».",
+        "Знайдіть «Agente Immo» та торкніться «Видалити».",
         "Доступ відкликається негайно."
       ]},
       { type: "h2", text: "3. Які дані видаляються" },

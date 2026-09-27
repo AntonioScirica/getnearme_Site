@@ -31,7 +31,7 @@ if (typeof document !== 'undefined') {
   document.head.appendChild(style);
 }
 
-// GetNearMe SaaS dashboard — React port of the Claude Design prototype.
+// Agente Immo SaaS dashboard — React port of the Claude Design prototype.
 // Phase 1: app shell (sidebar, header, project switcher, jobs tray, ⌘K), Home,
 // onboarding (welcome + coachmark tour), toasts. Other routes render a placeholder
 // until ported. Demo data mirrors the prototype; real data wiring comes later.
@@ -137,7 +137,7 @@ const TOUR_DEFS = [
   { sel: '[title="Galleria"]', title: 'Galleria', anim: 'media', text: 'Tutto ciò che generi finisce qui. Puoi riusarlo in post e video quando vuoi.' },
   { sel: '[title="Lavori in corso"]', title: 'Lavori in corso', anim: 'jobs', text: 'Le generazioni girano in background: qui vedi i progressi senza mai bloccarti. Ti avvisiamo a fine lavoro.' },
   { sel: '@center', title: 'Tutto parte da qui', anim: 'project', text: "Inserisci foto e dettagli una sola volta: l'AI li userà in automatico per generare home staging, video reel e post social perfetti e già compilati." },
-  { sel: '[data-tour-dropdown]', title: 'Inizia subito', anim: 'none', text: 'Clicca qui per iniziare a caricare foto e dettagli e sbloccare tutte le funzioni AI di GetNearMe.' },
+  { sel: '[data-tour-dropdown]', title: 'Inizia subito', anim: 'none', text: 'Clicca qui per iniziare a caricare foto e dettagli e sbloccare tutte le funzioni AI di Agente Immo.' },
 ];
 
 // Mini-animazioni per ogni step del tour (CSS, leggere).
@@ -250,7 +250,7 @@ function TourAnim({ kind }: { kind: string }) {
       <div style={{ position: 'relative', width: 58, height: 58, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ position: 'absolute', width: 50, height: 50, borderRadius: '50%', border: '1.5px solid rgba(59,131,246,.3)', animation: 'pulse-ring 2.6s linear infinite' }} />
         <div style={{ width: 36, height: 36, background: 'radial-gradient(circle at 32% 28%, #AECBFF, #3B83F6 70%, #5B6CF0)', animation: 'organic-blob 10s linear infinite', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <img src="/templates/default-logo-vertical.svg" style={{ height: 14, filter: 'brightness(0) invert(1)' }} alt="GetNearMe" />
+          <img src="/templates/default-logo-vertical.svg" style={{ height: 14, filter: 'brightness(0) invert(1)' }} alt="Agente Immo" />
         </div>
       </div>
     </div>
@@ -421,7 +421,7 @@ const PLANS_BY_TIER: Record<PlanTier, Plan[]> = {
 // Tutti i piani (per lookup del piano attivo). Free una volta sola.
 const ALL_PLANS: Plan[] = [...PLANS_BY_TIER.individual, ...PLANS_BY_TIER.agency.slice(1)];
 
-// Brand GetNearMe imposto e BLOCCATO per gli account free: watermark + copertina
+// Brand Agente Immo imposto e BLOCCATO per gli account free: watermark + copertina
 // finale dei video, e i loghi mostrati nella sezione Brand. URL assoluti (origin
 // corrente) cosi' che il Lambda di render possa fetcharli per watermark/outro.
 function gnmBrandLogos(): import('@/lib/brand').BrandLogos {
@@ -2632,12 +2632,12 @@ function BrandScreen({ toast, brand: brandProp, setBrand: setBrandParent, brandR
   const [brand, setBrand] = React.useState<BrandState>(() => {
     const base = brandProp as unknown as BrandState;
     if (!demoMode) return base;
-    return { ...base, logos: { logo_white_v: '/dashboard/logo-icon-white.svg', logo_black_v: '/dashboard/logo-icon-black.svg', logo_colored_v: '/dashboard/logo-icon.svg', logo_white_h: '/assets/svg/logo_scritta_white_circle.svg', logo_black_h: '/assets/svg/logo_scritta_black_circle.svg', logo_colored_h: '/dashboard/logo.svg' }, primaryColor: '#3B83F6', companyName: 'GetNearMe', companyWebsite: 'https://getnearme.com', companyEmail: 'info@getnearme.com' };
+    return { ...base, logos: { logo_white_v: '/dashboard/logo-icon-white.svg', logo_black_v: '/dashboard/logo-icon-black.svg', logo_colored_v: '/dashboard/logo-icon.svg', logo_white_h: '/assets/svg/logo_scritta_white_circle.svg', logo_black_h: '/assets/svg/logo_scritta_black_circle.svg', logo_colored_h: '/dashboard/logo.svg' }, primaryColor: '#3B83F6', companyName: 'Agente Immo', companyWebsite: 'https://agenteimmo.me', companyEmail: 'info@agenteimmo.me' };
   });
   const [demoStep, setDemoStep] = React.useState(0);
   React.useEffect(() => {
     if (!demoMode) return;
-    setBrand(prev => ({ ...prev, logos: { logo_white_v: '/dashboard/logo-icon-white.svg', logo_black_v: '/dashboard/logo-icon-black.svg', logo_colored_v: '/dashboard/logo-icon.svg', logo_white_h: '/assets/svg/logo_scritta_white_circle.svg', logo_black_h: '/assets/svg/logo_scritta_black_circle.svg', logo_colored_h: '/dashboard/logo.svg' }, primaryColor: '#3B83F6', companyName: 'GetNearMe', companyWebsite: 'https://getnearme.com', companyEmail: 'info@getnearme.com' }));
+    setBrand(prev => ({ ...prev, logos: { logo_white_v: '/dashboard/logo-icon-white.svg', logo_black_v: '/dashboard/logo-icon-black.svg', logo_colored_v: '/dashboard/logo-icon.svg', logo_white_h: '/assets/svg/logo_scritta_white_circle.svg', logo_black_h: '/assets/svg/logo_scritta_black_circle.svg', logo_colored_h: '/dashboard/logo.svg' }, primaryColor: '#3B83F6', companyName: 'Agente Immo', companyWebsite: 'https://agenteimmo.me', companyEmail: 'info@agenteimmo.me' }));
     setDemoStep(0);
     if (demoPaused) return;
     const timers = [1,2,3,4,5].map((step, i) => setTimeout(() => setDemoStep(step), 300 + i * 350));
@@ -2701,7 +2701,7 @@ function BrandScreen({ toast, brand: brandProp, setBrand: setBrandParent, brandR
   const set = <K extends keyof BrandState>(k: K, v: BrandState[K]) => setBrand(b => ({ ...b, [k]: v }));
 
   const handleLogoUpload = async (variant: string, file: File) => {
-    if (locked) { toast('Brand GetNearMe incluso nel piano Free. Passa a un piano per usare il tuo logo.', 'x'); return; }
+    if (locked) { toast('Brand Agente Immo incluso nel piano Free. Passa a un piano per usare il tuo logo.', 'x'); return; }
     if (file.size > 500 * 1024) { toast('File troppo grande (max 500 KB). Comprimila qui:', 'x', { href: 'https://www.iloveimg.com/compress-image', label: 'clicca qui' }); return; }
     if (!['image/png', 'image/jpeg', 'image/svg+xml', 'image/webp'].includes(file.type)) { toast('Formato non supportato', 'x'); return; }
     // Optimistic local preview
@@ -2722,7 +2722,7 @@ function BrandScreen({ toast, brand: brandProp, setBrand: setBrandParent, brandR
   };
 
   const removeLogo = async (variant: string) => {
-    if (locked) { toast('Brand GetNearMe incluso nel piano Free. Passa a un piano per personalizzarlo.', 'x'); return; }
+    if (locked) { toast('Brand Agente Immo incluso nel piano Free. Passa a un piano per personalizzarlo.', 'x'); return; }
     setBrand(b => ({ ...b, logos: { ...b.logos, [variant]: null } }));
     const ok = await removeBrandLogo(scope, variant);
     if (ok) {
@@ -2746,7 +2746,7 @@ function BrandScreen({ toast, brand: brandProp, setBrand: setBrandParent, brandR
       {locked && !demoMode && (
         <div onClick={() => go?.('account')} style={{ display: 'flex', alignItems: 'center', gap: 9, background: '#eef4fe', border: '1px solid #cfe0fb', borderRadius: 11, padding: '11px 14px', marginBottom: 18, cursor: go ? 'pointer' : 'default' }}>
           <Icon name="lock" size={14} color="#1d5fd0" />
-          <div style={{ fontSize: 12, color: '#1d5fd0', fontWeight: 600 }}>Sul piano Free i contenuti usano il brand GetNearMe. <span style={{ textDecoration: 'underline', fontWeight: 800 }}>Passa a un piano</span> per caricare il tuo logo e personalizzare tutto.</div>
+          <div style={{ fontSize: 12, color: '#1d5fd0', fontWeight: 600 }}>Sul piano Free i contenuti usano il brand Agente Immo. <span style={{ textDecoration: 'underline', fontWeight: 800 }}>Passa a un piano</span> per caricare il tuo logo e personalizzare tutto.</div>
         </div>
       )}
 
@@ -3166,7 +3166,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
   // Accesso Agenzia: piano agency diretto OPPURE membro di un team agenzia.
   const inAgencyTeam = !!brandData?.isTeamMember;
   const hasAgency = isAgencyTier(userData?.subscriptionType) || inAgencyTeam;
-  // Free: brand GetNearMe forzato (loghi non rimovibili, usati in watermark/outro).
+  // Free: brand Agente Immo forzato (loghi non rimovibili, usati in watermark/outro).
   // I membri di un team agenzia NON sono free per il brand.
   const isFreePlan = (!userData?.subscriptionType || userData.subscriptionType === 'free') && !inAgencyTeam;
   const brandLocked = isFreePlan;
@@ -3405,9 +3405,9 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
           <div style={{ background: 'linear-gradient(160deg, #eef4fe 0%, var(--bg-hover) 100%)', borderRadius: 22, boxShadow: '0 32px 80px rgba(0,0,0,.15), 0 2px 16px rgba(0,0,0,.05)', width: '100%', maxWidth: 396, overflow: 'hidden', position: 'relative', padding: '40px 36px 29px', textAlign: 'center' }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <div style={{ width: 61, height: 61, background: 'var(--bg-card)', borderRadius: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 22px', boxShadow: '0 8px 24px rgba(33,31,28,.1)' }}>
-              <img src="/dashboard/logo-icon.svg" alt="GetNearMe" style={{ width: 36, height: 36 }} />
+              <img src="/dashboard/logo-icon.svg" alt="Agente Immo" style={{ width: 36, height: 36 }} />
             </div>
-            <h2 style={s('margin: 0 0 4px;font-size:24px;font-weight:800;letter-spacing:-.6px;color:#1a1a1a')}>Benvenuto su GetNearMe</h2>
+            <h2 style={s('margin: 0 0 4px;font-size:24px;font-weight:800;letter-spacing:-.6px;color:#1a1a1a')}>Benvenuto su Agente Immo</h2>
             <p style={s('margin: 0 auto 18px;max-width:333px;color:var(--text-sec);font-size:14px;line-height:1.5')}>Foto, video e post curati per i tuoi annunci, pronti in pochi minuti. Ti facciamo vedere come.</p>
             <Box as="button" onClick={startTour} style={s('width:100%;border:none;background:#3B83F6;color:var(--bg-card);font-size:14px;font-weight:700;padding: 12px 25px;border-radius:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap: 6px;min-height:43px;transition:all .2s')} hover={s('background:#2b6fe0;transform:translateY(-1px);box-shadow:0 8px 24px rgba(59,131,246,.28)')}>
               Fai un giro veloce
@@ -3510,7 +3510,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
         {/* SIDEBAR */}
         <div className={`max-md:!fixed max-md:!inset-y-0 max-md:!left-0 max-md:!z-[100] max-md:!w-64 max-md:!shadow-2xl max-md:!flex ${mobileMenuOpen ? 'max-md:!translate-x-0' : 'max-md:!-translate-x-full'}`} style={{ width: collapsed ? 58 : 227, flex: 'none', background: 'var(--bg-card)', borderRight: '1px solid var(--border-light)', display: 'flex', flexDirection: 'column', transition: 'width .25s ease, transform .3s cubic-bezier(.4,0,.2,1)', overflow: 'hidden' }}>
           <div style={s('height:58px;flex:none;display:flex;align-items:center;padding:0 18px;overflow:hidden;justify-content:space-between')}>
-            <div style={{ width: collapsed ? 24 : 117, overflow: 'hidden', flex: 'none' }}><img src="/dashboard/logo.svg" alt="GetNearMe" style={{ height: 22, maxWidth: 'none' }} /></div>
+            <div style={{ width: collapsed ? 24 : 117, overflow: 'hidden', flex: 'none' }}><img src="/dashboard/logo.svg" alt="Agente Immo" style={{ height: 22, maxWidth: 'none' }} /></div>
             {mobileMenuOpen && (
               <Box as="button" onClick={() => setMobileMenuOpen(false)} className="md:!hidden" style={s('border:none;background:transparent;width:29px;height:29px;border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center')} hover={s('background:#f1efe9')}><Icon name="x" size={16} /></Box>
             )}

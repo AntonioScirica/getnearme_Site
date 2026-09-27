@@ -42,7 +42,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: {
       default: seoTitles[locale as Locale],
-      template: `%s | GetNearMe`,
+      template: `%s | Agente Immo`,
     },
     description: seoDescriptions[locale as Locale],
     keywords: [
@@ -56,11 +56,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       "mercato immobiliare",
       "real estate analysis",
       "property comparison",
-      "GetNearMe"
+      "Agente Immo"
     ],
-    authors: [{ name: "GetNearMe" }],
-    creator: "GetNearMe",
-    publisher: "GetNearMe",
+    authors: [{ name: "Agente Immo" }],
+    creator: "Agente Immo",
+    publisher: "Agente Immo",
     alternates: {
       canonical: `${baseUrl}/${locale}`,
       languages,
@@ -72,7 +72,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         .filter((l) => l !== locale)
         .map((l) => ogLocaleMap[l]),
       url: `${baseUrl}/${locale}`,
-      siteName: "GetNearMe",
+      siteName: "Agente Immo",
       title: seoTitles[locale as Locale],
       description: seoDescriptions[locale as Locale],
       images: [
@@ -108,9 +108,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       // yandex: "codice-yandex",
     },
     category: "technology",
-    applicationName: "GetNearMe",
+    applicationName: "Agente Immo",
     manifest: "/manifest.json",
-    appleWebApp: { title: "GetNearMe" },
+    appleWebApp: { title: "Agente Immo" },
   };
 }
 

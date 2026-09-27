@@ -1,4 +1,4 @@
-Site: getnearme.it
+Site: agenteimmo.me
 Type: Editorial content for housing decisions in Italy
 Language: Italian (primary), with localized versions
 
@@ -27,7 +27,7 @@ This content does not provide legal, financial, or investment advice.
 This content is not SEO filler or AI-generated padding.
 
 Relationship to product:
-The site supports a browser extension called GetNearMe.
+The site supports a browser extension called Agente Immo.
 The extension provides contextual information when users view real estate listings.
 Editorial content and extension functionality are complementary but independent.
 Articles are authored to be useful without the extension.

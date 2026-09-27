@@ -166,8 +166,8 @@ export function HomeScreen({
     return (
       <div style={s('max-width:1044px;margin:0 auto;padding:32px 29px 58px')}>
         <div style={s('display:flex;flex-direction:column;align-items:center;justify-content:center;padding:72px 29px;text-align:center')}>
-          <img src="/dashboard/logo-icon.svg" alt="GetNearMe" style={{ width: 50, height: 50, marginBottom: 22 }} />
-          <h1 style={s('margin:0 0 7px;font-size:22px;font-weight:800;letter-spacing:-.3px')}>Benvenuto in GetNearMe</h1>
+          <img src="/dashboard/logo-icon.svg" alt="Agente Immo" style={{ width: 50, height: 50, marginBottom: 22 }} />
+          <h1 style={s('margin:0 0 7px;font-size:22px;font-weight:800;letter-spacing:-.3px')}>Benvenuto in Agente Immo</h1>
           <p style={s('margin:0 0 29px;font-size:13.5px;color:#8c867d;max-width:378px;line-height:1.6')}>Crea il tuo primo immobile per iniziare a generare foto AI, video e post social per i tuoi annunci</p>
           <Box onClick={() => setNewProjOpen(true)} style={s('display:inline-flex;align-items:center;gap:9px;background:#3B83F6;color:#fff;padding:13px 25px;border-radius:11px;font-size:13.5px;font-weight:700;cursor:pointer;transition:transform .2s,box-shadow .2s')} hover={{ transform: 'translateY(-2px)', boxShadow: '0 8px 24px rgba(59,131,246,.3)' }}>
             Crea il tuo primo immobile

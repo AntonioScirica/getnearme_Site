@@ -373,9 +373,9 @@ export function buildReportHtml(args: {
   const appartamentoImageUrl = '/report/appartamento.png';
 
   const brandColor = brand.primaryColor || '#3b83f6';
-  const brandName = brand.companyName || 'GetNearMe';
+  const brandName = brand.companyName || 'Agente Immo';
   const brandWebsite = brand.companyWebsite || 'https://agenteimmo.me';
-  const brandEmail = brand.companyEmail || 'info@getnearme.com';
+  const brandEmail = brand.companyEmail || 'info@agenteimmo.me';
   const reportLogo = brand.logo;
   const hasCustomLogo = !!reportLogo;
   const isWhiteLabel = hasCustomLogo || !!brand.companyName;
@@ -924,7 +924,7 @@ export function buildReportHtml(args: {
 <html lang="it">
 <head>
   <meta charset="UTF-8">
-  <title>Comparazione Immobili - GetNearMe</title>
+  <title>Comparazione Immobili - Agente Immo</title>
   <style>
     @page {
       size: A4 landscape;
@@ -2435,7 +2435,7 @@ export function buildReportHtml(args: {
 
       <div class="legal-section">
         <h4>Affidabilità dei dati</h4>
-        <p style="font-style: italic; color: #6B7280;">I dati contenuti in questo report rappresentano un'istantanea della sessione di navigazione del ${today}. GetNearMe non garantisce l'aggiornamento in tempo reale di prezzi o disponibilità successivi alla generazione di questa schermata.</p>
+        <p style="font-style: italic; color: #6B7280;">I dati contenuti in questo report rappresentano un'istantanea della sessione di navigazione del ${today}. Agente Immo non garantisce l'aggiornamento in tempo reale di prezzi o disponibilità successivi alla generazione di questa schermata.</p>
         <p>Le informazioni contenute nel presente report derivano da dati pubblicamente disponibili, informazioni presenti negli annunci immobiliari analizzati e da elaborazioni automatiche basate su parametri medi.</p>
         <p>In particolare:</p>
         <ul>
@@ -2448,7 +2448,7 @@ export function buildReportHtml(args: {
 
       <div class="legal-section">
         <h4>Finalità del report</h4>
-        <p>Il presente documento ha finalità informativa e comparativa e non sostituisce verifiche tecniche, legali, fiscali o finanziarie effettuate da professionisti abilitati. GetNearMe non garantisce l'accuratezza, completezza o aggiornamento dei dati e non assume responsabilità per decisioni prese sulla base delle informazioni contenute nel report.</p>
+        <p>Il presente documento ha finalità informativa e comparativa e non sostituisce verifiche tecniche, legali, fiscali o finanziarie effettuate da professionisti abilitati. Agente Immo non garantisce l'accuratezza, completezza o aggiornamento dei dati e non assume responsabilità per decisioni prese sulla base delle informazioni contenute nel report.</p>
       </div>
     </div>
   </div>
@@ -2463,7 +2463,7 @@ export function buildReportHtml(args: {
         <h1 class="thanks-title">${ed('thanks.title', customFinalTitle || 'Grazie per aver utilizzato questo report')}</h1>
 
         ${customFinalDesc ? `<p class="thanks-text">${ed('thanks.desc', customFinalDesc)}</p>` : `
-        <p class="thanks-text">${ed('thanks.p1', 'Grazie per aver utilizzato GetNearMe come supporto nella valutazione degli immobili analizzati. Questo report è stato generato per aiutarti a confrontare più opzioni in modo chiaro e consapevole, mettendo a disposizione dati, stime indicative e analisi comparative.')}</p>
+        <p class="thanks-text">${ed('thanks.p1', 'Grazie per aver utilizzato Agente Immo come supporto nella valutazione degli immobili analizzati. Questo report è stato generato per aiutarti a confrontare più opzioni in modo chiaro e consapevole, mettendo a disposizione dati, stime indicative e analisi comparative.')}</p>
 
         <p class="thanks-text">${ed('thanks.p2', 'Ci auguriamo che le informazioni contenute siano state utili nel tuo percorso decisionale.')}</p>
 
@@ -2475,7 +2475,7 @@ export function buildReportHtml(args: {
         ${thanksWebsiteLink}
         ${thanksEmailLink}
       </div>
-      ${isWhiteLabel ? `<div class="powered-by-footer">Powered by <a href="https://agenteimmo.me">GetNearMe</a></div>` : ''}
+      ${isWhiteLabel ? `<div class="powered-by-footer">Powered by <a href="https://agenteimmo.me">Agente Immo</a></div>` : ''}
     </div>
   </div>
   ` : ''}

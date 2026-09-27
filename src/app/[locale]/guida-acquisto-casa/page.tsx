@@ -33,14 +33,14 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
   return {
-    title: "Guida completa all'acquisto casa in Italia | GetNearMe",
+    title: "Guida completa all'acquisto casa in Italia | Agente Immo",
     description:
       "Dalla ricerca al rogito: 10 capitoli con tutto quello che devi sapere per comprare casa in Italia. Documenti, mutuo, costi, tasse e errori da evitare.",
     alternates: {
       canonical: `https://agenteimmo.me/${locale}/guida-acquisto-casa`,
     },
     openGraph: {
-      title: "Guida completa all'acquisto casa in Italia | GetNearMe",
+      title: "Guida completa all'acquisto casa in Italia | Agente Immo",
       description:
         "Dalla ricerca al rogito: 10 capitoli con tutto quello che devi sapere per comprare casa in Italia.",
       type: "website",
@@ -486,7 +486,7 @@ export default async function GuidaAcquistoCasaPage({ params }: Props) {
               lineHeight: 1.6,
             }}
           >
-            GetNearMe analizza ogni annuncio immobiliare per te.
+            Agente Immo analizza ogni annuncio immobiliare per te.
             <br />
             Prezzo, zona, servizi vicini: tutto in un click.
           </p>
@@ -511,7 +511,7 @@ export default async function GuidaAcquistoCasaPage({ params }: Props) {
             }}
           >
             <Search size={18} />
-            Prova GetNearMe gratis
+            Prova Agente Immo gratis
             <ChevronRight size={16} />
           </a>
         </div>
@@ -526,7 +526,7 @@ export default async function GuidaAcquistoCasaPage({ params }: Props) {
           color: "#a1a1aa",
         }}
       >
-        Guida aggiornata a Maggio 2026 · GetNearMe
+        Guida aggiornata a Maggio 2026 · Agente Immo
       </footer>
     </div>
   );

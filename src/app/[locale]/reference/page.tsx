@@ -16,8 +16,8 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
   return {
-    title: "Esempi reali — GetNearMe",
-    description: "Esempi reali delle funzionalità GetNearMe: foto AI, video, post social, report PDF, analisi di zona e molto altro.",
+    title: "Esempi reali — Agente Immo",
+    description: "Esempi reali delle funzionalità Agente Immo: foto AI, video, post social, report PDF, analisi di zona e molto altro.",
     alternates: {
       canonical: `https://agenteimmo.me/${locale}/reference`,
     },
@@ -92,7 +92,7 @@ export default async function ReferencePage({ params }: Props) {
               <span style={{ color: "#3B83F6" }}>Risultati concreti.</span>
             </h1>
             <p style={{ color: "#aaa", fontSize: 15, maxWidth: 540, margin: "0 auto" }}>
-              Scopri cosa puoi creare con ogni funzionalità di GetNearMe.
+              Scopri cosa puoi creare con ogni funzionalità di Agente Immo.
               Video, foto, post e report generati in pochi click.
             </p>
           </div>

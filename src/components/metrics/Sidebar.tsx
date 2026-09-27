@@ -62,7 +62,7 @@ export default function Sidebar({
     <div className="h-full bg-[#161920] border-r border-white/[0.08] flex flex-col">
       {/* Logo */}
       <div className="px-5 h-16 flex items-center border-b border-white/[0.08] shrink-0">
-        <span className="font-semibold text-gray-100 text-lg">GetNearMe</span>
+        <span className="font-semibold text-gray-100 text-lg">Agente Immo</span>
         <span className={`${MONO} text-[10px] text-gray-500 tracking-wider uppercase ml-2`}>
           Metrics
         </span>
@@ -144,7 +144,7 @@ export default function Sidebar({
           </div>
           <div className="flex-1 text-left min-w-0">
             <p className={`${MONO} text-sm text-gray-200 truncate`}>Admin</p>
-            <p className={`${MONO} text-[10px] text-gray-600 truncate`}>GetNearMe</p>
+            <p className={`${MONO} text-[10px] text-gray-600 truncate`}>Agente Immo</p>
           </div>
           <ChevronUp className={`w-4 h-4 text-gray-600 shrink-0 transition-transform ${menuOpen ? "" : "rotate-180"}`} />
         </button>

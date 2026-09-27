@@ -10,37 +10,37 @@ import { track } from '@/lib/analytics';
 const translations: Record<string, Record<string, string>> = {
   it: {
     title: 'Abbonamento attivato!',
-    subtitle: 'Grazie per aver scelto GetNearMe.',
+    subtitle: 'Grazie per aver scelto Agente Immo.',
     cta: 'Vai alla dashboard',
     syncHint: 'Accedi con il tuo account per iniziare a usare la piattaforma.',
   },
   en: {
     title: 'Subscription activated!',
-    subtitle: 'Thank you for choosing GetNearMe.',
+    subtitle: 'Thank you for choosing Agente Immo.',
     cta: 'Go to dashboard',
     syncHint: 'Sign in with your account to start using the platform.',
   },
   es: {
     title: '¡Suscripción activada!',
-    subtitle: 'Gracias por elegir GetNearMe.',
+    subtitle: 'Gracias por elegir Agente Immo.',
     cta: 'Ir al panel',
     syncHint: 'Inicia sesión con tu cuenta para empezar a usar la plataforma.',
   },
   fr: {
     title: 'Abonnement activé !',
-    subtitle: 'Merci d\'avoir choisi GetNearMe.',
+    subtitle: 'Merci d\'avoir choisi Agente Immo.',
     cta: 'Aller au tableau de bord',
     syncHint: 'Connectez-vous avec votre compte pour commencer à utiliser la plateforme.',
   },
   ru: {
     title: 'Подписка активирована!',
-    subtitle: 'Спасибо, что выбрали GetNearMe.',
+    subtitle: 'Спасибо, что выбрали Agente Immo.',
     cta: 'Перейти в панель',
     syncHint: 'Войдите в аккаунт, чтобы начать пользоваться платформой.',
   },
   uk: {
     title: 'Підписку активовано!',
-    subtitle: 'Дякуємо, що обрали GetNearMe.',
+    subtitle: 'Дякуємо, що обрали Agente Immo.',
     cta: 'Перейти до панелі',
     syncHint: 'Увійдіть у свій акаунт, щоб почати користуватися платформою.',
   },
@@ -84,7 +84,7 @@ export default function CheckoutSuccessPage() {
         <div className="max-w-7xl mx-auto px-4 pt-8 pb-8">
           <div className="pt-4 border-t border-slate-800">
             <p className="text-slate-400 text-sm font-light text-center">
-              © 2025 GetNearMe. All rights reserved.
+              © 2025 Agente Immo. All rights reserved.
             </p>
           </div>
         </div>

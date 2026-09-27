@@ -1,5 +1,5 @@
-// Prompt di home staging, portati dalle edge function Nano Banana di GetNearMe
-// (GetNearMe/supabase/functions/replicate-staging): stessi 6 stili x interno/facciata/giardino,
+// Prompt di home staging, portati dalle edge function Nano Banana di Agente Immo
+// (Agente Immo/supabase/functions/replicate-staging): stessi 6 stili x interno/facciata/giardino,
 // le 6 viste, la planimetria e le protezioni per il testo libero. Qui li usa Qwen-Image
 // (/api/platform/photo-edit). Il tipo di stanza per gli interni vuoti non c'e' ancora:
 // sulle edge function lo classificava Groq, qui arriva quando ci serve.

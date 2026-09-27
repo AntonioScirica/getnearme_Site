@@ -21,12 +21,12 @@ const titles: Record<Locale, string> = {
 };
 
 const descriptions: Record<Locale, string> = {
-  it: "Imposta una nuova password per il tuo account GetNearMe.",
-  en: "Set a new password for your GetNearMe account.",
-  es: "Establece una nueva contraseña para tu cuenta GetNearMe.",
-  fr: "Définissez un nouveau mot de passe pour votre compte GetNearMe.",
-  ru: "Установите новый пароль для вашего аккаунта GetNearMe.",
-  uk: "Встановіть новий пароль для вашого акаунту GetNearMe.",
+  it: "Imposta una nuova password per il tuo account Agente Immo.",
+  en: "Set a new password for your Agente Immo account.",
+  es: "Establece una nueva contraseña para tu cuenta Agente Immo.",
+  fr: "Définissez un nouveau mot de passe pour votre compte Agente Immo.",
+  ru: "Установите новый пароль для вашего аккаунта Agente Immo.",
+  uk: "Встановіть новий пароль для вашого акаунту Agente Immo.",
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

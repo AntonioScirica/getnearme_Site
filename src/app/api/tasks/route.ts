@@ -93,7 +93,7 @@ async function notifyTagged(task: TaskRow): Promise<number> {
         method: "POST",
         headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
         body: JSON.stringify({
-          from: "GetNearMe <noreply@getnearme.it>",
+          from: "Agente Immo <noreply@agenteimmo.me>",
           to,
           subject: `Sei stato taggato su una task: ${task.title}`,
           html: `

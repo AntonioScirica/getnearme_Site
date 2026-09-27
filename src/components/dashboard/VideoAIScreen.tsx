@@ -601,7 +601,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
   initialPhotoUrl?: string | null;
   demoMode?: boolean;
   go?: (r: string) => void;
-  lockBrand?: boolean; // free: watermark + copertina finale GetNearMe non rimovibili
+  lockBrand?: boolean; // free: watermark + copertina finale Agente Immo non rimovibili
   subscriptionType?: string | null; // starter_monthly: walkthrough limitato a 3 foto (costo AI capped a ~€1)
 }) {
   const isStarterPlan = subscriptionType === 'starter_monthly';
@@ -710,7 +710,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
   const [watermarkEnabled, setWatermarkEnabled] = React.useState(true);
   const [watermarkPosition, setWatermarkPosition] = React.useState('bottom-right');
   const [watermarkOpacity, setWatermarkOpacity] = React.useState(100);
-  // Free: watermark + copertina finale GetNearMe sempre attivi (non disattivabili).
+  // Free: watermark + copertina finale Agente Immo sempre attivi (non disattivabili).
   React.useEffect(() => { if (lockBrand) { setWatermarkEnabled(true); setOutroOn(true); } }, [lockBrand]);
   // render
   const [renderStage, setRenderStage] = React.useState<string | null>(null); // uploading|avatar|render|done|failed
@@ -1095,7 +1095,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
           <div style={{ fontSize: 12, fontWeight: 600 }}>Copertina finale</div>
           <div style={{ fontSize: 11, color: '#8c867d', marginTop: 2 }}>Chiusura con dissolvenza su bianco e logo al centro</div>
         </div>
-        <div onClick={() => { if (lockBrand) { toast('Copertina finale GetNearMe inclusa nel piano Free. Passa a un piano per rimuoverla.', 'x'); return; } if (!hasAnyLogo) { toast('Carica prima un logo nella sezione Brand per usare la copertina finale', 'x'); return; } setOutroOn(v => !v); }} title={lockBrand ? 'Inclusa nel piano Free' : (hasAnyLogo ? '' : 'Carica un logo nella sezione Brand')} style={{ width: 36, height: 21.5, borderRadius: 89, background: outroOn && hasAnyLogo ? '#3B83F6' : '#d8d4cb', position: 'relative', cursor: lockBrand ? 'not-allowed' : 'pointer', opacity: lockBrand ? 1 : (hasAnyLogo ? 1 : .5), transition: 'background .2s', flex: 'none' }}>
+        <div onClick={() => { if (lockBrand) { toast('Copertina finale Agente Immo inclusa nel piano Free. Passa a un piano per rimuoverla.', 'x'); return; } if (!hasAnyLogo) { toast('Carica prima un logo nella sezione Brand per usare la copertina finale', 'x'); return; } setOutroOn(v => !v); }} title={lockBrand ? 'Inclusa nel piano Free' : (hasAnyLogo ? '' : 'Carica un logo nella sezione Brand')} style={{ width: 36, height: 21.5, borderRadius: 89, background: outroOn && hasAnyLogo ? '#3B83F6' : '#d8d4cb', position: 'relative', cursor: lockBrand ? 'not-allowed' : 'pointer', opacity: lockBrand ? 1 : (hasAnyLogo ? 1 : .5), transition: 'background .2s', flex: 'none' }}>
           <span style={{ position: 'absolute', top: 2.5, left: outroOn && hasAnyLogo ? 19 : 3, width: 16, height: 16, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,.2)', transition: 'left .2s' }} />
         </div>
       </div>
@@ -2457,7 +2457,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
                   <>
                     <div style={s('display:flex;align-items:center;justify-content:space-between;padding-bottom:12.5px')}>
                       <span style={{ fontSize: 12, fontWeight: 600 }}>Logo nelle clip</span>
-                      <div onClick={() => { if (lockBrand) { toast('Logo GetNearMe incluso nel piano Free. Passa a un piano per rimuoverlo.', 'x'); return; } if (whiteLogo) setWatermarkEnabled(v => !v); }} title={lockBrand ? 'Incluso nel piano Free' : (whiteLogo ? '' : 'Carica un logo bianco in Brand')} style={{ width: 36, height: 21.5, borderRadius: 89, background: watermarkEnabled && whiteLogo ? '#3B83F6' : '#d8d4cb', position: 'relative', cursor: lockBrand ? 'not-allowed' : (whiteLogo ? 'pointer' : 'not-allowed'), opacity: lockBrand ? 1 : (whiteLogo ? 1 : .5), transition: 'background .2s' }}>
+                      <div onClick={() => { if (lockBrand) { toast('Logo Agente Immo incluso nel piano Free. Passa a un piano per rimuoverlo.', 'x'); return; } if (whiteLogo) setWatermarkEnabled(v => !v); }} title={lockBrand ? 'Incluso nel piano Free' : (whiteLogo ? '' : 'Carica un logo bianco in Brand')} style={{ width: 36, height: 21.5, borderRadius: 89, background: watermarkEnabled && whiteLogo ? '#3B83F6' : '#d8d4cb', position: 'relative', cursor: lockBrand ? 'not-allowed' : (whiteLogo ? 'pointer' : 'not-allowed'), opacity: lockBrand ? 1 : (whiteLogo ? 1 : .5), transition: 'background .2s' }}>
                         <span style={{ position: 'absolute', top: 2.5, left: watermarkEnabled && whiteLogo ? 19 : 3, width: 16, height: 16, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,.2)', transition: 'left .2s' }} />
                       </div>
                     </div>

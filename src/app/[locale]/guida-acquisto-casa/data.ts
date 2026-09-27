@@ -71,7 +71,7 @@ export const CHAPTERS: Chapter[] = [
         title: "Canali di ricerca",
         content: `<p>Non limitarti a un solo canale. Più fonti esplori, più possibilità hai di trovare l'immobile giusto al prezzo giusto.</p>
 <ul>
-  <li><strong>Portali online:</strong> Immobiliare.it, Idealista, Casa.it, Subito.it. Con GetNearMe puoi analizzare ogni annuncio direttamente dal portale</li>
+  <li><strong>Portali online:</strong> Immobiliare.it, Idealista, Casa.it, Subito.it. Con Agente Immo puoi analizzare ogni annuncio direttamente dal portale</li>
   <li><strong>Agenzie immobiliari:</strong> conoscono il mercato locale, spesso hanno immobili in esclusiva non pubblicati online</li>
   <li><strong>Aste giudiziarie:</strong> prezzi inferiori al mercato (20-40% in meno), ma tempi lunghi, burocrazia complessa e nessuna garanzia sullo stato dell'immobile</li>
   <li><strong>Passaparola:</strong> fai sapere a parenti, amici e colleghi che cerchi casa. Molte vendite avvengono prima della pubblicazione online</li>

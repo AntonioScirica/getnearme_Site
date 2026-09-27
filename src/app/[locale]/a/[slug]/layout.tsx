@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { loadSite, siteUrl } from '@/lib/portfolio';
 
-// Metadati di base del sito di un agente: sostituiscono quelli di GetNearMe ereditati dal layout della lingua
+// Metadati di base del sito di un agente: sostituiscono quelli di Agente Immo ereditati dal layout della lingua
 // (nome del sito, anteprima social, autore). Le pagine aggiungono titolo, descrizione e canonical.
 type Props = { params: Promise<{ locale: string; slug: string }> };
 

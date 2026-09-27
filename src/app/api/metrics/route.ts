@@ -124,10 +124,10 @@ export async function GET(request: NextRequest) {
       "software.hubwater@gmail.com",
       "antonioiphoneid@gmail.com",
       "lookgameyt@gmail.com",
-      "info@getnearme.it",
+      "info@agenteimmo.me",
       "calogero.scirica@inwind.it",
-      "agency.test@getnearme.it",
-      "agency-test@getnearme.it",
+      "agency.test@agenteimmo.me",
+      "agency-test@agenteimmo.me",
       "facebook@test.com",
     ];
     const excludedUserIds = new Set(

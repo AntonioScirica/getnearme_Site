@@ -170,7 +170,7 @@ export default function SupportFormClient({ locale }: { locale: string }) {
 
       {status === 'error' && (
         <p style={{ color: '#dc2626', fontSize: 13, margin: 0 }}>
-          {errorMsg || 'Errore nell\'invio'}. Riprova o scrivici a info@getnearme.it
+          {errorMsg || 'Errore nell\'invio'}. Riprova o scrivici a info@agenteimmo.me
         </p>
       )}
 

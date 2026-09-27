@@ -50,13 +50,13 @@ export async function POST(request: NextRequest) {
           </tr>` : ''}
         </table>
         <hr style="border: 1px solid #eee; margin: 20px 0;" />
-        <p style="color: #999; font-size: 12px;">Inviato dal form demo di getnearme.it</p>
+        <p style="color: #999; font-size: 12px;">Inviato dal form demo di agenteimmo.me</p>
       </div>
     `;
 
     await resend.emails.send({
-      from: 'GetNearMe <noreply@getnearme.it>',
-      to: 'info@getnearme.it',
+      from: 'Agente Immo <noreply@agenteimmo.me>',
+      to: 'info@agenteimmo.me',
       replyTo: email.trim(),
       subject: `Nuova richiesta demo — ${nomeAgenzia.trim()}`,
       html: htmlBody,

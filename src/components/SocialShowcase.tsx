@@ -38,7 +38,7 @@ function Badge({ variant = 'white', style }: { variant?: 'white' | 'blue' | 'out
   return <div style={{ ...base, ...variants[variant], ...style }}>{D.badge}</div>;
 }
 
-// Real SVG icons from GetNearMe/sidepanel/templates/icons.js
+// Real SVG icons from Agente Immo/sidepanel/templates/icons.js
 function IconBed({ size = 6, color = 'currentColor' }: { size?: number; color?: string }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

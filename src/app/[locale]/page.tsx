@@ -50,7 +50,7 @@ export default async function Home({ params }: Props) {
           __html: JSON.stringify({
             "@context": "https://schema.org",
             "@type": "SoftwareApplication",
-            "name": "GetNearMe",
+            "name": "Agente Immo",
             "applicationCategory": "BrowserApplication",
             "operatingSystem": "Chrome",
             "description": translations[locale as Locale].hero.description,
@@ -58,7 +58,7 @@ export default async function Home({ params }: Props) {
             "inLanguage": locale,
             "author": {
               "@type": "Organization",
-              "name": "GetNearMe",
+              "name": "Agente Immo",
               "url": "https://agenteimmo.me",
             },
             "offers": {
@@ -78,7 +78,7 @@ export default async function Home({ params }: Props) {
           __html: JSON.stringify({
             "@context": "https://schema.org",
             "@type": "WebSite",
-            "name": "GetNearMe",
+            "name": "Agente Immo",
             "url": "https://agenteimmo.me",
             "inLanguage": locale,
           }),
@@ -92,12 +92,12 @@ export default async function Home({ params }: Props) {
           __html: JSON.stringify({
             "@context": "https://schema.org",
             "@type": "Organization",
-            "name": "GetNearMe",
+            "name": "Agente Immo",
             "url": "https://agenteimmo.me",
             "logo": "https://agenteimmo.me/favicon.ico",
             "contactPoint": {
               "@type": "ContactPoint",
-              "email": "info@getnearme.it",
+              "email": "info@agenteimmo.me",
               "contactType": "customer service",
               "availableLanguage": ["Italian", "English", "Spanish", "French", "Russian", "Ukrainian"],
             },
@@ -323,7 +323,7 @@ export default async function Home({ params }: Props) {
                 <HeroVideo
                   poster="/staging/timelaps_ai-poster.jpg"
                   src="/staging/timelaps_ai.mp4"
-                  ariaLabel="GetNearMe — AI timelapse ricostruzione immobile"
+                  ariaLabel="Agente Immo — AI timelapse ricostruzione immobile"
                 />
               </div>
             </a>
@@ -352,7 +352,7 @@ export default async function Home({ params }: Props) {
             </div>
             {(() => {
               const flowSteps = [
-                { n: "1", icon: ImagePlus, color: "#6366f1", bg: "#eef2ff", title: "Carichi le tue foto", desc: "Carichi le foto dell'immobile, inserisci i dati principali e scegli cosa vuoi ottenere. Il resto lo fa GetNearMe." },
+                { n: "1", icon: ImagePlus, color: "#6366f1", bg: "#eef2ff", title: "Carichi le tue foto", desc: "Carichi le foto dell'immobile, inserisci i dati principali e scegli cosa vuoi ottenere. Il resto lo fa Agente Immo." },
                 { n: "2", icon: Sparkles, color: "#f59e0b", bg: "#fffbeb", title: "L'AI prepara tutto", desc: "In pochi minuti l'assistente genera home staging, video e post social, già col tuo logo e i tuoi colori." },
                 { n: "3", icon: Send, color: "#10b981", bg: "#ecfdf5", title: "Pubblichi e invii", desc: "Pubblichi sui social, metti sui portali o mandi al cliente. Tutto pronto, senza altri programmi." },
               ];
@@ -455,7 +455,7 @@ export default async function Home({ params }: Props) {
             <div style={{ textAlign: "center", marginBottom: 36 }}>
               <h2 style={{ fontSize: "clamp(23px, 4.5vw, 32px)", fontWeight: 800, color: "#1a1a2e", lineHeight: 1.15, margin: "0 0 13px" }}>
                 Ogni attività ti porta via tempo.<br />
-                <span style={{ color: "#3B83F6" }}>Con GetNearMe, minuti.</span>
+                <span style={{ color: "#3B83F6" }}>Con Agente Immo, minuti.</span>
               </h2>
               <p style={{ color: "#666", fontSize: 15, maxWidth: 648, margin: "0 auto", lineHeight: 1.6 }}>
                 {"Quello che oggi ti richiede ore lo fai in pochi minuti. Su una settimana di lavoro è più di un giorno e mezzo che ti riprendi per clienti e trattative."}
@@ -508,7 +508,7 @@ export default async function Home({ params }: Props) {
                     </div>
                     <div style={{ width: 40, height: 40, borderRadius: "50%", background: "#1a1a2e", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 800 }}>VS</div>
                     <div style={{ textAlign: "center" }}>
-                      <div style={{ fontSize: 11, fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Con GetNearMe</div>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Con Agente Immo</div>
                       <div style={{ fontSize: 25, fontWeight: 800, color: GREEN }}>da €14,99</div>
                     </div>
                   </div>
@@ -890,7 +890,7 @@ export default async function Home({ params }: Props) {
                     color: "#1a1a2e",
                   }}
                 >
-                  GetNearMe
+                  Agente Immo
                 </h3>
                 <p
                   className="footer-desc"
@@ -981,7 +981,7 @@ export default async function Home({ params }: Props) {
               }}
             >
               <p style={{ color: "#6b7280", fontSize: 12 }}>
-                © 2026 GetNearMe. {t.footer.rights}
+                © 2026 Agente Immo. {t.footer.rights}
               </p>
             </div>
           </div>

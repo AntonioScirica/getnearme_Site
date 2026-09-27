@@ -26,12 +26,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 
   const descriptions: Record<Locale, string> = {
-    it: "La tua iscrizione a GetNearMe e stata confermata con successo.",
-    en: "Your subscription to GetNearMe has been successfully confirmed.",
-    es: "Tu suscripcion a GetNearMe ha sido confirmada con exito.",
-    fr: "Votre inscription a GetNearMe a ete confirmee avec succes.",
-    ru: "Ваша подписка на GetNearMe успешно подтверждена.",
-    uk: "Вашу пiдписку на GetNearMe успiшно пiдтверджено.",
+    it: "La tua iscrizione a Agente Immo e stata confermata con successo.",
+    en: "Your subscription to Agente Immo has been successfully confirmed.",
+    es: "Tu suscripcion a Agente Immo ha sido confirmada con exito.",
+    fr: "Votre inscription a Agente Immo a ete confirmee avec succes.",
+    ru: "Ваша подписка на Agente Immo успешно подтверждена.",
+    uk: "Вашу пiдписку на Agente Immo успiшно пiдтверджено.",
   };
 
   return {
@@ -86,7 +86,7 @@ export default async function ConfirmPage({ params }: Props) {
         <div className="max-w-7xl mx-auto px-4 pt-8 pb-8">
           <div className="pt-4 border-t border-slate-800">
             <p className="text-slate-400 text-sm font-light text-center">
-              © 2025 GetNearMe. {t.footer.rights}
+              © 2025 Agente Immo. {t.footer.rights}
             </p>
           </div>
         </div>

@@ -6,7 +6,7 @@ import { fetchBrand } from '@/lib/brand';
 
 type Pos = 'tl' | 'tr' | 'bl' | 'br' | 'center';
 const SIZES: Record<string, number> = { S: 0.12, M: 0.18, L: 0.26 };
-// Free / nessun logo agenzia → loghi GetNearMe di default tra cui scegliere.
+// Free / nessun logo agenzia → loghi Agente Immo di default tra cui scegliere.
 const GNM_DEFAULTS = ['/assets/svg/logo_scritta_black_circle.svg', '/assets/svg/logo_scritta_white_circle.svg', '/dashboard/logo.svg'];
 
 async function loadViaBlob(url: string): Promise<HTMLImageElement> {
@@ -69,7 +69,7 @@ export default function WatermarkDownloadModal({
   filename?: string;
   zipName?: string;
   onClose: () => void;
-  // Piano Free: il logo GetNearMe e' obbligatorio, non si puo' togliere.
+  // Piano Free: il logo Agente Immo e' obbligatorio, non si puo' togliere.
   lockBrand?: boolean;
 }) {
   const list = (images && images.length ? images : (imageUrl ? [imageUrl] : []));
@@ -196,7 +196,7 @@ export default function WatermarkDownloadModal({
             hover={lockBrand ? {} : { background: '#faf9f7' }}
           >
             <Icon name={lockBrand ? 'lock' : 'image'} size={14} color={withLogo ? '#211f1c' : '#b3aca1'} />
-            <div style={{ flex: 1, fontSize: 12, fontWeight: 600, color: withLogo ? '#211f1c' : '#8c867d' }}>{lockBrand ? 'Logo GetNearMe (piano Free)' : 'Aggiungi logo'}</div>
+            <div style={{ flex: 1, fontSize: 12, fontWeight: 600, color: withLogo ? '#211f1c' : '#8c867d' }}>{lockBrand ? 'Logo Agente Immo (piano Free)' : 'Aggiungi logo'}</div>
             <div style={{ width: 32, height: 18, borderRadius: 89, background: withLogo ? '#3B83F6' : '#d8d4cb', position: 'relative', flexShrink: 0 }}>
               <div style={{ position: 'absolute', top: 2, left: withLogo ? 16 : 2, width: 14, height: 14, borderRadius: 89, background: '#fff', transition: 'left .2s' }} />
             </div>

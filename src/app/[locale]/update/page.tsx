@@ -52,7 +52,7 @@ export async function generateStaticParams() {
 export async function generateMetadata(): Promise<Metadata> {
   return {
     title: "Novità",
-    description: "Scopri le ultime novità e miglioramenti di GetNearMe",
+    description: "Scopri le ultime novità e miglioramenti di Agente Immo",
   };
 }
 
@@ -78,7 +78,7 @@ const updates: {
     date: "Giugno 2026",
     badge: "Ultima versione",
     badgeColor: "#059669",
-    title: "GetNearMe diventa una piattaforma",
+    title: "Agente Immo diventa una piattaforma",
     subtitle:
       "Non solo estensione: ora hai una piattaforma web completa. Immobili, report, team, foto e video AI in un unico posto, anche da telefono.",
     features: [
@@ -86,7 +86,7 @@ const updates: {
         icon: <Globe size={22} />,
         title: "Tutto dal browser, anche senza estensione",
         description:
-          "GetNearMe ora è una piattaforma web completa: Foto AI, Video AI, Post social, Montaggio, Media e Brand li gestisci da un'unica dashboard, senza dipendere dall'estensione.",
+          "Agente Immo ora è una piattaforma web completa: Foto AI, Video AI, Post social, Montaggio, Media e Brand li gestisci da un'unica dashboard, senza dipendere dall'estensione.",
         tag: "Nuovo",
         tagColor: "#059669",
       },
@@ -333,7 +333,7 @@ const updates: {
         icon: <Star size={22} />,
         title: "Programma Ambassador",
         description:
-          "Diventa protagonista della crescita di GetNearMe. Dashboard dedicata, codice promo personale e provvigioni su ogni agenzia.",
+          "Diventa protagonista della crescita di Agente Immo. Dashboard dedicata, codice promo personale e provvigioni su ogni agenzia.",
         tag: "Nuovo",
         tagColor: "#059669",
       },
@@ -455,7 +455,7 @@ export default async function UpdatePage({ params }: Props) {
           }}
         >
           <PartyPopper size={18} color="#f59e0b" />
-          <span>GetNearMe si aggiorna!</span>
+          <span>Agente Immo si aggiorna!</span>
         </div>
 
         <h1
@@ -556,7 +556,7 @@ export default async function UpdatePage({ params }: Props) {
               Pubblicazione automatica sui social
             </h2>
             <p style={{ fontSize: 14, color: "#71717a", margin: 0, lineHeight: 1.5 }}>
-              Crea il post, scegli data e ora, e GetNearMe pubblica per te su Instagram, Facebook e LinkedIn. Zero copia-incolla, zero app esterne.
+              Crea il post, scegli data e ora, e Agente Immo pubblica per te su Instagram, Facebook e LinkedIn. Zero copia-incolla, zero app esterne.
             </p>
           </div>
 
@@ -881,7 +881,7 @@ export default async function UpdatePage({ params }: Props) {
               margin: "0 0 7px",
             }}
           >
-            Ti piace GetNearMe?
+            Ti piace Agente Immo?
           </h2>
           <p
             style={{
@@ -931,7 +931,7 @@ export default async function UpdatePage({ params }: Props) {
           color: "#a1a1aa",
         }}
       >
-        GetNearMe v{CURRENT_VERSION} · Made with ❤️ in Italia
+        Agente Immo v{CURRENT_VERSION} · Made with ❤️ in Italia
       </footer>
     </div>
   );

@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
 
   const row = (k: string, v: string) => v ? `<tr><td style="padding:8px 0;color:#666;width:120px;vertical-align:top"><b>${k}</b></td><td style="padding:8px 0">${esc(v).replace(/\n/g, '<br>')}</td></tr>` : ''
   await new Resend(process.env.RESEND_API_KEY).emails.send({
-    from: 'Agente Immo <noreply@getnearme.it>',
+    from: 'Agente Immo <noreply@agenteimmo.me>',
     to,
     replyTo: email,
     subject: `Nuova richiesta dal sito: ${name}`,

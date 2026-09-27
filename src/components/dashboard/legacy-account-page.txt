@@ -19,20 +19,20 @@ const PLAN_FEATURES: Record<string, Record<string, string[]>> = {
     uk: ['500 початкових кредитів', 'Базовий аналіз нерухомості'],
   },
   user_lite: {
-    it: ['Analisi immobiliari illimitate', 'Calcolo prezzo al m² in tempo reale', 'Export PDF (brand GetNearMe)'],
-    en: ['Unlimited property analysis', 'Real-time price per sqm', 'PDF Export (GetNearMe brand)'],
-    es: ['Análisis inmobiliarios ilimitados', 'Cálculo precio por m² en tiempo real', 'Export PDF (marca GetNearMe)'],
-    fr: ['Analyses immobilières illimitées', 'Calcul prix au m² en temps réel', 'Export PDF (marque GetNearMe)'],
-    ru: ['Безлимитный анализ недвижимости', 'Расчёт цены за м² в реальном времени', 'Экспорт PDF (бренд GetNearMe)'],
-    uk: ['Безлімітний аналіз нерухомості', 'Розрахунок ціни за м² в реальному часі', 'Експорт PDF (бренд GetNearMe)'],
+    it: ['Analisi immobiliari illimitate', 'Calcolo prezzo al m² in tempo reale', 'Export PDF (brand Agente Immo)'],
+    en: ['Unlimited property analysis', 'Real-time price per sqm', 'PDF Export (Agente Immo brand)'],
+    es: ['Análisis inmobiliarios ilimitados', 'Cálculo precio por m² en tiempo real', 'Export PDF (marca Agente Immo)'],
+    fr: ['Analyses immobilières illimitées', 'Calcul prix au m² en temps réel', 'Export PDF (marque Agente Immo)'],
+    ru: ['Безлимитный анализ недвижимости', 'Расчёт цены за м² в реальном времени', 'Экспорт PDF (бренд Agente Immo)'],
+    uk: ['Безлімітний аналіз нерухомості', 'Розрахунок ціни за м² в реальному часі', 'Експорт PDF (бренд Agente Immo)'],
   },
   agency_starter: {
-    it: ['Analisi immobiliari illimitate', 'Calcolo prezzo al m² in tempo reale', 'Export PDF illimitati (brand GetNearMe)'],
-    en: ['Unlimited property analysis', 'Real-time price per sqm', 'Unlimited PDF exports (GetNearMe brand)'],
-    es: ['Análisis inmobiliarios ilimitados', 'Cálculo precio por m² en tiempo real', 'Exports PDF ilimitados (marca GetNearMe)'],
-    fr: ['Analyses immobilières illimitées', 'Calcul prix au m² en temps réel', 'Exports PDF illimités (marque GetNearMe)'],
-    ru: ['Безлимитный анализ недвижимости', 'Расчёт цены за м² в реальном времени', 'Безлимитные PDF экспорты (бренд GetNearMe)'],
-    uk: ['Безлімітний аналіз нерухомості', 'Розрахунок ціни за м² в реальному часі', 'Безлімітні PDF експорти (бренд GetNearMe)'],
+    it: ['Analisi immobiliari illimitate', 'Calcolo prezzo al m² in tempo reale', 'Export PDF illimitati (brand Agente Immo)'],
+    en: ['Unlimited property analysis', 'Real-time price per sqm', 'Unlimited PDF exports (Agente Immo brand)'],
+    es: ['Análisis inmobiliarios ilimitados', 'Cálculo precio por m² en tiempo real', 'Exports PDF ilimitados (marca Agente Immo)'],
+    fr: ['Analyses immobilières illimitées', 'Calcul prix au m² en temps réel', 'Exports PDF illimités (marque Agente Immo)'],
+    ru: ['Безлимитный анализ недвижимости', 'Расчёт цены за м² в реальном времени', 'Безлимитные PDF экспорты (бренд Agente Immo)'],
+    uk: ['Безлімітний аналіз нерухомості', 'Розрахунок ціни за м² в реальному часі', 'Безлімітні PDF експорти (бренд Agente Immo)'],
   },
   agency: {
     it: ['Tutto di Starter, più:', 'Template Post & Stories Social', 'AI Rendering & Homestaging', '5 utenti inclusi'],
@@ -491,7 +491,7 @@ export default function DashboardPage() {
         <div className="max-w-7xl mx-auto px-4 pt-8 pb-8">
           <div className="pt-4 border-t border-slate-800">
             <p className="text-slate-400 text-sm font-light text-center">
-              © 2025 GetNearMe. {t.footer}
+              © 2025 Agente Immo. {t.footer}
             </p>
           </div>
         </div>

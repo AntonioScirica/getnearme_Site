@@ -1,6 +1,6 @@
 {
-  "name": "GetNearMe",
-  "short_name": "GetNearMe",
+  "name": "Agente Immo",
+  "short_name": "Agente Immo",
   "description": "Chrome extension for real estate analysis. Compare properties, analyze neighborhoods and prices.",
   "start_url": "/",
   "display": "standalone",

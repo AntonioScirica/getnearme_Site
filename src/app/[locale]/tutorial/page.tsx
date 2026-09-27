@@ -17,9 +17,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
 
   return {
-    title: "Tutorial — GetNearMe",
+    title: "Tutorial — Agente Immo",
     description:
-      "Scopri come funziona GetNearMe e come può potenziare il lavoro della tua agenzia immobiliare.",
+      "Scopri come funziona Agente Immo e come può potenziare il lavoro della tua agenzia immobiliare.",
     alternates: {
       canonical: `https://agenteimmo.me/${locale}/tutorial`,
     },
@@ -27,14 +27,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 const videos = [
-  { id: "I7kcgpiGQH8", title: "Come scaricare GetNearMe!", duration: "0:46" },
-  { id: "mMpozP8SM48", title: "La sezione Immobile di GetNearMe", duration: "0:46" },
-  { id: "jY4_33HrD0E", title: "Analizza il quartiere intorno a te con GetNearMe!", duration: "0:47" },
-  { id: "bNnjbHegtjg", title: "Calcolare il prezzo medio al m2 di una zona con GetNearMe", duration: "0:42" },
-  { id: "klTtrvPqMlI", title: "Comparare i vari immobili con GetNearMe!", duration: "0:45" },
+  { id: "I7kcgpiGQH8", title: "Come scaricare Agente Immo!", duration: "0:46" },
+  { id: "mMpozP8SM48", title: "La sezione Immobile di Agente Immo", duration: "0:46" },
+  { id: "jY4_33HrD0E", title: "Analizza il quartiere intorno a te con Agente Immo!", duration: "0:47" },
+  { id: "bNnjbHegtjg", title: "Calcolare il prezzo medio al m2 di una zona con Agente Immo", duration: "0:42" },
+  { id: "klTtrvPqMlI", title: "Comparare i vari immobili con Agente Immo!", duration: "0:45" },
   { id: "-AxXOzMCzLQ", title: "Report Personalizzabili per le Agenzie Immobiliari", duration: "0:46" },
   { id: "VfLpWoesIrU", title: "Get AI per arredare gli immobili!", duration: "0:37" },
-  { id: "C_pkjIiW68o", title: "A cosa servono i crediti in GetNearMe?", duration: "1:45" },
+  { id: "C_pkjIiW68o", title: "A cosa servono i crediti in Agente Immo?", duration: "1:45" },
   { id: "BXCkVZp6nik", title: "Ottenere crediti con la newsletter!", duration: "0:44" },
   // { id: "YW2k6azRNcY", title: "Ho trovato un problema nell'estensione!", duration: "0:39" },
 ];
@@ -58,7 +58,7 @@ export default async function Tutorial({ params }: Props) {
             Tutorial
           </h1>
           <p className="text-lg text-slate-600 font-light leading-relaxed">
-            Scopri come sfruttare al meglio GetNearMe nella tua agenzia con le nostre guide video.
+            Scopri come sfruttare al meglio Agente Immo nella tua agenzia con le nostre guide video.
           </p>
         </div>
 

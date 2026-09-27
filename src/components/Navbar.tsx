@@ -121,7 +121,7 @@ export default function Navbar({ locale }: NavbarProps) {
                 <div className="max-w-7xl mx-auto px-5 md:px-3 h-20 flex items-center justify-between relative">
                     <Link href={`/${locale}`} className="flex items-center">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src="/logo_blu_nero.svg" alt="GetNearMe" className="h-7 md:h-9 w-auto" />
+                        <img src="/logo_blu_nero.svg" alt="Agente Immo" className="h-7 md:h-9 w-auto" />
                     </Link>
 
                     <div className="hidden md:flex items-center gap-16 text-sm font-medium text-slate-600 absolute left-1/2 -translate-x-1/2">

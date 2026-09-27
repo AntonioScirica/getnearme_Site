@@ -22,14 +22,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (locale !== "it") return {};
 
   return {
-    title: "Blog GetNearMe — risorse per agenti immobiliari",
+    title: "Blog Agente Immo — risorse per agenti immobiliari",
     description:
       "Guide pratiche su home staging AI, video per annunci, social media e produttività per agenzie immobiliari.",
     alternates: {
       canonical: `${BASE_URL}/${locale}/blog`,
     },
     openGraph: {
-      title: "Blog GetNearMe — risorse per agenti immobiliari",
+      title: "Blog Agente Immo — risorse per agenti immobiliari",
       description:
         "Guide pratiche su home staging AI, video per annunci, social media e produttività per agenzie immobiliari.",
       type: "website",
@@ -98,7 +98,7 @@ export default async function BlogHubPage({ params }: Props) {
             padding: "36px 29px",
           }}
         >
-          <h2 style={{ fontSize: 23, fontWeight: 800, margin: "0 0 7px", color: "#1a1a2e" }}>Prova GetNearMe gratis</h2>
+          <h2 style={{ fontSize: 23, fontWeight: 800, margin: "0 0 7px", color: "#1a1a2e" }}>Prova Agente Immo gratis</h2>
           <p style={{ fontSize: 14, color: "#6b7280", margin: "0 0 22px", lineHeight: 1.6 }}>
             Staging AI, video, template social e report brandizzati per la tua agenzia.
           </p>

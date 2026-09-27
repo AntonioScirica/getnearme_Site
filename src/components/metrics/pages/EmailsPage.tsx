@@ -37,7 +37,7 @@ interface EmailTemplateFull extends EmailTemplateMeta {
 
 const AUDIENCE_LABEL: Record<EmailAudience, string> = {
   user: "Email all'utente",
-  internal: "Notifiche interne (info@getnearme.it)",
+  internal: "Notifiche interne (info@agenteimmo.me)",
 };
 
 const BADGE_STYLES: Record<EmailAudience, string> = {

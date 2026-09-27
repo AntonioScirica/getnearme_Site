@@ -21,11 +21,11 @@ export const translations = {
       description: "Home staging, video, post social e report per ogni immobile, pronti in pochi minuti. Quello che oggi ti porta via ore, lo fai da un posto solo.",
       cta: "Prova gratis",
       ctaSecondary: "Come funziona",
-      subMockup: "GetNearMe è l'assistente AI per agenti immobiliari: parti dall'annuncio o dalle tue foto e ottieni home staging, video, post social, report col tuo brand e analisi di zona. Tutto in un posto solo, senza imparare niente di nuovo."
+      subMockup: "Agente Immo è l'assistente AI per agenti immobiliari: parti dall'annuncio o dalle tue foto e ottieni home staging, video, post social, report col tuo brand e analisi di zona. Tutto in un posto solo, senza imparare niente di nuovo."
     },
     features: {
       title: "Tutto ciò che puoi",
-      titleItalic: "fare con GetNearMe",
+      titleItalic: "fare con Agente Immo",
       description: "Un assistente al posto di Canva, editor video, designer e ore di lavoro. Analizzi l'immobile, valorizzi le foto e prepari report e contenuti in pochi minuti.",
       card1: {
         title: "Analisi completa dell'immobile",
@@ -57,12 +57,12 @@ export const translations = {
       titleItalic: "frequenti",
       items: [
         {
-          q: "Cos'è GetNearMe?",
+          q: "Cos'è Agente Immo?",
           a: "È l'assistente AI che prepara tutto il materiale dei tuoi annunci: home staging, video, post social, report e analisi di zona. Parti dal link del portale o dalle tue foto e in pochi minuti hai tutto pronto, col tuo brand."
         },
         {
           q: "Devo installare qualcosa?",
-          a: "No. GetNearMe è online: accedi dal browser e inizi a lavorare. Niente da scaricare, niente software da imparare."
+          a: "No. Agente Immo è online: accedi dal browser e inizi a lavorare. Niente da scaricare, niente software da imparare."
         },
         {
           q: "Come lo provo?",
@@ -97,12 +97,12 @@ export const translations = {
         {
           name: "Free",
           subtitle: "Per iniziare",
-          desc: "Provi GetNearMe gratis e senza carta: crei l'account e usi subito le funzioni con i crediti di prova inclusi."
+          desc: "Provi Agente Immo gratis e senza carta: crei l'account e usi subito le funzioni con i crediti di prova inclusi."
         },
         {
           name: "Piano Mensile",
           subtitle: "Tutte le funzioni incluse",
-          desc: "Accesso completo a GetNearMe per il singolo agente: home staging AI, video, post social, report col tuo brand e analisi di zona. Uno strumento di supporto al tuo lavoro, non un sistema di valutazione immobiliare."
+          desc: "Accesso completo a Agente Immo per il singolo agente: home staging AI, video, post social, report col tuo brand e analisi di zona. Uno strumento di supporto al tuo lavoro, non un sistema di valutazione immobiliare."
         },
         {
           name: "Piano Annuale",
@@ -127,10 +127,10 @@ export const translations = {
       step3Title: "Pubblica in pochi minuti",
       step3Desc: "Foto, video, post e report pronti, col tuo brand. Tutto da un posto solo.",
       cta: "Prova gratis",
-      videoTitle: "GetNearMe: come funziona",
+      videoTitle: "Agente Immo: come funziona",
     },
     footer: {
-      desc: "L'assistente AI per agenti immobiliari. Quello che oggi ti costa ore, foto, video, post e presentazioni, con GetNearMe lo fai in pochi minuti, partendo dall'annuncio.",
+      desc: "L'assistente AI per agenti immobiliari. Quello che oggi ti costa ore, foto, video, post e presentazioni, con Agente Immo lo fai in pochi minuti, partendo dall'annuncio.",
       product: "Prodotto",
       legal: "Legale",
       privacy: "Privacy Policy",
@@ -141,11 +141,11 @@ export const translations = {
     },
     privacy: {
       update: "Ultimo aggiornamento: 23/01/2026",
-      intro: "La presente Privacy Policy descrive le modalità di trattamento dei dati personali degli utenti che utilizzano il sito web getnearme.it e l'estensione browser GetNearMe (di seguito, il \"Servizio\").",
+      intro: "La presente Privacy Policy descrive le modalità di trattamento dei dati personali degli utenti che utilizzano il sito web agenteimmo.me e l'estensione browser Agente Immo (di seguito, il \"Servizio\").",
       sections: [
         {
           t: "1. Titolare del trattamento",
-          c: "Il titolare del trattamento è persona fisica, identificata come GetNearMe. Per qualsiasi richiesta relativa al trattamento dei dati personali è possibile contattare: info@getnearme.it"
+          c: "Il titolare del trattamento è persona fisica, identificata come Agente Immo. Per qualsiasi richiesta relativa al trattamento dei dati personali è possibile contattare: info@agenteimmo.me"
         },
         {
           t: "2. Tipologie di dati trattati",
@@ -157,7 +157,7 @@ export const translations = {
         },
         {
           t: "4. Pagamenti",
-          c: "I pagamenti sono elaborati da Stripe. GetNearMe NON memorizza dati di carte di credito. Stripe gestisce tutte le informazioni di pagamento in conformità con gli standard PCI-DSS. Conserviamo solo: ID cliente Stripe (per collegare gli acquisti al tuo account) e storico crediti acquistati."
+          c: "I pagamenti sono elaborati da Stripe. Agente Immo NON memorizza dati di carte di credito. Stripe gestisce tutte le informazioni di pagamento in conformità con gli standard PCI-DSS. Conserviamo solo: ID cliente Stripe (per collegare gli acquisti al tuo account) e storico crediti acquistati."
         },
         {
           t: "5. Generazione Immagini AI",
@@ -177,7 +177,7 @@ export const translations = {
         },
         {
           t: "9. Conservazione dei dati",
-          c: "Dati di navigazione locale: cancellati alla chiusura del browser. Cache immobili analizzati: conservata localmente fino a cancellazione manuale. Account utente: conservato fino a richiesta di eliminazione. Per eliminare il tuo account e tutti i dati associati, contatta info@getnearme.it o usa l'opzione \"Elimina Account\" nelle impostazioni dell'estensione."
+          c: "Dati di navigazione locale: cancellati alla chiusura del browser. Cache immobili analizzati: conservata localmente fino a cancellazione manuale. Account utente: conservato fino a richiesta di eliminazione. Per eliminare il tuo account e tutti i dati associati, contatta info@agenteimmo.me o usa l'opzione \"Elimina Account\" nelle impostazioni dell'estensione."
         },
         {
           t: "10. Condivisione dei dati",
@@ -185,21 +185,21 @@ export const translations = {
         },
         {
           t: "11. Diritti dell'utente",
-          c: "L'utente può esercitare i diritti previsti dal Regolamento UE 2016/679 (GDPR), inclusi accesso, rettifica, cancellazione e opposizione, scrivendo a info@getnearme.it."
+          c: "L'utente può esercitare i diritti previsti dal Regolamento UE 2016/679 (GDPR), inclusi accesso, rettifica, cancellazione e opposizione, scrivendo a info@agenteimmo.me."
         }
       ]
     },
     terms: {
       update: "Ultimo aggiornamento: 22/12/2025",
-      intro: "I presenti Termini disciplinano l’utilizzo del sito web getnearme.it e l’estensione browser GetNearMe.",
+      intro: "I presenti Termini disciplinano l’utilizzo del sito web agenteimmo.me e l’estensione browser Agente Immo.",
       sections: [
         {
           t: "1. Natura del Servizio",
-          c: "GetNearMe è uno strumento di supporto decisionale che organizza e confronta dati disponibili su immobili e quartieri. GetNearMe non è un’agenzia immobiliare e non fornisce consulenza professionale, legale, fiscale o immobiliare."
+          c: "Agente Immo è uno strumento di supporto decisionale che organizza e confronta dati disponibili su immobili e quartieri. Agente Immo non è un’agenzia immobiliare e non fornisce consulenza professionale, legale, fiscale o immobiliare."
         },
         {
           t: "2. Origine dei dati",
-          c: "Le informazioni visualizzate derivano da annunci immobiliari di terze parti e da fonti pubbliche disponibili. GetNearMe non ha alcun controllo sui contenuti degli annunci e non è responsabile per eventuali errori, omissioni o variazioni successive."
+          c: "Le informazioni visualizzate derivano da annunci immobiliari di terze parti e da fonti pubbliche disponibili. Agente Immo non ha alcun controllo sui contenuti degli annunci e non è responsabile per eventuali errori, omissioni o variazioni successive."
         },
         {
           t: "3. Analisi e stime",
@@ -215,17 +215,17 @@ export const translations = {
         },
         {
           t: "6. Disponibilità del Servizio",
-          c: "Alcune funzionalità possono variare in base alla disponibilità delle fonti, al sito analizzato o al browser utilizzato. GetNearMe si riserva il diritto di modificare, sospendere o interrompere il Servizio, in tutto o in parte, in qualsiasi momento."
+          c: "Alcune funzionalità possono variare in base alla disponibilità delle fonti, al sito analizzato o al browser utilizzato. Agente Immo si riserva il diritto di modificare, sospendere o interrompere il Servizio, in tutto o in parte, in qualsiasi momento."
         },
         {
           t: "7. Limitazione di responsabilità",
-          c: "Nei limiti consentiti dalla legge, GetNearMe non è responsabile per eventuali danni derivanti dall’uso o dall’impossibilità di utilizzo del Servizio."
+          c: "Nei limiti consentiti dalla legge, Agente Immo non è responsabile per eventuali danni derivanti dall’uso o dall’impossibilità di utilizzo del Servizio."
         }
       ]
     },
     cookie: {
       update: "Ultimo aggiornamento: 22/12/2025",
-      intro: "La presente Cookie Policy si applica esclusivamente al sito web getnearme.it.",
+      intro: "La presente Cookie Policy si applica esclusivamente al sito web agenteimmo.me.",
       sections: [
         {
           t: "1. Cosa sono i cookie",
@@ -250,7 +250,7 @@ export const translations = {
       dayCompleted: "Giorno {day} completato!",
       weekComplete: "Fantastico! Hai completato la settimana! Ricevi 120 crediti bonus!",
       comeBackTomorrow: "Torna domani per il giorno {day}.",
-      goToHome: "Vai a GetNearMe",
+      goToHome: "Vai a Agente Immo",
       backToHome: "Torna alla Home",
       error: {
         defaultTitle: "Errore",
@@ -269,17 +269,17 @@ export const translations = {
       loading: "Caricamento..."
     },
     confirm: {
-      subtitle: "Benvenuto in GetNearMe",
-      description: "La tua iscrizione al servizio è stata confermata. Accedi a GetNearMe e inizia a usare tutte le funzioni.",
+      subtitle: "Benvenuto in Agente Immo",
+      description: "La tua iscrizione al servizio è stata confermata. Accedi a Agente Immo e inizia a usare tutte le funzioni.",
       cta: "Inizia ad esplorare"
     },
     unsubscribe: {
       subtitle: "Disiscrizione completata",
-      description: "Sei stato rimosso con successo dalla nostra mailing list. Non riceverai più email da GetNearMe."
+      description: "Sei stato rimosso con successo dalla nostra mailing list. Non riceverai più email da Agente Immo."
     },
     featuresPage: {
       title: "Tutte le Funzionalità",
-      titleItalic: "di GetNearMe",
+      titleItalic: "di Agente Immo",
       subtitle: "Scopri tutti gli strumenti pensati per cambiare il tuo lavoro di agente immobiliare. Dall'analisi di zona all'intelligenza artificiale, ogni funzione ti dà un vantaggio concreto.",
       feature6: {
         title: "Marketing Immobiliare Automatico",
@@ -292,7 +292,7 @@ export const translations = {
         badge: "NUOVO",
       },
       ctaTitle: "Pronto per iniziare?",
-      ctaDesc: "Unisciti agli agenti immobiliari che stanno già cambiando il loro modo di lavorare con GetNearMe.",
+      ctaDesc: "Unisciti agli agenti immobiliari che stanno già cambiando il loro modo di lavorare con Agente Immo.",
       ctaButton: "Prova gratis",
       ctaContact: "Contattaci",
     },
@@ -321,12 +321,12 @@ export const translations = {
       solution: {
         emoji: "rocket",
         title: "Un assistente solo. Tutto il lavoro sull'annuncio, finito.",
-        desc: "Parti dall'annuncio — incolli il link del portale o carichi le tue foto — e GetNearMe ti restituisce home staging, video, post social e report col tuo logo. In pochi minuti, senza aprire altri programmi e senza imparare niente di nuovo.",
+        desc: "Parti dall'annuncio — incolli il link del portale o carichi le tue foto — e Agente Immo ti restituisce home staging, video, post social e report col tuo logo. In pochi minuti, senza aprire altri programmi e senza imparare niente di nuovo.",
       },
       features: {
         title: "Cinque strumenti professionali.",
         titleHighlight: "Un assistente solo.",
-        subtitle: "GetNearMe fa il lavoro di Canva, editor video, designer, social media manager e PowerPoint, senza imparare niente di nuovo.",
+        subtitle: "Agente Immo fa il lavoro di Canva, editor video, designer, social media manager e PowerPoint, senza imparare niente di nuovo.",
         items: [
           { num: "01", title: "Home staging AI", desc: "Arreda, svuota o trasforma una stanza in pochi secondi. Mostri il prima/dopo al cliente o lo pubblichi subito sui portali e sui social.", icon: "sparkles", color: "#6366f1" },
           { num: "02", title: "Video AI per l'immobile", desc: "Reel, walkthrough, before/after, video con avatar che parla e molto altro. Pronti in pochi click, senza montaggio e senza videomaker.", icon: "clapperboard", color: "#10b981" },
@@ -435,8 +435,8 @@ export const translations = {
         title: "Domande?",
         titleHighlight: "Risposte.",
         items: [
-          { q: "Cos'è GetNearMe?", a: "È l'assistente AI che prepara tutto il materiale dei tuoi annunci: home staging, video, post social, report e analisi di zona. Parti dal link del portale o dalle tue foto e in pochi minuti hai tutto pronto, col tuo brand." },
-          { q: "Devo installare qualcosa?", a: "No. GetNearMe è online: accedi dal browser e inizi a lavorare. Niente da scaricare, niente software da imparare." },
+          { q: "Cos'è Agente Immo?", a: "È l'assistente AI che prepara tutto il materiale dei tuoi annunci: home staging, video, post social, report e analisi di zona. Parti dal link del portale o dalle tue foto e in pochi minuti hai tutto pronto, col tuo brand." },
+          { q: "Devo installare qualcosa?", a: "No. Agente Immo è online: accedi dal browser e inizi a lavorare. Niente da scaricare, niente software da imparare." },
           { q: "Come lo provo?", a: "Gratis e senza carta. Crei l'account e provi subito le funzioni: vedi l'output prima di decidere se abbonarti." },
           { q: "Funziona se lavoro da solo?", a: "Sì, è pensato proprio per il singolo agente. Fai da solo il lavoro di un piccolo team: foto, video, post e report, senza fornitori esterni." },
           { q: "Quali strumenti sostituisce?", a: "Canva, editor video, PowerPoint, designer, social media manager e ore di ricerca manuale. Un assistente solo al posto di tanti strumenti, con meno costi e meno tempo per ogni immobile." },
@@ -456,23 +456,23 @@ export const translations = {
       },
       roiCalculator: {
         title: "Quanto risparmi con",
-        titleHighlight: "GetNearMe?",
+        titleHighlight: "Agente Immo?",
         subtitle: "Calcola quanto tempo e quanti soldi ti fa risparmiare.",
         inputProperties: "Immobili che gestisci al mese",
         inputHours: "Ore per preparare i materiali di un immobile",
         inputRate: "Quanto vale un'ora del tuo lavoro",
         outputHoursSaved: "Ore risparmiate al mese",
         outputValueRecovered: "Valore del tempo recuperato",
-        outputCost: "Costo di GetNearMe",
+        outputCost: "Costo di Agente Immo",
         outputNetSavings: "Risparmio netto mensile",
         outputROI: "ritorno per ogni euro speso",
         perMonth: "/mese",
         cta: "Scegli questo piano",
-        note: "Con GetNearMe ogni immobile richiede circa 3 minuti invece di ore. Usiamo 80% come stima conservativa del tempo risparmiato.",
+        note: "Con Agente Immo ogni immobile richiede circa 3 minuti invece di ore. Usiamo 80% come stima conservativa del tempo risparmiato.",
       },
       demo: {
         pageTitle: "Prenota una demo",
-        pageSubtitle: "Compila il modulo e ti ricontattiamo per organizzare una demo personalizzata di GetNearMe.",
+        pageSubtitle: "Compila il modulo e ti ricontattiamo per organizzare una demo personalizzata di Agente Immo.",
         fieldName: "Nome e cognome",
         fieldEmail: "Email",
         fieldAgencyName: "Agenzia o team (opzionale)",
@@ -498,15 +498,15 @@ export const translations = {
       popups: [
         { icon: "circle", text: "Un agente ha appena attivato il piano", time: "3 min fa" },
         { icon: "clapperboard", text: "Un agente ha generato un video promozionale con l'AI", time: "" },
-        { icon: "users", text: "Agenti al lavoro su GetNearMe in questo momento", time: "" },
+        { icon: "users", text: "Agenti al lavoro su Agente Immo in questo momento", time: "" },
         { icon: "rocket", text: "Un agente ha appena iniziato la prova gratuita", time: "12 min fa" },
-        { icon: "flame", text: "Sempre più agenti scelgono GetNearMe", time: "" },
+        { icon: "flame", text: "Sempre più agenti scelgono Agente Immo", time: "" },
         { icon: "sparkles", text: "Un agente ha arredato una stanza con l'home staging AI", time: "5 min fa" },
         { icon: "star", text: "Un agente è passato al piano annuale", time: "18 min fa" },
-        { icon: "smartphone", text: "Post social creati con GetNearMe", time: "" },
+        { icon: "smartphone", text: "Post social creati con Agente Immo", time: "" },
         { icon: "target", text: "Un agente ha esportato un report PDF col proprio logo", time: "7 min fa" },
-        { icon: "briefcase", text: "Un agente si è appena registrato su GetNearMe", time: "2 min fa" },
-        { icon: "trophy", text: "GetNearMe usato da agenti immobiliari in tutta Italia", time: "" },
+        { icon: "briefcase", text: "Un agente si è appena registrato su Agente Immo", time: "2 min fa" },
+        { icon: "trophy", text: "Agente Immo usato da agenti immobiliari in tutta Italia", time: "" },
         { icon: "map", text: "Un agente ha generato l'analisi di zona di un immobile", time: "9 min fa" },
       ],
       sections: {
@@ -518,7 +518,7 @@ export const translations = {
         flowSubtitle: "Niente da installare, niente da imparare. Carichi le tue foto, l'assistente AI prepara tutto il materiale, già col tuo brand.",
         stepLabel: "Passo",
         flowStep1Title: "Carichi le tue foto",
-        flowStep1Desc: "Carichi le foto dell'immobile, inserisci i dati principali e scegli cosa vuoi ottenere. Il resto lo fa GetNearMe.",
+        flowStep1Desc: "Carichi le foto dell'immobile, inserisci i dati principali e scegli cosa vuoi ottenere. Il resto lo fa Agente Immo.",
         flowStep1Chips: ["Foto", "Dati immobile"],
         flowStep2Title: "L'AI prepara tutto",
         flowStep2Desc: "In pochi minuti l'assistente genera home staging, video e post social, già col tuo logo e i tuoi colori.",
@@ -527,11 +527,11 @@ export const translations = {
         flowStep3Desc: "Pubblichi sui social, metti sui portali o mandi al cliente. Tutto pronto, senza altri programmi.",
         flowStep3Chips: ["Portali", "Social", "Cliente"],
         timeTitle1: "Ogni attività ti porta via tempo.",
-        timeTitleHighlight: "Con GetNearMe, minuti.",
+        timeTitleHighlight: "Con Agente Immo, minuti.",
         timeSubtitle: "Quello che oggi ti richiede ore lo fai in pochi minuti. Su una settimana di lavoro è più di un giorno e mezzo che ti riprendi per clienti e trattative.",
         timeHeaderActivity: "Attività",
         timeHeaderBefore: "Come la fai oggi",
-        timeHeaderAfter: "Con GetNearMe",
+        timeHeaderAfter: "Con Agente Immo",
         timeRow1Activity: "Home staging di una stanza",
         timeRow1Before: "~2 ore con designer o Photoshop",
         timeRow1After: "30 secondi",
@@ -550,7 +550,7 @@ export const translations = {
         timeDisclaimer: "Stime indicative sul tempo tipico di preparazione manuale.",
         examplesTitle1: "Esempi reali. ",
         examplesTitleHighlight: "Risultati concreti.",
-        examplesSubtitle: "Guarda cosa puoi creare con GetNearMe: video, reel e post pronti in pochi click. Questi sono risultati reali, generati dall'AI.",
+        examplesSubtitle: "Guarda cosa puoi creare con Agente Immo: video, reel e post pronti in pochi click. Questi sono risultati reali, generati dall'AI.",
         examplesViewAll: "Guarda tutti gli esempi",
         videoTitles: {
           closeup: "Avatar in primo piano",
@@ -577,7 +577,7 @@ export const translations = {
         login: "Accedi",
         refTitle1: "Esempi reali. ",
         refTitleHighlight: "Risultati concreti.",
-        refSubtitle: "Scopri cosa puoi creare con ogni funzionalità di GetNearMe. Video, foto, post e report generati in pochi click.",
+        refSubtitle: "Scopri cosa puoi creare con ogni funzionalità di Agente Immo. Video, foto, post e report generati in pochi click.",
         refAiVideoTitle: "Video AI per l'immobile",
         refAiVideoDesc: "Reel, walkthrough, before/after, video con avatar parlante e molto altro.",
         refSocialTitle: "Post automatici",
@@ -628,11 +628,11 @@ export const translations = {
       description: "Home staging, videos, social posts and reports for every property, ready in minutes. Everything that used to take you hours, done from one place.",
       cta: "Try it free",
       ctaSecondary: "How it works",
-      subMockup: "GetNearMe is the AI assistant for real estate agents: start from the listing or your own photos and get home staging, videos, social posts, branded reports and area analysis. All in one place, with nothing new to learn."
+      subMockup: "Agente Immo is the AI assistant for real estate agents: start from the listing or your own photos and get home staging, videos, social posts, branded reports and area analysis. All in one place, with nothing new to learn."
     },
     features: {
       title: "Everything you can",
-      titleItalic: "do with GetNearMe",
+      titleItalic: "do with Agente Immo",
       description: "One assistant instead of Canva, a video editor, a designer and hours of work. Analyse the property, enhance the photos and prepare reports and content in minutes.",
       card1: {
         title: "Full property analysis",
@@ -664,12 +664,12 @@ export const translations = {
       titleItalic: "questions",
       items: [
         {
-          q: "What is GetNearMe?",
+          q: "What is Agente Immo?",
           a: "It is the AI assistant that prepares all the material for your listings: home staging, videos, social posts, reports and area analysis. Start from the portal link or your own photos and in minutes everything is ready, with your brand."
         },
         {
           q: "Do I need to install anything?",
-          a: "No. GetNearMe is online: open it in your browser and start working. Nothing to download, no software to learn."
+          a: "No. Agente Immo is online: open it in your browser and start working. Nothing to download, no software to learn."
         },
         {
           q: "How do I try it?",
@@ -704,12 +704,12 @@ export const translations = {
         {
           name: "Free",
           subtitle: "To get started",
-          desc: "Try GetNearMe free with no card: create your account and use the features right away with the included trial credits."
+          desc: "Try Agente Immo free with no card: create your account and use the features right away with the included trial credits."
         },
         {
           name: "Monthly Plan",
           subtitle: "All features included",
-          desc: "Full access to GetNearMe for the individual agent: AI home staging, videos, social posts, branded reports and area analysis. A tool to support your work, not a property valuation system."
+          desc: "Full access to Agente Immo for the individual agent: AI home staging, videos, social posts, branded reports and area analysis. A tool to support your work, not a property valuation system."
         },
         {
           name: "Annual Plan",
@@ -734,10 +734,10 @@ export const translations = {
       step3Title: "Publish in minutes",
       step3Desc: "Photos, videos, posts and reports ready, with your brand. All from one place.",
       cta: "Try it free",
-      videoTitle: "GetNearMe: how it works",
+      videoTitle: "Agente Immo: how it works",
     },
     footer: {
-      desc: "The AI assistant for real estate agents. Everything that used to cost you hours — photos, videos, posts and presentations — with GetNearMe you do it in minutes, starting from the listing.",
+      desc: "The AI assistant for real estate agents. Everything that used to cost you hours — photos, videos, posts and presentations — with Agente Immo you do it in minutes, starting from the listing.",
       product: "Product",
       legal: "Legal",
       privacy: "Privacy Policy",
@@ -748,11 +748,11 @@ export const translations = {
     },
     privacy: {
       update: "Last update: 01/23/2026",
-      intro: "This Privacy Policy describes the methods of processing personal data of users who use the getnearme.it website and the GetNearMe browser extension (hereinafter, the \"Service\").",
+      intro: "This Privacy Policy describes the methods of processing personal data of users who use the agenteimmo.me website and the Agente Immo browser extension (hereinafter, the \"Service\").",
       sections: [
         {
           t: "1. Data Controller",
-          c: "The data controller is a natural person, identified as GetNearMe. For any request relating to the processing of personal data, please contact: info@getnearme.it"
+          c: "The data controller is a natural person, identified as Agente Immo. For any request relating to the processing of personal data, please contact: info@agenteimmo.me"
         },
         {
           t: "2. Types of data processed",
@@ -764,7 +764,7 @@ export const translations = {
         },
         {
           t: "4. Payments",
-          c: "Payments are processed by Stripe. GetNearMe does NOT store credit card data. Stripe handles all payment information in compliance with PCI-DSS standards. We only store: Stripe customer ID (to link purchases to your account) and purchased credits history."
+          c: "Payments are processed by Stripe. Agente Immo does NOT store credit card data. Stripe handles all payment information in compliance with PCI-DSS standards. We only store: Stripe customer ID (to link purchases to your account) and purchased credits history."
         },
         {
           t: "5. AI Image Generation",
@@ -784,7 +784,7 @@ export const translations = {
         },
         {
           t: "9. Data retention",
-          c: "Local browsing data: deleted when the browser is closed. Analyzed property cache: stored locally until manual deletion. User account: retained until deletion request. To delete your account and all associated data, contact info@getnearme.it or use the \"Delete Account\" option in the extension settings."
+          c: "Local browsing data: deleted when the browser is closed. Analyzed property cache: stored locally until manual deletion. User account: retained until deletion request. To delete your account and all associated data, contact info@agenteimmo.me or use the \"Delete Account\" option in the extension settings."
         },
         {
           t: "10. Data sharing",
@@ -792,21 +792,21 @@ export const translations = {
         },
         {
           t: "11. User rights",
-          c: "The user can exercise the rights provided by EU Regulation 2016/679 (GDPR), including access, rectification, cancellation and opposition, by writing to info@getnearme.it."
+          c: "The user can exercise the rights provided by EU Regulation 2016/679 (GDPR), including access, rectification, cancellation and opposition, by writing to info@agenteimmo.me."
         }
       ]
     },
     terms: {
       update: "Last update: 12/22/2025",
-      intro: "These Terms govern the use of the getnearme.it website and the GetNearMe browser extension.",
+      intro: "These Terms govern the use of the agenteimmo.me website and the Agente Immo browser extension.",
       sections: [
         {
           t: "1. Nature of the Service",
-          c: "GetNearMe is a decision support tool that organizes and compares available data on real estate and neighborhoods. GetNearMe is not a real estate agency and does not provide professional, legal, tax or real estate advice."
+          c: "Agente Immo is a decision support tool that organizes and compares available data on real estate and neighborhoods. Agente Immo is not a real estate agency and does not provide professional, legal, tax or real estate advice."
         },
         {
           t: "2. Origin of the data",
-          c: "The displayed information derives from third-party real estate listings and available public sources. GetNearMe has no control over the content of the listings and is not responsible for any errors, omissions or subsequent changes."
+          c: "The displayed information derives from third-party real estate listings and available public sources. Agente Immo has no control over the content of the listings and is not responsible for any errors, omissions or subsequent changes."
         },
         {
           t: "3. Analyzes and estimates",
@@ -822,17 +822,17 @@ export const translations = {
         },
         {
           t: "6. Service availability",
-          c: "Some features may vary based on source availability, the site analyzed or the browser used. GetNearMe reserves the right to modify, suspend or interrupt the Service, in whole or in part, at any time."
+          c: "Some features may vary based on source availability, the site analyzed or the browser used. Agente Immo reserves the right to modify, suspend or interrupt the Service, in whole or in part, at any time."
         },
         {
           t: "7. Limitation of liability",
-          c: "To the extent permitted by law, GetNearMe is not responsible for any damages resulting from the use or inability to use the Service."
+          c: "To the extent permitted by law, Agente Immo is not responsible for any damages resulting from the use or inability to use the Service."
         }
       ]
     },
     cookie: {
       update: "Last update: 12/22/2025",
-      intro: "This Cookie Policy applies exclusively to the getnearme.it website.",
+      intro: "This Cookie Policy applies exclusively to the agenteimmo.me website.",
       sections: [
         {
           t: "1. What are cookies",
@@ -857,7 +857,7 @@ export const translations = {
       dayCompleted: "Day {day} completed!",
       weekComplete: "Fantastic! You completed the week! You get 120 bonus credits!",
       comeBackTomorrow: "Come back tomorrow for day {day}.",
-      goToHome: "Go to GetNearMe",
+      goToHome: "Go to Agente Immo",
       backToHome: "Back to Home",
       error: {
         defaultTitle: "Error",
@@ -876,17 +876,17 @@ export const translations = {
       loading: "Loading..."
     },
     confirm: {
-      subtitle: "Welcome to GetNearMe",
-      description: "Your subscription has been successfully confirmed. Return to the extension and start using all GetNearMe features!",
+      subtitle: "Welcome to Agente Immo",
+      description: "Your subscription has been successfully confirmed. Return to the extension and start using all Agente Immo features!",
       cta: "Start exploring"
     },
     unsubscribe: {
       subtitle: "Unsubscribe complete",
-      description: "You have been successfully removed from our mailing list. You will no longer receive emails from GetNearMe."
+      description: "You have been successfully removed from our mailing list. You will no longer receive emails from Agente Immo."
     },
     featuresPage: {
       title: "All the Features",
-      titleItalic: "of GetNearMe",
+      titleItalic: "of Agente Immo",
       subtitle: "Discover all the tools designed to change the way you work as a real estate agent. From area analysis to artificial intelligence, every feature gives you a concrete advantage.",
       feature6: {
         title: "Automated Property Marketing",
@@ -899,7 +899,7 @@ export const translations = {
         badge: "NEW",
       },
       ctaTitle: "Ready to get started?",
-      ctaDesc: "Join the real estate agents already changing the way they work with GetNearMe.",
+      ctaDesc: "Join the real estate agents already changing the way they work with Agente Immo.",
       ctaButton: "Try it free",
       ctaContact: "Contact us",
     },
@@ -928,12 +928,12 @@ export const translations = {
       solution: {
         emoji: "rocket",
         title: "One assistant. All the work on the listing, done.",
-        desc: "Start from the listing — paste the portal link or upload your photos — and GetNearMe gives you back home staging, videos, social posts and a branded report. In minutes, without opening another programme or learning anything new.",
+        desc: "Start from the listing — paste the portal link or upload your photos — and Agente Immo gives you back home staging, videos, social posts and a branded report. In minutes, without opening another programme or learning anything new.",
       },
       features: {
         title: "Five professional tools.",
         titleHighlight: "One assistant.",
-        subtitle: "GetNearMe does the work of Canva, a video editor, a designer, a social media manager and PowerPoint — without learning anything new.",
+        subtitle: "Agente Immo does the work of Canva, a video editor, a designer, a social media manager and PowerPoint — without learning anything new.",
         items: [
           { num: "01", title: "AI home staging", desc: "Furnish, empty or transform a room in seconds. Show the before/after to the client or publish it straight to portals and social media.", icon: "sparkles", color: "#6366f1" },
           { num: "02", title: "AI property video", desc: "Reels, walkthroughs, before/after, videos with a talking avatar and much more. Ready in a few clicks, no editing and no videographer.", icon: "clapperboard", color: "#10b981" },
@@ -1042,8 +1042,8 @@ export const translations = {
         title: "Questions?",
         titleHighlight: "Answers.",
         items: [
-          { q: "What is GetNearMe?", a: "It is the AI assistant that prepares all the material for your listings: home staging, videos, social posts, reports and area analysis. Start from the portal link or your own photos and in minutes everything is ready, with your brand." },
-          { q: "Do I need to install anything?", a: "No. GetNearMe is online: open it in your browser and start working. Nothing to download, no software to learn." },
+          { q: "What is Agente Immo?", a: "It is the AI assistant that prepares all the material for your listings: home staging, videos, social posts, reports and area analysis. Start from the portal link or your own photos and in minutes everything is ready, with your brand." },
+          { q: "Do I need to install anything?", a: "No. Agente Immo is online: open it in your browser and start working. Nothing to download, no software to learn." },
           { q: "How do I try it?", a: "Free and without a card. Create your account and try the features straight away: see the output before you decide to subscribe." },
           { q: "Does it work if I work alone?", a: "Yes, it is designed precisely for the individual agent. You do the work of a small team on your own: photos, videos, posts and reports, with no external suppliers." },
           { q: "Which tools does it replace?", a: "Canva, a video editor, PowerPoint, a designer, a social media manager and hours of manual research. One assistant instead of many tools, with lower costs and less time spent per property." },
@@ -1063,23 +1063,23 @@ export const translations = {
       },
       roiCalculator: {
         title: "How much do you save with",
-        titleHighlight: "GetNearMe?",
+        titleHighlight: "Agente Immo?",
         subtitle: "Calculate how much time and money you save.",
         inputProperties: "Properties you manage per month",
         inputHours: "Hours to prepare materials per property",
         inputRate: "What one hour of your time is worth",
         outputHoursSaved: "Hours saved per month",
         outputValueRecovered: "Value of time recovered",
-        outputCost: "Cost of GetNearMe",
+        outputCost: "Cost of Agente Immo",
         outputNetSavings: "Net monthly savings",
         outputROI: "return for every euro spent",
         perMonth: "/month",
         cta: "Choose this plan",
-        note: "With GetNearMe each property takes about 3 minutes instead of hours. We use 80% as a conservative estimate of time saved.",
+        note: "With Agente Immo each property takes about 3 minutes instead of hours. We use 80% as a conservative estimate of time saved.",
       },
       demo: {
         pageTitle: "Book a demo",
-        pageSubtitle: "Fill out the form and we'll get back to you to arrange a personalised GetNearMe demo.",
+        pageSubtitle: "Fill out the form and we'll get back to you to arrange a personalised Agente Immo demo.",
         fieldName: "Full name",
         fieldEmail: "Email",
         fieldAgencyName: "Agency or team (optional)",
@@ -1105,15 +1105,15 @@ export const translations = {
       popups: [
         { icon: "circle", text: "An agent just activated the plan", time: "3 min ago" },
         { icon: "clapperboard", text: "An agent generated a promotional video with AI", time: "" },
-        { icon: "users", text: "Agents working on GetNearMe right now", time: "" },
+        { icon: "users", text: "Agents working on Agente Immo right now", time: "" },
         { icon: "rocket", text: "An agent just started the free trial", time: "12 min ago" },
-        { icon: "flame", text: "More and more agents are choosing GetNearMe", time: "" },
+        { icon: "flame", text: "More and more agents are choosing Agente Immo", time: "" },
         { icon: "sparkles", text: "An agent furnished a room with AI home staging", time: "5 min ago" },
         { icon: "star", text: "An agent switched to the annual plan", time: "18 min ago" },
-        { icon: "smartphone", text: "Social posts created with GetNearMe", time: "" },
+        { icon: "smartphone", text: "Social posts created with Agente Immo", time: "" },
         { icon: "target", text: "An agent exported a branded PDF report", time: "7 min ago" },
-        { icon: "briefcase", text: "An agent just signed up on GetNearMe", time: "2 min ago" },
-        { icon: "trophy", text: "GetNearMe used by real estate agents all across Italy", time: "" },
+        { icon: "briefcase", text: "An agent just signed up on Agente Immo", time: "2 min ago" },
+        { icon: "trophy", text: "Agente Immo used by real estate agents all across Italy", time: "" },
         { icon: "map", text: "An agent generated area analysis for a property", time: "9 min ago" },
       ],
       sections: {
@@ -1125,7 +1125,7 @@ export const translations = {
         flowSubtitle: "Nothing to install, nothing to learn. Upload your photos, the AI assistant prepares all the material, already branded.",
         stepLabel: "Step",
         flowStep1Title: "Upload your photos",
-        flowStep1Desc: "Upload the property photos, enter the main details and choose what you want. GetNearMe does the rest.",
+        flowStep1Desc: "Upload the property photos, enter the main details and choose what you want. Agente Immo does the rest.",
         flowStep1Chips: ["Photos", "Property data"],
         flowStep2Title: "AI prepares everything",
         flowStep2Desc: "In a few minutes the assistant generates home staging, videos and social posts, already with your logo and colors.",
@@ -1134,11 +1134,11 @@ export const translations = {
         flowStep3Desc: "Publish on social media, post on portals or send to the client. Everything ready, no other programs needed.",
         flowStep3Chips: ["Portals", "Social", "Client"],
         timeTitle1: "Every task eats up your time.",
-        timeTitleHighlight: "With GetNearMe, minutes.",
+        timeTitleHighlight: "With Agente Immo, minutes.",
         timeSubtitle: "What takes you hours today, you do in minutes. Over a work week, that's more than a day and a half you get back for clients and deals.",
         timeHeaderActivity: "Task",
         timeHeaderBefore: "How you do it today",
-        timeHeaderAfter: "With GetNearMe",
+        timeHeaderAfter: "With Agente Immo",
         timeRow1Activity: "Home staging a room",
         timeRow1Before: "~2 hours with designer or Photoshop",
         timeRow1After: "30 seconds",
@@ -1157,7 +1157,7 @@ export const translations = {
         timeDisclaimer: "Indicative estimates of typical manual preparation time.",
         examplesTitle1: "Real examples. ",
         examplesTitleHighlight: "Concrete results.",
-        examplesSubtitle: "See what you can create with GetNearMe: videos, reels and posts ready in a few clicks. These are real results, generated by AI.",
+        examplesSubtitle: "See what you can create with Agente Immo: videos, reels and posts ready in a few clicks. These are real results, generated by AI.",
         examplesViewAll: "View all examples",
         videoTitles: {
           closeup: "Close-up avatar",
@@ -1184,7 +1184,7 @@ export const translations = {
         login: "Sign in",
         refTitle1: "Real examples. ",
         refTitleHighlight: "Concrete results.",
-        refSubtitle: "Discover what you can create with every GetNearMe feature. Videos, photos, posts and reports generated in a few clicks.",
+        refSubtitle: "Discover what you can create with every Agente Immo feature. Videos, photos, posts and reports generated in a few clicks.",
         refAiVideoTitle: "AI Video for the property",
         refAiVideoDesc: "Reels, walkthroughs, before/after, talking avatar videos and much more.",
         refSocialTitle: "Automatic posts",
@@ -1235,11 +1235,11 @@ export const translations = {
       description: "Home staging, vídeos, posts sociales e informes para cada inmueble, listos en pocos minutos. Lo que hoy te lleva horas, lo haces desde un solo lugar.",
       cta: "Pruébalo gratis",
       ctaSecondary: "Cómo funciona",
-      subMockup: "GetNearMe es el asistente de IA para agentes inmobiliarios: parte del anuncio o de tus fotos y obtén home staging, vídeos, posts sociales, informes con tu marca y análisis de zona. Todo en un solo lugar, sin aprender nada nuevo."
+      subMockup: "Agente Immo es el asistente de IA para agentes inmobiliarios: parte del anuncio o de tus fotos y obtén home staging, vídeos, posts sociales, informes con tu marca y análisis de zona. Todo en un solo lugar, sin aprender nada nuevo."
     },
     features: {
       title: "Todo lo que puedes",
-      titleItalic: "hacer con GetNearMe",
+      titleItalic: "hacer con Agente Immo",
       description: "Un asistente en lugar de Canva, editor de vídeo, diseñador y horas de trabajo. Analizas el inmueble, valorizas las fotos y preparas informes y contenidos en pocos minutos.",
       card1: {
         title: "Análisis completo del inmueble",
@@ -1271,12 +1271,12 @@ export const translations = {
       titleItalic: "frecuentes",
       items: [
         {
-          q: "¿Qué es GetNearMe?",
+          q: "¿Qué es Agente Immo?",
           a: "Es el asistente de IA que prepara todo el material de tus anuncios: home staging, vídeos, posts sociales, informes y análisis de zona. Parte del enlace del portal o de tus fotos y en pocos minutos tienes todo listo, con tu marca."
         },
         {
           q: "¿Tengo que instalar algo?",
-          a: "No. GetNearMe es online: accedes desde el navegador y empiezas a trabajar. Nada que descargar, ningún software que aprender."
+          a: "No. Agente Immo es online: accedes desde el navegador y empiezas a trabajar. Nada que descargar, ningún software que aprender."
         },
         {
           q: "¿Cómo lo pruebo?",
@@ -1311,12 +1311,12 @@ export const translations = {
         {
           name: "Gratis",
           subtitle: "Para empezar",
-          desc: "Prueba GetNearMe gratis y sin tarjeta: creas la cuenta y usas enseguida las funciones con los créditos de prueba incluidos."
+          desc: "Prueba Agente Immo gratis y sin tarjeta: creas la cuenta y usas enseguida las funciones con los créditos de prueba incluidos."
         },
         {
           name: "Plan Mensual",
           subtitle: "Todas las funciones incluidas",
-          desc: "Acceso completo a GetNearMe para el agente individual: home staging AI, vídeos, posts sociales, informes con tu marca y análisis de zona. Una herramienta de apoyo a tu trabajo, no un sistema de valoración inmobiliaria."
+          desc: "Acceso completo a Agente Immo para el agente individual: home staging AI, vídeos, posts sociales, informes con tu marca y análisis de zona. Una herramienta de apoyo a tu trabajo, no un sistema de valoración inmobiliaria."
         },
         {
           name: "Plan Anual",
@@ -1341,10 +1341,10 @@ export const translations = {
       step3Title: "Publica en pocos minutos",
       step3Desc: "Fotos, vídeos, posts e informes listos, con tu marca. Todo desde un solo lugar.",
       cta: "Pruébalo gratis",
-      videoTitle: "GetNearMe: cómo funciona",
+      videoTitle: "Agente Immo: cómo funciona",
     },
     footer: {
-      desc: "El asistente de IA para agentes inmobiliarios. Lo que hoy te cuesta horas — fotos, vídeos, posts y presentaciones — con GetNearMe lo haces en pocos minutos, partiendo del anuncio.",
+      desc: "El asistente de IA para agentes inmobiliarios. Lo que hoy te cuesta horas — fotos, vídeos, posts y presentaciones — con Agente Immo lo haces en pocos minutos, partiendo del anuncio.",
       product: "Producto",
       legal: "Legal",
       privacy: "Política de Privacidad",
@@ -1355,11 +1355,11 @@ export const translations = {
     },
     privacy: {
       update: "Última actualización: 23/01/2026",
-      intro: "Esta Política de Privacidad describe las modalidades de tratamiento de los datos personales de los usuarios que utilizan el sitio web getnearme.it y la extensión de navegador GetNearMe (en adelante, el \"Servicio\").",
+      intro: "Esta Política de Privacidad describe las modalidades de tratamiento de los datos personales de los usuarios que utilizan el sitio web agenteimmo.me y la extensión de navegador Agente Immo (en adelante, el \"Servicio\").",
       sections: [
         {
           t: "1. Responsable del tratamiento",
-          c: "El responsable del tratamiento es una persona física, identificada como GetNearMe. Para cualquier solicitud relacionada con el tratamiento de datos personales es posible contactar con: info@getnearme.it"
+          c: "El responsable del tratamiento es una persona física, identificada como Agente Immo. Para cualquier solicitud relacionada con el tratamiento de datos personales es posible contactar con: info@agenteimmo.me"
         },
         {
           t: "2. Tipos de datos tratados",
@@ -1371,7 +1371,7 @@ export const translations = {
         },
         {
           t: "4. Pagos",
-          c: "Los pagos son procesados por Stripe. GetNearMe NO almacena datos de tarjetas de crédito. Stripe gestiona toda la información de pago de conformidad con los estándares PCI-DSS. Solo almacenamos: ID de cliente de Stripe (para vincular compras a tu cuenta) e historial de créditos comprados."
+          c: "Los pagos son procesados por Stripe. Agente Immo NO almacena datos de tarjetas de crédito. Stripe gestiona toda la información de pago de conformidad con los estándares PCI-DSS. Solo almacenamos: ID de cliente de Stripe (para vincular compras a tu cuenta) e historial de créditos comprados."
         },
         {
           t: "5. Generación de Imágenes con IA",
@@ -1391,7 +1391,7 @@ export const translations = {
         },
         {
           t: "9. Conservación de los datos",
-          c: "Datos de navegación local: se eliminan al cerrar el navegador. Caché de inmuebles analizados: se conserva localmente hasta su eliminación manual. Cuenta de usuario: se conserva hasta solicitud de eliminación. Para eliminar tu cuenta y todos los datos asociados, contacta con info@getnearme.it o usa la opción \"Eliminar cuenta\" en la configuración de la extensión."
+          c: "Datos de navegación local: se eliminan al cerrar el navegador. Caché de inmuebles analizados: se conserva localmente hasta su eliminación manual. Cuenta de usuario: se conserva hasta solicitud de eliminación. Para eliminar tu cuenta y todos los datos asociados, contacta con info@agenteimmo.me o usa la opción \"Eliminar cuenta\" en la configuración de la extensión."
         },
         {
           t: "10. Intercambio de datos",
@@ -1399,21 +1399,21 @@ export const translations = {
         },
         {
           t: "11. Derechos del usuario",
-          c: "El usuario puede ejercer los derechos previstos por el Reglamento UE 2016/679 (RGPD), incluidos el acceso, rectificación, cancelación y oposición, escribiendo a info@getnearme.it."
+          c: "El usuario puede ejercer los derechos previstos por el Reglamento UE 2016/679 (RGPD), incluidos el acceso, rectificación, cancelación y oposición, escribiendo a info@agenteimmo.me."
         }
       ]
     },
     terms: {
       update: "Última actualización: 22/12/2025",
-      intro: "Estos Términos regulan el uso del sitio web getnearme.it y la extensión de navegador GetNearMe.",
+      intro: "Estos Términos regulan el uso del sitio web agenteimmo.me y la extensión de navegador Agente Immo.",
       sections: [
         {
           t: "1. Naturaleza del Servicio",
-          c: "GetNearMe es una herramienta de soporte a la decisión que organiza y compara datos disponibles sobre inmuebles y barrios. GetNearMe no es una agencia inmobiliaria y no proporciona asesoramiento profesional, legal, fiscal o inmobiliario."
+          c: "Agente Immo es una herramienta de soporte a la decisión que organiza y compara datos disponibles sobre inmuebles y barrios. Agente Immo no es una agencia inmobiliaria y no proporciona asesoramiento profesional, legal, fiscal o inmobiliario."
         },
         {
           t: "2. Origen de los datos",
-          c: "La información mostrada deriva de anuncios inmobiliarios de terceros y de fuentes públicas disponibles. GetNearMe no tiene control sobre el contenido de los anuncios y no es responsable de errores, omisiones o cambios posteriores."
+          c: "La información mostrada deriva de anuncios inmobiliarios de terceros y de fuentes públicas disponibles. Agente Immo no tiene control sobre el contenido de los anuncios y no es responsable de errores, omisiones o cambios posteriores."
         },
         {
           t: "3. Análisis y estimaciones",
@@ -1429,17 +1429,17 @@ export const translations = {
         },
         {
           t: "6. Disponibilidad del Servicio",
-          c: "Algunas funcionalidades pueden variar según la disponibilidad de las fuentes, el sitio analizado o el navegador utilizado. GetNearMe se reserva el derecho de modificar, suspender o interrumpir el Servicio, en todo o en parte, en cualquier momento."
+          c: "Algunas funcionalidades pueden variar según la disponibilidad de las fuentes, el sitio analizado o el navegador utilizado. Agente Immo se reserva el derecho de modificar, suspender o interrumpir el Servicio, en todo o en parte, en cualquier momento."
         },
         {
           t: "7. Limitación de responsabilidad",
-          c: "En la medida permitida por la ley, GetNearMe no es responsable de los daños derivados del uso o de la imposibilidad de uso del Servicio."
+          c: "En la medida permitida por la ley, Agente Immo no es responsable de los daños derivados del uso o de la imposibilidad de uso del Servicio."
         }
       ]
     },
     cookie: {
       update: "Última actualización: 22/12/2025",
-      intro: "Esta Política de Cookies se aplica exclusivamente al sitio web getnearme.it.",
+      intro: "Esta Política de Cookies se aplica exclusivamente al sitio web agenteimmo.me.",
       sections: [
         {
           t: "1. ¿Qué son las cookies?",
@@ -1464,7 +1464,7 @@ export const translations = {
       dayCompleted: "¡Día {day} completado!",
       weekComplete: "¡Genial! ¡Has completado la semana! ¡Recibes 120 créditos extra!",
       comeBackTomorrow: "Vuelve mañana para el día {day}.",
-      goToHome: "Ir a GetNearMe",
+      goToHome: "Ir a Agente Immo",
       backToHome: "Volver al Inicio",
       error: {
         defaultTitle: "Error",
@@ -1483,17 +1483,17 @@ export const translations = {
       loading: "Cargando..."
     },
     confirm: {
-      subtitle: "Bienvenido a GetNearMe",
-      description: "Tu suscripcion al servicio ha sido confirmada con exito. Vuelve a la extension y empieza a utilizar todas las funcionalidades de GetNearMe!",
+      subtitle: "Bienvenido a Agente Immo",
+      description: "Tu suscripcion al servicio ha sido confirmada con exito. Vuelve a la extension y empieza a utilizar todas las funcionalidades de Agente Immo!",
       cta: "Empieza a explorar"
     },
     unsubscribe: {
       subtitle: "Baja completada",
-      description: "Has sido eliminado con exito de nuestra lista de correo. Ya no recibiras emails de GetNearMe."
+      description: "Has sido eliminado con exito de nuestra lista de correo. Ya no recibiras emails de Agente Immo."
     },
     featuresPage: {
       title: "Todas las Funcionalidades",
-      titleItalic: "de GetNearMe",
+      titleItalic: "de Agente Immo",
       subtitle: "Descubre todas las herramientas pensadas para transformar tu trabajo como agente inmobiliario. Desde el análisis de zona hasta la inteligencia artificial, cada función te da una ventaja concreta.",
       feature6: {
         title: "Marketing Inmobiliario Automático",
@@ -1506,7 +1506,7 @@ export const translations = {
         badge: "NUEVO",
       },
       ctaTitle: "¿Listo para empezar?",
-      ctaDesc: "Únete a los agentes inmobiliarios que ya están cambiando su forma de trabajar con GetNearMe.",
+      ctaDesc: "Únete a los agentes inmobiliarios que ya están cambiando su forma de trabajar con Agente Immo.",
       ctaButton: "Pruébalo gratis",
       ctaContact: "Contáctanos",
     },
@@ -1535,12 +1535,12 @@ export const translations = {
       solution: {
         emoji: "rocket",
         title: "Un solo asistente. Todo el trabajo sobre el anuncio, terminado.",
-        desc: "Partes del anuncio — pegas el enlace del portal o subes tus fotos — y GetNearMe te devuelve home staging, vídeos, posts sociales e informes con tu logo. En pocos minutos, sin abrir otros programas y sin aprender nada nuevo.",
+        desc: "Partes del anuncio — pegas el enlace del portal o subes tus fotos — y Agente Immo te devuelve home staging, vídeos, posts sociales e informes con tu logo. En pocos minutos, sin abrir otros programas y sin aprender nada nuevo.",
       },
       features: {
         title: "Cinco herramientas profesionales.",
         titleHighlight: "Un solo asistente.",
-        subtitle: "GetNearMe hace el trabajo de Canva, editor de vídeo, diseñador, social media manager y PowerPoint, sin aprender nada nuevo.",
+        subtitle: "Agente Immo hace el trabajo de Canva, editor de vídeo, diseñador, social media manager y PowerPoint, sin aprender nada nuevo.",
         items: [
           { num: "01", title: "Home staging AI", desc: "Amuebla, vacía o transforma una habitación en pocos segundos. Muestras el antes/después al cliente o lo publicas directamente en los portales y en las redes.", icon: "sparkles", color: "#6366f1" },
           { num: "02", title: "Vídeo AI para el inmueble", desc: "Reels, walkthrough, before/after, vídeo con avatar que habla y mucho más. Listos en pocos clics, sin montaje y sin videomaker.", icon: "clapperboard", color: "#10b981" },
@@ -1649,8 +1649,8 @@ export const translations = {
         title: "¿Preguntas?",
         titleHighlight: "Respuestas.",
         items: [
-          { q: "¿Qué es GetNearMe?", a: "Es el asistente de IA que prepara todo el material de tus anuncios: home staging, vídeos, posts sociales, informes y análisis de zona. Parte del enlace del portal o de tus fotos y en pocos minutos tienes todo listo, con tu marca." },
-          { q: "¿Tengo que instalar algo?", a: "No. GetNearMe es online: accedes desde el navegador y empiezas a trabajar. Nada que descargar, ningún software que aprender." },
+          { q: "¿Qué es Agente Immo?", a: "Es el asistente de IA que prepara todo el material de tus anuncios: home staging, vídeos, posts sociales, informes y análisis de zona. Parte del enlace del portal o de tus fotos y en pocos minutos tienes todo listo, con tu marca." },
+          { q: "¿Tengo que instalar algo?", a: "No. Agente Immo es online: accedes desde el navegador y empiezas a trabajar. Nada que descargar, ningún software que aprender." },
           { q: "¿Cómo lo pruebo?", a: "Gratis y sin tarjeta. Creas la cuenta y pruebas las funciones enseguida: ves el resultado antes de decidir si suscribirte." },
           { q: "¿Funciona si trabajo solo?", a: "Sí, está pensado precisamente para el agente individual. Haces tú solo el trabajo de un pequeño equipo: fotos, vídeos, posts e informes, sin proveedores externos." },
           { q: "¿Qué herramientas sustituye?", a: "Canva, editor de vídeo, PowerPoint, diseñador, social media manager y horas de búsqueda manual. Un solo asistente en lugar de muchas herramientas, con menos costes y menos tiempo por inmueble." },
@@ -1670,23 +1670,23 @@ export const translations = {
       },
       roiCalculator: {
         title: "¿Cuánto ahorras con",
-        titleHighlight: "GetNearMe?",
+        titleHighlight: "Agente Immo?",
         subtitle: "Calcula cuánto tiempo y dinero te hace ahorrar.",
         inputProperties: "Inmuebles que gestionas al mes",
         inputHours: "Horas para preparar los materiales de un inmueble",
         inputRate: "Cuánto vale una hora de tu trabajo",
         outputHoursSaved: "Horas ahorradas al mes",
         outputValueRecovered: "Valor del tiempo recuperado",
-        outputCost: "Coste de GetNearMe",
+        outputCost: "Coste de Agente Immo",
         outputNetSavings: "Ahorro neto mensual",
         outputROI: "retorno por cada euro invertido",
         perMonth: "/mes",
         cta: "Elige este plan",
-        note: "Con GetNearMe cada inmueble requiere unos 3 minutos en lugar de horas. Usamos el 80% como estimación conservadora del tiempo ahorrado.",
+        note: "Con Agente Immo cada inmueble requiere unos 3 minutos en lugar de horas. Usamos el 80% como estimación conservadora del tiempo ahorrado.",
       },
       demo: {
         pageTitle: "Reserva una demo",
-        pageSubtitle: "Rellena el formulario y te contactamos para organizar una demo personalizada de GetNearMe.",
+        pageSubtitle: "Rellena el formulario y te contactamos para organizar una demo personalizada de Agente Immo.",
         fieldName: "Nombre y apellidos",
         fieldEmail: "Email",
         fieldAgencyName: "Agencia o equipo (opcional)",
@@ -1712,15 +1712,15 @@ export const translations = {
       popups: [
         { icon: "circle", text: "Un agente acaba de activar el plan", time: "hace 3 min" },
         { icon: "clapperboard", text: "Un agente ha generado un vídeo promocional con IA", time: "" },
-        { icon: "users", text: "Agentes trabajando en GetNearMe en este momento", time: "" },
+        { icon: "users", text: "Agentes trabajando en Agente Immo en este momento", time: "" },
         { icon: "rocket", text: "Un agente acaba de empezar la prueba gratuita", time: "hace 12 min" },
-        { icon: "flame", text: "Cada vez más agentes eligen GetNearMe", time: "" },
+        { icon: "flame", text: "Cada vez más agentes eligen Agente Immo", time: "" },
         { icon: "sparkles", text: "Un agente ha amueblado una habitación con el home staging AI", time: "hace 5 min" },
         { icon: "star", text: "Un agente ha pasado al plan anual", time: "hace 18 min" },
-        { icon: "smartphone", text: "Posts sociales creados con GetNearMe", time: "" },
+        { icon: "smartphone", text: "Posts sociales creados con Agente Immo", time: "" },
         { icon: "target", text: "Un agente ha exportado un informe PDF con su logo", time: "hace 7 min" },
-        { icon: "briefcase", text: "Un agente acaba de registrarse en GetNearMe", time: "hace 2 min" },
-        { icon: "trophy", text: "GetNearMe usado por agentes inmobiliarios en toda Italia", time: "" },
+        { icon: "briefcase", text: "Un agente acaba de registrarse en Agente Immo", time: "hace 2 min" },
+        { icon: "trophy", text: "Agente Immo usado por agentes inmobiliarios en toda Italia", time: "" },
         { icon: "map", text: "Un agente ha generado el análisis de zona de un inmueble", time: "hace 9 min" },
       ],
       sections: {
@@ -1732,7 +1732,7 @@ export const translations = {
         flowSubtitle: "Nada que instalar, nada que aprender. Subes tus fotos, el asistente AI prepara todo el material, ya con tu marca.",
         stepLabel: "Paso",
         flowStep1Title: "Sube tus fotos",
-        flowStep1Desc: "Subes las fotos del inmueble, introduces los datos principales y eliges lo que quieres. GetNearMe hace el resto.",
+        flowStep1Desc: "Subes las fotos del inmueble, introduces los datos principales y eliges lo que quieres. Agente Immo hace el resto.",
         flowStep1Chips: ["Fotos", "Datos del inmueble"],
         flowStep2Title: "La AI lo prepara todo",
         flowStep2Desc: "En pocos minutos el asistente genera home staging, vídeos y posts sociales, ya con tu logo y tus colores.",
@@ -1741,11 +1741,11 @@ export const translations = {
         flowStep3Desc: "Publicas en redes sociales, subes a portales o envías al cliente. Todo listo, sin otros programas.",
         flowStep3Chips: ["Portales", "Redes", "Cliente"],
         timeTitle1: "Cada tarea te quita tiempo.",
-        timeTitleHighlight: "Con GetNearMe, minutos.",
+        timeTitleHighlight: "Con Agente Immo, minutos.",
         timeSubtitle: "Lo que hoy te lleva horas lo haces en minutos. En una semana de trabajo es más de un día y medio que recuperas para clientes y negociaciones.",
         timeHeaderActivity: "Tarea",
         timeHeaderBefore: "Cómo lo haces hoy",
-        timeHeaderAfter: "Con GetNearMe",
+        timeHeaderAfter: "Con Agente Immo",
         timeRow1Activity: "Home staging de una habitación",
         timeRow1Before: "~2 horas con diseñador o Photoshop",
         timeRow1After: "30 segundos",
@@ -1764,7 +1764,7 @@ export const translations = {
         timeDisclaimer: "Estimaciones indicativas del tiempo típico de preparación manual.",
         examplesTitle1: "Ejemplos reales. ",
         examplesTitleHighlight: "Resultados concretos.",
-        examplesSubtitle: "Mira lo que puedes crear con GetNearMe: vídeos, reels y posts listos en pocos clics. Estos son resultados reales, generados por la AI.",
+        examplesSubtitle: "Mira lo que puedes crear con Agente Immo: vídeos, reels y posts listos en pocos clics. Estos son resultados reales, generados por la AI.",
         examplesViewAll: "Ver todos los ejemplos",
         videoTitles: {
           closeup: "Avatar en primer plano",
@@ -1791,7 +1791,7 @@ export const translations = {
         login: "Acceder",
         refTitle1: "Ejemplos reales. ",
         refTitleHighlight: "Resultados concretos.",
-        refSubtitle: "Descubre lo que puedes crear con cada funcionalidad de GetNearMe. Vídeos, fotos, posts e informes generados en pocos clics.",
+        refSubtitle: "Descubre lo que puedes crear con cada funcionalidad de Agente Immo. Vídeos, fotos, posts e informes generados en pocos clics.",
         refAiVideoTitle: "Vídeo AI para el inmueble",
         refAiVideoDesc: "Reels, walkthroughs, antes/después, vídeos con avatar parlante y mucho más.",
         refSocialTitle: "Posts automáticos",
@@ -1842,11 +1842,11 @@ export const translations = {
       description: "Home staging, vidéos, posts sociaux et rapports pour chaque bien, prêts en quelques minutes. Ce qui te prend des heures aujourd'hui, tu le fais depuis un seul endroit.",
       cta: "Essaie gratuitement",
       ctaSecondary: "Comment ça marche",
-      subMockup: "GetNearMe est l'assistant AI pour les agents immobiliers : pars de l'annonce ou de tes photos et obtiens home staging, vidéos, posts sociaux, rapports avec ton logo et analyse de zone. Tout au même endroit, sans rien apprendre de nouveau."
+      subMockup: "Agente Immo est l'assistant AI pour les agents immobiliers : pars de l'annonce ou de tes photos et obtiens home staging, vidéos, posts sociaux, rapports avec ton logo et analyse de zone. Tout au même endroit, sans rien apprendre de nouveau."
     },
     features: {
       title: "Tout ce que tu peux",
-      titleItalic: "faire avec GetNearMe",
+      titleItalic: "faire avec Agente Immo",
       description: "Un assistant à la place de Canva, éditeur vidéo, designer et des heures de travail. Tu analyses le bien, tu valorises les photos et tu prépares rapports et contenus en quelques minutes.",
       card1: {
         title: "Analyse complète du bien",
@@ -1878,12 +1878,12 @@ export const translations = {
       titleItalic: "fréquentes",
       items: [
         {
-          q: "Qu'est-ce que GetNearMe ?",
+          q: "Qu'est-ce que Agente Immo ?",
           a: "C'est l'assistant AI qui prépare tous les supports de tes annonces : home staging, vidéos, posts sociaux, rapports et analyse de zone. Pars du lien du portail ou de tes photos et en quelques minutes tu as tout prêt, avec ton logo."
         },
         {
           q: "Dois-je installer quelque chose ?",
-          a: "Non. GetNearMe est en ligne : tu accèdes depuis le navigateur et tu commences à travailler. Rien à télécharger, aucun logiciel à apprendre."
+          a: "Non. Agente Immo est en ligne : tu accèdes depuis le navigateur et tu commences à travailler. Rien à télécharger, aucun logiciel à apprendre."
         },
         {
           q: "Comment l'essayer ?",
@@ -1918,12 +1918,12 @@ export const translations = {
         {
           name: "Gratuit",
           subtitle: "Pour commencer",
-          desc: "Tu essaies GetNearMe gratuitement et sans carte : tu crées le compte et tu utilises aussitôt les fonctions avec les crédits d'essai inclus."
+          desc: "Tu essaies Agente Immo gratuitement et sans carte : tu crées le compte et tu utilises aussitôt les fonctions avec les crédits d'essai inclus."
         },
         {
           name: "Plan Mensuel",
           subtitle: "Toutes les fonctions incluses",
-          desc: "Accès complet à GetNearMe pour l'agent individuel : home staging AI, vidéos, posts sociaux, rapports avec ton logo et analyse de zone. Un outil de support à ton travail, pas un système d'évaluation immobilière."
+          desc: "Accès complet à Agente Immo pour l'agent individuel : home staging AI, vidéos, posts sociaux, rapports avec ton logo et analyse de zone. Un outil de support à ton travail, pas un système d'évaluation immobilière."
         },
         {
           name: "Plan Annuel",
@@ -1948,10 +1948,10 @@ export const translations = {
       step3Title: "Publie en quelques minutes",
       step3Desc: "Photos, vidéos, posts et rapports prêts, avec ton logo. Tout depuis un seul endroit.",
       cta: "Essaie gratuitement",
-      videoTitle: "GetNearMe : comment ça marche",
+      videoTitle: "Agente Immo : comment ça marche",
     },
     footer: {
-      desc: "L'assistant AI pour les agents immobiliers. Ce qui te coûte des heures aujourd'hui — photos, vidéos, posts et présentations — avec GetNearMe tu le fais en quelques minutes, en partant de l'annonce.",
+      desc: "L'assistant AI pour les agents immobiliers. Ce qui te coûte des heures aujourd'hui — photos, vidéos, posts et présentations — avec Agente Immo tu le fais en quelques minutes, en partant de l'annonce.",
       product: "Produit",
       legal: "Légal",
       privacy: "Politique de Confidentialité",
@@ -1962,11 +1962,11 @@ export const translations = {
     },
     privacy: {
       update: "Dernière mise à jour : 23/01/2026",
-      intro: "La présente Politique de Confidentialité décrit les modalités de traitement des données personnelles des utilisateurs qui utilisent le site web getnearme.it et l'extension de navigateur GetNearMe (ci-après, le « Service »).",
+      intro: "La présente Politique de Confidentialité décrit les modalités de traitement des données personnelles des utilisateurs qui utilisent le site web agenteimmo.me et l'extension de navigateur Agente Immo (ci-après, le « Service »).",
       sections: [
         {
           t: "1. Responsable du traitement",
-          c: "Le responsable du traitement est une personne physique, identifiée comme GetNearMe. Pour toute demande relative au traitement des données personnelles, il est possible de contacter : info@getnearme.it"
+          c: "Le responsable du traitement est une personne physique, identifiée comme Agente Immo. Pour toute demande relative au traitement des données personnelles, il est possible de contacter : info@agenteimmo.me"
         },
         {
           t: "2. Types de données traitées",
@@ -1978,7 +1978,7 @@ export const translations = {
         },
         {
           t: "4. Paiements",
-          c: "Les paiements sont traités par Stripe. GetNearMe ne stocke PAS les données de cartes de crédit. Stripe gère toutes les informations de paiement conformément aux normes PCI-DSS. Nous ne conservons que : l'identifiant client Stripe (pour lier les achats à votre compte) et l'historique des crédits achetés."
+          c: "Les paiements sont traités par Stripe. Agente Immo ne stocke PAS les données de cartes de crédit. Stripe gère toutes les informations de paiement conformément aux normes PCI-DSS. Nous ne conservons que : l'identifiant client Stripe (pour lier les achats à votre compte) et l'historique des crédits achetés."
         },
         {
           t: "5. Génération d'Images IA",
@@ -1998,7 +1998,7 @@ export const translations = {
         },
         {
           t: "9. Conservation des données",
-          c: "Données de navigation locales : supprimées à la fermeture du navigateur. Cache des biens analysés : conservé localement jusqu'à suppression manuelle. Compte utilisateur : conservé jusqu'à demande de suppression. Pour supprimer votre compte et toutes les données associées, contactez info@getnearme.it ou utilisez l'option « Supprimer le compte » dans les paramètres de l'extension."
+          c: "Données de navigation locales : supprimées à la fermeture du navigateur. Cache des biens analysés : conservé localement jusqu'à suppression manuelle. Compte utilisateur : conservé jusqu'à demande de suppression. Pour supprimer votre compte et toutes les données associées, contactez info@agenteimmo.me ou utilisez l'option « Supprimer le compte » dans les paramètres de l'extension."
         },
         {
           t: "10. Partage des données",
@@ -2006,21 +2006,21 @@ export const translations = {
         },
         {
           t: "11. Droits de l'utilisateur",
-          c: "L'utilisateur peut exercer les droits prévus par le Règlement UE 2016/679 (RGPD), y compris l'accès, la rectification, la suppression et l'opposition, en écrivant à info@getnearme.it."
+          c: "L'utilisateur peut exercer les droits prévus par le Règlement UE 2016/679 (RGPD), y compris l'accès, la rectification, la suppression et l'opposition, en écrivant à info@agenteimmo.me."
         }
       ]
     },
     terms: {
       update: "Dernière mise à jour : 23/01/2026",
-      intro: "Les présentes Conditions régissent l'utilisation du site web getnearme.it et de l'extension de navigateur GetNearMe.",
+      intro: "Les présentes Conditions régissent l'utilisation du site web agenteimmo.me et de l'extension de navigateur Agente Immo.",
       sections: [
         {
           t: "1. Nature du Service",
-          c: "GetNearMe est un outil d'aide à la décision qui organise et compare les données disponibles sur les biens immobiliers et les quartiers. GetNearMe n'est pas une agence immobilière et ne fournit pas de conseils professionnels, juridiques, fiscaux ou immobiliers."
+          c: "Agente Immo est un outil d'aide à la décision qui organise et compare les données disponibles sur les biens immobiliers et les quartiers. Agente Immo n'est pas une agence immobilière et ne fournit pas de conseils professionnels, juridiques, fiscaux ou immobiliers."
         },
         {
           t: "2. Origine des données",
-          c: "Les informations affichées proviennent d'annonces immobilières tierces et de sources publiques disponibles. GetNearMe n'a aucun contrôle sur le contenu des annonces et n'est pas responsable des erreurs, omissions ou modifications ultérieures."
+          c: "Les informations affichées proviennent d'annonces immobilières tierces et de sources publiques disponibles. Agente Immo n'a aucun contrôle sur le contenu des annonces et n'est pas responsable des erreurs, omissions ou modifications ultérieures."
         },
         {
           t: "3. Analyses et estimations",
@@ -2036,17 +2036,17 @@ export const translations = {
         },
         {
           t: "6. Disponibilité du Service",
-          c: "Certaines fonctionnalités peuvent varier selon la disponibilité des sources, le site analysé ou le navigateur utilisé. GetNearMe se réserve le droit de modifier, de suspendre ou d'interrompre le Service, en tout ou en partie, à tout moment."
+          c: "Certaines fonctionnalités peuvent varier selon la disponibilité des sources, le site analysé ou le navigateur utilisé. Agente Immo se réserve le droit de modifier, de suspendre ou d'interrompre le Service, en tout ou en partie, à tout moment."
         },
         {
           t: "7. Limitation de responsabilité",
-          c: "Dans la mesure permise par la loi, GetNearMe n'est pas responsable des dommages résultant de l'utilisation ou de l'impossibilité d'utiliser le Service."
+          c: "Dans la mesure permise par la loi, Agente Immo n'est pas responsable des dommages résultant de l'utilisation ou de l'impossibilité d'utiliser le Service."
         }
       ]
     },
     cookie: {
       update: "Dernière mise à jour : 22/12/2025",
-      intro: "La présente Politique relative aux Cookies s'applique exclusivement au site web getnearme.it.",
+      intro: "La présente Politique relative aux Cookies s'applique exclusivement au site web agenteimmo.me.",
       sections: [
         {
           t: "1. Que sont les cookies ?",
@@ -2071,7 +2071,7 @@ export const translations = {
       dayCompleted: "Jour {day} terminé !",
       weekComplete: "Fantastique ! Vous avez terminé la semaine ! Vous recevez 120 crédits bonus !",
       comeBackTomorrow: "Revenez demain pour le jour {day}.",
-      goToHome: "Aller à GetNearMe",
+      goToHome: "Aller à Agente Immo",
       backToHome: "Retour à l'Accueil",
       error: {
         defaultTitle: "Erreur",
@@ -2090,17 +2090,17 @@ export const translations = {
       loading: "Chargement..."
     },
     confirm: {
-      subtitle: "Bienvenue sur GetNearMe",
-      description: "Votre inscription au service a ete confirmee avec succes. Retournez a l'extension et commencez a utiliser toutes les fonctionnalites de GetNearMe!",
+      subtitle: "Bienvenue sur Agente Immo",
+      description: "Votre inscription au service a ete confirmee avec succes. Retournez a l'extension et commencez a utiliser toutes les fonctionnalites de Agente Immo!",
       cta: "Commencer a explorer"
     },
     unsubscribe: {
       subtitle: "Desinscription terminee",
-      description: "Vous avez ete supprime avec succes de notre liste de diffusion. Vous ne recevrez plus d'emails de GetNearMe."
+      description: "Vous avez ete supprime avec succes de notre liste de diffusion. Vous ne recevrez plus d'emails de Agente Immo."
     },
     featuresPage: {
       title: "Toutes les Fonctionnalités",
-      titleItalic: "de GetNearMe",
+      titleItalic: "de Agente Immo",
       subtitle: "Découvre tous les outils conçus pour changer ton travail d'agent immobilier. De l'analyse de zone à l'intelligence artificielle, chaque fonction te donne un avantage concret.",
       feature6: {
         title: "Marketing Immobilier Automatique",
@@ -2113,7 +2113,7 @@ export const translations = {
         badge: "NOUVEAU",
       },
       ctaTitle: "Prêt à commencer ?",
-      ctaDesc: "Rejoins les agents immobiliers qui changent déjà leur façon de travailler avec GetNearMe.",
+      ctaDesc: "Rejoins les agents immobiliers qui changent déjà leur façon de travailler avec Agente Immo.",
       ctaButton: "Essaie gratuitement",
       ctaContact: "Contacte-nous",
     },
@@ -2142,12 +2142,12 @@ export const translations = {
       solution: {
         emoji: "rocket",
         title: "Un seul assistant. Tout le travail sur l'annonce, terminé.",
-        desc: "Pars de l'annonce — tu colles le lien du portail ou tu charges tes photos — et GetNearMe te restitue home staging, vidéos, posts sociaux et rapports avec ton logo. En quelques minutes, sans ouvrir d'autres programmes et sans rien apprendre de nouveau.",
+        desc: "Pars de l'annonce — tu colles le lien du portail ou tu charges tes photos — et Agente Immo te restitue home staging, vidéos, posts sociaux et rapports avec ton logo. En quelques minutes, sans ouvrir d'autres programmes et sans rien apprendre de nouveau.",
       },
       features: {
         title: "Trois outils professionnels.",
         titleHighlight: "Un seul assistant.",
-        subtitle: "GetNearMe fait le travail de Canva, éditeur vidéo, designer, social media manager et PowerPoint, sans rien de nouveau à apprendre.",
+        subtitle: "Agente Immo fait le travail de Canva, éditeur vidéo, designer, social media manager et PowerPoint, sans rien de nouveau à apprendre.",
         items: [
           { num: "01", title: "Home staging AI", desc: "Meuble, vide ou transforme une pièce en quelques secondes. Tu montres l'avant/après au client ou tu le publies directement sur les portails et les réseaux sociaux.", icon: "sparkles", color: "#6366f1" },
           { num: "02", title: "Vidéo AI pour le bien", desc: "Reels, walkthroughs, before/after, vidéos avec avatar parlant et bien plus. Prêts en quelques clics, sans montage et sans vidéaste.", icon: "clapperboard", color: "#10b981" },
@@ -2254,8 +2254,8 @@ export const translations = {
         title: "Des questions ?",
         titleHighlight: "Des réponses.",
         items: [
-          { q: "Qu'est-ce que GetNearMe ?", a: "C'est l'assistant AI qui prépare tous les supports de tes annonces : home staging, vidéos, posts sociaux, rapports et analyse de zone. Pars du lien du portail ou de tes photos et en quelques minutes tu as tout prêt, avec ton logo." },
-          { q: "Dois-je installer quelque chose ?", a: "Non. GetNearMe est en ligne : tu accèdes depuis le navigateur et tu commences à travailler. Rien à télécharger, aucun logiciel à apprendre." },
+          { q: "Qu'est-ce que Agente Immo ?", a: "C'est l'assistant AI qui prépare tous les supports de tes annonces : home staging, vidéos, posts sociaux, rapports et analyse de zone. Pars du lien du portail ou de tes photos et en quelques minutes tu as tout prêt, avec ton logo." },
+          { q: "Dois-je installer quelque chose ?", a: "Non. Agente Immo est en ligne : tu accèdes depuis le navigateur et tu commences à travailler. Rien à télécharger, aucun logiciel à apprendre." },
           { q: "Comment l'essayer ?", a: "Gratuitement et sans carte. Tu crées le compte et tu essaies aussitôt les fonctions : tu vois le résultat avant de décider si tu t'abonnes." },
           { q: "Ça marche si je travaille seul ?", a: "Oui, c'est conçu justement pour l'agent individuel. Tu fais seul le travail d'une petite équipe : photos, vidéos, posts et rapports, sans prestataires externes." },
           { q: "Quels outils remplace-t-il ?", a: "Canva, éditeur vidéo, PowerPoint, designer, social media manager et des heures de recherche manuelle. Un seul assistant à la place de nombreux outils, avec moins de coûts et moins de temps par bien." },
@@ -2275,23 +2275,23 @@ export const translations = {
       },
       roiCalculator: {
         title: "Combien tu gagnes avec",
-        titleHighlight: "GetNearMe ?",
+        titleHighlight: "Agente Immo ?",
         subtitle: "Calcule combien de temps et d'argent tu économises.",
         inputProperties: "Biens que tu gères par mois",
         inputHours: "Heures pour préparer les supports d'un bien",
         inputRate: "Combien vaut une heure de ton travail",
         outputHoursSaved: "Heures économisées par mois",
         outputValueRecovered: "Valeur du temps récupéré",
-        outputCost: "Coût de GetNearMe",
+        outputCost: "Coût de Agente Immo",
         outputNetSavings: "Économie nette mensuelle",
         outputROI: "de retour pour chaque euro dépensé",
         perMonth: "/mois",
         cta: "Choisir ce plan",
-        note: "Avec GetNearMe chaque bien nécessite environ 3 minutes au lieu de plusieurs heures. On utilise 80 % comme estimation conservative du temps économisé.",
+        note: "Avec Agente Immo chaque bien nécessite environ 3 minutes au lieu de plusieurs heures. On utilise 80 % comme estimation conservative du temps économisé.",
       },
       demo: {
         pageTitle: "Réserve une démo",
-        pageSubtitle: "Remplis le formulaire et on te recontacte pour organiser une démo personnalisée de GetNearMe.",
+        pageSubtitle: "Remplis le formulaire et on te recontacte pour organiser une démo personnalisée de Agente Immo.",
         fieldName: "Prénom et nom",
         fieldEmail: "E-mail",
         fieldAgencyName: "Agence ou équipe (facultatif)",
@@ -2317,15 +2317,15 @@ export const translations = {
       popups: [
         { icon: "circle", text: "Un agent vient d'activer le plan", time: "il y a 3 min" },
         { icon: "clapperboard", text: "Un agent a généré une vidéo promotionnelle avec l'AI", time: "" },
-        { icon: "users", text: "Agents au travail sur GetNearMe en ce moment", time: "" },
+        { icon: "users", text: "Agents au travail sur Agente Immo en ce moment", time: "" },
         { icon: "rocket", text: "Un agent vient de commencer l'essai gratuit", time: "il y a 12 min" },
-        { icon: "flame", text: "De plus en plus d'agents choisissent GetNearMe", time: "" },
+        { icon: "flame", text: "De plus en plus d'agents choisissent Agente Immo", time: "" },
         { icon: "sparkles", text: "Un agent a meublé une pièce avec le home staging AI", time: "il y a 5 min" },
         { icon: "star", text: "Un agent est passé au plan annuel", time: "il y a 18 min" },
-        { icon: "smartphone", text: "Posts sociaux créés avec GetNearMe", time: "" },
+        { icon: "smartphone", text: "Posts sociaux créés avec Agente Immo", time: "" },
         { icon: "target", text: "Un agent a exporté un rapport PDF avec son logo", time: "il y a 7 min" },
-        { icon: "briefcase", text: "Un agent vient de s'inscrire sur GetNearMe", time: "il y a 2 min" },
-        { icon: "trophy", text: "GetNearMe utilisé par des agents immobiliers dans toute l'Italie", time: "" },
+        { icon: "briefcase", text: "Un agent vient de s'inscrire sur Agente Immo", time: "il y a 2 min" },
+        { icon: "trophy", text: "Agente Immo utilisé par des agents immobiliers dans toute l'Italie", time: "" },
         { icon: "map", text: "Un agent a généré l'analyse de zone d'un bien", time: "il y a 9 min" },
       ],
     },
@@ -2350,11 +2350,11 @@ export const translations = {
       description: "Home staging, видео, посты для соцсетей и отчёты по каждому объекту — готовы за несколько минут. То, что сейчас занимает часы, делаешь из одного места.",
       cta: "Попробуй бесплатно",
       ctaSecondary: "Как это работает",
-      subMockup: "GetNearMe — это ИИ-ассистент для агентов по недвижимости: начинаешь с объявления или своих фото и получаешь home staging, видео, посты для соцсетей, отчёт с твоим брендом и анализ района. Всё в одном месте, без изучения новых инструментов."
+      subMockup: "Agente Immo — это ИИ-ассистент для агентов по недвижимости: начинаешь с объявления или своих фото и получаешь home staging, видео, посты для соцсетей, отчёт с твоим брендом и анализ района. Всё в одном месте, без изучения новых инструментов."
     },
     features: {
       title: "Всё, что ты можешь",
-      titleItalic: "сделать с GetNearMe",
+      titleItalic: "сделать с Agente Immo",
       description: "Один ассистент вместо Canva, видеоредактора, дизайнера и часов работы. Анализируешь объект, улучшаешь фото и готовишь отчёты и контент за несколько минут.",
       card1: {
         title: "Полный анализ объекта",
@@ -2386,12 +2386,12 @@ export const translations = {
       titleItalic: "вопросы",
       items: [
         {
-          q: "Что такое GetNearMe?",
+          q: "Что такое Agente Immo?",
           a: "Это ИИ-ассистент, который готовит все материалы для твоих объявлений: home staging, видео, посты для соцсетей, отчёты и анализ района. Начинаешь со ссылки на портал или своих фото — и за несколько минут всё готово, с твоим брендом."
         },
         {
           q: "Нужно что-то устанавливать?",
-          a: "Нет. GetNearMe работает онлайн: заходишь через браузер и сразу начинаешь работать. Ничего скачивать, никакого нового软件 учить не нужно."
+          a: "Нет. Agente Immo работает онлайн: заходишь через браузер и сразу начинаешь работать. Ничего скачивать, никакого нового软件 учить не нужно."
         },
         {
           q: "Как попробовать?",
@@ -2426,12 +2426,12 @@ export const translations = {
         {
           name: "Бесплатно",
           subtitle: "Чтобы начать",
-          desc: "Попробуй GetNearMe бесплатно и без карты: создаёшь аккаунт и сразу используешь функции с включёнными пробными кредитами."
+          desc: "Попробуй Agente Immo бесплатно и без карты: создаёшь аккаунт и сразу используешь функции с включёнными пробными кредитами."
         },
         {
           name: "Месячный план",
           subtitle: "Все функции включены",
-          desc: "Полный доступ к GetNearMe для одного агента: ИИ home staging, видео, посты для соцсетей, отчёты с твоим брендом и анализ района. Инструмент для поддержки твоей работы, не система оценки недвижимости."
+          desc: "Полный доступ к Agente Immo для одного агента: ИИ home staging, видео, посты для соцсетей, отчёты с твоим брендом и анализ района. Инструмент для поддержки твоей работы, не система оценки недвижимости."
         },
         {
           name: "Годовой план",
@@ -2456,10 +2456,10 @@ export const translations = {
       step3Title: "Публикуй за несколько минут",
       step3Desc: "Фото, видео, посты и отчёты готовы, с твоим брендом. Всё из одного места.",
       cta: "Попробуй бесплатно",
-      videoTitle: "GetNearMe: как это работает",
+      videoTitle: "Agente Immo: как это работает",
     },
     footer: {
-      desc: "ИИ-ассистент для агентов по недвижимости. То, что сейчас занимает часы — фото, видео, посты и презентации — с GetNearMe делаешь за несколько минут, начиная с объявления.",
+      desc: "ИИ-ассистент для агентов по недвижимости. То, что сейчас занимает часы — фото, видео, посты и презентации — с Agente Immo делаешь за несколько минут, начиная с объявления.",
       product: "Продукт",
       legal: "Юридическая информация",
       privacy: "Политика конфиденциальности",
@@ -2470,11 +2470,11 @@ export const translations = {
     },
     privacy: {
       update: "Последнее обновление: 23.01.2026",
-      intro: "Настоящая Политика конфиденциальности описывает способы обработки персональных данных пользователей, которые используют веб-сайт getnearme.it и расширение браузера GetNearMe (далее — «Сервис»).",
+      intro: "Настоящая Политика конфиденциальности описывает способы обработки персональных данных пользователей, которые используют веб-сайт agenteimmo.me и расширение браузера Agente Immo (далее — «Сервис»).",
       sections: [
         {
           t: "1. Оператор обработки данных",
-          c: "Оператором обработки данных является физическое лицо, идентифицируемое как GetNearMe. По любым запросам, связанным с обработкой персональных данных, можно обращаться по адресу: info@getnearme.it"
+          c: "Оператором обработки данных является физическое лицо, идентифицируемое как Agente Immo. По любым запросам, связанным с обработкой персональных данных, можно обращаться по адресу: info@agenteimmo.me"
         },
         {
           t: "2. Типы обрабатываемых данных",
@@ -2486,7 +2486,7 @@ export const translations = {
         },
         {
           t: "4. Платежи",
-          c: "Платежи обрабатываются через Stripe. GetNearMe НЕ хранит данные кредитных карт. Stripe обрабатывает всю платежную информацию в соответствии со стандартами PCI-DSS. Мы храним только: идентификатор клиента Stripe (для привязки покупок к вашему аккаунту) и историю приобретенных кредитов."
+          c: "Платежи обрабатываются через Stripe. Agente Immo НЕ хранит данные кредитных карт. Stripe обрабатывает всю платежную информацию в соответствии со стандартами PCI-DSS. Мы храним только: идентификатор клиента Stripe (для привязки покупок к вашему аккаунту) и историю приобретенных кредитов."
         },
         {
           t: "5. Генерация изображений с помощью ИИ",
@@ -2506,7 +2506,7 @@ export const translations = {
         },
         {
           t: "9. Хранение данных",
-          c: "Локальные данные навигации: удаляются при закрытии браузера. Кэш проанализированных объектов: хранится локально до ручного удаления. Учетная запись пользователя: сохраняется до запроса на удаление. Чтобы удалить свою учетную запись и все связанные данные, свяжитесь с info@getnearme.it или используйте опцию «Удалить аккаунт» в настройках расширения."
+          c: "Локальные данные навигации: удаляются при закрытии браузера. Кэш проанализированных объектов: хранится локально до ручного удаления. Учетная запись пользователя: сохраняется до запроса на удаление. Чтобы удалить свою учетную запись и все связанные данные, свяжитесь с info@agenteimmo.me или используйте опцию «Удалить аккаунт» в настройках расширения."
         },
         {
           t: "10. Обмен данными",
@@ -2514,21 +2514,21 @@ export const translations = {
         },
         {
           t: "11. Права пользователя",
-          c: "Пользователь может осуществлять права, предусмотренные Регламентом ЕС 2016/679 (GDPR), включая доступ, исправление, удаление и возражение, написав по адресу info@getnearme.it."
+          c: "Пользователь может осуществлять права, предусмотренные Регламентом ЕС 2016/679 (GDPR), включая доступ, исправление, удаление и возражение, написав по адресу info@agenteimmo.me."
         }
       ]
     },
     terms: {
       update: "Последнее обновление: 23.01.2026",
-      intro: "Настоящие Условия регулируют использование веб-сайта getnearme.it и расширения браузера GetNearMe.",
+      intro: "Настоящие Условия регулируют использование веб-сайта agenteimmo.me и расширения браузера Agente Immo.",
       sections: [
         {
           t: "1. Характер Сервиса",
-          c: "GetNearMe — это инструмент поддержки принятия решений, который организует и сравнивает доступные данные о недвижимости и районах. GetNearMe не является агентством недвижимости и не предоставляет профессиональных, юридических, налоговых или риелторских консультаций."
+          c: "Agente Immo — это инструмент поддержки принятия решений, который организует и сравнивает доступные данные о недвижимости и районах. Agente Immo не является агентством недвижимости и не предоставляет профессиональных, юридических, налоговых или риелторских консультаций."
         },
         {
           t: "2. Происхождение данных",
-          c: "Отображаемая информация поступает из объявлений о недвижимости третьих лиц и доступных государственных источников. GetNearMe не контролирует содержание объявлений и не несет ответственности за ошибки, упущения или последующие изменения."
+          c: "Отображаемая информация поступает из объявлений о недвижимости третьих лиц и доступных государственных источников. Agente Immo не контролирует содержание объявлений и не несет ответственности за ошибки, упущения или последующие изменения."
         },
         {
           t: "3. Анализы и оценки",
@@ -2544,17 +2544,17 @@ export const translations = {
         },
         {
           t: "6. Доступность Сервиса",
-          c: "Некоторые функции могут варьироваться в зависимости от доступности источников, анализируемого сайта или используемого браузера. GetNearMe оставляет за собой право изменять, приостанавливать или прекращать работу Сервиса, полностью или частично, в любое время."
+          c: "Некоторые функции могут варьироваться в зависимости от доступности источников, анализируемого сайта или используемого браузера. Agente Immo оставляет за собой право изменять, приостанавливать или прекращать работу Сервиса, полностью или частично, в любое время."
         },
         {
           t: "7. Ограничение ответственности",
-          c: "В пределах, разрешенных законом, GetNearMe не несет ответственности за любой ущерб, возникший в результате использования или невозможности использования Сервиса."
+          c: "В пределах, разрешенных законом, Agente Immo не несет ответственности за любой ущерб, возникший в результате использования или невозможности использования Сервиса."
         }
       ]
     },
     cookie: {
       update: "Последнее обновление: 22.12.2025",
-      intro: "Настоящая Политика использования файлов cookie применяется исключительно к веб-сайту getnearme.it.",
+      intro: "Настоящая Политика использования файлов cookie применяется исключительно к веб-сайту agenteimmo.me.",
       sections: [
         {
           t: "1. Что такое файлы cookie",
@@ -2579,7 +2579,7 @@ export const translations = {
       dayCompleted: "День {day} завершен!",
       weekComplete: "Фантастика! Вы завершили неделю! Получите 120 бонусных кредитов!",
       comeBackTomorrow: "Возвращайтесь завтра на {day} день.",
-      goToHome: "Перейти в GetNearMe",
+      goToHome: "Перейти в Agente Immo",
       backToHome: "Вернуться на Главную",
       error: {
         defaultTitle: "Ошибка",
@@ -2598,17 +2598,17 @@ export const translations = {
       loading: "Загрузка..."
     },
     confirm: {
-      subtitle: "Добро пожаловать в GetNearMe",
-      description: "Ваша подписка на сервис успешно подтверждена. Вернитесь к расширению и начните использовать все возможности GetNearMe!",
+      subtitle: "Добро пожаловать в Agente Immo",
+      description: "Ваша подписка на сервис успешно подтверждена. Вернитесь к расширению и начните использовать все возможности Agente Immo!",
       cta: "Начать исследование"
     },
     unsubscribe: {
       subtitle: "Отписка завершена",
-      description: "Вы были успешно удалены из нашей рассылки. Вы больше не будете получать письма от GetNearMe."
+      description: "Вы были успешно удалены из нашей рассылки. Вы больше не будете получать письма от Agente Immo."
     },
     featuresPage: {
       title: "Все возможности",
-      titleItalic: "GetNearMe",
+      titleItalic: "Agente Immo",
       subtitle: "Узнай обо всех инструментах, созданных чтобы изменить твою работу агента по недвижимости. От анализа района до искусственного интеллекта — каждая функция даёт тебе реальное преимущество.",
       feature6: {
         title: "Автоматический маркетинг недвижимости",
@@ -2621,7 +2621,7 @@ export const translations = {
         badge: "НОВОЕ",
       },
       ctaTitle: "Готов начать?",
-      ctaDesc: "Присоединяйся к агентам по недвижимости, которые уже меняют свой подход к работе с GetNearMe.",
+      ctaDesc: "Присоединяйся к агентам по недвижимости, которые уже меняют свой подход к работе с Agente Immo.",
       ctaButton: "Попробуй бесплатно",
       ctaContact: "Связаться с нами",
     },
@@ -2650,12 +2650,12 @@ export const translations = {
       solution: {
         emoji: "rocket",
         title: "Один ассистент. Вся работа по объявлению — готова.",
-        desc: "Начинаешь с объявления — вставляешь ссылку на портал или загружаешь свои фото — и GetNearMe возвращает home staging, видео, посты для соцсетей и отчёт с твоим логотипом. За несколько минут, без открытия других программ и без изучения чего-то нового.",
+        desc: "Начинаешь с объявления — вставляешь ссылку на портал или загружаешь свои фото — и Agente Immo возвращает home staging, видео, посты для соцсетей и отчёт с твоим логотипом. За несколько минут, без открытия других программ и без изучения чего-то нового.",
       },
       features: {
         title: "Три профессиональных инструмента.",
         titleHighlight: "Один ассистент.",
-        subtitle: "GetNearMe делает работу Canva, видеоредактора, дизайнера, SMM-специалиста и PowerPoint, без необходимости учиться чему-то новому.",
+        subtitle: "Agente Immo делает работу Canva, видеоредактора, дизайнера, SMM-специалиста и PowerPoint, без необходимости учиться чему-то новому.",
         items: [
           { num: "01", title: "ИИ home staging", desc: "Обставляешь, освобождаешь или преображаешь комнату за секунды. Показываешь клиенту до/после или сразу публикуешь на порталах и в соцсетях.", icon: "sparkles", color: "#6366f1" },
           { num: "02", title: "ИИ-видео об объекте", desc: "Reels, walkthrough, before/after, видео с говорящим аватаром и многое другое. Готово за несколько кликов, без монтажа и без видеографа.", icon: "clapperboard", color: "#10b981" },
@@ -2762,8 +2762,8 @@ export const translations = {
         title: "Вопросы?",
         titleHighlight: "Ответы.",
         items: [
-          { q: "Что такое GetNearMe?", a: "Это ИИ-ассистент, который готовит все материалы для твоих объявлений: home staging, видео, посты для соцсетей, отчёты и анализ района. Начинаешь со ссылки на портал или своих фото — и за несколько минут всё готово, с твоим брендом." },
-          { q: "Нужно что-то устанавливать?", a: "Нет. GetNearMe работает онлайн: заходишь через браузер и сразу начинаешь работать. Ничего скачивать, никакого нового программного обеспечения." },
+          { q: "Что такое Agente Immo?", a: "Это ИИ-ассистент, который готовит все материалы для твоих объявлений: home staging, видео, посты для соцсетей, отчёты и анализ района. Начинаешь со ссылки на портал или своих фото — и за несколько минут всё готово, с твоим брендом." },
+          { q: "Нужно что-то устанавливать?", a: "Нет. Agente Immo работает онлайн: заходишь через браузер и сразу начинаешь работать. Ничего скачивать, никакого нового программного обеспечения." },
           { q: "Как попробовать?", a: "Бесплатно и без карты. Создаёшь аккаунт и сразу пробуешь функции: видишь результат до того, как решаешь оформить подписку." },
           { q: "Работает, если работаю один?", a: "Да, именно для такого агента и создано. Делаешь в одиночку работу небольшой команды: фото, видео, посты и отчёты — без внешних подрядчиков." },
           { q: "Какие инструменты заменяет?", a: "Canva, видеоредактор, PowerPoint, дизайнера, SMM-специалиста и часы ручного поиска. Один ассистент вместо множества инструментов — меньше затрат и меньше времени на каждый объект." },
@@ -2783,23 +2783,23 @@ export const translations = {
       },
       roiCalculator: {
         title: "Сколько ты экономишь с",
-        titleHighlight: "GetNearMe?",
+        titleHighlight: "Agente Immo?",
         subtitle: "Рассчитай, сколько времени и денег ты сэкономишь.",
         inputProperties: "Объектов в работе в месяц",
         inputHours: "Часов на подготовку материалов по одному объекту",
         inputRate: "Сколько стоит один час твоей работы",
         outputHoursSaved: "Сэкономленных часов в месяц",
         outputValueRecovered: "Стоимость возвращённого времени",
-        outputCost: "Стоимость GetNearMe",
+        outputCost: "Стоимость Agente Immo",
         outputNetSavings: "Чистая экономия в месяц",
         outputROI: "возврат на каждый потраченный евро",
         perMonth: "/мес",
         cta: "Выбрать этот план",
-        note: "С GetNearMe каждый объект занимает около 3 минут вместо часов. Используем 80% как консервативную оценку экономии времени.",
+        note: "С Agente Immo каждый объект занимает около 3 минут вместо часов. Используем 80% как консервативную оценку экономии времени.",
       },
       demo: {
         pageTitle: "Записаться на демо",
-        pageSubtitle: "Заполни форму и мы свяжемся с тобой, чтобы организовать персональную демонстрацию GetNearMe.",
+        pageSubtitle: "Заполни форму и мы свяжемся с тобой, чтобы организовать персональную демонстрацию Agente Immo.",
         fieldName: "Имя и фамилия",
         fieldEmail: "Email",
         fieldAgencyName: "Агентство или команда (необязательно)",
@@ -2825,15 +2825,15 @@ export const translations = {
       popups: [
         { icon: "circle", text: "Агент только что активировал план", time: "3 мин назад" },
         { icon: "clapperboard", text: "Агент создал промо-видео с помощью ИИ", time: "" },
-        { icon: "users", text: "Агентов работают с GetNearMe прямо сейчас", time: "" },
+        { icon: "users", text: "Агентов работают с Agente Immo прямо сейчас", time: "" },
         { icon: "rocket", text: "Агент только что начал бесплатную пробную версию", time: "12 мин назад" },
-        { icon: "flame", text: "Всё больше агентов выбирают GetNearMe", time: "" },
+        { icon: "flame", text: "Всё больше агентов выбирают Agente Immo", time: "" },
         { icon: "sparkles", text: "Агент обставил комнату с помощью ИИ home staging", time: "5 мин назад" },
         { icon: "star", text: "Агент перешёл на годовой план", time: "18 мин назад" },
-        { icon: "smartphone", text: "Постов для соцсетей создано с GetNearMe", time: "" },
+        { icon: "smartphone", text: "Постов для соцсетей создано с Agente Immo", time: "" },
         { icon: "target", text: "Агент экспортировал PDF-отчёт с собственным логотипом", time: "7 мин назад" },
-        { icon: "briefcase", text: "Агент только что зарегистрировался в GetNearMe", time: "2 мин назад" },
-        { icon: "trophy", text: "GetNearMe используют агенты по всей Италии", time: "" },
+        { icon: "briefcase", text: "Агент только что зарегистрировался в Agente Immo", time: "2 мин назад" },
+        { icon: "trophy", text: "Agente Immo используют агенты по всей Италии", time: "" },
         { icon: "map", text: "Агент сгенерировал анализ района для объекта", time: "9 мин назад" },
       ],
     },
@@ -2858,11 +2858,11 @@ export const translations = {
       description: "Хоум стейджинг, відео, пости для соцмереж і звіти для кожного об'єкта — готові за кілька хвилин. Те, що сьогодні забирає години, тепер робиш в одному місці.",
       cta: "Спробуй безкоштовно",
       ctaSecondary: "Як це працює",
-      subMockup: "GetNearMe — це AI-асистент для агентів нерухомості: починаєш з оголошення або своїх фото і отримуєш хоум стейджинг, відео, пости для соцмереж, звіт з твоїм брендом і аналіз района. Все в одному місці, без необхідності вчитися чомусь новому."
+      subMockup: "Agente Immo — це AI-асистент для агентів нерухомості: починаєш з оголошення або своїх фото і отримуєш хоум стейджинг, відео, пости для соцмереж, звіт з твоїм брендом і аналіз района. Все в одному місці, без необхідності вчитися чомусь новому."
     },
     features: {
       title: "Все, що можна",
-      titleItalic: "зробити з GetNearMe",
+      titleItalic: "зробити з Agente Immo",
       description: "Один асистент замість Canva, відеоредактора, дизайнера і годин роботи. Аналізуєш об'єкт, покращуєш фото і готуєш звіти та контент за кілька хвилин.",
       card1: {
         title: "Повний аналіз об'єкта",
@@ -2894,12 +2894,12 @@ export const translations = {
       titleItalic: "запитання",
       items: [
         {
-          q: "Що таке GetNearMe?",
+          q: "Що таке Agente Immo?",
           a: "Це AI-асистент, який готує всі матеріали для твоїх оголошень: хоум стейджинг, відео, пости для соцмереж, звіти й аналіз района. Починаєш з посилання на портал або своїх фото і за кілька хвилин маєш все готове з твоїм брендом."
         },
         {
           q: "Потрібно щось встановлювати?",
-          a: "Ні. GetNearMe — онлайн-сервіс: відкриваєш у браузері і починаєш працювати. Нічого завантажувати, нічого вчитися."
+          a: "Ні. Agente Immo — онлайн-сервіс: відкриваєш у браузері і починаєш працювати. Нічого завантажувати, нічого вчитися."
         },
         {
           q: "Як його спробувати?",
@@ -2934,12 +2934,12 @@ export const translations = {
         {
           name: "Free",
           subtitle: "Для початку",
-          desc: "Пробуєш GetNearMe безкоштовно і без картки: створюєш акаунт і відразу користуєшся функціями з включеними тестовими кредитами."
+          desc: "Пробуєш Agente Immo безкоштовно і без картки: створюєш акаунт і відразу користуєшся функціями з включеними тестовими кредитами."
         },
         {
           name: "Місячний план",
           subtitle: "Всі функції включені",
-          desc: "Повний доступ до GetNearMe для індивідуального агента: AI хоум стейджинг, відео, пости для соцмереж, звіти з твоїм брендом і аналіз района. Інструмент для підтримки твоєї роботи, а не система оцінки нерухомості."
+          desc: "Повний доступ до Agente Immo для індивідуального агента: AI хоум стейджинг, відео, пости для соцмереж, звіти з твоїм брендом і аналіз района. Інструмент для підтримки твоєї роботи, а не система оцінки нерухомості."
         },
         {
           name: "Річний план",
@@ -2964,10 +2964,10 @@ export const translations = {
       step3Title: "Публікуй за кілька хвилин",
       step3Desc: "Фото, відео, пости і звіти готові з твоїм брендом. Все в одному місці.",
       cta: "Спробуй безкоштовно",
-      videoTitle: "GetNearMe: як це працює",
+      videoTitle: "Agente Immo: як це працює",
     },
     footer: {
-      desc: "AI-асистент для агентів нерухомості. Те, що сьогодні коштує тобі годин — фото, відео, пости і презентації — з GetNearMe робиш за кілька хвилин, починаючи з оголошення.",
+      desc: "AI-асистент для агентів нерухомості. Те, що сьогодні коштує тобі годин — фото, відео, пости і презентації — з Agente Immo робиш за кілька хвилин, починаючи з оголошення.",
       product: "Продукт",
       legal: "Юридична інформація",
       privacy: "Політика конфіденційності",
@@ -2978,11 +2978,11 @@ export const translations = {
     },
     privacy: {
       update: "Останнє оновлення: 23.01.2026",
-      intro: "Ця Політика конфіденційності описує методи обробки персональних даних користувачів, які використовують веб-сайт getnearme.it та розширення браузера GetNearMe (далі — «Сервіс»).",
+      intro: "Ця Політика конфіденційності описує методи обробки персональних даних користувачів, які використовують веб-сайт agenteimmo.me та розширення браузера Agente Immo (далі — «Сервіс»).",
       sections: [
         {
           t: "1. Володілець персональних даних",
-          c: "Володільцем персональних даних є фізична особа, ідентифікована як GetNearMe. З будь-яких запитів щодо обробки персональних даних можна звертатися за адресою: info@getnearme.it"
+          c: "Володільцем персональних даних є фізична особа, ідентифікована як Agente Immo. З будь-яких запитів щодо обробки персональних даних можна звертатися за адресою: info@agenteimmo.me"
         },
         {
           t: "2. Типи даних, що обробляються",
@@ -2994,7 +2994,7 @@ export const translations = {
         },
         {
           t: "4. Платежі",
-          c: "Платежі обробляються через Stripe. GetNearMe НЕ зберігає дані кредитних карток. Stripe обробляє всю платіжну інформацію відповідно до стандартів PCI-DSS. Ми зберігаємо лише: ідентифікатор клієнта Stripe (для прив'язки покупок до вашого облікового запису) та історію придбаних кредитів."
+          c: "Платежі обробляються через Stripe. Agente Immo НЕ зберігає дані кредитних карток. Stripe обробляє всю платіжну інформацію відповідно до стандартів PCI-DSS. Ми зберігаємо лише: ідентифікатор клієнта Stripe (для прив'язки покупок до вашого облікового запису) та історію придбаних кредитів."
         },
         {
           t: "5. Генерація зображень за допомогою ШІ",
@@ -3014,7 +3014,7 @@ export const translations = {
         },
         {
           t: "9. Зберігання даних",
-          c: "Локальні дані навігації: видаляються при закритті браузера. Кеш проаналізованих об'єктів: зберігається локально до ручного видалення. Обліковий запис користувача: зберігається до запиту на видалення. Щоб видалити свій обліковий запис та всі пов'язані дані, зверніться за адресою info@getnearme.it або скористайтеся опцією «Видалити обліковий запис» у налаштуваннях розширення."
+          c: "Локальні дані навігації: видаляються при закритті браузера. Кеш проаналізованих об'єктів: зберігається локально до ручного видалення. Обліковий запис користувача: зберігається до запиту на видалення. Щоб видалити свій обліковий запис та всі пов'язані дані, зверніться за адресою info@agenteimmo.me або скористайтеся опцією «Видалити обліковий запис» у налаштуваннях розширення."
         },
         {
           t: "10. Обмін даними",
@@ -3022,21 +3022,21 @@ export const translations = {
         },
         {
           t: "11. Права користувача",
-          c: "Користувач може здійснювати права, передбачені Регламентом ЄС 2016/679 (GDPR), включаючи доступ, виправлення, видалення та заперечення, написавши за адресою info@getnearme.it."
+          c: "Користувач може здійснювати права, передбачені Регламентом ЄС 2016/679 (GDPR), включаючи доступ, виправлення, видалення та заперечення, написавши за адресою info@agenteimmo.me."
         }
       ]
     },
     terms: {
       update: "Останнє оновлення: 23.01.2026",
-      intro: "Ці Умови регулюють використання веб-сайту getnearme.it та розширення браузера GetNearMe.",
+      intro: "Ці Умови регулюють використання веб-сайту agenteimmo.me та розширення браузера Agente Immo.",
       sections: [
         {
           t: "1. Характер Сервісу",
-          c: "GetNearMe — це інструмент підтримки прийняття рішень, який організовує та порівнює доступні дані про нерухомість та райони. GetNearMe не є агентством нерухомості та не надає професійних, юридичних, податкових або ріелторських консультацій."
+          c: "Agente Immo — це інструмент підтримки прийняття рішень, який організовує та порівнює доступні дані про нерухомість та райони. Agente Immo не є агентством нерухомості та не надає професійних, юридичних, податкових або ріелторських консультацій."
         },
         {
           t: "2. Походження даних",
-          c: "Відображена інформація надходить з оголошень про нерухомість третіх осіб та доступних державних джерел. GetNearMe не контролює зміст оголошень і не несе відповідальності за помилки, упущення або подальші зміни."
+          c: "Відображена інформація надходить з оголошень про нерухомість третіх осіб та доступних державних джерел. Agente Immo не контролює зміст оголошень і не несе відповідальності за помилки, упущення або подальші зміни."
         },
         {
           t: "3. Аналізи та оцінки",
@@ -3052,17 +3052,17 @@ export const translations = {
         },
         {
           t: "6. Доступність Сервісу",
-          c: "Деякі функції можуть варіюватися залежно від доступності джерел, сайту, що аналізується, або використовуваного браузера. GetNearMe залишає за собою право змінювати, призупиняти або припиняти роботу Сервісу, повністю або частково, у будь-який час."
+          c: "Деякі функції можуть варіюватися залежно від доступності джерел, сайту, що аналізується, або використовуваного браузера. Agente Immo залишає за собою право змінювати, призупиняти або припиняти роботу Сервісу, повністю або частково, у будь-який час."
         },
         {
           t: "7. Обмеження відповідальності",
-          c: "У межах, дозволених законом, GetNearMe не несе відповідальності за будь-які збитки, що виникли внаслідок використання або неможливості використання Сервісу."
+          c: "У межах, дозволених законом, Agente Immo не несе відповідальності за будь-які збитки, що виникли внаслідок використання або неможливості використання Сервісу."
         }
       ]
     },
     cookie: {
       update: "Останнє оновлення: 22.12.2025",
-      intro: "Ця Політика використання файлів cookie застосовується виключно до веб-сайту getnearme.it.",
+      intro: "Ця Політика використання файлів cookie застосовується виключно до веб-сайту agenteimmo.me.",
       sections: [
         {
           t: "1. Що таке файли cookie",
@@ -3087,7 +3087,7 @@ export const translations = {
       dayCompleted: "День {day} завершено!",
       weekComplete: "Фантастика! Ти завершив тиждень! Отримуєш 120 бонусних кредитів!",
       comeBackTomorrow: "Повертайся завтра на {day} день.",
-      goToHome: "Перейти в GetNearMe",
+      goToHome: "Перейти в Agente Immo",
       backToHome: "Повернутися на Головну",
       error: {
         defaultTitle: "Помилка",
@@ -3106,17 +3106,17 @@ export const translations = {
       loading: "Завантаження..."
     },
     confirm: {
-      subtitle: "Ласкаво просимо до GetNearMe",
-      description: "Твою підписку на сервіс підтверджено. Увійди в GetNearMe і починай користуватися всіма функціями.",
+      subtitle: "Ласкаво просимо до Agente Immo",
+      description: "Твою підписку на сервіс підтверджено. Увійди в Agente Immo і починай користуватися всіма функціями.",
       cta: "Почати досліджувати"
     },
     unsubscribe: {
       subtitle: "Відписку завершено",
-      description: "Тебе успішно видалено з нашого списку розсилки. Ти більше не отримуватимеш листів від GetNearMe."
+      description: "Тебе успішно видалено з нашого списку розсилки. Ти більше не отримуватимеш листів від Agente Immo."
     },
     featuresPage: {
       title: "Всі Можливості",
-      titleItalic: "GetNearMe",
+      titleItalic: "Agente Immo",
       subtitle: "Відкрий для себе всі інструменти, створені для того, щоб змінити твою роботу агента нерухомості. Від аналізу района до штучного інтелекту — кожна функція дає тобі реальну перевагу.",
       feature6: {
         title: "Автоматичний Маркетинг Нерухомості",
@@ -3129,7 +3129,7 @@ export const translations = {
         badge: "НОВЕ",
       },
       ctaTitle: "Готовий почати?",
-      ctaDesc: "Приєднуйся до агентів нерухомості, які вже змінюють свій спосіб роботи з GetNearMe.",
+      ctaDesc: "Приєднуйся до агентів нерухомості, які вже змінюють свій спосіб роботи з Agente Immo.",
       ctaButton: "Спробуй безкоштовно",
       ctaContact: "Зв'яжись з нами",
     },
@@ -3158,12 +3158,12 @@ export const translations = {
       solution: {
         emoji: "rocket",
         title: "Один асистент. Вся робота по оголошенню — готова.",
-        desc: "Починаєш з оголошення — вставляєш посилання на портал або завантажуєш свої фото — і GetNearMe повертає тобі хоум стейджинг, відео, пости для соцмереж і звіт з твоїм логотипом. За кілька хвилин, без відкриття інших програм і без необхідності вчитися чомусь новому.",
+        desc: "Починаєш з оголошення — вставляєш посилання на портал або завантажуєш свої фото — і Agente Immo повертає тобі хоум стейджинг, відео, пости для соцмереж і звіт з твоїм логотипом. За кілька хвилин, без відкриття інших програм і без необхідності вчитися чомусь новому.",
       },
       features: {
         title: "Три професійних інструменти.",
         titleHighlight: "Один асистент.",
-        subtitle: "GetNearMe робить роботу Canva, відеоредактора, дизайнера, SMM-спеціаліста і PowerPoint, без потреби вчитися чомусь новому.",
+        subtitle: "Agente Immo робить роботу Canva, відеоредактора, дизайнера, SMM-спеціаліста і PowerPoint, без потреби вчитися чомусь новому.",
         items: [
           { num: "01", title: "Хоум стейджинг AI", desc: "Меблюєш, прибираєш або перетворюєш кімнату за лічені секунди. Показуєш клієнту порівняння до/після або відразу публікуєш на порталах і в соцмережах.", icon: "sparkles", color: "#6366f1" },
           { num: "02", title: "AI відео для об'єкта", desc: "Reel, walkthrough, before/after, відео з аватаром, що говорить, та багато іншого. Готові за кілька кліків, без монтажу і без відеографа.", icon: "clapperboard", color: "#10b981" },
@@ -3270,8 +3270,8 @@ export const translations = {
         title: "Питання?",
         titleHighlight: "Відповіді.",
         items: [
-          { q: "Що таке GetNearMe?", a: "Це AI-асистент, який готує всі матеріали для твоїх оголошень: хоум стейджинг, відео, пости для соцмереж, звіти й аналіз района. Починаєш з посилання на портал або своїх фото і за кілька хвилин маєш все готове з твоїм брендом." },
-          { q: "Потрібно щось встановлювати?", a: "Ні. GetNearMe — онлайн-сервіс: відкриваєш у браузері і починаєш працювати. Нічого завантажувати, нічого вчитися." },
+          { q: "Що таке Agente Immo?", a: "Це AI-асистент, який готує всі матеріали для твоїх оголошень: хоум стейджинг, відео, пости для соцмереж, звіти й аналіз района. Починаєш з посилання на портал або своїх фото і за кілька хвилин маєш все готове з твоїм брендом." },
+          { q: "Потрібно щось встановлювати?", a: "Ні. Agente Immo — онлайн-сервіс: відкриваєш у браузері і починаєш працювати. Нічого завантажувати, нічого вчитися." },
           { q: "Як його спробувати?", a: "Безкоштовно і без картки. Створюєш акаунт і відразу пробуєш функції — бачиш результат ще до того, як вирішиш підписатися." },
           { q: "Підходить, якщо я працюю самостійно?", a: "Так, він створений саме для індивідуального агента. Сам робиш роботу невеликої команди: фото, відео, пости і звіти — без сторонніх підрядників." },
           { q: "Які інструменти замінює?", a: "Canva, відеоредактор, PowerPoint, дизайнер, SMM-спеціаліст і години ручного пошуку. Один асистент замість багатьох інструментів — менше витрат і менше часу на кожен об'єкт." },
@@ -3291,23 +3291,23 @@ export const translations = {
       },
       roiCalculator: {
         title: "Скільки заощаджуєш з",
-        titleHighlight: "GetNearMe?",
+        titleHighlight: "Agente Immo?",
         subtitle: "Розрахуй, скільки часу і грошей це тобі економить.",
         inputProperties: "Об'єктів, якими управляєш на місяць",
         inputHours: "Годин на підготовку матеріалів для одного об'єкта",
         inputRate: "Скільки коштує одна година твоєї роботи",
         outputHoursSaved: "Годин зекономлено на місяць",
         outputValueRecovered: "Вартість відновленого часу",
-        outputCost: "Вартість GetNearMe",
+        outputCost: "Вартість Agente Immo",
         outputNetSavings: "Чиста економія на місяць",
         outputROI: "повернення на кожне витрачене євро",
         perMonth: "/міс",
         cta: "Обрати цей план",
-        note: "З GetNearMe кожен об'єкт займає близько 3 хвилин замість годин. Використовуємо 80% як консервативну оцінку заощадженого часу.",
+        note: "З Agente Immo кожен об'єкт займає близько 3 хвилин замість годин. Використовуємо 80% як консервативну оцінку заощадженого часу.",
       },
       demo: {
         pageTitle: "Замов демо",
-        pageSubtitle: "Заповни форму і ми зв'яжемося з тобою, щоб організувати персональне демо GetNearMe.",
+        pageSubtitle: "Заповни форму і ми зв'яжемося з тобою, щоб організувати персональне демо Agente Immo.",
         fieldName: "Ім'я та прізвище",
         fieldEmail: "Email",
         fieldAgencyName: "Агентство або команда (необов'язково)",
@@ -3333,15 +3333,15 @@ export const translations = {
       popups: [
         { icon: "circle", text: "Агент щойно активував план", time: "3 хв тому" },
         { icon: "clapperboard", text: "Агент згенерував промо-відео за допомогою AI", time: "" },
-        { icon: "users", text: "Агентів зараз працюють в GetNearMe", time: "" },
+        { icon: "users", text: "Агентів зараз працюють в Agente Immo", time: "" },
         { icon: "rocket", text: "Агент щойно почав безкоштовну пробну версію", time: "12 хв тому" },
-        { icon: "flame", text: "Дедалі більше агентів обирають GetNearMe", time: "" },
+        { icon: "flame", text: "Дедалі більше агентів обирають Agente Immo", time: "" },
         { icon: "sparkles", text: "Агент облаштував кімнату за допомогою AI хоум стейджингу", time: "5 хв тому" },
         { icon: "star", text: "Агент перейшов на річний план", time: "18 хв тому" },
-        { icon: "smartphone", text: "Пости для соцмереж створені з GetNearMe", time: "" },
+        { icon: "smartphone", text: "Пости для соцмереж створені з Agente Immo", time: "" },
         { icon: "target", text: "Агент експортував PDF звіт зі своїм логотипом", time: "7 хв тому" },
-        { icon: "briefcase", text: "Агент щойно зареєструвався в GetNearMe", time: "2 хв тому" },
-        { icon: "trophy", text: "GetNearMe використовують агенти нерухомості по всій Італії", time: "" },
+        { icon: "briefcase", text: "Агент щойно зареєструвався в Agente Immo", time: "2 хв тому" },
+        { icon: "trophy", text: "Agente Immo використовують агенти нерухомості по всій Італії", time: "" },
         { icon: "map", text: "Агент згенерував аналіз района для об'єкта", time: "9 хв тому" },
       ],
     },

@@ -43,12 +43,12 @@ export const ogLocaleMap: Record<Locale, string> = {
 
 // Titoli SEO localizzati (≤60 caratteri ideali)
 export const seoTitles: Record<Locale, string> = {
-  it: 'GetNearMe — Assistente AI per Agenti Immobiliari | Foto, Video, Report',
-  en: 'GetNearMe — AI Assistant for Real Estate Agents | Photos, Video, Reports',
-  es: 'GetNearMe — Asistente IA para Agentes Inmobiliarios | Fotos, Vídeo, Informes',
-  fr: 'GetNearMe — Assistant IA pour Agents Immobiliers | Photos, Vidéo, Rapports',
-  ru: 'GetNearMe — ИИ-ассистент для риелторов | Фото, видео, отчёты',
-  uk: 'GetNearMe — ШІ-асистент для ріелторів | Фото, відео, звіти',
+  it: 'Agente Immo | Assistente AI per Agenti Immobiliari | Foto, Video, Report',
+  en: 'Agente Immo | AI Assistant for Real Estate Agents | Photos, Video, Reports',
+  es: 'Agente Immo | Asistente IA para Agentes Inmobiliarios | Fotos, Vídeo, Informes',
+  fr: 'Agente Immo | Assistant IA pour Agents Immobiliers | Photos, Vidéo, Rapports',
+  ru: 'Agente Immo | ИИ-ассистент для риелторов | Фото, видео, отчёты',
+  uk: 'Agente Immo | ШІ-асистент для ріелторів | Фото, відео, звіти',
 };
 
 // Descrizioni SEO localizzate (≤155 caratteri ideali)
@@ -64,7 +64,7 @@ export const seoDescriptions: Record<Locale, string> = {
 // Alt text per immagini localizzati
 export const altTexts: Record<Locale, { hero: string; cards: string[] }> = {
   it: {
-    hero: 'GetNearMe — l\'assistente AI per agenti immobiliari',
+    hero: 'Agente Immo | l\'assistente AI per agenti immobiliari',
     cards: [
       'Analisi di zona interattiva dei servizi di quartiere',
       'Prezzo medio di zona al m² per riferimento',
@@ -75,7 +75,7 @@ export const altTexts: Record<Locale, { hero: string; cards: string[] }> = {
     ],
   },
   en: {
-    hero: 'GetNearMe — the AI assistant for real estate agents',
+    hero: 'Agente Immo | the AI assistant for real estate agents',
     cards: [
       'Interactive area analysis of neighborhood services',
       'Average area price per m² for reference',
@@ -86,7 +86,7 @@ export const altTexts: Record<Locale, { hero: string; cards: string[] }> = {
     ],
   },
   es: {
-    hero: 'GetNearMe — el asistente IA para agentes inmobiliarios',
+    hero: 'Agente Immo | el asistente IA para agentes inmobiliarios',
     cards: [
       'Análisis de zona interactivo de los servicios del barrio',
       'Precio medio de la zona por m² a título orientativo',
@@ -97,7 +97,7 @@ export const altTexts: Record<Locale, { hero: string; cards: string[] }> = {
     ],
   },
   fr: {
-    hero: "GetNearMe — l'assistant IA pour les agents immobiliers",
+    hero: "Agente Immo | l'assistant IA pour les agents immobiliers",
     cards: [
       'Analyse de quartier interactive des services du secteur',
       'Prix moyen du secteur au m² à titre indicatif',
@@ -108,7 +108,7 @@ export const altTexts: Record<Locale, { hero: string; cards: string[] }> = {
     ],
   },
   ru: {
-    hero: 'GetNearMe — ИИ-ассистент для риелторов',
+    hero: 'Agente Immo | ИИ-ассистент для риелторов',
     cards: [
       'Интерактивный анализ района и его сервисов',
       'Средняя цена по району за м² для ориентира',
@@ -119,7 +119,7 @@ export const altTexts: Record<Locale, { hero: string; cards: string[] }> = {
     ],
   },
   uk: {
-    hero: 'GetNearMe — ШІ-асистент для ріелторів',
+    hero: 'Agente Immo | ШІ-асистент для ріелторів',
     cards: [
       'Інтерактивний аналіз району та його сервісів',
       'Середня ціна по району за м² для орієнтиру',

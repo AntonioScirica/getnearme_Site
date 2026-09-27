@@ -89,12 +89,12 @@ export default async function ChapterPage({ params }: Props) {
     description: chapter.seoDescription,
     author: {
       "@type": "Organization",
-      name: "GetNearMe",
+      name: "Agente Immo",
       url: "https://agenteimmo.me",
     },
     publisher: {
       "@type": "Organization",
-      name: "GetNearMe",
+      name: "Agente Immo",
       url: "https://agenteimmo.me",
     },
     mainEntityOfPage: {
@@ -467,7 +467,7 @@ export default async function ChapterPage({ params }: Props) {
               lineHeight: 1.6,
             }}
           >
-            GetNearMe ti mostra prezzo al mq, servizi vicini e
+            Agente Immo ti mostra prezzo al mq, servizi vicini e
             <br />
             confronto con il mercato. Direttamente dal portale.
           </p>
@@ -491,7 +491,7 @@ export default async function ChapterPage({ params }: Props) {
               transition: "transform 0.15s, box-shadow 0.15s",
             }}
           >
-            Prova GetNearMe gratis
+            Prova Agente Immo gratis
             <ChevronRight size={16} />
           </a>
         </div>
@@ -570,7 +570,7 @@ export default async function ChapterPage({ params }: Props) {
           color: "#a1a1aa",
         }}
       >
-        Guida aggiornata a Maggio 2026 · GetNearMe
+        Guida aggiornata a Maggio 2026 · Agente Immo
       </footer>
     </div>
   );

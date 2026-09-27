@@ -78,7 +78,7 @@ export default async function CookiePolicy({ params }: Props) {
         <div className="max-w-7xl mx-auto px-4 pt-8 pb-8">
           <div className="pt-4 border-t border-slate-800">
             <p className="text-slate-400 text-sm font-light text-center">
-              © 2025 GetNearMe. {t.footer.rights}
+              © 2025 Agente Immo. {t.footer.rights}
             </p>
           </div>
         </div>

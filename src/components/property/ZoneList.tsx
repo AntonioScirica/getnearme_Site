@@ -40,7 +40,7 @@ export default function ZoneList({ all, featured, withCta }: { all: string[]; fe
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/10"><Compass size={20} /></span>
           <span className="min-w-0 flex-1">
             <span className="block text-sm font-semibold">Vuoi l&apos;analisi completa del quartiere?</span>
-            <span className="block text-xs text-white/70">Prezzi di zona, servizi, tempi di percorrenza e punteggio della casa con l&apos;estensione gratuita GetNearMe.</span>
+            <span className="block text-xs text-white/70">Prezzi di zona, servizi, tempi di percorrenza e punteggio della casa con l&apos;estensione gratuita Agente Immo.</span>
           </span>
         </a>
       )}

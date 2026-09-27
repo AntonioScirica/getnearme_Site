@@ -14,9 +14,9 @@ export async function generateStaticParams() {
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
-    title: "Prenota una demo | GetNearMe",
+    title: "Prenota una demo | Agente Immo",
     description:
-      "Compila il modulo e ti contatteremo per organizzare una demo personalizzata di GetNearMe per la tua agenzia.",
+      "Compila il modulo e ti contatteremo per organizzare una demo personalizzata di Agente Immo per la tua agenzia.",
   };
 }
 
@@ -28,7 +28,7 @@ export default async function DemoPage({ params }: Props) {
   const demo = (t as any).landing?.demo ?? {
     pageTitle: "Prenota una demo per la tua agenzia",
     pageSubtitle:
-      "Compila il modulo e ti contatteremo per organizzare una demo personalizzata di GetNearMe.",
+      "Compila il modulo e ti contatteremo per organizzare una demo personalizzata di Agente Immo.",
     fieldName: "Nome e cognome",
     fieldEmail: "Email",
     fieldAgencyName: "Nome agenzia",
