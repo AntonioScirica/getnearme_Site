@@ -2,7 +2,7 @@ import sharp from 'sharp'
 import { runJob } from '@/lib/runpodImage'
 import Anthropic from '@anthropic-ai/sdk'
 import { logUsage } from '@/lib/ai'
-import { editPlanPrompt, leftoverPrompt, removePrompt, removeInBoxPrompt, addFurniturePrompt, type EditPlan, type Box, type Zone } from '@/lib/stagingPrompts'
+import { editPlanPrompt, leftoverPrompt, removePrompt, removeInBoxPrompt, addFurniturePrompt, layoutCheckPrompt, type EditPlan, type Box, type Zone } from '@/lib/stagingPrompts'
 
 // Svuota, arreda e modifiche guidate da un piano del modello di visione. Qwen da solo non distingue fisso da mobile e inventa le cose nominate che non ci
 // sono; sostituire i mobili in un colpo gli faceva reinventare la stanza (27/09). Quindi:
@@ -56,10 +56,19 @@ export async function guidedEdit(o: { userId: string; input: { image_base64: str
   if (o.task !== 'empty' && (plan.add.length || plan.restyle.length || Object.values(plan.surfaces ?? {}).some(Boolean))) {
     // un passaggio sulla stanza vuota con la sua mappa di profondita' come guida: la struttura resta (prova del 27/09:
     // tiene finestre, porte, pareti e inquadratura meglio del solo testo e dei riquadri)
+    const empty = cur
     prompt = addFurniturePrompt(plan)
-    const a = await runJob({ image_base64: `data:image/jpeg;base64,${cur}`, prompt, control: 'depth', seed: o.seed + 1, steps: 12 })
+    const a = await runJob({ image_base64: `data:image/jpeg;base64,${empty}`, prompt, control: 'depth', seed: o.seed + 1, steps: 12 })
     if (!a.output?.image_base64) return {}
     cur = a.output.image_base64
+    // controllo veloce: Qwen capisce male le posizioni (27/09: divano e sgabelli finiti nella stanza dietro, cucina curva).
+    // Se non torna, un secondo tentativo con il problema scritto nel prompt
+    const chk = await askJson(o.userId, [empty, cur], layoutCheckPrompt(plan), FAST)
+    if (chk.ok === false) {
+      prompt = `${prompt} Important: ${typeof chk.why === 'string' ? chk.why.slice(0, 200) : 'place every piece exactly where described'}.`
+      const b = await runJob({ image_base64: `data:image/jpeg;base64,${empty}`, prompt, control: 'depth', seed: o.seed + 7, steps: 12 })
+      if (b.output?.image_base64) cur = b.output.image_base64
+    }
   }
   return { image: cur, prompt, plan }
 }
