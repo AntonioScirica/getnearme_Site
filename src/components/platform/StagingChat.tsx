@@ -1,5 +1,6 @@
 'use client';
 
+import { VIDEO_SAMPLES } from '@/lib/videoSamples';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Anvil, WandSparkles, Film, HardHat, MoonStar, ArrowUp, Search, Building2, Check, ChevronLeft, Clapperboard, SquareSplitHorizontal, Image as ImageIcon, Palette, Sofa, Sparkles, Download, ExternalLink, ImagePlus, Lasso, Shuffle, LayoutGrid, Loader2, Monitor, RotateCcw, SquareDashed, SquareDashedMousePointer, X } from 'lucide-react';
@@ -77,21 +78,20 @@ type VideoAnim = 'popup' | 'gravity' | 'particles' | 'stopmotion' | 'cantiere' |
 type VideoPick = { label: string; icon: 'split' | 'pop' | 'drop' | 'dust' | 'steps' | 'build' | 'moon' | 'style' | 'keep' | 'photo'; src?: string };
 const PICK_ICON = { split: SquareSplitHorizontal, pop: Sparkles, drop: Anvil, dust: WandSparkles, steps: Film, build: HardHat, moon: MoonStar, style: Palette, keep: Sofa, photo: ImageIcon };
 const ANIM_ICON: Record<VideoAnim, VideoPick['icon']> = { popup: 'pop', gravity: 'drop', particles: 'dust', stopmotion: 'steps', cantiere: 'build', daynight: 'moon' };
-const R2_SPIKE = 'https://pub-a668674eaa484e8e8f2f10c264392bfc.r2.dev/spike-video/stili';
 type VideoCard = { id: string; label: string; desc: string; sample: string };
 const VIDEO_TEMPLATES: (VideoCard & { anims: (VideoCard & { id: VideoAnim })[] })[] = [
-  { id: 'prima-dopo', label: 'Prima e dopo', desc: 'Dalla stanza vuota a quella arredata', sample: `${R2_SPIKE}/F12_rianima.mp4`, anims: [
-    { id: 'popup', label: 'Popup', desc: 'I mobili spuntano uno alla volta', sample: `${R2_SPIKE}/F12_rianima.mp4` },
-    { id: 'gravity', label: 'Dall’alto', desc: 'I mobili cadono dall’alto e si posano', sample: `${R2_SPIKE}/F9_gravity.mp4` },
-    { id: 'particles', label: 'Particelle', desc: 'I mobili si compongono da una polvere dorata', sample: `${R2_SPIKE}/particles.mp4` },
-    { id: 'stopmotion', label: 'Stop-motion', desc: 'I mobili compaiono a scatti, uno per volta', sample: `${R2_SPIKE}/stopmotion.mp4` },
+  { id: 'prima-dopo', label: 'Prima e dopo', desc: 'Dalla stanza vuota a quella arredata', sample: VIDEO_SAMPLES.popup, anims: [
+    { id: 'popup', label: 'Popup', desc: 'I mobili spuntano uno alla volta', sample: VIDEO_SAMPLES.popup },
+    { id: 'gravity', label: 'Dall’alto', desc: 'I mobili cadono dall’alto e si posano', sample: VIDEO_SAMPLES.gravity },
+    { id: 'particles', label: 'Particelle', desc: 'I mobili si compongono da una polvere dorata', sample: VIDEO_SAMPLES.particles },
+    { id: 'stopmotion', label: 'Stop-motion', desc: 'I mobili compaiono a scatti, uno per volta', sample: VIDEO_SAMPLES.stopmotion },
   ] },
   // un'animazione sola: dal template si passa subito alla scelta della stanza
-  { id: 'cantiere', label: 'Cantiere', desc: 'Dal cantiere alla casa finita', sample: `${R2_SPIKE}/cantiere.mp4`, anims: [
-    { id: 'cantiere', label: 'Cantiere', desc: 'Dal cantiere alla casa finita', sample: `${R2_SPIKE}/cantiere.mp4` },
+  { id: 'cantiere', label: 'Cantiere', desc: 'Dal cantiere alla casa finita', sample: VIDEO_SAMPLES.cantiere, anims: [
+    { id: 'cantiere', label: 'Cantiere', desc: 'Dal cantiere alla casa finita', sample: VIDEO_SAMPLES.cantiere },
   ] },
-  { id: 'giorno-notte', label: 'Giorno e notte', desc: 'Scende la sera e si accendono le luci', sample: `${R2_SPIKE}/daynight.mp4`, anims: [
-    { id: 'daynight', label: 'Giorno e notte', desc: 'Scende la sera e si accendono le luci', sample: `${R2_SPIKE}/daynight.mp4` },
+  { id: 'giorno-notte', label: 'Giorno e notte', desc: 'Scende la sera e si accendono le luci', sample: VIDEO_SAMPLES.daynight, anims: [
+    { id: 'daynight', label: 'Giorno e notte', desc: 'Scende la sera e si accendono le luci', sample: VIDEO_SAMPLES.daynight },
   ] },
 ];
 const VIDEO_STYLES = [{ id: 'modern', label: 'Moderno' }, { id: 'nordic', label: 'Nordico' }, { id: 'industrial', label: 'Luxury' }, { id: 'boho', label: 'Boho' }];

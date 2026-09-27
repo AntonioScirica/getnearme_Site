@@ -9,6 +9,7 @@ import { fetchProjects, type ProjectData } from '@/lib/projects';
 import NewPropertyWizard from './NewPropertyWizard';
 import PropertyDetail from './PropertyDetail';
 import PortfolioView, { TemplatePreview } from './PortfolioView';
+import Tour, { TOUR_KEY } from './Tour';
 import type { TemplateId } from '@/lib/siteTemplates';
 import ImportView from './ImportView';
 import { BrowserBody, Results, SCAN_STEPS, useImprove, Verdict, type Stage } from './ImproveView';
@@ -56,6 +57,8 @@ export default function PlatformApp({ userData }: { userData: UserData }) {
   // mai rimesso a false, altrimenti a fine transizione torna fade-up e il contenuto riparte da trasparente (scatto)
   const [morphAt, setMorphAt] = useState<string | null>(null);
   const [demoGate, setDemoGate] = useState(hasDemo);
+  // tour guidato: dopo l'onboarding (flag in localStorage) o da #/tour
+  const [tour, setTour] = useState(() => { try { return localStorage.getItem(TOUR_KEY) === '1'; } catch { return false; } });
   const morph = morphAt === route;
 
   const reload = () => fetchProjects().then(setProjects);
@@ -73,11 +76,13 @@ export default function PlatformApp({ userData }: { userData: UserData }) {
     // arrivato scegliendo un piano sulla landing: finito l'onboarding si va dritti al pagamento
     if (/^#\/piano\?buy=/.test(location.hash)) { setProfile(p); return; }
     // hashchange lanciato a mano: e' sincrono, cosi' la home e' gia' nel DOM quando il browser cattura lo stato nuovo
+    localStorage.setItem(TOUR_KEY, '1'); setTimeout(() => setTour(true), 1400); // tour dopo la trasformazione nella home
     const swap = () => flushSync(() => { history.replaceState(null, '', '#/'); window.dispatchEvent(new HashChangeEvent('hashchange')); setMorphAt('/'); setProfile(p); });
     if (!document.startViewTransition) return swap();
     document.startViewTransition(swap);
   }} />;
 
+  if (route === '/tour' && !tour) queueMicrotask(() => { history.replaceState(null, '', '#/'); window.dispatchEvent(new HashChangeEvent('hashchange')); setTour(true); });
   // anteprima di un modello del sito (aperta in un'altra scheda dalla galleria dei modelli)
   if (route.startsWith('/anteprima/')) return <TemplatePreview id={route.slice('/anteprima/'.length) as TemplateId} projects={projects} solo={new URLSearchParams(query).get('solo') === '1'} pagina={new URLSearchParams(query).get('pagina')} />;
   const detailId = route.startsWith('/immobile/') ? route.slice('/immobile/'.length) : null;
@@ -87,6 +92,7 @@ export default function PlatformApp({ userData }: { userData: UserData }) {
     <div className="relative flex h-full flex-col font-body text-ink" style={DOTS}>
       <NoCreditsModal />
       <DemoDownload />
+      {tour && !chat && <Tour onDone={() => setTour(false)} />}
       <header style={morph ? { viewTransitionName: 'ob-nav' } : undefined} className={`${route === '/immobili' ? 'absolute inset-x-0' : 'sticky'} top-0 z-30`}>
         <ProgressiveBlur />
         <div className="mx-auto flex h-20 max-w-6xl items-center px-6">
@@ -102,19 +108,19 @@ export default function PlatformApp({ userData }: { userData: UserData }) {
           <nav className="mx-auto hidden items-center gap-1 rounded-full bg-canvas p-1 md:flex">
             {NAV.map(({ path, label }) => {
               const active = route === path || (path === '/immobili' && !!detailId);
-              return <a key={path} href={`#${path}`} className={`rounded-full px-4 py-1.5 text-sm font-medium ease-smooth transition-colors ${active ? 'bg-white text-ink shadow-sm' : 'text-muted hover:text-ink'}`}>{label}</a>;
+              return <a key={path} href={`#${path}`} data-tour={path} className={`rounded-full px-4 py-1.5 text-sm font-medium ease-smooth transition-colors ${active ? 'bg-white text-ink shadow-sm' : 'text-muted hover:text-ink'}`}>{label}</a>;
             })}
           </nav>
           <div className="ml-auto flex items-center gap-2.5 md:ml-0">
-            <CreditsPill />
-            <a href="#/nuovo" className="flex h-10 items-center rounded-full bg-brand px-5 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand/90 active:scale-[0.98]">Metti in vetrina</a>
+            <span data-tour="crediti"><CreditsPill /></span>
+            <a href="#/nuovo" data-tour="nuovo" className="flex h-10 items-center rounded-full bg-brand px-5 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand/90 active:scale-[0.98]">Metti in vetrina</a>
           </div>
           </>}
         </div>
       </header>
 
       {/* Profilo: solo icona e testo; in home al centro in basso, nelle altre pagine in basso a sinistra, in chat no */}
-      {!chat && <a href="#/profilo" style={morph ? { viewTransitionName: 'ob-bottom' } : undefined} className={`fixed bottom-5 z-30 flex h-10 items-center gap-2 rounded-full bg-white px-4 text-sm font-medium shadow-sm ring-1 ring-line ease-smooth transition-shadow hover:shadow-md ${route === '/' ? 'left-1/2 -translate-x-1/2' : 'left-5'} ${route === '/profilo' ? 'ring-ink' : ''}`}>
+      {!chat && <a href="#/profilo" data-tour="profilo" style={morph ? { viewTransitionName: 'ob-bottom' } : undefined} className={`fixed bottom-5 z-30 flex h-10 items-center gap-2 rounded-full bg-white px-4 text-sm font-medium shadow-sm ring-1 ring-line ease-smooth transition-shadow hover:shadow-md ${route === '/' ? 'left-1/2 -translate-x-1/2' : 'left-5'} ${route === '/profilo' ? 'ring-ink' : ''}`}>
         <UserRound size={16} className="text-muted" /> Il mio profilo
       </a>}
 
