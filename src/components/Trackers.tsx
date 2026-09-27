@@ -21,7 +21,8 @@ export function readConsent(): Consent | null {
     const raw = localStorage.getItem(KEY);
     if (raw === cache.raw) return cache.val; // stesso oggetto: useSyncExternalStore non va in loop
     const v = JSON.parse(raw ?? 'null') as (Consent & { at: number }) | null;
-    cache = { raw, val: v && Date.now() - v.at < SIX_MONTHS ? { stats: !!v.stats, ads: !!v.ads } : null };
+    // scelta vecchia (prima delle categorie, senza 'stats'): si richiede
+    cache = { raw, val: v && 'stats' in v && Date.now() - v.at < SIX_MONTHS ? { stats: !!v.stats, ads: !!v.ads } : null };
     return cache.val;
   } catch { return null; }
 }
