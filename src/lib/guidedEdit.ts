@@ -2,7 +2,7 @@ import sharp from 'sharp'
 import { runJob } from '@/lib/runpodImage'
 import Anthropic from '@anthropic-ai/sdk'
 import { logUsage } from '@/lib/ai'
-import { editPlanPrompt, leftoverPrompt, removePrompt, addFurniturePrompt, type EditPlan } from '@/lib/stagingPrompts'
+import { editPlanPrompt, leftoverPrompt, removePrompt, removeInBoxPrompt, addFurniturePrompt, type EditPlan } from '@/lib/stagingPrompts'
 
 // Svuota, arreda e modifiche guidate da un piano del modello di visione. Qwen da solo non distingue fisso da mobile e inventa le cose nominate che non ci
 // sono; sostituire i mobili in un colpo gli faceva reinventare la stanza (27/09). Quindi:
@@ -14,7 +14,7 @@ export async function guidedEdit(o: { userId: string; input: { image_base64: str
   const orig = 'image_base64' in o.input
     ? o.input.image_base64.split(',').pop() ?? ''
     : Buffer.from(await (await fetch(o.input.image_url, { signal: AbortSignal.timeout(20_000) })).arrayBuffer()).toString('base64')
-  const plan = await ask(o.userId, [orig], editPlanPrompt(o.room, o.task, o.style))
+  const plan = parsePlan(await askJson(o.userId, [orig], editPlanPrompt(o.room, o.task, o.style)))
   // il modello a volte mette tra le cose da togliere la cucina, il forno o le pareti (27/09: cucina sostituita da un'isola):
   // i fissi non si tolgono mai, salvo "gli oggetti sopra" (quelli si' che vanno via); cambiarli e' compito di restyle
   // si guarda solo l'oggetto (prima di "on/in/against/near..."), non la posizione: "il divano sul lato sinistro del pavimento" va tolto
@@ -28,14 +28,16 @@ export async function guidedEdit(o: { userId: string; input: { image_base64: str
     const r = await runJob({ image_base64: `data:image/jpeg;base64,${orig}`, prompt, seed: o.seed, steps: 12 })
     if (!r.output?.image_base64) return {}
     cur = r.output.image_base64
-    // controllo e fino a 2 passaggi sulla lista corta di cio' che e' rimasto
+    // controllo (Opus) di cosa e' rimasto, con il riquadro di ogni oggetto; poi un passaggio per oggetto solo dentro
+    // il suo riquadro (mark nel worker: fuori resta la foto). Al massimo 2 giri.
     for (let k = 0; k < 2; k++) {
-      const left = (await ask(o.userId, [orig, cur], leftoverPrompt(plan.remove), 'claude-sonnet-5')).left ?? []
+      const left = parseLeft(await askJson(o.userId, [orig, cur], leftoverPrompt(plan.remove))).slice(0, 4)
       if (!left.length) break
-      prompt = removePrompt({ remove: left, keep: plan.keep })
-      const again = await runJob({ image_base64: `data:image/jpeg;base64,${cur}`, prompt, seed: o.seed + 2 + k, steps: 12 })
-      if (!again.output?.image_base64) break
-      cur = again.output.image_base64
+      for (const [n, it] of left.entries()) {
+        prompt = removeInBoxPrompt(it.what)
+        const r = await runJob({ image_base64: `data:image/jpeg;base64,${cur}`, prompt, mark: it.box, seed: o.seed + 10 * (k + 1) + n, steps: 12 })
+        if (r.output?.image_base64) cur = r.output.image_base64
+      }
     }
   }
   if (o.task !== 'empty' && (plan.add.length || plan.restyle.length)) {
@@ -55,7 +57,7 @@ const ON_TOP = /\b(items?|objects?|things|clutter|on (the|top)|above)\b/i
 // Claude guarda la foto (o originale + risultato) e risponde in JSON. Opus per il piano, Sonnet per il controllo.
 // Il nostro modello (qwen-analisi) e' stato provato il 27/09: liste incoerenti (su 4 prove una sola completa), scartato.
 // Errore = liste vuote (la richiesta non si blocca: chi chiama ripiega sul passaggio unico).
-async function ask(userId: string, imagesB64: string[], text: string, model = 'claude-opus-5-5'): Promise<EditPlan & { left?: string[] }> {
+async function askJson(userId: string, imagesB64: string[], text: string, model = 'claude-opus-5-5'): Promise<Record<string, unknown>> {
   const t0 = Date.now()
   try {
     const imgs = await Promise.all(imagesB64.map(async b => (await sharp(Buffer.from(b, 'base64')).resize({ width: 1024, height: 1024, fit: 'inside' }).jpeg({ quality: 85 }).toBuffer()).toString('base64')))
@@ -65,11 +67,21 @@ async function ask(userId: string, imagesB64: string[], text: string, model = 'c
     })
     await logUsage({ userId, kind: 'staging_plan' }, false, Date.now() - t0, { input: msg.usage.input_tokens, output: msg.usage.output_tokens }, true, model)
     const txt = msg.content.find(c => c.type === 'text')?.text ?? ''
-    const r = JSON.parse(txt.slice(txt.indexOf('{'), txt.lastIndexOf('}') + 1))
-    const list = (x: unknown) => (Array.isArray(x) ? x.filter((v): v is string => typeof v === 'string').slice(0, 12) : [])
-    return { remove: list(r.remove), keep: list(r.keep), restyle: list(r.restyle), add: list(r.add), left: list(r.left) }
+    return JSON.parse(txt.slice(txt.indexOf('{'), txt.lastIndexOf('}') + 1))
   } catch (e) {
     console.error('staging plan', e)
-    return { remove: [], keep: [], restyle: [], add: [], left: [] }
+    return {}
   }
+}
+const list = (x: unknown) => (Array.isArray(x) ? x.filter((v): v is string => typeof v === 'string').slice(0, 12) : [])
+const parsePlan = (r: Record<string, unknown>): EditPlan => ({ remove: list(r.remove), keep: list(r.keep), restyle: list(r.restyle), add: list(r.add) })
+// oggetti rimasti con riquadro valido (0..1, allargato del 4% per lato e tenuto dentro la foto)
+function parseLeft(r: Record<string, unknown>): { what: string; box: { x: number; y: number; w: number; h: number } }[] {
+  if (!Array.isArray(r.left)) return []
+  return r.left.flatMap(it => {
+    const b = it?.box, what = typeof it?.what === 'string' ? it.what : ''
+    if (!what || !b || ![b.x, b.y, b.w, b.h].every((v: unknown) => typeof v === 'number' && v >= 0 && v <= 1) || b.w < 0.02 || b.h < 0.02) return []
+    const x = Math.max(0, b.x - 0.04), y = Math.max(0, b.y - 0.04)
+    return [{ what, box: { x, y, w: Math.min(1 - x, b.w + 0.08), h: Math.min(1 - y, b.h + 0.08) } }]
+  })
 }
