@@ -191,7 +191,8 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   useEffect(() => {
     lastActive.current = Date.now();
     warm('photo');
-    const t = setInterval(() => { if (Date.now() - lastActive.current < 5 * 60_000) warm('photo'); }, 50_000);
+    // la chat resta montata anche nelle altre pagine: la GPU si tiene accesa solo se si e' davvero nella chat
+    const t = setInterval(() => { if (location.hash.startsWith('#/staging') && Date.now() - lastActive.current < 5 * 60_000) warm('photo'); }, 50_000);
     return () => clearInterval(t);
   }, []);
 
