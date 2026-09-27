@@ -46,6 +46,7 @@ export async function getBrand(slug: string): Promise<PortfolioBrand | null> {
     .from('user_brand')
     .select('user_id, portfolio_slug, company_name, display_name, company_email, company_website, primary_color, logo_colored_h, logo_black_h')
     .eq('portfolio_slug', slug)
+    .eq('site_published', true) // sito spento dall'agente: 404
     .maybeSingle()
   return data
 }
@@ -99,7 +100,7 @@ export async function allSitePages(): Promise<{ url: string; lastModified?: stri
   const { data: pub } = await admin.from('projects').select('id, user_id, created_at').eq('is_public', true)
   const users = [...new Set((pub ?? []).map(p => p.user_id as string))]
   if (!users.length) return []
-  const { data: brands } = await admin.from('user_brand').select('user_id, portfolio_slug, company_name, display_name, company_email').in('user_id', users).not('portfolio_slug', 'is', null)
+  const { data: brands } = await admin.from('user_brand').select('user_id, portfolio_slug, company_name, display_name, company_email').in('user_id', users).not('portfolio_slug', 'is', null).eq('site_published', true)
   const out: { url: string; lastModified?: string }[] = []
   for (const b of brands ?? []) {
     const slug = b.portfolio_slug as string

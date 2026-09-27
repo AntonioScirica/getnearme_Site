@@ -456,6 +456,7 @@ html.metrics-light [class*="border-gray-600"] { border-color: #d8d4cb !important
 /* stesso testo, trasparente, riempito da una banda di luce: si vede solo nelle lettere */
 .swap-light { pointer-events: none; color: transparent; -webkit-text-fill-color: transparent; background-image: linear-gradient(90deg, transparent 0%, #60a5fa 35%, #2563eb 50%, #60a5fa 65%, transparent 100%); background-size: 28% 100%; background-repeat: no-repeat; -webkit-background-clip: text; background-clip: text; animation: gnm-swap-light 1.6s cubic-bezier(.45,0,.25,1) both; }
 .swap-light * { color: transparent !important; -webkit-text-fill-color: transparent; }
+.fade { animation: gnm-fade calc(var(--gnm-dur) * 2) var(--gnm-ease) both; }
 @keyframes gnm-rise { from { opacity: 0; transform: translateY(24px) scale(.97); } to { opacity: 1; transform: none; } }
 .rise { animation: gnm-rise var(--gnm-dur) var(--gnm-ease) backwards; } /* backwards: a fine animazione torna la transform di .tilt */
 /* Caricamento stile Foto AI (home staging): alone aurora sui bordi della foto, poi slider prima/dopo */
@@ -503,3 +504,17 @@ html.metrics-light [class*="border-gray-600"] { border-color: #d8d4cb !important
 @keyframes gnm-morph { from { opacity: 0; transform: scale(.9); filter: blur(4px); } to { opacity: 1; transform: none; filter: none; } }
 .morph-in { animation: gnm-morph .42s cubic-bezier(.34, 1.3, .64, 1) backwards; }
 @media (prefers-reduced-motion: reduce) { .morph-in { animation: none; } }
+
+/* Onboarding -> home: logo, titolo e card si spostano e ridimensionano (View Transitions), stesso ritmo calmo */
+::view-transition-group(*) { animation-duration: 900ms; animation-timing-function: cubic-bezier(.65, 0, .35, 1); }
+::view-transition-old(*), ::view-transition-new(*) { animation-duration: 600ms; animation-timing-function: cubic-bezier(.65, 0, .35, 1); height: 100%; object-fit: cover; }
+@media (prefers-reduced-motion: reduce) { ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; } }
+/* navbar dall'alto, "Il mio profilo" dal basso; i testi della home entrano con le loro animazioni (blur-in) */
+@keyframes gnm-vt-top { from { transform: translateY(-100%); opacity: 0; } }
+@keyframes gnm-vt-bottom { from { transform: translateY(160%); opacity: 0; } }
+::view-transition-new(ob-nav) { animation: gnm-vt-top 900ms cubic-bezier(.65, 0, .35, 1) 200ms both; }
+::view-transition-new(ob-bottom) { animation: gnm-vt-bottom 900ms cubic-bezier(.65, 0, .35, 1) 300ms both; }
+/* il logo sale piu' lento */
+::view-transition-group(ob-logo) { animation-duration: 1400ms; z-index: 2; }
+@keyframes gnm-pop-in { 0% { opacity: 0; transform: scale(0); } 60% { opacity: 1; transform: scale(1.12); } 100% { opacity: 1; transform: scale(1); } }
+.pop { animation: gnm-pop-in var(--gnm-dur) var(--gnm-ease) both; }

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
 import { Home, Building2, Globe, Gauge, LogOut, Plus, Loader2, X, Wand2, Images, ExternalLink, UserRound, ArrowLeft } from 'lucide-react';
 import type { UserData } from '@/app/[locale]/dashboard/page';
 import { supabase } from '@/lib/supabase';
@@ -19,6 +20,7 @@ import { isPlatformAdmin } from '@/lib/platformAdmins';
 import ProgressiveBlur from '@/components/ProgressiveBlur';
 import { go, formatPrice, authFetch, CARD_SHADOW, warm } from './api';
 import ProfileForm, { type Profile } from './ProfileForm';
+import Onboarding from './Onboarding';
 import { tiltMove, tiltReset } from '@/components/ui/tilt';
 
 // Routing a hash (#/immobili, #/nuovo, #/immobile/<id>): back/forward del browser
@@ -48,6 +50,10 @@ export default function PlatformApp({ userData }: { userData: UserData }) {
   const [projects, setProjects] = useState<ProjectData[] | null>(null);
 
   const [profile, setProfile] = useState<Profile | null | undefined>(undefined);
+  // fine onboarding: le card si trasformano nella home (View Transitions). Resta la pagina dove e' successo:
+  // mai rimesso a false, altrimenti a fine transizione torna fade-up e il contenuto riparte da trasparente (scatto)
+  const [morphAt, setMorphAt] = useState<string | null>(null);
+  const morph = morphAt === route;
 
   const reload = () => fetchProjects().then(setProjects);
   useEffect(() => {
@@ -57,14 +63,20 @@ export default function PlatformApp({ userData }: { userData: UserData }) {
 
   // Onboarding: finche' l'agente non ha scelto nome + indirizzo portfolio, niente piattaforma.
   if (profile === undefined) return <div className="flex h-full items-center justify-center bg-canvas"><Loader2 className="animate-spin text-muted" /></div>;
-  if (profile && !profile.slug) return <Onboarding onDone={setProfile} />;
+  // #/benvenuto la rimostra a chi vuole rivederla.
+  if (profile && (!profile.slug || route === '/benvenuto')) return <Onboarding onDone={p => {
+    // hashchange lanciato a mano: e' sincrono, cosi' la home e' gia' nel DOM quando il browser cattura lo stato nuovo
+    const swap = () => flushSync(() => { history.replaceState(null, '', '#/'); window.dispatchEvent(new HashChangeEvent('hashchange')); setMorphAt('/'); setProfile(p); });
+    if (!document.startViewTransition) return swap();
+    document.startViewTransition(swap);
+  }} />;
 
   const detailId = route.startsWith('/immobile/') ? route.slice('/immobile/'.length) : null;
   const chat = route === '/staging';
 
   return (
     <div className="relative flex h-full flex-col font-body text-ink" style={DOTS}>
-      <header className={`${route === '/immobili' ? 'absolute inset-x-0' : 'sticky'} top-0 z-30`}>
+      <header style={morph ? { viewTransitionName: 'ob-nav' } : undefined} className={`${route === '/immobili' ? 'absolute inset-x-0' : 'sticky'} top-0 z-30`}>
         <ProgressiveBlur />
         <div className="mx-auto flex h-20 max-w-6xl items-center px-6">
           {/* in chat: niente logo, menu e Metti in vetrina, solo Indietro (la chat ha tutto lo spazio) */}
@@ -73,7 +85,7 @@ export default function PlatformApp({ userData }: { userData: UserData }) {
               className="flex h-10 items-center gap-1.5 rounded-full px-3 text-sm font-medium text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink"><ArrowLeft size={18} /> Indietro</button>
           ) : <>
           <a href="#/" className="flex items-center gap-2">
-            <img src="/immo/logo-mark.png" alt="" className="h-8 w-8" />
+            <img src="/immo/logo-mark.png" alt="" className="h-8 w-8" style={{ viewTransitionName: 'ob-logo' }} />
             <span className="font-display text-lg font-extrabold tracking-tight">Agente <span className="text-brand">Immo</span></span>
           </a>
           <nav className="mx-auto hidden items-center gap-1 rounded-full bg-canvas p-1 md:flex">
@@ -90,13 +102,13 @@ export default function PlatformApp({ userData }: { userData: UserData }) {
       </header>
 
       {/* Profilo: solo icona e testo; in home al centro in basso, nelle altre pagine in basso a sinistra, in chat no */}
-      {!chat && <a href="#/profilo" className={`fixed bottom-5 z-30 flex h-10 items-center gap-2 rounded-full bg-white px-4 text-sm font-medium shadow-sm ring-1 ring-line ease-smooth transition-shadow hover:shadow-md ${route === '/' ? 'left-1/2 -translate-x-1/2' : 'left-5'} ${route === '/profilo' ? 'ring-ink' : ''}`}>
+      {!chat && <a href="#/profilo" style={morph ? { viewTransitionName: 'ob-bottom' } : undefined} className={`fixed bottom-5 z-30 flex h-10 items-center gap-2 rounded-full bg-white px-4 text-sm font-medium shadow-sm ring-1 ring-line ease-smooth transition-shadow hover:shadow-md ${route === '/' ? 'left-1/2 -translate-x-1/2' : 'left-5'} ${route === '/profilo' ? 'ring-ink' : ''}`}>
         <UserRound size={16} className="text-muted" /> Il mio profilo
       </a>}
 
       <main className={`flex-1 ${route === '/staging' ? 'overflow-hidden' : 'overflow-y-auto'}`}>
         {/* Home staging: la chat gestisce lo scorrimento da sola (campo fisso in fondo) */}
-        <div key={route} className={`fade-up ${route === '/immobili' ? '' : 'mx-auto max-w-6xl px-6'} ${route === '/immobili' ? '' : route === '/staging' ? 'h-full' : route === '/' || route === '/migliora' ? '' : 'pb-16 pt-8'}`}>
+        <div key={route} className={`${morph ? '' : 'fade-up'} ${route === '/immobili' ? '' : 'mx-auto max-w-6xl px-6'} ${route === '/immobili' ? '' : route === '/staging' ? 'h-full' : route === '/' || route === '/migliora' ? '' : 'pb-16 pt-8'}`}>
           {route === '/profilo' ? (
             <ProfileView email={userData.email} profile={profile ?? null} onSaved={setProfile} admin={isPlatformAdmin(userData.email)} />
           ) : route === '/costi' && isPlatformAdmin(userData.email) ? (
@@ -118,7 +130,7 @@ export default function PlatformApp({ userData }: { userData: UserData }) {
           ) : route === '/portfolio' ? (
             <PortfolioView projects={projects} onChange={reload} />
           ) : (
-            <HomeView name={profile?.name ?? undefined} onSaved={reload} />
+            <HomeView name={profile?.name ?? undefined} onSaved={reload} morph={morph} />
           )}
         </div>
       </main>
@@ -146,7 +158,7 @@ function Tile({ kicker, title, onClick, href, active, index, onHover, intro, wra
   );
   // Ingresso sul contenitore, inclinazione sulla card: due transform che non si sovrascrivono.
   return (
-    <div ref={wrapRef} className={`w-full shrink-0 transition-all ease-smooth sm:w-80 ${intro ? 'rise' : ''} ${wrapClass}`} style={{ animationDelay: `${0.25 + index * 0.1}s`, ...wrapStyle }}>
+    <div ref={wrapRef} className={`w-full shrink-0 transition-all ease-smooth sm:w-80 ${intro ? 'rise' : ''} ${wrapClass}`} style={{ animationDelay: `${0.25 + index * 0.1}s`, viewTransitionName: `ob-card-${index}`, ...wrapStyle }}>
       {href ? <a href={href} {...props}>{inner}</a> : <button type="button" onClick={onClick} {...props}>{inner}</button>}
     </div>
   );
@@ -200,7 +212,7 @@ function ImproveTile({ phase, stage, onOpen, onClose, onSubmit, onNew, hover, se
   const height = { closed: 'h-[22rem] p-6', input: 'h-[12.5rem] p-6 delay-[120ms]', browser: 'h-[36rem] p-4', done: 'h-[20rem] p-4' }[phase];
 
   return (
-    <div className={`relative mx-2.5 w-full max-w-full shrink-0 transition-all ease-smooth ${width} ${intro ? 'rise' : ''}`} style={{ animationDelay: '0.25s' }}>
+    <div className={`relative mx-2.5 w-full max-w-full shrink-0 transition-all ease-smooth ${width} ${intro ? 'rise' : ''}`} style={{ animationDelay: '0.25s', viewTransitionName: 'ob-card-0' }}>
       {/* Fascio di scansione blu AgenteImmo: fuori dalla card (niente overflow), sporge dai bordi */}
       {stage === 'scanning' && (
         // la maschera taglia tutto cio' che esce dal suo box: il box sborda di 3rem sopra e sotto il percorso della linea, cosi' l'alone non si tronca
@@ -324,13 +336,14 @@ const TITLES: Record<string, [string, string]> = {
   manual: ['Incolla il testo dell\'annuncio', 'Titolo, prezzo, caratteristiche e descrizione.'],
 };
 
-export function HomeView({ name, initialUrl = '', onSaved }: { name?: string; initialUrl?: string; onSaved?: () => void }) {
+export function HomeView({ name, initialUrl = '', onSaved, morph }: { name?: string; initialUrl?: string; onSaved?: () => void; morph?: boolean }) {
   const imp = useImprove();
   const [open, setOpen] = useState(false);
   const [url, setUrl] = useState(initialUrl);
   const [hover, setHover] = useState(false);
   const [stageHover, setStageHover] = useState(false);
-  const [intro, setIntro] = useState(true);
+  const [d0] = useState(morph ? 0.5 : 0); // dall'onboarding: il titolo entra quando le card sono quasi al loro posto
+  const [intro, setIntro] = useState(!morph); // arrivando dall'onboarding le card ci sono gia', niente ingresso
   const phase: Phase = !open ? 'closed' : imp.stage === 'input' ? 'input' : imp.stage === 'done' ? 'done' : 'browser';
 
   // Titolo: quando cambia fase esce, cambia testo a meta' transizione e rientra.
@@ -367,8 +380,8 @@ export function HomeView({ name, initialUrl = '', onSaved }: { name?: string; in
   return (
     <div className="flex min-h-[calc(100vh-5rem)] flex-col items-center justify-center py-10">
       <h1 className={`text-center font-display text-4xl font-bold leading-[1.2] tracking-tight ease-smooth transition-all md:text-5xl md:leading-[1.2] ${titleOut ? '-translate-y-3 opacity-0 blur-[6px]' : ''}`}>
-        {head.split(' ').map((w, i) => <span key={`${shown}-${i}`} className="blur-in inline-block" style={{ animationDelay: `${i * 0.05}s` }}>{w}&nbsp;</span>)}
-        <span key={subtitle} className="blur-in block text-muted/70" style={{ animationDelay: shown === 'scanning' ? '0s' : '0.3s' }}>{subtitle}</span>
+        {head.split(' ').map((w, i) => <span key={`${shown}-${i}`} className="blur-in inline-block" style={{ animationDelay: `${d0 + i * 0.05}s` }}>{w}&nbsp;</span>)}
+        <span key={subtitle} className="blur-in block text-muted/70" style={{ animationDelay: shown === 'scanning' ? '0s' : `${d0 + 0.3}s` }}>{subtitle}</span>
       </h1>
 
       <div className="mt-14 flex w-full flex-col items-center justify-center gap-5 sm:flex-row sm:gap-0">
@@ -441,19 +454,6 @@ function ProfileView({ email, profile, onSaved, admin }: { email: string; profil
       <div className="mt-6 flex items-center justify-between gap-3">
         <button onClick={() => supabase.auth.signOut()} className="flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium text-muted ring-1 ring-line hover:bg-white hover:text-ink"><LogOut size={15} /> Esci</button>
         <DeleteAccount />
-      </div>
-    </div>
-  );
-}
-
-function Onboarding({ onDone }: { onDone: (p: Profile) => void }) {
-  return (
-    <div className="flex h-full items-center justify-center overflow-y-auto bg-white px-6 font-body text-ink">
-      <div className="w-full max-w-md card p-8">
-        <div className="flex items-center gap-2"><img src="/immo/logo-mark.png" alt="" className="h-9 w-9" /><span className="font-display text-xl font-extrabold tracking-tight">Agente <span className="text-brand">Immo</span></span></div>
-        <h1 className="mt-6 font-display text-2xl font-bold tracking-tight">Come ti chiami?</h1>
-        <p className="mt-1 text-sm text-muted">Il tuo nome apparirà sul tuo sito personale, quello con i tuoi immobili da condividere con i clienti.</p>
-        <div className="mt-6"><ProfileForm initial={{ name: null, slug: null }} submitLabel="Continua" onSaved={onDone} /></div>
       </div>
     </div>
   );

@@ -10,17 +10,36 @@ export type Profile = { name: string | null; slug: string | null };
 export const slugify = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
   .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40).replace(/-+$/, '');
 
-type Check = { slug: string; state: 'ok' | 'taken' | 'invalid'; suggestion?: string | null };
+type Check = { slug: string; state: 'ok' | 'taken' | 'invalid' | 'bad'; suggestion?: string | null };
+export type SlugCheck = { state: 'idle' | 'checking' | Check['state']; suggestion?: string | null };
+
+// Disponibilita' dello slug mentre si scrive (350 ms di attesa, risposte vecchie ignorate). Usato anche dall'onboarding.
+export function useSlugCheck(slug: string, initialSlug: string | null): [SlugCheck, (c: Check) => void] {
+  const [result, setResult] = useState<Check | null>(null);
+  const reqId = useRef(0);
+  useEffect(() => {
+    if (!slug || slug === initialSlug) return;
+    const id = ++reqId.current;
+    const t = setTimeout(async () => {
+      const d = await authFetch(`/api/platform/portfolio?check=${encodeURIComponent(slug)}`).then(r => r.json()).catch(() => null);
+      if (id !== reqId.current || !d) return;
+      setResult({ slug, state: d.bad ? 'bad' : d.invalid ? 'invalid' : d.available ? 'ok' : 'taken', suggestion: d.suggestion });
+    }, 350);
+    return () => clearTimeout(t);
+  }, [slug, initialSlug]);
+  // Stato derivato: risultato valido solo se riferito allo slug attuale.
+  const check: SlugCheck = !slug ? { state: 'idle' } : slug === initialSlug ? { state: 'ok' } : result?.slug === slug ? result : { state: 'checking' };
+  return [check, setResult];
+}
 
 // Nome agente -> indirizzo portfolio (slug), con verifica disponibilita' mentre scrive.
 export default function ProfileForm({ initial, submitLabel, onSaved }: { initial: Profile; submitLabel: string; onSaved: (p: Profile) => void }) {
   const [name, setName] = useState(initial.name ?? '');
   const [slug, setSlug] = useState(initial.slug ?? '');
   const [slugTouched, setSlugTouched] = useState(!!initial.slug);
-  const [result, setResult] = useState<Check | null>(null);
+  const [check, setResult] = useSlugCheck(slug, initial.slug);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const reqId = useRef(0);
 
   // Precompila col nome del provider (Google) al primo accesso.
   useEffect(() => {
@@ -31,21 +50,6 @@ export default function ProfileForm({ initial, submitLabel, onSaved }: { initial
       if (n) { setName(n); setSlug(slugify(n)); }
     });
   }, [initial.name]);
-
-  useEffect(() => {
-    if (!slug || slug === initial.slug) return;
-    const id = ++reqId.current;
-    const t = setTimeout(async () => {
-      const d = await authFetch(`/api/platform/portfolio?check=${encodeURIComponent(slug)}`).then(r => r.json()).catch(() => null);
-      if (id !== reqId.current || !d) return;
-      setResult({ slug, state: d.invalid ? 'invalid' : d.available ? 'ok' : 'taken', suggestion: d.suggestion });
-    }, 350);
-    return () => clearTimeout(t);
-  }, [slug, initial.slug]);
-
-  // Stato del controllo derivato: risultato valido solo se riferito allo slug attuale.
-  const check: { state: 'idle' | 'checking' | Check['state']; suggestion?: string | null } =
-    !slug ? { state: 'idle' } : slug === initial.slug ? { state: 'ok' } : result?.slug === slug ? result : { state: 'checking' };
 
   const onName = (v: string) => { setName(v); if (!slugTouched) setSlug(slugify(v)); };
 
@@ -78,7 +82,7 @@ export default function ProfileForm({ initial, submitLabel, onSaved }: { initial
           <span className="pr-3">
             {check.state === 'checking' && <Loader2 size={16} className="animate-spin text-muted" />}
             {check.state === 'ok' && <Check size={16} className="text-green-600" />}
-            {(check.state === 'taken' || check.state === 'invalid') && <X size={16} className="text-red-600" />}
+            {(check.state === 'taken' || check.state === 'invalid' || check.state === 'bad') && <X size={16} className="text-red-600" />}
           </span>
         </div>
         {check.state === 'taken' && (
@@ -87,6 +91,7 @@ export default function ProfileForm({ initial, submitLabel, onSaved }: { initial
           </p>
         )}
         {check.state === 'invalid' && <p className="mt-2 text-sm text-red-600">Da 3 a 40 caratteri: lettere minuscole, numeri e trattini.</p>}
+        {check.state === 'bad' && <p className="mt-2 text-sm text-red-600">Questo indirizzo contiene una parola che non possiamo usare.</p>}
       </div>
       {error && <p className="text-sm text-red-600">{error}</p>}
       <button disabled={!canSave || saving} className="w-full btn-ink rounded-full py-2.5 text-sm font-semibold">

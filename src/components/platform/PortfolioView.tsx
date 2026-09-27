@@ -17,7 +17,7 @@ import { MorphTarget, morphFrom } from '@/components/ui/Morph';
 // Vetrina: l'agente sceglie uno dei 5 template e modifica colori, testi, foto, contatti e sezioni,
 // con l'anteprima dal vivo accanto (stesse pagine del sito pubblico, con i suoi immobili).
 
-type Site = { slug: string | null; name: string; email: string; logo: string | null; config: SiteConfig };
+type Site = { slug: string | null; name: string; email: string; logo: string | null; published: boolean; config: SiteConfig };
 const PAGES = [['home', 'Home'], ['immobili', 'Immobili'], ['immobile', 'Scheda'], ['agente', 'Profilo'], ['servizi', 'Servizi'], ['contatti', 'Contatti'], ['zona', 'Zona']] as const;
 const pageOf = (id: PageId, firstId?: string, zone?: string): Page => id === 'immobile' ? { page: 'immobile', id: firstId ?? '' } : id === 'zona' ? { page: 'zona', slug: zone ?? '' } : { page: id } as Page;
 const COLORS = ['#1d5b3c', '#4d7a2c', '#2a2b7c', '#1f6feb', '#111111', '#ff6a2b', '#be185d', '#8a6a4f'];
@@ -67,6 +67,13 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
     </div>
   );
   const url = site.slug ? portfolioUrl(site.slug) : null;
+  // il sito va online solo quando l'agente accende lo switch (spento: la pagina pubblica risponde 404)
+  const publish = async () => {
+    const next = !site.published;
+    setSite(s => ({ ...s!, published: next }));
+    const d = await authFetch('/api/platform/site', { method: 'PATCH', body: JSON.stringify({ published: next }) }).then(r => r.json()).catch(() => ({}));
+    if (d.published !== next) setSite(s => ({ ...s!, published: !next }));
+  };
   const dirty = JSON.stringify(cfg) !== JSON.stringify(site.config);
   const set = (p: Partial<SiteConfig>) => setCfg(c => ({ ...c!, ...p }));
   const save = async () => {
@@ -96,7 +103,9 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
           <p className="pt-1 text-sm text-muted">Il tuo sito con le tue case, da condividere con i clienti.</p>
         </div>
         {url && (
-          <div className="flex h-10 min-w-0 items-center gap-1 rounded-full bg-white pl-4 pr-1 text-sm ring-1 ring-line">
+          <div className="flex min-w-0 items-center gap-4">
+          <PublicSwitch on={site.published} onClick={publish} labels={['Online', 'Non pubblicato']} />
+          <div className={`flex h-10 min-w-0 items-center gap-1 rounded-full bg-white pl-4 pr-1 text-sm ring-1 ring-line ease-smooth transition-opacity ${site.published ? '' : 'opacity-50'}`}>
             <Globe size={15} className="shrink-0 text-muted" />
             <a href={url} target="_blank" rel="noreferrer" className="min-w-0 truncate px-1.5 font-medium hover:text-brand">{url.replace(/^https?:\/\//, '')}</a>
             <Tooltip label={copied ? 'Copiato' : 'Copia il link'}>
@@ -106,6 +115,7 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
             <Tooltip label="Apri il sito">
               <a href={url} target="_blank" rel="noreferrer" aria-label="Apri il sito" className="flex h-8 w-8 items-center justify-center rounded-full text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink"><ExternalLink size={15} /></a>
             </Tooltip>
+          </div>
           </div>
         )}
       </div>
@@ -587,10 +597,10 @@ function PropertiesTab({ projects, onChange }: { projects: ProjectData[] | null;
   );
 }
 
-export function PublicSwitch({ on, onClick }: { on: boolean; onClick: () => void }) {
+export function PublicSwitch({ on, onClick, labels = ['Pubblico', 'Privato'] }: { on: boolean; onClick: () => void; labels?: [string, string] }) {
   return (
     <button role="switch" aria-checked={on} onClick={onClick} className="flex shrink-0 items-center gap-2 text-sm">
-      <span className={on ? 'text-brand' : 'text-muted'}>{on ? 'Pubblico' : 'Privato'}</span>
+      <span className={on ? 'text-brand' : 'text-muted'}>{on ? labels[0] : labels[1]}</span>
       <span className={`relative h-6 w-10 rounded-full transition-colors ${on ? 'bg-brand' : 'bg-line'}`}>
         <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${on ? 'left-[18px]' : 'left-0.5'}`} />
       </span>

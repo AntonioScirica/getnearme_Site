@@ -11,6 +11,11 @@ const SLUG_RE = /^[a-z0-9](?:[a-z0-9-]{1,38}[a-z0-9])$/
 // Sul dominio vetrina questi prefissi non arrivano alla pagina portfolio (esclusi dal matcher in proxy.ts).
 const RESERVED_RE = /^(api|metrics|nfc)/
 const validSlug = (s: string) => SLUG_RE.test(s) && !RESERVED_RE.test(s)
+// Parole da non avere in un indirizzo pubblico (it + en), come sottostringa senza trattini ("cazz-o" non passa).
+// Niente radici corte che stanno dentro cognomi o paesi veri (Cazzaniga, Negri, Ficarra, Troia, Madonna di Campiglio).
+const BAD = ['cazzo', 'merda', 'merdos', 'stronz', 'puttan', 'vaffa', 'fanculo', 'minchia', 'pompin', 'bastard', 'coglion', 'frocio', 'froci', 'ricchion', 'porcodio', 'porcamadonna', 'diocan', 'zoccola', 'sborr', 'inculat',
+  'fuck', 'shit', 'bitch', 'cunt', 'pussy', 'nigg', 'whore', 'slut', 'asshole', 'porn', 'hitler']
+const badSlug = (s: string) => { const flat = s.replace(/-/g, ''); return BAD.some(w => flat.includes(w)) }
 
 const getUserId = async (req: NextRequest) => {
   const token = req.headers.get('authorization')?.replace('Bearer ', '')
@@ -38,7 +43,7 @@ export async function GET(req: NextRequest) {
 
   const check = req.nextUrl.searchParams.get('check')
   if (check !== null) {
-    if (!validSlug(check)) return NextResponse.json({ available: false, suggestion: null, invalid: true })
+    if (!validSlug(check) || badSlug(check)) return NextResponse.json({ available: false, suggestion: null, invalid: true, bad: badSlug(check) })
     const suggestion = await firstFree(check, userId)
     return NextResponse.json({ available: suggestion === check, suggestion })
   }
@@ -54,7 +59,7 @@ export async function PUT(req: NextRequest) {
   try { body = await req.json() } catch { return NextResponse.json({ error: 'bad_request' }, { status: 400 }) }
   const { slug } = body
   const name = typeof body.name === 'string' ? body.name.trim() : ''
-  if (typeof slug !== 'string' || !validSlug(slug)) return NextResponse.json({ error: 'invalid_slug' }, { status: 400 })
+  if (typeof slug !== 'string' || !validSlug(slug) || badSlug(slug)) return NextResponse.json({ error: 'invalid_slug' }, { status: 400 })
   if (name.length < 2 || name.length > 80) return NextResponse.json({ error: 'invalid_name' }, { status: 400 })
 
   const { error } = await admin.from('user_brand').upsert(
