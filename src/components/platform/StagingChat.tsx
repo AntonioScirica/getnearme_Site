@@ -589,11 +589,11 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                         Foto verticale (card stretta): solo icone con il nome al passaggio, senza la didascalia */}
                     {!isNarrow(m.before) && <span className="min-w-0 flex-1 truncate">{m.text}</span>}
                     {/* a destra: Modifica (zona su questa foto) e Ricomincia da qui; "Si continua da qui" solo dopo esserci tornati */}
-                    <div className="flex shrink-0 items-center gap-1">
+                    <div className={`flex items-center gap-1 ${isNarrow(m.before) ? 'w-full' : 'shrink-0'}`}>
                       <Act narrow={isNarrow(m.before)} icon={<SquareDashedMousePointer size={14} className="translate-y-px" />} label="Modifica" onClick={() => { if (base !== m.out) restartFrom(i, m.out!); setSelecting(true); }} />
-                      <Act narrow={isNarrow(m.before)} icon={<Building2 size={14} className="translate-y-px" />} label="Salva nell’immobile" active={saveOpen === m.id} onClick={() => setSaveOpen(v => (v === m.id ? null : m.id))} />
+                      <Act narrow={isNarrow(m.before)} icon={<Building2 size={14} className="translate-y-px" />} label="Salva nell’immobile" short="Salva" active={saveOpen === m.id} onClick={() => setSaveOpen(v => (v === m.id ? null : m.id))} />
                       <Act narrow={isNarrow(m.before)} icon={<Clapperboard size={14} className="translate-y-px" />} label="Video" tip="I mobili compaiono uno alla volta" disabled={busy} onClick={() => askVideo(m.out!)} />
-                      {m.req && <Act narrow={isNarrow(m.before)} icon={<Shuffle size={14} className="translate-y-px" />} label="Altra versione" tip="Stesso stile, un'altra versione" disabled={busy} onClick={() => variant(m)} />}
+                      {m.req && <Act narrow={isNarrow(m.before)} icon={<Shuffle size={14} className="translate-y-px" />} label="Altra versione" short="Altra" tip="Stesso stile, un'altra versione" disabled={busy} onClick={() => variant(m)} />}
                       {base !== m.out && (
                         <>
                           <span className="mx-1 h-4 w-px bg-line" aria-hidden />
@@ -909,11 +909,11 @@ function StepSwap({ step, children }: { step: string; children: React.ReactNode 
   return <div key={cur} className={leaving ? 'opacity-0 transition-opacity duration-200 ease-smooth' : 'blur-in'} style={leaving ? undefined : { animationDelay: '.05s' }}>{leaving ? old : children}</div>;
 }
 
-// Pulsante della card del risultato: con testo, oppure (card stretta, foto verticale) solo icona tonda con il nome in tooltip
-function Act({ icon, label, tip, narrow, active, disabled, onClick }: { icon: React.ReactNode; label: string; tip?: string; narrow: boolean; active?: boolean; disabled?: boolean; onClick: () => void }) {
+// Pulsante della card del risultato: icona e nome in riga, oppure (card stretta, foto verticale) icona sopra e nome corto sotto
+function Act({ icon, label, short, tip, narrow, active, disabled, onClick }: { icon: React.ReactNode; label: string; short?: string; tip?: string; narrow: boolean; active?: boolean; disabled?: boolean; onClick: () => void }) {
   const tone = active ? 'bg-canvas text-ink' : 'text-ink hover:bg-canvas';
   const btn = narrow
-    ? <button onClick={onClick} disabled={disabled} aria-label={label} aria-pressed={active} className={`flex h-9 w-9 items-center justify-center rounded-full disabled:opacity-40 ${tone}`}>{icon}</button>
+    ? <button onClick={onClick} disabled={disabled} aria-label={label} aria-pressed={active} className={`flex min-w-0 flex-1 flex-col items-center gap-1 rounded-2xl px-1 py-2 text-[11px] font-medium leading-none disabled:opacity-40 ${tone}`}>{icon}<span className="truncate">{short ?? label}</span></button>
     : <button onClick={onClick} disabled={disabled} aria-pressed={active} className={`flex h-8 items-center gap-1.5 rounded-full px-3 font-medium leading-none disabled:opacity-40 ${tone}`}>{icon} {label}</button>;
-  return narrow || tip ? <Tooltip label={narrow ? label : tip!}>{btn}</Tooltip> : btn;
+  return tip && !narrow ? <Tooltip label={tip}>{btn}</Tooltip> : btn;
 }
