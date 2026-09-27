@@ -455,7 +455,7 @@ function Landing({ faq }: { faq: [string, string][] }) {
             <ul className="mt-6 space-y-3 text-[15px]">
               {[L('La prima foto ferma chi scorre', "The first photo stops the scroll"), L('Il cliente capisce subito come vivrebbe quella casa', "Buyers instantly see how they'd live there"), L('Nessun home staging vero da pagare o da organizzare', "No physical staging to pay for or organize")].map(x => <li key={x} className="flex items-start gap-3">{CHECK}{x}</li>)}
             </ul>
-            <Cta className="mt-8">{L('Prova gratis', "Try it free")}</Cta>
+            <span className="hidden md:block"><Cta className="mt-8">{L('Prova gratis', "Try it free")}</Cta></span>
           </Reveal>
           <Reveal delay={150} anim="in-right">
             <div className="parallax">
@@ -465,6 +465,8 @@ function Landing({ faq }: { faq: [string, string][] }) {
               <p className="mt-3 text-center text-xs text-muted">{L('Trascina per confrontare. Foto reale, arredata dall\'AI.', "Drag to compare. Real photo, staged by AI.")}</p>
             </div>
           </Reveal>
+          {/* su telefono i bottoni vanno sotto le immagini */}
+          <div className="flex justify-center md:hidden"><Cta>{L('Prova gratis', "Try it free")}</Cta></div>
         </div>
       </Band>
 
@@ -478,19 +480,20 @@ function Landing({ faq }: { faq: [string, string][] }) {
             <ul className="mt-6 space-y-3 text-[15px]">
               {[L('Ti fai conoscere nella tua zona, non solo sul portale', "Get known in your area, not just on the portal"), L('Ogni incarico diventa un contenuto da pubblicare', "Every listing becomes something to post"), L('Niente riprese, niente montaggio, niente videomaker', "No filming, no editing, no videographer")].map(x => <li key={x} className="flex items-start gap-3">{CHECK}{x}</li>)}
             </ul>
-            <Cta className="mt-8">{L('Prova gratis', "Try it free")}</Cta>
+            <span className="hidden md:block"><Cta className="mt-8">{L('Prova gratis', "Try it free")}</Cta></span>
           </Reveal>
           <Reveal delay={150} className="md:order-1" anim="in-left">
-            <div className="parallax relative mx-auto w-[88%]">
+            <div className="parallax relative w-[90%]">
               <Tilt className="overflow-hidden rounded-[24px] bg-white p-2 shadow-[0_30px_80px_-30px_rgba(0,0,0,.3)] ring-1 ring-black/5">
                 <video ref={vid} src={videoSeen ? VIDEO : undefined} poster="https://pub-a668674eaa484e8e8f2f10c264392bfc.r2.dev/spike-video/soggiorno.jpg" muted loop playsInline preload="none" className="aspect-video w-full rounded-2xl bg-canvas object-cover" />
               </Tilt>
               {/* verticale, come un reel: stesso video tagliato al centro */}
-              <div className="absolute -bottom-10 -right-4 w-[27%] rotate-[4deg] overflow-hidden rounded-[24px] bg-white p-1.5 shadow-[0_24px_60px_-24px_rgba(0,0,0,.4)] ring-1 ring-black/5 md:-right-10">
+              <div className="absolute -bottom-10 -right-[8%] w-[32%] rotate-[4deg] overflow-hidden rounded-[24px] bg-white p-1.5 shadow-[0_24px_60px_-24px_rgba(0,0,0,.4)] ring-1 ring-black/5">
                 <video ref={vid2} src={videoSeen ? VIDEO2 : undefined} poster="https://pub-a668674eaa484e8e8f2f10c264392bfc.r2.dev/spike-video/cucina.jpg" muted loop playsInline preload="none" className="aspect-[9/16] w-full rounded-[18px] bg-canvas object-cover" />
               </div>
             </div>
           </Reveal>
+          <div className="mt-6 flex justify-center md:hidden"><Cta>{L('Prova gratis', "Try it free")}</Cta></div>
         </div>
       </Band>
 
@@ -504,9 +507,11 @@ function Landing({ faq }: { faq: [string, string][] }) {
             <ul className="mt-6 space-y-3 text-[15px]">
               {[L('Incluso nell\'abbonamento, niente web agency da pagare', "Included in your plan, no web agency to pay"), L('Ogni immobile che carichi è subito online', "Every property you upload is live right away"), L('Le richieste arrivano a te, non a un portale', "Inquiries come to you, not to a portal")].map(x => <li key={x} className="flex items-start gap-3">{CHECK}{x}</li>)}
             </ul>
-            <Cta href={APP} className="mt-8">{L('Crea il tuo sito', "Create your website")}</Cta>
+            {/* su telefono il bottone va sotto i modelli */}
+            <span className="hidden md:block"><Cta href={APP} className="mt-8">{L('Crea il tuo sito', "Create your website")}</Cta></span>
           </Reveal>
           <Reveal delay={150} anim="in-right"><div className="parallax"><Tilt className="rounded-[24px]"><TemplateShowcase active={siteOn} en={en} /></Tilt></div></Reveal>
+          <div className="flex justify-center md:hidden"><Cta href={APP}>{L('Crea il tuo sito', "Create your website")}</Cta></div>
         </div>
       </Band>
 
