@@ -15,7 +15,7 @@ type Props = {
   params: Promise<{ locale: string }>;
 };
 
-const BASE_URL = "https://www.getnearme.it";
+const BASE_URL = "https://agenteimmo.me";
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;

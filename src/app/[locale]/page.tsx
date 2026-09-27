@@ -54,12 +54,12 @@ export default async function Home({ params }: Props) {
             "applicationCategory": "BrowserApplication",
             "operatingSystem": "Chrome",
             "description": translations[locale as Locale].hero.description,
-            "url": `https://www.getnearme.it/${locale}`,
+            "url": `https://agenteimmo.me/${locale}`,
             "inLanguage": locale,
             "author": {
               "@type": "Organization",
               "name": "GetNearMe",
-              "url": "https://www.getnearme.it",
+              "url": "https://agenteimmo.me",
             },
             "offers": {
               "@type": "Offer",
@@ -79,7 +79,7 @@ export default async function Home({ params }: Props) {
             "@context": "https://schema.org",
             "@type": "WebSite",
             "name": "GetNearMe",
-            "url": "https://www.getnearme.it",
+            "url": "https://agenteimmo.me",
             "inLanguage": locale,
           }),
         }}
@@ -93,8 +93,8 @@ export default async function Home({ params }: Props) {
             "@context": "https://schema.org",
             "@type": "Organization",
             "name": "GetNearMe",
-            "url": "https://www.getnearme.it",
-            "logo": "https://www.getnearme.it/favicon.ico",
+            "url": "https://agenteimmo.me",
+            "logo": "https://agenteimmo.me/favicon.ico",
             "contactPoint": {
               "@type": "ContactPoint",
               "email": "info@getnearme.it",

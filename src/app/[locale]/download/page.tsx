@@ -167,7 +167,7 @@ function DownloadContent() {
         </div>
       )}
 
-      <a href="https://www.getnearme.it" className="absolute bottom-6 text-sm text-white/50 hover:text-white/70 transition">GetNearMe</a>
+      <a href="https://agenteimmo.me" className="absolute bottom-6 text-sm text-white/50 hover:text-white/70 transition">GetNearMe</a>
     </div>
   )
 }

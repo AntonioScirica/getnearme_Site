@@ -374,7 +374,7 @@ export function buildReportHtml(args: {
 
   const brandColor = brand.primaryColor || '#3b83f6';
   const brandName = brand.companyName || 'GetNearMe';
-  const brandWebsite = brand.companyWebsite || 'https://getnearme.it';
+  const brandWebsite = brand.companyWebsite || 'https://agenteimmo.me';
   const brandEmail = brand.companyEmail || 'info@getnearme.com';
   const reportLogo = brand.logo;
   const hasCustomLogo = !!reportLogo;
@@ -2475,7 +2475,7 @@ export function buildReportHtml(args: {
         ${thanksWebsiteLink}
         ${thanksEmailLink}
       </div>
-      ${isWhiteLabel ? `<div class="powered-by-footer">Powered by <a href="https://getnearme.it">GetNearMe</a></div>` : ''}
+      ${isWhiteLabel ? `<div class="powered-by-footer">Powered by <a href="https://agenteimmo.me">GetNearMe</a></div>` : ''}
     </div>
   </div>
   ` : ''}

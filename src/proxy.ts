@@ -1,30 +1,36 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { isReserved } from "@/lib/reservedPaths";
 
 const locales = ['it', 'en', 'es', 'fr', 'ru', 'uk'] as const;
 type Locale = (typeof locales)[number];
 const defaultLocale: Locale = 'it';
 
-// Dominio vetrina degli agenti (es. agenteimmo.me/mario-rossi): serve il portfolio
-// /it/a/<slug> senza prefissi. Configurabile perche' il dominio cambiera'.
+// agenteimmo.me: piattaforma e siti degli agenti sullo stesso dominio.
+// /<lingua>/... = pagine della piattaforma; /<slug>/... = sito dell'agente (riscritto su /it/a/<slug>/...).
+// Il vecchio dominio (getnearme.it) rimanda qui con 301, stesso percorso (le /api non passano dal proxy: estensione e webhook restano vivi).
 const PORTFOLIO_HOST = process.env.NEXT_PUBLIC_PORTFOLIO_HOST;
+const OLD_HOST = 'getnearme.it';
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   const host = request.headers.get('host')?.split(':')[0].replace(/^www\./, '');
-  if (PORTFOLIO_HOST && host === PORTFOLIO_HOST) {
-    // ponytail: la root del dominio vetrina rimanda al sito, landing dedicata quando servira'.
-    if (pathname === '/') return NextResponse.redirect('https://getnearme.it/it', 307);
-    const url = request.nextUrl.clone();
-    url.pathname = `/${defaultLocale}/a${pathname}`;
-    return NextResponse.rewrite(url);
+  if (PORTFOLIO_HOST && host === OLD_HOST) {
+    return NextResponse.redirect(`https://${PORTFOLIO_HOST}${pathname}${request.nextUrl.search}`, 301);
   }
 
   // Controlla se il pathname inizia con un locale supportato
   const pathnameHasLocale = locales.some(
     (locale) => pathname.startsWith(`/${locale}/`) || pathname === `/${locale}`
   );
+
+  const first = pathname.split('/')[1] ?? '';
+  if (PORTFOLIO_HOST && host === PORTFOLIO_HOST && !pathnameHasLocale && first && !isReserved(first)) {
+    const url = request.nextUrl.clone();
+    url.pathname = `/${defaultLocale}/a${pathname}`;
+    return NextResponse.rewrite(url);
+  }
 
   if (pathnameHasLocale) {
     return NextResponse.next();

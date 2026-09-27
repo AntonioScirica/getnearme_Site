@@ -5,7 +5,7 @@ import AnalyticsEvents from "@/components/AnalyticsEvents";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://www.getnearme.it"),
+  metadataBase: new URL("https://agenteimmo.me"),
   other: {
     "facebook-domain-verification": "3el76s85o30orscaoxt1ceryo0tbki",
   },

@@ -38,7 +38,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: titles[locale as Locale],
     description: descriptions[locale as Locale],
     alternates: {
-      canonical: `https://getnearme.it/${locale}/confirm`,
+      canonical: `https://agenteimmo.me/${locale}/confirm`,
     },
   };
 }

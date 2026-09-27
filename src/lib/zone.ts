@@ -3,7 +3,7 @@
 // dall'estensione. Risultato: poche righe pronte per l'AI e per la pagina della casa.
 
 const RADIUS = 1200
-const UA = 'GetNearMe/1.0 (https://getnearme.it)'
+const UA = 'GetNearMe/1.0 (https://agenteimmo.me)'
 const OVERPASS = ['https://overpass-api.de/api/interpreter', 'https://overpass.private.coffee/api/interpreter', 'https://maps.mail.ru/osm/tools/overpass/api/interpreter']
 
 export type Poi = { categoria: string; nome: string; distanza: number; lat?: number; lon?: number }

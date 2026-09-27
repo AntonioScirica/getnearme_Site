@@ -30,7 +30,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return {};
   }
   
-  const baseUrl = "https://www.getnearme.it";
+  const baseUrl = "https://agenteimmo.me";
   
   // Genera alternate languages con x-default
   const languages: Record<string, string> = {};

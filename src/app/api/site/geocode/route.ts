@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
   hits.set(ip, [...recent, Date.now()])
 
   const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=it&q=${encodeURIComponent(q)}`, {
-    headers: { 'User-Agent': 'GetNearMe/1.0 (https://getnearme.it)', 'Accept-Language': 'it' }, signal: AbortSignal.timeout(8000),
+    headers: { 'User-Agent': 'GetNearMe/1.0 (https://agenteimmo.me)', 'Accept-Language': 'it' }, signal: AbortSignal.timeout(8000),
   }).then(x => (x.ok ? x.json() : null)).catch(() => null) as { lat: string; lon: string }[] | null
   const v = r?.[0] ? { lat: Number(r[0].lat), lon: Number(r[0].lon) } : null
   cache.set(q, { at: Date.now(), v })

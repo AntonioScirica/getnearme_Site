@@ -103,7 +103,7 @@ async function notifyTagged(task: TaskRow): Promise<number> {
               <p style="color:#666;font-size:14px;margin:0 0 4px">Assegnata a: <b>${esc(task.assignee || "—")}</b></p>
               ${due ? `<p style="color:#666;font-size:14px;margin:0 0 4px">Scadenza: <b>${due}</b></p>` : ""}
               <p style="color:#666;font-size:14px;margin:0 0 16px">Stato: <b>${task.status === "todo" ? "Da fare" : task.status === "doing" ? "In corso" : "Fatto"}</b></p>
-              <a href="https://www.getnearme.it/metrics" style="color:#3B83F6">Apri la board →</a>
+              <a href="https://agenteimmo.me/metrics" style="color:#3B83F6">Apri la board →</a>
             </div>`,
         }),
       });

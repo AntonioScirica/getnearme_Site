@@ -21,7 +21,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     description:
       "Scopri come funziona GetNearMe e come può potenziare il lavoro della tua agenzia immobiliare.",
     alternates: {
-      canonical: `https://getnearme.it/${locale}/tutorial`,
+      canonical: `https://agenteimmo.me/${locale}/tutorial`,
     },
   };
 }

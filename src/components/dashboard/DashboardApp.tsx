@@ -425,7 +425,7 @@ const ALL_PLANS: Plan[] = [...PLANS_BY_TIER.individual, ...PLANS_BY_TIER.agency.
 // finale dei video, e i loghi mostrati nella sezione Brand. URL assoluti (origin
 // corrente) cosi' che il Lambda di render possa fetcharli per watermark/outro.
 function gnmBrandLogos(): import('@/lib/brand').BrandLogos {
-  const o = typeof window !== 'undefined' ? window.location.origin : 'https://www.getnearme.it';
+  const o = typeof window !== 'undefined' ? window.location.origin : 'https://agenteimmo.me';
   return {
     logo_white_h: `${o}/assets/svg/logo_scritta_white.svg`,
     logo_white_v: `${o}/dashboard/logo-icon-white.svg`,
@@ -2083,8 +2083,8 @@ function AccountScreen({ credits, toast, go, userData, tierHint }: { credits: nu
         body: JSON.stringify({
           packageId: planId === 'agy_annual' ? 'agency-seat-annual' : 'agency-seat-monthly',
           seats,
-          successUrl: 'https://www.getnearme.it/dashboard?checkout=success',
-          cancelUrl: 'https://www.getnearme.it/dashboard',
+          successUrl: 'https://agenteimmo.me/dashboard?checkout=success',
+          cancelUrl: 'https://agenteimmo.me/dashboard',
         }),
       });
       const data = await resp.json().catch(() => null);
@@ -2467,11 +2467,11 @@ function SettingsScreen({ toast }: { toast: (msg: string, icon?: string) => void
             <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-main)' }}>Versione App</div>
             <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>1.0.0</div>
           </div>
-          <a href="https://www.getnearme.it/it/privacy" target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 0', borderBottom: '1px solid var(--border-light)', textDecoration: 'none' }}>
+          <a href="https://agenteimmo.me/it/privacy" target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 0', borderBottom: '1px solid var(--border-light)', textDecoration: 'none' }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-main)' }}>Privacy Policy</div>
             <Icon name="external-link" size={13} color="var(--text-muted)" />
           </a>
-          <a href="https://www.getnearme.it/it/terms" target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 0', textDecoration: 'none' }}>
+          <a href="https://agenteimmo.me/it/terms" target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 0', textDecoration: 'none' }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-main)' }}>Termini e Condizioni</div>
             <Icon name="external-link" size={13} color="var(--text-muted)" />
           </a>

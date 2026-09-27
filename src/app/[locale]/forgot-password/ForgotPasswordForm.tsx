@@ -116,7 +116,7 @@ export default function ForgotPasswordForm({ locale }: { locale: Locale }) {
     setLoading(true);
     try {
       const { error: resetError } = await supabase.auth.resetPasswordForEmail(trimmed, {
-        redirectTo: `https://www.getnearme.it/${locale}/reset-password`,
+        redirectTo: `https://agenteimmo.me/${locale}/reset-password`,
       });
       if (resetError) throw resetError;
       setSuccess(true);

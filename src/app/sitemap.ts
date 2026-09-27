@@ -3,7 +3,7 @@ import { locales } from "@/lib/i18n";
 import { CHAPTERS } from "./[locale]/guida-acquisto-casa/data";
 import { getPublishedPosts } from "@/lib/blog";
 
-const baseUrl = "https://www.getnearme.it";
+const baseUrl = "https://agenteimmo.me";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const entries: MetadataRoute.Sitemap = [];

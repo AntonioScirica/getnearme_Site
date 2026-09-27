@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { isReserved } from '@/lib/reservedPaths'
 
 const admin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -8,9 +9,8 @@ const admin = createClient(
 
 // Stesso vincolo del CHECK su user_brand.portfolio_slug.
 const SLUG_RE = /^[a-z0-9](?:[a-z0-9-]{1,38}[a-z0-9])$/
-// Sul dominio vetrina questi prefissi non arrivano alla pagina portfolio (esclusi dal matcher in proxy.ts).
-const RESERVED_RE = /^(api|metrics|nfc)/
-const validSlug = (s: string) => SLUG_RE.test(s) && !RESERVED_RE.test(s)
+// Su agenteimmo.me sito e piattaforma condividono il dominio: le pagine della piattaforma non possono essere slug.
+const validSlug = (s: string) => SLUG_RE.test(s) && !isReserved(s)
 // Parole da non avere in un indirizzo pubblico (it + en), come sottostringa senza trattini ("cazz-o" non passa).
 // Niente radici corte che stanno dentro cognomi o paesi veri (Cazzaniga, Negri, Ficarra, Troia, Madonna di Campiglio).
 const BAD = ['cazzo', 'merda', 'merdos', 'stronz', 'puttan', 'vaffa', 'fanculo', 'minchia', 'pompin', 'bastard', 'coglion', 'frocio', 'froci', 'ricchion', 'porcodio', 'porcamadonna', 'diocan', 'zoccola', 'sborr', 'inculat',

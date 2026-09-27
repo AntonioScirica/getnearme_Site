@@ -7,7 +7,7 @@ import { useSyncExternalStore } from 'react';
 // (Pixel, GA4, Clarity, Cal). Deciso nel browser, cosi' le pagine restano statiche.
 const PORTFOLIO_HOST = process.env.NEXT_PUBLIC_PORTFOLIO_HOST;
 export const isAgentSite = () =>
-  (!!PORTFOLIO_HOST && location.hostname.replace(/^www\./, '') === PORTFOLIO_HOST) || /^\/[a-z]{2}\/a(\/|$)/.test(location.pathname);
+  (!!PORTFOLIO_HOST && location.hostname.replace(/^www\./, '') === PORTFOLIO_HOST && !/^\/([a-z]{2}(\/|$)|$)/.test(location.pathname)) || /^\/[a-z]{2}\/a(\/|$)/.test(location.pathname);
 const noop = () => () => {};
 
 export default function Trackers({ children }: { children: React.ReactNode }) {

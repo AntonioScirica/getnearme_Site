@@ -1,17 +1,18 @@
 # Robots.txt per GetNearMe
-# https://www.getnearme.it
+# https://agenteimmo.me
 
 User-agent: *
 Allow: /
 
 # Sitemap
-Sitemap: https://www.getnearme.it/sitemap.xml
+Sitemap: https://agenteimmo.me/sitemap.xml
 
 # Blocca file di sistema
 Disallow: /_next/
 Disallow: /api/
 Allow: /api/site/fonts
 Allow: /api/site/tiles/
+Allow: /api/site/sitemap
 
 # Blocca pagine di draft (se presenti in futuro)
 Disallow: /*?draft=
@@ -31,3 +32,4 @@ Allow: /
 
 User-agent: Slurp
 Allow: /
+Sitemap: https://agenteimmo.me/api/site/sitemap

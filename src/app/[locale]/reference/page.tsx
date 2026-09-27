@@ -19,7 +19,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: "Esempi reali — GetNearMe",
     description: "Esempi reali delle funzionalità GetNearMe: foto AI, video, post social, report PDF, analisi di zona e molto altro.",
     alternates: {
-      canonical: `https://getnearme.it/${locale}/reference`,
+      canonical: `https://agenteimmo.me/${locale}/reference`,
     },
   };
 }

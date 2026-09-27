@@ -47,7 +47,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: chapter.seoTitle,
     description: chapter.seoDescription,
     alternates: {
-      canonical: `https://www.getnearme.it/${locale}/guida-acquisto-casa/${slug}`,
+      canonical: `https://agenteimmo.me/${locale}/guida-acquisto-casa/${slug}`,
     },
     openGraph: {
       title: chapter.seoTitle,
@@ -90,21 +90,21 @@ export default async function ChapterPage({ params }: Props) {
     author: {
       "@type": "Organization",
       name: "GetNearMe",
-      url: "https://www.getnearme.it",
+      url: "https://agenteimmo.me",
     },
     publisher: {
       "@type": "Organization",
       name: "GetNearMe",
-      url: "https://www.getnearme.it",
+      url: "https://agenteimmo.me",
     },
     mainEntityOfPage: {
       "@type": "WebPage",
-      "@id": `https://www.getnearme.it/${locale}/guida-acquisto-casa/${slug}`,
+      "@id": `https://agenteimmo.me/${locale}/guida-acquisto-casa/${slug}`,
     },
     isPartOf: {
       "@type": "WebPage",
       name: "Guida completa all'acquisto casa in Italia",
-      url: `https://www.getnearme.it/${locale}/guida-acquisto-casa`,
+      url: `https://agenteimmo.me/${locale}/guida-acquisto-casa`,
     },
     inLanguage: locale,
     datePublished: "2026-05-01",

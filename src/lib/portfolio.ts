@@ -59,7 +59,7 @@ export async function getPublicProperties(userId: string): Promise<PublicPropert
 
 // Indirizzo pubblico canonico del sito (per canonical, sitemap, dati strutturati): dominio vetrina se c'e'.
 export const siteUrl = (slug: string, path = '') =>
-  process.env.NEXT_PUBLIC_PORTFOLIO_HOST ? `https://${process.env.NEXT_PUBLIC_PORTFOLIO_HOST}/${slug}${path}` : `https://www.getnearme.it/it/a/${slug}${path}`
+  process.env.NEXT_PUBLIC_PORTFOLIO_HOST ? `https://${process.env.NEXT_PUBLIC_PORTFOLIO_HOST}/${slug}${path}` : `https://agenteimmo.me/it/a/${slug}${path}`
 
 // Base dei link interni: sul dominio vetrina /<slug>, sul sito /<locale>/a/<slug>.
 export async function portfolioBase(locale: string, slug: string): Promise<string> {

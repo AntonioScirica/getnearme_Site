@@ -181,7 +181,7 @@ export default function PagePicker({ sessionId, locale }: Props) {
         <XCircle className="w-14 h-14 text-amber-500" />
         <p className="text-slate-600 text-lg">{t.expired}</p>
         <a
-          href="https://getnearme.it"
+          href="https://agenteimmo.me"
           className="mt-4 inline-flex items-center px-6 py-3 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors"
         >
           {t.close}
@@ -202,7 +202,7 @@ export default function PagePicker({ sessionId, locale }: Props) {
           </p>
         )}
         <a
-          href="https://getnearme.it"
+          href="https://agenteimmo.me"
           className="mt-4 inline-flex items-center px-6 py-3 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors"
         >
           {t.close}
@@ -218,7 +218,7 @@ export default function PagePicker({ sessionId, locale }: Props) {
         <p className="text-slate-600 text-lg">{t.error}</p>
         {errorMsg && <p className="text-red-400 text-xs font-mono">{errorMsg}</p>}
         <a
-          href="https://getnearme.it"
+          href="https://agenteimmo.me"
           className="mt-4 inline-flex items-center px-6 py-3 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors"
         >
           {t.close}

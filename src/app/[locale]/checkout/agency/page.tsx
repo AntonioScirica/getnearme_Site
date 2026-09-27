@@ -517,10 +517,10 @@ function CheckoutAgencyContent() {
           body: JSON.stringify({
             packageId: selectedPlanId === 'agency_annual' ? 'agency-seat-annual' : 'agency-seat-monthly',
             seats,
-            successUrl: 'https://www.getnearme.it?checkout=success',
-            cancelUrl: window.location.href.startsWith('https://www.getnearme.it') || window.location.href.startsWith('https://getnearme.it')
+            successUrl: 'https://agenteimmo.me?checkout=success',
+            cancelUrl: window.location.href.startsWith('https://agenteimmo.me') || window.location.href.startsWith('https://agenteimmo.me')
               ? window.location.href
-              : 'https://www.getnearme.it?checkout=cancelled',
+              : 'https://agenteimmo.me?checkout=cancelled',
           }),
         });
         const data = await resp.json().catch(() => null);

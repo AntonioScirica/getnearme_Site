@@ -28,7 +28,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: titles[locale as Locale],
     alternates: {
-      canonical: `https://getnearme.it/${locale}/social-connected`,
+      canonical: `https://agenteimmo.me/${locale}/social-connected`,
     },
     robots: { index: false, follow: false },
   };
@@ -170,7 +170,7 @@ export default async function SocialConnectedPage({ params, searchParams }: Prop
               )}
 
               <a
-                href="https://getnearme.it"
+                href="https://agenteimmo.me"
                 className="mt-6 inline-flex items-center px-6 py-3 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors"
               >
                 {success ? t.success.close : t.error.retry}

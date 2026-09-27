@@ -12,20 +12,6 @@ const nextConfig: NextConfig = {
     // video della chat: il binario di ffmpeg-static (montaggio del video Veo)
     "/api/platform/video": ["./node_modules/ffmpeg-static/ffmpeg"],
   },
-  // Dominio vetrina degli agenti: robots.txt e sitemap.xml propri (il proxy non vede i percorsi con estensione)
-  async rewrites() {
-    const host = process.env.NEXT_PUBLIC_PORTFOLIO_HOST;
-    if (!host) return [];
-    const has = [{ type: "host" as const, value: `(www\\.)?${host.replace(/\./g, "\\.")}` }];
-    return {
-      beforeFiles: [
-        { source: "/robots.txt", has, destination: "/api/site/robots" },
-        { source: "/sitemap.xml", has, destination: "/api/site/sitemap" },
-      ],
-      afterFiles: [],
-      fallback: [],
-    };
-  },
   async redirects() {
     return [
       { source: "/:locale/home", destination: "/:locale", permanent: true },
