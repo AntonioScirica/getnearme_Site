@@ -362,7 +362,9 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
     <button key="video" disabled={busy} onClick={() => askVideo(base)}
       className="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-ink px-3.5 py-1.5 text-[13px] font-medium text-white shadow-sm ease-smooth transition-colors hover:bg-brand disabled:opacity-40"><Clapperboard size={13} /> Crea video</button>,
   ] : [];
-  const chips = [...videoChip, ...suggestionsFor(kind).filter(x => roomState !== 'vuota' || (x.id !== 'empty' && x.id !== 'tidy')).map(x => (
+  // interni: "Svuota la stanza" sempre primo, subito dopo Crea video (esterni e giardini hanno i loro "Rinnova")
+  const sugs = kind?.startsWith('scene:') ? suggestionsFor(kind) : [EMPTY, ...suggestionsFor(kind).filter(x => x.id !== 'empty')];
+  const chips = [...videoChip, ...sugs.filter(x => roomState !== 'vuota' || (x.id !== 'empty' && x.id !== 'tidy')).map(x => (
     <button key={x.id} disabled={busy} onClick={() => send(x.label, x)}
       className="shrink-0 whitespace-nowrap rounded-full bg-white px-3.5 py-1.5 text-[13px] font-medium text-ink/80 shadow-sm ring-1 ring-inset ring-black/10 ease-smooth transition-colors hover:bg-brand hover:text-white disabled:opacity-40">{x.label}</button>
   ))];
