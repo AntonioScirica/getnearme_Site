@@ -486,7 +486,6 @@ export default function AgenteImmoLanding() {
           <Pill>Domande frequenti</Pill>
           <h2 className="mt-5 font-display text-3xl font-extrabold tracking-tight md:text-4xl">Quello che ci chiedono gli agenti immobiliari</h2>
         </Reveal>
-        <p className="mt-6 text-center text-muted">Vuoi sapere di più sul mestiere? Leggi la <Link href="/it/agente-immobiliare" className="font-medium text-ink underline underline-offset-4">guida completa all&apos;agente immobiliare</Link>.</p>
         <div className="mt-10 space-y-3">
           {FAQ.map(([q, a], i) => (
             <Reveal key={q} as="div" delay={i * 40} anim="rise">
