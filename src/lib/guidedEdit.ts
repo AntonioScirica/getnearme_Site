@@ -20,7 +20,7 @@ export async function guidedEdit(o: { userId: string; input: { image_base64: str
   // si guarda solo l'oggetto (prima di "on/in/against/near..."), non la posizione: "il divano sul lato sinistro del pavimento" va tolto
   const head = (r: string) => r.split(/\b(?:on|in|at|against|near|next to|by|under|beside|along|behind|to the|from|of the room)\b/i)[0]
   // "Svuota" toglie anche la cucina (stanza nuda): li' si blocca solo l'architettura
-  plan.remove = plan.remove.filter(r => !(o.task === 'empty' ? ARCH : FIXED).test(head(r)) || ON_TOP.test(r))
+  plan.remove = plan.remove.filter(r => !(o.task === 'empty' ? ARCH : FIXED).test(head(r)) || ON_TOP.test(head(r)))
   if (!plan.remove.length && !plan.add.length && !plan.restyle.length) return {}
   let cur = orig, prompt = ''
   if (plan.remove.length) {
@@ -50,9 +50,11 @@ export async function guidedEdit(o: { userId: string; input: { image_base64: str
 }
 
 // Fissi che non si tolgono mai (solo gli oggetti sopra): vedi il filtro in guidedEdit
-const FIXED = /\b(kitchen|cabinets?|cupboards?|worktop|countertop|counter|backsplash|splashback|stove|hob|oven|hood|sink|tap|island|peninsula|appliances?|fridge|refrigerator|dishwasher|walls?|half[- ]wall|pillar|ceiling|windows?|doors?|radiators?|wardrobes?|built[- ]in|floor|tiles|curtains?|shelves)\b/i
-const ARCH = /\b(walls?|half[- ]wall|pillar|ceiling|windows?|doors?|radiators?|wardrobes?|floor|tiles|curtains?)\b/i
-const ON_TOP = /\b(items?|objects?|things|clutter|on (the|top)|above)\b/i
+const FIXED = /\b(kitchen|cabinets?|cupboards?|worktop|countertop|counter|backsplash|splashback|stove|hob|oven|hood|sink|tap|island|peninsula|appliances?|fridge|refrigerator|dishwasher|walls?|half[- ]wall|pillar|ceiling|windows?|doors?|radiators?|wardrobes?|built[- ]in|floor|tiles|curtains?|shelves|toilet|wc|bidet|wash ?basin|basin|vanity|shower|bath ?tub|sanitary)\b/i
+// architettura + sanitari: non si tolgono mai, nemmeno con "Svuota" (in bagno vanno via solo gli oggetti)
+const ARCH = /\b(walls?|half[- ]wall|pillar|ceiling|windows?|doors?|radiators?|wardrobes?|floor|tiles|curtains?|toilet|wc|bidet|wash ?basin|basin|vanity|shower|bath ?tub|sanitary)\b/i
+// eccezione: l'oggetto stesso sono "gli oggetti / il disordine" (sopra un fisso), non la posizione ("sulla sinistra")
+const ON_TOP = /\b(items?|objects?|things|clutter|everything|accessories)\b/i
 
 // Claude guarda la foto (o originale + risultato) e risponde in JSON. Opus per il piano, Sonnet per il controllo.
 // Il nostro modello (qwen-analisi) e' stato provato il 27/09: liste incoerenti (su 4 prove una sola completa), scartato.
