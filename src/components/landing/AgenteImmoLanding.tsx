@@ -175,7 +175,7 @@ function Credits({ n }: { n: number }) {
 
 // il sito: stesso blocco dei crediti (titolo grande), sotto cosa c'e' dentro in due colonne.
 // Solo funzioni che esistono davvero nei siti degli agenti (niente traduzione finche' non c'e').
-const SITE_PERKS: [typeof Globe, string][] = [[Sparkles, 'Ogni casa online da sola, con il prima e dopo'], [MessageCircle, 'Richieste su email, telefono e WhatsApp'], [FileText, 'Report PDF da scaricare per ogni casa'], [MapPin, 'Ti trovano su Google nella tua zona']];
+const SITE_PERKS: [typeof Globe, string][] = [[Sparkles, 'Ogni casa online in automatico'], [MessageCircle, 'Richieste su email, telefono e WhatsApp'], [FileText, 'Report PDF da scaricare per ogni casa'], [MapPin, 'Ti trovano su Google nella tua zona']];
 function SiteIncluded() {
   return (
     <div className="mt-3 rounded-[20px] bg-canvas p-5">
