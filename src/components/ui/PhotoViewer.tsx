@@ -2,13 +2,15 @@
 
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Layers, X } from 'lucide-react';
+import { Download, Layers, X } from 'lucide-react';
+import { downloadImage } from '@/lib/staging';
 
 type Step = { src: string; label: string };
 
 // Foto a tutto schermo. Con `before` (risultati AI) si passa tra Prima e Dopo; con `steps` (Galleria)
-// si possono aprire tutti i passaggi dall'originale all'ultima versione. Frecce, Esc o clic fuori chiude.
-export default function PhotoViewer({ src, before, steps, onClose }: { src: string; before?: string; steps?: Step[]; onClose: () => void }) {
+// si possono aprire tutti i passaggi dall'originale all'ultima versione. Con `video` (Galleria) mostra il video con
+// il pulsante Scarica. Frecce, Esc o clic fuori chiude.
+export default function PhotoViewer({ src, before, steps, video, onClose }: { src: string; before?: string; steps?: Step[]; video?: string; onClose: () => void }) {
   const list: Step[] = steps?.length ? steps : [...(before ? [{ src: before, label: 'Prima' }] : []), { src, label: 'Dopo' }];
   const [i, setI] = useState(list.length - 1);
   const [all, setAll] = useState(false); // passaggi intermedi visibili
@@ -30,11 +32,17 @@ export default function PhotoViewer({ src, before, steps, onClose }: { src: stri
     <div className="blur-in fixed inset-0 z-[250] flex flex-col items-center gap-4 bg-black/85 p-6 backdrop-blur-sm" onClick={onClose}>
       {/* area foto a misura fissa (tutto lo spazio sopra i controlli): cambiando passaggio la foto non si sposta */}
       <div className="flex min-h-0 w-full flex-1 items-center justify-center">
-        <img key={cur.src} src={cur.src} alt="" onClick={e => e.stopPropagation()}
-          className="blur-in max-h-full max-w-[92vw] rounded-2xl object-contain shadow-2xl" />
+        {video
+          ? <video src={video} autoPlay controls playsInline onClick={e => e.stopPropagation()} className="blur-in max-h-full max-w-[92vw] rounded-2xl bg-black shadow-2xl" />
+          : <img key={cur.src} src={cur.src} alt="" onClick={e => e.stopPropagation()}
+            className="blur-in max-h-full max-w-[92vw] rounded-2xl object-contain shadow-2xl" />}
       </div>
+      {video && (
+        <button onClick={e => { e.stopPropagation(); downloadImage(video, 'agenteimmo-video.mp4'); }}
+          className="flex h-11 shrink-0 items-center gap-2 rounded-full bg-white px-5 text-sm font-semibold text-ink ease-smooth transition-colors hover:bg-white/90"><Download size={16} /> Scarica</button>
+      )}
       <button onClick={onClose} aria-label="Chiudi" className="absolute right-5 top-5 flex h-11 w-11 items-center justify-center rounded-full bg-white/15 text-white ease-smooth transition-colors hover:bg-white/25"><X size={20} /></button>
-      {list.length > 1 && (
+      {!video && list.length > 1 && (
         <div className="flex shrink-0 flex-col items-center" onClick={e => e.stopPropagation()}>
           {/* passaggi: chiusi non occupano spazio; aprendoli la fascia cresce (righe della griglia 0fr -> 1fr)
               e la foto si rimpicciolisce insieme, senza scatti */}

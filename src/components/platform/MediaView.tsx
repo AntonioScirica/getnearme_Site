@@ -150,13 +150,18 @@ export default function MediaView() {
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {list.map(m => (
                   <div key={m.id} className={`blur-in group rounded-3xl bg-white p-2 ease-smooth transition-shadow ${CARD_SHADOW} ${sel.has(m.id) ? '!ring-2 !ring-brand' : ''}`}>
-                    <button type="button" onClick={() => (selecting ? toggle(m.id) : m.video ? window.open(m.video, '_blank', 'noopener') : setViewer(m))} className={`relative block aspect-[4/3] w-full overflow-hidden rounded-2xl bg-canvas ${selecting ? 'cursor-pointer' : 'cursor-zoom-in'}`}>
+                    <button type="button" onClick={() => (selecting ? toggle(m.id) : setViewer(m))} className={`relative block aspect-[4/3] w-full overflow-hidden rounded-2xl bg-canvas ${selecting ? 'cursor-pointer' : 'cursor-zoom-in'}`}>
                       {selecting && (
                         <span className={`absolute right-3 top-3 z-10 flex h-7 w-7 items-center justify-center rounded-full ring-2 ease-smooth transition-colors ${sel.has(m.id) ? 'bg-brand text-white ring-brand' : 'bg-white/80 text-transparent ring-white'}`}><Check size={15} strokeWidth={3} /></span>
                       )}
                       {/* video: copertina ferma, parte al passaggio del mouse */}
                       {m.video
-                        ? <video src={m.video} poster={m.dopo || undefined} muted loop playsInline preload="metadata" onMouseEnter={e => e.currentTarget.play().catch(() => {})} onMouseLeave={e => { e.currentTarget.pause(); e.currentTarget.currentTime = 0; }} className="absolute inset-0 h-full w-full object-cover" />
+                        // fermo sull'ultimo fotogramma (la stanza arredata); in hover parte dall'inizio e gira tutto
+                        ? <video src={m.video} muted loop playsInline preload="auto"
+                            onLoadedMetadata={e => { e.currentTarget.currentTime = Math.max(0, e.currentTarget.duration - 0.05); }}
+                            onMouseEnter={e => { e.currentTarget.currentTime = 0; e.currentTarget.play().catch(() => {}); }}
+                            onMouseLeave={e => { const v = e.currentTarget; v.pause(); v.currentTime = Math.max(0, v.duration - 0.05); }}
+                            className="absolute inset-0 h-full w-full object-cover" />
                         : <img src={m.dopo} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover" />}
                       {m.video && <span className="absolute bottom-3 left-3 flex items-center gap-1 rounded-full bg-black/55 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur"><Clapperboard size={12} /> Video</span>}
                       {m.prima && <img src={m.prima} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover opacity-0 ease-smooth transition-opacity group-hover:opacity-100" />}
@@ -167,7 +172,7 @@ export default function MediaView() {
                     </button>
                     <div className="flex min-h-12 items-center gap-3 px-2 pt-2 text-xs text-muted">
                       <span className="min-w-0 flex-1 truncate">{DAY.format(m.at)}</span>
-                      <button type="button" onClick={() => (m.video ? window.open(m.video, '_blank', 'noopener') : downloadImage(m.dopo, 'agenteimmo.jpg'))} className="flex h-8 shrink-0 items-center gap-1.5 rounded-full px-3 font-medium leading-none text-ink hover:bg-canvas"><Download size={14} className="translate-y-px" /> Scarica</button>
+                      <button type="button" onClick={() => downloadImage(m.video ?? m.dopo, m.video ? 'agenteimmo-video.mp4' : 'agenteimmo.jpg')} className="flex h-8 shrink-0 items-center gap-1.5 rounded-full px-3 font-medium leading-none text-ink hover:bg-canvas"><Download size={14} className="translate-y-px" /> Scarica</button>
                     </div>
                   </div>
                 ))}
@@ -204,7 +209,7 @@ export default function MediaView() {
         </div>,
         document.body,
       )}
-      {viewer && <PhotoViewer src={viewer.dopo} steps={stepsOf(viewer)} onClose={() => setViewer(null)} />}
+      {viewer && <PhotoViewer src={viewer.dopo} steps={stepsOf(viewer)} video={viewer.video} onClose={() => setViewer(null)} />}
     </div>
   );
 }
