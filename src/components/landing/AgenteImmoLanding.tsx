@@ -188,6 +188,49 @@ function SiteIncluded() {
   );
 }
 
+// Quanto costa oggi farlo senza di noi (stime indicative di mercato, come nella vecchia landing GetNearMe)
+// e il conto che conta: un incarico in piu' ripaga anni di abbonamento.
+const WITHOUT: [typeof Globe, string, string, string][] = [
+  [Wand2, 'Home staging', '~1.500 €', 'home stager, circa 4 giorni per casa'],
+  [Clapperboard, 'Video della casa', '~250 €', 'videomaker, mezza giornata'],
+  [Globe, 'Sito con i tuoi immobili', '~1.500 €', 'web agency, 2-4 settimane'],
+  [Sparkles, 'Foto sistemate e più luminose', '~150 €', 'fotografo o fotoritocco, per casa'],
+  [FileText, 'Report PDF da lasciare al cliente', '~40 €', 'grafico, circa 45 minuti'],
+];
+function Compare() {
+  return (
+    <section className="mx-auto max-w-4xl px-4 py-20">
+      <Reveal className="mx-auto max-w-2xl text-center">
+        <Pill>Quanto ti costa oggi</Pill>
+        <h2 className="mt-5 font-display text-4xl font-extrabold leading-[1.05] tracking-tight md:text-5xl">Tutto questo ti costerebbe più di 3.000 €.</h2>
+        <p className="mt-5 text-lg leading-relaxed text-muted">Con Agente Immo è incluso, per ogni casa, da {PRICING.starter} € al mese.</p>
+      </Reveal>
+      <Reveal delay={120} className="mt-10 overflow-hidden rounded-[28px] bg-white ring-1 ring-black/5 shadow-[0_1px_2px_rgba(0,0,0,.04),0_8px_24px_-12px_rgba(0,0,0,.12)]">
+        <div className="grid grid-cols-[1.4fr_1fr_auto] gap-4 bg-canvas px-6 py-3 text-xs font-semibold uppercase tracking-wide text-muted">
+          <span>Cosa ti serve</span><span>Senza Agente Immo</span><span className="text-right">Con Agente Immo</span>
+        </div>
+        {WITHOUT.map(([Icon, what, cost, who]) => (
+          <div key={what} className="grid grid-cols-[1.4fr_1fr_auto] items-center gap-4 border-t border-line px-6 py-4">
+            <span className="flex items-center gap-3 font-semibold"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-canvas text-ink"><Icon size={16} /></span>{what}</span>
+            <span><span className="block font-bold text-rose-600">{cost}</span><span className="block text-xs text-muted">{who}</span></span>
+            <span className="flex items-center justify-end gap-1.5 text-sm font-semibold text-emerald-600"><Check size={15} /> Incluso</span>
+          </div>
+        ))}
+        <div className="grid grid-cols-[1.4fr_1fr_auto] items-center gap-4 border-t border-line bg-canvas px-6 py-5">
+          <span className="font-display text-lg font-extrabold">Totale</span>
+          <span className="font-display text-xl font-extrabold text-rose-600 line-through decoration-rose-300">~3.440 €</span>
+          <span className="text-right font-display text-xl font-extrabold text-emerald-600">da {PRICING.starter} €/mese</span>
+        </div>
+      </Reveal>
+      <Reveal delay={200} className="mt-6 rounded-[28px] bg-ink p-7 text-white md:flex md:items-center md:gap-8">
+        <div className="font-display text-5xl font-extrabold tracking-tight md:shrink-0">+1</div>
+        <p className="mt-3 text-lg leading-relaxed text-white/80 md:mt-0"><span className="font-semibold text-white">Basta un incarico in più per ripagarlo per anni.</span> Su una casa da 200.000 € con provvigione al 3%, un incarico vale 6.000 €: più di 8 anni di piano Pro.</p>
+      </Reveal>
+      <p className="mt-4 text-center text-xs text-muted">Costi indicativi di mercato per una singola casa; il sito è una spesa una tantum più la manutenzione.</p>
+    </section>
+  );
+}
+
 // Due piani con lo stesso prodotto (stessa qualita', sito compreso): cambiano solo i crediti e come si paga.
 // Prova gratis in pagina, senza account: una foto della tua casa arredata dall'AI (max 3 al giorno, limite nel server).
 // Si vede il prima/dopo; per scaricarla serve l'account.
@@ -482,6 +525,8 @@ export default function AgenteImmoLanding() {
       </section>
 
       {/* prezzi: Starter e Pro (stesso prodotto, crediti diversi). Numeri in PRICING */}
+      <Compare />
+
       <Pricing />
 
       {/* domande frequenti: testo visibile + FAQPage in JSON-LD (stesse risposte, vedi FAQ) */}
