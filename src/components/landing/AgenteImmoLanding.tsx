@@ -168,8 +168,7 @@ function Credits({ n }: { n: number }) {
       <div className="flex items-center gap-2 font-display text-xl font-extrabold tracking-tight"><Sparkles size={16} className="text-ai" /> {thousands(n)} crediti al mese</div>
       <div className="mt-2 space-y-1 pl-6 text-[15px] text-muted">
         <div>= {photosFor(n)} foto arredate</div>
-        <div>oppure {videosFor(n)} video per social e portali</div>
-        <div>oppure un mix, come ti serve</div>
+        <div>~ {videosFor(n)} video</div>
       </div>
     </div>
   );
