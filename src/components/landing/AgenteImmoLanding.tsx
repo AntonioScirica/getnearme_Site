@@ -442,7 +442,7 @@ export default function AgenteImmoLanding() {
         <div className="grid items-center gap-10 md:grid-cols-2 md:gap-16">
           <Reveal anim="in-left">
             <Eyebrow n="01">Annunci che si notano</Eyebrow>
-            <h2 className={H2}>Chi scorre il portale non si ferma su una stanza vuota.</h2>
+            <h2 className={H2}>Nessuno si ferma su una stanza vuota.</h2>
             <p className="mt-5 text-lg leading-relaxed text-muted">Vuota, una casa sembra più piccola e più fredda di com&apos;è. Arredata, chi guarda ci si immagina dentro e ti chiama per vederla. Carichi la foto, scegli lo stile, in un minuto è pronta.</p>
             <ul className="mt-6 space-y-3 text-[15px]">
               {['La prima foto ferma chi scorre', 'Il cliente capisce subito come vivrebbe quella casa', 'Nessun home staging vero da pagare o da organizzare'].map(x => <li key={x} className="flex items-start gap-3">{CHECK}{x}</li>)}
@@ -465,7 +465,7 @@ export default function AgenteImmoLanding() {
         <div ref={videoRef} className="grid items-center gap-10 md:grid-cols-2 md:gap-16">
           <Reveal className="md:order-2" anim="in-right">
             <Eyebrow n="02">Farti conoscere</Eyebrow>
-            <h2 className={H2}>I video fanno vedere le case. E fanno vedere te.</h2>
+            <h2 className={H2}>Ogni casa diventa un video.</h2>
             <p className="mt-5 text-lg leading-relaxed text-muted">Nella tua zona i clienti chiamano l&apos;agente che vedono ogni settimana su Instagram e TikTok. Un videomaker costa e ci mette giorni: qui ogni nuovo incarico diventa un video, e tu resti presente senza fermarti a girare.</p>
             <ul className="mt-6 space-y-3 text-[15px]">
               {['Ti fai conoscere nella tua zona, non solo sul portale', 'Ogni incarico diventa un contenuto da pubblicare', 'Niente riprese, niente montaggio, niente videomaker'].map(x => <li key={x} className="flex items-start gap-3">{CHECK}{x}</li>)}
@@ -490,7 +490,7 @@ export default function AgenteImmoLanding() {
         <div ref={siteRef} className="grid items-center gap-10 md:grid-cols-2 md:gap-16">
           <Reveal anim="in-left">
             <Eyebrow n="03">Il tuo sito, già pronto</Eyebrow>
-            <h2 className={H2}>Sui portali sei uno dei tanti. Sul tuo sito sei l&apos;unico.</h2>
+            <h2 className={H2}>Sul tuo sito sei l&apos;unico agente.</h2>
             <p className="mt-5 text-lg leading-relaxed text-muted">Sul portale l&apos;acquirente sceglie la casa, non l&apos;agente. Il sito te lo diamo noi, già fatto e finito: scegli uno dei nostri modelli, metti logo e colori, e ogni immobile che carichi ci finisce da solo. Niente web agency, niente da costruire.</p>
             <ul className="mt-6 space-y-3 text-[15px]">
               {['Pronto in un minuto: scegli il modello, il resto è già fatto', 'Ogni immobile che carichi è subito online, con foto e descrizione', 'I contatti arrivano a te, non a un portale', 'Ti fai trovare su Google nella tua zona'].map(x => <li key={x} className="flex items-start gap-3">{CHECK}{x}</li>)}
