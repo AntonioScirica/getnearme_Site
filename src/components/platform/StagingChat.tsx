@@ -578,7 +578,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
               <div className="flex justify-end">
                 {m.image
                   ? <button type="button" onClick={() => setViewer({ src: m.image! })} className="max-w-[60%] cursor-zoom-in"><img src={m.image} alt="Foto caricata" data-base-photo={base === m.image ? '' : undefined} className={`max-h-56 rounded-3xl object-cover ${CARD_SHADOW} ease-smooth transition-transform hover:scale-[1.01]`} /></button>
-                  : <div className="max-w-[75%] rounded-3xl rounded-br-2xl bg-ink px-4 py-2.5 text-sm text-white">{/* solo immagine e testo; il credito Unsplash (obbligatorio) sta nel tooltip dell'immagine */}{m.style && <img src={m.style.src} alt="Foto di stile" title={m.style.author ? `Foto di ${m.style.author} su Unsplash` : undefined} className="mb-2 block h-24 w-32 rounded-2xl object-cover" />}{m.region && <span className="mr-1.5 inline-flex items-center gap-1 rounded-full bg-white/15 px-2 py-0.5 text-[11px]"><SquareDashedMousePointer size={11} /> zona</span>}{m.text}</div>}
+                  : <div className="max-w-[75%] rounded-3xl rounded-br-2xl bg-ink px-4 py-2.5 text-sm text-white">{/* solo immagine e testo; il credito Unsplash (obbligatorio) sta nel tooltip dell'immagine */}{m.style && <img src={m.style.src} alt="Foto di stile" title={m.style.author ? `Foto di ${m.style.author} su Unsplash` : undefined} className="mb-2 ml-auto block h-24 w-32 rounded-2xl object-cover" />}{m.region && <span className="mr-1.5 inline-flex items-center gap-1 rounded-full bg-white/15 px-2 py-0.5 text-[11px]"><SquareDashedMousePointer size={11} /> zona</span>}{m.text}</div>}
               </div>
               {m.image && i === msgs.length - 1 && !busy && (
                 <div className="blur-in mt-6 w-fit max-w-[85%] rounded-3xl rounded-bl-2xl bg-canvas px-4 py-3 text-sm" style={{ animationDelay: '.3s' }}>
@@ -970,7 +970,7 @@ const showImg = (el: HTMLImageElement) => { el.style.opacity = '1'; if (el.previ
 // "Cerca ispirazione": foto d'interni da Unsplash (ricerca sul server, /api/platform/inspiration). Scelta = foto di stile.
 type InspoPhoto = { id: string; thumb: string; url: string; author: string; authorUrl: string; download: string; alt: string };
 // ricerca di partenza: la stanza riconosciuta nella foto caricata
-const ROOM_QUERY: Record<string, string> = { openspace: 'open space cucina soggiorno moderno', soggiorno: 'soggiorno moderno', cucina: 'cucina moderna', camera: 'camera da letto moderna', cameretta: 'cameretta', bagno: 'bagno moderno', sala: 'sala da pranzo moderna', studio: 'studio in casa', ingresso: 'ingresso casa', corridoio: 'corridoio casa', balcone: 'balcone arredato' };
+const ROOM_QUERY: Record<string, string> = { openspace: 'cucina e soggiorno', soggiorno: 'soggiorno moderno', cucina: 'cucina moderna', camera: 'camera da letto moderna', cameretta: 'cameretta', bagno: 'bagno moderno', sala: 'sala da pranzo moderna', studio: 'studio in casa', ingresso: 'ingresso casa', corridoio: 'corridoio casa', balcone: 'balcone arredato' };
 function Inspiration({ room, onPick, onUpload, onClose }: { room: string | null; onPick: (url: string, credit: { author: string; url: string }) => void; onUpload: () => void; onClose: () => void }) {
   const base = ROOM_QUERY[room?.replace(/^room:/, '') ?? ''] ?? 'soggiorno moderno'
   const [q, setQ] = useState(''); // vuoto: la stanza riconosciuta e' il segnaposto, e si apre gia' con quei risultati
