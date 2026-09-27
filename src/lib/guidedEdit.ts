@@ -2,7 +2,7 @@ import sharp from 'sharp'
 import { runJob } from '@/lib/runpodImage'
 import Anthropic from '@anthropic-ai/sdk'
 import { logUsage } from '@/lib/ai'
-import { editPlanPrompt, leftoverPrompt, removePrompt, removeInBoxPrompt, sameRoomPrompt, addFurniturePrompt, type EditPlan, type Box, type Zone } from '@/lib/stagingPrompts'
+import { editPlanPrompt, leftoverPrompt, removePrompt, removeInBoxPrompt, addFurniturePrompt, type EditPlan, type Box, type Zone } from '@/lib/stagingPrompts'
 
 // Svuota, arreda e modifiche guidate da un piano del modello di visione. Qwen da solo non distingue fisso da mobile e inventa le cose nominate che non ci
 // sono; sostituire i mobili in un colpo gli faceva reinventare la stanza (27/09). Quindi:
@@ -52,19 +52,12 @@ export async function guidedEdit(o: { userId: string; input: { image_base64: str
     }
   }
   if (o.task !== 'empty' && (plan.add.length || plan.restyle.length || Object.values(plan.surfaces ?? {}).some(Boolean))) {
-    // arredo (e ristrutturazione: pavimento, soffitto, pareti, cucina) in UN passaggio su tutta la foto: coerente, come Gemini.
-    // Maschere per le superfici e riquadri per i mobili davano aloni e pezzi tagliati (27/09). Se la stanza cambia
-    // (controllo veloce), un secondo tentativo con il blocco della stanza in testa; si tiene quello.
-    const base = cur
+    // un passaggio sulla stanza vuota con la sua mappa di profondita' come guida: la struttura resta (prova del 27/09:
+    // tiene finestre, porte, pareti e inquadratura meglio del solo testo e dei riquadri)
     prompt = addFurniturePrompt(plan)
-    const a = await runJob({ image_base64: `data:image/jpeg;base64,${base}`, prompt, seed: o.seed + 1, steps: 12 })
+    const a = await runJob({ image_base64: `data:image/jpeg;base64,${cur}`, prompt, control: 'depth', seed: o.seed + 1, steps: 12 })
     if (!a.output?.image_base64) return {}
     cur = a.output.image_base64
-    if ((await askJson(o.userId, [base, cur], sameRoomPrompt, FAST)).same === false) {
-      prompt = `Keep this exact room: same camera, framing and perspective, same walls, half walls, pillars, windows, doors and openings in the same places. ${prompt}`
-      const b = await runJob({ image_base64: `data:image/jpeg;base64,${base}`, prompt, seed: o.seed + 2, steps: 12 })
-      if (b.output?.image_base64) cur = b.output.image_base64
-    }
   }
   return { image: cur, prompt, plan }
 }
