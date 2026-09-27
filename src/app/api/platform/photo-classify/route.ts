@@ -77,14 +77,17 @@ export async function POST(req: NextRequest) {
     ? (await admin.from('projects').select('id, import_data').eq('id', body.projectId).in('user_id', await getTeamUserIds(admin, data.user.id)).maybeSingle()).data
     : null
   const rooms = ((project?.import_data as { rooms?: Record<string, Classified> } | null)?.rooms) ?? {}
-  if (project && rooms[photoUrl]) return NextResponse.json({ ...rooms[photoUrl], cached: true })
+  // v2: con "openspace" (cucina + soggiorno). Le foto riconosciute prima si rifanno
+  if (project && rooms[photoUrl] && (rooms[photoUrl] as Classified & { v?: number }).v === 2) return NextResponse.json({ ...rooms[photoUrl], cached: true })
 
   const image = { imageBase64, imageUrl }
-  const c = await Promise.any([viaGpu(image), viaHaiku(image)]).catch(() => null)
+  // solo Haiku: il riconoscimento del worker ha la sua lista di stanze (senza openspace) e, a GPU calda, rispondeva
+  // per primo "soggiorno" sulle cucine a vista (27/09). Il worker resta di riserva se Haiku non risponde.
+  const c = await viaHaiku(image).catch(() => viaGpu(image)).catch(() => null)
   if (!c) return NextResponse.json({ error: 'ai_failed' }, { status: 502 })
   if (project) {
     const d = (project.import_data && typeof project.import_data === 'object' ? project.import_data : {}) as Record<string, unknown>
-    await admin.from('projects').update({ import_data: { ...d, rooms: { ...rooms, [photoUrl]: c } } }).eq('id', project.id)
+    await admin.from('projects').update({ import_data: { ...d, rooms: { ...rooms, [photoUrl]: { ...c, v: 2 } } } }).eq('id', project.id)
   }
   return NextResponse.json(c)
 }
