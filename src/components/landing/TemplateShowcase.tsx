@@ -12,8 +12,8 @@ const COVERS = ['demo-1', 'demo-2', 'demo-3', 'demo-4', 'fan-1', 'fan-2', 'fan-3
 const PROPS: SiteProperty[] = FAKE_PROPERTIES.map((p, i) => ({ id: p.id, titolo: p.titolo, addr: p.addr, prezzo: p.prezzo, mq: p.mq, camere: p.camere, bagni: p.bagni, tipologia: p.tipologia, cover: COVERS[i % COVERS.length], photos: [COVERS[i % COVERS.length]] }));
 const BASE = defaultSite('Studio Rossi');
 
-// Mazzo di finestre: davanti il modello attivo, dietro i prossimi (piu' in alto, piu' piccoli). Ogni 3,5 s quella
-// davanti scende e sparisce, le altre avanzano di un posto. Si disegnano solo le 5 vicine (i modelli sono pesanti).
+// Mazzo di finestre: davanti il modello attivo, dietro i prossimi (scalati in alto a destra, piu' piccoli). Ogni 3,5 s quella
+// davanti esce a sinistra e sparisce, le altre avanzano di un posto. Si disegnano solo le 5 vicine (i modelli sono pesanti).
 const N = TEMPLATES.length;
 const DEPTH = 3; // finestre visibili dietro quella davanti
 
@@ -59,15 +59,15 @@ export default function TemplateShowcase({ active }: { active: boolean }) {
   // posizione -1 = quella appena uscita (scende e sparisce), 0 = davanti, 1..DEPTH dietro (DEPTH = entra, invisibile)
   const cards = [-1, 0, 1, 2, DEPTH].map(p => ({ p, n: i + p, id: TEMPLATES[(((i + p) % N) + N) % N].id }));
   return (
-    <div className="relative pt-20">
+    <div className="relative pr-[72px] pt-16">
       {/* dà l'altezza al mazzo */}
       <div ref={sizer} className="invisible"><Bar name="" /><div className="aspect-[4/3]" /></div>
       {cards.map(({ p, n, id }) => {
         const style = p < 0
-          ? { transform: 'translateY(48px) scale(1.02)', opacity: 0, zIndex: 20 }
-          : { transform: `translateY(${-p * 34}px) scale(${1 - p * 0.07})`, opacity: p >= DEPTH ? 0 : 1 - p * 0.15, zIndex: 10 - p };
+          ? { transform: 'translate(-64px, 24px) scale(1.02)', opacity: 0, zIndex: 20 }
+          : { transform: `translate(${p * 36}px, ${-p * 32}px) scale(${1 - p * 0.05})`, opacity: p >= DEPTH ? 0 : 1 - p * 0.15, zIndex: 10 - p };
         return (
-          <div key={n} className="absolute inset-x-0 bottom-0 origin-top" style={{ ...style, transition: 'transform 1s cubic-bezier(.65,0,.35,1), opacity 1s cubic-bezier(.65,0,.35,1)' }}>
+          <div key={n} className="absolute bottom-0 left-0 right-[72px] origin-top-right" style={{ ...style, transition: 'transform 1s cubic-bezier(.65,0,.35,1), opacity 1s cubic-bezier(.65,0,.35,1)' }}>
             <Window id={id} k={k} front={p === 0} />
           </div>
         );

@@ -510,9 +510,31 @@ export default function AgenteImmoLanding() {
         </Reveal>
       </section>
 
-      <footer className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 pb-10 text-sm text-muted">
-        <span className="flex items-center gap-2"><img src="/immo/logo-mark.png" alt="" className="h-6 w-6" /> © {new Date().getFullYear()} Agente Immo</span>
-        <span className="flex flex-wrap gap-5">{GUIDE_LINKS.map(([href, l]) => <Link key={href} href={href} className="hover:text-ink">{l}</Link>)}<Link href="/it/privacy" className="hover:text-ink">Privacy</Link><Link href="/it/cookie" className="hover:text-ink">Cookie</Link><Link href="/it/termini" className="hover:text-ink">Termini</Link><a href="mailto:info@agenteimmo.me" className="hover:text-ink">Contatti</a></span>
+      {/* footer: marchio a sinistra, tre colonne di link (prodotto, guide SEO, legale), riga finale */}
+      <footer className="border-t border-line bg-canvas">
+        <div className="mx-auto grid max-w-6xl gap-10 px-4 py-16 md:grid-cols-[1.4fr_1fr_1.2fr_1fr]">
+          <div>
+            <a href="#top" className="flex items-center gap-2"><img src="/immo/logo-mark.png" alt="" className="h-8 w-8" /><span className="font-display text-lg font-extrabold tracking-tight">Agente <span className="text-brand">Immo</span></span></a>
+            <p className="mt-4 max-w-xs text-sm leading-relaxed text-muted">Foto arredate, video e il tuo sito per ogni immobile. Il software per agenti immobiliari.</p>
+            <Cta className="mt-6 !h-10 !px-5 text-sm">Prova gratis</Cta>
+          </div>
+          {([
+            ['Prodotto', [['#staging', 'Home staging'], ['#video', 'Video per i social'], ['#sito', 'Il tuo sito'], ['#prezzi', 'Prezzi'], ['#domande', 'Domande frequenti']]],
+            ['Guide', GUIDE_LINKS],
+            ['Agente Immo', [['/it/privacy', 'Privacy'], ['/it/cookie', 'Cookie'], ['/it/termini', 'Termini'], ['mailto:info@agenteimmo.me', 'Contatti']]],
+          ] as [string, string[][]][]).map(([h, links]) => (
+            <nav key={h} aria-label={h}>
+              <div className="text-sm font-semibold">{h}</div>
+              <ul className="mt-4 space-y-2.5 text-sm text-muted">
+                {links.map(([href, l]) => <li key={href}>{href.startsWith('/') ? <Link href={href} className="ease-smooth transition-colors hover:text-ink">{l}</Link> : <a href={href} className="ease-smooth transition-colors hover:text-ink">{l}</a>}</li>)}
+              </ul>
+            </nav>
+          ))}
+        </div>
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 border-t border-line px-4 py-6 text-xs text-muted">
+          <span>© {new Date().getFullYear()} Agente Immo</span>
+          <a href="mailto:info@agenteimmo.me" className="hover:text-ink">info@agenteimmo.me</a>
+        </div>
       </footer>
     </div>
   );
