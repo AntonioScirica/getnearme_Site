@@ -3,15 +3,15 @@
 import Link from 'next/link';
 import AuthCta from '@/components/AuthCta';
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
-import { ArrowDown, ArrowRight, Check, Hammer, Lock, Moon, ChevronLeft, ChevronRight, MessageCircle, Clapperboard, FileText, Globe, ImagePlus, Images, Loader2, MapPin, Pencil, Search, Sparkles, Upload, Users, Wand2 } from 'lucide-react';
+import { ArrowRight, Check, Lock, ChevronLeft, ChevronRight, Clapperboard, FileText, Globe, ImagePlus, Images, Loader2, MapPin, Sparkles, Upload, Users, Wand2 } from 'lucide-react';
 
 // Landing di Agente Immo per gli agenti: tre promesse (home staging AI, video, sito pronto) con lo stesso
 // linguaggio della piattaforma: bianco, puntini, card 28/16, pillole, un solo tempo (600ms, ease-smooth).
 // Le animazioni entrano quando la sezione arriva in vista (blur-in), niente scatti.
 
-import { FAQ } from '@/lib/landingFaq';
-import { PRICING, photosFor, videosFor } from '@/lib/pricing';
+import { PRICING } from '@/lib/pricing';
 import { tiltMove, tiltReset } from '@/components/ui/tilt';
+import { Credits, SiteIncluded } from '@/components/PlanParts';
 import { startCheckout, type Buy } from '@/lib/startCheckout';
 import dynamic from 'next/dynamic';
 
@@ -146,36 +146,6 @@ function useInView(margin = '0px') {
 // Foto "illimitate" con uso ragionevole (vedi termini), video contati perche' costano davvero.
 
 const thousands = (n: number, sep = '.') => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, sep);
-
-// crediti in grande, sotto cosa ci fai (come Higgsfield)
-function Credits({ n }: { n: number }) {
-  const L = useL(), en = useEn();
-  return (
-    <div className="mt-6 rounded-[20px] bg-canvas p-5">
-      <div className="flex items-center gap-2 font-display text-xl font-extrabold tracking-tight"><Sparkles size={16} className="text-ai" /> {thousands(n, en ? ',' : '.')} {L('crediti al mese', "credits a month")}</div>
-      <div className="mt-2 space-y-1 pl-6 text-[15px] text-muted">
-        <div>= {photosFor(n)} {L('foto arredate', "staged photos")}</div>
-        <div>~ {videosFor(n)} {L('video', "videos")}</div>
-      </div>
-    </div>
-  );
-}
-
-// il sito: stesso blocco dei crediti (titolo grande), sotto cosa c'e' dentro in due colonne.
-// Solo funzioni che esistono davvero nei siti degli agenti (niente traduzione finche' non c'e').
-const SITE_PERKS: [typeof Globe, string, string][] = [[Search, 'SEO: ti trovano su Google nella tua zona', 'SEO: found on Google in your area'], [Pencil, 'Modifichi tutto: colori, testi, foto, sezioni', 'Edit everything: colors, text, photos, sections'], [MessageCircle, 'Le richieste arrivano a te, non al portale', 'Inquiries come to you, not to a portal'], [Sparkles, 'Ogni casa che carichi va online da sola', 'Every listing you upload goes live on its own']];
-function SiteIncluded() {
-  const L = useL();
-  return (
-    <div className="mt-3 rounded-[20px] bg-canvas p-5">
-      <div className="flex items-center gap-2 font-display text-xl font-extrabold tracking-tight"><Globe size={16} className="text-brand" /> {L('Il tuo sito incluso', "Your website included")}</div>
-      <div className="mt-1 pl-6 text-[15px] text-muted">agenteimmo.me/<span className="text-ink">{L('tuonome', "yourname")}</span>, {L('già fatto con i nostri modelli', "ready-made with our templates")}</div>
-      <ul className="mt-4 space-y-2.5 pl-6 text-[15px]">
-        {SITE_PERKS.map(([Icon, l, e]) => <li key={l} className="flex items-center gap-2.5"><Icon size={15} className="shrink-0 text-brand" />{L(l, e)}</li>)}
-      </ul>
-    </div>
-  );
-}
 
 // Quanto costa oggi farlo senza di noi (stime indicative di mercato, come nella vecchia landing GetNearMe)
 const WITHOUT: [typeof Globe, string, string, string, string, string, string][] = [
@@ -422,8 +392,8 @@ function Pricing() {
           <div className="flex h-10 items-center text-sm font-semibold text-muted">Starter</div>
           <div className="mt-3 flex items-end gap-2"><span className="font-display text-6xl font-extrabold tracking-tight">{en ? `€${PRICING.starter}` : `${PRICING.starter} €`}</span><span className="pb-2 text-muted">{L('/ mese', "/ month")}</span></div>
           <div className="mt-1 text-sm text-muted">{L('Mensile, disdici quando vuoi', "Monthly, cancel anytime")}</div>
-          <Credits n={PRICING.starterCredits} />
-          <SiteIncluded />
+          <Credits n={PRICING.starterCredits} en={en} />
+          <SiteIncluded en={en} />
           <div className="min-h-8 flex-1" />
           <Cta ghost href={buyHref('starter')} onClick={buyClick('starter')} className="w-full justify-center">{L('Scegli Starter', "Choose Starter")}</Cta>
         </Reveal>
@@ -439,8 +409,8 @@ function Pricing() {
           </div>
           <div className="mt-3 flex items-end gap-2"><span key={pro} className="blur-in font-display text-6xl font-extrabold tracking-tight">{en ? `€${pro}` : `${pro} €`}</span><span className="pb-2 text-muted">{L('/ mese', "/ month")}</span></div>
           <div key={billed} className="blur-in mt-1 text-sm text-muted">{billed}</div>
-          <Credits n={PRICING.credits} />
-          <SiteIncluded />
+          <Credits n={PRICING.credits} en={en} />
+          <SiteIncluded en={en} />
           <div className="min-h-8 flex-1" />
           <Cta href={buyHref(yearly ? 'pro_yearly' : 'pro_quarterly')} onClick={buyClick(yearly ? 'pro_yearly' : 'pro_quarterly')} className="w-full justify-center">{L('Scegli Pro', "Choose Pro")}</Cta>
         </Reveal>

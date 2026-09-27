@@ -21,7 +21,7 @@ import ProgressiveBlur from '@/components/ProgressiveBlur';
 import { go, formatPrice, authFetch, CARD_SHADOW, warm } from './api';
 import ProfileForm, { type Profile } from './ProfileForm';
 import Onboarding from './Onboarding';
-import PlanView, { CreditsPill, DemoDownload, isBuy, NoCreditsModal } from './PlanView';
+import PlanView, { CreditsPill, DemoDownload, hasDemo, isBuy, NoCreditsModal } from './PlanView';
 import { tiltMove, tiltReset } from '@/components/ui/tilt';
 
 // Routing a hash (#/immobili, #/nuovo, #/immobile/<id>): back/forward del browser
@@ -54,6 +54,7 @@ export default function PlatformApp({ userData }: { userData: UserData }) {
   // fine onboarding: le card si trasformano nella home (View Transitions). Resta la pagina dove e' successo:
   // mai rimesso a false, altrimenti a fine transizione torna fade-up e il contenuto riparte da trasparente (scatto)
   const [morphAt, setMorphAt] = useState<string | null>(null);
+  const [demoGate, setDemoGate] = useState(hasDemo);
   const morph = morphAt === route;
 
   const reload = () => fetchProjects().then(setProjects);
@@ -65,6 +66,8 @@ export default function PlatformApp({ userData }: { userData: UserData }) {
   // Onboarding: finche' l'agente non ha scelto nome + indirizzo portfolio, niente piattaforma.
   if (profile === undefined) return <div className="flex h-full items-center justify-center bg-canvas"><Loader2 className="animate-spin text-muted" /></div>;
   // #/benvenuto la rimostra a chi vuole rivederla.
+  // agente nuovo arrivato dalla prova della landing: prima scarica foto/video, poi l'onboarding dall'inizio
+  if (profile && !profile.slug && demoGate) return <div className="h-full" style={DOTS}><DemoDownload onDone={() => setDemoGate(false)} /></div>;
   if (profile && (!profile.slug || route === '/benvenuto')) return <Onboarding onDone={p => {
     // arrivato scegliendo un piano sulla landing: finito l'onboarding si va dritti al pagamento
     if (/^#\/piano\?buy=/.test(location.hash)) { setProfile(p); return; }

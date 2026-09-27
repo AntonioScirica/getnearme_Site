@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { isReserved } from '@/lib/reservedPaths'
+import { isPlatformAdmin } from '@/lib/platformAdmins'
 
 const admin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -24,10 +25,29 @@ const getUserId = async (req: NextRequest) => {
   return data.user?.id ?? null
 }
 
-// Primo slug libero tra base, base-2 ... base-99 (lo slug gia' dell'utente conta come libero).
+// Il nome del sito e' "tenuto" solo da chi paga: piano Agente Immo attivo, vecchio abbonamento GetNearMe o admin.
+// Chi non ha un piano puo' sceglierlo, ma resta libero per gli altri finche' non paga (27/09/2026).
+async function payers(ids: string[]): Promise<Set<string>> {
+  if (!ids.length) return new Set()
+  const now = new Date().toISOString()
+  const [{ data: plat }, { data: old }, admins] = await Promise.all([
+    admin.from('platform_credits').select('user_id').in('user_id', ids).neq('plan', 'none').gt('subscription_until', now),
+    admin.from('user_credits').select('user_id, subscription_type').in('user_id', ids),
+    Promise.all(ids.map(id => admin.auth.admin.getUserById(id).then(r => (isPlatformAdmin(r.data.user?.email) ? id : null)).catch(() => null))),
+  ])
+  return new Set([
+    ...(plat ?? []).map(r => r.user_id as string),
+    ...(old ?? []).filter(r => r.subscription_type && !['free', 'ambassador'].includes(r.subscription_type)).map(r => r.user_id as string),
+    ...admins.filter((x): x is string => !!x),
+  ])
+}
+
+// Primo slug libero tra base, base-2 ... base-99 (lo slug gia' dell'utente e quelli di chi non paga contano come liberi).
 async function firstFree(base: string, userId: string): Promise<string | null> {
   const { data } = await admin.from('user_brand').select('portfolio_slug, user_id').like('portfolio_slug', `${base}%`)
-  const taken = new Set((data ?? []).filter(r => r.user_id !== userId).map(r => r.portfolio_slug))
+  const others = (data ?? []).filter(r => r.user_id !== userId)
+  const paid = await payers(others.map(r => r.user_id as string))
+  const taken = new Set(others.filter(r => paid.has(r.user_id as string)).map(r => r.portfolio_slug))
   for (let i = 1; i < 100; i++) {
     const s = i === 1 ? base : `${base.slice(0, 36)}-${i}`
     if (!taken.has(s)) return s
@@ -62,6 +82,12 @@ export async function PUT(req: NextRequest) {
   if (typeof slug !== 'string' || !validSlug(slug) || badSlug(slug)) return NextResponse.json({ error: 'invalid_slug' }, { status: 400 })
   if (name.length < 2 || name.length > 80) return NextResponse.json({ error: 'invalid_name' }, { status: 400 })
 
+  // nome tenuto da chi non paga: si libera (quell'agente ne sceglie un altro al prossimo accesso, il suo sito va offline)
+  const { data: holder } = await admin.from('user_brand').select('user_id').eq('portfolio_slug', slug).neq('user_id', userId).maybeSingle()
+  if (holder) {
+    if ((await payers([holder.user_id as string])).size) return NextResponse.json({ error: 'slug_taken', suggestion: await firstFree(slug, userId) }, { status: 409 })
+    await admin.from('user_brand').update({ portfolio_slug: null, site_published: false, updated_at: new Date().toISOString() }).eq('user_id', holder.user_id)
+  }
   const { error } = await admin.from('user_brand').upsert(
     { user_id: userId, portfolio_slug: slug, display_name: name, updated_at: new Date().toISOString() },
     { onConflict: 'user_id' },
