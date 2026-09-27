@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Anvil, ArrowUp, Building2, Check, ChevronLeft, Clapperboard, SquareSplitHorizontal, Image as ImageIcon, Palette, Sofa, Sparkles, Download, ExternalLink, ImagePlus, Lasso, Shuffle, LayoutGrid, Loader2, Monitor, RotateCcw, SquareDashed, SquareDashedMousePointer, X } from 'lucide-react';
+import { Anvil, ArrowUp, Search, Building2, Check, ChevronLeft, Clapperboard, SquareSplitHorizontal, Image as ImageIcon, Palette, Sofa, Sparkles, Download, ExternalLink, ImagePlus, Lasso, Shuffle, LayoutGrid, Loader2, Monitor, RotateCcw, SquareDashed, SquareDashedMousePointer, X } from 'lucide-react';
 import { fileToResizedDataUrl } from '@/lib/staging';
 import { AI_MOCK } from '@/lib/aiMock';
 import { AiPhotoStage, type EditRequest, type Region, type Reveal, type Suggestion } from './AiPhoto';
@@ -175,6 +175,8 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   const [text, setText] = useState('');
   // foto di riferimento per lo stile (Pinterest, catalogo, altro annuncio): resta finche' non la si toglie, vale per ogni arredo
   const [styleRef, setStyleRef] = useState<string | null>(null);
+  const [styleCredit, setStyleCredit] = useState<{ author: string; url: string } | null>(null); // foto da Unsplash: autore (richiesto da Unsplash)
+  const [inspo, setInspo] = useState(false); // pannello "Cerca ispirazione" (Unsplash)
   const styleInput = useRef<HTMLInputElement>(null);
   const [picked, setPicked] = useState<Suggestion | null>(null);
   const [scene, setScene] = useState<Scene>(saved?.scene ?? 'interno');
@@ -267,7 +269,8 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   };
 
   const send = async (given?: string, sug?: Suggestion | null) => {
-    const t = (given ?? text).trim();
+    // con la foto di stile si puo' inviare anche senza scrivere nulla
+    const t = (given ?? text).trim() || (!given && styleRef ? 'Arreda nello stile della foto' : '');
     const pk = given ? sug ?? null : picked;
     if (!t || !base || busy) return;
     touch();
@@ -674,19 +677,20 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
           {styleRef && (
             <div className="blur-in mb-2 flex w-fit items-center gap-2 rounded-2xl bg-white py-1.5 pl-1.5 pr-2 text-xs font-medium shadow-sm ring-1 ring-black/5">
               <img src={styleRef} alt="" className="h-8 w-8 rounded-xl object-cover" />
-              Stile da questa foto
-              <button onClick={() => setStyleRef(null)} aria-label="Togli la foto di stile" className="flex h-6 w-6 items-center justify-center rounded-full text-muted hover:bg-canvas hover:text-ink"><X size={13} /></button>
+              <span>Stile da questa foto{styleCredit && <span className="block text-[10px] font-normal text-muted">Foto di <a href={styleCredit.url} target="_blank" rel="noopener noreferrer" className="underline">{styleCredit.author}</a> su <a href="https://unsplash.com/?utm_source=agenteimmo&utm_medium=referral" target="_blank" rel="noopener noreferrer" className="underline">Unsplash</a></span>}</span>
+              <button onClick={() => { setStyleRef(null); setStyleCredit(null); }} aria-label="Togli la foto di stile" className="flex h-6 w-6 items-center justify-center rounded-full text-muted hover:bg-canvas hover:text-ink"><X size={13} /></button>
             </div>
           )}
-          <input ref={styleInput} type="file" accept="image/*" className="hidden" onChange={async e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) setStyleRef(await fileToResizedDataUrl(f, 1024)); }} />
+          <input ref={styleInput} type="file" accept="image/*" className="hidden" onChange={async e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) { setStyleRef(await fileToResizedDataUrl(f, 1024)); setStyleCredit(null); } }} />
+          {inspo && <Inspiration onClose={() => setInspo(false)} onUpload={() => { setInspo(false); styleInput.current?.click(); }} onPick={(url, credit) => { setStyleRef(url); setStyleCredit(credit); setInspo(false); }} />}
           <div className={`flex items-center gap-1.5 rounded-[26px] bg-white p-2 pl-2.5 ${CARD_SHADOW} ${drag ? 'ring-2 ring-brand' : ''}`}>
             {/* foto e zona vicine, come un gruppo di strumenti */}
             <div className="flex shrink-0 items-center">
               <button type="button" onClick={() => setLibrary(true)} title={base ? 'Carica un\'altra foto' : 'Carica una foto'} className="flex h-10 w-9 shrink-0 items-center justify-center rounded-full text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink">
                 <ImagePlus size={20} />
               </button>
-              <Tooltip label="Stile da una foto (Pinterest, catalogo, un altro annuncio)">
-                <button type="button" onClick={() => styleInput.current?.click()} aria-label="Stile da una foto" className={`flex h-10 w-9 shrink-0 items-center justify-center rounded-full ease-smooth transition-colors hover:bg-canvas hover:text-ink ${styleRef ? 'text-brand' : 'text-muted'}`}>
+              <Tooltip label="Stile da una foto: cerca o carica dal computer">
+                <button type="button" onClick={() => setInspo(true)} aria-label="Stile da una foto" className={`flex h-10 w-9 shrink-0 items-center justify-center rounded-full ease-smooth transition-colors hover:bg-canvas hover:text-ink ${styleRef ? 'text-brand' : 'text-muted'}`}>
                   <Palette size={19} />
                 </button>
               </Tooltip>
@@ -695,7 +699,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
               placeholder={hint}
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
               className="block h-10 min-w-0 flex-1 resize-none bg-transparent px-1 py-2 text-[15px] leading-6 outline-none placeholder:text-muted/60 disabled:cursor-not-allowed" />
-            <button onClick={() => send()} disabled={!text.trim() || !base || busy} aria-label="Invia"
+            <button onClick={() => send()} disabled={(!text.trim() && !styleRef) || !base || busy} aria-label="Invia"
               className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand text-white ease-smooth transition-[background-color,opacity,transform] hover:bg-brand/90 active:scale-95 disabled:opacity-40">
               {busy ? <Loader2 size={17} className="animate-spin" /> : <ArrowUp size={18} />}
             </button>
@@ -969,4 +973,65 @@ function Act({ icon, label, short, tip, narrow, active, disabled, onClick }: { i
     ? <button onClick={onClick} disabled={disabled} aria-label={label} aria-pressed={active} className={`flex min-w-0 flex-1 flex-col items-center gap-1 rounded-2xl px-1 py-2 text-[11px] font-medium leading-none disabled:opacity-40 ${tone}`}>{icon}<span className="truncate">{short ?? label}</span></button>
     : <button onClick={onClick} disabled={disabled} aria-pressed={active} className={`flex h-8 items-center gap-1.5 rounded-full px-3 font-medium leading-none disabled:opacity-40 ${tone}`}>{icon} {label}</button>;
   return tip && !narrow ? <Tooltip label={tip}>{btn}</Tooltip> : btn;
+}
+
+// "Cerca ispirazione": foto d'interni da Unsplash (ricerca sul server, /api/platform/inspiration). Scelta = foto di stile.
+type InspoPhoto = { id: string; thumb: string; url: string; author: string; authorUrl: string; download: string; alt: string };
+function Inspiration({ onPick, onUpload, onClose }: { onPick: (url: string, credit: { author: string; url: string }) => void; onUpload: () => void; onClose: () => void }) {
+  const [q, setQ] = useState('soggiorno moderno'); // di default si apre gia' con dei soggiorni
+  const [items, setItems] = useState<InspoPhoto[] | null>(null);
+  const [loading, setLoading] = useState(true); // si apre gia' cercando
+  const fetchInspo = async (query: string) => {
+    const r = await authFetch(`/api/platform/inspiration?q=${encodeURIComponent(query.trim())}`).catch(() => null);
+    return ((r?.ok ? await r.json() : { results: [] }).results ?? []) as InspoPhoto[];
+  };
+  const search = async (query: string) => {
+    if (!query.trim()) return;
+    setLoading(true);
+    setItems(await fetchInspo(query)); setLoading(false);
+  };
+  useEffect(() => { let on = true; fetchInspo('soggiorno moderno').then(r => { if (on) { setItems(r); setLoading(false); } }); return () => { on = false; }; }, []);
+  useEffect(() => {
+    const k = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', k);
+    return () => document.removeEventListener('keydown', k);
+  }, [onClose]);
+  return createPortal(
+    <div className="blur-in fixed inset-0 z-[240] flex items-center justify-center bg-black/40 p-6 backdrop-blur-sm" onClick={onClose}>
+      <div className="flex max-h-[85vh] w-full max-w-3xl flex-col rounded-[32px] bg-white p-5 shadow-2xl" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between pb-4">
+          <div>
+            <h3 className="font-display text-xl font-bold tracking-tight">Stile da una foto</h3>
+            <p className="text-sm text-muted">Scegli una foto che ti piace: la stanza verrà arredata con quello stile.</p>
+          </div>
+          <button onClick={onClose} aria-label="Chiudi" className="flex h-10 w-10 items-center justify-center rounded-full text-muted hover:bg-canvas hover:text-ink"><X size={18} /></button>
+        </div>
+        <div className="flex items-center gap-2">
+          <label className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-full bg-canvas px-4">
+            <Search size={16} className="shrink-0 text-muted" />
+            <input autoFocus value={q} onChange={e => setQ(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') search(q); }}
+              placeholder="Es. cucina moderna rovere, camera scandinava" className="h-full min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted/60" />
+          </label>
+          <button onClick={onUpload} className="flex h-11 shrink-0 items-center gap-2 rounded-full px-4 text-sm font-medium ring-1 ring-inset ring-line hover:bg-canvas"><ImagePlus size={16} /> Carica dal computer</button>
+        </div>
+        <div className="mt-4 min-h-40 overflow-y-auto">
+          {loading && <div className="flex h-40 items-center justify-center text-muted"><Loader2 size={20} className="animate-spin" /></div>}
+          {!loading && items && !items.length && <p className="py-10 text-center text-sm text-muted">Nessuna foto, prova con altre parole.</p>}
+          {!loading && !!items?.length && (
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
+              {items.map(p => (
+                <button key={p.id} title={`Foto di ${p.author}`} className="group relative aspect-[4/3] overflow-hidden rounded-2xl bg-canvas"
+                  onClick={() => { authFetch('/api/platform/inspiration', { method: 'POST', body: JSON.stringify({ download: p.download }) }).catch(() => {}); onPick(p.url, { author: p.author, url: p.authorUrl }); }}>
+                  <img src={p.thumb} alt={p.alt} loading="lazy" className="h-full w-full object-cover ease-smooth transition-transform group-hover:scale-105" />
+                  <span className="absolute inset-x-0 bottom-0 truncate bg-gradient-to-t from-black/60 to-transparent px-2 pb-1 pt-4 text-[10px] text-white opacity-0 ease-smooth transition-opacity group-hover:opacity-100">{p.author}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+        {!!items?.length && <p className="pt-3 text-[11px] text-muted">Foto da <a href="https://unsplash.com/?utm_source=agenteimmo&utm_medium=referral" target="_blank" rel="noopener noreferrer" className="underline">Unsplash</a></p>}
+      </div>
+    </div>,
+    document.body,
+  );
 }
