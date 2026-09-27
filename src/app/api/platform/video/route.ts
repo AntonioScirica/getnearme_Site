@@ -40,13 +40,29 @@ const VEO_SECONDS = 4
 // Corto e "remove only": con il blocco lungo della stanza davanti Qwen allargava l'inquadratura (prova del 27/09)
 const EMPTY_PROMPT = 'Remove only the movable furniture and loose objects from this room: sofas, armchairs, chairs, tables, beds, freestanding cabinets, rugs, cushions, blankets, lamps, plants, decor and personal items. Keep exactly the same, pixel for pixel: walls, ceiling and lights, windows and doors with their frames, curtains, mirrors and built-in or mirrored wardrobes, the TV wall unit with its shelves, the kitchen, bathroom fixtures, radiators, sockets, the floor with its exact material and color (continue the same floor where the furniture stood), the daylight and the camera position, zoom and framing. Photorealistic.'
 const NEG = 'text, letters, numbers, percent signs, captions, watermark, circles, ovals, rings, halos, light arcs, light trails, glowing lines, light beams, lens flare, fast camera movement, camera shake, new parts of the room, dissolve, ghosting, double exposure, semi-transparent objects, duplicated furniture, springs, coils, bouncing platform, ropes, cranes, new objects, extra furniture, extra cushions, extra decor, people, hands, tripod, camera, sliding objects, flying objects, floating objects, fading in, cross-fade, morphing, melting, flicker, exposure change, camera movement, zoom, pan'
-type Anim = 'popup' | 'gravity'
+type Anim = 'popup' | 'gravity' | 'particles' | 'stopmotion' | 'cantiere' | 'daynight'
+// cantiere e giorno/notte: niente elenco dei mobili, l'immagine di arrivo la fa Nano Banana 2
+const SCENE: Partial<Record<Anim, true>> = { cantiere: true, daynight: true }
 // Veo lavora AL CONTRARIO (dalla foto arredata alla vuota), poi il video si inverte:
 // popup = ogni pezzo si rimpicciolisce sul posto (invertito: spunta e si assesta);
 // gravity = ogni pezzo si solleva ed esce dall'alto (invertito: cade dall'alto e si posa).
 const VANISH: Record<Anim, string> = {
   popup: 'Each object vanishes on the spot: it swells very slightly for a few frames, then quickly shrinks into a tiny point at its base and is gone, leaving the bare floor and walls exactly as in the last image. Objects never move, slide or fly. ',
   gravity: 'Each object lifts straight up off the floor and quickly rises out through the top of the frame, keeping its shape, size and color, never rotating or tumbling, leaving the bare floor and walls exactly as in the last image. Objects never slide sideways. ',
+  // invertito: la polvere converge e compone il mobile
+  particles: 'Each object dissolves on the spot into a cloud of fine, soft golden dust particles that drift slightly upward and fade away, leaving the bare floor and walls exactly as in the last image. Objects never slide or fly. ',
+  // invertito: i mobili compaiono a scatti, uno per volta, come in stop-motion
+  stopmotion: 'Stop-motion style: each object disappears instantly between two frames, with no fading, no shrinking and no motion, one after another in a quick steady rhythm, leaving the bare floor and walls exactly as in the last image. ',
+  cantiere: '', daynight: '',
+}
+// Cantiere (al contrario): la stanza finita torna cantiere; invertito, il cantiere diventa la casa finita.
+const CANTIERE_PROMPT = 'Elegant, satisfying real-estate timelapse with a perfectly still, locked-off camera: identical framing for the whole video, no pan, no zoom. The walls, windows, doors, beams and stairs stay exactly where they are. The finished, furnished room is shown still for a quarter of a second, then it progressively turns back into the raw construction site of the last image, like a renovation timelapse played in reverse: the decor and furniture go away piece by piece, the paint and plaster come off the walls revealing the bricks, the finished floor gives way to the bare screed, and the tools and materials of the works appear. By the third second the room is identical to the last image; from then on nothing moves.'
+// Giorno -> notte (in avanti): cala la sera, fuori il cielo si scurisce, dentro si accendono le luci.
+const DAYNIGHT_PROMPT = 'Elegant real-estate timelapse with a perfectly still, locked-off camera: identical framing for the whole video, no pan, no zoom. The room, the furniture and every object never change or move. Evening falls: the daylight outside the windows slowly turns into a deep blue dusk and then night, and the interior lights and lamps switch on one after another with a warm glow, until the room looks exactly like the last image. Smooth and continuous, no flicker.'
+// Immagine di arrivo fatta da Nano Banana 2 per cantiere e giorno/notte (stessa inquadratura della foto)
+const SCENE_IMAGE: Record<'cantiere' | 'daynight', string> = {
+  cantiere: 'Show this exact room during the renovation works, before it was finished, photographed from the identical camera position, lens and framing: every wall, window, door, beam, staircase and fireplace stays exactly where it is. Remove all furniture, rugs, curtains and decor. Rough walls with exposed brick and patches of old plaster, bare concrete screed floor, loose electrical conduits and wires, a stepladder, buckets, bags of cement and a few tools on the floor, a little dust. Same daylight. Photorealistic, no people, no text.',
+  daynight: 'Show this exact room at night, photographed from the identical camera position, lens and framing: same architecture, same furniture and objects in the same place, nothing added or removed. Deep blue night sky outside the windows, warm interior lights on (ceiling lights and lamps glowing), cozy evening atmosphere, balanced exposure, no burnt highlights. Photorealistic, no people, no text.',
 }
 const prompt = (order: string, anim: Anim) => 'Elegant, satisfying real-estate animation with a perfectly still, locked-off camera: identical framing for the whole video, no pan, no zoom. Walls, ceiling, curtains, built-in furniture, doors, windows, floor and daylight never change. '
   + `These are the only objects that disappear, in exactly these quantities: ${order}. Nothing new ever appears. The last frame is identical to the final empty image. `
@@ -55,7 +71,11 @@ const prompt = (order: string, anim: Anim) => 'Elegant, satisfying real-estate a
   + VANISH[anim]
   + `Order: ${order}. By the third second the room is completely empty and identical to the last image; from then on nothing moves or changes at all.`
 // dall'alto: i pezzi volano per davvero, niente divieti di volo
-const negFor = (anim: Anim) => (anim === 'gravity' ? NEG.replace('flying objects, floating objects, ', 'tumbling objects, rotating objects, ') : NEG)
+const negFor = (anim: Anim) => anim === 'gravity' ? NEG.replace('flying objects, floating objects, ', 'tumbling objects, rotating objects, ')
+  : anim === 'particles' ? NEG.replace('dissolve, ', '').replace('glowing lines, ', '')
+  : anim === 'daynight' ? NEG.replace('exposure change, ', '').replace('flicker, ', 'flicker, strobing, ')
+  : anim === 'cantiere' ? NEG.replace('new objects, ', '').replace('morphing, ', '')
+  : NEG
 
 async function userOf(req: NextRequest) {
   const token = req.headers.get('authorization')?.replace('Bearer ', '')
@@ -77,7 +97,7 @@ export async function POST(req: NextRequest) {
   try { body = await req.json() } catch { return NextResponse.json({ error: 'bad_request' }, { status: 400 }) }
   const imageUrl = typeof body.imageUrl === 'string' ? body.imageUrl : ''
   const imageBase64 = typeof body.imageBase64 === 'string' && /^data:image\/(jpeg|png|webp);base64,/.test(body.imageBase64) && body.imageBase64.length < 8_000_000 ? body.imageBase64 : ''
-  const anim: Anim = body.anim === 'gravity' ? 'gravity' : 'popup'
+  const anim: Anim = (['gravity', 'particles', 'stopmotion', 'cantiere', 'daynight'] as const).find(a => a === body.anim) ?? 'popup'
   if (!imageBase64 && !allowedUrl(imageUrl)) return NextResponse.json({ error: 'bad_request' }, { status: 400 })
   // crediti: controllo all'avvio, si scalano solo a video consegnato (GET)
   if (!(await canAfford(userId, 'video'))) return NextResponse.json({ error: 'no_credits', cost: CREDIT_COST.video }, { status: 402 })
@@ -92,9 +112,24 @@ export async function POST(req: NextRequest) {
     const [W, H] = landscape ? [1280, 720] : [720, 1280]
     const full = await sharp(src).rotate().resize(W, H, { fit: 'cover' }).jpeg({ quality: 95 }).toBuffer()
     const pid = typeof body.projectId === 'string' && /^[\w-]{1,64}$/.test(body.projectId) ? body.projectId : ''
-    const name = `${pid ? `casa-${pid}/` : ''}${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+    const name = `${pid ? `casa-${pid}/` : ''}${Date.now()}-${Math.random().toString(36).slice(2, 8)}${anim === 'daynight' ? '-f' : ''}`
     const key = `videos/${userId}/${name}`
     const fullUrl = await uploadJpeg(full, `${key}-arredata.jpg`)
+
+    // Cantiere e giorno/notte: Nano Banana 2 fa l'immagine di arrivo, poi Veo (cantiere al contrario, notte in avanti)
+    if (SCENE[anim]) {
+      const kind = anim as 'cantiere' | 'daynight'
+      const out = await nanoBanana({ userId, image: fullUrl, prompt: SCENE_IMAGE[kind], kind: `video_${kind}` })
+      if (!out) return NextResponse.json({ error: 'ai_failed' }, { status: 502 })
+      const endImg = await sharp(Buffer.from(out, 'base64')).resize(W, H, { fit: 'fill' }).jpeg({ quality: 95 }).toBuffer()
+      const endUrl = await uploadJpeg(endImg, `${key}-${kind}.jpg`)
+      const q = await fal(`${FAL}/lite/first-last-frame-to-video`, {
+        first_frame_url: fullUrl, last_frame_url: endUrl, prompt: kind === 'cantiere' ? CANTIERE_PROMPT : DAYNIGHT_PROMPT, negative_prompt: negFor(anim),
+        duration: `${VEO_SECONDS}s`, aspect_ratio: landscape ? '16:9' : '9:16', resolution: '720p', generate_audio: false, seed: Math.floor(Math.random() * 1_000_000),
+      })
+      if (!q.request_id) { console.error('video fal submit', q); return NextResponse.json({ error: 'ai_failed' }, { status: 502 }) }
+      return NextResponse.json({ job: `${q.request_id}.${name.replace('/', '~')}.${sign(userId, `${q.request_id}.${name}`)}` })
+    }
 
     // 2-3. Qwen svuota (stessa inquadratura), Opus elenca i pezzi e controlla che la stanza sia davvero vuota:
     // a volte Qwen lascia un mobile (27/09: letto rimasto con un seme su due), allora si riprova con un altro seme.
@@ -153,7 +188,7 @@ export async function GET(req: NextRequest) {
   if (job === 'mock' && AI_MOCK) return NextResponse.json({ url: 'https://pub-a668674eaa484e8e8f2f10c264392bfc.r2.dev/spike-video/stili/F12_rianima.mp4' })
   const [id, tilde, sig] = job.split('.')
   const name = (tilde ?? '').replace('~', '/')
-  if (!id || !/^[\w-]{8,64}$/.test(id) || !/^(casa-[\w-]{1,64}\/)?\d+-[a-z0-9]+$/.test(name) || !sig || sig.length !== 22 || !timingSafeEqual(Buffer.from(sig), Buffer.from(sign(userId, `${id}.${name}`)))) return NextResponse.json({ error: 'bad_request' }, { status: 400 })
+  if (!id || !/^[\w-]{8,64}$/.test(id) || !/^(casa-[\w-]{1,64}\/)?\d+-[a-z0-9]+(-f)?$/.test(name) || !sig || sig.length !== 22 || !timingSafeEqual(Buffer.from(sig), Buffer.from(sign(userId, `${id}.${name}`)))) return NextResponse.json({ error: 'bad_request' }, { status: 400 })
 
   const key = `videos/${userId}/${name}.mp4`
   const url = `${process.env.R2_PUBLIC_URL}/${key}`
@@ -174,12 +209,14 @@ export async function GET(req: NextRequest) {
       fetch(out.video.url).then(r => r.arrayBuffer()).then(b => writeFile(raw, Buffer.from(b))),
       fetch(`https://pub-cd3d5947375c4207af2dc57da61686ee.r2.dev/music/property-reveal/${encodeURIComponent(track)}`).then(r => r.arrayBuffer()).then(b => writeFile(music, Buffer.from(b))),
     ])
-    const cut = cutPoint(await ffmpeg(['-i', raw, '-vf', 'scale=160:90,format=gray', '-f', 'rawvideo', '-']), 160 * 90)
+    // giorno/notte va in avanti (tutto il clip, la notte e' l'ultima immagine); gli altri al contrario, tagliati prima della dissolvenza di Veo
+    const forward = name.endsWith('-f')
+    const cut = forward ? VEO_SECONDS : cutPoint(await ffmpeg(['-i', raw, '-vf', 'scale=160:90,format=gray', '-f', 'rawvideo', '-']), 160 * 90)
     const total = cut + HOLD, n = Math.round(total * 30)
     // zoom 4% ease-in-out su tutto il video, sub-pixel (perspective con interpolazione: niente tremolio)
     const z = `(1+0.04*(0.5-0.5*cos(PI*min(in/${n}\\,1))))`, o = `(1-1/${z})/2`
     await ffmpeg(['-y', '-i', raw, '-i', music, '-filter_complex',
-      `[0:v]trim=end=${cut.toFixed(2)},setpts=PTS-STARTPTS,reverse,fps=30,tpad=stop_mode=clone:stop_duration=${HOLD},`
+      `[0:v]trim=end=${cut.toFixed(2)},setpts=PTS-STARTPTS,${forward ? '' : 'reverse,'}fps=30,tpad=stop_mode=clone:stop_duration=${HOLD},`
       + `perspective=x0='W*${o}':y0='H*${o}':x1='W-W*${o}':y1='H*${o}':x2='W*${o}':y2='H-H*${o}':x3='W-W*${o}':y3='H-H*${o}':interpolation=cubic:eval=frame,format=yuv420p[v];`
       + `[1:a]atrim=end=${total.toFixed(2)},afade=t=out:st=${(total - 1.2).toFixed(2)}:d=1.2,volume=0.8[a]`,
       '-map', '[v]', '-map', '[a]', '-c:v', 'libx264', '-crf', '18', '-preset', 'medium', '-c:a', 'aac', '-b:a', '128k', '-shortest', '-movflags', '+faststart', final])

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Anvil, ArrowUp, Search, Building2, Check, ChevronLeft, Clapperboard, SquareSplitHorizontal, Image as ImageIcon, Palette, Sofa, Sparkles, Download, ExternalLink, ImagePlus, Lasso, Shuffle, LayoutGrid, Loader2, Monitor, RotateCcw, SquareDashed, SquareDashedMousePointer, X } from 'lucide-react';
+import { Anvil, WandSparkles, Film, HardHat, MoonStar, ArrowUp, Search, Building2, Check, ChevronLeft, Clapperboard, SquareSplitHorizontal, Image as ImageIcon, Palette, Sofa, Sparkles, Download, ExternalLink, ImagePlus, Lasso, Shuffle, LayoutGrid, Loader2, Monitor, RotateCcw, SquareDashed, SquareDashedMousePointer, X } from 'lucide-react';
 import { fileToResizedDataUrl } from '@/lib/staging';
 import { AI_MOCK } from '@/lib/aiMock';
 import { AiPhotoStage, type EditRequest, type Region, type Reveal, type Suggestion } from './AiPhoto';
@@ -59,16 +59,26 @@ type Msg =
   | { id: string; role: 'video'; step: 'template' | 'anim' | 'mode' | 'previews' | 'render'; photo: string; anim?: VideoAnim; picks: VideoPick[]; previews?: (string | null)[]; url?: string; err?: string; job?: string };
 
 // Macro template video, ognuno con i suoi stili di animazione (card con anteprima in loop)
-type VideoAnim = 'popup' | 'gravity';
+type VideoAnim = 'popup' | 'gravity' | 'particles' | 'stopmotion' | 'cantiere' | 'daynight';
 // scelta gia' fatta: etichetta con icona (o la foto scelta) sopra la domanda
-type VideoPick = { label: string; icon: 'split' | 'pop' | 'drop' | 'style' | 'keep' | 'photo'; src?: string };
-const PICK_ICON = { split: SquareSplitHorizontal, pop: Sparkles, drop: Anvil, style: Palette, keep: Sofa, photo: ImageIcon };
+type VideoPick = { label: string; icon: 'split' | 'pop' | 'drop' | 'dust' | 'steps' | 'build' | 'moon' | 'style' | 'keep' | 'photo'; src?: string };
+const PICK_ICON = { split: SquareSplitHorizontal, pop: Sparkles, drop: Anvil, dust: WandSparkles, steps: Film, build: HardHat, moon: MoonStar, style: Palette, keep: Sofa, photo: ImageIcon };
+const ANIM_ICON: Record<VideoAnim, VideoPick['icon']> = { popup: 'pop', gravity: 'drop', particles: 'dust', stopmotion: 'steps', cantiere: 'build', daynight: 'moon' };
 const R2_SPIKE = 'https://pub-a668674eaa484e8e8f2f10c264392bfc.r2.dev/spike-video/stili';
 type VideoCard = { id: string; label: string; desc: string; sample: string };
 const VIDEO_TEMPLATES: (VideoCard & { anims: (VideoCard & { id: VideoAnim })[] })[] = [
   { id: 'prima-dopo', label: 'Prima e dopo', desc: 'Dalla stanza vuota a quella arredata', sample: `${R2_SPIKE}/F12_rianima.mp4`, anims: [
     { id: 'popup', label: 'Popup', desc: 'I mobili spuntano uno alla volta', sample: `${R2_SPIKE}/F12_rianima.mp4` },
     { id: 'gravity', label: 'Dall’alto', desc: 'I mobili cadono dall’alto e si posano', sample: `${R2_SPIKE}/F9_gravity.mp4` },
+    { id: 'particles', label: 'Particelle', desc: 'I mobili si compongono da una polvere dorata', sample: `${R2_SPIKE}/particles.mp4` },
+    { id: 'stopmotion', label: 'Stop-motion', desc: 'I mobili compaiono a scatti, uno per volta', sample: `${R2_SPIKE}/stopmotion.mp4` },
+  ] },
+  // un'animazione sola: dal template si passa subito alla scelta della stanza
+  { id: 'cantiere', label: 'Cantiere', desc: 'Dal cantiere alla casa finita', sample: `${R2_SPIKE}/cantiere.mp4`, anims: [
+    { id: 'cantiere', label: 'Cantiere', desc: 'Dal cantiere alla casa finita', sample: `${R2_SPIKE}/cantiere.mp4` },
+  ] },
+  { id: 'giorno-notte', label: 'Giorno e notte', desc: 'Scende la sera e si accendono le luci', sample: `${R2_SPIKE}/daynight.mp4`, anims: [
+    { id: 'daynight', label: 'Giorno e notte', desc: 'Scende la sera e si accendono le luci', sample: `${R2_SPIKE}/daynight.mp4` },
   ] },
 ];
 const VIDEO_STYLES = [{ id: 'modern', label: 'Moderno' }, { id: 'nordic', label: 'Nordico' }, { id: 'industrial', label: 'Luxury' }, { id: 'boho', label: 'Boho' }];
@@ -500,7 +510,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                   <div className="flex items-center gap-1 px-2 pb-4 text-sm">
                     {/* indietro di un passo (non a video partito) */}
                     {m.step !== 'template' && m.step !== 'render' && (
-                      <button aria-label="Indietro" onClick={() => patchV(m.id, m.step === 'anim' ? { step: 'template', picks: [] } : m.step === 'mode' ? { step: 'anim', anim: undefined, picks: m.picks.slice(0, 1) } : { step: 'mode', picks: m.picks.slice(0, 2), previews: undefined })}
+                      <button aria-label="Indietro" onClick={() => patchV(m.id, m.step === 'anim' ? { step: 'template', picks: [] } : m.step === 'mode' && (m.anim === 'cantiere' || m.anim === 'daynight') ? { step: 'template', anim: undefined, picks: [] } : m.step === 'mode' ? { step: 'anim', anim: undefined, picks: m.picks.slice(0, 1) } : { step: 'mode', picks: m.picks.slice(0, 2), previews: undefined })}
                         className="-ml-1.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-muted ease-smooth transition-colors hover:bg-black/5 hover:text-ink"><ChevronLeft size={18} /></button>
                     )}
                     <span className="font-medium">{m.step === 'template' ? 'Che video vuoi creare?' : m.step === 'anim' ? 'Con quale animazione?' : m.step === 'mode' ? 'Tengo i mobili che ci sono o arredo in un nuovo stile?' : m.step === 'previews' ? (m.previews?.some(p => !p) ? 'Preparo due proposte…' : 'Scegli quella per il video') : m.url ? 'Ecco il video' : m.err ? '' : 'Creo il video, circa 2 minuti'}</span>
@@ -509,7 +519,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                       <div className="grid gap-4 sm:grid-cols-2">
                         {(m.step === 'template' ? VIDEO_TEMPLATES : VIDEO_TEMPLATES.find(t => t.label === m.picks[0]?.label)?.anims ?? []).map((t, k) => (
                           <div key={t.id} className="rise" style={{ animationDelay: `${0.05 + k * 0.06}s` }}>
-                            <button onClick={() => patchV(m.id, m.step === 'template' ? { step: 'anim', picks: [{ label: t.label, icon: 'split' }] } : { step: 'mode', anim: t.id as VideoAnim, picks: [...m.picks, { label: t.label, icon: t.id === 'gravity' ? 'drop' : 'pop' }] })}
+                            <button onClick={() => { const one = m.step === 'template' ? (t as (typeof VIDEO_TEMPLATES)[number]).anims : null; patchV(m.id, one?.length === 1 ? { step: 'mode', anim: one[0].id, picks: [{ label: t.label, icon: ANIM_ICON[one[0].id] }] } : m.step === 'template' ? { step: 'anim', picks: [{ label: t.label, icon: 'split' }] } : { step: 'mode', anim: t.id as VideoAnim, picks: [...m.picks, { label: t.label, icon: ANIM_ICON[t.id as VideoAnim] }] }); }}
                               onMouseMove={tiltMove} onMouseLeave={e => tiltReset(e.currentTarget)} className="tilt group relative flex w-full flex-col overflow-hidden rounded-[28px] bg-white p-2 text-left shadow-[0_1px_2px_rgba(0,0,0,.04),0_8px_24px_-12px_rgba(0,0,0,.12)] ring-1 ring-black/5 hover:shadow-[0_2px_4px_rgba(0,0,0,.04),0_30px_50px_-20px_rgba(0,0,0,.25)] active:scale-[0.985]">
                               <span className="sheen pointer-events-none absolute inset-0 z-20" />
                               <video src={t.sample} autoPlay loop muted playsInline className="aspect-video w-full rounded-[20px] object-cover" />
