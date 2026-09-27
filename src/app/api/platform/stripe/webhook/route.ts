@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { activatePlan, endPlan, extendPaid, userForSubscription } from '@/lib/credits'
+import { FORFETTARIO_FOOTER as FOOTER } from '@/lib/pricing'
 
 export const runtime = 'nodejs'
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
-// Dicitura del forfettario sulle fatture successive alla prima (la prima la prende dal modello fattura dell'account Stripe)
-const FOOTER = 'Operazione senza applicazione dell\'IVA ai sensi dell\'art. 1, commi 54-89, L. 190/2014 (regime forfettario). Imposta di bollo assolta sull\'originale per importi superiori a 77,47 euro.'
 
 // Fine del periodo pagato: nelle API recenti sta sulla voce dell'abbonamento
 const paidUntil = (s: Stripe.Subscription) => new Date(((s as unknown as { current_period_end?: number }).current_period_end ?? s.items.data[0]?.current_period_end ?? 0) * 1000)

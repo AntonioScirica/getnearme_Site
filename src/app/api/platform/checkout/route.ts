@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
 import { authUser } from '@/lib/platformAuth'
+import { FORFETTARIO_FOOTER } from '@/lib/pricing'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
@@ -21,10 +22,15 @@ export async function POST(req: NextRequest) {
   const plan = body!.plan!.startsWith('pro') ? 'pro' : 'starter'
   const { data: row } = await admin.from('platform_credits').select('stripe_customer_id').eq('user_id', u.id).maybeSingle()
   const meta = { app: 'agenteimmo', user_id: u.id, plan }
+  let customer = row?.stripe_customer_id as string | undefined
+  if (!customer) {
+    customer = (await stripe.customers.create({ email: u.email || undefined, invoice_settings: { footer: FORFETTARIO_FOOTER }, metadata: { app: 'agenteimmo', user_id: u.id }, preferred_locales: ['it'] })).id
+    await admin.from('platform_credits').upsert({ user_id: u.id, stripe_customer_id: customer, updated_at: new Date().toISOString() }, { onConflict: 'user_id' })
+  }
   const session = await stripe.checkout.sessions.create({
     mode: 'subscription',
     line_items: [{ price: price.id, quantity: 1 }],
-    ...(row?.stripe_customer_id ? { customer: row.stripe_customer_id, customer_update: { address: 'auto', name: 'auto' } } : { customer_email: u.email || undefined }),
+    customer, customer_update: { address: 'auto', name: 'auto' },
     client_reference_id: u.id,
     metadata: meta,
     subscription_data: { metadata: meta },

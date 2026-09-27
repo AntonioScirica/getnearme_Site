@@ -9,3 +9,6 @@ export const CREDIT_COST = { luminoso: 0, modifica: 3, arreda: 5, svuota: 5, vid
 export const PRICING = { starter: 29, starterCredits: 1000, quarterly: 69, yearly: 59, credits: 2500 };
 export const photosFor = (credits: number) => Math.floor(credits / CREDIT_COST.arreda);
 export const videosFor = (credits: number) => Math.floor(credits / CREDIT_COST.video);
+
+// Dicitura del forfettario sulle fatture Stripe: sul cliente gia' prima del pagamento, cosi' c'e' anche sulla prima fattura
+export const FORFETTARIO_FOOTER = 'Operazione senza applicazione dell\'IVA ai sensi dell\'art. 1, commi 54-89, L. 190/2014 (regime forfettario). Imposta di bollo assolta sull\'originale per importi superiori a 77,47 euro.'
