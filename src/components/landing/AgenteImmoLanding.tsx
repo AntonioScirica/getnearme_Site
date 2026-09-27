@@ -10,7 +10,7 @@ import { ArrowRight, Award, Check, Clapperboard, Clock, FileText, Globe, Images,
 // Le animazioni entrano quando la sezione arriva in vista (blur-in), niente scatti.
 
 import { FAQ } from '@/lib/landingFaq';
-import { PRICING } from '@/lib/pricing';
+import { PRICING, photosFor, videosFor } from '@/lib/pricing';
 
 // guide SEO linkate dal fondo pagina (collegamenti interni verso le pagine che devono posizionarsi)
 const GUIDE_LINKS = [['/it/agente-immobiliare', 'Agente immobiliare'], ['/it/come-diventare-agente-immobiliare', 'Come diventare agente immobiliare'], ['/it/provvigione-agente-immobiliare', 'Provvigione agente immobiliare'], ['/it/software-agenti-immobiliari', 'Software per agenti immobiliari'], ['/it/home-staging-virtuale', 'Home staging virtuale']];
@@ -182,13 +182,22 @@ function Pricing() {
           <div className="text-sm font-semibold text-muted">Agente Immo</div>
           <div className="mt-3 flex items-end gap-2"><span key={p} className="blur-in font-display text-6xl font-extrabold tracking-tight">{p} €</span><span className="pb-2 text-muted">/ mese</span></div>
           <div key={billed} className="blur-in mt-1 text-sm text-muted">{billed}</div>
-          <ul className="mt-7 space-y-3 text-[15px]">
-            {['Foto arredate illimitate, per tutti i tuoi immobili', `${PRICING.videos} video al mese per social e portali`, 'Il tuo sito con tutti i tuoi immobili, sul tuo nome', 'Annunci, report PDF e cosa c\'è vicino, per ogni immobile', 'Lo disdici quando vuoi, alla fine del periodo'].map(x => (
+          {/* crediti in grande, sotto cosa ci fai (come Higgsfield) */}
+          <div className="mt-7 rounded-[20px] bg-canvas p-5">
+            <div className="flex items-center gap-2 font-display text-xl font-extrabold tracking-tight"><Sparkles size={16} className="text-ai" /> {String(PRICING.credits).replace(/\B(?=(\d{3})+(?!\d))/g, '.')} crediti al mese</div>
+            <div className="mt-2 space-y-1 pl-6 text-[15px] text-muted">
+              <div>= {photosFor(PRICING.credits)} foto arredate</div>
+              <div>oppure {videosFor(PRICING.credits)} video per social e portali</div>
+              <div>oppure un mix, come ti serve</div>
+            </div>
+          </div>
+          <ul className="mt-6 space-y-3 text-[15px]">
+            {['Foto più luminose sempre gratis, senza crediti', 'Il tuo sito con tutti i tuoi immobili, sul tuo nome', 'Annunci, report PDF e cosa c\'è vicino, per ogni immobile', 'Lo disdici quando vuoi, alla fine del periodo'].map(x => (
               <li key={x} className="flex items-start gap-3"><span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand/10 text-brand"><Check size={12} /></span>{x}</li>
             ))}
           </ul>
           <Cta className="mt-8 w-full justify-center">Prova gratis {PRICING.trialDays} giorni</Cta>
-          <p className="mt-3 text-center text-xs text-muted">Nessuna carta per la prova. Prezzi finali, senza IVA aggiunta.</p>
+          <p className="mt-3 text-center text-xs text-muted">Prova con {PRICING.trialCredits} crediti, nessuna carta. Prezzi finali, senza IVA aggiunta.</p>
         </div>
       </Reveal>
     </section>
