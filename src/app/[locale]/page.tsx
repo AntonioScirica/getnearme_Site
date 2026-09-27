@@ -2,52 +2,61 @@ import type { Metadata } from 'next';
 import { permanentRedirect } from 'next/navigation';
 import { locales } from '@/lib/i18n';
 import { platformFontVars } from '@/lib/platformFonts';
-import { FAQ } from '@/lib/landingFaq';
+import { FAQ, FAQ_EN } from '@/lib/landingFaq';
 import { PRICING } from '@/lib/pricing';
 import AgenteImmoLanding from '@/components/landing/AgenteImmoLanding';
 
-// Home di agenteimmo.me: landing di Agente Immo. Esiste solo in italiano: le altre lingue rimandano a /it
-// (niente pagine duplicate con hreflang falsi).
+// Home di agenteimmo.me: landing di Agente Immo in italiano (/it) e inglese (/en). Le altre lingue rimandano a /en
+// (niente pagine duplicate con hreflang falsi). La piattaforma dietro, per ora, e' solo in italiano.
 // ponytail: la vecchia landing GetNearMe (estensione) e' nella storia git, prima del commit che l'ha sostituita.
-const URL = 'https://agenteimmo.me/it';
-const TITLE = 'Software per agenti immobiliari: più incarichi, case vendute prima | Agente Immo';
-const DESC = 'Il software per agenti immobiliari che ti fa vincere più incarichi: foto arredate con l\'AI, video per i social e il tuo sito, senza fotografo né web agency. Prova gratis.';
+const IT_URL = 'https://agenteimmo.me/it';
+const EN_URL = 'https://agenteimmo.me/en';
+const COPY = {
+  it: { url: IT_URL, og: 'it_IT', title: 'Software per agenti immobiliari: più incarichi, case vendute prima | Agente Immo', share: 'Agente Immo, il software per agenti immobiliari', short: 'Più incarichi, case vendute prima. Senza spendere di più.', desc: 'Il software per agenti immobiliari che ti fa vincere più incarichi: foto arredate con l\'AI, video per i social e il tuo sito, senza fotografo né web agency. Prova gratis.', faq: FAQ, lang: 'it-IT', features: ['Home staging virtuale con AI', 'Video immobiliari per i social', 'Sito personale per agente immobiliare', 'Annunci e report per ogni immobile'], audience: 'Agenti immobiliari e agenzie immobiliari', offer: 'Prezzo mensile: Starter mensile, Pro annuale o trimestrale' },
+  en: { url: EN_URL, og: 'en_US', title: 'Real estate agent software: win more listings, sell homes faster | Agente Immo', share: 'Agente Immo, the software for real estate agents', short: 'Win more listings, sell homes faster. Without spending more.', desc: 'The real estate agent software that helps you win more listings: AI-staged photos, social media videos and your own website, no photographer or web agency needed. Try it free.', faq: FAQ_EN, lang: 'en', features: ['AI virtual staging', 'Real estate videos for social media', 'Personal website for real estate agents', 'Listings and reports for every property'], audience: 'Real estate agents and agencies', offer: 'Monthly price: Starter monthly, Pro yearly or quarterly' },
+} as const;
+const langOf = (locale: string) => (locale === 'en' ? 'en' : 'it') as keyof typeof COPY;
 
-export const metadata: Metadata = {
-  title: { absolute: TITLE },
-  description: DESC,
-  alternates: { canonical: URL, languages: { it: URL, 'x-default': URL } },
-  openGraph: { type: 'website', url: URL, siteName: 'Agente Immo', locale: 'it_IT', title: 'Agente Immo, il software per agenti immobiliari', description: 'Più incarichi, case vendute prima. Senza spendere di più.', images: ['/immo/home/staging-after.webp'] },
-  twitter: { card: 'summary_large_image', title: 'Agente Immo, il software per agenti immobiliari', description: DESC, images: ['/immo/home/staging-after.webp'] },
-};
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const c = COPY[langOf((await params).locale)];
+  return {
+    title: { absolute: c.title },
+    description: c.desc,
+    alternates: { canonical: c.url, languages: { it: IT_URL, en: EN_URL, 'x-default': IT_URL } },
+    openGraph: { type: 'website', url: c.url, siteName: 'Agente Immo', locale: c.og, title: c.share, description: c.short, images: ['/immo/home/staging-after.webp'] },
+    twitter: { card: 'summary_large_image', title: c.share, description: c.desc, images: ['/immo/home/staging-after.webp'] },
+  };
+}
 
 export function generateStaticParams() {
   return locales.map((locale) => ({ locale }));
 }
 
-const jsonLd = {
+const jsonLd = (c: (typeof COPY)[keyof typeof COPY]) => ({
   '@context': 'https://schema.org',
   '@graph': [
-    { '@type': 'Organization', '@id': 'https://agenteimmo.me/#org', name: 'Agente Immo', url: URL, logo: 'https://agenteimmo.me/immo/logo-mark.png', email: 'info@agenteimmo.me' },
-    { '@type': 'WebSite', '@id': 'https://agenteimmo.me/#site', name: 'Agente Immo', url: URL, inLanguage: 'it-IT', publisher: { '@id': 'https://agenteimmo.me/#org' } },
+    { '@type': 'Organization', '@id': 'https://agenteimmo.me/#org', name: 'Agente Immo', url: IT_URL, logo: 'https://agenteimmo.me/immo/logo-mark.png', email: 'info@agenteimmo.me' },
+    { '@type': 'WebSite', '@id': 'https://agenteimmo.me/#site', name: 'Agente Immo', url: IT_URL, inLanguage: ['it-IT', 'en'], publisher: { '@id': 'https://agenteimmo.me/#org' } },
     {
       '@type': 'SoftwareApplication', name: 'Agente Immo', applicationCategory: 'BusinessApplication', operatingSystem: 'Web',
-      url: URL, description: DESC, inLanguage: 'it-IT', audience: { '@type': 'BusinessAudience', audienceType: 'Agenti immobiliari e agenzie immobiliari' },
-      featureList: ['Home staging virtuale con AI', 'Video immobiliari per i social', 'Sito personale per agente immobiliare', 'Annunci e report per ogni immobile'],
-      offers: { '@type': 'AggregateOffer', priceCurrency: 'EUR', lowPrice: PRICING.starter, highPrice: PRICING.quarterly, offerCount: 3, description: 'Prezzo mensile: Starter mensile, Pro annuale o trimestrale' },
+      url: c.url, description: c.desc, inLanguage: c.lang, audience: { '@type': 'BusinessAudience', audienceType: c.audience },
+      featureList: c.features,
+      offers: { '@type': 'AggregateOffer', priceCurrency: 'EUR', lowPrice: PRICING.starter, highPrice: PRICING.quarterly, offerCount: 3, description: c.offer },
       publisher: { '@id': 'https://agenteimmo.me/#org' },
     },
-    { '@type': 'FAQPage', mainEntity: FAQ.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) },
+    { '@type': 'FAQPage', mainEntity: c.faq.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) },
   ],
-};
+});
 
 export default async function Home({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
-  if (locale !== 'it') permanentRedirect('/it');
+  if (locale !== 'it' && locale !== 'en') permanentRedirect('/en');
+  const lang = langOf(locale);
+  const c = COPY[lang];
   return (
-    <div className={platformFontVars}>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <AgenteImmoLanding />
+    <div className={platformFontVars} lang={c.lang}>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd(c)) }} />
+      <AgenteImmoLanding lang={lang} faq={[...c.faq]} />
     </div>
   );
 }

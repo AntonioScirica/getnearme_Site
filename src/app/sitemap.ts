@@ -10,8 +10,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const entries: MetadataRoute.Sitemap = [];
 
   // ===== LANDING PAGES =====
-  // Home e guida pilastro: solo italiano (le altre lingue rimandano a /it)
+  // Home in italiano e inglese; guide solo in italiano
   entries.push({ url: `${baseUrl}/it`, lastModified: new Date(), changeFrequency: "weekly", priority: 1.0 });
+  entries.push({ url: `${baseUrl}/en`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.8 });
   GUIDES.forEach((g, i) => entries.push({ url: `${baseUrl}/it/${g.slug}`, lastModified: new Date(g.updated), changeFrequency: "monthly", priority: i === 0 ? 0.9 : 0.8 }));
 
   // Pagine legali per ogni lingua

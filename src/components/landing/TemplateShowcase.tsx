@@ -35,26 +35,26 @@ const Site = memo(function Site({ id, k }: { id: (typeof TEMPLATES)[number]['id'
   );
 });
 
-function Window({ id, k, front }: { id: (typeof TEMPLATES)[number]['id']; k: number; front: boolean }) {
+function Window({ id, k, front, label }: { id: (typeof TEMPLATES)[number]['id']; k: number; front: boolean; label: string }) {
   return (
     <div className="overflow-hidden rounded-[24px] bg-white shadow-[0_30px_80px_-30px_rgba(0,0,0,.35)] ring-1 ring-black/5">
-      <Bar name={front ? TEMPLATES.find(x => x.id === id)!.name : ''} agent={AGENTS[TEMPLATES.findIndex(x => x.id === id) % AGENTS.length]} />
+      <Bar name={front ? TEMPLATES.find(x => x.id === id)!.name : ''} agent={AGENTS[TEMPLATES.findIndex(x => x.id === id) % AGENTS.length]} label={label} />
       <Site id={id} k={k} />
     </div>
   );
 }
 
-function Bar({ name, agent = AGENTS[0] }: { name: string; agent?: string }) {
+function Bar({ name, agent = AGENTS[0], label = 'Modello' }: { name: string; agent?: string; label?: string }) {
   return (
     <div className="flex h-12 items-center gap-2 border-b border-line bg-canvas px-4">
       <span className="flex gap-1.5">{['#ff5f57', '#febc2e', '#28c840'].map(c => <span key={c} className="h-2.5 w-2.5 rounded-full" style={{ background: c }} />)}</span>
       <span className="mx-auto flex h-7 items-center gap-1.5 rounded-full bg-white px-3 text-[11px] font-medium text-muted ring-1 ring-black/5"><Globe size={11} className="text-brand" /><span>agenteimmo.me/<span className="text-ink">{slug(agent)}</span></span></span>
-      <span key={name} className={`rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold text-muted ring-1 ring-black/5 ${name ? 'blur-in' : 'opacity-0'}`}>Modello: {name || '-'}</span>
+      <span key={name} className={`rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold text-muted ring-1 ring-black/5 ${name ? 'blur-in' : 'opacity-0'}`}>{label}: {name || '-'}</span>
     </div>
   );
 }
 
-export default function TemplateShowcase({ active }: { active: boolean }) {
+export default function TemplateShowcase({ active, en = false }: { active: boolean; en?: boolean }) {
   const [i, setI] = useState(0);
   const sizer = useRef<HTMLDivElement>(null);
   const [k, setK] = useState(0.4);
@@ -80,7 +80,7 @@ export default function TemplateShowcase({ active }: { active: boolean }) {
           : { transform: `translate(${p * 36}px, ${-p * 32}px) scale(${1 - p * 0.05})`, opacity: p >= DEPTH ? 0 : 1 - p * 0.15, zIndex: 10 - p };
         return (
           <div key={id} className="absolute bottom-0 left-0 right-[72px] origin-top-right" style={{ ...style, transition: 'transform 1s cubic-bezier(.65,0,.35,1), opacity 1s cubic-bezier(.65,0,.35,1)' }}>
-            <Window id={id} k={k} front={p === 0} />
+            <Window id={id} k={k} front={p === 0} label={en ? 'Template' : 'Modello'} />
           </div>
         );
       })}

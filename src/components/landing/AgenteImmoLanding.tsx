@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import AuthCta from '@/components/AuthCta';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { ArrowRight, Check, ChevronLeft, ChevronRight, MessageCircle, Clapperboard, FileText, Globe, ImagePlus, Images, Loader2, MapPin, Pencil, Search, Sparkles, Upload, Users, Wand2 } from 'lucide-react';
 
 // Landing di Agente Immo per gli agenti: tre promesse (home staging AI, video, sito pronto) con lo stesso
@@ -20,7 +20,13 @@ const TemplateShowcase = dynamic(() => import('./TemplateShowcase'), { ssr: fals
 // ponytail: le guide per chi inizia (come diventare, provvigione) restano online ma non si linkano da qui: la landing parla ad agenti gia' in attivita'
 const GUIDE_LINKS = [['/it/acquisire-incarichi-immobiliari', 'Come acquisire più incarichi'], ['/it/intelligenza-artificiale-agenti-immobiliari', 'AI per agenti immobiliari'], ['/it/video-immobiliari-social', 'Video immobiliari per i social'], ['/it/home-staging-virtuale', 'Home staging virtuale'], ['/it/software-agenti-immobiliari', 'Software per agenti immobiliari']];
 
-const APP = '/it/dashboard';
+const APP = '/it/dashboard'; // ponytail: la piattaforma per ora e' solo in italiano, anche dalla landing inglese
+
+// Lingua della landing (it su /it, en su /en): L('testo italiano', "English text") accanto nel codice.
+export type LandingLang = 'it' | 'en';
+const Lang = createContext<LandingLang>('it');
+const useL = () => { const en = useContext(Lang) === 'en'; return (it: string, eng: string) => (en ? eng : it); };
+const useEn = () => useContext(Lang) === 'en';
 const VIDEO = 'https://pub-a668674eaa484e8e8f2f10c264392bfc.r2.dev/spike-video/out/bbb243664b.mp4';
 const VIDEO2 = 'https://pub-a668674eaa484e8e8f2f10c264392bfc.r2.dev/spike-video/out/d626678fc2.mp4';
 
@@ -52,7 +58,8 @@ function CountUp({ to, prefix = '', suffix = '' }: { to: number; prefix?: string
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
   }, [on, to]);
-  return <span ref={ref as unknown as React.Ref<HTMLSpanElement>} className="tabular-nums">{prefix}{thousands(v)}{suffix}</span>;
+  const sep = useEn() ? ',' : '.';
+  return <span ref={ref as unknown as React.Ref<HTMLSpanElement>} className="tabular-nums">{prefix}{thousands(v, sep)}{suffix}</span>;
 }
 
 // Fascia a tutta larghezza: bianca (puntini della pagina), grigia o scura. Separa le sezioni e da' ritmo.
@@ -76,6 +83,7 @@ const Cta = ({ href = '#prova', children, ghost = false, className = '' }: { hre
 
 // Prima/dopo: si trascina col mouse, da fermo scorre da solo avanti e indietro
 function BeforeAfter({ before, after, className = '', auto = true }: { before: string; after: string; className?: string; auto?: boolean }) {
+  const L = useL();
   const [p, setP] = useState(50);
   const [drag, setDrag] = useState(false);
   const [idle, setIdle] = useState(true); // dopo il primo trascinamento lo scorrimento automatico si ferma
@@ -95,10 +103,10 @@ function BeforeAfter({ before, after, className = '', auto = true }: { before: s
   return (
     <div className={`relative select-none overflow-hidden ${className}`} onPointerDown={e => { setIdle(false); setDrag(true); e.currentTarget.setPointerCapture(e.pointerId); move(e); }}
       onPointerMove={move} onPointerUp={() => setDrag(false)} onPointerCancel={() => setDrag(false)} style={{ cursor: 'ew-resize', touchAction: 'none' }}>
-      <img src={after} alt="Dopo il home staging" className="absolute inset-0 h-full w-full object-cover" draggable={false} />
-      <img src={before} alt="Prima" className="absolute inset-0 h-full w-full object-cover" draggable={false} style={{ clipPath: `inset(0 ${100 - p}% 0 0)`, transition: t }} />
-      <span className="absolute left-4 top-4 rounded-full bg-black/55 px-3 py-1 text-xs font-semibold text-white backdrop-blur">Prima</span>
-      <span className="absolute right-4 top-4 flex items-center gap-1 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-ink backdrop-blur"><Sparkles size={12} className="text-ai" /> Dopo</span>
+      <img src={after} alt={L('Dopo il home staging', "After virtual staging")} className="absolute inset-0 h-full w-full object-cover" draggable={false} />
+      <img src={before} alt={L('Prima', "Before")} className="absolute inset-0 h-full w-full object-cover" draggable={false} style={{ clipPath: `inset(0 ${100 - p}% 0 0)`, transition: t }} />
+      <span className="absolute left-4 top-4 rounded-full bg-black/55 px-3 py-1 text-xs font-semibold text-white backdrop-blur">{L('Prima', "Before")}</span>
+      <span className="absolute right-4 top-4 flex items-center gap-1 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-ink backdrop-blur"><Sparkles size={12} className="text-ai" /> {L('Dopo', "After")}</span>
       <span className="absolute inset-y-0 w-0.5 -translate-x-1/2 bg-white shadow-[0_0_10px_rgba(0,0,0,.45)]" style={{ left: `${p}%`, transition: t }}>
         <span className="absolute left-1/2 top-1/2 flex h-12 w-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center gap-0.5 rounded-full bg-white text-brand shadow-lg"><ChevronLeft size={16} strokeWidth={2.5} /><ChevronRight size={16} strokeWidth={2.5} /></span>
       </span>
@@ -133,16 +141,17 @@ function useInView(margin = '0px') {
 // Un solo pacchetto: il sito non costa nulla in piu' a noi e chi non lo vuole semplicemente non lo pubblica.
 // Foto "illimitate" con uso ragionevole (vedi termini), video contati perche' costano davvero.
 
-const thousands = (n: number) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+const thousands = (n: number, sep = '.') => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, sep);
 
 // crediti in grande, sotto cosa ci fai (come Higgsfield)
 function Credits({ n }: { n: number }) {
+  const L = useL(), en = useEn();
   return (
     <div className="mt-6 rounded-[20px] bg-canvas p-5">
-      <div className="flex items-center gap-2 font-display text-xl font-extrabold tracking-tight"><Sparkles size={16} className="text-ai" /> {thousands(n)} crediti al mese</div>
+      <div className="flex items-center gap-2 font-display text-xl font-extrabold tracking-tight"><Sparkles size={16} className="text-ai" /> {thousands(n, en ? ',' : '.')} {L('crediti al mese', "credits a month")}</div>
       <div className="mt-2 space-y-1 pl-6 text-[15px] text-muted">
-        <div>= {photosFor(n)} foto arredate</div>
-        <div>~ {videosFor(n)} video</div>
+        <div>= {photosFor(n)} {L('foto arredate', "staged photos")}</div>
+        <div>~ {videosFor(n)} {L('video', "videos")}</div>
       </div>
     </div>
   );
@@ -150,52 +159,54 @@ function Credits({ n }: { n: number }) {
 
 // il sito: stesso blocco dei crediti (titolo grande), sotto cosa c'e' dentro in due colonne.
 // Solo funzioni che esistono davvero nei siti degli agenti (niente traduzione finche' non c'e').
-const SITE_PERKS: [typeof Globe, string][] = [[Search, 'SEO: ti trovano su Google nella tua zona'], [Pencil, 'Modifichi tutto: colori, testi, foto, sezioni'], [MessageCircle, 'Le richieste arrivano a te, non al portale'], [Sparkles, 'Ogni casa che carichi va online da sola']];
+const SITE_PERKS: [typeof Globe, string, string][] = [[Search, 'SEO: ti trovano su Google nella tua zona', 'SEO: found on Google in your area'], [Pencil, 'Modifichi tutto: colori, testi, foto, sezioni', 'Edit everything: colors, text, photos, sections'], [MessageCircle, 'Le richieste arrivano a te, non al portale', 'Inquiries come to you, not to a portal'], [Sparkles, 'Ogni casa che carichi va online da sola', 'Every listing you upload goes live on its own']];
 function SiteIncluded() {
+  const L = useL();
   return (
     <div className="mt-3 rounded-[20px] bg-canvas p-5">
-      <div className="flex items-center gap-2 font-display text-xl font-extrabold tracking-tight"><Globe size={16} className="text-brand" /> Il tuo sito incluso</div>
-      <div className="mt-1 pl-6 text-[15px] text-muted">agenteimmo.me/<span className="text-ink">tuonome</span>, già fatto con i nostri modelli</div>
+      <div className="flex items-center gap-2 font-display text-xl font-extrabold tracking-tight"><Globe size={16} className="text-brand" /> {L('Il tuo sito incluso', "Your website included")}</div>
+      <div className="mt-1 pl-6 text-[15px] text-muted">agenteimmo.me/<span className="text-ink">{L('tuonome', "yourname")}</span>, {L('già fatto con i nostri modelli', "ready-made with our templates")}</div>
       <ul className="mt-4 space-y-2.5 pl-6 text-[15px]">
-        {SITE_PERKS.map(([Icon, l]) => <li key={l} className="flex items-center gap-2.5"><Icon size={15} className="shrink-0 text-brand" />{l}</li>)}
+        {SITE_PERKS.map(([Icon, l, e]) => <li key={l} className="flex items-center gap-2.5"><Icon size={15} className="shrink-0 text-brand" />{L(l, e)}</li>)}
       </ul>
     </div>
   );
 }
 
 // Quanto costa oggi farlo senza di noi (stime indicative di mercato, come nella vecchia landing GetNearMe)
-const WITHOUT: [typeof Globe, string, string, string][] = [
-  [Wand2, 'Home staging', '~1.500 €', 'home stager, circa 4 giorni per casa'],
-  [Clapperboard, 'Video della casa', '~250 €', 'videomaker, mezza giornata'],
-  [Globe, 'Sito con i tuoi immobili', '~1.500 €', 'web agency, 2-4 settimane'],
-  [Sparkles, 'Foto sistemate e più luminose', '~150 €', 'fotografo o fotoritocco, per casa'],
+const WITHOUT: [typeof Globe, string, string, string, string, string, string][] = [
+  [Wand2, 'Home staging', '~1.500 €', 'home stager, circa 4 giorni per casa', 'Home staging', '~€1,500', 'home stager, about 4 days per home'],
+  [Clapperboard, 'Video della casa', '~250 €', 'videomaker, mezza giornata', 'Property video', '~€250', 'videographer, half a day'],
+  [Globe, 'Sito con i tuoi immobili', '~1.500 €', 'web agency, 2-4 settimane', 'Website with your listings', '~€1,500', 'web agency, 2-4 weeks'],
+  [Sparkles, 'Foto sistemate e più luminose', '~150 €', 'fotografo o fotoritocco, per casa', 'Brighter, retouched photos', '~€150', 'photographer or retouching, per home'],
 ];
 function Compare() {
+  const L = useL(), en = useEn();
   return (
     <Band inner="max-w-4xl">
       <Reveal className="mx-auto max-w-2xl text-center">
-        <Pill>Quanto ti costa oggi</Pill>
-        <h2 className="mt-5 font-display text-4xl font-extrabold leading-[1.05] tracking-tight md:text-5xl">Da solo, per una casa, spenderesti <span className="text-rose-600"><CountUp to={3400} prefix="~" suffix=" €" /></span>.</h2>
-        <p className="mt-5 text-lg leading-relaxed text-muted">Con Agente Immo è tutto incluso, per ogni casa che prendi, da {PRICING.starter} € al mese.</p>
+        <Pill>{L('Quanto ti costa oggi', "What it costs you today")}</Pill>
+        <h2 className="mt-5 font-display text-4xl font-extrabold leading-[1.05] tracking-tight md:text-5xl">{L('Da solo, per una casa, spenderesti', "On your own, one home would cost you")} <span className="text-rose-600">{en ? <CountUp to={3400} prefix="~€" /> : <CountUp to={3400} prefix="~" suffix=" €" />}</span>.</h2>
+        <p className="mt-5 text-lg leading-relaxed text-muted">{L(`Con Agente Immo è tutto incluso, per ogni casa che prendi, da ${PRICING.starter} € al mese.`, `With Agente Immo it's all included, for every home you list, from €${PRICING.starter} a month.`)}</p>
       </Reveal>
       <Reveal delay={120} className="mt-10 overflow-hidden rounded-[28px] bg-white ring-1 ring-black/5 shadow-[0_1px_2px_rgba(0,0,0,.04),0_8px_24px_-12px_rgba(0,0,0,.12)]">
         <div className="grid grid-cols-[1.4fr_1fr_auto] gap-4 bg-canvas px-6 py-3 text-xs font-semibold uppercase tracking-wide text-muted">
-          <span>Cosa ti serve</span><span>Senza Agente Immo</span><span className="text-right">Con Agente Immo</span>
+          <span>{L('Cosa ti serve', "What you need")}</span><span>{L('Senza Agente Immo', "Without Agente Immo")}</span><span className="text-right">{L('Con Agente Immo', "With Agente Immo")}</span>
         </div>
-        {WITHOUT.map(([Icon, what, cost, who]) => (
+        {WITHOUT.map(([Icon, ...t]) => { const [what, cost, who] = en ? t.slice(3) : t; return (
           <div key={what} className="grid grid-cols-[1.4fr_1fr_auto] items-center gap-4 border-t border-line px-6 py-4">
             <span className="flex items-center gap-3 font-semibold"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-canvas text-ink"><Icon size={16} /></span>{what}</span>
             <span><span className="block font-bold text-rose-600">{cost}</span><span className="block text-xs text-muted">{who}</span></span>
-            <span className="flex items-center justify-end gap-1.5 text-sm font-semibold text-emerald-600"><Check size={15} /> Incluso</span>
+            <span className="flex items-center justify-end gap-1.5 text-sm font-semibold text-emerald-600"><Check size={15} /> {L('Incluso', "Included")}</span>
           </div>
-        ))}
+        ); })}
         <div className="grid grid-cols-[1.4fr_1fr_auto] items-center gap-4 border-t border-line bg-canvas px-6 py-5">
-          <span className="font-display text-lg font-extrabold">Totale</span>
-          <span className="font-display text-xl font-extrabold text-rose-600 line-through decoration-rose-300">~3.400 €</span>
-          <span className="text-right font-display text-xl font-extrabold text-emerald-600">da {PRICING.starter} €/mese</span>
+          <span className="font-display text-lg font-extrabold">{L('Totale', "Total")}</span>
+          <span className="font-display text-xl font-extrabold text-rose-600 line-through decoration-rose-300">{L('~3.400 €', "~€3,400")}</span>
+          <span className="text-right font-display text-xl font-extrabold text-emerald-600">{L(`da ${PRICING.starter} €/mese`, `from €${PRICING.starter}/mo`)}</span>
         </div>
       </Reveal>
-      <p className="mt-4 text-center text-xs text-muted">Costi indicativi di mercato per una singola casa; il sito è una spesa una tantum più la manutenzione.</p>
+      <p className="mt-4 text-center text-xs text-muted">{L('Costi indicativi di mercato per una singola casa; il sito è una spesa una tantum più la manutenzione.', "Indicative market prices for a single home; the website is a one-off cost plus maintenance.")}</p>
     </Band>
   );
 }
@@ -203,8 +214,9 @@ function Compare() {
 // Due piani con lo stesso prodotto (stessa qualita', sito compreso): cambiano solo i crediti e come si paga.
 // Prova gratis in pagina, senza account: una foto arredata dall'AI e poi il suo video (1 + 1 al giorno per IP, limite nel server).
 // Si vede il prima/dopo; per scaricarla serve l'account.
-const DEMO_STYLES = [['modern', 'Moderno'], ['nordic', 'Nordico'], ['industrial', 'Elegante']] as const;
+const DEMO_STYLES = [['modern', 'Moderno', 'Modern'], ['nordic', 'Nordico', 'Nordic'], ['industrial', 'Elegante', 'Elegant']] as const;
 function TryIt() {
+  const L = useL();
   const [before, setBefore] = useState<string | null>(null);
   const [after, setAfter] = useState<string | null>(null);
   const [style, setStyle] = useState<(typeof DEMO_STYLES)[number][0]>('modern');
@@ -238,7 +250,7 @@ function TryIt() {
     setBusy(false);
     if (typeof d?.left === 'number') setLeft(d.left);
     if (d?.image) { setPhotoUrl(d.url ?? null); return setAfter(d.image); }
-    setMsg(d?.error === 'limit' ? 'Hai già fatto la prova di oggi. Crea l\'account per continuare.' : d?.error === 'busy' ? 'Ci sono molte prove in corso, riprova tra qualche minuto.' : 'Non siamo riusciti ad arredare questa foto. Prova con un\'altra stanza.');
+    setMsg(d?.error === 'limit' ? L('Hai già fatto la prova di oggi. Crea l\'account per continuare.', "You've used today's free try. Create an account to continue.") : d?.error === 'busy' ? L('Ci sono molte prove in corso, riprova tra qualche minuto.', "Lots of tries running right now, try again in a few minutes.") : L('Non siamo riusciti ad arredare questa foto. Prova con un\'altra stanza.', "We couldn't stage this photo. Try another room."));
   };
   // Scarica: la prova resta nel browser, si entra (login o registrazione) e dopo l'onboarding la piattaforma la fa scaricare
   const keep = (withVideo: boolean) => {
@@ -248,7 +260,7 @@ function TryIt() {
   const toVideo = async () => {
     if (!after || vBusy) return;
     setVBusy(true); setMsg('');
-    const fail = (e?: string) => { setVBusy(false); setMsg(e === 'limit' ? 'Hai già fatto il video di prova oggi. Crea l\'account per farne altri.' : e === 'busy' ? 'Ci sono molti video in corso, riprova tra qualche minuto.' : 'Non siamo riusciti a fare il video di questa foto. Riprova con un\'altra stanza.'); };
+    const fail = (e?: string) => { setVBusy(false); setMsg(e === 'limit' ? L('Hai già fatto il video di prova oggi. Crea l\'account per farne altri.', "You've made today's free video. Create an account to make more.") : e === 'busy' ? L('Ci sono molti video in corso, riprova tra qualche minuto.', "Lots of videos running right now, try again in a few minutes.") : L('Non siamo riusciti a fare il video di questa foto. Riprova con un\'altra stanza.', "We couldn't make a video of this photo. Try another room.")); };
     const r = await fetch('/api/landing/demo-video', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ image: after }) }).catch(() => null);
     const d = await r?.json().catch(() => null) as { job?: string; error?: string } | null;
     if (!d?.job) return fail(d?.error);
@@ -273,17 +285,17 @@ function TryIt() {
                 {vBusy && (
                   <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-white/55 backdrop-blur-[2px]">
                     <Loader2 size={28} className="animate-spin text-ai" />
-                    <span className="rounded-full bg-white px-4 py-1.5 text-sm font-semibold shadow">Stiamo facendo il video, 1-2 minuti</span>
+                    <span className="rounded-full bg-white px-4 py-1.5 text-sm font-semibold shadow">{L('Stiamo facendo il video, 1-2 minuti', "Making your video, 1-2 minutes")}</span>
                   </div>
                 )}
               </div>
             ) : before ? (
               <div className="relative aspect-[4/3] md:aspect-[16/10]">
-                <img src={before} alt="La tua foto" className="absolute inset-0 h-full w-full object-cover" />
+                <img src={before} alt={L('La tua foto', "Your photo")} className="absolute inset-0 h-full w-full object-cover" />
                 {busy && (
                   <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-white/55 backdrop-blur-[2px]">
                     <Loader2 size={28} className="animate-spin text-ai" />
-                    <span className="rounded-full bg-white px-4 py-1.5 text-sm font-semibold shadow">L&apos;AI sta arredando la stanza, circa un minuto</span>
+                    <span className="rounded-full bg-white px-4 py-1.5 text-sm font-semibold shadow">{L('L\'AI sta arredando la stanza, circa un minuto', "AI is staging the room, about a minute")}</span>
                   </div>
                 )}
               </div>
@@ -291,7 +303,7 @@ function TryIt() {
               <div className="relative" onDragOver={e => e.preventDefault()} onDrop={e => { e.preventDefault(); pick(e.dataTransfer.files[0]); }}>
                 <BeforeAfter before="/immo/home/demo-before.webp" after="/immo/home/demo-after.webp" className="aspect-[4/3] md:aspect-[16/9]" />
                 <button type="button" onClick={() => input.current?.click()} className="absolute bottom-5 left-1/2 flex -translate-x-1/2 items-center gap-2.5 whitespace-nowrap rounded-full bg-ink px-7 py-4 text-base font-semibold text-white shadow-[0_0_0_6px_rgba(255,255,255,.35),0_20px_40px_-10px_rgba(0,0,0,.5)] ease-smooth transition-transform hover:scale-[1.04]">
-                  <ImagePlus size={18} /> Carica la foto di una tua stanza
+                  <ImagePlus size={18} /> {L('Carica la foto di una tua stanza', "Upload a photo of a room")}
                 </button>
               </div>
             )}
@@ -299,70 +311,71 @@ function TryIt() {
           </div>
           <div className="p-3">
             <div className="flex items-center gap-2 rounded-[20px] bg-canvas p-2 pl-2 ring-1 ring-black/5 focus-within:bg-white focus-within:ring-2 focus-within:ring-ai">
-              <button type="button" onClick={() => input.current?.click()} aria-label="Carica una foto" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-ink shadow-sm ring-1 ring-black/5 hover:bg-line/40"><ImagePlus size={18} /></button>
-              <input value={text} onChange={e => setText(e.target.value.slice(0, 200))} onKeyDown={e => e.key === 'Enter' && run()} placeholder="Scrivi come la vuoi, es. soggiorno moderno con divano grigio"
+              <button type="button" onClick={() => input.current?.click()} aria-label={L('Carica una foto', "Upload a photo")} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-ink shadow-sm ring-1 ring-black/5 hover:bg-line/40"><ImagePlus size={18} /></button>
+              <input value={text} onChange={e => setText(e.target.value.slice(0, 200))} onKeyDown={e => e.key === 'Enter' && run()} placeholder={L('Scrivi come la vuoi, es. soggiorno moderno con divano grigio', "Describe it, e.g. modern living room with a grey sofa")}
                 className="min-w-0 flex-1 bg-transparent px-2 text-[15px] outline-none placeholder:text-muted/70" />
               {after
                 ? video
-                  ? <button type="button" onClick={() => keep(true)} className="inline-flex h-11 shrink-0 items-center gap-2 rounded-2xl bg-ink px-5 text-sm font-semibold text-white">Scarica tutto <ArrowRight size={15} /></button>
-                  : <button type="button" disabled={vBusy} onClick={toVideo} className="inline-flex h-11 shrink-0 items-center gap-2 rounded-2xl bg-ai px-5 text-sm font-semibold text-white disabled:opacity-50"><Clapperboard size={15} /> Trasforma in video</button>
-                : <button type="button" disabled={busy || left <= 0} onClick={() => (before ? run() : input.current?.click())} className="inline-flex h-11 shrink-0 items-center gap-2 rounded-2xl bg-ink px-5 text-sm font-semibold text-white disabled:opacity-40"><Sparkles size={15} /> {before ? 'Arreda' : 'Carica foto'}</button>}
+                  ? <button type="button" onClick={() => keep(true)} className="inline-flex h-11 shrink-0 items-center gap-2 rounded-2xl bg-ink px-5 text-sm font-semibold text-white">{L('Scarica tutto', "Download all")} <ArrowRight size={15} /></button>
+                  : <button type="button" disabled={vBusy} onClick={toVideo} className="inline-flex h-11 shrink-0 items-center gap-2 rounded-2xl bg-ai px-5 text-sm font-semibold text-white disabled:opacity-50"><Clapperboard size={15} /> {L('Trasforma in video', "Turn into video")}</button>
+                : <button type="button" disabled={busy || left <= 0} onClick={() => (before ? run() : input.current?.click())} className="inline-flex h-11 shrink-0 items-center gap-2 rounded-2xl bg-ink px-5 text-sm font-semibold text-white disabled:opacity-40"><Sparkles size={15} /> {before ? L('Arreda', "Stage it") : L('Carica foto', "Upload photo")}</button>}
             </div>
             <div className="mt-3 flex flex-wrap items-center gap-2">
-              <span className="text-sm text-muted">Oppure scegli uno stile:</span>
-              {DEMO_STYLES.map(([k, l]) => (
-                <button key={k} type="button" onClick={() => { setStyle(k); setText(''); }} className={`h-9 rounded-full px-4 text-sm font-semibold ease-smooth transition-colors ${style === k && !text ? 'bg-ink text-white' : 'bg-canvas text-muted hover:text-ink'}`}>{l}</button>
+              <span className="text-sm text-muted">{L('Oppure scegli uno stile:', "Or pick a style:")}</span>
+              {DEMO_STYLES.map(([k, l, e]) => (
+                <button key={k} type="button" onClick={() => { setStyle(k); setText(''); }} className={`h-9 rounded-full px-4 text-sm font-semibold ease-smooth transition-colors ${style === k && !text ? 'bg-ink text-white' : 'bg-canvas text-muted hover:text-ink'}`}>{L(l, e)}</button>
               ))}
-              <span className="ml-auto text-sm text-muted">{video ? 'Prova finita per oggi' : after ? 'Ti resta 1 video gratis' : 'Prova gratis: 1 foto e 1 video'}</span>
+              <span className="ml-auto text-sm text-muted">{video ? L('Prova finita per oggi', "Free try done for today") : after ? L('Ti resta 1 video gratis', "1 free video left") : L('Prova gratis: 1 foto e 1 video', "Free: 1 photo and 1 video")}</span>
             </div>
           </div>
         </div>
-        {after && <p className="mt-3 text-center text-sm text-muted">{video ? 'Foto e video pronti per l\'annuncio e i social. Per scaricarli entra o crea l\'account, è gratis.' : <>Ora trasformala in un video per i social, gratis. Oppure <button type="button" onClick={() => keep(false)} className="font-medium text-ink underline underline-offset-4">scarica solo la foto</button>.</>}{left > 0 && <> Oppure scegli un altro stile e <button type="button" onClick={run} className="font-medium text-ink underline underline-offset-4">rifai la prova</button>.</>}</p>}
-        {msg && <p className="mt-3 text-center text-sm text-rose-600">{msg} {left <= 0 && <a href={APP} className="font-medium text-ink underline underline-offset-4">Crea l&apos;account</a>}</p>}
+        {after && <p className="mt-3 text-center text-sm text-muted">{video ? L('Foto e video pronti per l\'annuncio e i social. Per scaricarli entra o crea l\'account, è gratis.', "Photo and video ready for your listing and socials. Sign in or create a free account to download them.") : <>{L('Ora trasformala in un video per i social, gratis. Oppure', "Now turn it into a video for social media, free. Or")} <button type="button" onClick={() => keep(false)} className="font-medium text-ink underline underline-offset-4">{L('scarica solo la foto', "download just the photo")}</button>.</>}{left > 0 && <> {L('Oppure scegli un altro stile e', "Or pick another style and")} <button type="button" onClick={run} className="font-medium text-ink underline underline-offset-4">{L('rifai la prova', "try again")}</button>.</>}</p>}
+        {msg && <p className="mt-3 text-center text-sm text-rose-600">{msg} {left <= 0 && <a href={APP} className="font-medium text-ink underline underline-offset-4">{L('Crea l\'account', "Create an account")}</a>}</p>}
     </>
   );
 }
 
 function Pricing() {
+  const L = useL(), en = useEn();
   const [yearly, setYearly] = useState(true);
   const pro = yearly ? PRICING.yearly : PRICING.quarterly;
-  const billed = yearly ? `${PRICING.yearly * 12} € fatturati ogni anno` : `${PRICING.quarterly * 3} € fatturati ogni 3 mesi`;
+  const billed = en ? (yearly ? `€${PRICING.yearly * 12} billed yearly` : `€${PRICING.quarterly * 3} billed every 3 months`) : yearly ? `${PRICING.yearly * 12} € fatturati ogni anno` : `${PRICING.quarterly * 3} € fatturati ogni 3 mesi`;
   return (
     <Band id="prezzi" tone="canvas">
       <Reveal className="mx-auto max-w-2xl text-center">
-        <Pill>Prezzi</Pill>
-        <h2 className="mt-5 font-display text-4xl font-extrabold leading-[1.05] tracking-tight md:text-5xl">Meno di un caffè al giorno. Per tutte le case.</h2>
-        <p className="mt-5 text-lg leading-relaxed text-muted">Sito, foto e video in entrambi i piani. Cambiano solo i crediti, cioè quante foto e video fai al mese.</p>
+        <Pill>{L('Prezzi', "Pricing")}</Pill>
+        <h2 className="mt-5 font-display text-4xl font-extrabold leading-[1.05] tracking-tight md:text-5xl">{L('Meno di un caffè al giorno. Per tutte le case.', "Less than a coffee a day. For every home.")}</h2>
+        <p className="mt-5 text-lg leading-relaxed text-muted">{L('Sito, foto e video in entrambi i piani. Cambiano solo i crediti, cioè quante foto e video fai al mese.', "Website, photos and videos in both plans. Only the credits change, meaning how many photos and videos you make each month.")}</p>
       </Reveal>
       <div className="mx-auto mt-12 grid max-w-4xl items-stretch gap-5 md:grid-cols-2">
         <Reveal delay={80} className="flex flex-col rounded-[32px] bg-white p-8 ring-1 ring-black/5">
           <div className="flex h-10 items-center text-sm font-semibold text-muted">Starter</div>
-          <div className="mt-3 flex items-end gap-2"><span className="font-display text-6xl font-extrabold tracking-tight">{PRICING.starter} €</span><span className="pb-2 text-muted">/ mese</span></div>
-          <div className="mt-1 text-sm text-muted">Mensile, disdici quando vuoi</div>
+          <div className="mt-3 flex items-end gap-2"><span className="font-display text-6xl font-extrabold tracking-tight">{en ? `€${PRICING.starter}` : `${PRICING.starter} €`}</span><span className="pb-2 text-muted">{L('/ mese', "/ month")}</span></div>
+          <div className="mt-1 text-sm text-muted">{L('Mensile, disdici quando vuoi', "Monthly, cancel anytime")}</div>
           <Credits n={PRICING.starterCredits} />
           <SiteIncluded />
           <div className="min-h-8 flex-1" />
-          <Cta ghost href={`${APP}#/piano`} className="w-full justify-center">Scegli Starter</Cta>
+          <Cta ghost href={`${APP}#/piano`} className="w-full justify-center">{L('Scegli Starter', "Choose Starter")}</Cta>
         </Reveal>
         <Reveal delay={160} className="relative flex flex-col rounded-[32px] bg-white p-8 ring-2 ring-ink shadow-[0_40px_100px_-40px_rgba(0,0,0,.35)]">
-          <span className="absolute -top-3 left-8 rounded-full bg-ink px-3 py-1 text-xs font-semibold text-white">Consigliato</span>
+          <span className="absolute -top-3 left-8 rounded-full bg-ink px-3 py-1 text-xs font-semibold text-white">{L('Consigliato', "Recommended")}</span>
           <div className="flex h-10 items-center justify-between gap-3">
             <div className="text-sm font-semibold text-muted">Pro</div>
             <div className="flex rounded-full bg-canvas p-1">
-              {([[false, 'Trimestrale'], [true, 'Annuale']] as const).map(([y, l]) => (
+              {([[false, L('Trimestrale', "Quarterly")], [true, L('Annuale', "Yearly")]] as const).map(([y, l]) => (
                 <button key={l} type="button" onClick={() => setYearly(y)} className={`h-8 rounded-full px-3 text-xs font-semibold ease-smooth transition-colors ${yearly === y ? 'bg-ink text-white' : 'text-muted hover:text-ink'}`}>{l}</button>
               ))}
             </div>
           </div>
-          <div className="mt-3 flex items-end gap-2"><span key={pro} className="blur-in font-display text-6xl font-extrabold tracking-tight">{pro} €</span><span className="pb-2 text-muted">/ mese</span></div>
+          <div className="mt-3 flex items-end gap-2"><span key={pro} className="blur-in font-display text-6xl font-extrabold tracking-tight">{en ? `€${pro}` : `${pro} €`}</span><span className="pb-2 text-muted">{L('/ mese', "/ month")}</span></div>
           <div key={billed} className="blur-in mt-1 text-sm text-muted">{billed}</div>
           <Credits n={PRICING.credits} />
           <SiteIncluded />
           <div className="min-h-8 flex-1" />
-          <Cta href={`${APP}#/piano`} className="w-full justify-center">Scegli Pro</Cta>
+          <Cta href={`${APP}#/piano`} className="w-full justify-center">{L('Scegli Pro', "Choose Pro")}</Cta>
         </Reveal>
       </div>
-      <p className="mt-6 text-center text-sm text-muted">Prima di scegliere, <a href="#prova" className="font-medium text-ink underline underline-offset-4">provalo gratis sulla tua foto</a>, senza registrarti. Prezzi finali, senza IVA aggiunta.</p>
+      <p className="mt-6 text-center text-sm text-muted">{L('Prima di scegliere,', "Before choosing,")} <a href="#prova" className="font-medium text-ink underline underline-offset-4">{L('provalo gratis sulla tua foto', "try it free on your photo")}</a>{L(', senza registrarti. Prezzi finali, senza IVA aggiunta.', ", no sign-up needed. Final prices, no VAT added.")}</p>
     </Band>
   );
 }
@@ -372,7 +385,12 @@ function Pricing() {
 const CHECK = <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand/10 text-brand"><Check size={12} /></span>;
 const H2 = 'mt-5 font-display text-4xl font-extrabold leading-[1.05] tracking-tight md:text-5xl';
 
-export default function AgenteImmoLanding() {
+export default function AgenteImmoLanding({ lang = 'it', faq }: { lang?: LandingLang; faq: [string, string][] }) {
+  return <Lang.Provider value={lang}><Landing faq={faq} /></Lang.Provider>;
+}
+
+function Landing({ faq }: { faq: [string, string][] }) {
+  const L = useL(), en = useEn();
   const [siteRef, siteOn] = useInView('-15%');
   const [videoRef, videoOn] = useInView('-10%');
   const vid = useRef<HTMLVideoElement>(null);
@@ -390,10 +408,10 @@ export default function AgenteImmoLanding() {
           <nav className="glass flex h-14 w-full items-center gap-2 rounded-full border px-2 pl-4 shadow-[0_10px_40px_-15px_rgba(0,0,0,.2)]">
             <a href="#top" className="flex items-center gap-2"><img src="/immo/logo-mark.png" alt="" className="h-8 w-8" /><span className="font-display text-lg font-extrabold tracking-tight">Agente <span className="text-brand">Immo</span></span></a>
             <div className="mx-auto hidden items-center gap-1 md:flex">
-              {[['#staging', 'Annunci'], ['#video', 'Social'], ['#sito', 'Il tuo sito'], ['#prezzi', 'Prezzi']].map(([h, l]) => <a key={h} href={h} className="rounded-full px-3.5 py-2 text-sm font-medium text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink">{l}</a>)}
+              {[['#staging', L('Annunci', "Listings")], ['#video', 'Social'], ['#sito', L('Il tuo sito', "Your website")], ['#prezzi', L('Prezzi', "Pricing")]].map(([h, l]) => <a key={h} href={h} className="rounded-full px-3.5 py-2 text-sm font-medium text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink">{l}</a>)}
             </div>
-            <AuthCta locale="it" href={APP} dashLabel="Dashboard" className="hidden px-3 text-sm font-semibold text-ink sm:block">Accedi</AuthCta>
-            <Cta className="!h-10 !px-5 text-sm">Prova gratis</Cta>
+            <AuthCta locale="it" href={APP} dashLabel="Dashboard" className="hidden px-3 text-sm font-semibold text-ink sm:block">{L('Accedi', "Sign in")}</AuthCta>
+            <Cta className="!h-10 !px-5 text-sm">{L('Prova gratis', "Try it free")}</Cta>
           </nav>
         </div>
       </header>
@@ -401,15 +419,15 @@ export default function AgenteImmoLanding() {
       {/* hero: la promessa in una frase, poi la prova sulla propria foto */}
       <section id="top" className="mx-auto max-w-6xl px-4 pb-24 pt-14 md:pt-20">
         <div className="mx-auto max-w-5xl text-center">
-          <Reveal><h1><Pill><Sparkles size={13} className="text-ai" /> Il software per agenti immobiliari</Pill></h1></Reveal>
+          <Reveal><h1><Pill><Sparkles size={13} className="text-ai" /> {L('Il software per agenti immobiliari', "The software for real estate agents")}</Pill></h1></Reveal>
           <p className="mx-auto mt-6 w-fit font-display text-[clamp(24px,5.2vw,60px)] font-extrabold leading-[1.05] tracking-[-0.03em]">
-            <span className="block sm:whitespace-nowrap">{'Vinci più incarichi.'.split(' ').map((w, i) => <span key={i} className="blur-in inline-block" style={{ animationDelay: `${i * 40}ms` }}>{w}&nbsp;</span>)}</span>
-            <span className="block text-brand sm:whitespace-nowrap">{'Presenta meglio ogni casa.'.split(' ').map((w, i) => <span key={i} className="blur-in inline-block" style={{ animationDelay: `${360 + i * 40}ms` }}>{w}&nbsp;</span>)}</span>
+            <span className="block sm:whitespace-nowrap">{L('Vinci più incarichi.', "Win more listings.").split(' ').map((w, i) => <span key={i} className="blur-in inline-block" style={{ animationDelay: `${i * 40}ms` }}>{w}&nbsp;</span>)}</span>
+            <span className="block text-brand sm:whitespace-nowrap">{L('Presenta meglio ogni casa.', "Present every home better.").split(' ').map((w, i) => <span key={i} className="blur-in inline-block" style={{ animationDelay: `${360 + i * 40}ms` }}>{w}&nbsp;</span>)}</span>
           </p>
-          <Reveal delay={600}><p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-muted">Tre agenzie in gara per lo stesso incarico: lo prende chi arriva con la casa già arredata, un video pronto e la sua pagina sul proprio sito. Con Agente Immo ce l&apos;hai in un minuto, per ogni immobile, senza fotografo, home stager e web agency da pagare.</p></Reveal>
+          <Reveal delay={600}><p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-muted">{L('Tre agenzie in gara per lo stesso incarico: lo prende chi arriva con la casa già arredata, un video pronto e la sua pagina sul proprio sito. Con Agente Immo ce l\'hai in un minuto, per ogni immobile, senza fotografo, home stager e web agency da pagare.', "Three agencies competing for the same listing: it goes to the one who shows up with the home already staged, a video ready and its own page on their website. With Agente Immo you get all of it in a minute, for every property, without paying a photographer, a home stager or a web agency.")}</p></Reveal>
           <Reveal delay={700} className="mt-8 flex flex-wrap items-center justify-center gap-3">
-            <Cta>Prova gratis sulla tua foto</Cta>
-            <Cta ghost href="#prezzi">Vedi i prezzi</Cta>
+            <Cta>{L('Prova gratis sulla tua foto', "Try it free on your photo")}</Cta>
+            <Cta ghost href="#prezzi">{L('Vedi i prezzi', "See pricing")}</Cta>
           </Reveal>
         </div>
 
@@ -419,7 +437,7 @@ export default function AgenteImmoLanding() {
         </div>
 
         <Reveal delay={900} className="mx-auto mt-10 flex max-w-3xl flex-wrap justify-center gap-x-8 gap-y-3 text-sm text-muted">
-          {['La prima foto ferma chi scorre', 'Il proprietario vede subito cosa farai per lui', '1 foto e 1 video gratis, senza registrarti'].map(x => <span key={x} className="flex items-center gap-2"><Check size={14} className="text-brand" />{x}</span>)}
+          {[L('La prima foto ferma chi scorre', "The first photo stops the scroll"), L('Il proprietario vede subito cosa farai per lui', "Owners see right away what you'll do for them"), L('1 foto e 1 video gratis, senza registrarti', "1 photo and 1 video free, no sign-up")].map(x => <span key={x} className="flex items-center gap-2"><Check size={14} className="text-brand" />{x}</span>)}
         </Reveal>
       </section>
 
@@ -427,20 +445,20 @@ export default function AgenteImmoLanding() {
       <Band id="staging">
         <div className="grid items-center gap-10 md:grid-cols-2 md:gap-16">
           <Reveal anim="in-left">
-            <Eyebrow n="01">Annunci che si notano</Eyebrow>
-            <h2 className={H2}>Chi scorre non si ferma su una stanza vuota.</h2>
-            <p className="mt-5 text-lg leading-relaxed text-muted">Vuota, una casa sembra più piccola e più fredda di com&apos;è. Arredata, chi guarda ci si immagina dentro e ti chiama per vederla. Carichi la foto, scegli lo stile, in un minuto è pronta.</p>
+            <Eyebrow n="01">{L('Annunci che si notano', "Listings that stand out")}</Eyebrow>
+            <h2 className={H2}>{L('Chi scorre non si ferma su una stanza vuota.', "Nobody stops scrolling for an empty room.")}</h2>
+            <p className="mt-5 text-lg leading-relaxed text-muted">{L('Vuota, una casa sembra più piccola e più fredda di com\'è. Arredata, chi guarda ci si immagina dentro e ti chiama per vederla. Carichi la foto, scegli lo stile, in un minuto è pronta.', "Empty, a home looks smaller and colder than it is. Furnished, buyers picture themselves living there and call you to see it. Upload the photo, pick a style, it's ready in a minute.")}</p>
             <ul className="mt-6 space-y-3 text-[15px]">
-              {['La prima foto ferma chi scorre', 'Il cliente capisce subito come vivrebbe quella casa', 'Nessun home staging vero da pagare o da organizzare'].map(x => <li key={x} className="flex items-start gap-3">{CHECK}{x}</li>)}
+              {[L('La prima foto ferma chi scorre', "The first photo stops the scroll"), L('Il cliente capisce subito come vivrebbe quella casa', "Buyers instantly see how they'd live there"), L('Nessun home staging vero da pagare o da organizzare', "No physical staging to pay for or organize")].map(x => <li key={x} className="flex items-start gap-3">{CHECK}{x}</li>)}
             </ul>
-            <Cta className="mt-8">Prova gratis</Cta>
+            <Cta className="mt-8">{L('Prova gratis', "Try it free")}</Cta>
           </Reveal>
           <Reveal delay={150} anim="in-right">
             <div className="parallax">
               <Tilt className="rounded-[24px] bg-white p-2 shadow-[0_30px_80px_-30px_rgba(0,0,0,.3)] ring-1 ring-black/5">
                 <BeforeAfter before="https://pub-a668674eaa484e8e8f2f10c264392bfc.r2.dev/spike-video/soggiorno_prima.jpg" after="https://pub-a668674eaa484e8e8f2f10c264392bfc.r2.dev/spike-video/soggiorno.jpg" className="aspect-[4/3] rounded-2xl" />
               </Tilt>
-              <p className="mt-3 text-center text-xs text-muted">Trascina per confrontare. Foto reale, arredata dall&apos;AI.</p>
+              <p className="mt-3 text-center text-xs text-muted">{L('Trascina per confrontare. Foto reale, arredata dall\'AI.', "Drag to compare. Real photo, staged by AI.")}</p>
             </div>
           </Reveal>
         </div>
@@ -450,13 +468,13 @@ export default function AgenteImmoLanding() {
       <Band id="video" tone="canvas">
         <div ref={videoRef} className="grid items-center gap-10 md:grid-cols-2 md:gap-16">
           <Reveal className="md:order-2" anim="in-right">
-            <Eyebrow n="02">Farti conoscere</Eyebrow>
-            <h2 className={H2}>Ogni casa diventa un video per i tuoi social.</h2>
-            <p className="mt-5 text-lg leading-relaxed text-muted">Nella tua zona i clienti chiamano l&apos;agente che vedono ogni settimana su Instagram e TikTok. Un videomaker costa e ci mette giorni: qui ogni nuovo incarico diventa un video, e tu resti presente senza fermarti a girare.</p>
+            <Eyebrow n="02">{L('Farti conoscere', "Get known")}</Eyebrow>
+            <h2 className={H2}>{L('Ogni casa diventa un video per i tuoi social.', "Every home becomes a video for your socials.")}</h2>
+            <p className="mt-5 text-lg leading-relaxed text-muted">{L('Nella tua zona i clienti chiamano l\'agente che vedono ogni settimana su Instagram e TikTok. Un videomaker costa e ci mette giorni: qui ogni nuovo incarico diventa un video, e tu resti presente senza fermarti a girare.', "In your area, clients call the agent they see every week on Instagram and TikTok. A videographer is expensive and takes days: here every new listing becomes a video, and you stay visible without stopping to film.")}</p>
             <ul className="mt-6 space-y-3 text-[15px]">
-              {['Ti fai conoscere nella tua zona, non solo sul portale', 'Ogni incarico diventa un contenuto da pubblicare', 'Niente riprese, niente montaggio, niente videomaker'].map(x => <li key={x} className="flex items-start gap-3">{CHECK}{x}</li>)}
+              {[L('Ti fai conoscere nella tua zona, non solo sul portale', "Get known in your area, not just on the portal"), L('Ogni incarico diventa un contenuto da pubblicare', "Every listing becomes something to post"), L('Niente riprese, niente montaggio, niente videomaker', "No filming, no editing, no videographer")].map(x => <li key={x} className="flex items-start gap-3">{CHECK}{x}</li>)}
             </ul>
-            <Cta className="mt-8">Prova gratis</Cta>
+            <Cta className="mt-8">{L('Prova gratis', "Try it free")}</Cta>
           </Reveal>
           <Reveal delay={150} className="md:order-1" anim="in-left">
             <div className="parallax relative">
@@ -476,32 +494,32 @@ export default function AgenteImmoLanding() {
       <Band id="sito">
         <div ref={siteRef} className="grid items-center gap-10 md:grid-cols-2 md:gap-16">
           <Reveal anim="in-left">
-            <Eyebrow n="03">Il sito te lo facciamo noi</Eyebrow>
-            <h2 className={H2}>Il tuo sito lo facciamo noi, tu scegli lo stile.</h2>
-            <p className="mt-5 text-lg leading-relaxed text-muted">Appena ti iscrivi hai già il tuo sito personale, con il tuo nome, pronto da pubblicare. Non devi costruire niente: scegli uno dei nostri modelli, metti logo e colori, e ogni immobile che carichi ci finisce da solo. Sul portale sei uno dei tanti, qui sei l&apos;unico agente.</p>
+            <Eyebrow n="03">{L('Il sito te lo facciamo noi', "We build your website")}</Eyebrow>
+            <h2 className={H2}>{L('Il tuo sito lo facciamo noi, tu scegli lo stile.', "We build your website, you just pick the style.")}</h2>
+            <p className="mt-5 text-lg leading-relaxed text-muted">{L('Appena ti iscrivi hai già il tuo sito personale, con il tuo nome, pronto da pubblicare. Non devi costruire niente: scegli uno dei nostri modelli, metti logo e colori, e ogni immobile che carichi ci finisce da solo. Sul portale sei uno dei tanti, qui sei l\'unico agente.', "As soon as you sign up you already have your own website, with your name, ready to publish. Nothing to build: pick one of our templates, add your logo and colors, and every property you upload lands there on its own. On the portal you're one of many, here you're the only agent.")}</p>
             <ul className="mt-6 space-y-3 text-[15px]">
-              {['Incluso nell\'abbonamento, niente web agency da pagare', 'Già fatto: scegli il modello e pubblichi', 'Ogni immobile che carichi è subito online', 'Le richieste arrivano a te, non a un portale'].map(x => <li key={x} className="flex items-start gap-3">{CHECK}{x}</li>)}
+              {[L('Incluso nell\'abbonamento, niente web agency da pagare', "Included in your plan, no web agency to pay"), L('Già fatto: scegli il modello e pubblichi', "Ready-made: pick a template and publish"), L('Ogni immobile che carichi è subito online', "Every property you upload is live right away"), L('Le richieste arrivano a te, non a un portale', "Inquiries come to you, not to a portal")].map(x => <li key={x} className="flex items-start gap-3">{CHECK}{x}</li>)}
             </ul>
-            <Cta href={APP} className="mt-8">Crea il tuo sito</Cta>
+            <Cta href={APP} className="mt-8">{L('Crea il tuo sito', "Create your website")}</Cta>
           </Reveal>
-          <Reveal delay={150} anim="in-right"><div className="parallax"><Tilt className="rounded-[24px]"><TemplateShowcase active={siteOn} /></Tilt></div></Reveal>
+          <Reveal delay={150} anim="in-right"><div className="parallax"><Tilt className="rounded-[24px]"><TemplateShowcase active={siteOn} en={en} /></Tilt></div></Reveal>
         </div>
       </Band>
 
       {/* tutto il resto */}
       <Band tone="canvas">
         <Reveal className="mx-auto max-w-2xl text-center">
-          <Pill>E in più</Pill>
-          <h2 className={H2}>Il lavoro noioso sparisce.</h2>
+          <Pill>{L('E in più', "And more")}</Pill>
+          <h2 className={H2}>{L('Il lavoro noioso sparisce.', "The boring work disappears.")}</h2>
         </Reveal>
         <div className="mt-12 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {[
-            [FileText, 'Il cliente si ricorda di te', 'Dopo la visita riparte con un report della casa col tuo logo, da girare a chi deve decidere.'],
-            [Sparkles, 'Annunci pronti in un attimo', 'Il testo si scrive da solo: tu lo rileggi e pubblichi.'],
-            [MapPin, 'Risposte prima delle domande', 'Scuole, metro e negozi vicini sono già nell\'annuncio: meno telefonate a vuoto.'],
-            [Images, 'Tutto in un posto', 'Foto, video e versioni di ogni immobile sempre a portata, anche dal telefono.'],
-            [Upload, 'Parti da quello che hai', 'Gli immobili che hai già non li ricarichi a mano.'],
-            [Users, 'Tutta l\'agenzia con la stessa immagine', 'Ogni agente con i suoi immobili, tutti presentati allo stesso livello.'],
+            [FileText, L('Il cliente si ricorda di te', "Clients remember you"), L('Dopo la visita riparte con un report della casa col tuo logo, da girare a chi deve decidere.', "After the viewing they leave with a report of the home with your logo, to share with whoever decides.")],
+            [Sparkles, L('Annunci pronti in un attimo', "Listings ready in no time"), L('Il testo si scrive da solo: tu lo rileggi e pubblichi.', "The copy writes itself: you review it and publish.")],
+            [MapPin, L('Risposte prima delle domande', "Answers before questions"), L('Scuole, metro e negozi vicini sono già nell\'annuncio: meno telefonate a vuoto.', "Nearby schools, transit and shops are already in the listing: fewer pointless calls.")],
+            [Images, L('Tutto in un posto', "Everything in one place"), L('Foto, video e versioni di ogni immobile sempre a portata, anche dal telefono.', "Photos, videos and versions of every property always at hand, even on your phone.")],
+            [Upload, L('Parti da quello che hai', "Start from what you have"), L('Gli immobili che hai già non li ricarichi a mano.', "No re-uploading the properties you already have.")],
+            [Users, L('Tutta l\'agenzia con la stessa immagine', "The whole agency, one look"), L('Ogni agente con i suoi immobili, tutti presentati allo stesso livello.', "Each agent with their own listings, all presented to the same standard.")],
           ].map(([I, t, d], i) => {
             const Icon = I as typeof Upload;
             return (
@@ -522,11 +540,11 @@ export default function AgenteImmoLanding() {
       {/* domande frequenti: testo visibile + FAQPage in JSON-LD (stesse risposte, vedi FAQ) */}
       <Band id="domande" inner="max-w-3xl">
         <Reveal className="text-center">
-          <Pill>Domande frequenti</Pill>
-          <h2 className="mt-5 font-display text-3xl font-extrabold tracking-tight md:text-4xl">Quello che ci chiedono gli agenti immobiliari</h2>
+          <Pill>{L('Domande frequenti', "FAQ")}</Pill>
+          <h2 className="mt-5 font-display text-3xl font-extrabold tracking-tight md:text-4xl">{L('Quello che ci chiedono gli agenti immobiliari', "What real estate agents ask us")}</h2>
         </Reveal>
         <div className="mt-10 space-y-3">
-          {FAQ.map(([q, a], i) => (
+          {faq.map(([q, a], i) => (
             <Reveal key={q} as="div" delay={i * 40} anim="rise">
               <details className="group rounded-[24px] bg-white p-5 ring-1 ring-black/5 open:shadow-[0_20px_40px_-20px_rgba(0,0,0,.2)]">
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-semibold">{q}<ArrowRight size={16} className="shrink-0 text-muted ease-smooth transition-transform group-open:rotate-90" /></summary>
@@ -542,25 +560,26 @@ export default function AgenteImmoLanding() {
         <Reveal anim="rise" className="relative overflow-hidden rounded-[32px] bg-ink px-6 py-16 text-center text-white md:py-24">
           <div className="pointer-events-none absolute inset-0 opacity-30" style={{ background: 'radial-gradient(600px circle at 20% 0%, rgba(83,126,236,.8), transparent 60%), radial-gradient(500px circle at 90% 100%, rgba(110,86,248,.7), transparent 60%)' }} />
           <div className="relative">
-            <h2 className="mx-auto max-w-2xl font-display text-4xl font-extrabold leading-[1.05] tracking-tight md:text-6xl">Il prossimo incarico, vincilo così.</h2>
-            <p className="mx-auto mt-5 max-w-xl text-lg text-white/70">Carica la foto di una tua casa e guarda il risultato. Gratis, senza registrarti.</p>
-            <a href="#prova" className="mt-8 inline-flex h-13 items-center gap-2 rounded-full bg-white px-7 text-[15px] font-semibold text-ink ease-smooth transition-transform hover:scale-[1.03] active:scale-[.98]">Prova gratis <ArrowRight size={16} /></a>
+            <h2 className="mx-auto max-w-2xl font-display text-4xl font-extrabold leading-[1.05] tracking-tight md:text-6xl">{L('Il prossimo incarico, vincilo così.', "Win your next listing like this.")}</h2>
+            <p className="mx-auto mt-5 max-w-xl text-lg text-white/70">{L('Carica la foto di una tua casa e guarda il risultato. Gratis, senza registrarti.', "Upload a photo of one of your homes and see the result. Free, no sign-up.")}</p>
+            <a href="#prova" className="mt-8 inline-flex h-13 items-center gap-2 rounded-full bg-white px-7 text-[15px] font-semibold text-ink ease-smooth transition-transform hover:scale-[1.03] active:scale-[.98]">{L('Prova gratis', "Try it free")} <ArrowRight size={16} /></a>
           </div>
         </Reveal>
       </section>
 
       {/* footer: marchio a sinistra, tre colonne di link (prodotto, guide SEO, legale), riga finale */}
       <footer className="border-t border-line bg-canvas">
-        <div className="mx-auto grid max-w-6xl gap-10 px-4 py-16 md:grid-cols-[1.4fr_1fr_1.2fr_1fr]">
+        <div className={`mx-auto grid max-w-6xl gap-10 px-4 py-16 ${en ? 'md:grid-cols-[1.4fr_1fr_1fr]' : 'md:grid-cols-[1.4fr_1fr_1.2fr_1fr]'}`}>
           <div>
             <a href="#top" className="flex items-center gap-2"><img src="/immo/logo-mark.png" alt="" className="h-8 w-8" /><span className="font-display text-lg font-extrabold tracking-tight">Agente <span className="text-brand">Immo</span></span></a>
-            <p className="mt-4 max-w-xs text-sm leading-relaxed text-muted">Foto arredate, video e il tuo sito per ogni immobile. Il software per agenti immobiliari.</p>
-            <Cta className="mt-6 !h-10 !px-5 text-sm">Prova gratis</Cta>
+            <p className="mt-4 max-w-xs text-sm leading-relaxed text-muted">{L('Foto arredate, video e il tuo sito per ogni immobile. Il software per agenti immobiliari.', "Staged photos, videos and your website for every property. The software for real estate agents.")}</p>
+            <Cta className="mt-6 !h-10 !px-5 text-sm">{L('Prova gratis', "Try it free")}</Cta>
           </div>
           {([
-            ['Prodotto', [['#staging', 'Home staging'], ['#video', 'Video per i social'], ['#sito', 'Il tuo sito'], ['#prezzi', 'Prezzi'], ['#domande', 'Domande frequenti']]],
-            ['Guide', GUIDE_LINKS],
-            ['Agente Immo', [['/it/privacy', 'Privacy'], ['/it/cookie', 'Cookie'], ['/it/termini', 'Termini'], ['mailto:info@agenteimmo.me', 'Contatti']]],
+            [L('Prodotto', "Product"), [['#staging', 'Home staging'], ['#video', L('Video per i social', "Social videos")], ['#sito', L('Il tuo sito', "Your website")], ['#prezzi', L('Prezzi', "Pricing")], ['#domande', L('Domande frequenti', "FAQ")]]],
+            // le guide sono articoli in italiano: nella versione inglese la colonna non c'e'
+            ...(en ? [] : [['Guide', GUIDE_LINKS]]),
+            ['Agente Immo', [['/it/privacy', 'Privacy'], ['/it/cookie', 'Cookie'], ['/it/termini', L('Termini', "Terms")], ['mailto:info@agenteimmo.me', L('Contatti', "Contact")]]],
           ] as [string, string[][]][]).map(([h, links]) => (
             <nav key={h} aria-label={h}>
               <div className="text-sm font-semibold">{h}</div>

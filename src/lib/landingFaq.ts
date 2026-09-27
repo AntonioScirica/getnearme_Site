@@ -9,3 +9,15 @@ export const FAQ: [string, string][] = [
   ['Le foto arredate con l\'AI si possono usare negli annunci?', 'Sì. L\'AI aggiunge solo i mobili e lascia com\'è tutto il resto: muri, finestre, pavimenti e prospettiva. Per correttezza verso chi cerca casa è buona regola indicare nell\'annuncio che l\'arredamento è virtuale, e tenere anche la foto originale.'],
   ['Serve saper usare programmi di grafica o di montaggio video?', 'No. Scrivi cosa vuoi in italiano, come in una chat, oppure scegli uno stile con un clic. Foto, video e pagine del sito si preparano da sole.'],
 ]
+
+// Stesse domande per la landing inglese (/en)
+export const FAQ_EN: [string, string][] = [
+  ['Why should a real estate agent use virtual staging?', 'Because an empty or poorly furnished home looks smaller and colder than it is, and people scrolling a portal don\'t stop. With staged rooms buyers picture themselves in the home and ask for a viewing, and the owner sees you\'re putting real effort into their property. Without paying for or organizing physical staging.'],
+  ['Do I need my own website if the property portals already exist?', 'Yes. On a portal buyers choose the home, not the agent, and dozens of competitors sit right next to you. Your website is the one place where it\'s only you: send it to clients, put it in your signature, show it to owners when you pitch for a listing. And inquiries come straight to you.'],
+  ['How do you win more listings?', 'Owners give their home to whoever best shows how they\'ll sell it. Showing up with staged photos, a video and a page already live on your website makes the difference against agents who only bring a valuation. And posting regularly on social media makes you the agent people in the area know.'],
+  ['How much does Agente Immo cost?', 'There are two plans with the same product, website included. Starter at €29 a month, billed monthly, with 1,000 credits (about 200 staged photos). Pro at €59 a month billed yearly or €69 billed quarterly, with 2,500 credits (about 500 photos). You can try it free on one of your photos right from the page, no sign-up needed.'],
+  ['How does it compare to a photographer, home stager and web agency?', 'Physical staging or a videographer are paid property by property. With Agente Immo you pay one subscription and get staged photos, videos and a website for all your properties.'],
+  ['What if I don\'t need the website?', 'You don\'t have to use it: the website only goes live when you switch it on. Photos and videos work the same, at the same price.'],
+  ['Can AI-staged photos be used in listings?', 'Yes. The AI only adds furniture and leaves everything else as it is: walls, windows, floors and perspective. To be fair to buyers, it\'s good practice to state in the listing that the furniture is virtual and to keep the original photo too.'],
+  ['Do I need to know graphic design or video editing software?', 'No. Write what you want in plain words, like in a chat, or pick a style with one click. Photos, videos and website pages get made on their own.'],
+]
