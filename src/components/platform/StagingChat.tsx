@@ -624,7 +624,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                     {/* alta quanto il campo di Modifica (8 + 40): aprendo e chiudendo la card non cambia altezza.
                         Niente didascalia: la richiesta e' gia' nel messaggio sopra. Foto verticale (card stretta): icona sopra e nome sotto */}
                                         {/* a destra: Modifica (zona su questa foto) e Ricomincia da qui; "Si continua da qui" solo dopo esserci tornati */}
-                    <div className={`flex items-center gap-1 ${isNarrow(m.before) ? 'w-full' : 'shrink-0'}`}>
+                    <div className={`flex w-full items-center gap-1 ${isNarrow(m.before) ? '' : 'justify-between'}`}>
                       <Act narrow={isNarrow(m.before)} icon={<SquareDashedMousePointer size={14} className="translate-y-px" />} label="Modifica" onClick={() => { if (base !== m.out) restartFrom(i, m.out!); setSelecting(true); }} />
                       <Act narrow={isNarrow(m.before)} icon={<Building2 size={14} className="translate-y-px" />} label="Salva nell’immobile" short="Salva" active={saveOpen === m.id} onClick={() => setSaveOpen(v => (v === m.id ? null : m.id))} />
                       <Act narrow={isNarrow(m.before)} icon={<Clapperboard size={14} className="translate-y-px" />} label="Video" tip="I mobili compaiono uno alla volta" disabled={busy} onClick={() => askVideo(m.out!)} />
