@@ -338,11 +338,10 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
     : done ? `Vuoi ritoccare qualcosa? Es. ${AFTER[(done - 1) % AFTER.length]}`
     : `Cosa vuoi cambiare? Es. ${(kind && FIRST[kind.replace(/^(room|scene):/, '')]) || 'togli il divano e metti un tavolo da pranzo'}`;
   // arrivo da un immobile (#/staging?photo=...&project=...): la foto entra subito in chat
-  // foto arrivata da un immobile: una volta per foto (la chat resta montata tra le pagine, ci si puo' tornare con un'altra)
-  const started = useRef<string | null>(null);
+  const started = useRef(false);
   useEffect(() => {
-    if (!initial?.photo || started.current === initial.photo) return;
-    started.current = initial.photo;
+    if (started.current || !initial?.photo) return;
+    started.current = true;
     // riconoscimento subito, in parallelo al download della foto (spesso e' gia' in memoria dell'immobile)
     const early = authFetch('/api/platform/photo-classify', { method: 'POST', body: JSON.stringify({ imageUrl: initial.photo, ...(initial.project ? { projectId: initial.project, photoUrl: initial.photo } : {}) }) }).catch(() => null);
     // la foto dell'immobile e' gia' online: entra subito in chat con il suo indirizzo, senza scaricarla e ridimensionarla
