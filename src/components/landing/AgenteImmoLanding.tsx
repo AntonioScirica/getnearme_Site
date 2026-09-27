@@ -466,7 +466,7 @@ function Landing({ faq }: { faq: [string, string][] }) {
             </div>
           </Reveal>
           {/* su telefono i bottoni vanno sotto le immagini */}
-          <div className="flex justify-center md:hidden"><Cta>{L('Prova gratis', "Try it free")}</Cta></div>
+          <div className="flex justify-center pt-6 md:hidden"><Cta>{L('Prova gratis', "Try it free")}</Cta></div>
         </div>
       </Band>
 
@@ -480,7 +480,7 @@ function Landing({ faq }: { faq: [string, string][] }) {
             <ul className="mt-6 space-y-3 text-[15px]">
               {[L('Ti fai conoscere nella tua zona, non solo sul portale', "Get known in your area, not just on the portal"), L('Ogni incarico diventa un contenuto da pubblicare', "Every listing becomes something to post"), L('Niente riprese, niente montaggio, niente videomaker', "No filming, no editing, no videographer")].map(x => <li key={x} className="flex items-start gap-3">{CHECK}{x}</li>)}
             </ul>
-            <span className="hidden md:block"><Cta className="mt-8">{L('Prova gratis', "Try it free")}</Cta></span>
+            <span className="hidden md:block"><Cta className="mt-8">{L('Crea video', "Create a video")}</Cta></span>
           </Reveal>
           <Reveal delay={150} className="md:order-1" anim="in-left">
             <div className="parallax relative w-[90%]">
@@ -493,7 +493,7 @@ function Landing({ faq }: { faq: [string, string][] }) {
               </div>
             </div>
           </Reveal>
-          <div className="mt-6 flex justify-center md:hidden"><Cta>{L('Prova gratis', "Try it free")}</Cta></div>
+          <div className="mt-14 flex justify-center md:hidden"><Cta>{L('Crea video', "Create a video")}</Cta></div>
         </div>
       </Band>
 
@@ -511,7 +511,7 @@ function Landing({ faq }: { faq: [string, string][] }) {
             <span className="hidden md:block"><Cta href={APP} className="mt-8">{L('Crea il tuo sito', "Create your website")}</Cta></span>
           </Reveal>
           <Reveal delay={150} anim="in-right"><div className="parallax"><Tilt className="rounded-[24px]"><TemplateShowcase active={siteOn} en={en} /></Tilt></div></Reveal>
-          <div className="flex justify-center md:hidden"><Cta href={APP}>{L('Crea il tuo sito', "Create your website")}</Cta></div>
+          <div className="flex justify-center pt-6 md:hidden"><Cta href={APP}>{L('Crea il tuo sito', "Create your website")}</Cta></div>
         </div>
       </Band>
 
