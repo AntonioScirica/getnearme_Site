@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import AuthCta from '@/components/AuthCta';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { ArrowRight, Award, Check, Clapperboard, Clock, FileText, Globe, Images, MapPin, Sparkles, Upload, Users, Wallet, Wand2 } from 'lucide-react';
+import { ArrowRight, Award, Check, Clapperboard, Clock, FileText, Globe, ImagePlus, Images, Loader2, MapPin, Sparkles, Upload, Users, Wallet, Wand2 } from 'lucide-react';
 
 // Landing di Agente Immo per gli agenti: tre promesse (home staging AI, video, sito pronto) con lo stesso
 // linguaggio della piattaforma: bianco, puntini, card 28/16, pillole, un solo tempo (600ms, ease-smooth).
@@ -38,7 +38,7 @@ function Reveal({ children, className = '', delay = 0, as: Tag = 'div' }: { chil
 const Pill = ({ children, className = '' }: { children: ReactNode; className?: string }) =>
   <span className={`inline-flex h-8 items-center gap-1.5 rounded-full bg-white px-3.5 text-[13px] font-medium text-muted ring-1 ring-black/5 ${className}`}>{children}</span>;
 
-const Cta = ({ href = APP, children, ghost = false, className = '' }: { href?: string; children: ReactNode; ghost?: boolean; className?: string }) =>
+const Cta = ({ href = '#prova', children, ghost = false, className = '' }: { href?: string; children: ReactNode; ghost?: boolean; className?: string }) =>
   <a href={href} className={`group inline-flex h-12 items-center gap-2 rounded-full px-6 text-[15px] font-semibold ease-smooth transition-all active:scale-[.98] ${ghost ? 'bg-white text-ink ring-1 ring-black/10 hover:ring-ink' : 'bg-ink text-white hover:bg-black hover:shadow-[0_16px_40px_-16px_rgba(0,0,0,.5)]'} ${className}`}>
     {children}{!ghost && <ArrowRight size={16} className="ease-smooth transition-transform group-hover:translate-x-0.5" />}
   </a>;
@@ -154,7 +154,6 @@ function useInView(margin = '0px') {
   return [ref, on] as const;
 }
 
-const STYLES = ['Moderno', 'Nordico', 'Contemporaneo', 'Naturale', 'Svuota la stanza', 'Giorno → notte'];
 
 // Un solo pacchetto: il sito non costa nulla in piu' a noi e chi non lo vuole semplicemente non lo pubblica.
 // Foto "illimitate" con uso ragionevole (vedi termini), video contati perche' costano davvero.
@@ -184,6 +183,91 @@ const Included = ({ extra }: { extra: string }) => (
 );
 
 // Due piani con lo stesso prodotto (stessa qualita', sito compreso): cambiano solo i crediti e come si paga.
+// Prova gratis in pagina, senza account: una foto della tua casa arredata dall'AI (max 3 al giorno, limite nel server).
+// Si vede il prima/dopo; per scaricarla serve l'account.
+const DEMO_STYLES = [['modern', 'Moderno'], ['nordic', 'Nordico'], ['industrial', 'Elegante']] as const;
+function TryIt() {
+  const [before, setBefore] = useState<string | null>(null);
+  const [after, setAfter] = useState<string | null>(null);
+  const [style, setStyle] = useState<(typeof DEMO_STYLES)[number][0]>('modern');
+  const [text, setText] = useState(''); // richiesta scritta: se c'e', vince sullo stile
+  const [busy, setBusy] = useState(false);
+  const [left, setLeft] = useState(3);
+  const [msg, setMsg] = useState('');
+  const input = useRef<HTMLInputElement>(null);
+  const pick = (f?: File) => {
+    if (!f || !f.type.startsWith('image/')) return;
+    const img = new Image();
+    img.onload = () => {
+      // ridotta nel browser a 1600 px: upload veloce anche da telefono
+      const k = Math.min(1, 1600 / Math.max(img.width, img.height));
+      const c = document.createElement('canvas'); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+      c.getContext('2d')!.drawImage(img, 0, 0, c.width, c.height);
+      setBefore(c.toDataURL('image/jpeg', 0.88)); setAfter(null); setMsg('');
+      URL.revokeObjectURL(img.src);
+    };
+    img.src = URL.createObjectURL(f);
+  };
+  const run = async () => {
+    if (!before || busy) return;
+    setBusy(true); setMsg(''); setAfter(null);
+    const r = await fetch('/api/landing/demo', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ image: before, style, prompt: text.trim() }) }).catch(() => null);
+    const d = await r?.json().catch(() => null) as { image?: string; left?: number; error?: string } | null;
+    setBusy(false);
+    if (typeof d?.left === 'number') setLeft(d.left);
+    if (d?.image) return setAfter(d.image);
+    setMsg(d?.error === 'limit' ? 'Hai usato le 3 prove di oggi. Crea l\'account per continuare.' : d?.error === 'busy' ? 'Ci sono molte prove in corso, riprova tra qualche minuto.' : 'Non siamo riusciti ad arredare questa foto. Prova con un\'altra stanza.');
+  };
+  return (
+    <>
+        <div className="rounded-[32px] bg-white p-2 shadow-[0_0_0_1px_rgba(0,0,0,.05),0_0_80px_-10px_rgba(110,86,248,.45),0_40px_100px_-40px_rgba(0,0,0,.35)]">
+          <div className="relative overflow-hidden rounded-[24px] bg-canvas">
+            {after && before ? (
+              <BeforeAfter before={before} after={after} auto={false} className="aspect-[4/3] md:aspect-[16/10]" />
+            ) : before ? (
+              <div className="relative aspect-[4/3] md:aspect-[16/10]">
+                <img src={before} alt="La tua foto" className="absolute inset-0 h-full w-full object-cover" />
+                {busy && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-white/55 backdrop-blur-[2px]">
+                    <Loader2 size={28} className="animate-spin text-ai" />
+                    <span className="rounded-full bg-white px-4 py-1.5 text-sm font-semibold shadow">L&apos;AI sta arredando la stanza, circa un minuto</span>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="relative" onDragOver={e => e.preventDefault()} onDrop={e => { e.preventDefault(); pick(e.dataTransfer.files[0]); }}>
+                <BeforeAfter before="/immo/home/demo-before.webp" after="/immo/home/demo-after.webp" className="aspect-[4/3] md:aspect-[16/10]" />
+                <button type="button" onClick={() => input.current?.click()} className="absolute bottom-5 left-1/2 flex -translate-x-1/2 items-center gap-2.5 whitespace-nowrap rounded-full bg-ink px-7 py-4 text-base font-semibold text-white shadow-[0_0_0_6px_rgba(255,255,255,.35),0_20px_40px_-10px_rgba(0,0,0,.5)] ease-smooth transition-transform hover:scale-[1.04]">
+                  <ImagePlus size={18} /> Carica la foto di una tua stanza
+                </button>
+              </div>
+            )}
+            <input ref={input} type="file" accept="image/*" className="hidden" onChange={e => { pick(e.target.files?.[0]); e.target.value = ''; }} />
+          </div>
+          <div className="p-3">
+            <div className="flex items-center gap-2 rounded-[20px] bg-canvas p-2 pl-2 ring-1 ring-black/5 focus-within:bg-white focus-within:ring-2 focus-within:ring-ai">
+              <button type="button" onClick={() => input.current?.click()} aria-label="Carica una foto" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-ink shadow-sm ring-1 ring-black/5 hover:bg-line/40"><ImagePlus size={18} /></button>
+              <input value={text} onChange={e => setText(e.target.value.slice(0, 200))} onKeyDown={e => e.key === 'Enter' && run()} placeholder="Scrivi come la vuoi, es. soggiorno moderno con divano grigio"
+                className="min-w-0 flex-1 bg-transparent px-2 text-[15px] outline-none placeholder:text-muted/70" />
+              {after
+                ? <a href={APP} className="inline-flex h-11 shrink-0 items-center gap-2 rounded-2xl bg-ink px-5 text-sm font-semibold text-white">Scaricala <ArrowRight size={15} /></a>
+                : <button type="button" disabled={busy || left <= 0} onClick={() => (before ? run() : input.current?.click())} className="inline-flex h-11 shrink-0 items-center gap-2 rounded-2xl bg-ink px-5 text-sm font-semibold text-white disabled:opacity-40"><Sparkles size={15} /> {before ? 'Arreda' : 'Carica foto'}</button>}
+            </div>
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <span className="text-sm text-muted">Oppure scegli uno stile:</span>
+              {DEMO_STYLES.map(([k, l]) => (
+                <button key={k} type="button" onClick={() => { setStyle(k); setText(''); }} className={`h-9 rounded-full px-4 text-sm font-semibold ease-smooth transition-colors ${style === k && !text ? 'bg-ink text-white' : 'bg-canvas text-muted hover:text-ink'}`}>{l}</button>
+              ))}
+              <span className="ml-auto text-sm text-muted">{left > 0 ? `Ti restano ${left} prove gratis` : 'Prove finite per oggi'}</span>
+            </div>
+          </div>
+        </div>
+        {after && <p className="mt-3 text-center text-sm text-muted">Per scaricarla in alta qualità crea l&apos;account.{left > 0 && <> Oppure scegli un altro stile e <button type="button" onClick={run} className="font-medium text-ink underline underline-offset-4">rifai la prova</button>.</>}</p>}
+        {msg && <p className="mt-3 text-center text-sm text-rose-600">{msg} {left <= 0 && <a href={APP} className="font-medium text-ink underline underline-offset-4">Crea l&apos;account</a>}</p>}
+    </>
+  );
+}
+
 function Pricing() {
   const [yearly, setYearly] = useState(true);
   const pro = yearly ? PRICING.yearly : PRICING.quarterly;
@@ -202,7 +286,7 @@ function Pricing() {
           <div className="mt-1 text-sm text-muted">Mensile, disdici quando vuoi</div>
           <Credits n={PRICING.starterCredits} />
           <Included extra="Per chi ha pochi immobili al mese" />
-          <Cta ghost className="mt-auto w-full justify-center">Prova gratis {PRICING.trialDays} giorni</Cta>
+          <Cta ghost href={APP} className="mt-auto w-full justify-center">Scegli Starter</Cta>
         </Reveal>
         <Reveal delay={160} className="relative flex flex-col rounded-[32px] bg-white p-8 ring-2 ring-ink shadow-[0_40px_100px_-40px_rgba(0,0,0,.35)]">
           <span className="absolute -top-3 left-8 rounded-full bg-ink px-3 py-1 text-xs font-semibold text-white">Consigliato</span>
@@ -218,10 +302,10 @@ function Pricing() {
           <div key={billed} className="blur-in mt-1 text-sm text-muted">{billed}</div>
           <Credits n={PRICING.credits} />
           <Included extra="Per chi ha tanti immobili al mese" />
-          <Cta className="mt-auto w-full justify-center">Prova gratis {PRICING.trialDays} giorni</Cta>
+          <Cta href={APP} className="mt-auto w-full justify-center">Scegli Pro</Cta>
         </Reveal>
       </div>
-      <p className="mt-6 text-center text-sm text-muted">Prova di {PRICING.trialDays} giorni con {PRICING.trialCredits} crediti, nessuna carta. Prezzi finali, senza IVA aggiunta.</p>
+      <p className="mt-6 text-center text-sm text-muted">Prima di scegliere, <a href="#prova" className="font-medium text-ink underline underline-offset-4">provalo gratis sulla tua foto</a>, senza registrarti. Prezzi finali, senza IVA aggiunta.</p>
     </section>
   );
 }
@@ -229,8 +313,6 @@ function Pricing() {
 export default function AgenteImmoLanding() {
   const [siteRef, siteOn] = useInView('-15%');
   const [videoRef, videoOn] = useInView('-10%');
-  const [styleI, setStyleI] = useState(0);
-  useEffect(() => { const id = setInterval(() => setStyleI(v => (v + 1) % STYLES.length), 2200); return () => clearInterval(id); }, []);
   const vid = useRef<HTMLVideoElement>(null);
   const vid2 = useRef<HTMLVideoElement>(null);
   // i video (1,5 MB) si scaricano solo quando la sezione arriva in vista: prima non rubano banda al primo schermo
@@ -249,7 +331,7 @@ export default function AgenteImmoLanding() {
               {[['#perche', 'Perché'], ['#staging', 'Annunci'], ['#video', 'Social'], ['#sito', 'Il tuo sito'], ['#prezzi', 'Prezzi']].map(([h, l]) => <a key={h} href={h} className="rounded-full px-3.5 py-2 text-sm font-medium text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink">{l}</a>)}
             </div>
             <AuthCta locale="it" href={APP} dashLabel="Dashboard" className="hidden px-3 text-sm font-semibold text-ink sm:block">Accedi</AuthCta>
-            <Cta className="!h-10 !px-5 text-sm">Inizia gratis</Cta>
+            <Cta className="!h-10 !px-5 text-sm">Prova gratis</Cta>
           </nav>
         </div>
       </header>
@@ -264,31 +346,18 @@ export default function AgenteImmoLanding() {
           </p>
           <Reveal delay={600}><p className="mx-auto mt-6 max-w-xl text-lg leading-relaxed text-muted">Il proprietario sceglie l&apos;agente che presenta meglio la sua casa. L&apos;acquirente si ferma sull&apos;annuncio che si nota. Con Agente Immo ogni tuo immobile si presenta al meglio dal primo giorno, senza fotografo, home stager e web agency da pagare.</p></Reveal>
           <Reveal delay={700} className="mt-8 flex flex-wrap items-center justify-center gap-3">
-            <Cta>Inizia gratis, senza carta</Cta>
-            <Cta ghost href="#perche">Perché ti serve</Cta>
+            <Cta>Prova gratis</Cta>
+            <Cta ghost href="#prezzi">Vedi i prezzi</Cta>
           </Reveal>
         </div>
 
-        {/* visual: la chat di staging, prima/dopo che scorre da solo */}
-        <Reveal delay={800} className="mx-auto mt-14 max-w-4xl">
-          <Tilt className="rounded-[32px] bg-white p-2 shadow-[0_40px_100px_-40px_rgba(0,0,0,.35)] ring-1 ring-black/5">
-            <div className="rounded-[24px] bg-canvas p-3 md:p-4">
-              <div className="mb-3 flex items-center justify-between px-1">
-                <span className="flex items-center gap-2 text-sm font-semibold"><span className="flex h-7 w-7 items-center justify-center rounded-full bg-ai text-white"><Wand2 size={13} /></span> Home staging AI</span>
-                <span className="flex h-8 items-center rounded-full bg-white px-3 text-xs font-medium text-muted ring-1 ring-black/5">Soggiorno · vuoto</span>
-              </div>
-              <BeforeAfter before="/immo/home/staging-before.webp" after="/immo/home/staging-after.webp" className="aspect-[3/2] rounded-2xl md:aspect-[16/9]" />
-              <div className="mt-3 flex items-center gap-2 rounded-full bg-white p-1.5 pl-4 ring-1 ring-black/5">
-                <span className="text-sm text-muted">Arreda in stile</span>
-                <span key={styleI} className="blur-in rounded-full bg-canvas px-3 py-1 text-sm font-semibold">{STYLES[styleI]}</span>
-                <span className="ml-auto flex h-9 w-9 items-center justify-center rounded-full bg-ink text-white"><ArrowRight size={15} /></span>
-              </div>
-            </div>
-          </Tilt>
-        </Reveal>
+        {/* prova in pagina al posto dello slider: prima dell'upload scorre l'esempio, poi e' la foto dell'agente */}
+        <div id="prova" className="mx-auto mt-14 max-w-4xl scroll-mt-24">
+          <Reveal delay={800}><TryIt /></Reveal>
+        </div>
 
         <Reveal delay={900} className="mx-auto mt-10 flex max-w-3xl flex-wrap justify-center gap-x-8 gap-y-3 text-sm text-muted">
-          {['Annunci che si notano tra cento uguali', 'Fai bella figura con chi ti affida casa', 'Meno ore davanti al computer', 'Nessuna carta per provare'].map(x => <span key={x} className="flex items-center gap-2"><Check size={14} className="text-brand" />{x}</span>)}
+          {['Annunci che si notano tra cento uguali', 'Fai bella figura con chi ti affida casa', 'Meno ore davanti al computer', 'Prova gratis, senza registrarti'].map(x => <span key={x} className="flex items-center gap-2"><Check size={14} className="text-brand" />{x}</span>)}
         </Reveal>
       </section>
 
@@ -327,7 +396,7 @@ export default function AgenteImmoLanding() {
             <ul className="mt-6 space-y-3 text-[15px]">
               {['La prima foto ferma chi scorre', 'Il cliente capisce subito come vivrebbe quella casa', 'Nessun home staging vero da pagare o da organizzare'].map(x => <li key={x} className="flex items-start gap-3"><span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand/10 text-brand"><Check size={12} /></span>{x}</li>)}
             </ul>
-            <Cta className="mt-8">Prova sulla tua foto</Cta>
+            <Cta className="mt-8">Prova gratis</Cta>
           </Reveal>
           <Reveal delay={150}>
             <Tilt className="rounded-[24px] bg-white p-2 shadow-[0_30px_80px_-30px_rgba(0,0,0,.3)] ring-1 ring-black/5">
@@ -348,7 +417,7 @@ export default function AgenteImmoLanding() {
             <ul className="mt-6 space-y-3 text-[15px]">
               {['Ti fai conoscere nella tua zona, non solo sul portale', 'Ogni incarico diventa un contenuto da pubblicare', 'Niente riprese, niente montaggio, niente videomaker'].map(x => <li key={x} className="flex items-start gap-3"><span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand/10 text-brand"><Check size={12} /></span>{x}</li>)}
             </ul>
-            <Cta className="mt-8">Crea il primo video</Cta>
+            <Cta className="mt-8">Prova gratis</Cta>
           </Reveal>
           <Reveal delay={150} className="md:order-1">
             <div className="relative">
@@ -367,13 +436,13 @@ export default function AgenteImmoLanding() {
       <section id="sito" className="mx-auto max-w-6xl px-4 py-20">
         <div ref={siteRef} className="grid items-center gap-10 md:grid-cols-2 md:gap-16">
           <Reveal>
-            <Pill><Globe size={13} className="text-brand" /> Il tuo sito</Pill>
+            <Pill><Globe size={13} className="text-brand" /> Il tuo sito, già pronto</Pill>
             <h2 className="mt-5 font-display text-4xl font-extrabold leading-[1.05] tracking-tight md:text-5xl">Sui portali sei uno dei tanti. Sul tuo sito sei l&apos;unico.</h2>
-            <p className="mt-5 text-lg leading-relaxed text-muted">Sul portale l&apos;acquirente sceglie la casa, non l&apos;agente, e accanto ci sono cento concorrenti. Il tuo sito è il posto dove ci sei solo tu: lo mandi ai clienti, lo metti in firma, lo mostri al proprietario per fargli vedere dove finirà la sua casa.</p>
+            <p className="mt-5 text-lg leading-relaxed text-muted">Sul portale l&apos;acquirente sceglie la casa, non l&apos;agente. Il sito te lo diamo noi, già fatto e finito: scegli uno dei nostri modelli, metti logo e colori, e ogni immobile che carichi ci finisce da solo. Niente web agency, niente da costruire.</p>
             <ul className="mt-6 space-y-3 text-[15px]">
-              {['I contatti arrivano a te, non a un portale', 'Un biglietto da visita per chi deve scegliere a chi affidare casa', 'Ti fai trovare su Google nella tua zona'].map(x => <li key={x} className="flex items-start gap-3"><span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand/10 text-brand"><Check size={12} /></span>{x}</li>)}
+              {['Pronto in un minuto: scegli il modello, il resto è già fatto', 'Ogni immobile che carichi è subito online, con foto e descrizione', 'I contatti arrivano a te, non a un portale', 'Ti fai trovare su Google nella tua zona'].map(x => <li key={x} className="flex items-start gap-3"><span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand/10 text-brand"><Check size={12} /></span>{x}</li>)}
             </ul>
-            <Cta className="mt-8">Metti online il primo immobile</Cta>
+            <Cta className="mt-8">Prova gratis</Cta>
           </Reveal>
           <Reveal delay={150}><Tilt className="rounded-[24px]"><MiniSite active={siteOn} /></Tilt></Reveal>
         </div>
@@ -404,7 +473,7 @@ export default function AgenteImmoLanding() {
         </div>
       </section>
 
-      {/* prezzi: un solo piano (foto, video e sito), trimestrale o annuale, 7 giorni di prova. Numeri in PRICING */}
+      {/* prezzi: Starter e Pro (stesso prodotto, crediti diversi). Numeri in PRICING */}
       <Pricing />
 
       {/* domande frequenti: testo visibile + FAQPage in JSON-LD (stesse risposte, vedi FAQ) */}
@@ -430,8 +499,8 @@ export default function AgenteImmoLanding() {
           <div className="pointer-events-none absolute inset-0 opacity-30" style={{ background: 'radial-gradient(600px circle at 20% 0%, rgba(83,126,236,.8), transparent 60%), radial-gradient(500px circle at 90% 100%, rgba(110,86,248,.7), transparent 60%)' }} />
           <div className="relative">
             <h2 className="mx-auto max-w-2xl font-display text-4xl font-extrabold leading-[1.05] tracking-tight md:text-6xl">Il prossimo incarico, vincilo così.</h2>
-            <p className="mx-auto mt-5 max-w-xl text-lg text-white/70">Provi gratis, senza carta. Se non ti serve, non paghi niente.</p>
-            <a href={APP} className="mt-8 inline-flex h-13 items-center gap-2 rounded-full bg-white px-7 text-[15px] font-semibold text-ink ease-smooth transition-transform hover:scale-[1.03] active:scale-[.98]">Inizia gratis <ArrowRight size={16} /></a>
+            <p className="mx-auto mt-5 max-w-xl text-lg text-white/70">Carica la foto di una tua casa e guarda il risultato. Gratis, senza registrarti.</p>
+            <a href="#prova" className="mt-8 inline-flex h-13 items-center gap-2 rounded-full bg-white px-7 text-[15px] font-semibold text-ink ease-smooth transition-transform hover:scale-[1.03] active:scale-[.98]">Prova gratis <ArrowRight size={16} /></a>
           </div>
         </Reveal>
       </section>

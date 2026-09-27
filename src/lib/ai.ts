@@ -48,7 +48,7 @@ export async function logUsage(u: Args['usage'], runpod: boolean, ms: number, tk
   try {
     admin ??= createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
     await admin.from('ai_usage').insert({
-      user_id: u.userId, kind: u.kind, provider: runpod ? 'runpod' : 'anthropic',
+      user_id: u.userId || null, kind: u.kind, // null = prova anonima dalla landing provider: runpod ? 'runpod' : 'anthropic',
       model: model ?? (runpod ? process.env.AI_MODEL : 'claude-opus-5'),
       input_tokens: tk.input ?? null, output_tokens: tk.output ?? null,
       duration_ms: ms, cost_usd: Number(cost.toFixed(6)), ok,
