@@ -291,6 +291,22 @@ function TryIt() {
             ) : after && before ? (
               <div className="relative">
                 <BeforeAfter before={before} after={after} auto={false} className="aspect-[4/3] md:aspect-[16/10]" />
+                {/* template del video dentro la foto: Popup e Dall'alto nella prova, gli altri si vedono ma portano ai prezzi */}
+                {picking && !vBusy && (
+                  <div className="blur-in absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/35 p-3 backdrop-blur-md sm:p-6">
+                    <div className="mb-3 rounded-full bg-white px-4 py-1.5 text-sm font-semibold shadow sm:mb-4">{L('Scegli l\'animazione del video', "Pick the video animation")}</div>
+                    <div className="grid w-full max-w-2xl grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3">
+                      {VIDEO_TEMPLATES.map(([k, it, eng, Icon]) => {
+                        const free = k === 'popup' || k === 'gravity';
+                        const cls = 'flex flex-col items-start gap-2 rounded-[20px] p-3 text-left text-sm font-semibold shadow-lg ease-smooth transition-transform sm:p-4';
+                        return free
+                          ? <button key={k} type="button" onClick={() => toVideo(k)} className={`${cls} bg-white hover:scale-[1.03]`}><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-ai/10 text-ai"><Icon size={17} /></span>{L(it, eng)}</button>
+                          : <a key={k} href="#prezzi" className={`${cls} bg-white/80 text-muted hover:bg-white`}><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-canvas"><Lock size={15} /></span><span className="flex w-full items-center justify-between gap-1">{L(it, eng)}<span className="text-[11px] font-medium">{L('Con un piano', "With a plan")}</span></span></a>;
+                      })}
+                    </div>
+                    <button type="button" onClick={() => setPicking(false)} className="mt-3 text-sm font-medium text-white underline underline-offset-4 sm:mt-4">{L('Torna alla foto', "Back to the photo")}</button>
+                  </div>
+                )}
                 {vBusy && (
                   <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-white/55 backdrop-blur-[2px]">
                     <Loader2 size={28} className="animate-spin text-ai" />
@@ -320,30 +336,17 @@ function TryIt() {
           </div>
           <div className="px-1.5 pb-2 pt-3 sm:p-3">
             <div className="flex flex-wrap items-center gap-2 rounded-[20px] bg-canvas p-2 pl-2 ring-1 ring-black/5 focus-within:bg-white focus-within:ring-2 focus-within:ring-ai sm:flex-nowrap">
+              {!after && <>
               <button type="button" onClick={() => input.current?.click()} aria-label={L('Carica una foto', "Upload a photo")} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-ink shadow-sm ring-1 ring-black/5 hover:bg-line/40"><ImagePlus size={18} /></button>
               <input value={text} onChange={e => setText(e.target.value.slice(0, 200))} onKeyDown={e => e.key === 'Enter' && run()} placeholder={L('Scrivi come la vuoi, es. soggiorno moderno con divano grigio', "Describe it, e.g. modern living room with a grey sofa")}
                 className="min-w-0 flex-1 bg-transparent px-2 text-[15px] outline-none placeholder:text-muted/70" />
+              </>}
               {after
                 ? video || emptied
-                  ? <button type="button" onClick={() => keep(!!video)} className="inline-flex h-11 w-full shrink-0 items-center justify-center gap-2 rounded-2xl bg-ink px-5 text-sm font-semibold text-white sm:w-auto">{L('Scarica tutto', "Download all")} <ArrowRight size={15} /></button>
-                  : <button type="button" disabled={vBusy} onClick={() => setPicking(p => !p)} className="inline-flex h-11 w-full shrink-0 items-center justify-center gap-2 rounded-2xl bg-ai px-5 text-sm font-semibold text-white disabled:opacity-50 sm:w-auto"><Clapperboard size={15} /> {L('Trasforma in video', "Turn into video")}</button>
+                  ? <button type="button" onClick={() => keep(!!video)} className="inline-flex h-11 w-full shrink-0 items-center justify-center gap-2 rounded-2xl bg-ink px-5 text-sm font-semibold text-white">{L('Scarica tutto', "Download all")} <ArrowRight size={15} /></button>
+                  : <button type="button" disabled={vBusy} onClick={() => setPicking(p => !p)} className="inline-flex h-11 w-full shrink-0 items-center justify-center gap-2 rounded-2xl bg-ai px-5 text-sm font-semibold text-white disabled:opacity-50"><Clapperboard size={15} /> {L('Trasforma in video', "Turn into video")}</button>
                 : <button type="button" disabled={busy || left <= 0} onClick={() => (before ? run() : input.current?.click())} className="inline-flex h-11 w-full shrink-0 items-center justify-center gap-2 rounded-2xl bg-ink px-5 text-sm font-semibold text-white disabled:opacity-40 sm:w-auto"><Sparkles size={15} /> {before ? L('Arreda', "Stage it") : L('Carica foto', "Upload photo")}</button>}
             </div>
-            {/* template del video: Popup e Dall'alto nella prova, gli altri si vedono ma portano ai prezzi */}
-            {picking && after && !video && (
-              <div className="blur-in mt-3 rounded-[20px] bg-canvas p-3">
-                <div className="px-1 pb-2 text-sm font-semibold">{L('Scegli l\'animazione del video', "Pick the video animation")}</div>
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                  {VIDEO_TEMPLATES.map(([k, it, eng, Icon]) => {
-                    const free = k === 'popup' || k === 'gravity';
-                    const cls = 'flex h-12 items-center gap-2 rounded-2xl px-3 text-left text-sm font-semibold ease-smooth transition-colors';
-                    return free
-                      ? <button key={k} type="button" onClick={() => toVideo(k)} className={`${cls} bg-white ring-1 ring-black/5 hover:ring-ai`}><Icon size={16} className="shrink-0 text-ai" />{L(it, eng)}</button>
-                      : <a key={k} href="#prezzi" className={`${cls} text-muted ring-1 ring-black/5 hover:text-ink`}><Lock size={14} className="shrink-0" />{L(it, eng)}<span className="ml-auto text-[11px] font-medium">{L('Con un piano', "With a plan")}</span></a>;
-                  })}
-                </div>
-              </div>
-            )}
             <div className="mt-4 flex flex-wrap items-center justify-center gap-2 sm:mt-3 sm:justify-start">
               <span className="hidden text-sm text-muted sm:inline">{L('Oppure scegli uno stile:', "Or pick a style:")}</span>
               {DEMO_STYLES.map(([k, l, e]) => (
