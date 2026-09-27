@@ -404,7 +404,7 @@ export default function AgenteImmoLanding() {
           <nav className="glass flex h-14 w-full items-center gap-2 rounded-full border px-2 pl-4 shadow-[0_10px_40px_-15px_rgba(0,0,0,.2)]">
             <a href="#top" className="flex items-center gap-2"><img src="/immo/logo-mark.png" alt="" className="h-8 w-8" /><span className="font-display text-lg font-extrabold tracking-tight">Agente <span className="text-brand">Immo</span></span></a>
             <div className="mx-auto hidden items-center gap-1 md:flex">
-              {[['#perche', 'Perché'], ['#staging', 'Annunci'], ['#video', 'Social'], ['#sito', 'Il tuo sito'], ['#prezzi', 'Prezzi']].map(([h, l]) => <a key={h} href={h} className="rounded-full px-3.5 py-2 text-sm font-medium text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink">{l}</a>)}
+              {[['#staging', 'Annunci'], ['#video', 'Social'], ['#sito', 'Il tuo sito'], ['#prezzi', 'Prezzi']].map(([h, l]) => <a key={h} href={h} className="rounded-full px-3.5 py-2 text-sm font-medium text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink">{l}</a>)}
             </div>
             <AuthCta locale="it" href={APP} dashLabel="Dashboard" className="hidden px-3 text-sm font-semibold text-ink sm:block">Accedi</AuthCta>
             <Cta className="!h-10 !px-5 text-sm">Prova gratis</Cta>
@@ -417,13 +417,13 @@ export default function AgenteImmoLanding() {
         <div className="mx-auto max-w-5xl text-center">
           <Reveal><h1><Pill><Sparkles size={13} className="text-ai" /> Il software per agenti immobiliari</Pill></h1></Reveal>
           <p className="mx-auto mt-6 w-fit font-display text-[clamp(24px,5.2vw,60px)] font-extrabold leading-[1.05] tracking-[-0.03em]">
-            <span className="block sm:whitespace-nowrap">{'L\'incarico va a chi presenta meglio.'.split(' ').map((w, i) => <span key={i} className="blur-in inline-block" style={{ animationDelay: `${i * 40}ms` }}>{w}&nbsp;</span>)}</span>
-            <span className="block text-brand sm:whitespace-nowrap">{'Da oggi sei tu.'.split(' ').map((w, i) => <span key={i} className="blur-in inline-block" style={{ animationDelay: `${360 + i * 40}ms` }}>{w}&nbsp;</span>)}</span>
+            <span className="block sm:whitespace-nowrap">{'Vinci più incarichi.'.split(' ').map((w, i) => <span key={i} className="blur-in inline-block" style={{ animationDelay: `${i * 40}ms` }}>{w}&nbsp;</span>)}</span>
+            <span className="block text-brand sm:whitespace-nowrap">{'Presenta meglio ogni casa.'.split(' ').map((w, i) => <span key={i} className="blur-in inline-block" style={{ animationDelay: `${360 + i * 40}ms` }}>{w}&nbsp;</span>)}</span>
           </p>
           <Reveal delay={600}><p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-muted">Tre agenzie in gara per lo stesso incarico: lo prende chi arriva con la casa già arredata, un video pronto e la sua pagina sul proprio sito. Con Agente Immo ce l&apos;hai in un minuto, per ogni immobile, senza fotografo, home stager e web agency da pagare.</p></Reveal>
           <Reveal delay={700} className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <Cta>Prova gratis sulla tua foto</Cta>
-            <Cta ghost href="#perche">Perché ti serve</Cta>
+            <Cta ghost href="#prezzi">Vedi i prezzi</Cta>
           </Reveal>
         </div>
 
@@ -436,33 +436,6 @@ export default function AgenteImmoLanding() {
           {['La prima foto ferma chi scorre', 'Il proprietario vede subito cosa farai per lui', `~3.400 € di professionisti inclusi, da ${PRICING.starter} € al mese`, 'Prova gratis, senza registrarti'].map(x => <span key={x} className="flex items-center gap-2"><Check size={14} className="text-brand" />{x}</span>)}
         </Reveal>
       </section>
-
-      {/* perche' ti serve: la scena dell'acquisizione, fascia scura. Problemi dell'agente, non passaggi del prodotto */}
-      <Band id="perche" tone="dark" className="scroll-mt-4">
-        <Reveal className="mx-auto max-w-3xl text-center">
-          <Pill className="!bg-white/10 !text-white/80 !ring-white/10">Perché ti serve</Pill>
-          <h2 className={H2}>Tre agenzie, un incarico.<br className="hidden md:block" /> Lo vince chi si presenta meglio.</h2>
-          <p className="mt-5 text-lg leading-relaxed text-white/60">Non chi ha l&apos;ufficio più grande. Chi fa vedere al proprietario, lì al tavolo, come venderà la sua casa.</p>
-        </Reveal>
-        <ol className="mt-14 grid gap-4 md:grid-cols-3">
-          {[
-            ['01', 'All\'acquisizione', 'Il proprietario ha già sentito altre due agenzie. Tu gli mostri la sua casa arredata, un video e la pagina sul tuo sito. Gli altri gli lasciano un biglietto da visita.'],
-            ['02', 'Sul portale', 'Cento annunci, tutti con le stesse stanze vuote. L\'acquirente si ferma sulla foto in cui si immagina a cena, e chiama te. E il proprietario vede l\'annuncio fatto bene.'],
-            ['03', 'Il conto', 'Fotografo, home stager, videomaker, web agency: circa 3.400 € a casa, o giorni tuoi al computer. Qui è tutto incluso, per ogni immobile, in un minuto.'],
-          ].map(([n, t, d], i) => (
-            <Reveal key={t} as="li" delay={i * 140} anim="rise" className="relative overflow-hidden rounded-[28px] bg-white/[.06] p-7 ring-1 ring-white/10 ease-smooth transition-colors hover:bg-white/[.1]">
-              <span className="font-display text-5xl font-extrabold tracking-tight text-brand">{n}</span>
-              <h3 className="mt-5 font-display text-2xl font-bold tracking-tight">{t}</h3>
-              <p className="mt-2 leading-relaxed text-white/60">{d}</p>
-            </Reveal>
-          ))}
-        </ol>
-        <Reveal delay={200} className="mx-auto mt-14 grid max-w-4xl grid-cols-3 gap-4 text-center">
-          {([[<CountUp key="a" to={3400} prefix="~" suffix=" €" />, 'ti costa oggi, per una casa'], ['1 min', 'per avere tutto con Agente Immo'], [`da ${PRICING.starter} €`, 'al mese, per tutte le case']] as [ReactNode, string][]).map(([v, l]) => (
-            <div key={l}><div className="font-display text-3xl font-extrabold tracking-tight md:text-5xl">{v}</div><div className="mt-2 text-sm text-white/55">{l}</div></div>
-          ))}
-        </Reveal>
-      </Band>
 
       {/* 01 home staging */}
       <Band id="staging">

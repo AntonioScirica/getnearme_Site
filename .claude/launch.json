@@ -4,9 +4,23 @@
     {
       "name": "getnearme-site",
       "runtimeExecutable": "/Users/antonioscirica/.nvm/versions/node/v22.19.0/bin/node",
-      "runtimeArgs": ["node_modules/next/dist/bin/next", "dev"],
+      "runtimeArgs": [
+        "node_modules/next/dist/bin/next",
+        "dev"
+      ],
       "port": 3000,
       "autoPort": true
+    },
+    {
+      "name": "getnearme-site-3001",
+      "runtimeExecutable": "/Users/antonioscirica/.nvm/versions/node/v22.19.0/bin/node",
+      "runtimeArgs": [
+        "node_modules/next/dist/bin/next",
+        "dev",
+        "-p",
+        "3001"
+      ],
+      "port": 3001
     }
   ]
 }
