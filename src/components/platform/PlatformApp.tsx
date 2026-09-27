@@ -8,7 +8,8 @@ import { supabase } from '@/lib/supabase';
 import { fetchProjects, type ProjectData } from '@/lib/projects';
 import NewPropertyWizard from './NewPropertyWizard';
 import PropertyDetail from './PropertyDetail';
-import PortfolioView from './PortfolioView';
+import PortfolioView, { TemplatePreview } from './PortfolioView';
+import type { TemplateId } from '@/lib/siteTemplates';
 import ImportView from './ImportView';
 import { BrowserBody, Results, SCAN_STEPS, useImprove, Verdict, type Stage } from './ImproveView';
 import { Elapsed } from './AiPhoto';
@@ -77,6 +78,8 @@ export default function PlatformApp({ userData }: { userData: UserData }) {
     document.startViewTransition(swap);
   }} />;
 
+  // anteprima di un modello del sito (aperta in un'altra scheda dalla galleria dei modelli)
+  if (route.startsWith('/anteprima/')) return <TemplatePreview id={route.slice('/anteprima/'.length) as TemplateId} projects={projects} solo={new URLSearchParams(query).get('solo') === '1'} />;
   const detailId = route.startsWith('/immobile/') ? route.slice('/immobile/'.length) : null;
   const chat = route === '/staging';
 

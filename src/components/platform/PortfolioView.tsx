@@ -22,6 +22,13 @@ const PAGES = [['home', 'Home'], ['immobili', 'Immobili'], ['immobile', 'Scheda'
 const pageOf = (id: PageId, firstId?: string, zone?: string): Page => id === 'immobile' ? { page: 'immobile', id: firstId ?? '' } : id === 'zona' ? { page: 'zona', slug: zone ?? '' } : { page: id } as Page;
 const COLORS = ['#1d5b3c', '#4d7a2c', '#2a2b7c', '#1f6feb', '#111111', '#ff6a2b', '#be185d', '#8a6a4f'];
 
+// immobile della piattaforma -> immobile del sito
+const toSite = (p: ProjectData): SiteProperty => {
+      const d = (p.import_data ?? {}) as { photos?: string[]; zona?: string[]; contratto?: string };
+      return { id: p.id, titolo: p.titolo || p.nome, addr: p.addr, prezzo: p.prezzo, mq: p.mq, camere: p.camere, bagni: p.bagni, locali: p.locali, tipologia: p.tipologia, cover: p.cover,
+        descrizione: p.descrizione, riferimento: p.riferimento, createdAt: p.createdAt, details: (d as { details?: Record<string, unknown> }).details, photos: Array.isArray(d.photos) && d.photos.length ? d.photos : [p.cover], zona: Array.isArray(d.zona) ? d.zona : [], contratto: d.contratto ?? '' };
+};
+
 export default function PortfolioView({ projects, onChange }: { projects: ProjectData[] | null; onChange: () => void }) {
   const [tab, setTab] = useState<'sito' | 'immobili'>('sito');
   const [site, setSite] = useState<Site | null>(null);
@@ -83,11 +90,6 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
   };
 
   const pub = (projects ?? []).filter(p => p.is_public);
-  const toSite = (p: ProjectData): SiteProperty => {
-      const d = (p.import_data ?? {}) as { photos?: string[]; zona?: string[]; contratto?: string };
-      return { id: p.id, titolo: p.titolo || p.nome, addr: p.addr, prezzo: p.prezzo, mq: p.mq, camere: p.camere, bagni: p.bagni, locali: p.locali, tipologia: p.tipologia, cover: p.cover,
-        descrizione: p.descrizione, riferimento: p.riferimento, createdAt: p.createdAt, details: (d as { details?: Record<string, unknown> }).details, photos: Array.isArray(d.photos) && d.photos.length ? d.photos : [p.cover], zona: Array.isArray(d.zona) ? d.zona : [], contratto: d.contratto ?? '' };
-  };
   const props: SiteProperty[] = (pub.length ? pub : process.env.NODE_ENV === 'development' ? FAKE_PROPERTIES : []).map(toSite);
   // miniature dei modelli: sempre piene di case, le tue piu' quelle di esempio fino a 9 (solo anteprima, non va online)
   const showcase = [...props, ...FAKE_PROPERTIES.filter(f => !props.some(p => p.id === f.id)).map(toSite)].slice(0, Math.max(9, props.length));
@@ -395,19 +397,22 @@ function Gallery({ cfg, name, logo, props, onPick }: { cfg: SiteConfig; name: st
           return (
             // stessa card delle altre pagine (Galleria): bianca 24 con la miniatura 16 dentro e una riga sotto.
             // Passando sopra la miniatura scorre lenta verso il basso e mostra tutta la home.
-            <div key={t.id} role="button" tabIndex={0} onMouseEnter={e => measureThumb(e.currentTarget)} onClick={e => pick(t.id, e.currentTarget)} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(t.id, e.currentTarget); } }}
-              className={`group rise cursor-pointer rounded-3xl bg-white p-2 text-left outline-none ease-smooth transition-[opacity,transform,filter,box-shadow] focus-visible:ring-2 focus-visible:ring-brand ${CARD_SHADOW} ${used ? '!ring-2 !ring-brand' : ''} ${leaving && leaving !== t.id ? 'pointer-events-none scale-90 opacity-0 blur-[8px]' : ''}`} style={{ animationDelay: `${i * 0.04}s`, transitionDelay: leaving ? `${(i % 3) * 40}ms` : undefined }}>
+            <div key={t.id} onMouseEnter={e => measureThumb(e.currentTarget)}
+              className={`group rise rounded-3xl bg-white p-2 text-left ease-smooth transition-[opacity,transform,filter,box-shadow] ${CARD_SHADOW} ${used ? '!ring-2 !ring-brand' : ''} ${leaving && leaving !== t.id ? 'pointer-events-none scale-90 opacity-0 blur-[8px]' : ''}`} style={{ animationDelay: `${i * 0.04}s`, transitionDelay: leaving ? `${(i % 3) * 40}ms` : undefined }}>
               <div data-thumb className="relative overflow-hidden rounded-2xl bg-canvas">
                 <MorphTarget id={`tpl-${t.id}`}><Thumb><SiteThumb ctx={{ cfg: tcfg, name, logo, properties: props, base: '', preview: true }} /></Thumb></MorphTarget>
+                {/* in hover (sempre su telefono): anteprima in un'altra scheda o scelta del modello, stessa larghezza */}
+                <div className="absolute inset-x-3 bottom-3 z-10 grid grid-cols-2 gap-2 ease-smooth transition-opacity md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100">
+                  <a href={`#/anteprima/${t.id}`} target="_blank" rel="noopener" className="flex h-10 items-center justify-center gap-1.5 rounded-full bg-white/95 text-sm font-semibold text-ink shadow-lg ring-1 ring-black/5 backdrop-blur hover:bg-white"><Eye size={15} /> Anteprima</a>
+                  <button type="button" onClick={e => pick(t.id, e.currentTarget.closest('.group') as HTMLElement)} className="flex h-10 items-center justify-center gap-1.5 rounded-full bg-ink text-sm font-semibold text-white shadow-lg hover:bg-black"><Pencil size={14} /> Scegli template</button>
+                </div>
               </div>
               <div className="flex min-h-12 items-center gap-3 px-2 pt-2">
                 <span className="min-w-0 flex-1">
                   <span className="block text-sm font-semibold">{t.name}</span>
                   <span className="block truncate text-xs text-muted">{t.desc}</span>
                 </span>
-                {used
-                  ? <span className="shrink-0 rounded-full bg-brand/10 px-3 py-1 text-xs font-semibold text-brand">In uso</span>
-                  : <span className="flex h-8 shrink-0 items-center gap-1.5 rounded-full px-3 text-xs font-medium text-ink opacity-0 ease-smooth transition-opacity group-hover:bg-canvas group-hover:opacity-100"><Pencil size={13} /> Personalizza</span>}
+                {used && <span className="shrink-0 rounded-full bg-brand/10 px-3 py-1 text-xs font-semibold text-brand">In uso</span>}
               </div>
             </div>
           );
@@ -605,5 +610,40 @@ export function PublicSwitch({ on, onClick, labels = ['Pubblico', 'Privato'] }: 
         <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${on ? 'left-[18px]' : 'left-0.5'}`} />
       </span>
     </button>
+  );
+}
+
+// Anteprima di un modello in un'altra scheda (#/anteprima/<id>): barra con PC / Tablet / Telefono e il sito in una
+// cornice della larghezza scelta. La cornice carica #/anteprima/<id>?solo=1 (solo il sito): cosi' le regole
+// responsive del sito vedono davvero la larghezza del telefono, non un sito da computer rimpicciolito.
+const DEVICES = [['pc', 'PC', '100%'], ['tablet', 'Tablet', '834px'], ['phone', 'Telefono', '390px']] as const;
+export function TemplatePreview({ id, projects, solo }: { id: TemplateId; projects: ProjectData[] | null; solo: boolean }) {
+  const [site, setSite] = useState<{ name: string; logo: string | null; config: SiteConfig } | null>(null);
+  const [page, setPage] = useState<Page>({ page: 'home' });
+  const [device, setDevice] = useState<(typeof DEVICES)[number][0]>('pc');
+  useEffect(() => { if (solo) authFetch('/api/platform/site').then(r => r.json()).then(setSite).catch(() => {}); }, [solo]);
+  const t = TEMPLATES.find(x => x.id === id) ?? TEMPLATES[0];
+  if (solo) {
+    if (!site) return <div className="flex h-full items-center justify-center"><Loader2 className="animate-spin text-muted" /></div>;
+    const pub = (projects ?? []).filter(p => p.is_public).map(toSite);
+    const props = [...pub, ...FAKE_PROPERTIES.filter(f => !pub.some(p => p.id === f.id)).map(toSite)].slice(0, Math.max(9, pub.length));
+    const cfg = withPlaceholders(site.config.template === t.id ? site.config : { ...site.config, template: t.id, primary: t.primary, font: t.font });
+    return <div className="h-full overflow-y-auto bg-white"><SitePage page={page} ctx={{ cfg, name: site.name || 'La tua agenzia', logo: site.logo, properties: props, base: '', preview: true, go: setPage }} /></div>;
+  }
+  const w = DEVICES.find(d => d[0] === device)![2];
+  return (
+    <div className="flex h-full flex-col bg-canvas">
+      <div className="flex h-16 shrink-0 items-center gap-4 border-b border-line bg-white px-4">
+        <span className="min-w-0 flex-1 truncate text-sm"><span className="text-muted">Anteprima del modello</span> <b>{t.name}</b></span>
+        <div className="flex rounded-full bg-canvas p-1">
+          {DEVICES.map(([k, l]) => <button key={k} type="button" onClick={() => setDevice(k)} className={`h-8 rounded-full px-4 text-sm font-semibold ease-smooth transition-colors ${device === k ? 'bg-white text-ink shadow-sm' : 'text-muted hover:text-ink'}`}>{l}</button>)}
+        </div>
+        <span className="flex-1" />
+      </div>
+      <div className="flex min-h-0 flex-1 justify-center overflow-hidden p-4">
+        <iframe title={`Anteprima ${t.name}`} src={`${location.pathname}#/anteprima/${t.id}?solo=1`} style={{ width: w, maxWidth: '100%' }}
+          className={`h-full bg-white ease-smooth transition-[width] ${device === 'pc' ? 'rounded-2xl' : 'rounded-[32px] shadow-[0_30px_80px_-30px_rgba(0,0,0,.35)] ring-8 ring-ink'}`} />
+      </div>
+    </div>
   );
 }

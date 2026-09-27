@@ -30,7 +30,8 @@ const TXT = {
 } as const;
 
 export default function CookieBanner() {
-  const unset = useSyncExternalStore(subscribeConsent, () => !isAgentSite() && readConsent() === null, () => false);
+  // niente banner dentro una cornice (anteprima dei modelli): c'e' gia' nella pagina che la contiene
+  const unset = useSyncExternalStore(subscribeConsent, () => !isAgentSite() && window.self === window.top && readConsent() === null, () => false);
   const [reopen, setReopen] = useState(false);
   const [custom, setCustom] = useState(false);
   const [pick, setPick] = useState<Consent>({ stats: false, ads: false });
