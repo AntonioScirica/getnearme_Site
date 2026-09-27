@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { buildStagingPrompt, roomKey, variantText, isRestyle, isFurnishing, roomLabel, STYLE_LOOK, type SceneType } from '@/lib/stagingPrompts'
 import { guidedEdit } from '@/lib/guidedEdit'
 import { brighten } from '@/lib/brighten'
+import { finish } from '@/lib/finish'
 import { createClient } from '@supabase/supabase-js'
 import { uploadJpeg, uploadMarker } from '@/lib/r2'
 import sharp from 'sharp'
@@ -124,15 +125,19 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: job.status === 'IN_QUEUE' || job.status === 'IN_PROGRESS' ? 'timeout' : 'ai_failed' }, { status: 502 })
   }
   if (process.env.NODE_ENV !== 'production') await debugDump({ imageBase64, imageUrl, region, prompt: used, request: translation.request, outB64: b64, translated: (job.output as { translated?: string } | undefined)?.translated, worker: (job as { workerId?: string }).workerId })
+  // risultato alle proporzioni dell'originale + finitura fotografica (grana, contrasto locale: meno "piatto");
+  // Luminoso no: e' gia' la foto vera con l'esposizione corretta
+  let shapedBuf: Buffer | null = null
+  const shaped = async () => (shapedBuf ??= body.angle === 'day' ? await matchInputShape(Buffer.from(b64, 'base64'), imageBase64, imageUrl) : await finish(await matchInputShape(Buffer.from(b64, 'base64'), imageBase64, imageUrl)))
   // foto di un immobile (scelta dalla vetrina): cartella casa-<id>, la Galleria le raggruppa per casa
   const projectId = typeof body.projectId === 'string' && /^[\w-]{1,64}$/.test(body.projectId) ? body.projectId : ''
   // anteprime per il video (tre proposte tra cui scegliere): cartella a parte, non vanno in Galleria
   if (body.preview === true) {
-    const url = await uploadJpeg(await matchInputShape(Buffer.from(b64, 'base64'), imageBase64, imageUrl), `previews/${userId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`)
+    const url = await uploadJpeg(await shaped(), `previews/${userId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`)
     return NextResponse.json({ url, seconds: job.output?.seconds })
   }
   const key = `edits/${userId}/${projectId ? `casa-${projectId}/` : ''}${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
-  const url = await uploadJpeg(await matchInputShape(Buffer.from(b64, 'base64'), imageBase64, imageUrl), `${key}.jpg`)
+  const url = await uploadJpeg(await shaped(), `${key}.jpg`)
   // Media: accanto al risultato si salva anche il "prima" (<chiave>-prima.jpg), cosi' la pagina Media
   // mostra ogni modifica con prima e dopo leggendo solo la cartella su R2 (niente tabella).
   await savePrima(imageBase64, imageUrl, `${key}-prima.jpg`)

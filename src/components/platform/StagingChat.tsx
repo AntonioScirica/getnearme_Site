@@ -38,8 +38,8 @@ const EMPTY = S('empty', 'Svuota la stanza', { style: 'empty' }), LIGHT = S('day
 // Interni: gli stessi veri stili per ogni stanza (Moderno, Nordico, Luxury, Boho: ogni chip porta la descrizione completa
 // dello stile e il piano di Claude la adatta alla stanza). I chip "a parole" per stanza (letto, comodini, armadio...) davano
 // arredi poveri e incoerenti (27/09). Esterni e giardini hanno i loro.
-// interni (balcone compreso): solo questi quattro, in quest'ordine (27/09). Nordico, Boho e disordine si chiedono scrivendo.
-const INDOOR: Suggestion[] = [S('modern', 'Moderno', { style: 'modern' }), S('industrial', 'Luxury', { style: 'industrial' }), EMPTY, LIGHT];
+// interni (balcone compreso): solo questi quattro, in quest'ordine dopo Crea video (27/09). Nordico, Boho e disordine si chiedono scrivendo.
+const INDOOR: Suggestion[] = [EMPTY, S('modern', 'Moderno', { style: 'modern' }), S('industrial', 'Luxury', { style: 'industrial' }), LIGHT];
 function suggestionsFor(kind: string | null): Suggestion[] {
   switch (kind) {
     case 'scene:esterno': return [S('f-renew', 'Rinnova la facciata', { style: 'empty' }), S('f-modern', 'Facciata moderna', { style: 'modern' }), S('f-sky', 'Cielo azzurro', { prompt: 'Cielo azzurro limpido e luce di sole, senza cambiare l’edificio' }), S('f-garden', 'Giardino curato', { prompt: 'Prato curato e piante ordinate intorno alla casa, senza cambiare l’edificio' })];
