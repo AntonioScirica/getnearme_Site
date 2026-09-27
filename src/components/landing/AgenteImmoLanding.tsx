@@ -176,7 +176,7 @@ function Credits({ n }: { n: number }) {
 
 const INCLUDED = ['Il tuo sito con tutti i tuoi immobili, sul tuo nome', 'Foto più luminose sempre gratis, senza crediti', 'Annunci, report PDF e cosa c\'è vicino, per ogni immobile'];
 const Included = ({ extra }: { extra: string }) => (
-  <ul className="mt-6 space-y-3 text-[15px]">
+  <ul className="mb-8 mt-6 space-y-3 text-[15px]">
     {[...INCLUDED, extra].map(x => (
       <li key={x} className="flex items-start gap-3"><span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand/10 text-brand"><Check size={12} /></span>{x}</li>
     ))}
@@ -195,18 +195,18 @@ function Pricing() {
         <h2 className="mt-5 font-display text-4xl font-extrabold leading-[1.05] tracking-tight md:text-5xl">Stesso prodotto, scegli quanto ti serve.</h2>
         <p className="mt-5 text-lg leading-relaxed text-muted">Sito, foto e video in entrambi i piani. Cambiano solo i crediti.</p>
       </Reveal>
-      <div className="mx-auto mt-12 grid max-w-4xl items-start gap-5 md:grid-cols-2">
-        <Reveal delay={80} className="rounded-[32px] bg-white p-8 ring-1 ring-black/5">
-          <div className="text-sm font-semibold text-muted">Starter</div>
+      <div className="mx-auto mt-12 grid max-w-4xl items-stretch gap-5 md:grid-cols-2">
+        <Reveal delay={80} className="flex flex-col rounded-[32px] bg-white p-8 ring-1 ring-black/5">
+          <div className="flex h-10 items-center text-sm font-semibold text-muted">Starter</div>
           <div className="mt-3 flex items-end gap-2"><span className="font-display text-6xl font-extrabold tracking-tight">{PRICING.starter} €</span><span className="pb-2 text-muted">/ mese</span></div>
           <div className="mt-1 text-sm text-muted">Mensile, disdici quando vuoi</div>
           <Credits n={PRICING.starterCredits} />
           <Included extra="Per chi ha pochi immobili al mese" />
-          <Cta ghost className="mt-8 w-full justify-center">Prova gratis {PRICING.trialDays} giorni</Cta>
+          <Cta ghost className="mt-auto w-full justify-center">Prova gratis {PRICING.trialDays} giorni</Cta>
         </Reveal>
-        <Reveal delay={160} className="relative rounded-[32px] bg-white p-8 ring-2 ring-ink shadow-[0_40px_100px_-40px_rgba(0,0,0,.35)]">
+        <Reveal delay={160} className="relative flex flex-col rounded-[32px] bg-white p-8 ring-2 ring-ink shadow-[0_40px_100px_-40px_rgba(0,0,0,.35)]">
           <span className="absolute -top-3 left-8 rounded-full bg-ink px-3 py-1 text-xs font-semibold text-white">Consigliato</span>
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex h-10 items-center justify-between gap-3">
             <div className="text-sm font-semibold text-muted">Pro</div>
             <div className="flex rounded-full bg-canvas p-1">
               {([[false, 'Trimestrale'], [true, 'Annuale']] as const).map(([y, l]) => (
@@ -217,8 +217,8 @@ function Pricing() {
           <div className="mt-3 flex items-end gap-2"><span key={pro} className="blur-in font-display text-6xl font-extrabold tracking-tight">{pro} €</span><span className="pb-2 text-muted">/ mese</span></div>
           <div key={billed} className="blur-in mt-1 text-sm text-muted">{billed}</div>
           <Credits n={PRICING.credits} />
-          <Included extra="Il triplo dei crediti dello Starter" />
-          <Cta className="mt-8 w-full justify-center">Prova gratis {PRICING.trialDays} giorni</Cta>
+          <Included extra="Per chi ha tanti immobili al mese" />
+          <Cta className="mt-auto w-full justify-center">Prova gratis {PRICING.trialDays} giorni</Cta>
         </Reveal>
       </div>
       <p className="mt-6 text-center text-sm text-muted">Prova di {PRICING.trialDays} giorni con {PRICING.trialCredits} crediti, nessuna carta. Prezzi finali, senza IVA aggiunta.</p>
