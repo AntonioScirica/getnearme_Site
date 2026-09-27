@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowDownToLine, ArrowUp, Building2, Check, ChevronLeft, Clapperboard, Columns2, Image as ImageIcon, Palette, Sofa, Sparkles, Download, ExternalLink, ImagePlus, Lasso, Shuffle, LayoutGrid, Loader2, Monitor, RotateCcw, SquareDashed, SquareDashedMousePointer, X } from 'lucide-react';
+import { Anvil, ArrowUp, Building2, Check, ChevronLeft, Clapperboard, Columns2, Image as ImageIcon, Palette, Sofa, Sparkles, Download, ExternalLink, ImagePlus, Lasso, Shuffle, LayoutGrid, Loader2, Monitor, RotateCcw, SquareDashed, SquareDashedMousePointer, X } from 'lucide-react';
 import { fileToResizedDataUrl } from '@/lib/staging';
 import { AI_MOCK } from '@/lib/aiMock';
 import { AiPhotoStage, QUICK_PRESETS, type EditRequest, type Region, type Reveal, type Suggestion } from './AiPhoto';
@@ -62,7 +62,7 @@ type Msg =
 type VideoAnim = 'popup' | 'gravity';
 // scelta gia' fatta: etichetta con icona (o la foto scelta) sopra la domanda
 type VideoPick = { label: string; icon: 'split' | 'pop' | 'drop' | 'style' | 'keep' | 'photo'; src?: string };
-const PICK_ICON = { split: Columns2, pop: Sparkles, drop: ArrowDownToLine, style: Palette, keep: Sofa, photo: ImageIcon };
+const PICK_ICON = { split: Columns2, pop: Sparkles, drop: Anvil, style: Palette, keep: Sofa, photo: ImageIcon };
 const R2_SPIKE = 'https://pub-a668674eaa484e8e8f2f10c264392bfc.r2.dev/spike-video/stili';
 type VideoCard = { id: string; label: string; desc: string; sample: string };
 const VIDEO_TEMPLATES: (VideoCard & { anims: (VideoCard & { id: VideoAnim })[] })[] = [
