@@ -173,6 +173,9 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   const [viewer, setViewer] = useState<{ src: string; before?: string } | null>(null); // foto a tutto schermo
   const downAt = useRef<{ x: number; y: number } | null>(null);
   const [text, setText] = useState('');
+  // foto di riferimento per lo stile (Pinterest, catalogo, altro annuncio): resta finche' non la si toglie, vale per ogni arredo
+  const [styleRef, setStyleRef] = useState<string | null>(null);
+  const styleInput = useRef<HTMLInputElement>(null);
   const [picked, setPicked] = useState<Suggestion | null>(null);
   const [scene, setScene] = useState<Scene>(saved?.scene ?? 'interno');
   const [kind, setKind] = useState<string | null>(saved?.kind ?? null); // es. "room:cucina", "scene:giardino": decide i suggerimenti
@@ -275,6 +278,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
     const req: EditRequest = {
       ...(project ? { projectId: project } : {}),
       ...(sourcePhoto && sourcePhoto !== before ? { reference: sourcePhoto } : {}),
+      ...(styleRef ? { styleRef } : {}),
       ...(kind ? { room: seenLabel(kind) } : {}),
       ...(before.startsWith('data:') ? { imageBase64: before } : { imageUrl: before }),
       ...(scene === 'planimetria'
@@ -302,7 +306,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   const stylePreviews = (m: VideoMsg, label: string, req: { style?: string; prompt?: string }) => {
     touch();
     patchV(m.id, { step: 'previews', picks: [...m.picks, { label, icon: 'style' }], previews: [null, null] });
-    const body = { ...(project ? { projectId: project } : {}), ...(kind ? { room: seenLabel(kind) } : {}), ...(m.photo.startsWith('data:') ? { imageBase64: m.photo } : { imageUrl: m.photo }), scene: 'interno', ...req, variant: -1, preview: true, ...(sourcePhoto && sourcePhoto !== m.photo ? { reference: sourcePhoto } : {}) };
+    const body = { ...(project ? { projectId: project } : {}), ...(kind ? { room: seenLabel(kind) } : {}), ...(m.photo.startsWith('data:') ? { imageBase64: m.photo } : { imageUrl: m.photo }), scene: 'interno', ...req, variant: -1, preview: true, ...(sourcePhoto && sourcePhoto !== m.photo ? { reference: sourcePhoto } : {}), ...(styleRef ? { styleRef } : {}) };
     [0, 1].forEach(k => {
       authFetch('/api/platform/photo-edit', { method: 'POST', body: JSON.stringify(body) }).then(r => (r.ok ? r.json() : {})).catch(() => ({}))
         .then((d: { url?: string }) => patchV(m.id, x => ({ previews: x.previews?.map((p, j) => (j === k ? d.url ?? 'err' : p)) })));
@@ -666,12 +670,26 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
           {base && !busy && (
             <div className="blur-in -mx-1 mb-2 flex gap-1.5 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" style={{ maskImage: 'linear-gradient(90deg, #000 90%, transparent)' }}>{chips}</div>
           )}
+          {/* stile da una foto: miniatura sopra il campo, finche' non la si toglie */}
+          {styleRef && (
+            <div className="blur-in mb-2 flex w-fit items-center gap-2 rounded-2xl bg-white py-1.5 pl-1.5 pr-2 text-xs font-medium shadow-sm ring-1 ring-black/5">
+              <img src={styleRef} alt="" className="h-8 w-8 rounded-xl object-cover" />
+              Stile da questa foto
+              <button onClick={() => setStyleRef(null)} aria-label="Togli la foto di stile" className="flex h-6 w-6 items-center justify-center rounded-full text-muted hover:bg-canvas hover:text-ink"><X size={13} /></button>
+            </div>
+          )}
+          <input ref={styleInput} type="file" accept="image/*" className="hidden" onChange={async e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) setStyleRef(await fileToResizedDataUrl(f, 1024)); }} />
           <div className={`flex items-center gap-1.5 rounded-[26px] bg-white p-2 pl-2.5 ${CARD_SHADOW} ${drag ? 'ring-2 ring-brand' : ''}`}>
             {/* foto e zona vicine, come un gruppo di strumenti */}
             <div className="flex shrink-0 items-center">
               <button type="button" onClick={() => setLibrary(true)} title={base ? 'Carica un\'altra foto' : 'Carica una foto'} className="flex h-10 w-9 shrink-0 items-center justify-center rounded-full text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink">
                 <ImagePlus size={20} />
               </button>
+              <Tooltip label="Stile da una foto (Pinterest, catalogo, un altro annuncio)">
+                <button type="button" onClick={() => styleInput.current?.click()} aria-label="Stile da una foto" className={`flex h-10 w-9 shrink-0 items-center justify-center rounded-full ease-smooth transition-colors hover:bg-canvas hover:text-ink ${styleRef ? 'text-brand' : 'text-muted'}`}>
+                  <Palette size={19} />
+                </button>
+              </Tooltip>
             </div>
             <textarea rows={1} value={text} onChange={e => { setText(e.target.value); touch(); }} disabled={!base}
               placeholder={hint}

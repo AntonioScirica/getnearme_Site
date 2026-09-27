@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
 
   // Foto: URL (annunci, R2) oppure caricata dal computer (imageBase64, data URL gia' ridimensionata).
   // Modifica: testo libero e/o i preset di home staging (stile, vista, scena, planimetria).
-  let body: { imageUrl?: string; imageBase64?: string; prompt?: string; style?: string; angle?: string; scene?: SceneType; planimetria?: boolean; seed?: number; region?: { x: number; y: number; w: number; h: number; poly?: { x: number; y: number }[] }; projectId?: string; room?: string; variant?: number; preview?: boolean; reference?: string; points?: { x: number; y: number }[] }
+  let body: { imageUrl?: string; imageBase64?: string; prompt?: string; style?: string; angle?: string; scene?: SceneType; planimetria?: boolean; seed?: number; region?: { x: number; y: number; w: number; h: number; poly?: { x: number; y: number }[] }; projectId?: string; room?: string; variant?: number; preview?: boolean; reference?: string; styleRef?: string; points?: { x: number; y: number }[] }
   try { body = await req.json() } catch { return NextResponse.json({ error: 'bad_request' }, { status: 400 }) }
   const imageUrl = typeof body.imageUrl === 'string' ? body.imageUrl : ''
   const imageBase64 = typeof body.imageBase64 === 'string' && /^data:image\/(jpeg|png|webp);base64,/.test(body.imageBase64) && body.imageBase64.length < 8_000_000 ? body.imageBase64 : ''
@@ -36,7 +36,10 @@ export async function POST(req: NextRequest) {
   // -1 = scegli tu una variante a caso
   // ogni arredo e' una versione nuova (combinazione di materiali e colori a caso), anche dal chip dello stile o dal testo:
   // prima solo "Altra versione" cambiava davvero, cliccando di nuovo lo stile veniva simile
-  const furnishReq = isFurnishing({ style: body.style, customPrompt: custom, angle: body.angle, planimetria: body.planimetria, scene: body.scene === 'esterno' || body.scene === 'giardino' ? body.scene : 'interno', restyle: isRestyle(custom) })
+  const imgOk = (x: unknown): x is string => typeof x === 'string' && ((/^data:image\/(jpeg|png|webp);base64,/.test(x) && x.length < 8_000_000) || allowedUrl(x))
+  // foto di stile: ogni richiesta diventa arredo nello stile di quella foto (chip, testo o solo la foto)
+  const styleRef = imgOk(body.styleRef) ? body.styleRef : undefined
+  const furnishReq = !!styleRef && (body.scene ?? 'interno') === 'interno' && !body.angle && !body.planimetria && body.style !== 'empty' || isFurnishing({ style: body.style, customPrompt: custom, angle: body.angle, planimetria: body.planimetria, scene: body.scene === 'esterno' || body.scene === 'giardino' ? body.scene : 'interno', restyle: isRestyle(custom) })
   const variantN = typeof body.variant === 'number' && body.variant > 0 ? body.variant : body.variant === -1 || furnishReq ? 1 + Math.floor(Math.random() * 100000) : 0
   const vary = variantN > 0 && !body.angle ? ` ${variantText(body.style, variantN)}` : ''
   const roomK = roomKey(typeof body.room === 'string' ? body.room : '')
@@ -86,7 +89,7 @@ export async function POST(req: NextRequest) {
     if (guided) {
       const task = body.style === 'empty' ? 'empty' : furnishReq ? 'furnish' : 'edit'
       const reference = typeof body.reference === 'string' && ((/^data:image\/(jpeg|png|webp);base64,/.test(body.reference) && body.reference.length < 8_000_000) || allowedUrl(body.reference)) ? body.reference : undefined
-      const g = await guidedEdit({ userId, input, reference, task, room: roomLabel(roomK), style: task === 'edit' ? custom : (body.style && STYLE_LOOK[body.style] ? STYLE_LOOK[body.style] : `as requested by the agent (in Italian): "${custom}"`) + vary, seed })
+      const g = await guidedEdit({ userId, input, reference, styleRef, task, room: roomLabel(roomK), style: task === 'edit' ? custom : (body.style && STYLE_LOOK[body.style] ? STYLE_LOOK[body.style] : `as requested by the agent (in Italian): "${custom}"`) + vary, seed })
       used = g.prompt || prompt
       job = g.image ? { status: 'COMPLETED', output: { image_base64: g.image } } : await runJob({ ...input, prompt, ...translation, seed, steps: 12 }) // senza piano: vecchio passaggio unico
     } else {

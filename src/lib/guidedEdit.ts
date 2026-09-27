@@ -10,13 +10,14 @@ import { editPlanPrompt, leftoverPrompt, removePrompt, removeInBoxPrompt, addFur
 //   2. Qwen toglie; Claude (Sonnet) controlla cosa e' rimasto e, se serve, secondo passaggio con la lista corta
 //   3. (arredo) Qwen rinnova i fissi (es. ante della cucina) e aggiunge i pezzi nella stanza vuota
 // Senza piano (il modello non risponde) torna image vuota: chi chiama usa il vecchio passaggio unico.
-export async function guidedEdit(o: { userId: string; input: { image_base64: string } | { image_url: string }; reference?: string; task: 'empty' | 'furnish' | 'edit'; room: string; style: string; seed: number; planModel?: string }): Promise<{ image?: string; prompt?: string; plan?: EditPlan }> {
+export async function guidedEdit(o: { userId: string; input: { image_base64: string } | { image_url: string }; reference?: string; styleRef?: string; task: 'empty' | 'furnish' | 'edit'; room: string; style: string; seed: number; planModel?: string }): Promise<{ image?: string; prompt?: string; plan?: EditPlan }> {
   const orig = 'image_base64' in o.input
     ? o.input.image_base64.split(',').pop() ?? ''
     : Buffer.from(await (await fetch(o.input.image_url, { signal: AbortSignal.timeout(20_000) })).arrayBuffer()).toString('base64')
   // foto reale di partenza (se questa e' gia' un risultato, es. dopo "Svuota"): il piano sa che stanza era e cosa c'era di fisso
   const ref = o.reference ? await toB64(o.reference) : null
-  const plan = parsePlan(await askJson(o.userId, ref ? [ref, orig] : [orig], (ref ? REFERENCE_NOTE : '') + editPlanPrompt(o.room, o.task, o.style), o.planModel))
+  const sty = o.styleRef ? await toB64(o.styleRef) : null
+  const plan = parsePlan(await askJson(o.userId, [...(ref ? [ref] : []), orig, ...(sty ? [sty] : [])], (ref ? REFERENCE_NOTE : '') + (sty ? STYLE_REF_NOTE : '') + editPlanPrompt(o.room, o.task, o.style), o.planModel))
   // il modello a volte mette tra le cose da togliere la cucina, il forno o le pareti (27/09: cucina sostituita da un'isola):
   // i fissi non si tolgono mai, salvo "gli oggetti sopra" (quelli si' che vanno via); cambiarli e' compito di restyle
   // si guarda solo l'oggetto (prima di "on/in/against/near..."), non la posizione: "il divano sul lato sinistro del pavimento" va tolto
@@ -77,6 +78,8 @@ export async function guidedEdit(o: { userId: string; input: { image_base64: str
 const FAST = 'claude-haiku-4-5-20251001'
 
 const REFERENCE_NOTE = `Image 1 is the ORIGINAL photo of this room, as it really is. Image 2 is the current photo, already edited before (for example emptied): plan the edit on image 2, but it is the same room with the same purpose. If image 1 has fixed elements that image 2 lost (a fitted kitchen, bathroom fixtures, a TV wall unit), and the task is to furnish or restage, add them back in the same place in the style. Room type is decided by image 1.\n\n`
+// foto di stile scelta dall'agente: e' SEMPRE l'ultima immagine; da li' colori, materiali, tipi di mobili e atmosfera, non la pianta
+const STYLE_REF_NOTE = `The LAST image is a style reference chosen by the agent (it is not this room): take from it the colors, materials, finishes, furniture types and mood, and apply them to this room with a layout that fits this room. The style reference comes before any other style description.\n\n`
 async function toB64(src: string): Promise<string> {
   return src.startsWith('data:') ? src.split(',').pop() ?? '' : Buffer.from(await (await fetch(src, { signal: AbortSignal.timeout(20_000) })).arrayBuffer()).toString('base64')
 }
