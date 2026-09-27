@@ -206,14 +206,14 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   const sourcePhoto = [...msgs].reverse().find((m): m is Extract<Msg, { role: 'user' }> => m.role === 'user' && !!m.image)?.image ?? null;
 
   // GPU: si accende appena entri nella chat e resta accesa finche' la usi (segnale ogni 50 s, spegnimento
-  // a 60 s). Dopo 5 minuti senza scrivere, caricare o generare non la teniamo piu' accesa; uscendo dalla
+  // a 60 s). Dopo 2 minuti senza scrivere, caricare o generare non la teniamo piu' accesa; uscendo dalla
   // pagina si spegne da sola. Qualsiasi attivita' la riaccende.
   const lastActive = useRef(0);
-  const touch = useCallback(() => { const now = Date.now(); if (now - lastActive.current > 5 * 60_000) warm('photo'); lastActive.current = now; }, []);
+  const touch = useCallback(() => { const now = Date.now(); if (now - lastActive.current > 2 * 60_000) warm('photo'); lastActive.current = now; }, []);
   useEffect(() => {
     lastActive.current = Date.now();
     warm('photo');
-    const t = setInterval(() => { if (Date.now() - lastActive.current < 5 * 60_000) warm('photo'); }, 50_000);
+    const t = setInterval(() => { if (Date.now() - lastActive.current < 2 * 60_000) warm('photo'); }, 50_000);
     return () => clearInterval(t);
   }, []);
 

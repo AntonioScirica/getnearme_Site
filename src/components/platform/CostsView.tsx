@@ -71,7 +71,7 @@ export default function CostsView() {
 
           <div className="grid gap-4 md:grid-cols-4">
             <Kpi icon={Wallet} label="Credito RunPod" value={usd(rp.balance)} warn={rp.balance < 5} />
-            <Kpi icon={Zap} label="Spesa adesso" value={`${usd(rp.spendPerHr)}/h`} sub={`≈ ${usd(rp.spendPerHr * 24 * 30, 0)}/mese a questo ritmo`} warn={rp.spendPerHr > 0} />
+            <Kpi icon={Zap} label="Spesa adesso" value={`${usd(rp.spendPerHr)}/h`} sub="solo mentre le GPU sono accese (si spengono da sole dopo 1 minuto)" warn={rp.spendPerHr > 0} />
             <Kpi icon={Wallet} label="Limite di spesa" value={`${usd(rp.spendLimit, 0)}/h`} />
             <Kpi icon={Cpu} label="Costo AI stimato, mese" value={usd(data.usage.monthTotal, 3)} sub={`${data.usage.calls} chiamate`} />
           </div>
