@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 import { Anvil, ArrowUp, Building2, Check, ChevronLeft, Clapperboard, SquareSplitHorizontal, Image as ImageIcon, Palette, Sofa, Sparkles, Download, ExternalLink, ImagePlus, Lasso, Shuffle, LayoutGrid, Loader2, Monitor, RotateCcw, SquareDashed, SquareDashedMousePointer, X } from 'lucide-react';
 import { fileToResizedDataUrl } from '@/lib/staging';
 import { AI_MOCK } from '@/lib/aiMock';
-import { AiPhotoStage, QUICK_PRESETS, type EditRequest, type Region, type Reveal, type Suggestion } from './AiPhoto';
+import { AiPhotoStage, type EditRequest, type Region, type Reveal, type Suggestion } from './AiPhoto';
 import { authFetch, CARD_SHADOW, portfolioUrl, warm } from './api';
 import ProgressiveBlur from '@/components/ProgressiveBlur';
 import Dropdown, { type DropdownOption } from '@/components/ui/Dropdown';
@@ -34,18 +34,18 @@ const SEEN_OPTIONS: DropdownOption<string>[] = [
 ];
 // Suggerimenti in base a cosa c'e' nella foto (la cucina non ha "Arreda nordico", la facciata non ha "Svuota la stanza")
 const S = (id: string, label: string, req: Suggestion['req']): Suggestion => ({ id, label, req });
-const EMPTY = S('empty', 'Svuota la stanza', { style: 'empty' }), LIGHT = S('day', 'Luminoso', { angle: 'day' }), TIDY = QUICK_PRESETS.find(x => x.id === 'tidy')!;
+const EMPTY = S('empty', 'Svuota la stanza', { style: 'empty' }), LIGHT = S('day', 'Luminoso', { angle: 'day' });
 // Interni: gli stessi veri stili per ogni stanza (Moderno, Nordico, Luxury, Boho: ogni chip porta la descrizione completa
 // dello stile e il piano di Claude la adatta alla stanza). I chip "a parole" per stanza (letto, comodini, armadio...) davano
 // arredi poveri e incoerenti (27/09). Esterni e giardini hanno i loro.
-const STYLES: Suggestion[] = [S('modern', 'Moderno', { style: 'modern' }), S('nordic', 'Nordico', { style: 'nordic' }), S('industrial', 'Luxury', { style: 'industrial' }), S('boho', 'Boho', { style: 'boho' })];
+// interni (balcone compreso): solo questi quattro, in quest'ordine (27/09). Nordico, Boho e disordine si chiedono scrivendo.
+const INDOOR: Suggestion[] = [S('modern', 'Moderno', { style: 'modern' }), S('industrial', 'Luxury', { style: 'industrial' }), EMPTY, LIGHT];
 function suggestionsFor(kind: string | null): Suggestion[] {
   switch (kind) {
-    case 'room:balcone': return [S('o-furnish', 'Arreda il balcone', { prompt: 'Arreda il balcone con un tavolino, due sedie da esterno e qualche pianta' }), S('o-plants', 'Aggiungi piante', { prompt: 'Aggiungi piante e fiori in vaso lungo il balcone' }), TIDY, LIGHT];
     case 'scene:esterno': return [S('f-renew', 'Rinnova la facciata', { style: 'empty' }), S('f-modern', 'Facciata moderna', { style: 'modern' }), S('f-sky', 'Cielo azzurro', { prompt: 'Cielo azzurro limpido e luce di sole, senza cambiare l’edificio' }), S('f-garden', 'Giardino curato', { prompt: 'Prato curato e piante ordinate intorno alla casa, senza cambiare l’edificio' })];
     case 'scene:giardino': return [S('g-renew', 'Giardino curato', { style: 'empty' }), S('g-furnish', 'Arreda il giardino', { prompt: 'Aggiungi un tavolo con sedie da esterno e un ombrellone, lascia prato e piante' }), S('g-modern', 'Giardino moderno', { style: 'modern' }), LIGHT];
     case 'scene:planimetria': return [];
-    default: return [...STYLES, TIDY, LIGHT];
+    default: return INDOOR;
   }
 }
 // "custom:..." = scritto dall'agente quando nessuna voce va bene
@@ -404,7 +404,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
       className="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-ink px-3.5 py-1.5 text-[13px] font-medium text-white shadow-sm ease-smooth transition-colors hover:bg-brand disabled:opacity-40"><Clapperboard size={13} /> Crea video</button>,
   ] : [];
   // interni: "Svuota la stanza" sempre primo, subito dopo Crea video (esterni e giardini hanno i loro "Rinnova")
-  const sugs = kind?.startsWith('scene:') ? suggestionsFor(kind) : [EMPTY, ...suggestionsFor(kind).filter(x => x.id !== 'empty')];
+  const sugs = suggestionsFor(kind);
   const chips = [...videoChip, ...sugs.filter(x => roomState !== 'vuota' || (x.id !== 'empty' && x.id !== 'tidy')).map(x => (
     <button key={x.id} disabled={busy} onClick={() => send(x.label, x)}
       className="shrink-0 whitespace-nowrap rounded-full bg-white px-3.5 py-1.5 text-[13px] font-medium text-ink/80 shadow-sm ring-1 ring-inset ring-black/10 ease-smooth transition-colors hover:bg-brand hover:text-white disabled:opacity-40">{x.label}</button>
