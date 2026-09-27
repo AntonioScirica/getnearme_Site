@@ -32,7 +32,8 @@ export async function guidedEdit(o: { userId: string; input: { image_base64: str
     // controllo (Opus) di cosa e' rimasto, con il riquadro di ogni oggetto; poi un passaggio per oggetto solo dentro
     // il suo riquadro (mark nel worker: fuori resta la foto). Al massimo 2 giri.
     for (let k = 0; k < 2; k++) {
-      const left = parseLeft(await askJson(o.userId, [orig, cur], leftoverPrompt(plan.remove))).slice(0, 4)
+      // prima i piu' grandi: con 4 per giro prendeva un cappellino e lasciava tavolo e sedia (27/09)
+      const left = parseLeft(await askJson(o.userId, [orig, cur], leftoverPrompt(plan.remove))).sort((a, b) => b.box.w * b.box.h - a.box.w * a.box.h).slice(0, 4)
       if (!left.length) break
       for (const [n, it] of left.entries()) {
         prompt = removeInBoxPrompt(it.what)
