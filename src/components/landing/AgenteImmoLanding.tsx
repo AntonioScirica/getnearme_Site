@@ -11,6 +11,7 @@ import { ArrowDown, ArrowRight, Check, Hammer, Lock, Moon, ChevronLeft, ChevronR
 
 import { FAQ } from '@/lib/landingFaq';
 import { PRICING, photosFor, videosFor } from '@/lib/pricing';
+import { startCheckout, type Buy } from '@/lib/startCheckout';
 import dynamic from 'next/dynamic';
 
 // i modelli veri del sito: codice pesante, si carica dopo il primo schermo
@@ -76,8 +77,8 @@ function Eyebrow({ n, children }: { n?: string; children: ReactNode }) {
 const Pill = ({ children, className = '' }: { children: ReactNode; className?: string }) =>
   <span className={`inline-flex h-8 items-center gap-1.5 rounded-full bg-white px-3.5 text-[13px] font-medium text-muted ring-1 ring-black/5 ${className}`}>{children}</span>;
 
-const Cta = ({ href = '#prova', children, ghost = false, className = '' }: { href?: string; children: ReactNode; ghost?: boolean; className?: string }) =>
-  <a href={href} className={`group inline-flex h-12 items-center gap-2 rounded-full px-6 text-[15px] font-semibold ease-smooth transition-all active:scale-[.98] ${ghost ? 'bg-white text-ink ring-1 ring-black/10 hover:ring-ink' : 'bg-ink text-white hover:bg-black hover:shadow-[0_16px_40px_-16px_rgba(0,0,0,.5)]'} ${className}`}>
+const Cta = ({ href = '#prova', children, ghost = false, className = '', onClick }: { href?: string; children: ReactNode; ghost?: boolean; className?: string; onClick?: (e: React.MouseEvent<HTMLAnchorElement>) => void }) =>
+  <a href={href} onClick={onClick} className={`group inline-flex h-12 items-center gap-2 rounded-full px-6 text-[15px] font-semibold ease-smooth transition-all active:scale-[.98] ${ghost ? 'bg-white text-ink ring-1 ring-black/10 hover:ring-ink' : 'bg-ink text-white hover:bg-black hover:shadow-[0_16px_40px_-16px_rgba(0,0,0,.5)]'} ${className}`}>
     {children}{!ghost && <ArrowRight size={16} className="ease-smooth transition-transform group-hover:translate-x-0.5" />}
   </a>;
 
@@ -217,6 +218,9 @@ function Compare() {
 // template del video nella prova: i primi due gratis, gli altri solo con un piano
 const VIDEO_TEMPLATES = [['popup', 'Popup', 'Pop-up', Sparkles], ['gravity', 'Dall\'alto', 'From above', ArrowDown], ['particles', 'Particelle', 'Particles', Wand2], ['stopmotion', 'Stop-motion', 'Stop-motion', Clapperboard], ['cantiere', 'Cantiere', 'Construction', Hammer], ['daynight', 'Giorno e notte', 'Day to night', Moon]] as const;
 const DEMO_STYLES = [['modern', 'Moderno', 'Modern'], ['nordic', 'Nordico', 'Nordic'], ['empty', 'Svuota', 'Empty it']] as const;
+// ?simula=1: prova senza AI e senza costi (il server la accetta solo dagli IP senza limiti e in sviluppo)
+const simulate = () => new URLSearchParams(location.search).has('simula');
+
 function TryIt() {
   const L = useL();
   const [before, setBefore] = useState<string | null>(null);
@@ -247,7 +251,7 @@ function TryIt() {
   const run = async () => {
     if (!before || busy) return;
     setBusy(true); setMsg(''); setAfter(null); setVideo(null);
-    const r = await fetch('/api/landing/demo', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ image: before, style, prompt: text.trim() }) }).catch(() => null);
+    const r = await fetch('/api/landing/demo', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ image: before, style, prompt: text.trim(), mock: simulate() }) }).catch(() => null);
     const d = await r?.json().catch(() => null) as { image?: string; url?: string; left?: number; error?: string } | null;
     setBusy(false);
     if (typeof d?.left === 'number') setLeft(d.left);
@@ -265,7 +269,7 @@ function TryIt() {
     if (!after || vBusy) return;
     setPicking(false); setVBusy(true); setMsg('');
     const fail = (e?: string) => { setVBusy(false); setMsg(e === 'limit' ? L('Hai già fatto il video di prova oggi. Crea l\'account per farne altri.', "You've made today's free video. Create an account to make more.") : e === 'busy' ? L('Ci sono molti video in corso, riprova tra qualche minuto.', "Lots of videos running right now, try again in a few minutes.") : L('Non siamo riusciti a fare il video di questa foto. Riprova con un\'altra stanza.', "We couldn't make a video of this photo. Try another room.")); };
-    const r = await fetch('/api/landing/demo-video', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ image: after, anim }) }).catch(() => null);
+    const r = await fetch('/api/landing/demo-video', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ image: after, anim, mock: simulate() }) }).catch(() => null);
     const d = await r?.json().catch(() => null) as { job?: string; error?: string } | null;
     if (!d?.job) return fail(d?.error);
     // Veo lavora 1-2 minuti: si controlla ogni 5 s, per massimo 5 minuti
@@ -356,6 +360,12 @@ function TryIt() {
 
 function Pricing() {
   const L = useL(), en = useEn();
+  // Piano scelto: con l'accesso gia' fatto dritti a Stripe; altrimenti accesso e poi Stripe (?buy=). Annullando si torna qui.
+  const buyHref = (b: Buy) => `/it/checkout/agency?buy=${b}`;
+  const buyClick = (b: Buy) => async (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    if (!(await startCheckout(b, { back: en ? 'en' : 'it' }))) window.location.href = buyHref(b);
+  };
   const [yearly, setYearly] = useState(true);
   const pro = yearly ? PRICING.yearly : PRICING.quarterly;
   const billed = en ? (yearly ? `€${PRICING.yearly * 12} billed yearly` : `€${PRICING.quarterly * 3} billed every 3 months`) : yearly ? `${PRICING.yearly * 12} € fatturati ogni anno` : `${PRICING.quarterly * 3} € fatturati ogni 3 mesi`;
@@ -374,7 +384,7 @@ function Pricing() {
           <Credits n={PRICING.starterCredits} />
           <SiteIncluded />
           <div className="min-h-8 flex-1" />
-          <Cta ghost href={`${APP}#/piano?buy=starter`} className="w-full justify-center">{L('Scegli Starter', "Choose Starter")}</Cta>
+          <Cta ghost href={buyHref('starter')} onClick={buyClick('starter')} className="w-full justify-center">{L('Scegli Starter', "Choose Starter")}</Cta>
         </Reveal>
         <Reveal delay={160} className="relative flex flex-col rounded-[32px] bg-white p-8 ring-2 ring-ink shadow-[0_40px_100px_-40px_rgba(0,0,0,.35)]">
           <span className="absolute -top-3 left-8 rounded-full bg-ink px-3 py-1 text-xs font-semibold text-white">{L('Consigliato', "Recommended")}</span>
@@ -391,7 +401,7 @@ function Pricing() {
           <Credits n={PRICING.credits} />
           <SiteIncluded />
           <div className="min-h-8 flex-1" />
-          <Cta href={`${APP}#/piano?buy=${yearly ? 'pro_yearly' : 'pro_quarterly'}`} className="w-full justify-center">{L('Scegli Pro', "Choose Pro")}</Cta>
+          <Cta href={buyHref(yearly ? 'pro_yearly' : 'pro_quarterly')} onClick={buyClick(yearly ? 'pro_yearly' : 'pro_quarterly')} className="w-full justify-center">{L('Scegli Pro', "Choose Pro")}</Cta>
         </Reveal>
       </div>
       <p className="mt-6 text-center text-sm text-muted">{L('Prima di scegliere,', "Before choosing,")} <a href="#prova" className="font-medium text-ink underline underline-offset-4">{L('provalo gratis sulla tua foto', "try it free on your photo")}</a>{L(', senza registrarti. Prezzi finali, senza IVA aggiunta.', ", no sign-up needed. Final prices, no VAT added.")}</p>

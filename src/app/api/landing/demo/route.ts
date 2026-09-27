@@ -23,7 +23,7 @@ const STYLES = ['modern', 'nordic', 'empty'] as const // empty = svuota la stanz
 const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 
 export async function POST(req: NextRequest) {
-  const body = await req.json().catch(() => null) as { image?: unknown; style?: unknown; prompt?: unknown } | null
+  const body = await req.json().catch(() => null) as { image?: unknown; style?: unknown; prompt?: unknown; mock?: unknown } | null
   const image = typeof body?.image === 'string' ? body.image : ''
   const style = STYLES.find(s => s === body?.style) ?? 'modern'
   const custom = typeof body?.prompt === 'string' ? body.prompt.replace(/[\u0000-\u001f"]/g, ' ').trim().slice(0, 200) : ''
@@ -40,6 +40,11 @@ export async function POST(req: NextRequest) {
   // IP senza limiti (i nostri, LANDING_FREE_IPS separati da virgola) e sviluppo locale: niente contatore
   const free = process.env.NODE_ENV === 'development' || (process.env.LANDING_FREE_IPS ?? '').split(',').map(x => x.trim()).includes(ip)
   const [used, all] = free ? [0, 0] : await Promise.all([count(true), count(false)])
+  // simulazione (?simula=1 sulla landing, solo IP senza limiti o sviluppo): nessuna AI, foto d'esempio dopo 3 s
+  if (free && body?.mock === true) {
+    await new Promise(r => setTimeout(r, 3000))
+    return NextResponse.json({ image: 'https://agenteimmo.me/immo/home/demo-after.webp', url: 'https://agenteimmo.me/immo/home/demo-after.webp', left: 99 })
+  }
   if (used >= PER_IP) return NextResponse.json({ error: 'limit', left: 0 }, { status: 429 })
   if (all >= PER_DAY) return NextResponse.json({ error: 'busy' }, { status: 429 })
   // si prenota la prova prima di generare: richieste in parallelo dallo stesso IP non superano il limite di molto
