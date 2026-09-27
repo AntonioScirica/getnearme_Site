@@ -525,3 +525,12 @@ html.metrics-light [class*="border-gray-600"] { border-color: #d8d4cb !important
 .guide ul, .guide ol { margin-top: 1rem; padding-left: 1.25rem; font-size: 1.0625rem; line-height: 1.7; color: #333; }
 .guide ul { list-style: disc; } .guide ol { list-style: decimal; }
 .guide li { margin-top: .5rem; } .guide strong { color: #222; font-weight: 600; }
+
+/* Landing: testo che entra dal suo lato, foto in parallasse mentre si scorre (solo dove il browser lo sa fare) */
+.in-left { animation: gnm-in-left var(--gnm-dur) var(--gnm-ease) both; }
+.in-right { animation: gnm-in-right var(--gnm-dur) var(--gnm-ease) both; }
+@keyframes gnm-parallax { from { transform: translateY(56px); } to { transform: translateY(-56px); } }
+@supports (animation-timeline: view()) {
+  .parallax { animation: gnm-parallax linear both; animation-timeline: view(); animation-range: entry 0% exit 100%; }
+}
+@media (prefers-reduced-motion: reduce) { .in-left, .in-right, .parallax, .blur-in, .rise { animation: none; opacity: 1; } }

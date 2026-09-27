@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import AuthCta from '@/components/AuthCta';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { ArrowRight, Award, Check, ChevronLeft, ChevronRight, MessageCircle, Clapperboard, Clock, FileText, Globe, ImagePlus, Images, Loader2, MapPin, Sparkles, Upload, Users, Wallet, Wand2 } from 'lucide-react';
+import { ArrowRight, Check, ChevronLeft, ChevronRight, MessageCircle, Clapperboard, FileText, Globe, ImagePlus, Images, Loader2, MapPin, Sparkles, Upload, Users, Wand2 } from 'lucide-react';
 
 // Landing di Agente Immo per gli agenti: tre promesse (home staging AI, video, sito pronto) con lo stesso
 // linguaggio della piattaforma: bianco, puntini, card 28/16, pillole, un solo tempo (600ms, ease-smooth).
@@ -20,7 +20,7 @@ const VIDEO = 'https://pub-a668674eaa484e8e8f2f10c264392bfc.r2.dev/spike-video/o
 const VIDEO2 = 'https://pub-a668674eaa484e8e8f2f10c264392bfc.r2.dev/spike-video/out/d626678fc2.mp4';
 
 // Compare quando entra in vista. Se la pagina e' nascosta l'observer non scatta: dopo 1,5 s si mostra comunque.
-function Reveal({ children, className = '', delay = 0, as: Tag = 'div' }: { children: ReactNode; className?: string; delay?: number; as?: 'div' | 'section' | 'li' }) {
+function Reveal({ children, className = '', delay = 0, as: Tag = 'div', anim = 'blur-in' }: { children: ReactNode; className?: string; delay?: number; as?: 'div' | 'section' | 'li'; anim?: 'blur-in' | 'in-left' | 'in-right' | 'rise' }) {
   const ref = useRef<HTMLElement>(null);
   const [on, setOn] = useState(false);
   useEffect(() => {
@@ -32,7 +32,33 @@ function Reveal({ children, className = '', delay = 0, as: Tag = 'div' }: { chil
     return () => { io.disconnect(); clearTimeout(t); };
   }, []);
   const T = Tag as 'div';
-  return <T ref={ref as React.Ref<HTMLDivElement>} className={`${on ? 'blur-in' : 'opacity-0'} ${className}`} style={{ animationDelay: `${delay}ms` }}>{children}</T>;
+  return <T ref={ref as React.Ref<HTMLDivElement>} className={`${on ? anim : 'opacity-0'} ${className}`} style={{ animationDelay: `${delay}ms` }}>{children}</T>;
+}
+
+// Numero che sale da 0 quando entra in vista (e riparte se si torna su)
+function CountUp({ to, prefix = '', suffix = '' }: { to: number; prefix?: string; suffix?: string }) {
+  const [ref, on] = useInView('-10%');
+  const [v, setV] = useState(0);
+  useEffect(() => {
+    if (!on) return;
+    const t0 = performance.now();
+    let raf = 0;
+    const tick = (t: number) => { const k = Math.min(1, (t - t0) / 1400); setV(Math.round(to * (1 - Math.pow(1 - k, 3)))); if (k < 1) raf = requestAnimationFrame(tick); };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [on, to]);
+  return <span ref={ref as unknown as React.Ref<HTMLSpanElement>} className="tabular-nums">{prefix}{thousands(v)}{suffix}</span>;
+}
+
+// Fascia a tutta larghezza: bianca (puntini della pagina), grigia o scura. Separa le sezioni e da' ritmo.
+function Band({ id, tone = 'white', children, className = '', inner = 'max-w-6xl' }: { id?: string; tone?: 'white' | 'canvas' | 'dark'; children: ReactNode; className?: string; inner?: string }) {
+  const bg = tone === 'dark' ? 'bg-ink text-white' : tone === 'canvas' ? 'bg-canvas' : '';
+  return <section id={id} className={`${bg} ${className}`}><div className={`mx-auto ${inner} px-4 py-24 md:py-32`}>{children}</div></section>;
+}
+
+// Titolo di sezione: numero in blu + pillola, titolo, sottotitolo
+function Eyebrow({ n, children }: { n?: string; children: ReactNode }) {
+  return <Pill>{n && <span className="font-bold text-brand">{n}</span>}{children}</Pill>;
 }
 
 const Pill = ({ children, className = '' }: { children: ReactNode; className?: string }) =>
@@ -197,11 +223,11 @@ const WITHOUT: [typeof Globe, string, string, string][] = [
 ];
 function Compare() {
   return (
-    <section className="mx-auto max-w-4xl px-4 py-20">
+    <Band inner="max-w-4xl">
       <Reveal className="mx-auto max-w-2xl text-center">
         <Pill>Quanto ti costa oggi</Pill>
-        <h2 className="mt-5 font-display text-4xl font-extrabold leading-[1.05] tracking-tight md:text-5xl">Tutto questo ti costerebbe più di 3.000 €.</h2>
-        <p className="mt-5 text-lg leading-relaxed text-muted">Con Agente Immo è incluso, per ogni casa, da {PRICING.starter} € al mese.</p>
+        <h2 className="mt-5 font-display text-4xl font-extrabold leading-[1.05] tracking-tight md:text-5xl">Da solo, per una casa, spenderesti <span className="text-rose-600"><CountUp to={3400} prefix="~" suffix=" €" /></span>.</h2>
+        <p className="mt-5 text-lg leading-relaxed text-muted">Con Agente Immo è tutto incluso, per ogni casa che prendi, da {PRICING.starter} € al mese.</p>
       </Reveal>
       <Reveal delay={120} className="mt-10 overflow-hidden rounded-[28px] bg-white ring-1 ring-black/5 shadow-[0_1px_2px_rgba(0,0,0,.04),0_8px_24px_-12px_rgba(0,0,0,.12)]">
         <div className="grid grid-cols-[1.4fr_1fr_auto] gap-4 bg-canvas px-6 py-3 text-xs font-semibold uppercase tracking-wide text-muted">
@@ -221,7 +247,7 @@ function Compare() {
         </div>
       </Reveal>
       <p className="mt-4 text-center text-xs text-muted">Costi indicativi di mercato per una singola casa; il sito è una spesa una tantum più la manutenzione.</p>
-    </section>
+    </Band>
   );
 }
 
@@ -316,11 +342,11 @@ function Pricing() {
   const pro = yearly ? PRICING.yearly : PRICING.quarterly;
   const billed = yearly ? `${PRICING.yearly * 12} € fatturati ogni anno` : `${PRICING.quarterly * 3} € fatturati ogni 3 mesi`;
   return (
-    <section id="prezzi" className="mx-auto max-w-6xl px-4 py-20">
+    <Band id="prezzi" tone="canvas">
       <Reveal className="mx-auto max-w-2xl text-center">
         <Pill>Prezzi</Pill>
-        <h2 className="mt-5 font-display text-4xl font-extrabold leading-[1.05] tracking-tight md:text-5xl">Stesso prodotto, scegli quanto ti serve.</h2>
-        <p className="mt-5 text-lg leading-relaxed text-muted">Sito, foto e video in entrambi i piani. Cambiano solo i crediti.</p>
+        <h2 className="mt-5 font-display text-4xl font-extrabold leading-[1.05] tracking-tight md:text-5xl">Meno di un caffè al giorno. Per tutte le case.</h2>
+        <p className="mt-5 text-lg leading-relaxed text-muted">Sito, foto e video in entrambi i piani. Cambiano solo i crediti, cioè quante foto e video fai al mese.</p>
       </Reveal>
       <div className="mx-auto mt-12 grid max-w-4xl items-stretch gap-5 md:grid-cols-2">
         <Reveal delay={80} className="flex flex-col rounded-[32px] bg-white p-8 ring-1 ring-black/5">
@@ -351,9 +377,14 @@ function Pricing() {
         </Reveal>
       </div>
       <p className="mt-6 text-center text-sm text-muted">Prima di scegliere, <a href="#prova" className="font-medium text-ink underline underline-offset-4">provalo gratis sulla tua foto</a>, senza registrarti. Prezzi finali, senza IVA aggiunta.</p>
-    </section>
+    </Band>
   );
 }
+
+// Il filo della pagina: l'incarico lo vince chi presenta meglio la casa. Hero (promessa + prova), il perche' (scena
+// dell'acquisizione, fascia scura), le tre cose che ti diamo (01 02 03, fasce alternate), il conto, i prezzi.
+const CHECK = <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand/10 text-brand"><Check size={12} /></span>;
+const H2 = 'mt-5 font-display text-4xl font-extrabold leading-[1.05] tracking-tight md:text-5xl';
 
 export default function AgenteImmoLanding() {
   const [siteRef, siteOn] = useInView('-15%');
@@ -381,91 +412,95 @@ export default function AgenteImmoLanding() {
         </div>
       </header>
 
-      {/* hero */}
-      <section id="top" className="mx-auto max-w-6xl px-4 pb-16 pt-14 md:pt-20">
+      {/* hero: la promessa in una frase, poi la prova sulla propria foto */}
+      <section id="top" className="mx-auto max-w-6xl px-4 pb-24 pt-14 md:pt-20">
         <div className="mx-auto max-w-5xl text-center">
           <Reveal><h1><Pill><Sparkles size={13} className="text-ai" /> Il software per agenti immobiliari</Pill></h1></Reveal>
           <p className="mx-auto mt-6 w-fit font-display text-[clamp(24px,5.2vw,60px)] font-extrabold leading-[1.05] tracking-[-0.03em]">
-            <span className="block sm:whitespace-nowrap">{'Più incarichi, case vendute prima.'.split(' ').map((w, i) => <span key={i} className="blur-in inline-block" style={{ animationDelay: `${i * 40}ms` }}>{w}&nbsp;</span>)}</span>
-            <span className="block text-muted/60 sm:whitespace-nowrap">{'Senza spendere di più.'.split(' ').map((w, i) => <span key={i} className="blur-in inline-block" style={{ animationDelay: `${160 + i * 40}ms` }}>{w}&nbsp;</span>)}</span>
+            <span className="block sm:whitespace-nowrap">{'L\'incarico va a chi presenta meglio.'.split(' ').map((w, i) => <span key={i} className="blur-in inline-block" style={{ animationDelay: `${i * 40}ms` }}>{w}&nbsp;</span>)}</span>
+            <span className="block text-brand sm:whitespace-nowrap">{'Da oggi sei tu.'.split(' ').map((w, i) => <span key={i} className="blur-in inline-block" style={{ animationDelay: `${360 + i * 40}ms` }}>{w}&nbsp;</span>)}</span>
           </p>
-          <Reveal delay={600}><p className="mx-auto mt-6 max-w-xl text-lg leading-relaxed text-muted">Il proprietario sceglie l&apos;agente che presenta meglio la sua casa. L&apos;acquirente si ferma sull&apos;annuncio che si nota. Con Agente Immo ogni tuo immobile si presenta al meglio dal primo giorno, senza fotografo, home stager e web agency da pagare.</p></Reveal>
+          <Reveal delay={600}><p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-muted">Tre agenzie in gara per lo stesso incarico: lo prende chi arriva con la casa già arredata, un video pronto e la sua pagina sul proprio sito. Con Agente Immo ce l&apos;hai in un minuto, per ogni immobile, senza fotografo, home stager e web agency da pagare.</p></Reveal>
           <Reveal delay={700} className="mt-8 flex flex-wrap items-center justify-center gap-3">
-            <Cta>Prova gratis</Cta>
-            <Cta ghost href="#prezzi">Vedi i prezzi</Cta>
+            <Cta>Prova gratis sulla tua foto</Cta>
+            <Cta ghost href="#perche">Perché ti serve</Cta>
           </Reveal>
         </div>
 
         {/* prova in pagina al posto dello slider: prima dell'upload scorre l'esempio, poi e' la foto dell'agente */}
         <div id="prova" className="mx-auto mt-14 max-w-4xl scroll-mt-24">
-          <Reveal delay={800}><TryIt /></Reveal>
+          <Reveal delay={800} anim="rise"><TryIt /></Reveal>
         </div>
 
         <Reveal delay={900} className="mx-auto mt-10 flex max-w-3xl flex-wrap justify-center gap-x-8 gap-y-3 text-sm text-muted">
-          {['Annunci che si notano tra cento uguali', 'Fai bella figura con chi ti affida casa', 'Meno ore davanti al computer', 'Prova gratis, senza registrarti'].map(x => <span key={x} className="flex items-center gap-2"><Check size={14} className="text-brand" />{x}</span>)}
+          {['La prima foto ferma chi scorre', 'Il proprietario vede subito cosa farai per lui', `~3.400 € di professionisti inclusi, da ${PRICING.starter} € al mese`, 'Prova gratis, senza registrarti'].map(x => <span key={x} className="flex items-center gap-2"><Check size={14} className="text-brand" />{x}</span>)}
         </Reveal>
       </section>
 
-      {/* perche' ti serve: i problemi dell'agente, non i passaggi del prodotto */}
-      <section id="perche" className="mx-auto max-w-6xl px-4 py-20">
-        <Reveal className="mx-auto max-w-2xl text-center">
-          <Pill>Perché ti serve</Pill>
-          <h2 className="mt-5 font-display text-4xl font-extrabold leading-[1.05] tracking-tight md:text-5xl">Vendere casa oggi è una gara di immagine.</h2>
-          <p className="mt-5 text-lg leading-relaxed text-muted">E si gioca prima ancora della prima visita.</p>
+      {/* perche' ti serve: la scena dell'acquisizione, fascia scura. Problemi dell'agente, non passaggi del prodotto */}
+      <Band id="perche" tone="dark" className="scroll-mt-4">
+        <Reveal className="mx-auto max-w-3xl text-center">
+          <Pill className="!bg-white/10 !text-white/80 !ring-white/10">Perché ti serve</Pill>
+          <h2 className={H2}>Tre agenzie, un incarico.<br className="hidden md:block" /> Lo vince chi si presenta meglio.</h2>
+          <p className="mt-5 text-lg leading-relaxed text-white/60">Non chi ha l&apos;ufficio più grande. Chi fa vedere al proprietario, lì al tavolo, come venderà la sua casa.</p>
         </Reveal>
-        <ol className="mt-12 grid gap-4 md:grid-cols-3">
+        <ol className="mt-14 grid gap-4 md:grid-cols-3">
           {[
-            [Award, 'Gli incarichi si vincono in presentazione', 'Il proprietario affida la casa a chi gli mostra meglio come la venderà. Ti presenti con foto arredate, un video e il tuo sito, non con una promessa.'],
-            [Clock, 'Il tuo tempo vale in strada, non al computer', 'Ogni ora passata a sistemare foto, scrivere annunci e aggiornare siti è un\'ora tolta a clienti e visite.'],
-            [Wallet, 'Fotografo, stager, web agency: costi che non rientrano', 'Per ogni immobile servirebbe un professionista diverso. Qui paghi un abbonamento e ce li hai tutti, per tutti gli immobili.'],
-          ].map(([I, t, d], i) => {
-            const Icon = I as typeof Upload;
-            return (
-              <Reveal key={t as string} as="li" delay={i * 120} className="group relative overflow-hidden rounded-[28px] bg-white p-7 ring-1 ring-black/5 shadow-[0_1px_2px_rgba(0,0,0,.04),0_8px_24px_-12px_rgba(0,0,0,.12)] ease-smooth transition-shadow hover:shadow-[0_30px_50px_-20px_rgba(0,0,0,.25)]">
-                <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-ink text-white"><Icon size={20} /></span>
-                <h3 className="mt-6 font-display text-2xl font-bold tracking-tight">{t as string}</h3>
-                <p className="mt-2 leading-relaxed text-muted">{d as string}</p>
-              </Reveal>
-            );
-          })}
+            ['01', 'All\'acquisizione', 'Il proprietario ha già sentito altre due agenzie. Tu gli mostri la sua casa arredata, un video e la pagina sul tuo sito. Gli altri gli lasciano un biglietto da visita.'],
+            ['02', 'Sul portale', 'Cento annunci, tutti con le stesse stanze vuote. L\'acquirente si ferma sulla foto in cui si immagina a cena, e chiama te. E il proprietario vede l\'annuncio fatto bene.'],
+            ['03', 'Il conto', 'Fotografo, home stager, videomaker, web agency: circa 3.400 € a casa, o giorni tuoi al computer. Qui è tutto incluso, per ogni immobile, in un minuto.'],
+          ].map(([n, t, d], i) => (
+            <Reveal key={t} as="li" delay={i * 140} anim="rise" className="relative overflow-hidden rounded-[28px] bg-white/[.06] p-7 ring-1 ring-white/10 ease-smooth transition-colors hover:bg-white/[.1]">
+              <span className="font-display text-5xl font-extrabold tracking-tight text-brand">{n}</span>
+              <h3 className="mt-5 font-display text-2xl font-bold tracking-tight">{t}</h3>
+              <p className="mt-2 leading-relaxed text-white/60">{d}</p>
+            </Reveal>
+          ))}
         </ol>
-      </section>
+        <Reveal delay={200} className="mx-auto mt-14 grid max-w-4xl grid-cols-3 gap-4 text-center">
+          {([[<CountUp key="a" to={3400} prefix="~" suffix=" €" />, 'ti costa oggi, per una casa'], ['1 min', 'per avere tutto con Agente Immo'], [`da ${PRICING.starter} €`, 'al mese, per tutte le case']] as [ReactNode, string][]).map(([v, l]) => (
+            <div key={l}><div className="font-display text-3xl font-extrabold tracking-tight md:text-5xl">{v}</div><div className="mt-2 text-sm text-white/55">{l}</div></div>
+          ))}
+        </Reveal>
+      </Band>
 
-      {/* 1. home staging */}
-      <section id="staging" className="mx-auto max-w-6xl px-4 py-20">
+      {/* 01 home staging */}
+      <Band id="staging">
         <div className="grid items-center gap-10 md:grid-cols-2 md:gap-16">
-          <Reveal>
-            <Pill><Wand2 size={13} className="text-ai" /> Annunci che si notano</Pill>
-            <h2 className="mt-5 font-display text-4xl font-extrabold leading-[1.05] tracking-tight md:text-5xl">Chi scorre il portale non si ferma su una stanza vuota.</h2>
-            <p className="mt-5 text-lg leading-relaxed text-muted">Vuota o arredata male, una casa sembra più piccola e più fredda di com&apos;è. Arredata, chi guarda ci si immagina dentro e ti chiama per vederla. E il proprietario vede che per la sua casa ti stai impegnando davvero.</p>
+          <Reveal anim="in-left">
+            <Eyebrow n="01">Annunci che si notano</Eyebrow>
+            <h2 className={H2}>Chi scorre il portale non si ferma su una stanza vuota.</h2>
+            <p className="mt-5 text-lg leading-relaxed text-muted">Vuota, una casa sembra più piccola e più fredda di com&apos;è. Arredata, chi guarda ci si immagina dentro e ti chiama per vederla. Carichi la foto, scegli lo stile, in un minuto è pronta.</p>
             <ul className="mt-6 space-y-3 text-[15px]">
-              {['La prima foto ferma chi scorre', 'Il cliente capisce subito come vivrebbe quella casa', 'Nessun home staging vero da pagare o da organizzare'].map(x => <li key={x} className="flex items-start gap-3"><span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand/10 text-brand"><Check size={12} /></span>{x}</li>)}
+              {['La prima foto ferma chi scorre', 'Il cliente capisce subito come vivrebbe quella casa', 'Nessun home staging vero da pagare o da organizzare'].map(x => <li key={x} className="flex items-start gap-3">{CHECK}{x}</li>)}
             </ul>
             <Cta className="mt-8">Prova gratis</Cta>
           </Reveal>
-          <Reveal delay={150}>
-            <Tilt className="rounded-[24px] bg-white p-2 shadow-[0_30px_80px_-30px_rgba(0,0,0,.3)] ring-1 ring-black/5">
-              <BeforeAfter before="https://pub-a668674eaa484e8e8f2f10c264392bfc.r2.dev/spike-video/soggiorno_prima.jpg" after="https://pub-a668674eaa484e8e8f2f10c264392bfc.r2.dev/spike-video/soggiorno.jpg" className="aspect-[4/3] rounded-2xl" />
-            </Tilt>
-            <p className="mt-3 text-center text-xs text-muted">Trascina per confrontare. Foto reale, arredata dall&apos;AI.</p>
+          <Reveal delay={150} anim="in-right">
+            <div className="parallax">
+              <Tilt className="rounded-[24px] bg-white p-2 shadow-[0_30px_80px_-30px_rgba(0,0,0,.3)] ring-1 ring-black/5">
+                <BeforeAfter before="https://pub-a668674eaa484e8e8f2f10c264392bfc.r2.dev/spike-video/soggiorno_prima.jpg" after="https://pub-a668674eaa484e8e8f2f10c264392bfc.r2.dev/spike-video/soggiorno.jpg" className="aspect-[4/3] rounded-2xl" />
+              </Tilt>
+              <p className="mt-3 text-center text-xs text-muted">Trascina per confrontare. Foto reale, arredata dall&apos;AI.</p>
+            </div>
           </Reveal>
         </div>
-      </section>
+      </Band>
 
-      {/* 2. video */}
-      <section id="video" className="mx-auto max-w-6xl px-4 py-20">
+      {/* 02 video */}
+      <Band id="video" tone="canvas">
         <div ref={videoRef} className="grid items-center gap-10 md:grid-cols-2 md:gap-16">
-          <Reveal className="md:order-2">
-            <Pill><Clapperboard size={13} className="text-brand" /> Farti conoscere</Pill>
-            <h2 className="mt-5 font-display text-4xl font-extrabold leading-[1.05] tracking-tight md:text-5xl">I video fanno vedere le case. E fanno vedere te.</h2>
+          <Reveal className="md:order-2" anim="in-right">
+            <Eyebrow n="02">Farti conoscere</Eyebrow>
+            <h2 className={H2}>I video fanno vedere le case. E fanno vedere te.</h2>
             <p className="mt-5 text-lg leading-relaxed text-muted">Nella tua zona i clienti chiamano l&apos;agente che vedono ogni settimana su Instagram e TikTok. Un videomaker costa e ci mette giorni: qui ogni nuovo incarico diventa un video, e tu resti presente senza fermarti a girare.</p>
             <ul className="mt-6 space-y-3 text-[15px]">
-              {['Ti fai conoscere nella tua zona, non solo sul portale', 'Ogni incarico diventa un contenuto da pubblicare', 'Niente riprese, niente montaggio, niente videomaker'].map(x => <li key={x} className="flex items-start gap-3"><span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand/10 text-brand"><Check size={12} /></span>{x}</li>)}
+              {['Ti fai conoscere nella tua zona, non solo sul portale', 'Ogni incarico diventa un contenuto da pubblicare', 'Niente riprese, niente montaggio, niente videomaker'].map(x => <li key={x} className="flex items-start gap-3">{CHECK}{x}</li>)}
             </ul>
             <Cta className="mt-8">Prova gratis</Cta>
           </Reveal>
-          <Reveal delay={150} className="md:order-1">
-            <div className="relative">
+          <Reveal delay={150} className="md:order-1" anim="in-left">
+            <div className="parallax relative">
               <Tilt className="overflow-hidden rounded-[24px] bg-white p-2 shadow-[0_30px_80px_-30px_rgba(0,0,0,.3)] ring-1 ring-black/5">
                 <video ref={vid} src={videoSeen ? VIDEO : undefined} poster="https://pub-a668674eaa484e8e8f2f10c264392bfc.r2.dev/spike-video/soggiorno.jpg" muted loop playsInline preload="none" className="aspect-video w-full rounded-2xl bg-canvas object-cover" />
               </Tilt>
@@ -475,30 +510,31 @@ export default function AgenteImmoLanding() {
             </div>
           </Reveal>
         </div>
-      </section>
+      </Band>
 
-      {/* 3. sito */}
-      <section id="sito" className="mx-auto max-w-6xl px-4 py-20">
+      {/* 03 sito */}
+      <Band id="sito">
         <div ref={siteRef} className="grid items-center gap-10 md:grid-cols-2 md:gap-16">
-          <Reveal>
-            <Pill><Globe size={13} className="text-brand" /> Il tuo sito, già pronto</Pill>
-            <h2 className="mt-5 font-display text-4xl font-extrabold leading-[1.05] tracking-tight md:text-5xl">Sui portali sei uno dei tanti. Sul tuo sito sei l&apos;unico.</h2>
+          <Reveal anim="in-left">
+            <Eyebrow n="03">Il tuo sito, già pronto</Eyebrow>
+            <h2 className={H2}>Sui portali sei uno dei tanti. Sul tuo sito sei l&apos;unico.</h2>
             <p className="mt-5 text-lg leading-relaxed text-muted">Sul portale l&apos;acquirente sceglie la casa, non l&apos;agente. Il sito te lo diamo noi, già fatto e finito: scegli uno dei nostri modelli, metti logo e colori, e ogni immobile che carichi ci finisce da solo. Niente web agency, niente da costruire.</p>
             <ul className="mt-6 space-y-3 text-[15px]">
-              {['Pronto in un minuto: scegli il modello, il resto è già fatto', 'Ogni immobile che carichi è subito online, con foto e descrizione', 'I contatti arrivano a te, non a un portale', 'Ti fai trovare su Google nella tua zona'].map(x => <li key={x} className="flex items-start gap-3"><span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand/10 text-brand"><Check size={12} /></span>{x}</li>)}
+              {['Pronto in un minuto: scegli il modello, il resto è già fatto', 'Ogni immobile che carichi è subito online, con foto e descrizione', 'I contatti arrivano a te, non a un portale', 'Ti fai trovare su Google nella tua zona'].map(x => <li key={x} className="flex items-start gap-3">{CHECK}{x}</li>)}
             </ul>
             <Cta className="mt-8">Prova gratis</Cta>
           </Reveal>
-          <Reveal delay={150}><Tilt className="rounded-[24px]"><MiniSite active={siteOn} /></Tilt></Reveal>
+          <Reveal delay={150} anim="in-right"><div className="parallax"><Tilt className="rounded-[24px]"><MiniSite active={siteOn} /></Tilt></div></Reveal>
         </div>
-      </section>
+      </Band>
 
       {/* tutto il resto */}
-      <section className="mx-auto max-w-6xl px-4 py-12">
+      <Band tone="canvas">
         <Reveal className="mx-auto max-w-2xl text-center">
-          <h2 className="font-display text-3xl font-extrabold tracking-tight md:text-4xl">E il lavoro noioso sparisce.</h2>
+          <Pill>E in più</Pill>
+          <h2 className={H2}>Il lavoro noioso sparisce.</h2>
         </Reveal>
-        <div className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-12 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {[
             [FileText, 'Il cliente si ricorda di te', 'Dopo la visita riparte con un report della casa col tuo logo, da girare a chi deve decidere.'],
             [Sparkles, 'Annunci pronti in un attimo', 'Il testo si scrive da solo: tu lo rileggi e pubblichi.'],
@@ -509,40 +545,42 @@ export default function AgenteImmoLanding() {
           ].map(([I, t, d], i) => {
             const Icon = I as typeof Upload;
             return (
-              <Reveal key={t as string} delay={i * 60} className="flex gap-4 rounded-[24px] bg-white p-5 ring-1 ring-black/5 ease-smooth transition-shadow hover:shadow-[0_20px_40px_-20px_rgba(0,0,0,.2)]">
+              <Reveal key={t as string} delay={i * 60} anim="rise" className="flex gap-4 rounded-[24px] bg-white p-5 ring-1 ring-black/5 ease-smooth transition-shadow hover:shadow-[0_20px_40px_-20px_rgba(0,0,0,.2)]">
                 <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-canvas text-ink"><Icon size={18} /></span>
                 <div><div className="font-semibold">{t as string}</div><p className="mt-1 text-sm leading-relaxed text-muted">{d as string}</p></div>
               </Reveal>
             );
           })}
         </div>
-      </section>
+      </Band>
 
-      {/* prezzi: Starter e Pro (stesso prodotto, crediti diversi). Numeri in PRICING */}
+      {/* il conto, poi i prezzi. Numeri in PRICING */}
       <Compare />
 
       <Pricing />
 
       {/* domande frequenti: testo visibile + FAQPage in JSON-LD (stesse risposte, vedi FAQ) */}
-      <section id="domande" className="mx-auto max-w-3xl px-4 py-16">
+      <Band id="domande" inner="max-w-3xl">
         <Reveal className="text-center">
           <Pill>Domande frequenti</Pill>
           <h2 className="mt-5 font-display text-3xl font-extrabold tracking-tight md:text-4xl">Quello che ci chiedono gli agenti immobiliari</h2>
         </Reveal>
         <p className="mt-6 text-center text-muted">Vuoi sapere di più sul mestiere? Leggi la <Link href="/it/agente-immobiliare" className="font-medium text-ink underline underline-offset-4">guida completa all&apos;agente immobiliare</Link>.</p>
         <div className="mt-10 space-y-3">
-          {FAQ.map(([q, a]) => (
-            <details key={q} className="group rounded-[24px] bg-white p-5 ring-1 ring-black/5 open:shadow-[0_20px_40px_-20px_rgba(0,0,0,.2)]">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-semibold">{q}<ArrowRight size={16} className="shrink-0 text-muted ease-smooth transition-transform group-open:rotate-90" /></summary>
-              <p className="mt-3 leading-relaxed text-muted">{a}</p>
-            </details>
+          {FAQ.map(([q, a], i) => (
+            <Reveal key={q} as="div" delay={i * 40} anim="rise">
+              <details className="group rounded-[24px] bg-white p-5 ring-1 ring-black/5 open:shadow-[0_20px_40px_-20px_rgba(0,0,0,.2)]">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-semibold">{q}<ArrowRight size={16} className="shrink-0 text-muted ease-smooth transition-transform group-open:rotate-90" /></summary>
+                <p className="mt-3 leading-relaxed text-muted">{a}</p>
+              </details>
+            </Reveal>
           ))}
         </div>
-      </section>
+      </Band>
 
       {/* cta finale */}
-      <section className="mx-auto max-w-6xl px-4 py-20">
-        <Reveal className="relative overflow-hidden rounded-[32px] bg-ink px-6 py-16 text-center text-white md:py-24">
+      <section className="mx-auto max-w-6xl px-4 pb-24">
+        <Reveal anim="rise" className="relative overflow-hidden rounded-[32px] bg-ink px-6 py-16 text-center text-white md:py-24">
           <div className="pointer-events-none absolute inset-0 opacity-30" style={{ background: 'radial-gradient(600px circle at 20% 0%, rgba(83,126,236,.8), transparent 60%), radial-gradient(500px circle at 90% 100%, rgba(110,86,248,.7), transparent 60%)' }} />
           <div className="relative">
             <h2 className="mx-auto max-w-2xl font-display text-4xl font-extrabold leading-[1.05] tracking-tight md:text-6xl">Il prossimo incarico, vincilo così.</h2>
