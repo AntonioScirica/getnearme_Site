@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowUp, Building2, Check, Clapperboard, Download, ExternalLink, ImagePlus, Lasso, Shuffle, LayoutGrid, Loader2, Monitor, RotateCcw, SquareDashed, SquareDashedMousePointer, X } from 'lucide-react';
+import { ArrowUp, Building2, Check, ChevronLeft, Clapperboard, Download, ExternalLink, ImagePlus, Lasso, Shuffle, LayoutGrid, Loader2, Monitor, RotateCcw, SquareDashed, SquareDashedMousePointer, X } from 'lucide-react';
 import { fileToResizedDataUrl } from '@/lib/staging';
 import { AI_MOCK } from '@/lib/aiMock';
 import { AiPhotoStage, QUICK_PRESETS, type EditRequest, type Region, type Reveal, type Suggestion } from './AiPhoto';
@@ -434,7 +434,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                 <div className="p-4 pb-6">
                   {/* passo nuovo: il vecchio sfuma, il contenitore cambia altezza (AutoSize), poi il nuovo appare */}
                   {/* scelte fatte: miniature sopra la domanda; restano ferme tra un passo e l'altro, entra solo l'ultima */}
-                  {m.picks.length > 0 && (
+                  {m.picks.length > 0 && m.step !== 'anim' && (
                     <div className="flex flex-wrap gap-3 px-2 pb-4">
                       {m.picks.map(p => (
                         <div key={p.label} className="blur-in w-24">
@@ -447,7 +447,12 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                     </div>
                   )}
                   <StepSwap step={m.step}>
-                  <div className="px-2 pb-4 text-sm">
+                  <div className="flex items-center gap-1 px-2 pb-4 text-sm">
+                    {/* indietro di un passo (non a video partito) */}
+                    {m.step !== 'template' && m.step !== 'render' && (
+                      <button aria-label="Indietro" onClick={() => patchV(m.id, m.step === 'anim' ? { step: 'template', picks: [] } : m.step === 'mode' ? { step: 'anim', anim: undefined, picks: m.picks.slice(0, 1) } : { step: 'mode', picks: m.picks.slice(0, 2), previews: undefined })}
+                        className="-ml-1.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-muted ease-smooth transition-colors hover:bg-black/5 hover:text-ink"><ChevronLeft size={18} /></button>
+                    )}
                     <span className="font-medium">{m.step === 'template' ? 'Che video vuoi creare?' : m.step === 'anim' ? 'Con quale animazione?' : m.step === 'mode' ? 'Tengo i mobili che ci sono o arredo in un nuovo stile?' : m.step === 'previews' ? (m.previews?.some(p => !p) ? 'Preparo tre proposte…' : 'Scegli quella per il video') : m.url ? 'Ecco il video' : m.err ? '' : 'Creo il video, circa 2 minuti'}</span>
                   </div>
                     {(m.step === 'template' || m.step === 'anim') && (
