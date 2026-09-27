@@ -2,7 +2,7 @@ import sharp from 'sharp'
 import { runJob } from '@/lib/runpodImage'
 import Anthropic from '@anthropic-ai/sdk'
 import { logUsage } from '@/lib/ai'
-import { editPlanPrompt, leftoverPrompt, removePrompt, removeInBoxPrompt, addFurniturePrompt, type EditPlan } from '@/lib/stagingPrompts'
+import { editPlanPrompt, leftoverPrompt, removePrompt, removeInBoxPrompt, zoneInBoxPrompt, sameRoomPrompt, addFurniturePrompt, type EditPlan, type Box, type Zone } from '@/lib/stagingPrompts'
 
 // Svuota, arreda e modifiche guidate da un piano del modello di visione. Qwen da solo non distingue fisso da mobile e inventa le cose nominate che non ci
 // sono; sostituire i mobili in un colpo gli faceva reinventare la stanza (27/09). Quindi:
@@ -38,15 +38,27 @@ export async function guidedEdit(o: { userId: string; input: { image_base64: str
       for (const [n, it] of left.entries()) {
         prompt = removeInBoxPrompt(it.what)
         const r = await runJob({ image_base64: `data:image/jpeg;base64,${cur}`, prompt, mark: it.box, seed: o.seed + 10 * (k + 1) + n, steps: 12 })
-        if (r.output?.image_base64) cur = r.output.image_base64
+        if (r.output?.image_base64) cur = await blendBox(cur, r.output.image_base64, it.box)
       }
     }
   }
   if (o.task !== 'empty' && (plan.add.length || plan.restyle.length)) {
+    // 1) in un colpo (veloce, luce e prospettiva coerenti), 2) Opus controlla che la stanza sia la stessa, 3) se no si rifa'
+    // a zone, ognuna solo dentro il suo riquadro (27/09: "rinnova il bagno" su una stanza vuota ridisegnava tutto il bagno)
+    const base = cur
     prompt = addFurniturePrompt(plan)
-    const a = await runJob({ image_base64: `data:image/jpeg;base64,${cur}`, prompt, seed: o.seed + 1, steps: 12 }) // 28 passaggi: piu' dettaglio ma allarga l'inquadratura (27/09)
+    const a = await runJob({ image_base64: `data:image/jpeg;base64,${base}`, prompt, seed: o.seed + 1, steps: 12 }) // 28 passaggi: piu' dettaglio ma allarga l'inquadratura (27/09)
     if (!a.output?.image_base64) return {}
     cur = a.output.image_base64
+    const zones: [Zone, boolean][] = [...plan.restyle.map(z => [z, true] as [Zone, boolean]), ...plan.add.map(z => [z, false] as [Zone, boolean]).sort((p, q) => (p[0].box ? p[0].box.y + p[0].box.h : 1) - (q[0].box ? q[0].box.y + q[0].box.h : 1))]
+    if (zones.every(([z]) => z.box) && (await askJson(o.userId, [base, cur], sameRoomPrompt)).same === false) {
+      cur = base
+      for (const [n, [z, re]] of zones.entries()) {
+        prompt = zoneInBoxPrompt(z, re)
+        const r = await runJob({ image_base64: `data:image/jpeg;base64,${cur}`, prompt, mark: z.box, seed: o.seed + 100 + n, steps: 12 })
+        if (r.output?.image_base64) cur = await blendBox(cur, r.output.image_base64, z.box!)
+      }
+    }
   }
   return { image: cur, prompt, plan }
 }
@@ -78,14 +90,52 @@ async function askJson(userId: string, imagesB64: string[], text: string, model 
   }
 }
 const list = (x: unknown) => (Array.isArray(x) ? x.filter((v): v is string => typeof v === 'string').slice(0, 12) : [])
-const parsePlan = (r: Record<string, unknown>): EditPlan => ({ remove: list(r.remove), keep: list(r.keep), restyle: list(r.restyle), add: list(r.add) })
+const parsePlan = (r: Record<string, unknown>): EditPlan => ({ remove: list(r.remove), keep: list(r.keep), restyle: zones(r.restyle), add: zones(r.add) })
+// zone {what, box}; accetta anche stringhe (senza riquadro: si ripiega sul passaggio unico)
+function zones(x: unknown): Zone[] {
+  if (!Array.isArray(x)) return []
+  return x.slice(0, 6).flatMap((it): Zone[] => typeof it === 'string' ? [{ what: it }] : typeof it?.what === 'string' ? [{ what: it.what, box: toBox(it.box, 0.03) }] : [])
+}
+// riquadro valido 0..1, allargato di pad per lato e tenuto dentro la foto
+function toBox(b: { x?: unknown; y?: unknown; w?: unknown; h?: unknown } | undefined, pad: number): Box | undefined {
+  if (!b || ![b.x, b.y, b.w, b.h].every(v => typeof v === 'number' && v >= 0 && v <= 1)) return undefined
+  const [bx, by, bw, bh] = [b.x, b.y, b.w, b.h] as number[]
+  if (bw < 0.02 || bh < 0.02) return undefined
+  const x = Math.max(0, bx - pad), y = Math.max(0, by - pad)
+  return { x, y, w: Math.min(1 - x, bw + 2 * pad), h: Math.min(1 - y, bh + 2 * pad) }
+}
 // oggetti rimasti con riquadro valido (0..1, allargato del 4% per lato e tenuto dentro la foto)
-function parseLeft(r: Record<string, unknown>): { what: string; box: { x: number; y: number; w: number; h: number } }[] {
+function parseLeft(r: Record<string, unknown>): { what: string; box: Box }[] {
   if (!Array.isArray(r.left)) return []
   return r.left.flatMap(it => {
-    const b = it?.box, what = typeof it?.what === 'string' ? it.what : ''
-    if (!what || !b || ![b.x, b.y, b.w, b.h].every((v: unknown) => typeof v === 'number' && v >= 0 && v <= 1) || b.w < 0.02 || b.h < 0.02) return []
-    const x = Math.max(0, b.x - 0.04), y = Math.max(0, b.y - 0.04)
-    return [{ what, box: { x, y, w: Math.min(1 - x, b.w + 0.08), h: Math.min(1 - y, b.h + 0.08) } }]
+    const what = typeof it?.what === 'string' ? it.what : '', box = toBox(it?.box, 0.04)
+    return what && box ? [{ what, box }] : []
   })
+}
+
+// Incolla il risultato di un passaggio nel riquadro sulla foto di prima senza che si veda: il modello cambia un po' la luce
+// dentro il riquadro (rettangolo piu' chiaro a meta' foto, 27/09). Si pareggia colore e luminosita' su una cornice interna
+// del riquadro e si sfuma il bordo, fuori resta la foto di prima.
+async function blendBox(prevB64: string, outB64: string, box: Box): Promise<string> {
+  const prev = sharp(Buffer.from(prevB64, 'base64'))
+  const { width: W = 0, height: H = 0 } = await prev.metadata()
+  if (!W || !H) return outB64
+  const [a, b] = await Promise.all([prev.removeAlpha().raw().toBuffer(), sharp(Buffer.from(outB64, 'base64')).resize(W, H, { fit: 'fill' }).removeAlpha().raw().toBuffer()])
+  const x0 = Math.round(box.x * W), y0 = Math.round(box.y * H), x1 = Math.min(W, Math.round((box.x + box.w) * W)), y1 = Math.min(H, Math.round((box.y + box.h) * H))
+  const ring = Math.max(4, Math.round(Math.min(x1 - x0, y1 - y0) * 0.08)), feather = Math.max(6, Math.round(Math.min(x1 - x0, y1 - y0) * 0.12))
+  const sa = [0, 0, 0], sb = [0, 0, 0]; let n = 0
+  for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) {
+    if (Math.min(x - x0, x1 - 1 - x, y - y0, y1 - 1 - y) >= ring) continue
+    const i = (y * W + x) * 3
+    for (let c = 0; c < 3; c++) { sa[c] += a[i + c]; sb[c] += b[i + c] }
+    n++
+  }
+  const gain = sa.map((v, c) => (n && sb[c] ? Math.min(1.25, Math.max(0.8, v / sb[c])) : 1))
+  const res = Buffer.from(a)
+  for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) {
+    const f = Math.min(1, Math.min(x - x0, x1 - 1 - x, y - y0, y1 - 1 - y) / feather)
+    const i = (y * W + x) * 3
+    for (let c = 0; c < 3; c++) res[i + c] = Math.round(a[i + c] * (1 - f) + Math.min(255, b[i + c] * gain[c]) * f)
+  }
+  return (await sharp(res, { raw: { width: W, height: H, channels: 3 } }).jpeg({ quality: 92 }).toBuffer()).toString('base64')
 }
