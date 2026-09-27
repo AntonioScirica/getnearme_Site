@@ -100,7 +100,8 @@ export const FONTS: { id: string; label: string; family: string; serif: boolean;
 ]
 export const fontCss = (ids: string[]) => {
   const fs = FONTS.filter(f => ids.includes(f.id))
-  return fs.length ? `https://fonts.googleapis.com/css2?${fs.map(f => `family=${f.family.replace(/ /g, '+')}:wght@${f.weight}`).join('&')}&display=swap` : ''
+  // passa dal nostro server (/api/site/fonts): i visitatori dei siti non contattano Google
+  return fs.length ? `/api/site/fonts?ids=${fs.map(f => f.id).join(',')}` : ''
 }
 
 // Esempi per i campi vuoti: nell'editor sono il testo grigio dei campi e nell'anteprima riempiono il sito,

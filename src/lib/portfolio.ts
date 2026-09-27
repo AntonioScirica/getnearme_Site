@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { cache } from 'react'
 import { headers } from 'next/headers'
-import { cleanSite, type SiteConfig, type SiteProperty } from './siteTemplates'
+import { cleanSite, pageHidden, zoneSlug, type SiteConfig, type SiteProperty } from './siteTemplates'
 
 // Lettura pubblica del portfolio: service role lato server, SOLO immobili is_public.
 const admin = createClient(
@@ -56,6 +56,10 @@ export async function getPublicProperties(userId: string): Promise<PublicPropert
   return data ?? []
 }
 
+// Indirizzo pubblico canonico del sito (per canonical, sitemap, dati strutturati): dominio vetrina se c'e'.
+export const siteUrl = (slug: string, path = '') =>
+  process.env.NEXT_PUBLIC_PORTFOLIO_HOST ? `https://${process.env.NEXT_PUBLIC_PORTFOLIO_HOST}/${slug}${path}` : `https://www.getnearme.it/it/a/${slug}${path}`
+
 // Base dei link interni: sul dominio vetrina /<slug>, sul sito /<locale>/a/<slug>.
 export async function portfolioBase(locale: string, slug: string): Promise<string> {
   const host = (await headers()).get('host')?.split(':')[0].replace(/^www\./, '')
@@ -88,3 +92,23 @@ export const loadSite = cache(async (locale: string, slug: string) => {
   const [props, cfg, base] = await Promise.all([getPublicProperties(brand.user_id), getSite(brand), portfolioBase(locale, slug)])
   return { cfg, base, name: brand.company_name || brand.display_name || 'Immobili', logo: brand.logo_colored_h || brand.logo_black_h, properties: props.map(toSiteProperty) }
 })
+
+// Tutte le pagine pubbliche dei siti degli agenti, per la sitemap del dominio vetrina.
+// ponytail: un giro su tutti gli agenti con immobili pubblici (una lettura della config per agente); a migliaia di siti, sitemap index per agente
+export async function allSitePages(): Promise<{ url: string; lastModified?: string }[]> {
+  const { data: pub } = await admin.from('projects').select('id, user_id, created_at').eq('is_public', true)
+  const users = [...new Set((pub ?? []).map(p => p.user_id as string))]
+  if (!users.length) return []
+  const { data: brands } = await admin.from('user_brand').select('user_id, portfolio_slug, company_name, display_name, company_email').in('user_id', users).not('portfolio_slug', 'is', null)
+  const out: { url: string; lastModified?: string }[] = []
+  for (const b of brands ?? []) {
+    const slug = b.portfolio_slug as string
+    const cfg = await getSite(b as PortfolioBrand)
+    const mine = (pub ?? []).filter(p => p.user_id === b.user_id)
+    out.push({ url: siteUrl(slug), lastModified: mine[0]?.created_at })
+    for (const page of ['immobili', 'servizi', 'contatti', 'agente']) if (!pageHidden(cfg, page)) out.push({ url: siteUrl(slug, `/${page}`) })
+    if (!pageHidden(cfg, 'zona')) for (const z of cfg.zones) out.push({ url: siteUrl(slug, `/zona/${zoneSlug(z.name)}`) })
+    if (!pageHidden(cfg, 'immobile')) for (const p of mine) out.push({ url: siteUrl(slug, `/${p.id}`), lastModified: p.created_at })
+  }
+  return out
+}

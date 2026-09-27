@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { loadSite } from '@/lib/portfolio';
+import { loadSite, siteUrl } from '@/lib/portfolio';
 import { zoneSlug } from '@/lib/siteTemplates';
 import { SitePage } from '@/components/site/pages';
 
@@ -13,7 +13,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const s = await loadSite(locale, slug);
   const z = s?.cfg.zones.find(x => zoneSlug(x.name) === zona);
   if (!s || !z) return { title: 'Zona non trovata' };
-  return { title: { absolute: `Casa a ${z.name} | ${s.name}` }, description: z.text.replace(/^## .*$/gm, '').trim().slice(0, 160) };
+  return { title: { absolute: `Casa a ${z.name} | ${s.name}` }, description: z.text.replace(/^## .*$/gm, '').trim().slice(0, 160), alternates: { canonical: siteUrl(slug, `/zona/${zona}`) } };
 }
 
 export default async function Zone({ params }: Props) {

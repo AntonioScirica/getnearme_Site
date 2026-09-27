@@ -3,11 +3,12 @@
 import LeafletMap from '@/components/ui/LeafletMap';
 import { iconFor } from '@/lib/fieldIcons';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
-import { Check, Facebook, GraduationCap, Hospital, Instagram, Loader2, Mail, MapPin, MessageCircle, Phone, Pill, Printer, School, Share2, ShoppingCart, Train, TrainFront, TramFront, Trees } from 'lucide-react';
+import { Check, Compass, FileDown, Play, ExternalLink, Facebook, Fence, Flame, Layers, LandPlot, Package, Shirt, ShieldCheck, Siren, Sun, Video, WashingMachine, Waves, Wifi, Wine, HouseWifi, Warehouse, GraduationCap, Hospital, Instagram, Loader2, Mail, MapPin, MessageCircle, Phone, Pill, School, Share2, ShoppingCart, Train, TrainFront, TramFront, Trees } from 'lucide-react';
 import { authFetch } from '@/components/platform/api';
 import { ESSENTIALS, GROUPS, type Field } from '@/lib/propertyFields';
 import type { SiteProperty } from '@/lib/siteTemplates';
-import { contacts, H, useSite, useT } from './ui';
+import type { Poi } from '@/lib/zone';
+import { contacts, H, SiteLink, useSite, useT } from './ui';
 
 // Parti aggiunte sul modello dei siti di agenzia di zona (es. casalconero.com): barra contatti,
 // WhatsApp fisso, modulo di contatto vero, dettagli e caratteristiche dell'immobile, mappa, servizi.
@@ -73,7 +74,7 @@ export function ContactForm({ property, compact }: { property?: SiteProperty; co
       <textarea name="message" rows={compact ? 3 : 5} maxLength={2000} defaultValue={property ? `Vorrei informazioni su "${property.titolo}"${property.riferimento ? ` (rif. ${property.riferimento})` : ''}.` : ''} placeholder="Il tuo messaggio" className={`${field} h-auto resize-none py-3`} />
       {/* campo trappola per i bot */}
       <input name="website" tabIndex={-1} autoComplete="off" className="hidden" aria-hidden />
-      <label className="flex items-start gap-2 text-xs text-[var(--muted)]"><input type="checkbox" name="privacy" required className="mt-0.5 accent-[var(--c)]" /> Ho letto e accetto l’informativa privacy e acconsento a essere ricontattato.</label>
+      <label className="flex items-start gap-2 text-xs text-[var(--muted)]"><input type="checkbox" name="privacy" required className="mt-0.5 accent-[var(--c)]" /> <span>Ho letto l’<SiteLink to={{ page: 'legal', doc: 'privacy' }} className="underline underline-offset-2 hover:text-[var(--fg)]">informativa privacy</SiteLink> e acconsento a essere ricontattato.</span></label>
       <button disabled={state === 'sending'} className="flex h-12 w-full items-center justify-center gap-2 rounded-[calc(var(--r)*0.6)] bg-[var(--c)] text-sm font-semibold text-[var(--on-c,#fff)] transition hover:brightness-110 disabled:opacity-60">
         {state === 'sending' && <Loader2 size={15} className="animate-spin" />} {tx('form.button')}
       </button>
@@ -84,7 +85,7 @@ export function ContactForm({ property, compact }: { property?: SiteProperty; co
 
 // Dettagli e caratteristiche dall'unico schema dei campi (lib/propertyFields)
 const ALL: Field[] = [...ESSENTIALS, ...GROUPS.flatMap(g => g.fields)];
-const SKIP = new Set(['indirizzo', 'mostra_indirizzo', 'trattativa_riservata', 'prezzo', 'contratto', 'tipologia', 'superficie', 'locali', 'camere', 'bagni']);
+const SKIP = new Set(['indirizzo', 'mostra_indirizzo', 'trattativa_riservata', 'prezzo', 'contratto', 'tipologia', 'superficie', 'locali', 'camere', 'bagni', 'virtual_tour']);
 const fmt = (f: Field, v: unknown) => (typeof v === 'boolean' ? (v ? 'Sì' : 'No') : `${v}${f.unit ? ` ${f.unit}` : ''}`);
 
 export function DetailsTable({ p }: { p: SiteProperty }) {
@@ -118,15 +119,71 @@ export function DetailsTable({ p }: { p: SiteProperty }) {
   );
 }
 
+// Caratteristiche: una tessera per voce con la sua icona (esterni, dotazioni); l'esposizione in una sola tessera
+const FEATURE_ICON: Record<string, typeof Check> = {
+  Balcone: Fence, Terrazzo: Sun, 'Giardino privato': Trees, 'Giardino condominiale': Trees, Cortile: LandPlot, Piscina: Waves,
+  Parquet: Layers, 'Porta blindata': ShieldCheck, "Impianto d'allarme": Siren, 'Fibra ottica': Wifi, Domotica: HouseWifi, Camino: Flame,
+  Ripostiglio: Package, 'Cabina armadio': Shirt, Lavanderia: WashingMachine, Taverna: Wine, Soppalco: Warehouse, Videocitofono: Video,
+};
 export function FeatureList({ p }: { p: SiteProperty }) {
   const tx = useT();
   const d = p.details ?? {};
-  const items = ALL.filter(f => f.type === 'multi').flatMap(f => (Array.isArray(d[f.key]) ? (d[f.key] as string[]) : []));
+  const list = (k: string) => (Array.isArray(d[k]) ? (d[k] as string[]) : []);
+  const esp = list('esposizione');
+  const items: [string, typeof Check, string?][] = [
+    ...[...list('esterni'), ...list('dotazioni')].map(x => [x, FEATURE_ICON[x] ?? Check] as [string, typeof Check]),
+    ...(esp.length ? [[esp.join(', '), Compass, 'Esposizione'] as [string, typeof Check, string]] : []),
+  ];
   if (!items.length) return null;
   return (
     <div>
       <H className="text-3xl">{tx('property.features')}</H>
-      <ul className="mt-5 grid gap-x-6 gap-y-3 sm:grid-cols-2 md:grid-cols-3">{items.map(x => <li key={x} className="flex items-center gap-2.5 text-sm"><span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--c)_15%,transparent)] text-[var(--c)]"><Check size={12} /></span>{x}</li>)}</ul>
+      <ul className="mt-5 grid grid-cols-2 gap-2 xl:grid-cols-3">
+        {items.map(([label, I, kicker]) => (
+          <li key={label} className="flex items-center gap-3 rounded-[calc(var(--r)*0.6)] bg-[var(--soft)] px-4 py-3">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--surface)] text-[var(--c)]"><I size={16} /></span>
+            <span className="min-w-0 text-sm">{kicker && <span className="block text-xs text-[var(--muted)]">{kicker}</span>}<span className="block font-medium leading-snug">{label}</span></span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+// Tour virtuale o video: YouTube e Vimeo diventano il loro player, gli altri link (Matterport, Kuula...) si aprono
+// nella pagina cosi' come sono. Solo http(s). Sotto resta il link per aprirlo a parte (alcuni siti non si lasciano incorporare).
+export function tourEmbed(raw?: unknown): { src: string; href: string } | null {
+  if (typeof raw !== 'string' || !raw.trim()) return null;
+  let u: URL;
+  try { u = new URL(/^https?:\/\//i.test(raw.trim()) ? raw.trim() : `https://${raw.trim()}`); } catch { return null; }
+  if (!/^https?:$/.test(u.protocol) || !u.hostname.includes('.')) return null;
+  const href = u.toString();
+  const yt = u.hostname.includes('youtu.be') ? u.pathname.slice(1) : /youtube\.com$/.test(u.hostname.replace(/^www\.|^m\./, '')) ? (u.searchParams.get('v') || u.pathname.match(/\/(?:shorts|embed|live)\/([\w-]+)/)?.[1]) : null;
+  if (yt) return { src: `https://www.youtube-nocookie.com/embed/${yt}`, href };
+  const vm = /vimeo\.com$/.test(u.hostname.replace(/^www\./, '')) && u.pathname.match(/\/(\d+)/)?.[1];
+  if (vm) return { src: `https://player.vimeo.com/video/${vm}`, href };
+  return { src: href, href };
+}
+// Il tour si carica solo al clic: fino ad allora il visitatore non contatta YouTube, Matterport... (niente banner cookie)
+export function TourBlock({ p }: { p: SiteProperty }) {
+  const t = tourEmbed(p.details?.virtual_tour);
+  const [on, setOn] = useState(false);
+  if (!t) return null;
+  const host = new URL(t.src).hostname.replace(/^www\./, '');
+  return (
+    <div>
+      <H className="text-3xl">Tour virtuale</H>
+      <div className="mt-5 aspect-video overflow-hidden rounded-[var(--r)] bg-[var(--soft)] ring-1 ring-[var(--line)]">
+        {!on ? (
+          <button type="button" onClick={() => setOn(true)} className="flex h-full w-full flex-col items-center justify-center gap-3 px-6 text-center">
+            <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--c)] text-[var(--on-c,#fff)] shadow-lg transition-transform hover:scale-105"><Play size={22} className="translate-x-px" /></span>
+            <span className="font-semibold">Mostra il tour</span>
+            <span className="max-w-sm text-xs text-[var(--muted)]">Il tour è ospitato da {host}: caricandolo, quel sito riceve i tuoi dati di navigazione e può usare cookie.</span>
+          </button>
+        ) : <iframe src={t.src} title="Tour virtuale" allowFullScreen allow="fullscreen; xr-spatial-tracking; gyroscope; accelerometer; autoplay; encrypted-media; picture-in-picture"
+          sandbox="allow-scripts allow-same-origin allow-popups allow-presentation allow-forms" className="h-full w-full border-0" />}
+      </div>
+      <a href={t.href} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-[var(--c)] hover:underline">Apri a schermo intero <ExternalLink size={13} /></a>
     </div>
   );
 }
@@ -147,6 +204,38 @@ export function MapBlock({ addr, bare }: { addr: string; bare?: boolean }) {
   );
 }
 
+// "Scarica il report": brochure PDF della casa (foto, descrizione, caratteristiche, zona, costi, contatti dell'agente).
+// L'HTML lo compone il server; qui si stampa da un iframe nascosto (il browser offre "Salva come PDF").
+export function ReportButton({ id, className = '' }: { id: string; className?: string }) {
+  const { base, preview } = useSite();
+  const [busy, setBusy] = useState(false);
+  const run = async () => {
+    if (preview || busy) return;
+    setBusy(true);
+    try {
+      const slug = base.split('/').filter(Boolean).pop() ?? '';
+      const html = await fetch(`/api/site/report?slug=${encodeURIComponent(slug)}&id=${encodeURIComponent(id)}`).then(r => (r.ok ? r.text() : ''));
+      if (!html) return;
+      const f = Object.assign(document.createElement('iframe'), { title: 'report' });
+      Object.assign(f.style, { position: 'fixed', right: '0', bottom: '0', width: '0', height: '0', border: '0' });
+      document.body.appendChild(f);
+      const doc = f.contentDocument!;
+      doc.open(); doc.write(html); doc.close();
+      // aspetto foto e font, poi la finestra di stampa
+      await Promise.race([Promise.all([...doc.images].map(img => (img.complete ? null : new Promise(ok => { img.onload = img.onerror = ok; })))), new Promise(ok => setTimeout(ok, 5000))]);
+      await doc.fonts?.ready;
+      f.contentWindow?.focus();
+      f.contentWindow?.print();
+      setTimeout(() => f.remove(), 60000);
+    } finally { setBusy(false); }
+  };
+  return (
+    <button type="button" onClick={run} disabled={busy} className={`flex h-10 items-center gap-2 rounded-full px-4 text-sm font-medium ring-1 ring-[var(--line)] transition-colors hover:ring-[var(--fg)] disabled:opacity-60 print:hidden ${className}`}>
+      {busy ? <Loader2 size={15} className="animate-spin" /> : <FileDown size={15} />}{busy ? 'Preparo il report…' : 'Scarica il report'}
+    </button>
+  );
+}
+
 export function ShareBar({ title }: { title: string }) {
   const [copied, setCopied] = useState(false);
   const share = async () => {
@@ -157,7 +246,6 @@ export function ShareBar({ title }: { title: string }) {
   return (
     <div className="flex gap-2">
       <button onClick={share} className={btn}>{copied ? <Check size={15} /> : <Share2 size={15} />}{copied ? 'Link copiato' : 'Condividi'}</button>
-      <button onClick={() => print()} className={btn}><Printer size={15} /> Stampa</button>
     </div>
   );
 }
@@ -202,7 +290,7 @@ const far = (m: number) => (m < 1000 ? `${Math.round(m / 10) * 10} m` : `${(m / 
 export function NearbyList({ p }: { p: SiteProperty }) {
   const { base, preview } = useSite();
   const [radius, setRadius] = useState(1000);
-  const [pois, setPois] = useState<{ categoria: string; nome: string; distanza: number }[] | null>(null);
+  const [pois, setPois] = useState<Poi[] | null>(null);
   useEffect(() => {
     let stop = false;
     const slug = base.split('/').filter(Boolean).pop() ?? '';
@@ -210,7 +298,7 @@ export function NearbyList({ p }: { p: SiteProperty }) {
       ? authFetch(`/api/platform/zone?address=${encodeURIComponent(p.addr)}&radius=${radius}`)
       : fetch(`/api/site/zone?slug=${encodeURIComponent(slug)}&id=${encodeURIComponent(p.id)}&r=${radius}`);
     req.then(r => (r.ok ? r.json() : null)).catch(() => null)
-      .then(d => { if (!stop) setPois(((d?.pois ?? []) as { categoria: string; nome: string; distanza: number }[]).filter(x => x.distanza <= radius).sort((a, b) => a.distanza - b.distanza).slice(0, 10)); });
+      .then(d => { if (!stop) setPois(((d?.pois ?? []) as Poi[]).filter(x => x.distanza <= radius).sort((a, b) => a.distanza - b.distanza).slice(0, 10)); });
     return () => { stop = true; };
   }, [base, preview, p.addr, p.id, radius]);
   return (
@@ -231,11 +319,13 @@ export function NearbyList({ p }: { p: SiteProperty }) {
           {pois.map(x => {
             const I = POI_ICON[x.categoria] ?? MapPin;
             return (
-              <li key={`${x.categoria}-${x.nome}-${x.distanza}`} className="flex items-center gap-3 rounded-[calc(var(--r)*0.6)] bg-[var(--soft)] px-4 py-3 text-sm">
+              <li key={`${x.categoria}-${x.nome}-${x.distanza}`}><a target="_blank" rel="noopener noreferrer"
+                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(x.lat != null ? `${x.lat},${x.lon}` : `${x.nome}, ${p.addr}`)}`}
+                className="flex items-center gap-3 rounded-[calc(var(--r)*0.6)] bg-[var(--soft)] px-4 py-3 text-sm ring-1 ring-transparent transition-shadow hover:ring-[var(--line)]">
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--surface)] text-[var(--c)]"><I size={16} /></span>
                 <span className="min-w-0 flex-1"><span className="block truncate font-medium">{x.nome}</span><span className="block text-xs text-[var(--muted)]">{x.categoria}</span></span>
                 <span className="shrink-0 text-right text-xs"><span className="block font-semibold">{far(x.distanza)}</span><span className="block text-[var(--muted)]">{Math.max(1, Math.round(x.distanza / 80))} min a piedi</span></span>
-              </li>
+              </a></li>
             );
           })}
         </ul>

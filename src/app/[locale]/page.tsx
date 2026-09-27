@@ -38,6 +38,78 @@ export default async function Home({ params }: Props) {
       {/* Preload del poster hero (LCP): Next lo issa nel <head> → carica per primo */}
       {/* eslint-disable-next-line @next/next/no-head-element */}
       <link rel="preload" as="image" href="/staging/1.webp" fetchPriority="high" />
+      {/* Schema.org della landing (prima nel layout della lingua: finiva anche sui siti degli agenti) */}
+        {/* 
+        Schema.org JSON-LD - SoftwareApplication
+        NOTA: AggregateRating rimosso - aggiungere solo quando disponibili
+        recensioni verificabili da Chrome Web Store o altra fonte attendibile
+      */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "SoftwareApplication",
+            "name": "GetNearMe",
+            "applicationCategory": "BrowserApplication",
+            "operatingSystem": "Chrome",
+            "description": translations[locale as Locale].hero.description,
+            "url": `https://www.getnearme.it/${locale}`,
+            "inLanguage": locale,
+            "author": {
+              "@type": "Organization",
+              "name": "GetNearMe",
+              "url": "https://www.getnearme.it",
+            },
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "EUR",
+              "description": translations[locale as Locale].pricing.plans[0].desc,
+            },
+          }),
+        }}
+      />
+      
+      {/* Schema.org JSON-LD - WebSite */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            "name": "GetNearMe",
+            "url": "https://www.getnearme.it",
+            "inLanguage": locale,
+          }),
+        }}
+      />
+      
+      {/* Schema.org JSON-LD - Organization */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            "name": "GetNearMe",
+            "url": "https://www.getnearme.it",
+            "logo": "https://www.getnearme.it/favicon.ico",
+            "contactPoint": {
+              "@type": "ContactPoint",
+              "email": "info@getnearme.it",
+              "contactType": "customer service",
+              "availableLanguage": ["Italian", "English", "Spanish", "French", "Russian", "Ukrainian"],
+            },
+            "sameAs": [
+              // Aggiungi i tuoi social qui quando disponibili
+              // "https://twitter.com/getnearme",
+              // "https://www.linkedin.com/company/getnearme",
+            ],
+          }),
+        }}
+      />
+
 
       {/* Sticky Header: Banner + Navbar */}
       <div className="sticky top-0 z-50">

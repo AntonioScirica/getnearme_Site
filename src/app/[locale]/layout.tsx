@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Script from "next/script";
+import Trackers from "@/components/Trackers";
 import { notFound } from "next/navigation";
 import {
   locales,
@@ -107,6 +108,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       // yandex: "codice-yandex",
     },
     category: "technology",
+    applicationName: "GetNearMe",
+    manifest: "/manifest.json",
+    appleWebApp: { title: "GetNearMe" },
   };
 }
 
@@ -118,96 +122,22 @@ export default async function LocaleLayout({ children, params }: Props) {
     notFound();
   }
   
-  const t = translations[locale as Locale];
   
   return (
     <html lang={locale} suppressHydrationWarning>
       <head>
         <meta name="facebook-domain-verification" content="3el76s85o30orscaoxt1ceryo0tbki" />
         <link rel="preconnect" href="https://ecrnpyksnfyykqwnutwa.supabase.co" crossOrigin="anonymous" />
-        <link rel="preconnect" href="https://api.fontshare.com" crossOrigin="anonymous" />
-        <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&display=swap" rel="stylesheet" />
+        {/* Satoshi servito da noi (niente IP dei visitatori a fontshare, vale anche per i siti degli agenti) */}
+        <link href="/fonts/satoshi/satoshi.css" rel="stylesheet" />
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="apple-touch-icon" href="/favicon.ico" />
-        <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#3B82F6" />
-        <meta name="application-name" content="GetNearMe" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="apple-mobile-web-app-title" content="GetNearMe" />
         <meta name="format-detection" content="telephone=no" />
         <meta name="mobile-web-app-capable" content="yes" />
         
-        {/* 
-          Schema.org JSON-LD - SoftwareApplication
-          NOTA: AggregateRating rimosso - aggiungere solo quando disponibili
-          recensioni verificabili da Chrome Web Store o altra fonte attendibile
-        */}
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "SoftwareApplication",
-              "name": "GetNearMe",
-              "applicationCategory": "BrowserApplication",
-              "operatingSystem": "Chrome",
-              "description": t.hero.description,
-              "url": `https://www.getnearme.it/${locale}`,
-              "inLanguage": locale,
-              "author": {
-                "@type": "Organization",
-                "name": "GetNearMe",
-                "url": "https://www.getnearme.it",
-              },
-              "offers": {
-                "@type": "Offer",
-                "price": "0",
-                "priceCurrency": "EUR",
-                "description": t.pricing.plans[0].desc,
-              },
-            }),
-          }}
-        />
-        
-        {/* Schema.org JSON-LD - WebSite */}
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "WebSite",
-              "name": "GetNearMe",
-              "url": "https://www.getnearme.it",
-              "inLanguage": locale,
-            }),
-          }}
-        />
-        
-        {/* Schema.org JSON-LD - Organization */}
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "Organization",
-              "name": "GetNearMe",
-              "url": "https://www.getnearme.it",
-              "logo": "https://www.getnearme.it/favicon.ico",
-              "contactPoint": {
-                "@type": "ContactPoint",
-                "email": "info@getnearme.it",
-                "contactType": "customer service",
-                "availableLanguage": ["Italian", "English", "Spanish", "French", "Russian", "Ukrainian"],
-              },
-              "sameAs": [
-                // Aggiungi i tuoi social qui quando disponibili
-                // "https://twitter.com/getnearme",
-                // "https://www.linkedin.com/company/getnearme",
-              ],
-            }),
-          }}
-        />
       </head>
       <body
         className="antialiased"
@@ -216,12 +146,14 @@ export default async function LocaleLayout({ children, params }: Props) {
       >
         {children}
         {/* Analytics + embed deferiti (lazyOnload): non competono col primo paint. */}
+        <Trackers>
         <Script id="ms-clarity" strategy="lazyOnload">
           {`(function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);})(window, document, "clarity", "script", "vlznalklsj");`}
         </Script>
         <Script id="cal-embed" strategy="lazyOnload">
           {`(function (C, A, L) { let p = function (a, ar) { a.q.push(ar); }; let d = C.document; C.Cal = C.Cal || function () { let cal = C.Cal; let ar = arguments; if (!cal.loaded) { cal.ns = {}; cal.q = cal.q || []; d.head.appendChild(d.createElement("script")).src = A; cal.loaded = true; } if (ar[0] === L) { const api = function () { p(api, arguments); }; const namespace = ar[1]; api.q = api.q || []; if(typeof namespace === "string"){cal.ns[namespace] = cal.ns[namespace] || api;p(cal.ns[namespace], ar);p(cal, ["initNamespace", namespace]);} else p(cal, ar); return;} p(cal, ar); }; })(window, "https://app.cal.com/embed/embed.js", "init");Cal("init", {origin:"https://cal.com"});Cal("ui", {"hideEventTypeDetails":false,"layout":"month_view"});`}
         </Script>
+        </Trackers>
       </body>
     </html>
   );

@@ -24,7 +24,7 @@ export default function LeafletMap({ addr, className = '', circle, color = '#256
   useEffect(() => {
     let map: import('leaflet').Map | null = null, stop = false;
     const t = setTimeout(async () => {
-      if (!document.getElementById('leaflet-css')) Object.assign(document.head.appendChild(document.createElement('link')), { id: 'leaflet-css', rel: 'stylesheet', href: 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css' });
+      if (!document.getElementById('leaflet-css')) Object.assign(document.head.appendChild(document.createElement('link')), { id: 'leaflet-css', rel: 'stylesheet', href: '/vendor/leaflet/leaflet.css' });
       // passa dal nostro server (cache, niente blocchi CORS del browser)
       const g = await fetch(`/api/site/geocode?q=${encodeURIComponent(addr)}`).then(x => (x.ok ? x.json() : null)).catch(() => null) as { lat: number; lon: number } | null;
       if (stop || !el.current) return;
@@ -36,7 +36,8 @@ export default function LeafletMap({ addr, className = '', circle, color = '#256
       const m = L.map(el.current, { zoomControl: false, attributionControl: true, scrollWheelZoom: false, zoomSnap: 0, zoomDelta: 0.5 }).setView(ll, 15);
       map = m;
       m.attributionControl.setPrefix(false).setPosition('bottomright');
-      const esri = (l: string) => `https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_${l}/MapServer/tile/{z}/{y}/{x}`;
+      // tile passate dal nostro server (cache CDN): i visitatori non contattano Esri
+      const esri = (l: string) => `/api/site/tiles/${l.toLowerCase()}/{z}/{y}/{x}`;
       L.tileLayer(esri('Base'), { maxNativeZoom: 16, maxZoom: 19, attribution: '© Esri, OpenStreetMap' }).addTo(m);
       L.tileLayer(esri('Reference'), { maxNativeZoom: 16, maxZoom: 19 }).addTo(m);
       L.control.zoom({ position: 'bottomleft', zoomInTitle: 'Avvicina', zoomOutTitle: 'Allontana' }).addTo(m);

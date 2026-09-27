@@ -6,7 +6,7 @@ const RADIUS = 1200
 const UA = 'GetNearMe/1.0 (https://getnearme.it)'
 const OVERPASS = ['https://overpass-api.de/api/interpreter', 'https://overpass.private.coffee/api/interpreter', 'https://maps.mail.ru/osm/tools/overpass/api/interpreter']
 
-export type Poi = { categoria: string; nome: string; distanza: number }
+export type Poi = { categoria: string; nome: string; distanza: number; lat?: number; lon?: number }
 export type Zone = { lat: number; lon: number; luogo: string; pois: Poi[] }
 
 const CATS: { key: string; label: string; filter: string; max: number }[] = [
@@ -51,10 +51,10 @@ export async function lookupZone(address: string, radius = RADIUS): Promise<Zone
     const seen = new Set<string>()
     const items = data.elements
       .filter(e => e.tags && matches(e.tags, c.key))
-      .map(e => ({ nome: e.tags!.name || c.label, d: dist(lat, lon, e.lat ?? e.center!.lat, e.lon ?? e.center!.lon) }))
+      .map(e => { const y = e.lat ?? e.center!.lat, x = e.lon ?? e.center!.lon; return { nome: e.tags!.name || c.label, d: dist(lat, lon, y, x), y, x } })
       .filter(x => { if (seen.has(x.nome)) return false; seen.add(x.nome); return true })
       .sort((a, b) => a.d - b.d).slice(0, c.max)
-    for (const it of items) pois.push({ categoria: c.label, nome: it.nome, distanza: it.d })
+    for (const it of items) pois.push({ categoria: c.label, nome: it.nome, distanza: it.d, lat: it.y, lon: it.x })
   }
   return { lat, lon, luogo: geo[0].display_name, pois }
 }

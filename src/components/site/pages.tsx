@@ -5,7 +5,8 @@ import { ArrowLeft, ChevronLeft, ChevronRight, Expand, Mail, MapPin, MessageCirc
 import InlineSlider from '@/components/InlineSlider';
 import { zoneSlug, type SiteProperty } from '@/lib/siteTemplates';
 
-import { AddressLink, ContactForm, DetailsTable, FeatureList, MapBlock, NearbyList, RichText, ServicesGrid, ShareBar, WhatsAppFloat } from './extras';
+import { LegalPage } from './legal';
+import { AddressLink, ContactForm, DetailsTable, FeatureList, MapBlock, NearbyList, RichText, ServicesGrid, ReportButton, ShareBar, TourBlock, WhatsAppFloat } from './extras';
 import { AboutBlock, CtaBand, Featured, Footer, Header, Hero, Intro, isRent, PropertyCard, PropertyRow, Reviews, SearchForm, SectionHead, statsOf, tipiOf, Zones, type Filters } from './sections';
 import { Btn, Container, contacts, Eyebrow, Facts, FavButton, H, Photo, price, Sec, SiteLink, SiteRoot, typeOf, useFavs, useSite, useT, zoneOf, type Page, type SiteCtx, Select } from './ui';
 
@@ -36,7 +37,7 @@ function PageHead({ eyebrow, title, sub, children }: { eyebrow: string; title: s
 }
 
 // ---------- Immobili ----------
-type F = Filters & { min?: number; sort?: string; fav?: boolean };
+type F = Filters & { min?: number; sort?: string };
 const PER_PAGE = 9;
 function useFilter(initial?: Filters) {
   const { properties } = useSite();
@@ -205,12 +206,13 @@ function Gallery({ p }: { p: SiteProperty }) {
   const tag = (src: string) => p.prima?.[src] ? <span className="pointer-events-none absolute left-3 top-3 z-10 flex items-center gap-1 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-semibold text-neutral-900 shadow"><Sparkles size={11} /> Prima / Dopo</span> : null;
   const [i, setI] = useState<number | null>(null);
   const [cur, setCur] = useState(0);
+  const alt = (k: number) => `${p.titolo}, foto ${k + 1}`; // testo alternativo per Google Immagini e lettori di schermo
   const all = photos.length > 1 && <button onClick={() => setI(0)} className="absolute bottom-4 right-4 flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-neutral-900 shadow-lg"><Expand size={14} /> {photos.length} foto</button>;
   let body: ReactNode;
   if (t.gallery === 'slider') body = (
     <div>
       <div className="relative aspect-[16/9] overflow-hidden rounded-[var(--r)]">
-        <button onClick={() => setI(cur)} className="h-full w-full"><Photo src={photos[cur]} fit className="h-full" /></button>{tag(photos[cur])}
+        <button onClick={() => setI(cur)} className="h-full w-full"><Photo src={photos[cur]} alt={alt(cur)} fit className="h-full" /></button>{tag(photos[cur])}
         {photos.length > 1 && <>
           <button onClick={() => setCur((cur - 1 + photos.length) % photos.length)} className="absolute left-4 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-neutral-900 shadow"><ChevronLeft size={18} /></button>
           <button onClick={() => setCur((cur + 1) % photos.length)} className="absolute right-4 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-neutral-900 shadow"><ChevronRight size={18} /></button>
@@ -218,13 +220,13 @@ function Gallery({ p }: { p: SiteProperty }) {
         {all}
       </div>
       <div className="mt-3 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none]">
-        {photos.map((src, k) => <button key={k} onClick={() => setCur(k)} className={`h-20 w-28 shrink-0 overflow-hidden rounded-[calc(var(--r)*0.6)] transition-opacity ${k === cur ? 'ring-2 ring-[var(--c)] ring-offset-2' : 'opacity-60 hover:opacity-100'}`}><Photo src={src} className="h-full" /></button>)}
+        {photos.map((src, k) => <button key={k} onClick={() => setCur(k)} className={`h-20 w-28 shrink-0 overflow-hidden rounded-[calc(var(--r)*0.6)] transition-opacity ${k === cur ? 'ring-2 ring-[var(--c)] ring-offset-2' : 'opacity-60 hover:opacity-100'}`}><Photo src={src} alt={alt(k)} className="h-full" /></button>)}
       </div>
     </div>
   );
   else if (t.gallery === 'full') body = (
     <div className="relative h-[70vh] min-h-[480px] overflow-hidden">
-      <button onClick={() => setI(0)} className="h-full w-full"><Photo src={photos[0]} fit className="h-full" /></button>{tag(photos[0])}
+      <button onClick={() => setI(0)} className="h-full w-full"><Photo src={photos[0]} alt={alt(0)} fit className="h-full" /></button>{tag(photos[0])}
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
       {all}
     </div>
@@ -232,7 +234,7 @@ function Gallery({ p }: { p: SiteProperty }) {
   else body = (
     <div className="relative grid h-[480px] grid-cols-4 grid-rows-2 gap-2 overflow-hidden rounded-[var(--r)] md:h-[540px]">
       {photos.slice(0, 5).map((src, k) => (
-        <button key={k} onClick={() => setI(k)} className={`group relative overflow-hidden ${k === 0 ? 'col-span-4 row-span-2 md:col-span-2' : 'hidden md:block'}`}><Photo src={src} zoom fit className="h-full" />{tag(src)}</button>
+        <button key={k} onClick={() => setI(k)} className={`group relative overflow-hidden ${k === 0 ? 'col-span-4 row-span-2 md:col-span-2' : 'hidden md:block'}`}><Photo src={src} alt={alt(k)} zoom fit className="h-full" />{tag(src)}</button>
       ))}
       {all}
     </div>
@@ -247,7 +249,7 @@ function AgentCard({ subject, property }: { subject?: string; property?: SitePro
   return (
     <div id="contatti" className="rounded-[var(--r)] bg-[var(--surface)] p-6 shadow-[0_20px_50px_-25px_rgba(0,0,0,.25)] ring-1 ring-[var(--line)]">
       <div className="flex items-center gap-3.5">
-        {cfg.aboutImage ? <Photo src={cfg.aboutImage} className="h-14 w-14 rounded-full" /> : <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--c)] text-lg font-bold text-white">{name.slice(0, 1)}</span>}
+        {cfg.aboutImage ? <Photo src={cfg.aboutImage} alt={name} className="h-14 w-14 rounded-full" /> : <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--c)] text-lg font-bold text-white">{name.slice(0, 1)}</span>}
         <div className="min-w-0"><div className="truncate font-semibold">{name}</div><div className="text-sm text-[var(--muted)]">{cfg.agentRole}</div></div>
       </div>
       <div className="mt-5 grid gap-2">
@@ -304,7 +306,7 @@ function PropertyPage({ id }: { id: string }) {
           {t.gallery !== 'full' && heading}
           {cfg.showPrices && <div className={`${t.gallery === 'full' ? '' : 'mt-6'} text-4xl font-bold tracking-tight`}>{price(p.prezzo)}{isRent(p) && p.prezzo ? <span className="text-lg font-medium text-[var(--muted)]"> /mese</span> : null}</div>}
           <Facts p={p} full className="mt-8" />
-          <div className="mt-6 flex items-center gap-2"><ShareBar title={p.titolo} /><FavButton id={p.id} className="!h-10 !w-10 ring-1 ring-[var(--line)] !shadow-none" /></div>
+          <div className="mt-6 flex flex-wrap items-center gap-2"><ShareBar title={p.titolo} /><ReportButton id={p.id} /><FavButton id={p.id} className="!h-10 !w-10 ring-1 ring-[var(--line)] !shadow-none" /></div>
           {desc && (
             <Sec id="property.desc"><div className="mt-12">
               <H className="text-3xl">{tx('property.desc')}</H>
@@ -314,6 +316,7 @@ function PropertyPage({ id }: { id: string }) {
           )}
           <Sec id="property.details"><div className="mt-12"><DetailsTable p={p} /></div></Sec>
           <Sec id="property.features"><div className="mt-12 empty:hidden"><FeatureList p={p} /></div></Sec>
+          <div className="mt-12 empty:hidden"><TourBlock p={p} /></div>
           {(!!p.zona?.length || !!p.addr) && (
             <Sec id="property.zone"><div className="mt-12">
               {!!p.zona?.length && <>
@@ -349,7 +352,7 @@ function AgentPage() {
   const c = contacts(cfg);
   // il primo paragrafo va in alto, il resto (con eventuali "## Sottotitoli") sotto come storia
   const [intro, ...rest] = cfg.aboutText.split(/\n{2,}/);
-  const photo = (cls: string) => cfg.aboutImage ? <Photo src={cfg.aboutImage} className={cls} /> : <span className={`flex items-center justify-center bg-[var(--soft)] text-6xl font-bold text-[var(--muted)]/50 ${cls}`}>{name.slice(0, 1)}</span>;
+  const photo = (cls: string) => cfg.aboutImage ? <Photo src={cfg.aboutImage} alt={name} className={cls} /> : <span className={`flex items-center justify-center bg-[var(--soft)] text-6xl font-bold text-[var(--muted)]/50 ${cls}`}>{name.slice(0, 1)}</span>;
   const buttons = (
     <div className="flex flex-wrap gap-3">
       {c.wa && <Btn href={c.wa} external><MessageCircle size={16} /> WhatsApp</Btn>}
@@ -573,7 +576,7 @@ export function SitePage({ ctx, page }: { ctx: SiteCtx; page: Page }) {
     <SiteRoot ctx={ctx}>
       <div className="relative">
         {page.page === 'home' ? <HomePage /> : page.page === 'immobili' ? <ListingsPage key={JSON.stringify(page.f ?? {})} initial={page.f} /> : page.page === 'immobile' ? <PropertyPage key={page.id} id={page.id} />
-          : page.page === 'servizi' ? <ServicesPage /> : page.page === 'contatti' ? <ContactPage /> : page.page === 'zona' ? <ZonePage slug={page.slug} /> : <AgentPage />}
+          : page.page === 'servizi' ? <ServicesPage /> : page.page === 'contatti' ? <ContactPage /> : page.page === 'zona' ? <ZonePage slug={page.slug} /> : page.page === 'legal' ? <><Sec id="header"><Header /></Sec><LegalPage doc={page.doc} /><Sec id="footer"><Footer /></Sec></> : <AgentPage />}
         <WhatsAppFloat />
       </div>
     </SiteRoot>

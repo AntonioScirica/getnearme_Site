@@ -4,7 +4,7 @@ import { useState, type FormEvent } from 'react';
 import { ArrowDown, ArrowRight, ArrowUpRight, Building, Building2, ChevronDown, Home, Store, TreePine, Warehouse, Check, ChevronLeft, ChevronRight, Handshake, Heart, Leaf, Mail, MapPin, Menu, Phone, Quote, Search, ShieldCheck, Sparkles, Star, Users, X } from 'lucide-react';
 import { pageHidden, zoneSlug, type SiteConfig, type SiteProperty } from '@/lib/siteTemplates';
 import { MapBlock, TopBar } from './extras';
-import { Btn, Container, contacts, Eyebrow, Facts, FavButton, H, Photo, price, SiteLink, typeOf, useSite, useT, zoneOf, pathOf, type Filters, type Page, Select } from './ui';
+import { Btn, Container, contacts, Eyebrow, Facts, FavButton, H, Photo, price, SiteLink, typeOf, useFavs, useSite, useT, zoneOf, pathOf, type Filters, type Page, Select } from './ui';
 export type { Filters };
 
 // Sezioni dei siti vetrina. Ogni sezione ha piu' varianti: il tema del template sceglie quale usare,
@@ -52,6 +52,7 @@ export function Header({ over }: { over?: boolean }) {
   const logo = cfg.logo || profileLogo; // logo scelto nel sito, altrimenti quello del profilo
   const [open, setOpen] = useState(false);
   const links = navLinks(cfg);
+  const favs = useFavs();
   const light = over && t.header === 'over';
   const mark = logo
     ? <img src={logo} alt={name} style={{ height: cfg.logoSize, maxWidth: cfg.logoSize * 6 }} className={`object-contain ${light ? 'brightness-0 invert' : ''}`} />
@@ -66,6 +67,14 @@ export function Header({ over }: { over?: boolean }) {
       {t.header !== 'minimal' && <Phone size={14} />}{cfg.ctaLabel}{t.header === 'minimal' && <ArrowUpRight size={14} />}
     </Btn></span>
   );
+  // cuore con il numero delle case salvate: porta a Immobili con i soli preferiti (compare dal primo salvataggio)
+  const fav = favs.ids.length > 0 && !pageHidden(cfg, 'immobili') && (
+    <SiteLink to={{ page: 'immobili', f: { fav: true } }} aria-label={`Preferiti (${favs.ids.length})`}
+      className={`relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-colors ${light || t.header === 'drawer' ? 'text-white hover:bg-white/10' : 'hover:bg-[var(--soft)]'}`}>
+      <Heart size={18} className="fill-rose-500 text-rose-500" />
+      <span className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[var(--c)] px-1 text-[10px] font-bold leading-none text-[var(--on-c,#fff)]">{favs.ids.length}</span>
+    </SiteLink>
+  );
   const burger = <button onClick={() => setOpen(v => !v)} className="md:hidden" aria-label="Menu">{open ? <X /> : <Menu />}</button>;
   const mobile = open && <div className="border-t border-[var(--line)] bg-[var(--bg)] px-6 py-4 text-[var(--fg)] md:hidden">{links.map(([l, to]) => <SiteLink key={l} to={to} className="block py-2.5 text-base font-medium">{l}</SiteLink>)}</div>;
 
@@ -77,7 +86,7 @@ export function Header({ over }: { over?: boolean }) {
         <Container className="grid min-h-[72px] py-3 grid-cols-[1fr_auto_1fr] items-center">
           <button onClick={() => setOpen(true)} aria-label="Menu" className="flex w-fit items-center gap-2 text-sm font-medium"><Menu size={20} /> <span className="hidden md:inline">Menu</span></button>
           <SiteLink to={{ page: 'home' }}>{logo ? <img src={logo} alt={name} style={{ height: cfg.logoSize, maxWidth: cfg.logoSize * 6 }} className="object-contain brightness-0 invert" /> : <span className="text-xl font-bold tracking-tight">#{name.replace(/\s+/g, '')}</span>}</SiteLink>
-          <div className="flex justify-end">{cfg.showContact && <SiteLink to={{ page: 'contatti' }} className="hidden text-sm font-semibold text-[var(--c)] md:block">{cfg.ctaLabel}</SiteLink>}</div>
+          <div className="flex items-center justify-end gap-2">{fav}{cfg.showContact && <SiteLink to={{ page: 'contatti' }} className="hidden text-sm font-semibold text-[var(--c)] md:block">{cfg.ctaLabel}</SiteLink>}</div>
         </Container>
       </div>
       {open && (
@@ -99,7 +108,7 @@ export function Header({ over }: { over?: boolean }) {
       <Container className="grid min-h-24 py-3 grid-cols-[1fr_auto_1fr] items-center">
         <nav className="hidden items-center md:flex">{nav}</nav>
         <SiteLink to={{ page: 'home' }}>{mark}</SiteLink>
-        <div className="flex justify-end gap-3">{cta}{burger}</div>
+        <div className="flex justify-end gap-3">{fav}{cta}{burger}</div>
       </Container>{mobile}
     </header>
   );
@@ -111,7 +120,7 @@ export function Header({ over }: { over?: boolean }) {
         <div className="flex min-h-16 items-center gap-6 rounded-full py-2 bg-[var(--surface)]/85 px-3 pl-5 shadow-[0_10px_40px_-15px_rgba(22,22,58,.25)] ring-1 ring-[var(--line)] backdrop-blur-xl">
           <SiteLink to={{ page: 'home' }}>{mark}</SiteLink>
           <nav className="mx-auto hidden items-center md:flex">{nav}</nav>
-          <div className="ml-auto flex items-center gap-3 md:ml-0">{cta}{burger}</div>
+          <div className="ml-auto flex items-center gap-3 md:ml-0">{fav}{cta}{burger}</div>
         </div>
       </Container>{mobile}
     </header>
@@ -123,7 +132,7 @@ export function Header({ over }: { over?: boolean }) {
       <Container className="flex min-h-20 items-center gap-6 py-3">
         <SiteLink to={{ page: 'home' }} className="min-w-0">{mark}</SiteLink>
         <nav className={`hidden items-center md:flex ${t.header === 'minimal' ? 'mx-auto' : 'ml-auto'}`}>{nav}</nav>
-        <div className="ml-auto flex items-center gap-3 md:ml-0">{cta}{burger}</div>
+        <div className="ml-auto flex items-center gap-3 md:ml-0">{fav}{cta}{burger}</div>
       </Container>{mobile}
     </header>
   );
@@ -935,7 +944,8 @@ export function Footer() {
         </div></div>
       </Container>
       <Container className={`flex flex-wrap justify-between gap-2 border-t py-6 text-xs ${dark ? 'border-white/10 text-white/45' : 'border-[var(--line)] text-[var(--muted)]'}`}>
-        <span>© {new Date().getFullYear()} {name}{cfg.legal ? ` · ${cfg.legal}` : ''}</span><a href="/" target="_blank" rel="noopener" className="hover:underline">Sito creato con Agente Immo</a>
+        <span>© {new Date().getFullYear()} {name}{cfg.legal ? ` · ${cfg.legal}` : ''}</span>
+        <span className="flex flex-wrap gap-x-4 gap-y-1"><SiteLink to={{ page: 'legal', doc: 'privacy' }} className="hover:underline">Privacy</SiteLink><SiteLink to={{ page: 'legal', doc: 'cookie' }} className="hover:underline">Cookie</SiteLink><a href="/" target="_blank" rel="noopener" className="hover:underline">Sito creato con Agente Immo</a></span>
       </Container>
     </footer>
   );

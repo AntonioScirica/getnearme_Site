@@ -108,7 +108,7 @@ function getEnergyColor(energyClass?: string): string {
   return colors[key] || '#9ca3af';
 }
 
-function calculateDetailedCosts(price?: number, surfaceNum = 0): DetailedCosts {
+export function calculateDetailedCosts(price?: number, surfaceNum = 0): DetailedCosts {
   if (!price || price <= 0) {
     return {
       listingPrice: 0, agencyCost: 0, agencyPercentage: 0, notaryCost: 0,

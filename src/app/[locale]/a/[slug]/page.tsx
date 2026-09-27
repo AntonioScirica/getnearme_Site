@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { loadSite } from '@/lib/portfolio';
+import { loadSite, siteUrl } from '@/lib/portfolio';
 import { SitePage } from '@/components/site/pages';
 
 export const revalidate = 60;
@@ -10,7 +10,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale, slug } = await params;
   const s = await loadSite(locale, slug);
   if (!s) return { title: 'Sito non trovato' };
-  return { title: { absolute: `${s.name} | Immobili` }, description: s.cfg.heroSubtitle, openGraph: { images: s.cfg.heroImage || s.properties[0]?.cover ? [s.cfg.heroImage || s.properties[0].cover] : [] } };
+  return { title: { absolute: `${s.name} | Immobili` }, description: s.cfg.heroSubtitle, alternates: { canonical: siteUrl(slug) }, openGraph: { images: s.cfg.heroImage || s.properties[0]?.cover ? [s.cfg.heroImage || s.properties[0].cover] : [] } };
 }
 
 // Sito vetrina dell'agente: home

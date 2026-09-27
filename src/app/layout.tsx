@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Script from "next/script";
+import Trackers from "@/components/Trackers";
 import AnalyticsEvents from "@/components/AnalyticsEvents";
 import "./globals.css";
 
@@ -22,6 +23,7 @@ export default function RootLayout({
 }) {
   return (
     <>
+      <Trackers>
       <Script id="meta-pixel" strategy="lazyOnload">
         {`!function(f,b,e,v,n,t,s)
 {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
@@ -45,6 +47,7 @@ gtag('js', new Date());
 gtag('config', '${GA_ID}');`}
       </Script>
       <AnalyticsEvents />
+      </Trackers>
       {children}
     </>
   );

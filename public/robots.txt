@@ -10,6 +10,8 @@ Sitemap: https://www.getnearme.it/sitemap.xml
 # Blocca file di sistema
 Disallow: /_next/
 Disallow: /api/
+Allow: /api/site/fonts
+Allow: /api/site/tiles/
 
 # Blocca pagine di draft (se presenti in futuro)
 Disallow: /*?draft=

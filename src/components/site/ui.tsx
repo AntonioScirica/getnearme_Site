@@ -9,8 +9,8 @@ import { FONTS, fontCss, PAGE_SECTIONS, pageHidden, TEXTS, type SiteConfig, type
 // Base dei siti vetrina: tema per template, contesto del sito, link (veri sul sito, interni
 // nell'anteprima dell'editor) e i mattoni piu' piccoli (titoli, pulsanti, foto, dati).
 
-export type Filters = { q?: string; tipo?: string; max?: number; contratto?: string; camere?: number; bagni?: number; rif?: string };
-export type Page = { page: 'home' } | { page: 'immobili'; f?: Filters } | { page: 'immobile'; id: string } | { page: 'agente' } | { page: 'servizi' } | { page: 'contatti' } | { page: 'zona'; slug: string };
+export type Filters = { q?: string; tipo?: string; max?: number; contratto?: string; camere?: number; bagni?: number; rif?: string; fav?: boolean };
+export type Page = { page: 'home' } | { page: 'immobili'; f?: Filters } | { page: 'immobile'; id: string } | { page: 'agente' } | { page: 'servizi' } | { page: 'contatti' } | { page: 'zona'; slug: string } | { page: 'legal'; doc: 'privacy' | 'cookie' };
 
 // Ogni template sceglie una variante per ogni parte: stessi dati, siti molto diversi.
 export type Theme = {
@@ -88,7 +88,7 @@ export function SiteRoot({ ctx, children }: { ctx: SiteCtx; children: ReactNode 
 }
 
 export const pathOf = (base: string, p: Page): string =>
-  p.page === 'home' ? base || '/' : p.page === 'servizi' ? `${base}/servizi` : p.page === 'contatti' ? `${base}/contatti` : p.page === 'zona' ? `${base}/zona/${p.slug}` : p.page === 'immobili' ? `${base}/immobili${p.f ? `?${new URLSearchParams(Object.entries(p.f).filter(([, v]) => v).map(([k, v]) => [k, String(v)]))}` : ''}` : p.page === 'agente' ? `${base}/agente` : `${base}/${p.id}`;
+  p.page === 'home' ? base || '/' : p.page === 'servizi' ? `${base}/servizi` : p.page === 'contatti' ? `${base}/contatti` : p.page === 'zona' ? `${base}/zona/${p.slug}` : p.page === 'immobili' ? `${base}/immobili${p.f ? `?${new URLSearchParams(Object.entries(p.f).filter(([, v]) => v).map(([k, v]) => [k, String(v)]))}` : ''}` : p.page === 'agente' ? `${base}/agente` : p.page === 'legal' ? `${base}/${p.doc}` : `${base}/${p.id}`;
 
 // Link del sito: sul sito vero e' un <a href>, nell'anteprima cambia pagina dentro l'editor
 export function SiteLink({ to, className = '', children, ...rest }: { to: Page; className?: string; children: ReactNode; 'aria-label'?: string; onMouseEnter?: () => void }) {

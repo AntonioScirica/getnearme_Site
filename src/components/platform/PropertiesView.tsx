@@ -63,7 +63,7 @@ function ensureLeafletCss() {
   const link = document.createElement('link');
   link.id = 'leaflet-css';
   link.rel = 'stylesheet';
-  link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+  link.href = '/vendor/leaflet/leaflet.css';
   document.head.appendChild(link);
 }
 
@@ -188,7 +188,7 @@ function PropertyMap({ projects, geo, hover, loading }: { projects: ProjectData[
       m.attributionControl.setPrefix(false).setPosition('bottomright');
       // Esri Light Gray (gratis, senza chiave): grigia e senza punti di interesse (negozi, ristoranti...);
       // sopra solo i nomi di vie e quartieri
-      const esri = (l: string) => `https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_${l}/MapServer/tile/{z}/{y}/{x}`;
+      const esri = (l: string) => `/api/site/tiles/${l.toLowerCase()}/{z}/{y}/{x}`;
       Lf.tileLayer(esri('Base'), { maxNativeZoom: 16, maxZoom: 19, attribution: '© Esri, OpenStreetMap' }).addTo(m);
       Lf.tileLayer(esri('Reference'), { maxNativeZoom: 16, maxZoom: 19 }).addTo(m);
       Lf.control.zoom({ position: 'bottomleft', zoomInTitle: 'Avvicina', zoomOutTitle: 'Allontana' }).addTo(m);
