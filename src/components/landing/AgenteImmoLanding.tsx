@@ -69,7 +69,7 @@ function BeforeAfter({ before, after, className = '', auto = true }: { before: s
       <span className="absolute left-4 top-4 rounded-full bg-black/55 px-3 py-1 text-xs font-semibold text-white backdrop-blur">Prima</span>
       <span className="absolute right-4 top-4 flex items-center gap-1 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-ink backdrop-blur"><Sparkles size={12} className="text-ai" /> Dopo</span>
       <span className="absolute inset-y-0 w-0.5 -translate-x-1/2 bg-white shadow-[0_0_10px_rgba(0,0,0,.45)]" style={{ left: `${p}%`, transition: t }}>
-        <span className="absolute left-1/2 top-1/2 flex h-10 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center gap-1.5 rounded-full bg-white text-brand shadow-lg"><ChevronLeft size={16} strokeWidth={2.5} /><ChevronRight size={16} strokeWidth={2.5} /></span>
+        <span className="absolute left-1/2 top-1/2 flex h-12 w-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center gap-0.5 rounded-full bg-white text-brand shadow-lg"><ChevronLeft size={16} strokeWidth={2.5} /><ChevronRight size={16} strokeWidth={2.5} /></span>
       </span>
     </div>
   );
