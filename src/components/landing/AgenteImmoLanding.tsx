@@ -495,7 +495,7 @@ export default function AgenteImmoLanding() {
             <ul className="mt-6 space-y-3 text-[15px]">
               {['Pronto in un minuto: scegli il modello, il resto è già fatto', 'Ogni immobile che carichi è subito online, con foto e descrizione', 'I contatti arrivano a te, non a un portale', 'Ti fai trovare su Google nella tua zona'].map(x => <li key={x} className="flex items-start gap-3">{CHECK}{x}</li>)}
             </ul>
-            <Cta className="mt-8">Prova gratis</Cta>
+            <Cta href={APP} className="mt-8">Crea il tuo sito</Cta>
           </Reveal>
           <Reveal delay={150} anim="in-right"><div className="parallax"><Tilt className="rounded-[24px]"><MiniSite active={siteOn} /></Tilt></div></Reveal>
         </div>
