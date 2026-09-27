@@ -11,17 +11,22 @@ export type SceneType = 'interno' | 'esterno' | 'giardino';
 // resto uguale" tiene prospettiva, finestre e pavimento (prova del 24/09 su stanze vuote).
 // Resa di riferimento (foto dell'utente del 25/09): foto professionale di un annuncio immobiliare italiano,
 // casa vera ristrutturata e arredata con mobili normali. Vale per tutti gli stili e per le richieste libere.
-const LISTING_PHOTO = "The result must look like a professional photo of a real Italian apartment for a real estate listing: bright and even natural daylight, clean and tidy, straight vertical lines, true colors, real materials and real furniture. NOT a Pinterest, magazine or CGI render: no dramatic mood lighting, no golden hour, no heavy styling.";
-// Blocco della stanza in TESTA al prompt: in coda Qwen lo pesava poco e su una camera gia' arredata
-// ridisegnava tutto (armadio a specchio diventato cucina, finestra spostata, prova del 25/09).
-const ROOM_LOCK = "Keep this exact room: same camera position, zoom, framing and perspective, same walls, ceiling, windows, blinds, doors and floor, same room size. Mirrors, mirrored or built-in wardrobes, radiators and sockets are part of the room and stay where they are. Do not open new doorways, do not show other rooms, do not zoom out.";
+// Stessa luce della foto: "luce naturale piena e uniforme" su una foto scura faceva ridipingere pareti e parete TV e
+// allargare l'inquadratura (prova del 27/09). Resa da annuncio vero, ma la foto resta quella.
+const LISTING_PHOTO = "Same light, exposure and colors as the photo. The result must look like a real photo of a real Italian apartment for a real estate listing: clean and tidy, straight vertical lines, real materials and real furniture. NOT a Pinterest, magazine or CGI render.";
+// Prompt CORTO: con il blocco lungo della stanza e le regole di arredo (versione del 25/09) Qwen allargava
+// l'inquadratura (letto piu' piccolo, piu' stanza visibile, prova del 27/09 su 3 anteprime su 3); la forma
+// "sostituisci solo i mobili ... tieni identico pixel per pixel ... stessa inquadratura" la tiene.
+// Il tipo di stanza (ROOM_FURNISH) va in TESTA, prima dello stile (vedi buildStagingPrompt).
 const stage = (style: string, look: string) =>
-  `${ROOM_LOCK} Change only the furniture and decor to ${style} (${look}): if there is already furniture, replace each piece with a ${style} piece of the same kind, size and position; if the room is empty, add only the pieces that fit on the visible floor. Remove clutter: loose boards, boxes, junk, bags, cables and personal items, including objects in the foreground (replace them with the wall or floor behind). Use real furniture that Italian families actually buy today (IKEA, Mondo Convenienza, a mid-range Italian kitchen or furniture store): simple shapes, white or light wood fronts, fabric sofas and armchairs, a plain rug, a simple pendant or floor lamp; in kitchens flat handle-less cabinets, a light worktop and built-in steel appliances. Neutral base (white, beige, light grey, light oak) with at most one or two soft color accents (sage green, blue, mustard). Only a few simple accessories: a vase, a couple of books, a throw, one or two plants; nothing on the walls unless it was already there. Tidy and ready to show, no clutter and no personal items. ${LISTING_PHOTO}`;
+  `Replace only the furniture and decor with ${style} furniture (${look}), real pieces that Italian families buy today, tidy, no clutter. Keep exactly the same, pixel for pixel: walls, ceiling, windows, curtains, doors, mirrors, wardrobes, radiators, the floor, the light, and the camera position, zoom and framing. Photorealistic real estate listing photo.`
 
 const STYLE_PROMPTS: Record<string, string> = {
-  modern: stage('simple modern', 'white fronts and light oak, a light grey fabric sofa, a simple round coffee table, one or two cushions in soft blue or mustard'),
-  nordic: stage('simple Scandinavian', 'light oak and white, a wooden armchair with a linen cushion, a wool rug, linen curtains, a white pendant lamp'),
-  industrial: stage('good quality contemporary', 'white and warm grey fronts, concrete-look or light stone surfaces, a wall unit with open oak shelves and a soft warm LED strip, calm colors'),
+  // lo stile dice solo materiali e colori: QUALI mobili li decide il tipo di stanza (ROOM_FURNISH). Con "divano e
+  // tavolino" nello stile Qwen li metteva anche in camera da letto (prova del 27/09).
+  modern: stage('simple modern', 'white fronts and light oak, light grey fabrics, simple rounded shapes, one or two cushions in soft blue or mustard'),
+  nordic: stage('simple Scandinavian', 'light oak and white, linen fabrics, a wool rug, a white pendant lamp'),
+  industrial: stage('good quality contemporary', 'white and warm grey fronts, concrete-look or light stone surfaces, open oak shelves, a soft warm LED strip, calm colors'),
   boho: stage('warm natural', 'light wood, linen and cotton, a jute rug, one plant, warm sand, terracotta and sage tones'),
   daynight: "Analyze the lighting in this photo. If daytime: convert to nighttime — dark blue sky through windows, all light fixtures ON with warm glow and halos, deep shadows. If nighttime: convert to daytime — bright blue sky, natural sunlight through windows, morning light. CRITICAL: do NOT add, remove, move or change ANY object, furniture, door, window or wall. ONLY change lighting and sky. Photorealistic, 8k.",
   // Qwen-Image segue meglio istruzioni corte: il prompt lungo di Nano Banana gli faceva rifare il pavimento.
@@ -89,28 +94,28 @@ const POOLS: Record<string, Pool> = {
     fabric: ['light grey fabric', 'off-white bouclé', 'beige linen', 'warm taupe fabric', 'pale grey velvet'],
     shape: ['clean rectangular shapes', 'soft rounded shapes', 'slim metal legs', 'low wide proportions'],
     accent: ['sage green', 'navy blue', 'mustard yellow', 'terracotta', 'dusty pink', 'olive green'],
-    detail: ['a round coffee table', 'a striped rug', 'a globe pendant lamp', 'linen curtains', 'a large plant in a ceramic pot'],
+    detail: ['round shapes', 'a striped rug', 'a globe pendant lamp', 'a linen throw', 'a large plant in a ceramic pot'],
   },
   nordic: {
     wood: ['birch', 'light oak', 'pale ash', 'whitewashed pine', 'natural beech'],
     fabric: ['white linen', 'soft grey wool', 'cream bouclé', 'light beige cotton', 'pale blue fabric'],
     shape: ['simple Scandinavian shapes', 'tapered wooden legs', 'rounded edges', 'slatted wood details'],
     accent: ['pale blue', 'sage green', 'warm grey', 'soft yellow', 'dusty rose'],
-    detail: ['a wool rug with a subtle pattern', 'a white pendant lamp', 'a sheepskin throw', 'a wooden wall shelf', 'a paper lamp', 'linen curtains'],
+    detail: ['a wool rug with a subtle pattern', 'a white pendant lamp', 'a sheepskin throw', 'a wooden wall shelf', 'a paper lamp', 'a linen throw'],
   },
   industrial: {
     wood: ['smoked oak', 'walnut', 'dark oak accents', 'concrete-look surfaces', 'light stone surfaces'],
     fabric: ['stone grey fabric', 'charcoal fabric', 'warm beige', 'cognac leather', 'ivory bouclé'],
     shape: ['black metal details', 'strong rectangular shapes', 'open oak shelves with warm LED light', 'slim brushed steel legs'],
     accent: ['olive green', 'deep blue', 'rust orange', 'warm white', 'bronze'],
-    detail: ['a large grey rug', 'a black arc floor lamp', 'a low media unit', 'sheer white curtains', 'a round travertine side table', 'a tall plant'],
+    detail: ['a large grey rug', 'a black arc floor lamp', 'low profiles', 'a wool throw', 'travertine accents', 'a tall plant'],
   },
   boho: {
     wood: ['honey oak', 'light teak', 'natural pine', 'bamboo', 'rattan and cane'],
     fabric: ['ivory cotton', 'sand linen', 'oatmeal fabric', 'warm cream bouclé', 'light terracotta cotton'],
     shape: ['soft organic shapes', 'woven cane details', 'low rounded furniture', 'natural fibre textures'],
     accent: ['terracotta', 'deep green', 'ochre', 'sage', 'rust', 'warm pink'],
-    detail: ['a jute rug', 'a woven pendant lamp', 'linen curtains', 'a large plant in a basket', 'a striped cotton throw'],
+    detail: ['a jute rug', 'a woven pendant lamp', 'a linen throw', 'a large plant in a basket', 'a striped cotton throw'],
   },
 };
 const variantPool = (style?: string | null) => POOLS[style && POOLS[style] ? style : 'modern'];
@@ -121,16 +126,16 @@ export function variantText(style: string | null | undefined, n: number): string
   let k = Math.abs(Math.floor(n));
   const pick = (a: string[]) => { const x = a[k % a.length]; k = Math.floor(k / a.length); return x; };
   const wood = pick(p.wood), fabric = pick(p.fabric), shape = pick(p.shape), accent = pick(p.accent), detail = pick(p.detail);
-  return `For this version use a different combination in the same style: ${wood}, ${fabric}, ${shape}, ${accent} accents and ${detail}.`;
+  return `Use ${wood}, ${fabric}, ${shape}, ${accent} accents and ${detail}.`;
 }
 
 
 // Cosa mettere per tipo di stanza negli stili: senza, in una cucina aperta arredava solo i pensili e lasciava vuoto il resto
 const ROOM_FURNISH: Record<string, string> = {
   cucina: 'This room is a kitchen: furnish it completely, the kitchen units AND the free floor space: a dining table with four chairs, a pendant lamp above the table; if part of the room is a living area, a sofa and a coffee table there.',
-  soggiorno: 'This room is a living room: a sofa, an armchair, a coffee table, a TV unit, a rug, a floor lamp and curtains; fill the whole visible floor in a natural way.',
+  soggiorno: 'This room is a living room: a sofa, an armchair, a coffee table, a TV unit, a rug and a floor lamp, curtains only if the windows have none; fill the whole visible floor in a natural way.',
   sala: 'This room is a dining room: a dining table with six chairs, a sideboard, a pendant lamp above the table.',
-  camera: 'This room is a bedroom: a double bed with bedding and cushions, two bedside tables with lamps, a rug; a wardrobe and curtains only if there is free wall space for them.',
+  camera: 'This room is a bedroom: a double bed with bedding and cushions, two bedside tables with lamps, a rug; a wardrobe only if there is free wall space for it, curtains only if the windows have none.',
   cameretta: "This room is a child's bedroom: a single bed, a desk with a chair, a bookcase, a rug, soft colors.",
   studio: 'This room is a home office: a desk with an office chair, a bookcase, a lamp, a rug.',
   ingresso: 'This room is an entrance hall: a slim shoe cabinet, a mirror, a coat rack, a small rug.',
@@ -159,11 +164,13 @@ export function buildStagingPrompt(o: { style?: string | null; customPrompt?: st
     if (scene === 'giardino') return `GARDEN EDIT: Preserve the existing layout, any visible building structure, paths, boundaries and the camera angle/perspective exactly. ALLOWED: freely adding or modifying plants, furniture, decking, lighting as requested. USER EDIT REQUEST (apply in any language): "${custom}". Photorealistic result, 8K outdoor photography.${OUTDOOR_LOCK}${NO_TEXT}`;
     if (o.restyle && scene === 'interno') {
       const furnishRoom = o.room && ROOM_FURNISH[o.room] ? ` ${ROOM_FURNISH[o.room]}` : '';
-      return stage('new', `as requested: ${custom}`) + furnishRoom + NO_TEXT_PLAIN;
+      return (furnishRoom.trim() + ' ' + stage('new', `as requested: ${custom}`)).trim() + NO_TEXT_PLAIN;
     }
     // Stessa formula "additiva" degli stili: cambia solo quello che chiede l'agente, la foto resta quella.
     return `Edit this exact photo: ${custom}. Change only what is requested; everything else stays exactly the same: camera position, zoom, framing, perspective, walls, windows, doors, furniture, decorations and light (unless the request is about them). Do not zoom out and do not show more of the room.${ONLY_REQUESTED} If new furniture is requested, it must be real furniture that Italian families actually buy today (IKEA, Mondo Convenienza, mid-range Italian stores). ${LISTING_PHOTO}${NO_TEXT_PLAIN}`;
   }
   const furnish = scene === 'interno' && o.style !== 'empty' && o.style !== 'daynight' && o.room && ROOM_FURNISH[o.room] ? ` ${ROOM_FURNISH[o.room]}` : '';
-  return (styles[o.style || ''] || styles.modern) + furnish + (scene === 'interno' ? '' : OUTDOOR_LOCK) + NO_TEXT;
+  // tipo di stanza in testa: in coda a un prompt Qwen lo pesava poco e seguiva i mobili dello stile
+  // interni: prompt corto (vedi stage), niente blocco lungo sul testo
+  return (scene === 'interno' && furnish ? furnish.trim() + ' ' : '') + (styles[o.style || ''] || styles.modern) + (scene === 'interno' ? NO_TEXT_PLAIN : OUTDOOR_LOCK + NO_TEXT);
 }
