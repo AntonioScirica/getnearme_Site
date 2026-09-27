@@ -15,11 +15,11 @@ export const maxDuration = 120
 //    vince il primo che risponde. Il risultato si salva nell'immobile, la volta dopo e' immediato.
 export type Classified = { scene: 'interno' | 'esterno' | 'giardino' | 'planimetria'; room: string; state?: string }
 const SCENES = ['interno', 'esterno', 'giardino', 'planimetria']
-const ROOMS = ['soggiorno', 'cucina', 'camera', 'cameretta', 'bagno', 'sala', 'studio', 'ingresso', 'corridoio', 'balcone', 'cantina', 'box', 'altro']
+const ROOMS = ['openspace', 'soggiorno', 'cucina', 'camera', 'cameretta', 'bagno', 'sala', 'studio', 'ingresso', 'corridoio', 'balcone', 'cantina', 'box', 'altro']
 const STATES = ['vuota', 'disordinata', 'datata', 'arredata']
 const PROMPT = `Classifica questa foto immobiliare. Rispondi SOLO con JSON {"scene": "...", "room": "...", "state": "..."}.
 scene: interno (stanza, anche balconi/logge/terrazzi di appartamento), esterno (facciata vista da fuori), giardino (giardino o cortile a terra), planimetria (disegno della pianta).
-room (solo per interno, altrimenti ""): ${ROOMS.join(', ')}. Balconi e terrazzi = balcone.
+room (solo per interno, altrimenti ""): ${ROOMS.join(', ')}. openspace = cucina e zona giorno nello stesso ambiente (anche separate da penisola o muretto), molto comune: se si vedono sia la cucina sia divano/zona giorno o lo spazio per essa, e' openspace. Balconi e terrazzi = balcone.
 state (solo per interno, altrimenti ""): vuota (senza veri mobili), disordinata (arredata ma in disordine), datata (mobili/finiture vecchi), arredata (arredata e in ordine).`
 
 const clean = (o: Partial<Classified> | null | undefined): Classified | null => {

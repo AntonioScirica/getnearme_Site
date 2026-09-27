@@ -188,6 +188,7 @@ export function variantText(style: string | null | undefined, n: number): string
 
 // Cosa mettere per tipo di stanza negli stili: senza, in una cucina aperta arredava solo i pensili e lasciava vuoto il resto
 const ROOM_FURNISH: Record<string, string> = {
+  openspace: 'This is an open-plan living room with kitchen: keep the kitchen in its place (renewed in the style if asked) and furnish the living area: a sofa facing the TV or the window, a coffee table, a rug, and a dining table with chairs between kitchen and living area if there is room.',
   cucina: 'This room is a kitchen: furnish it completely, the kitchen units AND the free floor space: a dining table with four chairs, a pendant lamp above the table; if part of the room is a living area, a sofa and a coffee table there.',
   soggiorno: 'This room is a living room: a sofa, an armchair, a coffee table, a TV unit, a rug and a floor lamp, curtains only if the windows have none; fill the whole visible floor in a natural way.',
   sala: 'This room is a dining room: a dining table with six chairs, a sideboard, a pendant lamp above the table.',
@@ -199,7 +200,8 @@ const ROOM_FURNISH: Record<string, string> = {
   bagno: 'This room is a bathroom: a vanity unit with sink and mirror, towels, a small plant; keep sanitary fixtures where they are.',
   balcone: 'This is a balcony: a small outdoor table with two chairs and some potted plants.',
 }
-export const roomKey = (label?: string | null) => Object.keys(ROOM_FURNISH).find(k => label?.toLowerCase().includes(k === 'camera' ? 'camera da letto' : k)) ?? ''
+// "un soggiorno con cucina" contiene sia cucina sia soggiorno: si riconosce prima
+export const roomKey = (label?: string | null) => (/soggiorno con cucina|openspace/i.test(label ?? '') ? 'openspace' : Object.keys(ROOM_FURNISH).find(k => k !== 'openspace' && label?.toLowerCase().includes(k === 'camera' ? 'camera da letto' : k)) ?? '')
 
 // Richieste a parole che chiedono di arredare o cambiare stile ("balcone stile moderno", "arredala nordica"):
 // con la formula "cambia solo quello che chiedo" il modello non toccava nulla. Vanno trattate come uno stile.
@@ -243,4 +245,4 @@ export function buildStagingPrompt(o: { style?: string | null; customPrompt?: st
 // Arredo in due passi (svuota, piano di Claude, aggiunta): stili d'interni e richieste di arredo ("arreda moderno")
 export const isFurnishing = (o: { style?: string | null; customPrompt?: string | null; angle?: string | null; planimetria?: boolean; scene?: SceneType; restyle?: boolean }) =>
   (o.scene ?? 'interno') === 'interno' && !o.angle && !o.planimetria && (!!(o.style && STYLE_LOOK[o.style]) || (!!o.customPrompt?.trim() && !!o.restyle));
-export const roomLabel = (key: string) => ({ cucina: 'kitchen', soggiorno: 'living room', sala: 'dining room', camera: 'double bedroom', cameretta: "child's bedroom", studio: 'home office', ingresso: 'entrance hall', corridoio: 'hallway', bagno: 'bathroom', balcone: 'balcony' } as Record<string, string>)[key] ?? '';
+export const roomLabel = (key: string) => ({ openspace: 'open-plan living room with kitchen', cucina: 'kitchen', soggiorno: 'living room', sala: 'dining room', camera: 'double bedroom', cameretta: "child's bedroom", studio: 'home office', ingresso: 'entrance hall', corridoio: 'hallway', bagno: 'bathroom', balcone: 'balcony' } as Record<string, string>)[key] ?? '';

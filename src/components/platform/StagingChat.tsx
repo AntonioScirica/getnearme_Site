@@ -24,11 +24,11 @@ import { uploadDataUrl } from '@/lib/imageUpload';
 // un'altra foto riparte da quella. "Continua da qui" su un risultato vecchio lo rende la base.
 
 type Scene = 'interno' | 'esterno' | 'giardino' | 'planimetria';
-const ROOM_LABEL: Record<string, string> = { soggiorno: 'un soggiorno', cucina: 'una cucina', camera: 'una camera da letto', cameretta: 'una cameretta', bagno: 'un bagno', sala: 'una sala da pranzo', studio: 'uno studio', ingresso: 'un ingresso', corridoio: 'un corridoio', balcone: 'un balcone', cantina: 'una cantina', box: 'un box' };
+const ROOM_LABEL: Record<string, string> = { openspace: 'un soggiorno con cucina', soggiorno: 'un soggiorno', cucina: 'una cucina', camera: 'una camera da letto', cameretta: 'una cameretta', bagno: 'un bagno', sala: 'una sala da pranzo', studio: 'uno studio', ingresso: 'un ingresso', corridoio: 'un corridoio', balcone: 'un balcone', cantina: 'una cantina', box: 'un box' };
 const SCENE_LABEL: Record<Scene, string> = { interno: 'un interno', esterno: 'una facciata', giardino: 'un giardino', planimetria: 'una planimetria' };
 // Cosa sembra la foto: correggibile dal menu nel messaggio ("room:cucina" oppure "scene:esterno")
 const SEEN_OPTIONS: DropdownOption<string>[] = [
-  ...['soggiorno', 'cucina', 'camera', 'cameretta', 'bagno', 'sala', 'studio', 'ingresso', 'corridoio', 'balcone', 'cantina', 'box'].map(r => ({ value: `room:${r}`, label: ROOM_LABEL[r], group: 'Interno' })),
+  ...['openspace', 'soggiorno', 'cucina', 'camera', 'cameretta', 'bagno', 'sala', 'studio', 'ingresso', 'corridoio', 'balcone', 'cantina', 'box'].map(r => ({ value: `room:${r}`, label: ROOM_LABEL[r], group: 'Interno' })),
   ...(['esterno', 'giardino', 'planimetria'] as const).map(x => ({ value: `scene:${x}`, label: SCENE_LABEL[x], group: 'Altro' })),
   { value: 'other', label: 'Altro, lo scrivo io', group: 'Altro' },
 ];
@@ -78,7 +78,7 @@ const wait = (ms: number) => new Promise(r => setTimeout(r, ms));
 // planimetria: rendering con regole sue, dal testo prendo solo lo stile dell'arredo
 // esempi del campo: il primo per tipo di stanza, poi ritocchi sul risultato (a rotazione)
 const FIRST: Record<string, string> = {
-  soggiorno: 'arreda con un divano grigio e un tavolino', cucina: 'ante bianche e piano in legno chiaro', camera: 'letto matrimoniale e comodini in rovere',
+  openspace: 'cucina bianca e zona giorno con divano', soggiorno: 'arreda con un divano grigio e un tavolino', cucina: 'ante bianche e piano in legno chiaro', camera: 'letto matrimoniale e comodini in rovere',
   cameretta: 'lettino, scrivania e colori tenui', bagno: 'piastrelle chiare e doccia in vetro', sala: 'tavolo da pranzo per sei persone',
   studio: 'scrivania e libreria bianca', ingresso: 'mobile scarpiera e specchio', corridoio: 'pareti bianche e luci a soffitto',
   balcone: 'tavolino con due sedie e piante', cantina: 'scaffali ordinati e luce', box: 'pavimento pulito e scaffali',
