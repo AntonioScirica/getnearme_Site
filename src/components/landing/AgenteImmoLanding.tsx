@@ -11,6 +11,10 @@ import { ArrowRight, Check, ChevronLeft, ChevronRight, MessageCircle, Clapperboa
 
 import { FAQ } from '@/lib/landingFaq';
 import { PRICING, photosFor, videosFor } from '@/lib/pricing';
+import dynamic from 'next/dynamic';
+
+// i modelli veri del sito: codice pesante, si carica dopo il primo schermo
+const TemplateShowcase = dynamic(() => import('./TemplateShowcase'), { ssr: false, loading: () => <div className="aspect-[4/3] rounded-[24px] bg-canvas" /> });
 
 // guide SEO linkate dal fondo pagina (collegamenti interni verso le pagine che devono posizionarsi)
 const GUIDE_LINKS = [['/it/agente-immobiliare', 'Agente immobiliare'], ['/it/come-diventare-agente-immobiliare', 'Come diventare agente immobiliare'], ['/it/provvigione-agente-immobiliare', 'Provvigione agente immobiliare'], ['/it/software-agenti-immobiliari', 'Software per agenti immobiliari'], ['/it/home-staging-virtuale', 'Home staging virtuale']];
@@ -97,62 +101,6 @@ function BeforeAfter({ before, after, className = '', auto = true }: { before: s
       <span className="absolute inset-y-0 w-0.5 -translate-x-1/2 bg-white shadow-[0_0_10px_rgba(0,0,0,.45)]" style={{ left: `${p}%`, transition: t }}>
         <span className="absolute left-1/2 top-1/2 flex h-12 w-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center gap-0.5 rounded-full bg-white text-brand shadow-lg"><ChevronLeft size={16} strokeWidth={2.5} /><ChevronRight size={16} strokeWidth={2.5} /></span>
       </span>
-    </div>
-  );
-}
-
-// Finestra del browser con dentro un mini sito che cambia modello da solo (colori, font, layout)
-const THEMES = [
-  { name: 'Classico', c: '#1d5b3c', bg: '#fbfaf7', fg: '#1c1c1c', r: 12, serif: true },
-  { name: 'Moderno', c: '#537eec', bg: '#ffffff', fg: '#111111', r: 20, serif: false },
-  { name: 'Editoriale', c: '#b4690e', bg: '#f6f1ea', fg: '#231f1a', r: 4, serif: true },
-  { name: 'Notte', c: '#8ab4ff', bg: '#151821', fg: '#ffffff', r: 16, serif: false },
-];
-function MiniSite({ active }: { active: boolean }) {
-  const [i, setI] = useState(0);
-  useEffect(() => {
-    if (!active) return;
-    const id = setInterval(() => setI(v => (v + 1) % THEMES.length), 2800);
-    return () => clearInterval(id);
-  }, [active]);
-  const t = THEMES[i];
-  const dark = t.bg === '#151821';
-  const soft = dark ? 'rgba(255,255,255,.08)' : 'rgba(0,0,0,.05)';
-  const tr = 'all var(--gnm-dur) var(--gnm-ease)';
-  const photos = ['/immo/home/demo-4.webp', '/immo/home/demo-3.webp', '/immo/home/demo-2.webp'];
-  return (
-    <div className="overflow-hidden rounded-[24px] bg-white shadow-[0_30px_80px_-30px_rgba(0,0,0,.35)] ring-1 ring-black/5">
-      <div className="flex items-center gap-2 border-b border-line bg-canvas px-4 py-2.5">
-        <span className="flex gap-1.5">{['#ff5f57', '#febc2e', '#28c840'].map(c => <span key={c} className="h-2.5 w-2.5 rounded-full" style={{ background: c }} />)}</span>
-        <span className="mx-auto flex h-7 items-center gap-1.5 rounded-full bg-white px-3 text-[11px] font-medium text-muted ring-1 ring-black/5"><Globe size={11} className="text-brand" /> agenteimmo.me/<span className="text-ink">tuonome</span></span>
-        <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold text-muted ring-1 ring-black/5" style={{ transition: tr }}>Modello: {t.name}</span>
-      </div>
-      <div className="relative aspect-[4/3] overflow-hidden p-5" style={{ background: t.bg, color: t.fg, transition: tr, fontFamily: t.serif ? 'var(--font-serif-accent), Georgia, serif' : 'var(--font-bricolage), system-ui, sans-serif' }}>
-        <div className="flex items-center justify-between">
-          <span className="flex items-center gap-2 text-[13px] font-bold"><span className="h-6 w-6 rounded-lg" style={{ background: t.c, borderRadius: Math.max(4, t.r / 2), transition: tr }} /> Studio Rossi</span>
-          <span className="flex gap-3 text-[10px] opacity-70">{['Home', 'Immobili', 'Servizi', 'Contatti'].map(x => <span key={x}>{x}</span>)}</span>
-          <span className="h-6 rounded-full px-2.5 text-[10px] font-semibold leading-6 text-white" style={{ background: t.c, borderRadius: t.r, transition: tr }}>Contattami</span>
-        </div>
-        <div className="mt-5 grid grid-cols-[1.1fr_1fr] items-center gap-4">
-          <div>
-            <div className="text-[9px] font-bold uppercase tracking-[.2em]" style={{ color: t.c, transition: tr }}>Immobili selezionati</div>
-            <div className={`mt-1.5 text-[22px] leading-[1.05] ${t.serif ? 'font-normal italic' : 'font-extrabold tracking-tight'}`}>Trova la casa giusta per te</div>
-            <div className="mt-2 h-1.5 w-3/4 rounded" style={{ background: soft }} /><div className="mt-1 h-1.5 w-1/2 rounded" style={{ background: soft }} />
-            <div className="mt-3 flex h-7 items-center gap-2 rounded-full px-2 text-[9px]" style={{ background: dark ? 'rgba(255,255,255,.1)' : '#fff', borderRadius: t.r, boxShadow: dark ? 'none' : '0 4px 14px rgba(0,0,0,.08)', transition: tr }}>
-              <MapPin size={9} style={{ color: t.c }} /><span className="opacity-60">Città, quartiere</span><span className="ml-auto h-5 rounded-full px-2 leading-5 text-white" style={{ background: t.c, borderRadius: t.r, transition: tr }}>Cerca</span>
-            </div>
-          </div>
-          <img src="/immo/home/demo-1.webp" alt="" className="aspect-[4/3] w-full object-cover" style={{ borderRadius: t.r, transition: tr }} />
-        </div>
-        <div className="mt-4 grid grid-cols-3 gap-2.5">
-          {photos.map((src, k) => (
-            <div key={src} className="overflow-hidden" style={{ background: dark ? 'rgba(255,255,255,.06)' : '#fff', borderRadius: t.r, boxShadow: dark ? 'none' : '0 6px 18px -8px rgba(0,0,0,.18)', transition: tr }}>
-              <img src={src} alt="" className="aspect-[4/3] w-full object-cover" />
-              <div className="p-2"><div className="text-[10px] font-bold" style={{ color: t.c, transition: tr }}>{['€ 320.000', '€ 1.450/mese', '€ 495.000'][k]}</div><div className="mt-1 h-1.5 w-4/5 rounded" style={{ background: soft }} /></div>
-            </div>
-          ))}
-        </div>
-      </div>
     </div>
   );
 }
@@ -442,7 +390,7 @@ export default function AgenteImmoLanding() {
         <div className="grid items-center gap-10 md:grid-cols-2 md:gap-16">
           <Reveal anim="in-left">
             <Eyebrow n="01">Annunci che si notano</Eyebrow>
-            <h2 className={H2}>Nessuno si ferma su una stanza vuota.</h2>
+            <h2 className={H2}>Chi scorre non si ferma su una stanza vuota.</h2>
             <p className="mt-5 text-lg leading-relaxed text-muted">Vuota, una casa sembra più piccola e più fredda di com&apos;è. Arredata, chi guarda ci si immagina dentro e ti chiama per vederla. Carichi la foto, scegli lo stile, in un minuto è pronta.</p>
             <ul className="mt-6 space-y-3 text-[15px]">
               {['La prima foto ferma chi scorre', 'Il cliente capisce subito come vivrebbe quella casa', 'Nessun home staging vero da pagare o da organizzare'].map(x => <li key={x} className="flex items-start gap-3">{CHECK}{x}</li>)}
@@ -465,7 +413,7 @@ export default function AgenteImmoLanding() {
         <div ref={videoRef} className="grid items-center gap-10 md:grid-cols-2 md:gap-16">
           <Reveal className="md:order-2" anim="in-right">
             <Eyebrow n="02">Farti conoscere</Eyebrow>
-            <h2 className={H2}>Ogni casa diventa un video.</h2>
+            <h2 className={H2}>Ogni casa diventa un video per i tuoi social.</h2>
             <p className="mt-5 text-lg leading-relaxed text-muted">Nella tua zona i clienti chiamano l&apos;agente che vedono ogni settimana su Instagram e TikTok. Un videomaker costa e ci mette giorni: qui ogni nuovo incarico diventa un video, e tu resti presente senza fermarti a girare.</p>
             <ul className="mt-6 space-y-3 text-[15px]">
               {['Ti fai conoscere nella tua zona, non solo sul portale', 'Ogni incarico diventa un contenuto da pubblicare', 'Niente riprese, niente montaggio, niente videomaker'].map(x => <li key={x} className="flex items-start gap-3">{CHECK}{x}</li>)}
@@ -490,14 +438,14 @@ export default function AgenteImmoLanding() {
         <div ref={siteRef} className="grid items-center gap-10 md:grid-cols-2 md:gap-16">
           <Reveal anim="in-left">
             <Eyebrow n="03">Il tuo sito, già pronto</Eyebrow>
-            <h2 className={H2}>Sul tuo sito sei l&apos;unico agente.</h2>
+            <h2 className={H2}>Sul tuo sito non sei uno dei tanti agenti.</h2>
             <p className="mt-5 text-lg leading-relaxed text-muted">Sul portale l&apos;acquirente sceglie la casa, non l&apos;agente. Il sito te lo diamo noi, già fatto e finito: scegli uno dei nostri modelli, metti logo e colori, e ogni immobile che carichi ci finisce da solo. Niente web agency, niente da costruire.</p>
             <ul className="mt-6 space-y-3 text-[15px]">
               {['Pronto in un minuto: scegli il modello, il resto è già fatto', 'Ogni immobile che carichi è subito online, con foto e descrizione', 'I contatti arrivano a te, non a un portale', 'Ti fai trovare su Google nella tua zona'].map(x => <li key={x} className="flex items-start gap-3">{CHECK}{x}</li>)}
             </ul>
             <Cta href={APP} className="mt-8">Crea il tuo sito</Cta>
           </Reveal>
-          <Reveal delay={150} anim="in-right"><div className="parallax"><Tilt className="rounded-[24px]"><MiniSite active={siteOn} /></Tilt></div></Reveal>
+          <Reveal delay={150} anim="in-right"><div className="parallax"><Tilt className="rounded-[24px]"><TemplateShowcase active={siteOn} /></Tilt></div></Reveal>
         </div>
       </Band>
 
