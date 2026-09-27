@@ -409,7 +409,7 @@ export function HomeView({ name, initialUrl = '', onSaved, morph }: { name?: str
         {/* Crea: foto a ventaglio con molla + "+" che ruota */}
         <Tile index={1} intro={intro} wrapClass={others(1)} kicker="Hai preso un immobile nuovo?" title="Mettilo in vetrina" href="#/nuovo">
           {/* la vetrina e' la pagina AgenteImmo dell'agente: si capisce dalla barra indirizzi */}
-          <span className="par-1 absolute -top-3 left-1/2 z-20 -translate-x-1/2"><span className="flex items-center gap-1.5 whitespace-nowrap rounded-full bg-white px-3 py-1 text-[11px] font-medium text-muted shadow-md ring-1 ring-black/5 ease-smooth transition-[translate] group-hover:-translate-y-1"><Globe size={11} className="text-brand" /> agenteimmo.me/<span className="text-ink">{vetrina}</span></span></span>
+          <span className="par-1 absolute -top-3 left-1/2 z-20 -translate-x-1/2"><span className="flex items-center gap-1.5 whitespace-nowrap rounded-full bg-white px-3 py-1 text-[11px] font-medium text-muted shadow-md ring-1 ring-black/5 ease-smooth transition-[translate] group-hover:-translate-y-1"><Globe size={11} className="text-brand" /><span>agenteimmo.me/<span className="text-ink">{vetrina}</span></span></span></span>
           {['/immo/home/fan-1.webp', '/immo/home/fan-2.webp', '/immo/home/fan-3.webp'].map((src, i) => (
             <div key={src} className={`absolute left-1/2 ${i === 1 ? 'top-4' : 'top-6'} ${['par-1', 'par-2 z-10', 'par-3'][i]}`}>
               <img src={src} alt="" className={`${i === 1 ? 'h-32' : 'h-28'} w-24 -translate-x-1/2 rounded-xl object-cover shadow-md ring-2 ring-white transition-transform ease-smooth ${
