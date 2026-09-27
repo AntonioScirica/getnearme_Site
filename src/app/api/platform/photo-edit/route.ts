@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { buildStagingPrompt, roomKey, variantText, isRestyle, type SceneType } from '@/lib/stagingPrompts'
+import { buildStagingPrompt, roomKey, variantText, isRestyle, isFurnishing, roomLabel, EMPTY_KEEP, STYLE_LOOK, furnishPlanPrompt, addFurniturePrompt, type SceneType } from '@/lib/stagingPrompts'
+import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@supabase/supabase-js'
 import { uploadJpeg, uploadMarker } from '@/lib/r2'
 import sharp from 'sharp'
@@ -73,8 +74,21 @@ export async function POST(req: NextRequest) {
 
   const t0 = Date.now()
   let job: RunpodJob
+  let used = translation.prompt_template ?? prompt // prompt dell'ultimo passo, per il debug
   try {
-    job = await runJob({ ...(imageBase64 ? { image_base64: imageBase64 } : { image_url: imageUrl }), prompt, ...translation, ...(region ? { mark: region } : {}), ...(points.length ? { points } : {}), ...(labels.length ? { labels } : {}), seed, steps: 12 }) // 12 passaggi: ~8 s invece di 17 a 25, qualita' simile nel confronto del 24/09
+    const input = imageBase64 ? { image_base64: imageBase64 } : { image_url: imageUrl }
+    if (isFurnishing({ style: body.style, customPrompt: custom, angle: body.angle, planimetria: body.planimetria, scene, restyle }) && !region && !points.length) {
+      // Arredo in due passi (vedi stagingPrompts): 1) svuota tenendo la stanza, 2) Claude decide cosa e dove, 3) Qwen aggiunge
+      job = await runJob({ ...input, prompt: EMPTY_KEEP, seed, steps: 12 })
+      const empty = job.output?.image_base64
+      if (empty) {
+        const pieces = await planFurniture(userId, empty, roomLabel(roomK), (body.style && STYLE_LOOK[body.style] ? STYLE_LOOK[body.style] : `as requested by the agent (in Italian): "${custom}"`) + vary)
+        used = addFurniturePrompt(pieces)
+        job = await runJob({ image_base64: `data:image/jpeg;base64,${empty}`, prompt: used, seed: seed + 1, steps: 12 })
+      }
+    } else {
+      job = await runJob({ ...input, prompt, ...translation, ...(region ? { mark: region } : {}), ...(points.length ? { points } : {}), ...(labels.length ? { labels } : {}), seed, steps: 12 }) // 12 passaggi: ~8 s invece di 17 a 25, qualita' simile nel confronto del 24/09
+    }
   } catch (e) {
     console.error('photo-edit runpod error:', e)
     await logUsage({ userId, kind: 'photo_edit' }, true, Date.now() - t0, {}, false, 'qwen-image-2.1')
@@ -87,7 +101,7 @@ export async function POST(req: NextRequest) {
     console.error('photo-edit failed:', job.status, job.error || job.output?.error)
     return NextResponse.json({ error: job.status === 'IN_QUEUE' || job.status === 'IN_PROGRESS' ? 'timeout' : 'ai_failed' }, { status: 502 })
   }
-  if (process.env.NODE_ENV !== 'production') await debugDump({ imageBase64, imageUrl, region, prompt: (translation.prompt_template ?? prompt), request: translation.request, outB64: b64, translated: (job.output as { translated?: string } | undefined)?.translated, worker: (job as { workerId?: string }).workerId })
+  if (process.env.NODE_ENV !== 'production') await debugDump({ imageBase64, imageUrl, region, prompt: used, request: translation.request, outB64: b64, translated: (job.output as { translated?: string } | undefined)?.translated, worker: (job as { workerId?: string }).workerId })
   // foto di un immobile (scelta dalla vetrina): cartella casa-<id>, la Galleria le raggruppa per casa
   const projectId = typeof body.projectId === 'string' && /^[\w-]{1,64}$/.test(body.projectId) ? body.projectId : ''
   // anteprime per il video (tre proposte tra cui scegliere): cartella a parte, non vanno in Galleria
@@ -157,4 +171,22 @@ async function debugDump(d: { imageBase64: string; imageUrl: string; region: { x
     await writeFile(`${dir}/3-risultato.jpg`, Buffer.from(d.outB64, 'base64'))
     await writeFile(`${dir}/prompt.txt`, `richiesta: ${d.request ?? ''}\ntradotta: ${d.translated ?? '(worker vecchio, nessuna traduzione)'}\nzona: ${JSON.stringify(d.region)}\nworker: ${d.worker ?? '?'}\n\nprompt:\n${d.prompt}\n`)
   } catch (e) { console.error('debugDump', e) }
+}
+
+// Piano di arredo per la stanza vuota: quali mobili e dove, come farebbe un home stager (Claude guarda la foto).
+// Se non risponde si ripiega su un elenco generico, cosi' l'arredo non si blocca.
+async function planFurniture(userId: string, emptyB64: string, room: string, style: string): Promise<string[]> {
+  const t0 = Date.now()
+  try {
+    const small = (await sharp(Buffer.from(emptyB64, 'base64')).resize({ width: 1024, height: 1024, fit: 'inside' }).jpeg({ quality: 85 }).toBuffer()).toString('base64')
+    const msg = await new Anthropic().messages.create({
+      model: 'claude-opus-5-5', max_tokens: 3000,
+      messages: [{ role: 'user', content: [{ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: small } }, { type: 'text', text: furnishPlanPrompt(room, style) }] }],
+    })
+    await logUsage({ userId, kind: 'staging_plan' }, false, Date.now() - t0, { input: msg.usage.input_tokens, output: msg.usage.output_tokens }, true, 'claude-opus-5-5')
+    const txt = msg.content.find(c => c.type === 'text')?.text ?? ''
+    const pieces = (JSON.parse(txt.slice(txt.indexOf('{'), txt.lastIndexOf('}') + 1)) as { pieces?: string[] }).pieces
+    if (pieces?.length) return pieces.slice(0, 10)
+  } catch (e) { console.error('staging plan', e) }
+  return [`Furniture for a ${room || 'room'} in ${style}, placed where it makes sense.`]
 }

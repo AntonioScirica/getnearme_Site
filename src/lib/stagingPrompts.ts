@@ -21,6 +21,25 @@ const LISTING_PHOTO = "Same light, exposure and colors as the photo. The result 
 const stage = (style: string, look: string) =>
   `Replace only the furniture and decor with ${style} furniture (${look}), real pieces that Italian families buy today, tidy, no clutter. Keep exactly the same, pixel for pixel: walls, ceiling, windows, curtains, doors, mirrors, wardrobes, radiators, the floor, the light, and the camera position, zoom and framing. Photorealistic real estate listing photo.`
 
+// Svuota: "togli solo i mobili, tieni identico pixel per pixel" tiene l'inquadratura e la stanza (prove del 27/09);
+// la versione vecchia toglieva anche tende, mensole, parete TV e cucina. Primo passo anche dell'arredo (vedi photo-edit).
+export const EMPTY_KEEP = 'Remove only the movable furniture and loose objects from this room: sofas, armchairs, chairs, tables, beds, freestanding cabinets and bookcases, rugs, cushions, blankets, lamps, plants, decor, boxes, bags and personal items. Keep exactly the same, pixel for pixel: walls, ceiling and lights, windows and doors with their frames, curtains, mirrors and built-in or mirrored wardrobes, the TV wall unit with its shelves, the kitchen, bathroom fixtures, radiators, sockets, the floor with its exact material and color (continue the same floor where the furniture stood), the daylight and the camera position, zoom and framing. Photorealistic.';
+
+// Arredo in due passi (photo-edit): 1) EMPTY_KEEP svuota, 2) Claude guarda la stanza vuota e decide QUALI mobili e DOVE
+// (furnishPlanPrompt), 3) Qwen li aggiunge alla foto vuota (addFurniturePrompt). Sostituire i mobili in un colpo solo
+// faceva reinventare la stanza (muretto sparito, pareti e finestre spostate) e arredare senza logica (27/09).
+export const STYLE_LOOK: Record<string, string> = {
+  modern: 'simple modern style: white fronts and light oak, light grey fabrics, simple rounded shapes, one or two cushions in soft blue or mustard',
+  nordic: 'simple Scandinavian style: light oak and white, linen fabrics, a wool rug, a white pendant lamp',
+  industrial: 'good quality contemporary style: white and warm grey fronts, concrete-look or light stone surfaces, open oak shelves, calm colors',
+  boho: 'warm natural style: light wood, linen and cotton, a jute rug, one plant, warm sand, terracotta and sage tones',
+};
+export const furnishPlanPrompt = (room: string, style: string) => `The image is an empty room of a real Italian apartment, photographed for a real estate listing. Room type: ${room || 'decide it from the photo'}. Style wanted: ${style}.
+Plan the furniture a professional Italian home stager would put in THIS room so that it makes sense and sells the space: look at the visible floor, the walls, the windows, doors, radiators and passages. Only pieces that belong in this room type and physically fit in the visible floor area, never blocking doors, windows, radiators or passages, nothing floating or cut in half at the edges unless it naturally continues out of frame. Real furniture that Italian families buy today (IKEA, Mondo Convenienza), in the wanted style. From 3 to 7 pieces, then at most 3 small accessories.
+For each item write one short English sentence: what it is, its color and material, and exactly where it stands in the photo (for example "against the left wall, facing the window", "in the middle of the floor", "in the right corner next to the radiator").
+Reply with JSON only: {"pieces": ["..."]}`;
+export const addFurniturePrompt = (pieces: string[]) => `Add furniture to this exact photo without changing anything else. The camera position, zoom, framing and perspective stay exactly the same: walls, windows, doors, ceiling, curtains, radiators and floor stay exactly where they are, pixel for pixel. Add only these pieces, standing on the visible floor, exactly where described: ${pieces.join(' ')} Nothing else. Same light and colors as the photo. Photorealistic real estate listing photo. Do not add any text, letters, logos or watermarks.`;
+
 const STYLE_PROMPTS: Record<string, string> = {
   // lo stile dice solo materiali e colori: QUALI mobili li decide il tipo di stanza (ROOM_FURNISH). Con "divano e
   // tavolino" nello stile Qwen li metteva anche in camera da letto (prova del 27/09).
@@ -30,7 +49,7 @@ const STYLE_PROMPTS: Record<string, string> = {
   boho: stage('warm natural', 'light wood, linen and cotton, a jute rug, one plant, warm sand, terracotta and sage tones'),
   daynight: "Analyze the lighting in this photo. If daytime: convert to nighttime — dark blue sky through windows, all light fixtures ON with warm glow and halos, deep shadows. If nighttime: convert to daytime — bright blue sky, natural sunlight through windows, morning light. CRITICAL: do NOT add, remove, move or change ANY object, furniture, door, window or wall. ONLY change lighting and sky. Photorealistic, 8k.",
   // Qwen-Image segue meglio istruzioni corte: il prompt lungo di Nano Banana gli faceva rifare il pavimento.
-  empty: "Remove all furniture and movable objects from this room so it becomes an empty, vacant room: sofas, armchairs, chairs, tables, beds, wardrobes, cabinets, shelves, TV, lamps, plants, loose rugs, curtains, pictures and personal items. Keep the floor EXACTLY the same as in the photo: same material, color, pattern and texture (if it is carpet keep the same carpet, if it is wood keep the same wood, if it is tiles keep the same tiles); where furniture stood, continue that same floor. Keep walls, ceiling, windows, doors, radiators, built-in fixtures, light and camera angle unchanged. Photorealistic.",
+  empty: EMPTY_KEEP,
 };
 
 const STYLE_PROMPTS_ESTERNO: Record<string, string> = {
@@ -156,6 +175,14 @@ export function buildStagingPrompt(o: { style?: string | null; customPrompt?: st
   const styles = scene === 'esterno' ? STYLE_PROMPTS_ESTERNO : scene === 'giardino' ? STYLE_PROMPTS_GIARDINO : STYLE_PROMPTS;
   const custom = o.customPrompt?.trim();
   const angle = ANGLES.find(a => a.id === o.angle);
+  // luce (giorno/notte): si cambia solo la luce della STESSA foto. Il modello "nuova inquadratura" qui sotto diceva
+  // "from a new camera position" e spostava la camera anche per "Piu' luce".
+  if (angle && (angle.id === 'day' || angle.id === 'night')) {
+    const light = angle.id === 'day'
+      ? 'make it brighter and more luminous, as on a sunny day: higher exposure, lifted shadows, whiter and cleaner walls and ceiling, bright sky only where a window already shows the outside. Never add windows, doors, openings or lamps'  // con "luce dalle finestre" inventava finestre sulle pareti piene (27/09)
+      : 'evening: dark blue sky outside, all the lamps and ceiling lights on with a warm glow';
+    return `Change only the light of this exact photo: ${light}. Every wall, window, door, piece of furniture and object stays exactly the same, pixel for pixel, and the camera position, zoom and framing stay exactly the same. Photorealistic.${NO_TEXT_PLAIN}`;
+  }
   if (angle) {
     return `ROOM ANALYSIS REQUIRED: Study every detail — furniture pieces, materials, colors, textures, wall finishes, window placement, door positions, architectural features, lighting fixtures, decorative objects. TASK: Regenerate this IDENTICAL room from a new camera position: ${angle.prompt}. Every object must appear in the same position relative to the room. Same furniture, same colors, same materials, same lighting conditions, same time of day. FORBIDDEN: adding new objects, removing existing objects, changing any material or color, altering room dimensions, modifying architectural features. Output: photorealistic interior photograph, 8K, consistent with input image lighting.${NO_TEXT}`;
   }
@@ -167,10 +194,16 @@ export function buildStagingPrompt(o: { style?: string | null; customPrompt?: st
       return (furnishRoom.trim() + ' ' + stage('new', `as requested: ${custom}`)).trim() + NO_TEXT_PLAIN;
     }
     // Stessa formula "additiva" degli stili: cambia solo quello che chiede l'agente, la foto resta quella.
-    return `Edit this exact photo: ${custom}. Change only what is requested; everything else stays exactly the same: camera position, zoom, framing, perspective, walls, windows, doors, furniture, decorations and light (unless the request is about them). Do not zoom out and do not show more of the room.${ONLY_REQUESTED} If new furniture is requested, it must be real furniture that Italian families actually buy today (IKEA, Mondo Convenienza, mid-range Italian stores). ${LISTING_PHOTO}${NO_TEXT_PLAIN}`;
+    // corto: i prompt lunghi facevano reinventare la stanza a Qwen (27/09)
+    return `Edit this exact photo: ${custom}. Change only that. Everything else stays exactly the same, pixel for pixel: walls, windows, doors, furniture, decor, light, and the camera position, zoom and framing.${ONLY_REQUESTED} Photorealistic.${NO_TEXT_PLAIN}`;
   }
   const furnish = scene === 'interno' && o.style !== 'empty' && o.style !== 'daynight' && o.room && ROOM_FURNISH[o.room] ? ` ${ROOM_FURNISH[o.room]}` : '';
   // tipo di stanza in testa: in coda a un prompt Qwen lo pesava poco e seguiva i mobili dello stile
   // interni: prompt corto (vedi stage), niente blocco lungo sul testo
   return (scene === 'interno' && furnish ? furnish.trim() + ' ' : '') + (styles[o.style || ''] || styles.modern) + (scene === 'interno' ? NO_TEXT_PLAIN : OUTDOOR_LOCK + NO_TEXT);
 }
+
+// Arredo in due passi (svuota, piano di Claude, aggiunta): stili d'interni e richieste di arredo ("arreda moderno")
+export const isFurnishing = (o: { style?: string | null; customPrompt?: string | null; angle?: string | null; planimetria?: boolean; scene?: SceneType; restyle?: boolean }) =>
+  (o.scene ?? 'interno') === 'interno' && !o.angle && !o.planimetria && (!!(o.style && STYLE_LOOK[o.style]) || (!!o.customPrompt?.trim() && !!o.restyle));
+export const roomLabel = (key: string) => ({ cucina: 'kitchen', soggiorno: 'living room', sala: 'dining room', camera: 'double bedroom', cameretta: "child's bedroom", studio: 'home office', ingresso: 'entrance hall', corridoio: 'hallway', bagno: 'bathroom', balcone: 'balcony' } as Record<string, string>)[key] ?? '';
