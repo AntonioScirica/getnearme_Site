@@ -2,7 +2,7 @@ import sharp from 'sharp'
 import { runJob } from '@/lib/runpodImage'
 import Anthropic from '@anthropic-ai/sdk'
 import { logUsage } from '@/lib/ai'
-import { editPlanPrompt, leftoverPrompt, removePrompt, removeInBoxPrompt, addFurniturePrompt, layoutCheckPrompt, type EditPlan, type Box, type Zone } from '@/lib/stagingPrompts'
+import { EMPTY_KEEP, editPlanPrompt, leftoverPrompt, removePrompt, removeInBoxPrompt, addFurniturePrompt, layoutCheckPrompt, type EditPlan, type Box, type Zone } from '@/lib/stagingPrompts'
 
 // Svuota, arreda e modifiche guidate da un piano del modello di visione. Qwen da solo non distingue fisso da mobile e inventa le cose nominate che non ci
 // sono; sostituire i mobili in un colpo gli faceva reinventare la stanza (27/09). Quindi:
@@ -10,14 +10,22 @@ import { editPlanPrompt, leftoverPrompt, removePrompt, removeInBoxPrompt, addFur
 //   2. Qwen toglie; Claude (Sonnet) controlla cosa e' rimasto e, se serve, secondo passaggio con la lista corta
 //   3. (arredo) Qwen rinnova i fissi (es. ante della cucina) e aggiunge i pezzi nella stanza vuota
 // Senza piano (il modello non risponde) torna image vuota: chi chiama usa il vecchio passaggio unico.
-export async function guidedEdit(o: { userId: string; input: { image_base64: string } | { image_url: string }; reference?: string; styleRef?: string; task: 'empty' | 'furnish' | 'edit'; room: string; style: string; seed: number; planModel?: string }): Promise<{ image?: string; prompt?: string; plan?: EditPlan }> {
+export async function guidedEdit(o: { userId: string; input: { image_base64: string } | { image_url: string }; reference?: string; styleRef?: string; task: 'empty' | 'furnish' | 'edit'; room: string; style: string; seed: number; planModel?: string }): Promise<{ image?: string; prompt?: string; plan?: EditPlan; timing?: Record<string, number> }> {
+  // tempi dei passi (ms), per capire dove va il tempo
+  const timing: Record<string, number> = {}; let tt = Date.now()
+  const lap = (k: string) => { timing[k] = (timing[k] ?? 0) + Date.now() - tt; tt = Date.now() }
   const orig = 'image_base64' in o.input
     ? o.input.image_base64.split(',').pop() ?? ''
     : Buffer.from(await (await fetch(o.input.image_url, { signal: AbortSignal.timeout(20_000) })).arrayBuffer()).toString('base64')
   // foto reale di partenza (se questa e' gia' un risultato, es. dopo "Svuota"): il piano sa che stanza era e cosa c'era di fisso
   const ref = o.reference ? await toB64(o.reference) : null
   const sty = o.styleRef ? await toB64(o.styleRef) : null
+  lap('preparazione')
+  // arredo: la rimozione non ha bisogno del piano dettagliato (i mobili nuovi coprono il resto), quindi parte sulla GPU
+  // SUBITO, insieme al piano di Opus: i due passi si sovrappongono (~7-9 s in meno, 27/09). Svuota resta guidato dal piano.
+  const early = o.task === 'furnish' ? runJob({ image_base64: `data:image/jpeg;base64,${orig}`, prompt: EMPTY_KEEP, seed: o.seed, steps: 8 }) : null
   const plan = parsePlan(await askJson(o.userId, [...(ref ? [ref] : []), orig, ...(sty ? [sty] : [])], (ref ? REFERENCE_NOTE : '') + (sty ? STYLE_REF_NOTE : '') + editPlanPrompt(o.room, o.task, o.style), o.planModel))
+  lap('piano_opus')
   // il modello a volte mette tra le cose da togliere la cucina, il forno o le pareti (27/09: cucina sostituita da un'isola):
   // i fissi non si tolgono mai, salvo "gli oggetti sopra" (quelli si' che vanno via); cambiarli e' compito di restyle
   // si guarda solo l'oggetto (prima di "on/in/against/near..."), non la posizione: "il divano sul lato sinistro del pavimento" va tolto
@@ -28,11 +36,12 @@ export async function guidedEdit(o: { userId: string; input: { image_base64: str
   if (!plan.remove.length && !plan.add.length && !plan.restyle.length && !Object.values(plan.surfaces ?? {}).some(Boolean)) return {}
   let cur = orig, prompt = ''
   if (plan.remove.length) {
-    prompt = removePrompt(plan)
+    prompt = early ? EMPTY_KEEP : removePrompt(plan)
     // togliere e' piu' semplice che arredare: 8 passaggi bastano (~30% di tempo in meno)
-    const r = await runJob({ image_base64: `data:image/jpeg;base64,${orig}`, prompt, seed: o.seed, steps: 8 })
+    const r = early ? await early : await runJob({ image_base64: `data:image/jpeg;base64,${orig}`, prompt, seed: o.seed, steps: 8 })
     if (!r.output?.image_base64) return {}
     cur = r.output.image_base64
+    lap('rimozione_gpu')
     // controllo (Opus) di cosa e' rimasto, con il riquadro di ogni oggetto; poi un passaggio per oggetto solo dentro
     // il suo riquadro (mark nel worker: fuori resta la foto). Al massimo 2 giri.
     // controllo di cosa e' rimasto solo per "Svuota" (la stanza deve uscire vuota davvero). Nell'arredo i mobili nuovi
@@ -64,16 +73,19 @@ export async function guidedEdit(o: { userId: string; input: { image_base64: str
     const a = await runJob({ image_base64: `data:image/jpeg;base64,${empty}`, prompt, control: 'depth', seed: o.seed + 1, steps: 12 })
     if (!a.output?.image_base64) return {}
     cur = a.output.image_base64
+    lap('arredo_gpu')
     // controllo veloce: Qwen capisce male le posizioni (27/09: divano e sgabelli finiti nella stanza dietro, cucina curva).
     // Se non torna, un secondo tentativo con il problema scritto nel prompt
     const chk = await askJson(o.userId, [empty, cur], layoutCheckPrompt(plan), FAST)
+    lap('controllo_haiku')
     if (chk.ok === false) {
       prompt = `${prompt} Important: ${typeof chk.why === 'string' ? chk.why.slice(0, 200) : 'place every piece exactly where described'}.`
       const b = await runJob({ image_base64: `data:image/jpeg;base64,${empty}`, prompt, control: 'depth', seed: o.seed + 7, steps: 12 })
       if (b.output?.image_base64) cur = b.output.image_base64
+      lap('riprova_gpu')
     }
   }
-  return { image: cur, prompt, plan }
+  return { image: cur, prompt, plan, timing }
 }
 
 // controlli semplici (cosa e' rimasto, stanza uguale?): modello veloce; il piano resta a Opus
