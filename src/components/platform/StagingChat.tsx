@@ -35,17 +35,17 @@ const SEEN_OPTIONS: DropdownOption<string>[] = [
 // Suggerimenti in base a cosa c'e' nella foto (la cucina non ha "Arreda nordico", la facciata non ha "Svuota la stanza")
 const S = (id: string, label: string, req: Suggestion['req']): Suggestion => ({ id, label, req });
 const EMPTY = S('empty', 'Svuota la stanza', { style: 'empty' }), LIGHT = S('day', 'Luminoso', { angle: 'day' }), TIDY = QUICK_PRESETS.find(x => x.id === 'tidy')!;
+// Interni: gli stessi veri stili per ogni stanza (Moderno, Nordico, Luxury, Boho: ogni chip porta la descrizione completa
+// dello stile e il piano di Claude la adatta alla stanza). I chip "a parole" per stanza (letto, comodini, armadio...) davano
+// arredi poveri e incoerenti (27/09). Esterni e giardini hanno i loro.
+const STYLES: Suggestion[] = [S('modern', 'Moderno', { style: 'modern' }), S('nordic', 'Nordico', { style: 'nordic' }), S('industrial', 'Luxury', { style: 'industrial' }), S('boho', 'Boho', { style: 'boho' })];
 function suggestionsFor(kind: string | null): Suggestion[] {
   switch (kind) {
-    case 'room:cucina': return [S('k-modern', 'Cucina moderna', { prompt: 'Rinnova la cucina in stile moderno: ante lisce, piano di lavoro chiaro, elettrodomestici da incasso' }), S('k-wood', 'Bianco e legno', { prompt: 'Rendi la cucina bianca con dettagli in legno chiaro' }), TIDY, LIGHT, EMPTY];
-    case 'room:camera': return [S('b-modern', 'Camera moderna', { prompt: 'Arreda come camera da letto moderna: letto matrimoniale, comodini, armadio, tessili neutri' }), TIDY, LIGHT, EMPTY];
-    case 'room:cameretta': return [S('c-kids', 'Cameretta bambini', { prompt: 'Arreda come cameretta per bambini: lettino, scrivania, giochi ordinati, colori tenui' }), S('c-teen', 'Camera ragazzi', { prompt: 'Arreda come camera per ragazzi: letto singolo, scrivania, libreria' }), TIDY, LIGHT, EMPTY];
-    case 'room:bagno': return [S('w-modern', 'Bagno moderno', { prompt: 'Rinnova il bagno in stile moderno: sanitari sospesi, doccia in vetro, piastrelle chiare grandi' }), S('w-light', 'Piastrelle chiare', { prompt: 'Cambia le piastrelle con piastrelle chiare moderne, lascia sanitari e disposizione' }), TIDY, LIGHT];
-    case 'room:balcone': return [S('o-furnish', 'Arreda il balcone', { prompt: 'Arreda il balcone con un tavolino, due sedie da esterno e qualche pianta' }), S('o-plants', 'Aggiungi piante', { prompt: 'Aggiungi piante e fiori in vaso lungo il balcone' }), S('o-night', 'Giorno e notte', { style: 'daynight' }), TIDY];
-    case 'scene:esterno': return [S('f-renew', 'Rinnova la facciata', { style: 'empty' }), S('f-modern', 'Facciata moderna', { style: 'modern' }), S('f-sky', 'Cielo azzurro', { prompt: 'Cielo azzurro limpido e luce di sole, senza cambiare l’edificio' }), S('f-night', 'Giorno e notte', { style: 'daynight' })];
-    case 'scene:giardino': return [S('g-renew', 'Giardino curato', { style: 'empty' }), S('g-furnish', 'Arreda il giardino', { prompt: 'Aggiungi un tavolo con sedie da esterno e un ombrellone, lascia prato e piante' }), S('g-modern', 'Giardino moderno', { style: 'modern' }), S('g-night', 'Luci di sera', { style: 'daynight' })];
+    case 'room:balcone': return [S('o-furnish', 'Arreda il balcone', { prompt: 'Arreda il balcone con un tavolino, due sedie da esterno e qualche pianta' }), S('o-plants', 'Aggiungi piante', { prompt: 'Aggiungi piante e fiori in vaso lungo il balcone' }), TIDY, LIGHT];
+    case 'scene:esterno': return [S('f-renew', 'Rinnova la facciata', { style: 'empty' }), S('f-modern', 'Facciata moderna', { style: 'modern' }), S('f-sky', 'Cielo azzurro', { prompt: 'Cielo azzurro limpido e luce di sole, senza cambiare l’edificio' }), S('f-garden', 'Giardino curato', { prompt: 'Prato curato e piante ordinate intorno alla casa, senza cambiare l’edificio' })];
+    case 'scene:giardino': return [S('g-renew', 'Giardino curato', { style: 'empty' }), S('g-furnish', 'Arreda il giardino', { prompt: 'Aggiungi un tavolo con sedie da esterno e un ombrellone, lascia prato e piante' }), S('g-modern', 'Giardino moderno', { style: 'modern' }), LIGHT];
     case 'scene:planimetria': return [];
-    default: return QUICK_PRESETS;
+    default: return [...STYLES, TIDY, LIGHT];
   }
 }
 // "custom:..." = scritto dall'agente quando nessuna voce va bene

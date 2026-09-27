@@ -2,7 +2,7 @@ import sharp from 'sharp'
 import { runJob } from '@/lib/runpodImage'
 import Anthropic from '@anthropic-ai/sdk'
 import { logUsage } from '@/lib/ai'
-import { editPlanPrompt, leftoverPrompt, removePrompt, removeInBoxPrompt, zoneInBoxPrompt, sameRoomPrompt, surfacePrompt, addFurniturePrompt, type EditPlan, type Box, type Zone } from '@/lib/stagingPrompts'
+import { editPlanPrompt, leftoverPrompt, removePrompt, removeInBoxPrompt, sameRoomPrompt, addFurniturePrompt, type EditPlan, type Box, type Zone } from '@/lib/stagingPrompts'
 
 // Svuota, arreda e modifiche guidate da un piano del modello di visione. Qwen da solo non distingue fisso da mobile e inventa le cose nominate che non ci
 // sono; sostituire i mobili in un colpo gli faceva reinventare la stanza (27/09). Quindi:
@@ -31,9 +31,10 @@ export async function guidedEdit(o: { userId: string; input: { image_base64: str
     cur = r.output.image_base64
     // controllo (Opus) di cosa e' rimasto, con il riquadro di ogni oggetto; poi un passaggio per oggetto solo dentro
     // il suo riquadro (mark nel worker: fuori resta la foto). Al massimo 2 giri.
-    for (let k = 0; k < 2; k++) {
+    // arredo: un giro solo (i mobili coprono il resto); svuota: due
+    for (let k = 0; k < (o.task === 'empty' ? 2 : 1); k++) {
       // prima i piu' grandi: con 4 per giro prendeva un cappellino e lasciava tavolo e sedia (27/09)
-      const left = parseLeft(await askJson(o.userId, [orig, cur], leftoverPrompt(plan.remove))).sort((a, b) => b.box.w * b.box.h - a.box.w * a.box.h).slice(0, 4)
+      const left = parseLeft(await askJson(o.userId, [orig, cur], leftoverPrompt(plan.remove), FAST)).sort((a, b) => b.box.w * b.box.h - a.box.w * a.box.h).slice(0, 4)
       if (!left.length) break
       // oggetti grandi (>10% della foto): passaggio su tutta la foto con la lista corta (nel riquadro il modello riempie
       // con macchie sfocate: cucina e penisola, 27/09). Riquadro solo per gli oggetti piccoli.
@@ -50,36 +51,26 @@ export async function guidedEdit(o: { userId: string; input: { image_base64: str
       }
     }
   }
-  // ristrutturazione: pavimento, soffitto e pareti uno alla volta, ciascuno con la sua maschera (labels ADE20K nel worker)
-  if (o.task === 'furnish') {
-    for (const [key, label] of [['floor', 'floor'], ['walls', 'wall'], ['ceiling', 'ceiling']] as const) {
-      const desc = plan.surfaces?.[key]
-      if (!desc) continue
-      prompt = surfacePrompt(key, desc)
-      const r = await runJob({ image_base64: `data:image/jpeg;base64,${cur}`, prompt, labels: [label], seed: o.seed + 50, steps: 12 })
-      if (r.output?.image_base64) cur = r.output.image_base64
-    }
-  }
-  if (o.task !== 'empty' && (plan.add.length || plan.restyle.length)) {
-    // 1) in un colpo (veloce, luce e prospettiva coerenti), 2) Opus controlla che la stanza sia la stessa, 3) se no si rifa'
-    // a zone, ognuna solo dentro il suo riquadro (27/09: "rinnova il bagno" su una stanza vuota ridisegnava tutto il bagno)
+  if (o.task !== 'empty' && (plan.add.length || plan.restyle.length || Object.values(plan.surfaces ?? {}).some(Boolean))) {
+    // arredo (e ristrutturazione: pavimento, soffitto, pareti, cucina) in UN passaggio su tutta la foto: coerente, come Gemini.
+    // Maschere per le superfici e riquadri per i mobili davano aloni e pezzi tagliati (27/09). Se la stanza cambia
+    // (controllo veloce), un secondo tentativo con il blocco della stanza in testa; si tiene quello.
     const base = cur
     prompt = addFurniturePrompt(plan)
-    const a = await runJob({ image_base64: `data:image/jpeg;base64,${base}`, prompt, seed: o.seed + 1, steps: 12 }) // 28 passaggi: piu' dettaglio ma allarga l'inquadratura (27/09)
+    const a = await runJob({ image_base64: `data:image/jpeg;base64,${base}`, prompt, seed: o.seed + 1, steps: 12 })
     if (!a.output?.image_base64) return {}
     cur = a.output.image_base64
-    const zones: [Zone, boolean][] = [...plan.restyle.map(z => [z, true] as [Zone, boolean]), ...plan.add.map(z => [z, false] as [Zone, boolean]).sort((p, q) => (p[0].box ? p[0].box.y + p[0].box.h : 1) - (q[0].box ? q[0].box.y + q[0].box.h : 1))]
-    if (zones.every(([z]) => z.box) && (await askJson(o.userId, [base, cur], sameRoomPrompt)).same === false) {
-      cur = base
-      for (const [n, [z, re]] of zones.entries()) {
-        prompt = zoneInBoxPrompt(z, re)
-        const r = await runJob({ image_base64: `data:image/jpeg;base64,${cur}`, prompt, mark: z.box, seed: o.seed + 100 + n, steps: 12 })
-        if (r.output?.image_base64) cur = await blendBox(cur, r.output.image_base64, z.box!)
-      }
+    if ((await askJson(o.userId, [base, cur], sameRoomPrompt, FAST)).same === false) {
+      prompt = `Keep this exact room: same camera, framing and perspective, same walls, half walls, pillars, windows, doors and openings in the same places. ${prompt}`
+      const b = await runJob({ image_base64: `data:image/jpeg;base64,${base}`, prompt, seed: o.seed + 2, steps: 12 })
+      if (b.output?.image_base64) cur = b.output.image_base64
     }
   }
   return { image: cur, prompt, plan }
 }
+
+// controlli semplici (cosa e' rimasto, stanza uguale?): modello veloce; il piano resta a Opus
+const FAST = 'claude-haiku-4-5-20251001'
 
 // Fissi che non si tolgono mai (solo gli oggetti sopra): vedi il filtro in guidedEdit
 const FIXED = /\b(kitchen|cabinets?|cupboards?|worktop|countertop|counter|backsplash|splashback|stove|hob|oven|hood|sink|tap|island|peninsula|appliances?|fridge|refrigerator|dishwasher|walls?|half[- ]wall|pillar|ceiling|windows?|doors?|radiators?|wardrobes?|built[- ]in|floor|tiles|curtains?|shelves|toilet|wc|bidet|wash ?basin|basin|vanity|shower|bath ?tub|sanitary)\b/i
