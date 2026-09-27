@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { buildStagingPrompt, roomKey, variantText, isRestyle, isFurnishing, roomLabel, STYLE_LOOK, type SceneType } from '@/lib/stagingPrompts'
 import { guidedEdit } from '@/lib/guidedEdit'
+import { brighten } from '@/lib/brighten'
 import { createClient } from '@supabase/supabase-js'
 import { uploadJpeg, uploadMarker } from '@/lib/r2'
 import sharp from 'sharp'
@@ -85,6 +86,12 @@ export async function POST(req: NextRequest) {
     const input = imageBase64 ? { image_base64: imageBase64 } : { image_url: imageUrl }
     // Guidati da Claude (src/lib/guidedEdit.ts): arredo, svuota e ogni richiesta scritta o chip sugli interni.
     // Restano sul passaggio unico: luce (angle), zona o clic, pareti/pavimento/soffitto (maschera nel worker), planimetria, esterni.
+    // Luminoso: correzione dell'esposizione senza AI (istantanea, gratis, non brucia i bianchi, la stanza non cambia)
+    if (body.angle === 'day') {
+      const src = imageBase64 ? Buffer.from(imageBase64.split(',')[1] ?? '', 'base64') : Buffer.from(await (await fetch(imageUrl, { signal: AbortSignal.timeout(20_000) })).arrayBuffer())
+      job = { status: 'COMPLETED', output: { image_base64: (await brighten(src)).toString('base64') } }
+      used = 'brighten (curva esposizione, niente AI)'
+    } else {
     const guided = scene === 'interno' && !region && !points.length && !labels.length && !body.angle && !body.planimetria && (furnishReq || body.style === 'empty' || !!custom)
     if (guided) {
       const task = body.style === 'empty' ? 'empty' : furnishReq ? 'furnish' : 'edit'
@@ -94,6 +101,7 @@ export async function POST(req: NextRequest) {
       job = g.image ? { status: 'COMPLETED', output: { image_base64: g.image } } : await runJob({ ...input, prompt, ...translation, seed, steps: 12 }) // senza piano: vecchio passaggio unico
     } else {
       job = await runJob({ ...input, prompt, ...translation, ...(region ? { mark: region } : {}), ...(points.length ? { points } : {}), ...(labels.length ? { labels } : {}), seed, steps: 12 }) // 12 passaggi: ~8 s invece di 17 a 25, qualita' simile nel confronto del 24/09
+    }
     }
   } catch (e) {
     console.error('photo-edit runpod error:', e)

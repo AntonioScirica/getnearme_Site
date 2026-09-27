@@ -223,7 +223,7 @@ export function buildStagingPrompt(o: { style?: string | null; customPrompt?: st
   // "from a new camera position" e spostava la camera anche per "Piu' luce".
   if (angle && (angle.id === 'day' || angle.id === 'night')) {
     const light = angle.id === 'day'
-      ? 'make it brighter and more luminous, as on a sunny day: higher exposure, lifted shadows, whiter and cleaner walls and ceiling, bright sky only where a window already shows the outside. Never add windows, doors, openings or lamps'  // con "luce dalle finestre" inventava finestre sulle pareti piene (27/09)
+      ? 'make it bright and luminous like a well-exposed real estate photo taken on a sunny day: lift the shadows and the darker areas, warm and even light, but keep full detail in the whites: walls, ceiling, window frames and the view outside must not be blown out or pure white, no glare, no haze. Never add windows, doors, openings or lamps'  // "piu' luce" bruciava i bianchi (27/09): si alzano le ombre, i bianchi tengono il dettaglio
       : 'evening: dark blue sky outside, all the lamps and ceiling lights on with a warm glow';
     return `Change only the light of this exact photo: ${light}. Every wall, window, door, piece of furniture and object stays exactly the same, pixel for pixel, and the camera position, zoom and framing stay exactly the same. Photorealistic.${NO_TEXT_PLAIN}`;
   }
