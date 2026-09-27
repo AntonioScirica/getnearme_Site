@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { buildStagingPrompt, roomKey, variantText, isRestyle, isFurnishing, roomLabel, STYLE_LOOK, type SceneType } from '@/lib/stagingPrompts'
 import { guidedEdit } from '@/lib/guidedEdit'
-import { nanoBanana, stagePrompt } from '@/lib/nanoBanana'
+import { nanoBanana, stagePrompt, markedCopy, zonePrompt } from '@/lib/nanoBanana'
 import { canAfford, spend, type Action } from '@/lib/credits'
 import { CREDIT_COST } from '@/lib/pricing'
 import { brighten } from '@/lib/brighten'
@@ -115,7 +115,7 @@ export async function POST(req: NextRequest) {
       const style = task === 'edit' ? custom : (body.style && STYLE_LOOK[body.style] ? STYLE_LOOK[body.style] : `as requested by the agent (in Italian): "${custom}"`) + vary
       // Nano Banana 2 (src/lib/nanoBanana.ts): una chiamata, niente GPU. Se Google non risponde, il vecchio flusso Qwen + Opus.
       const nbPrompt = stagePrompt({ task, room: roomLabel(roomK), style, styleRef: !!styleRef })
-      const nb = process.env.GEMINI_API_KEY ? await nanoBanana({ userId, image: imageBase64 || imageUrl, prompt: nbPrompt, styleRef }) : null
+      const nb = process.env.GEMINI_API_KEY ? await nanoBanana({ userId, image: imageBase64 || imageUrl, prompt: nbPrompt, styleRef, lite: task === 'edit' }) : null
       if (nb) {
         gemini = true; used = nbPrompt
         job = { status: 'COMPLETED', output: { image_base64: nb } }
@@ -125,7 +125,16 @@ export async function POST(req: NextRequest) {
         job = g.image ? { status: 'COMPLETED', output: { image_base64: g.image } } : await runJob({ ...input, prompt, ...translation, seed, steps: 12 }) // senza piano: vecchio passaggio unico
       }
     } else {
-      job = await runJob({ ...input, prompt, ...translation, ...(region ? { mark: region } : {}), ...(points.length ? { points } : {}), ...(labels.length ? { labels } : {}), seed, steps: 12 }) // 12 passaggi: ~8 s invece di 17 a 25, qualita' simile nel confronto del 24/09
+      // Zona, clic o pareti/pavimento/soffitto con una richiesta scritta: Nano Banana 2 con la zona segnata in rosso
+      // su una copia della foto (niente GPU). Il resto (luce, planimetria, stili senza testo) resta su Qwen.
+      const src = imageBase64 || imageUrl
+      const nb = process.env.GEMINI_API_KEY && usesText && (drawn || points.length || labels.length)
+        ? await nanoBanana(drawn || points.length
+          ? { userId, image: src, prompt: zonePrompt(custom, roomLabel(roomK), drawn ? 'zone' : 'points'), extra: [await markedCopy(src, drawn, points)], lite: true }
+          : { userId, image: src, prompt: stagePrompt({ task: 'edit', room: roomLabel(roomK), style: custom }), lite: true })
+        : null
+      if (nb) { gemini = true; used = 'nano-banana-2 (zona)'; job = { status: 'COMPLETED', output: { image_base64: nb } } }
+      else job = await runJob({ ...input, prompt, ...translation, ...(region ? { mark: region } : {}), ...(points.length ? { points } : {}), ...(labels.length ? { labels } : {}), seed, steps: 12 }) // 12 passaggi: ~8 s invece di 17 a 25, qualita' simile nel confronto del 24/09
     }
     }
   } catch (e) {

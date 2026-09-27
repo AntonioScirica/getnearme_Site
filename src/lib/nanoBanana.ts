@@ -3,9 +3,12 @@
 // compresa di accensioni e minuti a vuoto), 15-20 s invece di 70-100, la stanza resta quella vera.
 // Prompt a 5 regole provato su cantiere, cucina e camera (prove in ~/Desktop/prove-nanobanana).
 // Esce a 1K: l'ingrandimento lo fa matchInputShape (sharp), gratis.
+import sharp from 'sharp'
 import { logUsage } from '@/lib/ai'
 
 const MODEL = 'gemini-3.1-flash-image'
+// Lite per le modifiche mirate (zona, clic, richiesta scritta): stesso risultato nella prova del 27/09, meta' prezzo
+export const LITE = 'gemini-3.1-flash-lite-image'
 const USD_PER_IMAGE_1K = 0.067
 
 export type StageTask = 'furnish' | 'empty' | 'edit'
@@ -48,14 +51,15 @@ async function toInline(src: string): Promise<{ mime_type: string; data: string 
 }
 
 // Ritorna la foto (base64 JPEG/PNG) o null. userId '' = prova anonima dalla landing.
-export async function nanoBanana(o: { userId: string; image: string; prompt: string; styleRef?: string; kind?: string }): Promise<string | null> {
+export async function nanoBanana(o: { userId: string; image: string; prompt: string; styleRef?: string; extra?: string[]; kind?: string; lite?: boolean }): Promise<string | null> {
+  const model = o.lite ? LITE : MODEL
   const key = process.env.GEMINI_API_KEY
   if (!key) return null
   const t0 = Date.now()
   let ok = false
   try {
-    const images = [await toInline(o.image), ...(o.styleRef ? [await toInline(o.styleRef)] : [])]
-    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`, {
+    const images = [await toInline(o.image), ...(o.styleRef ? [await toInline(o.styleRef)] : []), ...(await Promise.all((o.extra ?? []).map(toInline)))]
+    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
       method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key }, signal: AbortSignal.timeout(120_000),
       body: JSON.stringify({
         contents: [{ parts: [...images.map(inline_data => ({ inline_data })), { text: o.prompt }] }],
@@ -72,8 +76,30 @@ export async function nanoBanana(o: { userId: string; image: string; prompt: str
     console.error('nano banana', e)
     return null
   } finally {
-    await logUsage({ userId: o.userId, kind: o.kind ?? 'photo_edit' }, false, Date.now() - t0, {}, ok, MODEL).catch(() => {})
+    await logUsage({ userId: o.userId, kind: o.kind ?? 'photo_edit' }, false, Date.now() - t0, {}, ok, model).catch(() => {})
   }
+}
+
+// Modifica su una zona o su oggetti cliccati: alla foto si aggiunge una copia con la zona segnata in rosso
+// (rettangolo, lazo o cerchi sui clic). Il modello modifica solo li' e restituisce la foto senza segni.
+type Pt = { x: number; y: number }
+export async function markedCopy(src: string, zone: { x: number; y: number; w: number; h: number; poly?: Pt[] } | null, points: Pt[]): Promise<string> {
+  const buf = src.startsWith('data:') ? Buffer.from(b64(src), 'base64') : Buffer.from(await (await fetch(src, { signal: AbortSignal.timeout(20_000) })).arrayBuffer())
+  const img = sharp(buf).rotate()
+  const { width: W = 1024, height: H = 768 } = await img.metadata()
+  const sw = Math.max(4, Math.round(Math.min(W, H) * 0.006))
+  const shapes = [
+    zone?.poly ? `<polygon points="${zone.poly.map(p => `${Math.round(p.x * W)},${Math.round(p.y * H)}`).join(' ')}" fill="none" stroke="#ff0000" stroke-width="${sw}"/>`
+      : zone ? `<rect x="${Math.round(zone.x * W)}" y="${Math.round(zone.y * H)}" width="${Math.round(zone.w * W)}" height="${Math.round(zone.h * H)}" fill="none" stroke="#ff0000" stroke-width="${sw}"/>` : '',
+    ...points.map(p => `<circle cx="${Math.round(p.x * W)}" cy="${Math.round(p.y * H)}" r="${Math.round(Math.min(W, H) * 0.04)}" fill="none" stroke="#ff0000" stroke-width="${sw}"/>`),
+  ].join('')
+  const out = await img.composite([{ input: Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}">${shapes}</svg>`) }]).jpeg({ quality: 88 }).toBuffer()
+  return `data:image/jpeg;base64,${out.toString('base64')}`
+}
+
+export function zonePrompt(request: string, room: string, marks: 'zone' | 'points'): string {
+  const what = marks === 'zone' ? 'inside the area marked by the red outline' : 'on the objects marked by the red circles'
+  return `You are a professional real estate photo editor. This room is a ${room || 'room'}. The first image is the photo to edit. The second image is the same photo with marks in red showing where to work. Request of the agent (in Italian): "${request}". Apply it only ${what}; if it asks to remove something, remove the whole object there, including its shadow and, for a lamp, its light and glow, and fill the freed area continuing the same floor, walls and light. Everything else stays exactly the same, ${FRAMING} The output is the first image edited: it must not contain any red line, circle or mark. ${OUTPUT}`
 }
 
 export { USD_PER_IMAGE_1K }
