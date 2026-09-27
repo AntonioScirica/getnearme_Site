@@ -159,47 +159,70 @@ const STYLES = ['Moderno', 'Nordico', 'Contemporaneo', 'Naturale', 'Svuota la st
 // Un solo pacchetto: il sito non costa nulla in piu' a noi e chi non lo vuole semplicemente non lo pubblica.
 // Foto "illimitate" con uso ragionevole (vedi termini), video contati perche' costano davvero.
 
+const thousands = (n: number) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+
+// crediti in grande, sotto cosa ci fai (come Higgsfield)
+function Credits({ n }: { n: number }) {
+  return (
+    <div className="mt-6 rounded-[20px] bg-canvas p-5">
+      <div className="flex items-center gap-2 font-display text-xl font-extrabold tracking-tight"><Sparkles size={16} className="text-ai" /> {thousands(n)} crediti al mese</div>
+      <div className="mt-2 space-y-1 pl-6 text-[15px] text-muted">
+        <div>= {photosFor(n)} foto arredate</div>
+        <div>oppure {videosFor(n)} video per social e portali</div>
+        <div>oppure un mix, come ti serve</div>
+      </div>
+    </div>
+  );
+}
+
+const INCLUDED = ['Il tuo sito con tutti i tuoi immobili, sul tuo nome', 'Foto più luminose sempre gratis, senza crediti', 'Annunci, report PDF e cosa c\'è vicino, per ogni immobile'];
+const Included = ({ extra }: { extra: string }) => (
+  <ul className="mt-6 space-y-3 text-[15px]">
+    {[...INCLUDED, extra].map(x => (
+      <li key={x} className="flex items-start gap-3"><span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand/10 text-brand"><Check size={12} /></span>{x}</li>
+    ))}
+  </ul>
+);
+
+// Due piani con lo stesso prodotto (stessa qualita', sito compreso): cambiano solo i crediti e come si paga.
 function Pricing() {
   const [yearly, setYearly] = useState(true);
-  const p = yearly ? PRICING.yearly : PRICING.quarterly;
+  const pro = yearly ? PRICING.yearly : PRICING.quarterly;
   const billed = yearly ? `${PRICING.yearly * 12} € fatturati ogni anno` : `${PRICING.quarterly * 3} € fatturati ogni 3 mesi`;
   return (
     <section id="prezzi" className="mx-auto max-w-6xl px-4 py-20">
       <Reveal className="mx-auto max-w-2xl text-center">
         <Pill>Prezzi</Pill>
-        <h2 className="mt-5 font-display text-4xl font-extrabold leading-[1.05] tracking-tight md:text-5xl">Un solo piano. Tutto incluso.</h2>
-        <p className="mt-5 text-lg leading-relaxed text-muted">Meno di un home staging per un solo immobile, per tutti i tuoi immobili.</p>
+        <h2 className="mt-5 font-display text-4xl font-extrabold leading-[1.05] tracking-tight md:text-5xl">Stesso prodotto, scegli quanto ti serve.</h2>
+        <p className="mt-5 text-lg leading-relaxed text-muted">Sito, foto e video in entrambi i piani. Cambiano solo i crediti.</p>
       </Reveal>
-      <Reveal delay={120} className="mx-auto mt-10 max-w-md">
-        <div className="mx-auto flex w-fit rounded-full bg-white p-1 ring-1 ring-black/5">
-          {([[false, 'Trimestrale'], [true, 'Annuale']] as const).map(([y, l]) => (
-            <button key={l} type="button" onClick={() => setYearly(y)} className={`h-10 rounded-full px-5 text-sm font-semibold ease-smooth transition-colors ${yearly === y ? 'bg-ink text-white' : 'text-muted hover:text-ink'}`}>
-              {l}{y && <span className={`ml-2 rounded-full px-2 py-0.5 text-[11px] ${yearly ? 'bg-white/15' : 'bg-brand/10 text-brand'}`}>-{Math.round((1 - PRICING.yearly / PRICING.quarterly) * 100)}%</span>}
-            </button>
-          ))}
-        </div>
-        <div className="mt-6 rounded-[32px] bg-white p-8 ring-1 ring-black/5 shadow-[0_40px_100px_-40px_rgba(0,0,0,.35)]">
-          <div className="text-sm font-semibold text-muted">Agente Immo</div>
-          <div className="mt-3 flex items-end gap-2"><span key={p} className="blur-in font-display text-6xl font-extrabold tracking-tight">{p} €</span><span className="pb-2 text-muted">/ mese</span></div>
-          <div key={billed} className="blur-in mt-1 text-sm text-muted">{billed}</div>
-          {/* crediti in grande, sotto cosa ci fai (come Higgsfield) */}
-          <div className="mt-7 rounded-[20px] bg-canvas p-5">
-            <div className="flex items-center gap-2 font-display text-xl font-extrabold tracking-tight"><Sparkles size={16} className="text-ai" /> {String(PRICING.credits).replace(/\B(?=(\d{3})+(?!\d))/g, '.')} crediti al mese</div>
-            <div className="mt-2 space-y-1 pl-6 text-[15px] text-muted">
-              <div>= {photosFor(PRICING.credits)} foto arredate</div>
-              <div>oppure {videosFor(PRICING.credits)} video per social e portali</div>
-              <div>oppure un mix, come ti serve</div>
+      <div className="mx-auto mt-12 grid max-w-4xl items-start gap-5 md:grid-cols-2">
+        <Reveal delay={80} className="rounded-[32px] bg-white p-8 ring-1 ring-black/5">
+          <div className="text-sm font-semibold text-muted">Starter</div>
+          <div className="mt-3 flex items-end gap-2"><span className="font-display text-6xl font-extrabold tracking-tight">{PRICING.starter} €</span><span className="pb-2 text-muted">/ mese</span></div>
+          <div className="mt-1 text-sm text-muted">Mensile, disdici quando vuoi</div>
+          <Credits n={PRICING.starterCredits} />
+          <Included extra="Per chi ha pochi immobili al mese" />
+          <Cta ghost className="mt-8 w-full justify-center">Prova gratis {PRICING.trialDays} giorni</Cta>
+        </Reveal>
+        <Reveal delay={160} className="relative rounded-[32px] bg-white p-8 ring-2 ring-ink shadow-[0_40px_100px_-40px_rgba(0,0,0,.35)]">
+          <span className="absolute -top-3 left-8 rounded-full bg-ink px-3 py-1 text-xs font-semibold text-white">Consigliato</span>
+          <div className="flex items-center justify-between gap-3">
+            <div className="text-sm font-semibold text-muted">Pro</div>
+            <div className="flex rounded-full bg-canvas p-1">
+              {([[false, 'Trimestrale'], [true, 'Annuale']] as const).map(([y, l]) => (
+                <button key={l} type="button" onClick={() => setYearly(y)} className={`h-8 rounded-full px-3 text-xs font-semibold ease-smooth transition-colors ${yearly === y ? 'bg-ink text-white' : 'text-muted hover:text-ink'}`}>{l}</button>
+              ))}
             </div>
           </div>
-          <ul className="mt-6 space-y-3 text-[15px]">
-            {['Foto più luminose sempre gratis, senza crediti', 'Il tuo sito con tutti i tuoi immobili, sul tuo nome', 'Annunci, report PDF e cosa c\'è vicino, per ogni immobile', 'Lo disdici quando vuoi, alla fine del periodo'].map(x => (
-              <li key={x} className="flex items-start gap-3"><span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand/10 text-brand"><Check size={12} /></span>{x}</li>
-            ))}
-          </ul>
+          <div className="mt-3 flex items-end gap-2"><span key={pro} className="blur-in font-display text-6xl font-extrabold tracking-tight">{pro} €</span><span className="pb-2 text-muted">/ mese</span></div>
+          <div key={billed} className="blur-in mt-1 text-sm text-muted">{billed}</div>
+          <Credits n={PRICING.credits} />
+          <Included extra="Il triplo dei crediti dello Starter" />
           <Cta className="mt-8 w-full justify-center">Prova gratis {PRICING.trialDays} giorni</Cta>
-          <p className="mt-3 text-center text-xs text-muted">Prova con {PRICING.trialCredits} crediti, nessuna carta. Prezzi finali, senza IVA aggiunta.</p>
-        </div>
-      </Reveal>
+        </Reveal>
+      </div>
+      <p className="mt-6 text-center text-sm text-muted">Prova di {PRICING.trialDays} giorni con {PRICING.trialCredits} crediti, nessuna carta. Prezzi finali, senza IVA aggiunta.</p>
     </section>
   );
 }

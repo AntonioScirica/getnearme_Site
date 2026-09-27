@@ -34,7 +34,7 @@ const jsonLd = {
       '@type': 'SoftwareApplication', name: 'Agente Immo', applicationCategory: 'BusinessApplication', operatingSystem: 'Web',
       url: URL, description: DESC, inLanguage: 'it-IT', audience: { '@type': 'BusinessAudience', audienceType: 'Agenti immobiliari e agenzie immobiliari' },
       featureList: ['Home staging virtuale con AI', 'Video immobiliari per i social', 'Sito personale per agente immobiliare', 'Annunci e report per ogni immobile'],
-      offers: { '@type': 'AggregateOffer', priceCurrency: 'EUR', lowPrice: PRICING.yearly, highPrice: PRICING.quarterly, offerCount: 2, description: 'Prezzo mensile: abbonamento annuale o trimestrale' },
+      offers: { '@type': 'AggregateOffer', priceCurrency: 'EUR', lowPrice: PRICING.starter, highPrice: PRICING.quarterly, offerCount: 3, description: 'Prezzo mensile: Starter mensile, Pro annuale o trimestrale' },
       publisher: { '@id': 'https://agenteimmo.me/#org' },
     },
     { '@type': 'FAQPage', mainEntity: FAQ.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) },
