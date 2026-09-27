@@ -162,7 +162,10 @@ export default function AgenteImmoLanding() {
   useEffect(() => { const id = setInterval(() => setStyleI(v => (v + 1) % STYLES.length), 2200); return () => clearInterval(id); }, []);
   const vid = useRef<HTMLVideoElement>(null);
   const vid2 = useRef<HTMLVideoElement>(null);
-  useEffect(() => { [vid, vid2].forEach(v => { if (!v.current) return; if (videoOn) v.current.play().catch(() => {}); else v.current.pause(); }); }, [videoOn]);
+  // i video (1,5 MB) si scaricano solo quando la sezione arriva in vista: prima non rubano banda al primo schermo
+  const [videoSeen, setVideoSeen] = useState(false);
+  useEffect(() => { if (videoOn) setVideoSeen(true); }, [videoOn]);
+  useEffect(() => { [vid, vid2].forEach(v => { if (!v.current) return; if (videoOn) v.current.play().catch(() => {}); else v.current.pause(); }); }, [videoOn, videoSeen]);
 
   return (
     <div className="dots-bg min-h-screen font-body text-ink antialiased">
@@ -185,8 +188,8 @@ export default function AgenteImmoLanding() {
         <div className="mx-auto max-w-3xl text-center">
           <Reveal><h1><Pill><Sparkles size={13} className="text-ai" /> Il software per agenti immobiliari</Pill></h1></Reveal>
           <p className="mt-6 font-display text-[44px] font-extrabold leading-[1.02] tracking-[-0.03em] md:text-[76px]">
-            {'Più incarichi, case vendute prima.'.split(' ').map((w, i) => <span key={i} className="blur-in inline-block" style={{ animationDelay: `${80 + i * 60}ms` }}>{w}&nbsp;</span>)}
-            <span className="block text-muted/60">{'Senza spendere di più.'.split(' ').map((w, i) => <span key={i} className="blur-in inline-block" style={{ animationDelay: `${420 + i * 60}ms` }}>{w}&nbsp;</span>)}</span>
+            {'Più incarichi, case vendute prima.'.split(' ').map((w, i) => <span key={i} className="blur-in inline-block" style={{ animationDelay: `${i * 40}ms` }}>{w}&nbsp;</span>)}
+            <span className="block text-muted/60">{'Senza spendere di più.'.split(' ').map((w, i) => <span key={i} className="blur-in inline-block" style={{ animationDelay: `${160 + i * 40}ms` }}>{w}&nbsp;</span>)}</span>
           </p>
           <Reveal delay={600}><p className="mx-auto mt-6 max-w-xl text-lg leading-relaxed text-muted">Il proprietario sceglie l&apos;agente che presenta meglio la sua casa. L&apos;acquirente si ferma sull&apos;annuncio che si nota. Con Agente Immo ogni tuo immobile si presenta al meglio dal primo giorno, senza fotografo, home stager e web agency da pagare.</p></Reveal>
           <Reveal delay={700} className="mt-8 flex flex-wrap items-center justify-center gap-3">
@@ -279,10 +282,10 @@ export default function AgenteImmoLanding() {
           <Reveal delay={150} className="md:order-1">
             <div className="relative">
               <Tilt className="overflow-hidden rounded-[24px] bg-white p-2 shadow-[0_30px_80px_-30px_rgba(0,0,0,.3)] ring-1 ring-black/5">
-                <video ref={vid} src={VIDEO} poster="https://pub-a668674eaa484e8e8f2f10c264392bfc.r2.dev/spike-video/soggiorno.jpg" autoPlay muted loop playsInline preload="auto" className="aspect-video w-full rounded-2xl bg-canvas object-cover" />
+                <video ref={vid} src={videoSeen ? VIDEO : undefined} poster="https://pub-a668674eaa484e8e8f2f10c264392bfc.r2.dev/spike-video/soggiorno.jpg" muted loop playsInline preload="none" className="aspect-video w-full rounded-2xl bg-canvas object-cover" />
               </Tilt>
               <div className="absolute -bottom-8 -right-4 w-[46%] rotate-[4deg] overflow-hidden rounded-[20px] bg-white p-1.5 shadow-[0_24px_60px_-24px_rgba(0,0,0,.4)] ring-1 ring-black/5 md:-right-10">
-                <video ref={vid2} src={VIDEO2} poster="https://pub-a668674eaa484e8e8f2f10c264392bfc.r2.dev/spike-video/cucina.jpg" autoPlay muted loop playsInline preload="auto" className="aspect-video w-full rounded-[14px] bg-canvas object-cover" />
+                <video ref={vid2} src={videoSeen ? VIDEO2 : undefined} poster="https://pub-a668674eaa484e8e8f2f10c264392bfc.r2.dev/spike-video/cucina.jpg" muted loop playsInline preload="none" className="aspect-video w-full rounded-[14px] bg-canvas object-cover" />
               </div>
             </div>
           </Reveal>
