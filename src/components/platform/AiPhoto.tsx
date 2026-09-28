@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Check, Download, Loader2, Wand2, X } from 'lucide-react';
+import { Building2, Check, Download, Loader2, Wand2, X } from 'lucide-react';
 import { platformFontVars } from '@/lib/platformFonts';
 import { downloadImage } from '@/lib/staging';
 import { AI_MOCK } from '@/lib/aiMock';
@@ -68,8 +68,8 @@ export function useAiPhoto() {
 }
 
 // Riquadro foto: originale con alone blu mentre lavora, poi slider prima/dopo con Scarica.
-export function AiPhotoStage({ src, busy, out, reveal, msg, fileName, onDownload, parked, onUnpark, className = 'aspect-[3/2] max-h-[60vh]' }: {
-  src: string; busy: boolean; out: string | null; reveal: Reveal; msg: number; fileName: string; onDownload?: (url: string) => void; parked?: boolean; onUnpark?: () => void; className?: string;
+export function AiPhotoStage({ src, busy, out, reveal, msg, fileName, onDownload, parked, onUnpark, onSave, saveActive, className = 'aspect-[3/2] max-h-[60vh]' }: {
+  src: string; busy: boolean; out: string | null; reveal: Reveal; msg: number; fileName: string; onDownload?: (url: string) => void; parked?: boolean; onUnpark?: () => void; onSave?: () => void; saveActive?: boolean; className?: string;
 }) {
   const [saved, setSaved] = useState(false);
   // larghezza vera dell'etichetta (Scarica / Scaricato): serve un numero per animare il passaggio a cerchio
@@ -117,6 +117,13 @@ export function AiPhotoStage({ src, busy, out, reveal, msg, fileName, onDownload
           <span className={`blur-in bottom-3 right-3 ${tag}`}>Dopo</span>
           {/* un solo pulsante: Scarica (dopo il clic "Scaricato" per 2 s); con `parked` (Modifica aperta) si stringe e diventa la X.
               Sta sopra la selezione (z-30) cosi' non ci sono mai due pulsanti uno sull'altro. */}
+          {/* Salva (nell'immobile) accanto a Scarica, stesso stile; con Modifica aperta sparisce */}
+          {onSave && (
+            <button onPointerDown={e => e.stopPropagation()} onClick={onSave} aria-pressed={saveActive} style={{ right: 12 + (labelW ?? 96) + 8 }}
+              className={`blur-in absolute top-3 z-30 flex h-9 items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 text-xs font-semibold shadow-sm ring-1 ring-black/5 backdrop-blur-md ease-smooth transition-[opacity,background-color] ${saveActive ? 'bg-white' : 'bg-white/85 hover:bg-white'} ${parked ? 'pointer-events-none opacity-0' : ''}`}>
+              <Building2 size={14} /> Salva
+            </button>
+          )}
           <button onPointerDown={e => e.stopPropagation()} aria-label={parked ? 'Annulla selezione' : 'Scarica'}
             onClick={() => { if (parked) { onUnpark?.(); return; } downloadImage(out, fileName); onDownload?.(out); setSaved(true); clearTimeout(savedT.current); savedT.current = setTimeout(() => setSaved(false), 2000); }}
             style={{ width: parked ? 36 : labelW }}
