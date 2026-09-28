@@ -167,7 +167,7 @@ const planStyle = (t: string) => (/nordic|scandinav/i.test(t) ? 'nordic' : /luss
 // Conversazione salvata nella memoria della scheda (sessionStorage): se Chrome ricarica una scheda rimasta in background
 // (risparmio memoria) la chat torna com'era. Cambiando pagina della piattaforma si cancella (la chat riparte vuota, come prima).
 const SAVE_KEY = 'gnm-staging-chat';
-type Saved = { msgs: Msg[]; base: string | null; kind: string | null; scene: Scene; roomState: string | null; project: string | null; origin: string | null };
+type Saved = { msgs: Msg[]; base: string | null; kind: string | null; scene: Scene; roomState: string | null; project: string | null; origin: string | null; emptyFrom?: string | null };
 function loadSaved(): Saved | null {
   try {
     const raw = sessionStorage.getItem(SAVE_KEY);
@@ -188,6 +188,9 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   const [saveOpen, setSaveOpen] = useState<string | null>(null); // risultato con il pannello "Salva nell'immobile" aperto
   // com'e' la stanza nella foto di lavoro (vuota, disordinata, datata, arredata): cambia suggerimento e proposte
   const [roomState, setRoomState] = useState<string | null>(saved?.roomState ?? null);
+  // foto caricata che era una stanza vuota: il video Prima e dopo parte da questa (stanza vera -> arredata), non da una
+  // vuota rifatta dall'AI (che non combacia e lascia pezzi)
+  const [emptyFrom, setEmptyFrom] = useState<string | null>(saved?.emptyFrom ?? null);
   const [otherFor, setOtherFor] = useState<string | null>(null); // messaggio in cui l'agente scrive a mano cos'e' la foto
   // chiusura di Modifica: 300 ms in cui selezione e campo sfumano mentre il pulsante torna Scarica e il divisore rientra
   const [zoneClosing, setZoneClosing] = useState(false);
@@ -248,8 +251,8 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   }, [busy]);
 
   useEffect(() => {
-    try { sessionStorage.setItem(SAVE_KEY, JSON.stringify({ msgs, base, kind, scene, roomState, project, origin })); } catch { /* troppo grande: si salva al prossimo cambio */ }
-  }, [msgs, base, kind, scene, roomState, project, origin]);
+    try { sessionStorage.setItem(SAVE_KEY, JSON.stringify({ msgs, base, kind, scene, roomState, project, origin, emptyFrom })); } catch { /* troppo grande: si salva al prossimo cambio */ }
+  }, [msgs, base, kind, scene, roomState, project, origin, emptyFrom]);
   // uscita dalla chat (altra pagina della piattaforma): conversazione chiusa. Una ricarica della scheda non passa di qui.
   useEffect(() => () => { try { sessionStorage.removeItem(SAVE_KEY); } catch { /* niente */ } }, []);
   const patch = (id: string, p: Partial<Extract<Msg, { role: 'ai' }>>) => setMsgs(ms => ms.map(m => (m.id === id && m.role === 'ai' ? { ...m, ...p } : m)));
@@ -269,12 +272,12 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
     const id = uid();
     setMsgs(ms => [...ms, { id, role: 'user', image: img, seen: null }]);
     setKind(null); // nuova foto: suggerimenti generici finche' non la riconosce
-    setRoomState(null);
+    setRoomState(null); setEmptyFrom(null);
     setBase(img);
-    await applySeen(id, classified);
+    await applySeen(id, classified, img);
   };
   // Tipo di foto e stanza: imposta il tipo da solo e lo dice nel messaggio guida
-  const applySeen = async (id: string, classified: Promise<Response | null>) => {
+  const applySeen = async (id: string, classified: Promise<Response | null>, photo: string) => {
     try {
       const r = await classified;
       if (!r) return;
@@ -285,6 +288,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
         setMsgs(ms => ms.map(m => (m.id === id && m.role === 'user' ? { ...m, seen: what } : m)));
         setKind(what);
         setRoomState(c.state || null);
+        setEmptyFrom(c.scene === 'interno' && c.state === 'vuota' ? photo : null);
       }
     } catch { /* senza riconoscimento resta il tipo scelto a mano */ }
   };
@@ -341,7 +345,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
     touch();
     patchV(m.id, { step: 'render', photo, picks: [...m.picks, pick === 'Stanza com’è' ? { label: pick, icon: 'keep' } : { label: pick, icon: 'photo', src: photo }], err: undefined });
     const fail = 'Video non riuscito, riprova.';
-    const res = await authFetch('/api/platform/video', { method: 'POST', headers: QUIET, body: JSON.stringify({ ...(photo.startsWith('data:') ? { imageBase64: photo } : { imageUrl: photo }), anim: m.anim, ...(project ? { projectId: project } : {}) }) }).catch(() => null);
+    const res = await authFetch('/api/platform/video', { method: 'POST', headers: QUIET, body: JSON.stringify({ ...(photo.startsWith('data:') ? { imageBase64: photo } : { imageUrl: photo }), ...(emptyFrom && emptyFrom !== photo ? { from: emptyFrom } : {}), anim: m.anim, ...(project ? { projectId: project } : {}) }) }).catch(() => null);
     const d = res ? await res.json().catch(() => ({})) : {};
     if (!d.job) { patchV(m.id, { err: d.error === 'no_credits' ? NO_CREDITS : d.error === 'timeout' ? 'La GPU si sta avviando, riprova tra un minuto.' : d.error === 'nothing_to_animate' ? 'Nella foto non ci sono mobili da animare.' : fail }); return; }
     patchV(m.id, { job: d.job });
@@ -417,8 +421,8 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
     queueMicrotask(() => {
       setProject(initial.project ?? null); setOrigin(photo); touch();
       setMsgs(ms => [...ms, { id, role: 'user', image: photo, seen: null }]);
-      setKind(null); setRoomState(null); setBase(photo);
-      applySeen(id, early);
+      setKind(null); setRoomState(null); setEmptyFrom(null); setBase(photo);
+      applySeen(id, early, photo);
     });
   }, [initial]); // eslint-disable-line react-hooks/exhaustive-deps
   const closeLibrary = useCallback(() => setLibrary(false), []);

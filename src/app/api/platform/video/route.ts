@@ -22,7 +22,7 @@ const reply = ({ status, ...r }: VideoResult) => NextResponse.json(status === 'w
 export async function POST(req: NextRequest) {
   const userId = await userOf(req)
   if (!userId) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
-  let body: { imageUrl?: string; imageBase64?: string; projectId?: string; anim?: string }
+  let body: { imageUrl?: string; imageBase64?: string; projectId?: string; anim?: string; from?: string }
   try { body = await req.json() } catch { return NextResponse.json({ error: 'bad_request' }, { status: 400 }) }
   const imageUrl = typeof body.imageUrl === 'string' ? body.imageUrl : ''
   const imageBase64 = typeof body.imageBase64 === 'string' && /^data:image\/(jpeg|png|webp);base64,/.test(body.imageBase64) && body.imageBase64.length < 8_000_000 ? body.imageBase64 : ''
@@ -31,7 +31,9 @@ export async function POST(req: NextRequest) {
   const anim = parseAnim(body.anim), action = anim === 'cantiere' ? 'video_cantiere' : 'video'
   if (!(await canAfford(userId, action))) return NextResponse.json({ error: 'no_credits', cost: CREDIT_COST[action] }, { status: 402 })
   const pid = typeof body.projectId === 'string' && /^[\w-]{1,64}$/.test(body.projectId) ? body.projectId : ''
-  return reply(await startVideo(userId, userId, { imageUrl, imageBase64, projectId: pid, anim }))
+  // foto vera di partenza (stanza vuota caricata dall'agente): stesse regole della foto principale
+  const from = typeof body.from === 'string' && ((/^data:image\/(jpeg|png|webp);base64,/.test(body.from) && body.from.length < 8_000_000) || allowedUrl(body.from)) ? body.from : undefined
+  return reply(await startVideo(userId, userId, { imageUrl, imageBase64, projectId: pid, anim, from }))
 }
 
 export async function GET(req: NextRequest) {
