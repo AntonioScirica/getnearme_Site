@@ -61,7 +61,13 @@ export default function Tour({ onDone }: { onDone: () => void }) {
     loop();
     return () => cancelAnimationFrame(raf);
   }, [step]);
-  const finish = () => { localStorage.removeItem(TOUR_KEY); if (location.hash !== '#/') location.hash = '#/'; onDone(); };
+  // fine (Iniziamo o Salta): tutto sfuma in 600 ms, poi si chiude sulla home
+  const [leaving, setLeaving] = useState(false);
+  const finish = () => {
+    if (leaving) return;
+    setLeaving(true); localStorage.removeItem(TOUR_KEY);
+    setTimeout(() => { if (location.hash !== '#/') location.hash = '#/'; onDone(); }, 600);
+  };
   const next = () => (i < STEPS.length - 1 ? setI(i + 1) : finish());
   useEffect(() => {
     const key = (e: KeyboardEvent) => { if (e.key === 'Escape') finish(); if (e.key === 'ArrowRight' || e.key === 'Enter') next(); };
@@ -83,7 +89,7 @@ export default function Tour({ onDone }: { onDone: () => void }) {
   // nome di transizione: durante una View Transition (onboarding -> home) le card della home vanno sopra a tutto,
   // il velo deve starci anche lui, e sopra
   return (
-    <div className="fade fixed inset-0 z-[310]" style={{ viewTransitionName: 'tour' }} role="dialog" aria-label="Tour della piattaforma">
+    <div className={`fixed inset-0 z-[310] ${leaving ? 'tour-out pointer-events-none' : 'fade'}`} style={{ viewTransitionName: 'tour' }} role="dialog" aria-label="Tour della piattaforma">
       {/* la luce: un riquadro trasparente con un'ombra enorme che scurisce tutto il resto */}
       {light
         ? <div className="pointer-events-none absolute" style={{ ...light, borderRadius: Math.min(28, light.height / 2), boxShadow: '0 0 0 9999px rgba(15,17,25,.62), 0 0 0 3px rgba(255,255,255,.9), 0 0 40px 6px rgba(83,126,236,.55)', transition: ease }} />
