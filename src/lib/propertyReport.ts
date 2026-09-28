@@ -7,7 +7,7 @@
 //   3. l'immobile: descrizione e caratteristiche complete
 //   4. zona e costi, poi i contatti dell'agente
 import { calculateDetailedCosts } from './reportHtml'
-import { ENERGY_COLORS, GROUPS, groupFacts, type Details } from './propertyFields'
+import { ALL_FIELDS, ENERGY_COLORS, GROUPS, formatValue, visible, type Details } from './propertyFields'
 import type { SiteConfig, SiteProperty } from './siteTemplates'
 import type { Poi } from './zone'
 
@@ -28,7 +28,23 @@ const ICON: Record<string, string> = {
   web: '<circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20M2 12h20"/>',
   check: '<path d="M20 6 9 17l-5-5"/>',
   walk: '<circle cx="13" cy="4" r="1"/><path d="m7 21 3-4M16 21l-2-4-3-3 1-6M6 12l2-3 3-1 3 3 3 1"/>',
+  piano: '<path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z"/><path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12"/><path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17"/>',
+  stato: '<path d="M14 9.536V7a4 4 0 0 1 4-4h1.5a.5.5 0 0 1 .5.5V5a4 4 0 0 1-4 4 4 4 0 0 0-4 4c0 2 1 3 1 5a5 5 0 0 1-1 3"/><path d="M4 9a5 5 0 0 1 8 4 5 5 0 0 1-8-4"/><path d="M5 21h14"/>',
+  anno: '<path d="M16 14v2.2l1.6 1M16 2v4M21 7.5V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h3.5M3 10h5M8 2v4"/><circle cx="16" cy="16" r="6"/>',
+  riscaldamento: '<path d="M12 3q1 4 4 6.5t3 5.5a1 1 0 0 1-14 0 5 5 0 0 1 1-3 1 1 0 0 0 5 0c0-2-1.5-3-1.5-5q0-2 2.5-4"/>',
+  spese_condominiali: '<path d="M4 10h12M4 14h9M19 6a7.7 7.7 0 0 0-5.2-2A7.9 7.9 0 0 0 6 12c0 4.4 3.5 8 7.8 8 2 0 3.8-.8 5.2-2"/>',
+  posto_auto: '<path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/>',
+  esposizione: '<path d="M12.8 19.6A2 2 0 1 0 14 16H2M17.5 8a2.5 2.5 0 1 1 2 4H2M9.8 4.4A2 2 0 1 1 11 8H2"/>',
+  ascensore: '<path d="m21 16-4 4-4-4M17 20V4m-14 4 4-4 4 4M7 4v16"/>',
+  classe_energetica: '<path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>',
+  arredato: '<path d="M19 9V6a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v3"/><path d="M3 16a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-5a2 2 0 0 0-4 0v1.5a.5.5 0 0 1-.5.5h-9a.5.5 0 0 1-.5-.5V11a2 2 0 0 0-4 0z"/><path d="M5 18v2M19 18v2"/>',
+  climatizzazione: '<path d="m10 20-1.25-2.5L6 18M10 4 8.75 6.5 6 6m8 14 1.25-2.5L18 18m-4-14 1.25 2.5L18 6m-1 15-3-6h-4m7-12-3 6 1.5 3M2 12h6.5L10 9m10 1-1.5 2 1.5 2M22 12h-6.5L14 15M4 10l1.5 2L4 14m3 7 3-6-1.5-3M7 3l3 6h4"/>',
+  cucina: '<path d="m16 2-2.3 2.3a3 3 0 0 0 0 4.2l1.8 1.8a3 3 0 0 0 4.2 0L22 8m-19.9 13.8 6.4-6.3M19 5l-7 7"/>',
+  piani_edificio: '<path d="M10 12h4M10 8h4M14 21v-3a2 2 0 0 0-4 0v3M6 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16"/>',
+  disponibilita: '<path d="M16 14v2.2l1.6 1M16 2v4M21 7.5V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h3.5M3 10h5M8 2v4"/><circle cx="16" cy="16" r="6"/>',
 }
+// i dati chiave della scheda, in ordine di importanza per chi compra: al massimo 8 riquadri con icona
+const KEY_FIELDS = ['stato', 'piano', 'classe_energetica', 'riscaldamento', 'anno', 'spese_condominiali', 'posto_auto', 'ascensore', 'esposizione', 'arredato', 'climatizzazione', 'cucina', 'piani_edificio', 'disponibilita']
 const icon = (k: string, size = 16) => `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ICON[k] ?? ''}</svg>`
 
 export type ReportInput = {
@@ -47,7 +63,11 @@ export function buildPropertyReportHtml(a: ReportInput): string {
   const tipo = p.tipologia?.split('|')[0]?.trim() || 'Immobile'
   const facts = ([['mq', p.mq ? `${p.mq} m²` : '', 'Superficie'], ['locali', p.locali, 'Locali'], ['camere', p.camere, 'Camere'], ['bagni', p.bagni, 'Bagni']] as const).filter(([, v]) => v)
   const perSqm = showPrice && !rent && p.mq ? `${Math.round(p.prezzo / p.mq).toLocaleString('it-IT')} €/m²` : ''
-  const groups = GROUPS.map(g => ({ title: g.title, rows: groupFacts(g, d).filter(r => !/virtual|link/i.test(r.label)) })).filter(g => g.rows.length)
+  const fieldBy = (k: string) => ALL_FIELDS.find(f => f.key === k)
+  const val = (k: string) => { const f = fieldBy(k); return f && visible(f, d) ? formatValue(f, d[k]) : null }
+  const keyTiles = KEY_FIELDS.map(k => ({ k, f: fieldBy(k)!, v: val(k) })).filter(x => x.v).slice(0, 8)
+  const inTiles = new Set(keyTiles.map(x => x.k))
+  const groups = GROUPS.map(g => ({ title: g.title, rows: g.fields.filter(f => visible(f, d) && f.key !== 'riferimento' && !inTiles.has(f.key) && f.key !== 'dotazioni' && f.key !== 'esterni' && !/virtual|link/i.test(f.label)).map(f => ({ label: f.label, value: formatValue(f, d[f.key]) })).filter((r): r is { label: string; value: string } => !!r.value) })).filter(g => g.rows.length)
   const extras = [...new Set([...(Array.isArray(d.esterni) ? d.esterni : []), ...(Array.isArray(d.dotazioni) ? d.dotazioni : [])] as string[])]
   const energy = typeof d.classe_energetica === 'string' ? d.classe_energetica : ''
   const costs = !rent && showPrice ? calculateDetailedCosts(p.prezzo, p.mq || 0) : null
@@ -104,13 +124,14 @@ export function buildPropertyReportHtml(a: ReportInput): string {
   }
 
   // 3. l'immobile: descrizione in alto (al massimo meta' pagina), caratteristiche sotto su due colonne
-  const groupsHtml = groups.map(g => `<div class="card"><h3>${esc(g.title)}</h3>${g.rows.map(r => `<div class="row"><span>${esc(r.label)}</span><b>${esc(r.value)}</b></div>`).join('')}</div>`).join('')
-  const chipsHtml = extras.length ? `<div class="chips">${extras.map(x => `<span>${icon('check', 12)} ${esc(x)}</span>`).join('')}</div>` : ''
-  const energyHtml = energy ? `<div class="energy"><span style="background:${ENERGY_COLORS[energy] ?? '#9ca3af'};color:${/^(B|C|D)$/.test(energy) ? '#1a1a1a' : '#fff'}">${esc(energy)}</span> Classe energetica${d.ipe ? ` · ${esc(d.ipe)} kWh/m² anno` : ''}</div>` : ''
-  if (desc || groups.length || extras.length || energy) pages.push(`<section class="page">
+  const tilesHtml = keyTiles.length ? `<div class="tiles">${keyTiles.map(({ k, f, v }) => `<div class="tile"><span class="ic">${k === 'classe_energetica' ? icon(k, 18) : icon(k, 18)}</span><b>${k === 'classe_energetica' ? `<i class="badge" style="background:${ENERGY_COLORS[String(v)] ?? '#9ca3af'};color:${/^(B|C|D)$/.test(String(v)) ? '#1a1a1a' : '#fff'}">${esc(v)}</i>${d.ipe ? `<small> ${esc(d.ipe)} kWh/m²a</small>` : ''}` : esc(v)}</b><span>${esc(f.label.replace('Box o posto auto', 'Box / posto auto').replace('Spese condominiali', 'Spese cond.'))}</span></div>`).join('')}</div>` : ''
+  const groupsHtml = groups.length ? `<div class="groups">${groups.map(g => `<div class="grp"><h3>${esc(g.title)}</h3>${g.rows.map(r => `<div class="row"><span>${esc(r.label)}</span><b>${esc(r.value)}</b></div>`).join('')}</div>`).join('')}</div>` : ''
+  const chipsHtml = extras.length ? `<div class="chips-block"><h3>Dotazioni e spazi esterni</h3><div class="chips">${extras.map(x => `<span>${icon('check', 12)} ${esc(x)}</span>`).join('')}</div></div>` : ''
+  const energyHtml = energy && !inTiles.has('classe_energetica') ? `<div class="energy"><span style="background:${ENERGY_COLORS[energy] ?? '#9ca3af'};color:${/^(B|C|D)$/.test(energy) ? '#1a1a1a' : '#fff'}">${esc(energy)}</span> Classe energetica${d.ipe ? ` · ${esc(d.ipe)} kWh/m² anno` : ''}</div>` : ''
+  if (desc || groups.length || keyTiles.length || extras.length || energy) pages.push(`<section class="page">
     <div class="pad fill">
-      ${desc ? `<div class="eyebrow">${String(pages.length + 1).padStart(2, '0')} · La casa</div><h2>L'immobile</h2><div class="${groups.length && photos[1] ? 'desc-row' : ''}"><div class="desc ${groups.length ? 'half' : 'full'}">${esc(desc).split(/\n{2,}/).map(t => `<p>${t.replace(/\n/g, '<br>')}</p>`).join('')}</div>${groups.length && photos[1] ? `<div class="side-photo"><img src="${esc(photos[photos.length > 2 ? 2 : 1])}" alt=""></div>` : ''}</div>` : ''}
-      ${groups.length || extras.length || energy ? `${desc ? '<div class="sep"></div>' : `<div class="eyebrow">${String(pages.length + 1).padStart(2, '0')} · La casa</div>`}<h2>Caratteristiche</h2>${energyHtml}<div class="groups">${groupsHtml}</div>${chipsHtml}` : ''}
+      ${desc ? `<div class="eyebrow">${String(pages.length + 1).padStart(2, '0')} · La casa</div><h2>L'immobile</h2><div class="${(groups.length || keyTiles.length) && photos[1] ? 'desc-row' : ''}"><div class="desc ${groups.length || keyTiles.length ? 'half' : 'full'}">${esc(desc).split(/\n{2,}/).map(t => `<p>${t.replace(/\n/g, '<br>')}</p>`).join('')}</div>${(groups.length || keyTiles.length) && photos[1] ? `<div class="side-photo"><img src="${esc(photos[photos.length > 2 ? 2 : 1])}" alt=""></div>` : ''}</div>` : ''}
+      ${groups.length || keyTiles.length || extras.length || energy ? `${desc ? '<div class="sep"></div>' : `<div class="eyebrow">${String(pages.length + 1).padStart(2, '0')} · La casa</div>`}<h2>Caratteristiche</h2>${energyHtml}${tilesHtml}${groupsHtml}${chipsHtml}` : ''}
     </div>
     ${foot(pages.length + 1)}
   </section>`)
@@ -173,9 +194,15 @@ h2{font-size:21px;margin:0 0 10px;letter-spacing:-.01em}h3{font-size:11.5px;marg
 .desc-row{display:grid;grid-template-columns:1fr 62mm;gap:8mm;align-items:start}.side-photo{height:74mm;border-radius:16px;overflow:hidden;background:#f2f2f0}.side-photo img{width:100%;height:100%;object-fit:cover;display:block}
 .desc{font-size:12.5px;line-height:1.62;color:#444;overflow:hidden}.desc.half{max-height:74mm}.desc.full{max-height:236mm;column-count:2;column-gap:10mm}.desc p{margin:0 0 8px;break-inside:avoid}
 .energy{display:flex;align-items:center;gap:10px;font-size:13px;margin:-2px 0 10px}.energy span{font-weight:800;border-radius:8px;padding:4px 10px}
-.groups{columns:2;column-gap:10px}
+/* dati chiave con icona, poi il resto della scheda in due colonne a righe sottili */
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:2px 0 12px}
+.tile{background:#f6f6f4;border-radius:14px;padding:10px 12px;display:flex;flex-direction:column;gap:1px;min-height:62px}.tile .ic{color:${c};height:20px;display:flex;align-items:center;margin-bottom:5px}.tile b{font-size:13.5px;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.tile span:last-child{font-size:10px;color:#777;margin-top:2px}
+.badge{display:inline-block;font-style:normal;font-weight:800;border-radius:6px;padding:1px 8px;font-size:12.5px}.tile small{font-size:10px;color:#777;font-weight:500}
+.groups{columns:2;column-gap:12mm}
+.grp{break-inside:avoid;margin-bottom:12px;padding-top:2px;border-top:2px solid ${c}22}.grp h3{margin:8px 0 2px}
+.chips-block{margin-top:4px}.chips-block h3{margin-bottom:6px}
 .card{break-inside:avoid;background:#f6f6f4;border-radius:14px;padding:10px 12px;margin-bottom:10px}
-.row{display:flex;justify-content:space-between;gap:12px;font-size:11.5px;padding:4px 0;border-bottom:1px solid #e6e6e2}.row:last-child{border-bottom:0}.row span{color:#666}.row b{text-align:right}
+.row{display:flex;justify-content:space-between;gap:12px;font-size:11.5px;padding:5px 0;border-bottom:1px solid #ececea}.row:last-child{border-bottom:0}.row span{color:#666}.row b{text-align:right}.card .row{border-color:#e6e6e2}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}.chips span{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;background:#f6f6f4;border-radius:999px;padding:5px 11px}.chips svg{color:${c}}
 .energy-chip i{display:inline-block;width:9px;height:9px;border-radius:999px}
 /* zona e costi */
