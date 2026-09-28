@@ -120,7 +120,8 @@ export async function POST(req: NextRequest) {
       // Svuota: prima con maschera e inpainting (lib/emptyRoom), che non ridisegna la stanza; se non riesce, Nano Banana
       const masked = task === 'empty' ? await emptyRoomMasked({ userId, image: imageBase64 || imageUrl, kind: 'svuota' }) : null
       // Arredo: GPT Image 2 (FURNISH_MODEL=gpt, ~0,041 $ contro 0,067 $, prova del 28/09), senza foto di stile; se non risponde, Nano Banana 2
-      const gpt = !masked && task === 'furnish' && !styleRef && process.env.FURNISH_MODEL === 'gpt' ? await gptImage({ userId, image: imageBase64 || imageUrl, prompt: nbPrompt, kind: 'arreda' }) : null
+      const gpt = !masked && !styleRef && ((task === 'furnish' && process.env.FURNISH_MODEL === 'gpt') || (task === 'edit' && process.env.EDIT_MODEL === 'gpt'))
+        ? await gptImage({ userId, image: imageBase64 || imageUrl, prompt: nbPrompt, kind: task === 'furnish' ? 'arreda' : 'modifica', ...(task === 'edit' ? { quality: process.env.GPT_EDIT_QUALITY || 'low' } : {}) }) : null
       const nb = masked ? masked.toString('base64') : gpt ? gpt : process.env.GEMINI_API_KEY ? await nanoBanana({ userId, image: imageBase64 || imageUrl, prompt: nbPrompt, styleRef, lite: task === 'edit' }) : null
       if (nb) {
         gemini = true; used = nbPrompt
@@ -134,12 +135,14 @@ export async function POST(req: NextRequest) {
       // Zona, clic o pareti/pavimento/soffitto con una richiesta scritta: Nano Banana 2 con la zona segnata in rosso
       // su una copia della foto (niente GPU). Il resto (luce, planimetria, stili senza testo) resta su Qwen.
       const src = imageBase64 || imageUrl
-      const nb = process.env.GEMINI_API_KEY && usesText && (drawn || points.length || labels.length)
-        ? await nanoBanana(drawn || points.length
-          ? { userId, image: src, prompt: zonePrompt(custom, roomLabel(roomK), drawn ? 'zone' : 'points'), extra: [await markedCopy(src, drawn, points)], lite: true }
-          : { userId, image: src, prompt: stagePrompt({ task: 'edit', room: roomLabel(roomK), style: custom }), lite: true })
-        : null
-      if (nb) { gemini = true; used = 'nano-banana-2 (zona)'; job = { status: 'COMPLETED', output: { image_base64: nb } } }
+      const zoneReq = drawn || points.length
+        ? { image: src, prompt: zonePrompt(custom, roomLabel(roomK), drawn ? 'zone' : 'points'), extra: [await markedCopy(src, drawn, points)] }
+        : { image: src, prompt: stagePrompt({ task: 'edit', room: roomLabel(roomK), style: custom }) }
+      // Modifiche: GPT Image 2.5 Sunburst a qualita' bassa (EDIT_MODEL=gpt, ~0,005 $ contro 0,033 $ della Lite; prova del 28/09: tocca
+      // meno la foto fuori dalla zona), se non risponde Nano Banana Lite
+      const gz = usesText && (drawn || points.length || labels.length) && process.env.EDIT_MODEL === 'gpt' ? await gptImage({ userId, ...zoneReq, kind: 'zona', quality: process.env.GPT_EDIT_QUALITY || 'low' }) : null
+      const nb = gz ?? (process.env.GEMINI_API_KEY && usesText && (drawn || points.length || labels.length) ? await nanoBanana({ userId, ...zoneReq, lite: true }) : null)
+      if (nb) { gemini = !gz; used = gz ? 'gpt-image-2.5 (zona)' : 'nano-banana-2 (zona)'; job = { status: 'COMPLETED', output: { image_base64: nb } } }
       else job = await runJob({ ...input, prompt, ...translation, ...(region ? { mark: region } : {}), ...(points.length ? { points } : {}), ...(labels.length ? { labels } : {}), seed, steps: 12 }) // 12 passaggi: ~8 s invece di 17 a 25, qualita' simile nel confronto del 24/09
     }
     }

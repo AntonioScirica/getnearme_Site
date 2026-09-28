@@ -9,7 +9,8 @@ import { logUsage } from '@/lib/ai'
 const MODEL = process.env.GPT_IMAGE_MODEL || 'gpt-image-2.5-sunburst' // Sunburst: l'unico che ha tenuto la cucina com'era (prova del 28/09)
 export const GPT_IMAGE_USD: Record<string, number> = { low: 0.005, medium: 0.041, high: 0.165 } // 1536x1024, listino OpenAI 28/09/2026 (stime: la 2.5 e' a token)
 
-export async function gptImage(o: { userId: string; image: string; prompt: string; kind?: string }): Promise<string | null> {
+// extra: altre immagini di riferimento (la copia con la zona in rosso); quality: livello per questa chiamata (predefinito GPT_IMAGE_QUALITY)
+export async function gptImage(o: { userId: string; image: string; prompt: string; kind?: string; extra?: string[]; quality?: string }): Promise<string | null> {
   const key = process.env.OPENAI_API_KEY
   if (!key) return null
   const t0 = Date.now()
@@ -21,11 +22,15 @@ export async function gptImage(o: { userId: string; image: string; prompt: strin
     const png = await sharp(src).rotate().png().toBuffer()
     const form = new FormData()
     form.append('model', MODEL)
-    form.append('image', new Blob([new Uint8Array(png)], { type: 'image/png' }), 'photo.png')
-    form.append('prompt', `${o.prompt} Keep any fitted kitchen exactly as it is in the photo: same cabinets, same fronts and colors, same worktop, same appliances; never renovate or repaint it.`)
+    form.append('image[]', new Blob([new Uint8Array(png)], { type: 'image/png' }), 'photo.png')
+    for (const [i, x] of (o.extra ?? []).entries()) {
+      const b = x.startsWith('data:') ? Buffer.from(x.split(',')[1] ?? '', 'base64') : Buffer.from(await (await fetch(x, { signal: AbortSignal.timeout(20_000) })).arrayBuffer())
+      form.append('image[]', new Blob([new Uint8Array(await sharp(b).rotate().png().toBuffer())], { type: 'image/png' }), `ref${i}.png`)
+    }
+    form.append('prompt', o.kind === 'arreda' ? `${o.prompt} Keep any fitted kitchen exactly as it is in the photo: same cabinets, same fronts and colors, same worktop, same appliances; never renovate or repaint it.` : o.prompt)
     form.append('size', size)
     // GPT_IMAGE_QUALITY: 'low' (~0,005 $, provato il 28/09: quasi pari alla media), 'medium' (~0,041 $), 'high'
-    form.append('quality', process.env.GPT_IMAGE_QUALITY || 'medium')
+    form.append('quality', o.quality || process.env.GPT_IMAGE_QUALITY || 'medium')
     form.append('output_format', 'jpeg')
     form.append('n', '1')
     const r = await fetch('https://api.openai.com/v1/images/edits', { method: 'POST', headers: { Authorization: `Bearer ${key}` }, body: form, signal: AbortSignal.timeout(120_000) })

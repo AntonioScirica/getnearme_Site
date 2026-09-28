@@ -46,7 +46,7 @@ export async function logUsage(u: Args['usage'], runpod: boolean, ms: number, tk
   const openai = !!model?.startsWith('gpt-image')
   const cost = model?.endsWith('-free') ? 0 // quota gratuita di Gemini (lib/geminiFree)
     : openai
-    ? (ok ? ({ low: 0.005, medium: 0.041, high: 0.165 }[process.env.GPT_IMAGE_QUALITY || 'medium'] ?? 0.041) : 0) // GPT Image 2.5, 1536x1024 (listino OpenAI 28/09/2026)
+    ? (ok ? ({ low: 0.005, medium: 0.041, high: 0.165 }[u.kind === 'modifica' || u.kind === 'zona' ? (process.env.GPT_EDIT_QUALITY || 'low') : (process.env.GPT_IMAGE_QUALITY || 'medium')] ?? 0.041) : 0) // GPT Image 2.5, 1536x1024 (listino OpenAI 28/09/2026)
     : gemini
     ? (ok ? (model!.includes('lite') ? 0.034 : 0.067) : 0) // Nano Banana 2 / Lite a 1K: prezzo per immagine (listino Google, 27/09/2026)
     : runpod
