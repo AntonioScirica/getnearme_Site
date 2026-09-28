@@ -12,14 +12,22 @@ import { headlessRead } from '@/lib/headlessRead'
 export type PageResult = { ok: true; raw: Raw; photos: string[]; title: string; via: 'headless' | 'zenrows'; fields?: Record<string, unknown> } | { ok: false; error: 'blocked' | 'not_a_listing' | 'invalid_url' }
 
 
-async function zenrows(url: string): Promise<string | null> {
+// ZenRows a volte scade o risponde a vuoto (2 su 7 nelle prove del 28/09/2026): si ritenta finche' c'e' tempo,
+// ogni tentativo al massimo 90 s, entro il tempo della funzione (read-listing, 200 s). Il browser poi ritenta a sua volta.
+async function zenrows(url: string, budgetMs = 170_000): Promise<string | null> {
   const key = process.env.ZENROWS_API_KEY
   if (!key) return null
-  try {
-    const r = await fetch(`https://api.zenrows.com/v1/?apikey=${key}&url=${encodeURIComponent(url)}&mode=auto`, { signal: AbortSignal.timeout(150_000) })
-    if (!r.ok) { console.error('zenrows', r.status, (await r.text()).slice(0, 200)); return null }
-    return (await r.text()).slice(0, 5_000_000)
-  } catch (e) { console.error('zenrows', e); return null }
+  const end = Date.now() + budgetMs
+  while (end - Date.now() > 30_000) {
+    try {
+      const r = await fetch(`https://api.zenrows.com/v1/?apikey=${key}&url=${encodeURIComponent(url)}&mode=auto`, { signal: AbortSignal.timeout(Math.min(90_000, end - Date.now())) })
+      const html = r.ok ? await r.text() : ''
+      if (r.ok && html.length > 5000) return html.slice(0, 5_000_000)
+      console.error('zenrows', r.status, html.slice(0, 200))
+      if (r.status === 404 || r.status === 401 || r.status === 402) return null // annuncio inesistente o account: ritentare non serve
+    } catch (e) { console.error('zenrows', e) }
+  }
+  return null
 }
 
 const decode = (s: string) => s.replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>')

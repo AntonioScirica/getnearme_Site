@@ -81,10 +81,15 @@ export function useImprove() {
     setStage('opening');
     if (AI_MOCK) { await wait(1500); if (id === run.current) analyze(MOCK_LISTING(u), id, true); return; }
     // la legge il nostro server (browser headless, o ZenRows per i portali che bloccano): niente estensione
-    const res = await authFetch('/api/platform/read-listing', { method: 'POST', body: JSON.stringify({ url: u }) }).catch(() => null);
-    if (id !== run.current) return;
-    const d = res ? await res.json().catch(() => null) : null;
-    if (res?.ok && d) { analyze(d as Listing, id); return; }
+    // se va male si ricomincia da soli (fino a 3 volte), l'agente vede solo "Apro l'annuncio"
+    let res: Response | null = null, d: { error?: string } | null = null;
+    for (let tent = 0; tent < 3; tent++) {
+      res = await authFetch('/api/platform/read-listing', { method: 'POST', body: JSON.stringify({ url: u }) }).catch(() => null);
+      if (id !== run.current) return;
+      d = res ? await res.json().catch(() => null) : null;
+      if ((res?.ok && d) || d?.error === 'not_a_listing' || d?.error === 'invalid_url' || res?.status === 401) break;
+    }
+    if (res?.ok && d) { analyze(d as unknown as Listing, id); return; }
     setError(d?.error === 'not_a_listing'
       ? 'Questa pagina non sembra un annuncio immobiliare (non trovo prezzo e superficie). Controlla il link.'
       : 'Non sono riuscito a leggere l\'annuncio (pagina lenta, rimossa o bloccata). Riprova tra poco, oppure incolla il testo.');
