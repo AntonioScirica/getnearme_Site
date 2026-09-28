@@ -4,6 +4,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { isPublicHttpsUrl } from '@/lib/safeUrl'
 import { AI_MOCK } from '@/lib/aiMock'
 import { getTeamUserIds } from '@/lib/teamScope'
+import { logUsage, overDailyCap } from '@/lib/ai'
 
 const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 export const maxDuration = 120
@@ -26,9 +27,11 @@ const clean = (o: Partial<Classified> | null | undefined): Classified | null => 
   return { scene: o.scene as Classified['scene'], room: interno && ROOMS.includes(String(o.room)) ? String(o.room) : interno ? 'altro' : '', state: interno && STATES.includes(String(o.state)) ? String(o.state) : '' }
 }
 
-async function viaHaiku(image: { imageBase64?: string; imageUrl?: string }): Promise<Classified> {
+// ~0,002 $ a foto (immagine + 60 token): si registra in ai_usage e si blocca oltre CLASSIFY_DAILY_LIMIT al giorno (500)
+async function viaHaiku(image: { imageBase64?: string; imageUrl?: string }, userId: string): Promise<Classified> {
   const key = (process.env.ANTHROPIC_API_KEY || '').trim()
   if (!key) throw new Error('no_key')
+  const t0 = Date.now()
   const m = image.imageBase64?.match(/^data:(image\/(?:jpeg|png|webp));base64,(.+)$/)
   const source = m
     ? { type: 'base64' as const, media_type: m[1] as 'image/jpeg' | 'image/png' | 'image/webp', data: m[2] }
@@ -39,6 +42,7 @@ async function viaHaiku(image: { imageBase64?: string; imageUrl?: string }): Pro
   })
   const text = resp.content.map(b => (b.type === 'text' ? b.text : '')).join('')
   const c = clean(JSON.parse(text.match(/\{[\s\S]*\}/)?.[0] ?? 'null'))
+  await logUsage({ userId, kind: 'classify' }, false, Date.now() - t0, { input: resp.usage.input_tokens, output: resp.usage.output_tokens }, !!c, 'claude-haiku-4-5-20251001').catch(() => {})
   if (!c) throw new Error('haiku_failed')
   return c
 }
@@ -66,7 +70,8 @@ export async function POST(req: NextRequest) {
   if (project && rooms[photoUrl] && (rooms[photoUrl] as Classified & { v?: number }).v === 2) return NextResponse.json({ ...rooms[photoUrl], cached: true })
 
   const image = { imageBase64, imageUrl }
-  const c = await viaHaiku(image).catch(() => null)
+  if (await overDailyCap(data.user.id, ['classify'], Number(process.env.CLASSIFY_DAILY_LIMIT) || 500)) return NextResponse.json({ error: 'daily_limit' }, { status: 429 })
+  const c = await viaHaiku(image, data.user.id).catch(() => null)
   if (!c) return NextResponse.json({ error: 'ai_failed' }, { status: 502 })
   if (project) {
     const d = (project.import_data && typeof project.import_data === 'object' ? project.import_data : {}) as Record<string, unknown>

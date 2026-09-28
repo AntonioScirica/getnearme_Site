@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { canAfford, spend } from '@/lib/credits'
-import { generateJson } from '@/lib/ai'
+import { generateJson, overDailyCap } from '@/lib/ai'
 import { geminiFreeJson } from '@/lib/geminiFree'
 import { TITLE_RULES } from '@/lib/titleRules'
 import { deepProfanity } from '@/lib/profanity'
@@ -39,6 +39,7 @@ export async function POST(req: NextRequest) {
   const input = `Annuncio attuale (JSON):\n${text}`
   const ok = (o: Partial<Out> | null): o is Out => !!o && typeof o.titolo === 'string' && typeof o.descrizione === 'string' && !!o.descrizione.trim()
 
+  if (await overDailyCap(data.user.id, ['rewrite'], Number(process.env.REWRITE_DAILY_LIMIT) || 50)) return NextResponse.json({ error: 'daily_limit' }, { status: 429 })
   const free = await geminiFreeJson<Out>({ system: SYSTEM, text: input, userId: data.user.id, kind: 'rewrite', maxTokens: 6000 })
   if (ok(free) && !deepProfanity(free)) return NextResponse.json({ titolo: free.titolo, descrizione: free.descrizione, gratis: true })
 

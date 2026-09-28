@@ -85,7 +85,7 @@ export default function PropertyView({ p, contact, hideGallery }: { p: PropertyV
               {facts.map(({ icon: Icon, label, value }) => (
                 <div key={label} className="card p-4">
                   <Icon size={18} className="text-brand" />
-                  <div className="mt-2 font-display text-lg font-semibold">{value}</div>
+                  <div className={`mt-2 break-words font-display font-semibold ${String(value).length > 12 ? 'text-sm leading-snug' : 'text-lg'}`}>{value}</div>
                   <div className="text-xs text-muted">{label}</div>
                 </div>
               ))}

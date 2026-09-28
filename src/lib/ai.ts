@@ -38,6 +38,10 @@ export async function logUsage(u: Args['usage'], _gpu: boolean, ms: number, tk: 
   const cost = model?.endsWith('-free') ? 0 // quota gratuita di Gemini (lib/geminiFree)
     : openai
     ? (ok ? ({ low: 0.014, medium: 0.020, high: 0.06 }[u.kind === 'arreda' ? (process.env.GPT_IMAGE_QUALITY || 'low') : (process.env.GPT_EDIT_QUALITY || 'low')] ?? 0.02) : 0) // GPT Image 2.5 Sunburst, modifica di una foto 1536x1024: misurato dal campo usage il 28/09/2026 (bassa 0,014, media 0,020)
+    : model === 'zenrows'
+    ? (ok ? 0.025 : 0) // lettura di una pagina di annuncio sui portali (prove del 28/09/2026, modalita' automatica)
+    : gemini && !model!.includes('image')
+    ? (ok ? 0.001 : 0) // Gemini Flash su testo o una foto (stile da foto): ~0,001 $ a chiamata
     : gemini
     ? (ok ? (model!.includes('lite') ? 0.034 : 0.067) : 0) // Nano Banana 2 / Lite a 1K: prezzo per immagine (listino Google, 27/09/2026)
     : (p => ((tk.input ?? 0) * p.input + (tk.output ?? 0) * p.output) / 1e6)(CLAUDE_USD_PER_MTOK[model ?? ''] ?? CLAUDE_USD_PER_MTOK['claude-opus-5'])
@@ -45,7 +49,7 @@ export async function logUsage(u: Args['usage'], _gpu: boolean, ms: number, tk: 
     admin ??= createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
     await admin.from('ai_usage').insert({
       user_id: u.userId || null, kind: u.kind, // null = prova anonima dalla landing
-      provider: gemini ? 'google' : openai ? 'openai' : 'anthropic',
+      provider: model === 'zenrows' ? 'zenrows' : gemini ? 'google' : openai ? 'openai' : 'anthropic',
       model: model ?? 'claude-opus-5',
       input_tokens: tk.input ?? null, output_tokens: tk.output ?? null,
       duration_ms: ms, cost_usd: Number(cost.toFixed(6)), ok,
@@ -88,4 +92,14 @@ async function viaClaude<T>({ system, text, images = [], schema, maxTokens = 800
   } catch (e) {
     return { ok: false, error: 'failed', detail: String(e) }
   }
+}
+
+// Tetto giornaliero per utente su una o piu' voci di ai_usage (ogni chiamata a pagamento, anche piccola, si conta e si
+// blocca: nessuna e' gratis all'infinito). true = superato.
+export async function overDailyCap(userId: string, kinds: string[], limit: number): Promise<boolean> {
+  try {
+    admin ??= createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
+    const { count } = await admin.from('ai_usage').select('id', { count: 'exact', head: true }).eq('user_id', userId).in('kind', kinds).gte('created_at', new Date(Date.now() - 86_400_000).toISOString())
+    return (count ?? 0) >= limit
+  } catch { return false }
 }

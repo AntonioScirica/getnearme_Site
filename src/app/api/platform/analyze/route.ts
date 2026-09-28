@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { extractFields, type ListingIn } from '@/lib/listingExtract'
+import { overDailyCap } from '@/lib/ai'
 import { rulesAnalysis } from '@/lib/listingRules'
 
 const admin = createClient(
@@ -26,6 +27,8 @@ export async function POST(req: NextRequest) {
   if (!listing || typeof listing !== 'object') return NextResponse.json({ error: 'bad_request' }, { status: 400 })
   if (JSON.stringify(listing).length > 400_000) return NextResponse.json({ error: 'too_large' }, { status: 400 })
 
+  // Gemini a quota gratuita, ma la quota e' unica per tutti: tetto per agente (ANALYZE_DAILY_LIMIT, 100)
+  if (await overDailyCap(data.user.id, ['extract'], Number(process.env.ANALYZE_DAILY_LIMIT) || 100)) return NextResponse.json({ error: 'daily_limit' }, { status: 429 })
   const fields = await extractFields(listing, data.user.id)
   return NextResponse.json({ ...rulesAnalysis(fields), fields })
 }

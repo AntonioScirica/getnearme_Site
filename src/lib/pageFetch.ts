@@ -1,5 +1,6 @@
 import { isPublicHttpsUrl } from '@/lib/safeUrl'
 import { idealista, immobiliare, type Raw } from '@/lib/listingExtract'
+import { logUsage } from '@/lib/ai'
 
 // Pagina di un annuncio letta dal nostro server tramite ZenRows (servizio esterno con i suoi proxy e browser,
 // ZENROWS_API_KEY), in modalita' automatica: sceglie da solo quanto "pesante" andare, anche per i portali che bloccano
@@ -86,9 +87,12 @@ export function parseHtml(html: string): { raw: Raw; photos: string[]; title: st
 
 const isListing = (text: string) => /[€$£]|\b(eur|euro)\b/i.test(text) && /\b(m²|m2|mq|metri quadr|sqm)/i.test(text)
 
-export async function fetchListingPage(url: string): Promise<PageResult> {
+// userId: ogni lettura si registra in ai_usage (kind lettura_annuncio, ~0,025 $) e conta nel tetto giornaliero di chi chiama
+export async function fetchListingPage(url: string, userId = ''): Promise<PageResult> {
   if (!isPublicHttpsUrl(url)) return { ok: false, error: 'invalid_url' }
+  const t0 = Date.now()
   const html = await zenrows(url)
+  await logUsage({ userId, kind: 'lettura_annuncio' }, false, Date.now() - t0, {}, !!html && html.length >= 5000, 'zenrows').catch(() => {})
   if (!html || html.length < 5000) return { ok: false, error: 'blocked' }
   const p = parseHtml(html)
   if (!isListing(p.raw.text ?? '')) return { ok: false, error: 'not_a_listing' }

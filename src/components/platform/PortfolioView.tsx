@@ -101,9 +101,11 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
   // il sito pubblico e' nei piani Plus e Pro: con Starter si prepara tutto ma non va online (il server rifiuta comunque)
   const sitePlan = !credits || credits.unlimited || credits.plan === 'plus' || credits.plan === 'pro';
   // il sito va online solo quando l'agente accende lo switch (spento: la pagina pubblica risponde 404)
+  // senza piano col sito lo switch e' sempre spento (anche se in passato era stato acceso: la pagina pubblica risponde 404)
+  const online = site.published && sitePlan;
   const publish = async () => {
+    if (!sitePlan) { go('/piano'); return; }
     const next = !site.published;
-    if (next && !sitePlan) { go('/piano'); return; }
     setSite(s => ({ ...s!, published: next }));
     const d = await authFetch('/api/platform/site', { method: 'PATCH', body: JSON.stringify({ published: next }) }).then(r => r.json()).catch(() => ({}));
     if (d.published !== next) setSite(s => ({ ...s!, published: !next }));
@@ -136,8 +138,8 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
         </div>
         {url && (
           <div data-tour="site-link" className="flex min-w-0 items-center gap-4">
-          <PublicSwitch on={site.published} onClick={publish} labels={['Online', 'Non pubblicato']} />
-          <div className={`flex h-10 min-w-0 items-center gap-1 rounded-full bg-white pl-4 pr-1 text-sm ring-1 ring-line ease-smooth transition-opacity ${site.published ? '' : 'opacity-50'}`}>
+          <PublicSwitch on={online} onClick={publish} labels={['Online', 'Non pubblicato']} />
+          <div className={`flex h-10 min-w-0 items-center gap-1 rounded-full bg-white pl-4 pr-1 text-sm ring-1 ring-line ease-smooth transition-opacity ${online ? '' : 'opacity-50'}`}>
             <Globe size={15} className="shrink-0 text-muted" />
             <a href={url} target="_blank" rel="noreferrer" className="min-w-0 truncate px-1.5 font-medium hover:text-brand">{url.replace(/^https?:\/\//, '')}</a>
             <Tooltip label={copied ? 'Copiato' : 'Copia il link'}>

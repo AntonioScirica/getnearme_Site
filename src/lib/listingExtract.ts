@@ -117,7 +117,18 @@ function fallback(l: ListingIn): Fields {
   }
 }
 
+// "Seminterrato, con ascensore" (idealista e immobiliare mettono l'ascensore nella riga del piano): il piano resta
+// solo il piano, l'ascensore va nel suo campo. Vale per ogni fonte (portali, AI, ripiego).
+function tidy(f: Fields): Fields {
+  const m = f.piano.match(/,?\s*\b(con|senza)\s+ascensore\b/i)
+  if (!m) return f
+  return { ...f, piano: f.piano.replace(m[0], '').replace(/[,\s]+$/, '').trim(), ascensore: f.ascensore || (m[1].toLowerCase() === 'con' ? 'si' : 'no') }
+}
+
 export async function extractFields(l: ListingIn, userId: string): Promise<Fields> {
+  return tidy(await extractRaw(l, userId))
+}
+async function extractRaw(l: ListingIn, userId: string): Promise<Fields> {
   // campi gia' letti con precisione dal server (pageFetch: immobiliare, idealista), arrivati in propertyInfo
   if (l.propertyInfo?._fonte === 'immobiliare' || l.propertyInfo?._fonte === 'idealista') return { ...EMPTY_FIELDS, ...(l.propertyInfo as Partial<Fields>), foto: (l.photos ?? []).length }
   const base = fallback(l)

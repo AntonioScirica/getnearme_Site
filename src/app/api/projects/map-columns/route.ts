@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { generateJson } from '@/lib/ai'
+import { generateJson, overDailyCap } from '@/lib/ai'
 import { DETAIL_FIELDS } from '@/lib/propertyImport'
 
 export const runtime = 'nodejs'
@@ -18,9 +18,9 @@ async function getUserId(req: NextRequest): Promise<string | null> {
   return data.user?.id ?? null
 }
 
-// Mappa gli header di un file import sui campi immobile usando Claude Haiku.
-// Solo gli HEADER (+ 1 riga d'esempio) vengono inviati: costo ~zero, indipendente
-// dalla dimensione del file. Il client ha comunque un fallback euristico.
+// Mappa gli header di un file import sui campi immobile usando Claude Haiku (~0,003 $ a file).
+// Solo gli HEADER (+ 1 riga d'esempio) vengono inviati, indipendente dalla dimensione del file.
+// Il client ha comunque un fallback euristico. Tetto: MAP_COLUMNS_DAILY_LIMIT file al giorno (predefinito 30).
 const BASE_KEYS = ['riferimento', 'nome', 'addr', 'prezzo', 'mq', 'locali', 'camere', 'bagni', 'descrizione', 'titolo', 'tipologia', 'photoUrl', 'url'] as const
 // campi della scheda (classe energetica, piano...): chiave "d:<campo>"
 const TARGET_KEYS = [...BASE_KEYS, ...DETAIL_FIELDS.map(f => `d:${f.key}`)]
@@ -28,6 +28,7 @@ const TARGET_KEYS = [...BASE_KEYS, ...DETAIL_FIELDS.map(f => `d:${f.key}`)]
 export async function POST(req: NextRequest) {
   const userId = await getUserId(req)
   if (!userId) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
+  if (await overDailyCap(userId, ['map_columns'], Number(process.env.MAP_COLUMNS_DAILY_LIMIT) || 30)) return NextResponse.json({ error: 'daily_limit' }, { status: 429 })
 
   let body: { headers?: unknown; sample?: Record<string, unknown> }
   try { body = await req.json() } catch { return NextResponse.json({ error: 'bad_request' }, { status: 400 }) }
@@ -62,8 +63,8 @@ ${DETAIL_FIELDS.map(f => `- d:${f.key}: ${f.label}${f.options?.length ? ` (valor
 Rispondi SOLO con un oggetto JSON valido, chiavi = i campi target, valori = nome colonna esatto (copiato dagli header) o stringa vuota. Nessun altro testo.`
 
   try {
-    // stesso modello dei testi della piattaforma (Claude): lib/ai
     const r = await generateJson<Record<string, unknown>>({
+      model: 'claude-haiku-4-5-20251001',
       system: 'Sei un mappatore di colonne per import immobiliari. Rispondi solo con il JSON richiesto.',
       text: prompt,
       schema: { type: 'object', properties: Object.fromEntries(TARGET_KEYS.map(k => [k, { type: 'string' }])), additionalProperties: false },

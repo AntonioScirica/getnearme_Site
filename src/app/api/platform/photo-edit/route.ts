@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { buildStagingPrompt, roomKey, variantText, isRestyle, isFurnishing, roomLabel, STYLE_LOOK, type SceneType } from '@/lib/stagingPrompts'
 import { gptImage } from '@/lib/gptImage'
+import { overDailyCap } from '@/lib/ai'
 import { stagePrompt, markedCopy, zonePrompt } from '@/lib/nanoBanana'
 import { canAfford, spend, type Action } from '@/lib/credits'
 import { CREDIT_COST, FREE_EDITS } from '@/lib/pricing'
@@ -107,6 +108,7 @@ export async function POST(req: NextRequest) {
       // Stile da una foto: lo stile del riferimento si legge e si scrive a parole (styleFromPhoto), la foto non gli si passa
       const task = body.style === 'empty' ? 'empty' : furnishReq ? 'furnish' : 'edit'
       const style = task === 'edit' ? custom : (body.style && STYLE_LOOK[body.style] ? STYLE_LOOK[body.style] : `as requested by the agent (in Italian): "${custom}"`) + vary
+      if (styleRef && task === 'furnish' && await overDailyCap(userId, ['stile_da_foto'], Number(process.env.STYLE_REF_DAILY_LIMIT) || 100)) throw new Error('daily_limit')
       const refStyle = styleRef && task === 'furnish' ? await styleFromPhoto(styleRef, userId) : null
       if (styleRef && task === 'furnish' && !refStyle) throw new Error('styleFromPhoto')
       req = { image: src, prompt: stagePrompt({ task, room: roomLabel(roomK), style: refStyle ?? style, density }) }
@@ -132,6 +134,7 @@ export async function POST(req: NextRequest) {
     b64 = await gptImage({ userId, ...req, kind, ...(kind !== 'arreda' ? { quality: process.env.GPT_EDIT_QUALITY || 'low' } : {}) })
     }
   } catch (e) {
+    if ((e as Error).message === 'daily_limit') return NextResponse.json({ error: 'daily_limit' }, { status: 429 })
     console.error('photo-edit error:', e)
     return NextResponse.json({ error: 'ai_failed' }, { status: 502 })
   }

@@ -4,11 +4,11 @@ import { fetchListingPage } from '@/lib/pageFetch'
 import { extractFields } from '@/lib/listingExtract'
 import { saveListingProject, str } from '@/lib/saveListing'
 import { isPublicHttpsUrl } from '@/lib/safeUrl'
+import { overDailyCap } from '@/lib/ai'
 
 const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 export const runtime = 'nodejs'
 export const maxDuration = 300
-const DAILY = Number(process.env.IMPORT_LINK_DAILY_LIMIT) || 100 // annunci letti al giorno per agente (ZenRows ~0,025 $ a pagina)
 
 // "Importa da link": un annuncio alla volta (immobiliare, idealista, casa, qualsiasi sito). Il server legge la pagina
 // con ZenRows (lib/pageFetch), estrae i campi (portali con precisione, altrove Gemini a quota gratuita), copia tutte
@@ -31,12 +31,10 @@ export async function POST(req: NextRequest) {
   // gia' in vetrina (stesso link): niente seconda lettura a pagamento
   const { data: dup } = await admin.from('projects').select('id, nome').eq('user_id', userId).eq('import_data->>url', url).limit(1).maybeSingle()
   if (dup) return NextResponse.json({ id: dup.id, nome: dup.nome, existing: true })
-  // tetto giornaliero
-  const since = new Date(Date.now() - 86_400_000).toISOString()
-  const { count } = await admin.from('projects').select('id', { count: 'exact', head: true }).eq('user_id', userId).in('import_data->>source', ['link', 'csv-link']).gte('created_at', since)
-  if ((count ?? 0) >= DAILY) return NextResponse.json({ error: 'daily_limit' }, { status: 429 })
+  // letture a pagamento (ZenRows ~0,025 $): tetto giornaliero condiviso con Migliora annuncio (LISTING_READ_DAILY_LIMIT, 100)
+  if (await overDailyCap(userId, ['lettura_annuncio'], Number(process.env.LISTING_READ_DAILY_LIMIT) || 100)) return NextResponse.json({ error: 'daily_limit' }, { status: 429 })
 
-  const page = await fetchListingPage(url)
+  const page = await fetchListingPage(url, userId)
   if (!page.ok) return NextResponse.json({ error: page.error }, { status: page.error === 'invalid_url' ? 400 : 422 })
   const listing = { url, title: page.title, address: '', propertyInfo: page.fields ?? {}, photos: page.photos, raw: page.raw }
   const f = await extractFields(listing, userId)
