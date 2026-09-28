@@ -67,7 +67,7 @@ export function buildPropertyReportHtml(a: ReportInput): string {
   const val = (k: string) => { const f = fieldBy(k); return f && visible(f, d) ? formatValue(f, d[k]) : null }
   const keyTiles = KEY_FIELDS.map(k => ({ k, f: fieldBy(k)!, v: val(k) })).filter(x => x.v).slice(0, 8)
   const inTiles = new Set(keyTiles.map(x => x.k))
-  const groups = GROUPS.map(g => ({ title: g.title, rows: g.fields.filter(f => visible(f, d) && f.key !== 'riferimento' && !inTiles.has(f.key) && f.key !== 'dotazioni' && f.key !== 'esterni' && !/virtual|link/i.test(f.label)).map(f => ({ label: f.label, value: formatValue(f, d[f.key]) })).filter((r): r is { label: string; value: string } => !!r.value) })).filter(g => g.rows.length)
+  const groups = GROUPS.map(g => ({ title: g.title, rows: g.fields.filter(f => visible(f, d) && f.key !== 'riferimento' && !inTiles.has(f.key) && f.key !== 'dotazioni' && f.key !== 'esterni' && !(f.key === 'ipe' && inTiles.has('classe_energetica')) && !/virtual|link/i.test(f.label)).map(f => ({ label: f.label, value: formatValue(f, d[f.key]) })).filter((r): r is { label: string; value: string } => !!r.value) })).filter(g => g.rows.length)
   const extras = [...new Set([...(Array.isArray(d.esterni) ? d.esterni : []), ...(Array.isArray(d.dotazioni) ? d.dotazioni : [])] as string[])]
   const energy = typeof d.classe_energetica === 'string' ? d.classe_energetica : ''
   const costs = !rent && showPrice ? calculateDetailedCosts(p.prezzo, p.mq || 0) : null
@@ -200,7 +200,7 @@ h2{font-size:21px;margin:0 0 10px;letter-spacing:-.01em}h3{font-size:11.5px;marg
 .badge{display:inline-block;font-style:normal;font-weight:800;border-radius:6px;padding:1px 8px;font-size:12.5px}.tile small{font-size:10px;color:#777;font-weight:500}
 .groups{columns:2;column-gap:12mm}
 .grp{break-inside:avoid;margin-bottom:12px;padding-top:2px;border-top:2px solid ${c}22}.grp h3{margin:8px 0 2px}
-.chips-block{margin-top:4px}.chips-block h3{margin-bottom:6px}
+.chips-block{margin-top:10px}.chips-block h3{margin-bottom:6px}
 .card{break-inside:avoid;background:#f6f6f4;border-radius:14px;padding:10px 12px;margin-bottom:10px}
 .row{display:flex;justify-content:space-between;gap:12px;font-size:11.5px;padding:5px 0;border-bottom:1px solid #ececea}.row:last-child{border-bottom:0}.row span{color:#666}.row b{text-align:right}.card .row{border-color:#e6e6e2}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}.chips span{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;background:#f6f6f4;border-radius:999px;padding:5px 11px}.chips svg{color:${c}}
