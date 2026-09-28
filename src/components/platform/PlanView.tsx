@@ -70,15 +70,13 @@ export default function PlanView({ ok, buy }: { ok?: boolean; buy?: Buy }) {
         <div className={`mt-6 flex flex-wrap items-center justify-between gap-4 rounded-[28px] bg-white p-6 ${CARD_SHADOW}`}>
           <div>
             {/* con un piano attivo non si rivedono le card: cambio piano, disdetta, pagamento e fatture nel portale Stripe */}
-            <div className="flex items-center gap-2 text-sm text-muted">Piano {c.plan === 'pro' ? 'Pro' : c.plan === 'plus' ? 'Plus' : 'Starter'}
-              <span aria-hidden>·</span>
-              <button type="button" disabled={busy === 'portal'} onClick={async () => { setBusy('portal'); const d = await authFetch('/api/platform/billing', { method: 'POST' }).then(r => r.json()).catch(() => null); if (d?.url) window.location.href = d.url; else { setBusy(''); setPortalError('Portale non disponibile, riprova tra poco.'); } }}
-                className="inline-flex items-center gap-1 font-medium text-ink underline underline-offset-4 hover:text-brand disabled:opacity-60">{busy === 'portal' && <Loader2 size={12} className="animate-spin" />}Gestisci</button>
-            </div>
+            <div className="text-sm text-muted">Piano {c.plan === 'pro' ? 'Pro' : c.plan === 'plus' ? 'Plus' : 'Starter'}</div>
             {portalError && <p className="text-sm text-rose-600">{portalError}</p>}
             <div className="font-display text-3xl font-extrabold tracking-tight">{fmt(c.balance)} crediti</div>
             <div className="text-sm text-muted">circa {photosFor(c.balance)} foto o {videosFor(c.balance)} video · si ricaricano a {fmt(c.monthly)} il {date(c.renews)}</div>
           </div>
+          <button type="button" disabled={busy === 'portal'} onClick={async () => { setBusy('portal'); const d = await authFetch('/api/platform/billing', { method: 'POST' }).then(r => r.json()).catch(() => null); if (d?.url) window.location.href = d.url; else { setBusy(''); setPortalError('Portale non disponibile, riprova tra poco.'); } }}
+            className="flex h-11 items-center gap-2 rounded-full bg-ink px-6 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand disabled:opacity-60">{busy === 'portal' && <Loader2 size={14} className="animate-spin" />}Gestisci abbonamento</button>
         </div>
       )}
       {c && c.plan !== 'none' && !c.unlimited && (
