@@ -543,3 +543,5 @@ html.metrics-light [class*="border-gray-600"] { border-color: #d8d4cb !important
 .profanity-tip { position: fixed; z-index: 400; pointer-events: none; border-radius: 9999px; background: #e5484d; color: #fff; font-size: 12px; font-weight: 600; padding: 6px 12px; box-shadow: 0 8px 24px -8px rgba(229,72,77,.6); animation: gnm-fade .3s ease both; }
 @keyframes profanity-shake { 0%, 100% { transform: none; } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
 .profanity-shake { animation: profanity-shake .3s ease; }
+/* velo del tour sempre sopra le card della home anche durante una transizione */
+::view-transition-group(tour) { z-index: 10; animation: none; }

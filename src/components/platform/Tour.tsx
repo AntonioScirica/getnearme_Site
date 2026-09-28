@@ -72,8 +72,10 @@ export default function Tour({ onDone }: { onDone: () => void }) {
     : { width: cardW, left: '50%', top: '50%', transform: 'translate(-50%, -50%)' };
   const ease = moving ? 'all 600ms cubic-bezier(.22,1,.36,1)' : 'none';
   if (!start) return null;
+  // nome di transizione: durante una View Transition (onboarding -> home) le card della home vanno sopra a tutto,
+  // il velo deve starci anche lui, e sopra
   return (
-    <div className="fade fixed inset-0 z-[310]" role="dialog" aria-label="Tour della piattaforma">
+    <div className="fade fixed inset-0 z-[310]" style={{ viewTransitionName: 'tour' }} role="dialog" aria-label="Tour della piattaforma">
       {/* la luce: un riquadro trasparente con un'ombra enorme che scurisce tutto il resto */}
       {light
         ? <div className="pointer-events-none absolute" style={{ ...light, borderRadius: Math.min(28, light.height / 2), boxShadow: '0 0 0 9999px rgba(15,17,25,.62), 0 0 0 3px rgba(255,255,255,.9), 0 0 40px 6px rgba(83,126,236,.55)', transition: ease }} />
