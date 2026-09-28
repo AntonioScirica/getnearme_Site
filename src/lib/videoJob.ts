@@ -240,9 +240,11 @@ export async function pollVideo(owner: string, job: string): Promise<VideoResult
     if (parts.length > 1) await ffmpeg(['-y', '-i', parts[0], '-i', parts[1], '-filter_complex', '[0:v][1:v]concat=n=2:v=1:a=0[v]', '-map', '[v]', '-c:v', 'libx264', '-crf', '14', raw])
     else await rename(parts[0], raw)
     // Kling e Svuota vanno in avanti (tutta la clip); gli altri Veo al contrario, tagliati prima della dissolvenza di Veo
-    // in avanti: Svuota (-f), Kling (-k, -kc) e Dall'alto (-g); Dall'alto si taglia comunque prima della dissolvenza di Veo
+    // in avanti: Svuota (-f), Kling (-k, -kc) e Dall'alto (-g)
     const forward = /-(f|k|kc|g)$/.test(name)
-    const cut = kling ? KLING_SECONDS * parts.length : forward && !name.endsWith('-g') ? VEO_SECONDS : cutPoint(await ffmpeg(['-i', raw, '-vf', 'scale=320:180,format=gray', '-f', 'rawvideo', '-']), 320 * 180, 24, name.endsWith('-g') ? 3.5 : 0)
+    // Dall'alto: clip INTERA, mai fermata a meta' (un fotogramma di Veo a mobili appena atterrati puo' avere pezzi
+    // trasparenti, e il fermo lo mostrava: 28/09). L'ultimo fotogramma di Veo e' l'immagine arredata vera: il fermo e' su quella.
+    const cut = kling ? KLING_SECONDS * parts.length : forward ? VEO_SECONDS : cutPoint(await ffmpeg(['-i', raw, '-vf', 'scale=320:180,format=gray', '-f', 'rawvideo', '-']), 320 * 180)
     // Dall'alto un po' piu' veloce (1,4x): la caduta di Veo sembrava lenta
     const speed = name.endsWith('-g') ? 1.4 : 1
     const total = cut / speed + HOLD, n = Math.round(total * 30)
