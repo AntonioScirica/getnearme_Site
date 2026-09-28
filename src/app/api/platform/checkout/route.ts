@@ -24,9 +24,22 @@ export async function POST(req: NextRequest) {
   const price = (await stripe.prices.list({ lookup_keys: [lookup], active: true, limit: 1 })).data[0]
   if (!price) return NextResponse.json({ error: 'price_missing' }, { status: 500 })
   const plan = pack ? 'pack' : body!.plan!.startsWith('pro') ? 'pro' : body!.plan === 'plus' ? 'plus' : 'starter'
-  const { data: row } = await admin.from('platform_credits').select('stripe_customer_id, plan').eq('user_id', u.id).maybeSingle()
+  const { data: row } = await admin.from('platform_credits').select('stripe_customer_id, stripe_subscription_id, plan').eq('user_id', u.id).maybeSingle()
   if (pack && (!row?.plan || row.plan === 'none')) return NextResponse.json({ error: 'no_plan' }, { status: 400 })
   const meta: Record<string, string> = pack ? { app: 'agenteimmo', user_id: u.id, plan, pack: pack.id, credits: String(pack.credits) } : { app: 'agenteimmo', user_id: u.id, plan }
+  // cambio piano con un abbonamento attivo: si cambia il prezzo dello stesso abbonamento (niente secondo abbonamento).
+  // Si paga subito la differenza del periodo; se il pagamento non passa il cambio non si applica (pending_if_incomplete).
+  // I crediti del nuovo piano li mette il webhook (customer.subscription.updated).
+  if (!pack && row?.stripe_subscription_id && row.plan && row.plan !== 'none') {
+    const sub = await stripe.subscriptions.retrieve(row.stripe_subscription_id).catch(() => null)
+    if (sub && ['active', 'trialing'].includes(sub.status)) {
+      const item = sub.items.data[0]
+      if (item.price.id === price.id) return NextResponse.json({ error: 'same_plan' }, { status: 400 })
+      const upd = await stripe.subscriptions.update(sub.id, { items: [{ id: item.id, price: price.id }], proration_behavior: 'always_invoice', payment_behavior: 'pending_if_incomplete' })
+      if (upd.pending_update) return NextResponse.json({ error: 'payment_failed' }, { status: 402 })
+      return NextResponse.json({ url: `${siteOf(req)}/it/dashboard#/piano?ok=1` })
+    }
+  }
   let customer = row?.stripe_customer_id as string | undefined
   if (!customer) {
     customer = (await stripe.customers.create({ email: u.email || undefined, invoice_settings: { footer: FORFETTARIO_FOOTER }, metadata: { app: 'agenteimmo', user_id: u.id }, preferred_locales: ['it'] })).id

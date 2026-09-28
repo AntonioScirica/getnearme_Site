@@ -41,6 +41,7 @@ async function checkout(plan: Buy | PackId) {
   const isPack = PACKS.some(p => p.id === plan);
   const d = await authFetch('/api/platform/checkout', { method: 'POST', body: JSON.stringify(isPack ? { pack: plan } : { plan }) }).then(r => r.json()).catch(() => null);
   if (d?.url) window.location.href = d.url;
+  return d as { url?: string; error?: string } | null;
 }
 
 // Pagina del piano: saldo, scelta del piano, pagamento con Stripe (dati di fatturazione raccolti da Stripe)
@@ -50,7 +51,14 @@ export default function PlanView({ ok, buy }: { ok?: boolean; buy?: Buy }) {
   const [yearly, setYearly] = useState(buy !== 'pro_quarterly');
   const [busy, setBusy] = useState<string>(buy ?? '');
   const [portalError, setPortalError] = useState<string | null>(null);
-  const go = async (p: Buy | PackId) => { setBusy(p); await checkout(p); setBusy(''); };
+  const [changing, setChanging] = useState(false); // con un piano attivo: card dei piani aperte per cambiarlo
+  const go = async (p: Buy | PackId) => {
+    setBusy(p); setPortalError(null);
+    const d = await checkout(p);
+    setBusy('');
+    if (d?.error === 'payment_failed') setPortalError('Pagamento non riuscito: il piano non è cambiato. Controlla la carta in Gestisci abbonamento.');
+    else if (d?.url?.includes('ok=1')) setChanging(false);
+  };
   useEffect(() => {
     if (!buy) return;
     history.replaceState(null, '', '#/piano'); // tornando indietro da Stripe non riparte da solo
@@ -75,8 +83,12 @@ export default function PlanView({ ok, buy }: { ok?: boolean; buy?: Buy }) {
             <div className="font-display text-3xl font-extrabold tracking-tight">{fmt(c.balance)} crediti</div>
             <div className="text-sm text-muted">circa {photosFor(c.balance)} foto o {videosFor(c.balance)} video · si ricaricano a {fmt(c.monthly)} il {date(c.renews)}</div>
           </div>
+          <div className="flex flex-wrap items-center gap-2">
+          <button type="button" onClick={() => setChanging(v => !v)} aria-expanded={changing}
+            className={`flex h-11 items-center rounded-full px-6 text-sm font-semibold ring-1 ease-smooth transition-colors ${changing ? 'bg-canvas ring-ink' : 'bg-white ring-black/10 hover:ring-ink'}`}>Cambia piano</button>
           <button type="button" disabled={busy === 'portal'} onClick={async () => { setBusy('portal'); const d = await authFetch('/api/platform/billing', { method: 'POST' }).then(r => r.json()).catch(() => null); if (d?.url) window.location.href = d.url; else { setBusy(''); setPortalError('Portale non disponibile, riprova tra poco.'); } }}
             className="flex h-11 items-center gap-2 rounded-full bg-ink px-6 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand disabled:opacity-60">{busy === 'portal' && <Loader2 size={14} className="animate-spin" />}Gestisci abbonamento</button>
+          </div>
         </div>
       )}
       {c && c.plan !== 'none' && !c.unlimited && (
@@ -96,9 +108,9 @@ export default function PlanView({ ok, buy }: { ok?: boolean; buy?: Buy }) {
           </div>
         </>
       )}
-      {(!c || c.plan === 'none' || c.unlimited) && (<>
-      <h2 className="mt-8 font-semibold">Scegli il piano</h2>
-      <p className="mt-1 text-sm text-muted">Starter: foto e video. Plus: anche il tuo sito. Pro: più crediti, a trimestre o anno.</p>
+      {(!c || c.plan === 'none' || c.unlimited || changing) && (<>
+      <h2 className="mt-8 font-semibold">{changing ? 'Cambia piano' : 'Scegli il piano'}</h2>
+      <p className="mt-1 text-sm text-muted">{changing ? 'Il nuovo piano parte subito: paghi ora la differenza per il periodo in corso e i crediti diventano quelli del nuovo piano.' : 'Starter: foto e video. Plus: anche il tuo sito. Pro: più crediti, a trimestre o anno.'}</p>
       <div className="mt-5 grid items-stretch gap-5 md:grid-cols-3">
         <div className={`flex flex-col rounded-[32px] bg-white p-8 ${CARD_SHADOW}`}>
           <div className="flex h-10 items-center text-sm font-semibold text-muted">Starter</div>
@@ -107,7 +119,7 @@ export default function PlanView({ ok, buy }: { ok?: boolean; buy?: Buy }) {
           <Credits n={PRICING.starterCredits} />
           <SiteNotIncluded />
           <div className="min-h-8 flex-1" />
-          <button type="button" disabled={!!busy} onClick={() => go('starter')} className="flex h-12 items-center justify-center gap-2 rounded-full bg-white text-[15px] font-semibold ring-1 ring-black/10 hover:ring-ink disabled:opacity-60">{busy === 'starter' && <Loader2 size={15} className="animate-spin" />}Scegli Starter</button>
+          <button type="button" disabled={!!busy || (changing && c?.plan === 'starter')} onClick={() => go('starter')} className="flex h-12 items-center justify-center gap-2 rounded-full bg-white text-[15px] font-semibold ring-1 ring-black/10 hover:ring-ink disabled:opacity-60">{busy === 'starter' && <Loader2 size={15} className="animate-spin" />}{changing ? (c?.plan === 'starter' ? 'Il tuo piano' : 'Passa a Starter') : 'Scegli Starter'}</button>
         </div>
         <div className={`flex flex-col rounded-[32px] bg-white p-8 ${CARD_SHADOW}`}>
           <div className="flex h-10 items-center text-sm font-semibold text-muted">Plus</div>
@@ -116,7 +128,7 @@ export default function PlanView({ ok, buy }: { ok?: boolean; buy?: Buy }) {
           <Credits n={PRICING.plusCredits} />
           <SiteIncluded slug={slug} />
           <div className="min-h-8 flex-1" />
-          <button type="button" disabled={!!busy} onClick={() => go('plus')} className="flex h-12 items-center justify-center gap-2 rounded-full bg-white text-[15px] font-semibold ring-1 ring-black/10 hover:ring-ink disabled:opacity-60">{busy === 'plus' && <Loader2 size={15} className="animate-spin" />}Scegli Plus</button>
+          <button type="button" disabled={!!busy || (changing && c?.plan === 'plus')} onClick={() => go('plus')} className="flex h-12 items-center justify-center gap-2 rounded-full bg-white text-[15px] font-semibold ring-1 ring-black/10 hover:ring-ink disabled:opacity-60">{busy === 'plus' && <Loader2 size={15} className="animate-spin" />}{changing ? (c?.plan === 'plus' ? 'Il tuo piano' : 'Passa a Plus') : 'Scegli Plus'}</button>
         </div>
         <div className="relative flex flex-col rounded-[32px] bg-white p-8 shadow-[0_40px_100px_-40px_rgba(0,0,0,.35)] ring-2 ring-ink">
           <span className="absolute -top-3 left-8 rounded-full bg-ink px-3 py-1 text-xs font-semibold text-white">Consigliato</span>
@@ -133,7 +145,7 @@ export default function PlanView({ ok, buy }: { ok?: boolean; buy?: Buy }) {
           <Credits n={PRICING.credits} />
           <SiteIncluded slug={slug} />
           <div className="min-h-8 flex-1" />
-          <button type="button" disabled={!!busy} onClick={() => go(yearly ? 'pro_yearly' : 'pro_quarterly')} className="flex h-12 items-center justify-center gap-2 rounded-full bg-ink text-[15px] font-semibold text-white disabled:opacity-60">{busy.startsWith('pro') && <Loader2 size={15} className="animate-spin" />}Scegli Pro</button>
+          <button type="button" disabled={!!busy} onClick={() => go(yearly ? 'pro_yearly' : 'pro_quarterly')} className="flex h-12 items-center justify-center gap-2 rounded-full bg-ink text-[15px] font-semibold text-white disabled:opacity-60">{busy.startsWith('pro') && <Loader2 size={15} className="animate-spin" />}{changing ? (c?.plan === 'pro' ? 'Cambia fatturazione' : 'Passa a Pro') : 'Scegli Pro'}</button>
         </div>
       </div>
       <p className="mt-5 text-center text-xs text-muted">Pagamento sicuro con Stripe. Ti chiediamo ragione sociale, Partita IVA e codice SDI o PEC per la fattura elettronica. Prezzi finali, senza IVA (regime forfettario).</p>
