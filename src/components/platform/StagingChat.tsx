@@ -205,7 +205,16 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   // quantita' di arredo (Essenziale / Normale / Ricco), ricordata tra una foto e l'altra
   const [density, setDensityState] = useState<'poco' | 'normale' | 'ricco'>('normale');
   useEffect(() => { const d = localStorage.getItem('gnm-density'); if (d === 'poco' || d === 'ricco') setDensityState(d); }, []);
-  const setDensity = (d: 'poco' | 'normale' | 'ricco') => { setDensityState(d); try { localStorage.setItem('gnm-density', d); } catch { /* niente */ } };
+  const densityRef = useRef(density); densityRef.current = density;
+  const setDensity = (d: 'poco' | 'normale' | 'ricco') => { densityRef.current = d; setDensityState(d); try { localStorage.setItem('gnm-density', d); } catch { /* niente */ } };
+  // popup "Quanto arredo?" sopra il suggerimento di stile cliccato (posizione del pulsante sullo schermo)
+  const [densityAsk, setDensityAsk] = useState<{ sug: Suggestion; x: number; y: number } | null>(null);
+  useEffect(() => {
+    if (!densityAsk) return;
+    const close = (e: Event) => { if (e instanceof KeyboardEvent ? e.key === 'Escape' : !(e.target as HTMLElement).closest('[data-density-pop], [data-density-chip]')) setDensityAsk(null); };
+    document.addEventListener('keydown', close); document.addEventListener('pointerdown', close); window.addEventListener('resize', close as EventListener);
+    return () => { document.removeEventListener('keydown', close); document.removeEventListener('pointerdown', close); window.removeEventListener('resize', close as EventListener); };
+  }, [densityAsk]);
   const [saveOpen, setSaveOpen] = useState<string | null>(null); // risultato con il pannello "Salva nell'immobile" aperto
   // com'e' la stanza nella foto di lavoro (vuota, disordinata, datata, arredata): cambia suggerimento e proposte
   const [roomState, setRoomState] = useState<string | null>(saved?.roomState ?? null);
@@ -328,7 +337,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
       ...(project ? { projectId: project } : {}),
       ...(sourcePhoto && sourcePhoto !== before ? { reference: sourcePhoto } : {}),
       ...(styleRef ? { styleRef } : {}),
-      ...(scene === 'interno' && density !== 'normale' ? { density } : {}),
+      ...(scene === 'interno' && densityRef.current !== 'normale' ? { density: densityRef.current } : {}),
       ...(kind ? { room: seenLabel(kind) } : {}),
       ...(before.startsWith('data:') ? { imageBase64: before } : { imageUrl: before }),
       ...(scene === 'planimetria'
@@ -488,7 +497,11 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   // interni: "Svuota la stanza" sempre primo, subito dopo Crea video (esterni e giardini hanno i loro "Rinnova")
   const sugs = suggestionsFor(kind);
   const chips = [...videoChip, ...sugs.filter(x => roomState !== 'vuota' || (x.id !== 'empty' && x.id !== 'tidy')).map(x => (
-    <button key={x.id} disabled={busy} onClick={() => send(x.label, x)}
+    <button key={x.id} data-density-chip disabled={busy} onClick={e => {
+      if (creditsOf(x.req, editsDone) !== CREDIT_COST.arreda || scene !== 'interno') { void send(x.label, x); return; }
+      const r = e.currentTarget.getBoundingClientRect();
+      setDensityAsk(v => (v?.sug.id === x.id ? null : { sug: x, x: r.left + r.width / 2, y: r.top }));
+    }}
       className="group flex shrink-0 items-center whitespace-nowrap rounded-full bg-white pl-3.5 pr-1.5 py-1.5 text-[13px] font-medium text-ink/80 shadow-sm ring-1 ring-inset ring-black/10 ease-smooth transition-colors hover:bg-brand hover:text-white disabled:opacity-40">{x.label}<Cr n={creditsOf(x.req, editsDone)} /></button>
   ))];
 
@@ -789,17 +802,18 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
         <div className="pointer-events-none absolute inset-0"><ProgressiveBlur side="bottom" fade={24} /></div>
         <div className="relative mx-auto max-w-3xl">
           {/* Suggerimenti: una riga sola sopra il campo, scorre di lato; toccati partono subito */}
-          {base && !busy && scene === 'interno' && (
-            <div className="blur-in mb-2 flex items-center gap-2 text-xs text-muted">
-              Arredo
-              <div className="flex items-center rounded-full bg-white p-0.5 shadow-sm ring-1 ring-inset ring-black/10" role="radiogroup" aria-label="Quantità di arredo">
-                {([['poco', 'Essenziale'], ['normale', 'Normale'], ['ricco', 'Ricco']] as const).map(([d, l]) => (
-                  <button key={d} role="radio" aria-checked={density === d} onClick={() => setDensity(d)}
-                    className={`flex h-7 min-w-[84px] items-center justify-center rounded-full px-3 pb-px font-medium leading-none ease-smooth transition-colors ${density === d ? 'bg-ink text-white' : 'text-ink/70 hover:text-ink'}`}>{l}</button>
-                ))}
+          {densityAsk && !busy && createPortal(
+            <div data-density-pop className="blur-in fixed z-[250] -translate-x-1/2 -translate-y-full pb-2" style={{ left: densityAsk.x, top: densityAsk.y }}>
+              <div className={`rounded-3xl bg-white p-1.5 ${CARD_SHADOW}`}>
+                <div className="px-2 pb-1.5 pt-1 text-xs font-medium text-muted">Quanto arredo?</div>
+                <div className="flex gap-1" role="radiogroup" aria-label="Quantità di arredo">
+                  {([['poco', 'Essenziale'], ['normale', 'Normale'], ['ricco', 'Ricco']] as const).map(([d, l]) => (
+                    <button key={d} role="radio" aria-checked={density === d} onClick={() => { const sg = densityAsk.sug; setDensity(d); setDensityAsk(null); void send(sg.label, sg); }}
+                      className={`flex h-8 min-w-[84px] items-center justify-center rounded-full px-3 pb-px text-[13px] font-medium leading-none ease-smooth transition-colors ${density === d ? 'bg-ink text-white hover:bg-brand' : 'bg-canvas text-ink/80 hover:bg-brand hover:text-white'}`}>{l}</button>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            </div>, document.body)}
           {base && !busy && (
             <div className="blur-in -mx-1 mb-2 flex gap-1.5 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" style={{ maskImage: 'linear-gradient(90deg, #000 90%, transparent)' }}>{chips}</div>
           )}
