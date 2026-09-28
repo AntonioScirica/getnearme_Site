@@ -117,6 +117,10 @@ const ZONE_EX: Record<string, string> = {
   ingresso: 'metti una consolle', corridoio: 'appendi dei quadri', balcone: 'metti delle piante', cantina: 'togli gli scatoloni',
   box: 'togli gli attrezzi', esterno: 'ridipingi la facciata', giardino: 'metti un prato curato', planimetria: 'togli le scritte',
 };
+// Quantita' di arredo capita dalle parole della richiesta scritta (null = non detto: Normale)
+const detectDensity = (t: string): 'poco' | 'ricco' | null =>
+  /\b(poch[ie]|pochissim[ie]|essenzial[ei]|minimal[ei]?|minimalist[aie]?|ariosa?|arios[io]|spoglia?|leggero|sobri[oa]|il minimo|solo l'essenziale)\b/i.test(t) ? 'poco'
+  : /\b(ricc[oa]|ricchissim[oa]|pien[oa]|tanti|tantissim[ie]|molt[ie] (mobili|oggetti)|da rivista|arredatissim[oa]|completo|completa|piena di)\b/i.test(t) ? 'ricco' : null
 const FIRST: Record<string, string> = {
   openspace: 'cucina bianca e zona giorno con divano', soggiorno: 'arreda con un divano grigio e un tavolino', cucina: 'ante bianche e piano in legno chiaro', camera: 'letto matrimoniale e comodini in rovere',
   cameretta: 'lettino, scrivania e colori tenui', bagno: 'piastrelle chiare e doccia in vetro', sala: 'tavolo da pranzo per sei persone',
@@ -206,6 +210,8 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   const [density, setDensityState] = useState<'poco' | 'normale' | 'ricco'>('normale');
   useEffect(() => { const d = localStorage.getItem('gnm-density'); if (d === 'poco' || d === 'ricco') setDensityState(d); }, []);
   const densityRef = useRef(density); densityRef.current = density;
+  // richiesta scritta: Normale se non dice niente, la pill si accende da sola se le parole la indicano; un clic la sceglie a mano
+  const [textDensity, setTextDensity] = useState<'poco' | 'normale' | 'ricco' | null>(null);
   const setDensity = (d: 'poco' | 'normale' | 'ricco') => { densityRef.current = d; setDensityState(d); try { localStorage.setItem('gnm-density', d); } catch { /* niente */ } };
   // popup "Quanto arredo?" sopra il suggerimento di stile cliccato (posizione del pulsante sullo schermo)
   const [densityAsk, setDensityAsk] = useState<{ sug: Suggestion; x: number; y: number } | null>(null);
@@ -228,6 +234,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   const [viewer, setViewer] = useState<{ src: string; before?: string } | null>(null); // foto a tutto schermo
   const downAt = useRef<{ x: number; y: number } | null>(null);
   const [text, setText] = useState('');
+  useEffect(() => { if (!text.trim()) setTextDensity(null); }, [text]);
   // foto di riferimento per lo stile: scelta (Unsplash o dal computer) = richiesta inviata subito
   const [inspo, setInspo] = useState(false); // pannello "Cerca ispirazione" (Unsplash)
   const styleInput = useRef<HTMLInputElement>(null);
@@ -327,6 +334,8 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
     const t = (given ?? text).trim();
     const pk = given ? sug ?? null : picked;
     if (!t || !base || busy) return;
+    const dens = given === undefined ? typedDensity : densityRef.current; // scritta: quella delle pill sopra il campo
+    setTextDensity(null);
     touch();
     const id = uid();
     const before = base;
@@ -337,7 +346,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
       ...(project ? { projectId: project } : {}),
       ...(sourcePhoto && sourcePhoto !== before ? { reference: sourcePhoto } : {}),
       ...(styleRef ? { styleRef } : {}),
-      ...(scene === 'interno' && densityRef.current !== 'normale' ? { density: densityRef.current } : {}),
+      ...(scene === 'interno' && dens !== 'normale' ? { density: dens } : {}),
       ...(kind ? { room: seenLabel(kind) } : {}),
       ...(before.startsWith('data:') ? { imageBase64: before } : { imageUrl: before }),
       ...(scene === 'planimetria'
@@ -496,6 +505,12 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   ] : [];
   // interni: "Svuota la stanza" sempre primo, subito dopo Crea video (esterni e giardini hanno i loro "Rinnova")
   const sugs = suggestionsFor(kind);
+  const typedDensity = textDensity ?? detectDensity(text) ?? 'normale';
+  const typingFurnish = !!base && scene === 'interno' && !!text.trim() && creditsOf({ prompt: text, scene }, editsDone) === CREDIT_COST.arreda;
+  const densityPills = ([['poco', 'Essenziale'], ['normale', 'Normale'], ['ricco', 'Ricco']] as const).map(([d, l]) => (
+    <button key={d} role="radio" aria-checked={typedDensity === d} onClick={() => setTextDensity(d)}
+      className={`flex h-8 shrink-0 items-center rounded-full px-3.5 pb-px text-[13px] font-medium leading-none shadow-sm ease-smooth transition-colors ${typedDensity === d ? 'bg-ink text-white' : 'bg-white text-ink/80 ring-1 ring-inset ring-black/10 hover:bg-canvas'}`}>{l}</button>
+  ));
   const chips = [...videoChip, ...sugs.filter(x => roomState !== 'vuota' || (x.id !== 'empty' && x.id !== 'tidy')).map(x => (
     <button key={x.id} data-density-chip disabled={busy} onClick={e => {
       if (creditsOf(x.req, editsDone) !== CREDIT_COST.arreda || scene !== 'interno') { void send(x.label, x); return; }
@@ -815,7 +830,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
               </div>
             </div>, document.body)}
           {base && !busy && (
-            <div className="blur-in -mx-1 mb-2 flex gap-1.5 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" style={{ maskImage: 'linear-gradient(90deg, #000 90%, transparent)' }}>{chips}</div>
+            <div className="blur-in -mx-1 mb-2 flex gap-1.5 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" style={{ maskImage: 'linear-gradient(90deg, #000 90%, transparent)' }}>{typingFurnish ? <><span className="self-center pl-1 pr-1 text-xs text-muted">Quanto arredo?</span><span role="radiogroup" aria-label="Quantità di arredo" className="flex gap-1.5">{densityPills}</span></> : chips}</div>
           )}
           <input ref={styleInput} type="file" accept="image/*" className="hidden" onChange={async e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) void send('Arreda nello stile della foto', null, { src: await fileToResizedDataUrl(f, 1024) }); }} />
           {inspo && <Inspiration room={kind} onClose={() => setInspo(false)} onUpload={() => { setInspo(false); styleInput.current?.click(); }} onPick={(url, credit) => { setInspo(false); void send('Arreda nello stile della foto', null, { src: url, author: credit.author, authorUrl: credit.url }); }} />}
