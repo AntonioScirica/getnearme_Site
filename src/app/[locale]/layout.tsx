@@ -35,7 +35,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   
   // Genera alternate languages con x-default
   const languages: Record<string, string> = {};
-  locales.forEach((loc) => {
+  // solo le lingue che esistono davvero (le altre rimandano a /en)
+  (['it', 'en'] as const).forEach((loc) => {
     languages[hreflangMap[loc]] = `${baseUrl}/${loc}`;
   });
   languages["x-default"] = `${baseUrl}/${defaultLocale}`;
