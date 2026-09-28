@@ -63,7 +63,7 @@ export async function nanoBanana(o: { userId: string; image: string; prompt: str
       method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key }, signal: AbortSignal.timeout(120_000),
       body: JSON.stringify({
         contents: [{ parts: [...images.map(inline_data => ({ inline_data })), { text: o.prompt }] }],
-        generationConfig: { responseModalities: ['IMAGE'], imageConfig: { imageSize: '1K', ...(o.aspect ? { aspectRatio: o.aspect } : {}) } },
+        generationConfig: { responseModalities: ['IMAGE'], imageConfig: { imageSize: '1K', aspectRatio: o.aspect ?? await nearestAspect(images[0].data) } },
       }),
     })
     const d = await r.json() as { candidates?: { content?: { parts?: { inlineData?: { data: string }; inline_data?: { data: string } }[] } }[]; error?: { message?: string } }
@@ -78,6 +78,15 @@ export async function nanoBanana(o: { userId: string; image: string; prompt: str
   } finally {
     await logUsage({ userId: o.userId, kind: o.kind ?? 'photo_edit' }, false, Date.now() - t0, {}, ok, model).catch(() => {})
   }
+}
+
+// formato della foto di partenza: se no Nano Banana sceglie il suo e il ritaglio dopo zooma la stanza (28/09)
+const ASPECTS = ['1:1', '2:3', '3:2', '3:4', '4:3', '4:5', '5:4', '9:16', '16:9', '21:9']
+async function nearestAspect(b64data: string): Promise<string> {
+  const { width = 1, height = 1, orientation = 1 } = await sharp(Buffer.from(b64data, 'base64')).metadata()
+  const r = orientation >= 5 ? height / width : width / height
+  const d = (x: string) => Math.abs(Math.log(r * +x.split(':')[1] / +x.split(':')[0]))
+  return ASPECTS.reduce((a, b) => (d(b) < d(a) ? b : a))
 }
 
 // Modifica su una zona o su oggetti cliccati: alla foto si aggiunge una copia con la zona segnata in rosso
