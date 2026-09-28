@@ -71,9 +71,11 @@ const GRAVITY_PROMPT = (order: string, n: number) => 'Real-estate staging animat
   + `These are the only objects that ever appear, in exactly these quantities: ${order}. Nothing else appears at any moment and nothing that appears ever disappears. The last frame is identical to the final image. `
   + 'The empty room is shown for one second. Then the furniture falls into the room from above, out of the top of the frame, one piece after another in quick rhythm: '
   + `each piece drops straight down onto its exact final spot, lands with a soft impact and a tiny puff of dust, and stays perfectly still. Order: ${order}. `
+  // 28/09: letto e divano comparivano sul posto: ogni pezzo, anche il piu' grande, si deve vedere in volo
+  + 'Every piece, even the biggest ones like the bed, the sofa and the wardrobe, is clearly seen falling through the air for about half a second before it lands; nothing appears already in place. '
   // aggiunto il 28/09: Veo in avanti a volte non faceva cadere tutto (all'ultimo fotogramma ci arriva solo dissolvendo)
   + `All ${n} pieces fall, the largest first: none is skipped and none appears without falling. By the fourth second all ${n} pieces have landed and the room is identical to the final image; from then on nothing moves or changes at all.`
-const GRAVITY_NEG = 'text, letters, numbers, percent signs, captions, watermark, circles, ovals, rings, halos, light arcs, light trails, glowing lines, light beams, lens flare, fast camera movement, camera shake, new parts of the room, dissolve, ghosting, double exposure, semi-transparent objects, duplicated furniture, springs, coils, bouncing platform, ropes, cranes, objects not in the last frame, extra furniture, extra cushions, extra decor, chairs, lamps, plants that are not in the last frame, people, hands, tripod, camera, springs, coils, sliding objects, flying objects, floating objects, objects disappearing, fading in, cross-fade, morphing, melting, flicker, exposure change, camera movement, zoom, pan'
+const GRAVITY_NEG = 'text, letters, numbers, percent signs, captions, watermark, circles, ovals, rings, halos, light arcs, light trails, glowing lines, light beams, lens flare, fast camera movement, camera shake, new parts of the room, dissolve, ghosting, double exposure, semi-transparent objects, duplicated furniture, springs, coils, bouncing platform, ropes, cranes, objects not in the last frame, extra furniture, extra cushions, extra decor, chairs, lamps, plants that are not in the last frame, people, hands, tripod, camera, springs, coils, sliding objects, objects disappearing, fading in, popping in, appearing out of nowhere, teleporting, cross-fade, morphing, melting, flicker, exposure change, camera movement, zoom, pan'
 
 // Stanza vuota della foto: Qwen (RunPod) "remove only", identica al pixel alla foto (misurato il 28/09: 0 px di scarto).
 // Nano Banana ridisegna l'inquadratura (fino a -24% di zoom, 159 px, 2,3 gradi): per il video da una foto all'altra e'
@@ -245,8 +247,8 @@ export async function pollVideo(owner: string, job: string): Promise<VideoResult
     // Dall'alto: clip INTERA, mai fermata a meta' (un fotogramma di Veo a mobili appena atterrati puo' avere pezzi
     // trasparenti, e il fermo lo mostrava: 28/09). L'ultimo fotogramma di Veo e' l'immagine arredata vera: il fermo e' su quella.
     const cut = kling ? KLING_SECONDS * parts.length : forward ? VEO_SECONDS : cutPoint(await ffmpeg(['-i', raw, '-vf', 'scale=320:180,format=gray', '-f', 'rawvideo', '-']), 320 * 180)
-    // Dall'alto un po' piu' veloce (1,4x): la caduta di Veo sembrava lenta
-    const speed = name.endsWith('-g') ? 1.4 : 1
+    // Dall'alto un po' piu' veloce (1,2x; a 1,4x le cadute diventavano istantanee)
+    const speed = name.endsWith('-g') ? 1.2 : 1
     const total = cut / speed + HOLD, n = Math.round(total * 30)
     // zoom 4% ease-in-out su tutto il video, sub-pixel (perspective con interpolazione: niente tremolio)
     const z = `(1+0.04*(0.5-0.5*cos(PI*min(in/${n}\\,1))))`, o = `(1-1/${z})/2`
