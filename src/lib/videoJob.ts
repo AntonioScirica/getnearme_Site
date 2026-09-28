@@ -5,8 +5,7 @@ import { mkdtemp, readFile, rename, rm, writeFile } from 'fs/promises'
 import { tmpdir } from 'os'
 import { join } from 'path'
 import sharp from 'sharp'
-import { nanoBanana, stagePrompt } from '@/lib/nanoBanana'
-import { emptyRoomMasked } from '@/lib/emptyRoom'
+import { stagePrompt } from '@/lib/nanoBanana'
 import { gptImage } from '@/lib/gptImage'
 import { GNM_CANTIERE_1, GNM_CANTIERE_2, GNM_DAYNIGHT, GNM_EXCAVATION_IMAGE, GNM_NIGHT_IMAGE, GNM_STOPMOTION, GNM_STRUCTURE_IMAGE } from '@/lib/gnmVideoPrompts'
 import Anthropic from '@anthropic-ai/sdk'
@@ -46,7 +45,7 @@ const GRAVITY_SPEED = 1.2 // Dall'alto un po' piu' veloce (scelto il 28/09 tra 1
 // Veo Lite primo/ultimo fotogramma su fal accetta SOLO 8 s (con 4 s rifiuta il lavoro: "Input should be '8s'").
 const VEO_SECONDS = 8
 
-// Stanza vuota: maschera + inpainting (lib/emptyRoom), ripiego sul prompt Svuota della piattaforma (nanoBanana.stagePrompt).
+// Stanza vuota: GPT Image con il prompt Svuota della piattaforma (nanoBanana.stagePrompt).
 // Svuota (landing, Veo Lite in avanti F -> E): prompt e negativi della ricetta del 27/09, invariati
 const NEG = 'text, letters, numbers, percent signs, captions, watermark, circles, ovals, rings, halos, light arcs, light trails, glowing lines, light beams, lens flare, fast camera movement, camera shake, new parts of the room, dissolve, ghosting, double exposure, semi-transparent objects, duplicated furniture, springs, coils, bouncing platform, ropes, cranes, new objects, extra furniture, extra cushions, extra decor, people, hands, tripod, camera, sliding objects, flying objects, floating objects, fading in, cross-fade, morphing, melting, flicker, exposure change, camera movement, zoom, pan'
 // Popup e Dall'alto (Veo 3.1 standard/fast), negativi provati il 28/09
@@ -86,16 +85,10 @@ const prompt = (order: string, anim: Anim) => 'Elegant, satisfying real-estate a
 const negFor = (anim: Anim) => anim === 'gravity' ? NEG.replace('flying objects, floating objects, ', 'tumbling objects, rotating objects, ')
   : NEG
 
-// Stanza vuota della foto (Stop-motion e Particelle, Kling): Nano Banana, come tutte le foto.
-// aspect: stesso formato della foto, se no Nano Banana sceglie il suo e il ritaglio zooma la stanza (28/09)
-async function emptyRoom(fullUrl: string, logUser: string, aspect: string): Promise<string | null> {
-  // GPT Image 2.5 Sunburst senza maschera (EDIT_MODEL=gpt, 0,014 $ a qualita' bassa, misurato il 28/09): tiene pilastri,
-  // muretti e pavimento da solo. Se non risponde: maschera + inpainting (lib/emptyRoom), poi Nano Banana.
-  const gpt = process.env.EDIT_MODEL === 'gpt' ? await gptImage({ userId: logUser, image: fullUrl, prompt: stagePrompt({ task: 'empty', room: '', style: '' }), kind: 'svuota', quality: process.env.GPT_EDIT_QUALITY || 'low' }) : null
-  if (gpt) return gpt
-  const masked = await emptyRoomMasked({ userId: logUser, image: fullUrl, kind: 'video_empty' })
-  if (masked) return masked.toString('base64')
-  return nanoBanana({ userId: logUser, image: fullUrl, aspect, prompt: stagePrompt({ task: 'empty', room: '', style: '' }), kind: 'video_empty' })
+// Stanza vuota della foto: GPT Image 2.5 Sunburst senza maschera (0,014 $ a qualita' bassa, misurato il 28/09): tiene
+// pilastri, muretti e pavimento da solo. Sempre e solo GPT per le foto (scelta del 28/09). Il formato lo prende dalla foto.
+async function emptyRoom(fullUrl: string, logUser: string): Promise<string | null> {
+  return gptImage({ userId: logUser, image: fullUrl, prompt: stagePrompt({ task: 'empty', room: '', style: '' }), kind: 'svuota', quality: process.env.GPT_EDIT_QUALITY || 'low' })
 }
 
 // il lavoro di fal torna al client firmato con l'utente: solo chi l'ha avviato puo' finalizzarlo
@@ -109,13 +102,13 @@ export type VideoResult = { job?: string; url?: string; id?: string; status?: nu
 export type Anim = 'popup' | 'gravity' | 'particles' | 'stopmotion' | 'cantiere' | 'daynight'
 export const parseAnim = (a: unknown): Anim => (['gravity', 'particles', 'stopmotion', 'cantiere', 'daynight'] as const).find(x => x === a) ?? 'popup'
 
-// empty = stanza gia' svuotata (prova "Svuota" della landing): niente Nano Banana, e il video va IN AVANTI:
+// empty = stanza gia' svuotata (prova "Svuota" della landing): niente foto vuota da fare, e il video va IN AVANTI:
 // i mobili della foto originale spariscono uno alla volta e resta la stanza vuota.
 export async function startVideo(owner: string, logUser: string, o: { imageUrl: string; imageBase64: string; projectId?: string; anim: Anim; empty?: string; styled?: string; framesOnly?: boolean }): Promise<VideoResult & FramesResult> {
   const { imageUrl, imageBase64, anim } = o
   const pid = o.projectId ?? '' // gia' validato dalla rotta
   if (AI_MOCK) { await mockDelay(2000); return { job: 'mock' } }
-  if (!process.env.FAL_API_KEY || !process.env.GEMINI_API_KEY) return { error: 'not_configured', status: 503 } // Nano Banana + fal
+  if (!process.env.FAL_API_KEY || !process.env.OPENAI_API_KEY) return { error: 'not_configured', status: 503 } // GPT Image + fal
 
   try {
     // 1. formato dalla foto, ritaglio centrale
@@ -130,11 +123,11 @@ export async function startVideo(owner: string, logUser: string, o: { imageUrl: 
 
     // Stop-motion, Particelle, Cantiere e Giorno/notte: gli stessi flussi dei reel di GetNearMe (Kling o3, primo e
     // ultimo fotogramma, 5 s a clip, in avanti). Qui la foto finale e' quella vera dell'agente; i fotogrammi
-    // intermedi li fa Nano Banana 2 (come nei reel) partendo dalla foto.
+    // intermedi li fa GPT Image 2.5 Sunburst (0,014 $ l'uno) partendo dalla foto.
     // (con Svuota la foto e' gia' vuota: resta il flusso Veo in avanti)
     if (KLING[anim] && !o.empty) {
       const frame = async (prompt: string, label: string, ref = fullUrl) => {
-        const out = await nanoBanana({ userId: logUser, image: ref, prompt, kind: `video_${anim}` })
+        const out = await gptImage({ userId: logUser, image: ref, prompt, kind: `video_${anim}`, quality: process.env.GPT_EDIT_QUALITY || 'low' })
         if (!out) return null
         return uploadJpeg(await sharp(Buffer.from(out, 'base64')).resize(W, H, { fit: 'cover' }).jpeg({ quality: 95 }).toBuffer(), `${key}-${label}.jpg`)
       }
@@ -154,7 +147,7 @@ export async function startVideo(owner: string, logUser: string, o: { imageUrl: 
       } else {
         // stop-motion: dalla stanza vuota alla foto arredata
         // stanza vuota (vedi emptyRoom): Kling va da questa alla foto vera
-        const q = await emptyRoom(fullUrl, logUser, landscape ? '16:9' : '9:16')
+        const q = await emptyRoom(fullUrl, logUser)
         const empty = q && await uploadJpeg(await sharp(Buffer.from(q, 'base64')).resize(W, H, { fit: 'cover' }).jpeg({ quality: 95 }).toBuffer(), `${key}-vuota.jpg`)
         if (!empty) return { error: 'ai_failed', status: 502 }
         ids = [(await kling(empty, fullUrl, GNM_STOPMOTION)).request_id]
@@ -204,7 +197,7 @@ export async function prepareFrames(owner: string, logUser: string, o: { name: s
     let emptyBuf: Buffer
     if (o.empty) emptyBuf = await toJpeg(await b64Of(o.empty))
     else {
-      const e = await emptyRoom(after, logUser, landscape ? '16:9' : '9:16')
+      const e = await emptyRoom(after, logUser)
       if (!e) return { error: 'ai_failed', status: 502 }
       emptyBuf = await toJpeg(e)
     }

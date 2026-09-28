@@ -1,6 +1,6 @@
 // Arredo con GPT Image 2 / 2.5 (OpenAI diretto), provato il 28/09/2026 sulle stesse foto di Nano Banana 2: stanza e inquadratura
-// identiche, arredo realistico, 0,020 $ a foto a qualita' media e 0,014 $ a bassa (misurati dal campo usage) contro 0,067 $. Si attiva con FURNISH_MODEL=gpt e
-// OPENAI_API_KEY; se non risponde, il chiamante ripiega su Nano Banana 2. La fedelta' all'immagine di partenza in GPT Image 2 e'
+// identiche, arredo realistico, 0,020 $ a foto a qualita' media e 0,014 $ a bassa (misurati dal campo usage) contro 0,067 $. Dal 28/09 e'
+// l'unico modello per le foto (piattaforma, video e prova della landing); serve OPENAI_API_KEY. La fedelta' all'immagine di partenza in GPT Image 2 e'
 // sempre alta (input_fidelity ignorato). La cucina fissa viene rifatta nello stile scelto tenendo posizione e layout (scelta del 28/09).
 import sharp from 'sharp'
 import { logUsage } from '@/lib/ai'

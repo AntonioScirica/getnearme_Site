@@ -4,7 +4,8 @@ import { uploadJpeg } from '@/lib/r2'
 import sharp from 'sharp'
 import { createClient } from '@supabase/supabase-js'
 import { guidedEdit } from '@/lib/guidedEdit'
-import { nanoBanana, stagePrompt } from '@/lib/nanoBanana'
+import { stagePrompt } from '@/lib/nanoBanana'
+import { gptImage } from '@/lib/gptImage'
 import { STYLE_LOOK } from '@/lib/stagingPrompts'
 import { finish } from '@/lib/finish'
 
@@ -56,7 +57,8 @@ export async function POST(req: NextRequest) {
   const look = custom ? `as requested by the agent (in Italian): "${custom}"` : style === 'empty' ? '' : STYLE_LOOK[style]
   const img = `data:image/jpeg;base64,${src.toString('base64')}`
   const empty = style === 'empty' && !custom
-  const nb = await nanoBanana({ userId: '', image: img, prompt: stagePrompt({ task: empty ? 'empty' : 'furnish', room: '', style: look }), kind: 'landing_demo_image' })
+  // GPT Image 2.5 Sunburst, come in piattaforma (0,014 $ a qualita' bassa)
+  const nb = await gptImage({ userId: '', image: img, prompt: stagePrompt({ task: empty ? 'empty' : 'furnish', room: '', style: look }), kind: 'landing_demo_image', quality: process.env.GPT_EDIT_QUALITY || 'low' })
   const staged = nb ?? (await guidedEdit({ userId: '', input: { image_base64: img }, task: empty ? 'empty' : 'furnish', room: 'the room in the photo (recognize its type)', style: look, seed: Math.floor(Math.random() * 1_000_000) })).image
   if (!staged) { await giveBack(); return NextResponse.json({ error: 'failed', left: PER_IP - used }, { status: 502 }) }
   const { width = 1024, height = 1024 } = await sharp(src).metadata()

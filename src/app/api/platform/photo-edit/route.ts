@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { buildStagingPrompt, roomKey, variantText, isRestyle, isFurnishing, roomLabel, STYLE_LOOK, type SceneType } from '@/lib/stagingPrompts'
-import { guidedEdit } from '@/lib/guidedEdit'
-import { emptyRoomMasked } from '@/lib/emptyRoom'
 import { gptImage } from '@/lib/gptImage'
-import { nanoBanana, stagePrompt, markedCopy, zonePrompt } from '@/lib/nanoBanana'
+import { stagePrompt, markedCopy, zonePrompt } from '@/lib/nanoBanana'
 import { canAfford, spend, type Action } from '@/lib/credits'
 import { CREDIT_COST, FREE_EDITS } from '@/lib/pricing'
 import { brighten } from '@/lib/brighten'
@@ -108,10 +106,10 @@ export async function POST(req: NextRequest) {
   const t0 = Date.now()
   let job: RunpodJob
   let used = translation.prompt_template ?? prompt // prompt dell'ultimo passo, per il debug
-  let gemini = false // foto fatta da Nano Banana 2 (costo registrato in nanoBanana, non come GPU)
+  let direct = false // foto fatta da GPT Image (costo registrato in gptImage, non come GPU)
   try {
     const input = imageBase64 ? { image_base64: imageBase64 } : { image_url: imageUrl }
-    // Guidati da Claude (src/lib/guidedEdit.ts): arredo, svuota e ogni richiesta scritta o chip sugli interni.
+    // GPT Image (lib/gptImage): arredo, svuota e ogni richiesta scritta o chip sugli interni.
     // Restano sul passaggio unico: luce (angle), zona o clic, pareti/pavimento/soffitto (maschera nel worker), planimetria, esterni.
     // Luminoso: correzione dell'esposizione senza AI (istantanea, gratis, non brucia i bianchi, la stanza non cambia)
     if (body.angle === 'day') {
@@ -122,40 +120,27 @@ export async function POST(req: NextRequest) {
     const guided = scene === 'interno' && !drawn && !points.length && !labels.length && !body.angle && !body.planimetria && (furnishReq || body.style === 'empty' || !!custom)
     if (guided) {
       const task = body.style === 'empty' ? 'empty' : furnishReq ? 'furnish' : 'edit'
-      const reference = typeof body.reference === 'string' && ((/^data:image\/(jpeg|png|webp);base64,/.test(body.reference) && body.reference.length < 8_000_000) || allowedUrl(body.reference)) ? body.reference : undefined
       const style = task === 'edit' ? custom : (body.style && STYLE_LOOK[body.style] ? STYLE_LOOK[body.style] : `as requested by the agent (in Italian): "${custom}"`) + vary
-      // Nano Banana 2 (src/lib/nanoBanana.ts): una chiamata, niente GPU. Se Google non risponde, il vecchio flusso Qwen + Opus.
+      // GPT Image 2.5 Sunburst (OpenAI diretto), sempre e solo lui per le foto (scelta del 28/09): arredo, Svuota e modifiche.
+      // Svuota senza maschera: tiene pilastri, muretti e pavimento da solo (0,014 $ a qualita' bassa). I prompt sono in lib/nanoBanana.
+      // Stile da una foto: lo stile del riferimento si legge e si scrive a parole (styleFromPhoto), la foto non gli si passa
       const density = (['poco', 'ricco'] as const).find(d => d === body.density)
-      const nbPrompt = stagePrompt({ task, room: roomLabel(roomK), style, styleRef: !!styleRef, density })
-      // Svuota: prima con maschera e inpainting (lib/emptyRoom), che non ridisegna la stanza; se non riesce, Nano Banana
-      // GPT Image 2.5 Sunburst (OpenAI diretto): arredo con FURNISH_MODEL=gpt, modifiche e Svuota con EDIT_MODEL=gpt. Svuota senza
-      // maschera: tiene pilastri, muretti e pavimento da solo (prova del 28/09, 0,014 $). Se non risponde: Svuota a maschera, poi Nano Banana.
-      // Stile da una foto: con GPT lo stile del riferimento si legge e si scrive a parole (styleFromPhoto), la foto non gli si passa
-      const refStyle = styleRef && task === 'furnish' && process.env.FURNISH_MODEL === 'gpt' ? await styleFromPhoto(styleRef, userId) : null
-      const gpt = (!styleRef || refStyle) && ((task === 'furnish' && process.env.FURNISH_MODEL === 'gpt') || (task !== 'furnish' && process.env.EDIT_MODEL === 'gpt'))
-        ? await gptImage({ userId, image: imageBase64 || imageUrl, prompt: refStyle ? stagePrompt({ task, room: roomLabel(roomK), style: refStyle, density }) : nbPrompt, kind: task === 'furnish' ? 'arreda' : task === 'empty' ? 'svuota' : 'modifica', ...(task !== 'furnish' ? { quality: process.env.GPT_EDIT_QUALITY || 'low' } : {}) }) : null
-      const masked = !gpt && task === 'empty' ? await emptyRoomMasked({ userId, image: imageBase64 || imageUrl, kind: 'svuota' }) : null
-      const nb = masked ? masked.toString('base64') : gpt ? gpt : process.env.GEMINI_API_KEY ? await nanoBanana({ userId, image: imageBase64 || imageUrl, prompt: nbPrompt, styleRef, lite: task === 'edit' }) : null
-      if (nb) {
-        gemini = true; used = nbPrompt
-        job = { status: 'COMPLETED', output: { image_base64: nb } }
-      } else {
-        const g = await guidedEdit({ userId, input, reference, styleRef, task, room: roomLabel(roomK), style, seed })
-        used = g.prompt || prompt
-        job = g.image ? { status: 'COMPLETED', output: { image_base64: g.image } } : await runJob({ ...input, prompt, ...translation, seed, steps: 12 }) // senza piano: vecchio passaggio unico
-      }
+      const refStyle = styleRef && task === 'furnish' ? await styleFromPhoto(styleRef, userId) : null
+      const nbPrompt = stagePrompt({ task, room: roomLabel(roomK), style: refStyle ?? style, density })
+      const nb = styleRef && task === 'furnish' && !refStyle ? null
+        : await gptImage({ userId, image: imageBase64 || imageUrl, prompt: nbPrompt, kind: task === 'furnish' ? 'arreda' : task === 'empty' ? 'svuota' : 'modifica', ...(task !== 'furnish' ? { quality: process.env.GPT_EDIT_QUALITY || 'low' } : {}) })
+      direct = true; used = nbPrompt
+      job = nb ? { status: 'COMPLETED', output: { image_base64: nb } } : { status: 'FAILED', error: 'gpt image' }
     } else {
-      // Zona, clic o pareti/pavimento/soffitto con una richiesta scritta: Nano Banana 2 con la zona segnata in rosso
+      // Zona, clic o pareti/pavimento/soffitto con una richiesta scritta: GPT Image con la zona segnata in rosso
       // su una copia della foto (niente GPU). Il resto (luce, planimetria, stili senza testo) resta su Qwen.
       const src = imageBase64 || imageUrl
       const zoneReq = drawn || points.length
         ? { image: src, prompt: zonePrompt(custom, roomLabel(roomK), drawn ? 'zone' : 'points'), extra: [await markedCopy(src, drawn, points)] }
         : { image: src, prompt: stagePrompt({ task: 'edit', room: roomLabel(roomK), style: custom }) }
-      // Modifiche: GPT Image 2.5 Sunburst a qualita' bassa (EDIT_MODEL=gpt, ~0,005 $ contro 0,033 $ della Lite; prova del 28/09: tocca
-      // meno la foto fuori dalla zona), se non risponde Nano Banana Lite
-      const gz = usesText && (drawn || points.length || labels.length) && process.env.EDIT_MODEL === 'gpt' ? await gptImage({ userId, ...zoneReq, kind: 'zona', quality: process.env.GPT_EDIT_QUALITY || 'low' }) : null
-      const nb = gz ?? (process.env.GEMINI_API_KEY && usesText && (drawn || points.length || labels.length) ? await nanoBanana({ userId, ...zoneReq, lite: true }) : null)
-      if (nb) { gemini = !gz; used = gz ? 'gpt-image-2.5 (zona)' : 'nano-banana-2 (zona)'; job = { status: 'COMPLETED', output: { image_base64: nb } } }
+      // Modifiche con testo: GPT Image 2.5 Sunburst a qualita' bassa (~0,014 $; prova del 28/09: tocca meno la foto fuori dalla zona)
+      const nb = usesText && (drawn || points.length || labels.length) ? await gptImage({ userId, ...zoneReq, kind: 'zona', quality: process.env.GPT_EDIT_QUALITY || 'low' }) : null
+      if (nb) { direct = true; used = 'gpt-image-2.5 (zona)'; job = { status: 'COMPLETED', output: { image_base64: nb } } }
       else job = await runJob({ ...input, prompt, ...translation, ...(region ? { mark: region } : {}), ...(points.length ? { points } : {}), ...(labels.length ? { labels } : {}), seed, steps: 12 }) // 12 passaggi: ~8 s invece di 17 a 25, qualita' simile nel confronto del 24/09
     }
     }
@@ -166,7 +151,7 @@ export async function POST(req: NextRequest) {
   }
   const ms = Date.now() - t0
   const b64 = job.output?.image_base64
-  if (!gemini) await logUsage({ userId, kind: 'photo_edit' }, true, ms, {}, !!b64, 'qwen-image-2.1')
+  if (!direct) await logUsage({ userId, kind: 'photo_edit' }, true, ms, {}, !!b64, 'qwen-image-2.1')
   const creditsLeft = b64 ? await spend(userId, action, { preview: !!body.preview }) : null
   if (!b64) {
     console.error('photo-edit failed:', job.status, job.error || job.output?.error)
