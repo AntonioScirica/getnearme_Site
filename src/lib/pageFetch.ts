@@ -1,15 +1,12 @@
 import { isPublicHttpsUrl } from '@/lib/safeUrl'
 import { immobiliare, type Raw } from '@/lib/listingExtract'
-import { headlessRead } from '@/lib/headlessRead'
 
-// Pagina di un annuncio letta dal nostro server, nello stesso formato grezzo: testo, JSON incorporati, meta, immagini.
-// 1. il nostro Chromium headless (lib/headlessRead): apre la pagina, scorre e clicca le parti nascoste. Gratis, va sui
-//    siti che non bloccano l'automazione (agenzie, subito, portali minori);
-// 2. se il sito blocca (immobiliare, idealista, casa...): ZenRows in modalita' automatica, servizio esterno con i suoi
-//    proxy e browser (ZENROWS_API_KEY). ~0,025 $ e ~25 s a pagina (prova su immobiliare del 28/09/2026). Li' non si
-//    clicca, ma i portali grandi mettono l'annuncio intero (descrizione, caratteristiche, spese) nei dati JSON della pagina.
+// Pagina di un annuncio letta dal nostro server tramite ZenRows (servizio esterno con i suoi proxy e browser,
+// ZENROWS_API_KEY), in modalita' automatica: sceglie da solo quanto "pesante" andare, anche per i portali che bloccano
+// (immobiliare, idealista, casa). ~0,025 $ e 15-90 s a pagina sui portali (prove del 28/09/2026).
+// Formato grezzo: testo, JSON incorporati, meta, immagini; immobiliare letto con precisione dai dati della pagina.
 // Solo pagine che sembrano annunci (prezzo + superficie): il server non diventa un proxy per qualsiasi pagina.
-export type PageResult = { ok: true; raw: Raw; photos: string[]; title: string; via: 'headless' | 'zenrows'; fields?: Record<string, unknown> } | { ok: false; error: 'blocked' | 'not_a_listing' | 'invalid_url' }
+export type PageResult = { ok: true; raw: Raw; photos: string[]; title: string; via: 'zenrows'; fields?: Record<string, unknown> } | { ok: false; error: 'blocked' | 'not_a_listing' | 'invalid_url' }
 
 
 // ZenRows a volte scade o risponde a vuoto (2 su 7 nelle prove del 28/09/2026): si ritenta finche' c'e' tempo,
@@ -59,23 +56,9 @@ export function parseHtml(html: string): { raw: Raw; photos: string[]; title: st
 }
 
 const isListing = (text: string) => /[€$£]|\b(eur|euro)\b/i.test(text) && /\b(m²|m2|mq|metri quadr|sqm)/i.test(text)
-// immagini senza doppioni, loghi e icone (anche per quelle trovate dal copione headless)
-const cleanPhotos = (urls: string[]) => {
-  const seen = new Set<string>()
-  return urls.filter(u => /^https:\/\//.test(u) && !/logo|icon|avatar|sprite|placeholder|agency|agenzia|banner|badge/i.test(u)
-    && !seen.has(u.split('?')[0]) && seen.add(u.split('?')[0])).slice(0, 40)
-}
 
 export async function fetchListingPage(url: string): Promise<PageResult> {
   if (!isPublicHttpsUrl(url)) return { ok: false, error: 'invalid_url' }
-  // portali che bloccano sempre l'automazione (provato il 28/09/2026): dritti a ZenRows, senza perdere tempo col nostro browser
-  const blocked = /(^|\.)(immobiliare\.it|idealista\.it|idealista\.com|casa\.it)$/i.test(new URL(url).hostname)
-  const h = blocked ? null : await headlessRead(url)
-  if (h && isPublicHttpsUrl(h.finalUrl)) {
-    if (!isListing(h.raw.text ?? '')) return { ok: false, error: 'not_a_listing' }
-    const photos = cleanPhotos(h.raw.images ?? [])
-    return { ok: true, raw: h.raw, photos, title: h.raw.meta?.['og:title'] || h.raw.meta?.title || '', via: 'headless' }
-  }
   const html = await zenrows(url)
   if (!html || html.length < 5000) return { ok: false, error: 'blocked' }
   const p = parseHtml(html)
