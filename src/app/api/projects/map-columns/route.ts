@@ -21,7 +21,7 @@ async function getUserId(req: NextRequest): Promise<string | null> {
 // Mappa gli header di un file import sui campi immobile usando Claude Haiku.
 // Solo gli HEADER (+ 1 riga d'esempio) vengono inviati: costo ~zero, indipendente
 // dalla dimensione del file. Il client ha comunque un fallback euristico.
-const BASE_KEYS = ['riferimento', 'nome', 'addr', 'prezzo', 'mq', 'locali', 'camere', 'bagni', 'descrizione', 'titolo', 'tipologia', 'photoUrl'] as const
+const BASE_KEYS = ['riferimento', 'nome', 'addr', 'prezzo', 'mq', 'locali', 'camere', 'bagni', 'descrizione', 'titolo', 'tipologia', 'photoUrl', 'url'] as const
 // campi della scheda (classe energetica, piano...): chiave "d:<campo>"
 const TARGET_KEYS = [...BASE_KEYS, ...DETAIL_FIELDS.map(f => `d:${f.key}`)]
 
@@ -55,6 +55,7 @@ Campi target:
 - titolo: titolo annuncio
 - tipologia: tipo immobile (appartamento, villa, attico...)
 - photoUrl: url di una foto/immagine (la prima colonna foto)
+- url: link della pagina dell'annuncio sul portale (immobiliare, idealista, casa...)
 Campi della scheda (usali solo se c'e' una colonna che li contiene davvero):
 ${DETAIL_FIELDS.map(f => `- d:${f.key}: ${f.label}${f.options?.length ? ` (valori tipo: ${f.options.slice(0, 6).join(', ')})` : ''}`).join('\n')}
 

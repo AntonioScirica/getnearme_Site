@@ -226,7 +226,7 @@ export default function NewPropertyWizard({ onCreated }: { onCreated: (p: Projec
           <div className="text-xs text-muted">{done ? 'Pronto' : `Scheda ${step + 1} di ${STEPS.length}`} · completezza <CountUp value={comp.score} duration={400} />%
             <span className={`ml-2 inline-flex items-center gap-1 text-emerald-600 ease-smooth transition-opacity ${savedShown ? 'opacity-100' : 'opacity-0'}`}><Check size={11} strokeWidth={3} /> Bozza salvata</span></div>
         </div>
-        <a href="#/importa" className="hidden shrink-0 text-xs text-brand sm:block">Importa da CSV</a>
+        <a href="#/importa" className="hidden shrink-0 text-xs text-brand sm:block">Importa da link o CSV</a>
       </div>
       <div className="mt-4 flex gap-1">
         {STEPS.map((s, i) => <button key={s.id} onClick={() => i <= step && go(i)} aria-label={s.title} title={s.title} className={`h-1.5 flex-1 rounded-full ease-smooth transition-colors ${i < step || done ? 'bg-brand' : i === step ? 'bg-ink' : 'bg-line'}`} />)}

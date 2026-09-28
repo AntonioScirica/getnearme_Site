@@ -20,6 +20,7 @@ export type ImportRow = {
   tipologia?: string;
   photoUrl?: string;
   photoUrls?: string[]; // piu' URL nella cella foto: il server usa la prima raggiungibile
+  url?: string; // link dell'annuncio sul portale: l'import lo legge (ZenRows) e prende dati e foto da li'
   _raw?: Record<string, unknown>; // riga originale completa (salvata per report futuri)
   details?: Record<string, unknown>; // campi della scheda (classe energetica, piano, riscaldamento...) gia' normalizzati
 };
@@ -43,6 +44,7 @@ export const TARGET_FIELDS: { key: TargetKey; label: string; required?: boolean;
   { key: 'titolo', label: 'Titolo', synonyms: ['titolo', 'title', 'headline'] },
   { key: 'tipologia', label: 'Tipologia', synonyms: ['tipo_immobile', 'tipologia', 'tipo immobile', 'cosa è', 'cosa e', 'tipo', 'category', 'typology'] },
   { key: 'photoUrl', label: 'Foto / URL', synonyms: ['url foto', 'foto url', 'foto', 'immagine', 'photo', 'image', 'cover', 'foto1', 'immagine1'] },
+  { key: 'url', label: 'Link annuncio', synonyms: ['link annuncio', 'url annuncio', 'link immobiliare', 'url immobiliare', 'link idealista', 'link portale', 'url portale', 'annuncio', 'link', 'url', 'listing url'] },
 ];
 
 // Campi della scheda oltre a quelli base: nella mappatura hanno chiave "d:<campo>".
@@ -165,6 +167,9 @@ export function buildImportRows(rawRows: Record<string, unknown>[], mapping: Rec
       } else if (NUMERIC_FIELDS.includes(field.key)) {
         const num = parseNumeric(val);
         if (num !== undefined) (row as Record<string, unknown>)[field.key] = num;
+      } else if (field.key === 'url') {
+        const u = String(val ?? '').match(/https?:\/\/[^\s,;|"']+/)?.[0];
+        if (u) row.url = u;
       } else {
         const str = cleanString(val);
         if (str) (row as Record<string, unknown>)[field.key] = str;

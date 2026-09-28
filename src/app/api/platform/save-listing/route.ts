@@ -1,8 +1,7 @@
 import { deepProfanity } from '@/lib/profanity'
 import { NextRequest, NextResponse } from 'next/server'
-import { isPublicHttpsUrl } from '@/lib/safeUrl'
 import { createClient } from '@supabase/supabase-js'
-import { rehostImage } from '@/lib/r2'
+import { saveListingProject, str } from '@/lib/saveListing'
 
 const admin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -12,22 +11,11 @@ const admin = createClient(
 export const runtime = 'nodejs'
 export const maxDuration = 60
 
-// "Salva nei miei immobili" da Migliora annuncio: copia TUTTE le foto su R2 (non
-// dipendiamo piu' dal CDN del portale) e salva tutti i dati letti dall'estensione.
-// Solo URL dei CDN dei portali: il server non scarica indirizzi arbitrari (SSRF).
-const MAX_PHOTOS = 40
-const PARALLEL = 6
-
-const toNum = (v: unknown) => {
-  if (typeof v === 'number') return Number.isFinite(v) ? Math.round(v) : 0 // numeri della scheda AI (niente "95.5" -> 955)
-  const m = String(v ?? '').match(/\d[\d.]*/)
-  return m ? Number(m[0].replace(/\./g, '')) || 0 : 0
-}
-const str = (v: unknown, max = 200) => (typeof v === 'string' ? v.slice(0, max) : '')
+// "Salva nei miei immobili" da Migliora annuncio: copia TUTTE le foto su R2 e salva tutti i dati letti (lib/saveListing).
 
 type Body = {
   titolo?: string; descrizione?: string; score?: number; suggerimenti?: string[]
-  details?: Record<string, unknown> // scheda completa estratta da Qwen (campi di propertyFields)
+  details?: Record<string, unknown> // scheda completa estratta dall'AI (campi di propertyFields)
   listing?: { url?: string; title?: string; address?: string; propertyInfo?: Record<string, unknown>; photos?: string[] }
 }
 
@@ -48,51 +36,12 @@ export async function POST(req: NextRequest) {
   if (JSON.stringify(info).length > 30000) return NextResponse.json({ error: 'too_large' }, { status: 400 })
   const details = b.details && typeof b.details === 'object' && !Array.isArray(b.details) ? b.details : {}
   if (JSON.stringify(details).length > 20000) return NextResponse.json({ error: 'too_large' }, { status: 400 })
-  const d = details as Record<string, unknown>
 
-  // Foto: copia su R2 a 1600px, a gruppi di PARALLEL, mantenendo l'ordine.
-  const sources = (Array.isArray(l.photos) ? l.photos : []).filter(isPublicHttpsUrl) // foto di qualsiasi sito di annunci, solo https pubblico.slice(0, MAX_PHOTOS)
-  const stamp = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
-  const photos: string[] = []
-  for (let i = 0; i < sources.length; i += PARALLEL) {
-    const batch = await Promise.all(sources.slice(i, i + PARALLEL).map((u, j) => rehostImage(u, `properties/${userId}/${stamp}-${i + j}.jpg`, 1600, 82)))
-    photos.push(...batch.filter((u): u is string => !!u))
-  }
-  const thumb = sources[0] ? await rehostImage(sources[0], `covers/${userId}/${stamp}-thumb.jpg`, 100, 80) : null
-
-  const { data: project, error } = await admin.from('projects').insert({
-    user_id: userId,
-    nome: titolo,
-    titolo,
-    descrizione: str(b.descrizione, 10000),
-    // scheda estratta dall'AI prima, dati dei selettori dell'estensione come ripiego
-    addr: str(d.indirizzo, 300) || str(l.address, 300),
-    tipologia: str(d.tipologia, 100) || str(info.type, 100),
-    prezzo: toNum(d.prezzo) || toNum(info.price),
-    mq: toNum(d.superficie) || toNum(info.surface),
-    locali: toNum(d.locali) || toNum(info.rooms) || null,
-    camere: toNum(d.camere) || toNum(info.bedrooms),
-    bagni: toNum(d.bagni) || toNum(info.bathrooms),
-    cover: photos[0] ?? '',
-    thumb: thumb ?? '',
-    import_data: {
-      source: 'portal',
-      url: str(l.url, 500),
-      photos,
-      score: typeof b.score === 'number' ? b.score : null,
-      suggerimenti: Array.isArray(b.suggerimenti) ? b.suggerimenti.slice(0, 20).map(s => str(s, 1000)) : [],
-      piano: str(info.floor, 50),
-      classe: str(info.energyClass, 20),
-      caratteristiche: Array.isArray(info.features) ? info.features.slice(0, 50) : [],
-      originale: { titolo: str(l.title, 300), descrizione: str(info.description, 10000) },
-      details, // scheda completa (stessi campi di Crea da zero): la legge la pagina della casa
-      info, // tutto quello che ha letto l'estensione (spese, riscaldamento, anno, esposizione, box...)
-    },
-  }).select('id').single()
-
-  if (error) {
-    console.error('save-listing error:', error)
+  try {
+    const r = await saveListingProject(userId, { titolo, descrizione: b.descrizione, score: b.score, suggerimenti: b.suggerimenti, details, listing: l, source: 'portal' })
+    return NextResponse.json(r)
+  } catch (e) {
+    console.error('save-listing error:', e)
     return NextResponse.json({ error: 'internal_server_error' }, { status: 500 })
   }
-  return NextResponse.json({ id: project.id, photos: photos.length, skipped: sources.length - photos.length })
 }
