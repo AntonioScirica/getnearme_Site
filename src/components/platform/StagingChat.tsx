@@ -19,6 +19,8 @@ import LibraryPicker from './LibraryPicker';
 import { fetchProjects, type ProjectData } from '@/lib/projects';
 import { tiltMove, tiltReset } from '@/components/ui/tilt';
 import { uploadDataUrl } from '@/lib/imageUpload';
+import { CREDIT_COST, FREE_EDITS } from '@/lib/pricing';
+import { isFurnishing, isRestyle } from '@/lib/stagingPrompts';
 
 // Home staging come chat: l'agente carica una foto nella conversazione, scrive cosa vuole (in italiano,
 // il servizio traduce), riceve il prima/dopo e continua a chiedere sull'ultimo risultato. Caricare
@@ -94,6 +96,15 @@ const VIDEO_TEMPLATES: (VideoCard & { anims: (VideoCard & { id: VideoAnim })[] }
 ];
 const VIDEO_STYLES = [{ id: 'modern', label: 'Moderno' }, { id: 'nordic', label: 'Nordico' }, { id: 'industrial', label: 'Luxury' }, { id: 'boho', label: 'Boho' }];
 
+// Crediti di un'azione, stessa regola del server (api/platform/photo-edit): luce gratis, svuota e arredo 5, modifica gratis
+// per le prime FREE_EDITS su una foto poi 1. Etichetta piccola accanto a ogni pulsante, cosi' l'agente sa cosa spende.
+const creditsOf = (req: Partial<EditRequest>, editsDone: number): number => req.angle === 'day' ? CREDIT_COST.luminoso
+  : req.style === 'empty' ? CREDIT_COST.svuota
+  : isFurnishing({ style: req.style, customPrompt: req.prompt, angle: req.angle, planimetria: req.planimetria, scene: req.scene as 'interno' | undefined, restyle: isRestyle(req.prompt ?? '') }) || !!req.styleRef ? CREDIT_COST.arreda
+  : editsDone >= FREE_EDITS ? CREDIT_COST.modifica_extra : CREDIT_COST.modifica;
+function Cr({ n, dark }: { n: number; dark?: boolean }) {
+  return <span className={`ml-1.5 rounded-full px-1.5 py-px text-[10px] font-semibold leading-4 ${dark ? 'bg-white/20 text-white' : 'bg-black/[.06] text-muted'}`}>{n === 0 ? 'gratis' : `${n} cr`}</span>;
+}
 const uid = () => Math.random().toString(36).slice(2, 10);
 const wait = (ms: number) => new Promise(r => setTimeout(r, ms));
 // planimetria: rendering con regole sue, dal testo prendo solo lo stile dell'arredo
@@ -456,15 +467,16 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   const empty = msgs.length === 0;
   const picker = <input type="file" accept="image/*" multiple className="hidden" onChange={e => { upload(e.target.files); e.target.value = ''; }} />;
   // i suggerimenti partono subito, senza passare dal campo
+  const editsDone = msgs.filter(x => x.role === 'ai' && !!x.out).length; // modifiche gia' fatte su questa foto
   const videoChip = base && scene === 'interno' ? [
     <button key="video" disabled={busy} onClick={() => askVideo(base)}
-      className="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-ink px-3.5 py-1.5 text-[13px] font-medium text-white shadow-sm ease-smooth transition-colors hover:bg-brand disabled:opacity-40"><Clapperboard size={13} /> Crea video</button>,
+      className="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-ink px-3.5 py-1.5 text-[13px] font-medium text-white shadow-sm ease-smooth transition-colors hover:bg-brand disabled:opacity-40"><Clapperboard size={13} /> Crea video<Cr n={CREDIT_COST.video} dark /></button>,
   ] : [];
   // interni: "Svuota la stanza" sempre primo, subito dopo Crea video (esterni e giardini hanno i loro "Rinnova")
   const sugs = suggestionsFor(kind);
   const chips = [...videoChip, ...sugs.filter(x => roomState !== 'vuota' || (x.id !== 'empty' && x.id !== 'tidy')).map(x => (
     <button key={x.id} disabled={busy} onClick={() => send(x.label, x)}
-      className="shrink-0 whitespace-nowrap rounded-full bg-white px-3.5 py-1.5 text-[13px] font-medium text-ink/80 shadow-sm ring-1 ring-inset ring-black/10 ease-smooth transition-colors hover:bg-brand hover:text-white disabled:opacity-40">{x.label}</button>
+      className="group flex shrink-0 items-center whitespace-nowrap rounded-full bg-white px-3.5 py-1.5 text-[13px] font-medium text-ink/80 shadow-sm ring-1 ring-inset ring-black/10 ease-smooth transition-colors hover:bg-brand hover:text-white disabled:opacity-40">{x.label}<Cr n={creditsOf(x.req, editsDone)} /></button>
   ))];
 
   // proporzioni vere delle foto: il risultato segue la foto (verticale resta verticale)
@@ -591,8 +603,8 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                     {m.step === 'mode' && (
                       <div className="px-1">
                         <div className="flex flex-wrap gap-1.5">
-                          {!(emptyFrom && emptyFrom === m.photo) && <button onClick={() => makeVideo(m, m.photo, 'Stanza com’è')} className="shrink-0 whitespace-nowrap rounded-full bg-ink px-3.5 py-1.5 text-[13px] font-medium text-white shadow-sm ease-smooth transition-colors hover:bg-brand">Tieni la stanza com’è</button>}
-                          {VIDEO_STYLES.map(x => <button key={x.id} onClick={() => styleVideo(m, x.label, { style: x.id })} className="shrink-0 whitespace-nowrap rounded-full bg-white px-3.5 py-1.5 text-[13px] font-medium text-ink/80 shadow-sm ring-1 ring-inset ring-black/10 ease-smooth transition-colors hover:bg-brand hover:text-white">{x.label}</button>)}
+                          {!(emptyFrom && emptyFrom === m.photo) && <button onClick={() => makeVideo(m, m.photo, 'Stanza com’è')} className="shrink-0 whitespace-nowrap rounded-full bg-ink px-3.5 py-1.5 text-[13px] font-medium text-white shadow-sm ease-smooth transition-colors hover:bg-brand">Tieni la stanza com’è<Cr n={0} dark /></button>}
+                          {VIDEO_STYLES.map(x => <button key={x.id} onClick={() => styleVideo(m, x.label, { style: x.id })} className="shrink-0 whitespace-nowrap rounded-full bg-white px-3.5 py-1.5 text-[13px] font-medium text-ink/80 shadow-sm ring-1 ring-inset ring-black/10 ease-smooth transition-colors hover:bg-brand hover:text-white">{x.label}<Cr n={CREDIT_COST.arreda} /></button>)}
                         </div>
                         <input placeholder="Oppure scrivi lo stile, es. classico con legno scuro" maxLength={200}
                           onKeyDown={e => { const v = e.currentTarget.value.trim(); if (e.key === 'Enter' && v) styleVideo(m, v, { prompt: `Arreda la stanza in stile ${v}` }); }}
@@ -619,8 +631,8 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                         {/* approvazione: Veo (la parte cara) parte solo da qui; la stanza vuota si puo' rifare (costa come una foto) */}
                         {m.frames && (
                           <div className="flex flex-wrap items-center gap-2 pt-3">
-                            <button onClick={() => renderVideo(m)} className="rounded-full bg-ink px-4 py-2 text-[13px] font-medium text-white shadow-sm ease-smooth transition-colors hover:bg-brand">Crea il video</button>
-                            <button onClick={() => { const f = m.frames!; makeVideo({ ...m, picks: m.picks.slice(0, -1) }, f.src, m.picks[m.picks.length - 1]?.label ?? 'Stanza com’è', f.styled); }} className="rounded-full bg-white px-4 py-2 text-[13px] font-medium text-ink/80 shadow-sm ring-1 ring-inset ring-black/10 ease-smooth transition-colors hover:bg-canvas">Rifai la stanza vuota</button>
+                            <button onClick={() => renderVideo(m)} className="flex items-center rounded-full bg-ink px-4 py-2 text-[13px] font-medium text-white shadow-sm ease-smooth transition-colors hover:bg-brand">Crea il video<Cr n={m.anim === 'cantiere' ? CREDIT_COST.video_cantiere : CREDIT_COST.video} dark /></button>
+                            <button onClick={() => { const f = m.frames!; makeVideo({ ...m, picks: m.picks.slice(0, -1) }, f.src, m.picks[m.picks.length - 1]?.label ?? 'Stanza com’è', f.styled); }} className="rounded-full bg-white px-4 py-2 text-[13px] font-medium text-ink/80 shadow-sm ring-1 ring-inset ring-black/10 ease-smooth transition-colors hover:bg-canvas">Rifai la stanza vuota<Cr n={0} /></button>
                           </div>
                         )}
                         {m.err && !m.frames && (
@@ -727,8 +739,8 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                     <div className={`flex w-full items-center gap-1 ${isNarrow(m.before) ? '' : 'justify-between'}`}>
                       <Act narrow={isNarrow(m.before)} icon={<SquareDashedMousePointer size={14} className="translate-y-px" />} label="Modifica" onClick={() => { if (base !== m.out) restartFrom(i, m.out!); setSelecting(true); }} />
                       <Act narrow={isNarrow(m.before)} icon={<Building2 size={14} className="translate-y-px" />} label="Salva nell’immobile" short="Salva" active={saveOpen === m.id} onClick={() => setSaveOpen(v => (v === m.id ? null : m.id))} />
-                      <Act narrow={isNarrow(m.before)} icon={<Clapperboard size={14} className="translate-y-px" />} label="Video" tip="I mobili compaiono uno alla volta" disabled={busy} onClick={() => askVideo(m.out!)} />
-                      {m.req && <Act narrow={isNarrow(m.before)} icon={<Shuffle size={14} className="translate-y-px" />} label="Altra versione" short="Altra" tip="Stesso stile, un'altra versione" disabled={busy} onClick={() => variant(m)} />}
+                      <Act narrow={isNarrow(m.before)} icon={<Clapperboard size={14} className="translate-y-px" />} label="Video" tip="I mobili compaiono uno alla volta" disabled={busy} onClick={() => askVideo(m.out!)} cr={CREDIT_COST.video} />
+                      {m.req && <Act narrow={isNarrow(m.before)} icon={<Shuffle size={14} className="translate-y-px" />} label="Altra versione" short="Altra" tip="Stesso stile, un'altra versione" disabled={busy} onClick={() => variant(m)} cr={creditsOf(m.req, editsDone)} />}
                       {base !== m.out && (
                         <>
                           <span className="mx-1 h-4 w-px bg-line" aria-hidden />
@@ -784,6 +796,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
               placeholder={hint}
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
               className="block h-10 min-w-0 flex-1 resize-none bg-transparent px-1 py-2 text-[15px] leading-6 outline-none placeholder:text-muted/60 disabled:cursor-not-allowed" />
+            {base && text.trim() && !busy && <span className="self-center"><Cr n={creditsOf({ prompt: text, scene }, editsDone)} /></span>}
             <button onClick={() => send()} disabled={!text.trim() || !base || busy} aria-label="Invia"
               className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand text-white ease-smooth transition-[background-color,opacity,transform] hover:bg-brand/90 active:scale-95 disabled:opacity-40">
               {busy ? <Loader2 size={17} className="animate-spin" /> : <ArrowUp size={18} />}
@@ -1052,11 +1065,11 @@ function StepSwap({ step, children }: { step: string; children: React.ReactNode 
 }
 
 // Pulsante della card del risultato: icona e nome in riga, oppure (card stretta, foto verticale) icona sopra e nome corto sotto
-function Act({ icon, label, short, tip, narrow, active, disabled, onClick }: { icon: React.ReactNode; label: string; short?: string; tip?: string; narrow: boolean; active?: boolean; disabled?: boolean; onClick: () => void }) {
+function Act({ icon, label, short, tip, narrow, active, disabled, onClick, cr }: { icon: React.ReactNode; label: string; short?: string; tip?: string; narrow: boolean; active?: boolean; disabled?: boolean; onClick: () => void; cr?: number }) {
   const tone = active ? 'bg-canvas text-ink' : 'text-ink hover:bg-canvas';
   const btn = narrow
     ? <button onClick={onClick} disabled={disabled} aria-label={label} aria-pressed={active} className={`flex min-w-0 flex-1 flex-col items-center gap-1 rounded-2xl px-1 py-2 text-[11px] font-medium leading-none disabled:opacity-40 ${tone}`}>{icon}<span className="truncate">{short ?? label}</span></button>
-    : <button onClick={onClick} disabled={disabled} aria-pressed={active} className={`flex h-8 items-center gap-1.5 rounded-full px-3 font-medium leading-none disabled:opacity-40 ${tone}`}>{icon} {label}</button>;
+    : <button onClick={onClick} disabled={disabled} aria-pressed={active} className={`flex h-8 items-center gap-1.5 rounded-full px-3 font-medium leading-none disabled:opacity-40 ${tone}`}>{icon} {label}{cr !== undefined && <Cr n={cr} />}</button>;
   return tip && !narrow ? <Tooltip label={tip}>{btn}</Tooltip> : btn;
 }
 
