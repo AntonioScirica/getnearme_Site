@@ -1,3 +1,4 @@
+import { deepProfanity } from '@/lib/profanity'
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
@@ -12,6 +13,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const { email, type, message } = body;
+    if (deepProfanity(body)) return NextResponse.json({ error: 'Il messaggio contiene parole non ammesse' }, { status: 400 });
 
     if (!email || typeof email !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return NextResponse.json({ error: 'Email non valida' }, { status: 400 });

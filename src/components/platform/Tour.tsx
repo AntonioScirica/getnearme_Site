@@ -25,6 +25,13 @@ export const TOUR_KEY = 'agenteimmo:tour';
 export default function Tour({ onDone }: { onDone: () => void }) {
   const [i, setI] = useState(0);
   const [box, setBox] = useState<DOMRect | null>(null);
+  // all'inizio niente finche' la prima voce non e' trovata (o 1 s, se non si vede: card al centro); la luce
+  // compare gia' al suo posto e si anima solo dal passo dopo, niente luce che arriva da un angolo
+  const [start, setStart] = useState(false);
+  const [moving, setMoving] = useState(false);
+  useEffect(() => { const t = setTimeout(() => setStart(true), 1000); return () => clearTimeout(t); }, []);
+  useEffect(() => { if (box && !start) setStart(true); }, [box, start]); // eslint-disable-line react-hooks/set-state-in-effect
+  useEffect(() => { if (!start) return; const t = setTimeout(() => setMoving(true), 50); return () => clearTimeout(t); }, [start]);
   const step = STEPS[i];
   // apre la pagina del passo; la pagina carica per conto suo, quindi la voce si rimisura finche' il passo resta
   // (se non si vede, es. menu nascosto su telefono: solo la card al centro)
@@ -63,9 +70,10 @@ export default function Tour({ onDone }: { onDone: () => void }) {
   const cardStyle: React.CSSProperties = light
     ? { width: cardW, left: Math.max(16, Math.min(window.innerWidth - cardW - 16, light.left + light.width / 2 - cardW / 2)), ...(below ? { top: light.top + light.height + 14 } : above ? { bottom: window.innerHeight - light.top + 14 } : { bottom: 24 }) }
     : { width: cardW, left: '50%', top: '50%', transform: 'translate(-50%, -50%)' };
-  const ease = 'all 600ms cubic-bezier(.22,1,.36,1)';
+  const ease = moving ? 'all 600ms cubic-bezier(.22,1,.36,1)' : 'none';
+  if (!start) return null;
   return (
-    <div className="fixed inset-0 z-[310]" role="dialog" aria-label="Tour della piattaforma">
+    <div className="fade fixed inset-0 z-[310]" role="dialog" aria-label="Tour della piattaforma">
       {/* la luce: un riquadro trasparente con un'ombra enorme che scurisce tutto il resto */}
       {light
         ? <div className="pointer-events-none absolute" style={{ ...light, borderRadius: Math.min(28, light.height / 2), boxShadow: '0 0 0 9999px rgba(15,17,25,.62), 0 0 0 3px rgba(255,255,255,.9), 0 0 40px 6px rgba(83,126,236,.55)', transition: ease }} />

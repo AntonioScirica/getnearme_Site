@@ -1,3 +1,4 @@
+import { badSlug, hasProfanity } from '@/lib/profanity'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { isReserved } from '@/lib/reservedPaths'
@@ -12,11 +13,6 @@ const admin = createClient(
 const SLUG_RE = /^[a-z0-9](?:[a-z0-9-]{1,38}[a-z0-9])$/
 // Su agenteimmo.me sito e piattaforma condividono il dominio: le pagine della piattaforma non possono essere slug.
 const validSlug = (s: string) => SLUG_RE.test(s) && !isReserved(s)
-// Parole da non avere in un indirizzo pubblico (it + en), come sottostringa senza trattini ("cazz-o" non passa).
-// Niente radici corte che stanno dentro cognomi o paesi veri (Cazzaniga, Negri, Ficarra, Troia, Madonna di Campiglio).
-const BAD = ['cazzo', 'merda', 'merdos', 'stronz', 'puttan', 'vaffa', 'fanculo', 'minchia', 'pompin', 'bastard', 'coglion', 'frocio', 'froci', 'ricchion', 'porcodio', 'porcamadonna', 'diocan', 'zoccola', 'sborr', 'inculat',
-  'fuck', 'shit', 'bitch', 'cunt', 'pussy', 'nigg', 'whore', 'slut', 'asshole', 'porn', 'hitler']
-const badSlug = (s: string) => { const flat = s.replace(/-/g, ''); return BAD.some(w => flat.includes(w)) }
 
 const getUserId = async (req: NextRequest) => {
   const token = req.headers.get('authorization')?.replace('Bearer ', '')
@@ -80,7 +76,7 @@ export async function PUT(req: NextRequest) {
   const { slug } = body
   const name = typeof body.name === 'string' ? body.name.trim() : ''
   if (typeof slug !== 'string' || !validSlug(slug) || badSlug(slug)) return NextResponse.json({ error: 'invalid_slug' }, { status: 400 })
-  if (name.length < 2 || name.length > 80) return NextResponse.json({ error: 'invalid_name' }, { status: 400 })
+  if (name.length < 2 || name.length > 80 || hasProfanity(name)) return NextResponse.json({ error: 'invalid_name' }, { status: 400 })
 
   // nome tenuto da chi non paga: si libera (quell'agente ne sceglie un altro al prossimo accesso, il suo sito va offline)
   const { data: holder } = await admin.from('user_brand').select('user_id').eq('portfolio_slug', slug).neq('user_id', userId).maybeSingle()

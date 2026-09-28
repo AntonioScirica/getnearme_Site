@@ -1,3 +1,4 @@
+import { deepProfanity } from '@/lib/profanity'
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
 
@@ -10,6 +11,7 @@ export async function POST(request: NextRequest) {
     const resend = new Resend(process.env.RESEND_API_KEY);
     const body = await request.json();
     const { nome, email, nomeAgenzia, telefono, messaggio } = body;
+    if (deepProfanity(body)) return NextResponse.json({ error: 'Il messaggio contiene parole non ammesse' }, { status: 400 });
 
     // Validate required fields
     if (!nome || typeof nome !== 'string' || nome.trim().length < 2) {

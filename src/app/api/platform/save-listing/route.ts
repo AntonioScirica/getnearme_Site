@@ -1,3 +1,4 @@
+import { deepProfanity } from '@/lib/profanity'
 import { NextRequest, NextResponse } from 'next/server'
 import { isPublicHttpsUrl } from '@/lib/safeUrl'
 import { createClient } from '@supabase/supabase-js'
@@ -39,6 +40,7 @@ export async function POST(req: NextRequest) {
 
   let b: Body
   try { b = await req.json() } catch { return NextResponse.json({ error: 'bad_request' }, { status: 400 }) }
+  if (deepProfanity(b)) return NextResponse.json({ error: 'profanity' }, { status: 400 })
   const l = b.listing
   const titolo = str(b.titolo, 200)
   if (!l || !titolo) return NextResponse.json({ error: 'bad_request' }, { status: 400 })

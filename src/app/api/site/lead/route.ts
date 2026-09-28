@@ -1,3 +1,4 @@
+import { deepProfanity } from '@/lib/profanity'
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import { getBrand, getSite } from '@/lib/portfolio'
@@ -12,6 +13,7 @@ export async function POST(req: NextRequest) {
   let b: Record<string, unknown>
   try { b = await req.json() } catch { return NextResponse.json({ error: 'bad_request' }, { status: 400 }) }
   if (str(b.website, 100)) return NextResponse.json({ ok: true }) // bot: campo trappola compilato
+  if (deepProfanity(b)) return NextResponse.json({ error: 'profanity' }, { status: 400 })
 
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'x'
   const now = Date.now()

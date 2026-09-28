@@ -76,10 +76,12 @@ export default function PlatformApp({ userData }: { userData: UserData }) {
     // arrivato scegliendo un piano sulla landing: finito l'onboarding si va dritti al pagamento
     if (/^#\/piano\?buy=/.test(location.hash)) { setProfile(p); return; }
     // hashchange lanciato a mano: e' sincrono, cosi' la home e' gia' nel DOM quando il browser cattura lo stato nuovo
-    localStorage.setItem(TOUR_KEY, '1'); setTimeout(() => setTour(true), 1400); // tour dopo la trasformazione nella home
+    // tour solo a transizione finita: finche' dura, le card della home stanno sopra a tutto (anche sopra il velo)
+    localStorage.setItem(TOUR_KEY, '1');
+    const tourLater = () => setTimeout(() => setTour(true), 800);
     const swap = () => flushSync(() => { history.replaceState(null, '', '#/'); window.dispatchEvent(new HashChangeEvent('hashchange')); setMorphAt('/'); setProfile(p); });
-    if (!document.startViewTransition) return swap();
-    document.startViewTransition(swap);
+    if (!document.startViewTransition) { swap(); tourLater(); return; }
+    document.startViewTransition(swap).finished.finally(tourLater);
   }} />;
 
   if (route === '/tour' && !tour) queueMicrotask(() => { history.replaceState(null, '', '#/'); window.dispatchEvent(new HashChangeEvent('hashchange')); setTour(true); });

@@ -1,3 +1,4 @@
+import { deepProfanity } from '@/lib/profanity'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { getTeamUserIds } from '@/lib/teamScope'
@@ -69,6 +70,8 @@ export async function POST(req: NextRequest) {
   }
 
   const { nome, addr, prezzo, mq, bagni, camere, locali, titolo, descrizione, cover, thumb, riferimento, tipologia, icons, import_data } = body
+  // solo i testi scritti dall'agente (import_data viene dal portale: controllarlo bloccherebbe ogni salvataggio)
+  if (deepProfanity([nome, addr, titolo, descrizione, riferimento, tipologia])) return NextResponse.json({ error: 'profanity' }, { status: 400 })
 
   if (!nome) {
     return NextResponse.json({ error: 'missing_name' }, { status: 400 })
@@ -138,6 +141,8 @@ export async function PUT(req: NextRequest) {
   }
 
   const { id, nome, addr, prezzo, mq, bagni, camere, locali, titolo, descrizione, cover, thumb, riferimento, tipologia, icons, import_data, is_public } = body
+  // solo i testi scritti dall'agente (import_data viene dal portale: controllarlo bloccherebbe ogni salvataggio)
+  if (deepProfanity([nome, addr, titolo, descrizione, riferimento, tipologia])) return NextResponse.json({ error: 'profanity' }, { status: 400 })
 
   if (!id) {
     return NextResponse.json({ error: 'missing_id' }, { status: 400 })

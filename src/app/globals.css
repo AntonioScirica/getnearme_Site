@@ -537,3 +537,9 @@ html.metrics-light [class*="border-gray-600"] { border-color: #d8d4cb !important
   }
 }
 @media (prefers-reduced-motion: reduce) { .in-left, .in-right, .parallax, .blur-in, .rise { animation: none; opacity: 1; } }
+
+/* ProfanityGuard: campo con parola non ammessa, avviso sotto e piccolo scossone se si prova a inviare */
+[data-profanity] { outline: 2px solid #e5484d !important; outline-offset: 2px; }
+.profanity-tip { position: fixed; z-index: 400; pointer-events: none; border-radius: 9999px; background: #e5484d; color: #fff; font-size: 12px; font-weight: 600; padding: 6px 12px; box-shadow: 0 8px 24px -8px rgba(229,72,77,.6); animation: gnm-fade .3s ease both; }
+@keyframes profanity-shake { 0%, 100% { transform: none; } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+.profanity-shake { animation: profanity-shake .3s ease; }

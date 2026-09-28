@@ -1,3 +1,4 @@
+import { deepProfanity } from '@/lib/profanity'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { cleanSite } from '@/lib/siteTemplates'
@@ -42,6 +43,7 @@ export async function PUT(req: NextRequest) {
   if (!u) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   let body: unknown
   try { body = await req.json() } catch { return NextResponse.json({ error: 'bad_request' }, { status: 400 }) }
+  if (deepProfanity(body)) return NextResponse.json({ error: 'profanity' }, { status: 400 })
   const b = await brandOf(u.id)
   const config = cleanSite(body, b.name, b.email || u.email || '')
   const { error } = await admin.auth.admin.updateUserById(u.id, { user_metadata: { ...u.user_metadata, vetrina_site: config } })
