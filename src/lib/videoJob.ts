@@ -29,7 +29,7 @@ import { MUSIC_CATALOG } from '@/lib/aiVideoMusic'
 //      Sempre 8 s: a 6 s Fast inventava un divano a meta' clip e poi dissolveva (prova su fal del 28/09).
 //   5. (GET) Dall'alto: clip fino al fermo (max 6 s) a 1,2x; Popup e Particelle: clip fino a stanza vuota (tempo morto tolto), invertita.
 //      Poi passaggio di 0,35 s alla foto vera e 2 s di fermo su di essa: il video finisce SEMPRE sulla foto
-//      dell'agente, qualunque cosa abbia fatto Veo. Zoom 4% ease-in-out, musica.
+//      dell'agente, qualunque cosa abbia fatto Veo. Zoom 3% solo nel fermo finale, musica.
 // startVideo avvia (~30 s, Veo resta in coda su fal), pollVideo controlla e a fine lavoro monta e salva su R2.
 // owner = cartella su R2 e firma del lavoro (id utente, o 'landing' per la prova anonima); logUser = chi paga nei log.
 
@@ -262,8 +262,10 @@ export async function pollVideo(owner: string, job: string): Promise<VideoResult
     const speed = veo && !popup ? GRAVITY_SPEED : 1
     const shown = cut / speed // durata della clip nel video finale
     const total = shown + HOLD, n = Math.round(total * 30)
-    // zoom 4% ease-in-out su tutto il video, sub-pixel (perspective con interpolazione: niente tremolio)
-    const z = `(1+0.04*(0.5-0.5*cos(PI*min(in/${n}\\,1))))`, o = `(1-1/${z})/2`
+    // zoom 3% ease-in-out solo nel finale, dal passaggio alla foto vera in poi (Kling e Svuota: ultimi 2 s);
+    // sub-pixel (perspective con interpolazione: niente tremolio)
+    const z0 = Math.round((veo ? shown - XFADE : shown) * 30)
+    const z = `(1+0.03*(0.5-0.5*cos(PI*min(max(in-${z0}\\,0)/${n - z0}\\,1))))`, o = `(1-1/${z})/2`
     const zoom = `perspective=x0='W*${o}':y0='H*${o}':x1='W-W*${o}':y1='H*${o}':x2='W*${o}':y2='H-H*${o}':x3='W-W*${o}':y3='H-H*${o}':interpolation=cubic:eval=frame,format=yuv420p[v];`
     const audio = `atrim=end=${total.toFixed(2)},afade=t=out:st=${(total - 1.2).toFixed(2)}:d=1.2,volume=0.8[a]`
     const clip = `[0:v]trim=end=${cut.toFixed(2)},setpts=(PTS-STARTPTS)/${speed},${popup ? 'reverse,' : ''}fps=30,format=yuv420p`
