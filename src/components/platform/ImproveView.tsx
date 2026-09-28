@@ -18,6 +18,8 @@ type Problem = { area: string; gravita: 'alta' | 'media' | 'bassa'; problema: st
 export type Analysis = {
   score: number; score_potenziale: number; criteri: Criteri; sintesi: string; punti_forza: string[]; problemi: Problem[];
   dati_mancanti: string[]; foto_consigli: string[]; titolo: string; descrizione: string;
+  // dal 28/09/2026 il verdetto e' a regole e la riscrittura a richiesta: riscritto false = titolo e descrizione originali
+  riscritto?: boolean; fields?: Record<string, unknown>;
 };
 export type Stage = 'input' | 'opening' | 'scanning' | 'done' | 'no-extension' | 'manual' | 'error';
 
@@ -47,8 +49,8 @@ export function useImprove() {
 
   useEffect(() => {
     if (stage !== 'scanning') return;
-    // passi distribuiti sulla durata tipica dell'analisi su Qwen (~1-2 min), l'ultimo resta finche' non arriva
-    const t = setInterval(() => setStep(s => Math.min(s + 1, SCAN_STEPS.length - 1)), 14000);
+    // passi distribuiti sulla durata tipica del verdetto (lettura dei campi + regole, pochi secondi)
+    const t = setInterval(() => setStep(s => Math.min(s + 1, SCAN_STEPS.length - 1)), 1500);
     return () => clearInterval(t);
   }, [stage]);
 
@@ -59,7 +61,10 @@ export function useImprove() {
     if (id !== run.current) return;
     setListing(l); setStep(0); setStage('scanning');
     if (demo) { await wait(6000); if (id === run.current) { setAnalysis(cap(withScores(mockFor<Analysis>('analyze')))); setStage('done'); } return; }
-    const res = await authFetch('/api/platform/analyze', { method: 'POST', body: JSON.stringify({ listing: { ...l, raw: undefined } }) }).catch(() => null);
+    // pagina grezza accorciata: bastano l'inizio del testo e dei dati incorporati per leggere i campi
+    const raw = l.raw as { text?: string; json?: string; meta?: unknown } | undefined;
+    const slim = raw ? { text: raw.text?.slice(0, 20000), json: raw.json?.slice(0, 20000), meta: raw.meta } : undefined;
+    const res = await authFetch('/api/platform/analyze', { method: 'POST', body: JSON.stringify({ listing: { ...l, raw: slim } }) }).catch(() => null);
     if (id !== run.current) return;
     if (!res?.ok) { setError('Analisi non riuscita, riprova.'); setStage('error'); return; }
     setAnalysis(cap(await res.json()));
@@ -78,6 +83,12 @@ export function useImprove() {
     if (id !== run.current) return;
     if (!ping?.ok) {
       if (AI_MOCK) { await wait(1500); if (id === run.current) analyze(MOCK_LISTING(u), id, true); return; }
+      // senza estensione la legge il nostro server (diretto o con proxy); se il sito blocca anche quello, estensione o testo
+      const res = await authFetch('/api/platform/read-listing', { method: 'POST', body: JSON.stringify({ url: u }) }).catch(() => null);
+      if (id !== run.current) return;
+      const d = res ? await res.json().catch(() => null) : null;
+      if (res?.ok && d) { analyze(d as Listing, id); return; }
+      if (d?.error === 'not_a_listing') { setError('Questa pagina non sembra un annuncio immobiliare (non trovo prezzo e superficie). Controlla il link.'); setStage('error'); return; }
       setStage('no-extension'); return;
     }
     const r = await extSend<{ ok: boolean; data?: Listing; error?: string }>({ type: 'GNM_IMPORT_LISTING', url: u });
@@ -232,6 +243,20 @@ const GRAVITA: Record<Problem['gravita'], { label: string; cls: string }> = {
 export function Results({ listing, analysis: a, onSaved, onRestart }: { listing: Listing; analysis: Analysis; onSaved?: () => void; onRestart: () => void }) {
   const [titolo, setTitolo] = useState(a.titolo);
   const [descrizione, setDescrizione] = useState(a.descrizione);
+  // riscrittura su richiesta (gratis con Gemini, altrimenti 1 credito)
+  const [riscritto, setRiscritto] = useState(a.riscritto !== false);
+  const [rewriting, setRewriting] = useState(false);
+  const [rewriteError, setRewriteError] = useState<string | null>(null);
+  const rewrite = async () => {
+    setRewriting(true); setRewriteError(null);
+    const res = await authFetch('/api/platform/rewrite', { method: 'POST', body: JSON.stringify({ url: listing.url, fields: { ...a.fields, titolo, descrizione } }) }).catch(() => null);
+    const d = res ? await res.json().catch(() => null) : null;
+    setRewriting(false);
+    if (!res?.ok || !d?.descrizione) { setRewriteError(d?.error === 'no_credits' ? 'Crediti finiti: scegli un piano per riscrivere l\'annuncio.' : 'Riscrittura non riuscita, riprova.'); return; }
+    setTitolo(d.titolo); setDescrizione(d.descrizione); setRiscritto(true); setShowBefore(true);
+  };
+  const origTitle = text(a.fields?.titolo) || listing.title;
+  const origDescr = text(a.fields?.descrizione) || text(listing.propertyInfo.description);
   const [showBefore, setShowBefore] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -259,16 +284,19 @@ export function Results({ listing, analysis: a, onSaved, onRestart }: { listing:
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2.5">
-              <h2 className="text-2xl font-bold leading-none tracking-tight">Annuncio riscritto</h2>
+              <h2 className="text-2xl font-bold leading-none tracking-tight">{riscritto ? 'Annuncio riscritto' : 'Il tuo annuncio'}</h2>
               <ScoreInfo a={a} />
             </div>
-            <p className="mt-2 text-sm text-muted">Pronto da incollare sul portale.</p>
+            <p className="mt-2 text-sm text-muted">{riscritto ? 'Pronto da incollare sul portale.' : 'Titolo e descrizione come sono ora. Falli riscrivere dall\'AI, poi ritocca quello che vuoi.'}</p>
+            {rewriteError && <p className="mt-2 text-sm text-rose-600">{rewriteError}</p>}
           </div>
-          <button onClick={() => setShowBefore(v => !v)} className="btn-ghost shrink-0 self-start rounded-full px-4 py-2 text-sm font-medium">{showBefore ? 'Nascondi originale' : 'Confronta con originale'}</button>
+          {riscritto
+            ? <button onClick={() => setShowBefore(v => !v)} className="btn-ghost shrink-0 self-start rounded-full px-4 py-2 text-sm font-medium">{showBefore ? 'Nascondi originale' : 'Confronta con originale'}</button>
+            : <button onClick={rewrite} disabled={rewriting} className="btn-ink flex shrink-0 items-center gap-2 self-start rounded-full px-5 py-2.5 text-sm font-semibold">{rewriting ? <Loader2 size={15} className="animate-spin" /> : <Wand2 size={15} />} {rewriting ? 'Riscrivo...' : 'Riscrivi con l\'AI'}</button>}
         </div>
 
         <Field label="Titolo" meta={`${titolo.length}/60`} warn={titolo.length > 60}>
-          {showBefore && <Before text={listing.title} />}
+          {showBefore && <Before text={origTitle} />}
           <div className="relative">
             <input value={titolo} onChange={e => setTitolo(e.target.value)} className={`${input} pr-12 text-base font-medium`} />
             <CopyIcon text={titolo} center />
@@ -276,7 +304,7 @@ export function Results({ listing, analysis: a, onSaved, onRestart }: { listing:
         </Field>
         <Field label="Descrizione" meta={`${words} parole`}>
           <div className={showBefore ? 'grid gap-4 lg:grid-cols-2' : ''}>
-            {showBefore && <Before text={text(listing.propertyInfo.description)} tall />}
+            {showBefore && <Before text={origDescr} tall />}
             <div className="relative">
               <textarea rows={14} value={descrizione} onChange={e => setDescrizione(e.target.value)} className={`${input} pr-12 text-[15px] leading-relaxed ${showBefore ? 'block h-[26rem] resize-none' : ''}`} />
               <CopyIcon text={descrizione} />
@@ -299,12 +327,13 @@ export function Results({ listing, analysis: a, onSaved, onRestart }: { listing:
         <Section title="Dati da aggiungere" hint="I compratori li cercano prima di chiamare.">
           {a.dati_mancanti.length ? <Checklist items={a.dati_mancanti} /> : <li className="text-sm text-muted">Nessuno, i dati principali ci sono.</li>}
         </Section>
-        <Section limit={3} title="Foto: cosa rifare" hint={`Valutate le prime ${Math.min(3, listing.photos.length)} foto.`}>
+        {a.foto_consigli.length > 0 && <Section limit={3} title="Foto: cosa rifare" hint={`Valutate le prime ${Math.min(3, listing.photos.length)} foto.`}>
           {a.foto_consigli.map(f => <li key={f} className="flex gap-2 text-sm"><span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-ink" />{f}</li>)}
-        </Section>
-        <Section limit={3} title="Cosa funziona già" hint="Da tenere anche nella nuova versione.">
+        </Section>}
+        {a.punti_forza.length > 0 && 
+<Section limit={3} title="Cosa funziona già" hint="Da tenere anche nella nuova versione.">
           {a.punti_forza.map(f => <li key={f} className="flex gap-2 text-sm text-muted"><Check size={15} className="mt-0.5 shrink-0 text-emerald-600" />{f}</li>)}
-        </Section>
+        </Section>}
       </div>
 
       {/* CTA finale: salva titolo e descrizione (anche ritoccati), foto e dati letti dall'estensione */}

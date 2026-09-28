@@ -43,7 +43,8 @@ let admin: ReturnType<typeof createClient> | null = null
 export async function logUsage(u: Args['usage'], runpod: boolean, ms: number, tk: Tokens, ok: boolean, model?: string) {
   const gpuPerHour = Number(process.env.AI_GPU_USD_PER_HOUR) || 1.22
   const gemini = !!model?.startsWith('gemini-')
-  const cost = gemini
+  const cost = model?.endsWith('-free') ? 0 // quota gratuita di Gemini (lib/geminiFree)
+    : gemini
     ? (ok ? (model!.includes('lite') ? 0.034 : 0.067) : 0) // Nano Banana 2 / Lite a 1K: prezzo per immagine (listino Google, 27/09/2026)
     : runpod
     ? (ms / 3_600_000) * gpuPerHour
