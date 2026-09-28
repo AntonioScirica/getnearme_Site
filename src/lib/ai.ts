@@ -43,7 +43,10 @@ let admin: ReturnType<typeof createClient> | null = null
 export async function logUsage(u: Args['usage'], runpod: boolean, ms: number, tk: Tokens, ok: boolean, model?: string) {
   const gpuPerHour = Number(process.env.AI_GPU_USD_PER_HOUR) || 1.22
   const gemini = !!model?.startsWith('gemini-')
+  const openai = !!model?.startsWith('gpt-image')
   const cost = model?.endsWith('-free') ? 0 // quota gratuita di Gemini (lib/geminiFree)
+    : openai
+    ? (ok ? 0.041 : 0) // GPT Image 2, qualita' media, 1536x1024 (listino OpenAI 28/09/2026)
     : gemini
     ? (ok ? (model!.includes('lite') ? 0.034 : 0.067) : 0) // Nano Banana 2 / Lite a 1K: prezzo per immagine (listino Google, 27/09/2026)
     : runpod
@@ -53,7 +56,7 @@ export async function logUsage(u: Args['usage'], runpod: boolean, ms: number, tk
     admin ??= createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
     await admin.from('ai_usage').insert({
       user_id: u.userId || null, kind: u.kind, // null = prova anonima dalla landing
-      provider: gemini ? 'google' : runpod ? 'runpod' : 'anthropic',
+      provider: gemini ? 'google' : openai ? 'openai' : runpod ? 'runpod' : 'anthropic',
       model: model ?? (runpod ? process.env.AI_MODEL : 'claude-opus-5'),
       input_tokens: tk.input ?? null, output_tokens: tk.output ?? null,
       duration_ms: ms, cost_usd: Number(cost.toFixed(6)), ok,

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { buildStagingPrompt, roomKey, variantText, isRestyle, isFurnishing, roomLabel, STYLE_LOOK, type SceneType } from '@/lib/stagingPrompts'
 import { guidedEdit } from '@/lib/guidedEdit'
 import { emptyRoomMasked } from '@/lib/emptyRoom'
+import { gptImage } from '@/lib/gptImage'
 import { nanoBanana, stagePrompt, markedCopy, zonePrompt } from '@/lib/nanoBanana'
 import { canAfford, spend, type Action } from '@/lib/credits'
 import { CREDIT_COST } from '@/lib/pricing'
@@ -118,7 +119,9 @@ export async function POST(req: NextRequest) {
       const nbPrompt = stagePrompt({ task, room: roomLabel(roomK), style, styleRef: !!styleRef })
       // Svuota: prima con maschera e inpainting (lib/emptyRoom), che non ridisegna la stanza; se non riesce, Nano Banana
       const masked = task === 'empty' ? await emptyRoomMasked({ userId, image: imageBase64 || imageUrl, kind: 'svuota' }) : null
-      const nb = masked ? masked.toString('base64') : process.env.GEMINI_API_KEY ? await nanoBanana({ userId, image: imageBase64 || imageUrl, prompt: nbPrompt, styleRef, lite: task === 'edit' }) : null
+      // Arredo: GPT Image 2 (FURNISH_MODEL=gpt, ~0,041 $ contro 0,067 $, prova del 28/09), senza foto di stile; se non risponde, Nano Banana 2
+      const gpt = !masked && task === 'furnish' && !styleRef && process.env.FURNISH_MODEL === 'gpt' ? await gptImage({ userId, image: imageBase64 || imageUrl, prompt: nbPrompt, kind: 'arreda' }) : null
+      const nb = masked ? masked.toString('base64') : gpt ? gpt : process.env.GEMINI_API_KEY ? await nanoBanana({ userId, image: imageBase64 || imageUrl, prompt: nbPrompt, styleRef, lite: task === 'edit' }) : null
       if (nb) {
         gemini = true; used = nbPrompt
         job = { status: 'COMPLETED', output: { image_base64: nb } }

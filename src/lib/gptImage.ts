@@ -1,0 +1,42 @@
+// Arredo con GPT Image 2 / 2.5 (OpenAI diretto), provato il 28/09/2026 sulle stesse foto di Nano Banana 2: stanza e inquadratura
+// identiche, arredo realistico, ~0,041 $ a foto (1536x1024, qualita' media) contro 0,067 $. Si attiva con FURNISH_MODEL=gpt e
+// OPENAI_API_KEY; se non risponde, il chiamante ripiega su Nano Banana 2. La fedelta' all'immagine di partenza in GPT Image 2 e'
+// sempre alta (input_fidelity ignorato). Unico difetto visto: tende a rinnovare la cucina, quindi il prompt lo ribadisce.
+import sharp from 'sharp'
+import { logUsage } from '@/lib/ai'
+
+// GPT Image 2.5 (8/9/2026): 'gpt-image-2.5-flare' veloce, 'gpt-image-2.5-sunburst' di precisione; stesso prezzo del 2. Scelta con GPT_IMAGE_MODEL.
+const MODEL = process.env.GPT_IMAGE_MODEL || 'gpt-image-2.5-sunburst' // Sunburst: l'unico che ha tenuto la cucina com'era (prova del 28/09)
+export const GPT_IMAGE_USD = { medium: 0.041 } // 1536x1024 o 1024x1536, listino OpenAI 28/09/2026
+
+export async function gptImage(o: { userId: string; image: string; prompt: string; kind?: string }): Promise<string | null> {
+  const key = process.env.OPENAI_API_KEY
+  if (!key) return null
+  const t0 = Date.now()
+  let ok = false
+  try {
+    const src = o.image.startsWith('data:') ? Buffer.from(o.image.split(',')[1] ?? '', 'base64') : Buffer.from(await (await fetch(o.image, { signal: AbortSignal.timeout(20_000) })).arrayBuffer())
+    const { width = 0, height = 0 } = await sharp(src).rotate().metadata()
+    const size = width > height * 1.15 ? '1536x1024' : height > width * 1.15 ? '1024x1536' : '1024x1024'
+    const png = await sharp(src).rotate().png().toBuffer()
+    const form = new FormData()
+    form.append('model', MODEL)
+    form.append('image', new Blob([new Uint8Array(png)], { type: 'image/png' }), 'photo.png')
+    form.append('prompt', `${o.prompt} Keep any fitted kitchen exactly as it is in the photo: same cabinets, same fronts and colors, same worktop, same appliances; never renovate or repaint it.`)
+    form.append('size', size)
+    form.append('quality', 'medium')
+    form.append('output_format', 'jpeg')
+    form.append('n', '1')
+    const r = await fetch('https://api.openai.com/v1/images/edits', { method: 'POST', headers: { Authorization: `Bearer ${key}` }, body: form, signal: AbortSignal.timeout(120_000) })
+    const d = await r.json() as { data?: { b64_json?: string }[]; error?: { message?: string } }
+    const out = d.data?.[0]?.b64_json ?? null
+    ok = !!out
+    if (!out) console.error('gpt image: nessuna immagine', r.status, d.error?.message ?? JSON.stringify(d).slice(0, 300))
+    return out
+  } catch (e) {
+    console.error('gpt image', e)
+    return null
+  } finally {
+    await logUsage({ userId: o.userId, kind: o.kind ?? 'photo_edit' }, false, Date.now() - t0, {}, ok, MODEL).catch(() => {})
+  }
+}
