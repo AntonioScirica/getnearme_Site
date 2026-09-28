@@ -471,13 +471,13 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   const editsDone = msgs.filter(x => x.role === 'ai' && !!x.out).length; // modifiche gia' fatte su questa foto
   const videoChip = base && scene === 'interno' ? [
     <button key="video" disabled={busy} onClick={() => askVideo(base)}
-      className="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-ink pl-3.5 pr-[18px] py-1.5 text-[13px] font-medium text-white shadow-sm ease-smooth transition-colors hover:bg-brand disabled:opacity-40"><Clapperboard size={13} /> Crea video<Cr n={CREDIT_COST.video} dark /></button>,
+      className="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-ink pl-3.5 pr-1.5 py-1.5 text-[13px] font-medium text-white shadow-sm ease-smooth transition-colors hover:bg-brand disabled:opacity-40"><Clapperboard size={13} /> Crea video<Cr n={CREDIT_COST.video} dark /></button>,
   ] : [];
   // interni: "Svuota la stanza" sempre primo, subito dopo Crea video (esterni e giardini hanno i loro "Rinnova")
   const sugs = suggestionsFor(kind);
   const chips = [...videoChip, ...sugs.filter(x => roomState !== 'vuota' || (x.id !== 'empty' && x.id !== 'tidy')).map(x => (
     <button key={x.id} disabled={busy} onClick={() => send(x.label, x)}
-      className="group flex shrink-0 items-center whitespace-nowrap rounded-full bg-white pl-3.5 pr-[18px] py-1.5 text-[13px] font-medium text-ink/80 shadow-sm ring-1 ring-inset ring-black/10 ease-smooth transition-colors hover:bg-brand hover:text-white disabled:opacity-40">{x.label}<Cr n={creditsOf(x.req, editsDone)} /></button>
+      className="group flex shrink-0 items-center whitespace-nowrap rounded-full bg-white pl-3.5 pr-1.5 py-1.5 text-[13px] font-medium text-ink/80 shadow-sm ring-1 ring-inset ring-black/10 ease-smooth transition-colors hover:bg-brand hover:text-white disabled:opacity-40">{x.label}<Cr n={creditsOf(x.req, editsDone)} /></button>
   ))];
 
   // proporzioni vere delle foto: il risultato segue la foto (verticale resta verticale)
@@ -604,8 +604,8 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                     {m.step === 'mode' && (
                       <div className="px-1">
                         <div className="flex flex-wrap gap-1.5">
-                          {!(emptyFrom && emptyFrom === m.photo) && <button onClick={() => makeVideo(m, m.photo, 'Stanza com’è')} className="shrink-0 whitespace-nowrap rounded-full bg-ink pl-3.5 pr-[18px] py-1.5 text-[13px] font-medium text-white shadow-sm ease-smooth transition-colors hover:bg-brand">Tieni la stanza com’è<Cr n={0} dark /></button>}
-                          {VIDEO_STYLES.map(x => <button key={x.id} onClick={() => styleVideo(m, x.label, { style: x.id })} className="group shrink-0 whitespace-nowrap rounded-full bg-white pl-3.5 pr-[18px] py-1.5 text-[13px] font-medium text-ink/80 shadow-sm ring-1 ring-inset ring-black/10 ease-smooth transition-colors hover:bg-brand hover:text-white">{x.label}<Cr n={CREDIT_COST.arreda} /></button>)}
+                          {!(emptyFrom && emptyFrom === m.photo) && <button onClick={() => makeVideo(m, m.photo, 'Stanza com’è')} className="shrink-0 whitespace-nowrap rounded-full bg-ink pl-3.5 pr-1.5 py-1.5 text-[13px] font-medium text-white shadow-sm ease-smooth transition-colors hover:bg-brand">Tieni la stanza com’è<Cr n={0} dark /></button>}
+                          {VIDEO_STYLES.map(x => <button key={x.id} onClick={() => styleVideo(m, x.label, { style: x.id })} className="group shrink-0 whitespace-nowrap rounded-full bg-white pl-3.5 pr-1.5 py-1.5 text-[13px] font-medium text-ink/80 shadow-sm ring-1 ring-inset ring-black/10 ease-smooth transition-colors hover:bg-brand hover:text-white">{x.label}<Cr n={CREDIT_COST.arreda} /></button>)}
                         </div>
                         <input placeholder="Oppure scrivi lo stile, es. classico con legno scuro" maxLength={200}
                           onKeyDown={e => { const v = e.currentTarget.value.trim(); if (e.key === 'Enter' && v) styleVideo(m, v, { prompt: `Arreda la stanza in stile ${v}` }); }}
@@ -632,8 +632,8 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                         {/* approvazione: Veo (la parte cara) parte solo da qui; la stanza vuota si puo' rifare (costa come una foto) */}
                         {m.frames && (
                           <div className="flex flex-wrap items-center gap-2 pt-3">
-                            <button onClick={() => renderVideo(m)} className="flex items-center rounded-full bg-ink pl-4 pr-5 py-2 text-[13px] font-medium text-white shadow-sm ease-smooth transition-colors hover:bg-brand">Crea il video<Cr n={m.anim === 'cantiere' ? CREDIT_COST.video_cantiere : CREDIT_COST.video} dark /></button>
-                            <button onClick={() => { const f = m.frames!; makeVideo({ ...m, picks: m.picks.slice(0, -1) }, f.src, m.picks[m.picks.length - 1]?.label ?? 'Stanza com’è', f.styled); }} className="rounded-full bg-white pl-4 pr-5 py-2 text-[13px] font-medium text-ink/80 shadow-sm ring-1 ring-inset ring-black/10 ease-smooth transition-colors hover:bg-canvas">Rifai la stanza vuota<Cr n={0} /></button>
+                            <button onClick={() => renderVideo(m)} className="flex items-center rounded-full bg-ink pl-4 pr-2 py-2 text-[13px] font-medium text-white shadow-sm ease-smooth transition-colors hover:bg-brand">Crea il video<Cr n={m.anim === 'cantiere' ? CREDIT_COST.video_cantiere : CREDIT_COST.video} dark /></button>
+                            <button onClick={() => { const f = m.frames!; makeVideo({ ...m, picks: m.picks.slice(0, -1) }, f.src, m.picks[m.picks.length - 1]?.label ?? 'Stanza com’è', f.styled); }} className="rounded-full bg-white pl-4 pr-2 py-2 text-[13px] font-medium text-ink/80 shadow-sm ring-1 ring-inset ring-black/10 ease-smooth transition-colors hover:bg-canvas">Rifai la stanza vuota<Cr n={0} /></button>
                           </div>
                         )}
                         {m.err && !m.frames && (
