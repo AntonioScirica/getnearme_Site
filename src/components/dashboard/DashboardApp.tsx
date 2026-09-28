@@ -44,9 +44,7 @@ import dynamic from 'next/dynamic';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore — modulo JS condiviso con l'estensione, senza tipi
 import { TEMPLATES, renderTemplate } from './templates/index.js';
-// @ts-ignore — JS module, no types
 import { ICONS as TPL_ICONS } from './templates/icons.js';
-// @ts-ignore — JS module, no types
 import { exportToPng, exportStaticToVideo, downloadBlob } from './templates/exporter.js';
 import { fetchBrand, updateBrand, uploadBrandLogo, removeBrandLogo, logoUrlToDataUrl, DEFAULT_BRAND_SETTINGS, type BrandSettings } from '@/lib/brand';
 import FotoAIScreen from './FotoAIScreen';
@@ -2446,8 +2444,8 @@ function SettingsScreen({ toast }: { toast: (msg: string, icon?: string) => void
       await supabase.auth.signOut();
       const loc = window.location.pathname.split('/')[1] || 'it';
       window.location.replace(`/${loc}`);
-    } catch (err: any) {
-      toast(err.message, 'x');
+    } catch (err) {
+      toast((err as Error).message, 'x');
       setDeleteLoading(false);
       setDeleteModalOpen(false);
     }
@@ -2456,7 +2454,7 @@ function SettingsScreen({ toast }: { toast: (msg: string, icon?: string) => void
   return (
     <div style={s('max-width:1044px;margin: 0 auto;padding: 26px 29px 58px')}>
       <h1 style={s('margin: 0 0 4px;font-size:24px;font-weight:800;letter-spacing:-.5px')}>Impostazioni</h1>
-      <div style={s('color:var(--text-muted);font-size:13px;margin-bottom:25px')}>Gestisci il tuo account e le preferenze dell'app.</div>
+      <div style={s('color:var(--text-muted);font-size:13px;margin-bottom:25px')}>Gestisci il tuo account e le preferenze dell&apos;app.</div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
         {/* Info Box */}
@@ -2496,7 +2494,7 @@ function SettingsScreen({ toast }: { toast: (msg: string, icon?: string) => void
           <div style={{ flex: '1 1 300px' }}>
             <h3 style={{ margin: '0 0 7px', fontSize: 14, fontWeight: 700, color: '#dc2626' }}>Zona Pericolosa</h3>
             <p style={{ margin: 0, fontSize: 12, color: '#b91c1c', maxWidth: 540 }}>
-              L'eliminazione dell'account è irreversibile. Tutti i tuoi immobili, foto AI, video e brand verranno cancellati definitivamente dai nostri server.
+              L&apos;eliminazione dell&apos;account è irreversibile. Tutti i tuoi immobili, foto AI, video e brand verranno cancellati definitivamente dai nostri server.
             </p>
           </div>
 
@@ -2575,8 +2573,8 @@ function AssistenzaScreen({ toast, email, defaultType = 'support' }: { toast: (m
       }
       toast('Richiesta inviata con successo!', 'check');
       setMessage('');
-    } catch (err: any) {
-      toast(err.message, 'x');
+    } catch (err) {
+      toast((err as Error).message, 'x');
     } finally {
       setLoading(false);
     }
@@ -2890,8 +2888,23 @@ const getCoverStyle = (p: Project | null | undefined, small = false): React.CSSP
 };
 
 
+const EMPTY_BATCHES: BatchInfo[] = [];
+
+// Tutorial iniziale: va mostrato se manca il flag (server o localStorage).
+function needsWelcome(userData: UserData | null): boolean {
+  if (typeof window === 'undefined' || !userData?.id) return false;
+  if (userData.onboardingCompleted) return false;
+  try { return !localStorage.getItem(`gnm_tutorial_seen_${userData.id}`); } catch { return false; }
+}
+
 export default function DashboardApp({ userData }: { userData: UserData | null }) {
-  const [route, setRoute] = useState('home');
+  const [welcomeInit] = useState(() => needsWelcome(userData));
+  const [route, setRoute] = useState(welcomeInit ? 'brand' : 'home');
+  const [routeKey, setRouteKey] = useState(0);
+  // Badge "+N" sulla voce Galleria: contenuti creati non ancora visti.
+  const [galleryUnseen, setGalleryUnseen] = useState(0);
+  const routeRef = useRef(route);
+  useEffect(() => { routeRef.current = route; }, [route]);
   const [collapsed, setCollapsed] = useState(false);
   const [projOpen, setProjOpen] = useState(false);
   const projHoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -2944,12 +2957,12 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
   const setProjects = useCallback((updater: React.SetStateAction<Project[]>) => {
     mutateProjects(prev => {
       const prevArray = (prev as unknown as Project[]) || [];
-      return typeof updater === 'function' ? (updater as any)(prevArray) : updater;
+      return typeof updater === 'function' ? updater(prevArray) : updater;
     }, false);
   }, [mutateProjects]);
 
   // Smart Polling with SWR for Batches
-  const { data: batches = [], isLoading: loadingBatches, mutate: mutateBatches } = useSWR('batches', fetchUserBatches, {
+  const { data: batchesData, isLoading: loadingBatches, mutate: mutateBatches } = useSWR('batches', fetchUserBatches, {
     refreshInterval: (data) => {
       if (!data) return 0;
       const hasActive = data.some(x => x.status === 'processing' || x.status === 'pending');
@@ -2961,33 +2974,38 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
   const setBatches = useCallback((updater: React.SetStateAction<BatchInfo[]>) => {
     mutateBatches(prev => {
       const prevArray = prev || [];
-      return typeof updater === 'function' ? (updater as any)(prevArray) : updater;
+      return typeof updater === 'function' ? updater(prevArray) : updater;
     }, false);
   }, [mutateBatches]);
 
+  const batches = batchesData ?? EMPTY_BATCHES;
+
   // Badge galleria +N per le foto batch: scatta SOLO quando il batch passa da
   // attivo (processing/pending) a completato, non al submit. Conta una volta sola.
-  const batchPrevStatusRef = useRef<Map<string, string>>(new Map());
-  const batchCountedRef = useRef<Set<string>>(new Set());
-  useEffect(() => {
+  // Calcolato durante il render confrontando con l'ultima lista vista.
+  const [batchSeen, setBatchSeen] = useState<{ src: BatchInfo[]; prev: Map<string, string>; counted: Set<string> }>(() => ({ src: EMPTY_BATCHES, prev: new Map(), counted: new Set() }));
+  if (batchSeen.src !== batches) {
+    const prevMap = new Map(batchSeen.prev);
+    const counted = new Set(batchSeen.counted);
+    let unseen = 0;
     for (const b of batches) {
-      const prev = batchPrevStatusRef.current.get(b.id);
+      const prev = prevMap.get(b.id);
       const isDone = b.status === 'completed' || b.status === 'partial';
       const wasActive = prev === 'processing' || prev === 'pending';
-      if (isDone && wasActive && !batchCountedRef.current.has(b.id)) {
-        batchCountedRef.current.add(b.id);
-        const n = b.completedItems || b.totalItems || 1;
-        if (routeRef.current !== 'media') setGalleryUnseen(x => x + n);
+      if (isDone && wasActive && !counted.has(b.id)) {
+        counted.add(b.id);
+        unseen += b.completedItems || b.totalItems || 1;
       }
-      batchPrevStatusRef.current.set(b.id, b.status);
+      prevMap.set(b.id, b.status);
     }
-  }, [batches]);
+    setBatchSeen({ src: batches, prev: prevMap, counted });
+    if (unseen > 0 && route !== 'media') setGalleryUnseen(x => x + unseen);
+  }
 
   // ── Video jobs (montaggio/avatar): tray "Lavori in corso" + Media ──
   // Source of truth = tabella ai_video_jobs (finalizzata dal cron, sopravvive a
   // browser chiuso/altro device). localStorage = cache ottimistica. Si fondono.
-  const [videoJobs, setVideoJobs] = useState<VideoJob[]>([]);
-  useEffect(() => { setVideoJobs(loadVideoJobs()); }, []);
+  const [videoJobs, setVideoJobs] = useState<VideoJob[]>(() => loadVideoJobs());
   const registerVideoJob = useCallback((job: Omit<VideoJob, 'createdAt' | 'dismissed'> & { replaceId?: string }) => {
     const { replaceId, ...j } = job;
     if (replaceId && replaceId !== j.id) removeVideoJob(replaceId); // sostituisce il job temporaneo
@@ -2996,10 +3014,9 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
 
   // Sync col server: al mount, al ritorno sul tab, e ogni 20s mentre ci sono
   // render in corso. Fonde lo stato server (vince su done/failed) nel locale.
-  const syncServerVideoJobs = useCallback(async () => {
-    const server = await fetchServerVideoJobs();
+  const syncServerVideoJobs = useCallback(() => fetchServerVideoJobs().then((server) => {
     if (server.length) setVideoJobs(mergeServerJobs(server));
-  }, []);
+  }), []);
   useEffect(() => { void syncServerVideoJobs(); }, [syncServerVideoJobs]);
   useEffect(() => {
     const onVis = () => { if (document.visibilityState === 'visible') void syncServerVideoJobs(); };
@@ -3087,29 +3104,30 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
   // stesso browser un altro account l'aveva gia' chiuso (il vecchio flag globale
   // 'gnm_tutorial_seen' lo impediva, per questo non partiva).
   const tutorialKey = userData?.id ? `gnm_tutorial_seen_${userData.id}` : null;
-  const [welcomeOpen, setWelcomeOpen] = useState(false);
+  const [welcomeOpen, setWelcomeOpen] = useState(welcomeInit);
   useEffect(() => {
     if (typeof window === 'undefined' || !tutorialKey) return;
     // Server flag is the source of truth: localStorage gets wiped on logout (gnm_*
     // cleanup) / new device, which used to replay onboarding for existing accounts.
-    if (userData?.onboardingCompleted) { try { localStorage.setItem(tutorialKey, '1'); } catch { /* quota */ } return; }
-    if (!localStorage.getItem(tutorialKey)) { setWelcomeOpen(true); setRoute('brand'); }
+    if (userData?.onboardingCompleted) { try { localStorage.setItem(tutorialKey, '1'); } catch { /* quota */ } }
   }, [tutorialKey, userData?.onboardingCompleted]);
+  const userId = userData?.id;
   const markTutorialSeen = useCallback(() => {
     try { if (tutorialKey) localStorage.setItem(tutorialKey, '1'); } catch { /* quota */ }
     // Persist server-side so re-login / another device never replays onboarding.
-    if (userData?.id) supabase.from('user_credits').update({ onboarding_completed: true }).eq('user_id', userData.id).then(() => {}, () => {});
-  }, [tutorialKey, userData?.id]);
-  const tourReplayRef = useRef(false);
+    if (userId) supabase.from('user_credits').update({ onboarding_completed: true }).eq('user_id', userId).then(() => {}, () => {});
+  }, [tutorialKey, userId]);
+  const [tourReplay, setTourReplay] = useState(false);
 
   // Quota free trial (foto + video) per spiegarla in onboarding / empty state.
   // Numeri NON hardcoded: letti dalla quota reale. Solo per utenti free.
-  const [freeTrial, setFreeTrial] = useState<{ photos: number; videos: number } | null>(null);
+  const [freeTrialData, setFreeTrial] = useState<{ photos: number; videos: number } | null>(null);
+  // 'free'/null = non pagante -> mostra la quota di prova. Solo i piani a
+  // pagamento (agency_*) la nascondono. ('free' e' un tier reale, non l'assenza.)
+  const isPaidPlan = !!userData?.subscriptionType && userData.subscriptionType !== 'free';
+  const freeTrial = isPaidPlan ? null : freeTrialData;
   useEffect(() => {
-    // 'free'/null = non pagante -> mostra la quota di prova. Solo i piani a
-    // pagamento (agency_*) la nascondono. ('free' e' un tier reale, non l'assenza.)
-    const isPaidPlan = !!userData?.subscriptionType && userData.subscriptionType !== 'free';
-    if (isPaidPlan) { setFreeTrial(null); return; }
+    if (isPaidPlan) return;
     let cancelled = false;
     (async () => {
       const [sq, vq] = await Promise.all([fetchStagingQuota(), fetchVideoQuota()]);
@@ -3142,11 +3160,9 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
     }
     prevTrayOpen.current = trayOpen;
   }, [trayOpen, batches, setBatches]);
-  useEffect(() => {
-    if (tourStep !== null && TOUR_DEFS[tourStep]?.sel === '[data-tour-dropdown]' && !projOpen) {
-      setProjOpen(true);
-    }
-  }, [tourStep, projOpen]);
+  if (tourStep !== null && TOUR_DEFS[tourStep]?.sel === '[data-tour-dropdown]' && !projOpen) {
+    setProjOpen(true);
+  }
   const [profileOpen, setProfileOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const { data: notifications = [], mutate: mutateNotifs } = useSWR('notifications', async () => {
@@ -3156,6 +3172,11 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
     return (data || []) as AppNotification[];
   }, { refreshInterval: 15000 });
   const profileRef = React.useRef<HTMLDivElement>(null);
+  // Rect del bottone profilo, misurato al commit quando il menu è aperto (per posizionare il dropdown fixed).
+  const [profileRect, setProfileRect] = useState<DOMRect | null>(null);
+  React.useLayoutEffect(() => {
+    if (profileOpen) setProfileRect(profileRef.current?.getBoundingClientRect() ?? null);
+  }, [profileOpen, collapsed]);
   const notifRef = React.useRef<HTMLDivElement>(null);
   const [cmdkOpen, setCmdkOpen] = useState(false);
   const [cmdQuery, setCmdQuery] = useState('');
@@ -3175,7 +3196,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
   const setBrand = useCallback((updater: React.SetStateAction<BrandSettings>) => {
     mutateBrand(prev => {
       if (!prev) return prev;
-      const nextBrand = typeof updater === 'function' ? (updater as any)(prev.settings) : updater;
+      const nextBrand = typeof updater === 'function' ? updater(prev.settings) : updater;
       return { ...prev, settings: nextBrand };
     }, false);
   }, [mutateBrand]);
@@ -3183,7 +3204,8 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
   const active = useMemo(() => projects.find((p) => p.id === activeProject) ?? projects[0], [projects, activeProject]);
 
   useEffect(() => { localStorage.setItem('gnm_active_project', activeProject); }, [activeProject]);
-  useEffect(() => { setRouteKey(k => k + 1); }, [activeProject]);
+  const [prevActiveProject, setPrevActiveProject] = useState(activeProject);
+  if (prevActiveProject !== activeProject) { setPrevActiveProject(activeProject); setRouteKey(k => k + 1); }
   useEffect(() => { cleanupOldMedia().catch(console.error); }, []);
 
   useEffect(() => {
@@ -3219,19 +3241,16 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
   }, [userData?.id]);
   // Mostra il toast solo a onboarding concluso (welcome chiuso e nessuno step tour).
   useEffect(() => {
-    if (pendingTeamToast && !welcomeOpen && tourStep === null) {
+    if (!(pendingTeamToast && !welcomeOpen && tourStep === null)) return;
+    const t = setTimeout(() => {
       toast(`Sei stato aggiunto al team "${pendingTeamToast}"`, 'check');
       setPendingTeamToast(null);
-    }
+    }, 0);
+    return () => clearTimeout(t);
   }, [pendingTeamToast, welcomeOpen, tourStep, toast]);
 
   const contentRef = React.useRef<HTMLDivElement>(null);
-  const [routeKey, setRouteKey] = useState(0);
   const [studioPhoto, setStudioPhoto] = useState<string | null>(null);
-  // Badge "+N" sulla voce Galleria: contenuti creati non ancora visti.
-  const [galleryUnseen, setGalleryUnseen] = useState(0);
-  const routeRef = useRef(route);
-  useEffect(() => { routeRef.current = route; }, [route]);
   const [accountTierHint, setAccountTierHint] = useState<PlanTier | null>(null);
   const go = useCallback((r: string, params?: { photoUrl?: string; tier?: PlanTier }) => {
     setRoute(r);
@@ -3368,16 +3387,18 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
     ['Brand Agenzia', 'brand', 'palette'], ['Piano e crediti', 'account', 'credit-card'],
   ] as const;
   // Voci disponibili dal menu profilo (non in sidebar).
-  const cmdActions: [string, string, string, () => void][] = [
-    ['Impostazioni', 'settings', 'Account', () => { setCmdkOpen(false); go('impostazioni'); }],
-    ['Assistenza', 'life-buoy', 'Supporto', () => { setCmdkOpen(false); go('assistenza'); }],
-    ['Tutorial', 'play-circle', 'Guida', () => { setCmdkOpen(false); tourReplayRef.current = true; setWelcomeOpen(true); }],
+  // (solo dati: l'handler viene creato nel map, così l'array resta "puro")
+  const cmdActions: [string, string, string, string | null][] = [
+    ['Impostazioni', 'settings', 'Account', 'impostazioni'],
+    ['Assistenza', 'life-buoy', 'Supporto', 'assistenza'],
+    ['Tutorial', 'play-circle', 'Guida', null],
   ];
-  const cmdResults: { label: string; sub: string; icon: string; go: () => void }[] = [];
-  cmdTools.filter((t) => !cmdq || t[0].toLowerCase().includes(cmdq)).forEach((t) => cmdResults.push({ label: t[0], sub: 'Strumento', icon: t[2], go: () => { setCmdkOpen(false); go(t[1]); } }));
-  cmdActions.filter((a) => !cmdq || a[0].toLowerCase().includes(cmdq)).forEach((a) => cmdResults.push({ label: a[0], sub: a[2], icon: a[1], go: a[3] }));
-  // Progetti: solo se cercati (niente lista di default).
-  if (cmdq) projects.filter((p) => (p.nome + ' ' + p.addr).toLowerCase().includes(cmdq)).forEach((p) => cmdResults.push({ label: p.nome, sub: p.addr, icon: 'building-2', go: () => { setCmdkOpen(false); setActiveProject(p.id); go('home'); } }));
+  const cmdResults: { label: string; sub: string; icon: string; go: () => void }[] = [
+    ...cmdTools.filter((t) => !cmdq || t[0].toLowerCase().includes(cmdq)).map((t) => ({ label: t[0], sub: 'Strumento', icon: t[2], go: () => { setCmdkOpen(false); go(t[1]); } })),
+    ...cmdActions.filter((a) => !cmdq || a[0].toLowerCase().includes(cmdq)).map((a) => ({ label: a[0], sub: a[2], icon: a[1], go: () => { setCmdkOpen(false); if (a[3]) go(a[3]); else { setTourReplay(true); setWelcomeOpen(true); } } })),
+    // Progetti: solo se cercati (niente lista di default).
+    ...(cmdq ? projects.filter((p) => (p.nome + ' ' + p.addr).toLowerCase().includes(cmdq)).map((p) => ({ label: p.nome, sub: p.addr, icon: 'building-2', go: () => { setCmdkOpen(false); setActiveProject(p.id); go('home'); } })) : []),
+  ];
 
   const tipRef = tourRect2 || tourRect;
   const TIP_W = 270; // deve combaciare con la width del tooltip (vedi card style sotto)
@@ -3493,11 +3514,11 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
               <div style={s('display:flex;align-items:center;justify-content:space-between')}>
                 {tourStep > 0 && tdef.sel !== '@center' && <Box as="button" onClick={() => tourGo(tourStep - 1)} style={s('border:1px solid var(--border-main);background:var(--bg-card);font-size:11px;font-weight:700;padding: 7px 14px;border-radius:7px;cursor:pointer;min-height:34px')} hover={s('background:var(--bg-hover)')}>Indietro</Box>}
                 {tdef.sel === '@center'
-                  ? (tourReplayRef.current
-                    ? <Box as="button" onClick={() => { tourReplayRef.current = false; setTourStep(null); setTourRect(null); setTourRect2(null); setProjOpen(false); go('home'); }} style={s('border:none;background:#3B83F6;color:var(--bg-card);font-size:12px;font-weight:700;padding: 10px 16px;border-radius:7px;cursor:pointer;width:100%;text-align:center;display:flex;align-items:center;justify-content:center;min-height:40px')} hover={s('background:#2b6fe0;transform:translateY(-1px);box-shadow:0 8px 20px rgba(59,131,246,.25)')}>Ho capito</Box>
+                  ? (tourReplay
+                    ? <Box as="button" onClick={() => { setTourReplay(false); setTourStep(null); setTourRect(null); setTourRect2(null); setProjOpen(false); go('home'); }} style={s('border:none;background:#3B83F6;color:var(--bg-card);font-size:12px;font-weight:700;padding: 10px 16px;border-radius:7px;cursor:pointer;width:100%;text-align:center;display:flex;align-items:center;justify-content:center;min-height:40px')} hover={s('background:#2b6fe0;transform:translateY(-1px);box-shadow:0 8px 20px rgba(59,131,246,.25)')}>Ho capito</Box>
                     : <Box as="button" onClick={() => tourGo(tourStep + 1)} style={s('border:none;background:#3B83F6;color:var(--bg-card);font-size:12px;font-weight:700;padding: 10px 16px;border-radius:7px;cursor:pointer;width:100%;text-align:center;display:flex;align-items:center;justify-content:center;min-height:40px')} hover={s('background:#2b6fe0;transform:translateY(-1px);box-shadow:0 8px 20px rgba(59,131,246,.25)')}>Avanti</Box>)
                   : tdef.sel === '[data-tour-dropdown]'
-                  ? <Box as="button" onClick={() => { const replay = tourReplayRef.current; tourReplayRef.current = false; setTourStep(null); setTourRect(null); setTourRect2(null); setProjOpen(false); if (replay) { go('home'); } else if (inAgencyTeam) { go('immobili'); } else { setNewProjOpen(true); } }} style={s('border:none;background:#3B83F6;color:var(--bg-card);font-size:12px;font-weight:700;padding: 10px 16px;border-radius:7px;cursor:pointer;width:100%;text-align:center;display:flex;align-items:center;justify-content:center;min-height:40px')} hover={s('background:#2b6fe0;transform:translateY(-1px);box-shadow:0 8px 20px rgba(59,131,246,.25)')}>{tourReplayRef.current ? 'Ho capito' : (inAgencyTeam ? 'Vedi gli immobili' : 'Aggiungi immobile')}</Box>
+                  ? <Box as="button" onClick={() => { const replay = tourReplay; setTourReplay(false); setTourStep(null); setTourRect(null); setTourRect2(null); setProjOpen(false); if (replay) { go('home'); } else if (inAgencyTeam) { go('immobili'); } else { setNewProjOpen(true); } }} style={s('border:none;background:#3B83F6;color:var(--bg-card);font-size:12px;font-weight:700;padding: 10px 16px;border-radius:7px;cursor:pointer;width:100%;text-align:center;display:flex;align-items:center;justify-content:center;min-height:40px')} hover={s('background:#2b6fe0;transform:translateY(-1px);box-shadow:0 8px 20px rgba(59,131,246,.25)')}>{tourReplay ? 'Ho capito' : (inAgencyTeam ? 'Vedi gli immobili' : 'Aggiungi immobile')}</Box>
                   : <Box as="button" onClick={() => tourGo(tourStep + 1)} style={s('border:none;background:#3B83F6;color:var(--bg-card);font-size:11px;font-weight:700;padding: 7px 16px;border-radius:7px;cursor:pointer;margin-left:auto;min-height:34px')} hover={s('background:#2b6fe0')}>Avanti</Box>}
               </div>
             </div>
@@ -3559,22 +3580,17 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
               {!collapsed && <div style={{ minWidth: 0, flex: 1 }}><div style={s('font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{userData?.email?.split('@')[0] ?? 'Utente'}</div><div style={s('font-size:10px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{userData?.email ?? ''}</div></div>}
               {!collapsed && <Icon name="chevron-up" size={13} color="var(--text-muted)" style={{ transition: 'transform .2s', transform: profileOpen ? 'none' : 'rotate(180deg)' }} />}
             </Box>
-            {profileOpen && (() => {
-              const rect = profileRef.current?.getBoundingClientRect();
-              const left = rect ? rect.left + 10 : 10;
-              const w = rect ? rect.width - 20 : 220;
-              const bottom = rect ? window.innerHeight - rect.top - 12 : 80;
-              return (
-                <div style={{ position: 'fixed', bottom, left, width: w, zIndex: 9999, paddingBottom: 14 }}>
+            {profileOpen && (
+                <div style={{ position: 'fixed', bottom: profileRect ? window.innerHeight - profileRect.top - 12 : 80, left: profileRect ? profileRect.left + 10 : 10, width: profileRect ? profileRect.width - 20 : 220, zIndex: 9999, paddingBottom: 14 }}>
                   <div style={{ background: 'var(--bg-card)', borderRadius: 11, boxShadow: '0 16px 48px rgba(33,31,28,.16)', border: '1px solid var(--border-light)', overflow: 'hidden' }}>
                     <div style={s('padding:4px')}>
                       {[
-                        { icon: 'play-circle', label: 'Tutorial', action: () => { setProfileOpen(false); setMobileMenuOpen(false); tourReplayRef.current = true; setWelcomeOpen(true); } },
-                        { icon: 'message-square', label: 'Suggerimenti', action: () => { setProfileOpen(false); setMobileMenuOpen(false); go('assistenza?type=feature'); } },
-                        { icon: 'settings', label: 'Impostazioni', action: () => { setProfileOpen(false); setMobileMenuOpen(false); go('impostazioni'); } },
-                        { icon: 'life-buoy', label: 'Assistenza', action: () => { setProfileOpen(false); setMobileMenuOpen(false); go('assistenza'); } },
+                        { icon: 'play-circle', label: 'Tutorial', route: null },
+                        { icon: 'message-square', label: 'Suggerimenti', route: 'assistenza?type=feature' },
+                        { icon: 'settings', label: 'Impostazioni', route: 'impostazioni' },
+                        { icon: 'life-buoy', label: 'Assistenza', route: 'assistenza' },
                       ].map(item => (
-                        <Box key={item.label} onClick={item.action} style={s('display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:9px;cursor:pointer;font-size:12px;font-weight:600')} hover={s('background:var(--bg-hover)')}>
+                        <Box key={item.label} onClick={() => { setProfileOpen(false); setMobileMenuOpen(false); if (item.route) go(item.route); else { setTourReplay(true); setWelcomeOpen(true); } }} style={s('display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:9px;cursor:pointer;font-size:12px;font-weight:600')} hover={s('background:var(--bg-hover)')}>
                           <Icon name={item.icon} size={14} color="var(--text-sec)" />{item.label}
                         </Box>
                       ))}
@@ -3592,8 +3608,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                     </div>
                   </div>
                 </div>
-              );
-            })()}
+            )}
           </div>
         </div>
 
@@ -3603,7 +3618,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
         {/* MAIN */}
         <div className="max-md:!w-full" style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
           {/* HEADER */}
-          <div className="max-md:!px-3 max-md:!gap-2 max-md:!flex-wrap max-md:!h-auto max-md:!py-2.5" style={{ height: 58, flex: 'none', background: 'var(--bg-card)', borderBottom: '1px solid var(--border-light)', display: 'flex', alignItems: 'center', gap: 13, padding: '0 18px', position: 'relative', zIndex: tourStep !== null && tdef.sel === '[data-tour-dropdown]' ? 'auto' as any : 30 }}>
+          <div className="max-md:!px-3 max-md:!gap-2 max-md:!flex-wrap max-md:!h-auto max-md:!py-2.5" style={{ height: 58, flex: 'none', background: 'var(--bg-card)', borderBottom: '1px solid var(--border-light)', display: 'flex', alignItems: 'center', gap: 13, padding: '0 18px', position: 'relative', zIndex: tourStep !== null && tdef.sel === '[data-tour-dropdown]' ? 'auto' : 30 }}>
             {/* Hamburger (Mobile) */}
             <Box as="button" onClick={() => setMobileMenuOpen(true)} className="md:!hidden" title="Apri menu" aria-label="Apri menu" style={s('border:none;background:transparent;width:34px;height:34px;border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none')} hover={s('background:#f1efe9')}><Icon name="menu" size={18} /></Box>
 
@@ -3636,9 +3651,9 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                   <div style={{ padding: tourStep !== null ? '11px' : '0 11px 11px', borderBottom: '1px solid var(--border-light)' }}>
                     <Box data-tour="new-project" onClick={() => {
                       const inTourDropdown = tourStep !== null && TOUR_DEFS[tourStep]?.sel === '[data-tour-dropdown]';
-                      if (inTourDropdown && tourReplayRef.current) {
+                      if (inTourDropdown && tourReplay) {
                         // Replay del tutorial: l'ultima CTA chiude e basta, niente nuovo progetto.
-                        tourReplayRef.current = false;
+                        setTourReplay(false);
                         setProjOpen(false); setTourStep(null); setTourRect(null); setTourRect2(null); setTourCtaRect(null); go('home');
                         return;
                       }
@@ -3648,7 +3663,7 @@ export default function DashboardApp({ userData }: { userData: UserData | null }
                         return;
                       }
                       setProjOpen(false); setNewProjOpen(true); setTourStep(null); setTourRect(null); setTourRect2(null); setTourCtaRect(null);
-                    }} style={s(`display:flex;align-items:center;justify-content:center;gap:7px;padding:11px 14px;border-radius:9px;cursor:pointer;color:var(--bg-card);background:#3B83F6;font-weight:700;font-size:12px;min-height:40px;${tourStep !== null && tdef.sel === '[data-tour-dropdown]' ? 'box-shadow:0 0 0 3px rgba(255,255,255,.7),0 0 20px rgba(255,255,255,.4);animation:tour-cta-glow 2s ease-in-out infinite;pointer-events:auto;' : ''}`)} hover={s('background:#2b6fe0')}>{tourStep !== null && tdef.sel === '[data-tour-dropdown]' && tourReplayRef.current && <Icon name="check" size={14} color="var(--bg-card)" />}{tourStep !== null && tdef.sel === '[data-tour-dropdown]' && tourReplayRef.current ? 'Ho capito' : (tourStep !== null && tdef.sel === '[data-tour-dropdown]' && inAgencyTeam ? 'Vedi gli immobili' : (projList.length === 0 ? 'Crea il tuo primo immobile' : 'Nuovo immobile'))}</Box>
+                    }} style={s(`display:flex;align-items:center;justify-content:center;gap:7px;padding:11px 14px;border-radius:9px;cursor:pointer;color:var(--bg-card);background:#3B83F6;font-weight:700;font-size:12px;min-height:40px;${tourStep !== null && tdef.sel === '[data-tour-dropdown]' ? 'box-shadow:0 0 0 3px rgba(255,255,255,.7),0 0 20px rgba(255,255,255,.4);animation:tour-cta-glow 2s ease-in-out infinite;pointer-events:auto;' : ''}`)} hover={s('background:#2b6fe0')}>{tourStep !== null && tdef.sel === '[data-tour-dropdown]' && tourReplay && <Icon name="check" size={14} color="var(--bg-card)" />}{tourStep !== null && tdef.sel === '[data-tour-dropdown]' && tourReplay ? 'Ho capito' : (tourStep !== null && tdef.sel === '[data-tour-dropdown]' && inAgencyTeam ? 'Vedi gli immobili' : (projList.length === 0 ? 'Crea il tuo primo immobile' : 'Nuovo immobile'))}</Box>
                   </div>
                   {projList.length > 0 && (
                     <div style={s('max-height:234px;overflow:auto;padding:7px 5px')}>

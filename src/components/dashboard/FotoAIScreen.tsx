@@ -591,11 +591,11 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
     // Start con retry: il primo tentativo può scadere su cold start; il secondo
     // (function calda) di solito va. Prima di ogni retry controlla se una
     // prediction è già stata creata server-side (evita doppio scalo quota).
-    let res = await (async () => {
+    const res = await (async () => {
       for (let attempt = 1; attempt <= 2; attempt++) {
         console.log(`[FotoAI] startStaging… (tentativo ${attempt})`);
         const r = await startStaging({ imageDataUrl: opts.imageDataUrl, style: opts.style, angle: opts.angle, customPrompt: opts.customPrompt, planimetria: opts.planimetria ?? null, sceneType: opts.sceneType ?? null });
-        console.log('[FotoAI] start result:', r.ok ? `ok predictionId=${(r as any).predictionId}` : `FAIL ${r.error}`);
+        console.log('[FotoAI] start result:', r.ok ? `ok predictionId=${r.predictionId}` : `FAIL ${r.error}`);
         if (r.ok) return r;
         if (!r.error?.includes('troppo lento')) return r; // errore vero (quota/auth) → non ritentare
         // timeout: forse la prediction è stata creata lo stesso → recupera
@@ -680,9 +680,9 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
           sceneType: scene,
         });
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error('[FotoAI] exception:', err);
-      setError(err?.message || 'Errore di connessione al server AI');
+      setError((err as Error | undefined)?.message || 'Errore di connessione al server AI');
       setGenerating(false);
     }
   };
@@ -708,8 +708,8 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
         sceneType: scene, // stessa scena della foto originale
         replaceBatchId: currentBatchId.current, // sostituisci la versione precedente
       });
-    } catch (err: any) {
-      setError(err?.message || 'Errore di connessione al server AI');
+    } catch (err) {
+      setError((err as Error | undefined)?.message || 'Errore di connessione al server AI');
       setGenerating(false);
     }
   };
@@ -777,7 +777,7 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
           </div>
           <div style={s('font-size:18px;font-weight:800;margin-bottom:7px')}>{batchDone} foto in elaborazione</div>
           <div style={s('color:#8c867d;font-size:13.5px;max-width:450px;margin:0 auto 29px;line-height:1.5')}>
-            Puoi fare quello che vuoi e chiudere la pagina. Le trovi nell'area di lavoro una volta pronte, controlla l'icona&nbsp;<span style={{ display: 'inline-flex', alignItems: 'center', verticalAlign: 'middle', background: '#eef4fe', borderRadius: 5, padding: '2px 5px', gap: 4 }}><Icon name="inbox" size={13} color="#3B83F6" /></span>&nbsp;in alto a destra.
+            Puoi fare quello che vuoi e chiudere la pagina. Le trovi nell&apos;area di lavoro una volta pronte, controlla l&apos;icona&nbsp;<span style={{ display: 'inline-flex', alignItems: 'center', verticalAlign: 'middle', background: '#eef4fe', borderRadius: 5, padding: '2px 5px', gap: 4 }}><Icon name="inbox" size={13} color="#3B83F6" /></span>&nbsp;in alto a destra.
           </div>
           <div style={{ display: 'flex', gap: 11, justifyContent: 'center' }}>
             <Box as="button" onClick={resetAll} style={s('border:none;background:#3B83F6;color:#fff;font-size:13px;font-weight:700;padding:11px 22px;border-radius:9px;cursor:pointer') as React.CSSProperties} hover={s('background:#2b6fe0')}>
@@ -1065,7 +1065,7 @@ export default function FotoAIScreen({ toast, routeKey, project, onBatchCreated,
                   <div style={{ display: 'flex', gap: 9, alignItems: 'flex-start', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 13, padding: '11px 13px' }}>
                     <span style={{ display: 'flex', flexShrink: 0, marginTop: 1 }}><Icon name="sparkles" size={14} color="#1d5fd0" /></span>
                     <div style={{ fontSize: 11, lineHeight: 1.45, color: '#1d5fd0' }}>
-                      <b>Planimetria rilevata.</b> Verrà creato un render 2D arredato mantenendo la disposizione delle stanze. Scegli lo stile d'arredo qui sotto.
+                      <b>Planimetria rilevata.</b> Verrà creato un render 2D arredato mantenendo la disposizione delle stanze. Scegli lo stile d&apos;arredo qui sotto.
                       <button onClick={() => { if (generating) return; setNotPlan(true); }} style={{ display: 'block', marginTop: 5, padding: 0, background: 'none', border: 'none', color: '#1d5fd0', fontWeight: 700, fontSize: 11, textDecoration: 'underline', cursor: 'pointer' }}>Non è una planimetria</button>
                     </div>
                   </div>

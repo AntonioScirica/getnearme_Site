@@ -2,12 +2,13 @@ import React from 'react';
 import Image from 'next/image';
 import { Box, Icon } from './ui';
 import { ProjectData } from '@/lib/projects';
-import { fetchRecentPhotos } from '@/lib/stagingBatches';
+import { fetchRecentPhotos, type BatchInfo } from '@/lib/stagingBatches';
+import type { VideoJob } from '@/lib/videoJobs';
 
 type RecentPhoto = { url: string; ts: number; isVideo?: boolean };
 
 // Helpers
-const s = (str: string) => str.split(';').reduce((acc: any, rule) => {
+const s = (str: string) => str.split(';').reduce((acc: Record<string, string>, rule) => {
   if (!rule.trim()) return acc;
   const [k, v] = rule.split(':');
   if (k && v) {
@@ -15,7 +16,7 @@ const s = (str: string) => str.split(';').reduce((acc: any, rule) => {
     acc[camelK] = v.trim();
   }
   return acc;
-}, {} as React.CSSProperties);
+}, {} as Record<string, string>) as React.CSSProperties;
 
 const fmt = (n?: number) => {
   if (n == null || isNaN(n)) return '-';
@@ -56,14 +57,14 @@ export function HomeScreen({
   onProjectUpdate,
 }: {
   active: ProjectData | null;
-  batches?: any[];
-  videoJobs?: any[];
+  batches?: BatchInfo[];
+  videoJobs?: VideoJob[];
   toast?: (msg: string, icon?: string) => void;
   freeTrial?: { photos: number; videos: number } | null;
   setNewProjOpen: (b: boolean) => void;
   onEditProject?: () => void;
   go: (route: string) => void;
-  getCoverStyle: (p: ProjectData) => any;
+  getCoverStyle: (p: ProjectData) => React.CSSProperties;
   onProjectUpdate?: (upd: Partial<ProjectData>) => void;
 }) {
 
@@ -274,7 +275,7 @@ export function HomeScreen({
               ].map(st => (
                 <div key={st.label} style={s('background:#fff;border:1px solid #f0ede7;border-radius:13px;padding:14px')}>
                   <div style={s('display:flex;align-items:center;gap:5px;margin-bottom:5px')}>
-                    <span style={{ width: 13, height: 13, display: 'flex', color: '#b3aca1' }} dangerouslySetInnerHTML={{ __html: (TPL_ICONS as any)[st.iconKey] || '' }} />
+                    <span style={{ width: 13, height: 13, display: 'flex', color: '#b3aca1' }} dangerouslySetInnerHTML={{ __html: (TPL_ICONS as Record<string, string>)[st.iconKey] || '' }} />
                     <span style={s('font-size:10.5px;font-weight:700;color:#8c867d;text-transform:uppercase;letter-spacing:.04em')}>{st.label}</span>
                   </div>
                   <div style={s('font-size:15px;font-weight:800;letter-spacing:-.3px;color:#211f1c')}>{st.value}</div>
@@ -296,7 +297,7 @@ export function HomeScreen({
                 </div>
                 <div className="max-md:!mt-10" style={{ marginTop: 108 }}>
                   <h3 style={s('font-size:22px;font-weight:800;letter-spacing:-.5px;margin:0 0 5px')}>Homestaging AI</h3>
-                  <p style={s('font-size:13px;color:rgba(255,255,255,.8);margin:0;line-height:1.4')}>Arreda stanze vuote o cambia stile ai tuoi ambienti con l'Intelligenza Artificiale.</p>
+                  <p style={s('font-size:13px;color:rgba(255,255,255,.8);margin:0;line-height:1.4')}>Arreda stanze vuote o cambia stile ai tuoi ambienti con l&apos;Intelligenza Artificiale.</p>
                 </div>
               </Box>
 

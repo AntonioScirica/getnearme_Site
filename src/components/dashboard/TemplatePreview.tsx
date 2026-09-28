@@ -93,7 +93,9 @@ export default function TemplatePreview({ templateId, data, photoUrl, width = 20
   const containerRef = useRef<HTMLDivElement>(null);
   const isVideo = !!opts.isVideo;
   const cache = isVideo ? blurCacheVideo : blurCache;
-  const [blurredUrl, setBlurredUrl] = useState<string | null>(cache.get(photoUrl) || null);
+  // Il blur vive nella cache modulo; lo stato serve solo a ri-renderizzare quando è pronto.
+  const [, setBlurTick] = useState(0);
+  const blurredUrl: string | null = cache.get(photoUrl) || null;
   const [fontsReady, setFontsReady] = useState(false);
   // Minimum skeleton time so fast loads don't flash.
   const [minTimePassed, setMinTimePassed] = useState(false);
@@ -109,14 +111,10 @@ export default function TemplatePreview({ templateId, data, photoUrl, width = 20
 
   useEffect(() => {
     const c = isVideo ? blurCacheVideo : blurCache;
-    if (c.has(photoUrl)) {
-      setBlurredUrl(c.get(photoUrl)!);
-      return;
-    }
-    setBlurredUrl(null);
+    if (c.has(photoUrl)) return;
     createBlurredImage(photoUrl, isVideo).then(b => {
       c.set(photoUrl, b);
-      setBlurredUrl(b);
+      setBlurTick(t => t + 1);
     });
   }, [photoUrl, isVideo]);
 

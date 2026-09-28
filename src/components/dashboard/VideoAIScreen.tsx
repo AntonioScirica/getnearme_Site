@@ -170,11 +170,11 @@ const MONT_STRIP_IMGS = [
   'https://images.unsplash.com/photo-1600210492493-0946911123ea?w=300&q=80&auto=format&fit=crop',
   'https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=300&q=80&auto=format&fit=crop',
 ];
+const Img = ({ src, style }: { src: string; style?: React.CSSProperties }) => (
+  // eslint-disable-next-line @next/next/no-img-element
+  <img src={src} alt="" draggable={false} style={{ objectFit: 'cover', display: 'block', ...style }} />
+);
 function MontaggioDiagram({ kind }: { kind: 'normale' | 'split' | 'pip' }) {
-  const Img = ({ src, style }: { src: string; style?: React.CSSProperties }) => (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img src={src} alt="" draggable={false} style={{ objectFit: 'cover', display: 'block', ...style }} />
-  );
   // Full-bleed 9:16 (come le anteprime di Video AI): niente margine/bordo proprio.
   const frame: React.CSSProperties = { width: '100%', aspectRatio: '9/16', overflow: 'hidden', position: 'relative', background: '#000' };
 
@@ -224,6 +224,13 @@ function MontaggioDiagram({ kind }: { kind: 'normale' | 'split' | 'pip' }) {
   );
 }
 
+const PlusZone = ({ label, onClick }: { label: string; onClick: () => void }) => (
+  <button onClick={onClick} style={{ position: 'absolute', inset: 0, border: 'none', cursor: 'pointer', padding: 0, background: 'transparent', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 5.5, color: '#fff' }}>
+    <span style={{ width: 34, height: 34, borderRadius: '50%', background: 'rgba(255,255,255,.92)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="plus" size={18} color="#1d5fd0" /></span>
+    <span style={{ fontSize: 11, fontWeight: 800, textShadow: '0 1px 3px rgba(0,0,0,.6)' }}>{label}</span>
+  </button>
+);
+
 // Anteprima LIVE dello Schermo diviso / Riquadro: il parlato parte con audio e
 // in alto (split) o sullo sfondo (pip) scorrono le clip della casa secondo gli
 // slot della timeline. Cliccando si avvia/pausa.
@@ -253,7 +260,7 @@ function SplitLivePreview({ mode, clips, talkingClip, slots, pipPosition, onAddH
     return () => URL.revokeObjectURL(u);
   }, [talkingClip]);
   // Confini cumulativi degli slot (in secondi del parlato).
-  const bounds = React.useMemo(() => { let acc = 0; return slots.map(sd => (acc += sd)); }, [slots]);
+  const bounds = React.useMemo(() => slots.reduce<number[]>((arr, sd) => { arr.push((arr[arr.length - 1] ?? 0) + sd); return arr; }, []), [slots]);
   const onTime = () => {
     const t = talkRef.current?.currentTime || 0;
     setCurTime(t); onTimeUpdate?.(t);
@@ -291,13 +298,6 @@ function SplitLivePreview({ mode, clips, talkingClip, slots, pipPosition, onAddH
     const v = houseRef.current; if (!v) return;
     if (playing) v.play().catch(() => {}); else v.pause();
   }, [playing, houseUrl]);
-
-  const PlusZone = ({ label, onClick }: { label: string; onClick: () => void }) => (
-    <button onClick={onClick} style={{ position: 'absolute', inset: 0, border: 'none', cursor: 'pointer', padding: 0, background: 'transparent', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 5.5, color: '#fff' }}>
-      <span style={{ width: 34, height: 34, borderRadius: '50%', background: 'rgba(255,255,255,.92)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Icon name="plus" size={18} color="#1d5fd0" /></span>
-      <span style={{ fontSize: 11, fontWeight: 800, textShadow: '0 1px 3px rgba(0,0,0,.6)' }}>{label}</span>
-    </button>
-  );
 
   const playBtn = talkingClip && clips.length > 0 && (
     <button onClick={(e) => { e.stopPropagation(); toggle(); }} aria-label={playing ? 'Pausa' : 'Play'} style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', zIndex: 5, width: 47, height: 47, borderRadius: '50%', border: 'none', cursor: 'pointer', background: 'rgba(0,0,0,.42)', display: playing ? 'none' : 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -2198,7 +2198,7 @@ export default function VideoAIScreen({ toast, routeKey, brand, preselect, proje
             <div style={s('background:#fff;border:1px solid #f0ede7;border-radius:14.5px;padding:43px;text-align:center;max-width:486px;margin:0 auto')}>
               <div style={{ width: 36, height: 36, border: '4px solid #eef0f3', borderTopColor: '#3B83F6', borderRadius: '50%', animation: 'export-spin .8s linear infinite', margin: '0 auto 14.5px' }} />
               <div style={s('font-size:13.5px;font-weight:800;margin-bottom:5.5px')}>Trascrizione in corso...</div>
-              <div style={s('color:#8c867d;font-size:11.5px')}>Stiamo analizzando l'audio del video.</div>
+              <div style={s('color:#8c867d;font-size:11.5px')}>Stiamo analizzando l&apos;audio del video.</div>
             </div>
           ) : sottPhase === 'edit' ? (
         <div className="max-md:!grid-cols-1 max-md:!flex max-md:!flex-col-reverse" style={{ display: 'grid', gridTemplateColumns: '234px 1fr', gap: 18, alignItems: 'start' }}>

@@ -212,7 +212,7 @@ export default function ReportScreen({
   );
 
   // Selezione immobili da includere/confrontare. Default: immobile attivo (o il primo).
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => {
+  const [rawSelectedIds, setSelectedIds] = useState<Set<string>>(() => {
     const init = new Set<string>();
     if (locked) { REPORT_DEMO_PROJECTS.slice(0, 2).forEach((p) => init.add(p.id)); return init; }
     if (project?.id) init.add(project.id);
@@ -221,26 +221,24 @@ export default function ReportScreen({
   });
   // Quando si passa al set mockup (locked) o cambiano gli immobili, scarta gli id
   // non più presenti; se non resta nulla, riparti dai default (2 in locked, 1 reale).
-  useEffect(() => {
-    setSelectedIds((prev) => {
-      const valid = new Set([...prev].filter((id) => allProjects.some((p) => p.id === id)));
-      if (valid.size > 0) return valid.size === prev.size ? prev : valid;
-      const next = new Set<string>();
-      (locked ? allProjects.slice(0, 2) : allProjects.slice(0, 1)).forEach((p) => next.add(p.id));
-      return next;
-    });
-  }, [allProjects, locked]);
+  const selectedIds = useMemo(() => {
+    const valid = new Set([...rawSelectedIds].filter((id) => allProjects.some((p) => p.id === id)));
+    if (valid.size > 0) return valid.size === rawSelectedIds.size ? rawSelectedIds : valid;
+    const next = new Set<string>();
+    (locked ? allProjects.slice(0, 2) : allProjects.slice(0, 1)).forEach((p) => next.add(p.id));
+    return next;
+  }, [rawSelectedIds, allProjects, locked]);
 
   const MAX_COMPARE = 4;
-  const toggleProject = (id: string) => setSelectedIds((prev) => {
-    const next = new Set(prev);
+  const toggleProject = (id: string) => {
+    const next = new Set(selectedIds);
     if (next.has(id)) { if (next.size > 1) next.delete(id); } // almeno 1 selezionato
     else {
-      if (next.size >= MAX_COMPARE) { toast(`Massimo ${MAX_COMPARE} immobili da confrontare`, 'x'); return prev; }
+      if (next.size >= MAX_COMPARE) { toast(`Massimo ${MAX_COMPARE} immobili da confrontare`, 'x'); return; }
       next.add(id);
     }
-    return next;
-  });
+    setSelectedIds(next);
+  };
 
   // Ricerca immobili (la lista può essere lunghissima).
   const [q, setQ] = useState('');
@@ -266,10 +264,10 @@ export default function ReportScreen({
   const poiLoadingRef = useRef(false); // mirror per attendere nella stampa
   useEffect(() => {
     const props = mappedProperties.slice(0, POI_MAX);
-    if (!props.length) { setPoiDataMap({}); return; }
     let cancelled = false;
-    setPoiLoading(true); poiLoadingRef.current = true;
     (async () => {
+      if (!props.length) { setPoiDataMap({}); return; }
+      setPoiLoading(true); poiLoadingRef.current = true;
       const map: Record<number, ZonaResult | null> = {};
       for (let i = 0; i < props.length; i++) {
         if (cancelled) return;
@@ -485,13 +483,12 @@ export default function ReportScreen({
     }
     if (isMobile) {
       const measure = () => setDocH(doc.documentElement.scrollHeight || doc.body.scrollHeight || 0);
-      measure();
-      // Ri-misura dopo il caricamento di immagini/foto cover.
+      // Misura subito (microtask: stesso frame, prima del paint) e poi
+      // ri-misura dopo il caricamento di immagini/foto cover.
+      queueMicrotask(measure);
       measureTimeout = setTimeout(measure, 400);
       onLoad = measure;
       win?.addEventListener('load', onLoad);
-    } else {
-      setDocH(0);
     }
     if (pendingFocusRef.current && doc) {
       const { title, pcType } = pendingFocusRef.current;

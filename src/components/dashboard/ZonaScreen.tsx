@@ -346,7 +346,7 @@ export default function ZonaScreen({
 
   // Usa la posizione attuale: reverse geocode → compila SOLO l'indirizzo.
   // NON analizza in automatico: l'utente preme la CTA quando vuole.
-  const useMyLocation = () => {
+  const locateMe = () => {
     if (typeof navigator === 'undefined' || !navigator.geolocation) { toast('Geolocalizzazione non disponibile', 'x'); return; }
     setLocating(true);
     navigator.geolocation.getCurrentPosition(
@@ -655,7 +655,7 @@ body { font-family: 'Inter', -apple-system, sans-serif; color: #111827; backgrou
             />
             {address && <span onClick={() => { suppressSug.current = true; setAddress(''); setAddrSug([]); setSugOpen(false); }} style={{ cursor: 'pointer', display: 'flex' }}><Icon name="x" size={13} color="#b3aca1" /></span>}
             {geoEnabled && (
-              <span onClick={() => { if (!locating) useMyLocation(); }} title="Usa la mia posizione" style={{ cursor: locating ? 'default' : 'pointer', display: 'flex', paddingLeft: 4, borderLeft: '1px solid #f0ede7' }}>
+              <span onClick={() => { if (!locating) locateMe(); }} title="Usa la mia posizione" style={{ cursor: locating ? 'default' : 'pointer', display: 'flex', paddingLeft: 4, borderLeft: '1px solid #f0ede7' }}>
                 {locating
                   ? <span style={{ width: 14, height: 14, border: `2px solid ${accent}`, borderTopColor: 'transparent', borderRadius: '50%', display: 'inline-block', animation: 'spin .8s linear infinite' }} />
                   : <Icon name="crosshair" size={15} color={accent} />}
