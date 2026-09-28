@@ -1,5 +1,141 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type User as AuthUser } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
+
+// ─── Row types (only the fields actually used below) ───
+interface CreditRow {
+  user_id: string;
+  email: string | null;
+  subscription_type: string | null;
+  credits: number | null;
+  total_earned: number | null;
+  total_spent: number | null;
+  onboarding_completed: boolean | null;
+  created_at: string;
+  updated_at: string;
+}
+interface TxRow {
+  user_id: string;
+  transaction_type: string;
+  reason: string;
+  amount: number | null;
+  created_at: string;
+}
+interface PropertyRow {
+  user_id: string;
+  site: string | null;
+  created_at: string;
+  unlocked_sections: string[] | null;
+}
+interface NewsletterRow {
+  email: string;
+  marketing_consent: boolean | null;
+  unsubscribed_at: string | null;
+  is_agency: boolean | null;
+  current_streak: number | null;
+  longest_streak: number | null;
+  total_bonuses_claimed: number | null;
+}
+interface BonusRow {
+  email: string;
+  is_claimed: boolean | null;
+  expires_at: string;
+  credits_amount: number | null;
+  streak_day: number | null;
+}
+interface ReferralRow {
+  status: string | null;
+}
+interface StagingRow {
+  user_id: string;
+  style: string | null;
+  created_at: string;
+}
+interface ExportRow {
+  user_id: string;
+  export_type: string | null;
+  width: number | null;
+  height: number | null;
+  format: string | null;
+  template: string | null;
+  created_at: string | null;
+}
+interface TeamRow {
+  id: string;
+  owner_id: string;
+  name: string | null;
+  is_active: boolean | null;
+  created_at: string;
+}
+interface TeamMemberRow {
+  team_id: string;
+  user_id: string;
+  role: string;
+  joined_at: string;
+}
+interface StripeEventRow {
+  id: string;
+  type: string;
+  customer_id: string | null;
+  customer_email: string | null;
+  amount: number | null;
+  currency: string | null;
+  product_id: string | null;
+  price_id: string | null;
+  status: string | null;
+  occurred_at: string;
+}
+interface AiVideoJobRow {
+  user_id: string;
+  status: string;
+  template: string | null;
+  cost_eur: number | null;
+  created_at: string;
+}
+
+// ─── Aggregate shapes ───
+interface UsersSummary {
+  total: number;
+  confirmed: number;
+  signedIn: number;
+  firstCreated: string | null;
+  latestCreated: string | null;
+}
+interface SessionsSummary {
+  total: number;
+  active_7d: number;
+  active_30d: number;
+}
+interface CreditsByType {
+  subscription_type: string;
+  users: number;
+  total_credits: number;
+  total_earned: number;
+  total_spent: number;
+  onboarding_done: number;
+}
+interface TxBreakdown {
+  transaction_type: string;
+  reason: string;
+  count: number;
+  total_amount: number;
+}
+interface TxTrend {
+  month: string;
+  transaction_type: string;
+  count: number;
+  total_amount: number;
+}
+interface PropBySite {
+  site: string;
+  count: number;
+  unique_users: Set<string>;
+  full_analyses: number;
+}
+interface PropTrend {
+  month: string;
+  saved: number;
+  full_analyses: number;
+}
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -23,7 +159,7 @@ export async function GET(request: NextRequest) {
     const now = new Date();
 
     // Try to fetch auth users - may fail if service key lacks admin access
-    let authUsers: any[] = [];
+    let authUsers: AuthUser[] = [];
     try {
       const { data: usersData } =
         await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
@@ -94,29 +230,29 @@ export async function GET(request: NextRequest) {
       const res = await admin.from("batch_staging").select("user_id, completed_items, style, created_at");
       batchStagingRows = res.data || [];
     } catch { /* tabella assente */ }
-    let aiVideoJobRows: { user_id: string; status: string; template: string | null; cost_eur: number | null; created_at: string }[] = [];
+    let aiVideoJobRows: AiVideoJobRow[] = [];
     try {
       // Try with cost_eur first; if column doesn't exist yet, fall back without it
       let res = await admin.from("ai_video_jobs").select("user_id, status, template, cost_eur, created_at");
       if (res.error && res.error.message?.includes("cost_eur")) {
         res = await admin.from("ai_video_jobs").select("user_id, status, template, created_at");
-        aiVideoJobRows = (res.data || []).map((r: any) => ({ ...r, cost_eur: null }));
+        aiVideoJobRows = (res.data || []).map((r: Omit<AiVideoJobRow, "cost_eur">) => ({ ...r, cost_eur: null }));
       } else {
         aiVideoJobRows = res.data || [];
       }
     } catch { /* tabella assente */ }
 
-    const creditRows = creditsRes.data || [];
-    const txRows = transactionsRes.data || [];
-    const propRows = propertiesRes.data || [];
-    const stagingRows = stagingRes.data || [];
-    const exportRows = exportEventsRes.data || [];
-    const nlRows = newsletterRes.data || [];
-    const bonusRows = bonusRes.data || [];
-    const refRows = referralRes.data || [];
-    const teamRows = teamsRes.data || [];
-    const teamMemberRows = teamMembersRes.data || [];
-    const stripeEventRows: any[] = stripeEventsRes.data || [];
+    const creditRows: CreditRow[] = creditsRes.data || [];
+    const txRows: TxRow[] = transactionsRes.data || [];
+    const propRows: PropertyRow[] = propertiesRes.data || [];
+    const stagingRows: StagingRow[] = stagingRes.data || [];
+    const exportRows: ExportRow[] = exportEventsRes.data || [];
+    const nlRows: NewsletterRow[] = newsletterRes.data || [];
+    const bonusRows: BonusRow[] = bonusRes.data || [];
+    const refRows: ReferralRow[] = referralRes.data || [];
+    const teamRows: TeamRow[] = teamsRes.data || [];
+    const teamMemberRows: TeamMemberRow[] = teamMembersRes.data || [];
+    const stripeEventRows: StripeEventRow[] = stripeEventsRes.data || [];
 
     // Exclude admin/test accounts from spending metrics
     const EXCLUDED_EMAILS = [
@@ -132,36 +268,36 @@ export async function GET(request: NextRequest) {
     ];
     const excludedUserIds = new Set(
       creditRows
-        .filter((c: any) => EXCLUDED_EMAILS.includes(c.email))
-        .map((c: any) => c.user_id)
+        .filter((c) => c.email !== null && EXCLUDED_EMAILS.includes(c.email))
+        .map((c) => c.user_id)
     );
 
     // ─── Users / Growth / Providers / Sessions ───
     // If auth admin worked, use that data. Otherwise derive from user_credits.
-    let users: any;
-    let growth: any[];
-    let providers: any[];
-    let sessions: any;
+    let users: UsersSummary;
+    let growth: { month: string; new_users: number }[];
+    let providers: { provider: string; count: number }[];
+    let sessions: SessionsSummary;
 
     // Filter out excluded (admin/test) users from auth list too
     const filteredAuthUsers = authUsers.filter(
-      (u: any) => !EXCLUDED_EMAILS.includes(u.email)
+      (u) => !(u.email !== undefined && EXCLUDED_EMAILS.includes(u.email))
     );
 
     if (filteredAuthUsers.length > 0) {
       users = {
         total: filteredAuthUsers.length,
-        confirmed: filteredAuthUsers.filter((u: any) => u.email_confirmed_at).length,
-        signedIn: filteredAuthUsers.filter((u: any) => u.last_sign_in_at).length,
-        firstCreated: filteredAuthUsers.reduce((a: any, b: any) =>
+        confirmed: filteredAuthUsers.filter((u) => u.email_confirmed_at).length,
+        signedIn: filteredAuthUsers.filter((u) => u.last_sign_in_at).length,
+        firstCreated: filteredAuthUsers.reduce((a, b) =>
           new Date(a.created_at) < new Date(b.created_at) ? a : b
         ).created_at,
-        latestCreated: filteredAuthUsers.reduce((a: any, b: any) =>
+        latestCreated: filteredAuthUsers.reduce((a, b) =>
           new Date(a.created_at) > new Date(b.created_at) ? a : b
         ).created_at,
       };
       const growthMap: Record<string, number> = {};
-      filteredAuthUsers.forEach((u: any) => {
+      filteredAuthUsers.forEach((u) => {
         const month = new Date(u.created_at).toISOString().slice(0, 7);
         growthMap[month] = (growthMap[month] || 0) + 1;
       });
@@ -169,11 +305,11 @@ export async function GET(request: NextRequest) {
         .map(([month, count]) => ({ month, new_users: count }))
         .sort((a, b) => a.month.localeCompare(b.month));
       const providerMap: Record<string, number> = {};
-      filteredAuthUsers.forEach((u: any) => {
+      filteredAuthUsers.forEach((u) => {
         // Try identities first, then app_metadata.provider
         const ids = u.identities || [];
         if (ids.length > 0) {
-          ids.forEach((id: any) => {
+          ids.forEach((id) => {
             providerMap[id.provider] = (providerMap[id.provider] || 0) + 1;
           });
         } else {
@@ -185,20 +321,20 @@ export async function GET(request: NextRequest) {
         .map(([provider, count]) => ({ provider, count }))
         .sort((a, b) => b.count - a.count);
       sessions = {
-        total: filteredAuthUsers.filter((u: any) => u.last_sign_in_at).length,
+        total: filteredAuthUsers.filter((u) => u.last_sign_in_at).length,
         active_7d: filteredAuthUsers.filter(
-          (u: any) => u.last_sign_in_at && new Date(u.last_sign_in_at) > sevenDaysAgo
+          (u) => u.last_sign_in_at && new Date(u.last_sign_in_at) > sevenDaysAgo
         ).length,
         active_30d: filteredAuthUsers.filter(
-          (u: any) => u.last_sign_in_at && new Date(u.last_sign_in_at) > thirtyDaysAgo
+          (u) => u.last_sign_in_at && new Date(u.last_sign_in_at) > thirtyDaysAgo
         ).length,
       };
     } else {
       // Fallback: derive from user_credits table (already excludes admin via excludedUserIds)
-      const filteredCreditRows = creditRows.filter((c: any) => !excludedUserIds.has(c.user_id));
+      const filteredCreditRows = creditRows.filter((c) => !excludedUserIds.has(c.user_id));
       const totalUsers = filteredCreditRows.length;
       const growthMap: Record<string, number> = {};
-      filteredCreditRows.forEach((c: any) => {
+      filteredCreditRows.forEach((c) => {
         const month = new Date(c.created_at).toISOString().slice(0, 7);
         growthMap[month] = (growthMap[month] || 0) + 1;
       });
@@ -206,22 +342,22 @@ export async function GET(request: NextRequest) {
         .map(([month, count]) => ({ month, new_users: count }))
         .sort((a, b) => a.month.localeCompare(b.month));
       const recentUsers = filteredCreditRows.filter(
-        (c: any) => new Date(c.updated_at) > sevenDaysAgo
+        (c) => new Date(c.updated_at) > sevenDaysAgo
       ).length;
       const monthUsers = filteredCreditRows.filter(
-        (c: any) => new Date(c.updated_at) > thirtyDaysAgo
+        (c) => new Date(c.updated_at) > thirtyDaysAgo
       ).length;
       users = {
         total: totalUsers,
         confirmed: totalUsers,
         signedIn: totalUsers,
         firstCreated: filteredCreditRows.length
-          ? filteredCreditRows.reduce((a: any, b: any) =>
+          ? filteredCreditRows.reduce((a, b) =>
               new Date(a.created_at) < new Date(b.created_at) ? a : b
             ).created_at
           : null,
         latestCreated: filteredCreditRows.length
-          ? filteredCreditRows.reduce((a: any, b: any) =>
+          ? filteredCreditRows.reduce((a, b) =>
               new Date(a.created_at) > new Date(b.created_at) ? a : b
             ).created_at
           : null,
@@ -236,8 +372,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Credits by subscription (exclude admin emails)
-    const creditsByType: Record<string, any> = {};
-    creditRows.forEach((c: any) => {
+    const creditsByType: Record<string, CreditsByType> = {};
+    creditRows.forEach((c) => {
       const t = c.subscription_type || "free";
       const isExcluded = excludedUserIds.has(c.user_id);
       if (isExcluded) return; // skip admin accounts entirely
@@ -258,13 +394,13 @@ export async function GET(request: NextRequest) {
       if (c.onboarding_completed) creditsByType[t].onboarding_done++;
     });
     const credits = Object.values(creditsByType).sort(
-      (a: any, b: any) => b.users - a.users
+      (a, b) => b.users - a.users
     );
 
     // Transactions breakdown (exclude admin emails)
-    const filteredTxRows = txRows.filter((tx: any) => !excludedUserIds.has(tx.user_id));
-    const txBreakdown: Record<string, any> = {};
-    filteredTxRows.forEach((tx: any) => {
+    const filteredTxRows = txRows.filter((tx) => !excludedUserIds.has(tx.user_id));
+    const txBreakdown: Record<string, TxBreakdown> = {};
+    filteredTxRows.forEach((tx) => {
       const key = `${tx.transaction_type}|${tx.reason}`;
       if (!txBreakdown[key]) {
         txBreakdown[key] = {
@@ -278,12 +414,12 @@ export async function GET(request: NextRequest) {
       txBreakdown[key].total_amount += tx.amount || 0;
     });
     const transactions = Object.values(txBreakdown).sort(
-      (a: any, b: any) => b.count - a.count
+      (a, b) => b.count - a.count
     );
 
     // Transactions trend by month (exclude admin emails)
-    const txTrendMap: Record<string, any> = {};
-    filteredTxRows.forEach((tx: any) => {
+    const txTrendMap: Record<string, TxTrend> = {};
+    filteredTxRows.forEach((tx) => {
       const month = new Date(tx.created_at).toISOString().slice(0, 7);
       const key = `${month}|${tx.transaction_type}`;
       if (!txTrendMap[key]) {
@@ -297,14 +433,14 @@ export async function GET(request: NextRequest) {
       txTrendMap[key].count++;
       txTrendMap[key].total_amount += tx.amount || 0;
     });
-    const transactionsTrend = Object.values(txTrendMap).sort((a: any, b: any) =>
+    const transactionsTrend = Object.values(txTrendMap).sort((a, b) =>
       a.month.localeCompare(b.month)
     );
 
     // Properties by site (exclude admin accounts)
-    const propBySite: Record<string, any> = {};
+    const propBySite: Record<string, PropBySite> = {};
     const propUserIds = new Set<string>();
-    propRows.forEach((p: any) => {
+    propRows.forEach((p) => {
       if (excludedUserIds.has(p.user_id)) return; // skip admin properties
       const s = p.site || "unknown";
       if (!propBySite[s]) {
@@ -315,17 +451,17 @@ export async function GET(request: NextRequest) {
       propUserIds.add(p.user_id);
     });
     const properties = Object.values(propBySite)
-      .map((p: any) => ({
+      .map((p) => ({
         site: p.site,
         count: p.count,
         unique_users: p.unique_users.size,
         full_analyses: p.full_analyses,
       }))
-      .sort((a: any, b: any) => b.count - a.count);
+      .sort((a, b) => b.count - a.count);
 
     // Properties trend (exclude admin accounts)
-    const propTrendMap: Record<string, any> = {};
-    propRows.forEach((p: any) => {
+    const propTrendMap: Record<string, PropTrend> = {};
+    propRows.forEach((p) => {
       if (excludedUserIds.has(p.user_id)) return;
       const month = new Date(p.created_at).toISOString().slice(0, 7);
       if (!propTrendMap[month]) {
@@ -333,32 +469,32 @@ export async function GET(request: NextRequest) {
       }
       propTrendMap[month].saved++;
     });
-    const propertiesTrend = Object.values(propTrendMap).sort((a: any, b: any) =>
+    const propertiesTrend = Object.values(propTrendMap).sort((a, b) =>
       a.month.localeCompare(b.month)
     );
 
     // Newsletter — also count users with marketing_consent in auth metadata but not in newsletter table
-    const nlEmails = new Set(nlRows.map((n: any) => n.email));
+    const nlEmails = new Set(nlRows.map((n) => n.email));
     const authMarketingConsent = filteredAuthUsers.filter(
-      (u: any) =>
+      (u) =>
         (u.user_metadata?.marketing_consent === true || u.user_metadata?.marketing_consent === "true") &&
         u.email &&
         !nlEmails.has(u.email)
     ).length;
     const newsletter = {
       total_subs: nlRows.length + authMarketingConsent,
-      marketing_consent: nlRows.filter((n: any) => n.marketing_consent).length + authMarketingConsent,
-      unsubscribed: nlRows.filter((n: any) => n.unsubscribed_at).length,
-      agencies: nlRows.filter((n: any) => n.is_agency).length,
+      marketing_consent: nlRows.filter((n) => n.marketing_consent).length + authMarketingConsent,
+      unsubscribed: nlRows.filter((n) => n.unsubscribed_at).length,
+      agencies: nlRows.filter((n) => n.is_agency).length,
       avg_streak: nlRows.length
         ? +(
-            nlRows.reduce((s: number, n: any) => s + (n.current_streak || 0), 0) /
+            nlRows.reduce((s: number, n) => s + (n.current_streak || 0), 0) /
             nlRows.length
           ).toFixed(1)
         : 0,
-      max_streak: Math.max(0, ...nlRows.map((n: any) => n.longest_streak || 0)),
+      max_streak: Math.max(0, ...nlRows.map((n) => n.longest_streak || 0)),
       total_bonuses: nlRows.reduce(
-        (s: number, n: any) => s + (n.total_bonuses_claimed || 0),
+        (s: number, n) => s + (n.total_bonuses_claimed || 0),
         0
       ),
     };
@@ -366,27 +502,27 @@ export async function GET(request: NextRequest) {
     // Bonus
     const bonus = {
       total_tokens: bonusRows.length,
-      claimed: bonusRows.filter((b: any) => b.is_claimed).length,
+      claimed: bonusRows.filter((b) => b.is_claimed).length,
       expired_unclaimed: bonusRows.filter(
-        (b: any) => !b.is_claimed && new Date(b.expires_at) < now
+        (b) => !b.is_claimed && new Date(b.expires_at) < now
       ).length,
       credits_claimed: bonusRows
-        .filter((b: any) => b.is_claimed)
-        .reduce((s: number, b: any) => s + (b.credits_amount || 0), 0),
-      unique_emails: new Set(bonusRows.map((b: any) => b.email)).size,
-      max_streak_day: Math.max(0, ...bonusRows.map((b: any) => b.streak_day || 0)),
+        .filter((b) => b.is_claimed)
+        .reduce((s: number, b) => s + (b.credits_amount || 0), 0),
+      unique_emails: new Set(bonusRows.map((b) => b.email)).size,
+      max_streak_day: Math.max(0, ...bonusRows.map((b) => b.streak_day || 0)),
     };
 
     // Referral
     const referral = {
       total: refRows.length,
-      completed: refRows.filter((r: any) => r.status === "completed").length,
-      pending: refRows.filter((r: any) => r.status === "pending").length,
+      completed: refRows.filter((r) => r.status === "completed").length,
+      pending: refRows.filter((r) => r.status === "pending").length,
     };
 
     // Per-user property counts (exclude admin accounts)
     const userPropCount: Record<string, { saved: number }> = {};
-    propRows.forEach((p: any) => {
+    propRows.forEach((p) => {
       if (excludedUserIds.has(p.user_id)) return;
       if (!userPropCount[p.user_id]) {
         userPropCount[p.user_id] = { saved: 0 };
@@ -397,7 +533,7 @@ export async function GET(request: NextRequest) {
     // Build per-user lookup maps for credit transaction counts
     // full_analyses comes from credit_transactions (source of truth — full_analysis on saved_properties is unreliable)
     const userTxCount: Record<string, { pdf_reports: number; zone_analyses: number; full_analyses: number }> = {};
-    txRows.forEach((tx: any) => {
+    txRows.forEach((tx) => {
       if (!userTxCount[tx.user_id]) userTxCount[tx.user_id] = { pdf_reports: 0, zone_analyses: 0, full_analyses: 0 };
       if (tx.transaction_type === "spend" && tx.reason === "pdf_report") userTxCount[tx.user_id].pdf_reports++;
       if (tx.transaction_type === "spend" && tx.reason === "zone_analysis") userTxCount[tx.user_id].zone_analyses++;
@@ -406,7 +542,7 @@ export async function GET(request: NextRequest) {
 
     // Build per-user staging photo count
     const userStagingCount: Record<string, number> = {};
-    stagingRows.forEach((s: any) => {
+    stagingRows.forEach((s) => {
       userStagingCount[s.user_id] = (userStagingCount[s.user_id] || 0) + 1;
     });
 
@@ -431,11 +567,11 @@ export async function GET(request: NextRequest) {
 
     // ─── Teams ───
     const memberCountByTeam: Record<string, number> = {};
-    teamMemberRows.forEach((m: any) => {
+    teamMemberRows.forEach((m) => {
       memberCountByTeam[m.team_id] = (memberCountByTeam[m.team_id] || 0) + 1;
     });
-    const activeTeams = teamRows.filter((t: any) => t.is_active !== false);
-    const memberCounts = activeTeams.map((t: any) => memberCountByTeam[t.id] || 1);
+    const activeTeams = teamRows.filter((t) => t.is_active !== false);
+    const memberCounts = activeTeams.map((t) => memberCountByTeam[t.id] || 1);
     const teamsStats = {
       total: teamRows.length,
       active: activeTeams.length,
@@ -450,8 +586,8 @@ export async function GET(request: NextRequest) {
 
     // Per-user team info (is_owner, team_id, member_count)
     const userTeamInfo: Record<string, { role: string; team_id: string; member_count: number; team_name: string }> = {};
-    teamMemberRows.forEach((m: any) => {
-      const team = teamRows.find((t: any) => t.id === m.team_id);
+    teamMemberRows.forEach((m) => {
+      const team = teamRows.find((t) => t.id === m.team_id);
       if (!team) return;
       userTeamInfo[m.user_id] = {
         role: m.role,
@@ -466,7 +602,7 @@ export async function GET(request: NextRequest) {
     const formatCounts: Record<string, number> = {};
     const templateCounts: Record<string, number> = {};
 
-    exportRows.forEach((e: any) => {
+    exportRows.forEach((e) => {
       // Heatmap: hour of day (UTC)
       if (e.created_at) {
         const hour = new Date(e.created_at).getUTCHours();
@@ -495,7 +631,7 @@ export async function GET(request: NextRequest) {
 
     // Build per-user export counts
     const userExportCount: Record<string, { post_png: number; post_video: number; template_video: number; staging_video: number; staging_photo: number; post_png_by_size: Record<string, number>; post_png_by_template: Record<string, number>; staging_photo_by_style: Record<string, number> }> = {};
-    exportRows.forEach((e: any) => {
+    exportRows.forEach((e) => {
       if (!userExportCount[e.user_id]) userExportCount[e.user_id] = { post_png: 0, post_video: 0, template_video: 0, staging_video: 0, staging_photo: 0, post_png_by_size: {}, post_png_by_template: {}, staging_photo_by_style: {} };
       const t = e.export_type as string;
       if (t === "post_png") {
@@ -510,7 +646,7 @@ export async function GET(request: NextRequest) {
         const styleKey = e.template || "n/d";
         userExportCount[e.user_id].staging_photo_by_style[styleKey] = (userExportCount[e.user_id].staging_photo_by_style[styleKey] || 0) + 1;
       } else if (t === "post_video" || t === "template_video" || t === "staging_video") {
-        (userExportCount[e.user_id] as any)[t]++;
+        userExportCount[e.user_id][t]++;
       }
     });
 
@@ -518,14 +654,14 @@ export async function GET(request: NextRequest) {
     // non scrivono credit_transactions come l'estensione.
     const userExportPdf: Record<string, number> = {};
     const userExportZone: Record<string, number> = {};
-    exportRows.forEach((e: any) => {
+    exportRows.forEach((e) => {
       if (e.export_type === "pdf_report") userExportPdf[e.user_id] = (userExportPdf[e.user_id] || 0) + 1;
       if (e.export_type === "zone_analysis") userExportZone[e.user_id] = (userExportZone[e.user_id] || 0) + 1;
     });
 
     // Build a lookup map from user_id → last_sign_in_at (from auth users if available)
     const authSignInMap: Record<string, string | null> = {};
-    authUsers.forEach((u: any) => {
+    authUsers.forEach((u) => {
       authSignInMap[u.id] = u.last_sign_in_at || null;
     });
 
@@ -577,8 +713,8 @@ export async function GET(request: NextRequest) {
     }
 
     const topUsers = creditRows
-      .filter((c: any) => !excludedUserIds.has(c.user_id))
-      .map((c: any) => ({
+      .filter((c) => !excludedUserIds.has(c.user_id))
+      .map((c) => ({
         email: c.email || "(no email)",
         subscription_type: c.subscription_type || "free",
         credits: c.credits,
@@ -588,12 +724,12 @@ export async function GET(request: NextRequest) {
         properties_saved: (userPropCount[c.user_id]?.saved || 0) + (userProjectCount[c.user_id] || 0),
         full_analyses: userTxCount[c.user_id]?.full_analyses || 0,
       }))
-      .sort((a: any, b: any) => b.properties_saved - a.properties_saved)
+      .sort((a, b) => b.properties_saved - a.properties_saved)
       .slice(0, 15);
 
     const allUsers = creditRows
-      .filter((c: any) => !excludedUserIds.has(c.user_id))
-      .map((c: any) => ({
+      .filter((c) => !excludedUserIds.has(c.user_id))
+      .map((c) => ({
         id: c.user_id,
         email: c.email || "(no email)",
         subscription_type: c.subscription_type || "free",
@@ -621,19 +757,19 @@ export async function GET(request: NextRequest) {
         ai_videos_by_template: userAiVideoByTemplate[c.user_id] || {},
         estimated_cost: computeUserCost(c.user_id),
       }))
-      .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
     // Summary totals (exclude admin emails)
     const totalSpent = creditRows
-      .filter((c: any) => !excludedUserIds.has(c.user_id))
-      .reduce((s: number, c: any) => s + (c.total_spent || 0), 0);
+      .filter((c) => !excludedUserIds.has(c.user_id))
+      .reduce((s: number, c) => s + (c.total_spent || 0), 0);
     // totalProperties and propUserIds are already filtered above (exclude admin)
-    const totalProperties = propRows.filter((p: any) => !excludedUserIds.has(p.user_id)).length;
+    const totalProperties = propRows.filter((p) => !excludedUserIds.has(p.user_id)).length;
     const totalUniquePropertyUsers = propUserIds.size;
     // full_analyses count from credit_transactions (source of truth)
-    const totalFullAnalysesTx = filteredTxRows.filter((tx: any) => tx.reason === "full_analysis").length;
+    const totalFullAnalysesTx = filteredTxRows.filter((tx) => tx.reason === "full_analysis").length;
     const usersWithAnalysis = new Set(
-      filteredTxRows.filter((tx: any) => tx.reason === "full_analysis").map((tx: any) => tx.user_id)
+      filteredTxRows.filter((tx) => tx.reason === "full_analysis").map((tx) => tx.user_id)
     ).size;
     // Users who saved at least 1 property (active property users, denominator for analysis rate)
     const totalUsersWithProperties = Object.keys(userPropCount).length;
@@ -641,7 +777,7 @@ export async function GET(request: NextRequest) {
     // Section unlocks — from saved_properties.unlocked_sections (array of section names)
     const sectionUnlockMap: Record<string, number> = {};
     const usersWithUnlockedSectionSet = new Set<string>();
-    propRows.forEach((p: any) => {
+    propRows.forEach((p) => {
       if (excludedUserIds.has(p.user_id)) return;
       const sections: string[] = p.unlocked_sections || [];
       if (sections.length > 0) {
@@ -712,10 +848,13 @@ export async function GET(request: NextRequest) {
 
     // Build map: user_id → registration month
     const userRegMonth: Record<string, string> = {};
-    const registrationSource = filteredAuthUsers.length > 0 ? filteredAuthUsers : creditRows.filter((c: any) => !excludedUserIds.has(c.user_id));
-    registrationSource.forEach((u: any) => {
-      const uid = u.id ?? u.user_id;
-      if (uid) userRegMonth[uid] = new Date(u.created_at).toISOString().slice(0, 7);
+    const registrationSource: { uid: string; created_at: string }[] = filteredAuthUsers.length > 0
+      ? filteredAuthUsers.map((u) => ({ uid: u.id, created_at: u.created_at }))
+      : creditRows
+          .filter((c) => !excludedUserIds.has(c.user_id))
+          .map((c) => ({ uid: c.user_id, created_at: c.created_at }));
+    registrationSource.forEach(({ uid, created_at }) => {
+      if (uid) userRegMonth[uid] = new Date(created_at).toISOString().slice(0, 7);
     });
 
     // Build map: user_id → Set of active months
@@ -795,7 +934,7 @@ export async function GET(request: NextRequest) {
     };
 
     // Active subscriptions = most recent subscription event per customer
-    const latestSubByCustomer: Record<string, any> = {};
+    const latestSubByCustomer: Record<string, StripeEventRow> = {};
     stripeEventRows
       .filter(e => ['customer.subscription.created', 'customer.subscription.updated', 'customer.subscription.deleted'].includes(e.type))
       .forEach(e => {
@@ -807,7 +946,7 @@ export async function GET(request: NextRequest) {
       });
 
     const activeSubs = Object.values(latestSubByCustomer).filter(e => e.status === 'active' || e.status === 'trialing');
-    const mrr = activeSubs.reduce((sum: number, e: any) => {
+    const mrr = activeSubs.reduce((sum: number, e) => {
       const monthly = e.price_id ? (PRICE_MONTHLY_EUR[e.price_id] || 0) : 0;
       return sum + monthly;
     }, 0);
@@ -818,7 +957,7 @@ export async function GET(request: NextRequest) {
       .filter(e => e.type === 'invoice.payment_succeeded' && e.amount)
       .forEach(e => {
         const month = new Date(e.occurred_at).toISOString().slice(0, 7);
-        revenueByMonth[month] = (revenueByMonth[month] || 0) + e.amount;
+        revenueByMonth[month] = (revenueByMonth[month] || 0) + (e.amount || 0);
       });
     const revenueTrend = Object.entries(revenueByMonth)
       .map(([month, amount_cents]) => ({ month, amount_cents, amount_eur: +(amount_cents / 100).toFixed(2) }))
@@ -855,11 +994,11 @@ export async function GET(request: NextRequest) {
     // Revenue last 30d
     const revenue30d = stripeEventRows
       .filter(e => e.type === 'invoice.payment_succeeded' && new Date(e.occurred_at) > thirtyDaysAgoDate && e.amount)
-      .reduce((sum: number, e: any) => sum + e.amount, 0);
+      .reduce((sum: number, e) => sum + (e.amount || 0), 0);
 
     // Plan distribution from active subs
     const planDist: Record<string, number> = {};
-    activeSubs.forEach((e: any) => {
+    activeSubs.forEach((e) => {
       const tier = e.price_id ? (
         PRICE_MONTHLY_EUR[e.price_id] !== undefined ? e.price_id : 'other'
       ) : 'other';
@@ -909,7 +1048,7 @@ export async function GET(request: NextRequest) {
     };
 
     // All users including admin/test — used only for Ambassador page
-    const allUsersForAmbassador = creditRows.map((c: any) => ({
+    const allUsersForAmbassador = creditRows.map((c) => ({
       email: c.email || "(no email)",
       subscription_type: c.subscription_type || "free",
       credits: c.credits,
