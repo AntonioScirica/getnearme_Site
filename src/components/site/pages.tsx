@@ -1,14 +1,14 @@
 'use client';
 
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { ArrowLeft, ChevronLeft, ChevronRight, Expand, Mail, MapPin, MessageCircle, Phone, Search, SlidersHorizontal, Sparkles, X } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, Expand, Mail, MapPin, MessageCircle, Phone, Handshake, Search, SearchX, SlidersHorizontal, Sparkles, X } from 'lucide-react';
 import InlineSlider from '@/components/InlineSlider';
-import { zoneSlug, type SiteProperty } from '@/lib/siteTemplates';
+import { pageHidden, zoneSlug, type SiteProperty } from '@/lib/siteTemplates';
 
 import { LegalPage } from './legal';
 import { AddressLink, ContactForm, DetailsTable, FeatureList, MapBlock, NearbyList, RichText, ServicesGrid, ReportButton, ShareBar, TourBlock, WhatsAppFloat } from './extras';
 import { AboutBlock, CtaBand, Featured, Footer, Header, Hero, Intro, isRent, PropertyCard, PropertyRow, Reviews, SearchForm, SectionHead, statsOf, tipiOf, Zones, type Filters } from './sections';
-import { Btn, Container, contacts, Eyebrow, Facts, FavButton, H, Photo, price, Sec, SiteLink, SiteRoot, typeOf, useFavs, useSite, useT, zoneOf, type Page, type SiteCtx, Select } from './ui';
+import { Btn, Container, contacts, EmptyState, Eyebrow, NoListings, Facts, FavButton, H, Photo, price, Sec, SiteLink, SiteRoot, typeOf, useFavs, useSite, useT, zoneOf, type Page, type SiteCtx, Select } from './ui';
 
 // Le 4 pagine del sito vetrina. Struttura comune, ma ogni template sceglie le sue varianti:
 // filtri laterali o in alto, card o righe, galleria a mosaico, slider o a tutto schermo, profilo diviso, con copertina o centrato.
@@ -59,7 +59,7 @@ function useFilter(initial?: Filters) {
 }
 
 function ListingsPage({ initial }: { initial?: Filters }) {
-  const { t } = useSite();
+  const { t, properties } = useSite();
   const tx = useT();
   const s = useFilter(initial);
   const { f, set, setF, list, tipi, favCount } = s;
@@ -112,7 +112,9 @@ function ListingsPage({ initial }: { initial?: Filters }) {
       {t.results === 'rows'
         ? <div className="border-t border-[var(--line)]">{shown.map(p => <PropertyRow key={p.id} p={p} />)}</div>
         : <div className={`grid gap-6 sm:grid-cols-2 ${t.listings === 'topbar' ? 'lg:grid-cols-3' : 'xl:grid-cols-3'}`}>{shown.map(p => <PropertyCard key={p.id} p={p} />)}</div>}
-      {!list.length && <div className="rounded-[var(--r)] bg-[var(--soft)] px-6 py-16 text-center text-[var(--muted)]">{tx('listings.empty')} <button onClick={() => setF({})} className="font-semibold text-[var(--c)]">Azzera</button></div>}
+      {!list.length && (properties.length
+        ? <EmptyState icon={SearchX} title={tx('listings.empty')} text="Prova ad allargare la ricerca: meno filtri, un prezzo più alto o un'altra zona." action={<button onClick={() => setF({})} className="inline-flex h-11 items-center rounded-[min(var(--r),999px)] px-5 text-sm font-semibold ring-1 ring-inset ring-[var(--line)] transition-colors hover:ring-[var(--fg)]">Azzera filtri</button>} />
+        : <NoListings />)}
       {pages > 1 && (
         <div className="mt-12 flex items-center justify-center gap-2">
           <button disabled={!pageN} onClick={() => setPageN(n => n - 1)} className="flex h-10 w-10 items-center justify-center rounded-full disabled:opacity-30"><ChevronLeft size={18} /></button>
@@ -123,7 +125,7 @@ function ListingsPage({ initial }: { initial?: Filters }) {
     </>
   );
   const title = f.q ? `Immobili a ${f.q}` : tx('listings.title');
-  const sub = `${list.length} ${list.length === 1 ? 'risultato' : 'risultati'}`;
+  const sub = properties.length ? `${list.length} ${list.length === 1 ? 'risultato' : 'risultati'}` : undefined; // nessun immobile: niente "0 risultati"
 
   return (
     <>
@@ -412,12 +414,12 @@ function AgentPage() {
       <Sec id="header"><Header /></Sec>
       <Sec id="agent.top">{top}
       {rest.length > 0 && <Container className="max-w-3xl pt-20"><RichText text={rest.join('\n\n')} /></Container>}</Sec>
-      <Sec id="agent.listings"><Container className="py-20">
+      {properties.length > 0 && <Sec id="agent.listings"><Container className="py-20">
         <SectionHead eyebrow={tx('agent.listingsEyebrow')} title={tx('agent.listingsTitle')} link={{ label: 'Cerca tra tutti', to: { page: 'immobili' } }} />
         <div className="mt-8">{t.results === 'rows'
           ? <div className="border-t border-[var(--line)]">{properties.slice(0, 4).map(p => <PropertyRow key={p.id} p={p} />)}</div>
           : <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">{properties.slice(0, 6).map(p => <PropertyCard key={p.id} p={p} />)}</div>}</div>
-      </Container></Sec>
+      </Container></Sec>}
       <Sec id="home.reviews"><Reviews /></Sec>
       <Sec id="cta"><CtaBand /></Sec>
       <Sec id="footer"><Footer /></Sec>
@@ -453,6 +455,9 @@ function ServicesPage() {
     </ol>
   );
   else body = <ServicesGrid numbered />;
+  // nessun servizio scritto: invito a chiedere, invece di una pagina vuota
+  if (!cfg.services.length) body = <EmptyState icon={Handshake} title="Come posso aiutarti" text="Vendita, affitto, valutazione o consulenza: raccontami cosa ti serve e ti dico come lavoro."
+    action={!pageHidden(cfg, 'contatti') && <SiteLink to={{ page: 'contatti' }} className="inline-flex h-11 items-center rounded-[min(var(--r),999px)] bg-[var(--c)] px-5 text-sm font-semibold text-[var(--on-c,#fff)] transition-all hover:brightness-110">Scrivimi</SiteLink>} />;
   return (
     <>
       <Sec id="header"><Header /></Sec>
@@ -491,6 +496,7 @@ function ContactPage() {
       {c.tel && <a href={c.tel} className="flex items-center gap-3"><Phone size={17} className="text-[var(--c)]" />{cfg.phone}</a>}
       {c.mail && <a href={c.mail} className="flex items-center gap-3"><Mail size={17} className="text-[var(--c)]" />{cfg.email}</a>}
       {c.wa && <Btn href={c.wa} external className="mt-4"><MessageCircle size={16} /> Scrivimi su WhatsApp</Btn>}
+      {!cfg.address && !c.tel && !c.mail && !c.wa && <p className="text-[var(--muted)]">Scrivimi dal modulo: ti rispondo al più presto.</p>}
     </div>
   );
   const form = <Sec id="contact.form"><div className="rounded-[var(--r)] bg-[var(--surface)] p-4 text-[var(--fg)] shadow-[0_30px_80px_-40px_rgba(0,0,0,.35)] ring-1 ring-[var(--line)] sm:p-6 md:p-8"><H className="mb-6 text-2xl">{tx('contact.formTitle')}</H><ContactForm /></div></Sec>;
@@ -536,7 +542,7 @@ function ZonePage({ slug }: { slug: string }) {
   const grid = (ps: SiteProperty[]) => t.results === 'rows'
     ? <div className="border-t border-[var(--line)]">{ps.map(p => <PropertyRow key={p.id} p={p} />)}</div>
     : <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">{ps.map(p => <PropertyCard key={p.id} p={p} />)}</div>;
-  const head = <PageHead eyebrow={tx('zone.eyebrow')} title={`Casa a ${z.name}`} sub={here.length ? `${here.length} ${here.length === 1 ? 'immobile disponibile' : 'immobili disponibili'}` : 'Al momento nessun immobile qui: ecco gli altri disponibili'} />;
+  const head = <PageHead eyebrow={tx('zone.eyebrow')} title={`Casa a ${z.name}`} sub={here.length ? `${here.length} ${here.length === 1 ? 'immobile disponibile' : 'immobili disponibili'}` : properties.length ? 'Al momento nessun immobile qui: ecco gli altri disponibili' : undefined} />;
   if (t.zone === 'wide') return (
     <>
       <Sec id="header"><Header /></Sec><Sec id="zone.page">{head}</Sec>
@@ -544,7 +550,7 @@ function ZonePage({ slug }: { slug: string }) {
       <section className="bg-[var(--soft)] py-16">
         <Container>
           <SectionHead title={here.length ? `Immobili a ${z.name}` : 'Immobili disponibili'} link={{ label: 'Cerca tra tutti', to: { page: 'immobili', f: { q: z.name } } }} />
-          <div className="mt-8">{grid(list.slice(0, 6))}</div>
+          <div className="mt-8">{list.length ? grid(list.slice(0, 6)) : <NoListings className="bg-[var(--surface)]" />}</div>
         </Container>
       </section>
       <Sec id="cta"><CtaBand /></Sec><Sec id="footer"><Footer /></Sec>
@@ -557,7 +563,7 @@ function ZonePage({ slug }: { slug: string }) {
         <RichText text={z.text} />
         <aside className="space-y-8">
           <div className="rounded-[var(--r)] bg-[var(--soft)] p-4 sm:p-5"><div className="mb-4 text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--muted)]">Ricerca avanzata</div><SearchForm layout="stack" /></div>
-          <div className="space-y-4"><div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--muted)]">{here.length ? `Ultimi a ${z.name}` : 'Immobili disponibili'}</div>{list.slice(0, 3).map(p => <PropertyCard key={p.id} p={p} />)}</div>
+          {list.length > 0 && <div className="space-y-4"><div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--muted)]">{here.length ? `Ultimi a ${z.name}` : 'Immobili disponibili'}</div>{list.slice(0, 3).map(p => <PropertyCard key={p.id} p={p} />)}</div>}
         </aside>
       </Container>
       {here.length > 3 && <Container className="pb-16"><SectionHead title={`Tutti gli immobili a ${z.name}`} /><div className="mt-8">{grid(here.slice(3))}</div></Container>}

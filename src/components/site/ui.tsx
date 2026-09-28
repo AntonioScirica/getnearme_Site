@@ -3,7 +3,7 @@
 import { Children, createContext, isValidElement, useContext, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactElement, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import FitImage from '@/components/ui/FitImage';
-import { Bath, BedDouble, Check, ChevronDown, DoorOpen, Heart, Maximize2 } from 'lucide-react';
+import { Bath, BedDouble, Check, ChevronDown, DoorOpen, Heart, House, ImageIcon, Maximize2, type LucideIcon } from 'lucide-react';
 import { FONTS, fontCss, PAGE_SECTIONS, pageHidden, TEXTS, type SiteConfig, type SiteProperty, type TemplateId } from '@/lib/siteTemplates';
 
 // Base dei siti vetrina: tema per template, contesto del sito, link (veri sul sito, interni
@@ -133,8 +133,28 @@ export function Photo({ src, alt = '', className = '', zoom, fit }: { src?: stri
     <div className={`overflow-hidden bg-[var(--soft)] ${fit ? 'relative' : ''} ${className}`}>
       {shown && fit && <FitImage src={shown} alt={alt} imgClassName={zoom ? 'transition-transform duration-[900ms] ease-[cubic-bezier(.22,1,.36,1)] group-hover:scale-[1.04]' : ''} />}
       {shown && !fit && <img src={shown} alt={alt} loading="lazy" className={`h-full w-full object-cover ${zoom ? 'transition-transform duration-[900ms] ease-[cubic-bezier(.22,1,.36,1)] group-hover:scale-[1.04]' : ''}`} />}
+      {/* senza foto (sul sito vero): un'icona discreta invece del riquadro vuoto */}
+      {!shown && <div className="flex h-full min-h-24 w-full items-center justify-center text-[var(--muted)] opacity-40"><ImageIcon size={28} strokeWidth={1.5} /></div>}
     </div>
   );
+}
+
+// Stato vuoto del sito: icona in un cerchio tenue, titolo, testo e un'azione. Prende colori e raggi del template.
+export function EmptyState({ icon: I, title, text, action, className = '' }: { icon: LucideIcon; title: string; text?: string; action?: ReactNode; className?: string }) {
+  return (
+    <div className={`flex flex-col items-center rounded-[var(--r)] bg-[var(--soft)] px-6 py-14 text-center sm:py-16 ${className}`}>
+      <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--c)_12%,transparent)] text-[var(--c)]"><I size={24} /></span>
+      <H as="h3" className="mt-5 text-2xl">{title}</H>
+      {text && <p className="mt-2 max-w-md text-[15px] leading-relaxed text-[var(--muted)]">{text}</p>}
+      {action && <div className="mt-6">{action}</div>}
+    </div>
+  );
+}
+// Nessun immobile pubblicato: si invita a dire cosa si cerca (pagina Contatti, se non e' nascosta)
+export function NoListings({ className = '' }: { className?: string }) {
+  const { cfg } = useSite();
+  return <EmptyState icon={House} className={className} title="Nuovi immobili in arrivo" text="Sto selezionando le prossime case. Dimmi cosa cerchi e ti avviso appena arriva quella giusta."
+    action={!pageHidden(cfg, 'contatti') && <SiteLink to={{ page: 'contatti' }} className="inline-flex h-11 items-center justify-center rounded-[min(var(--r),999px)] bg-[var(--c)] px-5 text-sm font-semibold text-[var(--on-c,#fff)] transition-all hover:brightness-110">Dimmi cosa cerchi</SiteLink>} />;
 }
 
 export const price = (n: number) => (n ? `€ ${Number(n).toLocaleString('it-IT')}` : 'Trattativa riservata');

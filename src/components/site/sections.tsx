@@ -4,7 +4,7 @@ import { useState, type FormEvent } from 'react';
 import { ArrowDown, ArrowRight, ArrowUpRight, Building, Building2, ChevronDown, Home, Store, TreePine, Warehouse, Check, ChevronLeft, ChevronRight, Handshake, Heart, Leaf, Mail, MapPin, Menu, Phone, Quote, Search, ShieldCheck, Sparkles, Star, Users, X } from 'lucide-react';
 import { pageHidden, zoneSlug, type SiteConfig, type SiteProperty } from '@/lib/siteTemplates';
 import { MapBlock, TopBar } from './extras';
-import { Btn, Container, contacts, Eyebrow, Facts, FavButton, H, Photo, price, SiteLink, typeOf, useFavs, useSite, useT, zoneOf, pathOf, type Filters, type Page, Select } from './ui';
+import { Btn, Container, contacts, Eyebrow, NoListings, Facts, FavButton, H, Photo, price, SiteLink, typeOf, useFavs, useSite, useT, zoneOf, pathOf, type Filters, type Page, Select } from './ui';
 export type { Filters };
 
 // Sezioni dei siti vetrina. Ogni sezione ha piu' varianti: il tema del template sceglie quale usare,
@@ -36,7 +36,7 @@ export function statsOf(cfg: SiteConfig, properties: SiteProperty[]) {
     cfg.years && { v: `${cfg.years}+`, l: 'Anni di esperienza' },
     cfg.sold && { v: `${cfg.sold}+`, l: 'Immobili venduti' },
     cfg.clients && { v: `${cfg.clients}+`, l: 'Clienti seguiti' },
-    { v: String(properties.length), l: 'Immobili disponibili' },
+    properties.length > 0 && { v: String(properties.length), l: 'Immobili disponibili' }, // mai "0 immobili"
     zones > 1 && { v: String(zones), l: 'Zone servite' },
   ].filter(Boolean).slice(0, 4) as { v: string; l: string }[];
 }
@@ -458,7 +458,7 @@ export function Intro() {
           {tipi.map(x => { const I = icon(x); const n = properties.filter(p => p.tipologia?.startsWith(x)).length; return (
             <SiteLink key={x} to={{ page: 'immobili', f: { tipo: x } }} className="group flex flex-col items-center text-center">
               <span className="flex h-16 w-16 items-center justify-center rounded-full bg-[var(--soft)] text-[var(--c)] transition-colors duration-500 group-hover:bg-[var(--c)] group-hover:text-white"><I size={24} /></span>
-              <span className="mt-3 text-sm font-semibold">{x}</span><span className="text-xs text-[var(--muted)]">{n} {n === 1 ? 'immobile' : 'immobili'}</span>
+              <span className="mt-3 text-sm font-semibold">{x}</span>{n > 0 && <span className="text-xs text-[var(--muted)]">{n} {n === 1 ? 'immobile' : 'immobili'}</span>}
             </SiteLink>
           ); })}
         </div>
@@ -659,7 +659,7 @@ export function Featured() {
   const tx = useT();
   const [off, setOff] = useState(0);
   const head = { eyebrow: tx('featured.eyebrow'), title: tx('featured.title'), sub: tx('featured.sub'), link: { label: tx('featured.link'), to: { page: 'immobili' } as Page } };
-  if (!properties.length) return <Container className="py-20"><SectionHead {...head} /><p className="mt-8 text-[var(--muted)]">Presto nuovi immobili.</p></Container>;
+  if (!properties.length) return <Container className="py-20"><SectionHead {...head} sub={undefined} link={undefined} /><NoListings className="mt-8" /></Container>;
   if (t.results === 'rows') return <Container className="py-24"><SectionHead {...head} /><div className="mt-6 border-t border-[var(--line)]">{properties.slice(0, 4).map(p => <PropertyRow key={p.id} p={p} />)}</div></Container>;
   if (t.featured === 'chips') return <FeaturedChips />;
   if (cfg.template === 'bosco') {
@@ -889,7 +889,7 @@ export function Zones() {
 
 // ---------- Fascia contatti: 4 varianti ----------
 export function CtaBand() {
-  const { cfg, t, properties } = useSite();
+  const { cfg, t, properties, preview } = useSite();
   const tx = useT();
   const c = contacts(cfg);
   if (!cfg.showContact) return null;
@@ -898,7 +898,9 @@ export function CtaBand() {
       {c.tel && <Btn href={c.tel} variant="light"><Phone size={15} /> {cfg.phone}</Btn>}
       {c.wa && <Btn href={c.wa} external variant="light">WhatsApp</Btn>}
       {c.mail && <Btn href={c.mail} variant="light"><Mail size={15} /> Email</Btn>}
-      {!c.tel && !c.wa && !c.mail && <span className="text-sm text-white/80">Aggiungi telefono o email nell’editor.</span>}
+      {/* senza recapiti: nell'editor il suggerimento, sul sito il link alla pagina Contatti (modulo) */}
+      {!c.tel && !c.wa && !c.mail && (preview ? <span className="text-sm text-white/80">Aggiungi telefono o email nell’editor.</span>
+        : !pageHidden(cfg, 'contatti') && <SiteLink to={{ page: 'contatti' }} className="inline-flex h-11 items-center gap-2 rounded-[min(var(--r),999px)] bg-white px-5 text-sm font-semibold text-neutral-900 hover:bg-white/90"><Mail size={15} /> Scrivimi</SiteLink>)}
     </div>
   );
   const text = <div><H className="text-3xl md:text-5xl">{tx('cta.title')}</H><p className="mt-3 max-w-md text-white/80">{tx('cta.text')}</p></div>;
