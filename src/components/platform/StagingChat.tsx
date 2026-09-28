@@ -334,7 +334,8 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
     const t = (given ?? text).trim();
     const pk = given ? sug ?? null : picked;
     if (!t || !base || busy) return;
-    const dens = given === undefined ? typedDensity : densityRef.current; // scritta: quella delle pill sopra il campo
+    // stile da una foto: sempre Normale; scritta: quella delle pill sopra il campo; stili: l'ultima scelta nel popup
+    const dens = styleRef ? 'normale' : given === undefined ? typedDensity : densityRef.current;
     setTextDensity(null);
     touch();
     const id = uid();
