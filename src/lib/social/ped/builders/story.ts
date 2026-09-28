@@ -10,9 +10,16 @@ import { GNM_ICON_SM, RUBRIC_STORY } from "./shared";
 
 type RubricStoryMap = typeof RUBRIC_STORY;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// Only the slide_data fields this builder reads.
+export interface StoryData {
+  storyBadge?: string;
+  storyHook?: string;
+  storyHookHL?: string;
+  storySub?: string;
+}
+
 export function storyTeaserD(
-  d: any,
+  d: StoryData,
   rubric: string,
   rubricMap: RubricStoryMap = RUBRIC_STORY
 ): string {

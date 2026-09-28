@@ -159,7 +159,7 @@ export async function POST(req: NextRequest) {
         await fetch(`${FN_BASE}/render-ai-video-final`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'x-cron-secret': CRON_SECRET, 'x-user-id': userId },
-          body: JSON.stringify({ mode: 'commit-quota', template: body.template, aiModel: (body.ctx as any)?.aiModel, count: (body.ctx as any)?.segmentCount }),
+          body: JSON.stringify({ mode: 'commit-quota', template: body.template, aiModel: (body.ctx as Record<string, unknown> | undefined)?.aiModel, count: (body.ctx as Record<string, unknown> | undefined)?.segmentCount }),
         })
       } catch (e) {
         console.error('video-jobs commit-quota (sync) failed:', (e as Error)?.message)

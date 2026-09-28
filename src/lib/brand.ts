@@ -219,8 +219,8 @@ async function upsertBrand(patch: Record<string, unknown>): Promise<boolean> {
       return false;
     }
     return true;
-  } catch (err: any) {
-    console.error('[brand] upsert exception:', err.message);
+  } catch (err) {
+    console.error('[brand] upsert exception:', (err as Error).message);
     return false;
   }
 }
@@ -303,8 +303,8 @@ export async function uploadBrandLogo(scope: Scope, logoKey: string, file: File)
       return false;
     }
     return true;
-  } catch (err: any) {
-    console.error('[brand] logo upload exception:', err.message);
+  } catch (err) {
+    console.error('[brand] logo upload exception:', (err as Error).message);
     return false;
   }
 }

@@ -319,13 +319,13 @@ export async function preloadCoverFonts(): Promise<void> {
     link.href = 'https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400&family=Poppins:wght@300;600;700&display=swap';
     document.head.appendChild(link);
   }
-  if (!(document as any).fonts?.load) return;
+  if (!document.fonts?.load) return;
   try {
     await Promise.all([
-      (document as any).fonts.load('700 48px Poppins'),
-      (document as any).fonts.load('600 48px Poppins'),
-      (document as any).fonts.load('300 48px Poppins'),
-      (document as any).fonts.load('400 48px "EB Garamond"'),
+      document.fonts.load('700 48px Poppins'),
+      document.fonts.load('600 48px Poppins'),
+      document.fonts.load('300 48px Poppins'),
+      document.fonts.load('400 48px "EB Garamond"'),
     ]);
   } catch { /* fallback sans-serif */ }
 }

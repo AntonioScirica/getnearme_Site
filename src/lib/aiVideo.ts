@@ -262,16 +262,17 @@ async function callEdge<T = Record<string, unknown>>(name: string, body: Record<
       const fresh = await refreshTokenFast();
       if (fresh) resp = await doFetch(fresh);
     }
-  } catch (e: any) {
-    throw new AIVideoError(e?.name === 'AbortError' ? 'Richiesta troppo lenta, riprova' : (e?.message || 'Errore di rete'));
+  } catch (e) {
+    const err = e as { name?: string; message?: string } | null;
+    throw new AIVideoError(err?.name === 'AbortError' ? 'Richiesta troppo lenta, riprova' : (err?.message || 'Errore di rete'));
   }
-  let json: any = null;
+  let json: Record<string, unknown> | null = null;
   try { json = await resp.json(); } catch { /* no body */ }
   if (!resp.ok) {
     const msg = (json?.error as string) || `HTTP ${resp.status}`;
     throw new AIVideoError(resp.status === 401 ? 'Accedi per usare Video AI' : msg, resp.status, json);
   }
-  return json as T;
+  return json as unknown as T;
 }
 
 // Presigned R2 upload URLs

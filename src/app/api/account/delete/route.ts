@@ -29,7 +29,7 @@ async function cancelStripeSubscription(subscriptionId: string) {
       const list = await fetch(`https://api.stripe.com/v1/subscriptions?customer=${encodeURIComponent(customerId)}&status=active&limit=100`, { headers: { Authorization: `Bearer ${key}` } });
       const json = await list.json();
       if (list.ok && Array.isArray(json?.data)) {
-        await Promise.all(json.data.map((s: any) =>
+        await Promise.all(json.data.map((s: { id: string }) =>
           fetch(`https://api.stripe.com/v1/subscriptions/${s.id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${key}` } }).catch(() => null)
         ));
       }
@@ -74,7 +74,7 @@ export async function DELETE(req: NextRequest) {
     }
 
     return NextResponse.json({ success: true });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err) {
+    return NextResponse.json({ error: (err as Error).message }, { status: 500 });
   }
 }

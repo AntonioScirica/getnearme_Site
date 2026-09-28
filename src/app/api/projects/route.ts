@@ -148,7 +148,7 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: 'missing_id' }, { status: 400 })
   }
 
-  const updates: any = { updated_at: new Date().toISOString() }
+  const updates: Record<string, unknown> = { updated_at: new Date().toISOString() }
   if (nome !== undefined) updates.nome = nome
   if (addr !== undefined) updates.addr = addr
   if (prezzo !== undefined) updates.prezzo = typeof prezzo === 'number' ? prezzo : 0

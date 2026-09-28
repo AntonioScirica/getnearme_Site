@@ -30,8 +30,8 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ success: true });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err) {
+    return NextResponse.json({ error: (err as Error).message }, { status: 500 });
   }
 }
 
@@ -70,7 +70,7 @@ export async function GET(req: NextRequest) {
     }));
 
     return NextResponse.json({ row, signed });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err) {
+    return NextResponse.json({ error: (err as Error).message }, { status: 500 });
   }
 }

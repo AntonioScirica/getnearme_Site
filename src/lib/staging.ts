@@ -63,7 +63,21 @@ export async function refreshTokenFast(): Promise<string | null> {
   }
 }
 
-async function invokeFn<T = any>(name: string, body: unknown, timeoutMs = 60_000): Promise<{ data: T | null; status: number; error: string | null }> {
+// Shape of the JSON the staging edge functions return (only the fields we read).
+type StagingFnResponse = {
+  success?: boolean;
+  error?: string;
+  predictionId?: string;
+  outputUrl?: string;
+  status?: string;
+  quota_exhausted?: boolean;
+  sceneType?: string;
+  confident?: boolean;
+  batchId?: string;
+  itemCount?: number;
+};
+
+async function invokeFn<T = StagingFnResponse>(name: string, body: unknown, timeoutMs = 60_000): Promise<{ data: T | null; status: number; error: string | null }> {
   const once = async (token: string) => {
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), timeoutMs);
@@ -82,11 +96,12 @@ async function invokeFn<T = any>(name: string, body: unknown, timeoutMs = 60_000
       const fresh = await refreshTokenFast();
       if (fresh) resp = await once(fresh);
     }
-    let json: any = null;
+    let json: StagingFnResponse | null = null;
     try { json = await resp.json(); } catch { /* no body */ }
-    return { data: json, status: resp.status, error: resp.ok ? null : (json?.error || `HTTP ${resp.status}`) };
-  } catch (e: any) {
-    return { data: null, status: 0, error: e?.name === 'AbortError' ? '__timeout' : (e?.message || 'network') };
+    return { data: json as T | null, status: resp.status, error: resp.ok ? null : (json?.error || `HTTP ${resp.status}`) };
+  } catch (e) {
+    const err = e as { name?: string; message?: string } | null;
+    return { data: null, status: 0, error: err?.name === 'AbortError' ? '__timeout' : (err?.message || 'network') };
   }
 }
 
@@ -309,9 +324,9 @@ async function downscaleForClassify(dataUrl: string, maxDim = 288): Promise<stri
 export async function classifyScene(dataUrl: string): Promise<{ scene: SceneType; confident: boolean }> {
   const thumb = await downscaleForClassify(dataUrl);
   const { data } = await invokeFn('replicate-staging', { action: 'classify', imageUrl: thumb }, 15_000);
-  const t = (data as any)?.sceneType;
+  const t = data?.sceneType;
   const scene: SceneType = t === 'esterno' || t === 'giardino' ? t : 'interno';
-  const confident = (data as any)?.confident !== false;
+  const confident = data?.confident !== false;
   return { scene, confident };
 }
 
@@ -380,7 +395,7 @@ export async function startStaging(opts: {
 
   if (error === '__timeout') return { ok: false, error: 'Avvio generazione troppo lento, riprova' };
   if (status === 401) return { ok: false, error: 'Accedi per generare le foto AI', notAuthenticated: true };
-  if (status === 402 || (data as any)?.quota_exhausted) return { ok: false, error: 'Quota foto esaurita', quotaExhausted: true };
+  if (status === 402 || data?.quota_exhausted) return { ok: false, error: 'Quota foto esaurita', quotaExhausted: true };
   if (error && !data) return { ok: false, error };
   if (!data?.success || !data?.predictionId) {
     return { ok: false, error: (data?.error as string) || 'Generazione non riuscita' };
@@ -442,17 +457,18 @@ export async function createBatchStaging(opts: {
   if (error && !data) {
     if (error === '__timeout') return { ok: false, error: 'Invio troppo lento, riprova' };
     if (status === 401) return { ok: false, error: 'Accedi per generare le foto AI', notAuthenticated: true };
-    if (status === 402 || (data as any)?.quota_exhausted) return { ok: false, error: 'Crediti insufficienti', quotaExhausted: true };
+    if (status === 402 || (data as StagingFnResponse | null)?.quota_exhausted) return { ok: false, error: 'Crediti insufficienti', quotaExhausted: true };
     return { ok: false, error };
   }
   if (!data?.success) return { ok: false, error: (data?.error as string) || 'Invio non riuscito' };
   
   // Save originals to IndexedDB so they don't consume backend storage
-  if (data?.batchId) {
-    Promise.all(images.map((img, i) => saveOriginalMedia(data.batchId, i, img))).catch(console.error);
+  const batchId = data?.batchId;
+  if (batchId) {
+    Promise.all(images.map((img, i) => saveOriginalMedia(batchId, i, img))).catch(console.error);
   }
   
-  return { ok: true, batchId: data.batchId, itemCount: data.itemCount };
+  return { ok: true, batchId: data.batchId as string, itemCount: data.itemCount as number };
 }
 
 export type StagingQuota = { remaining: number; limit: number };
