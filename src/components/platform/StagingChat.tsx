@@ -6,7 +6,7 @@ import { createPortal } from 'react-dom';
 import { Anvil, WandSparkles, Film, HardHat, MoonStar, ArrowUp, Search, Building2, Check, ChevronLeft, Clapperboard, SquareSplitHorizontal, Image as ImageIcon, Palette, Sofa, Sparkles, Download, ExternalLink, ImagePlus, Lasso, Shuffle, LayoutGrid, Loader2, Monitor, RotateCcw, SquareDashed, SquareDashedMousePointer, X } from 'lucide-react';
 import { fileToResizedDataUrl } from '@/lib/staging';
 import { AI_MOCK } from '@/lib/aiMock';
-import { AiPhotoStage, type EditRequest, type Region, type Reveal, type Suggestion } from './AiPhoto';
+import { AiPhotoStage, Elapsed, type EditRequest, type Region, type Reveal, type Suggestion } from './AiPhoto';
 import { authFetch, CARD_SHADOW, portfolioUrl, warm } from './api';
 import ProgressiveBlur from '@/components/ProgressiveBlur';
 import Dropdown, { type DropdownOption } from '@/components/ui/Dropdown';
@@ -514,7 +514,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                 <div className="p-4 pb-6">
                   {/* passo nuovo: il vecchio sfuma, il contenitore cambia altezza (AutoSize), poi il nuovo appare */}
                   {/* scelte fatte: miniature sopra la domanda; restano ferme tra un passo e l'altro, entra solo l'ultima */}
-                  {m.picks.length > 0 && m.step !== 'anim' && (
+                  {m.picks.length > 0 && m.step !== 'anim' && m.step !== 'render' && (
                     <div className="flex flex-wrap gap-2 px-2 pb-4">
                       {m.picks.map(p => {
                         const Icon = PICK_ICON[p.icon];
@@ -583,15 +583,32 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                             ? <video src={m.url} autoPlay loop muted playsInline controls className="blur-in absolute inset-0 h-full w-full object-cover" />
                             : <>
                               <img src={m.photo} alt="" className={`absolute inset-0 h-full w-full scale-105 object-cover ${m.err ? 'opacity-40' : 'blur-md'}`} />
-                              {!m.err && <div className="absolute inset-0 flex items-center justify-center bg-black/20 text-white"><Loader2 size={22} className="animate-spin" /></div>}
+                              {!m.err && (
+                                <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/20 text-white">
+                                  <Loader2 size={22} className="animate-spin" />
+                                  {/* tempo passato e quanto ci vuole di solito (Kling molto piu' lento di Veo) */}
+                                  <span className="text-xs font-medium text-white/85"><Elapsed className="text-white" /> · di solito {m.anim === 'popup' ? 'circa 2 min' : '3-9 min'}</span>
+                                </div>
+                              )}
                             </>}
                         </div>
                         {m.err && <ErrLine err={m.err} className="pt-3" />}
-                        {m.url && (
-                          <div className="blur-in flex justify-end pt-3">
-                            <a href={m.url} download target="_blank" rel="noopener noreferrer" className="flex h-8 items-center gap-1.5 rounded-full bg-white px-3 text-xs font-medium text-ink ring-1 ring-inset ring-black/10 hover:bg-canvas"><Download size={14} className="translate-y-px" /> Scarica</a>
+                        {/* scelte fatte sotto il video, Scarica a destra: si attiva quando il video e' pronto */}
+                        <div className="flex items-center gap-2 pt-3">
+                          <div className="flex min-w-0 flex-1 flex-wrap gap-2">
+                            {m.picks.map(p => {
+                              const Icon = PICK_ICON[p.icon];
+                              return (
+                                <span key={p.label} className="flex items-center gap-2 rounded-2xl bg-white py-1.5 pl-1.5 pr-3 text-xs font-medium shadow-sm ring-1 ring-black/5">
+                                  {p.src ? <img src={p.src} alt="" className="h-7 w-7 rounded-xl object-cover" /> : <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-brand/10 text-brand"><Icon size={15} /></span>}
+                                  {p.label}
+                                </span>
+                              );
+                            })}
                           </div>
-                        )}
+                          <a href={m.url || undefined} download target="_blank" rel="noopener noreferrer" aria-disabled={!m.url}
+                            className={`flex h-8 shrink-0 items-center gap-1.5 rounded-full bg-white px-3 text-xs font-medium text-ink ring-1 ring-inset ring-black/10 ease-smooth transition-opacity hover:bg-canvas ${m.url ? '' : 'pointer-events-none opacity-40'}`}><Download size={14} className="translate-y-px" /> Scarica</a>
+                        </div>
                       </div>
                     )}
                   </StepSwap>
