@@ -1070,7 +1070,7 @@ function Act({ icon, label, short, tip, narrow, active, disabled, onClick, cr }:
   const tone = active ? 'bg-canvas text-ink' : 'text-ink hover:bg-canvas';
   const btn = narrow
     ? <button onClick={onClick} disabled={disabled} aria-label={label} aria-pressed={active} className={`flex min-w-0 flex-1 flex-col items-center gap-1 rounded-2xl px-1 py-2 text-[11px] font-medium leading-none disabled:opacity-40 ${tone}`}>{icon}<span className="truncate">{short ?? label}</span></button>
-    : <button onClick={onClick} disabled={disabled} aria-pressed={active} className={`flex h-8 items-center gap-1.5 rounded-full px-3 font-medium leading-none disabled:opacity-40 ${tone}`}>{icon} {label}{cr !== undefined && <Cr n={cr} />}</button>;
+    : <button onClick={onClick} disabled={disabled} aria-pressed={active} className={`flex h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3 font-medium leading-none disabled:opacity-40 ${tone}`}>{icon}{label}{cr !== undefined && <Cr n={cr} />}</button>;
   return tip && !narrow ? <Tooltip label={tip}>{btn}</Tooltip> : btn;
 }
 
