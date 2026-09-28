@@ -72,7 +72,7 @@ type Msg =
   | { id: string; role: 'user'; text?: string; image?: string; seen?: string | null; region?: Region; style?: { src: string; author?: string; authorUrl?: string } }
   | { id: string; role: 'ai'; before: string; out: string | null; busy: boolean; reveal: Reveal; err?: string; text: string; req?: EditRequest }
   // video in chat: UN messaggio che si trasforma a ogni scelta (template, arredo, due anteprime, video)
-  | { id: string; role: 'video'; step: 'template' | 'anim' | 'mode' | 'previews' | 'frames' | 'render'; photo: string; anim?: VideoAnim; picks: VideoPick[]; previews?: (string | null)[]; frames?: { token: string; before: string; after: string; src: string; styled?: string }; url?: string; err?: string; job?: string };
+  | { id: string; role: 'video'; step: 'template' | 'anim' | 'mode' | 'previews' | 'frames' | 'render'; photo: string; anim?: VideoAnim; picks: VideoPick[]; previews?: (string | null)[]; frames?: { token: string; before: string; after: string; src: string; styled?: string }; url?: string; err?: string; job?: string; restyle?: { label: string; req: { style?: string; prompt?: string } }; redone?: boolean };
 
 // Macro template video, ognuno con i suoi stili di animazione (card con anteprima in loop)
 type VideoAnim = 'popup' | 'gravity' | 'particles' | 'stopmotion' | 'cantiere' | 'daynight';
@@ -374,16 +374,18 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
     setMsgs(ms => ms.map(m => (m.id === id && m.role === 'video' ? { ...m, ...(typeof p === 'function' ? p(m) : p) } : m)));
   // Stile scelto: dietro le quinte si crea UNA foto arredata nello stile (non si mostra), poi il video parte da quella.
   // Il video va dalla foto com'era a quella nuova (Veo, primo e ultimo fotogramma). Come su GetNearMe: niente proposte.
-  const styleVideo = async (m: VideoMsg, label: string, req: { style?: string; prompt?: string }) => {
+  // redo: "Rifai lo stile" dal passo Prima/Dopo, una volta sola (le scelte restano quelle, si rifa' la foto nel nuovo stile)
+  const styleVideo = async (m: VideoMsg, label: string, req: { style?: string; prompt?: string }, redo = false) => {
     touch();
+    const picks = redo ? m.picks : [...m.picks, { label, icon: 'style' as const }];
     // intanto il passo Prima/Dopo in attesa (prima mostrava "Creo il video" e sembrava saltare l'approvazione)
-    patchV(m.id, { step: 'frames', frames: undefined, picks: [...m.picks, { label, icon: 'style' }], err: undefined });
+    patchV(m.id, { step: 'frames', frames: undefined, picks, err: undefined, restyle: { label, req }, redone: redo });
     const body = { ...(project ? { projectId: project } : {}), ...(kind ? { room: seenLabel(kind) } : {}), ...(m.photo.startsWith('data:') ? { imageBase64: m.photo } : { imageUrl: m.photo }), scene: 'interno', ...(density !== 'normale' ? { density } : {}), ...req, variant: -1, preview: true, ...(sourcePhoto && sourcePhoto !== m.photo ? { reference: sourcePhoto } : {}) };
     const r = await authFetch('/api/platform/photo-edit', { method: 'POST', headers: QUIET, body: JSON.stringify(body) }).catch(() => null);
     const d = r?.ok ? await r.json().catch(() => ({})) as { url?: string } : null;
     if (r?.status === 402) { patchV(m.id, { err: NO_CREDITS }); return; }
     if (!d?.url) { patchV(m.id, { err: 'Non sono riuscito ad arredare la stanza, riprova.' }); return; }
-    await makeVideo({ ...m, picks: [...m.picks, { label, icon: 'style' }] }, m.photo, label, d.url);
+    await makeVideo({ ...m, picks }, m.photo, label, d.url);
   };
   // Video in due fasi (28/09): 1) il server fa Prima (stanza vuota, Nano Banana) e Dopo (foto vera o nel nuovo stile)
   // e la chat li mostra; 2) l'agente approva e parte Veo (la parte cara), poi il montaggio; qui si controlla ogni 6 s.
@@ -684,6 +686,8 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                         {m.frames && (
                           <div className="flex flex-wrap items-center gap-2 pt-3">
                             <button onClick={() => renderVideo(m)} className="flex items-center rounded-full bg-ink pl-4 pr-2 py-2 text-[13px] font-medium text-white shadow-sm ease-smooth transition-colors hover:bg-brand">Crea il video<Cr n={videoCr(m.anim)} dark /></button>
+                            {/* una sola seconda possibilita' sullo stile (poi si torna indietro): costa come una foto */}
+                            {m.restyle && !m.redone && <button onClick={() => styleVideo(m, m.restyle!.label, m.restyle!.req, true)} className="flex items-center rounded-full bg-white py-2 pl-4 pr-2 text-[13px] font-medium text-ink/80 shadow-sm ring-1 ring-inset ring-black/10 ease-smooth transition-colors hover:bg-canvas">Rifai lo stile<Cr n={CREDIT_COST.arreda} /></button>}
                           </div>
                         )}
                         {m.err && !m.frames && (
