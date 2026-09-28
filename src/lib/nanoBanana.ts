@@ -51,7 +51,7 @@ async function toInline(src: string): Promise<{ mime_type: string; data: string 
 }
 
 // Ritorna la foto (base64 JPEG/PNG) o null. userId '' = prova anonima dalla landing.
-export async function nanoBanana(o: { userId: string; image: string; prompt: string; styleRef?: string; extra?: string[]; kind?: string; lite?: boolean }): Promise<string | null> {
+export async function nanoBanana(o: { userId: string; image: string; prompt: string; styleRef?: string; extra?: string[]; kind?: string; lite?: boolean; aspect?: string }): Promise<string | null> {
   const model = o.lite ? LITE : MODEL
   const key = process.env.GEMINI_API_KEY
   if (!key) return null
@@ -63,7 +63,7 @@ export async function nanoBanana(o: { userId: string; image: string; prompt: str
       method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key }, signal: AbortSignal.timeout(120_000),
       body: JSON.stringify({
         contents: [{ parts: [...images.map(inline_data => ({ inline_data })), { text: o.prompt }] }],
-        generationConfig: { responseModalities: ['IMAGE'], imageConfig: { imageSize: '1K' } },
+        generationConfig: { responseModalities: ['IMAGE'], imageConfig: { imageSize: '1K', ...(o.aspect ? { aspectRatio: o.aspect } : {}) } },
       }),
     })
     const d = await r.json() as { candidates?: { content?: { parts?: { inlineData?: { data: string }; inline_data?: { data: string } }[] } }[]; error?: { message?: string } }

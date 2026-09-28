@@ -65,8 +65,9 @@ const negFor = (anim: Anim) => anim === 'gravity' ? NEG.replace('flying objects,
   : NEG
 
 // Stanza vuota della foto (Stop-motion e Particelle, Kling): Nano Banana, come tutte le foto.
-async function emptyRoom(fullUrl: string, logUser: string): Promise<string | null> {
-  return nanoBanana({ userId: logUser, image: fullUrl, prompt: `${EMPTY_PROMPT} Remove every piece of furniture and every object, leave only the bare room. Same camera, framing and perspective as the original photo. Photorealistic, no text.`, kind: 'video_empty' })
+// aspect: stesso formato della foto, se no Nano Banana sceglie il suo e il ritaglio zooma la stanza (28/09)
+async function emptyRoom(fullUrl: string, logUser: string, aspect: string): Promise<string | null> {
+  return nanoBanana({ userId: logUser, image: fullUrl, aspect, prompt: `${EMPTY_PROMPT} Remove every piece of furniture and every object, leave only the bare room. Same camera, framing and perspective as the original photo. Photorealistic, no text.`, kind: 'video_empty' })
 }
 
 // il lavoro di fal torna al client firmato con l'utente: solo chi l'ha avviato puo' finalizzarlo
@@ -125,7 +126,7 @@ export async function startVideo(owner: string, logUser: string, o: { imageUrl: 
       } else {
         // stop-motion / particelle: dalla stanza vuota alla foto arredata
         // stanza vuota (vedi emptyRoom): Kling va da questa alla foto vera
-        const q = await emptyRoom(fullUrl, logUser)
+        const q = await emptyRoom(fullUrl, logUser, landscape ? '16:9' : '9:16')
         const empty = q && await uploadJpeg(await sharp(Buffer.from(q, 'base64')).resize(W, H, { fit: 'cover' }).jpeg({ quality: 95 }).toBuffer(), `${key}-vuota.jpg`)
         if (!empty) return { error: 'ai_failed', status: 502 }
         ids = [(await kling(empty, fullUrl, anim === 'stopmotion' ? GNM_STOPMOTION : GNM_PARTICLES)).request_id]
@@ -151,7 +152,7 @@ export async function startVideo(owner: string, logUser: string, o: { imageUrl: 
     let emptyBuf: Buffer
     if (o.empty) emptyBuf = await toJpeg(await b64Of(o.empty))
     else {
-      const e = await emptyRoom(furnishedUrl, logUser)
+      const e = await emptyRoom(furnishedUrl, logUser, landscape ? '16:9' : '9:16')
       if (!e) return { error: 'ai_failed', status: 502 }
       emptyBuf = await toJpeg(e)
     }
@@ -223,10 +224,11 @@ export async function pollVideo(owner: string, job: string): Promise<VideoResult
     // due clip del cantiere una dopo l'altra (ricodifica leggera, crf 14)
     if (parts.length > 1) await ffmpeg(['-y', '-i', parts[0], '-i', parts[1], '-filter_complex', '[0:v][1:v]concat=n=2:v=1:a=0[v]', '-map', '[v]', '-c:v', 'libx264', '-crf', '14', raw])
     else await rename(parts[0], raw)
-    // Kling e Svuota vanno in avanti (tutta la clip); Popup (-p) e Dall'alto (-g) sono Veo al contrario: taglio a stanza
-    // gia' vuota, prima della dissolvenza di Veo, poi inversione (niente fermo a meta' movimento: si taglia a pezzi spariti)
+    // Kling e Svuota vanno in avanti; Popup (-p) e Dall'alto (-g) sono Veo al contrario, poi invertiti. Clip INTERA:
+    // tagliando prima della dissolvenza il video partiva dalla stanza vuota inventata da Veo (un'altra stanza, 28/09);
+    // intera, la dissolvenza di Veo cade all'inizio tra due stanze vuote e il primo fotogramma e' la vuota vera.
     const forward = /-(f|k|kc)$/.test(name)
-    const cut = kling ? KLING_SECONDS * parts.length : forward ? VEO_SECONDS : cutPoint(await ffmpeg(['-i', raw, '-vf', 'scale=320:180,format=gray', '-f', 'rawvideo', '-']), 320 * 180)
+    const cut = kling ? KLING_SECONDS * parts.length : /-(f|p|g)$/.test(name) ? VEO_SECONDS : cutPoint(await ffmpeg(['-i', raw, '-vf', 'scale=320:180,format=gray', '-f', 'rawvideo', '-']), 320 * 180)
     // Dall'alto un po' piu' veloce (1,2x; a 1,4x le cadute diventavano istantanee)
     const speed = /-(g|p)$/.test(name) ? 1.2 : 1
     const total = cut / speed + HOLD, n = Math.round(total * 30)
