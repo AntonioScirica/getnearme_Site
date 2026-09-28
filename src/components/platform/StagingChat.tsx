@@ -109,8 +109,9 @@ const creditsOf = (req: Partial<EditRequest>, editsDone: number): number => req.
   : isFurnishing({ style: req.style, customPrompt: req.prompt, angle: req.angle, planimetria: req.planimetria, scene: req.scene as 'interno' | undefined, restyle: isRestyle(req.prompt ?? '') }) || !!req.styleRef ? CREDIT_COST.arreda
   : editsDone >= FREE_EDITS ? CREDIT_COST.modifica_extra : CREDIT_COST.modifica;
 function Cr({ n, dark, tight }: { n: number; dark?: boolean; tight?: boolean }) {
-  // icona moneta: i crediti si spendono (Sparkles e' gia' l'icona dell'AI)
-  return <span title={n === 0 ? undefined : `${n} crediti`} className={`${tight ? '' : 'ml-1.5'} inline-flex items-center gap-0.5 rounded-full px-1.5 py-px text-[10px] font-semibold leading-4 ${dark ? 'bg-white/20 text-white' : 'bg-black/[.06] text-muted ease-smooth transition-colors group-hover:bg-white/20 group-hover:text-white'}`}>{n === 0 ? 'gratis' : <><Coins size={10} className="shrink-0" />{n}</>}</span>;
+  // icona moneta: i crediti si spendono (Sparkles e' gia' l'icona dell'AI); gratis: niente pill
+  if (n === 0) return null;
+  return <span title={`${n} crediti`} className={`${tight ? '' : 'ml-1.5'} inline-flex items-center gap-0.5 rounded-full px-1.5 py-px text-[10px] font-semibold leading-4 ${dark ? 'bg-white/20 text-white' : 'bg-black/[.06] text-muted ease-smooth transition-colors group-hover:bg-white/20 group-hover:text-white'}`}><Coins size={10} className="shrink-0" />{n}</span>;
 }
 const uid = () => Math.random().toString(36).slice(2, 10);
 const wait = (ms: number) => new Promise(r => setTimeout(r, ms));
@@ -518,7 +519,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
       const r = e.currentTarget.getBoundingClientRect();
       setDensityAsk(v => (v?.sug.id === x.id ? null : { sug: x, x: r.left + r.width / 2, y: r.top }));
     }}
-      className="group flex shrink-0 items-center whitespace-nowrap rounded-full bg-white pl-3.5 pr-1.5 py-1.5 text-[13px] font-medium text-ink/80 shadow-sm ring-1 ring-inset ring-black/10 ease-smooth transition-colors hover:bg-brand hover:text-white disabled:opacity-40">{x.label}<Cr n={creditsOf(x.req, editsDone)} /></button>
+      className={`group flex shrink-0 items-center whitespace-nowrap rounded-full bg-white py-1.5 ${creditsOf(x.req, editsDone) ? 'pl-3.5 pr-1.5' : 'px-3.5'} text-[13px] font-medium text-ink/80 shadow-sm ring-1 ring-inset ring-black/10 ease-smooth transition-colors hover:bg-brand hover:text-white disabled:opacity-40`}>{x.label}<Cr n={creditsOf(x.req, editsDone)} /></button>
   ))];
 
   // proporzioni vere delle foto: il risultato segue la foto (verticale resta verticale)
@@ -675,7 +676,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                         {m.frames && (
                           <div className="flex flex-wrap items-center gap-2 pt-3">
                             <button onClick={() => renderVideo(m)} className="flex items-center rounded-full bg-ink pl-4 pr-2 py-2 text-[13px] font-medium text-white shadow-sm ease-smooth transition-colors hover:bg-brand">Crea il video<Cr n={videoCr(m.anim)} dark /></button>
-                            <button onClick={() => { const f = m.frames!; makeVideo({ ...m, picks: m.picks.slice(0, -1) }, f.src, m.picks[m.picks.length - 1]?.label ?? 'Stanza com’è', f.styled); }} className="rounded-full bg-white pl-4 pr-2 py-2 text-[13px] font-medium text-ink/80 shadow-sm ring-1 ring-inset ring-black/10 ease-smooth transition-colors hover:bg-canvas">Rifai la stanza vuota<Cr n={0} /></button>
+                            <button onClick={() => { const f = m.frames!; makeVideo({ ...m, picks: m.picks.slice(0, -1) }, f.src, m.picks[m.picks.length - 1]?.label ?? 'Stanza com’è', f.styled); }} className="rounded-full bg-white px-4 py-2 text-[13px] font-medium text-ink/80 shadow-sm ring-1 ring-inset ring-black/10 ease-smooth transition-colors hover:bg-canvas">Rifai la stanza vuota</button>
                           </div>
                         )}
                         {m.err && !m.frames && (
