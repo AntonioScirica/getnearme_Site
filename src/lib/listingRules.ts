@@ -10,6 +10,7 @@ export type Fields = {
   piano: string; classe_energetica: string; riscaldamento: string; spese_condominiali: string; anno_costruzione: string
   stato: string; box_posto_auto: string; esposizione: string; ascensore: string; balcone_terrazzo: string
   arredato: string; disponibilita: string; zona: string; contratto: string; planimetria: boolean; foto: number
+  no_titolo?: boolean // portale che non fa scrivere un titolo all'agente (idealista): il titolo non si valuta
 }
 export const EMPTY_FIELDS: Fields = {
   titolo: '', descrizione: '', prezzo: '', mq: '', locali: '', camere: '', bagni: '', piano: '', classe_energetica: '', riscaldamento: '',
@@ -46,7 +47,8 @@ export function rulesAnalysis(f: Fields) {
   // titolo
   const t = f.titolo.trim()
   let titolo = 10
-  if (!t) { titolo = 0; p('titolo', 'alta', 'L\'annuncio non ha un titolo tuo.', 'Il titolo e\' la prima riga che si legge in lista: senza, l\'annuncio non si distingue.', 'Scrivi un titolo con zona, tipologia e un punto di forza.') }
+  if (f.no_titolo) titolo = 10
+  else if (!t) { titolo = 0; p('titolo', 'alta', 'L\'annuncio non ha un titolo tuo.', 'Il titolo e\' la prima riga che si legge in lista: senza, l\'annuncio non si distingue.', 'Scrivi un titolo con zona, tipologia e un punto di forza.') }
   else {
     if (t.length > 60) { titolo -= 3; p('titolo', 'media', `Il titolo e\' lungo ${t.length} caratteri: il portale lo taglia a 60.`, 'La parte finale, spesso il punto di forza, non si vede.', 'Accorcialo sotto i 60 caratteri, zona per prima.') }
     if (VUOTI.test(t)) { titolo -= 3; p('titolo', 'bassa', `Il titolo usa aggettivi vuoti ("${t.match(VUOTI)![0]}").`, 'Non dicono niente di concreto e sembrano pubblicità.', 'Sostituiscili con un punto di forza reale: terrazzo, box, ultimo piano, metro vicina.') }
@@ -81,7 +83,7 @@ export function rulesAnalysis(f: Fields) {
     dati: { punti: datiPunti, punti_dopo: 25, nota: mancanti.length ? `Mancano: ${mancanti.map(m => m[1].toLowerCase()).join(', ')}` : 'Tutti i dati principali', limite: '' },
     descrizione: { punti: Math.max(0, descr), punti_dopo: 20, nota: `${n} parole`, limite: '' },
     coerenza: { punti: Math.max(0, coer), punti_dopo: 15, nota: CONTATTI.test(d) ? 'Contatti nel testo' : 'Dati coerenti', limite: '' },
-    titolo: { punti: Math.max(0, titolo), punti_dopo: 10, nota: t ? `${t.length} caratteri` : 'Assente', limite: '' },
+    titolo: { punti: Math.max(0, titolo), punti_dopo: 10, nota: f.no_titolo ? 'Il portale lo crea da solo' : t ? `${t.length} caratteri` : 'Assente', limite: '' },
   }
   const ordine = { alta: 0, media: 1, bassa: 2 }
   const r = withScores({ criteri })

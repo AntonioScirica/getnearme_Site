@@ -49,6 +49,46 @@ export function immobiliare(html: string): { fields: Partial<Fields>; photos: st
   }
 }
 
+// idealista.it: niente dati JSON completi, ma HTML ordinato. La descrizione intera c'e' anche se a video e' troncata
+// ("Leggi il commento completo" la mostra e basta); le caratteristiche sono una lista, una per riga.
+// Il titolo lo genera il portale (tipologia + via): l'agente non ne scrive uno, quindi resta vuoto.
+export function idealista(html: string): { fields: Partial<Fields>; photos: string[] } | null {
+  const descr = html.match(/<div class="adCommentsLanguage[^"]*"[^>]*>\s*<p>([\s\S]*?)<\/p>/)?.[1]
+  if (!descr) return null
+  const txt = (h: string) => h.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&#39;|&apos;/g, "'").replace(/[ \t]+/g, ' ').trim()
+  const feats = [...html.matchAll(/<div class="details-property_features">([\s\S]*?)<\/div>/g)].flatMap(m => [...m[1].matchAll(/<li[^>]*>([\s\S]*?)<\/li>/g)].map(x => txt(x[1])))
+  const f = (re: RegExp) => feats.find(x => re.test(x)) ?? ''
+  const n = (re: RegExp) => f(re).match(/\d+/)?.[0] ?? ''
+  const seen = new Set<string>()
+  const photos = [...html.matchAll(/https:\/\/img\d?\.idealista\.it\/blur\/WEB_DETAIL[^"'\s]*?\/(\d+)\.(?:jpg|webp)/g)]
+    .filter(m => !seen.has(m[1]) && seen.add(m[1])).map(m => m[0])
+  return {
+    photos,
+    fields: {
+      titolo: '', no_titolo: true, descrizione: txt(descr),
+      prezzo: (html.match(/class="info-data-price"[^>]*>\s*<span[^>]*>([^<]+)/)?.[1] ?? '').replace(/\D/g, ''),
+      mq: n(/m²/), locali: n(/local/i), camere: n(/camer/i), bagni: n(/bagn/i), piano: f(/piano|terra|attico/i),
+      // la lettera e' un'icona (icon-energy-c-N) che non traduciamo con certezza: basta sapere che c'e', col consumo
+      classe_energetica: /icon-energy-c-/.test(html) ? `indicata${f(/classe energetica/i).match(/\(([^)]*kWh[^)]*)\)/)?.[1] ? ` (${f(/classe energetica/i).match(/\(([^)]*kWh[^)]*)\)/)![1]})` : ''}` : '',
+      riscaldamento: f(/riscaldamento/i).replace(/riscaldamento\s*/i, ''), spese_condominiali: f(/spese|condomin/i),
+      anno_costruzione: f(/costruit/i).match(/\d{4}/)?.[0] ?? '', stato: f(/stato|ristrutturat|nuova costruzione/i),
+      box_posto_auto: f(/box|garage|posto auto/i), esposizione: f(/orientamento|esposizione/i).replace(/orientamento|esposizione/i, '').trim(),
+      ascensore: /con ascensore/i.test(feats.join(' ')) ? 'si' : '', balcone_terrazzo: feats.filter(x => /balcon|terrazz/i.test(x)).join(', '),
+      arredato: f(/arredat/i), disponibilita: '', zona: txt(html.match(/class="main-info__title-minor">([^<]+)/)?.[1] ?? ''),
+      contratto: /in affitto/i.test(html.match(/<span class="main-info__title-main">([^<]+)/)?.[1] ?? '') ? 'affitto' : 'vendita',
+      planimetria: /planimetri/i.test(html.match(/"multimedias"[\s\S]{0,20000}/)?.[0] ?? ''),
+    },
+  }
+}
+
+// descrizione senza AI: la piu' lunga tra dati strutturati (JSON-LD "description"), meta tag e il blocco di testo
+// piu' lungo della pagina (la descrizione di un annuncio e' quasi sempre il paragrafo piu' lungo)
+function longestDescription(l: ListingIn): string {
+  const ld = [...(l.raw?.json ?? '').matchAll(/"description"\s*:\s*"((?:[^"\\]|\\.){80,})"/g)].map(m => { try { return JSON.parse(`"${m[1]}"`) as string } catch { return '' } })
+  const blocks = (l.raw?.text ?? '').split(/\n\s*\n/).map(b => b.trim()).filter(b => b.length > 200 && !/cookie|privacy|consenso/i.test(b))
+  return [...ld, ...blocks, s(l.raw?.meta?.['og:description']), s(l.raw?.meta?.description)].sort((a, b) => b.length - a.length)[0] ?? ''
+}
+
 // ripiego: campi dell'estensione (content script dei portali noti) + regex sul testo della pagina
 function fallback(l: ListingIn): Fields {
   const pi = (l.propertyInfo ?? {}) as Record<string, unknown>
@@ -57,7 +97,7 @@ function fallback(l: ListingIn): Fields {
   return {
     ...EMPTY_FIELDS,
     titolo: s(pi.title) || s(l.title) || s(l.raw?.meta?.['og:title']),
-    descrizione: s(pi.description) || s(l.raw?.meta?.['og:description']) || s(l.raw?.meta?.description),
+    descrizione: s(pi.description) || longestDescription(l),
     prezzo: num(s(pi.price)) || num(rx(/€\s*([\d.,]+)/)),
     mq: num(s(pi.surface)) || rx(/(\d{2,4})\s*(?:m²|m2|mq)\b/i),
     locali: num(s(pi.rooms)) || rx(/(\d+)\s*locali/i),
@@ -78,8 +118,8 @@ function fallback(l: ListingIn): Fields {
 }
 
 export async function extractFields(l: ListingIn, userId: string): Promise<Fields> {
-  // campi gia' letti con precisione dal server (pageFetch: immobiliare), arrivati in propertyInfo
-  if (l.propertyInfo?._fonte === 'immobiliare') return { ...EMPTY_FIELDS, ...(l.propertyInfo as Partial<Fields>), foto: (l.photos ?? []).length }
+  // campi gia' letti con precisione dal server (pageFetch: immobiliare, idealista), arrivati in propertyInfo
+  if (l.propertyInfo?._fonte === 'immobiliare' || l.propertyInfo?._fonte === 'idealista') return { ...EMPTY_FIELDS, ...(l.propertyInfo as Partial<Fields>), foto: (l.photos ?? []).length }
   const base = fallback(l)
   const foto = (l.photos ?? []).length
   if (!l.raw?.text && !l.raw?.json) return { ...base, foto }
