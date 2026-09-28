@@ -70,7 +70,7 @@ type Msg =
   | { id: string; role: 'user'; text?: string; image?: string; seen?: string | null; region?: Region; style?: { src: string; author?: string; authorUrl?: string } }
   | { id: string; role: 'ai'; before: string; out: string | null; busy: boolean; reveal: Reveal; err?: string; text: string; req?: EditRequest }
   // video in chat: UN messaggio che si trasforma a ogni scelta (template, arredo, due anteprime, video)
-  | { id: string; role: 'video'; step: 'template' | 'anim' | 'mode' | 'previews' | 'render'; photo: string; anim?: VideoAnim; picks: VideoPick[]; previews?: (string | null)[]; url?: string; err?: string; job?: string };
+  | { id: string; role: 'video'; step: 'template' | 'anim' | 'mode' | 'previews' | 'frames' | 'render'; photo: string; anim?: VideoAnim; picks: VideoPick[]; previews?: (string | null)[]; frames?: { token: string; before: string; after: string; src: string; styled?: string }; url?: string; err?: string; job?: string };
 
 // Macro template video, ognuno con i suoi stili di animazione (card con anteprima in loop)
 type VideoAnim = 'popup' | 'gravity' | 'particles' | 'stopmotion' | 'cantiere' | 'daynight';
@@ -83,8 +83,6 @@ const VIDEO_TEMPLATES: (VideoCard & { anims: (VideoCard & { id: VideoAnim })[] }
   { id: 'prima-dopo', label: 'Prima e dopo', desc: 'Dalla stanza vuota a quella arredata', sample: VIDEO_SAMPLES.popup, anims: [
     { id: 'popup', label: 'Popup', desc: 'I mobili spuntano uno alla volta', sample: VIDEO_SAMPLES.popup },
     { id: 'gravity', label: 'Dall’alto', desc: 'I mobili cadono dall’alto e si posano', sample: VIDEO_SAMPLES.gravity },
-    { id: 'particles', label: 'Particelle', desc: 'I mobili si compongono da una polvere dorata', sample: VIDEO_SAMPLES.particles },
-    { id: 'stopmotion', label: 'Stop-motion', desc: 'I mobili compaiono a scatti, uno per volta', sample: VIDEO_SAMPLES.stopmotion },
   ] },
   // un'animazione sola: dal template si passa subito alla scelta della stanza
   { id: 'cantiere', label: 'Cantiere', desc: 'Dal cantiere alla casa finita', sample: VIDEO_SAMPLES.cantiere, anims: [
@@ -341,16 +339,38 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
     if (!d?.url) { patchV(m.id, { err: 'Video non riuscito, riprova.' }); return; }
     await makeVideo({ ...m, picks: [...m.picks, { label, icon: 'style' }] }, m.photo, label, d.url);
   };
-  // Video: il server svuota la foto, fa partire Veo e poi monta; qui si controlla ogni 6 s (circa 2 minuti in tutto)
-  // styled: foto nel nuovo stile (fatta dietro le quinte): il video va dalla foto com'era a questa
+  // Video in due fasi (28/09): 1) il server fa Prima (stanza vuota, Nano Banana) e Dopo (foto vera o nel nuovo stile)
+  // e la chat li mostra; 2) l'agente approva e parte Veo (la parte cara), poi il montaggio; qui si controlla ogni 6 s.
+  // styled: foto nel nuovo stile (fatta dietro le quinte): il Dopo e' quella
   const makeVideo = async (m: VideoMsg, photo: string, pick: string, styled?: string) => {
     touch();
+    const picks: VideoPick[] = styled ? m.picks : [...m.picks, pick === 'Stanza com’è' ? { label: pick, icon: 'keep' } : { label: pick, icon: 'photo', src: photo }];
+    // Cantiere e Giorno/notte (Kling): niente Prima/Dopo da approvare, parte subito
+    if (m.anim === 'cantiere' || m.anim === 'daynight') {
+      patchV(m.id, { step: 'render', photo, picks, err: undefined });
+      const res = await authFetch('/api/platform/video', { method: 'POST', headers: QUIET, body: JSON.stringify({ ...(photo.startsWith('data:') ? { imageBase64: photo } : { imageUrl: photo }), anim: m.anim, ...(project ? { projectId: project } : {}) }) }).catch(() => null);
+      const d = res ? await res.json().catch(() => ({})) : {};
+      if (!d.job) { patchV(m.id, { err: d.error === 'no_credits' ? NO_CREDITS : 'Video non riuscito, riprova.' }); return; }
+      patchV(m.id, { job: d.job });
+      await pollVideo(m.id, d.job);
+      return;
+    }
     // foto nel nuovo stile: resta dietro le quinte (la scelta "Moderno" e' gia' tra le scelte, niente miniatura)
-    patchV(m.id, { step: 'render', ...(styled ? {} : { photo }), picks: styled ? m.picks : [...m.picks, pick === 'Stanza com’è' ? { label: pick, icon: 'keep' } : { label: pick, icon: 'photo', src: photo }], err: undefined });
-    const fail = 'Video non riuscito, riprova.';
-    const res = await authFetch('/api/platform/video', { method: 'POST', headers: QUIET, body: JSON.stringify({ ...(photo.startsWith('data:') ? { imageBase64: photo } : { imageUrl: photo }), ...(styled ? { styled } : {}), anim: m.anim, ...(project ? { projectId: project } : {}) }) }).catch(() => null);
+    patchV(m.id, { step: 'frames', frames: undefined, ...(styled ? {} : { photo }), picks, err: undefined });
+    const res = await authFetch('/api/platform/video', { method: 'POST', headers: QUIET, body: JSON.stringify({ phase: 'frames', ...(photo.startsWith('data:') ? { imageBase64: photo } : { imageUrl: photo }), ...(styled ? { styled } : {}), anim: m.anim, ...(project ? { projectId: project } : {}) }) }).catch(() => null);
     const d = res ? await res.json().catch(() => ({})) : {};
-    if (!d.job) { patchV(m.id, { err: d.error === 'no_credits' ? NO_CREDITS : d.error === 'timeout' ? 'La GPU si sta avviando, riprova tra un minuto.' : d.error === 'nothing_to_animate' ? 'Nella foto non ci sono mobili da animare.' : fail }); return; }
+    if (!d.frames) { patchV(m.id, { err: d.error === 'no_credits' ? NO_CREDITS : d.error === 'timeout' ? 'La GPU si sta avviando, riprova tra un minuto.' : 'Non sono riuscito a preparare la stanza vuota, riprova.' }); return; }
+    patchV(m.id, { frames: { token: d.frames, before: d.before, after: d.after, src: photo, styled } });
+  };
+  // fase 2: Veo e montaggio
+  const renderVideo = async (m: VideoMsg) => {
+    if (!m.frames) return;
+    touch();
+    patchV(m.id, { step: 'render', err: undefined });
+    const fail = 'Video non riuscito, riprova.';
+    const res = await authFetch('/api/platform/video', { method: 'POST', headers: QUIET, body: JSON.stringify({ phase: 'render', frames: m.frames.token, anim: m.anim }) }).catch(() => null);
+    const d = res ? await res.json().catch(() => ({})) : {};
+    if (!d.job) { patchV(m.id, { err: d.error === 'no_credits' ? NO_CREDITS : d.error === 'nothing_to_animate' ? 'Nella foto non ci sono mobili da animare.' : fail }); return; }
     patchV(m.id, { job: d.job });
     await pollVideo(m.id, d.job);
   };
@@ -533,10 +553,10 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                   <div className="flex w-full items-center gap-1 px-2 pb-4 text-sm">
                     {/* indietro di un passo (non a video partito) */}
                     {m.step !== 'template' && m.step !== 'render' && (
-                      <button aria-label="Indietro" onClick={() => patchV(m.id, m.step === 'anim' ? { step: 'template', picks: [] } : m.step === 'mode' && (m.anim === 'cantiere' || m.anim === 'daynight') ? { step: 'template', anim: undefined, picks: [] } : m.step === 'mode' ? { step: 'anim', anim: undefined, picks: m.picks.slice(0, 1) } : { step: 'mode', picks: m.picks.slice(0, 2), previews: undefined })}
+                      <button aria-label="Indietro" onClick={() => patchV(m.id, m.step === 'anim' ? { step: 'template', picks: [] } : m.step === 'mode' && (m.anim === 'cantiere' || m.anim === 'daynight') ? { step: 'template', anim: undefined, picks: [] } : m.step === 'mode' ? { step: 'anim', anim: undefined, picks: m.picks.slice(0, 1) } : { step: 'mode', picks: m.picks.slice(0, m.anim === 'cantiere' || m.anim === 'daynight' ? 1 : 2), previews: undefined, frames: undefined, err: undefined })}
                         className="-ml-1.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-muted ease-smooth transition-colors hover:bg-black/5 hover:text-ink"><ChevronLeft size={18} /></button>
                     )}
-                    <span className="font-medium">{m.step === 'template' ? 'Che video vuoi creare?' : m.step === 'anim' ? 'Con quale animazione?' : m.step === 'mode' ? (emptyFrom && emptyFrom === m.photo ? 'In che stile la arredo?' : 'Tengo i mobili che ci sono o arredo in un nuovo stile?') : m.step === 'previews' ? (m.previews?.some(p => !p) ? 'Preparo due proposte…' : 'Scegli quella per il video') : m.url ? 'Ecco il video' : m.err ? '' : (m.anim === 'popup' || m.anim === 'gravity' || m.anim === 'particles') ? 'Creo il video, circa 2 minuti' : 'Creo il video, qualche minuto'}</span>
+                    <span className="font-medium">{m.step === 'template' ? 'Che video vuoi creare?' : m.step === 'anim' ? 'Con quale animazione?' : m.step === 'mode' ? (emptyFrom && emptyFrom === m.photo ? 'In che stile la arredo?' : 'Tengo i mobili che ci sono o arredo in un nuovo stile?') : m.step === 'previews' ? (m.previews?.some(p => !p) ? 'Preparo due proposte…' : 'Scegli quella per il video') : m.step === 'frames' ? (m.err ? '' : m.frames ? 'Ecco prima e dopo. Creo il video?' : 'Preparo prima e dopo…') : m.url ? 'Ecco il video' : m.err ? '' : (m.anim === 'popup' || m.anim === 'gravity') ? 'Creo il video, circa 2 minuti' : 'Creo il video, qualche minuto'}</span>
                     {/* annulla: via il messaggio del video (e il "Crea un video" prima), si torna alle foto; non a video mandato */}
                     {m.step !== 'render' && (
                       <button onClick={() => setMsgs(ms => { const k = ms.findIndex(x => x.id === m.id); return ms.filter((x, n) => n !== k && !(n === k - 1 && x.role === 'user' && x.text === 'Crea un video')); })}
@@ -576,6 +596,34 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                           className="mt-3 h-12 w-full rounded-full bg-white px-5 text-sm outline-none ring-1 ring-inset ring-black/10 placeholder:text-muted/60 focus:ring-brand" />
                       </div>
                     )}
+                    {m.step === 'frames' && (
+                      <div className="mx-auto" style={{ maxWidth: (ratios[m.photo] ?? 1.5) >= 1 ? 720 : 480 }}>
+                        <div className="grid grid-cols-2 gap-2">
+                          {(['before', 'after'] as const).map(k => (
+                            <div key={k} className="relative overflow-hidden rounded-[20px] bg-white" style={{ aspectRatio: (ratios[m.photo] ?? 1.5) >= 1 ? 16 / 9 : 9 / 16 }}>
+                              {m.frames
+                                ? <img src={m.frames[k]} alt="" className="blur-in absolute inset-0 h-full w-full object-cover" />
+                                : <>
+                                  <img src={m.photo} alt="" className={`absolute inset-0 h-full w-full scale-105 object-cover ${m.err ? 'opacity-40' : 'blur-md'}`} />
+                                  {!m.err && k === 'before' && <div className="absolute inset-0 flex items-center justify-center bg-black/20 text-white"><Loader2 size={22} className="animate-spin" /></div>}
+                                </>}
+                              <span className="absolute left-2 top-2 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-semibold text-ink shadow-sm">{k === 'before' ? 'Prima' : 'Dopo'}</span>
+                            </div>
+                          ))}
+                        </div>
+                        {m.err && <ErrLine err={m.err} className="pt-3" />}
+                        {/* approvazione: Veo (la parte cara) parte solo da qui; la stanza vuota si puo' rifare (costa come una foto) */}
+                        {m.frames && (
+                          <div className="flex flex-wrap items-center gap-2 pt-3">
+                            <button onClick={() => renderVideo(m)} className="rounded-full bg-ink px-4 py-2 text-[13px] font-medium text-white shadow-sm ease-smooth transition-colors hover:bg-brand">Crea il video</button>
+                            <button onClick={() => { const f = m.frames!; makeVideo({ ...m, picks: m.picks.slice(0, -1) }, f.src, m.picks[m.picks.length - 1]?.label ?? 'Stanza com’è', f.styled); }} className="rounded-full bg-white px-4 py-2 text-[13px] font-medium text-ink/80 shadow-sm ring-1 ring-inset ring-black/10 ease-smooth transition-colors hover:bg-canvas">Rifai la stanza vuota</button>
+                          </div>
+                        )}
+                        {m.err && !m.frames && (
+                          <div className="pt-3"><button onClick={() => patchV(m.id, { step: 'mode', picks: m.picks.slice(0, 2), err: undefined })} className="rounded-full bg-white px-4 py-2 text-[13px] font-medium text-ink/80 shadow-sm ring-1 ring-inset ring-black/10 hover:bg-canvas">Riprova</button></div>
+                        )}
+                      </div>
+                    )}
                     {m.step === 'render' && (
                       <div className="mx-auto" style={{ maxWidth: (ratios[m.photo] ?? 1.5) >= 1 ? 720 : 340 }}>
                         <div className="relative overflow-hidden rounded-[20px] bg-white" style={{ aspectRatio: (ratios[m.photo] ?? 1.5) >= 1 ? 16 / 9 : 9 / 16 }}>
@@ -587,7 +635,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/20 text-white">
                                   <Loader2 size={22} className="animate-spin" />
                                   {/* tempo passato e quanto ci vuole di solito (Kling molto piu' lento di Veo) */}
-                                  <span className="text-xs font-medium text-white/85"><Elapsed className="text-white" /> · di solito {(m.anim === 'popup' || m.anim === 'gravity' || m.anim === 'particles') ? 'circa 2 min' : '3-9 min'}</span>
+                                  <span className="text-xs font-medium text-white/85"><Elapsed className="text-white" /> · di solito {(m.anim === 'popup' || m.anim === 'gravity') ? 'circa 2 min' : '3-9 min'}</span>
                                 </div>
                               )}
                             </>}

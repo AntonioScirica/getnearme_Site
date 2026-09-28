@@ -105,11 +105,11 @@ export const parseAnim = (a: unknown): Anim => (['gravity', 'particles', 'stopmo
 
 // empty = stanza gia' svuotata (prova "Svuota" della landing): niente Nano Banana, e il video va IN AVANTI:
 // i mobili della foto originale spariscono uno alla volta e resta la stanza vuota.
-export async function startVideo(owner: string, logUser: string, o: { imageUrl: string; imageBase64: string; projectId?: string; anim: Anim; empty?: string; styled?: string }): Promise<VideoResult> {
+export async function startVideo(owner: string, logUser: string, o: { imageUrl: string; imageBase64: string; projectId?: string; anim: Anim; empty?: string; styled?: string; framesOnly?: boolean }): Promise<VideoResult & FramesResult> {
   const { imageUrl, imageBase64, anim } = o
   const pid = o.projectId ?? '' // gia' validato dalla rotta
   if (AI_MOCK) { await mockDelay(2000); return { job: 'mock' } }
-  if (!process.env.FAL_API_KEY || !process.env.GEMINI_API_KEY) return { error: 'not_configured', status: 503 } // niente piu' GPU nostra: Nano Banana + fal
+  if (!process.env.FAL_API_KEY || !process.env.GEMINI_API_KEY) return { error: 'not_configured', status: 503 } // Nano Banana + fal
 
   try {
     // 1. formato dalla foto, ritaglio centrale
@@ -159,23 +159,69 @@ export async function startVideo(owner: string, logUser: string, o: { imageUrl: 
       return { job: `${id}.${kname.replace('/', '~')}.${sign(owner, `${id}.${kname}`)}` }
     }
 
-    // Popup e Dall'alto: la stanza vuota la fa Nano Banana dalla foto finale (stesse pareti, stessa inquadratura).
-    // - stessi mobili: la foto finale e' quella dell'agente;
-    // - stile: la chat manda la foto nel nuovo stile (o.styled, fatta da photo-edit), la vuota viene da quella.
-    // Poi Veo: Dall'alto in avanti (vuota -> foto), Popup al contrario (foto -> vuota, invertito al montaggio).
-    // Svuota (o.empty, landing) resta su Veo Lite in avanti, dalla foto alla vuota gia' pronta.
+    // Popup e Dall'alto: due fasi. prepareFrames fa e salva Prima (stanza vuota) e Dopo (foto vera o nel nuovo stile),
+    // la chat le mostra e l'agente approva; renderVideo fa partire Veo. Qui (landing, Svuota) le due fasi di seguito.
+    const f = await prepareFrames(owner, logUser, { name, full, landscape, styled: o.styled, empty: o.empty })
+    if (!f.frames || o.framesOnly) return f
+    return renderVideo(owner, logUser, f.frames, anim, !!o.empty)
+  } catch (e) {
+    console.error('video start', e)
+    return { error: 'ai_failed', status: 502 }
+  }
+}
+
+
+export type FramesResult = { frames?: string; before?: string; after?: string; status?: number | 'working'; error?: string }
+const frameSig = (owner: string, name: string) => sign(owner, `frames.${name}`)
+const framesToken = (owner: string, name: string) => `${name.replace('/', '~')}.${frameSig(owner, name)}`
+export const parseFrames = (owner: string, token: string): string | null => {
+  const [tilde, sig] = token.split('.')
+  const name = (tilde ?? '').replace('~', '/')
+  if (!/^(casa-[\w-]{1,64}\/)?\d+-[a-z0-9]+(-f|-g|-p|-d)$/.test(name) || !sig || sig.length !== 22 || !timingSafeEqual(Buffer.from(sig), Buffer.from(frameSig(owner, name)))) return null
+  return name
+}
+
+// Fase 1: Prima e Dopo. Dopo = foto vera (o nel nuovo stile, fatta da photo-edit); Prima = Dopo svuotata da Nano Banana
+// (stesse pareti, stessa inquadratura). Salvate su R2 accanto al lavoro (-finale.jpg, -vuota.jpg); il token firmato
+// lega il nome all'utente. Con Svuota (landing) la vuota arriva gia' fatta. Niente Veo qui: l'agente prima approva.
+export async function prepareFrames(owner: string, logUser: string, o: { name: string; full: Buffer; landscape: boolean; styled?: string; empty?: string }): Promise<FramesResult> {
+  const { name, landscape } = o
+  const [W, H] = landscape ? [1280, 720] : [720, 1280]
+  const key = `videos/${owner}/${name}`
+  try {
     const toJpeg = async (b64: string) => sharp(Buffer.from(b64, 'base64')).rotate().resize(W, H, { fit: 'cover' }).jpeg({ quality: 95 }).toBuffer()
     const b64Of = async (src: string) => (src.startsWith('data:') ? src.split(',').pop()! : Buffer.from(await (await fetch(src, { signal: AbortSignal.timeout(20_000) })).arrayBuffer()).toString('base64'))
-    const furnished = o.styled ? await toJpeg(await b64Of(o.styled)) : full
-    const furnishedUrl = o.styled ? await uploadJpeg(furnished, `${key}-nuova.jpg`) : fullUrl
+    const furnished = o.styled ? await toJpeg(await b64Of(o.styled)) : o.full
+    const after = await uploadJpeg(furnished, `${key}-finale.jpg`)
     let emptyBuf: Buffer
     if (o.empty) emptyBuf = await toJpeg(await b64Of(o.empty))
     else {
-      const e = await emptyRoom(furnishedUrl, logUser, landscape ? '16:9' : '9:16')
+      const e = await emptyRoom(after, logUser, landscape ? '16:9' : '9:16')
       if (!e) return { error: 'ai_failed', status: 502 }
       emptyBuf = await toJpeg(e)
     }
-    const emptyUrl = await uploadJpeg(emptyBuf, `${key}-vuota.jpg`)
+    const before = await uploadJpeg(emptyBuf, `${key}-vuota.jpg`)
+    return { frames: framesToken(owner, name), before, after }
+  } catch (e) {
+    console.error('video frames', e)
+    return { error: 'ai_failed', status: 502 }
+  }
+}
+
+// Fase 2: elenco dei pezzi (Sonnet) e Veo. Svuota (fromEmpty, landing): Lite in avanti dalla foto alla vuota.
+// Dall'alto: in avanti dalla vuota alla foto, pezzi grandi prima. Popup e Particelle: al contrario dalla foto
+// alla vuota, oggetti piccoli prima (invertito: mobili prima, poi gli oggetti sopra).
+export async function renderVideo(owner: string, logUser: string, frames: string, anim: Anim, fromEmpty = false): Promise<VideoResult> {
+  const name = parseFrames(owner, frames)
+  if (!name) return { error: 'bad_request', status: 400 }
+  if (!process.env.FAL_API_KEY || !process.env.ANTHROPIC_API_KEY) return { error: 'not_configured', status: 503 }
+  try {
+    const key = `videos/${owner}/${name}`
+    const get = async (suffix: string) => Buffer.from(await (await fetch(`${process.env.R2_PUBLIC_URL}/${key}-${suffix}.jpg`, { signal: AbortSignal.timeout(20_000) })).arrayBuffer())
+    const [furnished, emptyBuf] = await Promise.all([get('finale'), get('vuota')])
+    const { width = 0, height = 0 } = await sharp(furnished).metadata()
+    const landscape = width >= height
+    const furnishedUrl = `${process.env.R2_PUBLIC_URL}/${key}-finale.jpg`, emptyUrl = `${process.env.R2_PUBLIC_URL}/${key}-vuota.jpg`
     // pezzi che ci sono nella foto arredata e non nella vuota: nomi semplici, quantita' esatte
     const t1 = Date.now()
     const msg = await new Anthropic().messages.create({
@@ -192,30 +238,23 @@ export async function startVideo(owner: string, logUser: string, o: { imageUrl: 
     const items = ((JSON.parse(txt.slice(txt.indexOf('{'), txt.lastIndexOf('}') + 1)) as { items?: string[] }).items ?? []).filter(x => typeof x === 'string')
     if (!items.length) return { error: 'nothing_to_animate', status: 422 }
 
-    // 4. Veo, 8 s. Svuota: Lite in avanti dalla foto alla vuota (ricetta del 27/09).
-    // Dall'alto: in avanti dalla vuota alla foto, pezzi grandi prima. Popup e Particelle: al contrario dalla foto
-    // alla vuota, oggetti piccoli prima (invertito: mobili prima, poi gli oggetti sopra).
     const big = items.join(', then '), small = [...items].reverse().join(', then ')
-    const forward = o.empty ? false : anim === 'gravity'
+    const forward = fromEmpty ? false : anim === 'gravity'
     const [first, last] = forward ? [emptyUrl, furnishedUrl] : [furnishedUrl, emptyUrl]
-    const text = o.empty ? prompt(small, anim) : anim === 'gravity' ? GRAVITY_PROMPT(big) : anim === 'particles' ? PARTICLES_PROMPT(small) : POPUP_PROMPT(small)
-    const negative = o.empty ? negFor(anim) : anim === 'gravity' ? NEG_VEO : anim === 'particles' ? NEG_PARTICLES : NEG_REVERSE
-    // la foto vera va a fine video (GET): salvata accanto al lavoro
-    await uploadJpeg(furnished, `${key}-finale.jpg`)
-    const submit = (seconds: number) => fal(o.empty ? `${FAL}/lite/first-last-frame-to-video` : VEO_FLF, {
+    const text = fromEmpty ? prompt(small, anim) : anim === 'gravity' ? GRAVITY_PROMPT(big) : anim === 'particles' ? PARTICLES_PROMPT(small) : POPUP_PROMPT(small)
+    const negative = fromEmpty ? negFor(anim) : anim === 'gravity' ? NEG_VEO : anim === 'particles' ? NEG_PARTICLES : NEG_REVERSE
+    const q = await fal(fromEmpty ? `${FAL}/lite/first-last-frame-to-video` : VEO_FLF, {
       first_frame_url: first, last_frame_url: last, prompt: text, negative_prompt: negative,
-      duration: `${seconds}s`, aspect_ratio: landscape ? '16:9' : '9:16', resolution: '720p', generate_audio: false, seed: Math.floor(Math.random() * 1_000_000),
+      duration: `${VEO_SECONDS}s`, aspect_ratio: landscape ? '16:9' : '9:16', resolution: '720p', generate_audio: false, seed: Math.floor(Math.random() * 1_000_000),
     })
-    const q = await submit(VEO_SECONDS)
     if (!q.request_id) { console.error('video fal submit', q); return { error: 'ai_failed', status: 502 } }
     // il nome va nel lavoro firmato: a fine montaggio il video si salva accanto alla sua foto (copertina in Galleria)
     return { job: `${q.request_id}.${name.replace('/', '~')}.${sign(owner, `${q.request_id}.${name}`)}` }
   } catch (e) {
-    console.error('video start', e)
+    console.error('video render', e)
     return { error: 'ai_failed', status: 502 }
   }
 }
-
 
 // url pronto; fresh = montato adesso (la piattaforma scala i crediti una volta sola, con l'id di fal)
 export async function pollVideo(owner: string, job: string): Promise<VideoResult & { fresh?: boolean }> {
