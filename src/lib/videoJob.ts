@@ -242,7 +242,7 @@ export async function pollVideo(owner: string, job: string): Promise<VideoResult
     // Kling e Svuota vanno in avanti (tutta la clip); gli altri Veo al contrario, tagliati prima della dissolvenza di Veo
     // in avanti: Svuota (-f), Kling (-k, -kc) e Dall'alto (-g); Dall'alto si taglia comunque prima della dissolvenza di Veo
     const forward = /-(f|k|kc|g)$/.test(name)
-    const cut = kling ? KLING_SECONDS * parts.length : forward && !name.endsWith('-g') ? VEO_SECONDS : cutPoint(await ffmpeg(['-i', raw, '-vf', 'scale=160:90,format=gray', '-f', 'rawvideo', '-']), 160 * 90)
+    const cut = kling ? KLING_SECONDS * parts.length : forward && !name.endsWith('-g') ? VEO_SECONDS : cutPoint(await ffmpeg(['-i', raw, '-vf', 'scale=320:180,format=gray', '-f', 'rawvideo', '-']), 320 * 180, 24, name.endsWith('-g') ? 3.5 : 0)
     // Dall'alto un po' piu' veloce (1,4x): la caduta di Veo sembrava lenta
     const speed = name.endsWith('-g') ? 1.4 : 1
     const total = cut / speed + HOLD, n = Math.round(total * 30)
@@ -276,18 +276,21 @@ function ffmpeg(args: string[]): Promise<Buffer> {
 // Fine dell'animazione di Veo (24 fps, fotogrammi grigi 160x90): dopo il picco di movimento, primo istante
 // in cui il moto resta basso per 0,5 s; poi Veo "corregge" verso l'ultima immagine con una dissolvenza
 // (la distanza dalla finale scende a immagine ferma): si taglia prima, tra 0,25 e 1 s dopo la fine del moto.
-function cutPoint(raw: Buffer, px: number, fps = 24): number {
+function cutPoint(raw: Buffer, px: number, fps = 24, minSec = 0): number {
   const n = Math.floor(raw.length / px)
   const fr = (i: number) => raw.subarray(i * px, (i + 1) * px)
   const diff = (a: Buffer, b: Buffer) => { let s = 0; for (let k = 0; k < px; k++) s += Math.abs(a[k] - b[k]); return s / px }
+  // movimento = quota di pixel che cambiano davvero (non la media): un cuscino che cade e' piccolo e la media lo perdeva,
+  // il taglio arrivava con il cuscino a mezz'aria (28/09)
+  const moving = (a: Buffer, b: Buffer) => { let c = 0; for (let k = 0; k < px; k++) if (Math.abs(a[k] - b[k]) > 14) c++; return c / px }
   const mv = [0], dl: number[] = [], last = fr(n - 1)
-  for (let i = 1; i < n; i++) mv.push(diff(fr(i), fr(i - 1)))
+  for (let i = 1; i < n; i++) mv.push(moving(fr(i), fr(i - 1)))
   for (let i = 0; i < n; i++) dl.push(diff(fr(i), last))
-  const still = (i: number) => Math.max(...mv.slice(i, i + 12)) < 0.8
+  const still = (i: number) => Math.max(...mv.slice(i, i + 12)) < 0.0005
   const peak = mv.indexOf(Math.max(...mv))
   let calm = -1
-  for (let i = peak; i < n - 12; i++) if (still(i)) { calm = i; break }
-  if (calm < 0) return 4 // ponytail: nessun fermo trovato, taglio fisso a 4 s (il prompt chiede il vuoto entro il quarto secondo)
+  for (let i = Math.max(peak, Math.round(minSec * fps)); i < n - 12; i++) if (still(i)) { calm = i; break }
+  if (calm < 0) return Math.max(4, minSec) // ponytail: nessun fermo trovato, taglio fisso (il prompt chiede tutto finito entro il quarto secondo)
   let diss = n - 1
   for (let i = calm + 6; i < n - 12; i++) if (dl[i] - dl[i + 12] > 0.6 && still(i)) { diss = i; break }
   return Math.max(calm + 6, Math.min(diss - 2, calm + 24)) / fps
