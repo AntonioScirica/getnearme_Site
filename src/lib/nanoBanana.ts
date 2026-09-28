@@ -28,7 +28,7 @@ export function stagePrompt(o: { task: StageTask; room: string; style: string; s
     return `You are a professional real estate photographer. This room is a ${room}. Show this exact room completely empty, ${FRAMING}
 Rules:
 1. ${ARCHITECTURE} Keep built-in wardrobes.
-2. Remove everything else: all furniture, rugs, lamps, curtains, decorations, personal items, clutter, people, and also kitchen units, appliances and bathroom fixtures. Where they were, show clean, finished, freshly painted walls and the same floor: no marks, holes, pipes, sockets left hanging or broken tiles, as if the room had just been prepared for sale.
+2. Remove everything else: all furniture, rugs, lamps, curtains, decorations, personal items, clutter, people, and also kitchen units, appliances and every bathroom fixture: bathtub, shower tray, shower enclosure and glass screen, shower head, taps and mixers, toilet, bidet, washbasin and vanity unit, mirrors and towel rails. A bathtub or shower is a fixture to remove, not a wall. Where they were, show clean, finished, freshly painted walls and the same floor: no marks, holes, pipes, sockets left hanging or broken tiles, as if the room had just been prepared for sale.
 3. Surfaces: keep the existing floor exactly as it is (same material, same tiles with the same size, color and pattern, never replace tiles with wood or another floor) and the same wall finishes, only cleaned; if the room is unfinished, show plastered walls and a clean floor.
 4. ${LIGHT}
 ${OUTPUT}`
