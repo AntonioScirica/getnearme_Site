@@ -11,7 +11,7 @@ import { ArrowRight } from 'lucide-react';
 const STEPS: { target: string; go: string; title: string; text: string; edit?: boolean; demo?: boolean }[] = [
   { target: '/', go: '/', title: 'Home', text: 'Il tuo punto di partenza: metti in vetrina un immobile, arreda una stanza, crea un video.' },
   { target: '/immobili', go: '/immobili', demo: true, title: 'Immobili', text: 'Tutte le tue case in un posto, con foto, descrizione e report da mandare ai clienti.' },
-  { target: '/portfolio', go: '/portfolio', title: 'Il mio sito', text: 'Il tuo sito con le tue case: gli immobili ci finiscono da soli.' },
+  { target: '/portfolio', go: '/portfolio', title: 'Il mio sito', text: 'Scegli un template, modificalo e pubblica il tuo sito in 5 minuti.' },
   { target: 'site-gallery', go: '/portfolio', title: 'Scegli il modello', text: 'Dieci stili già pronti, già pieni dei tuoi immobili. Ne scegli uno.' },
   { target: 'site-editor', go: '/portfolio', edit: true, title: 'Modifica tutto', text: 'Testi, foto, colori, caratteri e logo: tocchi un punto del sito e lo cambi, vedi subito come viene.' },
   { target: 'site-link', go: '/portfolio', edit: true, title: 'Pubblica con il tuo link', text: 'Quando sei pronto lo accendi: il sito va online al tuo indirizzo, da mandare ai clienti.' },
