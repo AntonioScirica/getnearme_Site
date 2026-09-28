@@ -967,7 +967,7 @@ function ZonePicker({ inline, closing = false, src, region, onChange, onLoad, bu
         {/* campo con dentro, a destra, gli strumenti di selezione (solo icone, nome nel tooltip) */}
         <div className="flex h-10 min-w-0 flex-1 items-center rounded-full border border-transparent bg-canvas pl-4 pr-1 ease-smooth transition-colors focus-within:border-ink/15 focus-within:bg-white">
           <input ref={el => { if (el && !focused.current) { focused.current = true; el.focus({ preventScroll: true }); } }} value={text} onChange={e => setText(e.target.value)}
-            placeholder={ready ? `Cosa cambio qui? Es. ${example}` : tool === 'rect' ? 'Trascina sulla foto' : clicks.length ? 'Doppio clic per chiudere' : 'Disegna il contorno'}
+            placeholder={ready ? `Cosa cambio qui? Es. ${example}` : tool === 'rect' ? 'Disegna sulla foto' : clicks.length ? 'Doppio clic per chiudere' : 'Disegna il contorno'}
             className="h-full min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted/60" />
           {([['rect', 'Rettangolo: trascina per disegnare la zona', SquareDashed], ['lasso', 'Forma: disegna il contorno o clicca i punti', Lasso]] as const).map(([id, l, I]) => (
             <Tooltip key={id} label={l}>
