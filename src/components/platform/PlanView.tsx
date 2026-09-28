@@ -70,7 +70,7 @@ export default function PlanView({ ok, buy }: { ok?: boolean; buy?: Buy }) {
   const billed = yearly ? `${PRICING.yearly * 12} € fatturati ogni anno` : `${PRICING.quarterly * 3} € fatturati ogni 3 mesi`;
   // stesse card dei prezzi della landing
   return (
-    <div className="mx-auto max-w-4xl">
+    <div className="mx-auto max-w-6xl">
       <h1 className="font-display text-3xl font-bold tracking-tight">Il tuo piano</h1>
       {ok && <p className="mt-3 flex items-center gap-2 rounded-full bg-green-50 px-4 py-2 text-sm font-medium text-green-700"><Check size={15} /> Pagamento ricevuto: i crediti arrivano in pochi secondi.</p>}
       {c?.unlimited && <p className="mt-4 text-sm text-muted">Account amministratore: crediti illimitati, niente da pagare.</p>}
