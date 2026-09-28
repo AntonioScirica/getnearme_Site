@@ -614,7 +614,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                       <button aria-label="Indietro" onClick={() => patchV(m.id, m.step === 'anim' ? { step: 'template', picks: [] } : m.step === 'mode' && (m.anim === 'cantiere' || m.anim === 'daynight') ? { step: 'template', anim: undefined, picks: [] } : m.step === 'mode' ? { step: 'anim', anim: undefined, picks: m.picks.slice(0, 1) } : { step: 'mode', picks: m.picks.slice(0, m.anim === 'cantiere' || m.anim === 'daynight' ? 1 : 2), previews: undefined, frames: undefined, err: undefined })}
                         className="-ml-1.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-muted ease-smooth transition-colors hover:bg-black/5 hover:text-ink"><ChevronLeft size={18} /></button>
                     )}
-                    <span className="font-medium">{m.step === 'template' ? 'Che video vuoi creare?' : m.step === 'anim' ? 'Con quale animazione?' : m.step === 'mode' ? (emptyFrom && emptyFrom === m.photo ? 'In che stile la arredo?' : 'Tengo i mobili che ci sono o arredo in un nuovo stile?') : m.step === 'previews' ? (m.previews?.some(p => !p) ? 'Preparo due proposte…' : 'Scegli quella per il video') : m.step === 'frames' ? (m.err ? '' : m.frames ? 'Ecco prima e dopo. Creo il video?' : 'Preparo prima e dopo…') : m.url ? 'Ecco il video' : m.err ? '' : (m.anim === 'popup' || m.anim === 'gravity') ? 'Creo il video, circa 2 minuti' : 'Creo il video, qualche minuto'}</span>
+                    <span className="font-medium">{m.step === 'template' ? 'Che video vuoi creare?' : m.step === 'anim' ? 'Con quale animazione?' : m.step === 'mode' ? (emptyFrom && emptyFrom === m.photo ? 'In che stile la arredo?' : 'Com’è ora o in un nuovo stile?') : m.step === 'previews' ? (m.previews?.some(p => !p) ? 'Preparo due proposte…' : 'Scegli quella per il video') : m.step === 'frames' ? (m.err ? '' : m.frames ? 'Ecco prima e dopo. Creo il video?' : 'Preparo prima e dopo…') : m.url ? 'Ecco il video' : m.err ? '' : (m.anim === 'popup' || m.anim === 'gravity') ? 'Creo il video, circa 2 minuti' : 'Creo il video, qualche minuto'}</span>
                     {/* annulla: via il messaggio del video (e il "Crea un video" prima), si torna alle foto; non a video mandato */}
                     {m.step !== 'render' && (
                       <button onClick={() => setMsgs(ms => { const k = ms.findIndex(x => x.id === m.id); return ms.filter((x, n) => n !== k && !(n === k - 1 && x.role === 'user' && x.text === 'Crea un video')); })}
@@ -645,15 +645,23 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                       </div>
                     )}
                     {m.step === 'mode' && (
-                      <div className="px-1">
-                        <div className="flex flex-wrap gap-1.5">
-                          {!(emptyFrom && emptyFrom === m.photo) && <button onClick={() => makeVideo(m, m.photo, 'Stanza com’è')} className="shrink-0 whitespace-nowrap rounded-full bg-ink pl-3.5 pr-1.5 py-1.5 text-[13px] font-medium text-white shadow-sm ease-smooth transition-colors hover:bg-brand">Tieni la stanza com’è<Cr n={directVideo(m.anim) ? videoCr(m.anim) : 0} dark /></button>}
-                          {VIDEO_STYLES.map(x => <button key={x.id} onClick={() => styleVideo(m, x.label, { style: x.id })} className="group shrink-0 whitespace-nowrap rounded-full bg-white pl-3.5 pr-1.5 py-1.5 text-[13px] font-medium text-ink/80 shadow-sm ring-1 ring-inset ring-black/10 ease-smooth transition-colors hover:bg-brand hover:text-white">{x.label}<Cr n={CREDIT_COST.arreda + (directVideo(m.anim) ? videoCr(m.anim) : 0)} /></button>)}
+                        // scelta dello stile come le card dei modelli: foto vera per "Com'è ora", un soggiorno d'esempio per ogni stile
+                        <div className="px-1">
+                          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+                            {[...(!(emptyFrom && emptyFrom === m.photo) ? [{ id: 'keep', label: 'Com’è ora', src: m.photo }] : []), ...VIDEO_STYLES.map(x => ({ ...x, src: `/staging/stili/${x.id}.jpg` }))].map((o, k) => (
+                              <button key={o.id} onClick={() => (o.id === 'keep' ? makeVideo(m, m.photo, 'Stanza com’è') : styleVideo(m, o.label, { style: o.id }))} className="rise group relative flex flex-col overflow-hidden rounded-3xl bg-white p-1.5 text-left shadow-[0_1px_2px_rgba(0,0,0,.04),0_8px_24px_-12px_rgba(0,0,0,.12)] ring-1 ring-black/5 ease-smooth transition-shadow hover:shadow-[0_2px_4px_rgba(0,0,0,.04),0_24px_40px_-18px_rgba(0,0,0,.25)] active:scale-[0.985]" style={{ animationDelay: `${0.04 + k * 0.05}s` }}>
+                                <span className="block aspect-[4/3] overflow-hidden rounded-[18px] bg-canvas"><img src={o.src} alt="" className="h-full w-full object-cover ease-smooth transition-transform duration-500 group-hover:scale-[1.04]" /></span>
+                                <span className="flex items-center justify-between gap-2 px-2 pb-1 pt-2.5 text-[13px] font-semibold">{o.label}<Cr n={(o.id === 'keep' ? 0 : CREDIT_COST.arreda) + (directVideo(m.anim) ? videoCr(m.anim) : 0)} tight /></span>
+                              </button>
+                            ))}
+                          </div>
+                          <form className={`mt-3 flex h-12 items-center gap-2 rounded-full bg-white pl-5 pr-1.5 ring-1 ring-inset ring-black/10 focus-within:ring-brand`}
+                            onSubmit={e => { e.preventDefault(); const v = (new FormData(e.currentTarget).get('stile') as string ?? '').trim(); if (v) styleVideo(m, v, { prompt: `Arreda la stanza in stile ${v}` }); }}>
+                            <Palette size={16} className="shrink-0 text-muted" />
+                            <input name="stile" placeholder="Un altro stile, es. classico con legno scuro" maxLength={200} className="h-full min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted/60" />
+                            <button aria-label="Usa questo stile" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand text-white ease-smooth transition-colors hover:bg-brand/90"><ArrowUp size={16} /></button>
+                          </form>
                         </div>
-                        <input placeholder="Oppure scrivi lo stile, es. classico con legno scuro" maxLength={200}
-                          onKeyDown={e => { const v = e.currentTarget.value.trim(); if (e.key === 'Enter' && v) styleVideo(m, v, { prompt: `Arreda la stanza in stile ${v}` }); }}
-                          className="mt-3 h-12 w-full rounded-full bg-white px-5 text-sm outline-none ring-1 ring-inset ring-black/10 placeholder:text-muted/60 focus:ring-brand" />
-                      </div>
                     )}
                     {m.step === 'frames' && (
                       <div className="mx-auto" style={{ maxWidth: (ratios[m.photo] ?? 1.5) >= 1 ? 720 : 480 }}>
