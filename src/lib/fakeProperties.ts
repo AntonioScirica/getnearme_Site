@@ -3,18 +3,20 @@ import type { ProjectData } from './projects'
 // 10 immobili finti, tutti a Roma: in sviluppo per provare mappa e lista, in produzione come esempio in Immobili
 // finche' l'agente non ne ha uno e nelle miniature dei modelli del sito. Foto nostre, mai quelle dei portali.
 const photos = ['/staging/1.jpg', '/staging/2.jpg', '/immo/home/demo-after.webp', '/staging/3.jpg', '/staging/4.jpg', '/immo/home/demo-1.webp', '/staging/5.jpg', '/staging/6.jpg', '/staging/1_real.jpg', '/staging/2_real.jpg']
-const rows: [string, string, number, number, number, number][] = [
-  ['Trilocale arredato con box, zona Prati', 'Via Cola di Rienzo 120, Roma', 598000, 95, 2, 1],
-  ['Bilocale ristrutturato vicino alla metro', 'Via Tuscolana 210, 00182 Roma', 289000, 60, 1, 1],
-  ['Attico con terrazzo vista cupole', 'Via del Corso 300, Roma', 1250000, 180, 3, 2],
-  ['Quadrilocale luminoso, San Giovanni', 'Via Appia Nuova 45, 00183 Roma', 640000, 120, 3, 2],
-  ['Loft in ex fabbrica, Ostiense', 'Via Ostiense 95, Roma', 420000, 85, 1, 1],
-  ['Trilocale con balcone, Monteverde', 'Via di Donna Olimpia 20, Roma', 520000, 90, 2, 1],
-  ['Bilocale a Trastevere', 'Via della Lungaretta 44, Roma', 375000, 55, 1, 1],
-  ['Quadrilocale signorile, Parioli', 'Viale Parioli 60, Roma', 1480000, 160, 3, 3],
-  ['Trilocale nuovo con giardino, EUR', 'Viale Europa 100, 00144 Roma', 890000, 105, 2, 2],
-  ['Monolocale arredato, San Lorenzo', 'Via dei Volsci 30, Roma', 219000, 38, 1, 1],
+// coordinate fisse: la mappa inquadra subito Roma, senza aspettare la geolocalizzazione degli indirizzi
+const rows: [string, string, number, number, number, number, [number, number]][] = [
+  ['Trilocale arredato con box, zona Prati', 'Via Cola di Rienzo 120, Roma', 598000, 95, 2, 1, [41.9075, 12.4620]],
+  ['Bilocale ristrutturato vicino alla metro', 'Via Tuscolana 210, 00182 Roma', 289000, 60, 1, 1, [41.8800, 12.5290]],
+  ['Attico con terrazzo vista cupole', 'Via del Corso 300, Roma', 1250000, 180, 3, 2, [41.9010, 12.4810]],
+  ['Quadrilocale luminoso, San Giovanni', 'Via Appia Nuova 45, 00183 Roma', 640000, 120, 3, 2, [41.8830, 12.5130]],
+  ['Loft in ex fabbrica, Ostiense', 'Via Ostiense 95, Roma', 420000, 85, 1, 1, [41.8680, 12.4800]],
+  ['Trilocale con balcone, Monteverde', 'Via di Donna Olimpia 20, Roma', 520000, 90, 2, 1, [41.8760, 12.4520]],
+  ['Bilocale a Trastevere', 'Via della Lungaretta 44, Roma', 375000, 55, 1, 1, [41.8890, 12.4720]],
+  ['Quadrilocale signorile, Parioli', 'Viale Parioli 60, Roma', 1480000, 160, 3, 3, [41.9270, 12.4920]],
+  ['Trilocale nuovo con giardino, EUR', 'Viale Europa 100, 00144 Roma', 890000, 105, 2, 2, [41.8330, 12.4700]],
+  ['Monolocale arredato, San Lorenzo', 'Via dei Volsci 30, Roma', 219000, 38, 1, 1, [41.8990, 12.5150]],
 ]
+export const FAKE_GEO: Record<string, [number, number]> = Object.fromEntries(rows.map(r => [r[1], r[6]]))
 export const FAKE_PROPERTIES: ProjectData[] = rows.map(([titolo, addr, prezzo, mq, camere, bagni], i) => ({
   id: `fake-${i}`, nome: '', titolo, addr, prezzo, mq, camere, bagni, tipologia: 'Appartamento',
   cover: photos[i % photos.length], is_public: i % 3 !== 1, import_data: { score: 55 + ((i * 7) % 35) },

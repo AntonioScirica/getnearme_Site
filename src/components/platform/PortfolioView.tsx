@@ -105,10 +105,12 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
   };
 
   const pub = (projects ?? []).filter(p => p.is_public);
-  const props: SiteProperty[] = (pub.length ? pub : process.env.NODE_ENV === 'development' ? FAKE_PROPERTIES : []).map(toSite);
+  // anteprima: senza case in vetrina (o durante il tour) il sito si vede con le case d'esempio a Roma. Solo anteprima:
+  // online vanno le case vere, e le foto proponibili come copertina restano solo quelle dell'agente
+  const props: SiteProperty[] = (pub.length && !demo ? pub : FAKE_PROPERTIES).map(toSite);
   // miniature dei modelli: sempre piene di case, le tue piu' quelle di esempio fino a 9 (solo anteprima, non va online)
   const showcase = [...props, ...FAKE_PROPERTIES.filter(f => !props.some(p => p.id === f.id)).map(toSite)].slice(0, Math.max(9, props.length));
-  const covers = [...new Set(props.map(p => p.cover).filter(Boolean))].slice(0, 12);
+  const covers = [...new Set(pub.map(toSite).map(p => p.cover).filter(Boolean))].slice(0, 12);
 
   return (
     <>

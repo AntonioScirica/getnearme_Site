@@ -7,10 +7,10 @@ import { ArrowRight } from 'lucide-react';
 // una card breve per ognuna, poi si torna alla home. Intanto dietro il velo si apre la pagina di cui parla (go),
 // cosi' la si vede. Si accende con localStorage 'agenteimmo:tour' = '1' (lo mette l'onboarding) o aprendo #/tour;
 // si spegne a fine giro o con Salta.
-// edit: chiede al Il mio sito di aprire l'editor del modello (evento 'agenteimmo:tour-edit'), per mostrare che si modifica
-const STEPS: { target: string; go: string; title: string; text: string; edit?: boolean }[] = [
+// demo: Immobili mostra solo le case d'esempio. edit: chiede al Il mio sito di aprire l'editor del modello (evento 'agenteimmo:tour-edit'), per mostrare che si modifica
+const STEPS: { target: string; go: string; title: string; text: string; edit?: boolean; demo?: boolean }[] = [
   { target: '/', go: '/', title: 'Home', text: 'Il tuo punto di partenza: metti in vetrina un immobile, arreda una stanza, crea un video.' },
-  { target: '/immobili', go: '/immobili', title: 'Immobili', text: 'Tutte le tue case in un posto, con foto, descrizione e report da mandare ai clienti.' },
+  { target: '/immobili', go: '/immobili', demo: true, title: 'Immobili', text: 'Tutte le tue case in un posto, con foto, descrizione e report da mandare ai clienti.' },
   { target: '/portfolio', go: '/portfolio', title: 'Il mio sito', text: 'Il tuo sito con le tue case: gli immobili ci finiscono da soli.' },
   { target: 'site-gallery', go: '/portfolio', title: 'Scegli il modello', text: 'Dieci stili già pronti, già pieni dei tuoi immobili. Ne scegli uno.' },
   { target: 'site-editor', go: '/portfolio', edit: true, title: 'Modifica tutto', text: 'Testi, foto, colori, caratteri e logo: tocchi un punto del sito e lo cambi, vedi subito come viene.' },
@@ -33,6 +33,7 @@ export default function Tour({ onDone }: { onDone: () => void }) {
     let seen = false;
     const measure = () => {
       if (step.edit) window.dispatchEvent(new Event('agenteimmo:tour-edit'));
+      if (step.demo) window.dispatchEvent(new Event('agenteimmo:tour-demo'));
       const el = document.querySelector<HTMLElement>(`[data-tour="${step.target}"]`);
       if (el && !seen) { seen = true; el.scrollIntoView({ block: el.offsetHeight > window.innerHeight * 0.6 ? 'start' : 'center', behavior: 'smooth' }); }
       const r = el?.getBoundingClientRect();

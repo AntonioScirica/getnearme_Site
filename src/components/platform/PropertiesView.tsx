@@ -5,7 +5,7 @@ import type { Map as LeafletMap, Marker } from 'leaflet';
 import { ArrowUpRight, Bath, BedDouble, Building2, Footprints, GraduationCap, Hospital, Loader2, MapPin, Maximize2, Pill, School, Search, ShoppingCart, Train, TrainFront, TramFront, Trees, X } from 'lucide-react';
 import type { Poi } from '@/lib/zone';
 import type { ProjectData } from '@/lib/projects';
-import { FAKE_PROPERTIES } from '@/lib/fakeProperties';
+import { FAKE_GEO, FAKE_PROPERTIES } from '@/lib/fakeProperties';
 import { addFitButton } from '@/components/ui/LeafletMap';
 import { authFetch, CARD_SHADOW, formatPrice, go } from './api';
 
@@ -31,7 +31,7 @@ function useGeo(projects: ProjectData[] | null) {
   useEffect(() => {
     let cached = {};
     try { cached = JSON.parse(localStorage.getItem(GEO_KEY) || '{}'); } catch {}
-    setGeo(cached); // eslint-disable-line react-hooks/set-state-in-effect
+    setGeo({ ...cached, ...FAKE_GEO }); // eslint-disable-line react-hooks/set-state-in-effect
   }, []);
   useEffect(() => {
     if (!geo) return;
@@ -70,8 +70,15 @@ function ensureLeafletCss() {
 export default function PropertiesView({ projects: real }: { projects: ProjectData[] | null }) {
   // nessun immobile ancora: case d'esempio a Roma (mappa e lista piene), con l'invito a mettere in vetrina la prima.
   // ponytail: in sviluppo si aggiungono sempre i finti
-  const demo = real?.length === 0;
-  const projects = useMemo(() => (real && (demo || process.env.NODE_ENV === 'development') ? [...real, ...FAKE_PROPERTIES] : real), [real, demo]);
+  // durante il tour solo le case d'esempio (evento 'agenteimmo:tour-demo' dal Tour)
+  const [tour, setTour] = useState(false);
+  useEffect(() => {
+    const on = () => setTour(true);
+    window.addEventListener('agenteimmo:tour-demo', on);
+    return () => window.removeEventListener('agenteimmo:tour-demo', on);
+  }, []);
+  const demo = tour || real?.length === 0;
+  const projects = useMemo(() => (tour ? FAKE_PROPERTIES : real && (demo || process.env.NODE_ENV === 'development') ? [...real, ...FAKE_PROPERTIES] : real), [real, demo, tour]);
   const [filter, setFilter] = useState<Filter>('tutti');
   const [q, setQ] = useState('');
   const [hover, setHover] = useState<string | null>(null);
