@@ -530,7 +530,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                     </div>
                   )}
                   <StepSwap step={m.step}>
-                  <div className="flex items-center gap-1 px-2 pb-4 text-sm">
+                  <div className="flex w-full items-center gap-1 px-2 pb-4 text-sm">
                     {/* indietro di un passo (non a video partito) */}
                     {m.step !== 'template' && m.step !== 'render' && (
                       <button aria-label="Indietro" onClick={() => patchV(m.id, m.step === 'anim' ? { step: 'template', picks: [] } : m.step === 'mode' && (m.anim === 'cantiere' || m.anim === 'daynight') ? { step: 'template', anim: undefined, picks: [] } : m.step === 'mode' ? { step: 'anim', anim: undefined, picks: m.picks.slice(0, 1) } : { step: 'mode', picks: m.picks.slice(0, 2), previews: undefined })}
@@ -539,10 +539,8 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                     <span className="font-medium">{m.step === 'template' ? 'Che video vuoi creare?' : m.step === 'anim' ? 'Con quale animazione?' : m.step === 'mode' ? (emptyFrom && emptyFrom === m.photo ? 'In che stile la arredo?' : 'Tengo i mobili che ci sono o arredo in un nuovo stile?') : m.step === 'previews' ? (m.previews?.some(p => !p) ? 'Preparo due proposte…' : 'Scegli quella per il video') : m.url ? 'Ecco il video' : m.err ? '' : m.anim && m.anim !== 'popup' && m.anim !== 'gravity' ? 'Creo il video, circa 10 minuti' : 'Creo il video, circa 2 minuti'}</span>
                     {/* annulla: via il messaggio del video (e il "Crea un video" prima), si torna alle foto; a video partito smette solo di aspettarlo */}
                     {!m.url && (
-                      <Tooltip label="Annulla">
-                        <button aria-label="Annulla il video" onClick={() => setMsgs(ms => { const k = ms.findIndex(x => x.id === m.id); return ms.filter((x, n) => n !== k && !(n === k - 1 && x.role === 'user' && x.text === 'Crea un video')); })}
-                          className="ml-auto flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-muted ease-smooth transition-colors hover:bg-black/5 hover:text-ink"><X size={16} /></button>
-                      </Tooltip>
+                      <button onClick={() => setMsgs(ms => { const k = ms.findIndex(x => x.id === m.id); return ms.filter((x, n) => n !== k && !(n === k - 1 && x.role === 'user' && x.text === 'Crea un video')); })}
+                        className="ml-auto h-8 shrink-0 rounded-full px-3 text-[13px] font-medium text-muted ease-smooth transition-colors hover:bg-black/5 hover:text-ink">Annulla</button>
                     )}
                   </div>
                     {(m.step === 'template' || m.step === 'anim') && (
