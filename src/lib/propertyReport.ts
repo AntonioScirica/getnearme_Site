@@ -146,7 +146,6 @@ export function buildPropertyReportHtml(a: ReportInput): string {
 *{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 body{margin:0;font-family:Satoshi,system-ui,sans-serif;color:#1c1c1c;background:#eee}
 .page{position:relative;width:210mm;height:297mm;overflow:hidden;background:#fff;margin:0 auto;page-break-after:always;break-after:page}
-.page:last-child{page-break-after:auto;break-after:auto}
 .pad{padding:14mm 16mm 20mm}.pad.fill{height:100%;display:flex;flex-direction:column}
 .head{display:flex;align-items:flex-end;justify-content:space-between;padding-bottom:2mm}.muted{color:#777;font-size:13px}.bar{width:14mm;height:4px;background:${c};border-radius:4px;margin:0 0 6mm}.sep{height:1px;background:#eee;margin:7mm 0 6mm}
 .eyebrow{font-size:10.5px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:${c}}.eyebrow.light{color:#fff;opacity:.9}
