@@ -426,6 +426,7 @@ export function Intro() {
   const tx = useT();
   if (t.intro === 'none') return null;
   if (t.intro === 'services') {
+    if (!cfg.services.length) return <section className="bg-[var(--ink)] pb-10" />; // niente servizi scritti: resta solo la fascia scura sotto il modulo
     const [a, b] = ['I miei', 'servizi'];
     return (
       <section className="bg-[var(--ink)] pb-24 pt-16 text-white">
