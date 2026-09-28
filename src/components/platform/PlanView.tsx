@@ -49,6 +49,7 @@ export default function PlanView({ ok, buy }: { ok?: boolean; buy?: Buy }) {
   const c = useCredits();
   const [yearly, setYearly] = useState(buy !== 'pro_quarterly');
   const [busy, setBusy] = useState<string>(buy ?? '');
+  const [portalError, setPortalError] = useState<string | null>(null);
   const go = async (p: Buy | PackId) => { setBusy(p); await checkout(p); setBusy(''); };
   useEffect(() => {
     if (!buy) return;
@@ -72,6 +73,10 @@ export default function PlanView({ ok, buy }: { ok?: boolean; buy?: Buy }) {
             <div className="font-display text-3xl font-extrabold tracking-tight">{fmt(c.balance)} crediti</div>
             <div className="text-sm text-muted">circa {photosFor(c.balance)} foto o {videosFor(c.balance)} video · si ricaricano a {fmt(c.monthly)} il {date(c.renews)}</div>
           </div>
+          {/* con un piano attivo non si rivedono le card: cambio piano, disdetta, pagamento e fatture nel portale Stripe */}
+          <button type="button" disabled={busy === 'portal'} onClick={async () => { setBusy('portal'); const d = await authFetch('/api/platform/billing', { method: 'POST' }).then(r => r.json()).catch(() => null); if (d?.url) window.location.href = d.url; else { setBusy(''); setPortalError('Portale non disponibile, riprova tra poco.'); } }}
+            className="flex h-11 items-center justify-center gap-2 rounded-full bg-ink px-5 text-sm font-semibold text-white disabled:opacity-60">{busy === 'portal' && <Loader2 size={15} className="animate-spin" />}Gestisci abbonamento</button>
+          {portalError && <p className="w-full text-sm text-rose-600">{portalError}</p>}
         </div>
       )}
       {c && c.plan !== 'none' && !c.unlimited && (
@@ -91,7 +96,8 @@ export default function PlanView({ ok, buy }: { ok?: boolean; buy?: Buy }) {
           </div>
         </>
       )}
-      <h2 className="mt-8 font-semibold">{c?.plan === 'none' || !c ? 'Scegli il piano' : 'Cambia piano'}</h2>
+      {(!c || c.plan === 'none' || c.unlimited) && (<>
+      <h2 className="mt-8 font-semibold">Scegli il piano</h2>
       <p className="mt-1 text-sm text-muted">Starter: foto e video. Plus: anche il tuo sito. Pro: più crediti, a trimestre o anno.</p>
       <div className="mt-5 grid items-stretch gap-5 md:grid-cols-3">
         <div className={`flex flex-col rounded-[32px] bg-white p-8 ${CARD_SHADOW}`}>
@@ -131,6 +137,7 @@ export default function PlanView({ ok, buy }: { ok?: boolean; buy?: Buy }) {
         </div>
       </div>
       <p className="mt-5 text-center text-xs text-muted">Pagamento sicuro con Stripe. Ti chiediamo ragione sociale, Partita IVA e codice SDI o PEC per la fattura elettronica. Prezzi finali, senza IVA (regime forfettario).</p>
+      </>)}
     </div>
   );
 }
