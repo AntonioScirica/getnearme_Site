@@ -7,7 +7,7 @@ import { logUsage } from '@/lib/ai'
 
 // GPT Image 2.5 (8/9/2026): 'gpt-image-2.5-flare' veloce, 'gpt-image-2.5-sunburst' di precisione; stesso prezzo del 2. Scelta con GPT_IMAGE_MODEL.
 const MODEL = process.env.GPT_IMAGE_MODEL || 'gpt-image-2.5-sunburst' // Sunburst: l'unico che ha tenuto la cucina com'era (prova del 28/09)
-export const GPT_IMAGE_USD = { medium: 0.041 } // 1536x1024 o 1024x1536, listino OpenAI 28/09/2026
+export const GPT_IMAGE_USD: Record<string, number> = { low: 0.005, medium: 0.041, high: 0.165 } // 1536x1024, listino OpenAI 28/09/2026 (stime: la 2.5 e' a token)
 
 export async function gptImage(o: { userId: string; image: string; prompt: string; kind?: string }): Promise<string | null> {
   const key = process.env.OPENAI_API_KEY
@@ -24,7 +24,8 @@ export async function gptImage(o: { userId: string; image: string; prompt: strin
     form.append('image', new Blob([new Uint8Array(png)], { type: 'image/png' }), 'photo.png')
     form.append('prompt', `${o.prompt} Keep any fitted kitchen exactly as it is in the photo: same cabinets, same fronts and colors, same worktop, same appliances; never renovate or repaint it.`)
     form.append('size', size)
-    form.append('quality', 'medium')
+    // GPT_IMAGE_QUALITY: 'low' (~0,005 $, provato il 28/09: quasi pari alla media), 'medium' (~0,041 $), 'high'
+    form.append('quality', process.env.GPT_IMAGE_QUALITY || 'medium')
     form.append('output_format', 'jpeg')
     form.append('n', '1')
     const r = await fetch('https://api.openai.com/v1/images/edits', { method: 'POST', headers: { Authorization: `Bearer ${key}` }, body: form, signal: AbortSignal.timeout(120_000) })
