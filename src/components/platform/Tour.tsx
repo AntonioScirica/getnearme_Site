@@ -80,7 +80,8 @@ export default function Tour({ onDone }: { onDone: () => void }) {
       {light
         ? <div className="pointer-events-none absolute" style={{ ...light, borderRadius: Math.min(28, light.height / 2), boxShadow: '0 0 0 9999px rgba(15,17,25,.62), 0 0 0 3px rgba(255,255,255,.9), 0 0 40px 6px rgba(83,126,236,.55)', transition: ease }} />
         : <div className="absolute inset-0 bg-[rgba(15,17,25,.62)]" />}
-      <div className="absolute inset-0" onClick={next} />
+      {/* lo sfondo blocca i clic sulla pagina ma non manda avanti: un clic durante la dissolvenza saltava la Home */}
+      <div className="absolute inset-0" />
       {/* la card entra quando la luce e' quasi arrivata: prima la luce si sposta, poi compare il testo */}
       <div key={i} className="blur-in absolute rounded-[24px] bg-white p-5 shadow-2xl" style={{ ...cardStyle, transition: ease, animationDelay: i ? '.35s' : '0s' }}>
         <div className="flex items-center justify-between">
