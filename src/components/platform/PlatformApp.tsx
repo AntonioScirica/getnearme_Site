@@ -351,10 +351,9 @@ function StageCompare({ active }: { active: boolean }) {
 
 const TITLES: Record<string, [string, string]> = {
   link: ['Incolla il link dell\'annuncio', 'Da qualsiasi portale immobiliare.'],
-  opening: ['Apro l\'annuncio', 'Lo leggo dal tuo browser, in background.'],
+  opening: ['Apro l\'annuncio', 'Lo leggo io, dai portali può volerci fino a un minuto.'],
   scanning: ['Sto analizzando l\'annuncio', ''],
   done: ['Ecco il tuo annuncio, migliorato', 'Score, versione riscritta e cosa sistemare.'],
-  'no-extension': ['Manca solo un passo', 'Installa l\'estensione per leggere l\'annuncio.'],
   error: ['Non riesco a leggerlo', 'Riprova o incolla il testo dell\'annuncio.'],
   manual: ['Incolla il testo dell\'annuncio', 'Titolo, prezzo, caratteristiche e descrizione.'],
 };

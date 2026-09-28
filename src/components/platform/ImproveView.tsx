@@ -1,15 +1,15 @@
 'use client';
 
 import { Children, useEffect, useRef, useState } from 'react';
-import { Camera, Check, Copy, ExternalLink, Loader2, Puzzle, Wand2 } from 'lucide-react';
+import { Camera, Check, Copy, ExternalLink, Loader2, Wand2 } from 'lucide-react';
 import { AI_MOCK, mockFor } from '@/lib/aiMock';
-import { authFetch, CARD_SHADOW, extSend, EXTENSION_URL, go, warm } from './api';
+import { authFetch, CARD_SHADOW, go, warm } from './api';
 import CountUp from './CountUp';
 import { PhotoEditModal } from './AiPhoto';
 import { CRITERI, withScores, type Criteri } from '@/lib/listingScore';
 
-// "Migliora annuncio": link portale -> estensione legge l'annuncio in background ->
-// scansione animata -> diagnosi + annuncio riscritto. Senza estensione: testo incollato.
+// "Migliora annuncio": link di qualsiasi sito -> il nostro server legge l'annuncio (api/platform/read-listing) ->
+// scansione animata -> verdetto a regole, riscrittura a richiesta. Se non si riesce a leggere: testo incollato.
 // Il flusso vive nella home (HomeView): la card "Miglioralo" diventa il browser e poi il verdetto.
 
 // raw = pagina grezza letta dall'estensione (testo, JSON incorporati, meta, immagini): la legge Qwen lato server.
@@ -21,7 +21,7 @@ export type Analysis = {
   // dal 28/09/2026 il verdetto e' a regole e la riscrittura a richiesta: riscritto false = titolo e descrizione originali
   riscritto?: boolean; fields?: Record<string, unknown>;
 };
-export type Stage = 'input' | 'opening' | 'scanning' | 'done' | 'no-extension' | 'manual' | 'error';
+export type Stage = 'input' | 'opening' | 'scanning' | 'done' | 'manual' | 'error';
 
 // Qualsiasi sito di annunci: l'estensione legge la pagina in modo generico e Qwen ne estrae i dati.
 const LINK_RE = /^https:\/\/[^/\s]+\.[^/\s]+/i;
@@ -79,30 +79,16 @@ export function useImprove() {
     warm('analysis');
     setListing({ url: u, title: '', address: '', propertyInfo: {}, photos: [] });
     setStage('opening');
-    const ping = await extSend<{ ok: boolean }>({ type: 'GNM_PING' });
+    if (AI_MOCK) { await wait(1500); if (id === run.current) analyze(MOCK_LISTING(u), id, true); return; }
+    // la legge il nostro server (browser headless, o ZenRows per i portali che bloccano): niente estensione
+    const res = await authFetch('/api/platform/read-listing', { method: 'POST', body: JSON.stringify({ url: u }) }).catch(() => null);
     if (id !== run.current) return;
-    if (!ping?.ok) {
-      if (AI_MOCK) { await wait(1500); if (id === run.current) analyze(MOCK_LISTING(u), id, true); return; }
-      // senza estensione la legge il nostro server (diretto o con proxy); se il sito blocca anche quello, estensione o testo
-      const res = await authFetch('/api/platform/read-listing', { method: 'POST', body: JSON.stringify({ url: u }) }).catch(() => null);
-      if (id !== run.current) return;
-      const d = res ? await res.json().catch(() => null) : null;
-      if (res?.ok && d) { analyze(d as Listing, id); return; }
-      if (d?.error === 'not_a_listing') { setError('Questa pagina non sembra un annuncio immobiliare (non trovo prezzo e superficie). Controlla il link.'); setStage('error'); return; }
-      setStage('no-extension'); return;
-    }
-    const r = await extSend<{ ok: boolean; data?: Listing; error?: string }>({ type: 'GNM_IMPORT_LISTING', url: u });
-    if (id !== run.current) return;
-    if (!r?.ok || !r.data) {
-      setError(r?.error === 'not_a_listing'
-        ? 'Questa pagina non sembra un annuncio immobiliare (non trovo prezzo e superficie). Controlla il link.'
-        : r?.error === 'timeout'
-        ? 'Non sono riuscito a leggere l\'annuncio (pagina lenta, rimossa o con verifica anti-bot). Aprilo una volta nel browser e riprova, oppure incolla il testo.'
-        : 'Import non riuscito. Riprova o incolla il testo dell\'annuncio.');
-      setStage('error');
-      return;
-    }
-    analyze(r.data, id);
+    const d = res ? await res.json().catch(() => null) : null;
+    if (res?.ok && d) { analyze(d as Listing, id); return; }
+    setError(d?.error === 'not_a_listing'
+      ? 'Questa pagina non sembra un annuncio immobiliare (non trovo prezzo e superficie). Controlla il link.'
+      : 'Non sono riuscito a leggere l\'annuncio (pagina lenta, rimossa o bloccata). Riprova tra poco, oppure incolla il testo.');
+    setStage('error');
   };
 
   const analyzeText = (u: string, pasted: string) => {
@@ -126,14 +112,6 @@ export function BrowserBody({ stage, listing, error, url, onRetry, onManual, onT
 }) {
   const [pasted, setPasted] = useState('');
 
-  if (stage === 'no-extension') return (
-    <Center icon={<Puzzle size={22} />} title="Serve l'estensione per leggere l'annuncio"
-      body="I portali non permettono ad altri siti di leggere le loro pagine: l'estensione lo fa dal tuo browser, in background. Si installa in un click (Chrome, Edge, Brave).">
-      <a href={EXTENSION_URL} target="_blank" rel="noreferrer" className="btn-ink rounded-full px-5 py-2.5 text-sm font-semibold">Installa l&apos;estensione</a>
-      <button onClick={onRetry} className="btn-ghost rounded-full px-5 py-2.5 text-sm font-medium">L&apos;ho installata, riprova</button>
-      <button onClick={onManual} className="px-2 text-sm text-muted hover:text-ink">Incolla il testo a mano</button>
-    </Center>
-  );
   if (stage === 'error') return (
     <Center title="Qualcosa non è andato" body={error ?? 'Riprova tra poco.'}>
       <button onClick={onRetry} className="btn-ink rounded-full px-5 py-2.5 text-sm font-semibold">Riprova</button>
