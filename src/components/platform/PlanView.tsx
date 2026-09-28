@@ -31,8 +31,9 @@ export function CreditsPill() {
   if (!c) return null;
   const low = isLow(c);
   return (
-    <a href="#/piano" className={`flex h-10 items-center gap-1.5 rounded-full bg-white px-4 text-sm font-semibold ring-1 ease-smooth transition-shadow hover:shadow-md ${low ? 'ring-amber-300 text-amber-700' : 'ring-line'}`}>
-      <Coins size={14} className={low ? 'text-amber-500' : 'text-ai'} /> {c.unlimited ? 'Crediti illimitati' : c.plan === 'none' ? 'Scegli un piano' : `${fmt(c.balance)} crediti`}{low && <span className="ml-1 text-xs font-medium">· Ricarica</span>}
+    <a href="#/piano" title={c.unlimited || c.plan === 'none' ? undefined : `${fmt(c.balance)} crediti`} className={`flex h-10 items-center gap-1.5 rounded-full bg-white px-4 text-sm font-semibold ring-1 ease-smooth transition-shadow hover:shadow-md ${low ? 'ring-amber-300 text-amber-700' : 'ring-line'}`}>
+      {/* numero e moneta, senza la parola "crediti" */}
+      {c.unlimited ? <><Coins size={15} className="text-ai" /> Illimitati</> : c.plan === 'none' ? 'Scegli un piano' : <>{fmt(c.balance)} <Coins size={15} className={low ? 'text-amber-500' : 'text-ai'} /></>}{low && <span className="ml-1 text-xs font-medium">· Ricarica</span>}
     </a>
   );
 }

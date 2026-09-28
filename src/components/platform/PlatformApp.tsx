@@ -98,7 +98,7 @@ export default function PlatformApp({ userData }: { userData: UserData }) {
       {tour && !chat && <Tour onDone={() => setTour(false)} />}
       <header style={morph ? { viewTransitionName: 'ob-nav' } : undefined} className={`${route === '/immobili' ? 'absolute inset-x-0' : 'sticky'} top-0 z-30`}>
         <ProgressiveBlur />
-        <div className="mx-auto flex h-20 max-w-6xl items-center px-6">
+        <div className={`mx-auto h-20 max-w-6xl items-center px-6 ${chat ? 'flex' : 'grid grid-cols-[1fr_auto_1fr] max-md:flex'}`}>
           {/* in chat: niente logo, menu e Metti in vetrina, solo Indietro e i crediti (la chat ha tutto lo spazio) */}
           {chat ? (<>
             <button type="button" onClick={() => (history.length > 1 ? history.back() : (location.hash = '#/'))}
@@ -106,17 +106,18 @@ export default function PlatformApp({ userData }: { userData: UserData }) {
             {/* crediti sempre in vista in alto a destra: in chat ogni azione ne spende */}
             <div className="ml-auto"><CreditsPill /></div>
           </>) : <>
-          <a href="#/" className="flex items-center gap-2">
+          <a href="#/" className="flex items-center gap-2 justify-self-start">
             <img src="/immo/logo-mark.png" alt="" className="h-8 w-8" style={{ viewTransitionName: 'ob-logo' }} />
             <span className="font-display text-lg font-extrabold tracking-tight">Agente <span className="text-brand">Immo</span></span>
           </a>
-          <nav className="mx-auto hidden items-center gap-1 rounded-full bg-canvas p-1 md:flex">
+          {/* menu al centro esatto: colonne laterali uguali (1fr), qualunque sia la larghezza di logo e pulsanti */}
+          <nav className="hidden items-center gap-1 rounded-full bg-canvas p-1 md:flex">
             {NAV.map(({ path, label }) => {
               const active = route === path || (path === '/immobili' && !!detailId);
               return <a key={path} href={`#${path}`} data-tour={path} className={`rounded-full px-4 py-1.5 text-sm font-medium ease-smooth transition-colors ${active ? 'bg-white text-ink shadow-sm' : 'text-muted hover:text-ink'}`}>{label}</a>;
             })}
           </nav>
-          <div className="ml-auto flex items-center gap-2.5 md:ml-0">
+          <div className="ml-auto flex items-center gap-2.5 justify-self-end md:ml-0">
             <span data-tour="crediti"><CreditsPill /></span>
             <a href="#/nuovo" data-tour="nuovo" className="flex h-10 items-center rounded-full bg-brand px-5 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand/90 active:scale-[0.98]">Metti in vetrina</a>
           </div>
