@@ -331,12 +331,13 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   // Il video va dalla foto com'era a quella nuova (Veo, primo e ultimo fotogramma). Come su GetNearMe: niente proposte.
   const styleVideo = async (m: VideoMsg, label: string, req: { style?: string; prompt?: string }) => {
     touch();
-    patchV(m.id, { step: 'render', picks: [...m.picks, { label, icon: 'style' }], err: undefined });
+    // intanto il passo Prima/Dopo in attesa (prima mostrava "Creo il video" e sembrava saltare l'approvazione)
+    patchV(m.id, { step: 'frames', frames: undefined, picks: [...m.picks, { label, icon: 'style' }], err: undefined });
     const body = { ...(project ? { projectId: project } : {}), ...(kind ? { room: seenLabel(kind) } : {}), ...(m.photo.startsWith('data:') ? { imageBase64: m.photo } : { imageUrl: m.photo }), scene: 'interno', ...req, variant: -1, preview: true, ...(sourcePhoto && sourcePhoto !== m.photo ? { reference: sourcePhoto } : {}) };
     const r = await authFetch('/api/platform/photo-edit', { method: 'POST', headers: QUIET, body: JSON.stringify(body) }).catch(() => null);
     const d = r?.ok ? await r.json().catch(() => ({})) as { url?: string } : null;
     if (r?.status === 402) { patchV(m.id, { err: NO_CREDITS }); return; }
-    if (!d?.url) { patchV(m.id, { err: 'Video non riuscito, riprova.' }); return; }
+    if (!d?.url) { patchV(m.id, { err: 'Non sono riuscito ad arredare la stanza, riprova.' }); return; }
     await makeVideo({ ...m, picks: [...m.picks, { label, icon: 'style' }] }, m.photo, label, d.url);
   };
   // Video in due fasi (28/09): 1) il server fa Prima (stanza vuota, Nano Banana) e Dopo (foto vera o nel nuovo stile)
