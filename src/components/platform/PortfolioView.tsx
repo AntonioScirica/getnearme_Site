@@ -55,7 +55,13 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
   const tpl = cfg?.template;
   const [demo, setDemo] = useState(false);
   useEffect(() => {
-    const on = () => { if (tpl) { setTab('sito'); setEditing(e => e ?? tpl); setDemo(true); } };
+    const on = () => {
+      if (!tpl) return;
+      setTab('sito'); setDemo(true);
+      // come un clic su "Scegli template": le altre card escono e la miniatura diventa l'editor (pick ignora i doppi)
+      const b = document.querySelector<HTMLButtonElement>(`[data-pick="${tpl}"]`);
+      if (b) b.click(); else setEditing(e => e ?? tpl);
+    };
     window.addEventListener('agenteimmo:tour-edit', on);
     return () => window.removeEventListener('agenteimmo:tour-edit', on);
   }, [tpl]);
@@ -423,7 +429,7 @@ function Gallery({ cfg, name, logo, props, onPick }: { cfg: SiteConfig; name: st
                 <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/25 to-transparent opacity-0 ease-smooth transition-opacity duration-[600ms] md:group-hover:opacity-100" />
                 <div className="absolute inset-x-3 bottom-3 z-10 grid grid-cols-2 gap-2 ease-smooth transition-[opacity,transform] duration-[600ms] md:translate-y-2 md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100 md:group-focus-within:translate-y-0 md:group-focus-within:opacity-100">
                   <a href={`#/anteprima/${t.id}`} target="_blank" rel="noopener" className="flex h-10 items-center justify-center gap-1.5 rounded-full bg-white/95 text-sm font-semibold text-ink shadow-lg ring-1 ring-black/5 backdrop-blur hover:bg-white"><Eye size={15} /> Anteprima</a>
-                  <button type="button" onClick={e => pick(t.id, e.currentTarget.closest('.group') as HTMLElement)} className="flex h-10 items-center justify-center gap-1.5 rounded-full bg-ink text-sm font-semibold text-white shadow-lg hover:bg-black"><Pencil size={14} /> Scegli template</button>
+                  <button type="button" data-pick={t.id} onClick={e => pick(t.id, e.currentTarget.closest('.group') as HTMLElement)} className="flex h-10 items-center justify-center gap-1.5 rounded-full bg-ink text-sm font-semibold text-white shadow-lg hover:bg-black"><Pencil size={14} /> Scegli template</button>
                 </div>
               </div>
               <div className="flex min-h-12 items-center gap-3 px-2 pt-2">
