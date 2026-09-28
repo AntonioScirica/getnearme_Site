@@ -7,10 +7,10 @@ export const runtime = 'nodejs'
 export const maxDuration = 300
 
 // Prova anonima dalla landing, secondo passo: la foto appena arredata diventa un video (ricetta "i mobili compaiono",
-// la stessa della piattaforma). ~1,7 $ a video con Veo 3.1 standard, ~0,9 $ con fast (Nano Banana 2 vuota + Sonnet elenco + Veo 8 s).
+// la stessa della piattaforma). ~0,7 $ a video con Veo 3.1 fast a 6 s (~1,3 $ standard) (Nano Banana 2 vuota + Sonnet elenco + Veo 8 s).
 // Limiti come la prova foto (riga contatore in ai_usage): 1 video al giorno per IP, tetto globale giornaliero.
 const PER_IP = 1
-const PER_DAY = 20 // ~35 $/giorno al massimo con Veo standard
+const PER_DAY = 20 // ~15 $/giorno al massimo
 const OWNER = 'landing'
 const MOCK_VIDEO = 'https://pub-a668674eaa484e8e8f2f10c264392bfc.r2.dev/spike-video/out/bbb243664b.mp4' // cartella su R2 e firma del lavoro
 const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)

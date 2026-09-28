@@ -24,8 +24,9 @@ import { MUSIC_CATALOG } from '@/lib/aiVideoMusic'
 //        raggiunto a 1-2 punti di distanza (nessuna dissolvenza visibile);
 //      - Popup e Particelle AL CONTRARIO (F -> E): "compaiono sul posto" in avanti faceva inventare i mobili a Veo
 //        (3 prove su 3, anche con Veo standard); da F i pezzi che spariscono sono quelli veri e la stanza che resta e' E.
-//      Lite (0,03 $/s) inventava i mobili e poi dissolveva anche in avanti: per Popup e Dall'alto serve standard
-//      (0,20 $/s) o fast (0,10 $/s, VEO_FAST=1; provato solo su Dall'alto, uguale a standard).
+//      Lite (0,03 $/s) inventava i mobili e poi dissolveva anche in avanti: per Popup e Dall'alto serve fast
+//      (0,10 $/s, provato su Dall'alto uguale a standard) o standard (0,20 $/s, VEO_FAST=0).
+//      Clip da 6 s (l'animazione finisce entro i 5), 8 s solo se fal rifiuta i 6 (la Lite li rifiutava).
 //   5. (GET) Dall'alto: primi 6 s di Veo; Popup e Particelle: clip fino a stanza vuota (tempo morto tolto), invertita.
 //      Poi passaggio di 0,35 s alla foto vera e 2 s di fermo su di essa: il video finisce SEMPRE sulla foto
 //      dell'agente, qualunque cosa abbia fatto Veo. Zoom 4% ease-in-out, musica.
@@ -34,13 +35,14 @@ import { MUSIC_CATALOG } from '@/lib/aiVideoMusic'
 
 const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 const FAL = 'https://queue.fal.run/fal-ai/veo3.1'
-// Popup e Dall'alto: Veo 3.1 standard, o fast con VEO_FAST=1 (meta' prezzo). Svuota (landing) resta su Lite.
-const VEO_FLF = `${FAL}/${process.env.VEO_FAST === '1' ? 'fast/' : ''}first-last-frame-to-video`
+// Popup, Dall'alto e Particelle: Veo 3.1 fast (0,10 $/s; standard con VEO_FAST=0, 0,20 $/s). Svuota (landing) resta su Lite.
+const VEO_FLF = `${FAL}/${process.env.VEO_FAST === '0' ? '' : 'fast/'}first-last-frame-to-video`
 const HOLD = 2 // fermo finale sulla foto vera
 const XFADE = 0.35 // passaggio dall'ultimo fotogramma di Veo alla foto vera
 const GRAVITY_CUT = 6 // Dall'alto: i pezzi si sono posati tutti entro i 5 s (prove del 28/09), il resto e' fermo
-// Veo primo/ultimo fotogramma su fal accetta SOLO 8 s (con 4 s rifiuta il lavoro: "Input should be '8s'").
+// Veo Lite primo/ultimo fotogramma su fal accetta SOLO 8 s (con 4 s rifiuta il lavoro: "Input should be '8s'").
 const VEO_SECONDS = 8
+const VEO_SHORT = 6 // Popup, Dall'alto e Particelle: si chiede 6 s, ripiego a 8 se rifiutati
 
 // Stanza vuota: un solo prompt coerente. Restano architettura e pezzi fissi (cucina, armadi a muro, camino), va via
 // tutto l'arredo mobile: sono i pezzi che poi cadono o spuntano nel video.
@@ -199,10 +201,12 @@ export async function startVideo(owner: string, logUser: string, o: { imageUrl: 
     const negative = o.empty ? negFor(anim) : anim === 'gravity' ? NEG_VEO : anim === 'particles' ? NEG_PARTICLES : NEG_REVERSE
     // la foto vera va a fine video (GET): salvata accanto al lavoro
     await uploadJpeg(furnished, `${key}-finale.jpg`)
-    const q = await fal(o.empty ? `${FAL}/lite/first-last-frame-to-video` : VEO_FLF, {
+    const submit = (seconds: number) => fal(o.empty ? `${FAL}/lite/first-last-frame-to-video` : VEO_FLF, {
       first_frame_url: first, last_frame_url: last, prompt: text, negative_prompt: negative,
-      duration: `${VEO_SECONDS}s`, aspect_ratio: landscape ? '16:9' : '9:16', resolution: '720p', generate_audio: false, seed: Math.floor(Math.random() * 1_000_000),
+      duration: `${seconds}s`, aspect_ratio: landscape ? '16:9' : '9:16', resolution: '720p', generate_audio: false, seed: Math.floor(Math.random() * 1_000_000),
     })
+    let q = await submit(o.empty ? VEO_SECONDS : VEO_SHORT)
+    if (!q.request_id && !o.empty) { console.warn('video fal 6s rifiutati, riprovo a 8s', JSON.stringify(q).slice(0, 300)); q = await submit(VEO_SECONDS) }
     if (!q.request_id) { console.error('video fal submit', q); return { error: 'ai_failed', status: 502 } }
     // il nome va nel lavoro firmato: a fine montaggio il video si salva accanto alla sua foto (copertina in Galleria)
     return { job: `${q.request_id}.${name.replace('/', '~')}.${sign(owner, `${q.request_id}.${name}`)}` }
@@ -253,8 +257,9 @@ export async function pollVideo(owner: string, job: string): Promise<VideoResult
     // passa in 0,35 s alla foto vera e ci resta 2 s: finisce SEMPRE sulla foto dell'agente.
     const veo = /-(p|g|d)$/.test(name)
     const popup = /-(p|d)$/.test(name) // al contrario
-    const cut = kling ? KLING_SECONDS * parts.length : !veo ? VEO_SECONDS : popup
-      ? calmPoint(await ffmpeg(['-i', raw, '-vf', 'scale=320:180,format=gray', '-f', 'rawvideo', '-']), 320 * 180) : GRAVITY_CUT
+    // la clip di Veo puo' essere di 6 o 8 s: Dall'alto prende al massimo i primi 6, mai oltre la fine
+    const gray = veo ? await ffmpeg(['-i', raw, '-vf', 'scale=320:180,format=gray', '-f', 'rawvideo', '-']) : Buffer.alloc(0)
+    const cut = kling ? KLING_SECONDS * parts.length : !veo ? VEO_SECONDS : popup ? calmPoint(gray, 320 * 180) : Math.min(GRAVITY_CUT, Math.floor(gray.length / (320 * 180)) / 24)
     const total = cut + HOLD, n = Math.round(total * 30)
     // zoom 4% ease-in-out su tutto il video, sub-pixel (perspective con interpolazione: niente tremolio)
     const z = `(1+0.04*(0.5-0.5*cos(PI*min(in/${n}\\,1))))`, o = `(1-1/${z})/2`
