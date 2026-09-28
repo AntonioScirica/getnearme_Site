@@ -98,6 +98,9 @@ const VIDEO_STYLES = [{ id: 'modern', label: 'Moderno' }, { id: 'nordic', label:
 
 // Crediti di un'azione, stessa regola del server (api/platform/photo-edit): luce gratis, svuota e arredo 5, modifica gratis
 // per le prime FREE_EDITS su una foto poi 1. Etichetta piccola accanto a ogni pulsante, cosi' l'agente sa cosa spende.
+// arreda davvero (non Svuota ne' Luminoso, che costano uguale): serve per chiedere "Quanto arredo?"
+const furnishes = (req: Partial<EditRequest>) => req.angle !== 'day' && req.style !== 'empty'
+  && (isFurnishing({ style: req.style, customPrompt: req.prompt, angle: req.angle, planimetria: req.planimetria, scene: req.scene as 'interno' | undefined, restyle: isRestyle(req.prompt ?? '') }) || !!req.styleRef);
 const creditsOf = (req: Partial<EditRequest>, editsDone: number): number => req.angle === 'day' ? CREDIT_COST.luminoso
   : req.style === 'empty' ? CREDIT_COST.svuota
   : isFurnishing({ style: req.style, customPrompt: req.prompt, angle: req.angle, planimetria: req.planimetria, scene: req.scene as 'interno' | undefined, restyle: isRestyle(req.prompt ?? '') }) || !!req.styleRef ? CREDIT_COST.arreda
@@ -507,14 +510,14 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   // interni: "Svuota la stanza" sempre primo, subito dopo Crea video (esterni e giardini hanno i loro "Rinnova")
   const sugs = suggestionsFor(kind);
   const typedDensity = textDensity ?? detectDensity(text) ?? 'normale';
-  const typingFurnish = !!base && scene === 'interno' && !!text.trim() && creditsOf({ prompt: text, scene }, editsDone) === CREDIT_COST.arreda;
+  const typingFurnish = !!base && scene === 'interno' && !!text.trim() && furnishes({ prompt: text, scene });
   const densityPills = ([['poco', 'Essenziale'], ['normale', 'Normale'], ['ricco', 'Ricco']] as const).map(([d, l]) => (
     <button key={d} role="radio" aria-checked={typedDensity === d} onClick={() => setTextDensity(d)}
       className={`flex h-8 shrink-0 items-center rounded-full px-3.5 pb-px text-[13px] font-medium leading-none shadow-sm ease-smooth transition-colors ${typedDensity === d ? 'bg-ink text-white' : 'bg-white text-ink/80 ring-1 ring-inset ring-black/10 hover:bg-canvas'}`}>{l}</button>
   ));
   const chips = [...videoChip, ...sugs.filter(x => roomState !== 'vuota' || (x.id !== 'empty' && x.id !== 'tidy')).map(x => (
     <button key={x.id} data-density-chip disabled={busy} onClick={e => {
-      if (creditsOf(x.req, editsDone) !== CREDIT_COST.arreda || scene !== 'interno') { void send(x.label, x); return; }
+      if (!furnishes(x.req) || scene !== 'interno') { void send(x.label, x); return; }
       const r = e.currentTarget.getBoundingClientRect();
       setDensityAsk(v => (v?.sug.id === x.id ? null : { sug: x, x: r.left + r.width / 2, y: r.top }));
     }}
