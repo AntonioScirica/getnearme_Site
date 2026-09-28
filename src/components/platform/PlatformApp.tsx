@@ -69,9 +69,9 @@ export default function PlatformApp({ userData }: { userData: UserData }) {
 
   // Onboarding: finche' l'agente non ha scelto nome + indirizzo portfolio, niente piattaforma.
   if (profile === undefined) return <div className="flex h-full items-center justify-center bg-canvas"><Loader2 className="animate-spin text-muted" /></div>;
-  // #/benvenuto la rimostra a chi vuole rivederla.
+  // #/benvenuto la rimostra a chi vuole rivederla (tutta: scarica la prova se c'e', onboarding, tour).
   // agente nuovo arrivato dalla prova della landing: prima scarica foto/video, poi l'onboarding dall'inizio
-  if (profile && !profile.slug && demoGate) return <div className="h-full" style={DOTS}><DemoDownload onDone={() => setDemoGate(false)} /></div>;
+  if (profile && (!profile.slug || route === '/benvenuto') && demoGate) return <div className="h-full" style={DOTS}><DemoDownload onDone={() => setDemoGate(false)} /></div>;
   if (profile && (!profile.slug || route === '/benvenuto')) return <Onboarding onDone={p => {
     // arrivato scegliendo un piano sulla landing: finito l'onboarding si va dritti al pagamento
     if (/^#\/piano\?buy=/.test(location.hash)) { setProfile(p); return; }
