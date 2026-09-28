@@ -124,8 +124,8 @@ export default function PlatformApp({ userData }: { userData: UserData }) {
         </div>
       </header>
 
-      {/* Profilo e Importa immobile: pillole in basso; in home al centro, nelle altre pagine a sinistra, in chat no */}
-      {!chat && <div className={`fixed bottom-5 z-30 flex items-center gap-2 ${route === '/' ? 'left-1/2 -translate-x-1/2' : 'left-5'}`}>
+      {/* Profilo e Importa immobile: pillole in basso; in home al centro, nelle altre pagine a sinistra, in chat e in Importa no */}
+      {!chat && route !== '/importa' && <div className={`fixed bottom-5 z-30 flex items-center gap-2 ${route === '/' ? 'left-1/2 -translate-x-1/2' : 'left-5'}`}>
         <a href="#/profilo" data-tour="profilo" style={morph ? { viewTransitionName: 'ob-bottom' } : undefined} className={`flex h-10 items-center gap-2 rounded-full bg-white px-4 text-sm font-medium shadow-sm ring-1 ring-line ease-smooth transition-shadow hover:shadow-md ${route === '/profilo' ? 'ring-ink' : ''}`}>
           <UserRound size={16} className="text-muted" /> Il mio profilo
         </a>
