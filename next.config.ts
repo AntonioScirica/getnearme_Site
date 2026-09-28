@@ -11,6 +11,8 @@ const nextConfig: NextConfig = {
   // NB: glob key — "[action]" would be parsed as a char-class, so use "**".
   outputFileTracingIncludes: {
     "/api/social/cron/**": ["./node_modules/@sparticuz/chromium/**"],
+    // Miglioralo: lettura degli annunci col nostro Chromium headless (lib/headlessRead)
+    "/api/platform/read-listing": ["./node_modules/@sparticuz/chromium/**"],
     // video della chat: il binario di ffmpeg-static (montaggio del video Veo)
     "/api/platform/video": ["./node_modules/ffmpeg-static/ffmpeg"],
   },

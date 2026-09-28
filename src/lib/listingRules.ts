@@ -26,7 +26,8 @@ const DATI: [keyof Fields, string, number][] = [
 ]
 const words = (s: string) => s.trim().split(/\s+/).filter(Boolean).length
 const VUOTI = /\b(splendid[oa]|imperdibile|occasione unica|affare|bellissim[oa]|stupend[oa]|meraviglios[oa])\b/i
-const CONTATTI = /(\+?\d[\d\s./-]{7,}\d)|([\w.+-]+@[\w-]+\.[\w.]+)/
+// telefoni italiani (cellulare 3xx o fisso 0x, anche con +39) ed email; non riferimenti, date o prezzi
+const CONTATTI = /(?:\+39[\s.]?)?(?<!\d)(?:3\d{2}|0\d{1,3})[\s./-]?\d{3}[\s./-]?\d{3,4}(?!\d)|[\w.+-]+@[\w-]+\.[a-z]{2,}/i
 const TIPOLOGIA = /\b(monolocale|bilocale|trilocale|quadrilocale|pentalocale|attico|mansarda|loft|villa|villino|villetta|rustico|casale|open space)\b/i
 
 export function rulesAnalysis(f: Fields) {

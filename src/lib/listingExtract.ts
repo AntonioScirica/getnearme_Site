@@ -17,6 +17,38 @@ ${KEYS.join(', ')}, planimetria (true se l'annuncio ha la planimetria, altriment
 const s = (v: unknown) => (typeof v === 'string' || typeof v === 'number' ? String(v).trim() : '')
 const num = (v: string) => v.match(/\d[\d.]*(?:,\d+)?/)?.[0].replace(/\.(?=\d{3})/g, '') ?? ''
 
+// immobiliare.it: l'annuncio intero sta nei dati di Next (__NEXT_DATA__ -> detailData.realEstate). Lettura precisa,
+// senza AI: il portale principale non deve dipendere da Gemini. null se la pagina non e' di immobiliare.
+type Imm = { caption?: string; description?: string; surface?: string; rooms?: string; bedRoomsNumber?: string; bathrooms?: string
+  floor?: { value?: string }; energy?: { class?: { name?: string }; heatingType?: string }; costs?: { condominiumExpenses?: string }
+  buildingYear?: number; condition?: string; garage?: string; features?: string[]; elevator?: boolean; availability?: string
+  multimedia?: { photos?: { urls?: { large?: string; xxl?: string } }[]; floorplans?: unknown[] }; location?: { address?: string; macrozone?: string; city?: string } }
+// Si legge dall'HTML intero appena scaricato (il JSON e' ~230.000 caratteri: nel formato grezzo verrebbe tagliato).
+export function immobiliare(html: string): { fields: Partial<Fields>; photos: string[] } | null {
+  const m = html.match(/<script[^>]*id=["']__NEXT_DATA__["'][^>]*>([\s\S]*?)<\/script>/i)
+  if (!m || !m[1].includes('"realEstate"')) return null
+  let data: { props?: { pageProps?: { detailData?: { realEstate?: { contract?: string; price?: { value?: number }; properties?: Imm[] } } } } }
+  try { data = JSON.parse(m[1]) } catch { return null }
+  const re = data.props?.pageProps?.detailData?.realEstate, p = re?.properties?.[0]
+  if (!re || !p) return null
+  const feats = (p.features ?? []).map(f => f.toLowerCase())
+  return {
+    photos: (p.multimedia?.photos ?? []).map(x => x.urls?.large || x.urls?.xxl || '').filter(Boolean),
+    fields: {
+      titolo: s(p.caption), descrizione: s(p.description), prezzo: re.price?.value ? String(re.price.value) : '',
+      mq: num(s(p.surface)), locali: s(p.rooms), camere: s(p.bedRoomsNumber), bagni: s(p.bathrooms), piano: s(p.floor?.value),
+      classe_energetica: s(p.energy?.class?.name), riscaldamento: s(p.energy?.heatingType), spese_condominiali: s(p.costs?.condominiumExpenses),
+      anno_costruzione: p.buildingYear ? String(p.buildingYear) : '', stato: s(p.condition), box_posto_auto: s(p.garage),
+      esposizione: feats.find(f => f.startsWith('esposizione'))?.replace('esposizione', '').trim() ?? '',
+      ascensore: p.elevator ? 'si' : '', balcone_terrazzo: feats.filter(f => /balcon|terrazz/.test(f)).join(', '),
+      arredato: feats.includes('arredato') ? 'si' : '', disponibilita: s(p.availability),
+      zona: [p.location?.address, p.location?.macrozone, p.location?.city].filter(Boolean).join(', '),
+      contratto: re.contract === 'rent' ? 'affitto' : re.contract === 'sale' ? 'vendita' : '',
+      planimetria: (p.multimedia?.floorplans?.length ?? 0) > 0,
+    },
+  }
+}
+
 // ripiego: campi dell'estensione (content script dei portali noti) + regex sul testo della pagina
 function fallback(l: ListingIn): Fields {
   const pi = (l.propertyInfo ?? {}) as Record<string, unknown>
@@ -46,6 +78,8 @@ function fallback(l: ListingIn): Fields {
 }
 
 export async function extractFields(l: ListingIn, userId: string): Promise<Fields> {
+  // campi gia' letti con precisione dal server (pageFetch: immobiliare), arrivati in propertyInfo
+  if (l.propertyInfo?._fonte === 'immobiliare') return { ...EMPTY_FIELDS, ...(l.propertyInfo as Partial<Fields>), foto: (l.photos ?? []).length }
   const base = fallback(l)
   const foto = (l.photos ?? []).length
   if (!l.raw?.text && !l.raw?.json) return { ...base, foto }
