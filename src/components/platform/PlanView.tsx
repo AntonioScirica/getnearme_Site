@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Check, Coins, Loader2, Sparkles, X } from 'lucide-react';
 import { authFetch, CARD_SHADOW } from './api';
 import { isBuy, type Buy } from '@/lib/startCheckout';
-import { Credits, SiteIncluded, SiteNotIncluded } from '@/components/PlanParts';
+import { Credits, SiteIncluded } from '@/components/PlanParts';
 export { isBuy };
 import { PRICING, PACKS, photosFor, videosFor, type PackId } from '@/lib/pricing';
 
@@ -119,7 +119,6 @@ export default function PlanView({ ok, buy }: { ok?: boolean; buy?: Buy }) {
           <div className="mt-3 flex items-end gap-2"><span className="font-display text-6xl font-extrabold tracking-tight">{PRICING.starter} €</span><span className="pb-2 text-muted">/ mese</span></div>
           <div className="mt-1 text-sm text-muted">Mensile, disdici quando vuoi</div>
           <Credits n={PRICING.starterCredits} />
-          <SiteNotIncluded />
           <div className="min-h-8 flex-1" />
           <button type="button" disabled={!!busy || (changing && c?.plan === 'starter')} onClick={() => go('starter')} className="flex h-12 items-center justify-center gap-2 rounded-full bg-white text-[15px] font-semibold ring-1 ring-black/10 hover:ring-ink disabled:opacity-60">{busy === 'starter' && <Loader2 size={15} className="animate-spin" />}{changing ? (c?.plan === 'starter' ? 'Il tuo piano' : 'Passa a Starter') : 'Scegli Starter'}</button>
         </div>

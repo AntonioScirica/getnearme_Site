@@ -11,7 +11,7 @@ import { ArrowRight, Check, Lock, ChevronLeft, ChevronRight, Clapperboard, FileT
 
 import { PRICING } from '@/lib/pricing';
 import { tiltMove, tiltReset } from '@/components/ui/tilt';
-import { Credits, SiteIncluded, SiteNotIncluded } from '@/components/PlanParts';
+import { Credits, SiteIncluded } from '@/components/PlanParts';
 import { VIDEO_SAMPLES } from '@/lib/videoSamples';
 import { startCheckout, type Buy } from '@/lib/startCheckout';
 import dynamic from 'next/dynamic';
@@ -404,7 +404,6 @@ function Pricing() {
           <div className="mt-3 flex items-end gap-2"><span className="font-display text-6xl font-extrabold tracking-tight">{en ? `€${PRICING.starter}` : `${PRICING.starter} €`}</span><span className="pb-2 text-muted">{L('/ mese', "/ month")}</span></div>
           <div className="mt-1 text-sm text-muted">{L('Mensile, disdici quando vuoi', "Monthly, cancel anytime")}</div>
           <Credits n={PRICING.starterCredits} en={en} />
-          <SiteNotIncluded en={en} />
           <div className="min-h-8 flex-1" />
           <Cta ghost href={buyHref('starter')} onClick={buyClick('starter')} className="w-full justify-center">{L('Scegli Starter', "Choose Starter")}</Cta>
         </Reveal>

@@ -1,4 +1,4 @@
-import { Globe, Lock, MessageCircle, Pencil, Search, Sparkles } from 'lucide-react';
+import { Globe, MessageCircle, Pencil, Search, Sparkles } from 'lucide-react';
 import { photosFor, videosFor } from '@/lib/pricing';
 
 // Pezzi delle card dei piani, uguali su landing e piattaforma: crediti in grande con cosa ci fai, e il sito (Plus e Pro dal 28/09).
@@ -30,12 +30,3 @@ export function SiteIncluded({ en, slug }: { en?: boolean; slug?: string | null 
   );
 }
 
-// Starter: il sito non c'e', lo dice chiaro e rimanda al Pro
-export function SiteNotIncluded({ en }: { en?: boolean }) {
-  return (
-    <div className="mt-3 rounded-[20px] bg-canvas p-5 text-muted">
-      <div className="flex items-center gap-2 font-display text-xl font-extrabold tracking-tight"><Lock size={16} /> {en ? 'Website: Plus and Pro plans' : 'Il tuo sito: nei piani Plus e Pro'}</div>
-      <div className="mt-1 pl-6 text-[15px]">{en ? 'Starter includes staged photos and videos only.' : 'Starter comprende solo foto arredate e video.'}</div>
-    </div>
-  );
-}
