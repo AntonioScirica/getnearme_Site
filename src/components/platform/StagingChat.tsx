@@ -103,7 +103,8 @@ const creditsOf = (req: Partial<EditRequest>, editsDone: number): number => req.
   : isFurnishing({ style: req.style, customPrompt: req.prompt, angle: req.angle, planimetria: req.planimetria, scene: req.scene as 'interno' | undefined, restyle: isRestyle(req.prompt ?? '') }) || !!req.styleRef ? CREDIT_COST.arreda
   : editsDone >= FREE_EDITS ? CREDIT_COST.modifica_extra : CREDIT_COST.modifica;
 function Cr({ n, dark }: { n: number; dark?: boolean }) {
-  return <span className={`ml-1.5 rounded-full px-1.5 py-px text-[10px] font-semibold leading-4 ${dark ? 'bg-white/20 text-white' : 'bg-black/[.06] text-muted'}`}>{n === 0 ? 'gratis' : `${n} cr`}</span>;
+  // stessa icona dei crediti della pagina Piano (Sparkles)
+  return <span title={n === 0 ? undefined : `${n} crediti`} className={`ml-1.5 inline-flex items-center gap-0.5 rounded-full px-1.5 py-px text-[10px] font-semibold leading-4 ${dark ? 'bg-white/20 text-white' : 'bg-black/[.06] text-muted'}`}>{n === 0 ? 'gratis' : <><Sparkles size={10} className="shrink-0" />{n}</>}</span>;
 }
 const uid = () => Math.random().toString(36).slice(2, 10);
 const wait = (ms: number) => new Promise(r => setTimeout(r, ms));
