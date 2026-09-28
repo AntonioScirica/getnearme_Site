@@ -117,10 +117,10 @@ export function AiPhotoStage({ src, busy, out, reveal, msg, fileName, onDownload
           <span className={`blur-in bottom-3 right-3 ${tag}`}>Dopo</span>
           {/* un solo pulsante: Scarica (dopo il clic "Scaricato" per 2 s); con `parked` (Modifica aperta) si stringe e diventa la X.
               Sta sopra la selezione (z-30) cosi' non ci sono mai due pulsanti uno sull'altro. */}
-          {/* Salva (nell'immobile) accanto a Scarica, stesso stile; con Modifica aperta sparisce */}
-          {onSave && (
+          {/* Salva (nell'immobile) accanto a Scarica, stesso stile; con Modifica aperta non c'e' (opacity-0 non basta: blur-in la riporta a 1) */}
+          {onSave && !parked && (
             <button onPointerDown={e => e.stopPropagation()} onClick={onSave} aria-pressed={saveActive} style={{ right: 12 + (labelW ?? 96) + 8 }}
-              className={`blur-in absolute top-3 z-30 flex h-9 items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 text-xs font-semibold shadow-sm ring-1 ring-black/5 backdrop-blur-md ease-smooth transition-[opacity,background-color] ${saveActive ? 'bg-white' : 'bg-white/85 hover:bg-white'} ${parked ? 'pointer-events-none opacity-0' : ''}`}>
+              className={`blur-in absolute top-3 z-30 flex h-9 items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 text-xs font-semibold shadow-sm ring-1 ring-black/5 backdrop-blur-md ease-smooth transition-[opacity,background-color] ${saveActive ? 'bg-white' : 'bg-white/85 hover:bg-white'} `}>
               <Building2 size={14} /> Salva
             </button>
           )}
