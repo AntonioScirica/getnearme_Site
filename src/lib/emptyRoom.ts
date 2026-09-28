@@ -4,7 +4,7 @@
 //   2. EVF-SAM (fal) fa la maschera di ogni pezzo; unione, chiusura dei buchi (il rivestimento tra pensili e piano) e dilatazione
 //   3. LaMa (fal) toglie tutto dentro la maschera: pareti e pavimento restano, ma sbavati
 //   4. Nano Banana pulisce le sbavature (pareti piane, piastrelle continue); il risultato si compone SOLO dentro la maschera
-// Prova sulla cucina con muretto del 28/09: pilastro, muretto, porta e piastrelle intatti. Costo ~0,10 $ a foto.
+// Prova sulla cucina con muretto del 28/09: pilastro, muretto, porta e piastrelle intatti. Costo ~0,07 $ a foto.
 import sharp from 'sharp'
 import Anthropic from '@anthropic-ai/sdk'
 import { nanoBanana } from '@/lib/nanoBanana'
@@ -97,7 +97,8 @@ export async function emptyRoomMasked(o: { userId: string; image: string; kind?:
     const cleared = await sharp(await download(lamaUrl)).resize(W, H, { fit: 'fill' }).jpeg({ quality: 95 }).toBuffer()
 
     // 4. pulizia delle sbavature, poi composizione solo dentro la maschera (bordo sfumato)
-    const cleaned = await nanoBanana({ userId: o.userId, image: dataUrl(cleared), kind: o.kind ?? 'empty', prompt: 'You are a professional real estate photo retoucher. In this photo of an empty room, furniture was digitally removed and left blurry smudges on the walls and floor. Clean them: make every smudged wall area a flat, plain wall freshly painted in the same color as the rest of that wall, from floor to ceiling, and where the floor is smudged continue the same floor with the same material, tiles and grid. Change nothing else: same walls, same half-height walls, same doors, same windows, same ceiling, same camera, same framing, same light. Do not add any furniture, tiles, decoration or object. Output one photorealistic photo, no text.' })
+    // Lite: e' una correzione (pareti piane, pavimento continuo), il terreno dove la Lite e' pari al modello grande, a meta' prezzo
+    const cleaned = await nanoBanana({ userId: o.userId, image: dataUrl(cleared), kind: o.kind ?? 'empty', lite: true, prompt: 'You are a professional real estate photo retoucher. In this photo of an empty room, furniture was digitally removed and left blurry smudges on the walls and floor. Clean them: make every smudged wall area a flat, plain wall freshly painted in the same color as the rest of that wall, from floor to ceiling, and where the floor is smudged continue the same floor with the same material, tiles and grid. Change nothing else: same walls, same half-height walls, same doors, same windows, same ceiling, same camera, same framing, same light. Do not add any furniture, tiles, decoration or object. Output one photorealistic photo, no text.' })
     // tre canali sempre (Nano Banana puo' rispondere in PNG con alfa)
     const top = cleaned ? await sharp(Buffer.from(cleaned, 'base64')).resize(W, H, { fit: 'fill' }).removeAlpha().raw().toBuffer() : await sharp(cleared).removeAlpha().raw().toBuffer()
     const base = await sharp(photo).removeAlpha().raw().toBuffer()
