@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Check, Loader2, Sparkles, X } from 'lucide-react';
+import { Check, Coins, Loader2, Sparkles, X } from 'lucide-react';
 import { authFetch, CARD_SHADOW } from './api';
 import { isBuy, type Buy } from '@/lib/startCheckout';
 import { Credits, SiteIncluded } from '@/components/PlanParts';
@@ -29,7 +29,7 @@ export function CreditsPill() {
   if (!c) return null;
   return (
     <a href="#/piano" className="flex h-10 items-center gap-1.5 rounded-full bg-white px-4 text-sm font-semibold ring-1 ring-line ease-smooth transition-shadow hover:shadow-md">
-      <Sparkles size={14} className="text-ai" /> {c.unlimited ? 'Crediti illimitati' : c.plan === 'none' ? 'Scegli un piano' : `${fmt(c.balance)} crediti`}
+      <Coins size={14} className="text-ai" /> {c.unlimited ? 'Crediti illimitati' : c.plan === 'none' ? 'Scegli un piano' : `${fmt(c.balance)} crediti`}
     </a>
   );
 }

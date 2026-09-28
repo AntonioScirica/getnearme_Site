@@ -99,11 +99,13 @@ export default function PlatformApp({ userData }: { userData: UserData }) {
       <header style={morph ? { viewTransitionName: 'ob-nav' } : undefined} className={`${route === '/immobili' ? 'absolute inset-x-0' : 'sticky'} top-0 z-30`}>
         <ProgressiveBlur />
         <div className="mx-auto flex h-20 max-w-6xl items-center px-6">
-          {/* in chat: niente logo, menu e Metti in vetrina, solo Indietro (la chat ha tutto lo spazio) */}
-          {chat ? (
+          {/* in chat: niente logo, menu e Metti in vetrina, solo Indietro e i crediti (la chat ha tutto lo spazio) */}
+          {chat ? (<>
             <button type="button" onClick={() => (history.length > 1 ? history.back() : (location.hash = '#/'))}
               className="flex h-10 items-center gap-1.5 rounded-full px-3 text-sm font-medium text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink"><ArrowLeft size={18} /> Indietro</button>
-          ) : <>
+            {/* crediti sempre in vista in alto a destra: in chat ogni azione ne spende */}
+            <div className="ml-auto"><CreditsPill /></div>
+          </>) : <>
           <a href="#/" className="flex items-center gap-2">
             <img src="/immo/logo-mark.png" alt="" className="h-8 w-8" style={{ viewTransitionName: 'ob-logo' }} />
             <span className="font-display text-lg font-extrabold tracking-tight">Agente <span className="text-brand">Immo</span></span>
