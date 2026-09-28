@@ -3,7 +3,7 @@
 import { Children, useEffect, useRef, useState } from 'react';
 import { Camera, Check, Copy, ExternalLink, Loader2, Wand2 } from 'lucide-react';
 import { AI_MOCK, mockFor } from '@/lib/aiMock';
-import { authFetch, CARD_SHADOW, go, warm } from './api';
+import { authFetch, CARD_SHADOW, go } from './api';
 import CountUp from './CountUp';
 import { PhotoEditModal } from './AiPhoto';
 import { CRITERI, withScores, type Criteri } from '@/lib/listingScore';
@@ -76,7 +76,6 @@ export function useImprove() {
     const u = target.trim();
     setError(null); setAnalysis(null);
     if (!LINK_RE.test(u)) { setError('Incolla il link completo dell\'annuncio (inizia con https://).'); setStage('error'); return; }
-    warm('analysis');
     setListing({ url: u, title: '', address: '', propertyInfo: {}, photos: [] });
     setStage('opening');
     if (AI_MOCK) { await wait(1500); if (id === run.current) analyze(MOCK_LISTING(u), id, true); return; }
@@ -433,7 +432,7 @@ function ProblemCard({ p, i, photos }: { p: Problem; i: number; photos: string[]
             <Check size={14} strokeWidth={3} /> Foto sistemata
           </button>
         ) : (
-          <button onClick={() => setFix(true)} onMouseEnter={() => warm('photo')} onFocus={() => warm('photo')} className="ml-auto flex h-8 shrink-0 items-center gap-1.5 rounded-full bg-brand px-3.5 text-xs font-semibold text-white ease-smooth transition-colors hover:bg-brand/90 active:scale-[0.97]">
+          <button onClick={() => setFix(true)} className="ml-auto flex h-8 shrink-0 items-center gap-1.5 rounded-full bg-brand px-3.5 text-xs font-semibold text-white ease-smooth transition-colors hover:bg-brand/90 active:scale-[0.97]">
             <Wand2 size={14} /> Sistema con AI
           </button>
         ))}
@@ -461,7 +460,7 @@ function ProblemCard({ p, i, photos }: { p: Problem; i: number; photos: string[]
   );
 }
 
-// Modifica foto con l'AI (Qwen-Image su RunPod) in un pannello sopra la pagina: prima/dopo e download.
+// Modifica foto con l'AI (GPT Image) in un pannello sopra la pagina: prima/dopo e download.
 function PhotoFix({ src, label, edit, onDone, onClose }: { src: string; label: string; edit: string; onDone: (url: string) => void; onClose: () => void }) {
   return <PhotoEditModal src={src} title={label} initialText={edit} onClose={onClose}
     actions={[{ label: 'Finito', primary: true, onClick: url => { onDone(url); onClose(); } }]} />;

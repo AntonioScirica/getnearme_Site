@@ -12,7 +12,7 @@ import { alignTo } from '@/lib/align'
 import { styleFromPhoto } from '@/lib/styleFromPhoto'
 import sharp from 'sharp'
 import { AI_MOCK, mockDelay } from '@/lib/aiMock'
-import { allowedUrl } from '@/lib/runpodImage'
+import { allowedUrl } from '@/lib/safeUrl'
 
 const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 

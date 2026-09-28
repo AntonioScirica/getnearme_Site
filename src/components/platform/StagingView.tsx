@@ -4,13 +4,13 @@ import { useEffect, useState } from 'react';
 import { Download, Loader2, Plus, Wand2, X } from 'lucide-react';
 import { downloadImage, fileToResizedDataUrl, SCENE_STYLE_LABELS, STAGING_STYLES } from '@/lib/staging';
 import { ANGLES, type SceneType } from '@/lib/stagingPrompts';
-import { AiPhotoStage, Elapsed, useAiPhoto, useKeepPhotoGpu, type EditRequest } from './AiPhoto';
+import { AiPhotoStage, Elapsed, useAiPhoto, type EditRequest } from './AiPhoto';
 import StagingChat from './StagingChat';
 import { CARD_SHADOW } from './api';
 
-// Home staging nella piattaforma (Qwen-Image, prompt in lib/stagingPrompts). Una foto alla volta: chat
+// Home staging nella piattaforma (GPT Image, prompt in lib/stagingPrompts e lib/nanoBanana). Una foto alla volta: chat
 // (StagingChat). Piu' foto caricate insieme: batch, ogni foto con la sua impostazione, "Genera tutte"
-// le lancia insieme (RunPod le distribuisce sui worker).
+// le lancia insieme.
 
 type Scene = SceneType | 'planimetria';
 type Item = { id: string; src: string; scene: Scene; style: string | null; angle: string | null; custom: string };
@@ -38,7 +38,6 @@ const fileName = (it: Item, i = 0) => `home-staging-${i ? `${i}-` : ''}${it.angl
 const newItem = (src: string): Item => ({ id: Math.random().toString(36).slice(2), src, scene: 'interno', style: 'modern', angle: null, custom: '' });
 
 // La GPU resta accesa solo mentre ci sono foto caricate in pagina.
-function KeepGpu() { useKeepPhotoGpu(); return null; }
 
 const primary = 'flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-brand px-4 text-[13px] font-semibold text-white ease-smooth transition-[background-color,opacity,transform] hover:bg-brand/90 active:scale-[0.97] disabled:opacity-40';
 const secondary = 'flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-white px-4 text-[13px] font-semibold ring-1 ring-black/10 ease-smooth transition-colors hover:bg-canvas disabled:opacity-40';
@@ -69,8 +68,6 @@ export default function StagingView({ initial }: { initial?: { photo?: string; p
         <span className="blur-in inline-block">Home staging</span>
         <span className="blur-in block text-muted/70" style={{ animationDelay: '.1s' }}>Scegli cosa fare su ogni foto, poi generale tutte insieme.</span>
       </h1>
-      <KeepGpu />
-
       {items.length > 1 && (
         <>
           {/* Barra del batch: stesso stile per tutte, aggiungi, genera tutte, scarica tutte */}

@@ -6,13 +6,11 @@ import { AI_MOCK } from '@/lib/aiMock'
 import { getTeamUserIds } from '@/lib/teamScope'
 
 const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
-const RUNPOD = 'https://api.runpod.ai/v2'
 export const maxDuration = 120
 
 // Tipo di foto (interno/esterno/giardino/planimetria), stanza e stato. Quasi istantaneo:
 // 1. foto di un immobile gia' riconosciuta: risposta dalla memoria dell'immobile (import_data.rooms);
-// 2. altrimenti gara tra la nostra GPU (gratis ma a volte spenta) e Claude Haiku (sempre acceso, ~1 s):
-//    vince il primo che risponde. Il risultato si salva nell'immobile, la volta dopo e' immediato.
+// 2. altrimenti Claude Haiku (~1 s). Il risultato si salva nell'immobile, la volta dopo e' immediato.
 export type Classified = { scene: 'interno' | 'esterno' | 'giardino' | 'planimetria'; room: string; state?: string }
 const SCENES = ['interno', 'esterno', 'giardino', 'planimetria']
 const ROOMS = ['openspace', 'soggiorno', 'cucina', 'camera', 'cameretta', 'bagno', 'sala', 'studio', 'ingresso', 'corridoio', 'balcone', 'cantina', 'box', 'altro']
@@ -26,19 +24,6 @@ const clean = (o: Partial<Classified> | null | undefined): Classified | null => 
   if (!o || !SCENES.includes(String(o.scene))) return null
   const interno = o.scene === 'interno'
   return { scene: o.scene as Classified['scene'], room: interno && ROOMS.includes(String(o.room)) ? String(o.room) : interno ? 'altro' : '', state: interno && STATES.includes(String(o.state)) ? String(o.state) : '' }
-}
-
-async function viaGpu(image: { imageBase64?: string; imageUrl?: string }): Promise<Classified> {
-  const id = process.env.AI_IMAGE_ENDPOINT_ID
-  if (!id || !process.env.RUNPOD_API_KEY) throw new Error('no_gpu')
-  const r = await fetch(`${RUNPOD}/${id}/runsync`, {
-    method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RUNPOD_API_KEY}` },
-    body: JSON.stringify({ input: { classify: true, ...(image.imageBase64 ? { image_base64: image.imageBase64 } : { image_url: image.imageUrl }) } }),
-    signal: AbortSignal.timeout(110_000),
-  }).then(x => x.json())
-  const c = clean(r?.output)
-  if (!c) throw new Error('gpu_failed')
-  return c
 }
 
 async function viaHaiku(image: { imageBase64?: string; imageUrl?: string }): Promise<Classified> {
@@ -81,9 +66,7 @@ export async function POST(req: NextRequest) {
   if (project && rooms[photoUrl] && (rooms[photoUrl] as Classified & { v?: number }).v === 2) return NextResponse.json({ ...rooms[photoUrl], cached: true })
 
   const image = { imageBase64, imageUrl }
-  // solo Haiku: il riconoscimento del worker ha la sua lista di stanze (senza openspace) e, a GPU calda, rispondeva
-  // per primo "soggiorno" sulle cucine a vista (27/09). Il worker resta di riserva se Haiku non risponde.
-  const c = await viaHaiku(image).catch(() => viaGpu(image)).catch(() => null)
+  const c = await viaHaiku(image).catch(() => null)
   if (!c) return NextResponse.json({ error: 'ai_failed' }, { status: 502 })
   if (project) {
     const d = (project.import_data && typeof project.import_data === 'object' ? project.import_data : {}) as Record<string, unknown>

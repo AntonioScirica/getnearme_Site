@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { canAfford, spendOnce } from '@/lib/credits'
 import { CREDIT_COST } from '@/lib/pricing'
-import { allowedUrl } from '@/lib/runpodImage'
+import { allowedUrl } from '@/lib/safeUrl'
 import { parseAnim, pollVideo, renderVideo, startVideo, type FramesResult, type VideoResult } from '@/lib/videoJob'
 
 export const runtime = 'nodejs'

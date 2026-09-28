@@ -1,16 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { AlertTriangle, Cpu, Loader2, RefreshCw, Wallet, Zap } from 'lucide-react';
+import { Cpu, Loader2, RefreshCw } from 'lucide-react';
 import { authFetch } from './api';
 
-// Costi AI in tempo reale (solo admin): RunPod (credito, spesa/ora, worker) + ai_usage
-// per agente. Dati da /api/platform/costs (lib/aiCosts), refresh ogni 10 s.
+// Costi AI in tempo reale (solo admin): ai_usage per agente. Dati da /api/platform/costs (lib/aiCosts), refresh ogni 10 s.
 
-type Health = { jobs: { inQueue: number; inProgress: number; completed: number; failed: number }; workers: { idle: number; running: number; initializing: number; ready: number } } | null;
-type Endpoint = { id: string; name: string; gpuIds: string; workersMin: number; workersMax: number; idleTimeout: number; health: Health };
 type Data = {
-  runpod: { balance: number; spendPerHr: number; spendLimit: number; endpoints: Endpoint[] } | null;
   usage: {
     monthTotal: number; calls: number;
     byUser: { id: string; email: string; calls: number; cost: number }[];
@@ -47,8 +43,6 @@ export default function CostsView() {
 
   if (!data) return error ? <p className="text-sm text-red-600">{error}</p> : <Loader2 className="animate-spin text-muted" />;
 
-  const rp = data.runpod;
-  const alwaysOn = rp?.endpoints.filter(e => e.workersMin > 0) ?? [];
   const maxDay = Math.max(0.0001, ...data.usage.byDay.map(d => d.cost));
 
   return (
@@ -58,55 +52,9 @@ export default function CostsView() {
         <span className="flex items-center gap-1.5 text-xs text-muted"><RefreshCw size={12} /> Aggiornato {new Date(data.fetchedAt).toLocaleTimeString('it-IT')} · ogni 10 s{error && <span className="text-red-600"> · ultimo aggiornamento fallito</span>}</span>
       </div>
 
-      {!rp && <div className={`${card} text-sm text-amber-700`}>RunPod non raggiungibile o RUNPOD_API_KEY mancante.</div>}
-
-      {rp && (
-        <>
-          {alwaysOn.map(e => (
-            <div key={e.id} className="flex items-start gap-3 rounded-2xl bg-red-50 p-4 text-sm text-red-700 ring-1 ring-red-200">
-              <AlertTriangle size={18} className="shrink-0" />
-              <div><b>{e.name}</b> ha <b>{e.workersMin} worker sempre accesi</b>: paghi la GPU anche senza richieste.</div>
-            </div>
-          ))}
-
-          <div className="grid gap-4 md:grid-cols-4">
-            <Kpi icon={Wallet} label="Credito RunPod" value={usd(rp.balance)} warn={rp.balance < 5} />
-            <Kpi icon={Zap} label="Spesa adesso" value={`${usd(rp.spendPerHr)}/h`} sub="solo mentre le GPU sono accese (si spengono da sole dopo 1 minuto)" warn={rp.spendPerHr > 0} />
-            <Kpi icon={Wallet} label="Limite di spesa" value={`${usd(rp.spendLimit, 0)}/h`} />
-            <Kpi icon={Cpu} label="Costo AI stimato, mese" value={usd(data.usage.monthTotal, 3)} sub={`${data.usage.calls} chiamate`} />
-          </div>
-
-          <div className={card}>
-            <h2 className="font-display text-lg font-semibold">Endpoint RunPod</h2>
-            <div className="mt-3 overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="text-xs text-muted">
-                  <tr className="text-left"><th className="py-2 font-medium">Nome</th><th className="font-medium">GPU</th><th className="font-medium">Min/Max</th><th className="font-medium">Idle</th><th className="font-medium">Accesi</th><th className="font-medium">In lavoro</th><th className="font-medium">In avvio</th><th className="font-medium">Coda</th><th className="font-medium">Falliti</th></tr>
-                </thead>
-                <tbody>
-                  {rp.endpoints.map(e => {
-                    const w = e.health?.workers; const j = e.health?.jobs;
-                    const on = w ? w.idle + w.running + w.initializing : 0;
-                    return (
-                      <tr key={e.id} className="border-t border-line">
-                        <td className="py-2.5 font-medium">{e.name}<div className="text-xs font-normal text-muted">{e.id}</div></td>
-                        <td className="text-xs">{e.gpuIds}</td>
-                        <td className={e.workersMin > 0 ? 'font-semibold text-red-600' : ''}>{e.workersMin}/{e.workersMax}</td>
-                        <td>{e.idleTimeout}s</td>
-                        <td className={on > 0 ? 'font-semibold text-amber-600' : 'text-muted'}>{w ? on : '?'}</td>
-                        <td>{w?.running ?? '?'}</td>
-                        <td>{w?.initializing ?? '?'}</td>
-                        <td>{j?.inQueue ?? '?'}</td>
-                        <td className={j?.failed ? 'text-red-600' : ''}>{j?.failed ?? '?'}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </>
-      )}
+      <div className="grid gap-4 md:grid-cols-4">
+        <Kpi icon={Cpu} label="Costo AI stimato, mese" value={usd(data.usage.monthTotal, 3)} sub={`${data.usage.calls} chiamate`} />
+      </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
         <div className={card}>

@@ -61,7 +61,7 @@ ${DETAIL_FIELDS.map(f => `- d:${f.key}: ${f.label}${f.options?.length ? ` (valor
 Rispondi SOLO con un oggetto JSON valido, chiavi = i campi target, valori = nome colonna esatto (copiato dagli header) o stringa vuota. Nessun altro testo.`
 
   try {
-    // stesso modello dei testi della piattaforma (Qwen su RunPod, ripiego su Claude): lib/ai
+    // stesso modello dei testi della piattaforma (Claude): lib/ai
     const r = await generateJson<Record<string, unknown>>({
       system: 'Sei un mappatore di colonne per import immobiliari. Rispondi solo con il JSON richiesto.',
       text: prompt,

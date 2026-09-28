@@ -7,7 +7,7 @@ import { platformFontVars } from '@/lib/platformFonts';
 import { downloadImage } from '@/lib/staging';
 import { AI_MOCK } from '@/lib/aiMock';
 import InlineSlider from '@/components/InlineSlider';
-import { authFetch, CARD_SHADOW, warm } from './api';
+import { authFetch, CARD_SHADOW } from './api';
 
 // Modifica foto con Qwen-Image, condivisa da "Sistema con AI" (Migliora annuncio) e Home staging:
 // stato della generazione, riquadro con alone mentre lavora e slider prima/dopo alla fine.
@@ -26,14 +26,6 @@ export type Region = { x: number; y: number; w: number; h: number; poly?: { x: n
 export type EditRequest = { imageUrl?: string; imageBase64?: string; prompt?: string; style?: string; angle?: string; scene?: string; planimetria?: boolean; region?: Region; points?: { x: number; y: number }[]; projectId?: string; room?: string; variant?: number; reference?: string; styleRef?: string; edits?: number; density?: 'poco' | 'ricco' };
 export type Reveal = 'burst' | 'line' | 'slider' | null;
 
-// GPU accesa finche' il componente che la usa e' a schermo (segnale ogni 50 s, spegnimento a 60 s).
-export function useKeepPhotoGpu() {
-  useEffect(() => {
-    warm('photo');
-    const t = setInterval(() => warm('photo'), 50_000);
-    return () => clearInterval(t);
-  }, []);
-}
 
 export function useAiPhoto() {
   const [busy, setBusy] = useState(false);
@@ -167,7 +159,6 @@ export function PhotoChat({ original, scene, fileName, actions = [], className, 
   const [runBase, setRunBase] = useState(original);
   const [pending, setPending] = useState('');
   const ai = useAiPhoto();
-  useKeepPhotoGpu();
 
   // risultato arrivato: diventa una nuova versione e quella corrente
   useEffect(() => {

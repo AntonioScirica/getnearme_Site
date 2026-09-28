@@ -7,7 +7,7 @@ import { Anvil, ChevronsLeftRight, Coins, WandSparkles, Film, HardHat, MoonStar,
 import { fileToResizedDataUrl } from '@/lib/staging';
 import { AI_MOCK } from '@/lib/aiMock';
 import { AiPhotoStage, Elapsed, type EditRequest, type Region, type Reveal, type Suggestion } from './AiPhoto';
-import { authFetch, CARD_SHADOW, portfolioUrl, warm } from './api';
+import { authFetch, CARD_SHADOW, portfolioUrl } from './api';
 import ProgressiveBlur from '@/components/ProgressiveBlur';
 import Dropdown, { type DropdownOption } from '@/components/ui/Dropdown';
 import Tooltip from '@/components/ui/Tooltip';
@@ -274,13 +274,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   // a 60 s). Dopo 2 minuti senza scrivere, caricare o generare non la teniamo piu' accesa; uscendo dalla
   // pagina si spegne da sola. Qualsiasi attivita' la riaccende.
   const lastActive = useRef(0);
-  const touch = useCallback(() => { const now = Date.now(); if (now - lastActive.current > 2 * 60_000) warm('photo'); lastActive.current = now; }, []);
-  useEffect(() => {
-    lastActive.current = Date.now();
-    warm('photo');
-    const t = setInterval(() => { if (Date.now() - lastActive.current < 2 * 60_000) warm('photo'); }, 50_000);
-    return () => clearInterval(t);
-  }, []);
+  const touch = useCallback(() => { lastActive.current = Date.now(); }, []);
 
   useEffect(() => { toBottom(); }, [msgs.length, selecting, toBottom]);
   useEffect(() => {

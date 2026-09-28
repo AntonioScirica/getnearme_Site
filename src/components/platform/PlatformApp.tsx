@@ -20,7 +20,7 @@ import MediaView from './MediaView';
 import PropertiesView from './PropertiesView';
 import { isPlatformAdmin } from '@/lib/platformAdmins';
 import ProgressiveBlur from '@/components/ProgressiveBlur';
-import { go, formatPrice, authFetch, CARD_SHADOW, warm } from './api';
+import { go, formatPrice, authFetch, CARD_SHADOW } from './api';
 import ProfileForm, { type Profile } from './ProfileForm';
 import Onboarding from './Onboarding';
 import PlanView, { CreditsPill, DemoDownload, hasDemo, isBuy, NoCreditsModal } from './PlanView';
@@ -392,13 +392,13 @@ export function HomeView({ name, initialUrl = '', onSaved, morph }: { name?: str
   // Arrivo da #/migliora?url=... : parte subito.
   useEffect(() => {
     if (!initialUrl) return;
-    const t = setTimeout(() => { setIntro(false); setOpen(true); warm('analysis'); imp.start(initialUrl); }, 0);
+    const t = setTimeout(() => { setIntro(false); setOpen(true); imp.start(initialUrl); }, 0);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialUrl]);
 
   // Apre Migliora = intenzione di analizzare: si accende la GPU dell'analisi (avvio a freddo ~3,5 min).
-  const openLink = () => { setIntro(false); setOpen(true); warm('analysis'); };
+  const openLink = () => { setIntro(false); setOpen(true); };
   const vetrina = (name ?? 'tuonome').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   const close = () => { imp.reset(); setOpen(false); };
   const restart = () => { imp.reset(); setUrl(''); document.querySelector('main')?.scrollTo({ top: 0, behavior: 'smooth' }); };
