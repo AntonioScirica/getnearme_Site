@@ -32,7 +32,7 @@ export default function LazyVideo({
       const r = v.getBoundingClientRect();
       return r.bottom > -300 && r.top < window.innerHeight + 300 && r.right > 0 && r.left < window.innerWidth;
     };
-    if (isVisibleNow()) setLoad(true);
+    if (isVisibleNow()) queueMicrotask(() => setLoad(true));
 
     const io = new IntersectionObserver(
       (entries) => {

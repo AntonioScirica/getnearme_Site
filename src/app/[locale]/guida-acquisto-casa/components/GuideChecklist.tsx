@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback, useSyncExternalStore } from "react";
 import { Check, ListChecks } from "lucide-react";
 
 type Props = {
@@ -11,30 +11,30 @@ type Props = {
 
 const STORAGE_PREFIX = "gnm_guide_cl_";
 
+const noopSubscribe = () => () => {};
+
+function loadChecked(slug: string, items: string[]): boolean[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(STORAGE_PREFIX + slug);
+    if (raw) {
+      const saved: number[] = JSON.parse(raw);
+      return items.map((_, i) => saved.includes(i));
+    }
+    return items.map(() => false);
+  } catch {
+    return items.map(() => false);
+  }
+}
+
 export default function GuideChecklist({
   slug,
   items,
   onCompletionChange,
 }: Props) {
-  const [checked, setChecked] = useState<boolean[]>([]);
-  const [mounted, setMounted] = useState(false);
-
-  // Load from localStorage
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_PREFIX + slug);
-      if (raw) {
-        const saved: number[] = JSON.parse(raw);
-        const arr = items.map((_, i) => saved.includes(i));
-        setChecked(arr);
-      } else {
-        setChecked(items.map(() => false));
-      }
-    } catch {
-      setChecked(items.map(() => false));
-    }
-    setMounted(true);
-  }, [slug, items]);
+  // Load from localStorage (client only); render nothing until hydrated
+  const [checked, setChecked] = useState<boolean[]>(() => loadChecked(slug, items));
+  const mounted = useSyncExternalStore(noopSubscribe, () => true, () => false);
 
   // Persist + notify parent
   const persist = useCallback(

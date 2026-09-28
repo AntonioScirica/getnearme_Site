@@ -9,7 +9,9 @@
 // hand-maintained template list with invented ids.
 
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+
+const noopSubscribe = () => () => {};
 import { ArrowLeft, Eye, Layers } from "lucide-react";
 import {
   PED_CATALOG,
@@ -96,19 +98,17 @@ function TemplateFrame({
 
 export default function TemplatesPage() {
   const router = useRouter();
-  const [authKey, setAuthKey] = useState<string | null>(null);
+  const [authKey] = useState<string | null>(() =>
+    typeof window === "undefined" ? null : sessionStorage.getItem("metrics_key")
+  );
+  const hydrated = useSyncExternalStore(noopSubscribe, () => true, () => false);
   const [selected, setSelected] = useState<string>(ALL_CATALOG[0]?.id ?? "");
 
   useEffect(() => {
-    const key = sessionStorage.getItem("metrics_key");
-    if (!key) {
-      router.replace("/metrics");
-      return;
-    }
-    setAuthKey(key);
-  }, [router]);
+    if (!authKey) router.replace("/metrics");
+  }, [authKey, router]);
 
-  if (!authKey) return null;
+  if (!hydrated || !authKey) return null;
 
   const tpl = ALL_CATALOG.find((t) => t.id === selected) ?? ALL_CATALOG[0];
   const previews = ALL_PREVIEWS[tpl.id];

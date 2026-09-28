@@ -18,17 +18,15 @@ export default function SocialPopup({ messages }: SocialPopupProps) {
   const [show, setShow] = useState(false);
   const [fading, setFading] = useState(false);
   const [visible, setVisible] = useState(false);
-  const [order, setOrder] = useState<number[]>([]);
-
   // Shuffle message order on mount
-  useEffect(() => {
+  const [order] = useState<number[]>(() => {
     const indices = Array.from({ length: messages.length }, (_, i) => i);
     for (let i = indices.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [indices[i], indices[j]] = [indices[j], indices[i]];
     }
-    setOrder(indices);
-  }, [messages.length]);
+    return indices;
+  });
 
   const getRandomInterval = useCallback(() => {
     return 120000 + Math.floor(Math.random() * 120000); // 120-240 seconds between popups
@@ -36,17 +34,13 @@ export default function SocialPopup({ messages }: SocialPopupProps) {
 
   // Initial appearance with random delay
   useEffect(() => {
-    const d = setTimeout(() => setShow(true), 15000 + Math.floor(Math.random() * 10000));
-    return () => clearTimeout(d);
-  }, []);
-
-  // When show turns true, make visible
-  useEffect(() => {
-    if (show) {
+    const d = setTimeout(() => {
+      setShow(true);
       setVisible(true);
       setFading(false);
-    }
-  }, [show]);
+    }, 15000 + Math.floor(Math.random() * 10000));
+    return () => clearTimeout(d);
+  }, []);
 
   // Auto-hide after 3s with fade out
   useEffect(() => {
@@ -68,6 +62,8 @@ export default function SocialPopup({ messages }: SocialPopupProps) {
     const nextId = setTimeout(() => {
       setCur((c) => (c + 1) % order.length);
       setShow(true);
+      setVisible(true);
+      setFading(false);
     }, getRandomInterval());
     return () => clearTimeout(nextId);
   }, [show, visible, order.length, getRandomInterval]);

@@ -369,7 +369,8 @@ function Td({ children }: { children: React.ReactNode }) {
 // Inline-editable text cell: looks like text, becomes editable on focus, saves on blur.
 function Txt({ v, onSave, bold, wide, num }: { v: string | null; onSave: (v: string) => void; bold?: boolean; wide?: boolean; num?: boolean }) {
   const [val, setVal] = useState(v ?? "");
-  useEffect(() => { setVal(v ?? ""); }, [v]);
+  const [prevV, setPrevV] = useState(v);
+  if (prevV !== v) { setPrevV(v); setVal(v ?? ""); }
   return (
     <input
       value={val}

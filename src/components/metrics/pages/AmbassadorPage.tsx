@@ -219,7 +219,7 @@ export default function AmbassadorPage({ data, authKey }: { data: MetricsData; a
             )}
             {promoteSearch.trim().length === 0 && (
               <p className={`${MONO} text-xs text-gray-600 text-center py-6`}>
-                Digita l'email per cercare un utente
+                Digita l&apos;email per cercare un utente
               </p>
             )}
             {promoteResults.map((user) => (

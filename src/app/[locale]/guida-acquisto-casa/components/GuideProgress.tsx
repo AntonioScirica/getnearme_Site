@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useSyncExternalStore } from "react";
 import { Trophy } from "lucide-react";
 
 type Props = {
@@ -8,23 +8,28 @@ type Props = {
   chapterSlugs: string[];
 };
 
+const noopSubscribe = () => () => {};
+
+function loadCompleted(chapterSlugs: string[]): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem("gnm_guide_completed");
+    if (raw) {
+      const parsed: string[] = JSON.parse(raw);
+      // Only count slugs that actually exist
+      return parsed.filter((s) => chapterSlugs.includes(s));
+    }
+  } catch {
+    // ignore
+  }
+  return [];
+}
+
 export default function GuideProgress({ totalChapters, chapterSlugs }: Props) {
-  const [completed, setCompleted] = useState<string[]>([]);
-  const [mounted, setMounted] = useState(false);
+  const [completed, setCompleted] = useState<string[]>(() => loadCompleted(chapterSlugs));
+  const mounted = useSyncExternalStore(noopSubscribe, () => true, () => false);
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem("gnm_guide_completed");
-      if (raw) {
-        const parsed: string[] = JSON.parse(raw);
-        // Only count slugs that actually exist
-        setCompleted(parsed.filter((s) => chapterSlugs.includes(s)));
-      }
-    } catch {
-      // ignore
-    }
-    setMounted(true);
-
     // Listen for storage changes from other tabs
     const handler = (e: StorageEvent) => {
       if (e.key === "gnm_guide_completed" && e.newValue) {

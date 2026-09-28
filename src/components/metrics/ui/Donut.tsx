@@ -15,12 +15,14 @@ export default function Donut({ segments, size = 80 }: DonutProps) {
     );
   }
 
+  const stops: string[] = [];
   let cumulative = 0;
-  const stops = segments.map((seg, i) => {
+  for (let i = 0; i < segments.length; i++) {
+    const seg = segments[i];
     const start = cumulative;
     cumulative += (seg.value / total) * 360;
-    return `${seg.color || PALETTE[i % PALETTE.length]} ${start}deg ${cumulative}deg`;
-  });
+    stops.push(`${seg.color || PALETTE[i % PALETTE.length]} ${start}deg ${cumulative}deg`);
+  }
 
   const gradient = `conic-gradient(${stops.join(", ")})`;
 

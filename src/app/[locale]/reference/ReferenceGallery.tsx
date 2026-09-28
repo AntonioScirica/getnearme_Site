@@ -150,7 +150,7 @@ export default function ReferenceGallery({ variant, media = [], posts = [], reel
   const closeLightbox = useCallback(() => {
     setLightboxItem(null);
     if (window.location.hash) history.replaceState(null, '', window.location.pathname);
-  }, []);
+  }, [setLightboxItem]);
 
   const allItems: MediaItem[] = variant === 'social'
     ? [

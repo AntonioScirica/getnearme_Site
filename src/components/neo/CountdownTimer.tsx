@@ -29,18 +29,16 @@ function getOrCreateTarget(): number {
 }
 
 function useCountdown() {
-  const [target, setTarget] = useState<number | null>(null);
+  // Initialize from cookie on mount (client only)
+  const [target, setTarget] = useState<number | null>(() =>
+    typeof window === 'undefined' ? null : getOrCreateTarget()
+  );
   const [t, setT] = useState({ h: 47, m: 59, s: 59 });
 
   const resetCountdown = useCallback(() => {
     const newTarget = Date.now() + COUNTDOWN_DURATION;
     setCookie(COOKIE_NAME, String(newTarget), 3);
     setTarget(newTarget);
-  }, []);
-
-  // Initialize from cookie on mount (client only)
-  useEffect(() => {
-    setTarget(getOrCreateTarget());
   }, []);
 
   useEffect(() => {

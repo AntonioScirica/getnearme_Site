@@ -54,17 +54,20 @@ const fmtEst = (h: number) => (h < 1 ? `${Math.round(h * 60)}min` : `${h % 1 ===
 function useAnchoredRect(open: boolean, anchorRef: React.RefObject<HTMLElement | null>) {
   const [rect, setRect] = useState<{ top: number; bottom: number; left: number; width: number } | null>(null);
   useEffect(() => {
-    if (!open || !anchorRef.current) { setRect(null); return; }
+    if (!open || !anchorRef.current) return;
     const update = () => {
-      const r = anchorRef.current!.getBoundingClientRect();
+      const el = anchorRef.current;
+      if (!el) return;
+      const r = el.getBoundingClientRect();
       setRect({ top: r.top, bottom: r.bottom, left: r.left, width: r.width });
     };
-    update();
+    queueMicrotask(update);
     window.addEventListener("scroll", update, true);
     window.addEventListener("resize", update);
     return () => {
       window.removeEventListener("scroll", update, true);
       window.removeEventListener("resize", update);
+      setRect(null);
     };
   }, [open, anchorRef]);
   return rect;

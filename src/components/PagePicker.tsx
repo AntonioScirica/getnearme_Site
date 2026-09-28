@@ -160,8 +160,8 @@ export default function PagePicker({ sessionId, locale }: Props) {
       } else {
         throw new Error("Save failed");
       }
-    } catch (e: any) {
-      setErrorMsg(e.message);
+    } catch (e) {
+      setErrorMsg(e instanceof Error ? e.message : String(e));
       setStatus("error");
     }
   }

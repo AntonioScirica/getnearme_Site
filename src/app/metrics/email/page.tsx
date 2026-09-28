@@ -1,24 +1,23 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { Lock, Loader2 } from "lucide-react";
 import EmailsPage from "@/components/metrics/pages/EmailsPage";
 import { MONO } from "@/components/metrics/types";
 
 const EMAIL_KEY = "GetEmail";
 
+const noopSubscribe = () => () => {};
+
 export default function EmailOnlyPage() {
-  const [authed, setAuthed] = useState(false);
+  const [authed, setAuthed] = useState(
+    () => typeof window !== "undefined" && !!sessionStorage.getItem("metrics_key")
+  );
   const [pw, setPw] = useState("");
   const [error, setError] = useState(false);
   const [shake, setShake] = useState(false);
-  const [checking, setChecking] = useState(true);
-
-  useEffect(() => {
-    const saved = sessionStorage.getItem("metrics_key");
-    if (saved) setAuthed(true);
-    setChecking(false);
-  }, []);
+  // Show the loader until hydrated (sessionStorage is client-only)
+  const checking = !useSyncExternalStore(noopSubscribe, () => true, () => false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
