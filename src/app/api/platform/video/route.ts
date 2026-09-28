@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
   // phase 'frames': solo Prima e Dopo (la chat li mostra); 'render': Veo dal token di Prima/Dopo approvati; senza: tutto di seguito
   let body: { imageUrl?: string; imageBase64?: string; projectId?: string; anim?: string; styled?: string; phase?: string; frames?: string }
   try { body = await req.json() } catch { return NextResponse.json({ error: 'bad_request' }, { status: 400 }) }
-  const anim = parseAnim(body.anim), action = anim === 'cantiere' ? 'video_cantiere' : 'video'
+  const anim = parseAnim(body.anim), action = anim === 'cantiere' ? 'video_cantiere' : anim === 'daynight' ? 'video_daynight' : 'video'
   if (body.phase === 'render') {
     if (typeof body.frames !== 'string') return NextResponse.json({ error: 'bad_request' }, { status: 400 })
     if (!(await canAfford(userId, action))) return NextResponse.json({ error: 'no_credits', cost: CREDIT_COST[action] }, { status: 402 })
@@ -46,9 +46,9 @@ export async function GET(req: NextRequest) {
   const userId = await userOf(req)
   if (!userId) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   const { fresh, id, ...r } = await pollVideo(userId, req.nextUrl.searchParams.get('job') ?? '')
-  // il lavoro firmato dice che video era: cantiere = due clip (nome che finisce con -kc)
+  // il lavoro firmato dice che video era: cantiere = due clip Kling (nome che finisce con -kc), Giorno e notte = una (-k)
   const job = req.nextUrl.searchParams.get('job') ?? ''
-  const action = /-kc\./.test(job) ? 'video_cantiere' : 'video'
+  const action = /-kc\./.test(job) ? 'video_cantiere' : /-k\./.test(job) ? 'video_daynight' : 'video'
   if (fresh && id) return NextResponse.json({ url: r.url, credits: await spendOnce(userId, action, id) })
   return reply(r)
 }

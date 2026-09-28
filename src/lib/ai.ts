@@ -9,7 +9,7 @@ import { AI_MOCK, mockDelay, mockFor } from './aiMock'
 
 export type JsonSchema = Record<string, unknown>
 
-type Args = { system: string; text: string; images?: string[]; schema: JsonSchema; maxTokens?: number; usage: { userId: string; kind: string } }
+type Args = { system: string; text: string; images?: string[]; schema: JsonSchema; maxTokens?: number; usage: { userId: string; kind: string }; model?: string } // model: predefinito Opus 5
 type Tokens = { input?: number; output?: number }
 type Result<T> = { ok: true; data: T } | { ok: false; error: 'refused' | 'empty' | 'failed'; detail?: string }
 
@@ -18,7 +18,7 @@ export async function generateJson<T>(args: Args): Promise<Result<T>> {
   const t0 = Date.now()
   const tokens: Tokens = {}
   const r = await viaClaude<T>(args, tokens)
-  await logUsage(args.usage, false, Date.now() - t0, tokens, r.ok)
+  await logUsage(args.usage, false, Date.now() - t0, tokens, r.ok, args.model)
   return r
 }
 
@@ -56,10 +56,10 @@ export async function logUsage(u: Args['usage'], _gpu: boolean, ms: number, tk: 
 }
 
 let anthropic: Anthropic | null = null
-async function viaClaude<T>({ system, text, images = [], schema, maxTokens = 8000 }: Args, tokens: Tokens): Promise<Result<T>> {
+async function viaClaude<T>({ system, text, images = [], schema, maxTokens = 8000, model = 'claude-opus-5' }: Args, tokens: Tokens): Promise<Result<T>> {
   anthropic ??= new Anthropic()
   const ask = (withPhotos: boolean) => anthropic!.messages.create({
-    model: 'claude-opus-5',
+    model,
     max_tokens: maxTokens,
     output_config: { effort: 'low', format: { type: 'json_schema', schema } },
     system,

@@ -11,7 +11,7 @@ export const maxDuration = 300
 
 // "Riscrivi l'annuncio" (Miglioralo): nuovo titolo e descrizione dai campi letti. Solo testo, niente foto.
 // Prima Gemini a quota gratuita (costo 0, gratis anche per l'agente); se manca la chiave o la quota e' finita,
-// Qwen sulla nostra GPU e si scala 1 credito.
+// Sonnet 5 (~0,01 $ a riscrittura, scelto il 28/09: scrive meglio di Haiku e costa meno del credito) e si scala 1 credito.
 const SYSTEM = `Sei un consulente esperto di annunci immobiliari italiani (immobiliare.it, idealista, casa.it). Ricevi i dati e il testo di un annuncio gia' pubblicato e lo riscrivi meglio.
 Rispondi SOLO con un oggetto JSON con le chiavi "titolo" e "descrizione".
 - titolo: nuovo titolo, MASSIMO 60 caratteri spazi inclusi (immobiliare.it taglia a 60). Regole, da ricerca sui portali:
@@ -42,9 +42,9 @@ export async function POST(req: NextRequest) {
   const free = await geminiFreeJson<Out>({ system: SYSTEM, text: input, userId: data.user.id, kind: 'rewrite', maxTokens: 6000 })
   if (ok(free) && !deepProfanity(free)) return NextResponse.json({ titolo: free.titolo, descrizione: free.descrizione, gratis: true })
 
-  // ripiego a pagamento: la nostra GPU, 1 credito
+  // ripiego a pagamento: Sonnet 5, 1 credito
   if (!(await canAfford(data.user.id, 'riscrivi'))) return NextResponse.json({ error: 'no_credits' }, { status: 402 })
-  const r = await generateJson<Out>({ system: SYSTEM, text: input, schema: SCHEMA, usage: { userId: data.user.id, kind: 'rewrite' } })
+  const r = await generateJson<Out>({ system: SYSTEM, text: input, schema: SCHEMA, usage: { userId: data.user.id, kind: 'rewrite' }, model: 'claude-sonnet-5' })
   if (!r.ok || !ok(r.data)) return NextResponse.json({ error: 'ai_failed' }, { status: 502 })
   await spend(data.user.id, 'riscrivi', { url: b.url })
   return NextResponse.json({ titolo: r.data.titolo, descrizione: r.data.descrizione, gratis: false })

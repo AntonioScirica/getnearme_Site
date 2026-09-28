@@ -10,8 +10,9 @@
 // Cantiere (2 Nano Banana + 2 Kling, ~0,73 $) = 50.
 // Modifiche (28/09/2026): con GPT Image 2.5 a qualita' bassa costano ~0,014 $; tetto giornaliero per utente in api/platform/photo-edit.
 // modifica: le prime 3 su una foto sono gratis, dalla quarta 1 credito (modifica_extra), che e' il nostro costo (0,014 $).
-// Video (28/09/2026): Veo 3.1 Fast ~0,83 $ a video tutto compreso -> 75 crediti (1 credito ~0,013 $ di costo), Cantiere il doppio.
-export const CREDIT_COST = { luminoso: 0, modifica: 0, modifica_extra: 1, arreda: 5, svuota: 5, video: 75, video_cantiere: 150, riscrivi: 1 };
+// Video (28/09/2026): Prima e dopo con Veo 3.1 Fast ~0,83 $ tutto compreso -> 75 crediti (1 credito ~0,013 $ di costo);
+// Cantiere (2 Kling o3 da 5 s + 2 GPT, ~0,87 $) 150; Giorno e notte (1 Kling da 5 s + 1 GPT, ~0,43 $) 50.
+export const CREDIT_COST = { luminoso: 0, modifica: 0, modifica_extra: 1, arreda: 5, svuota: 5, video: 75, video_cantiere: 150, video_daynight: 50, riscrivi: 1 };
 // Pacchetti di crediti extra (una tantum, non scadono col mese): per chi finisce i crediti prima del rinnovo.
 // Prezzi Stripe con lookup key ai_pack_<crediti>; stesso margine dei piani (~0,024 EUR a credito).
 export const PACKS = [{ id: 'pack500', credits: 500, eur: 12 }, { id: 'pack1500', credits: 1500, eur: 30 }] as const;
