@@ -65,14 +65,22 @@ const prompt = (order: string, anim: Anim) => 'Elegant, satisfying real-estate a
 const negFor = (anim: Anim) => anim === 'gravity' ? NEG.replace('flying objects, floating objects, ', 'tumbling objects, rotating objects, ')
   : NEG
 
-// Stanza vuota della foto: Qwen (RunPod) "remove only", allineata al pixel; ripiego Nano Banana se la GPU non risponde.
+// Dall'alto, testo esatto dell'anteprima approvata (spike 27/09, popup_video.py STYLE=gravity)
+const GRAVITY_PROMPT = (order: string) => 'Real-estate staging animation with a perfectly still, locked-off camera: identical framing for the whole video, no pan, no zoom. '
+  + 'Walls, ceiling, kitchen, doors, windows, floor and daylight never change. '
+  + `These are the only objects that ever appear, in exactly these quantities: ${order}. Nothing else appears at any moment and nothing that appears ever disappears. The last frame is identical to the final image. `
+  + 'The empty room is shown for one second. Then the furniture falls into the room from above, out of the top of the frame, one piece after another in quick rhythm: '
+  + `each piece drops straight down onto its exact final spot, lands with a soft impact and a tiny puff of dust, and stays perfectly still. Order: ${order}.`
+const GRAVITY_NEG = 'text, letters, numbers, percent signs, captions, watermark, circles, ovals, rings, halos, light arcs, light trails, glowing lines, light beams, lens flare, fast camera movement, camera shake, new parts of the room, dissolve, ghosting, double exposure, semi-transparent objects, duplicated furniture, springs, coils, bouncing platform, ropes, cranes, objects not in the last frame, extra furniture, extra cushions, extra decor, chairs, lamps, plants that are not in the last frame, people, hands, tripod, camera, springs, coils, sliding objects, flying objects, floating objects, objects disappearing, fading in, cross-fade, morphing, melting, flicker, exposure change, camera movement, zoom, pan'
+
+// Stanza vuota della foto: Nano Banana (il motore di tutte le foto, tiene il formato della foto), Qwen solo se Google non risponde.
 async function emptyRoom(fullUrl: string, logUser: string): Promise<string | null> {
+  const nb = await nanoBanana({ userId: logUser, image: fullUrl, prompt: `${EMPTY_PROMPT} The result must line up exactly with the original photo: same camera, framing and perspective. Photorealistic, no text.`, kind: 'video_empty' })
+  if (nb) return nb
   const t0 = Date.now()
   const job = await runJob({ image_url: fullUrl, prompt: EMPTY_PROMPT, seed: Math.floor(Math.random() * 1_000_000), steps: 12 })
   await logUsage({ userId: logUser, kind: 'video_empty' }, true, Date.now() - t0, {}, !!job.output?.image_base64, 'qwen-image-2.1')
-  if (job.output?.image_base64) return job.output.image_base64
-  console.error('video: Qwen non ha svuotato, provo Nano Banana', job.status)
-  return nanoBanana({ userId: logUser, image: fullUrl, prompt: `${EMPTY_PROMPT} The result must line up exactly with the original photo: same camera, framing and perspective. Photorealistic, no text.`, kind: 'video_empty' })
+  return job.output?.image_base64 ?? null
 }
 
 // il lavoro di fal torna al client firmato con l'utente: solo chi l'ha avviato puo' finalizzarlo
@@ -88,7 +96,9 @@ export const parseAnim = (a: unknown): Anim => (['gravity', 'particles', 'stopmo
 
 // empty = stanza gia' svuotata (prova "Svuota" della landing): niente Nano Banana, e il video va IN AVANTI:
 // i mobili della foto originale spariscono uno alla volta e resta la stanza vuota.
-export async function startVideo(owner: string, logUser: string, o: { imageUrl: string; imageBase64: string; projectId?: string; anim: Anim; empty?: string }): Promise<VideoResult> {
+// from: foto di partenza vera (la stanza vuota dell'agente, prima dell'arredo AI): se Opus conferma che e' vuota, il video
+// parte da li' (stanza spoglia -> arredata, come le anteprime); altrimenti si svuota la foto arredata con Qwen.
+export async function startVideo(owner: string, logUser: string, o: { imageUrl: string; imageBase64: string; projectId?: string; anim: Anim; empty?: string; from?: string }): Promise<VideoResult> {
   const { imageUrl, imageBase64, anim } = o
   const pid = o.projectId ?? '' // gia' validato dalla rotta
   if (AI_MOCK) { await mockDelay(2000); return { job: 'mock' } }
@@ -101,7 +111,7 @@ export async function startVideo(owner: string, logUser: string, o: { imageUrl: 
     const landscape = width >= height
     const [W, H] = landscape ? [1280, 720] : [720, 1280]
     const full = await sharp(src).rotate().resize(W, H, { fit: 'cover' }).jpeg({ quality: 95 }).toBuffer()
-    const name = `${pid ? `casa-${pid}/` : ''}${Date.now()}-${Math.random().toString(36).slice(2, 8)}${o.empty ? '-f' : ''}`
+    const name = `${pid ? `casa-${pid}/` : ''}${Date.now()}-${Math.random().toString(36).slice(2, 8)}${o.empty ? '-f' : anim === 'gravity' ? '-g' : ''}`
     const key = `videos/${owner}/${name}`
     const fullUrl = await uploadJpeg(full, `${key}-arredata.jpg`)
 
@@ -113,7 +123,7 @@ export async function startVideo(owner: string, logUser: string, o: { imageUrl: 
       const frame = async (prompt: string, label: string, ref = fullUrl) => {
         const out = await nanoBanana({ userId: logUser, image: ref, prompt, kind: `video_${anim}` })
         if (!out) return null
-        return uploadJpeg(await sharp(Buffer.from(out, 'base64')).resize(W, H, { fit: 'fill' }).jpeg({ quality: 95 }).toBuffer(), `${key}-${label}.jpg`)
+        return uploadJpeg(await sharp(Buffer.from(out, 'base64')).resize(W, H, { fit: 'cover' }).jpeg({ quality: 95 }).toBuffer(), `${key}-${label}.jpg`)
       }
       const kling = (image_url: string, end_image_url: string, prompt: string) => fal(KLING_URL, { image_url, end_image_url, prompt, duration: 5, generate_audio: false })
       let ids: string[] = []
@@ -130,9 +140,9 @@ export async function startVideo(owner: string, logUser: string, o: { imageUrl: 
         ids = [(await kling(fullUrl, night, GNM_DAYNIGHT)).request_id]
       } else {
         // stop-motion / particelle: dalla stanza vuota alla foto arredata
-        // stanza vuota con Qwen (allineata alla foto, vedi emptyRoom): Kling va da questa alla foto vera
+        // stanza vuota (vedi emptyRoom): Kling va da questa alla foto vera
         const q = await emptyRoom(fullUrl, logUser)
-        const empty = q && await uploadJpeg(await sharp(Buffer.from(q, 'base64')).resize(W, H, { fit: 'fill' }).jpeg({ quality: 95 }).toBuffer(), `${key}-vuota.jpg`)
+        const empty = q && await uploadJpeg(await sharp(Buffer.from(q, 'base64')).resize(W, H, { fit: 'cover' }).jpeg({ quality: 95 }).toBuffer(), `${key}-vuota.jpg`)
         if (!empty) return { error: 'ai_failed', status: 502 }
         ids = [(await kling(empty, fullUrl, anim === 'stopmotion' ? GNM_STOPMOTION : GNM_PARTICLES)).request_id]
       }
@@ -146,12 +156,12 @@ export async function startVideo(owner: string, logUser: string, o: { imageUrl: 
     // a volte Qwen lascia un mobile (27/09: letto rimasto con un seme su due), allora si riprova con un altro seme.
     let empty: Buffer | null = null, items: string[] = []
     for (let attempt = 0; attempt < 2; attempt++) {
-      // Qwen, come nella ricetta approvata (27/09): la stanza vuota coincide al pixel con la foto. Nano Banana (usato dal
-      // 27/09 sera al 28/09) la restituiva in un altro formato che andava stirato: la vuota non combaciava piu' e Veo
-      // dissolveva una stanza nell'altra invece di far sparire i mobili. Nano Banana resta solo se Qwen non risponde.
-      const out = o.empty ? o.empty.split(',').pop()! : await emptyRoom(fullUrl, logUser)
+      // stanza vuota: data da fuori (Svuota, o la foto vera di partenza) oppure Nano Banana dalla foto arredata
+      const given = o.empty ?? (attempt === 0 ? o.from : undefined)
+      const out = given ? (given.startsWith('data:') ? given.split(',').pop()! : Buffer.from(await (await fetch(given, { signal: AbortSignal.timeout(20_000) })).arrayBuffer()).toString('base64')) : await emptyRoom(fullUrl, logUser)
       if (!out) return { error: 'ai_failed', status: 502 }
-      empty = await sharp(Buffer.from(out, 'base64')).resize(W, H, { fit: 'fill' }).jpeg({ quality: 95 }).toBuffer()
+      // stesso ritaglio della foto arredata (cover): la foto di partenza data da fuori puo' avere un altro formato
+      empty = await sharp(Buffer.from(out, 'base64')).rotate().resize(W, H, { fit: 'cover' }).jpeg({ quality: 95 }).toBuffer()
       // nomi semplici e quantita' esatte: descrizioni sbagliate cambiano la forma ai mobili
       const t1 = Date.now()
       const msg = await new Anthropic().messages.create({
@@ -167,15 +177,20 @@ export async function startVideo(owner: string, logUser: string, o: { imageUrl: 
       const txt = msg.content.find(c => c.type === 'text')?.text ?? '' // i modelli nuovi possono mettere prima un blocco di ragionamento
       const r = JSON.parse(txt.slice(txt.indexOf('{'), txt.lastIndexOf('}') + 1)) as { items?: string[]; empty?: boolean }
       items = r.items ?? []
-      if (r.empty !== false || o.empty) break // stanza vuota data da fuori: nessun altro tentativo
+      // stanza vuota data da fuori (Svuota o foto vera di partenza): si usa com'e', anche se in fondo si vede un mobile
+      if (r.empty !== false || o.empty || (attempt === 0 && o.from)) break
     }
     if (!items.length || !empty) return { error: 'nothing_to_animate', status: 422 }
     const emptyUrl = await uploadJpeg(empty, `${key}-vuota.jpg`)
-    const order = [...items].reverse().join(', then ') // al contrario: spariscono prima i piccoli oggetti
+    // Dall'alto: in avanti, dalla vuota all'arredata, i mobili cadono dall'alto (ricetta dell'anteprima approvata F9_gravity,
+    // 27/09: al contrario, con i mobili che "salgono via", sembravano comparire sul posto). Gli altri al contrario.
+    const down = anim === 'gravity' && !o.empty
+    const order = down ? items.join(', then ') : [...items].reverse().join(', then ') // al contrario: spariscono prima i piccoli oggetti
 
-    // 4. Veo al contrario: dalla foto arredata alla vuota
+    // 4. Veo: al contrario (dalla foto arredata alla vuota) o in avanti per Dall'alto
     const q = await fal(`${FAL}/lite/first-last-frame-to-video`, {
-      first_frame_url: fullUrl, last_frame_url: emptyUrl, prompt: prompt(order, anim), negative_prompt: negFor(anim),
+      first_frame_url: down ? emptyUrl : fullUrl, last_frame_url: down ? fullUrl : emptyUrl,
+      prompt: down ? GRAVITY_PROMPT(order) : prompt(order, anim), negative_prompt: down ? GRAVITY_NEG : negFor(anim),
       duration: `${VEO_SECONDS}s`, aspect_ratio: landscape ? '16:9' : '9:16', resolution: '720p', generate_audio: false, seed: Math.floor(Math.random() * 1_000_000),
     })
     if (!q.request_id) { console.error('video fal submit', q); return { error: 'ai_failed', status: 502 } }
@@ -193,7 +208,7 @@ export async function pollVideo(owner: string, job: string): Promise<VideoResult
   if (job === 'mock' && AI_MOCK) return { url: 'https://pub-a668674eaa484e8e8f2f10c264392bfc.r2.dev/spike-video/stili/F12_rianima.mp4' }
   const [id, tilde, sig] = job.split('.')
   const name = (tilde ?? '').replace('~', '/')
-  if (!id || !/^[\w-]{8,64}(\+[\w-]{8,64})?$/.test(id) || !/^(casa-[\w-]{1,64}\/)?\d+-[a-z0-9]+(-f|-k|-kc)?$/.test(name) || !sig || sig.length !== 22 || !timingSafeEqual(Buffer.from(sig), Buffer.from(sign(owner, `${id}.${name}`)))) return { error: 'bad_request', status: 400 }
+  if (!id || !/^[\w-]{8,64}(\+[\w-]{8,64})?$/.test(id) || !/^(casa-[\w-]{1,64}\/)?\d+-[a-z0-9]+(-f|-k|-kc|-g)?$/.test(name) || !sig || sig.length !== 22 || !timingSafeEqual(Buffer.from(sig), Buffer.from(sign(owner, `${id}.${name}`)))) return { error: 'bad_request', status: 400 }
 
   const key = `videos/${owner}/${name}.mp4`
   const url = `${process.env.R2_PUBLIC_URL}/${key}`
@@ -223,8 +238,9 @@ export async function pollVideo(owner: string, job: string): Promise<VideoResult
     if (parts.length > 1) await ffmpeg(['-y', '-i', parts[0], '-i', parts[1], '-filter_complex', '[0:v][1:v]concat=n=2:v=1:a=0[v]', '-map', '[v]', '-c:v', 'libx264', '-crf', '14', raw])
     else await rename(parts[0], raw)
     // Kling e Svuota vanno in avanti (tutta la clip); gli altri Veo al contrario, tagliati prima della dissolvenza di Veo
-    const forward = /-(f|k|kc)$/.test(name)
-    const cut = kling ? KLING_SECONDS * parts.length : forward ? VEO_SECONDS : cutPoint(await ffmpeg(['-i', raw, '-vf', 'scale=160:90,format=gray', '-f', 'rawvideo', '-']), 160 * 90)
+    // in avanti: Svuota (-f), Kling (-k, -kc) e Dall'alto (-g); Dall'alto si taglia comunque prima della dissolvenza di Veo
+    const forward = /-(f|k|kc|g)$/.test(name)
+    const cut = kling ? KLING_SECONDS * parts.length : forward && !name.endsWith('-g') ? VEO_SECONDS : cutPoint(await ffmpeg(['-i', raw, '-vf', 'scale=160:90,format=gray', '-f', 'rawvideo', '-']), 160 * 90)
     const total = cut + HOLD, n = Math.round(total * 30)
     // zoom 4% ease-in-out su tutto il video, sub-pixel (perspective con interpolazione: niente tremolio)
     const z = `(1+0.04*(0.5-0.5*cos(PI*min(in/${n}\\,1))))`, o = `(1-1/${z})/2`
