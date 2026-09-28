@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
-import { Home, Building2, Globe, Gauge, LogOut, Plus, Loader2, X, Wand2, Images, ExternalLink, UserRound, ArrowLeft } from 'lucide-react';
+import { Home, Building2, Globe, Gauge, LogOut, Plus, Loader2, X, Wand2, Images, ExternalLink, UserRound, ArrowLeft, Download } from 'lucide-react';
 import type { UserData } from '@/app/[locale]/dashboard/page';
 import { supabase } from '@/lib/supabase';
 import { fetchProjects, type ProjectData } from '@/lib/projects';
@@ -124,10 +124,15 @@ export default function PlatformApp({ userData }: { userData: UserData }) {
         </div>
       </header>
 
-      {/* Profilo: solo icona e testo; in home al centro in basso, nelle altre pagine in basso a sinistra, in chat no */}
-      {!chat && <a href="#/profilo" data-tour="profilo" style={morph ? { viewTransitionName: 'ob-bottom' } : undefined} className={`fixed bottom-5 z-30 flex h-10 items-center gap-2 rounded-full bg-white px-4 text-sm font-medium shadow-sm ring-1 ring-line ease-smooth transition-shadow hover:shadow-md ${route === '/' ? 'left-1/2 -translate-x-1/2' : 'left-5'} ${route === '/profilo' ? 'ring-ink' : ''}`}>
-        <UserRound size={16} className="text-muted" /> Il mio profilo
-      </a>}
+      {/* Profilo e Importa immobile: pillole in basso; in home al centro, nelle altre pagine a sinistra, in chat no */}
+      {!chat && <div className={`fixed bottom-5 z-30 flex items-center gap-2 ${route === '/' ? 'left-1/2 -translate-x-1/2' : 'left-5'}`}>
+        <a href="#/profilo" data-tour="profilo" style={morph ? { viewTransitionName: 'ob-bottom' } : undefined} className={`flex h-10 items-center gap-2 rounded-full bg-white px-4 text-sm font-medium shadow-sm ring-1 ring-line ease-smooth transition-shadow hover:shadow-md ${route === '/profilo' ? 'ring-ink' : ''}`}>
+          <UserRound size={16} className="text-muted" /> Il mio profilo
+        </a>
+        <a href="#/importa" className={`flex h-10 items-center gap-2 rounded-full bg-white px-4 text-sm font-medium shadow-sm ring-1 ring-line ease-smooth transition-shadow hover:shadow-md ${route === '/importa' ? 'ring-ink' : ''}`}>
+          <Download size={16} className="text-muted" /> Importa immobile
+        </a>
+      </div>}
 
       <main className={`flex-1 ${route === '/staging' ? 'overflow-hidden' : 'overflow-y-auto'}`}>
         {/* Home staging: la chat gestisce lo scorrimento da sola (campo fisso in fondo) */}
