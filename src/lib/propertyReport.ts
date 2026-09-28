@@ -3,7 +3,7 @@
 // la stampa in PDF da un iframe nascosto (lib/printHtml). Rifatto il 29/09/2026: ogni pagina ha un contenuto che la
 // riempie (niente meta' pagine vuote) e nessuna zona che trabocca.
 //   1. copertina: foto a tutta pagina con titolo sopra, prezzo, numeri chiave, agente
-//   2. foto: fino a 6 per pagina (una o due pagine)
+//   2. foto: fino a 25, la prima pagina con una foto grande e quattro sotto, poi 6 per pagina
 //   3. l'immobile: descrizione e caratteristiche complete
 //   4. zona e costi, poi i contatti dell'agente
 import { calculateDetailedCosts } from './reportHtml'
@@ -43,7 +43,7 @@ export function buildPropertyReportHtml(a: ReportInput): string {
   const rent = /affitt/i.test(p.contratto ?? '')
   const showPrice = cfg.showPrices && !d.trattativa_riservata && p.prezzo > 0
   const address = d.mostra_indirizzo ? p.addr : p.addr?.split(',').map(x => x.trim()).filter(Boolean).slice(-2).join(', ')
-  const photos = (p.photos?.length ? p.photos : p.cover ? [p.cover] : []).slice(0, 13)
+  const photos = (p.photos?.length ? p.photos : p.cover ? [p.cover] : []).slice(0, 25)
   const tipo = p.tipologia?.split('|')[0]?.trim() || 'Immobile'
   const facts = ([['mq', p.mq ? `${p.mq} m²` : '', 'Superficie'], ['locali', p.locali, 'Locali'], ['camere', p.camere, 'Camere'], ['bagni', p.bagni, 'Bagni']] as const).filter(([, v]) => v)
   const perSqm = showPrice && !rent && p.mq ? `${Math.round(p.prezzo / p.mq).toLocaleString('it-IT')} €/m²` : ''
@@ -71,6 +71,7 @@ export function buildPropertyReportHtml(a: ReportInput): string {
       </div>
     </div>
     <div class="pad cover-body">
+      <div class="bar"></div>
       <div class="price-row">
         ${showPrice ? `<div class="price">${eur(p.prezzo)}${rent ? '<small> /mese</small>' : ''}</div>` : '<div class="price small">Prezzo su richiesta</div>'}
         ${perSqm ? `<div class="persqm">${perSqm}</div>` : ''}
@@ -84,18 +85,22 @@ export function buildPropertyReportHtml(a: ReportInput): string {
     ${foot(1)}
   </section>`)
 
-  // 2. foto: 6 per pagina che riempiono l'area (2 colonne x 3 righe); con 3 o meno foto in piu' una griglia piu' grande
+  // 2. foto: prima pagina con una foto grande e quattro sotto, poi sei per pagina (2 colonne x 3 righe)
   const rest = photos.slice(1)
-  for (let i = 0; i < rest.length; i += 6) {
-    const chunk = rest.slice(i, i + 6)
-    const cls = chunk.length === 1 ? 'g1' : chunk.length === 2 ? 'g2' : chunk.length <= 4 ? 'g4' : 'g6'
+  const chunks: string[][] = []
+  if (rest.length) { chunks.push(rest.slice(0, 5)); for (let i = 5; i < rest.length; i += 6) chunks.push(rest.slice(i, i + 6)) }
+  let shown = 1
+  for (const [k, chunk] of chunks.entries()) {
+    const first = k === 0 && chunk.length >= 3
+    const cls = first ? 'g5' : chunk.length === 1 ? 'g1' : chunk.length === 2 ? 'g2' : chunk.length <= 4 ? 'g4' : 'g6'
     pages.push(`<section class="page">
       <div class="pad fill">
-        <div class="head"><h2>Le foto</h2><span class="muted">${i + 2}–${i + 1 + chunk.length} di ${photos.length}</span></div>
+        <div class="head"><div><div class="eyebrow">${String(pages.length + 1).padStart(2, '0')} · Fotografie</div><h2>Le foto</h2></div><span class="muted">${shown + 1}–${shown + chunk.length} di ${photos.length}</span></div>
         <div class="gallery ${cls}">${chunk.map(u => `<div><img src="${esc(u)}" alt=""></div>`).join('')}</div>
       </div>
       ${foot(pages.length + 1)}
     </section>`)
+    shown += chunk.length
   }
 
   // 3. l'immobile: descrizione in alto (al massimo meta' pagina), caratteristiche sotto su due colonne
@@ -104,22 +109,23 @@ export function buildPropertyReportHtml(a: ReportInput): string {
   const energyHtml = energy ? `<div class="energy"><span style="background:${ENERGY_COLORS[energy] ?? '#9ca3af'};color:${/^(B|C|D)$/.test(energy) ? '#1a1a1a' : '#fff'}">${esc(energy)}</span> Classe energetica${d.ipe ? ` · ${esc(d.ipe)} kWh/m² anno` : ''}</div>` : ''
   if (desc || groups.length || extras.length || energy) pages.push(`<section class="page">
     <div class="pad fill">
-      ${desc ? `<h2>L'immobile</h2><div class="desc ${groups.length ? 'half' : 'full'}">${esc(desc).split(/\n{2,}/).map(t => `<p>${t.replace(/\n/g, '<br>')}</p>`).join('')}</div>` : ''}
-      ${groups.length || extras.length || energy ? `<h2 ${desc ? 'style="margin-top:8mm"' : ''}>Caratteristiche</h2>${energyHtml}<div class="groups">${groupsHtml}</div>${chipsHtml}` : ''}
+      ${desc ? `<div class="eyebrow">${String(pages.length + 1).padStart(2, '0')} · La casa</div><h2>L'immobile</h2><div class="${groups.length && photos[1] ? 'desc-row' : ''}"><div class="desc ${groups.length ? 'half' : 'full'}">${esc(desc).split(/\n{2,}/).map(t => `<p>${t.replace(/\n/g, '<br>')}</p>`).join('')}</div>${groups.length && photos[1] ? `<div class="side-photo"><img src="${esc(photos[photos.length > 2 ? 2 : 1])}" alt=""></div>` : ''}</div>` : ''}
+      ${groups.length || extras.length || energy ? `${desc ? '<div class="sep"></div>' : `<div class="eyebrow">${String(pages.length + 1).padStart(2, '0')} · La casa</div>`}<h2>Caratteristiche</h2>${energyHtml}<div class="groups">${groupsHtml}</div>${chipsHtml}` : ''}
     </div>
     ${foot(pages.length + 1)}
   </section>`)
 
   // 4. zona e costi in alto (due colonne), contatti dell'agente in basso, sempre nella stessa pagina
-  const poisHtml = pois.length ? `<h2>Cosa c'è vicino</h2><div class="pois">${pois.map(x => `<div class="poi"><div><b>${esc(x.nome)}</b><span>${esc(x.categoria)}</span></div><div class="r"><b>${far(x.distanza)}</b><span>${walk(x.distanza)}</span></div></div>`).join('')}</div><p class="note">Distanze in linea d'aria da OpenStreetMap.</p>` : ''
-  const costsHtml = costs ? `<h2>Quanto costa davvero</h2><div class="card costs">
+  const poisHtml = pois.length ? `<div class="eyebrow">Zona</div><h2>Cosa c'è vicino</h2><div class="pois">${pois.map(x => `<div class="poi"><div><b>${esc(x.nome)}</b><span>${esc(x.categoria)}</span></div><div class="r"><b>${far(x.distanza)}</b><span>${walk(x.distanza)}</span></div></div>`).join('')}</div><p class="note">Distanze in linea d'aria da OpenStreetMap.</p>` : ''
+  const costsHtml = costs ? `<div class="eyebrow">Acquisto</div><h2>Quanto costa davvero</h2><div class="card costs">
       ${([['Prezzo richiesto', costs.listingPrice], [`Agenzia (~${costs.agencyPercentage}% + IVA)`, costs.agencyCost], ['Notaio (stima)', costs.notaryCost], ['Imposte (stima)', costs.taxesCost], ['Perizia e assicurazione', costs.otherCosts]] as const).map(([l, v]) => `<div class="row"><span>${esc(l)}</span><b>${eur(v)}</b></div>`).join('')}
       <div class="row total"><span>Totale stimato</span><b>${eur(costs.totalEstimated)}</b></div>
     </div><p class="note">Stima indicativa per l'acquisto come prima casa: le cifre reali dipendono da mutuo, notaio e accordi con l'agenzia.</p>` : ''
   const contact = ([['phone', cfg.phone, `tel:${cfg.phone}`], ['mail', cfg.email, `mailto:${cfg.email}`], ['pin', cfg.address || cfg.city, ''], ['web', site, a.url]] as const).filter(([, v]) => v)
-  pages.push(`<section class="page">
-    <div class="pad">
+  pages.push(`<section class="page last">
+    <div class="pad top">
       ${poisHtml || costsHtml ? `<div class="${poisHtml && costsHtml ? 'two' : ''}">${poisHtml ? `<div>${poisHtml}</div>` : ''}${costsHtml ? `<div>${costsHtml}</div>` : ''}</div>` : ''}
+      ${photos.length > 1 ? `<div class="band"><img src="${esc(photos[photos.length > 3 ? 3 : 1])}" alt=""></div>` : ''}
     </div>
     <div class="end">
       <div class="agent">${avatar(76)}
@@ -142,7 +148,7 @@ body{margin:0;font-family:Satoshi,system-ui,sans-serif;color:#1c1c1c;background:
 .page{position:relative;width:210mm;height:297mm;overflow:hidden;background:#fff;margin:0 auto;page-break-after:always;break-after:page}
 .page:last-child{page-break-after:auto;break-after:auto}
 .pad{padding:14mm 16mm 20mm}.pad.fill{height:100%;display:flex;flex-direction:column}
-.head{display:flex;align-items:baseline;justify-content:space-between}.muted{color:#777;font-size:13px}
+.head{display:flex;align-items:flex-end;justify-content:space-between;padding-bottom:2mm}.muted{color:#777;font-size:13px}.bar{width:14mm;height:4px;background:${c};border-radius:4px;margin:0 0 6mm}.sep{height:1px;background:#eee;margin:7mm 0 6mm}
 .eyebrow{font-size:10.5px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:${c}}.eyebrow.light{color:#fff;opacity:.9}
 h1{font-size:34px;line-height:1.1;margin:8px 0 10px;letter-spacing:-.02em;color:#fff;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;text-shadow:0 2px 12px rgba(0,0,0,.25)}
 h2{font-size:21px;margin:0 0 10px;letter-spacing:-.01em}h3{font-size:11.5px;margin:0 0 6px;color:${c};text-transform:uppercase;letter-spacing:.08em}
@@ -152,7 +158,7 @@ h2{font-size:21px;margin:0 0 10px;letter-spacing:-.01em}h3{font-size:11.5px;marg
 .brand{position:absolute;left:12mm;top:12mm;z-index:2;background:#fff;border-radius:14px;padding:9px 14px;box-shadow:0 8px 24px rgba(0,0,0,.18)}
 .hero-text{position:absolute;left:16mm;right:16mm;bottom:12mm;z-index:2}
 .addr{display:flex;gap:6px;align-items:center;color:#fff;font-size:14px;opacity:.95}.addr svg{color:#fff}
-.cover-body{position:absolute;left:0;right:0;top:172mm;bottom:0;padding-bottom:16mm}
+.cover-body{position:absolute;left:0;right:0;top:172mm;bottom:0;padding-top:11mm;padding-bottom:16mm}
 .price-row{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
 .price{font-size:36px;font-weight:800;letter-spacing:-.02em}.price small{font-size:15px;color:#777;font-weight:500}.price.small{font-size:20px;color:#666;font-weight:700}.persqm{font-size:14px;color:#777;font-weight:500}
 .facts{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px}
@@ -163,9 +169,10 @@ h2{font-size:21px;margin:0 0 10px;letter-spacing:-.01em}h3{font-size:11.5px;marg
 .avatar{border-radius:999px;object-fit:cover;flex:none}.ini{background:${c};color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700}
 /* foto */
 .gallery{display:grid;gap:8px;flex:1;min-height:0;margin-top:6px}.gallery>div{min-height:0;overflow:hidden;border-radius:16px;background:#f2f2f0}.gallery img{width:100%;height:100%;object-fit:cover;display:block}
-.gallery.g1{grid-template-columns:1fr}.gallery.g2{grid-template-columns:1fr;grid-template-rows:1fr 1fr}.gallery.g4{grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr}.gallery.g6{grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr 1fr}
+.gallery.g5{grid-template-columns:1fr 1fr;grid-template-rows:1.15fr 1fr 1fr}.gallery.g5>div:first-child{grid-column:span 2}.gallery.g1{grid-template-columns:1fr}.gallery.g2{grid-template-columns:1fr;grid-template-rows:1fr 1fr}.gallery.g4{grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr}.gallery.g6{grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr 1fr}
 /* immobile */
-.desc{font-size:12.5px;line-height:1.62;color:#444;overflow:hidden}.desc.half{max-height:112mm}.desc.full{max-height:236mm;column-count:2;column-gap:10mm}.desc p{margin:0 0 8px;break-inside:avoid}
+.desc-row{display:grid;grid-template-columns:1fr 62mm;gap:8mm;align-items:start}.side-photo{height:74mm;border-radius:16px;overflow:hidden;background:#f2f2f0}.side-photo img{width:100%;height:100%;object-fit:cover;display:block}
+.desc{font-size:12.5px;line-height:1.62;color:#444;overflow:hidden}.desc.half{max-height:74mm}.desc.full{max-height:236mm;column-count:2;column-gap:10mm}.desc p{margin:0 0 8px;break-inside:avoid}
 .energy{display:flex;align-items:center;gap:10px;font-size:13px;margin:-2px 0 10px}.energy span{font-weight:800;border-radius:8px;padding:4px 10px}
 .groups{columns:2;column-gap:10px}
 .card{break-inside:avoid;background:#f6f6f4;border-radius:14px;padding:10px 12px;margin-bottom:10px}
@@ -173,16 +180,17 @@ h2{font-size:21px;margin:0 0 10px;letter-spacing:-.01em}h3{font-size:11.5px;marg
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}.chips span{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;background:#f6f6f4;border-radius:999px;padding:5px 11px}.chips svg{color:${c}}
 .energy-chip i{display:inline-block;width:9px;height:9px;border-radius:999px}
 /* zona e costi */
+.page.last{display:flex;flex-direction:column}.pad.top{flex:1;min-height:0;display:flex;flex-direction:column;padding-bottom:8mm}.band{flex:1;min-height:24mm;margin-top:8mm;border-radius:16px;overflow:hidden;background:#f2f2f0}.band img{width:100%;height:100%;object-fit:cover;display:block}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:12mm}
 .pois{display:grid;gap:6px}.poi{display:flex;justify-content:space-between;gap:8px;background:#f6f6f4;border-radius:12px;padding:8px 12px;font-size:11.5px}.poi span{display:block;color:#777;font-size:10px}.poi .r{text-align:right;white-space:nowrap}
 .costs .total{border-top:2px solid ${c};margin-top:4px;padding-top:8px;font-size:14px}.costs .total span{color:#1c1c1c;font-weight:700}.note{font-size:10px;color:#888;margin:8px 2px 0}
 /* contatti */
-.end{position:absolute;left:16mm;right:16mm;bottom:16mm;border-top:1px solid #eee;padding-top:10mm}
+.end{flex:none;margin:0 12mm 14mm;background:${c}0f;border-radius:22px;padding:9mm 10mm 7mm}
 .agent{display:flex;align-items:center;gap:16px}
-.lead{font-size:16px;line-height:1.5;margin:14px 0 12px}
+.lead{font-size:16px;line-height:1.5;margin:12px 0 10px}
 .contact{display:grid;grid-template-columns:1fr 1fr;gap:9px 18px;font-size:13.5px}.contact div{display:flex;align-items:center;gap:9px;min-width:0}.contact svg{color:${c};flex:none}.contact a{color:inherit;text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cta{display:inline-block;margin-top:14px;background:${c};color:#fff;text-decoration:none;font-weight:700;border-radius:999px;padding:11px 20px;font-size:13px}
-.legal{font-size:9.5px;color:#999;line-height:1.5;margin:12px 0 0}
+.legal{font-size:9.5px;color:#888;line-height:1.5;margin:10px 0 0}
 .foot{position:absolute;left:16mm;right:16mm;bottom:8mm;display:flex;justify-content:space-between;font-size:9.5px;color:#aaa}
 @media print{body{background:#fff}.page{margin:0}}
 </style></head><body>${pages.join('')}</body></html>`
