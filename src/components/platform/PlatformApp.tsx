@@ -262,17 +262,25 @@ function ImproveTile({ phase, stage, onOpen, onClose, onSubmit, onNew, hover, se
         </div>
 
         {/* Mini scheda annuncio: diventa la pill sopra l'input, poi sparisce quando si apre il browser */}
-        <div className={`flex items-center justify-center transition-all ease-smooth ${flow ? 'max-h-0 flex-none scale-95 overflow-hidden opacity-0' : 'max-h-60 flex-1'}`}>
+        <div className={`flex items-center justify-center transition-all ease-smooth ${flow ? 'max-h-0 scale-95 overflow-hidden opacity-0' : 'max-h-60'} flex-1`}>
           <div className={`relative transition-all ease-smooth ${open ? 'w-72 delay-[120ms]' : 'w-48'}`}>
             <div className="par-2">
-              <div className={`flex transition-all ease-smooth ${open ? 'flex-row items-center gap-3 rounded-2xl bg-canvas p-2 pr-3 delay-[120ms]' : 'flex-col rounded-xl bg-white p-2 shadow-md group-hover:-rotate-2'}`}>
-                <img src="/immo/home/card.webp" alt="" decoding="async" className={`shrink-0 object-cover transition-all ease-smooth ${open ? 'h-12 w-16 rounded-xl delay-[120ms]' : 'h-[6.5rem] w-full rounded-lg'}`} />
-                <div className={`min-w-0 flex-1 ease-smooth transition-all ${open ? '' : 'mt-2'}`}>
-                  {['w-2/3', 'w-2/5', 'w-1/2'].map((w, i) => (
-                    <div key={w} className={`${open ? '' : 'rewrite'} h-1.5 rounded bg-line ease-smooth transition-all ${i ? 'mt-1.5' : ''} ${open && i === 2 ? 'hidden' : w}`} />
-                  ))}
+              {/* Il contenitore cambia forma (misure, angoli, sfondo: tutto animabile); la versione verticale sfuma e quella
+                  orizzontale compare dopo. Passare da colonna a riga nello stesso box dava uno scatto: non si anima. */}
+              <div className={`relative overflow-hidden transition-all ease-smooth ${open ? 'h-16 rounded-2xl bg-canvas delay-[120ms]' : 'h-40 rounded-xl bg-white shadow-md group-hover:-rotate-2'}`}>
+                <div className={`absolute inset-2 flex flex-col transition-[opacity,filter] ease-smooth ${open ? 'opacity-0 blur-[4px] duration-200' : 'opacity-100 delay-300'}`}>
+                  <img src="/immo/home/card.webp" alt="" decoding="async" className="h-[6.5rem] w-full shrink-0 rounded-lg object-cover" />
+                  <div className="mt-2">
+                    {['w-2/3', 'w-2/5', 'w-1/2'].map((w, i) => <div key={w} className={`rewrite h-1.5 rounded bg-line ${w} ${i ? 'mt-1.5' : ''}`} />)}
+                  </div>
                 </div>
-                {open && <span className="blur-in shrink-0" style={{ animationDelay: '.45s' }}><ScoreBadge on /></span>}
+                <div className={`absolute inset-2 flex items-center gap-3 pr-1 transition-[opacity,filter] ease-smooth ${open ? 'opacity-100 delay-[450ms]' : 'pointer-events-none opacity-0 blur-[4px] duration-200'}`}>
+                  <img src="/immo/home/card.webp" alt="" decoding="async" className="h-12 w-16 shrink-0 rounded-xl object-cover" />
+                  <div className="min-w-0 flex-1">
+                    {['w-2/3', 'w-2/5'].map((w, i) => <div key={w} className={`h-1.5 rounded bg-line ${w} ${i ? 'mt-1.5' : ''}`} />)}
+                  </div>
+                  {open && <span className="blur-in shrink-0" style={{ animationDelay: '.45s' }}><ScoreBadge on /></span>}
+                </div>
               </div>
             </div>
             {!open && <span className="par-3 absolute -right-4 -top-3 z-10"><ScoreBadge on={hover} /></span>}
