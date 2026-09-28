@@ -61,6 +61,14 @@ export async function grant(userId: string, amount: number, reason: string, meta
   return typeof data === 'number' ? data : -1
 }
 
+// Pacchetto di crediti comprato (webhook Stripe): si aggiunge al saldo. Idempotente per sessione di pagamento (Stripe riprova).
+export async function grantPack(userId: string, credits: number, pack: string, session: string): Promise<number> {
+  const reason = `pacchetto_${pack}_${session.slice(-12)}`
+  const { count } = await admin.from('platform_credit_events').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('reason', reason)
+  if (count) return (await getCredits(userId)).balance
+  return grant(userId, credits, reason, { pack, session })
+}
+
 // Abbonamento attivato o rinnovato (webhook Stripe): piano, crediti del mese pieni, scadenze.
 export async function activatePlan(userId: string, o: { plan: 'starter' | 'pro'; paidUntil: Date; customer?: string; subscription?: string }) {
   const monthly = PLAN_CREDITS[o.plan]

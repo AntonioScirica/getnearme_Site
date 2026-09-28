@@ -6,7 +6,7 @@ import { authFetch, CARD_SHADOW } from './api';
 import { isBuy, type Buy } from '@/lib/startCheckout';
 import { Credits, SiteIncluded } from '@/components/PlanParts';
 export { isBuy };
-import { PRICING, photosFor } from '@/lib/pricing';
+import { PRICING, PACKS, photosFor, videosFor, type PackId } from '@/lib/pricing';
 
 export type Credits = { plan: 'none' | 'starter' | 'pro'; balance: number; monthly: number; renews: string | null; until: string | null; unlimited?: boolean };
 const fmt = (n: number) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
@@ -24,18 +24,22 @@ export function useCredits(): Credits | null {
 }
 
 // Pillola in alto: crediti rimasti, porta alla pagina del piano
+// pochi crediti: sotto il 15% del mese o sotto il costo di un video (con un piano attivo)
+export const isLow = (c: Credits) => !c.unlimited && c.plan !== 'none' && (c.balance < Math.max(75, Math.round(c.monthly * 0.15)));
 export function CreditsPill() {
   const c = useCredits();
   if (!c) return null;
+  const low = isLow(c);
   return (
-    <a href="#/piano" className="flex h-10 items-center gap-1.5 rounded-full bg-white px-4 text-sm font-semibold ring-1 ring-line ease-smooth transition-shadow hover:shadow-md">
-      <Coins size={14} className="text-ai" /> {c.unlimited ? 'Crediti illimitati' : c.plan === 'none' ? 'Scegli un piano' : `${fmt(c.balance)} crediti`}
+    <a href="#/piano" className={`flex h-10 items-center gap-1.5 rounded-full bg-white px-4 text-sm font-semibold ring-1 ease-smooth transition-shadow hover:shadow-md ${low ? 'ring-amber-300 text-amber-700' : 'ring-line'}`}>
+      <Coins size={14} className={low ? 'text-amber-500' : 'text-ai'} /> {c.unlimited ? 'Crediti illimitati' : c.plan === 'none' ? 'Scegli un piano' : `${fmt(c.balance)} crediti`}{low && <span className="ml-1 text-xs font-medium">· Ricarica</span>}
     </a>
   );
 }
 
-async function checkout(plan: 'starter' | 'pro_yearly' | 'pro_quarterly') {
-  const d = await authFetch('/api/platform/checkout', { method: 'POST', body: JSON.stringify({ plan }) }).then(r => r.json()).catch(() => null);
+async function checkout(plan: 'starter' | 'pro_yearly' | 'pro_quarterly' | PackId) {
+  const isPack = PACKS.some(p => p.id === plan);
+  const d = await authFetch('/api/platform/checkout', { method: 'POST', body: JSON.stringify(isPack ? { pack: plan } : { plan }) }).then(r => r.json()).catch(() => null);
   if (d?.url) window.location.href = d.url;
 }
 
@@ -45,7 +49,7 @@ export default function PlanView({ ok, buy }: { ok?: boolean; buy?: Buy }) {
   const c = useCredits();
   const [yearly, setYearly] = useState(buy !== 'pro_quarterly');
   const [busy, setBusy] = useState<string>(buy ?? '');
-  const go = async (p: Buy) => { setBusy(p); await checkout(p); setBusy(''); };
+  const go = async (p: Buy | PackId) => { setBusy(p); await checkout(p); setBusy(''); };
   useEffect(() => {
     if (!buy) return;
     history.replaceState(null, '', '#/piano'); // tornando indietro da Stripe non riparte da solo
@@ -66,9 +70,26 @@ export default function PlanView({ ok, buy }: { ok?: boolean; buy?: Buy }) {
           <div>
             <div className="text-sm text-muted">Piano {c.plan === 'pro' ? 'Pro' : 'Starter'}</div>
             <div className="font-display text-3xl font-extrabold tracking-tight">{fmt(c.balance)} crediti</div>
-            <div className="text-sm text-muted">circa {photosFor(c.balance)} foto · si ricaricano a {fmt(c.monthly)} il {date(c.renews)}</div>
+            <div className="text-sm text-muted">circa {photosFor(c.balance)} foto o {videosFor(c.balance)} video · si ricaricano a {fmt(c.monthly)} il {date(c.renews)}</div>
           </div>
         </div>
+      )}
+      {c && c.plan !== 'none' && !c.unlimited && (
+        <>
+          <h2 className="mt-8 font-semibold">Ti servono altri crediti?</h2>
+          <p className="mt-1 text-sm text-muted">I pacchetti si aggiungono al saldo e non scadono con il mese. Pagamento singolo.</p>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            {PACKS.map(p => (
+              <div key={p.id} className={`flex items-center justify-between gap-4 rounded-[24px] bg-white p-5 ${CARD_SHADOW}`}>
+                <div>
+                  <div className="font-display text-2xl font-extrabold tracking-tight">{fmt(p.credits)} crediti</div>
+                  <div className="text-sm text-muted">{photosFor(p.credits)} foto o {videosFor(p.credits)} video</div>
+                </div>
+                <button type="button" disabled={!!busy} onClick={() => go(p.id)} className="flex h-11 shrink-0 items-center justify-center gap-2 rounded-full bg-ink px-5 text-sm font-semibold text-white disabled:opacity-60">{busy === p.id ? <Loader2 size={15} className="animate-spin" /> : null} {p.eur} €</button>
+              </div>
+            ))}
+          </div>
+        </>
       )}
       <h2 className="mt-8 font-semibold">{c?.plan === 'none' || !c ? 'Scegli il piano' : 'Cambia piano'}</h2>
       <p className="mt-1 text-sm text-muted">Sito, foto e video in entrambi i piani. Cambiano solo i crediti.</p>
@@ -108,6 +129,9 @@ export default function PlanView({ ok, buy }: { ok?: boolean; buy?: Buy }) {
 // Crediti finiti: finestra con la scelta del piano (si apre su ogni risposta 402)
 export function NoCreditsModal() {
   const [open, setOpen] = useState(false);
+  const [busy, setBusy] = useState('');
+  const c = useCredits();
+  const hasPlan = !!c && c.plan !== 'none' && !c.unlimited;
   useEffect(() => {
     const on = () => setOpen(true);
     window.addEventListener('agenteimmo:no-credits', on);
@@ -119,9 +143,13 @@ export function NoCreditsModal() {
       <div onClick={e => e.stopPropagation()} className="relative w-full max-w-md rounded-[32px] bg-white p-7 text-center shadow-2xl">
         <button type="button" onClick={() => setOpen(false)} aria-label="Chiudi" className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full text-muted hover:bg-canvas"><X size={16} /></button>
         <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-ai/10 text-ai"><Sparkles size={20} /></span>
-        <h2 className="mt-4 font-display text-2xl font-extrabold tracking-tight">Ti servono crediti</h2>
-        <p className="mt-2 text-sm text-muted">Scegli un piano per arredare le foto, creare video e avere il tuo sito. Da {PRICING.starter} € al mese.</p>
-        <a href="#/piano" onClick={() => setOpen(false)} className="mt-6 inline-flex h-11 items-center justify-center rounded-full bg-ink px-6 text-sm font-semibold text-white">Vedi i piani</a>
+        <h2 className="mt-4 font-display text-2xl font-extrabold tracking-tight">{hasPlan ? 'Crediti finiti' : 'Ti servono crediti'}</h2>
+        <p className="mt-2 text-sm text-muted">{hasPlan ? `Si ricaricano il ${date(c!.renews)}. Se ti servono prima, un pacchetto si aggiunge subito al saldo e non scade.` : `Scegli un piano per arredare le foto, creare video e avere il tuo sito. Da ${PRICING.starter} € al mese.`}</p>
+        {hasPlan ? (
+          <div className="mt-6 flex flex-col gap-2">
+            {PACKS.map(p => <button key={p.id} type="button" disabled={!!busy} onClick={() => { setBusy(p.id); void checkout(p.id).then(() => setBusy('')); }} className="flex h-11 items-center justify-between rounded-full bg-ink px-5 text-sm font-semibold text-white disabled:opacity-60"><span>{fmt(p.credits)} crediti</span><span>{busy === p.id ? <Loader2 size={15} className="animate-spin" /> : `${p.eur} €`}</span></button>)}
+          </div>
+        ) : <a href="#/piano" onClick={() => setOpen(false)} className="mt-6 inline-flex h-11 items-center justify-center rounded-full bg-ink px-6 text-sm font-semibold text-white">Vedi i piani</a>}
       </div>
     </div>
   );

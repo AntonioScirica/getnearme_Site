@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
-import { activatePlan, endPlan, extendPaid, userForSubscription } from '@/lib/credits'
+import { activatePlan, endPlan, extendPaid, grantPack, userForSubscription } from '@/lib/credits'
 import { FORFETTARIO_FOOTER as FOOTER } from '@/lib/pricing'
 
 export const runtime = 'nodejs'
@@ -22,6 +22,13 @@ export async function POST(req: NextRequest) {
   try {
     if (ev.type === 'checkout.session.completed') {
       const cs = ev.data.object as Stripe.Checkout.Session
+      // pacchetto di crediti extra (pagamento singolo): crediti aggiunti al saldo, una volta sola per sessione
+      if (cs.metadata?.app === 'agenteimmo' && cs.mode === 'payment' && cs.metadata.pack && cs.payment_status === 'paid') {
+        const userId = cs.metadata.user_id || cs.client_reference_id
+        const credits = Number(cs.metadata.credits)
+        if (userId && credits > 0) await grantPack(userId, credits, cs.metadata.pack, cs.id)
+        return NextResponse.json({ ok: true })
+      }
       if (cs.metadata?.app !== 'agenteimmo' || cs.mode !== 'subscription' || !cs.subscription) return NextResponse.json({ ok: true })
       const userId = cs.metadata.user_id || cs.client_reference_id
       if (!userId) return NextResponse.json({ ok: true })
