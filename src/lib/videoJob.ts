@@ -27,7 +27,7 @@ import { MUSIC_CATALOG } from '@/lib/aiVideoMusic'
 //      Lite (0,03 $/s) inventava i mobili e poi dissolveva anche in avanti: per Popup e Dall'alto serve fast
 //      (0,10 $/s, provato su Dall'alto uguale a standard) o standard (0,20 $/s, VEO_FAST=0).
 //      Sempre 8 s: a 6 s Fast inventava un divano a meta' clip e poi dissolveva (prova su fal del 28/09).
-//   5. (GET) Dall'alto: primi 6 s di Veo; Popup e Particelle: clip fino a stanza vuota (tempo morto tolto), invertita.
+//   5. (GET) Dall'alto: primi 6 s di Veo a 1,2x; Popup e Particelle: clip fino a stanza vuota (tempo morto tolto), invertita.
 //      Poi passaggio di 0,35 s alla foto vera e 2 s di fermo su di essa: il video finisce SEMPRE sulla foto
 //      dell'agente, qualunque cosa abbia fatto Veo. Zoom 4% ease-in-out, musica.
 // startVideo avvia (~30 s, Veo resta in coda su fal), pollVideo controlla e a fine lavoro monta e salva su R2.
@@ -40,6 +40,7 @@ const VEO_FLF = `${FAL}/${process.env.VEO_FAST === '0' ? '' : 'fast/'}first-last
 const HOLD = 2 // fermo finale sulla foto vera
 const XFADE = 0.35 // passaggio dall'ultimo fotogramma di Veo alla foto vera
 const GRAVITY_CUT = 6 // Dall'alto: i pezzi si sono posati tutti entro i 5 s (prove del 28/09), il resto e' fermo
+const GRAVITY_SPEED = 1.2 // Dall'alto un po' piu' veloce (scelto il 28/09 tra 1x, 1,2x, 1,5x e 2x)
 // Veo Lite primo/ultimo fotogramma su fal accetta SOLO 8 s (con 4 s rifiuta il lavoro: "Input should be '8s'").
 const VEO_SECONDS = 8
 
@@ -258,18 +259,20 @@ export async function pollVideo(owner: string, job: string): Promise<VideoResult
     // Dall'alto prende i primi 6 s della clip (mai oltre la fine)
     const gray = veo ? await ffmpeg(['-i', raw, '-vf', 'scale=320:180,format=gray', '-f', 'rawvideo', '-']) : Buffer.alloc(0)
     const cut = kling ? KLING_SECONDS * parts.length : !veo ? VEO_SECONDS : popup ? calmPoint(gray, 320 * 180) : Math.min(GRAVITY_CUT, Math.floor(gray.length / (320 * 180)) / 24)
-    const total = cut + HOLD, n = Math.round(total * 30)
+    const speed = veo && !popup ? GRAVITY_SPEED : 1
+    const shown = cut / speed // durata della clip nel video finale
+    const total = shown + HOLD, n = Math.round(total * 30)
     // zoom 4% ease-in-out su tutto il video, sub-pixel (perspective con interpolazione: niente tremolio)
     const z = `(1+0.04*(0.5-0.5*cos(PI*min(in/${n}\\,1))))`, o = `(1-1/${z})/2`
     const zoom = `perspective=x0='W*${o}':y0='H*${o}':x1='W-W*${o}':y1='H*${o}':x2='W*${o}':y2='H-H*${o}':x3='W-W*${o}':y3='H-H*${o}':interpolation=cubic:eval=frame,format=yuv420p[v];`
     const audio = `atrim=end=${total.toFixed(2)},afade=t=out:st=${(total - 1.2).toFixed(2)}:d=1.2,volume=0.8[a]`
-    const clip = `[0:v]trim=end=${cut.toFixed(2)},setpts=PTS-STARTPTS,${popup ? 'reverse,' : ''}fps=30,format=yuv420p`
+    const clip = `[0:v]trim=end=${cut.toFixed(2)},setpts=(PTS-STARTPTS)/${speed},${popup ? 'reverse,' : ''}fps=30,format=yuv420p`
     if (veo) {
       const photo = join(dir, 'finale.jpg')
       await writeFile(photo, Buffer.from(await (await fetch(`${process.env.R2_PUBLIC_URL}/videos/${owner}/${name}-finale.jpg`)).arrayBuffer()))
       await ffmpeg(['-y', '-i', raw, '-loop', '1', '-t', (HOLD + XFADE).toFixed(2), '-i', photo, '-i', music, '-filter_complex',
         // la foto e' gia' W x H come i fotogrammi di Veo (720p); niente scale2ref: con ffmpeg 7 resta appeso
-        `${clip}[c];[1:v]fps=30,format=yuv420p[p];[c][p]xfade=transition=fade:duration=${XFADE}:offset=${(cut - XFADE).toFixed(2)},${zoom}[2:a]${audio}`,
+        `${clip}[c];[1:v]fps=30,format=yuv420p[p];[c][p]xfade=transition=fade:duration=${XFADE}:offset=${(shown - XFADE).toFixed(2)},${zoom}[2:a]${audio}`,
         '-map', '[v]', '-map', '[a]', '-c:v', 'libx264', '-crf', '18', '-preset', 'medium', '-c:a', 'aac', '-b:a', '128k', '-shortest', '-movflags', '+faststart', final])
     } else {
       await ffmpeg(['-y', '-i', raw, '-i', music, '-filter_complex',
