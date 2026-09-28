@@ -11,7 +11,7 @@ import { ArrowRight, Check, Lock, ChevronLeft, ChevronRight, Clapperboard, FileT
 
 import { PRICING } from '@/lib/pricing';
 import { tiltMove, tiltReset } from '@/components/ui/tilt';
-import { Credits, SiteIncluded } from '@/components/PlanParts';
+import { Credits, SiteIncluded, SiteNotIncluded } from '@/components/PlanParts';
 import { VIDEO_SAMPLES } from '@/lib/videoSamples';
 import { startCheckout, type Buy } from '@/lib/startCheckout';
 import dynamic from 'next/dynamic';
@@ -143,7 +143,7 @@ function useInView(margin = '0px') {
 }
 
 
-// Un solo pacchetto: il sito non costa nulla in piu' a noi e chi non lo vuole semplicemente non lo pubblica.
+// Il sito e' nel piano Pro (28/09): Starter ha foto e video.
 // Foto "illimitate" con uso ragionevole (vedi termini), video contati perche' costano davvero.
 
 const thousands = (n: number, sep = '.') => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, sep);
@@ -186,7 +186,7 @@ function Compare() {
   );
 }
 
-// Due piani con lo stesso prodotto (stessa qualita', sito compreso): cambiano solo i crediti e come si paga.
+// Due piani: Starter (foto e video, 1000 crediti) e Pro (piu' crediti, il sito, si paga a trimestre o anno).
 // Prova gratis in pagina, senza account: una foto arredata dall'AI e poi il suo video (1 + 1 al giorno per IP, limite nel server).
 // Si vede il prima/dopo; per scaricarla serve l'account.
 // template del video nella prova: i primi due gratis, gli altri solo con un piano
@@ -396,7 +396,7 @@ function Pricing() {
       <Reveal className="mx-auto max-w-2xl text-center">
         <Pill>{L('Prezzi', "Pricing")}</Pill>
         <h2 className="mt-5 font-display text-4xl font-extrabold leading-[1.05] tracking-tight md:text-5xl">{L('Meno di un caffè al giorno. Per tutte le case.', "Less than a coffee a day. For every home.")}</h2>
-        <p className="mt-5 text-base leading-relaxed text-muted md:text-lg">{L('Sito, foto e video in entrambi i piani. Cambiano solo i crediti.', "Website, photos and videos in both plans. Only the credits change.")}</p>
+        <p className="mt-5 text-base leading-relaxed text-muted md:text-lg">{L('Starter: foto e video. Pro: più crediti e il tuo sito.', "Starter: photos and videos. Pro: more credits and your website.")}</p>
       </Reveal>
       <div className="mx-auto mt-12 grid max-w-4xl items-stretch gap-5 md:grid-cols-2">
         <Reveal delay={80} className="flex flex-col rounded-[32px] bg-white p-8 ring-1 ring-black/5">
@@ -404,7 +404,7 @@ function Pricing() {
           <div className="mt-3 flex items-end gap-2"><span className="font-display text-6xl font-extrabold tracking-tight">{en ? `€${PRICING.starter}` : `${PRICING.starter} €`}</span><span className="pb-2 text-muted">{L('/ mese', "/ month")}</span></div>
           <div className="mt-1 text-sm text-muted">{L('Mensile, disdici quando vuoi', "Monthly, cancel anytime")}</div>
           <Credits n={PRICING.starterCredits} en={en} />
-          <SiteIncluded en={en} />
+          <SiteNotIncluded en={en} />
           <div className="min-h-8 flex-1" />
           <Cta ghost href={buyHref('starter')} onClick={buyClick('starter')} className="w-full justify-center">{L('Scegli Starter', "Choose Starter")}</Cta>
         </Reveal>

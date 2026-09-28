@@ -10,8 +10,9 @@ import { FIELD_LABELS, FONTS, fontCss, PAGE_SECTIONS, PLACEHOLDERS, withPlacehol
 import { SitePage, SiteThumb } from '@/components/site/pages';
 import type { Page } from '@/components/site/ui';
 import { fileToResizedDataUrl } from '@/lib/staging';
+import { useCredits } from './PlanView';
 import { uploadDataUrl } from '@/lib/imageUpload';
-import { authFetch, CARD_SHADOW, formatPrice, portfolioUrl, setPublic } from './api';
+import { authFetch, CARD_SHADOW, formatPrice, go, portfolioUrl, setPublic } from './api';
 import { MorphTarget, morphFrom } from '@/components/ui/Morph';
 import ImmoLoader from '@/components/ui/ImmoLoader';
 
@@ -72,6 +73,7 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
     const t = setInterval(() => setCfg(c => c && { ...c, primary: TEMPLATES[k++ % TEMPLATES.length].primary }), 1400);
     return () => clearInterval(t);
   }, [demo]);
+  const credits = useCredits();
   useEffect(() => {
     authFetch('/api/platform/site').then(r => r.json()).then((d: Site) => { setSite(d); setCfg(d.config); });
   }, []);
@@ -96,9 +98,12 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
     </div>
   );
   const url = site.slug ? portfolioUrl(site.slug) : null;
+  // il sito pubblico e' nel piano Pro: con Starter si prepara tutto ma non va online (il server rifiuta comunque)
+  const sitePlan = !credits || credits.unlimited || credits.plan === 'pro';
   // il sito va online solo quando l'agente accende lo switch (spento: la pagina pubblica risponde 404)
   const publish = async () => {
     const next = !site.published;
+    if (next && !sitePlan) { go('/piano'); return; }
     setSite(s => ({ ...s!, published: next }));
     const d = await authFetch('/api/platform/site', { method: 'PATCH', body: JSON.stringify({ published: next }) }).then(r => r.json()).catch(() => ({}));
     if (d.published !== next) setSite(s => ({ ...s!, published: !next }));
@@ -127,6 +132,7 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
         <div>
           <h1 className="font-display text-3xl font-bold tracking-tight">Il mio sito</h1>
           <p className="pt-1 text-sm text-muted">Scegli un template, modificalo e pubblica il tuo sito in 5 minuti.</p>
+          {!sitePlan && <p className="mt-2 inline-flex items-center gap-2 rounded-full bg-amber-50 px-3 py-1.5 text-sm text-amber-800 ring-1 ring-amber-200">Il sito pubblico è nel piano Pro. <button type="button" onClick={() => go('/piano')} className="font-semibold underline underline-offset-2">Passa a Pro</button></p>}
         </div>
         {url && (
           <div data-tour="site-link" className="flex min-w-0 items-center gap-4">

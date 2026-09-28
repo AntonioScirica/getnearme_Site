@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 import { cache } from 'react'
 import { headers } from 'next/headers'
 import { cleanSite, pageHidden, zoneSlug, type SiteConfig, type SiteProperty } from './siteTemplates'
+import { hasSitePlan, sitePlanHolders } from './sitePlan'
 
 // Lettura pubblica del portfolio: service role lato server, SOLO immobili is_public.
 const admin = createClient(
@@ -48,7 +49,8 @@ export async function getBrand(slug: string): Promise<PortfolioBrand | null> {
     .eq('portfolio_slug', slug)
     .eq('site_published', true) // sito spento dall'agente: 404
     .maybeSingle()
-  return data
+  // piano scaduto o senza sito (Starter): 404 finche' non torna Pro
+  return data && (await hasSitePlan(data.user_id as string)) ? data : null
 }
 
 export async function getPublicProperties(userId: string): Promise<PublicProperty[]> {
@@ -102,7 +104,8 @@ export async function allSitePages(): Promise<{ url: string; lastModified?: stri
   if (!users.length) return []
   const { data: brands } = await admin.from('user_brand').select('user_id, portfolio_slug, company_name, display_name, company_email').in('user_id', users).not('portfolio_slug', 'is', null).eq('site_published', true)
   const out: { url: string; lastModified?: string }[] = []
-  for (const b of brands ?? []) {
+  const withPlan = await sitePlanHolders((brands ?? []).map(b => b.user_id as string))
+  for (const b of (brands ?? []).filter(b => withPlan.has(b.user_id as string))) {
     const slug = b.portfolio_slug as string
     const cfg = await getSite(b as PortfolioBrand)
     const mine = (pub ?? []).filter(p => p.user_id === b.user_id)

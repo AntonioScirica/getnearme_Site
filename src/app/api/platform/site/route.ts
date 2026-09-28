@@ -1,5 +1,6 @@
 import { deepProfanity } from '@/lib/profanity'
 import { NextRequest, NextResponse } from 'next/server'
+import { hasSitePlan } from '@/lib/sitePlan'
 import { createClient } from '@supabase/supabase-js'
 import { cleanSite } from '@/lib/siteTemplates'
 
@@ -26,12 +27,13 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({ ...b, config: cleanSite(u.user_metadata?.vetrina_site, b.name, b.email || u.email || '') })
 }
 
-// PATCH { published } -> accende/spegne il sito pubblico (solo se ha gia' un indirizzo)
+// PATCH { published } -> accende/spegne il sito pubblico (solo se ha gia' un indirizzo e il piano Pro)
 export async function PATCH(req: NextRequest) {
   const u = await user(req)
   if (!u) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   const body = await req.json().catch(() => null) as { published?: unknown } | null
   if (typeof body?.published !== 'boolean') return NextResponse.json({ error: 'bad_request' }, { status: 400 })
+  if (body.published && !(await hasSitePlan(u.id))) return NextResponse.json({ error: 'plan_required' }, { status: 403 })
   const { data, error } = await admin.from('user_brand').update({ site_published: body.published, updated_at: new Date().toISOString() })
     .eq('user_id', u.id).not('portfolio_slug', 'is', null).select('site_published').maybeSingle()
   if (error || !data) return NextResponse.json({ error: 'save_failed' }, { status: error ? 500 : 409 })
