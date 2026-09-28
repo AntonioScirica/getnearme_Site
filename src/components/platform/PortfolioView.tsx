@@ -413,7 +413,7 @@ function Gallery({ cfg, name, logo, props, onPick }: { cfg: SiteConfig; name: st
   return (
     <div className="mt-6">
       <p className="mb-6 text-sm text-muted">Dieci stili già pronti con i tuoi immobili: scegline uno e personalizzalo. Online cambia solo quando pubblichi.</p>
-      <div data-tour="site-gallery" className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
         {TEMPLATES.map((t, i) => {
           const used = cfg.template === t.id;
           const tcfg = used ? cfg : { ...cfg, template: t.id, primary: t.primary, font: t.font };
@@ -421,7 +421,8 @@ function Gallery({ cfg, name, logo, props, onPick }: { cfg: SiteConfig; name: st
             // stessa card delle altre pagine (Galleria): bianca 24 con la miniatura 16 dentro e una riga sotto.
             // Passando sopra: velo leggero sulla miniatura e i due pulsanti che salgono (la miniatura resta ferma,
             // cosi' diventa l'editor dalla stessa immagine)
-            <div key={t.id}
+            // tour: la luce va sulla card del modello in uso, da cui poi nasce l'editor
+            <div key={t.id} data-tour={used ? 'site-gallery' : undefined}
               className={`group rise rounded-3xl bg-white p-2 text-left ease-smooth transition-[opacity,transform,filter,box-shadow] ${CARD_SHADOW} ${used ? '!ring-2 !ring-brand' : ''} ${leaving && leaving !== t.id ? 'pointer-events-none scale-90 opacity-0 blur-[8px]' : ''}`} style={{ animationDelay: `${i * 0.04}s`, transitionDelay: leaving ? `${(i % 3) * 40}ms` : undefined }}>
               <div data-thumb className="relative overflow-hidden rounded-2xl bg-canvas">
                 <MorphTarget id={`tpl-${t.id}`}><Thumb><SiteThumb ctx={{ cfg: tcfg, name, logo, properties: props, base: '', preview: true }} /></Thumb></MorphTarget>

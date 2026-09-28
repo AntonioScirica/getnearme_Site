@@ -38,13 +38,21 @@ export default function Tour({ onDone }: { onDone: () => void }) {
   useLayoutEffect(() => {
     if (location.hash !== `#${step.go}`) location.hash = `#${step.go}`;
     let seen = false;
+    const t0 = Date.now();
     const measure = () => {
       if (step.edit) window.dispatchEvent(new Event('agenteimmo:tour-edit'));
       if (step.demo) window.dispatchEvent(new Event('agenteimmo:tour-demo'));
       const el = document.querySelector<HTMLElement>(`[data-tour="${step.target}"]`);
       // scorrimento immediato: la luce fa un solo movimento invece di inseguire lo scorrimento
-      if (el && !seen) { seen = true; el.scrollIntoView({ block: el.offsetHeight > window.innerHeight * 0.6 ? 'start' : 'center', behavior: 'instant' }); }
+      // si scorre solo se la voce non si vede tutta (se e' gia' li', es. l'editor che sta nascendo, niente scatti)
+      if (el && !seen) {
+        seen = true;
+        const q = el.getBoundingClientRect();
+        if (q.top < 80 || q.bottom > window.innerHeight - 80) el.scrollIntoView({ block: el.offsetHeight > window.innerHeight * 0.6 ? 'start' : 'center', behavior: 'instant' });
+      }
       const r = el?.getBoundingClientRect();
+      // voce non ancora in pagina (sta nascendo): la luce resta dov'era e poi ci va, invece di spegnersi e riaccendersi
+      if (!el && Date.now() - t0 < 2500) return;
       setBox(b => (r && r.width ? (b && b.top === r.top && b.left === r.left && b.width === r.width && b.height === r.height ? b : r) : null));
     };
     // a ogni fotogramma: la luce segue la pagina che si carica o si sposta senza scatti (setBox ignora i valori uguali)
@@ -60,6 +68,7 @@ export default function Tour({ onDone }: { onDone: () => void }) {
     window.addEventListener('keydown', key);
     return () => window.removeEventListener('keydown', key);
   });
+  if (!start) return null; // anche lato server (window non c'e')
   const pad = 8;
   // luce tenuta dentro lo schermo (le sezioni grandi, come l'editor del sito, sono piu' alte della finestra)
   const light = box && (() => { const top = Math.max(8, box.top - pad), bottom = Math.min(window.innerHeight - 8, box.bottom + pad); return { top, left: box.left - pad, width: box.width + pad * 2, height: Math.max(0, bottom - top) }; })();
@@ -71,7 +80,6 @@ export default function Tour({ onDone }: { onDone: () => void }) {
     ? { width: cardW, left: Math.max(16, Math.min(window.innerWidth - cardW - 16, light.left + light.width / 2 - cardW / 2)), ...(below ? { top: light.top + light.height + 14 } : above ? { bottom: window.innerHeight - light.top + 14 } : { bottom: 24 }) }
     : { width: cardW, left: '50%', top: '50%', transform: 'translate(-50%, -50%)' };
   const ease = moving ? 'all 600ms cubic-bezier(.22,1,.36,1)' : 'none';
-  if (!start) return null;
   // nome di transizione: durante una View Transition (onboarding -> home) le card della home vanno sopra a tutto,
   // il velo deve starci anche lui, e sopra
   return (
@@ -82,8 +90,8 @@ export default function Tour({ onDone }: { onDone: () => void }) {
         : <div className="absolute inset-0 bg-[rgba(15,17,25,.62)]" />}
       {/* lo sfondo blocca i clic sulla pagina ma non manda avanti: un clic durante la dissolvenza saltava la Home */}
       <div className="absolute inset-0" />
-      {/* la card entra quando la luce e' quasi arrivata: prima la luce si sposta, poi compare il testo */}
-      <div key={i} className="blur-in absolute rounded-[24px] bg-white p-5 shadow-2xl" style={{ ...cardStyle, transition: ease, animationDelay: i ? '.35s' : '0s' }}>
+      {/* la card entra quando la luce e' quasi arrivata (o, aprendo l'editor, quando la miniatura e' diventata l'editor) */}
+      <div key={i} className="blur-in absolute rounded-[24px] bg-white p-5 shadow-2xl" style={{ ...cardStyle, transition: ease, animationDelay: step.edit && !STEPS[i - 1]?.edit ? '.7s' : i ? '.35s' : '0s' }}>
         <div className="flex items-center justify-between">
           <span className="text-xs font-semibold text-muted">{i + 1} di {STEPS.length}</span>
           <button type="button" onClick={finish} className="text-xs font-medium text-muted hover:text-ink">Salta</button>
@@ -92,7 +100,7 @@ export default function Tour({ onDone }: { onDone: () => void }) {
         <p className="mt-1 text-sm leading-relaxed text-muted">{step.text}</p>
         <div className="mt-4 flex items-center justify-between">
           <span className="flex gap-1">{STEPS.map((_, k) => <span key={k} className={`h-1.5 rounded-full ease-smooth transition-all ${k === i ? 'w-5 bg-ink' : 'w-1.5 bg-line'}`} />)}</span>
-          <button type="button" onClick={next} className="inline-flex h-10 items-center gap-1.5 rounded-full bg-ink px-4 text-sm font-semibold text-white">{i < STEPS.length - 1 ? 'Avanti' : 'Inizia'} <ArrowRight size={15} /></button>
+          <button type="button" onClick={next} className="inline-flex h-10 items-center gap-1.5 rounded-full bg-ink px-4 text-sm font-semibold text-white">{i < STEPS.length - 1 ? 'Avanti' : 'Iniziamo'} <ArrowRight size={15} /></button>
         </div>
       </div>
     </div>

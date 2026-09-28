@@ -60,7 +60,8 @@ export function MorphTarget({ id, children, className = '', style }: { id: strin
     const to0 = lookOf(shape);
     // ponte: contenitore con la forma della partenza e dentro la copia del suo contenuto
     const bridge = document.createElement('div');
-    Object.assign(bridge.style, { position: 'fixed', zIndex: '300', pointerEvents: 'none', overflow: 'hidden', willChange: 'left, top, width, height' });
+    Object.assign(bridge.style, { position: 'fixed', zIndex: '320', // sopra anche il velo del tour (310)
+      pointerEvents: 'none', overflow: 'hidden', willChange: 'left, top, width, height' });
     bridge.appendChild(p.clone);
     document.body.appendChild(bridge);
     const t0 = performance.now();
