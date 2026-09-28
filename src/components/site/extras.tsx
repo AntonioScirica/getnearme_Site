@@ -5,6 +5,7 @@ import { iconFor } from '@/lib/fieldIcons';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { Check, Compass, FileDown, Play, ExternalLink, Facebook, Fence, Flame, Layers, LandPlot, Package, Shirt, ShieldCheck, Siren, Sun, Video, WashingMachine, Waves, Wifi, Wine, HouseWifi, Warehouse, GraduationCap, Hospital, Instagram, Loader2, Mail, MapPin, MessageCircle, Phone, Pill, School, Share2, ShoppingCart, Train, TrainFront, TramFront, Trees } from 'lucide-react';
 import { authFetch } from '@/components/platform/api';
+import { printHtml } from '@/lib/printHtml';
 import { ESSENTIALS, GROUPS, type Field } from '@/lib/propertyFields';
 import type { SiteProperty } from '@/lib/siteTemplates';
 import type { Poi } from '@/lib/zone';
@@ -205,7 +206,7 @@ export function MapBlock({ addr, bare }: { addr: string; bare?: boolean }) {
 }
 
 // "Scarica il report": brochure PDF della casa (foto, descrizione, caratteristiche, zona, costi, contatti dell'agente).
-// L'HTML lo compone il server; qui si stampa da un iframe nascosto (il browser offre "Salva come PDF").
+// L'HTML lo compone il server; qui si stampa da un iframe nascosto (lib/printHtml, il browser offre "Salva come PDF").
 export function ReportButton({ id, className = '' }: { id: string; className?: string }) {
   const { base, preview } = useSite();
   const [busy, setBusy] = useState(false);
@@ -216,17 +217,7 @@ export function ReportButton({ id, className = '' }: { id: string; className?: s
       const slug = base.split('/').filter(Boolean).pop() ?? '';
       const html = await fetch(`/api/site/report?slug=${encodeURIComponent(slug)}&id=${encodeURIComponent(id)}`).then(r => (r.ok ? r.text() : ''));
       if (!html) return;
-      const f = Object.assign(document.createElement('iframe'), { title: 'report' });
-      Object.assign(f.style, { position: 'fixed', right: '0', bottom: '0', width: '0', height: '0', border: '0' });
-      document.body.appendChild(f);
-      const doc = f.contentDocument!;
-      doc.open(); doc.write(html); doc.close();
-      // aspetto foto e font, poi la finestra di stampa
-      await Promise.race([Promise.all([...doc.images].map(img => (img.complete ? null : new Promise(ok => { img.onload = img.onerror = ok; })))), new Promise(ok => setTimeout(ok, 5000))]);
-      await doc.fonts?.ready;
-      f.contentWindow?.focus();
-      f.contentWindow?.print();
-      setTimeout(() => f.remove(), 60000);
+      await printHtml(html);
     } finally { setBusy(false); }
   };
   return (

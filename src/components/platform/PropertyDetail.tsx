@@ -1,13 +1,14 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { ArrowLeft, ExternalLink, Info, Loader2, Pencil, Sparkles, Star, Wand2, X } from 'lucide-react';
+import { ArrowLeft, ExternalLink, FileDown, Info, Loader2, Pencil, Sparkles, Star, Wand2, X } from 'lucide-react';
 import FitImage from '@/components/ui/FitImage';
 import { TEMPLATES, type TemplateId } from '@/lib/siteTemplates';
 import { updateProject, type ProjectData } from '@/lib/projects';
 import PropertyView from '../property/PropertyView';
 import { authFetch, CARD_SHADOW, portfolioUrl, setPublic } from './api';
 import { PublicSwitch } from './PortfolioView';
+import { printHtml } from '@/lib/printHtml';
 
 // Dettaglio in piattaforma: stessa pagina della casa del portfolio pubblico + barra agente
 // (torna agli immobili, pubblico/privato) e suggerimenti dell'AI in fondo.
@@ -15,6 +16,13 @@ export default function PropertyDetail({ project, loading, onChange }: { project
   // modello del sito e indirizzo: per l'avviso "sul sito si vede con lo stile del modello"
   const [site, setSite] = useState<{ slug: string | null; template: TemplateId } | null>(null);
   const [editing, setEditing] = useState(false);
+  // report PDF da mandare ai clienti: lo compone il server (api/platform/report), si stampa da un iframe nascosto
+  const [report, setReport] = useState<'idle' | 'busy' | 'err'>('idle');
+  const downloadReport = async (id: string) => {
+    setReport('busy');
+    const html = await authFetch(`/api/platform/report?id=${encodeURIComponent(id)}`).then(r => (r.ok ? r.text() : '')).catch(() => '');
+    if (html) { await printHtml(html); setReport('idle'); } else setReport('err');
+  };
   useEffect(() => { authFetch('/api/platform/site').then(r => r.json()).then(d => setSite({ slug: d.slug ?? null, template: d.config?.template })).catch(() => {}); }, []);
   if (loading) return <Loader2 className="animate-spin text-muted" />;
   if (!project) return <p className="text-muted">Immobile non trovato. <a href="#/immobili" className="text-brand">Torna agli immobili</a>.</p>;
@@ -25,6 +33,7 @@ export default function PropertyDetail({ project, loading, onChange }: { project
       <div className="mb-5 flex items-center justify-between">
         <a href="#/immobili" className="inline-flex items-center gap-1 text-sm text-muted hover:text-ink"><ArrowLeft size={16} /> Immobili</a>
         <div className="flex items-center gap-2">
+          <button type="button" onClick={() => downloadReport(project.id)} disabled={report === 'busy'} title={report === 'err' ? 'Report non disponibile, riprova' : 'PDF con foto, dati, zona e costi da mandare ai clienti'} className={`flex h-10 items-center gap-1.5 rounded-full bg-white px-4 text-sm font-medium ring-1 ease-smooth transition-colors hover:bg-canvas disabled:opacity-60 ${report === 'err' ? 'ring-rose-300 text-rose-700' : 'ring-black/10'}`}>{report === 'busy' ? <Loader2 size={14} className="animate-spin" /> : <FileDown size={14} />} {report === 'busy' ? 'Preparo il report…' : 'Scarica report'}</button>
           <button type="button" onClick={() => setEditing(true)} className="flex h-10 items-center gap-1.5 rounded-full bg-white px-4 text-sm font-medium ring-1 ring-black/10 ease-smooth transition-colors hover:bg-canvas"><Pencil size={14} /> Modifica</button>
           <PublicSwitch on={!!project.is_public} onClick={async () => { if (await setPublic(project.id, !project.is_public)) onChange(); }} />
         </div>
