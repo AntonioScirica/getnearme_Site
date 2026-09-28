@@ -1,4 +1,5 @@
 import type { ProjectData } from './projects'
+import { VIDEO_SAMPLES } from './videoSamples'
 
 // 10 immobili finti, tutti a Roma: in sviluppo per provare mappa e lista, in produzione come esempio in Immobili
 // finche' l'agente non ne ha uno e nelle miniature dei modelli del sito. Foto nostre, mai quelle dei portali.
@@ -24,7 +25,7 @@ export const FAKE_PROPERTIES: ProjectData[] = rows.map(([titolo, addr, prezzo, m
 
 // Solo in sviluppo: Galleria di prova per i primi 4 immobili finti (prima, dopo e passaggi)
 const S = (n: string) => `/staging/${n}`
-type FakeMedia = { id: string; dopo: string; prima: string | null; at: number; casa: string | null; text: string; room: string; steps: { url: string; text: string }[]; all: string; keys: string[] }
+type FakeMedia = { id: string; video?: string; dopo: string; prima: string | null; at: number; casa: string | null; text: string; room: string; steps: { url: string; text: string }[]; all: string; keys: string[] }
 const fm = (i: number, casa: number, hoursAgo: number, room: string, prima: string, steps: [string, string][]): FakeMedia => ({
   id: `fake-media-${i}`, casa: `fake-${casa}`, room, prima, at: Date.parse('2026-09-25T12:00:00Z') - hoursAgo * 3_600_000,
   dopo: steps[steps.length - 1][0], text: steps[steps.length - 1][1], steps: steps.map(([url, text]) => ({ url, text })),
@@ -35,8 +36,14 @@ const ROOMS = ['un soggiorno', 'una cucina', 'una camera da letto', 'un bagno', 
 const REQS = ['Arreda moderno', 'Arreda nordico', 'Cucina moderna', 'Camera accogliente', 'Bagno moderno', 'Arreda il balcone', 'cuscini verdi sul divano', 'togli il quadro', 'pavimento in rovere chiaro', 'più luce naturale', 'tende di lino bianche', 'Svuota la stanza']
 const AFTERS = ['1.jpg', '2.jpg', '3.jpg', '4.jpg', '5.jpg', '6.jpg'].map(S)
 const BEFORES = [S('1_real.jpg'), S('2_real.jpg'), S('before.jpg'), '/demo/foto_demo.jpg', ...photos]
-export const FAKE_MEDIA: FakeMedia[] = Array.from({ length: 60 }, (_, i) => {
+const PHOTOS: FakeMedia[] = Array.from({ length: 60 }, (_, i) => {
   const n = 1 + (i % 3) // 1-3 passaggi
   return fm(i, i % 4, i * 7 + (i % 5), ROOMS[i % ROOMS.length], BEFORES[i % BEFORES.length],
     Array.from({ length: n }, (_, j) => [AFTERS[(i + j) % AFTERS.length], REQS[(i * 3 + j) % REQS.length]] as [string, string]))
 })
+// piu' 5 video d'esempio (i nostri campioni dei template), in testa: si vedono subito
+const VIDEOS: FakeMedia[] = (['particles', 'stopmotion', 'cantiere', 'daynight', 'gravity'] as const).map((k, i) => ({
+  ...fm(100 + i, i % 4, i * 5 + 1, ROOMS[i % ROOMS.length], null as unknown as string, [[AFTERS[i % AFTERS.length], `Video ${k}`]]),
+  video: VIDEO_SAMPLES[k],
+}))
+export const FAKE_MEDIA: FakeMedia[] = [...VIDEOS, ...PHOTOS]

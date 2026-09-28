@@ -11,7 +11,7 @@ import { useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode }
 // scorrimenti e cambi di impaginazione. Alla fine il ponte sparisce e il contenuto vero entra in dissolvenza.
 
 type Look = { radius: number; bg: string; shadow: string };
-type Pending = { id: string; rect: DOMRect; look: Look; clone: HTMLElement };
+type Pending = { id: string; rect: DOMRect; look: Look; clone: HTMLElement; grow?: boolean };
 let pending: Pending | null = null;
 
 const DUR = 600;
@@ -29,13 +29,16 @@ const lookOf = (el: Element): Look => {
   return { radius: parseFloat(cs.borderTopLeftRadius) || 0, bg: cs.backgroundColor === 'rgba(0, 0, 0, 0)' ? '#fff' : cs.backgroundColor, shadow: cs.boxShadow === 'none' ? '0 1px 3px rgba(0,0,0,.04), 0 16px 40px -22px rgba(0,0,0,.18)' : cs.boxShadow };
 };
 
-export function morphFrom(el: Element | null | undefined, id: string) {
+// grow: il contenuto di partenza e' la stessa cosa dell'arrivo in piccolo (miniatura del modello -> editor):
+// la copia cresce con il contenitore invece di sfumare subito, e alla fine si dissolve sull'arrivo vero
+export function morphFrom(el: Element | null | undefined, id: string, grow = false) {
   if (!el || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   const rect = el.getBoundingClientRect();
   // copia del contenuto di partenza, alla sua misura: sfuma mentre il contenitore si trasforma
   const clone = el.cloneNode(true) as HTMLElement;
   Object.assign(clone.style, { position: 'absolute', left: '0', top: '0', width: `${rect.width}px`, height: `${rect.height}px`, margin: '0', transform: 'none', pointerEvents: 'none' });
-  pending = { id, rect, look: lookOf(el), clone };
+  if (grow) clone.style.transformOrigin = 'top left';
+  pending = { id, rect, look: lookOf(el), clone, grow };
   setTimeout(() => { if (pending?.id === id) pending = null; }, 1500); // se l'arrivo non compare, si dimentica
 }
 
@@ -61,8 +64,8 @@ export function MorphTarget({ id, children, className = '', style }: { id: strin
     bridge.appendChild(p.clone);
     document.body.appendChild(bridge);
     const t0 = performance.now();
-    let raf = 0, done = false;
-    const finish = () => { if (done) return; done = true; cancelAnimationFrame(raf); bridge.remove(); start.current = false; setHidden(false); setRevealed(true); };
+    let raf = 0, done = false, shown = false;
+    const finish = () => { if (done) return; done = true; cancelAnimationFrame(raf); bridge.remove(); start.current = false; setHidden(false); setRevealed(!p.grow); };
     // sicurezza: con la scheda nascosta i fotogrammi non partono, si chiude comunque
     const safety = setTimeout(finish, DUR + 300);
     const lerp = (a: number, b: number, k: number) => a + (b - a) * k;
@@ -76,7 +79,16 @@ export function MorphTarget({ id, children, className = '', style }: { id: strin
         background: k < 0.5 ? p.look.bg : to0.bg,
         boxShadow: k < 0.5 ? p.look.shadow : to0.shadow,
       });
-      p.clone.style.opacity = String(Math.max(0, 1 - k / 0.45)); // il contenuto vecchio sfuma nel primo tratto
+      if (p.grow) {
+        // la copia va sul contenuto vero dell'arrivo (sotto l'eventuale barra), non sul bordo del contenitore
+        const c = shape.querySelector('[data-morph-content]')?.getBoundingClientRect() ?? to;
+        const w = lerp(p.rect.width, c.width, e);
+        p.clone.style.transform = `translate(${lerp(0, c.left - to.left, e)}px, ${lerp(0, c.top - to.top, e)}px) scale(${w / p.rect.width})`;
+        // ultimo tratto: sotto compare l'arrivo vero, il ponte diventa trasparente e la copia ci sfuma sopra
+        if (k >= 0.7 && !shown) { shown = true; setHidden(false); setRevealed(false); }
+        if (shown) Object.assign(bridge.style, { background: 'transparent', boxShadow: 'none' });
+        p.clone.style.opacity = String(k < 0.7 ? 1 : Math.max(0, 1 - (k - 0.7) / 0.3));
+      } else p.clone.style.opacity = String(Math.max(0, 1 - k / 0.45)); // il contenuto vecchio sfuma nel primo tratto
       if (k < 1) raf = requestAnimationFrame(frame);
       else finish();
     };

@@ -66,12 +66,29 @@ export default function MediaView() {
   };
   const [now] = useState(() => Date.now()); // riferimento per i periodi (Oggi, 7 giorni...)
   const sentinel = useRef<HTMLDivElement>(null);
-  // in sviluppo si aggiungono 4 immobili finti con le loro foto, per provare gruppi, filtri e passaggi
+  // in sviluppo si aggiungono 4 immobili finti con le loro foto e video, per provare gruppi, filtri e passaggi.
+  // Galleria vuota o tour (evento 'agenteimmo:tour-demo'): solo quelli d'esempio
   const dev = process.env.NODE_ENV === 'development';
+  const [tour, setTour] = useState(false);
+  const [demo, setDemo] = useState(false);
   useEffect(() => {
-    fetchMedia().then(m => setItems(dev ? [...m, ...FAKE_MEDIA].sort((a, b) => b.at - a.at) : m));
-    fetchProjects().then(p => setProjects(dev ? [...p, ...FAKE_PROPERTIES.slice(0, 4)] : p));
-  }, [dev]);
+    const on = () => setTour(true);
+    window.addEventListener('agenteimmo:tour-demo', on);
+    return () => window.removeEventListener('agenteimmo:tour-demo', on);
+  }, []);
+  useEffect(() => {
+    const fake = [...FAKE_MEDIA].sort((a, b) => b.at - a.at), fakeP = FAKE_PROPERTIES.slice(0, 4);
+    if (tour) { setItems(fake); setProjects(fakeP); setDemo(true); return; }
+    let stale = false; // il tour parte mentre si carica: la risposta vecchia non deve coprire gli esempi
+    Promise.all([fetchMedia(), fetchProjects()]).then(([m, p]) => {
+      if (stale) return;
+      const empty = !m.length;
+      setDemo(empty && !dev);
+      setItems(dev || empty ? [...m, ...fake].sort((a, b) => b.at - a.at) : m);
+      setProjects(dev || empty ? [...p, ...fakeP] : p);
+    });
+    return () => { stale = true; };
+  }, [dev, tour]);
 
   const nameOf = (id: string | null) => {
     const p = id ? projects.find(x => x.id === id) : null;
@@ -126,6 +143,15 @@ export default function MediaView() {
         <a href="#/staging" className="flex h-10 shrink-0 items-center gap-2 rounded-full bg-brand px-5 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand/90"><Wand2 size={15} /> Nuova foto</a>
       </div>
 
+      {demo && (
+        <div className="blur-in mt-6 flex flex-wrap items-center justify-between gap-4 rounded-[24px] bg-white p-5 ring-1 ring-black/5">
+          <div>
+            <div className="font-semibold">Queste sono foto e video di esempio</div>
+            <p className="mt-0.5 text-sm text-muted">Arreda la tua prima stanza: qui trovi tutto quello che crei.</p>
+          </div>
+          <a href="#/staging" className="flex h-10 items-center rounded-full bg-brand px-5 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand/90">Arreda una stanza</a>
+        </div>
+      )}
       <div className="flex flex-wrap items-center gap-2 pt-6">
         <label className="flex h-10 min-w-0 flex-1 items-center gap-2 rounded-full bg-white px-4 ring-1 ring-line ease-smooth transition-shadow focus-within:ring-ink/25 sm:max-w-sm">
           <Search size={16} className="shrink-0 text-muted" />

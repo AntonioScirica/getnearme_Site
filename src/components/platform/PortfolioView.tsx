@@ -119,7 +119,7 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
       <div className="flex flex-wrap items-end justify-between gap-4 border-b border-line pb-6">
         <div>
           <h1 className="font-display text-3xl font-bold tracking-tight">Il mio sito</h1>
-          <p className="pt-1 text-sm text-muted">Il tuo sito con le tue case, da condividere con i clienti.</p>
+          <p className="pt-1 text-sm text-muted">Scegli un template, modificalo e pubblica il tuo sito in 5 minuti.</p>
         </div>
         {url && (
           <div data-tour="site-link" className="flex min-w-0 items-center gap-4">
@@ -168,7 +168,7 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
             </button>
           </div>
           </div>
-        <div className="grid items-start gap-6 lg:grid-cols-[340px_minmax(0,1fr)]">
+        <div data-tour="site-editor" className="grid items-start gap-6 lg:grid-cols-[340px_minmax(0,1fr)]">
           {/* Controlli: sezioni della pagina aperta (clic nell'anteprima = apre la sezione) o impostazioni generali */}
           <SideEditor cfg={cfg} set={set} page={page} onPage={setPage} firstId={props[0]?.id} covers={covers} selected={selected} setSelected={setSelected} getUsed={getUsed} />
 
@@ -400,7 +400,7 @@ function Gallery({ cfg, name, logo, props, onPick }: { cfg: SiteConfig; name: st
     setLeaving(id);
     // prima si torna in cima (mentre le altre card escono), poi la card scelta diventa l'editor:
     // cambiando pagina a meta' scorrimento il browser taglierebbe lo scroll di colpo
-    const go = () => { morphFrom(el.querySelector('[data-thumb]'), `tpl-${id}`); onPick(id); };
+    const go = () => { morphFrom(el.querySelector('[data-thumb]'), `tpl-${id}`, true); onPick(id); };
     const main = el.closest('main');
     if (main && main.scrollTop > 0) scrollTopEased(main, go); else setTimeout(go, 260);
   };
@@ -413,13 +413,15 @@ function Gallery({ cfg, name, logo, props, onPick }: { cfg: SiteConfig; name: st
           const tcfg = used ? cfg : { ...cfg, template: t.id, primary: t.primary, font: t.font };
           return (
             // stessa card delle altre pagine (Galleria): bianca 24 con la miniatura 16 dentro e una riga sotto.
-            // Passando sopra la miniatura scorre lenta verso il basso e mostra tutta la home.
-            <div key={t.id} onMouseEnter={e => measureThumb(e.currentTarget)}
+            // Passando sopra: velo leggero sulla miniatura e i due pulsanti che salgono (la miniatura resta ferma,
+            // cosi' diventa l'editor dalla stessa immagine)
+            <div key={t.id}
               className={`group rise rounded-3xl bg-white p-2 text-left ease-smooth transition-[opacity,transform,filter,box-shadow] ${CARD_SHADOW} ${used ? '!ring-2 !ring-brand' : ''} ${leaving && leaving !== t.id ? 'pointer-events-none scale-90 opacity-0 blur-[8px]' : ''}`} style={{ animationDelay: `${i * 0.04}s`, transitionDelay: leaving ? `${(i % 3) * 40}ms` : undefined }}>
               <div data-thumb className="relative overflow-hidden rounded-2xl bg-canvas">
                 <MorphTarget id={`tpl-${t.id}`}><Thumb><SiteThumb ctx={{ cfg: tcfg, name, logo, properties: props, base: '', preview: true }} /></Thumb></MorphTarget>
                 {/* in hover (sempre su telefono): anteprima in un'altra scheda o scelta del modello, stessa larghezza */}
-                <div className="absolute inset-x-3 bottom-3 z-10 grid grid-cols-2 gap-2 ease-smooth transition-opacity md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100">
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/25 to-transparent opacity-0 ease-smooth transition-opacity duration-[600ms] md:group-hover:opacity-100" />
+                <div className="absolute inset-x-3 bottom-3 z-10 grid grid-cols-2 gap-2 ease-smooth transition-[opacity,transform] duration-[600ms] md:translate-y-2 md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100 md:group-focus-within:translate-y-0 md:group-focus-within:opacity-100">
                   <a href={`#/anteprima/${t.id}`} target="_blank" rel="noopener" className="flex h-10 items-center justify-center gap-1.5 rounded-full bg-white/95 text-sm font-semibold text-ink shadow-lg ring-1 ring-black/5 backdrop-blur hover:bg-white"><Eye size={15} /> Anteprima</a>
                   <button type="button" onClick={e => pick(t.id, e.currentTarget.closest('.group') as HTMLElement)} className="flex h-10 items-center justify-center gap-1.5 rounded-full bg-ink text-sm font-semibold text-white shadow-lg hover:bg-black"><Pencil size={14} /> Scegli template</button>
                 </div>
@@ -442,37 +444,19 @@ function Gallery({ cfg, name, logo, props, onPick }: { cfg: SiteConfig; name: st
 // Miniatura: il sito largo 1280 px rimpicciolito nella card, solo la parte alta, non cliccabile
 // Distanza dello scorrimento misurata anche all'ingresso del mouse: se la misura iniziale e' arrivata prima
 // che la pagina finisse di caricare (immagini), valeva 0 e alcune card non scorrevano.
-function measureThumb(card: HTMLElement) {
-  const box = card.querySelector<HTMLElement>('[data-thumb-box]');
-  const page = box?.firstElementChild?.firstElementChild as HTMLElement | null;
-  if (!box || !page) return;
-  const k = box.clientWidth / 1280;
-  box.style.setProperty('--thumb-scroll', `-${Math.max(0, page.offsetHeight * k - box.clientHeight)}px`);
-}
 
-// Passando sopra (group-hover della card) scorre verso il fondo della pagina in 6 s e torna su uscendo.
+// Miniatura della home del modello, in scala sulla larghezza della card
 function Thumb({ children }: { children: ReactNode }) {
   const box = useRef<HTMLDivElement>(null);
-  const page = useRef<HTMLDivElement>(null);
   const [k, setK] = useState(0.3);
-  const [scroll, setScroll] = useState(0);
   useEffect(() => {
-    const ro = new ResizeObserver(() => {
-      if (!box.current || !page.current) return;
-      const kk = box.current.clientWidth / 1280;
-      setK(kk);
-      setScroll(Math.max(0, page.current.offsetHeight * kk - box.current.clientHeight));
-    });
+    const ro = new ResizeObserver(() => box.current && setK(box.current.clientWidth / 1280));
     if (box.current) ro.observe(box.current);
-    if (page.current) ro.observe(page.current);
     return () => ro.disconnect();
   }, []);
   return (
-    <div ref={box} data-thumb-box className="pointer-events-none relative aspect-[4/3] select-none overflow-hidden" aria-hidden style={{ ['--thumb-scroll' as string]: `-${scroll}px` }}>
-      {/* in hover scende piano (12 s); uscendo torna in cima in 2 s, sempre ease-in-out */}
-      <div className="transition-transform duration-[2000ms] ease-in-out group-hover:duration-[12000ms] group-hover:[transform:translateY(var(--thumb-scroll))]">
-        <div ref={page} style={{ width: 1280, transform: `scale(${k})`, transformOrigin: 'top left', height: 'max-content' }}>{children}</div>
-      </div>
+    <div ref={box} className="pointer-events-none relative aspect-[4/3] select-none overflow-hidden" aria-hidden>
+      <div style={{ width: 1280, transform: `scale(${k})`, transformOrigin: 'top left' }}>{children}</div>
     </div>
   );
 }
@@ -495,7 +479,7 @@ function Preview({ children, page, onPage, firstId, zone, editMode, setEditMode,
   return (
     // min-w-0: e' la colonna della griglia; senza, il sito largo 1280 px la allargava e l'anteprima usciva dallo schermo
     <MorphTarget id={vtName ?? 'preview'} className="min-w-0">
-    <div data-morph="preview" data-tour="site-editor" className={`relative overflow-hidden rounded-[28px] bg-white ${CARD_SHADOW}`}>
+    <div data-morph="preview" className={`relative overflow-hidden rounded-[28px] bg-white ${CARD_SHADOW}`}>
       {/* pulsante WhatsApp del sito: fisso nell'angolo come sul sito vero */}
       {wa && <span className="pointer-events-none absolute bottom-4 right-5 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-[#25d366] text-white shadow-[0_10px_30px_-5px_rgba(37,211,102,.6)]"><MessageCircle size={21} fill="currentColor" /></span>}
       <div className="flex items-center gap-2 border-b border-line px-4 py-3 text-xs text-muted">
@@ -511,7 +495,7 @@ function Preview({ children, page, onPage, firstId, zone, editMode, setEditMode,
           {([[true, 'Modifica'], [false, 'Naviga']] as const).map(([v, l]) => <button key={l} onClick={() => setEditMode(v)} className={`rounded-full px-3 py-1 font-medium ease-smooth transition-colors ${editMode === v ? 'bg-white text-ink shadow-sm' : 'hover:text-ink'}`}>{l}</button>)}
         </div>
       </div>
-      <div ref={box} key={JSON.stringify(page)} className="h-[calc(100vh-12rem)] overflow-y-auto overflow-x-hidden [scrollbar-width:thin]"
+      <div ref={box} data-morph-content key={JSON.stringify(page)} className="h-[calc(100vh-12rem)] overflow-y-auto overflow-x-hidden [scrollbar-width:thin]"
         onClickCapture={e => { if ((e.target as HTMLElement).closest('a')) e.preventDefault(); }}>
         {/* overflow nascosto: il sito rimpicciolito occupa comunque la sua altezza piena nel layout e sotto restava spazio vuoto */}
         <div style={{ height: h * k, overflow: 'hidden' }}>
