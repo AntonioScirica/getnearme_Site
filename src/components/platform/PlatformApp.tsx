@@ -125,12 +125,12 @@ export default function PlatformApp({ userData }: { userData: UserData }) {
         </div>
       </header>
 
-      {/* Profilo e Importa immobile: pillole in basso; in home al centro, nelle altre pagine a sinistra, in chat, in Importa e in Piano no */}
-      {!chat && route !== '/importa' && route !== '/piano' && <div className={`fixed bottom-5 z-30 flex items-center gap-2 ${route === '/' ? 'left-1/2 -translate-x-1/2' : 'left-5'}`}>
-        <a href="#/profilo" data-tour="profilo" style={morph ? { viewTransitionName: 'ob-bottom' } : undefined} className={`flex h-10 items-center gap-2 rounded-full bg-white px-4 text-sm font-medium shadow-sm ring-1 ring-line ease-smooth transition-shadow hover:shadow-md ${route === '/profilo' ? 'ring-ink' : ''}`}>
+      {/* Profilo e Importa immobile: pillole in basso al centro, solo in home */}
+      {!chat && route === '/' && <div className="fixed bottom-5 left-1/2 z-30 flex -translate-x-1/2 items-center gap-2">
+        <a href="#/profilo" data-tour="profilo" style={morph ? { viewTransitionName: 'ob-bottom' } : undefined} className={`flex h-10 items-center gap-2 rounded-full bg-white px-4 text-sm font-medium shadow-sm ring-1 ring-line ease-smooth transition-shadow hover:shadow-md`}>
           <UserRound size={16} className="text-muted" /> Il mio profilo
         </a>
-        <a href="#/importa" className={`flex h-10 items-center gap-2 rounded-full bg-white px-4 text-sm font-medium shadow-sm ring-1 ring-line ease-smooth transition-shadow hover:shadow-md ${route === '/importa' ? 'ring-ink' : ''}`}>
+        <a href="#/importa" className={`flex h-10 items-center gap-2 rounded-full bg-white px-4 text-sm font-medium shadow-sm ring-1 ring-line ease-smooth transition-shadow hover:shadow-md`}>
           <Download size={16} className="text-muted" /> Importa immobile
         </a>
       </div>}
