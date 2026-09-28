@@ -1,7 +1,8 @@
 import type { ProjectData } from './projects'
 
-// Solo in sviluppo: 10 immobili finti per provare mappa e lista senza toccare il database.
-const photos = ['2005025054', '2005025068', '2005025050', '2005025056', '2005025058', '2005025060'].map(i => `https://pwm.im-cdn.it/image/${i}/xxl.jpg`)
+// 10 immobili finti, tutti a Roma: in sviluppo per provare mappa e lista, in produzione come esempio in Immobili
+// finche' l'agente non ne ha uno e nelle miniature dei modelli del sito. Foto nostre, mai quelle dei portali.
+const photos = ['/staging/1.jpg', '/staging/2.jpg', '/immo/home/demo-after.webp', '/staging/3.jpg', '/staging/4.jpg', '/immo/home/demo-1.webp', '/staging/5.jpg', '/staging/6.jpg', '/staging/1_real.jpg', '/staging/2_real.jpg']
 const rows: [string, string, number, number, number, number][] = [
   ['Trilocale arredato con box, zona Prati', 'Via Cola di Rienzo 120, Roma', 598000, 95, 2, 1],
   ['Bilocale ristrutturato vicino alla metro', 'Via Tuscolana 210, 00182 Roma', 289000, 60, 1, 1],

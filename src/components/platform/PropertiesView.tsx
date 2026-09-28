@@ -68,8 +68,10 @@ function ensureLeafletCss() {
 }
 
 export default function PropertiesView({ projects: real }: { projects: ProjectData[] | null }) {
-  // ponytail: in sviluppo si aggiungono 10 immobili finti (mappa e lista piene); in produzione mai
-  const projects = useMemo(() => (real && process.env.NODE_ENV === 'development' ? [...real, ...FAKE_PROPERTIES] : real), [real]);
+  // nessun immobile ancora: case d'esempio a Roma (mappa e lista piene), con l'invito a mettere in vetrina la prima.
+  // ponytail: in sviluppo si aggiungono sempre i finti
+  const demo = real?.length === 0;
+  const projects = useMemo(() => (real && (demo || process.env.NODE_ENV === 'development') ? [...real, ...FAKE_PROPERTIES] : real), [real, demo]);
   const [filter, setFilter] = useState<Filter>('tutti');
   const [q, setQ] = useState('');
   const [hover, setHover] = useState<string | null>(null);
@@ -79,8 +81,6 @@ export default function PropertiesView({ projects: real }: { projects: ProjectDa
     (filter === 'tutti' || (filter === 'vetrina') === !!p.is_public) &&
     (!q.trim() || `${title(p)} ${p.addr} ${p.riferimento ?? ''}`.toLowerCase().includes(q.trim().toLowerCase()))), [projects, filter, q]);
 
-  if (projects && !projects.length) return <Empty />;
-
   return (
     <div className="pb-16">
       {/* Mappa a tutta larghezza, anche sotto la navbar; in basso sfuma nello sfondo */}
@@ -89,7 +89,7 @@ export default function PropertiesView({ projects: real }: { projects: ProjectDa
       <div className="relative z-10 mx-auto -mt-24 max-w-6xl px-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <h1 className="blur-in font-display text-4xl font-bold leading-[1.2] tracking-tight">
-          Immobili{projects && <span className="ml-3 align-middle text-2xl font-semibold text-muted/60">{projects.length}</span>}
+          Immobili{projects && !demo && <span className="ml-3 align-middle text-2xl font-semibold text-muted/60">{projects.length}</span>}
         </h1>
         {/* Filtri: stato e ricerca */}
         <div className="blur-in flex items-center gap-2" style={{ animationDelay: '.08s' }}>
@@ -106,13 +106,22 @@ export default function PropertiesView({ projects: real }: { projects: ProjectDa
         </div>
       </div>
 
+      {demo && (
+        <div className="blur-in mt-8 flex flex-wrap items-center justify-between gap-4 rounded-[24px] bg-white p-5 ring-1 ring-black/5">
+          <div>
+            <div className="font-semibold">Queste sono case di esempio</div>
+            <p className="mt-0.5 text-sm text-muted">Metti in vetrina il tuo primo immobile: qui e sulla mappa vedrai le tue.</p>
+          </div>
+          <a href="#/nuovo" className="flex h-10 items-center rounded-full bg-brand px-5 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand/90">Metti in vetrina</a>
+        </div>
+      )}
       {!projects ? (
         <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {[0, 1, 2].map(i => <div key={i} className="aspect-[4/3] animate-pulse rounded-[24px] bg-canvas" />)}
         </div>
       ) : shown.length ? (
         <div className="stagger mt-10 grid gap-x-6 gap-y-9 sm:grid-cols-2 lg:grid-cols-3">
-          {shown.map(p => <PropertyCard key={p.id} p={p} onHover={on => setHover(on ? p.id : null)} />)}
+          {shown.map(p => <PropertyCard key={p.id} p={p} demo={demo} onHover={on => setHover(on ? p.id : null)} />)}
         </div>
       ) : (
         <p className="mt-12 text-center text-sm text-muted">Nessun immobile con questi filtri.</p>
@@ -136,16 +145,18 @@ function Facts({ p, className = '' }: { p: ProjectData; className?: string }) {
   );
 }
 
-function PropertyCard({ p, onHover }: { p: ProjectData; onHover: (on: boolean) => void }) {
+function PropertyCard({ p, demo, onHover }: { p: ProjectData; demo?: boolean; onHover: (on: boolean) => void }) {
   const score = (p.import_data as { score?: number } | undefined)?.score;
   return (
-    <a href={`#/immobile/${p.id}`} onMouseEnter={() => onHover(true)} onMouseLeave={() => onHover(false)} className="group block">
+    // esempio: la scheda non esiste, il clic porta a mettere in vetrina il primo immobile
+    <a href={demo ? '#/nuovo' : `#/immobile/${p.id}`} onMouseEnter={() => onHover(true)} onMouseLeave={() => onHover(false)} className="group block">
       <div className={`relative aspect-[4/3] overflow-hidden rounded-[24px] bg-canvas ${CARD_SHADOW} ease-smooth transition-transform group-hover:-translate-y-1`}>
         {p.cover
           ? <img src={p.cover} alt="" className="h-full w-full object-cover ease-smooth transition-transform group-hover:scale-[1.04]" />
           : <div className="flex h-full items-center justify-center text-muted/40"><Building2 size={36} /></div>}
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/45 to-transparent" />
         <div className="absolute left-3 right-16 top-3 flex min-w-0 gap-1.5">
+          {demo && <span className="shrink-0 whitespace-nowrap rounded-full bg-ink/80 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur-md">Esempio</span>}
           {p.is_public && <span className="shrink-0 whitespace-nowrap rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-semibold shadow-sm ring-1 ring-black/5 backdrop-blur-md">In vetrina</span>}
           {p.tipologia && <span className="min-w-0 truncate rounded-full bg-black/35 px-2.5 py-1 text-[11px] font-medium text-white backdrop-blur-md">{p.tipologia.split('|')[0].trim()}</span>}
         </div>
@@ -374,13 +385,3 @@ function NearbySidebar({ p, onClose }: { p: ProjectData; onClose: () => void }) 
   );
 }
 
-function Empty() {
-  return (
-    <div className="flex flex-col items-center px-6 pt-20 text-center">
-      <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-canvas text-muted"><Building2 size={26} /></span>
-      <p className="mt-5 font-display text-2xl font-bold tracking-tight">Ancora nessun immobile</p>
-      <p className="mt-2 max-w-xs text-sm text-muted">Mettine uno in vetrina: comparirà qui e sulla mappa.</p>
-      <a href="#/nuovo" className="mt-6 rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand/90">Metti in vetrina</a>
-    </div>
-  );
-}
