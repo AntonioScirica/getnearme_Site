@@ -14,7 +14,7 @@ const USD_PER_IMAGE_1K = 0.067
 export type StageTask = 'furnish' | 'empty' | 'edit'
 
 const FRAMING = 'photographed from the identical camera position, with the same lens and framing. The result must line up with the original photo: every corner, wall edge, window and door stays at the same position in the frame (do not move, rotate, zoom out, widen or crop the view).'
-const ARCHITECTURE = 'Same architecture: every wall, window, door, beam, column, staircase, radiator and fireplace stays exactly where it is, with the same shape and size. Keep the existing window and door frames. Never add or remove windows, doors or rooms, and never invent a kitchen, stairs or other spaces that are not visible in the photo.'
+const ARCHITECTURE = 'Same architecture: every wall (including half-height walls, low partition walls, counter walls and ledges, which are masonry and must stay), window, door, beam, column, staircase, radiator and fireplace stays exactly where it is, with the same shape and size. Keep the existing window and door frames. Never add or remove windows, doors or rooms, and never invent a kitchen, stairs or other spaces that are not visible in the photo.'
 const LIGHT = 'Light: bright natural daylight through the windows, soft interior lights on, balanced exposure, no burnt highlights, straight vertical lines.'
 const OUTPUT = 'Output one photorealistic photo, believable and magazine-quality, no text, no watermark.'
 
@@ -29,7 +29,7 @@ export function stagePrompt(o: { task: StageTask; room: string; style: string; s
 Rules:
 1. ${ARCHITECTURE} Keep built-in wardrobes.
 2. Remove everything else: all furniture, rugs, lamps, curtains, decorations, personal items, clutter, people, and also kitchen units, appliances and bathroom fixtures. Where they were, show clean, finished, freshly painted walls and the same floor: no marks, holes, pipes, sockets left hanging or broken tiles, as if the room had just been prepared for sale.
-3. Surfaces: keep the existing floor, tiles and wall finishes exactly as they are, only cleaned; if the room is unfinished, show plastered walls and a clean floor.
+3. Surfaces: keep the existing floor exactly as it is (same material, same tiles with the same size, color and pattern, never replace tiles with wood or another floor) and the same wall finishes, only cleaned; if the room is unfinished, show plastered walls and a clean floor.
 4. ${LIGHT}
 ${OUTPUT}`
   }
