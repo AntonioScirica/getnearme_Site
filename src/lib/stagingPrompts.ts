@@ -208,9 +208,10 @@ const ROOM_FURNISH: Record<string, string> = {
 // "un soggiorno con cucina" contiene sia cucina sia soggiorno: si riconosce prima
 export const roomKey = (label?: string | null) => (/soggiorno con cucina|openspace/i.test(label ?? '') ? 'openspace' : Object.keys(ROOM_FURNISH).find(k => k !== 'openspace' && label?.toLowerCase().includes(k === 'camera' ? 'camera da letto' : k)) ?? '')
 
-// Richieste a parole che chiedono di arredare o cambiare stile ("balcone stile moderno", "arredala nordica"):
+// Richieste a parole che chiedono di arredare o cambiare stile ("balcone stile moderno", "arredala nordica", "arredo ricco",
+// "pochi mobili"; prima "arredo" e "mobili" restavano modifiche gratis e non arredavano):
 // con la formula "cambia solo quello che chiedo" il modello non toccava nulla. Vanno trattate come uno stile.
-const RESTYLE = /\b(stile|moderno|moderna|nordico|nordica|scandinavo|scandinava|minimal|contemporaneo|contemporanea|industriale|boho|arreda\w*|riarreda\w*|rinnova\w*|rifai|rifalla|trasforma\w*|ristruttura\w*|home staging)\b/i;
+const RESTYLE = /\b(stile|moderno|moderna|nordico|nordica|scandinavo|scandinava|minimal|contemporaneo|contemporanea|industriale|boho|arred\w*|riarred\w*|mobili|rinnova\w*|rifai|rifalla|trasforma\w*|ristruttura\w*|home staging)\b/i;
 export const isRestyle = (text?: string | null) => !!text && RESTYLE.test(text) && !/\b(togli|rimuovi|elimina|cancella)\b/i.test(text);
 
 export function buildStagingPrompt(o: { style?: string | null; customPrompt?: string | null; angle?: string | null; planimetria?: boolean; scene?: SceneType; room?: string; restyle?: boolean }): string {

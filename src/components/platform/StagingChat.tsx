@@ -850,7 +850,6 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
               placeholder={hint}
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
               className="block h-10 min-w-0 flex-1 resize-none bg-transparent px-1 py-2 text-[15px] leading-6 outline-none placeholder:text-muted/60 disabled:cursor-not-allowed" />
-            {base && text.trim() && !busy && <span className="self-center"><Cr n={creditsOf({ prompt: text, scene }, editsDone)} /></span>}
             <button onClick={() => send()} disabled={!text.trim() || !base || busy} aria-label="Invia"
               className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand text-white ease-smooth transition-[background-color,opacity,transform] hover:bg-brand/90 active:scale-95 disabled:opacity-40">
               {busy ? <Loader2 size={17} className="animate-spin" /> : <ArrowUp size={18} />}
