@@ -728,11 +728,10 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                 {m.image
                   ? <button type="button" onClick={() => setViewer({ src: m.image! })} className="max-w-[60%] cursor-zoom-in"><img src={m.image} alt="Foto caricata" data-base-photo={base === m.image ? '' : undefined} className={`max-h-56 rounded-3xl object-cover ${CARD_SHADOW} ease-smooth transition-transform hover:scale-[1.01]`} /></button>
                   : m.style
-                    // stile da una foto: la foto di riferimento a tutta larghezza (raggio 18 = 24 - 6 di margine), sotto cosa si fa e il credito
+                    // stile da una foto: la foto di riferimento a tutta larghezza (raggio 18 = 24 - 6 di margine), sotto cosa si fa; il credito Unsplash (obbligatorio) sta nel tooltip della foto
                     ? <div className="w-64 max-w-[75%] rounded-3xl rounded-br-2xl bg-ink p-1.5 text-sm text-white">
-                        <img src={m.style.src} alt="Foto di stile" className="block aspect-[4/3] w-full rounded-[18px] object-cover" />
+                        <img src={m.style.src} alt="Foto di stile" title={m.style.author ? `Foto di ${m.style.author} su Unsplash` : undefined} className="block aspect-[4/3] w-full rounded-[18px] object-cover" />
                         <div className="flex items-center gap-2 px-2.5 pb-1.5 pt-2.5"><Palette size={15} className="shrink-0 opacity-70" /><span className="min-w-0 flex-1">{m.text}</span></div>
-                        {m.style.author && <div className="truncate px-2.5 pb-1.5 text-[11px] text-white/50">Foto di {m.style.authorUrl ? <a href={m.style.authorUrl} target="_blank" rel="noopener" className="underline decoration-white/30 underline-offset-2 hover:text-white/80">{m.style.author}</a> : m.style.author} su Unsplash</div>}
                       </div>
                   : <div className="max-w-[75%] rounded-3xl rounded-br-2xl bg-ink px-4 py-2.5 text-sm text-white">{m.region && <span className="mr-1.5 inline-flex items-center gap-1 rounded-full bg-white/15 px-2 py-0.5 text-[11px]"><SquareDashedMousePointer size={11} /> zona</span>}{m.text}</div>}
               </div>
