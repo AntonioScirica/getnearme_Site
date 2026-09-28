@@ -349,7 +349,8 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   };
   const pollVideo = async (id: string, job: string) => {
     const fail = 'Video non riuscito, riprova.';
-    for (let k = 0; k < 80; k++) {
+    // Kling (Stop-motion, Particelle, Cantiere, Giorno/notte) ci mette ~9 min (prove del 28/09/2026): si aspetta fino a 16
+    for (let k = 0; k < 160; k++) {
       await wait(6000);
       const r = await authFetch(`/api/platform/video?job=${encodeURIComponent(job)}`).catch(() => null);
       const v = r ? await r.json().catch(() => ({})) : {};
