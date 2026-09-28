@@ -93,6 +93,11 @@ export async function POST(req: NextRequest) {
   // Crediti: si controlla prima di generare, si scalano solo a foto riuscita (src/lib/credits.ts)
   const action: Action = body.angle === 'day' ? 'luminoso' : body.style === 'empty' ? 'svuota' : furnishReq ? 'arreda' : 'modifica'
   if (!(await canAfford(userId, action))) return NextResponse.json({ error: 'no_credits', cost: CREDIT_COST[action] }, { status: 402 })
+  // Modifiche gratis: tetto giornaliero per utente contro gli abusi (EDIT_DAILY_LIMIT, predefinito 300), contato su ai_usage
+  if (action === 'modifica') {
+    const { count } = await admin.from('ai_usage').select('id', { count: 'exact', head: true }).eq('user_id', userId).in('kind', ['zona', 'modifica', 'photo_edit']).gte('created_at', new Date(Date.now() - 86_400_000).toISOString())
+    if ((count ?? 0) >= (Number(process.env.EDIT_DAILY_LIMIT) || 300)) return NextResponse.json({ error: 'daily_limit' }, { status: 429 })
+  }
   if (AI_MOCK) { await mockDelay(2000); return NextResponse.json({ url: imageUrl || imageBase64, mock: true }) }
   if (!process.env.AI_IMAGE_ENDPOINT_ID || !process.env.RUNPOD_API_KEY) return NextResponse.json({ error: 'not_configured' }, { status: 503 })
 

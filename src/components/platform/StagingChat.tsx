@@ -398,6 +398,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
     const res = await authFetch('/api/platform/photo-edit', { method: 'POST', headers: QUIET, body: JSON.stringify(req) }).catch(() => null);
     let d = res ? await res.json().catch(() => ({})) : {};
     if (d.error === 'no_credits') { patch(id, { busy: false, err: NO_CREDITS }); return; }
+    if (d.error === 'daily_limit') { patch(id, { busy: false, err: 'Hai raggiunto il limite di modifiche di oggi, riprova domani.' }); return; }
     if (AI_MOCK && res?.status === 401) { await wait(4000); d = { url: before }; } // anteprima senza login
     if (!d.url) { patch(id, { busy: false, err: d.error === 'timeout' ? 'La GPU si sta avviando, riprova tra un minuto.' : 'Modifica non riuscita, riprova.' }); return; }
     patch(id, { busy: false, out: d.url, reveal: 'burst' });
