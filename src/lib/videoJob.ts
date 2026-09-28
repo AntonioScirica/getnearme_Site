@@ -11,7 +11,7 @@ import { gptImage } from '@/lib/gptImage'
 import { GNM_CANTIERE_1, GNM_CANTIERE_2, GNM_DAYNIGHT, GNM_EXCAVATION_IMAGE, GNM_NIGHT_IMAGE, GNM_STOPMOTION, GNM_STRUCTURE_IMAGE } from '@/lib/gnmVideoPrompts'
 import Anthropic from '@anthropic-ai/sdk'
 import ffmpegPath from 'ffmpeg-static'
-import { uploadFile, uploadJpeg } from '@/lib/r2'
+import { deleteKeys, uploadFile, uploadJpeg } from '@/lib/r2'
 import { logUsage } from '@/lib/ai'
 import { AI_MOCK, mockDelay } from '@/lib/aiMock'
 import { MUSIC_CATALOG } from '@/lib/aiVideoMusic'
@@ -162,7 +162,9 @@ export async function startVideo(owner: string, logUser: string, o: { imageUrl: 
       if (ids.some(x => !x)) { console.error('video kling submit', ids); return { error: 'ai_failed', status: 502 } }
       const kname = `${name}${ids.length > 1 ? '-kc' : '-k'}`
       const id = ids.join('+')
-      return { job: `${id}.${kname.replace('/', '~')}.${sign(owner, `${id}.${kname}`)}` }
+      const job = `${id}.${kname.replace('/', '~')}.${sign(owner, `${id}.${kname}`)}`
+      await markPending(owner, kname, job)
+      return { job }
     }
 
     // Popup e Dall'alto: due fasi. prepareFrames fa e salva Prima (stanza vuota) e Dopo (foto vera o nel nuovo stile),
@@ -255,11 +257,19 @@ export async function renderVideo(owner: string, logUser: string, frames: string
     })
     if (!q.request_id) { console.error('video fal submit', q); return { error: 'ai_failed', status: 502 } }
     // il nome va nel lavoro firmato: a fine montaggio il video si salva accanto alla sua foto (copertina in Galleria)
-    return { job: `${q.request_id}.${name.replace('/', '~')}.${sign(owner, `${q.request_id}.${name}`)}` }
+    const job = `${q.request_id}.${name.replace('/', '~')}.${sign(owner, `${q.request_id}.${name}`)}`
+    await markPending(owner, name, job)
+    return { job }
   } catch (e) {
     console.error('video render', e)
     return { error: 'ai_failed', status: 502 }
   }
+}
+
+// Segnaposto del video in lavorazione (videos/<owner>/<nome>.job.json): la Galleria lo lista come "in lavorazione" e
+// ne segue il lavoro anche se la chat e' andata persa; sparisce a video montato (o dopo 30 minuti, se e' fallito).
+async function markPending(owner: string, name: string, job: string) {
+  await uploadFile(Buffer.from(JSON.stringify({ job, at: Date.now() })), `videos/${owner}/${name}.job.json`, 'application/json').catch(e => console.error('video segnaposto', e))
 }
 
 // url pronto; fresh = montato adesso (la piattaforma scala i crediti una volta sola, con l'id di fal)
@@ -328,6 +338,7 @@ export async function pollVideo(owner: string, job: string): Promise<VideoResult
         '-map', '[v]', '-map', '[a]', '-c:v', 'libx264', '-crf', '18', '-preset', 'medium', '-c:a', 'aac', '-b:a', '128k', '-shortest', '-movflags', '+faststart', final])
     }
     await uploadFile(await readFile(final), key, 'video/mp4')
+    await deleteKeys([`${key.replace(/\.mp4$/, '')}.job.json`]).catch(() => {}) // via il segnaposto "in lavorazione"
     return { url, id, fresh: true }
   } catch (e) {
     console.error('video montaggio', e)

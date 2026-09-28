@@ -58,7 +58,15 @@ export async function GET(req: NextRequest) {
       const cover = key.replace(/\.mp4$/, '-arredata.jpg')
       return { id: key, video: publicUrl(key), dopo: vall.has(cover) ? publicUrl(cover) : '', prima: null, at: t, casa: key.match(/\/casa-([\w-]+)\//)?.[1] ?? null, text: 'Video', room: '', steps: [], all: 'video', keys: [key] }
     })
-    return NextResponse.json({ items: [...items, ...videos].sort((a, b) => b.at - a.at) })
+    // video in lavorazione (segnaposto <nome>.job.json senza il suo .mp4, degli ultimi 30 minuti): la Galleria li segue
+    const pending = await Promise.all(vkeys.filter(k => k.key.endsWith('.job.json') && !vall.has(k.key.replace(/\.job\.json$/, '.mp4')) && Date.now() - k.at < 30 * 60_000).map(async ({ key, at: t }) => {
+      const j = await fetch(publicUrl(key), { signal: AbortSignal.timeout(10_000) }).then(r => (r.ok ? r.json() : null)).catch(() => null) as { job?: string } | null
+      if (!j?.job) return null
+      const base = key.replace(/\.job\.json$/, '')
+      const cover = `${base.replace(/-(k|kc)$/, '')}-arredata.jpg`
+      return { id: base + '.mp4', video: '', pending: true, job: j.job, dopo: vall.has(cover) ? publicUrl(cover) : '', prima: null, at: t, casa: key.match(/\/casa-([\w-]+)\//)?.[1] ?? null, text: 'Video in lavorazione', room: '', steps: [], all: 'video', keys: [] }
+    }))
+    return NextResponse.json({ items: [...items, ...videos, ...pending.filter(Boolean)].sort((a, b) => b!.at - a!.at) })
   } catch (e) {
     console.error('media list', e)
     return NextResponse.json({ error: 'failed' }, { status: 502 })

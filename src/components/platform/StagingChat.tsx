@@ -293,7 +293,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
     try { sessionStorage.setItem(SAVE_KEY, JSON.stringify({ msgs, base, kind, scene, roomState, project, origin, emptyFrom })); } catch { /* troppo grande: si salva al prossimo cambio */ }
   }, [msgs, base, kind, scene, roomState, project, origin, emptyFrom]);
   // uscita dalla chat (altra pagina della piattaforma): conversazione chiusa. Una ricarica della scheda non passa di qui.
-  useEffect(() => () => { try { sessionStorage.removeItem(SAVE_KEY); } catch { /* niente */ } }, []);
+  // la conversazione resta finche' la scheda e' aperta: tornando da un'altra pagina si ritrova (28/09, prima si perdeva all'uscita)
   const patch = (id: string, p: Partial<Extract<Msg, { role: 'ai' }>>) => setMsgs(ms => ms.map(m => (m.id === id && m.role === 'ai' ? { ...m, ...p } : m)));
 
   const upload = async (files: FileList | File[] | null, projectId?: string | null, sourceUrl?: string, early?: Promise<Response | null>) => {

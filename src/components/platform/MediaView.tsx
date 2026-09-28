@@ -13,7 +13,7 @@ import { FAKE_MEDIA, FAKE_PROPERTIES } from '@/lib/fakeProperties';
 import ImmoLoader from '@/components/ui/ImmoLoader';
 
 // Una voce = una foto di partenza: ultima versione (dopo), originale (prima) e i passaggi in mezzo.
-export type MediaItem = { id: string; video?: string; dopo: string; prima: string | null; at: number; casa: string | null; text: string; room: string; steps: { url: string; text: string }[]; all: string; keys: string[] };
+export type MediaItem = { id: string; video?: string; pending?: boolean; job?: string; dopo: string; prima: string | null; at: number; casa: string | null; text: string; room: string; steps: { url: string; text: string }[]; all: string; keys: string[] };
 
 export async function fetchMedia(): Promise<MediaItem[]> {
   const r = await authFetch('/api/platform/media').catch(() => null);
@@ -77,6 +77,23 @@ export default function MediaView() {
     window.addEventListener('agenteimmo:tour-demo', on);
     return () => window.removeEventListener('agenteimmo:tour-demo', on);
   }, []);
+  // video in lavorazione (chat persa o chiusa): si segue il lavoro da qui, a video pronto si ricarica la lista
+  useEffect(() => {
+    const jobs = (items ?? []).filter(m => m.pending && m.job).map(m => m.job!);
+    if (!jobs.length) return;
+    let stop = false;
+    let t: ReturnType<typeof setTimeout>;
+    const tick = async () => {
+      for (const job of jobs) {
+        const r = await authFetch(`/api/platform/video?job=${encodeURIComponent(job)}`).catch(() => null);
+        const v = r ? await r.json().catch(() => ({})) : {};
+        if (v.url || v.error) { if (!stop) fetchMedia().then(m => { if (!stop) setItems(m); }); return; }
+      }
+      if (!stop) t = setTimeout(tick, 8000);
+    };
+    t = setTimeout(tick, 8000);
+    return () => { stop = true; clearTimeout(t); };
+  }, [items]);
   useEffect(() => {
     const fake = [...FAKE_MEDIA].sort((a, b) => b.at - a.at), fakeP = FAKE_PROPERTIES.slice(0, 4);
     if (tour) { setItems(fake); setProjects(fakeP); setDemo(true); return; }
@@ -194,6 +211,11 @@ export default function MediaView() {
                           <video data-play src={m.video} muted loop playsInline preload="auto" className="absolute inset-0 h-full w-full object-cover" />
                           <video src={m.video} muted playsInline preload="auto" onLoadedMetadata={e => { e.currentTarget.currentTime = Math.max(0, e.currentTarget.duration - 0.05); }}
                             className="absolute inset-0 h-full w-full object-cover ease-smooth transition-opacity duration-[600ms] group-hover:opacity-0" />
+                        </>
+                        : m.pending
+                        ? <>
+                          {m.dopo && <img src={m.dopo} alt="" loading="lazy" className="absolute inset-0 h-full w-full scale-105 object-cover blur-md" />}
+                          <span className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/25 text-white"><Loader2 size={22} className="animate-spin" /><span className="text-xs font-medium">Video in lavorazione</span></span>
                         </>
                         : <img src={m.dopo} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover" />}
                       {m.video && <span className="absolute bottom-3 left-3 flex items-center gap-1 rounded-full bg-black/55 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur"><Clapperboard size={12} /> Video</span>}
