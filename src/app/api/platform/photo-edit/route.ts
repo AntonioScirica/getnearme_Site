@@ -10,6 +10,7 @@ import { brighten } from '@/lib/brighten'
 import { finish } from '@/lib/finish'
 import { createClient } from '@supabase/supabase-js'
 import { uploadJpeg, uploadMarker } from '@/lib/r2'
+import { alignTo } from '@/lib/align'
 import sharp from 'sharp'
 import { logUsage } from '@/lib/ai'
 import { AI_MOCK, mockDelay } from '@/lib/aiMock'
@@ -171,7 +172,7 @@ export async function POST(req: NextRequest) {
   // risultato alle proporzioni dell'originale + finitura fotografica (grana, contrasto locale: meno "piatto");
   // Luminoso no: e' gia' la foto vera con l'esposizione corretta
   let shapedBuf: Buffer | null = null
-  const shaped = async () => (shapedBuf ??= body.angle === 'day' ? await matchInputShape(Buffer.from(b64, 'base64'), imageBase64, imageUrl) : await finish(await matchInputShape(Buffer.from(b64, 'base64'), imageBase64, imageUrl)))
+  const shaped = async () => (shapedBuf ??= body.angle === 'day' ? await matchInputShape(Buffer.from(b64, 'base64'), imageBase64, imageUrl) : await finish(await matchInputShape(Buffer.from(b64, 'base64'), imageBase64, imageUrl, !body.planimetria && (!body.angle || body.angle === 'day'))))
   // foto di un immobile (scelta dalla vetrina): cartella casa-<id>, la Galleria le raggruppa per casa
   const projectId = typeof body.projectId === 'string' && /^[\w-]{1,64}$/.test(body.projectId) ? body.projectId : ''
   // anteprime per il video (tre proposte tra cui scegliere): cartella a parte, non vanno in Galleria
@@ -208,7 +209,7 @@ async function savePrima(imageBase64: string, imageUrl: string, key: string) {
 // Il modello genera a ~1 MP con lati multipli di 32: le proporzioni cambiano di poco (es. 1920x1440 ->
 // 1184x896) e nel prima/dopo la foto sembra spostata. Riporto il risultato alle proporzioni esatte
 // dell'originale (lato lungo max 1600 px). Se l'originale non si legge, resta com'e'.
-async function matchInputShape(out: Buffer, imageBase64: string, imageUrl: string): Promise<Buffer> {
+async function matchInputShape(out: Buffer, imageBase64: string, imageUrl: string, align = true): Promise<Buffer> {
   try {
     const src = imageBase64
       ? Buffer.from(imageBase64.split(',')[1] ?? '', 'base64')
@@ -216,7 +217,9 @@ async function matchInputShape(out: Buffer, imageBase64: string, imageUrl: strin
     const { width = 0, height = 0 } = await sharp(src).metadata()
     if (!width || !height) return out
     const k = Math.min(1, 1600 / Math.max(width, height))
-    return await sharp(out).resize(Math.round(width * k), Math.round(height * k), { fit: 'fill' }).jpeg({ quality: 90 }).toBuffer()
+    const shaped = await sharp(out).resize(Math.round(width * k), Math.round(height * k), { fit: 'fill' }).jpeg({ quality: 90 }).toBuffer()
+    // stessa stanza rimessa esattamente sopra l'originale (i modelli la spostano di qualche pixel), vedi align.ts
+    return align ? await alignTo(src, shaped) : shaped
   } catch {
     return out
   }
