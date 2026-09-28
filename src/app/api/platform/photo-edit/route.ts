@@ -11,6 +11,7 @@ import { finish } from '@/lib/finish'
 import { createClient } from '@supabase/supabase-js'
 import { uploadJpeg, uploadMarker } from '@/lib/r2'
 import { alignTo } from '@/lib/align'
+import { styleFromPhoto } from '@/lib/styleFromPhoto'
 import sharp from 'sharp'
 import { logUsage } from '@/lib/ai'
 import { AI_MOCK, mockDelay } from '@/lib/aiMock'
@@ -128,8 +129,10 @@ export async function POST(req: NextRequest) {
       // Svuota: prima con maschera e inpainting (lib/emptyRoom), che non ridisegna la stanza; se non riesce, Nano Banana
       // GPT Image 2.5 Sunburst (OpenAI diretto): arredo con FURNISH_MODEL=gpt, modifiche e Svuota con EDIT_MODEL=gpt. Svuota senza
       // maschera: tiene pilastri, muretti e pavimento da solo (prova del 28/09, 0,014 $). Se non risponde: Svuota a maschera, poi Nano Banana.
-      const gpt = !styleRef && ((task === 'furnish' && process.env.FURNISH_MODEL === 'gpt') || (task !== 'furnish' && process.env.EDIT_MODEL === 'gpt'))
-        ? await gptImage({ userId, image: imageBase64 || imageUrl, prompt: nbPrompt, kind: task === 'furnish' ? 'arreda' : task === 'empty' ? 'svuota' : 'modifica', ...(task !== 'furnish' ? { quality: process.env.GPT_EDIT_QUALITY || 'low' } : {}) }) : null
+      // Stile da una foto: con GPT lo stile del riferimento si legge e si scrive a parole (styleFromPhoto), la foto non gli si passa
+      const refStyle = styleRef && task === 'furnish' && process.env.FURNISH_MODEL === 'gpt' ? await styleFromPhoto(styleRef, userId) : null
+      const gpt = (!styleRef || refStyle) && ((task === 'furnish' && process.env.FURNISH_MODEL === 'gpt') || (task !== 'furnish' && process.env.EDIT_MODEL === 'gpt'))
+        ? await gptImage({ userId, image: imageBase64 || imageUrl, prompt: refStyle ? stagePrompt({ task, room: roomLabel(roomK), style: refStyle }) : nbPrompt, kind: task === 'furnish' ? 'arreda' : task === 'empty' ? 'svuota' : 'modifica', ...(task !== 'furnish' ? { quality: process.env.GPT_EDIT_QUALITY || 'low' } : {}) }) : null
       const masked = !gpt && task === 'empty' ? await emptyRoomMasked({ userId, image: imageBase64 || imageUrl, kind: 'svuota' }) : null
       const nb = masked ? masked.toString('base64') : gpt ? gpt : process.env.GEMINI_API_KEY ? await nanoBanana({ userId, image: imageBase64 || imageUrl, prompt: nbPrompt, styleRef, lite: task === 'edit' }) : null
       if (nb) {

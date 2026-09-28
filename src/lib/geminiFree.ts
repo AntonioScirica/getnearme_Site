@@ -5,7 +5,7 @@ import { logUsage } from '@/lib/ai'
 // (quello di Nano Banana) tutto si paga. Nel SEE i termini valgono anche per la quota gratuita come per il pagamento:
 // Google non usa i dati per addestrare (verificato su ai.google.dev/gemini-api/terms il 28/09/2026).
 // Senza chiave, quota finita (429) o errore: null, e chi chiama passa al ripiego.
-const MODEL = process.env.GEMINI_FREE_MODEL || 'gemini-2.5-flash'
+const MODEL = process.env.GEMINI_FREE_MODEL || 'gemini-flash-latest' // 2.5 non piu' disponibile per le chiavi nuove (28/09)
 
 export async function geminiFreeJson<T>(o: { system: string; text: string; userId: string; kind: string; maxTokens?: number }): Promise<T | null> {
   const key = process.env.GEMINI_FREE_API_KEY
