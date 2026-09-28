@@ -28,15 +28,19 @@ export async function POST(req: NextRequest) {
   const imageBase64 = typeof body.imageBase64 === 'string' && /^data:image\/(jpeg|png|webp);base64,/.test(body.imageBase64) && body.imageBase64.length < 8_000_000 ? body.imageBase64 : ''
   if (!imageBase64 && !allowedUrl(imageUrl)) return NextResponse.json({ error: 'bad_request' }, { status: 400 })
   // crediti: controllo all'avvio, si scalano solo a video consegnato (GET)
-  if (!(await canAfford(userId, 'video'))) return NextResponse.json({ error: 'no_credits', cost: CREDIT_COST.video }, { status: 402 })
+  const anim = parseAnim(body.anim), action = anim === 'cantiere' ? 'video_cantiere' : 'video'
+  if (!(await canAfford(userId, action))) return NextResponse.json({ error: 'no_credits', cost: CREDIT_COST[action] }, { status: 402 })
   const pid = typeof body.projectId === 'string' && /^[\w-]{1,64}$/.test(body.projectId) ? body.projectId : ''
-  return reply(await startVideo(userId, userId, { imageUrl, imageBase64, projectId: pid, anim: parseAnim(body.anim) }))
+  return reply(await startVideo(userId, userId, { imageUrl, imageBase64, projectId: pid, anim }))
 }
 
 export async function GET(req: NextRequest) {
   const userId = await userOf(req)
   if (!userId) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   const { fresh, id, ...r } = await pollVideo(userId, req.nextUrl.searchParams.get('job') ?? '')
-  if (fresh && id) return NextResponse.json({ url: r.url, credits: await spendOnce(userId, 'video', id) })
+  // il lavoro firmato dice che video era: cantiere = due clip (nome che finisce con -kc)
+  const job = req.nextUrl.searchParams.get('job') ?? ''
+  const action = /-kc\./.test(job) ? 'video_cantiere' : 'video'
+  if (fresh && id) return NextResponse.json({ url: r.url, credits: await spendOnce(userId, action, id) })
   return reply(r)
 }

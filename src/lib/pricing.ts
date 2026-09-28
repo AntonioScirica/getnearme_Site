@@ -5,7 +5,10 @@
 // Costi 27/09: foto con Nano Banana 2 ~0,065 EUR, modifica con la Lite ~0,033 EUR, video Veo 4 s ~0,21 EUR.
 // Starter 29 EUR mensile (sotto 77,47: niente bollo), 200 foto: netto 18,8, costo max 13 -> margine min ~5,8 EUR.
 // Pro 59 annuale / 69 trimestrale, 500 foto: netto 38,6 / 44,6, costo max 32,5 -> margine min ~6 / ~12 EUR.
-export const CREDIT_COST = { luminoso: 0, modifica: 3, arreda: 5, svuota: 5, video: 20, riscrivi: 1 };
+// Video: crediti in proporzione al costo (28/09/2026, incasso al credito peggiore 0,0236 € col Pro annuale, margine ~45%):
+// Popup / Dall'alto (Veo, ~0,34 $) e Stop-motion / Particelle / Giorno-notte (Nano Banana + Kling, ~0,37 $) = 25;
+// Cantiere (2 Nano Banana + 2 Kling, ~0,73 $) = 50.
+export const CREDIT_COST = { luminoso: 0, modifica: 3, arreda: 5, svuota: 5, video: 25, video_cantiere: 50, riscrivi: 1 };
 export const PRICING = { starter: 29, starterCredits: 1000, quarterly: 69, yearly: 59, credits: 2500 };
 export const photosFor = (credits: number) => Math.floor(credits / CREDIT_COST.arreda);
 export const videosFor = (credits: number) => Math.floor(credits / CREDIT_COST.video);
