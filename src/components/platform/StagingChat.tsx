@@ -684,7 +684,6 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                         {m.frames && (
                           <div className="flex flex-wrap items-center gap-2 pt-3">
                             <button onClick={() => renderVideo(m)} className="flex items-center rounded-full bg-ink pl-4 pr-2 py-2 text-[13px] font-medium text-white shadow-sm ease-smooth transition-colors hover:bg-brand">Crea il video<Cr n={videoCr(m.anim)} dark /></button>
-                            <button onClick={() => { const f = m.frames!; makeVideo({ ...m, picks: m.picks.slice(0, -1) }, f.src, m.picks[m.picks.length - 1]?.label ?? 'Stanza com’è', f.styled); }} className="rounded-full bg-white px-4 py-2 text-[13px] font-medium text-ink/80 shadow-sm ring-1 ring-inset ring-black/10 ease-smooth transition-colors hover:bg-canvas">Rifai la stanza vuota</button>
                           </div>
                         )}
                         {m.err && !m.frames && (
