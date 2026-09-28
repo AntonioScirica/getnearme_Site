@@ -110,6 +110,13 @@ const uid = () => Math.random().toString(36).slice(2, 10);
 const wait = (ms: number) => new Promise(r => setTimeout(r, ms));
 // planimetria: rendering con regole sue, dal testo prendo solo lo stile dell'arredo
 // esempi del campo: il primo per tipo di stanza, poi ritocchi sul risultato (a rotazione)
+// Modifica di una zona: esempio nel campo secondo la stanza riconosciuta (cosa si trova di solito in quella foto)
+const ZONE_EX: Record<string, string> = {
+  openspace: 'togli la tv', soggiorno: 'togli la tv', cucina: 'cambia il colore delle ante', camera: 'cambia la testiera del letto',
+  cameretta: 'togli i giochi', bagno: 'togli il box doccia', sala: 'metti un lampadario', studio: 'togli la scrivania',
+  ingresso: 'metti una consolle', corridoio: 'appendi dei quadri', balcone: 'metti delle piante', cantina: 'togli gli scatoloni',
+  box: 'togli gli attrezzi', esterno: 'ridipingi la facciata', giardino: 'metti un prato curato', planimetria: 'togli le scritte',
+};
 const FIRST: Record<string, string> = {
   openspace: 'cucina bianca e zona giorno con divano', soggiorno: 'arreda con un divano grigio e un tavolino', cucina: 'ante bianche e piano in legno chiaro', camera: 'letto matrimoniale e comodini in rovere',
   cameretta: 'lettino, scrivania e colori tenui', bagno: 'piastrelle chiare e doccia in vetro', sala: 'tavolo da pranzo per sei persone',
@@ -500,7 +507,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
     setZoneClosing(true);
     setTimeout(() => { clearZone(); setSelecting(false); setZoneClosing(false); }, 300);
   };
-  const zonePicker = (inline?: number) => selecting && base ? <ZonePicker inline={inline} src={base} region={region} onChange={setRegion} onLoad={toBottom} busy={busy} onSubmit={t => send(t)} closing={zoneClosing} onCancel={inline ? cancelZone : () => { clearZone(); setSelecting(false); }} /> : null;
+  const zonePicker = (inline?: number) => selecting && base ? <ZonePicker example={(kind && ZONE_EX[kind.replace(/^(room|scene):/, '')]) || undefined} inline={inline} src={base} region={region} onChange={setRegion} onLoad={toBottom} busy={busy} onSubmit={t => send(t)} closing={zoneClosing} onCancel={inline ? cancelZone : () => { clearZone(); setSelecting(false); }} /> : null;
 
   return (
     // Tutta l'altezza disponibile: la conversazione scorre da sola, il campo e' sempre in fondo alla pagina
@@ -816,7 +823,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
 type Tool = 'rect' | 'lasso';
 // Zona: rettangolo trascinato o forma libera (lazo) disegnata col mouse; la forma libera arriva come
 // poligono (poly) con il suo rettangolo di ingombro, cosi' il resto del flusso resta quello del rettangolo.
-function ZonePicker({ inline, closing = false, src, region, onChange, onLoad, busy, onSubmit, onCancel }: { inline?: number; closing?: boolean; src: string; region: Region | null; onChange: (r: Region | null) => void; onLoad: () => void; busy: boolean; onSubmit: (text: string) => void; onCancel: () => void }) {
+function ZonePicker({ inline, closing = false, src, region, onChange, onLoad, busy, onSubmit, onCancel, example = 'togli la tv' }: { example?: string; inline?: number; closing?: boolean; src: string; region: Region | null; onChange: (r: Region | null) => void; onLoad: () => void; busy: boolean; onSubmit: (text: string) => void; onCancel: () => void }) {
   const box = useRef<HTMLDivElement>(null);
   const start = useRef<{ x: number; y: number } | null>(null);
   const [tool, setTool] = useState<Tool>('rect');
@@ -915,7 +922,7 @@ function ZonePicker({ inline, closing = false, src, region, onChange, onLoad, bu
         {/* campo con dentro, a destra, gli strumenti di selezione (solo icone, nome nel tooltip) */}
         <div className="flex h-10 min-w-0 flex-1 items-center rounded-full border border-transparent bg-canvas pl-4 pr-1 ease-smooth transition-colors focus-within:border-ink/15 focus-within:bg-white">
           <input ref={el => { if (el && !focused.current) { focused.current = true; el.focus({ preventScroll: true }); } }} value={text} onChange={e => setText(e.target.value)}
-            placeholder={ready ? 'Cosa cambio? Es. togli la tv' : tool === 'rect' ? 'Trascina sulla foto' : clicks.length ? 'Doppio clic per chiudere' : 'Disegna il contorno'}
+            placeholder={ready ? `Cosa cambio qui? Es. ${example}` : tool === 'rect' ? 'Trascina sulla foto' : clicks.length ? 'Doppio clic per chiudere' : 'Disegna il contorno'}
             className="h-full min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted/60" />
           {([['rect', 'Rettangolo: trascina per disegnare la zona', SquareDashed], ['lasso', 'Forma: disegna il contorno o clicca i punti', Lasso]] as const).map(([id, l, I]) => (
             <Tooltip key={id} label={l}>
