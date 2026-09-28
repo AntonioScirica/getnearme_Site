@@ -11,9 +11,11 @@ export const PLAN_CREDITS: Record<string, number> = { starter: 1000, pro: 2500 }
 export type Credits = { plan: 'none' | 'starter' | 'pro'; balance: number; monthly: number; renews: string | null; until: string | null; unlimited?: boolean }
 
 // Account admin (i nostri): crediti illimitati, niente scalare
+// (tranne l'account di test, che scala crediti veri per provare saldo e costi come un cliente)
+const METERED = ['a@gmail.com']
 const adminCache = new Map<string, boolean>()
 async function unlimited(userId: string): Promise<boolean> {
-  if (!adminCache.has(userId)) adminCache.set(userId, isPlatformAdmin((await admin.auth.admin.getUserById(userId)).data.user?.email))
+  if (!adminCache.has(userId)) { const email = (await admin.auth.admin.getUserById(userId)).data.user?.email; adminCache.set(userId, isPlatformAdmin(email) && !METERED.includes(email ?? '')) }
   return adminCache.get(userId)!
 }
 
