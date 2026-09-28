@@ -1,7 +1,7 @@
 // Arredo con GPT Image 2 / 2.5 (OpenAI diretto), provato il 28/09/2026 sulle stesse foto di Nano Banana 2: stanza e inquadratura
 // identiche, arredo realistico, 0,020 $ a foto a qualita' media e 0,014 $ a bassa (misurati dal campo usage) contro 0,067 $. Si attiva con FURNISH_MODEL=gpt e
 // OPENAI_API_KEY; se non risponde, il chiamante ripiega su Nano Banana 2. La fedelta' all'immagine di partenza in GPT Image 2 e'
-// sempre alta (input_fidelity ignorato). Unico difetto visto: tende a rinnovare la cucina, quindi il prompt lo ribadisce.
+// sempre alta (input_fidelity ignorato). La cucina fissa viene rifatta nello stile scelto tenendo posizione e layout (scelta del 28/09).
 import sharp from 'sharp'
 import { logUsage } from '@/lib/ai'
 
@@ -28,7 +28,7 @@ export async function gptImage(o: { userId: string; image: string; prompt: strin
       const b = x.startsWith('data:') ? Buffer.from(x.split(',')[1] ?? '', 'base64') : Buffer.from(await (await fetch(x, { signal: AbortSignal.timeout(20_000) })).arrayBuffer())
       form.append('image[]', new Blob([new Uint8Array(await sharp(b).rotate().png().toBuffer())], { type: 'image/png' }), `ref${i}.png`)
     }
-    form.append('prompt', o.kind === 'arreda' ? `${o.prompt} Keep any fitted kitchen exactly as it is in the photo: same cabinets, same fronts and colors, same worktop, same appliances; never renovate or repaint it.` : o.prompt)
+    form.append('prompt', o.kind === 'arreda' ? `${o.prompt} If there is a fitted kitchen, restyle it in the same style: new fronts, handles, worktop and backsplash matching the chosen style, keeping exactly the same layout, position, size and the same appliances in the same places.` : o.prompt)
     if (o.mask) form.append('mask', new Blob([new Uint8Array(o.mask)], { type: 'image/png' }), 'mask.png')
     form.append('size', size)
     // GPT_IMAGE_QUALITY: 'low' (~0,005 $, provato il 28/09: quasi pari alla media), 'medium' (~0,041 $), 'high'

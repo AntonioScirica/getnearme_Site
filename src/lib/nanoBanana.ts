@@ -35,7 +35,7 @@ ${OUTPUT}`
   }
   return `You are a professional real estate photographer and interior stager. This room is a ${room}. Show this exact room ready to be listed for sale, ${FRAMING}
 Rules:
-1. ${ARCHITECTURE} Keep fitted kitchens, bathroom fixtures and built-in wardrobes exactly as they are, in the same position and finish.
+1. ${ARCHITECTURE} Keep bathroom fixtures and built-in wardrobes exactly as they are, in the same position and finish. A fitted kitchen keeps exactly its position, layout, size and appliances in the same places, but its fronts, handles, worktop and backsplash get restyled in the chosen style (decided the 28/09: the style applies to the kitchen too).
 2. Clear the room: remove people, clutter, personal items, construction tools and materials, and replace all old or worn loose furniture and rugs with new pieces. Outside the windows show a clean, finished view (no scaffolding, no building site).
 3. Surfaces: if the room is unfinished or damaged, show it finished with plastered, freshly painted walls and a clean finished floor; otherwise keep the existing floor, tiles and wall finishes exactly as they are, only cleaned.
 4. Furnish it as a ${room} in this style: ${o.style}. Always include the main pieces a buyer expects in this room (a living room has a sofa and a coffee table, a bedroom a bed with bedside tables, a kitchen or open space a dining table with chairs), then a rug, a plant and a few decorative objects. Real, well-proportioned furniture placed only on the floor that is visible in the photo, never blocking windows, doors or passages; if there is not enough free floor for a piece, choose a smaller one (a loveseat instead of a large sofa). Never change the view to make room for furniture.${ref}
