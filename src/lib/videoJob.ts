@@ -58,12 +58,22 @@ const VANISH: Record<Anim, string> = {
 const prompt = (order: string, anim: Anim) => 'Elegant, satisfying real-estate animation with a perfectly still, locked-off camera: identical framing for the whole video, no pan, no zoom. Walls, ceiling, curtains, built-in furniture, doors, windows, floor and daylight never change. '
   + `These are the only objects that disappear, in exactly these quantities: ${order}. Nothing new ever appears. The last frame is identical to the final empty image. `
   + 'The camera is exactly the one of the first and last image for the whole video: same lens, same framing, same distance, it never moves. '
-  + 'The furnished room is shown perfectly still for a quarter of a second. Then the objects vanish one after another in a quick smooth cascade, consecutive objects overlapping slightly in time like a wave: first the small objects on top of the furniture, then the pieces closest to the camera, then the pieces further back. '
+  + 'The furnished room is shown perfectly still for half a second. Then the objects vanish one after another in a quick smooth cascade, consecutive objects overlapping slightly in time like a wave: first the small objects on top of the furniture, then the pieces closest to the camera, then the pieces further back. '
   + VANISH[anim]
-  + `Order: ${order}. By the third second the room is completely empty and identical to the last image; from then on nothing moves or changes at all.`
+  + `Order: ${order}. By the fourth second the room is completely empty and identical to the last image; from then on nothing moves or changes at all.`
 // dall'alto: i pezzi volano per davvero, niente divieti di volo
 const negFor = (anim: Anim) => anim === 'gravity' ? NEG.replace('flying objects, floating objects, ', 'tumbling objects, rotating objects, ')
   : NEG
+
+// Stanza vuota della foto: Qwen (RunPod) "remove only", allineata al pixel; ripiego Nano Banana se la GPU non risponde.
+async function emptyRoom(fullUrl: string, logUser: string): Promise<string | null> {
+  const t0 = Date.now()
+  const job = await runJob({ image_url: fullUrl, prompt: EMPTY_PROMPT, seed: Math.floor(Math.random() * 1_000_000), steps: 12 })
+  await logUsage({ userId: logUser, kind: 'video_empty' }, true, Date.now() - t0, {}, !!job.output?.image_base64, 'qwen-image-2.1')
+  if (job.output?.image_base64) return job.output.image_base64
+  console.error('video: Qwen non ha svuotato, provo Nano Banana', job.status)
+  return nanoBanana({ userId: logUser, image: fullUrl, prompt: `${EMPTY_PROMPT} The result must line up exactly with the original photo: same camera, framing and perspective. Photorealistic, no text.`, kind: 'video_empty' })
+}
 
 // il lavoro di fal torna al client firmato con l'utente: solo chi l'ha avviato puo' finalizzarlo
 const sign = (userId: string, id: string) => createHmac('sha256', process.env.SUPABASE_SERVICE_ROLE_KEY!).update(`${userId}:${id}`).digest('base64url').slice(0, 22)
@@ -120,7 +130,9 @@ export async function startVideo(owner: string, logUser: string, o: { imageUrl: 
         ids = [(await kling(fullUrl, night, GNM_DAYNIGHT)).request_id]
       } else {
         // stop-motion / particelle: dalla stanza vuota alla foto arredata
-        const empty = await frame(`${EMPTY_PROMPT} The result must line up exactly with the original photo: same camera, framing and perspective. Photorealistic, no text.`, 'vuota')
+        // stanza vuota con Qwen (allineata alla foto, vedi emptyRoom): Kling va da questa alla foto vera
+        const q = await emptyRoom(fullUrl, logUser)
+        const empty = q && await uploadJpeg(await sharp(Buffer.from(q, 'base64')).resize(W, H, { fit: 'fill' }).jpeg({ quality: 95 }).toBuffer(), `${key}-vuota.jpg`)
         if (!empty) return { error: 'ai_failed', status: 502 }
         ids = [(await kling(empty, fullUrl, anim === 'stopmotion' ? GNM_STOPMOTION : GNM_PARTICLES)).request_id]
       }
@@ -134,16 +146,11 @@ export async function startVideo(owner: string, logUser: string, o: { imageUrl: 
     // a volte Qwen lascia un mobile (27/09: letto rimasto con un seme su due), allora si riprova con un altro seme.
     let empty: Buffer | null = null, items: string[] = []
     for (let attempt = 0; attempt < 2; attempt++) {
-      // Nano Banana 2 (una chiamata, niente GPU); se Google non risponde, Qwen come prima
-      const nb = o.empty ? o.empty.split(',').pop()! : await nanoBanana({ userId: logUser, image: fullUrl, prompt: `${EMPTY_PROMPT} The result must line up exactly with the original photo: same camera, framing and perspective. Photorealistic, no text.`, kind: 'video_empty' })
-      let out = nb
-      if (!out) {
-        const t0 = Date.now()
-        const job = await runJob({ image_url: fullUrl, prompt: EMPTY_PROMPT, seed: Math.floor(Math.random() * 1_000_000), steps: 12 })
-        await logUsage({ userId: logUser, kind: 'video_empty' }, true, Date.now() - t0, {}, !!job.output?.image_base64, 'qwen-image-2.1')
-        if (!job.output?.image_base64) return { error: job.status === 'IN_QUEUE' || job.status === 'IN_PROGRESS' ? 'timeout' : 'ai_failed', status: 502 }
-        out = job.output.image_base64
-      }
+      // Qwen, come nella ricetta approvata (27/09): la stanza vuota coincide al pixel con la foto. Nano Banana (usato dal
+      // 27/09 sera al 28/09) la restituiva in un altro formato che andava stirato: la vuota non combaciava piu' e Veo
+      // dissolveva una stanza nell'altra invece di far sparire i mobili. Nano Banana resta solo se Qwen non risponde.
+      const out = o.empty ? o.empty.split(',').pop()! : await emptyRoom(fullUrl, logUser)
+      if (!out) return { error: 'ai_failed', status: 502 }
       empty = await sharp(Buffer.from(out, 'base64')).resize(W, H, { fit: 'fill' }).jpeg({ quality: 95 }).toBuffer()
       // nomi semplici e quantita' esatte: descrizioni sbagliate cambiano la forma ai mobili
       const t1 = Date.now()
@@ -260,7 +267,7 @@ function cutPoint(raw: Buffer, px: number, fps = 24): number {
   const peak = mv.indexOf(Math.max(...mv))
   let calm = -1
   for (let i = peak; i < n - 12; i++) if (still(i)) { calm = i; break }
-  if (calm < 0) return VEO_SECONDS - 1 // ponytail: nessun fermo trovato, taglio fisso (il prompt chiede il vuoto entro il terzo secondo)
+  if (calm < 0) return 4 // ponytail: nessun fermo trovato, taglio fisso a 4 s (il prompt chiede il vuoto entro il quarto secondo)
   let diss = n - 1
   for (let i = calm + 6; i < n - 12; i++) if (dl[i] - dl[i + 12] > 0.6 && still(i)) { diss = i; break }
   return Math.max(calm + 6, Math.min(diss - 2, calm + 24)) / fps
