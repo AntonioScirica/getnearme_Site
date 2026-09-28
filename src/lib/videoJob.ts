@@ -5,7 +5,7 @@ import { mkdtemp, readFile, rename, rm, writeFile } from 'fs/promises'
 import { tmpdir } from 'os'
 import { join } from 'path'
 import sharp from 'sharp'
-import { nanoBanana } from '@/lib/nanoBanana'
+import { nanoBanana, stagePrompt } from '@/lib/nanoBanana'
 import { GNM_CANTIERE_1, GNM_CANTIERE_2, GNM_DAYNIGHT, GNM_EXCAVATION_IMAGE, GNM_NIGHT_IMAGE, GNM_STOPMOTION, GNM_STRUCTURE_IMAGE } from '@/lib/gnmVideoPrompts'
 import Anthropic from '@anthropic-ai/sdk'
 import ffmpegPath from 'ffmpeg-static'
@@ -44,9 +44,8 @@ const GRAVITY_SPEED = 1.2 // Dall'alto un po' piu' veloce (scelto il 28/09 tra 1
 // Veo Lite primo/ultimo fotogramma su fal accetta SOLO 8 s (con 4 s rifiuta il lavoro: "Input should be '8s'").
 const VEO_SECONDS = 8
 
-// Stanza vuota: un solo prompt coerente. Restano architettura, armadi a muro, camino e sanitari; va via tutto il resto,
-// cucina compresa (deciso il 28/09: il Prima deve essere davvero vuoto): sono i pezzi che poi cadono o spuntano nel video.
-const EMPTY_PROMPT = 'You are a professional real estate photographer. Show this exact room completely empty, photographed from the identical camera position, with the same lens and framing: every corner, wall edge, window and door stays at the same position in the frame (do not move, rotate, zoom out, widen or crop the view). Keep the architecture exactly as it is: walls, ceiling and its lights, windows with their frames, blinds and curtains, doors, fireplace, built-in and mirrored wardrobes, bathroom fixtures, radiators, sockets, and the floor with its exact material and color. Remove everything else: the whole kitchen (base and wall units, worktop, hood, sink, appliances), all sofas, armchairs, chairs, tables, beds, freestanding cabinets, lamps, rugs, cushions, vases, plants, pictures, decor and personal items. Where they were, show clean finished walls and the same floor continuing naturally, with the same daylight and exposure, as if the room had just been prepared for sale. Output one photorealistic photo, no text.'
+// Stanza vuota: lo stesso prompt del pulsante Svuota della piattaforma (nanoBanana.stagePrompt, provato sulle foto):
+// via TUTTO, cucina, elettrodomestici, sanitari e tende compresi; restano muri, pavimento, infissi e armadi a muro (28/09).
 // Svuota (landing, Veo Lite in avanti F -> E): prompt e negativi della ricetta del 27/09, invariati
 const NEG = 'text, letters, numbers, percent signs, captions, watermark, circles, ovals, rings, halos, light arcs, light trails, glowing lines, light beams, lens flare, fast camera movement, camera shake, new parts of the room, dissolve, ghosting, double exposure, semi-transparent objects, duplicated furniture, springs, coils, bouncing platform, ropes, cranes, new objects, extra furniture, extra cushions, extra decor, people, hands, tripod, camera, sliding objects, flying objects, floating objects, fading in, cross-fade, morphing, melting, flicker, exposure change, camera movement, zoom, pan'
 // Popup e Dall'alto (Veo 3.1 standard/fast), negativi provati il 28/09
@@ -89,7 +88,7 @@ const negFor = (anim: Anim) => anim === 'gravity' ? NEG.replace('flying objects,
 // Stanza vuota della foto (Stop-motion e Particelle, Kling): Nano Banana, come tutte le foto.
 // aspect: stesso formato della foto, se no Nano Banana sceglie il suo e il ritaglio zooma la stanza (28/09)
 async function emptyRoom(fullUrl: string, logUser: string, aspect: string): Promise<string | null> {
-  return nanoBanana({ userId: logUser, image: fullUrl, aspect, prompt: `${EMPTY_PROMPT} Remove every piece of furniture and every object, leave only the bare room. Same camera, framing and perspective as the original photo. Photorealistic, no text.`, kind: 'video_empty' })
+  return nanoBanana({ userId: logUser, image: fullUrl, aspect, prompt: stagePrompt({ task: 'empty', room: '', style: '' }), kind: 'video_empty' })
 }
 
 // il lavoro di fal torna al client firmato con l'utente: solo chi l'ha avviato puo' finalizzarlo
