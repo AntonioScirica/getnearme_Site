@@ -3,7 +3,7 @@
 import { VIDEO_SAMPLES } from '@/lib/videoSamples';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Anvil, Coins, WandSparkles, Film, HardHat, MoonStar, ArrowUp, Search, Check, ChevronLeft, Clapperboard, SquareSplitHorizontal, Image as ImageIcon, Palette, Sofa, Sparkles, Download, ExternalLink, ImagePlus, Lasso, Shuffle, LayoutGrid, Loader2, Monitor, RotateCcw, SquareDashed, SquareDashedMousePointer, X } from 'lucide-react';
+import { Anvil, ChevronsLeftRight, Coins, WandSparkles, Film, HardHat, MoonStar, ArrowUp, Search, Check, ChevronLeft, Clapperboard, SquareSplitHorizontal, Image as ImageIcon, Palette, Sofa, Sparkles, Download, ExternalLink, ImagePlus, Lasso, Shuffle, LayoutGrid, Loader2, Monitor, RotateCcw, SquareDashed, SquareDashedMousePointer, X } from 'lucide-react';
 import { fileToResizedDataUrl } from '@/lib/staging';
 import { AI_MOCK } from '@/lib/aiMock';
 import { AiPhotoStage, Elapsed, type EditRequest, type Region, type Reveal, type Suggestion } from './AiPhoto';
@@ -102,9 +102,9 @@ const creditsOf = (req: Partial<EditRequest>, editsDone: number): number => req.
   : req.style === 'empty' ? CREDIT_COST.svuota
   : isFurnishing({ style: req.style, customPrompt: req.prompt, angle: req.angle, planimetria: req.planimetria, scene: req.scene as 'interno' | undefined, restyle: isRestyle(req.prompt ?? '') }) || !!req.styleRef ? CREDIT_COST.arreda
   : editsDone >= FREE_EDITS ? CREDIT_COST.modifica_extra : CREDIT_COST.modifica;
-function Cr({ n, dark }: { n: number; dark?: boolean }) {
+function Cr({ n, dark, tight }: { n: number; dark?: boolean; tight?: boolean }) {
   // icona moneta: i crediti si spendono (Sparkles e' gia' l'icona dell'AI)
-  return <span title={n === 0 ? undefined : `${n} crediti`} className={`ml-1.5 inline-flex items-center gap-0.5 rounded-full px-1.5 py-px text-[10px] font-semibold leading-4 ${dark ? 'bg-white/20 text-white' : 'bg-black/[.06] text-muted ease-smooth transition-colors group-hover:bg-white/20 group-hover:text-white'}`}>{n === 0 ? 'gratis' : <><Coins size={10} className="shrink-0" />{n}</>}</span>;
+  return <span title={n === 0 ? undefined : `${n} crediti`} className={`${tight ? '' : 'ml-1.5'} inline-flex items-center gap-0.5 rounded-full px-1.5 py-px text-[10px] font-semibold leading-4 ${dark ? 'bg-white/20 text-white' : 'bg-black/[.06] text-muted ease-smooth transition-colors group-hover:bg-white/20 group-hover:text-white'}`}>{n === 0 ? 'gratis' : <><Coins size={10} className="shrink-0" />{n}</>}</span>;
 }
 const uid = () => Math.random().toString(36).slice(2, 10);
 const wait = (ms: number) => new Promise(r => setTimeout(r, ms));
@@ -737,13 +737,13 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                     {/* alta quanto il campo di Modifica (8 + 40): aprendo e chiudendo la card non cambia altezza.
                         Niente didascalia: la richiesta e' gia' nel messaggio sopra. Foto verticale (card stretta): icona sopra e nome sotto */}
                                         {/* a destra: Modifica (zona su questa foto) e Ricomincia da qui; "Si continua da qui" solo dopo esserci tornati */}
-                    <div className={`flex w-full items-center gap-1 ${isNarrow(m.before) ? '' : 'justify-between'}`}>
+                    <div className={`flex w-full items-center gap-1 ${isNarrow(m.before) ? '' : 'justify-start'}`}>
                       <Act narrow={isNarrow(m.before)} icon={<SquareDashedMousePointer size={14} className="translate-y-px" />} label="Modifica" onClick={() => { if (base !== m.out) restartFrom(i, m.out!); setSelecting(true); }} />
                       <Act narrow={isNarrow(m.before)} icon={<Clapperboard size={14} className="translate-y-px" />} label="Video" tip="I mobili compaiono uno alla volta" disabled={busy} onClick={() => askVideo(m.out!)} cr={CREDIT_COST.video} />
                       {m.req && <Act narrow={isNarrow(m.before)} icon={<Shuffle size={14} className="translate-y-px" />} label="Altra versione" short="Altra" tip="Stesso stile, un'altra versione" disabled={busy} onClick={() => variant(m)} cr={creditsOf(m.req, editsDone)} />}
                       {base !== m.out && (
                         <>
-                          <span className="mx-1 h-4 w-px bg-line" aria-hidden />
+                          <span className="ml-auto mr-1 h-4 w-px bg-line" aria-hidden />
                           <Tooltip label="Ricomincia da qui">
                             <button onClick={() => restartFrom(i, m.out!)} aria-label="Ricomincia da qui" className="flex h-8 w-8 items-center justify-center rounded-full text-brand hover:bg-brand/5"><RotateCcw size={15} /></button>
                           </Tooltip>
@@ -953,11 +953,13 @@ function ZonePicker({ inline, closing = false, src, region, onChange, onLoad, bu
 //   (solo se la foto di partenza era gia' di quell'immobile).
 // Vale anche per foto caricate dal computer: si sceglie l'immobile, l'originale va online solo per il prima/dopo.
 const SAVE_ANIM = `
-@keyframes gnm-sv-clip { 0%,15% { clip-path: inset(0 0 0 100%) } 45%,58% { clip-path: inset(0 0 0 0) } 85%,100% { clip-path: inset(0 0 0 50%) } }
-@keyframes gnm-sv-line { 0%,15% { left: 100% } 45%,58% { left: 0% } 85%,100% { left: 50% } }
-@keyframes gnm-sv-new { 0%,20% { opacity: 0; transform: scale(1.06) } 55%,88% { opacity: 1; transform: scale(1) } 100% { opacity: 0; transform: scale(1) } }
-@keyframes gnm-sv-tag { 0%,45% { opacity: 0 } 60%,85% { opacity: 1 } 100% { opacity: 0 } }
-@keyframes gnm-sv-tagold { 0%,25% { opacity: 1 } 40%,90% { opacity: 0 } 100% { opacity: 1 } }
+@property --sv-p { syntax: '<percentage>'; inherits: true; initial-value: 50% }
+@keyframes gnm-sv-p { 0%,10% { --sv-p: 50% } 36%,46% { --sv-p: 12% } 72%,82% { --sv-p: 88% } 100% { --sv-p: 50% } }
+@keyframes gnm-sv-drop { 0%,14% { transform: translateY(-104%); opacity: 1 } 42%,86% { transform: translateY(0); opacity: 1 } 100% { transform: translateY(0); opacity: 0 } }
+@keyframes gnm-sv-old { 0%,14% { transform: scale(1); filter: brightness(1) } 42%,86% { transform: scale(.9); filter: brightness(.6) } 100% { transform: scale(1); filter: brightness(1) } }
+@keyframes gnm-sv-tag { 0%,40% { opacity: 0 } 50%,84% { opacity: 1 } 96%,100% { opacity: 0 } }
+@keyframes gnm-sv-tagold { 0%,22% { opacity: 1 } 34%,92% { opacity: 0 } 100% { opacity: 1 } }
+@media (prefers-reduced-motion: reduce) { .gnm-sv * { animation: none !important } }
 `;
 function SaveToProperty({ before, after, projectId, origin, onClose }: { before: string; after: string; projectId: string | null; origin: string | null; onClose: () => void }) {
   const [projects, setProjects] = useState<ProjectData[] | null>(null);
@@ -1022,18 +1024,24 @@ function SaveToProperty({ before, after, projectId, origin, onClose }: { before:
           </div>}
           <div className="mt-4 flex flex-col gap-3 sm:flex-row">
             {option('add', 'Prima e dopo', 'Aggiunge la foto nuova: sul sito si confronta con l’originale.', <>
-              <img src={before} alt="" className="absolute inset-0 h-full w-full object-cover" />
-              <img src={after} alt="" className="absolute inset-0 h-full w-full object-cover" style={{ animation: 'gnm-sv-clip 6s cubic-bezier(.65,0,.35,1) infinite' }} />
-              <span className="absolute inset-y-0 w-0.5 -translate-x-1/2 bg-white shadow" style={{ animation: 'gnm-sv-line 6s cubic-bezier(.65,0,.35,1) infinite' }} />
+              {/* un solo valore animato (--sv-p) muove insieme taglio, linea e maniglia; la vecchia in bianco e nero */}
+              <span className="gnm-sv absolute inset-0" style={{ animation: 'gnm-sv-p 7s cubic-bezier(.65,0,.35,1) infinite' }}>
+                <img src={before} alt="" className="absolute inset-0 h-full w-full object-cover grayscale" />
+                <img src={after} alt="" className="absolute inset-0 h-full w-full object-cover" style={{ clipPath: 'inset(0 0 0 var(--sv-p))' }} />
+                <span className="absolute inset-y-0 w-0.5 -translate-x-1/2 bg-white shadow-[0_0_8px_rgba(0,0,0,.35)]" style={{ left: 'var(--sv-p)' }} />
+                <span className="absolute top-1/2 flex h-7 w-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white text-ink shadow-md" style={{ left: 'var(--sv-p)' }}><ChevronsLeftRight size={14} /></span>
+              </span>
               <span className={`${tag} left-2`}>Prima</span><span className={`${tag} right-2`}>Dopo</span>
             </>)}
             {/* sempre visibile, spenta quando la foto di partenza non e' di quell'immobile: si capisce che esiste */}
             {option('replace', 'Sostituisci', canReplace ? 'La foto nuova prende il posto dell’originale.' : 'Solo se parti da una foto di questo immobile.', <>
-              {/* dissolvenza lenta: l'originale resta sotto, la nuova compare sopra con un leggero zoom e resta */}
-              <img src={before} alt="" className="absolute inset-0 h-full w-full object-cover" />
-              <img src={after} alt="" className="absolute inset-0 h-full w-full object-cover" style={{ animation: 'gnm-sv-new 6s cubic-bezier(.65,0,.35,1) infinite' }} />
-              <span className={`${tag} left-2`} style={{ animation: 'gnm-sv-tagold 6s cubic-bezier(.65,0,.35,1) infinite' }}>Originale</span>
-              <span className={`${tag} right-2`} style={{ animation: 'gnm-sv-tag 6s cubic-bezier(.65,0,.35,1) infinite' }}>Nuova</span>
+              {/* la nuova scende dall'alto e copre l'originale, che arretra e si scurisce; poi ricomincia */}
+              <span className="gnm-sv absolute inset-0">
+                <img src={before} alt="" className="absolute inset-0 h-full w-full object-cover" style={{ animation: 'gnm-sv-old 7s cubic-bezier(.65,0,.35,1) infinite' }} />
+                <img src={after} alt="" className="absolute inset-0 h-full w-full rounded-2xl object-cover shadow-[0_-8px_24px_rgba(0,0,0,.25)]" style={{ animation: 'gnm-sv-drop 7s cubic-bezier(.65,0,.35,1) infinite' }} />
+                <span className={`${tag} left-2`} style={{ animation: 'gnm-sv-tagold 7s ease infinite' }}>Originale</span>
+                <span className={`${tag} right-2`} style={{ animation: 'gnm-sv-tag 7s ease infinite' }}>Nuova</span>
+              </span>
             </>, !canReplace)}
           </div>
           <div className="flex items-center justify-end gap-2 pt-5">
@@ -1069,7 +1077,7 @@ function Act({ icon, label, short, tip, narrow, active, disabled, onClick, cr }:
   const tone = active ? 'bg-canvas text-ink' : 'text-ink hover:bg-canvas';
   const btn = narrow
     ? <button onClick={onClick} disabled={disabled} aria-label={label} aria-pressed={active} className={`flex min-w-0 flex-1 flex-col items-center gap-1 rounded-2xl px-1 py-2 text-[11px] font-medium leading-none disabled:opacity-40 ${tone}`}>{icon}<span className="truncate">{short ?? label}</span></button>
-    : <button onClick={onClick} disabled={disabled} aria-pressed={active} className={`flex h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3 font-medium leading-none disabled:opacity-40 ${tone}`}>{icon}{label}{cr !== undefined && <Cr n={cr} />}</button>;
+    : <button onClick={onClick} disabled={disabled} aria-pressed={active} className={`flex h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3 font-medium leading-none disabled:opacity-40 ${tone}`}>{icon}{label}{cr !== undefined && <Cr n={cr} tight />}</button>;
   return tip && !narrow ? <Tooltip label={tip}>{btn}</Tooltip> : btn;
 }
 
