@@ -792,10 +792,10 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
           {base && !busy && scene === 'interno' && (
             <div className="blur-in mb-2 flex items-center gap-2 text-xs text-muted">
               Arredo
-              <div className="flex rounded-full bg-white p-0.5 shadow-sm ring-1 ring-inset ring-black/10" role="radiogroup" aria-label="Quantità di arredo">
+              <div className="flex items-center rounded-full bg-white p-0.5 shadow-sm ring-1 ring-inset ring-black/10" role="radiogroup" aria-label="Quantità di arredo">
                 {([['poco', 'Essenziale'], ['normale', 'Normale'], ['ricco', 'Ricco']] as const).map(([d, l]) => (
                   <button key={d} role="radio" aria-checked={density === d} onClick={() => setDensity(d)}
-                    className={`rounded-full px-3 py-1 font-medium ease-smooth transition-colors ${density === d ? 'bg-ink text-white' : 'text-ink/70 hover:text-ink'}`}>{l}</button>
+                    className={`flex h-7 min-w-[84px] items-center justify-center rounded-full px-3 pb-px font-medium leading-none ease-smooth transition-colors ${density === d ? 'bg-ink text-white' : 'text-ink/70 hover:text-ink'}`}>{l}</button>
                 ))}
               </div>
             </div>
