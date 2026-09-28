@@ -64,6 +64,11 @@ const prompt = (order: string, anim: Anim) => 'Elegant, satisfying real-estate a
 const negFor = (anim: Anim) => anim === 'gravity' ? NEG.replace('flying objects, floating objects, ', 'tumbling objects, rotating objects, ')
   : NEG
 
+// Dall'alto su Kling: mobili che cadono dall'alto fino all'ultima immagine (con lo stile, prima escono i vecchi)
+const GRAVITY_KLING = (styled: boolean) => 'Real-estate staging animation with a perfectly still, locked-off camera: identical framing for the whole video, no pan, no zoom. Walls, ceiling, doors, windows, floor and daylight never change. '
+  + (styled ? 'At the start, all the old furniture of the first image lifts straight up out of the top of the frame in about one second. Then the new furniture of the last image ' : 'The empty room is shown for half a second. Then the furniture of the last image ')
+  + 'falls into the room from above, out of the top of the frame, one piece after another in quick rhythm, the largest first: each piece drops straight down onto its exact final spot, lands with a soft impact and a tiny puff of dust, and stays perfectly still. '
+  + 'Every piece is clearly seen falling through the air before it lands; nothing appears already in place. The last frame is identical to the final image.'
 // Dall'alto, testo esatto dell'anteprima approvata (spike 27/09, popup_video.py STYLE=gravity)
 const BASE_FWD = (order: string) => 'with a perfectly still, locked-off camera: identical framing for the whole video, no pan, no zoom. Walls, ceiling, kitchen, doors, windows, floor and daylight never change. '
   + `These are the only new objects that appear, in exactly these quantities: ${order}. Nothing else appears at any moment and nothing that appears ever disappears. The last frame is identical to the final image. `
@@ -116,7 +121,7 @@ export async function startVideo(owner: string, logUser: string, o: { imageUrl: 
     const landscape = width >= height
     const [W, H] = landscape ? [1280, 720] : [720, 1280]
     const full = await sharp(src).rotate().resize(W, H, { fit: 'cover' }).jpeg({ quality: 95 }).toBuffer()
-    const name = `${pid ? `casa-${pid}/` : ''}${Date.now()}-${Math.random().toString(36).slice(2, 8)}${o.empty ? '-f' : anim === 'gravity' ? '-g' : anim === 'popup' ? '-p' : ''}`
+    const name = `${pid ? `casa-${pid}/` : ''}${Date.now()}-${Math.random().toString(36).slice(2, 8)}${o.empty ? '-f' : anim === 'popup' ? '-p' : ''}`
     const key = `videos/${owner}/${name}`
     const fullUrl = await uploadJpeg(full, `${key}-arredata.jpg`)
 
@@ -177,6 +182,14 @@ export async function startVideo(owner: string, logUser: string, o: { imageUrl: 
       firstBuf === full ? fullUrl : uploadJpeg(firstBuf, `${key}-vuota.jpg`),
       lastBuf === full ? fullUrl : uploadJpeg(lastBuf, `${key}-${o.empty ? 'vuota' : 'nuova'}.jpg`),
     ])
+    // Dall'alto con Kling (28/09): Veo Lite inventava i suoi mobili e poi dissolveva verso l'ultima immagine (la stanza
+    // cambiava tre volte); Kling va verso l'ultimo fotogramma per tutta la clip. 5 s, in avanti, niente elenco dei pezzi.
+    if (anim === 'gravity' && !o.empty) {
+      const k = await fal(KLING_URL, { image_url: firstUrl, end_image_url: lastUrl, prompt: GRAVITY_KLING(!!o.styled), duration: 5, generate_audio: false })
+      if (!k.request_id) { console.error('video kling submit', k); return { error: 'ai_failed', status: 502 } }
+      const kname = `${name}-k`
+      return { job: `${k.request_id}.${kname.replace('/', '~')}.${sign(owner, `${k.request_id}.${kname}`)}` }
+    }
     // pezzi che compaiono (nell'ultima e non nella prima; per Svuota quelli che spariscono): nomi semplici, quantita' esatte
     const [a, z] = o.empty ? [lastBuf, firstBuf] : [firstBuf, lastBuf]
     const t1 = Date.now()
