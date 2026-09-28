@@ -2,12 +2,14 @@
 // un pilastro, cambiavano le piastrelle. Qui fuori dalla maschera i pixel sono per costruzione quelli della foto.
 //   1. Sonnet elenca i pezzi da togliere (frasi brevi, una per oggetto)
 //   2. EVF-SAM (fal) fa la maschera di ogni pezzo; unione, chiusura dei buchi (il rivestimento tra pensili e piano) e dilatazione
-//   3. LaMa (fal) toglie tutto dentro la maschera: pareti e pavimento restano, ma sbavati
-//   4. Nano Banana pulisce le sbavature (pareti piane, piastrelle continue); il risultato si compone SOLO dentro la maschera
-// Prova sulla cucina con muretto del 28/09: pilastro, muretto, porta e piastrelle intatti. Costo ~0,07 $ a foto.
+//   3. GPT Image 2.5 Sunburst con la maschera (EDIT_MODEL=gpt, ~0,005 $) svuota e ricostruisce pareti e pavimento; senza,
+//      LaMa (fal) toglie e Nano Banana Lite pulisce le sbavature
+//   4. il risultato si compone SOLO dentro la maschera
+// Prova sulla cucina con muretto del 28/09: pilastro, muretto, porta e piastrelle intatti. Costo ~0,04 $ a foto con GPT (Sonnet + maschere + GPT).
 import sharp from 'sharp'
 import Anthropic from '@anthropic-ai/sdk'
 import { nanoBanana } from '@/lib/nanoBanana'
+import { gptImage } from '@/lib/gptImage'
 import { logUsage } from '@/lib/ai'
 
 const FAL = 'https://queue.fal.run'
@@ -90,17 +92,27 @@ export async function emptyRoomMasked(o: { userId: string; image: string; kind?:
     u = morph(u, mw, mh, 5, true)
     const maskPng = await sharp(Buffer.from(u), { raw: { width: mw, height: mh, channels: 1 } }).resize(W, H, { fit: 'fill' }).png().toBuffer()
 
-    // 3. via tutto dentro la maschera
+    // 3. GPT Image 2.5 Sunburst con la maschera (EDIT_MODEL=gpt, ~0,005 $ a qualita' bassa): una chiamata sola, pareti piane e
+    // pavimento continuo (prova del 28/09, meglio di LaMa + pulizia). Maschera per OpenAI: trasparente dove modificare.
+    let top: Buffer | null = null
+    if (process.env.EDIT_MODEL === 'gpt') {
+      const alpha = Buffer.alloc(mw * mh * 4)
+      for (let i = 0; i < u.length; i++) alpha[i * 4 + 3] = u[i] ? 0 : 255
+      const maskAlpha = await sharp(alpha, { raw: { width: mw, height: mh, channels: 4 } }).resize(W, H, { fit: 'fill', kernel: 'nearest' }).png().toBuffer()
+      const g = await gptImage({ userId: o.userId, image: dataUrl(photo), mask: maskAlpha, kind: 'svuota', quality: process.env.GPT_EDIT_QUALITY || 'low', prompt: `Show this exact room completely empty: remove everything inside the masked area (${items.join(', ')}) and show in its place only bare, flat, freshly painted walls in the same color as the rest of each wall and the same floor continuing with the same material, tiles and grid. Keep every wall, half-height wall, door, window and radiator. Everything outside the mask stays exactly the same: same camera, same framing, same light. No furniture, no objects, no text.` })
+      if (g) top = await sharp(Buffer.from(g, 'base64')).resize(W, H, { fit: 'fill' }).removeAlpha().raw().toBuffer()
+    }
+    if (!top) {
+    // 3b. ripiego: LaMa toglie tutto dentro la maschera, Nano Banana Lite pulisce le sbavature
     const lama = await falRun('fal-ai/lama', { image_url: photoUrl, mask_image_url: dataUrl(maskPng, 'image/png') })
     const lamaUrl = (lama?.image as { url?: string } | undefined)?.url
     if (!lamaUrl) return null
     const cleared = await sharp(await download(lamaUrl)).resize(W, H, { fit: 'fill' }).jpeg({ quality: 95 }).toBuffer()
-
-    // 4. pulizia delle sbavature, poi composizione solo dentro la maschera (bordo sfumato)
-    // Lite: e' una correzione (pareti piane, pavimento continuo), il terreno dove la Lite e' pari al modello grande, a meta' prezzo
     const cleaned = await nanoBanana({ userId: o.userId, image: dataUrl(cleared), kind: o.kind ?? 'empty', lite: true, prompt: 'You are a professional real estate photo retoucher. In this photo of an empty room, furniture was digitally removed and left blurry smudges on the walls and floor. Clean them: make every smudged wall area a flat, plain wall freshly painted in the same color as the rest of that wall, from floor to ceiling, and where the floor is smudged continue the same floor with the same material, tiles and grid. Change nothing else: same walls, same half-height walls, same doors, same windows, same ceiling, same camera, same framing, same light. Do not add any furniture, tiles, decoration or object. Output one photorealistic photo, no text.' })
     // tre canali sempre (Nano Banana puo' rispondere in PNG con alfa)
-    const top = cleaned ? await sharp(Buffer.from(cleaned, 'base64')).resize(W, H, { fit: 'fill' }).removeAlpha().raw().toBuffer() : await sharp(cleared).removeAlpha().raw().toBuffer()
+    top = cleaned ? await sharp(Buffer.from(cleaned, 'base64')).resize(W, H, { fit: 'fill' }).removeAlpha().raw().toBuffer() : await sharp(cleared).removeAlpha().raw().toBuffer()
+    }
+    // 4. composizione solo dentro la maschera (bordo sfumato): fuori i pixel sono quelli della foto
     const base = await sharp(photo).removeAlpha().raw().toBuffer()
     const alpha = await sharp(maskPng).blur(6).greyscale().raw().toBuffer()
     const out = Buffer.alloc(base.length)

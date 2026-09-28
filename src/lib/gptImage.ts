@@ -10,7 +10,8 @@ const MODEL = process.env.GPT_IMAGE_MODEL || 'gpt-image-2.5-sunburst' // Sunburs
 export const GPT_IMAGE_USD: Record<string, number> = { low: 0.005, medium: 0.041, high: 0.165 } // 1536x1024, listino OpenAI 28/09/2026 (stime: la 2.5 e' a token)
 
 // extra: altre immagini di riferimento (la copia con la zona in rosso); quality: livello per questa chiamata (predefinito GPT_IMAGE_QUALITY)
-export async function gptImage(o: { userId: string; image: string; prompt: string; kind?: string; extra?: string[]; quality?: string }): Promise<string | null> {
+// mask: PNG RGBA della stessa misura della foto, trasparente dove modificare (inpainting nativo di OpenAI)
+export async function gptImage(o: { userId: string; image: string; prompt: string; kind?: string; extra?: string[]; quality?: string; mask?: Buffer }): Promise<string | null> {
   const key = process.env.OPENAI_API_KEY
   if (!key) return null
   const t0 = Date.now()
@@ -28,6 +29,7 @@ export async function gptImage(o: { userId: string; image: string; prompt: strin
       form.append('image[]', new Blob([new Uint8Array(await sharp(b).rotate().png().toBuffer())], { type: 'image/png' }), `ref${i}.png`)
     }
     form.append('prompt', o.kind === 'arreda' ? `${o.prompt} Keep any fitted kitchen exactly as it is in the photo: same cabinets, same fronts and colors, same worktop, same appliances; never renovate or repaint it.` : o.prompt)
+    if (o.mask) form.append('mask', new Blob([new Uint8Array(o.mask)], { type: 'image/png' }), 'mask.png')
     form.append('size', size)
     // GPT_IMAGE_QUALITY: 'low' (~0,005 $, provato il 28/09: quasi pari alla media), 'medium' (~0,041 $), 'high'
     form.append('quality', o.quality || process.env.GPT_IMAGE_QUALITY || 'medium')
