@@ -7,6 +7,7 @@ import { join } from 'path'
 import sharp from 'sharp'
 import { nanoBanana, stagePrompt } from '@/lib/nanoBanana'
 import { emptyRoomMasked } from '@/lib/emptyRoom'
+import { gptImage } from '@/lib/gptImage'
 import { GNM_CANTIERE_1, GNM_CANTIERE_2, GNM_DAYNIGHT, GNM_EXCAVATION_IMAGE, GNM_NIGHT_IMAGE, GNM_STOPMOTION, GNM_STRUCTURE_IMAGE } from '@/lib/gnmVideoPrompts'
 import Anthropic from '@anthropic-ai/sdk'
 import ffmpegPath from 'ffmpeg-static'
@@ -88,7 +89,10 @@ const negFor = (anim: Anim) => anim === 'gravity' ? NEG.replace('flying objects,
 // Stanza vuota della foto (Stop-motion e Particelle, Kling): Nano Banana, come tutte le foto.
 // aspect: stesso formato della foto, se no Nano Banana sceglie il suo e il ritaglio zooma la stanza (28/09)
 async function emptyRoom(fullUrl: string, logUser: string, aspect: string): Promise<string | null> {
-  // prima con maschera e inpainting (lib/emptyRoom: muri, muretti e pavimento restano quelli veri), se non riesce Nano Banana
+  // GPT Image 2.5 Sunburst senza maschera (EDIT_MODEL=gpt, 0,014 $ a qualita' bassa, misurato il 28/09): tiene pilastri,
+  // muretti e pavimento da solo. Se non risponde: maschera + inpainting (lib/emptyRoom), poi Nano Banana.
+  const gpt = process.env.EDIT_MODEL === 'gpt' ? await gptImage({ userId: logUser, image: fullUrl, prompt: stagePrompt({ task: 'empty', room: '', style: '' }), kind: 'svuota', quality: process.env.GPT_EDIT_QUALITY || 'low' }) : null
+  if (gpt) return gpt
   const masked = await emptyRoomMasked({ userId: logUser, image: fullUrl, kind: 'video_empty' })
   if (masked) return masked.toString('base64')
   return nanoBanana({ userId: logUser, image: fullUrl, aspect, prompt: stagePrompt({ task: 'empty', room: '', style: '' }), kind: 'video_empty' })

@@ -123,10 +123,11 @@ export async function POST(req: NextRequest) {
       // Nano Banana 2 (src/lib/nanoBanana.ts): una chiamata, niente GPU. Se Google non risponde, il vecchio flusso Qwen + Opus.
       const nbPrompt = stagePrompt({ task, room: roomLabel(roomK), style, styleRef: !!styleRef })
       // Svuota: prima con maschera e inpainting (lib/emptyRoom), che non ridisegna la stanza; se non riesce, Nano Banana
-      const masked = task === 'empty' ? await emptyRoomMasked({ userId, image: imageBase64 || imageUrl, kind: 'svuota' }) : null
-      // Arredo: GPT Image 2 (FURNISH_MODEL=gpt, ~0,041 $ contro 0,067 $, prova del 28/09), senza foto di stile; se non risponde, Nano Banana 2
-      const gpt = !masked && !styleRef && ((task === 'furnish' && process.env.FURNISH_MODEL === 'gpt') || (task === 'edit' && process.env.EDIT_MODEL === 'gpt'))
-        ? await gptImage({ userId, image: imageBase64 || imageUrl, prompt: nbPrompt, kind: task === 'furnish' ? 'arreda' : 'modifica', ...(task === 'edit' ? { quality: process.env.GPT_EDIT_QUALITY || 'low' } : {}) }) : null
+      // GPT Image 2.5 Sunburst (OpenAI diretto): arredo con FURNISH_MODEL=gpt, modifiche e Svuota con EDIT_MODEL=gpt. Svuota senza
+      // maschera: tiene pilastri, muretti e pavimento da solo (prova del 28/09, 0,014 $). Se non risponde: Svuota a maschera, poi Nano Banana.
+      const gpt = !styleRef && ((task === 'furnish' && process.env.FURNISH_MODEL === 'gpt') || (task !== 'furnish' && process.env.EDIT_MODEL === 'gpt'))
+        ? await gptImage({ userId, image: imageBase64 || imageUrl, prompt: nbPrompt, kind: task === 'furnish' ? 'arreda' : task === 'empty' ? 'svuota' : 'modifica', ...(task !== 'furnish' ? { quality: process.env.GPT_EDIT_QUALITY || 'low' } : {}) }) : null
+      const masked = !gpt && task === 'empty' ? await emptyRoomMasked({ userId, image: imageBase64 || imageUrl, kind: 'svuota' }) : null
       const nb = masked ? masked.toString('base64') : gpt ? gpt : process.env.GEMINI_API_KEY ? await nanoBanana({ userId, image: imageBase64 || imageUrl, prompt: nbPrompt, styleRef, lite: task === 'edit' }) : null
       if (nb) {
         gemini = true; used = nbPrompt

@@ -1,5 +1,5 @@
 // Arredo con GPT Image 2 / 2.5 (OpenAI diretto), provato il 28/09/2026 sulle stesse foto di Nano Banana 2: stanza e inquadratura
-// identiche, arredo realistico, ~0,041 $ a foto (1536x1024, qualita' media) contro 0,067 $. Si attiva con FURNISH_MODEL=gpt e
+// identiche, arredo realistico, 0,020 $ a foto a qualita' media e 0,014 $ a bassa (misurati dal campo usage) contro 0,067 $. Si attiva con FURNISH_MODEL=gpt e
 // OPENAI_API_KEY; se non risponde, il chiamante ripiega su Nano Banana 2. La fedelta' all'immagine di partenza in GPT Image 2 e'
 // sempre alta (input_fidelity ignorato). Unico difetto visto: tende a rinnovare la cucina, quindi il prompt lo ribadisce.
 import sharp from 'sharp'
@@ -7,7 +7,7 @@ import { logUsage } from '@/lib/ai'
 
 // GPT Image 2.5 (8/9/2026): 'gpt-image-2.5-flare' veloce, 'gpt-image-2.5-sunburst' di precisione; stesso prezzo del 2. Scelta con GPT_IMAGE_MODEL.
 const MODEL = process.env.GPT_IMAGE_MODEL || 'gpt-image-2.5-sunburst' // Sunburst: l'unico che ha tenuto la cucina com'era (prova del 28/09)
-export const GPT_IMAGE_USD: Record<string, number> = { low: 0.005, medium: 0.041, high: 0.165 } // 1536x1024, listino OpenAI 28/09/2026 (stime: la 2.5 e' a token)
+export const GPT_IMAGE_USD: Record<string, number> = { low: 0.014, medium: 0.020, high: 0.06 } // modifica di una foto 1536x1024, misurato dal campo usage il 28/09/2026 (la foto in ingresso pesa 920 token = 0,007 $ fissi)
 
 // extra: altre immagini di riferimento (la copia con la zona in rosso); quality: livello per questa chiamata (predefinito GPT_IMAGE_QUALITY)
 // mask: PNG RGBA della stessa misura della foto, trasparente dove modificare (inpainting nativo di OpenAI)
