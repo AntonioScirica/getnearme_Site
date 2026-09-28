@@ -27,7 +27,7 @@ import { MUSIC_CATALOG } from '@/lib/aiVideoMusic'
 //      Lite (0,03 $/s) inventava i mobili e poi dissolveva anche in avanti: per Popup e Dall'alto serve fast
 //      (0,10 $/s, provato su Dall'alto uguale a standard) o standard (0,20 $/s, VEO_FAST=0).
 //      Sempre 8 s: a 6 s Fast inventava un divano a meta' clip e poi dissolveva (prova su fal del 28/09).
-//   5. (GET) Dall'alto: primi 6 s di Veo a 1,2x; Popup e Particelle: clip fino a stanza vuota (tempo morto tolto), invertita.
+//   5. (GET) Dall'alto: clip fino al fermo (max 6 s) a 1,2x; Popup e Particelle: clip fino a stanza vuota (tempo morto tolto), invertita.
 //      Poi passaggio di 0,35 s alla foto vera e 2 s di fermo su di essa: il video finisce SEMPRE sulla foto
 //      dell'agente, qualunque cosa abbia fatto Veo. Zoom 4% ease-in-out, musica.
 // startVideo avvia (~30 s, Veo resta in coda su fal), pollVideo controlla e a fine lavoro monta e salva su R2.
@@ -39,7 +39,7 @@ const FAL = 'https://queue.fal.run/fal-ai/veo3.1'
 const VEO_FLF = `${FAL}/${process.env.VEO_FAST === '0' ? '' : 'fast/'}first-last-frame-to-video`
 const HOLD = 2 // fermo finale sulla foto vera
 const XFADE = 0.35 // passaggio dall'ultimo fotogramma di Veo alla foto vera
-const GRAVITY_CUT = 6 // Dall'alto: i pezzi si sono posati tutti entro i 5 s (prove del 28/09), il resto e' fermo
+const GRAVITY_CUT = 6 // Dall'alto: taglio al fermo (calmPoint), mai oltre 6 s (i pezzi si posano entro 3-5 s, prove del 28/09)
 const GRAVITY_SPEED = 1.2 // Dall'alto un po' piu' veloce (scelto il 28/09 tra 1x, 1,2x, 1,5x e 2x)
 // Veo Lite primo/ultimo fotogramma su fal accetta SOLO 8 s (con 4 s rifiuta il lavoro: "Input should be '8s'").
 const VEO_SECONDS = 8
@@ -53,7 +53,7 @@ const NEG = 'text, letters, numbers, percent signs, captions, watermark, circles
 const NEG_VEO = 'camera movement, pan, zoom, dolly, camera shake, dissolve, cross-fade, fade in, morphing, ghosting, semi-transparent objects, duplicated furniture, extra furniture, objects sliding, objects floating, bouncing ball, springs, people, hands, text, letters, captions, watermark, lens flare, light trails, exposure change, flicker'
 const STILL = 'The camera is locked off on a tripod for the whole video: identical framing, no pan, no zoom, no shake. '
 // Dall'alto, in avanti: pezzi grandi prima, poi i piccoli sopra
-const GRAVITY_PROMPT = (items: string) => `Satisfying real-estate home staging animation. ${STILL}The room starts completely empty, exactly as the first image, and stays perfectly still for half a second. Then the furniture drops in from above, one piece at a time in a quick rhythm: each piece enters from the top edge of the frame already in its final size and orientation, falls straight down fast under gravity, and lands heavily in its exact final position with a tiny firm settle, then never moves again. First the big pieces, then the small items drop onto them, in this order: ${items}. Nothing slides, nothing fades in, nothing morphs or changes shape, no object appears in a place other than its final position. Walls, ceiling, windows, curtains, built-in furniture, floor and daylight never change. The last frame is exactly the second image, with every piece in place.`
+const GRAVITY_PROMPT = (items: string) => `Satisfying real-estate home staging animation. ${STILL}The room starts completely empty, exactly as the first image, and stays perfectly still for half a second. Then the furniture drops in from above in a fast rhythm, several pieces in quick succession: each piece enters from the top edge of the frame already in its final size and orientation, falls straight down fast under gravity, and lands heavily in its exact final position with a tiny firm settle, then never moves again. Pictures and wall art fall the same way and hook onto the wall. First the big pieces, then the small items drop onto them, in this order: ${items}. Everything, including the pictures on the walls, has landed by the fourth second; from then on nothing moves or changes at all. Nothing slides, nothing fades in, nothing morphs or changes shape, no object appears in a place other than its final position. Walls, ceiling, windows, curtains, built-in furniture, floor and daylight never change. The last frame is exactly the second image, with every piece in place.`
 // Popup e Particelle, al contrario: i piccoli spariscono prima, poi i mobili (invertito: mobili prima, poi gli oggetti sopra)
 const POPUP_PROMPT = (items: string) => `Satisfying real-estate animation. ${STILL}The furnished room is shown perfectly still for half a second. Then the objects vanish one after another in a quick steady rhythm, popping out of existence on the spot: each object swells very slightly for a few frames, then shrinks fast into a tiny point at its base and is gone, leaving the bare floor and walls exactly as in the second image. Objects never move, slide, fall or fly; nothing new ever appears. First the small items, then the furniture, in this order: ${items}. By the fifth second the room is completely empty and identical to the second image, and from then on nothing moves or changes at all. Walls, ceiling, windows, curtains, built-in furniture, floor and daylight never change.`
 const PARTICLES_PROMPT = (items: string) => `Magical real-estate animation. ${STILL}The furnished room is shown perfectly still for half a second. Then, one after another in a quick steady rhythm, each object transforms: it starts glowing warm golden, its surface turns into a shimmering golden-particle silhouette of exactly its shape, and that silhouette unravels into long, bright, swirling ribbons of glowing golden particles that sweep gracefully upward through the air and fly out of the top of the frame, leaving the bare floor and walls exactly as in the second image. The ribbons are made of countless tiny glowing sparkles with soft volumetric glow. Objects never slide or fall; nothing new ever appears. First the small items, then the furniture, in this order: ${items}. By the sixth second the room is completely empty and identical to the second image, and from then on nothing moves or changes at all. Walls, ceiling, windows, curtains, built-in furniture, floor and daylight never change.`
@@ -256,9 +256,9 @@ export async function pollVideo(owner: string, job: string): Promise<VideoResult
     // passa in 0,35 s alla foto vera e ci resta 2 s: finisce SEMPRE sulla foto dell'agente.
     const veo = /-(p|g|d)$/.test(name)
     const popup = /-(p|d)$/.test(name) // al contrario
-    // Dall'alto prende i primi 6 s della clip (mai oltre la fine)
+    // Dall'alto: taglio dove l'animazione si ferma, mai oltre 6 s
     const gray = veo ? await ffmpeg(['-i', raw, '-vf', 'scale=320:180,format=gray', '-f', 'rawvideo', '-']) : Buffer.alloc(0)
-    const cut = kling ? KLING_SECONDS * parts.length : !veo ? VEO_SECONDS : popup ? calmPoint(gray, 320 * 180) : Math.min(GRAVITY_CUT, Math.floor(gray.length / (320 * 180)) / 24)
+    const cut = kling ? KLING_SECONDS * parts.length : !veo ? VEO_SECONDS : Math.min(popup ? Infinity : GRAVITY_CUT, calmPoint(gray, 320 * 180))
     const speed = veo && !popup ? GRAVITY_SPEED : 1
     const shown = cut / speed // durata della clip nel video finale
     const total = shown + HOLD, n = Math.round(total * 30)
@@ -300,7 +300,7 @@ function ffmpeg(args: string[]): Promise<Buffer> {
 }
 
 // Popup (Veo al contrario, 24 fps, fotogrammi grigi 320x180): fine dell'animazione = dopo il picco di movimento,
-// primo istante in cui per 0,75 s meno dello 0,3% dei pixel cambia (nella prova del 28/09: 3,5 s), piu' 0,5 s di
+// primo istante in cui per 0,75 s meno dello 0,5% dei pixel cambia (nella prova del 28/09: 3,5 s), piu' 0,5 s di
 // stanza vuota ferma. Movimento = quota di pixel che cambiano davvero, non la media: un cuscino e' piccolo.
 function calmPoint(raw: Buffer, px: number, fps = 24): number {
   const n = Math.floor(raw.length / px)
@@ -309,6 +309,6 @@ function calmPoint(raw: Buffer, px: number, fps = 24): number {
   const mv = [0]
   for (let i = 1; i < n; i++) mv.push(moving(fr(i), fr(i - 1)))
   const peak = mv.indexOf(Math.max(...mv))
-  for (let i = peak; i < n - 18; i++) if (Math.max(...mv.slice(i, i + 18)) < 0.003) return Math.min(n - 1, i + fps / 2) / fps
+  for (let i = peak; i < n - 18; i++) if (Math.max(...mv.slice(i, i + 18)) < 0.005) return Math.min(n - 1, i + fps / 2) / fps
   return n / fps // nessun fermo: clip intera
 }
