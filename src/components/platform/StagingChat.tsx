@@ -104,7 +104,7 @@ const creditsOf = (req: Partial<EditRequest>, editsDone: number): number => req.
   : editsDone >= FREE_EDITS ? CREDIT_COST.modifica_extra : CREDIT_COST.modifica;
 function Cr({ n, dark }: { n: number; dark?: boolean }) {
   // icona moneta: i crediti si spendono (Sparkles e' gia' l'icona dell'AI)
-  return <span title={n === 0 ? undefined : `${n} crediti`} className={`ml-1.5 inline-flex items-center gap-0.5 rounded-full px-1.5 py-px text-[10px] font-semibold leading-4 ${dark ? 'bg-white/20 text-white' : 'bg-black/[.06] text-muted'}`}>{n === 0 ? 'gratis' : <><Coins size={10} className="shrink-0" />{n}</>}</span>;
+  return <span title={n === 0 ? undefined : `${n} crediti`} className={`ml-1.5 inline-flex items-center gap-0.5 rounded-full px-1.5 py-px text-[10px] font-semibold leading-4 ${dark ? 'bg-white/20 text-white' : 'bg-black/[.06] text-muted ease-smooth transition-colors group-hover:bg-white/20 group-hover:text-white'}`}>{n === 0 ? 'gratis' : <><Coins size={10} className="shrink-0" />{n}</>}</span>;
 }
 const uid = () => Math.random().toString(36).slice(2, 10);
 const wait = (ms: number) => new Promise(r => setTimeout(r, ms));
@@ -605,7 +605,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                       <div className="px-1">
                         <div className="flex flex-wrap gap-1.5">
                           {!(emptyFrom && emptyFrom === m.photo) && <button onClick={() => makeVideo(m, m.photo, 'Stanza com’è')} className="shrink-0 whitespace-nowrap rounded-full bg-ink px-3.5 py-1.5 text-[13px] font-medium text-white shadow-sm ease-smooth transition-colors hover:bg-brand">Tieni la stanza com’è<Cr n={0} dark /></button>}
-                          {VIDEO_STYLES.map(x => <button key={x.id} onClick={() => styleVideo(m, x.label, { style: x.id })} className="shrink-0 whitespace-nowrap rounded-full bg-white px-3.5 py-1.5 text-[13px] font-medium text-ink/80 shadow-sm ring-1 ring-inset ring-black/10 ease-smooth transition-colors hover:bg-brand hover:text-white">{x.label}<Cr n={CREDIT_COST.arreda} /></button>)}
+                          {VIDEO_STYLES.map(x => <button key={x.id} onClick={() => styleVideo(m, x.label, { style: x.id })} className="group shrink-0 whitespace-nowrap rounded-full bg-white px-3.5 py-1.5 text-[13px] font-medium text-ink/80 shadow-sm ring-1 ring-inset ring-black/10 ease-smooth transition-colors hover:bg-brand hover:text-white">{x.label}<Cr n={CREDIT_COST.arreda} /></button>)}
                         </div>
                         <input placeholder="Oppure scrivi lo stile, es. classico con legno scuro" maxLength={200}
                           onKeyDown={e => { const v = e.currentTarget.value.trim(); if (e.key === 'Enter' && v) styleVideo(m, v, { prompt: `Arreda la stanza in stile ${v}` }); }}
