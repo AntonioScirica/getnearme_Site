@@ -11,8 +11,7 @@ const RUNPOD = 'https://api.runpod.ai/v2'
 const ENDPOINTS: Record<string, { id?: string; input: Record<string, unknown> }> = {
   // vLLM: 1 token. L'id sta nell'URL OpenAI-compatibile (.../v2/<id>/openai/v1).
   analysis: { id: process.env.AI_BASE_URL?.match(/\/v2\/([^/]+)\//)?.[1], input: { prompt: 'ok', sampling_params: { max_tokens: 1 } } },
-  // Qwen-Image: prompt vuoto -> il worker carica il modello e risponde subito con un errore innocuo.
-  photo: { id: process.env.AI_IMAGE_ENDPOINT_ID, input: { prompt: '' } },
+  // (le foto dal 28/09 le fa GPT Image: il worker foto non si scalda piu')
 }
 // ponytail: throttle in memoria per istanza (basta per non accodare decine di job); per piu'
 // istanze o per contare gli avvii servira' uno stato condiviso.

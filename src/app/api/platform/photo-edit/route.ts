@@ -11,17 +11,16 @@ import { uploadJpeg, uploadMarker } from '@/lib/r2'
 import { alignTo } from '@/lib/align'
 import { styleFromPhoto } from '@/lib/styleFromPhoto'
 import sharp from 'sharp'
-import { logUsage } from '@/lib/ai'
 import { AI_MOCK, mockDelay } from '@/lib/aiMock'
-import { runJob, allowedUrl, type RunpodJob } from '@/lib/runpodImage'
+import { allowedUrl } from '@/lib/runpodImage'
 
 const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 
 export const runtime = 'nodejs'
 export const maxDuration = 300
 
-// "Sistema con AI": modifica una foto con Qwen-Image 2.1 sul nostro endpoint RunPod
-// (repo getnearme-qwen-image-worker). Risultato salvato su R2, costo in ai_usage.
+// "Sistema con AI": modifica una foto con GPT Image 2.5 Sunburst (OpenAI diretto, lib/gptImage).
+// Risultato salvato su R2, costo in ai_usage.
 export async function POST(req: NextRequest) {
   const token = req.headers.get('authorization')?.replace('Bearer ', '')
   if (!token) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
@@ -52,10 +51,8 @@ export async function POST(req: NextRequest) {
   const roomK = roomKey(typeof body.room === 'string' ? body.room : '')
   const restyle = isRestyle(custom) // "balcone stile moderno": si arreda come uno stile, non "cambia solo quello che chiedo"
   const prompt = buildStagingPrompt({ customPrompt: custom, style: body.style, angle: body.angle, planimetria: !!body.planimetria, scene, room: roomK, restyle }) + vary
-  // Testo libero: il worker lo traduce in inglese (Qwen-Image ignora quasi l'italiano) dentro la stessa cornice.
   const usesText = !!custom && !body.angle && !body.planimetria
-  const translation: { request?: string; prompt_template?: string } = usesText ? { request: custom, prompt_template: buildStagingPrompt({ customPrompt: '{REQUEST}', scene, room: roomK, restyle }) } : {}
-  // Zona selezionata dall'agente (0..1): il worker modifica solo li'. Prompt dedicato: si lavora su un ritaglio.
+  // Zona selezionata dall'agente (0..1): al modello va anche una copia della foto con la zona segnata in rosso.
   const r = body.region
   // Forma libera (lazo): poligono in 0..1, max 300 punti; senza, e' un rettangolo
   const poly = Array.isArray(r?.poly) ? r.poly.filter(p => p && [p.x, p.y].every(v => typeof v === 'number' && v >= 0 && v <= 1)).slice(0, 300).map(p => ({ x: p.x, y: p.y })) : []
@@ -64,31 +61,15 @@ export async function POST(req: NextRequest) {
   // zona rimette la foto): luce e ombra di una lampada vanno oltre la zona e lasciavano un rettangolo scuro (27/09)
   const removing = /\b(togli|rimuovi|elimina|cancella|leva)\b/i.test(custom)
   const region: { x: number; y: number; w: number; h: number; poly?: { x: number; y: number }[] } | null = drawn && removing ? null : drawn
-  // posizione della zona a parole (per la rimozione su tutta la foto)
-  const where = drawn ? `${drawn.y + drawn.h / 2 < 0.34 ? 'top' : drawn.y + drawn.h / 2 > 0.66 ? 'bottom' : 'middle'} ${drawn.x + drawn.w / 2 < 0.34 ? 'left' : drawn.x + drawn.w / 2 > 0.66 ? 'right' : 'centre'} of the photo (about ${Math.round((drawn.x + drawn.w / 2) * 100)}% from the left and ${Math.round((drawn.y + drawn.h / 2) * 100)}% from the top)` : ''
-  // Clic sugli oggetti (maschera SAM nel worker)
+  // Clic sugli oggetti: punti segnati sulla copia
   const points = Array.isArray(body.points) ? body.points.filter(p => p && [p.x, p.y].every(v => typeof v === 'number' && v >= 0 && v <= 1)).slice(0, 10) : []
   // Senza zona ne' clic: se la richiesta parla di pareti, pavimento o soffitto si modifica solo quell'elemento
-  // (riconosciuto nel worker), cosi' "pareti bianche" non tocca i mobili bianchi.
+  // cosi' "pareti bianche" non tocca i mobili bianchi.
   const labels = !region && !points.length && usesText ? [
     ...(/\b(pareti|parete|muri|muro|muratura)\b/i.test(custom) ? ['wall'] : []),
     ...(/\b(pavimento|pavimenti|parquet)\b/i.test(custom) ? ['floor'] : []),
     ...(/\b(soffitto|soffitti)\b/i.test(custom) ? ['ceiling'] : []),
   ] : []
-  // Rettangolo: al modello vanno la foto e la stessa foto con un rettangolo rosso sulla zona (disegnato
-  // dal worker, "mark"); fuori dalla zona il worker rimette la foto originale.
-  if (drawn && removing && usesText) {
-    translation.prompt_template = `Edit this exact photo: {REQUEST}. The object to remove is in the ${where}. Remove it completely together with everything it causes: its shadow on the floor, walls and ceiling and, if it is a lamp or any light source, its light, glow, halo and reflections, so the whole room looks as it would without it, with its normal daylight. Fill the freed area continuing the same wall, ceiling or floor. Everything else stays exactly the same: walls, windows, furniture and the camera position, zoom and framing. Do not add anything. Photorealistic.`
-  } else if (region && usesText) {
-    const mk = region.poly ? 'red outline' : 'red rectangle'
-    translation.prompt_template = `Edit the first image: {REQUEST}. The request refers to what is inside the area marked by the ${mk} in the second image: change only that area; if it asks to remove, erase the whole object inside the ${mk} completely, including all its parts, and show the floor and walls behind it. Do not add any new object, decoration or wall art that was not requested. Fill any freed area naturally, continuing the same floor, walls and light around it. Keep everything outside the ${mk} exactly the same, same framing and perspective. The result must not contain any red rectangle or outline. When something is removed, remove also everything it causes: its shadow on the floor and walls and, if it is a lamp or any light source, its light, glow, halo and reflections, so the area looks as it would without it, with the room's normal light. Photorealistic.`
-  } else if (points.length && usesText) {
-    translation.prompt_template = 'In this close-up crop of a room photo: {REQUEST}. Do not add anything that was not requested. Fill any freed area naturally, continuing the same floor, walls and light around it. Keep the rest of the crop unchanged. Photorealistic.'
-  }
-  if (vary && translation.prompt_template) translation.prompt_template += vary
-  // Seme casuale: la stessa richiesta ripetuta da' ogni volta un risultato diverso (iterare, rigenerare).
-  const seed = typeof body.seed === 'number' ? body.seed : Math.floor(Math.random() * 1_000_000)
-
   // Modalita' finta: nessuna GPU, torna la stessa foto.
   // Crediti: si controlla prima di generare, si scalano solo a foto riuscita (src/lib/credits.ts)
   // modifiche: le prime FREE_EDITS su una foto gratis (conteggio dalla chat), poi 1 credito
@@ -101,63 +82,62 @@ export async function POST(req: NextRequest) {
     if ((count ?? 0) >= (Number(process.env.EDIT_DAILY_LIMIT) || 300)) return NextResponse.json({ error: 'daily_limit' }, { status: 429 })
   }
   if (AI_MOCK) { await mockDelay(2000); return NextResponse.json({ url: imageUrl || imageBase64, mock: true }) }
-  if (!process.env.AI_IMAGE_ENDPOINT_ID || !process.env.RUNPOD_API_KEY) return NextResponse.json({ error: 'not_configured' }, { status: 503 })
+  if (!process.env.OPENAI_API_KEY) return NextResponse.json({ error: 'not_configured' }, { status: 503 })
 
   const t0 = Date.now()
-  let job: RunpodJob
-  let used = translation.prompt_template ?? prompt // prompt dell'ultimo passo, per il debug
-  let direct = false // foto fatta da GPT Image (costo registrato in gptImage, non come GPU)
+  let b64: string | null = null
+  let used = prompt // prompt usato, per il debug
+  const src = imageBase64 || imageUrl
   try {
-    const input = imageBase64 ? { image_base64: imageBase64 } : { image_url: imageUrl }
-    // GPT Image (lib/gptImage): arredo, svuota e ogni richiesta scritta o chip sugli interni.
-    // Restano sul passaggio unico: luce (angle), zona o clic, pareti/pavimento/soffitto (maschera nel worker), planimetria, esterni.
     // Luminoso: correzione dell'esposizione senza AI (istantanea, gratis, non brucia i bianchi, la stanza non cambia)
     if (body.angle === 'day') {
-      const src = imageBase64 ? Buffer.from(imageBase64.split(',')[1] ?? '', 'base64') : Buffer.from(await (await fetch(imageUrl, { signal: AbortSignal.timeout(20_000) })).arrayBuffer())
-      job = { status: 'COMPLETED', output: { image_base64: (await brighten(src)).toString('base64') } }
+      const buf = imageBase64 ? Buffer.from(imageBase64.split(',')[1] ?? '', 'base64') : Buffer.from(await (await fetch(imageUrl, { signal: AbortSignal.timeout(20_000) })).arrayBuffer())
+      b64 = (await brighten(buf)).toString('base64')
       used = 'brighten (curva esposizione, niente AI)'
     } else {
+    // Tutto il resto: GPT Image 2.5 Sunburst (OpenAI diretto), sempre e solo lui per le foto (scelta del 28/09).
+    // Qualita' bassa per modifiche, zone, luce e planimetrie (0,014 $); arredo con la qualita' predefinita (GPT_IMAGE_QUALITY).
     const guided = scene === 'interno' && !drawn && !points.length && !labels.length && !body.angle && !body.planimetria && (furnishReq || body.style === 'empty' || !!custom)
+    const density = (['poco', 'ricco'] as const).find(d => d === body.density)
+    let req: { image: string; prompt: string; extra?: string[] }
+    let kind: string
     if (guided) {
+      // arredo, Svuota e ogni richiesta scritta sugli interni: i prompt della piattaforma (lib/nanoBanana.stagePrompt).
+      // Svuota senza maschera: tiene pilastri, muretti e pavimento da solo.
+      // Stile da una foto: lo stile del riferimento si legge e si scrive a parole (styleFromPhoto), la foto non gli si passa
       const task = body.style === 'empty' ? 'empty' : furnishReq ? 'furnish' : 'edit'
       const style = task === 'edit' ? custom : (body.style && STYLE_LOOK[body.style] ? STYLE_LOOK[body.style] : `as requested by the agent (in Italian): "${custom}"`) + vary
-      // GPT Image 2.5 Sunburst (OpenAI diretto), sempre e solo lui per le foto (scelta del 28/09): arredo, Svuota e modifiche.
-      // Svuota senza maschera: tiene pilastri, muretti e pavimento da solo (0,014 $ a qualita' bassa). I prompt sono in lib/nanoBanana.
-      // Stile da una foto: lo stile del riferimento si legge e si scrive a parole (styleFromPhoto), la foto non gli si passa
-      const density = (['poco', 'ricco'] as const).find(d => d === body.density)
       const refStyle = styleRef && task === 'furnish' ? await styleFromPhoto(styleRef, userId) : null
-      const nbPrompt = stagePrompt({ task, room: roomLabel(roomK), style: refStyle ?? style, density })
-      const nb = styleRef && task === 'furnish' && !refStyle ? null
-        : await gptImage({ userId, image: imageBase64 || imageUrl, prompt: nbPrompt, kind: task === 'furnish' ? 'arreda' : task === 'empty' ? 'svuota' : 'modifica', ...(task !== 'furnish' ? { quality: process.env.GPT_EDIT_QUALITY || 'low' } : {}) })
-      direct = true; used = nbPrompt
-      job = nb ? { status: 'COMPLETED', output: { image_base64: nb } } : { status: 'FAILED', error: 'gpt image' }
+      if (styleRef && task === 'furnish' && !refStyle) throw new Error('styleFromPhoto')
+      req = { image: src, prompt: stagePrompt({ task, room: roomLabel(roomK), style: refStyle ?? style, density }) }
+      kind = task === 'furnish' ? 'arreda' : task === 'empty' ? 'svuota' : 'modifica'
+    } else if (usesText && (drawn || points.length)) {
+      // zona o clic con una richiesta scritta: la foto e una copia con la zona segnata in rosso
+      req = { image: src, prompt: zonePrompt(custom, roomLabel(roomK), drawn ? 'zone' : 'points'), extra: [await markedCopy(src, drawn, points)] }
+      kind = 'zona'
+    } else if (usesText) {
+      // pareti, pavimento o soffitto nominati nel testo: richiesta scritta sull'elemento
+      req = { image: src, prompt: stagePrompt({ task: 'edit', room: roomLabel(roomK), style: custom }) }
+      kind = 'modifica'
+    } else if (drawn || points.length) {
+      // preset (stile, vista) dentro una zona: il prompt della piattaforma limitato alla zona segnata in rosso
+      req = { image: src, prompt: `${prompt} Apply this only inside the area marked in red in the second image; everything outside it stays exactly the same, same framing and perspective. The result must not contain any red mark.`, extra: [await markedCopy(src, drawn, points)] }
+      kind = 'zona'
     } else {
-      // Zona, clic o pareti/pavimento/soffitto con una richiesta scritta: GPT Image con la zona segnata in rosso
-      // su una copia della foto (niente GPU). Il resto (luce, planimetria, stili senza testo) resta su Qwen.
-      const src = imageBase64 || imageUrl
-      const zoneReq = drawn || points.length
-        ? { image: src, prompt: zonePrompt(custom, roomLabel(roomK), drawn ? 'zone' : 'points'), extra: [await markedCopy(src, drawn, points)] }
-        : { image: src, prompt: stagePrompt({ task: 'edit', room: roomLabel(roomK), style: custom }) }
-      // Modifiche con testo: GPT Image 2.5 Sunburst a qualita' bassa (~0,014 $; prova del 28/09: tocca meno la foto fuori dalla zona)
-      const nb = usesText && (drawn || points.length || labels.length) ? await gptImage({ userId, ...zoneReq, kind: 'zona', quality: process.env.GPT_EDIT_QUALITY || 'low' }) : null
-      if (nb) { direct = true; used = 'gpt-image-2.5 (zona)'; job = { status: 'COMPLETED', output: { image_base64: nb } } }
-      else job = await runJob({ ...input, prompt, ...translation, ...(region ? { mark: region } : {}), ...(points.length ? { points } : {}), ...(labels.length ? { labels } : {}), seed, steps: 12 }) // 12 passaggi: ~8 s invece di 17 a 25, qualita' simile nel confronto del 24/09
+      // luce (vista), planimetria, esterni e giardini, stili senza testo: il prompt classico della piattaforma (lib/stagingPrompts)
+      req = { image: src, prompt }
+      kind = body.angle ? 'luce' : body.planimetria ? 'planimetria' : furnishReq ? 'arreda' : 'modifica'
     }
+    used = req.prompt
+    b64 = await gptImage({ userId, ...req, kind, ...(kind !== 'arreda' ? { quality: process.env.GPT_EDIT_QUALITY || 'low' } : {}) })
     }
   } catch (e) {
-    console.error('photo-edit runpod error:', e)
-    await logUsage({ userId, kind: 'photo_edit' }, true, Date.now() - t0, {}, false, 'qwen-image-2.1')
+    console.error('photo-edit error:', e)
     return NextResponse.json({ error: 'ai_failed' }, { status: 502 })
   }
-  const ms = Date.now() - t0
-  const b64 = job.output?.image_base64
-  if (!direct) await logUsage({ userId, kind: 'photo_edit' }, true, ms, {}, !!b64, 'qwen-image-2.1')
   const creditsLeft = b64 ? await spend(userId, action, { preview: !!body.preview }) : null
-  if (!b64) {
-    console.error('photo-edit failed:', job.status, job.error || job.output?.error)
-    return NextResponse.json({ error: job.status === 'IN_QUEUE' || job.status === 'IN_PROGRESS' ? 'timeout' : 'ai_failed' }, { status: 502 })
-  }
-  if (process.env.NODE_ENV !== 'production') await debugDump({ imageBase64, imageUrl, region, prompt: used, request: translation.request, outB64: b64, translated: (job.output as { translated?: string } | undefined)?.translated, worker: (job as { workerId?: string }).workerId })
+  if (!b64) { console.error('photo-edit failed: nessuna immagine'); return NextResponse.json({ error: 'ai_failed' }, { status: 502 }) }
+  if (process.env.NODE_ENV !== 'production') await debugDump({ imageBase64, imageUrl, region, prompt: used, request: custom, outB64: b64 })
   // risultato alle proporzioni dell'originale + finitura fotografica (grana, contrasto locale: meno "piatto");
   // Luminoso no: e' gia' la foto vera con l'esposizione corretta
   let shapedBuf: Buffer | null = null
@@ -167,7 +147,7 @@ export async function POST(req: NextRequest) {
   // anteprime per il video (tre proposte tra cui scegliere): cartella a parte, non vanno in Galleria
   if (body.preview === true) {
     const url = await uploadJpeg(await shaped(), `previews/${userId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`)
-    return NextResponse.json({ url, seconds: job.output?.seconds, credits: creditsLeft })
+    return NextResponse.json({ url, seconds: Math.round((Date.now() - t0) / 1000), credits: creditsLeft })
   }
   const key = `edits/${userId}/${projectId ? `casa-${projectId}/` : ''}${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
   const url = await uploadJpeg(await shaped(), `${key}.jpg`)
@@ -183,7 +163,7 @@ export async function POST(req: NextRequest) {
   const from = imageUrl.startsWith(mine) ? imageUrl.slice(`${process.env.R2_PUBLIC_URL}/`.length) : undefined
   const meta = Buffer.from(JSON.stringify({ t: what.slice(0, 160), r: room, ...(from ? { f: from } : {}) })).toString('base64url')
   await uploadMarker(`${key}.meta.${meta}`).catch(e => console.error('media meta', e))
-  return NextResponse.json({ url, seconds: job.output?.seconds, credits: creditsLeft })
+  return NextResponse.json({ url, seconds: Math.round((Date.now() - t0) / 1000), credits: creditsLeft })
 }
 
 async function savePrima(imageBase64: string, imageUrl: string, key: string) {
@@ -227,10 +207,10 @@ async function debugDump(d: { imageBase64: string; imageUrl: string; region: { x
     if (d.region && width && height) {
       const r = d.region
       const svg = `<svg width="${width}" height="${height}"><rect x="${r.x * width}" y="${r.y * height}" width="${r.w * width}" height="${r.h * height}" fill="none" stroke="red" stroke-width="${Math.max(4, Math.floor(width / 200))}"/></svg>`
-      // stessa immagine segnata che disegna il worker (draw_mark): rettangolo rosso pieno
+      // zona segnata: rettangolo rosso
       await writeFile(`${dir}/2-foto-con-rettangolo.jpg`, await sharp(src).composite([{ input: Buffer.from(svg) }]).jpeg().toBuffer())
     }
     await writeFile(`${dir}/3-risultato.jpg`, Buffer.from(d.outB64, 'base64'))
-    await writeFile(`${dir}/prompt.txt`, `richiesta: ${d.request ?? ''}\ntradotta: ${d.translated ?? '(worker vecchio, nessuna traduzione)'}\nzona: ${JSON.stringify(d.region)}\nworker: ${d.worker ?? '?'}\n\nprompt:\n${d.prompt}\n`)
+    await writeFile(`${dir}/prompt.txt`, `richiesta: ${d.request ?? ''}\nzona: ${JSON.stringify(d.region)}\n\nprompt:\n${d.prompt}\n`)
   } catch (e) { console.error('debugDump', e) }
 }
