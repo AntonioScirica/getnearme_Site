@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
 
   // Foto: URL (annunci, R2) oppure caricata dal computer (imageBase64, data URL gia' ridimensionata).
   // Modifica: testo libero e/o i preset di home staging (stile, vista, scena, planimetria).
-  let body: { edits?: number; imageUrl?: string; imageBase64?: string; prompt?: string; style?: string; angle?: string; scene?: SceneType; planimetria?: boolean; seed?: number; region?: { x: number; y: number; w: number; h: number; poly?: { x: number; y: number }[] }; projectId?: string; room?: string; variant?: number; preview?: boolean; reference?: string; styleRef?: string; points?: { x: number; y: number }[] }
+  let body: { edits?: number; imageUrl?: string; imageBase64?: string; prompt?: string; style?: string; angle?: string; scene?: SceneType; planimetria?: boolean; seed?: number; region?: { x: number; y: number; w: number; h: number; poly?: { x: number; y: number }[] }; projectId?: string; room?: string; variant?: number; preview?: boolean; reference?: string; styleRef?: string; points?: { x: number; y: number }[]; density?: string }
   try { body = await req.json() } catch { return NextResponse.json({ error: 'bad_request' }, { status: 400 }) }
   const imageUrl = typeof body.imageUrl === 'string' ? body.imageUrl : ''
   const imageBase64 = typeof body.imageBase64 === 'string' && /^data:image\/(jpeg|png|webp);base64,/.test(body.imageBase64) && body.imageBase64.length < 8_000_000 ? body.imageBase64 : ''
@@ -125,14 +125,15 @@ export async function POST(req: NextRequest) {
       const reference = typeof body.reference === 'string' && ((/^data:image\/(jpeg|png|webp);base64,/.test(body.reference) && body.reference.length < 8_000_000) || allowedUrl(body.reference)) ? body.reference : undefined
       const style = task === 'edit' ? custom : (body.style && STYLE_LOOK[body.style] ? STYLE_LOOK[body.style] : `as requested by the agent (in Italian): "${custom}"`) + vary
       // Nano Banana 2 (src/lib/nanoBanana.ts): una chiamata, niente GPU. Se Google non risponde, il vecchio flusso Qwen + Opus.
-      const nbPrompt = stagePrompt({ task, room: roomLabel(roomK), style, styleRef: !!styleRef })
+      const density = (['poco', 'ricco'] as const).find(d => d === body.density)
+      const nbPrompt = stagePrompt({ task, room: roomLabel(roomK), style, styleRef: !!styleRef, density })
       // Svuota: prima con maschera e inpainting (lib/emptyRoom), che non ridisegna la stanza; se non riesce, Nano Banana
       // GPT Image 2.5 Sunburst (OpenAI diretto): arredo con FURNISH_MODEL=gpt, modifiche e Svuota con EDIT_MODEL=gpt. Svuota senza
       // maschera: tiene pilastri, muretti e pavimento da solo (prova del 28/09, 0,014 $). Se non risponde: Svuota a maschera, poi Nano Banana.
       // Stile da una foto: con GPT lo stile del riferimento si legge e si scrive a parole (styleFromPhoto), la foto non gli si passa
       const refStyle = styleRef && task === 'furnish' && process.env.FURNISH_MODEL === 'gpt' ? await styleFromPhoto(styleRef, userId) : null
       const gpt = (!styleRef || refStyle) && ((task === 'furnish' && process.env.FURNISH_MODEL === 'gpt') || (task !== 'furnish' && process.env.EDIT_MODEL === 'gpt'))
-        ? await gptImage({ userId, image: imageBase64 || imageUrl, prompt: refStyle ? stagePrompt({ task, room: roomLabel(roomK), style: refStyle }) : nbPrompt, kind: task === 'furnish' ? 'arreda' : task === 'empty' ? 'svuota' : 'modifica', ...(task !== 'furnish' ? { quality: process.env.GPT_EDIT_QUALITY || 'low' } : {}) }) : null
+        ? await gptImage({ userId, image: imageBase64 || imageUrl, prompt: refStyle ? stagePrompt({ task, room: roomLabel(roomK), style: refStyle, density }) : nbPrompt, kind: task === 'furnish' ? 'arreda' : task === 'empty' ? 'svuota' : 'modifica', ...(task !== 'furnish' ? { quality: process.env.GPT_EDIT_QUALITY || 'low' } : {}) }) : null
       const masked = !gpt && task === 'empty' ? await emptyRoomMasked({ userId, image: imageBase64 || imageUrl, kind: 'svuota' }) : null
       const nb = masked ? masked.toString('base64') : gpt ? gpt : process.env.GEMINI_API_KEY ? await nanoBanana({ userId, image: imageBase64 || imageUrl, prompt: nbPrompt, styleRef, lite: task === 'edit' }) : null
       if (nb) {

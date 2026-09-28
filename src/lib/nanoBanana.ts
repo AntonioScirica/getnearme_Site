@@ -18,7 +18,15 @@ const ARCHITECTURE = 'Same architecture: every wall (including half-height walls
 const LIGHT = 'Light: bright natural daylight through the windows, soft interior lights on, balanced exposure, no burnt highlights, straight vertical lines.'
 const OUTPUT = 'Output one photorealistic photo, believable and magazine-quality, no text, no watermark.'
 
-export function stagePrompt(o: { task: StageTask; room: string; style: string; styleRef?: boolean }): string {
+// Quantita' di arredo scelta nella chat (Essenziale / Normale / Ricco); la frase sostituisce quella "normale"
+export type Density = 'poco' | 'normale' | 'ricco'
+const MAIN = 'the main pieces a buyer expects in this room (a living room has a sofa and a coffee table, a bedroom a bed with bedside tables, a kitchen or open space a dining table with chairs)'
+const DENSITY: Record<Density, string> = {
+  poco: `Furnish it sparingly: only ${MAIN} and a rug, nothing else (no decorative objects, no plants, no wall art), so the room looks airy and spacious.`,
+  normale: `Always include ${MAIN}, then a rug, a plant and a few decorative objects.`,
+  ricco: `Furnish it fully and richly, like a magazine photo: ${MAIN}, plus extra seating, lamps, wall art, cushions and throws, books, plants and decorative objects, keeping passages free.`,
+}
+export function stagePrompt(o: { task: StageTask; room: string; style: string; styleRef?: boolean; density?: Density }): string {
   const room = o.room || 'room (recognize what kind of room it is from the photo)'
   const ref = o.styleRef ? ' The second image is only a style reference chosen by the agent (it is not this room): take from it the furniture types, colors, materials and mood, never its layout or architecture.' : ''
   if (o.task === 'edit') {
@@ -38,7 +46,7 @@ Rules:
 1. ${ARCHITECTURE} Keep bathroom fixtures and built-in wardrobes exactly as they are, in the same position and finish. A fitted kitchen keeps exactly its position, layout, size and appliances in the same places, but its fronts, handles, worktop and backsplash get restyled in the chosen style (decided the 28/09: the style applies to the kitchen too).
 2. Clear the room: remove people, clutter, personal items, construction tools and materials, and replace all old or worn loose furniture and rugs with new pieces. Outside the windows show a clean, finished view (no scaffolding, no building site).
 3. Surfaces: if the room is unfinished or damaged, show it finished with plastered, freshly painted walls and a clean finished floor; otherwise keep the existing floor, tiles and wall finishes exactly as they are, only cleaned.
-4. Furnish it as a ${room} in this style: ${o.style}. Always include the main pieces a buyer expects in this room (a living room has a sofa and a coffee table, a bedroom a bed with bedside tables, a kitchen or open space a dining table with chairs), then a rug, a plant and a few decorative objects. Real, well-proportioned furniture placed only on the floor that is visible in the photo, never blocking windows, doors or passages; if there is not enough free floor for a piece, choose a smaller one (a loveseat instead of a large sofa). Never change the view to make room for furniture.${ref}
+4. Furnish it as a ${room} in this style: ${o.style}. ${DENSITY[o.density ?? 'normale']} Real, well-proportioned furniture placed only on the floor that is visible in the photo, never blocking windows, doors or passages; if there is not enough free floor for a piece, choose a smaller one (a loveseat instead of a large sofa). Never change the view to make room for furniture.${ref}
 5. ${LIGHT}
 ${OUTPUT}`
 }

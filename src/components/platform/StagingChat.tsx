@@ -202,6 +202,10 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   const [library, setLibrary] = useState(false); // scelta foto: vetrina o computer
   const [project, setProject] = useState<string | null>(saved?.project ?? null); // immobile della foto (se scelta dalla vetrina): la Galleria raggruppa per casa
   const [origin, setOrigin] = useState<string | null>(saved?.origin ?? null); // foto originale dell'immobile da cui si e' partiti (per il prima/dopo)
+  // quantita' di arredo (Essenziale / Normale / Ricco), ricordata tra una foto e l'altra
+  const [density, setDensityState] = useState<'poco' | 'normale' | 'ricco'>('normale');
+  useEffect(() => { const d = localStorage.getItem('gnm-density'); if (d === 'poco' || d === 'ricco') setDensityState(d); }, []);
+  const setDensity = (d: 'poco' | 'normale' | 'ricco') => { setDensityState(d); try { localStorage.setItem('gnm-density', d); } catch { /* niente */ } };
   const [saveOpen, setSaveOpen] = useState<string | null>(null); // risultato con il pannello "Salva nell'immobile" aperto
   // com'e' la stanza nella foto di lavoro (vuota, disordinata, datata, arredata): cambia suggerimento e proposte
   const [roomState, setRoomState] = useState<string | null>(saved?.roomState ?? null);
@@ -324,6 +328,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
       ...(project ? { projectId: project } : {}),
       ...(sourcePhoto && sourcePhoto !== before ? { reference: sourcePhoto } : {}),
       ...(styleRef ? { styleRef } : {}),
+      ...(scene === 'interno' && density !== 'normale' ? { density } : {}),
       ...(kind ? { room: seenLabel(kind) } : {}),
       ...(before.startsWith('data:') ? { imageBase64: before } : { imageUrl: before }),
       ...(scene === 'planimetria'
@@ -353,7 +358,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
     touch();
     // intanto il passo Prima/Dopo in attesa (prima mostrava "Creo il video" e sembrava saltare l'approvazione)
     patchV(m.id, { step: 'frames', frames: undefined, picks: [...m.picks, { label, icon: 'style' }], err: undefined });
-    const body = { ...(project ? { projectId: project } : {}), ...(kind ? { room: seenLabel(kind) } : {}), ...(m.photo.startsWith('data:') ? { imageBase64: m.photo } : { imageUrl: m.photo }), scene: 'interno', ...req, variant: -1, preview: true, ...(sourcePhoto && sourcePhoto !== m.photo ? { reference: sourcePhoto } : {}) };
+    const body = { ...(project ? { projectId: project } : {}), ...(kind ? { room: seenLabel(kind) } : {}), ...(m.photo.startsWith('data:') ? { imageBase64: m.photo } : { imageUrl: m.photo }), scene: 'interno', ...(density !== 'normale' ? { density } : {}), ...req, variant: -1, preview: true, ...(sourcePhoto && sourcePhoto !== m.photo ? { reference: sourcePhoto } : {}) };
     const r = await authFetch('/api/platform/photo-edit', { method: 'POST', headers: QUIET, body: JSON.stringify(body) }).catch(() => null);
     const d = r?.ok ? await r.json().catch(() => ({})) as { url?: string } : null;
     if (r?.status === 402) { patchV(m.id, { err: NO_CREDITS }); return; }
@@ -784,6 +789,17 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
         <div className="pointer-events-none absolute inset-0"><ProgressiveBlur side="bottom" fade={24} /></div>
         <div className="relative mx-auto max-w-3xl">
           {/* Suggerimenti: una riga sola sopra il campo, scorre di lato; toccati partono subito */}
+          {base && !busy && scene === 'interno' && (
+            <div className="blur-in mb-2 flex items-center gap-2 text-xs text-muted">
+              Arredo
+              <div className="flex rounded-full bg-white p-0.5 shadow-sm ring-1 ring-inset ring-black/10" role="radiogroup" aria-label="Quantità di arredo">
+                {([['poco', 'Essenziale'], ['normale', 'Normale'], ['ricco', 'Ricco']] as const).map(([d, l]) => (
+                  <button key={d} role="radio" aria-checked={density === d} onClick={() => setDensity(d)}
+                    className={`rounded-full px-3 py-1 font-medium ease-smooth transition-colors ${density === d ? 'bg-ink text-white' : 'text-ink/70 hover:text-ink'}`}>{l}</button>
+                ))}
+              </div>
+            </div>
+          )}
           {base && !busy && (
             <div className="blur-in -mx-1 mb-2 flex gap-1.5 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" style={{ maskImage: 'linear-gradient(90deg, #000 90%, transparent)' }}>{chips}</div>
           )}
