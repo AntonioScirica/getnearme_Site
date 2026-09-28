@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { buildStagingPrompt, roomKey, variantText, isRestyle, isFurnishing, roomLabel, STYLE_LOOK, type SceneType } from '@/lib/stagingPrompts'
 import { guidedEdit } from '@/lib/guidedEdit'
+import { emptyRoomMasked } from '@/lib/emptyRoom'
 import { nanoBanana, stagePrompt, markedCopy, zonePrompt } from '@/lib/nanoBanana'
 import { canAfford, spend, type Action } from '@/lib/credits'
 import { CREDIT_COST } from '@/lib/pricing'
@@ -115,7 +116,9 @@ export async function POST(req: NextRequest) {
       const style = task === 'edit' ? custom : (body.style && STYLE_LOOK[body.style] ? STYLE_LOOK[body.style] : `as requested by the agent (in Italian): "${custom}"`) + vary
       // Nano Banana 2 (src/lib/nanoBanana.ts): una chiamata, niente GPU. Se Google non risponde, il vecchio flusso Qwen + Opus.
       const nbPrompt = stagePrompt({ task, room: roomLabel(roomK), style, styleRef: !!styleRef })
-      const nb = process.env.GEMINI_API_KEY ? await nanoBanana({ userId, image: imageBase64 || imageUrl, prompt: nbPrompt, styleRef, lite: task === 'edit' }) : null
+      // Svuota: prima con maschera e inpainting (lib/emptyRoom), che non ridisegna la stanza; se non riesce, Nano Banana
+      const masked = task === 'empty' ? await emptyRoomMasked({ userId, image: imageBase64 || imageUrl, kind: 'svuota' }) : null
+      const nb = masked ? masked.toString('base64') : process.env.GEMINI_API_KEY ? await nanoBanana({ userId, image: imageBase64 || imageUrl, prompt: nbPrompt, styleRef, lite: task === 'edit' }) : null
       if (nb) {
         gemini = true; used = nbPrompt
         job = { status: 'COMPLETED', output: { image_base64: nb } }

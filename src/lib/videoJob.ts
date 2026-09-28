@@ -6,6 +6,7 @@ import { tmpdir } from 'os'
 import { join } from 'path'
 import sharp from 'sharp'
 import { nanoBanana, stagePrompt } from '@/lib/nanoBanana'
+import { emptyRoomMasked } from '@/lib/emptyRoom'
 import { GNM_CANTIERE_1, GNM_CANTIERE_2, GNM_DAYNIGHT, GNM_EXCAVATION_IMAGE, GNM_NIGHT_IMAGE, GNM_STOPMOTION, GNM_STRUCTURE_IMAGE } from '@/lib/gnmVideoPrompts'
 import Anthropic from '@anthropic-ai/sdk'
 import ffmpegPath from 'ffmpeg-static'
@@ -44,8 +45,7 @@ const GRAVITY_SPEED = 1.2 // Dall'alto un po' piu' veloce (scelto il 28/09 tra 1
 // Veo Lite primo/ultimo fotogramma su fal accetta SOLO 8 s (con 4 s rifiuta il lavoro: "Input should be '8s'").
 const VEO_SECONDS = 8
 
-// Stanza vuota: lo stesso prompt del pulsante Svuota della piattaforma (nanoBanana.stagePrompt, provato sulle foto):
-// via TUTTO, cucina, elettrodomestici, sanitari e tende compresi; restano muri, pavimento, infissi e armadi a muro (28/09).
+// Stanza vuota: maschera + inpainting (lib/emptyRoom), ripiego sul prompt Svuota della piattaforma (nanoBanana.stagePrompt).
 // Svuota (landing, Veo Lite in avanti F -> E): prompt e negativi della ricetta del 27/09, invariati
 const NEG = 'text, letters, numbers, percent signs, captions, watermark, circles, ovals, rings, halos, light arcs, light trails, glowing lines, light beams, lens flare, fast camera movement, camera shake, new parts of the room, dissolve, ghosting, double exposure, semi-transparent objects, duplicated furniture, springs, coils, bouncing platform, ropes, cranes, new objects, extra furniture, extra cushions, extra decor, people, hands, tripod, camera, sliding objects, flying objects, floating objects, fading in, cross-fade, morphing, melting, flicker, exposure change, camera movement, zoom, pan'
 // Popup e Dall'alto (Veo 3.1 standard/fast), negativi provati il 28/09
@@ -88,6 +88,9 @@ const negFor = (anim: Anim) => anim === 'gravity' ? NEG.replace('flying objects,
 // Stanza vuota della foto (Stop-motion e Particelle, Kling): Nano Banana, come tutte le foto.
 // aspect: stesso formato della foto, se no Nano Banana sceglie il suo e il ritaglio zooma la stanza (28/09)
 async function emptyRoom(fullUrl: string, logUser: string, aspect: string): Promise<string | null> {
+  // prima con maschera e inpainting (lib/emptyRoom: muri, muretti e pavimento restano quelli veri), se non riesce Nano Banana
+  const masked = await emptyRoomMasked({ userId: logUser, image: fullUrl, kind: 'video_empty' })
+  if (masked) return masked.toString('base64')
   return nanoBanana({ userId: logUser, image: fullUrl, aspect, prompt: stagePrompt({ task: 'empty', room: '', style: '' }), kind: 'video_empty' })
 }
 
