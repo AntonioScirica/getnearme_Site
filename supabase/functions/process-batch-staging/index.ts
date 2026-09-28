@@ -71,7 +71,8 @@ serve(async (req) => {
 
     // Group items by batch
     const batchIds = [...new Set(items.map(i => i.batch_id))]
-    const batches: Record<string, any> = {}
+    type Batch = { id: string; user_id: string; status?: string; style?: string | null; custom_prompt?: string | null; total_items?: number; completed_items?: number; failed_items?: number }
+    const batches: Record<string, Batch> = {}
     for (const bid of batchIds) {
       const { data: b } = await supabase
         .from('batch_staging')
@@ -105,7 +106,7 @@ serve(async (req) => {
     // Build prompt helper
     const perspectiveInstructions = `STRICT RULES: The room structure must be IDENTICAL to the input — same walls, same doors, same windows, same arches, same ceiling, same floor. Do NOT add new rooms, openings, arches, extensions or architectural features. Do NOT extend or expand the visible space. The photo must show the SAME room from the SAME angle. Replace ALL existing furniture and objects throughout the ENTIRE room. Every single piece of original furniture must be removed and replaced — nothing from the original furnishing should remain visible, especially in corners, edges, and along walls.`
 
-    function buildPrompt(batch: any): string {
+    function buildPrompt(batch: Batch): string {
       if (batch.custom_prompt?.trim()) {
         return `${perspectiveInstructions} Edit this interior photo following the user's instructions below (the user may write in any language — interpret accordingly and apply the described changes). User instructions: "${batch.custom_prompt}". Apply these changes while keeping the overall structure, perspective and architectural elements of the image. Photorealistic result, 8k interior photography.`
       }

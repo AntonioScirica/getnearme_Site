@@ -196,8 +196,8 @@ function parseDraft(rawText: string): ParsedDraft | null {
 
     const faqItems = Array.isArray(parsed.faq_items)
       ? parsed.faq_items
-          .filter((f: any) => f?.question && f?.answer)
-          .map((f: any) => ({ question: String(f.question), answer: String(f.answer) }))
+          .filter((f: { question?: unknown; answer?: unknown } | null) => f?.question && f?.answer)
+          .map((f: { question?: unknown; answer?: unknown }) => ({ question: String(f.question), answer: String(f.answer) }))
       : []
 
     return {
