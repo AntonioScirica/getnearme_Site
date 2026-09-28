@@ -9,7 +9,6 @@ import { nanoBanana } from '@/lib/nanoBanana'
 import { GNM_CANTIERE_1, GNM_CANTIERE_2, GNM_DAYNIGHT, GNM_EXCAVATION_IMAGE, GNM_NIGHT_IMAGE, GNM_PARTICLES, GNM_STOPMOTION, GNM_STRUCTURE_IMAGE } from '@/lib/gnmVideoPrompts'
 import Anthropic from '@anthropic-ai/sdk'
 import ffmpegPath from 'ffmpeg-static'
-import { runJob, allowedUrl } from '@/lib/runpodImage'
 import { uploadFile, uploadJpeg } from '@/lib/r2'
 import { logUsage } from '@/lib/ai'
 import { AI_MOCK, mockDelay } from '@/lib/aiMock'
@@ -66,27 +65,29 @@ const negFor = (anim: Anim) => anim === 'gravity' ? NEG.replace('flying objects,
   : NEG
 
 // Dall'alto, testo esatto dell'anteprima approvata (spike 27/09, popup_video.py STYLE=gravity)
-const GRAVITY_PROMPT = (order: string, n: number) => 'Real-estate staging animation with a perfectly still, locked-off camera: identical framing for the whole video, no pan, no zoom. '
-  + 'Walls, ceiling, kitchen, doors, windows, floor and daylight never change. '
-  + `These are the only objects that ever appear, in exactly these quantities: ${order}. Nothing else appears at any moment and nothing that appears ever disappears. The last frame is identical to the final image. `
-  + 'The empty room is shown for one second. Then the furniture falls into the room from above, out of the top of the frame, one piece after another in quick rhythm: '
+const BASE_FWD = (order: string) => 'with a perfectly still, locked-off camera: identical framing for the whole video, no pan, no zoom. Walls, ceiling, kitchen, doors, windows, floor and daylight never change. '
+  + `These are the only new objects that appear, in exactly these quantities: ${order}. Nothing else appears at any moment and nothing that appears ever disappears. The last frame is identical to the final image. `
+// stile: nella prima immagine ci sono i mobili vecchi, che se ne vanno prima che arrivino i nuovi
+const OLD_OUT = (how: string) => `At the start, all the old furniture and objects of the first image ${how} in about one second, then the new pieces arrive. `
+// Dall'alto, testo dell'anteprima approvata (spike 27/09, popup_video.py STYLE=gravity) + "tutti i pezzi cadono"
+const GRAVITY_PROMPT = (order: string, n: number, styled: boolean) => `Real-estate staging animation ${BASE_FWD(order)}`
+  + (styled ? OLD_OUT('lift straight up out of the top of the frame') : 'The empty room is shown for one second. ')
+  + 'Then the furniture falls into the room from above, out of the top of the frame, one piece after another in quick rhythm: '
   + `each piece drops straight down onto its exact final spot, lands with a soft impact and a tiny puff of dust, and stays perfectly still. Order: ${order}. `
-  // 28/09: letto e divano comparivano sul posto: ogni pezzo, anche il piu' grande, si deve vedere in volo
   + 'Every piece, even the biggest ones like the bed, the sofa and the wardrobe, is clearly seen falling through the air for about half a second before it lands; nothing appears already in place. '
-  // aggiunto il 28/09: Veo in avanti a volte non faceva cadere tutto (all'ultimo fotogramma ci arriva solo dissolvendo)
-  + `All ${n} pieces fall, the largest first: none is skipped and none appears without falling. By the fourth second all ${n} pieces have landed and the room is identical to the final image; from then on nothing moves or changes at all.`
+  + `All ${n} pieces fall, the largest first: none is skipped. By the sixth second all ${n} pieces have landed and the room is identical to the final image; from then on nothing moves or changes at all.`
+// Popup in avanti, testo dell'anteprima approvata (spike 27/09, STYLE=popup3)
+const POPUP_PROMPT = (order: string, n: number, styled: boolean) => `Elegant, satisfying real-estate staging animation ${BASE_FWD(order)}`
+  + 'The camera is exactly the one of the first and last image for the whole video: same lens, same framing, same distance, it never moves back or forward. '
+  + (styled ? OLD_OUT('shrink into their base and vanish one after another') : 'After half a second of empty room, ')
+  + 'the furniture pops in as a smooth cascade that travels across the room from the back wall towards the camera, then the small objects on top of the furniture. Consecutive pieces overlap slightly in time, like a wave. '
+  + 'Each piece pops at its exact final spot: it springs out of nothing, grows quickly to a little larger than its real size, then eases back to exactly its real size and stays perfectly still. Every piece keeps its final shape and color from the first moment it appears. '
+  + `Pieces: ${order}. All ${n} pieces appear. By the sixth second every piece is in its final place, with its final shape, size and color; from then on the image is completely frozen and identical to the final image.`
 const GRAVITY_NEG = 'text, letters, numbers, percent signs, captions, watermark, circles, ovals, rings, halos, light arcs, light trails, glowing lines, light beams, lens flare, fast camera movement, camera shake, new parts of the room, dissolve, ghosting, double exposure, semi-transparent objects, duplicated furniture, springs, coils, bouncing platform, ropes, cranes, objects not in the last frame, extra furniture, extra cushions, extra decor, chairs, lamps, plants that are not in the last frame, people, hands, tripod, camera, springs, coils, sliding objects, objects disappearing, fading in, popping in, appearing out of nowhere, teleporting, cross-fade, morphing, melting, flicker, exposure change, camera movement, zoom, pan'
 
-// Stanza vuota della foto: Qwen (RunPod) "remove only", identica al pixel alla foto (misurato il 28/09: 0 px di scarto).
-// Nano Banana ridisegna l'inquadratura (fino a -24% di zoom, 159 px, 2,3 gradi): per il video da una foto all'altra e'
-// un disastro (Veo muove la stanza e dissolve), quindi solo di ripiego se la GPU non risponde.
+// Stanza vuota della foto (Stop-motion e Particelle, Kling): Nano Banana, come tutte le foto.
 async function emptyRoom(fullUrl: string, logUser: string): Promise<string | null> {
-  const t0 = Date.now()
-  const job = await runJob({ image_url: fullUrl, prompt: EMPTY_PROMPT, seed: Math.floor(Math.random() * 1_000_000), steps: 12 })
-  await logUsage({ userId: logUser, kind: 'video_empty' }, true, Date.now() - t0, {}, !!job.output?.image_base64, 'qwen-image-2.1')
-  if (job.output?.image_base64) return job.output.image_base64
-  console.error('video: Qwen non ha svuotato, provo Nano Banana', job.status)
-  return nanoBanana({ userId: logUser, image: fullUrl, prompt: `${EMPTY_PROMPT} The result must line up exactly with the original photo: same camera, framing and perspective. Photorealistic, no text.`, kind: 'video_empty' })
+  return nanoBanana({ userId: logUser, image: fullUrl, prompt: `${EMPTY_PROMPT} Remove every piece of furniture and every object, leave only the bare room. Same camera, framing and perspective as the original photo. Photorealistic, no text.`, kind: 'video_empty' })
 }
 
 // il lavoro di fal torna al client firmato con l'utente: solo chi l'ha avviato puo' finalizzarlo
@@ -102,11 +103,11 @@ export const parseAnim = (a: unknown): Anim => (['gravity', 'particles', 'stopmo
 
 // empty = stanza gia' svuotata (prova "Svuota" della landing): niente Nano Banana, e il video va IN AVANTI:
 // i mobili della foto originale spariscono uno alla volta e resta la stanza vuota.
-export async function startVideo(owner: string, logUser: string, o: { imageUrl: string; imageBase64: string; projectId?: string; anim: Anim; empty?: string }): Promise<VideoResult> {
+export async function startVideo(owner: string, logUser: string, o: { imageUrl: string; imageBase64: string; projectId?: string; anim: Anim; empty?: string; styled?: string }): Promise<VideoResult> {
   const { imageUrl, imageBase64, anim } = o
   const pid = o.projectId ?? '' // gia' validato dalla rotta
   if (AI_MOCK) { await mockDelay(2000); return { job: 'mock' } }
-  if (!process.env.FAL_API_KEY || !process.env.AI_IMAGE_ENDPOINT_ID || !process.env.RUNPOD_API_KEY) return { error: 'not_configured', status: 503 }
+  if (!process.env.FAL_API_KEY || !process.env.GEMINI_API_KEY) return { error: 'not_configured', status: 503 } // niente piu' GPU nostra: Nano Banana + fal
 
   try {
     // 1. formato dalla foto, ritaglio centrale
@@ -115,7 +116,7 @@ export async function startVideo(owner: string, logUser: string, o: { imageUrl: 
     const landscape = width >= height
     const [W, H] = landscape ? [1280, 720] : [720, 1280]
     const full = await sharp(src).rotate().resize(W, H, { fit: 'cover' }).jpeg({ quality: 95 }).toBuffer()
-    const name = `${pid ? `casa-${pid}/` : ''}${Date.now()}-${Math.random().toString(36).slice(2, 8)}${o.empty ? '-f' : anim === 'gravity' ? '-g' : ''}`
+    const name = `${pid ? `casa-${pid}/` : ''}${Date.now()}-${Math.random().toString(36).slice(2, 8)}${o.empty ? '-f' : anim === 'gravity' ? '-g' : anim === 'popup' ? '-p' : ''}`
     const key = `videos/${owner}/${name}`
     const fullUrl = await uploadJpeg(full, `${key}-arredata.jpg`)
 
@@ -156,45 +157,48 @@ export async function startVideo(owner: string, logUser: string, o: { imageUrl: 
       return { job: `${id}.${kname.replace('/', '~')}.${sign(owner, `${id}.${kname}`)}` }
     }
 
-    // 2-3. Qwen svuota (stessa inquadratura), Opus elenca i pezzi e controlla che la stanza sia davvero vuota:
-    // a volte Qwen lascia un mobile (27/09: letto rimasto con un seme su due), allora si riprova con un altro seme.
-    let empty: Buffer | null = null, items: string[] = []
-    for (let attempt = 0; attempt < 2; attempt++) {
-      // stanza vuota: data da fuori (Svuota, o la foto vera di partenza) oppure Nano Banana dalla foto arredata
-      const given = o.empty
-      const out = given ? (given.startsWith('data:') ? given.split(',').pop()! : Buffer.from(await (await fetch(given, { signal: AbortSignal.timeout(20_000) })).arrayBuffer()).toString('base64')) : await emptyRoom(fullUrl, logUser)
-      if (!out) return { error: 'ai_failed', status: 502 }
-      // stesso ritaglio della foto arredata (cover): la foto di partenza data da fuori puo' avere un altro formato
-      empty = await sharp(Buffer.from(out, 'base64')).rotate().resize(W, H, { fit: 'cover' }).jpeg({ quality: 95 }).toBuffer()
-      // nomi semplici e quantita' esatte: descrizioni sbagliate cambiano la forma ai mobili
-      const t1 = Date.now()
-      const msg = await new Anthropic().messages.create({
-        model: 'claude-sonnet-5', max_tokens: 3000, // come nella prova approvata del 27/09: basta, e costa ~1/3 di Opus
-        messages: [{ role: 'user', content: [
-          { type: 'text', text: 'Image 1 should be an empty room, image 2 is the same room furnished.' },
-          { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: (await sharp(empty).jpeg({ quality: 85 }).toBuffer()).toString('base64') } },
-          { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: (await sharp(full).jpeg({ quality: 85 }).toBuffer()).toString('base64') } },
-          { type: 'text', text: 'List every object that is in image 2 and not in image 1: rugs, furniture, cushions, throws, plants, books, decor. Look carefully and count exactly. For each item write a short description of how it really looks in image 2: its real shape (e.g. rectangular, round, L-shaped, curved) and its main color and material, exactly as you see them, nothing invented. Order as a designer would place them: rug first, then the largest furniture, then smaller furniture, then cushions, then small decor last. Group identical small items with their exact count. Also check image 1: "empty" is false if it still contains any bed, sofa, armchair, table, chair or other freestanding furniture (built-in wardrobes, kitchens, TV wall units, curtains and radiators are fine), or if its framing or zoom differs from image 2. Reply with JSON only: {"items": ["..."], "empty": true}' },
-        ] }],
-      })
-      await logUsage({ userId: logUser, kind: 'video_items' }, false, Date.now() - t1, { input: msg.usage.input_tokens, output: msg.usage.output_tokens }, true, 'claude-sonnet-5')
-      const txt = msg.content.find(c => c.type === 'text')?.text ?? '' // i modelli nuovi possono mettere prima un blocco di ragionamento
-      const r = JSON.parse(txt.slice(txt.indexOf('{'), txt.lastIndexOf('}') + 1)) as { items?: string[]; empty?: boolean }
-      items = r.items ?? []
-      // stanza vuota data da fuori (Svuota): si usa com'e'
-      if (r.empty !== false || o.empty) break
+    // Popup e Dall'alto (28/09, come deciso con l'utente): solo Nano Banana e Veo sempre in avanti, dal primo all'ultimo
+    // fotogramma, mai fermato a meta'.
+    // - stessi mobili: Nano Banana svuota del tutto la foto -> Veo dalla stanza vuota alla foto arredata;
+    // - stile: la chat manda la foto nel nuovo stile (o.styled, fatta da Nano Banana come le foto) -> Veo dalla foto com'era
+    //   alla stanza nel nuovo stile;
+    // - Svuota (o.empty): dalla foto arredata alla stanza vuota, i mobili spariscono.
+    const toJpeg = async (b64: string) => sharp(Buffer.from(b64, 'base64')).rotate().resize(W, H, { fit: 'cover' }).jpeg({ quality: 95 }).toBuffer()
+    const b64Of = async (src: string) => (src.startsWith('data:') ? src.split(',').pop()! : Buffer.from(await (await fetch(src, { signal: AbortSignal.timeout(20_000) })).arrayBuffer()).toString('base64'))
+    let firstBuf: Buffer, lastBuf: Buffer
+    if (o.empty) { firstBuf = full; lastBuf = await toJpeg(await b64Of(o.empty)) }
+    else if (o.styled) { firstBuf = full; lastBuf = await toJpeg(await b64Of(o.styled)) }
+    else {
+      const e = await nanoBanana({ userId: logUser, image: fullUrl, prompt: `${EMPTY_PROMPT} Remove every piece of furniture and every object, leave only the bare room. Same camera, framing and perspective as the original photo. Photorealistic, no text.`, kind: 'video_empty' })
+      if (!e) return { error: 'ai_failed', status: 502 }
+      firstBuf = await toJpeg(e); lastBuf = full
     }
-    if (!items.length || !empty) return { error: 'nothing_to_animate', status: 422 }
-    const emptyUrl = await uploadJpeg(empty, `${key}-vuota.jpg`)
-    // Dall'alto: in avanti, dalla vuota all'arredata, i mobili cadono dall'alto (ricetta dell'anteprima approvata F9_gravity,
-    // 27/09: al contrario, con i mobili che "salgono via", sembravano comparire sul posto). Gli altri al contrario.
-    const down = anim === 'gravity' && !o.empty
-    const order = down ? items.join(', then ') : [...items].reverse().join(', then ') // al contrario: spariscono prima i piccoli oggetti
+    const [firstUrl, lastUrl] = await Promise.all([
+      firstBuf === full ? fullUrl : uploadJpeg(firstBuf, `${key}-vuota.jpg`),
+      lastBuf === full ? fullUrl : uploadJpeg(lastBuf, `${key}-${o.empty ? 'vuota' : 'nuova'}.jpg`),
+    ])
+    // pezzi che compaiono (nell'ultima e non nella prima; per Svuota quelli che spariscono): nomi semplici, quantita' esatte
+    const [a, z] = o.empty ? [lastBuf, firstBuf] : [firstBuf, lastBuf]
+    const t1 = Date.now()
+    const msg = await new Anthropic().messages.create({
+      model: 'claude-sonnet-5', max_tokens: 3000,
+      messages: [{ role: 'user', content: [
+        { type: 'text', text: 'Image 1 is a room before, image 2 is the same room after home staging.' },
+        { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: (await sharp(a).jpeg({ quality: 85 }).toBuffer()).toString('base64') } },
+        { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: (await sharp(z).jpeg({ quality: 85 }).toBuffer()).toString('base64') } },
+        { type: 'text', text: 'List every object that is in image 2 and not in image 1: rugs, furniture, cushions, throws, plants, books, decor. Look carefully and count exactly, largest pieces first. Use short simple names, no adjectives about shape. Reply only with JSON {"items": ["..."]}.' },
+      ] }],
+    })
+    await logUsage({ userId: logUser, kind: 'video_items' }, false, Date.now() - t1, { input: msg.usage.input_tokens, output: msg.usage.output_tokens }, true, 'claude-sonnet-5')
+    const txt = msg.content.find(c => c.type === 'text')?.text ?? ''
+    const items = ((JSON.parse(txt.slice(txt.indexOf('{'), txt.lastIndexOf('}') + 1)) as { items?: string[] }).items ?? []).filter(x => typeof x === 'string')
+    if (!items.length) return { error: 'nothing_to_animate', status: 422 }
+    const order = items.join(', then ')
+    const text = o.empty ? prompt([...items].reverse().join(', then '), anim) : anim === 'gravity' ? GRAVITY_PROMPT(order, items.length, !!o.styled) : POPUP_PROMPT(order, items.length, !!o.styled)
 
-    // 4. Veo: al contrario (dalla foto arredata alla vuota) o in avanti per Dall'alto
+    // 4. Veo in avanti, 8 s
     const q = await fal(`${FAL}/lite/first-last-frame-to-video`, {
-      first_frame_url: down ? emptyUrl : fullUrl, last_frame_url: down ? fullUrl : emptyUrl,
-      prompt: down ? GRAVITY_PROMPT(order, items.length) : prompt(order, anim), negative_prompt: down ? GRAVITY_NEG : negFor(anim),
+      first_frame_url: firstUrl, last_frame_url: lastUrl, prompt: text, negative_prompt: o.empty ? negFor(anim) : GRAVITY_NEG,
       duration: `${VEO_SECONDS}s`, aspect_ratio: landscape ? '16:9' : '9:16', resolution: '720p', generate_audio: false, seed: Math.floor(Math.random() * 1_000_000),
     })
     if (!q.request_id) { console.error('video fal submit', q); return { error: 'ai_failed', status: 502 } }
@@ -212,7 +216,7 @@ export async function pollVideo(owner: string, job: string): Promise<VideoResult
   if (job === 'mock' && AI_MOCK) return { url: 'https://pub-a668674eaa484e8e8f2f10c264392bfc.r2.dev/spike-video/stili/F12_rianima.mp4' }
   const [id, tilde, sig] = job.split('.')
   const name = (tilde ?? '').replace('~', '/')
-  if (!id || !/^[\w-]{8,64}(\+[\w-]{8,64})?$/.test(id) || !/^(casa-[\w-]{1,64}\/)?\d+-[a-z0-9]+(-f|-k|-kc|-g)?$/.test(name) || !sig || sig.length !== 22 || !timingSafeEqual(Buffer.from(sig), Buffer.from(sign(owner, `${id}.${name}`)))) return { error: 'bad_request', status: 400 }
+  if (!id || !/^[\w-]{8,64}(\+[\w-]{8,64})?$/.test(id) || !/^(casa-[\w-]{1,64}\/)?\d+-[a-z0-9]+(-f|-k|-kc|-g|-p)?$/.test(name) || !sig || sig.length !== 22 || !timingSafeEqual(Buffer.from(sig), Buffer.from(sign(owner, `${id}.${name}`)))) return { error: 'bad_request', status: 400 }
 
   const key = `videos/${owner}/${name}.mp4`
   const url = `${process.env.R2_PUBLIC_URL}/${key}`
@@ -243,12 +247,12 @@ export async function pollVideo(owner: string, job: string): Promise<VideoResult
     else await rename(parts[0], raw)
     // Kling e Svuota vanno in avanti (tutta la clip); gli altri Veo al contrario, tagliati prima della dissolvenza di Veo
     // in avanti: Svuota (-f), Kling (-k, -kc) e Dall'alto (-g)
-    const forward = /-(f|k|kc|g)$/.test(name)
+    const forward = /-(f|k|kc|g|p)$/.test(name)
     // Dall'alto: clip INTERA, mai fermata a meta' (un fotogramma di Veo a mobili appena atterrati puo' avere pezzi
     // trasparenti, e il fermo lo mostrava: 28/09). L'ultimo fotogramma di Veo e' l'immagine arredata vera: il fermo e' su quella.
     const cut = kling ? KLING_SECONDS * parts.length : forward ? VEO_SECONDS : cutPoint(await ffmpeg(['-i', raw, '-vf', 'scale=320:180,format=gray', '-f', 'rawvideo', '-']), 320 * 180)
     // Dall'alto un po' piu' veloce (1,2x; a 1,4x le cadute diventavano istantanee)
-    const speed = name.endsWith('-g') ? 1.2 : 1
+    const speed = /-(g|p)$/.test(name) ? 1.2 : 1
     const total = cut / speed + HOLD, n = Math.round(total * 30)
     // zoom 4% ease-in-out su tutto il video, sub-pixel (perspective con interpolazione: niente tremolio)
     const z = `(1+0.04*(0.5-0.5*cos(PI*min(in/${n}\\,1))))`, o = `(1-1/${z})/2`

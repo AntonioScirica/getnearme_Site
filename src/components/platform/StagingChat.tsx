@@ -330,8 +330,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   const patchV = (id: string, p: Partial<VideoMsg> | ((m: VideoMsg) => Partial<VideoMsg>)) =>
     setMsgs(ms => ms.map(m => (m.id === id && m.role === 'video' ? { ...m, ...(typeof p === 'function' ? p(m) : p) } : m)));
   // Stile scelto: dietro le quinte si crea UNA foto arredata nello stile (non si mostra), poi il video parte da quella.
-  // Il server svuota con Qwen proprio quella foto (stessa inquadratura al pixel) e ci fa arrivare i mobili nuovi.
-  // Come su GetNearMe: niente proposte da scegliere.
+  // Il video va dalla foto com'era a quella nuova (Veo, primo e ultimo fotogramma). Come su GetNearMe: niente proposte.
   const styleVideo = async (m: VideoMsg, label: string, req: { style?: string; prompt?: string }) => {
     touch();
     patchV(m.id, { step: 'render', picks: [...m.picks, { label, icon: 'style' }], err: undefined });
@@ -340,15 +339,16 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
     const d = r?.ok ? await r.json().catch(() => ({})) as { url?: string } : null;
     if (r?.status === 402) { patchV(m.id, { err: NO_CREDITS }); return; }
     if (!d?.url) { patchV(m.id, { err: 'Video non riuscito, riprova.' }); return; }
-    await makeVideo({ ...m, picks: [...m.picks, { label, icon: 'style' }] }, d.url, label, true);
+    await makeVideo({ ...m, picks: [...m.picks, { label, icon: 'style' }] }, m.photo, label, d.url);
   };
   // Video: il server svuota la foto, fa partire Veo e poi monta; qui si controlla ogni 6 s (circa 2 minuti in tutto)
-  const makeVideo = async (m: VideoMsg, photo: string, pick: string, styled = false) => {
+  // styled: foto nel nuovo stile (fatta dietro le quinte): il video va dalla foto com'era a questa
+  const makeVideo = async (m: VideoMsg, photo: string, pick: string, styled?: string) => {
     touch();
     // foto nel nuovo stile: resta dietro le quinte (la scelta "Moderno" e' gia' tra le scelte, niente miniatura)
     patchV(m.id, { step: 'render', ...(styled ? {} : { photo }), picks: styled ? m.picks : [...m.picks, pick === 'Stanza com’è' ? { label: pick, icon: 'keep' } : { label: pick, icon: 'photo', src: photo }], err: undefined });
     const fail = 'Video non riuscito, riprova.';
-    const res = await authFetch('/api/platform/video', { method: 'POST', headers: QUIET, body: JSON.stringify({ ...(photo.startsWith('data:') ? { imageBase64: photo } : { imageUrl: photo }), anim: m.anim, ...(project ? { projectId: project } : {}) }) }).catch(() => null);
+    const res = await authFetch('/api/platform/video', { method: 'POST', headers: QUIET, body: JSON.stringify({ ...(photo.startsWith('data:') ? { imageBase64: photo } : { imageUrl: photo }), ...(styled ? { styled } : {}), anim: m.anim, ...(project ? { projectId: project } : {}) }) }).catch(() => null);
     const d = res ? await res.json().catch(() => ({})) : {};
     if (!d.job) { patchV(m.id, { err: d.error === 'no_credits' ? NO_CREDITS : d.error === 'timeout' ? 'La GPU si sta avviando, riprova tra un minuto.' : d.error === 'nothing_to_animate' ? 'Nella foto non ci sono mobili da animare.' : fail }); return; }
     patchV(m.id, { job: d.job });
