@@ -188,8 +188,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   const [saveOpen, setSaveOpen] = useState<string | null>(null); // risultato con il pannello "Salva nell'immobile" aperto
   // com'e' la stanza nella foto di lavoro (vuota, disordinata, datata, arredata): cambia suggerimento e proposte
   const [roomState, setRoomState] = useState<string | null>(saved?.roomState ?? null);
-  // foto caricata che era una stanza vuota: il video Prima e dopo parte da questa (stanza vera -> arredata), non da una
-  // vuota rifatta dall'AI (che non combacia e lascia pezzi)
+  // foto caricata che era una stanza vuota: nel video niente "Tieni la stanza com'e'", si sceglie solo lo stile
   const [emptyFrom, setEmptyFrom] = useState<string | null>(saved?.emptyFrom ?? null);
   const [otherFor, setOtherFor] = useState<string | null>(null); // messaggio in cui l'agente scrive a mano cos'e' la foto
   // chiusura di Modifica: 300 ms in cui selezione e campo sfumano mentre il pulsante torna Scarica e il divisore rientra
@@ -331,8 +330,8 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   const patchV = (id: string, p: Partial<VideoMsg> | ((m: VideoMsg) => Partial<VideoMsg>)) =>
     setMsgs(ms => ms.map(m => (m.id === id && m.role === 'video' ? { ...m, ...(typeof p === 'function' ? p(m) : p) } : m)));
   // Stile scelto: dietro le quinte si crea UNA foto arredata nello stile (non si mostra), poi il video parte da quella.
-  // Stanza vuota: il video va dalla foto vera vuota ai mobili nuovi (emptyFrom); stanza arredata: il server svuota la
-  // foto nel nuovo stile e ci fa arrivare i mobili nuovi. Come su GetNearMe: niente proposte da scegliere.
+  // Il server svuota con Qwen proprio quella foto (stessa inquadratura al pixel) e ci fa arrivare i mobili nuovi.
+  // Come su GetNearMe: niente proposte da scegliere.
   const styleVideo = async (m: VideoMsg, label: string, req: { style?: string; prompt?: string }) => {
     touch();
     patchV(m.id, { step: 'render', picks: [...m.picks, { label, icon: 'style' }], err: undefined });
@@ -349,7 +348,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
     // foto nel nuovo stile: resta dietro le quinte (la scelta "Moderno" e' gia' tra le scelte, niente miniatura)
     patchV(m.id, { step: 'render', ...(styled ? {} : { photo }), picks: styled ? m.picks : [...m.picks, pick === 'Stanza com’è' ? { label: pick, icon: 'keep' } : { label: pick, icon: 'photo', src: photo }], err: undefined });
     const fail = 'Video non riuscito, riprova.';
-    const res = await authFetch('/api/platform/video', { method: 'POST', headers: QUIET, body: JSON.stringify({ ...(photo.startsWith('data:') ? { imageBase64: photo } : { imageUrl: photo }), ...(emptyFrom && emptyFrom !== photo ? { from: emptyFrom } : {}), anim: m.anim, ...(project ? { projectId: project } : {}) }) }).catch(() => null);
+    const res = await authFetch('/api/platform/video', { method: 'POST', headers: QUIET, body: JSON.stringify({ ...(photo.startsWith('data:') ? { imageBase64: photo } : { imageUrl: photo }), anim: m.anim, ...(project ? { projectId: project } : {}) }) }).catch(() => null);
     const d = res ? await res.json().catch(() => ({})) : {};
     if (!d.job) { patchV(m.id, { err: d.error === 'no_credits' ? NO_CREDITS : d.error === 'timeout' ? 'La GPU si sta avviando, riprova tra un minuto.' : d.error === 'nothing_to_animate' ? 'Nella foto non ci sono mobili da animare.' : fail }); return; }
     patchV(m.id, { job: d.job });
