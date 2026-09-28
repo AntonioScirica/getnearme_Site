@@ -8,9 +8,10 @@
 // Video: crediti in proporzione al costo (28/09/2026, incasso al credito peggiore 0,0236 € col Pro annuale, margine ~45%):
 // Popup / Dall'alto (Veo, ~0,34 $) e Stop-motion / Particelle / Giorno-notte (Nano Banana + Kling, ~0,37 $) = 25;
 // Cantiere (2 Nano Banana + 2 Kling, ~0,73 $) = 50.
-// Modifiche gratis (28/09/2026): con GPT Image 2.5 a qualita' bassa costano ~0,005 $, si lasciano "infinite" e si tiene d'occhio
-// ai_usage (tetto giornaliero per utente in api/platform/photo-edit).
-export const CREDIT_COST = { luminoso: 0, modifica: 0, arreda: 5, svuota: 5, video: 25, video_cantiere: 50, riscrivi: 1 };
+// Modifiche (28/09/2026): con GPT Image 2.5 a qualita' bassa costano ~0,014 $; tetto giornaliero per utente in api/platform/photo-edit.
+// modifica: le prime 3 su una foto sono gratis, dalla quarta 1 credito (modifica_extra), che e' il nostro costo (0,014 $).
+export const CREDIT_COST = { luminoso: 0, modifica: 0, modifica_extra: 1, arreda: 5, svuota: 5, video: 25, video_cantiere: 50, riscrivi: 1 };
+export const FREE_EDITS = 3;
 export const PRICING = { starter: 29, starterCredits: 1000, quarterly: 69, yearly: 59, credits: 2500 };
 export const photosFor = (credits: number) => Math.floor(credits / CREDIT_COST.arreda);
 export const videosFor = (credits: number) => Math.floor(credits / CREDIT_COST.video);

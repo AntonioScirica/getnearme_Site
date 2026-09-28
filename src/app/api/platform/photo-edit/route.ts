@@ -5,7 +5,7 @@ import { emptyRoomMasked } from '@/lib/emptyRoom'
 import { gptImage } from '@/lib/gptImage'
 import { nanoBanana, stagePrompt, markedCopy, zonePrompt } from '@/lib/nanoBanana'
 import { canAfford, spend, type Action } from '@/lib/credits'
-import { CREDIT_COST } from '@/lib/pricing'
+import { CREDIT_COST, FREE_EDITS } from '@/lib/pricing'
 import { brighten } from '@/lib/brighten'
 import { finish } from '@/lib/finish'
 import { createClient } from '@supabase/supabase-js'
@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
 
   // Foto: URL (annunci, R2) oppure caricata dal computer (imageBase64, data URL gia' ridimensionata).
   // Modifica: testo libero e/o i preset di home staging (stile, vista, scena, planimetria).
-  let body: { imageUrl?: string; imageBase64?: string; prompt?: string; style?: string; angle?: string; scene?: SceneType; planimetria?: boolean; seed?: number; region?: { x: number; y: number; w: number; h: number; poly?: { x: number; y: number }[] }; projectId?: string; room?: string; variant?: number; preview?: boolean; reference?: string; styleRef?: string; points?: { x: number; y: number }[] }
+  let body: { edits?: number; imageUrl?: string; imageBase64?: string; prompt?: string; style?: string; angle?: string; scene?: SceneType; planimetria?: boolean; seed?: number; region?: { x: number; y: number; w: number; h: number; poly?: { x: number; y: number }[] }; projectId?: string; room?: string; variant?: number; preview?: boolean; reference?: string; styleRef?: string; points?: { x: number; y: number }[] }
   try { body = await req.json() } catch { return NextResponse.json({ error: 'bad_request' }, { status: 400 }) }
   const imageUrl = typeof body.imageUrl === 'string' ? body.imageUrl : ''
   const imageBase64 = typeof body.imageBase64 === 'string' && /^data:image\/(jpeg|png|webp);base64,/.test(body.imageBase64) && body.imageBase64.length < 8_000_000 ? body.imageBase64 : ''
@@ -91,7 +91,9 @@ export async function POST(req: NextRequest) {
 
   // Modalita' finta: nessuna GPU, torna la stessa foto.
   // Crediti: si controlla prima di generare, si scalano solo a foto riuscita (src/lib/credits.ts)
-  const action: Action = body.angle === 'day' ? 'luminoso' : body.style === 'empty' ? 'svuota' : furnishReq ? 'arreda' : 'modifica'
+  // modifiche: le prime FREE_EDITS su una foto gratis (conteggio dalla chat), poi 1 credito
+  const edits = typeof body.edits === 'number' && body.edits >= 0 ? body.edits : 0
+  const action: Action = body.angle === 'day' ? 'luminoso' : body.style === 'empty' ? 'svuota' : furnishReq ? 'arreda' : edits >= FREE_EDITS ? 'modifica_extra' : 'modifica'
   if (!(await canAfford(userId, action))) return NextResponse.json({ error: 'no_credits', cost: CREDIT_COST[action] }, { status: 402 })
   // Modifiche gratis: tetto giornaliero per utente contro gli abusi (EDIT_DAILY_LIMIT, predefinito 300), contato su ai_usage
   if (action === 'modifica') {

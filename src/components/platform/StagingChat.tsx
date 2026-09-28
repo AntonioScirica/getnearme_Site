@@ -301,6 +301,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
     const zone = region;
     setText(''); setPicked(null); clearZone(); setSelecting(false);
     const req: EditRequest = {
+      edits: msgs.filter(x => x.role === 'ai' && !!x.out).length, // modifiche gia' fatte su questa foto: le prime 3 gratis, poi 1 credito
       ...(project ? { projectId: project } : {}),
       ...(sourcePhoto && sourcePhoto !== before ? { reference: sourcePhoto } : {}),
       ...(styleRef ? { styleRef } : {}),
