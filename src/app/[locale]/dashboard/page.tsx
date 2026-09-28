@@ -3,9 +3,9 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
-import { Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import DashboardApp from '@/components/dashboard/DashboardApp';
+import ImmoLoader from '@/components/ui/ImmoLoader';
 
 // Nuova piattaforma (branch ui-rewrite): visibile solo agli admin (lib/platformAdmins)
 // finche' non si fa lo switch. Switch = rendere sempre <PlatformApp/> e cancellare
@@ -206,7 +206,7 @@ export default function DashboardPage() {
   if (loading || !userData) {
     return (
       <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#faf9f7' }}>
-        <Loader2 size={26} color="#3B82F6" style={{ animation: 'spin 1s linear infinite' }} />
+        <ImmoLoader />
       </div>
     );
   }

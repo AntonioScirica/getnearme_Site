@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { ArrowLeft, Loader2, Monitor, X } from 'lucide-react';
 import { fetchProjects, type ProjectData } from '@/lib/projects';
 import { FAKE_PROPERTIES } from '@/lib/fakeProperties';
+import ImmoLoader from '@/components/ui/ImmoLoader';
 
 // Scelta della foto per la chat: dalla vetrina (gli immobili dell'agente, poi le foto di quello scelto) o dal computer.
 // Finestra ad altezza fissa: passando da immobili a foto non cambia misura.
@@ -58,7 +59,7 @@ export default function LibraryPicker({ onFiles, onClose }: { onFiles: (files: F
         {err && <p className="pb-3 text-sm text-rose-600">Non riesco a scaricare questa foto, provane un&apos;altra.</p>}
         <div className="-mx-1 min-h-0 flex-1 overflow-y-auto px-1 [scrollbar-width:thin]">
           {projects === null ? (
-            <div className="flex h-full items-center justify-center text-muted"><Loader2 size={20} className="animate-spin" /></div>
+            <div className="flex h-full items-center justify-center"><ImmoLoader size="block" /></div>
           ) : !open ? (
             list.length ? (
               <div key="case" className="blur-in grid grid-cols-2 gap-3 sm:grid-cols-3">

@@ -30,6 +30,9 @@ const LISTINGS = [['/immo/home/demo-1.webp', '245.000'], ['/immo/home/demo-2.web
 
 export default function Onboarding({ onDone }: { onDone: (p: Profile) => void }) {
   const [step, setStep] = useState<Step>(0);
+  // passo del nome: il campo c'e' gia' (bloccato) dall'inizio, autoFocus non basta: si mette il cursore quando si apre
+  const nameRef = useRef<HTMLInputElement>(null);
+  useEffect(() => { if (step !== 1) return; const t = setTimeout(() => nameRef.current?.focus({ preventScroll: true }), 60); return () => clearTimeout(t); }, [step]);
   const [hello, setHello] = useState(false); // prima solo il logo al centro, poi sale e parla
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
@@ -125,7 +128,7 @@ export default function Onboarding({ onDone }: { onDone: (p: Profile) => void })
       <div inert={step !== 1} className={`grid w-full max-w-md transition-[grid-template-rows,opacity] duration-[900ms] ease-smooth ${step === 1 ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
         <div className={`-mx-8 min-h-0 overflow-hidden px-8 transition-[padding] duration-[900ms] ease-smooth ${step === 1 ? 'pb-8' : 'pb-0'}`}>
           <div className={`mt-8 flex items-center rounded-full bg-white p-1.5 pl-6 ${CARD_SHADOW}`}>
-            <input autoFocus={step === 1} value={name} onChange={e => onName(e.target.value)} onKeyDown={e => e.key === 'Enter' && next()} maxLength={80} placeholder="Mario Rossi"
+            <input ref={nameRef} value={name} onChange={e => onName(e.target.value)} onKeyDown={e => e.key === 'Enter' && next()} maxLength={80} placeholder="Mario Rossi"
               className="min-w-0 flex-1 bg-transparent font-display text-xl font-bold tracking-tight outline-none placeholder:text-muted/40" />
             <button type="button" disabled={!nameOk} onClick={next} className="btn-ink flex h-11 items-center gap-2 rounded-full px-5 text-sm font-semibold">Continua <ArrowRight size={15} /></button>
           </div>

@@ -545,3 +545,10 @@ html.metrics-light [class*="border-gray-600"] { border-color: #d8d4cb !important
 .profanity-shake { animation: profanity-shake .3s ease; }
 /* velo del tour sempre sopra le card della home anche durante una transizione */
 ::view-transition-group(tour) { z-index: 10; animation: none; }
+
+/* ImmoLoader: marchio che respira + tre puntini a onda, stesso ritmo (1,2 s) */
+@keyframes immo-breathe { 0%, 100% { transform: scale(.94); opacity: .75; } 50% { transform: scale(1); opacity: 1; } }
+.immo-breathe { animation: immo-breathe 1.2s cubic-bezier(.65,0,.35,1) infinite; }
+@keyframes immo-dot { 0%, 60%, 100% { transform: translateY(0); opacity: .35; } 30% { transform: translateY(-5px); opacity: 1; } }
+.immo-dot { animation: immo-dot 1.2s cubic-bezier(.65,0,.35,1) infinite; }
+@media (prefers-reduced-motion: reduce) { .immo-breathe, .immo-dot { animation: none; opacity: 1; } }

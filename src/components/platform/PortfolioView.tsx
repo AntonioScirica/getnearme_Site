@@ -13,6 +13,7 @@ import { fileToResizedDataUrl } from '@/lib/staging';
 import { uploadDataUrl } from '@/lib/imageUpload';
 import { authFetch, CARD_SHADOW, formatPrice, portfolioUrl, setPublic } from './api';
 import { MorphTarget, morphFrom } from '@/components/ui/Morph';
+import ImmoLoader from '@/components/ui/ImmoLoader';
 
 // Vetrina: l'agente sceglie uno dei 5 template e modifica colori, testi, foto, contatti e sezioni,
 // con l'anteprima dal vivo accanto (stesse pagine del sito pubblico, con i suoi immobili).
@@ -634,7 +635,7 @@ export function TemplatePreview({ id, projects, solo, pagina }: { id: TemplateId
   useEffect(() => { if (solo) authFetch('/api/platform/site').then(r => r.json()).then(setSite).catch(() => {}); }, [solo]);
   const t = TEMPLATES.find(x => x.id === id) ?? TEMPLATES[0];
   if (solo) {
-    if (!site) return <div className="flex h-full items-center justify-center"><Loader2 className="animate-spin text-muted" /></div>;
+    if (!site) return <div className="flex h-full items-center justify-center"><ImmoLoader /></div>;
     const pub = (projects ?? []).filter(p => p.is_public).map(toSite);
     const props = [...pub, ...FAKE_PROPERTIES.filter(f => !pub.some(p => p.id === f.id)).map(toSite)].slice(0, Math.max(9, pub.length));
     const cfg = withPlaceholders(site.config.template === t.id ? site.config : { ...site.config, template: t.id, primary: t.primary, font: t.font });

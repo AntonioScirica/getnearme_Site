@@ -25,6 +25,7 @@ import ProfileForm, { type Profile } from './ProfileForm';
 import Onboarding from './Onboarding';
 import PlanView, { CreditsPill, DemoDownload, hasDemo, isBuy, NoCreditsModal } from './PlanView';
 import { tiltMove, tiltReset } from '@/components/ui/tilt';
+import ImmoLoader from '@/components/ui/ImmoLoader';
 
 // Routing a hash (#/immobili, #/nuovo, #/immobile/<id>): back/forward del browser
 // funzionano senza toccare le route Next della vecchia dashboard.
@@ -68,7 +69,7 @@ export default function PlatformApp({ userData }: { userData: UserData }) {
   }, []);
 
   // Onboarding: finche' l'agente non ha scelto nome + indirizzo portfolio, niente piattaforma.
-  if (profile === undefined) return <div className="flex h-full items-center justify-center bg-canvas"><Loader2 className="animate-spin text-muted" /></div>;
+  if (profile === undefined) return <div className="flex h-full items-center justify-center bg-canvas"><ImmoLoader /></div>;
   // #/benvenuto la rimostra a chi vuole rivederla (tutta: scarica la prova se c'e', onboarding, tour).
   // agente nuovo arrivato dalla prova della landing: prima scarica foto/video, poi l'onboarding dall'inizio
   if (profile && (!profile.slug || route === '/benvenuto') && demoGate) return <div className="h-full" style={DOTS}><DemoDownload onDone={() => setDemoGate(false)} /></div>;

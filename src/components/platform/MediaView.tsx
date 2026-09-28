@@ -10,6 +10,7 @@ import { downloadImage } from '@/lib/staging';
 import { fetchProjects, type ProjectData } from '@/lib/projects';
 import { authFetch, CARD_SHADOW } from './api';
 import { FAKE_MEDIA, FAKE_PROPERTIES } from '@/lib/fakeProperties';
+import ImmoLoader from '@/components/ui/ImmoLoader';
 
 // Una voce = una foto di partenza: ultima versione (dopo), originale (prima) e i passaggi in mezzo.
 export type MediaItem = { id: string; video?: string; dopo: string; prima: string | null; at: number; casa: string | null; text: string; room: string; steps: { url: string; text: string }[]; all: string; keys: string[] };
@@ -166,7 +167,7 @@ export default function MediaView() {
 
       {note && <p className="blur-in pt-4 text-sm text-rose-600">{note}</p>}
       {items === null ? (
-        <div className="flex h-64 items-center justify-center text-muted"><Loader2 size={20} className="animate-spin" /></div>
+        <div className="flex h-64 items-center justify-center"><ImmoLoader size="block" /></div>
       ) : !items.length ? (
         <p className="flex h-64 items-center justify-center text-sm text-muted">Qui finiranno le foto che crei nella chat di home staging.</p>
       ) : !filtered.length ? (
