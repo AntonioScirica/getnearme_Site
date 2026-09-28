@@ -607,7 +607,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                             })}
                           </div>
                           <a href={m.url || undefined} download target="_blank" rel="noopener noreferrer" aria-disabled={!m.url}
-                            className={`flex h-8 shrink-0 items-center gap-1.5 rounded-full bg-white px-3 text-xs font-medium text-ink ring-1 ring-inset ring-black/10 ease-smooth transition-opacity hover:bg-canvas ${m.url ? '' : 'pointer-events-none opacity-40'}`}><Download size={14} className="translate-y-px" /> Scarica</a>
+                            className={`flex shrink-0 items-center gap-2 rounded-2xl bg-white py-1.5 pl-1.5 pr-3 text-xs font-medium text-ink shadow-sm ring-1 ring-black/5 ease-smooth transition-opacity hover:bg-canvas ${m.url ? '' : 'pointer-events-none opacity-40'}`}><span className="flex h-7 w-7 items-center justify-center rounded-xl bg-brand/10 text-brand"><Download size={15} /></span> Scarica</a>
                         </div>
                       </div>
                     )}
