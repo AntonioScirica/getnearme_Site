@@ -330,20 +330,24 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   type VideoMsg = Extract<Msg, { role: 'video' }>;
   const patchV = (id: string, p: Partial<VideoMsg> | ((m: VideoMsg) => Partial<VideoMsg>)) =>
     setMsgs(ms => ms.map(m => (m.id === id && m.role === 'video' ? { ...m, ...(typeof p === 'function' ? p(m) : p) } : m)));
-  // due anteprime in parallelo dello stile scelto (foto: costano poco), poi l'agente sceglie quella del video
-  const stylePreviews = (m: VideoMsg, label: string, req: { style?: string; prompt?: string }) => {
+  // Stile scelto: dietro le quinte si crea UNA foto arredata nello stile (non si mostra), poi il video parte da quella.
+  // Stanza vuota: il video va dalla foto vera vuota ai mobili nuovi (emptyFrom); stanza arredata: il server svuota la
+  // foto nel nuovo stile e ci fa arrivare i mobili nuovi. Come su GetNearMe: niente proposte da scegliere.
+  const styleVideo = async (m: VideoMsg, label: string, req: { style?: string; prompt?: string }) => {
     touch();
-    patchV(m.id, { step: 'previews', picks: [...m.picks, { label, icon: 'style' }], previews: [null, null] });
+    patchV(m.id, { step: 'render', picks: [...m.picks, { label, icon: 'style' }], err: undefined });
     const body = { ...(project ? { projectId: project } : {}), ...(kind ? { room: seenLabel(kind) } : {}), ...(m.photo.startsWith('data:') ? { imageBase64: m.photo } : { imageUrl: m.photo }), scene: 'interno', ...req, variant: -1, preview: true, ...(sourcePhoto && sourcePhoto !== m.photo ? { reference: sourcePhoto } : {}) };
-    [0, 1].forEach(k => {
-      authFetch('/api/platform/photo-edit', { method: 'POST', headers: QUIET, body: JSON.stringify(body) }).then(r => (r.status === 402 ? (patchV(m.id, { err: NO_CREDITS }), {}) : r.ok ? r.json() : {})).catch(() => ({}))
-        .then((d: { url?: string }) => patchV(m.id, x => ({ previews: x.previews?.map((p, j) => (j === k ? d.url ?? 'err' : p)) })));
-    });
+    const r = await authFetch('/api/platform/photo-edit', { method: 'POST', headers: QUIET, body: JSON.stringify(body) }).catch(() => null);
+    const d = r?.ok ? await r.json().catch(() => ({})) as { url?: string } : null;
+    if (r?.status === 402) { patchV(m.id, { err: NO_CREDITS }); return; }
+    if (!d?.url) { patchV(m.id, { err: 'Video non riuscito, riprova.' }); return; }
+    await makeVideo({ ...m, picks: [...m.picks, { label, icon: 'style' }] }, d.url, label, true);
   };
   // Video: il server svuota la foto, fa partire Veo e poi monta; qui si controlla ogni 6 s (circa 2 minuti in tutto)
-  const makeVideo = async (m: VideoMsg, photo: string, pick: string) => {
+  const makeVideo = async (m: VideoMsg, photo: string, pick: string, styled = false) => {
     touch();
-    patchV(m.id, { step: 'render', photo, picks: [...m.picks, pick === 'Stanza com’è' ? { label: pick, icon: 'keep' } : { label: pick, icon: 'photo', src: photo }], err: undefined });
+    // foto nel nuovo stile: resta dietro le quinte (la scelta "Moderno" e' gia' tra le scelte, niente miniatura)
+    patchV(m.id, { step: 'render', ...(styled ? {} : { photo }), picks: styled ? m.picks : [...m.picks, pick === 'Stanza com’è' ? { label: pick, icon: 'keep' } : { label: pick, icon: 'photo', src: photo }], err: undefined });
     const fail = 'Video non riuscito, riprova.';
     const res = await authFetch('/api/platform/video', { method: 'POST', headers: QUIET, body: JSON.stringify({ ...(photo.startsWith('data:') ? { imageBase64: photo } : { imageUrl: photo }), ...(emptyFrom && emptyFrom !== photo ? { from: emptyFrom } : {}), anim: m.anim, ...(project ? { projectId: project } : {}) }) }).catch(() => null);
     const d = res ? await res.json().catch(() => ({})) : {};
@@ -430,7 +434,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   const empty = msgs.length === 0;
   const picker = <input type="file" accept="image/*" multiple className="hidden" onChange={e => { upload(e.target.files); e.target.value = ''; }} />;
   // i suggerimenti partono subito, senza passare dal campo
-  const videoChip = base && roomState !== 'vuota' && scene === 'interno' ? [
+  const videoChip = base && scene === 'interno' ? [
     <button key="video" disabled={busy} onClick={() => askVideo(base)}
       className="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-ink px-3.5 py-1.5 text-[13px] font-medium text-white shadow-sm ease-smooth transition-colors hover:bg-brand disabled:opacity-40"><Clapperboard size={13} /> Crea video</button>,
   ] : [];
@@ -533,7 +537,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                       <button aria-label="Indietro" onClick={() => patchV(m.id, m.step === 'anim' ? { step: 'template', picks: [] } : m.step === 'mode' && (m.anim === 'cantiere' || m.anim === 'daynight') ? { step: 'template', anim: undefined, picks: [] } : m.step === 'mode' ? { step: 'anim', anim: undefined, picks: m.picks.slice(0, 1) } : { step: 'mode', picks: m.picks.slice(0, 2), previews: undefined })}
                         className="-ml-1.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-muted ease-smooth transition-colors hover:bg-black/5 hover:text-ink"><ChevronLeft size={18} /></button>
                     )}
-                    <span className="font-medium">{m.step === 'template' ? 'Che video vuoi creare?' : m.step === 'anim' ? 'Con quale animazione?' : m.step === 'mode' ? 'Tengo i mobili che ci sono o arredo in un nuovo stile?' : m.step === 'previews' ? (m.previews?.some(p => !p) ? 'Preparo due proposte…' : 'Scegli quella per il video') : m.url ? 'Ecco il video' : m.err ? '' : 'Creo il video, circa 2 minuti'}</span>
+                    <span className="font-medium">{m.step === 'template' ? 'Che video vuoi creare?' : m.step === 'anim' ? 'Con quale animazione?' : m.step === 'mode' ? (emptyFrom && emptyFrom === m.photo ? 'In che stile la arredo?' : 'Tengo i mobili che ci sono o arredo in un nuovo stile?') : m.step === 'previews' ? (m.previews?.some(p => !p) ? 'Preparo due proposte…' : 'Scegli quella per il video') : m.url ? 'Ecco il video' : m.err ? '' : m.anim && m.anim !== 'popup' && m.anim !== 'gravity' ? 'Creo il video, circa 10 minuti' : 'Creo il video, circa 2 minuti'}</span>
                   </div>
                     {(m.step === 'template' || m.step === 'anim') && (
                       <div className="grid gap-4 sm:grid-cols-2">
@@ -560,31 +564,12 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                     {m.step === 'mode' && (
                       <div className="px-1">
                         <div className="flex flex-wrap gap-1.5">
-                          <button onClick={() => makeVideo(m, m.photo, 'Stanza com’è')} className="shrink-0 whitespace-nowrap rounded-full bg-ink px-3.5 py-1.5 text-[13px] font-medium text-white shadow-sm ease-smooth transition-colors hover:bg-brand">Tieni la stanza com’è</button>
-                          {VIDEO_STYLES.map(x => <button key={x.id} onClick={() => stylePreviews(m, x.label, { style: x.id })} className="shrink-0 whitespace-nowrap rounded-full bg-white px-3.5 py-1.5 text-[13px] font-medium text-ink/80 shadow-sm ring-1 ring-inset ring-black/10 ease-smooth transition-colors hover:bg-brand hover:text-white">{x.label}</button>)}
+                          {!(emptyFrom && emptyFrom === m.photo) && <button onClick={() => makeVideo(m, m.photo, 'Stanza com’è')} className="shrink-0 whitespace-nowrap rounded-full bg-ink px-3.5 py-1.5 text-[13px] font-medium text-white shadow-sm ease-smooth transition-colors hover:bg-brand">Tieni la stanza com’è</button>}
+                          {VIDEO_STYLES.map(x => <button key={x.id} onClick={() => styleVideo(m, x.label, { style: x.id })} className="shrink-0 whitespace-nowrap rounded-full bg-white px-3.5 py-1.5 text-[13px] font-medium text-ink/80 shadow-sm ring-1 ring-inset ring-black/10 ease-smooth transition-colors hover:bg-brand hover:text-white">{x.label}</button>)}
                         </div>
                         <input placeholder="Oppure scrivi lo stile, es. classico con legno scuro" maxLength={200}
-                          onKeyDown={e => { const v = e.currentTarget.value.trim(); if (e.key === 'Enter' && v) stylePreviews(m, v, { prompt: `Arreda la stanza in stile ${v}` }); }}
+                          onKeyDown={e => { const v = e.currentTarget.value.trim(); if (e.key === 'Enter' && v) styleVideo(m, v, { prompt: `Arreda la stanza in stile ${v}` }); }}
                           className="mt-3 h-12 w-full rounded-full bg-white px-5 text-sm outline-none ring-1 ring-inset ring-black/10 placeholder:text-muted/60 focus:ring-brand" />
-                      </div>
-                    )}
-                    {m.step === 'previews' && (
-                      <div className="grid grid-cols-2 gap-4">
-                        {m.previews?.map((p, k) => (
-                          <div key={k} className="rise" style={{ animationDelay: `${0.05 + k * 0.06}s` }}>
-                            <button disabled={!p || p === 'err'} onClick={() => p && makeVideo(m, p, `Proposta ${k + 1}`)} onMouseMove={tiltMove} onMouseLeave={e => tiltReset(e.currentTarget)} className="tilt group relative flex w-full flex-col overflow-hidden rounded-[28px] bg-white p-2 text-left shadow-[0_1px_2px_rgba(0,0,0,.04),0_8px_24px_-12px_rgba(0,0,0,.12)] ring-1 ring-black/5 hover:shadow-[0_2px_4px_rgba(0,0,0,.04),0_30px_50px_-20px_rgba(0,0,0,.25)] active:scale-[0.985] disabled:pointer-events-none disabled:opacity-50 disabled:grayscale">
-                              <span className="sheen pointer-events-none absolute inset-0 z-20" />
-                              <span className="relative block overflow-hidden rounded-[20px]" style={{ aspectRatio: ratios[m.photo] ?? 1.5 }}>
-                                {p && p !== 'err'
-                                  ? <img src={p} alt={`Proposta ${k + 1}`} className="blur-in absolute inset-0 h-full w-full object-cover" />
-                                  : <>
-                                    <img src={m.photo} alt="" className={`absolute inset-0 h-full w-full scale-110 object-cover ${p === 'err' ? 'opacity-30' : 'blur-md'}`} />
-                                    <span className="absolute inset-0 flex items-center justify-center text-xs font-medium text-white">{p === 'err' ? <span className="text-ink/60">Non riuscita</span> : <Loader2 size={18} className="animate-spin" />}</span>
-                                  </>}
-                              </span>
-                            </button>
-                          </div>
-                        ))}
                       </div>
                     )}
                     {m.step === 'render' && (
