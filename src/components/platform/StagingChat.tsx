@@ -537,8 +537,8 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                         className="-ml-1.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-muted ease-smooth transition-colors hover:bg-black/5 hover:text-ink"><ChevronLeft size={18} /></button>
                     )}
                     <span className="font-medium">{m.step === 'template' ? 'Che video vuoi creare?' : m.step === 'anim' ? 'Con quale animazione?' : m.step === 'mode' ? (emptyFrom && emptyFrom === m.photo ? 'In che stile la arredo?' : 'Tengo i mobili che ci sono o arredo in un nuovo stile?') : m.step === 'previews' ? (m.previews?.some(p => !p) ? 'Preparo due proposte…' : 'Scegli quella per il video') : m.url ? 'Ecco il video' : m.err ? '' : m.anim && m.anim !== 'popup' && m.anim !== 'gravity' ? 'Creo il video, circa 10 minuti' : 'Creo il video, circa 2 minuti'}</span>
-                    {/* annulla: via il messaggio del video (e il "Crea un video" prima), si torna alle foto; a video partito smette solo di aspettarlo */}
-                    {!m.url && (
+                    {/* annulla: via il messaggio del video (e il "Crea un video" prima), si torna alle foto; non a video mandato */}
+                    {m.step !== 'render' && (
                       <button onClick={() => setMsgs(ms => { const k = ms.findIndex(x => x.id === m.id); return ms.filter((x, n) => n !== k && !(n === k - 1 && x.role === 'user' && x.text === 'Crea un video')); })}
                         className="ml-auto h-8 shrink-0 rounded-full px-3 text-[13px] font-medium text-muted ease-smooth transition-colors hover:bg-black/5 hover:text-ink">Annulla</button>
                     )}
