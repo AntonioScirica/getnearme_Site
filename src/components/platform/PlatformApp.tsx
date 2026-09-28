@@ -351,7 +351,7 @@ function StageCompare({ active }: { active: boolean }) {
 
 const TITLES: Record<string, [string, string]> = {
   link: ['Incolla il link dell\'annuncio', 'Da qualsiasi portale immobiliare.'],
-  opening: ['Apro l\'annuncio', 'Lo leggo io, dai portali può volerci fino a un minuto.'],
+  opening: ['Apro l\'annuncio', 'Ci vuole al massimo un minuto.'],
   scanning: ['Sto analizzando l\'annuncio', ''],
   done: ['Ecco il tuo annuncio, migliorato', 'Score, versione riscritta e cosa sistemare.'],
   error: ['Non riesco a leggerlo', 'Riprova o incolla il testo dell\'annuncio.'],
