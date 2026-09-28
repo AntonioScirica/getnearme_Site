@@ -96,7 +96,7 @@ export default function MediaView() {
   }, [items]);
   useEffect(() => {
     const fake = [...FAKE_MEDIA].sort((a, b) => b.at - a.at), fakeP = FAKE_PROPERTIES.slice(0, 4);
-    if (tour) { setItems(fake); setProjects(fakeP); setDemo(true); return; }
+    if (tour) { const id = setTimeout(() => { setItems(fake); setProjects(fakeP); setDemo(true); }, 0); return () => clearTimeout(id); }
     let stale = false; // il tour parte mentre si carica: la risposta vecchia non deve coprire gli esempi
     Promise.all([fetchMedia(), fetchProjects()]).then(([m, p]) => {
       if (stale) return;

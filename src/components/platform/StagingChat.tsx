@@ -210,9 +210,9 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   const [project, setProject] = useState<string | null>(saved?.project ?? null); // immobile della foto (se scelta dalla vetrina): la Galleria raggruppa per casa
   const [origin, setOrigin] = useState<string | null>(saved?.origin ?? null); // foto originale dell'immobile da cui si e' partiti (per il prima/dopo)
   // quantita' di arredo (Essenziale / Normale / Ricco), ricordata tra una foto e l'altra
-  const [density, setDensityState] = useState<'poco' | 'normale' | 'ricco'>('normale');
-  useEffect(() => { const d = localStorage.getItem('gnm-density'); if (d === 'poco' || d === 'ricco') setDensityState(d); }, []);
-  const densityRef = useRef(density); densityRef.current = density;
+  const [density, setDensityState] = useState<'poco' | 'normale' | 'ricco'>(() => { try { const d = localStorage.getItem('gnm-density'); return d === 'poco' || d === 'ricco' ? d : 'normale'; } catch { return 'normale'; } });
+  const densityRef = useRef(density);
+  useEffect(() => { densityRef.current = density; }, [density]);
   // richiesta scritta: Normale se non dice niente, la pill si accende da sola se le parole la indicano; un clic la sceglie a mano
   const [textDensity, setTextDensity] = useState<'poco' | 'normale' | 'ricco' | null>(null);
   const setDensity = (d: 'poco' | 'normale' | 'ricco') => { densityRef.current = d; setDensityState(d); try { localStorage.setItem('gnm-density', d); } catch { /* niente */ } };
@@ -236,8 +236,8 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   const [base, setBase] = useState<string | null>(saved?.base ?? null); // immagine su cui lavora la prossima richiesta
   const [viewer, setViewer] = useState<{ src: string; before?: string } | null>(null); // foto a tutto schermo
   const downAt = useRef<{ x: number; y: number } | null>(null);
-  const [text, setText] = useState('');
-  useEffect(() => { if (!text.trim()) setTextDensity(null); }, [text]);
+  const [text, setTextState] = useState('');
+  const setText = (v: string) => { setTextState(v); if (!v.trim()) setTextDensity(null); }; // testo vuoto: la densita' letta dalle parole si azzera
   // foto di riferimento per lo stile: scelta (Unsplash o dal computer) = richiesta inviata subito
   const [inspo, setInspo] = useState(false); // pannello "Cerca ispirazione" (Unsplash)
   const styleInput = useRef<HTMLInputElement>(null);
