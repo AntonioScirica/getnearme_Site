@@ -35,15 +35,17 @@ export default function PropertyDetail({ project, loading, onChange }: { project
         <div className="flex items-center gap-2">
           <button type="button" onClick={() => downloadReport(project.id)} disabled={report === 'busy'} title={report === 'err' ? 'Report non disponibile, riprova' : 'PDF con foto, dati, zona e costi da mandare ai clienti'} className={`flex h-10 items-center gap-1.5 rounded-full bg-white px-4 text-sm font-medium ring-1 ease-smooth transition-colors hover:bg-canvas disabled:opacity-60 ${report === 'err' ? 'ring-rose-300 text-rose-700' : 'ring-black/10'}`}>{report === 'busy' ? <Loader2 size={14} className="animate-spin" /> : <FileDown size={14} />} {report === 'busy' ? 'Preparo il report…' : 'Scarica report'}</button>
           <button type="button" onClick={() => setEditing(true)} className="flex h-10 items-center gap-1.5 rounded-full bg-white px-4 text-sm font-medium ring-1 ring-black/10 ease-smooth transition-colors hover:bg-canvas"><Pencil size={14} /> Modifica</button>
-          <PublicSwitch on={!!project.is_public} onClick={async () => { if (await setPublic(project.id, !project.is_public)) onChange(); }} />
         </div>
       </div>
       {editing && <EditProperty project={project} onClose={() => setEditing(false)} onSaved={() => { setEditing(false); onChange(); }} />}
       {/* avviso: qui e' la scheda della piattaforma, sul sito cambia con il modello scelto */}
       <div className={`mb-6 flex flex-wrap items-center gap-3 rounded-3xl bg-white p-2 pl-4 text-sm ${CARD_SHADOW}`}>
         <Info size={16} className="shrink-0 text-brand" />
-        <span className="min-w-0 flex-1 truncate text-muted">Sul tuo sito si vedrà con lo stile del modello {site?.template ? <b className="text-ink">{TEMPLATES.find(t => t.id === site.template)?.name}</b> : 'scelto'}.</span>
+        {/* tutto quello che riguarda il sito in una riga: stile, online o no, cambio modello */}
+        <span className="min-w-0 flex-1 truncate text-muted">{project.is_public ? 'Sul tuo sito si vede' : 'Non è sul tuo sito. Online si vedrà'} con lo stile del modello {site?.template ? <b className="text-ink">{TEMPLATES.find(t => t.id === site.template)?.name}</b> : 'scelto'}.</span>
         <a href="#/portfolio" className="flex h-9 items-center rounded-full px-3 font-medium hover:bg-canvas">Cambia modello</a>
+        <span className="h-5 w-px bg-line" aria-hidden />
+        <span className="pr-2"><PublicSwitch on={!!project.is_public} labels={['Online', 'Offline']} onClick={async () => { if (await setPublic(project.id, !project.is_public)) onChange(); }} /></span>
         {project.is_public && site?.slug && <a href={`${portfolioUrl(site.slug)}/${project.id}`} target="_blank" rel="noopener" className="flex h-9 items-center gap-1.5 rounded-full bg-canvas px-4 font-medium hover:bg-line/60">Vedi sul sito <ExternalLink size={14} /></a>}
       </div>
       {/* le foto: da qui ogni foto va all'AI, e una foto AI torna qui accanto all'originale (prima/dopo sul sito) */}
