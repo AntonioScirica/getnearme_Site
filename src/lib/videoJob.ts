@@ -1,11 +1,12 @@
 import { createClient } from '@supabase/supabase-js'
 import { createHmac, timingSafeEqual } from 'crypto'
 import { spawn } from 'child_process'
-import { mkdtemp, readFile, rm, writeFile } from 'fs/promises'
+import { mkdtemp, readFile, rename, rm, writeFile } from 'fs/promises'
 import { tmpdir } from 'os'
 import { join } from 'path'
 import sharp from 'sharp'
 import { nanoBanana } from '@/lib/nanoBanana'
+import { GNM_CANTIERE_1, GNM_CANTIERE_2, GNM_DAYNIGHT, GNM_EXCAVATION_IMAGE, GNM_NIGHT_IMAGE, GNM_PARTICLES, GNM_STOPMOTION, GNM_STRUCTURE_IMAGE } from '@/lib/gnmVideoPrompts'
 import Anthropic from '@anthropic-ai/sdk'
 import ffmpegPath from 'ffmpeg-static'
 import { runJob, allowedUrl } from '@/lib/runpodImage'
@@ -37,8 +38,11 @@ const VEO_SECONDS = 8
 // Corto e "remove only": con il blocco lungo della stanza davanti Qwen allargava l'inquadratura (prova del 27/09)
 const EMPTY_PROMPT = 'Remove only the movable furniture and loose objects from this room: sofas, armchairs, chairs, tables, beds, freestanding cabinets, rugs, cushions, blankets, lamps, plants, decor and personal items. Keep exactly the same, pixel for pixel: walls, ceiling and lights, windows and doors with their frames, curtains, mirrors and built-in or mirrored wardrobes, the TV wall unit with its shelves, the kitchen, bathroom fixtures, radiators, sockets, the floor with its exact material and color (continue the same floor where the furniture stood), the daylight and the camera position, zoom and framing. Photorealistic.'
 const NEG = 'text, letters, numbers, percent signs, captions, watermark, circles, ovals, rings, halos, light arcs, light trails, glowing lines, light beams, lens flare, fast camera movement, camera shake, new parts of the room, dissolve, ghosting, double exposure, semi-transparent objects, duplicated furniture, springs, coils, bouncing platform, ropes, cranes, new objects, extra furniture, extra cushions, extra decor, people, hands, tripod, camera, sliding objects, flying objects, floating objects, fading in, cross-fade, morphing, melting, flicker, exposure change, camera movement, zoom, pan'
-// cantiere e giorno/notte: niente elenco dei mobili, l'immagine di arrivo la fa Nano Banana 2
-const SCENE: Partial<Record<Anim, true>> = { cantiere: true, daynight: true }
+// template con i flussi Kling di GetNearMe (vedi gnmVideoPrompts); Popup e Dall'alto restano su Veo
+const KLING: Partial<Record<Anim, true>> = { stopmotion: true, particles: true, cantiere: true, daynight: true }
+const KLING_URL = 'https://queue.fal.run/fal-ai/kling-video/o3/standard/image-to-video'
+const KLING_BASE = 'https://queue.fal.run/fal-ai/kling-video'
+const KLING_SECONDS = 5
 // Veo lavora AL CONTRARIO (dalla foto arredata alla vuota), poi il video si inverte:
 // popup = ogni pezzo si rimpicciolisce sul posto (invertito: spunta e si assesta);
 // gravity = ogni pezzo si solleva ed esce dall'alto (invertito: cade dall'alto e si posa).
@@ -51,15 +55,6 @@ const VANISH: Record<Anim, string> = {
   stopmotion: 'Stop-motion style: each object disappears instantly between two frames, with no fading, no shrinking and no motion, one after another in a quick steady rhythm, leaving the bare floor and walls exactly as in the last image. ',
   cantiere: '', daynight: '',
 }
-// Cantiere (al contrario): la stanza finita torna cantiere; invertito, il cantiere diventa la casa finita.
-const CANTIERE_PROMPT = 'Elegant, satisfying real-estate timelapse with a perfectly still, locked-off camera: identical framing for the whole video, no pan, no zoom. The walls, windows, doors, beams and stairs stay exactly where they are. The finished, furnished room is shown still for a quarter of a second, then it progressively turns back into the raw construction site of the last image, like a renovation timelapse played in reverse: the decor and furniture go away piece by piece, the paint and plaster come off the walls revealing the bricks, the finished floor gives way to the bare screed, and the tools and materials of the works appear. By the third second the room is identical to the last image; from then on nothing moves.'
-// Giorno -> notte (in avanti): cala la sera, fuori il cielo si scurisce, dentro si accendono le luci.
-const DAYNIGHT_PROMPT = 'Elegant real-estate timelapse with a perfectly still, locked-off camera: identical framing for the whole video, no pan, no zoom. The room, the furniture and every object never change or move. Evening falls: the daylight outside the windows slowly turns into a deep blue dusk and then night, and the interior lights and lamps switch on one after another with a warm glow, until the room looks exactly like the last image. Smooth and continuous, no flicker.'
-// Immagine di arrivo fatta da Nano Banana 2 per cantiere e giorno/notte (stessa inquadratura della foto)
-const SCENE_IMAGE: Record<'cantiere' | 'daynight', string> = {
-  cantiere: 'Show this exact room during the renovation works, before it was finished, photographed from the identical camera position, lens and framing: every wall, window, door, beam, staircase and fireplace stays exactly where it is. Remove all furniture, rugs, curtains and decor. Rough walls with exposed brick and patches of old plaster, bare concrete screed floor, loose electrical conduits and wires, a stepladder, buckets, bags of cement and a few tools on the floor, a little dust. Same daylight. Photorealistic, no people, no text.',
-  daynight: 'Show this exact room at night, photographed from the identical camera position, lens and framing: same architecture, same furniture and objects in the same place, nothing added or removed. Deep blue night sky outside the windows, warm interior lights on (ceiling lights and lamps glowing), cozy evening atmosphere, balanced exposure, no burnt highlights. Photorealistic, no people, no text.',
-}
 const prompt = (order: string, anim: Anim) => 'Elegant, satisfying real-estate animation with a perfectly still, locked-off camera: identical framing for the whole video, no pan, no zoom. Walls, ceiling, curtains, built-in furniture, doors, windows, floor and daylight never change. '
   + `These are the only objects that disappear, in exactly these quantities: ${order}. Nothing new ever appears. The last frame is identical to the final empty image. `
   + 'The camera is exactly the one of the first and last image for the whole video: same lens, same framing, same distance, it never moves. '
@@ -68,9 +63,6 @@ const prompt = (order: string, anim: Anim) => 'Elegant, satisfying real-estate a
   + `Order: ${order}. By the third second the room is completely empty and identical to the last image; from then on nothing moves or changes at all.`
 // dall'alto: i pezzi volano per davvero, niente divieti di volo
 const negFor = (anim: Anim) => anim === 'gravity' ? NEG.replace('flying objects, floating objects, ', 'tumbling objects, rotating objects, ')
-  : anim === 'particles' ? NEG.replace('dissolve, ', '').replace('glowing lines, ', '')
-  : anim === 'daynight' ? NEG.replace('exposure change, ', '').replace('flicker, ', 'flicker, strobing, ')
-  : anim === 'cantiere' ? NEG.replace('new objects, ', '').replace('morphing, ', '')
   : NEG
 
 // il lavoro di fal torna al client firmato con l'utente: solo chi l'ha avviato puo' finalizzarlo
@@ -99,23 +91,43 @@ export async function startVideo(owner: string, logUser: string, o: { imageUrl: 
     const landscape = width >= height
     const [W, H] = landscape ? [1280, 720] : [720, 1280]
     const full = await sharp(src).rotate().resize(W, H, { fit: 'cover' }).jpeg({ quality: 95 }).toBuffer()
-    const name = `${pid ? `casa-${pid}/` : ''}${Date.now()}-${Math.random().toString(36).slice(2, 8)}${anim === 'daynight' || o.empty ? '-f' : ''}`
+    const name = `${pid ? `casa-${pid}/` : ''}${Date.now()}-${Math.random().toString(36).slice(2, 8)}${o.empty ? '-f' : ''}`
     const key = `videos/${owner}/${name}`
     const fullUrl = await uploadJpeg(full, `${key}-arredata.jpg`)
 
-    // Cantiere e giorno/notte: Nano Banana 2 fa l'immagine di arrivo, poi Veo (cantiere al contrario, notte in avanti)
-    if (SCENE[anim]) {
-      const kind = anim as 'cantiere' | 'daynight'
-      const out = await nanoBanana({ userId: logUser, image: fullUrl, prompt: SCENE_IMAGE[kind], kind: `video_${kind}` })
-      if (!out) return { error: 'ai_failed', status: 502 }
-      const endImg = await sharp(Buffer.from(out, 'base64')).resize(W, H, { fit: 'fill' }).jpeg({ quality: 95 }).toBuffer()
-      const endUrl = await uploadJpeg(endImg, `${key}-${kind}.jpg`)
-      const q = await fal(`${FAL}/lite/first-last-frame-to-video`, {
-        first_frame_url: fullUrl, last_frame_url: endUrl, prompt: kind === 'cantiere' ? CANTIERE_PROMPT : DAYNIGHT_PROMPT, negative_prompt: negFor(anim),
-        duration: `${VEO_SECONDS}s`, aspect_ratio: landscape ? '16:9' : '9:16', resolution: '720p', generate_audio: false, seed: Math.floor(Math.random() * 1_000_000),
-      })
-      if (!q.request_id) { console.error('video fal submit', q); return { error: 'ai_failed', status: 502 } }
-      return { job: `${q.request_id}.${name.replace('/', '~')}.${sign(owner, `${q.request_id}.${name}`)}` }
+    // Stop-motion, Particelle, Cantiere e Giorno/notte: gli stessi flussi dei reel di GetNearMe (Kling o3, primo e
+    // ultimo fotogramma, 5 s a clip, in avanti). Qui la foto finale e' quella vera dell'agente; i fotogrammi
+    // intermedi li fa Nano Banana 2 (come nei reel) partendo dalla foto.
+    // (con Svuota la foto e' gia' vuota: resta il flusso Veo in avanti)
+    if (KLING[anim] && !o.empty) {
+      const frame = async (prompt: string, label: string, ref = fullUrl) => {
+        const out = await nanoBanana({ userId: logUser, image: ref, prompt, kind: `video_${anim}` })
+        if (!out) return null
+        return uploadJpeg(await sharp(Buffer.from(out, 'base64')).resize(W, H, { fit: 'fill' }).jpeg({ quality: 95 }).toBuffer(), `${key}-${label}.jpg`)
+      }
+      const kling = (image_url: string, end_image_url: string, prompt: string) => fal(KLING_URL, { image_url, end_image_url, prompt, duration: 5, generate_audio: false })
+      let ids: string[] = []
+      if (anim === 'cantiere') {
+        // scavo -> struttura -> casa finita (2 clip montate di seguito)
+        const structure = await frame(GNM_STRUCTURE_IMAGE, 'struttura')
+        const excavation = structure && await frame(GNM_EXCAVATION_IMAGE, 'scavo', structure)
+        if (!structure || !excavation) return { error: 'ai_failed', status: 502 }
+        const [a, b] = await Promise.all([kling(excavation, structure, GNM_CANTIERE_1), kling(structure, fullUrl, GNM_CANTIERE_2)])
+        ids = [a.request_id, b.request_id]
+      } else if (anim === 'daynight') {
+        const night = await frame(GNM_NIGHT_IMAGE, 'notte')
+        if (!night) return { error: 'ai_failed', status: 502 }
+        ids = [(await kling(fullUrl, night, GNM_DAYNIGHT)).request_id]
+      } else {
+        // stop-motion / particelle: dalla stanza vuota alla foto arredata
+        const empty = await frame(`${EMPTY_PROMPT} The result must line up exactly with the original photo: same camera, framing and perspective. Photorealistic, no text.`, 'vuota')
+        if (!empty) return { error: 'ai_failed', status: 502 }
+        ids = [(await kling(empty, fullUrl, anim === 'stopmotion' ? GNM_STOPMOTION : GNM_PARTICLES)).request_id]
+      }
+      if (ids.some(x => !x)) { console.error('video kling submit', ids); return { error: 'ai_failed', status: 502 } }
+      const kname = `${name}${ids.length > 1 ? '-kc' : '-k'}`
+      const id = ids.join('+')
+      return { job: `${id}.${kname.replace('/', '~')}.${sign(owner, `${id}.${kname}`)}` }
     }
 
     // 2-3. Qwen svuota (stessa inquadratura), Opus elenca i pezzi e controlla che la stanza sia davvero vuota:
@@ -174,30 +186,38 @@ export async function pollVideo(owner: string, job: string): Promise<VideoResult
   if (job === 'mock' && AI_MOCK) return { url: 'https://pub-a668674eaa484e8e8f2f10c264392bfc.r2.dev/spike-video/stili/F12_rianima.mp4' }
   const [id, tilde, sig] = job.split('.')
   const name = (tilde ?? '').replace('~', '/')
-  if (!id || !/^[\w-]{8,64}$/.test(id) || !/^(casa-[\w-]{1,64}\/)?\d+-[a-z0-9]+(-f)?$/.test(name) || !sig || sig.length !== 22 || !timingSafeEqual(Buffer.from(sig), Buffer.from(sign(owner, `${id}.${name}`)))) return { error: 'bad_request', status: 400 }
+  if (!id || !/^[\w-]{8,64}(\+[\w-]{8,64})?$/.test(id) || !/^(casa-[\w-]{1,64}\/)?\d+-[a-z0-9]+(-f|-k|-kc)?$/.test(name) || !sig || sig.length !== 22 || !timingSafeEqual(Buffer.from(sig), Buffer.from(sign(owner, `${id}.${name}`)))) return { error: 'bad_request', status: 400 }
 
   const key = `videos/${owner}/${name}.mp4`
   const url = `${process.env.R2_PUBLIC_URL}/${key}`
   if ((await fetch(url, { method: 'HEAD' })).ok) return { url } // gia' montato
 
-  const s = await fal(`${FAL}/requests/${id}/status`)
-  if (s.status === 'IN_QUEUE' || s.status === 'IN_PROGRESS') return { status: 'working' }
-  if (s.status !== 'COMPLETED') { console.error('video fal status', s); return { error: 'ai_failed', status: 502 } }
-  const out = await fal(`${FAL}/requests/${id}`)
-  if (!out.video?.url) { console.error('video fal result', out); return { error: 'ai_failed', status: 502 } }
+  // Kling (flussi GetNearMe): una clip, o due per il cantiere (scavo -> struttura, struttura -> casa)
+  const kling = /-kc?$/.test(name)
+  const base = kling ? KLING_BASE : FAL
+  const ids = id.split('+')
+  const st = await Promise.all(ids.map(r => fal(`${base}/requests/${r}/status`)))
+  if (st.some(x => x.status === 'IN_QUEUE' || x.status === 'IN_PROGRESS')) return { status: 'working' }
+  if (st.some(x => x.status !== 'COMPLETED')) { console.error('video fal status', st); return { error: 'ai_failed', status: 502 } }
+  const outs = await Promise.all(ids.map(r => fal(`${base}/requests/${r}`)))
+  if (outs.some(x => !x.video?.url)) { console.error('video fal result', outs); return { error: 'ai_failed', status: 502 } }
 
   const dir = await mkdtemp(join(tmpdir(), 'vid-'))
   try {
     const raw = join(dir, 'veo.mp4'), music = join(dir, 'music.mp3'), final = join(dir, 'out.mp4')
+    const parts = outs.map((_, k) => join(dir, `clip${k}.mp4`))
     const tracks = MUSIC_CATALOG['property-reveal']
     const track = tracks[Math.floor(Math.random() * tracks.length)]
     await Promise.all([
-      fetch(out.video.url).then(r => r.arrayBuffer()).then(b => writeFile(raw, Buffer.from(b))),
+      ...outs.map((o, k) => fetch(o.video.url).then(r => r.arrayBuffer()).then(b => writeFile(parts[k], Buffer.from(b)))),
       fetch(`https://pub-cd3d5947375c4207af2dc57da61686ee.r2.dev/music/property-reveal/${encodeURIComponent(track)}`).then(r => r.arrayBuffer()).then(b => writeFile(music, Buffer.from(b))),
     ])
-    // giorno/notte va in avanti (tutto il clip, la notte e' l'ultima immagine); gli altri al contrario, tagliati prima della dissolvenza di Veo
-    const forward = name.endsWith('-f')
-    const cut = forward ? VEO_SECONDS : cutPoint(await ffmpeg(['-i', raw, '-vf', 'scale=160:90,format=gray', '-f', 'rawvideo', '-']), 160 * 90)
+    // due clip del cantiere una dopo l'altra (ricodifica leggera, crf 14)
+    if (parts.length > 1) await ffmpeg(['-y', '-i', parts[0], '-i', parts[1], '-filter_complex', '[0:v][1:v]concat=n=2:v=1:a=0[v]', '-map', '[v]', '-c:v', 'libx264', '-crf', '14', raw])
+    else await rename(parts[0], raw)
+    // Kling e Svuota vanno in avanti (tutta la clip); gli altri Veo al contrario, tagliati prima della dissolvenza di Veo
+    const forward = /-(f|k|kc)$/.test(name)
+    const cut = kling ? KLING_SECONDS * parts.length : forward ? VEO_SECONDS : cutPoint(await ffmpeg(['-i', raw, '-vf', 'scale=160:90,format=gray', '-f', 'rawvideo', '-']), 160 * 90)
     const total = cut + HOLD, n = Math.round(total * 30)
     // zoom 4% ease-in-out su tutto il video, sub-pixel (perspective con interpolazione: niente tremolio)
     const z = `(1+0.04*(0.5-0.5*cos(PI*min(in/${n}\\,1))))`, o = `(1-1/${z})/2`

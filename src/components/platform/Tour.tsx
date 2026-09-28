@@ -4,16 +4,21 @@ import { useEffect, useLayoutEffect, useState } from 'react';
 import { ArrowRight } from 'lucide-react';
 
 // Tour dopo l'onboarding: velo scuro con una luce (riquadro illuminato) che passa sulle voci della piattaforma,
-// una card breve per ognuna, poi si torna alla home. Si accende con localStorage 'agenteimmo:tour' = '1'
-// (lo mette l'onboarding) o aprendo #/tour; si spegne a fine giro o con Salta.
-const STEPS: { target: string; title: string; text: string }[] = [
-  { target: '/', title: 'Home', text: 'Il tuo punto di partenza: metti in vetrina un immobile, arreda una stanza, crea un video.' },
-  { target: '/immobili', title: 'Immobili', text: 'Tutte le tue case in un posto, con foto, descrizione e report da mandare ai clienti.' },
-  { target: '/portfolio', title: 'Il mio sito', text: 'Scegli il modello, mettici logo e colori e accendilo quando sei pronto. Gli immobili ci finiscono da soli.' },
-  { target: '/galleria', title: 'Galleria', text: 'Le foto arredate e i video che hai creato, pronti da scaricare e pubblicare.' },
-  { target: 'crediti', title: 'I tuoi crediti', text: 'Ogni foto e video usa dei crediti: qui vedi quanti te ne restano e scegli il piano.' },
-  { target: 'nuovo', title: 'Metti in vetrina', text: 'Hai preso un incarico? Parti da qui: carichi le foto e la casa è pronta per portale, social e sito.' },
-  { target: 'profilo', title: 'Il tuo profilo', text: 'Nome, indirizzo del sito e account. Buon lavoro!' },
+// una card breve per ognuna, poi si torna alla home. Intanto dietro il velo si apre la pagina di cui parla (go),
+// cosi' la si vede. Si accende con localStorage 'agenteimmo:tour' = '1' (lo mette l'onboarding) o aprendo #/tour;
+// si spegne a fine giro o con Salta.
+// edit: chiede al Il mio sito di aprire l'editor del modello (evento 'agenteimmo:tour-edit'), per mostrare che si modifica
+const STEPS: { target: string; go: string; title: string; text: string; edit?: boolean }[] = [
+  { target: '/', go: '/', title: 'Home', text: 'Il tuo punto di partenza: metti in vetrina un immobile, arreda una stanza, crea un video.' },
+  { target: '/immobili', go: '/immobili', title: 'Immobili', text: 'Tutte le tue case in un posto, con foto, descrizione e report da mandare ai clienti.' },
+  { target: '/portfolio', go: '/portfolio', title: 'Il mio sito', text: 'Il tuo sito con le tue case: gli immobili ci finiscono da soli.' },
+  { target: 'site-gallery', go: '/portfolio', title: 'Scegli il modello', text: 'Dieci stili già pronti, già pieni dei tuoi immobili. Ne scegli uno.' },
+  { target: 'site-editor', go: '/portfolio', edit: true, title: 'Modifica tutto', text: 'Testi, foto, colori, caratteri e logo: tocchi un punto del sito e lo cambi, vedi subito come viene.' },
+  { target: 'site-link', go: '/portfolio', edit: true, title: 'Pubblica con il tuo link', text: 'Quando sei pronto lo accendi: il sito va online al tuo indirizzo, da mandare ai clienti.' },
+  { target: '/galleria', go: '/galleria', title: 'Galleria', text: 'Le foto arredate e i video che hai creato, pronti da scaricare e pubblicare.' },
+  { target: 'crediti', go: '/', title: 'I tuoi crediti', text: 'Ogni foto e video usa dei crediti: qui vedi quanti te ne restano e scegli il piano.' },
+  { target: 'nuovo', go: '/', title: 'Metti in vetrina', text: 'Hai preso un incarico? Parti da qui: carichi le foto e la casa è pronta per portale, social e sito.' },
+  { target: 'profilo', go: '/', title: 'Il tuo profilo', text: 'Nome, indirizzo del sito e account. Buon lavoro!' },
 ];
 export const TOUR_KEY = 'agenteimmo:tour';
 
@@ -21,17 +26,22 @@ export default function Tour({ onDone }: { onDone: () => void }) {
   const [i, setI] = useState(0);
   const [box, setBox] = useState<DOMRect | null>(null);
   const step = STEPS[i];
-  // posizione della voce illuminata (se non si vede, es. menu nascosto su telefono: solo la card al centro)
+  // apre la pagina del passo; la pagina carica per conto suo, quindi la voce si rimisura finche' il passo resta
+  // (se non si vede, es. menu nascosto su telefono: solo la card al centro)
   useLayoutEffect(() => {
+    if (location.hash !== `#${step.go}`) location.hash = `#${step.go}`;
+    let seen = false;
     const measure = () => {
+      if (step.edit) window.dispatchEvent(new Event('agenteimmo:tour-edit'));
       const el = document.querySelector<HTMLElement>(`[data-tour="${step.target}"]`);
+      if (el && !seen) { seen = true; el.scrollIntoView({ block: el.offsetHeight > window.innerHeight * 0.6 ? 'start' : 'center', behavior: 'smooth' }); }
       const r = el?.getBoundingClientRect();
-      setBox(r && r.width ? r : null);
+      setBox(b => (r && r.width ? (b && b.top === r.top && b.left === r.left && b.width === r.width && b.height === r.height ? b : r) : null));
     };
     measure();
-    window.addEventListener('resize', measure);
-    return () => window.removeEventListener('resize', measure);
-  }, [step.target]);
+    const t = setInterval(measure, 250); // ponytail: polling leggero solo durante il tour, niente observer
+    return () => clearInterval(t);
+  }, [step]);
   const finish = () => { localStorage.removeItem(TOUR_KEY); if (location.hash !== '#/') location.hash = '#/'; onDone(); };
   const next = () => (i < STEPS.length - 1 ? setI(i + 1) : finish());
   useEffect(() => {
@@ -40,19 +50,21 @@ export default function Tour({ onDone }: { onDone: () => void }) {
     return () => window.removeEventListener('keydown', key);
   });
   const pad = 8;
-  const light = box && { top: box.top - pad, left: box.left - pad, width: box.width + pad * 2, height: box.height + pad * 2 };
-  // card sotto la luce se c'e' spazio, altrimenti sopra; sempre dentro lo schermo
+  // luce tenuta dentro lo schermo (le sezioni grandi, come l'editor del sito, sono piu' alte della finestra)
+  const light = box && (() => { const top = Math.max(8, box.top - pad), bottom = Math.min(window.innerHeight - 8, box.bottom + pad); return { top, left: box.left - pad, width: box.width + pad * 2, height: Math.max(0, bottom - top) }; })();
+  // card sotto la luce se c'e' spazio, altrimenti sopra, altrimenti in basso sopra la luce; sempre dentro lo schermo
   const cardW = Math.min(340, window.innerWidth - 32);
   const below = !light || light.top + light.height + 220 < window.innerHeight;
+  const above = light && light.top > 220;
   const cardStyle: React.CSSProperties = light
-    ? { width: cardW, left: Math.max(16, Math.min(window.innerWidth - cardW - 16, light.left + light.width / 2 - cardW / 2)), ...(below ? { top: light.top + light.height + 14 } : { bottom: window.innerHeight - light.top + 14 }) }
+    ? { width: cardW, left: Math.max(16, Math.min(window.innerWidth - cardW - 16, light.left + light.width / 2 - cardW / 2)), ...(below ? { top: light.top + light.height + 14 } : above ? { bottom: window.innerHeight - light.top + 14 } : { bottom: 24 }) }
     : { width: cardW, left: '50%', top: '50%', transform: 'translate(-50%, -50%)' };
   const ease = 'all 600ms cubic-bezier(.65,0,.35,1)';
   return (
-    <div className="fixed inset-0 z-[270]" role="dialog" aria-label="Tour della piattaforma">
+    <div className="fixed inset-0 z-[310]" role="dialog" aria-label="Tour della piattaforma">
       {/* la luce: un riquadro trasparente con un'ombra enorme che scurisce tutto il resto */}
       {light
-        ? <div className="pointer-events-none absolute rounded-full" style={{ ...light, boxShadow: '0 0 0 9999px rgba(15,17,25,.62), 0 0 0 3px rgba(255,255,255,.9), 0 0 40px 6px rgba(83,126,236,.55)', transition: ease }} />
+        ? <div className="pointer-events-none absolute" style={{ ...light, borderRadius: light.height > 64 ? 24 : 9999, boxShadow: '0 0 0 9999px rgba(15,17,25,.62), 0 0 0 3px rgba(255,255,255,.9), 0 0 40px 6px rgba(83,126,236,.55)', transition: ease }} />
         : <div className="absolute inset-0 bg-[rgba(15,17,25,.62)]" />}
       <div className="absolute inset-0" onClick={next} />
       <div key={i} className="blur-in absolute rounded-[24px] bg-white p-5 shadow-2xl" style={{ ...cardStyle, transition: ease }}>

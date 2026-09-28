@@ -50,6 +50,21 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
   const [selected, setSelected] = useState<string | null>(null);
   const [editMode, setEditMode] = useState(true);
 
+  // tour: apre l'editor del modello attuale e ne cambia il colore ogni poco, per far vedere che si modifica.
+  // Solo in anteprima: il tour finisce in home, la pagina si smonta e le modifiche non salvate si perdono.
+  const tpl = cfg?.template;
+  const [demo, setDemo] = useState(false);
+  useEffect(() => {
+    const on = () => { if (tpl) { setTab('sito'); setEditing(e => e ?? tpl); setDemo(true); } };
+    window.addEventListener('agenteimmo:tour-edit', on);
+    return () => window.removeEventListener('agenteimmo:tour-edit', on);
+  }, [tpl]);
+  useEffect(() => {
+    if (!demo) return;
+    let k = 0;
+    const t = setInterval(() => setCfg(c => c && { ...c, primary: TEMPLATES[k++ % TEMPLATES.length].primary }), 1400);
+    return () => clearInterval(t);
+  }, [demo]);
   useEffect(() => {
     authFetch('/api/platform/site').then(r => r.json()).then((d: Site) => { setSite(d); setCfg(d.config); });
   }, []);
@@ -105,7 +120,7 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
           <p className="pt-1 text-sm text-muted">Il tuo sito con le tue case, da condividere con i clienti.</p>
         </div>
         {url && (
-          <div className="flex min-w-0 items-center gap-4">
+          <div data-tour="site-link" className="flex min-w-0 items-center gap-4">
           <PublicSwitch on={site.published} onClick={publish} labels={['Online', 'Non pubblicato']} />
           <div className={`flex h-10 min-w-0 items-center gap-1 rounded-full bg-white pl-4 pr-1 text-sm ring-1 ring-line ease-smooth transition-opacity ${site.published ? '' : 'opacity-50'}`}>
             <Globe size={15} className="shrink-0 text-muted" />
@@ -390,7 +405,7 @@ function Gallery({ cfg, name, logo, props, onPick }: { cfg: SiteConfig; name: st
   return (
     <div className="mt-6">
       <p className="mb-6 text-sm text-muted">Dieci stili già pronti con i tuoi immobili: scegline uno e personalizzalo. Online cambia solo quando pubblichi.</p>
-      <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+      <div data-tour="site-gallery" className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
         {TEMPLATES.map((t, i) => {
           const used = cfg.template === t.id;
           const tcfg = used ? cfg : { ...cfg, template: t.id, primary: t.primary, font: t.font };
@@ -478,7 +493,7 @@ function Preview({ children, page, onPage, firstId, zone, editMode, setEditMode,
   return (
     // min-w-0: e' la colonna della griglia; senza, il sito largo 1280 px la allargava e l'anteprima usciva dallo schermo
     <MorphTarget id={vtName ?? 'preview'} className="min-w-0">
-    <div data-morph="preview" className={`relative overflow-hidden rounded-[28px] bg-white ${CARD_SHADOW}`}>
+    <div data-morph="preview" data-tour="site-editor" className={`relative overflow-hidden rounded-[28px] bg-white ${CARD_SHADOW}`}>
       {/* pulsante WhatsApp del sito: fisso nell'angolo come sul sito vero */}
       {wa && <span className="pointer-events-none absolute bottom-4 right-5 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-[#25d366] text-white shadow-[0_10px_30px_-5px_rgba(37,211,102,.6)]"><MessageCircle size={21} fill="currentColor" /></span>}
       <div className="flex items-center gap-2 border-b border-line px-4 py-3 text-xs text-muted">
