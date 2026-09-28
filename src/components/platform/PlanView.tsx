@@ -108,7 +108,8 @@ export default function PlanView({ ok, buy }: { ok?: boolean; buy?: Buy }) {
           </div>
         </>
       )}
-      {(!c || c.plan === 'none' || c.unlimited || changing) && (<>
+      {/* solo a crediti letti: prima (c null) comparivano e sparivano appena si scopriva il piano attivo */}
+      {c && (c.plan === 'none' || c.unlimited || changing) && (<>
       <h2 className="mt-8 font-semibold">{changing ? 'Cambia piano' : 'Scegli il piano'}</h2>
       <p className="mt-1 text-sm text-muted">{changing ? 'Il nuovo piano parte subito: paghi ora la differenza per il periodo in corso e i crediti diventano quelli del nuovo piano.' : 'Starter: foto e video. Plus: anche il tuo sito. Pro: più crediti, a trimestre o anno.'}</p>
       <div className="mt-5 grid items-stretch gap-5 md:grid-cols-3">
