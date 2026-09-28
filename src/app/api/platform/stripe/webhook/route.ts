@@ -8,7 +8,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 
 // Fine del periodo pagato: nelle API recenti sta sulla voce dell'abbonamento
 const paidUntil = (s: Stripe.Subscription) => new Date(((s as unknown as { current_period_end?: number }).current_period_end ?? s.items.data[0]?.current_period_end ?? 0) * 1000)
-const planOf = (s: Stripe.Subscription): 'starter' | 'pro' => (s.metadata?.plan === 'pro' || s.items.data[0]?.price?.metadata?.plan === 'pro' ? 'pro' : 'starter')
+const planOf = (s: Stripe.Subscription): 'starter' | 'plus' | 'pro' => { const p = s.metadata?.plan ?? s.items.data[0]?.price?.metadata?.plan; return p === 'pro' || p === 'plus' ? p : 'starter' }
 
 // Webhook Stripe dei piani di Agente Immo (endpoint separato da quello dell'estensione).
 export async function POST(req: NextRequest) {

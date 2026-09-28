@@ -186,7 +186,7 @@ function Compare() {
   );
 }
 
-// Due piani: Starter (foto e video, 1000 crediti) e Pro (piu' crediti, il sito, si paga a trimestre o anno).
+// Tre piani: Starter (foto e video), Plus (anche il sito), Pro (piu' crediti, il sito, si paga a trimestre o anno).
 // Prova gratis in pagina, senza account: una foto arredata dall'AI e poi il suo video (1 + 1 al giorno per IP, limite nel server).
 // Si vede il prima/dopo; per scaricarla serve l'account.
 // template del video nella prova: i primi due gratis, gli altri solo con un piano
@@ -396,9 +396,9 @@ function Pricing() {
       <Reveal className="mx-auto max-w-2xl text-center">
         <Pill>{L('Prezzi', "Pricing")}</Pill>
         <h2 className="mt-5 font-display text-4xl font-extrabold leading-[1.05] tracking-tight md:text-5xl">{L('Meno di un caffè al giorno. Per tutte le case.', "Less than a coffee a day. For every home.")}</h2>
-        <p className="mt-5 text-base leading-relaxed text-muted md:text-lg">{L('Starter: foto e video. Pro: più crediti e il tuo sito.', "Starter: photos and videos. Pro: more credits and your website.")}</p>
+        <p className="mt-5 text-base leading-relaxed text-muted md:text-lg">{L('Starter: foto e video. Plus: anche il tuo sito. Pro: più crediti, a trimestre o anno.', "Starter: photos and videos. Plus: your website too. Pro: more credits, quarterly or yearly.")}</p>
       </Reveal>
-      <div className="mx-auto mt-12 grid max-w-4xl items-stretch gap-5 md:grid-cols-2">
+      <div className="mx-auto mt-12 grid max-w-6xl items-stretch gap-5 md:grid-cols-3">
         <Reveal delay={80} className="flex flex-col rounded-[32px] bg-white p-8 ring-1 ring-black/5">
           <div className="flex h-10 items-center text-sm font-semibold text-muted">Starter</div>
           <div className="mt-3 flex items-end gap-2"><span className="font-display text-6xl font-extrabold tracking-tight">{en ? `€${PRICING.starter}` : `${PRICING.starter} €`}</span><span className="pb-2 text-muted">{L('/ mese', "/ month")}</span></div>
@@ -407,6 +407,15 @@ function Pricing() {
           <SiteNotIncluded en={en} />
           <div className="min-h-8 flex-1" />
           <Cta ghost href={buyHref('starter')} onClick={buyClick('starter')} className="w-full justify-center">{L('Scegli Starter', "Choose Starter")}</Cta>
+        </Reveal>
+        <Reveal delay={120} className="flex flex-col rounded-[32px] bg-white p-8 ring-1 ring-black/5">
+          <div className="flex h-10 items-center text-sm font-semibold text-muted">Plus</div>
+          <div className="mt-3 flex items-end gap-2"><span className="font-display text-6xl font-extrabold tracking-tight">{en ? `€${PRICING.plus}` : `${PRICING.plus} €`}</span><span className="pb-2 text-muted">{L('/ mese', "/ month")}</span></div>
+          <div className="mt-1 text-sm text-muted">{L('Mensile, disdici quando vuoi', "Monthly, cancel anytime")}</div>
+          <Credits n={PRICING.plusCredits} en={en} />
+          <SiteIncluded en={en} />
+          <div className="min-h-8 flex-1" />
+          <Cta ghost href={buyHref('plus')} onClick={buyClick('plus')} className="w-full justify-center">{L('Scegli Plus', "Choose Plus")}</Cta>
         </Reveal>
         <Reveal delay={160} className="relative flex flex-col rounded-[32px] bg-white p-8 ring-2 ring-ink shadow-[0_40px_100px_-40px_rgba(0,0,0,.35)]">
           <span className="absolute -top-3 left-8 rounded-full bg-ink px-3 py-1 text-xs font-semibold text-white">{L('Consigliato', "Recommended")}</span>

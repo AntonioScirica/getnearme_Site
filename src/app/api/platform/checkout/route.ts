@@ -6,7 +6,7 @@ import { FORFETTARIO_FOOTER, PACKS } from '@/lib/pricing'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
-const PRICES = { starter: 'ai_starter_monthly', pro_yearly: 'ai_pro_yearly', pro_quarterly: 'ai_pro_quarterly' } as const
+const PRICES = { starter: 'ai_starter_monthly', plus: 'ai_plus_monthly', pro_yearly: 'ai_pro_yearly', pro_quarterly: 'ai_pro_quarterly' } as const
 const SITE = 'https://agenteimmo.me'
 // ritorno da Stripe sullo stesso sito da cui si e' partiti (in sviluppo localhost o IP di rete), mai verso altri domini
 const siteOf = (req: NextRequest) => { const o = req.nextUrl.origin; return /^https?:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+)(:\d+)?$/.test(o) ? o : SITE }
@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
   if (!lookup) return NextResponse.json({ error: 'bad_plan' }, { status: 400 })
   const price = (await stripe.prices.list({ lookup_keys: [lookup], active: true, limit: 1 })).data[0]
   if (!price) return NextResponse.json({ error: 'price_missing' }, { status: 500 })
-  const plan = pack ? 'pack' : body!.plan!.startsWith('pro') ? 'pro' : 'starter'
+  const plan = pack ? 'pack' : body!.plan!.startsWith('pro') ? 'pro' : body!.plan === 'plus' ? 'plus' : 'starter'
   const { data: row } = await admin.from('platform_credits').select('stripe_customer_id, plan').eq('user_id', u.id).maybeSingle()
   if (pack && (!row?.plan || row.plan === 'none')) return NextResponse.json({ error: 'no_plan' }, { status: 400 })
   const meta: Record<string, string> = pack ? { app: 'agenteimmo', user_id: u.id, plan, pack: pack.id, credits: String(pack.credits) } : { app: 'agenteimmo', user_id: u.id, plan }

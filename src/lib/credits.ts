@@ -6,9 +6,9 @@ import { isPlatformAdmin } from '@/lib/platformAdmins'
 
 const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 export type Action = keyof typeof CREDIT_COST
-export const PLAN_CREDITS: Record<string, number> = { starter: 1000, pro: 2500 }
+export const PLAN_CREDITS: Record<string, number> = { starter: 900, plus: 1500, pro: 2500 }
 
-export type Credits = { plan: 'none' | 'starter' | 'pro'; balance: number; monthly: number; renews: string | null; until: string | null; unlimited?: boolean }
+export type Credits = { plan: 'none' | 'starter' | 'plus' | 'pro'; balance: number; monthly: number; renews: string | null; until: string | null; unlimited?: boolean }
 
 // Account admin (i nostri): crediti illimitati, niente scalare
 // (tranne l'account di test, che scala crediti veri per provare saldo e costi come un cliente)
@@ -70,7 +70,7 @@ export async function grantPack(userId: string, credits: number, pack: string, s
 }
 
 // Abbonamento attivato o rinnovato (webhook Stripe): piano, crediti del mese pieni, scadenze.
-export async function activatePlan(userId: string, o: { plan: 'starter' | 'pro'; paidUntil: Date; customer?: string; subscription?: string }) {
+export async function activatePlan(userId: string, o: { plan: 'starter' | 'plus' | 'pro'; paidUntil: Date; customer?: string; subscription?: string }) {
   const monthly = PLAN_CREDITS[o.plan]
   const periodEnd = monthAfter(new Date())
   await admin.from('platform_credits').upsert({

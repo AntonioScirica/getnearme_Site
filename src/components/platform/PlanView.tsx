@@ -8,7 +8,7 @@ import { Credits, SiteIncluded, SiteNotIncluded } from '@/components/PlanParts';
 export { isBuy };
 import { PRICING, PACKS, photosFor, videosFor, type PackId } from '@/lib/pricing';
 
-export type Credits = { plan: 'none' | 'starter' | 'pro'; balance: number; monthly: number; renews: string | null; until: string | null; unlimited?: boolean };
+export type Credits = { plan: 'none' | 'starter' | 'plus' | 'pro'; balance: number; monthly: number; renews: string | null; until: string | null; unlimited?: boolean };
 const fmt = (n: number) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 const date = (s: string | null) => (s ? new Date(s).toLocaleDateString('it-IT', { day: 'numeric', month: 'long' }) : '');
 
@@ -37,7 +37,7 @@ export function CreditsPill() {
   );
 }
 
-async function checkout(plan: 'starter' | 'pro_yearly' | 'pro_quarterly' | PackId) {
+async function checkout(plan: Buy | PackId) {
   const isPack = PACKS.some(p => p.id === plan);
   const d = await authFetch('/api/platform/checkout', { method: 'POST', body: JSON.stringify(isPack ? { pack: plan } : { plan }) }).then(r => r.json()).catch(() => null);
   if (d?.url) window.location.href = d.url;
@@ -68,7 +68,7 @@ export default function PlanView({ ok, buy }: { ok?: boolean; buy?: Buy }) {
       {c && c.plan !== 'none' && !c.unlimited && (
         <div className={`mt-6 flex flex-wrap items-center justify-between gap-4 rounded-[28px] bg-white p-6 ${CARD_SHADOW}`}>
           <div>
-            <div className="text-sm text-muted">Piano {c.plan === 'pro' ? 'Pro' : 'Starter'}</div>
+            <div className="text-sm text-muted">Piano {c.plan === 'pro' ? 'Pro' : c.plan === 'plus' ? 'Plus' : 'Starter'}</div>
             <div className="font-display text-3xl font-extrabold tracking-tight">{fmt(c.balance)} crediti</div>
             <div className="text-sm text-muted">circa {photosFor(c.balance)} foto o {videosFor(c.balance)} video · si ricaricano a {fmt(c.monthly)} il {date(c.renews)}</div>
           </div>
@@ -78,7 +78,7 @@ export default function PlanView({ ok, buy }: { ok?: boolean; buy?: Buy }) {
         <>
           <h2 className="mt-8 font-semibold">Ti servono altri crediti?</h2>
           <p className="mt-1 text-sm text-muted">I pacchetti si aggiungono al saldo e non scadono con il mese. Pagamento singolo.</p>
-          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <div className="mt-4 grid gap-4 sm:grid-cols-3">
             {PACKS.map(p => (
               <div key={p.id} className={`flex items-center justify-between gap-4 rounded-[24px] bg-white p-5 ${CARD_SHADOW}`}>
                 <div>
@@ -92,8 +92,8 @@ export default function PlanView({ ok, buy }: { ok?: boolean; buy?: Buy }) {
         </>
       )}
       <h2 className="mt-8 font-semibold">{c?.plan === 'none' || !c ? 'Scegli il piano' : 'Cambia piano'}</h2>
-      <p className="mt-1 text-sm text-muted">Starter: foto e video. Pro: più crediti e il tuo sito.</p>
-      <div className="mt-5 grid items-stretch gap-5 md:grid-cols-2">
+      <p className="mt-1 text-sm text-muted">Starter: foto e video. Plus: anche il tuo sito. Pro: più crediti, a trimestre o anno.</p>
+      <div className="mt-5 grid items-stretch gap-5 md:grid-cols-3">
         <div className={`flex flex-col rounded-[32px] bg-white p-8 ${CARD_SHADOW}`}>
           <div className="flex h-10 items-center text-sm font-semibold text-muted">Starter</div>
           <div className="mt-3 flex items-end gap-2"><span className="font-display text-6xl font-extrabold tracking-tight">{PRICING.starter} €</span><span className="pb-2 text-muted">/ mese</span></div>
@@ -102,6 +102,15 @@ export default function PlanView({ ok, buy }: { ok?: boolean; buy?: Buy }) {
           <SiteNotIncluded />
           <div className="min-h-8 flex-1" />
           <button type="button" disabled={!!busy} onClick={() => go('starter')} className="flex h-12 items-center justify-center gap-2 rounded-full bg-white text-[15px] font-semibold ring-1 ring-black/10 hover:ring-ink disabled:opacity-60">{busy === 'starter' && <Loader2 size={15} className="animate-spin" />}Scegli Starter</button>
+        </div>
+        <div className={`flex flex-col rounded-[32px] bg-white p-8 ${CARD_SHADOW}`}>
+          <div className="flex h-10 items-center text-sm font-semibold text-muted">Plus</div>
+          <div className="mt-3 flex items-end gap-2"><span className="font-display text-6xl font-extrabold tracking-tight">{PRICING.plus} €</span><span className="pb-2 text-muted">/ mese</span></div>
+          <div className="mt-1 text-sm text-muted">Mensile, disdici quando vuoi</div>
+          <Credits n={PRICING.plusCredits} />
+          <SiteIncluded slug={slug} />
+          <div className="min-h-8 flex-1" />
+          <button type="button" disabled={!!busy} onClick={() => go('plus')} className="flex h-12 items-center justify-center gap-2 rounded-full bg-white text-[15px] font-semibold ring-1 ring-black/10 hover:ring-ink disabled:opacity-60">{busy === 'plus' && <Loader2 size={15} className="animate-spin" />}Scegli Plus</button>
         </div>
         <div className="relative flex flex-col rounded-[32px] bg-white p-8 shadow-[0_40px_100px_-40px_rgba(0,0,0,.35)] ring-2 ring-ink">
           <span className="absolute -top-3 left-8 rounded-full bg-ink px-3 py-1 text-xs font-semibold text-white">Consigliato</span>
