@@ -407,7 +407,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
     }
     // foto nel nuovo stile: resta dietro le quinte (la scelta "Moderno" e' gia' tra le scelte, niente miniatura)
     patchV(m.id, { step: 'frames', frames: undefined, ...(styled ? {} : { photo }), picks, err: undefined });
-    const res = await authFetch('/api/platform/video', { method: 'POST', headers: QUIET, body: JSON.stringify({ phase: 'frames', ...(photo.startsWith('data:') ? { imageBase64: photo } : { imageUrl: photo }), ...(styled ? { styled } : {}), anim: m.anim, ...(project ? { projectId: project } : {}) }) }).catch(() => null);
+    const res = await authFetch('/api/platform/video', { method: 'POST', headers: QUIET, body: JSON.stringify({ phase: 'frames', ...(photo.startsWith('data:') ? { imageBase64: photo } : { imageUrl: photo }), ...(styled ? { styled } : {}), ...(styled && emptyFrom && emptyFrom === photo ? { photoEmpty: true } : {}), anim: m.anim, ...(project ? { projectId: project } : {}) }) }).catch(() => null);
     const d = res ? await res.json().catch(() => ({})) : {};
     if (!d.frames) { patchV(m.id, { err: d.error === 'no_credits' ? NO_CREDITS : d.error === 'timeout' ? 'La GPU si sta avviando, riprova tra un minuto.' : 'Non sono riuscito a preparare la stanza vuota, riprova.' }); return; }
     patchV(m.id, { frames: { token: d.frames, before: d.before, after: d.after, src: photo, styled } });
