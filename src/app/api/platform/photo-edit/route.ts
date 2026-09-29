@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { buildStagingPrompt, roomKey, variantText, isRestyle, isFurnishing, roomLabel, STYLE_LOOK, type SceneType } from '@/lib/stagingPrompts'
 import { gptImage } from '@/lib/gptImage'
 import { overDailyCap } from '@/lib/ai'
-import { stagePrompt, markedCopy, zonePrompt, nanoBanana } from '@/lib/nanoBanana'
+import { stagePrompt, markedCopy, zonePrompt } from '@/lib/nanoBanana'
+import { planBox, cropTo, pasteBack } from '@/lib/planCrop'
 import { canAfford, spend, type Action } from '@/lib/credits'
 import { CREDIT_COST, FREE_EDITS } from '@/lib/pricing'
 import { brighten } from '@/lib/brighten'
@@ -132,10 +133,15 @@ export async function POST(req: NextRequest) {
       kind = body.angle ? 'luce' : body.planimetria ? 'planimetria' : furnishReq ? 'arreda' : 'modifica'
     }
     used = req.prompt
-    // planimetrie: Nano Banana 2, che lascia la pianta dov'e' (stessa posizione, rotazione e scala); GPT spostava e
-    // raddrizzava muri e terrazze (prove del 29/09 in ~/Desktop/prove-planimetria)
-    b64 = kind === 'planimetria' ? await nanoBanana({ userId, image: req.image, prompt: req.prompt, kind })
-      : await gptImage({ userId, ...req, kind, ...(kind !== 'arreda' ? { quality: process.env.GPT_EDIT_QUALITY || 'low' } : {}) })
+    if (kind === 'planimetria') {
+      // planimetria: si ritaglia il solo appartamento (niente intestazione, timbri, cantina a parte), GPT a qualita' piena,
+      // poi il risultato torna al suo posto sul foglio. Intera, la catastale veniva reinventata da GPT e da Nano Banana
+      // (prove del 29/09 in ~/Desktop/prove-planimetria)
+      const page = imageBase64 ? Buffer.from(imageBase64.split(',')[1] ?? '', 'base64') : Buffer.from(await (await fetch(imageUrl, { signal: AbortSignal.timeout(20_000) })).arrayBuffer())
+      const box = await planBox(page, userId)
+      const out = await gptImage({ userId, ...req, image: box ? await cropTo(page, box) : req.image, kind })
+      b64 = out && box ? await pasteBack(page, Buffer.from(out, 'base64'), box) : out
+    } else b64 = await gptImage({ userId, ...req, kind, ...(kind !== 'arreda' ? { quality: process.env.GPT_EDIT_QUALITY || 'low' } : {}) })
     }
   } catch (e) {
     if ((e as Error).message === 'daily_limit') return NextResponse.json({ error: 'daily_limit' }, { status: 429 })
