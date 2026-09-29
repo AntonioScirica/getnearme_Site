@@ -594,6 +594,9 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
     if (resumed.current) return;
     resumed.current = true;
     for (const m of saved?.msgs ?? []) if (m.role === 'video' && m.job && !m.url && !m.err) void pollVideo(m.id, m.job);
+    // pagina ricaricata a meta' (prima che il video partisse): niente lavoro da seguire, si ferma e si puo' riprovare
+    for (const m of saved?.msgs ?? []) if (m.role === 'video' && !m.job && !m.url && !m.err && (m.step === 'render' || m.agent?.busy))
+      patchV(m.id, { err: 'La pagina si è ricaricata prima che il video partisse, riprova.', agent: m.agent && { ...m.agent, busy: undefined } });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const run = async (id: string, req: EditRequest, before: string) => {
     const res = await authFetch('/api/platform/photo-edit', { method: 'POST', headers: QUIET, body: JSON.stringify(req) }).catch(() => null);
