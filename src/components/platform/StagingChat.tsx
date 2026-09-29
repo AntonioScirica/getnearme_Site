@@ -659,7 +659,8 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   const picker = <input type="file" accept="image/*,video/*" multiple className="hidden" onChange={e => { upload(e.target.files); e.target.value = ''; }} />;
   // i suggerimenti partono subito, senza passare dal campo
   const editsDone = msgs.filter(x => x.role === 'ai' && !!x.out).length; // modifiche gia' fatte su questa foto
-  const videoChip = base && scene === 'interno' ? [
+  // video anche da facciata e giardino (Cantiere, Giorno e notte, Camminata); non dalla planimetria
+  const videoChip = base && scene !== 'planimetria' ? [
     <button key="video" disabled={busy} onClick={() => askVideo(base)}
       className="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-ink pl-3.5 pr-1.5 py-1.5 text-[13px] font-medium text-white shadow-sm ease-smooth transition-colors hover:bg-brand disabled:opacity-40"><Clapperboard size={13} /> Crea video<Cr n={CREDIT_COST.video_render} dark /></button>,
   ] : [];
@@ -784,8 +785,9 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                         {(m.step === 'template' ? VIDEO_TEMPLATES : VIDEO_TEMPLATES.find(t => t.label === m.picks[0]?.label)?.anims ?? []).map((t, k) => {
                           // Cantiere e Giorno/notte nascono per foto della casa vista da fuori (su una stanza Nano Banana non fa lo
                           // scavo e Kling non finisce); Prima e dopo e' per le stanze. Tipo di foto non ancora noto: tutto aperto.
-                          const outside = t.id === 'cantiere' // Giorno e notte e Movimento camera vanno anche sulle stanze
-                          const off = outside ? kind?.startsWith('room:') : kind === 'scene:esterno' || kind === 'scene:giardino'
+                          const outside = t.id === 'cantiere' // Giorno e notte e Camminata vanno sia dentro sia fuori
+                          const both = t.id === 'giorno-notte' || t.id === 'camera' || t.id === 'daynight'
+                          const off = outside ? kind?.startsWith('room:') : !both && (kind === 'scene:esterno' || kind === 'scene:giardino')
                           return (
                           <div key={t.id} className="rise" style={{ animationDelay: `${0.05 + k * 0.06}s` }}>
                             <button disabled={!!off} onClick={() => { const one = m.step === 'template' ? (t as (typeof VIDEO_TEMPLATES)[number]).anims : null; if (short(m, Math.min(...(one ?? [t as { id: VideoAnim }]).map(a => fullCr(a.id))))) return; const prev = one?.length === 1 && one[0].id === 'agent' ? [...msgs].reverse().find((x): x is VideoMsg => x.role === 'video' && !!x.agent?.up && x.agent.at !== undefined && x.agent.exit !== false)?.agent : undefined; patchV(m.id, { err: undefined, ...(prev ? { step: 'exit', anim: 'agent', photo: prev.room ?? m.photo, agent: { ...prev, busy: undefined, styled: undefined }, picks: [{ label: t.label, icon: 'agent' }] } : one?.length === 1 && (one[0].id === 'agent' || one[0].id === 'walk') ? { step: 'upload', anim: one[0].id, picks: [{ label: t.label, icon: ANIM_ICON[one[0].id] }] } : one?.length === 1 ? { step: 'mode', anim: one[0].id, picks: [{ label: t.label, icon: ANIM_ICON[one[0].id] }] } : m.step === 'template' ? { step: 'anim', picks: [{ label: t.label, icon: 'split' }] } : { step: 'mode', anim: t.id as VideoAnim, picks: [...m.picks, { label: t.label, icon: ANIM_ICON[t.id as VideoAnim] }] }) }); }}
@@ -891,7 +893,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                         // scelta dello stile come le card dei modelli: foto vera per "Com'è ora", un soggiorno d'esempio per ogni stile
                         <div className="px-1">
                           <div className={`grid grid-cols-2 gap-3 sm:grid-cols-3 ${m.anim === 'agent' || m.anim === 'walk' || (emptyFrom && emptyFrom === m.photo) ? 'lg:grid-cols-4' : 'lg:grid-cols-5'}`}>
-                            {[...(!(emptyFrom && emptyFrom === m.photo) && m.anim !== 'agent' && m.anim !== 'walk' ? [{ id: 'keep', label: 'Com’è ora', src: m.photo }] : []), ...VIDEO_STYLES.map(x => ({ ...x, src: `/staging/stili/${x.id}.jpg` }))].map((o, k) => (
+                            {[...(!(emptyFrom && emptyFrom === m.photo) && m.anim !== 'agent' && m.anim !== 'walk' ? [{ id: 'keep', label: 'Com’è ora', src: m.photo }] : []), ...(kind === 'scene:esterno' || kind === 'scene:giardino' ? [] : VIDEO_STYLES.map(x => ({ ...x, src: `/staging/stili/${x.id}.jpg` })))].map((o, k) => (
                               <button key={o.id} onClick={() => { if (short(m, fullCr(m.anim) + (o.id === 'keep' ? 0 : CREDIT_COST.arreda))) return; if (o.id === 'keep') void makeVideo(m, m.photo, 'Stanza com’è'); else void styleVideo(m, o.label, { style: o.id }); }} className="rise group relative flex flex-col overflow-hidden rounded-3xl bg-white p-1.5 text-left shadow-[0_1px_2px_rgba(0,0,0,.04),0_8px_24px_-12px_rgba(0,0,0,.12)] ring-1 ring-black/5 ease-smooth transition-shadow hover:shadow-[0_2px_4px_rgba(0,0,0,.04),0_24px_40px_-18px_rgba(0,0,0,.25)] active:scale-[0.985]" style={{ animationDelay: `${0.04 + k * 0.05}s` }}>
                                 <span className="block aspect-[4/3] overflow-hidden rounded-[18px] bg-canvas"><img src={o.src} alt="" className="h-full w-full object-cover ease-smooth transition-transform duration-500 group-hover:scale-[1.04]" /></span>
                                 <span className="flex items-center justify-between gap-2 px-2 pb-1 pt-2.5 text-[13px] font-semibold">{o.label}<Cr n={(o.id === 'keep' ? 0 : CREDIT_COST.arreda) + (directVideo(m.anim) || m.anim === 'agent' || m.anim === 'walk' ? videoCr(m.anim) : CREDIT_COST.video_prep)} tight still /></span>
