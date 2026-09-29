@@ -468,8 +468,8 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   // miniature della striscia per ogni video (per agent.up), fatte nel browser; si rifanno se mancano (dopo una ricarica)
   const [thumbs, setThumbs] = useState<Record<string, string[]>>({});
   useEffect(() => {
-    for (const x of msgs) if (x.role === 'video' && (x.step === 'exit' || x.step === 'pick') && x.agent?.up && x.agent.video && !thumbs[x.agent.up]) {
-      const up = x.agent.up;
+    for (const x of msgs) if (x.role === 'video' && (x.step === 'exit' || x.step === 'pick') && x.agent?.video && !thumbs[x.agent.video]) {
+      const up = x.agent.video;
       setThumbs(t => ({ ...t, [up]: [] }));
       void videoThumbs(x.agent.video).then(list => setThumbs(t => ({ ...t, [up]: list }))).catch(() => {});
     }
@@ -487,7 +487,8 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
       const put = await fetch(u.url, { method: 'PUT', headers: { 'Content-Type': type }, body: f }).catch(() => null);
       if (!put?.ok) return null;
       const p = await authFetch('/api/platform/agent-video', { method: 'POST', headers: QUIET, body: JSON.stringify({ phase: 'prepare', key: u.key, ...(project ? { projectId: project } : {}) }) }).then(r => r.json()).catch(() => ({}));
-      if (p.video) setMsgs(ms => ms.map(x => (x.id === um && x.role === 'user' ? { ...x, video: p.video } : x))); // il video locale non sopravvive a una ricarica
+      // il video locale (blob) non sopravvive a una ricarica: messaggio dell'agente e anteprima passano a quello sul server
+      if (p.video) setMsgs(ms => ms.map(x => (x.id === um && x.role === 'user' ? { ...x, video: p.video } : x.role === 'video' && x.agent?.up === up && x.agent.video?.startsWith('blob:') ? { ...x, agent: { ...x.agent, video: p.video } } : x)));
       return (p.token as string) ?? null;
     })());
     patchV(m.id, { step: next, err: undefined, agent: { up, video: local, busy: 'Guardo il video…' } });
@@ -795,12 +796,12 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                     {(m.step === 'exit' || m.step === 'pick') && (() => {
                       // come la scelta della copertina sul telefono: striscia di fotogrammi con una "lente" sul momento scelto,
                       // la parte prima scurita (li' c'e' l'agente), sotto - tempo + e il pulsante; a destra l'anteprima grande
-                      const a = m.agent, list = a?.up ? thumbs[a.up] ?? [] : [], dur = a?.duration ?? 10, at = a?.at ?? 0;
+                      const a = m.agent, list = a?.video ? thumbs[a.video] ?? [] : [], dur = a?.duration ?? 10, at = a?.at ?? 0;
                       const pos = Math.min(100, Math.max(0, (at / dur) * 100));
                       const step = (d: number) => patchV(m.id, { agent: { ...a, at: Math.min(dur, Math.max(0, Math.round((at + d) * 100) / 100)) } });
                       return (
-                        // video orizzontale: anteprima sopra, larga; verticale: anteprima a destra della card
-                        <div className={`grid gap-4 px-1 ${a?.landscape ? '' : 'sm:grid-cols-[1fr_auto] sm:items-center'}`}>
+                        // anteprima sempre sopra in un riquadro 16:9 (il verticale intero, con lo sfondo sfocato), sotto la card
+                        <div className="mx-auto grid max-w-2xl gap-4 px-1">
                           <div className="min-w-0 rounded-[28px] bg-white p-4 shadow-sm ring-1 ring-black/5">
                             <div className="relative h-20 select-none">
                               <div className="absolute inset-0 flex overflow-hidden rounded-2xl bg-canvas">
@@ -826,8 +827,9 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                             </div>
                             {m.step === 'exit' && a?.steady === false && <p className="mt-3 rounded-2xl bg-amber-50 px-3 py-2 text-xs text-amber-800">Il telefono si muove nel video: la trasformazione può venire male.</p>}
                           </div>
-                          <div className={`relative mx-auto overflow-hidden rounded-3xl bg-canvas shadow-sm ring-1 ring-black/5 ${a?.landscape ? '-order-1 w-full max-w-xl' : 'w-36'}`} style={{ aspectRatio: a?.landscape ? '16 / 9' : '9 / 16' }}>
-                            {a?.video && <video key={a.video} src={`${a.video}#t=${at}`} muted playsInline preload="auto" className="absolute inset-0 h-full w-full object-cover"
+                          <div className="relative -order-1 aspect-video w-full overflow-hidden rounded-3xl bg-ink shadow-sm ring-1 ring-black/5">
+                            {list.length > 0 && <img src={list[Math.min(list.length - 1, Math.floor((pos / 100) * list.length))]} alt="" className="absolute inset-0 h-full w-full scale-110 object-cover opacity-60 blur-2xl" />}
+                            {a?.video && <video key={a.video} src={`${a.video}#t=${at}`} muted playsInline preload="auto" crossOrigin={a.video.startsWith('blob:') ? undefined : 'anonymous'} className="absolute inset-0 h-full w-full object-contain"
                               ref={el => { if (el && Math.abs(el.currentTime - at) > 0.02) el.currentTime = at; }} />}
                             {(!a?.video || a.busy) && <div className="absolute inset-0 flex items-center justify-center bg-black/10"><Loader2 className="animate-spin text-white" /></div>}
                           </div>
