@@ -655,7 +655,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                             {[...(!(emptyFrom && emptyFrom === m.photo) ? [{ id: 'keep', label: 'Com’è ora', src: m.photo }] : []), ...VIDEO_STYLES.map(x => ({ ...x, src: `/staging/stili/${x.id}.jpg` }))].map((o, k) => (
                               <button key={o.id} onClick={() => (o.id === 'keep' ? makeVideo(m, m.photo, 'Stanza com’è') : styleVideo(m, o.label, { style: o.id }))} className="rise group relative flex flex-col overflow-hidden rounded-3xl bg-white p-1.5 text-left shadow-[0_1px_2px_rgba(0,0,0,.04),0_8px_24px_-12px_rgba(0,0,0,.12)] ring-1 ring-black/5 ease-smooth transition-shadow hover:shadow-[0_2px_4px_rgba(0,0,0,.04),0_24px_40px_-18px_rgba(0,0,0,.25)] active:scale-[0.985]" style={{ animationDelay: `${0.04 + k * 0.05}s` }}>
                                 <span className="block aspect-[4/3] overflow-hidden rounded-[18px] bg-canvas"><img src={o.src} alt="" className="h-full w-full object-cover ease-smooth transition-transform duration-500 group-hover:scale-[1.04]" /></span>
-                                <span className="flex items-center justify-between gap-2 px-2 pb-1 pt-2.5 text-[13px] font-semibold">{o.label}<Cr n={(o.id === 'keep' ? 0 : CREDIT_COST.arreda) + (directVideo(m.anim) ? videoCr(m.anim) : 0)} tight still /></span>
+                                <span className="flex items-center justify-between gap-2 px-2 pb-1 pt-2.5 text-[13px] font-semibold">{o.label}<Cr n={(o.id === 'keep' ? 0 : CREDIT_COST.arreda) + (directVideo(m.anim) ? videoCr(m.anim) : CREDIT_COST.video_prep)} tight still /></span>
                               </button>
                             ))}
                           </div>
@@ -687,9 +687,9 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                         {/* approvazione: Veo (la parte cara) parte solo da qui; la stanza vuota si puo' rifare (costa come una foto) */}
                         {m.frames && (
                           <div className="flex flex-wrap items-center gap-2 pt-3">
-                            <button onClick={() => renderVideo(m)} className="flex items-center rounded-full bg-ink pl-4 pr-2 py-2 text-[13px] font-medium text-white shadow-sm ease-smooth transition-colors hover:bg-brand">Crea il video<Cr n={videoCr(m.anim)} dark /></button>
+                            <button onClick={() => renderVideo(m)} className="flex items-center rounded-full bg-ink pl-4 pr-2 py-2 text-[13px] font-medium text-white shadow-sm ease-smooth transition-colors hover:bg-brand">Crea il video<Cr n={m.anim === 'cantiere' || m.anim === 'daynight' ? videoCr(m.anim) : CREDIT_COST.video_render} dark /></button>
                             {/* una sola seconda possibilita' sullo stile (poi si torna indietro): costa come una foto */}
-                            {m.restyle && !m.redone && <button onClick={() => styleVideo(m, m.restyle!.label, m.restyle!.req, true)} className="flex items-center rounded-full bg-white py-2 pl-4 pr-2 text-[13px] font-medium text-ink/80 shadow-sm ring-1 ring-inset ring-black/10 ease-smooth transition-colors hover:bg-canvas">Rifai lo stile<Cr n={CREDIT_COST.arreda} /></button>}
+                            {m.restyle && !m.redone && <button onClick={() => styleVideo(m, m.restyle!.label, m.restyle!.req, true)} className="flex items-center rounded-full bg-white py-2 pl-4 pr-2 text-[13px] font-medium text-ink/80 shadow-sm ring-1 ring-inset ring-black/10 ease-smooth transition-colors hover:bg-canvas">Rifai lo stile<Cr n={CREDIT_COST.arreda + CREDIT_COST.video_prep} /></button>}
                           </div>
                         )}
                         {m.err && !m.frames && (
