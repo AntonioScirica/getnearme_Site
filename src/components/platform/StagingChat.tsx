@@ -133,7 +133,8 @@ const uid = () => Math.random().toString(36).slice(2, 10);
 // ponytail: regole semplici; nel dubbio il messaggio va a GPT come prima
 const EDIT_WORDS = /\b(togl|rimuov|elimin|lev[ai]|mett|aggiung|inser|arred|svuot|cambi|sostitu|spost|dipin|color|rend|fa[ir]|rifa|trasform|stil|modern|nordic|scandinav|luxury|luss|boho|industr|classic|minimal|paret|paviment|parquet|soffitt|luc|lumin|divan|lett|tavol|sedi|cucin|bagn|tend|quadr|piant|tappet|mobil|armad|finestr|port|bianc|ner|grig|legn|marm)\w*/i;
 const CHAT_WORDS = /^(ciao|salve|buongiorno|buonasera|hey|ehi|hello|hi|grazie|ok|okay|perfetto|bene|come va|chi sei|cosa sai fare|aiuto|help|test|prova)\b/i;
-const isChatter = (t: string) => !EDIT_WORDS.test(t) && (CHAT_WORDS.test(t) || /\?\s*$/.test(t) || t.length < 3);
+// 1-2 parole senza parole da modifica ("cicaooo", tasti a caso) = non e' una richiesta; da 3 parole in su nel dubbio parte
+const isChatter = (t: string) => !EDIT_WORDS.test(t) && (CHAT_WORDS.test(t) || /\?\s*$/.test(t) || t.split(/\s+/).length <= 2);
 const wait = (ms: number) => new Promise(r => setTimeout(r, ms));
 // planimetria: rendering con regole sue, dal testo prendo solo lo stile dell'arredo
 // esempi del campo: il primo per tipo di stanza, poi ritocchi sul risultato (a rotazione)
