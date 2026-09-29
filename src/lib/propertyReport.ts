@@ -5,7 +5,7 @@
 // PDF da un iframe nascosto (lib/printHtml). Ogni pagina e' piena e niente trabocca.
 //   1. copertina: foto a tutta pagina, titolo, indirizzo, prezzo e numeri chiave
 //   2. la casa: numeri in colonna, descrizione, una foto
-//   3. foto: fino a 40, la prima pagina con una grande e due sotto, poi quattro per pagina, a filo dei bordi
+//   3. foto: fino a 40, nove per pagina (3 x 3) a filo dei bordi; l'ultima pagina si adatta a quante ne restano
 //   4. caratteristiche: dati chiave in grande, scala energetica, il resto della scheda a filetti
 //   5. zona e costi, chiusura con l'agente
 import { calculateDetailedCosts } from './reportHtml'
@@ -102,13 +102,14 @@ export function buildPropertyReportHtml(a: ReportInput): string {
     ${foot(pages.length + 1)}
   </section>`)
 
-  // 3. foto: la prima pagina con una foto grande e due sotto, poi quattro per pagina, a filo dei bordi
+  // 3. foto: nove per pagina (3 x 3) a filo dei bordi; con meno di nove la griglia si allarga
   const rest = photos.slice(1)
   const chunks: string[][] = []
-  if (rest.length) { chunks.push(rest.slice(0, 3)); for (let i = 3; i < rest.length; i += 4) chunks.push(rest.slice(i, i + 4)) }
+  for (let i = 0; i < rest.length; i += 9) chunks.push(rest.slice(i, i + 9))
   let shown = 1
-  for (const [k, chunk] of chunks.entries()) {
-    const cls = k === 0 && chunk.length === 3 ? 'g3' : chunk.length === 1 ? 'g1' : chunk.length === 2 ? 'g2' : chunk.length === 3 ? 'g3b' : 'g4'
+  for (const chunk of chunks) {
+    const n = chunk.length
+    const cls = n === 1 ? 'g1' : n === 2 ? 'g2' : n === 3 ? 'g3' : n === 4 ? 'g4' : n <= 6 ? 'g6' : 'g9'
     pages.push(`<section class="page">
       ${head(pages.length + 1, `Fotografie · ${shown + 1}–${shown + chunk.length} di ${photos.length}`)}
       <div class="gallery ${cls}">${chunk.map(u => `<div><img src="${esc(u)}" alt=""></div>`).join('')}</div>
@@ -185,9 +186,10 @@ h2{font-size:24px;margin:0 0 10px;line-height:1.15}h3{font-size:9.5px;margin:0 0
 .band{flex:1;min-height:30mm;margin-top:8mm;overflow:hidden;border-radius:4px;background:#f0f0ee}.band img{width:100%;height:100%;object-fit:cover;display:block}.band.grow{min-height:20mm}
 /* foto */
 .gallery{flex:1;min-height:0;display:grid;gap:4mm;padding:6mm 10mm 0}.gallery>div{min-height:0;overflow:hidden;border-radius:3px;background:#f0f0ee}.gallery img{width:100%;height:100%;object-fit:cover;display:block}
+.gallery.g1{grid-template-columns:1fr}.gallery.g2{grid-template-columns:1fr;grid-template-rows:1fr 1fr}
 .gallery.g3{grid-template-columns:1fr 1fr;grid-template-rows:1.6fr 1fr}.gallery.g3>div:first-child{grid-column:span 2}
-.gallery.g3b{grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr}.gallery.g3b>div:first-child{grid-column:span 2}
-.gallery.g1{grid-template-columns:1fr}.gallery.g2{grid-template-columns:1fr;grid-template-rows:1fr 1fr}.gallery.g4{grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr}
+.gallery.g4{grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr}.gallery.g6{grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr 1fr}
+.gallery.g9{grid-template-columns:1fr 1fr 1fr;grid-template-rows:1fr 1fr 1fr;gap:3mm}
 .gallery+.foot{padding-top:6mm}
 /* caratteristiche */
 .keys{display:grid;grid-template-columns:repeat(4,1fr);gap:8mm;border-top:1px solid #151515;padding-top:10px;margin-bottom:8mm}.key b{display:block;font-size:22px;line-height:1.1;margin-top:5px}.key .eyebrow{color:#888}
