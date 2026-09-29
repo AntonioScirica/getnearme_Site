@@ -688,7 +688,8 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   const empty = msgs.length === 0;
   const picker = <input type="file" accept="image/*,video/*" multiple className="hidden" onChange={e => { upload(e.target.files); e.target.value = ''; }} />;
   // i suggerimenti partono subito, senza passare dal campo
-  const editsDone = msgs.filter(x => x.role === 'ai' && !!x.out).length; // modifiche gia' fatte su questa foto
+  // modifiche scritte gia' fatte sulla foto di partenza (le prime 3 gratis per foto: lo conta il server, qui solo per le pill)
+  const editsDone = msgs.filter(x => x.role === 'ai' && !!x.out && !!x.req && x.req.angle !== 'day' && creditsOf(x.req, 0) === CREDIT_COST.modifica && (x.req.reference ?? x.req.imageUrl ?? x.req.imageBase64) === sourcePhoto).length;
   // video anche da facciata e giardino (Cantiere, Giorno e notte, Camminata); non dalla planimetria
   const videoChip = base && scene !== 'planimetria' ? [
     <button key="video" disabled={busy} onClick={() => askVideo(base)}

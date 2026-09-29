@@ -55,6 +55,17 @@ export async function spend(userId: string, action: Action, meta?: Record<string
   return typeof data === 'number' ? data : -1
 }
 
+// azione gratis ma da contare (le 3 modifiche gratis per foto): riga a 0 crediti nello storico
+export async function noteFree(userId: string, reason: Action, meta: Record<string, unknown>) {
+  const { error } = await admin.from('platform_credit_events').insert({ user_id: userId, delta: 0, reason, meta, balance_after: (await getCredits(userId)).balance } as never)
+  if (error) console.error('note free', error)
+}
+// quante modifiche (gratis o a 1 credito) sono gia' state fatte sulla stessa foto di partenza
+export async function editsOn(userId: string, root: string): Promise<number> {
+  const { count } = await admin.from('platform_credit_events').select('id', { count: 'exact', head: true }).eq('user_id', userId).in('reason', ['modifica', 'modifica_extra']).eq('meta->>root', root)
+  return count ?? 0
+}
+
 export async function grant(userId: string, amount: number, reason: string, meta?: Record<string, unknown>): Promise<number> {
   const { data, error } = await admin.rpc('grant_platform_credits', { p_user: userId, p_amount: amount, p_reason: reason, p_meta: meta ?? null })
   if (error) console.error('grant credits', error)

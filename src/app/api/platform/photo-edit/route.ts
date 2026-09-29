@@ -4,7 +4,8 @@ import { gptImage } from '@/lib/gptImage'
 import { overDailyCap } from '@/lib/ai'
 import { stagePrompt, markedCopy, zonePrompt } from '@/lib/nanoBanana'
 import { planBox, cropTo, pasteBack } from '@/lib/planCrop'
-import { canAfford, spend, type Action } from '@/lib/credits'
+import { canAfford, spend, noteFree, editsOn, type Action } from '@/lib/credits'
+import { createHash } from 'crypto'
 import { CREDIT_COST, FREE_EDITS } from '@/lib/pricing'
 import { brighten } from '@/lib/brighten'
 import { finish } from '@/lib/finish'
@@ -74,8 +75,10 @@ export async function POST(req: NextRequest) {
   ] : []
   // Modalita' finta: nessuna GPU, torna la stessa foto.
   // Crediti: si controlla prima di generare, si scalano solo a foto riuscita (src/lib/credits.ts)
-  // modifiche: le prime FREE_EDITS su una foto gratis (conteggio dalla chat), poi 1 credito
-  const edits = typeof body.edits === 'number' && body.edits >= 0 ? body.edits : 0
+  // modifiche: le prime FREE_EDITS per foto gratis, poi 1 credito. Conteggio sul server (prima lo mandava il browser, ed era
+  // per chat): la foto e' quella di partenza (reference quando si modifica un risultato), contata nello storico dei crediti
+  const root = createHash('sha1').update(String(body.reference || imageUrl || imageBase64.slice(0, 200_000))).digest('hex').slice(0, 16)
+  const edits = await editsOn(userId, root)
   // planimetria: rendering completo della pianta, costa come arredare una stanza
   const action: Action = body.angle === 'day' ? 'luminoso' : body.planimetria ? 'arreda' : body.style === 'empty' ? 'svuota' : furnishReq ? 'arreda' : edits >= FREE_EDITS ? 'modifica_extra' : 'modifica'
   if (!(await canAfford(userId, action))) return NextResponse.json({ error: 'no_credits', cost: CREDIT_COST[action] }, { status: 402 })
@@ -148,7 +151,8 @@ export async function POST(req: NextRequest) {
     console.error('photo-edit error:', e)
     return NextResponse.json({ error: 'ai_failed' }, { status: 502 })
   }
-  const creditsLeft = b64 ? await spend(userId, action, { preview: !!body.preview }) : null
+  const creditsLeft = b64 ? await spend(userId, action, { preview: !!body.preview, root }) : null
+  if (b64 && action === 'modifica') await noteFree(userId, action, { root })
   if (!b64) { console.error('photo-edit failed: nessuna immagine'); return NextResponse.json({ error: 'ai_failed' }, { status: 502 }) }
   if (process.env.NODE_ENV !== 'production') await debugDump({ imageBase64, imageUrl, region, prompt: used, request: custom, outB64: b64 })
   // risultato alle proporzioni dell'originale + finitura fotografica (grana, contrasto locale: meno "piatto");
