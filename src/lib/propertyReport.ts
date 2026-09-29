@@ -5,7 +5,7 @@
 // PDF da un iframe nascosto (lib/printHtml). Ogni pagina e' piena e niente trabocca.
 //   1. copertina: foto a tutta pagina, titolo, indirizzo, prezzo e numeri chiave
 //   2. la casa: numeri in colonna, descrizione, una foto
-//   3. foto: la prima pagina con una grande e due sotto, poi quattro per pagina, a filo dei bordi
+//   3. foto: fino a 40, la prima pagina con una grande e due sotto, poi quattro per pagina, a filo dei bordi
 //   4. caratteristiche: dati chiave in grande, scala energetica, il resto della scheda a filetti
 //   5. zona e costi, chiusura con l'agente
 import { calculateDetailedCosts } from './reportHtml'
@@ -44,7 +44,7 @@ export function buildPropertyReportHtml(a: ReportInput): string {
   const showPrice = cfg.showPrices && !d.trattativa_riservata && p.prezzo > 0
   const address = d.mostra_indirizzo ? p.addr : p.addr?.split(',').map(x => x.trim()).filter(Boolean).slice(-2).join(', ')
   const city = (p.addr ?? '').split(',').map(x => x.trim()).filter(Boolean).pop()?.replace(/^\d{5}\s*/, '') ?? ''
-  const photos = (p.photos?.length ? p.photos : p.cover ? [p.cover] : []).slice(0, 25)
+  const photos = (p.photos?.length ? p.photos : p.cover ? [p.cover] : []).slice(0, 40)
   const tipo = p.tipologia?.split('|')[0]?.trim() || 'Immobile'
   const facts = ([[p.mq ? `${p.mq}` : '', 'm²', 'Superficie'], [p.locali, '', 'Locali'], [p.camere, '', 'Camere'], [p.bagni, '', 'Bagni']] as const).filter(([v]) => v)
   const perSqm = showPrice && !rent && p.mq ? `${Math.round(p.prezzo / p.mq).toLocaleString('it-IT')} €/m²` : ''
@@ -122,7 +122,7 @@ export function buildPropertyReportHtml(a: ReportInput): string {
   if (keyFacts.length || groups.length || energy || extras.length) pages.push(`<section class="page">
     ${head(pages.length + 1, 'Caratteristiche')}
     <div class="body fill">
-      ${keyFacts.length || energy ? `<div class="keys">${keyFacts.map(x => `<div class="key"><span class="eyebrow">${esc(x.label)}</span><b>${esc(x.v)}</b></div>`).join('')}${energy ? `<div class="key"><span class="eyebrow">Classe energetica</span><b><i class="badge" style="background:${ENERGY_COLORS[energy] ?? '#9ca3af'};color:${/^(B|C|D)$/.test(energy) ? '#1a1a1a' : '#fff'}">${esc(energy)}</i></b></div>` : ''}</div>` : ''}
+      ${keyFacts.length || energy ? `<div class="keys">${keyFacts.map(x => `<div class="key"><span class="eyebrow">${esc(x.label)}</span><b>${esc(x.v)}</b></div>`).join('')}${energy ? `<div class="key"><span class="eyebrow">Classe energetica</span><b><i class="badge" style="background:${ENERGY_COLORS[energy] ?? '#9ca3af'};color:#151515">${esc(energy)}</i></b></div>` : ''}</div>` : ''}
       ${scale}
       ${groups.length ? `<div class="sheet">${groups.map(g => `<div class="grp"><h3>${esc(g.title)}</h3>${g.rows.map(r => `<div class="row"><span>${esc(r.label)}</span><b>${esc(r.value)}</b></div>`).join('')}</div>`).join('')}</div>` : ''}
       ${extras.length ? `<div class="grp wide"><h3>Dotazioni e spazi esterni</h3><div class="tags">${extras.map(x => `<span>${esc(x)}</span>`).join('')}</div></div>` : ''}
@@ -192,7 +192,7 @@ h2{font-size:24px;margin:0 0 10px;line-height:1.15}h3{font-size:9.5px;margin:0 0
 /* caratteristiche */
 .keys{display:grid;grid-template-columns:repeat(4,1fr);gap:8mm;border-top:1px solid #151515;padding-top:10px;margin-bottom:8mm}.key b{display:block;font-size:22px;line-height:1.1;margin-top:5px}.key .eyebrow{color:#888}
 .badge{display:inline-block;font-style:normal;font-family:Satoshi,sans-serif;font-weight:800;border-radius:6px;padding:2px 12px;font-size:16px;line-height:1.4}
-.scale{margin-bottom:8mm}.scale>span{display:inline-block;width:9.4%;margin-right:.6%;padding:5px 0;text-align:center;font-size:9.5px;font-weight:800;color:#fff;opacity:.35;border-radius:3px}.scale>span.on{opacity:1;box-shadow:0 0 0 2px #fff,0 0 0 3.5px #151515}.scale-cap{font-size:11px;color:#666;margin-top:6px}
+.scale{margin-bottom:8mm}.scale>span{display:inline-block;width:9.4%;margin-right:.6%;padding:5px 0;text-align:center;font-size:9.5px;font-weight:800;color:#151515;opacity:.45;border-radius:3px}.scale>span.on{opacity:1;box-shadow:0 0 0 2px #fff,0 0 0 3.5px #151515}.scale-cap{font-size:11px;color:#666;margin-top:6px}
 .sheet{columns:2;column-gap:12mm}.grp{break-inside:avoid;margin-bottom:6mm}.grp.wide{margin-top:2mm}
 .row{display:flex;justify-content:space-between;gap:12px;font-size:11.5px;padding:5px 0;border-bottom:1px solid #e6e6e3}.row span{color:#666}.row b{text-align:right;font-weight:600}
 .tags{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:11.5px}.tags span::before{content:"";display:inline-block;width:5px;height:5px;border-radius:99px;background:${c};margin-right:7px;vertical-align:2px}
