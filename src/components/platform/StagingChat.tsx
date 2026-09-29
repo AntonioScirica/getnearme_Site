@@ -815,10 +815,12 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                               <div className="absolute inset-0 flex overflow-hidden rounded-2xl bg-canvas">
                                 {list.map((src, i) => <img key={i} src={src} alt="" draggable={false} className="h-full min-w-0 flex-1 object-cover" />)}
                               </div>
-                              <div className="pointer-events-none absolute inset-y-0 left-0 rounded-l-2xl bg-white/70" style={{ width: `${pos}%` }} />
-                              {/* lente: il fotogramma scelto, bordo bianco e ombra, leggermente piu' alta della striscia */}
-                              <div className="pointer-events-none absolute -inset-y-1.5 w-12 -translate-x-1/2 overflow-hidden rounded-xl bg-canvas shadow-[0_6px_20px_rgba(0,0,0,.25)] ring-[3px] ring-white" style={{ left: `${pos}%` }}>
-                                {list.length > 0 && <img src={list[Math.min(list.length - 1, Math.floor((pos / 100) * list.length))]} alt="" className="h-full w-full object-cover" />}
+                              <div className="pointer-events-none absolute inset-y-0 left-0 rounded-l-2xl bg-white/50" style={{ width: `${pos}%` }} />
+                              {/* linea della timeline: si trascina sulla striscia, con la maniglia in alto e in basso */}
+                              <div className="pointer-events-none absolute -inset-y-1.5 -translate-x-1/2" style={{ left: `${pos}%` }}>
+                                <div className="mx-auto h-full w-[3px] rounded-full bg-white shadow-[0_0_0_1px_rgba(0,0,0,.2),0_2px_8px_rgba(0,0,0,.35)]" />
+                                <div className="absolute -top-1 left-1/2 h-3 w-3 -translate-x-1/2 rounded-full bg-white shadow-[0_0_0_1px_rgba(0,0,0,.2)]" />
+                                <div className="absolute -bottom-1 left-1/2 h-3 w-3 -translate-x-1/2 rounded-full bg-white shadow-[0_0_0_1px_rgba(0,0,0,.2)]" />
                               </div>
                               {a?.at !== undefined && <input type="range" min={0} max={dur} step={1 / 30} value={at} aria-label={m.step === 'pick' ? 'Momento della foto' : 'Momento in cui esci'}
                                 onChange={e => patchV(m.id, { agent: { ...a, at: Number(e.target.value) } })} className="absolute inset-0 h-full w-full cursor-ew-resize opacity-0" />}
@@ -837,7 +839,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                           </div>
                           <div className="relative -order-1 aspect-video w-full overflow-hidden rounded-3xl bg-ink shadow-sm ring-1 ring-black/5">
                             {list.length > 0 && <img src={list[Math.min(list.length - 1, Math.floor((pos / 100) * list.length))]} alt="" className="absolute inset-0 h-full w-full scale-110 object-cover opacity-60 blur-2xl" />}
-                            {a?.video && <video key={a.video} src={`${a.video}#t=${at}`} muted playsInline preload="auto" crossOrigin={a.video.startsWith('blob:') ? undefined : 'anonymous'} className="absolute inset-0 h-full w-full object-contain"
+                            {a?.video && <video key={a.video} src={a.video} muted playsInline preload="auto" crossOrigin={a.video.startsWith('blob:') ? undefined : 'anonymous'} className="absolute inset-0 h-full w-full object-contain"
                               ref={el => { if (el && Math.abs(el.currentTime - at) > 0.02) el.currentTime = at; }} />}
                             {(!a?.video || a.busy) && <div className="absolute inset-0 flex items-center justify-center bg-black/10"><Loader2 className="animate-spin text-white" /></div>}
                           </div>
