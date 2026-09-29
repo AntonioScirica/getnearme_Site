@@ -786,11 +786,11 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                         {m.agent?.steady === false && <p className="mb-3 rounded-2xl bg-amber-50 px-4 py-2.5 text-sm text-amber-800">Il telefono si muove nel video: per la stanza che si arreda gira di nuovo con il telefono appoggiato o su un cavalletto, se no la trasformazione viene male.</p>}
                         <div className="grid gap-3 sm:grid-cols-2">
                           {([['agent', 'La stanza si arreda quando esci', 'Parli in camera, esci e la stanza cambia stile', UserRound, CREDIT_COST.video_agent], ['photo', 'Usa una foto del video', 'Scegli il momento e lavoraci come una foto', ImageIcon, 0]] as const).map(([id, t, d, I, cr]) => {
-                            const off = m.agent?.at === undefined || (id === 'agent' && m.agent.exit === false);
+                            const off = !m.agent || (id === 'agent' && m.agent.exit === false); // si sceglie subito: il momento arriva mentre si passa al cursore
                             return (
                               <button key={id} disabled={off} onClick={() => patchV(m.id, id === 'agent' ? { step: 'exit', anim: 'agent', picks: [{ label: 'Con te in video', icon: 'agent' }] } : { step: 'pick' })}
                                 className="group flex items-start gap-3 rounded-3xl bg-white p-4 text-left shadow-sm ring-1 ring-black/5 ease-smooth transition-shadow hover:shadow-md disabled:opacity-50">
-                                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-brand/10 text-brand">{m.agent?.busy ? <Loader2 size={18} className="animate-spin" /> : <I size={18} />}</span>
+                                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-brand/10 text-brand"><I size={18} /></span>
                                 <span className="min-w-0 flex-1"><span className="flex items-center justify-between gap-2 text-sm font-semibold">{t}<Cr n={cr} tight still /></span>
                                   <span className="mt-0.5 block text-xs text-muted">{id === 'agent' && m.agent?.exit === false ? 'Non ti vedo uscire dall’inquadratura in questo video' : d}</span></span>
                               </button>
