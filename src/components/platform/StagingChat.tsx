@@ -465,6 +465,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   // l'agente sceglie; il momento in cui esce e la foto della stanza li fa il browser dal video che ha gia'. Solo il
   // montaggio aspetta il caricamento. agentUps: caricamenti in corso, per id (agent.up), con il token del video pronto.
   const agentUps = useRef(new Map<string, Promise<string | null>>());
+  const agentGrids = useRef(new Map<string, { grid: string; n: number; cols: number; tw: number; th: number }>());
   const agentUpload = async (m: VideoMsg, f: File, userMsg?: string, next: 'exit' | 'vchoice' = 'exit') => {
     touch();
     const local = URL.createObjectURL(f);
@@ -484,6 +485,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
     patchV(m.id, { step: next, err: undefined, agent: { up, video: local, busy: 'Guardo il video…' } });
     try {
       const g = await videoGrid(local);
+      agentGrids.current.set(up, g);
       const e = await authFetch('/api/platform/agent-video', { method: 'POST', headers: QUIET, body: JSON.stringify({ phase: 'exit', ...g }) }).then(r => r.json()).catch(() => ({}));
       if (e.at === undefined) throw new Error(e.error);
       if (next === 'exit' && !e.exit) { patchV(m.id, { step: 'upload', agent: undefined, err: 'Non vedo il momento in cui esci dall’inquadratura: alla fine del video esci e lascia la stanza sola per 2-3 secondi.' }); return; }
@@ -783,28 +785,44 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                         </div>
                       </div>
                     )}
-                    {(m.step === 'exit' || m.step === 'pick') && (
-                      // il momento in cui l'agente esce, trovato dal server: si vede la stanza e si puo' spostare col cursore
-                      <div className="mx-auto px-1" style={{ maxWidth: 260 }}>
-                        <div className="relative overflow-hidden rounded-[24px] bg-canvas" style={{ aspectRatio: '9 / 16' }}>
-                          {m.agent?.video
-                            ? <video key={m.agent.video} src={`${m.agent.video}#t=${m.agent.at ?? 0}`} muted playsInline preload="auto" className="absolute inset-0 h-full w-full object-contain"
-                                ref={el => { if (el && m.agent?.at !== undefined && Math.abs(el.currentTime - m.agent.at) > 0.05) el.currentTime = m.agent.at; }} />
-                            : <div className="absolute inset-0 flex items-center justify-center"><Loader2 className="animate-spin text-muted" /></div>}
-                          {m.agent?.busy && m.agent.video && <div className="absolute inset-0 flex items-center justify-center bg-black/20"><Loader2 className="animate-spin text-white" /></div>}
+                    {(m.step === 'exit' || m.step === 'pick') && (() => {
+                      // il momento scelto: anteprima a sinistra, a destra il tempo, la striscia dei fotogrammi con il cursore e il pulsante
+                      const a = m.agent, g = a?.up ? agentGrids.current.get(a.up) : undefined, dur = a?.duration ?? 10;
+                      const strip = g ? Array.from({ length: 10 }, (_, i) => Math.min(g.n - 1, Math.round((i + 0.5) * g.n / 10))) : [];
+                      return (
+                        <div className="flex flex-col items-center gap-5 px-1 sm:flex-row sm:items-center">
+                          <div className="relative w-40 shrink-0 overflow-hidden rounded-3xl bg-canvas shadow-sm ring-1 ring-black/5" style={{ aspectRatio: g ? `${g.tw} / ${g.th}` : '9 / 16' }}>
+                            {a?.video
+                              ? <video key={a.video} src={`${a.video}#t=${a.at ?? 0}`} muted playsInline preload="auto" className="absolute inset-0 h-full w-full object-cover"
+                                  ref={el => { if (el && a?.at !== undefined && Math.abs(el.currentTime - a.at) > 0.05) el.currentTime = a.at; }} />
+                              : null}
+                            {(!a?.video || a.busy) && <div className="absolute inset-0 flex items-center justify-center bg-black/10"><Loader2 className="animate-spin text-white" /></div>}
+                          </div>
+                          <div className="w-full min-w-0 flex-1">
+                            {a?.at !== undefined && (
+                              <>
+                                <div className="text-sm text-muted">{m.step === 'pick' ? 'Foto al secondo' : 'Esci dall’inquadratura al secondo'} <b className="font-semibold tabular-nums text-ink">{a.at.toFixed(1).replace('.', ',')}</b></div>
+                                {/* striscia dei fotogrammi (dalla griglia fatta per trovare l'uscita) con il cursore sopra */}
+                                <div className="relative mt-3 h-16 overflow-hidden rounded-2xl bg-canvas ring-1 ring-black/5">
+                                  {g && <div className="absolute inset-0 flex">{strip.map((k, i) => (
+                                    <div key={i} className="h-full flex-1" style={{ backgroundImage: `url(${g.grid})`, backgroundSize: `${g.cols * 100}% ${Math.ceil(g.n / g.cols) * 100}%`, backgroundPosition: `${(k % g.cols) / Math.max(1, g.cols - 1) * 100}% ${Math.floor(k / g.cols) / Math.max(1, Math.ceil(g.n / g.cols) - 1) * 100}%` }} />
+                                  ))}</div>}
+                                  <div className="pointer-events-none absolute inset-y-0 left-0 bg-black/35" style={{ width: `${(a.at / dur) * 100}%` }} />
+                                  <div className="pointer-events-none absolute inset-y-0 w-1 -translate-x-1/2 rounded-full bg-white shadow-[0_0_0_1px_rgba(0,0,0,.15),0_2px_8px_rgba(0,0,0,.35)]" style={{ left: `${(a.at / dur) * 100}%` }} />
+                                  <input type="range" min={0} max={dur} step={0.1} value={a.at} aria-label={m.step === 'pick' ? 'Momento della foto' : 'Momento in cui esci'}
+                                    onChange={e => patchV(m.id, { agent: { ...a, at: Number(e.target.value) } })}
+                                    className="absolute inset-0 h-full w-full cursor-ew-resize opacity-0" />
+                                </div>
+                                <p className="mt-2 text-xs text-muted">{m.step === 'pick' ? 'Trascina sulla striscia per scegliere il momento.' : 'La parte scura è quella con te: trascina se ti vedi ancora nell’anteprima.'}</p>
+                                {m.step === 'exit' && a.steady === false && <p className="mt-3 rounded-2xl bg-amber-50 px-3 py-2 text-xs text-amber-800">Il telefono si muove nel video: la trasformazione può venire male.</p>}
+                                <button disabled={!!a.busy} onClick={async () => { if (m.step === 'pick') { void takeFrame(m); return; } if (await agentRoom(m)) patchV(m.id, { step: 'mode' }); }}
+                                  className="mt-4 flex h-10 items-center gap-1.5 rounded-full bg-ink px-5 text-[13px] font-semibold text-white ease-smooth transition-colors hover:bg-brand disabled:opacity-40">{a.busy && <Loader2 size={14} className="animate-spin" />}{m.step === 'pick' ? 'Usa questa foto' : 'Scegli lo stile'}</button>
+                              </>
+                            )}
+                          </div>
                         </div>
-                        {m.step === 'exit' && m.agent?.steady === false && <p className="mt-3 rounded-2xl bg-amber-50 px-3 py-2 text-xs text-amber-800">Il telefono si muove nel video: la trasformazione può venire male.</p>}
-                        {m.agent?.at !== undefined && (
-                          <>
-                            <input type="range" min={0} max={m.agent.duration ?? 10} step={0.1} value={m.agent.at ?? 0} aria-label="Momento in cui esci"
-                              onChange={e => patchV(m.id, { agent: { ...m.agent, at: Number(e.target.value) } })}
-                              className="mt-4 w-full accent-[var(--color-brand)]" />
-                            <p className="mt-1 text-center text-xs text-muted">{m.step === 'pick' ? 'Sposta il cursore sul momento migliore' : 'Sposta il cursore se ti vedi ancora nell’inquadratura'}</p>
-                            <button disabled={!!m.agent.busy} onClick={async () => { if (m.step === 'pick') { void takeFrame(m); return; } if (await agentRoom(m)) patchV(m.id, { step: 'mode' }); }} className="mt-4 flex h-11 w-full items-center justify-center rounded-full bg-ink text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand disabled:opacity-40">{m.step === 'pick' ? 'Usa questa foto' : 'Scegli lo stile'}</button>
-                          </>
-                        )}
-                      </div>
-                    )}
+                      );
+                    })()}
                     {m.step === 'mode' && (
                         // scelta dello stile come le card dei modelli: foto vera per "Com'è ora", un soggiorno d'esempio per ogni stile
                         <div className="px-1">
