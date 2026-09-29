@@ -193,8 +193,6 @@ function Compare() {
 const VIDEO_TEMPLATES = [
   ['popup', 'Popup', 'Pop-up', 'I mobili spuntano uno alla volta', 'Furniture pops in piece by piece', VIDEO_SAMPLES.popup],
   ['gravity', 'Dall\'alto', 'From above', 'I mobili cadono dall\'alto e si posano', 'Furniture drops in from above', VIDEO_SAMPLES.gravity],
-  ['particles', 'Particelle', 'Particles', 'Si compongono da una polvere dorata', 'Built from golden dust', VIDEO_SAMPLES.particles],
-  ['stopmotion', 'Stop-motion', 'Stop-motion', 'Compaiono a scatti, uno per volta', 'Appear frame by frame', VIDEO_SAMPLES.stopmotion],
   ['cantiere', 'Cantiere', 'Construction', 'Dal cantiere alla casa finita', 'From building site to finished home', VIDEO_SAMPLES.cantiere],
   ['daynight', 'Giorno e notte', 'Day to night', 'Scende la sera, si accendono le luci', 'Evening falls, lights come on', VIDEO_SAMPLES.daynight],
   ['camera', 'Camminata', 'Walkthrough', 'Entri nella stanza con una ripresa lenta', 'A slow walk into the room', VIDEO_SAMPLES.camera],
