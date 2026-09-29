@@ -471,7 +471,12 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
     for (const x of msgs) if (x.role === 'video' && (x.step === 'exit' || x.step === 'pick') && x.agent?.video && !thumbs[x.agent.video]) {
       const up = x.agent.video;
       setThumbs(t => ({ ...t, [up]: [] }));
-      void videoThumbs(x.agent.video).then(list => setThumbs(t => ({ ...t, [up]: list }))).catch(() => setThumbs(t => ({ ...t, [up]: ['dead'] }))); // dead: video del browser perso con una ricarica
+      void videoThumbs(x.agent.video).then(list => setThumbs(t => ({ ...t, [up]: list }))).catch(() => {
+        // video del browser perso con una ricarica: se il caricamento era finito, il messaggio dell'agente ha gia' quello sul server
+        const k = msgs.indexOf(x), server = [...msgs.slice(0, k)].reverse().find(y => y.role === 'user' && !!y.video && !y.video.startsWith('blob:'));
+        if (server && server.role === 'user' && server.video) patchV(x.id, { agent: { ...x.agent, video: server.video } });
+        else setThumbs(t => ({ ...t, [up]: ['dead'] }));
+      });
     }
   }, [msgs, thumbs]);
   const agentUpload = async (m: VideoMsg, f: File, userMsg?: string, next: 'exit' | 'vchoice' = 'exit') => {
