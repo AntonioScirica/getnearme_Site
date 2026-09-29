@@ -73,7 +73,7 @@ type Msg =
   | { id: string; role: 'user'; text?: string; image?: string; video?: string; seen?: string | null; region?: Region; style?: { src: string; author?: string; authorUrl?: string } }
   | { id: string; role: 'ai'; before: string; out: string | null; busy: boolean; reveal: Reveal; err?: string; text: string; req?: EditRequest }
   // video in chat: UN messaggio che si trasforma a ogni scelta (template, arredo, due anteprime, video)
-  | { id: string; role: 'video'; step: 'template' | 'anim' | 'upload' | 'exit' | 'mode' | 'previews' | 'frames' | 'render'; photo: string; anim?: VideoAnim; picks: VideoPick[]; previews?: (string | null)[]; frames?: { token: string; before: string; after: string; src: string; styled?: string }; url?: string; err?: string; job?: string; restyle?: { label: string; req: { style?: string; prompt?: string } }; redone?: boolean; agent?: { busy?: string; up?: string; token?: string; video?: string; room?: string; at?: number; duration?: number; exit?: boolean; steady?: boolean; styled?: string; landscape?: boolean } };
+  | { id: string; role: 'video'; step: 'template' | 'anim' | 'upload' | 'vchoice' | 'exit' | 'mode' | 'previews' | 'frames' | 'render'; photo: string; anim?: VideoAnim; picks: VideoPick[]; previews?: (string | null)[]; frames?: { token: string; before: string; after: string; src: string; styled?: string }; url?: string; err?: string; job?: string; restyle?: { label: string; req: { style?: string; prompt?: string } }; redone?: boolean; agent?: { busy?: string; up?: string; token?: string; video?: string; room?: string; at?: number; duration?: number; exit?: boolean; steady?: boolean; styled?: string; landscape?: boolean } };
 
 // Macro template video, ognuno con i suoi stili di animazione (card con anteprima in loop)
 type VideoAnim = 'popup' | 'gravity' | 'particles' | 'stopmotion' | 'cantiere' | 'daynight' | 'camera' | 'agent' | 'walk';
@@ -321,9 +321,9 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
     touch();
     if (files.length > 1) { onMany(files); return; } // piu' foto insieme: vista a griglia
     const f = files[0];
-    // un video: Con te in video (l'agente parla, esce e la stanza si arreda)
+    // un video: si carica e si sceglie il template video (la stanza si arreda quando esci / cammina e cambia stile)
     if (f.type.startsWith('video/') || /\.(mov|mp4)$/i.test(f.name)) {
-      const vm: VideoMsg = { id: uid(), role: 'video', step: 'exit', anim: 'agent', photo: '', picks: [{ label: 'Con te in video', icon: 'agent' }] };
+      const vm: VideoMsg = { id: uid(), role: 'video', step: 'vchoice', photo: '', picks: [] };
       const um = uid();
       const waiting = [...msgs].reverse().find((x): x is VideoMsg => x.role === 'video' && x.step === 'upload');
       if (waiting) {
@@ -513,22 +513,32 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
       if (p.video) setMsgs(ms => ms.map(x => (x.id === um && x.role === 'user' ? { ...x, video: p.video } : x.role === 'video' && x.agent?.up === up ? { ...x, agent: { ...x.agent, token: p.token, ...(x.agent.video?.startsWith('blob:') ? { video: p.video } : {}) } } : x)));
       return (p.token as string) ?? null;
     })());
-    if (m.anim === 'walk') {
-      // cammina e cambia stile: la stanza a meta' della camminata per scegliere lo stile, poi si va allo stile
-      patchV(m.id, { step: 'upload', err: undefined, agent: { up, video: local, busy: 'Preparo la stanza…' } });
-      const dur = await videoDuration(local).catch(() => 0);
+    const ag = { up, video: local };
+    // video mandato in chat senza template: si sceglie quale (la stanza si arreda quando esci / cammina e cambia stile)
+    if (!m.anim) { patchV(m.id, { step: 'vchoice', err: undefined, agent: ag }); return; }
+    await agentContinue({ ...m, agent: ag }, m.anim);
+  };
+  // dopo il caricamento, secondo il template scelto: cammina -> stanza a meta' e stile; con te -> momento dell'uscita
+  const agentContinue = async (m: VideoMsg, anim: VideoAnim) => {
+    const ag = m.agent;
+    if (!ag?.video) return;
+    const pick: VideoPick = anim === 'walk' ? { label: 'Cammina e cambia stile', icon: 'cam' } : { label: 'Con te in video', icon: 'agent' };
+    const picks = m.picks.length ? m.picks : [pick];
+    if (anim === 'walk') {
+      patchV(m.id, { step: 'upload', anim, picks, err: undefined, agent: { ...ag, busy: 'Preparo la stanza…' } });
+      const dur = await videoDuration(ag.video).catch(() => 0);
       if (dur < 3) { patchV(m.id, { agent: undefined, err: 'Il video è troppo corto: cammina almeno 4-5 secondi.' }); return; }
-      const nm: VideoMsg = { ...m, agent: { up, video: local, at: Math.min(dur, 15) / 2, duration: dur } };
+      const nm: VideoMsg = { ...m, anim, picks, agent: { ...ag, at: Math.min(dur, 15) / 2, duration: dur } };
       if (await agentRoom(nm)) patchV(m.id, { step: 'mode' });
       return;
     }
-    patchV(m.id, { step: 'exit', err: undefined, agent: { up, video: local, busy: 'Guardo il video…' } });
+    patchV(m.id, { step: 'exit', anim, picks, err: undefined, agent: { ...ag, busy: 'Guardo il video…' } });
     try {
-      const g = await videoGrid(local);
+      const g = await videoGrid(ag.video);
       const e = await authFetch('/api/platform/agent-video', { method: 'POST', headers: QUIET, body: JSON.stringify({ phase: 'exit', ...g }) }).then(r => r.json()).catch(() => ({}));
       if (e.at === undefined) throw new Error(e.error);
       if (!e.exit) { patchV(m.id, { step: 'upload', agent: undefined, err: 'Non vedo il momento in cui esci dall’inquadratura: alla fine del video esci e lascia la stanza sola per 2-3 secondi.' }); return; }
-      patchV(m.id, { agent: { up, video: local, at: e.at, duration: e.duration, exit: e.exit, steady: e.steady, landscape: g.tw > g.th } });
+      patchV(m.id, { agent: { ...ag, at: e.at, duration: e.duration, exit: e.exit, steady: e.steady, landscape: g.tw > g.th } });
     } catch {
       patchV(m.id, { step: 'upload', agent: undefined, err: 'Non sono riuscito a leggere il video, riprova.' });
     }
@@ -745,11 +755,11 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                   <StepSwap step={m.step}>
                   <div className="flex w-full items-center gap-1 px-2 pb-4 text-sm">
                     {/* indietro di un passo (non a video partito) */}
-                    {m.step !== 'template' && m.step !== 'render' && (
-                      <button aria-label="Indietro" onClick={() => patchV(m.id, m.step === 'upload' ? { step: 'template', anim: undefined, picks: [], err: undefined } : m.step === 'exit' ? { step: 'upload', agent: undefined, err: undefined } : m.step === 'mode' && m.anim === 'walk' ? { step: 'upload', agent: undefined, picks: m.picks.slice(0, 1) } : m.step === 'mode' && m.anim === 'agent' ? { step: 'exit', picks: m.picks.slice(0, 1) } : m.step === 'anim' ? { step: 'template', picks: [] } : m.step === 'mode' && (m.anim === 'cantiere' || m.anim === 'daynight' || m.anim === 'camera') ? { step: 'template', anim: undefined, picks: [] } : m.step === 'mode' ? { step: 'anim', anim: undefined, picks: m.picks.slice(0, 1) } : { step: 'mode', picks: m.picks.slice(0, m.anim === 'cantiere' || m.anim === 'daynight' ? 1 : 2), previews: undefined, frames: undefined, err: undefined })}
+                    {m.step !== 'template' && m.step !== 'render' && m.step !== 'vchoice' && (
+                      <button aria-label="Indietro" onClick={() => patchV(m.id, m.step === 'upload' ? { step: 'template', anim: undefined, picks: [], err: undefined } : m.step === 'exit' ? (m.agent?.up ? { step: 'vchoice', anim: undefined, picks: [], agent: { up: m.agent.up, video: m.agent.video, token: m.agent.token } } : { step: 'upload', agent: undefined, err: undefined }) : m.step === 'mode' && m.anim === 'walk' ? (m.agent?.up ? { step: 'vchoice', anim: undefined, picks: [], agent: { up: m.agent.up, video: m.agent.video, token: m.agent.token } } : { step: 'upload', agent: undefined, picks: m.picks.slice(0, 1) }) : m.step === 'mode' && m.anim === 'agent' ? { step: 'exit', picks: m.picks.slice(0, 1) } : m.step === 'anim' ? { step: 'template', picks: [] } : m.step === 'mode' && (m.anim === 'cantiere' || m.anim === 'daynight' || m.anim === 'camera') ? { step: 'template', anim: undefined, picks: [] } : m.step === 'mode' ? { step: 'anim', anim: undefined, picks: m.picks.slice(0, 1) } : { step: 'mode', picks: m.picks.slice(0, m.anim === 'cantiere' || m.anim === 'daynight' ? 1 : 2), previews: undefined, frames: undefined, err: undefined })}
                         className="-ml-1.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-muted ease-smooth transition-colors hover:bg-black/5 hover:text-ink"><ChevronLeft size={18} /></button>
                     )}
-                    <span className="font-medium">{m.step === 'template' ? 'Che video vuoi creare?' : m.step === 'upload' ? 'Aspetto il tuo video' : m.step === 'exit' ? (m.agent?.busy ?? 'Da qui la stanza si trasforma') : m.step === 'anim' ? 'Con quale animazione?' : m.step === 'mode' ? ((emptyFrom && emptyFrom === m.photo) || m.anim === 'agent' || m.anim === 'walk' ? 'In che stile la arredo?' : 'Com’è ora o in un nuovo stile?') : m.step === 'previews' ? (m.previews?.some(p => !p) ? 'Preparo due proposte…' : 'Scegli quella per il video') : m.step === 'frames' ? (m.err ? '' : m.frames ? 'Ecco prima e dopo. Creo il video?' : 'Preparo prima e dopo…') : m.url ? 'Ecco il video' : m.err ? '' : (m.anim === 'popup' || m.anim === 'gravity') ? 'Creo il video, circa 2 minuti' : 'Creo il video, qualche minuto'}</span>
+                    <span className="font-medium">{m.step === 'template' ? 'Che video vuoi creare?' : m.step === 'upload' ? 'Aspetto il tuo video' : m.step === 'vchoice' ? 'Che video facciamo?' : m.step === 'exit' ? (m.agent?.busy ?? 'Da qui la stanza si trasforma') : m.step === 'anim' ? 'Con quale animazione?' : m.step === 'mode' ? ((emptyFrom && emptyFrom === m.photo) || m.anim === 'agent' || m.anim === 'walk' ? 'In che stile la arredo?' : 'Com’è ora o in un nuovo stile?') : m.step === 'previews' ? (m.previews?.some(p => !p) ? 'Preparo due proposte…' : 'Scegli quella per il video') : m.step === 'frames' ? (m.err ? '' : m.frames ? 'Ecco prima e dopo. Creo il video?' : 'Preparo prima e dopo…') : m.url ? 'Ecco il video' : m.err ? '' : (m.anim === 'popup' || m.anim === 'gravity') ? 'Creo il video, circa 2 minuti' : 'Creo il video, qualche minuto'}</span>
                     {/* annulla: via il messaggio del video (e il "Crea un video" prima), si torna alle foto; non a video mandato */}
                     {m.step !== 'render' && (
                       <button onClick={() => setMsgs(ms => { const k = ms.findIndex(x => x.id === m.id); return ms.filter((x, n) => n !== k && !(n === k - 1 && x.role === 'user' && x.text === 'Crea un video')); })}
@@ -797,6 +807,23 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                               </ol>)}
                         </div>
                         {m.err && <ErrLine err={m.err} className="pt-3" />}
+                      </div>
+                    )}
+                    {m.step === 'vchoice' && (
+                      // video appena mandato: quale template video (il caricamento continua in sottofondo)
+                      <div className="grid gap-3 px-1 sm:grid-cols-2">
+                        {VIDEO_TEMPLATES.filter(t => t.anims[0].id === 'agent' || t.anims[0].id === 'walk').map((t, k) => (
+                          <div key={t.id} className="rise" style={{ animationDelay: `${0.05 + k * 0.06}s` }}>
+                            <button onClick={() => void agentContinue(m, t.anims[0].id)} onMouseMove={tiltMove} onMouseLeave={e => tiltReset(e.currentTarget)}
+                              className="tilt group relative flex w-full flex-col overflow-hidden rounded-[28px] bg-white p-2 text-left shadow-[0_1px_2px_rgba(0,0,0,.04),0_8px_24px_-12px_rgba(0,0,0,.12)] ring-1 ring-black/5 hover:shadow-[0_2px_4px_rgba(0,0,0,.04),0_30px_50px_-20px_rgba(0,0,0,.25)] active:scale-[0.985]">
+                              <span className="sheen pointer-events-none absolute inset-0 z-20" />
+                              <video src={t.sample} autoPlay loop muted playsInline className="aspect-video w-full rounded-[20px] object-cover" />
+                              <span className="absolute right-4 top-4 z-30 rounded-full bg-white/95 px-2.5 py-1 text-xs font-semibold text-ink shadow-sm">{videoCr(t.anims[0].id)} cr</span>
+                              <span className="block px-3 pt-3 font-semibold">{t.label}</span>
+                              <span className="block px-3 pb-3 text-xs text-muted">{t.desc}</span>
+                            </button>
+                          </div>
+                        ))}
                       </div>
                     )}
                     {m.step === 'exit' && (() => {
