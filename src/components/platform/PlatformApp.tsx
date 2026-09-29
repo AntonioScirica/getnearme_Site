@@ -420,7 +420,8 @@ export function HomeView({ name, initialUrl = '', onSaved, morph }: { name?: str
   const others = (i: number) => `mx-2.5 ${open ? 'pointer-events-none -my-2.5 max-h-0 overflow-hidden sm:mx-0! sm:my-0 sm:w-0! scale-75 opacity-0 blur-[8px]' : `max-h-[24rem] ${i === 1 ? 'delay-[160ms]' : 'delay-[220ms]'}`}`;
 
   return (
-    <div className="flex min-h-[calc(100vh-5rem)] flex-col items-center justify-center py-10">
+    // pb-24: lo spazio delle pill fisse in basso (Profilo, Importa), cosi' titolo e box stanno al centro della parte libera
+    <div className="flex min-h-[calc(100vh-5rem)] flex-col items-center justify-center pb-24 pt-10">
       <h1 className={`text-center font-display text-4xl font-bold leading-[1.2] tracking-tight ease-smooth transition-all md:text-5xl md:leading-[1.2] ${titleOut ? '-translate-y-3 opacity-0 blur-[6px]' : ''}`}>
         {head.split(' ').map((w, i) => <span key={`${shown}-${i}`} className="blur-in inline-block" style={{ animationDelay: `${d0 + i * 0.05}s` }}>{w}&nbsp;</span>)}
         <span key={subtitle} className="blur-in block text-muted/70" style={{ animationDelay: shown === 'scanning' ? '0s' : `${d0 + 0.3}s` }}>{subtitle}</span>
