@@ -49,3 +49,9 @@ export async function videoThumbs(url: string, n = 10): Promise<string[]> {
   for (let i = 0; i < n; i++) { await seek(v, Math.min(d - 0.05, (i + 0.5) * d / n)); g.drawImage(v, 0, 0, tw, th); out.push(c.toDataURL('image/jpeg', 0.7)) }
   return out
 }
+
+// durata del video (per prendere la stanza a meta' della camminata)
+export async function videoDuration(url: string): Promise<number> {
+  const v = await open(url)
+  return v.duration || 0
+}

@@ -169,3 +169,37 @@ export async function montageAgent(o: { dir: string; raw: string; music: string;
     `[0:a]atrim=end=${CUT},asetpts=PTS-STARTPTS,${voice}aresample=48000,apad[vo];[3:a]atrim=end=${(K + HOLD).toFixed(2)},afade=t=in:d=0.3,afade=t=out:st=${(K + HOLD - 1.2).toFixed(2)}:d=1.2,volume=0.8,adelay=${Math.round(CUT * 1000)}|${Math.round(CUT * 1000)}[mu];[vo][mu]amix=inputs=2:duration=longest:normalize=0,atrim=end=${T.toFixed(2)}[au]`,
     '-map', '[v]', '-map', '[au]', '-c:v', 'libx264', '-crf', '18', '-preset', 'medium', '-c:a', 'aac', '-b:a', '160k', '-movflags', '+faststart', '-t', T.toFixed(2), o.final])
 }
+
+// Camminata che cambia stile (29/09, NON ancora provata): l'agente cammina col telefono nella stanza, Kling o3 "modifica
+// video" ridisegna la stanza nello stile della foto di riferimento mentre la camera si muove. Kling accetta 3-15 s:
+// si usano i primi 15 del video convertito. ~0,14 $/s. Il lavoro (-kw) lo chiude pollVideo con montageWalk.
+const KLING_EDIT_URL = 'https://queue.fal.run/fal-ai/kling-video/o3/standard/video-to-video/edit'
+const WALK_PROMPT = 'Restyle the interior of the room in @Video1 so that its furniture, decor, materials and colors match the style of @Image1. Keep exactly the same camera movement, framing, timing, walls, windows, doors, floor plan and light direction of @Video1. The room layout and architecture never change, only furniture and decor. No people. Photorealistic, stable, no flicker.'
+export async function renderWalk(owner: string, t: string, styled: string): Promise<{ job?: string; error?: string }> {
+  const name = parseAgent(owner, t)
+  if (!name) return { error: 'bad_request' }
+  const dir = await mkdtemp(join(tmpdir(), 'cammina-'))
+  try {
+    const src = join(dir, 'a.mp4'), cut = join(dir, 'walk.mp4')
+    await writeFile(src, Buffer.from(await (await fetch(`${process.env.R2_PUBLIC_URL}/${key(owner, name)}-agente.mp4`)).arrayBuffer()))
+    await ffmpeg(['-y', '-i', src, '-t', '15', '-c', 'copy', cut])
+    const walkUrl = await uploadFile(await readFile(cut), `${key(owner, name)}-walk.mp4`, 'video/mp4')
+    const q = await fal(KLING_EDIT_URL, { video_url: walkUrl, image_urls: [styled], prompt: WALK_PROMPT, keep_audio: true })
+    if (!q.request_id) { console.error('cammina kling', q); return { error: 'ai_failed' } }
+    const kname = `${name}-kw`
+    const job = `${q.request_id}.${kname.replace('/', '~')}.${sign(owner, `${q.request_id}.${kname}`)}`
+    await markPending(owner, kname, job)
+    return { job }
+  } finally {
+    rm(dir, { recursive: true, force: true }).catch(() => {})
+  }
+}
+
+// montaggio della camminata: la clip di Kling con la sua voce (keep_audio) e la musica sotto, sfumata alla fine
+export async function montageWalk(o: { raw: string; music: string; final: string }) {
+  const probe = await ffmpeg(['-i', o.raw, '-map', '0:a:0', '-t', '0.1', '-f', 'null', '-']).then(() => true, () => false)
+  const T = 15
+  await ffmpeg(['-y', '-i', o.raw, '-i', o.music, '-filter_complex',
+    `[1:a]atrim=end=${T},afade=t=in:d=0.5,afade=t=out:st=${T - 1.5}:d=1.5,volume=0.45[mu];${probe ? '[0:a]loudnorm=I=-16:TP=-1.5:LRA=11[vo];[vo][mu]amix=inputs=2:duration=first:normalize=0[au]' : '[mu]anull[au]'}`,
+    '-map', '0:v', '-map', '[au]', '-c:v', 'libx264', '-crf', '18', '-preset', 'medium', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '160k', '-shortest', '-movflags', '+faststart', o.final])
+}

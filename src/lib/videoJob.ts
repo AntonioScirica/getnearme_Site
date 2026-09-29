@@ -15,7 +15,7 @@ import { logUsage } from '@/lib/ai'
 import { AI_MOCK, mockDelay } from '@/lib/aiMock'
 import { MUSIC_CATALOG } from '@/lib/aiVideoMusic'
 import { measureShift } from '@/lib/align'
-import { montageAgent } from '@/lib/agentVideo'
+import { montageAgent, montageWalk } from '@/lib/agentVideo'
 
 // Video "i mobili compaiono" da una foto arredata (risultato AI o foto vera dell'agente).
 // Ricetta del 28/09/2026 (prove su Veo 3.1 standard e fast, misurate fotogramma per fotogramma):
@@ -287,7 +287,7 @@ export async function pollVideo(owner: string, job: string): Promise<VideoResult
   if (job === 'mock' && AI_MOCK) return { url: 'https://pub-a668674eaa484e8e8f2f10c264392bfc.r2.dev/spike-video/stili/F12_rianima.mp4' }
   const [id, tilde, sig] = job.split('.')
   const name = (tilde ?? '').replace('~', '/')
-  if (!id || !/^[\w-]{8,64}(\+[\w-]{8,64})?$/.test(id) || !/^(casa-[\w-]{1,64}\/)?\d+-[a-z0-9]+(-f|-k|-kc|-km|-ka|-g|-p|-d)?$/.test(name) || !sig || sig.length !== 22 || !timingSafeEqual(Buffer.from(sig), Buffer.from(sign(owner, `${id}.${name}`)))) return { error: 'bad_request', status: 400 }
+  if (!id || !/^[\w-]{8,64}(\+[\w-]{8,64})?$/.test(id) || !/^(casa-[\w-]{1,64}\/)?\d+-[a-z0-9]+(-f|-k|-kc|-km|-ka|-kw|-g|-p|-d)?$/.test(name) || !sig || sig.length !== 22 || !timingSafeEqual(Buffer.from(sig), Buffer.from(sign(owner, `${id}.${name}`)))) return { error: 'bad_request', status: 400 }
 
   const key = `videos/${owner}/${name}.mp4`
   const url = `${process.env.R2_PUBLIC_URL}/${key}`
@@ -296,7 +296,7 @@ export async function pollVideo(owner: string, job: string): Promise<VideoResult
   // Kling (flussi GetNearMe): una clip, o due per il cantiere (scavo -> struttura, struttura -> casa).
   // Dall'alto (-g) e' su Kling con l'id k_...: clip in avanti, poi dissolvenza sulla foto vera come i video Veo.
   const gk = id.startsWith('k_')
-  const kling = /-k[cma]?$/.test(name) || gk
+  const kling = /-k[cmaw]?$/.test(name) || gk
   const base = kling ? KLING_BASE : FAL
   const ids = id.replace(/^k_/, '').split('+')
   const st = await Promise.all(ids.map(r => fal(`${base}/requests/${r}/status`)))
@@ -319,8 +319,8 @@ export async function pollVideo(owner: string, job: string): Promise<VideoResult
     if (parts.length > 1) await ffmpeg(['-y', '-i', parts[0], '-i', parts[1], '-filter_complex', '[0:v][1:v]concat=n=2:v=1:a=0[v]', '-map', '[v]', '-c:v', 'libx264', '-crf', '14', raw])
     else await rename(parts[0], raw)
     // Con te in video (-ka): montaggio suo (video dell'agente + trasformazione), vedi agentVideo
-    if (/-ka$/.test(name)) {
-      await montageAgent({ dir, raw, music, final, owner, name })
+    if (/-k[aw]$/.test(name)) {
+      if (/-kw$/.test(name)) await montageWalk({ raw, music, final }); else await montageAgent({ dir, raw, music, final, owner, name })
       await uploadFile(await readFile(final), key, 'video/mp4')
       await deleteKeys([`${key.replace(/\.mp4$/, '')}.job.json`]).catch(() => {})
       return { url, id, fresh: true }

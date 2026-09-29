@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { canAfford } from '@/lib/credits'
 import { CREDIT_COST } from '@/lib/pricing'
 import { allowedUrl } from '@/lib/safeUrl'
-import { exitFromGrid, prepare, renderAgent, uploadUrl } from '@/lib/agentVideo'
+import { exitFromGrid, prepare, renderAgent, renderWalk, uploadUrl } from '@/lib/agentVideo'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300
@@ -39,6 +39,12 @@ export async function POST(req: NextRequest) {
     if (typeof b.styled !== 'string' || !allowedUrl(b.styled) || typeof b.room !== 'string' || !allowedUrl(b.room)) return NextResponse.json({ error: 'bad_request' }, { status: 400 })
     if (!(await canAfford(userId, 'video_agent'))) return NextResponse.json({ error: 'no_credits', cost: CREDIT_COST.video_agent }, { status: 402 })
     const r = await renderAgent(userId, String(b.token ?? ''), Number(b.at), b.styled, b.room)
+    return bad(r, r)
+  }
+  if (b.phase === 'walk') {
+    if (typeof b.styled !== 'string' || !allowedUrl(b.styled)) return NextResponse.json({ error: 'bad_request' }, { status: 400 })
+    if (!(await canAfford(userId, 'video_walk'))) return NextResponse.json({ error: 'no_credits', cost: CREDIT_COST.video_walk }, { status: 402 })
+    const r = await renderWalk(userId, String(b.token ?? ''), b.styled)
     return bad(r, r)
   }
   return NextResponse.json({ error: 'bad_request' }, { status: 400 })
