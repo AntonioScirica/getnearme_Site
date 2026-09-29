@@ -3,7 +3,7 @@
 import { VIDEO_SAMPLES } from '@/lib/videoSamples';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Anvil, UserRound, Video as VideoIcon, ChevronsLeftRight, Coins, WandSparkles, Film, HardHat, MoonStar, ArrowUp, Search, Check, ChevronLeft, Clapperboard, SquareSplitHorizontal, Image as ImageIcon, Palette, Sofa, Sparkles, Download, ExternalLink, ImagePlus, Lasso, Shuffle, LayoutGrid, Loader2, Monitor, RotateCcw, SquareDashed, SquareDashedMousePointer, X } from 'lucide-react';
+import { Anvil, Minus, Plus, UserRound, Video as VideoIcon, ChevronsLeftRight, Coins, WandSparkles, Film, HardHat, MoonStar, ArrowUp, Search, Check, ChevronLeft, Clapperboard, SquareSplitHorizontal, Image as ImageIcon, Palette, Sofa, Sparkles, Download, ExternalLink, ImagePlus, Lasso, Shuffle, LayoutGrid, Loader2, Monitor, RotateCcw, SquareDashed, SquareDashedMousePointer, X } from 'lucide-react';
 import { fileToResizedDataUrl } from '@/lib/staging';
 import { AI_MOCK } from '@/lib/aiMock';
 import { AiPhotoStage, Elapsed, type EditRequest, type Region, type Reveal, type Suggestion } from './AiPhoto';
@@ -816,9 +816,9 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                             </div>
                             <div className="mt-4 flex items-center gap-3">
                               <div className="flex items-center rounded-full bg-canvas p-1">
-                                <button type="button" aria-label="Fotogramma prima" onClick={() => step(-1 / 30)} className="flex h-8 w-8 items-center justify-center rounded-full text-base font-medium ease-smooth transition-colors hover:bg-white">−</button>
-                                <span className="min-w-16 px-1 text-center text-sm font-semibold tabular-nums">{at.toFixed(2).replace('.', ',')} s</span>
-                                <button type="button" aria-label="Fotogramma dopo" onClick={() => step(1 / 30)} className="flex h-8 w-8 items-center justify-center rounded-full text-base font-medium ease-smooth transition-colors hover:bg-white">+</button>
+                                <button type="button" aria-label="Fotogramma prima" onClick={() => step(-1 / 30)} className="flex h-8 w-8 items-center justify-center rounded-full ease-smooth transition-colors hover:bg-white"><Minus size={14} /></button>
+                                <span className="flex h-8 min-w-16 items-center justify-center px-1 pb-px text-sm font-semibold leading-none tabular-nums">{at.toFixed(2).replace('.', ',')} s</span>
+                                <button type="button" aria-label="Fotogramma dopo" onClick={() => step(1 / 30)} className="flex h-8 w-8 items-center justify-center rounded-full ease-smooth transition-colors hover:bg-white"><Plus size={14} /></button>
                               </div>
                               <span className="hidden min-w-0 flex-1 truncate text-xs text-muted sm:block">{m.step === 'pick' ? 'Scegli il momento da usare come foto' : 'Da qui la stanza si trasforma: non devi più vederti'}</span>
                               <button disabled={!!a?.busy || a?.at === undefined} onClick={async () => { if (m.step === 'pick') { void takeFrame(m); return; } if (await agentRoom(m)) patchV(m.id, { step: 'mode' }); }}
