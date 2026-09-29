@@ -249,6 +249,19 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   const [emptyFrom, setEmptyFrom] = useState<string | null>(saved?.emptyFrom ?? null);
   const [otherFor, setOtherFor] = useState<string | null>(null); // messaggio in cui l'agente scrive a mano cos'e' la foto
   const [roomOther, setRoomOther] = useState<{ id: string; v: string } | null>(null); // pill "Altro" della stanza, diventa un campo
+  // campo "Altro, lo scrivo io" sotto la foto: si chiude solo se resta vuoto e il cursore e' uscito davvero
+  // (mentre il messaggio si riscrive con l'animazione ci sono due copie del campo: la seconda rubava il cursore)
+  const otherInput = (id: string) => (
+    <input autoFocus placeholder="es. una mansarda" maxLength={40} className="w-40 border-b border-ink/30 bg-transparent font-bold outline-none placeholder:font-normal placeholder:text-muted/60"
+      onKeyDown={e => {
+        if (e.key === 'Escape') setOtherFor(null);
+        if (e.key !== 'Enter') return;
+        const v = e.currentTarget.value.trim();
+        if (v) { setMsgs(ms => ms.map(x => (x.id === id && x.role === 'user' ? { ...x, seen: `custom:${v}` } : x))); setScene('interno'); setKind(null); }
+        setOtherFor(null);
+      }}
+      onBlur={e => { const el = e.currentTarget; setTimeout(() => { if (!el.value.trim() && !(document.activeElement as HTMLElement | null)?.matches?.('input[placeholder="es. una mansarda"]')) setOtherFor(null); }, 0); }} />
+  );
   // chiusura di Modifica: 300 ms in cui selezione e campo sfumano mentre il pulsante torna Scarica e il divisore rientra
   const [zoneClosing, setZoneClosing] = useState(false);
   const [msgs, setMsgs] = useState<Msg[]>(saved?.msgs ?? []);
@@ -1029,28 +1042,21 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                   {/* quando riconosce la foto il messaggio si riscrive parola per parola (key = cosa ha visto) */}
                   <AutoSize><LightSwap swapKey={m.seen ?? 'caricata'}>
                     <p>{m.seen === 'unknown' ? <>Non riesco a capire che stanza è:{' '}
-                      <Dropdown value="" options={SEEN_OPTIONS} className="rounded-full bg-brand/10 px-2.5 py-0.5 font-bold text-brand ring-2 ring-brand/40" onChange={v => {
-                        if (v === 'other') { setOtherFor(m.id); setMsgs(ms => ms.map(x => (x.id === m.id && x.role === 'user' ? { ...x, seen: 'custom:' } : x))); return; }
+                      {otherFor === m.id ? otherInput(m.id) : <Dropdown value="" options={SEEN_OPTIONS} className="rounded-full bg-brand/10 px-2.5 py-0.5 font-bold text-brand ring-2 ring-brand/40" onChange={v => {
+                        if (v === 'other') { setOtherFor(m.id); return; }
                         setMsgs(ms => ms.map(x => (x.id === m.id && x.role === 'user' ? { ...x, seen: v } : x)));
                         setScene(v.startsWith('scene:') ? (v.slice(6) as Scene) : 'interno'); setKind(v);
-                      }}>sceglila tu</Dropdown>{'. '}Così la arredo giusta.</> : m.seen ? <>Sembra{' '}
+                      }}>sceglila tu</Dropdown>}, così la arredo giusta.</> : m.seen ? <>Sembra{' '}
                       {otherFor === m.id ? (
                         // "Altro": campo al posto della voce, Invio conferma, Esc annulla
-                        <input autoFocus placeholder="es. una mansarda" maxLength={40} className="w-40 border-b border-ink/30 bg-transparent font-bold outline-none placeholder:font-normal placeholder:text-muted/60"
-                          onKeyDown={e => {
-                            if (e.key === 'Escape') setOtherFor(null);
-                            if (e.key !== 'Enter') return;
-                            const v = e.currentTarget.value.trim();
-                            if (v) { setMsgs(ms => ms.map(x => (x.id === m.id && x.role === 'user' ? { ...x, seen: `custom:${v}` } : x))); setScene('interno'); setKind(null); }
-                            setOtherFor(null);
-                          }} onBlur={() => setOtherFor(null)} />
+                        otherInput(m.id)
                       ) : (
                       <Dropdown value={m.seen} options={SEEN_OPTIONS} className="font-bold" onChange={v => {
                         if (v === 'other') { setOtherFor(m.id); return; }
                         setMsgs(ms => ms.map(x => (x.id === m.id && x.role === 'user' ? { ...x, seen: v } : x)));
                         setScene(v.startsWith('scene:') ? (v.slice(6) as Scene) : 'interno'); setKind(v);
                       }}>{seenLabel(m.seen)}</Dropdown>
-                      )}. </> : 'Foto caricata. '}Cosa vuoi cambiare?</p>
+                      )}. </> : 'Foto caricata. '}{m.seen === 'unknown' ? '' : 'Cosa vuoi cambiare?'}</p>
                   </LightSwap></AutoSize>
                 </div>
               )}

@@ -17,7 +17,7 @@ const SCENES = ['interno', 'esterno', 'giardino', 'planimetria']
 const ROOMS = ['openspace', 'soggiorno', 'cucina', 'camera', 'cameretta', 'bagno', 'sala', 'studio', 'ingresso', 'corridoio', 'balcone', 'cantina', 'box', 'altro']
 const STATES = ['vuota', 'disordinata', 'datata', 'arredata']
 const PROMPT = `Classifica questa foto immobiliare. Rispondi SOLO con JSON {"scene": "...", "room": "...", "state": "..."}.
-scene: interno (stanza, anche balconi/logge/terrazzi di appartamento), esterno (facciata vista da fuori), giardino (giardino o cortile a terra), planimetria (disegno della pianta).
+scene: interno (stanza, anche balconi/logge/terrazzi di appartamento), esterno (facciata vista da fuori), giardino (giardino o cortile a terra), planimetria (disegno tecnico della pianta di una casa, con muri e stanze), nessuna (NON e' una foto o una pianta di un immobile: sfondi, grafiche astratte, schermate, persone, documenti, oggetti).
 room (solo per interno, altrimenti ""): ${ROOMS.join(', ')}. openspace = cucina e zona giorno nello stesso ambiente (anche separate da penisola o muretto): SOLO se nella foto si vedono davvero mobili o elettrodomestici della cucina (piano cottura, lavello, pensili, frigo, cappa, penisola con piano di lavoro). Un tavolo da pranzo con le sedie NON e' una cucina: divano + tavolo da pranzo senza cucina visibile = soggiorno. Balconi e terrazzi = balcone.
 state (solo per interno, altrimenti ""): vuota (senza veri mobili), disordinata (arredata ma in disordine), datata (mobili/finiture vecchi), arredata (arredata e in ordine).`
 
