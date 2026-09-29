@@ -73,7 +73,7 @@ type Msg =
   | { id: string; role: 'user'; text?: string; image?: string; video?: string; seen?: string | null; region?: Region; style?: { src: string; author?: string; authorUrl?: string } }
   | { id: string; role: 'ai'; before: string; out: string | null; busy: boolean; reveal: Reveal; err?: string; text: string; req?: EditRequest }
   // video in chat: UN messaggio che si trasforma a ogni scelta (template, arredo, due anteprime, video)
-  | { id: string; role: 'video'; step: 'template' | 'anim' | 'upload' | 'vchoice' | 'pick' | 'exit' | 'mode' | 'previews' | 'frames' | 'render'; photo: string; anim?: VideoAnim; picks: VideoPick[]; previews?: (string | null)[]; frames?: { token: string; before: string; after: string; src: string; styled?: string }; url?: string; err?: string; job?: string; restyle?: { label: string; req: { style?: string; prompt?: string } }; redone?: boolean; agent?: { busy?: string; up?: string; video?: string; room?: string; at?: number; duration?: number; exit?: boolean; steady?: boolean; styled?: string; landscape?: boolean } };
+  | { id: string; role: 'video'; step: 'template' | 'anim' | 'upload' | 'vchoice' | 'pick' | 'exit' | 'mode' | 'previews' | 'frames' | 'render'; photo: string; anim?: VideoAnim; picks: VideoPick[]; previews?: (string | null)[]; frames?: { token: string; before: string; after: string; src: string; styled?: string }; url?: string; err?: string; job?: string; restyle?: { label: string; req: { style?: string; prompt?: string } }; redone?: boolean; agent?: { busy?: string; up?: string; token?: string; video?: string; room?: string; at?: number; duration?: number; exit?: boolean; steady?: boolean; styled?: string; landscape?: boolean } };
 
 // Macro template video, ognuno con i suoi stili di animazione (card con anteprima in loop)
 type VideoAnim = 'popup' | 'gravity' | 'particles' | 'stopmotion' | 'cantiere' | 'daynight' | 'camera' | 'agent';
@@ -433,7 +433,8 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
     const picks: VideoPick[] = styled ? m.picks : [...m.picks, pick === 'Stanza com’è' ? { label: pick, icon: 'keep' } : { label: pick, icon: 'photo', src: photo }];
     if (m.anim === 'agent' && m.agent?.up && styled) {
       patchV(m.id, { step: 'render', picks, err: undefined, agent: { ...m.agent, styled } });
-      const token = await (agentUps.current.get(m.agent.up) ?? Promise.resolve(null));
+      // token del video convertito: gia' nel messaggio (anche dopo una ricarica) o dal caricamento in corso
+      const token = m.agent.token ?? await (agentUps.current.get(m.agent.up) ?? Promise.resolve(null));
       if (!token) { patchV(m.id, { err: 'Il video non si è caricato, riprova.' }); return; }
       const d = await authFetch('/api/platform/agent-video', { method: 'POST', headers: QUIET, body: JSON.stringify({ phase: 'render', token, at: m.agent.at, styled, room: m.agent.room }) }).then(r => r.json()).catch(() => ({}));
       if (!d.job) { patchV(m.id, { err: d.error === 'no_credits' ? NO_CREDITS : 'Video non riuscito, riprova.' }); return; }
@@ -493,7 +494,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
       if (!put?.ok) return null;
       const p = await authFetch('/api/platform/agent-video', { method: 'POST', headers: QUIET, body: JSON.stringify({ phase: 'prepare', key: u.key, ...(project ? { projectId: project } : {}) }) }).then(r => r.json()).catch(() => ({}));
       // il video locale (blob) non sopravvive a una ricarica: messaggio dell'agente e anteprima passano a quello sul server
-      if (p.video) setMsgs(ms => ms.map(x => (x.id === um && x.role === 'user' ? { ...x, video: p.video } : x.role === 'video' && x.agent?.up === up && x.agent.video?.startsWith('blob:') ? { ...x, agent: { ...x.agent, video: p.video } } : x)));
+      if (p.video) setMsgs(ms => ms.map(x => (x.id === um && x.role === 'user' ? { ...x, video: p.video } : x.role === 'video' && x.agent?.up === up ? { ...x, agent: { ...x.agent, token: p.token, ...(x.agent.video?.startsWith('blob:') ? { video: p.video } : {}) } } : x)));
       return (p.token as string) ?? null;
     })());
     patchV(m.id, { step: next, err: undefined, agent: { up, video: local, busy: 'Guardo il video…' } });
