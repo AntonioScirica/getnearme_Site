@@ -106,7 +106,7 @@ export default function PlatformApp({ userData }: { userData: UserData }) {
             {/* crediti sempre in vista in alto a destra: in chat ogni azione ne spende */}
             <div className="ml-auto flex items-center gap-2">
               <button type="button" onClick={() => window.dispatchEvent(new Event('agenteimmo:new-chat'))}
-                className="flex h-10 items-center gap-1.5 rounded-full px-3 text-sm font-medium text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink"><SquarePen size={16} /> Nuova chat</button>
+                className="flex h-10 items-center gap-1.5 rounded-full bg-white px-4 text-sm font-semibold ring-1 ring-line ease-smooth transition-shadow hover:shadow-md"><SquarePen size={15} className="text-muted" /> Nuova chat</button>
               <CreditsPill />
             </div>
           </>) : <>
