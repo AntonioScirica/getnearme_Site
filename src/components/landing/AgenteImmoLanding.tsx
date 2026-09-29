@@ -197,6 +197,7 @@ const VIDEO_TEMPLATES = [
   ['stopmotion', 'Stop-motion', 'Stop-motion', 'Compaiono a scatti, uno per volta', 'Appear frame by frame', VIDEO_SAMPLES.stopmotion],
   ['cantiere', 'Cantiere', 'Construction', 'Dal cantiere alla casa finita', 'From building site to finished home', VIDEO_SAMPLES.cantiere],
   ['daynight', 'Giorno e notte', 'Day to night', 'Scende la sera, si accendono le luci', 'Evening falls, lights come on', VIDEO_SAMPLES.daynight],
+  ['camera', 'Camminata', 'Walkthrough', 'Entri nella stanza con una ripresa lenta', 'A slow walk into the room', VIDEO_SAMPLES.camera],
 ] as const;
 const DEMO_STYLES = [['modern', 'Moderno', 'Modern'], ['nordic', 'Nordico', 'Nordic'], ['empty', 'Svuota', 'Empty it']] as const;
 // ?simula=1: prova senza AI e senza costi (il server la accetta solo dagli IP senza limiti e in sviluppo).

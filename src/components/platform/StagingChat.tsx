@@ -93,8 +93,8 @@ const VIDEO_TEMPLATES: (VideoCard & { anims: (VideoCard & { id: VideoAnim })[] }
   { id: 'giorno-notte', label: 'Giorno e notte', desc: 'Scende la sera e si accendono le luci', sample: VIDEO_SAMPLES.daynight, anims: [
     { id: 'daynight', label: 'Giorno e notte', desc: 'Scende la sera e si accendono le luci', sample: VIDEO_SAMPLES.daynight },
   ] },
-  { id: 'camera', label: 'Movimento camera', desc: 'La stanza prende vita con una ripresa lenta', sample: VIDEO_SAMPLES.camera, anims: [
-    { id: 'camera', label: 'Movimento camera', desc: 'La stanza prende vita con una ripresa lenta', sample: VIDEO_SAMPLES.camera },
+  { id: 'camera', label: 'Camminata', desc: 'Entri nella stanza con una ripresa lenta', sample: VIDEO_SAMPLES.camera, anims: [
+    { id: 'camera', label: 'Camminata', desc: 'Entri nella stanza con una ripresa lenta', sample: VIDEO_SAMPLES.camera },
   ] },
 ];
 const VIDEO_STYLES = [{ id: 'modern', label: 'Moderno' }, { id: 'nordic', label: 'Nordico' }, { id: 'industrial', label: 'Luxury' }, { id: 'boho', label: 'Boho' }];
