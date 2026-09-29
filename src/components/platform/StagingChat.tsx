@@ -794,7 +794,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                               onMouseMove={tiltMove} onMouseLeave={e => tiltReset(e.currentTarget)} className="tilt group relative flex w-full flex-col overflow-hidden rounded-[28px] bg-white p-2 text-left shadow-[0_1px_2px_rgba(0,0,0,.04),0_8px_24px_-12px_rgba(0,0,0,.12)] ring-1 ring-black/5 hover:shadow-[0_2px_4px_rgba(0,0,0,.04),0_30px_50px_-20px_rgba(0,0,0,.25)] active:scale-[0.985] disabled:pointer-events-none disabled:opacity-50 disabled:grayscale">
                               <span className="sheen pointer-events-none absolute inset-0 z-20" />
                               <video src={t.sample} autoPlay loop muted playsInline className="aspect-video w-full rounded-[20px] object-cover" />
-                              <span className="absolute right-4 top-4 z-30 rounded-full bg-white/95 px-2.5 py-1 text-xs font-semibold text-ink shadow-sm">{m.step === 'template' ? Math.min(...(t as (typeof VIDEO_TEMPLATES)[number]).anims.map(a => videoCr(a.id))) : videoCr(t.id as VideoAnim)} cr</span>
+                              <span className="absolute right-4 top-4 z-30 rounded-full bg-white/95 px-2.5 py-1 text-xs font-semibold text-ink shadow-sm inline-flex items-center gap-1">{m.step === 'template' ? Math.min(...(t as (typeof VIDEO_TEMPLATES)[number]).anims.map(a => videoCr(a.id))) : videoCr(t.id as VideoAnim)}<Coins size={12} className="shrink-0" aria-label="crediti" /></span>
                               <span className="block px-3 pt-3 font-semibold">{t.label}</span>
                               <span className="block px-3 pb-3 text-xs text-muted">{t.desc}</span>
                               {off && <span className="absolute left-4 top-4 z-30 rounded-full bg-white/95 px-3 py-1 text-xs font-semibold text-ink shadow-sm">{outside ? 'Solo foto esterne' : 'Solo stanze'}</span>}
@@ -833,7 +833,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                               className="tilt group relative flex w-full flex-col overflow-hidden rounded-[28px] bg-white p-2 text-left shadow-[0_1px_2px_rgba(0,0,0,.04),0_8px_24px_-12px_rgba(0,0,0,.12)] ring-1 ring-black/5 hover:shadow-[0_2px_4px_rgba(0,0,0,.04),0_30px_50px_-20px_rgba(0,0,0,.25)] active:scale-[0.985]">
                               <span className="sheen pointer-events-none absolute inset-0 z-20" />
                               <video src={t.sample} autoPlay loop muted playsInline className="aspect-video w-full rounded-[20px] object-cover" />
-                              <span className="absolute right-4 top-4 z-30 rounded-full bg-white/95 px-2.5 py-1 text-xs font-semibold text-ink shadow-sm">{videoCr(t.anims[0].id)} cr</span>
+                              <span className="absolute right-4 top-4 z-30 rounded-full bg-white/95 px-2.5 py-1 text-xs font-semibold text-ink shadow-sm inline-flex items-center gap-1">{videoCr(t.anims[0].id)}<Coins size={12} className="shrink-0" aria-label="crediti" /></span>
                               <span className="block px-3 pt-3 font-semibold">{t.label}</span>
                               <span className="block px-3 pb-3 text-xs text-muted">{t.desc}</span>
                             </button>
