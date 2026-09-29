@@ -14,6 +14,7 @@ import { deleteKeys, uploadFile, uploadJpeg } from '@/lib/r2'
 import { logUsage } from '@/lib/ai'
 import { AI_MOCK, mockDelay } from '@/lib/aiMock'
 import { MUSIC_CATALOG } from '@/lib/aiVideoMusic'
+import { measureShift } from '@/lib/align'
 
 // Video "i mobili compaiono" da una foto arredata (risultato AI o foto vera dell'agente).
 // Ricetta del 28/09/2026 (prove su Veo 3.1 standard e fast, misurate fotogramma per fotogramma):
@@ -323,10 +324,21 @@ export async function pollVideo(owner: string, job: string): Promise<VideoResult
     const clip = `[0:v]trim=end=${cut.toFixed(2)},setpts=(PTS-STARTPTS)/${speed},${popup ? 'reverse,' : ''}fps=30,format=yuv420p`
     if (veo) {
       const photo = join(dir, 'finale.jpg')
-      await writeFile(photo, Buffer.from(await (await fetch(`${process.env.R2_PUBLIC_URL}/videos/${owner}/${name}-finale.jpg`)).arrayBuffer()))
+      const photoBuf = Buffer.from(await (await fetch(`${process.env.R2_PUBLIC_URL}/videos/${owner}/${name}-finale.jpg`)).arrayBuffer())
+      // Veo a fine animazione ha la camera un po' spostata rispetto alla foto vera (Dall'alto: fino al 5-6% in verticale,
+      // 29/09): la foto compariva piu' in alto e poi "scattava". Si misura lo spostamento sull'ultimo fotogramma tenuto,
+      // la foto entra spostata come Veo e durante il fermo scivola al suo posto (ease), insieme allo zoom.
+      const last = await ffmpeg(['-ss', (popup ? 0.02 : Math.max(0, cut - 0.05)).toFixed(2), '-i', raw, '-frames:v', '1', '-f', 'image2', '-c:v', 'png', '-'])
+      const sh = await measureShift(photoBuf, last, 0.08).catch(() => ({ dx: 0, dy: 0, gain: 0 }))
+      const { width: PW = 1280, height: PH = 720 } = await sharp(photoBuf).metadata()
+      const px = sh.gain > 0.02 ? Math.round(sh.dx * PW) : 0, py = sh.gain > 0.02 ? Math.round(sh.dy * PH) : 0
+      const L = Math.abs(px), T = Math.abs(py)
+      await writeFile(photo, L || T ? await sharp(photoBuf).extend({ left: L, right: L, top: T, bottom: T, extendWith: 'copy' }).jpeg({ quality: 95 }).toBuffer() : photoBuf)
+      const ease = `(0.5-0.5*cos(PI*min(max((t-${XFADE})/${HOLD}\\,0)\\,1)))`
+      const slide = L || T ? `crop=${PW}:${PH}:'${L}-(${px})*(1-${ease})':'${T}-(${py})*(1-${ease})',` : ''
       await ffmpeg(['-y', '-i', raw, '-loop', '1', '-t', (HOLD + XFADE).toFixed(2), '-i', photo, '-i', music, '-filter_complex',
         // la foto e' gia' W x H come i fotogrammi di Veo (720p); niente scale2ref: con ffmpeg 7 resta appeso
-        `${clip}[c];[1:v]fps=30,format=yuv420p[p];[c][p]xfade=transition=fade:duration=${XFADE}:offset=${(shown - XFADE).toFixed(2)},${zoom}[2:a]${audio}`,
+        `${clip}[c];[1:v]fps=30,${slide}format=yuv420p[p];[c][p]xfade=transition=fade:duration=${XFADE}:offset=${(shown - XFADE).toFixed(2)},${zoom}[2:a]${audio}`,
         '-map', '[v]', '-map', '[a]', '-c:v', 'libx264', '-crf', '18', '-preset', 'medium', '-c:a', 'aac', '-b:a', '128k', '-shortest', '-movflags', '+faststart', final])
     } else {
       await ffmpeg(['-y', '-i', raw, '-i', music, '-filter_complex',

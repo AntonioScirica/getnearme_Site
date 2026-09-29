@@ -20,9 +20,10 @@ function corr(a: Float32Array, b: Float32Array, w: number, h: number, dx: number
 }
 
 // spostamento del risultato rispetto all'originale, in frazione della foto (dx > 0 = risultato spostato a destra)
-export async function measureShift(orig: Buffer, out: Buffer): Promise<{ dx: number; dy: number; gain: number }> {
+// max: spostamento massimo cercato, in frazione della foto (3% per le foto AI; di piu' per i fotogrammi di Veo)
+export async function measureShift(orig: Buffer, out: Buffer, max = 0.03): Promise<{ dx: number; dy: number; gain: number }> {
   const { width = 1, height = 1 } = await sharp(orig).rotate().metadata()
-  const h = Math.round(W * height / width), m = Math.ceil(W * 0.03) + 1
+  const h = Math.round(W * height / width), m = Math.ceil(W * max) + 1
   const [a, b] = await Promise.all([edges(orig, W, h), edges(out, W, h)])
   const zero = corr(a, b, W, h, 0, 0, m)
   let best = { dx: 0, dy: 0, c: zero }
