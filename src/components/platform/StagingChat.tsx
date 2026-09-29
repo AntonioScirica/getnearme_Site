@@ -415,7 +415,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
     touch();
     const picks = redo ? m.picks : [...m.picks, { label, icon: 'style' as const }];
     // intanto il passo Prima/Dopo in attesa (prima mostrava "Creo il video" e sembrava saltare l'approvazione)
-    patchV(m.id, { step: 'frames', frames: undefined, picks, err: undefined, restyle: { label, req }, redone: redo });
+    patchV(m.id, { step: 'render', frames: undefined, picks, err: undefined, restyle: { label, req }, redone: redo });
     // quantita' di arredo: quella scelta per la foto da cui parte il video (se era un arredo), altrimenti Normale
     const dens = msgs.find((x): x is Extract<Msg, { role: 'ai' }> => x.role === 'ai' && x.out === m.photo)?.req?.density;
     const body = { ...(project ? { projectId: project } : {}), ...(kind ? { room: seenLabel(kind) } : {}), ...(m.photo.startsWith('data:') ? { imageBase64: m.photo } : { imageUrl: m.photo }), scene: 'interno', ...(dens ? { density: dens } : {}), ...req, variant: -1, preview: true, ...(sourcePhoto && sourcePhoto !== m.photo ? { reference: sourcePhoto } : {}) };
@@ -455,11 +455,14 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
       return;
     }
     // foto nel nuovo stile: resta dietro le quinte (la scelta "Moderno" e' gia' tra le scelte, niente miniatura)
-    patchV(m.id, { step: 'frames', frames: undefined, ...(styled ? {} : { photo }), picks, err: undefined });
+    patchV(m.id, { step: 'render', frames: undefined, ...(styled ? {} : { photo }), picks, err: undefined });
     const res = await authFetch('/api/platform/video', { method: 'POST', headers: QUIET, body: JSON.stringify({ phase: 'frames', ...(photo.startsWith('data:') ? { imageBase64: photo } : { imageUrl: photo }), ...(styled ? { styled } : {}), anim: m.anim, ...(project ? { projectId: project } : {}) }) }).catch(() => null);
     const d = res ? await res.json().catch(() => ({})) : {};
     if (!d.frames) { patchV(m.id, { err: d.error === 'no_credits' ? NO_CREDITS : d.error === 'timeout' ? 'La GPU si sta avviando, riprova tra un minuto.' : 'Non sono riuscito a preparare la stanza vuota, riprova.' }); return; }
-    patchV(m.id, { frames: { token: d.frames, before: d.before, after: d.after, src: photo, styled } });
+    // Prima e Dopo pronti: il video parte subito, senza chiedere conferma (29/09)
+    const frames = { token: d.frames, before: d.before, after: d.after, src: photo, styled };
+    patchV(m.id, { frames });
+    await renderVideo({ ...m, frames, anim: m.anim });
   };
   // fase 2: Veo e montaggio
   // Con te in video: il video pesa (decine di MB) e si carica in sottofondo (URL firmato + conversione sul server) mentre
@@ -912,7 +915,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                               )}
                             </>}
                         </div>
-                        {m.err && <ErrLine err={m.err} className="pt-3" />}
+                        {m.err && <div className="flex flex-wrap items-center gap-3 pt-3"><ErrLine err={m.err} /><button onClick={() => patchV(m.id, { step: 'mode', err: undefined, frames: undefined, job: undefined, picks: m.picks.filter(p => p.icon !== 'style') })} className="rounded-full bg-white px-4 py-2 text-[13px] font-medium text-ink/80 shadow-sm ring-1 ring-inset ring-black/10 hover:bg-canvas">Riprova</button></div>}
                         {/* scelte fatte sotto il video, Scarica a destra: si attiva quando il video e' pronto */}
                         <div className="flex items-center gap-2 pt-3">
                           <div className="flex min-w-0 flex-1 flex-wrap gap-2">
