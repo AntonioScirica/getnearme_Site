@@ -897,17 +897,19 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                       </div>
                     )}
                     {m.step === 'render' && (
-                      <div className="mx-auto" style={{ maxWidth: (ratios[m.photo] ?? 1.5) >= 1 ? 720 : 340 }}>
-                        <div className="relative overflow-hidden rounded-[20px] bg-white" style={{ aspectRatio: (ratios[m.photo] ?? 1.5) >= 1 ? 16 / 9 : 9 / 16 }}>
+                      // sempre un riquadro 16:9, non troppo grande: il video verticale sta intero al centro, ai lati la sua foto sfocata
+                      <div className="mx-auto" style={{ maxWidth: 560 }}>
+                        <div className="relative aspect-video overflow-hidden rounded-[20px] bg-ink">
+                          {(ratios[m.photo] ?? 1.5) < 1 && <img src={m.photo} alt="" className="absolute inset-0 h-full w-full scale-110 object-cover opacity-60 blur-2xl" />}
                           {m.url
-                            ? <video src={m.url} autoPlay loop muted playsInline controls className="blur-in absolute inset-0 h-full w-full object-cover" />
+                            ? <video src={m.url} autoPlay loop muted playsInline controls className="blur-in absolute inset-0 h-full w-full object-contain" />
                             : <>
-                              <img src={m.photo} alt="" className={`absolute inset-0 h-full w-full scale-105 object-cover ${m.err ? 'opacity-40' : 'blur-md'}`} />
+                              <img src={m.photo} alt="" className={`absolute inset-0 h-full w-full scale-105 ${(ratios[m.photo] ?? 1.5) < 1 ? 'object-contain' : 'object-cover'} ${m.err ? 'opacity-40' : 'blur-md'}`} />
                               {!m.err && (
                                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/20 text-white">
                                   <Loader2 size={22} className="animate-spin" />
                                   {/* tempo passato e quanto ci vuole di solito (Kling molto piu' lento di Veo) */}
-                                  <span className="text-xs font-medium text-white/85"><Elapsed className="text-white" /> · di solito {m.anim === 'popup' ? 'circa 2 min' : '3-9 min'}</span>
+                                  <span className="text-xs font-medium text-white/85"><Elapsed className="text-white" /> · di solito {m.anim === 'cantiere' ? '3-9 min' : 'circa 2 min'}</span>
                                 </div>
                               )}
                             </>}
