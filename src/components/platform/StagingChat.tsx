@@ -545,8 +545,6 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
       const v = r ? await r.json().catch(() => ({})) : {};
       if (v.url) {
         patchV(id, { url: v.url });
-        // Con te in video: in chat anche la stanza (fotogramma del video) e la stanza arredata, come una foto normale
-        setMsgs(ms => { const vm = ms.find((x): x is VideoMsg => x.id === id && x.role === 'video'); const a = vm?.agent; if (!a?.room || !a.styled) return ms; setBase(a.styled); return [...ms, { id: uid(), role: 'ai', before: a.room, out: a.styled, busy: false, reveal: 'slider', text: 'Stanza dal tuo video' } as Msg]; });
         toBottom(); return;
       }
       if (v.error) { patchV(id, { err: fail }); return; }

@@ -9,6 +9,8 @@ import { s3 } from '@/lib/s3'
 import { uploadFile, uploadJpeg } from '@/lib/r2'
 import { logUsage } from '@/lib/ai'
 import { alignTo, measureShift } from '@/lib/align'
+import { spawn } from 'child_process'
+import ffmpegPath from 'ffmpeg-static'
 import { fal, ffmpeg, markPending, sign } from '@/lib/videoJob'
 
 // Template "Con te in video" (29/09, prova in ~/Desktop/prove-video-template/agente): l'agente parla in camera, esce
@@ -150,6 +152,13 @@ export async function montageAgent(o: { dir: string; raw: string; music: string;
   await Promise.all([writeFile(agent, Buffer.from(a)), writeFile(photo, Buffer.from(p))])
   const { width: W = 720, height: H = 1280 } = await sharp(Buffer.from(p)).metadata()
   const CUT = meta.at, SKIP = 0.6, SPD = 1.5, XF = 0.4, HOLD = 2.5
+  // voce: se c'e' (picco sopra -35 dB) si porta a un volume da reel (-16 LUFS), se no si lascia com'e' (alzarla alzerebbe
+  // solo il fruscio). 29/09: un video girato col telefono lontano aveva la voce a -43 dB e sembrava "abbassata"
+  const peak = await new Promise<number>(res => {
+    const p = spawn(ffmpegPath as unknown as string, ['-hide_banner', '-t', CUT.toFixed(2), '-i', agent, '-af', 'volumedetect', '-vn', '-f', 'null', '-'])
+    let err = ''; p.stderr.on('data', c => { err += c }); p.on('close', () => res(Number(err.match(/max_volume: (-?[\d.]+) dB/)?.[1] ?? -99)))
+  })
+  const voice = peak > -35 ? 'loudnorm=I=-16:TP=-1.5:LRA=11,' : ''
   const K = (5 - SKIP) / SPD, T = CUT + K + HOLD
   const z = `(1+0.05*max(in/30-${CUT}\\,0)/${(K + HOLD).toFixed(2)})`, off = `((1-1/${z})/2)`
   const zoom = `perspective=x0='W*${off}':y0='H*${off}':x1='W-W*${off}':y1='H*${off}':x2='W*${off}':y2='H-H*${off}':x3='W-W*${off}':y3='H-H*${off}':interpolation=cubic:eval=frame`
@@ -157,6 +166,6 @@ export async function montageAgent(o: { dir: string; raw: string; music: string;
     `[0:v]trim=end=${CUT},setpts=PTS-STARTPTS,fps=30,scale=${W}:${H},setsar=1,format=yuv420p[a];` +
     `[1:v]trim=start=${SKIP},setpts=(PTS-STARTPTS)/${SPD},fps=30,scale=${W}:${H},setsar=1,format=yuv420p[k];[2:v]fps=30,scale=${W}:${H},setsar=1,format=yuv420p[p];` +
     `[k][p]xfade=transition=fade:duration=${XF}:offset=${(K - XF).toFixed(2)}[kp];[a][kp]concat=n=2:v=1:a=0,${zoom},format=yuv420p[v];` +
-    `[0:a]atrim=end=${CUT},asetpts=PTS-STARTPTS,apad[vo];[3:a]atrim=end=${(K + HOLD).toFixed(2)},afade=t=in:d=0.3,afade=t=out:st=${(K + HOLD - 1.2).toFixed(2)}:d=1.2,volume=0.8,adelay=${Math.round(CUT * 1000)}|${Math.round(CUT * 1000)}[mu];[vo][mu]amix=inputs=2:duration=longest:normalize=0,atrim=end=${T.toFixed(2)}[au]`,
+    `[0:a]atrim=end=${CUT},asetpts=PTS-STARTPTS,${voice}aresample=48000,apad[vo];[3:a]atrim=end=${(K + HOLD).toFixed(2)},afade=t=in:d=0.3,afade=t=out:st=${(K + HOLD - 1.2).toFixed(2)}:d=1.2,volume=0.8,adelay=${Math.round(CUT * 1000)}|${Math.round(CUT * 1000)}[mu];[vo][mu]amix=inputs=2:duration=longest:normalize=0,atrim=end=${T.toFixed(2)}[au]`,
     '-map', '[v]', '-map', '[au]', '-c:v', 'libx264', '-crf', '18', '-preset', 'medium', '-c:a', 'aac', '-b:a', '160k', '-movflags', '+faststart', '-t', T.toFixed(2), o.final])
 }
