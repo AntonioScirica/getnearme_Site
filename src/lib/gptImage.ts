@@ -20,16 +20,28 @@ export async function gptImage(o: { userId: string; image: string; prompt: strin
     const src = o.image.startsWith('data:') ? Buffer.from(o.image.split(',')[1] ?? '', 'base64') : Buffer.from(await (await fetch(o.image, { signal: AbortSignal.timeout(20_000) })).arrayBuffer())
     const { width = 0, height = 0 } = await sharp(src).rotate().metadata()
     const size = width > height * 1.15 ? '1536x1024' : height > width * 1.15 ? '1024x1536' : '1024x1024'
-    const png = await sharp(src).rotate().png().toBuffer()
+    // GPT risponde solo in 3:2, 2:3 o 1:1: con una foto di altro formato (16:9 dei video, 4:3 delle macchine) la
+    // allungava inventando soffitto e pavimento, e il prima/dopo non combaciava piu'. Si mettono bande grigie piatte
+    // fino al formato di GPT, gli si chiede di lasciarle, e alla fine si ritagliano: inquadratura identica alla foto
+    // (prova del 29/09 su 16:9: bande tornate al pixel). La stessa cornice va sulle immagini di riferimento (zona in rosso).
+    const [TW, TH] = size.split('x').map(Number)
+    const fitW = Math.min(TW, Math.round(TH * width / height)), fitH = Math.min(TH, Math.round(TW * height / width))
+    const padX = Math.floor((TW - fitW) / 2), padY = Math.floor((TH - fitH) / 2)
+    const bars = padX > TW * 0.01 || padY > TH * 0.01
+    const frame = (b: Buffer, mode: 'photo' | 'mask' = 'photo') => bars
+      ? sharp(b).rotate().resize(fitW, fitH, { fit: 'fill' }).extend({ top: padY, bottom: TH - fitH - padY, left: padX, right: TW - fitW - padX, background: mode === 'mask' ? { r: 0, g: 0, b: 0, alpha: 1 } : '#808080' }).png().toBuffer()
+      : sharp(b).rotate().png().toBuffer()
+    const png = await frame(src)
     const form = new FormData()
     form.append('model', MODEL)
     form.append('image[]', new Blob([new Uint8Array(png)], { type: 'image/png' }), 'photo.png')
     for (const [i, x] of (o.extra ?? []).entries()) {
       const b = x.startsWith('data:') ? Buffer.from(x.split(',')[1] ?? '', 'base64') : Buffer.from(await (await fetch(x, { signal: AbortSignal.timeout(20_000) })).arrayBuffer())
-      form.append('image[]', new Blob([new Uint8Array(await sharp(b).rotate().png().toBuffer())], { type: 'image/png' }), `ref${i}.png`)
+      form.append('image[]', new Blob([new Uint8Array(await frame(b))], { type: 'image/png' }), `ref${i}.png`)
     }
-    form.append('prompt', o.kind === 'arreda' ? `${o.prompt} If there is a fitted kitchen, restyle it in the same style: new fronts, handles, worktop and backsplash matching the chosen style, keeping exactly the same layout, position, size and the same appliances in the same places.` : o.prompt)
-    if (o.mask) form.append('mask', new Blob([new Uint8Array(o.mask)], { type: 'image/png' }), 'mask.png')
+    const barsNote = bars ? ` The image has flat grey bars on ${padY ? 'the top and the bottom' : 'the left and the right'}: keep both bars exactly as they are, flat grey, and do not paint anything on them.` : ''
+    form.append('prompt', (o.kind === 'arreda' ? `${o.prompt} If there is a fitted kitchen, restyle it in the same style: new fronts, handles, worktop and backsplash matching the chosen style, keeping exactly the same layout, position, size and the same appliances in the same places.` : o.prompt) + barsNote)
+    if (o.mask) form.append('mask', new Blob([new Uint8Array(await frame(o.mask, 'mask'))], { type: 'image/png' }), 'mask.png')
     form.append('size', size)
     // GPT_IMAGE_QUALITY: 'low' (~0,005 $, provato il 28/09: quasi pari alla media), 'medium' (~0,041 $), 'high'
     form.append('quality', o.quality || process.env.GPT_IMAGE_QUALITY || 'low') // bassa: "top" anche per l'agente (28/09), 0,014 $
@@ -37,9 +49,14 @@ export async function gptImage(o: { userId: string; image: string; prompt: strin
     form.append('n', '1')
     const r = await fetch('https://api.openai.com/v1/images/edits', { method: 'POST', headers: { Authorization: `Bearer ${key}` }, body: form, signal: AbortSignal.timeout(120_000) })
     const d = await r.json() as { data?: { b64_json?: string }[]; error?: { message?: string } }
-    const out = d.data?.[0]?.b64_json ?? null
+    let out = d.data?.[0]?.b64_json ?? null
     ok = !!out
     if (!out) console.error('gpt image: nessuna immagine', r.status, d.error?.message ?? JSON.stringify(d).slice(0, 300))
+    // via le bande: si ritaglia la parte della foto e si riporta alla misura della foto di partenza
+    if (out && bars) {
+      const full = await sharp(Buffer.from(out, 'base64')).resize(TW, TH, { fit: 'fill' }).toBuffer() // in due passi: sharp non accetta resize + extract nella stessa catena
+      out = (await sharp(full).extract({ left: padX, top: padY, width: fitW, height: fitH }).resize(width, height, { fit: 'fill' }).jpeg({ quality: 93 }).toBuffer()).toString('base64')
+    }
     return out
   } catch (e) {
     console.error('gpt image', e)
