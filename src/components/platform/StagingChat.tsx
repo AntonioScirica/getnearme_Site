@@ -471,7 +471,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
     for (const x of msgs) if (x.role === 'video' && (x.step === 'exit' || x.step === 'pick') && x.agent?.video && !thumbs[x.agent.video]) {
       const up = x.agent.video;
       setThumbs(t => ({ ...t, [up]: [] }));
-      void videoThumbs(x.agent.video).then(list => setThumbs(t => ({ ...t, [up]: list }))).catch(() => {});
+      void videoThumbs(x.agent.video).then(list => setThumbs(t => ({ ...t, [up]: list }))).catch(() => setThumbs(t => ({ ...t, [up]: ['dead'] }))); // dead: video del browser perso con una ricarica
     }
   }, [msgs, thumbs]);
   const agentUpload = async (m: VideoMsg, f: File, userMsg?: string, next: 'exit' | 'vchoice' = 'exit') => {
@@ -796,12 +796,13 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                     {(m.step === 'exit' || m.step === 'pick') && (() => {
                       // come la scelta della copertina sul telefono: striscia di fotogrammi con una "lente" sul momento scelto,
                       // la parte prima scurita (li' c'e' l'agente), sotto - tempo + e il pulsante; a destra l'anteprima grande
-                      const a = m.agent, list = a?.video ? thumbs[a.video] ?? [] : [], dur = a?.duration ?? 10, at = a?.at ?? 0;
+                      const a = m.agent, raw = a?.video ? thumbs[a.video] ?? [] : [], dead = raw[0] === 'dead', list = dead ? [] : raw, dur = a?.duration ?? 10, at = a?.at ?? 0;
                       const pos = Math.min(100, Math.max(0, (at / dur) * 100));
                       const step = (d: number) => patchV(m.id, { agent: { ...a, at: Math.min(dur, Math.max(0, Math.round((at + d) * 100) / 100)) } });
                       return (
                         // anteprima sempre sopra in un riquadro 16:9 (il verticale intero, con lo sfondo sfocato), sotto la card
                         <div className="mx-auto grid max-w-2xl gap-4 px-1">
+                          {dead && <p className="rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-800">Il video non è più disponibile (la pagina è stata ricaricata mentre si caricava): premi Nuova chat e rimandalo.</p>}
                           <div className="min-w-0 rounded-[28px] bg-white p-4 shadow-sm ring-1 ring-black/5">
                             <div className="relative h-20 select-none">
                               <div className="absolute inset-0 flex overflow-hidden rounded-2xl bg-canvas">
