@@ -41,8 +41,6 @@ const FAL = 'https://queue.fal.run/fal-ai/veo3.1'
 const VEO_FLF = `${FAL}/${process.env.VEO_FAST === '0' ? '' : 'fast/'}first-last-frame-to-video`
 const HOLD = 2 // fermo finale sulla foto vera
 const XFADE = 0.35 // passaggio dall'ultimo fotogramma di Veo alla foto vera
-const GRAVITY_CUT = 6 // Dall'alto: taglio al fermo (calmPoint), mai oltre 6 s (i pezzi si posano entro 3-5 s, prove del 28/09)
-const GRAVITY_SPEED = 1.2 // Dall'alto un po' piu' veloce (scelto il 28/09 tra 1x, 1,2x, 1,5x e 2x)
 // Veo Lite primo/ultimo fotogramma su fal accetta SOLO 8 s (con 4 s rifiuta il lavoro: "Input should be '8s'").
 const VEO_SECONDS = 8
 
@@ -53,8 +51,11 @@ const NEG = 'text, letters, numbers, percent signs, captions, watermark, circles
 const NEG_VEO = 'camera movement, pan, tilt, zoom, dolly, camera shake, different camera angle, dissolve, cross-fade, fade in, double exposure, morphing, ghosting, semi-transparent objects, duplicated furniture, extra furniture, replaced furniture, objects sliding, objects floating, bouncing ball, springs, people, hands, tripod, camera equipment, text, letters, captions, watermark, lens flare, light trails, exposure change, flicker'
 // niente "tripod": Veo lo disegnava nella stanza (Particelle, 28/09)
 const STILL = 'The camera is completely static for the whole video: identical framing from the first frame to the last, no pan, no tilt, no zoom, no shake, never a different view of the room. '
-// Dall'alto, in avanti: pezzi grandi prima, poi i piccoli sopra
-const GRAVITY_PROMPT = (items: string) => `Satisfying real-estate home staging animation. ${STILL}The room starts completely empty, exactly as the first image, and stays perfectly still for half a second. Then the furniture drops in from above in a fast rhythm, several pieces in quick succession: each piece enters from the top edge of the frame already in its final size and orientation, falls straight down fast under gravity, and lands heavily in its exact final position with a tiny firm settle, then never moves again. Pictures and wall art fall the same way and hook onto the wall. First the big pieces, then the small items drop onto them, in this order: ${items}. Everything, including the pictures on the walls, has landed by the fourth second; from then on nothing moves or changes at all. Nothing slides, nothing fades in, nothing morphs or changes shape, no object appears in a place other than its final position. Walls, ceiling, windows, curtains, built-in furniture, floor and daylight never change. The last frame is exactly the second image, with every piece in place.`
+// Dall'alto, AL CONTRARIO come Popup (29/09): Veo parte dalla foto arredata e fa salire via i mobili dall'alto; invertito,
+// cadono e atterrano esattamente sui mobili della foto. In avanti (stanza vuota -> foto) Veo inventava mobili suoi e la
+// dissolvenza finale sulla foto vera li cambiava tutti (prova del 29/09: al contrario l'ultimo fotogramma coincide con la foto).
+const GRAVITY_REVERSE_PROMPT = (items: string) => `Satisfying real-estate animation. ${STILL}The furnished room is shown perfectly still for half a second. Then the objects leave one after another in a quick steady rhythm: each object lifts straight up off the floor or off the wall, keeping exactly its size and orientation, accelerates straight upward and exits through the top edge of the frame in well under a second, leaving the bare floor and walls exactly as in the second image. Objects never slide sideways, never rotate, never fade, never shrink; nothing new ever appears. First the small items, then the furniture, in this order: ${items}. By the fifth second the room is completely empty and identical to the second image, and from then on nothing moves or changes at all. Walls, ceiling, windows, curtains, built-in furniture, floor and daylight never change.`
+const NEG_GRAVITY_REVERSE = `${NEG_VEO}, falling objects, new furniture appearing, objects rotating, objects shrinking, objects fading`
 // Popup e Particelle, al contrario: i piccoli spariscono prima, poi i mobili (invertito: mobili prima, poi gli oggetti sopra)
 const POPUP_PROMPT = (items: string) => `Satisfying real-estate animation. ${STILL}The furnished room is shown perfectly still for half a second. Then the objects vanish one after another in a quick steady rhythm, popping out of existence on the spot: each object swells very slightly for a few frames, then shrinks fast into a tiny point at its base and is gone, leaving the bare floor and walls exactly as in the second image. Objects never move, slide, fall or fly; nothing new ever appears. First the small items, then the furniture, in this order: ${items}. By the fifth second the room is completely empty and identical to the second image, and from then on nothing moves or changes at all. Walls, ceiling, windows, curtains, built-in furniture, floor and daylight never change.`
 const PARTICLES_PROMPT = (items: string) => `Magical real-estate animation. ${STILL}The furnished room is shown perfectly still for half a second. Then, one after another in a quick steady rhythm, each object transforms on the spot: its surface turns into a shimmering silhouette of glowing golden particles with exactly its shape, and that silhouette unravels into a few graceful swirling ribbons of golden sparkles that rise a short way into the air above it and fade out within a second, leaving the bare floor and walls exactly as in the second image. Only the objects change: everything else in the frame stays exactly as it is, and the objects still waiting for their turn stay perfectly still and unchanged. Objects never slide or fall; nothing new ever appears. First the small items, then the furniture, in this order: ${items}. By the sixth second the room is completely empty and identical to the second image, and from then on nothing moves or changes at all.`
@@ -243,11 +244,11 @@ export async function renderVideo(owner: string, logUser: string, frames: string
     const items = ((JSON.parse(txt.slice(txt.indexOf('{'), txt.lastIndexOf('}') + 1)) as { items?: string[] }).items ?? []).filter(x => typeof x === 'string')
     if (!items.length) return { error: 'nothing_to_animate', status: 422 }
 
-    const big = items.join(', then '), small = [...items].reverse().join(', then ')
-    const forward = fromEmpty ? false : anim === 'gravity'
-    const [first, last] = forward ? [emptyUrl, furnishedUrl] : [furnishedUrl, emptyUrl]
-    const text = fromEmpty ? prompt(small, anim) : anim === 'gravity' ? GRAVITY_PROMPT(big) : anim === 'particles' ? PARTICLES_PROMPT(small) : POPUP_PROMPT(small)
-    const negative = fromEmpty ? negFor(anim) : anim === 'gravity' ? NEG_VEO : anim === 'particles' ? NEG_PARTICLES : NEG_REVERSE
+    const small = [...items].reverse().join(', then ') // i piccoli spariscono prima, poi i mobili (invertito: mobili prima, poi gli oggetti sopra)
+    // tutti al contrario (foto arredata -> vuota, poi invertito nel montaggio): l'ultimo fotogramma e' la foto vera
+    const [first, last] = [furnishedUrl, emptyUrl]
+    const text = fromEmpty ? prompt(small, anim) : anim === 'gravity' ? GRAVITY_REVERSE_PROMPT(small) : anim === 'particles' ? PARTICLES_PROMPT(small) : POPUP_PROMPT(small)
+    const negative = fromEmpty ? negFor(anim) : anim === 'gravity' ? NEG_GRAVITY_REVERSE : anim === 'particles' ? NEG_PARTICLES : NEG_REVERSE
     const q = await fal(fromEmpty ? `${FAL}/lite/first-last-frame-to-video` : VEO_FLF, {
       first_frame_url: first, last_frame_url: last, prompt: text, negative_prompt: negative,
       duration: `${VEO_SECONDS}s`, aspect_ratio: landscape ? '16:9' : '9:16', resolution: '720p', generate_audio: false, seed: Math.floor(Math.random() * 1_000_000),
@@ -304,15 +305,15 @@ export async function pollVideo(owner: string, job: string): Promise<VideoResult
     if (parts.length > 1) await ffmpeg(['-y', '-i', parts[0], '-i', parts[1], '-filter_complex', '[0:v][1:v]concat=n=2:v=1:a=0[v]', '-map', '[v]', '-c:v', 'libx264', '-crf', '14', raw])
     else await rename(parts[0], raw)
     // Kling e Svuota (-f) vanno in avanti, clip intera, fermo sull'ultimo fotogramma.
-    // Dall'alto (-g): primi 6 s di Veo in avanti. Popup (-p) e Particelle (-d): Veo al contrario, clip fino a stanza vuota e ferma
-    // (il tempo morto finale di Veo diventerebbe un inizio fermo), poi invertita. Per tutti e due il video
+    // Popup (-p), Dall'alto (-g) e Particelle (-d): Veo al contrario, clip fino a stanza vuota e ferma (il tempo morto
+    // finale di Veo diventerebbe un inizio fermo), poi invertita: l'ultimo fotogramma e' la foto arredata. Poi il video
     // passa in 0,35 s alla foto vera e ci resta 2 s: finisce SEMPRE sulla foto dell'agente.
     const veo = /-(p|g|d)$/.test(name)
-    const popup = /-(p|d)$/.test(name) // al contrario
-    // Dall'alto: taglio dove l'animazione si ferma, mai oltre 6 s
+    const popup = veo // al contrario
+    // taglio dove l'animazione si ferma (stanza vuota)
     const gray = veo ? await ffmpeg(['-i', raw, '-vf', 'scale=320:180,format=gray', '-f', 'rawvideo', '-']) : Buffer.alloc(0)
-    const cut = kling ? KLING_SECONDS * parts.length : !veo ? VEO_SECONDS : Math.min(popup ? Infinity : GRAVITY_CUT, calmPoint(gray, 320 * 180))
-    const speed = veo && !popup ? GRAVITY_SPEED : 1
+    const cut = kling ? KLING_SECONDS * parts.length : !veo ? VEO_SECONDS : calmPoint(gray, 320 * 180)
+    const speed = 1
     const shown = cut / speed // durata della clip nel video finale
     const total = shown + HOLD, n = Math.round(total * 30)
     // zoom 3% ease-in-out solo nel finale, dal passaggio alla foto vera in poi (Kling e Svuota: ultimi 2 s);
