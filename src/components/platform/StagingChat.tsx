@@ -902,7 +902,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                         ))}
                         {roomOther?.id === m.id ? (
                           // "Altro": la pill diventa il campo e si allunga col testo; Invio conferma, Esc annulla
-                          <input autoFocus value={roomOther.v} placeholder="es. mansarda" maxLength={40} size={Math.max(10, roomOther.v.length + 1)}
+                          <input autoFocus value={roomOther.v} placeholder="es. mansarda" maxLength={40} size={Math.max(24, roomOther.v.length + 2)}
                             onChange={e => setRoomOther({ id: m.id, v: e.target.value })}
                             onKeyDown={e => {
                               if (e.key === 'Escape') setRoomOther(null);
