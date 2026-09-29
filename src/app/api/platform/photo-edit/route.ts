@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { buildStagingPrompt, roomKey, variantText, isRestyle, isFurnishing, roomLabel, STYLE_LOOK, type SceneType } from '@/lib/stagingPrompts'
 import { gptImage } from '@/lib/gptImage'
 import { overDailyCap } from '@/lib/ai'
-import { stagePrompt, markedCopy, zonePrompt } from '@/lib/nanoBanana'
+import { stagePrompt, markedCopy, zonePrompt, nanoBanana } from '@/lib/nanoBanana'
 import { canAfford, spend, type Action } from '@/lib/credits'
 import { CREDIT_COST, FREE_EDITS } from '@/lib/pricing'
 import { brighten } from '@/lib/brighten'
@@ -132,7 +132,10 @@ export async function POST(req: NextRequest) {
       kind = body.angle ? 'luce' : body.planimetria ? 'planimetria' : furnishReq ? 'arreda' : 'modifica'
     }
     used = req.prompt
-    b64 = await gptImage({ userId, ...req, kind, ...(kind !== 'arreda' && kind !== 'planimetria' ? { quality: process.env.GPT_EDIT_QUALITY || 'low' } : {}) })
+    // planimetrie: Nano Banana 2, che lascia la pianta dov'e' (stessa posizione, rotazione e scala); GPT spostava e
+    // raddrizzava muri e terrazze (prove del 29/09 in ~/Desktop/prove-planimetria)
+    b64 = kind === 'planimetria' ? await nanoBanana({ userId, image: req.image, prompt: req.prompt, kind })
+      : await gptImage({ userId, ...req, kind, ...(kind !== 'arreda' ? { quality: process.env.GPT_EDIT_QUALITY || 'low' } : {}) })
     }
   } catch (e) {
     if ((e as Error).message === 'daily_limit') return NextResponse.json({ error: 'daily_limit' }, { status: 429 })
