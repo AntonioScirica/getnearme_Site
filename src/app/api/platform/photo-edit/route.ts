@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
 
   // Foto: URL (annunci, R2) oppure caricata dal computer (imageBase64, data URL gia' ridimensionata).
   // Modifica: testo libero e/o i preset di home staging (stile, vista, scena, planimetria).
-  let body: { edits?: number; imageUrl?: string; imageBase64?: string; prompt?: string; style?: string; angle?: string; scene?: SceneType; planimetria?: boolean; seed?: number; region?: { x: number; y: number; w: number; h: number; poly?: { x: number; y: number }[] }; projectId?: string; room?: string; variant?: number; preview?: boolean; reference?: string; styleRef?: string; points?: { x: number; y: number }[]; density?: string }
+  let body: { edits?: number; imageUrl?: string; imageBase64?: string; prompt?: string; style?: string; angle?: string; scene?: SceneType; planimetria?: boolean; plan?: string; seed?: number; region?: { x: number; y: number; w: number; h: number; poly?: { x: number; y: number }[] }; projectId?: string; room?: string; variant?: number; preview?: boolean; reference?: string; styleRef?: string; points?: { x: number; y: number }[]; density?: string }
   try { body = await req.json() } catch { return NextResponse.json({ error: 'bad_request' }, { status: 400 }) }
   const imageUrl = typeof body.imageUrl === 'string' ? body.imageUrl : ''
   const imageBase64 = typeof body.imageBase64 === 'string' && /^data:image\/(jpeg|png|webp);base64,/.test(body.imageBase64) && body.imageBase64.length < 8_000_000 ? body.imageBase64 : ''
@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
   const vary = variantN > 0 && !body.angle ? ` ${variantText(body.style, variantN)}` : ''
   const roomK = roomKey(typeof body.room === 'string' ? body.room : '')
   const restyle = isRestyle(custom) // "balcone stile moderno": si arreda come uno stile, non "cambia solo quello che chiedo"
-  const prompt = buildStagingPrompt({ customPrompt: custom, style: body.style, angle: body.angle, planimetria: !!body.planimetria, scene, room: roomK, restyle }) + vary
+  const prompt = buildStagingPrompt({ customPrompt: custom, style: body.style, angle: body.angle, planimetria: !!body.planimetria, plan: body.plan === 'bw' || body.plan === '3d' ? body.plan : undefined, scene, room: roomK, restyle }) + vary
   const usesText = !!custom && !body.angle && !body.planimetria
   // Zona selezionata dall'agente (0..1): al modello va anche una copia della foto con la zona segnata in rosso.
   const r = body.region
@@ -75,7 +75,8 @@ export async function POST(req: NextRequest) {
   // Crediti: si controlla prima di generare, si scalano solo a foto riuscita (src/lib/credits.ts)
   // modifiche: le prime FREE_EDITS su una foto gratis (conteggio dalla chat), poi 1 credito
   const edits = typeof body.edits === 'number' && body.edits >= 0 ? body.edits : 0
-  const action: Action = body.angle === 'day' ? 'luminoso' : body.style === 'empty' ? 'svuota' : furnishReq ? 'arreda' : edits >= FREE_EDITS ? 'modifica_extra' : 'modifica'
+  // planimetria: rendering completo della pianta, costa come arredare una stanza
+  const action: Action = body.angle === 'day' ? 'luminoso' : body.planimetria ? 'arreda' : body.style === 'empty' ? 'svuota' : furnishReq ? 'arreda' : edits >= FREE_EDITS ? 'modifica_extra' : 'modifica'
   if (!(await canAfford(userId, action))) return NextResponse.json({ error: 'no_credits', cost: CREDIT_COST[action] }, { status: 402 })
   // Modifiche gratis: tetto giornaliero per utente contro gli abusi (EDIT_DAILY_LIMIT, predefinito 40: oltre, 0,013 $ l'una a nostro carico), contato su ai_usage
   if (action === 'modifica') {
@@ -131,7 +132,7 @@ export async function POST(req: NextRequest) {
       kind = body.angle ? 'luce' : body.planimetria ? 'planimetria' : furnishReq ? 'arreda' : 'modifica'
     }
     used = req.prompt
-    b64 = await gptImage({ userId, ...req, kind, ...(kind !== 'arreda' ? { quality: process.env.GPT_EDIT_QUALITY || 'low' } : {}) })
+    b64 = await gptImage({ userId, ...req, kind, ...(kind !== 'arreda' && kind !== 'planimetria' ? { quality: process.env.GPT_EDIT_QUALITY || 'low' } : {}) })
     }
   } catch (e) {
     if ((e as Error).message === 'daily_limit') return NextResponse.json({ error: 'daily_limit' }, { status: 429 })

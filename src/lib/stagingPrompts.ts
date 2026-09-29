@@ -131,6 +131,11 @@ export const ANGLES: { id: string; label: string; prompt: string }[] = [
 ];
 
 const PLANIMETRIA_BASE = "This image is a 2D architectural floor plan (planimetria). Redraw it as a clean, elegant, COLORED and FURNISHED 2D floor plan seen strictly from directly above (top-down orthographic view, NO perspective, NO 3D, NO isometric, NO tilt). ABSOLUTELY CRITICAL — preserve the geometry EXACTLY: keep the same outer footprint and aspect ratio, and keep every interior wall, every separate room, the corridor/hallway, and all door and window openings in the IDENTICAL position, size, count and proportion as the input. Do NOT add, remove, merge, split, move, rotate or resize any room, wall, corridor or opening. Trace the original walls precisely. Only ADD, inside the existing rooms: realistic per-room floor colors and materials (wood, tile, stone), neat top-view furniture (beds, sofas, dining table and chairs, kitchen counters and appliances, bathroom fixtures, wardrobes), rugs and soft drop shadows. Thin crisp dark walls, light rooms. Output: a professional, readable real-estate 2D rendered floor plan with the SAME layout as the original.";
+// bianco e nero, da brochure stampata: stessa geometria, niente colori
+const PLANIMETRIA_BW = PLANIMETRIA_BASE.replace('COLORED and FURNISHED', 'BLACK-AND-WHITE and FURNISHED').replace('realistic per-room floor colors and materials (wood, tile, stone)', 'subtle light grey floor textures (wood planks, tiles)')
+  + ' Strictly grayscale: black walls, white rooms, furniture drawn with thin dark grey outlines and light grey fills, soft grey shadows, NO color at all, like a clean printed brochure plan.';
+// 3D dall'alto (casa delle bambole, pareti tagliate): prova del 29/09 su 3 planimetrie, geometria tenuta
+const PLANIMETRIA_3D = "This image is a 2D architectural floor plan. Turn it into a photorealistic 3D cutaway floor plan of the same apartment, seen from above at a slight angle (3/4 bird's-eye, dollhouse view, walls cut at mid height, no roof). ABSOLUTELY CRITICAL: keep the same outer footprint, every interior wall, every room, the corridor and all door and window openings in the IDENTICAL position, size, count and proportion as the input. Do not add, remove, merge, split or move any room, wall or opening. Inside the existing rooms add realistic floors (wood, tile), modern furniture fitting each room (beds, sofa, dining table, kitchen, bathroom fixtures), soft daylight and gentle shadows, white walls. Plain light background.";
 const FURNISH: Record<string, string> = {
   modern: ' Furnish (top-view) in a clean modern contemporary style: neutral palette with accent colors, minimalist pieces, wood and tile floors.',
   nordic: ' Furnish (top-view) in a Scandinavian Nordic style: light oak/birch wood, white and grey palette, minimal functional pieces, cozy uncluttered look.',
@@ -214,8 +219,10 @@ export const roomKey = (label?: string | null) => (/soggiorno con cucina|openspa
 const RESTYLE = /\b(stile|moderno|moderna|nordico|nordica|scandinavo|scandinava|minimal|contemporaneo|contemporanea|industriale|boho|arred\w*|riarred\w*|mobili|rinnova\w*|rifai|rifalla|trasforma\w*|ristruttura\w*|home staging)\b/i;
 export const isRestyle = (text?: string | null) => !!text && RESTYLE.test(text) && !/\b(togli|rimuovi|elimina|cancella)\b/i.test(text);
 
-export function buildStagingPrompt(o: { style?: string | null; customPrompt?: string | null; angle?: string | null; planimetria?: boolean; scene?: SceneType; room?: string; restyle?: boolean }): string {
+export function buildStagingPrompt(o: { style?: string | null; customPrompt?: string | null; angle?: string | null; planimetria?: boolean; plan?: 'bw' | '3d'; scene?: SceneType; room?: string; restyle?: boolean }): string {
   const scene = o.scene ?? 'interno';
+  if (o.planimetria && o.plan === 'bw') return PLANIMETRIA_BW + NO_TEXT;
+  if (o.planimetria && o.plan === '3d') return PLANIMETRIA_3D + NO_TEXT;
   if (o.planimetria) return PLANIMETRIA_BASE + (FURNISH[o.style || ''] || FURNISH.modern) + NO_TEXT;
   const styles = scene === 'esterno' ? STYLE_PROMPTS_ESTERNO : scene === 'giardino' ? STYLE_PROMPTS_GIARDINO : STYLE_PROMPTS;
   const custom = o.customPrompt?.trim();

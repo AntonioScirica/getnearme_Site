@@ -49,7 +49,8 @@ function suggestionsFor(kind: string | null): Suggestion[] {
   switch (kind) {
     case 'scene:esterno': return [S('f-renew', 'Rinnova la facciata', { style: 'empty' }), S('f-modern', 'Facciata moderna', { style: 'modern' }), S('f-sky', 'Cielo azzurro', { prompt: 'Cielo azzurro limpido e luce di sole, senza cambiare l’edificio' }), S('f-garden', 'Giardino curato', { prompt: 'Prato curato e piante ordinate intorno alla casa, senza cambiare l’edificio' })];
     case 'scene:giardino': return [S('g-renew', 'Giardino curato', { style: 'empty' }), S('g-furnish', 'Arreda il giardino', { prompt: 'Aggiungi un tavolo con sedie da esterno e un ombrellone, lascia prato e piante' }), S('g-modern', 'Giardino moderno', { style: 'modern' }), LIGHT];
-    case 'scene:planimetria': return [];
+    // planimetria: stile dell'arredo (pianta 2D a colori), 3D dall'alto oppure in bianco e nero, da stampa
+    case 'scene:planimetria': { const PLAN = { planimetria: true }; return [S('p-modern', 'Moderno', PLAN), S('p-nordic', 'Nordico', PLAN), S('p-lux', 'Luxury', PLAN), S('p-boho', 'Boho', PLAN), S('p-3d', '3D dall’alto', PLAN), S('p-bw', 'Bianco e nero', PLAN)]; }
     default: return INDOOR;
   }
 }
@@ -98,9 +99,6 @@ const VIDEO_TEMPLATES: (VideoCard & { anims: (VideoCard & { id: VideoAnim })[] }
   { id: 'agente', label: 'Con te in video', desc: 'Parli in camera, esci e la stanza si arreda', sample: VIDEO_SAMPLES.agent, anims: [
     { id: 'agent', label: 'Con te in video', desc: 'Parli in camera, esci e la stanza si arreda', sample: VIDEO_SAMPLES.agent },
   ] },
-  { id: 'cammina-stile', label: 'Cammina e cambia stile', desc: 'Giri la stanza col telefono e l’arredo cambia mentre cammini', sample: VIDEO_SAMPLES.camera, anims: [
-    { id: 'walk', label: 'Cammina e cambia stile', desc: 'Giri la stanza col telefono e l’arredo cambia mentre cammini', sample: VIDEO_SAMPLES.camera },
-  ] },
   { id: 'camera', label: 'Camminata', desc: 'Entri nella stanza con una ripresa lenta', sample: VIDEO_SAMPLES.camera, anims: [
     { id: 'camera', label: 'Camminata', desc: 'Entri nella stanza con una ripresa lenta', sample: VIDEO_SAMPLES.camera },
   ] },
@@ -119,6 +117,7 @@ const directVideo = (anim?: VideoAnim) => anim === 'cantiere' || anim === 'dayni
 // crediti per arrivare al video finito (Veo: foto di partenza + montaggio), senza lo stile
 const fullCr = (anim?: VideoAnim) => videoCr(anim) + (directVideo(anim) || anim === 'agent' || anim === 'walk' ? 0 : CREDIT_COST.video_prep);
 const creditsOf = (req: Partial<EditRequest>, editsDone: number): number => req.angle === 'day' ? CREDIT_COST.luminoso
+  : req.planimetria ? CREDIT_COST.arreda
   : req.style === 'empty' ? CREDIT_COST.svuota
   : isFurnishing({ style: req.style, customPrompt: req.prompt, angle: req.angle, planimetria: req.planimetria, scene: req.scene as 'interno' | undefined, restyle: isRestyle(req.prompt ?? '') }) || !!req.styleRef ? CREDIT_COST.arreda
   : editsDone >= FREE_EDITS ? CREDIT_COST.modifica_extra : CREDIT_COST.modifica;
@@ -395,7 +394,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
       ...(kind ? { room: seenLabel(kind) } : {}),
       ...(before.startsWith('data:') ? { imageBase64: before } : { imageUrl: before }),
       ...(scene === 'planimetria'
-        ? { planimetria: true, style: planStyle(t) }
+        ? { planimetria: true, style: planStyle(t), ...(/bianco e nero|b\/n|in bianco/i.test(t) ? { plan: 'bw' as const } : /\b3d\b|tridimensional/i.test(t) ? { plan: '3d' as const } : {}) }
         : { scene, ...(zone ? { prompt: pk?.req.prompt && t === pk.label ? pk.req.prompt : t, region: zone } : pk && t === pk.label && !pk.req.prompt ? pk.req : { prompt: pk?.req.prompt && t === pk.label ? pk.req.prompt : t }) }),
     };
     setMsgs(ms => [...ms, { id: uid(), role: 'user', text: t, region: zone ?? undefined, ...(style ? { style } : {}) }, { id, role: 'ai', before, out: null, busy: true, reveal: null, text: t, req }]);
