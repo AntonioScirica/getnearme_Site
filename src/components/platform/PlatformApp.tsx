@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
-import { Home, Building2, Globe, Gauge, LogOut, Plus, Loader2, X, Wand2, Images, ExternalLink, UserRound, ArrowLeft, Download } from 'lucide-react';
+import { Home, SquarePen, Building2, Globe, Gauge, LogOut, Plus, Loader2, X, Wand2, Images, ExternalLink, UserRound, ArrowLeft, Download } from 'lucide-react';
 import type { UserData } from '@/app/[locale]/dashboard/page';
 import { supabase } from '@/lib/supabase';
 import { fetchProjects, type ProjectData } from '@/lib/projects';
@@ -104,7 +104,11 @@ export default function PlatformApp({ userData }: { userData: UserData }) {
             <button type="button" onClick={() => (history.length > 1 ? history.back() : (location.hash = '#/'))}
               className="flex h-10 items-center gap-1.5 rounded-full px-3 text-sm font-medium text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink"><ArrowLeft size={18} /> Indietro</button>
             {/* crediti sempre in vista in alto a destra: in chat ogni azione ne spende */}
-            <div className="ml-auto"><CreditsPill /></div>
+            <div className="ml-auto flex items-center gap-2">
+              <button type="button" onClick={() => window.dispatchEvent(new Event('agenteimmo:new-chat'))}
+                className="flex h-10 items-center gap-1.5 rounded-full px-3 text-sm font-medium text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink"><SquarePen size={16} /> Nuova chat</button>
+              <CreditsPill />
+            </div>
           </>) : <>
           <a href="#/" className="flex items-center gap-2 justify-self-start">
             <img src="/immo/logo-mark.png" alt="" className="h-8 w-8" style={{ viewTransitionName: 'ob-logo' }} />

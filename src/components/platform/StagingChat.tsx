@@ -297,6 +297,16 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   useEffect(() => {
     try { sessionStorage.setItem(SAVE_KEY, JSON.stringify({ msgs, base, kind, scene, roomState, project, origin, emptyFrom })); } catch { /* troppo grande: si salva al prossimo cambio */ }
   }, [msgs, base, kind, scene, roomState, project, origin, emptyFrom]);
+  // Nuova chat (pulsante in alto, PlatformApp): si ricomincia da zero; foto e video fatti restano nella Galleria
+  useEffect(() => {
+    const reset = () => {
+      setMsgs([]); setBase(null); setKind(null); setScene('interno'); setRoomState(null); setProject(null); setOrigin(null); setEmptyFrom(null);
+      clearZone(); setSelecting(false); setText('');
+      try { sessionStorage.removeItem(SAVE_KEY); } catch { /* niente */ }
+    };
+    window.addEventListener('agenteimmo:new-chat', reset);
+    return () => window.removeEventListener('agenteimmo:new-chat', reset);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   // uscita dalla chat (altra pagina della piattaforma): conversazione chiusa. Una ricarica della scheda non passa di qui.
   // la conversazione resta finche' la scheda e' aperta: tornando da un'altra pagina si ritrova (28/09, prima si perdeva all'uscita)
   const patch = (id: string, p: Partial<Extract<Msg, { role: 'ai' }>>) => setMsgs(ms => ms.map(m => (m.id === id && m.role === 'ai' ? { ...m, ...p } : m)));
