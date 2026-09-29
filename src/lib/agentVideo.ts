@@ -182,7 +182,8 @@ export async function renderWalk(owner: string, t: string, styled: string): Prom
   try {
     const src = join(dir, 'a.mp4'), cut = join(dir, 'walk.mp4')
     await writeFile(src, Buffer.from(await (await fetch(`${process.env.R2_PUBLIC_URL}/${key(owner, name)}-agente.mp4`)).arrayBuffer()))
-    await ffmpeg(['-y', '-i', src, '-t', '15', '-c', 'copy', cut])
+    // ricodificato: con -c copy il taglio cade sul keyframe dopo e la clip supera il limite di Kling (15,05 s)
+    await ffmpeg(['-y', '-i', src, '-t', '14.8', '-c:v', 'libx264', '-crf', '16', '-preset', 'veryfast', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '160k', cut])
     const walkUrl = await uploadFile(await readFile(cut), `${key(owner, name)}-walk.mp4`, 'video/mp4')
     const q = await fal(KLING_EDIT_URL, { video_url: walkUrl, image_urls: [styled], prompt: WALK_PROMPT, keep_audio: true })
     if (!q.request_id) { console.error('cammina kling', q); return { error: 'ai_failed' } }
