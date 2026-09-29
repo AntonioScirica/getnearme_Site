@@ -8,6 +8,7 @@ import { fileToResizedDataUrl } from '@/lib/staging';
 import { AI_MOCK } from '@/lib/aiMock';
 import { AiPhotoStage, Elapsed, type EditRequest, type Region, type Reveal, type Suggestion } from './AiPhoto';
 import { authFetch, CARD_SHADOW, portfolioUrl } from './api';
+import { useCredits } from './PlanView';
 import ProgressiveBlur from '@/components/ProgressiveBlur';
 import Dropdown, { type DropdownOption } from '@/components/ui/Dropdown';
 import Tooltip from '@/components/ui/Tooltip';
@@ -115,6 +116,8 @@ const furnishes = (req: Partial<EditRequest>) => req.angle !== 'day' && req.styl
 // Prima e dopo: 99 per il video (1 credito si scala gia' al Prima/Dopo)
 const videoCr = (anim?: VideoAnim) => anim === 'cantiere' ? CREDIT_COST.video_cantiere : anim === 'daynight' ? CREDIT_COST.video_daynight : anim === 'camera' ? CREDIT_COST.video_camera : anim === 'agent' ? CREDIT_COST.video_agent : anim === 'walk' ? CREDIT_COST.video_walk : CREDIT_COST.video_render;
 const directVideo = (anim?: VideoAnim) => anim === 'cantiere' || anim === 'daynight' || anim === 'camera';
+// crediti per arrivare al video finito (Veo: foto di partenza + montaggio), senza lo stile
+const fullCr = (anim?: VideoAnim) => videoCr(anim) + (directVideo(anim) || anim === 'agent' || anim === 'walk' ? 0 : CREDIT_COST.video_prep);
 const creditsOf = (req: Partial<EditRequest>, editsDone: number): number => req.angle === 'day' ? CREDIT_COST.luminoso
   : req.style === 'empty' ? CREDIT_COST.svuota
   : isFurnishing({ style: req.style, customPrompt: req.prompt, angle: req.angle, planimetria: req.planimetria, scene: req.scene as 'interno' | undefined, restyle: isRestyle(req.prompt ?? '') }) || !!req.styleRef ? CREDIT_COST.arreda
@@ -248,6 +251,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   // chiusura di Modifica: 300 ms in cui selezione e campo sfumano mentre il pulsante torna Scarica e il divisore rientra
   const [zoneClosing, setZoneClosing] = useState(false);
   const [msgs, setMsgs] = useState<Msg[]>(saved?.msgs ?? []);
+  const credits = useCredits();
   const [base, setBase] = useState<string | null>(saved?.base ?? null); // immagine su cui lavora la prossima richiesta
   const [viewer, setViewer] = useState<{ src: string; before?: string } | null>(null); // foto a tutto schermo
   const downAt = useRef<{ x: number; y: number } | null>(null);
@@ -411,6 +415,13 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   type VideoMsg = Extract<Msg, { role: 'video' }>;
   const patchV = (id: string, p: Partial<VideoMsg> | ((m: VideoMsg) => Partial<VideoMsg>)) =>
     setMsgs(ms => ms.map(m => (m.id === id && m.role === 'video' ? { ...m, ...(typeof p === 'function' ? p(m) : p) } : m)));
+  // crediti non bastano per finire il video: si dice subito e si resta fermi (niente soldi spesi a meta')
+  const short = (m: VideoMsg, need: number) => {
+    if (!credits || credits.unlimited || credits.balance >= need) return false;
+    patchV(m.id, { err: `Per questo video servono ${need} crediti, ne hai ${credits.balance}. Ricarica per continuare.` });
+    window.dispatchEvent(new Event('agenteimmo:no-credits'));
+    return true;
+  };
   // Stile scelto: dietro le quinte si crea UNA foto arredata nello stile (non si mostra), poi il video parte da quella.
   // Il video va dalla foto com'era a quella nuova (Veo, primo e ultimo fotogramma). Come su GetNearMe: niente proposte.
   // redo: "Rifai lo stile" dal passo Prima/Dopo, una volta sola (le scelte restano quelle, si rifa' la foto nel nuovo stile)
@@ -775,7 +786,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                           const off = outside ? kind?.startsWith('room:') : kind === 'scene:esterno' || kind === 'scene:giardino'
                           return (
                           <div key={t.id} className="rise" style={{ animationDelay: `${0.05 + k * 0.06}s` }}>
-                            <button disabled={!!off} onClick={() => { const one = m.step === 'template' ? (t as (typeof VIDEO_TEMPLATES)[number]).anims : null; const prev = one?.length === 1 && one[0].id === 'agent' ? [...msgs].reverse().find((x): x is VideoMsg => x.role === 'video' && !!x.agent?.up && x.agent.at !== undefined && x.agent.exit !== false)?.agent : undefined; patchV(m.id, prev ? { step: 'exit', anim: 'agent', photo: prev.room ?? m.photo, agent: { ...prev, busy: undefined, styled: undefined }, picks: [{ label: t.label, icon: 'agent' }] } : one?.length === 1 && (one[0].id === 'agent' || one[0].id === 'walk') ? { step: 'upload', anim: one[0].id, picks: [{ label: t.label, icon: ANIM_ICON[one[0].id] }] } : one?.length === 1 ? { step: 'mode', anim: one[0].id, picks: [{ label: t.label, icon: ANIM_ICON[one[0].id] }] } : m.step === 'template' ? { step: 'anim', picks: [{ label: t.label, icon: 'split' }] } : { step: 'mode', anim: t.id as VideoAnim, picks: [...m.picks, { label: t.label, icon: ANIM_ICON[t.id as VideoAnim] }] }); }}
+                            <button disabled={!!off} onClick={() => { const one = m.step === 'template' ? (t as (typeof VIDEO_TEMPLATES)[number]).anims : null; if (short(m, Math.min(...(one ?? [t as { id: VideoAnim }]).map(a => fullCr(a.id))))) return; const prev = one?.length === 1 && one[0].id === 'agent' ? [...msgs].reverse().find((x): x is VideoMsg => x.role === 'video' && !!x.agent?.up && x.agent.at !== undefined && x.agent.exit !== false)?.agent : undefined; patchV(m.id, { err: undefined, ...(prev ? { step: 'exit', anim: 'agent', photo: prev.room ?? m.photo, agent: { ...prev, busy: undefined, styled: undefined }, picks: [{ label: t.label, icon: 'agent' }] } : one?.length === 1 && (one[0].id === 'agent' || one[0].id === 'walk') ? { step: 'upload', anim: one[0].id, picks: [{ label: t.label, icon: ANIM_ICON[one[0].id] }] } : one?.length === 1 ? { step: 'mode', anim: one[0].id, picks: [{ label: t.label, icon: ANIM_ICON[one[0].id] }] } : m.step === 'template' ? { step: 'anim', picks: [{ label: t.label, icon: 'split' }] } : { step: 'mode', anim: t.id as VideoAnim, picks: [...m.picks, { label: t.label, icon: ANIM_ICON[t.id as VideoAnim] }] }) }); }}
                               onMouseMove={tiltMove} onMouseLeave={e => tiltReset(e.currentTarget)} className="tilt group relative flex w-full flex-col overflow-hidden rounded-[28px] bg-white p-2 text-left shadow-[0_1px_2px_rgba(0,0,0,.04),0_8px_24px_-12px_rgba(0,0,0,.12)] ring-1 ring-black/5 hover:shadow-[0_2px_4px_rgba(0,0,0,.04),0_30px_50px_-20px_rgba(0,0,0,.25)] active:scale-[0.985] disabled:pointer-events-none disabled:opacity-50 disabled:grayscale">
                               <span className="sheen pointer-events-none absolute inset-0 z-20" />
                               <video src={t.sample} autoPlay loop muted playsInline className="aspect-video w-full rounded-[20px] object-cover" />
@@ -814,7 +825,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                       <div className="grid gap-3 px-1 sm:grid-cols-2">
                         {VIDEO_TEMPLATES.filter(t => t.anims[0].id === 'agent' || t.anims[0].id === 'walk').map((t, k) => (
                           <div key={t.id} className="rise" style={{ animationDelay: `${0.05 + k * 0.06}s` }}>
-                            <button onClick={() => void agentContinue(m, t.anims[0].id)} onMouseMove={tiltMove} onMouseLeave={e => tiltReset(e.currentTarget)}
+                            <button onClick={() => { if (!short(m, fullCr(t.anims[0].id))) void agentContinue({ ...m, err: undefined }, t.anims[0].id); }} onMouseMove={tiltMove} onMouseLeave={e => tiltReset(e.currentTarget)}
                               className="tilt group relative flex w-full flex-col overflow-hidden rounded-[28px] bg-white p-2 text-left shadow-[0_1px_2px_rgba(0,0,0,.04),0_8px_24px_-12px_rgba(0,0,0,.12)] ring-1 ring-black/5 hover:shadow-[0_2px_4px_rgba(0,0,0,.04),0_30px_50px_-20px_rgba(0,0,0,.25)] active:scale-[0.985]">
                               <span className="sheen pointer-events-none absolute inset-0 z-20" />
                               <video src={t.sample} autoPlay loop muted playsInline className="aspect-video w-full rounded-[20px] object-cover" />
@@ -824,6 +835,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                             </button>
                           </div>
                         ))}
+                        {m.err && <ErrLine err={m.err} className="pt-1 sm:col-span-2" />}
                       </div>
                     )}
                     {m.step === 'exit' && (() => {
@@ -878,7 +890,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                         <div className="px-1">
                           <div className={`grid grid-cols-2 gap-3 sm:grid-cols-3 ${m.anim === 'agent' || m.anim === 'walk' || (emptyFrom && emptyFrom === m.photo) ? 'lg:grid-cols-4' : 'lg:grid-cols-5'}`}>
                             {[...(!(emptyFrom && emptyFrom === m.photo) && m.anim !== 'agent' && m.anim !== 'walk' ? [{ id: 'keep', label: 'Com’è ora', src: m.photo }] : []), ...VIDEO_STYLES.map(x => ({ ...x, src: `/staging/stili/${x.id}.jpg` }))].map((o, k) => (
-                              <button key={o.id} onClick={() => (o.id === 'keep' ? makeVideo(m, m.photo, 'Stanza com’è') : styleVideo(m, o.label, { style: o.id }))} className="rise group relative flex flex-col overflow-hidden rounded-3xl bg-white p-1.5 text-left shadow-[0_1px_2px_rgba(0,0,0,.04),0_8px_24px_-12px_rgba(0,0,0,.12)] ring-1 ring-black/5 ease-smooth transition-shadow hover:shadow-[0_2px_4px_rgba(0,0,0,.04),0_24px_40px_-18px_rgba(0,0,0,.25)] active:scale-[0.985]" style={{ animationDelay: `${0.04 + k * 0.05}s` }}>
+                              <button key={o.id} onClick={() => { if (short(m, fullCr(m.anim) + (o.id === 'keep' ? 0 : CREDIT_COST.arreda))) return; if (o.id === 'keep') void makeVideo(m, m.photo, 'Stanza com’è'); else void styleVideo(m, o.label, { style: o.id }); }} className="rise group relative flex flex-col overflow-hidden rounded-3xl bg-white p-1.5 text-left shadow-[0_1px_2px_rgba(0,0,0,.04),0_8px_24px_-12px_rgba(0,0,0,.12)] ring-1 ring-black/5 ease-smooth transition-shadow hover:shadow-[0_2px_4px_rgba(0,0,0,.04),0_24px_40px_-18px_rgba(0,0,0,.25)] active:scale-[0.985]" style={{ animationDelay: `${0.04 + k * 0.05}s` }}>
                                 <span className="block aspect-[4/3] overflow-hidden rounded-[18px] bg-canvas"><img src={o.src} alt="" className="h-full w-full object-cover ease-smooth transition-transform duration-500 group-hover:scale-[1.04]" /></span>
                                 <span className="flex items-center justify-between gap-2 px-2 pb-1 pt-2.5 text-[13px] font-semibold">{o.label}<Cr n={(o.id === 'keep' ? 0 : CREDIT_COST.arreda) + (directVideo(m.anim) || m.anim === 'agent' || m.anim === 'walk' ? videoCr(m.anim) : CREDIT_COST.video_prep)} tight still /></span>
                               </button>
@@ -913,9 +925,9 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                         {/* approvazione: Veo (la parte cara) parte solo da qui; la stanza vuota si puo' rifare (costa come una foto) */}
                         {m.frames && (
                           <div className="flex flex-wrap items-center gap-2 pt-3">
-                            <button onClick={() => renderVideo(m)} className="flex items-center rounded-full bg-ink pl-4 pr-2 py-2 text-[13px] font-medium text-white shadow-sm ease-smooth transition-colors hover:bg-brand">Crea il video<Cr n={videoCr(m.anim)} dark /></button>
+                            <button onClick={() => { if (!short(m, videoCr(m.anim))) void renderVideo(m); }} className="flex items-center rounded-full bg-ink pl-4 pr-2 py-2 text-[13px] font-medium text-white shadow-sm ease-smooth transition-colors hover:bg-brand">Crea il video<Cr n={videoCr(m.anim)} dark /></button>
                             {/* una sola seconda possibilita' sullo stile (poi si torna indietro): costa come una foto */}
-                            {m.restyle && !m.redone && <button onClick={() => styleVideo(m, m.restyle!.label, m.restyle!.req, true)} className="flex items-center rounded-full bg-white py-2 pl-4 pr-2 text-[13px] font-medium text-ink/80 shadow-sm ring-1 ring-inset ring-black/10 ease-smooth transition-colors hover:bg-canvas">Rifai lo stile<Cr n={CREDIT_COST.arreda + CREDIT_COST.video_prep} /></button>}
+                            {m.restyle && !m.redone && <button onClick={() => { if (!short(m, CREDIT_COST.arreda + CREDIT_COST.video_prep + videoCr(m.anim))) void styleVideo(m, m.restyle!.label, m.restyle!.req, true); }} className="flex items-center rounded-full bg-white py-2 pl-4 pr-2 text-[13px] font-medium text-ink/80 shadow-sm ring-1 ring-inset ring-black/10 ease-smooth transition-colors hover:bg-canvas">Rifai lo stile<Cr n={CREDIT_COST.arreda + CREDIT_COST.video_prep} /></button>}
                           </div>
                         )}
                         {m.err && !m.frames && (
