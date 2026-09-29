@@ -10,4 +10,5 @@ export const VIDEO_SAMPLES = {
   stopmotion: '/staging/videos/stopmotion_room_v2.mp4',
   cantiere: `${REELS}/social-frames/bbe5b3fa-e484-4f34-8c55-341f02907f19/base.mp4`,
   daynight: `${REELS}/social-frames/b4938420-a308-413b-853f-0ea38719dd5e/daynight.mp4`,
+  camera: '/staging/videos/camera.mp4', // prova del 29/09 (Kling o3 da una foto)
 } as const;

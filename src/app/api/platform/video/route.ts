@@ -23,9 +23,9 @@ export async function POST(req: NextRequest) {
   const userId = await userOf(req)
   if (!userId) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   // phase 'frames': solo Prima e Dopo (la chat li mostra); 'render': Veo dal token di Prima/Dopo approvati; senza: tutto di seguito
-  let body: { imageUrl?: string; imageBase64?: string; projectId?: string; anim?: string; styled?: string; phase?: string; frames?: string }
+  let body: { imageUrl?: string; imageBase64?: string; projectId?: string; anim?: string; styled?: string; phase?: string; frames?: string; interior?: boolean }
   try { body = await req.json() } catch { return NextResponse.json({ error: 'bad_request' }, { status: 400 }) }
-  const anim = parseAnim(body.anim), action = anim === 'cantiere' ? 'video_cantiere' : anim === 'daynight' ? 'video_daynight' : 'video'
+  const anim = parseAnim(body.anim), action = anim === 'cantiere' ? 'video_cantiere' : anim === 'daynight' ? 'video_daynight' : anim === 'camera' ? 'video_camera' : 'video'
   if (body.phase === 'render') {
     if (typeof body.frames !== 'string') return NextResponse.json({ error: 'bad_request' }, { status: 400 })
     if (!(await canAfford(userId, 'video_render'))) return NextResponse.json({ error: 'no_credits', cost: CREDIT_COST.video_render }, { status: 402 })
@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
   const pid = typeof body.projectId === 'string' && /^[\w-]{1,64}$/.test(body.projectId) ? body.projectId : ''
   // foto nel nuovo stile (fatta da photo-edit, su R2): il video va dalla foto com'era a questa
   const styled = typeof body.styled === 'string' && allowedUrl(body.styled) ? body.styled : undefined
-  const r = await startVideo(userId, userId, { imageUrl, imageBase64, projectId: pid, anim, styled, framesOnly: body.phase === 'frames' })
+  const r = await startVideo(userId, userId, { imageUrl, imageBase64, projectId: pid, anim, styled, framesOnly: body.phase === 'frames', interior: body.interior === true })
   // Prima e Dopo pronti: 1 credito (una volta per coppia di foto), il resto alla consegna del video
   if (body.phase === 'frames' && r.frames) await spendOnce(userId, 'video_prep', r.frames)
   return reply(r)
@@ -51,7 +51,7 @@ export async function GET(req: NextRequest) {
   const { fresh, id, ...r } = await pollVideo(userId, req.nextUrl.searchParams.get('job') ?? '')
   // il lavoro firmato dice che video era: cantiere = due clip Kling (nome che finisce con -kc), Giorno e notte = una (-k)
   const job = req.nextUrl.searchParams.get('job') ?? ''
-  const action = /-kc\./.test(job) ? 'video_cantiere' : /-k\./.test(job) ? 'video_daynight' : 'video_render' // Prima e dopo: 1 credito gia' scalato ai fotogrammi
+  const action = /-kc\./.test(job) ? 'video_cantiere' : /-km\./.test(job) ? 'video_camera' : /-k\./.test(job) ? 'video_daynight' : 'video_render' // Prima e dopo: 1 credito gia' scalato ai fotogrammi
   if (fresh && id) return NextResponse.json({ url: r.url, credits: await spendOnce(userId, action, id) })
   return reply(r)
 }

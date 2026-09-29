@@ -7,7 +7,7 @@ import { join } from 'path'
 import sharp from 'sharp'
 import { stagePrompt } from '@/lib/nanoBanana'
 import { gptImage } from '@/lib/gptImage'
-import { GNM_CANTIERE_1, GNM_CANTIERE_2, GNM_DAYNIGHT, GNM_EXCAVATION_IMAGE, GNM_NIGHT_IMAGE, GNM_STOPMOTION, GNM_STRUCTURE_IMAGE } from '@/lib/gnmVideoPrompts'
+import { CAMERA_MOVE, DAYNIGHT_INTERIOR, GNM_CANTIERE_1, GNM_CANTIERE_2, GNM_DAYNIGHT, GNM_EXCAVATION_IMAGE, GNM_NIGHT_IMAGE, GNM_STOPMOTION, GNM_STRUCTURE_IMAGE, NIGHT_IMAGE_INTERIOR } from '@/lib/gnmVideoPrompts'
 import Anthropic from '@anthropic-ai/sdk'
 import ffmpegPath from 'ffmpeg-static'
 import { deleteKeys, uploadFile, uploadJpeg } from '@/lib/r2'
@@ -64,7 +64,7 @@ const NEG_REVERSE = `${NEG_VEO}, falling objects, flying objects, new furniture 
 // Particelle (invertito: le scie dorate entrano e formano i mobili, come nel reel di GetNearMe): niente divieti su scie e bagliori
 const NEG_PARTICLES = 'camera movement, pan, tilt, zoom, dolly, camera shake, different camera angle, cross-fade, double exposure, ghosting, transparent walls, morphing, duplicated furniture, extra furniture, new furniture appearing, replaced furniture, objects sliding, falling objects, people, hands, tripod, camera equipment, text, letters, captions, watermark, exposure change, flicker, smoke, fire, flames, explosion, large debris'
 // template con i flussi Kling di GetNearMe (vedi gnmVideoPrompts); Popup, Dall'alto e Particelle su Veo
-const KLING: Partial<Record<Anim, true>> = { stopmotion: true, cantiere: true, daynight: true }
+const KLING: Partial<Record<Anim, true>> = { stopmotion: true, cantiere: true, daynight: true, camera: true }
 const KLING_URL = 'https://queue.fal.run/fal-ai/kling-video/o3/standard/image-to-video'
 const KLING_BASE = 'https://queue.fal.run/fal-ai/kling-video'
 const KLING_SECONDS = 5
@@ -76,7 +76,7 @@ const VANISH: Record<Anim, string> = {
   particles: 'Each object dissolves on the spot into a cloud of fine, soft golden dust particles that drift slightly upward and fade away, leaving the bare floor and walls exactly as in the last image. Objects never slide or fly. ',
   // invertito: i mobili compaiono a scatti, uno per volta, come in stop-motion
   stopmotion: 'Stop-motion style: each object disappears instantly between two frames, with no fading, no shrinking and no motion, one after another in a quick steady rhythm, leaving the bare floor and walls exactly as in the last image. ',
-  cantiere: '', daynight: '',
+  cantiere: '', daynight: '', camera: '',
 }
 const prompt = (order: string, anim: Anim) => 'Elegant, satisfying real-estate animation with a perfectly still, locked-off camera: identical framing for the whole video, no pan, no zoom. Walls, ceiling, curtains, built-in furniture, doors, windows, floor and daylight never change. '
   + `These are the only objects that disappear, in exactly these quantities: ${order}. Nothing new ever appears. The last frame is identical to the final empty image. `
@@ -102,12 +102,12 @@ const fal = (url: string, body?: unknown) => fetch(url, {
 }).then(r => r.json())
 
 export type VideoResult = { job?: string; url?: string; id?: string; status?: number | 'working'; error?: string }
-export type Anim = 'popup' | 'gravity' | 'particles' | 'stopmotion' | 'cantiere' | 'daynight'
-export const parseAnim = (a: unknown): Anim => (['gravity', 'particles', 'stopmotion', 'cantiere', 'daynight'] as const).find(x => x === a) ?? 'popup'
+export type Anim = 'popup' | 'gravity' | 'particles' | 'stopmotion' | 'cantiere' | 'daynight' | 'camera'
+export const parseAnim = (a: unknown): Anim => (['gravity', 'particles', 'stopmotion', 'cantiere', 'daynight', 'camera'] as const).find(x => x === a) ?? 'popup'
 
 // empty = stanza gia' svuotata (prova "Svuota" della landing): niente foto vuota da fare, e il video va IN AVANTI:
 // i mobili della foto originale spariscono uno alla volta e resta la stanza vuota.
-export async function startVideo(owner: string, logUser: string, o: { imageUrl: string; imageBase64: string; projectId?: string; anim: Anim; empty?: string; styled?: string; framesOnly?: boolean }): Promise<VideoResult & FramesResult> {
+export async function startVideo(owner: string, logUser: string, o: { imageUrl: string; imageBase64: string; projectId?: string; anim: Anim; empty?: string; styled?: string; framesOnly?: boolean; interior?: boolean }): Promise<VideoResult & FramesResult> {
   const { imageUrl, imageBase64, anim } = o
   const pid = o.projectId ?? '' // gia' validato dalla rotta
   if (AI_MOCK) { await mockDelay(2000); return { job: 'mock' } }
@@ -120,7 +120,7 @@ export async function startVideo(owner: string, logUser: string, o: { imageUrl: 
     const landscape = width >= height
     const [W, H] = landscape ? [1280, 720] : [720, 1280]
     const full = await sharp(src).rotate().resize(W, H, { fit: 'cover' }).jpeg({ quality: 95 }).toBuffer()
-    const name = `${pid ? `casa-${pid}/` : ''}${Date.now()}-${Math.random().toString(36).slice(2, 8)}${o.empty ? '-f' : anim === 'popup' ? '-p' : anim === 'particles' ? '-d' : '-g'}`
+    const name = `${pid ? `casa-${pid}/` : ''}${Date.now()}-${Math.random().toString(36).slice(2, 8)}${o.empty ? '-f' : anim === 'popup' ? '-p' : anim === 'particles' ? '-d' : KLING[anim] ? '' : '-g'}` // Kling: il suffisso (-k, -kc, -km) si aggiunge dopo
     const key = `videos/${owner}/${name}`
     const fullUrl = await uploadJpeg(full, `${key}-arredata.jpg`)
 
@@ -134,7 +134,7 @@ export async function startVideo(owner: string, logUser: string, o: { imageUrl: 
         if (!out) return null
         return uploadJpeg(await sharp(Buffer.from(out, 'base64')).resize(W, H, { fit: 'cover' }).jpeg({ quality: 95 }).toBuffer(), `${key}-${label}.jpg`)
       }
-      const kling = (image_url: string, end_image_url: string, prompt: string) => fal(KLING_URL, { image_url, end_image_url, prompt, duration: 5, generate_audio: false })
+      const kling = (image_url: string, end_image_url: string | undefined, prompt: string) => fal(KLING_URL, { image_url, ...(end_image_url ? { end_image_url } : {}), prompt, duration: 5, generate_audio: false })
       let ids: string[] = []
       if (anim === 'cantiere') {
         // scavo -> struttura -> casa finita (2 clip montate di seguito)
@@ -144,9 +144,13 @@ export async function startVideo(owner: string, logUser: string, o: { imageUrl: 
         const [a, b] = await Promise.all([kling(excavation, structure, GNM_CANTIERE_1), kling(structure, fullUrl, GNM_CANTIERE_2)])
         ids = [a.request_id, b.request_id]
       } else if (anim === 'daynight') {
-        const night = await frame(GNM_NIGHT_IMAGE, 'notte')
+        // interni: la stanza di sera con le sue luci accese; esterni: la casa di notte (reel di GetNearMe)
+        const night = await frame(o.interior ? NIGHT_IMAGE_INTERIOR : GNM_NIGHT_IMAGE, 'notte')
         if (!night) return { error: 'ai_failed', status: 502 }
-        ids = [(await kling(fullUrl, night, GNM_DAYNIGHT)).request_id]
+        ids = [(await kling(fullUrl, night, o.interior ? DAYNIGHT_INTERIOR : GNM_DAYNIGHT)).request_id]
+      } else if (anim === 'camera') {
+        // movimento di camera: solo la foto di partenza, Kling fa la carrellata (niente foto da generare)
+        ids = [(await kling(fullUrl, undefined, CAMERA_MOVE)).request_id]
       } else {
         // stop-motion: dalla stanza vuota alla foto arredata
         // stanza vuota (vedi emptyRoom): Kling va da questa alla foto vera
@@ -156,7 +160,7 @@ export async function startVideo(owner: string, logUser: string, o: { imageUrl: 
         ids = [(await kling(empty, fullUrl, GNM_STOPMOTION)).request_id]
       }
       if (ids.some(x => !x)) { console.error('video kling submit', ids); return { error: 'ai_failed', status: 502 } }
-      const kname = `${name}${ids.length > 1 ? '-kc' : '-k'}`
+      const kname = `${name}${ids.length > 1 ? '-kc' : anim === 'camera' ? '-km' : '-k'}`
       const id = ids.join('+')
       const job = `${id}.${kname.replace('/', '~')}.${sign(owner, `${id}.${kname}`)}`
       await markPending(owner, kname, job)
@@ -278,7 +282,7 @@ export async function pollVideo(owner: string, job: string): Promise<VideoResult
   if (job === 'mock' && AI_MOCK) return { url: 'https://pub-a668674eaa484e8e8f2f10c264392bfc.r2.dev/spike-video/stili/F12_rianima.mp4' }
   const [id, tilde, sig] = job.split('.')
   const name = (tilde ?? '').replace('~', '/')
-  if (!id || !/^[\w-]{8,64}(\+[\w-]{8,64})?$/.test(id) || !/^(casa-[\w-]{1,64}\/)?\d+-[a-z0-9]+(-f|-k|-kc|-g|-p|-d)?$/.test(name) || !sig || sig.length !== 22 || !timingSafeEqual(Buffer.from(sig), Buffer.from(sign(owner, `${id}.${name}`)))) return { error: 'bad_request', status: 400 }
+  if (!id || !/^[\w-]{8,64}(\+[\w-]{8,64})?$/.test(id) || !/^(casa-[\w-]{1,64}\/)?\d+-[a-z0-9]+(-f|-k|-kc|-km|-g|-p|-d)?$/.test(name) || !sig || sig.length !== 22 || !timingSafeEqual(Buffer.from(sig), Buffer.from(sign(owner, `${id}.${name}`)))) return { error: 'bad_request', status: 400 }
 
   const key = `videos/${owner}/${name}.mp4`
   const url = `${process.env.R2_PUBLIC_URL}/${key}`
@@ -287,7 +291,7 @@ export async function pollVideo(owner: string, job: string): Promise<VideoResult
   // Kling (flussi GetNearMe): una clip, o due per il cantiere (scavo -> struttura, struttura -> casa).
   // Dall'alto (-g) e' su Kling con l'id k_...: clip in avanti, poi dissolvenza sulla foto vera come i video Veo.
   const gk = id.startsWith('k_')
-  const kling = /-kc?$/.test(name) || gk
+  const kling = /-k[cm]?$/.test(name) || gk
   const base = kling ? KLING_BASE : FAL
   const ids = id.replace(/^k_/, '').split('+')
   const st = await Promise.all(ids.map(r => fal(`${base}/requests/${r}/status`)))

@@ -3,7 +3,7 @@
 import { VIDEO_SAMPLES } from '@/lib/videoSamples';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Anvil, ChevronsLeftRight, Coins, WandSparkles, Film, HardHat, MoonStar, ArrowUp, Search, Check, ChevronLeft, Clapperboard, SquareSplitHorizontal, Image as ImageIcon, Palette, Sofa, Sparkles, Download, ExternalLink, ImagePlus, Lasso, Shuffle, LayoutGrid, Loader2, Monitor, RotateCcw, SquareDashed, SquareDashedMousePointer, X } from 'lucide-react';
+import { Anvil, Video as VideoIcon, ChevronsLeftRight, Coins, WandSparkles, Film, HardHat, MoonStar, ArrowUp, Search, Check, ChevronLeft, Clapperboard, SquareSplitHorizontal, Image as ImageIcon, Palette, Sofa, Sparkles, Download, ExternalLink, ImagePlus, Lasso, Shuffle, LayoutGrid, Loader2, Monitor, RotateCcw, SquareDashed, SquareDashedMousePointer, X } from 'lucide-react';
 import { fileToResizedDataUrl } from '@/lib/staging';
 import { AI_MOCK } from '@/lib/aiMock';
 import { AiPhotoStage, Elapsed, type EditRequest, type Region, type Reveal, type Suggestion } from './AiPhoto';
@@ -75,11 +75,11 @@ type Msg =
   | { id: string; role: 'video'; step: 'template' | 'anim' | 'mode' | 'previews' | 'frames' | 'render'; photo: string; anim?: VideoAnim; picks: VideoPick[]; previews?: (string | null)[]; frames?: { token: string; before: string; after: string; src: string; styled?: string }; url?: string; err?: string; job?: string; restyle?: { label: string; req: { style?: string; prompt?: string } }; redone?: boolean };
 
 // Macro template video, ognuno con i suoi stili di animazione (card con anteprima in loop)
-type VideoAnim = 'popup' | 'gravity' | 'particles' | 'stopmotion' | 'cantiere' | 'daynight';
+type VideoAnim = 'popup' | 'gravity' | 'particles' | 'stopmotion' | 'cantiere' | 'daynight' | 'camera';
 // scelta gia' fatta: etichetta con icona (o la foto scelta) sopra la domanda
-type VideoPick = { label: string; icon: 'split' | 'pop' | 'drop' | 'dust' | 'steps' | 'build' | 'moon' | 'style' | 'keep' | 'photo'; src?: string };
-const PICK_ICON = { split: SquareSplitHorizontal, pop: Sparkles, drop: Anvil, dust: WandSparkles, steps: Film, build: HardHat, moon: MoonStar, style: Palette, keep: Sofa, photo: ImageIcon };
-const ANIM_ICON: Record<VideoAnim, VideoPick['icon']> = { popup: 'pop', gravity: 'drop', particles: 'dust', stopmotion: 'steps', cantiere: 'build', daynight: 'moon' };
+type VideoPick = { label: string; icon: 'split' | 'pop' | 'drop' | 'dust' | 'steps' | 'build' | 'moon' | 'cam' | 'style' | 'keep' | 'photo'; src?: string };
+const PICK_ICON = { split: SquareSplitHorizontal, pop: Sparkles, drop: Anvil, dust: WandSparkles, steps: Film, build: HardHat, moon: MoonStar, cam: VideoIcon, style: Palette, keep: Sofa, photo: ImageIcon };
+const ANIM_ICON: Record<VideoAnim, VideoPick['icon']> = { popup: 'pop', gravity: 'drop', particles: 'dust', stopmotion: 'steps', cantiere: 'build', daynight: 'moon', camera: 'cam' };
 type VideoCard = { id: string; label: string; desc: string; sample: string };
 const VIDEO_TEMPLATES: (VideoCard & { anims: (VideoCard & { id: VideoAnim })[] })[] = [
   { id: 'prima-dopo', label: 'Prima e dopo', desc: 'Dalla stanza vuota a quella arredata', sample: VIDEO_SAMPLES.popup, anims: [
@@ -93,6 +93,9 @@ const VIDEO_TEMPLATES: (VideoCard & { anims: (VideoCard & { id: VideoAnim })[] }
   { id: 'giorno-notte', label: 'Giorno e notte', desc: 'Scende la sera e si accendono le luci', sample: VIDEO_SAMPLES.daynight, anims: [
     { id: 'daynight', label: 'Giorno e notte', desc: 'Scende la sera e si accendono le luci', sample: VIDEO_SAMPLES.daynight },
   ] },
+  { id: 'camera', label: 'Movimento camera', desc: 'La stanza prende vita con una ripresa lenta', sample: VIDEO_SAMPLES.camera, anims: [
+    { id: 'camera', label: 'Movimento camera', desc: 'La stanza prende vita con una ripresa lenta', sample: VIDEO_SAMPLES.camera },
+  ] },
 ];
 const VIDEO_STYLES = [{ id: 'modern', label: 'Moderno' }, { id: 'nordic', label: 'Nordico' }, { id: 'industrial', label: 'Luxury' }, { id: 'boho', label: 'Boho' }];
 
@@ -103,8 +106,8 @@ const furnishes = (req: Partial<EditRequest>) => req.angle !== 'day' && req.styl
   && (isFurnishing({ style: req.style, customPrompt: req.prompt, angle: req.angle, planimetria: req.planimetria, scene: req.scene as 'interno' | undefined, restyle: isRestyle(req.prompt ?? '') }) || !!req.styleRef);
 // crediti di un video per animazione; Cantiere e Giorno/notte partono subito dopo la scelta (niente passo Prima/Dopo)
 // Prima e dopo: 99 per il video (1 credito si scala gia' al Prima/Dopo)
-const videoCr = (anim?: VideoAnim) => anim === 'cantiere' ? CREDIT_COST.video_cantiere : anim === 'daynight' ? CREDIT_COST.video_daynight : CREDIT_COST.video_render;
-const directVideo = (anim?: VideoAnim) => anim === 'cantiere' || anim === 'daynight';
+const videoCr = (anim?: VideoAnim) => anim === 'cantiere' ? CREDIT_COST.video_cantiere : anim === 'daynight' ? CREDIT_COST.video_daynight : anim === 'camera' ? CREDIT_COST.video_camera : CREDIT_COST.video_render;
+const directVideo = (anim?: VideoAnim) => anim === 'cantiere' || anim === 'daynight' || anim === 'camera';
 const creditsOf = (req: Partial<EditRequest>, editsDone: number): number => req.angle === 'day' ? CREDIT_COST.luminoso
   : req.style === 'empty' ? CREDIT_COST.svuota
   : isFurnishing({ style: req.style, customPrompt: req.prompt, angle: req.angle, planimetria: req.planimetria, scene: req.scene as 'interno' | undefined, restyle: isRestyle(req.prompt ?? '') }) || !!req.styleRef ? CREDIT_COST.arreda
@@ -396,10 +399,12 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   const makeVideo = async (m: VideoMsg, photo: string, pick: string, styled?: string) => {
     touch();
     const picks: VideoPick[] = styled ? m.picks : [...m.picks, pick === 'Stanza com’è' ? { label: pick, icon: 'keep' } : { label: pick, icon: 'photo', src: photo }];
-    // Cantiere e Giorno/notte (Kling): niente Prima/Dopo da approvare, parte subito
-    if (m.anim === 'cantiere' || m.anim === 'daynight') {
+    // Cantiere, Giorno/notte e Movimento camera (Kling): niente Prima/Dopo da approvare, parte subito. Con uno stile il
+    // video parte dalla foto nel nuovo stile; interior: Giorno e notte di una stanza (luci della stanza, non la facciata)
+    if (directVideo(m.anim)) {
+      const src = styled ?? photo;
       patchV(m.id, { step: 'render', photo, picks, err: undefined });
-      const res = await authFetch('/api/platform/video', { method: 'POST', headers: QUIET, body: JSON.stringify({ ...(photo.startsWith('data:') ? { imageBase64: photo } : { imageUrl: photo }), anim: m.anim, ...(project ? { projectId: project } : {}) }) }).catch(() => null);
+      const res = await authFetch('/api/platform/video', { method: 'POST', headers: QUIET, body: JSON.stringify({ ...(src.startsWith('data:') ? { imageBase64: src } : { imageUrl: src }), anim: m.anim, ...(kind?.startsWith('room:') ? { interior: true } : {}), ...(project ? { projectId: project } : {}) }) }).catch(() => null);
       const d = res ? await res.json().catch(() => ({})) : {};
       if (!d.job) { patchV(m.id, { err: d.error === 'no_credits' ? NO_CREDITS : 'Video non riuscito, riprova.' }); return; }
       patchV(m.id, { job: d.job });
@@ -616,7 +621,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                   <div className="flex w-full items-center gap-1 px-2 pb-4 text-sm">
                     {/* indietro di un passo (non a video partito) */}
                     {m.step !== 'template' && m.step !== 'render' && (
-                      <button aria-label="Indietro" onClick={() => patchV(m.id, m.step === 'anim' ? { step: 'template', picks: [] } : m.step === 'mode' && (m.anim === 'cantiere' || m.anim === 'daynight') ? { step: 'template', anim: undefined, picks: [] } : m.step === 'mode' ? { step: 'anim', anim: undefined, picks: m.picks.slice(0, 1) } : { step: 'mode', picks: m.picks.slice(0, m.anim === 'cantiere' || m.anim === 'daynight' ? 1 : 2), previews: undefined, frames: undefined, err: undefined })}
+                      <button aria-label="Indietro" onClick={() => patchV(m.id, m.step === 'anim' ? { step: 'template', picks: [] } : m.step === 'mode' && (m.anim === 'cantiere' || m.anim === 'daynight' || m.anim === 'camera') ? { step: 'template', anim: undefined, picks: [] } : m.step === 'mode' ? { step: 'anim', anim: undefined, picks: m.picks.slice(0, 1) } : { step: 'mode', picks: m.picks.slice(0, m.anim === 'cantiere' || m.anim === 'daynight' ? 1 : 2), previews: undefined, frames: undefined, err: undefined })}
                         className="-ml-1.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-muted ease-smooth transition-colors hover:bg-black/5 hover:text-ink"><ChevronLeft size={18} /></button>
                     )}
                     <span className="font-medium">{m.step === 'template' ? 'Che video vuoi creare?' : m.step === 'anim' ? 'Con quale animazione?' : m.step === 'mode' ? (emptyFrom && emptyFrom === m.photo ? 'In che stile la arredo?' : 'Com’è ora o in un nuovo stile?') : m.step === 'previews' ? (m.previews?.some(p => !p) ? 'Preparo due proposte…' : 'Scegli quella per il video') : m.step === 'frames' ? (m.err ? '' : m.frames ? 'Ecco prima e dopo. Creo il video?' : 'Preparo prima e dopo…') : m.url ? 'Ecco il video' : m.err ? '' : (m.anim === 'popup' || m.anim === 'gravity') ? 'Creo il video, circa 2 minuti' : 'Creo il video, qualche minuto'}</span>
@@ -631,7 +636,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                         {(m.step === 'template' ? VIDEO_TEMPLATES : VIDEO_TEMPLATES.find(t => t.label === m.picks[0]?.label)?.anims ?? []).map((t, k) => {
                           // Cantiere e Giorno/notte nascono per foto della casa vista da fuori (su una stanza Nano Banana non fa lo
                           // scavo e Kling non finisce); Prima e dopo e' per le stanze. Tipo di foto non ancora noto: tutto aperto.
-                          const outside = t.id === 'cantiere' || t.id === 'giorno-notte' || t.id === 'daynight'
+                          const outside = t.id === 'cantiere' // Giorno e notte e Movimento camera vanno anche sulle stanze
                           const off = outside ? kind?.startsWith('room:') : kind === 'scene:esterno' || kind === 'scene:giardino'
                           return (
                           <div key={t.id} className="rise" style={{ animationDelay: `${0.05 + k * 0.06}s` }}>
