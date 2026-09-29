@@ -782,7 +782,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                   </div>
                     {(m.step === 'template' || m.step === 'anim') && (
                       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                        {(m.step === 'template' ? VIDEO_TEMPLATES : VIDEO_TEMPLATES.find(t => t.label === m.picks[0]?.label)?.anims ?? []).map((t, k) => {
+                        {(m.step === 'template' ? VIDEO_TEMPLATES.filter(t => t.id !== 'agente') /* Con te in video: solo dopo aver mandato un video */ : VIDEO_TEMPLATES.find(t => t.label === m.picks[0]?.label)?.anims ?? []).map((t, k) => {
                           // Cantiere e Giorno/notte nascono per foto della casa vista da fuori (su una stanza Nano Banana non fa lo
                           // scavo e Kling non finisce); Prima e dopo e' per le stanze. Tipo di foto non ancora noto: tutto aperto.
                           const outside = t.id === 'cantiere' // Giorno e notte e Camminata vanno sia dentro sia fuori
