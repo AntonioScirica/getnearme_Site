@@ -808,6 +808,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                       return (
                         // anteprima sempre sopra in un riquadro 16:9 (il verticale intero, con lo sfondo sfocato), sotto la card
                         <div className="mx-auto grid max-w-2xl gap-4 px-1">
+                          {m.step === 'exit' && a?.exit === false && <p className="rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-800">Non ti vedo uscire dall’inquadratura in questo video: la stanza si arreda solo dopo che esci. Puoi usare una foto del video (freccia indietro) o mandarne un altro.</p>}
                           {dead && <p className="rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-800">Il video non è più disponibile (la pagina è stata ricaricata mentre si caricava): premi Nuova chat e rimandalo.</p>}
                           <div className="min-w-0 rounded-[28px] bg-white p-4 shadow-sm ring-1 ring-black/5">
                             <div className="relative h-20 select-none">
@@ -829,7 +830,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                                 <button type="button" aria-label="Fotogramma dopo" onClick={() => step(1 / 30)} className="flex h-8 w-8 items-center justify-center rounded-full ease-smooth transition-colors hover:bg-white"><Plus size={14} /></button>
                               </div>
                               <span className="hidden min-w-0 flex-1 truncate text-xs text-muted sm:block">{m.step === 'pick' ? 'Scegli il momento da usare come foto' : 'Da qui la stanza si trasforma: non devi più vederti'}</span>
-                              <button disabled={!!a?.busy || a?.at === undefined} onClick={async () => { if (m.step === 'pick') { void takeFrame(m); return; } if (await agentRoom(m)) patchV(m.id, { step: 'mode' }); }}
+                              <button disabled={!!a?.busy || a?.at === undefined || (m.step === 'exit' && a?.exit === false)} onClick={async () => { if (m.step === 'pick') { void takeFrame(m); return; } if (await agentRoom(m)) patchV(m.id, { step: 'mode' }); }}
                                 className="ml-auto flex h-10 shrink-0 items-center gap-1.5 rounded-full bg-ink px-5 text-[13px] font-semibold text-white ease-smooth transition-colors hover:bg-brand disabled:opacity-40">{a?.busy && <Loader2 size={14} className="animate-spin" />}{m.step === 'pick' ? 'Usa questa foto' : 'Scegli lo stile'}</button>
                             </div>
                             {m.step === 'exit' && a?.steady === false && <p className="mt-3 rounded-2xl bg-amber-50 px-3 py-2 text-xs text-amber-800">Il telefono si muove nel video: la trasformazione può venire male.</p>}
