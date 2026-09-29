@@ -102,8 +102,13 @@ async function emptyRoom(fullUrl: string, logUser: string): Promise<string | nul
 // il lavoro di fal torna al client firmato con l'utente: solo chi l'ha avviato puo' finalizzarlo
 export const sign = (userId: string, id: string) => createHmac('sha256', process.env.SUPABASE_SERVICE_ROLE_KEY!).update(`${userId}:${id}`).digest('base64url').slice(0, 22)
 // listino fal senza audio (29/09/2026), $ al secondo di video
+// Veo: prezzo per risoluzione e audio (Lite 720p 0,03/0,05, 1080p 0,05/0,08; Fast 0,10/0,15; standard 0,20/0,40)
+const veoRate = (url: string, b?: Record<string, unknown>) => {
+  const audio = b?.generate_audio !== false, hd = b?.resolution === '1080p'
+  return /\/lite\//.test(url) ? (hd ? (audio ? 0.08 : 0.05) : (audio ? 0.05 : 0.03)) : /\/fast\//.test(url) ? (audio ? 0.15 : 0.10) : (audio ? 0.40 : 0.20)
+}
 const FAL_USD_PER_S: [RegExp, number, string][] = [
-  [/veo3\.1\/fast\//, 0.10, 'veo3.1-fast'], [/veo3\.1\/lite\//, 0.03, 'veo3.1-lite'], [/veo3\.1\/first-last/, 0.20, 'veo3.1'],
+  [/veo3\.1\/fast\//, 0, 'veo3.1-fast'], [/veo3\.1\/lite\//, 0, 'veo3.1-lite'], [/veo3\.1\//, 0, 'veo3.1'],
   [/kling-video\/o3\/standard\/video-to-video/, 0.14, 'kling-o3-edit'], [/kling-video\/o3\//, 0.14, 'kling-o3'],
   [/kling-video\/v2\.5-turbo/, 0.07, 'kling-2.5-turbo'], [/kling-video\/v1\.6/, 0.056, 'kling-1.6'],
 ]
@@ -116,7 +121,8 @@ export const fal = async (url: string, body?: { duration?: unknown } & Record<st
   const rate = bill && j?.request_id ? FAL_USD_PER_S.find(([re]) => re.test(url)) : undefined
   if (bill && rate) {
     const s = bill.seconds ?? (parseFloat(String(body?.duration ?? 5)) || 5)
-    await logUsage({ userId: bill.userId, kind: bill.kind }, false, 0, { usd: rate[1] * s }, true, `fal-${rate[2]}`).catch(() => {})
+    const usd = (rate[2].startsWith('veo') ? veoRate(url, body) : rate[1]) * s
+    await logUsage({ userId: bill.userId, kind: bill.kind }, false, 0, { usd }, true, `fal-${rate[2]}`).catch(() => {})
   }
   return j
 }
