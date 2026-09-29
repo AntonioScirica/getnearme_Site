@@ -107,7 +107,7 @@ export const parseAnim = (a: unknown): Anim => (['gravity', 'particles', 'stopmo
 
 // empty = stanza gia' svuotata (prova "Svuota" della landing): niente foto vuota da fare, e il video va IN AVANTI:
 // i mobili della foto originale spariscono uno alla volta e resta la stanza vuota.
-export async function startVideo(owner: string, logUser: string, o: { imageUrl: string; imageBase64: string; projectId?: string; anim: Anim; empty?: string; styled?: string; framesOnly?: boolean; photoEmpty?: boolean }): Promise<VideoResult & FramesResult> {
+export async function startVideo(owner: string, logUser: string, o: { imageUrl: string; imageBase64: string; projectId?: string; anim: Anim; empty?: string; styled?: string; framesOnly?: boolean }): Promise<VideoResult & FramesResult> {
   const { imageUrl, imageBase64, anim } = o
   const pid = o.projectId ?? '' // gia' validato dalla rotta
   if (AI_MOCK) { await mockDelay(2000); return { job: 'mock' } }
@@ -165,7 +165,7 @@ export async function startVideo(owner: string, logUser: string, o: { imageUrl: 
 
     // Popup e Dall'alto: due fasi. prepareFrames fa e salva Prima (stanza vuota) e Dopo (foto vera o nel nuovo stile),
     // la chat le mostra e l'agente approva; renderVideo fa partire Veo. Qui (landing, Svuota) le due fasi di seguito.
-    const f = await prepareFrames(owner, logUser, { name, full, landscape, styled: o.styled, empty: o.empty, photoEmpty: o.photoEmpty && !!o.styled })
+    const f = await prepareFrames(owner, logUser, { name, full, landscape, styled: o.styled, empty: o.empty })
     if (!f.frames || o.framesOnly) return f
     return renderVideo(owner, logUser, f.frames, anim, !!o.empty)
   } catch (e) {
@@ -188,9 +188,7 @@ export const parseFrames = (owner: string, token: string): string | null => {
 // Fase 1: Prima e Dopo. Dopo = foto vera (o nel nuovo stile, fatta da photo-edit); Prima = Dopo svuotata da Nano Banana
 // (stesse pareti, stessa inquadratura). Salvate su R2 accanto al lavoro (-finale.jpg, -vuota.jpg); il token firmato
 // lega il nome all'utente. Con Svuota (landing) la vuota arriva gia' fatta. Niente Veo qui: l'agente prima approva.
-// Si genera solo quello che manca: "Com'e' ora" -> il Dopo e' la foto vera; stanza gia' vuota con uno stile (photoEmpty)
-// -> il Prima e' la foto vera e si fa solo il Dopo. Una foto vera non si rifa' mai.
-export async function prepareFrames(owner: string, logUser: string, o: { name: string; full: Buffer; landscape: boolean; styled?: string; empty?: string; photoEmpty?: boolean }): Promise<FramesResult> {
+export async function prepareFrames(owner: string, logUser: string, o: { name: string; full: Buffer; landscape: boolean; styled?: string; empty?: string }): Promise<FramesResult> {
   const { name, landscape } = o
   const [W, H] = landscape ? [1280, 720] : [720, 1280]
   const key = `videos/${owner}/${name}`
@@ -201,7 +199,6 @@ export async function prepareFrames(owner: string, logUser: string, o: { name: s
     const after = await uploadJpeg(furnished, `${key}-finale.jpg`)
     let emptyBuf: Buffer
     if (o.empty) emptyBuf = await toJpeg(await b64Of(o.empty))
-    else if (o.photoEmpty) emptyBuf = o.full
     else {
       const e = await emptyRoom(after, logUser)
       if (!e) return { error: 'ai_failed', status: 502 }

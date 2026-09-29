@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
   const userId = await userOf(req)
   if (!userId) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   // phase 'frames': solo Prima e Dopo (la chat li mostra); 'render': Veo dal token di Prima/Dopo approvati; senza: tutto di seguito
-  let body: { imageUrl?: string; imageBase64?: string; projectId?: string; anim?: string; styled?: string; phase?: string; frames?: string; photoEmpty?: boolean }
+  let body: { imageUrl?: string; imageBase64?: string; projectId?: string; anim?: string; styled?: string; phase?: string; frames?: string }
   try { body = await req.json() } catch { return NextResponse.json({ error: 'bad_request' }, { status: 400 }) }
   const anim = parseAnim(body.anim), action = anim === 'cantiere' ? 'video_cantiere' : anim === 'daynight' ? 'video_daynight' : 'video'
   if (body.phase === 'render') {
@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
   const pid = typeof body.projectId === 'string' && /^[\w-]{1,64}$/.test(body.projectId) ? body.projectId : ''
   // foto nel nuovo stile (fatta da photo-edit, su R2): il video va dalla foto com'era a questa
   const styled = typeof body.styled === 'string' && allowedUrl(body.styled) ? body.styled : undefined
-  return reply(await startVideo(userId, userId, { imageUrl, imageBase64, projectId: pid, anim, styled, framesOnly: body.phase === 'frames', photoEmpty: body.photoEmpty === true }))
+  return reply(await startVideo(userId, userId, { imageUrl, imageBase64, projectId: pid, anim, styled, framesOnly: body.phase === 'frames' }))
 }
 
 export async function GET(req: NextRequest) {
