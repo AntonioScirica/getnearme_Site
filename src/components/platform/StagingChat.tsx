@@ -708,7 +708,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/20 text-white">
                                   <Loader2 size={22} className="animate-spin" />
                                   {/* tempo passato e quanto ci vuole di solito (Kling molto piu' lento di Veo) */}
-                                  <span className="text-xs font-medium text-white/85"><Elapsed className="text-white" /> · di solito {(m.anim === 'popup' || m.anim === 'gravity') ? 'circa 2 min' : '3-9 min'}</span>
+                                  <span className="text-xs font-medium text-white/85"><Elapsed className="text-white" /> · di solito {m.anim === 'popup' ? 'circa 2 min' : '3-9 min'}</span>
                                 </div>
                               )}
                             </>}

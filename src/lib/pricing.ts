@@ -12,7 +12,7 @@
 // modifica: le prime 3 su una foto sono gratis, dalla quarta 1 credito (modifica_extra), che e' il nostro costo (0,014 $).
 // Video (28/09/2026): Prima e dopo con Veo 3.1 Fast ~0,83 $ tutto compreso -> 75 crediti (1 credito ~0,013 $ di costo);
 // Cantiere (2 Kling o3 da 5 s + 2 GPT, ~0,87 $) 150; Giorno e notte (1 Kling da 5 s + 1 GPT, ~0,43 $) 50.
-// Crediti per azione (28/09/2026, tre piani): foto 3 (costo 0,013 $), Prima e dopo 100 (0,83 $), Giorno e notte 70 (0,43 $), Cantiere 200 (0,87 $).
+// Crediti per azione (28/09/2026, tre piani): foto 3 (costo 0,013 $), Prima e dopo 100 (Popup con Veo 0,83 $; Dall'alto con Kling 0,45 $), Giorno e notte 70 (0,43 $), Cantiere 200 (0,87 $).
 // Starter 1000 crediti = 333 foto o 10 video; Plus 1500 = 500 foto o 15 video; Pro 2500 = 833 foto o 25 video.
 export const CREDIT_COST = { luminoso: 0, modifica: 0, modifica_extra: 1, arreda: 3, svuota: 3, video: 100, video_cantiere: 200, video_daynight: 70, riscrivi: 1 };
 // Pacchetti di crediti extra (una tantum, non scadono col mese): per chi finisce i crediti prima del rinnovo.
