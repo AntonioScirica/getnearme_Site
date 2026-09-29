@@ -7,7 +7,7 @@ import { join } from 'path'
 import sharp from 'sharp'
 import { stagePrompt } from '@/lib/nanoBanana'
 import { gptImage } from '@/lib/gptImage'
-import { CAMERA_MOVE, DAYNIGHT_INTERIOR, GNM_CANTIERE_1, GNM_CANTIERE_2, GNM_DAYNIGHT, GNM_EXCAVATION_IMAGE, GNM_NIGHT_IMAGE, GNM_STOPMOTION, GNM_STRUCTURE_IMAGE, NIGHT_IMAGE_INTERIOR } from '@/lib/gnmVideoPrompts'
+import { DAYNIGHT_INTERIOR, WALK_EXTERIOR, WALK_EXTERIOR_NEG, WALK_INTERIOR, WALK_INTERIOR_NEG, GNM_CANTIERE_1, GNM_CANTIERE_2, GNM_DAYNIGHT, GNM_EXCAVATION_IMAGE, GNM_NIGHT_IMAGE, GNM_STOPMOTION, GNM_STRUCTURE_IMAGE, NIGHT_IMAGE_INTERIOR } from '@/lib/gnmVideoPrompts'
 import Anthropic from '@anthropic-ai/sdk'
 import ffmpegPath from 'ffmpeg-static'
 import { deleteKeys, uploadFile, uploadJpeg } from '@/lib/r2'
@@ -66,6 +66,10 @@ const NEG_PARTICLES = 'camera movement, pan, tilt, zoom, dolly, camera shake, di
 // template con i flussi Kling di GetNearMe (vedi gnmVideoPrompts); Popup, Dall'alto e Particelle su Veo
 const KLING: Partial<Record<Anim, true>> = { stopmotion: true, cantiere: true, daynight: true, camera: true }
 const KLING_URL = 'https://queue.fal.run/fal-ai/kling-video/o3/standard/image-to-video'
+// Giorno e notte: Kling 2.5 Turbo Pro con foto finale (0,07 $/s = 0,35 $, meta' dell'o3); Movimento camera: Kling 1.6
+// standard da una foto, la "passeggiata" dei video di GetNearMe (0,056 $/s = 0,28 $, prompt e negativi uguali)
+const KLING_TURBO_URL = 'https://queue.fal.run/fal-ai/kling-video/v2.5-turbo/pro/image-to-video'
+const KLING16_URL = 'https://queue.fal.run/fal-ai/kling-video/v1.6/standard/image-to-video'
 const KLING_BASE = 'https://queue.fal.run/fal-ai/kling-video'
 const KLING_SECONDS = 5
 // Svuota (o.empty, landing): Veo Lite in avanti dalla foto alla stanza gia' svuotata, i pezzi spariscono
@@ -147,10 +151,10 @@ export async function startVideo(owner: string, logUser: string, o: { imageUrl: 
         // interni: la stanza di sera con le sue luci accese; esterni: la casa di notte (reel di GetNearMe)
         const night = await frame(o.interior ? NIGHT_IMAGE_INTERIOR : GNM_NIGHT_IMAGE, 'notte')
         if (!night) return { error: 'ai_failed', status: 502 }
-        ids = [(await kling(fullUrl, night, o.interior ? DAYNIGHT_INTERIOR : GNM_DAYNIGHT)).request_id]
+        ids = [(await fal(KLING_TURBO_URL, { image_url: fullUrl, tail_image_url: night, prompt: o.interior ? DAYNIGHT_INTERIOR : GNM_DAYNIGHT, duration: '5' })).request_id]
       } else if (anim === 'camera') {
-        // movimento di camera: solo la foto di partenza, Kling fa la carrellata (niente foto da generare)
-        ids = [(await kling(fullUrl, undefined, CAMERA_MOVE)).request_id]
+        // movimento di camera: solo la foto di partenza (niente foto da generare); dentro si cammina nella stanza, fuori verso la casa
+        ids = [(await fal(KLING16_URL, { image_url: fullUrl, prompt: o.interior ? WALK_INTERIOR : WALK_EXTERIOR, negative_prompt: o.interior ? WALK_INTERIOR_NEG : WALK_EXTERIOR_NEG, duration: '5', cfg_scale: 0.65 })).request_id]
       } else {
         // stop-motion: dalla stanza vuota alla foto arredata
         // stanza vuota (vedi emptyRoom): Kling va da questa alla foto vera
@@ -323,7 +327,8 @@ export async function pollVideo(owner: string, job: string): Promise<VideoResult
     // taglio dove l'animazione si ferma (stanza vuota per i video al contrario, mobili posati per Dall'alto)
     const gray = veo ? await ffmpeg(['-i', raw, '-vf', 'scale=320:180,format=gray', '-f', 'rawvideo', '-']) : Buffer.alloc(0)
     const cut = gk ? Math.min(KLING_SECONDS, calmPoint(gray, 320 * 180)) : kling ? KLING_SECONDS * parts.length : !veo ? VEO_SECONDS : calmPoint(gray, 320 * 180)
-    const speed = 1
+    // Giorno e notte (-k): 1,6x, il cambio di luce di Kling e' lento (29/09); gli altri a velocita' vera
+    const speed = /-k$/.test(name) ? 1.6 : 1
     const shown = cut / speed // durata della clip nel video finale
     const total = shown + HOLD, n = Math.round(total * 30)
     // zoom 3% ease-in-out solo nel finale, dal passaggio alla foto vera in poi (Kling e Svuota: ultimi 2 s);
