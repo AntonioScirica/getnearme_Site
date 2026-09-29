@@ -786,32 +786,31 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                       </div>
                     )}
                     {(m.step === 'exit' || m.step === 'pick') && (() => {
-                      // il momento scelto: anteprima a sinistra, a destra il tempo, la striscia dei fotogrammi con il cursore e il pulsante
+                      // il momento scelto: a sinistra il tempo, la striscia dei fotogrammi con cursore e - / + di un fotogramma, il pulsante; a destra l'anteprima
                       const a = m.agent, g = a?.up ? agentGrids.current.get(a.up) : undefined, dur = a?.duration ?? 10;
                       const strip = g ? Array.from({ length: 10 }, (_, i) => Math.min(g.n - 1, Math.round((i + 0.5) * g.n / 10))) : [];
                       return (
-                        <div className="flex flex-col items-center gap-5 px-1 sm:flex-row sm:items-center">
-                          <div className="relative w-40 shrink-0 overflow-hidden rounded-3xl bg-canvas shadow-sm ring-1 ring-black/5" style={{ aspectRatio: g ? `${g.tw} / ${g.th}` : '9 / 16' }}>
-                            {a?.video
-                              ? <video key={a.video} src={`${a.video}#t=${a.at ?? 0}`} muted playsInline preload="auto" className="absolute inset-0 h-full w-full object-cover"
-                                  ref={el => { if (el && a?.at !== undefined && Math.abs(el.currentTime - a.at) > 0.05) el.currentTime = a.at; }} />
-                              : null}
-                            {(!a?.video || a.busy) && <div className="absolute inset-0 flex items-center justify-center bg-black/10"><Loader2 className="animate-spin text-white" /></div>}
-                          </div>
+                        <div className="flex flex-col-reverse items-center gap-5 px-1 sm:flex-row sm:items-center">
                           <div className="w-full min-w-0 flex-1">
                             {a?.at !== undefined && (
                               <>
-                                <div className="text-sm text-muted">{m.step === 'pick' ? 'Foto al secondo' : 'Esci dall’inquadratura al secondo'} <b className="font-semibold tabular-nums text-ink">{a.at.toFixed(1).replace('.', ',')}</b></div>
+                                <div className="text-sm text-muted">{m.step === 'pick' ? 'Foto al secondo' : 'Esci dall’inquadratura al secondo'} <b className="font-semibold tabular-nums text-ink">{a.at.toFixed(2).replace('.', ',')}</b></div>
                                 {/* striscia dei fotogrammi (dalla griglia fatta per trovare l'uscita) con il cursore sopra */}
-                                <div className="relative mt-3 h-16 overflow-hidden rounded-2xl bg-canvas ring-1 ring-black/5">
+                                <div className="mt-3 flex items-center gap-2">
+                                <button type="button" aria-label="Fotogramma prima" onClick={() => patchV(m.id, { agent: { ...a, at: Math.max(0, Math.round(((a.at ?? 0) - 1 / 30) * 100) / 100) } })}
+                                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-lg font-medium shadow-sm ring-1 ring-black/10 ease-smooth transition-colors hover:bg-canvas">−</button>
+                                <div className="relative h-16 min-w-0 flex-1 overflow-hidden rounded-2xl bg-canvas ring-1 ring-black/5">
                                   {g && <div className="absolute inset-0 flex">{strip.map((k, i) => (
                                     <div key={i} className="h-full flex-1" style={{ backgroundImage: `url(${g.grid})`, backgroundSize: `${g.cols * 100}% ${Math.ceil(g.n / g.cols) * 100}%`, backgroundPosition: `${(k % g.cols) / Math.max(1, g.cols - 1) * 100}% ${Math.floor(k / g.cols) / Math.max(1, Math.ceil(g.n / g.cols) - 1) * 100}%` }} />
                                   ))}</div>}
                                   <div className="pointer-events-none absolute inset-y-0 left-0 bg-black/35" style={{ width: `${(a.at / dur) * 100}%` }} />
                                   <div className="pointer-events-none absolute inset-y-0 w-1 -translate-x-1/2 rounded-full bg-white shadow-[0_0_0_1px_rgba(0,0,0,.15),0_2px_8px_rgba(0,0,0,.35)]" style={{ left: `${(a.at / dur) * 100}%` }} />
-                                  <input type="range" min={0} max={dur} step={0.1} value={a.at} aria-label={m.step === 'pick' ? 'Momento della foto' : 'Momento in cui esci'}
+                                  <input type="range" min={0} max={dur} step={1 / 30} value={a.at} aria-label={m.step === 'pick' ? 'Momento della foto' : 'Momento in cui esci'}
                                     onChange={e => patchV(m.id, { agent: { ...a, at: Number(e.target.value) } })}
                                     className="absolute inset-0 h-full w-full cursor-ew-resize opacity-0" />
+                                </div>
+                                <button type="button" aria-label="Fotogramma dopo" onClick={() => patchV(m.id, { agent: { ...a, at: Math.min(dur, Math.round(((a.at ?? 0) + 1 / 30) * 100) / 100) } })}
+                                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-lg font-medium shadow-sm ring-1 ring-black/10 ease-smooth transition-colors hover:bg-canvas">+</button>
                                 </div>
                                 <p className="mt-2 text-xs text-muted">{m.step === 'pick' ? 'Trascina sulla striscia per scegliere il momento.' : 'La parte scura è quella con te: trascina se ti vedi ancora nell’anteprima.'}</p>
                                 {m.step === 'exit' && a.steady === false && <p className="mt-3 rounded-2xl bg-amber-50 px-3 py-2 text-xs text-amber-800">Il telefono si muove nel video: la trasformazione può venire male.</p>}
@@ -819,6 +818,13 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                                   className="mt-4 flex h-10 items-center gap-1.5 rounded-full bg-ink px-5 text-[13px] font-semibold text-white ease-smooth transition-colors hover:bg-brand disabled:opacity-40">{a.busy && <Loader2 size={14} className="animate-spin" />}{m.step === 'pick' ? 'Usa questa foto' : 'Scegli lo stile'}</button>
                               </>
                             )}
+                          </div>
+                          <div className="relative w-40 shrink-0 overflow-hidden rounded-3xl bg-canvas shadow-sm ring-1 ring-black/5" style={{ aspectRatio: g ? `${g.tw} / ${g.th}` : '9 / 16' }}>
+                            {a?.video
+                              ? <video key={a.video} src={`${a.video}#t=${a.at ?? 0}`} muted playsInline preload="auto" className="absolute inset-0 h-full w-full object-cover"
+                                  ref={el => { if (el && a?.at !== undefined && Math.abs(el.currentTime - a.at) > 0.05) el.currentTime = a.at; }} />
+                              : null}
+                            {(!a?.video || a.busy) && <div className="absolute inset-0 flex items-center justify-center bg-black/10"><Loader2 className="animate-spin text-white" /></div>}
                           </div>
                         </div>
                       );
