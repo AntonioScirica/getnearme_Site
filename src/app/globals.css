@@ -456,6 +456,8 @@ html.metrics-light [class*="border-gray-600"] { border-color: #d8d4cb !important
 /* stesso testo, trasparente, riempito da una banda di luce: si vede solo nelle lettere */
 .swap-light { pointer-events: none; color: transparent; -webkit-text-fill-color: transparent; background-image: linear-gradient(90deg, transparent 0%, #60a5fa 35%, #2563eb 50%, #60a5fa 65%, transparent 100%); background-size: 28% 100%; background-repeat: no-repeat; -webkit-background-clip: text; background-clip: text; animation: gnm-swap-light 1.6s cubic-bezier(.45,0,.25,1) both; }
 .swap-light * { color: transparent !important; -webkit-text-fill-color: transparent; }
+/* niente sfondi, bordi e ombre degli elementi dentro (pill, menu): nel livello della luce comparivano prima del testo */
+.swap-light * { background: transparent !important; box-shadow: none !important; border-color: transparent !important; }
 .fade { animation: gnm-fade calc(var(--gnm-dur) * 2) var(--gnm-ease) both; }
 @keyframes gnm-rise { from { opacity: 0; transform: translateY(24px) scale(.97); } to { opacity: 1; transform: none; } }
 .rise { animation: gnm-rise var(--gnm-dur) var(--gnm-ease) backwards; } /* backwards: a fine animazione torna la transform di .tilt */
