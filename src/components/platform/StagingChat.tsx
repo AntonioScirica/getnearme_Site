@@ -248,6 +248,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   // foto caricata che era una stanza vuota: nel video niente "Tieni la stanza com'e'", si sceglie solo lo stile
   const [emptyFrom, setEmptyFrom] = useState<string | null>(saved?.emptyFrom ?? null);
   const [otherFor, setOtherFor] = useState<string | null>(null); // messaggio in cui l'agente scrive a mano cos'e' la foto
+  const [roomOther, setRoomOther] = useState<{ id: string; v: string } | null>(null); // pill "Altro" della stanza, diventa un campo
   // chiusura di Modifica: 300 ms in cui selezione e campo sfumano mentre il pulsante torna Scarica e il divisore rientra
   const [zoneClosing, setZoneClosing] = useState(false);
   const [msgs, setMsgs] = useState<Msg[]>(saved?.msgs ?? []);
@@ -360,17 +361,19 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   const applySeen = async (id: string, classified: Promise<Response | null>, photo: string) => {
     try {
       const r = await classified;
-      if (!r) return;
-      const c = r.ok ? await r.json() : null;
+      const c = r?.ok ? await r.json() : null;
+      // stanza non riconosciuta (o riconoscimento fallito): niente tipo inventato, lo sceglie l'agente dal menu in evidenza
+      const unknown = !c?.scene || (c.scene === 'interno' && (!ROOM_LABEL[c.room] || c.room === 'altro'))
+      if (unknown) { if (c?.scene) setScene(c.scene); setMsgs(ms => ms.map(m => (m.id === id && m.role === 'user' ? { ...m, seen: 'unknown' } : m))); return; }
       if (c?.scene) {
         setScene(c.scene);
-        const what = c.scene === 'interno' ? `room:${ROOM_LABEL[c.room] ? c.room : 'soggiorno'}` : `scene:${c.scene}`;
+        const what = c.scene === 'interno' ? `room:${c.room}` : `scene:${c.scene}`;
         setMsgs(ms => ms.map(m => (m.id === id && m.role === 'user' ? { ...m, seen: what } : m)));
         setKind(what);
         setRoomState(c.state || null);
         setEmptyFrom(c.scene === 'interno' && c.state === 'vuota' ? photo : null);
       }
-    } catch { /* senza riconoscimento resta il tipo scelto a mano */ }
+    } catch { setMsgs(ms => ms.map(m => (m.id === id && m.role === 'user' ? { ...m, seen: 'unknown' } : m))); }
   };
 
   const send = async (given?: string, sug?: Suggestion | null, style?: { src: string; author?: string; authorUrl?: string }) => {
@@ -897,6 +900,21 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                           <button key={r} onClick={() => patchV(m.id, { step: 'mode', agent: { ...m.agent, kind: `room:${r}` } })}
                             className="rise rounded-full bg-white px-4 py-2 text-[13px] font-medium text-ink/80 shadow-sm ring-1 ring-inset ring-black/10 ease-smooth transition-colors hover:bg-ink hover:text-white" style={{ animationDelay: `${0.03 + k * 0.03}s` }}>{label}</button>
                         ))}
+                        {roomOther?.id === m.id ? (
+                          // "Altro": la pill diventa il campo e si allunga col testo; Invio conferma, Esc annulla
+                          <input autoFocus value={roomOther.v} placeholder="es. mansarda" maxLength={40} size={Math.max(10, roomOther.v.length + 1)}
+                            onChange={e => setRoomOther({ id: m.id, v: e.target.value })}
+                            onKeyDown={e => {
+                              if (e.key === 'Escape') setRoomOther(null);
+                              if (e.key !== 'Enter' || !roomOther.v.trim()) return;
+                              patchV(m.id, { step: 'mode', agent: { ...m.agent, kind: `custom:${roomOther.v.trim()}` } }); setRoomOther(null);
+                            }}
+                            onBlur={() => { if (!roomOther.v.trim()) setRoomOther(null); }}
+                            className="rounded-full bg-white px-4 py-2 text-[13px] font-medium text-ink shadow-sm outline-none ring-2 ring-inset ring-brand/50 placeholder:text-muted/60" />
+                        ) : (
+                          <button onClick={() => setRoomOther({ id: m.id, v: '' })}
+                            className="rise rounded-full bg-white px-4 py-2 text-[13px] font-medium text-ink/80 shadow-sm ring-1 ring-inset ring-black/10 ease-smooth transition-colors hover:bg-ink hover:text-white" style={{ animationDelay: `${0.03 + AGENT_ROOMS.length * 0.03}s` }}>Altro</button>
+                        )}
                       </div>
                     )}
                     {m.step === 'mode' && (
@@ -1010,7 +1028,12 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                 <div className="blur-in mt-6 w-fit max-w-[85%] rounded-3xl rounded-bl-2xl bg-canvas px-4 py-3 text-sm" style={{ animationDelay: '.3s' }}>
                   {/* quando riconosce la foto il messaggio si riscrive parola per parola (key = cosa ha visto) */}
                   <AutoSize><LightSwap swapKey={m.seen ?? 'caricata'}>
-                    <p>{m.seen ? <>Sembra{' '}
+                    <p>{m.seen === 'unknown' ? <>Non riesco a capire che stanza è:{' '}
+                      <Dropdown value="" options={SEEN_OPTIONS} className="rounded-full bg-brand/10 px-2.5 py-0.5 font-bold text-brand ring-2 ring-brand/40" onChange={v => {
+                        if (v === 'other') { setOtherFor(m.id); setMsgs(ms => ms.map(x => (x.id === m.id && x.role === 'user' ? { ...x, seen: 'custom:' } : x))); return; }
+                        setMsgs(ms => ms.map(x => (x.id === m.id && x.role === 'user' ? { ...x, seen: v } : x)));
+                        setScene(v.startsWith('scene:') ? (v.slice(6) as Scene) : 'interno'); setKind(v);
+                      }}>sceglila tu</Dropdown>{'. '}Così la arredo giusta.</> : m.seen ? <>Sembra{' '}
                       {otherFor === m.id ? (
                         // "Altro": campo al posto della voce, Invio conferma, Esc annulla
                         <input autoFocus placeholder="es. una mansarda" maxLength={40} className="w-40 border-b border-ink/30 bg-transparent font-bold outline-none placeholder:font-normal placeholder:text-muted/60"
