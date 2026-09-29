@@ -3,7 +3,8 @@
 
 async function open(url: string): Promise<HTMLVideoElement> {
   const v = document.createElement('video')
-  v.muted = true; v.playsInline = true; v.preload = 'auto'; v.src = url
+  // crossOrigin: anche il video su R2 (CORS aperto) si puo' disegnare nel canvas
+  v.muted = true; v.playsInline = true; v.preload = 'auto'; if (!url.startsWith('blob:')) v.crossOrigin = 'anonymous'; v.src = url
   await new Promise<void>((ok, ko) => { v.onloadeddata = () => ok(); v.onerror = () => ko(new Error('video')) })
   return v
 }
@@ -35,4 +36,16 @@ export async function videoFrame(url: string, at: number): Promise<string> {
   c.width = W; c.height = H
   c.getContext('2d')!.drawImage(v, (W - v.videoWidth * k) / 2, (H - v.videoHeight * k) / 2, v.videoWidth * k, v.videoHeight * k)
   return c.toDataURL('image/jpeg', 0.92)
+}
+
+// miniature per la striscia del cursore (n fotogrammi a distanza uguale), piccole
+export async function videoThumbs(url: string, n = 10): Promise<string[]> {
+  const v = await open(url)
+  const d = v.duration || 1, th = 120, tw = Math.round(th * v.videoWidth / v.videoHeight)
+  const c = document.createElement('canvas')
+  c.width = tw; c.height = th
+  const g = c.getContext('2d')!
+  const out: string[] = []
+  for (let i = 0; i < n; i++) { await seek(v, Math.min(d - 0.05, (i + 0.5) * d / n)); g.drawImage(v, 0, 0, tw, th); out.push(c.toDataURL('image/jpeg', 0.7)) }
+  return out
 }
