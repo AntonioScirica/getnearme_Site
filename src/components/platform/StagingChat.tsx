@@ -73,7 +73,7 @@ type Msg =
   | { id: string; role: 'user'; text?: string; image?: string; video?: string; seen?: string | null; region?: Region; style?: { src: string; author?: string; authorUrl?: string } }
   | { id: string; role: 'ai'; before: string; out: string | null; busy: boolean; reveal: Reveal; err?: string; text: string; req?: EditRequest }
   // video in chat: UN messaggio che si trasforma a ogni scelta (template, arredo, due anteprime, video)
-  | { id: string; role: 'video'; step: 'template' | 'anim' | 'upload' | 'vchoice' | 'pick' | 'exit' | 'mode' | 'previews' | 'frames' | 'render'; photo: string; anim?: VideoAnim; picks: VideoPick[]; previews?: (string | null)[]; frames?: { token: string; before: string; after: string; src: string; styled?: string }; url?: string; err?: string; job?: string; restyle?: { label: string; req: { style?: string; prompt?: string } }; redone?: boolean; agent?: { busy?: string; up?: string; video?: string; room?: string; at?: number; duration?: number; exit?: boolean; steady?: boolean; styled?: string } };
+  | { id: string; role: 'video'; step: 'template' | 'anim' | 'upload' | 'vchoice' | 'pick' | 'exit' | 'mode' | 'previews' | 'frames' | 'render'; photo: string; anim?: VideoAnim; picks: VideoPick[]; previews?: (string | null)[]; frames?: { token: string; before: string; after: string; src: string; styled?: string }; url?: string; err?: string; job?: string; restyle?: { label: string; req: { style?: string; prompt?: string } }; redone?: boolean; agent?: { busy?: string; up?: string; video?: string; room?: string; at?: number; duration?: number; exit?: boolean; steady?: boolean; styled?: string; landscape?: boolean } };
 
 // Macro template video, ognuno con i suoi stili di animazione (card con anteprima in loop)
 type VideoAnim = 'popup' | 'gravity' | 'particles' | 'stopmotion' | 'cantiere' | 'daynight' | 'camera' | 'agent';
@@ -496,7 +496,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
       const e = await authFetch('/api/platform/agent-video', { method: 'POST', headers: QUIET, body: JSON.stringify({ phase: 'exit', ...g }) }).then(r => r.json()).catch(() => ({}));
       if (e.at === undefined) throw new Error(e.error);
       if (next === 'exit' && !e.exit) { patchV(m.id, { step: 'upload', agent: undefined, err: 'Non vedo il momento in cui esci dall’inquadratura: alla fine del video esci e lascia la stanza sola per 2-3 secondi.' }); return; }
-      patchV(m.id, { agent: { up, video: local, at: e.at, duration: e.duration, exit: e.exit, steady: e.steady } });
+      patchV(m.id, { agent: { up, video: local, at: e.at, duration: e.duration, exit: e.exit, steady: e.steady, landscape: g.tw > g.th } });
     } catch {
       patchV(m.id, { step: next === 'exit' ? 'upload' : 'vchoice', agent: next === 'exit' ? undefined : { up, video: local }, err: 'Non sono riuscito a leggere il video, riprova.' });
     }
@@ -799,7 +799,8 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                       const pos = Math.min(100, Math.max(0, (at / dur) * 100));
                       const step = (d: number) => patchV(m.id, { agent: { ...a, at: Math.min(dur, Math.max(0, Math.round((at + d) * 100) / 100)) } });
                       return (
-                        <div className="grid gap-4 px-1 sm:grid-cols-[1fr_auto] sm:items-center">
+                        // video orizzontale: anteprima sopra, larga; verticale: anteprima a destra della card
+                        <div className={`grid gap-4 px-1 ${a?.landscape ? '' : 'sm:grid-cols-[1fr_auto] sm:items-center'}`}>
                           <div className="min-w-0 rounded-[28px] bg-white p-4 shadow-sm ring-1 ring-black/5">
                             <div className="relative h-20 select-none">
                               <div className="absolute inset-0 flex overflow-hidden rounded-2xl bg-canvas">
@@ -825,7 +826,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                             </div>
                             {m.step === 'exit' && a?.steady === false && <p className="mt-3 rounded-2xl bg-amber-50 px-3 py-2 text-xs text-amber-800">Il telefono si muove nel video: la trasformazione può venire male.</p>}
                           </div>
-                          <div className="relative mx-auto w-36 overflow-hidden rounded-3xl bg-canvas shadow-sm ring-1 ring-black/5" style={{ aspectRatio: '9 / 16' }}>
+                          <div className={`relative mx-auto overflow-hidden rounded-3xl bg-canvas shadow-sm ring-1 ring-black/5 ${a?.landscape ? '-order-1 w-full max-w-xl' : 'w-36'}`} style={{ aspectRatio: a?.landscape ? '16 / 9' : '9 / 16' }}>
                             {a?.video && <video key={a.video} src={`${a.video}#t=${at}`} muted playsInline preload="auto" className="absolute inset-0 h-full w-full object-cover"
                               ref={el => { if (el && Math.abs(el.currentTime - at) > 0.02) el.currentTime = at; }} />}
                             {(!a?.video || a.busy) && <div className="absolute inset-0 flex items-center justify-center bg-black/10"><Loader2 className="animate-spin text-white" /></div>}
