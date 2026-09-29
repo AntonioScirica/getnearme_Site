@@ -19,6 +19,7 @@ import LibraryPicker from './LibraryPicker';
 import { fetchProjects, type ProjectData } from '@/lib/projects';
 import { tiltMove, tiltReset } from '@/components/ui/tilt';
 import { uploadDataUrl } from '@/lib/imageUpload';
+import { videoFrame, videoGrid } from '@/lib/videoFrames';
 import { CREDIT_COST, FREE_EDITS } from '@/lib/pricing';
 import { isFurnishing, isRestyle } from '@/lib/stagingPrompts';
 
@@ -72,7 +73,7 @@ type Msg =
   | { id: string; role: 'user'; text?: string; image?: string; video?: string; seen?: string | null; region?: Region; style?: { src: string; author?: string; authorUrl?: string } }
   | { id: string; role: 'ai'; before: string; out: string | null; busy: boolean; reveal: Reveal; err?: string; text: string; req?: EditRequest }
   // video in chat: UN messaggio che si trasforma a ogni scelta (template, arredo, due anteprime, video)
-  | { id: string; role: 'video'; step: 'template' | 'anim' | 'upload' | 'vchoice' | 'pick' | 'exit' | 'mode' | 'previews' | 'frames' | 'render'; photo: string; anim?: VideoAnim; picks: VideoPick[]; previews?: (string | null)[]; frames?: { token: string; before: string; after: string; src: string; styled?: string }; url?: string; err?: string; job?: string; restyle?: { label: string; req: { style?: string; prompt?: string } }; redone?: boolean; agent?: { busy?: string; token?: string; video?: string; room?: string; at?: number; duration?: number; exit?: boolean; steady?: boolean; styled?: string } };
+  | { id: string; role: 'video'; step: 'template' | 'anim' | 'upload' | 'vchoice' | 'pick' | 'exit' | 'mode' | 'previews' | 'frames' | 'render'; photo: string; anim?: VideoAnim; picks: VideoPick[]; previews?: (string | null)[]; frames?: { token: string; before: string; after: string; src: string; styled?: string }; url?: string; err?: string; job?: string; restyle?: { label: string; req: { style?: string; prompt?: string } }; redone?: boolean; agent?: { busy?: string; up?: string; video?: string; room?: string; at?: number; duration?: number; exit?: boolean; steady?: boolean; styled?: string } };
 
 // Macro template video, ognuno con i suoi stili di animazione (card con anteprima in loop)
 type VideoAnim = 'popup' | 'gravity' | 'particles' | 'stopmotion' | 'cantiere' | 'daynight' | 'camera' | 'agent';
@@ -430,9 +431,11 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   const makeVideo = async (m: VideoMsg, photo: string, pick: string, styled?: string) => {
     touch();
     const picks: VideoPick[] = styled ? m.picks : [...m.picks, pick === 'Stanza com’è' ? { label: pick, icon: 'keep' } : { label: pick, icon: 'photo', src: photo }];
-    if (m.anim === 'agent' && m.agent?.token && styled) {
+    if (m.anim === 'agent' && m.agent?.up && styled) {
       patchV(m.id, { step: 'render', picks, err: undefined, agent: { ...m.agent, styled } });
-      const d = await authFetch('/api/platform/agent-video', { method: 'POST', headers: QUIET, body: JSON.stringify({ phase: 'render', token: m.agent.token, at: m.agent.at, styled }) }).then(r => r.json()).catch(() => ({}));
+      const token = await (agentUps.current.get(m.agent.up) ?? Promise.resolve(null));
+      if (!token) { patchV(m.id, { err: 'Il video non si è caricato, riprova.' }); return; }
+      const d = await authFetch('/api/platform/agent-video', { method: 'POST', headers: QUIET, body: JSON.stringify({ phase: 'render', token, at: m.agent.at, styled, room: m.agent.room }) }).then(r => r.json()).catch(() => ({}));
       if (!d.job) { patchV(m.id, { err: d.error === 'no_credits' ? NO_CREDITS : 'Video non riuscito, riprova.' }); return; }
       patchV(m.id, { job: d.job });
       await pollVideo(m.id, d.job);
@@ -458,34 +461,47 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
     patchV(m.id, { frames: { token: d.frames, before: d.before, after: d.after, src: photo, styled } });
   };
   // fase 2: Veo e montaggio
-  // Con te in video: il video va su R2 dal browser (URL firmato), il server trova il momento in cui l'agente esce
+  // Con te in video: il video pesa (decine di MB) e si carica in sottofondo (URL firmato + conversione sul server) mentre
+  // l'agente sceglie; il momento in cui esce e la foto della stanza li fa il browser dal video che ha gia'. Solo il
+  // montaggio aspetta il caricamento. agentUps: caricamenti in corso, per id (agent.up), con il token del video pronto.
+  const agentUps = useRef(new Map<string, Promise<string | null>>());
   const agentUpload = async (m: VideoMsg, f: File, userMsg?: string, next: 'exit' | 'vchoice' = 'exit') => {
     touch();
-    // il video dell'agente come suo messaggio (a destra); dalla card del template si aggiunge qui, prima del video
+    const local = URL.createObjectURL(f);
     const um = userMsg ?? uid();
-    if (!userMsg) setMsgs(ms => { const k = ms.findIndex(x => x.id === m.id); const copy = [...ms]; copy.splice(k < 0 ? copy.length : k, 0, { id: um, role: 'user', video: URL.createObjectURL(f) }); return copy; });
+    if (!userMsg) setMsgs(ms => { const k = ms.findIndex(x => x.id === m.id); const copy = [...ms]; copy.splice(k < 0 ? copy.length : k, 0, { id: um, role: 'user', video: local }); return copy; });
+    const up = uid();
     const type = f.type || (f.name.toLowerCase().endsWith('.mov') ? 'video/quicktime' : 'video/mp4');
-    patchV(m.id, { step: next, err: undefined, agent: { busy: 'Carico il video…' } });
-    const u = await authFetch('/api/platform/agent-video', { method: 'POST', headers: QUIET, body: JSON.stringify({ phase: 'upload', type }) }).then(r => r.json()).catch(() => ({}));
-    if (u.error === 'no_credits') { patchV(m.id, { err: NO_CREDITS, agent: {} }); return; }
-    if (!u.url) { patchV(m.id, { step: 'upload', err: 'Formato non supportato: carica un video .mov o .mp4.', agent: {} }); return; }
-    const put = await fetch(u.url, { method: 'PUT', headers: { 'Content-Type': type }, body: f }).catch(() => null);
-    if (!put?.ok) { patchV(m.id, { step: 'upload', err: 'Caricamento non riuscito, riprova.', agent: {} }); return; }
-    patchV(m.id, { agent: { busy: next === 'exit' ? 'Cerco il momento in cui esci…' : 'Guardo il video…' } });
-    const a = await authFetch('/api/platform/agent-video', { method: 'POST', headers: QUIET, body: JSON.stringify({ phase: 'analyze', key: u.key, ...(project ? { projectId: project } : {}) }) }).then(r => r.json()).catch(() => ({}));
-    if (next === 'exit' && a.token && !a.exit) a.error = 'no_exit';
-    if (!a.token || (next === 'exit' && !a.exit)) { patchV(m.id, { step: next === 'exit' ? 'upload' : 'vchoice', agent: {}, err: a.error === 'no_exit' ? 'Non vedo il momento in cui esci dall’inquadratura: alla fine del video esci e lascia la stanza sola per 2-3 secondi.' : a.error === 'too_short' ? 'Il video è troppo corto: almeno 5 secondi.' : 'Non sono riuscito a leggere il video, riprova.' }); return; }
-    patchV(m.id, { photo: a.room, agent: { token: a.token, video: a.video, room: a.room, at: a.at, duration: a.duration, exit: a.exit, steady: a.steady } });
-    setMsgs(ms => ms.map(x => (x.id === um && x.role === 'user' ? { ...x, video: a.video } : x))); // il video locale (blob) non sopravvive a una ricarica
+    agentUps.current.set(up, (async () => {
+      const u = await authFetch('/api/platform/agent-video', { method: 'POST', headers: QUIET, body: JSON.stringify({ phase: 'upload', type }) }).then(r => r.json()).catch(() => ({}));
+      if (!u.url) return null;
+      const put = await fetch(u.url, { method: 'PUT', headers: { 'Content-Type': type }, body: f }).catch(() => null);
+      if (!put?.ok) return null;
+      const p = await authFetch('/api/platform/agent-video', { method: 'POST', headers: QUIET, body: JSON.stringify({ phase: 'prepare', key: u.key, ...(project ? { projectId: project } : {}) }) }).then(r => r.json()).catch(() => ({}));
+      if (p.video) setMsgs(ms => ms.map(x => (x.id === um && x.role === 'user' ? { ...x, video: p.video } : x))); // il video locale non sopravvive a una ricarica
+      return (p.token as string) ?? null;
+    })());
+    patchV(m.id, { step: next, err: undefined, agent: { up, video: local, busy: 'Guardo il video…' } });
+    try {
+      const g = await videoGrid(local);
+      const e = await authFetch('/api/platform/agent-video', { method: 'POST', headers: QUIET, body: JSON.stringify({ phase: 'exit', ...g }) }).then(r => r.json()).catch(() => ({}));
+      if (e.at === undefined) throw new Error(e.error);
+      if (next === 'exit' && !e.exit) { patchV(m.id, { step: 'upload', agent: undefined, err: 'Non vedo il momento in cui esci dall’inquadratura: alla fine del video esci e lascia la stanza sola per 2-3 secondi.' }); return; }
+      patchV(m.id, { agent: { up, video: local, at: e.at, duration: e.duration, exit: e.exit, steady: e.steady } });
+    } catch {
+      patchV(m.id, { step: next === 'exit' ? 'upload' : 'vchoice', agent: next === 'exit' ? undefined : { up, video: local }, err: 'Non sono riuscito a leggere il video, riprova.' });
+    }
   };
-  const agentFrame = async (m: VideoMsg, at: number) => {
-    if (!m.agent?.token) return;
-    patchV(m.id, { agent: { ...m.agent, at, busy: 'Aggiorno la stanza…' } });
-    const f = await authFetch('/api/platform/agent-video', { method: 'POST', headers: QUIET, body: JSON.stringify({ phase: 'frame', token: m.agent.token, at }) }).then(r => r.json()).catch(() => ({}));
-    patchV(m.id, { ...(f.room ? { photo: f.room } : {}), agent: { ...m.agent, at, room: f.room ?? m.agent.room, busy: undefined } });
+  // foto della stanza all'istante scelto, dal video che ha il browser (poi caricata come le altre foto)
+  const agentRoom = async (m: VideoMsg): Promise<string | null> => {
+    if (!m.agent?.video || m.agent.at === undefined) return null;
+    patchV(m.id, { agent: { ...m.agent, busy: 'Preparo la foto della stanza…' } });
+    const url = await videoFrame(m.agent.video, m.agent.at).then(d => uploadDataUrl(d, 'properties')).catch(() => '');
+    patchV(m.id, { ...(url ? { photo: url } : {}), agent: { ...m.agent, room: url || undefined, busy: undefined } });
+    return url || null;
   };
-  const takeFrame = (m: VideoMsg) => {
-    const room = m.agent?.room;
+  const takeFrame = async (m: VideoMsg) => {
+    const room = await agentRoom(m);
     if (!room) return;
     const id = uid();
     setMsgs(ms => [...ms.filter(x => x.id !== m.id), { id, role: 'user', image: room, seen: null }]);
@@ -700,7 +716,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                   <div className="flex w-full items-center gap-1 px-2 pb-4 text-sm">
                     {/* indietro di un passo (non a video partito) */}
                     {m.step !== 'template' && m.step !== 'render' && m.step !== 'vchoice' && (
-                      <button aria-label="Indietro" onClick={() => patchV(m.id, m.step === 'pick' ? { step: 'vchoice' } : m.step === 'upload' ? { step: 'template', anim: undefined, picks: [], err: undefined } : m.step === 'exit' ? (m.agent?.token ? { step: 'vchoice', anim: undefined, picks: [] } : { step: 'upload', agent: undefined, err: undefined }) : m.step === 'mode' && m.anim === 'agent' ? { step: 'exit', picks: m.picks.slice(0, 1) } : m.step === 'anim' ? { step: 'template', picks: [] } : m.step === 'mode' && (m.anim === 'cantiere' || m.anim === 'daynight' || m.anim === 'camera') ? { step: 'template', anim: undefined, picks: [] } : m.step === 'mode' ? { step: 'anim', anim: undefined, picks: m.picks.slice(0, 1) } : { step: 'mode', picks: m.picks.slice(0, m.anim === 'cantiere' || m.anim === 'daynight' ? 1 : 2), previews: undefined, frames: undefined, err: undefined })}
+                      <button aria-label="Indietro" onClick={() => patchV(m.id, m.step === 'pick' ? { step: 'vchoice' } : m.step === 'upload' ? { step: 'template', anim: undefined, picks: [], err: undefined } : m.step === 'exit' ? (m.agent?.up ? { step: 'vchoice', anim: undefined, picks: [] } : { step: 'upload', agent: undefined, err: undefined }) : m.step === 'mode' && m.anim === 'agent' ? { step: 'exit', picks: m.picks.slice(0, 1) } : m.step === 'anim' ? { step: 'template', picks: [] } : m.step === 'mode' && (m.anim === 'cantiere' || m.anim === 'daynight' || m.anim === 'camera') ? { step: 'template', anim: undefined, picks: [] } : m.step === 'mode' ? { step: 'anim', anim: undefined, picks: m.picks.slice(0, 1) } : { step: 'mode', picks: m.picks.slice(0, m.anim === 'cantiere' || m.anim === 'daynight' ? 1 : 2), previews: undefined, frames: undefined, err: undefined })}
                         className="-ml-1.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-muted ease-smooth transition-colors hover:bg-black/5 hover:text-ink"><ChevronLeft size={18} /></button>
                     )}
                     <span className="font-medium">{m.step === 'template' ? 'Che video vuoi creare?' : m.step === 'upload' ? 'Aspetto il tuo video' : m.step === 'vchoice' ? (m.agent?.busy ?? 'Cosa facciamo con il video?') : m.step === 'pick' ? (m.agent?.busy ?? 'Scegli il momento da usare come foto') : m.step === 'exit' ? (m.agent?.busy ?? 'Da qui la stanza si trasforma') : m.step === 'anim' ? 'Con quale animazione?' : m.step === 'mode' ? (emptyFrom && emptyFrom === m.photo ? 'In che stile la arredo?' : 'Com’è ora o in un nuovo stile?') : m.step === 'previews' ? (m.previews?.some(p => !p) ? 'Preparo due proposte…' : 'Scegli quella per il video') : m.step === 'frames' ? (m.err ? '' : m.frames ? 'Ecco prima e dopo. Creo il video?' : 'Preparo prima e dopo…') : m.url ? 'Ecco il video' : m.err ? '' : (m.anim === 'popup' || m.anim === 'gravity') ? 'Creo il video, circa 2 minuti' : 'Creo il video, qualche minuto'}</span>
@@ -719,7 +735,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                           const off = outside ? kind?.startsWith('room:') : kind === 'scene:esterno' || kind === 'scene:giardino'
                           return (
                           <div key={t.id} className="rise" style={{ animationDelay: `${0.05 + k * 0.06}s` }}>
-                            <button disabled={!!off} onClick={() => { const one = m.step === 'template' ? (t as (typeof VIDEO_TEMPLATES)[number]).anims : null; const prev = one?.length === 1 && one[0].id === 'agent' ? [...msgs].reverse().find((x): x is VideoMsg => x.role === 'video' && !!x.agent?.token && x.agent.exit !== false)?.agent : undefined; patchV(m.id, prev ? { step: 'exit', anim: 'agent', photo: prev.room ?? m.photo, agent: { ...prev, busy: undefined, styled: undefined }, picks: [{ label: t.label, icon: 'agent' }] } : one?.length === 1 && one[0].id === 'agent' ? { step: 'upload', anim: 'agent', picks: [{ label: t.label, icon: 'agent' }] } : one?.length === 1 ? { step: 'mode', anim: one[0].id, picks: [{ label: t.label, icon: ANIM_ICON[one[0].id] }] } : m.step === 'template' ? { step: 'anim', picks: [{ label: t.label, icon: 'split' }] } : { step: 'mode', anim: t.id as VideoAnim, picks: [...m.picks, { label: t.label, icon: ANIM_ICON[t.id as VideoAnim] }] }); }}
+                            <button disabled={!!off} onClick={() => { const one = m.step === 'template' ? (t as (typeof VIDEO_TEMPLATES)[number]).anims : null; const prev = one?.length === 1 && one[0].id === 'agent' ? [...msgs].reverse().find((x): x is VideoMsg => x.role === 'video' && !!x.agent?.up && x.agent.at !== undefined && x.agent.exit !== false)?.agent : undefined; patchV(m.id, prev ? { step: 'exit', anim: 'agent', photo: prev.room ?? m.photo, agent: { ...prev, busy: undefined, styled: undefined }, picks: [{ label: t.label, icon: 'agent' }] } : one?.length === 1 && one[0].id === 'agent' ? { step: 'upload', anim: 'agent', picks: [{ label: t.label, icon: 'agent' }] } : one?.length === 1 ? { step: 'mode', anim: one[0].id, picks: [{ label: t.label, icon: ANIM_ICON[one[0].id] }] } : m.step === 'template' ? { step: 'anim', picks: [{ label: t.label, icon: 'split' }] } : { step: 'mode', anim: t.id as VideoAnim, picks: [...m.picks, { label: t.label, icon: ANIM_ICON[t.id as VideoAnim] }] }); }}
                               onMouseMove={tiltMove} onMouseLeave={e => tiltReset(e.currentTarget)} className="tilt group relative flex w-full flex-col overflow-hidden rounded-[28px] bg-white p-2 text-left shadow-[0_1px_2px_rgba(0,0,0,.04),0_8px_24px_-12px_rgba(0,0,0,.12)] ring-1 ring-black/5 hover:shadow-[0_2px_4px_rgba(0,0,0,.04),0_30px_50px_-20px_rgba(0,0,0,.25)] active:scale-[0.985] disabled:pointer-events-none disabled:opacity-50 disabled:grayscale">
                               <span className="sheen pointer-events-none absolute inset-0 z-20" />
                               <video src={t.sample} autoPlay loop muted playsInline className="aspect-video w-full rounded-[20px] object-cover" />
@@ -754,7 +770,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                         {m.agent?.steady === false && <p className="mb-3 rounded-2xl bg-amber-50 px-4 py-2.5 text-sm text-amber-800">Il telefono si muove nel video: per la stanza che si arreda gira di nuovo con il telefono appoggiato o su un cavalletto, se no la trasformazione viene male.</p>}
                         <div className="grid gap-3 sm:grid-cols-2">
                           {([['agent', 'La stanza si arreda quando esci', 'Parli in camera, esci e la stanza cambia stile', UserRound, CREDIT_COST.video_agent], ['photo', 'Usa una foto del video', 'Scegli il momento e lavoraci come una foto', ImageIcon, 0]] as const).map(([id, t, d, I, cr]) => {
-                            const off = !m.agent?.token || (id === 'agent' && m.agent.exit === false);
+                            const off = m.agent?.at === undefined || (id === 'agent' && m.agent.exit === false);
                             return (
                               <button key={id} disabled={off} onClick={() => patchV(m.id, id === 'agent' ? { step: 'exit', anim: 'agent', picks: [{ label: 'Con te in video', icon: 'agent' }] } : { step: 'pick' })}
                                 className="group flex items-start gap-3 rounded-3xl bg-white p-4 text-left shadow-sm ring-1 ring-black/5 ease-smooth transition-shadow hover:shadow-md disabled:opacity-50">
@@ -778,14 +794,13 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                           {m.agent?.busy && m.agent.video && <div className="absolute inset-0 flex items-center justify-center bg-black/20"><Loader2 className="animate-spin text-white" /></div>}
                         </div>
                         {m.step === 'exit' && m.agent?.steady === false && <p className="mt-3 rounded-2xl bg-amber-50 px-3 py-2 text-xs text-amber-800">Il telefono si muove nel video: la trasformazione può venire male.</p>}
-                        {m.agent?.token && (
+                        {m.agent?.at !== undefined && (
                           <>
                             <input type="range" min={0} max={m.agent.duration ?? 10} step={0.1} value={m.agent.at ?? 0} aria-label="Momento in cui esci"
                               onChange={e => patchV(m.id, { agent: { ...m.agent, at: Number(e.target.value) } })}
-                              onPointerUp={e => void agentFrame(m, Number((e.target as HTMLInputElement).value))} onKeyUp={e => void agentFrame(m, Number((e.target as HTMLInputElement).value))}
                               className="mt-4 w-full accent-[var(--color-brand)]" />
                             <p className="mt-1 text-center text-xs text-muted">{m.step === 'pick' ? 'Sposta il cursore sul momento migliore' : 'Sposta il cursore se ti vedi ancora nell’inquadratura'}</p>
-                            <button disabled={!!m.agent.busy} onClick={() => (m.step === 'pick' ? takeFrame(m) : patchV(m.id, { step: 'mode' }))} className="mt-4 flex h-11 w-full items-center justify-center rounded-full bg-ink text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand disabled:opacity-40">{m.step === 'pick' ? 'Usa questa foto' : 'Scegli lo stile'}</button>
+                            <button disabled={!!m.agent.busy} onClick={async () => { if (m.step === 'pick') { void takeFrame(m); return; } if (await agentRoom(m)) patchV(m.id, { step: 'mode' }); }} className="mt-4 flex h-11 w-full items-center justify-center rounded-full bg-ink text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand disabled:opacity-40">{m.step === 'pick' ? 'Usa questa foto' : 'Scegli lo stile'}</button>
                           </>
                         )}
                       </div>

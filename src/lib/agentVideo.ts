@@ -15,8 +15,8 @@ import { fal, ffmpeg, markPending, sign } from '@/lib/videoJob'
 // dall'inquadratura e la stanza si arreda. La parte con l'agente e' il suo video vero (voce compresa); l'AI lavora solo
 // sulla stanza: fotogramma dopo l'uscita -> foto nel nuovo stile (photo-edit, come le altre) -> Kling 2.5 Turbo dalla
 // stanza vera a quella arredata -> montaggio (videoJob.pollVideo chiama montageAgent per i lavori -ka).
-// Fasi: upload (URL firmato, il video va su R2 dal browser) -> analyze (conversione, punto di uscita con Haiku) ->
-// frame (fotogramma della stanza al punto scelto) -> render (Kling).
+// Fasi: upload (URL firmato) e prepare (conversione) in sottofondo; exit (punto di uscita da una griglia fatta dal
+// browser, Haiku); la foto della stanza la fa il browser dal suo video; render (Kling) aspetta la conversione.
 
 const KLING_TURBO_URL = 'https://queue.fal.run/fal-ai/kling-video/v2.5-turbo/pro/image-to-video'
 const STEP = 0.5 // un fotogramma ogni mezzo secondo per cercare l'uscita
@@ -40,46 +40,42 @@ export async function uploadUrl(owner: string, type: string): Promise<{ url: str
   return { url, key: k }
 }
 
-// 2. video caricato -> mp4 720p (verticale o orizzontale), punto di uscita dell'agente, fotogramma della stanza
-export async function analyze(owner: string, logUser: string, srcKey: string, projectId: string): Promise<{ token?: string; video?: string; room?: string; at?: number; duration?: number; exit?: boolean; steady?: boolean; error?: string }> {
+// 2a. in sottofondo (mentre l'agente sceglie): video caricato -> mp4 720p con la voce, per il montaggio.
+// Il punto di uscita e la foto della stanza li fa il browser dal video che ha gia' (vedi exitFromGrid): niente attesa.
+export async function prepare(owner: string, srcKey: string, projectId: string): Promise<{ token?: string; video?: string; error?: string }> {
   if (!new RegExp(`^uploads/${owner}/agente-[\\w-]+\\.(mov|mp4|webm)$`).test(srcKey)) return { error: 'bad_request' }
   const dir = await mkdtemp(join(tmpdir(), 'agente-'))
   try {
     const src = join(dir, 'src'), out = join(dir, 'agente.mp4')
     await writeFile(src, Buffer.from(await (await fetch(`${process.env.R2_PUBLIC_URL}/${srcKey}`)).arrayBuffer()))
-    // la rotazione del telefono la applica ffmpeg da solo: dopo la conversione la misura e' quella vera.
-    // Senza audio (registrazione muta) si mette una traccia di silenzio: il montaggio mescola voce e musica
+    // la rotazione del telefono la applica ffmpeg da solo; senza audio si mette il silenzio (il montaggio mescola voce e musica)
     const hasAudio = await ffmpeg(['-i', src, '-map', '0:a:0', '-t', '0.1', '-f', 'null', '-']).then(() => true, () => false)
-    await ffmpeg(['-y', '-i', src, ...(hasAudio ? [] : ['-f', 'lavfi', '-i', 'anullsrc=r=48000:cl=stereo', '-map', '0:v:0', '-map', '1:a', '-shortest']), '-t', String(MAX_SECONDS), '-vf', "scale='if(gt(iw,ih),1280,720)':'if(gt(iw,ih),720,1280)':force_original_aspect_ratio=increase,crop='if(gt(iw,ih),1280,720)':'if(gt(iw,ih),720,1280)',fps=30,setsar=1",
+    await ffmpeg(['-y', '-i', src, ...(hasAudio ? [] : ['-f', 'lavfi', '-i', 'anullsrc=r=48000:cl=stereo', '-map', '0:v:0', '-map', '1:a', '-shortest']), '-t', String(MAX_SECONDS), '-vf',
+      "scale='if(gt(iw,ih),1280,720)':'if(gt(iw,ih),720,1280)':force_original_aspect_ratio=increase,crop='if(gt(iw,ih),1280,720)':'if(gt(iw,ih),720,1280)',fps=30,setsar=1",
       '-c:v', 'libx264', '-crf', '20', '-preset', 'veryfast', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-ar', '48000', '-ac', '2', '-movflags', '+faststart', out])
-    const { width = 720, height = 1280 } = await sharp(await ffmpeg(['-i', out, '-frames:v', '1', '-f', 'image2', '-c:v', 'png', '-'])).metadata()
-    // fotogrammi piccoli ogni mezzo secondo, in una griglia sola (una chiamata a Haiku)
-    const tiles = await ffmpeg(['-i', out, '-vf', `fps=${1 / STEP},scale=-2:${width > height ? 90 : 160}`, '-f', 'image2pipe', '-c:v', 'png', '-'])
-    const frames = splitPng(tiles)
-    if (frames.length < 4) return { error: 'too_short' }
-    const person = await whoIsThere(frames, logUser)
-    if (!person) return { error: 'ai_failed' }
-    // uscita: primo fotogramma senza persona dopo averla vista, e senza persona anche nel successivo
-    let exit = -1
-    for (let i = 1; i < frames.length; i++) if (person.slice(0, i).some(Boolean) && !person[i] && !person[i + 1]) { exit = i; break }
-    // senza uscita il video serve comunque (una foto presa dal video): si parte da meta'
-    const at = exit < 0 ? Math.round(frames.length * STEP * 5) / 10 : Math.round(exit * STEP * 10) / 10
-    // telefono fermo? La trasformazione parte dall'ultima inquadratura: se la camera si muove il video viene male.
-    // Spostamento dello sfondo (soffitto, pareti) di ogni fotogramma rispetto a quello della stanza: mediana sopra il 2,5% = mosso
-    const ref = frames[exit < 0 ? Math.floor(frames.length / 2) : exit]
-    const shifts = (await Promise.all(frames.filter((_, k) => k % 2 === 0).map(f => measureShift(ref, f, 0.08).catch(() => ({ dx: 0, dy: 0, gain: 0 })))))
-      .map(x => Math.hypot(x.dx, x.dy)).sort((a, b) => a - b)
-    const steady = (shifts[Math.floor(shifts.length / 2)] ?? 0) < 0.025
     const name = `${projectId ? `casa-${projectId}/` : ''}${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
     const video = await uploadFile(await readFile(out), `${key(owner, name)}-agente.mp4`, 'video/mp4')
-    const room = await roomFrame(owner, name, at, out)
-    return { token: token(owner, name), video, room, at, duration: frames.length * STEP, exit: exit >= 0, steady }
+    return { token: token(owner, name), video }
   } catch (e) {
-    console.error('agente analisi', e)
+    console.error('agente conversione', e)
     return { error: 'ai_failed' }
   } finally {
     rm(dir, { recursive: true, force: true }).catch(() => {})
   }
+}
+
+// 2b. punto di uscita da una griglia di fotogrammi fatta dal browser (uno ogni mezzo secondo, piccoli): Haiku dice dove
+// c'e' una persona; il telefono e' fermo se lo sfondo non si sposta (mediana sotto il 2,5%)
+export async function exitFromGrid(logUser: string, grid: Buffer, n: number, cols: number, tw: number, th: number): Promise<{ at?: number; exit?: boolean; steady?: boolean; duration?: number; error?: string }> {
+  if (!(n >= 4 && n <= MAX_SECONDS / STEP + 2 && cols > 0 && tw > 0 && th > 0)) return { error: 'too_short' }
+  const frames = await Promise.all(Array.from({ length: n }, (_, k) => sharp(grid).extract({ left: (k % cols) * tw, top: Math.floor(k / cols) * th, width: tw, height: th }).png().toBuffer()))
+  const person = await whoIsThere(frames, logUser)
+  if (!person) return { error: 'ai_failed' }
+  let exit = -1
+  for (let i = 1; i < n; i++) if (person.slice(0, i).some(Boolean) && !person[i] && !person[i + 1]) { exit = i; break }
+  const ref = frames[exit < 0 ? Math.floor(n / 2) : exit]
+  const shifts = (await Promise.all(frames.filter((_, k) => k % 2 === 0).map(f => measureShift(ref, f, 0.08).catch(() => ({ dx: 0, dy: 0, gain: 0 }))))).map(x => Math.hypot(x.dx, x.dy)).sort((a, b) => a - b)
+  return { at: exit < 0 ? Math.round(n * STEP * 5) / 10 : Math.round(exit * STEP * 10) / 10, exit: exit >= 0, steady: (shifts[Math.floor(shifts.length / 2)] ?? 0) < 0.025, duration: n * STEP }
 }
 
 // immagini PNG una dopo l'altra (image2pipe): si separano sulla firma PNG
@@ -91,7 +87,8 @@ function splitPng(buf: Buffer): Buffer[] {
   return out
 }
 
-// C'e' una persona? Una griglia numerata letta da Haiku (~0,005 $); un solo sguardo per tutto il video
+// C'e' una persona? Una griglia numerata letta da Sonnet (~0,01 $), un solo sguardo per tutto il video. Haiku la
+// sbagliava (persona in tutti i riquadri, anche nella stanza vuota e scura: prova del 29/09); Sonnet giusto al riquadro.
 async function whoIsThere(frames: Buffer[], logUser: string): Promise<boolean[] | null> {
   const cols = 8, rows = Math.ceil(frames.length / cols)
   const { width: w = 90, height: h = 160 } = await sharp(frames[0]).metadata()
@@ -102,46 +99,30 @@ async function whoIsThere(frames: Buffer[], logUser: string): Promise<boolean[] 
   const t0 = Date.now()
   try {
     const resp = await new Anthropic().messages.create({
-      model: 'claude-haiku-4-5-20251001', max_tokens: 300, temperature: 0,
+      model: 'claude-sonnet-5', max_tokens: 1500,
       messages: [{ role: 'user', content: [
         { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: grid.toString('base64') } },
         { type: 'text', text: `These are ${frames.length} numbered frames of a video, left to right, top to bottom. For each frame, is a person (or part of a person: body, arm, face) visible? Reply only with JSON {"person": [numbers of the frames with a person]}.` },
       ] }],
     })
-    await logUsage({ userId: logUser, kind: 'agente_uscita' }, false, Date.now() - t0, { input: resp.usage.input_tokens, output: resp.usage.output_tokens }, true, 'claude-haiku-4-5-20251001').catch(() => {})
+    await logUsage({ userId: logUser, kind: 'agente_uscita' }, false, Date.now() - t0, { input: resp.usage.input_tokens, output: resp.usage.output_tokens }, true, 'claude-sonnet-5').catch(() => {})
     const txt = resp.content.map(b => (b.type === 'text' ? b.text : '')).join('')
     const nums = (JSON.parse(txt.slice(txt.indexOf('{'), txt.lastIndexOf('}') + 1)) as { person?: number[] }).person ?? []
     return frames.map((_, k) => nums.includes(k + 1))
   } catch (e) {
-    console.error('agente haiku', e)
+    console.error('agente persona', e)
     return null
   }
 }
 
-async function roomFrame(owner: string, name: string, at: number, video: string): Promise<string> {
-  const img = await ffmpeg(['-ss', at.toFixed(2), '-i', video, '-frames:v', '1', '-q:v', '2', '-f', 'image2', '-c:v', 'mjpeg', '-'])
-  return uploadJpeg(img, `${key(owner, name)}-stanza.jpg`)
-}
-
-// 3. fotogramma della stanza al punto scelto dall'agente (cursore)
-export async function frameAt(owner: string, t: string, at: number): Promise<{ room?: string; error?: string }> {
-  const name = parseAgent(owner, t)
-  if (!name || !(at >= 0 && at <= MAX_SECONDS)) return { error: 'bad_request' }
-  const dir = await mkdtemp(join(tmpdir(), 'agente-'))
-  try {
-    const v = join(dir, 'a.mp4')
-    await writeFile(v, Buffer.from(await (await fetch(`${process.env.R2_PUBLIC_URL}/${key(owner, name)}-agente.mp4`)).arrayBuffer()))
-    return { room: `${await roomFrame(owner, name, at, v)}?v=${Date.now()}` }
-  } finally {
-    rm(dir, { recursive: true, force: true }).catch(() => {})
-  }
-}
-
 // 4. Kling dalla stanza vera alla foto nel nuovo stile; il lavoro (-ka) lo chiude pollVideo con montageAgent
-export async function renderAgent(owner: string, t: string, at: number, styled: string): Promise<{ job?: string; error?: string }> {
+export async function renderAgent(owner: string, t: string, at: number, styled: string, roomUrl: string): Promise<{ job?: string; error?: string }> {
   const name = parseAgent(owner, t)
   if (!name || !(at >= 0 && at <= MAX_SECONDS)) return { error: 'bad_request' }
-  const room = Buffer.from(await (await fetch(`${process.env.R2_PUBLIC_URL}/${key(owner, name)}-stanza.jpg`)).arrayBuffer())
+  // foto della stanza fatta dal browser allo stesso istante, alla misura del video convertito
+  const { width: VW = 720, height: VH = 1280 } = await sharp(await ffmpeg(['-i', `${process.env.R2_PUBLIC_URL}/${key(owner, name)}-agente.mp4`, '-frames:v', '1', '-f', 'image2', '-c:v', 'png', '-'])).metadata()
+  const room = await sharp(Buffer.from(await (await fetch(roomUrl)).arrayBuffer())).rotate().resize(VW, VH, { fit: 'cover' }).jpeg({ quality: 95 }).toBuffer()
+  await uploadJpeg(room, `${key(owner, name)}-stanza.jpg`)
   const { width = 720, height = 1280 } = await sharp(room).metadata()
   const st = Buffer.from(await (await fetch(styled)).arrayBuffer())
   const after = await alignTo(room, await sharp(st).rotate().resize(width, height, { fit: 'cover' }).jpeg({ quality: 95 }).toBuffer())
