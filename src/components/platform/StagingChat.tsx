@@ -104,7 +104,9 @@ const VIDEO_TEMPLATES: (VideoCard & { anims: (VideoCard & { id: VideoAnim })[] }
     { id: 'camera', label: 'Camminata', desc: 'Entri nella stanza con una ripresa lenta', sample: VIDEO_SAMPLES.camera },
   ] },
 ];
-const VIDEO_STYLES = [{ id: 'modern', label: 'Moderno' }, { id: 'nordic', label: 'Nordico' }, { id: 'industrial', label: 'Luxury' }, { id: 'boho', label: 'Boho' }];
+const VIDEO_STYLES = [{ id: 'modern', label: 'Moderno', desc: 'Linee pulite, grigio e legno scuro' }, { id: 'nordic', label: 'Nordico', desc: 'Legno chiaro, bianco e lino' }, { id: 'industrial', label: 'Luxury', desc: 'Velluto, marmo e ottone' }, { id: 'boho', label: 'Boho', desc: 'Terracotta, rattan e piante' }];
+// le foto d'esempio degli stili sono soggiorni: per le altre stanze card solo testo (un soggiorno per arredare una camera confonde)
+const LIVING = /^room:(soggiorno|openspace|sala)$/;
 
 // Crediti di un'azione, stessa regola del server (api/platform/photo-edit): luce gratis, svuota e arredo 5, modifica gratis
 // per le prime FREE_EDITS su una foto poi 1. Etichetta piccola accanto a ogni pulsante, cosi' l'agente sa cosa spende.
@@ -934,10 +936,11 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                         // scelta dello stile come le card dei modelli: foto vera per "Com'è ora", un soggiorno d'esempio per ogni stile
                         <div className="px-1">
                           <div className={`grid grid-cols-2 gap-3 sm:grid-cols-3 ${m.anim === 'agent' || m.anim === 'walk' || (emptyFrom && emptyFrom === m.photo) ? 'lg:grid-cols-4' : 'lg:grid-cols-5'}`}>
-                            {[...(!(emptyFrom && emptyFrom === m.photo) && m.anim !== 'agent' && m.anim !== 'walk' ? [{ id: 'keep', label: 'Com’è ora', src: m.photo }] : []), ...(!m.agent && (kind === 'scene:esterno' || kind === 'scene:giardino') ? [] : VIDEO_STYLES.map(x => ({ ...x, src: `/staging/stili/${x.id}.jpg` })))].map((o, k) => (
+                            {[...(!(emptyFrom && emptyFrom === m.photo) && m.anim !== 'agent' && m.anim !== 'walk' ? [{ id: 'keep', label: 'Com’è ora', src: m.photo }] : []), ...(!m.agent && (kind === 'scene:esterno' || kind === 'scene:giardino') ? [] : VIDEO_STYLES.map(x => ({ ...x, src: LIVING.test((m.agent ? m.agent.kind : kind) ?? 'room:soggiorno') ? `/staging/stili/${x.id}.jpg` : '' })))].map((o, k) => (
                               <button key={o.id} onClick={() => { if (short(m, fullCr(m.anim) + (o.id === 'keep' ? 0 : CREDIT_COST.arreda))) return; if (o.id === 'keep') void makeVideo(m, m.photo, 'Stanza com’è'); else void styleVideo(m, o.label, { style: o.id }); }} className="rise group relative flex flex-col overflow-hidden rounded-3xl bg-white p-1.5 text-left shadow-[0_1px_2px_rgba(0,0,0,.04),0_8px_24px_-12px_rgba(0,0,0,.12)] ring-1 ring-black/5 ease-smooth transition-shadow hover:shadow-[0_2px_4px_rgba(0,0,0,.04),0_24px_40px_-18px_rgba(0,0,0,.25)] active:scale-[0.985]" style={{ animationDelay: `${0.04 + k * 0.05}s` }}>
-                                <span className="block aspect-[4/3] overflow-hidden rounded-[18px] bg-canvas"><img src={o.src} alt="" className="h-full w-full object-cover ease-smooth transition-transform duration-500 group-hover:scale-[1.04]" /></span>
+                                {o.src && <span className="block aspect-[4/3] overflow-hidden rounded-[18px] bg-canvas"><img src={o.src} alt="" className="h-full w-full object-cover ease-smooth transition-transform duration-500 group-hover:scale-[1.04]" /></span>}
                                 <span className="flex items-center justify-between gap-2 px-2 pb-1 pt-2.5 text-[13px] font-semibold">{o.label}<Cr n={(o.id === 'keep' ? 0 : CREDIT_COST.arreda) + (directVideo(m.anim) || m.anim === 'agent' || m.anim === 'walk' ? videoCr(m.anim) : CREDIT_COST.video_prep)} tight still /></span>
+                                {!o.src && 'desc' in o && <span className="block px-2 pb-2 text-xs leading-snug text-muted">{o.desc}</span>}
                               </button>
                             ))}
                           </div>
