@@ -924,8 +924,8 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                       </div>
                     )}
                     {m.step === 'render' && (
-                      // sempre un riquadro 16:9, non troppo grande: il video verticale sta intero al centro, ai lati la sua foto sfocata
-                      <div className="mx-auto" style={{ maxWidth: 560 }}>
+                      // sempre un riquadro 16:9 a tutta larghezza, come un video orizzontale: il verticale sta intero al centro, ai lati la sua foto sfocata
+                      <div className="w-full">
                         <div className="relative aspect-video overflow-hidden rounded-[20px] bg-ink">
                           {(ratios[m.photo] ?? 1.5) < 1 && <img src={m.photo} alt="" className="absolute inset-0 h-full w-full scale-110 object-cover opacity-60 blur-2xl" />}
                           {m.url
