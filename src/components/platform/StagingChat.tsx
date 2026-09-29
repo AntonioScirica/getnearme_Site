@@ -874,8 +874,9 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                                 ? <img src={m.frames[k]} alt="" className="blur-in absolute inset-0 h-full w-full object-cover" />
                                 : <>
                                   {/* in attesa: il Dopo e' gia' la foto (nitida se la stanza resta com'e', sfocata finche' non c'e' quella nello stile), il Prima si prepara */}
-                                  <img src={m.photo} alt="" className={`absolute inset-0 h-full w-full object-cover ${m.err ? 'opacity-40' : k === 'after' && !m.picks.some(p => p.icon === 'style') ? '' : 'scale-105 blur-md'}`} />
-                                  {!m.err && (k === 'before' || m.picks.some(p => p.icon === 'style')) && <div className="absolute inset-0 flex items-center justify-center bg-black/20 text-white"><Loader2 size={22} className="animate-spin" /></div>}
+                                  {/* Con te in video: il Prima e' gia' la stanza del video, nitida; si prepara solo il Dopo */}
+                                  <img src={m.photo} alt="" className={`absolute inset-0 h-full w-full object-cover ${m.err ? 'opacity-40' : (k === 'after' && !m.picks.some(p => p.icon === 'style')) || (k === 'before' && m.anim === 'agent') ? '' : 'scale-105 blur-md'}`} />
+                                  {!m.err && ((k === 'before' && m.anim !== 'agent') || (k === 'after' && m.picks.some(p => p.icon === 'style'))) && <div className="absolute inset-0 flex items-center justify-center bg-black/20 text-white"><Loader2 size={22} className="animate-spin" /></div>}
                                 </>}
                               <span className="absolute left-2 top-2 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-semibold text-ink shadow-sm">{k === 'before' ? 'Prima' : 'Dopo'}</span>
                             </div>
