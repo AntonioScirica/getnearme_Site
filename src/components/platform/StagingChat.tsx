@@ -575,8 +575,8 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   };
   const pollVideo = async (id: string, job: string) => {
     const fail = 'Video non riuscito, riprova.';
-    // Kling (Stop-motion, Cantiere, Giorno/notte) ci mette ~9 min (prove del 28/09/2026): si aspetta fino a 16
-    for (let k = 0; k < 160; k++) {
+    // Kling ci mette ~9 min (prove del 28/09/2026), la camminata di 15 s anche di piu': si aspetta fino a 25
+    for (let k = 0; k < 250; k++) {
       await wait(6000);
       const r = await authFetch(`/api/platform/video?job=${encodeURIComponent(job)}`).catch(() => null);
       const v = r ? await r.json().catch(() => ({})) : {};
@@ -951,7 +951,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/20 text-white">
                                   <Loader2 size={22} className="animate-spin" />
                                   {/* tempo passato e quanto ci vuole di solito (Kling molto piu' lento di Veo) */}
-                                  <span className="text-xs font-medium text-white/85"><Elapsed className="text-white" /> · di solito {m.anim === 'cantiere' ? '3-9 min' : 'circa 2 min'}</span>
+                                  <span className="text-xs font-medium text-white/85"><Elapsed className="text-white" /> · di solito {m.anim === 'walk' ? '10-15 min' : m.anim === 'cantiere' ? '5-10 min' : m.anim === 'daynight' || m.anim === 'camera' || m.anim === 'agent' ? '3-8 min' : 'circa 3 min'}</span>
                                 </div>
                               )}
                             </>}
