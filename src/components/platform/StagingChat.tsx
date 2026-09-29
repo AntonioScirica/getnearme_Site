@@ -307,6 +307,14 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
     touch();
     if (files.length > 1) { onMany(files); return; } // piu' foto insieme: vista a griglia
     const f = files[0];
+    // un video: parte subito "Con te in video" (l'agente parla, esce e la stanza si arreda)
+    if (f.type.startsWith('video/') || /\.(mov|mp4)$/i.test(f.name)) {
+      const vm: VideoMsg = { id: uid(), role: 'video', step: 'exit', anim: 'agent', photo: '', picks: [{ label: 'Con te in video', icon: 'agent' }] };
+      setMsgs(ms => [...ms, { id: uid(), role: 'user', text: 'Crea un video con me' }, vm]);
+      toBottom();
+      void agentUpload(vm, f);
+      return;
+    }
     if (!f.type.startsWith('image/')) return;
     // Riconoscimento su una copia piccola (448 px): parte subito, carica poco e il modello la legge in un terzo del tempo
     const small = await fileToResizedDataUrl(f, 448);
@@ -545,7 +553,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   const closeLibrary = useCallback(() => setLibrary(false), []);
   const closeSave = useCallback(() => setSaveOpen(null), []);
   const empty = msgs.length === 0;
-  const picker = <input type="file" accept="image/*" multiple className="hidden" onChange={e => { upload(e.target.files); e.target.value = ''; }} />;
+  const picker = <input type="file" accept="image/*,video/mp4,video/quicktime" multiple className="hidden" onChange={e => { upload(e.target.files); e.target.value = ''; }} />;
   // i suggerimenti partono subito, senza passare dal campo
   const editsDone = msgs.filter(x => x.role === 'ai' && !!x.out).length; // modifiche gia' fatte su questa foto
   const videoChip = base && scene === 'interno' ? [
