@@ -553,7 +553,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   const closeLibrary = useCallback(() => setLibrary(false), []);
   const closeSave = useCallback(() => setSaveOpen(null), []);
   const empty = msgs.length === 0;
-  const picker = <input type="file" accept="image/*,video/mp4,video/quicktime" multiple className="hidden" onChange={e => { upload(e.target.files); e.target.value = ''; }} />;
+  const picker = <input type="file" accept="image/*,video/*" multiple className="hidden" onChange={e => { upload(e.target.files); e.target.value = ''; }} />;
   // i suggerimenti partono subito, senza passare dal campo
   const editsDone = msgs.filter(x => x.role === 'ai' && !!x.out).length; // modifiche gia' fatte su questa foto
   const videoChip = base && scene === 'interno' ? [
@@ -614,7 +614,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
               <label className={`rise mt-10 flex w-full max-w-xl cursor-pointer flex-col items-center gap-4 rounded-[28px] border-2 border-dashed bg-white px-8 py-12 text-center ease-smooth transition-colors ${drag ? 'border-brand bg-brand/5' : 'border-line hover:border-brand/60'} ${CARD_SHADOW}`} style={{ animationDelay: '.2s' }}>
                 <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-brand/10 text-brand"><ImagePlus size={30} /></span>
                 <span className="text-lg font-semibold">Carica la foto della stanza</span>
-                <span className="text-sm text-muted">Trascinala qui oppure clicca il pulsante. Va bene anche una facciata, un giardino o una planimetria: la riconosco da solo.</span>
+                <span className="text-sm text-muted">Trascinala qui oppure clicca il pulsante. Va bene anche una facciata, un giardino o una planimetria: la riconosco da solo. Oppure un tuo video: parli, esci e la stanza si arreda.</span>
                 {/* il campo file deve stare prima del pulsante vetrina: la label attiva il primo controllo che contiene, e un <button> lo e' */}
                 {picker}
                 <span className="mt-1 flex flex-wrap items-center justify-center gap-2">

@@ -52,7 +52,7 @@ export default function LibraryPicker({ onFiles, onClose }: { onFiles: (files: F
           </div>
           <label className="flex h-9 cursor-pointer items-center gap-2 rounded-full bg-canvas px-4 text-sm font-medium ease-smooth transition-colors hover:bg-line">
             <Monitor size={15} /> Dal computer
-            <input type="file" accept="image/*" multiple className="hidden" onChange={e => { const f = Array.from(e.target.files ?? []); if (f.length) { onFiles(f); onClose(); } }} />
+            <input type="file" accept="image/*,video/*" multiple className="hidden" onChange={e => { const f = Array.from(e.target.files ?? []); if (f.length) { onFiles(f); onClose(); } }} />
           </label>
           <button onClick={onClose} aria-label="Chiudi" className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-canvas"><X size={18} /></button>
         </div>
