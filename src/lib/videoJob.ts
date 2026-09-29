@@ -101,10 +101,25 @@ async function emptyRoom(fullUrl: string, logUser: string): Promise<string | nul
 
 // il lavoro di fal torna al client firmato con l'utente: solo chi l'ha avviato puo' finalizzarlo
 export const sign = (userId: string, id: string) => createHmac('sha256', process.env.SUPABASE_SERVICE_ROLE_KEY!).update(`${userId}:${id}`).digest('base64url').slice(0, 22)
-export const fal = (url: string, body?: unknown) => fetch(url, {
-  method: body ? 'POST' : 'GET', headers: { Authorization: `Key ${process.env.FAL_API_KEY}`, 'Content-Type': 'application/json' },
-  ...(body ? { body: JSON.stringify(body) } : {}), signal: AbortSignal.timeout(30_000),
-}).then(r => r.json())
+// listino fal senza audio (29/09/2026), $ al secondo di video
+const FAL_USD_PER_S: [RegExp, number, string][] = [
+  [/veo3\.1\/fast\//, 0.10, 'veo3.1-fast'], [/veo3\.1\/lite\//, 0.03, 'veo3.1-lite'], [/veo3\.1\/first-last/, 0.20, 'veo3.1'],
+  [/kling-video\/o3\/standard\/video-to-video/, 0.14, 'kling-o3-edit'], [/kling-video\/o3\//, 0.14, 'kling-o3'],
+  [/kling-video\/v2\.5-turbo/, 0.07, 'kling-2.5-turbo'], [/kling-video\/v1\.6/, 0.056, 'kling-1.6'],
+]
+// bill: chi paga il video; si registra in ai_usage appena fal accetta il lavoro (anche se poi il montaggio fallisce)
+export const fal = async (url: string, body?: { duration?: unknown } & Record<string, unknown>, bill?: { userId: string; kind: string; seconds?: number }) => {
+  const j = await fetch(url, {
+    method: body ? 'POST' : 'GET', headers: { Authorization: `Key ${process.env.FAL_API_KEY}`, 'Content-Type': 'application/json' },
+    ...(body ? { body: JSON.stringify(body) } : {}), signal: AbortSignal.timeout(30_000),
+  }).then(r => r.json())
+  const rate = bill && j?.request_id ? FAL_USD_PER_S.find(([re]) => re.test(url)) : undefined
+  if (bill && rate) {
+    const s = bill.seconds ?? (parseFloat(String(body?.duration ?? 5)) || 5)
+    await logUsage({ userId: bill.userId, kind: bill.kind }, false, 0, { usd: rate[1] * s }, true, `fal-${rate[2]}`).catch(() => {})
+  }
+  return j
+}
 
 export type VideoResult = { job?: string; url?: string; id?: string; status?: number | 'working'; error?: string }
 export type Anim = 'popup' | 'gravity' | 'particles' | 'stopmotion' | 'cantiere' | 'daynight' | 'camera'
@@ -139,7 +154,7 @@ export async function startVideo(owner: string, logUser: string, o: { imageUrl: 
         if (!out) return null
         return uploadJpeg(await sharp(Buffer.from(out, 'base64')).resize(W, H, { fit: 'cover' }).jpeg({ quality: 95 }).toBuffer(), `${key}-${label}.jpg`)
       }
-      const kling = (image_url: string, end_image_url: string | undefined, prompt: string) => fal(KLING_URL, { image_url, ...(end_image_url ? { end_image_url } : {}), prompt, duration: 5, generate_audio: false })
+      const kling = (image_url: string, end_image_url: string | undefined, prompt: string) => fal(KLING_URL, { image_url, ...(end_image_url ? { end_image_url } : {}), prompt, duration: 5, generate_audio: false }, { userId: logUser, kind: `video_${anim}` })
       let ids: string[] = []
       if (anim === 'cantiere') {
         // scavo -> struttura -> casa finita (2 clip montate di seguito)
@@ -152,10 +167,10 @@ export async function startVideo(owner: string, logUser: string, o: { imageUrl: 
         // interni: la stanza di sera con le sue luci accese; esterni: la casa di notte (reel di GetNearMe)
         const night = await frame(o.interior ? NIGHT_IMAGE_INTERIOR : GNM_NIGHT_IMAGE, 'notte')
         if (!night) return { error: 'ai_failed', status: 502 }
-        ids = [(await fal(KLING_TURBO_URL, { image_url: fullUrl, tail_image_url: night, prompt: o.interior ? DAYNIGHT_INTERIOR : GNM_DAYNIGHT, duration: '5' })).request_id]
+        ids = [(await fal(KLING_TURBO_URL, { image_url: fullUrl, tail_image_url: night, prompt: o.interior ? DAYNIGHT_INTERIOR : GNM_DAYNIGHT, duration: '5' }, { userId: logUser, kind: 'video_daynight' })).request_id]
       } else if (anim === 'camera') {
         // movimento di camera: solo la foto di partenza (niente foto da generare); dentro si cammina nella stanza, fuori verso la casa
-        ids = [(await fal(KLING16_URL, { image_url: fullUrl, prompt: o.interior ? WALK_INTERIOR : WALK_EXTERIOR, negative_prompt: o.interior ? WALK_INTERIOR_NEG : WALK_EXTERIOR_NEG, duration: '5', cfg_scale: 0.65 })).request_id]
+        ids = [(await fal(KLING16_URL, { image_url: fullUrl, prompt: o.interior ? WALK_INTERIOR : WALK_EXTERIOR, negative_prompt: o.interior ? WALK_INTERIOR_NEG : WALK_EXTERIOR_NEG, duration: '5', cfg_scale: 0.65 }, { userId: logUser, kind: 'video_camera' })).request_id]
       } else {
         // stop-motion: dalla stanza vuota alla foto arredata
         // stanza vuota (vedi emptyRoom): Kling va da questa alla foto vera
@@ -258,11 +273,11 @@ export async function renderVideo(owner: string, logUser: string, frames: string
     const text = fromEmpty ? prompt(small, anim) : anim === 'particles' ? PARTICLES_PROMPT(small) : POPUP_PROMPT(small)
     const negative = fromEmpty ? negFor(anim) : anim === 'particles' ? NEG_PARTICLES : NEG_REVERSE
     const q = gravity
-      ? await fal(KLING_URL, { image_url: emptyUrl, end_image_url: furnishedUrl, prompt: GRAVITY_PROMPT(big), negative_prompt: NEG_GRAVITY, duration: KLING_SECONDS, generate_audio: false })
+      ? await fal(KLING_URL, { image_url: emptyUrl, end_image_url: furnishedUrl, prompt: GRAVITY_PROMPT(big), negative_prompt: NEG_GRAVITY, duration: KLING_SECONDS, generate_audio: false }, { userId: logUser, kind: `video_${anim}` })
       : await fal(fromEmpty ? `${FAL}/lite/first-last-frame-to-video` : VEO_FLF, {
         first_frame_url: first, last_frame_url: last, prompt: text, negative_prompt: negative,
         duration: `${VEO_SECONDS}s`, aspect_ratio: landscape ? '16:9' : '9:16', resolution: '720p', generate_audio: false, seed: Math.floor(Math.random() * 1_000_000),
-      })
+      }, { userId: logUser, kind: `video_${anim}`, seconds: VEO_SECONDS })
     if (!q.request_id) { console.error('video fal submit', q); return { error: 'ai_failed', status: 502 } }
     // il nome va nel lavoro firmato: a fine montaggio il video si salva accanto alla sua foto (copertina in Galleria).
     // k_ davanti all'id: il lavoro e' su Kling (stesso nome e stessi fotogrammi di prima/dopo)

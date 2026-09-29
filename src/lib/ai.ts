@@ -10,7 +10,7 @@ import { AI_MOCK, mockDelay, mockFor } from './aiMock'
 export type JsonSchema = Record<string, unknown>
 
 type Args = { system: string; text: string; images?: string[]; schema: JsonSchema; maxTokens?: number; usage: { userId: string; kind: string }; model?: string } // model: predefinito Opus 5
-type Tokens = { input?: number; output?: number }
+type Tokens = { input?: number; output?: number; usd?: number } // usd: costo gia' noto (video fal, qualita' GPT usata)
 type Result<T> = { ok: true; data: T } | { ok: false; error: 'refused' | 'empty' | 'failed'; detail?: string }
 
 export async function generateJson<T>(args: Args): Promise<Result<T>> {
@@ -35,7 +35,8 @@ let admin: ReturnType<typeof createClient> | null = null
 export async function logUsage(u: Args['usage'], _gpu: boolean, ms: number, tk: Tokens, ok: boolean, model?: string) {
   const gemini = !!model?.startsWith('gemini-')
   const openai = !!model?.startsWith('gpt-image')
-  const cost = model?.endsWith('-free') ? 0 // quota gratuita di Gemini (lib/geminiFree)
+  const cost = tk.usd !== undefined ? tk.usd
+    : model?.endsWith('-free') ? 0 // quota gratuita di Gemini (lib/geminiFree)
     : openai
     ? (ok ? ({ low: 0.014, medium: 0.020, high: 0.06 }[u.kind === 'arreda' ? (process.env.GPT_IMAGE_QUALITY || 'low') : (process.env.GPT_EDIT_QUALITY || 'low')] ?? 0.02) : 0) // GPT Image 2.5 Sunburst, modifica di una foto 1536x1024: misurato dal campo usage il 28/09/2026 (bassa 0,014, media 0,020)
     : model === 'zenrows'
@@ -49,7 +50,7 @@ export async function logUsage(u: Args['usage'], _gpu: boolean, ms: number, tk: 
     admin ??= createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
     await admin.from('ai_usage').insert({
       user_id: u.userId || null, kind: u.kind, // null = prova anonima dalla landing
-      provider: model === 'zenrows' ? 'zenrows' : gemini ? 'google' : openai ? 'openai' : 'anthropic',
+      provider: model?.startsWith('fal-') ? 'fal' : model === 'zenrows' ? 'zenrows' : gemini ? 'google' : openai ? 'openai' : 'anthropic',
       model: model ?? 'claude-opus-5',
       input_tokens: tk.input ?? null, output_tokens: tk.output ?? null,
       duration_ms: ms, cost_usd: Number(cost.toFixed(6)), ok,

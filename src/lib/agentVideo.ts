@@ -130,7 +130,7 @@ export async function renderAgent(owner: string, t: string, at: number, styled: 
   const after = await alignTo(room, await sharp(st).rotate().resize(width, height, { fit: 'cover' }).jpeg({ quality: 95 }).toBuffer())
   const afterUrl = await uploadJpeg(after, `${key(owner, name)}-arredata.jpg`)
   await uploadFile(Buffer.from(JSON.stringify({ at })), `${key(owner, name)}.agent.json`, 'application/json')
-  const q = await fal(KLING_TURBO_URL, { image_url: `${process.env.R2_PUBLIC_URL}/${key(owner, name)}-stanza.jpg`, tail_image_url: afterUrl, prompt: TRANSFORM, negative_prompt: TRANSFORM_NEG, duration: '5' })
+  const q = await fal(KLING_TURBO_URL, { image_url: `${process.env.R2_PUBLIC_URL}/${key(owner, name)}-stanza.jpg`, tail_image_url: afterUrl, prompt: TRANSFORM, negative_prompt: TRANSFORM_NEG, duration: '5' }, { userId: owner, kind: 'video_agent' })
   if (!q.request_id) { console.error('agente kling', q); return { error: 'ai_failed' } }
   const kname = `${name}-ka`
   const job = `${q.request_id}.${kname.replace('/', '~')}.${sign(owner, `${q.request_id}.${kname}`)}`
@@ -185,7 +185,7 @@ export async function renderWalk(owner: string, t: string, styled: string): Prom
     // ricodificato: con -c copy il taglio cade sul keyframe dopo e la clip supera il limite di Kling (15,05 s)
     await ffmpeg(['-y', '-i', src, '-t', '14.8', '-c:v', 'libx264', '-crf', '16', '-preset', 'veryfast', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '160k', cut])
     const walkUrl = await uploadFile(await readFile(cut), `${key(owner, name)}-walk.mp4`, 'video/mp4')
-    const q = await fal(KLING_EDIT_URL, { video_url: walkUrl, image_urls: [styled], prompt: WALK_PROMPT, keep_audio: true })
+    const q = await fal(KLING_EDIT_URL, { video_url: walkUrl, image_urls: [styled], prompt: WALK_PROMPT, keep_audio: true }, { userId: owner, kind: 'video_walk', seconds: 14.8 }) // ponytail: 14,8 = tetto, clip piu' corte costano meno
     if (!q.request_id) { console.error('cammina kling', q); return { error: 'ai_failed' } }
     const kname = `${name}-kw`
     const job = `${q.request_id}.${kname.replace('/', '~')}.${sign(owner, `${q.request_id}.${kname}`)}`

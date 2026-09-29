@@ -16,6 +16,7 @@ export async function gptImage(o: { userId: string; image: string; prompt: strin
   if (!key) return null
   const t0 = Date.now()
   let ok = false
+  const quality = o.quality || process.env.GPT_IMAGE_QUALITY || 'low'
   try {
     const src = o.image.startsWith('data:') ? Buffer.from(o.image.split(',')[1] ?? '', 'base64') : Buffer.from(await (await fetch(o.image, { signal: AbortSignal.timeout(20_000) })).arrayBuffer())
     const { width = 0, height = 0 } = await sharp(src).rotate().metadata()
@@ -44,7 +45,7 @@ export async function gptImage(o: { userId: string; image: string; prompt: strin
     if (o.mask) form.append('mask', new Blob([new Uint8Array(await frame(o.mask, 'mask'))], { type: 'image/png' }), 'mask.png')
     form.append('size', size)
     // GPT_IMAGE_QUALITY: 'low' (~0,005 $, provato il 28/09: quasi pari alla media), 'medium' (~0,041 $), 'high'
-    form.append('quality', o.quality || process.env.GPT_IMAGE_QUALITY || 'low') // bassa: "top" anche per l'agente (28/09), 0,014 $
+    form.append('quality', quality) // bassa: "top" anche per l'agente (28/09), 0,014 $
     form.append('output_format', 'jpeg')
     form.append('n', '1')
     const r = await fetch('https://api.openai.com/v1/images/edits', { method: 'POST', headers: { Authorization: `Bearer ${key}` }, body: form, signal: AbortSignal.timeout(120_000) })
@@ -62,6 +63,7 @@ export async function gptImage(o: { userId: string; image: string; prompt: strin
     console.error('gpt image', e)
     return null
   } finally {
-    await logUsage({ userId: o.userId, kind: o.kind ?? 'photo_edit' }, false, Date.now() - t0, {}, ok, MODEL).catch(() => {})
+    // costo della qualita' usata davvero (non una stima dal tipo di richiesta)
+    await logUsage({ userId: o.userId, kind: o.kind ?? 'photo_edit' }, false, Date.now() - t0, { usd: ok ? GPT_IMAGE_USD[quality] ?? GPT_IMAGE_USD.medium : 0 }, ok, MODEL).catch(() => {})
   }
 }
