@@ -73,6 +73,7 @@ function ErrLine({ err, className = '' }: { err: string; className?: string }) {
 
 type Msg =
   | { id: string; role: 'divider'; image: string }
+  | { id: string; role: 'note'; text: string } // risposta fissa della chat, senza AI (saluti, foto da riconoscere)
   | { id: string; role: 'user'; text?: string; image?: string; video?: string; seen?: string | null; region?: Region; style?: { src: string; author?: string; authorUrl?: string } }
   | { id: string; role: 'ai'; before: string; out: string | null; busy: boolean; reveal: Reveal; err?: string; text: string; req?: EditRequest }
   // video in chat: UN messaggio che si trasforma a ogni scelta (template, arredo, due anteprime, video)
@@ -128,6 +129,11 @@ function Cr({ n, dark, tight, still }: { n: number; dark?: boolean; tight?: bool
   return <span title={`${n} crediti`} className={`${tight ? '' : 'ml-1.5'} inline-flex items-center gap-0.5 rounded-full px-1.5 py-px text-[10px] font-semibold leading-4 ${dark ? 'bg-white/20 text-white' : still ? 'bg-black/[.06] text-muted' : 'bg-black/[.06] text-muted ease-smooth transition-colors group-hover:bg-white/20 group-hover:text-white'}`}><Coins size={10} className="shrink-0" />{n}</span>;
 }
 const uid = () => Math.random().toString(36).slice(2, 10);
+// messaggio che non chiede niente sulla foto (saluto, grazie, domanda generica): nessuna parola da modifica o da stanza.
+// ponytail: regole semplici; nel dubbio il messaggio va a GPT come prima
+const EDIT_WORDS = /\b(togl|rimuov|elimin|lev[ai]|mett|aggiung|inser|arred|svuot|cambi|sostitu|spost|dipin|color|rend|fa[ir]|rifa|trasform|stil|modern|nordic|scandinav|luxury|luss|boho|industr|classic|minimal|paret|paviment|parquet|soffitt|luc|lumin|divan|lett|tavol|sedi|cucin|bagn|tend|quadr|piant|tappet|mobil|armad|finestr|port|bianc|ner|grig|legn|marm)\w*/i;
+const CHAT_WORDS = /^(ciao|salve|buongiorno|buonasera|hey|ehi|hello|hi|grazie|ok|okay|perfetto|bene|come va|chi sei|cosa sai fare|aiuto|help|test|prova)\b/i;
+const isChatter = (t: string) => !EDIT_WORDS.test(t) && (CHAT_WORDS.test(t) || /\?\s*$/.test(t) || t.length < 3);
 const wait = (ms: number) => new Promise(r => setTimeout(r, ms));
 // planimetria: rendering con regole sue, dal testo prendo solo lo stile dell'arredo
 // esempi del campo: il primo per tipo di stanza, poi ritocchi sul risultato (a rotazione)
@@ -394,6 +400,12 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
     const t = (given ?? text).trim();
     const pk = given ? sug ?? null : picked;
     if (!t || !base || busy) return;
+    // niente AI quando non serve (29/09): saluti e domande senza una richiesta sulla foto partivano verso GPT e pagavamo
+    // una foto inutile; con la foto non riconosciuta si sceglie prima cos'e' (non si arreda uno sfondo del desktop)
+    const note = (n: string) => { setText(''); setMsgs(ms => [...ms, { id: uid(), role: 'user', text: t }, { id: uid(), role: 'note', text: n }]); toBottom(); };
+    const lastPhoto = [...msgs].reverse().find((x): x is Extract<Msg, { role: 'user' }> => x.role === 'user' && !!x.image);
+    if (lastPhoto?.seen === 'unknown') { note('Prima dimmi che stanza è dal menu qui sopra, così la arredo giusta.'); return; }
+    if (!region && !styleRef && !pk && isChatter(t)) { note('Scrivimi cosa cambiare nella foto, per esempio: togli il divano, pareti bianche, arredala in stile nordico.'); return; }
     // stile da una foto: sempre Normale; scritta: quella delle pill sopra il campo; stili: l'ultima scelta nel popup
     const dens = styleRef ? 'normale' : given === undefined ? typedDensity : densityRef.current;
     setTextDensity(null);
@@ -757,6 +769,8 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
               Ripreso da questa versione
               <span className="h-px flex-1 bg-line" />
             </div>
+          ) : m.role === 'note' ? (
+            <div key={m.id} className="blur-in flex justify-start"><p className="max-w-[85%] rounded-3xl rounded-bl-2xl bg-canvas px-4 py-3 text-sm">{m.text}</p></div>
           ) : m.role === 'video' ? (
             // video: tutta la larghezza, un solo contenitore che cambia contenuto a ogni scelta (le scelte fatte restano in alto)
             <div key={m.id} className="blur-in">
