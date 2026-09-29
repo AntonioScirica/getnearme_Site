@@ -1042,7 +1042,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                   {/* quando riconosce la foto il messaggio si riscrive parola per parola (key = cosa ha visto) */}
                   <AutoSize><LightSwap swapKey={m.seen ?? 'caricata'}>
                     <p>{m.seen === 'unknown' ? <>Non riesco a capire che stanza è:{' '}
-                      {otherFor === m.id ? otherInput(m.id) : <Dropdown value="" options={SEEN_OPTIONS} className="rounded-full bg-brand/10 px-2 font-bold text-brand ring-1 ring-inset ring-brand/40" onChange={v => {
+                      {otherFor === m.id ? otherInput(m.id) : <Dropdown value="" options={SEEN_OPTIONS} className="font-bold text-brand" onChange={v => {
                         if (v === 'other') { setOtherFor(m.id); return; }
                         setMsgs(ms => ms.map(x => (x.id === m.id && x.role === 'user' ? { ...x, seen: v } : x)));
                         setScene(v.startsWith('scene:') ? (v.slice(6) as Scene) : 'interno'); setKind(v);
