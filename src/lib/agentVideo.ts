@@ -41,7 +41,7 @@ export async function uploadUrl(owner: string, type: string): Promise<{ url: str
 }
 
 // 2. video caricato -> mp4 720p (verticale o orizzontale), punto di uscita dell'agente, fotogramma della stanza
-export async function analyze(owner: string, logUser: string, srcKey: string, projectId: string): Promise<{ token?: string; video?: string; room?: string; at?: number; duration?: number; error?: string }> {
+export async function analyze(owner: string, logUser: string, srcKey: string, projectId: string): Promise<{ token?: string; video?: string; room?: string; at?: number; duration?: number; exit?: boolean; error?: string }> {
   if (!new RegExp(`^uploads/${owner}/agente-[\\w-]+\\.(mov|mp4|webm)$`).test(srcKey)) return { error: 'bad_request' }
   const dir = await mkdtemp(join(tmpdir(), 'agente-'))
   try {
@@ -62,12 +62,12 @@ export async function analyze(owner: string, logUser: string, srcKey: string, pr
     // uscita: primo fotogramma senza persona dopo averla vista, e senza persona anche nel successivo
     let exit = -1
     for (let i = 1; i < frames.length; i++) if (person.slice(0, i).some(Boolean) && !person[i] && !person[i + 1]) { exit = i; break }
-    if (exit < 0) return { error: 'no_exit' }
-    const at = Math.round(exit * STEP * 10) / 10
+    // senza uscita il video serve comunque (una foto presa dal video): si parte da meta'
+    const at = exit < 0 ? Math.round(frames.length * STEP * 5) / 10 : Math.round(exit * STEP * 10) / 10
     const name = `${projectId ? `casa-${projectId}/` : ''}${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
     const video = await uploadFile(await readFile(out), `${key(owner, name)}-agente.mp4`, 'video/mp4')
     const room = await roomFrame(owner, name, at, out)
-    return { token: token(owner, name), video, room, at, duration: frames.length * STEP }
+    return { token: token(owner, name), video, room, at, duration: frames.length * STEP, exit: exit >= 0 }
   } catch (e) {
     console.error('agente analisi', e)
     return { error: 'ai_failed' }
