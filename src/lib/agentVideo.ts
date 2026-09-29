@@ -8,7 +8,7 @@ import { PutObjectCommand } from '@aws-sdk/client-s3'
 import { s3 } from '@/lib/s3'
 import { uploadFile, uploadJpeg } from '@/lib/r2'
 import { logUsage } from '@/lib/ai'
-import { alignTo } from '@/lib/align'
+import { alignTo, measureShift } from '@/lib/align'
 import { fal, ffmpeg, markPending, sign } from '@/lib/videoJob'
 
 // Template "Con te in video" (29/09, prova in ~/Desktop/prove-video-template/agente): l'agente parla in camera, esce
@@ -41,7 +41,7 @@ export async function uploadUrl(owner: string, type: string): Promise<{ url: str
 }
 
 // 2. video caricato -> mp4 720p (verticale o orizzontale), punto di uscita dell'agente, fotogramma della stanza
-export async function analyze(owner: string, logUser: string, srcKey: string, projectId: string): Promise<{ token?: string; video?: string; room?: string; at?: number; duration?: number; exit?: boolean; error?: string }> {
+export async function analyze(owner: string, logUser: string, srcKey: string, projectId: string): Promise<{ token?: string; video?: string; room?: string; at?: number; duration?: number; exit?: boolean; steady?: boolean; error?: string }> {
   if (!new RegExp(`^uploads/${owner}/agente-[\\w-]+\\.(mov|mp4|webm)$`).test(srcKey)) return { error: 'bad_request' }
   const dir = await mkdtemp(join(tmpdir(), 'agente-'))
   try {
@@ -64,10 +64,16 @@ export async function analyze(owner: string, logUser: string, srcKey: string, pr
     for (let i = 1; i < frames.length; i++) if (person.slice(0, i).some(Boolean) && !person[i] && !person[i + 1]) { exit = i; break }
     // senza uscita il video serve comunque (una foto presa dal video): si parte da meta'
     const at = exit < 0 ? Math.round(frames.length * STEP * 5) / 10 : Math.round(exit * STEP * 10) / 10
+    // telefono fermo? La trasformazione parte dall'ultima inquadratura: se la camera si muove il video viene male.
+    // Spostamento dello sfondo (soffitto, pareti) di ogni fotogramma rispetto a quello della stanza: mediana sopra il 2,5% = mosso
+    const ref = frames[exit < 0 ? Math.floor(frames.length / 2) : exit]
+    const shifts = (await Promise.all(frames.filter((_, k) => k % 2 === 0).map(f => measureShift(ref, f, 0.08).catch(() => ({ dx: 0, dy: 0, gain: 0 })))))
+      .map(x => Math.hypot(x.dx, x.dy)).sort((a, b) => a - b)
+    const steady = (shifts[Math.floor(shifts.length / 2)] ?? 0) < 0.025
     const name = `${projectId ? `casa-${projectId}/` : ''}${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
     const video = await uploadFile(await readFile(out), `${key(owner, name)}-agente.mp4`, 'video/mp4')
     const room = await roomFrame(owner, name, at, out)
-    return { token: token(owner, name), video, room, at, duration: frames.length * STEP, exit: exit >= 0 }
+    return { token: token(owner, name), video, room, at, duration: frames.length * STEP, exit: exit >= 0, steady }
   } catch (e) {
     console.error('agente analisi', e)
     return { error: 'ai_failed' }

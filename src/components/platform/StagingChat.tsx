@@ -72,7 +72,7 @@ type Msg =
   | { id: string; role: 'user'; text?: string; image?: string; video?: string; seen?: string | null; region?: Region; style?: { src: string; author?: string; authorUrl?: string } }
   | { id: string; role: 'ai'; before: string; out: string | null; busy: boolean; reveal: Reveal; err?: string; text: string; req?: EditRequest }
   // video in chat: UN messaggio che si trasforma a ogni scelta (template, arredo, due anteprime, video)
-  | { id: string; role: 'video'; step: 'template' | 'anim' | 'upload' | 'vchoice' | 'pick' | 'exit' | 'mode' | 'previews' | 'frames' | 'render'; photo: string; anim?: VideoAnim; picks: VideoPick[]; previews?: (string | null)[]; frames?: { token: string; before: string; after: string; src: string; styled?: string }; url?: string; err?: string; job?: string; restyle?: { label: string; req: { style?: string; prompt?: string } }; redone?: boolean; agent?: { busy?: string; token?: string; video?: string; room?: string; at?: number; duration?: number; exit?: boolean; styled?: string } };
+  | { id: string; role: 'video'; step: 'template' | 'anim' | 'upload' | 'vchoice' | 'pick' | 'exit' | 'mode' | 'previews' | 'frames' | 'render'; photo: string; anim?: VideoAnim; picks: VideoPick[]; previews?: (string | null)[]; frames?: { token: string; before: string; after: string; src: string; styled?: string }; url?: string; err?: string; job?: string; restyle?: { label: string; req: { style?: string; prompt?: string } }; redone?: boolean; agent?: { busy?: string; token?: string; video?: string; room?: string; at?: number; duration?: number; exit?: boolean; steady?: boolean; styled?: string } };
 
 // Macro template video, ognuno con i suoi stili di animazione (card con anteprima in loop)
 type VideoAnim = 'popup' | 'gravity' | 'particles' | 'stopmotion' | 'cantiere' | 'daynight' | 'camera' | 'agent';
@@ -311,6 +311,15 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
     if (f.type.startsWith('video/') || /\.(mov|mp4)$/i.test(f.name)) {
       const vm: VideoMsg = { id: uid(), role: 'video', step: 'vchoice', photo: '', picks: [] };
       const um = uid();
+      const waiting = [...msgs].reverse().find((x): x is VideoMsg => x.role === 'video' && x.step === 'upload');
+      if (waiting) {
+        // "Con te in video" aspettava il video: il messaggio d'attesa lascia il posto al video e alla scelta del momento
+        const next: VideoMsg = { ...waiting, id: uid(), step: 'exit', err: undefined };
+        setMsgs(ms => [...ms.filter(x => x.id !== waiting.id), { id: um, role: 'user', video: URL.createObjectURL(f) }, next]);
+        toBottom();
+        void agentUpload(next, f, um, 'exit');
+        return;
+      }
       setMsgs(ms => [...ms, { id: um, role: 'user', video: URL.createObjectURL(f) }, vm]);
       toBottom();
       void agentUpload(vm, f, um, 'vchoice');
@@ -456,7 +465,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
     const a = await authFetch('/api/platform/agent-video', { method: 'POST', headers: QUIET, body: JSON.stringify({ phase: 'analyze', key: u.key, ...(project ? { projectId: project } : {}) }) }).then(r => r.json()).catch(() => ({}));
     if (next === 'exit' && a.token && !a.exit) a.error = 'no_exit';
     if (!a.token || (next === 'exit' && !a.exit)) { patchV(m.id, { step: next === 'exit' ? 'upload' : 'vchoice', agent: {}, err: a.error === 'no_exit' ? 'Non vedo il momento in cui esci dall’inquadratura: alla fine del video esci e lascia la stanza sola per 2-3 secondi.' : a.error === 'too_short' ? 'Il video è troppo corto: almeno 5 secondi.' : 'Non sono riuscito a leggere il video, riprova.' }); return; }
-    patchV(m.id, { photo: a.room, agent: { token: a.token, video: a.video, room: a.room, at: a.at, duration: a.duration, exit: a.exit } });
+    patchV(m.id, { photo: a.room, agent: { token: a.token, video: a.video, room: a.room, at: a.at, duration: a.duration, exit: a.exit, steady: a.steady } });
     setMsgs(ms => ms.map(x => (x.id === um && x.role === 'user' ? { ...x, video: a.video } : x))); // il video locale (blob) non sopravvive a una ricarica
   };
   const agentFrame = async (m: VideoMsg, at: number) => {
@@ -684,7 +693,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                       <button aria-label="Indietro" onClick={() => patchV(m.id, m.step === 'pick' ? { step: 'vchoice' } : m.step === 'upload' ? { step: 'template', anim: undefined, picks: [], err: undefined } : m.step === 'exit' ? (m.agent?.token ? { step: 'vchoice', anim: undefined, picks: [] } : { step: 'upload', agent: undefined, err: undefined }) : m.step === 'mode' && m.anim === 'agent' ? { step: 'exit', picks: m.picks.slice(0, 1) } : m.step === 'anim' ? { step: 'template', picks: [] } : m.step === 'mode' && (m.anim === 'cantiere' || m.anim === 'daynight' || m.anim === 'camera') ? { step: 'template', anim: undefined, picks: [] } : m.step === 'mode' ? { step: 'anim', anim: undefined, picks: m.picks.slice(0, 1) } : { step: 'mode', picks: m.picks.slice(0, m.anim === 'cantiere' || m.anim === 'daynight' ? 1 : 2), previews: undefined, frames: undefined, err: undefined })}
                         className="-ml-1.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-muted ease-smooth transition-colors hover:bg-black/5 hover:text-ink"><ChevronLeft size={18} /></button>
                     )}
-                    <span className="font-medium">{m.step === 'template' ? 'Che video vuoi creare?' : m.step === 'upload' ? 'Carica il tuo video' : m.step === 'vchoice' ? (m.agent?.busy ?? 'Cosa facciamo con il video?') : m.step === 'pick' ? (m.agent?.busy ?? 'Scegli il momento da usare come foto') : m.step === 'exit' ? (m.agent?.busy ?? 'Da qui la stanza si trasforma') : m.step === 'anim' ? 'Con quale animazione?' : m.step === 'mode' ? (emptyFrom && emptyFrom === m.photo ? 'In che stile la arredo?' : 'Com’è ora o in un nuovo stile?') : m.step === 'previews' ? (m.previews?.some(p => !p) ? 'Preparo due proposte…' : 'Scegli quella per il video') : m.step === 'frames' ? (m.err ? '' : m.frames ? 'Ecco prima e dopo. Creo il video?' : 'Preparo prima e dopo…') : m.url ? 'Ecco il video' : m.err ? '' : (m.anim === 'popup' || m.anim === 'gravity') ? 'Creo il video, circa 2 minuti' : 'Creo il video, qualche minuto'}</span>
+                    <span className="font-medium">{m.step === 'template' ? 'Che video vuoi creare?' : m.step === 'upload' ? 'Aspetto il tuo video' : m.step === 'vchoice' ? (m.agent?.busy ?? 'Cosa facciamo con il video?') : m.step === 'pick' ? (m.agent?.busy ?? 'Scegli il momento da usare come foto') : m.step === 'exit' ? (m.agent?.busy ?? 'Da qui la stanza si trasforma') : m.step === 'anim' ? 'Con quale animazione?' : m.step === 'mode' ? (emptyFrom && emptyFrom === m.photo ? 'In che stile la arredo?' : 'Com’è ora o in un nuovo stile?') : m.step === 'previews' ? (m.previews?.some(p => !p) ? 'Preparo due proposte…' : 'Scegli quella per il video') : m.step === 'frames' ? (m.err ? '' : m.frames ? 'Ecco prima e dopo. Creo il video?' : 'Preparo prima e dopo…') : m.url ? 'Ecco il video' : m.err ? '' : (m.anim === 'popup' || m.anim === 'gravity') ? 'Creo il video, circa 2 minuti' : 'Creo il video, qualche minuto'}</span>
                     {/* annulla: via il messaggio del video (e il "Crea un video" prima), si torna alle foto; non a video mandato */}
                     {m.step !== 'render' && (
                       <button onClick={() => setMsgs(ms => { const k = ms.findIndex(x => x.id === m.id); return ms.filter((x, n) => n !== k && !(n === k - 1 && x.role === 'user' && x.text === 'Crea un video')); })}
@@ -700,7 +709,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                           const off = outside ? kind?.startsWith('room:') : kind === 'scene:esterno' || kind === 'scene:giardino'
                           return (
                           <div key={t.id} className="rise" style={{ animationDelay: `${0.05 + k * 0.06}s` }}>
-                            <button disabled={!!off} onClick={() => { const one = m.step === 'template' ? (t as (typeof VIDEO_TEMPLATES)[number]).anims : null; patchV(m.id, one?.length === 1 && one[0].id === 'agent' ? { step: 'upload', anim: 'agent', picks: [{ label: t.label, icon: 'agent' }] } : one?.length === 1 ? { step: 'mode', anim: one[0].id, picks: [{ label: t.label, icon: ANIM_ICON[one[0].id] }] } : m.step === 'template' ? { step: 'anim', picks: [{ label: t.label, icon: 'split' }] } : { step: 'mode', anim: t.id as VideoAnim, picks: [...m.picks, { label: t.label, icon: ANIM_ICON[t.id as VideoAnim] }] }); }}
+                            <button disabled={!!off} onClick={() => { const one = m.step === 'template' ? (t as (typeof VIDEO_TEMPLATES)[number]).anims : null; const prev = one?.length === 1 && one[0].id === 'agent' ? [...msgs].reverse().find((x): x is VideoMsg => x.role === 'video' && !!x.agent?.token && x.agent.exit !== false)?.agent : undefined; patchV(m.id, prev ? { step: 'exit', anim: 'agent', photo: prev.room ?? m.photo, agent: { ...prev, busy: undefined, styled: undefined }, picks: [{ label: t.label, icon: 'agent' }] } : one?.length === 1 && one[0].id === 'agent' ? { step: 'upload', anim: 'agent', picks: [{ label: t.label, icon: 'agent' }] } : one?.length === 1 ? { step: 'mode', anim: one[0].id, picks: [{ label: t.label, icon: ANIM_ICON[one[0].id] }] } : m.step === 'template' ? { step: 'anim', picks: [{ label: t.label, icon: 'split' }] } : { step: 'mode', anim: t.id as VideoAnim, picks: [...m.picks, { label: t.label, icon: ANIM_ICON[t.id as VideoAnim] }] }); }}
                               onMouseMove={tiltMove} onMouseLeave={e => tiltReset(e.currentTarget)} className="tilt group relative flex w-full flex-col overflow-hidden rounded-[28px] bg-white p-2 text-left shadow-[0_1px_2px_rgba(0,0,0,.04),0_8px_24px_-12px_rgba(0,0,0,.12)] ring-1 ring-black/5 hover:shadow-[0_2px_4px_rgba(0,0,0,.04),0_30px_50px_-20px_rgba(0,0,0,.25)] active:scale-[0.985] disabled:pointer-events-none disabled:opacity-50 disabled:grayscale">
                               <span className="sheen pointer-events-none absolute inset-0 z-20" />
                               <video src={t.sample} autoPlay loop muted playsInline className="aspect-video w-full rounded-[20px] object-cover" />
@@ -715,24 +724,24 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                       </div>
                     )}
                     {m.step === 'upload' && (
-                      // come girare il video, poi il file (verticale o orizzontale, fino a 40 s)
+                      // messaggio: come girare il video, poi lo si manda in chat come una foto (trascinato o con il pulsante)
                       <div className="px-1">
-                        <div className="grid gap-3 sm:grid-cols-3">
-                          {[['1', 'Telefono fermo', 'Appoggialo o usa un cavalletto, inquadra la stanza intera.'], ['2', 'Parla in camera', 'Presenta la casa o la stanza, anche pochi secondi.'], ['3', 'Esci dall’inquadratura', 'Lascia la stanza sola 2-3 secondi: da lì si arreda.']].map(([n, t, d]) => (
-                            <div key={n} className="rounded-3xl bg-white p-4 shadow-sm ring-1 ring-black/5"><span className="flex h-7 w-7 items-center justify-center rounded-full bg-brand/10 text-xs font-bold text-brand">{n}</span><div className="mt-3 text-sm font-semibold">{t}</div><div className="mt-1 text-xs text-muted">{d}</div></div>
-                          ))}
+                        <div className="max-w-xl rounded-3xl rounded-bl-2xl bg-canvas px-4 py-3 text-sm leading-relaxed">
+                          <p>Mandami un tuo video, qui in chat come una foto. Giralo così:</p>
+                          <ol className="mt-2 list-decimal space-y-1 pl-5 text-muted">
+                            <li><b className="font-semibold text-ink">Telefono fermo</b>, appoggiato o su un cavalletto, con la stanza intera</li>
+                            <li><b className="font-semibold text-ink">Parla in camera</b>, anche pochi secondi</li>
+                            <li><b className="font-semibold text-ink">Esci dall’inquadratura</b> e lascia la stanza sola 2-3 secondi: da lì si arreda</li>
+                          </ol>
                         </div>
                         {m.err && <ErrLine err={m.err} className="pt-3" />}
-                        <label className="mt-4 flex h-12 cursor-pointer items-center justify-center gap-2 rounded-full bg-ink text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand">
-                          <VideoIcon size={16} /> Carica il video<Cr n={CREDIT_COST.video_agent} dark />
-                          <input type="file" accept="video/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) void agentUpload(m, f); }} />
-                        </label>
                       </div>
                     )}
                     {m.step === 'vchoice' && (
                       // video appena caricato: cosa farne (la stanza che si arreda quando esci, o una foto presa dal video)
                       <div className="px-1">
                         {m.err && <ErrLine err={m.err} className="pb-3" />}
+                        {m.agent?.steady === false && <p className="mb-3 rounded-2xl bg-amber-50 px-4 py-2.5 text-sm text-amber-800">Il telefono si muove nel video: per la stanza che si arreda gira di nuovo con il telefono appoggiato o su un cavalletto, se no la trasformazione viene male.</p>}
                         <div className="grid gap-3 sm:grid-cols-2">
                           {([['agent', 'La stanza si arreda quando esci', 'Parli in camera, esci e la stanza cambia stile', UserRound, CREDIT_COST.video_agent], ['photo', 'Usa una foto del video', 'Scegli il momento e lavoraci come una foto', ImageIcon, 0]] as const).map(([id, t, d, I, cr]) => {
                             const off = !m.agent?.token || (id === 'agent' && m.agent.exit === false);
@@ -758,6 +767,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                             : <div className="absolute inset-0 flex items-center justify-center"><Loader2 className="animate-spin text-muted" /></div>}
                           {m.agent?.busy && m.agent.video && <div className="absolute inset-0 flex items-center justify-center bg-black/20"><Loader2 className="animate-spin text-white" /></div>}
                         </div>
+                        {m.step === 'exit' && m.agent?.steady === false && <p className="mt-3 rounded-2xl bg-amber-50 px-3 py-2 text-xs text-amber-800">Il telefono si muove nel video: la trasformazione può venire male.</p>}
                         {m.agent?.token && (
                           <>
                             <input type="range" min={0} max={m.agent.duration ?? 10} step={0.1} value={m.agent.at ?? 0} aria-label="Momento in cui esci"
