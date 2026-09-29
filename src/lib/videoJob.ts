@@ -344,8 +344,9 @@ export async function pollVideo(owner: string, job: string): Promise<VideoResult
       const ease = `(0.5-0.5*cos(PI*min(max((t-${XFADE})/${HOLD}\\,0)\\,1)))`
       const slide = L || T ? `crop=${PW}:${PH}:'${L}-(${px})*(1-${ease})':'${T}-(${py})*(1-${ease})',` : ''
       await ffmpeg(['-y', '-i', raw, '-loop', '1', '-t', (HOLD + XFADE).toFixed(2), '-i', photo, '-i', music, '-filter_complex',
-        // la foto e' gia' W x H come i fotogrammi di Veo (720p); niente scale2ref: con ffmpeg 7 resta appeso
-        `${clip}[c];[1:v]fps=30,${slide}format=yuv420p[p];[c][p]xfade=transition=fade:duration=${XFADE}:offset=${(shown - XFADE).toFixed(2)},${zoom}[2:a]${audio}`,
+        // clip alla misura della foto (Kling non esce sempre a 1280x720 / 720x1280, e xfade vuole la stessa misura);
+        // niente scale2ref: con ffmpeg 7 resta appeso
+        `${clip},scale=${PW}:${PH}:flags=bicubic,setsar=1[c];[1:v]fps=30,${slide}format=yuv420p[p];[c][p]xfade=transition=fade:duration=${XFADE}:offset=${(shown - XFADE).toFixed(2)},${zoom}[2:a]${audio}`,
         '-map', '[v]', '-map', '[a]', '-c:v', 'libx264', '-crf', '18', '-preset', 'medium', '-c:a', 'aac', '-b:a', '128k', '-shortest', '-movflags', '+faststart', final])
     } else {
       await ffmpeg(['-y', '-i', raw, '-i', music, '-filter_complex',

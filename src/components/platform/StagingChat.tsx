@@ -102,7 +102,8 @@ const VIDEO_STYLES = [{ id: 'modern', label: 'Moderno' }, { id: 'nordic', label:
 const furnishes = (req: Partial<EditRequest>) => req.angle !== 'day' && req.style !== 'empty'
   && (isFurnishing({ style: req.style, customPrompt: req.prompt, angle: req.angle, planimetria: req.planimetria, scene: req.scene as 'interno' | undefined, restyle: isRestyle(req.prompt ?? '') }) || !!req.styleRef);
 // crediti di un video per animazione; Cantiere e Giorno/notte partono subito dopo la scelta (niente passo Prima/Dopo)
-const videoCr = (anim?: VideoAnim) => anim === 'cantiere' ? CREDIT_COST.video_cantiere : anim === 'daynight' ? CREDIT_COST.video_daynight : CREDIT_COST.video;
+// Prima e dopo: 99 per il video (1 credito si scala gia' al Prima/Dopo)
+const videoCr = (anim?: VideoAnim) => anim === 'cantiere' ? CREDIT_COST.video_cantiere : anim === 'daynight' ? CREDIT_COST.video_daynight : CREDIT_COST.video_render;
 const directVideo = (anim?: VideoAnim) => anim === 'cantiere' || anim === 'daynight';
 const creditsOf = (req: Partial<EditRequest>, editsDone: number): number => req.angle === 'day' ? CREDIT_COST.luminoso
   : req.style === 'empty' ? CREDIT_COST.svuota
@@ -507,7 +508,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   const editsDone = msgs.filter(x => x.role === 'ai' && !!x.out).length; // modifiche gia' fatte su questa foto
   const videoChip = base && scene === 'interno' ? [
     <button key="video" disabled={busy} onClick={() => askVideo(base)}
-      className="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-ink pl-3.5 pr-1.5 py-1.5 text-[13px] font-medium text-white shadow-sm ease-smooth transition-colors hover:bg-brand disabled:opacity-40"><Clapperboard size={13} /> Crea video<Cr n={CREDIT_COST.video} dark /></button>,
+      className="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-ink pl-3.5 pr-1.5 py-1.5 text-[13px] font-medium text-white shadow-sm ease-smooth transition-colors hover:bg-brand disabled:opacity-40"><Clapperboard size={13} /> Crea video<Cr n={CREDIT_COST.video_render} dark /></button>,
   ] : [];
   // interni: "Svuota la stanza" sempre primo, subito dopo Crea video (esterni e giardini hanno i loro "Rinnova")
   const sugs = suggestionsFor(kind);
@@ -687,7 +688,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                         {/* approvazione: Veo (la parte cara) parte solo da qui; la stanza vuota si puo' rifare (costa come una foto) */}
                         {m.frames && (
                           <div className="flex flex-wrap items-center gap-2 pt-3">
-                            <button onClick={() => renderVideo(m)} className="flex items-center rounded-full bg-ink pl-4 pr-2 py-2 text-[13px] font-medium text-white shadow-sm ease-smooth transition-colors hover:bg-brand">Crea il video<Cr n={m.anim === 'cantiere' || m.anim === 'daynight' ? videoCr(m.anim) : CREDIT_COST.video_render} dark /></button>
+                            <button onClick={() => renderVideo(m)} className="flex items-center rounded-full bg-ink pl-4 pr-2 py-2 text-[13px] font-medium text-white shadow-sm ease-smooth transition-colors hover:bg-brand">Crea il video<Cr n={videoCr(m.anim)} dark /></button>
                             {/* una sola seconda possibilita' sullo stile (poi si torna indietro): costa come una foto */}
                             {m.restyle && !m.redone && <button onClick={() => styleVideo(m, m.restyle!.label, m.restyle!.req, true)} className="flex items-center rounded-full bg-white py-2 pl-4 pr-2 text-[13px] font-medium text-ink/80 shadow-sm ring-1 ring-inset ring-black/10 ease-smooth transition-colors hover:bg-canvas">Rifai lo stile<Cr n={CREDIT_COST.arreda + CREDIT_COST.video_prep} /></button>}
                           </div>
@@ -802,7 +803,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                     <div className={`flex w-full items-center gap-1 ${isNarrow(m.before) ? '' : 'justify-start'}`}>
                       <Act narrow={isNarrow(m.before)} icon={<SquareDashedMousePointer size={14} className="translate-y-px" />} label="Modifica" onClick={() => { if (base !== m.out) restartFrom(i, m.out!); setSelecting(true); }} />
                       {!isNarrow(m.before) && <span className="mx-1 h-4 w-px bg-line" aria-hidden />}
-                      <Act narrow={isNarrow(m.before)} icon={<Clapperboard size={14} className="translate-y-px" />} label="Crea video" tip="I mobili compaiono uno alla volta" disabled={busy} onClick={() => askVideo(m.out!)} cr={CREDIT_COST.video} />
+                      <Act narrow={isNarrow(m.before)} icon={<Clapperboard size={14} className="translate-y-px" />} label="Crea video" tip="I mobili compaiono uno alla volta" disabled={busy} onClick={() => askVideo(m.out!)} cr={CREDIT_COST.video_render} />
                       {m.req && !isNarrow(m.before) && <span className="mx-1 h-4 w-px bg-line" aria-hidden />}
                       {m.req && <Act narrow={isNarrow(m.before)} icon={<Shuffle size={14} className="translate-y-px" />} label="Rifai" tip="Stesso stile, un'altra versione" disabled={busy} onClick={() => variant(m)} cr={creditsOf(m.req, editsDone)} />}
                       {base !== m.out && (
