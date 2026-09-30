@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { ArrowLeft, ExternalLink, FileDown, GripVertical, Info, Loader2, Star, Wand2, X } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import { TEMPLATES, type SiteConfig, type TemplateId } from '@/lib/siteTemplates';
@@ -151,10 +151,24 @@ function SiteFrame({ ctx, id }: { ctx: Parameters<typeof SitePage>[0]['ctx']; id
 // Si salva con Salva ordine; Annulla lascia tutto com'era.
 export function PhotoOrder({ photos, onPhoto, onClose, onSave }: { photos: string[]; onPhoto?: PropEdit['onPhoto']; onClose: () => void; onSave: (order: string[]) => void }) {
   const [order, setOrder] = useState(photos);
-  const first = (src: string) => setOrder(o => [src, ...o.filter(x => x !== src)]); // metti per prima (= copertina, salvata con l'ordine)
+  // cambio d'ordine animato (FLIP): si fotografano le posizioni prima, dopo il render ogni foto scivola dalla vecchia alla nuova
+  const tiles = useRef(new Map<string, HTMLLIElement>());
+  const before = useRef(new Map<string, DOMRect>());
+  const snap = () => { before.current = new Map([...tiles.current].map(([k, el]) => [k, el.getBoundingClientRect()])); };
+  useLayoutEffect(() => {
+    tiles.current.forEach((el, k) => {
+      const a = before.current.get(k);
+      if (!a) return;
+      const b = el.getBoundingClientRect();
+      const dx = a.left - b.left, dy = a.top - b.top;
+      if (dx || dy) el.animate([{ transform: `translate(${dx}px, ${dy}px)` }, { transform: 'none' }], { duration: 600, easing: 'cubic-bezier(.65,0,.35,1)' });
+    });
+    before.current = new Map();
+  }, [order]);
+  const first = (src: string) => { snap(); setOrder(o => [src, ...o.filter(x => x !== src)]); }; // metti per prima (= copertina, salvata con l'ordine)
   const remove = (src: string) => { if (!confirm('Togliere questa foto dall’immobile?')) return; setOrder(o => o.filter(x => x !== src)); onPhoto?.(src, 'remove'); };
   const [drag, setDrag] = useState<string | null>(null);
-  const move = (over: string) => { if (!drag || drag === over) return; setOrder(o => { const n = o.filter(x => x !== drag); n.splice(n.indexOf(over) + (o.indexOf(drag) < o.indexOf(over) ? 1 : 0), 0, drag); return n; }); };
+  const move = (over: string) => { if (!drag || drag === over) return; snap(); setOrder(o => { const n = o.filter(x => x !== drag); n.splice(n.indexOf(over) + (o.indexOf(drag) < o.indexOf(over) ? 1 : 0), 0, drag); return n; }); };
   return createPortal(
     <div className="blur-in fixed inset-0 z-[260] flex items-center justify-center bg-black/40 p-6 backdrop-blur-sm" onClick={onClose}>
       <div onClick={e => e.stopPropagation()} className="flex max-h-[88vh] w-full max-w-4xl flex-col rounded-[32px] bg-white shadow-2xl">
@@ -164,7 +178,7 @@ export function PhotoOrder({ photos, onPhoto, onClose, onSave }: { photos: strin
         </div>
         <ul className="grid flex-1 grid-cols-2 gap-3 overflow-y-auto p-7 sm:grid-cols-3">
           {order.map((src, i) => (
-            <li key={src} draggable onDragStart={e => { setDrag(src); e.dataTransfer.effectAllowed = 'move'; }} onDragEnd={() => setDrag(null)} onDragOver={e => { e.preventDefault(); move(src); }} onDrop={e => e.preventDefault()}
+            <li key={src} ref={el => { if (el) tiles.current.set(src, el); else tiles.current.delete(src); }} draggable onDragStart={e => { setDrag(src); e.dataTransfer.effectAllowed = 'move'; }} onDragEnd={() => setDrag(null)} onDragOver={e => { e.preventDefault(); move(src); }} onDrop={e => e.preventDefault()}
               className={`group relative aspect-[4/3] cursor-grab overflow-hidden rounded-2xl bg-canvas ease-smooth transition-[opacity,transform,box-shadow] active:cursor-grabbing ${drag === src ? 'scale-95 opacity-40' : 'hover:shadow-lg'} ${i === 0 ? 'ring-[3px] ring-brand' : 'ring-1 ring-black/5'}`}>
               <img src={src} alt="" draggable={false} className="h-full w-full object-cover" />
               <span className={`absolute left-2 top-2 flex h-7 items-center rounded-full px-2.5 text-xs font-semibold shadow ${i === 0 ? 'bg-brand text-white' : 'bg-white text-ink'}`}>{i === 0 ? 'Copertina' : i + 1}</span>
