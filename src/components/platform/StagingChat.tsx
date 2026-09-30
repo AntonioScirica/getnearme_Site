@@ -227,6 +227,9 @@ const planStyle = (t: string) => (/nordic|scandinav/i.test(t) ? 'nordic' : /luss
 // (risparmio memoria) la chat torna com'era. Cambiando pagina della piattaforma si cancella (la chat riparte vuota, come prima).
 // Legata all'account (uid): nella stessa scheda un altro account (o uno nuovo dopo l'eliminazione) parte da vuota.
 const SAVE_KEY = 'gnm-staging-chat';
+// Risultati delle foto arrivati mentre la chat era chiusa (si e' andati su un'altra pagina senza ricaricare): la richiesta
+// finisce comunque e il risultato resta qui; rientrando in chat si riprende da qui (vedi recover).
+const FINISHED = new Map<string, { out?: string; err?: string }>();
 type Saved = { uid?: string; chatId?: string; msgs: Msg[]; base: string | null; kind: string | null; scene: Scene; roomState: string | null; project: string | null; origin: string | null; emptyFrom?: string | null };
 function loadSaved(): Saved | null {
   try {
@@ -398,16 +401,29 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
     const lost = msgs.filter((m): m is Extract<Msg, { role: 'ai' }> => m.role === 'ai' && !!m.recover);
     if (!lost.length) return;
     let stop = false, tries = 0;
+    const left = new Set(lost.map(m => m.id));
+    const done = (m: (typeof lost)[number], p: { out?: string; err?: string }) => {
+      left.delete(m.id);
+      patch(m.id, { busy: false, recover: false, ...(p.out ? { out: p.out, reveal: 'slider' as Reveal } : { err: p.err }) });
+      if (p.out && m.id === lost[lost.length - 1].id) setBase(p.out);
+    };
     const tick = async () => {
       if (stop) return;
-      const items = await fetchMedia().catch(() => []);
-      const used = new Set(msgs.map(m => (m.role === 'ai' ? m.out : null)));
-      for (const m of lost) {
-        const hit = items.filter(it => !it.video && !used.has(it.dopo) && it.at >= (m.at ?? 0) - 10_000).sort((a, b) => a.at - b.at)[0];
-        if (hit) { used.add(hit.dopo); patch(m.id, { out: hit.dopo, busy: false, recover: false }); if (m.id === lost[lost.length - 1].id) setBase(hit.dopo); }
+      // 1) risultato arrivato mentre la chat era chiusa (stessa scheda): subito
+      for (const m of lost) { const f = left.has(m.id) ? FINISHED.get(m.id) : undefined; if (f) done(m, f); }
+      // 2) pagina ricaricata: la foto e' in Galleria. Solo foto fatte dopo la richiesta e diverse da quella di partenza
+      if (left.size && tries % 3 === 2) {
+        const items = await fetchMedia().catch(() => []);
+        const used = new Set(msgs.map(m => (m.role === 'ai' ? m.out : null)));
+        for (const m of lost) {
+          if (!left.has(m.id)) continue;
+          const hit = items.filter(it => !it.video && !used.has(it.dopo) && it.dopo !== m.before && it.at >= (m.at ?? Infinity)).sort((a, b) => a.at - b.at)[0];
+          if (hit) { used.add(hit.dopo); done(m, { out: hit.dopo }); }
+        }
       }
-      if (++tries >= 30) { lost.forEach(m => patch(m.id, { busy: false, recover: false, err: 'La pagina si è ricaricata mentre lavorava: trovi il risultato nella Galleria.' })); return; }
-      if (!stop) setTimeout(tick, 4000);
+      if (!left.size) return;
+      if (++tries >= 60) { lost.forEach(m => { if (left.has(m.id)) done(m, { err: 'La pagina si è ricaricata mentre lavorava: trovi il risultato nella Galleria.' }); }); return; }
+      if (!stop) setTimeout(tick, 2000);
     };
     void tick();
     return () => { stop = true; };
@@ -709,10 +725,11 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   const run = async (id: string, req: EditRequest, before: string) => {
     const res = await authFetch('/api/platform/photo-edit', { method: 'POST', headers: QUIET, body: JSON.stringify(req) }).catch(() => null);
     let d = res ? await res.json().catch(() => ({})) : {};
-    if (d.error === 'no_credits') { patch(id, { busy: false, err: NO_CREDITS }); return; }
-    if (d.error === 'daily_limit') { patch(id, { busy: false, err: 'Hai raggiunto il limite di modifiche di oggi, riprova domani.' }); return; }
+    if (d.error === 'no_credits') { FINISHED.set(id, { err: NO_CREDITS }); patch(id, { busy: false, err: NO_CREDITS }); return; }
+    if (d.error === 'daily_limit') { FINISHED.set(id, { err: 'Hai raggiunto il limite di modifiche di oggi, riprova domani.' }); patch(id, { busy: false, err: 'Hai raggiunto il limite di modifiche di oggi, riprova domani.' }); return; }
     if (AI_MOCK && res?.status === 401) { await wait(4000); d = { url: before }; } // anteprima senza login
-    if (!d.url) { patch(id, { busy: false, err: d.error === 'timeout' ? 'La GPU si sta avviando, riprova tra un minuto.' : 'Modifica non riuscita, riprova.' }); return; }
+    if (!d.url) { const err = d.error === 'timeout' ? 'La GPU si sta avviando, riprova tra un minuto.' : 'Modifica non riuscita, riprova.'; FINISHED.set(id, { err }); patch(id, { busy: false, err }); return; }
+    FINISHED.set(id, { out: d.url });
     patch(id, { busy: false, out: d.url, reveal: 'burst' });
     setBase(d.url); // la prossima richiesta continua da qui
     // stato della stanza dopo la modifica: subito una stima dalla richiesta, poi lo guarda il modello sul risultato
