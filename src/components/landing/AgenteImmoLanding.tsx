@@ -306,7 +306,7 @@ function TryIt() {
                   <div className="blur-in absolute inset-0 z-10 flex flex-col items-center overflow-y-auto bg-black/35 p-3 backdrop-blur-md sm:justify-center sm:p-6">
                     <div className="mb-3 flex items-center gap-2 rounded-full bg-white px-4 py-1.5 text-sm font-semibold shadow sm:mb-4">{anims && <button type="button" onClick={() => setAnims(false)} aria-label={L('Indietro', "Back")} className="-ml-1 text-muted hover:text-ink"><ChevronLeft size={16} /></button>}{anims ? L('Con quale animazione?', "Which animation?") : L('Che video vuoi creare?', "Which video do you want?")}</div>
                     {/* stesse card della chat della piattaforma: video d'esempio, nome, descrizione */}
-                    <div className="grid w-full max-w-3xl grid-cols-2 gap-3 sm:grid-cols-3">
+                    <div className={`grid w-full gap-3 ${anims ? 'max-w-xl grid-cols-2' : 'max-w-3xl grid-cols-2 sm:grid-cols-3'}`}>{/* due animazioni: griglia stretta e centrata */}
                       {(anims ? PRIMA_DOPO : VIDEO_TEMPLATES).map(([k, it, eng, dIt, dEn, sample], n) => {
                         const free = k === 'popup' || k === 'gravity';
                         const body = <>
