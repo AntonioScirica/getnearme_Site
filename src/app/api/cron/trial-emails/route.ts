@@ -4,7 +4,7 @@ import { Resend } from 'resend'
 import { publicUrl } from '@/lib/r2'
 import { PRICING, photosFor, videosFor } from '@/lib/pricing'
 import { unsubUrl } from '@/lib/marketingEmail'
-import { beforeAfterHero, button, email, eyebrow, features, photo as photo_, ps, signature, stats, text, title, toText } from '@/lib/emailLayout'
+import { beforeAfterHero, button, email, eyebrow, features, photo as photo_, planChoice, ps, signature, text, title, toText } from '@/lib/emailLayout'
 
 // Email dopo la prova gratis (una volta al giorno da cron-job.org, ?secret=<TRIAL_EMAILS_SECRET>):
 // giorno 1 "La tua stanza arredata ti aspetta", giorno 3 "Le case arredate si vendono prima".
@@ -29,7 +29,7 @@ function email1(name: string, pic: { before: string | null; after: string } | nu
       + (pic ? (pic.before ? beforeAfterHero(pic.before, pic.after) : photo_(pic.after, 'La tua stanza arredata', 'La tua foto, arredata con Agente Immo')) : '')
       + text('Con un piano lo fai per <strong style="color:#1d1d1f">tutte le case che hai in vendita</strong>, e dalla stessa foto crei anche un video per Instagram e TikTok.')
       // i crediti si usano per foto o per video: si dice che e' l'uno o l'altro, non entrambi
-      + stats(`Con Starter a ${PRICING.starter} € al mese hai ${PRICING.starterCredits} crediti, da usare come vuoi:`, [[`${photosFor(PRICING.starterCredits)}`, 'foto arredate'], [`<span style="font-size:17px;font-weight:700;color:rgba(255,255,255,.85)">oppure</span> ~${videosFor(PRICING.starterCredits)}`, 'video per i social']])
+      + planChoice(`Starter · ${PRICING.starter} € al mese`, `${PRICING.starterCredits} crediti ogni mese, da usare come vuoi`, [`${photosFor(PRICING.starterCredits)}`, 'foto arredate'], [`~${videosFor(PRICING.starterCredits)}`, 'video per i social'])
       + button(PLANS, 'Arreda tutte le tue case', 'Disdici quando vuoi, senza vincoli')
       + signature('Antonio', 'Fondatore di Agente Immo')
       + ps('Hai in vendita case vuote o da rinnovare? Sono proprio quelle che cambiano di più una volta arredate.'),
