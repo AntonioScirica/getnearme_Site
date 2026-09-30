@@ -20,6 +20,11 @@ export default function PropertyDetail({ project, loading, onChange }: { project
   const editing = true; // la barra di modifica c'e' sempre, a sinistra della pagina del sito
   const [draft, setDraft] = useState<Partial<ProjectData> | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  // foto mostrate prima della risposta del server: si tolgono quando arrivano i dati ricaricati (niente ritorno all'ordine vecchio)
+  const dropPhotoDraft = () => setDraft(d => { if (!d) return d; const { cover: _c, import_data: _i, ...rest } = d; return rest; });
+  const photoKey = project ? `${project.cover}|${JSON.stringify((project.import_data as { photos?: unknown } | undefined)?.photos ?? null)}` : '';
+  const [seenPhotos, setSeenPhotos] = useState(photoKey);
+  if (photoKey !== seenPhotos) { setSeenPhotos(photoKey); dropPhotoDraft(); }
   const credits = useCredits();
   const grid = useRef<HTMLDivElement>(null);
   const [gridH, setGridH] = useState<number>();
@@ -52,17 +57,19 @@ export default function PropertyDetail({ project, loading, onChange }: { project
     if (order.join() === photos.join()) return;
     setDraft(d => ({ ...d, cover: order[0], import_data: { ...(project.import_data ?? {}), photos: order } }));
     const r = await authFetch('/api/platform/property-photo', { method: 'POST', body: JSON.stringify({ projectId: project.id, mode: 'order', order }) }).catch(() => null);
-    if (r?.ok) onChange(); else alert('Non sono riuscito a cambiare l’ordine delle foto, riprova.');
+    if (r?.ok) onChange(); else { dropPhotoDraft(); alert('Non sono riuscito a cambiare l’ordine delle foto, riprova.'); }
   };
   const propEdit: PropEdit = {
     photos, cover: project.cover, busy, editing, // in modifica le foto hanno il velo e i pulsanti sempre in vista
     onPhoto: async (src, action) => {
       if (action === 'ai') { window.location.hash = `#/staging?project=${project.id}&photo=${encodeURIComponent(src)}`; return; }
       if (action === 'remove' && !confirm('Togliere questa foto dall’immobile?')) return;
+      // copertina: sale subito al primo posto e la galleria torna sulla prima (si rimonta sulla copertina nuova)
+      if (action === 'cover') setDraft(d => ({ ...d, cover: src, import_data: { ...(project.import_data ?? {}), photos: [src, ...photos.filter(x => x !== src)] } }));
       setBusy(src);
       const r = await authFetch('/api/platform/property-photo', { method: 'POST', body: JSON.stringify({ projectId: project.id, mode: action, photo: src }) }).catch(() => null);
       setBusy(null);
-      if (r?.ok) onChange(); else alert(action === 'cover' ? 'Non sono riuscito a mettere la copertina, riprova.' : 'Non sono riuscito a togliere la foto, riprova.');
+      if (r?.ok) onChange(); else { dropPhotoDraft(); alert(action === 'cover' ? 'Non sono riuscito a mettere la copertina, riprova.' : 'Non sono riuscito a togliere la foto, riprova.'); }
     },
     onField: async (k, v) => {
       const val = k === 'prezzo' ? Math.max(0, Math.round(Number(v.replace(/[^\d]/g, '')) || 0)) : v.trim();

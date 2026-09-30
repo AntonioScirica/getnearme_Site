@@ -297,11 +297,11 @@ function PropertyPage({ id }: { id: string }) {
     <>
       <Sec id="header"><Header /></Sec>
       {t.gallery === 'full' ? (
-        <div className="relative"><Gallery p={p} /><Container className="absolute inset-x-0 bottom-10 text-white">{heading}</Container></div>
+        <div className="relative"><Gallery key={p.cover} p={p} /><Container className="absolute inset-x-0 bottom-10 text-white">{heading}</Container></div>
       ) : (
         <Container className="pt-8">
           <div className="text-[var(--muted)]">{crumbs}</div>
-          <Gallery p={p} />
+          <Gallery key={p.cover} p={p} />
         </Container>
       )}
       <Container className="grid gap-12 py-12 lg:grid-cols-[1fr_360px]">
