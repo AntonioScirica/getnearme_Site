@@ -162,7 +162,8 @@ export default function PlanView({ ok, buy, change }: { ok?: boolean; buy?: Buy;
           </div>
         </>
       )}
-      {c && (c.plan !== 'none' || c.unlimited) && <CodeBox onReady={() => setCodeReady(true)} />}
+      {/* codice: chi ha un piano ne inserisce uno; l'affiliato (anche senza piano) al posto del campo vede il suo */}
+      {c && <CodeBox canRedeem={c.plan !== 'none' || !!c.unlimited} onReady={() => setCodeReady(true)} />}
       {/* solo a crediti letti: prima (c null) comparivano e sparivano appena si scopriva il piano attivo */}
       {c && (c.plan === 'none' || c.unlimited || changing) && (<>
       <h2 ref={plansRef} className="mt-8 scroll-mt-28 font-semibold">{changing ? tr('Cambia piano', 'Change plan') : tr('Scegli il piano', 'Choose your plan')}</h2>
@@ -211,7 +212,7 @@ export default function PlanView({ ok, buy, change }: { ok?: boolean; buy?: Buy;
 
 // Codice affiliato (lib/affiliates.ts): chi ha un piano lo inserisce e riceve crediti; l'affiliato vede il suo codice
 // e quante persone l'hanno usato. Si possono usare piu' codici, ognuno una volta.
-function CodeBox({ onReady }: { onReady?: () => void }) {
+function CodeBox({ onReady, canRedeem }: { onReady?: () => void; canRedeem: boolean }) {
   const [info, setInfo] = useState<{ gives: number; mine: { code: string; uses: number; each: number; gives: number } | null } | null>(null);
   const [code, setCode] = useState('');
   const [busy, setBusy] = useState(false);
@@ -240,17 +241,25 @@ function CodeBox({ onReady }: { onReady?: () => void }) {
   return (
     <div className="blur-in mt-8 flex flex-col gap-4">
       {info?.mine && (
-        <div className={`rounded-[28px] bg-white p-6 ${CARD_SHADOW}`}>
-          <div className="text-sm text-muted">{tr('Il tuo codice affiliato', 'Your affiliate code')}</div>
-          <div className="mt-2 flex items-center gap-2">
-            <span className="font-display text-2xl font-extrabold tracking-tight">{info.mine.code}</span>
-            <button type="button" onClick={() => { void navigator.clipboard.writeText(info.mine!.code); setCopied(true); setTimeout(() => setCopied(false), 1500); }} aria-label={tr('Copia il codice', 'Copy the code')} className="flex h-9 w-9 items-center justify-center rounded-full bg-canvas text-ink hover:bg-line">{copied ? <Check size={15} /> : <Copy size={15} />}</button>
+        <div className={`blur-in rounded-[28px] bg-white p-6 ${CARD_SHADOW}`}>
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 font-semibold"><Gift size={20} className="text-brand" /> {tr('Il tuo codice affiliato', 'Your affiliate code')}</div>
+              <p className="mt-1 text-sm text-muted">{tr(`Condividilo: chi lo inserisce riceve ${fmt(info.mine.gives)} crediti, tu ${fmt(info.mine.each)} per ogni persona.`, `Share it: whoever enters it gets ${fmt(info.mine.gives)} credits, you get ${fmt(info.mine.each)} per person.`)}</p>
+            </div>
+            <button type="button" onClick={() => { void navigator.clipboard.writeText(info.mine!.code); setCopied(true); setTimeout(() => setCopied(false), 1500); }} aria-label={tr('Copia il codice', 'Copy the code')}
+              className="flex h-12 items-center gap-3 rounded-full bg-canvas pl-5 pr-2 ring-1 ring-black/5 ease-smooth transition-colors hover:bg-white hover:ring-brand">
+              <span className="font-display text-lg font-extrabold tracking-wide">{info.mine.code}</span>
+              <span className={`flex h-8 items-center gap-1.5 rounded-full px-3 text-xs font-semibold ease-smooth transition-colors ${copied ? 'bg-green-600 text-white' : 'bg-brand text-white'}`}>{copied ? <><Check size={13} /> {tr('Copiato', 'Copied')}</> : <><Copy size={13} /> {tr('Copia', 'Copy')}</>}</span>
+            </button>
           </div>
-          <p className="mt-2 text-sm text-muted">{tr(`Chi lo inserisce riceve ${fmt(info.mine.gives)} crediti, tu ${fmt(info.mine.each)} per ogni persona.`, `Whoever enters it gets ${fmt(info.mine.gives)} credits, you get ${fmt(info.mine.each)} per person.`)}</p>
-          <p className="mt-3 text-sm font-semibold">{tr(`Usato da ${info.mine.uses} ${info.mine.uses === 1 ? 'persona' : 'persone'}: ${fmt(info.mine.uses * info.mine.each)} crediti ricevuti`, `Used by ${info.mine.uses} ${info.mine.uses === 1 ? 'person' : 'people'}: ${fmt(info.mine.uses * info.mine.each)} credits received`)}</p>
+          <div className="mt-4 flex flex-wrap gap-2 text-sm">
+            <span className="rounded-full bg-canvas px-3 py-1.5"><strong>{info.mine.uses}</strong> {info.mine.uses === 1 ? tr('persona l’ha usato', 'person used it') : tr('persone l’hanno usato', 'people used it')}</span>
+            <span className="rounded-full bg-canvas px-3 py-1.5"><strong>{fmt(info.mine.uses * info.mine.each)}</strong> {tr('crediti ricevuti', 'credits received')}</span>
+          </div>
         </div>
       )}
-      {(
+      {canRedeem && !info?.mine && (
         <div className={`rounded-[28px] bg-white p-6 ${CARD_SHADOW}`}>
           <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-2 font-semibold"><Gift size={20} className="text-brand" /> {tr('Codice promozionale', 'Promo code')}</div>
