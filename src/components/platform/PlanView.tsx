@@ -34,13 +34,13 @@ export function CreditsPill() {
   const profile = <a href="#/profilo" data-tour="profilo" aria-label="Il mio profilo" title="Il mio profilo" className="flex h-8 w-8 items-center justify-center rounded-full bg-canvas text-ink ease-smooth transition-colors hover:bg-line"><UserRound size={16} /></a>;
   // senza piano: Scegli un piano in nero, il profilo accanto
   if (c.plan === 'none' && !c.unlimited) return (
-    <span className="flex items-center gap-2">
+    <span className="blur-in flex items-center gap-2">
       <a href="#/piano" className="flex h-10 items-center rounded-full bg-ink px-4 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-black">Scegli un piano</a>
       <span className="flex h-10 items-center rounded-full bg-white px-1 ring-1 ring-line">{profile}</span>
     </span>
   );
   return (
-    <span className={`flex h-10 items-center rounded-full bg-white pr-1 ring-1 ease-smooth transition-shadow hover:shadow-md ${low ? 'ring-amber-300' : 'ring-line'}`}>
+    <span className={`blur-in flex h-10 items-center rounded-full bg-white pr-1 ring-1 ease-smooth transition-shadow hover:shadow-md ${low ? 'ring-amber-300' : 'ring-line'}`}>
       <a href="#/piano" title={c.unlimited ? undefined : `${fmt(c.balance)} crediti`} className={`flex h-full items-center gap-1.5 pl-4 pr-3 text-sm font-semibold ${low ? 'text-amber-700' : ''}`}>
         {/* numero e moneta, senza la parola "crediti" */}
         {c.unlimited ? <><Coins size={15} className="text-ai" /> Illimitati</> : <>{fmt(c.balance)} <Coins size={15} className={low ? 'text-amber-500' : 'text-ai'} /></>}{low && <span className="ml-1 text-xs font-medium">· Ricarica</span>}

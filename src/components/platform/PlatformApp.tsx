@@ -165,7 +165,8 @@ function PlatformInner({ userData }: { userData: UserData }) {
             <button type="button" onClick={() => { location.hash = '#/'; }}
               className="flex h-10 items-center gap-1.5 rounded-full px-3 text-sm font-medium text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink"><ArrowLeft size={18} /> Indietro</button>
             {/* crediti sempre in vista in alto a destra: in chat ogni azione ne spende */}
-            <div className="ml-auto flex items-center gap-2">
+            {/* entrando in chat i pulsanti arrivano in dissolvenza, non di scatto */}
+            <div className="blur-in ml-auto flex items-center gap-2">
               {!noPlan && <ChatHistory />}
               {!noPlan && <button type="button" onClick={() => window.dispatchEvent(new Event('agenteimmo:new-chat'))}
                 className="flex h-10 items-center gap-1.5 rounded-full bg-white px-4 text-sm font-semibold ring-1 ring-line ease-smooth transition-shadow hover:shadow-md"><SquarePen size={15} className="text-muted" /> Nuova chat</button>}
