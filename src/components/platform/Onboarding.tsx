@@ -107,7 +107,8 @@ export default function Onboarding({ onDone }: { onDone: (p: Profile) => void })
     setSaving(true); setError(null);
     const res = await authFetch('/api/platform/portfolio', { method: 'PUT', body: JSON.stringify({ name: name.trim(), slug }) });
     const d = await res.json().catch(() => ({}));
-    setSaving(false);
+    // riuscito: il loader resta finche' l'onboarding sparisce (niente "Inizia" di nuovo per un attimo)
+    if (!res.ok) setSaving(false);
     if (res.ok) {
       // modello scelto: colori e carattere del modello sulla configurazione di partenza (best effort, si cambia dal sito)
       const t = TEMPLATES.find(x => x.id === tpl)!;

@@ -95,11 +95,22 @@ export default function PlanView({ ok, buy, change }: { ok?: boolean; buy?: Buy;
   const [slug, setSlug] = useState<string | null>(null);
   useEffect(() => { authFetch('/api/platform/site').then(r => r.json()).then(d => setSlug(d.slug ?? null)).catch(() => {}); }, []);
   const pro = yearly ? PRICING.yearly : PRICING.quarterly;
+  // card in evidenza: il piano che si ha (cambio piano), altrimenti il Pro consigliato
+  const mine = c && c.plan !== 'none' && !c.unlimited ? c.plan : null;
+  const card = (p: 'starter' | 'plus' | 'pro') => `${(mine ?? 'pro') === p ? 'shadow-[0_40px_100px_-40px_rgba(0,0,0,.35)] ring-2 ring-ink' : CARD_SHADOW} relative flex flex-col rounded-[32px] bg-white p-8`;
   const billed = yearly ? tr(`${PRICING.yearly * 12} € fatturati ogni anno`, `€${PRICING.yearly * 12} billed yearly`) : tr(`${PRICING.quarterly * 3} € fatturati ogni 3 mesi`, `€${PRICING.quarterly * 3} billed every 3 months`);
   // stesse card dei prezzi della landing
   return (
     <div className="mx-auto max-w-6xl">
       <h1 className="font-display text-3xl font-bold tracking-tight">{tr('Il tuo piano', 'Your plan')}</h1>
+      {/* crediti non ancora letti: la forma della pagina (card del piano e pacchetti), non una pagina vuota */}
+      {!c && (
+        <div aria-hidden className="animate-pulse">
+          <div className="mt-6 h-[124px] rounded-[28px] bg-black/[0.05]" />
+          <div className="mt-8 h-4 w-48 rounded-full bg-black/[0.07]" />
+          <div className="mt-4 grid gap-4 sm:grid-cols-3">{[0, 1, 2].map(i => <div key={i} className="h-[92px] rounded-[24px] bg-black/[0.05]" />)}</div>
+        </div>
+      )}
       {ok && <p className="mt-3 flex items-center gap-2 rounded-full bg-green-50 px-4 py-2 text-sm font-medium text-green-700"><Check size={15} /> {tr('Pagamento ricevuto: i crediti arrivano in pochi secondi.', 'Payment received: your credits will arrive in a few seconds.')}</p>}
       {c?.unlimited && <p className="mt-4 text-sm text-muted">{tr('Account amministratore: crediti illimitati, niente da pagare.', 'Admin account: unlimited credits, nothing to pay.')}</p>}
       {c && c.plan !== 'none' && !c.unlimited && (
@@ -142,7 +153,7 @@ export default function PlanView({ ok, buy, change }: { ok?: boolean; buy?: Buy;
       <h2 ref={plansRef} className="mt-8 scroll-mt-28 font-semibold">{changing ? tr('Cambia piano', 'Change plan') : tr('Scegli il piano', 'Choose your plan')}</h2>
       <p className="mt-1 text-sm text-muted">{changing ? tr('Il nuovo piano parte subito: paghi ora la differenza per il periodo in corso e i crediti diventano quelli del nuovo piano.', 'The new plan starts right away: you pay the difference for the current period now and your credits switch to the new plan.') : tr('Starter: foto e video. Plus: anche il tuo sito. Pro: più crediti, a trimestre o anno.', 'Starter: photos and videos. Plus: your website too. Pro: more credits, quarterly or yearly.')}</p>
       <div className="mt-5 grid items-stretch gap-5 md:grid-cols-3">
-        <div className={`flex flex-col rounded-[32px] bg-white p-8 ${CARD_SHADOW}`}>
+        <div className={card('starter')}>
           <div className="flex h-10 items-center text-sm font-semibold text-muted">Starter</div>
           <div className="mt-3 flex items-end gap-2"><span className="font-display text-6xl font-extrabold tracking-tight">{eur(PRICING.starter)}</span><span className="pb-2 text-muted">{tr('/ mese', '/ month')}</span></div>
           <div className="mt-1 text-sm text-muted">{tr('Mensile, disdici quando vuoi', 'Monthly, cancel anytime')}</div>
@@ -150,7 +161,7 @@ export default function PlanView({ ok, buy, change }: { ok?: boolean; buy?: Buy;
           <div className="min-h-8 flex-1" />
           <button type="button" disabled={!!busy || (changing && c?.plan === 'starter')} onClick={() => go('starter')} className="flex h-12 items-center justify-center gap-2 rounded-full bg-white text-[15px] font-semibold ring-1 ring-black/10 hover:ring-ink disabled:opacity-60">{busy === 'starter' && <Loader2 size={15} className="animate-spin" />}{changing ? (c?.plan === 'starter' ? tr('Il tuo piano', 'Your plan') : tr('Passa a Starter', 'Switch to Starter')) : tr('Scegli Starter', 'Choose Starter')}</button>
         </div>
-        <div className={`flex flex-col rounded-[32px] bg-white p-8 ${CARD_SHADOW}`}>
+        <div className={card('plus')}>
           <div className="flex h-10 items-center text-sm font-semibold text-muted">Plus</div>
           <div className="mt-3 flex items-end gap-2"><span className="font-display text-6xl font-extrabold tracking-tight">{eur(PRICING.plus)}</span><span className="pb-2 text-muted">{tr('/ mese', '/ month')}</span></div>
           <div className="mt-1 text-sm text-muted">{tr('Mensile, disdici quando vuoi', 'Monthly, cancel anytime')}</div>
@@ -159,8 +170,8 @@ export default function PlanView({ ok, buy, change }: { ok?: boolean; buy?: Buy;
           <div className="min-h-8 flex-1" />
           <button type="button" disabled={!!busy || (changing && c?.plan === 'plus')} onClick={() => go('plus')} className="flex h-12 items-center justify-center gap-2 rounded-full bg-white text-[15px] font-semibold ring-1 ring-black/10 hover:ring-ink disabled:opacity-60">{busy === 'plus' && <Loader2 size={15} className="animate-spin" />}{changing ? (c?.plan === 'plus' ? tr('Il tuo piano', 'Your plan') : tr('Passa a Plus', 'Switch to Plus')) : tr('Scegli Plus', 'Choose Plus')}</button>
         </div>
-        <div className="relative flex flex-col rounded-[32px] bg-white p-8 shadow-[0_40px_100px_-40px_rgba(0,0,0,.35)] ring-2 ring-ink">
-          <span className="absolute -top-3 left-8 rounded-full bg-ink px-3 py-1 text-xs font-semibold text-white">{tr('Consigliato', 'Recommended')}</span>
+        <div className={card('pro')}>
+          {!mine && <span className="absolute -top-3 left-8 rounded-full bg-ink px-3 py-1 text-xs font-semibold text-white">{tr('Consigliato', 'Recommended')}</span>}
           <div className="flex h-10 items-center justify-between gap-3">
             <div className="text-sm font-semibold text-muted">Pro</div>
             <div className="flex rounded-full bg-canvas p-1">
@@ -200,7 +211,7 @@ function CodeBox() {
     const d = await r?.json().catch(() => null) as { ok?: boolean; credits?: number; error?: string } | null;
     setBusy(false);
     if (d?.ok) {
-      setMsg({ ok: true, text: tr(`Fatto: ${fmt(d.credits ?? 0)} crediti aggiunti al saldo. Non scadono con il mese.`, `Done: ${fmt(d.credits ?? 0)} credits added to your balance. They don’t expire at the end of the month.`) });
+      setMsg({ ok: true, text: tr('Codice applicato: trovi i crediti nel saldo.', 'Code applied: the credits are in your balance.') });
       window.dispatchEvent(new Event('agenteimmo:credits'));
       return setInfo(i => i && { ...i, used: code.trim().toUpperCase() });
     }
@@ -212,7 +223,7 @@ function CodeBox() {
       : tr('Non siamo riusciti ad applicarlo, riprova tra poco.', 'We couldn’t apply it, try again shortly.') });
   };
   return (
-    <div className="mt-8 grid gap-4 md:grid-cols-2">
+    <div className="blur-in mt-8 flex flex-col gap-4">
       {info.mine && (
         <div className={`rounded-[28px] bg-white p-6 ${CARD_SHADOW}`}>
           <div className="text-sm text-muted">{tr('Il tuo codice affiliato', 'Your affiliate code')}</div>
@@ -226,12 +237,13 @@ function CodeBox() {
       )}
       {!info.used && (
         <div className={`rounded-[28px] bg-white p-6 ${CARD_SHADOW}`}>
-          <div className="flex items-center gap-2 font-semibold"><Gift size={16} className="text-brand" /> {tr('Hai un codice?', 'Have a code?')}</div>
-          <p className="mt-1 text-sm text-muted">{tr(`Inseriscilo qui: ricevi ${fmt(info.gives)} crediti in più, che non scadono.`, `Enter it here: you get ${fmt(info.gives)} extra credits that don’t expire.`)}</p>
-          <div className="mt-4 flex gap-2">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-2 font-semibold"><Gift size={16} className="text-brand" /> {tr('Codice promozionale', 'Promo code')}</div>
+          <div className="flex w-full gap-2 sm:w-auto sm:min-w-[420px]">
             <input value={code} onChange={e => { setCode(e.target.value.slice(0, 40)); setMsg(null); }} onKeyDown={e => e.key === 'Enter' && void send()} placeholder={tr('Es. MARIO-IMMO', 'e.g. MARIO-IMMO')} autoCapitalize="characters" spellCheck={false}
               className="h-11 min-w-0 flex-1 rounded-full bg-canvas px-4 text-sm font-semibold uppercase tracking-wide outline-none ring-1 ring-black/5 placeholder:font-normal placeholder:normal-case placeholder:tracking-normal focus:bg-white focus:ring-2 focus:ring-brand" />
             <button type="button" disabled={busy || !code.trim()} onClick={() => void send()} className="flex h-11 shrink-0 items-center gap-2 rounded-full bg-ink px-5 text-sm font-semibold text-white disabled:opacity-40">{busy && <Loader2 size={15} className="animate-spin" />}{tr('Applica', 'Apply')}</button>
+          </div>
           </div>
           {msg && <p className={`blur-in mt-3 text-sm ${msg.ok ? 'text-green-700' : 'text-rose-600'}`}>{msg.text}</p>}
         </div>
