@@ -27,8 +27,10 @@ export function useCredits(): Credits | null {
 // pochi crediti: sotto il 15% del mese o sotto il costo di un video (con un piano attivo)
 export const isLow = (c: Credits) => !c.unlimited && c.plan !== 'none' && (c.balance < Math.max(75, Math.round(c.monthly * 0.15)));
 // Pillola in alto: crediti (porta alla pagina del piano) e, attaccata, l'icona del profilo (porta a Il mio profilo)
-export function CreditsPill() {
-  const c = useCredits();
+// c: crediti gia' letti da chi la mostra (stessa lettura dei pulsanti accanto: compaiono insieme, non prima)
+export function CreditsPill({ c: given }: { c?: Credits | null } = {}) {
+  const own = useCredits();
+  const c = given !== undefined ? given : own;
   // mentre si caricano: un posto della stessa misura, cosi' arrivando non sposta gli altri pulsanti
   if (!c) return <span className="flex h-10 w-[136px] rounded-full bg-white ring-1 ring-line" aria-hidden />;
   const low = isLow(c);

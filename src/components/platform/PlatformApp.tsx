@@ -170,12 +170,12 @@ function PlatformInner({ userData }: { userData: UserData }) {
             <div className="ml-auto flex items-center gap-2">
               {credits && !noPlan && (
                 <span className="blur-in flex h-10 items-center rounded-full bg-white pr-1 ring-1 ring-line" style={{ animationDelay: '.15s' }}>
-                  <button type="button" onClick={() => window.dispatchEvent(new Event('agenteimmo:new-chat'))} className="flex h-full items-center gap-1.5 pl-4 pr-3 text-sm font-semibold"><SquarePen size={15} className="text-muted" /> Nuova chat</button>
+                  <button type="button" onClick={() => window.dispatchEvent(new Event('agenteimmo:new-chat'))} className="flex h-full items-center pl-4 pr-3 text-sm font-semibold">Nuova chat</button>
                   <span className="mr-1 h-5 w-px bg-line" aria-hidden />
                   <ChatHistory />
                 </span>
               )}
-              {credits && <CreditsPill />}
+              {credits && <CreditsPill c={credits} />}
             </div>
           </>) : <>
           <a href="#/" className="flex items-center gap-2 justify-self-start">

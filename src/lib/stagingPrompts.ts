@@ -31,7 +31,8 @@ export const EMPTY_KEEP = 'Empty this room completely, as for a listing of an em
 export const STYLE_LOOK: Record<string, string> = {
   modern: 'simple modern style: white or light grey handle-less fronts with light oak, light grey or beige fabrics, black details, one or two soft color accents',
   nordic: 'Scandinavian style: light oak and white, linen and wool in off-white, beige and soft grey, a textured rug, plants',
-  industrial: 'elegant contemporary style: warm walnut wood, greige and cream, light stone surfaces, brass or black details',
+  // 30/09: "light stone surfaces" faceva rifare pavimento e pareti (stanza cambiata): lo stile ora parla solo di mobili e tessili
+  industrial: 'elegant contemporary style, only in the furniture and textiles: warm walnut wood, greige and cream fabrics, a marble-top table, brass or black details. Floor, walls and ceiling stay as they are',
   boho: 'warm natural style: light wood, rattan, linen and cotton, a jute rug, terracotta, sand and sage tones, plants',
 };
 // Piano di Claude sulla foto ORIGINALE: elenchi con solo cio' che c'e' davvero (Qwen inventa le cose nominate che non ci
