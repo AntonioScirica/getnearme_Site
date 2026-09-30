@@ -1161,7 +1161,8 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                 </div>
               </div>
             </div>, document.body)}
-          {base && !busy && (
+          {/* dopo un video niente pill: non si capirebbe che valgono per la foto sopra */}
+          {base && !busy && msgs[msgs.length - 1]?.role !== 'video' && (
             <div className="blur-in -mx-1 mb-2 flex gap-1.5 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" style={{ maskImage: 'linear-gradient(90deg, #000 90%, transparent)' }}>{typingFurnish ? <><span className="self-center pl-1 pr-1 text-xs text-muted">Quanto arredo?</span><span role="radiogroup" aria-label="Quantità di arredo" className="flex gap-1.5">{densityPills}</span></> : chips}</div>
           )}
           <input ref={styleInput} type="file" accept="image/*" className="hidden" onChange={async e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) void send('Arreda nello stile della foto', null, { src: await fileToResizedDataUrl(f, 1024) }); }} />

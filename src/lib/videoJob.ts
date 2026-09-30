@@ -358,11 +358,17 @@ export async function pollVideo(owner: string, job: string): Promise<VideoResult
   try {
     const raw = join(dir, 'veo.mp4'), music = join(dir, 'music.mp3'), final = join(dir, 'out.mp4')
     const parts = outs.map((_, k) => join(dir, `clip${k}.mp4`))
-    const tracks = MUSIC_CATALOG['property-reveal']
-    const track = tracks[Math.floor(Math.random() * tracks.length)]
+    // musica secondo il video (30/09, energia misurata su 10 brani per categoria): Volo nel cantiere dinamica, Cantiere e
+    // Prima e dopo a meta', Giorno e notte e Camminata tranquille, Con te in video niente (solo la voce dell'agente)
+    const mood = /-ka$/.test(name) ? null : /-kf$/.test(name) ? ['open-house-vibes', 'property-reveal'] as const
+      : /-kc$/.test(name) || !kling || gk ? ['virtual-tour', 'smart-home-tour'] as const : ['ambient-walkthrough', 'luxury-showcase'] as const
+    const cat = mood ? mood[Math.floor(Math.random() * mood.length)] : null
+    const track = cat ? MUSIC_CATALOG[cat][Math.floor(Math.random() * MUSIC_CATALOG[cat].length)] : null
     await Promise.all([
       ...outs.map((o, k) => fetch(o.video.url).then(r => r.arrayBuffer()).then(b => writeFile(parts[k], Buffer.from(b)))),
-      fetch(`https://pub-cd3d5947375c4207af2dc57da61686ee.r2.dev/music/property-reveal/${encodeURIComponent(track)}`).then(r => r.arrayBuffer()).then(b => writeFile(music, Buffer.from(b))),
+      cat && track
+        ? fetch(`https://pub-cd3d5947375c4207af2dc57da61686ee.r2.dev/music/${cat}/${encodeURIComponent(track)}`).then(r => r.arrayBuffer()).then(b => writeFile(music, Buffer.from(b)))
+        : ffmpeg(['-y', '-f', 'lavfi', '-i', 'anullsrc=r=48000:cl=stereo', '-t', '60', music]), // silenzio: il montaggio resta uguale
     ])
     // Volo nel cantiere (-kf): intro fissa + flip + chiusura, montaggio suo
     if (/-kf$/.test(name)) {
