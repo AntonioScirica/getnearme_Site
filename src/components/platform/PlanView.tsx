@@ -31,7 +31,7 @@ export function CreditsPill() {
   const c = useCredits();
   if (!c) return null;
   const low = isLow(c);
-  const profile = <a href="#/profilo" aria-label="Il mio profilo" title="Il mio profilo" className="flex h-8 w-8 items-center justify-center rounded-full bg-canvas text-ink ease-smooth transition-colors hover:bg-line"><UserRound size={16} /></a>;
+  const profile = <a href="#/profilo" data-tour="profilo" aria-label="Il mio profilo" title="Il mio profilo" className="flex h-8 w-8 items-center justify-center rounded-full bg-canvas text-ink ease-smooth transition-colors hover:bg-line"><UserRound size={16} /></a>;
   // senza piano: Scegli un piano in nero, il profilo accanto
   if (c.plan === 'none' && !c.unlimited) return (
     <span className="flex items-center gap-2">

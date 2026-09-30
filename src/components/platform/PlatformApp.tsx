@@ -191,12 +191,9 @@ function PlatformInner({ userData }: { userData: UserData }) {
         </div>
       </header>
 
-      {/* Profilo e Importa immobile: pillole in basso al centro, solo in home */}
+      {/* Importa immobile: pillola in basso al centro, solo in home (il profilo e' nella pillola dei crediti in alto) */}
       {!chat && route === '/' && <div className="fixed bottom-5 left-1/2 z-30 flex -translate-x-1/2 items-center gap-2">
-        <a href="#/profilo" data-tour="profilo" style={morph ? { viewTransitionName: 'ob-bottom' } : undefined} className={`flex h-10 items-center gap-2 rounded-full bg-white px-4 text-sm font-medium shadow-sm ring-1 ring-line ease-smooth transition-shadow hover:shadow-md`}>
-          <UserRound size={16} className="text-muted" /> Il mio profilo
-        </a>
-        <a href="#/importa" className={`flex h-10 items-center gap-2 rounded-full bg-white px-4 text-sm font-medium shadow-sm ring-1 ring-line ease-smooth transition-shadow hover:shadow-md`}>
+        <a href="#/importa" style={morph ? { viewTransitionName: 'ob-bottom' } : undefined} className={`flex h-10 items-center gap-2 rounded-full bg-white px-4 text-sm font-medium shadow-sm ring-1 ring-line ease-smooth transition-shadow hover:shadow-md`}>
           <Download size={16} className="text-muted" /> Importa immobile
         </a>
       </div>}
