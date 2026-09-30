@@ -168,13 +168,14 @@ export function PhotoOrder({ photos, onPhoto, onClose, onSave }: { photos: strin
               className={`group relative aspect-[4/3] cursor-grab overflow-hidden rounded-2xl bg-canvas ease-smooth transition-[opacity,transform,box-shadow] active:cursor-grabbing ${drag === src ? 'scale-95 opacity-40' : 'hover:shadow-lg'} ${i === 0 ? 'ring-[3px] ring-brand' : 'ring-1 ring-black/5'}`}>
               <img src={src} alt="" draggable={false} className="h-full w-full object-cover" />
               <span className={`absolute left-2 top-2 flex h-7 items-center rounded-full px-2.5 text-xs font-semibold shadow ${i === 0 ? 'bg-brand text-white' : 'bg-white text-ink'}`}>{i === 0 ? 'Copertina' : i + 1}</span>
-              <span className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-ink shadow" aria-hidden><GripVertical size={16} /></span>
+              {/* maniglia: in hover si sposta accanto alla X (sopra il velo) */}
+              <span className={`absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-ink shadow ease-smooth transition-[right] ${onPhoto ? 'group-hover:right-12' : ''}`} aria-hidden><GripVertical size={16} /></span>
               {onPhoto && (
                 // in hover: velo su tutta la foto, azioni al centro una sotto l'altra, togli in alto a destra (sopra la maniglia)
                 <span className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/40 opacity-0 ease-smooth transition-opacity group-hover:opacity-100">
                   <button type="button" onClick={() => { onClose(); onPhoto(src, 'ai'); }} className="flex h-9 min-w-40 items-center justify-center gap-1.5 rounded-full bg-brand px-4 text-xs font-semibold text-white shadow"><Wand2 size={13} /> Migliora con l’AI</button>
                   {i > 0 && <button type="button" onClick={() => first(src)} className="flex h-9 min-w-40 items-center justify-center gap-1.5 rounded-full bg-white px-4 text-xs font-semibold text-ink shadow"><Star size={13} /> Metti per prima</button>}
-                  <button type="button" onClick={() => remove(src)} aria-label="Togli la foto" className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-white text-ink shadow"><X size={14} /></button>
+                  <button type="button" onClick={() => remove(src)} aria-label="Togli la foto" className="absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white text-ink shadow"><X size={14} /></button>
                 </span>
               )}
             </li>
