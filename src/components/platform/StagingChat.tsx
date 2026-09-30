@@ -18,6 +18,7 @@ import AutoSize from '@/components/ui/AutoSize';
 import { MorphTarget } from '@/components/ui/Morph';
 import PhotoViewer from '@/components/ui/PhotoViewer';
 import LibraryPicker from './LibraryPicker';
+import { fetchMedia } from './MediaView';
 import { fetchProjects, type ProjectData } from '@/lib/projects';
 import { tiltMove, tiltReset } from '@/components/ui/tilt';
 import { uploadDataUrl } from '@/lib/imageUpload';
@@ -76,7 +77,7 @@ type Msg =
   | { id: string; role: 'divider'; image: string }
   | { id: string; role: 'note'; text: string } // risposta fissa della chat, senza AI (saluti, foto da riconoscere)
   | { id: string; role: 'user'; text?: string; image?: string; video?: string; seen?: string | null; region?: Region; style?: { src: string; author?: string; authorUrl?: string } }
-  | { id: string; role: 'ai'; before: string; out: string | null; busy: boolean; reveal: Reveal; err?: string; text: string; req?: EditRequest }
+  | { id: string; role: 'ai'; before: string; out: string | null; busy: boolean; reveal: Reveal; err?: string; text: string; req?: EditRequest; at?: number; recover?: boolean }
   // video in chat: UN messaggio che si trasforma a ogni scelta (template, arredo, due anteprime, video)
   | { id: string; role: 'video'; step: 'template' | 'anim' | 'upload' | 'vchoice' | 'exit' | 'room' | 'mode' | 'previews' | 'frames' | 'render'; photo: string; anim?: VideoAnim; picks: VideoPick[]; previews?: (string | null)[]; frames?: { token: string; before: string; after: string; src: string; styled?: string }; url?: string; err?: string; job?: string; restyle?: { label: string; req: { style?: string; prompt?: string } }; redone?: boolean; agent?: { busy?: string; up?: string; token?: string; video?: string; room?: string; at?: number; duration?: number; exit?: boolean; steady?: boolean; styled?: string; landscape?: boolean; kind?: string } }; // kind: stanza scelta dall'agente (room:...), per il video con lui dentro
 
@@ -233,7 +234,8 @@ function loadSaved(): Saved | null {
     if (!raw) return null;
     const d = JSON.parse(raw) as Saved;
     // lavori interrotti dalla ricarica: la foto non si puo' riprendere (e' comunque nella Galleria), il video si' (job)
-    d.msgs = d.msgs.map(m => (m.role === 'ai' && m.busy ? { ...m, busy: false, err: 'La pagina si è ricaricata mentre lavorava: trovi il risultato nella Galleria.' }
+    // foto interrotta dalla ricarica: resta in lavorazione e si va a riprendere il risultato dalla Galleria (vedi recover)
+    d.msgs = d.msgs.map(m => (m.role === 'ai' && m.busy ? { ...m, recover: true }
       : m.role === 'video' && m.previews?.some(p => !p) ? { ...m, previews: m.previews.map(p => p ?? 'err') } : m));
     return d;
   } catch { return null; }
@@ -390,6 +392,26 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
   // uscita dalla chat (altra pagina della piattaforma): conversazione chiusa. Una ricarica della scheda non passa di qui.
   // la conversazione resta finche' la scheda e' aperta: tornando da un'altra pagina si ritrova (28/09, prima si perdeva all'uscita)
   const patch = (id: string, p: Partial<Extract<Msg, { role: 'ai' }>>) => setMsgs(ms => ms.map(m => (m.id === id && m.role === 'ai' ? { ...m, ...p } : m)));
+  // Ricarica a meta' lavoro: il server finisce lo stesso e salva la foto in Galleria. Si controlla la Galleria ogni 4 s
+  // (fino a 2 minuti) e la prima foto nuova fatta dopo la richiesta torna al suo posto in chat; se non arriva, l'avviso.
+  useEffect(() => {
+    const lost = msgs.filter((m): m is Extract<Msg, { role: 'ai' }> => m.role === 'ai' && !!m.recover);
+    if (!lost.length) return;
+    let stop = false, tries = 0;
+    const tick = async () => {
+      if (stop) return;
+      const items = await fetchMedia().catch(() => []);
+      const used = new Set(msgs.map(m => (m.role === 'ai' ? m.out : null)));
+      for (const m of lost) {
+        const hit = items.filter(it => !it.video && !used.has(it.dopo) && it.at >= (m.at ?? 0) - 10_000).sort((a, b) => a.at - b.at)[0];
+        if (hit) { used.add(hit.dopo); patch(m.id, { out: hit.dopo, busy: false, recover: false }); if (m.id === lost[lost.length - 1].id) setBase(hit.dopo); }
+      }
+      if (++tries >= 30) { lost.forEach(m => patch(m.id, { busy: false, recover: false, err: 'La pagina si è ricaricata mentre lavorava: trovi il risultato nella Galleria.' })); return; }
+      if (!stop) setTimeout(tick, 4000);
+    };
+    void tick();
+    return () => { stop = true; };
+  }, [msgs.some(m => m.role === 'ai' && m.recover)]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const upload = async (files: FileList | File[] | null, projectId?: string | null, sourceUrl?: string, early?: Promise<Response | null>) => {
     if (!files?.length) return;
@@ -478,7 +500,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
         ? { planimetria: true, style: planStyle(t), ...(/bianco e nero|b\/n|in bianco/i.test(t) ? { plan: 'bw' as const } : /\b3d\b|tridimensional/i.test(t) ? { plan: '3d' as const } : {}) }
         : { scene, ...(zone ? { prompt: pk?.req.prompt && t === pk.label ? pk.req.prompt : t, region: zone } : pk && t === pk.label && !pk.req.prompt ? pk.req : { prompt: pk?.req.prompt && t === pk.label ? pk.req.prompt : t }) }),
     };
-    setMsgs(ms => [...ms, { id: uid(), role: 'user', text: t, region: zone ?? undefined, ...(style ? { style } : {}) }, { id, role: 'ai', before, out: null, busy: true, reveal: null, text: t, req }]);
+    setMsgs(ms => [...ms, { id: uid(), role: 'user', text: t, region: zone ?? undefined, ...(style ? { style } : {}) }, { id, role: 'ai', before, out: null, busy: true, at: Date.now(), reveal: null, text: t, req }]);
     await run(id, req, before);
   };
   // Stesso stile ma diverso: stessa richiesta sulla stessa foto di partenza, nuovo seme (lo sceglie il server)
@@ -486,7 +508,7 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
     if (!m.req || busy) return;
     touch();
     const id = uid();
-    setMsgs(ms => [...ms, { id: uid(), role: 'user', text: 'Stesso stile, un’altra versione' }, { id, role: 'ai', before: m.before, out: null, busy: true, reveal: null, text: m.text, req: m.req }]);
+    setMsgs(ms => [...ms, { id: uid(), role: 'user', text: 'Stesso stile, un’altra versione' }, { id, role: 'ai', before: m.before, out: null, busy: true, at: Date.now(), reveal: null, text: m.text, req: m.req }]);
     // variante: palette e materiali diversi nello stesso stile, la sceglie il server (vedi variantText)
     await run(id, { ...m.req, variant: -1 }, m.before);
   };
