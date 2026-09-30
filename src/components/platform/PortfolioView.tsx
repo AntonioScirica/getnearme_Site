@@ -130,7 +130,12 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
         <div>
           <h1 className="font-display text-3xl font-bold tracking-tight">Il mio sito</h1>
           <p className="pt-1 text-sm text-muted">Scegli un template, modificalo e pubblica il tuo sito in 5 minuti.</p>
-          {credits && !sitePlan && <p className="mt-2 inline-flex items-center gap-2 rounded-full bg-amber-50 px-3 py-1.5 text-sm text-amber-800 ring-1 ring-amber-200">Il sito pubblico è nei piani Plus e Pro. <button type="button" onClick={() => go('/piano?cambia=1')} className="font-semibold underline underline-offset-2">Passa a Pro</button></p>}
+          {/* avviso senza piano col sito: si apre con un movimento quando il piano e' noto (prima compariva di scatto) */}
+          <div className={`grid ease-smooth transition-[grid-template-rows,opacity] duration-[600ms] ${credits && !sitePlan ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
+            <div className="min-h-0 overflow-hidden">
+              <p className="mt-2 inline-flex items-center gap-2 rounded-full bg-amber-50 px-3 py-1.5 text-sm text-amber-800 ring-1 ring-amber-200">Il sito pubblico è nei piani Plus e Pro. <button type="button" onClick={() => go('/piano?cambia=1')} className="font-semibold underline underline-offset-2">Passa a Pro</button></p>
+            </div>
+          </div>
         </div>
         {url && (
           <div data-tour="site-link" className="flex min-w-0 items-center gap-4">
