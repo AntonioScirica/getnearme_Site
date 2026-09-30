@@ -16,7 +16,8 @@ export const maxDuration = 300
 // la stessa della piattaforma). ~0,9 $ a video con Veo 3.1 fast a 8 s (~1,7 $ standard) (Nano Banana 2 vuota + Sonnet elenco + Veo 8 s).
 // Limiti come la prova foto (riga contatore in ai_usage): 1 video al giorno per IP, tetto globale giornaliero.
 const PER_IP = 1
-const PER_DAY = 20 // ~18 $/giorno al massimo
+// tetto di tutti i video di prova al giorno (~0,85 $ l'uno): LANDING_VIDEO_PER_DAY su Vercel, predefinito 20 (~17 $/giorno)
+const PER_DAY = Number(process.env.LANDING_VIDEO_PER_DAY) || 20
 const OWNER = 'landing'
 const MOCK_VIDEO = 'https://pub-a668674eaa484e8e8f2f10c264392bfc.r2.dev/spike-video/out/bbb243664b.mp4' // cartella su R2 e firma del lavoro
 const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)

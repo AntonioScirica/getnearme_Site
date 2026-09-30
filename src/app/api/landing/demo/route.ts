@@ -21,7 +21,8 @@ export const maxDuration = 300
 // Se la foto non riesce la prova si restituisce (si cancella la riga contatore appena creata).
 // ponytail: IP condivisi (uffici, 4G) si dividono la prova; tabella dedicata se serve un limite per dispositivo.
 const PER_IP = 1
-const PER_DAY = 100 // ~6 EUR/giorno al massimo con Nano Banana 2
+// tetto di tutte le foto di prova al giorno (~0,014 $ l'una con GPT): LANDING_PHOTO_PER_DAY su Vercel, predefinito 100
+const PER_DAY = Number(process.env.LANDING_PHOTO_PER_DAY) || 100
 const STYLES = ['modern', 'nordic', 'empty'] as const // empty = svuota la stanza
 const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 
