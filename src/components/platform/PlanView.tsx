@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Check, Coins, Loader2, Sparkles, UserRound, X } from 'lucide-react';
+import { Check, Coins, Copy, Gift, Loader2, Sparkles, UserRound, X } from 'lucide-react';
 import { authFetch, CARD_SHADOW } from './api';
 import { isBuy, type Buy } from '@/lib/startCheckout';
 import { Credits, SiteIncluded } from '@/components/PlanParts';
@@ -136,6 +136,7 @@ export default function PlanView({ ok, buy, change }: { ok?: boolean; buy?: Buy;
           </div>
         </>
       )}
+      {c && (c.plan !== 'none' || c.unlimited) && <CodeBox />}
       {/* solo a crediti letti: prima (c null) comparivano e sparivano appena si scopriva il piano attivo */}
       {c && (c.plan === 'none' || c.unlimited || changing) && (<>
       <h2 ref={plansRef} className="mt-8 scroll-mt-28 font-semibold">{changing ? tr('Cambia piano', 'Change plan') : tr('Scegli il piano', 'Choose your plan')}</h2>
@@ -178,6 +179,64 @@ export default function PlanView({ ok, buy, change }: { ok?: boolean; buy?: Buy;
       </div>
       <p className="mt-5 text-center text-xs text-muted">{tr('Pagamento sicuro con Stripe. Ti chiediamo ragione sociale, Partita IVA e codice SDI o PEC per la fattura elettronica. Prezzi finali, senza IVA (regime forfettario).', 'Secure payment with Stripe. We ask for your company name and VAT details for the invoice. Final prices, no VAT added (Italian flat-rate scheme).')}</p>
       </>)}
+    </div>
+  );
+}
+
+// Codice affiliato (lib/affiliates.ts): chi ha un piano lo inserisce e riceve crediti; l'affiliato vede il suo codice
+// e quante persone l'hanno usato. Chi ha gia' usato un codice non vede piu' il campo.
+function CodeBox() {
+  const [info, setInfo] = useState<{ used: string | null; gives: number; mine: { code: string; uses: number; each: number; gives: number } | null } | null>(null);
+  const [code, setCode] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [copied, setCopied] = useState(false);
+  useEffect(() => { authFetch('/api/platform/code').then(r => (r.ok ? r.json() : null)).then(setInfo).catch(() => {}); }, []);
+  if (!info) return null;
+  const send = async () => {
+    if (!code.trim() || busy) return;
+    setBusy(true); setMsg(null);
+    const r = await authFetch('/api/platform/code', { method: 'POST', body: JSON.stringify({ code }) }).catch(() => null);
+    const d = await r?.json().catch(() => null) as { ok?: boolean; credits?: number; error?: string } | null;
+    setBusy(false);
+    if (d?.ok) {
+      setMsg({ ok: true, text: tr(`Fatto: ${fmt(d.credits ?? 0)} crediti aggiunti al saldo. Non scadono con il mese.`, `Done: ${fmt(d.credits ?? 0)} credits added to your balance. They don’t expire at the end of the month.`) });
+      window.dispatchEvent(new Event('agenteimmo:credits'));
+      return setInfo(i => i && { ...i, used: code.trim().toUpperCase() });
+    }
+    setMsg({ ok: false, text: d?.error === 'used' ? tr('Hai già usato un codice su questo account.', 'You have already used a code on this account.')
+      : d?.error === 'own' ? tr('Non puoi usare il tuo codice.', 'You can’t use your own code.')
+      : d?.error === 'full' ? tr('Questo codice ha finito gli utilizzi.', 'This code has no uses left.')
+      : d?.error === 'plan' ? tr('Il codice vale con un piano attivo.', 'The code works with an active plan.')
+      : d?.error === 'invalid' ? tr('Codice non valido. Controlla di averlo scritto giusto.', 'Invalid code. Check you typed it correctly.')
+      : tr('Non siamo riusciti ad applicarlo, riprova tra poco.', 'We couldn’t apply it, try again shortly.') });
+  };
+  return (
+    <div className="mt-8 grid gap-4 md:grid-cols-2">
+      {info.mine && (
+        <div className={`rounded-[28px] bg-white p-6 ${CARD_SHADOW}`}>
+          <div className="text-sm text-muted">{tr('Il tuo codice affiliato', 'Your affiliate code')}</div>
+          <div className="mt-2 flex items-center gap-2">
+            <span className="font-display text-2xl font-extrabold tracking-tight">{info.mine.code}</span>
+            <button type="button" onClick={() => { void navigator.clipboard.writeText(info.mine!.code); setCopied(true); setTimeout(() => setCopied(false), 1500); }} aria-label={tr('Copia il codice', 'Copy the code')} className="flex h-9 w-9 items-center justify-center rounded-full bg-canvas text-ink hover:bg-line">{copied ? <Check size={15} /> : <Copy size={15} />}</button>
+          </div>
+          <p className="mt-2 text-sm text-muted">{tr(`Chi lo inserisce riceve ${fmt(info.mine.gives)} crediti, tu ${fmt(info.mine.each)} per ogni persona.`, `Whoever enters it gets ${fmt(info.mine.gives)} credits, you get ${fmt(info.mine.each)} per person.`)}</p>
+          <p className="mt-3 text-sm font-semibold">{tr(`Usato da ${info.mine.uses} ${info.mine.uses === 1 ? 'persona' : 'persone'}: ${fmt(info.mine.uses * info.mine.each)} crediti ricevuti`, `Used by ${info.mine.uses} ${info.mine.uses === 1 ? 'person' : 'people'}: ${fmt(info.mine.uses * info.mine.each)} credits received`)}</p>
+        </div>
+      )}
+      {!info.used && (
+        <div className={`rounded-[28px] bg-white p-6 ${CARD_SHADOW}`}>
+          <div className="flex items-center gap-2 font-semibold"><Gift size={16} className="text-brand" /> {tr('Hai un codice?', 'Have a code?')}</div>
+          <p className="mt-1 text-sm text-muted">{tr(`Inseriscilo qui: ricevi ${fmt(info.gives)} crediti in più, che non scadono.`, `Enter it here: you get ${fmt(info.gives)} extra credits that don’t expire.`)}</p>
+          <div className="mt-4 flex gap-2">
+            <input value={code} onChange={e => { setCode(e.target.value.slice(0, 40)); setMsg(null); }} onKeyDown={e => e.key === 'Enter' && void send()} placeholder={tr('Es. MARIO-IMMO', 'e.g. MARIO-IMMO')} autoCapitalize="characters" spellCheck={false}
+              className="h-11 min-w-0 flex-1 rounded-full bg-canvas px-4 text-sm font-semibold uppercase tracking-wide outline-none ring-1 ring-black/5 placeholder:font-normal placeholder:normal-case placeholder:tracking-normal focus:bg-white focus:ring-2 focus:ring-brand" />
+            <button type="button" disabled={busy || !code.trim()} onClick={() => void send()} className="flex h-11 shrink-0 items-center gap-2 rounded-full bg-ink px-5 text-sm font-semibold text-white disabled:opacity-40">{busy && <Loader2 size={15} className="animate-spin" />}{tr('Applica', 'Apply')}</button>
+          </div>
+          {msg && <p className={`blur-in mt-3 text-sm ${msg.ok ? 'text-green-700' : 'text-rose-600'}`}>{msg.text}</p>}
+        </div>
+      )}
+      {info.used && msg?.ok && <p className="blur-in self-center text-sm text-green-700">{msg.text}</p>}
     </div>
   );
 }
