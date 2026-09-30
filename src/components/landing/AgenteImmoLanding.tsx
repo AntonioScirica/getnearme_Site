@@ -30,8 +30,8 @@ export type LandingLang = 'it' | 'en';
 const Lang = createContext<LandingLang>('it');
 const useL = () => { const en = useContext(Lang) === 'en'; return (it: string, eng: string) => (en ? eng : it); };
 const useEn = () => useContext(Lang) === 'en';
-const VIDEO = 'https://pub-a668674eaa484e8e8f2f10c264392bfc.r2.dev/spike-video/out/bbb243664b.mp4';
-const VIDEO2 = 'https://pub-a668674eaa484e8e8f2f10c264392bfc.r2.dev/spike-video/out/d626678fc2.mp4';
+// i modelli di video della piattaforma (stessi esempi della chat)
+const VIDEO_TEMPLATES_LP: [keyof typeof VIDEO_SAMPLES, string, string][] = [['popup', 'Prima e dopo', 'Before and after'], ['cantiere', 'Cantiere', 'Building site'], ['fpv', 'Volo nel cantiere', 'Site fly-through'], ['daynight', 'Giorno e notte', 'Day to night'], ['camera', 'Camminata', 'Walk-in'], ['agent', 'Con te in video', 'You on camera']];
 
 // Compare quando entra in vista. Se la pagina e' nascosta l'observer non scatta: dopo 1,5 s si mostra comunque.
 function Reveal({ children, className = '', delay = 0, as: Tag = 'div', anim = 'blur-in' }: { children: ReactNode; className?: string; delay?: number; as?: 'div' | 'section' | 'li'; anim?: 'blur-in' | 'in-left' | 'in-right' | 'rise' }) {
@@ -451,12 +451,10 @@ function Landing({ faq }: { faq: [string, string][] }) {
   const L = useL(), en = useEn();
   const [siteRef, siteOn] = useInView('-15%');
   const [videoRef, videoOn] = useInView('-10%');
-  const vid = useRef<HTMLVideoElement>(null);
-  const vid2 = useRef<HTMLVideoElement>(null);
   // i video (1,5 MB) si scaricano solo quando la sezione arriva in vista: prima non rubano banda al primo schermo
   const [videoSeen, setVideoSeen] = useState(false);
   if (videoOn && !videoSeen) setVideoSeen(true); // aggiornamento in render: niente effetto a cascata
-  useEffect(() => { [vid, vid2].forEach(v => { if (!v.current) return; if (videoOn) v.current.play().catch(() => {}); else v.current.pause(); }); }, [videoOn, videoSeen]);
+  useEffect(() => { document.querySelectorAll<HTMLVideoElement>('video[data-lp-template]').forEach(v => { if (videoOn) v.play().catch(() => {}); else v.pause(); }); }, [videoOn, videoSeen]);
 
   return (
     <div className="dots-bg min-h-screen overflow-x-clip font-body text-ink antialiased">
@@ -507,7 +505,7 @@ function Landing({ faq }: { faq: [string, string][] }) {
             <h2 className={H2}>{L('Chi scorre non si ferma su una stanza vuota.', "Nobody stops scrolling for an empty room.")}</h2>
             <p className="mt-5 text-base leading-relaxed text-muted md:text-lg">{L('Vuota, una casa sembra piccola e fredda. Arredata, chi guarda ci si immagina dentro e ti chiama.', "Empty, a home looks small and cold. Staged, buyers picture themselves there and call you.")}</p>
             <ul className="mt-6 space-y-3 text-[15px]">
-              {[L('La prima foto ferma chi scorre', "The first photo stops the scroll"), L('Il cliente capisce subito come vivrebbe quella casa', "Buyers instantly see how they'd live there"), L('Nessun home staging vero da pagare o da organizzare', "No physical staging to pay for or organize")].map(x => <li key={x} className="flex items-start gap-3">{CHECK}{x}</li>)}
+              {[L('Quattro stili per ogni stanza: Moderno, Nordico, Luxury, Boho', "Four styles for every room: Modern, Nordic, Luxury, Boho"), L('Svuoti la stanza o cambi un dettaglio scrivendolo, come in chat', "Empty the room or change a detail just by typing it, like in a chat"), L('Anche le planimetrie: a colori, in 3D dall\'alto o in bianco e nero', "Floor plans too: in colour, 3D from above or black and white"), L('Nessun home staging vero da pagare o da organizzare', "No physical staging to pay for or organize")].map(x => <li key={x} className="flex items-start gap-3">{CHECK}{x}</li>)}
             </ul>
             <span className="hidden md:block"><Cta className="mt-8">{L('Prova gratis', "Try it free")}</Cta></span>
           </Reveal>
@@ -529,22 +527,22 @@ function Landing({ faq }: { faq: [string, string][] }) {
         <div ref={videoRef} className="grid items-center gap-10 md:grid-cols-2 md:gap-16">
           <Reveal className="md:order-2" anim="in-right">
             <Eyebrow n="02">{L('Farti conoscere', "Get known")}</Eyebrow>
-            <h2 className={H2}>{L('Ogni casa diventa un video per i tuoi social.', "Every home becomes a video for your socials.")}</h2>
-            <p className="mt-5 text-base leading-relaxed text-muted md:text-lg">{L('Nella tua zona i clienti chiamano l\'agente che vedono ogni settimana sui social. Qui ogni incarico diventa un video, senza videomaker.', "Locally, clients call the agent they see every week on social media. Here every listing becomes a video, no videographer.")}</p>
+            <h2 className={H2}>{L('Sei video pronti per ogni casa, anche con te dentro.', "Six ready-made videos for every home, even with you in them.")}</h2>
+            <p className="mt-5 text-base leading-relaxed text-muted md:text-lg">{L('Nella tua zona i clienti chiamano l\'agente che vedono ogni settimana sui social. Scegli il modello, parti da una foto (o da un tuo video) e in pochi minuti hai il reel, verticale o orizzontale.', "Locally, clients call the agent they see every week on social media. Pick a template, start from a photo (or a video of yours) and in a few minutes your reel is ready, vertical or horizontal.")}</p>
             <ul className="mt-6 space-y-3 text-[15px]">
-              {[L('Ti fai conoscere nella tua zona, non solo sul portale', "Get known in your area, not just on the portal"), L('Ogni incarico diventa un contenuto da pubblicare', "Every listing becomes something to post"), L('Niente riprese, niente montaggio, niente videomaker', "No filming, no editing, no videographer")].map(x => <li key={x} className="flex items-start gap-3">{CHECK}{x}</li>)}
+              {[L('La stanza vuota che si arreda, il cantiere che diventa casa, il giorno che diventa sera', "An empty room getting furnished, a building site becoming a home, day turning into night"), L('Con te in video: parli in camera, esci e la stanza si arreda', "With you on camera: you talk, walk out and the room gets furnished"), L('Musica già scelta per ogni video, niente montaggio né videomaker', "Music already picked for each video, no editing, no videographer")].map(x => <li key={x} className="flex items-start gap-3">{CHECK}{x}</li>)}
             </ul>
             <span className="hidden md:block"><Cta className="mt-8">{L('Crea video', "Create a video")}</Cta></span>
           </Reveal>
           <Reveal delay={150} className="md:order-1" anim="in-left">
-            <div className="parallax relative w-[90%]">
-              <Tilt className="overflow-hidden rounded-[24px] bg-white p-2 shadow-[0_30px_80px_-30px_rgba(0,0,0,.3)] ring-1 ring-black/5">
-                <video ref={vid} src={videoSeen ? VIDEO : undefined} poster="https://pub-a668674eaa484e8e8f2f10c264392bfc.r2.dev/spike-video/soggiorno.jpg" muted loop playsInline preload="none" className="aspect-video w-full rounded-2xl bg-canvas object-cover" />
-              </Tilt>
-              {/* verticale, come un reel: stesso video tagliato al centro */}
-              <div className="absolute -bottom-10 -right-[8%] w-[32%] rotate-[4deg] overflow-hidden rounded-[24px] bg-white p-1.5 shadow-[0_24px_60px_-24px_rgba(0,0,0,.4)] ring-1 ring-black/5">
-                <video ref={vid2} src={videoSeen ? VIDEO2 : undefined} poster="https://pub-a668674eaa484e8e8f2f10c264392bfc.r2.dev/spike-video/cucina.jpg" muted loop playsInline preload="none" className="aspect-[9/16] w-full rounded-[18px] bg-canvas object-cover" />
-              </div>
+            {/* i sei modelli della piattaforma, con i loro esempi (si scaricano solo quando la sezione e' in vista) */}
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              {VIDEO_TEMPLATES_LP.map(([k, it, enl], i) => (
+                <div key={k} className="overflow-hidden rounded-[20px] bg-white p-1.5 shadow-[0_20px_50px_-25px_rgba(0,0,0,.35)] ring-1 ring-black/5">
+                  <video data-lp-template src={videoSeen ? VIDEO_SAMPLES[k] : undefined} muted loop playsInline preload="none" className="aspect-[4/5] w-full rounded-[14px] bg-canvas object-cover" />
+                  <div className="px-2 pb-1.5 pt-2 text-[13px] font-semibold">{en ? enl : it}</div>
+                </div>
+              ))}
             </div>
           </Reveal>
           <div className="mt-14 flex justify-center md:hidden"><Cta>{L('Crea video', "Create a video")}</Cta></div>
