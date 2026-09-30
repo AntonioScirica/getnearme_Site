@@ -176,7 +176,9 @@ function PropertyCard({ p, demo, onHover, onChange }: { p: ProjectData; demo?: b
   };
   return (
     // i tre puntini stanno fuori dal link (un bottone dentro un link non va bene): menu con Modifica ed Elimina
-    <div ref={box} className={`relative ${busy ? 'pointer-events-none opacity-50' : ''}`}>
+    <div ref={box} className={`relative ${busy ? 'pointer-events-none' : ''}`}>
+    {/* eliminazione in corso: rotellina sulla card */}
+    {busy && <div className="absolute inset-0 z-30 flex items-center justify-center rounded-[24px] bg-white/60 backdrop-blur-[2px]"><Loader2 size={22} className="animate-spin text-muted" /></div>}
     {!demo && (
       <div className="absolute right-3 top-3 z-20">
         <button type="button" onClick={() => setMenu(m => !m)} aria-label="Altre azioni" aria-expanded={menu} className="flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-ink shadow-sm ring-1 ring-black/5 backdrop-blur-md hover:bg-white"><MoreHorizontal size={16} /></button>

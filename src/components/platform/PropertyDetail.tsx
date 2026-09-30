@@ -14,7 +14,7 @@ import { printHtml } from '@/lib/printHtml';
 
 // Dettaglio in piattaforma: stessa pagina della casa del portfolio pubblico + barra agente
 // (torna agli immobili, pubblico/privato) e suggerimenti dell'AI in fondo.
-export default function PropertyDetail({ project, loading, onChange }: { project?: ProjectData; loading: boolean; onChange: () => void }) {
+export default function PropertyDetail({ project, loading, onChange }: { project?: ProjectData; loading: boolean; onChange: () => void | Promise<unknown> }) {
   // modello del sito e indirizzo: per l'avviso "sul sito si vede con lo stile del modello"
   const [site, setSite] = useState<{ slug: string | null; template: TemplateId; config: SiteConfig; name: string; logo: string | null } | null>(null);
   const editing = true; // la barra di modifica c'e' sempre, a sinistra della pagina del sito
@@ -96,7 +96,7 @@ export default function PropertyDetail({ project, loading, onChange }: { project
         <a href="#/portfolio" className="flex h-9 items-center rounded-full px-3 font-medium hover:bg-canvas">Cambia modello</a>
         <span className="h-5 w-px bg-line" aria-hidden />
         {!planKnown ? <span className="h-9 w-56 rounded-full bg-canvas" aria-hidden /> : sitePlan
-          ? <span className="pr-2"><PublicSwitch on={!!project.is_public} labels={['Pubblico', 'Non pubblico']} both onClick={async () => { if (await setPublic(project.id, !project.is_public)) onChange(); }} /></span>
+          ? <span className="pr-2"><PublicSwitch on={!!project.is_public} labels={['Pubblico', 'Non pubblico']} both onClick={async () => { if (await setPublic(project.id, !project.is_public)) await onChange(); }} /></span>
           : <a href="#/piano?cambia=1" className="flex h-9 items-center rounded-full bg-ink px-4 font-semibold text-white hover:bg-black">Passa a Plus o Pro per pubblicare</a>}
         {sitePlan && project.is_public && site?.slug && <a href={`${portfolioUrl(site.slug)}/${project.id}`} target="_blank" rel="noopener" className="flex h-9 items-center gap-1.5 rounded-full bg-canvas px-4 font-medium hover:bg-line/60">Vedi sul sito <ExternalLink size={14} /></a>}
       </div>

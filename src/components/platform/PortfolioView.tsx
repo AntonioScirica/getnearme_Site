@@ -671,14 +671,22 @@ function PropertiesTab({ projects, onChange }: { projects: ProjectData[] | null;
 }
 
 // both: "Non pubblico" a sinistra e "Pubblico" a destra dell'interruttore, evidenziato quello attivo
-export function PublicSwitch({ on, onClick, labels = ['Pubblico', 'Privato'], both = false }: { on: boolean; onClick: () => void; labels?: [string, string]; both?: boolean }) {
+// Il clic sposta subito l'interruttore (poi si salva): mentre si salva c'e' la rotellina sul pallino e non si riclicca
+export function PublicSwitch({ on: saved, onClick, labels = ['Pubblico', 'Privato'], both = false }: { on: boolean; onClick: () => void | Promise<unknown>; labels?: [string, string]; both?: boolean }) {
+  const [pending, setPending] = useState<boolean | null>(null);
+  const on = pending ?? saved;
+  const click = async () => {
+    if (pending !== null) return;
+    setPending(!saved);
+    try { await onClick(); } finally { setPending(null); }
+  };
   const knob = (
     <span className={`relative h-6 w-10 rounded-full transition-colors ${on ? 'bg-brand' : 'bg-line'}`}>
-      <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${on ? 'left-[18px]' : 'left-0.5'}`} />
+      <span className={`absolute top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-white shadow transition-all ${on ? 'left-[18px]' : 'left-0.5'}`}>{pending !== null && <Loader2 size={12} className="animate-spin text-muted" />}</span>
     </span>
   );
   return (
-    <button role="switch" aria-checked={on} onClick={onClick} className="flex shrink-0 items-center gap-2 text-sm">
+    <button role="switch" aria-checked={on} aria-busy={pending !== null} onClick={click} className="flex shrink-0 items-center gap-2 text-sm">
       {both ? <>
         <span className={`ease-smooth transition-colors ${on ? 'text-muted/60' : 'font-medium text-ink'}`}>{labels[1]}</span>
         {knob}
