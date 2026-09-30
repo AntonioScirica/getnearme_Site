@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createHash, randomBytes } from 'crypto'
 import { uploadJpeg } from '@/lib/r2'
 import { sealKey, watermarkImage } from '@/lib/demoProtect'
+import { readFile } from 'fs/promises'
+import { join } from 'path'
 import sharp from 'sharp'
 import { createClient } from '@supabase/supabase-js'
 import { stagePrompt } from '@/lib/nanoBanana'
@@ -24,7 +26,7 @@ const STYLES = ['modern', 'nordic', 'empty'] as const // empty = svuota la stanz
 const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 
 export async function POST(req: NextRequest) {
-  const body = await req.json().catch(() => null) as { image?: unknown; style?: unknown; prompt?: unknown; mock?: unknown } | null
+  const body = await req.json().catch(() => null) as { image?: unknown; device?: unknown; style?: unknown; prompt?: unknown; mock?: unknown } | null
   const image = typeof body?.image === 'string' ? body.image : ''
   const style = STYLES.find(s => s === body?.style) ?? 'modern'
   const custom = typeof body?.prompt === 'string' ? body.prompt.replace(/[\u0000-\u001f"]/g, ' ').trim().slice(0, 200) : ''
@@ -33,10 +35,12 @@ export async function POST(req: NextRequest) {
   const ip = (req.headers.get('x-forwarded-for')?.split(',')[0] ?? req.headers.get('x-real-ip') ?? 'unknown').trim()
   const who = createHash('sha256').update(`${ip}|${process.env.SUPABASE_SERVICE_ROLE_KEY?.slice(-12)}`).digest('hex').slice(0, 24)
   const since = new Date(Date.now() - 86_400_000).toISOString()
+  // impronta del dispositivo (lib/deviceId): la prova vale una volta anche cambiando IP (VPN) o in incognito
+  const dev = typeof body?.device === 'string' && /^[a-f0-9]{32}$/.test(body.device) ? `fp:${createHash('sha256').update(`${body.device}|${process.env.SUPABASE_SERVICE_ROLE_KEY?.slice(-12)}`).digest('hex').slice(0, 24)}` : null
   const count = async (mine: boolean) => {
     // la prova e' una sola per IP, per sempre (30/09); il tetto di tutti resta giornaliero
     let q = admin.from('ai_usage').select('id', { count: 'exact', head: true }).eq('kind', 'landing_demo')
-    q = mine ? q.eq('model', who) : q.gte('created_at', since)
+    q = mine ? q.in('model', dev ? [who, dev] : [who]) : q.eq('provider', 'counter').gte('created_at', since)
     return (await q).count ?? 0
   }
   // IP senza limiti (i nostri, LANDING_FREE_IPS separati da virgola) e sviluppo locale: niente contatore
@@ -45,13 +49,17 @@ export async function POST(req: NextRequest) {
   // simulazione (?simula=1 sulla landing, solo IP senza limiti o sviluppo): nessuna AI, foto d'esempio dopo 3 s
   if (free && body?.mock === true) {
     await new Promise(r => setTimeout(r, 3000))
-    return NextResponse.json({ image: 'https://agenteimmo.me/immo/home/demo-after.webp', url: 'https://agenteimmo.me/immo/home/demo-after.webp', left: 99 })
+    // anche la simulazione con la filigrana, come la prova vera
+    const ex = await sharp(await readFile(join(process.cwd(), 'public/immo/home/demo-after.webp'))).jpeg({ quality: 88 }).toBuffer()
+    return NextResponse.json({ image: `data:image/jpeg;base64,${(await watermarkImage(ex)).toString('base64')}`, token: null, left: 99 })
   }
   if (used >= PER_IP) return NextResponse.json({ error: 'limit', left: 0 }, { status: 429 })
   if (all >= PER_DAY) return NextResponse.json({ error: 'busy' }, { status: 429 })
   // si prenota la prova prima di generare: richieste in parallelo dallo stesso IP non superano il limite di molto
   const { data: slot } = free ? { data: null } : await admin.from('ai_usage').insert({ user_id: null, kind: 'landing_demo', provider: 'counter', model: who, duration_ms: 0, cost_usd: 0, ok: true } as never).select('id').single()
-  const giveBack = () => slot && admin.from('ai_usage').delete().eq('id', (slot as { id: string }).id)
+  // la stessa prova segnata anche sull'impronta del dispositivo (provider counter-fp: non conta nel tetto di tutti)
+  if (!free && slot && dev) await admin.from('ai_usage').insert({ user_id: null, kind: 'landing_demo', provider: 'counter-fp', model: dev, duration_ms: 0, cost_usd: 0, ok: true } as never)
+  const giveBack = async () => { if (!slot) return; await admin.from('ai_usage').delete().eq('id', (slot as { id: string }).id); if (dev) await admin.from('ai_usage').delete().eq('kind', 'landing_demo').eq('provider', 'counter-fp').eq('model', dev) }
 
   // foto ridotta a 1536 px: basta per il modello e per l'anteprima
   const src = await sharp(Buffer.from(image.split(',')[1], 'base64')).rotate().resize({ width: 1536, height: 1536, fit: 'inside' }).jpeg({ quality: 88 }).toBuffer()
@@ -79,6 +87,8 @@ export async function GET(req: NextRequest) {
   const free = process.env.NODE_ENV === 'development' || (process.env.LANDING_FREE_IPS ?? '').split(',').map(x => x.trim()).includes(ip)
   if (free) return NextResponse.json({ left: 99 })
   const who = createHash('sha256').update(`${ip}|${process.env.SUPABASE_SERVICE_ROLE_KEY?.slice(-12)}`).digest('hex').slice(0, 24)
-  const { count } = await admin.from('ai_usage').select('id', { count: 'exact', head: true }).eq('kind', 'landing_demo').eq('model', who)
+  const d = req.nextUrl.searchParams.get('d') ?? ''
+  const dev = /^[a-f0-9]{32}$/.test(d) ? `fp:${createHash('sha256').update(`${d}|${process.env.SUPABASE_SERVICE_ROLE_KEY?.slice(-12)}`).digest('hex').slice(0, 24)}` : null
+  const { count } = await admin.from('ai_usage').select('id', { count: 'exact', head: true }).eq('kind', 'landing_demo').in('model', dev ? [who, dev] : [who])
   return NextResponse.json({ left: Math.max(0, PER_IP - (count ?? 0)) })
 }

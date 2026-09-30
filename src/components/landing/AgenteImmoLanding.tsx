@@ -12,6 +12,7 @@ import { ArrowRight, Check, Lock, ChevronLeft, ChevronRight, Clapperboard, FileT
 import { PRICING } from '@/lib/pricing';
 import { tiltMove, tiltReset } from '@/components/ui/tilt';
 import { Credits, SiteIncluded } from '@/components/PlanParts';
+import { deviceId } from '@/lib/deviceId';
 import { VIDEO_SAMPLES } from '@/lib/videoSamples';
 import { startCheckout, type Buy } from '@/lib/startCheckout';
 import dynamic from 'next/dynamic';
@@ -222,11 +223,13 @@ function TryIt() {
   const [used, setUsed] = useState(false);
   useEffect(() => {
     const force = new URLSearchParams(location.search).has('piani');
-    let mark = false; try { mark = !!localStorage.getItem('agenteimmo:demo-used'); } catch { /* niente storage */ }
+    // in locale (sviluppo) nessun limite: il segno nel browser non conta
+    let mark = false; try { mark = process.env.NODE_ENV !== 'development' && !!localStorage.getItem('agenteimmo:demo-used'); } catch { /* niente storage */ }
     if (force || mark) { void Promise.resolve().then(() => { setUsed(true); setLeft(0); }); return; } // dopo il render (niente setState sincrono nell'effetto)
-    fetch('/api/landing/demo').then(r => r.json()).then((d: { left?: number }) => { if (d.left === 0) { setUsed(true); setLeft(0); } }).catch(() => {});
+    void deviceId().then(dv => { device.current = dv; return fetch(`/api/landing/demo?d=${dv}`); }).then(r => r.json()).then(r => r.json()).then((d: { left?: number }) => { if (d.left === 0) { setUsed(true); setLeft(0); } }).catch(() => {});
   }, []);
   const [msg, setMsg] = useState('');
+  const device = useRef(''); // impronta del dispositivo (lib/deviceId), inviata con la prova
   // secondo passo: la foto arredata diventa un video (1 al giorno, vedi /api/landing/demo-video)
   const [video, setVideo] = useState<string | null>(null);
   // gettoni cifrati di foto e video puliti (senza filigrana): la piattaforma li scambia con i file dopo il login
@@ -250,7 +253,7 @@ function TryIt() {
   const run = async () => {
     if (!before || busy) return;
     setBusy(true); setMsg(''); setAfter(null); setVideo(null);
-    const r = await fetch('/api/landing/demo', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ image: before, style, prompt: text.trim(), mock: simulate() }) }).catch(() => null);
+    const r = await fetch('/api/landing/demo', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ image: before, style, prompt: text.trim(), device: device.current || undefined, mock: simulate() }) }).catch(() => null);
     const d = await r?.json().catch(() => null) as { image?: string; token?: string | null; left?: number; error?: string } | null;
     setBusy(false);
     if (typeof d?.left === 'number') setLeft(d.left);
@@ -269,7 +272,7 @@ function TryIt() {
     if (!after || vBusy) return;
     setPicking(false); setVBusy(true); setMsg('');
     const fail = (e?: string) => { setVBusy(false); setMsg(e === 'limit' ? L('Hai già fatto il video di prova. Crea l\'account per farne altri.', "You've made your free video. Create an account to make more.") : e === 'busy' ? L('Ci sono molti video in corso, riprova tra qualche minuto.', "Lots of videos running right now, try again in a few minutes.") : L('Non siamo riusciti a fare il video di questa foto. Riprova con un\'altra stanza.', "We couldn't make a video of this photo. Try another room.")); };
-    const r = await fetch('/api/landing/demo-video', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(vanish ? { image: before, empty: after, anim, mock: simulate() } : { image: after, anim, mock: simulate() }) }).catch(() => null);
+    const r = await fetch('/api/landing/demo-video', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(vanish ? { image: before, empty: after, anim, device: device.current || undefined, mock: simulate() } : { image: after, anim, device: device.current || undefined, mock: simulate() }) }).catch(() => null);
     const d = await r?.json().catch(() => null) as { job?: string; error?: string } | null;
     if (!d?.job) return fail(d?.error);
     // Veo lavora 1-2 minuti: si controlla ogni 5 s, per massimo 5 minuti
@@ -344,7 +347,7 @@ function TryIt() {
                 {used && (
                   <div className="blur-in absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 bg-black/40 p-6 text-center backdrop-blur-md">
                     <div className="max-w-md font-display text-2xl font-extrabold tracking-tight text-white md:text-3xl">{L('Hai già usato la prova gratis', "You've used your free try")}</div>
-                    <p className="max-w-sm text-sm text-white/80">{L('Con un piano arredi tutte le tue case, fai i video e pubblichi il tuo sito.', "With a plan you stage all your homes, make videos and publish your website.")}</p>
+                    <p className="max-w-xl text-sm text-white/80">{L('Con un piano arredi tutte le tue case, fai i video e pubblichi il tuo sito.', "With a plan you stage all your homes, make videos and publish your website.")}</p>
                     <a href="#prezzi" className="inline-flex h-12 items-center gap-2 rounded-full bg-white px-6 text-[15px] font-semibold text-ink ease-smooth transition-transform hover:scale-[1.03]">{L('Vedi i piani', "See the plans")} <ArrowRight size={16} /></a>
                   </div>
                 )}

@@ -22,17 +22,19 @@ const MOCK_VIDEO = 'https://pub-a668674eaa484e8e8f2f10c264392bfc.r2.dev/spike-vi
 const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 
 export async function POST(req: NextRequest) {
-  const body = await req.json().catch(() => null) as { image?: unknown; anim?: unknown; mock?: unknown; empty?: unknown } | null
+  const body = await req.json().catch(() => null) as { image?: unknown; device?: unknown; anim?: unknown; mock?: unknown; empty?: unknown } | null
   const image = typeof body?.image === 'string' ? body.image : ''
   if (body?.mock !== true && (!/^data:image\/(jpeg|png|webp);base64,/.test(image) || image.length > 4_000_000)) return NextResponse.json({ error: 'bad_image' }, { status: 400 })
 
   const ip = (req.headers.get('x-forwarded-for')?.split(',')[0] ?? req.headers.get('x-real-ip') ?? 'unknown').trim()
   const who = createHash('sha256').update(`${ip}|${process.env.SUPABASE_SERVICE_ROLE_KEY?.slice(-12)}`).digest('hex').slice(0, 24)
   const since = new Date(Date.now() - 86_400_000).toISOString()
+  // impronta del dispositivo (lib/deviceId): la prova vale una volta anche cambiando IP (VPN) o in incognito
+  const dev = typeof body?.device === 'string' && /^[a-f0-9]{32}$/.test(body.device) ? `fp:${createHash('sha256').update(`${body.device}|${process.env.SUPABASE_SERVICE_ROLE_KEY?.slice(-12)}`).digest('hex').slice(0, 24)}` : null
   const count = async (mine: boolean) => {
     // la prova e' una sola per IP, per sempre (30/09); il tetto di tutti resta giornaliero
     let q = admin.from('ai_usage').select('id', { count: 'exact', head: true }).eq('kind', 'landing_demo_video')
-    q = mine ? q.eq('model', who) : q.gte('created_at', since)
+    q = mine ? q.in('model', dev ? [who, dev] : [who]) : q.eq('provider', 'counter').gte('created_at', since)
     return (await q).count ?? 0
   }
   // IP senza limiti (i nostri, LANDING_FREE_IPS separati da virgola) e sviluppo locale: niente contatore
@@ -43,12 +45,14 @@ export async function POST(req: NextRequest) {
   if (used >= PER_IP) return NextResponse.json({ error: 'limit' }, { status: 429 })
   if (all >= PER_DAY) return NextResponse.json({ error: 'busy' }, { status: 429 })
   const { data: slot } = free ? { data: null } : await admin.from('ai_usage').insert({ user_id: null, kind: 'landing_demo_video', provider: 'counter', model: who, duration_ms: 0, cost_usd: 0, ok: true } as never).select('id').single()
+  // la stessa prova segnata anche sull'impronta del dispositivo (provider counter-fp: non conta nel tetto di tutti)
+  if (!free && slot && dev) await admin.from('ai_usage').insert({ user_id: null, kind: 'landing_demo_video', provider: 'counter-fp', model: dev, duration_ms: 0, cost_usd: 0, ok: true } as never)
 
   // Svuota: image = foto originale, empty = stanza svuotata dalla prova; video in avanti, i mobili spariscono
   const empty = typeof body?.empty === 'string' && /^data:image\/(jpeg|png|webp);base64,/.test(body.empty) && body.empty.length < 4_000_000 ? body.empty : undefined
   const { status, ...r } = await startVideo(OWNER, '', { imageUrl: '', imageBase64: image, anim: body?.anim === 'gravity' ? 'gravity' : 'popup', empty }) // nella prova solo Popup e Dall'alto
   // non partito: la prova si restituisce
-  if (!r.job && slot) await admin.from('ai_usage').delete().eq('id', (slot as { id: string }).id)
+  if (!r.job && slot) { await admin.from('ai_usage').delete().eq('id', (slot as { id: string }).id); if (dev) await admin.from('ai_usage').delete().eq('kind', 'landing_demo_video').eq('provider', 'counter-fp').eq('model', dev) }
   return NextResponse.json(r, typeof status === 'number' ? { status } : undefined)
 }
 
