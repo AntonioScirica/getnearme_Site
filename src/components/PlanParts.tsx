@@ -7,8 +7,8 @@ const thousands = (n: number, en?: boolean) => String(n).replace(/\B(?=(\d{3})+(
 export function Credits({ n, en }: { n: number; en?: boolean }) {
   return (
     <div className="mt-6 border-t border-line pt-6">
-      <div className="flex items-center gap-2 font-display text-xl font-extrabold tracking-tight"><Sparkles size={16} className="text-ai" /> {thousands(n, en)} {en ? 'credits a month' : 'crediti al mese'}</div>
-      <div className="mt-2 space-y-1 pl-6 text-[15px] text-muted">
+      <div className="font-display text-xl font-extrabold tracking-tight">{thousands(n, en)} {en ? 'credits a month' : 'crediti al mese'}</div>
+      <div className="mt-2 space-y-1 text-[15px] text-muted">
         <div>= {photosFor(n)} {en ? 'staged photos' : 'foto arredate'}</div>
         <div>~ {videosFor(n)} {en ? 'videos' : 'video'}</div>
       </div>
@@ -21,10 +21,10 @@ const SITE_PERKS: [typeof Globe, string, string][] = [[Search, 'SEO: ti trovano 
 export function SiteIncluded({ en, slug }: { en?: boolean; slug?: string | null }) {
   return (
     <div className="mt-6 border-t border-line pt-6">
-      <div className="flex items-center gap-2 font-display text-xl font-extrabold tracking-tight"><Globe size={16} className="text-brand" /> {en ? 'Your website included' : 'Il tuo sito incluso'}</div>
-      <div className="mt-1 pl-6 text-[15px] text-muted">agenteimmo.me/<span className="text-ink">{slug || (en ? 'yourname' : 'tuonome')}</span>, {en ? 'ready-made with our templates' : 'già fatto con i nostri modelli'}</div>
-      <ul className="mt-4 space-y-2.5 pl-6 text-[15px]">
-        {SITE_PERKS.map(([Icon, l, e]) => <li key={l} className="flex items-center gap-2.5"><Icon size={15} className="shrink-0 text-brand" />{en ? e : l}</li>)}
+      <div className="font-display text-xl font-extrabold tracking-tight">{en ? 'Your website included' : 'Il tuo sito incluso'}</div>
+      <div className="mt-1 text-[15px] text-muted">agenteimmo.me/<span className="text-ink">{slug || (en ? 'yourname' : 'tuonome')}</span>, {en ? 'ready-made with our templates' : 'già fatto con i nostri modelli'}</div>
+      <ul className="mt-4 space-y-2.5 text-[15px]">
+        {SITE_PERKS.map(([, l, e]) => <li key={l}>{en ? e : l}</li>)}
       </ul>
     </div>
   );
