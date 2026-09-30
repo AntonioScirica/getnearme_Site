@@ -230,8 +230,8 @@ function EditProperty({ project, photos, onReorder, onPhoto, onClose, onSaved, o
         {photos.length > 0 && (
           <section className="rounded-2xl bg-canvas p-3">
             <div className="flex items-center gap-3">
-              <span className="flex shrink-0 -space-x-3">
-                {photos.slice(0, 3).map((src, i) => <img key={src} src={src} alt="" className="h-12 w-12 rounded-xl object-cover ring-2 ring-canvas" style={{ zIndex: 3 - i }} />)}
+              <span className="flex shrink-0 -space-x-7">{/* miniature molto sovrapposte: piu' spazio al testo */}
+                {photos.slice(0, 3).map((src, i) => <img key={src} src={src} alt="" className="h-11 w-11 rounded-xl object-cover ring-2 ring-canvas" style={{ zIndex: 3 - i }} />)}
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block text-sm font-semibold">Le foto</span>
