@@ -36,7 +36,7 @@ export default function PropertyDetail({ project, loading, onChange }: { project
   // la pagina del sito e' anche il posto dove si modifica: testi al clic, azioni sulle foto (AI, copertina, togli)
   const photos = Array.isArray(extra.photos) ? extra.photos.filter((x): x is string => typeof x === 'string') : project.cover ? [project.cover] : [];
   const propEdit: PropEdit = {
-    photos, cover: project.cover, busy,
+    photos, cover: project.cover, busy, editing, // in modifica le foto hanno il velo e i pulsanti sempre in vista
     onPhoto: async (src, action) => {
       if (action === 'ai') { window.location.hash = `#/staging?project=${project.id}&photo=${encodeURIComponent(src)}`; return; }
       if (action === 'remove' && !confirm('Togliere questa foto dall’immobile?')) return;

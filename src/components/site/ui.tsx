@@ -73,7 +73,7 @@ export type SiteCtx = {
   propEdit?: PropEdit;
 };
 // texts: testi modificabili al clic sulla pagina (spento: si modifica dalla barra a sinistra)
-export type PropEdit = { photos: string[]; cover: string; busy: string | null; texts?: boolean; onPhoto: (src: string, action: 'ai' | 'cover' | 'remove') => void; onField: (k: 'titolo' | 'addr' | 'prezzo' | 'descrizione', v: string) => void };
+export type PropEdit = { photos: string[]; cover: string; busy: string | null; texts?: boolean; editing?: boolean; onPhoto: (src: string, action: 'ai' | 'cover' | 'remove') => void; onField: (k: 'titolo' | 'addr' | 'prezzo' | 'descrizione', v: string) => void };
 
 // Testo dell'immobile modificabile al clic (solo nella scheda della piattaforma): si salva uscendo dal campo
 export function Editable({ k, value, children, multiline = false, className = '' }: { k: Parameters<PropEdit['onField']>[0]; value: string; children: ReactNode; multiline?: boolean; className?: string }) {
@@ -150,14 +150,16 @@ export function Photo({ src, alt = '', className = '', zoom, fit, noActions }: {
   // scheda della piattaforma: sulle foto dell'immobile le azioni (span e non button: le gallerie hanno gia' un button intorno)
   const acts = pe && src && !noActions && pe.photos.includes(src) ? (
     pe.busy === src ? <span className="absolute inset-0 z-20 flex items-center justify-center bg-white/60 text-sm font-semibold text-neutral-900">Un attimo…</span> : (
-      <span className="absolute inset-0 z-20 flex items-center justify-center gap-2 bg-black/35 opacity-0 transition-opacity group-hover/ph:opacity-100" onClick={e => { e.preventDefault(); e.stopPropagation(); }}>
-        {src !== pe.cover && <span role="button" tabIndex={0} onClick={() => pe.onPhoto(src, 'cover')} className="flex h-10 items-center rounded-full bg-white px-4 text-sm font-semibold text-neutral-900 shadow-lg">Copertina</span>}
+      // in modifica: velo sempre sopra e i due pulsanti grandi uno sotto l'altro; fuori, copertina e togli al passaggio
+      <span className={`absolute inset-0 z-20 flex items-center justify-center bg-black/35 transition-opacity ${pe.editing ? 'flex-col gap-3' : 'gap-2 opacity-0 group-hover/ph:opacity-100'}`} onClick={e => { e.preventDefault(); e.stopPropagation(); }}>
+        {pe.editing && <span role="button" tabIndex={0} onClick={() => pe.onPhoto(src, 'ai')} className="flex h-14 min-w-56 items-center justify-center rounded-full bg-[#537eec] px-7 text-lg font-semibold text-white shadow-lg transition-transform hover:scale-105">Migliora con l’AI</span>}
+        {src !== pe.cover && <span role="button" tabIndex={0} onClick={() => pe.onPhoto(src, 'cover')} className={`flex items-center justify-center rounded-full bg-white font-semibold text-neutral-900 shadow-lg transition-transform hover:scale-105 ${pe.editing ? 'h-14 min-w-56 px-7 text-lg' : 'h-10 px-4 text-sm'}`}>Copertina</span>}
         <span role="button" tabIndex={0} aria-label="Togli la foto" onClick={() => pe.onPhoto(src, 'remove')} className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-lg leading-none text-neutral-900">×</span>
       </span>
     )
   ) : null;
   // Migliora con l'AI sempre in vista sulla foto (copertina e togli al passaggio del mouse)
-  const ai = acts && pe?.busy !== src ? <span role="button" tabIndex={0} onClick={e => { e.preventDefault(); e.stopPropagation(); pe!.onPhoto(src!, 'ai'); }} className="absolute bottom-4 left-4 z-30 flex h-10 items-center gap-1.5 rounded-full bg-[#537eec] px-4 text-sm font-semibold text-white shadow-lg transition-transform hover:scale-105">Migliora con l’AI</span> : null;
+  const ai = acts && pe?.busy !== src && !pe?.editing ? <span role="button" tabIndex={0} onClick={e => { e.preventDefault(); e.stopPropagation(); pe!.onPhoto(src!, 'ai'); }} className="absolute bottom-4 left-4 z-30 flex h-10 items-center gap-1.5 rounded-full bg-[#537eec] px-4 text-sm font-semibold text-white shadow-lg transition-transform hover:scale-105">Migliora con l’AI</span> : null;
   return (
     <div className={`overflow-hidden bg-[var(--soft)] ${fit || acts ? 'relative' : ''} ${acts ? 'group/ph' : ''} ${className}`}>
       {acts}{ai}
