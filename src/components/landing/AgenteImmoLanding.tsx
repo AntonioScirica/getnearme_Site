@@ -784,10 +784,11 @@ function Trial() {
           </nav>
         </div>
       </header>
-      <section id="prova" className="mx-auto max-w-4xl px-4 pb-16 pt-10 md:pb-24 md:pt-16">
+      {/* la prova sta tutta nel primo schermo, centrata: la foto si stringe in base all'altezza della finestra */}
+      <section id="prova" className="mx-auto flex min-h-[calc(100svh-4.5rem)] max-w-4xl flex-col justify-center px-4 py-6">
         <h1 className="text-center font-display text-4xl font-extrabold leading-[1.05] tracking-tight md:text-5xl">{L('La tua prova gratis', "Your free try")}</h1>
         <p className="mx-auto mt-4 max-w-xl text-center text-base text-muted md:text-lg">{L('Scegli uno stile o scrivi come la vuoi. Poi la trasformi in un video.', "Pick a style or describe it. Then turn it into a video.")}</p>
-        <div className="mt-10"><TryIt /></div>
+        <div className="mx-auto mt-6 w-full" style={{ maxWidth: 'min(56rem, calc((100svh - 400px) * 1.6))' }}><TryIt /></div>
       </section>
       <Pricing />
     </div>
