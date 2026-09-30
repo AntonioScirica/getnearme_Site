@@ -6,7 +6,7 @@ import { isPlatformAdmin } from '@/lib/platformAdmins'
 
 const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 export type Action = keyof typeof CREDIT_COST
-export const PLAN_CREDITS: Record<string, number> = { starter: 1000, plus: 1500, pro: 2500 }
+export const PLAN_CREDITS: Record<string, number> = { starter: 600, plus: 1500, pro: 2500 }
 
 export type Credits = { plan: 'none' | 'starter' | 'plus' | 'pro'; balance: number; monthly: number; renews: string | null; until: string | null; unlimited?: boolean }
 

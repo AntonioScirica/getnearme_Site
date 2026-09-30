@@ -27,7 +27,8 @@ export const PACKS = [{ id: 'pack300', credits: 300, eur: 10 }, { id: 'pack500',
 export type PackId = (typeof PACKS)[number]['id'];
 export const FREE_EDITS = 3;
 // Tre piani (28/09/2026): Starter foto e video; Plus foto, video e sito; Pro come Plus con piu' crediti, a trimestre o anno.
-export const PRICING = { starter: 29, starterCredits: 1000, plus: 49, plusCredits: 1500, quarterly: 69, yearly: 59, credits: 2500 };
+// 30/09: Starter a 19 € con 600 crediti (piano d'ingresso; Stripe price_1ULLFbFzCo1FYIKToWZ64ZfW, lookup ai_starter_monthly)
+export const PRICING = { starter: 19, starterCredits: 600, plus: 49, plusCredits: 1500, quarterly: 69, yearly: 59, credits: 2500 };
 export const photosFor = (credits: number) => Math.floor(credits / CREDIT_COST.arreda);
 export const videosFor = (credits: number) => Math.floor(credits / CREDIT_COST.video);
 
