@@ -28,7 +28,7 @@ const DOTS_BG = { background: 'radial-gradient(rgba(0,0,0,0.09) 1.2px, transpare
 // ultimo passo: le tre card della home, ferme (scheletro + testo, non sembrano bottoni)
 const TOOLS = [
   { kicker: 'Hai già un annuncio online?', title: 'Miglioralo', img: '/immo/home/demo-1.webp', badge: null },
-  { kicker: 'Hai preso un immobile nuovo?', title: 'Mettilo in vetrina', img: '/immo/home/fan-2.webp', badge: Plus },
+  { kicker: 'Hai un nuovo immobile?', title: 'Mettilo in vetrina', img: '/immo/home/fan-2.webp', badge: Plus },
   { kicker: 'Hai una stanza vuota?', title: 'Home staging', img: '/immo/home/staging-after.webp', badge: Wand2 },
 ];
 const LISTINGS = [['/immo/home/demo-1.webp', '245.000'], ['/immo/home/demo-2.webp', '189.000'], ['/immo/home/demo-3.webp', '320.000']];
