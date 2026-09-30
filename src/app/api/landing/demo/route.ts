@@ -42,8 +42,9 @@ export async function POST(req: NextRequest) {
   const dev = typeof body?.device === 'string' && /^[a-f0-9]{32}$/.test(body.device) ? `fp:${createHash('sha256').update(`${body.device}|${process.env.SUPABASE_SERVICE_ROLE_KEY?.slice(-12)}`).digest('hex').slice(0, 24)}` : null
   // la prova si fa solo con l'account (30/09): vale una volta per account, IP e dispositivo
   const user = await authUser(req)
-  if (!user) return NextResponse.json({ error: 'login' }, { status: 401 })
-  const acc = `u:${user.id}`
+  const devMock = process.env.NODE_ENV === 'development' && body?.mock === true // simulazione in locale: senza login
+  if (!user && !devMock) return NextResponse.json({ error: 'login' }, { status: 401 })
+  const acc = `u:${user?.id ?? 'dev'}`
   const keys = [who, acc, ...(dev ? [dev] : [])]
   const count = async (mine: boolean) => {
     // la prova e' una sola per IP, per sempre (30/09); il tetto di tutti resta giornaliero
@@ -64,10 +65,10 @@ export async function POST(req: NextRequest) {
   if (used >= PER_IP) return NextResponse.json({ error: 'limit', left: 0 }, { status: 429 })
   if (all >= PER_DAY) { await alertCapReached(admin, 'foto', PER_DAY); return NextResponse.json({ error: 'busy' }, { status: 429 }) }
   // si prenota la prova prima di generare: richieste in parallelo dallo stesso IP non superano il limite di molto
-  const { data: slot } = free ? { data: null } : await admin.from('ai_usage').insert({ user_id: user.id, kind: 'landing_demo', provider: 'counter', model: who, duration_ms: 0, cost_usd: 0, ok: true } as never).select('id').single()
+  const { data: slot } = free ? { data: null } : await admin.from('ai_usage').insert({ user_id: user?.id ?? null, kind: 'landing_demo', provider: 'counter', model: who, duration_ms: 0, cost_usd: 0, ok: true } as never).select('id').single()
   // la stessa prova segnata anche sull'impronta del dispositivo (provider counter-fp: non conta nel tetto di tutti)
   if (!free && slot && dev) await admin.from('ai_usage').insert({ user_id: null, kind: 'landing_demo', provider: 'counter-fp', model: dev, duration_ms: 0, cost_usd: 0, ok: true } as never)
-  if (!free && slot) await admin.from('ai_usage').insert({ user_id: user.id, kind: 'landing_demo', provider: 'counter-fp', model: acc, duration_ms: 0, cost_usd: 0, ok: true } as never)
+  if (!free && slot) await admin.from('ai_usage').insert({ user_id: user?.id ?? null, kind: 'landing_demo', provider: 'counter-fp', model: acc, duration_ms: 0, cost_usd: 0, ok: true } as never)
   const giveBack = async () => { if (!slot) return; await admin.from('ai_usage').delete().eq('id', (slot as { id: string }).id); await admin.from('ai_usage').delete().eq('kind', 'landing_demo').eq('provider', 'counter-fp').in('model', dev ? [dev, acc] : [acc]) }
 
   // foto ridotta a 1536 px: basta per il modello e per l'anteprima

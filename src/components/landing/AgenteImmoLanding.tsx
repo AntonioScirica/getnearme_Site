@@ -300,7 +300,7 @@ function TryIt({ gate = false }: { gate?: boolean }) {
     if (typeof d?.left === 'number') setLeft(d.left);
     if (d?.error === 'login') return window.location.replace(`/it/accedi?next=${TRIAL}`); // sessione scaduta
     if (d?.image) try { localStorage.setItem('agenteimmo:demo-used', '1'); } catch { /* niente storage */ }
-    if (d?.image) { setPhotoToken(d.token ?? null); const em = st === 'empty' && !tx; setEmptied(em); if (!em) setPicking(true); return setAfter(d.image); } // foto pronta: subito i modelli di video nel riquadro, come in chat
+    if (d?.image) { setPhotoToken(d.token ?? null); setEmptied(st === 'empty' && !tx); return setAfter(d.image); } // foto pronta: prima si guarda, poi Crea video o Scarica
     setMsg(d?.error === 'limit' ? L('Hai già fatto la prova gratis. Crea l\'account per continuare.', "You've used your free try. Create an account to continue.") : d?.error === 'busy' ? L('Ci sono molte prove in corso, riprova tra qualche minuto.', "Lots of tries running right now, try again in a few minutes.") : L('Non siamo riusciti ad arredare questa foto. Prova con un\'altra stanza.', "We couldn't stage this photo. Try another room."));
   };
   // Scarica: la prova resta nel browser, si entra (login o registrazione) e dopo l'onboarding la piattaforma la fa scaricare
@@ -413,14 +413,12 @@ function TryIt({ gate = false }: { gate?: boolean }) {
               {after
                 ? video
                   ? <button type="button" onClick={() => keep(!!video)} className="inline-flex h-11 w-full shrink-0 items-center justify-center gap-2 rounded-2xl bg-ink px-5 text-sm font-semibold text-white">{L(video ? 'Scarica tutto' : 'Scarica', video ? "Download all" : "Download")} <ArrowRight size={15} /></button>
-                  // foto arredata: i modelli di video sono gia' nel riquadro, qui solo lo scarico della foto
+                  // foto arredata: si guarda, poi Scarica o Crea video (che apre i modelli nel riquadro)
                   : vBusy ? null // mentre si crea il video niente scarico della sola foto
-                  : !emptied
-                  ? <button type="button" onClick={() => keep(false)} className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-2xl bg-white px-4 text-sm font-semibold text-ink ring-1 ring-black/10 hover:ring-ink">{L('Scarica solo la foto', "Download just the photo")}</button>
                   : <div className="grid w-full grid-cols-2 gap-2">
-                      <button type="button" onClick={() => keep(false)} className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-white px-4 text-sm font-semibold text-ink ring-1 ring-black/10 hover:ring-ink">{L('Scarica', "Download")}</button>
+                      <button type="button" onClick={() => keep(false)} className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-white px-4 text-sm font-semibold text-ink ring-1 ring-black/10 hover:ring-ink">{L('Scarica foto', "Download photo")}</button>
                       {/* svuotata: il video va dalla foto originale alla stanza vuota (i mobili spariscono), niente template */}
-                      <button type="button" disabled={vBusy} onClick={() => (emptied ? toVideo('popup', true) : setPicking(p => !p))} className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-ai px-4 text-sm font-semibold text-white disabled:opacity-50"><Clapperboard size={15} /> {L('Trasforma in video', "Turn into video")}</button>
+                      <button type="button" disabled={vBusy} onClick={() => (emptied ? toVideo('popup', true) : setPicking(p => !p))} className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-ai px-4 text-sm font-semibold text-white disabled:opacity-50"><Clapperboard size={15} /> {L('Crea video', "Create video")}</button>
                     </div>
                 : <button type="button" disabled={busy || left <= 0} onClick={() => (before || gate ? run() : input.current?.click())} className="inline-flex h-11 w-full shrink-0 items-center justify-center gap-2 rounded-2xl bg-ink px-5 text-sm font-semibold text-white disabled:opacity-40 sm:w-auto"><Sparkles size={15} /> {before || gate ? L('Arreda', "Stage it") : L('Carica foto', "Upload photo")}</button>}
             </div>
@@ -436,7 +434,7 @@ function TryIt({ gate = false }: { gate?: boolean }) {
             </div>}
           </div>
         </div>
-        {after && <p className="mt-3 text-center text-sm text-muted">{video ? L('Foto e video pronti per l\'annuncio e i social. Per scaricarli entra o crea l\'account, è gratis.', "Photo and video ready for your listing and socials. Sign in or create a free account to download them.") : emptied ? <>{L('Ora fai il video in cui i mobili spariscono, gratis. Oppure', "Now make the video where the furniture disappears, free. Or")} <button type="button" onClick={() => keep(false)} className="font-medium text-ink underline underline-offset-4">{L('scarica solo la foto', "download just the photo")}</button>.</> : L('Scegli un modello e trasformala in un video per i social, gratis.', "Pick a template and turn it into a social video, free.")}</p>}
+        {after && <p className="mt-3 text-center text-sm text-muted">{video ? L('Foto e video pronti per l\'annuncio e i social. Per scaricarli entra o crea l\'account, è gratis.', "Photo and video ready for your listing and socials. Sign in or create a free account to download them.") : emptied ? <>{L('Ora fai il video in cui i mobili spariscono, gratis. Oppure', "Now make the video where the furniture disappears, free. Or")} <button type="button" onClick={() => keep(false)} className="font-medium text-ink underline underline-offset-4">{L('scarica solo la foto', "download just the photo")}</button>.</> : L('Guarda il risultato, poi trasformala in un video per i social, gratis.', "Check the result, then turn it into a social video, free.")}</p>}
         {msg && <p className="mt-3 text-center text-sm text-rose-600">{msg} {left <= 0 && <a href={APP} className="font-medium text-ink underline underline-offset-4">{L('Crea l\'account', "Create an account")}</a>}</p>}
     </>
   );
