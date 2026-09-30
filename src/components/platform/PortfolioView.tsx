@@ -520,6 +520,7 @@ function PageMenu({ current, firstId, onPick }: { current: string; firstId?: str
 
 // Il sito in scala dentro una finestra "browser": largo 1280 px come su un computer, rimpicciolito.
 function Preview({ children, page, onPage, firstId, zone, editMode, setEditMode, vtName, wa }: { children: ReactNode; page: Page; onPage: (p: Page) => void; firstId?: string; zone?: string; editMode: boolean; setEditMode: (v: boolean) => void; vtName?: string; wa?: boolean }) {
+  const [hint, setHint] = useState(false); // avviso "Ora puoi modificare" appena si passa a Modifica
   const box = useRef<HTMLDivElement>(null);
   const inner = useRef<HTMLDivElement>(null);
   const [k, setK] = useState(0.5);
@@ -538,6 +539,10 @@ function Preview({ children, page, onPage, firstId, zone, editMode, setEditMode,
     <MorphTarget id={vtName ?? 'preview'} className="min-w-0">
     <div data-morph="preview" className={`relative overflow-hidden rounded-[28px] bg-white ${CARD_SHADOW}`}>
       {/* pulsante WhatsApp del sito: fisso nell'angolo come sul sito vero */}
+      {/* passando a Modifica: avviso sopra il sito per un attimo, poi sparisce */}
+      <div className={`pointer-events-none absolute inset-0 z-20 flex items-center justify-center bg-black/30 backdrop-blur-[2px] ease-smooth transition-opacity duration-[600ms] ${hint ? 'opacity-100' : 'opacity-0'}`} aria-hidden={!hint}>
+        <span className={`flex items-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-semibold text-ink shadow-xl ease-smooth transition-transform duration-[600ms] ${hint ? 'scale-100' : 'scale-90'}`}><Pencil size={15} className="text-brand" /> Ora puoi modificare: clicca su una parte del sito</span>
+      </div>
       {wa && <span className="pointer-events-none absolute bottom-4 right-5 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-[#25d366] text-white shadow-[0_10px_30px_-5px_rgba(37,211,102,.6)]"><MessageCircle size={21} fill="currentColor" /></span>}
       <div className="flex items-center gap-2 border-b border-line px-4 py-3 text-xs text-muted">
         <span className="flex gap-1.5">{[0, 1, 2].map(i => <span key={i} className="h-2.5 w-2.5 rounded-full bg-line" />)}</span>
@@ -547,7 +552,7 @@ function Preview({ children, page, onPage, firstId, zone, editMode, setEditMode,
         {/* stesse misure di prima, piu' visibile: icone e colore pieno su quello attivo (Modifica in blu) */}
         <div className="ml-auto flex items-center rounded-full bg-canvas p-1">
           {([[false, 'Naviga', Eye], [true, 'Modifica', Pencil]] as const).map(([v, l, I]) => (
-            <button key={l} onClick={() => setEditMode(v)} className={`flex items-center gap-1.5 rounded-full px-4 py-1 font-medium ease-smooth transition-colors ${editMode === v ? (v ? 'bg-brand text-white shadow-sm' : 'bg-ink text-white shadow-sm') : 'text-muted hover:text-ink'}`}><I size={13} /> {l}</button>
+            <button key={l} onClick={() => { setEditMode(v); if (v && !editMode) { setHint(true); setTimeout(() => setHint(false), 1800); } }} className={`flex items-center gap-1.5 rounded-full px-4 py-1 font-medium ease-smooth transition-colors ${editMode === v ? (v ? 'bg-brand text-white shadow-sm' : 'bg-ink text-white shadow-sm') : 'text-muted hover:text-ink'}`}><I size={13} /> {l}</button>
           ))}
         </div>
       </div>
