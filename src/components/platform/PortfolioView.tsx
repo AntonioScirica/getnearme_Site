@@ -25,7 +25,7 @@ const pageOf = (id: PageId, firstId?: string, zone?: string): Page => id === 'im
 const COLORS = ['#1d5b3c', '#4d7a2c', '#2a2b7c', '#1f6feb', '#111111', '#ff6a2b', '#be185d', '#8a6a4f'];
 
 // immobile della piattaforma -> immobile del sito
-const toSite = (p: ProjectData): SiteProperty => {
+export const toSite = (p: ProjectData): SiteProperty => {
       const d = (p.import_data ?? {}) as { photos?: string[]; zona?: string[]; contratto?: string };
       return { id: p.id, titolo: p.titolo || p.nome, addr: p.addr, prezzo: p.prezzo, mq: p.mq, camere: p.camere, bagni: p.bagni, locali: p.locali, tipologia: p.tipologia, cover: p.cover,
         descrizione: p.descrizione, riferimento: p.riferimento, createdAt: p.createdAt, details: (d as { details?: Record<string, unknown> }).details, photos: Array.isArray(d.photos) && d.photos.length ? d.photos : [p.cover], zona: Array.isArray(d.zona) ? d.zona : [], contratto: d.contratto ?? '' };
@@ -85,15 +85,11 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
         <div><div className="h-9 w-48 rounded-full bg-line/70" /><div className="mt-3 h-4 w-72 rounded-full bg-line/50" /></div>
         <div className="h-10 w-72 rounded-full bg-line/50" />
       </div>
-      <div className="mt-6 h-10 w-56 rounded-full bg-line/50" />
-      <div className="mt-6 h-4 w-96 max-w-full rounded-full bg-line/40" />
-      <div className="mt-6 grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-        {[0, 1, 2, 3, 4, 5].map(i => (
-          <div key={i} className="rounded-3xl bg-white p-2 ring-1 ring-black/5">
-            <div className="aspect-[4/3] rounded-2xl bg-line/50" />
-            <div className="flex min-h-12 items-center px-2 pt-2"><div className="h-4 w-24 rounded-full bg-line/60" /></div>
-          </div>
-        ))}
+      {/* si apre l'editor del modello in uso: lo scheletro e' quello dell'editor, non della galleria dei modelli */}
+      <div className="mt-6 flex items-center justify-between"><div className="h-10 w-40 rounded-full bg-line/50" /><div className="h-10 w-44 rounded-full bg-line/50" /></div>
+      <div className="mt-5 grid items-start gap-6 lg:grid-cols-[340px_minmax(0,1fr)]">
+        <div className="h-[520px] rounded-[28px] bg-white ring-1 ring-black/5" />
+        <div className="aspect-[16/10] rounded-[28px] bg-white ring-1 ring-black/5" />
       </div>
     </div>
   );

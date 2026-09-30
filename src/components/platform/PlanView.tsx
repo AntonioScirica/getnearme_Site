@@ -31,7 +31,7 @@ export function CreditsPill() {
   if (!c) return null;
   const low = isLow(c);
   return (
-    <a href="#/piano" title={c.unlimited || c.plan === 'none' ? undefined : `${fmt(c.balance)} crediti`} className={`flex h-10 items-center gap-1.5 rounded-full px-4 text-sm font-semibold ring-1 ease-smooth transition-shadow hover:shadow-md ${c.plan === 'none' && !c.unlimited ? 'bg-brand text-white ring-brand hover:bg-brand/90' : low ? 'bg-white ring-amber-300 text-amber-700' : 'bg-white ring-line'}`}>{/* senza piano: Scegli un piano in blu (e Metti in vetrina sparisce, PlatformApp) */}
+    <a href="#/piano" title={c.unlimited || c.plan === 'none' ? undefined : `${fmt(c.balance)} crediti`} className={`flex h-10 items-center gap-1.5 rounded-full px-4 text-sm font-semibold ring-1 ease-smooth transition-shadow hover:shadow-md ${c.plan === 'none' && !c.unlimited ? 'bg-ink text-white ring-ink hover:bg-black' : low ? 'bg-white ring-amber-300 text-amber-700' : 'bg-white ring-line'}`}>{/* senza piano: Scegli un piano in nero (e Metti in vetrina sparisce, PlatformApp) */}
       {/* numero e moneta, senza la parola "crediti" */}
       {c.unlimited ? <><Coins size={15} className="text-ai" /> Illimitati</> : c.plan === 'none' ? 'Scegli un piano' : <>{fmt(c.balance)} <Coins size={15} className={low ? 'text-amber-500' : 'text-ai'} /></>}{low && <span className="ml-1 text-xs font-medium">· Ricarica</span>}
     </a>

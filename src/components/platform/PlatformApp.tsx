@@ -145,7 +145,7 @@ function PlatformInner({ userData }: { userData: UserData }) {
           </nav>
           <div className="ml-auto flex items-center gap-2.5 justify-self-end md:ml-0">
             <span data-tour="crediti"><CreditsPill /></span>
-            {/* senza piano solo Scegli un piano (in blu): Metti in vetrina appare col piano */}
+            {/* senza piano solo Scegli un piano (in nero): Metti in vetrina appare col piano */}
             {credits && (credits.unlimited || credits.plan !== 'none') && <a href="#/nuovo" data-tour="nuovo" className="flex h-10 items-center rounded-full bg-brand px-5 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-brand/90 active:scale-[0.98]">Metti in vetrina</a>}
           </div>
           </>}
