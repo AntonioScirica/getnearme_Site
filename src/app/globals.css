@@ -412,7 +412,7 @@ html.metrics-light [class*="border-gray-600"] { border-color: #d8d4cb !important
 .card-hover { transition: box-shadow 0.25s, transform 0.25s cubic-bezier(.2,.8,.2,1); }
 .card-hover:hover { box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08); }
 .float-bar { background: #fff; border: 1px solid #ebebeb; box-shadow: 0 16px 40px -12px rgba(0, 0, 0, 0.18), 0 2px 6px rgba(0, 0, 0, 0.04); }
-.glass { background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(28px) saturate(160%); -webkit-backdrop-filter: blur(28px) saturate(160%); border-color: #ebebeb; } /* 30/09: blur piu' forte, il testo sotto la barra si leggeva */
+.glass { @apply backdrop-blur-2xl backdrop-saturate-150; background: rgba(255, 255, 255, 0.92); border-color: #ebebeb; } /* 30/09: lo sfocato scritto a mano (backdrop-filter) spariva nella compilazione del CSS: con le classi di Tailwind arriva */
 .btn-primary, .btn-ink { background: #222; color: #fff; transition: background 0.2s, transform 0.15s; }
 .btn-primary:hover, .btn-ink:hover { background: #000; }
 .btn-primary:active, .btn-ink:active { transform: scale(0.97); }
