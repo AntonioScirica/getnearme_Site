@@ -481,7 +481,7 @@ export function HomeView({ name, initialUrl = '', onSaved, morph }: { name?: str
         </Tile>
 
         {/* Home staging: stanza vuota -> arredata, la linea prima/dopo scorre al passaggio del mouse */}
-        <Tile index={2} intro={intro} wrapClass={others(2)} onHover={setStageHover} kicker="Hai una stanza vuota?" title="Home staging" href="#/staging">
+        <Tile index={2} intro={intro} wrapClass={others(2)} onHover={setStageHover} kicker="Home staging" title="Hai una stanza vuota?" href="#/staging">
           {/* .par-2 imposta la sua transizione su transform: la rotazione sta su un contenitore a parte, cosi' e' morbida */}
           <div className="par-2 absolute left-1/2 top-1/2 w-52 -translate-x-1/2 -translate-y-1/2">
             <div className="rounded-xl bg-white p-1.5 shadow-md ease-smooth transition-[rotate,scale,box-shadow] group-hover:rotate-2 group-hover:scale-[1.03] group-hover:shadow-lg">

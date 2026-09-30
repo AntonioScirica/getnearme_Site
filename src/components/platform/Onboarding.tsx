@@ -29,7 +29,7 @@ const DOTS_BG = { background: 'radial-gradient(rgba(0,0,0,0.09) 1.2px, transpare
 const TOOLS = [
   { kicker: 'Annuncio già online?', title: 'Miglioralo', img: '/immo/home/demo-1.webp', badge: null },
   { kicker: 'Hai un nuovo immobile?', title: 'Mettilo in vetrina', img: '/immo/home/fan-2.webp', badge: Plus },
-  { kicker: 'Hai una stanza vuota?', title: 'Home staging', img: '/immo/home/staging-after.webp', badge: Wand2 },
+  { kicker: 'Home staging', title: 'Hai una stanza vuota?', img: '/immo/home/staging-after.webp', badge: Wand2 },
 ];
 const LISTINGS = [['/immo/home/demo-1.webp', '245.000'], ['/immo/home/demo-2.webp', '189.000'], ['/immo/home/demo-3.webp', '320.000']];
 
