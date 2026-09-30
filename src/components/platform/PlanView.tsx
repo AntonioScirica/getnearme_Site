@@ -72,6 +72,17 @@ export default function PlanView({ ok, buy, change }: { ok?: boolean; buy?: Buy;
   const [busy, setBusy] = useState<string>(buy ?? '');
   const [portalError, setPortalError] = useState<string | null>(null);
   const [changing, setChanging] = useState(!!change);
+  // Pro: fatturazione in corso (annuale o trimestrale) letta da Stripe, cosi' la card mostra quella che si ha
+  const [proLookup, setProLookup] = useState<string | null>(null);
+  useEffect(() => {
+    if (c?.plan !== 'pro') return;
+    authFetch('/api/platform/billing').then(r => r.json()).then((d: { lookup?: string | null }) => {
+      if (!d.lookup) return;
+      setProLookup(d.lookup);
+      if (!buy) setYearly(d.lookup === 'ai_pro_yearly');
+    }).catch(() => {});
+  }, [c?.plan, buy]);
+  const proMine = c?.plan === 'pro' && proLookup === (yearly ? 'ai_pro_yearly' : 'ai_pro_quarterly');
   // arrivando da un invito (?cambia=1): la pagina scorre fino ai piani, una volta sola quando le card ci sono
   const plansRef = useRef<HTMLHeadingElement>(null);
   const scrolled = useRef(false);
@@ -188,7 +199,7 @@ export default function PlanView({ ok, buy, change }: { ok?: boolean; buy?: Buy;
           <Credits n={PRICING.credits} en={en} />
           <SiteIncluded slug={slug} en={en} />
           <div className="min-h-8 flex-1" />
-          <button type="button" disabled={!!busy} onClick={() => go(yearly ? 'pro_yearly' : 'pro_quarterly')} className="flex h-12 items-center justify-center gap-2 rounded-full bg-ink text-[15px] font-semibold text-white disabled:opacity-60">{busy.startsWith('pro') && <Loader2 size={15} className="animate-spin" />}{changing ? (c?.plan === 'pro' ? tr('Cambia fatturazione', 'Change billing') : tr('Passa a Pro', 'Switch to Pro')) : tr('Scegli Pro', 'Choose Pro')}</button>
+          <button type="button" disabled={!!busy || (changing && proMine)} onClick={() => go(yearly ? 'pro_yearly' : 'pro_quarterly')} className="flex h-12 items-center justify-center gap-2 rounded-full bg-ink text-[15px] font-semibold text-white disabled:opacity-60">{busy.startsWith('pro') && <Loader2 size={15} className="animate-spin" />}{changing ? (proMine ? tr('Il tuo piano', 'Your plan') : c?.plan === 'pro' ? (yearly ? tr('Passa all\'annuale', 'Switch to yearly') : tr('Passa al trimestrale', 'Switch to quarterly')) : tr('Passa a Pro', 'Switch to Pro')) : tr('Scegli Pro', 'Choose Pro')}</button>
         </div>
       </div>
       <p className="mt-5 text-center text-xs text-muted">{tr('Pagamento sicuro con Stripe. Ti chiediamo ragione sociale, Partita IVA e codice SDI o PEC per la fattura elettronica. Prezzi finali, senza IVA (regime forfettario).', 'Secure payment with Stripe. We ask for your company name and VAT details for the invoice. Final prices, no VAT added (Italian flat-rate scheme).')}</p>

@@ -12,6 +12,15 @@ const siteOf = (req: NextRequest) => { const o = req.nextUrl.origin; return /^ht
 
 // Portale clienti di Stripe per chi ha gia' un piano: cambio piano, disdetta, metodo di pagamento e fatture stanno li',
 // la pagina Piano non rimostra le card. Serve la configurazione del portale su Stripe (prodotti e prezzi ammessi al cambio).
+// GET: il prezzo dell'abbonamento in corso (lookup_key, es. ai_pro_yearly): la pagina Piano seleziona piano e fatturazione giusti
+export async function GET(req: NextRequest) {
+  const u = await authUser(req)
+  if (!u) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
+  const { data: row } = await admin.from('platform_credits').select('stripe_subscription_id').eq('user_id', u.id).maybeSingle()
+  const sub = row?.stripe_subscription_id ? await stripe.subscriptions.retrieve(row.stripe_subscription_id as string).catch(() => null) : null
+  return NextResponse.json({ lookup: sub?.items.data[0]?.price.lookup_key ?? null })
+}
+
 export async function POST(req: NextRequest) {
   const u = await authUser(req)
   if (!u) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
