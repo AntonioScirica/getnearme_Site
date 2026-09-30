@@ -69,6 +69,8 @@ export default function PlatformApp(props: { userData: UserData }) {
 
 function PlatformInner({ userData }: { userData: UserData }) {
   const credits = useCredits(); // senza piano niente Metti in vetrina in alto
+  const noPlan = !!credits && credits.plan === 'none' && !credits.unlimited;
+  const blockNoPlan = (e: React.SyntheticEvent) => { e.preventDefault(); e.stopPropagation(); window.dispatchEvent(new Event('agenteimmo:no-credits')); };
   useDemoTrack();
   const [route, query = ''] = useHashRoute().split('?');
   const [projects, setProjects] = useState<ProjectData[] | null>(null);
@@ -125,8 +127,8 @@ function PlatformInner({ userData }: { userData: UserData }) {
               className="flex h-10 items-center gap-1.5 rounded-full px-3 text-sm font-medium text-muted ease-smooth transition-colors hover:bg-canvas hover:text-ink"><ArrowLeft size={18} /> Indietro</button>
             {/* crediti sempre in vista in alto a destra: in chat ogni azione ne spende */}
             <div className="ml-auto flex items-center gap-2">
-              <button type="button" onClick={() => window.dispatchEvent(new Event('agenteimmo:new-chat'))}
-                className="flex h-10 items-center gap-1.5 rounded-full bg-white px-4 text-sm font-semibold ring-1 ring-line ease-smooth transition-shadow hover:shadow-md"><SquarePen size={15} className="text-muted" /> Nuova chat</button>
+              {!noPlan && <button type="button" onClick={() => window.dispatchEvent(new Event('agenteimmo:new-chat'))}
+                className="flex h-10 items-center gap-1.5 rounded-full bg-white px-4 text-sm font-semibold ring-1 ring-line ease-smooth transition-shadow hover:shadow-md"><SquarePen size={15} className="text-muted" /> Nuova chat</button>}
               <CreditsPill />
             </div>
           </>) : <>
@@ -172,7 +174,10 @@ function PlatformInner({ userData }: { userData: UserData }) {
           ) : route === '/migliora' ? (
             <HomeView key={query} name={profile?.name ?? undefined} initialUrl={new URLSearchParams(query).get('url') ?? ''} onSaved={reload} />
           ) : route === '/staging' ? (
-            <StagingView initial={{ photo: new URLSearchParams(query).get('photo') ?? undefined, project: new URLSearchParams(query).get('project') ?? undefined }} />
+            // senza piano: qualsiasi clic, tasto o foto trascinata nella chat apre il popup che porta ai piani
+            <div className="h-full" onClickCapture={noPlan ? blockNoPlan : undefined} onKeyDownCapture={noPlan ? blockNoPlan : undefined} onDropCapture={noPlan ? blockNoPlan : undefined} onDragOverCapture={noPlan ? e => e.preventDefault() : undefined}>
+              <StagingView initial={{ photo: new URLSearchParams(query).get('photo') ?? undefined, project: new URLSearchParams(query).get('project') ?? undefined }} />
+            </div>
           ) : route === '/galleria' ? (
             <MediaView />
           ) : route === '/importa' ? (
