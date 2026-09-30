@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { ArrowLeft, ExternalLink, FileDown, GripVertical, Info, Loader2 } from 'lucide-react';
+import { ArrowLeft, ExternalLink, FileDown, GripVertical, Info, Loader2, Star, Wand2, X } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import { TEMPLATES, type SiteConfig, type TemplateId } from '@/lib/siteTemplates';
 import { SitePage } from '@/components/site/pages';
@@ -68,7 +68,7 @@ export default function PropertyDetail({ project, loading, onChange }: { project
         if (credits && credits.plan === 'none' && !credits.unlimited) { window.dispatchEvent(new Event('agenteimmo:no-credits')); return; }
         window.location.hash = `#/staging?project=${project.id}&photo=${encodeURIComponent(src)}`; return;
       }
-      if (action === 'remove' && !confirm('Togliere questa foto dall’immobile?')) return;
+      // togliere una foto si fa solo dalla finestra Le foto (che chiede conferma)
       // copertina: sale subito al primo posto e la galleria torna sulla prima (si rimonta sulla copertina nuova)
       if (action === 'cover') setDraft(d => ({ ...d, cover: src, import_data: { ...(project.import_data ?? {}), photos: [src, ...photos.filter(x => x !== src)] } }));
       setBusy(src);
@@ -103,7 +103,7 @@ export default function PropertyDetail({ project, loading, onChange }: { project
       {/* la pagina dell'immobile com'e' sul sito, col modello scelto; in modifica i campi a sinistra e la pagina si aggiorna */}
       {/* in modifica: barra e sito alti fino al fondo dello schermo, la pagina sta ferma e scorre solo il sito a destra */}
       <div ref={grid} style={editing ? { height: gridH } : undefined} className={`mt-8 grid gap-6 ${editing ? 'scroll-mt-24 lg:grid-cols-[360px_minmax(0,1fr)]' : 'items-start'}`}>
-        {editing && <EditProperty project={project} photos={photos} onReorder={reorder} onDraft={setDraft} onClose={() => setDraft(null)} onSaved={() => { setDraft(null); onChange(); }}
+        {editing && <EditProperty project={project} photos={photos} onReorder={reorder} onPhoto={propEdit.onPhoto} onDraft={setDraft} onClose={() => setDraft(null)} onSaved={() => { setDraft(null); onChange(); }}
           report={<button type="button" onClick={() => downloadReport(project.id)} disabled={report === 'busy'} title={report === 'err' ? 'Report non disponibile, riprova' : 'PDF con foto, dati, zona e costi da mandare ai clienti'} className="mr-auto flex h-10 items-center gap-1.5 rounded-full px-3 text-sm font-medium text-muted hover:bg-canvas hover:text-ink disabled:opacity-50">{report === 'busy' ? <Loader2 size={14} className="animate-spin" /> : <FileDown size={14} />} Report PDF</button>} />}
         {site?.config ? <div className={editing ? 'h-full min-w-0 overflow-y-auto rounded-[28px] overscroll-contain' : 'min-w-0'}><SiteFrame ctx={{ cfg: site.config, name: site.name, logo: site.logo, properties: [toSite({ ...project, ...draft })], base: '', preview: true, propEdit }} id={project.id} /></div> : <div className="aspect-[16/10] animate-pulse rounded-[28px] bg-canvas" />}
       </div>
@@ -149,16 +149,18 @@ function SiteFrame({ ctx, id }: { ctx: Parameters<typeof SitePage>[0]['ctx']; id
 
 // Finestra per riordinare le foto: tutte grandi, si trascinano (maniglia e numero su ognuna), la prima e' la copertina.
 // Si salva con Salva ordine; Annulla lascia tutto com'era.
-export function PhotoOrder({ photos, onClose, onSave }: { photos: string[]; onClose: () => void; onSave: (order: string[]) => void }) {
+export function PhotoOrder({ photos, onPhoto, onClose, onSave }: { photos: string[]; onPhoto?: PropEdit['onPhoto']; onClose: () => void; onSave: (order: string[]) => void }) {
   const [order, setOrder] = useState(photos);
+  const first = (src: string) => setOrder(o => [src, ...o.filter(x => x !== src)]); // metti per prima (= copertina, salvata con l'ordine)
+  const remove = (src: string) => { if (!confirm('Togliere questa foto dall’immobile?')) return; setOrder(o => o.filter(x => x !== src)); onPhoto?.(src, 'remove'); };
   const [drag, setDrag] = useState<string | null>(null);
   const move = (over: string) => { if (!drag || drag === over) return; setOrder(o => { const n = o.filter(x => x !== drag); n.splice(n.indexOf(over) + (o.indexOf(drag) < o.indexOf(over) ? 1 : 0), 0, drag); return n; }); };
   return createPortal(
     <div className="blur-in fixed inset-0 z-[260] flex items-center justify-center bg-black/40 p-6 backdrop-blur-sm" onClick={onClose}>
       <div onClick={e => e.stopPropagation()} className="flex max-h-[88vh] w-full max-w-4xl flex-col rounded-[32px] bg-white shadow-2xl">
         <div className="px-7 pt-7">
-          <h2 className="font-display text-2xl font-bold tracking-tight">Ordine delle foto</h2>
-          <p className="mt-1 text-sm text-muted">Trascina le foto per metterle nell’ordine in cui le vedranno i clienti. La prima è la copertina dell’annuncio.</p>
+          <h2 className="font-display text-2xl font-bold tracking-tight">Le foto</h2>
+          <p className="mt-1 text-sm text-muted">Trascinale per cambiare l’ordine in cui le vedranno i clienti: la prima è la copertina. Passa sopra una foto per migliorarla con l’AI o toglierla.</p>
         </div>
         <ul className="grid flex-1 grid-cols-2 gap-3 overflow-y-auto p-7 sm:grid-cols-3">
           {order.map((src, i) => (
@@ -167,6 +169,13 @@ export function PhotoOrder({ photos, onClose, onSave }: { photos: string[]; onCl
               <img src={src} alt="" draggable={false} className="h-full w-full object-cover" />
               <span className={`absolute left-2 top-2 flex h-7 items-center rounded-full px-2.5 text-xs font-semibold shadow ${i === 0 ? 'bg-brand text-white' : 'bg-white text-ink'}`}>{i === 0 ? 'Copertina' : i + 1}</span>
               <span className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-ink shadow" aria-hidden><GripVertical size={16} /></span>
+              {onPhoto && (
+                <span className="absolute inset-x-2 bottom-2 flex flex-wrap justify-center gap-1.5 opacity-0 ease-smooth transition-opacity group-hover:opacity-100">
+                  <button type="button" onClick={() => { onClose(); onPhoto(src, 'ai'); }} className="flex h-8 items-center gap-1 rounded-full bg-brand px-3 text-xs font-semibold text-white shadow"><Wand2 size={12} /> Migliora con l’AI</button>
+                  {i > 0 && <button type="button" onClick={() => first(src)} className="flex h-8 items-center gap-1 rounded-full bg-white px-3 text-xs font-semibold text-ink shadow"><Star size={12} /> Metti per prima</button>}
+                  <button type="button" onClick={() => remove(src)} aria-label="Togli la foto" className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-ink shadow"><X size={13} /></button>
+                </span>
+              )}
             </li>
           ))}
         </ul>
@@ -183,7 +192,7 @@ export function PhotoOrder({ photos, onClose, onSave }: { photos: string[]; onCl
 // Barra a sinistra della pagina del sito: i dati dell'immobile per gruppi, la pagina accanto cambia mentre si scrive.
 // Le foto si gestiscono sulla pagina (Migliora con l'AI sempre in vista sulle foto).
 const GROUPS: [string, (keyof ProjectData)[]][] = [['Annuncio', ['titolo', 'addr']], ['Prezzo e spazi', ['prezzo', 'mq', 'locali', 'camere', 'bagni']], ['Altro', ['tipologia', 'riferimento']]];
-function EditProperty({ project, photos, onReorder, onClose, onSaved, onDraft, report }: { project: ProjectData; photos: string[]; onReorder: (order: string[]) => void; onClose: () => void; onSaved: () => void; onDraft: (d: Partial<ProjectData>) => void; report: React.ReactNode }) {
+function EditProperty({ project, photos, onReorder, onPhoto, onClose, onSaved, onDraft, report }: { project: ProjectData; photos: string[]; onReorder: (order: string[]) => void; onPhoto: PropEdit['onPhoto']; onClose: () => void; onSaved: () => void; onDraft: (d: Partial<ProjectData>) => void; report: React.ReactNode }) {
   const [sorting, setSorting] = useState(false); // finestra per riordinare le foto
   const panel = useRef<HTMLDivElement>(null);
   const [v, setV] = useState<Record<string, string>>(() => Object.fromEntries([...FIELDS.map(f => [f.k, String(project[f.k] ?? '')]), ['descrizione', project.descrizione ?? '']]));
@@ -218,20 +227,22 @@ function EditProperty({ project, photos, onReorder, onClose, onSaved, onDraft, r
       </div>
       <div className="flex-1 space-y-6 overflow-y-auto px-5 py-5">
         {/* foto: una card che apre la finestra per riordinarle (la prima e' la copertina) */}
-        {photos.length > 1 && (
-          <button type="button" onClick={() => setSorting(true)} className="group w-full rounded-2xl bg-canvas p-3 text-left ring-1 ring-transparent ease-smooth transition-shadow hover:ring-black/10">
-            <span className="flex items-center gap-3">
-              <span className="flex shrink-0 -space-x-3">
-                {photos.slice(0, 3).map((src, i) => <img key={src} src={src} alt="" className="h-12 w-12 rounded-xl object-cover ring-2 ring-canvas" style={{ zIndex: 3 - i }} />)}
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block text-sm font-semibold">Ordine delle foto</span>
-                <span className="block text-xs text-muted">{photos.length} foto · copertina e ordine</span>
-              </span>
-            </span>
-            {/* pulsante sotto, largo quanto la card */}
-            <span className="mt-3 flex h-10 w-full items-center justify-center rounded-full bg-white text-sm font-semibold shadow-sm ring-1 ring-black/5 ease-smooth transition-colors group-hover:bg-ink group-hover:text-white">Riordina le foto</span>
-          </button>
+        {photos.length > 0 && (
+          <section className="rounded-2xl bg-canvas p-3">
+            <div className="flex items-baseline justify-between"><h3 className="text-sm font-semibold">Foto</h3><span className="text-xs text-muted">{photos.length}</span></div>
+            {/* tutte le foto sempre in vista (alcuni modelli ne mostrano una sola): la prima grande, sotto le altre a scorrimento */}
+            <div className="relative mt-2 overflow-hidden rounded-xl">
+              <img src={photos[0]} alt="" className="aspect-[16/10] w-full object-cover" />
+              <span className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-white px-2 py-0.5 text-[11px] font-semibold shadow"><Star size={11} className="fill-amber-400 text-amber-400" /> Copertina</span>
+            </div>
+            <div className="-mx-1 mt-2 flex gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:thin]">
+              {photos.slice(1).map(src => <img key={src} src={src} alt="" className="h-14 w-20 shrink-0 rounded-lg object-cover ring-1 ring-black/5" />)}
+            </div>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <button type="button" onClick={() => setSorting(true)} className="flex h-10 items-center justify-center gap-1.5 rounded-full bg-white text-sm font-semibold shadow-sm ring-1 ring-black/5 ease-smooth transition-colors hover:bg-ink hover:text-white"><GripVertical size={14} /> Riordina</button>
+              <button type="button" onClick={() => setSorting(true)} className="flex h-10 items-center justify-center gap-1.5 rounded-full bg-white text-sm font-semibold shadow-sm ring-1 ring-black/5 ease-smooth transition-colors hover:bg-ink hover:text-white"><Wand2 size={14} /> Modifica</button>
+            </div>
+          </section>
         )}
         {GROUPS.map(([title, keys]) => (
           <section key={title}>
@@ -245,7 +256,7 @@ function EditProperty({ project, photos, onReorder, onClose, onSaved, onDraft, r
           </section>
         ))}
       </div>
-      {sorting && <PhotoOrder photos={photos} onClose={() => setSorting(false)} onSave={o => { setSorting(false); onReorder(o); }} />}
+      {sorting && <PhotoOrder photos={photos} onPhoto={onPhoto} onClose={() => setSorting(false)} onSave={o => { setSorting(false); onReorder(o); }} />}
       <div className="flex items-center justify-end gap-2 border-t border-line px-5 py-3">
         {report}
         <button type="button" onClick={reset} disabled={busy} className="h-10 rounded-full px-4 text-sm font-medium text-muted hover:bg-canvas">Annulla</button>

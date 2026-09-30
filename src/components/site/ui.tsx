@@ -154,7 +154,6 @@ export function Photo({ src, alt = '', className = '', zoom, fit, noActions }: {
       <span className={`absolute inset-0 z-20 flex items-center justify-center bg-black/35 transition-opacity ${pe.editing ? 'flex-col gap-3' : 'gap-2 opacity-0 group-hover/ph:opacity-100'}`} onClick={e => { e.preventDefault(); e.stopPropagation(); }}>
         {pe.editing && <span role="button" tabIndex={0} onClick={() => pe.onPhoto(src, 'ai')} className="flex h-14 min-w-56 items-center justify-center rounded-full bg-[#537eec] px-7 text-lg font-semibold text-white shadow-lg transition-transform hover:scale-105">Migliora con l’AI</span>}
         {src !== pe.cover && <span role="button" tabIndex={0} onClick={() => pe.onPhoto(src, 'cover')} className={`flex items-center justify-center rounded-full bg-white font-semibold text-neutral-900 shadow-lg transition-transform hover:scale-105 ${pe.editing ? 'h-14 min-w-56 px-7 text-lg' : 'h-10 px-4 text-sm'}`}>Copertina</span>}
-        <span role="button" tabIndex={0} aria-label="Togli la foto" onClick={() => pe.onPhoto(src, 'remove')} className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-lg leading-none text-neutral-900">×</span>
       </span>
     )
   ) : null;
