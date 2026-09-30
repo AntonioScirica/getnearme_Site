@@ -12,5 +12,5 @@ export const VIDEO_SAMPLES = {
   daynight: `${REELS}/social-frames/b4938420-a308-413b-853f-0ea38719dd5e/daynight.mp4`,
   camera: '/staging/videos/camera-v2.mp4', // prova del 29/09 (Kling 1.6, la passeggiata di GetNearMe)
   fpv: '/staging/videos/volo-cantiere.mp4', // prova del 30/09: volo nel cantiere, flip, il palazzo si svela finito
-  agent: '/staging/videos/agente-v2.mp4', // prova del 29/09: l'agente parla, esce e la stanza si arreda
+  agent: '/staging/videos/agente-v3.mp4', // prova del 29/09: l'agente parla, esce e la stanza si arreda
 } as const;
