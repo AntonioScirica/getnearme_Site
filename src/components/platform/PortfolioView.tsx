@@ -479,6 +479,45 @@ export function Thumb({ children, scroll = false }: { children: ReactNode; scrol
   );
 }
 
+// Menu a tendina delle pagine dell'anteprima: bottone con la pagina aperta, pannello con l'elenco e la spunta.
+// Si chiude cliccando fuori o con Esc.
+function PageMenu({ current, firstId, onPick }: { current: string; firstId?: string; onPick: (id: PageId) => void }) {
+  const [open, setOpen] = useState(false);
+  const box = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const out = (e: MouseEvent) => { if (!box.current?.contains(e.target as Node)) setOpen(false); };
+    const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
+    document.addEventListener('mousedown', out); document.addEventListener('keydown', esc);
+    return () => { document.removeEventListener('mousedown', out); document.removeEventListener('keydown', esc); };
+  }, [open]);
+  const label = PAGES.find(([id]) => id === current)?.[1] ?? 'Pagina';
+  return (
+    <div ref={box} className="relative ml-3">
+      <button type="button" onClick={() => setOpen(o => !o)} aria-haspopup="listbox" aria-expanded={open}
+        className={`flex h-8 items-center gap-2 rounded-full pl-3.5 pr-2.5 text-xs font-semibold ease-smooth transition-colors ${open ? 'bg-ink text-white' : 'bg-canvas text-ink hover:bg-line/60'}`}>
+        <span className={open ? 'text-white/60' : 'text-muted'}>Pagina</span>{label}
+        <ChevronDown size={14} className={`ease-smooth transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+      {open && (
+        <ul role="listbox" className="blur-in absolute left-0 top-10 z-30 w-48 rounded-2xl bg-white p-1.5 text-sm shadow-[0_20px_50px_-12px_rgba(0,0,0,.25)] ring-1 ring-black/5">
+          {PAGES.map(([id, l]) => {
+            const off = id === 'immobile' && !firstId;
+            return (
+              <li key={id}>
+                <button type="button" role="option" aria-selected={current === id} disabled={off} onClick={() => { onPick(id); setOpen(false); }}
+                  className={`flex h-9 w-full items-center justify-between rounded-xl px-3 text-left font-medium ease-smooth transition-colors disabled:opacity-40 ${current === id ? 'bg-canvas text-ink' : 'text-muted hover:bg-canvas hover:text-ink'}`}>
+                  {l}{current === id && <Check size={14} className="text-brand" />}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 // Il sito in scala dentro una finestra "browser": largo 1280 px come su un computer, rimpicciolito.
 function Preview({ children, page, onPage, firstId, zone, editMode, setEditMode, vtName, wa }: { children: ReactNode; page: Page; onPage: (p: Page) => void; firstId?: string; zone?: string; editMode: boolean; setEditMode: (v: boolean) => void; vtName?: string; wa?: boolean }) {
   const box = useRef<HTMLDivElement>(null);
@@ -503,18 +542,10 @@ function Preview({ children, page, onPage, firstId, zone, editMode, setEditMode,
       <div className="flex items-center gap-2 border-b border-line px-4 py-3 text-xs text-muted">
         <span className="flex gap-1.5">{[0, 1, 2].map(i => <span key={i} className="h-2.5 w-2.5 rounded-full bg-line" />)}</span>
         {/* pagine del sito: si naviga anche cliccando dentro l'anteprima */}
-        {/* menu a tendina delle pagine (le pillole non stavano piu' nella barra) */}
-        <label className="relative ml-3 flex items-center">
-          <span className="sr-only">Pagina del sito</span>
-          <select value={page.page} onChange={e => onPage(pageOf(e.target.value as (typeof PAGES)[number][0], firstId, zone))}
-            className="h-8 cursor-pointer appearance-none rounded-full bg-canvas pl-3.5 pr-8 text-xs font-semibold text-ink outline-none ring-1 ring-transparent ease-smooth transition-shadow hover:ring-black/10 focus:ring-brand">
-            {PAGES.map(([id, l]) => <option key={id} value={id} disabled={id === 'immobile' && !firstId}>{l}</option>)}
-            {!PAGES.some(([id]) => id === page.page) && <option value={page.page} hidden>{page.page}</option>}
-          </select>
-          <ChevronDown size={14} className="pointer-events-none absolute right-2.5 text-muted" />
-        </label>
+        {/* menu delle pagine del sito (le pillole non stavano piu' nella barra) */}
+        <PageMenu current={page.page} firstId={firstId} onPick={id => onPage(pageOf(id, firstId, zone))} />
         {/* stesse misure di prima, piu' visibile: icone e colore pieno su quello attivo (Modifica in blu) */}
-        <div className="ml-auto flex items-center rounded-full bg-canvas p-0.5">
+        <div className="ml-auto flex items-center rounded-full bg-canvas p-1">
           {([[false, 'Naviga', Eye], [true, 'Modifica', Pencil]] as const).map(([v, l, I]) => (
             <button key={l} onClick={() => setEditMode(v)} className={`flex items-center gap-1.5 rounded-full px-4 py-1 font-medium ease-smooth transition-colors ${editMode === v ? (v ? 'bg-brand text-white shadow-sm' : 'bg-ink text-white shadow-sm') : 'text-muted hover:text-ink'}`}><I size={13} /> {l}</button>
           ))}
