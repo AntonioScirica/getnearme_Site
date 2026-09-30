@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { ArrowLeft, ExternalLink, FileDown, Info, Loader2 } from 'lucide-react';
+import { ArrowLeft, ExternalLink, FileDown, GripVertical, Info, Loader2 } from 'lucide-react';
+import { createPortal } from 'react-dom';
 import { TEMPLATES, type SiteConfig, type TemplateId } from '@/lib/siteTemplates';
 import { SitePage } from '@/components/site/pages';
 import type { PropEdit } from '@/components/site/ui';
@@ -134,15 +135,44 @@ function SiteFrame({ ctx, id }: { ctx: Parameters<typeof SitePage>[0]['ctx']; id
   );
 }
 
+// Finestra per riordinare le foto: tutte grandi, si trascinano (maniglia e numero su ognuna), la prima e' la copertina.
+// Si salva con Salva ordine; Annulla lascia tutto com'era.
+export function PhotoOrder({ photos, onClose, onSave }: { photos: string[]; onClose: () => void; onSave: (order: string[]) => void }) {
+  const [order, setOrder] = useState(photos);
+  const [drag, setDrag] = useState<string | null>(null);
+  const move = (over: string) => { if (!drag || drag === over) return; setOrder(o => { const n = o.filter(x => x !== drag); n.splice(n.indexOf(over) + (o.indexOf(drag) < o.indexOf(over) ? 1 : 0), 0, drag); return n; }); };
+  return createPortal(
+    <div className="blur-in fixed inset-0 z-[260] flex items-center justify-center bg-black/40 p-6 backdrop-blur-sm" onClick={onClose}>
+      <div onClick={e => e.stopPropagation()} className="flex max-h-[88vh] w-full max-w-4xl flex-col rounded-[32px] bg-white shadow-2xl">
+        <div className="px-7 pt-7">
+          <h2 className="font-display text-2xl font-bold tracking-tight">Ordine delle foto</h2>
+          <p className="mt-1 text-sm text-muted">Trascina le foto per metterle nell’ordine in cui le vedranno i clienti. La prima è la copertina dell’annuncio.</p>
+        </div>
+        <ul className="grid flex-1 grid-cols-2 gap-3 overflow-y-auto p-7 sm:grid-cols-3">
+          {order.map((src, i) => (
+            <li key={src} draggable onDragStart={e => { setDrag(src); e.dataTransfer.effectAllowed = 'move'; }} onDragEnd={() => setDrag(null)} onDragOver={e => { e.preventDefault(); move(src); }} onDrop={e => e.preventDefault()}
+              className={`group relative aspect-[4/3] cursor-grab overflow-hidden rounded-2xl bg-canvas ease-smooth transition-[opacity,transform,box-shadow] active:cursor-grabbing ${drag === src ? 'scale-95 opacity-40' : 'hover:shadow-lg'} ${i === 0 ? 'ring-[3px] ring-brand' : 'ring-1 ring-black/5'}`}>
+              <img src={src} alt="" draggable={false} className="h-full w-full object-cover" />
+              <span className={`absolute left-2 top-2 flex h-7 items-center rounded-full px-2.5 text-xs font-semibold shadow ${i === 0 ? 'bg-brand text-white' : 'bg-white text-ink'}`}>{i === 0 ? 'Copertina' : i + 1}</span>
+              <span className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-ink shadow" aria-hidden><GripVertical size={16} /></span>
+            </li>
+          ))}
+        </ul>
+        <div className="flex items-center justify-end gap-2 border-t border-line px-7 py-4">
+          <button type="button" onClick={onClose} className="h-11 rounded-full px-5 text-sm font-medium text-muted hover:bg-canvas">Annulla</button>
+          <button type="button" onClick={() => onSave(order)} className="h-11 rounded-full bg-ink px-6 text-sm font-semibold text-white hover:bg-black">Salva ordine</button>
+        </div>
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
 // Barra a sinistra della pagina del sito: i dati dell'immobile per gruppi, la pagina accanto cambia mentre si scrive.
 // Le foto si gestiscono sulla pagina (Migliora con l'AI sempre in vista sulle foto).
 const GROUPS: [string, (keyof ProjectData)[]][] = [['Annuncio', ['titolo', 'addr']], ['Prezzo e spazi', ['prezzo', 'mq', 'locali', 'camere', 'bagni']], ['Altro', ['tipologia', 'riferimento']]];
 function EditProperty({ project, photos, onReorder, onClose, onSaved, onDraft, report }: { project: ProjectData; photos: string[]; onReorder: (order: string[]) => void; onClose: () => void; onSaved: () => void; onDraft: (d: Partial<ProjectData>) => void; report: React.ReactNode }) {
-  const [order, setOrder] = useState(photos);
-  const [drag, setDrag] = useState<string | null>(null);
-  // foto cambiate da fuori (copertina, togli, salvataggio): si riallinea l'ordine (aggiornamento in render, niente effetto)
-  const [seen, setSeen] = useState(photos.join());
-  if (!drag && photos.join() !== seen) { setSeen(photos.join()); setOrder(photos); }
+  const [sorting, setSorting] = useState(false); // finestra per riordinare le foto
   const panel = useRef<HTMLDivElement>(null);
   const [v, setV] = useState<Record<string, string>>(() => Object.fromEntries([...FIELDS.map(f => [f.k, String(project[f.k] ?? '')]), ['descrizione', project.descrizione ?? '']]));
   const [busy, setBusy] = useState(false);
@@ -175,23 +205,21 @@ function EditProperty({ project, photos, onReorder, onClose, onSaved, onDraft, r
         {err && <span className="ml-auto mr-2 text-sm text-rose-600">{err}</span>}
       </div>
       <div className="flex-1 space-y-6 overflow-y-auto px-5 py-5">
-        {/* ordine delle foto: si trascinano; la prima e' la copertina */}
+        {/* foto: una card che apre la finestra per riordinarle (la prima e' la copertina) */}
         {photos.length > 1 && (
-          <section className="rounded-2xl bg-canvas p-3">
-            <h3 className="text-sm font-semibold">Ordine delle foto</h3>
-            <p className="text-xs text-muted">Trascinale per cambiare l’ordine. La prima è la copertina.</p>
-            <ul className="mt-3 grid grid-cols-4 gap-2">
-              {order.map((src, i) => (
-                <li key={src} draggable onDragStart={() => setDrag(src)} onDragEnd={() => setDrag(null)}
-                  onDragOver={e => { e.preventDefault(); if (drag && drag !== src) setOrder(o => { const n = o.filter(x => x !== drag); n.splice(n.indexOf(src) + (o.indexOf(drag) < o.indexOf(src) ? 1 : 0), 0, drag); return n; }); }}
-                  onDrop={e => { e.preventDefault(); onReorder(order); }}
-                  className={`relative aspect-square cursor-grab overflow-hidden rounded-xl bg-white ring-1 ease-smooth transition-[opacity,box-shadow] active:cursor-grabbing ${drag === src ? 'opacity-40 ring-brand' : 'ring-black/5'}`}>
-                  <img src={src} alt="" draggable={false} className="h-full w-full object-cover" />
-                  <span className="absolute left-1 top-1 rounded-full bg-white/90 px-1.5 text-[10px] font-semibold">{i === 0 ? 'Copertina' : i + 1}</span>
-                </li>
-              ))}
-            </ul>
-          </section>
+          <button type="button" onClick={() => setSorting(true)} className="group w-full rounded-2xl bg-canvas p-3 text-left ring-1 ring-transparent ease-smooth transition-shadow hover:ring-black/10">
+            <span className="flex items-center gap-3">
+              <span className="flex shrink-0 -space-x-3">
+                {photos.slice(0, 3).map((src, i) => <img key={src} src={src} alt="" className="h-12 w-12 rounded-xl object-cover ring-2 ring-canvas" style={{ zIndex: 3 - i }} />)}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-semibold">Ordine delle foto</span>
+                <span className="block text-xs text-muted">{photos.length} foto · copertina e ordine</span>
+              </span>
+            </span>
+            {/* pulsante sotto, largo quanto la card */}
+            <span className="mt-3 flex h-10 w-full items-center justify-center rounded-full bg-white text-sm font-semibold shadow-sm ring-1 ring-black/5 ease-smooth transition-colors group-hover:bg-ink group-hover:text-white">Riordina le foto</span>
+          </button>
         )}
         {GROUPS.map(([title, keys]) => (
           <section key={title}>
@@ -205,6 +233,7 @@ function EditProperty({ project, photos, onReorder, onClose, onSaved, onDraft, r
           </section>
         ))}
       </div>
+      {sorting && <PhotoOrder photos={photos} onClose={() => setSorting(false)} onSave={o => { setSorting(false); onReorder(o); }} />}
       <div className="flex items-center justify-end gap-2 border-t border-line px-5 py-3">
         {report}
         <button type="button" onClick={reset} disabled={busy} className="h-10 rounded-full px-4 text-sm font-medium text-muted hover:bg-canvas">Annulla</button>
