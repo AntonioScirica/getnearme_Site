@@ -63,7 +63,11 @@ export default function PropertyDetail({ project, loading, onChange }: { project
   const propEdit: PropEdit = {
     photos, cover: project.cover, busy, editing, // in modifica le foto hanno il velo e i pulsanti sempre in vista
     onPhoto: async (src, action) => {
-      if (action === 'ai') { window.location.hash = `#/staging?project=${project.id}&photo=${encodeURIComponent(src)}`; return; }
+      if (action === 'ai') {
+        // senza piano: subito il popup dei piani (in chat non si potrebbe fare niente); con il piano la foto va in chat
+        if (credits && credits.plan === 'none' && !credits.unlimited) { window.dispatchEvent(new Event('agenteimmo:no-credits')); return; }
+        window.location.hash = `#/staging?project=${project.id}&photo=${encodeURIComponent(src)}`; return;
+      }
       if (action === 'remove' && !confirm('Togliere questa foto dall’immobile?')) return;
       // copertina: sale subito al primo posto e la galleria torna sulla prima (si rimonta sulla copertina nuova)
       if (action === 'cover') setDraft(d => ({ ...d, cover: src, import_data: { ...(project.import_data ?? {}), photos: [src, ...photos.filter(x => x !== src)] } }));
