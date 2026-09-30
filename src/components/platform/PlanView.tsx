@@ -60,12 +60,12 @@ async function checkout(plan: Buy | PackId) {
 
 // Pagina del piano: saldo, scelta del piano, pagamento con Stripe (dati di fatturazione raccolti da Stripe)
 // buy = piano scelto sulla landing (anche prima del login): si va dritti a Stripe
-export default function PlanView({ ok, buy }: { ok?: boolean; buy?: Buy }) {
+export default function PlanView({ ok, buy, change }: { ok?: boolean; buy?: Buy; change?: boolean }) {
   const c = useCredits();
   const [yearly, setYearly] = useState(buy !== 'pro_quarterly');
   const [busy, setBusy] = useState<string>(buy ?? '');
   const [portalError, setPortalError] = useState<string | null>(null);
-  const [changing, setChanging] = useState(false); // con un piano attivo: card dei piani aperte per cambiarlo
+  const [changing, setChanging] = useState(!!change); // con un piano attivo: card dei piani aperte per cambiarlo (?cambia=1: arrivando da un invito a passare di piano, gia' aperte)
   const go = async (p: Buy | PackId) => {
     setBusy(p); setPortalError(null);
     const d = await checkout(p);
@@ -197,7 +197,7 @@ export function NoCreditsModal() {
               <li key={t} className="flex items-center gap-3"><span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand/10 text-brand"><Check size={12} strokeWidth={3} /></span>{t}</li>
             ))}
           </ul>
-          <a href="#/piano" onClick={() => setOpen(false)} className="mt-6 flex h-12 w-full items-center justify-center rounded-full bg-brand text-[15px] font-semibold text-white ease-smooth transition-colors hover:bg-brand/90">Vedi i piani</a>
+          <a href="#/piano?cambia=1" onClick={() => setOpen(false)} className="mt-6 flex h-12 w-full items-center justify-center rounded-full bg-brand text-[15px] font-semibold text-white ease-smooth transition-colors hover:bg-brand/90">Vedi i piani</a>
           <button type="button" onClick={() => setOpen(false)} className="mt-2 h-10 w-full rounded-full text-sm font-medium text-muted hover:text-ink">Più tardi</button>
         </div>
       </div>
@@ -214,7 +214,7 @@ export function NoCreditsModal() {
           <div className="mt-6 flex flex-col gap-2">
             {PACKS.map(p => <button key={p.id} type="button" disabled={!!busy} onClick={() => { setBusy(p.id); void checkout(p.id).then(() => setBusy('')); }} className="flex h-11 items-center justify-between rounded-full bg-ink px-5 text-sm font-semibold text-white disabled:opacity-60"><span>{fmt(p.credits)} crediti</span><span>{busy === p.id ? <Loader2 size={15} className="animate-spin" /> : `${p.eur} €`}</span></button>)}
           </div>
-        ) : <a href="#/piano" onClick={() => setOpen(false)} className="mt-6 inline-flex h-11 items-center justify-center rounded-full bg-ink px-6 text-sm font-semibold text-white">Vedi i piani</a>}
+        ) : <a href="#/piano?cambia=1" onClick={() => setOpen(false)} className="mt-6 inline-flex h-11 items-center justify-center rounded-full bg-ink px-6 text-sm font-semibold text-white">Vedi i piani</a>}
       </div>
     </div>
   );

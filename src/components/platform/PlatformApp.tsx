@@ -207,7 +207,7 @@ function PlatformInner({ userData }: { userData: UserData }) {
           {route === '/profilo' ? (
             <ProfileView email={userData.email} profile={profile ?? null} onSaved={setProfile} admin={isPlatformAdmin(userData.email)} />
           ) : route === '/piano' ? (
-            <PlanView ok={new URLSearchParams(query).get('ok') === '1'} buy={(b => (isBuy(b) ? b : undefined))(new URLSearchParams(query).get('buy'))} />
+            <PlanView key={query} change={new URLSearchParams(query).get('cambia') === '1'} ok={new URLSearchParams(query).get('ok') === '1'} buy={(b => (isBuy(b) ? b : undefined))(new URLSearchParams(query).get('buy'))} />
           ) : route === '/costi' && isPlatformAdmin(userData.email) ? (
             <CostsView />
           ) : route === '/migliora' ? (

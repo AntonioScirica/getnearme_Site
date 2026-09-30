@@ -67,7 +67,7 @@ function ErrLine({ err, className = '' }: { err: string; className?: string }) {
   return (
     <p className={`blur-in flex flex-wrap items-center gap-x-3 gap-y-2 px-2 text-sm ${className}`}>
       <span>Hai finito i crediti: per arredare foto e creare video scegli un piano.</span>
-      <a href="#/piano" className="inline-flex h-9 items-center rounded-full bg-ink px-4 text-sm font-semibold text-white">Vedi i piani</a>
+      <a href="#/piano?cambia=1" className="inline-flex h-9 items-center rounded-full bg-ink px-4 text-sm font-semibold text-white">Vedi i piani</a>
     </p>
   );
 }
@@ -720,10 +720,13 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
     : done ? `Vuoi ritoccare qualcosa? Es. ${AFTER[(done - 1) % AFTER.length]}`
     : `Cosa vuoi cambiare? Es. ${(kind && FIRST[kind.replace(/^(room|scene):/, '')]) || 'togli il divano e metti un tavolo da pranzo'}`;
   // arrivo da un immobile (#/staging?photo=...&project=...): la foto entra subito in chat
-  const started = useRef(!!saved); // conversazione ripresa dopo una ricarica: la foto dell'indirizzo c'e' gia'
+  // ricarica della scheda: la foto dell'indirizzo e' gia' nella chat salvata, non si rimette. Se la chat salvata e' un'altra,
+  // la foto dell'immobile apre una chat nuova (prima veniva ignorata e sembrava che il clic non facesse niente)
+  const started = useRef(!!saved && !!initial?.photo && JSON.stringify(saved.msgs).includes(JSON.stringify(initial.photo)));
   useEffect(() => {
     if (started.current || !initial?.photo) return;
     started.current = true;
+    if (msgs.length) window.dispatchEvent(new Event('agenteimmo:new-chat')); // chat vecchia aperta: si riparte da una nuova con questa foto
     // riconoscimento subito, in parallelo al download della foto (spesso e' gia' in memoria dell'immobile)
     const early = authFetch('/api/platform/photo-classify', { method: 'POST', body: JSON.stringify({ imageUrl: initial.photo, ...(initial.project ? { projectId: initial.project, photoUrl: initial.photo } : {}) }) }).catch(() => null);
     // la foto dell'immobile e' gia' online: entra subito in chat con il suo indirizzo, senza scaricarla e ridimensionarla

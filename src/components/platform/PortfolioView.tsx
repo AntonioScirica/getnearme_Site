@@ -100,7 +100,7 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
   // senza piano col sito lo switch e' sempre spento (anche se in passato era stato acceso: la pagina pubblica risponde 404)
   const online = site.published && sitePlan;
   const publish = async () => {
-    if (!sitePlan) { go('/piano'); return; }
+    if (!sitePlan) { go('/piano?cambia=1'); return; }
     const next = !site.published;
     setSite(s => ({ ...s!, published: next }));
     const d = await authFetch('/api/platform/site', { method: 'PATCH', body: JSON.stringify({ published: next }) }).then(r => r.json()).catch(() => ({}));
@@ -130,7 +130,7 @@ export default function PortfolioView({ projects, onChange }: { projects: Projec
         <div>
           <h1 className="font-display text-3xl font-bold tracking-tight">Il mio sito</h1>
           <p className="pt-1 text-sm text-muted">Scegli un template, modificalo e pubblica il tuo sito in 5 minuti.</p>
-          {credits && !sitePlan && <p className="mt-2 inline-flex items-center gap-2 rounded-full bg-amber-50 px-3 py-1.5 text-sm text-amber-800 ring-1 ring-amber-200">Il sito pubblico è nei piani Plus e Pro. <button type="button" onClick={() => go('/piano')} className="font-semibold underline underline-offset-2">Passa a Pro</button></p>}
+          {credits && !sitePlan && <p className="mt-2 inline-flex items-center gap-2 rounded-full bg-amber-50 px-3 py-1.5 text-sm text-amber-800 ring-1 ring-amber-200">Il sito pubblico è nei piani Plus e Pro. <button type="button" onClick={() => go('/piano?cambia=1')} className="font-semibold underline underline-offset-2">Passa a Pro</button></p>}
         </div>
         {url && (
           <div data-tour="site-link" className="flex min-w-0 items-center gap-4">
