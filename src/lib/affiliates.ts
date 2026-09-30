@@ -1,6 +1,6 @@
 // Codici affiliato: un agente (l'affiliato) passa il suo codice ad altri agenti. Chi ha un piano a pagamento lo
 // inserisce nella pagina Il tuo piano: riceve REDEEM_CREDITS crediti, l'affiliato AFFILIATE_CREDITS per ogni persona.
-// Un codice per account, per sempre; il proprio codice non vale. I crediti regalati non scadono con il mese
+// Piu' codici per account, ognuno una volta sola; il proprio codice non vale. I crediti regalati non scadono con il mese
 // (stesso motivo "pacchetto_" dei pacchetti comprati, vedi packLeft in credits.ts).
 // ponytail: codici in questo file (niente tabella, niente DDL su prod); nuovo affiliato = una riga qui + deploy.
 // Se gli affiliati diventano tanti: tabella affiliate_codes con pannello admin.

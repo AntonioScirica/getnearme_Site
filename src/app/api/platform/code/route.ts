@@ -5,14 +5,15 @@ import { getCredits, grant } from '@/lib/credits'
 import { AFFILIATE_CODES, AFFILIATE_CREDITS, REDEEM_CREDITS, codeOf, normCode } from '@/lib/affiliates'
 
 // Codice affiliato (vedi lib/affiliates.ts).
-// GET: se l'utente ha gia' usato un codice e, se e' un affiliato, il suo codice con quante persone l'hanno usato.
+// GET: se e' un affiliato, il suo codice con quante persone l'hanno usato.
 // POST { code }: con un piano a pagamento, REDEEM_CREDITS a chi lo inserisce e AFFILIATE_CREDITS all'affiliato.
 const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 const REASON = 'pacchetto_codice_' // + CODICE: "pacchetto_" = non scade con il mese
 
-const usedBy = async (userId: string) => {
-  const { data } = await admin.from('platform_credit_events').select('reason').eq('user_id', userId).like('reason', `${REASON}%`).limit(1).maybeSingle()
-  return data ? (data.reason as string).slice(REASON.length) : null
+// piu' codici per account, ognuno una volta sola
+const usedBy = async (userId: string, code: string) => {
+  const { count } = await admin.from('platform_credit_events').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('reason', REASON + code)
+  return !!count
 }
 const uses = async (code: string) => {
   const { count } = await admin.from('platform_credit_events').select('id', { count: 'exact', head: true }).eq('reason', REASON + code)
@@ -35,7 +36,6 @@ export async function GET(req: NextRequest) {
   if (!u) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   const mine = codeOf(u.email)
   return NextResponse.json({
-    used: await usedBy(u.id),
     mine: mine ? { code: mine, uses: await uses(mine), each: AFFILIATE_CREDITS, gives: REDEEM_CREDITS } : null,
     gives: REDEEM_CREDITS,
   })
@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
   if (aff.owner.toLowerCase() === u.email.toLowerCase()) return NextResponse.json({ error: 'own' }, { status: 400 })
   const c = await getCredits(u.id)
   if (c.plan === 'none' && !c.unlimited) return NextResponse.json({ error: 'plan' }, { status: 402 })
-  if (await usedBy(u.id)) return NextResponse.json({ error: 'used' }, { status: 409 })
+  if (await usedBy(u.id, code)) return NextResponse.json({ error: 'used' }, { status: 409 })
   if (aff.max && (await uses(code)) >= aff.max) return NextResponse.json({ error: 'full' }, { status: 409 })
   const owner = await userIdByEmail(aff.owner)
   if (!owner) { console.error('codice affiliato: account non trovato', code); return NextResponse.json({ error: 'invalid' }, { status: 400 }) }

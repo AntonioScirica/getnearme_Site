@@ -209,16 +209,15 @@ export default function PlanView({ ok, buy, change }: { ok?: boolean; buy?: Buy;
 }
 
 // Codice affiliato (lib/affiliates.ts): chi ha un piano lo inserisce e riceve crediti; l'affiliato vede il suo codice
-// e quante persone l'hanno usato. Chi ha gia' usato un codice non vede piu' il campo.
+// e quante persone l'hanno usato. Si possono usare piu' codici, ognuno una volta.
 function CodeBox({ onReady }: { onReady?: () => void }) {
-  const [info, setInfo] = useState<{ used: string | null; gives: number; mine: { code: string; uses: number; each: number; gives: number } | null } | null>(null);
+  const [info, setInfo] = useState<{ gives: number; mine: { code: string; uses: number; each: number; gives: number } | null } | null>(null);
   const [code, setCode] = useState('');
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [copied, setCopied] = useState(false);
   useEffect(() => { authFetch('/api/platform/code').then(r => (r.ok ? r.json() : null)).then(setInfo).catch(() => {}).finally(() => onReady?.()); }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  // la barra del codice c'e' subito (prima aspettava la risposta del server e compariva dopo il resto); sparisce solo
-  // se il codice e' gia' stato usato, la card dell'affiliato arriva quando si sa
+  // la barra del codice c'e' sempre e subito (si possono usare piu' codici); la card dell'affiliato arriva quando si sa
   const send = async () => {
     if (!code.trim() || busy) return;
     setBusy(true); setMsg(null);
@@ -228,9 +227,9 @@ function CodeBox({ onReady }: { onReady?: () => void }) {
     if (d?.ok) {
       setMsg({ ok: true, text: tr('Codice applicato: trovi i crediti nel saldo.', 'Code applied: the credits are in your balance.') });
       window.dispatchEvent(new Event('agenteimmo:credits'));
-      return setInfo(i => ({ gives: 0, mine: null, ...i, used: code.trim().toUpperCase() }));
+      return setCode('');
     }
-    setMsg({ ok: false, text: d?.error === 'used' ? tr('Hai già usato un codice su questo account.', 'You have already used a code on this account.')
+    setMsg({ ok: false, text: d?.error === 'used' ? tr('Hai già usato questo codice.', 'You have already used this code.')
       : d?.error === 'own' ? tr('Non puoi usare il tuo codice.', 'You can’t use your own code.')
       : d?.error === 'full' ? tr('Questo codice ha finito gli utilizzi.', 'This code has no uses left.')
       : d?.error === 'plan' ? tr('Il codice vale con un piano attivo.', 'The code works with an active plan.')
@@ -250,7 +249,7 @@ function CodeBox({ onReady }: { onReady?: () => void }) {
           <p className="mt-3 text-sm font-semibold">{tr(`Usato da ${info.mine.uses} ${info.mine.uses === 1 ? 'persona' : 'persone'}: ${fmt(info.mine.uses * info.mine.each)} crediti ricevuti`, `Used by ${info.mine.uses} ${info.mine.uses === 1 ? 'person' : 'people'}: ${fmt(info.mine.uses * info.mine.each)} credits received`)}</p>
         </div>
       )}
-      {!info?.used && (
+      {(
         <div className={`rounded-[28px] bg-white p-6 ${CARD_SHADOW}`}>
           <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-2 font-semibold"><Gift size={20} className="text-brand" /> {tr('Codice promozionale', 'Promo code')}</div>
@@ -263,7 +262,6 @@ function CodeBox({ onReady }: { onReady?: () => void }) {
           {msg && <p className={`blur-in mt-3 text-sm ${msg.ok ? 'text-green-700' : 'text-rose-600'}`}>{msg.text}</p>}
         </div>
       )}
-      {info?.used && msg?.ok && <p className="blur-in self-center text-sm text-green-700">{msg.text}</p>}
     </div>
   );
 }
