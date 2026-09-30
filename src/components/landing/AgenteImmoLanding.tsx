@@ -430,7 +430,10 @@ function TryIt({ gate = false }: { gate?: boolean }) {
               </>}
               {after
                 ? video
-                  ? <button type="button" disabled={saving} onClick={() => keep(!!video)} className="inline-flex h-11 w-full shrink-0 items-center justify-center gap-2 rounded-2xl bg-ink px-5 text-sm font-semibold text-white">{L(video ? 'Scarica tutto' : 'Scarica', video ? "Download all" : "Download")} <ArrowRight size={15} /></button>
+                  ? <div className="grid w-full grid-cols-2 gap-2">{/* video fatto: si scarica o si va alla piattaforma */}
+                      <button type="button" disabled={saving} onClick={() => keep(true)} className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-white px-4 text-sm font-semibold text-ink ring-1 ring-black/10 hover:ring-ink">{L('Scarica tutto', "Download all")}</button>
+                      <a href={APP} className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-ink px-4 text-sm font-semibold text-white hover:bg-black">{L('Vai alla dashboard', "Go to dashboard")} <ArrowRight size={15} /></a>
+                    </div>
                   // foto arredata: si guarda, poi Scarica o Crea video (che apre i modelli nel riquadro)
                   : vBusy ? null // mentre si crea il video niente scarico della sola foto
                   : <div className="grid w-full grid-cols-2 gap-2">
