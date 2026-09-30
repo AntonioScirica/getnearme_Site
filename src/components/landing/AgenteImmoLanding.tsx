@@ -237,9 +237,11 @@ function TryIt({ gate = false }: { gate?: boolean }) {
     // in locale (sviluppo) nessun limite: il segno nel browser non conta
     let mark = false; try { mark = process.env.NODE_ENV !== 'development' && !!localStorage.getItem('agenteimmo:demo-used'); } catch { /* niente storage */ }
     if (force || mark) { void Promise.resolve().then(() => { setUsed(true); setLeft(0); }); return; } // dopo il render (niente setState sincrono nell'effetto)
+    // pagina /prova: foto e richiesta subito (niente foto d'esempio che poi cambia); se la prova e' gia' usata si tolgono
+    if (!gate) void Promise.resolve().then(restore);
     void deviceId().then(async dv => { device.current = dv; return fetch(`/api/landing/demo?d=${dv}`, { headers: await auth() }); }).then(r => r.json()).then((d: { left?: number }) => {
-      if (d.left === 0) { setUsed(true); setLeft(0); } else if (!gate) restore();
-    }).catch(() => { if (!gate) restore(); });
+      if (d.left === 0) { setUsed(true); setLeft(0); setBefore(null); setBusy(false); }
+    }).catch(() => {});
   }, []);
   const [msg, setMsg] = useState('');
   const device = useRef(''); // impronta del dispositivo (lib/deviceId), inviata con la prova
@@ -382,6 +384,8 @@ function TryIt({ gate = false }: { gate?: boolean }) {
                   </div>
                 )}
               </div>
+            ) : !gate && !used ? (
+              <div className={BOX} /> // pagina /prova: la foto arriva tra un attimo, niente esempio nel frattempo
             ) : (
               <div className="relative" onDragOver={e => e.preventDefault()} onDrop={e => { e.preventDefault(); pick(e.dataTransfer.files[0]); }}>
                 <BeforeAfter before="/immo/home/demo-before.webp" after="/immo/home/demo-after.webp" className={BOX} />
@@ -756,14 +760,6 @@ function Trial() {
   return (
     <div className="dots-bg min-h-screen overflow-x-clip font-body text-ink antialiased">
       <ConsentGate />
-      <header className="sticky top-0 z-40 pt-4">
-        <div className="mx-auto max-w-6xl px-4">
-          <nav className="glass flex h-14 w-full items-center gap-2 rounded-full border px-2 pl-4 shadow-[0_10px_40px_-15px_rgba(0,0,0,.2)]">
-            <Link href="/it" className="flex items-center gap-2"><img src="/immo/logo-mark.png" alt="" className="h-8 w-8" /><span className="whitespace-nowrap font-display text-lg font-extrabold tracking-tight">Agente <span className="text-brand">Immo</span></span></Link>
-            <Cta href={APP} className="ml-auto !h-10 shrink-0 whitespace-nowrap !px-4 text-sm sm:!px-5">Dashboard</Cta>
-          </nav>
-        </div>
-      </header>
       <section id="prova" className="mx-auto max-w-4xl px-4 pb-16 pt-10 md:pb-24 md:pt-16">
         <h1 className="text-center font-display text-4xl font-extrabold leading-[1.05] tracking-tight md:text-5xl">{L('La tua prova gratis', "Your free try")}</h1>
         <p className="mx-auto mt-4 max-w-xl text-center text-base text-muted md:text-lg">{L('Scegli uno stile o scrivi come la vuoi. Poi la trasformi in un video.', "Pick a style or describe it. Then turn it into a video.")}</p>
