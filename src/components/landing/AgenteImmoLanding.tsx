@@ -535,7 +535,7 @@ function Pricing() {
           <Cta href={buyHref(yearly ? 'pro_yearly' : 'pro_quarterly')} onClick={buyClick(yearly ? 'pro_yearly' : 'pro_quarterly')} className="w-full justify-center">{L('Scegli Pro', "Choose Pro")}</Cta>
         </Reveal>
       </div>
-      <p className="mt-6 text-center text-sm text-muted">{L('Prima di scegliere,', "Before choosing,")} <a href="#prova" className="font-medium text-ink underline underline-offset-4">{L('provalo gratis sulla tua foto', "try it free on your photo")}</a>{L('. Prezzi finali, senza IVA aggiunta.', ". Final prices, no VAT added.")}</p>
+      <p className="mt-6 text-center text-sm text-muted">{L('Prima di scegliere,', "Before choosing,")} <a href={TRIAL_LOGIN} className="font-medium text-ink underline underline-offset-4">{L('provalo gratis sulla tua foto', "try it free on your photo")}</a>{L('. Prezzi finali, senza IVA aggiunta.', ". Final prices, no VAT added.")}</p>
     </Band>
   );
 }
