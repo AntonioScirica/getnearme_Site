@@ -169,6 +169,29 @@ function Picks({ picks }: { picks: { label: string; icon: keyof typeof PICK_ICON
   );
 }
 const uid = () => Math.random().toString(36).slice(2, 10);
+// dopo un risultato: cosa facciamo ora? Tante frasi, scelte in base al messaggio (non cambiano a ogni render)
+const NEXT_PHOTO: [string, string][] = [
+  ['Ti piace? Possiamo cambiare stile, togliere qualcosa o farne un video.', 'Like it? We can change the style, remove something or make a video.'],
+  ['Eccola. Vuoi ritoccare un dettaglio o passiamo al video?', 'Here it is. Want to tweak a detail or shall we make a video?'],
+  ['Cosa facciamo ora? Posso provare un altro stile o sistemare una zona precisa.', 'What next? I can try another style or fix a specific area.'],
+  ['Pronta. Se qualcosa non ti convince dimmelo, la sistemiamo insieme.', 'Done. If something’s off, tell me and we’ll fix it together.'],
+  ['Come ti sembra? Posso renderla più luminosa, cambiare i mobili o creare un video.', 'How does it look? I can brighten it, change the furniture or create a video.'],
+  ['Fatto. Proseguiamo con un’altra stanza o la trasformiamo in un video per i social?', 'Done. Shall we move to another room or turn it into a social video?'],
+  ['Ecco il risultato. Vuoi una variante con meno arredi o in un altro stile?', 'Here’s the result. Want a version with less furniture or in another style?'],
+  ['E adesso? Possiamo salvarla nell’immobile, rifinirla o farne un video.', 'And now? We can save it to the listing, refine it or make a video.'],
+  ['Ci siamo. Dimmi cosa cambiare, oppure scegli una delle azioni qui sotto.', 'There we go. Tell me what to change, or pick one of the actions below.'],
+  ['Ti convince? Se vuoi provo un colore diverso per pareti o tessuti.', 'Convinced? If you like I can try a different colour for walls or fabrics.'],
+];
+const NEXT_VIDEO: [string, string][] = [
+  ['Ecco il tuo video. Ne facciamo un altro con un modello diverso?', 'Here’s your video. Shall we make another one with a different template?'],
+  ['Pronto per i social. Vuoi provare un altro stile o passiamo a un’altra stanza?', 'Ready for social. Want to try another style or move to another room?'],
+  ['Cosa facciamo ora? Posso fare un video da un’altra foto o arredare un’altra stanza.', 'What next? I can make a video from another photo or furnish another room.'],
+  ['Fatto. Scaricalo e pubblicalo, oppure proviamo una versione diversa.', 'Done. Download and post it, or let’s try a different version.'],
+  ['Ti piace? Con la stessa foto posso fare anche un giorno e notte o una camminata.', 'Like it? With the same photo I can also do a day to night or a walk-in.'],
+  ['Eccolo. Lo trovi anche in Galleria. Facciamo un altro video?', 'Here it is. You’ll also find it in the Gallery. Shall we make another video?'],
+  ['Ci siamo. Un’altra stanza da preparare per l’annuncio?', 'There we go. Another room to get ready for the listing?'],
+  ['Video pronto. Se vuoi cambio lo stile dell’arredo e lo rifacciamo.', 'Video ready. If you like I can change the furniture style and redo it.'],
+];
 // testi fissi confrontati nel codice: stesso valore dove si scrivono e dove si leggono (la lingua non cambia senza ricaricare)
 const CREATE_VIDEO = tr('Crea un video', 'Create a video');
 const KEEP_ROOM = tr('Stanza com’è', 'Room as is');
@@ -1296,6 +1319,15 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
               </AutoSize></div>
             </div>
           ))}
+          {/* risultato pronto (foto o video): una domanda per andare avanti, ogni volta diversa ma ferma per quel risultato */}
+          {(() => {
+            const last = msgs[msgs.length - 1];
+            const done = last && !busy && ((last.role === 'ai' && !!last.out && !last.busy && !last.err) || (last.role === 'video' && !!last.url && !last.err));
+            if (!done || zoneOwner >= 0) return null;
+            const list = last.role === 'video' ? NEXT_VIDEO : NEXT_PHOTO;
+            const [it, en] = list[[...last.id].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7) % list.length];
+            return <p key={last.id} className="blur-in px-2 pt-1 text-[15px] text-ink" style={{ animationDelay: '.6s' }}>{tr(it, en)}</p>;
+          })()}
           {/* Selezione di una zona: e' un messaggio della chat come gli altri, con i pulsanti sotto la foto */}
           {zoneOwner < 0 && zonePicker()}
 
