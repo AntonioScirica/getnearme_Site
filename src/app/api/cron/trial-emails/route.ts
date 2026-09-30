@@ -5,7 +5,7 @@ import { publicUrl } from '@/lib/r2'
 import { PRICING } from '@/lib/pricing'
 import { unsubUrl } from '@/lib/marketingEmail'
 
-// Email dopo la prova gratis (una volta al giorno da cron-job.org, ?secret=<CRON_SECRET>):
+// Email dopo la prova gratis (una volta al giorno da cron-job.org, ?secret=<TRIAL_EMAILS_SECRET>):
 // giorno 1 "La tua stanza arredata ti aspetta", giorno 3 "Le case arredate si vendono prima".
 // Solo a chi ha fatto la prova con l'account, ha dato il consenso al marketing e non ha comprato (niente piano ne' crediti).
 // Ogni email una volta sola: il segno e' una riga in ai_usage (kind trial_email_1 / trial_email_3).
@@ -46,7 +46,9 @@ export async function GET(req: NextRequest) {
   const preview = req.nextUrl.searchParams.get('anteprima')
   if (preview && process.env.NODE_ENV === 'development') return new NextResponse((preview === '3' ? email3 : email1)('Mario', EXAMPLE.after, '00000000-0000-0000-0000-000000000000'), { headers: { 'content-type': 'text/html; charset=utf-8' } })
   const dry = req.nextUrl.searchParams.has('dry') // ?dry=1: dice a chi manderebbe, senza mandare (in locale anche senza segreto)
-  const okSecret = !!process.env.CRON_SECRET && req.nextUrl.searchParams.get('secret') === process.env.CRON_SECRET
+  // segreto dedicato a questo cron (TRIAL_EMAILS_SECRET su Vercel), quello dei social vale lo stesso
+  const secret = req.nextUrl.searchParams.get('secret')
+  const okSecret = !!secret && [process.env.TRIAL_EMAILS_SECRET, process.env.CRON_SECRET].some(x => !!x && x === secret)
   if (!okSecret && !(dry && process.env.NODE_ENV === 'development')) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   const now = Date.now()
   const out: { uid: string; step: 1 | 3; sent: boolean; why?: string }[] = []
