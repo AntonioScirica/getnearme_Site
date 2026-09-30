@@ -29,6 +29,18 @@ import ImmoLoader from '@/components/ui/ImmoLoader';
 
 // Routing a hash (#/immobili, #/nuovo, #/immobile/<id>): back/forward del browser
 // funzionano senza toccare le route Next della vecchia dashboard.
+// chi arriva dalla prova gratis della landing (segno nel browser): si segnala una volta, per contare gli iscritti dalla prova
+function useDemoTrack() {
+  useEffect(() => {
+    try {
+      if (!localStorage.getItem('agenteimmo:demo-used') || localStorage.getItem('agenteimmo:demo-tracked')) return;
+      const video = !!localStorage.getItem('agenteimmo:demo-video');
+      authFetch('/api/platform/demo-track', { method: 'POST', body: JSON.stringify({ video }) })
+        .then(r => { if (r.ok) localStorage.setItem('agenteimmo:demo-tracked', '1'); }).catch(() => {});
+    } catch { /* niente storage */ }
+  }, []);
+}
+
 function useHashRoute(): string {
   const [route, setRoute] = useState(() => window.location.hash.slice(1) || '/');
   useEffect(() => {
@@ -50,6 +62,7 @@ const NAV = [
 ];
 
 export default function PlatformApp({ userData }: { userData: UserData }) {
+  useDemoTrack();
   const [route, query = ''] = useHashRoute().split('?');
   const [projects, setProjects] = useState<ProjectData[] | null>(null);
 
