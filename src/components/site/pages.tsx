@@ -8,7 +8,7 @@ import { pageHidden, zoneSlug, type SiteProperty } from '@/lib/siteTemplates';
 import { LegalPage } from './legal';
 import { AddressLink, ContactForm, DetailsTable, FeatureList, MapBlock, NearbyList, RichText, ServicesGrid, ReportButton, ShareBar, TourBlock, WhatsAppFloat } from './extras';
 import { AboutBlock, CtaBand, Featured, Footer, Header, Hero, Intro, isRent, PropertyCard, PropertyRow, Reviews, SearchForm, SectionHead, statsOf, tipiOf, Zones, type Filters } from './sections';
-import { Btn, Container, contacts, EmptyState, Eyebrow, NoListings, Facts, FavButton, H, Photo, price, Sec, SiteLink, SiteRoot, typeOf, useFavs, useSite, useT, zoneOf, type Page, type SiteCtx, Select } from './ui';
+import { Btn, Container, contacts, Editable, EmptyState, Eyebrow, NoListings, Facts, FavButton, H, Photo, price, Sec, SiteLink, SiteRoot, typeOf, useFavs, useSite, useT, zoneOf, type Page, type SiteCtx, Select } from './ui';
 
 // Le 4 pagine del sito vetrina. Struttura comune, ma ogni template sceglie le sue varianti:
 // filtri laterali o in alto, card o righe, galleria a mosaico, slider o a tutto schermo, profilo diviso, con copertina o centrato.
@@ -267,7 +267,7 @@ function AgentCard({ subject, property }: { subject?: string; property?: SitePro
 }
 
 function PropertyPage({ id }: { id: string }) {
-  const { properties, cfg, t } = useSite();
+  const { properties, cfg, t, propEdit } = useSite();
   const tx = useT();
   const p = properties.find(x => x.id === id) ?? properties[0];
   const [more, setMore] = useState(false);
@@ -288,8 +288,8 @@ function PropertyPage({ id }: { id: string }) {
         <span className="rounded-[calc(var(--r)*0.5)] bg-[var(--c)] px-2.5 py-1 text-[11px] font-semibold text-white">{isRent(p) ? 'In affitto' : 'In vendita'}</span>
         <span className="rounded-[calc(var(--r)*0.5)] bg-[var(--soft)] px-2.5 py-1 text-[11px] font-semibold text-[var(--fg)]">{typeOf(p)}</span>
       </div>
-      <H as="h1" className="mt-4 text-4xl md:text-5xl">{p.titolo}</H>
-      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 opacity-75"><AddressLink addr={(p.details as { mostra_indirizzo?: boolean } | undefined)?.mostra_indirizzo ? p.addr : zoneOf(p.addr) || p.addr} />{p.riferimento && <span className="text-sm">Rif. {p.riferimento}</span>}</div>
+      <H as="h1" className="mt-4 text-4xl md:text-5xl"><Editable k="titolo" value={p.titolo}>{p.titolo || 'Titolo dell’immobile'}</Editable></H>
+      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 opacity-75"><Editable k="addr" value={p.addr}><AddressLink addr={(p.details as { mostra_indirizzo?: boolean } | undefined)?.mostra_indirizzo ? p.addr : zoneOf(p.addr) || p.addr} /></Editable>{p.riferimento && <span className="text-sm">Rif. {p.riferimento}</span>}</div>
     </>
   );
   return (
@@ -306,13 +306,13 @@ function PropertyPage({ id }: { id: string }) {
       <Container className="grid gap-12 py-12 lg:grid-cols-[1fr_360px]">
         <div>
           {t.gallery !== 'full' && heading}
-          {cfg.showPrices && <div className={`${t.gallery === 'full' ? '' : 'mt-6'} text-4xl font-bold tracking-tight`}>{price(p.prezzo)}{isRent(p) && p.prezzo ? <span className="text-lg font-medium text-[var(--muted)]"> /mese</span> : null}</div>}
+          {cfg.showPrices && <div className={`${t.gallery === 'full' ? '' : 'mt-6'} text-4xl font-bold tracking-tight`}><Editable k="prezzo" value={p.prezzo ? String(p.prezzo) : ''}>{price(p.prezzo)}</Editable>{isRent(p) && p.prezzo ? <span className="text-lg font-medium text-[var(--muted)]"> /mese</span> : null}</div>}
           <Facts p={p} full className="mt-8" />
           <div className="mt-6 flex flex-wrap items-center gap-2"><ShareBar title={p.titolo} /><ReportButton id={p.id} /><FavButton id={p.id} className="!h-10 !w-10 ring-1 ring-[var(--line)] !shadow-none" /></div>
-          {desc && (
+          {(desc || propEdit) && (
             <Sec id="property.desc"><div className="mt-12">
               <H className="text-3xl">{tx('property.desc')}</H>
-              <p className={`mt-4 whitespace-pre-line text-[17px] leading-relaxed text-[var(--muted)] ${more ? '' : 'line-clamp-6'}`}>{desc}</p>
+              <p className={`mt-4 whitespace-pre-line text-[17px] leading-relaxed text-[var(--muted)] ${more || propEdit ? '' : 'line-clamp-6'}`}><Editable k="descrizione" value={desc} multiline>{desc || 'Scrivi la descrizione'}</Editable></p>
               {desc.length > 400 && <button onClick={() => setMore(v => !v)} className="mt-2 text-sm font-semibold text-[var(--c)]">{more ? 'Mostra meno' : 'Leggi tutto'}</button>}
             </div></Sec>
           )}

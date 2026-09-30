@@ -69,7 +69,23 @@ export type SiteCtx = {
   editMode?: boolean; selected?: string | null; onSelect?: (id: string) => void;
   // editor: segna quali testi usa davvero il modello aperto (gli altri non si mostrano tra i campi)
   onText?: (key: string) => void;
+  // piattaforma, scheda dell'immobile: i dati si modificano sulla pagina (testi al clic, azioni sulle foto)
+  propEdit?: PropEdit;
 };
+export type PropEdit = { photos: string[]; cover: string; busy: string | null; onPhoto: (src: string, action: 'ai' | 'cover' | 'remove') => void; onField: (k: 'titolo' | 'addr' | 'prezzo' | 'descrizione', v: string) => void };
+
+// Testo dell'immobile modificabile al clic (solo nella scheda della piattaforma): si salva uscendo dal campo
+export function Editable({ k, value, children, multiline = false, className = '' }: { k: Parameters<PropEdit['onField']>[0]; value: string; children: ReactNode; multiline?: boolean; className?: string }) {
+  const pe = useContext(Ctx)?.propEdit;
+  const [on, setOn] = useState(false);
+  if (!pe) return <>{children}</>;
+  if (!on) return <span role="button" tabIndex={0} title="Clicca per modificare" onClick={e => { e.preventDefault(); e.stopPropagation(); setOn(true); }} className={`cursor-text rounded-md outline-dashed outline-2 outline-offset-4 outline-transparent transition-[outline-color] hover:outline-[#3b82f6] ${className}`}>{children}</span>;
+  const done = (v: string) => { setOn(false); if (v.trim() !== value.trim()) pe.onField(k, v); };
+  const cls = 'w-full rounded-md bg-white/95 px-2 py-1 text-inherit text-neutral-900 outline outline-2 outline-[#3b82f6]';
+  return multiline
+    ? <textarea autoFocus defaultValue={value} rows={10} onClick={e => e.stopPropagation()} onBlur={e => done(e.target.value)} onKeyDown={e => e.key === 'Escape' && setOn(false)} className={`${cls} text-base leading-relaxed`} />
+    : <input autoFocus defaultValue={value} onClick={e => e.stopPropagation()} onBlur={e => done(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); if (e.key === 'Escape') setOn(false); }} className={cls} />;
+}
 const Ctx = createContext<SiteCtx | null>(null);
 export const useSite = () => {
   const c = useContext(Ctx)!;
@@ -128,9 +144,21 @@ const pick = (key: string) => PLACEHOLDERS[[...key].reduce((h, c) => (h * 31 + c
 // fit: foto verticali intere con lo sfondo sfocato (gallerie della scheda) invece che ritagliate
 export function Photo({ src, alt = '', className = '', zoom, fit }: { src?: string; alt?: string; className?: string; zoom?: boolean; fit?: boolean }) {
   const preview = useContext(Ctx)?.preview;
+  const pe = useContext(Ctx)?.propEdit;
   const shown = src || (preview ? pick(alt + className) : '');
+  // scheda della piattaforma: sulle foto dell'immobile le azioni (span e non button: le gallerie hanno gia' un button intorno)
+  const acts = pe && src && pe.photos.includes(src) ? (
+    pe.busy === src ? <span className="absolute inset-0 z-20 flex items-center justify-center bg-white/60 text-sm font-semibold text-neutral-900">Un attimo…</span> : (
+      <span className="absolute inset-0 z-20 flex items-center justify-center gap-2 bg-black/35 opacity-0 transition-opacity group-hover/ph:opacity-100" onClick={e => { e.preventDefault(); e.stopPropagation(); }}>
+        <span role="button" tabIndex={0} onClick={() => pe.onPhoto(src, 'ai')} className="flex h-10 items-center gap-1.5 rounded-full bg-[#537eec] px-4 text-sm font-semibold text-white shadow-lg">Migliora con l’AI</span>
+        {src !== pe.cover && <span role="button" tabIndex={0} onClick={() => pe.onPhoto(src, 'cover')} className="flex h-10 items-center rounded-full bg-white px-4 text-sm font-semibold text-neutral-900 shadow-lg">Copertina</span>}
+        <span role="button" tabIndex={0} aria-label="Togli la foto" onClick={() => pe.onPhoto(src, 'remove')} className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-lg leading-none text-neutral-900">×</span>
+      </span>
+    )
+  ) : null;
   return (
-    <div className={`overflow-hidden bg-[var(--soft)] ${fit ? 'relative' : ''} ${className}`}>
+    <div className={`overflow-hidden bg-[var(--soft)] ${fit || acts ? 'relative' : ''} ${acts ? 'group/ph' : ''} ${className}`}>
+      {acts}
       {shown && fit && <FitImage src={shown} alt={alt} imgClassName={zoom ? 'transition-transform duration-[900ms] ease-[cubic-bezier(.22,1,.36,1)] group-hover:scale-[1.04]' : ''} />}
       {shown && !fit && <img src={shown} alt={alt} loading="lazy" className={`h-full w-full object-cover ${zoom ? 'transition-transform duration-[900ms] ease-[cubic-bezier(.22,1,.36,1)] group-hover:scale-[1.04]' : ''}`} />}
       {/* senza foto (sul sito vero): un'icona discreta invece del riquadro vuoto */}

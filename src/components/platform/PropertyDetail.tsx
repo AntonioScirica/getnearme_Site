@@ -1,10 +1,10 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { ArrowLeft, ExternalLink, FileDown, Info, Loader2, Pencil, Sparkles, Star, Wand2, X } from 'lucide-react';
-import FitImage from '@/components/ui/FitImage';
+import { ArrowLeft, ExternalLink, FileDown, Info, Loader2, Pencil, X } from 'lucide-react';
 import { TEMPLATES, type SiteConfig, type TemplateId } from '@/lib/siteTemplates';
 import { SitePage } from '@/components/site/pages';
+import type { PropEdit } from '@/components/site/ui';
 import { updateProject, type ProjectData } from '@/lib/projects';
 import { authFetch, CARD_SHADOW, portfolioUrl, setPublic } from './api';
 import { PublicSwitch, toSite } from './PortfolioView';
@@ -16,7 +16,8 @@ export default function PropertyDetail({ project, loading, onChange }: { project
   // modello del sito e indirizzo: per l'avviso "sul sito si vede con lo stile del modello"
   const [site, setSite] = useState<{ slug: string | null; template: TemplateId; config: SiteConfig; name: string; logo: string | null } | null>(null);
   const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState<Partial<ProjectData> | null>(null); // dati in modifica: la pagina del sito si aggiorna mentre si scrive
+  const [draft, setDraft] = useState<Partial<ProjectData> | null>(null);
+  const [busy, setBusy] = useState<string | null>(null); // foto su cui si sta lavorando (copertina, togli) // dati in modifica: la pagina del sito si aggiorna mentre si scrive
   // report PDF da mandare ai clienti: lo compone il server (api/platform/report), si stampa da un iframe nascosto
   const [report, setReport] = useState<'idle' | 'busy' | 'err'>('idle');
   const downloadReport = async (id: string) => {
@@ -28,7 +29,25 @@ export default function PropertyDetail({ project, loading, onChange }: { project
   if (loading) return <Loader2 className="animate-spin text-muted" />;
   if (!project) return <p className="text-muted">Immobile non trovato. <a href="#/immobili" className="text-brand">Torna agli immobili</a>.</p>;
 
-  const extra = (project.import_data ?? {}) as { score?: number; suggerimenti?: string[] };
+  const extra = (project.import_data ?? {}) as { score?: number; suggerimenti?: string[]; photos?: unknown };
+  // la pagina del sito e' anche il posto dove si modifica: testi al clic, azioni sulle foto (AI, copertina, togli)
+  const photos = Array.isArray(extra.photos) ? extra.photos.filter((x): x is string => typeof x === 'string') : project.cover ? [project.cover] : [];
+  const propEdit: PropEdit = {
+    photos, cover: project.cover, busy,
+    onPhoto: async (src, action) => {
+      if (action === 'ai') { window.location.hash = `#/staging?project=${project.id}&photo=${encodeURIComponent(src)}`; return; }
+      if (action === 'remove' && !confirm('Togliere questa foto dall’immobile?')) return;
+      setBusy(src);
+      const r = await authFetch('/api/platform/property-photo', { method: 'POST', body: JSON.stringify({ projectId: project.id, mode: action, photo: src }) }).catch(() => null);
+      setBusy(null);
+      if (r?.ok) onChange();
+    },
+    onField: async (k, v) => {
+      const val = k === 'prezzo' ? Math.max(0, Math.round(Number(v.replace(/[^\d]/g, '')) || 0)) : v.trim();
+      setDraft(d => ({ ...d, [k]: val })); // si vede subito, poi si salva
+      if (await updateProject(project.id, { [k]: val })) onChange();
+    },
+  };
   return (
     <>
       <div className="mb-5 flex items-center justify-between">
@@ -45,15 +64,13 @@ export default function PropertyDetail({ project, loading, onChange }: { project
         <span className="min-w-0 flex-1 truncate text-muted">{project.is_public ? 'Sul tuo sito si vede' : 'Non è sul tuo sito. Online si vedrà'} con lo stile del modello {site?.template ? <b className="text-ink">{TEMPLATES.find(t => t.id === site.template)?.name}</b> : 'scelto'}.</span>
         <a href="#/portfolio" className="flex h-9 items-center rounded-full px-3 font-medium hover:bg-canvas">Cambia modello</a>
         <span className="h-5 w-px bg-line" aria-hidden />
-        <span className="pr-2"><PublicSwitch on={!!project.is_public} labels={['Online', 'Offline']} onClick={async () => { if (await setPublic(project.id, !project.is_public)) onChange(); }} /></span>
+        <span className="pr-2"><PublicSwitch on={!!project.is_public} labels={['Pubblico', 'Non pubblico']} right onClick={async () => { if (await setPublic(project.id, !project.is_public)) onChange(); }} /></span>
         {project.is_public && site?.slug && <a href={`${portfolioUrl(site.slug)}/${project.id}`} target="_blank" rel="noopener" className="flex h-9 items-center gap-1.5 rounded-full bg-canvas px-4 font-medium hover:bg-line/60">Vedi sul sito <ExternalLink size={14} /></a>}
       </div>
-      {/* le foto: da qui ogni foto va all'AI, e una foto AI torna qui accanto all'originale (prima/dopo sul sito) */}
-      <PhotoManager project={project} onChange={onChange} />
       {/* la pagina dell'immobile com'e' sul sito, col modello scelto; in modifica i campi a sinistra e la pagina si aggiorna */}
       <div className={`mt-8 grid items-start gap-6 ${editing ? 'lg:grid-cols-[360px_minmax(0,1fr)]' : ''}`}>
         {editing && <EditProperty project={project} onDraft={setDraft} onClose={() => { setEditing(false); setDraft(null); }} onSaved={() => { setEditing(false); setDraft(null); onChange(); }} />}
-        {site?.config ? <SiteFrame ctx={{ cfg: site.config, name: site.name, logo: site.logo, properties: [toSite({ ...project, ...draft })], base: '', preview: true }} id={project.id} /> : <div className="aspect-[16/10] animate-pulse rounded-[28px] bg-canvas" />}
+        {site?.config ? <SiteFrame ctx={{ cfg: site.config, name: site.name, logo: site.logo, properties: [toSite({ ...project, ...draft })], base: '', preview: true, propEdit }} id={project.id} /> : <div className="aspect-[16/10] animate-pulse rounded-[28px] bg-canvas" />}
       </div>
       {typeof extra.score === 'number' && (
         <section className="mt-10 card p-6">
@@ -62,58 +79,6 @@ export default function PropertyDetail({ project, loading, onChange }: { project
         </section>
       )}
     </>
-  );
-}
-
-// Foto dell'immobile con le azioni: Migliora con l'AI (apre la chat con quella foto), Copertina, togli.
-// Le foto AI messe accanto all'originale hanno l'etichetta Prima / Dopo.
-function PhotoManager({ project, onChange }: { project: ProjectData; onChange: () => void }) {
-  const d = (project.import_data ?? {}) as { photos?: unknown; prima?: Record<string, string> };
-  const photos = Array.isArray(d.photos) ? d.photos.filter((x): x is string => typeof x === 'string') : project.cover ? [project.cover] : [];
-  const [busy, setBusy] = useState<string | null>(null);
-  // passando sopra una foto si fa gia' riconoscere la stanza: quando la apri in chat la risposta e' in memoria
-  const warmed = useRef(new Set<string>());
-  const prefetch = (src: string) => {
-    const known = (d as { rooms?: Record<string, unknown> }).rooms?.[src];
-    if (known || warmed.current.has(src)) return;
-    warmed.current.add(src);
-    authFetch('/api/platform/photo-classify', { method: 'POST', body: JSON.stringify({ imageUrl: src, projectId: project.id, photoUrl: src }) }).catch(() => {});
-  };
-  const act = async (mode: 'remove' | 'cover', photo: string) => {
-    if (mode === 'remove' && !confirm('Togliere questa foto dall’immobile?')) return;
-    setBusy(photo);
-    const r = await authFetch('/api/platform/property-photo', { method: 'POST', body: JSON.stringify({ projectId: project.id, mode, photo }) }).catch(() => null);
-    setBusy(null);
-    if (r?.ok) onChange();
-  };
-  return (
-    <section className={`mb-6 rounded-3xl bg-white p-4 ${CARD_SHADOW}`}>
-      <div className="flex flex-wrap items-end justify-between gap-3 px-1 pb-5">
-        <div><h2 className="font-display text-lg font-semibold">Le foto</h2><p className="text-sm text-muted">Passa sopra una foto per migliorarla con l’AI. Il risultato torna qui, accanto all’originale, e sul sito si vede il prima/dopo.</p></div>
-      </div>
-      {photos.length ? (
-        <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
-          {photos.map(src => (
-            <li key={src} onMouseEnter={() => prefetch(src)} className="group relative aspect-[4/3] overflow-hidden rounded-2xl bg-canvas">
-              <FitImage src={src} />
-              {src === project.cover && <span className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-ink/75 px-2.5 py-1 text-[11px] font-semibold text-white"><Star size={10} /> Copertina</span>}
-              {d.prima?.[src] && <span className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-brand px-2.5 py-1 text-[11px] font-semibold text-white"><Sparkles size={10} /> Prima / Dopo</span>}
-              {busy === src ? <span className="absolute inset-0 flex items-center justify-center bg-white/60"><Loader2 size={18} className="animate-spin" /></span> : (
-                <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/35 opacity-0 ease-smooth transition-opacity group-hover:opacity-100">
-                  {/* togli: in alto a destra; al centro l'azione principale e, uguale ma secondaria, Copertina */}
-                  <button onClick={() => act('remove', src)} aria-label="Togli la foto" className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-ink hover:bg-white"><X size={14} /></button>
-                  {/* colonna larga quanto il pulsante piu' largo: i due pulsanti hanno la stessa larghezza */}
-                  <div className="flex w-fit flex-col gap-2">
-                    <a href={`#/staging?project=${project.id}&photo=${encodeURIComponent(src)}`} className="flex h-9 items-center justify-center gap-1.5 rounded-full bg-brand px-4 text-xs font-semibold text-white shadow-lg ease-smooth transition-transform hover:scale-105"><Wand2 size={13} /> Migliora con l’AI</a>
-                    {src !== project.cover && <button onClick={() => act('cover', src)} className="flex h-9 items-center justify-center gap-1.5 rounded-full bg-white px-4 text-xs font-semibold text-ink shadow-lg ease-smooth transition-transform hover:scale-105"><Star size={13} /> Copertina</button>}
-                  </div>
-                </div>
-              )}
-            </li>
-          ))}
-        </ul>
-      ) : <p className="px-1 pb-2 text-sm text-muted">Nessuna foto ancora.</p>}
-    </section>
   );
 }
 
@@ -140,7 +105,7 @@ function SiteFrame({ ctx, id }: { ctx: Parameters<typeof SitePage>[0]['ctx']; id
   }, []);
   return (
     <div ref={box} className={`relative min-w-0 overflow-hidden rounded-[28px] bg-white ${CARD_SHADOW}`} style={{ height: h ? h * k : undefined }}>
-      <div ref={inner} className="pointer-events-none select-none" style={{ width: 1280, transform: `scale(${k})`, transformOrigin: 'top left' }} aria-hidden>
+      <div ref={inner} className={ctx.propEdit ? '' : 'pointer-events-none select-none'} style={{ width: 1280, transform: `scale(${k})`, transformOrigin: 'top left' }} aria-hidden={!ctx.propEdit}>
         <SitePage ctx={ctx} page={{ page: 'immobile', id }} />
       </div>
     </div>
