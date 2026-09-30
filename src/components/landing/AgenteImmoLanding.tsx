@@ -638,7 +638,7 @@ function Landing({ faq }: { faq: [string, string][] }) {
             <ul className="mt-6 space-y-3 text-[15px]">
               {[L('Stili già pronti per ogni stanza', "Ready-made styles for every room"), L('Svuoti la stanza o cambi un dettaglio scrivendolo, come in chat', "Empty the room or change a detail just by typing it, like in a chat"), L('Anche le planimetrie: a colori, in 3D dall\'alto o in bianco e nero', "Floor plans too: in colour, 3D from above or black and white"), L('Nessun home staging vero da pagare o da organizzare', "No physical staging to pay for or organize")].map(x => <li key={x} className="flex items-start gap-3">{CHECK}{x}</li>)}
             </ul>
-            <span className="hidden md:block"><Cta href={SIGNUP} className="mt-8">{L('Prova gratis', "Try it free")}</Cta></span>
+            <span className="hidden md:block"><Cta href={SIGNUP} className="mt-8">{L('Inizia gratis', "Start for free")}</Cta></span>
           </Reveal>
           <Reveal delay={150} anim="in-right">
             <div className="parallax">
@@ -650,7 +650,7 @@ function Landing({ faq }: { faq: [string, string][] }) {
             </div>
           </Reveal>
           {/* su telefono i bottoni vanno sotto le immagini */}
-          <div className="flex justify-center pt-6 md:hidden"><Cta href={SIGNUP}>{L('Prova gratis', "Try it free")}</Cta></div>
+          <div className="flex justify-center pt-6 md:hidden"><Cta href={SIGNUP}>{L('Inizia gratis', "Start for free")}</Cta></div>
         </div>
       </Band>
 
