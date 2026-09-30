@@ -71,9 +71,9 @@ function build(e: PlatformEmail, name: string): { subject: string; html: string 
     case 'affiliate_used': return { subject: `Qualcuno ha usato il tuo codice: +${e.credits} crediti`, html: email({
       preheader: `Il codice ${e.code} ti ha fatto guadagnare ${e.credits} crediti.`,
       body: eyebrow('Codice affiliato') + title(`+${e.credits} crediti per te`)
-        + text(`${hi(name)} un agente ha appena usato il tuo codice <strong style="color:#1d1d1f">${e.code}</strong>. I ${e.credits} crediti sono già nel tuo saldo e <strong style="color:#1d1d1f">non scadono</strong> con il mese.`)
-        + planChoice('Il tuo codice finora', `Usato da ${e.uses} ${e.uses === 1 ? 'persona' : 'persone'}: ${e.uses * e.credits} crediti ricevuti`, [`${photosFor(e.credits)}`, 'foto arredate'], [`${videosFor(e.credits)}`, 'video per i social'])
-        + text('Continua a condividerlo: ogni agente che lo inserisce riceve crediti anche lui, e tu ne ricevi altri.')
+        + text(`${hi(name)} un agente ha appena usato il tuo codice <strong style="color:#1d1d1f;white-space:nowrap">${e.code}</strong>. I ${e.credits} crediti sono già nel tuo saldo e <strong style="color:#1d1d1f">non scadono</strong> con il mese.`)
+        + planChoice('Con questi crediti fai', `${e.credits} crediti, da usare come vuoi`, [`${photosFor(e.credits)}`, 'foto arredate'], [`${videosFor(e.credits)}`, 'video per i social'])
+        + text(`Finora il tuo codice è stato usato da <strong style="color:#1d1d1f">${e.uses} ${e.uses === 1 ? 'persona' : 'persone'}</strong>, per un totale di <strong style="color:#1d1d1f">${String(e.uses * e.credits).replace(/\B(?=(\d{3})+(?!\d))/g, '.')} crediti</strong>. Continua a condividerlo: ogni agente che lo inserisce riceve crediti anche lui, e tu ne ricevi altri.`)
         + button(`${APP}#/staging`, 'Usa i tuoi crediti'),
     }) }
     case 'payment_failed': return { subject: 'Pagamento non riuscito: aggiorna la carta', html: email({
