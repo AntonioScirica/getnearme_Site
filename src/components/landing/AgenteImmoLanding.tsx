@@ -775,11 +775,18 @@ function Trial() {
   return (
     <div className="dots-bg min-h-screen overflow-x-clip font-body text-ink antialiased">
       <ConsentGate />
-      {/* prova compatta: sotto, nel primo schermo, si vede che iniziano i prezzi */}
-      <section id="prova" className="mx-auto max-w-2xl px-4 pb-4 pt-8 md:pt-10">
-        <h1 className="text-center font-display text-3xl font-extrabold leading-[1.05] tracking-tight md:text-4xl">{L('La tua prova gratis', "Your free try")}</h1>
-        <p className="mx-auto mt-3 max-w-xl text-center text-base text-muted">{L('Scegli uno stile o scrivi come la vuoi. Poi la trasformi in un video.', "Pick a style or describe it. Then turn it into a video.")}</p>
-        <div className="mt-6"><TryIt /></div>
+      <header className="sticky top-0 z-40 pt-4">
+        <div className="mx-auto max-w-6xl px-4">
+          <nav className="glass flex h-14 w-full items-center gap-2 rounded-full border px-2 pl-4 shadow-[0_10px_40px_-15px_rgba(0,0,0,.2)]">
+            <Link href="/it" className="flex items-center gap-2"><img src="/immo/logo-mark.png" alt="" className="h-8 w-8" /><span className="whitespace-nowrap font-display text-lg font-extrabold tracking-tight">Agente <span className="text-brand">Immo</span></span></Link>
+            <Cta href="#prezzi" className="ml-auto !h-10 shrink-0 whitespace-nowrap !px-4 text-sm sm:!px-5">{L('Acquista', "Buy")}</Cta>
+          </nav>
+        </div>
+      </header>
+      <section id="prova" className="mx-auto max-w-4xl px-4 pb-16 pt-10 md:pb-24 md:pt-16">
+        <h1 className="text-center font-display text-4xl font-extrabold leading-[1.05] tracking-tight md:text-5xl">{L('La tua prova gratis', "Your free try")}</h1>
+        <p className="mx-auto mt-4 max-w-xl text-center text-base text-muted md:text-lg">{L('Scegli uno stile o scrivi come la vuoi. Poi la trasformi in un video.', "Pick a style or describe it. Then turn it into a video.")}</p>
+        <div className="mt-10"><TryIt /></div>
       </section>
       <Pricing />
     </div>
