@@ -1126,7 +1126,8 @@ export default function StagingChat({ onMany, initial }: { onMany: (files: FileL
                     <div className={`flex w-full items-center gap-1 ${isNarrow(m.before) ? '' : 'justify-start'}`}>
                       <Act narrow={isNarrow(m.before)} icon={<SquareDashedMousePointer size={14} className="translate-y-px" />} label="Modifica" onClick={() => { if (base !== m.out) restartFrom(i, m.out!); setSelecting(true); }} />
                       {!isNarrow(m.before) && <span className="mx-1 h-4 w-px bg-line" aria-hidden />}
-                      <Act narrow={isNarrow(m.before)} icon={<Clapperboard size={14} className="translate-y-px" />} label="Crea video" tip="I mobili compaiono uno alla volta" disabled={busy} onClick={() => askVideo(m.out!)} />
+                      {/* dalla planimetria nessun video (nessun modello adatto) */}
+                      {!m.req?.planimetria && <Act narrow={isNarrow(m.before)} icon={<Clapperboard size={14} className="translate-y-px" />} label="Crea video" tip="I mobili compaiono uno alla volta" disabled={busy} onClick={() => askVideo(m.out!)} />}
                       {m.req && !isNarrow(m.before) && <span className="mx-1 h-4 w-px bg-line" aria-hidden />}
                       {m.req && <Act narrow={isNarrow(m.before)} icon={<Shuffle size={14} className="translate-y-px" />} label="Rifai" tip="Stesso stile, un'altra versione" disabled={busy} onClick={() => variant(m)} cr={creditsOf(m.req, editsDone)} />}
                       {base !== m.out && (
