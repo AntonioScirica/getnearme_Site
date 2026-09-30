@@ -512,7 +512,8 @@ function Landing({ faq }: { faq: [string, string][] }) {
           <Reveal delay={150} anim="in-right">
             <div className="parallax">
               <Tilt className="rounded-[24px] bg-white p-2 shadow-[0_30px_80px_-30px_rgba(0,0,0,.3)] ring-1 ring-black/5">
-                <BeforeAfter before="https://pub-a668674eaa484e8e8f2f10c264392bfc.r2.dev/spike-video/soggiorno_prima.jpg" after="https://pub-a668674eaa484e8e8f2f10c264392bfc.r2.dev/spike-video/soggiorno.jpg" className="aspect-[4/3] rounded-2xl" />
+                {/* stanza vuota da Unsplash (licenza libera), arredata in stile Moderno con la stessa pipeline della piattaforma (30/09) */}
+                <BeforeAfter before="https://pub-a668674eaa484e8e8f2f10c264392bfc.r2.dev/landing/staging-prima.jpg" after="https://pub-a668674eaa484e8e8f2f10c264392bfc.r2.dev/landing/staging-dopo.jpg" className="aspect-[4/3] rounded-2xl" />
               </Tilt>
               <p className="mt-3 text-center text-xs text-muted">{L('Trascina per confrontare. Foto reale, arredata dall\'AI.', "Drag to compare. Real photo, staged by AI.")}</p>
             </div>
