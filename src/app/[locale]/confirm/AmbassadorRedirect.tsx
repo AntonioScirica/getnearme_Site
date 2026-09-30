@@ -14,6 +14,9 @@ export default function AmbassadorRedirect({ locale }: { locale: Locale }) {
 
     async function check(userId: string) {
       if (done || cancelled) return;
+      // conferma email arrivata dalla prova della landing (foto e richiesta messe da parte): si torna alla prova
+      let trial = false; try { trial = !!localStorage.getItem('agenteimmo:prova'); } catch { /* niente storage */ }
+      if (trial) { done = true; window.location.replace('/it/prova'); return; }
       const { data } = await supabase
         .from('user_credits')
         .select('subscription_type')
