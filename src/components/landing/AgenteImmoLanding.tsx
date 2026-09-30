@@ -234,7 +234,7 @@ function FakeBar({ secs }: { secs: number }) {
 const BOX = 'aspect-[4/3] md:aspect-[16/10]';
 
 // gate (landing): la foto d'esempio c'e' gia', ogni azione (invio, Arreda, carica) porta al login e poi alla pagina /prova
-function TryIt({ gate = false, onVideo }: { gate?: boolean; onVideo?: () => void }) {
+function TryIt({ gate = false }: { gate?: boolean }) {
   const L = useL();
   const [before, setBefore] = useState<string | null>(null);
   const [after, setAfter] = useState<string | null>(null);
@@ -355,7 +355,7 @@ function TryIt({ gate = false, onVideo }: { gate?: boolean; onVideo?: () => void
     for (let i = 0; i < 60; i++) {
       await new Promise(res => setTimeout(res, 5000));
       const g = await fetch(`/api/landing/demo-video?job=${encodeURIComponent(d.job)}`).then(x => x.json()).catch(() => null) as { url?: string; token?: string; status?: string; error?: string } | null;
-      if (g?.url) { setVBusy(false); setVideoToken(g.token ?? null); try { localStorage.setItem('agenteimmo:demo-video', '1'); } catch { /* niente storage */ } onVideo?.(); return setVideo(g.url); }
+      if (g?.url) { setVBusy(false); setVideoToken(g.token ?? null); try { localStorage.setItem('agenteimmo:demo-video', '1'); } catch { /* niente storage */ } return setVideo(g.url); }
       if (g?.error) return fail(g.error);
     }
     fail();
@@ -447,7 +447,7 @@ function TryIt({ gate = false, onVideo }: { gate?: boolean; onVideo?: () => void
               </>}
               {after
                 ? video
-                  ? <div className="grid w-full grid-cols-2 gap-2">{/* video fatto: si scarica o si compra (la Dashboard sale nella barra) */}
+                  ? <div className="grid w-full grid-cols-2 gap-2">{/* video fatto: si scarica o si compra */}
                       <button type="button" disabled={saving} onClick={() => keep(true)} className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-white px-4 text-sm font-semibold text-ink ring-1 ring-black/10 hover:ring-ink">{L('Scarica tutto', "Download all")}</button>
                       <a href="#prezzi" className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-ink px-4 text-sm font-semibold text-white hover:bg-black">{L('Acquista', "Buy")}</a>
                     </div>
@@ -790,7 +790,6 @@ export function TrialPage({ lang = 'it' }: { lang?: LandingLang }) {
 function Trial() {
   const L = useL();
   const [ok, setOk] = useState(false);
-  const [done, setDone] = useState(false); // video della prova fatto
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => (session ? setOk(true) : window.location.replace(`/it/accedi?next=${TRIAL}`)));
   }, []);
@@ -802,9 +801,7 @@ function Trial() {
         <div className="mx-auto max-w-6xl px-4">
           <nav className="glass flex h-14 w-full items-center gap-2 rounded-full border px-2 pl-4 shadow-[0_10px_40px_-15px_rgba(0,0,0,.2)]">
             <Link href="/it" className="flex items-center gap-2"><img src="/immo/logo-mark.png" alt="" className="h-8 w-8" /><span className="whitespace-nowrap font-display text-lg font-extrabold tracking-tight">Agente <span className="text-brand">Immo</span></span></Link>
-            {/* a video fatto Acquista scende sotto il video e qui resta la Dashboard */}
-            {!done && <a href={APP} className="ml-auto px-3 text-sm font-semibold text-ink">Dashboard</a>}
-            <a href={done ? APP : '#prezzi'} className={`${done ? 'ml-auto ' : ''}inline-flex h-10 shrink-0 items-center whitespace-nowrap rounded-full bg-ink px-4 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-black sm:px-5`}>{done ? 'Dashboard' : L('Acquista', "Buy")}</a>
+            <a href={APP} className="ml-auto inline-flex h-10 shrink-0 items-center whitespace-nowrap rounded-full bg-ink px-4 text-sm font-semibold text-white ease-smooth transition-colors hover:bg-black sm:px-5">Dashboard</a>
           </nav>
         </div>
       </header>
@@ -812,7 +809,7 @@ function Trial() {
       <section id="prova" className="mx-auto flex min-h-[calc(100svh-4.5rem)] max-w-4xl flex-col justify-center px-4 py-6">
         <h1 className="text-center font-display text-4xl font-extrabold leading-[1.05] tracking-tight md:text-5xl">{L('La tua prova gratis', "Your free try")}</h1>
         <p className="mx-auto mt-4 max-w-xl text-center text-base text-muted md:text-lg">{L('Scegli uno stile o scrivi come la vuoi. Poi la trasformi in un video.', "Pick a style or describe it. Then turn it into a video.")}</p>
-        <div className="mx-auto mt-6 w-full" style={{ maxWidth: 'min(56rem, calc((100svh - 400px) * 1.6))' }}><TryIt onVideo={() => setDone(true)} /></div>
+        <div className="mx-auto mt-6 w-full" style={{ maxWidth: 'min(56rem, calc((100svh - 400px) * 1.6))' }}><TryIt /></div>
       </section>
       <Pricing />
     </div>
